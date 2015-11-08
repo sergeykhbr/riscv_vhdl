@@ -1,0 +1,40 @@
+NET "i_sclk_p" TNM_NET = TNM_SysClk;
+TIMESPEC "TS_SysClk" = PERIOD "TNM_SysClk" 12 ns ;
+NET  "i_sclk_p"   LOC = "J9";
+NET  "i_sclk_p"   IOSTANDARD = LVDS_25;
+NET  "i_sclk_n"   LOC = "H9";
+NET  "i_sclk_n"   IOSTANDARD = LVDS_25;
+
+# button "Center"
+NET "i_rst" LOC = G26;
+NET "i_rst" CLOCK_DEDICATED_ROUTE = "FALSE";
+# jumpers
+
+
+# UART1 interface
+NET "i_uart1_ctsn" LOC = T23;
+NET "i_uart1_rd"   LOC = J24;
+NET "o_uart1_rtsn" LOC = T24;
+NET "o_uart1_td"   LOC = J25;
+
+# GPIO
+NET "i_dip[0]"  LOC = D22;   # DIP-0
+NET "i_dip[1]"  LOC = C22;   # DIP-1
+NET "i_dip[2]"  LOC = L21;   # DIP-2
+NET "i_dip[3]"  LOC = L20;   # DIP-3
+#NET "i_dip[4]"  LOC = C18;   # DIP-4
+#NET "i_dip[5]"  LOC = B18;   # DIP-5
+#NET "i_dip[6]"  LOC = K22;   # DIP-6
+#NET "i_dip[7]"  LOC = K21;   # DIP-7
+
+
+# User's LEDs:
+NET "o_led[0]" LOC = AC22;
+NET "o_led[1]" LOC = AC24;
+NET "o_led[2]" LOC = AE22;
+NET "o_led[3]" LOC = AE23;
+NET "o_led[4]" LOC = AB23;
+NET "o_led[5]" LOC = AG23;
+NET "o_led[6]" LOC = AE24;
+NET "o_led[7]" LOC = AD24;
+
