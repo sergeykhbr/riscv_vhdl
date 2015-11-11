@@ -1,10 +1,14 @@
---
-------------------------------------------------------------------------------
--- "Output    Output      Phase     Duty      Pk-to-Pk        Phase"
--- "Clock    Freq (MHz) (degrees) Cycle (%) Jitter (ps)  Error (ps)"
-------------------------------------------------------------------------------
--- CLK_OUT1____70.000
---
+-----------------------------------------------------------------------------
+--! @file
+--! @copyright Copyright 2015 GNSS Sensor Ltd. All right reserved.
+--! @author    Sergey Khabarov - sergeykhbr@gmail.com
+--! @details  	PLL instance for the behaviour simulation
+--!
+--! "Output    Output      Phase     Duty      Pk-to-Pk        Phase"
+--! "Clock    Freq (MHz) (degrees) Cycle (%) Jitter (ps)  Error (ps)"
+--!
+--! CLK_OUT1____70.000
+-----------------------------------------------------------------------------
 
 library ieee;
 use ieee.std_logic_1164.all;

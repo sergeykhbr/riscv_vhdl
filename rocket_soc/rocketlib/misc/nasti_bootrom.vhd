@@ -1,7 +1,8 @@
 -----------------------------------------------------------------------------
--- @file
--- @author  Sergey Khabarov
--- @brief   ROM storage with the boot image (4KB default = 16 x 256)
+--! @file
+--! @copyright Copyright 2015 GNSS Sensor Ltd. All right reserved.
+--! @author    Sergey Khabarov - sergeykhbr@gmail.com
+--! @brief     ROM storage with the boot image (4KB default = 16 x 256)
 ------------------------------------------------------------------------------
 
 library ieee;
@@ -36,7 +37,9 @@ architecture arch_nasti_bootrom of nasti_bootrom is
   constant xconfig : nasti_slave_config_type := (
      xindex => xindex,
      xaddr => conv_std_logic_vector(xaddr, CFG_NASTI_CFG_ADDR_BITS),
-     xmask => conv_std_logic_vector(xmask, CFG_NASTI_CFG_ADDR_BITS)
+     xmask => conv_std_logic_vector(xmask, CFG_NASTI_CFG_ADDR_BITS),
+     vid => VENDOR_GNSSSENSOR,
+     did => GNSSSENSOR_BOOTROM
   );
 
   type registers is record

@@ -1,13 +1,13 @@
 -----------------------------------------------------------------------------
 --! @file
---! @copyright  Copyright 2015 GNSS Sensor Ltd. All right reserved.
---! @author     Sergey Khabarov
---! @brief      AMBA AXI4 (NASTI) bus configuraiton file.
---! @details    This file defines bus interface constants that have to be
---!             used by any periphery device implementation in order 
---!             to provide compatibility in a wide range of possible settings.
---!             For better implementation use the AXI4 register bank and 
---!             implemented tasks from this file.
+--! @copyright Copyright 2015 GNSS Sensor Ltd. All right reserved.
+--! @author    Sergey Khabarov - sergeykhbr@gmail.com
+--! @brief     AMBA AXI4 (NASTI) bus configuraiton file.
+--! @details   This file defines bus interface constants that have to be
+--!            used by any periphery device implementation in order 
+--!            to provide compatibility in a wide range of possible settings.
+--!            For better implementation use the AXI4 register bank and 
+--!            implemented tasks from this file.
 ------------------------------------------------------------------------------
 
 library ieee;
@@ -55,6 +55,24 @@ constant NASTI_BURST_FIXED   : std_logic_vector(1 downto 0) := "00";
 constant NASTI_BURST_INCR    : std_logic_vector(1 downto 0) := "01";
 constant NASTI_BURST_WRAP    : std_logic_vector(1 downto 0) := "10";
 
+--! Vendor ID of the GNSS Sensor Ltd.
+constant VENDOR_GNSSSENSOR        : std_logic_vector(15 downto 0) := X"00F1"; 
+--! Device IDs definition:
+constant GNSSSENSOR_DUMMY         : std_logic_vector(15 downto 0) := X"5577";--! Dummy device
+constant GNSSSENSOR_BOOTROM       : std_logic_vector(15 downto 0) := X"0071";--! Boot ROM Device ID
+constant GNSSSENSOR_FWIMAGE       : std_logic_vector(15 downto 0) := X"0072";--! FW ROM image Device ID
+constant GNSSSENSOR_SRAM          : std_logic_vector(15 downto 0) := X"0073";--! Internal SRAM block Device ID
+constant GNSSSENSOR_PNP           : std_logic_vector(15 downto 0) := X"0074";--! Configuration Registers Module Device ID provided by gnsslib
+constant GNSSSENSOR_SPI_FLASH     : std_logic_vector(15 downto 0) := X"0075";--! SD-card controller Device ID provided by gnsslib
+constant GNSSSENSOR_GPIO          : std_logic_vector(15 downto 0) := X"0076";--! General purpose IOs Device ID provided by gnsslib
+constant GNSSSENSOR_RF_CONTROL    : std_logic_vector(15 downto 0) := X"0077";--! RF front-end controller Device ID provided by gnsslib
+constant GNSSSENSOR_ENGINE        : std_logic_vector(15 downto 0) := X"0078";--! GNSS Engine Device ID provided by gnsslib
+constant GNSSSENSOR_FSE_V2        : std_logic_vector(15 downto 0) := X"0079";--! Fast Search Engines Device ID provided by gnsslib
+constant GNSSSENSOR_UART          : std_logic_vector(15 downto 0) := X"007a";--! rs-232 UART Device ID
+constant GNSSSENSOR_ACCELEROMETER : std_logic_vector(15 downto 0) := X"007b";--! Accelerometer Device ID provided by gnsslib
+constant GNSSSENSOR_GYROSCOPE     : std_logic_vector(15 downto 0) := X"007c";--! Gyroscope Device ID provided by gnsslib
+
+
 --! @brief Burst length size decoder
 constant XSIZE_TOTAL : integer := 8;
 type xsize_type is array (0 to XSIZE_TOTAL-1) of integer;
@@ -73,6 +91,8 @@ type nasti_slave_config_type is record
     xindex : integer;
     xaddr  : std_logic_vector(CFG_NASTI_CFG_ADDR_BITS-1 downto 0);
     xmask  : std_logic_vector(CFG_NASTI_CFG_ADDR_BITS-1 downto 0);
+    vid    : std_logic_vector(15 downto 0); --! Vendor ID
+    did    : std_logic_vector(15 downto 0); --! Device ID
 end record;
 
 --! Configuration bus vector from all cached slaves to plug'n'play
@@ -83,7 +103,7 @@ type nasti_slave_cfg_vector is array (0 to CFG_NASTI_SLAVES_TOTAL-1)
 
 --! Default config value
 constant nasti_slave_config_none : nasti_slave_config_type := (
-    0, (others => '0'), (others => '1'));
+    0, (others => '0'), (others => '1'), VENDOR_GNSSSENSOR, GNSSSENSOR_DUMMY);
 
 type nasti_metadata_type is record
   --! Read address. The read address gives the address of the first transfer

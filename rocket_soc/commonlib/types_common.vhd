@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------------
 --! @file
---! @copyright  Copyright 2015 GNSS Sensor Ltd. All right reserved.
---! @author     Sergey Khabarov - sergeykhbr@gmail.com
---! @brief	Package for common VHDL functions
+--! @copyright Copyright 2015 GNSS Sensor Ltd. All right reserved.
+--! @author    Sergey Khabarov - sergeykhbr@gmail.com
+--! @brief	    Package for common VHDL functions
 ------------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;

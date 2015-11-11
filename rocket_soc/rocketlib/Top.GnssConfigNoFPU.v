@@ -1262,7 +1262,7 @@ module ClientTileLinkNetworkPort_0(input clk, input reset,
   );
 endmodule
 
-module Queue_8(input clk, input reset,
+module Queue_7(input clk, input reset,
     output io_enq_ready,
     input  io_enq_valid,
     input [1:0] io_enq_bits_header_src,
@@ -1420,7 +1420,7 @@ module Queue_8(input clk, input reset,
   end
 endmodule
 
-module Queue_9(input clk, input reset,
+module Queue_8(input clk, input reset,
     output io_enq_ready,
     input  io_enq_valid,
     input [1:0] io_enq_bits_header_src,
@@ -1543,7 +1543,7 @@ module Queue_9(input clk, input reset,
   end
 endmodule
 
-module Queue_10(input clk, input reset,
+module Queue_9(input clk, input reset,
     output io_enq_ready,
     input  io_enq_valid,
     input [1:0] io_enq_bits_header_src,
@@ -1694,7 +1694,7 @@ module Queue_10(input clk, input reset,
   end
 endmodule
 
-module Queue_11(input clk, input reset,
+module Queue_10(input clk, input reset,
     output io_enq_ready,
     input  io_enq_valid,
     input [1:0] io_enq_bits_header_src,
@@ -1845,7 +1845,7 @@ module Queue_11(input clk, input reset,
   end
 endmodule
 
-module Queue_12(input clk, input reset,
+module Queue_11(input clk, input reset,
     output io_enq_ready,
     input  io_enq_valid,
     input [1:0] io_enq_bits_header_src,
@@ -2134,7 +2134,7 @@ module TileLinkEnqueuer_0(input clk, input reset,
   assign io_client_grant_bits_header_src = Queue_3_io_deq_bits_header_src;
   assign io_client_grant_valid = Queue_3_io_deq_valid;
   assign io_client_acquire_ready = Queue_io_enq_ready;
-  Queue_8 Queue(.clk(clk), .reset(reset),
+  Queue_7 Queue(.clk(clk), .reset(reset),
        .io_enq_ready( Queue_io_enq_ready ),
        .io_enq_valid( io_client_acquire_valid ),
        .io_enq_bits_header_src( io_client_acquire_bits_header_src ),
@@ -2159,7 +2159,7 @@ module TileLinkEnqueuer_0(input clk, input reset,
        .io_deq_bits_payload_data( Queue_io_deq_bits_payload_data )
        //.io_count(  )
   );
-  Queue_9 Queue_1(.clk(clk), .reset(reset),
+  Queue_8 Queue_1(.clk(clk), .reset(reset),
        .io_enq_ready( Queue_1_io_enq_ready ),
        .io_enq_valid( io_manager_probe_valid ),
        .io_enq_bits_header_src( io_manager_probe_bits_header_src ),
@@ -2174,7 +2174,7 @@ module TileLinkEnqueuer_0(input clk, input reset,
        .io_deq_bits_payload_p_type( Queue_1_io_deq_bits_payload_p_type )
        //.io_count(  )
   );
-  Queue_10 Queue_2(.clk(clk), .reset(reset),
+  Queue_9 Queue_2(.clk(clk), .reset(reset),
        .io_enq_ready( Queue_2_io_enq_ready ),
        .io_enq_valid( io_client_release_valid ),
        .io_enq_bits_header_src( io_client_release_bits_header_src ),
@@ -2197,7 +2197,7 @@ module TileLinkEnqueuer_0(input clk, input reset,
        .io_deq_bits_payload_data( Queue_2_io_deq_bits_payload_data )
        //.io_count(  )
   );
-  Queue_11 Queue_3(.clk(clk), .reset(reset),
+  Queue_10 Queue_3(.clk(clk), .reset(reset),
        .io_enq_ready( Queue_3_io_enq_ready ),
        .io_enq_valid( io_manager_grant_valid ),
        .io_enq_bits_header_src( io_manager_grant_bits_header_src ),
@@ -2220,7 +2220,7 @@ module TileLinkEnqueuer_0(input clk, input reset,
        .io_deq_bits_payload_data( Queue_3_io_deq_bits_payload_data )
        //.io_count(  )
   );
-  Queue_12 Queue_4(.clk(clk), .reset(reset),
+  Queue_11 Queue_4(.clk(clk), .reset(reset),
        .io_enq_ready( Queue_4_io_enq_ready ),
        .io_enq_valid( io_client_finish_valid ),
        .io_enq_bits_header_src( io_client_finish_bits_header_src ),
@@ -3132,7 +3132,7 @@ module ManagerTileLinkNetworkPort(
   assign T35 = io_network_acquire_valid;
 endmodule
 
-module Queue_13(input clk, input reset,
+module Queue_12(input clk, input reset,
     output io_enq_ready,
     input  io_enq_valid,
     input [1:0] io_enq_bits_header_src,
@@ -3390,7 +3390,7 @@ module TileLinkEnqueuer_1(input clk, input reset,
   assign io_client_grant_bits_header_src = io_manager_grant_bits_header_src;
   assign io_client_grant_valid = io_manager_grant_valid;
   assign io_client_acquire_ready = io_manager_acquire_ready;
-  Queue_13 Queue(.clk(clk), .reset(reset),
+  Queue_12 Queue(.clk(clk), .reset(reset),
        .io_enq_ready( Queue_io_enq_ready ),
        .io_enq_valid( io_client_release_valid ),
        .io_enq_bits_header_src( io_client_release_bits_header_src ),
@@ -19659,7 +19659,7 @@ module Queue_3(input clk, input reset,
   end
 endmodule
 
-module Queue_7(input clk, input reset,
+module Queue_14(input clk, input reset,
     output io_enq_ready,
     input  io_enq_valid,
     input [4:0] io_enq_bits,
@@ -19773,9 +19773,9 @@ module NastiErrorSlave(input clk, input reset,
     input  io_aw_bits_user,
     output io_w_ready,
     input  io_w_valid,
-    input [63:0] io_w_bits_data,
+    input [127:0] io_w_bits_data,
     input  io_w_bits_last,
-    input [7:0] io_w_bits_strb,
+    input [15:0] io_w_bits_strb,
     input  io_w_bits_user,
     input  io_b_ready,
     output io_b_valid,
@@ -19798,7 +19798,7 @@ module NastiErrorSlave(input clk, input reset,
     input  io_r_ready,
     output io_r_valid,
     output[1:0] io_r_bits_resp,
-    output[63:0] io_r_bits_data,
+    output[127:0] io_r_bits_data,
     output io_r_bits_last,
     output[4:0] io_r_bits_id
     //output io_r_bits_user
@@ -19912,7 +19912,7 @@ module NastiErrorSlave(input clk, input reset,
   assign T31 = beats_left - 8'h0;
   assign T32 = T30 & T33;
   assign T33 = T29 ^ 1'h1;
-  assign io_r_bits_data = 64'h0;
+  assign io_r_bits_data = 128'h0;
   assign io_r_bits_resp = 2'h3;
   assign io_r_valid = T34;
   assign T34 = r_queue_io_deq_valid & responding;
@@ -19955,7 +19955,7 @@ module NastiErrorSlave(input clk, input reset,
        //.io_deq_bits_user(  )
        //.io_count(  )
   );
-  Queue_7 b_queue(.clk(clk), .reset(reset),
+  Queue_14 b_queue(.clk(clk), .reset(reset),
        .io_enq_ready( b_queue_io_enq_ready ),
        .io_enq_valid( T17 ),
        .io_enq_bits( io_aw_bits_id ),
@@ -20256,35 +20256,35 @@ module JunctionsPeekingArbiter_0(input clk, input reset,
     output io_in_3_ready,
     input  io_in_3_valid,
     input [1:0] io_in_3_bits_resp,
-    input [63:0] io_in_3_bits_data,
+    input [127:0] io_in_3_bits_data,
     input  io_in_3_bits_last,
     input [4:0] io_in_3_bits_id,
     input  io_in_3_bits_user,
     output io_in_2_ready,
     input  io_in_2_valid,
     input [1:0] io_in_2_bits_resp,
-    input [63:0] io_in_2_bits_data,
+    input [127:0] io_in_2_bits_data,
     input  io_in_2_bits_last,
     input [4:0] io_in_2_bits_id,
     input  io_in_2_bits_user,
     output io_in_1_ready,
     input  io_in_1_valid,
     input [1:0] io_in_1_bits_resp,
-    input [63:0] io_in_1_bits_data,
+    input [127:0] io_in_1_bits_data,
     input  io_in_1_bits_last,
     input [4:0] io_in_1_bits_id,
     input  io_in_1_bits_user,
     output io_in_0_ready,
     input  io_in_0_valid,
     input [1:0] io_in_0_bits_resp,
-    input [63:0] io_in_0_bits_data,
+    input [127:0] io_in_0_bits_data,
     input  io_in_0_bits_last,
     input [4:0] io_in_0_bits_id,
     input  io_in_0_bits_user,
     input  io_out_ready,
     output io_out_valid,
     output[1:0] io_out_bits_resp,
-    output[63:0] io_out_bits_data,
+    output[127:0] io_out_bits_data,
     output io_out_bits_last,
     output[4:0] io_out_bits_id,
     output io_out_bits_user
@@ -20410,10 +20410,10 @@ module JunctionsPeekingArbiter_0(input clk, input reset,
   wire T106;
   wire T107;
   wire T108;
-  wire[63:0] T109;
-  wire[63:0] T110;
+  wire[127:0] T109;
+  wire[127:0] T110;
   wire T111;
-  wire[63:0] T112;
+  wire[127:0] T112;
   wire T113;
   wire T114;
   wire[1:0] T115;
@@ -20739,9 +20739,9 @@ module NastiRouter_0(input clk, input reset,
     input  io_master_aw_bits_user,
     output io_master_w_ready,
     input  io_master_w_valid,
-    input [63:0] io_master_w_bits_data,
+    input [127:0] io_master_w_bits_data,
     input  io_master_w_bits_last,
-    input [7:0] io_master_w_bits_strb,
+    input [15:0] io_master_w_bits_strb,
     input  io_master_w_bits_user,
     input  io_master_b_ready,
     output io_master_b_valid,
@@ -20764,7 +20764,7 @@ module NastiRouter_0(input clk, input reset,
     input  io_master_r_ready,
     output io_master_r_valid,
     output[1:0] io_master_r_bits_resp,
-    output[63:0] io_master_r_bits_data,
+    output[127:0] io_master_r_bits_data,
     output io_master_r_bits_last,
     output[4:0] io_master_r_bits_id,
     output io_master_r_bits_user,
@@ -20783,9 +20783,9 @@ module NastiRouter_0(input clk, input reset,
     output io_slave_2_aw_bits_user,
     input  io_slave_2_w_ready,
     output io_slave_2_w_valid,
-    output[63:0] io_slave_2_w_bits_data,
+    output[127:0] io_slave_2_w_bits_data,
     output io_slave_2_w_bits_last,
-    output[7:0] io_slave_2_w_bits_strb,
+    output[15:0] io_slave_2_w_bits_strb,
     output io_slave_2_w_bits_user,
     output io_slave_2_b_ready,
     input  io_slave_2_b_valid,
@@ -20808,7 +20808,7 @@ module NastiRouter_0(input clk, input reset,
     output io_slave_2_r_ready,
     input  io_slave_2_r_valid,
     input [1:0] io_slave_2_r_bits_resp,
-    input [63:0] io_slave_2_r_bits_data,
+    input [127:0] io_slave_2_r_bits_data,
     input  io_slave_2_r_bits_last,
     input [4:0] io_slave_2_r_bits_id,
     input  io_slave_2_r_bits_user,
@@ -20827,9 +20827,9 @@ module NastiRouter_0(input clk, input reset,
     output io_slave_1_aw_bits_user,
     input  io_slave_1_w_ready,
     output io_slave_1_w_valid,
-    output[63:0] io_slave_1_w_bits_data,
+    output[127:0] io_slave_1_w_bits_data,
     output io_slave_1_w_bits_last,
-    output[7:0] io_slave_1_w_bits_strb,
+    output[15:0] io_slave_1_w_bits_strb,
     output io_slave_1_w_bits_user,
     output io_slave_1_b_ready,
     input  io_slave_1_b_valid,
@@ -20852,7 +20852,7 @@ module NastiRouter_0(input clk, input reset,
     output io_slave_1_r_ready,
     input  io_slave_1_r_valid,
     input [1:0] io_slave_1_r_bits_resp,
-    input [63:0] io_slave_1_r_bits_data,
+    input [127:0] io_slave_1_r_bits_data,
     input  io_slave_1_r_bits_last,
     input [4:0] io_slave_1_r_bits_id,
     input  io_slave_1_r_bits_user,
@@ -20871,9 +20871,9 @@ module NastiRouter_0(input clk, input reset,
     output io_slave_0_aw_bits_user,
     input  io_slave_0_w_ready,
     output io_slave_0_w_valid,
-    output[63:0] io_slave_0_w_bits_data,
+    output[127:0] io_slave_0_w_bits_data,
     output io_slave_0_w_bits_last,
-    output[7:0] io_slave_0_w_bits_strb,
+    output[15:0] io_slave_0_w_bits_strb,
     output io_slave_0_w_bits_user,
     output io_slave_0_b_ready,
     input  io_slave_0_b_valid,
@@ -20896,7 +20896,7 @@ module NastiRouter_0(input clk, input reset,
     output io_slave_0_r_ready,
     input  io_slave_0_r_valid,
     input [1:0] io_slave_0_r_bits_resp,
-    input [63:0] io_slave_0_r_bits_data,
+    input [127:0] io_slave_0_r_bits_data,
     input  io_slave_0_r_bits_last,
     input [4:0] io_slave_0_r_bits_id,
     input  io_slave_0_r_bits_user
@@ -21010,7 +21010,7 @@ module NastiRouter_0(input clk, input reset,
   wire r_arb_io_in_0_ready;
   wire r_arb_io_out_valid;
   wire[1:0] r_arb_io_out_bits_resp;
-  wire[63:0] r_arb_io_out_bits_data;
+  wire[127:0] r_arb_io_out_bits_data;
   wire r_arb_io_out_bits_last;
   wire[4:0] r_arb_io_out_bits_id;
   wire r_arb_io_out_bits_user;
@@ -21022,7 +21022,7 @@ module NastiRouter_0(input clk, input reset,
   wire err_slave_io_ar_ready;
   wire err_slave_io_r_valid;
   wire[1:0] err_slave_io_r_bits_resp;
-  wire[63:0] err_slave_io_r_bits_data;
+  wire[127:0] err_slave_io_r_bits_data;
   wire err_slave_io_r_bits_last;
   wire[4:0] err_slave_io_r_bits_id;
 
@@ -21554,9 +21554,9 @@ module NastiArbiter(input clk, input reset,
     input  io_master_1_aw_bits_user,
     output io_master_1_w_ready,
     input  io_master_1_w_valid,
-    input [63:0] io_master_1_w_bits_data,
+    input [127:0] io_master_1_w_bits_data,
     input  io_master_1_w_bits_last,
-    input [7:0] io_master_1_w_bits_strb,
+    input [15:0] io_master_1_w_bits_strb,
     input  io_master_1_w_bits_user,
     input  io_master_1_b_ready,
     output io_master_1_b_valid,
@@ -21579,7 +21579,7 @@ module NastiArbiter(input clk, input reset,
     input  io_master_1_r_ready,
     output io_master_1_r_valid,
     output[1:0] io_master_1_r_bits_resp,
-    output[63:0] io_master_1_r_bits_data,
+    output[127:0] io_master_1_r_bits_data,
     output io_master_1_r_bits_last,
     output[4:0] io_master_1_r_bits_id,
     output io_master_1_r_bits_user,
@@ -21598,9 +21598,9 @@ module NastiArbiter(input clk, input reset,
     input  io_master_0_aw_bits_user,
     output io_master_0_w_ready,
     input  io_master_0_w_valid,
-    input [63:0] io_master_0_w_bits_data,
+    input [127:0] io_master_0_w_bits_data,
     input  io_master_0_w_bits_last,
-    input [7:0] io_master_0_w_bits_strb,
+    input [15:0] io_master_0_w_bits_strb,
     input  io_master_0_w_bits_user,
     input  io_master_0_b_ready,
     output io_master_0_b_valid,
@@ -21623,7 +21623,7 @@ module NastiArbiter(input clk, input reset,
     input  io_master_0_r_ready,
     output io_master_0_r_valid,
     output[1:0] io_master_0_r_bits_resp,
-    output[63:0] io_master_0_r_bits_data,
+    output[127:0] io_master_0_r_bits_data,
     output io_master_0_r_bits_last,
     output[4:0] io_master_0_r_bits_id,
     output io_master_0_r_bits_user,
@@ -21642,9 +21642,9 @@ module NastiArbiter(input clk, input reset,
     output io_slave_aw_bits_user,
     input  io_slave_w_ready,
     output io_slave_w_valid,
-    output[63:0] io_slave_w_bits_data,
+    output[127:0] io_slave_w_bits_data,
     output io_slave_w_bits_last,
-    output[7:0] io_slave_w_bits_strb,
+    output[15:0] io_slave_w_bits_strb,
     output io_slave_w_bits_user,
     output io_slave_b_ready,
     input  io_slave_b_valid,
@@ -21667,7 +21667,7 @@ module NastiArbiter(input clk, input reset,
     output io_slave_r_ready,
     input  io_slave_r_valid,
     input [1:0] io_slave_r_bits_resp,
-    input [63:0] io_slave_r_bits_data,
+    input [127:0] io_slave_r_bits_data,
     input  io_slave_r_bits_last,
     input [4:0] io_slave_r_bits_id,
     input  io_slave_r_bits_user
@@ -21699,9 +21699,9 @@ module NastiArbiter(input clk, input reset,
   wire T18;
   reg  R19;
   wire T20;
-  wire[7:0] T21;
+  wire[15:0] T21;
   wire T22;
-  wire[63:0] T23;
+  wire[127:0] T23;
   wire T24;
   wire T25;
   wire T26;
@@ -21998,9 +21998,9 @@ module NastiCrossbar_0(input clk, input reset,
     input  io_masters_1_aw_bits_user,
     output io_masters_1_w_ready,
     input  io_masters_1_w_valid,
-    input [63:0] io_masters_1_w_bits_data,
+    input [127:0] io_masters_1_w_bits_data,
     input  io_masters_1_w_bits_last,
-    input [7:0] io_masters_1_w_bits_strb,
+    input [15:0] io_masters_1_w_bits_strb,
     input  io_masters_1_w_bits_user,
     input  io_masters_1_b_ready,
     output io_masters_1_b_valid,
@@ -22023,7 +22023,7 @@ module NastiCrossbar_0(input clk, input reset,
     input  io_masters_1_r_ready,
     output io_masters_1_r_valid,
     output[1:0] io_masters_1_r_bits_resp,
-    output[63:0] io_masters_1_r_bits_data,
+    output[127:0] io_masters_1_r_bits_data,
     output io_masters_1_r_bits_last,
     output[4:0] io_masters_1_r_bits_id,
     output io_masters_1_r_bits_user,
@@ -22042,9 +22042,9 @@ module NastiCrossbar_0(input clk, input reset,
     input  io_masters_0_aw_bits_user,
     output io_masters_0_w_ready,
     input  io_masters_0_w_valid,
-    input [63:0] io_masters_0_w_bits_data,
+    input [127:0] io_masters_0_w_bits_data,
     input  io_masters_0_w_bits_last,
-    input [7:0] io_masters_0_w_bits_strb,
+    input [15:0] io_masters_0_w_bits_strb,
     input  io_masters_0_w_bits_user,
     input  io_masters_0_b_ready,
     output io_masters_0_b_valid,
@@ -22067,7 +22067,7 @@ module NastiCrossbar_0(input clk, input reset,
     input  io_masters_0_r_ready,
     output io_masters_0_r_valid,
     output[1:0] io_masters_0_r_bits_resp,
-    output[63:0] io_masters_0_r_bits_data,
+    output[127:0] io_masters_0_r_bits_data,
     output io_masters_0_r_bits_last,
     output[4:0] io_masters_0_r_bits_id,
     output io_masters_0_r_bits_user,
@@ -22086,9 +22086,9 @@ module NastiCrossbar_0(input clk, input reset,
     output io_slaves_2_aw_bits_user,
     input  io_slaves_2_w_ready,
     output io_slaves_2_w_valid,
-    output[63:0] io_slaves_2_w_bits_data,
+    output[127:0] io_slaves_2_w_bits_data,
     output io_slaves_2_w_bits_last,
-    output[7:0] io_slaves_2_w_bits_strb,
+    output[15:0] io_slaves_2_w_bits_strb,
     output io_slaves_2_w_bits_user,
     output io_slaves_2_b_ready,
     input  io_slaves_2_b_valid,
@@ -22111,7 +22111,7 @@ module NastiCrossbar_0(input clk, input reset,
     output io_slaves_2_r_ready,
     input  io_slaves_2_r_valid,
     input [1:0] io_slaves_2_r_bits_resp,
-    input [63:0] io_slaves_2_r_bits_data,
+    input [127:0] io_slaves_2_r_bits_data,
     input  io_slaves_2_r_bits_last,
     input [4:0] io_slaves_2_r_bits_id,
     input  io_slaves_2_r_bits_user,
@@ -22130,9 +22130,9 @@ module NastiCrossbar_0(input clk, input reset,
     output io_slaves_1_aw_bits_user,
     input  io_slaves_1_w_ready,
     output io_slaves_1_w_valid,
-    output[63:0] io_slaves_1_w_bits_data,
+    output[127:0] io_slaves_1_w_bits_data,
     output io_slaves_1_w_bits_last,
-    output[7:0] io_slaves_1_w_bits_strb,
+    output[15:0] io_slaves_1_w_bits_strb,
     output io_slaves_1_w_bits_user,
     output io_slaves_1_b_ready,
     input  io_slaves_1_b_valid,
@@ -22155,7 +22155,7 @@ module NastiCrossbar_0(input clk, input reset,
     output io_slaves_1_r_ready,
     input  io_slaves_1_r_valid,
     input [1:0] io_slaves_1_r_bits_resp,
-    input [63:0] io_slaves_1_r_bits_data,
+    input [127:0] io_slaves_1_r_bits_data,
     input  io_slaves_1_r_bits_last,
     input [4:0] io_slaves_1_r_bits_id,
     input  io_slaves_1_r_bits_user,
@@ -22174,9 +22174,9 @@ module NastiCrossbar_0(input clk, input reset,
     output io_slaves_0_aw_bits_user,
     input  io_slaves_0_w_ready,
     output io_slaves_0_w_valid,
-    output[63:0] io_slaves_0_w_bits_data,
+    output[127:0] io_slaves_0_w_bits_data,
     output io_slaves_0_w_bits_last,
-    output[7:0] io_slaves_0_w_bits_strb,
+    output[15:0] io_slaves_0_w_bits_strb,
     output io_slaves_0_w_bits_user,
     output io_slaves_0_b_ready,
     input  io_slaves_0_b_valid,
@@ -22199,7 +22199,7 @@ module NastiCrossbar_0(input clk, input reset,
     output io_slaves_0_r_ready,
     input  io_slaves_0_r_valid,
     input [1:0] io_slaves_0_r_bits_resp,
-    input [63:0] io_slaves_0_r_bits_data,
+    input [127:0] io_slaves_0_r_bits_data,
     input  io_slaves_0_r_bits_last,
     input [4:0] io_slaves_0_r_bits_id,
     input  io_slaves_0_r_bits_user
@@ -22214,7 +22214,7 @@ module NastiCrossbar_0(input clk, input reset,
   wire NastiArbiter_io_master_1_ar_ready;
   wire NastiArbiter_io_master_1_r_valid;
   wire[1:0] NastiArbiter_io_master_1_r_bits_resp;
-  wire[63:0] NastiArbiter_io_master_1_r_bits_data;
+  wire[127:0] NastiArbiter_io_master_1_r_bits_data;
   wire NastiArbiter_io_master_1_r_bits_last;
   wire[4:0] NastiArbiter_io_master_1_r_bits_id;
   wire NastiArbiter_io_master_1_r_bits_user;
@@ -22227,7 +22227,7 @@ module NastiCrossbar_0(input clk, input reset,
   wire NastiArbiter_io_master_0_ar_ready;
   wire NastiArbiter_io_master_0_r_valid;
   wire[1:0] NastiArbiter_io_master_0_r_bits_resp;
-  wire[63:0] NastiArbiter_io_master_0_r_bits_data;
+  wire[127:0] NastiArbiter_io_master_0_r_bits_data;
   wire NastiArbiter_io_master_0_r_bits_last;
   wire[4:0] NastiArbiter_io_master_0_r_bits_id;
   wire NastiArbiter_io_master_0_r_bits_user;
@@ -22244,9 +22244,9 @@ module NastiCrossbar_0(input clk, input reset,
   wire[4:0] NastiArbiter_io_slave_aw_bits_id;
   wire NastiArbiter_io_slave_aw_bits_user;
   wire NastiArbiter_io_slave_w_valid;
-  wire[63:0] NastiArbiter_io_slave_w_bits_data;
+  wire[127:0] NastiArbiter_io_slave_w_bits_data;
   wire NastiArbiter_io_slave_w_bits_last;
-  wire[7:0] NastiArbiter_io_slave_w_bits_strb;
+  wire[15:0] NastiArbiter_io_slave_w_bits_strb;
   wire NastiArbiter_io_slave_w_bits_user;
   wire NastiArbiter_io_slave_b_ready;
   wire NastiArbiter_io_slave_ar_valid;
@@ -22271,7 +22271,7 @@ module NastiCrossbar_0(input clk, input reset,
   wire NastiArbiter_1_io_master_1_ar_ready;
   wire NastiArbiter_1_io_master_1_r_valid;
   wire[1:0] NastiArbiter_1_io_master_1_r_bits_resp;
-  wire[63:0] NastiArbiter_1_io_master_1_r_bits_data;
+  wire[127:0] NastiArbiter_1_io_master_1_r_bits_data;
   wire NastiArbiter_1_io_master_1_r_bits_last;
   wire[4:0] NastiArbiter_1_io_master_1_r_bits_id;
   wire NastiArbiter_1_io_master_1_r_bits_user;
@@ -22284,7 +22284,7 @@ module NastiCrossbar_0(input clk, input reset,
   wire NastiArbiter_1_io_master_0_ar_ready;
   wire NastiArbiter_1_io_master_0_r_valid;
   wire[1:0] NastiArbiter_1_io_master_0_r_bits_resp;
-  wire[63:0] NastiArbiter_1_io_master_0_r_bits_data;
+  wire[127:0] NastiArbiter_1_io_master_0_r_bits_data;
   wire NastiArbiter_1_io_master_0_r_bits_last;
   wire[4:0] NastiArbiter_1_io_master_0_r_bits_id;
   wire NastiArbiter_1_io_master_0_r_bits_user;
@@ -22301,9 +22301,9 @@ module NastiCrossbar_0(input clk, input reset,
   wire[4:0] NastiArbiter_1_io_slave_aw_bits_id;
   wire NastiArbiter_1_io_slave_aw_bits_user;
   wire NastiArbiter_1_io_slave_w_valid;
-  wire[63:0] NastiArbiter_1_io_slave_w_bits_data;
+  wire[127:0] NastiArbiter_1_io_slave_w_bits_data;
   wire NastiArbiter_1_io_slave_w_bits_last;
-  wire[7:0] NastiArbiter_1_io_slave_w_bits_strb;
+  wire[15:0] NastiArbiter_1_io_slave_w_bits_strb;
   wire NastiArbiter_1_io_slave_w_bits_user;
   wire NastiArbiter_1_io_slave_b_ready;
   wire NastiArbiter_1_io_slave_ar_valid;
@@ -22328,7 +22328,7 @@ module NastiCrossbar_0(input clk, input reset,
   wire NastiArbiter_2_io_master_1_ar_ready;
   wire NastiArbiter_2_io_master_1_r_valid;
   wire[1:0] NastiArbiter_2_io_master_1_r_bits_resp;
-  wire[63:0] NastiArbiter_2_io_master_1_r_bits_data;
+  wire[127:0] NastiArbiter_2_io_master_1_r_bits_data;
   wire NastiArbiter_2_io_master_1_r_bits_last;
   wire[4:0] NastiArbiter_2_io_master_1_r_bits_id;
   wire NastiArbiter_2_io_master_1_r_bits_user;
@@ -22341,7 +22341,7 @@ module NastiCrossbar_0(input clk, input reset,
   wire NastiArbiter_2_io_master_0_ar_ready;
   wire NastiArbiter_2_io_master_0_r_valid;
   wire[1:0] NastiArbiter_2_io_master_0_r_bits_resp;
-  wire[63:0] NastiArbiter_2_io_master_0_r_bits_data;
+  wire[127:0] NastiArbiter_2_io_master_0_r_bits_data;
   wire NastiArbiter_2_io_master_0_r_bits_last;
   wire[4:0] NastiArbiter_2_io_master_0_r_bits_id;
   wire NastiArbiter_2_io_master_0_r_bits_user;
@@ -22358,9 +22358,9 @@ module NastiCrossbar_0(input clk, input reset,
   wire[4:0] NastiArbiter_2_io_slave_aw_bits_id;
   wire NastiArbiter_2_io_slave_aw_bits_user;
   wire NastiArbiter_2_io_slave_w_valid;
-  wire[63:0] NastiArbiter_2_io_slave_w_bits_data;
+  wire[127:0] NastiArbiter_2_io_slave_w_bits_data;
   wire NastiArbiter_2_io_slave_w_bits_last;
-  wire[7:0] NastiArbiter_2_io_slave_w_bits_strb;
+  wire[15:0] NastiArbiter_2_io_slave_w_bits_strb;
   wire NastiArbiter_2_io_slave_w_bits_user;
   wire NastiArbiter_2_io_slave_b_ready;
   wire NastiArbiter_2_io_slave_ar_valid;
@@ -22385,7 +22385,7 @@ module NastiCrossbar_0(input clk, input reset,
   wire NastiRouter_io_master_ar_ready;
   wire NastiRouter_io_master_r_valid;
   wire[1:0] NastiRouter_io_master_r_bits_resp;
-  wire[63:0] NastiRouter_io_master_r_bits_data;
+  wire[127:0] NastiRouter_io_master_r_bits_data;
   wire NastiRouter_io_master_r_bits_last;
   wire[4:0] NastiRouter_io_master_r_bits_id;
   wire NastiRouter_io_master_r_bits_user;
@@ -22402,9 +22402,9 @@ module NastiCrossbar_0(input clk, input reset,
   wire[4:0] NastiRouter_io_slave_2_aw_bits_id;
   wire NastiRouter_io_slave_2_aw_bits_user;
   wire NastiRouter_io_slave_2_w_valid;
-  wire[63:0] NastiRouter_io_slave_2_w_bits_data;
+  wire[127:0] NastiRouter_io_slave_2_w_bits_data;
   wire NastiRouter_io_slave_2_w_bits_last;
-  wire[7:0] NastiRouter_io_slave_2_w_bits_strb;
+  wire[15:0] NastiRouter_io_slave_2_w_bits_strb;
   wire NastiRouter_io_slave_2_w_bits_user;
   wire NastiRouter_io_slave_2_b_ready;
   wire NastiRouter_io_slave_2_ar_valid;
@@ -22433,9 +22433,9 @@ module NastiCrossbar_0(input clk, input reset,
   wire[4:0] NastiRouter_io_slave_1_aw_bits_id;
   wire NastiRouter_io_slave_1_aw_bits_user;
   wire NastiRouter_io_slave_1_w_valid;
-  wire[63:0] NastiRouter_io_slave_1_w_bits_data;
+  wire[127:0] NastiRouter_io_slave_1_w_bits_data;
   wire NastiRouter_io_slave_1_w_bits_last;
-  wire[7:0] NastiRouter_io_slave_1_w_bits_strb;
+  wire[15:0] NastiRouter_io_slave_1_w_bits_strb;
   wire NastiRouter_io_slave_1_w_bits_user;
   wire NastiRouter_io_slave_1_b_ready;
   wire NastiRouter_io_slave_1_ar_valid;
@@ -22464,9 +22464,9 @@ module NastiCrossbar_0(input clk, input reset,
   wire[4:0] NastiRouter_io_slave_0_aw_bits_id;
   wire NastiRouter_io_slave_0_aw_bits_user;
   wire NastiRouter_io_slave_0_w_valid;
-  wire[63:0] NastiRouter_io_slave_0_w_bits_data;
+  wire[127:0] NastiRouter_io_slave_0_w_bits_data;
   wire NastiRouter_io_slave_0_w_bits_last;
-  wire[7:0] NastiRouter_io_slave_0_w_bits_strb;
+  wire[15:0] NastiRouter_io_slave_0_w_bits_strb;
   wire NastiRouter_io_slave_0_w_bits_user;
   wire NastiRouter_io_slave_0_b_ready;
   wire NastiRouter_io_slave_0_ar_valid;
@@ -22491,7 +22491,7 @@ module NastiCrossbar_0(input clk, input reset,
   wire NastiRouter_1_io_master_ar_ready;
   wire NastiRouter_1_io_master_r_valid;
   wire[1:0] NastiRouter_1_io_master_r_bits_resp;
-  wire[63:0] NastiRouter_1_io_master_r_bits_data;
+  wire[127:0] NastiRouter_1_io_master_r_bits_data;
   wire NastiRouter_1_io_master_r_bits_last;
   wire[4:0] NastiRouter_1_io_master_r_bits_id;
   wire NastiRouter_1_io_master_r_bits_user;
@@ -22508,9 +22508,9 @@ module NastiCrossbar_0(input clk, input reset,
   wire[4:0] NastiRouter_1_io_slave_2_aw_bits_id;
   wire NastiRouter_1_io_slave_2_aw_bits_user;
   wire NastiRouter_1_io_slave_2_w_valid;
-  wire[63:0] NastiRouter_1_io_slave_2_w_bits_data;
+  wire[127:0] NastiRouter_1_io_slave_2_w_bits_data;
   wire NastiRouter_1_io_slave_2_w_bits_last;
-  wire[7:0] NastiRouter_1_io_slave_2_w_bits_strb;
+  wire[15:0] NastiRouter_1_io_slave_2_w_bits_strb;
   wire NastiRouter_1_io_slave_2_w_bits_user;
   wire NastiRouter_1_io_slave_2_b_ready;
   wire NastiRouter_1_io_slave_2_ar_valid;
@@ -22539,9 +22539,9 @@ module NastiCrossbar_0(input clk, input reset,
   wire[4:0] NastiRouter_1_io_slave_1_aw_bits_id;
   wire NastiRouter_1_io_slave_1_aw_bits_user;
   wire NastiRouter_1_io_slave_1_w_valid;
-  wire[63:0] NastiRouter_1_io_slave_1_w_bits_data;
+  wire[127:0] NastiRouter_1_io_slave_1_w_bits_data;
   wire NastiRouter_1_io_slave_1_w_bits_last;
-  wire[7:0] NastiRouter_1_io_slave_1_w_bits_strb;
+  wire[15:0] NastiRouter_1_io_slave_1_w_bits_strb;
   wire NastiRouter_1_io_slave_1_w_bits_user;
   wire NastiRouter_1_io_slave_1_b_ready;
   wire NastiRouter_1_io_slave_1_ar_valid;
@@ -22570,9 +22570,9 @@ module NastiCrossbar_0(input clk, input reset,
   wire[4:0] NastiRouter_1_io_slave_0_aw_bits_id;
   wire NastiRouter_1_io_slave_0_aw_bits_user;
   wire NastiRouter_1_io_slave_0_w_valid;
-  wire[63:0] NastiRouter_1_io_slave_0_w_bits_data;
+  wire[127:0] NastiRouter_1_io_slave_0_w_bits_data;
   wire NastiRouter_1_io_slave_0_w_bits_last;
-  wire[7:0] NastiRouter_1_io_slave_0_w_bits_strb;
+  wire[15:0] NastiRouter_1_io_slave_0_w_bits_strb;
   wire NastiRouter_1_io_slave_0_w_bits_user;
   wire NastiRouter_1_io_slave_0_b_ready;
   wire NastiRouter_1_io_slave_0_ar_valid;
@@ -23485,9 +23485,9 @@ module NastiMultiChannelRouter(
     input  io_master_aw_bits_user,
     output io_master_w_ready,
     input  io_master_w_valid,
-    input [63:0] io_master_w_bits_data,
+    input [127:0] io_master_w_bits_data,
     input  io_master_w_bits_last,
-    input [7:0] io_master_w_bits_strb,
+    input [15:0] io_master_w_bits_strb,
     input  io_master_w_bits_user,
     input  io_master_b_ready,
     output io_master_b_valid,
@@ -23510,7 +23510,7 @@ module NastiMultiChannelRouter(
     input  io_master_r_ready,
     output io_master_r_valid,
     output[1:0] io_master_r_bits_resp,
-    output[63:0] io_master_r_bits_data,
+    output[127:0] io_master_r_bits_data,
     output io_master_r_bits_last,
     output[4:0] io_master_r_bits_id,
     output io_master_r_bits_user,
@@ -23529,9 +23529,9 @@ module NastiMultiChannelRouter(
     output io_slaves_0_aw_bits_user,
     input  io_slaves_0_w_ready,
     output io_slaves_0_w_valid,
-    output[63:0] io_slaves_0_w_bits_data,
+    output[127:0] io_slaves_0_w_bits_data,
     output io_slaves_0_w_bits_last,
-    output[7:0] io_slaves_0_w_bits_strb,
+    output[15:0] io_slaves_0_w_bits_strb,
     output io_slaves_0_w_bits_user,
     output io_slaves_0_b_ready,
     input  io_slaves_0_b_valid,
@@ -23554,7 +23554,7 @@ module NastiMultiChannelRouter(
     output io_slaves_0_r_ready,
     input  io_slaves_0_r_valid,
     input [1:0] io_slaves_0_r_bits_resp,
-    input [63:0] io_slaves_0_r_bits_data,
+    input [127:0] io_slaves_0_r_bits_data,
     input  io_slaves_0_r_bits_last,
     input [4:0] io_slaves_0_r_bits_id,
     input  io_slaves_0_r_bits_user
@@ -23788,28 +23788,28 @@ module JunctionsPeekingArbiter_1(input clk, input reset,
     output io_in_2_ready,
     input  io_in_2_valid,
     input [1:0] io_in_2_bits_resp,
-    input [63:0] io_in_2_bits_data,
+    input [127:0] io_in_2_bits_data,
     input  io_in_2_bits_last,
     input [4:0] io_in_2_bits_id,
     input  io_in_2_bits_user,
     output io_in_1_ready,
     input  io_in_1_valid,
     input [1:0] io_in_1_bits_resp,
-    input [63:0] io_in_1_bits_data,
+    input [127:0] io_in_1_bits_data,
     input  io_in_1_bits_last,
     input [4:0] io_in_1_bits_id,
     input  io_in_1_bits_user,
     output io_in_0_ready,
     input  io_in_0_valid,
     input [1:0] io_in_0_bits_resp,
-    input [63:0] io_in_0_bits_data,
+    input [127:0] io_in_0_bits_data,
     input  io_in_0_bits_last,
     input [4:0] io_in_0_bits_id,
     input  io_in_0_bits_user,
     input  io_out_ready,
     output io_out_valid,
     output[1:0] io_out_bits_resp,
-    output[63:0] io_out_bits_data,
+    output[127:0] io_out_bits_data,
     output io_out_bits_last,
     output[4:0] io_out_bits_id,
     output io_out_bits_user
@@ -23890,8 +23890,8 @@ module JunctionsPeekingArbiter_1(input clk, input reset,
   wire T67;
   wire T68;
   wire T69;
-  wire[63:0] T70;
-  wire[63:0] T71;
+  wire[127:0] T70;
+  wire[127:0] T71;
   wire T72;
   wire T73;
   wire[1:0] T74;
@@ -24125,9 +24125,9 @@ module NastiRouter_1(input clk, input reset,
     input  io_master_aw_bits_user,
     output io_master_w_ready,
     input  io_master_w_valid,
-    input [63:0] io_master_w_bits_data,
+    input [127:0] io_master_w_bits_data,
     input  io_master_w_bits_last,
-    input [7:0] io_master_w_bits_strb,
+    input [15:0] io_master_w_bits_strb,
     input  io_master_w_bits_user,
     input  io_master_b_ready,
     output io_master_b_valid,
@@ -24150,7 +24150,7 @@ module NastiRouter_1(input clk, input reset,
     input  io_master_r_ready,
     output io_master_r_valid,
     output[1:0] io_master_r_bits_resp,
-    output[63:0] io_master_r_bits_data,
+    output[127:0] io_master_r_bits_data,
     output io_master_r_bits_last,
     output[4:0] io_master_r_bits_id,
     output io_master_r_bits_user,
@@ -24169,9 +24169,9 @@ module NastiRouter_1(input clk, input reset,
     output io_slave_1_aw_bits_user,
     input  io_slave_1_w_ready,
     output io_slave_1_w_valid,
-    output[63:0] io_slave_1_w_bits_data,
+    output[127:0] io_slave_1_w_bits_data,
     output io_slave_1_w_bits_last,
-    output[7:0] io_slave_1_w_bits_strb,
+    output[15:0] io_slave_1_w_bits_strb,
     output io_slave_1_w_bits_user,
     output io_slave_1_b_ready,
     input  io_slave_1_b_valid,
@@ -24194,7 +24194,7 @@ module NastiRouter_1(input clk, input reset,
     output io_slave_1_r_ready,
     input  io_slave_1_r_valid,
     input [1:0] io_slave_1_r_bits_resp,
-    input [63:0] io_slave_1_r_bits_data,
+    input [127:0] io_slave_1_r_bits_data,
     input  io_slave_1_r_bits_last,
     input [4:0] io_slave_1_r_bits_id,
     input  io_slave_1_r_bits_user,
@@ -24213,9 +24213,9 @@ module NastiRouter_1(input clk, input reset,
     output io_slave_0_aw_bits_user,
     input  io_slave_0_w_ready,
     output io_slave_0_w_valid,
-    output[63:0] io_slave_0_w_bits_data,
+    output[127:0] io_slave_0_w_bits_data,
     output io_slave_0_w_bits_last,
-    output[7:0] io_slave_0_w_bits_strb,
+    output[15:0] io_slave_0_w_bits_strb,
     output io_slave_0_w_bits_user,
     output io_slave_0_b_ready,
     input  io_slave_0_b_valid,
@@ -24238,7 +24238,7 @@ module NastiRouter_1(input clk, input reset,
     output io_slave_0_r_ready,
     input  io_slave_0_r_valid,
     input [1:0] io_slave_0_r_bits_resp,
-    input [63:0] io_slave_0_r_bits_data,
+    input [127:0] io_slave_0_r_bits_data,
     input  io_slave_0_r_bits_last,
     input [4:0] io_slave_0_r_bits_id,
     input  io_slave_0_r_bits_user
@@ -24320,7 +24320,7 @@ module NastiRouter_1(input clk, input reset,
   wire r_arb_io_in_0_ready;
   wire r_arb_io_out_valid;
   wire[1:0] r_arb_io_out_bits_resp;
-  wire[63:0] r_arb_io_out_bits_data;
+  wire[127:0] r_arb_io_out_bits_data;
   wire r_arb_io_out_bits_last;
   wire[4:0] r_arb_io_out_bits_id;
   wire r_arb_io_out_bits_user;
@@ -24332,7 +24332,7 @@ module NastiRouter_1(input clk, input reset,
   wire err_slave_io_ar_ready;
   wire err_slave_io_r_valid;
   wire[1:0] err_slave_io_r_bits_resp;
-  wire[63:0] err_slave_io_r_bits_data;
+  wire[127:0] err_slave_io_r_bits_data;
   wire err_slave_io_r_bits_last;
   wire[4:0] err_slave_io_r_bits_id;
 
@@ -24628,9 +24628,9 @@ module NastiCrossbar_1(input clk, input reset,
     input  io_masters_0_aw_bits_user,
     output io_masters_0_w_ready,
     input  io_masters_0_w_valid,
-    input [63:0] io_masters_0_w_bits_data,
+    input [127:0] io_masters_0_w_bits_data,
     input  io_masters_0_w_bits_last,
-    input [7:0] io_masters_0_w_bits_strb,
+    input [15:0] io_masters_0_w_bits_strb,
     input  io_masters_0_w_bits_user,
     input  io_masters_0_b_ready,
     output io_masters_0_b_valid,
@@ -24653,7 +24653,7 @@ module NastiCrossbar_1(input clk, input reset,
     input  io_masters_0_r_ready,
     output io_masters_0_r_valid,
     output[1:0] io_masters_0_r_bits_resp,
-    output[63:0] io_masters_0_r_bits_data,
+    output[127:0] io_masters_0_r_bits_data,
     output io_masters_0_r_bits_last,
     output[4:0] io_masters_0_r_bits_id,
     output io_masters_0_r_bits_user,
@@ -24672,9 +24672,9 @@ module NastiCrossbar_1(input clk, input reset,
     output io_slaves_1_aw_bits_user,
     input  io_slaves_1_w_ready,
     output io_slaves_1_w_valid,
-    output[63:0] io_slaves_1_w_bits_data,
+    output[127:0] io_slaves_1_w_bits_data,
     output io_slaves_1_w_bits_last,
-    output[7:0] io_slaves_1_w_bits_strb,
+    output[15:0] io_slaves_1_w_bits_strb,
     output io_slaves_1_w_bits_user,
     output io_slaves_1_b_ready,
     input  io_slaves_1_b_valid,
@@ -24697,7 +24697,7 @@ module NastiCrossbar_1(input clk, input reset,
     output io_slaves_1_r_ready,
     input  io_slaves_1_r_valid,
     input [1:0] io_slaves_1_r_bits_resp,
-    input [63:0] io_slaves_1_r_bits_data,
+    input [127:0] io_slaves_1_r_bits_data,
     input  io_slaves_1_r_bits_last,
     input [4:0] io_slaves_1_r_bits_id,
     input  io_slaves_1_r_bits_user,
@@ -24716,9 +24716,9 @@ module NastiCrossbar_1(input clk, input reset,
     output io_slaves_0_aw_bits_user,
     input  io_slaves_0_w_ready,
     output io_slaves_0_w_valid,
-    output[63:0] io_slaves_0_w_bits_data,
+    output[127:0] io_slaves_0_w_bits_data,
     output io_slaves_0_w_bits_last,
-    output[7:0] io_slaves_0_w_bits_strb,
+    output[15:0] io_slaves_0_w_bits_strb,
     output io_slaves_0_w_bits_user,
     output io_slaves_0_b_ready,
     input  io_slaves_0_b_valid,
@@ -24741,7 +24741,7 @@ module NastiCrossbar_1(input clk, input reset,
     output io_slaves_0_r_ready,
     input  io_slaves_0_r_valid,
     input [1:0] io_slaves_0_r_bits_resp,
-    input [63:0] io_slaves_0_r_bits_data,
+    input [127:0] io_slaves_0_r_bits_data,
     input  io_slaves_0_r_bits_last,
     input [4:0] io_slaves_0_r_bits_id,
     input  io_slaves_0_r_bits_user
@@ -24756,7 +24756,7 @@ module NastiCrossbar_1(input clk, input reset,
   wire NastiRouter_io_master_ar_ready;
   wire NastiRouter_io_master_r_valid;
   wire[1:0] NastiRouter_io_master_r_bits_resp;
-  wire[63:0] NastiRouter_io_master_r_bits_data;
+  wire[127:0] NastiRouter_io_master_r_bits_data;
   wire NastiRouter_io_master_r_bits_last;
   wire[4:0] NastiRouter_io_master_r_bits_id;
   wire NastiRouter_io_master_r_bits_user;
@@ -24773,9 +24773,9 @@ module NastiCrossbar_1(input clk, input reset,
   wire[4:0] NastiRouter_io_slave_1_aw_bits_id;
   wire NastiRouter_io_slave_1_aw_bits_user;
   wire NastiRouter_io_slave_1_w_valid;
-  wire[63:0] NastiRouter_io_slave_1_w_bits_data;
+  wire[127:0] NastiRouter_io_slave_1_w_bits_data;
   wire NastiRouter_io_slave_1_w_bits_last;
-  wire[7:0] NastiRouter_io_slave_1_w_bits_strb;
+  wire[15:0] NastiRouter_io_slave_1_w_bits_strb;
   wire NastiRouter_io_slave_1_w_bits_user;
   wire NastiRouter_io_slave_1_b_ready;
   wire NastiRouter_io_slave_1_ar_valid;
@@ -24804,9 +24804,9 @@ module NastiCrossbar_1(input clk, input reset,
   wire[4:0] NastiRouter_io_slave_0_aw_bits_id;
   wire NastiRouter_io_slave_0_aw_bits_user;
   wire NastiRouter_io_slave_0_w_valid;
-  wire[63:0] NastiRouter_io_slave_0_w_bits_data;
+  wire[127:0] NastiRouter_io_slave_0_w_bits_data;
   wire NastiRouter_io_slave_0_w_bits_last;
-  wire[7:0] NastiRouter_io_slave_0_w_bits_strb;
+  wire[15:0] NastiRouter_io_slave_0_w_bits_strb;
   wire NastiRouter_io_slave_0_w_bits_user;
   wire NastiRouter_io_slave_0_b_ready;
   wire NastiRouter_io_slave_0_ar_valid;
@@ -25051,9 +25051,9 @@ module NastiRecursiveInterconnect(input clk, input reset,
     input  io_masters_0_aw_bits_user,
     output io_masters_0_w_ready,
     input  io_masters_0_w_valid,
-    input [63:0] io_masters_0_w_bits_data,
+    input [127:0] io_masters_0_w_bits_data,
     input  io_masters_0_w_bits_last,
-    input [7:0] io_masters_0_w_bits_strb,
+    input [15:0] io_masters_0_w_bits_strb,
     input  io_masters_0_w_bits_user,
     input  io_masters_0_b_ready,
     output io_masters_0_b_valid,
@@ -25076,7 +25076,7 @@ module NastiRecursiveInterconnect(input clk, input reset,
     input  io_masters_0_r_ready,
     output io_masters_0_r_valid,
     output[1:0] io_masters_0_r_bits_resp,
-    output[63:0] io_masters_0_r_bits_data,
+    output[127:0] io_masters_0_r_bits_data,
     output io_masters_0_r_bits_last,
     output[4:0] io_masters_0_r_bits_id,
     output io_masters_0_r_bits_user,
@@ -25095,9 +25095,9 @@ module NastiRecursiveInterconnect(input clk, input reset,
     output io_slaves_1_aw_bits_user,
     input  io_slaves_1_w_ready,
     output io_slaves_1_w_valid,
-    output[63:0] io_slaves_1_w_bits_data,
+    output[127:0] io_slaves_1_w_bits_data,
     output io_slaves_1_w_bits_last,
-    output[7:0] io_slaves_1_w_bits_strb,
+    output[15:0] io_slaves_1_w_bits_strb,
     output io_slaves_1_w_bits_user,
     output io_slaves_1_b_ready,
     input  io_slaves_1_b_valid,
@@ -25120,7 +25120,7 @@ module NastiRecursiveInterconnect(input clk, input reset,
     output io_slaves_1_r_ready,
     input  io_slaves_1_r_valid,
     input [1:0] io_slaves_1_r_bits_resp,
-    input [63:0] io_slaves_1_r_bits_data,
+    input [127:0] io_slaves_1_r_bits_data,
     input  io_slaves_1_r_bits_last,
     input [4:0] io_slaves_1_r_bits_id,
     input  io_slaves_1_r_bits_user,
@@ -25139,9 +25139,9 @@ module NastiRecursiveInterconnect(input clk, input reset,
     output io_slaves_0_aw_bits_user,
     input  io_slaves_0_w_ready,
     output io_slaves_0_w_valid,
-    output[63:0] io_slaves_0_w_bits_data,
+    output[127:0] io_slaves_0_w_bits_data,
     output io_slaves_0_w_bits_last,
-    output[7:0] io_slaves_0_w_bits_strb,
+    output[15:0] io_slaves_0_w_bits_strb,
     output io_slaves_0_w_bits_user,
     output io_slaves_0_b_ready,
     input  io_slaves_0_b_valid,
@@ -25164,7 +25164,7 @@ module NastiRecursiveInterconnect(input clk, input reset,
     output io_slaves_0_r_ready,
     input  io_slaves_0_r_valid,
     input [1:0] io_slaves_0_r_bits_resp,
-    input [63:0] io_slaves_0_r_bits_data,
+    input [127:0] io_slaves_0_r_bits_data,
     input  io_slaves_0_r_bits_last,
     input [4:0] io_slaves_0_r_bits_id,
     input  io_slaves_0_r_bits_user
@@ -25179,7 +25179,7 @@ module NastiRecursiveInterconnect(input clk, input reset,
   wire xbar_io_masters_0_ar_ready;
   wire xbar_io_masters_0_r_valid;
   wire[1:0] xbar_io_masters_0_r_bits_resp;
-  wire[63:0] xbar_io_masters_0_r_bits_data;
+  wire[127:0] xbar_io_masters_0_r_bits_data;
   wire xbar_io_masters_0_r_bits_last;
   wire[4:0] xbar_io_masters_0_r_bits_id;
   wire xbar_io_masters_0_r_bits_user;
@@ -25196,9 +25196,9 @@ module NastiRecursiveInterconnect(input clk, input reset,
   wire[4:0] xbar_io_slaves_1_aw_bits_id;
   wire xbar_io_slaves_1_aw_bits_user;
   wire xbar_io_slaves_1_w_valid;
-  wire[63:0] xbar_io_slaves_1_w_bits_data;
+  wire[127:0] xbar_io_slaves_1_w_bits_data;
   wire xbar_io_slaves_1_w_bits_last;
-  wire[7:0] xbar_io_slaves_1_w_bits_strb;
+  wire[15:0] xbar_io_slaves_1_w_bits_strb;
   wire xbar_io_slaves_1_w_bits_user;
   wire xbar_io_slaves_1_b_ready;
   wire xbar_io_slaves_1_ar_valid;
@@ -25227,9 +25227,9 @@ module NastiRecursiveInterconnect(input clk, input reset,
   wire[4:0] xbar_io_slaves_0_aw_bits_id;
   wire xbar_io_slaves_0_aw_bits_user;
   wire xbar_io_slaves_0_w_valid;
-  wire[63:0] xbar_io_slaves_0_w_bits_data;
+  wire[127:0] xbar_io_slaves_0_w_bits_data;
   wire xbar_io_slaves_0_w_bits_last;
-  wire[7:0] xbar_io_slaves_0_w_bits_strb;
+  wire[15:0] xbar_io_slaves_0_w_bits_strb;
   wire xbar_io_slaves_0_w_bits_user;
   wire xbar_io_slaves_0_b_ready;
   wire xbar_io_slaves_0_ar_valid;
@@ -25474,9 +25474,9 @@ module NastiRecursiveInterconnect_1(input clk, input reset,
     input  io_masters_1_aw_bits_user,
     output io_masters_1_w_ready,
     input  io_masters_1_w_valid,
-    input [63:0] io_masters_1_w_bits_data,
+    input [127:0] io_masters_1_w_bits_data,
     input  io_masters_1_w_bits_last,
-    input [7:0] io_masters_1_w_bits_strb,
+    input [15:0] io_masters_1_w_bits_strb,
     input  io_masters_1_w_bits_user,
     input  io_masters_1_b_ready,
     output io_masters_1_b_valid,
@@ -25499,7 +25499,7 @@ module NastiRecursiveInterconnect_1(input clk, input reset,
     input  io_masters_1_r_ready,
     output io_masters_1_r_valid,
     output[1:0] io_masters_1_r_bits_resp,
-    output[63:0] io_masters_1_r_bits_data,
+    output[127:0] io_masters_1_r_bits_data,
     output io_masters_1_r_bits_last,
     output[4:0] io_masters_1_r_bits_id,
     output io_masters_1_r_bits_user,
@@ -25518,9 +25518,9 @@ module NastiRecursiveInterconnect_1(input clk, input reset,
     input  io_masters_0_aw_bits_user,
     output io_masters_0_w_ready,
     input  io_masters_0_w_valid,
-    input [63:0] io_masters_0_w_bits_data,
+    input [127:0] io_masters_0_w_bits_data,
     input  io_masters_0_w_bits_last,
-    input [7:0] io_masters_0_w_bits_strb,
+    input [15:0] io_masters_0_w_bits_strb,
     input  io_masters_0_w_bits_user,
     input  io_masters_0_b_ready,
     output io_masters_0_b_valid,
@@ -25543,7 +25543,7 @@ module NastiRecursiveInterconnect_1(input clk, input reset,
     input  io_masters_0_r_ready,
     output io_masters_0_r_valid,
     output[1:0] io_masters_0_r_bits_resp,
-    output[63:0] io_masters_0_r_bits_data,
+    output[127:0] io_masters_0_r_bits_data,
     output io_masters_0_r_bits_last,
     output[4:0] io_masters_0_r_bits_id,
     output io_masters_0_r_bits_user,
@@ -25562,9 +25562,9 @@ module NastiRecursiveInterconnect_1(input clk, input reset,
     output io_slaves_3_aw_bits_user,
     input  io_slaves_3_w_ready,
     output io_slaves_3_w_valid,
-    output[63:0] io_slaves_3_w_bits_data,
+    output[127:0] io_slaves_3_w_bits_data,
     output io_slaves_3_w_bits_last,
-    output[7:0] io_slaves_3_w_bits_strb,
+    output[15:0] io_slaves_3_w_bits_strb,
     output io_slaves_3_w_bits_user,
     output io_slaves_3_b_ready,
     input  io_slaves_3_b_valid,
@@ -25587,7 +25587,7 @@ module NastiRecursiveInterconnect_1(input clk, input reset,
     output io_slaves_3_r_ready,
     input  io_slaves_3_r_valid,
     input [1:0] io_slaves_3_r_bits_resp,
-    input [63:0] io_slaves_3_r_bits_data,
+    input [127:0] io_slaves_3_r_bits_data,
     input  io_slaves_3_r_bits_last,
     input [4:0] io_slaves_3_r_bits_id,
     input  io_slaves_3_r_bits_user,
@@ -25606,9 +25606,9 @@ module NastiRecursiveInterconnect_1(input clk, input reset,
     output io_slaves_2_aw_bits_user,
     input  io_slaves_2_w_ready,
     output io_slaves_2_w_valid,
-    output[63:0] io_slaves_2_w_bits_data,
+    output[127:0] io_slaves_2_w_bits_data,
     output io_slaves_2_w_bits_last,
-    output[7:0] io_slaves_2_w_bits_strb,
+    output[15:0] io_slaves_2_w_bits_strb,
     output io_slaves_2_w_bits_user,
     output io_slaves_2_b_ready,
     input  io_slaves_2_b_valid,
@@ -25631,7 +25631,7 @@ module NastiRecursiveInterconnect_1(input clk, input reset,
     output io_slaves_2_r_ready,
     input  io_slaves_2_r_valid,
     input [1:0] io_slaves_2_r_bits_resp,
-    input [63:0] io_slaves_2_r_bits_data,
+    input [127:0] io_slaves_2_r_bits_data,
     input  io_slaves_2_r_bits_last,
     input [4:0] io_slaves_2_r_bits_id,
     input  io_slaves_2_r_bits_user,
@@ -25650,9 +25650,9 @@ module NastiRecursiveInterconnect_1(input clk, input reset,
     output io_slaves_1_aw_bits_user,
     input  io_slaves_1_w_ready,
     output io_slaves_1_w_valid,
-    output[63:0] io_slaves_1_w_bits_data,
+    output[127:0] io_slaves_1_w_bits_data,
     output io_slaves_1_w_bits_last,
-    output[7:0] io_slaves_1_w_bits_strb,
+    output[15:0] io_slaves_1_w_bits_strb,
     output io_slaves_1_w_bits_user,
     output io_slaves_1_b_ready,
     input  io_slaves_1_b_valid,
@@ -25675,7 +25675,7 @@ module NastiRecursiveInterconnect_1(input clk, input reset,
     output io_slaves_1_r_ready,
     input  io_slaves_1_r_valid,
     input [1:0] io_slaves_1_r_bits_resp,
-    input [63:0] io_slaves_1_r_bits_data,
+    input [127:0] io_slaves_1_r_bits_data,
     input  io_slaves_1_r_bits_last,
     input [4:0] io_slaves_1_r_bits_id,
     input  io_slaves_1_r_bits_user,
@@ -25694,9 +25694,9 @@ module NastiRecursiveInterconnect_1(input clk, input reset,
     output io_slaves_0_aw_bits_user,
     input  io_slaves_0_w_ready,
     output io_slaves_0_w_valid,
-    output[63:0] io_slaves_0_w_bits_data,
+    output[127:0] io_slaves_0_w_bits_data,
     output io_slaves_0_w_bits_last,
-    output[7:0] io_slaves_0_w_bits_strb,
+    output[15:0] io_slaves_0_w_bits_strb,
     output io_slaves_0_w_bits_user,
     output io_slaves_0_b_ready,
     input  io_slaves_0_b_valid,
@@ -25719,7 +25719,7 @@ module NastiRecursiveInterconnect_1(input clk, input reset,
     output io_slaves_0_r_ready,
     input  io_slaves_0_r_valid,
     input [1:0] io_slaves_0_r_bits_resp,
-    input [63:0] io_slaves_0_r_bits_data,
+    input [127:0] io_slaves_0_r_bits_data,
     input  io_slaves_0_r_bits_last,
     input [4:0] io_slaves_0_r_bits_id,
     input  io_slaves_0_r_bits_user
@@ -25734,7 +25734,7 @@ module NastiRecursiveInterconnect_1(input clk, input reset,
   wire NastiMultiChannelRouter_io_master_ar_ready;
   wire NastiMultiChannelRouter_io_master_r_valid;
   wire[1:0] NastiMultiChannelRouter_io_master_r_bits_resp;
-  wire[63:0] NastiMultiChannelRouter_io_master_r_bits_data;
+  wire[127:0] NastiMultiChannelRouter_io_master_r_bits_data;
   wire NastiMultiChannelRouter_io_master_r_bits_last;
   wire[4:0] NastiMultiChannelRouter_io_master_r_bits_id;
   wire NastiMultiChannelRouter_io_master_r_bits_user;
@@ -25751,9 +25751,9 @@ module NastiRecursiveInterconnect_1(input clk, input reset,
   wire[4:0] NastiMultiChannelRouter_io_slaves_0_aw_bits_id;
   wire NastiMultiChannelRouter_io_slaves_0_aw_bits_user;
   wire NastiMultiChannelRouter_io_slaves_0_w_valid;
-  wire[63:0] NastiMultiChannelRouter_io_slaves_0_w_bits_data;
+  wire[127:0] NastiMultiChannelRouter_io_slaves_0_w_bits_data;
   wire NastiMultiChannelRouter_io_slaves_0_w_bits_last;
-  wire[7:0] NastiMultiChannelRouter_io_slaves_0_w_bits_strb;
+  wire[15:0] NastiMultiChannelRouter_io_slaves_0_w_bits_strb;
   wire NastiMultiChannelRouter_io_slaves_0_w_bits_user;
   wire NastiMultiChannelRouter_io_slaves_0_b_ready;
   wire NastiMultiChannelRouter_io_slaves_0_ar_valid;
@@ -25778,7 +25778,7 @@ module NastiRecursiveInterconnect_1(input clk, input reset,
   wire xbar_io_masters_1_ar_ready;
   wire xbar_io_masters_1_r_valid;
   wire[1:0] xbar_io_masters_1_r_bits_resp;
-  wire[63:0] xbar_io_masters_1_r_bits_data;
+  wire[127:0] xbar_io_masters_1_r_bits_data;
   wire xbar_io_masters_1_r_bits_last;
   wire[4:0] xbar_io_masters_1_r_bits_id;
   wire xbar_io_masters_1_r_bits_user;
@@ -25791,7 +25791,7 @@ module NastiRecursiveInterconnect_1(input clk, input reset,
   wire xbar_io_masters_0_ar_ready;
   wire xbar_io_masters_0_r_valid;
   wire[1:0] xbar_io_masters_0_r_bits_resp;
-  wire[63:0] xbar_io_masters_0_r_bits_data;
+  wire[127:0] xbar_io_masters_0_r_bits_data;
   wire xbar_io_masters_0_r_bits_last;
   wire[4:0] xbar_io_masters_0_r_bits_id;
   wire xbar_io_masters_0_r_bits_user;
@@ -25808,9 +25808,9 @@ module NastiRecursiveInterconnect_1(input clk, input reset,
   wire[4:0] xbar_io_slaves_2_aw_bits_id;
   wire xbar_io_slaves_2_aw_bits_user;
   wire xbar_io_slaves_2_w_valid;
-  wire[63:0] xbar_io_slaves_2_w_bits_data;
+  wire[127:0] xbar_io_slaves_2_w_bits_data;
   wire xbar_io_slaves_2_w_bits_last;
-  wire[7:0] xbar_io_slaves_2_w_bits_strb;
+  wire[15:0] xbar_io_slaves_2_w_bits_strb;
   wire xbar_io_slaves_2_w_bits_user;
   wire xbar_io_slaves_2_b_ready;
   wire xbar_io_slaves_2_ar_valid;
@@ -25839,9 +25839,9 @@ module NastiRecursiveInterconnect_1(input clk, input reset,
   wire[4:0] xbar_io_slaves_1_aw_bits_id;
   wire xbar_io_slaves_1_aw_bits_user;
   wire xbar_io_slaves_1_w_valid;
-  wire[63:0] xbar_io_slaves_1_w_bits_data;
+  wire[127:0] xbar_io_slaves_1_w_bits_data;
   wire xbar_io_slaves_1_w_bits_last;
-  wire[7:0] xbar_io_slaves_1_w_bits_strb;
+  wire[15:0] xbar_io_slaves_1_w_bits_strb;
   wire xbar_io_slaves_1_w_bits_user;
   wire xbar_io_slaves_1_b_ready;
   wire xbar_io_slaves_1_ar_valid;
@@ -25870,9 +25870,9 @@ module NastiRecursiveInterconnect_1(input clk, input reset,
   wire[4:0] xbar_io_slaves_0_aw_bits_id;
   wire xbar_io_slaves_0_aw_bits_user;
   wire xbar_io_slaves_0_w_valid;
-  wire[63:0] xbar_io_slaves_0_w_bits_data;
+  wire[127:0] xbar_io_slaves_0_w_bits_data;
   wire xbar_io_slaves_0_w_bits_last;
-  wire[7:0] xbar_io_slaves_0_w_bits_strb;
+  wire[15:0] xbar_io_slaves_0_w_bits_strb;
   wire xbar_io_slaves_0_w_bits_user;
   wire xbar_io_slaves_0_b_ready;
   wire xbar_io_slaves_0_ar_valid;
@@ -25897,7 +25897,7 @@ module NastiRecursiveInterconnect_1(input clk, input reset,
   wire NastiRecursiveInterconnect_io_masters_0_ar_ready;
   wire NastiRecursiveInterconnect_io_masters_0_r_valid;
   wire[1:0] NastiRecursiveInterconnect_io_masters_0_r_bits_resp;
-  wire[63:0] NastiRecursiveInterconnect_io_masters_0_r_bits_data;
+  wire[127:0] NastiRecursiveInterconnect_io_masters_0_r_bits_data;
   wire NastiRecursiveInterconnect_io_masters_0_r_bits_last;
   wire[4:0] NastiRecursiveInterconnect_io_masters_0_r_bits_id;
   wire NastiRecursiveInterconnect_io_masters_0_r_bits_user;
@@ -25914,9 +25914,9 @@ module NastiRecursiveInterconnect_1(input clk, input reset,
   wire[4:0] NastiRecursiveInterconnect_io_slaves_1_aw_bits_id;
   wire NastiRecursiveInterconnect_io_slaves_1_aw_bits_user;
   wire NastiRecursiveInterconnect_io_slaves_1_w_valid;
-  wire[63:0] NastiRecursiveInterconnect_io_slaves_1_w_bits_data;
+  wire[127:0] NastiRecursiveInterconnect_io_slaves_1_w_bits_data;
   wire NastiRecursiveInterconnect_io_slaves_1_w_bits_last;
-  wire[7:0] NastiRecursiveInterconnect_io_slaves_1_w_bits_strb;
+  wire[15:0] NastiRecursiveInterconnect_io_slaves_1_w_bits_strb;
   wire NastiRecursiveInterconnect_io_slaves_1_w_bits_user;
   wire NastiRecursiveInterconnect_io_slaves_1_b_ready;
   wire NastiRecursiveInterconnect_io_slaves_1_ar_valid;
@@ -25945,9 +25945,9 @@ module NastiRecursiveInterconnect_1(input clk, input reset,
   wire[4:0] NastiRecursiveInterconnect_io_slaves_0_aw_bits_id;
   wire NastiRecursiveInterconnect_io_slaves_0_aw_bits_user;
   wire NastiRecursiveInterconnect_io_slaves_0_w_valid;
-  wire[63:0] NastiRecursiveInterconnect_io_slaves_0_w_bits_data;
+  wire[127:0] NastiRecursiveInterconnect_io_slaves_0_w_bits_data;
   wire NastiRecursiveInterconnect_io_slaves_0_w_bits_last;
-  wire[7:0] NastiRecursiveInterconnect_io_slaves_0_w_bits_strb;
+  wire[15:0] NastiRecursiveInterconnect_io_slaves_0_w_bits_strb;
   wire NastiRecursiveInterconnect_io_slaves_0_w_bits_user;
   wire NastiRecursiveInterconnect_io_slaves_0_b_ready;
   wire NastiRecursiveInterconnect_io_slaves_0_ar_valid;
@@ -27673,7 +27673,7 @@ module ClientTileLinkIOUnwrapper(input clk, input reset,
   );
 endmodule
 
-module TileLinkIONarrower(input clk, input reset,
+module TileLinkIONarrower(
     output io_in_acquire_ready,
     input  io_in_acquire_valid,
     input [25:0] io_in_acquire_bits_addr_block,
@@ -27695,826 +27695,51 @@ module TileLinkIONarrower(input clk, input reset,
     output io_out_acquire_valid,
     output[25:0] io_out_acquire_bits_addr_block,
     output[3:0] io_out_acquire_bits_client_xact_id,
-    output[2:0] io_out_acquire_bits_addr_beat,
+    output[1:0] io_out_acquire_bits_addr_beat,
     output io_out_acquire_bits_is_builtin_type,
     output[2:0] io_out_acquire_bits_a_type,
-    output[11:0] io_out_acquire_bits_union,
-    output[63:0] io_out_acquire_bits_data,
+    output[16:0] io_out_acquire_bits_union,
+    output[127:0] io_out_acquire_bits_data,
     output io_out_grant_ready,
     input  io_out_grant_valid,
-    input [2:0] io_out_grant_bits_addr_beat,
+    input [1:0] io_out_grant_bits_addr_beat,
     input [3:0] io_out_grant_bits_client_xact_id,
     input  io_out_grant_bits_manager_xact_id,
     input  io_out_grant_bits_is_builtin_type,
     input [3:0] io_out_grant_bits_g_type,
-    input [63:0] io_out_grant_bits_data
+    input [127:0] io_out_grant_bits_data
 );
 
-  reg[0:0] T0;
-  wire T1;
-  wire T2;
-  wire T3;
-  wire T4;
-  wire T5;
-  wire T6;
-  wire T7;
-  wire T8;
-  wire[2:0] T9;
-  wire T10;
-  wire T11;
-  wire T12;
-  wire T13;
-  wire T14;
-  wire T15;
-  wire T16;
-  wire T17;
-  wire T18;
-  reg[0:0] T19;
-  wire T20;
-  wire T21;
-  wire T22;
-  wire[1:0] T23;
-  wire[1:0] T24;
-  wire T25;
-  wire[1:0] T26;
-  wire T27;
-  wire[7:0] T28;
-  wire[15:0] T29;
-  wire[15:0] T30;
-  wire[15:0] T31;
-  wire T32;
-  wire T33;
-  wire T34;
-  wire T35;
-  wire T36;
-  wire[15:0] T37;
-  wire[15:0] T38;
-  wire[7:0] T39;
-  wire[7:0] T302;
-  wire T40;
-  wire[1:0] T41;
-  wire T42;
-  wire[3:0] T43;
-  wire[7:0] T44;
-  wire[7:0] T303;
-  wire T45;
-  wire T46;
-  wire T47;
-  wire T48;
-  wire[7:0] T49;
-  wire[15:0] T50;
-  wire[15:0] T51;
-  wire[15:0] T52;
-  wire T53;
-  wire T54;
-  wire T55;
-  wire T56;
-  wire T57;
-  wire[15:0] T58;
-  wire[15:0] T59;
-  wire[7:0] T60;
-  wire[7:0] T304;
-  wire T61;
-  wire[1:0] T62;
-  wire T63;
-  wire[3:0] T64;
-  wire[7:0] T65;
-  wire[7:0] T305;
-  wire T66;
-  wire T67;
-  wire T68;
-  wire[1:0] T306;
-  wire T69;
-  wire T70;
-  wire T71;
-  wire T72;
-  wire T73;
-  wire T74;
-  wire T75;
-  wire T76;
-  wire T77;
-  wire[31:0] T78;
-  wire[5:0] T79;
-  wire[3:0] T80;
-  wire T81;
-  wire T82;
-  wire T83;
-  wire T84;
-  wire T85;
-  wire T86;
-  wire T87;
-  wire T88;
-  reg  R89;
-  wire T307;
-  wire T90;
-  wire T91;
-  wire T92;
-  wire T93;
-  reg  R94;
-  wire T308;
-  wire T95;
-  wire T96;
-  wire T97;
-  wire T98;
-  wire T99;
-  wire T100;
-  wire[63:0] T309;
-  wire[127:0] T101;
-  wire[127:0] T102;
-  wire[127:0] T103;
-  wire[127:0] T104;
-  wire[127:0] T310;
-  wire[63:0] T105;
-  wire[127:0] T311;
-  wire[63:0] T106;
-  wire[63:0] T107;
-  wire[63:0] T108;
-  wire[63:0] T109;
-  wire T110;
-  wire[63:0] T111;
-  wire[63:0] T112;
-  wire T113;
-  wire[127:0] T312;
-  wire[63:0] T114;
-  wire T115;
-  wire[127:0] T313;
-  wire[63:0] T116;
-  wire[63:0] T117;
-  reg [127:0] R118;
-  wire[127:0] T119;
-  wire[127:0] T120;
-  wire T121;
-  wire T122;
-  wire T123;
-  wire[127:0] T314;
-  wire[63:0] T124;
-  wire T125;
-  reg  R126;
-  wire T315;
-  wire T127;
-  wire T128;
-  wire T129;
-  wire T130;
-  reg  R131;
-  wire T316;
-  wire T132;
-  wire T133;
-  wire[11:0] T317;
-  wire[16:0] T134;
-  wire[16:0] T135;
-  wire[16:0] T136;
-  wire[16:0] T137;
-  wire[16:0] T318;
-  wire[11:0] T138;
-  wire[11:0] T139;
-  wire[5:0] T140;
-  wire T141;
-  wire[5:0] T142;
-  wire[2:0] T143;
-  wire[2:0] T144;
-  wire[31:0] T145;
-  wire[5:0] T146;
-  wire[3:0] T147;
-  wire[16:0] T319;
-  wire[11:0] T148;
-  wire[11:0] T320;
-  wire[8:0] T149;
-  wire[7:0] T150;
-  wire[7:0] T151;
-  wire T152;
-  wire[7:0] T153;
-  wire T154;
-  wire[16:0] T321;
-  wire[11:0] T155;
-  wire[11:0] T322;
-  wire[8:0] T156;
-  wire[5:0] T157;
-  wire T158;
-  wire[16:0] T323;
-  wire[11:0] T159;
-  wire[11:0] T324;
-  wire[8:0] T160;
-  wire T161;
-  wire[7:0] T162;
-  wire[7:0] T163;
-  reg [15:0] R164;
-  wire[15:0] T165;
-  wire[15:0] T166;
-  wire[15:0] T167;
-  wire[15:0] T168;
-  wire[15:0] T169;
-  wire T170;
-  wire T171;
-  wire T172;
-  wire T173;
-  wire T174;
-  wire[15:0] T175;
-  wire[15:0] T176;
-  wire[7:0] T177;
-  wire[7:0] T325;
-  wire T178;
-  wire[1:0] T179;
-  wire T180;
-  wire[3:0] T181;
-  wire[7:0] T182;
-  wire[7:0] T326;
-  wire T183;
-  wire T184;
-  wire T185;
-  wire[15:0] T327;
-  wire[7:0] T186;
-  wire[2:0] T187;
-  wire[2:0] T188;
-  wire[2:0] T189;
-  wire[2:0] T190;
-  wire[2:0] T191;
-  wire[2:0] T192;
-  wire[2:0] T193;
-  wire[2:0] T194;
-  wire T195;
-  wire T196;
-  wire T197;
-  wire T198;
-  wire T199;
-  wire T200;
-  wire T201;
-  wire T202;
-  wire[2:0] T203;
-  wire[2:0] T204;
-  wire[2:0] T205;
-  wire[2:0] T206;
-  wire[2:0] T328;
-  wire[2:0] T207;
-  wire[2:0] T208;
-  wire[31:0] T209;
-  wire[5:0] T210;
-  wire[3:0] T211;
-  wire[2:0] T212;
-  wire[2:0] T213;
-  wire T329;
-  wire T330;
-  wire[2:0] T215;
-  wire[2:0] T216;
-  wire[2:0] T217;
-  reg [1:0] R218;
-  wire[1:0] T219;
-  wire[3:0] T220;
-  wire[3:0] T221;
-  wire[3:0] T222;
-  wire[3:0] T223;
-  wire[3:0] T224;
-  wire[3:0] T225;
-  wire[3:0] T226;
-  wire[3:0] T227;
-  reg [3:0] R228;
-  wire[3:0] T229;
-  wire[25:0] T230;
-  wire[25:0] T231;
-  wire[25:0] T232;
-  wire[25:0] T233;
-  wire[25:0] T234;
-  wire[25:0] T235;
-  wire[25:0] T236;
-  wire[25:0] T237;
-  reg [25:0] R238;
-  wire[25:0] T239;
-  wire T240;
-  wire T241;
-  wire T242;
-  wire T243;
-  wire T244;
-  wire T245;
-  wire T246;
-  wire[127:0] T247;
-  wire[127:0] T248;
-  wire[127:0] T331;
-  wire[127:0] T249;
-  wire[127:0] T332;
-  wire[190:0] T250;
-  wire[6:0] T251;
-  wire[127:0] T252;
-  wire[127:0] T253;
-  wire[127:0] T254;
-  reg [63:0] R255;
-  wire[63:0] T256;
-  wire T257;
-  wire T258;
-  wire[1:0] T259;
-  wire T260;
-  reg [63:0] R261;
-  wire[63:0] T262;
-  wire T263;
-  wire T264;
-  wire[3:0] T265;
-  wire[3:0] T266;
-  wire[3:0] T267;
-  wire[3:0] T268;
-  wire T269;
-  wire T270;
-  wire T271;
-  wire T272;
-  wire T273;
-  wire T274;
-  wire T275;
-  wire T276;
-  reg  R277;
-  wire T278;
-  wire[3:0] T279;
-  wire[3:0] T280;
-  wire[3:0] T281;
-  wire[3:0] T282;
-  reg [3:0] R283;
-  wire[3:0] T284;
-  wire[1:0] T333;
-  wire[2:0] T285;
-  wire[2:0] T286;
-  wire[2:0] T334;
-  wire[1:0] T287;
-  wire[1:0] T335;
-  wire[2:0] T336;
-  wire[1:0] T288;
-  reg [1:0] R289;
-  wire[1:0] T337;
-  wire[1:0] T290;
-  wire[1:0] T291;
-  wire T292;
-  wire T293;
-  wire T294;
-  wire T295;
-  wire T296;
-  wire T297;
-  wire T298;
-  wire T299;
-  wire T300;
-  wire T301;
-  wire ReorderQueue_io_enq_ready;
-  wire ReorderQueue_io_deq_data;
 
-`ifndef SYNTHESIS
-// synthesis translate_off
-  integer initvar;
-  initial begin
-    #0.002;
-    T0 = 1'b0;
-    T19 = 1'b0;
-    R89 = {1{$random}};
-    R94 = {1{$random}};
-    R118 = {4{$random}};
-    R126 = {1{$random}};
-    R131 = {1{$random}};
-    R164 = {1{$random}};
-    R218 = {1{$random}};
-    R228 = {1{$random}};
-    R238 = {1{$random}};
-    R255 = {2{$random}};
-    R261 = {2{$random}};
-    R277 = {1{$random}};
-    R283 = {1{$random}};
-    R289 = {1{$random}};
-  end
-// synthesis translate_on
-`endif
 
-  assign T1 = T2 | reset;
-  assign T2 = T15 | T3;
-  assign T3 = T14 ? 1'h1 : T4;
-  assign T4 = T13 ? 1'h1 : T5;
-  assign T5 = T12 ? 1'h1 : T6;
-  assign T6 = T11 ? 1'h1 : T7;
-  assign T7 = T10 ? 1'h1 : T8;
-  assign T8 = T9 == 3'h3;
-  assign T9 = io_in_acquire_bits_union[4'h8:3'h6];
-  assign T10 = T9 == 3'h2;
-  assign T11 = T9 == 3'h5;
-  assign T12 = T9 == 3'h1;
-  assign T13 = T9 == 3'h4;
-  assign T14 = T9 == 3'h0;
-  assign T15 = T18 | T16;
-  assign T16 = T17 ^ 1'h1;
-  assign T17 = io_in_acquire_bits_a_type == 3'h0;
-  assign T18 = io_in_acquire_valid ^ 1'h1;
-  assign T20 = T21 | reset;
-  assign T21 = T70 | T22;
-  assign T22 = T23 <= 2'h1;
-  assign T23 = T306 + T24;
-  assign T24 = {1'h0, T25};
-  assign T25 = T26[1'h1:1'h1];
-  assign T26 = {T48, T27};
-  assign T27 = T28 != 8'h0;
-  assign T28 = T29[3'h7:1'h0];
-  assign T29 = T46 ? T37 : T30;
-  assign T30 = T32 ? T31 : 16'h0;
-  assign T31 = io_in_acquire_bits_union[5'h10:1'h1];
-  assign T32 = T35 | T33;
-  assign T33 = io_in_acquire_bits_is_builtin_type & T34;
-  assign T34 = io_in_acquire_bits_a_type == 3'h2;
-  assign T35 = io_in_acquire_bits_is_builtin_type & T36;
-  assign T36 = io_in_acquire_bits_a_type == 3'h3;
-  assign T37 = T38;
-  assign T38 = {T44, T39};
-  assign T39 = 8'h0 - T302;
-  assign T302 = {7'h0, T40};
-  assign T40 = T41[1'h0:1'h0];
-  assign T41 = 1'h1 << T42;
-  assign T42 = T43[2'h3:2'h3];
-  assign T43 = io_in_acquire_bits_union[4'hc:4'h9];
-  assign T44 = 8'h0 - T303;
-  assign T303 = {7'h0, T45};
-  assign T45 = T41[1'h1:1'h1];
-  assign T46 = io_in_acquire_bits_is_builtin_type & T47;
-  assign T47 = io_in_acquire_bits_a_type == 3'h4;
-  assign T48 = T49 != 8'h0;
-  assign T49 = T50[4'hf:4'h8];
-  assign T50 = T67 ? T58 : T51;
-  assign T51 = T53 ? T52 : 16'h0;
-  assign T52 = io_in_acquire_bits_union[5'h10:1'h1];
-  assign T53 = T56 | T54;
-  assign T54 = io_in_acquire_bits_is_builtin_type & T55;
-  assign T55 = io_in_acquire_bits_a_type == 3'h2;
-  assign T56 = io_in_acquire_bits_is_builtin_type & T57;
-  assign T57 = io_in_acquire_bits_a_type == 3'h3;
-  assign T58 = T59;
-  assign T59 = {T65, T60};
-  assign T60 = 8'h0 - T304;
-  assign T304 = {7'h0, T61};
-  assign T61 = T62[1'h0:1'h0];
-  assign T62 = 1'h1 << T63;
-  assign T63 = T64[2'h3:2'h3];
-  assign T64 = io_in_acquire_bits_union[4'hc:4'h9];
-  assign T65 = 8'h0 - T305;
-  assign T305 = {7'h0, T66};
-  assign T66 = T62[1'h1:1'h1];
-  assign T67 = io_in_acquire_bits_is_builtin_type & T68;
-  assign T68 = io_in_acquire_bits_a_type == 3'h4;
-  assign T306 = {1'h0, T69};
-  assign T69 = T26[1'h0:1'h0];
-  assign T70 = T73 | T71;
-  assign T71 = T72 ^ 1'h1;
-  assign T72 = io_in_acquire_bits_a_type == 3'h2;
-  assign T73 = io_in_acquire_valid ^ 1'h1;
-  assign T74 = T76 & T75;
-  assign T75 = io_out_grant_bits_g_type == 4'h4;
-  assign T76 = io_out_grant_ready & io_out_grant_valid;
-  assign T77 = T78[2'h3:2'h3];
-  assign T78 = {io_in_acquire_bits_addr_block, T79};
-  assign T79 = {io_in_acquire_bits_addr_beat, T80};
-  assign T80 = io_in_acquire_bits_union[4'hc:4'h9];
-  assign T81 = T82 & io_out_acquire_ready;
-  assign T82 = T17 & io_in_acquire_valid;
-  assign io_out_grant_ready = T83;
-  assign T83 = T88 & T84;
-  assign T84 = T85 | io_in_grant_ready;
-  assign T85 = io_out_grant_bits_is_builtin_type ? T87 : T86;
-  assign T86 = 4'h0 == io_out_grant_bits_g_type;
-  assign T87 = 4'h5 == io_out_grant_bits_g_type;
-  assign T88 = R89 ^ 1'h1;
-  assign T307 = reset ? 1'h0 : T90;
-  assign T90 = T100 ? 1'h0 : T91;
-  assign T91 = T92 ? 1'h1 : R89;
-  assign T92 = T97 & T93;
-  assign T93 = R94 == 1'h1;
-  assign T308 = reset ? 1'h0 : T95;
-  assign T95 = T97 ? T96 : R94;
-  assign T96 = R94 + 1'h1;
-  assign T97 = T99 & T98;
-  assign T98 = R89 ^ 1'h1;
-  assign T99 = io_out_grant_valid & T85;
-  assign T100 = io_in_grant_ready & R89;
-  assign io_out_acquire_bits_data = T309;
-  assign T309 = T101[6'h3f:1'h0];
-  assign T101 = R126 ? T313 : T102;
-  assign T102 = T115 ? T312 : T103;
-  assign T103 = T72 ? T311 : T104;
-  assign T104 = T17 ? T310 : io_in_acquire_bits_data;
-  assign T310 = {64'h0, T105};
-  assign T105 = 64'h0;
-  assign T311 = {64'h0, T106};
-  assign T106 = T107;
-  assign T107 = T111 | T108;
-  assign T108 = T110 ? T109 : 64'h0;
-  assign T109 = io_in_acquire_bits_data[7'h7f:7'h40];
-  assign T110 = T26[1'h1:1'h1];
-  assign T111 = T113 ? T112 : 64'h0;
-  assign T112 = io_in_acquire_bits_data[6'h3f:1'h0];
-  assign T113 = T26[1'h0:1'h0];
-  assign T312 = {64'h0, T114};
-  assign T114 = 64'h0;
-  assign T115 = io_in_acquire_bits_a_type == 3'h1;
-  assign T313 = {64'h0, T116};
-  assign T116 = T117;
-  assign T117 = R118[6'h3f:1'h0];
-  assign T119 = T125 ? T314 : T120;
-  assign T120 = T121 ? io_in_acquire_bits_data : R118;
-  assign T121 = T123 & T122;
-  assign T122 = io_in_acquire_bits_a_type == 3'h3;
-  assign T123 = io_in_acquire_ready & io_in_acquire_valid;
-  assign T314 = {64'h0, T124};
-  assign T124 = R118 >> 7'h40;
-  assign T125 = R126 & io_out_acquire_ready;
-  assign T315 = reset ? 1'h0 : T127;
-  assign T127 = T129 ? 1'h0 : T128;
-  assign T128 = T121 ? 1'h1 : R126;
-  assign T129 = T125 & T130;
-  assign T130 = R131 == 1'h1;
-  assign T316 = reset ? 1'h0 : T132;
-  assign T132 = T125 ? T133 : R131;
-  assign T133 = R131 + 1'h1;
-  assign io_out_acquire_bits_union = T317;
-  assign T317 = T134[4'hb:1'h0];
-  assign T134 = R126 ? T323 : T135;
-  assign T135 = T115 ? T321 : T136;
-  assign T136 = T72 ? T319 : T137;
-  assign T137 = T17 ? T318 : io_in_acquire_bits_union;
-  assign T318 = {5'h0, T138};
-  assign T138 = T139;
-  assign T139 = {T142, T140};
-  assign T140 = {5'h0, T141};
-  assign T141 = io_in_acquire_bits_union[1'h0:1'h0];
-  assign T142 = {T144, T143};
-  assign T143 = io_in_acquire_bits_union[4'h8:3'h6];
-  assign T144 = T145[2'h2:1'h0];
-  assign T145 = {io_in_acquire_bits_addr_block, T146};
-  assign T146 = {io_in_acquire_bits_addr_beat, T147};
-  assign T147 = io_in_acquire_bits_union[4'hc:4'h9];
-  assign T319 = {5'h0, T148};
-  assign T148 = T320;
-  assign T320 = {3'h0, T149};
-  assign T149 = {T150, 1'h1};
-  assign T150 = T153 | T151;
-  assign T151 = T152 ? T49 : 8'h0;
-  assign T152 = T26[1'h1:1'h1];
-  assign T153 = T154 ? T28 : 8'h0;
-  assign T154 = T26[1'h0:1'h0];
-  assign T321 = {5'h0, T155};
-  assign T155 = T322;
-  assign T322 = {3'h0, T156};
-  assign T156 = {3'h7, T157};
-  assign T157 = {5'h0, T158};
-  assign T158 = io_in_acquire_bits_union[1'h0:1'h0];
-  assign T323 = {5'h0, T159};
-  assign T159 = T324;
-  assign T324 = {3'h0, T160};
-  assign T160 = {T163, T161};
-  assign T161 = T163 != T162;
-  assign T162 = 8'hff;
-  assign T163 = R164[3'h7:1'h0];
-  assign T165 = T125 ? T327 : T166;
-  assign T166 = T121 ? T167 : R164;
-  assign T167 = T184 ? T175 : T168;
-  assign T168 = T170 ? T169 : 16'h0;
-  assign T169 = io_in_acquire_bits_union[5'h10:1'h1];
-  assign T170 = T173 | T171;
-  assign T171 = io_in_acquire_bits_is_builtin_type & T172;
-  assign T172 = io_in_acquire_bits_a_type == 3'h2;
-  assign T173 = io_in_acquire_bits_is_builtin_type & T174;
-  assign T174 = io_in_acquire_bits_a_type == 3'h3;
-  assign T175 = T176;
-  assign T176 = {T182, T177};
-  assign T177 = 8'h0 - T325;
-  assign T325 = {7'h0, T178};
-  assign T178 = T179[1'h0:1'h0];
-  assign T179 = 1'h1 << T180;
-  assign T180 = T181[2'h3:2'h3];
-  assign T181 = io_in_acquire_bits_union[4'hc:4'h9];
-  assign T182 = 8'h0 - T326;
-  assign T326 = {7'h0, T183};
-  assign T183 = T179[1'h1:1'h1];
-  assign T184 = io_in_acquire_bits_is_builtin_type & T185;
-  assign T185 = io_in_acquire_bits_a_type == 3'h4;
-  assign T327 = {8'h0, T186};
-  assign T186 = R164 >> 4'h8;
-  assign io_out_acquire_bits_a_type = T187;
-  assign T187 = R126 ? T194 : T188;
-  assign T188 = T115 ? T193 : T189;
-  assign T189 = T72 ? T192 : T190;
-  assign T190 = T17 ? T191 : io_in_acquire_bits_a_type;
-  assign T191 = 3'h0;
-  assign T192 = 3'h2;
-  assign T193 = 3'h1;
-  assign T194 = 3'h3;
-  assign io_out_acquire_bits_is_builtin_type = T195;
-  assign T195 = R126 ? T202 : T196;
-  assign T196 = T115 ? T201 : T197;
-  assign T197 = T72 ? T200 : T198;
-  assign T198 = T17 ? T199 : io_in_acquire_bits_is_builtin_type;
-  assign T199 = 1'h1;
-  assign T200 = 1'h1;
-  assign T201 = 1'h1;
-  assign T202 = 1'h1;
-  assign io_out_acquire_bits_addr_beat = T203;
-  assign T203 = R126 ? T216 : T204;
-  assign T204 = T115 ? T215 : T205;
-  assign T205 = T72 ? T212 : T206;
-  assign T206 = T17 ? T207 : T328;
-  assign T328 = {1'h0, io_in_acquire_bits_addr_beat};
-  assign T207 = T208;
-  assign T208 = T209[3'h5:2'h3];
-  assign T209 = {io_in_acquire_bits_addr_block, T210};
-  assign T210 = {io_in_acquire_bits_addr_beat, T211};
-  assign T211 = io_in_acquire_bits_union[4'hc:4'h9];
-  assign T212 = T213;
-  assign T213 = {io_in_acquire_bits_addr_beat, T329};
-  assign T329 = T330 == 1'h0;
-  assign T330 = T26[1'h0:1'h0];
-  assign T215 = 3'h0;
-  assign T216 = T217;
-  assign T217 = {R218, R131};
-  assign T219 = T121 ? io_in_acquire_bits_addr_beat : R218;
-  assign io_out_acquire_bits_client_xact_id = T220;
-  assign T220 = R126 ? T227 : T221;
-  assign T221 = T115 ? T226 : T222;
-  assign T222 = T72 ? T225 : T223;
-  assign T223 = T17 ? T224 : io_in_acquire_bits_client_xact_id;
-  assign T224 = io_in_acquire_bits_client_xact_id;
-  assign T225 = io_in_acquire_bits_client_xact_id;
-  assign T226 = io_in_acquire_bits_client_xact_id;
-  assign T227 = R228;
-  assign T229 = T121 ? io_in_acquire_bits_client_xact_id : R228;
-  assign io_out_acquire_bits_addr_block = T230;
-  assign T230 = R126 ? T237 : T231;
-  assign T231 = T115 ? T236 : T232;
-  assign T232 = T72 ? T235 : T233;
-  assign T233 = T17 ? T234 : io_in_acquire_bits_addr_block;
-  assign T234 = io_in_acquire_bits_addr_block;
-  assign T235 = io_in_acquire_bits_addr_block;
-  assign T236 = io_in_acquire_bits_addr_block;
-  assign T237 = R238;
-  assign T239 = T121 ? io_in_acquire_bits_addr_block : R238;
-  assign io_out_acquire_valid = T240;
-  assign T240 = T242 | T241;
-  assign T241 = T82 & ReorderQueue_io_enq_ready;
-  assign T242 = R126 | T243;
-  assign T243 = T245 & T244;
-  assign T244 = T17 ^ 1'h1;
-  assign T245 = io_in_acquire_valid & T246;
-  assign T246 = T122 ^ 1'h1;
-  assign io_in_grant_bits_data = T247;
-  assign T247 = R89 ? T252 : T248;
-  assign T248 = T75 ? T249 : T331;
-  assign T331 = {64'h0, io_out_grant_bits_data};
-  assign T249 = T332;
-  assign T332 = T250[7'h7f:1'h0];
-  assign T250 = io_out_grant_bits_data << T251;
-  assign T251 = {ReorderQueue_io_deq_data, 6'h0};
-  assign T252 = T253;
-  assign T253 = T254;
-  assign T254 = {R261, R255};
-  assign T256 = T257 ? io_out_grant_bits_data : R255;
-  assign T257 = T97 & T258;
-  assign T258 = T259[1'h0:1'h0];
-  assign T259 = 1'h1 << T260;
-  assign T260 = R94;
-  assign T262 = T263 ? io_out_grant_bits_data : R261;
-  assign T263 = T97 & T264;
-  assign T264 = T259[1'h1:1'h1];
-  assign io_in_grant_bits_g_type = T265;
-  assign T265 = R89 ? T268 : T266;
-  assign T266 = T75 ? T267 : io_out_grant_bits_g_type;
-  assign T267 = 4'h4;
-  assign T268 = 4'h5;
-  assign io_in_grant_bits_is_builtin_type = T269;
-  assign T269 = R89 ? T272 : T270;
-  assign T270 = T75 ? T271 : io_out_grant_bits_is_builtin_type;
-  assign T271 = 1'h1;
-  assign T272 = 1'h1;
-  assign io_in_grant_bits_manager_xact_id = T273;
-  assign T273 = R89 ? T276 : T274;
-  assign T274 = T75 ? T275 : io_out_grant_bits_manager_xact_id;
-  assign T275 = io_out_grant_bits_manager_xact_id;
-  assign T276 = R277;
-  assign T278 = T92 ? io_out_grant_bits_manager_xact_id : R277;
-  assign io_in_grant_bits_client_xact_id = T279;
-  assign T279 = R89 ? T282 : T280;
-  assign T280 = T75 ? T281 : io_out_grant_bits_client_xact_id;
-  assign T281 = io_out_grant_bits_client_xact_id;
-  assign T282 = R283;
-  assign T284 = T92 ? io_out_grant_bits_client_xact_id : R283;
-  assign io_in_grant_bits_addr_beat = T333;
-  assign T333 = T285[1'h1:1'h0];
-  assign T285 = R89 ? T336 : T286;
-  assign T286 = T75 ? T334 : io_out_grant_bits_addr_beat;
-  assign T334 = {1'h0, T287};
-  assign T287 = T335;
-  assign T335 = io_out_grant_bits_addr_beat[1'h1:1'h0];
-  assign T336 = {1'h0, T288};
-  assign T288 = R289;
-  assign T337 = reset ? 2'h0 : T290;
-  assign T290 = T100 ? T291 : R289;
-  assign T291 = R289 + 2'h1;
-  assign io_in_grant_valid = T292;
-  assign T292 = R89 | T293;
-  assign T293 = io_out_grant_valid & T294;
-  assign T294 = T85 ^ 1'h1;
-  assign io_in_acquire_ready = T295;
-  assign T295 = T301 & T296;
-  assign T296 = T298 | T297;
-  assign T297 = ReorderQueue_io_enq_ready & io_out_acquire_ready;
-  assign T298 = T122 | T299;
-  assign T299 = T300 & io_out_acquire_ready;
-  assign T300 = T17 ^ 1'h1;
-  assign T301 = R126 ^ 1'h1;
-  ReorderQueue_0 ReorderQueue(.clk(clk), .reset(reset),
-       .io_enq_ready( ReorderQueue_io_enq_ready ),
-       .io_enq_valid( T81 ),
-       .io_enq_bits_data( T77 ),
-       .io_enq_bits_tag( io_in_acquire_bits_client_xact_id ),
-       .io_deq_valid( T74 ),
-       .io_deq_tag( io_out_grant_bits_client_xact_id ),
-       .io_deq_data( ReorderQueue_io_deq_data )
-       //.io_deq_matches(  )
-  );
-
-  always @(posedge clk) begin
-`ifndef SYNTHESIS
-// synthesis translate_off
-  if(reset) T19 <= 1'b1;
-  if(!T20 && T19 && !reset) begin
-    $fwrite(32'h80000002, "ASSERTION FAILED: %s\n", "Can't perform Put wider than outer width");
-    $finish;
-  end
-// synthesis translate_on
-`endif
-`ifndef SYNTHESIS
-// synthesis translate_off
-  if(reset) T0 <= 1'b1;
-  if(!T1 && T0 && !reset) begin
-    $fwrite(32'h80000002, "ASSERTION FAILED: %s\n", "Can't perform Get wider than outer width");
-    $finish;
-  end
-// synthesis translate_on
-`endif
-    if(reset) begin
-      R89 <= 1'h0;
-    end else if(T100) begin
-      R89 <= 1'h0;
-    end else if(T92) begin
-      R89 <= 1'h1;
-    end
-    if(reset) begin
-      R94 <= 1'h0;
-    end else if(T97) begin
-      R94 <= T96;
-    end
-    if(T125) begin
-      R118 <= T314;
-    end else if(T121) begin
-      R118 <= io_in_acquire_bits_data;
-    end
-    if(reset) begin
-      R126 <= 1'h0;
-    end else if(T129) begin
-      R126 <= 1'h0;
-    end else if(T121) begin
-      R126 <= 1'h1;
-    end
-    if(reset) begin
-      R131 <= 1'h0;
-    end else if(T125) begin
-      R131 <= T133;
-    end
-    if(T125) begin
-      R164 <= T327;
-    end else if(T121) begin
-      R164 <= T167;
-    end
-    if(T121) begin
-      R218 <= io_in_acquire_bits_addr_beat;
-    end
-    if(T121) begin
-      R228 <= io_in_acquire_bits_client_xact_id;
-    end
-    if(T121) begin
-      R238 <= io_in_acquire_bits_addr_block;
-    end
-    if(T257) begin
-      R255 <= io_out_grant_bits_data;
-    end
-    if(T263) begin
-      R261 <= io_out_grant_bits_data;
-    end
-    if(T92) begin
-      R277 <= io_out_grant_bits_manager_xact_id;
-    end
-    if(T92) begin
-      R283 <= io_out_grant_bits_client_xact_id;
-    end
-    if(reset) begin
-      R289 <= 2'h0;
-    end else if(T100) begin
-      R289 <= T291;
-    end
-  end
+  assign io_out_grant_ready = io_in_grant_ready;
+  assign io_out_acquire_bits_data = io_in_acquire_bits_data;
+  assign io_out_acquire_bits_union = io_in_acquire_bits_union;
+  assign io_out_acquire_bits_a_type = io_in_acquire_bits_a_type;
+  assign io_out_acquire_bits_is_builtin_type = io_in_acquire_bits_is_builtin_type;
+  assign io_out_acquire_bits_addr_beat = io_in_acquire_bits_addr_beat;
+  assign io_out_acquire_bits_client_xact_id = io_in_acquire_bits_client_xact_id;
+  assign io_out_acquire_bits_addr_block = io_in_acquire_bits_addr_block;
+  assign io_out_acquire_valid = io_in_acquire_valid;
+  assign io_in_grant_bits_data = io_out_grant_bits_data;
+  assign io_in_grant_bits_g_type = io_out_grant_bits_g_type;
+  assign io_in_grant_bits_is_builtin_type = io_out_grant_bits_is_builtin_type;
+  assign io_in_grant_bits_manager_xact_id = io_out_grant_bits_manager_xact_id;
+  assign io_in_grant_bits_client_xact_id = io_out_grant_bits_client_xact_id;
+  assign io_in_grant_bits_addr_beat = io_out_grant_bits_addr_beat;
+  assign io_in_grant_valid = io_out_grant_valid;
+  assign io_in_acquire_ready = io_out_acquire_ready;
 endmodule
 
 module ReorderQueue_1(input clk, input reset,
     output io_enq_ready,
     input  io_enq_valid,
-    input [2:0] io_enq_bits_data_byteOff,
+    input [3:0] io_enq_bits_data_byteOff,
     input  io_enq_bits_data_subblock,
     input [4:0] io_enq_bits_tag,
     input  io_deq_valid,
     input [4:0] io_deq_tag,
-    output[2:0] io_deq_data_byteOff,
+    output[3:0] io_deq_data_byteOff,
     output io_deq_data_subblock,
     output io_deq_matches
 );
@@ -28740,47 +27965,47 @@ module ReorderQueue_1(input clk, input reset,
   wire T171;
   wire T172;
   wire T173;
-  wire[2:0] T174;
-  wire[2:0] T175;
-  wire[2:0] T176;
-  wire[2:0] T177;
-  reg [2:0] roq_data_0_byteOff;
-  wire[2:0] T178;
+  wire[3:0] T174;
+  wire[3:0] T175;
+  wire[3:0] T176;
+  wire[3:0] T177;
+  reg [3:0] roq_data_0_byteOff;
+  wire[3:0] T178;
   wire T179;
-  reg [2:0] roq_data_1_byteOff;
-  wire[2:0] T180;
+  reg [3:0] roq_data_1_byteOff;
+  wire[3:0] T180;
   wire T181;
   wire T182;
-  wire[2:0] T183;
-  reg [2:0] roq_data_2_byteOff;
-  wire[2:0] T184;
+  wire[3:0] T183;
+  reg [3:0] roq_data_2_byteOff;
+  wire[3:0] T184;
   wire T185;
-  reg [2:0] roq_data_3_byteOff;
-  wire[2:0] T186;
+  reg [3:0] roq_data_3_byteOff;
+  wire[3:0] T186;
   wire T187;
   wire T188;
   wire T189;
-  wire[2:0] T190;
-  wire[2:0] T191;
-  reg [2:0] roq_data_4_byteOff;
-  wire[2:0] T192;
+  wire[3:0] T190;
+  wire[3:0] T191;
+  reg [3:0] roq_data_4_byteOff;
+  wire[3:0] T192;
   wire T193;
-  reg [2:0] roq_data_5_byteOff;
-  wire[2:0] T194;
+  reg [3:0] roq_data_5_byteOff;
+  wire[3:0] T194;
   wire T195;
   wire T196;
-  wire[2:0] T197;
-  reg [2:0] roq_data_6_byteOff;
-  wire[2:0] T198;
+  wire[3:0] T197;
+  reg [3:0] roq_data_6_byteOff;
+  wire[3:0] T198;
   wire T199;
-  reg [2:0] roq_data_7_byteOff;
-  wire[2:0] T200;
+  reg [3:0] roq_data_7_byteOff;
+  wire[3:0] T200;
   wire T201;
   wire T202;
   wire T203;
   wire T204;
-  reg [2:0] roq_data_8_byteOff;
-  wire[2:0] T205;
+  reg [3:0] roq_data_8_byteOff;
+  wire[3:0] T205;
   wire T206;
   wire T207;
   wire T208;
@@ -29229,30 +28454,30 @@ endmodule
 module Arbiter_5(
     output io_in_1_ready,
     input  io_in_1_valid,
-    input [2:0] io_in_1_bits_addr_beat,
+    input [1:0] io_in_1_bits_addr_beat,
     input [3:0] io_in_1_bits_client_xact_id,
     input  io_in_1_bits_manager_xact_id,
     input  io_in_1_bits_is_builtin_type,
     input [3:0] io_in_1_bits_g_type,
-    input [63:0] io_in_1_bits_data,
+    input [127:0] io_in_1_bits_data,
     input  io_in_1_bits_client_id,
     output io_in_0_ready,
     input  io_in_0_valid,
-    input [2:0] io_in_0_bits_addr_beat,
+    input [1:0] io_in_0_bits_addr_beat,
     input [3:0] io_in_0_bits_client_xact_id,
     input  io_in_0_bits_manager_xact_id,
     input  io_in_0_bits_is_builtin_type,
     input [3:0] io_in_0_bits_g_type,
-    input [63:0] io_in_0_bits_data,
+    input [127:0] io_in_0_bits_data,
     input  io_in_0_bits_client_id,
     input  io_out_ready,
     output io_out_valid,
-    output[2:0] io_out_bits_addr_beat,
+    output[1:0] io_out_bits_addr_beat,
     output[3:0] io_out_bits_client_xact_id,
     output io_out_bits_manager_xact_id,
     output io_out_bits_is_builtin_type,
     output[3:0] io_out_bits_g_type,
-    output[63:0] io_out_bits_data,
+    output[127:0] io_out_bits_data,
     output io_out_bits_client_id,
     output io_chosen
 );
@@ -29261,12 +28486,12 @@ module Arbiter_5(
   wire choose;
   wire T0;
   wire T1;
-  wire[63:0] T2;
+  wire[127:0] T2;
   wire[3:0] T3;
   wire T4;
   wire T5;
   wire[3:0] T6;
-  wire[2:0] T7;
+  wire[1:0] T7;
   wire T8;
   wire T9;
   wire T10;
@@ -29303,19 +28528,19 @@ module NastiIOTileLinkIOConverter(input clk, input reset,
     input  io_tl_acquire_valid,
     input [25:0] io_tl_acquire_bits_addr_block,
     input [3:0] io_tl_acquire_bits_client_xact_id,
-    input [2:0] io_tl_acquire_bits_addr_beat,
+    input [1:0] io_tl_acquire_bits_addr_beat,
     input  io_tl_acquire_bits_is_builtin_type,
     input [2:0] io_tl_acquire_bits_a_type,
-    input [11:0] io_tl_acquire_bits_union,
-    input [63:0] io_tl_acquire_bits_data,
+    input [16:0] io_tl_acquire_bits_union,
+    input [127:0] io_tl_acquire_bits_data,
     input  io_tl_grant_ready,
     output io_tl_grant_valid,
-    output[2:0] io_tl_grant_bits_addr_beat,
+    output[1:0] io_tl_grant_bits_addr_beat,
     output[3:0] io_tl_grant_bits_client_xact_id,
     output io_tl_grant_bits_manager_xact_id,
     output io_tl_grant_bits_is_builtin_type,
     output[3:0] io_tl_grant_bits_g_type,
-    output[63:0] io_tl_grant_bits_data,
+    output[127:0] io_tl_grant_bits_data,
     input  io_nasti_aw_ready,
     output io_nasti_aw_valid,
     output[31:0] io_nasti_aw_bits_addr,
@@ -29331,9 +28556,9 @@ module NastiIOTileLinkIOConverter(input clk, input reset,
     output io_nasti_aw_bits_user,
     input  io_nasti_w_ready,
     output io_nasti_w_valid,
-    output[63:0] io_nasti_w_bits_data,
+    output[127:0] io_nasti_w_bits_data,
     output io_nasti_w_bits_last,
-    output[7:0] io_nasti_w_bits_strb,
+    output[15:0] io_nasti_w_bits_strb,
     output io_nasti_w_bits_user,
     output io_nasti_b_ready,
     input  io_nasti_b_valid,
@@ -29356,50 +28581,50 @@ module NastiIOTileLinkIOConverter(input clk, input reset,
     output io_nasti_r_ready,
     input  io_nasti_r_valid,
     input [1:0] io_nasti_r_bits_resp,
-    input [63:0] io_nasti_r_bits_data,
+    input [127:0] io_nasti_r_bits_data,
     input  io_nasti_r_bits_last,
     input [4:0] io_nasti_r_bits_id,
     input  io_nasti_r_bits_user
 );
 
-  wire[63:0] T0;
-  wire[63:0] T134;
-  wire[126:0] r_aligned_data;
-  wire[126:0] T135;
-  wire[126:0] T1;
-  wire[5:0] T2;
+  wire[127:0] T0;
+  wire[127:0] T137;
+  wire[254:0] r_aligned_data;
+  wire[254:0] T138;
+  wire[254:0] T1;
+  wire[6:0] T2;
   wire[3:0] T3;
-  wire[3:0] T136;
+  wire[3:0] T139;
   wire[2:0] T4;
   wire T5;
   wire T6;
   wire[3:0] T7;
-  wire[3:0] T137;
-  wire[2:0] T8;
-  reg [2:0] tl_cnt_in;
-  wire[2:0] T138;
-  wire[2:0] T9;
-  wire[2:0] T10;
+  wire[3:0] T140;
+  wire[1:0] T8;
+  reg [1:0] tl_cnt_in;
+  wire[1:0] T141;
+  wire[1:0] T9;
+  wire[1:0] T10;
   wire T11;
   wire T12;
   wire T13;
   wire T14;
   wire T15;
-  wire[63:0] T16;
+  wire[127:0] T16;
   wire[3:0] T17;
   wire T18;
   wire T19;
   wire[3:0] T20;
-  wire[3:0] T139;
-  wire[2:0] T21;
+  wire[3:0] T142;
+  wire[1:0] T21;
   wire T22;
   wire T23;
   wire nasti_wrap_out;
   wire T24;
-  reg [2:0] nasti_cnt_out;
-  wire[2:0] T140;
-  wire[2:0] T25;
-  wire[2:0] T26;
+  reg [1:0] nasti_cnt_out;
+  wire[1:0] T143;
+  wire[1:0] T25;
+  wire[1:0] T26;
   wire T27;
   wire T28;
   wire T29;
@@ -29410,7 +28635,7 @@ module NastiIOTileLinkIOConverter(input clk, input reset,
   wire T33;
   wire T34;
   wire T35;
-  wire[2:0] T36;
+  wire[3:0] T36;
   wire T37;
   wire get_valid;
   wire T38;
@@ -29422,7 +28647,7 @@ module NastiIOTileLinkIOConverter(input clk, input reset,
   wire T43;
   wire T44;
   wire[4:0] T45;
-  wire[4:0] T141;
+  wire[4:0] T144;
   wire[3:0] T46;
   wire[3:0] T47;
   wire[2:0] T48;
@@ -29447,91 +28672,98 @@ module NastiIOTileLinkIOConverter(input clk, input reset,
   wire T67;
   wire T68;
   wire[7:0] T69;
-  wire[7:0] T142;
-  wire[2:0] T70;
+  wire[7:0] T145;
+  wire[1:0] T70;
   wire[31:0] T71;
   wire[31:0] T72;
   wire[5:0] T73;
-  wire[2:0] T74;
+  wire[3:0] T74;
   wire T75;
   wire T76;
-  wire[7:0] T77;
-  wire[7:0] T78;
-  wire[7:0] T79;
-  wire[7:0] T80;
+  wire[15:0] T77;
+  wire[15:0] T78;
+  wire[15:0] T79;
+  wire[15:0] T80;
   wire T81;
   wire T82;
   wire T83;
   wire T84;
   wire T85;
-  wire[7:0] T86;
-  wire[7:0] T87;
-  wire[7:0] T143;
-  wire T88;
-  wire T92;
-  wire T93;
+  wire[15:0] T86;
+  wire[15:0] T87;
+  wire[7:0] T88;
+  wire[7:0] T146;
+  wire T89;
+  wire[1:0] T90;
+  wire T91;
+  wire[3:0] T92;
+  wire[7:0] T93;
+  wire[7:0] T147;
   wire T94;
   wire T95;
   wire T96;
   wire T97;
-  wire tl_wrap_out;
   wire T98;
-  reg [2:0] tl_cnt_out;
-  wire[2:0] T144;
-  wire[2:0] T99;
-  wire[2:0] T100;
+  wire T99;
+  wire T100;
+  wire tl_wrap_out;
   wire T101;
+  reg [1:0] tl_cnt_out;
+  wire[1:0] T148;
+  wire[1:0] T102;
+  wire[1:0] T103;
+  wire T104;
   wire is_multibeat;
-  wire T102;
-  wire T103;
-  wire[63:0] T104;
   wire T105;
+  wire T106;
+  wire[127:0] T107;
+  wire T108;
   wire aw_ready;
   reg  w_inflight;
-  wire T145;
-  wire T106;
-  wire T107;
-  wire T108;
+  wire T149;
   wire T109;
   wire T110;
   wire T111;
   wire T112;
-  wire put_valid;
   wire T113;
-  wire[4:0] T114;
-  wire[4:0] T146;
-  wire[3:0] T115;
-  wire[3:0] T116;
-  wire[2:0] T117;
+  wire T114;
+  wire T115;
+  wire put_valid;
+  wire T116;
+  wire[4:0] T117;
+  wire[4:0] T150;
   wire[3:0] T118;
-  wire T119;
-  wire[1:0] T120;
-  wire[2:0] T121;
-  wire[7:0] T122;
-  wire[7:0] T147;
-  wire[2:0] T123;
-  wire[31:0] T124;
-  wire[31:0] T125;
-  wire[5:0] T126;
-  wire[2:0] T127;
-  wire T128;
-  wire T129;
-  wire T130;
+  wire[3:0] T119;
+  wire[2:0] T120;
+  wire[3:0] T121;
+  wire T122;
+  wire[1:0] T123;
+  wire[2:0] T124;
+  wire[7:0] T125;
+  wire[7:0] T151;
+  wire[1:0] T126;
+  wire[31:0] T127;
+  wire[31:0] T128;
+  wire[5:0] T129;
+  wire[3:0] T130;
   wire T131;
   wire T132;
   wire T133;
+  wire T134;
+  wire T135;
+  wire T136;
   wire roq_io_enq_ready;
-  wire[2:0] roq_io_deq_data_byteOff;
+  wire[3:0] roq_io_deq_data_byteOff;
   wire roq_io_deq_data_subblock;
   wire gnt_arb_io_in_1_ready;
   wire gnt_arb_io_in_0_ready;
   wire gnt_arb_io_out_valid;
-  wire[2:0] gnt_arb_io_out_bits_addr_beat;
+  wire[1:0] gnt_arb_io_out_bits_addr_beat;
   wire[3:0] gnt_arb_io_out_bits_client_xact_id;
   wire gnt_arb_io_out_bits_manager_xact_id;
   wire gnt_arb_io_out_bits_is_builtin_type;
   wire[3:0] gnt_arb_io_out_bits_g_type;
-  wire[63:0] gnt_arb_io_out_bits_data;
+  wire[127:0] gnt_arb_io_out_bits_data;
 
 `ifndef SYNTHESIS
 // synthesis translate_off
@@ -29546,42 +28778,42 @@ module NastiIOTileLinkIOConverter(input clk, input reset,
 // synthesis translate_on
 `endif
 
-  assign T0 = T134;
-  assign T134 = r_aligned_data[6'h3f:1'h0];
-  assign r_aligned_data = roq_io_deq_data_subblock ? T1 : T135;
-  assign T135 = {63'h0, io_nasti_r_bits_data};
+  assign T0 = T137;
+  assign T137 = r_aligned_data[7'h7f:1'h0];
+  assign r_aligned_data = roq_io_deq_data_subblock ? T1 : T138;
+  assign T138 = {127'h0, io_nasti_r_bits_data};
   assign T1 = io_nasti_r_bits_data << T2;
   assign T2 = {roq_io_deq_data_byteOff, 3'h0};
-  assign T3 = T136;
-  assign T136 = {1'h0, T4};
+  assign T3 = T139;
+  assign T139 = {1'h0, T4};
   assign T4 = roq_io_deq_data_subblock ? 3'h4 : 3'h5;
   assign T5 = 1'h1;
   assign T6 = 1'h0;
-  assign T7 = T137;
-  assign T137 = io_nasti_r_bits_id[2'h3:1'h0];
+  assign T7 = T140;
+  assign T140 = io_nasti_r_bits_id[2'h3:1'h0];
   assign T8 = tl_cnt_in;
-  assign T138 = reset ? 3'h0 : T9;
+  assign T141 = reset ? 2'h0 : T9;
   assign T9 = T11 ? T10 : tl_cnt_in;
-  assign T10 = tl_cnt_in + 3'h1;
+  assign T10 = tl_cnt_in + 2'h1;
   assign T11 = T15 & T12;
   assign T12 = io_tl_grant_bits_is_builtin_type ? T14 : T13;
   assign T13 = 4'h0 == io_tl_grant_bits_g_type;
   assign T14 = 4'h5 == io_tl_grant_bits_g_type;
   assign T15 = io_tl_grant_ready & io_tl_grant_valid;
-  assign T16 = 64'h0;
+  assign T16 = 128'h0;
   assign T17 = 4'h3;
   assign T18 = 1'h1;
   assign T19 = 1'h0;
-  assign T20 = T139;
-  assign T139 = io_nasti_b_bits_id[2'h3:1'h0];
-  assign T21 = 3'h0;
+  assign T20 = T142;
+  assign T142 = io_nasti_b_bits_id[2'h3:1'h0];
+  assign T21 = 2'h0;
   assign T22 = T30 & T23;
   assign T23 = nasti_wrap_out | roq_io_deq_data_subblock;
   assign nasti_wrap_out = T27 & T24;
-  assign T24 = nasti_cnt_out == 3'h7;
-  assign T140 = reset ? 3'h0 : T25;
+  assign T24 = nasti_cnt_out == 2'h3;
+  assign T143 = reset ? 2'h0 : T25;
   assign T25 = T27 ? T26 : nasti_cnt_out;
-  assign T26 = nasti_cnt_out + 3'h1;
+  assign T26 = nasti_cnt_out + 2'h1;
   assign T27 = T29 & T28;
   assign T28 = roq_io_deq_data_subblock ^ 1'h1;
   assign T29 = io_nasti_r_ready & io_nasti_r_valid;
@@ -29592,7 +28824,7 @@ module NastiIOTileLinkIOConverter(input clk, input reset,
   assign T33 = T35 | T34;
   assign T34 = 3'h0 == io_tl_acquire_bits_a_type;
   assign T35 = 3'h2 == io_tl_acquire_bits_a_type;
-  assign T36 = io_tl_acquire_bits_union[4'hb:4'h9];
+  assign T36 = io_tl_acquire_bits_union[4'hc:4'h9];
   assign T37 = get_valid & io_nasti_ar_ready;
   assign get_valid = io_tl_acquire_valid & T38;
   assign T38 = has_data ^ 1'h1;
@@ -29606,8 +28838,8 @@ module NastiIOTileLinkIOConverter(input clk, input reset,
   assign io_nasti_ar_bits_user = T44;
   assign T44 = 1'h0;
   assign io_nasti_ar_bits_id = T45;
-  assign T45 = T141;
-  assign T141 = {1'h0, io_tl_acquire_bits_client_xact_id};
+  assign T45 = T144;
+  assign T144 = {1'h0, io_tl_acquire_bits_client_xact_id};
   assign io_nasti_ar_bits_region = T46;
   assign T46 = 4'h0;
   assign io_nasti_ar_bits_qos = T47;
@@ -29622,14 +28854,14 @@ module NastiIOTileLinkIOConverter(input clk, input reset,
   assign T51 = 2'h1;
   assign io_nasti_ar_bits_size = T52;
   assign T52 = T53;
-  assign T53 = is_subblock ? T54 : 3'h3;
+  assign T53 = is_subblock ? T54 : 3'h4;
   assign T54 = T68 ? 3'h0 : T55;
   assign T55 = T67 ? 3'h0 : T56;
   assign T56 = T66 ? 3'h1 : T57;
   assign T57 = T65 ? 3'h1 : T58;
   assign T58 = T64 ? 3'h2 : T59;
   assign T59 = T63 ? 3'h3 : T60;
-  assign T60 = T61 ? 3'h3 : 3'h7;
+  assign T60 = T61 ? 3'h4 : 3'h7;
   assign T61 = T62 == 3'h7;
   assign T62 = io_tl_acquire_bits_union[4'h8:3'h6];
   assign T63 = T62 == 3'h3;
@@ -29639,14 +28871,14 @@ module NastiIOTileLinkIOConverter(input clk, input reset,
   assign T67 = T62 == 3'h4;
   assign T68 = T62 == 3'h0;
   assign io_nasti_ar_bits_len = T69;
-  assign T69 = T142;
-  assign T142 = {5'h0, T70};
-  assign T70 = is_subblock ? 3'h0 : 3'h7;
+  assign T69 = T145;
+  assign T145 = {6'h0, T70};
+  assign T70 = is_subblock ? 2'h0 : 2'h3;
   assign io_nasti_ar_bits_addr = T71;
   assign T71 = T72;
   assign T72 = {io_tl_acquire_bits_addr_block, T73};
   assign T73 = {io_tl_acquire_bits_addr_beat, T74};
-  assign T74 = io_tl_acquire_bits_union[4'hb:4'h9];
+  assign T74 = io_tl_acquire_bits_union[4'hc:4'h9];
   assign io_nasti_ar_valid = T75;
   assign T75 = get_valid & roq_io_enq_ready;
   assign io_nasti_b_ready = gnt_arb_io_in_1_ready;
@@ -29654,80 +28886,87 @@ module NastiIOTileLinkIOConverter(input clk, input reset,
   assign T76 = 1'h0;
   assign io_nasti_w_bits_strb = T77;
   assign T77 = T78;
-  assign T78 = T92 ? T86 : T79;
-  assign T79 = T81 ? T80 : 8'h0;
-  assign T80 = io_tl_acquire_bits_union[4'h8:1'h1];
+  assign T78 = T95 ? T86 : T79;
+  assign T79 = T81 ? T80 : 16'h0;
+  assign T80 = io_tl_acquire_bits_union[5'h10:1'h1];
   assign T81 = T84 | T82;
   assign T82 = io_tl_acquire_bits_is_builtin_type & T83;
   assign T83 = io_tl_acquire_bits_a_type == 3'h2;
   assign T84 = io_tl_acquire_bits_is_builtin_type & T85;
   assign T85 = io_tl_acquire_bits_a_type == 3'h3;
   assign T86 = T87;
-  assign T87 = 8'h0 - T143;
-  assign T143 = {7'h0, T88};
-  assign T88 = 1'h1;
-  assign T92 = io_tl_acquire_bits_is_builtin_type & T93;
-  assign T93 = io_tl_acquire_bits_a_type == 3'h4;
-  assign io_nasti_w_bits_last = T94;
-  assign T94 = T95;
-  assign T95 = tl_wrap_out | T96;
-  assign T96 = T97 & is_subblock;
-  assign T97 = io_tl_acquire_ready & io_tl_acquire_valid;
-  assign tl_wrap_out = T101 & T98;
-  assign T98 = tl_cnt_out == 3'h7;
-  assign T144 = reset ? 3'h0 : T99;
-  assign T99 = T101 ? T100 : tl_cnt_out;
-  assign T100 = tl_cnt_out + 3'h1;
-  assign T101 = T103 & is_multibeat;
-  assign is_multibeat = io_tl_acquire_bits_is_builtin_type & T102;
-  assign T102 = 3'h3 == io_tl_acquire_bits_a_type;
-  assign T103 = io_tl_acquire_ready & io_tl_acquire_valid;
-  assign io_nasti_w_bits_data = T104;
-  assign T104 = io_tl_acquire_bits_data;
-  assign io_nasti_w_valid = T105;
-  assign T105 = put_valid & aw_ready;
+  assign T87 = {T93, T88};
+  assign T88 = 8'h0 - T146;
+  assign T146 = {7'h0, T89};
+  assign T89 = T90[1'h0:1'h0];
+  assign T90 = 1'h1 << T91;
+  assign T91 = T92[2'h3:2'h3];
+  assign T92 = io_tl_acquire_bits_union[4'hc:4'h9];
+  assign T93 = 8'h0 - T147;
+  assign T147 = {7'h0, T94};
+  assign T94 = T90[1'h1:1'h1];
+  assign T95 = io_tl_acquire_bits_is_builtin_type & T96;
+  assign T96 = io_tl_acquire_bits_a_type == 3'h4;
+  assign io_nasti_w_bits_last = T97;
+  assign T97 = T98;
+  assign T98 = tl_wrap_out | T99;
+  assign T99 = T100 & is_subblock;
+  assign T100 = io_tl_acquire_ready & io_tl_acquire_valid;
+  assign tl_wrap_out = T104 & T101;
+  assign T101 = tl_cnt_out == 2'h3;
+  assign T148 = reset ? 2'h0 : T102;
+  assign T102 = T104 ? T103 : tl_cnt_out;
+  assign T103 = tl_cnt_out + 2'h1;
+  assign T104 = T106 & is_multibeat;
+  assign is_multibeat = io_tl_acquire_bits_is_builtin_type & T105;
+  assign T105 = 3'h3 == io_tl_acquire_bits_a_type;
+  assign T106 = io_tl_acquire_ready & io_tl_acquire_valid;
+  assign io_nasti_w_bits_data = T107;
+  assign T107 = io_tl_acquire_bits_data;
+  assign io_nasti_w_valid = T108;
+  assign T108 = put_valid & aw_ready;
   assign aw_ready = w_inflight | io_nasti_aw_ready;
-  assign T145 = reset ? 1'h0 : T106;
-  assign T106 = T112 ? 1'h0 : T107;
-  assign T107 = T108 ? 1'h1 : w_inflight;
-  assign T108 = T109 & is_multibeat;
-  assign T109 = T111 & T110;
-  assign T110 = io_tl_acquire_ready & io_tl_acquire_valid;
-  assign T111 = w_inflight ^ 1'h1;
-  assign T112 = w_inflight & tl_wrap_out;
+  assign T149 = reset ? 1'h0 : T109;
+  assign T109 = T115 ? 1'h0 : T110;
+  assign T110 = T111 ? 1'h1 : w_inflight;
+  assign T111 = T112 & is_multibeat;
+  assign T112 = T114 & T113;
+  assign T113 = io_tl_acquire_ready & io_tl_acquire_valid;
+  assign T114 = w_inflight ^ 1'h1;
+  assign T115 = w_inflight & tl_wrap_out;
   assign put_valid = io_tl_acquire_valid & has_data;
-  assign io_nasti_aw_bits_user = T113;
-  assign T113 = 1'h0;
-  assign io_nasti_aw_bits_id = T114;
-  assign T114 = T146;
-  assign T146 = {1'h0, io_tl_acquire_bits_client_xact_id};
-  assign io_nasti_aw_bits_region = T115;
-  assign T115 = 4'h0;
-  assign io_nasti_aw_bits_qos = T116;
-  assign T116 = 4'h0;
-  assign io_nasti_aw_bits_prot = T117;
-  assign T117 = 3'h0;
-  assign io_nasti_aw_bits_cache = T118;
+  assign io_nasti_aw_bits_user = T116;
+  assign T116 = 1'h0;
+  assign io_nasti_aw_bits_id = T117;
+  assign T117 = T150;
+  assign T150 = {1'h0, io_tl_acquire_bits_client_xact_id};
+  assign io_nasti_aw_bits_region = T118;
   assign T118 = 4'h0;
-  assign io_nasti_aw_bits_lock = T119;
-  assign T119 = 1'h0;
-  assign io_nasti_aw_bits_burst = T120;
-  assign T120 = 2'h1;
-  assign io_nasti_aw_bits_size = T121;
-  assign T121 = 3'h3;
-  assign io_nasti_aw_bits_len = T122;
-  assign T122 = T147;
-  assign T147 = {5'h0, T123};
-  assign T123 = is_multibeat ? 3'h7 : 3'h0;
-  assign io_nasti_aw_bits_addr = T124;
-  assign T124 = T125;
-  assign T125 = {io_tl_acquire_bits_addr_block, T126};
-  assign T126 = {io_tl_acquire_bits_addr_beat, T127};
-  assign T127 = io_tl_acquire_bits_union[4'hb:4'h9];
-  assign io_nasti_aw_valid = T128;
-  assign T128 = T130 & T129;
-  assign T129 = w_inflight ^ 1'h1;
-  assign T130 = put_valid & io_nasti_w_ready;
+  assign io_nasti_aw_bits_qos = T119;
+  assign T119 = 4'h0;
+  assign io_nasti_aw_bits_prot = T120;
+  assign T120 = 3'h0;
+  assign io_nasti_aw_bits_cache = T121;
+  assign T121 = 4'h0;
+  assign io_nasti_aw_bits_lock = T122;
+  assign T122 = 1'h0;
+  assign io_nasti_aw_bits_burst = T123;
+  assign T123 = 2'h1;
+  assign io_nasti_aw_bits_size = T124;
+  assign T124 = 3'h4;
+  assign io_nasti_aw_bits_len = T125;
+  assign T125 = T151;
+  assign T151 = {6'h0, T126};
+  assign T126 = is_multibeat ? 2'h3 : 2'h0;
+  assign io_nasti_aw_bits_addr = T127;
+  assign T127 = T128;
+  assign T128 = {io_tl_acquire_bits_addr_block, T129};
+  assign T129 = {io_tl_acquire_bits_addr_beat, T130};
+  assign T130 = io_tl_acquire_bits_union[4'hc:4'h9];
+  assign io_nasti_aw_valid = T131;
+  assign T131 = T133 & T132;
+  assign T132 = w_inflight ^ 1'h1;
+  assign T133 = put_valid & io_nasti_w_ready;
   assign io_tl_grant_bits_data = gnt_arb_io_out_bits_data;
   assign io_tl_grant_bits_g_type = gnt_arb_io_out_bits_g_type;
   assign io_tl_grant_bits_is_builtin_type = gnt_arb_io_out_bits_is_builtin_type;
@@ -29735,10 +28974,10 @@ module NastiIOTileLinkIOConverter(input clk, input reset,
   assign io_tl_grant_bits_client_xact_id = gnt_arb_io_out_bits_client_xact_id;
   assign io_tl_grant_bits_addr_beat = gnt_arb_io_out_bits_addr_beat;
   assign io_tl_grant_valid = gnt_arb_io_out_valid;
-  assign io_tl_acquire_ready = T131;
-  assign T131 = has_data ? T133 : T132;
-  assign T132 = roq_io_enq_ready & io_nasti_ar_ready;
-  assign T133 = aw_ready & io_nasti_w_ready;
+  assign io_tl_acquire_ready = T134;
+  assign T134 = has_data ? T136 : T135;
+  assign T135 = roq_io_enq_ready & io_nasti_ar_ready;
+  assign T136 = aw_ready & io_nasti_w_ready;
   ReorderQueue_1 roq(.clk(clk), .reset(reset),
        .io_enq_ready( roq_io_enq_ready ),
        .io_enq_valid( T37 ),
@@ -29790,25 +29029,25 @@ module NastiIOTileLinkIOConverter(input clk, input reset,
 
   always @(posedge clk) begin
     if(reset) begin
-      tl_cnt_in <= 3'h0;
+      tl_cnt_in <= 2'h0;
     end else if(T11) begin
       tl_cnt_in <= T10;
     end
     if(reset) begin
-      nasti_cnt_out <= 3'h0;
+      nasti_cnt_out <= 2'h0;
     end else if(T27) begin
       nasti_cnt_out <= T26;
     end
     if(reset) begin
-      tl_cnt_out <= 3'h0;
-    end else if(T101) begin
-      tl_cnt_out <= T100;
+      tl_cnt_out <= 2'h0;
+    end else if(T104) begin
+      tl_cnt_out <= T103;
     end
     if(reset) begin
       w_inflight <= 1'h0;
-    end else if(T112) begin
+    end else if(T115) begin
       w_inflight <= 1'h0;
-    end else if(T108) begin
+    end else if(T111) begin
       w_inflight <= 1'h1;
     end
   end
@@ -29851,8 +29090,8 @@ module ClientTileLinkIOWrapper_1(
     input [127:0] io_out_grant_bits_data,
     output io_out_probe_ready,
     input  io_out_probe_valid,
-    //input [25:0] io_out_probe_bits_addr_block
-    //input [1:0] io_out_probe_bits_p_type
+    input [25:0] io_out_probe_bits_addr_block,
+    input [1:0] io_out_probe_bits_p_type,
     input  io_out_release_ready,
     output io_out_release_valid
     //output[1:0] io_out_release_bits_addr_beat
@@ -29896,33 +29135,127 @@ module ClientTileLinkIOWrapper_1(
   assign io_in_acquire_ready = io_out_acquire_ready;
 endmodule
 
+module ClientTileLinkEnqueuer(
+    output io_inner_acquire_ready,
+    input  io_inner_acquire_valid,
+    input [25:0] io_inner_acquire_bits_addr_block,
+    input [1:0] io_inner_acquire_bits_client_xact_id,
+    input [1:0] io_inner_acquire_bits_addr_beat,
+    input  io_inner_acquire_bits_is_builtin_type,
+    input [2:0] io_inner_acquire_bits_a_type,
+    input [16:0] io_inner_acquire_bits_union,
+    input [127:0] io_inner_acquire_bits_data,
+    input  io_inner_grant_ready,
+    output io_inner_grant_valid,
+    output[1:0] io_inner_grant_bits_addr_beat,
+    output[1:0] io_inner_grant_bits_client_xact_id,
+    output[3:0] io_inner_grant_bits_manager_xact_id,
+    output io_inner_grant_bits_is_builtin_type,
+    output[3:0] io_inner_grant_bits_g_type,
+    output[127:0] io_inner_grant_bits_data,
+    input  io_inner_probe_ready,
+    output io_inner_probe_valid,
+    output[25:0] io_inner_probe_bits_addr_block,
+    output[1:0] io_inner_probe_bits_p_type,
+    output io_inner_release_ready,
+    input  io_inner_release_valid,
+    input [1:0] io_inner_release_bits_addr_beat,
+    input [25:0] io_inner_release_bits_addr_block,
+    input [1:0] io_inner_release_bits_client_xact_id,
+    input [2:0] io_inner_release_bits_r_type,
+    input  io_inner_release_bits_voluntary,
+    input [127:0] io_inner_release_bits_data,
+    input  io_outer_acquire_ready,
+    output io_outer_acquire_valid,
+    output[25:0] io_outer_acquire_bits_addr_block,
+    output[1:0] io_outer_acquire_bits_client_xact_id,
+    output[1:0] io_outer_acquire_bits_addr_beat,
+    output io_outer_acquire_bits_is_builtin_type,
+    output[2:0] io_outer_acquire_bits_a_type,
+    output[16:0] io_outer_acquire_bits_union,
+    output[127:0] io_outer_acquire_bits_data,
+    output io_outer_grant_ready,
+    input  io_outer_grant_valid,
+    input [1:0] io_outer_grant_bits_addr_beat,
+    input [1:0] io_outer_grant_bits_client_xact_id,
+    input [3:0] io_outer_grant_bits_manager_xact_id,
+    input  io_outer_grant_bits_is_builtin_type,
+    input [3:0] io_outer_grant_bits_g_type,
+    input [127:0] io_outer_grant_bits_data,
+    output io_outer_probe_ready,
+    input  io_outer_probe_valid,
+    input [25:0] io_outer_probe_bits_addr_block,
+    input [1:0] io_outer_probe_bits_p_type,
+    input  io_outer_release_ready,
+    output io_outer_release_valid,
+    output[1:0] io_outer_release_bits_addr_beat,
+    output[25:0] io_outer_release_bits_addr_block,
+    output[1:0] io_outer_release_bits_client_xact_id,
+    output[2:0] io_outer_release_bits_r_type,
+    output io_outer_release_bits_voluntary,
+    output[127:0] io_outer_release_bits_data
+);
+
+
+
+  assign io_outer_release_bits_data = io_inner_release_bits_data;
+  assign io_outer_release_bits_voluntary = io_inner_release_bits_voluntary;
+  assign io_outer_release_bits_r_type = io_inner_release_bits_r_type;
+  assign io_outer_release_bits_client_xact_id = io_inner_release_bits_client_xact_id;
+  assign io_outer_release_bits_addr_block = io_inner_release_bits_addr_block;
+  assign io_outer_release_bits_addr_beat = io_inner_release_bits_addr_beat;
+  assign io_outer_release_valid = io_inner_release_valid;
+  assign io_outer_probe_ready = io_inner_probe_ready;
+  assign io_outer_grant_ready = io_inner_grant_ready;
+  assign io_outer_acquire_bits_data = io_inner_acquire_bits_data;
+  assign io_outer_acquire_bits_union = io_inner_acquire_bits_union;
+  assign io_outer_acquire_bits_a_type = io_inner_acquire_bits_a_type;
+  assign io_outer_acquire_bits_is_builtin_type = io_inner_acquire_bits_is_builtin_type;
+  assign io_outer_acquire_bits_addr_beat = io_inner_acquire_bits_addr_beat;
+  assign io_outer_acquire_bits_client_xact_id = io_inner_acquire_bits_client_xact_id;
+  assign io_outer_acquire_bits_addr_block = io_inner_acquire_bits_addr_block;
+  assign io_outer_acquire_valid = io_inner_acquire_valid;
+  assign io_inner_release_ready = io_outer_release_ready;
+  assign io_inner_probe_bits_p_type = io_outer_probe_bits_p_type;
+  assign io_inner_probe_bits_addr_block = io_outer_probe_bits_addr_block;
+  assign io_inner_probe_valid = io_outer_probe_valid;
+  assign io_inner_grant_bits_data = io_outer_grant_bits_data;
+  assign io_inner_grant_bits_g_type = io_outer_grant_bits_g_type;
+  assign io_inner_grant_bits_is_builtin_type = io_outer_grant_bits_is_builtin_type;
+  assign io_inner_grant_bits_manager_xact_id = io_outer_grant_bits_manager_xact_id;
+  assign io_inner_grant_bits_client_xact_id = io_outer_grant_bits_client_xact_id;
+  assign io_inner_grant_bits_addr_beat = io_outer_grant_bits_addr_beat;
+  assign io_inner_grant_valid = io_outer_grant_valid;
+  assign io_inner_acquire_ready = io_outer_acquire_ready;
+endmodule
+
 module Queue_4(input clk, input reset,
     output io_enq_ready,
     input  io_enq_valid,
-    input [63:0] io_enq_bits_data,
+    input [127:0] io_enq_bits_data,
     input  io_enq_bits_last,
-    input [7:0] io_enq_bits_strb,
+    input [15:0] io_enq_bits_strb,
     input  io_enq_bits_user,
     input  io_deq_ready,
     output io_deq_valid,
-    output[63:0] io_deq_bits_data,
+    output[127:0] io_deq_bits_data,
     output io_deq_bits_last,
-    output[7:0] io_deq_bits_strb,
+    output[15:0] io_deq_bits_strb,
     output io_deq_bits_user,
-    output[3:0] io_count
+    output[2:0] io_count
 );
 
-  wire[3:0] T0;
-  wire[2:0] ptr_diff;
-  reg [2:0] R1;
-  wire[2:0] T23;
-  wire[2:0] T2;
-  wire[2:0] T3;
+  wire[2:0] T0;
+  wire[1:0] ptr_diff;
+  reg [1:0] R1;
+  wire[1:0] T23;
+  wire[1:0] T2;
+  wire[1:0] T3;
   wire do_deq;
-  reg [2:0] R4;
-  wire[2:0] T24;
-  wire[2:0] T5;
-  wire[2:0] T6;
+  reg [1:0] R4;
+  wire[1:0] T24;
+  wire[1:0] T5;
+  wire[1:0] T6;
   wire do_enq;
   wire T7;
   wire ptr_match;
@@ -29931,16 +29264,16 @@ module Queue_4(input clk, input reset,
   wire T8;
   wire T9;
   wire T10;
-  wire[73:0] T11;
-  reg [73:0] ram [7:0];
-  wire[73:0] T12;
-  wire[73:0] T13;
-  wire[73:0] T14;
-  wire[8:0] T15;
-  wire[64:0] T16;
-  wire[7:0] T17;
+  wire[145:0] T11;
+  reg [145:0] ram [3:0];
+  wire[145:0] T12;
+  wire[145:0] T13;
+  wire[145:0] T14;
+  wire[16:0] T15;
+  wire[128:0] T16;
+  wire[15:0] T17;
   wire T18;
-  wire[63:0] T19;
+  wire[127:0] T19;
   wire T20;
   wire empty;
   wire T21;
@@ -29955,8 +29288,8 @@ module Queue_4(input clk, input reset,
     R1 = {1{$random}};
     R4 = {1{$random}};
     maybe_full = {1{$random}};
-    for (initvar = 0; initvar < 8; initvar = initvar+1)
-      ram[initvar] = {3{$random}};
+    for (initvar = 0; initvar < 4; initvar = initvar+1)
+      ram[initvar] = {5{$random}};
   end
 // synthesis translate_on
 `endif
@@ -29964,13 +29297,13 @@ module Queue_4(input clk, input reset,
   assign io_count = T0;
   assign T0 = {T7, ptr_diff};
   assign ptr_diff = R4 - R1;
-  assign T23 = reset ? 3'h0 : T2;
+  assign T23 = reset ? 2'h0 : T2;
   assign T2 = do_deq ? T3 : R1;
-  assign T3 = R1 + 3'h1;
+  assign T3 = R1 + 2'h1;
   assign do_deq = io_deq_ready & io_deq_valid;
-  assign T24 = reset ? 3'h0 : T5;
+  assign T24 = reset ? 2'h0 : T5;
   assign T5 = do_enq ? T6 : R4;
-  assign T6 = R4 + 3'h1;
+  assign T6 = R4 + 2'h1;
   assign do_enq = io_enq_ready & io_enq_valid;
   assign T7 = maybe_full & ptr_match;
   assign ptr_match = R4 == R1;
@@ -29985,11 +29318,11 @@ module Queue_4(input clk, input reset,
   assign T15 = {io_enq_bits_strb, io_enq_bits_user};
   assign T16 = {io_enq_bits_data, io_enq_bits_last};
   assign io_deq_bits_strb = T17;
-  assign T17 = T11[4'h8:1'h1];
+  assign T17 = T11[5'h10:1'h1];
   assign io_deq_bits_last = T18;
-  assign T18 = T11[4'h9:4'h9];
+  assign T18 = T11[5'h11:5'h11];
   assign io_deq_bits_data = T19;
-  assign T19 = T11[7'h49:4'ha];
+  assign T19 = T11[8'h91:5'h12];
   assign io_deq_valid = T20;
   assign T20 = empty ^ 1'h1;
   assign empty = ptr_match & T21;
@@ -30000,12 +29333,12 @@ module Queue_4(input clk, input reset,
 
   always @(posedge clk) begin
     if(reset) begin
-      R1 <= 3'h0;
+      R1 <= 2'h0;
     end else if(do_deq) begin
       R1 <= T3;
     end
     if(reset) begin
-      R4 <= 3'h0;
+      R4 <= 2'h0;
     end else if(do_enq) begin
       R4 <= T6;
     end
@@ -30023,31 +29356,31 @@ module Queue_5(input clk, input reset,
     output io_enq_ready,
     input  io_enq_valid,
     input [1:0] io_enq_bits_resp,
-    input [63:0] io_enq_bits_data,
+    input [127:0] io_enq_bits_data,
     input  io_enq_bits_last,
     input [4:0] io_enq_bits_id,
     input  io_enq_bits_user,
     input  io_deq_ready,
     output io_deq_valid,
     output[1:0] io_deq_bits_resp,
-    output[63:0] io_deq_bits_data,
+    output[127:0] io_deq_bits_data,
     output io_deq_bits_last,
     output[4:0] io_deq_bits_id,
     output io_deq_bits_user,
-    output[3:0] io_count
+    output[2:0] io_count
 );
 
-  wire[3:0] T0;
-  wire[2:0] ptr_diff;
-  reg [2:0] R1;
-  wire[2:0] T25;
-  wire[2:0] T2;
-  wire[2:0] T3;
+  wire[2:0] T0;
+  wire[1:0] ptr_diff;
+  reg [1:0] R1;
+  wire[1:0] T25;
+  wire[1:0] T2;
+  wire[1:0] T3;
   wire do_deq;
-  reg [2:0] R4;
-  wire[2:0] T26;
-  wire[2:0] T5;
-  wire[2:0] T6;
+  reg [1:0] R4;
+  wire[1:0] T26;
+  wire[1:0] T5;
+  wire[1:0] T6;
   wire do_enq;
   wire T7;
   wire ptr_match;
@@ -30056,17 +29389,17 @@ module Queue_5(input clk, input reset,
   wire T8;
   wire T9;
   wire T10;
-  wire[72:0] T11;
-  reg [72:0] ram [7:0];
-  wire[72:0] T12;
-  wire[72:0] T13;
-  wire[72:0] T14;
+  wire[136:0] T11;
+  reg [136:0] ram [3:0];
+  wire[136:0] T12;
+  wire[136:0] T13;
+  wire[136:0] T14;
   wire[6:0] T15;
   wire[5:0] T16;
-  wire[65:0] T17;
+  wire[129:0] T17;
   wire[4:0] T18;
   wire T19;
-  wire[63:0] T20;
+  wire[127:0] T20;
   wire[1:0] T21;
   wire T22;
   wire empty;
@@ -30082,8 +29415,8 @@ module Queue_5(input clk, input reset,
     R1 = {1{$random}};
     R4 = {1{$random}};
     maybe_full = {1{$random}};
-    for (initvar = 0; initvar < 8; initvar = initvar+1)
-      ram[initvar] = {3{$random}};
+    for (initvar = 0; initvar < 4; initvar = initvar+1)
+      ram[initvar] = {5{$random}};
   end
 // synthesis translate_on
 `endif
@@ -30091,13 +29424,13 @@ module Queue_5(input clk, input reset,
   assign io_count = T0;
   assign T0 = {T7, ptr_diff};
   assign ptr_diff = R4 - R1;
-  assign T25 = reset ? 3'h0 : T2;
+  assign T25 = reset ? 2'h0 : T2;
   assign T2 = do_deq ? T3 : R1;
-  assign T3 = R1 + 3'h1;
+  assign T3 = R1 + 2'h1;
   assign do_deq = io_deq_ready & io_deq_valid;
-  assign T26 = reset ? 3'h0 : T5;
+  assign T26 = reset ? 2'h0 : T5;
   assign T5 = do_enq ? T6 : R4;
-  assign T6 = R4 + 3'h1;
+  assign T6 = R4 + 2'h1;
   assign do_enq = io_enq_ready & io_enq_valid;
   assign T7 = maybe_full & ptr_match;
   assign ptr_match = R4 == R1;
@@ -30117,9 +29450,9 @@ module Queue_5(input clk, input reset,
   assign io_deq_bits_last = T19;
   assign T19 = T11[3'h6:3'h6];
   assign io_deq_bits_data = T20;
-  assign T20 = T11[7'h46:3'h7];
+  assign T20 = T11[8'h86:3'h7];
   assign io_deq_bits_resp = T21;
-  assign T21 = T11[7'h48:7'h47];
+  assign T21 = T11[8'h88:8'h87];
   assign io_deq_valid = T22;
   assign T22 = empty ^ 1'h1;
   assign empty = ptr_match & T23;
@@ -30130,12 +29463,12 @@ module Queue_5(input clk, input reset,
 
   always @(posedge clk) begin
     if(reset) begin
-      R1 <= 3'h0;
+      R1 <= 2'h0;
     end else if(do_deq) begin
       R1 <= T3;
     end
     if(reset) begin
-      R4 <= 3'h0;
+      R4 <= 2'h0;
     end else if(do_enq) begin
       R4 <= T6;
     end
@@ -30281,9 +29614,9 @@ module RTC(input clk, input reset,
     output io_aw_bits_user,
     input  io_w_ready,
     output io_w_valid,
-    output[63:0] io_w_bits_data,
+    output[127:0] io_w_bits_data,
     output io_w_bits_last,
-    output[7:0] io_w_bits_strb,
+    output[15:0] io_w_bits_strb,
     output io_w_bits_user,
     output io_b_ready,
     input  io_b_valid,
@@ -30306,7 +29639,7 @@ module RTC(input clk, input reset,
     output io_r_ready,
     input  io_r_valid,
     input [1:0] io_r_bits_resp,
-    input [63:0] io_r_bits_data,
+    input [127:0] io_r_bits_data,
     input  io_r_bits_last,
     input [4:0] io_r_bits_id,
     input  io_r_bits_user
@@ -30332,19 +29665,20 @@ module RTC(input clk, input reset,
   wire T12;
   wire T13;
   wire T14;
-  wire[7:0] T15;
+  wire[15:0] T15;
   wire T16;
-  wire[63:0] T17;
+  wire[127:0] T17;
+  wire[127:0] T42;
   reg [63:0] rtc;
-  wire[63:0] T42;
+  wire[63:0] T43;
   wire[63:0] T18;
   wire[63:0] T19;
   reg  sending_data;
-  wire T43;
+  wire T44;
   wire T20;
   wire T21;
   wire[4:0] T22;
-  wire[4:0] T44;
+  wire[4:0] T45;
   wire coreId;
   wire[3:0] T23;
   wire[3:0] T24;
@@ -30355,10 +29689,10 @@ module RTC(input clk, input reset,
   wire[2:0] T29;
   wire[7:0] T30;
   wire[31:0] T31;
-  wire[31:0] T45;
+  wire[31:0] T46;
   reg [30:0] T32;
   reg  sending_addr;
-  wire T46;
+  wire T47;
   wire T34;
   wire T35;
   wire T36;
@@ -30417,22 +29751,23 @@ module RTC(input clk, input reset,
   assign io_w_bits_user = T14;
   assign T14 = 1'h0;
   assign io_w_bits_strb = T15;
-  assign T15 = 8'hff;
+  assign T15 = 16'hffff;
   assign io_w_bits_last = T16;
   assign T16 = 1'h1;
   assign io_w_bits_data = T17;
-  assign T17 = rtc;
-  assign T42 = reset ? 64'h0 : T18;
+  assign T17 = T42;
+  assign T42 = {64'h0, rtc};
+  assign T43 = reset ? 64'h0 : T18;
   assign T18 = rtc_tick ? T19 : rtc;
   assign T19 = rtc + 64'h1;
   assign io_w_valid = sending_data;
-  assign T43 = reset ? 1'h0 : T20;
+  assign T44 = reset ? 1'h0 : T20;
   assign T20 = rtc_tick ? 1'h1 : sending_data;
   assign io_aw_bits_user = T21;
   assign T21 = 1'h0;
   assign io_aw_bits_id = T22;
-  assign T22 = T44;
-  assign T44 = {4'h0, coreId};
+  assign T22 = T45;
+  assign T45 = {4'h0, coreId};
   assign coreId = 1'h0;
   assign io_aw_bits_region = T23;
   assign T23 = 4'h0;
@@ -30451,8 +29786,8 @@ module RTC(input clk, input reset,
   assign io_aw_bits_len = T30;
   assign T30 = 8'h0;
   assign io_aw_bits_addr = T31;
-  assign T31 = T45;
-  assign T45 = {1'h0, T32};
+  assign T31 = T46;
+  assign T46 = {1'h0, T32};
   always @(*) case (coreId)
     0: T32 = 31'h40003808;
     default: begin
@@ -30465,7 +29800,7 @@ module RTC(input clk, input reset,
     end
   endcase
   assign io_aw_valid = sending_addr;
-  assign T46 = reset ? 1'h0 : T34;
+  assign T47 = reset ? 1'h0 : T34;
   assign T34 = T38 ? 1'h0 : T35;
   assign T35 = T37 ? 1'h0 : T36;
   assign T36 = rtc_tick ? 1'h1 : sending_addr;
@@ -30535,7 +29870,7 @@ module SMIIONastiReadIOConverter_0(input clk, input reset,
     input  io_r_ready,
     output io_r_valid,
     output[1:0] io_r_bits_resp,
-    output[63:0] io_r_bits_data,
+    output[127:0] io_r_bits_data,
     output io_r_bits_last,
     output[4:0] io_r_bits_id,
     output io_r_bits_user,
@@ -30551,7 +29886,7 @@ module SMIIONastiReadIOConverter_0(input clk, input reset,
 
   wire T0;
   reg [1:0] state;
-  wire[1:0] T60;
+  wire[1:0] T65;
   wire[1:0] T1;
   wire[1:0] T2;
   wire[1:0] T3;
@@ -30559,9 +29894,9 @@ module SMIIONastiReadIOConverter_0(input clk, input reset,
   wire T5;
   wire T6;
   reg  nWords;
-  wire T61;
+  wire T66;
   wire[7:0] T7;
-  wire[7:0] T62;
+  wire[7:0] T67;
   wire T8;
   wire T9;
   wire T10;
@@ -30571,7 +29906,7 @@ module SMIIONastiReadIOConverter_0(input clk, input reset,
   wire T14;
   wire T15;
   reg  recvInd;
-  wire T63;
+  wire T68;
   wire T16;
   wire T17;
   wire T18;
@@ -30587,12 +29922,12 @@ module SMIIONastiReadIOConverter_0(input clk, input reset,
   wire T27;
   wire T28;
   reg  sendDone;
-  wire T64;
+  wire T69;
   wire T29;
   wire T30;
   wire T31;
   reg  sendInd;
-  wire T65;
+  wire T70;
   wire T32;
   wire T33;
   wire T34;
@@ -30607,25 +29942,32 @@ module SMIIONastiReadIOConverter_0(input clk, input reset,
   wire[7:0] T41;
   wire[7:0] T42;
   wire[7:0] T43;
-  wire[63:0] T44;
-  wire[63:0] T45;
+  wire[127:0] T44;
+  wire[127:0] T45;
+  wire[127:0] T46;
   reg [63:0] buffer_0;
-  wire[63:0] T66;
-  wire[63:0] T46;
+  wire[63:0] T71;
   wire[63:0] T47;
   wire[63:0] T48;
-  wire[5:0] T49;
+  wire[63:0] T49;
+  wire[5:0] T50;
   reg [2:0] byteOff;
-  wire[2:0] T50;
   wire[2:0] T51;
   wire[2:0] T52;
-  wire T53;
+  wire[2:0] T53;
   wire T54;
-  wire[1:0] T55;
-  wire T56;
-  wire[1:0] T57;
-  wire T58;
-  wire T59;
+  wire T55;
+  wire[1:0] T56;
+  wire T57;
+  reg [63:0] buffer_1;
+  wire[63:0] T72;
+  wire[63:0] T58;
+  wire[63:0] T59;
+  wire T60;
+  wire T61;
+  wire[1:0] T62;
+  wire T63;
+  wire T64;
 
 `ifndef SYNTHESIS
 // synthesis translate_off
@@ -30642,6 +29984,7 @@ module SMIIONastiReadIOConverter_0(input clk, input reset,
     nBeats = {1{$random}};
     buffer_0 = {2{$random}};
     byteOff = {1{$random}};
+    buffer_1 = {2{$random}};
   end
 // synthesis translate_on
 `endif
@@ -30653,16 +29996,16 @@ module SMIIONastiReadIOConverter_0(input clk, input reset,
 `endif
   assign io_smi_resp_ready = T0;
   assign T0 = state == 2'h1;
-  assign T60 = reset ? 2'h0 : T1;
+  assign T65 = reset ? 2'h0 : T1;
   assign T1 = T21 ? T20 : T2;
   assign T2 = T5 ? 2'h2 : T3;
   assign T3 = T4 ? 2'h1 : state;
   assign T4 = io_ar_ready & io_ar_valid;
   assign T5 = T19 & T6;
   assign T6 = recvInd == nWords;
-  assign T61 = T7[1'h0:1'h0];
-  assign T7 = T14 ? T11 : T62;
-  assign T62 = {7'h0, T8};
+  assign T66 = T7[1'h0:1'h0];
+  assign T7 = T14 ? T11 : T67;
+  assign T67 = {7'h0, T8};
   assign T8 = T9 ? 1'h0 : nWords;
   assign T9 = T4 & T10;
   assign T10 = io_ar_bits_size < 3'h3;
@@ -30671,7 +30014,7 @@ module SMIIONastiReadIOConverter_0(input clk, input reset,
   assign T13 = io_ar_bits_size - 3'h3;
   assign T14 = T4 & T15;
   assign T15 = T10 ^ 1'h1;
-  assign T63 = reset ? 1'h0 : T16;
+  assign T68 = reset ? 1'h0 : T16;
   assign T16 = T21 ? 1'h0 : T17;
   assign T17 = T19 ? T18 : recvInd;
   assign T18 = recvInd + 1'h1;
@@ -30688,11 +30031,11 @@ module SMIIONastiReadIOConverter_0(input clk, input reset,
   assign io_smi_req_valid = T27;
   assign T27 = T35 & T28;
   assign T28 = sendDone ^ 1'h1;
-  assign T64 = reset ? 1'h0 : T29;
+  assign T69 = reset ? 1'h0 : T29;
   assign T29 = T21 ? 1'h0 : T30;
   assign T30 = T26 ? T31 : sendDone;
   assign T31 = sendInd == nWords;
-  assign T65 = reset ? 1'h0 : T32;
+  assign T70 = reset ? 1'h0 : T32;
   assign T32 = T21 ? 1'h0 : T33;
   assign T33 = T26 ? T34 : sendInd;
   assign T34 = sendInd + 1'h1;
@@ -30710,25 +30053,31 @@ module SMIIONastiReadIOConverter_0(input clk, input reset,
   assign T43 = nBeats - 8'h1;
   assign io_r_bits_data = T44;
   assign T44 = T45;
-  assign T45 = buffer_0;
-  assign T66 = reset ? 64'h0 : T46;
-  assign T46 = T21 ? 64'h0 : T47;
-  assign T47 = T53 ? T48 : buffer_0;
-  assign T48 = io_smi_resp_bits >> T49;
-  assign T49 = {byteOff, 3'h0};
-  assign T50 = T14 ? 3'h0 : T51;
-  assign T51 = T9 ? T52 : byteOff;
-  assign T52 = io_ar_bits_addr[2'h2:1'h0];
-  assign T53 = T19 & T54;
-  assign T54 = T55[1'h0:1'h0];
-  assign T55 = 1'h1 << T56;
-  assign T56 = recvInd;
-  assign io_r_bits_resp = T57;
-  assign T57 = 2'h0;
-  assign io_r_valid = T58;
-  assign T58 = state == 2'h2;
-  assign io_ar_ready = T59;
-  assign T59 = state == 2'h0;
+  assign T45 = T46;
+  assign T46 = {buffer_1, buffer_0};
+  assign T71 = reset ? 64'h0 : T47;
+  assign T47 = T21 ? 64'h0 : T48;
+  assign T48 = T54 ? T49 : buffer_0;
+  assign T49 = io_smi_resp_bits >> T50;
+  assign T50 = {byteOff, 3'h0};
+  assign T51 = T14 ? 3'h0 : T52;
+  assign T52 = T9 ? T53 : byteOff;
+  assign T53 = io_ar_bits_addr[2'h2:1'h0];
+  assign T54 = T19 & T55;
+  assign T55 = T56[1'h0:1'h0];
+  assign T56 = 1'h1 << T57;
+  assign T57 = recvInd;
+  assign T72 = reset ? 64'h0 : T58;
+  assign T58 = T21 ? 64'h0 : T59;
+  assign T59 = T60 ? T49 : buffer_1;
+  assign T60 = T19 & T61;
+  assign T61 = T56[1'h1:1'h1];
+  assign io_r_bits_resp = T62;
+  assign T62 = 2'h0;
+  assign io_r_valid = T63;
+  assign T63 = state == 2'h2;
+  assign io_ar_ready = T64;
+  assign T64 = state == 2'h0;
 
   always @(posedge clk) begin
     if(reset) begin
@@ -30740,7 +30089,7 @@ module SMIIONastiReadIOConverter_0(input clk, input reset,
     end else if(T4) begin
       state <= 2'h1;
     end
-    nWords <= T61;
+    nWords <= T66;
     if(reset) begin
       recvInd <= 1'h0;
     end else if(T21) begin
@@ -30779,13 +30128,20 @@ module SMIIONastiReadIOConverter_0(input clk, input reset,
       buffer_0 <= 64'h0;
     end else if(T21) begin
       buffer_0 <= 64'h0;
-    end else if(T53) begin
-      buffer_0 <= T48;
+    end else if(T54) begin
+      buffer_0 <= T49;
     end
     if(T14) begin
       byteOff <= 3'h0;
     end else if(T9) begin
-      byteOff <= T52;
+      byteOff <= T53;
+    end
+    if(reset) begin
+      buffer_1 <= 64'h0;
+    end else if(T21) begin
+      buffer_1 <= 64'h0;
+    end else if(T60) begin
+      buffer_1 <= T49;
     end
   end
 endmodule
@@ -30806,9 +30162,9 @@ module SMIIONastiWriteIOConverter_0(input clk, input reset,
     input  io_aw_bits_user,
     output io_w_ready,
     input  io_w_valid,
-    input [63:0] io_w_bits_data,
+    input [127:0] io_w_bits_data,
     input  io_w_bits_last,
-    input [7:0] io_w_bits_strb,
+    input [15:0] io_w_bits_strb,
     input  io_w_bits_user,
     input  io_b_ready,
     output io_b_valid,
@@ -30832,7 +30188,7 @@ module SMIIONastiWriteIOConverter_0(input clk, input reset,
   wire T4;
   wire T5;
   reg [2:0] state;
-  wire[2:0] T52;
+  wire[2:0] T57;
   wire[2:0] T6;
   wire[2:0] T7;
   wire[2:0] T8;
@@ -30846,19 +30202,21 @@ module SMIIONastiWriteIOConverter_0(input clk, input reset,
   wire T15;
   wire T16;
   wire T17;
-  reg  strb;
-  wire T18;
-  wire T19;
-  wire T20;
-  wire T21;
-  wire[255:0] T22;
-  wire[255:0] T53;
+  reg [1:0] strb;
+  wire[1:0] T18;
+  wire[1:0] T19;
+  wire[1:0] T20;
+  wire[1:0] T21;
+  wire T22;
   wire[255:0] T23;
+  wire[255:0] T58;
   wire[255:0] T24;
-  wire[7:0] T25;
+  wire[255:0] T25;
+  wire[7:0] T26;
   reg [2:0] size;
-  wire[2:0] T26;
+  wire[2:0] T27;
   wire T28;
+  wire[1:0] T59;
   wire T29;
   wire T30;
   wire T31;
@@ -30866,24 +30224,31 @@ module SMIIONastiWriteIOConverter_0(input clk, input reset,
   wire T33;
   wire T34;
   wire T35;
-  reg [63:0] data;
-  wire[63:0] T36;
-  wire[63:0] T37;
+  wire T36;
+  wire T37;
+  wire T38;
+  wire[63:0] T39;
+  reg [127:0] data;
+  wire[127:0] T40;
+  wire[127:0] T41;
+  wire[127:0] T60;
+  wire[63:0] T42;
   reg [11:0] addr;
-  wire[11:0] T39;
-  wire[11:0] T40;
-  wire[11:0] T41;
-  wire[11:0] T42;
-  wire T43;
-  wire T44;
-  wire T45;
-  wire[4:0] T46;
-  reg [4:0] id;
-  wire[4:0] T47;
-  wire[1:0] T48;
+  wire[11:0] T43;
+  wire[11:0] T44;
+  wire[11:0] T45;
+  wire[11:0] T46;
+  wire T47;
+  wire T48;
   wire T49;
   wire T50;
-  wire T51;
+  wire[4:0] T51;
+  reg [4:0] id;
+  wire[4:0] T52;
+  wire[1:0] T53;
+  wire T54;
+  wire T55;
+  wire T56;
 
 `ifndef SYNTHESIS
 // synthesis translate_off
@@ -30895,7 +30260,7 @@ module SMIIONastiWriteIOConverter_0(input clk, input reset,
     last = {1{$random}};
     strb = {1{$random}};
     size = {1{$random}};
-    data = {2{$random}};
+    data = {4{$random}};
     addr = {1{$random}};
     id = {1{$random}};
   end
@@ -30908,9 +30273,9 @@ module SMIIONastiWriteIOConverter_0(input clk, input reset,
   assign T4 = io_aw_valid ^ 1'h1;
   assign io_smi_resp_ready = T5;
   assign T5 = state == 3'h3;
-  assign T52 = reset ? 3'h0 : T6;
-  assign T6 = T35 ? 3'h0 : T7;
-  assign T7 = T34 ? 3'h4 : T8;
+  assign T57 = reset ? 3'h0 : T6;
+  assign T6 = T38 ? 3'h0 : T7;
+  assign T7 = T37 ? 3'h4 : T8;
   assign T8 = T16 ? T13 : T9;
   assign T9 = T12 ? 3'h2 : T10;
   assign T10 = T11 ? 3'h1 : state;
@@ -30919,51 +30284,60 @@ module SMIIONastiWriteIOConverter_0(input clk, input reset,
   assign T13 = last ? 3'h3 : 3'h1;
   assign T14 = T12 ? io_w_bits_last : T15;
   assign T15 = T11 ? 1'h0 : last;
-  assign T16 = T33 & T17;
-  assign T17 = strb == 1'h0;
-  assign T18 = T28 ? 1'h0 : T19;
+  assign T16 = T36 & T17;
+  assign T17 = strb == 2'h0;
+  assign T18 = T30 ? T59 : T19;
   assign T19 = T12 ? T20 : strb;
   assign T20 = T21;
-  assign T21 = T22[1'h0:1'h0];
-  assign T22 = T23 & T53;
-  assign T53 = {248'h0, io_w_bits_strb};
-  assign T23 = T24 - 256'h1;
-  assign T24 = 1'h1 << T25;
-  assign T25 = 1'h1 << size;
-  assign T26 = T11 ? io_aw_bits_size : size;
-  assign T28 = T33 & T29;
-  assign T29 = T32 & T30;
-  assign T30 = io_smi_req_ready | T31;
-  assign T31 = strb ^ 1'h1;
-  assign T32 = T17 ^ 1'h1;
-  assign T33 = state == 3'h2;
-  assign T34 = io_smi_resp_ready & io_smi_resp_valid;
-  assign T35 = io_b_ready & io_b_valid;
-  assign io_smi_req_bits_data = data;
-  assign T36 = T28 ? 64'h0 : T37;
-  assign T37 = T12 ? io_w_bits_data : data;
+  assign T21 = {T28, T22};
+  assign T22 = T23[1'h0:1'h0];
+  assign T23 = T24 & T58;
+  assign T58 = {240'h0, io_w_bits_strb};
+  assign T24 = T25 - 256'h1;
+  assign T25 = 1'h1 << T26;
+  assign T26 = 1'h1 << size;
+  assign T27 = T11 ? io_aw_bits_size : size;
+  assign T28 = T23[4'h8:4'h8];
+  assign T59 = {1'h0, T29};
+  assign T29 = strb >> 1'h1;
+  assign T30 = T36 & T31;
+  assign T31 = T35 & T32;
+  assign T32 = io_smi_req_ready | T33;
+  assign T33 = T34 ^ 1'h1;
+  assign T34 = strb[1'h0:1'h0];
+  assign T35 = T17 ^ 1'h1;
+  assign T36 = state == 3'h2;
+  assign T37 = io_smi_resp_ready & io_smi_resp_valid;
+  assign T38 = io_b_ready & io_b_valid;
+  assign io_smi_req_bits_data = T39;
+  assign T39 = data[6'h3f:1'h0];
+  assign T40 = T30 ? T60 : T41;
+  assign T41 = T12 ? io_w_bits_data : data;
+  assign T60 = {64'h0, T42};
+  assign T42 = data >> 7'h40;
   assign io_smi_req_bits_addr = addr;
-  assign T39 = T28 ? T42 : T40;
-  assign T40 = T11 ? T41 : addr;
-  assign T41 = io_aw_bits_addr[4'he:2'h3];
-  assign T42 = addr + 12'h1;
+  assign T43 = T30 ? T46 : T44;
+  assign T44 = T11 ? T45 : addr;
+  assign T45 = io_aw_bits_addr[4'he:2'h3];
+  assign T46 = addr + 12'h1;
   assign io_smi_req_bits_rw = 1'h1;
-  assign io_smi_req_valid = T43;
-  assign T43 = T44 & strb;
-  assign T44 = state == 3'h2;
-  assign io_b_bits_user = T45;
-  assign T45 = 1'h0;
-  assign io_b_bits_id = T46;
-  assign T46 = id;
-  assign T47 = T11 ? io_aw_bits_id : id;
-  assign io_b_bits_resp = T48;
-  assign T48 = 2'h0;
-  assign io_b_valid = T49;
-  assign T49 = state == 3'h4;
-  assign io_w_ready = T50;
-  assign T50 = state == 3'h1;
-  assign io_aw_ready = T51;
-  assign T51 = state == 3'h0;
+  assign io_smi_req_valid = T47;
+  assign T47 = T49 & T48;
+  assign T48 = strb[1'h0:1'h0];
+  assign T49 = state == 3'h2;
+  assign io_b_bits_user = T50;
+  assign T50 = 1'h0;
+  assign io_b_bits_id = T51;
+  assign T51 = id;
+  assign T52 = T11 ? io_aw_bits_id : id;
+  assign io_b_bits_resp = T53;
+  assign T53 = 2'h0;
+  assign io_b_valid = T54;
+  assign T54 = state == 3'h4;
+  assign io_w_ready = T55;
+  assign T55 = state == 3'h1;
+  assign io_aw_ready = T56;
+  assign T56 = state == 3'h0;
 
   always @(posedge clk) begin
 `ifndef SYNTHESIS
@@ -30977,9 +30351,9 @@ module SMIIONastiWriteIOConverter_0(input clk, input reset,
 `endif
     if(reset) begin
       state <= 3'h0;
-    end else if(T35) begin
+    end else if(T38) begin
       state <= 3'h0;
-    end else if(T34) begin
+    end else if(T37) begin
       state <= 3'h4;
     end else if(T16) begin
       state <= T13;
@@ -30993,23 +30367,23 @@ module SMIIONastiWriteIOConverter_0(input clk, input reset,
     end else if(T11) begin
       last <= 1'h0;
     end
-    if(T28) begin
-      strb <= 1'h0;
+    if(T30) begin
+      strb <= T59;
     end else if(T12) begin
       strb <= T20;
     end
     if(T11) begin
       size <= io_aw_bits_size;
     end
-    if(T28) begin
-      data <= 64'h0;
+    if(T30) begin
+      data <= T60;
     end else if(T12) begin
       data <= io_w_bits_data;
     end
-    if(T28) begin
-      addr <= T42;
+    if(T30) begin
+      addr <= T46;
     end else if(T11) begin
-      addr <= T41;
+      addr <= T45;
     end
     if(T11) begin
       id <= io_aw_bits_id;
@@ -31265,9 +30639,9 @@ module SMIIONastiIOConverter_0(input clk, input reset,
     input  io_nasti_aw_bits_user,
     output io_nasti_w_ready,
     input  io_nasti_w_valid,
-    input [63:0] io_nasti_w_bits_data,
+    input [127:0] io_nasti_w_bits_data,
     input  io_nasti_w_bits_last,
-    input [7:0] io_nasti_w_bits_strb,
+    input [15:0] io_nasti_w_bits_strb,
     input  io_nasti_w_bits_user,
     input  io_nasti_b_ready,
     output io_nasti_b_valid,
@@ -31290,7 +30664,7 @@ module SMIIONastiIOConverter_0(input clk, input reset,
     input  io_nasti_r_ready,
     output io_nasti_r_valid,
     output[1:0] io_nasti_r_bits_resp,
-    output[63:0] io_nasti_r_bits_data,
+    output[127:0] io_nasti_r_bits_data,
     output io_nasti_r_bits_last,
     output[4:0] io_nasti_r_bits_id,
     output io_nasti_r_bits_user,
@@ -31307,7 +30681,7 @@ module SMIIONastiIOConverter_0(input clk, input reset,
   wire reader_io_ar_ready;
   wire reader_io_r_valid;
   wire[1:0] reader_io_r_bits_resp;
-  wire[63:0] reader_io_r_bits_data;
+  wire[127:0] reader_io_r_bits_data;
   wire reader_io_r_bits_last;
   wire[4:0] reader_io_r_bits_id;
   wire reader_io_r_bits_user;
@@ -31471,7 +30845,7 @@ module SMIIONastiReadIOConverter_1(input clk, input reset,
     input  io_r_ready,
     output io_r_valid,
     output[1:0] io_r_bits_resp,
-    output[63:0] io_r_bits_data,
+    output[127:0] io_r_bits_data,
     output io_r_bits_last,
     output[4:0] io_r_bits_id,
     output io_r_bits_user,
@@ -31487,7 +30861,7 @@ module SMIIONastiReadIOConverter_1(input clk, input reset,
 
   wire T0;
   reg [1:0] state;
-  wire[1:0] T60;
+  wire[1:0] T65;
   wire[1:0] T1;
   wire[1:0] T2;
   wire[1:0] T3;
@@ -31495,9 +30869,9 @@ module SMIIONastiReadIOConverter_1(input clk, input reset,
   wire T5;
   wire T6;
   reg  nWords;
-  wire T61;
+  wire T66;
   wire[7:0] T7;
-  wire[7:0] T62;
+  wire[7:0] T67;
   wire T8;
   wire T9;
   wire T10;
@@ -31507,7 +30881,7 @@ module SMIIONastiReadIOConverter_1(input clk, input reset,
   wire T14;
   wire T15;
   reg  recvInd;
-  wire T63;
+  wire T68;
   wire T16;
   wire T17;
   wire T18;
@@ -31523,12 +30897,12 @@ module SMIIONastiReadIOConverter_1(input clk, input reset,
   wire T27;
   wire T28;
   reg  sendDone;
-  wire T64;
+  wire T69;
   wire T29;
   wire T30;
   wire T31;
   reg  sendInd;
-  wire T65;
+  wire T70;
   wire T32;
   wire T33;
   wire T34;
@@ -31543,25 +30917,32 @@ module SMIIONastiReadIOConverter_1(input clk, input reset,
   wire[7:0] T41;
   wire[7:0] T42;
   wire[7:0] T43;
-  wire[63:0] T44;
-  wire[63:0] T45;
+  wire[127:0] T44;
+  wire[127:0] T45;
+  wire[127:0] T46;
   reg [63:0] buffer_0;
-  wire[63:0] T66;
-  wire[63:0] T46;
+  wire[63:0] T71;
   wire[63:0] T47;
   wire[63:0] T48;
-  wire[5:0] T49;
+  wire[63:0] T49;
+  wire[5:0] T50;
   reg [2:0] byteOff;
-  wire[2:0] T50;
   wire[2:0] T51;
   wire[2:0] T52;
-  wire T53;
+  wire[2:0] T53;
   wire T54;
-  wire[1:0] T55;
-  wire T56;
-  wire[1:0] T57;
-  wire T58;
-  wire T59;
+  wire T55;
+  wire[1:0] T56;
+  wire T57;
+  reg [63:0] buffer_1;
+  wire[63:0] T72;
+  wire[63:0] T58;
+  wire[63:0] T59;
+  wire T60;
+  wire T61;
+  wire[1:0] T62;
+  wire T63;
+  wire T64;
 
 `ifndef SYNTHESIS
 // synthesis translate_off
@@ -31578,6 +30959,7 @@ module SMIIONastiReadIOConverter_1(input clk, input reset,
     nBeats = {1{$random}};
     buffer_0 = {2{$random}};
     byteOff = {1{$random}};
+    buffer_1 = {2{$random}};
   end
 // synthesis translate_on
 `endif
@@ -31589,16 +30971,16 @@ module SMIIONastiReadIOConverter_1(input clk, input reset,
 `endif
   assign io_smi_resp_ready = T0;
   assign T0 = state == 2'h1;
-  assign T60 = reset ? 2'h0 : T1;
+  assign T65 = reset ? 2'h0 : T1;
   assign T1 = T21 ? T20 : T2;
   assign T2 = T5 ? 2'h2 : T3;
   assign T3 = T4 ? 2'h1 : state;
   assign T4 = io_ar_ready & io_ar_valid;
   assign T5 = T19 & T6;
   assign T6 = recvInd == nWords;
-  assign T61 = T7[1'h0:1'h0];
-  assign T7 = T14 ? T11 : T62;
-  assign T62 = {7'h0, T8};
+  assign T66 = T7[1'h0:1'h0];
+  assign T7 = T14 ? T11 : T67;
+  assign T67 = {7'h0, T8};
   assign T8 = T9 ? 1'h0 : nWords;
   assign T9 = T4 & T10;
   assign T10 = io_ar_bits_size < 3'h3;
@@ -31607,7 +30989,7 @@ module SMIIONastiReadIOConverter_1(input clk, input reset,
   assign T13 = io_ar_bits_size - 3'h3;
   assign T14 = T4 & T15;
   assign T15 = T10 ^ 1'h1;
-  assign T63 = reset ? 1'h0 : T16;
+  assign T68 = reset ? 1'h0 : T16;
   assign T16 = T21 ? 1'h0 : T17;
   assign T17 = T19 ? T18 : recvInd;
   assign T18 = recvInd + 1'h1;
@@ -31624,11 +31006,11 @@ module SMIIONastiReadIOConverter_1(input clk, input reset,
   assign io_smi_req_valid = T27;
   assign T27 = T35 & T28;
   assign T28 = sendDone ^ 1'h1;
-  assign T64 = reset ? 1'h0 : T29;
+  assign T69 = reset ? 1'h0 : T29;
   assign T29 = T21 ? 1'h0 : T30;
   assign T30 = T26 ? T31 : sendDone;
   assign T31 = sendInd == nWords;
-  assign T65 = reset ? 1'h0 : T32;
+  assign T70 = reset ? 1'h0 : T32;
   assign T32 = T21 ? 1'h0 : T33;
   assign T33 = T26 ? T34 : sendInd;
   assign T34 = sendInd + 1'h1;
@@ -31646,25 +31028,31 @@ module SMIIONastiReadIOConverter_1(input clk, input reset,
   assign T43 = nBeats - 8'h1;
   assign io_r_bits_data = T44;
   assign T44 = T45;
-  assign T45 = buffer_0;
-  assign T66 = reset ? 64'h0 : T46;
-  assign T46 = T21 ? 64'h0 : T47;
-  assign T47 = T53 ? T48 : buffer_0;
-  assign T48 = io_smi_resp_bits >> T49;
-  assign T49 = {byteOff, 3'h0};
-  assign T50 = T14 ? 3'h0 : T51;
-  assign T51 = T9 ? T52 : byteOff;
-  assign T52 = io_ar_bits_addr[2'h2:1'h0];
-  assign T53 = T19 & T54;
-  assign T54 = T55[1'h0:1'h0];
-  assign T55 = 1'h1 << T56;
-  assign T56 = recvInd;
-  assign io_r_bits_resp = T57;
-  assign T57 = 2'h0;
-  assign io_r_valid = T58;
-  assign T58 = state == 2'h2;
-  assign io_ar_ready = T59;
-  assign T59 = state == 2'h0;
+  assign T45 = T46;
+  assign T46 = {buffer_1, buffer_0};
+  assign T71 = reset ? 64'h0 : T47;
+  assign T47 = T21 ? 64'h0 : T48;
+  assign T48 = T54 ? T49 : buffer_0;
+  assign T49 = io_smi_resp_bits >> T50;
+  assign T50 = {byteOff, 3'h0};
+  assign T51 = T14 ? 3'h0 : T52;
+  assign T52 = T9 ? T53 : byteOff;
+  assign T53 = io_ar_bits_addr[2'h2:1'h0];
+  assign T54 = T19 & T55;
+  assign T55 = T56[1'h0:1'h0];
+  assign T56 = 1'h1 << T57;
+  assign T57 = recvInd;
+  assign T72 = reset ? 64'h0 : T58;
+  assign T58 = T21 ? 64'h0 : T59;
+  assign T59 = T60 ? T49 : buffer_1;
+  assign T60 = T19 & T61;
+  assign T61 = T56[1'h1:1'h1];
+  assign io_r_bits_resp = T62;
+  assign T62 = 2'h0;
+  assign io_r_valid = T63;
+  assign T63 = state == 2'h2;
+  assign io_ar_ready = T64;
+  assign T64 = state == 2'h0;
 
   always @(posedge clk) begin
     if(reset) begin
@@ -31676,7 +31064,7 @@ module SMIIONastiReadIOConverter_1(input clk, input reset,
     end else if(T4) begin
       state <= 2'h1;
     end
-    nWords <= T61;
+    nWords <= T66;
     if(reset) begin
       recvInd <= 1'h0;
     end else if(T21) begin
@@ -31715,13 +31103,20 @@ module SMIIONastiReadIOConverter_1(input clk, input reset,
       buffer_0 <= 64'h0;
     end else if(T21) begin
       buffer_0 <= 64'h0;
-    end else if(T53) begin
-      buffer_0 <= T48;
+    end else if(T54) begin
+      buffer_0 <= T49;
     end
     if(T14) begin
       byteOff <= 3'h0;
     end else if(T9) begin
-      byteOff <= T52;
+      byteOff <= T53;
+    end
+    if(reset) begin
+      buffer_1 <= 64'h0;
+    end else if(T21) begin
+      buffer_1 <= 64'h0;
+    end else if(T60) begin
+      buffer_1 <= T49;
     end
   end
 endmodule
@@ -31742,9 +31137,9 @@ module SMIIONastiWriteIOConverter_1(input clk, input reset,
     input  io_aw_bits_user,
     output io_w_ready,
     input  io_w_valid,
-    input [63:0] io_w_bits_data,
+    input [127:0] io_w_bits_data,
     input  io_w_bits_last,
-    input [7:0] io_w_bits_strb,
+    input [15:0] io_w_bits_strb,
     input  io_w_bits_user,
     input  io_b_ready,
     output io_b_valid,
@@ -31768,7 +31163,7 @@ module SMIIONastiWriteIOConverter_1(input clk, input reset,
   wire T4;
   wire T5;
   reg [2:0] state;
-  wire[2:0] T52;
+  wire[2:0] T57;
   wire[2:0] T6;
   wire[2:0] T7;
   wire[2:0] T8;
@@ -31782,19 +31177,21 @@ module SMIIONastiWriteIOConverter_1(input clk, input reset,
   wire T15;
   wire T16;
   wire T17;
-  reg  strb;
-  wire T18;
-  wire T19;
-  wire T20;
-  wire T21;
-  wire[255:0] T22;
-  wire[255:0] T53;
+  reg [1:0] strb;
+  wire[1:0] T18;
+  wire[1:0] T19;
+  wire[1:0] T20;
+  wire[1:0] T21;
+  wire T22;
   wire[255:0] T23;
+  wire[255:0] T58;
   wire[255:0] T24;
-  wire[7:0] T25;
+  wire[255:0] T25;
+  wire[7:0] T26;
   reg [2:0] size;
-  wire[2:0] T26;
+  wire[2:0] T27;
   wire T28;
+  wire[1:0] T59;
   wire T29;
   wire T30;
   wire T31;
@@ -31802,24 +31199,31 @@ module SMIIONastiWriteIOConverter_1(input clk, input reset,
   wire T33;
   wire T34;
   wire T35;
-  reg [63:0] data;
-  wire[63:0] T36;
-  wire[63:0] T37;
+  wire T36;
+  wire T37;
+  wire T38;
+  wire[63:0] T39;
+  reg [127:0] data;
+  wire[127:0] T40;
+  wire[127:0] T41;
+  wire[127:0] T60;
+  wire[63:0] T42;
   reg [5:0] addr;
-  wire[5:0] T39;
-  wire[5:0] T40;
-  wire[5:0] T41;
-  wire[5:0] T42;
-  wire T43;
-  wire T44;
-  wire T45;
-  wire[4:0] T46;
-  reg [4:0] id;
-  wire[4:0] T47;
-  wire[1:0] T48;
+  wire[5:0] T43;
+  wire[5:0] T44;
+  wire[5:0] T45;
+  wire[5:0] T46;
+  wire T47;
+  wire T48;
   wire T49;
   wire T50;
-  wire T51;
+  wire[4:0] T51;
+  reg [4:0] id;
+  wire[4:0] T52;
+  wire[1:0] T53;
+  wire T54;
+  wire T55;
+  wire T56;
 
 `ifndef SYNTHESIS
 // synthesis translate_off
@@ -31831,7 +31235,7 @@ module SMIIONastiWriteIOConverter_1(input clk, input reset,
     last = {1{$random}};
     strb = {1{$random}};
     size = {1{$random}};
-    data = {2{$random}};
+    data = {4{$random}};
     addr = {1{$random}};
     id = {1{$random}};
   end
@@ -31844,9 +31248,9 @@ module SMIIONastiWriteIOConverter_1(input clk, input reset,
   assign T4 = io_aw_valid ^ 1'h1;
   assign io_smi_resp_ready = T5;
   assign T5 = state == 3'h3;
-  assign T52 = reset ? 3'h0 : T6;
-  assign T6 = T35 ? 3'h0 : T7;
-  assign T7 = T34 ? 3'h4 : T8;
+  assign T57 = reset ? 3'h0 : T6;
+  assign T6 = T38 ? 3'h0 : T7;
+  assign T7 = T37 ? 3'h4 : T8;
   assign T8 = T16 ? T13 : T9;
   assign T9 = T12 ? 3'h2 : T10;
   assign T10 = T11 ? 3'h1 : state;
@@ -31855,51 +31259,60 @@ module SMIIONastiWriteIOConverter_1(input clk, input reset,
   assign T13 = last ? 3'h3 : 3'h1;
   assign T14 = T12 ? io_w_bits_last : T15;
   assign T15 = T11 ? 1'h0 : last;
-  assign T16 = T33 & T17;
-  assign T17 = strb == 1'h0;
-  assign T18 = T28 ? 1'h0 : T19;
+  assign T16 = T36 & T17;
+  assign T17 = strb == 2'h0;
+  assign T18 = T30 ? T59 : T19;
   assign T19 = T12 ? T20 : strb;
   assign T20 = T21;
-  assign T21 = T22[1'h0:1'h0];
-  assign T22 = T23 & T53;
-  assign T53 = {248'h0, io_w_bits_strb};
-  assign T23 = T24 - 256'h1;
-  assign T24 = 1'h1 << T25;
-  assign T25 = 1'h1 << size;
-  assign T26 = T11 ? io_aw_bits_size : size;
-  assign T28 = T33 & T29;
-  assign T29 = T32 & T30;
-  assign T30 = io_smi_req_ready | T31;
-  assign T31 = strb ^ 1'h1;
-  assign T32 = T17 ^ 1'h1;
-  assign T33 = state == 3'h2;
-  assign T34 = io_smi_resp_ready & io_smi_resp_valid;
-  assign T35 = io_b_ready & io_b_valid;
-  assign io_smi_req_bits_data = data;
-  assign T36 = T28 ? 64'h0 : T37;
-  assign T37 = T12 ? io_w_bits_data : data;
+  assign T21 = {T28, T22};
+  assign T22 = T23[1'h0:1'h0];
+  assign T23 = T24 & T58;
+  assign T58 = {240'h0, io_w_bits_strb};
+  assign T24 = T25 - 256'h1;
+  assign T25 = 1'h1 << T26;
+  assign T26 = 1'h1 << size;
+  assign T27 = T11 ? io_aw_bits_size : size;
+  assign T28 = T23[4'h8:4'h8];
+  assign T59 = {1'h0, T29};
+  assign T29 = strb >> 1'h1;
+  assign T30 = T36 & T31;
+  assign T31 = T35 & T32;
+  assign T32 = io_smi_req_ready | T33;
+  assign T33 = T34 ^ 1'h1;
+  assign T34 = strb[1'h0:1'h0];
+  assign T35 = T17 ^ 1'h1;
+  assign T36 = state == 3'h2;
+  assign T37 = io_smi_resp_ready & io_smi_resp_valid;
+  assign T38 = io_b_ready & io_b_valid;
+  assign io_smi_req_bits_data = T39;
+  assign T39 = data[6'h3f:1'h0];
+  assign T40 = T30 ? T60 : T41;
+  assign T41 = T12 ? io_w_bits_data : data;
+  assign T60 = {64'h0, T42};
+  assign T42 = data >> 7'h40;
   assign io_smi_req_bits_addr = addr;
-  assign T39 = T28 ? T42 : T40;
-  assign T40 = T11 ? T41 : addr;
-  assign T41 = io_aw_bits_addr[4'h8:2'h3];
-  assign T42 = addr + 6'h1;
+  assign T43 = T30 ? T46 : T44;
+  assign T44 = T11 ? T45 : addr;
+  assign T45 = io_aw_bits_addr[4'h8:2'h3];
+  assign T46 = addr + 6'h1;
   assign io_smi_req_bits_rw = 1'h1;
-  assign io_smi_req_valid = T43;
-  assign T43 = T44 & strb;
-  assign T44 = state == 3'h2;
-  assign io_b_bits_user = T45;
-  assign T45 = 1'h0;
-  assign io_b_bits_id = T46;
-  assign T46 = id;
-  assign T47 = T11 ? io_aw_bits_id : id;
-  assign io_b_bits_resp = T48;
-  assign T48 = 2'h0;
-  assign io_b_valid = T49;
-  assign T49 = state == 3'h4;
-  assign io_w_ready = T50;
-  assign T50 = state == 3'h1;
-  assign io_aw_ready = T51;
-  assign T51 = state == 3'h0;
+  assign io_smi_req_valid = T47;
+  assign T47 = T49 & T48;
+  assign T48 = strb[1'h0:1'h0];
+  assign T49 = state == 3'h2;
+  assign io_b_bits_user = T50;
+  assign T50 = 1'h0;
+  assign io_b_bits_id = T51;
+  assign T51 = id;
+  assign T52 = T11 ? io_aw_bits_id : id;
+  assign io_b_bits_resp = T53;
+  assign T53 = 2'h0;
+  assign io_b_valid = T54;
+  assign T54 = state == 3'h4;
+  assign io_w_ready = T55;
+  assign T55 = state == 3'h1;
+  assign io_aw_ready = T56;
+  assign T56 = state == 3'h0;
 
   always @(posedge clk) begin
 `ifndef SYNTHESIS
@@ -31913,9 +31326,9 @@ module SMIIONastiWriteIOConverter_1(input clk, input reset,
 `endif
     if(reset) begin
       state <= 3'h0;
-    end else if(T35) begin
+    end else if(T38) begin
       state <= 3'h0;
-    end else if(T34) begin
+    end else if(T37) begin
       state <= 3'h4;
     end else if(T16) begin
       state <= T13;
@@ -31929,23 +31342,23 @@ module SMIIONastiWriteIOConverter_1(input clk, input reset,
     end else if(T11) begin
       last <= 1'h0;
     end
-    if(T28) begin
-      strb <= 1'h0;
+    if(T30) begin
+      strb <= T59;
     end else if(T12) begin
       strb <= T20;
     end
     if(T11) begin
       size <= io_aw_bits_size;
     end
-    if(T28) begin
-      data <= 64'h0;
+    if(T30) begin
+      data <= T60;
     end else if(T12) begin
       data <= io_w_bits_data;
     end
-    if(T28) begin
-      addr <= T42;
+    if(T30) begin
+      addr <= T46;
     end else if(T11) begin
-      addr <= T41;
+      addr <= T45;
     end
     if(T11) begin
       id <= io_aw_bits_id;
@@ -32201,9 +31614,9 @@ module SMIIONastiIOConverter_1(input clk, input reset,
     input  io_nasti_aw_bits_user,
     output io_nasti_w_ready,
     input  io_nasti_w_valid,
-    input [63:0] io_nasti_w_bits_data,
+    input [127:0] io_nasti_w_bits_data,
     input  io_nasti_w_bits_last,
-    input [7:0] io_nasti_w_bits_strb,
+    input [15:0] io_nasti_w_bits_strb,
     input  io_nasti_w_bits_user,
     input  io_nasti_b_ready,
     output io_nasti_b_valid,
@@ -32226,7 +31639,7 @@ module SMIIONastiIOConverter_1(input clk, input reset,
     input  io_nasti_r_ready,
     output io_nasti_r_valid,
     output[1:0] io_nasti_r_bits_resp,
-    output[63:0] io_nasti_r_bits_data,
+    output[127:0] io_nasti_r_bits_data,
     output io_nasti_r_bits_last,
     output[4:0] io_nasti_r_bits_id,
     output io_nasti_r_bits_user,
@@ -32243,7 +31656,7 @@ module SMIIONastiIOConverter_1(input clk, input reset,
   wire reader_io_ar_ready;
   wire reader_io_r_valid;
   wire[1:0] reader_io_r_bits_resp;
-  wire[63:0] reader_io_r_bits_data;
+  wire[127:0] reader_io_r_bits_data;
   wire reader_io_r_bits_last;
   wire[4:0] reader_io_r_bits_id;
   wire reader_io_r_bits_user;
@@ -32470,9 +31883,9 @@ module OuterMemorySystem(input clk, input reset,
     output io_mem_0_aw_bits_user,
     input  io_mem_0_w_ready,
     output io_mem_0_w_valid,
-    output[63:0] io_mem_0_w_bits_data,
+    output[127:0] io_mem_0_w_bits_data,
     output io_mem_0_w_bits_last,
-    output[7:0] io_mem_0_w_bits_strb,
+    output[15:0] io_mem_0_w_bits_strb,
     output io_mem_0_w_bits_user,
     output io_mem_0_b_ready,
     input  io_mem_0_b_valid,
@@ -32495,7 +31908,7 @@ module OuterMemorySystem(input clk, input reset,
     output io_mem_0_r_ready,
     input  io_mem_0_r_valid,
     input [1:0] io_mem_0_r_bits_resp,
-    input [63:0] io_mem_0_r_bits_data,
+    input [127:0] io_mem_0_r_bits_data,
     input  io_mem_0_r_bits_last,
     input [4:0] io_mem_0_r_bits_id,
     input  io_mem_0_r_bits_user,
@@ -32536,9 +31949,9 @@ module OuterMemorySystem(input clk, input reset,
     output io_mmio_aw_bits_user,
     input  io_mmio_w_ready,
     output io_mmio_w_valid,
-    output[63:0] io_mmio_w_bits_data,
+    output[127:0] io_mmio_w_bits_data,
     output io_mmio_w_bits_last,
-    output[7:0] io_mmio_w_bits_strb,
+    output[15:0] io_mmio_w_bits_strb,
     output io_mmio_w_bits_user,
     output io_mmio_b_ready,
     input  io_mmio_b_valid,
@@ -32561,12 +31974,19 @@ module OuterMemorySystem(input clk, input reset,
     output io_mmio_r_ready,
     input  io_mmio_r_valid,
     input [1:0] io_mmio_r_bits_resp,
-    input [63:0] io_mmio_r_bits_data,
+    input [127:0] io_mmio_r_bits_data,
     input  io_mmio_r_bits_last,
     input [4:0] io_mmio_r_bits_id,
     input  io_mmio_r_bits_user
 );
 
+  wire[3:0] T0;
+  wire[1:0] T1;
+  wire[1:0] T2;
+  wire T3;
+  wire[3:0] T4;
+  wire[3:0] T5;
+  wire[3:0] T6;
   wire ClientTileLinkIOWrapper_io_in_acquire_ready;
   wire ClientTileLinkIOWrapper_io_in_grant_valid;
   wire[1:0] ClientTileLinkIOWrapper_io_in_grant_bits_addr_beat;
@@ -32605,6 +32025,23 @@ module OuterMemorySystem(input clk, input reset,
   wire ClientTileLinkIOWrapper_1_io_out_grant_ready;
   wire ClientTileLinkIOWrapper_1_io_out_probe_ready;
   wire ClientTileLinkIOWrapper_1_io_out_release_valid;
+  wire TileLinkIONarrower_io_in_acquire_ready;
+  wire TileLinkIONarrower_io_in_grant_valid;
+  wire[1:0] TileLinkIONarrower_io_in_grant_bits_addr_beat;
+  wire[3:0] TileLinkIONarrower_io_in_grant_bits_client_xact_id;
+  wire TileLinkIONarrower_io_in_grant_bits_manager_xact_id;
+  wire TileLinkIONarrower_io_in_grant_bits_is_builtin_type;
+  wire[3:0] TileLinkIONarrower_io_in_grant_bits_g_type;
+  wire[127:0] TileLinkIONarrower_io_in_grant_bits_data;
+  wire TileLinkIONarrower_io_out_acquire_valid;
+  wire[25:0] TileLinkIONarrower_io_out_acquire_bits_addr_block;
+  wire[3:0] TileLinkIONarrower_io_out_acquire_bits_client_xact_id;
+  wire[1:0] TileLinkIONarrower_io_out_acquire_bits_addr_beat;
+  wire TileLinkIONarrower_io_out_acquire_bits_is_builtin_type;
+  wire[2:0] TileLinkIONarrower_io_out_acquire_bits_a_type;
+  wire[16:0] TileLinkIONarrower_io_out_acquire_bits_union;
+  wire[127:0] TileLinkIONarrower_io_out_acquire_bits_data;
+  wire TileLinkIONarrower_io_out_grant_ready;
   wire ClientTileLinkIOWrapper_2_io_in_acquire_ready;
   wire ClientTileLinkIOWrapper_2_io_in_grant_valid;
   wire[1:0] ClientTileLinkIOWrapper_2_io_in_grant_bits_addr_beat;
@@ -32624,6 +32061,35 @@ module OuterMemorySystem(input clk, input reset,
   wire ClientTileLinkIOWrapper_2_io_out_grant_ready;
   wire ClientTileLinkIOWrapper_2_io_out_probe_ready;
   wire ClientTileLinkIOWrapper_2_io_out_release_valid;
+  wire ClientTileLinkEnqueuer_io_inner_acquire_ready;
+  wire ClientTileLinkEnqueuer_io_inner_grant_valid;
+  wire[1:0] ClientTileLinkEnqueuer_io_inner_grant_bits_addr_beat;
+  wire[1:0] ClientTileLinkEnqueuer_io_inner_grant_bits_client_xact_id;
+  wire[3:0] ClientTileLinkEnqueuer_io_inner_grant_bits_manager_xact_id;
+  wire ClientTileLinkEnqueuer_io_inner_grant_bits_is_builtin_type;
+  wire[3:0] ClientTileLinkEnqueuer_io_inner_grant_bits_g_type;
+  wire[127:0] ClientTileLinkEnqueuer_io_inner_grant_bits_data;
+  wire ClientTileLinkEnqueuer_io_inner_probe_valid;
+  wire[25:0] ClientTileLinkEnqueuer_io_inner_probe_bits_addr_block;
+  wire[1:0] ClientTileLinkEnqueuer_io_inner_probe_bits_p_type;
+  wire ClientTileLinkEnqueuer_io_inner_release_ready;
+  wire ClientTileLinkEnqueuer_io_outer_acquire_valid;
+  wire[25:0] ClientTileLinkEnqueuer_io_outer_acquire_bits_addr_block;
+  wire[1:0] ClientTileLinkEnqueuer_io_outer_acquire_bits_client_xact_id;
+  wire[1:0] ClientTileLinkEnqueuer_io_outer_acquire_bits_addr_beat;
+  wire ClientTileLinkEnqueuer_io_outer_acquire_bits_is_builtin_type;
+  wire[2:0] ClientTileLinkEnqueuer_io_outer_acquire_bits_a_type;
+  wire[16:0] ClientTileLinkEnqueuer_io_outer_acquire_bits_union;
+  wire[127:0] ClientTileLinkEnqueuer_io_outer_acquire_bits_data;
+  wire ClientTileLinkEnqueuer_io_outer_grant_ready;
+  wire ClientTileLinkEnqueuer_io_outer_probe_ready;
+  wire ClientTileLinkEnqueuer_io_outer_release_valid;
+  wire[1:0] ClientTileLinkEnqueuer_io_outer_release_bits_addr_beat;
+  wire[25:0] ClientTileLinkEnqueuer_io_outer_release_bits_addr_block;
+  wire[1:0] ClientTileLinkEnqueuer_io_outer_release_bits_client_xact_id;
+  wire[2:0] ClientTileLinkEnqueuer_io_outer_release_bits_r_type;
+  wire ClientTileLinkEnqueuer_io_outer_release_bits_voluntary;
+  wire[127:0] ClientTileLinkEnqueuer_io_outer_release_bits_data;
   wire Queue_io_enq_ready;
   wire Queue_io_deq_valid;
   wire[31:0] Queue_io_deq_bits_addr;
@@ -32652,14 +32118,14 @@ module OuterMemorySystem(input clk, input reset,
   wire Queue_1_io_deq_bits_user;
   wire Queue_2_io_enq_ready;
   wire Queue_2_io_deq_valid;
-  wire[63:0] Queue_2_io_deq_bits_data;
+  wire[127:0] Queue_2_io_deq_bits_data;
   wire Queue_2_io_deq_bits_last;
-  wire[7:0] Queue_2_io_deq_bits_strb;
+  wire[15:0] Queue_2_io_deq_bits_strb;
   wire Queue_2_io_deq_bits_user;
   wire Queue_3_io_enq_ready;
   wire Queue_3_io_deq_valid;
   wire[1:0] Queue_3_io_deq_bits_resp;
-  wire[63:0] Queue_3_io_deq_bits_data;
+  wire[127:0] Queue_3_io_deq_bits_data;
   wire Queue_3_io_deq_bits_last;
   wire[4:0] Queue_3_io_deq_bits_id;
   wire Queue_3_io_deq_bits_user;
@@ -32681,9 +32147,9 @@ module OuterMemorySystem(input clk, input reset,
   wire[4:0] rtc_io_aw_bits_id;
   wire rtc_io_aw_bits_user;
   wire rtc_io_w_valid;
-  wire[63:0] rtc_io_w_bits_data;
+  wire[127:0] rtc_io_w_bits_data;
   wire rtc_io_w_bits_last;
-  wire[7:0] rtc_io_w_bits_strb;
+  wire[15:0] rtc_io_w_bits_strb;
   wire rtc_io_w_bits_user;
   wire rtc_io_b_ready;
   wire rtc_io_ar_valid;
@@ -32707,31 +32173,14 @@ module OuterMemorySystem(input clk, input reset,
   wire[16:0] ClientTileLinkIOUnwrapper_io_out_acquire_bits_union;
   wire[127:0] ClientTileLinkIOUnwrapper_io_out_acquire_bits_data;
   wire ClientTileLinkIOUnwrapper_io_out_grant_ready;
-  wire TileLinkIONarrower_io_in_acquire_ready;
-  wire TileLinkIONarrower_io_in_grant_valid;
-  wire[1:0] TileLinkIONarrower_io_in_grant_bits_addr_beat;
-  wire[3:0] TileLinkIONarrower_io_in_grant_bits_client_xact_id;
-  wire TileLinkIONarrower_io_in_grant_bits_manager_xact_id;
-  wire TileLinkIONarrower_io_in_grant_bits_is_builtin_type;
-  wire[3:0] TileLinkIONarrower_io_in_grant_bits_g_type;
-  wire[127:0] TileLinkIONarrower_io_in_grant_bits_data;
-  wire TileLinkIONarrower_io_out_acquire_valid;
-  wire[25:0] TileLinkIONarrower_io_out_acquire_bits_addr_block;
-  wire[3:0] TileLinkIONarrower_io_out_acquire_bits_client_xact_id;
-  wire[2:0] TileLinkIONarrower_io_out_acquire_bits_addr_beat;
-  wire TileLinkIONarrower_io_out_acquire_bits_is_builtin_type;
-  wire[2:0] TileLinkIONarrower_io_out_acquire_bits_a_type;
-  wire[11:0] TileLinkIONarrower_io_out_acquire_bits_union;
-  wire[63:0] TileLinkIONarrower_io_out_acquire_bits_data;
-  wire TileLinkIONarrower_io_out_grant_ready;
   wire NastiIOTileLinkIOConverter_io_tl_acquire_ready;
   wire NastiIOTileLinkIOConverter_io_tl_grant_valid;
-  wire[2:0] NastiIOTileLinkIOConverter_io_tl_grant_bits_addr_beat;
+  wire[1:0] NastiIOTileLinkIOConverter_io_tl_grant_bits_addr_beat;
   wire[3:0] NastiIOTileLinkIOConverter_io_tl_grant_bits_client_xact_id;
   wire NastiIOTileLinkIOConverter_io_tl_grant_bits_manager_xact_id;
   wire NastiIOTileLinkIOConverter_io_tl_grant_bits_is_builtin_type;
   wire[3:0] NastiIOTileLinkIOConverter_io_tl_grant_bits_g_type;
-  wire[63:0] NastiIOTileLinkIOConverter_io_tl_grant_bits_data;
+  wire[127:0] NastiIOTileLinkIOConverter_io_tl_grant_bits_data;
   wire NastiIOTileLinkIOConverter_io_nasti_aw_valid;
   wire[31:0] NastiIOTileLinkIOConverter_io_nasti_aw_bits_addr;
   wire[7:0] NastiIOTileLinkIOConverter_io_nasti_aw_bits_len;
@@ -32745,9 +32194,9 @@ module OuterMemorySystem(input clk, input reset,
   wire[4:0] NastiIOTileLinkIOConverter_io_nasti_aw_bits_id;
   wire NastiIOTileLinkIOConverter_io_nasti_aw_bits_user;
   wire NastiIOTileLinkIOConverter_io_nasti_w_valid;
-  wire[63:0] NastiIOTileLinkIOConverter_io_nasti_w_bits_data;
+  wire[127:0] NastiIOTileLinkIOConverter_io_nasti_w_bits_data;
   wire NastiIOTileLinkIOConverter_io_nasti_w_bits_last;
-  wire[7:0] NastiIOTileLinkIOConverter_io_nasti_w_bits_strb;
+  wire[15:0] NastiIOTileLinkIOConverter_io_nasti_w_bits_strb;
   wire NastiIOTileLinkIOConverter_io_nasti_w_bits_user;
   wire NastiIOTileLinkIOConverter_io_nasti_b_ready;
   wire NastiIOTileLinkIOConverter_io_nasti_ar_valid;
@@ -32796,7 +32245,7 @@ module OuterMemorySystem(input clk, input reset,
   wire SMIIONastiIOConverter_io_nasti_ar_ready;
   wire SMIIONastiIOConverter_io_nasti_r_valid;
   wire[1:0] SMIIONastiIOConverter_io_nasti_r_bits_resp;
-  wire[63:0] SMIIONastiIOConverter_io_nasti_r_bits_data;
+  wire[127:0] SMIIONastiIOConverter_io_nasti_r_bits_data;
   wire SMIIONastiIOConverter_io_nasti_r_bits_last;
   wire[4:0] SMIIONastiIOConverter_io_nasti_r_bits_id;
   wire SMIIONastiIOConverter_io_nasti_r_bits_user;
@@ -32814,7 +32263,7 @@ module OuterMemorySystem(input clk, input reset,
   wire conv_io_nasti_ar_ready;
   wire conv_io_nasti_r_valid;
   wire[1:0] conv_io_nasti_r_bits_resp;
-  wire[63:0] conv_io_nasti_r_bits_data;
+  wire[127:0] conv_io_nasti_r_bits_data;
   wire conv_io_nasti_r_bits_last;
   wire[4:0] conv_io_nasti_r_bits_id;
   wire conv_io_nasti_r_bits_user;
@@ -32889,7 +32338,7 @@ module OuterMemorySystem(input clk, input reset,
   wire interconnect_io_masters_1_ar_ready;
   wire interconnect_io_masters_1_r_valid;
   wire[1:0] interconnect_io_masters_1_r_bits_resp;
-  wire[63:0] interconnect_io_masters_1_r_bits_data;
+  wire[127:0] interconnect_io_masters_1_r_bits_data;
   wire interconnect_io_masters_1_r_bits_last;
   wire[4:0] interconnect_io_masters_1_r_bits_id;
   wire interconnect_io_masters_1_r_bits_user;
@@ -32902,7 +32351,7 @@ module OuterMemorySystem(input clk, input reset,
   wire interconnect_io_masters_0_ar_ready;
   wire interconnect_io_masters_0_r_valid;
   wire[1:0] interconnect_io_masters_0_r_bits_resp;
-  wire[63:0] interconnect_io_masters_0_r_bits_data;
+  wire[127:0] interconnect_io_masters_0_r_bits_data;
   wire interconnect_io_masters_0_r_bits_last;
   wire[4:0] interconnect_io_masters_0_r_bits_id;
   wire interconnect_io_masters_0_r_bits_user;
@@ -32919,9 +32368,9 @@ module OuterMemorySystem(input clk, input reset,
   wire[4:0] interconnect_io_slaves_3_aw_bits_id;
   wire interconnect_io_slaves_3_aw_bits_user;
   wire interconnect_io_slaves_3_w_valid;
-  wire[63:0] interconnect_io_slaves_3_w_bits_data;
+  wire[127:0] interconnect_io_slaves_3_w_bits_data;
   wire interconnect_io_slaves_3_w_bits_last;
-  wire[7:0] interconnect_io_slaves_3_w_bits_strb;
+  wire[15:0] interconnect_io_slaves_3_w_bits_strb;
   wire interconnect_io_slaves_3_w_bits_user;
   wire interconnect_io_slaves_3_b_ready;
   wire interconnect_io_slaves_3_ar_valid;
@@ -32950,9 +32399,9 @@ module OuterMemorySystem(input clk, input reset,
   wire[4:0] interconnect_io_slaves_2_aw_bits_id;
   wire interconnect_io_slaves_2_aw_bits_user;
   wire interconnect_io_slaves_2_w_valid;
-  wire[63:0] interconnect_io_slaves_2_w_bits_data;
+  wire[127:0] interconnect_io_slaves_2_w_bits_data;
   wire interconnect_io_slaves_2_w_bits_last;
-  wire[7:0] interconnect_io_slaves_2_w_bits_strb;
+  wire[15:0] interconnect_io_slaves_2_w_bits_strb;
   wire interconnect_io_slaves_2_w_bits_user;
   wire interconnect_io_slaves_2_b_ready;
   wire interconnect_io_slaves_2_ar_valid;
@@ -32981,9 +32430,9 @@ module OuterMemorySystem(input clk, input reset,
   wire[4:0] interconnect_io_slaves_1_aw_bits_id;
   wire interconnect_io_slaves_1_aw_bits_user;
   wire interconnect_io_slaves_1_w_valid;
-  wire[63:0] interconnect_io_slaves_1_w_bits_data;
+  wire[127:0] interconnect_io_slaves_1_w_bits_data;
   wire interconnect_io_slaves_1_w_bits_last;
-  wire[7:0] interconnect_io_slaves_1_w_bits_strb;
+  wire[15:0] interconnect_io_slaves_1_w_bits_strb;
   wire interconnect_io_slaves_1_w_bits_user;
   wire interconnect_io_slaves_1_b_ready;
   wire interconnect_io_slaves_1_ar_valid;
@@ -33012,9 +32461,9 @@ module OuterMemorySystem(input clk, input reset,
   wire[4:0] interconnect_io_slaves_0_aw_bits_id;
   wire interconnect_io_slaves_0_aw_bits_user;
   wire interconnect_io_slaves_0_w_valid;
-  wire[63:0] interconnect_io_slaves_0_w_bits_data;
+  wire[127:0] interconnect_io_slaves_0_w_bits_data;
   wire interconnect_io_slaves_0_w_bits_last;
-  wire[7:0] interconnect_io_slaves_0_w_bits_strb;
+  wire[15:0] interconnect_io_slaves_0_w_bits_strb;
   wire interconnect_io_slaves_0_w_bits_user;
   wire interconnect_io_slaves_0_b_ready;
   wire interconnect_io_slaves_0_ar_valid;
@@ -33038,6 +32487,13 @@ module OuterMemorySystem(input clk, input reset,
 //  assign io_mem_backup_req_valid = {1{$random}};
 // synthesis translate_on
 `endif
+  assign T0 = {3'h0, ClientTileLinkIOUnwrapper_io_in_grant_bits_manager_xact_id};
+  assign T1 = ClientTileLinkIOUnwrapper_io_in_grant_bits_client_xact_id[1'h1:1'h0];
+  assign T2 = ClientTileLinkIOWrapper_2_io_out_acquire_bits_client_xact_id[1'h1:1'h0];
+  assign T3 = ClientTileLinkEnqueuer_io_inner_grant_bits_manager_xact_id[1'h0:1'h0];
+  assign T4 = {2'h0, ClientTileLinkEnqueuer_io_inner_grant_bits_client_xact_id};
+  assign T5 = {2'h0, ClientTileLinkEnqueuer_io_outer_release_bits_client_xact_id};
+  assign T6 = {2'h0, ClientTileLinkEnqueuer_io_outer_acquire_bits_client_xact_id};
   assign io_mmio_r_ready = interconnect_io_slaves_3_r_ready;
   assign io_mmio_ar_bits_user = interconnect_io_slaves_3_ar_bits_user;
   assign io_mmio_ar_bits_id = interconnect_io_slaves_3_ar_bits_id;
@@ -33714,15 +33170,15 @@ module OuterMemorySystem(input clk, input reset,
 `endif
   ClientTileLinkIOUnwrapper ClientTileLinkIOUnwrapper(.clk(clk), .reset(reset),
        .io_in_acquire_ready( ClientTileLinkIOUnwrapper_io_in_acquire_ready ),
-       .io_in_acquire_valid( ClientTileLinkIOWrapper_2_io_out_acquire_valid ),
-       .io_in_acquire_bits_addr_block( ClientTileLinkIOWrapper_2_io_out_acquire_bits_addr_block ),
-       .io_in_acquire_bits_client_xact_id( ClientTileLinkIOWrapper_2_io_out_acquire_bits_client_xact_id ),
-       .io_in_acquire_bits_addr_beat( ClientTileLinkIOWrapper_2_io_out_acquire_bits_addr_beat ),
-       .io_in_acquire_bits_is_builtin_type( ClientTileLinkIOWrapper_2_io_out_acquire_bits_is_builtin_type ),
-       .io_in_acquire_bits_a_type( ClientTileLinkIOWrapper_2_io_out_acquire_bits_a_type ),
-       .io_in_acquire_bits_union( ClientTileLinkIOWrapper_2_io_out_acquire_bits_union ),
-       .io_in_acquire_bits_data( ClientTileLinkIOWrapper_2_io_out_acquire_bits_data ),
-       .io_in_grant_ready( ClientTileLinkIOWrapper_2_io_out_grant_ready ),
+       .io_in_acquire_valid( ClientTileLinkEnqueuer_io_outer_acquire_valid ),
+       .io_in_acquire_bits_addr_block( ClientTileLinkEnqueuer_io_outer_acquire_bits_addr_block ),
+       .io_in_acquire_bits_client_xact_id( T6 ),
+       .io_in_acquire_bits_addr_beat( ClientTileLinkEnqueuer_io_outer_acquire_bits_addr_beat ),
+       .io_in_acquire_bits_is_builtin_type( ClientTileLinkEnqueuer_io_outer_acquire_bits_is_builtin_type ),
+       .io_in_acquire_bits_a_type( ClientTileLinkEnqueuer_io_outer_acquire_bits_a_type ),
+       .io_in_acquire_bits_union( ClientTileLinkEnqueuer_io_outer_acquire_bits_union ),
+       .io_in_acquire_bits_data( ClientTileLinkEnqueuer_io_outer_acquire_bits_data ),
+       .io_in_grant_ready( ClientTileLinkEnqueuer_io_outer_grant_ready ),
        .io_in_grant_valid( ClientTileLinkIOUnwrapper_io_in_grant_valid ),
        .io_in_grant_bits_addr_beat( ClientTileLinkIOUnwrapper_io_in_grant_bits_addr_beat ),
        .io_in_grant_bits_client_xact_id( ClientTileLinkIOUnwrapper_io_in_grant_bits_client_xact_id ),
@@ -33730,18 +33186,18 @@ module OuterMemorySystem(input clk, input reset,
        .io_in_grant_bits_is_builtin_type( ClientTileLinkIOUnwrapper_io_in_grant_bits_is_builtin_type ),
        .io_in_grant_bits_g_type( ClientTileLinkIOUnwrapper_io_in_grant_bits_g_type ),
        .io_in_grant_bits_data( ClientTileLinkIOUnwrapper_io_in_grant_bits_data ),
-       .io_in_probe_ready( ClientTileLinkIOWrapper_2_io_out_probe_ready ),
+       .io_in_probe_ready( ClientTileLinkEnqueuer_io_outer_probe_ready ),
        .io_in_probe_valid( ClientTileLinkIOUnwrapper_io_in_probe_valid ),
        //.io_in_probe_bits_addr_block(  )
        //.io_in_probe_bits_p_type(  )
        .io_in_release_ready( ClientTileLinkIOUnwrapper_io_in_release_ready ),
-       .io_in_release_valid( ClientTileLinkIOWrapper_2_io_out_release_valid ),
-       //.io_in_release_bits_addr_beat(  )
-       //.io_in_release_bits_addr_block(  )
-       //.io_in_release_bits_client_xact_id(  )
-       //.io_in_release_bits_r_type(  )
-       //.io_in_release_bits_voluntary(  )
-       //.io_in_release_bits_data(  )
+       .io_in_release_valid( ClientTileLinkEnqueuer_io_outer_release_valid ),
+       .io_in_release_bits_addr_beat( ClientTileLinkEnqueuer_io_outer_release_bits_addr_beat ),
+       .io_in_release_bits_addr_block( ClientTileLinkEnqueuer_io_outer_release_bits_addr_block ),
+       .io_in_release_bits_client_xact_id( T5 ),
+       .io_in_release_bits_r_type( ClientTileLinkEnqueuer_io_outer_release_bits_r_type ),
+       .io_in_release_bits_voluntary( ClientTileLinkEnqueuer_io_outer_release_bits_voluntary ),
+       .io_in_release_bits_data( ClientTileLinkEnqueuer_io_outer_release_bits_data ),
        .io_out_acquire_ready( TileLinkIONarrower_io_in_acquire_ready ),
        .io_out_acquire_valid( ClientTileLinkIOUnwrapper_io_out_acquire_valid ),
        .io_out_acquire_bits_addr_block( ClientTileLinkIOUnwrapper_io_out_acquire_bits_addr_block ),
@@ -33760,17 +33216,7 @@ module OuterMemorySystem(input clk, input reset,
        .io_out_grant_bits_g_type( TileLinkIONarrower_io_in_grant_bits_g_type ),
        .io_out_grant_bits_data( TileLinkIONarrower_io_in_grant_bits_data )
   );
-`ifndef SYNTHESIS
-// synthesis translate_off
-    assign ClientTileLinkIOUnwrapper.io_in_release_bits_addr_beat = {1{$random}};
-    assign ClientTileLinkIOUnwrapper.io_in_release_bits_addr_block = {1{$random}};
-    assign ClientTileLinkIOUnwrapper.io_in_release_bits_client_xact_id = {1{$random}};
-    assign ClientTileLinkIOUnwrapper.io_in_release_bits_r_type = {1{$random}};
-    assign ClientTileLinkIOUnwrapper.io_in_release_bits_voluntary = {1{$random}};
-    assign ClientTileLinkIOUnwrapper.io_in_release_bits_data = {4{$random}};
-// synthesis translate_on
-`endif
-  TileLinkIONarrower TileLinkIONarrower(.clk(clk), .reset(reset),
+  TileLinkIONarrower TileLinkIONarrower(
        .io_in_acquire_ready( TileLinkIONarrower_io_in_acquire_ready ),
        .io_in_acquire_valid( ClientTileLinkIOUnwrapper_io_out_acquire_valid ),
        .io_in_acquire_bits_addr_block( ClientTileLinkIOUnwrapper_io_out_acquire_bits_addr_block ),
@@ -33887,7 +33333,7 @@ module OuterMemorySystem(input clk, input reset,
        .io_in_grant_bits_is_builtin_type( ClientTileLinkIOWrapper_2_io_in_grant_bits_is_builtin_type ),
        .io_in_grant_bits_g_type( ClientTileLinkIOWrapper_2_io_in_grant_bits_g_type ),
        .io_in_grant_bits_data( ClientTileLinkIOWrapper_2_io_in_grant_bits_data ),
-       .io_out_acquire_ready( ClientTileLinkIOUnwrapper_io_in_acquire_ready ),
+       .io_out_acquire_ready( ClientTileLinkEnqueuer_io_inner_acquire_ready ),
        .io_out_acquire_valid( ClientTileLinkIOWrapper_2_io_out_acquire_valid ),
        .io_out_acquire_bits_addr_block( ClientTileLinkIOWrapper_2_io_out_acquire_bits_addr_block ),
        .io_out_acquire_bits_client_xact_id( ClientTileLinkIOWrapper_2_io_out_acquire_bits_client_xact_id ),
@@ -33897,18 +33343,18 @@ module OuterMemorySystem(input clk, input reset,
        .io_out_acquire_bits_union( ClientTileLinkIOWrapper_2_io_out_acquire_bits_union ),
        .io_out_acquire_bits_data( ClientTileLinkIOWrapper_2_io_out_acquire_bits_data ),
        .io_out_grant_ready( ClientTileLinkIOWrapper_2_io_out_grant_ready ),
-       .io_out_grant_valid( ClientTileLinkIOUnwrapper_io_in_grant_valid ),
-       .io_out_grant_bits_addr_beat( ClientTileLinkIOUnwrapper_io_in_grant_bits_addr_beat ),
-       .io_out_grant_bits_client_xact_id( ClientTileLinkIOUnwrapper_io_in_grant_bits_client_xact_id ),
-       .io_out_grant_bits_manager_xact_id( ClientTileLinkIOUnwrapper_io_in_grant_bits_manager_xact_id ),
-       .io_out_grant_bits_is_builtin_type( ClientTileLinkIOUnwrapper_io_in_grant_bits_is_builtin_type ),
-       .io_out_grant_bits_g_type( ClientTileLinkIOUnwrapper_io_in_grant_bits_g_type ),
-       .io_out_grant_bits_data( ClientTileLinkIOUnwrapper_io_in_grant_bits_data ),
+       .io_out_grant_valid( ClientTileLinkEnqueuer_io_inner_grant_valid ),
+       .io_out_grant_bits_addr_beat( ClientTileLinkEnqueuer_io_inner_grant_bits_addr_beat ),
+       .io_out_grant_bits_client_xact_id( T4 ),
+       .io_out_grant_bits_manager_xact_id( T3 ),
+       .io_out_grant_bits_is_builtin_type( ClientTileLinkEnqueuer_io_inner_grant_bits_is_builtin_type ),
+       .io_out_grant_bits_g_type( ClientTileLinkEnqueuer_io_inner_grant_bits_g_type ),
+       .io_out_grant_bits_data( ClientTileLinkEnqueuer_io_inner_grant_bits_data ),
        .io_out_probe_ready( ClientTileLinkIOWrapper_2_io_out_probe_ready ),
-       .io_out_probe_valid( ClientTileLinkIOUnwrapper_io_in_probe_valid ),
-       //.io_out_probe_bits_addr_block(  )
-       //.io_out_probe_bits_p_type(  )
-       .io_out_release_ready( ClientTileLinkIOUnwrapper_io_in_release_ready ),
+       .io_out_probe_valid( ClientTileLinkEnqueuer_io_inner_probe_valid ),
+       .io_out_probe_bits_addr_block( ClientTileLinkEnqueuer_io_inner_probe_bits_addr_block ),
+       .io_out_probe_bits_p_type( ClientTileLinkEnqueuer_io_inner_probe_bits_p_type ),
+       .io_out_release_ready( ClientTileLinkEnqueuer_io_inner_release_ready ),
        .io_out_release_valid( ClientTileLinkIOWrapper_2_io_out_release_valid )
        //.io_out_release_bits_addr_beat(  )
        //.io_out_release_bits_addr_block(  )
@@ -33917,6 +33363,78 @@ module OuterMemorySystem(input clk, input reset,
        //.io_out_release_bits_voluntary(  )
        //.io_out_release_bits_data(  )
   );
+  ClientTileLinkEnqueuer ClientTileLinkEnqueuer(
+       .io_inner_acquire_ready( ClientTileLinkEnqueuer_io_inner_acquire_ready ),
+       .io_inner_acquire_valid( ClientTileLinkIOWrapper_2_io_out_acquire_valid ),
+       .io_inner_acquire_bits_addr_block( ClientTileLinkIOWrapper_2_io_out_acquire_bits_addr_block ),
+       .io_inner_acquire_bits_client_xact_id( T2 ),
+       .io_inner_acquire_bits_addr_beat( ClientTileLinkIOWrapper_2_io_out_acquire_bits_addr_beat ),
+       .io_inner_acquire_bits_is_builtin_type( ClientTileLinkIOWrapper_2_io_out_acquire_bits_is_builtin_type ),
+       .io_inner_acquire_bits_a_type( ClientTileLinkIOWrapper_2_io_out_acquire_bits_a_type ),
+       .io_inner_acquire_bits_union( ClientTileLinkIOWrapper_2_io_out_acquire_bits_union ),
+       .io_inner_acquire_bits_data( ClientTileLinkIOWrapper_2_io_out_acquire_bits_data ),
+       .io_inner_grant_ready( ClientTileLinkIOWrapper_2_io_out_grant_ready ),
+       .io_inner_grant_valid( ClientTileLinkEnqueuer_io_inner_grant_valid ),
+       .io_inner_grant_bits_addr_beat( ClientTileLinkEnqueuer_io_inner_grant_bits_addr_beat ),
+       .io_inner_grant_bits_client_xact_id( ClientTileLinkEnqueuer_io_inner_grant_bits_client_xact_id ),
+       .io_inner_grant_bits_manager_xact_id( ClientTileLinkEnqueuer_io_inner_grant_bits_manager_xact_id ),
+       .io_inner_grant_bits_is_builtin_type( ClientTileLinkEnqueuer_io_inner_grant_bits_is_builtin_type ),
+       .io_inner_grant_bits_g_type( ClientTileLinkEnqueuer_io_inner_grant_bits_g_type ),
+       .io_inner_grant_bits_data( ClientTileLinkEnqueuer_io_inner_grant_bits_data ),
+       .io_inner_probe_ready( ClientTileLinkIOWrapper_2_io_out_probe_ready ),
+       .io_inner_probe_valid( ClientTileLinkEnqueuer_io_inner_probe_valid ),
+       .io_inner_probe_bits_addr_block( ClientTileLinkEnqueuer_io_inner_probe_bits_addr_block ),
+       .io_inner_probe_bits_p_type( ClientTileLinkEnqueuer_io_inner_probe_bits_p_type ),
+       .io_inner_release_ready( ClientTileLinkEnqueuer_io_inner_release_ready ),
+       .io_inner_release_valid( ClientTileLinkIOWrapper_2_io_out_release_valid ),
+       //.io_inner_release_bits_addr_beat(  )
+       //.io_inner_release_bits_addr_block(  )
+       //.io_inner_release_bits_client_xact_id(  )
+       //.io_inner_release_bits_r_type(  )
+       //.io_inner_release_bits_voluntary(  )
+       //.io_inner_release_bits_data(  )
+       .io_outer_acquire_ready( ClientTileLinkIOUnwrapper_io_in_acquire_ready ),
+       .io_outer_acquire_valid( ClientTileLinkEnqueuer_io_outer_acquire_valid ),
+       .io_outer_acquire_bits_addr_block( ClientTileLinkEnqueuer_io_outer_acquire_bits_addr_block ),
+       .io_outer_acquire_bits_client_xact_id( ClientTileLinkEnqueuer_io_outer_acquire_bits_client_xact_id ),
+       .io_outer_acquire_bits_addr_beat( ClientTileLinkEnqueuer_io_outer_acquire_bits_addr_beat ),
+       .io_outer_acquire_bits_is_builtin_type( ClientTileLinkEnqueuer_io_outer_acquire_bits_is_builtin_type ),
+       .io_outer_acquire_bits_a_type( ClientTileLinkEnqueuer_io_outer_acquire_bits_a_type ),
+       .io_outer_acquire_bits_union( ClientTileLinkEnqueuer_io_outer_acquire_bits_union ),
+       .io_outer_acquire_bits_data( ClientTileLinkEnqueuer_io_outer_acquire_bits_data ),
+       .io_outer_grant_ready( ClientTileLinkEnqueuer_io_outer_grant_ready ),
+       .io_outer_grant_valid( ClientTileLinkIOUnwrapper_io_in_grant_valid ),
+       .io_outer_grant_bits_addr_beat( ClientTileLinkIOUnwrapper_io_in_grant_bits_addr_beat ),
+       .io_outer_grant_bits_client_xact_id( T1 ),
+       .io_outer_grant_bits_manager_xact_id( T0 ),
+       .io_outer_grant_bits_is_builtin_type( ClientTileLinkIOUnwrapper_io_in_grant_bits_is_builtin_type ),
+       .io_outer_grant_bits_g_type( ClientTileLinkIOUnwrapper_io_in_grant_bits_g_type ),
+       .io_outer_grant_bits_data( ClientTileLinkIOUnwrapper_io_in_grant_bits_data ),
+       .io_outer_probe_ready( ClientTileLinkEnqueuer_io_outer_probe_ready ),
+       .io_outer_probe_valid( ClientTileLinkIOUnwrapper_io_in_probe_valid ),
+       //.io_outer_probe_bits_addr_block(  )
+       //.io_outer_probe_bits_p_type(  )
+       .io_outer_release_ready( ClientTileLinkIOUnwrapper_io_in_release_ready ),
+       .io_outer_release_valid( ClientTileLinkEnqueuer_io_outer_release_valid ),
+       .io_outer_release_bits_addr_beat( ClientTileLinkEnqueuer_io_outer_release_bits_addr_beat ),
+       .io_outer_release_bits_addr_block( ClientTileLinkEnqueuer_io_outer_release_bits_addr_block ),
+       .io_outer_release_bits_client_xact_id( ClientTileLinkEnqueuer_io_outer_release_bits_client_xact_id ),
+       .io_outer_release_bits_r_type( ClientTileLinkEnqueuer_io_outer_release_bits_r_type ),
+       .io_outer_release_bits_voluntary( ClientTileLinkEnqueuer_io_outer_release_bits_voluntary ),
+       .io_outer_release_bits_data( ClientTileLinkEnqueuer_io_outer_release_bits_data )
+  );
+`ifndef SYNTHESIS
+// synthesis translate_off
+    assign ClientTileLinkEnqueuer.io_inner_release_bits_addr_beat = {1{$random}};
+    assign ClientTileLinkEnqueuer.io_inner_release_bits_addr_block = {1{$random}};
+    assign ClientTileLinkEnqueuer.io_inner_release_bits_client_xact_id = {1{$random}};
+    assign ClientTileLinkEnqueuer.io_inner_release_bits_r_type = {1{$random}};
+    assign ClientTileLinkEnqueuer.io_inner_release_bits_voluntary = {1{$random}};
+    assign ClientTileLinkEnqueuer.io_inner_release_bits_data = {4{$random}};
+    assign ClientTileLinkEnqueuer.io_outer_probe_bits_addr_block = {1{$random}};
+    assign ClientTileLinkEnqueuer.io_outer_probe_bits_p_type = {1{$random}};
+// synthesis translate_on
+`endif
   Queue_3 Queue(.clk(clk), .reset(reset),
        .io_enq_ready( Queue_io_enq_ready ),
        .io_enq_valid( NastiIOTileLinkIOConverter_io_nasti_ar_valid ),
@@ -34718,9 +34236,9 @@ module Uncore(input clk, input reset,
     output io_mem_0_aw_bits_user,
     input  io_mem_0_w_ready,
     output io_mem_0_w_valid,
-    output[63:0] io_mem_0_w_bits_data,
+    output[127:0] io_mem_0_w_bits_data,
     output io_mem_0_w_bits_last,
-    output[7:0] io_mem_0_w_bits_strb,
+    output[15:0] io_mem_0_w_bits_strb,
     output io_mem_0_w_bits_user,
     output io_mem_0_b_ready,
     input  io_mem_0_b_valid,
@@ -34743,7 +34261,7 @@ module Uncore(input clk, input reset,
     output io_mem_0_r_ready,
     input  io_mem_0_r_valid,
     input [1:0] io_mem_0_r_bits_resp,
-    input [63:0] io_mem_0_r_bits_data,
+    input [127:0] io_mem_0_r_bits_data,
     input  io_mem_0_r_bits_last,
     input [4:0] io_mem_0_r_bits_id,
     input  io_mem_0_r_bits_user,
@@ -34829,9 +34347,9 @@ module Uncore(input clk, input reset,
     output io_mmio_aw_bits_user,
     input  io_mmio_w_ready,
     output io_mmio_w_valid,
-    output[63:0] io_mmio_w_bits_data,
+    output[127:0] io_mmio_w_bits_data,
     output io_mmio_w_bits_last,
-    output[7:0] io_mmio_w_bits_strb,
+    output[15:0] io_mmio_w_bits_strb,
     output io_mmio_w_bits_user,
     output io_mmio_b_ready,
     input  io_mmio_b_valid,
@@ -34854,7 +34372,7 @@ module Uncore(input clk, input reset,
     output io_mmio_r_ready,
     input  io_mmio_r_valid,
     input [1:0] io_mmio_r_bits_resp,
-    input [63:0] io_mmio_r_bits_data,
+    input [127:0] io_mmio_r_bits_data,
     input  io_mmio_r_bits_last,
     input [4:0] io_mmio_r_bits_id,
     input  io_mmio_r_bits_user
@@ -34953,9 +34471,9 @@ module Uncore(input clk, input reset,
   wire[4:0] outmemsys_io_mem_0_aw_bits_id;
   wire outmemsys_io_mem_0_aw_bits_user;
   wire outmemsys_io_mem_0_w_valid;
-  wire[63:0] outmemsys_io_mem_0_w_bits_data;
+  wire[127:0] outmemsys_io_mem_0_w_bits_data;
   wire outmemsys_io_mem_0_w_bits_last;
-  wire[7:0] outmemsys_io_mem_0_w_bits_strb;
+  wire[15:0] outmemsys_io_mem_0_w_bits_strb;
   wire outmemsys_io_mem_0_w_bits_user;
   wire outmemsys_io_mem_0_b_ready;
   wire outmemsys_io_mem_0_ar_valid;
@@ -34994,9 +34512,9 @@ module Uncore(input clk, input reset,
   wire[4:0] outmemsys_io_mmio_aw_bits_id;
   wire outmemsys_io_mmio_aw_bits_user;
   wire outmemsys_io_mmio_w_valid;
-  wire[63:0] outmemsys_io_mmio_w_bits_data;
+  wire[127:0] outmemsys_io_mmio_w_bits_data;
   wire outmemsys_io_mmio_w_bits_last;
-  wire[7:0] outmemsys_io_mmio_w_bits_strb;
+  wire[15:0] outmemsys_io_mmio_w_bits_strb;
   wire outmemsys_io_mmio_w_bits_user;
   wire outmemsys_io_mmio_b_ready;
   wire outmemsys_io_mmio_ar_valid;
@@ -53493,7 +53011,7 @@ module Arbiter_8(
   assign T4 = io_in_0_valid ^ 1'h1;
 endmodule
 
-module Queue_14(input clk, input reset,
+module Queue_13(input clk, input reset,
     output io_enq_ready,
     input  io_enq_valid,
     input [39:0] io_enq_bits_addr,
@@ -54245,7 +53763,7 @@ module MSHR_0(input clk, input reset,
   assign T214 = sec_rdy & rpq_io_enq_ready;
   assign io_req_pri_rdy = T215;
   assign T215 = state == 4'h0;
-  Queue_14 rpq(.clk(clk), .reset(reset),
+  Queue_13 rpq(.clk(clk), .reset(reset),
        .io_enq_ready( rpq_io_enq_ready ),
        .io_enq_valid( T70 ),
        .io_enq_bits_addr( io_req_bits_addr ),
@@ -54940,7 +54458,7 @@ module MSHR_1(input clk, input reset,
   assign T214 = sec_rdy & rpq_io_enq_ready;
   assign io_req_pri_rdy = T215;
   assign T215 = state == 4'h0;
-  Queue_14 rpq(.clk(clk), .reset(reset),
+  Queue_13 rpq(.clk(clk), .reset(reset),
        .io_enq_ready( rpq_io_enq_ready ),
        .io_enq_valid( T70 ),
        .io_enq_bits_addr( io_req_bits_addr ),
@@ -62871,9 +62389,9 @@ module Top(input clk, input reset,
     output io_mem_0_aw_bits_user,
     input  io_mem_0_w_ready,
     output io_mem_0_w_valid,
-    output[63:0] io_mem_0_w_bits_data,
+    output[127:0] io_mem_0_w_bits_data,
     output io_mem_0_w_bits_last,
-    output[7:0] io_mem_0_w_bits_strb,
+    output[15:0] io_mem_0_w_bits_strb,
     output io_mem_0_w_bits_user,
     output io_mem_0_b_ready,
     input  io_mem_0_b_valid,
@@ -62896,10 +62414,54 @@ module Top(input clk, input reset,
     output io_mem_0_r_ready,
     input  io_mem_0_r_valid,
     input [1:0] io_mem_0_r_bits_resp,
-    input [63:0] io_mem_0_r_bits_data,
+    input [127:0] io_mem_0_r_bits_data,
     input  io_mem_0_r_bits_last,
     input [4:0] io_mem_0_r_bits_id,
-    input  io_mem_0_r_bits_user
+    input  io_mem_0_r_bits_user,
+    input  io_mmio_aw_ready,
+    output io_mmio_aw_valid,
+    output[31:0] io_mmio_aw_bits_addr,
+    output[7:0] io_mmio_aw_bits_len,
+    output[2:0] io_mmio_aw_bits_size,
+    output[1:0] io_mmio_aw_bits_burst,
+    output io_mmio_aw_bits_lock,
+    output[3:0] io_mmio_aw_bits_cache,
+    output[2:0] io_mmio_aw_bits_prot,
+    output[3:0] io_mmio_aw_bits_qos,
+    output[3:0] io_mmio_aw_bits_region,
+    output[4:0] io_mmio_aw_bits_id,
+    output io_mmio_aw_bits_user,
+    input  io_mmio_w_ready,
+    output io_mmio_w_valid,
+    output[127:0] io_mmio_w_bits_data,
+    output io_mmio_w_bits_last,
+    output[15:0] io_mmio_w_bits_strb,
+    output io_mmio_w_bits_user,
+    output io_mmio_b_ready,
+    input  io_mmio_b_valid,
+    input [1:0] io_mmio_b_bits_resp,
+    input [4:0] io_mmio_b_bits_id,
+    input  io_mmio_b_bits_user,
+    input  io_mmio_ar_ready,
+    output io_mmio_ar_valid,
+    output[31:0] io_mmio_ar_bits_addr,
+    output[7:0] io_mmio_ar_bits_len,
+    output[2:0] io_mmio_ar_bits_size,
+    output[1:0] io_mmio_ar_bits_burst,
+    output io_mmio_ar_bits_lock,
+    output[3:0] io_mmio_ar_bits_cache,
+    output[2:0] io_mmio_ar_bits_prot,
+    output[3:0] io_mmio_ar_bits_qos,
+    output[3:0] io_mmio_ar_bits_region,
+    output[4:0] io_mmio_ar_bits_id,
+    output io_mmio_ar_bits_user,
+    output io_mmio_r_ready,
+    input  io_mmio_r_valid,
+    input [1:0] io_mmio_r_bits_resp,
+    input [127:0] io_mmio_r_bits_data,
+    input  io_mmio_r_bits_last,
+    input [4:0] io_mmio_r_bits_id,
+    input  io_mmio_r_bits_user
 );
 
   reg  R0;
@@ -62944,14 +62506,14 @@ module Top(input clk, input reset,
   wire Queue_5_io_deq_bits_user;
   wire Queue_6_io_enq_ready;
   wire Queue_6_io_deq_valid;
-  wire[63:0] Queue_6_io_deq_bits_data;
+  wire[127:0] Queue_6_io_deq_bits_data;
   wire Queue_6_io_deq_bits_last;
-  wire[7:0] Queue_6_io_deq_bits_strb;
+  wire[15:0] Queue_6_io_deq_bits_strb;
   wire Queue_6_io_deq_bits_user;
   wire Queue_7_io_enq_ready;
   wire Queue_7_io_deq_valid;
   wire[1:0] Queue_7_io_deq_bits_resp;
-  wire[63:0] Queue_7_io_deq_bits_data;
+  wire[127:0] Queue_7_io_deq_bits_data;
   wire Queue_7_io_deq_bits_last;
   wire[4:0] Queue_7_io_deq_bits_id;
   wire Queue_7_io_deq_bits_user;
@@ -62960,17 +62522,6 @@ module Top(input clk, input reset,
   wire[1:0] Queue_8_io_deq_bits_resp;
   wire[4:0] Queue_8_io_deq_bits_id;
   wire Queue_8_io_deq_bits_user;
-  wire errslave_io_aw_ready;
-  wire errslave_io_w_ready;
-  wire errslave_io_b_valid;
-  wire[1:0] errslave_io_b_bits_resp;
-  wire[4:0] errslave_io_b_bits_id;
-  wire errslave_io_ar_ready;
-  wire errslave_io_r_valid;
-  wire[1:0] errslave_io_r_bits_resp;
-  wire[63:0] errslave_io_r_bits_data;
-  wire errslave_io_r_bits_last;
-  wire[4:0] errslave_io_r_bits_id;
   wire RocketTile_io_cached_0_acquire_valid;
   wire[25:0] RocketTile_io_cached_0_acquire_bits_addr_block;
   wire[1:0] RocketTile_io_cached_0_acquire_bits_client_xact_id;
@@ -63021,9 +62572,9 @@ module Top(input clk, input reset,
   wire[4:0] uncore_io_mem_0_aw_bits_id;
   wire uncore_io_mem_0_aw_bits_user;
   wire uncore_io_mem_0_w_valid;
-  wire[63:0] uncore_io_mem_0_w_bits_data;
+  wire[127:0] uncore_io_mem_0_w_bits_data;
   wire uncore_io_mem_0_w_bits_last;
-  wire[7:0] uncore_io_mem_0_w_bits_strb;
+  wire[15:0] uncore_io_mem_0_w_bits_strb;
   wire uncore_io_mem_0_w_bits_user;
   wire uncore_io_mem_0_b_ready;
   wire uncore_io_mem_0_ar_valid;
@@ -63081,9 +62632,9 @@ module Top(input clk, input reset,
   wire[4:0] uncore_io_mmio_aw_bits_id;
   wire uncore_io_mmio_aw_bits_user;
   wire uncore_io_mmio_w_valid;
-  wire[63:0] uncore_io_mmio_w_bits_data;
+  wire[127:0] uncore_io_mmio_w_bits_data;
   wire uncore_io_mmio_w_bits_last;
-  wire[7:0] uncore_io_mmio_w_bits_strb;
+  wire[15:0] uncore_io_mmio_w_bits_strb;
   wire uncore_io_mmio_w_bits_user;
   wire uncore_io_mmio_b_ready;
   wire uncore_io_mmio_ar_valid;
@@ -63118,6 +62669,37 @@ module Top(input clk, input reset,
 //  assign io_host_clk = {1{$random}};
 // synthesis translate_on
 `endif
+  assign io_mmio_r_ready = uncore_io_mmio_r_ready;
+  assign io_mmio_ar_bits_user = uncore_io_mmio_ar_bits_user;
+  assign io_mmio_ar_bits_id = uncore_io_mmio_ar_bits_id;
+  assign io_mmio_ar_bits_region = uncore_io_mmio_ar_bits_region;
+  assign io_mmio_ar_bits_qos = uncore_io_mmio_ar_bits_qos;
+  assign io_mmio_ar_bits_prot = uncore_io_mmio_ar_bits_prot;
+  assign io_mmio_ar_bits_cache = uncore_io_mmio_ar_bits_cache;
+  assign io_mmio_ar_bits_lock = uncore_io_mmio_ar_bits_lock;
+  assign io_mmio_ar_bits_burst = uncore_io_mmio_ar_bits_burst;
+  assign io_mmio_ar_bits_size = uncore_io_mmio_ar_bits_size;
+  assign io_mmio_ar_bits_len = uncore_io_mmio_ar_bits_len;
+  assign io_mmio_ar_bits_addr = uncore_io_mmio_ar_bits_addr;
+  assign io_mmio_ar_valid = uncore_io_mmio_ar_valid;
+  assign io_mmio_b_ready = uncore_io_mmio_b_ready;
+  assign io_mmio_w_bits_user = uncore_io_mmio_w_bits_user;
+  assign io_mmio_w_bits_strb = uncore_io_mmio_w_bits_strb;
+  assign io_mmio_w_bits_last = uncore_io_mmio_w_bits_last;
+  assign io_mmio_w_bits_data = uncore_io_mmio_w_bits_data;
+  assign io_mmio_w_valid = uncore_io_mmio_w_valid;
+  assign io_mmio_aw_bits_user = uncore_io_mmio_aw_bits_user;
+  assign io_mmio_aw_bits_id = uncore_io_mmio_aw_bits_id;
+  assign io_mmio_aw_bits_region = uncore_io_mmio_aw_bits_region;
+  assign io_mmio_aw_bits_qos = uncore_io_mmio_aw_bits_qos;
+  assign io_mmio_aw_bits_prot = uncore_io_mmio_aw_bits_prot;
+  assign io_mmio_aw_bits_cache = uncore_io_mmio_aw_bits_cache;
+  assign io_mmio_aw_bits_lock = uncore_io_mmio_aw_bits_lock;
+  assign io_mmio_aw_bits_burst = uncore_io_mmio_aw_bits_burst;
+  assign io_mmio_aw_bits_size = uncore_io_mmio_aw_bits_size;
+  assign io_mmio_aw_bits_len = uncore_io_mmio_aw_bits_len;
+  assign io_mmio_aw_bits_addr = uncore_io_mmio_aw_bits_addr;
+  assign io_mmio_aw_valid = uncore_io_mmio_aw_valid;
   assign io_mem_0_r_ready = Queue_7_io_enq_ready;
   assign io_mem_0_ar_bits_user = Queue_4_io_deq_bits_user;
   assign io_mem_0_ar_bits_id = Queue_4_io_deq_bits_id;
@@ -63274,7 +62856,7 @@ module Top(input clk, input reset,
        //.io_mem_backup_ctrl_in_valid(  )
        //.io_mem_backup_ctrl_out_ready(  )
        //.io_mem_backup_ctrl_out_valid(  )
-       .io_mmio_aw_ready( errslave_io_aw_ready ),
+       .io_mmio_aw_ready( io_mmio_aw_ready ),
        .io_mmio_aw_valid( uncore_io_mmio_aw_valid ),
        .io_mmio_aw_bits_addr( uncore_io_mmio_aw_bits_addr ),
        .io_mmio_aw_bits_len( uncore_io_mmio_aw_bits_len ),
@@ -63287,18 +62869,18 @@ module Top(input clk, input reset,
        .io_mmio_aw_bits_region( uncore_io_mmio_aw_bits_region ),
        .io_mmio_aw_bits_id( uncore_io_mmio_aw_bits_id ),
        .io_mmio_aw_bits_user( uncore_io_mmio_aw_bits_user ),
-       .io_mmio_w_ready( errslave_io_w_ready ),
+       .io_mmio_w_ready( io_mmio_w_ready ),
        .io_mmio_w_valid( uncore_io_mmio_w_valid ),
        .io_mmio_w_bits_data( uncore_io_mmio_w_bits_data ),
        .io_mmio_w_bits_last( uncore_io_mmio_w_bits_last ),
        .io_mmio_w_bits_strb( uncore_io_mmio_w_bits_strb ),
        .io_mmio_w_bits_user( uncore_io_mmio_w_bits_user ),
        .io_mmio_b_ready( uncore_io_mmio_b_ready ),
-       .io_mmio_b_valid( errslave_io_b_valid ),
-       .io_mmio_b_bits_resp( errslave_io_b_bits_resp ),
-       .io_mmio_b_bits_id( errslave_io_b_bits_id ),
-       //.io_mmio_b_bits_user(  )
-       .io_mmio_ar_ready( errslave_io_ar_ready ),
+       .io_mmio_b_valid( io_mmio_b_valid ),
+       .io_mmio_b_bits_resp( io_mmio_b_bits_resp ),
+       .io_mmio_b_bits_id( io_mmio_b_bits_id ),
+       .io_mmio_b_bits_user( io_mmio_b_bits_user ),
+       .io_mmio_ar_ready( io_mmio_ar_ready ),
        .io_mmio_ar_valid( uncore_io_mmio_ar_valid ),
        .io_mmio_ar_bits_addr( uncore_io_mmio_ar_bits_addr ),
        .io_mmio_ar_bits_len( uncore_io_mmio_ar_bits_len ),
@@ -63312,18 +62894,16 @@ module Top(input clk, input reset,
        .io_mmio_ar_bits_id( uncore_io_mmio_ar_bits_id ),
        .io_mmio_ar_bits_user( uncore_io_mmio_ar_bits_user ),
        .io_mmio_r_ready( uncore_io_mmio_r_ready ),
-       .io_mmio_r_valid( errslave_io_r_valid ),
-       .io_mmio_r_bits_resp( errslave_io_r_bits_resp ),
-       .io_mmio_r_bits_data( errslave_io_r_bits_data ),
-       .io_mmio_r_bits_last( errslave_io_r_bits_last ),
-       .io_mmio_r_bits_id( errslave_io_r_bits_id )
-       //.io_mmio_r_bits_user(  )
+       .io_mmio_r_valid( io_mmio_r_valid ),
+       .io_mmio_r_bits_resp( io_mmio_r_bits_resp ),
+       .io_mmio_r_bits_data( io_mmio_r_bits_data ),
+       .io_mmio_r_bits_last( io_mmio_r_bits_last ),
+       .io_mmio_r_bits_id( io_mmio_r_bits_id ),
+       .io_mmio_r_bits_user( io_mmio_r_bits_user )
   );
 `ifndef SYNTHESIS
 // synthesis translate_off
     assign uncore.io_htif_0_ipi_rep_bits = {1{$random}};
-    assign uncore.io_mmio_b_bits_user = {1{$random}};
-    assign uncore.io_mmio_r_bits_user = {1{$random}};
 // synthesis translate_on
 `endif
   RocketTile RocketTile(.clk(clk), .reset(uncore_io_htif_0_reset),
@@ -63533,52 +63113,6 @@ module Top(input clk, input reset,
        .io_deq_bits_id( Queue_8_io_deq_bits_id ),
        .io_deq_bits_user( Queue_8_io_deq_bits_user )
        //.io_count(  )
-  );
-  NastiErrorSlave errslave(.clk(clk), .reset(reset),
-       .io_aw_ready( errslave_io_aw_ready ),
-       .io_aw_valid( uncore_io_mmio_aw_valid ),
-       .io_aw_bits_addr( uncore_io_mmio_aw_bits_addr ),
-       .io_aw_bits_len( uncore_io_mmio_aw_bits_len ),
-       .io_aw_bits_size( uncore_io_mmio_aw_bits_size ),
-       .io_aw_bits_burst( uncore_io_mmio_aw_bits_burst ),
-       .io_aw_bits_lock( uncore_io_mmio_aw_bits_lock ),
-       .io_aw_bits_cache( uncore_io_mmio_aw_bits_cache ),
-       .io_aw_bits_prot( uncore_io_mmio_aw_bits_prot ),
-       .io_aw_bits_qos( uncore_io_mmio_aw_bits_qos ),
-       .io_aw_bits_region( uncore_io_mmio_aw_bits_region ),
-       .io_aw_bits_id( uncore_io_mmio_aw_bits_id ),
-       .io_aw_bits_user( uncore_io_mmio_aw_bits_user ),
-       .io_w_ready( errslave_io_w_ready ),
-       .io_w_valid( uncore_io_mmio_w_valid ),
-       .io_w_bits_data( uncore_io_mmio_w_bits_data ),
-       .io_w_bits_last( uncore_io_mmio_w_bits_last ),
-       .io_w_bits_strb( uncore_io_mmio_w_bits_strb ),
-       .io_w_bits_user( uncore_io_mmio_w_bits_user ),
-       .io_b_ready( uncore_io_mmio_b_ready ),
-       .io_b_valid( errslave_io_b_valid ),
-       .io_b_bits_resp( errslave_io_b_bits_resp ),
-       .io_b_bits_id( errslave_io_b_bits_id ),
-       //.io_b_bits_user(  )
-       .io_ar_ready( errslave_io_ar_ready ),
-       .io_ar_valid( uncore_io_mmio_ar_valid ),
-       .io_ar_bits_addr( uncore_io_mmio_ar_bits_addr ),
-       .io_ar_bits_len( uncore_io_mmio_ar_bits_len ),
-       .io_ar_bits_size( uncore_io_mmio_ar_bits_size ),
-       .io_ar_bits_burst( uncore_io_mmio_ar_bits_burst ),
-       .io_ar_bits_lock( uncore_io_mmio_ar_bits_lock ),
-       .io_ar_bits_cache( uncore_io_mmio_ar_bits_cache ),
-       .io_ar_bits_prot( uncore_io_mmio_ar_bits_prot ),
-       .io_ar_bits_qos( uncore_io_mmio_ar_bits_qos ),
-       .io_ar_bits_region( uncore_io_mmio_ar_bits_region ),
-       .io_ar_bits_id( uncore_io_mmio_ar_bits_id ),
-       .io_ar_bits_user( uncore_io_mmio_ar_bits_user ),
-       .io_r_ready( uncore_io_mmio_r_ready ),
-       .io_r_valid( errslave_io_r_valid ),
-       .io_r_bits_resp( errslave_io_r_bits_resp ),
-       .io_r_bits_data( errslave_io_r_bits_data ),
-       .io_r_bits_last( errslave_io_r_bits_last ),
-       .io_r_bits_id( errslave_io_r_bits_id )
-       //.io_r_bits_user(  )
   );
 
   always @(posedge clk) begin

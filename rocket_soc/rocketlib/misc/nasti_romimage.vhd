@@ -1,7 +1,8 @@
 -----------------------------------------------------------------------------
--- @file
--- @author  Sergey Khabarov
--- @brief   Firmware ROM image with the AXI4 interface
+--! @file
+--! @copyright Copyright 2015 GNSS Sensor Ltd. All right reserved.
+--! @author    Sergey Khabarov - sergeykhbr@gmail.com
+--! @brief     Firmware ROM image with the AXI4 interface
 ------------------------------------------------------------------------------
 
 library ieee;
@@ -36,7 +37,9 @@ architecture arch_nasti_romimage of nasti_romimage is
   constant xconfig : nasti_slave_config_type := (
      xindex => xindex,
      xaddr => conv_std_logic_vector(xaddr, CFG_NASTI_CFG_ADDR_BITS),
-     xmask => conv_std_logic_vector(xmask, CFG_NASTI_CFG_ADDR_BITS)
+     xmask => conv_std_logic_vector(xmask, CFG_NASTI_CFG_ADDR_BITS),
+     vid => VENDOR_GNSSSENSOR,
+     did => GNSSSENSOR_FWIMAGE
   );
 
   type registers is record

@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------------
 --! @file
---! @brief   Output signal arbiter of the cached slaves modules.
---! @author  Sergey Khabarov
---! @details This file implements priority multiplexing of the slaves
---!          data to the upper connected Netowrok On Chip. 
---!          Slave with the index 0 has the the highest priority.
+--! @copyright Copyright 2015 GNSS Sensor Ltd. All right reserved.
+--! @author    Sergey Khabarov - sergeykhbr@gmail.com
+--! @details   This file implements priority multiplexing of the slaves
+--!            data to the upper connected Netowrok On Chip. 
+--!            Slave with the index 0 has the the highest priority.
 ------------------------------------------------------------------------------
 
 library ieee;

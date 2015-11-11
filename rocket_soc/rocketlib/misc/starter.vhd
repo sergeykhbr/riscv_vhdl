@@ -1,9 +1,14 @@
---! @brief   Rocket Cores hard-reset initialization module
---! @details Everytime after hard reset Rocket core is in resetting
---!          state. Module Uncore::HTIF implements writting into 
---!          MRESET CSR-register (0x784) and not allow to start CPU
---!          execution. This resetting cycle is ongoing upto external
---!          write 0-value into this MRESET register.
+-----------------------------------------------------------------------------
+--! @file
+--! @copyright  Copyright 2015 GNSS Sensor Ltd. All right reserved.
+--! @author     Sergey Khabarov - sergeykhbr@gmail.com
+--! @brief      Rocket Cores hard-reset initialization module
+--! @details    Everytime after hard reset Rocket core is in resetting
+--!             state. Module Uncore::HTIF implements writting into 
+--!             MRESET CSR-register (0x784) and not allow to start CPU
+--!             execution. This resetting cycle is ongoing upto external
+--!             write 0-value into this MRESET register.
+-----------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;

@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------------
 --! @file
---! @copyright  Copyright 2015 GNSS Sensor Ltd. All right reserved.
---! @author     Sergey Khabarov
---! @brief      Controller of the GPIOs with the AMBA AXI4 interface.
+--! @copyright Copyright 2015 GNSS Sensor Ltd. All right reserved.
+--! @author    Sergey Khabarov - sergeykhbr@gmail.com
+--! @brief     Controller of the GPIOs with the AMBA AXI4 interface.
 ------------------------------------------------------------------------------
 
 library ieee;
@@ -38,7 +38,9 @@ architecture arch_nasti_gpio of nasti_gpio is
   constant xconfig : nasti_slave_config_type := (
      xindex => xindex,
      xaddr => conv_std_logic_vector(xaddr, CFG_NASTI_CFG_ADDR_BITS),
-     xmask => conv_std_logic_vector(xmask, CFG_NASTI_CFG_ADDR_BITS)
+     xmask => conv_std_logic_vector(xmask, CFG_NASTI_CFG_ADDR_BITS),
+     vid => VENDOR_GNSSSENSOR,
+     did => GNSSSENSOR_GPIO
   );
 
   type local_addr_array_type is array (0 to CFG_NASTI_DATA_BYTES/ALIGNMENT_BYTES-1) 

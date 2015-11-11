@@ -1,7 +1,8 @@
 -----------------------------------------------------------------------------
 --! @file
---! @author  Sergey Khabarov
---! @brief   System reset former.
+--! @copyright  Copyright 2015 GNSS Sensor Ltd. All right reserved.
+--! @author     Sergey Khabarov - sergeykhbr@gmail.com
+--! @brief      System reset former.
 -----------------------------------------------------------------------------
 
 library ieee;

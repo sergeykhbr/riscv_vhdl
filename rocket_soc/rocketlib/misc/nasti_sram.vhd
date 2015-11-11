@@ -1,7 +1,8 @@
 -----------------------------------------------------------------------------
--- @file
--- @author  Sergey Khabarov
--- @brief   Internal SRAM module with the byte access
+--! @file
+--! @copyright Copyright 2015 GNSS Sensor Ltd. All right reserved.
+--! @author    Sergey Khabarov - sergeykhbr@gmail.com
+--! @brief     Internal SRAM module with the byte access
 ------------------------------------------------------------------------------
 
 library ieee;
@@ -37,7 +38,9 @@ architecture arch_nasti_sram of nasti_sram is
   constant xconfig : nasti_slave_config_type := (
      xindex => xindex,
      xaddr => conv_std_logic_vector(xaddr, CFG_NASTI_CFG_ADDR_BITS),
-     xmask => conv_std_logic_vector(xmask, CFG_NASTI_CFG_ADDR_BITS)
+     xmask => conv_std_logic_vector(xmask, CFG_NASTI_CFG_ADDR_BITS),
+     vid => VENDOR_GNSSSENSOR,
+     did => GNSSSENSOR_SRAM
   );
 
   type registers is record

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------------
 --! @file
 --! @copyright  Copyright 2015 GNSS Sensor Ltd. All right reserved.
---! @author     Sergey Khabarov
+--! @author     Sergey Khabarov - sergeykhbr@gmail.com
 --! @brief      Hardware Configuration storage  with the AMBA AXI4 interface.
 ------------------------------------------------------------------------------
 
@@ -34,20 +34,21 @@ end;
 architecture arch_nasti_pnp of nasti_pnp is
   --! 4-bytes alignment so that all registers implemented as 32-bits
   --! width.
-  constant ALIGNMENT_BYTES : integer := 4;
+  constant ALIGNMENT_BYTES : integer := 8;
 
   constant xconfig : nasti_slave_config_type := (
      xindex => xindex,
      xaddr => conv_std_logic_vector(xaddr, CFG_NASTI_CFG_ADDR_BITS),
-     xmask => conv_std_logic_vector(xmask, CFG_NASTI_CFG_ADDR_BITS)
+     xmask => conv_std_logic_vector(xmask, CFG_NASTI_CFG_ADDR_BITS),
+     vid => VENDOR_GNSSSENSOR,
+     did => GNSSSENSOR_PNP
   );
 
   type local_addr_array_type is array (0 to CFG_NASTI_DATA_BYTES/ALIGNMENT_BYTES-1) 
        of integer;
 
   type bank_type is record
-    led_period : std_logic_vector(31 downto 0);
-    uart_scaler : std_logic_vector(31 downto 0);
+    idt : std_logic_vector(63 downto 0); --! Interrupt descriptor table
   end record;
 
   type registers is record
@@ -74,14 +75,31 @@ begin
     procedureAxi4(i, xconfig, r.bank_axi, v.bank_axi);
 
     for n in 0 to CFG_NASTI_DATA_BYTES/ALIGNMENT_BYTES-1 loop
-       raddr_reg(n) := conv_integer(r.bank_axi.raddr(ALIGNMENT_BYTES*n)(11 downto 2));
+       raddr_reg(n) := conv_integer(r.bank_axi.raddr(ALIGNMENT_BYTES*n)(11 downto log2(ALIGNMENT_BYTES)));
 
        case raddr_reg(n) is
-          when 0 => val := X"20151108";
-          when 1 => val := conv_std_logic_vector(tech,32);
-          when 2 => val := r.bank0.led_period;
-          when 3 => val := r.bank0.uart_scaler;
-          when others => val := X"badef00d";
+          when 0 => val := X"00000000" & X"20151108";
+          when 1 => val := X"00000000" & X"000000" & conv_std_logic_vector(tech,8);
+          when 2 => val := r.bank0.idt;
+          --! Slave:0
+          when 8 => val := cfg(0).xaddr & X"000" &cfg(0).xmask & X"000";
+          when 9 => val := X"00000000" & cfg(0).vid & cfg(0).did;
+          --! Slave:1
+          when 16#a# => val := cfg(1).xaddr & X"000" &cfg(1).xmask & X"000";
+          when 16#b# => val := X"00000000" & cfg(1).vid & cfg(1).did;
+          --! Slave:2
+          when 16#c# => val := cfg(2).xaddr & X"000" &cfg(2).xmask & X"000";
+          when 16#d# => val := X"00000000" & cfg(2).vid & cfg(2).did;
+          --! Slave:3
+          when 16#e# => val := cfg(3).xaddr & X"000" &cfg(3).xmask & X"000";
+          when 16#f# => val := X"00000000" & cfg(3).vid & cfg(3).did;
+          --! Slave:4
+          when 16#10# => val := cfg(4).xaddr & X"000" &cfg(4).xmask & X"000";
+          when 16#11# => val := X"00000000" & cfg(4).vid & cfg(4).did;
+          --! Slave:5
+          when 16#12# => val := cfg(5).xaddr & X"000" &cfg(5).xmask & X"000";
+          when 16#13# => val := X"00000000" & cfg(5).vid & cfg(5).did;
+          when others => val := X"badef00dcafecafe";
        end case;
        rdata(8*ALIGNMENT_BYTES*(n+1)-1 downto 8*ALIGNMENT_BYTES*n) := val;
     end loop;
@@ -94,13 +112,12 @@ begin
       wdata := i.w_data;
       wstrb := i.w_strb;
       for n in 0 to CFG_NASTI_DATA_BYTES/ALIGNMENT_BYTES-1 loop
-         waddr_reg(n) := conv_integer(r.bank_axi.waddr(ALIGNMENT_BYTES*n)(11 downto 2));
+         waddr_reg(n) := conv_integer(r.bank_axi.waddr(ALIGNMENT_BYTES*n)(11 downto log2(ALIGNMENT_BYTES)));
 
          if conv_integer(wstrb(ALIGNMENT_BYTES*(n+1)-1 downto ALIGNMENT_BYTES*n)) /= 0 then
            val := wdata(8*ALIGNMENT_BYTES*(n+1)-1 downto 8*ALIGNMENT_BYTES*n);
            case waddr_reg(n) is
-             when 2 => v.bank0.led_period := val;
-             when 3 => v.bank0.uart_scaler := val;
+             when 2 => v.bank0.idt := val;
              when others =>
            end case;
          end if;
@@ -117,13 +134,7 @@ begin
   begin 
      if nrst = '0' then
         r.bank_axi <= NASTI_SLAVE_BANK_RESET;
-        if tech = inferred then
-           r.bank0.led_period <= conv_std_logic_vector(150,32);
-           r.bank0.uart_scaler <= conv_std_logic_vector(3,32);
-        else
-           r.bank0.led_period <= conv_std_logic_vector(3000000,32);
-           r.bank0.uart_scaler <= conv_std_logic_vector(75,32);
-        end if;
+        r.bank0.idt <= (others => '0');
      elsif rising_edge(clk) then 
         r <= rin;
      end if; 

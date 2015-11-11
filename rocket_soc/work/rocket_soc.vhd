@@ -134,7 +134,7 @@ L1toL2ena0 : if CFG_COMMON_L1toL2_ENABLE generate
 
   ------------------------------------
   --! @brief NoC core instance.
-  rocket0 : MultiChannelTop port map
+  rocket0 : Top port map
   (
     clk                       => wClkBus,              --in
     reset                     => wReset,               --in
@@ -146,13 +146,13 @@ L1toL2ena0 : if CFG_COMMON_L1toL2_ENABLE generate
     io_host_out_ready         => o_starter.out_ready,  --in
     io_host_out_bits          => htif_out_bits_delay,  --out[15:0] goes to Starter and Memory DeSerializer
 
-    --io_host_clk               => htif_clk,             --out
-    --io_host_clk_edge          => open,                 --out
+    io_host_clk               => htif_clk,             --out
+    io_host_clk_edge          => open,                 --out
     io_host_debug_stats_csr   => htif_out_stats_delay, --out
     io_mem_backup_ctrl_en     => '0', --in
     io_mem_backup_ctrl_in_valid  => '0',--mem_bk_in_valid_delay, --in
     io_mem_backup_ctrl_out_ready => '0',--mem_bk_out_ready_delay,--in
-    --io_mem_backup_ctrl_out_valid => open,--mem_bk_out_valid_delay,--out
+    io_mem_backup_ctrl_out_valid => open,--mem_bk_out_valid_delay,--out
 
     --! mem 
     io_mem_0_aw_ready => carb2noc.aw_ready,--in
@@ -435,29 +435,30 @@ end generate;
   
   
   ------------------------------------
-  uart1i.extclk <= '0';
-  uart1i.ctsn   <= i_uart1_ctsn;
-  uart1i.rxd    <= i_uart1_rd;
+  uart1i.cts   <= i_uart1_ctsn;
+  uart1i.rd    <= i_uart1_rd;
 
   --! @brief UART Controller with the AXI4 interface.
   --! @details Map address:
   --!          0x80001000..0x80001fff (4 KB total)
-  --! @todo reimplement UART from the scratch
   uart1 : nasti_uart generic map
   (
     xindex   => CFG_NASTI_SLAVE_UART1,
-    xaddr    => 16#00001#,
-    xmask    => 16#FFFFF#
+    xaddr    => 16#80001#,
+    xmask    => 16#FFFFF#,
+    fifosz   => 16,
+    parity_bit => 0
   ) port map (
-    nrst  => wNReset, 
-    clk   => wClkbus, 
-    i     => noc2cslv,
-    o     => cslv2carb(CFG_NASTI_SLAVE_UART1),
-    uarti => uart1i, 
-    uarto => uart1o
+    nrst   => wNReset, 
+    clk    => wClkbus, 
+    cfg    => cslv_cfg(CFG_NASTI_SLAVE_UART1),
+    i_uart => uart1i, 
+    o_uart => uart1o,
+    i_axi  => noc2cslv,
+    o_axi  => cslv2carb(CFG_NASTI_SLAVE_UART1)
   );
-  o_uart1_td  <= uart1o.txd;
-  o_uart1_rtsn <= uart1o.rtsn;
+  o_uart1_td  <= uart1o.td;
+  o_uart1_rtsn <= uart1o.rts;
 
 
   --! @brief Plug'n'Play controller of the current configuration with the

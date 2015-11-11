@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------------
--- Entity: 	   PLL's descriptor
--- File:	      gnsspll.vhd
--- Author:	    Sergey Khabarov - GNSS Sensor Ltd
--- Description:	PLL in/out description
+--! @file
+--! @copyright Copyright 2015 GNSS Sensor Ltd. All right reserved.
+--! @author    Sergey Khabarov - sergeykhbr@gmail.com
+--! @details  	PLL components declaration
 ------------------------------------------------------------------------------
 
 library ieee;

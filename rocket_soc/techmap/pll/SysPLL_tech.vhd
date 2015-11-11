@@ -1,9 +1,10 @@
 -----------------------------------------------------------------------------
--- Entity: 	   FPGA PLL selector
--- File:	      gnsspll.vhd
--- Author:	    Sergey Khabarov - GNSS Sensor Ltd
--- Description:	This unit allows to form different pll for the different
---              targets
+--! @file
+--! @copyright Copyright 2015 GNSS Sensor Ltd. All right reserved.
+--! @author    Sergey Khabarov - sergeykhbr@gmail.com
+--! @brief  	  FPGA PLL selector
+--! @details  	This unit allows to form different pll for the different
+--!            targets
 ------------------------------------------------------------------------------
 
 library ieee;

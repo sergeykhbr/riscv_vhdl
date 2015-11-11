@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------------
 --! @file
---! @copyright  Copyright 2015 GNSS Sensor Ltd. All right reserved.
---! @author     Sergey Khabarov
---! @brief      TileLink bus interface declaration.
+--! @copyright Copyright 2015 GNSS Sensor Ltd. All right reserved.
+--! @author    Sergey Khabarov - sergeykhbr@gmail.com
+--! @brief     TileLink bus interface declaration.
 -----------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
