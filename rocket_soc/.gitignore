@@ -2,3 +2,4 @@
 fw/
 memmap.info
 work/tb/bridge0_tb.vhd
+docs/*.pptx

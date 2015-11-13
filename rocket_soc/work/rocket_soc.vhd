@@ -435,7 +435,7 @@ end generate;
   
   
   ------------------------------------
-  uart1i.cts   <= i_uart1_ctsn;
+  uart1i.cts   <= not i_uart1_ctsn;
   uart1i.rd    <= i_uart1_rd;
 
   --! @brief UART Controller with the AXI4 interface.
@@ -458,7 +458,7 @@ end generate;
     o_axi  => cslv2carb(CFG_NASTI_SLAVE_UART1)
   );
   o_uart1_td  <= uart1o.td;
-  o_uart1_rtsn <= uart1o.rts;
+  o_uart1_rtsn <= not uart1o.rts;
 
 
   --! @brief Plug'n'Play controller of the current configuration with the
