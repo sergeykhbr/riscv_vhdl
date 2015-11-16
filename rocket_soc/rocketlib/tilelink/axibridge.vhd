@@ -143,7 +143,11 @@ begin
           v.wr_beat_cnt  := wbBeatCnt;
           v.wr_xsize     := opSizeToXSize(conv_integer(i.tile.acquire_bits_union(8 downto 6)));
           v.wr_xact_id   := i.tile.acquire_bits_client_xact_id;
-          v.wr_g_type    := GRANT_ACK_NON_PREFETCH_PUT;
+          if i.tile.acquire_bits_is_builtin_type = '1' then
+              v.wr_g_type    := GRANT_ACK_NON_PREFETCH_PUT;
+          else
+              v.wr_g_type    := CACHED_GRANT_EXCLUSIVE_ACK;
+          end if;
           v.wmask        := wbWMask;
 
           if i.nasti.aw_ready = '1' then
@@ -152,7 +156,8 @@ begin
           end if;
           vo.nasti.aw_valid        := '1';
           vo.nasti.aw_bits         := functionAxi4MetaData(wbAddr, wbBeatCnt, wbAxiSize);
-          vo.nasti.aw_id           := "0000" & i.tile.acquire_bits_client_xact_id;
+          vo.nasti.aw_id(1 downto 0) := i.tile.acquire_bits_client_xact_id;
+          vo.nasti.aw_id(CFG_ROCKET_ID_BITS-1 downto 2) := (others => '0');
 
           vo.tile.acquire_ready := i.tile.acquire_valid and i.nasti.aw_ready;
         end if;
@@ -182,20 +187,32 @@ begin
           v.rd_beat_cnt := wbBeatCnt;
           v.rd_xsize := opSizeToXSize(conv_integer(i.tile.acquire_bits_union(8 downto 6)));
           v.rd_xact_id := i.tile.acquire_bits_client_xact_id;
-          if wbBeatCnt = 0 then
-            v.rd_g_type := GRANT_SINGLE_BEAT_GET;
+          if i.tile.acquire_bits_is_builtin_type = '1' then
+            if wbBeatCnt = 0 then
+              v.rd_g_type := GRANT_SINGLE_BEAT_GET;
+            else
+              v.rd_g_type := GRANT_BLOCK_GET;
+            end if;
           else
-            v.rd_g_type := GRANT_BLOCK_GET;
+              v.wr_g_type    := CACHED_GRANT_SHARED;
+              
+              --wbBeatCnt := 3;
+              --wbAxiSize := "100";
+              --v.rd_addr_incr := XSizeToBytes(conv_integer(wbAxiSize));
+              --v.rd_beat_cnt  := wbBeatCnt;
+              --v.rd_xsize     := wbAxiSize;
           end if;
 
-           if i.nasti.ar_ready = '1' then
-              v.rstate := reading;
-           end if;
-           vo.nasti.ar_valid        := '1';
-           vo.nasti.ar_bits         := functionAxi4MetaData(wbAddr, wbBeatCnt, wbAxiSize);
-           vo.nasti.ar_id           := "0000" & i.tile.acquire_bits_client_xact_id;
 
-           vo.tile.acquire_ready := i.tile.acquire_valid and i.nasti.ar_ready;
+          if i.nasti.ar_ready = '1' then
+            v.rstate := reading;
+          end if;
+          vo.nasti.ar_valid        := '1';
+          vo.nasti.ar_bits         := functionAxi4MetaData(wbAddr, wbBeatCnt, wbAxiSize);
+          vo.nasti.ar_id(1 downto 0) := i.tile.acquire_bits_client_xact_id;
+          vo.nasti.ar_id(CFG_ROCKET_ID_BITS-1 downto 2) := (others => '0');
+
+          vo.tile.acquire_ready := i.tile.acquire_valid and i.nasti.ar_ready;
         end if;
 
     when reading =>

@@ -49,7 +49,7 @@ port (
     io_mem_0_aw_bits_prot : out std_logic_vector(2 downto 0);
     io_mem_0_aw_bits_qos : out std_logic_vector(3 downto 0);
     io_mem_0_aw_bits_region : out std_logic_vector(3 downto 0);
-    io_mem_0_aw_bits_id : out std_logic_vector(5 downto 0);
+    io_mem_0_aw_bits_id : out std_logic_vector(CFG_ROCKET_ID_BITS-1 downto 0);
     io_mem_0_aw_bits_user : out std_logic;
     io_mem_0_w_ready : in std_logic;
     io_mem_0_w_valid : out std_logic;
@@ -60,7 +60,7 @@ port (
     io_mem_0_b_ready : out std_logic;
     io_mem_0_b_valid : in std_logic;
     io_mem_0_b_bits_resp : in std_logic_vector(1 downto 0);
-    io_mem_0_b_bits_id : in std_logic_vector(5 downto 0);
+    io_mem_0_b_bits_id : in std_logic_vector(CFG_ROCKET_ID_BITS-1 downto 0);
     io_mem_0_b_bits_user : in std_logic;
     io_mem_0_ar_ready : in std_logic;
     io_mem_0_ar_valid : out std_logic;
@@ -73,14 +73,14 @@ port (
     io_mem_0_ar_bits_prot : out std_logic_vector(2 downto 0);
     io_mem_0_ar_bits_qos : out std_logic_vector(3 downto 0);
     io_mem_0_ar_bits_region : out std_logic_vector(3 downto 0);
-    io_mem_0_ar_bits_id : out std_logic_vector(5 downto 0);
+    io_mem_0_ar_bits_id : out std_logic_vector(CFG_ROCKET_ID_BITS-1 downto 0);
     io_mem_0_ar_bits_user : out std_logic;
     io_mem_0_r_ready : out std_logic;
     io_mem_0_r_valid : in std_logic;
     io_mem_0_r_bits_resp : in std_logic_vector(1 downto 0);
     io_mem_0_r_bits_data : in std_logic_vector(127 downto 0);
     io_mem_0_r_bits_last : in std_logic;
-    io_mem_0_r_bits_id : in std_logic_vector(5 downto 0);
+    io_mem_0_r_bits_id : in std_logic_vector(CFG_ROCKET_ID_BITS-1 downto 0);
     io_mem_0_r_bits_user : in std_logic;
     --! mmio 
     io_mmio_aw_ready : in std_logic;
@@ -94,7 +94,7 @@ port (
     io_mmio_aw_bits_prot : out std_logic_vector(2 downto 0);
     io_mmio_aw_bits_qos : out std_logic_vector(3 downto 0);
     io_mmio_aw_bits_region : out std_logic_vector(3 downto 0);
-    io_mmio_aw_bits_id : out std_logic_vector(5 downto 0);
+    io_mmio_aw_bits_id : out std_logic_vector(CFG_ROCKET_ID_BITS-1 downto 0);
     io_mmio_aw_bits_user : out std_logic;
     io_mmio_w_ready : in std_logic;
     io_mmio_w_valid : out std_logic;
@@ -105,7 +105,7 @@ port (
     io_mmio_b_ready : out std_logic;
     io_mmio_b_valid : in std_logic;
     io_mmio_b_bits_resp : in std_logic_vector(1 downto 0);
-    io_mmio_b_bits_id : in std_logic_vector(5 downto 0);
+    io_mmio_b_bits_id : in std_logic_vector(CFG_ROCKET_ID_BITS-1 downto 0);
     io_mmio_b_bits_user : in std_logic;
     io_mmio_ar_ready : in std_logic;
     io_mmio_ar_valid : out std_logic;
@@ -118,14 +118,14 @@ port (
     io_mmio_ar_bits_prot : out std_logic_vector(2 downto 0);
     io_mmio_ar_bits_qos : out std_logic_vector(3 downto 0);
     io_mmio_ar_bits_region : out std_logic_vector(3 downto 0);
-    io_mmio_ar_bits_id : out std_logic_vector(5 downto 0);
+    io_mmio_ar_bits_id : out std_logic_vector(CFG_ROCKET_ID_BITS-1 downto 0);
     io_mmio_ar_bits_user : out std_logic;
     io_mmio_r_ready : out std_logic;
     io_mmio_r_valid : in std_logic;
     io_mmio_r_bits_resp : in std_logic_vector(1 downto 0);
     io_mmio_r_bits_data : in std_logic_vector(MEM_DATA_BITS-1 downto 0);
     io_mmio_r_bits_last : in std_logic;
-    io_mmio_r_bits_id : in std_logic_vector(5 downto 0);
+    io_mmio_r_bits_id : in std_logic_vector(CFG_ROCKET_ID_BITS-1 downto 0);
     io_mmio_r_bits_user : in std_logic
     --init : in std_logic
 );
@@ -200,6 +200,32 @@ port (
     io_host_debug_stats_csr : out std_logic
 );
 end component;
+
+--! HostIO tile input signals
+type host_in_type is  record
+    reset : std_logic;
+    id : std_logic;
+    csr_req_valid : std_logic;
+    csr_req_bits_rw : std_logic;
+    csr_req_bits_addr : std_logic_vector(11 downto 0);
+    csr_req_bits_data : std_logic_vector(63 downto 0);
+    csr_resp_ready : std_logic;
+    ipi_req_ready : std_logic;
+    ipi_rep_valid : std_logic;
+    ipi_rep_bits : std_logic;
+end record;
+
+--! HostIO tile output signals
+type host_out_type is record
+    csr_req_ready : std_logic;
+    csr_resp_valid : std_logic;
+    csr_resp_bits : std_logic_vector(63 downto 0);
+    ipi_req_valid : std_logic;
+    ipi_req_bits : std_logic;
+    ipi_rep_ready : std_logic;
+    debug_stats_csr : std_logic;
+end record;
+
 
 --! @brief NoC global reset former.
 --! @details This module produces output reset signal in a case if
@@ -365,6 +391,26 @@ component nasti_uart is
     o_uart : out uart_out_type;
     i_axi  : in  nasti_slave_in_type;
     o_axi  : out nasti_slave_out_type);
+end component;
+
+component nasti_irqctrl is
+  generic (
+    xindex   : integer := 0;
+    xaddr    : integer := 0;
+    xmask    : integer := 16#fffff#;
+    L2_ena   : boolean := false
+  );
+  port 
+ (
+    clk    : in std_logic;
+    nrst   : in std_logic;
+    i_irqs : in std_logic_vector(CFG_IRQ_TOTAL-1 downto 0);
+    o_cfg  : out nasti_slave_config_type;
+    i_axi  : in nasti_slave_in_type;
+    o_axi  : out nasti_slave_out_type;
+    i_host : in host_out_type;
+    o_host : out host_in_type
+  );
 end component;
 
 component nasti_pnp is

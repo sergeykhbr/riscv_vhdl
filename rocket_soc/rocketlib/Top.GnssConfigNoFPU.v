@@ -27734,11 +27734,13 @@ endmodule
 module ReorderQueue_1(input clk, input reset,
     output io_enq_ready,
     input  io_enq_valid,
+    input [1:0] io_enq_bits_data_addr_beat,
     input [3:0] io_enq_bits_data_byteOff,
     input  io_enq_bits_data_subblock,
     input [4:0] io_enq_bits_tag,
     input  io_deq_valid,
     input [4:0] io_deq_tag,
+    output[1:0] io_deq_data_addr_beat,
     output[3:0] io_deq_data_byteOff,
     output io_deq_data_subblock,
     output io_deq_matches
@@ -27748,7 +27750,7 @@ module ReorderQueue_1(input clk, input reset,
   wire roq_matches_8;
   wire T1;
   reg  roq_free_8;
-  wire T216;
+  wire T250;
   wire T2;
   wire T3;
   wire T4;
@@ -27764,7 +27766,7 @@ module ReorderQueue_1(input clk, input reset,
   wire[3:0] T13;
   wire[3:0] T14;
   reg  roq_free_7;
-  wire T217;
+  wire T251;
   wire T15;
   wire T16;
   wire T17;
@@ -27840,7 +27842,7 @@ module ReorderQueue_1(input clk, input reset,
   wire T70;
   wire T71;
   reg  roq_free_6;
-  wire T218;
+  wire T252;
   wire T72;
   wire T73;
   wire T74;
@@ -27848,7 +27850,7 @@ module ReorderQueue_1(input clk, input reset,
   wire T76;
   wire T77;
   reg  roq_free_5;
-  wire T219;
+  wire T253;
   wire T78;
   wire T79;
   wire T80;
@@ -27856,7 +27858,7 @@ module ReorderQueue_1(input clk, input reset,
   wire T82;
   wire T83;
   reg  roq_free_4;
-  wire T220;
+  wire T254;
   wire T84;
   wire T85;
   wire T86;
@@ -27864,7 +27866,7 @@ module ReorderQueue_1(input clk, input reset,
   wire T88;
   wire T89;
   reg  roq_free_3;
-  wire T221;
+  wire T255;
   wire T90;
   wire T91;
   wire T92;
@@ -27872,7 +27874,7 @@ module ReorderQueue_1(input clk, input reset,
   wire T94;
   wire T95;
   reg  roq_free_2;
-  wire T222;
+  wire T256;
   wire T96;
   wire T97;
   wire T98;
@@ -27880,7 +27882,7 @@ module ReorderQueue_1(input clk, input reset,
   wire T100;
   wire T101;
   reg  roq_free_1;
-  wire T223;
+  wire T257;
   wire T102;
   wire T103;
   wire T104;
@@ -27888,7 +27890,7 @@ module ReorderQueue_1(input clk, input reset,
   wire T106;
   wire T107;
   reg  roq_free_0;
-  wire T224;
+  wire T258;
   wire T108;
   wire T109;
   wire T110;
@@ -28008,14 +28010,57 @@ module ReorderQueue_1(input clk, input reset,
   wire[3:0] T205;
   wire T206;
   wire T207;
-  wire T208;
-  wire T209;
-  wire T210;
-  wire T211;
-  wire T212;
+  wire[1:0] T208;
+  wire[1:0] T209;
+  wire[1:0] T210;
+  wire[1:0] T211;
+  reg [1:0] roq_data_0_addr_beat;
+  wire[1:0] T212;
   wire T213;
-  wire T214;
+  reg [1:0] roq_data_1_addr_beat;
+  wire[1:0] T214;
   wire T215;
+  wire T216;
+  wire[1:0] T217;
+  reg [1:0] roq_data_2_addr_beat;
+  wire[1:0] T218;
+  wire T219;
+  reg [1:0] roq_data_3_addr_beat;
+  wire[1:0] T220;
+  wire T221;
+  wire T222;
+  wire T223;
+  wire[1:0] T224;
+  wire[1:0] T225;
+  reg [1:0] roq_data_4_addr_beat;
+  wire[1:0] T226;
+  wire T227;
+  reg [1:0] roq_data_5_addr_beat;
+  wire[1:0] T228;
+  wire T229;
+  wire T230;
+  wire[1:0] T231;
+  reg [1:0] roq_data_6_addr_beat;
+  wire[1:0] T232;
+  wire T233;
+  reg [1:0] roq_data_7_addr_beat;
+  wire[1:0] T234;
+  wire T235;
+  wire T236;
+  wire T237;
+  wire T238;
+  reg [1:0] roq_data_8_addr_beat;
+  wire[1:0] T239;
+  wire T240;
+  wire T241;
+  wire T242;
+  wire T243;
+  wire T244;
+  wire T245;
+  wire T246;
+  wire T247;
+  wire T248;
+  wire T249;
 
 `ifndef SYNTHESIS
 // synthesis translate_off
@@ -28058,6 +28103,15 @@ module ReorderQueue_1(input clk, input reset,
     roq_data_6_byteOff = {1{$random}};
     roq_data_7_byteOff = {1{$random}};
     roq_data_8_byteOff = {1{$random}};
+    roq_data_0_addr_beat = {1{$random}};
+    roq_data_1_addr_beat = {1{$random}};
+    roq_data_2_addr_beat = {1{$random}};
+    roq_data_3_addr_beat = {1{$random}};
+    roq_data_4_addr_beat = {1{$random}};
+    roq_data_5_addr_beat = {1{$random}};
+    roq_data_6_addr_beat = {1{$random}};
+    roq_data_7_addr_beat = {1{$random}};
+    roq_data_8_addr_beat = {1{$random}};
   end
 // synthesis translate_on
 `endif
@@ -28066,7 +28120,7 @@ module ReorderQueue_1(input clk, input reset,
   assign T0 = T121 | roq_matches_8;
   assign roq_matches_8 = T117 & T1;
   assign T1 = roq_free_8 ^ 1'h1;
-  assign T216 = reset ? 1'h1 : T2;
+  assign T250 = reset ? 1'h1 : T2;
   assign T2 = T115 ? 1'h1 : T3;
   assign T3 = T4 ? 1'h0 : roq_free_8;
   assign T4 = T114 & T5;
@@ -28081,7 +28135,7 @@ module ReorderQueue_1(input clk, input reset,
   assign T12 = roq_free_5 ? 4'h5 : T13;
   assign T13 = roq_free_6 ? 4'h6 : T14;
   assign T14 = roq_free_7 ? 4'h7 : 4'h8;
-  assign T217 = reset ? 1'h1 : T15;
+  assign T251 = reset ? 1'h1 : T15;
   assign T15 = T19 ? 1'h1 : T16;
   assign T16 = T17 ? 1'h0 : roq_free_7;
   assign T17 = T114 & T18;
@@ -28148,49 +28202,49 @@ module ReorderQueue_1(input clk, input reset,
   assign T69 = T70 ? io_enq_bits_tag : roq_tags_0;
   assign T70 = T114 & T71;
   assign T71 = T35[1'h0:1'h0];
-  assign T218 = reset ? 1'h1 : T72;
+  assign T252 = reset ? 1'h1 : T72;
   assign T72 = T76 ? 1'h1 : T73;
   assign T73 = T74 ? 1'h0 : roq_free_6;
   assign T74 = T114 & T75;
   assign T75 = T6[3'h6:3'h6];
   assign T76 = io_deq_valid & T77;
   assign T77 = T21[3'h6:3'h6];
-  assign T219 = reset ? 1'h1 : T78;
+  assign T253 = reset ? 1'h1 : T78;
   assign T78 = T82 ? 1'h1 : T79;
   assign T79 = T80 ? 1'h0 : roq_free_5;
   assign T80 = T114 & T81;
   assign T81 = T6[3'h5:3'h5];
   assign T82 = io_deq_valid & T83;
   assign T83 = T21[3'h5:3'h5];
-  assign T220 = reset ? 1'h1 : T84;
+  assign T254 = reset ? 1'h1 : T84;
   assign T84 = T88 ? 1'h1 : T85;
   assign T85 = T86 ? 1'h0 : roq_free_4;
   assign T86 = T114 & T87;
   assign T87 = T6[3'h4:3'h4];
   assign T88 = io_deq_valid & T89;
   assign T89 = T21[3'h4:3'h4];
-  assign T221 = reset ? 1'h1 : T90;
+  assign T255 = reset ? 1'h1 : T90;
   assign T90 = T94 ? 1'h1 : T91;
   assign T91 = T92 ? 1'h0 : roq_free_3;
   assign T92 = T114 & T93;
   assign T93 = T6[2'h3:2'h3];
   assign T94 = io_deq_valid & T95;
   assign T95 = T21[2'h3:2'h3];
-  assign T222 = reset ? 1'h1 : T96;
+  assign T256 = reset ? 1'h1 : T96;
   assign T96 = T100 ? 1'h1 : T97;
   assign T97 = T98 ? 1'h0 : roq_free_2;
   assign T98 = T114 & T99;
   assign T99 = T6[2'h2:2'h2];
   assign T100 = io_deq_valid & T101;
   assign T101 = T21[2'h2:2'h2];
-  assign T223 = reset ? 1'h1 : T102;
+  assign T257 = reset ? 1'h1 : T102;
   assign T102 = T106 ? 1'h1 : T103;
   assign T103 = T104 ? 1'h0 : roq_free_1;
   assign T104 = T114 & T105;
   assign T105 = T6[1'h1:1'h1];
   assign T106 = io_deq_valid & T107;
   assign T107 = T21[1'h1:1'h1];
-  assign T224 = reset ? 1'h1 : T108;
+  assign T258 = reset ? 1'h1 : T108;
   assign T108 = T112 ? 1'h1 : T109;
   assign T109 = T110 ? 1'h0 : roq_free_0;
   assign T110 = T114 & T111;
@@ -28293,15 +28347,50 @@ module ReorderQueue_1(input clk, input reset,
   assign T205 = T206 ? io_enq_bits_data_byteOff : roq_data_8_byteOff;
   assign T206 = T114 & T172;
   assign T207 = T141[2'h3:2'h3];
-  assign io_enq_ready = T208;
-  assign T208 = T209 | roq_free_8;
-  assign T209 = T210 | roq_free_7;
-  assign T210 = T211 | roq_free_6;
-  assign T211 = T212 | roq_free_5;
-  assign T212 = T213 | roq_free_4;
-  assign T213 = T214 | roq_free_3;
-  assign T214 = T215 | roq_free_2;
-  assign T215 = roq_free_0 | roq_free_1;
+  assign io_deq_data_addr_beat = T208;
+  assign T208 = T241 ? roq_data_8_addr_beat : T209;
+  assign T209 = T238 ? T224 : T210;
+  assign T210 = T223 ? T217 : T211;
+  assign T211 = T216 ? roq_data_1_addr_beat : roq_data_0_addr_beat;
+  assign T212 = T213 ? io_enq_bits_data_addr_beat : roq_data_0_addr_beat;
+  assign T213 = T114 & T134;
+  assign T214 = T215 ? io_enq_bits_data_addr_beat : roq_data_1_addr_beat;
+  assign T215 = T114 & T139;
+  assign T216 = T141[1'h0:1'h0];
+  assign T217 = T222 ? roq_data_3_addr_beat : roq_data_2_addr_beat;
+  assign T218 = T219 ? io_enq_bits_data_addr_beat : roq_data_2_addr_beat;
+  assign T219 = T114 & T145;
+  assign T220 = T221 ? io_enq_bits_data_addr_beat : roq_data_3_addr_beat;
+  assign T221 = T114 & T148;
+  assign T222 = T141[1'h0:1'h0];
+  assign T223 = T141[1'h1:1'h1];
+  assign T224 = T237 ? T231 : T225;
+  assign T225 = T230 ? roq_data_5_addr_beat : roq_data_4_addr_beat;
+  assign T226 = T227 ? io_enq_bits_data_addr_beat : roq_data_4_addr_beat;
+  assign T227 = T114 & T155;
+  assign T228 = T229 ? io_enq_bits_data_addr_beat : roq_data_5_addr_beat;
+  assign T229 = T114 & T158;
+  assign T230 = T141[1'h0:1'h0];
+  assign T231 = T236 ? roq_data_7_addr_beat : roq_data_6_addr_beat;
+  assign T232 = T233 ? io_enq_bits_data_addr_beat : roq_data_6_addr_beat;
+  assign T233 = T114 & T163;
+  assign T234 = T235 ? io_enq_bits_data_addr_beat : roq_data_7_addr_beat;
+  assign T235 = T114 & T166;
+  assign T236 = T141[1'h0:1'h0];
+  assign T237 = T141[1'h1:1'h1];
+  assign T238 = T141[2'h2:2'h2];
+  assign T239 = T240 ? io_enq_bits_data_addr_beat : roq_data_8_addr_beat;
+  assign T240 = T114 & T172;
+  assign T241 = T141[2'h3:2'h3];
+  assign io_enq_ready = T242;
+  assign T242 = T243 | roq_free_8;
+  assign T243 = T244 | roq_free_7;
+  assign T244 = T245 | roq_free_6;
+  assign T245 = T246 | roq_free_5;
+  assign T246 = T247 | roq_free_4;
+  assign T247 = T248 | roq_free_3;
+  assign T248 = T249 | roq_free_2;
+  assign T249 = roq_free_0 | roq_free_1;
 
   always @(posedge clk) begin
     if(reset) begin
@@ -28448,6 +28537,33 @@ module ReorderQueue_1(input clk, input reset,
     if(T206) begin
       roq_data_8_byteOff <= io_enq_bits_data_byteOff;
     end
+    if(T213) begin
+      roq_data_0_addr_beat <= io_enq_bits_data_addr_beat;
+    end
+    if(T215) begin
+      roq_data_1_addr_beat <= io_enq_bits_data_addr_beat;
+    end
+    if(T219) begin
+      roq_data_2_addr_beat <= io_enq_bits_data_addr_beat;
+    end
+    if(T221) begin
+      roq_data_3_addr_beat <= io_enq_bits_data_addr_beat;
+    end
+    if(T227) begin
+      roq_data_4_addr_beat <= io_enq_bits_data_addr_beat;
+    end
+    if(T229) begin
+      roq_data_5_addr_beat <= io_enq_bits_data_addr_beat;
+    end
+    if(T233) begin
+      roq_data_6_addr_beat <= io_enq_bits_data_addr_beat;
+    end
+    if(T235) begin
+      roq_data_7_addr_beat <= io_enq_bits_data_addr_beat;
+    end
+    if(T240) begin
+      roq_data_8_addr_beat <= io_enq_bits_data_addr_beat;
+    end
   end
 endmodule
 
@@ -28588,73 +28704,73 @@ module NastiIOTileLinkIOConverter(input clk, input reset,
 );
 
   wire[127:0] T0;
-  wire[127:0] T137;
+  wire[127:0] T138;
   wire[254:0] r_aligned_data;
-  wire[254:0] T138;
+  wire[254:0] T139;
   wire[254:0] T1;
   wire[6:0] T2;
   wire[3:0] T3;
-  wire[3:0] T139;
+  wire[3:0] T140;
   wire[2:0] T4;
   wire T5;
   wire T6;
   wire[3:0] T7;
-  wire[3:0] T140;
+  wire[3:0] T141;
   wire[1:0] T8;
-  reg [1:0] tl_cnt_in;
-  wire[1:0] T141;
   wire[1:0] T9;
+  reg [1:0] tl_cnt_in;
+  wire[1:0] T142;
   wire[1:0] T10;
-  wire T11;
+  wire[1:0] T11;
   wire T12;
   wire T13;
   wire T14;
   wire T15;
-  wire[127:0] T16;
-  wire[3:0] T17;
-  wire T18;
+  wire T16;
+  wire[127:0] T17;
+  wire[3:0] T18;
   wire T19;
-  wire[3:0] T20;
-  wire[3:0] T142;
-  wire[1:0] T21;
-  wire T22;
+  wire T20;
+  wire[3:0] T21;
+  wire[3:0] T143;
+  wire[1:0] T22;
   wire T23;
-  wire nasti_wrap_out;
   wire T24;
+  wire nasti_wrap_out;
+  wire T25;
   reg [1:0] nasti_cnt_out;
-  wire[1:0] T143;
-  wire[1:0] T25;
+  wire[1:0] T144;
   wire[1:0] T26;
-  wire T27;
+  wire[1:0] T27;
   wire T28;
   wire T29;
   wire T30;
-  wire is_subblock;
   wire T31;
+  wire is_subblock;
   wire T32;
   wire T33;
   wire T34;
   wire T35;
-  wire[3:0] T36;
-  wire T37;
-  wire get_valid;
+  wire T36;
+  wire[3:0] T37;
   wire T38;
-  wire has_data;
+  wire get_valid;
   wire T39;
+  wire has_data;
   wire T40;
   wire T41;
   wire T42;
   wire T43;
   wire T44;
-  wire[4:0] T45;
-  wire[4:0] T144;
-  wire[3:0] T46;
+  wire T45;
+  wire[4:0] T46;
+  wire[4:0] T145;
   wire[3:0] T47;
-  wire[2:0] T48;
-  wire[3:0] T49;
-  wire T50;
-  wire[1:0] T51;
-  wire[2:0] T52;
+  wire[3:0] T48;
+  wire[2:0] T49;
+  wire[3:0] T50;
+  wire T51;
+  wire[1:0] T52;
   wire[2:0] T53;
   wire[2:0] T54;
   wire[2:0] T55;
@@ -28663,96 +28779,98 @@ module NastiIOTileLinkIOConverter(input clk, input reset,
   wire[2:0] T58;
   wire[2:0] T59;
   wire[2:0] T60;
-  wire T61;
-  wire[2:0] T62;
-  wire T63;
+  wire[2:0] T61;
+  wire T62;
+  wire[2:0] T63;
   wire T64;
   wire T65;
   wire T66;
   wire T67;
   wire T68;
-  wire[7:0] T69;
-  wire[7:0] T145;
-  wire[1:0] T70;
-  wire[31:0] T71;
+  wire T69;
+  wire[7:0] T70;
+  wire[7:0] T146;
+  wire[1:0] T71;
   wire[31:0] T72;
-  wire[5:0] T73;
-  wire[3:0] T74;
-  wire T75;
+  wire[31:0] T73;
+  wire[5:0] T74;
+  wire[3:0] T75;
   wire T76;
-  wire[15:0] T77;
+  wire T77;
   wire[15:0] T78;
   wire[15:0] T79;
   wire[15:0] T80;
-  wire T81;
+  wire[15:0] T81;
   wire T82;
   wire T83;
   wire T84;
   wire T85;
-  wire[15:0] T86;
+  wire T86;
   wire[15:0] T87;
-  wire[7:0] T88;
-  wire[7:0] T146;
-  wire T89;
-  wire[1:0] T90;
-  wire T91;
-  wire[3:0] T92;
-  wire[7:0] T93;
+  wire[15:0] T88;
+  wire[7:0] T89;
   wire[7:0] T147;
-  wire T94;
+  wire T90;
+  wire[1:0] T91;
+  wire T92;
+  wire[3:0] T93;
+  wire[7:0] T94;
+  wire[7:0] T148;
   wire T95;
   wire T96;
   wire T97;
   wire T98;
   wire T99;
   wire T100;
-  wire tl_wrap_out;
   wire T101;
+  wire tl_wrap_out;
+  wire T102;
   reg [1:0] tl_cnt_out;
-  wire[1:0] T148;
-  wire[1:0] T102;
+  wire[1:0] T149;
   wire[1:0] T103;
-  wire T104;
-  wire is_multibeat;
+  wire[1:0] T104;
   wire T105;
+  wire is_multibeat;
   wire T106;
-  wire[127:0] T107;
-  wire T108;
+  wire T107;
+  wire[127:0] T108;
+  wire T109;
   wire aw_ready;
   reg  w_inflight;
-  wire T149;
-  wire T109;
+  wire T150;
   wire T110;
   wire T111;
   wire T112;
   wire T113;
   wire T114;
   wire T115;
-  wire put_valid;
   wire T116;
-  wire[4:0] T117;
-  wire[4:0] T150;
-  wire[3:0] T118;
+  wire put_valid;
+  wire T117;
+  wire[4:0] T118;
+  wire[4:0] T151;
   wire[3:0] T119;
-  wire[2:0] T120;
-  wire[3:0] T121;
-  wire T122;
-  wire[1:0] T123;
-  wire[2:0] T124;
-  wire[7:0] T125;
-  wire[7:0] T151;
-  wire[1:0] T126;
-  wire[31:0] T127;
+  wire[3:0] T120;
+  wire[2:0] T121;
+  wire[3:0] T122;
+  wire T123;
+  wire[1:0] T124;
+  wire[2:0] T125;
+  wire[7:0] T126;
+  wire[7:0] T152;
+  wire[1:0] T127;
   wire[31:0] T128;
-  wire[5:0] T129;
-  wire[3:0] T130;
-  wire T131;
+  wire[31:0] T129;
+  wire[5:0] T130;
+  wire[3:0] T131;
   wire T132;
   wire T133;
   wire T134;
   wire T135;
   wire T136;
+  wire T137;
   wire roq_io_enq_ready;
+  wire[1:0] roq_io_deq_data_addr_beat;
   wire[3:0] roq_io_deq_data_byteOff;
   wire roq_io_deq_data_subblock;
   wire gnt_arb_io_in_1_ready;
@@ -28778,195 +28896,196 @@ module NastiIOTileLinkIOConverter(input clk, input reset,
 // synthesis translate_on
 `endif
 
-  assign T0 = T137;
-  assign T137 = r_aligned_data[7'h7f:1'h0];
-  assign r_aligned_data = roq_io_deq_data_subblock ? T1 : T138;
-  assign T138 = {127'h0, io_nasti_r_bits_data};
+  assign T0 = T138;
+  assign T138 = r_aligned_data[7'h7f:1'h0];
+  assign r_aligned_data = roq_io_deq_data_subblock ? T1 : T139;
+  assign T139 = {127'h0, io_nasti_r_bits_data};
   assign T1 = io_nasti_r_bits_data << T2;
   assign T2 = {roq_io_deq_data_byteOff, 3'h0};
-  assign T3 = T139;
-  assign T139 = {1'h0, T4};
+  assign T3 = T140;
+  assign T140 = {1'h0, T4};
   assign T4 = roq_io_deq_data_subblock ? 3'h4 : 3'h5;
   assign T5 = 1'h1;
   assign T6 = 1'h0;
-  assign T7 = T140;
-  assign T140 = io_nasti_r_bits_id[2'h3:1'h0];
-  assign T8 = tl_cnt_in;
-  assign T141 = reset ? 2'h0 : T9;
-  assign T9 = T11 ? T10 : tl_cnt_in;
-  assign T10 = tl_cnt_in + 2'h1;
-  assign T11 = T15 & T12;
-  assign T12 = io_tl_grant_bits_is_builtin_type ? T14 : T13;
-  assign T13 = 4'h0 == io_tl_grant_bits_g_type;
-  assign T14 = 4'h5 == io_tl_grant_bits_g_type;
-  assign T15 = io_tl_grant_ready & io_tl_grant_valid;
-  assign T16 = 128'h0;
-  assign T17 = 4'h3;
-  assign T18 = 1'h1;
-  assign T19 = 1'h0;
-  assign T20 = T142;
-  assign T142 = io_nasti_b_bits_id[2'h3:1'h0];
-  assign T21 = 2'h0;
-  assign T22 = T30 & T23;
-  assign T23 = nasti_wrap_out | roq_io_deq_data_subblock;
-  assign nasti_wrap_out = T27 & T24;
-  assign T24 = nasti_cnt_out == 2'h3;
-  assign T143 = reset ? 2'h0 : T25;
-  assign T25 = T27 ? T26 : nasti_cnt_out;
-  assign T26 = nasti_cnt_out + 2'h1;
-  assign T27 = T29 & T28;
-  assign T28 = roq_io_deq_data_subblock ^ 1'h1;
-  assign T29 = io_nasti_r_ready & io_nasti_r_valid;
+  assign T7 = T141;
+  assign T141 = io_nasti_r_bits_id[2'h3:1'h0];
+  assign T8 = T9;
+  assign T9 = roq_io_deq_data_subblock ? roq_io_deq_data_addr_beat : tl_cnt_in;
+  assign T142 = reset ? 2'h0 : T10;
+  assign T10 = T12 ? T11 : tl_cnt_in;
+  assign T11 = tl_cnt_in + 2'h1;
+  assign T12 = T16 & T13;
+  assign T13 = io_tl_grant_bits_is_builtin_type ? T15 : T14;
+  assign T14 = 4'h0 == io_tl_grant_bits_g_type;
+  assign T15 = 4'h5 == io_tl_grant_bits_g_type;
+  assign T16 = io_tl_grant_ready & io_tl_grant_valid;
+  assign T17 = 128'h0;
+  assign T18 = 4'h3;
+  assign T19 = 1'h1;
+  assign T20 = 1'h0;
+  assign T21 = T143;
+  assign T143 = io_nasti_b_bits_id[2'h3:1'h0];
+  assign T22 = 2'h0;
+  assign T23 = T31 & T24;
+  assign T24 = nasti_wrap_out | roq_io_deq_data_subblock;
+  assign nasti_wrap_out = T28 & T25;
+  assign T25 = nasti_cnt_out == 2'h3;
+  assign T144 = reset ? 2'h0 : T26;
+  assign T26 = T28 ? T27 : nasti_cnt_out;
+  assign T27 = nasti_cnt_out + 2'h1;
+  assign T28 = T30 & T29;
+  assign T29 = roq_io_deq_data_subblock ^ 1'h1;
   assign T30 = io_nasti_r_ready & io_nasti_r_valid;
-  assign is_subblock = io_tl_acquire_bits_is_builtin_type & T31;
-  assign T31 = T33 | T32;
-  assign T32 = 3'h4 == io_tl_acquire_bits_a_type;
-  assign T33 = T35 | T34;
-  assign T34 = 3'h0 == io_tl_acquire_bits_a_type;
-  assign T35 = 3'h2 == io_tl_acquire_bits_a_type;
-  assign T36 = io_tl_acquire_bits_union[4'hc:4'h9];
-  assign T37 = get_valid & io_nasti_ar_ready;
-  assign get_valid = io_tl_acquire_valid & T38;
-  assign T38 = has_data ^ 1'h1;
-  assign has_data = io_tl_acquire_bits_is_builtin_type & T39;
-  assign T39 = T41 | T40;
-  assign T40 = 3'h4 == io_tl_acquire_bits_a_type;
-  assign T41 = T43 | T42;
-  assign T42 = 3'h3 == io_tl_acquire_bits_a_type;
-  assign T43 = 3'h2 == io_tl_acquire_bits_a_type;
+  assign T31 = io_nasti_r_ready & io_nasti_r_valid;
+  assign is_subblock = io_tl_acquire_bits_is_builtin_type & T32;
+  assign T32 = T34 | T33;
+  assign T33 = 3'h4 == io_tl_acquire_bits_a_type;
+  assign T34 = T36 | T35;
+  assign T35 = 3'h0 == io_tl_acquire_bits_a_type;
+  assign T36 = 3'h2 == io_tl_acquire_bits_a_type;
+  assign T37 = io_tl_acquire_bits_union[4'hc:4'h9];
+  assign T38 = get_valid & io_nasti_ar_ready;
+  assign get_valid = io_tl_acquire_valid & T39;
+  assign T39 = has_data ^ 1'h1;
+  assign has_data = io_tl_acquire_bits_is_builtin_type & T40;
+  assign T40 = T42 | T41;
+  assign T41 = 3'h4 == io_tl_acquire_bits_a_type;
+  assign T42 = T44 | T43;
+  assign T43 = 3'h3 == io_tl_acquire_bits_a_type;
+  assign T44 = 3'h2 == io_tl_acquire_bits_a_type;
   assign io_nasti_r_ready = gnt_arb_io_in_0_ready;
-  assign io_nasti_ar_bits_user = T44;
-  assign T44 = 1'h0;
-  assign io_nasti_ar_bits_id = T45;
-  assign T45 = T144;
-  assign T144 = {1'h0, io_tl_acquire_bits_client_xact_id};
-  assign io_nasti_ar_bits_region = T46;
-  assign T46 = 4'h0;
-  assign io_nasti_ar_bits_qos = T47;
+  assign io_nasti_ar_bits_user = T45;
+  assign T45 = 1'h0;
+  assign io_nasti_ar_bits_id = T46;
+  assign T46 = T145;
+  assign T145 = {1'h0, io_tl_acquire_bits_client_xact_id};
+  assign io_nasti_ar_bits_region = T47;
   assign T47 = 4'h0;
-  assign io_nasti_ar_bits_prot = T48;
-  assign T48 = 3'h0;
-  assign io_nasti_ar_bits_cache = T49;
-  assign T49 = 4'h0;
-  assign io_nasti_ar_bits_lock = T50;
-  assign T50 = 1'h0;
-  assign io_nasti_ar_bits_burst = T51;
-  assign T51 = 2'h1;
-  assign io_nasti_ar_bits_size = T52;
-  assign T52 = T53;
-  assign T53 = is_subblock ? T54 : 3'h4;
-  assign T54 = T68 ? 3'h0 : T55;
-  assign T55 = T67 ? 3'h0 : T56;
-  assign T56 = T66 ? 3'h1 : T57;
-  assign T57 = T65 ? 3'h1 : T58;
-  assign T58 = T64 ? 3'h2 : T59;
-  assign T59 = T63 ? 3'h3 : T60;
-  assign T60 = T61 ? 3'h4 : 3'h7;
-  assign T61 = T62 == 3'h7;
-  assign T62 = io_tl_acquire_bits_union[4'h8:3'h6];
-  assign T63 = T62 == 3'h3;
-  assign T64 = T62 == 3'h2;
-  assign T65 = T62 == 3'h5;
-  assign T66 = T62 == 3'h1;
-  assign T67 = T62 == 3'h4;
-  assign T68 = T62 == 3'h0;
-  assign io_nasti_ar_bits_len = T69;
-  assign T69 = T145;
-  assign T145 = {6'h0, T70};
-  assign T70 = is_subblock ? 2'h0 : 2'h3;
-  assign io_nasti_ar_bits_addr = T71;
-  assign T71 = T72;
-  assign T72 = {io_tl_acquire_bits_addr_block, T73};
-  assign T73 = {io_tl_acquire_bits_addr_beat, T74};
-  assign T74 = io_tl_acquire_bits_union[4'hc:4'h9];
-  assign io_nasti_ar_valid = T75;
-  assign T75 = get_valid & roq_io_enq_ready;
+  assign io_nasti_ar_bits_qos = T48;
+  assign T48 = 4'h0;
+  assign io_nasti_ar_bits_prot = T49;
+  assign T49 = 3'h0;
+  assign io_nasti_ar_bits_cache = T50;
+  assign T50 = 4'h0;
+  assign io_nasti_ar_bits_lock = T51;
+  assign T51 = 1'h0;
+  assign io_nasti_ar_bits_burst = T52;
+  assign T52 = 2'h1;
+  assign io_nasti_ar_bits_size = T53;
+  assign T53 = T54;
+  assign T54 = is_subblock ? T55 : 3'h4;
+  assign T55 = T69 ? 3'h0 : T56;
+  assign T56 = T68 ? 3'h0 : T57;
+  assign T57 = T67 ? 3'h1 : T58;
+  assign T58 = T66 ? 3'h1 : T59;
+  assign T59 = T65 ? 3'h2 : T60;
+  assign T60 = T64 ? 3'h3 : T61;
+  assign T61 = T62 ? 3'h4 : 3'h7;
+  assign T62 = T63 == 3'h7;
+  assign T63 = io_tl_acquire_bits_union[4'h8:3'h6];
+  assign T64 = T63 == 3'h3;
+  assign T65 = T63 == 3'h2;
+  assign T66 = T63 == 3'h5;
+  assign T67 = T63 == 3'h1;
+  assign T68 = T63 == 3'h4;
+  assign T69 = T63 == 3'h0;
+  assign io_nasti_ar_bits_len = T70;
+  assign T70 = T146;
+  assign T146 = {6'h0, T71};
+  assign T71 = is_subblock ? 2'h0 : 2'h3;
+  assign io_nasti_ar_bits_addr = T72;
+  assign T72 = T73;
+  assign T73 = {io_tl_acquire_bits_addr_block, T74};
+  assign T74 = {io_tl_acquire_bits_addr_beat, T75};
+  assign T75 = io_tl_acquire_bits_union[4'hc:4'h9];
+  assign io_nasti_ar_valid = T76;
+  assign T76 = get_valid & roq_io_enq_ready;
   assign io_nasti_b_ready = gnt_arb_io_in_1_ready;
-  assign io_nasti_w_bits_user = T76;
-  assign T76 = 1'h0;
-  assign io_nasti_w_bits_strb = T77;
-  assign T77 = T78;
-  assign T78 = T95 ? T86 : T79;
-  assign T79 = T81 ? T80 : 16'h0;
-  assign T80 = io_tl_acquire_bits_union[5'h10:1'h1];
-  assign T81 = T84 | T82;
-  assign T82 = io_tl_acquire_bits_is_builtin_type & T83;
-  assign T83 = io_tl_acquire_bits_a_type == 3'h2;
-  assign T84 = io_tl_acquire_bits_is_builtin_type & T85;
-  assign T85 = io_tl_acquire_bits_a_type == 3'h3;
-  assign T86 = T87;
-  assign T87 = {T93, T88};
-  assign T88 = 8'h0 - T146;
-  assign T146 = {7'h0, T89};
-  assign T89 = T90[1'h0:1'h0];
-  assign T90 = 1'h1 << T91;
-  assign T91 = T92[2'h3:2'h3];
-  assign T92 = io_tl_acquire_bits_union[4'hc:4'h9];
-  assign T93 = 8'h0 - T147;
-  assign T147 = {7'h0, T94};
-  assign T94 = T90[1'h1:1'h1];
-  assign T95 = io_tl_acquire_bits_is_builtin_type & T96;
-  assign T96 = io_tl_acquire_bits_a_type == 3'h4;
-  assign io_nasti_w_bits_last = T97;
-  assign T97 = T98;
-  assign T98 = tl_wrap_out | T99;
-  assign T99 = T100 & is_subblock;
-  assign T100 = io_tl_acquire_ready & io_tl_acquire_valid;
-  assign tl_wrap_out = T104 & T101;
-  assign T101 = tl_cnt_out == 2'h3;
-  assign T148 = reset ? 2'h0 : T102;
-  assign T102 = T104 ? T103 : tl_cnt_out;
-  assign T103 = tl_cnt_out + 2'h1;
-  assign T104 = T106 & is_multibeat;
-  assign is_multibeat = io_tl_acquire_bits_is_builtin_type & T105;
-  assign T105 = 3'h3 == io_tl_acquire_bits_a_type;
-  assign T106 = io_tl_acquire_ready & io_tl_acquire_valid;
-  assign io_nasti_w_bits_data = T107;
-  assign T107 = io_tl_acquire_bits_data;
-  assign io_nasti_w_valid = T108;
-  assign T108 = put_valid & aw_ready;
+  assign io_nasti_w_bits_user = T77;
+  assign T77 = 1'h0;
+  assign io_nasti_w_bits_strb = T78;
+  assign T78 = T79;
+  assign T79 = T96 ? T87 : T80;
+  assign T80 = T82 ? T81 : 16'h0;
+  assign T81 = io_tl_acquire_bits_union[5'h10:1'h1];
+  assign T82 = T85 | T83;
+  assign T83 = io_tl_acquire_bits_is_builtin_type & T84;
+  assign T84 = io_tl_acquire_bits_a_type == 3'h2;
+  assign T85 = io_tl_acquire_bits_is_builtin_type & T86;
+  assign T86 = io_tl_acquire_bits_a_type == 3'h3;
+  assign T87 = T88;
+  assign T88 = {T94, T89};
+  assign T89 = 8'h0 - T147;
+  assign T147 = {7'h0, T90};
+  assign T90 = T91[1'h0:1'h0];
+  assign T91 = 1'h1 << T92;
+  assign T92 = T93[2'h3:2'h3];
+  assign T93 = io_tl_acquire_bits_union[4'hc:4'h9];
+  assign T94 = 8'h0 - T148;
+  assign T148 = {7'h0, T95};
+  assign T95 = T91[1'h1:1'h1];
+  assign T96 = io_tl_acquire_bits_is_builtin_type & T97;
+  assign T97 = io_tl_acquire_bits_a_type == 3'h4;
+  assign io_nasti_w_bits_last = T98;
+  assign T98 = T99;
+  assign T99 = tl_wrap_out | T100;
+  assign T100 = T101 & is_subblock;
+  assign T101 = io_tl_acquire_ready & io_tl_acquire_valid;
+  assign tl_wrap_out = T105 & T102;
+  assign T102 = tl_cnt_out == 2'h3;
+  assign T149 = reset ? 2'h0 : T103;
+  assign T103 = T105 ? T104 : tl_cnt_out;
+  assign T104 = tl_cnt_out + 2'h1;
+  assign T105 = T107 & is_multibeat;
+  assign is_multibeat = io_tl_acquire_bits_is_builtin_type & T106;
+  assign T106 = 3'h3 == io_tl_acquire_bits_a_type;
+  assign T107 = io_tl_acquire_ready & io_tl_acquire_valid;
+  assign io_nasti_w_bits_data = T108;
+  assign T108 = io_tl_acquire_bits_data;
+  assign io_nasti_w_valid = T109;
+  assign T109 = put_valid & aw_ready;
   assign aw_ready = w_inflight | io_nasti_aw_ready;
-  assign T149 = reset ? 1'h0 : T109;
-  assign T109 = T115 ? 1'h0 : T110;
-  assign T110 = T111 ? 1'h1 : w_inflight;
-  assign T111 = T112 & is_multibeat;
-  assign T112 = T114 & T113;
-  assign T113 = io_tl_acquire_ready & io_tl_acquire_valid;
-  assign T114 = w_inflight ^ 1'h1;
-  assign T115 = w_inflight & tl_wrap_out;
+  assign T150 = reset ? 1'h0 : T110;
+  assign T110 = T116 ? 1'h0 : T111;
+  assign T111 = T112 ? 1'h1 : w_inflight;
+  assign T112 = T113 & is_multibeat;
+  assign T113 = T115 & T114;
+  assign T114 = io_tl_acquire_ready & io_tl_acquire_valid;
+  assign T115 = w_inflight ^ 1'h1;
+  assign T116 = w_inflight & tl_wrap_out;
   assign put_valid = io_tl_acquire_valid & has_data;
-  assign io_nasti_aw_bits_user = T116;
-  assign T116 = 1'h0;
-  assign io_nasti_aw_bits_id = T117;
-  assign T117 = T150;
-  assign T150 = {1'h0, io_tl_acquire_bits_client_xact_id};
-  assign io_nasti_aw_bits_region = T118;
-  assign T118 = 4'h0;
-  assign io_nasti_aw_bits_qos = T119;
+  assign io_nasti_aw_bits_user = T117;
+  assign T117 = 1'h0;
+  assign io_nasti_aw_bits_id = T118;
+  assign T118 = T151;
+  assign T151 = {1'h0, io_tl_acquire_bits_client_xact_id};
+  assign io_nasti_aw_bits_region = T119;
   assign T119 = 4'h0;
-  assign io_nasti_aw_bits_prot = T120;
-  assign T120 = 3'h0;
-  assign io_nasti_aw_bits_cache = T121;
-  assign T121 = 4'h0;
-  assign io_nasti_aw_bits_lock = T122;
-  assign T122 = 1'h0;
-  assign io_nasti_aw_bits_burst = T123;
-  assign T123 = 2'h1;
-  assign io_nasti_aw_bits_size = T124;
-  assign T124 = 3'h4;
-  assign io_nasti_aw_bits_len = T125;
-  assign T125 = T151;
-  assign T151 = {6'h0, T126};
-  assign T126 = is_multibeat ? 2'h3 : 2'h0;
-  assign io_nasti_aw_bits_addr = T127;
-  assign T127 = T128;
-  assign T128 = {io_tl_acquire_bits_addr_block, T129};
-  assign T129 = {io_tl_acquire_bits_addr_beat, T130};
-  assign T130 = io_tl_acquire_bits_union[4'hc:4'h9];
-  assign io_nasti_aw_valid = T131;
-  assign T131 = T133 & T132;
-  assign T132 = w_inflight ^ 1'h1;
-  assign T133 = put_valid & io_nasti_w_ready;
+  assign io_nasti_aw_bits_qos = T120;
+  assign T120 = 4'h0;
+  assign io_nasti_aw_bits_prot = T121;
+  assign T121 = 3'h0;
+  assign io_nasti_aw_bits_cache = T122;
+  assign T122 = 4'h0;
+  assign io_nasti_aw_bits_lock = T123;
+  assign T123 = 1'h0;
+  assign io_nasti_aw_bits_burst = T124;
+  assign T124 = 2'h1;
+  assign io_nasti_aw_bits_size = T125;
+  assign T125 = 3'h4;
+  assign io_nasti_aw_bits_len = T126;
+  assign T126 = T152;
+  assign T152 = {6'h0, T127};
+  assign T127 = is_multibeat ? 2'h3 : 2'h0;
+  assign io_nasti_aw_bits_addr = T128;
+  assign T128 = T129;
+  assign T129 = {io_tl_acquire_bits_addr_block, T130};
+  assign T130 = {io_tl_acquire_bits_addr_beat, T131};
+  assign T131 = io_tl_acquire_bits_union[4'hc:4'h9];
+  assign io_nasti_aw_valid = T132;
+  assign T132 = T134 & T133;
+  assign T133 = w_inflight ^ 1'h1;
+  assign T134 = put_valid & io_nasti_w_ready;
   assign io_tl_grant_bits_data = gnt_arb_io_out_bits_data;
   assign io_tl_grant_bits_g_type = gnt_arb_io_out_bits_g_type;
   assign io_tl_grant_bits_is_builtin_type = gnt_arb_io_out_bits_is_builtin_type;
@@ -28974,18 +29093,20 @@ module NastiIOTileLinkIOConverter(input clk, input reset,
   assign io_tl_grant_bits_client_xact_id = gnt_arb_io_out_bits_client_xact_id;
   assign io_tl_grant_bits_addr_beat = gnt_arb_io_out_bits_addr_beat;
   assign io_tl_grant_valid = gnt_arb_io_out_valid;
-  assign io_tl_acquire_ready = T134;
-  assign T134 = has_data ? T136 : T135;
-  assign T135 = roq_io_enq_ready & io_nasti_ar_ready;
-  assign T136 = aw_ready & io_nasti_w_ready;
+  assign io_tl_acquire_ready = T135;
+  assign T135 = has_data ? T137 : T136;
+  assign T136 = roq_io_enq_ready & io_nasti_ar_ready;
+  assign T137 = aw_ready & io_nasti_w_ready;
   ReorderQueue_1 roq(.clk(clk), .reset(reset),
        .io_enq_ready( roq_io_enq_ready ),
-       .io_enq_valid( T37 ),
-       .io_enq_bits_data_byteOff( T36 ),
+       .io_enq_valid( T38 ),
+       .io_enq_bits_data_addr_beat( io_tl_acquire_bits_addr_beat ),
+       .io_enq_bits_data_byteOff( T37 ),
        .io_enq_bits_data_subblock( is_subblock ),
        .io_enq_bits_tag( io_nasti_ar_bits_id ),
-       .io_deq_valid( T22 ),
+       .io_deq_valid( T23 ),
        .io_deq_tag( io_nasti_r_bits_id ),
+       .io_deq_data_addr_beat( roq_io_deq_data_addr_beat ),
        .io_deq_data_byteOff( roq_io_deq_data_byteOff ),
        .io_deq_data_subblock( roq_io_deq_data_subblock )
        //.io_deq_matches(  )
@@ -28993,12 +29114,12 @@ module NastiIOTileLinkIOConverter(input clk, input reset,
   Arbiter_5 gnt_arb(
        .io_in_1_ready( gnt_arb_io_in_1_ready ),
        .io_in_1_valid( io_nasti_b_valid ),
-       .io_in_1_bits_addr_beat( T21 ),
-       .io_in_1_bits_client_xact_id( T20 ),
-       .io_in_1_bits_manager_xact_id( T19 ),
-       .io_in_1_bits_is_builtin_type( T18 ),
-       .io_in_1_bits_g_type( T17 ),
-       .io_in_1_bits_data( T16 ),
+       .io_in_1_bits_addr_beat( T22 ),
+       .io_in_1_bits_client_xact_id( T21 ),
+       .io_in_1_bits_manager_xact_id( T20 ),
+       .io_in_1_bits_is_builtin_type( T19 ),
+       .io_in_1_bits_g_type( T18 ),
+       .io_in_1_bits_data( T17 ),
        //.io_in_1_bits_client_id(  )
        .io_in_0_ready( gnt_arb_io_in_0_ready ),
        .io_in_0_valid( io_nasti_r_valid ),
@@ -29030,24 +29151,24 @@ module NastiIOTileLinkIOConverter(input clk, input reset,
   always @(posedge clk) begin
     if(reset) begin
       tl_cnt_in <= 2'h0;
-    end else if(T11) begin
-      tl_cnt_in <= T10;
+    end else if(T12) begin
+      tl_cnt_in <= T11;
     end
     if(reset) begin
       nasti_cnt_out <= 2'h0;
-    end else if(T27) begin
-      nasti_cnt_out <= T26;
+    end else if(T28) begin
+      nasti_cnt_out <= T27;
     end
     if(reset) begin
       tl_cnt_out <= 2'h0;
-    end else if(T104) begin
-      tl_cnt_out <= T103;
+    end else if(T105) begin
+      tl_cnt_out <= T104;
     end
     if(reset) begin
       w_inflight <= 1'h0;
-    end else if(T115) begin
+    end else if(T116) begin
       w_inflight <= 1'h0;
-    end else if(T111) begin
+    end else if(T112) begin
       w_inflight <= 1'h1;
     end
   end
@@ -29139,7 +29260,7 @@ module ClientTileLinkEnqueuer(
     output io_inner_acquire_ready,
     input  io_inner_acquire_valid,
     input [25:0] io_inner_acquire_bits_addr_block,
-    input [1:0] io_inner_acquire_bits_client_xact_id,
+    input [3:0] io_inner_acquire_bits_client_xact_id,
     input [1:0] io_inner_acquire_bits_addr_beat,
     input  io_inner_acquire_bits_is_builtin_type,
     input [2:0] io_inner_acquire_bits_a_type,
@@ -29148,8 +29269,8 @@ module ClientTileLinkEnqueuer(
     input  io_inner_grant_ready,
     output io_inner_grant_valid,
     output[1:0] io_inner_grant_bits_addr_beat,
-    output[1:0] io_inner_grant_bits_client_xact_id,
-    output[3:0] io_inner_grant_bits_manager_xact_id,
+    output[3:0] io_inner_grant_bits_client_xact_id,
+    output io_inner_grant_bits_manager_xact_id,
     output io_inner_grant_bits_is_builtin_type,
     output[3:0] io_inner_grant_bits_g_type,
     output[127:0] io_inner_grant_bits_data,
@@ -29161,14 +29282,14 @@ module ClientTileLinkEnqueuer(
     input  io_inner_release_valid,
     input [1:0] io_inner_release_bits_addr_beat,
     input [25:0] io_inner_release_bits_addr_block,
-    input [1:0] io_inner_release_bits_client_xact_id,
+    input [3:0] io_inner_release_bits_client_xact_id,
     input [2:0] io_inner_release_bits_r_type,
     input  io_inner_release_bits_voluntary,
     input [127:0] io_inner_release_bits_data,
     input  io_outer_acquire_ready,
     output io_outer_acquire_valid,
     output[25:0] io_outer_acquire_bits_addr_block,
-    output[1:0] io_outer_acquire_bits_client_xact_id,
+    output[3:0] io_outer_acquire_bits_client_xact_id,
     output[1:0] io_outer_acquire_bits_addr_beat,
     output io_outer_acquire_bits_is_builtin_type,
     output[2:0] io_outer_acquire_bits_a_type,
@@ -29177,8 +29298,8 @@ module ClientTileLinkEnqueuer(
     output io_outer_grant_ready,
     input  io_outer_grant_valid,
     input [1:0] io_outer_grant_bits_addr_beat,
-    input [1:0] io_outer_grant_bits_client_xact_id,
-    input [3:0] io_outer_grant_bits_manager_xact_id,
+    input [3:0] io_outer_grant_bits_client_xact_id,
+    input  io_outer_grant_bits_manager_xact_id,
     input  io_outer_grant_bits_is_builtin_type,
     input [3:0] io_outer_grant_bits_g_type,
     input [127:0] io_outer_grant_bits_data,
@@ -29190,7 +29311,7 @@ module ClientTileLinkEnqueuer(
     output io_outer_release_valid,
     output[1:0] io_outer_release_bits_addr_beat,
     output[25:0] io_outer_release_bits_addr_block,
-    output[1:0] io_outer_release_bits_client_xact_id,
+    output[3:0] io_outer_release_bits_client_xact_id,
     output[2:0] io_outer_release_bits_r_type,
     output io_outer_release_bits_voluntary,
     output[127:0] io_outer_release_bits_data
@@ -31980,13 +32101,6 @@ module OuterMemorySystem(input clk, input reset,
     input  io_mmio_r_bits_user
 );
 
-  wire[3:0] T0;
-  wire[1:0] T1;
-  wire[1:0] T2;
-  wire T3;
-  wire[3:0] T4;
-  wire[3:0] T5;
-  wire[3:0] T6;
   wire ClientTileLinkIOWrapper_io_in_acquire_ready;
   wire ClientTileLinkIOWrapper_io_in_grant_valid;
   wire[1:0] ClientTileLinkIOWrapper_io_in_grant_bits_addr_beat;
@@ -32064,8 +32178,8 @@ module OuterMemorySystem(input clk, input reset,
   wire ClientTileLinkEnqueuer_io_inner_acquire_ready;
   wire ClientTileLinkEnqueuer_io_inner_grant_valid;
   wire[1:0] ClientTileLinkEnqueuer_io_inner_grant_bits_addr_beat;
-  wire[1:0] ClientTileLinkEnqueuer_io_inner_grant_bits_client_xact_id;
-  wire[3:0] ClientTileLinkEnqueuer_io_inner_grant_bits_manager_xact_id;
+  wire[3:0] ClientTileLinkEnqueuer_io_inner_grant_bits_client_xact_id;
+  wire ClientTileLinkEnqueuer_io_inner_grant_bits_manager_xact_id;
   wire ClientTileLinkEnqueuer_io_inner_grant_bits_is_builtin_type;
   wire[3:0] ClientTileLinkEnqueuer_io_inner_grant_bits_g_type;
   wire[127:0] ClientTileLinkEnqueuer_io_inner_grant_bits_data;
@@ -32075,7 +32189,7 @@ module OuterMemorySystem(input clk, input reset,
   wire ClientTileLinkEnqueuer_io_inner_release_ready;
   wire ClientTileLinkEnqueuer_io_outer_acquire_valid;
   wire[25:0] ClientTileLinkEnqueuer_io_outer_acquire_bits_addr_block;
-  wire[1:0] ClientTileLinkEnqueuer_io_outer_acquire_bits_client_xact_id;
+  wire[3:0] ClientTileLinkEnqueuer_io_outer_acquire_bits_client_xact_id;
   wire[1:0] ClientTileLinkEnqueuer_io_outer_acquire_bits_addr_beat;
   wire ClientTileLinkEnqueuer_io_outer_acquire_bits_is_builtin_type;
   wire[2:0] ClientTileLinkEnqueuer_io_outer_acquire_bits_a_type;
@@ -32086,7 +32200,7 @@ module OuterMemorySystem(input clk, input reset,
   wire ClientTileLinkEnqueuer_io_outer_release_valid;
   wire[1:0] ClientTileLinkEnqueuer_io_outer_release_bits_addr_beat;
   wire[25:0] ClientTileLinkEnqueuer_io_outer_release_bits_addr_block;
-  wire[1:0] ClientTileLinkEnqueuer_io_outer_release_bits_client_xact_id;
+  wire[3:0] ClientTileLinkEnqueuer_io_outer_release_bits_client_xact_id;
   wire[2:0] ClientTileLinkEnqueuer_io_outer_release_bits_r_type;
   wire ClientTileLinkEnqueuer_io_outer_release_bits_voluntary;
   wire[127:0] ClientTileLinkEnqueuer_io_outer_release_bits_data;
@@ -32487,13 +32601,6 @@ module OuterMemorySystem(input clk, input reset,
 //  assign io_mem_backup_req_valid = {1{$random}};
 // synthesis translate_on
 `endif
-  assign T0 = {3'h0, ClientTileLinkIOUnwrapper_io_in_grant_bits_manager_xact_id};
-  assign T1 = ClientTileLinkIOUnwrapper_io_in_grant_bits_client_xact_id[1'h1:1'h0];
-  assign T2 = ClientTileLinkIOWrapper_2_io_out_acquire_bits_client_xact_id[1'h1:1'h0];
-  assign T3 = ClientTileLinkEnqueuer_io_inner_grant_bits_manager_xact_id[1'h0:1'h0];
-  assign T4 = {2'h0, ClientTileLinkEnqueuer_io_inner_grant_bits_client_xact_id};
-  assign T5 = {2'h0, ClientTileLinkEnqueuer_io_outer_release_bits_client_xact_id};
-  assign T6 = {2'h0, ClientTileLinkEnqueuer_io_outer_acquire_bits_client_xact_id};
   assign io_mmio_r_ready = interconnect_io_slaves_3_r_ready;
   assign io_mmio_ar_bits_user = interconnect_io_slaves_3_ar_bits_user;
   assign io_mmio_ar_bits_id = interconnect_io_slaves_3_ar_bits_id;
@@ -33172,7 +33279,7 @@ module OuterMemorySystem(input clk, input reset,
        .io_in_acquire_ready( ClientTileLinkIOUnwrapper_io_in_acquire_ready ),
        .io_in_acquire_valid( ClientTileLinkEnqueuer_io_outer_acquire_valid ),
        .io_in_acquire_bits_addr_block( ClientTileLinkEnqueuer_io_outer_acquire_bits_addr_block ),
-       .io_in_acquire_bits_client_xact_id( T6 ),
+       .io_in_acquire_bits_client_xact_id( ClientTileLinkEnqueuer_io_outer_acquire_bits_client_xact_id ),
        .io_in_acquire_bits_addr_beat( ClientTileLinkEnqueuer_io_outer_acquire_bits_addr_beat ),
        .io_in_acquire_bits_is_builtin_type( ClientTileLinkEnqueuer_io_outer_acquire_bits_is_builtin_type ),
        .io_in_acquire_bits_a_type( ClientTileLinkEnqueuer_io_outer_acquire_bits_a_type ),
@@ -33194,7 +33301,7 @@ module OuterMemorySystem(input clk, input reset,
        .io_in_release_valid( ClientTileLinkEnqueuer_io_outer_release_valid ),
        .io_in_release_bits_addr_beat( ClientTileLinkEnqueuer_io_outer_release_bits_addr_beat ),
        .io_in_release_bits_addr_block( ClientTileLinkEnqueuer_io_outer_release_bits_addr_block ),
-       .io_in_release_bits_client_xact_id( T5 ),
+       .io_in_release_bits_client_xact_id( ClientTileLinkEnqueuer_io_outer_release_bits_client_xact_id ),
        .io_in_release_bits_r_type( ClientTileLinkEnqueuer_io_outer_release_bits_r_type ),
        .io_in_release_bits_voluntary( ClientTileLinkEnqueuer_io_outer_release_bits_voluntary ),
        .io_in_release_bits_data( ClientTileLinkEnqueuer_io_outer_release_bits_data ),
@@ -33345,8 +33452,8 @@ module OuterMemorySystem(input clk, input reset,
        .io_out_grant_ready( ClientTileLinkIOWrapper_2_io_out_grant_ready ),
        .io_out_grant_valid( ClientTileLinkEnqueuer_io_inner_grant_valid ),
        .io_out_grant_bits_addr_beat( ClientTileLinkEnqueuer_io_inner_grant_bits_addr_beat ),
-       .io_out_grant_bits_client_xact_id( T4 ),
-       .io_out_grant_bits_manager_xact_id( T3 ),
+       .io_out_grant_bits_client_xact_id( ClientTileLinkEnqueuer_io_inner_grant_bits_client_xact_id ),
+       .io_out_grant_bits_manager_xact_id( ClientTileLinkEnqueuer_io_inner_grant_bits_manager_xact_id ),
        .io_out_grant_bits_is_builtin_type( ClientTileLinkEnqueuer_io_inner_grant_bits_is_builtin_type ),
        .io_out_grant_bits_g_type( ClientTileLinkEnqueuer_io_inner_grant_bits_g_type ),
        .io_out_grant_bits_data( ClientTileLinkEnqueuer_io_inner_grant_bits_data ),
@@ -33367,7 +33474,7 @@ module OuterMemorySystem(input clk, input reset,
        .io_inner_acquire_ready( ClientTileLinkEnqueuer_io_inner_acquire_ready ),
        .io_inner_acquire_valid( ClientTileLinkIOWrapper_2_io_out_acquire_valid ),
        .io_inner_acquire_bits_addr_block( ClientTileLinkIOWrapper_2_io_out_acquire_bits_addr_block ),
-       .io_inner_acquire_bits_client_xact_id( T2 ),
+       .io_inner_acquire_bits_client_xact_id( ClientTileLinkIOWrapper_2_io_out_acquire_bits_client_xact_id ),
        .io_inner_acquire_bits_addr_beat( ClientTileLinkIOWrapper_2_io_out_acquire_bits_addr_beat ),
        .io_inner_acquire_bits_is_builtin_type( ClientTileLinkIOWrapper_2_io_out_acquire_bits_is_builtin_type ),
        .io_inner_acquire_bits_a_type( ClientTileLinkIOWrapper_2_io_out_acquire_bits_a_type ),
@@ -33405,8 +33512,8 @@ module OuterMemorySystem(input clk, input reset,
        .io_outer_grant_ready( ClientTileLinkEnqueuer_io_outer_grant_ready ),
        .io_outer_grant_valid( ClientTileLinkIOUnwrapper_io_in_grant_valid ),
        .io_outer_grant_bits_addr_beat( ClientTileLinkIOUnwrapper_io_in_grant_bits_addr_beat ),
-       .io_outer_grant_bits_client_xact_id( T1 ),
-       .io_outer_grant_bits_manager_xact_id( T0 ),
+       .io_outer_grant_bits_client_xact_id( ClientTileLinkIOUnwrapper_io_in_grant_bits_client_xact_id ),
+       .io_outer_grant_bits_manager_xact_id( ClientTileLinkIOUnwrapper_io_in_grant_bits_manager_xact_id ),
        .io_outer_grant_bits_is_builtin_type( ClientTileLinkIOUnwrapper_io_in_grant_bits_is_builtin_type ),
        .io_outer_grant_bits_g_type( ClientTileLinkIOUnwrapper_io_in_grant_bits_g_type ),
        .io_outer_grant_bits_data( ClientTileLinkIOUnwrapper_io_in_grant_bits_data ),
@@ -54667,7 +54774,7 @@ module IOMSHR(input clk, input reset,
   wire T10;
   wire T11;
   wire[63:0] T12;
-  wire[63:0] T156;
+  wire[63:0] T145;
   wire req_cmd_sc;
   wire[63:0] T13;
   wire[7:0] T14;
@@ -54700,7 +54807,7 @@ module IOMSHR(input clk, input reset,
   wire T39;
   wire T40;
   reg [1:0] state;
-  wire[1:0] T157;
+  wire[1:0] T146;
   wire[1:0] T41;
   wire[1:0] T42;
   wire[1:0] T43;
@@ -54715,7 +54822,7 @@ module IOMSHR(input clk, input reset,
   wire[31:0] T52;
   wire[31:0] T53;
   wire[31:0] T54;
-  wire[31:0] T158;
+  wire[31:0] T147;
   wire T55;
   wire T56;
   wire T57;
@@ -54735,7 +54842,7 @@ module IOMSHR(input clk, input reset,
   wire[47:0] T70;
   wire[47:0] T71;
   wire[47:0] T72;
-  wire[47:0] T159;
+  wire[47:0] T148;
   wire T73;
   wire T74;
   wire T75;
@@ -54746,7 +54853,7 @@ module IOMSHR(input clk, input reset,
   wire[55:0] T80;
   wire[55:0] T81;
   wire[55:0] T82;
-  wire[55:0] T160;
+  wire[55:0] T149;
   wire T83;
   wire T84;
   wire T85;
@@ -54757,6 +54864,7 @@ module IOMSHR(input clk, input reset,
   wire[8:0] T89;
   wire T90;
   wire[127:0] T91;
+  wire[127:0] put_acquire_data;
   wire[127:0] beat_data;
   wire[63:0] T92;
   wire[63:0] T93;
@@ -54779,58 +54887,60 @@ module IOMSHR(input clk, input reset,
   wire T110;
   wire T111;
   wire T112;
-  wire[16:0] T113;
-  wire[16:0] T161;
-  wire[26:0] T114;
-  wire[25:0] union;
-  wire[25:0] beat_mask;
-  wire[3:0] T115;
-  wire beat_offset;
-  wire[10:0] T116;
-  wire[10:0] T117;
-  wire[10:0] T118;
-  wire[10:0] T119;
-  wire[2:0] T120;
+  wire[127:0] get_acquire_data;
+  wire T113;
+  wire T114;
+  wire T115;
+  wire T116;
+  wire T117;
+  wire T118;
+  wire T119;
+  wire T120;
   wire T121;
-  wire[10:0] T162;
-  wire[8:0] T122;
-  wire[2:0] T123;
-  wire[1:0] T124;
-  wire[10:0] T163;
-  wire[7:0] T125;
-  wire[2:0] T126;
-  wire[25:0] T164;
-  wire[11:0] T127;
-  wire[7:0] T128;
-  wire[3:0] addr_byte;
-  wire T129;
+  wire[16:0] T122;
+  wire[16:0] put_acquire_union;
+  wire[16:0] T150;
+  wire[26:0] T123;
+  wire[25:0] beat_mask;
+  wire[3:0] T124;
+  wire beat_offset;
+  wire[10:0] T125;
+  wire[10:0] T126;
+  wire[10:0] T127;
+  wire[10:0] T128;
+  wire[2:0] T129;
   wire T130;
-  wire T131;
-  wire T132;
-  wire T133;
-  wire T134;
-  wire T135;
-  wire T136;
-  wire T137;
+  wire[10:0] T151;
+  wire[8:0] T131;
+  wire[2:0] T132;
+  wire[1:0] T133;
+  wire[10:0] T152;
+  wire[7:0] T134;
+  wire[2:0] T135;
+  wire[16:0] get_acquire_union;
+  wire[16:0] T153;
+  wire[12:0] T136;
+  wire[6:0] T137;
+  wire[3:0] addr_byte;
   wire[2:0] T138;
-  wire[2:0] a_type;
+  wire[2:0] put_acquire_a_type;
+  wire[2:0] get_acquire_a_type;
   wire T139;
-  wire T140;
-  wire T141;
-  wire T142;
+  wire put_acquire_is_builtin_type;
+  wire get_acquire_is_builtin_type;
+  wire[1:0] T140;
+  wire[1:0] put_acquire_addr_beat;
+  wire[1:0] addr_beat;
+  wire[1:0] get_acquire_addr_beat;
+  wire[1:0] T141;
+  wire[1:0] put_acquire_client_xact_id;
+  wire[1:0] get_acquire_client_xact_id;
+  wire[25:0] T142;
+  wire[25:0] put_acquire_addr_block;
+  wire[25:0] addr_block;
+  wire[25:0] get_acquire_addr_block;
   wire T143;
   wire T144;
-  wire T145;
-  wire T146;
-  wire T147;
-  wire T148;
-  wire[1:0] T149;
-  wire[1:0] T150;
-  wire[1:0] T151;
-  wire[25:0] T152;
-  wire[25:0] T153;
-  wire T154;
-  wire T155;
 
 `ifndef SYNTHESIS
 // synthesis translate_off
@@ -54870,8 +54980,8 @@ module IOMSHR(input clk, input reset,
   assign io_resp_bits_replay = io_resp_valid;
   assign io_resp_bits_nack = 1'h0;
   assign io_resp_bits_data = T12;
-  assign T12 = T13 | T156;
-  assign T156 = {63'h0, req_cmd_sc};
+  assign T12 = T13 | T145;
+  assign T145 = {63'h0, req_cmd_sc};
   assign req_cmd_sc = req_cmd == 5'h7;
   assign T13 = {T80, T14};
   assign T14 = req_cmd_sc ? 8'h0 : T15;
@@ -54901,7 +55011,7 @@ module IOMSHR(input clk, input reset,
   assign T38 = req_cmd == 5'h0;
   assign T39 = T40 & io_grant_valid;
   assign T40 = state == 2'h2;
-  assign T157 = reset ? 2'h0 : T41;
+  assign T146 = reset ? 2'h0 : T41;
   assign T41 = T49 ? 2'h0 : T42;
   assign T42 = T47 ? 2'h0 : T43;
   assign T43 = T29 ? 2'h3 : T44;
@@ -54915,8 +55025,8 @@ module IOMSHR(input clk, input reset,
   assign T51 = req_addr[2'h2:2'h2];
   assign T52 = T65 ? T54 : T53;
   assign T53 = grant_word[6'h3f:6'h20];
-  assign T54 = 32'h0 - T158;
-  assign T158 = {31'h0, T55};
+  assign T54 = 32'h0 - T147;
+  assign T147 = {31'h0, T55};
   assign T55 = T57 & T56;
   assign T56 = T21[5'h1f:5'h1f];
   assign T57 = T60 | T58;
@@ -54934,8 +55044,8 @@ module IOMSHR(input clk, input reset,
   assign T69 = req_addr[1'h1:1'h1];
   assign T70 = T75 ? T72 : T71;
   assign T71 = T20[6'h3f:5'h10];
-  assign T72 = 48'h0 - T159;
-  assign T159 = {47'h0, T73};
+  assign T72 = 48'h0 - T148;
+  assign T148 = {47'h0, T73};
   assign T73 = T57 & T74;
   assign T74 = T18[4'hf:4'hf];
   assign T75 = T77 | T76;
@@ -54945,8 +55055,8 @@ module IOMSHR(input clk, input reset,
   assign T79 = req_addr[1'h0:1'h0];
   assign T80 = T85 ? T82 : T81;
   assign T81 = T17[6'h3f:4'h8];
-  assign T82 = 56'h0 - T160;
-  assign T160 = {55'h0, T83};
+  assign T82 = 56'h0 - T149;
+  assign T149 = {55'h0, T83};
   assign T83 = T57 & T84;
   assign T84 = T14[3'h7:3'h7];
   assign T85 = req_cmd_sc | T86;
@@ -54961,7 +55071,8 @@ module IOMSHR(input clk, input reset,
   assign io_resp_valid = T90;
   assign T90 = state == 2'h3;
   assign io_acquire_bits_data = T91;
-  assign T91 = beat_data;
+  assign T91 = T113 ? get_acquire_data : put_acquire_data;
+  assign put_acquire_data = beat_data;
   assign beat_data = {T92, T92};
   assign T92 = T110 ? T106 : T93;
   assign T93 = T103 ? T100 : T94;
@@ -54984,66 +55095,68 @@ module IOMSHR(input clk, input reset,
   assign T110 = T112 | T111;
   assign T111 = req_typ == 3'h4;
   assign T112 = req_typ == 3'h0;
-  assign io_acquire_bits_union = T113;
-  assign T113 = T161;
-  assign T161 = T114[5'h10:1'h0];
-  assign T114 = {union, 1'h0};
-  assign union = T129 ? T164 : beat_mask;
-  assign beat_mask = T116 << T115;
-  assign T115 = {beat_offset, 3'h0};
+  assign get_acquire_data = 128'h0;
+  assign T113 = T117 | T114;
+  assign T114 = T116 | T115;
+  assign T115 = req_cmd == 5'h4;
+  assign T116 = req_cmd[2'h3:2'h3];
+  assign T117 = T119 | T118;
+  assign T118 = req_cmd == 5'h7;
+  assign T119 = T121 | T120;
+  assign T120 = req_cmd == 5'h6;
+  assign T121 = req_cmd == 5'h0;
+  assign io_acquire_bits_union = T122;
+  assign T122 = T113 ? get_acquire_union : put_acquire_union;
+  assign put_acquire_union = T150;
+  assign T150 = T123[5'h10:1'h0];
+  assign T123 = {beat_mask, 1'h0};
+  assign beat_mask = T125 << T124;
+  assign T124 = {beat_offset, 3'h0};
   assign beat_offset = req_addr[2'h3:2'h3];
-  assign T116 = T110 ? T163 : T117;
-  assign T117 = T103 ? T162 : T118;
-  assign T118 = T97 ? T119 : 11'hff;
-  assign T119 = 4'hf << T120;
-  assign T120 = {T121, 2'h0};
-  assign T121 = req_addr[2'h2:2'h2];
-  assign T162 = {2'h0, T122};
-  assign T122 = 2'h3 << T123;
-  assign T123 = {T124, 1'h0};
-  assign T124 = req_addr[2'h2:1'h1];
-  assign T163 = {3'h0, T125};
-  assign T125 = 1'h1 << T126;
-  assign T126 = req_addr[2'h2:1'h0];
-  assign T164 = {14'h0, T127};
-  assign T127 = {addr_byte, T128};
-  assign T128 = {req_typ, 5'h0};
+  assign T125 = T110 ? T152 : T126;
+  assign T126 = T103 ? T151 : T127;
+  assign T127 = T97 ? T128 : 11'hff;
+  assign T128 = 4'hf << T129;
+  assign T129 = {T130, 2'h0};
+  assign T130 = req_addr[2'h2:2'h2];
+  assign T151 = {2'h0, T131};
+  assign T131 = 2'h3 << T132;
+  assign T132 = {T133, 1'h0};
+  assign T133 = req_addr[2'h2:1'h1];
+  assign T152 = {3'h0, T134};
+  assign T134 = 1'h1 << T135;
+  assign T135 = req_addr[2'h2:1'h0];
+  assign get_acquire_union = T153;
+  assign T153 = {4'h0, T136};
+  assign T136 = {T137, 6'h0};
+  assign T137 = {addr_byte, req_typ};
   assign addr_byte = req_addr[2'h3:1'h0];
-  assign T129 = T133 | T130;
-  assign T130 = T132 | T131;
-  assign T131 = req_cmd == 5'h4;
-  assign T132 = req_cmd[2'h3:2'h3];
-  assign T133 = T135 | T134;
-  assign T134 = req_cmd == 5'h7;
-  assign T135 = T137 | T136;
-  assign T136 = req_cmd == 5'h6;
-  assign T137 = req_cmd == 5'h0;
   assign io_acquire_bits_a_type = T138;
-  assign T138 = a_type;
-  assign a_type = T139 ? 3'h0 : 3'h2;
-  assign T139 = T143 | T140;
-  assign T140 = T142 | T141;
-  assign T141 = req_cmd == 5'h4;
-  assign T142 = req_cmd[2'h3:2'h3];
-  assign T143 = T145 | T144;
-  assign T144 = req_cmd == 5'h7;
-  assign T145 = T147 | T146;
-  assign T146 = req_cmd == 5'h6;
-  assign T147 = req_cmd == 5'h0;
-  assign io_acquire_bits_is_builtin_type = T148;
-  assign T148 = 1'h1;
-  assign io_acquire_bits_addr_beat = T149;
-  assign T149 = T150;
-  assign T150 = req_addr[3'h5:3'h4];
-  assign io_acquire_bits_client_xact_id = T151;
-  assign T151 = 2'h2;
-  assign io_acquire_bits_addr_block = T152;
-  assign T152 = T153;
-  assign T153 = req_addr[5'h1f:3'h6];
-  assign io_acquire_valid = T154;
-  assign T154 = state == 2'h1;
-  assign io_req_ready = T155;
-  assign T155 = state == 2'h0;
+  assign T138 = T113 ? get_acquire_a_type : put_acquire_a_type;
+  assign put_acquire_a_type = 3'h2;
+  assign get_acquire_a_type = 3'h0;
+  assign io_acquire_bits_is_builtin_type = T139;
+  assign T139 = T113 ? get_acquire_is_builtin_type : put_acquire_is_builtin_type;
+  assign put_acquire_is_builtin_type = 1'h1;
+  assign get_acquire_is_builtin_type = 1'h1;
+  assign io_acquire_bits_addr_beat = T140;
+  assign T140 = T113 ? get_acquire_addr_beat : put_acquire_addr_beat;
+  assign put_acquire_addr_beat = addr_beat;
+  assign addr_beat = req_addr[3'h5:3'h4];
+  assign get_acquire_addr_beat = addr_beat;
+  assign io_acquire_bits_client_xact_id = T141;
+  assign T141 = T113 ? get_acquire_client_xact_id : put_acquire_client_xact_id;
+  assign put_acquire_client_xact_id = 2'h2;
+  assign get_acquire_client_xact_id = 2'h2;
+  assign io_acquire_bits_addr_block = T142;
+  assign T142 = T113 ? get_acquire_addr_block : put_acquire_addr_block;
+  assign put_acquire_addr_block = addr_block;
+  assign addr_block = req_addr[5'h1f:3'h6];
+  assign get_acquire_addr_block = addr_block;
+  assign io_acquire_valid = T143;
+  assign T143 = state == 2'h1;
+  assign io_req_ready = T144;
+  assign T144 = state == 2'h0;
 
   always @(posedge clk) begin
     if(T1) begin
@@ -57446,7 +57559,7 @@ module HellaCache(input clk, input reset,
   wire[63:0] T18;
   wire[63:0] T19;
   reg  s1_replay;
-  wire T568;
+  wire T570;
   wire T20;
   wire T21;
   wire s1_write;
@@ -57461,11 +57574,11 @@ module HellaCache(input clk, input reset,
   wire s2_recycle;
   wire T28;
   reg  s2_recycle_next;
-  wire T569;
+  wire T571;
   wire T29;
   wire T30;
   reg  s1_valid;
-  wire T570;
+  wire T572;
   wire T31;
   wire s2_recycle_ecc;
   wire s2_data_correctable;
@@ -57510,15 +57623,15 @@ module HellaCache(input clk, input reset,
   wire[39:0] T64;
   wire[39:0] T65;
   wire[39:0] T66;
-  wire[39:0] T571;
+  wire[39:0] T573;
   wire[31:0] T67;
   wire[25:0] T68;
-  wire[39:0] T572;
+  wire[39:0] T574;
   wire[31:0] T69;
   wire[25:0] T70;
   reg [39:0] s2_req_addr;
   wire[39:0] T71;
-  wire[39:0] T573;
+  wire[39:0] T575;
   wire T72;
   wire[19:0] T73;
   wire[1:0] T74;
@@ -57579,9 +57692,9 @@ module HellaCache(input clk, input reset,
   wire s2_replay;
   wire T128;
   reg  R129;
-  wire T574;
+  wire T576;
   reg  s2_valid;
-  wire T575;
+  wire T577;
   wire s1_valid_masked;
   wire T130;
   wire T131;
@@ -57595,9 +57708,9 @@ module HellaCache(input clk, input reset,
   wire[63:0] T137;
   wire T138;
   reg  s1_recycled;
-  wire T576;
+  wire T578;
   wire T139;
-  wire[63:0] T577;
+  wire[63:0] T579;
   wire[127:0] s2_data_word;
   wire[127:0] s2_data_word_prebypass;
   wire[127:0] s2_data_uncorrected;
@@ -57609,9 +57722,9 @@ module HellaCache(input clk, input reset,
   wire[127:0] T143;
   wire[127:0] T144;
   reg [63:0] R145;
-  wire[63:0] T578;
+  wire[63:0] T580;
   wire[127:0] T146;
-  wire[127:0] T579;
+  wire[127:0] T581;
   wire[127:0] T147;
   wire T148;
   wire T149;
@@ -57630,9 +57743,9 @@ module HellaCache(input clk, input reset,
   wire[127:0] T160;
   wire[127:0] T161;
   reg [63:0] R162;
-  wire[63:0] T580;
+  wire[63:0] T582;
   wire[127:0] T163;
-  wire[127:0] T581;
+  wire[127:0] T583;
   wire[127:0] T164;
   wire T165;
   wire T166;
@@ -57647,9 +57760,9 @@ module HellaCache(input clk, input reset,
   wire[127:0] T174;
   wire[127:0] T175;
   reg [63:0] R176;
-  wire[63:0] T582;
+  wire[63:0] T584;
   wire[127:0] T177;
-  wire[127:0] T583;
+  wire[127:0] T585;
   wire[127:0] T178;
   wire T179;
   wire T180;
@@ -57663,9 +57776,9 @@ module HellaCache(input clk, input reset,
   wire[127:0] T187;
   wire[127:0] T188;
   reg [63:0] R189;
-  wire[63:0] T584;
+  wire[63:0] T586;
   wire[127:0] T190;
-  wire[127:0] T585;
+  wire[127:0] T587;
   wire[127:0] T191;
   wire T192;
   wire T193;
@@ -57675,7 +57788,7 @@ module HellaCache(input clk, input reset,
   wire T197;
   wire T198;
   wire[63:0] T199;
-  wire[127:0] T586;
+  wire[127:0] T588;
   reg [63:0] s2_store_bypass_data;
   wire[63:0] T200;
   wire[63:0] T201;
@@ -57684,7 +57797,7 @@ module HellaCache(input clk, input reset,
   wire[63:0] T203;
   wire T204;
   reg  s3_valid;
-  wire T587;
+  wire T589;
   wire T205;
   wire T206;
   wire T207;
@@ -57727,7 +57840,7 @@ module HellaCache(input clk, input reset,
   wire T234;
   wire lrsc_valid;
   reg [4:0] lrsc_count;
-  wire[4:0] T588;
+  wire[4:0] T590;
   wire[4:0] T235;
   wire[4:0] T236;
   wire[4:0] T237;
@@ -57740,12 +57853,12 @@ module HellaCache(input clk, input reset,
   wire T243;
   wire T244;
   reg [63:0] s3_req_data;
-  wire[63:0] T589;
+  wire[63:0] T591;
   wire[127:0] T245;
-  wire[127:0] T590;
+  wire[127:0] T592;
   wire[63:0] T246;
   wire[127:0] T247;
-  wire[127:0] T591;
+  wire[127:0] T593;
   wire[127:0] s2_data_corrected;
   wire[127:0] T248;
   wire T249;
@@ -57773,7 +57886,7 @@ module HellaCache(input clk, input reset,
   wire[36:0] T270;
   reg [39:0] s3_req_addr;
   wire[39:0] T271;
-  wire[36:0] T592;
+  wire[36:0] T594;
   wire[28:0] T272;
   wire T273;
   wire T274;
@@ -57786,7 +57899,7 @@ module HellaCache(input clk, input reset,
   wire T281;
   wire T282;
   wire[36:0] T283;
-  wire[36:0] T593;
+  wire[36:0] T595;
   wire[28:0] T284;
   wire T285;
   wire T286;
@@ -57808,10 +57921,10 @@ module HellaCache(input clk, input reset,
   wire[36:0] T301;
   reg [39:0] s4_req_addr;
   wire[39:0] T302;
-  wire[36:0] T594;
+  wire[36:0] T596;
   wire[28:0] T303;
   reg  s4_valid;
-  wire T595;
+  wire T597;
   wire T304;
   reg  s2_store_bypass;
   wire T305;
@@ -57822,12 +57935,12 @@ module HellaCache(input clk, input reset,
   wire[2:0] T308;
   wire[2:0] T309;
   wire[2:0] T310;
-  wire[5:0] T596;
+  wire[5:0] T598;
   wire[127:0] T311;
   wire[1:0] rowWMask;
   wire rowIdx;
   wire T312;
-  wire[11:0] T597;
+  wire[11:0] T599;
   reg [3:0] s3_way;
   wire[3:0] T313;
   wire T314;
@@ -57842,16 +57955,16 @@ module HellaCache(input clk, input reset,
   wire T323;
   wire T324;
   wire T325;
-  wire[11:0] T598;
-  wire[11:0] T599;
   wire[11:0] T600;
+  wire[11:0] T601;
+  wire[11:0] T602;
   wire[127:0] T326;
   wire[127:0] T327;
   wire[63:0] wdata_encoded_0;
   wire[63:0] wdata_encoded_1;
-  wire[5:0] T601;
+  wire[5:0] T603;
   wire[33:0] T328;
-  wire[5:0] T602;
+  wire[5:0] T604;
   wire[33:0] T329;
   reg  s1_req_phys;
   wire T330;
@@ -57882,18 +57995,19 @@ module HellaCache(input clk, input reset,
   wire T352;
   wire T353;
   wire cache_pass;
-  wire[3:0] T354;
+  wire T354;
+  reg  s2_killed;
+  wire T355;
+  wire[3:0] T356;
   wire[3:0] s2_replaced_way_en;
-  reg [1:0] R355;
-  wire[1:0] T356;
-  wire[1:0] T357;
-  reg [15:0] R358;
-  wire[15:0] T603;
-  wire[15:0] T359;
-  wire[15:0] T360;
-  wire[14:0] T361;
-  wire T362;
-  wire T363;
+  reg [1:0] R357;
+  wire[1:0] T358;
+  wire[1:0] T359;
+  reg [15:0] R360;
+  wire[15:0] T605;
+  wire[15:0] T361;
+  wire[15:0] T362;
+  wire[14:0] T363;
   wire T364;
   wire T365;
   wire T366;
@@ -57901,71 +58015,71 @@ module HellaCache(input clk, input reset,
   wire T368;
   wire T369;
   wire T370;
-  wire[1:0] T371;
-  wire[1:0] T372;
-  wire[21:0] T373;
-  wire[21:0] T374;
+  wire T371;
+  wire T372;
+  wire[1:0] T373;
+  wire[1:0] T374;
   wire[21:0] T375;
   wire[21:0] T376;
-  reg [1:0] R377;
-  wire[1:0] T378;
-  wire T379;
-  wire T380;
+  wire[21:0] T377;
+  wire[21:0] T378;
+  reg [1:0] R379;
+  wire[1:0] T380;
+  wire T381;
+  wire T382;
   wire[3:0] s1_replaced_way_en;
-  wire[1:0] T381;
-  reg [19:0] R382;
-  wire[19:0] T383;
-  wire T384;
-  wire[21:0] T385;
-  wire[21:0] T386;
+  wire[1:0] T383;
+  reg [19:0] R384;
+  wire[19:0] T385;
+  wire T386;
   wire[21:0] T387;
   wire[21:0] T388;
-  reg [1:0] R389;
-  wire[1:0] T390;
-  wire T391;
-  wire T392;
-  reg [19:0] R393;
-  wire[19:0] T394;
-  wire T395;
-  wire[21:0] T396;
-  wire[21:0] T397;
+  wire[21:0] T389;
+  wire[21:0] T390;
+  reg [1:0] R391;
+  wire[1:0] T392;
+  wire T393;
+  wire T394;
+  reg [19:0] R395;
+  wire[19:0] T396;
+  wire T397;
   wire[21:0] T398;
   wire[21:0] T399;
-  reg [1:0] R400;
-  wire[1:0] T401;
-  wire T402;
-  wire T403;
-  reg [19:0] R404;
-  wire[19:0] T405;
-  wire T406;
-  wire[21:0] T407;
-  wire[21:0] T408;
+  wire[21:0] T400;
+  wire[21:0] T401;
+  reg [1:0] R402;
+  wire[1:0] T403;
+  wire T404;
+  wire T405;
+  reg [19:0] R406;
+  wire[19:0] T407;
+  wire T408;
   wire[21:0] T409;
-  reg [1:0] R410;
-  wire[1:0] T411;
-  wire T412;
-  wire T413;
-  reg [19:0] R414;
-  wire[19:0] T415;
-  wire T416;
-  wire[1:0] T417;
-  wire[19:0] T418;
-  wire[19:0] T419;
+  wire[21:0] T410;
+  wire[21:0] T411;
+  reg [1:0] R412;
+  wire[1:0] T413;
+  wire T414;
+  wire T415;
+  reg [19:0] R416;
+  wire[19:0] T417;
+  wire T418;
+  wire[1:0] T419;
   wire[19:0] T420;
+  wire[19:0] T421;
+  wire[19:0] T422;
   reg  s2_req_kill;
-  wire T421;
-  reg  s1_req_kill;
-  wire T422;
   wire T423;
+  reg  s1_req_kill;
   wire T424;
+  wire T425;
+  wire T426;
   reg [8:0] s2_req_tag;
-  wire[8:0] T425;
-  reg [8:0] s1_req_tag;
-  wire[8:0] T426;
   wire[8:0] T427;
+  reg [8:0] s1_req_tag;
   wire[8:0] T428;
-  wire T429;
-  wire T430;
+  wire[8:0] T429;
+  wire[8:0] T430;
   wire T431;
   wire T432;
   wire T433;
@@ -58000,17 +58114,17 @@ module HellaCache(input clk, input reset,
   wire T462;
   wire T463;
   wire T464;
-  wire misaligned;
   wire T465;
   wire T466;
-  wire[2:0] T467;
+  wire misaligned;
+  wire T467;
   wire T468;
-  wire T469;
+  wire[2:0] T469;
   wire T470;
   wire T471;
-  wire[1:0] T472;
+  wire T472;
   wire T473;
-  wire T474;
+  wire[1:0] T474;
   wire T475;
   wire T476;
   wire T477;
@@ -58020,20 +58134,20 @@ module HellaCache(input clk, input reset,
   wire T481;
   wire T482;
   wire T483;
-  wire[63:0] T484;
+  wire T484;
+  wire T485;
+  wire[63:0] T486;
   wire[63:0] uncache_resp_bits_store_data;
   wire[63:0] cache_resp_bits_store_data;
-  wire[63:0] T485;
-  wire[31:0] T486;
-  wire[31:0] T487;
+  wire[63:0] T487;
   wire[31:0] T488;
-  wire T489;
+  wire[31:0] T489;
   wire[31:0] T490;
-  wire[31:0] T491;
+  wire T491;
   wire[31:0] T492;
-  wire[31:0] T604;
-  wire T493;
-  wire T494;
+  wire[31:0] T493;
+  wire[31:0] T494;
+  wire[31:0] T606;
   wire T495;
   wire T496;
   wire T497;
@@ -58045,10 +58159,10 @@ module HellaCache(input clk, input reset,
   wire T503;
   wire T504;
   wire T505;
-  wire uncache_resp_bits_has_data;
-  wire cache_resp_bits_has_data;
   wire T506;
   wire T507;
+  wire uncache_resp_bits_has_data;
+  wire cache_resp_bits_has_data;
   wire T508;
   wire T509;
   wire T510;
@@ -58057,64 +58171,64 @@ module HellaCache(input clk, input reset,
   wire T513;
   wire T514;
   wire T515;
+  wire T516;
+  wire T517;
   wire uncache_resp_bits_replay;
   wire cache_resp_bits_replay;
-  wire T516;
+  wire T518;
   wire uncache_resp_bits_nack;
   wire cache_resp_bits_nack;
-  wire T517;
-  wire[63:0] T518;
+  wire T519;
+  wire[63:0] T520;
   wire[63:0] uncache_resp_bits_data;
   wire[63:0] cache_resp_bits_data;
-  wire[63:0] T519;
-  wire[63:0] T605;
-  wire[63:0] T520;
-  wire[7:0] T521;
-  wire[7:0] T522;
+  wire[63:0] T521;
+  wire[63:0] T607;
+  wire[63:0] T522;
   wire[7:0] T523;
-  wire[63:0] T524;
-  wire[15:0] T525;
-  wire[15:0] T526;
+  wire[7:0] T524;
+  wire[7:0] T525;
+  wire[63:0] T526;
   wire[15:0] T527;
-  wire T528;
-  wire[47:0] T529;
-  wire[47:0] T530;
+  wire[15:0] T528;
+  wire[15:0] T529;
+  wire T530;
   wire[47:0] T531;
-  wire[47:0] T606;
-  wire T532;
-  wire T533;
+  wire[47:0] T532;
+  wire[47:0] T533;
+  wire[47:0] T608;
   wire T534;
   wire T535;
   wire T536;
-  wire[7:0] T537;
+  wire T537;
   wire T538;
-  wire[55:0] T539;
-  wire[55:0] T540;
+  wire[7:0] T539;
+  wire T540;
   wire[55:0] T541;
-  wire[55:0] T607;
-  wire T542;
-  wire T543;
+  wire[55:0] T542;
+  wire[55:0] T543;
+  wire[55:0] T609;
   wire T544;
   wire T545;
   wire T546;
   wire T547;
-  wire[2:0] T548;
+  wire T548;
+  wire T549;
+  wire[2:0] T550;
   wire[2:0] uncache_resp_bits_typ;
   wire[2:0] cache_resp_bits_typ;
-  wire[4:0] T549;
+  wire[4:0] T551;
   wire[4:0] uncache_resp_bits_cmd;
   wire[4:0] cache_resp_bits_cmd;
-  wire[8:0] T550;
+  wire[8:0] T552;
   wire[8:0] uncache_resp_bits_tag;
   wire[8:0] cache_resp_bits_tag;
-  wire[39:0] T551;
+  wire[39:0] T553;
   wire[39:0] uncache_resp_bits_addr;
   wire[39:0] cache_resp_bits_addr;
-  wire T552;
+  wire T554;
   wire uncache_resp_valid;
   wire cache_resp_valid;
-  wire T553;
-  wire T554;
   wire T555;
   wire T556;
   wire T557;
@@ -58126,10 +58240,12 @@ module HellaCache(input clk, input reset,
   wire T563;
   wire T564;
   wire T565;
-  reg  block_miss;
-  wire T608;
   wire T566;
   wire T567;
+  reg  block_miss;
+  wire T610;
+  wire T568;
+  wire T569;
   wire wb_io_req_ready;
   wire wb_io_meta_read_valid;
   wire[5:0] wb_io_meta_read_bits_idx;
@@ -58345,16 +58461,17 @@ module HellaCache(input clk, input reset,
     s3_way = {1{$random}};
     s1_req_phys = {1{$random}};
     s2_req_phys = {1{$random}};
-    R355 = {1{$random}};
-    R358 = {1{$random}};
-    R377 = {1{$random}};
-    R382 = {1{$random}};
-    R389 = {1{$random}};
-    R393 = {1{$random}};
-    R400 = {1{$random}};
-    R404 = {1{$random}};
-    R410 = {1{$random}};
-    R414 = {1{$random}};
+    s2_killed = {1{$random}};
+    R357 = {1{$random}};
+    R360 = {1{$random}};
+    R379 = {1{$random}};
+    R384 = {1{$random}};
+    R391 = {1{$random}};
+    R395 = {1{$random}};
+    R402 = {1{$random}};
+    R406 = {1{$random}};
+    R412 = {1{$random}};
+    R416 = {1{$random}};
     s2_req_kill = {1{$random}};
     s1_req_kill = {1{$random}};
     s2_req_tag = {1{$random}};
@@ -58382,7 +58499,7 @@ module HellaCache(input clk, input reset,
   assign T17 = T138 ? s1_req_data : T18;
   assign T18 = T21 ? T19 : s2_req_data;
   assign T19 = s1_replay ? mshrs_io_replay_bits_data : io_cpu_req_bits_data;
-  assign T568 = reset ? 1'h0 : T20;
+  assign T570 = reset ? 1'h0 : T20;
   assign T20 = mshrs_io_replay_valid & readArb_io_in_1_ready;
   assign T21 = s1_clk_en & s1_write;
   assign s1_write = T132 | T22;
@@ -58394,10 +58511,10 @@ module HellaCache(input clk, input reset,
   assign T27 = s1_clk_en ? s1_req_cmd : s2_req_cmd;
   assign s2_recycle = T28;
   assign T28 = s2_recycle_ecc | s2_recycle_next;
-  assign T569 = reset ? 1'h0 : T29;
+  assign T571 = reset ? 1'h0 : T29;
   assign T29 = T30 ? s2_recycle_ecc : s2_recycle_next;
   assign T30 = s1_valid | s1_replay;
-  assign T570 = reset ? 1'h0 : T31;
+  assign T572 = reset ? 1'h0 : T31;
   assign T31 = io_cpu_req_ready & io_cpu_req_valid;
   assign s2_recycle_ecc = T33 & s2_data_correctable;
   assign s2_data_correctable = T32[1'h0:1'h0];
@@ -58436,17 +58553,17 @@ module HellaCache(input clk, input reset,
   assign T61 = s1_req_addr[4'hb:1'h0];
   assign T62 = s2_recycle ? s2_req_addr : T63;
   assign T63 = mshrs_io_replay_valid ? mshrs_io_replay_bits_addr : T64;
-  assign T64 = prober_io_meta_read_valid ? T572 : T65;
-  assign T65 = wb_io_meta_read_valid ? T571 : T66;
+  assign T64 = prober_io_meta_read_valid ? T574 : T65;
+  assign T65 = wb_io_meta_read_valid ? T573 : T66;
   assign T66 = io_cpu_req_valid ? io_cpu_req_bits_addr : s1_req_addr;
-  assign T571 = {8'h0, T67};
+  assign T573 = {8'h0, T67};
   assign T67 = T68 << 3'h6;
   assign T68 = {wb_io_meta_read_bits_tag, wb_io_meta_read_bits_idx};
-  assign T572 = {8'h0, T69};
+  assign T574 = {8'h0, T69};
   assign T69 = T70 << 3'h6;
   assign T70 = {prober_io_meta_read_bits_tag, prober_io_meta_read_bits_idx};
-  assign T71 = s1_clk_en ? T573 : s2_req_addr;
-  assign T573 = {8'h0, s1_addr};
+  assign T71 = s1_clk_en ? T575 : s2_req_addr;
+  assign T575 = {8'h0, s1_addr};
   assign T72 = meta_io_resp_1_tag == T73;
   assign T73 = s1_addr >> 4'hc;
   assign T74 = {T77, T75};
@@ -58503,8 +58620,8 @@ module HellaCache(input clk, input reset,
   assign T127 = s2_valid | s2_replay;
   assign s2_replay = R129 & T128;
   assign T128 = s2_req_cmd != 5'h5;
-  assign T574 = reset ? 1'h0 : s1_replay;
-  assign T575 = reset ? 1'h0 : s1_valid_masked;
+  assign T576 = reset ? 1'h0 : s1_replay;
+  assign T577 = reset ? 1'h0 : s1_valid_masked;
   assign s1_valid_masked = s1_valid & T130;
   assign T130 = io_cpu_req_bits_kill ^ 1'h1;
   assign T131 = s1_req_cmd[2'h3:2'h3];
@@ -58515,10 +58632,10 @@ module HellaCache(input clk, input reset,
   assign T136 = mshrs_io_replay_valid ? mshrs_io_replay_bits_data : T137;
   assign T137 = io_cpu_req_valid ? io_cpu_req_bits_data : s1_req_data;
   assign T138 = s1_clk_en & s1_recycled;
-  assign T576 = reset ? 1'h0 : T139;
+  assign T578 = reset ? 1'h0 : T139;
   assign T139 = s1_clk_en ? s2_recycle : s1_recycled;
-  assign T577 = s2_data_word[6'h3f:1'h0];
-  assign s2_data_word = s2_store_bypass ? T586 : s2_data_word_prebypass;
+  assign T579 = s2_data_word[6'h3f:1'h0];
+  assign s2_data_word = s2_store_bypass ? T588 : s2_data_word_prebypass;
   assign s2_data_word_prebypass = s2_data_uncorrected >> 7'h0;
   assign s2_data_uncorrected = T140;
   assign T140 = {T199, T141};
@@ -58528,9 +58645,9 @@ module HellaCache(input clk, input reset,
   assign s2_data_3 = T143;
   assign T143 = T144;
   assign T144 = {R150, R145};
-  assign T578 = T146[6'h3f:1'h0];
-  assign T146 = T148 ? T147 : T579;
-  assign T579 = {64'h0, R145};
+  assign T580 = T146[6'h3f:1'h0];
+  assign T146 = T148 ? T147 : T581;
+  assign T581 = {64'h0, R145};
   assign T147 = data_io_resp_3 >> 1'h0;
   assign T148 = s1_clk_en & T149;
   assign T149 = s1_tag_eq_way[2'h3:2'h3];
@@ -58547,9 +58664,9 @@ module HellaCache(input clk, input reset,
   assign s2_data_2 = T160;
   assign T160 = T161;
   assign T161 = {R167, R162};
-  assign T580 = T163[6'h3f:1'h0];
-  assign T163 = T165 ? T164 : T581;
-  assign T581 = {64'h0, R162};
+  assign T582 = T163[6'h3f:1'h0];
+  assign T163 = T165 ? T164 : T583;
+  assign T583 = {64'h0, R162};
   assign T164 = data_io_resp_2 >> 1'h0;
   assign T165 = s1_clk_en & T166;
   assign T166 = s1_tag_eq_way[2'h2:2'h2];
@@ -58562,9 +58679,9 @@ module HellaCache(input clk, input reset,
   assign s2_data_1 = T174;
   assign T174 = T175;
   assign T175 = {R181, R176};
-  assign T582 = T177[6'h3f:1'h0];
-  assign T177 = T179 ? T178 : T583;
-  assign T583 = {64'h0, R176};
+  assign T584 = T177[6'h3f:1'h0];
+  assign T177 = T179 ? T178 : T585;
+  assign T585 = {64'h0, R176};
   assign T178 = data_io_resp_1 >> 1'h0;
   assign T179 = s1_clk_en & T180;
   assign T180 = s1_tag_eq_way[1'h1:1'h1];
@@ -58576,9 +58693,9 @@ module HellaCache(input clk, input reset,
   assign s2_data_0 = T187;
   assign T187 = T188;
   assign T188 = {R194, R189};
-  assign T584 = T190[6'h3f:1'h0];
-  assign T190 = T192 ? T191 : T585;
-  assign T585 = {64'h0, R189};
+  assign T586 = T190[6'h3f:1'h0];
+  assign T190 = T192 ? T191 : T587;
+  assign T587 = {64'h0, R189};
   assign T191 = data_io_resp_0 >> 1'h0;
   assign T192 = s1_clk_en & T193;
   assign T193 = s1_tag_eq_way[1'h0:1'h0];
@@ -58587,13 +58704,13 @@ module HellaCache(input clk, input reset,
   assign T197 = T192 & s1_writeback;
   assign T198 = s2_tag_match_way[1'h0:1'h0];
   assign T199 = s2_data_muxed[7'h7f:7'h40];
-  assign T586 = {64'h0, s2_store_bypass_data};
+  assign T588 = {64'h0, s2_store_bypass_data};
   assign T200 = T288 ? T201 : s2_store_bypass_data;
   assign T201 = T273 ? amoalu_io_out : T202;
   assign T202 = T259 ? s3_req_data : s4_req_data;
   assign T203 = T204 ? s3_req_data : s4_req_data;
   assign T204 = s3_valid & metaReadArb_io_out_valid;
-  assign T587 = reset ? 1'h0 : T205;
+  assign T589 = reset ? 1'h0 : T205;
   assign T205 = T213 & T206;
   assign T206 = T210 | T207;
   assign T207 = T209 | T208;
@@ -58633,7 +58750,7 @@ module HellaCache(input clk, input reset,
   assign T233 = T337 & dtlb_io_resp_miss;
   assign T234 = s1_valid | s1_replay;
   assign lrsc_valid = lrsc_count != 5'h0;
-  assign T588 = reset ? 5'h0 : T235;
+  assign T590 = reset ? 5'h0 : T235;
   assign T235 = io_cpu_invalidate_lr ? 5'h0 : T236;
   assign T236 = T242 ? 5'h0 : T237;
   assign T237 = T240 ? 5'h1f : T238;
@@ -58645,12 +58762,12 @@ module HellaCache(input clk, input reset,
   assign s2_sc = s2_req_cmd == 5'h7;
   assign T243 = T244 | s2_replay;
   assign T244 = s2_valid_masked & s2_hit;
-  assign T589 = T245[6'h3f:1'h0];
-  assign T245 = T249 ? T247 : T590;
-  assign T590 = {64'h0, T246};
+  assign T591 = T245[6'h3f:1'h0];
+  assign T245 = T249 ? T247 : T592;
+  assign T592 = {64'h0, T246};
   assign T246 = T249 ? s2_req_data : s3_req_data;
-  assign T247 = s2_data_correctable ? s2_data_corrected : T591;
-  assign T591 = {64'h0, amoalu_io_out};
+  assign T247 = s2_data_correctable ? s2_data_corrected : T593;
+  assign T593 = {64'h0, amoalu_io_out};
   assign s2_data_corrected = T248;
   assign T248 = {T199, T141};
   assign T249 = T258 & T250;
@@ -58673,10 +58790,10 @@ module HellaCache(input clk, input reset,
   assign T266 = s3_req_cmd == 5'h7;
   assign T267 = s3_req_cmd == 5'h1;
   assign T268 = s3_valid & T269;
-  assign T269 = T592 == T270;
+  assign T269 = T594 == T270;
   assign T270 = s3_req_addr >> 2'h3;
   assign T271 = T249 ? s2_req_addr : s3_req_addr;
-  assign T592 = {8'h0, T272};
+  assign T594 = {8'h0, T272};
   assign T272 = s1_addr >> 2'h3;
   assign T273 = T281 & T274;
   assign T274 = T278 | T275;
@@ -58687,9 +58804,9 @@ module HellaCache(input clk, input reset,
   assign T279 = s2_req_cmd == 5'h7;
   assign T280 = s2_req_cmd == 5'h1;
   assign T281 = T285 & T282;
-  assign T282 = T593 == T283;
+  assign T282 = T595 == T283;
   assign T283 = s2_req_addr >> 2'h3;
-  assign T593 = {8'h0, T284};
+  assign T595 = {8'h0, T284};
   assign T284 = s1_addr >> 2'h3;
   assign T285 = T287 & T286;
   assign T286 = s2_sc_fail ^ 1'h1;
@@ -58706,12 +58823,12 @@ module HellaCache(input clk, input reset,
   assign T297 = s4_req_cmd == 5'h7;
   assign T298 = s4_req_cmd == 5'h1;
   assign T299 = s4_valid & T300;
-  assign T300 = T594 == T301;
+  assign T300 = T596 == T301;
   assign T301 = s4_req_addr >> 2'h3;
   assign T302 = T204 ? s3_req_addr : s4_req_addr;
-  assign T594 = {8'h0, T303};
+  assign T596 = {8'h0, T303};
   assign T303 = s1_addr >> 2'h3;
-  assign T595 = reset ? 1'h0 : s3_valid;
+  assign T597 = reset ? 1'h0 : s3_valid;
   assign T304 = T273 | T259;
   assign T305 = T288 ? 1'h1 : T306;
   assign T306 = s1_clk_en ? 1'h0 : s2_store_bypass;
@@ -58719,12 +58836,12 @@ module HellaCache(input clk, input reset,
   assign T308 = s2_recycle ? s2_req_typ : T309;
   assign T309 = mshrs_io_replay_valid ? mshrs_io_replay_bits_typ : T310;
   assign T310 = io_cpu_req_valid ? io_cpu_req_bits_typ : s1_req_typ;
-  assign T596 = s2_req_addr[3'h5:1'h0];
+  assign T598 = s2_req_addr[3'h5:1'h0];
   assign T311 = {s3_req_data, s3_req_data};
   assign rowWMask = 1'h1 << rowIdx;
   assign rowIdx = T312;
   assign T312 = s3_req_addr[2'h3:2'h3];
-  assign T597 = s3_req_addr[4'hb:1'h0];
+  assign T599 = s3_req_addr[4'hb:1'h0];
   assign T313 = T249 ? s2_tag_match_way : s3_way;
   assign T314 = T316 & T315;
   assign T315 = FlowThroughSerializer_io_out_bits_client_xact_id < 2'h2;
@@ -58738,16 +58855,16 @@ module HellaCache(input clk, input reset,
   assign T323 = 4'h5 == FlowThroughSerializer_io_out_bits_g_type;
   assign T324 = T325 | T8;
   assign T325 = FlowThroughSerializer_io_out_valid ^ 1'h1;
-  assign T598 = s2_req_addr[4'hb:1'h0];
-  assign T599 = mshrs_io_replay_bits_addr[4'hb:1'h0];
-  assign T600 = io_cpu_req_bits_addr[4'hb:1'h0];
+  assign T600 = s2_req_addr[4'hb:1'h0];
+  assign T601 = mshrs_io_replay_bits_addr[4'hb:1'h0];
+  assign T602 = io_cpu_req_bits_addr[4'hb:1'h0];
   assign T326 = T327;
   assign T327 = {wdata_encoded_1, wdata_encoded_0};
   assign wdata_encoded_0 = writeArb_io_out_bits_data[6'h3f:1'h0];
   assign wdata_encoded_1 = writeArb_io_out_bits_data[7'h7f:7'h40];
-  assign T601 = T328[3'h5:1'h0];
+  assign T603 = T328[3'h5:1'h0];
   assign T328 = s2_req_addr >> 3'h6;
-  assign T602 = T329[3'h5:1'h0];
+  assign T604 = T329[3'h5:1'h0];
   assign T329 = io_cpu_req_bits_addr >> 3'h6;
   assign T330 = s2_recycle ? s2_req_phys : T331;
   assign T331 = mshrs_io_replay_valid ? mshrs_io_replay_bits_phys : T332;
@@ -58775,102 +58892,104 @@ module HellaCache(input clk, input reset,
   assign T351 = s1_req_cmd == 5'h0;
   assign T352 = T8 & FlowThroughSerializer_io_out_valid;
   assign T353 = cache_pass ^ 1'h1;
-  assign cache_pass = s2_valid | s2_replay;
-  assign T354 = s2_tag_match ? s2_tag_match_way : s2_replaced_way_en;
-  assign s2_replaced_way_en = 1'h1 << R355;
-  assign T356 = s1_clk_en ? T357 : R355;
-  assign T357 = R358[1'h1:1'h0];
-  assign T603 = reset ? 16'h1 : T359;
-  assign T359 = T369 ? T360 : R358;
-  assign T360 = {T362, T361};
-  assign T361 = R358[4'hf:1'h1];
-  assign T362 = T364 ^ T363;
-  assign T363 = R358[3'h5:3'h5];
+  assign cache_pass = T354 | s2_replay;
+  assign T354 = s2_valid | s2_killed;
+  assign T355 = s1_valid & io_cpu_req_bits_kill;
+  assign T356 = s2_tag_match ? s2_tag_match_way : s2_replaced_way_en;
+  assign s2_replaced_way_en = 1'h1 << R357;
+  assign T358 = s1_clk_en ? T359 : R357;
+  assign T359 = R360[1'h1:1'h0];
+  assign T605 = reset ? 16'h1 : T361;
+  assign T361 = T371 ? T362 : R360;
+  assign T362 = {T364, T363};
+  assign T363 = R360[4'hf:1'h1];
   assign T364 = T366 ^ T365;
-  assign T365 = R358[2'h3:2'h3];
+  assign T365 = R360[3'h5:3'h5];
   assign T366 = T368 ^ T367;
-  assign T367 = R358[2'h2:2'h2];
-  assign T368 = R358[1'h0:1'h0];
-  assign T369 = T370;
-  assign T370 = mshrs_io_req_ready & T429;
-  assign T371 = s2_tag_match ? T417 : T372;
-  assign T372 = T373[1'h1:1'h0];
-  assign T373 = T385 | T374;
-  assign T374 = T384 ? T375 : 22'h0;
-  assign T375 = T376;
-  assign T376 = {R382, R377};
-  assign T378 = T379 ? meta_io_resp_3_coh_state : R377;
-  assign T379 = s1_clk_en & T380;
-  assign T380 = s1_replaced_way_en[2'h3:2'h3];
-  assign s1_replaced_way_en = 1'h1 << T381;
-  assign T381 = R358[1'h1:1'h0];
-  assign T383 = T379 ? meta_io_resp_3_tag : R382;
-  assign T384 = s2_replaced_way_en[2'h3:2'h3];
-  assign T385 = T396 | T386;
-  assign T386 = T395 ? T387 : 22'h0;
-  assign T387 = T388;
-  assign T388 = {R393, R389};
-  assign T390 = T391 ? meta_io_resp_2_coh_state : R389;
-  assign T391 = s1_clk_en & T392;
-  assign T392 = s1_replaced_way_en[2'h2:2'h2];
-  assign T394 = T391 ? meta_io_resp_2_tag : R393;
-  assign T395 = s2_replaced_way_en[2'h2:2'h2];
-  assign T396 = T407 | T397;
-  assign T397 = T406 ? T398 : 22'h0;
-  assign T398 = T399;
-  assign T399 = {R404, R400};
-  assign T401 = T402 ? meta_io_resp_1_coh_state : R400;
-  assign T402 = s1_clk_en & T403;
-  assign T403 = s1_replaced_way_en[1'h1:1'h1];
-  assign T405 = T402 ? meta_io_resp_1_tag : R404;
-  assign T406 = s2_replaced_way_en[1'h1:1'h1];
-  assign T407 = T416 ? T408 : 22'h0;
-  assign T408 = T409;
-  assign T409 = {R414, R410};
-  assign T411 = T412 ? meta_io_resp_0_coh_state : R410;
-  assign T412 = s1_clk_en & T413;
-  assign T413 = s1_replaced_way_en[1'h0:1'h0];
-  assign T415 = T412 ? meta_io_resp_0_tag : R414;
-  assign T416 = s2_replaced_way_en[1'h0:1'h0];
-  assign T417 = T44;
-  assign T418 = s2_tag_match ? T420 : T419;
-  assign T419 = T373[5'h15:2'h2];
-  assign T420 = T419;
-  assign T421 = s1_clk_en ? s1_req_kill : s2_req_kill;
-  assign T422 = s2_recycle ? s2_req_kill : T423;
-  assign T423 = mshrs_io_replay_valid ? mshrs_io_replay_bits_kill : T424;
-  assign T424 = io_cpu_req_valid ? io_cpu_req_bits_kill : s1_req_kill;
-  assign T425 = s1_clk_en ? s1_req_tag : s2_req_tag;
-  assign T426 = s2_recycle ? s2_req_tag : T427;
-  assign T427 = mshrs_io_replay_valid ? mshrs_io_replay_bits_tag : T428;
-  assign T428 = io_cpu_req_valid ? io_cpu_req_bits_tag : s1_req_tag;
-  assign T429 = s2_nack_hit ? 1'h0 : T430;
-  assign T430 = T452 & T431;
-  assign T431 = T439 | T432;
-  assign T432 = T436 | T433;
-  assign T433 = T435 | T434;
-  assign T434 = s2_req_cmd == 5'h4;
-  assign T435 = s2_req_cmd[2'h3:2'h3];
-  assign T436 = T438 | T437;
-  assign T437 = s2_req_cmd == 5'h7;
-  assign T438 = s2_req_cmd == 5'h1;
-  assign T439 = T449 | T440;
-  assign T440 = T444 | T441;
-  assign T441 = T443 | T442;
-  assign T442 = s2_req_cmd == 5'h4;
-  assign T443 = s2_req_cmd[2'h3:2'h3];
-  assign T444 = T446 | T445;
-  assign T445 = s2_req_cmd == 5'h7;
+  assign T367 = R360[2'h3:2'h3];
+  assign T368 = T370 ^ T369;
+  assign T369 = R360[2'h2:2'h2];
+  assign T370 = R360[1'h0:1'h0];
+  assign T371 = T372;
+  assign T372 = mshrs_io_req_ready & T431;
+  assign T373 = s2_tag_match ? T419 : T374;
+  assign T374 = T375[1'h1:1'h0];
+  assign T375 = T387 | T376;
+  assign T376 = T386 ? T377 : 22'h0;
+  assign T377 = T378;
+  assign T378 = {R384, R379};
+  assign T380 = T381 ? meta_io_resp_3_coh_state : R379;
+  assign T381 = s1_clk_en & T382;
+  assign T382 = s1_replaced_way_en[2'h3:2'h3];
+  assign s1_replaced_way_en = 1'h1 << T383;
+  assign T383 = R360[1'h1:1'h0];
+  assign T385 = T381 ? meta_io_resp_3_tag : R384;
+  assign T386 = s2_replaced_way_en[2'h3:2'h3];
+  assign T387 = T398 | T388;
+  assign T388 = T397 ? T389 : 22'h0;
+  assign T389 = T390;
+  assign T390 = {R395, R391};
+  assign T392 = T393 ? meta_io_resp_2_coh_state : R391;
+  assign T393 = s1_clk_en & T394;
+  assign T394 = s1_replaced_way_en[2'h2:2'h2];
+  assign T396 = T393 ? meta_io_resp_2_tag : R395;
+  assign T397 = s2_replaced_way_en[2'h2:2'h2];
+  assign T398 = T409 | T399;
+  assign T399 = T408 ? T400 : 22'h0;
+  assign T400 = T401;
+  assign T401 = {R406, R402};
+  assign T403 = T404 ? meta_io_resp_1_coh_state : R402;
+  assign T404 = s1_clk_en & T405;
+  assign T405 = s1_replaced_way_en[1'h1:1'h1];
+  assign T407 = T404 ? meta_io_resp_1_tag : R406;
+  assign T408 = s2_replaced_way_en[1'h1:1'h1];
+  assign T409 = T418 ? T410 : 22'h0;
+  assign T410 = T411;
+  assign T411 = {R416, R412};
+  assign T413 = T414 ? meta_io_resp_0_coh_state : R412;
+  assign T414 = s1_clk_en & T415;
+  assign T415 = s1_replaced_way_en[1'h0:1'h0];
+  assign T417 = T414 ? meta_io_resp_0_tag : R416;
+  assign T418 = s2_replaced_way_en[1'h0:1'h0];
+  assign T419 = T44;
+  assign T420 = s2_tag_match ? T422 : T421;
+  assign T421 = T375[5'h15:2'h2];
+  assign T422 = T421;
+  assign T423 = s1_clk_en ? s1_req_kill : s2_req_kill;
+  assign T424 = s2_recycle ? s2_req_kill : T425;
+  assign T425 = mshrs_io_replay_valid ? mshrs_io_replay_bits_kill : T426;
+  assign T426 = io_cpu_req_valid ? io_cpu_req_bits_kill : s1_req_kill;
+  assign T427 = s1_clk_en ? s1_req_tag : s2_req_tag;
+  assign T428 = s2_recycle ? s2_req_tag : T429;
+  assign T429 = mshrs_io_replay_valid ? mshrs_io_replay_bits_tag : T430;
+  assign T430 = io_cpu_req_valid ? io_cpu_req_bits_tag : s1_req_tag;
+  assign T431 = s2_nack_hit ? 1'h0 : T432;
+  assign T432 = T454 & T433;
+  assign T433 = T441 | T434;
+  assign T434 = T438 | T435;
+  assign T435 = T437 | T436;
+  assign T436 = s2_req_cmd == 5'h4;
+  assign T437 = s2_req_cmd[2'h3:2'h3];
+  assign T438 = T440 | T439;
+  assign T439 = s2_req_cmd == 5'h7;
+  assign T440 = s2_req_cmd == 5'h1;
+  assign T441 = T451 | T442;
+  assign T442 = T446 | T443;
+  assign T443 = T445 | T444;
+  assign T444 = s2_req_cmd == 5'h4;
+  assign T445 = s2_req_cmd[2'h3:2'h3];
   assign T446 = T448 | T447;
-  assign T447 = s2_req_cmd == 5'h6;
-  assign T448 = s2_req_cmd == 5'h0;
-  assign T449 = T451 | T450;
-  assign T450 = s2_req_cmd == 5'h3;
-  assign T451 = s2_req_cmd == 5'h2;
-  assign T452 = s2_valid_masked & T453;
-  assign T453 = s2_hit ^ 1'h1;
-  assign T454 = io_mem_probe_valid & T455;
-  assign T455 = lrsc_valid ^ 1'h1;
+  assign T447 = s2_req_cmd == 5'h7;
+  assign T448 = T450 | T449;
+  assign T449 = s2_req_cmd == 5'h6;
+  assign T450 = s2_req_cmd == 5'h0;
+  assign T451 = T453 | T452;
+  assign T452 = s2_req_cmd == 5'h3;
+  assign T453 = s2_req_cmd == 5'h2;
+  assign T454 = s2_valid_masked & T455;
+  assign T455 = s2_hit ^ 1'h1;
+  assign T456 = io_mem_probe_valid & T457;
+  assign T457 = lrsc_valid ^ 1'h1;
   assign io_mem_release_bits_data = releaseArb_io_out_bits_data;
   assign io_mem_release_bits_voluntary = releaseArb_io_out_bits_voluntary;
   assign io_mem_release_bits_r_type = releaseArb_io_out_bits_r_type;
@@ -58878,9 +58997,9 @@ module HellaCache(input clk, input reset,
   assign io_mem_release_bits_addr_block = releaseArb_io_out_bits_addr_block;
   assign io_mem_release_bits_addr_beat = releaseArb_io_out_bits_addr_beat;
   assign io_mem_release_valid = releaseArb_io_out_valid;
-  assign io_mem_probe_ready = T456;
-  assign T456 = prober_io_req_ready & T457;
-  assign T457 = lrsc_valid ^ 1'h1;
+  assign io_mem_probe_ready = T458;
+  assign T458 = prober_io_req_ready & T459;
+  assign T459 = lrsc_valid ^ 1'h1;
   assign io_mem_grant_ready = FlowThroughSerializer_io_in_ready;
   assign io_mem_acquire_bits_data = mshrs_io_mem_req_bits_data;
   assign io_mem_acquire_bits_union = mshrs_io_mem_req_bits_union;
@@ -58895,161 +59014,161 @@ module HellaCache(input clk, input reset,
   assign io_ptw_req_bits_prv = dtlb_io_ptw_req_bits_prv;
   assign io_ptw_req_bits_addr = dtlb_io_ptw_req_bits_addr;
   assign io_ptw_req_valid = dtlb_io_ptw_req_valid;
-  assign io_cpu_ordered = T458;
-  assign T458 = T460 & T459;
-  assign T459 = s2_valid ^ 1'h1;
-  assign T460 = mshrs_io_fence_rdy & T461;
-  assign T461 = s1_valid ^ 1'h1;
-  assign io_cpu_xcpt_pf_st = T462;
-  assign T462 = s1_write & dtlb_io_resp_xcpt_st;
-  assign io_cpu_xcpt_pf_ld = T463;
-  assign T463 = s1_read & dtlb_io_resp_xcpt_ld;
-  assign io_cpu_xcpt_ma_st = T464;
-  assign T464 = s1_write & misaligned;
-  assign misaligned = T469 | T465;
-  assign T465 = T468 & T466;
-  assign T466 = T467 != 3'h0;
-  assign T467 = s1_req_addr[2'h2:1'h0];
-  assign T468 = s1_req_typ == 3'h3;
-  assign T469 = T476 | T470;
-  assign T470 = T473 & T471;
-  assign T471 = T472 != 2'h0;
-  assign T472 = s1_req_addr[1'h1:1'h0];
-  assign T473 = T475 | T474;
-  assign T474 = s1_req_typ == 3'h6;
-  assign T475 = s1_req_typ == 3'h2;
-  assign T476 = T479 & T477;
-  assign T477 = T478 != 1'h0;
-  assign T478 = s1_req_addr[1'h0:1'h0];
-  assign T479 = T481 | T480;
-  assign T480 = s1_req_typ == 3'h5;
-  assign T481 = s1_req_typ == 3'h1;
-  assign io_cpu_xcpt_ma_ld = T482;
-  assign T482 = s1_read & misaligned;
+  assign io_cpu_ordered = T460;
+  assign T460 = T462 & T461;
+  assign T461 = s2_valid ^ 1'h1;
+  assign T462 = mshrs_io_fence_rdy & T463;
+  assign T463 = s1_valid ^ 1'h1;
+  assign io_cpu_xcpt_pf_st = T464;
+  assign T464 = s1_write & dtlb_io_resp_xcpt_st;
+  assign io_cpu_xcpt_pf_ld = T465;
+  assign T465 = s1_read & dtlb_io_resp_xcpt_ld;
+  assign io_cpu_xcpt_ma_st = T466;
+  assign T466 = s1_write & misaligned;
+  assign misaligned = T471 | T467;
+  assign T467 = T470 & T468;
+  assign T468 = T469 != 3'h0;
+  assign T469 = s1_req_addr[2'h2:1'h0];
+  assign T470 = s1_req_typ == 3'h3;
+  assign T471 = T478 | T472;
+  assign T472 = T475 & T473;
+  assign T473 = T474 != 2'h0;
+  assign T474 = s1_req_addr[1'h1:1'h0];
+  assign T475 = T477 | T476;
+  assign T476 = s1_req_typ == 3'h6;
+  assign T477 = s1_req_typ == 3'h2;
+  assign T478 = T481 & T479;
+  assign T479 = T480 != 1'h0;
+  assign T480 = s1_req_addr[1'h0:1'h0];
+  assign T481 = T483 | T482;
+  assign T482 = s1_req_typ == 3'h5;
+  assign T483 = s1_req_typ == 3'h1;
+  assign io_cpu_xcpt_ma_ld = T484;
+  assign T484 = s1_read & misaligned;
   assign io_cpu_replay_next_bits = s1_req_tag;
-  assign io_cpu_replay_next_valid = T483;
-  assign T483 = s1_replay & s1_read;
-  assign io_cpu_resp_bits_store_data = T484;
-  assign T484 = cache_pass ? cache_resp_bits_store_data : uncache_resp_bits_store_data;
+  assign io_cpu_replay_next_valid = T485;
+  assign T485 = s1_replay & s1_read;
+  assign io_cpu_resp_bits_store_data = T486;
+  assign T486 = cache_pass ? cache_resp_bits_store_data : uncache_resp_bits_store_data;
   assign uncache_resp_bits_store_data = mshrs_io_resp_bits_store_data;
   assign cache_resp_bits_store_data = s2_req_data;
-  assign io_cpu_resp_bits_data_word_bypass = T485;
-  assign T485 = {T490, T486};
-  assign T486 = T489 ? T488 : T487;
-  assign T487 = s2_data_word[5'h1f:1'h0];
-  assign T488 = s2_data_word[6'h3f:6'h20];
-  assign T489 = s2_req_addr[2'h2:2'h2];
-  assign T490 = T502 ? T492 : T491;
-  assign T491 = s2_data_word[6'h3f:6'h20];
-  assign T492 = 32'h0 - T604;
-  assign T604 = {31'h0, T493};
-  assign T493 = T495 & T494;
-  assign T494 = T486[5'h1f:5'h1f];
-  assign T495 = T497 | T496;
-  assign T496 = s2_req_typ == 3'h3;
+  assign io_cpu_resp_bits_data_word_bypass = T487;
+  assign T487 = {T492, T488};
+  assign T488 = T491 ? T490 : T489;
+  assign T489 = s2_data_word[5'h1f:1'h0];
+  assign T490 = s2_data_word[6'h3f:6'h20];
+  assign T491 = s2_req_addr[2'h2:2'h2];
+  assign T492 = T504 ? T494 : T493;
+  assign T493 = s2_data_word[6'h3f:6'h20];
+  assign T494 = 32'h0 - T606;
+  assign T606 = {31'h0, T495};
+  assign T495 = T497 & T496;
+  assign T496 = T488[5'h1f:5'h1f];
   assign T497 = T499 | T498;
-  assign T498 = s2_req_typ == 3'h2;
+  assign T498 = s2_req_typ == 3'h3;
   assign T499 = T501 | T500;
-  assign T500 = s2_req_typ == 3'h1;
-  assign T501 = s2_req_typ == 3'h0;
-  assign T502 = T504 | T503;
-  assign T503 = s2_req_typ == 3'h6;
-  assign T504 = s2_req_typ == 3'h2;
-  assign io_cpu_resp_bits_has_data = T505;
-  assign T505 = cache_pass ? cache_resp_bits_has_data : uncache_resp_bits_has_data;
+  assign T500 = s2_req_typ == 3'h2;
+  assign T501 = T503 | T502;
+  assign T502 = s2_req_typ == 3'h1;
+  assign T503 = s2_req_typ == 3'h0;
+  assign T504 = T506 | T505;
+  assign T505 = s2_req_typ == 3'h6;
+  assign T506 = s2_req_typ == 3'h2;
+  assign io_cpu_resp_bits_has_data = T507;
+  assign T507 = cache_pass ? cache_resp_bits_has_data : uncache_resp_bits_has_data;
   assign uncache_resp_bits_has_data = mshrs_io_resp_bits_has_data;
-  assign cache_resp_bits_has_data = T506;
-  assign T506 = T510 | T507;
-  assign T507 = T509 | T508;
-  assign T508 = s2_req_cmd == 5'h4;
-  assign T509 = s2_req_cmd[2'h3:2'h3];
-  assign T510 = T512 | T511;
-  assign T511 = s2_req_cmd == 5'h7;
+  assign cache_resp_bits_has_data = T508;
+  assign T508 = T512 | T509;
+  assign T509 = T511 | T510;
+  assign T510 = s2_req_cmd == 5'h4;
+  assign T511 = s2_req_cmd[2'h3:2'h3];
   assign T512 = T514 | T513;
-  assign T513 = s2_req_cmd == 5'h6;
-  assign T514 = s2_req_cmd == 5'h0;
-  assign io_cpu_resp_bits_replay = T515;
-  assign T515 = cache_pass ? cache_resp_bits_replay : uncache_resp_bits_replay;
+  assign T513 = s2_req_cmd == 5'h7;
+  assign T514 = T516 | T515;
+  assign T515 = s2_req_cmd == 5'h6;
+  assign T516 = s2_req_cmd == 5'h0;
+  assign io_cpu_resp_bits_replay = T517;
+  assign T517 = cache_pass ? cache_resp_bits_replay : uncache_resp_bits_replay;
   assign uncache_resp_bits_replay = mshrs_io_resp_bits_replay;
   assign cache_resp_bits_replay = s2_replay;
-  assign io_cpu_resp_bits_nack = T516;
-  assign T516 = cache_pass ? cache_resp_bits_nack : uncache_resp_bits_nack;
+  assign io_cpu_resp_bits_nack = T518;
+  assign T518 = cache_pass ? cache_resp_bits_nack : uncache_resp_bits_nack;
   assign uncache_resp_bits_nack = mshrs_io_resp_bits_nack;
-  assign cache_resp_bits_nack = T517;
-  assign T517 = s2_valid & s2_nack;
-  assign io_cpu_resp_bits_data = T518;
-  assign T518 = cache_pass ? cache_resp_bits_data : uncache_resp_bits_data;
+  assign cache_resp_bits_nack = T519;
+  assign T519 = s2_valid & s2_nack;
+  assign io_cpu_resp_bits_data = T520;
+  assign T520 = cache_pass ? cache_resp_bits_data : uncache_resp_bits_data;
   assign uncache_resp_bits_data = mshrs_io_resp_bits_data;
-  assign cache_resp_bits_data = T519;
-  assign T519 = T520 | T605;
-  assign T605 = {63'h0, s2_sc_fail};
-  assign T520 = {T539, T521};
-  assign T521 = s2_sc ? 8'h0 : T522;
-  assign T522 = T538 ? T537 : T523;
-  assign T523 = T524[3'h7:1'h0];
-  assign T524 = {T529, T525};
-  assign T525 = T528 ? T527 : T526;
-  assign T526 = T485[4'hf:1'h0];
-  assign T527 = T485[5'h1f:5'h10];
-  assign T528 = s2_req_addr[1'h1:1'h1];
-  assign T529 = T534 ? T531 : T530;
-  assign T530 = T485[6'h3f:5'h10];
-  assign T531 = 48'h0 - T606;
-  assign T606 = {47'h0, T532};
-  assign T532 = T495 & T533;
-  assign T533 = T525[4'hf:4'hf];
-  assign T534 = T536 | T535;
-  assign T535 = s2_req_typ == 3'h5;
-  assign T536 = s2_req_typ == 3'h1;
-  assign T537 = T524[4'hf:4'h8];
-  assign T538 = s2_req_addr[1'h0:1'h0];
-  assign T539 = T544 ? T541 : T540;
-  assign T540 = T524[6'h3f:4'h8];
-  assign T541 = 56'h0 - T607;
-  assign T607 = {55'h0, T542};
-  assign T542 = T495 & T543;
-  assign T543 = T521[3'h7:3'h7];
-  assign T544 = s2_sc | T545;
-  assign T545 = T547 | T546;
-  assign T546 = s2_req_typ == 3'h4;
-  assign T547 = s2_req_typ == 3'h0;
-  assign io_cpu_resp_bits_typ = T548;
-  assign T548 = cache_pass ? cache_resp_bits_typ : uncache_resp_bits_typ;
+  assign cache_resp_bits_data = T521;
+  assign T521 = T522 | T607;
+  assign T607 = {63'h0, s2_sc_fail};
+  assign T522 = {T541, T523};
+  assign T523 = s2_sc ? 8'h0 : T524;
+  assign T524 = T540 ? T539 : T525;
+  assign T525 = T526[3'h7:1'h0];
+  assign T526 = {T531, T527};
+  assign T527 = T530 ? T529 : T528;
+  assign T528 = T487[4'hf:1'h0];
+  assign T529 = T487[5'h1f:5'h10];
+  assign T530 = s2_req_addr[1'h1:1'h1];
+  assign T531 = T536 ? T533 : T532;
+  assign T532 = T487[6'h3f:5'h10];
+  assign T533 = 48'h0 - T608;
+  assign T608 = {47'h0, T534};
+  assign T534 = T497 & T535;
+  assign T535 = T527[4'hf:4'hf];
+  assign T536 = T538 | T537;
+  assign T537 = s2_req_typ == 3'h5;
+  assign T538 = s2_req_typ == 3'h1;
+  assign T539 = T526[4'hf:4'h8];
+  assign T540 = s2_req_addr[1'h0:1'h0];
+  assign T541 = T546 ? T543 : T542;
+  assign T542 = T526[6'h3f:4'h8];
+  assign T543 = 56'h0 - T609;
+  assign T609 = {55'h0, T544};
+  assign T544 = T497 & T545;
+  assign T545 = T523[3'h7:3'h7];
+  assign T546 = s2_sc | T547;
+  assign T547 = T549 | T548;
+  assign T548 = s2_req_typ == 3'h4;
+  assign T549 = s2_req_typ == 3'h0;
+  assign io_cpu_resp_bits_typ = T550;
+  assign T550 = cache_pass ? cache_resp_bits_typ : uncache_resp_bits_typ;
   assign uncache_resp_bits_typ = mshrs_io_resp_bits_typ;
   assign cache_resp_bits_typ = s2_req_typ;
-  assign io_cpu_resp_bits_cmd = T549;
-  assign T549 = cache_pass ? cache_resp_bits_cmd : uncache_resp_bits_cmd;
+  assign io_cpu_resp_bits_cmd = T551;
+  assign T551 = cache_pass ? cache_resp_bits_cmd : uncache_resp_bits_cmd;
   assign uncache_resp_bits_cmd = mshrs_io_resp_bits_cmd;
   assign cache_resp_bits_cmd = s2_req_cmd;
-  assign io_cpu_resp_bits_tag = T550;
-  assign T550 = cache_pass ? cache_resp_bits_tag : uncache_resp_bits_tag;
+  assign io_cpu_resp_bits_tag = T552;
+  assign T552 = cache_pass ? cache_resp_bits_tag : uncache_resp_bits_tag;
   assign uncache_resp_bits_tag = mshrs_io_resp_bits_tag;
   assign cache_resp_bits_tag = s2_req_tag;
-  assign io_cpu_resp_bits_addr = T551;
-  assign T551 = cache_pass ? cache_resp_bits_addr : uncache_resp_bits_addr;
+  assign io_cpu_resp_bits_addr = T553;
+  assign T553 = cache_pass ? cache_resp_bits_addr : uncache_resp_bits_addr;
   assign uncache_resp_bits_addr = mshrs_io_resp_bits_addr;
   assign cache_resp_bits_addr = s2_req_addr;
-  assign io_cpu_resp_valid = T552;
-  assign T552 = cache_pass ? cache_resp_valid : uncache_resp_valid;
+  assign io_cpu_resp_valid = T554;
+  assign T554 = cache_pass ? cache_resp_valid : uncache_resp_valid;
   assign uncache_resp_valid = mshrs_io_resp_valid;
-  assign cache_resp_valid = T553;
-  assign T553 = T555 & T554;
-  assign T554 = s2_data_correctable ^ 1'h1;
-  assign T555 = s2_replay | T556;
-  assign T556 = s2_valid_masked & s2_hit;
-  assign io_cpu_req_ready = T557;
-  assign T557 = block_miss ? 1'h0 : T558;
-  assign T558 = T565 ? 1'h0 : T559;
-  assign T559 = T564 ? 1'h0 : T560;
-  assign T560 = T561 == 1'h0;
-  assign T561 = T563 & T562;
-  assign T562 = io_cpu_req_bits_phys ^ 1'h1;
-  assign T563 = dtlb_io_req_ready ^ 1'h1;
-  assign T564 = metaReadArb_io_in_4_ready ^ 1'h1;
-  assign T565 = readArb_io_in_3_ready ^ 1'h1;
-  assign T608 = reset ? 1'h0 : T566;
-  assign T566 = T567 & s2_nack_miss;
-  assign T567 = s2_valid | block_miss;
+  assign cache_resp_valid = T555;
+  assign T555 = T557 & T556;
+  assign T556 = s2_data_correctable ^ 1'h1;
+  assign T557 = s2_replay | T558;
+  assign T558 = s2_valid_masked & s2_hit;
+  assign io_cpu_req_ready = T559;
+  assign T559 = block_miss ? 1'h0 : T560;
+  assign T560 = T567 ? 1'h0 : T561;
+  assign T561 = T566 ? 1'h0 : T562;
+  assign T562 = T563 == 1'h0;
+  assign T563 = T565 & T564;
+  assign T564 = io_cpu_req_bits_phys ^ 1'h1;
+  assign T565 = dtlb_io_req_ready ^ 1'h1;
+  assign T566 = metaReadArb_io_in_4_ready ^ 1'h1;
+  assign T567 = readArb_io_in_3_ready ^ 1'h1;
+  assign T610 = reset ? 1'h0 : T568;
+  assign T568 = T569 & s2_nack_miss;
+  assign T569 = s2_valid | block_miss;
   WritebackUnit wb(.clk(clk), .reset(reset),
        .io_req_ready( wb_io_req_ready ),
        .io_req_valid( wbArb_io_out_valid ),
@@ -59080,7 +59199,7 @@ module HellaCache(input clk, input reset,
   );
   ProbeUnit prober(.clk(clk), .reset(reset),
        .io_req_ready( prober_io_req_ready ),
-       .io_req_valid( T454 ),
+       .io_req_valid( T456 ),
        .io_req_bits_addr_block( io_mem_probe_bits_addr_block ),
        .io_req_bits_p_type( io_mem_probe_bits_p_type ),
        //.io_req_bits_client_xact_id(  )
@@ -59117,7 +59236,7 @@ module HellaCache(input clk, input reset,
   );
   MSHRFile mshrs(.clk(clk), .reset(reset),
        .io_req_ready( mshrs_io_req_ready ),
-       .io_req_valid( T429 ),
+       .io_req_valid( T431 ),
        .io_req_bits_addr( s2_req_addr ),
        .io_req_bits_tag( s2_req_tag ),
        .io_req_bits_cmd( s2_req_cmd ),
@@ -59126,9 +59245,9 @@ module HellaCache(input clk, input reset,
        .io_req_bits_phys( s2_req_phys ),
        .io_req_bits_data( s2_req_data ),
        .io_req_bits_tag_match( s2_tag_match ),
-       .io_req_bits_old_meta_tag( T418 ),
-       .io_req_bits_old_meta_coh_state( T371 ),
-       .io_req_bits_way_en( T354 ),
+       .io_req_bits_old_meta_tag( T420 ),
+       .io_req_bits_old_meta_coh_state( T373 ),
+       .io_req_bits_way_en( T356 ),
        .io_resp_ready( T353 ),
        .io_resp_valid( mshrs_io_resp_valid ),
        .io_resp_bits_addr( mshrs_io_resp_bits_addr ),
@@ -59259,7 +59378,7 @@ module HellaCache(input clk, input reset,
   Arbiter_0 metaReadArb(
        .io_in_4_ready( metaReadArb_io_in_4_ready ),
        .io_in_4_valid( io_cpu_req_valid ),
-       .io_in_4_bits_idx( T602 ),
+       .io_in_4_bits_idx( T604 ),
        .io_in_3_ready( metaReadArb_io_in_3_ready ),
        .io_in_3_valid( wb_io_meta_read_valid ),
        .io_in_3_bits_idx( wb_io_meta_read_bits_idx ),
@@ -59271,7 +59390,7 @@ module HellaCache(input clk, input reset,
        .io_in_1_bits_idx( mshrs_io_meta_read_bits_idx ),
        //.io_in_0_ready(  )
        .io_in_0_valid( s2_recycle ),
-       .io_in_0_bits_idx( T601 ),
+       .io_in_0_bits_idx( T603 ),
        .io_out_ready( meta_io_read_ready ),
        .io_out_valid( metaReadArb_io_out_valid ),
        .io_out_bits_idx( metaReadArb_io_out_bits_idx )
@@ -59318,7 +59437,7 @@ module HellaCache(input clk, input reset,
        .io_in_3_ready( readArb_io_in_3_ready ),
        .io_in_3_valid( io_cpu_req_valid ),
        .io_in_3_bits_way_en( 4'hf ),
-       .io_in_3_bits_addr( T600 ),
+       .io_in_3_bits_addr( T602 ),
        .io_in_2_ready( readArb_io_in_2_ready ),
        .io_in_2_valid( wb_io_data_req_valid ),
        .io_in_2_bits_way_en( wb_io_data_req_bits_way_en ),
@@ -59326,11 +59445,11 @@ module HellaCache(input clk, input reset,
        .io_in_1_ready( readArb_io_in_1_ready ),
        .io_in_1_valid( mshrs_io_replay_valid ),
        .io_in_1_bits_way_en( 4'hf ),
-       .io_in_1_bits_addr( T599 ),
+       .io_in_1_bits_addr( T601 ),
        //.io_in_0_ready(  )
        .io_in_0_valid( s2_recycle ),
        .io_in_0_bits_way_en( 4'hf ),
-       .io_in_0_bits_addr( T598 ),
+       .io_in_0_bits_addr( T600 ),
        .io_out_ready( T324 ),
        .io_out_valid( readArb_io_out_valid ),
        .io_out_bits_way_en( readArb_io_out_bits_way_en ),
@@ -59347,7 +59466,7 @@ module HellaCache(input clk, input reset,
        //.io_in_0_ready(  )
        .io_in_0_valid( s3_valid ),
        .io_in_0_bits_way_en( s3_way ),
-       .io_in_0_bits_addr( T597 ),
+       .io_in_0_bits_addr( T599 ),
        .io_in_0_bits_wmask( rowWMask ),
        .io_in_0_bits_data( T311 ),
        .io_out_ready( data_io_write_ready ),
@@ -59359,10 +59478,10 @@ module HellaCache(input clk, input reset,
        //.io_chosen(  )
   );
   AMOALU amoalu(
-       .io_addr( T596 ),
+       .io_addr( T598 ),
        .io_cmd( s2_req_cmd ),
        .io_typ( s2_req_typ ),
-       .io_lhs( T577 ),
+       .io_lhs( T579 ),
        .io_rhs( s2_req_data ),
        .io_out( amoalu_io_out )
   );
@@ -59496,14 +59615,14 @@ module HellaCache(input clk, input reset,
     end else if(mshrs_io_replay_valid) begin
       s1_req_addr <= mshrs_io_replay_bits_addr;
     end else if(prober_io_meta_read_valid) begin
-      s1_req_addr <= T572;
+      s1_req_addr <= T574;
     end else if(wb_io_meta_read_valid) begin
-      s1_req_addr <= T571;
+      s1_req_addr <= T573;
     end else if(io_cpu_req_valid) begin
       s1_req_addr <= io_cpu_req_bits_addr;
     end
     if(s1_clk_en) begin
-      s2_req_addr <= T573;
+      s2_req_addr <= T575;
     end
     if(s1_clk_en) begin
       R92 <= meta_io_resp_2_coh_state;
@@ -59537,19 +59656,19 @@ module HellaCache(input clk, input reset,
     end else if(s1_clk_en) begin
       s1_recycled <= s2_recycle;
     end
-    R145 <= T578;
+    R145 <= T580;
     if(T153) begin
       R150 <= T152;
     end
-    R162 <= T580;
+    R162 <= T582;
     if(T170) begin
       R167 <= T169;
     end
-    R176 <= T582;
+    R176 <= T584;
     if(T184) begin
       R181 <= T183;
     end
-    R189 <= T584;
+    R189 <= T586;
     if(T197) begin
       R194 <= T196;
     end
@@ -59581,7 +59700,7 @@ module HellaCache(input clk, input reset,
     end else if(lrsc_valid) begin
       lrsc_count <= T239;
     end
-    s3_req_data <= T589;
+    s3_req_data <= T591;
     if(T249) begin
       s3_req_cmd <= s2_req_cmd;
     end
@@ -59631,37 +59750,38 @@ module HellaCache(input clk, input reset,
     if(s1_clk_en) begin
       s2_req_phys <= s1_req_phys;
     end
+    s2_killed <= T355;
     if(s1_clk_en) begin
-      R355 <= T357;
+      R357 <= T359;
     end
     if(reset) begin
-      R358 <= 16'h1;
-    end else if(T369) begin
-      R358 <= T360;
+      R360 <= 16'h1;
+    end else if(T371) begin
+      R360 <= T362;
     end
-    if(T379) begin
-      R377 <= meta_io_resp_3_coh_state;
+    if(T381) begin
+      R379 <= meta_io_resp_3_coh_state;
     end
-    if(T379) begin
-      R382 <= meta_io_resp_3_tag;
+    if(T381) begin
+      R384 <= meta_io_resp_3_tag;
     end
-    if(T391) begin
-      R389 <= meta_io_resp_2_coh_state;
+    if(T393) begin
+      R391 <= meta_io_resp_2_coh_state;
     end
-    if(T391) begin
-      R393 <= meta_io_resp_2_tag;
+    if(T393) begin
+      R395 <= meta_io_resp_2_tag;
     end
-    if(T402) begin
-      R400 <= meta_io_resp_1_coh_state;
+    if(T404) begin
+      R402 <= meta_io_resp_1_coh_state;
     end
-    if(T402) begin
-      R404 <= meta_io_resp_1_tag;
+    if(T404) begin
+      R406 <= meta_io_resp_1_tag;
     end
-    if(T412) begin
-      R410 <= meta_io_resp_0_coh_state;
+    if(T414) begin
+      R412 <= meta_io_resp_0_coh_state;
     end
-    if(T412) begin
-      R414 <= meta_io_resp_0_tag;
+    if(T414) begin
+      R416 <= meta_io_resp_0_tag;
     end
     if(s1_clk_en) begin
       s2_req_kill <= s1_req_kill;
@@ -59686,7 +59806,7 @@ module HellaCache(input clk, input reset,
     if(reset) begin
       block_miss <= 1'h0;
     end else begin
-      block_miss <= T566;
+      block_miss <= T568;
     end
   end
 endmodule

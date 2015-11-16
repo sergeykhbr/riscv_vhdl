@@ -74,11 +74,13 @@ architecture arch_rocket_soc of rocket_soc is
   signal ubridge_in  : bridge_in_type;
   signal ubridge_out : bridge_out_type;
   
-  signal hctrl_in : hostctrl_in_type;
-  signal hctrl_out : hostctrl_out_type;
-  
+ 
+  signal irq_pins : std_logic_vector(CFG_IRQ_TOTAL-1 downto 0);
+  signal tile2host : host_out_type;
+  signal host2tile : host_in_type;
 begin
 
+  irq_pins <= (others => '0');  --! not used without GNSS engine
 
   ------------------------------------
   -- @brief Internal PLL device instance.
@@ -299,54 +301,48 @@ L1toL2dis0 : if not CFG_COMMON_L1toL2_ENABLE generate
     io_uncached_0_grant_bits_is_builtin_type => ubridge_out.tile.grant_bits_is_builtin_type,
     io_uncached_0_grant_bits_g_type => ubridge_out.tile.grant_bits_g_type,
     io_uncached_0_grant_bits_data => ubridge_out.tile.grant_bits_data,
-    io_host_reset => hctrl_out.host.reset,
-    io_host_id => hctrl_out.host.id,
-    io_host_csr_req_ready => hctrl_in.host.csr_req_ready,
-    io_host_csr_req_valid => hctrl_out.host.csr_req_valid,
-    io_host_csr_req_bits_rw => hctrl_out.host.csr_req_bits_rw,
-    io_host_csr_req_bits_addr => hctrl_out.host.csr_req_bits_addr,
-    io_host_csr_req_bits_data => hctrl_out.host.csr_req_bits_data,
-    io_host_csr_resp_ready => hctrl_out.host.csr_resp_ready,
-    io_host_csr_resp_valid => hctrl_in.host.csr_resp_valid,
-    io_host_csr_resp_bits => hctrl_in.host.csr_resp_bits,
-    io_host_ipi_req_ready => hctrl_out.host.ipi_req_ready,
-    io_host_ipi_req_valid => hctrl_in.host.ipi_req_valid,
-    io_host_ipi_req_bits => hctrl_in.host.ipi_req_bits,
-    io_host_ipi_rep_ready => hctrl_in.host.ipi_rep_ready,
-    io_host_ipi_rep_valid => hctrl_out.host.ipi_rep_valid,
-    io_host_ipi_rep_bits => hctrl_out.host.ipi_rep_bits,
-    io_host_debug_stats_csr => hctrl_in.host.debug_stats_csr
+    io_host_reset => host2tile.reset,
+    io_host_id => host2tile.id,
+    io_host_csr_req_ready => tile2host.csr_req_ready,
+    io_host_csr_req_valid => host2tile.csr_req_valid,
+    io_host_csr_req_bits_rw => host2tile.csr_req_bits_rw,
+    io_host_csr_req_bits_addr => host2tile.csr_req_bits_addr,
+    io_host_csr_req_bits_data => host2tile.csr_req_bits_data,
+    io_host_csr_resp_ready => host2tile.csr_resp_ready,
+    io_host_csr_resp_valid => tile2host.csr_resp_valid,
+    io_host_csr_resp_bits => tile2host.csr_resp_bits,
+    io_host_ipi_req_ready => host2tile.ipi_req_ready,
+    io_host_ipi_req_valid => tile2host.ipi_req_valid,
+    io_host_ipi_req_bits => tile2host.ipi_req_bits,
+    io_host_ipi_rep_ready => tile2host.ipi_rep_ready,
+    io_host_ipi_rep_valid => host2tile.ipi_rep_valid,
+    io_host_ipi_rep_bits => host2tile.ipi_rep_bits,
+    io_host_debug_stats_csr => tile2host.debug_stats_csr
 );
 
-cbridge_in.nasti <= carb2noc;
-ubridge_in.nasti <= carb2noc;
+  cbridge_in.nasti <= carb2noc;
+  ubridge_in.nasti <= carb2noc;
 
-cbridge0 : AxiBridge 
-port map (
+  cbridge0 : AxiBridge 
+  port map (
     clk => wClkBus,
     nrst => wNReset,
     i => cbridge_in,
     o => cbridge_out
-);
+  );
 
-ubridge0 : AxiBridge 
-port map (
+  ubridge0 : AxiBridge 
+  port map (
     clk => wClkBus,
     nrst => wNReset,
     i => ubridge_in,
     o => ubridge_out
-);
-
-hctrl0 : HostController
-port map (
-    clk => wClkBus,
-    nrst => wNReset,
-    i => hctrl_in,
-    o => hctrl_out
-);
+  );
 
 end generate;
 
+  ------------------------------------
+  -- @brief request multiplexer from cached/uncached TileLink into AXI4 bus
   bridgemux0 : TileBridgeArbiter
   port map (
     i_cached => cbridge_out.nasti,
@@ -459,6 +455,28 @@ end generate;
   );
   o_uart1_td  <= uart1o.td;
   o_uart1_rtsn <= not uart1o.rts;
+
+
+  ------------------------------------
+  --! @brief Interrupt controller with the AXI4 interface.
+  --! @details Map address:
+  --!          0x80002000..0x80002fff (4 KB total)
+  irq0 : nasti_irqctrl generic map
+  (
+    xindex   => CFG_NASTI_IRQCTRL,
+    xaddr    => 16#80002#,
+    xmask    => 16#FFFFF#,
+    L2_ena   => CFG_COMMON_L1toL2_ENABLE
+  ) port map (
+    clk    => wClkBus,
+    nrst   => wNReset,
+    i_irqs => irq_pins,
+    o_cfg  => cslv_cfg(CFG_NASTI_IRQCTRL),
+    i_axi  => noc2cslv,
+    o_axi  => cslv2carb(CFG_NASTI_IRQCTRL),
+    i_host => tile2host,
+    o_host => host2tile
+  );
 
 
   --! @brief Plug'n'Play controller of the current configuration with the

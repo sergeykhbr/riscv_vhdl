@@ -61,9 +61,6 @@ package types_tile is
   constant ACQUIRE_PUT_ATOMIC_DATA      : std_logic_vector(2 downto 0) := "100"; -- Single beat data. 64 bits width
   constant ACQUIRE_PREFETCH_BLOCK       : std_logic_vector(2 downto 0) := "101";
   
-  constant ACQUIRE_CACHED_GET_TYPE : std_logic_vector(2 downto 0) := "000";
-  constant ACQUIRE_CACHED_PUT_TYPE : std_logic_vector(2 downto 0) := "001";  
-
   --! <tilelink.scala> Object Grant {}
   constant GRANT_ACK_RELEASE          : std_logic_vector(3 downto 0) := "0000"; -- For acking Releases
   constant GRANT_ACK_PREFETCH         : std_logic_vector(3 downto 0) := "0001"; -- For acking any kind of Prefetch
@@ -71,6 +68,13 @@ package types_tile is
   constant GRANT_SINGLE_BEAT_GET      : std_logic_vector(3 downto 0) := "0100"; -- Supplying a single beat of Get
   constant GRANT_BLOCK_GET            : std_logic_vector(3 downto 0) := "0101"; -- Supplying all beats of a GetBlock
 
+  --! MESI coherence
+  constant CACHED_ACQUIRE_SHARED      : std_logic_vector(2 downto 0) := "000"; -- get 
+  constant CACHED_ACQUIRE_EXCLUSIVE   : std_logic_vector(2 downto 0) := "001"; -- put
+
+  constant CACHED_GRANT_SHARED        : std_logic_vector(3 downto 0) := "0000";
+  constant CACHED_GRANT_EXCLUSIVE     : std_logic_vector(3 downto 0) := "0001";  
+  constant CACHED_GRANT_EXCLUSIVE_ACK : std_logic_vector(3 downto 0) := "0010";  
 
   --! @brief Memory Operation size decoder
   --! @details TileLink bus has encoded Memory Operation size
@@ -148,29 +152,6 @@ type tile_uncached_out_type is record
     grant_ready : std_logic;
 end record;
 
-type tile_host_in_type is record
-    reset : std_logic;
-    id : std_logic;
-    csr_req_valid : std_logic;
-    csr_req_bits_rw : std_logic;
-    csr_req_bits_addr : std_logic_vector(11 downto 0);
-    csr_req_bits_data : std_logic_vector(63 downto 0);
-    csr_resp_ready : std_logic;
-    ipi_req_ready : std_logic;
-    ipi_rep_valid : std_logic;
-    ipi_rep_bits : std_logic;
-end record;
-
-type tile_host_out_type is record
-    csr_req_ready : std_logic;
-    csr_resp_valid : std_logic;
-    csr_resp_bits : std_logic_vector(63 downto 0);
-    ipi_req_valid : std_logic;
-    ipi_req_bits : std_logic;
-    ipi_rep_ready : std_logic;
-    debug_stats_csr : std_logic;
-end record;
-
 type bridge_in_type is record
   tile : tile_cached_out_type;
   nasti : nasti_slave_out_type;
@@ -181,33 +162,15 @@ type bridge_out_type is record
   nasti : nasti_slave_in_type;
 end record;
 
-component AxiBridge is
+  component AxiBridge is
   port (
     clk   : in  std_logic;
     nrst  : in  std_logic;
     i     : in bridge_in_type;
     o     : out bridge_out_type
   );
-end component; 
+  end component; 
 
-
-type hostctrl_in_type is record
-  host : tile_host_out_type;
-end record;
-
-type hostctrl_out_type is record
-  host : tile_host_in_type;
-end record;
-
-
-component HostController is
-  port (
-    clk   : in  std_logic;
-    nrst  : in  std_logic;
-    i     : in hostctrl_in_type;
-    o     : out hostctrl_out_type
-  );
-end component; 
 
   --! @brief Decode Acquire request from the Cached/Uncached TileLink
   --! @param[in] a_type   Request type depends of the built_in flag
@@ -325,13 +288,13 @@ package body types_tile is
     else --! built_in = '0'
       -- Cached request
       case a_type is
-      when ACQUIRE_CACHED_GET_TYPE =>
+      when CACHED_ACQUIRE_SHARED =>
           write := '0';
           wmask := (others => '0');
           byte_addr := u(12 downto 9);--tst.block.byte_addr;
           axi_sz := opSizeToXSize(conv_integer(u(8 downto 6)));
           beat_cnt := 0;
-      when ACQUIRE_CACHED_PUT_TYPE =>
+      when CACHED_ACQUIRE_EXCLUSIVE =>
           -- Single beat data.
           write := '1';
           wmask := u(16 downto 1);
