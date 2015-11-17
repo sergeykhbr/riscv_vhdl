@@ -3,3 +3,12 @@ fw/
 memmap.info
 work/tb/bridge0_tb.vhd
 docs/*.pptx
+ise/_xmsgs
+ise/iseconfig
+ise/xst
+ise/*.gise
+ise/*.lso
+ise/*.prj
+ise/*.stx
+ise/*.xst
+ise/*.html

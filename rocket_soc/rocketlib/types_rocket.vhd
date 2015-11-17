@@ -191,12 +191,6 @@ port (
     io_host_csr_resp_ready : in std_logic;
     io_host_csr_resp_valid : out std_logic;
     io_host_csr_resp_bits : out std_logic_vector(63 downto 0);
-    io_host_ipi_req_ready : in std_logic;
-    io_host_ipi_req_valid : out std_logic;
-    io_host_ipi_req_bits : out std_logic;
-    io_host_ipi_rep_ready : out std_logic;
-    io_host_ipi_rep_valid : in std_logic;
-    io_host_ipi_rep_bits : in std_logic;
     io_host_debug_stats_csr : out std_logic
 );
 end component;
@@ -210,9 +204,6 @@ type host_in_type is  record
     csr_req_bits_addr : std_logic_vector(11 downto 0);
     csr_req_bits_data : std_logic_vector(63 downto 0);
     csr_resp_ready : std_logic;
-    ipi_req_ready : std_logic;
-    ipi_rep_valid : std_logic;
-    ipi_rep_bits : std_logic;
 end record;
 
 --! HostIO tile output signals
@@ -220,9 +211,6 @@ type host_out_type is record
     csr_req_ready : std_logic;
     csr_resp_valid : std_logic;
     csr_resp_bits : std_logic_vector(63 downto 0);
-    ipi_req_valid : std_logic;
-    ipi_req_bits : std_logic;
-    ipi_rep_ready : std_logic;
     debug_stats_csr : std_logic;
 end record;
 
@@ -301,7 +289,8 @@ component nasti_bootrom is
     memtech  : integer := inferred;
     xindex   : integer := 0;
     xaddr    : integer := 0;
-    xmask    : integer := 16#fffff#
+    xmask    : integer := 16#fffff#;
+    sim_hexfile : string
   );
   port (
     clk  : in std_logic;
@@ -317,7 +306,8 @@ end component;
     memtech  : integer := inferred;
     xindex   : integer := 0;
     xaddr    : integer := 0;
-    xmask    : integer := 16#fffff#
+    xmask    : integer := 16#fffff#;
+    sim_hexfile : string
   );
   port (
     clk  : in std_logic;

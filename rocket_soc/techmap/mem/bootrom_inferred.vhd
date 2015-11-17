@@ -17,6 +17,9 @@ library rocketlib;
 use rocketlib.types_nasti.all;
 
 entity BootRom_inferred is
+  generic (
+    hex_filename : string
+  );
   port (
     clk     : in  std_ulogic;
     address : in std_logic_vector(CFG_NASTI_ADDR_BITS-1 downto CFG_NASTI_ADDR_OFFSET);
@@ -45,7 +48,7 @@ begin
     return temp_mem;
 end function;
 
-constant rom : rom_type := init_rom("E:/Projects/VHDLProjects/rocket/fw_images/bootimage.hex");
+constant rom : rom_type := init_rom(hex_filename);
 
 begin
 

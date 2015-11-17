@@ -311,12 +311,6 @@ L1toL2dis0 : if not CFG_COMMON_L1toL2_ENABLE generate
     io_host_csr_resp_ready => host2tile.csr_resp_ready,
     io_host_csr_resp_valid => tile2host.csr_resp_valid,
     io_host_csr_resp_bits => tile2host.csr_resp_bits,
-    io_host_ipi_req_ready => host2tile.ipi_req_ready,
-    io_host_ipi_req_valid => tile2host.ipi_req_valid,
-    io_host_ipi_req_bits => tile2host.ipi_req_bits,
-    io_host_ipi_rep_ready => tile2host.ipi_rep_ready,
-    io_host_ipi_rep_valid => host2tile.ipi_rep_valid,
-    io_host_ipi_rep_bits => host2tile.ipi_rep_bits,
     io_host_debug_stats_csr => tile2host.debug_stats_csr
 );
 
@@ -366,7 +360,8 @@ end generate;
     memtech  => CFG_MEMTECH,
     xindex   => CFG_NASTI_SLAVE_BOOTROM,
     xaddr    => 0,
-    xmask    => 16#ffffe#
+    xmask    => 16#ffffe#,
+    sim_hexfile => CFG_SIM_BOOTROM_HEX
   ) port map (
     clk  => wClkBus,
     nrst => wNReset,
@@ -383,7 +378,8 @@ end generate;
     memtech  => CFG_MEMTECH,
     xindex   => CFG_NASTI_SLAVE_ROMIMAGE,
     xaddr    => 16#00010#,
-    xmask    => 16#ffff0#
+    xmask    => 16#ffff0#,
+    sim_hexfile => CFG_SIM_FWIMAGE_HEX
   ) port map (
     clk  => wClkBus,
     nrst => wNReset,

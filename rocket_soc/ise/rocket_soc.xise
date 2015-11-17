@@ -95,11 +95,6 @@
       <association xil_pn:name="Implementation"/>
       <library xil_pn:name="rocketlib"/>
     </file>
-    <file xil_pn:name="../rocketlib/misc/nasti_uctrl.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation"/>
-      <association xil_pn:name="Implementation"/>
-      <library xil_pn:name="rocketlib"/>
-    </file>
     <file xil_pn:name="../work/tb/rocket_soc_tb.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation"/>
       <association xil_pn:name="PostMapSimulation"/>
@@ -185,17 +180,17 @@
       <association xil_pn:name="Implementation"/>
       <library xil_pn:name="rocketlib"/>
     </file>
-    <file xil_pn:name="../rocketlib/tilelink/hostctrl.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation"/>
-      <association xil_pn:name="Implementation"/>
-      <library xil_pn:name="rocketlib"/>
-    </file>
     <file xil_pn:name="../rocketlib/types_tile.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation"/>
       <association xil_pn:name="Implementation"/>
       <library xil_pn:name="rocketlib"/>
     </file>
     <file xil_pn:name="../rocketlib/misc/nasti_pnp.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation"/>
+      <association xil_pn:name="Implementation"/>
+      <library xil_pn:name="rocketlib"/>
+    </file>
+    <file xil_pn:name="../rocketlib/misc/nasti_irqctrl.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation"/>
       <association xil_pn:name="Implementation"/>
       <library xil_pn:name="rocketlib"/>

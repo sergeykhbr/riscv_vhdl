@@ -17,7 +17,8 @@ use rocketlib.types_nasti.all;
 
 entity RomImage_tech is
 generic (
-    memtech : integer := 0
+    memtech : integer := 0;
+    sim_hexfile : string
 );
 port (
     clk       : in std_logic;
@@ -31,7 +32,7 @@ begin
 
   genrom0 : if memtech = inferred or is_fpga(memtech) /= 0 generate
       infer0 : RomImage_inferred  generic map (
-        hex_filename => "E:/Projects/VHDLProjects/rocket/fw_images/fwimage.hex"
+        hex_filename => sim_hexfile
       ) port map (clk, address, data);
   end generate;
 

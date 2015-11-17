@@ -41,6 +41,7 @@ architecture nasti_irqctrl_rtl of nasti_irqctrl is
   --! width.
   constant ALIGNMENT_BYTES : integer := 4;
   constant HTIF_DATA_ZERO : std_logic_vector(HTIF_WIDTH-1 downto 0) := (others => '0');
+  constant CSR_MIPI : std_logic_vector(11 downto 0) := X"783";
 
   constant xconfig : nasti_slave_config_type := (
      xindex => xindex,
@@ -76,8 +77,11 @@ type registers is record
   irqs_mask     : std_logic_vector(CFG_IRQ_TOTAL-1 downto 0);
   --! irq pending bit mask
   irqs_pending  : std_logic_vector(CFG_IRQ_TOTAL-1 downto 0);
-  -- interrupt handler address initialized by FW:
+  --! interrupt handler address initialized by FW:
   irq_handler   : std_logic_vector(63 downto 0);
+  --! Function trap_entry copies the values of CSRs into these two regs:
+  dbg_cause    : std_logic_vector(31 downto 0);
+  dbg_code    : std_logic_vector(31 downto 0);
 end record;
 
 signal r, rin: registers;
@@ -110,6 +114,8 @@ begin
          when 3      => val := (others => '0');                           --! [WO]: Rise interrupts mask.
          when 4      => val := r.irq_handler(31 downto 0);                --! [RW]: LSB of the function address
          when 5      => val := r.irq_handler(63 downto 32);               --! [RW]: MSB of the function address
+         when 6      => val := r.dbg_cause(31 downto 0);                  --! [RW]: Cause of the interrupt
+         when 7      => val := r.dbg_code(31 downto 0);                   --! [RW]: Code of the excpetion
          when others => val := X"cafef00d";
        end case;
        rdata(8*ALIGNMENT_BYTES*(n+1)-1 downto 8*ALIGNMENT_BYTES*n) := val;
@@ -135,6 +141,8 @@ begin
                 v.irqs_pending := (not r.irqs_mask) and val(CFG_IRQ_TOTAL-1 downto 0);
              when 4 => v.irq_handler(31 downto 0) := val;
              when 5 => v.irq_handler(63 downto 32) := val;
+             when 6 => v.dbg_cause(31 downto 0) := val;
+             when 7 => v.dbg_code(31 downto 0) := val;
              when others =>
            end case;
          end if;
@@ -151,7 +159,7 @@ begin
     end loop;
 
    --! data, addr(core=0),  seqno=IDX, words=1, cmd=HTIF_CMD_WRITE_CONTROL_REG
-    wCmd := X"0000000000000001" & (X"000000050e" & r.seqno & X"001" & X"3");
+    wCmd := X"0000000000000000" & ((X"0000000" & CSR_MIPI) & r.seqno & X"001" & X"3");
 
     case r.state is
       when idle =>
@@ -190,12 +198,12 @@ begin
     else
       o_host.csr_req_valid     <= '1';
       o_host.csr_req_bits_rw   <= '1';
-      o_host.csr_req_bits_addr <= X"50e";   --! CSR address 'send_ipi'
+      o_host.csr_req_bits_addr <= CSR_MIPI;
       if L2_ena then
           o_host.csr_req_bits_data(63 downto HTIF_WIDTH) <= (others => '0');
           o_host.csr_req_bits_data(HTIF_WIDTH-1 downto 0) <= r.host_msg(HTIF_WIDTH-1 downto 0);
       else
-          o_host.csr_req_bits_data <= X"0000000000000001";
+          o_host.csr_req_bits_data <= X"0000000000000000";
       end if;
     end if;
 
@@ -210,9 +218,6 @@ begin
   o_host.reset          <= r.host_reset(1);
   o_host.id             <= '0';
   o_host.csr_resp_ready <= '1';
-  o_host.ipi_req_ready  <= '1';
-  o_host.ipi_rep_valid  <= '0';
-  o_host.ipi_rep_bits   <= '0';
 
 
   -- registers:
@@ -227,6 +232,8 @@ begin
        r.irqs_z <= (others => '0');
        r.irqs_zz <= (others => '0');
        r.irq_handler <= (others => '0');
+       r.dbg_cause <= (others => '0');
+       r.dbg_code <= (others => '0');
     elsif rising_edge(clk) then 
        r <= rin; 
     end if; 

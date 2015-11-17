@@ -21,7 +21,8 @@ entity nasti_romimage is
     memtech  : integer := inferred;
     xindex   : integer := 0;
     xaddr    : integer := 0;
-    xmask    : integer := 16#fffff#
+    xmask    : integer := 16#fffff#;
+    sim_hexfile : string
   );
   port (
     clk  : in std_logic;
@@ -75,7 +76,8 @@ begin
   cfg  <= xconfig;
   
   tech0 : RomImage_tech generic map (
-    memtech => memtech
+    memtech     => memtech,
+    sim_hexfile => sim_hexfile
   ) port map (
     clk     => clk,
     address => raddr_reg,

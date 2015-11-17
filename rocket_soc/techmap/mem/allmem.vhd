@@ -13,7 +13,8 @@ package allmem is
 
   component BootRom_tech is
   generic (
-    memtech : integer := 0
+    memtech : integer := 0;
+    sim_hexfile : string
   );
   port (
     clk       : in std_logic;
@@ -23,6 +24,9 @@ package allmem is
   end component;
 
   component BootRom_inferred is
+  generic (
+    hex_filename : string
+  );
   port (
     clk     : in  std_ulogic;
     address : in std_logic_vector(CFG_NASTI_ADDR_BITS-1 downto CFG_NASTI_ADDR_OFFSET);
@@ -32,7 +36,8 @@ package allmem is
 
   component RomImage_tech is
   generic (
-    memtech : integer := 0
+    memtech : integer := 0;
+    sim_hexfile : string    --! for simulation and FPGA inferred ROM
   );
   port (
     clk       : in std_logic;

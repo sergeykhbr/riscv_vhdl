@@ -12,9 +12,15 @@ use techmap.gencomp.all;
 package config_common is
 
 --! @brief Disable/Enable L2-cache as part of Uncore module.
---! @details After removing MultiChannelTop layer from verilog this option
---!          became unavailable due the different data bits width 128 <=> 64
---!          bits. Probably we will fix it in a future.
+--! @warning There are bugs in L2 implementaiton by this reason we implemented
+--!          this define that makes possible use Rocket without instantiation 
+--!          L1toL2interconnect. Probably these bug will fixed in future.
 constant CFG_COMMON_L1toL2_ENABLE : boolean := false;
+
+--! hex file used in a case of inferred Boot ROM
+constant CFG_SIM_BOOTROM_HEX : string := "E:/Projects/VHDLProjects/rocket/fw_images/bootimage.hex";
+
+--! hex file used in a case of inferred FwImage ROM
+constant CFG_SIM_FWIMAGE_HEX : string := "E:/Projects/VHDLProjects/rocket/fw_images/fwimage.hex";
 
 end;
