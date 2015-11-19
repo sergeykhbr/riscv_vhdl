@@ -1,0 +1,71 @@
+NET "i_sclk_p" TNM_NET = "TNM_SysClk";
+TIMESPEC TS_SysClk = PERIOD "TNM_SysClk" 5 ns;
+NET "i_sclk_p" IOSTANDARD = LVDS;
+NET "i_sclk_n" IOSTANDARD = LVDS;
+NET "i_sclk_p" LOC = AD12;
+NET "i_sclk_n" LOC = AD11;
+
+# button "Center"
+NET "i_rst" LOC = G12;
+NET "i_rst" CLOCK_DEDICATED_ROUTE = FALSE;
+
+NET "i_clk_adc" LOC = AF22;
+# DIP switch: SW1.1
+NET "i_dip[0]" LOC = Y29;
+NET "i_dip[1]" LOC = W29;
+NET "i_dip[2]" LOC = AA28;
+NET "i_dip[3]" LOC = Y28;
+
+
+
+#UART interface
+NET "i_uart1_ctsn" LOC = K23;
+NET "i_uart1_rd" LOC = M19;
+NET "o_uart1_rtsn" LOC = L27;
+NET "o_uart1_td" LOC = K24;
+
+
+#/ User's LEDs:
+NET "o_led[0]" LOC = AB8;
+NET "o_led[1]" LOC = AA8;
+NET "o_led[2]" LOC = AC9;
+NET "o_led[3]" LOC = AB9;
+NET "o_led[4]" LOC = AE26;
+NET "o_led[5]" LOC = G19;
+NET "o_led[6]" LOC = E18;
+NET "o_led[7]" LOC = F16;
+
+NET "i_clk_adc" IOSTANDARD = LVCMOS25;
+NET "i_uart1_ctsn" IOSTANDARD = LVCMOS25;
+NET "i_dip[0]" IOSTANDARD = LVCMOS25;
+NET "i_dip[1]" IOSTANDARD = LVCMOS25;
+NET "i_dip[2]" IOSTANDARD = LVCMOS25;
+NET "i_dip[3]" IOSTANDARD = LVCMOS25;
+
+NET "i_uart1_rd" IOSTANDARD = LVCMOS25;
+NET "i_rst" IOSTANDARD = LVCMOS25;
+NET "o_led[0]" IOSTANDARD = LVCMOS15;
+NET "o_led[1]" IOSTANDARD = LVCMOS15;
+NET "o_led[2]" IOSTANDARD = LVCMOS15;
+NET "o_led[3]" IOSTANDARD = LVCMOS15;
+NET "o_led[4]" IOSTANDARD = LVCMOS25;
+NET "o_led[5]" IOSTANDARD = LVCMOS25;
+NET "o_led[6]" IOSTANDARD = LVCMOS25;
+NET "o_led[7]" IOSTANDARD = LVCMOS25;
+NET "o_uart1_rtsn" IOSTANDARD = LVCMOS25;
+NET "o_uart1_td" IOSTANDARD = LVCMOS25;
+
+# new tap controller
+# comment this if using xilinx tap
+# ahbjtag.vhd line 107:
+# tech => tech (xilinx tap)
+# tech => 0 (asic tap)
+#NET "TMS" LOC = AE21;
+#NET "TMS" IOSTANDARD = LVCMOS25;
+#NET "TCK" LOC = AD21;
+#NET "TCK" IOSTANDARD = LVCMOS25;
+#NET "TDO" LOC = AK25;
+#NET "TDO" IOSTANDARD = LVCMOS25;
+#NET "TDI" LOC = AJ24;
+#NET "TDI" IOSTANDARD = LVCMOS25;
+#NET "TCK" CLOCK_DEDICATED_ROUTE = FALSE;
