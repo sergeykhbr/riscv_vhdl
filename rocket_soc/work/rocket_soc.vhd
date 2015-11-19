@@ -502,7 +502,7 @@ end generate;
     xindex  => CFG_NASTI_SLAVE_PNP,
     xaddr   => 16#fffff#,
     xmask   => 16#fffff#,
-    tech    => virtex6--CFG_MEMTECH
+    tech    => CFG_MEMTECH
   ) port map (
     clk   => wClkbus, 
     nrst  => wNReset,
