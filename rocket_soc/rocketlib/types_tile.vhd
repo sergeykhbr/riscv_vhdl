@@ -166,6 +166,10 @@ end record;
   port (
     clk   : in  std_logic;
     nrst  : in  std_logic;
+    i_rd_busy    : in std_logic;
+    i_wr_busy    : in std_logic;
+    o_rd_acquired : out std_logic;
+    o_wr_acquired : out std_logic;
     i     : in bridge_in_type;
     o     : out bridge_out_type
   );

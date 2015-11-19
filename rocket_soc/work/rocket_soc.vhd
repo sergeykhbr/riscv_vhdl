@@ -61,6 +61,13 @@ architecture arch_rocket_soc of rocket_soc is
   signal htif_clk : std_logic;
   signal htif_out_stats_delay : std_logic;
 
+  signal cached_rd_acquired : std_logic;
+  signal cached_wr_acquired : std_logic;
+  signal uncached_rd_busy : std_logic;
+  signal uncached_wr_busy : std_logic;
+  signal uncached_rd_acquired : std_logic;
+  signal uncached_wr_acquired : std_logic;
+
   --! Arbiter is switching only slaves output signal, data from noc
   --! is connected to all slaves and to the arbiter itself.
   signal noc2cslv   : nasti_slave_in_type;
@@ -321,14 +328,26 @@ L1toL2dis0 : if not CFG_COMMON_L1toL2_ENABLE generate
   port map (
     clk => wClkBus,
     nrst => wNReset,
+    i_rd_busy => uncached_rd_acquired,
+    i_wr_busy => uncached_wr_acquired,
+    o_rd_acquired => cached_rd_acquired,
+    o_wr_acquired => cached_wr_acquired,
     i => cbridge_in,
     o => cbridge_out
   );
 
+  --! We provide priority to acquire AXI bus to the cached Link
+  uncached_rd_busy <= (cbridge_in.tile.acquire_valid or cached_rd_acquired);
+  uncached_wr_busy <= (cbridge_in.tile.acquire_valid or cached_wr_acquired);
+  
   ubridge0 : AxiBridge 
   port map (
     clk => wClkBus,
     nrst => wNReset,
+    i_rd_busy => uncached_rd_busy,
+    i_wr_busy => uncached_wr_busy,
+    o_rd_acquired => uncached_rd_acquired,
+    o_wr_acquired => uncached_wr_acquired,
     i => ubridge_in,
     o => ubridge_out
   );
@@ -483,7 +502,7 @@ end generate;
     xindex  => CFG_NASTI_SLAVE_PNP,
     xaddr   => 16#fffff#,
     xmask   => 16#fffff#,
-    tech    => CFG_MEMTECH
+    tech    => virtex6--CFG_MEMTECH
   ) port map (
     clk   => wClkbus, 
     nrst  => wNReset,
