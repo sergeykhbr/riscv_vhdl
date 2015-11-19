@@ -23,30 +23,64 @@ Parameterized generator of the Rocket-chip can be found here:
 + Pre-configured single "Rocket" core (Verilog) integrated in our VHDL top
   level.
 + System-on-Chip top-level with the common set of peripheries with the 
-  AMBA AXI4 interfaces: GPIO, LEDs, UART etc.
+  AMBA AXI4 interfaces: GPIO, LEDs, UART, IRQ controller etc.
 + Configuration and constraint files for ML605 (Virtex6) and KC705 (Kintex7) 
   FPGA boards.
-+ Pre-built ROM images with the BootLoader and FW-image that is copying into
-  internal SRAM during boot-stage.
++ Pre-built ROM images with the BootLoader and FW-image. FW-image is copied
+  into internal SRAM during boot-stage.
 
 ## Final result without modification of code
 
 + LEDs sequential switching;
-+ UART outputs "Hello" message.
++ UART outputs Plug'n'Play configuraiton message with the 1 sec period
+  (115200 baud).
 
 ## How to create and build project using ISE Studio
 
-Use "rocket_soc.xise" project file to build image for the default target ML605
-(Virtex6) FPGA board. Do the following steps to change target on KC705 
-(Kintex7) board:
-+ Remove from the 'techmap' library file SysPLL_v6.vhd and change it on 
-  SysPLL_k7.vhd.
-+ Remove from the 'work' library file config_v6.vhd and change it
-  on config_k7.vhd
-+ Rename and overwrite file rocket_soc_k7.ucf to rocket_soc.ucf
+  Use "rocket_soc.xise" project file to build image for the default target ML605
+(Virtex6) FPGA board or "rocket_soc_kc705.xdc" for the KC705 board. 
+Do the following steps to change target on any unsupported board yet:
++ Generate System PLL for your FPGA/ASIC with the similar to outputs pins to
+  'SysPLL_v6.vhd' and 'SysPLL_k7.vhd'.
++ Add component declaration into 'techmap/pll/syspll.vhd' file and put it
+  into the library 'techmap'.
++ Add you own target name into 'techmap/gencomp/gencomp.vhd' file.
++ Create new target configuration file 'config_xx.vhd' in the 'work' directory
+  and library and setup there constant defintion:
+    - CFG_FABTECH
+    - CFG_MEMTECH
+    - CFG_PADTECH
+    - CFG_JTAGTECH
++ Use your new 'config_xx.vhd' file instead of default config_v6.vhd.
++ Overwrite constraint file 'rocket_soc.ucf' with the proper pins assignments.
 + Change FPGA type of the top-level file in ISE Studio using proper menu.
-+ That's all. 
++ Make and load *.bit file into FPGA.
 
 ## Simulation with the ModelSim
+
+1. Create new project.
+2. Create libraries with the following names using ModelSim 'libraries' view:
+       + techmap
+       + commonlib
+       + rocketlib
+       + work (was created by default)
+3. Using project browser create the same folders structure like in the 
+   'riscv_vhdl'. On the top level of the project should be folders matching
+   to the libraries names and they should include all exist sub-folders.
+4. Add existing files into the proper folder using righ-click menu of the
+   project browser in ModelSim.
+       + Add all files ".._tech.vhd" and ".._inferred.vhd"
+       + Don't include files ".._v6.vhd", ".._k7.vhd" etc.
+5. Make sure that all files in libraries folder will be compiled into appropriate
+   VHDL library. By default all files will be compiled into 'work' library.
+6. Use 'config_common.vhd' and 'config_msim.vhd' to configurate target for the
+   behaviour simualtion.
+7. Use 'work/tb/rocket_soc_tb.vhd' to run simulation.
+8. Default firmware does the following things:
+     - Switching LEDs;
+     - Print information into UART;
+     - Check Interupt controller
+     - and other.
+
 
 

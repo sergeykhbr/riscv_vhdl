@@ -5,3 +5,5 @@ work/tb/bridge0_tb.vhd
 docs/*.pptx
 ise/*
 !ise/rocket_soc.xise
+!ise/rocket_soc_kc705.ucf
+!ise/rocket_soc_kc705.xdc
