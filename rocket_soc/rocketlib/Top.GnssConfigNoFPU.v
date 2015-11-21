@@ -36353,7 +36353,6 @@ module CSRFile(input clk, input reset,
     reg_mstatus_prv1 = {1{$random}};
     reg_mstatus_prv2 = {1{$random}};
     host_csr_bits_data = {2{$random}};
-    host_csr_req_valid = {1{$random}};
     host_csr_bits_addr = {1{$random}};
     host_csr_bits_rw = {1{$random}};
     reg_mstatus_ie = {1{$random}};
@@ -36437,7 +36436,6 @@ module CSRFile(input clk, input reset,
     reg_mip_hsip = {1{$random}};
     reg_mip_utip = {1{$random}};
     reg_mip_htip = {1{$random}};
-    host_csr_rep_valid = {1{$random}};
   end
 // synthesis translate_on
 `endif
@@ -37629,7 +37627,9 @@ module CSRFile(input clk, input reset,
     end else if(T42) begin
       host_csr_bits_data <= io_host_csr_req_bits_data;
     end
-    if(host_csr_req_fire) begin
+    if (reset) begin
+      host_csr_req_valid <= 1'h0;
+    end else if(host_csr_req_fire) begin
       host_csr_req_valid <= 1'h0;
     end else if(T42) begin
       host_csr_req_valid <= 1'h1;
@@ -38037,7 +38037,9 @@ module CSRFile(input clk, input reset,
     if(reset) begin
       reg_mip_htip <= 1'h0;
     end
-    if(T879) begin
+    if (reset) begin
+      host_csr_rep_valid = 1'b0;
+    end else if(T879) begin
       host_csr_rep_valid <= 1'h0;
     end else if(host_csr_req_fire) begin
       host_csr_rep_valid <= 1'h1;
@@ -45530,9 +45532,6 @@ module BTB(input clk, input reset,
     T0 = 1'b0;
     R4 = {2{$random}};
     R7 = {1{$random}};
-    for (initvar = 0; initvar < 128; initvar = initvar+1)
-      T10[initvar] = {1{$random}};
-    R25 = {1{$random}};
     isJump_61 = {1{$random}};
     R36 = {1{$random}};
     nextRepl = {1{$random}};
@@ -48156,6 +48155,16 @@ module BTB(input clk, input reset,
   assign T2286 = T8[1'h0:1'h0];
   assign io_resp_valid = T2287;
   assign T2287 = hits != 62'h0;
+
+integer Idx;
+always @(posedge clk) begin
+
+  if (reset) begin
+    for (Idx = 0; Idx < 128; Idx = Idx+1)
+      T10[Idx] = {1{1'b0}};
+    R25 = {1{1'b0}};
+  end
+end
 
   always @(posedge clk) begin
 `ifndef SYNTHESIS
