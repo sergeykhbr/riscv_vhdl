@@ -38,6 +38,13 @@ constant CFG_NASTI_SLAVE_PNP    : integer := CFG_NASTI_IRQCTRL+1;
 constant CFG_CACHED_SLAVES_TOTAL : integer := CFG_NASTI_SLAVE_SRAM+1;
 constant CFG_NASTI_SLAVES_TOTAL  : integer := CFG_NASTI_SLAVE_PNP+1;
 
+--! @brief   Total masters number with TileLinkIO interface
+--! @details Each tile-master must use bridge to AXI4 interface to became
+--!          standard AXI-master.
+constant CFG_NASTI_MASTER_CACHED   : integer := 0;
+constant CFG_NASTI_MASTER_UNCACHED : integer := CFG_NASTI_MASTER_CACHED+1;
+constant CFG_NASTI_MASTER_TOTAL    : integer := CFG_NASTI_MASTER_UNCACHED+1;
+
 --! @brief Interrupt line index definition
 constant CFG_IRQ_GNSSENGINE      : integer := 0;
 constant CFG_IRQ_TOTAL           : integer := CFG_IRQ_GNSSENGINE+1;

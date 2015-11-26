@@ -76,7 +76,8 @@ package allmem is
 
   component sram8_inferred is
   generic (
-     abits : integer := 12
+     abits : integer := 12;
+     byte_idx : integer := 0
   );
   port (
     clk     : in  std_ulogic;

@@ -61,12 +61,8 @@ architecture arch_rocket_soc of rocket_soc is
   signal htif_clk : std_logic;
   signal htif_out_stats_delay : std_logic;
 
-  signal cached_rd_acquired : std_logic;
-  signal cached_wr_acquired : std_logic;
-  signal uncached_rd_busy : std_logic;
-  signal uncached_wr_busy : std_logic;
-  signal uncached_rd_acquired : std_logic;
-  signal uncached_wr_acquired : std_logic;
+  signal axi_acquired : std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0);
+  signal axi_busy : std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0);
 
   --! Arbiter is switching only slaves output signal, data from noc
   --! is connected to all slaves and to the arbiter itself.
@@ -324,30 +320,28 @@ L1toL2dis0 : if not CFG_COMMON_L1toL2_ENABLE generate
   cbridge_in.nasti <= carb2noc;
   ubridge_in.nasti <= carb2noc;
 
+  axi_busy(CFG_NASTI_MASTER_CACHED) <= axi_acquired(CFG_NASTI_MASTER_UNCACHED);
+  
   cbridge0 : AxiBridge 
   port map (
     clk => wClkBus,
     nrst => wNReset,
-    i_rd_busy => uncached_rd_acquired,
-    i_wr_busy => uncached_wr_acquired,
-    o_rd_acquired => cached_rd_acquired,
-    o_wr_acquired => cached_wr_acquired,
+    i_busy => axi_busy(CFG_NASTI_MASTER_CACHED),
+    o_acquired => axi_acquired(CFG_NASTI_MASTER_CACHED),
     i => cbridge_in,
     o => cbridge_out
   );
 
   --! We provide priority to acquire AXI bus to the cached Link
-  uncached_rd_busy <= (cbridge_in.tile.acquire_valid or cached_rd_acquired);
-  uncached_wr_busy <= (cbridge_in.tile.acquire_valid or cached_wr_acquired);
+  axi_busy(CFG_NASTI_MASTER_UNCACHED) <= 
+    cbridge_in.tile.acquire_valid or axi_acquired(CFG_NASTI_MASTER_CACHED);
   
   ubridge0 : AxiBridge 
   port map (
     clk => wClkBus,
     nrst => wNReset,
-    i_rd_busy => uncached_rd_busy,
-    i_wr_busy => uncached_wr_busy,
-    o_rd_acquired => uncached_rd_acquired,
-    o_wr_acquired => uncached_wr_acquired,
+    i_busy => axi_busy(CFG_NASTI_MASTER_UNCACHED),
+    o_acquired => axi_acquired(CFG_NASTI_MASTER_UNCACHED),
     i => ubridge_in,
     o => ubridge_out
   );
@@ -392,12 +386,12 @@ end generate;
   ------------------------------------
   --! @brief Firmware Image ROM with the AXI4 interface.
   --! @details Map address:
-  --!          0x00010000..0x0001ffff (64 KB total)
+  --!          0x00100000..0x0013ffff (256 KB total)
   img0 : nasti_romimage generic map (
     memtech  => CFG_MEMTECH,
     xindex   => CFG_NASTI_SLAVE_ROMIMAGE,
-    xaddr    => 16#00010#,
-    xmask    => 16#ffff0#,
+    xaddr    => 16#00100#,
+    xmask    => 16#fffc0#,
     sim_hexfile => CFG_SIM_FWIMAGE_HEX
   ) port map (
     clk  => wClkBus,

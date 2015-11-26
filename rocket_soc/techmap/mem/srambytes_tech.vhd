@@ -49,12 +49,13 @@ begin
     rx : for n in 0 to CFG_NASTI_DATA_BYTES-1 generate
 
       wr_ena(n) <= we and wstrb(n);
-      address(n) <= waddr(n)(abits-1 downto dw) when wr_ena(n) = '1'
+      address(n) <= waddr(n)(abits-1 downto dw) when we = '1'
             else raddr(n)(abits-1 downto dw);
       
       x0 : sram8_inferred generic map 
       (
-          abits => abits-dw
+          abits => abits-dw,
+          byte_idx => n
       ) port map (
           clk, 
           address => address(n),

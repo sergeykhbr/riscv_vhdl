@@ -79,7 +79,9 @@ begin
 
        case raddr_reg(n) is
           when 0 => val := X"00000000" & X"20151108";
-          when 1 => val := X"00000000" & X"000000" & conv_std_logic_vector(tech,8);
+          when 1 => val := X"00000000" & X"0000" 
+                        & conv_std_logic_vector(CFG_NASTI_SLAVES_TOTAL,8)
+                        & conv_std_logic_vector(tech,8);
           when 2 => val := r.bank0.idt;
           --! Slave:0
           when 8 => val := cfg(0).xaddr & X"000" &cfg(0).xmask & X"000";

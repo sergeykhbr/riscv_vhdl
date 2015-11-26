@@ -18,10 +18,8 @@ entity AxiBridge is
   port (
     clk   : in  std_logic;
     nrst  : in  std_logic;
-    i_rd_busy    : in std_logic;
-    i_wr_busy    : in std_logic;
-    o_rd_acquired : out std_logic;
-    o_wr_acquired : out std_logic;
+    i_busy    : in std_logic;
+    o_acquired : out std_logic;
     i     : in bridge_in_type;
     o     : out bridge_out_type
   );
@@ -77,15 +75,13 @@ signal r, rin : registers;
 
 begin
 
-  comblogic : process(i, i_rd_busy, i_wr_busy, r)
+  comblogic : process(i, i_busy, r)
     variable v : registers;
     variable vo     : bridge_out_type;
     
     variable addr : std_logic_vector(CFG_NASTI_ADDR_BITS-1 downto 0);
     variable write : std_logic;
     variable next_ena : std_logic;
-    variable wr_acquired : std_logic;
-    variable rd_acquired : std_logic;
     
     variable wbAddr     : std_logic_vector(CFG_NASTI_ADDR_BITS-1 downto 0);
     variable wWrite     : std_logic;
@@ -140,12 +136,9 @@ begin
             & i.tile.acquire_bits_addr_beat 
             & "0000";--wbByteAddr;
     
-    rd_acquired := '0';
-    wr_acquired := '0';
-
     case r.wstate is
     when wwait_acq =>
-        if i.tile.acquire_valid = '1' and wWrite = '1' and i_wr_busy = '0' then
+        if i.tile.acquire_valid = '1' and wWrite = '1' and i_busy = '0' and r.rstate = rwait_acq then
                                     
           v.wr_addr      := wbAddr;
           v.wr_addr_incr := XSizeToBytes(conv_integer(wbAxiSize));
@@ -172,11 +165,9 @@ begin
         end if;
 
     when writting =>
-          wr_acquired := '1';
           if r.wr_beat_cnt = 0 and i.nasti.w_ready = '1' then
               vo.nasti.w_last := '1';
               v.wstate := wwait_acq;
-              wr_acquired := '0';
           elsif i.nasti.w_ready = '1' and i.tile.acquire_valid = '1' then
              v.wr_beat_cnt := r.wr_beat_cnt - 1;
              v.wr_addr := r.wr_addr + r.wr_addr_incr;
@@ -191,8 +182,8 @@ begin
 
     case r.rstate is
     when rwait_acq =>
-        if i.tile.acquire_valid = '1' and wWrite = '0' and i_rd_busy = '0' then
-                                    
+        if i.tile.acquire_valid = '1' and wWrite = '0' and i_busy = '0' and r.wstate = wwait_acq then
+
           v.rd_addr := wbAddr;
           v.rd_addr_incr := XSizeToBytes(conv_integer(wbAxiSize));
           v.rd_beat_cnt := wbBeatCnt;
@@ -227,14 +218,12 @@ begin
         end if;
 
     when reading =>
-          rd_acquired := '1';
           next_ena := i.tile.grant_ready and i.nasti.r_valid;
           if next_ena = '1' and r.rd_xact_id = i.nasti.r_id(1 downto 0) then
               v.rd_beat_cnt := r.rd_beat_cnt - 1;
               v.rd_addr := r.rd_addr + r.rd_addr_incr;
               if r.rd_beat_cnt = 0 then
                  v.rstate := rwait_acq;
-                 rd_acquired := '0';
               end if;
           end if;
           vo.nasti.r_ready         := i.tile.grant_ready;
@@ -251,18 +240,20 @@ begin
         vo.tile.grant_bits_client_xact_id  := r.rd_xact_id;
         vo.tile.grant_bits_g_type          := r.rd_g_type;
         vo.tile.grant_bits_data            := i.nasti.r_data;
+        o_acquired <= '1';
     elsif r.wstate = writting then
         vo.tile.grant_valid               := i.nasti.w_ready;
         vo.tile.grant_bits_addr_beat      := r.wr_addr(5 downto 4);
         vo.tile.grant_bits_client_xact_id := r.wr_xact_id;
         vo.tile.grant_bits_g_type         := r.wr_g_type;
         vo.tile.grant_bits_data           := (others => '0');
+        o_acquired <= '1';
+    else
+        o_acquired <= '0';
     end if;
     
     rin <= v;
     o <= vo;
-    o_rd_acquired <= rd_acquired;
-    o_wr_acquired <= wr_acquired;
 
   end process;
 
