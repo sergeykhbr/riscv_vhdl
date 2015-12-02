@@ -82,5 +82,7 @@ Do the following steps to change target on any unsupported board yet:
      - Check Interupt controller
      - and other.
 
+## Doxygen project documentation
 
+[http://sergeykhbr.github.io/riscv_vhdl/](http://sergeykhbr.github.io/riscv_vhdl/)
 
