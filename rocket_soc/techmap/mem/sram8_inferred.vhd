@@ -28,6 +28,8 @@ end;
 
 architecture arch_sram8_inferred of sram8_inferred is
 
+constant FILE_IMAGE_LINES_TOTAL : integer := 16384;
+
 constant SRAM_LENGTH : integer := 2**abits;
 type ram_type is array (0 to SRAM_LENGTH-1) of std_logic_vector(7 downto 0);
 
@@ -37,7 +39,7 @@ impure function init_ram(file_name : in string) return ram_type is
     variable temp_bv : std_logic_vector(127 downto 0);
     variable temp_mem : ram_type;
 begin
-    for i in 0 to (SRAM_LENGTH/16-1) loop
+    for i in 0 to (FILE_IMAGE_LINES_TOTAL-1) loop
         readline(ram_file, ram_line);
         hread(ram_line, temp_bv);
         temp_mem(i) := temp_bv((byte_idx+1)*8-1 downto 8*byte_idx);

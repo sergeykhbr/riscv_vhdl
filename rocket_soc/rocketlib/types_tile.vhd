@@ -4,26 +4,43 @@
 --! @author    Sergey Khabarov - sergeykhbr@gmail.com
 --! @brief     TileLink bus interface declaration.
 -----------------------------------------------------------------------------
+
+--! Standard library
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+--! Technology definition library
 library techmap;
 use techmap.gencomp.all;
+--! Common constants and data conversion functions library
 library commonlib;
 use commonlib.types_common.all;
+--! CPU, System Bus and common peripheries library.
 library rocketlib;
 use rocketlib.types_nasti.all;
 
+--! @brief   TileLinkIO specific types definition.
+--! @details TileLinkIO interface could be implemented in cached and
+--!          uncached variantes. These bus are fully defined in SCALA
+--!          System generator and are very poor documented.
+--!          Cached link implements all signals of the uncached plus
+--!          additional support for the "probe" and "release" transactions
+--!          that are used to signal state of the cache memory access.
+--!          Cached link could be used (and used) for uncached access.
 package types_tile is
-
-  constant MT_B  : integer := 0;
-  constant MT_H  : integer := 1;
-  constant MT_W  : integer := 2;
-  constant MT_D  : integer := 3;
-  constant MT_BU : integer := 4;
-  constant MT_HU : integer := 5;
-  constant MT_WU : integer := 6;
-  constant MT_Q  : integer := 7;
+  --! @name    Memory Transaction types.
+  --! @details TileLinkIO interface uses these constant to identify the payload
+  --!          size of the transaction.
+  --! @{
+  constant MT_B  : integer := 0;  --! int8_t   Memory Transaction.
+  constant MT_H  : integer := 1;  --! int16_t  Memory Transaction.
+  constant MT_W  : integer := 2;  --! int32_t  Memory Transaction.
+  constant MT_D  : integer := 3;  --! int64_t  Memory Transaction.
+  constant MT_BU : integer := 4;  --! uint8_t  Memory Transaction.
+  constant MT_HU : integer := 5;  --! uint16_t Memory Transaction.
+  constant MT_WU : integer := 6;  --! uint32_t Memory Transaction.
+  constant MT_Q  : integer := 7;  --! AXI data-width Memory Transaction (default 128-bits).
+  --! @}
 
   --! @brief Memory operation types
   --! @details The union bits [5:1] contains information about current transaction
@@ -78,7 +95,7 @@ package types_tile is
 
   --! @brief Memory Operation size decoder
   --! @details TileLink bus has encoded Memory Operation size
-  --!          in the union[8:6] bits of the acquire bus.
+  --!          in the union[8:6] bits of the acquire request.
   constant MEMOP_XSIZE_TOTAL : integer := 8;
   type memop_xsize_type is array (0 to MEMOP_XSIZE_TOTAL-1) of std_logic_vector(2 downto 0);
   constant opSizeToXSize : memop_xsize_type := (

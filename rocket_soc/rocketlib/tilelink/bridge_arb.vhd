@@ -1,9 +1,9 @@
 -----------------------------------------------------------------------------
 --! @file
---! @brief   Cached/Uncached requests arbiter.
---! @author  Sergey Khabarov
---! @details This file implements multiplexing the tile request into common
---!          NASTI bus..
+--! @copyright Copyright 2015 GNSS Sensor Ltd. All right reserved.
+--! @author    Sergey Khabarov - sergeykhbr@gmail.com
+--! @details   This file implements multiplexing the tile request into common
+--!            NASTI bus.
 ------------------------------------------------------------------------------
 
 library ieee;

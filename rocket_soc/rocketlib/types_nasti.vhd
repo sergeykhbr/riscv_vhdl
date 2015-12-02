@@ -10,33 +10,63 @@
 --!            implemented tasks from this file.
 ------------------------------------------------------------------------------
 
+--! Standard library
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+--! Common constants and data conversion functions library
 library commonlib;
 use commonlib.types_common.all;
 
+--! @brief   System bus AXI4/NASTI types definition.
+--! @details This package provides general constants, data structures and
+--!          and functions description that define behaviour of all
+--!          peripheries devices implementing AXI4 interface.
 package types_nasti is
 
---! Indexes of the cachable devices:
---! Configuration index of the Boot ROM module visible by the firmware.
-constant CFG_NASTI_SLAVE_BOOTROM  : integer := 0;
+--! @name    AXI4 slaves generic IDs.
+--! @brief   Unique slave identificator.
+--! @details Each module in a SoC has to be indexed by unique identificator.
+--!          In current implementation it is used sequential indexing for it.
+--!          Indexes are used to specify a device bus item in a vectors.
+--!
+--!          The first group of the memory devices are cachable in a terms of
+--!          the Rocket-chip generator. But actually it doesn't take much sense
+--!          because all devices are connected to the one system bus and
+--!          implement identical responses. Cachable/Uncachable property
+--!          of the transaction maybe used in L1toL2interconnect module of the
+--!          Rocket-chip generator.
+--! @{
+constant CFG_NASTI_SLAVE_BOOTROM  : integer := 0; --! Configuration index of the Boot ROM module visible by the firmware.
+
 --! Configuration index of the Firmware ROM Image module.
 constant CFG_NASTI_SLAVE_ROMIMAGE  : integer := CFG_NASTI_SLAVE_BOOTROM+1;
 --! Configuration index of the SRAM module visible by the firmware.
 constant CFG_NASTI_SLAVE_SRAM     : integer := CFG_NASTI_SLAVE_ROMIMAGE+1;
--- Indexes of the uncachable devices:
-constant CFG_NASTI_SLAVE_UART1  : integer := CFG_NASTI_SLAVE_SRAM+1;
-constant CFG_NASTI_SLAVE_GPIO   : integer := CFG_NASTI_SLAVE_UART1+1;
-constant CFG_NASTI_IRQCTRL      : integer := CFG_NASTI_SLAVE_GPIO+1;
-constant CFG_NASTI_SLAVE_PNP    : integer := CFG_NASTI_IRQCTRL+1;
+--! Configuration index of the UART module.
+constant CFG_NASTI_SLAVE_UART1    : integer := CFG_NASTI_SLAVE_SRAM+1;
+--! Configuration index of the GPIO (General Purpose In/Out) module.
+constant CFG_NASTI_SLAVE_GPIO     : integer := CFG_NASTI_SLAVE_UART1+1;
+--! Configuration index of the Interrupt Controller module.
+constant CFG_NASTI_SLAVE_IRQCTRL  : integer := CFG_NASTI_SLAVE_GPIO+1;
+--! Configuration index of the Satellite Navigation Engine.
+constant CFG_NASTI_SLAVE_ENGINE   : integer := CFG_NASTI_SLAVE_IRQCTRL+1;
+--! Configuration index of the Plug-n-Play module.
+constant CFG_NASTI_SLAVE_PNP      : integer := CFG_NASTI_SLAVE_ENGINE+1;
+--! @}
 
---! @brief Total number of cachable devices in a system.
---! @details This value is used to specify proper vector size used
---!          by arbiter of cachable devices and plug'n'play configuration
+--! @name    Slaves Total number.
+--! @brief   Total number of AXI4 slaves devices in the system.
+--! @details This value is used to specify proper vector size and it's used
+--!          by arbiter of devices and in the plug'n'play configuration
 --!          module.
+--! @{
+
+--! Number of cached devices. Not used value.
 constant CFG_CACHED_SLAVES_TOTAL : integer := CFG_NASTI_SLAVE_SRAM+1;
-constant CFG_NASTI_SLAVES_TOTAL  : integer := CFG_NASTI_SLAVE_PNP+1;
+--! Total number of the slaves devices.
+constant CFG_NASTI_SLAVES_TOTAL  : integer := CFG_NASTI_SLAVE_PNP+1;  
+--! @}
 
 --! @brief   Total masters number with TileLinkIO interface
 --! @details Each tile-master must use bridge to AXI4 interface to became

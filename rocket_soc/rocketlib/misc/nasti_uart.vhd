@@ -203,13 +203,14 @@ begin
             end if;
         when data =>
             v.bank0.rx_shift := i_uart.rd & r.bank0.rx_shift(7 downto 1);
-            v.bank0.rx_data_cnt := r.bank0.rx_data_cnt + 1;
             if r.bank0.rx_data_cnt = 7 then
                 if parity_bit = 1 then
                     v.bank0.rx_state := parity;
                 else
                     v.bank0.rx_state := stopbit;
                 end if;
+            else
+                v.bank0.rx_data_cnt := r.bank0.rx_data_cnt + 1;
             end if;
         when parity =>
             t_rx := r.bank0.rx_shift;
@@ -251,7 +252,7 @@ begin
        val := (others => '0');
        case raddr_reg(n) is
           when 0 => 
-                if rx_fifo_empty /= '0' then
+                if rx_fifo_empty = '0' then
                     val(7 downto 0) := r.bank0.rx_fifo(conv_integer(r.bank0.rx_rd_cnt)); 
                     v.bank0.rx_rd_cnt := r.bank0.rx_rd_cnt + 1;
                 end if;
@@ -318,6 +319,7 @@ begin
         r.bank0.rx_rd_cnt <= (others => '0');
         r.bank0.rx_wr_cnt <= (others => '0');
 
+        r.bank0.scaler <= 0;
         r.bank0.err_parity <= '0';
         r.bank0.err_stopbit <= '0';
      elsif rising_edge(clk) then 

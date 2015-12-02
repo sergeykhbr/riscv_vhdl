@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------------
 --! @file
---! @copyright  Copyright 2015 GNSS Sensor Ltd. All right reserved.
---! @author     Sergey Khabarov
---! @brief      TileLink-to-AXI4 bridge implementation.
+--! @copyright Copyright 2015 GNSS Sensor Ltd. All right reserved.
+--! @author    Sergey Khabarov - sergeykhbr@gmail.com
+--! @brief     TileLink-to-AXI4 bridge implementation.
 ------------------------------------------------------------------------------
 
 library ieee;

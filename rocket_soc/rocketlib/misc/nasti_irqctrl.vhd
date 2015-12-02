@@ -80,8 +80,8 @@ type registers is record
   --! interrupt handler address initialized by FW:
   irq_handler   : std_logic_vector(63 downto 0);
   --! Function trap_entry copies the values of CSRs into these two regs:
-  dbg_cause    : std_logic_vector(31 downto 0);
-  dbg_code    : std_logic_vector(31 downto 0);
+  dbg_cause    : std_logic_vector(63 downto 0);
+  dbg_epc      : std_logic_vector(63 downto 0);
 end record;
 
 signal r, rin: registers;
@@ -115,7 +115,9 @@ begin
          when 4      => val := r.irq_handler(31 downto 0);                --! [RW]: LSB of the function address
          when 5      => val := r.irq_handler(63 downto 32);               --! [RW]: MSB of the function address
          when 6      => val := r.dbg_cause(31 downto 0);                  --! [RW]: Cause of the interrupt
-         when 7      => val := r.dbg_code(31 downto 0);                   --! [RW]: Code of the excpetion
+         when 7      => val := r.dbg_cause(63 downto 32);                 --! [RW]: 
+         when 8      => val := r.dbg_epc(31 downto 0);                    --! [RW]: Instruction pointer
+         when 9      => val := r.dbg_epc(63 downto 32);                   --! [RW]: 
          when others => val := X"cafef00d";
        end case;
        rdata(8*ALIGNMENT_BYTES*(n+1)-1 downto 8*ALIGNMENT_BYTES*n) := val;
@@ -142,7 +144,9 @@ begin
              when 4 => v.irq_handler(31 downto 0) := val;
              when 5 => v.irq_handler(63 downto 32) := val;
              when 6 => v.dbg_cause(31 downto 0) := val;
-             when 7 => v.dbg_code(31 downto 0) := val;
+             when 7 => v.dbg_cause(63 downto 32) := val;
+             when 8 => v.dbg_epc(31 downto 0) := val;
+             when 9 => v.dbg_epc(63 downto 32) := val;
              when others =>
            end case;
          end if;
@@ -233,7 +237,7 @@ begin
        r.irqs_zz <= (others => '0');
        r.irq_handler <= (others => '0');
        r.dbg_cause <= (others => '0');
-       r.dbg_code <= (others => '0');
+       r.dbg_epc <= (others => '0');
     elsif rising_edge(clk) then 
        r <= rin; 
     end if; 

@@ -83,8 +83,6 @@ architecture arch_rocket_soc of rocket_soc is
   signal host2tile : host_in_type;
 begin
 
-  irq_pins <= (others => '0');  --! not used without GNSS engine
-
   ------------------------------------
   -- @brief Internal PLL device instance.
   pll0 : SysPLL_tech generic map
@@ -472,7 +470,7 @@ end generate;
   --!          0x80002000..0x80002fff (4 KB total)
   irq0 : nasti_irqctrl generic map
   (
-    xindex   => CFG_NASTI_IRQCTRL,
+    xindex   => CFG_NASTI_SLAVE_IRQCTRL,
     xaddr    => 16#80002#,
     xmask    => 16#FFFFF#,
     L2_ena   => CFG_COMMON_L1toL2_ENABLE
@@ -480,12 +478,32 @@ end generate;
     clk    => wClkBus,
     nrst   => wNReset,
     i_irqs => irq_pins,
-    o_cfg  => cslv_cfg(CFG_NASTI_IRQCTRL),
+    o_cfg  => cslv_cfg(CFG_NASTI_SLAVE_IRQCTRL),
     i_axi  => noc2cslv,
-    o_axi  => cslv2carb(CFG_NASTI_IRQCTRL),
+    o_axi  => cslv2carb(CFG_NASTI_SLAVE_IRQCTRL),
     i_host => tile2host,
     o_host => host2tile
   );
+
+  ------------------------------------
+  --! @brief GNSS Engine stub with the AXI4 interface.
+  --! @details Map address:
+  --!          0x80003000..0x80003fff (4 KB total)
+geneng_dis : if not CFG_GNSSLIB_ENABLE generate 
+  gnss0 : nasti_gnssstub  generic map
+  (
+    xindex  => CFG_NASTI_SLAVE_ENGINE,
+    xaddr   => 16#80003#,
+    xmask   => 16#FFFFF#
+  ) port map (
+    clk    => wClkBus,
+    nrst   => wNReset,
+    cfg    => cslv_cfg(CFG_NASTI_SLAVE_ENGINE),
+    i      => noc2cslv,
+    o      => cslv2carb(CFG_NASTI_SLAVE_ENGINE),
+    irq    => irq_pins(CFG_IRQ_GNSSENGINE)
+  );
+end generate;
 
 
   --! @brief Plug'n'Play controller of the current configuration with the

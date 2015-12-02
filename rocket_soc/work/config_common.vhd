@@ -23,4 +23,11 @@ constant CFG_SIM_BOOTROM_HEX : string := "E:/Projects/VHDLProjects/rocket/fw_ima
 --! hex file used in a case of inferred FwImage ROM
 constant CFG_SIM_FWIMAGE_HEX : string := "E:/Projects/VHDLProjects/rocket/fw_images/fwimage.hex";
 
+--! @brief Disable/Enable usage of the 'gnsslib' library.
+--! @details This 'gnsslib' is the property of the "GNSS Sensor ltd"
+--!          (www.gnss-sensor.com) and it implements a lot of Navigation related
+--!          peripheries, like: Multi-system GNSS Engine, Fast Search modules,
+--!          Viterbi decoders, Self-test generators and so on.
+constant CFG_GNSSLIB_ENABLE : boolean := false;
+
 end;

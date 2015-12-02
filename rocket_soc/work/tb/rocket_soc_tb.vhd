@@ -32,7 +32,7 @@ architecture behavior of rocket_soc_tb is
   signal i_clk_adc : std_logic := '0';
   signal i_dip : std_logic_vector(3 downto 0);
   signal o_led : std_logic_vector(7 downto 0);
-  signal i_uart1_ctsn : std_logic := '1';
+  signal i_uart1_ctsn : std_logic := '0';
   signal i_uart1_rd : std_logic := '1';
   signal o_uart1_td : std_logic;
   signal o_uart1_rtsn : std_logic;
