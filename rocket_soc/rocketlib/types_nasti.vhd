@@ -2,7 +2,8 @@
 --! @file
 --! @copyright Copyright 2015 GNSS Sensor Ltd. All right reserved.
 --! @author    Sergey Khabarov - sergeykhbr@gmail.com
---! @brief     AMBA AXI4 (NASTI) bus configuraiton file.
+--! @brief     Declaration and common methods implementation of the types_nasti
+--!            package.
 --! @details   This file defines bus interface constants that have to be
 --!            used by any periphery device implementation in order 
 --!            to provide compatibility in a wide range of possible settings.
@@ -383,7 +384,6 @@ package body types_nasti is
                 o_bank.rstate := rwait;
             end if;
         end if;
-    when others => 
     end case;
 
     -- Writting state machine:
@@ -421,7 +421,6 @@ package body types_nasti is
         if i.b_ready = '1' then
             o_bank.wstate := wwait;
         end if;
-    when others => 
     end case;
   end; -- procedure
 

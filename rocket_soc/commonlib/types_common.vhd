@@ -4,6 +4,8 @@
 --! @author    Sergey Khabarov - sergeykhbr@gmail.com
 --! @brief	    Package for common VHDL functions
 ------------------------------------------------------------------------------
+
+--! Standard library
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;

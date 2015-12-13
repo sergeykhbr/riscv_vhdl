@@ -51,6 +51,7 @@ architecture arch_nasti_pnp of nasti_pnp is
     idt : std_logic_vector(63 downto 0); --! debug counter
     malloc_addr : std_logic_vector(63 downto 0); --! dynamic allocation addr
     malloc_size : std_logic_vector(63 downto 0); --! dynamic allocation size
+    fwdbg1 : std_logic_vector(63 downto 0); --! FW marker for the debug porposes
   end record;
 
   type registers is record
@@ -87,6 +88,7 @@ begin
           when 2 => val := r.bank0.idt;
           when 3 => val := r.bank0.malloc_addr;
           when 4 => val := r.bank0.malloc_size;
+          when 5 => val := r.bank0.fwdbg1;
           --! Slave:0
           when 8 => val := cfg(0).xaddr & X"000" &cfg(0).xmask & X"000";
           when 9 => val := X"00000000" & cfg(0).vid & cfg(0).did;
@@ -129,6 +131,7 @@ begin
              when 2 => v.bank0.idt := val;
              when 3 => v.bank0.malloc_addr := val;
              when 4 => v.bank0.malloc_size := val;
+             when 5 => v.bank0.fwdbg1 := val;
              when others =>
            end case;
          end if;
@@ -148,6 +151,7 @@ begin
         r.bank0.idt <= (others => '0');
         r.bank0.malloc_addr <= (others => '0');
         r.bank0.malloc_size <= (others => '0');
+        r.bank0.fwdbg1 <= (others => '0');
      elsif rising_edge(clk) then 
         r <= rin;
      end if; 

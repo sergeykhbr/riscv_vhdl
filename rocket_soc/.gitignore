@@ -1,7 +1,7 @@
 *.bak
 html
 fw/
-memmap.info
+patches/
 work/tb/bridge0_tb.vhd
 docs/*.pptx
 ise/*

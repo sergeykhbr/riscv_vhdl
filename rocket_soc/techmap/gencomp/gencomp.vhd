@@ -1,73 +1,93 @@
+-----------------------------------------------------------------------------
+--! @file
+--! @author     Sergey Khabarov - sergeykhbr@gmail.com
+--! @brief      Definition of the gencomp package.
+--! @details    This file defines constants that are used to enable/disable
+--!             target dependable modules.
+--!             This file inherits values from the \e grlib library that
+--!             that are published under GPL license. All unused values may
+--!             freely removed or reassigned on others values.
+------------------------------------------------------------------------------
 
+--! Standard library
 library ieee;
 use ieee.std_logic_1164.all;
 
+--! @brief   Known technologies names definition
+--! @details This package must be built first in a csae of manual compilation
+--!          order (\e ModelSim).
 package gencomp is
 
--- technologies and libraries
-
+--! @brief   Total number of the known technologies.
+--! @details These values was inherited from the \e grlib library.
 constant NTECH : integer := 53;
+
+--! Prototype of the data type for mapping name on certain index.
 type tech_ability_type is array (0 to NTECH) of integer;
 
-constant inferred    : integer := 0;
-constant virtex      : integer := 1;
-constant virtex2     : integer := 2;
-constant memvirage   : integer := 3;
-constant axcel       : integer := 4;
-constant proasic     : integer := 5;
-constant atc18s      : integer := 6;
-constant altera      : integer := 7;
-constant umc         : integer := 8;
-constant rhumc       : integer := 9;
-constant apa3        : integer := 10;
-constant spartan3    : integer := 11;
-constant ihp25       : integer := 12;
-constant rhlib18t    : integer := 13;
-constant virtex4     : integer := 14;
-constant lattice     : integer := 15;
-constant ut25        : integer := 16;
-constant spartan3e   : integer := 17;
-constant peregrine   : integer := 18;
-constant memartisan  : integer := 19;
-constant virtex5     : integer := 20;
-constant custom1     : integer := 21;
-constant ihp25rh     : integer := 22;
-constant stratix1    : integer := 23;
-constant stratix2    : integer := 24;
-constant eclipse     : integer := 25;
-constant stratix3    : integer := 26;
-constant cyclone3    : integer := 27;
-constant memvirage90 : integer := 28;
-constant tsmc90      : integer := 29;
-constant easic90     : integer := 30;
-constant atc18rha    : integer := 31;
-constant smic013     : integer := 32;
-constant tm65gpl     : integer := 33;
-constant axdsp       : integer := 34;
-constant spartan6    : integer := 35;
-constant virtex6     : integer := 36;
-constant actfus      : integer := 37;
-constant stratix4    : integer := 38;
-constant st65lp      : integer := 39;
-constant st65gp      : integer := 40;
-constant easic45     : integer := 41;
-constant cmos9sf     : integer := 42;
-constant apa3e       : integer := 43;
-constant apa3l       : integer := 44;
-constant ut130       : integer := 45;
-constant ut90        : integer := 46;
-constant gf65        : integer := 47;
-constant virtex7     : integer := 48;
-constant kintex7     : integer := 49;
-constant artix7      : integer := 50;
-constant zynq7000    : integer := 51;
-constant rhlib13t    : integer := 52;
-constant micron180   : integer := 53;
+--! @name  Techologies names.
+--! @brief Set of the predefined technology names.
+--! @{
+constant inferred    : integer := 0;  --! Behaviour simulation target.
+constant virtex      : integer := 1;  --! Not implemented.
+constant virtex2     : integer := 2;  --! Not implemented.
+constant memvirage   : integer := 3;  --! Not implemented.
+constant axcel       : integer := 4;  --! Not implemented.
+constant proasic     : integer := 5;  --! Not implemented.
+constant atc18s      : integer := 6;  --! Not implemented.
+constant altera      : integer := 7;  --! Not implemented.
+constant umc         : integer := 8;  --! Not implemented.
+constant rhumc       : integer := 9;  --! Not implemented.
+constant apa3        : integer := 10; --! Not implemented.
+constant spartan3    : integer := 11; --! Not implemented.
+constant ihp25       : integer := 12; --! Not implemented.
+constant rhlib18t    : integer := 13; --! Not implemented.
+constant virtex4     : integer := 14; --! Not implemented.
+constant lattice     : integer := 15; --! Not implemented.
+constant ut25        : integer := 16; --! Not implemented.
+constant spartan3e   : integer := 17; --! Not implemented.
+constant peregrine   : integer := 18; --! Not implemented.
+constant memartisan  : integer := 19; --! Not implemented.
+constant virtex5     : integer := 20; --! Not implemented.
+constant custom1     : integer := 21; --! Not implemented.
+constant ihp25rh     : integer := 22; --! Not implemented.
+constant stratix1    : integer := 23; --! Not implemented.
+constant stratix2    : integer := 24; --! Not implemented.
+constant eclipse     : integer := 25; --! Not implemented.
+constant stratix3    : integer := 26; --! Not implemented.
+constant cyclone3    : integer := 27; --! Not implemented.
+constant memvirage90 : integer := 28; --! Not implemented.
+constant tsmc90      : integer := 29; --! Not implemented.
+constant easic90     : integer := 30; --! Not implemented.
+constant atc18rha    : integer := 31; --! Not implemented.
+constant smic013     : integer := 32; --! Not implemented.
+constant tm65gpl     : integer := 33; --! Not implemented.
+constant axdsp       : integer := 34; --! Not implemented.
+constant spartan6    : integer := 35; --! Supported. Use files with the '_s6' suffix.
+constant virtex6     : integer := 36; --! Supported. Use files with the '_v6' suffix.
+constant actfus      : integer := 37; --! Not implemented.
+constant stratix4    : integer := 38; --! Not implemented.
+constant st65lp      : integer := 39; --! Not implemented.
+constant st65gp      : integer := 40; --! Not implemented.
+constant easic45     : integer := 41; --! Not implemented.
+constant cmos9sf     : integer := 42; --! Not implemented.
+constant apa3e       : integer := 43; --! Not implemented.
+constant apa3l       : integer := 44; --! Not implemented.
+constant ut130       : integer := 45; --! Not implemented.
+constant ut90        : integer := 46; --! Not implemented.
+constant gf65        : integer := 47; --! Not implemented.
+constant virtex7     : integer := 48; --! Not implemented.
+constant kintex7     : integer := 49; --! Supported. Use files with the '_k7' suffix.
+constant artix7      : integer := 50; --! Not implemented.
+constant zynq7000    : integer := 51; --! Not implemented.
+constant rhlib13t    : integer := 52; --! Not implemented.
+constant micron180   : integer := 53; --! Mikron 180nm. Use files with the '_micron180' suffix.
 
-constant DEFMEMTECH  : integer := inferred;
-constant DEFPADTECH  : integer := inferred;
-constant DEFFABTECH  : integer := inferred;
+--! @}
 
+--! @name    FPGAs technologies group.
+--! @details It is convinient sometimes to implement one module for a group of
+--!          technologies, this array specifies FPGA group.
 constant is_fpga : tech_ability_type :=
 	(inferred => 1, virtex => 1, virtex2 => 1, axcel => 1,
 	 proasic => 1, altera => 1, apa3 => 1, spartan3 => 1,

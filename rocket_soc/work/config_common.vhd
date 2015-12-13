@@ -20,15 +20,15 @@
 --! @file
 --! @copyright  Copyright 2015 GNSS Sensor Ltd. All right reserved.
 --! @author     Sergey Khabarov - sergeykhbr@gmail.com
---! @brief      Target independent configuration file.
+--! @brief      Definition of the config_common package.
 --! @details    This file defines constants and the system paramters that are
---  	        valid for any ASIC, FPGA and Simulation projects.
+--!    	        valid for any ASIC, FPGA and Simulation projects.
 ------------------------------------------------------------------------------
 --! Technology definition library
 library techmap;
-use techmap.gencomp.all;--! This package provides technology constant defines.
+use techmap.gencomp.all;
 
---! @brief   Target independent constants definitions.
+--! @brief   Techology independent configuration settings.
 --! @details This file defines configuration that are valid for all supported
 --!          targets: behaviour simulation, FPGAs or ASICs.
 package config_common is
