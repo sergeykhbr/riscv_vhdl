@@ -2,7 +2,7 @@
 --! @file
 --! @copyright Copyright 2015 GNSS Sensor Ltd. All right reserved.
 --! @author    Sergey Khabarov - sergeykhbr@gmail.com
---! @brief	    Package for common VHDL functions
+--! @brief     Declaration and implementation of the types_common package.
 ------------------------------------------------------------------------------
 
 --! Standard library
@@ -11,11 +11,29 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use std.textio.all;
 
+--! @brief   Definition of the generic VHDL methods and constants.
+--! @details This package defines common mathematical methods and
+--!          utility methods for the VHDL types conversions.
 package types_common is
 
-
+--! @brief Array declaration of the pre-computed log2 values.
 type log2arr is array(0 to 512) of integer;
 
+--! @brief Array definition of the pre-computed log2 values.
+--! @details These values are used as an argument in bus width
+--!          declaration. 
+--!
+--! Example usage:
+--! @code 
+--!   component foo_component is
+--!   generic (
+--!     max_clients  : integer := 8
+--!   );
+--!   port (
+--!     foo : inout  std_logic_vector(log2(max_clients)-1 downto 0)
+--!   );
+--!   end component;
+--! @endcode 
 constant log2   : log2arr := (
 0,0,1,2,2,3,3,3,3,4,4,4,4,4,4,4,4,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,
   6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,
