@@ -158,7 +158,7 @@ begin
         r.bank_axi <= NASTI_SLAVE_BANK_RESET;
         r.bank0.tmr.MsLength <= (others => '0');
         r.bank0.tmr.MsCnt <= (others => '0');
-        r.clk_cnt <= 0;
+        r.clk_cnt <= 69000;
      elsif rising_edge(clk) then 
         r <= rin;
      end if; 
