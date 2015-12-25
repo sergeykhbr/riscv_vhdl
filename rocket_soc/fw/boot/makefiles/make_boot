@@ -1,0 +1,130 @@
+include util.mak
+
+CC=riscv64-unknown-elf-gcc
+CPP=riscv64-unknown-elf-gcc
+OBJDUMP=riscv64-unknown-elf-objdump
+
+### C language options:
+# -std=c++11
+#       Determine the language standard for C and C++ languages only. 
+#     gnu99, c++11 and many others
+# -fno-common
+#       In C code, controls the placement of uninitialized global variables. 
+#     Unix C compilers have traditionally permitted multiple definitions of 
+#     such variables in different compilation units by placing the variables 
+#     in a common block. This is the behavior specified by -fcommon, and is 
+#     the default for GCC on most targets. On the other hand, this behavior 
+#     is not required by ISO C, and on some targets may carry a speed or code 
+#     size penalty on variable references. The -fno-common option specifies 
+#     that the compiler should place uninitialized global variables in the 
+#     data section of the object file, rather than generating them as common 
+#     blocks. This has the effect that if the same variable is declared 
+#     (without extern) in two different compilations, you get a multiple-definition 
+#     error when you link them. In this case, you must compile with -fcommon instead. 
+#     Compiling with -fno-common is useful on targets for which it provides 
+#     better performance, or if you wish to verify that the program will work on 
+#     other systems that always treat uninitialized variable declarations this way. 
+# -fno-builtin
+# -fno-builtin-<function>
+#       Don't recognize built-in functions that do not begin with ‘__builtin_’ 
+#     as prefix. See Other built-in functions provided by GCC, for details 
+#     of the functions affected, including those which are not built-in functions 
+#     when -ansi or -std options for strict ISO C conformance are used because 
+#     they do not have an ISO standard meaning.
+### Linker options:
+# -T <script>
+#       Use script as the linker script. This option is supported by most 
+#     systems using the GNU linker. On some targets, such as bare-board 
+#     targets without an operating system, the -T option may be required 
+#     when linking to avoid references to undefined symbols. 
+# -static   (!warning! linker not a compiler)
+#       On systems that support dynamic linking, this prevents linking with 
+#     the shared libraries. On other systems, this option has no effect.
+# -nostdlib
+#       Do not use the standard system startup files or libraries when linking. 
+#     No startup files and only the libraries you specify are passed to the linker,
+#     and options specifying linkage of the system libraries, such as -static-libgcc 
+#     or -shared-libgcc, are ignored.
+#       The compiler may generate calls to memcmp, memset, memcpy and memmove. 
+#     These entries are usually resolved by entries in libc. These entry points 
+#     should be supplied through some other mechanism when this option is specified.
+#       One of the standard libraries bypassed by -nostdlib and -nodefaultlibs 
+#     is libgcc.a, a library of internal subroutines which GCC uses to overcome 
+#     shortcomings of particular machines, or special needs for some languages. 
+#     (See Interfacing to GCC Output, for more discussion of libgcc.a.) In most 
+#     cases, you need libgcc.a even when you want to avoid other standard libraries. 
+#     In other words, when you specify -nostdlib or -nodefaultlibs you should usually 
+#     specify -lgcc as well. This ensures that you have no unresolved references 
+#     to internal GCC library subroutines. (An example of such an internal 
+#     subroutine is __main, used to ensure C++ constructors are called; see collect2.) 
+# -nostartfiles
+#       Do not use the standard system startup files when linking.
+#     The standard system libraries are used normally, unless -nostdlib 
+#     or -nodefaultlibs is used. 
+
+CFLAGS= -c -g -static -std=gnu99 -O2 -fno-common -fno-builtin-printf
+LDFLAGS=-T test.ld -nostdlib -nostartfiles 
+INCL_KEY=-I
+DIR_KEY=-B
+
+
+# include sub-folders list
+INCL_PATH=\
+	$(TOP_DIR)../common \
+	$(TOP_DIR)src
+
+# source files directories list:
+SRC_PATH =\
+	$(TOP_DIR)src
+
+LIB_NAMES =\
+	gcc \
+	c \
+	m
+
+VPATH = $(SRC_PATH)
+
+SOURCES = main \
+	trap \
+	crt
+
+OBJ_FILES = $(addsuffix .o,$(SOURCES))
+EXECUTABLE = bootimage
+DUMPFILE = $(EXECUTABLE).dump
+HEXFILE = $(EXECUTABLE).hex
+
+all: boot
+
+.PHONY: $(EXECUTABLE) $(DUMPFILE)
+
+
+boot: $(EXECUTABLE) $(DUMPFILE) $(HEXFILE)
+$(HEXFILE): $(EXECUTABLE)
+	echo elf2hex 16 512 $(addprefix $(ELF_DIR)/,$<) > $(addprefix $(ELF_DIR)/,$@)
+	elf2hex 16 512 $(addprefix $(ELF_DIR)/,$<) > $(addprefix $(ELF_DIR)/,$@)
+
+$(DUMPFILE): $(EXECUTABLE)
+	echo $(OBJDUMP) --disassemble-all --disassemble-zeroes --section=.text --section=.text.startup --section=.data $(addprefix $(ELF_DIR)/,$<) > $(addprefix $(ELF_DIR)/,$@)
+	$(OBJDUMP) --disassemble-all --disassemble-zeroes --section=.text --section=.text.startup --section=.data $(addprefix $(ELF_DIR)/,$<) > $(addprefix $(ELF_DIR)/,$@)
+
+
+$(EXECUTABLE): $(OBJ_FILES)
+	echo $(CPP) $(LDFLAGS) $(addprefix $(OBJ_DIR)/,$(OBJ_FILES)) -o $(addprefix $(ELF_DIR)/,$@) $(addprefix -l,$(LIB_NAMES))
+	$(CPP) $(LDFLAGS) $(addprefix $(OBJ_DIR)/,$(OBJ_FILES)) -o $(addprefix $(ELF_DIR)/,$@) $(addprefix -l,$(LIB_NAMES))
+	$(ECHO) "\n  Shared Library has been built successfully.\n"
+
+#.cpp.o:
+%.o: %.cpp
+	echo $(CPP) $(CFLAGS) $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $(addprefix $(OBJ_DIR)/,$@)
+	$(CPP) $(CFLAGS) $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $(addprefix $(OBJ_DIR)/,$@)
+
+#.c.o:
+%.o: %.c
+	echo $(CC) $(CFLAGS) $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $(addprefix $(OBJ_DIR)/,$@)
+	$(CC) $(CFLAGS) $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $(addprefix $(OBJ_DIR)/,$@)
+
+%.o: %.S
+	echo $(CC) $(CFLAGS) -D__ASSEMBLY__=1 $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $(addprefix $(OBJ_DIR)/,$@)
+	$(CC) $(CFLAGS) -D__ASSEMBLY__=1 $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $(addprefix $(OBJ_DIR)/,$@)
+
+

@@ -28,6 +28,7 @@ Parameterized generator of the Rocket-chip can be found here:
   FPGA boards.
 + Pre-built ROM images with the BootLoader and FW-image. FW-image is copied
   into internal SRAM during boot-stage.
++ "Hello World" example
 
 ## Final result without modification of code
 
@@ -81,6 +82,18 @@ Do the following steps to change target on any unsupported board yet:
      - Print information into UART;
      - Check Interupt controller
      - and other.
+
+## Firmware example
+
+  Use 'fw/boot/' example as a "Hello World" example. It implements general
+functionality, such as:
++ Initial Rocket-chip boot-up
++ Interrupt handling setup
++ UART output
++ LED switching
++ Target type auto-detection (RTL simulatation or not)
++ Coping image from ROM to SRAM using libc method memcpy()
+
 
 ## Doxygen project documentation
 
