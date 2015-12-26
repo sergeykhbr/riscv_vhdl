@@ -4,39 +4,79 @@
 --! @author     Sergey Khabarov
 --! @brief      Network on Chip design top level.
 --! @details    RISC-V "Rocket Core" based system with the AMBA AXI4 (NASTI) 
---!             system bus and connected peripheries.
+--!             system bus and integrated peripheries.
 ------------------------------------------------------------------------------
+--! Standard library
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
+
+--! Data transformation and math functions library
 library commonlib;
 use commonlib.types_common.all;
+
+--! Technology definition library.
 library techmap;
+--! Technology constants definition.
 use techmap.gencomp.all;
+--! "Virtual" PLL declaration.
 use techmap.syspll.all;
+
+--! Rocket-chip specific library
 library rocketlib;
+--! AMBA AXI4 (NASTI) interface configuration and templates
 use rocketlib.types_nasti.all;
+--! SOC top-level component declaration.
 use rocketlib.types_rocket.all;
+--! TileLink interface description.
 use rocketlib.types_tile.all;
+
+ --! Top-level implementaion library
 library work;
+--! Target dependable configuration: RTL, FPGA or ASIC.
 use work.config_target.all;
+--! Target independable configuration.
 use work.config_common.all;
 
+--! @brief   SOC Top-level entity declaration.
+--! @details This module implements full SOC functionality and all IO signals
+--!          are available on FPGA/ASIC IO pins.
 entity rocket_soc is port 
 ( 
-  i_rst     : in std_logic; -- button "Center"
+  --! Input reset. Active High. Usually assigned to button "Center".
+  i_rst     : in std_logic;
+
+  --! @name Clocks:
+  --! @{
+
+  --! Differential clock (LVDS) positive signal.
   i_sclk_p  : in std_logic;
+  --! Differential clock (LVDS) negative signal.
   i_sclk_n  : in std_logic;
+  --! External ADC clock (default 26 MHz).
   i_clk_adc : in std_logic;
+  --! @}
+ 
+  --! @name User's IOs:
+  --! @{
+
+  --! DIP switch.
   i_dip     : in std_logic_vector(3 downto 0);
+  --! LEDs.
   o_led     : out std_logic_vector(7 downto 0);
-  -- uart1
+  --! @}
+ 
+  --! @name  UART1 signals:
+  --! @{
   i_uart1_ctsn : in std_logic;
   i_uart1_rd   : in std_logic;
   o_uart1_td   : out std_logic;
   o_uart1_rtsn : out std_logic
 );
+  --! @}
+
 end rocket_soc;
 
+--! @brief SOC top-level  architecture declaration.
 architecture arch_rocket_soc of rocket_soc is
 
   signal wSysReset  : std_ulogic; -- Internal system reset. MUST NOT USED BY DEVICES.

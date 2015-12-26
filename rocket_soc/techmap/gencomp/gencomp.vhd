@@ -1,20 +1,21 @@
 -----------------------------------------------------------------------------
 --! @file
---! @author     Sergey Khabarov - sergeykhbr@gmail.com
---! @brief      Definition of the gencomp package.
---! @details    This file defines constants that are used to enable/disable
---!             target dependable modules.
---!             This file inherits values from the \e grlib library that
---!             that are published under GPL license. All unused values may
---!             freely removed or reassigned on others values.
+--! @copyright Copyright 2015 GNSS Sensor Ltd. All right reserved.
+--! @author    Sergey Khabarov - sergeykhbr@gmail.com
+--! @brief     Definition of the gencomp package.
+--! @details   This file defines constants that are used to enable/disable
+--!            target dependable modules.
+--!            This file inherits values from the \e grlib library that
+--!            that are published under GPL license. All unused values may
+--!            freely removed or reassigned on others values.
 ------------------------------------------------------------------------------
 
 --! Standard library
 library ieee;
 use ieee.std_logic_1164.all;
 
---! @brief   Known technologies names definition
---! @details This package must be built first in a csae of manual compilation
+--! @brief   Technologies names definition
+--! @details This package must be built first in a case of manual compilation
 --!          order (\e ModelSim).
 package gencomp is
 

@@ -83,10 +83,10 @@ Do the following steps to change target on any unsupported board yet:
      - Check Interupt controller
      - and other.
 
-## Firmware example
+## RISC-V Firmware example for the Rocket-chip
 
-  Use 'fw/boot/' example as a "Hello World" example. It implements general
-functionality, such as:
+  RISC-V "Hello World" example is available in ./rocket_soc/fw/boot directory.
+It implements general functionality for the Rocket-chip based system, such as:
 + Initial Rocket-chip boot-up
 + Interrupt handling setup
 + UART output
