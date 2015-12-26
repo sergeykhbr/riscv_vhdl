@@ -1,8 +1,26 @@
 var searchData=
 [
-  ['w_5fready',['w_ready',['../classtypes__nasti.html#ae16d8d8aaf7c2d575683b14d0c0b1dac',1,'types_nasti']]],
-  ['w_5fvalid',['w_valid',['../classtypes__nasti.html#a5307695c23a1074a4cb39ac53745e09d',1,'types_nasti']]],
-  ['waddr',['waddr',['../classtypes__nasti.html#a09c9b4efa2e8d19a4c019f765788aeaf',1,'types_nasti']]],
-  ['wlen',['wlen',['../classtypes__nasti.html#acf95ae09bd616dc5e00ac851f9717a3d',1,'types_nasti']]],
-  ['wresp',['wresp',['../classtypes__nasti.html#a941e429ef23f16dfd4ecbc32c4fb18d4',1,'types_nasti']]]
+  ['size',['size',['../classtypes__nasti.html#a1d8278cd5f6ddbded60faeaf103fef61',1,'types_nasti']]],
+  ['smic013',['smic013',['../classgencomp.html#afbcb38816db29ad0c488e85109de4015',1,'gencomp']]],
+  ['spartan3',['spartan3',['../classgencomp.html#aee686c0c57a6e81d47d71a9ec301fbd4',1,'gencomp']]],
+  ['spartan3e',['spartan3e',['../classgencomp.html#af0502a70c87cedee374744b48be54fca',1,'gencomp']]],
+  ['spartan6',['spartan6',['../classgencomp.html#a89be7a9ca6d0a71d9f8fdd88daf4a78a',1,'gencomp']]],
+  ['sram8_5finferred',['sram8_inferred',['../classallmem.html#a5720b74db77cbce45cca353ed4985570',1,'allmem']]],
+  ['srambytes_5ftech',['srambytes_tech',['../classallmem.html#aa663d9e4bda42ed999e150cd35ae4016',1,'allmem']]],
+  ['st65gp',['st65gp',['../classgencomp.html#a8a55ce3738c16a71e32dc05ff75594d3',1,'gencomp']]],
+  ['st65lp',['st65lp',['../classgencomp.html#af6b0c26a5be66eab524c921c4abbbf02',1,'gencomp']]],
+  ['starter',['Starter',['../classtypes__rocket.html#a7f1e563eb73f245fde907cd93228a0dd',1,'types_rocket']]],
+  ['starter_5fin_5ftype',['starter_in_type',['../classtypes__rocket.html#ac921be3f78d90df5c6501ffc402250d6',1,'types_rocket']]],
+  ['starter_5fout_5ftype',['starter_out_type',['../classtypes__rocket.html#ade2f0d04bac40e59a99607f0579a7b18',1,'types_rocket']]],
+  ['std_5flogic_5f1164',['std_logic_1164',['../classrocket__soc__tb.html#acd03516902501cd1c7296a98e22c6fcb',1,'rocket_soc_tb']]],
+  ['stratix1',['stratix1',['../classgencomp.html#a89848512112f77aee6cdcf30306828c3',1,'gencomp']]],
+  ['stratix2',['stratix2',['../classgencomp.html#a5014c815012e701cf6eef5e74a29d5e1',1,'gencomp']]],
+  ['stratix3',['stratix3',['../classgencomp.html#a5b646f533294bc35421c347c80673806',1,'gencomp']]],
+  ['stratix4',['stratix4',['../classgencomp.html#acb47502d4880d3fb293e5ab3832ff856',1,'gencomp']]],
+  ['syspll',['syspll',['../classrocket__soc.html#a4e743c398bb8479bc9f91131590cbfa1',1,'rocket_soc']]],
+  ['syspll_5finferred',['SysPLL_inferred',['../classsyspll.html#add3cb47df6ce1600fec88824f0d6963e',1,'syspll']]],
+  ['syspll_5fk7',['SysPLL_k7',['../classsyspll.html#a492166f49e0dadac4ea243f9da7f178c',1,'syspll']]],
+  ['syspll_5fmicron180',['SysPLL_micron180',['../classsyspll.html#a7a4179439946248c234bdb359c9aca30',1,'syspll']]],
+  ['syspll_5ftech',['SysPLL_tech',['../classsyspll.html#a3713bf6d7e2b4c18fc0e8782dd9f9280',1,'syspll']]],
+  ['syspll_5fv6',['SysPLL_v6',['../classsyspll.html#aa0f9e59a1241f05fb65a13e13cba10f2',1,'syspll']]]
 ];

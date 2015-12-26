@@ -1,16 +1,8 @@
 var searchData=
 [
-  ['r_5fdata',['r_data',['../classtypes__nasti.html#a1edf461f5fdbf26eab7fc76ab32c8513',1,'types_nasti']]],
-  ['r_5fid',['r_id',['../classtypes__nasti.html#a0731da694d711d3da0e954c6ce83a1c8',1,'types_nasti']]],
-  ['r_5flast',['r_last',['../classtypes__nasti.html#a77c11253b52b944c54ebfa41dd36535b',1,'types_nasti']]],
-  ['r_5fready',['r_ready',['../classtypes__nasti.html#a139e7da638d88df29ee1224ea2a852ca',1,'types_nasti']]],
-  ['r_5fresp',['r_resp',['../classtypes__nasti.html#abde11b9c1f66e68d5a20c5d4039afcfd',1,'types_nasti']]],
-  ['r_5fuser',['r_user',['../classtypes__nasti.html#a10beac688cd689af6be40ef75bed0e15',1,'types_nasti']]],
-  ['r_5fvalid',['r_valid',['../classtypes__nasti.html#ab2bf9220d47f1f72fb26621f757c0f5a',1,'types_nasti']]],
-  ['region',['region',['../classtypes__nasti.html#ad950d40a0ddf4742631aeeca41b44af7',1,'types_nasti']]],
-  ['reset_5fglobal',['reset_global',['../classtypes__rocket.html#a1d818c9830ffdbf40d76edae34fbaf13',1,'types_rocket']]],
-  ['rlen',['rlen',['../classtypes__nasti.html#a36a663118a20cf05bbb19e118a1536f7',1,'types_nasti']]],
-  ['rocketlib',['rocketlib',['../classtypes__rocket.html#a853aa6c124e455c35e810cdea36b805f',1,'types_rocket.rocketlib()'],['../classtypes__tile.html#a853aa6c124e455c35e810cdea36b805f',1,'types_tile.rocketlib()']]],
-  ['rockettile',['RocketTile',['../classtypes__rocket.html#a122be6f496b34c4fff1f446a20e2b5f4',1,'types_rocket']]],
-  ['rresp',['rresp',['../classtypes__nasti.html#a470562942da5471bf6aadc9e1b289d3e',1,'types_nasti']]]
+  ['o_5fclk_5fadc',['o_clk_adc',['../class_sys_p_l_l__tech.html#ae979c1b90a48db7c603f297a230aae7a',1,'SysPLL_tech']]],
+  ['o_5fclk_5fbus',['o_clk_bus',['../class_sys_p_l_l__tech.html#a6060bf57830d8ad9b28d999c17d981c9',1,'SysPLL_tech']]],
+  ['o_5fled',['o_led',['../classrocket__soc.html#a43c233140f6d5d4dcb2fa29a2a7539c7',1,'rocket_soc']]],
+  ['o_5flocked',['o_locked',['../class_sys_p_l_l__tech.html#abf2b239292f42b7248060c3518b76a42',1,'SysPLL_tech']]],
+  ['opsizetoxsize',['opSizeToXSize',['../classtypes__tile.html#a476dd0b283a505dd25fd45ac90c73a8c',1,'types_tile']]]
 ];

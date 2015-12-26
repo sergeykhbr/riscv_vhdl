@@ -1,7 +1,7 @@
 var searchData=
 [
-  ['size',['size',['../classtypes__nasti.html#a1d8278cd5f6ddbded60faeaf103fef61',1,'types_nasti']]],
-  ['starter',['Starter',['../classtypes__rocket.html#a7f1e563eb73f245fde907cd93228a0dd',1,'types_rocket']]],
-  ['starter_5fin_5ftype',['starter_in_type',['../classtypes__rocket.html#ac921be3f78d90df5c6501ffc402250d6',1,'types_rocket']]],
-  ['starter_5fout_5ftype',['starter_out_type',['../classtypes__rocket.html#ade2f0d04bac40e59a99607f0579a7b18',1,'types_rocket']]]
+  ['peregrine',['peregrine',['../classgencomp.html#a8dc1b2e8a9a2fbdf16340b51fd787163',1,'gencomp']]],
+  ['pll_5fclk_5fbus',['pll_clk_bus',['../class_sys_p_l_l__tech_1_1rtl.html#a852c100044fde141c44fecb9999b5fe1',1,'SysPLL_tech::rtl']]],
+  ['proasic',['proasic',['../classgencomp.html#ad07c86580ee759761a948749a13b69d7',1,'gencomp']]],
+  ['prot',['prot',['../classtypes__nasti.html#aa4783c9f0cbdc7f7d41f77a21b8be7a1',1,'types_nasti']]]
 ];

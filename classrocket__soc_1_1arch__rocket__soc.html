@@ -64,6 +64,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
     <ul class="tablist">
       <li><a href="annotated.html"><span>Design&#160;Unit&#160;List</span></a></li>
       <li><a href="classes.html"><span>Design&#160;Units</span></a></li>
+      <li><a href="hierarchy.html"><span>Design&#160;Unit&#160;Hierarchy</span></a></li>
       <li><a href="functions.html"><span>Design&#160;Unit&#160;Members</span></a></li>
     </ul>
   </div>
@@ -94,6 +95,9 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="title">arch_rocket_soc Architecture Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
+
+<p>SOC top-level architecture declaration.  
+ <a href="classrocket__soc_1_1arch__rocket__soc.html#details">More...</a></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="Signals"></a>
 Signals</h2></td></tr>
@@ -160,11 +164,11 @@ Signals</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="Instantiations"></a>
 Instantiations</h2></td></tr>
  <tr class="memitem:a5f10265d39c7ec43d503f7fe822d4d65"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5f10265d39c7ec43d503f7fe822d4d65"></a>
-<a class="el" href="classrocket__soc_1_1arch__rocket__soc.html#a5f10265d39c7ec43d503f7fe822d4d65">pll0</a>&#160;</td><td class="memItemRight" valign="bottom">  <b>syspll_tech</b>  </td></tr>
+<a class="el" href="classrocket__soc_1_1arch__rocket__soc.html#a5f10265d39c7ec43d503f7fe822d4d65">pll0</a>&#160;</td><td class="memItemRight" valign="bottom">  <b>SysPLL_tech</b>  <em><a class="el" href="class_sys_p_l_l__tech.html">&lt;Entity SysPLL_tech&gt;</a></em></td></tr>
 <tr class="memitem:a7d51c056599ceb31d2e112a0ed172567"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7d51c056599ceb31d2e112a0ed172567"></a>
-<a class="el" href="classrocket__soc_1_1arch__rocket__soc.html#a7d51c056599ceb31d2e112a0ed172567">rst0</a>&#160;</td><td class="memItemRight" valign="bottom">  <b>reset_global</b>  </td></tr>
+<a class="el" href="classrocket__soc_1_1arch__rocket__soc.html#a7d51c056599ceb31d2e112a0ed172567">rst0</a>&#160;</td><td class="memItemRight" valign="bottom">  <b>reset_global</b>  <em><a class="el" href="classreset__global.html">&lt;Entity reset_global&gt;</a></em></td></tr>
 <tr class="memdesc:a7d51c056599ceb31d2e112a0ed172567"><td class="mdescLeft">&#160;</td><td class="mdescRight">System Reset device instance. <br /></td></tr>
-<tr class="memitem:aa9287c2c4653cae9bbb6308bd44c695c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classrocket__soc_1_1arch__rocket__soc.html#aa9287c2c4653cae9bbb6308bd44c695c">start0</a>&#160;</td><td class="memItemRight" valign="bottom">  <b>starter</b>  </td></tr>
+<tr class="memitem:aa9287c2c4653cae9bbb6308bd44c695c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classrocket__soc_1_1arch__rocket__soc.html#aa9287c2c4653cae9bbb6308bd44c695c">start0</a>&#160;</td><td class="memItemRight" valign="bottom">  <b>Starter</b>  <em><a class="el" href="class_starter.html">&lt;Entity Starter&gt;</a></em></td></tr>
 <tr class="memdesc:aa9287c2c4653cae9bbb6308bd44c695c"><td class="mdescLeft">&#160;</td><td class="mdescRight">NoC core instance.  <a href="#aa9287c2c4653cae9bbb6308bd44c695c"></a><br /></td></tr>
 <tr class="memitem:a7a8ab64c3713b156b03d2a5553a3de0c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7a8ab64c3713b156b03d2a5553a3de0c"></a>
 <a class="el" href="classrocket__soc_1_1arch__rocket__soc.html#a7a8ab64c3713b156b03d2a5553a3de0c">rocket0</a>&#160;</td><td class="memItemRight" valign="bottom">  <b>top</b>  </td></tr>
@@ -172,30 +176,32 @@ Instantiations</h2></td></tr>
 <a class="el" href="classrocket__soc_1_1arch__rocket__soc.html#adac281b3179bd4bab7800bdf3dda2e3d">tile0</a>&#160;</td><td class="memItemRight" valign="bottom">  <b>rockettile</b>  </td></tr>
 <tr class="memdesc:adac281b3179bd4bab7800bdf3dda2e3d"><td class="mdescLeft">&#160;</td><td class="mdescRight">We provide priority to acquire AXI bus to the cached Link. <br /></td></tr>
 <tr class="memitem:aef978b1f161ef757b2efaa2af7f9f3db"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aef978b1f161ef757b2efaa2af7f9f3db"></a>
-<a class="el" href="classrocket__soc_1_1arch__rocket__soc.html#aef978b1f161ef757b2efaa2af7f9f3db">cbridge0</a>&#160;</td><td class="memItemRight" valign="bottom">  <b>axibridge</b>  </td></tr>
+<a class="el" href="classrocket__soc_1_1arch__rocket__soc.html#aef978b1f161ef757b2efaa2af7f9f3db">cbridge0</a>&#160;</td><td class="memItemRight" valign="bottom">  <b>AxiBridge</b>  <em><a class="el" href="class_axi_bridge.html">&lt;Entity AxiBridge&gt;</a></em></td></tr>
 <tr class="memitem:a8f4998bad0b8a535848e34aeddc22ff3"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8f4998bad0b8a535848e34aeddc22ff3"></a>
-<a class="el" href="classrocket__soc_1_1arch__rocket__soc.html#a8f4998bad0b8a535848e34aeddc22ff3">ubridge0</a>&#160;</td><td class="memItemRight" valign="bottom">  <b>axibridge</b>  </td></tr>
+<a class="el" href="classrocket__soc_1_1arch__rocket__soc.html#a8f4998bad0b8a535848e34aeddc22ff3">ubridge0</a>&#160;</td><td class="memItemRight" valign="bottom">  <b>AxiBridge</b>  <em><a class="el" href="class_axi_bridge.html">&lt;Entity AxiBridge&gt;</a></em></td></tr>
 <tr class="memitem:ab36829b86876f0ee2be29eb24a1436d5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab36829b86876f0ee2be29eb24a1436d5"></a>
-<a class="el" href="classrocket__soc_1_1arch__rocket__soc.html#ab36829b86876f0ee2be29eb24a1436d5">bridgemux0</a>&#160;</td><td class="memItemRight" valign="bottom">  <b>tilebridgearbiter</b>  </td></tr>
+<a class="el" href="classrocket__soc_1_1arch__rocket__soc.html#ab36829b86876f0ee2be29eb24a1436d5">bridgemux0</a>&#160;</td><td class="memItemRight" valign="bottom">  <b>TileBridgeArbiter</b>  <em><a class="el" href="class_tile_bridge_arbiter.html">&lt;Entity TileBridgeArbiter&gt;</a></em></td></tr>
 <tr class="memitem:a634643ad38b1cd9ff7ca687587988256"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a634643ad38b1cd9ff7ca687587988256"></a>
-<a class="el" href="classrocket__soc_1_1arch__rocket__soc.html#a634643ad38b1cd9ff7ca687587988256">carb0</a>&#160;</td><td class="memItemRight" valign="bottom">  <b>nastiarbiter</b>  </td></tr>
-<tr class="memitem:a7f985c0f02313cddf37e3b347ce12322"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classrocket__soc_1_1arch__rocket__soc.html#a7f985c0f02313cddf37e3b347ce12322">boot0</a>&#160;</td><td class="memItemRight" valign="bottom">  <b>nasti_bootrom</b>  </td></tr>
+<a class="el" href="classrocket__soc_1_1arch__rocket__soc.html#a634643ad38b1cd9ff7ca687587988256">carb0</a>&#160;</td><td class="memItemRight" valign="bottom">  <b>NastiArbiter</b>  <em><a class="el" href="class_nasti_arbiter.html">&lt;Entity NastiArbiter&gt;</a></em></td></tr>
+<tr class="memitem:a7f985c0f02313cddf37e3b347ce12322"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classrocket__soc_1_1arch__rocket__soc.html#a7f985c0f02313cddf37e3b347ce12322">boot0</a>&#160;</td><td class="memItemRight" valign="bottom">  <b>nasti_bootrom</b>  <em><a class="el" href="classnasti__bootrom.html">&lt;Entity nasti_bootrom&gt;</a></em></td></tr>
 <tr class="memdesc:a7f985c0f02313cddf37e3b347ce12322"><td class="mdescLeft">&#160;</td><td class="mdescRight">BOOT ROM module isntance with the AXI4 interface.  <a href="#a7f985c0f02313cddf37e3b347ce12322"></a><br /></td></tr>
-<tr class="memitem:ab41aee6357d61faa0e27ed08d124812a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classrocket__soc_1_1arch__rocket__soc.html#ab41aee6357d61faa0e27ed08d124812a">img0</a>&#160;</td><td class="memItemRight" valign="bottom">  <b>nasti_romimage</b>  </td></tr>
+<tr class="memitem:ab41aee6357d61faa0e27ed08d124812a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classrocket__soc_1_1arch__rocket__soc.html#ab41aee6357d61faa0e27ed08d124812a">img0</a>&#160;</td><td class="memItemRight" valign="bottom">  <b>nasti_romimage</b>  <em><a class="el" href="classnasti__romimage.html">&lt;Entity nasti_romimage&gt;</a></em></td></tr>
 <tr class="memdesc:ab41aee6357d61faa0e27ed08d124812a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Firmware Image ROM with the AXI4 interface.  <a href="#ab41aee6357d61faa0e27ed08d124812a"></a><br /></td></tr>
-<tr class="memitem:acbae39a5476bb5a99f13daa357fd4b96"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classrocket__soc_1_1arch__rocket__soc.html#acbae39a5476bb5a99f13daa357fd4b96">sram0</a>&#160;</td><td class="memItemRight" valign="bottom">  <b>nasti_sram</b>  </td></tr>
-<tr class="memitem:a10ef3314993d029cac9898e94ad2bf90"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classrocket__soc_1_1arch__rocket__soc.html#a10ef3314993d029cac9898e94ad2bf90">gpio0</a>&#160;</td><td class="memItemRight" valign="bottom">  <b>nasti_gpio</b>  </td></tr>
+<tr class="memitem:acbae39a5476bb5a99f13daa357fd4b96"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classrocket__soc_1_1arch__rocket__soc.html#acbae39a5476bb5a99f13daa357fd4b96">sram0</a>&#160;</td><td class="memItemRight" valign="bottom">  <b>nasti_sram</b>  <em><a class="el" href="classnasti__sram.html">&lt;Entity nasti_sram&gt;</a></em></td></tr>
+<tr class="memitem:a10ef3314993d029cac9898e94ad2bf90"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classrocket__soc_1_1arch__rocket__soc.html#a10ef3314993d029cac9898e94ad2bf90">gpio0</a>&#160;</td><td class="memItemRight" valign="bottom">  <b>nasti_gpio</b>  <em><a class="el" href="classnasti__gpio.html">&lt;Entity nasti_gpio&gt;</a></em></td></tr>
 <tr class="memdesc:a10ef3314993d029cac9898e94ad2bf90"><td class="mdescLeft">&#160;</td><td class="mdescRight">Controller of the LEDs, DIPs and GPIO with the AXI4 interface.  <a href="#a10ef3314993d029cac9898e94ad2bf90"></a><br /></td></tr>
-<tr class="memitem:a295d8dbeab49fa89195d502c595743c0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classrocket__soc_1_1arch__rocket__soc.html#a295d8dbeab49fa89195d502c595743c0">uart1</a>&#160;</td><td class="memItemRight" valign="bottom">  <b>nasti_uart</b>  </td></tr>
+<tr class="memitem:a295d8dbeab49fa89195d502c595743c0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classrocket__soc_1_1arch__rocket__soc.html#a295d8dbeab49fa89195d502c595743c0">uart1</a>&#160;</td><td class="memItemRight" valign="bottom">  <b>nasti_uart</b>  <em><a class="el" href="classnasti__uart.html">&lt;Entity nasti_uart&gt;</a></em></td></tr>
 <tr class="memdesc:a295d8dbeab49fa89195d502c595743c0"><td class="mdescLeft">&#160;</td><td class="mdescRight">UART Controller with the AXI4 interface.  <a href="#a295d8dbeab49fa89195d502c595743c0"></a><br /></td></tr>
-<tr class="memitem:accb8f0e65a242ddaf25b3ce786c901af"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classrocket__soc_1_1arch__rocket__soc.html#accb8f0e65a242ddaf25b3ce786c901af">irq0</a>&#160;</td><td class="memItemRight" valign="bottom">  <b>nasti_irqctrl</b>  </td></tr>
+<tr class="memitem:accb8f0e65a242ddaf25b3ce786c901af"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classrocket__soc_1_1arch__rocket__soc.html#accb8f0e65a242ddaf25b3ce786c901af">irq0</a>&#160;</td><td class="memItemRight" valign="bottom">  <b>nasti_irqctrl</b>  <em><a class="el" href="classnasti__irqctrl.html">&lt;Entity nasti_irqctrl&gt;</a></em></td></tr>
 <tr class="memdesc:accb8f0e65a242ddaf25b3ce786c901af"><td class="mdescLeft">&#160;</td><td class="mdescRight">Interrupt controller with the AXI4 interface.  <a href="#accb8f0e65a242ddaf25b3ce786c901af"></a><br /></td></tr>
-<tr class="memitem:a01cc8e0949901ce4bd989b64cd42cfaa"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classrocket__soc_1_1arch__rocket__soc.html#a01cc8e0949901ce4bd989b64cd42cfaa">gnss0</a>&#160;</td><td class="memItemRight" valign="bottom">  <b>nasti_gnssstub</b>  </td></tr>
+<tr class="memitem:a01cc8e0949901ce4bd989b64cd42cfaa"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classrocket__soc_1_1arch__rocket__soc.html#a01cc8e0949901ce4bd989b64cd42cfaa">gnss0</a>&#160;</td><td class="memItemRight" valign="bottom">  <b>nasti_gnssstub</b>  <em><a class="el" href="classnasti__gnssstub.html">&lt;Entity nasti_gnssstub&gt;</a></em></td></tr>
 <tr class="memdesc:a01cc8e0949901ce4bd989b64cd42cfaa"><td class="mdescLeft">&#160;</td><td class="mdescRight">GNSS Engine stub with the AXI4 interface.  <a href="#a01cc8e0949901ce4bd989b64cd42cfaa"></a><br /></td></tr>
-<tr class="memitem:a12f09dcb13e1437ebf695fbd6e75bc6e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classrocket__soc_1_1arch__rocket__soc.html#a12f09dcb13e1437ebf695fbd6e75bc6e">pnp0</a>&#160;</td><td class="memItemRight" valign="bottom">  <b>nasti_pnp</b>  </td></tr>
+<tr class="memitem:a12f09dcb13e1437ebf695fbd6e75bc6e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classrocket__soc_1_1arch__rocket__soc.html#a12f09dcb13e1437ebf695fbd6e75bc6e">pnp0</a>&#160;</td><td class="memItemRight" valign="bottom">  <b>nasti_pnp</b>  <em><a class="el" href="classnasti__pnp.html">&lt;Entity nasti_pnp&gt;</a></em></td></tr>
 <tr class="memdesc:a12f09dcb13e1437ebf695fbd6e75bc6e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Plug'n'Play controller of the current configuration with the AXI4 interface.  <a href="#a12f09dcb13e1437ebf695fbd6e75bc6e"></a><br /></td></tr>
 </table>
-<h2 class="groupheader">Member Data Documentation</h2>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><p>SOC top-level architecture declaration. </p>
+</div><h2 class="groupheader">Member Data Documentation</h2>
 <a class="anchor" id="a7f985c0f02313cddf37e3b347ce12322"></a>
 <div class="memitem">
 <div class="memproto">
@@ -385,7 +391,7 @@ Instantiations</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classrocket__soc_1_1arch__rocket__soc.html#aa9287c2c4653cae9bbb6308bd44c695c">start0</a> <b><span class="vhdlchar">starter</span><span class="vhdlchar"> </span></b> </td>
+          <td class="memname"><a class="el" href="classrocket__soc_1_1arch__rocket__soc.html#aa9287c2c4653cae9bbb6308bd44c695c">start0</a> <b><span class="vhdlchar">Starter</span><span class="vhdlchar"> </span></b> </td>
         </tr>
       </table>
   </td>
