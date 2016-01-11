@@ -543,6 +543,10 @@ geneng_dis : if not CFG_GNSSLIB_ENABLE generate
     o      => cslv2carb(CFG_NASTI_SLAVE_ENGINE),
     irq    => irq_pins(CFG_IRQ_GNSSENGINE)
   );
+  
+  -- Stub for the RF-controller
+  cslv_cfg(CFG_NASTI_SLAVE_RFCTRL) <= nasti_slave_config_none;
+  
 end generate;
 
 
@@ -556,13 +560,13 @@ end generate;
     xmask   => 16#fffff#,
     tech    => CFG_MEMTECH
   ) port map (
-    clk   => wClkbus, 
-    nrst  => wNReset,
-    cfg   => cslv_cfg,
-    i     => noc2cslv,
-    o     => cslv2carb(CFG_NASTI_SLAVE_PNP)
+    clk    => wClkbus, 
+    nrst   => wNReset,
+    cfgvec => cslv_cfg,
+    cfg    => cslv_cfg(CFG_NASTI_SLAVE_PNP),
+    i      => noc2cslv,
+    o      => cslv2carb(CFG_NASTI_SLAVE_PNP)
   );
-
 
 
 end arch_rocket_soc;

@@ -52,8 +52,10 @@ constant CFG_NASTI_SLAVE_GPIO     : integer := CFG_NASTI_SLAVE_UART1+1;
 constant CFG_NASTI_SLAVE_IRQCTRL  : integer := CFG_NASTI_SLAVE_GPIO+1;
 --! Configuration index of the Satellite Navigation Engine.
 constant CFG_NASTI_SLAVE_ENGINE   : integer := CFG_NASTI_SLAVE_IRQCTRL+1;
+--! Configuration index of the RF front-end controller.
+constant CFG_NASTI_SLAVE_RFCTRL   : integer := CFG_NASTI_SLAVE_ENGINE+1;
 --! Configuration index of the Plug-n-Play module.
-constant CFG_NASTI_SLAVE_PNP      : integer := CFG_NASTI_SLAVE_ENGINE+1;
+constant CFG_NASTI_SLAVE_PNP      : integer := CFG_NASTI_SLAVE_RFCTRL+1;
 --! @}
 
 --! @name    Slaves Total number.

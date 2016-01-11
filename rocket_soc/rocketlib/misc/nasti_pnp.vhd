@@ -2,7 +2,7 @@
 --! @file
 --! @copyright  Copyright 2015 GNSS Sensor Ltd. All right reserved.
 --! @author     Sergey Khabarov - sergeykhbr@gmail.com
---! @brief      Hardware Configuration storage  with the AMBA AXI4 interface.
+--! @brief      Entity nasti_pnp implementation for the plug'n'play support.
 ------------------------------------------------------------------------------
 
 library ieee;
@@ -15,6 +15,7 @@ library rocketlib;
 use rocketlib.types_nasti.all;
 
 
+--! @brief Hardware Configuration storage with the AMBA AXI4 interface.
 entity nasti_pnp is
   generic (
     xindex  : integer := 0;
@@ -23,11 +24,12 @@ entity nasti_pnp is
     tech    : integer := 0
   );
   port (
-    clk  : in  std_logic;
-    nrst : in  std_logic;
-    cfg  : in  nasti_slave_cfg_vector;
-    i    : in  nasti_slave_in_type;
-    o    : out nasti_slave_out_type
+    clk    : in  std_logic;
+    nrst   : in  std_logic;
+    cfgvec : in  nasti_slave_cfg_vector;
+    cfg    : out  nasti_slave_config_type;
+    i      : in  nasti_slave_in_type;
+    o      : out nasti_slave_out_type
   );
 end; 
  
@@ -63,7 +65,7 @@ signal r, rin : registers;
 
 begin
 
-  comblogic : process(i, cfg, r)
+  comblogic : process(i, cfgvec, r)
     variable v : registers;
     variable raddr_reg : local_addr_array_type;
     variable waddr_reg : local_addr_array_type;
@@ -80,38 +82,25 @@ begin
     for n in 0 to CFG_NASTI_DATA_BYTES/ALIGNMENT_BYTES-1 loop
        raddr_reg(n) := conv_integer(r.bank_axi.raddr(ALIGNMENT_BYTES*n)(11 downto log2(ALIGNMENT_BYTES)));
 
-       case raddr_reg(n) is
-          when 0 => val := X"00000000" & X"20151108";
-          when 1 => val := X"00000000" & X"0000" 
-                        & conv_std_logic_vector(CFG_NASTI_SLAVES_TOTAL,8)
-                        & conv_std_logic_vector(tech,8);
-          when 2 => val := r.bank0.idt;
-          when 3 => val := r.bank0.malloc_addr;
-          when 4 => val := r.bank0.malloc_size;
-          when 5 => val := r.bank0.fwdbg1;
-          --! Slave:0
-          when 8 => val := cfg(0).xaddr & X"000" &cfg(0).xmask & X"000";
-          when 9 => val := X"00000000" & cfg(0).vid & cfg(0).did;
-          --! Slave:1
-          when 16#a# => val := cfg(1).xaddr & X"000" &cfg(1).xmask & X"000";
-          when 16#b# => val := X"00000000" & cfg(1).vid & cfg(1).did;
-          --! Slave:2
-          when 16#c# => val := cfg(2).xaddr & X"000" &cfg(2).xmask & X"000";
-          when 16#d# => val := X"00000000" & cfg(2).vid & cfg(2).did;
-          --! Slave:3
-          when 16#e# => val := cfg(3).xaddr & X"000" &cfg(3).xmask & X"000";
-          when 16#f# => val := X"00000000" & cfg(3).vid & cfg(3).did;
-          --! Slave:4
-          when 16#10# => val := cfg(4).xaddr & X"000" &cfg(4).xmask & X"000";
-          when 16#11# => val := X"00000000" & cfg(4).vid & cfg(4).did;
-          --! Slave:5
-          when 16#12# => val := cfg(5).xaddr & X"000" &cfg(5).xmask & X"000";
-          when 16#13# => val := X"00000000" & cfg(5).vid & cfg(5).did;
-          --! Slave:6
-          when 16#14# => val := cfg(6).xaddr & X"000" &cfg(6).xmask & X"000";
-          when 16#15# => val := X"00000000" & cfg(6).vid & cfg(6).did;
-          when others => val := X"badef00dcafecafe";
-       end case;
+       val := X"badef00dcafecafe";
+       if raddr_reg(n) = 0 then val := X"00000000" & X"20151108";
+       elsif raddr_reg(n) = 1 then 
+          val := X"00000000" & X"0000" 
+              & conv_std_logic_vector(CFG_NASTI_SLAVES_TOTAL,8)
+              & conv_std_logic_vector(tech,8);
+       elsif raddr_reg(n) = 2 then val := r.bank0.idt;
+       elsif raddr_reg(n) = 3 then val := r.bank0.malloc_addr;
+       elsif raddr_reg(n) = 4 then val := r.bank0.malloc_size;
+       elsif raddr_reg(n) = 5 then val := r.bank0.fwdbg1;
+       else
+         for k in 0 to CFG_NASTI_SLAVES_TOTAL-1 loop
+             if raddr_reg(n) = 8+2*k then 
+               val := cfgvec(k).xaddr & X"000" & cfgvec(k).xmask & X"000";
+             elsif raddr_reg(n) = 8+2*k+1 then 
+               val := X"00000000" & cfgvec(k).vid & cfgvec(k).did;
+             end if;
+         end loop;
+       end if;
        rdata(8*ALIGNMENT_BYTES*(n+1)-1 downto 8*ALIGNMENT_BYTES*n) := val;
     end loop;
 
@@ -142,6 +131,7 @@ begin
     rin <= v;
   end process;
 
+  cfg <= xconfig;
 
   -- registers:
   regs : process(clk, nrst)

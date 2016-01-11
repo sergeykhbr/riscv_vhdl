@@ -448,11 +448,12 @@ component nasti_pnp is
     tech    : integer := 0
   );
   port (
-    clk  : in  std_logic;
-    nrst : in  std_logic;
-    cfg  : in  nasti_slave_cfg_vector;
-    i    : in  nasti_slave_in_type;
-    o    : out nasti_slave_out_type
+    clk    : in  std_logic;
+    nrst   : in  std_logic;
+    cfgvec : in  nasti_slave_cfg_vector;
+    cfg    : out  nasti_slave_config_type;
+    i      : in  nasti_slave_in_type;
+    o      : out nasti_slave_out_type
   );
 end component; 
 
