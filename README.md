@@ -36,6 +36,7 @@ Parameterized generator of the Rocket-chip can be found here:
 + UART outputs Plug'n'Play configuraiton message with the 1 sec period
   (115200 baud).
 
+```
     Boot . . .OK
     # RISC-V: Rocket-Chip demonstration design
     # HW version: 0x20160115
@@ -58,6 +59,7 @@ Parameterized generator of the Rocket-chip can be found here:
     #    0x00000000...0x00000FFF, size = 4 KB
     # AXI4: slv8: GNSS Sensor Ltd.    Plug'n'Play support
     #    0xFFFFF000...0xFFFFFFFF, size = 4 KB
+```
 
 ## How to create and build project using ISE Studio
 
