@@ -36,6 +36,29 @@ Parameterized generator of the Rocket-chip can be found here:
 + UART outputs Plug'n'Play configuraiton message with the 1 sec period
   (115200 baud).
 
+    Boot . . .OK
+    # RISC-V: Rocket-Chip demonstration design
+    # HW version: 0x20160115
+    # Target technology: Virtex6
+    # AXI4: slv0: GNSS Sensor Ltd.    Boot ROM
+    #    0x00000000...0x00001FFF, size = 8 KB
+    # AXI4: slv1: GNSS Sensor Ltd.    FW Image ROM
+    #    0x00100000...0x0013FFFF, size = 256 KB
+    # AXI4: slv2: GNSS Sensor Ltd.    Internal SRAM
+    #    0x10000000...0x1007FFFF, size = 512 KB
+    # AXI4: slv3: GNSS Sensor Ltd.    Generic UART
+    #    0x80001000...0x80001FFF, size = 4 KB
+    # AXI4: slv4: GNSS Sensor Ltd.    Generic GPIO
+    #    0x80000000...0x80000FFF, size = 4 KB
+    # AXI4: slv5: GNSS Sensor Ltd.    Interrupt Controller
+    #    0x80002000...0x80002FFF, size = 4 KB
+    # AXI4: slv6: GNSS Sensor Ltd.    GNSS Engine
+    #    0x80003000...0x80003FFF, size = 4 KB
+    # AXI4: slv7: GNSS Sensor Ltd.    Dummy device
+    #    0x00000000...0x00000FFF, size = 4 KB
+    # AXI4: slv8: GNSS Sensor Ltd.    Plug'n'Play support
+    #    0xFFFFF000...0xFFFFFFFF, size = 4 KB
+
 ## How to create and build project using ISE Studio
 
   Use "rocket_soc.xise" project file to build image for the default target ML605

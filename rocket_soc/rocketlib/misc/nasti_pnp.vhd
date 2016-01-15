@@ -37,6 +37,9 @@ architecture arch_nasti_pnp of nasti_pnp is
   --! 4-bytes alignment so that all registers implemented as 32-bits
   --! width.
   constant ALIGNMENT_BYTES : integer := 8;
+  --! Total bytes for each configuration structure.
+  --! Firmware uses this value instead of sizeof(nasti_slave_config_type).
+  constant PNP_CONFIG_DEFAULT_BYTES : std_logic_vector(7 downto 0) := X"10";
 
   constant xconfig : nasti_slave_config_type := (
      xindex => xindex,
@@ -83,7 +86,7 @@ begin
        raddr_reg(n) := conv_integer(r.bank_axi.raddr(ALIGNMENT_BYTES*n)(11 downto log2(ALIGNMENT_BYTES)));
 
        val := X"badef00dcafecafe";
-       if raddr_reg(n) = 0 then val := X"00000000" & X"20151108";
+       if raddr_reg(n) = 0 then val := X"00000000" & X"20160115";
        elsif raddr_reg(n) = 1 then 
           val := X"00000000" & X"0000" 
               & conv_std_logic_vector(CFG_NASTI_SLAVES_TOTAL,8)
@@ -97,7 +100,7 @@ begin
              if raddr_reg(n) = 8+2*k then 
                val := cfgvec(k).xaddr & X"000" & cfgvec(k).xmask & X"000";
              elsif raddr_reg(n) = 8+2*k+1 then 
-               val := X"00000000" & cfgvec(k).vid & cfgvec(k).did;
+               val := X"000000" & PNP_CONFIG_DEFAULT_BYTES & cfgvec(k).vid & cfgvec(k).did;
              end if;
          end loop;
        end if;
