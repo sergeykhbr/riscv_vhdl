@@ -2,7 +2,7 @@
 --! @file
 --! @copyright  Copyright 2015 GNSS Sensor Ltd. All right reserved.
 --! @author     Sergey Khabarov
---! @brief      Declaration allmem package components.
+--! @brief      Declaration types_mem package components.
 ------------------------------------------------------------------------------
 --! Standard library
 library ieee;
@@ -13,7 +13,7 @@ library rocketlib;
 use rocketlib.types_nasti.all;
 
 --! @brief      Memory components declaration for the various technologies.
-package allmem is
+package types_mem is
 
   --! @brief   Declaration of the "virtual" BootROM component.
   --! @details BootRom start address must implements address matching to the
@@ -127,7 +127,8 @@ package allmem is
   component srambytes_tech is
   generic (
     memtech : integer := 0;
-    abits   : integer := 16
+    abits   : integer := 16;
+    init_file : string := ""
   );
   port (
     clk       : in std_logic;
@@ -141,12 +142,28 @@ package allmem is
   end component;
 
   --! @brief   Declaration of the one-byte SRAM element.
-  --! @details This component is used for the RTL simulation and FPGA 
-  --!          implementation.
+  --! @details This component is used for the FPGA implementation.
   component sram8_inferred is
   generic (
      abits : integer := 12;
      byte_idx : integer := 0
+  );
+  port (
+    clk     : in  std_ulogic;
+    address : in  std_logic_vector(abits-1 downto 0);
+    rdata   : out std_logic_vector(7 downto 0);
+    we      : in  std_logic;
+    wdata   : in  std_logic_vector(7 downto 0)
+  );
+  end component;
+
+  --! @brief   Declaration of the one-byte SRAM element with init function.
+  --! @details This component is used for the RTL simulation.
+  component sram8_inferred_init is
+  generic (
+     abits     : integer := 12;
+     byte_idx  : integer := 0;
+     init_file : string
   );
   port (
     clk     : in  std_ulogic;

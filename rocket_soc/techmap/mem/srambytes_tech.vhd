@@ -7,18 +7,22 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
-library techmap;
-use techmap.gencomp.all;
-use techmap.allmem.all;
+
 library commonlib;
 use commonlib.types_common.all;
+
+library techmap;
+use techmap.gencomp.all;
+use techmap.types_mem.all;
+
 library rocketlib;
 use rocketlib.types_nasti.all;
 
 entity srambytes_tech is
 generic (
     memtech : integer := 0;
-    abits   : integer := 16
+    abits   : integer := 16;
+    init_file : string := ""
 );
 port (
     clk       : in std_logic;
@@ -45,7 +49,33 @@ signal rdatax : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
 
 begin
 
-  infer0 : if memtech = inferred or is_fpga(memtech) /= 0 generate
+  --! Instantiate component for RTL simulation
+  rtlsim0 : if memtech = inferred generate
+    rx : for n in 0 to CFG_NASTI_DATA_BYTES-1 generate
+
+      wr_ena(n) <= we and wstrb(n);
+      address(n) <= waddr(n)(abits-1 downto dw) when we = '1'
+            else raddr(n)(abits-1 downto dw);
+      
+      x0 : sram8_inferred_init generic map 
+      (
+          abits => abits-dw,
+          byte_idx => n,
+          init_file => init_file
+      ) port map (
+          clk, 
+          address => address(n),
+          rdata => rdatax(8*(n+1)-1 downto 8*n),
+          we => wr_ena(n), 
+          wdata => wdata(8*(n+1)-1 downto 8*n)
+      );
+    end generate; -- cycle
+    rdata <= rdatax;
+  end generate; -- tech=inferred
+
+
+  --! Instantiate component for FPGA (checked with Xilinx)
+  fpgasim0 : if memtech /= inferred and is_fpga(memtech) /= 0 generate
     rx : for n in 0 to CFG_NASTI_DATA_BYTES-1 generate
 
       wr_ena(n) <= we and wstrb(n);

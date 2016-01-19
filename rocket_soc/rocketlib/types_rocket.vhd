@@ -346,7 +346,8 @@ component nasti_sram is
     xindex   : integer := 0;
     xaddr    : integer := 0;
     xmask    : integer := 16#fffff#;
-    abits    : integer := 17
+    abits    : integer := 17;
+    init_file : string := "" -- only for 'inferred'
   );
   port (
     clk  : in std_logic;

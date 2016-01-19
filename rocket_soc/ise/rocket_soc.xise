@@ -25,11 +25,6 @@
       <association xil_pn:name="Implementation"/>
       <library xil_pn:name="commonlib"/>
     </file>
-    <file xil_pn:name="../techmap/bufg/bufgmux.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation"/>
-      <association xil_pn:name="Implementation"/>
-      <library xil_pn:name="techmap"/>
-    </file>
     <file xil_pn:name="../techmap/bufg/bufgmux_fpga.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation"/>
       <association xil_pn:name="Implementation"/>
@@ -41,11 +36,6 @@
       <library xil_pn:name="techmap"/>
     </file>
     <file xil_pn:name="../techmap/gencomp/gencomp.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation"/>
-      <association xil_pn:name="Implementation"/>
-      <library xil_pn:name="techmap"/>
-    </file>
-    <file xil_pn:name="../techmap/pll/syspll.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation"/>
       <association xil_pn:name="Implementation"/>
       <library xil_pn:name="techmap"/>
@@ -152,11 +142,6 @@
       <association xil_pn:name="Implementation"/>
       <library xil_pn:name="rocketlib"/>
     </file>
-    <file xil_pn:name="../techmap/mem/allmem.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation"/>
-      <association xil_pn:name="Implementation"/>
-      <library xil_pn:name="techmap"/>
-    </file>
     <file xil_pn:name="../techmap/mem/romimage_inferred.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation"/>
       <association xil_pn:name="Implementation"/>
@@ -199,6 +184,21 @@
       <association xil_pn:name="BehavioralSimulation"/>
       <association xil_pn:name="Implementation"/>
       <library xil_pn:name="rocketlib"/>
+    </file>
+    <file xil_pn:name="../techmap/mem/types_mem.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation"/>
+      <association xil_pn:name="Implementation"/>
+      <library xil_pn:name="techmap"/>
+    </file>
+    <file xil_pn:name="../techmap/bufg/types_buf.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation"/>
+      <association xil_pn:name="Implementation"/>
+      <library xil_pn:name="techmap"/>
+    </file>
+    <file xil_pn:name="../techmap/pll/types_pll.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation"/>
+      <association xil_pn:name="Implementation"/>
+      <library xil_pn:name="techmap"/>
     </file>
   </files>
 

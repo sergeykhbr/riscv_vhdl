@@ -2,7 +2,7 @@
 --! @file
 --! @copyright Copyright 2015 GNSS Sensor Ltd. All right reserved.
 --! @author    Sergey Khabarov - sergeykhbr@gmail.com
---! @brief     Component declaration of the syspll package.
+--! @brief     Component declaration of the types_pll package.
 ------------------------------------------------------------------------------
 
 --! Standard library
@@ -14,7 +14,7 @@ library techmap;
 use techmap.gencomp.all;
 
 --! @brief PLL components declaration
-package syspll is
+package types_pll is
 
   --! @brief   Declaration of the "virtual" PLL component.
   --! @details This module instantiates the certain PLL implementation

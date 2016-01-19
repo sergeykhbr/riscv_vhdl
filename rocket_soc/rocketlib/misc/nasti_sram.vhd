@@ -7,11 +7,14 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
+
 library techmap;
 use techmap.gencomp.all;
-use techmap.allmem.all;
+use techmap.types_mem.all;
+
 library commonlib;
 use commonlib.types_common.all;
+
 library rocketlib;
 use rocketlib.types_nasti.all;
 
@@ -22,7 +25,8 @@ entity nasti_sram is
     xindex   : integer := 0;
     xaddr    : integer := 0;
     xmask    : integer := 16#fffff#;
-    abits    : integer := 17
+    abits    : integer := 17;
+    init_file : string := "" -- only for inferred
   );
   port (
     clk  : in std_logic;
@@ -92,8 +96,9 @@ begin
   cfg  <= xconfig;
   
   tech0 : srambytes_tech generic map (
-    memtech => memtech,
-    abits   => abits
+    memtech   => memtech,
+    abits     => abits,
+    init_file => init_file -- only for 'inferred'
   ) port map (
     clk     => clk,
     raddr   => raddr_reg,

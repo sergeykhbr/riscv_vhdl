@@ -19,7 +19,9 @@ library techmap;
 --! Technology constants definition.
 use techmap.gencomp.all;
 --! "Virtual" PLL declaration.
-use techmap.syspll.all;
+use techmap.types_pll.all;
+--! "Virtual" buffers declaration.
+use techmap.types_buf.all;
 
 --! Rocket-chip specific library
 library rocketlib;
@@ -447,8 +449,9 @@ end generate;
     memtech  => CFG_MEMTECH,
     xindex   => CFG_NASTI_SLAVE_SRAM,
     xaddr    => 16#10000#,
-    xmask    => 16#fff80#,        -- 512 KB mask
-    abits    => (10 + log2(512))  -- 512 KB address
+    xmask    => 16#fff80#,            -- 512 KB mask
+    abits    => (10 + log2(512)),     -- 512 KB address
+    init_file => CFG_SIM_FWIMAGE_HEX  -- Used only for inferred
   ) port map (
     clk  => wClkBus,
     nrst => wNReset,

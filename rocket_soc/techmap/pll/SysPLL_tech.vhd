@@ -16,8 +16,8 @@ use ieee.numeric_std.all;
 --! "Virtual" components declarations library.
 library techmap;
 use techmap.gencomp.all;
-use techmap.syspll.all;
-use techmap.bufgmux.all;
+use techmap.types_pll.all;
+use techmap.types_buf.all;
 
 --! @brief   SysPLL_tech entity declaration ("Virtual" PLL).
 --! @details This module instantiates the certain PLL implementation
