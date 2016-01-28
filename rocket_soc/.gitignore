@@ -4,9 +4,8 @@
 *.err
 html
 fw/*
-gnsslib/*
-!gnsslib/fse_v2
-!gnsslib/gnssengine
+gnsslib/fse_v2/*
+gnsslib/gnssengine/*
 !fw/common/
 !fw/boot/
 fw/boot/linuxbuild/
