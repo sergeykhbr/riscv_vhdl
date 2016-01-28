@@ -85,7 +85,7 @@ demonstration procedure. v1.0 branch implements:
 - By default GNSS is disabled in *confg_common.vhd* file that makes *master*
   version very close to the *v1.0* branch by its functionality.
 - Using *master* trunk without *RF front-end* is **possible** in TEST_MODE.
-  Enabling of TEST_MODE in a final 2.0 version will require manual switching
+  Enabling TEST_MODE in a final 2.0 version will require manual switching
   of the configuration jumper (*i_int_adc*) on board.
 
 ## How to create and build project using ISE Studio
@@ -126,7 +126,8 @@ Do the following steps to change target on any unsupported board yet:
      * Add all files ".._tech.vhd" and ".._inferred.vhd"
      * Don't include files ".._v6.vhd", ".._k7.vhd" etc.
 5. Make sure that all files in libraries folder will be compiled into appropriate
-   VHDL library. By default all files will be compiled into 'work' library.
+   VHDL library. **_By default all files will be compiled into 'work' library_** 
+   and you should fix that assignments on appropriate ones.
 6. Use *config_common.vhd* and *config_msim.vhd* to configurate target for the
    behaviour simulation.
 7. Use *work/tb/rocket_soc_tb.vhd* to run simulation.
@@ -145,7 +146,7 @@ It implements general functionality for the Rocket-chip based system, such as:
 - UART output
 - LED switching
 - Target type auto-detection (RTL simulatation or not)
-- Coping image from ROM to SRAM using libc method memcpy()
+- Coping image from ROM to SRAM using libc method *memcpy()*
 
 
 ## Doxygen project documentation
