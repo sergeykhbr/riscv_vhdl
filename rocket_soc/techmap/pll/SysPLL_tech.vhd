@@ -100,15 +100,15 @@ begin
   -- Clock mux2:
   --     pass input ADC clock directly to output when i_int_clkrf=0
   --     otherwise pass sim_adc = bus/4 (for the self-test purposes without RF)
-  --buf1 : bufgmux_tech generic map
-  --(
-  --  tech => tech
-  --)port map 
-  --(
-  --  O  => o_clk_adc,
-  --  I1 => i_clk_adc,
-  --  I2 => clk_divider(1),
-  --  S  => i_int_clkrf
-  --);
+  buf1 : bufgmux_tech generic map
+  (
+    tech => tech
+  )port map 
+  (
+    O  => o_clk_adc,
+    I1 => i_clk_adc,
+    I2 => clk_divider(1),
+    S  => i_int_clkrf
+  );
 
 end;

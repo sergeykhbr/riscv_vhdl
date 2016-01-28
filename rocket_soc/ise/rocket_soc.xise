@@ -185,6 +185,11 @@
       <association xil_pn:name="Implementation"/>
       <library xil_pn:name="rocketlib"/>
     </file>
+    <file xil_pn:name="../techmap/pll/types_pll.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation"/>
+      <association xil_pn:name="Implementation"/>
+      <library xil_pn:name="techmap"/>
+    </file>
     <file xil_pn:name="../techmap/mem/types_mem.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation"/>
       <association xil_pn:name="Implementation"/>
@@ -195,10 +200,150 @@
       <association xil_pn:name="Implementation"/>
       <library xil_pn:name="techmap"/>
     </file>
-    <file xil_pn:name="../techmap/pll/types_pll.vhd" xil_pn:type="FILE_VHDL">
+    <file xil_pn:name="../gnsslib/types_gnss.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation"/>
+      <association xil_pn:name="Implementation"/>
+      <library xil_pn:name="gnsslib"/>
+    </file>
+    <file xil_pn:name="../gnsslib/rf3b/axi_rfctrl.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation"/>
+      <association xil_pn:name="Implementation"/>
+      <library xil_pn:name="gnsslib"/>
+    </file>
+    <file xil_pn:name="../techmap/mem/ram32_inferred.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation"/>
       <association xil_pn:name="Implementation"/>
       <library xil_pn:name="techmap"/>
+    </file>
+    <file xil_pn:name="../techmap/mem/ram32_tech.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation"/>
+      <association xil_pn:name="Implementation"/>
+      <library xil_pn:name="techmap"/>
+    </file>
+    <file xil_pn:name="../techmap/mem/romprn_inferred.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation"/>
+      <association xil_pn:name="Implementation"/>
+      <library xil_pn:name="techmap"/>
+    </file>
+    <file xil_pn:name="../techmap/mem/romprn_tech.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation"/>
+      <association xil_pn:name="Implementation"/>
+      <library xil_pn:name="techmap"/>
+    </file>
+    <file xil_pn:name="../gnsslib/sync/afifo.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation"/>
+      <association xil_pn:name="Implementation"/>
+      <library xil_pn:name="gnsslib"/>
+    </file>
+    <file xil_pn:name="../gnsslib/sync/greycnt.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation"/>
+      <association xil_pn:name="Implementation"/>
+      <library xil_pn:name="gnsslib"/>
+    </file>
+    <file xil_pn:name="../gnsslib/sync/types_sync.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation"/>
+      <association xil_pn:name="Implementation"/>
+      <library xil_pn:name="gnsslib"/>
+    </file>
+    <file xil_pn:name="../gnsslib/fse_v2/accum.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation"/>
+      <association xil_pn:name="Implementation"/>
+      <library xil_pn:name="gnsslib"/>
+    </file>
+    <file xil_pn:name="../gnsslib/fse_v2/axi2fse.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation"/>
+      <association xil_pn:name="Implementation"/>
+      <library xil_pn:name="gnsslib"/>
+    </file>
+    <file xil_pn:name="../gnsslib/fse_v2/carr_nco.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation"/>
+      <association xil_pn:name="Implementation"/>
+      <library xil_pn:name="gnsslib"/>
+    </file>
+    <file xil_pn:name="../gnsslib/fse_v2/control.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation"/>
+      <association xil_pn:name="Implementation"/>
+      <library xil_pn:name="gnsslib"/>
+    </file>
+    <file xil_pn:name="../gnsslib/fse_v2/decim.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation"/>
+      <association xil_pn:name="Implementation"/>
+      <library xil_pn:name="gnsslib"/>
+    </file>
+    <file xil_pn:name="../gnsslib/fse_v2/divphase.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation"/>
+      <association xil_pn:name="Implementation"/>
+      <library xil_pn:name="gnsslib"/>
+    </file>
+    <file xil_pn:name="../gnsslib/fse_v2/fifo.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation"/>
+      <association xil_pn:name="Implementation"/>
+      <library xil_pn:name="gnsslib"/>
+    </file>
+    <file xil_pn:name="../gnsslib/fse_v2/lpf.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation"/>
+      <association xil_pn:name="Implementation"/>
+      <library xil_pn:name="gnsslib"/>
+    </file>
+    <file xil_pn:name="../gnsslib/fse_v2/matrix.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation"/>
+      <association xil_pn:name="Implementation"/>
+      <library xil_pn:name="gnsslib"/>
+    </file>
+    <file xil_pn:name="../gnsslib/fse_v2/matrix24.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation"/>
+      <association xil_pn:name="Implementation"/>
+      <library xil_pn:name="gnsslib"/>
+    </file>
+    <file xil_pn:name="../gnsslib/fse_v2/matrix1024.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation"/>
+      <association xil_pn:name="Implementation"/>
+      <library xil_pn:name="gnsslib"/>
+    </file>
+    <file xil_pn:name="../gnsslib/fse_v2/prngenfse.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation"/>
+      <association xil_pn:name="Implementation"/>
+      <library xil_pn:name="gnsslib"/>
+    </file>
+    <file xil_pn:name="../gnsslib/fse_v2/prngenfsegal.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation"/>
+      <association xil_pn:name="Implementation"/>
+      <library xil_pn:name="gnsslib"/>
+    </file>
+    <file xil_pn:name="../gnsslib/fse_v2/prngenfseglo.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation"/>
+      <association xil_pn:name="Implementation"/>
+      <library xil_pn:name="gnsslib"/>
+    </file>
+    <file xil_pn:name="../gnsslib/fse_v2/prngenfsegps.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation"/>
+      <association xil_pn:name="Implementation"/>
+      <library xil_pn:name="gnsslib"/>
+    </file>
+    <file xil_pn:name="../gnsslib/fse_v2/recorder.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation"/>
+      <association xil_pn:name="Implementation"/>
+      <library xil_pn:name="gnsslib"/>
+    </file>
+    <file xil_pn:name="../gnsslib/fse_v2/requant.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation"/>
+      <association xil_pn:name="Implementation"/>
+      <library xil_pn:name="gnsslib"/>
+    </file>
+    <file xil_pn:name="../gnsslib/fse_v2/topfse.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation"/>
+      <association xil_pn:name="Implementation"/>
+      <library xil_pn:name="gnsslib"/>
+    </file>
+    <file xil_pn:name="../gnsslib/fse_v2/types_fse_v2.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation"/>
+      <association xil_pn:name="Implementation"/>
+      <library xil_pn:name="gnsslib"/>
+    </file>
+    <file xil_pn:name="../gnsslib/sync/reclk.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation"/>
+      <association xil_pn:name="Implementation"/>
+      <library xil_pn:name="gnsslib"/>
     </file>
   </files>
 
@@ -522,6 +667,7 @@
 
   <libraries>
     <library xil_pn:name="commonlib"/>
+    <library xil_pn:name="gnsslib"/>
     <library xil_pn:name="rocketlib"/>
     <library xil_pn:name="techmap"/>
   </libraries>

@@ -7,11 +7,14 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
+
 library techmap;
 use techmap.gencomp.all;
 use techmap.types_mem.all;
+
 library commonlib;
 use commonlib.types_common.all;
+
 library rocketlib;
 use rocketlib.types_nasti.all;
 

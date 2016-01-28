@@ -2,7 +2,7 @@
 --! @file
 --! @copyright Copyright 2015 GNSS Sensor Ltd. All right reserved.
 --! @author    Sergey Khabarov - sergeykhbr@gmail.com
---! @brief     Component declaration of the types_pll package.
+--! @brief     Components declaration of the types_pll package.
 ------------------------------------------------------------------------------
 
 --! Standard library
@@ -13,7 +13,7 @@ use ieee.numeric_std.all;
 library techmap;
 use techmap.gencomp.all;
 
---! @brief PLL components declaration
+--! @brief Declaration of 'virtual' PLL components
 package types_pll is
 
   --! @brief   Declaration of the "virtual" PLL component.

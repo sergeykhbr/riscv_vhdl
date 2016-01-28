@@ -55,10 +55,16 @@ constant log2x  : log2arr := (
   8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,
   8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,
   others => 9);
+  
+constant zero32 : std_logic_vector(31 downto 0) := X"00000000";
+constant zero64 : std_logic_vector(63 downto 0) := zero32 & zero32;
 
 
+function "-" (i : integer; d : std_logic_vector) return std_logic_vector;
 function "-" (d : std_logic_vector; i : integer) return std_logic_vector;
+function "-" (a, b : std_logic_vector) return std_logic_vector;
 function "+" (d : std_logic_vector; i : integer) return std_logic_vector;
+function "+" (a, b : std_logic_vector) return std_logic_vector;
 
 function conv_integer(v : std_logic_vector) return integer;
 function conv_integer(v : std_logic) return integer;
@@ -118,6 +124,36 @@ begin
 -- pragma translate_on
 end;
 
+function "+" (a, b : std_logic_vector) return std_logic_vector is
+variable x : std_logic_vector(a'length-1 downto 0);
+variable y : std_logic_vector(b'length-1 downto 0);
+begin
+-- pragma translate_off
+  if not is_x(a&b) then
+-- pragma translate_on
+    return(std_logic_vector(unsigned(a) + unsigned(b)));
+-- pragma translate_off
+  else
+     x := (others =>'X'); y := (others =>'X');
+     if (x'length > y'length) then return(x); else return(y); end if;
+  end if;
+-- pragma translate_on
+end;
+
+
+function "-" (i : integer; d : std_logic_vector) return std_logic_vector is
+variable x : std_logic_vector(d'length-1 downto 0);
+begin
+-- pragma translate_off
+  if not is_x(d) then
+-- pragma translate_on
+    return(std_logic_vector(i - unsigned(d)));
+-- pragma translate_off
+  else x := (others =>'X'); return(x); 
+  end if;
+-- pragma translate_on
+end;
+
 function "-" (d : std_logic_vector; i : integer) return std_logic_vector is
 variable x : std_logic_vector(d'length-1 downto 0);
 begin
@@ -127,6 +163,22 @@ begin
     return(std_logic_vector(unsigned(d) - i));
 -- pragma translate_off
   else x := (others =>'X'); return(x); 
+  end if;
+-- pragma translate_on
+end;
+
+function "-" (a, b : std_logic_vector) return std_logic_vector is
+variable x : std_logic_vector(a'length-1 downto 0);
+variable y : std_logic_vector(b'length-1 downto 0);
+begin
+-- pragma translate_off
+  if not is_x(a&b) then
+-- pragma translate_on
+    return(std_logic_vector(unsigned(a) - unsigned(b)));
+-- pragma translate_off
+  else
+     x := (others =>'X'); y := (others =>'X');
+     if (x'length > y'length) then return(x); else return(y); end if; 
   end if;
 -- pragma translate_on
 end;

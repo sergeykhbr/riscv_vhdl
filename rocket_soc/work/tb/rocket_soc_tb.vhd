@@ -36,6 +36,16 @@ architecture behavior of rocket_soc_tb is
   signal i_uart1_rd : std_logic := '1';
   signal o_uart1_td : std_logic;
   signal o_uart1_rtsn : std_logic;
+  
+  signal i_gps_ld    : std_logic := '1';
+  signal i_glo_ld    : std_logic := '1';
+  signal o_max_sclk  : std_logic;
+  signal o_max_sdata : std_logic;
+  signal o_max_ncs   : std_logic_vector(1 downto 0);
+  signal i_antext_stat   : std_logic := '0';
+  signal i_antext_detect : std_logic := '0';
+  signal o_antext_ena    : std_logic;
+  signal o_antint_contr  : std_logic;
 
   signal clk_cur: std_logic := '1';
   signal check_clk_bus : std_logic := '0';
@@ -55,7 +65,22 @@ component rocket_soc is port
   i_uart1_ctsn : in std_logic;
   i_uart1_rd   : in std_logic;
   o_uart1_td   : out std_logic;
-  o_uart1_rtsn : out std_logic
+  o_uart1_rtsn : out std_logic;
+  -- ADC samples
+  i_gps_I  : in std_logic_vector(1 downto 0);
+  i_gps_Q  : in std_logic_vector(1 downto 0);
+  i_glo_I  : in std_logic_vector(1 downto 0);
+  i_glo_Q  : in std_logic_vector(1 downto 0);
+  -- rf front-end
+  i_gps_ld    : in std_logic;
+  i_glo_ld    : in std_logic;
+  o_max_sclk  : out std_logic;
+  o_max_sdata : out std_logic;
+  o_max_ncs   : out std_logic_vector(1 downto 0);
+  i_antext_stat   : in std_logic;
+  i_antext_detect : in std_logic;
+  o_antext_ena    : out std_logic;
+  o_antint_contr  : out std_logic
 );
 end component;
 
@@ -120,7 +145,20 @@ begin
     i_uart1_ctsn => i_uart1_ctsn,
     i_uart1_rd   => i_uart1_rd,
     o_uart1_td   => o_uart1_td,
-    o_uart1_rtsn => o_uart1_rtsn
+    o_uart1_rtsn => o_uart1_rtsn,
+    i_gps_I  => "01",
+    i_gps_Q  => "11",
+    i_glo_I  => "11",
+    i_glo_Q  => "01",
+    i_gps_ld    => i_gps_ld,
+    i_glo_ld    => i_glo_ld,
+    o_max_sclk  => o_max_sclk,
+    o_max_sdata => o_max_sdata,
+    o_max_ncs   => o_max_ncs,
+    i_antext_stat   => i_antext_stat,
+    i_antext_detect => i_antext_detect,
+    o_antext_ena    => o_antext_ena,
+    o_antint_contr  => o_antint_contr
   );
 
   procCheck : process (i_rst, check_clk_bus)

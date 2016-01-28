@@ -7,12 +7,15 @@
 --! Standard library
 library ieee;
 use ieee.std_logic_1164.all;
+--! Provide common generic log() function
+library commonlib;
+use commonlib.types_common.all;
 --! Rocket-chip specific library
 library rocketlib;
 --! AXI4 configuration constants.
 use rocketlib.types_nasti.all;
 
---! @brief      Memory components declaration for the various technologies.
+--! @brief      Declaration of 'virtual' Memory components.
 package types_mem is
 
   --! @brief   Declaration of the "virtual" BootROM component.
@@ -107,6 +110,23 @@ package types_mem is
   );
   end component;
   --! @}
+  
+
+  ------------------------------------------------------------------------------
+  --! @brief   Galileo PRN codes ROM storage:
+  --! @details This ROM is used in FSE Engine to form reference E1 reference
+  --!          signals. HEX-file isn't used for this ROM because 'inferred'
+  --!          module was built using "case when" operators.
+  component RomPrn_tech is
+  generic (
+    generic_tech : integer := 0
+  );
+  port (
+    i_clk       : in std_logic;
+    i_address   : in std_logic_vector(12 downto 0);
+    o_data      : out std_logic_vector(31 downto 0)
+  );
+  end component;
 
 
   --! @brief   Declaration of the "virtual" SRAM component with unaligned access.
@@ -171,6 +191,41 @@ package types_mem is
     rdata   : out std_logic_vector(7 downto 0);
     we      : in  std_logic;
     wdata   : in  std_logic_vector(7 downto 0)
+  );
+  end component;
+
+
+  --! @brief Virtual SRAM block with fixed 32-bits data width.
+  --! @details This module doesn't support byte access and always implements
+  --!          4-bytes alignment.
+  component Ram32_tech
+  generic (
+    generic_tech   : integer := 0;
+    generic_kWords : integer := 1
+  );
+  port (
+    i_clk      : in std_logic;
+    i_address  : in std_logic_vector(10+log2(generic_kWords)-1 downto 0);
+    i_wr_ena   : in std_logic;
+    i_data     : in std_logic_vector(31 downto 0);
+    o_data     : out std_logic_vector(31 downto 0)
+  );
+  end component;
+
+  --! @brief Virtual SRAM block with fixed 64-bits data width.
+  --! @details This module doesn't support byte access and always implements
+  --!          8-bytes alignment.
+  component Ram64_tech
+  generic (
+    generic_tech   : integer := 0;
+    generic_abits  : integer := 4
+  );
+  port (
+    i_clk      : in std_logic;
+    i_address  : in std_logic_vector(generic_abits-1 downto 0);
+    i_wr_ena   : in std_logic;
+    i_data     : in std_logic_vector(63 downto 0);
+    o_data     : out std_logic_vector(63 downto 0)
   );
   end component;
 

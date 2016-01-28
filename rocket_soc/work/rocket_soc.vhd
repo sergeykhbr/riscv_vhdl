@@ -32,6 +32,10 @@ use rocketlib.types_rocket.all;
 --! TileLink interface description.
 use rocketlib.types_tile.all;
 
+--! GNSS Sensor Ltd proprietary library
+library gnsslib;
+use gnsslib.types_gnss.all;
+
  --! Top-level implementaion library
 library work;
 --! Target dependable configuration: RTL, FPGA or ASIC.
@@ -72,7 +76,32 @@ entity rocket_soc is port
   i_uart1_ctsn : in std_logic;
   i_uart1_rd   : in std_logic;
   o_uart1_td   : out std_logic;
-  o_uart1_rtsn : out std_logic
+  o_uart1_rtsn : out std_logic;
+  --! @}
+  
+  --! @name ADC channel A inputs (1575.4 GHz):
+  --! @{
+  i_gps_I  : in std_logic_vector(1 downto 0);
+  i_gps_Q  : in std_logic_vector(1 downto 0);
+  --! @}
+
+  --! @name ADC channel B inputs (1602 GHz):
+  --! @{
+  i_glo_I  : in std_logic_vector(1 downto 0);
+  i_glo_Q  : in std_logic_vector(1 downto 0);
+  --! @}
+  
+  --! @name MAX2769 SPIs and antenna controls signals:
+  --! @{
+  i_gps_ld    : in std_logic;
+  i_glo_ld    : in std_logic;
+  o_max_sclk  : out std_logic;
+  o_max_sdata : out std_logic;
+  o_max_ncs   : out std_logic_vector(1 downto 0);
+  i_antext_stat   : in std_logic;
+  i_antext_detect : in std_logic;
+  o_antext_ena    : out std_logic;
+  o_antint_contr  : out std_logic
 );
   --! @}
 
@@ -119,6 +148,8 @@ architecture arch_rocket_soc of rocket_soc is
   signal ubridge_in  : bridge_in_type;
   signal ubridge_out : bridge_out_type;
   
+  signal fse_i : fse_in_type;
+  signal fse_o : fse_out_type;
  
   signal irq_pins : std_logic_vector(CFG_IRQ_TOTAL-1 downto 0);
   signal tile2host : host_out_type;
@@ -546,11 +577,68 @@ geneng_dis : if not CFG_GNSSLIB_ENABLE generate
     o      => cslv2carb(CFG_NASTI_SLAVE_ENGINE),
     irq    => irq_pins(CFG_IRQ_GNSSENGINE)
   );
-  
-  -- Stub for the RF-controller
-  cslv_cfg(CFG_NASTI_SLAVE_RFCTRL) <= nasti_slave_config_none;
-  
 end generate;
+
+
+  --! @brief RF front-end controller with the AXI4 interface.
+  --! @details Map address:
+  --!          0x80004000..0x80004fff (4 KB total)
+  rf0 : axi_rfctrl generic map (
+    xindex => CFG_NASTI_SLAVE_RFCTRL,
+    xaddr  => 16#80004#,
+    xmask  => 16#fffff#
+  ) port map (
+    nrst           => wNReset,
+    clk            => wClkBus,
+    o_cfg          => cslv_cfg(CFG_NASTI_SLAVE_RFCTRL),
+    i_axi          => noc2cslv,
+    o_axi          => cslv2carb(CFG_NASTI_SLAVE_RFCTRL),
+    i_gps_ld       => i_gps_ld,
+    i_glo_ld       => i_glo_ld,
+    outSCLK        => o_max_sclk,
+    outSDATA       => o_max_sdata,
+    outCSn         => o_max_ncs,
+    inExtAntStat   => i_antext_stat,
+    inExtAntDetect => i_antext_detect,
+    outExtAntEna   => o_antext_ena,
+    outIntAntContr => o_antint_contr
+  );
+
+
+  --! @brief GPS-CA Fast Search Engine with the AXI4 interface.
+  --! @details Map address:
+  --!          0x80005000..0x80005fff (4 KB total)
+  fse0_ena : if CFG_GNSSLIB_FSEGPS_ENABLE = 1 generate 
+      fse_i.nrst       <= wNReset;
+      fse_i.clk_bus    <= wClkBus;
+      fse_i.clk_fse    <= wClkBus;
+      fse_i.axi        <= noc2cslv;
+      fse_i.clk_adc    <= wClkAdcSim;
+      fse_i.I          <= i_gps_I;
+      fse_i.Q          <= i_gps_Q;
+      fse_i.ms_pulse   <= irq_pins(CFG_IRQ_GNSSENGINE);
+      fse_i.pps        <= irq_pins(CFG_IRQ_GNSSENGINE);
+      fse_i.test_mode  <= '0';
+
+      fse0 : TopFSE generic map (
+        tech   => CFG_MEMTECH,
+        xindex => CFG_NASTI_SLAVE_FSE_GPS,
+        xaddr  => 16#80005#,
+        xmask  => 16#fffff#,
+        sys    => GEN_SYSTEM_GPSCA
+      ) port map (
+        i => fse_i,
+        o => fse_o
+      );
+  
+      cslv_cfg(CFG_NASTI_SLAVE_FSE_GPS) <= fse_o.cfg;
+      cslv2carb(CFG_NASTI_SLAVE_FSE_GPS) <= fse_o.axi;
+  end generate;
+  --! FSE GPS disable
+  fse0_dis : if CFG_GNSSLIB_FSEGPS_ENABLE = 0 generate 
+      cslv_cfg(CFG_NASTI_SLAVE_FSE_GPS) <= nasti_slave_config_none;
+      cslv2carb(CFG_NASTI_SLAVE_FSE_GPS) <= nasti_slave_out_none;
+  end generate;
 
 
   --! @brief Plug'n'Play controller of the current configuration with the

@@ -54,8 +54,10 @@ constant CFG_NASTI_SLAVE_IRQCTRL  : integer := CFG_NASTI_SLAVE_GPIO+1;
 constant CFG_NASTI_SLAVE_ENGINE   : integer := CFG_NASTI_SLAVE_IRQCTRL+1;
 --! Configuration index of the RF front-end controller.
 constant CFG_NASTI_SLAVE_RFCTRL   : integer := CFG_NASTI_SLAVE_ENGINE+1;
+--! Configuration index of the GPS-CA Fast Search Engine module.
+constant CFG_NASTI_SLAVE_FSE_GPS  : integer := CFG_NASTI_SLAVE_RFCTRL+1;
 --! Configuration index of the Plug-n-Play module.
-constant CFG_NASTI_SLAVE_PNP      : integer := CFG_NASTI_SLAVE_RFCTRL+1;
+constant CFG_NASTI_SLAVE_PNP      : integer := CFG_NASTI_SLAVE_FSE_GPS+1;
 --! @}
 
 --! @name    Slaves Total number.
@@ -297,6 +299,7 @@ type nasti_slave_bank_type is record
     rid    : std_logic_vector(CFG_ROCKET_ID_BITS-1 downto 0);
     rresp  : std_logic_vector(1 downto 0);  --! OK=0
     ruser  : std_logic;
+    rwaitready : std_logic;                 --! Reading wait state flag: 0=waiting
     
     wburst : std_logic_vector(1 downto 0);  -- 0=INCREMENT
     wsize  : integer;                       -- code in range 0=1 Bytes upto 7=128 Bytes. 
@@ -309,7 +312,7 @@ end record;
 
 constant NASTI_SLAVE_BANK_RESET : nasti_slave_bank_type := (
     rwait, wwait,
-    NASTI_BURST_FIXED, 0, (others=>(others=>'0')), 0, (others=>'0'), NASTI_RESP_OKAY, '0',
+    NASTI_BURST_FIXED, 0, (others=>(others=>'0')), 0, (others=>'0'), NASTI_RESP_OKAY, '0', '1',
     NASTI_BURST_FIXED, 0, (others=>(others=>'0')), 0, (others=>'0'), NASTI_RESP_OKAY, '0'
 );
 
@@ -372,9 +375,16 @@ package body types_nasti is
             o_bank.rid := i.ar_id;
             o_bank.rresp := NASTI_RESP_OKAY;
             o_bank.ruser := i.ar_user;
+            
+            --! No Wait States by default for reading operation.
+            --!
+            --! User can re-assign this value directly in module to implement
+            --! reading wait states.
+            --! Example: see axi2fse.vhd bridge implementation
+            o_bank.rwaitready := '1';
         end if;
     when rtrans =>
-        if i.r_ready = '1' then
+        if i.r_ready = '1' and i_bank.rwaitready = '1' then
             o_bank.rlen := i_bank.rlen - 1;
             if i_bank.rburst = NASTI_BURST_INCR then
               for n in 0 to CFG_NASTI_DATA_BYTES-1 loop
@@ -466,7 +476,7 @@ begin
     end if;
     ret.r_resp    := r.rresp;    -- unaligned 32 bits access
     ret.r_user    := r.ruser;
-    if r.rstate = rtrans then
+    if r.rwaitready = '1' and r.rstate = rtrans then
       ret.r_valid   := '1';
     else
       ret.r_valid   := '0';
