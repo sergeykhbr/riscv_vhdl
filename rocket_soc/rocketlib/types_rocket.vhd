@@ -432,7 +432,8 @@ component nasti_gnssstub is
     xmask   : integer := 16#fffff#
   );
   port (
-    clk  : in  std_logic;
+    clk_bus : in  std_logic;
+    clk_adc : in  std_logic;
     nrst : in  std_logic;
     cfg  : out nasti_slave_config_type;
     i    : in  nasti_slave_in_type;

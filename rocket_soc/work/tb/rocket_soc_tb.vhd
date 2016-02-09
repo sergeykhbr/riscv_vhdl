@@ -47,6 +47,7 @@ architecture behavior of rocket_soc_tb is
   signal o_antext_ena    : std_logic;
   signal o_antint_contr  : std_logic;
 
+  signal adc_cnt : integer := 0;
   signal clk_cur: std_logic := '1';
   signal check_clk_bus : std_logic := '0';
   signal iClkCnt : integer := 0;
@@ -93,6 +94,12 @@ begin
   begin
 
     wait for INCR_TIME;
+    if (adc_cnt + 26000000) >= 70000000 then
+      adc_cnt <= (adc_cnt + 26000000) - 70000000;
+      i_clk_adc <= not i_clk_adc;
+    else
+      adc_cnt <= (adc_cnt + 26000000);
+    end if;
 
     while true loop
       clk_next := not clk_cur;
@@ -107,6 +114,12 @@ begin
       wait for INCR_TIME;
       if clk_cur = '1' then
         iClkCnt <= iClkCnt + 1;
+      end if;
+      if (adc_cnt + 26000000) >= 70000000 then
+        adc_cnt <= (adc_cnt + 26000000) - 70000000;
+        i_clk_adc <= not i_clk_adc;
+      else
+        adc_cnt <= (adc_cnt + 26000000);
       end if;
 
     end loop;

@@ -110,11 +110,22 @@ end rocket_soc;
 --! @brief SOC top-level  architecture declaration.
 architecture arch_rocket_soc of rocket_soc is
 
+  --! @name Buffered in/out signals.
+  --! @details All signals that are connected with in/out pads must be passed
+  --!          through the dedicated buffere modules. For FPGA they are implemented
+  --!          as an empty devices but ASIC couldn't be made without buffering.
+  --! @{
+  signal ib_rst     : std_logic;
+  signal ib_sclk_p  : std_logic;
+  signal ib_sclk_n  : std_logic;
+  signal ib_clk_adc : std_logic;
+  --! @}
+
   signal wSysReset  : std_ulogic; -- Internal system reset. MUST NOT USED BY DEVICES.
   signal wReset     : std_ulogic; -- Global reset active HIGH
   signal wNReset    : std_ulogic; -- Global reset active LOW
   signal wClkBus    : std_ulogic; -- bus clock from the internal PLL (100MHz virtex6/40MHz Spartan6)
-  signal wClkAdcSim : std_ulogic; -- 26 MHz from the internal PLL
+  signal wClkAdc    : std_ulogic; -- 26 MHz from the internal PLL
   signal wClkGnss   : std_ulogic; -- clock that goes to GnssEngine (config dependable)
   signal wPllLocked : std_ulogic; -- PLL status signal. 0=Unlocked; 1=locked.
 
@@ -156,6 +167,14 @@ architecture arch_rocket_soc of rocket_soc is
   signal host2tile : host_in_type;
 begin
 
+  --! PAD buffers:
+  irst0   : ibuf_tech generic map(CFG_PADTECH) port map (ib_rst, i_rst);
+  iclkp0  : ibuf_tech generic map(CFG_PADTECH) port map (ib_sclk_p, i_sclk_p);
+  iclkn0  : ibuf_tech generic map(CFG_PADTECH) port map (ib_sclk_n, i_sclk_n);
+  iclk1  : ibuf_tech generic map(CFG_PADTECH) port map (ib_clk_adc, i_clk_adc);
+  --! @todo all other in/out signals via buffers:
+
+
   ------------------------------------
   -- @brief Internal PLL device instance.
   pll0 : SysPLL_tech generic map
@@ -163,20 +182,20 @@ begin
     tech => CFG_FABTECH
   )port map 
   (
-    i_reset     => i_rst,
+    i_reset     => ib_rst,
     i_int_clkrf => '0',
-    i_clkp	=> i_sclk_p,
-    i_clkn	=> i_sclk_n,
-    i_clk_adc   => i_clk_adc,
+    i_clkp	     => ib_sclk_p,
+    i_clkn	     => ib_sclk_n,
+    i_clk_adc   => ib_clk_adc,
     o_clk_bus   => wClkBus,
-    o_clk_adc   => wClkAdcSim,
+    o_clk_adc   => wClkAdc,
     o_locked    => wPllLocked
   );
 --`ifdef FPGA
   htif_clk <= wClkBus;
 --`endif
 
-  wSysReset <= i_rst or not wPllLocked;
+  wSysReset <= ib_rst or not wPllLocked;
 
   ------------------------------------
   --! @brief System Reset device instance.
@@ -570,7 +589,8 @@ geneng_dis : if not CFG_GNSSLIB_ENABLE generate
     xaddr   => 16#80003#,
     xmask   => 16#FFFFF#
   ) port map (
-    clk    => wClkBus,
+    clk_bus => wClkBus,
+    clk_adc => wClkAdc,
     nrst   => wNReset,
     cfg    => cslv_cfg(CFG_NASTI_SLAVE_ENGINE),
     i      => noc2cslv,
@@ -613,7 +633,7 @@ end generate;
       fse_i.clk_bus    <= wClkBus;
       fse_i.clk_fse    <= wClkBus;
       fse_i.axi        <= noc2cslv;
-      fse_i.clk_adc    <= wClkAdcSim;
+      fse_i.clk_adc    <= wClkAdc;
       fse_i.I          <= i_gps_I;
       fse_i.Q          <= i_gps_Q;
       fse_i.ms_pulse   <= irq_pins(CFG_IRQ_GNSSENGINE);

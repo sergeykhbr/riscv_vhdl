@@ -3,9 +3,9 @@
 *.dump
 *.err
 html
-fw/*
 gnsslib/fse_v2/*
 gnsslib/gnssengine/*
+fw/*
 !fw/common/
 !fw/boot/
 fw/boot/linuxbuild/
@@ -13,7 +13,8 @@ patches/
 work/tb/bridge0_tb.vhd
 docs/*.pptx
 ise/*
-!ise/rocket_soc.xise
-!ise/rocket_soc_kc705.ucf
-!ise/rocket_soc_kc705.xdc
-!ise/rocket_chip.xpr
+!ise/ml605/*.xise
+!ise/ml605/*.ucf
+!ise/kc705/rocket_soc_kc705.ucf
+!ise/kc705/rocket_soc_kc705.xdc
+!ise/kc705/rocket_chip.xpr
