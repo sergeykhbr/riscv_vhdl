@@ -55,6 +55,7 @@ constant CFG_SIM_FWIMAGE_HEX : string :=
                 
 
 --! @brief Disable/Enable usage of the <em><b>gnsslib library</b></em>.
+--!
 --! @details This \e  'gnsslib' is the property of the <em>"GNSS Sensor ltd"
 --!          </em> (\link www.gnss-sensor.com \endlink) and it 
 --!          implements a lot of Navigation related peripheries, like: 
@@ -64,7 +65,11 @@ constant CFG_SIM_FWIMAGE_HEX : string :=
 --!              <li>Viterbi decoders;</li>
 --!              <li>Self-test generators and so on.</li>
 --!          </ul>
-constant CFG_GNSSLIB_ENABLE : boolean := false;
+--! @warning Disabling this define will tourn off source of the  msec 
+--!          interrupts that makes impossible default FW execution.
+--!          Source of such interrupts is the gnssengine module (stub 
+--!          or full functional device).
+constant CFG_GNSSLIB_ENABLE : boolean := true;
 
 --! @brief Enable Fast Search Engine for the GPS signals.
 constant CFG_GNSSLIB_FSEGPS_ENABLE : integer := 1;

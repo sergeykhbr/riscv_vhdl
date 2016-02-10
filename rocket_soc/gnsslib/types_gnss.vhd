@@ -128,16 +128,16 @@ package types_gnss is
     ms_pulse : std_logic;
     pps      : std_logic;
     axi      : nasti_slave_out_type;
+    cfg      : nasti_slave_config_type;
   end record;
 
   component gnssengine is
   generic
   (
     tech   : integer range 0 to NTECH := 0;
-    hindex : integer := 0;
-    haddr  : integer := 0;
-    hmask  : integer := 16#FFFFF#;
-    hirq   : integer := 0
+    xindex : integer := 0;
+    xaddr  : integer := 0;
+    xmask  : integer := 16#FFFFF#
   );
   port
   (

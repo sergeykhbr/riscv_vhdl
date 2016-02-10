@@ -425,23 +425,6 @@ component nasti_irqctrl is
   );
 end component;
 
-component nasti_gnssstub is
-  generic (
-    xindex  : integer := 0;
-    xaddr   : integer := 0;
-    xmask   : integer := 16#fffff#
-  );
-  port (
-    clk_bus : in  std_logic;
-    clk_adc : in  std_logic;
-    nrst : in  std_logic;
-    cfg  : out nasti_slave_config_type;
-    i    : in  nasti_slave_in_type;
-    o    : out nasti_slave_out_type;
-    irq  : out std_logic
-  );
-end component; 
-
 component nasti_pnp is
   generic (
     xindex  : integer := 0;

@@ -15,26 +15,24 @@ library commonlib;
 use commonlib.types_common.all;
 library rocketlib;
 use rocketlib.types_nasti.all;
+library gnsslib;
+use gnsslib.types_gnss.all;
 
 
-entity nasti_gnssstub is
+entity gnssengine is
   generic (
+    tech   : integer range 0 to NTECH := 0;
     xindex  : integer := 0;
     xaddr   : integer := 0;
     xmask   : integer := 16#fffff#
   );
   port (
-    clk_bus : in  std_logic;
-    clk_adc : in  std_logic;
-    nrst : in  std_logic;
-    cfg  : out nasti_slave_config_type;
-    i    : in  nasti_slave_in_type;
-    o    : out nasti_slave_out_type;
-    irq  : out std_logic
+    i : in gns_in_type;
+    o : out gns_out_type
   );
 end; 
  
-architecture arch_nasti_gnssstub of nasti_gnssstub is
+architecture arch_gnssengine of gnssengine is
   --! 4-bytes alignment so that all registers implemented as 32-bits
   --! width.
   constant ALIGNMENT_BYTES : integer := 4;
@@ -100,7 +98,7 @@ begin
       end if;
     end if;
 
-    procedureAxi4(i, xconfig, r.bank_axi, v.bank_axi);
+    procedureAxi4(i.axi, xconfig, r.bank_axi, v.bank_axi);
 
     for n in 0 to CFG_NASTI_DATA_BYTES/ALIGNMENT_BYTES-1 loop
        raddr_reg(n) := conv_integer(r.bank_axi.raddr(ALIGNMENT_BYTES*n)(11 downto log2(ALIGNMENT_BYTES)));
@@ -122,12 +120,12 @@ begin
     end loop;
 
 
-    if i.w_valid = '1' and 
+    if i.axi.w_valid = '1' and 
        r.bank_axi.wstate = wtrans and 
        r.bank_axi.wresp = NASTI_RESP_OKAY then
 
-      wdata := i.w_data;
-      wstrb := i.w_strb;
+      wdata := i.axi.w_data;
+      wstrb := i.axi.w_strb;
       for n in 0 to CFG_NASTI_DATA_BYTES/ALIGNMENT_BYTES-1 loop
          waddr_reg(n) := conv_integer(r.bank_axi.waddr(ALIGNMENT_BYTES*n)(11 downto log2(ALIGNMENT_BYTES)));
 
@@ -143,30 +141,31 @@ begin
       end loop;
     end if;
 
-    irq <= rise_irq;
-    o <= functionAxi4Output(r.bank_axi, rdata);
+    o.ms_pulse <= rise_irq;
+    o.pps <= '0';
+    o.axi <= functionAxi4Output(r.bank_axi, rdata);
     rin <= v;
   end process;
 
-  cfg  <= xconfig;
+  o.cfg  <= xconfig;
 
   -- registers:
-  regadc : process(clk_adc, nrst)
+  regadc : process(i.clk_adc, i.nrst)
   begin 
-     if nrst = '0' then
+     if i.nrst = '0' then
         r.bank_adc.tmr.MsCnt <= (others => '0');
         r.bank_adc.clk_cnt <= 25000;
-     elsif rising_edge(clk_adc) then 
+     elsif rising_edge(i.clk_adc) then 
         r.bank_adc <= rin.bank_adc;
      end if; 
   end process;
 
-  regs : process(clk_bus, nrst)
+  regs : process(i.clk_bus, i.nrst)
   begin 
-     if nrst = '0' then
+     if i.nrst = '0' then
         r.bank_axi <= NASTI_SLAVE_BANK_RESET;
         r.MsLength <= (others => '0');
-     elsif rising_edge(clk_bus) then 
+     elsif rising_edge(i.clk_bus) then 
         r.bank_axi <= rin.bank_axi;
         r.MsLength <= rin.MsLength;
      end if; 

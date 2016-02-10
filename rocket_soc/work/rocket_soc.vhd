@@ -159,6 +159,9 @@ architecture arch_rocket_soc of rocket_soc is
   signal ubridge_in  : bridge_in_type;
   signal ubridge_out : bridge_out_type;
   
+  signal gnss_i : gns_in_type;
+  signal gnss_o : gns_out_type;
+  
   signal fse_i : fse_in_type;
   signal fse_o : fse_out_type;
  
@@ -578,28 +581,6 @@ end generate;
     o_host => host2tile
   );
 
-  ------------------------------------
-  --! @brief GNSS Engine stub with the AXI4 interface.
-  --! @details Map address:
-  --!          0x80003000..0x80003fff (4 KB total)
-geneng_dis : if not CFG_GNSSLIB_ENABLE generate 
-  gnss0 : nasti_gnssstub  generic map
-  (
-    xindex  => CFG_NASTI_SLAVE_ENGINE,
-    xaddr   => 16#80003#,
-    xmask   => 16#FFFFF#
-  ) port map (
-    clk_bus => wClkBus,
-    clk_adc => wClkAdc,
-    nrst   => wNReset,
-    cfg    => cslv_cfg(CFG_NASTI_SLAVE_ENGINE),
-    i      => noc2cslv,
-    o      => cslv2carb(CFG_NASTI_SLAVE_ENGINE),
-    irq    => irq_pins(CFG_IRQ_GNSSENGINE)
-  );
-end generate;
-
-
   --! @brief RF front-end controller with the AXI4 interface.
   --! @details Map address:
   --!          0x80004000..0x80004fff (4 KB total)
@@ -624,11 +605,46 @@ end generate;
     outIntAntContr => o_antint_contr
   );
 
+  ------------------------------------
+  --! @brief GNSS Engine stub with the AXI4 interface.
+  --! @details Map address:
+  --!          0x80003000..0x80003fff (4 KB total)
+geneng_ena : if CFG_GNSSLIB_ENABLE generate 
+  gnss_i.nrst     <= wNReset;
+  gnss_i.clk_bus  <= wClkBus;
+  gnss_i.axi      <= noc2cslv;
+  gnss_i.clk_adc  <= wClkAdc;
+  gnss_i.gps_I    <= i_gps_I;
+  gnss_i.gps_Q    <= i_gps_Q;
+  gnss_i.glo_I    <= i_glo_I;
+  gnss_i.glo_Q    <= i_glo_I;
+
+  gnss0 : gnssengine  generic map
+  (
+    tech    => CFG_MEMTECH,
+    xindex  => CFG_NASTI_SLAVE_ENGINE,
+    xaddr   => 16#80003#,
+    xmask   => 16#FFFFF#
+  ) port map (
+    i      => gnss_i,
+    o      => gnss_o
+  );
+  
+  cslv2carb(CFG_NASTI_SLAVE_ENGINE) <= gnss_o.axi;
+  cslv_cfg(CFG_NASTI_SLAVE_ENGINE)  <= gnss_o.cfg;
+  irq_pins(CFG_IRQ_GNSSENGINE)      <= gnss_o.ms_pulse;
+end generate;
+geneng_dis : if not CFG_GNSSLIB_ENABLE generate 
+  cslv2carb(CFG_NASTI_SLAVE_ENGINE) <= nasti_slave_out_none;
+  cslv_cfg(CFG_NASTI_SLAVE_ENGINE)  <= nasti_slave_config_none;
+  irq_pins(CFG_IRQ_GNSSENGINE)      <= '0';
+end generate;
+
 
   --! @brief GPS-CA Fast Search Engine with the AXI4 interface.
   --! @details Map address:
   --!          0x80005000..0x80005fff (4 KB total)
-  fse0_ena : if CFG_GNSSLIB_FSEGPS_ENABLE = 1 generate 
+  fse0_ena : if CFG_GNSSLIB_ENABLE and CFG_GNSSLIB_FSEGPS_ENABLE = 1 generate 
       fse_i.nrst       <= wNReset;
       fse_i.clk_bus    <= wClkBus;
       fse_i.clk_fse    <= wClkBus;
@@ -636,8 +652,8 @@ end generate;
       fse_i.clk_adc    <= wClkAdc;
       fse_i.I          <= i_gps_I;
       fse_i.Q          <= i_gps_Q;
-      fse_i.ms_pulse   <= irq_pins(CFG_IRQ_GNSSENGINE);
-      fse_i.pps        <= irq_pins(CFG_IRQ_GNSSENGINE);
+      fse_i.ms_pulse   <= gnss_o.ms_pulse;
+      fse_i.pps        <= gnss_o.pps;
       fse_i.test_mode  <= '0';
 
       fse0 : TopFSE generic map (
