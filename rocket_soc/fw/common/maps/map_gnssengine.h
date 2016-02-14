@@ -2,7 +2,7 @@
  * @file
  * @copyright Copyright 2015 GNSS Sensor Ltd. All right reserved.
  * @author    Sergey Khabarov - sergeykhbr@gmail.com
- * @brief	  GNSS Engine memory map description.
+ * @brief     GNSS Engine memory map description.
  ****************************************************************************/
 #ifndef __MAP_GNSSENGINE_H__
 #define __MAP_GNSSENGINE_H__

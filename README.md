@@ -137,16 +137,58 @@ Do the following steps to change target on any unsupported board yet:
      * Check Interupt controller
      * and other.
 
+
+## How to build your own firmware
+
+  You can find step-by-step instruction of how to build your own
+toolchain on [riscv.org](http://riscv.org/software-tools/). If you would like
+to use pre-build GCC binary files and libraries you can download it here:
+ 
+   [Ubuntu GNU GCC toolchain RV64IMA (256MB)](www.gnss-sensor.com/index.php?LinkID=1013)
+
+  Feature of this GCC build is the configuration *RV64IMA* (without FPU).
+Default toolchain configuration generates makefile with hardware FPU that 
+makes *libc* library incompatible with the *_-msoft-float_* compiler key.
+
+  Just after you download the toolchain unpack it and set environment variable
+as follows:
+
+    $ tar -xzvf gnu-toolchain-rv64ima.tar.gz gnu-toolchain-rv64ima
+    $ export PATH=/home/your_path/gnu-toolchain-rv64ima/bin:$PATH
+
+
 ## RISC-V Firmware example for the Rocket-chip
 
-  RISC-V "Hello World" example is available in *./rocket_soc/fw/boot* directory.
-It implements general functionality for the Rocket-chip based system, such as:
+  So, now you can build your own firmware image and create hex-file that
+can be directly used in VHDL SOC (*rocket_soc/work/config_common.vhd*) to 
+initialize Boot ROM image (FW ROM is the additional option).
+
+  RISC-V "Hello World" example is available in *./rocket_soc/fw/boot* 
+directory. It implements general functionality for the Rocket-chip based 
+system, such as:
 - Initial Rocket-chip boot-up
 - Interrupt handling setup
 - UART output
 - LED switching
 - Target type auto-detection (RTL simulatation or not)
-- Coping image from ROM to SRAM using libc method *memcpy()*
+- Coping image from FW ROM to SRAM using libc method *memcpy()*
+
+To build this example use:
+
+    $ cd rocket_soc/fw/boot/makefiles
+    $ make
+    $ cd ../linuxbuild/bin
+
+Opened directory contains the following files:
+     * _bootimage_       - elf-file (not used by SOC).
+     * _bootimage.dump_  - disassembled file for the verification.
+     * *_bootimage.hex_* - HEX-file for the Boot ROM intialization.
+
+Specify the correct path to file *_bootimage.hex_* in SOC configuraiton file
+for this open file *rocket_soc/work/config_common.vhd* and set the correct 
+value to *_CFG_SIM_BOOTROM_HEX_* constant.
+
+I hope your are also here and run your firmware on RISC-V system.
 
 
 ## Doxygen project documentation

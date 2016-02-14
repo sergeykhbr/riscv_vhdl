@@ -10,14 +10,16 @@
 
 #include <inttypes.h>
 
-#define CFG_NASTI_SLAVES_TOTAL 7
+#define CFG_NASTI_SLAVES_TOTAL 9
+#define PNP_CONFIG_DEFAULT_BYTES 16
 
 typedef struct PnpConfigType {
     uint32_t xmask;
     uint32_t xaddr;
     uint16_t did;
     uint16_t vid;
-    uint32_t rsrv;
+    uint8_t size;
+    uint8_t rsrv[3];
 } PnpConfigType;
 
 typedef struct pnp_map {

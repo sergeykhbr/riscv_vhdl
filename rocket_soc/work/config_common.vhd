@@ -72,6 +72,6 @@ constant CFG_SIM_FWIMAGE_HEX : string :=
 constant CFG_GNSSLIB_ENABLE : boolean := true;
 
 --! @brief Enable Fast Search Engine for the GPS signals.
-constant CFG_GNSSLIB_FSEGPS_ENABLE : integer := 1;
+constant CFG_GNSSLIB_FSEGPS_ENABLE : integer := 0;
 
 end;

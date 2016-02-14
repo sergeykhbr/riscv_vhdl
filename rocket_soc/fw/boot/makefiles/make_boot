@@ -63,6 +63,8 @@ OBJDUMP=riscv64-unknown-elf-objdump
 #     or -nodefaultlibs is used. 
 
 CFLAGS= -c -g -static -std=gnu99 -O2 -fno-common -fno-builtin-printf
+CFLAGS += -march=RV64IMA     # RV64IMA (no floating point). maybe skipped.
+CFLAGS += -msoft-float       # binary incompatible with the default toolcahin.
 LDFLAGS=-T test.ld -nostdlib -nostartfiles 
 INCL_KEY=-I
 DIR_KEY=-B
@@ -100,8 +102,8 @@ all: boot
 
 boot: $(EXECUTABLE) $(DUMPFILE) $(HEXFILE)
 $(HEXFILE): $(EXECUTABLE)
-	echo elf2hex 16 512 $(addprefix $(ELF_DIR)/,$<) > $(addprefix $(ELF_DIR)/,$@)
-	elf2hex 16 512 $(addprefix $(ELF_DIR)/,$<) > $(addprefix $(ELF_DIR)/,$@)
+	echo elf2raw64 16 512 $(addprefix $(ELF_DIR)/,$<) > $(addprefix $(ELF_DIR)/,$@)
+	elf2raw64 16 512 $(addprefix $(ELF_DIR)/,$<) > $(addprefix $(ELF_DIR)/,$@)
 
 $(DUMPFILE): $(EXECUTABLE)
 	echo $(OBJDUMP) --disassemble-all --disassemble-zeroes --section=.text --section=.text.startup --section=.data $(addprefix $(ELF_DIR)/,$<) > $(addprefix $(ELF_DIR)/,$@)

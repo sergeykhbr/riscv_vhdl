@@ -32,7 +32,7 @@ void copy_image() {
     led_set(0xff);
     /** Speed-up RTL simulation by skipping coping stage: */
     tech = pnp->tech & 0xFF;
-    if (!TECH_IS_SIMULATION(tech)) {
+    if (tech != TECH_INFERRED) {
         memcpy(sram, fwrom, FW_IMAGE_SIZE_BYTES);
     }
     led_set(0x81);
