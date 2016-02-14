@@ -144,7 +144,7 @@ Do the following steps to change target on any unsupported board yet:
 toolchain on [riscv.org](http://riscv.org/software-tools/). If you would like
 to use pre-build GCC binary files and libraries you can download it here:
  
-   [Ubuntu GNU GCC toolchain RV64IMA (256MB)](www.gnss-sensor.com/index.php?LinkID=1013)
+   [Ubuntu GNU GCC toolchain RV64IMA (256MB)](http://www.gnss-sensor.com/index.php?LinkID=1013)
 
   Feature of this GCC build is the configuration *RV64IMA* (without FPU).
 Default toolchain configuration generates makefile with hardware FPU that 
@@ -180,9 +180,9 @@ To build this example use:
     $ cd ../linuxbuild/bin
 
 Opened directory contains the following files:
-     * _bootimage_       - elf-file (not used by SOC).
-     * _bootimage.dump_  - disassembled file for the verification.
-     * *_bootimage.hex_* - HEX-file for the Boot ROM intialization.
+- _bootimage_       - elf-file (not used by SOC).
+- _bootimage.dump_  - disassembled file for the verification.
+- *_bootimage.hex_* - HEX-file for the Boot ROM intialization.
 
 Specify the correct path to file *_bootimage.hex_* in SOC configuraiton file
 for this open file *rocket_soc/work/config_common.vhd* and set the correct 
