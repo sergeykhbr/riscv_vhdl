@@ -169,26 +169,21 @@ type tile_uncached_out_type is record
     grant_ready : std_logic;
 end record;
 
-type bridge_in_type is record
-  tile : tile_cached_out_type;
-  nasti : nasti_slave_out_type;
-end record;
-
-type bridge_out_type is record
-  tile : tile_cached_in_type;
-  nasti : nasti_slave_in_type;
-end record;
-
-  component AxiBridge is
+  component AxiBridge is generic (
+     xindex : integer := 0
+  );
   port (
     clk   : in  std_logic;
     nrst  : in  std_logic;
-    i_busy    : in std_logic;
-    o_acquired : out std_logic;
-    i     : in bridge_in_type;
-    o     : out bridge_out_type
+
+    --! Tile-to-AXI direction
+    tloi : in tile_cached_out_type;
+    msto : out nasti_master_out_type;
+    --! AXI-to-Tile direction
+    msti : in nasti_master_in_type;
+    tlio : out tile_cached_in_type
   );
-  end component; 
+  end component;
 
 
   --! @brief Decode Acquire request from the Cached/Uncached TileLink

@@ -129,35 +129,20 @@ architecture arch_rocket_soc of rocket_soc is
   signal wClkGnss   : std_ulogic; -- clock that goes to GnssEngine (config dependable)
   signal wPllLocked : std_ulogic; -- PLL status signal. 0=Unlocked; 1=locked.
 
-  signal i_starter : starter_in_type;
-  signal o_starter : starter_out_type;
   
   signal uart1i : uart_in_type;
   signal uart1o : uart_out_type;
 
-  signal htif_in_valid_delay : std_logic;
-  signal htif_in_ready_delay : std_logic;
-  signal htif_in_bits_delay : std_logic_vector(HTIF_WIDTH-1 downto 0);
-  signal htif_out_bits_delay : std_logic_vector(HTIF_WIDTH-1 downto 0);
-
-  signal htif_clk : std_logic;
-  signal htif_out_stats_delay : std_logic;
-
-  signal axi_acquired : std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0);
-  signal axi_busy : std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0);
-
   --! Arbiter is switching only slaves output signal, data from noc
   --! is connected to all slaves and to the arbiter itself.
-  signal noc2cslv   : nasti_slave_in_type;
-  signal carb2noc   : nasti_slave_out_type;
-  signal cslv2carb  : nasti_slaves_out_vector;
-  signal cslv_cfg   : nasti_slave_cfg_vector;
-
-  signal cbridge_in  : bridge_in_type;
-  signal cbridge_out : bridge_out_type;
-
-  signal ubridge_in  : bridge_in_type;
-  signal ubridge_out : bridge_out_type;
+  signal aximi   : nasti_master_in_type;
+  signal aximo   : nasti_master_out_vector;
+  signal axisi   : nasti_slave_in_type;
+  signal axiso   : nasti_slaves_out_vector;
+  signal axi_cfg   : nasti_slave_cfg_vector;
+  signal htifo : host_out_type;
+  signal htifi : host_in_vector;
+  signal htifi_mux : host_in_type;
   
   signal gnss_i : gns_in_type;
   signal gnss_o : gns_out_type;
@@ -166,8 +151,6 @@ architecture arch_rocket_soc of rocket_soc is
   signal fse_o : fse_out_type;
  
   signal irq_pins : std_logic_vector(CFG_IRQ_TOTAL-1 downto 0);
-  signal tile2host : host_out_type;
-  signal host2tile : host_in_type;
 begin
 
   --! PAD buffers:
@@ -177,6 +160,9 @@ begin
   iclk1  : ibuf_tech generic map(CFG_PADTECH) port map (ib_clk_adc, i_clk_adc);
   --! @todo all other in/out signals via buffers:
 
+  htifi_mux <= htifi(CFG_HTIF_SRC_IRQCTRL);
+  htifi(CFG_HTIF_SRC_DSU) <= host_in_none;
+  htifi(CFG_HTIF_SRC_ETH) <= host_in_none;
 
   ------------------------------------
   -- @brief Internal PLL device instance.
@@ -194,10 +180,6 @@ begin
     o_clk_adc   => wClkAdc,
     o_locked    => wPllLocked
   );
---`ifdef FPGA
-  htif_clk <= wClkBus;
---`endif
-
   wSysReset <= ib_rst or not wPllLocked;
 
   ------------------------------------
@@ -211,252 +193,50 @@ begin
   );
   wNReset <= not wReset;
 
-
-L1toL2ena0 : if CFG_COMMON_L1toL2_ENABLE generate 
-  ------------------------------------
-  -- Hardware init and MRESET for the CPUs
-  htif_in_bits_delay <= o_starter.in_bits;
-  htif_in_valid_delay <= o_starter.in_valid;
-
-  i_starter.in_ready  <= htif_in_ready_delay;
-  i_starter.out_bits  <= htif_out_bits_delay;
-  
-  start0 : Starter port map
-  (
-    clk   => htif_clk,
-    nrst  => wNReset,
-    i     => i_starter,
-    o     => o_starter
+  ctrl0 : axictrl port map (
+    clk    => wClkBus,
+    nrst   => wNReset,
+    slvoi  => axiso,
+    mstoi  => aximo,
+    slvio  => axisi,
+    mstio  => aximi
   );
 
-
-  ------------------------------------
-  --! @brief NoC core instance.
-  rocket0 : Top port map
-  (
-    clk                       => wClkBus,              --in
-    reset                     => wReset,               --in
-
-    io_host_in_valid          => htif_in_valid_delay,  --in
-    io_host_in_ready          => htif_in_ready_delay,  --out
-    io_host_in_bits           => htif_in_bits_delay,   --in[15:0]
-    io_host_out_valid         => i_starter.out_valid,  --out
-    io_host_out_ready         => o_starter.out_ready,  --in
-    io_host_out_bits          => htif_out_bits_delay,  --out[15:0] goes to Starter and Memory DeSerializer
-
-    io_host_clk               => htif_clk,             --out
-    io_host_clk_edge          => open,                 --out
-    io_host_debug_stats_csr   => htif_out_stats_delay, --out
-    io_mem_backup_ctrl_en     => '0', --in
-    io_mem_backup_ctrl_in_valid  => '0',--mem_bk_in_valid_delay, --in
-    io_mem_backup_ctrl_out_ready => '0',--mem_bk_out_ready_delay,--in
-    io_mem_backup_ctrl_out_valid => open,--mem_bk_out_valid_delay,--out
-
-    --! mem 
-    io_mem_0_aw_ready => carb2noc.aw_ready,--in
-    io_mem_0_aw_valid => cbridge_out.nasti.aw_valid,--out
-    io_mem_0_aw_bits_addr => cbridge_out.nasti.aw_bits.addr,--out[31:0]
-    io_mem_0_aw_bits_len => cbridge_out.nasti.aw_bits.len,--out[7:0]
-    io_mem_0_aw_bits_size => cbridge_out.nasti.aw_bits.size,--out[2:0]
-    io_mem_0_aw_bits_burst => cbridge_out.nasti.aw_bits.burst,--out[1:0]
-    io_mem_0_aw_bits_lock => cbridge_out.nasti.aw_bits.lock,--out
-    io_mem_0_aw_bits_cache => cbridge_out.nasti.aw_bits.cache,--out[3:0]
-    io_mem_0_aw_bits_prot => cbridge_out.nasti.aw_bits.prot,--out[2:0]
-    io_mem_0_aw_bits_qos => cbridge_out.nasti.aw_bits.qos,--out[3:0]
-    io_mem_0_aw_bits_region => cbridge_out.nasti.aw_bits.region,--out[3:0]
-    io_mem_0_aw_bits_id  => cbridge_out.nasti.aw_id,--out[5:0]
-    io_mem_0_aw_bits_user => cbridge_out.nasti.aw_user,--out
-    io_mem_0_w_ready => carb2noc.w_ready,--in
-    io_mem_0_w_valid  => cbridge_out.nasti.w_valid,--out
-    io_mem_0_w_bits_data => cbridge_out.nasti.w_data,--out[127:0]
-    io_mem_0_w_bits_last => cbridge_out.nasti.w_last,--out
-    io_mem_0_w_bits_strb => cbridge_out.nasti.w_strb,--out[15:0]
-    io_mem_0_w_bits_user => cbridge_out.nasti.w_user,--out
-    io_mem_0_b_ready => cbridge_out.nasti.b_ready,--out
-    io_mem_0_b_valid => carb2noc.b_valid,--in
-    io_mem_0_b_bits_resp => carb2noc.b_resp,--in[1:0]
-    io_mem_0_b_bits_id => carb2noc.b_id,--in[5:0]
-    io_mem_0_b_bits_user => carb2noc.b_user,--in
-    io_mem_0_ar_ready => carb2noc.ar_ready,--in
-    io_mem_0_ar_valid => cbridge_out.nasti.ar_valid,--out
-    io_mem_0_ar_bits_addr => cbridge_out.nasti.ar_bits.addr,--out[31:0]
-    io_mem_0_ar_bits_len => cbridge_out.nasti.ar_bits.len,--out[7:0]
-    io_mem_0_ar_bits_size => cbridge_out.nasti.ar_bits.size,--out[2:0]
-    io_mem_0_ar_bits_burst => cbridge_out.nasti.ar_bits.burst,--out[1:0]
-    io_mem_0_ar_bits_lock => cbridge_out.nasti.ar_bits.lock,--out
-    io_mem_0_ar_bits_cache => cbridge_out.nasti.ar_bits.cache,--out[3:0]
-    io_mem_0_ar_bits_prot => cbridge_out.nasti.ar_bits.prot,--out[2:0]
-    io_mem_0_ar_bits_qos => cbridge_out.nasti.ar_bits.qos,--out[3:0]
-    io_mem_0_ar_bits_region => cbridge_out.nasti.ar_bits.region,--out[3:0]
-    io_mem_0_ar_bits_id => cbridge_out.nasti.ar_id,--out[5:0]
-    io_mem_0_ar_bits_user => cbridge_out.nasti.ar_user,--out
-    io_mem_0_r_ready => cbridge_out.nasti.r_ready,--out
-    io_mem_0_r_valid => carb2noc.r_valid,--in
-    io_mem_0_r_bits_resp => carb2noc.r_resp,--in[1:0]
-    io_mem_0_r_bits_data => carb2noc.r_data,--in[127:0]
-    io_mem_0_r_bits_last => carb2noc.r_last,--in
-    io_mem_0_r_bits_id => carb2noc.r_id,--in[5:0]
-    io_mem_0_r_bits_user => carb2noc.r_user,--in
-    --! mmio 
-    io_mmio_aw_ready => carb2noc.aw_ready,--in
-    io_mmio_aw_valid => ubridge_out.nasti.aw_valid,--out
-    io_mmio_aw_bits_addr => ubridge_out.nasti.aw_bits.addr,--out[31:0]
-    io_mmio_aw_bits_len => ubridge_out.nasti.aw_bits.len,--out[7:0]
-    io_mmio_aw_bits_size => ubridge_out.nasti.aw_bits.size,--out[2:0]
-    io_mmio_aw_bits_burst => ubridge_out.nasti.aw_bits.burst,--out[1:0]
-    io_mmio_aw_bits_lock => ubridge_out.nasti.aw_bits.lock,--out
-    io_mmio_aw_bits_cache => ubridge_out.nasti.aw_bits.cache,--out[3:0]
-    io_mmio_aw_bits_prot => ubridge_out.nasti.aw_bits.prot,--out[2:0]
-    io_mmio_aw_bits_qos => ubridge_out.nasti.aw_bits.qos,--out[3:0]
-    io_mmio_aw_bits_region => ubridge_out.nasti.aw_bits.region,--out[3:0]
-    io_mmio_aw_bits_id  => ubridge_out.nasti.aw_id,--out[5:0]
-    io_mmio_aw_bits_user => ubridge_out.nasti.aw_user,--out
-    io_mmio_w_ready => carb2noc.w_ready,--in
-    io_mmio_w_valid  => ubridge_out.nasti.w_valid,--out
-    io_mmio_w_bits_data => ubridge_out.nasti.w_data,--out[127:0]
-    io_mmio_w_bits_last => ubridge_out.nasti.w_last,--out
-    io_mmio_w_bits_strb => ubridge_out.nasti.w_strb,--out[15:0]
-    io_mmio_w_bits_user => ubridge_out.nasti.w_user,--out
-    io_mmio_b_ready => ubridge_out.nasti.b_ready,--out
-    io_mmio_b_valid => carb2noc.b_valid,--in
-    io_mmio_b_bits_resp => carb2noc.b_resp,--in[1:0]
-    io_mmio_b_bits_id => carb2noc.b_id,--in[5:0]
-    io_mmio_b_bits_user => carb2noc.b_user,--in
-    io_mmio_ar_ready => carb2noc.ar_ready,--in
-    io_mmio_ar_valid => ubridge_out.nasti.ar_valid,--out
-    io_mmio_ar_bits_addr => ubridge_out.nasti.ar_bits.addr,--out[31:0]
-    io_mmio_ar_bits_len => ubridge_out.nasti.ar_bits.len,--out[7:0]
-    io_mmio_ar_bits_size => ubridge_out.nasti.ar_bits.size,--out[2:0]
-    io_mmio_ar_bits_burst => ubridge_out.nasti.ar_bits.burst,--out[1:0]
-    io_mmio_ar_bits_lock => ubridge_out.nasti.ar_bits.lock,--out
-    io_mmio_ar_bits_cache => ubridge_out.nasti.ar_bits.cache,--out[3:0]
-    io_mmio_ar_bits_prot => ubridge_out.nasti.ar_bits.prot,--out[2:0]
-    io_mmio_ar_bits_qos => ubridge_out.nasti.ar_bits.qos,--out[3:0]
-    io_mmio_ar_bits_region => ubridge_out.nasti.ar_bits.region,--out[3:0]
-    io_mmio_ar_bits_id => ubridge_out.nasti.ar_id,--out[5:0]
-    io_mmio_ar_bits_user => ubridge_out.nasti.ar_user,--out
-    io_mmio_r_ready => ubridge_out.nasti.r_ready,--out
-    io_mmio_r_valid => carb2noc.r_valid,--in
-    io_mmio_r_bits_resp => carb2noc.r_resp,--in[1:0]
-    io_mmio_r_bits_data => carb2noc.r_data,--in[127:0]
-    io_mmio_r_bits_last => carb2noc.r_last,--in
-    io_mmio_r_bits_id => carb2noc.r_id,--in[5:0]
-    io_mmio_r_bits_user => carb2noc.r_user--in
+L1toL2ena0 : if CFG_COMMON_L1toL2_ENABLE generate 
+  --! @brief RISC-V Processor core + Uncore.
+  cpu0 : rocket_l2cache generic map (
+    xindex1 => CFG_NASTI_MASTER_CACHED,
+    xindex2 => CFG_NASTI_MASTER_UNCACHED
+  ) port map ( 
+    rst      => wReset,
+    clk_sys  => wClkBus,
+    clk_htif => wClkBus,
+    slvo     => axisi,
+    msti     => aximi,
+    msto1    => aximo(CFG_NASTI_MASTER_CACHED),
+    msto2    => aximo(CFG_NASTI_MASTER_UNCACHED),
+    htifi    => htifi_mux,
+    htifo    => htifo
   );
 end generate;
   
 L1toL2dis0 : if not CFG_COMMON_L1toL2_ENABLE generate 
-
-  tile0 : RocketTile port map
-  (
-    clk                       => wClkBus,              --in
-    reset                     => wReset,               --in
-    io_cached_0_acquire_ready => cbridge_out.tile.acquire_ready,
-    io_cached_0_acquire_valid => cbridge_in.tile.acquire_valid,
-    io_cached_0_acquire_bits_addr_block => cbridge_in.tile.acquire_bits_addr_block,
-    io_cached_0_acquire_bits_client_xact_id => cbridge_in.tile.acquire_bits_client_xact_id,
-    io_cached_0_acquire_bits_addr_beat  => cbridge_in.tile.acquire_bits_addr_beat,
-    io_cached_0_acquire_bits_is_builtin_type  => cbridge_in.tile.acquire_bits_is_builtin_type,
-    io_cached_0_acquire_bits_a_type => cbridge_in.tile.acquire_bits_a_type,
-    io_cached_0_acquire_bits_union => cbridge_in.tile.acquire_bits_union,
-    io_cached_0_acquire_bits_data => cbridge_in.tile.acquire_bits_data,
-    io_cached_0_grant_ready => cbridge_in.tile.grant_ready,
-    io_cached_0_grant_valid => cbridge_out.tile.grant_valid,
-    io_cached_0_grant_bits_addr_beat => cbridge_out.tile.grant_bits_addr_beat,
-    io_cached_0_grant_bits_client_xact_id => cbridge_out.tile.grant_bits_client_xact_id,
-    io_cached_0_grant_bits_manager_xact_id => cbridge_out.tile.grant_bits_manager_xact_id,
-    io_cached_0_grant_bits_is_builtin_type => cbridge_out.tile.grant_bits_is_builtin_type,
-    io_cached_0_grant_bits_g_type => cbridge_out.tile.grant_bits_g_type,
-    io_cached_0_grant_bits_data => cbridge_out.tile.grant_bits_data,
-    io_cached_0_probe_ready => cbridge_in.tile.probe_ready,
-    io_cached_0_probe_valid => cbridge_out.tile.probe_valid,
-    io_cached_0_probe_bits_addr_block => cbridge_out.tile.probe_bits_addr_block,
-    io_cached_0_probe_bits_p_type => cbridge_out.tile.probe_bits_p_type,
-    io_cached_0_release_ready => cbridge_out.tile.release_ready,
-    io_cached_0_release_valid => cbridge_in.tile.release_valid,
-    io_cached_0_release_bits_addr_beat => cbridge_in.tile.release_bits_addr_beat,
-    io_cached_0_release_bits_addr_block => cbridge_in.tile.release_bits_addr_block,
-    io_cached_0_release_bits_client_xact_id => cbridge_in.tile.release_bits_client_xact_id,
-    io_cached_0_release_bits_r_type => cbridge_in.tile.release_bits_r_type,
-    io_cached_0_release_bits_voluntary => cbridge_in.tile.release_bits_voluntary,
-    io_cached_0_release_bits_data => cbridge_in.tile.release_bits_data,
-    io_uncached_0_acquire_ready => ubridge_out.tile.acquire_ready,
-    io_uncached_0_acquire_valid => ubridge_in.tile.acquire_valid,
-    io_uncached_0_acquire_bits_addr_block => ubridge_in.tile.acquire_bits_addr_block,
-    io_uncached_0_acquire_bits_client_xact_id => ubridge_in.tile.acquire_bits_client_xact_id,
-    io_uncached_0_acquire_bits_addr_beat => ubridge_in.tile.acquire_bits_addr_beat,
-    io_uncached_0_acquire_bits_is_builtin_type => ubridge_in.tile.acquire_bits_is_builtin_type,
-    io_uncached_0_acquire_bits_a_type => ubridge_in.tile.acquire_bits_a_type,
-    io_uncached_0_acquire_bits_union => ubridge_in.tile.acquire_bits_union,
-    io_uncached_0_acquire_bits_data => ubridge_in.tile.acquire_bits_data,
-    io_uncached_0_grant_ready => ubridge_in.tile.grant_ready,
-    io_uncached_0_grant_valid => ubridge_out.tile.grant_valid,
-    io_uncached_0_grant_bits_addr_beat => ubridge_out.tile.grant_bits_addr_beat,
-    io_uncached_0_grant_bits_client_xact_id => ubridge_out.tile.grant_bits_client_xact_id,
-    io_uncached_0_grant_bits_manager_xact_id => ubridge_out.tile.grant_bits_manager_xact_id,
-    io_uncached_0_grant_bits_is_builtin_type => ubridge_out.tile.grant_bits_is_builtin_type,
-    io_uncached_0_grant_bits_g_type => ubridge_out.tile.grant_bits_g_type,
-    io_uncached_0_grant_bits_data => ubridge_out.tile.grant_bits_data,
-    io_host_reset => host2tile.reset,
-    io_host_id => host2tile.id,
-    io_host_csr_req_ready => tile2host.csr_req_ready,
-    io_host_csr_req_valid => host2tile.csr_req_valid,
-    io_host_csr_req_bits_rw => host2tile.csr_req_bits_rw,
-    io_host_csr_req_bits_addr => host2tile.csr_req_bits_addr,
-    io_host_csr_req_bits_data => host2tile.csr_req_bits_data,
-    io_host_csr_resp_ready => host2tile.csr_resp_ready,
-    io_host_csr_resp_valid => tile2host.csr_resp_valid,
-    io_host_csr_resp_bits => tile2host.csr_resp_bits,
-    io_host_debug_stats_csr => tile2host.debug_stats_csr
-);
-
-  cbridge_in.nasti <= carb2noc;
-  ubridge_in.nasti <= carb2noc;
-
-  axi_busy(CFG_NASTI_MASTER_CACHED) <= axi_acquired(CFG_NASTI_MASTER_UNCACHED);
-  
-  cbridge0 : AxiBridge 
-  port map (
-    clk => wClkBus,
-    nrst => wNReset,
-    i_busy => axi_busy(CFG_NASTI_MASTER_CACHED),
-    o_acquired => axi_acquired(CFG_NASTI_MASTER_CACHED),
-    i => cbridge_in,
-    o => cbridge_out
+  --! @brief RISC-V Processor core.
+  cpu0 : rocket_l1only generic map (
+    xindex1 => CFG_NASTI_MASTER_CACHED,
+    xindex2 => CFG_NASTI_MASTER_UNCACHED
+  ) port map ( 
+    rst      => wReset,
+    clk_sys  => wClkBus,
+    clk_htif => wClkBus,
+    slvo     => axisi,
+    msti     => aximi,
+    msto1    => aximo(CFG_NASTI_MASTER_CACHED),
+    msto2    => aximo(CFG_NASTI_MASTER_UNCACHED),
+    htifi    => htifi_mux,
+    htifo    => htifo
   );
-
-  --! We provide priority to acquire AXI bus to the cached Link
-  axi_busy(CFG_NASTI_MASTER_UNCACHED) <= 
-    cbridge_in.tile.acquire_valid or axi_acquired(CFG_NASTI_MASTER_CACHED);
-  
-  ubridge0 : AxiBridge 
-  port map (
-    clk => wClkBus,
-    nrst => wNReset,
-    i_busy => axi_busy(CFG_NASTI_MASTER_UNCACHED),
-    o_acquired => axi_acquired(CFG_NASTI_MASTER_UNCACHED),
-    i => ubridge_in,
-    o => ubridge_out
-  );
-
 end generate;
-
-  ------------------------------------
-  -- @brief request multiplexer from cached/uncached TileLink into AXI4 bus
-  bridgemux0 : TileBridgeArbiter
-  port map (
-    i_cached => cbridge_out.nasti,
-    i_uncached => ubridge_out.nasti,  
-    o => noc2cslv
-  );
-
-  ------------------------------------
-  -- @brief Cached memory access arbiter:
-  carb0 : NastiArbiter port map (
-    clk  => wClkBus,
-    i    => cslv2carb,
-    o    => carb2noc
-  );
 
   ------------------------------------
   --! @brief BOOT ROM module isntance with the AXI4 interface.
@@ -471,9 +251,9 @@ end generate;
   ) port map (
     clk  => wClkBus,
     nrst => wNReset,
-    cfg  => cslv_cfg(CFG_NASTI_SLAVE_BOOTROM),
-    i    => noc2cslv,
-    o    => cslv2carb(CFG_NASTI_SLAVE_BOOTROM)
+    cfg  => axi_cfg(CFG_NASTI_SLAVE_BOOTROM),
+    i    => axisi,
+    o    => axiso(CFG_NASTI_SLAVE_BOOTROM)
   );
 
   ------------------------------------
@@ -489,9 +269,9 @@ end generate;
   ) port map (
     clk  => wClkBus,
     nrst => wNReset,
-    cfg  => cslv_cfg(CFG_NASTI_SLAVE_ROMIMAGE),
-    i    => noc2cslv,
-    o    => cslv2carb(CFG_NASTI_SLAVE_ROMIMAGE)
+    cfg  => axi_cfg(CFG_NASTI_SLAVE_ROMIMAGE),
+    i    => axisi,
+    o    => axiso(CFG_NASTI_SLAVE_ROMIMAGE)
   );
 
   ------------------------------------
@@ -508,9 +288,9 @@ end generate;
   ) port map (
     clk  => wClkBus,
     nrst => wNReset,
-    cfg  => cslv_cfg(CFG_NASTI_SLAVE_SRAM),
-    i    => noc2cslv,
-    o    => cslv2carb(CFG_NASTI_SLAVE_SRAM)
+    cfg  => axi_cfg(CFG_NASTI_SLAVE_SRAM),
+    i    => axisi,
+    o    => axiso(CFG_NASTI_SLAVE_SRAM)
   );
 
 
@@ -525,9 +305,9 @@ end generate;
   ) port map (
     clk   => wClkBus,
     nrst  => wNReset,
-    cfg   => cslv_cfg(CFG_NASTI_SLAVE_GPIO),
-    i     => noc2cslv,
-    o     => cslv2carb(CFG_NASTI_SLAVE_GPIO),
+    cfg   => axi_cfg(CFG_NASTI_SLAVE_GPIO),
+    i     => axisi,
+    o     => axiso(CFG_NASTI_SLAVE_GPIO),
     i_dip => i_dip,
     o_led => o_led
   );
@@ -550,11 +330,11 @@ end generate;
   ) port map (
     nrst   => wNReset, 
     clk    => wClkbus, 
-    cfg    => cslv_cfg(CFG_NASTI_SLAVE_UART1),
+    cfg    => axi_cfg(CFG_NASTI_SLAVE_UART1),
     i_uart => uart1i, 
     o_uart => uart1o,
-    i_axi  => noc2cslv,
-    o_axi  => cslv2carb(CFG_NASTI_SLAVE_UART1)
+    i_axi  => axisi,
+    o_axi  => axiso(CFG_NASTI_SLAVE_UART1)
   );
   o_uart1_td  <= uart1o.td;
   o_uart1_rtsn <= not uart1o.rts;
@@ -574,11 +354,11 @@ end generate;
     clk    => wClkBus,
     nrst   => wNReset,
     i_irqs => irq_pins,
-    o_cfg  => cslv_cfg(CFG_NASTI_SLAVE_IRQCTRL),
-    i_axi  => noc2cslv,
-    o_axi  => cslv2carb(CFG_NASTI_SLAVE_IRQCTRL),
-    i_host => tile2host,
-    o_host => host2tile
+    o_cfg  => axi_cfg(CFG_NASTI_SLAVE_IRQCTRL),
+    i_axi  => axisi,
+    o_axi  => axiso(CFG_NASTI_SLAVE_IRQCTRL),
+    i_host => htifo,
+    o_host => htifi(CFG_HTIF_SRC_IRQCTRL)
   );
 
   --! @brief RF front-end controller with the AXI4 interface.
@@ -591,9 +371,9 @@ end generate;
   ) port map (
     nrst           => wNReset,
     clk            => wClkBus,
-    o_cfg          => cslv_cfg(CFG_NASTI_SLAVE_RFCTRL),
-    i_axi          => noc2cslv,
-    o_axi          => cslv2carb(CFG_NASTI_SLAVE_RFCTRL),
+    o_cfg          => axi_cfg(CFG_NASTI_SLAVE_RFCTRL),
+    i_axi          => axisi,
+    o_axi          => axiso(CFG_NASTI_SLAVE_RFCTRL),
     i_gps_ld       => i_gps_ld,
     i_glo_ld       => i_glo_ld,
     outSCLK        => o_max_sclk,
@@ -612,7 +392,7 @@ end generate;
 geneng_ena : if CFG_GNSSLIB_ENABLE generate 
   gnss_i.nrst     <= wNReset;
   gnss_i.clk_bus  <= wClkBus;
-  gnss_i.axi      <= noc2cslv;
+  gnss_i.axi      <= axisi;
   gnss_i.clk_adc  <= wClkAdc;
   gnss_i.gps_I    <= i_gps_I;
   gnss_i.gps_Q    <= i_gps_Q;
@@ -630,13 +410,13 @@ geneng_ena : if CFG_GNSSLIB_ENABLE generate
     o      => gnss_o
   );
   
-  cslv2carb(CFG_NASTI_SLAVE_ENGINE) <= gnss_o.axi;
-  cslv_cfg(CFG_NASTI_SLAVE_ENGINE)  <= gnss_o.cfg;
+  axiso(CFG_NASTI_SLAVE_ENGINE) <= gnss_o.axi;
+  axi_cfg(CFG_NASTI_SLAVE_ENGINE)  <= gnss_o.cfg;
   irq_pins(CFG_IRQ_GNSSENGINE)      <= gnss_o.ms_pulse;
 end generate;
 geneng_dis : if not CFG_GNSSLIB_ENABLE generate 
-  cslv2carb(CFG_NASTI_SLAVE_ENGINE) <= nasti_slave_out_none;
-  cslv_cfg(CFG_NASTI_SLAVE_ENGINE)  <= nasti_slave_config_none;
+  axiso(CFG_NASTI_SLAVE_ENGINE) <= nasti_slave_out_none;
+  axi_cfg(CFG_NASTI_SLAVE_ENGINE)  <= nasti_slave_config_none;
   irq_pins(CFG_IRQ_GNSSENGINE)      <= '0';
 end generate;
 
@@ -648,7 +428,7 @@ end generate;
       fse_i.nrst       <= wNReset;
       fse_i.clk_bus    <= wClkBus;
       fse_i.clk_fse    <= wClkBus;
-      fse_i.axi        <= noc2cslv;
+      fse_i.axi        <= axisi;
       fse_i.clk_adc    <= wClkAdc;
       fse_i.I          <= i_gps_I;
       fse_i.Q          <= i_gps_Q;
@@ -667,13 +447,13 @@ end generate;
         o => fse_o
       );
   
-      cslv_cfg(CFG_NASTI_SLAVE_FSE_GPS) <= fse_o.cfg;
-      cslv2carb(CFG_NASTI_SLAVE_FSE_GPS) <= fse_o.axi;
+      axi_cfg(CFG_NASTI_SLAVE_FSE_GPS) <= fse_o.cfg;
+      axiso(CFG_NASTI_SLAVE_FSE_GPS) <= fse_o.axi;
   end generate;
   --! FSE GPS disable
   fse0_dis : if CFG_GNSSLIB_FSEGPS_ENABLE = 0 generate 
-      cslv_cfg(CFG_NASTI_SLAVE_FSE_GPS) <= nasti_slave_config_none;
-      cslv2carb(CFG_NASTI_SLAVE_FSE_GPS) <= nasti_slave_out_none;
+      axi_cfg(CFG_NASTI_SLAVE_FSE_GPS) <= nasti_slave_config_none;
+      axiso(CFG_NASTI_SLAVE_FSE_GPS) <= nasti_slave_out_none;
   end generate;
 
 
@@ -689,10 +469,10 @@ end generate;
   ) port map (
     clk    => wClkbus, 
     nrst   => wNReset,
-    cfgvec => cslv_cfg,
-    cfg    => cslv_cfg(CFG_NASTI_SLAVE_PNP),
-    i      => noc2cslv,
-    o      => cslv2carb(CFG_NASTI_SLAVE_PNP)
+    cfgvec => axi_cfg,
+    cfg    => axi_cfg(CFG_NASTI_SLAVE_PNP),
+    i      => axisi,
+    o      => axiso(CFG_NASTI_SLAVE_PNP)
   );
 
 

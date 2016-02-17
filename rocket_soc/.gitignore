@@ -10,7 +10,8 @@ fw/*
 !fw/boot/
 fw/boot/linuxbuild/
 patches/
-work/tb/bridge0_tb.vhd
+work/tb/*
+!work/tb/rocket_soc_tb.vhd
 docs/*.pptx
 ise/*
 !ise/ml605/*.xise

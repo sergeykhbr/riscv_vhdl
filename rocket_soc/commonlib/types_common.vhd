@@ -65,6 +65,7 @@ function "-" (d : std_logic_vector; i : integer) return std_logic_vector;
 function "-" (a, b : std_logic_vector) return std_logic_vector;
 function "+" (d : std_logic_vector; i : integer) return std_logic_vector;
 function "+" (a, b : std_logic_vector) return std_logic_vector;
+function "+" (d : std_logic_vector; i : std_ulogic) return std_logic_vector;
 
 function conv_integer(v : std_logic_vector) return integer;
 function conv_integer(v : std_logic) return integer;
@@ -136,6 +137,21 @@ begin
   else
      x := (others =>'X'); y := (others =>'X');
      if (x'length > y'length) then return(x); else return(y); end if;
+  end if;
+-- pragma translate_on
+end;
+
+function "+" (d : std_logic_vector; i : std_ulogic) return std_logic_vector is
+variable x : std_logic_vector(d'length-1 downto 0);
+variable y : std_logic_vector(0 downto 0);
+begin
+  y(0) := i;
+-- pragma translate_off
+  if not is_x(d) then
+-- pragma translate_on
+    return(std_logic_vector(unsigned(d) + unsigned(y)));
+-- pragma translate_off
+  else x := (others =>'X'); return(x); 
   end if;
 -- pragma translate_on
 end;
