@@ -139,10 +139,17 @@ architecture arch_rocket_soc of rocket_soc is
   signal aximo   : nasti_master_out_vector;
   signal axisi   : nasti_slave_in_type;
   signal axiso   : nasti_slaves_out_vector;
-  signal axi_cfg   : nasti_slave_cfg_vector;
-  signal htifo : host_out_type;
-  signal htifi : host_in_vector;
-  signal htifi_mux : host_in_type;
+  signal axi_cfg : nasti_slave_cfg_vector;
+  
+  --! From modules-to-tile requests
+  signal htifo : host_out_vector;
+  --! Selected request with the highest priority.
+  signal htifo_mux : host_out_type;
+  
+  --! tile-to-module response.
+  signal htifi : host_in_type;
+  --! response with the 'grant' signal marking the exact recipient.
+  signal htifi_grant : host_in_type;
   
   signal gnss_i : gns_in_type;
   signal gnss_o : gns_out_type;
@@ -160,9 +167,9 @@ begin
   iclk1  : ibuf_tech generic map(CFG_PADTECH) port map (ib_clk_adc, i_clk_adc);
   --! @todo all other in/out signals via buffers:
 
-  htifi_mux <= htifi(CFG_HTIF_SRC_IRQCTRL);
-  htifi(CFG_HTIF_SRC_DSU) <= host_in_none;
-  htifi(CFG_HTIF_SRC_ETH) <= host_in_none;
+  --htifo_mux <= htifo(CFG_HTIF_SRC_IRQCTRL);
+  htifo(CFG_HTIF_SRC_DSU) <= host_out_none;
+  htifo(CFG_HTIF_SRC_ETH) <= host_out_none;
 
   ------------------------------------
   -- @brief Internal PLL device instance.
@@ -193,6 +200,7 @@ begin
   );
   wNReset <= not wReset;
 
+  --! @brief AXI4 controller.
   ctrl0 : axictrl port map (
     clk    => wClkBus,
     nrst   => wNReset,
@@ -201,6 +209,16 @@ begin
     slvio  => axisi,
     mstio  => aximi
   );
+  
+  --! @brief HostIO controller.
+  htif0 : htifctrl port map (
+    clk    => wClkBus,
+    nrst   => wNReset,
+    srcsi  => htifo,
+    srcso  => htifo_mux,
+    htifii => htifi,
+    htifio => htifi_grant
+);
 
 L1toL2ena0 : if CFG_COMMON_L1toL2_ENABLE generate 
   --! @brief RISC-V Processor core + Uncore.
@@ -210,13 +228,12 @@ L1toL2ena0 : if CFG_COMMON_L1toL2_ENABLE generate
   ) port map ( 
     rst      => wReset,
     clk_sys  => wClkBus,
-    clk_htif => wClkBus,
     slvo     => axisi,
     msti     => aximi,
     msto1    => aximo(CFG_NASTI_MASTER_CACHED),
     msto2    => aximo(CFG_NASTI_MASTER_UNCACHED),
-    htifi    => htifi_mux,
-    htifo    => htifo
+    htifoi   => htifo_mux,
+    htifio   => htifi
   );
 end generate;
   
@@ -228,13 +245,12 @@ L1toL2dis0 : if not CFG_COMMON_L1toL2_ENABLE generate
   ) port map ( 
     rst      => wReset,
     clk_sys  => wClkBus,
-    clk_htif => wClkBus,
     slvo     => axisi,
     msti     => aximi,
     msto1    => aximo(CFG_NASTI_MASTER_CACHED),
     msto2    => aximo(CFG_NASTI_MASTER_UNCACHED),
-    htifi    => htifi_mux,
-    htifo    => htifo
+    htifoi   => htifo_mux,
+    htifio   => htifi
   );
 end generate;
 
@@ -346,10 +362,10 @@ end generate;
   --!          0x80002000..0x80002fff (4 KB total)
   irq0 : nasti_irqctrl generic map
   (
-    xindex   => CFG_NASTI_SLAVE_IRQCTRL,
-    xaddr    => 16#80002#,
-    xmask    => 16#FFFFF#,
-    L2_ena   => CFG_COMMON_L1toL2_ENABLE
+    xindex     => CFG_NASTI_SLAVE_IRQCTRL,
+    xaddr      => 16#80002#,
+    xmask      => 16#FFFFF#,
+    htif_index => CFG_HTIF_SRC_IRQCTRL
   ) port map (
     clk    => wClkBus,
     nrst   => wNReset,
@@ -357,8 +373,8 @@ end generate;
     o_cfg  => axi_cfg(CFG_NASTI_SLAVE_IRQCTRL),
     i_axi  => axisi,
     o_axi  => axiso(CFG_NASTI_SLAVE_IRQCTRL),
-    i_host => htifo,
-    o_host => htifi(CFG_HTIF_SRC_IRQCTRL)
+    i_host => htifi_grant,
+    o_host => htifo(CFG_HTIF_SRC_IRQCTRL)
   );
 
   --! @brief RF front-end controller with the AXI4 interface.

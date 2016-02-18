@@ -13,13 +13,13 @@ library rocketlib;
 use rocketlib.types_rocket.all;
 
 --! @brief   HostIO (HTIF) bus controller. 
---! @todo    Add more flexible multi-sources logic.
 entity htifctrl is
   port (
     clk    : in std_logic;
     nrst   : in std_logic;
-    srcs   : in host_in_vector;
-    htifoi : in host_out_type;
+    srcsi  : in host_out_vector;
+    srcso  : out host_out_type;
+    htifii : in host_in_type;
     htifio : out host_in_type
 );
 end; 
@@ -30,47 +30,56 @@ architecture arch_htifctrl of htifctrl is
 
   type reg_type is record
      idx : integer range 0 to CFG_HTIF_SRC_TOTAL-1;
-     sel : std_logic_vector(CFG_HTIF_SRC_TOTAL-1 downto 0);
+     srcsel : std_logic_vector(CFG_HTIF_SRC_TOTAL-1 downto 0);
   end record;
 
   signal rin, r : reg_type;
 begin
 
-  comblogic : process(srcs, htifoi)
+  comblogic : process(srcsi, htifii)
     variable v : reg_type;
+    variable idx : integer range 0 to CFG_HTIF_SRC_TOTAL-1;
+    variable srcsel : std_logic_vector(CFG_HTIF_SRC_TOTAL-1 downto 0);
     variable req : std_logic;
-    variable cur_htif : host_in_type;
   begin
 
     v := r;
     req := '0';
-    cur_htif := host_in_none;
+    idx := 0;
+    srcsel := r.srcsel;
 
     for n in 0 to CFG_HTIF_SRC_TOTAL-1 loop
-       if req = '0' and srcs(n).csr_req_valid = '1' and r.sel = HTIF_ZERO then
-          v.idx    := n;
-          v.sel(n) := '1';
+       if req = '0' and srcsi(n).csr_req_valid = '1' then
+          idx := n;
           req := '1';
-          cur_htif := srcs(n);
        end if;
     end loop;
 
-   if r.sel /= HTIF_ZERO then
-      cur_htif := srcs(r.idx);
-       --! Free bus:
-      if (htifoi.csr_resp_valid and srcs(r.idx).csr_resp_ready) = '1' then
-         v.sel := HTIF_ZERO;
-      end if;
-   end if;
+    if (srcsel = HTIF_ZERO) or (htifii.csr_resp_valid and srcsi(r.idx).csr_resp_ready) = '1' then
+       srcsel(r.idx) := '0';
+       srcsel(idx) := req;
+       v.idx := idx;
+    else
+       idx := r.idx;
+    end if;
+
+    v.srcsel := srcsel;
 
     rin <= v;
-    htifio <= cur_htif;
+    
+    srcso <= srcsi(idx);
+    htifio.grant           <= srcsel;
+    htifio.csr_req_ready   <= htifii.csr_req_ready;
+    htifio.csr_resp_valid  <= htifii.csr_resp_valid;
+    htifio.csr_resp_bits   <= htifii.csr_resp_bits;
+    htifio.debug_stats_csr <= htifii.debug_stats_csr;
+
   end process;
 
   reg0 : process(clk, nrst) begin
      if nrst = '0' then
         r.idx <= 0;
-        r.sel <= (others =>'0');
+        r.srcsel <= (others =>'0');
      elsif rising_edge(clk) then 
         r <= rin;
      end if; 

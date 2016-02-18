@@ -41,13 +41,12 @@ generic (
 port ( 
     rst      : in std_logic;
     clk_sys  : in std_logic;
-    clk_htif : in std_logic;
     slvo     : in nasti_slave_in_type;
     msti     : in nasti_master_in_type;
     msto1    : out nasti_master_out_type;
     msto2    : out nasti_master_out_type;
-    htifi    : in host_in_type;
-    htifo    : out host_out_type
+    htifoi   : in host_out_type;
+    htifio   : out host_in_type
 );
   --! @}
 
@@ -181,17 +180,17 @@ begin
     io_uncached_0_grant_bits_is_builtin_type => uti.grant_bits_is_builtin_type,
     io_uncached_0_grant_bits_g_type => uti.grant_bits_g_type,
     io_uncached_0_grant_bits_data => uti.grant_bits_data,
-    io_host_reset => htifi.reset,
-    io_host_id => htifi.id,
-    io_host_csr_req_ready => htifo.csr_req_ready,
-    io_host_csr_req_valid => htifi.csr_req_valid,
-    io_host_csr_req_bits_rw => htifi.csr_req_bits_rw,
-    io_host_csr_req_bits_addr => htifi.csr_req_bits_addr,
-    io_host_csr_req_bits_data => htifi.csr_req_bits_data,
-    io_host_csr_resp_ready => htifi.csr_resp_ready,
-    io_host_csr_resp_valid => htifo.csr_resp_valid,
-    io_host_csr_resp_bits => htifo.csr_resp_bits,
-    io_host_debug_stats_csr => htifo.debug_stats_csr
+    io_host_reset => htifoi.reset,
+    io_host_id => htifoi.id,
+    io_host_csr_req_ready => htifio.csr_req_ready,
+    io_host_csr_req_valid => htifoi.csr_req_valid,
+    io_host_csr_req_bits_rw => htifoi.csr_req_bits_rw,
+    io_host_csr_req_bits_addr => htifoi.csr_req_bits_addr,
+    io_host_csr_req_bits_data => htifoi.csr_req_bits_data,
+    io_host_csr_resp_ready => htifoi.csr_resp_ready,
+    io_host_csr_resp_valid => htifio.csr_resp_valid,
+    io_host_csr_resp_bits => htifio.csr_resp_bits,
+    io_host_debug_stats_csr => htifio.debug_stats_csr
   );
 
  

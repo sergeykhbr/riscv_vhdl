@@ -55,8 +55,8 @@ constant CFG_HTIF_SRC_ETH     : integer := CFG_HTIF_SRC_DSU + 1;
 constant CFG_HTIF_SRC_TOTAL   : integer := CFG_HTIF_SRC_ETH + 1;
 --! @}
 
---! HostIO tile input signals
-type host_in_type is  record
+--! HostIO tile output signals
+type host_out_type is  record
     reset : std_logic;
     id : std_logic;
     csr_req_valid : std_logic;
@@ -66,20 +66,59 @@ type host_in_type is  record
     csr_resp_ready : std_logic;
 end record;
 
-constant host_in_none : host_in_type := (
+constant host_out_none : host_out_type := (
      '0', '0', '0', '0', (others => '0'), (others => '0'), '0');
-type host_in_vector is array (0 to CFG_HTIF_SRC_TOTAL-1) 
-       of host_in_type;
+type host_out_vector is array (0 to CFG_HTIF_SRC_TOTAL-1) 
+       of host_out_type;
 
 
---! HostIO tile output signals
-type host_out_type is record
+--! HostIO tile input signals
+type host_in_type is record
+    grant : std_logic_vector(CFG_HTIF_SRC_TOTAL-1 downto 0);
     csr_req_ready : std_logic;
     csr_resp_valid : std_logic;
     csr_resp_bits : std_logic_vector(63 downto 0);
     debug_stats_csr : std_logic;
 end record;
 
+--! @brief   HostIO (HTIF) controller. 
+--! @details This device provides multiplexing of the Host messages
+--!          from several sources (interrupt controller, ethernet MAC,
+--!          Debug Support Unit and others) on HostIO bus that is 
+--!          specific for Rocket-chip implementation of RISC-V.
+--! @todo    Make htifii as a vector to support multi-cores 
+--!          configuration.
+component htifctrl is
+  port (
+    clk    : in std_logic;
+    nrst   : in std_logic;
+    srcsi  : in host_out_vector;
+    srcso  : out host_out_type;
+    htifii : in host_in_type;
+    htifio : out host_in_type
+);
+end component; 
+
+--! @brief   HTIF serializer input.
+--! @details In a case of using L2-cache, 'Uncore' module implements
+--!          additional layer of the transformation of 128-bits HTIF 
+--!          messages into chunks of HTIF_WIDTH. So we have to 
+--!          implement the same serdes on upper level.
+type htif_serdes_in_type is record
+   --! Chunk was accepted by Uncore subsytem.
+   ready  : std_logic;
+   --! Current chunk output is valid
+   valid : std_logic;
+   --! Chunk bits itself.
+   bits  : std_logic_vector(HTIF_WIDTH-1 downto 0);
+end record;
+
+--! @brief   HTIF serializer output.
+type htif_serdes_out_type is record
+   valid     : std_logic;
+   bits      : std_logic_vector(HTIF_WIDTH-1 downto 0);
+   ready     : std_logic;
+end record;
 
 --! @brief   RocketTile component declaration.
 --! @details This module implements Risc-V Core with L1-cache, 
@@ -94,13 +133,12 @@ generic (
 port ( 
     rst      : in std_logic;
     clk_sys  : in std_logic;
-    clk_htif : in std_logic;
     slvo     : in nasti_slave_in_type;
     msti     : in nasti_master_in_type;
     msto1    : out nasti_master_out_type;
     msto2    : out nasti_master_out_type;
-    htifi    : in host_in_type;
-    htifo    : out host_out_type
+    htifoi   : in host_out_type;
+    htifio   : out host_in_type
 );
 end component;
 
@@ -117,13 +155,12 @@ generic (
 port ( 
     rst      : in std_logic;
     clk_sys  : in std_logic;
-    clk_htif : in std_logic;
     slvo     : in nasti_slave_in_type;
     msti     : in nasti_master_in_type;
     msto1    : out nasti_master_out_type;
     msto2    : out nasti_master_out_type;
-    htifi    : in host_in_type;
-    htifo    : out host_out_type
+    htifoi   : in host_out_type;
+    htifio   : out host_in_type
 );
 end component;
 
@@ -140,41 +177,6 @@ port (
   inSysClk    : in std_ulogic;
   inPllLock   : in std_ulogic;
   outReset    : out std_ulogic );
-end component;
-
-
---! @brief Input signals of the Starter component.
-type starter_in_type is record
-   in_ready  : std_logic;
-   out_valid : std_logic;
-   out_bits  : std_logic_vector(HTIF_WIDTH-1 downto 0);
-end record;
-
---! @brief Output signals of the Starter component.
-type starter_out_type is record
-   in_valid  : std_logic;
-   in_bits   : std_logic_vector(HTIF_WIDTH-1 downto 0);
-   out_ready : std_logic;
-   exit_t    : std_logic_vector(31 downto 0);
-end record;
-
---! @brief   Rocket Cores hard-reset initialization module
---! @details Everytime after hard reset Rocket core is in resetting
---!          state. Module Uncore::HTIF implements writting into 
---!          MRESET CSR-register (0x784) and not allowed to CPU start
---!          execution. This reseting cycle is continuing upto external
---!          write 0-value into this MRESET register.
---! param[in] clk  Clock sinal for the HTIFIO bus.
---! param[in] nrst Module reset signal with the active Low level.
---! param[in] i    Input interconnect signals.
---! param[out] o   Output interconnect signals.
-component Starter
-port (
-    clk   : in std_logic;
-    nrst  : in std_logic;
-    i     : in host_out_type;
-    o     : out host_in_type
-);
 end component;
 
 
@@ -284,7 +286,7 @@ component nasti_irqctrl is
     xindex   : integer := 0;
     xaddr    : integer := 0;
     xmask    : integer := 16#fffff#;
-    L2_ena   : boolean := false
+    htif_index  : integer := 0
   );
   port 
  (
@@ -294,8 +296,8 @@ component nasti_irqctrl is
     o_cfg  : out nasti_slave_config_type;
     i_axi  : in nasti_slave_in_type;
     o_axi  : out nasti_slave_out_type;
-    i_host : in host_out_type;
-    o_host : out host_in_type
+    i_host : in host_in_type;
+    o_host : out host_out_type
   );
 end component;
 

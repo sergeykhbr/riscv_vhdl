@@ -15,103 +15,110 @@ use ieee.numeric_std.all;
 library rocketlib;
 use rocketlib.types_rocket.all;
 
-entity Starter is port 
+entity starter is port 
 (
     clk   : in std_logic;
     nrst  : in std_logic;
-    i     : in starter_in_type;
-    o     : out starter_out_type
+    i_host : in host_in_type;
+    o_host : out host_out_type;
+    o_init_ena : out std_logic
 );
 end;
 
 architecture Starter_rtl of Starter is
 
---! data, addr(core=-1), seqno=1, words=1, cmd=HTIF_CMD_WRITE_CONTROL_REG
-constant CSR_WR_PLLDIVIDER : std_logic_vector(127 downto 0) := 
-    X"0000000000020005" & (X"fffff0003f" & X"01" & X"001" & X"3");
-
---! data, addr(core=0),  seqno=2, words=1, cmd=HTIF_CMD_WRITE_CONTROL_REG
-constant CSR_WR1_CSR29 : std_logic_vector(127 downto 0) := 
-    X"0000000000000001" & (X"000000001d" & X"02" & X"001" & X"3"); 
-
---! data, addr(core=0),  seqno=3, words=1, cmd=HTIF_CMD_WRITE_CONTROL_REG
-constant CSR_WR0_CSR29 : std_logic_vector(127 downto 0) := 
-    X"0000000000000000" & (X"000000001d" & X"03" & X"001" & X"3");
-
---! data, addr(core=0),  seqno=4, words=1, cmd=HTIF_CMD_WRITE_CONTROL_REG
-constant CSR_WR0_MRESET : std_logic_vector(127 downto 0) := 
-    X"0000000000000000" & (X"0000000782" & X"04" & X"001" & X"3");
-
+type state_type is (init_reset, init_cmd, wait_ready, wait_resp, disable);
 
 type registers is record
-  in_valid : std_logic;
-  muxCnt   : integer range 0 to 9;
+  state    : state_type;
+  init_ena : std_logic;
   cmdCnt   : integer range 0 to 3;
-  --! Multiplexed data
-  data     : std_logic_vector(HTIF_WIDTH-1 downto 0);
 end record;
 
 signal r, rin: registers;
 begin
 
-  comblogic : process(i, r)
-  variable v : registers;
-    variable wCmd : std_logic_vector(127 downto 0);
+  comblogic : process(i_host, r)
+    variable v : registers;
   begin
     v := r;
+    
+    case r.state is
+      when init_reset =>
+        v.state := init_cmd;
+        o_host.reset <= '1';
+        o_host.id    <= '0';
+        o_host.csr_req_valid <= '0';
+        o_host.csr_req_bits_rw <= '0';
+        o_host.csr_req_bits_addr <= (others  => '0');
+        o_host.csr_req_bits_data <= (others  => '0');
+        o_host.csr_resp_ready <= '1';
 
-    --! Select CSR write command
-    case r.cmdCnt is
-      when 0 =>   wCmd := CSR_WR_PLLDIVIDER;
-      when 1 =>   wCmd := CSR_WR1_CSR29;
-      when 2 =>   wCmd := CSR_WR0_CSR29;
-      when 3 =>   wCmd := CSR_WR0_MRESET;
-      when others => wCmd := (others =>'0');
+      when init_cmd =>
+        v.state := wait_ready;
+        o_host.reset <= '0';
+        --! Select CSR write command
+        case r.cmdCnt is
+          when 0 =>   
+            -- PLL divide. One Tile at once.
+            o_host.csr_req_valid <= '1';
+            o_host.csr_req_bits_rw <= '1';
+            o_host.csr_req_bits_addr <= X"03f";
+            o_host.csr_req_bits_data <= X"0000000000020005";
+          when 1 =>
+            -- Set CSR29.
+            o_host.csr_req_valid <= '1';
+            o_host.csr_req_bits_rw <= '1';
+            o_host.csr_req_bits_addr <= X"01d";
+            o_host.csr_req_bits_data <= X"0000000000000001";
+          when 2 =>
+            -- Clear CSR29.
+            o_host.csr_req_valid <= '1';
+            o_host.csr_req_bits_rw <= '1';
+            o_host.csr_req_bits_addr <= X"01d";
+            o_host.csr_req_bits_data <= X"0000000000000000";
+          when 3 =>
+            -- Write MRESET
+            o_host.csr_req_valid <= '1';
+            o_host.csr_req_bits_rw <= '1';
+            o_host.csr_req_bits_addr <= X"782";
+            o_host.csr_req_bits_data <= X"0000000000000000";
+          when others =>
+            v.state := disable;
+        end case;
+      when wait_ready =>
+           if i_host.csr_req_ready = '1' then
+               v.state := wait_resp;
+               o_host.csr_req_valid <= '0';
+           end if;
+      when wait_resp =>
+        if i_host.csr_resp_valid = '1' then
+            v.cmdCnt    := r.cmdCnt + 1;
+            if r.cmdCnt = 3 then
+                v.state := disable;
+                v.init_ena := '0';
+            else
+                v.state := init_cmd;
+            end if;
+        end if;
+      when others =>
     end case;
 
-    --! Multiplexer of the command into HTIF bus
-    if i.in_ready = '1' then
-      v.muxCnt := r.muxCnt + 1;
 
-      case r.muxCnt is
-        when 0 =>  v.data := wCmd(15 downto  0); v.in_valid := '1'; 
-        when 1 =>  v.data := wCmd(31 downto  16);
-        when 2 =>  v.data := wCmd(47 downto  32);
-        when 3 =>  v.data := wCmd(63 downto  48);
-        when 4 =>  v.data := wCmd(79 downto  64);
-        when 5 =>  v.data := wCmd(95 downto  80);
-        when 6 =>  v.data := wCmd(111 downto  96);
-        when 7 =>  v.data := wCmd(127 downto  112);
-        when 8 =>  
-          v.data  := X"face";
-          v.in_valid := '0'; 
-          if r.cmdCnt = 3 then
-            v.muxCnt := 8;
-          else
-            v.cmdCnt    := r.cmdCnt + 1;
-            v.muxCnt := 0;
-          end if;
-        when others =>
-      end case;
-    end if;
 
     rin <= v;
   end process;
-
-  o.in_valid  <= r.in_valid;
-  o.out_ready <= '1';
-  o.in_bits   <= r.data;
-  o.exit_t    <= (others =>'0');
+  
+  o_init_ena  <= r.init_ena;
 
 
   -- registers:
   regs : process(clk, nrst)
   begin 
     if nrst = '0' then 
-       r.in_valid <= '0';
-       r.muxCnt <= 0;
+       r.state <= init_reset;
+       r.init_ena <= '1';
        r.cmdCnt <= 0;
-       r.data <= (others => '0');
     elsif rising_edge(clk) then 
        r <= rin; 
     end if; 
