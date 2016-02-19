@@ -12,9 +12,10 @@ use commonlib.types_common.all;
 library rocketlib;
 use rocketlib.types_nasti.all;
 
---! @brief   AXI bus controller. 
+--! @brief   AXI (NASTI) bus controller. 
 --! @details Simplified version with the hardcoded priorities to bus access.
 --!          Lower master index has a higher priority.
+--! @todo    Round-robin algorithm for the master selection.
 entity axictrl is
   port (
     clk    : in std_logic;

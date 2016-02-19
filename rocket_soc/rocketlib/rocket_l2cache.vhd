@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------------
 --! @file
 --! @copyright  Copyright 2015 GNSS Sensor Ltd. All right reserved.
---! @author     Sergey Khabarov
+--! @author     Sergey Khabarov - sergeykhbr@gmail.com
 --! @brief      RISC-V "Rocket Core" with enabled L2-cache.
 ------------------------------------------------------------------------------
 --! Standard library
@@ -81,13 +81,17 @@ architecture arch_rocket_l2cache of rocket_l2cache is
   --!          MRESET CSR-register (0x784) and not allowed to CPU start
   --!          execution. This reseting cycle is continuing upto external
   --!          write 0-value into this MRESET register.
+  --! param[in]  core_idx  Recipient core index. Multicore not implemented yet.
   --! param[in]  clk   Clock sinal for the HTIFIO bus.
   --! param[in]  nrst  Module reset signal with the active Low level.
   --! param[in]  hosti HostIO interface input signals.
   --! param[out] hosto HostIO interface output signals.
   --! param[in]  srdi  HostIO serialized data input.
   --! param[out] srdo  HostIO serialized data output.
-  component htif_serdes
+  component htif_serdes is
+  generic (
+     core_idx : integer := 0
+  );
   port (
     clk   : in std_logic;
     nrst  : in std_logic;
@@ -226,6 +230,8 @@ architecture arch_rocket_l2cache of rocket_l2cache is
 begin
 
   rstn <= not rst;
+  clk_htif <= clk_sys; -- clock htif not used in Scala generated sources when FPGA define enabled.
+  
   ------------------------------------
   -- Hardware init and MRESET for the CPUs
   start0 : starter port map
@@ -242,8 +248,9 @@ begin
   --! doesn't make any action.
   htifo_mux <= htifo_starter when init_ena = '1' else htifoi;
   
-  serdes0 : htif_serdes port map
-  (
+  serdes0 : htif_serdes generic map (
+    core_idx => 0
+  ) port map (
     clk   => clk_htif,
     nrst  => rstn,
     hostoi => htifo_mux,

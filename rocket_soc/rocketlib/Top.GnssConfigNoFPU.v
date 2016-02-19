@@ -64781,7 +64781,7 @@ module Top(input clk, input reset,
   assign io_host_out_valid = uncore_io_host_out_valid;
   assign io_host_in_ready = uncore_io_host_in_ready;
   Uncore uncore(.clk(clk), .reset(reset),
-       //.io_host_clk(  )
+       //.io_host_clk(  ),
        //.io_host_clk_edge(  )
        .io_host_in_ready( uncore_io_host_in_ready ),
        .io_host_in_valid( io_host_in_valid ),

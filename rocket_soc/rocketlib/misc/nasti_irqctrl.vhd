@@ -54,9 +54,6 @@ architecture nasti_irqctrl_rtl of nasti_irqctrl is
   type local_addr_array_type is array (0 to CFG_NASTI_DATA_BYTES/ALIGNMENT_BYTES-1) 
        of integer;
 
---! data, addr(core=0),  seqno=IDX, words=1, cmd=HTIF_CMD_WRITE_CONTROL_REG
-constant CSR_WR1_CSR29 : std_logic_vector(127 downto 0) := 
-    X"0000000000000001" & (X"000000050e" & X"02" & X"001" & X"3"); 
 
 type state_type is (idle, wait_grant, wait_resp);
 
@@ -65,9 +62,6 @@ type registers is record
   
   host_reset : std_logic_vector(1 downto 0);
   --! Message multiplexer to form 128 request message of writting into CSR
-  host_msg : std_logic_vector(127 downto 0);
-  seqno    : std_logic_vector(7 downto 0);
-  beat_cnt : integer range 0 to 128/HTIF_WIDTH-1;
   state         : state_type;
   --! interrupt signal delay signal to detect interrupt positive edge
   irqs_z        : std_logic_vector(CFG_IRQ_TOTAL-1 downto 0);  
@@ -161,36 +155,15 @@ begin
       end if;
     end loop;
 
-   --! data, addr(core=0),  seqno=IDX, words=1, cmd=HTIF_CMD_WRITE_CONTROL_REG
-   -- wCmd := X"0000000000000000" & ((X"0000000" & CSR_MIPI) & r.seqno & X"001" & X"3");
-
     case r.state is
       when idle =>
         if w_generate_ipi = '1' then
             v.state := wait_grant;
-           --if L2_ena then
-           --    v.host_msg := wCmd;
-           --    v.seqno := r.seqno + 1;
-           --    v.beat_cnt := 0;
-           --end if;
         end if;
       when wait_grant =>
            if (i_host.grant(htif_index) and i_host.csr_req_ready) = '1' then
                v.state := wait_resp;
            end if;
-      --when write_req =>
-      --  if i_host.csr_req_ready = '1' then
-          --if L2_ena then
-          --    v.host_msg := HTIF_DATA_ZERO & r.host_msg(127 downto HTIF_WIDTH);
-          --    v.beat_cnt := r.beat_cnt + 1;
-          --    if r.beat_cnt = (128/HTIF_WIDTH) - 1 then
-          --       v.state := idle;
-          --    end if;
-          --else
-          --    v.state := idle;
-          --end if;
-      --    v.state := wait_resp;
-      --  end if;
       when wait_resp =>
         if i_host.csr_resp_valid = '1' then
             v.state := idle;
@@ -204,12 +177,7 @@ begin
       o_host.csr_req_valid     <= '1';
       o_host.csr_req_bits_rw   <= '1';
       o_host.csr_req_bits_addr <= CSR_MIPI;
-      --if L2_ena then
-      --    o_host.csr_req_bits_data(63 downto HTIF_WIDTH) <= (others => '0');
-      --    o_host.csr_req_bits_data(HTIF_WIDTH-1 downto 0) <= r.host_msg(HTIF_WIDTH-1 downto 0);
-      --else
-          o_host.csr_req_bits_data <= X"0000000000000000";
-      --end if;
+      o_host.csr_req_bits_data <= X"0000000000000000";
     else
       o_host.csr_req_valid     <= '0';
       o_host.csr_req_bits_rw   <= '0';

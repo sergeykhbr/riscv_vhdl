@@ -2,7 +2,7 @@
 --! @file
 --! @copyright  Copyright 2015 GNSS Sensor Ltd. All right reserved.
 --! @author     Sergey Khabarov - sergeykhbr@gmail.com
---! @brief      Rocket Cores hard-reset initialization module
+--! @brief      Implementation of the 'starter' module.
 --! @details    Everytime after hard reset Rocket core is in resetting
 --!             state. Module Uncore::HTIF implements writting into 
 --!             MRESET CSR-register (0x784) and not allow to start CPU
@@ -15,6 +15,13 @@ use ieee.numeric_std.all;
 library rocketlib;
 use rocketlib.types_rocket.all;
 
+--! @brief   Hard-reset initialization module.
+--! @details L2-cached system implementing Uncore module must be switched
+--!          from resetting state that is done by this module.
+--! param[in] HTIF   interface clock.
+--! param[in] Reset  signal with the active LOW level.
+--! param[in] i_host HostIO input signals.
+--! param[out] o_host HostIO output signals.
 entity starter is port 
 (
     clk   : in std_logic;
@@ -25,7 +32,7 @@ entity starter is port
 );
 end;
 
-architecture Starter_rtl of Starter is
+architecture arch_starter of starter is
 
 type state_type is (init_reset, init_cmd, wait_ready, wait_resp, disable);
 
@@ -55,7 +62,6 @@ begin
         o_host.csr_resp_ready <= '1';
 
       when init_cmd =>
-        v.state := wait_ready;
         o_host.reset <= '0';
         --! Select CSR write command
         case r.cmdCnt is
@@ -86,6 +92,11 @@ begin
           when others =>
             v.state := disable;
         end case;
+        if i_host.csr_req_ready = '0' then
+            v.state := wait_ready;
+        else
+            v.state := wait_resp;
+        end if;
       when wait_ready =>
            if i_host.csr_req_ready = '1' then
                v.state := wait_resp;
@@ -103,8 +114,6 @@ begin
         end if;
       when others =>
     end case;
-
-
 
     rin <= v;
   end process;

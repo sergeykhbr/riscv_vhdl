@@ -64,7 +64,6 @@ constant CFG_NASTI_SLAVES_TOTAL  : integer := CFG_NASTI_SLAVE_PNP+1;
 --! @}
 
 --! @name    AXI4 masters generic IDs.
---! @brief   Unique master identificators.
 --! @details Each master must be assigned to a specific ID that used
 --!          as an index in the vector array of AXI master bus.
 --! @{
@@ -79,7 +78,6 @@ constant CFG_NASTI_MASTER_TOTAL    : integer := CFG_NASTI_MASTER_UNCACHED+1;
 
 
 --! @name    AXI4 interrupt generic IDs.
---! @brief   Interrupt line index definition
 --! @details Unique indentificator of the interrupt pin also used
 --!          as an index in the interrupts bus.
 --! @{

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------------
 --! @file
 --! @copyright  Copyright 2015 GNSS Sensor Ltd. All right reserved.
---! @author     Sergey Khabarov
+--! @author     Sergey Khabarov - sergeykhbr@gmail.com
 --! @brief      RockeTile top level.
 --! @details    RISC-V "RocketTile" without Uncore subsystem.
 ------------------------------------------------------------------------------

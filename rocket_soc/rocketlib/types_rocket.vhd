@@ -14,8 +14,14 @@ library techmap;
 use techmap.gencomp.all;
 --! CPU, System Bus and common peripheries library.
 library rocketlib;
-use rocketlib.types_nasti.all; --! AXI4 bus configuration.
-use rocketlib.types_tile.all;  --! TileLink configuration.
+--! AXI4 bus configuration and data structures.
+use rocketlib.types_nasti.all;
+--! TileLink configuration and data structures.
+use rocketlib.types_tile.all;  
+
+--! @name Scala inherited constants.
+--! @brief The following constants were define in Rocket-chip generator.
+--! @{
 
 --! @brief   Declaration of components visible on SoC top level.
 package types_rocket is
@@ -40,9 +46,9 @@ constant MEM_ADDR_BITS : integer := 26;
 --!          value defines number of beats required to transmit/recieve such
 --!          message.
 constant HTIF_WIDTH    : integer := 16;
+--! @}
 
---! @name   Host Interface initiators.
---! @brief  HostIO transaction source modules unique IDs.
+--! @name   HostIO modules unique IDs.
 --! @{
 
 --! Interrupt controller
@@ -66,8 +72,15 @@ type host_out_type is  record
     csr_resp_ready : std_logic;
 end record;
 
+--! @brief   Empty output signals of HostIO interface.
+--! @details If device was included in the owners of the HostIO interface and
+--!          was disabled by configuration parameter (for example) then its
+--!          outputs must be assigned to this empty signals otherwise 
+--!          RTL simulation will fail with undefined states of the processor.
 constant host_out_none : host_out_type := (
      '0', '0', '0', '0', (others => '0'), (others => '0'), '0');
+
+--! Full stack of HostIO output signals from all devices.
 type host_out_vector is array (0 to CFG_HTIF_SRC_TOTAL-1) 
        of host_out_type;
 
@@ -81,7 +94,7 @@ type host_in_type is record
     debug_stats_csr : std_logic;
 end record;
 
---! @brief   HostIO (HTIF) controller. 
+--! @brief   HostIO (HTIF) controller declaration. 
 --! @details This device provides multiplexing of the Host messages
 --!          from several sources (interrupt controller, ethernet MAC,
 --!          Debug Support Unit and others) on HostIO bus that is 
@@ -123,11 +136,19 @@ end record;
 --! @brief   RocketTile component declaration.
 --! @details This module implements Risc-V Core with L1-cache, 
 --!          branch predictor and other stuffs of the RocketTile.
+--! @param[in] xindex1 Cached Tile AXI master index
+--! @param[in] xindex2 Uncached Tile AXI master index
+--! @param[in] rst     Reset signal with active HIGH level.
+--! @param[in] clk_sys System clock (BUS/CPU clock).
+--! @param[in] slvo    Bus-to-Slave device signals.
+--! @param[in] msti    Bus-to-Master device signals.
+--! @param[out] msto1  CachedTile-to-Bus request signals.
+--! @param[out] msto2  UncachedTile-to-Bus request signals.
+--! @param[in] htifoi  Requests from the HostIO-connected devices.
+--! @param[out] htifio Response to HostIO-connected devices.
 component rocket_l1only is 
 generic (
-    --! Cached Tile AXI master index
     xindex1 : integer := 0;
-    --! Uncached Tile AXI master index
     xindex2 : integer := 1
 );
 port ( 
@@ -145,11 +166,19 @@ end component;
 --! @brief   RocketTile + Uncore component declaration.
 --! @details This module implements Risc-V Core with L1-cache, 
 --!          branch predictor and other stuffs of the RocketTile.
+--! @param[in] xindex1 Cached Tile AXI master index
+--! @param[in] xindex2 Uncached Tile AXI master index
+--! @param[in] rst     Reset signal with active HIGH level.
+--! @param[in] clk_sys System clock (BUS/CPU clock).
+--! @param[in] slvo    Bus-to-Slave device signals.
+--! @param[in] msti    Bus-to-Master device signals.
+--! @param[out] msto1  CachedTile-to-Bus request signals.
+--! @param[out] msto2  UncachedTile-to-Bus request signals.
+--! @param[in] htifoi  Requests from the HostIO-connected devices.
+--! @param[out] htifio Response to HostIO-connected devices.
 component rocket_l2cache is 
 generic (
-    --! Cached Tile AXI master index
     xindex1 : integer := 0;
-    --! Uncached Tile AXI master index
     xindex2 : integer := 1
 );
 port ( 
@@ -164,7 +193,7 @@ port (
 );
 end component;
 
---! @brief NoC global reset former.
+--! @brief SOC global reset former.
 --! @details This module produces output reset signal in a case if
 --!          button 'Reset' was pushed or PLL isn't a 'lock' state.
 --! param[in]  inSysReset Button generated signal
@@ -198,6 +227,7 @@ component nasti_bootrom is
   );
 end component;
 
+--! AXI4 ROM with the default FW version declaration.
   component nasti_romimage is
   generic (
     memtech  : integer := inferred;
@@ -263,6 +293,7 @@ type uart_out_type is record
   rts   : std_ulogic;
 end record;
 
+--! UART with the AXI4 interface declaration.
 component nasti_uart is
   generic (
     xindex  : integer := 0;
@@ -281,6 +312,8 @@ component nasti_uart is
     o_axi  : out nasti_slave_out_type);
 end component;
 
+--! @brief   Interrupt controller with the AXI4 interface declaration.
+--! @details To rise interrupt on certain CPU HostIO interface is used.
 component nasti_irqctrl is
   generic (
     xindex   : integer := 0;
@@ -301,6 +334,11 @@ component nasti_irqctrl is
   );
 end component;
 
+--! @brief   Plug-n-Play support module with AXI4 interface declaration.
+--! @details Each device in a system hase to implements sideband signal
+--!          structure 'nasti_slave_config_type' that allows FW to
+--!          detect Hardware configuration in a run-time.
+--! @todo Implements PnP signals for all Masters devices.
 component nasti_pnp is
   generic (
     xindex  : integer := 0;
