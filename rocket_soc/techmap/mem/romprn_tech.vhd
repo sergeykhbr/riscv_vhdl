@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------------
 --! @file
 --! @copyright  Copyright 2015 GNSS Sensor Ltd. All right reserved.
---! @author     Sergey Khabarov
+--! @author     Sergey Khabarov - sergeykhbr@gmail.com
 --! @brief      Technology specific Galileo PRN ROM codes
 ------------------------------------------------------------------------------
 

@@ -39,7 +39,7 @@ architecture arch_axictrl of axictrl is
   signal rin, r : reg_type;
 begin
 
-  comblogic : process(mstoi, slvoi)
+  comblogic : process(mstoi, slvoi, r)
     variable v : reg_type;
     variable busreq : std_logic;
     variable mstsel : std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0);

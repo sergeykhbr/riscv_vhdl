@@ -36,7 +36,7 @@ architecture arch_htifctrl of htifctrl is
   signal rin, r : reg_type;
 begin
 
-  comblogic : process(srcsi, htifii)
+  comblogic : process(srcsi, htifii, r)
     variable v : reg_type;
     variable idx : integer range 0 to CFG_HTIF_SRC_TOTAL-1;
     variable srcsel : std_logic_vector(CFG_HTIF_SRC_TOTAL-1 downto 0);

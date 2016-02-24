@@ -186,6 +186,70 @@ end record;
   end component;
 
 
+component RocketTile is
+  port (
+    clk : in std_logic;
+    reset : in std_logic;
+    io_cached_0_acquire_ready : in std_logic;
+    io_cached_0_acquire_valid : out std_logic;
+    io_cached_0_acquire_bits_addr_block : out std_logic_vector(25 downto 0);
+    io_cached_0_acquire_bits_client_xact_id : out std_logic_vector(1 downto 0);
+    io_cached_0_acquire_bits_addr_beat : out std_logic_vector(1 downto 0);
+    io_cached_0_acquire_bits_is_builtin_type : out std_logic;
+    io_cached_0_acquire_bits_a_type : out std_logic_vector(2 downto 0);
+    io_cached_0_acquire_bits_union : out std_logic_vector(16 downto 0);
+    io_cached_0_acquire_bits_data : out std_logic_vector(127 downto 0);
+    io_cached_0_grant_ready : out std_logic;
+    io_cached_0_grant_valid : in std_logic;
+    io_cached_0_grant_bits_addr_beat : in std_logic_vector(1 downto 0);
+    io_cached_0_grant_bits_client_xact_id : in std_logic_vector(1 downto 0);
+    io_cached_0_grant_bits_manager_xact_id : in std_logic_vector(3 downto 0);
+    io_cached_0_grant_bits_is_builtin_type : in std_logic;
+    io_cached_0_grant_bits_g_type : in std_logic_vector(3 downto 0);
+    io_cached_0_grant_bits_data : in std_logic_vector(127 downto 0);
+    io_cached_0_probe_ready : out std_logic;
+    io_cached_0_probe_valid : in std_logic;
+    io_cached_0_probe_bits_addr_block : in std_logic_vector(25 downto 0);
+    io_cached_0_probe_bits_p_type : in std_logic_vector(1 downto 0);
+    io_cached_0_release_ready : in std_logic;
+    io_cached_0_release_valid : out std_logic;
+    io_cached_0_release_bits_addr_beat : out std_logic_vector(1 downto 0);
+    io_cached_0_release_bits_addr_block : out std_logic_vector(25 downto 0);
+    io_cached_0_release_bits_client_xact_id : out std_logic_vector(1 downto 0);
+    io_cached_0_release_bits_r_type : out std_logic_vector(2 downto 0);
+    io_cached_0_release_bits_voluntary : out std_logic;
+    io_cached_0_release_bits_data : out std_logic_vector(127 downto 0);
+    io_uncached_0_acquire_ready : in std_logic;
+    io_uncached_0_acquire_valid : out std_logic;
+    io_uncached_0_acquire_bits_addr_block : out std_logic_vector(25 downto 0);
+    io_uncached_0_acquire_bits_client_xact_id : out std_logic_vector(1 downto 0);
+    io_uncached_0_acquire_bits_addr_beat : out std_logic_vector(1 downto 0);
+    io_uncached_0_acquire_bits_is_builtin_type : out std_logic;
+    io_uncached_0_acquire_bits_a_type : out std_logic_vector(2 downto 0);
+    io_uncached_0_acquire_bits_union : out std_logic_vector(16 downto 0);
+    io_uncached_0_acquire_bits_data : out std_logic_vector(127 downto 0);
+    io_uncached_0_grant_ready : out std_logic;
+    io_uncached_0_grant_valid : in std_logic;
+    io_uncached_0_grant_bits_addr_beat : in std_logic_vector(1 downto 0);
+    io_uncached_0_grant_bits_client_xact_id : in std_logic_vector(1 downto 0);
+    io_uncached_0_grant_bits_manager_xact_id : in std_logic_vector(3 downto 0);
+    io_uncached_0_grant_bits_is_builtin_type : in std_logic;
+    io_uncached_0_grant_bits_g_type : in std_logic_vector(3 downto 0);
+    io_uncached_0_grant_bits_data : in std_logic_vector(127 downto 0);
+    io_host_reset : in std_logic;
+    io_host_id : in std_logic;
+    io_host_csr_req_ready : out std_logic;
+    io_host_csr_req_valid : in std_logic;
+    io_host_csr_req_bits_rw : in std_logic;
+    io_host_csr_req_bits_addr : in std_logic_vector(11 downto 0);
+    io_host_csr_req_bits_data : in std_logic_vector(63 downto 0);
+    io_host_csr_resp_ready : in std_logic;
+    io_host_csr_resp_valid : out std_logic;
+    io_host_csr_resp_bits : out std_logic_vector(63 downto 0);
+    io_host_debug_stats_csr : out std_logic
+  );
+  end component;
+
   --! @brief Decode Acquire request from the Cached/Uncached TileLink
   --! @param[in] a_type   Request type depends of the built_in flag
   --! @param[in] built_in This flag defines cached or uncached request. For

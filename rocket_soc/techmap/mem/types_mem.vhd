@@ -229,4 +229,28 @@ package types_mem is
   );
   end component;
 
+  --! @brief dual-port RAM declaration.
+  component syncram_2p_tech is
+  generic (
+    tech : integer := 0;
+    abits : integer := 6;
+    dbits : integer := 8;
+    sepclk : integer := 0;
+    wrfst : integer := 0;
+    testen : integer := 0;
+    words : integer := 0;
+    custombits : integer := 1
+  );
+  port (
+    rclk     : in std_ulogic;
+    renable  : in std_ulogic;
+    raddress : in std_logic_vector((abits -1) downto 0);
+    dataout  : out std_logic_vector((dbits -1) downto 0);
+    wclk     : in std_ulogic;
+    write    : in std_ulogic;
+    waddress : in std_logic_vector((abits -1) downto 0);
+    datain   : in std_logic_vector((dbits -1) downto 0)
+  );
+  end component;
+
 end;
