@@ -32,17 +32,21 @@ architecture arch_syncram_2p_inferred of syncram_2p_inferred is
   type dregtype is array (0 to 2**abits - 1) 
 	of std_logic_vector(dbits -1 downto 0);
 
+  --! This fuinction just to check with C++ reference model. Can be removed.
   impure function init_ram(file_name : in string) return dregtype is
     variable temp_mem : dregtype;
   begin
     for i in 0 to (2**abits - 1) loop
-        temp_mem(i) := X"CCCCCCCC";
+        if dbits = 32 then
+           temp_mem(i) := X"00000000";--X"CCCCCCCC";
+        else
+           temp_mem(i) := X"0000";--X"CCCC";
+        end if;
     end loop;
     return temp_mem;
   end function;
 
   signal rfd : dregtype := init_ram("");
-  signal raddr: std_logic_vector (abits -1 downto 0);
 
 begin
 
@@ -56,12 +60,9 @@ begin
   oneclk : if sepclk = 0 generate
     rp : process(wclk) begin
       if rising_edge(wclk) then 
-        --q <= rfd(conv_integer(rdaddress)); 
-        raddr <= rdaddress;
+        q <= rfd(conv_integer(rdaddress)); 
       end if;
     end process;
-    
-    q <= rfd(conv_integer(raddr)); 
   end generate;
 
   twoclk : if sepclk = 1 generate

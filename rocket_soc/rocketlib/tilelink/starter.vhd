@@ -13,7 +13,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 library rocketlib;
-use rocketlib.types_rocket.all;
+use rocketlib.types_tile.all;
 
 --! @brief   Hard-reset initialization module.
 --! @details L2-cached system implementing Uncore module must be switched

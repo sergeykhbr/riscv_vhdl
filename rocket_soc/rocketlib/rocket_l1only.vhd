@@ -22,10 +22,10 @@ use techmap.gencomp.all;
 library rocketlib;
 --! AMBA AXI4 (NASTI) interface configuration and templates
 use rocketlib.types_nasti.all;
---! SOC top-level component declaration.
-use rocketlib.types_rocket.all;
 --! TileLink interface description.
 use rocketlib.types_tile.all;
+--! SOC top-level component declaration.
+use rocketlib.types_rocket.all;
 
 
 --! @brief   RocketTile entity declaration.
@@ -62,11 +62,76 @@ architecture arch_rocket_l1only of rocket_l1only is
   signal uto : tile_cached_out_type;
   signal uti : tile_cached_in_type;
   
+
+  component rocket_tile is
+  port (
+    clk : in std_logic;
+    reset : in std_logic;
+    io_cached_0_acquire_ready : in std_logic;
+    io_cached_0_acquire_valid : out std_logic;
+    io_cached_0_acquire_bits_addr_block : out std_logic_vector(25 downto 0);
+    io_cached_0_acquire_bits_client_xact_id : out std_logic_vector(1 downto 0);
+    io_cached_0_acquire_bits_addr_beat : out std_logic_vector(1 downto 0);
+    io_cached_0_acquire_bits_is_builtin_type : out std_logic;
+    io_cached_0_acquire_bits_a_type : out std_logic_vector(2 downto 0);
+    io_cached_0_acquire_bits_union : out std_logic_vector(16 downto 0);
+    io_cached_0_acquire_bits_data : out std_logic_vector(127 downto 0);
+    io_cached_0_grant_ready : out std_logic;
+    io_cached_0_grant_valid : in std_logic;
+    io_cached_0_grant_bits_addr_beat : in std_logic_vector(1 downto 0);
+    io_cached_0_grant_bits_client_xact_id : in std_logic_vector(1 downto 0);
+    io_cached_0_grant_bits_manager_xact_id : in std_logic_vector(3 downto 0);
+    io_cached_0_grant_bits_is_builtin_type : in std_logic;
+    io_cached_0_grant_bits_g_type : in std_logic_vector(3 downto 0);
+    io_cached_0_grant_bits_data : in std_logic_vector(127 downto 0);
+    io_cached_0_probe_ready : out std_logic;
+    io_cached_0_probe_valid : in std_logic;
+    io_cached_0_probe_bits_addr_block : in std_logic_vector(25 downto 0);
+    io_cached_0_probe_bits_p_type : in std_logic_vector(1 downto 0);
+    io_cached_0_release_ready : in std_logic;
+    io_cached_0_release_valid : out std_logic;
+    io_cached_0_release_bits_addr_beat : out std_logic_vector(1 downto 0);
+    io_cached_0_release_bits_addr_block : out std_logic_vector(25 downto 0);
+    io_cached_0_release_bits_client_xact_id : out std_logic_vector(1 downto 0);
+    io_cached_0_release_bits_voluntary : out std_logic;
+    io_cached_0_release_bits_r_type : out std_logic_vector(2 downto 0);
+    io_cached_0_release_bits_data : out std_logic_vector(127 downto 0);
+    io_uncached_0_acquire_ready : in std_logic;
+    io_uncached_0_acquire_valid : out std_logic;
+    io_uncached_0_acquire_bits_addr_block : out std_logic_vector(25 downto 0);
+    io_uncached_0_acquire_bits_client_xact_id : out std_logic_vector(1 downto 0);
+    io_uncached_0_acquire_bits_addr_beat : out std_logic_vector(1 downto 0);
+    io_uncached_0_acquire_bits_is_builtin_type : out std_logic;
+    io_uncached_0_acquire_bits_a_type : out std_logic_vector(2 downto 0);
+    io_uncached_0_acquire_bits_union : out std_logic_vector(16 downto 0);
+    io_uncached_0_acquire_bits_data : out std_logic_vector(127 downto 0);
+    io_uncached_0_grant_ready : out std_logic;
+    io_uncached_0_grant_valid : in std_logic;
+    io_uncached_0_grant_bits_addr_beat : in std_logic_vector(1 downto 0);
+    io_uncached_0_grant_bits_client_xact_id : in std_logic_vector(1 downto 0);
+    io_uncached_0_grant_bits_manager_xact_id : in std_logic_vector(3 downto 0);
+    io_uncached_0_grant_bits_is_builtin_type : in std_logic;
+    io_uncached_0_grant_bits_g_type : in std_logic_vector(3 downto 0);
+    io_uncached_0_grant_bits_data : in std_logic_vector(127 downto 0);
+    io_host_reset : in std_logic;
+    io_host_id : in std_logic;
+    io_host_csr_req_ready : out std_logic;
+    io_host_csr_req_valid : in std_logic;
+    io_host_csr_req_bits_rw : in std_logic;
+    io_host_csr_req_bits_addr : in std_logic_vector(11 downto 0);
+    io_host_csr_req_bits_data : in std_logic_vector(63 downto 0);
+    io_host_csr_resp_ready : in std_logic;
+    io_host_csr_resp_valid : out std_logic;
+    io_host_csr_resp_bits : out std_logic_vector(63 downto 0);
+    io_host_debug_stats_csr : out std_logic
+  );
+  end component;
+
 begin
 
   nrst <= not rst;
 
-  tile0 : RocketTile port map
+  tile0 : rocket_tile port map
   (
     clk                       => clk_sys,              --in
     reset                     => rst,               --in
@@ -96,8 +161,8 @@ begin
     io_cached_0_release_bits_addr_beat => cto.release_bits_addr_beat,
     io_cached_0_release_bits_addr_block => cto.release_bits_addr_block,
     io_cached_0_release_bits_client_xact_id => cto.release_bits_client_xact_id,
-    io_cached_0_release_bits_r_type => cto.release_bits_r_type,
     io_cached_0_release_bits_voluntary => cto.release_bits_voluntary,
+    io_cached_0_release_bits_r_type => cto.release_bits_r_type,
     io_cached_0_release_bits_data => cto.release_bits_data,
     io_uncached_0_acquire_ready => uti.acquire_ready,
     io_uncached_0_acquire_valid => uto.acquire_valid,

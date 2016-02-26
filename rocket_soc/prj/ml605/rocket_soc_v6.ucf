@@ -4,7 +4,7 @@
 CONFIG PART = XC6VLX240T-FF1156-1;
 
 NET "i_sclk_p" TNM_NET = TNM_SysClk;
-TIMESPEC "TS_SysClk" = PERIOD "TNM_SysClk" 12 ns ;
+TIMESPEC "TS_SysClk" = PERIOD "TNM_SysClk" 5 ns ;
 NET  "i_sclk_p"   LOC = "J9";
 NET  "i_sclk_p"   IOSTANDARD = LVDS_25;
 NET  "i_sclk_n"   LOC = "H9";

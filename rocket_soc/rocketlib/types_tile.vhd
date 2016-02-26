@@ -169,6 +169,50 @@ type tile_uncached_out_type is record
     grant_ready : std_logic;
 end record;
 
+--! @name   HostIO modules unique IDs.
+--! @{
+
+--! Interrupt controller
+constant CFG_HTIF_SRC_IRQCTRL : integer := 0;
+--! Debug Support Unit (DSU)
+constant CFG_HTIF_SRC_DSU     : integer := CFG_HTIF_SRC_IRQCTRL + 1;
+--! Total number of HostIO initiators.
+constant CFG_HTIF_SRC_TOTAL   : integer := CFG_HTIF_SRC_DSU + 1;
+--! @}
+
+
+--! HostIO tile input signals
+type host_in_type is record
+    grant : std_logic_vector(CFG_HTIF_SRC_TOTAL-1 downto 0);
+    csr_req_ready : std_logic;
+    csr_resp_valid : std_logic;
+    csr_resp_bits : std_logic_vector(63 downto 0);
+    debug_stats_csr : std_logic;
+end record;
+
+--! HostIO tile output signals
+type host_out_type is  record
+    reset : std_logic;
+    id : std_logic;
+    csr_req_valid : std_logic;
+    csr_req_bits_rw : std_logic;
+    csr_req_bits_addr : std_logic_vector(11 downto 0);
+    csr_req_bits_data : std_logic_vector(63 downto 0);
+    csr_resp_ready : std_logic;
+end record;
+
+--! Full stack of HostIO output signals from all devices.
+type host_out_vector is array (0 to CFG_HTIF_SRC_TOTAL-1) 
+       of host_out_type;
+
+--! @brief   Empty output signals of HostIO interface.
+--! @details If device was included in the owners of the HostIO interface and
+--!          was disabled by configuration parameter (for example) then its
+--!          outputs must be assigned to this empty signals otherwise 
+--!          RTL simulation will fail with undefined states of the processor.
+constant host_out_none : host_out_type := (
+     '0', '0', '0', '0', (others => '0'), (others => '0'), '0');
+
   component AxiBridge is generic (
      xindex : integer := 0
   );
@@ -182,71 +226,6 @@ end record;
     --! AXI-to-Tile direction
     msti : in nasti_master_in_type;
     tlio : out tile_cached_in_type
-  );
-  end component;
-
-
-component RocketTile is
-  port (
-    clk : in std_logic;
-    reset : in std_logic;
-    io_cached_0_acquire_ready : in std_logic;
-    io_cached_0_acquire_valid : out std_logic;
-    io_cached_0_acquire_bits_addr_block : out std_logic_vector(25 downto 0);
-    io_cached_0_acquire_bits_client_xact_id : out std_logic_vector(1 downto 0);
-    io_cached_0_acquire_bits_addr_beat : out std_logic_vector(1 downto 0);
-    io_cached_0_acquire_bits_is_builtin_type : out std_logic;
-    io_cached_0_acquire_bits_a_type : out std_logic_vector(2 downto 0);
-    io_cached_0_acquire_bits_union : out std_logic_vector(16 downto 0);
-    io_cached_0_acquire_bits_data : out std_logic_vector(127 downto 0);
-    io_cached_0_grant_ready : out std_logic;
-    io_cached_0_grant_valid : in std_logic;
-    io_cached_0_grant_bits_addr_beat : in std_logic_vector(1 downto 0);
-    io_cached_0_grant_bits_client_xact_id : in std_logic_vector(1 downto 0);
-    io_cached_0_grant_bits_manager_xact_id : in std_logic_vector(3 downto 0);
-    io_cached_0_grant_bits_is_builtin_type : in std_logic;
-    io_cached_0_grant_bits_g_type : in std_logic_vector(3 downto 0);
-    io_cached_0_grant_bits_data : in std_logic_vector(127 downto 0);
-    io_cached_0_probe_ready : out std_logic;
-    io_cached_0_probe_valid : in std_logic;
-    io_cached_0_probe_bits_addr_block : in std_logic_vector(25 downto 0);
-    io_cached_0_probe_bits_p_type : in std_logic_vector(1 downto 0);
-    io_cached_0_release_ready : in std_logic;
-    io_cached_0_release_valid : out std_logic;
-    io_cached_0_release_bits_addr_beat : out std_logic_vector(1 downto 0);
-    io_cached_0_release_bits_addr_block : out std_logic_vector(25 downto 0);
-    io_cached_0_release_bits_client_xact_id : out std_logic_vector(1 downto 0);
-    io_cached_0_release_bits_r_type : out std_logic_vector(2 downto 0);
-    io_cached_0_release_bits_voluntary : out std_logic;
-    io_cached_0_release_bits_data : out std_logic_vector(127 downto 0);
-    io_uncached_0_acquire_ready : in std_logic;
-    io_uncached_0_acquire_valid : out std_logic;
-    io_uncached_0_acquire_bits_addr_block : out std_logic_vector(25 downto 0);
-    io_uncached_0_acquire_bits_client_xact_id : out std_logic_vector(1 downto 0);
-    io_uncached_0_acquire_bits_addr_beat : out std_logic_vector(1 downto 0);
-    io_uncached_0_acquire_bits_is_builtin_type : out std_logic;
-    io_uncached_0_acquire_bits_a_type : out std_logic_vector(2 downto 0);
-    io_uncached_0_acquire_bits_union : out std_logic_vector(16 downto 0);
-    io_uncached_0_acquire_bits_data : out std_logic_vector(127 downto 0);
-    io_uncached_0_grant_ready : out std_logic;
-    io_uncached_0_grant_valid : in std_logic;
-    io_uncached_0_grant_bits_addr_beat : in std_logic_vector(1 downto 0);
-    io_uncached_0_grant_bits_client_xact_id : in std_logic_vector(1 downto 0);
-    io_uncached_0_grant_bits_manager_xact_id : in std_logic_vector(3 downto 0);
-    io_uncached_0_grant_bits_is_builtin_type : in std_logic;
-    io_uncached_0_grant_bits_g_type : in std_logic_vector(3 downto 0);
-    io_uncached_0_grant_bits_data : in std_logic_vector(127 downto 0);
-    io_host_reset : in std_logic;
-    io_host_id : in std_logic;
-    io_host_csr_req_ready : out std_logic;
-    io_host_csr_req_valid : in std_logic;
-    io_host_csr_req_bits_rw : in std_logic;
-    io_host_csr_req_bits_addr : in std_logic_vector(11 downto 0);
-    io_host_csr_req_bits_data : in std_logic_vector(63 downto 0);
-    io_host_csr_resp_ready : in std_logic;
-    io_host_csr_resp_valid : out std_logic;
-    io_host_csr_resp_bits : out std_logic_vector(63 downto 0);
-    io_host_debug_stats_csr : out std_logic
   );
   end component;
 

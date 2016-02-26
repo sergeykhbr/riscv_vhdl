@@ -63015,7 +63015,7 @@ module HellaCacheArbiter(input clk,
   end
 endmodule
 
-module RocketTile(input clk, input reset,
+module rocket_tile(input clk, input reset,
     input  io_cached_0_acquire_ready,
     output io_cached_0_acquire_valid,
     output[25:0] io_cached_0_acquire_bits_addr_block,
@@ -64940,7 +64940,7 @@ module Top(input clk, input reset,
        .io_mmio_r_bits_id( io_mmio_r_bits_id ),
        .io_mmio_r_bits_user( io_mmio_r_bits_user )
   );
-  RocketTile RocketTile(.clk(clk), .reset(uncore_io_htif_0_reset),
+  rocket_tile rocket_tile(.clk(clk), .reset(uncore_io_htif_0_reset),
        .io_cached_0_acquire_ready( uncore_io_tiles_cached_0_acquire_ready ),
        .io_cached_0_acquire_valid( RocketTile_io_cached_0_acquire_valid ),
        .io_cached_0_acquire_bits_addr_block( RocketTile_io_cached_0_acquire_bits_addr_block ),

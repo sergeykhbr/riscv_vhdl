@@ -11,6 +11,7 @@ use ieee.numeric_std.all;
 library commonlib;
 use commonlib.types_common.all;
 library rocketlib;
+use rocketlib.types_tile.all;
 use rocketlib.types_rocket.all;
 
 --! @brief   Uncore messages serializer/deserializer.

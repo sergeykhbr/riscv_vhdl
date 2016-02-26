@@ -167,9 +167,7 @@ begin
   iclk1  : ibuf_tech generic map(CFG_PADTECH) port map (ib_clk_adc, i_clk_adc);
   --! @todo all other in/out signals via buffers:
 
-  --htifo_mux <= htifo(CFG_HTIF_SRC_IRQCTRL);
   htifo(CFG_HTIF_SRC_DSU) <= host_out_none;
-  htifo(CFG_HTIF_SRC_ETH) <= host_out_none;
 
   ------------------------------------
   -- @brief Internal PLL device instance.
