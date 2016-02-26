@@ -39,6 +39,8 @@ void copy_image() {
 }
 
 void _init() {
+    uint32_t tech;
+    pnp_map *pnp = (pnp_map *)ADDR_NASTI_SLAVE_PNP;
     uart_map *uart = (uart_map *)ADDR_NASTI_SLAVE_UART1;
     // Half period of the uart = Fbus / 115200 / 2 = 70 MHz / 115200 / 2:
     uart->scaler = 304;
@@ -46,6 +48,12 @@ void _init() {
     print_uart("Boot . . .", 10);
     copy_image();
     print_uart("OK\r\n", 4);
+
+    /** Check ADC detector that RF front-end is connected: */
+    tech = (pnp->tech >> 16) & 0xff;
+    if (tech != 0xFF) {
+        print_uart("ADC clock not found. Enable DIP int_rf.\r\n", 41);
+    }
 }
 
 /** Not used actually */

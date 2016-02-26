@@ -17,14 +17,15 @@ library techmap;
 --! Technology constants definition.
 use techmap.gencomp.all;
 
+--! AMBA system bus specific library.
+library ambalib;
+--! AXI4 configuration constants.
+use ambalib.types_amba4.all;
+
 --! Rocket-chip specific library
 library rocketlib;
---! AMBA AXI4 (NASTI) interface configuration and templates
-use rocketlib.types_nasti.all;
---! SOC top-level component declaration.
-use rocketlib.types_rocket.all;
 --! TileLink interface description.
-use rocketlib.types_tile.all;
+use rocketlib.types_rocket.all;
 
 
 --! @brief   Rocket Chip Top-level with enabled L2-cache.

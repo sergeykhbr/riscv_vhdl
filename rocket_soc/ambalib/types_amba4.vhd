@@ -23,7 +23,7 @@ use commonlib.types_common.all;
 --! @details This package provides general constants, data structures and
 --!          and functions description that define behaviour of all
 --!          peripheries devices implementing AXI4 interface.
-package types_nasti is
+package types_amba4 is
 
 --! @name    AXI4 slaves generic IDs.
 --! @brief   Unique slave identificator.
@@ -73,7 +73,9 @@ constant CFG_NASTI_MASTER_CACHED   : integer := 0;
 --! Uncached TileLinkIO bus.
 constant CFG_NASTI_MASTER_UNCACHED : integer := CFG_NASTI_MASTER_CACHED+1;
 --! Total Number of master devices on system bus.
-constant CFG_NASTI_MASTER_TOTAL    : integer := CFG_NASTI_MASTER_UNCACHED+1;
+constant CFG_NASTI_MASTER_ETH0     : integer := CFG_NASTI_MASTER_UNCACHED+1;
+--! Total Number of master devices on system bus.
+constant CFG_NASTI_MASTER_TOTAL    : integer := CFG_NASTI_MASTER_ETH0+1;
 --! @}
 
 
@@ -477,7 +479,7 @@ end; -- package declaration
 
 --! Implementation of the declared sub-programs (functions and
 --! procedures).
-package body types_nasti is
+package body types_amba4 is
 
   --! Read/write access state machines implementation.
   procedure procedureAxi4(

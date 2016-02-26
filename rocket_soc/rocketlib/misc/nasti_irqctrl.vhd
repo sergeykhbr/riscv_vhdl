@@ -11,9 +11,12 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 library commonlib;
 use commonlib.types_common.all;
+--! AMBA system bus specific library.
+library ambalib;
+--! AXI4 configuration constants.
+use ambalib.types_amba4.all;
+--! RISCV specific funcionality.
 library rocketlib;
-use rocketlib.types_nasti.all;
-use rocketlib.types_tile.all;
 use rocketlib.types_rocket.all;
 
 entity nasti_irqctrl is

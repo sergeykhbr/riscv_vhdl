@@ -12,8 +12,10 @@ use techmap.gencomp.all;
 use techmap.types_mem.all;
 library commonlib;
 use commonlib.types_common.all;
-library rocketlib;
-use rocketlib.types_nasti.all;
+--! AMBA system bus specific library.
+library ambalib;
+--! AXI4 configuration constants.
+use ambalib.types_amba4.all;
 
 entity RomImage_tech is
 generic (

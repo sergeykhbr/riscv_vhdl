@@ -11,7 +11,7 @@ NET "i_rst" CLOCK_DEDICATED_ROUTE = FALSE;
 
 NET "i_clk_adc" LOC = AF22;
 # DIP switch: SW1.1
-NET "i_dip[0]" LOC = Y29;
+NET "i_int_clkrf" LOC = Y29;
 NET "i_dip[1]" LOC = W29;
 NET "i_dip[2]" LOC = AA28;
 NET "i_dip[3]" LOC = Y28;

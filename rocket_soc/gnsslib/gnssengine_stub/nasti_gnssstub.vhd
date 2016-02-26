@@ -13,8 +13,11 @@ library techmap;
 use techmap.gencomp.all;
 library commonlib;
 use commonlib.types_common.all;
-library rocketlib;
-use rocketlib.types_nasti.all;
+--! AMBA system bus specific library
+library ambalib;
+--! AXI4 configuration constants.
+use ambalib.types_amba4.all;
+--! GNSS specific library.
 library gnsslib;
 use gnsslib.types_gnss.all;
 

@@ -23,14 +23,15 @@ use techmap.types_pll.all;
 --! "Virtual" buffers declaration.
 use techmap.types_buf.all;
 
+--! AMBA system bus specific library
+library ambalib;
+--! AXI4 configuration constants.
+use ambalib.types_amba4.all;
+
 --! Rocket-chip specific library
 library rocketlib;
---! AMBA AXI4 (NASTI) interface configuration and templates
-use rocketlib.types_nasti.all;
 --! SOC top-level component declaration.
 use rocketlib.types_rocket.all;
---! TileLink interface description.
-use rocketlib.types_tile.all;
 
 --! GNSS Sensor Ltd proprietary library
 library gnsslib;
@@ -66,7 +67,8 @@ entity rocket_soc is port
   --! @{
 
   --! DIP switch.
-  i_dip     : in std_logic_vector(3 downto 0);
+  i_int_clkrf : in std_logic;
+  i_dip     : in std_logic_vector(3 downto 1);
   --! LEDs.
   o_led     : out std_logic_vector(7 downto 0);
   --! @}
@@ -119,6 +121,7 @@ architecture arch_rocket_soc of rocket_soc is
   signal ib_sclk_p  : std_logic;
   signal ib_sclk_n  : std_logic;
   signal ib_clk_adc : std_logic;
+  signal ib_dip     : std_logic_vector(3 downto 0);
   --! @}
 
   signal wSysReset  : std_ulogic; -- Internal system reset. MUST NOT USED BY DEVICES.
@@ -165,6 +168,10 @@ begin
   iclkp0  : ibuf_tech generic map(CFG_PADTECH) port map (ib_sclk_p, i_sclk_p);
   iclkn0  : ibuf_tech generic map(CFG_PADTECH) port map (ib_sclk_n, i_sclk_n);
   iclk1  : ibuf_tech generic map(CFG_PADTECH) port map (ib_clk_adc, i_clk_adc);
+  idip0  : ibuf_tech generic map(CFG_PADTECH) port map (ib_dip(0), i_int_clkrf);
+  dipx : for i in 1 to 3 generate
+     idipz  : ibuf_tech generic map(CFG_PADTECH) port map (ib_dip(i), i_dip(i));
+  end generate;
   --! @todo all other in/out signals via buffers:
 
   htifo(CFG_HTIF_SRC_DSU) <= host_out_none;
@@ -177,7 +184,7 @@ begin
   )port map 
   (
     i_reset     => ib_rst,
-    i_int_clkrf => '0',
+    i_int_clkrf => ib_dip(0),
     i_clkp	     => ib_sclk_p,
     i_clkn	     => ib_sclk_n,
     i_clk_adc   => ib_clk_adc,
@@ -220,7 +227,7 @@ begin
 
 L1toL2ena0 : if CFG_COMMON_L1toL2_ENABLE generate 
   --! @brief RISC-V Processor core + Uncore.
-  cpu0 : rocket_l2cache generic map (
+  cpu1 : rocket_l2cache generic map (
     xindex1 => CFG_NASTI_MASTER_CACHED,
     xindex2 => CFG_NASTI_MASTER_UNCACHED
   ) port map ( 
@@ -322,7 +329,7 @@ end generate;
     cfg   => axi_cfg(CFG_NASTI_SLAVE_GPIO),
     i     => axisi,
     o     => axiso(CFG_NASTI_SLAVE_GPIO),
-    i_dip => i_dip,
+    i_dip => ib_dip,
     o_led => o_led
   );
   
@@ -481,7 +488,8 @@ end generate;
     xmask   => 16#fffff#,
     tech    => CFG_MEMTECH
   ) port map (
-    clk    => wClkbus, 
+    sys_clk => wClkbus, 
+    adc_clk => wClkAdc,
     nrst   => wNReset,
     cfgvec => axi_cfg,
     cfg    => axi_cfg(CFG_NASTI_SLAVE_PNP),

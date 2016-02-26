@@ -11,8 +11,10 @@ library techmap;
 use techmap.gencomp.all;
 library commonlib;
 use commonlib.types_common.all;
-library rocketlib;
-use rocketlib.types_nasti.all;
+--! AMBA system bus specific library.
+library ambalib;
+--! AXI4 configuration constants.
+use ambalib.types_amba4.all;
 
 
 --! @brief Hardware Configuration storage with the AMBA AXI4 interface.
@@ -24,7 +26,8 @@ entity nasti_pnp is
     tech    : integer := 0
   );
   port (
-    clk    : in  std_logic;
+    sys_clk : in  std_logic;
+    adc_clk : in  std_logic;
     nrst   : in  std_logic;
     cfgvec : in  nasti_slave_cfg_vector;
     cfg    : out  nasti_slave_config_type;
@@ -65,10 +68,15 @@ architecture arch_nasti_pnp of nasti_pnp is
   end record;
 
 signal r, rin : registers;
+--! @brief   Detector of the ADC clock.
+--! @details If this register won't equal to 0xFF, then we suppose RF front-end
+--!          not connected and FW should print message to enable 'i_int_clkrf'
+--!          jumper to make possible generation of the 1 msec interrupts.
+signal r_adc_detect : std_logic_vector(7 downto 0);
 
 begin
 
-  comblogic : process(i, cfgvec, r)
+  comblogic : process(i, cfgvec, r, r_adc_detect)
     variable v : registers;
     variable raddr_reg : local_addr_array_type;
     variable waddr_reg : local_addr_array_type;
@@ -88,7 +96,7 @@ begin
        val := X"badef00dcafecafe";
        if raddr_reg(n) = 0 then val := X"00000000" & X"20160115";
        elsif raddr_reg(n) = 1 then 
-          val := X"00000000" & X"0000" 
+          val := X"00000000" & X"00" & r_adc_detect
               & conv_std_logic_vector(CFG_NASTI_SLAVES_TOTAL,8)
               & conv_std_logic_vector(tech,8);
        elsif raddr_reg(n) = 2 then val := r.bank0.idt;
@@ -137,7 +145,7 @@ begin
   cfg <= xconfig;
 
   -- registers:
-  regs : process(clk, nrst)
+  regs : process(sys_clk, nrst)
   begin 
      if nrst = '0' then
         r.bank_axi <= NASTI_SLAVE_BANK_RESET;
@@ -145,8 +153,18 @@ begin
         r.bank0.malloc_addr <= (others => '0');
         r.bank0.malloc_size <= (others => '0');
         r.bank0.fwdbg1 <= (others => '0');
-     elsif rising_edge(clk) then 
+     elsif rising_edge(sys_clk) then 
         r <= rin;
+     end if; 
+  end process;
+
+  -- ADC clock detector:
+  regsadc : process(adc_clk, nrst)
+  begin 
+     if nrst = '0' then
+        r_adc_detect <= (others => '0');
+     elsif rising_edge(adc_clk) then 
+        r_adc_detect <= r_adc_detect(6 downto 0) & '1';
      end if; 
   end process;
 

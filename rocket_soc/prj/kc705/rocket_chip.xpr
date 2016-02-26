@@ -35,9 +35,9 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../rocketlib/types_nasti.vhd">
+      <File Path="$PPRDIR/../../ambalib/types_amba4.vhd">
         <FileInfo>
-          <Attr Name="Library" Val="rocketlib"/>
+          <Attr Name="Library" Val="ambalib"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
@@ -101,13 +101,6 @@
       <File Path="$PPRDIR/../../gnsslib/sync/greycnt.vhd">
         <FileInfo>
           <Attr Name="Library" Val="gnsslib"/>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PPRDIR/../../rocketlib/types_tile.vhd">
-        <FileInfo>
-          <Attr Name="Library" Val="rocketlib"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
@@ -372,6 +365,13 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
+      <File Path="$PPRDIR/../../ambalib/axictrl.vhd">
+        <FileInfo>
+          <Attr Name="Library" Val="ambalib"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
       <File Path="$PPRDIR/../../gnsslib/fse_v2/topfse.vhd">
         <FileInfo>
           <Attr Name="Library" Val="gnsslib"/>
@@ -422,13 +422,6 @@
         </FileInfo>
       </File>
       <File Path="$PPRDIR/../../rocketlib/misc/nasti_sram.vhd">
-        <FileInfo>
-          <Attr Name="Library" Val="rocketlib"/>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PPRDIR/../../rocketlib/misc/axictrl.vhd">
         <FileInfo>
           <Attr Name="Library" Val="rocketlib"/>
           <Attr Name="UsedIn" Val="synthesis"/>
@@ -493,14 +486,14 @@
       </File>
       <File Path="$PPRDIR/../../rocketlib/rocket_l1only.vhd">
         <FileInfo>
-          <Attr Name="Library" Val="rocketlib"/>
+          <Attr Name="Library" Val="work"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
       <File Path="$PPRDIR/../../rocketlib/rocket_l2cache.vhd">
         <FileInfo>
-          <Attr Name="Library" Val="rocketlib"/>
+          <Attr Name="Library" Val="work"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>

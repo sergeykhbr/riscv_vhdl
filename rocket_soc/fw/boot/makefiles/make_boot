@@ -102,8 +102,10 @@ all: boot
 
 boot: $(EXECUTABLE) $(DUMPFILE) $(HEXFILE)
 $(HEXFILE): $(EXECUTABLE)
-	echo elf2raw64 16 512 $(addprefix $(ELF_DIR)/,$<) > $(addprefix $(ELF_DIR)/,$@)
-	elf2raw64 16 512 $(addprefix $(ELF_DIR)/,$<) > $(addprefix $(ELF_DIR)/,$@)
+	#echo elf2raw64 $(addprefix $(ELF_DIR)/,$<) -h -f 8192 -o $(addprefix $(ELF_DIR)/,$(EXECUTABLE).hex)
+	#elf2raw64 $(addprefix $(ELF_DIR)/,$<) -h -f 8192 -o $(addprefix $(ELF_DIR)/,$(EXECUTABLE).hex)
+	echo elf2hex 16 512 $(addprefix $(ELF_DIR)/,$<) > $(addprefix $(ELF_DIR)/,$@)
+	elf2hex 16 512 $(addprefix $(ELF_DIR)/,$<) > $(addprefix $(ELF_DIR)/,$@)
 
 $(DUMPFILE): $(EXECUTABLE)
 	echo $(OBJDUMP) --disassemble-all --disassemble-zeroes --section=.text --section=.text.startup --section=.data $(addprefix $(ELF_DIR)/,$<) > $(addprefix $(ELF_DIR)/,$@)

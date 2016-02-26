@@ -28,7 +28,7 @@ set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets i_rst]
 
 set_property PACKAGE_PIN AF22 [get_ports i_clk_adc]
 # DIP switch: SW1.1
-set_property PACKAGE_PIN Y29 [get_ports {i_dip[0]}]
+set_property PACKAGE_PIN Y29 [get_ports {i_int_clkrf}]
 set_property PACKAGE_PIN W29 [get_ports {i_dip[1]}]
 set_property PACKAGE_PIN AA28 [get_ports {i_dip[2]}]
 set_property PACKAGE_PIN Y28 [get_ports {i_dip[3]}]
@@ -59,8 +59,8 @@ set_property IOSTANDARD LVCMOS25 [get_ports i_clk_adc]
 # The conversion of 'IOSTANDARD' constraint on 'net' object 'i_uart1_ctsn' has been applied to the port object 'i_uart1_ctsn'.
 set_property IOSTANDARD LVCMOS25 [get_ports i_uart1_ctsn]
 # C:/work/rocket/rocket_chip/rocket_soc.ucf:40
-# The conversion of 'IOSTANDARD' constraint on 'net' object 'i_dip[0]' has been applied to the port object 'i_dip[0]'.
-set_property IOSTANDARD LVCMOS25 [get_ports {i_dip[0]}]
+# The conversion of 'IOSTANDARD' constraint on 'net' object 'i_int_clkrf' has been applied to the port object 'i_int_clkrf'.
+set_property IOSTANDARD LVCMOS25 [get_ports {i_int_clkrf}]
 # C:/work/rocket/rocket_chip/rocket_soc.ucf:41
 # The conversion of 'IOSTANDARD' constraint on 'net' object 'i_dip[1]' has been applied to the port object 'i_dip[1]'.
 set_property IOSTANDARD LVCMOS25 [get_ports {i_dip[1]}]

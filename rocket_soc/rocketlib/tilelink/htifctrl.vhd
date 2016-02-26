@@ -10,7 +10,6 @@ use ieee.std_logic_1164.all;
 library commonlib;
 use commonlib.types_common.all;
 library rocketlib;
-use rocketlib.types_tile.all;
 use rocketlib.types_rocket.all;
 
 --! @brief   HostIO (HTIF) bus controller. 

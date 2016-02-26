@@ -9,8 +9,8 @@ library ieee;
 use ieee.std_logic_1164.all;
 library commonlib;
 use commonlib.types_common.all;
-library rocketlib;
-use rocketlib.types_nasti.all;
+library ambalib;
+use ambalib.types_amba4.all;
 
 --! @brief   AXI (NASTI) bus controller. 
 --! @details Simplified version with the hardcoded priorities to bus access.

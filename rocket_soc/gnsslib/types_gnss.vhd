@@ -14,13 +14,13 @@ use ieee.numeric_std.all;
 library commonlib;
 use commonlib.types_common.all;
 
---! AMBA AXI4 interconnect types
-library rocketlib;
-use rocketlib.types_nasti.all;
-
 --! Leon3 technologies definition library
 library techmap;
 use techmap.gencomp.all;  -- technology enumerator
+
+--! AMBA AXI4 interconnect types
+library ambalib;
+use ambalib.types_amba4.all;
 
 --! @brief Declaration of the GNSS modules visible outside of the package.
 --! @details This package provides User's API and general configuration 

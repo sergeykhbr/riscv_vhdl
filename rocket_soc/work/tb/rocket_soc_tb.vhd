@@ -30,7 +30,8 @@ architecture behavior of rocket_soc_tb is
   signal i_sclk_p : std_logic;
   signal i_sclk_n : std_logic;
   signal i_clk_adc : std_logic := '0';
-  signal i_dip : std_logic_vector(3 downto 0);
+  signal i_int_clkrf : std_logic := '1';
+  signal i_dip : std_logic_vector(3 downto 1);
   signal o_led : std_logic_vector(7 downto 0);
   signal i_uart1_ctsn : std_logic := '0';
   signal i_uart1_rd : std_logic := '1';
@@ -60,7 +61,8 @@ component rocket_soc is port
   i_sclk_p  : in std_logic;
   i_sclk_n  : in std_logic;
   i_clk_adc : in std_logic;
-  i_dip     : in std_logic_vector(3 downto 0);
+  i_int_clkrf : in std_logic;
+  i_dip     : in std_logic_vector(3 downto 1);
   o_led     : out std_logic_vector(7 downto 0);
   -- uart1
   i_uart1_ctsn : in std_logic;
@@ -144,7 +146,7 @@ begin
     end if;
   end process procSignal;
 
-  i_dip <= X"A";
+  i_dip <= "101";
 
   -- signal parsment and assignment
   tt : rocket_soc port map
@@ -153,6 +155,7 @@ begin
     i_sclk_p  => i_sclk_p,
     i_sclk_n  => i_sclk_n,
     i_clk_adc => i_clk_adc,
+    i_int_clkrf => i_int_clkrf,
     i_dip     => i_dip,
     o_led     => o_led,
     i_uart1_ctsn => i_uart1_ctsn,

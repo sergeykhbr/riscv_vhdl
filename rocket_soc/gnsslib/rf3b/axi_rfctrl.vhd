@@ -10,9 +10,10 @@ use ieee.std_logic_1164.all;
 library commonlib;
 use commonlib.types_common.all;
 
-library rocketlib;
-use rocketlib.types_rocket.all;
-use rocketlib.types_nasti.all;
+--! AMBA system bus specific library
+library ambalib;
+--! AXI4 configuration constants.
+use ambalib.types_amba4.all;
 
 --! @brief     RF-front controller based on MAX2769 ICs.
 --! @details   This unit implements SPI interface with MAX2769 ICs

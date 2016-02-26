@@ -10,10 +10,10 @@ use ieee.std_logic_1164.all;
 --! Provide common generic log() function
 library commonlib;
 use commonlib.types_common.all;
---! Rocket-chip specific library
-library rocketlib;
+--! AMBA system bus specific library.
+library ambalib;
 --! AXI4 configuration constants.
-use rocketlib.types_nasti.all;
+use ambalib.types_amba4.all;
 
 --! @brief      Declaration of 'virtual' Memory components.
 package types_mem is

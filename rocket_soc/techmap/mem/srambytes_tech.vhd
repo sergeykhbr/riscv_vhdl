@@ -15,8 +15,10 @@ library techmap;
 use techmap.gencomp.all;
 use techmap.types_mem.all;
 
-library rocketlib;
-use rocketlib.types_nasti.all;
+--! AMBA system bus specific library.
+library ambalib;
+--! AXI4 configuration constants.
+use ambalib.types_amba4.all;
 
 entity srambytes_tech is
 generic (
