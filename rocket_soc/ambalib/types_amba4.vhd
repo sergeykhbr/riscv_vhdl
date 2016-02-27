@@ -251,20 +251,25 @@ type nasti_master_out_type is record
   --! Write Address channel:
   aw_valid : std_logic;
   aw_bits : nasti_metadata_type;
+  --! Write address ID. Identification tag used for a trasaction ordering.
   aw_id   : std_logic_vector(CFG_ROCKET_ID_BITS-1 downto 0);
+  --! Optional user defined signal in a write address channel.
   aw_user : std_logic;
   --! Write Data channel:
   w_valid : std_logic;
   w_data : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
   w_last : std_logic;
   w_strb : std_logic_vector(CFG_NASTI_DATA_BYTES-1 downto 0);
+  --! Optional user defined signal in write channel.
   w_user : std_logic;
   --! Write Response channel:
   b_ready : std_logic;
   --! Read Address Channel:
   ar_valid : std_logic;
   ar_bits : nasti_metadata_type;
+  --! Read address ID. Identification tag used for a trasaction ordering.
   ar_id   : std_logic_vector(CFG_ROCKET_ID_BITS-1 downto 0);
+  --! Optional user defined signal in read address channel.
   ar_user : std_logic;
   --! Read Data channel:
   r_ready : std_logic;

@@ -9,16 +9,16 @@
 #include <string.h>
 #include "axi_maps.h"
 
-static const int FW_IMAGE_SIZE_BYTES = 1<<18;
+static const int FW_IMAGE_SIZE_BYTES = 1 << 18;
 
 void led_set(int output) {
     ((gpio_map *)ADDR_NASTI_SLAVE_GPIO)->led = output;
 }
 
 void print_uart(const char *buf, int sz) {
-    /** Simplified version without checking FIFO buffers (16 bytes) */
     uart_map *uart = (uart_map *)ADDR_NASTI_SLAVE_UART1;
     for (int i = 0; i < sz; i++) {
+        while (uart->status & UART_STATUS_TX_FULL) {}
         uart->data = buf[i];
     }
 }
@@ -58,7 +58,7 @@ void _init() {
 
 /** Not used actually */
 int main() {
-    while(1) {}
+    while (1) {}
 
     return 0;
 }

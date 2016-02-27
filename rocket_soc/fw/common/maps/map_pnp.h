@@ -10,7 +10,12 @@
 
 #include <inttypes.h>
 
+#ifdef ENABLE_FSE
 #define CFG_NASTI_SLAVES_TOTAL 9
+#else
+#define CFG_NASTI_SLAVES_TOTAL 8
+#endif
+
 #define PNP_CONFIG_DEFAULT_BYTES 16
 
 typedef struct PnpConfigType {
