@@ -1,5 +1,8 @@
 var searchData=
 [
-  ['xilinx',['xilinx',['../class_sys_p_l_l__v6_1_1xilinx.html',1,'SysPLL_v6']]],
-  ['xilinx',['xilinx',['../class_sys_p_l_l__k7_1_1xilinx.html',1,'SysPLL_k7']]]
+  ['ibuf_5finferred',['ibuf_inferred',['../classibuf__inferred.html',1,'']]],
+  ['ibuf_5ftech',['ibuf_tech',['../classibuf__tech.html',1,'']]],
+  ['iobuf_5finferred',['iobuf_inferred',['../classiobuf__inferred.html',1,'']]],
+  ['iobuf_5ftech',['iobuf_tech',['../classiobuf__tech.html',1,'']]],
+  ['iobuf_5fvirtex6',['iobuf_virtex6',['../classiobuf__virtex6.html',1,'']]]
 ];

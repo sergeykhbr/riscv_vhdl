@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.10"/>
-<title>RISC-V System-on-Chip: types_rocket Package  Reference</title>
+<title>RISC-V VHDL: System-on-Chip: types_rocket Package  Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -23,7 +23,7 @@
  <tbody>
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
-   <div id="projectname">RISC-V System-on-Chip
+   <div id="projectname">RISC-V VHDL: System-on-Chip
    &#160;<span id="projectnumber">1.0</span>
    </div>
   </td>
@@ -39,6 +39,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
+      <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
       <li><a href="namespaces.html"><span>Packages</span></a></li>
       <li class="current"><a href="annotated.html"><span>Design&#160;Unit&#160;List</span></a></li>
       <li><a href="files.html"><span>Files</span></a></li>
@@ -88,27 +89,54 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <a href="#Libraries">Libraries</a> &#124;
 <a href="#Use Clauses">Use Clauses</a> &#124;
 <a href="#Constants">Constants</a> &#124;
+<a href="#Types">Types</a> &#124;
+<a href="#Records">Records</a> &#124;
 <a href="#Components">Components</a> &#124;
-<a href="#Records">Records</a>  </div>
+<a href="#Functions">Functions</a> &#124;
+<a href="#Procedures">Procedures</a>  </div>
   <div class="headertitle">
 <div class="title">types_rocket Package Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 
-<p>TileLink configuration.  
+<p>Declaration of components visible on SoC top level.  
  <a href="classtypes__rocket.html#details">More...</a></p>
+<b>Package Body &gt;&gt; </b><a class="el" href="class__types__rocket.html">types_rocket</a><br />
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="Functions"></a>
+Functions</h2></td></tr>
+ <tr class="memitem:afd9930ae92fe1c6058c1ba29fa3cbff7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afd9930ae92fe1c6058c1ba29fa3cbff7"></a>
+<b><b><span class="comment">std_logic</span><span class="vhdlchar"> </span></b></b>&#160;</td><td class="memItemRight" valign="bottom"> <a class="el" href="classtypes__rocket.html#afd9930ae92fe1c6058c1ba29fa3cbff7">isAMO</a><b> ( </b><b><span class="vhdlchar">cmd: </span><span class="stringliteral">in </span><span class="vhdlchar">std_logic_vector( 4 downto  0)</span></b><b> )</b></td></tr>
+<tr class="memitem:a87a9fb3b96cefba057f4607f2cf8a554"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a87a9fb3b96cefba057f4607f2cf8a554"></a>
+<b><b><span class="comment">std_logic</span><span class="vhdlchar"> </span></b></b>&#160;</td><td class="memItemRight" valign="bottom"> <a class="el" href="classtypes__rocket.html#a87a9fb3b96cefba057f4607f2cf8a554">isWrite</a><b> ( </b><b><span class="vhdlchar">cmd: </span><span class="stringliteral">in </span><span class="vhdlchar">std_logic_vector( 4 downto  0)</span></b><b> )</b></td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="Procedures"></a>
+Procedures</h2></td></tr>
+ <tr class="memitem:a18e3ea3eccc13abb16af30f56d1d5d64"><td class="memItemLeft" align="right" valign="top"><b><b><span class="vhdlchar"> </span></b></b>&#160;</td><td class="memItemRight" valign="bottom"> <a class="el" href="classtypes__rocket.html#a18e3ea3eccc13abb16af30f56d1d5d64">procedureDecodeTileAcquire</a>( <br />
+<b><span class="vhdlchar"> </span><span class="vhdlchar">a_type: </span><span class="stringliteral"></span> <b><span class="keywordflow">in</span><span class="vhdlchar"> </span><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">2</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span></b></b><br />
+  <b><span class="vhdlchar"> </span><span class="vhdlchar">built_in: </span><span class="stringliteral"></span> <b><span class="keywordflow">in</span><span class="vhdlchar"> </span><span class="comment">std_logic</span><span class="vhdlchar"> </span></b></b><br />
+  <b><span class="vhdlchar"> </span><span class="vhdlchar">u: </span><span class="stringliteral"></span> <b><span class="keywordflow">in</span><span class="vhdlchar"> </span><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">16</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span></b></b><br />
+  <b><span class="vhdlchar"> </span><span class="vhdlchar">write: </span><span class="stringliteral"></span> <b><span class="keywordflow">out</span><span class="vhdlchar"> </span><span class="comment">std_logic</span><span class="vhdlchar"> </span></b></b><br />
+  <b><span class="vhdlchar"> </span><span class="vhdlchar">wmask: </span><span class="stringliteral"></span> <b><span class="keywordflow">out</span><span class="vhdlchar"> </span><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><b><a class="el" href="classtypes__amba4.html#af74e5749b32c77c685819ebbe95b6263">CFG_NASTI_DATA_BYTES</a></b> <span class="vhdlchar">-</span><span class="vhdlchar"> </span> <span class="vhdldigit">1</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span></b></b><br />
+  <b><span class="vhdlchar"> </span><span class="vhdlchar">axi_sz: </span><span class="stringliteral"></span> <b><span class="keywordflow">out</span><span class="vhdlchar"> </span><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">2</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span></b></b><br />
+  <b><span class="vhdlchar"> </span><span class="vhdlchar">byte_addr: </span><span class="stringliteral"></span> <b><span class="keywordflow">out</span><span class="vhdlchar"> </span><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">3</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span></b></b><br />
+  <b><span class="vhdlchar"> </span><span class="vhdlchar">beat_cnt: </span><span class="stringliteral"></span> <b><span class="keywordflow">out</span><span class="vhdlchar"> </span><span class="comment">integer</span><span class="vhdlchar"> </span></b></b><br />
+   )</td></tr>
+<tr class="memdesc:a18e3ea3eccc13abb16af30f56d1d5d64"><td class="mdescLeft">&#160;</td><td class="mdescRight">Decode Acquire request from the Cached/Uncached TileLink.  <a href="#a18e3ea3eccc13abb16af30f56d1d5d64"></a><br /></td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="Libraries"></a>
 Libraries</h2></td></tr>
  <tr class="memitem:a0a6af6eef40212dbaf130d57ce711256"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0a6af6eef40212dbaf130d57ce711256"></a>
 <a class="el" href="classtypes__rocket.html#a0a6af6eef40212dbaf130d57ce711256">ieee</a>&#160;</td><td class="memItemRight" valign="bottom"></td></tr>
 <tr class="memdesc:a0a6af6eef40212dbaf130d57ce711256"><td class="mdescLeft">&#160;</td><td class="mdescRight">Standard library. <br /></td></tr>
+<tr class="memitem:a713512fb49e4f2a36e6546e92bce0007"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a713512fb49e4f2a36e6546e92bce0007"></a>
+<a class="el" href="classtypes__rocket.html#a713512fb49e4f2a36e6546e92bce0007">commonlib</a>&#160;</td><td class="memItemRight" valign="bottom"></td></tr>
 <tr class="memitem:ae604a208d141a125a509abb5b8ad393c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae604a208d141a125a509abb5b8ad393c"></a>
 <a class="el" href="classtypes__rocket.html#ae604a208d141a125a509abb5b8ad393c">techmap</a>&#160;</td><td class="memItemRight" valign="bottom"></td></tr>
 <tr class="memdesc:ae604a208d141a125a509abb5b8ad393c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Technology definition library. <br /></td></tr>
-<tr class="memitem:a853aa6c124e455c35e810cdea36b805f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a853aa6c124e455c35e810cdea36b805f"></a>
-<a class="el" href="classtypes__rocket.html#a853aa6c124e455c35e810cdea36b805f">rocketlib</a>&#160;</td><td class="memItemRight" valign="bottom"></td></tr>
-<tr class="memdesc:a853aa6c124e455c35e810cdea36b805f"><td class="mdescLeft">&#160;</td><td class="mdescRight">CPU, System Bus and common peripheries library. <br /></td></tr>
+<tr class="memitem:afd386d1d86034116cc1c03044bd099fa"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afd386d1d86034116cc1c03044bd099fa"></a>
+<a class="el" href="classtypes__rocket.html#afd386d1d86034116cc1c03044bd099fa">ambalib</a>&#160;</td><td class="memItemRight" valign="bottom"></td></tr>
+<tr class="memdesc:afd386d1d86034116cc1c03044bd099fa"><td class="mdescLeft">&#160;</td><td class="mdescRight">CPU, System Bus and common peripheries library. <br /></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="Use Clauses"></a>
 Use Clauses</h2></td></tr>
@@ -116,35 +144,29 @@ Use Clauses</h2></td></tr>
 <a class="el" href="classtypes__rocket.html#acd03516902501cd1c7296a98e22c6fcb">std_logic_1164</a>&#160;</td><td class="memItemRight" valign="bottom">  </td></tr>
 <tr class="memitem:a2edc34402b573437d5f25fa90ba4013e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2edc34402b573437d5f25fa90ba4013e"></a>
 <a class="el" href="classtypes__rocket.html#a2edc34402b573437d5f25fa90ba4013e">numeric_std</a>&#160;</td><td class="memItemRight" valign="bottom">  </td></tr>
+<tr class="memitem:a906f6bfeb76c65d50ef761f7d2021003"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a906f6bfeb76c65d50ef761f7d2021003"></a>
+<a class="el" href="classtypes__rocket.html#a906f6bfeb76c65d50ef761f7d2021003">types_common</a>&#160;</td><td class="memItemRight" valign="bottom">   <b>Package</b><em><a class="el" href="classtypes__common.html"> &lt;types_common&gt;</a></td></tr>
 <tr class="memitem:a842f38e0ce3d6925c35aebc3851b3909"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a842f38e0ce3d6925c35aebc3851b3909"></a>
 <a class="el" href="classtypes__rocket.html#a842f38e0ce3d6925c35aebc3851b3909">gencomp</a>&#160;</td><td class="memItemRight" valign="bottom">   <b>Package</b><em><a class="el" href="classgencomp.html"> &lt;gencomp&gt;</a></td></tr>
-<tr class="memitem:a477b7107a15d555398f2f78b9473849f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a477b7107a15d555398f2f78b9473849f"></a>
-<a class="el" href="classtypes__rocket.html#a477b7107a15d555398f2f78b9473849f">types_nasti</a>&#160;</td><td class="memItemRight" valign="bottom">   <b>Package</b><em><a class="el" href="classtypes__nasti.html"> &lt;types_nasti&gt;</a></td></tr>
-<tr class="memitem:ad28a9fa1b209ba61b62b93aede649757"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad28a9fa1b209ba61b62b93aede649757"></a>
-<a class="el" href="classtypes__rocket.html#ad28a9fa1b209ba61b62b93aede649757">types_tile</a>&#160;</td><td class="memItemRight" valign="bottom">   <b>Package</b><em><a class="el" href="classtypes__tile.html"> &lt;types_tile&gt;</a></td></tr>
-<tr class="memdesc:ad28a9fa1b209ba61b62b93aede649757"><td class="mdescLeft">&#160;</td><td class="mdescRight">AXI4 bus configuration. <br /></td></tr>
+<tr class="memitem:aa5a674983f6f172dd67045188330e0f7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa5a674983f6f172dd67045188330e0f7"></a>
+<a class="el" href="classtypes__rocket.html#aa5a674983f6f172dd67045188330e0f7">types_amba4</a>&#160;</td><td class="memItemRight" valign="bottom">   <b>Package</b><em><a class="el" href="classtypes__amba4.html"> &lt;types_amba4&gt;</a></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="Components"></a>
 Components</h2></td></tr>
- <tr class="memitem:a7adef56c49bff81146683b744f1eaeec"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7adef56c49bff81146683b744f1eaeec"></a>
-<a class="el" href="classtypes__rocket.html#a7adef56c49bff81146683b744f1eaeec">Top</a>&#160;</td><td class="memItemRight" valign="bottom">  <b></b>  </td></tr>
-<tr class="memdesc:a7adef56c49bff81146683b744f1eaeec"><td class="mdescLeft">&#160;</td><td class="mdescRight">Rocket NoC Verilog implementation generated by SCALA. <br /></td></tr>
-<tr class="memitem:a122be6f496b34c4fff1f446a20e2b5f4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a122be6f496b34c4fff1f446a20e2b5f4"></a>
-<a class="el" href="classtypes__rocket.html#a122be6f496b34c4fff1f446a20e2b5f4">RocketTile</a>&#160;</td><td class="memItemRight" valign="bottom">  <b></b>  </td></tr>
-<tr class="memdesc:a122be6f496b34c4fff1f446a20e2b5f4"><td class="mdescLeft">&#160;</td><td class="mdescRight">mmio <br /></td></tr>
+ <tr class="memitem:a67b023184c16d9e40e457d84ba58e953"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classtypes__rocket.html#a67b023184c16d9e40e457d84ba58e953">htifctrl</a>&#160;</td><td class="memItemRight" valign="bottom">  <b></b>  <em><a class="el" href="classhtifctrl.html">&lt;Entity htifctrl&gt; </a></em></td></tr>
+<tr class="memdesc:a67b023184c16d9e40e457d84ba58e953"><td class="mdescLeft">&#160;</td><td class="mdescRight">HostIO (HTIF) controller declaration.  <a href="#a67b023184c16d9e40e457d84ba58e953"></a><br /></td></tr>
+<tr class="memitem:ace90059a4a3d4b1af67b8f35008b312e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classtypes__rocket.html#ace90059a4a3d4b1af67b8f35008b312e">rocket_l1only</a>&#160;</td><td class="memItemRight" valign="bottom">  <b></b>  <em><a class="el" href="classrocket__l1only.html">&lt;Entity rocket_l1only&gt; </a></em></td></tr>
+<tr class="memdesc:ace90059a4a3d4b1af67b8f35008b312e"><td class="mdescLeft">&#160;</td><td class="mdescRight">RocketTile component declaration.  <a href="#ace90059a4a3d4b1af67b8f35008b312e"></a><br /></td></tr>
+<tr class="memitem:a43c8f23939080364801d76f3608df49d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classtypes__rocket.html#a43c8f23939080364801d76f3608df49d">rocket_l2cache</a>&#160;</td><td class="memItemRight" valign="bottom">  <b></b>  <em><a class="el" href="classrocket__l2cache.html">&lt;Entity rocket_l2cache&gt; </a></em></td></tr>
+<tr class="memdesc:a43c8f23939080364801d76f3608df49d"><td class="mdescLeft">&#160;</td><td class="mdescRight">RocketTile + Uncore component declaration.  <a href="#a43c8f23939080364801d76f3608df49d"></a><br /></td></tr>
 <tr class="memitem:a1d818c9830ffdbf40d76edae34fbaf13"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classtypes__rocket.html#a1d818c9830ffdbf40d76edae34fbaf13">reset_global</a>&#160;</td><td class="memItemRight" valign="bottom">  <b></b>  <em><a class="el" href="classreset__global.html">&lt;Entity reset_global&gt; </a></em></td></tr>
-<tr class="memdesc:a1d818c9830ffdbf40d76edae34fbaf13"><td class="mdescLeft">&#160;</td><td class="mdescRight">NoC global reset former.  <a href="#a1d818c9830ffdbf40d76edae34fbaf13"></a><br /></td></tr>
-<tr class="memitem:a7f1e563eb73f245fde907cd93228a0dd"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classtypes__rocket.html#a7f1e563eb73f245fde907cd93228a0dd">Starter</a>&#160;</td><td class="memItemRight" valign="bottom">  <b></b>  <em><a class="el" href="class_starter.html">&lt;Entity Starter&gt; </a></em></td></tr>
-<tr class="memdesc:a7f1e563eb73f245fde907cd93228a0dd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Rocket Cores hard-reset initialization module.  <a href="#a7f1e563eb73f245fde907cd93228a0dd"></a><br /></td></tr>
-<tr class="memitem:afaedf40bb7a26c291959516b9150db98"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afaedf40bb7a26c291959516b9150db98"></a>
-<a class="el" href="classtypes__rocket.html#afaedf40bb7a26c291959516b9150db98">NastiArbiter</a>&#160;</td><td class="memItemRight" valign="bottom">  <b></b>  <em><a class="el" href="class_nasti_arbiter.html">&lt;Entity NastiArbiter&gt; </a></em></td></tr>
-<tr class="memitem:aab70c1f223c9a1bb70e528572551b638"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aab70c1f223c9a1bb70e528572551b638"></a>
-<a class="el" href="classtypes__rocket.html#aab70c1f223c9a1bb70e528572551b638">TileBridgeArbiter</a>&#160;</td><td class="memItemRight" valign="bottom">  <b></b>  <em><a class="el" href="class_tile_bridge_arbiter.html">&lt;Entity TileBridgeArbiter&gt; </a></em></td></tr>
+<tr class="memdesc:a1d818c9830ffdbf40d76edae34fbaf13"><td class="mdescLeft">&#160;</td><td class="mdescRight">SOC global reset former.  <a href="#a1d818c9830ffdbf40d76edae34fbaf13"></a><br /></td></tr>
 <tr class="memitem:af00d056c1fbaa57d125d58d3b0e55a6f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af00d056c1fbaa57d125d58d3b0e55a6f"></a>
 <a class="el" href="classtypes__rocket.html#af00d056c1fbaa57d125d58d3b0e55a6f">nasti_bootrom</a>&#160;</td><td class="memItemRight" valign="bottom">  <b></b>  <em><a class="el" href="classnasti__bootrom.html">&lt;Entity nasti_bootrom&gt; </a></em></td></tr>
 <tr class="memdesc:af00d056c1fbaa57d125d58d3b0e55a6f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Boot ROM with AXI4 interface declaration. <br /></td></tr>
 <tr class="memitem:a23b88d1da8da3aa1562734f452cda87d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a23b88d1da8da3aa1562734f452cda87d"></a>
 <a class="el" href="classtypes__rocket.html#a23b88d1da8da3aa1562734f452cda87d">nasti_romimage</a>&#160;</td><td class="memItemRight" valign="bottom">  <b></b>  <em><a class="el" href="classnasti__romimage.html">&lt;Entity nasti_romimage&gt; </a></em></td></tr>
+<tr class="memdesc:a23b88d1da8da3aa1562734f452cda87d"><td class="mdescLeft">&#160;</td><td class="mdescRight">AXI4 ROM with the default FW version declaration. <br /></td></tr>
 <tr class="memitem:a544bd7e57caac6a4f947fc9e23fa497a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a544bd7e57caac6a4f947fc9e23fa497a"></a>
 <a class="el" href="classtypes__rocket.html#a544bd7e57caac6a4f947fc9e23fa497a">nasti_sram</a>&#160;</td><td class="memItemRight" valign="bottom">  <b></b>  <em><a class="el" href="classnasti__sram.html">&lt;Entity nasti_sram&gt; </a></em></td></tr>
 <tr class="memdesc:a544bd7e57caac6a4f947fc9e23fa497a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Internal RAM with AXI4 interface declaration. <br /></td></tr>
@@ -153,30 +175,238 @@ Components</h2></td></tr>
 <tr class="memdesc:a64092e98133abd9456a557963f8092f4"><td class="mdescLeft">&#160;</td><td class="mdescRight">NASTI (AXI4) GPIO controller. <br /></td></tr>
 <tr class="memitem:a831fa7e21690218516588aae79d7fdac"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a831fa7e21690218516588aae79d7fdac"></a>
 <a class="el" href="classtypes__rocket.html#a831fa7e21690218516588aae79d7fdac">nasti_uart</a>&#160;</td><td class="memItemRight" valign="bottom">  <b></b>  <em><a class="el" href="classnasti__uart.html">&lt;Entity nasti_uart&gt; </a></em></td></tr>
-<tr class="memitem:acf48496c20b8b56615ea8d151b0a49a8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acf48496c20b8b56615ea8d151b0a49a8"></a>
-<a class="el" href="classtypes__rocket.html#acf48496c20b8b56615ea8d151b0a49a8">nasti_irqctrl</a>&#160;</td><td class="memItemRight" valign="bottom">  <b></b>  <em><a class="el" href="classnasti__irqctrl.html">&lt;Entity nasti_irqctrl&gt; </a></em></td></tr>
-<tr class="memitem:aa43d9d5ac27a062ae75694e313f90067"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa43d9d5ac27a062ae75694e313f90067"></a>
-<a class="el" href="classtypes__rocket.html#aa43d9d5ac27a062ae75694e313f90067">nasti_gnssstub</a>&#160;</td><td class="memItemRight" valign="bottom">  <b></b>  <em><a class="el" href="classnasti__gnssstub.html">&lt;Entity nasti_gnssstub&gt; </a></em></td></tr>
-<tr class="memitem:af88d736bc79cf701683c69467c66ccf5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af88d736bc79cf701683c69467c66ccf5"></a>
-<a class="el" href="classtypes__rocket.html#af88d736bc79cf701683c69467c66ccf5">nasti_pnp</a>&#160;</td><td class="memItemRight" valign="bottom">  <b></b>  <em><a class="el" href="classnasti__pnp.html">&lt;Entity nasti_pnp&gt; </a></em></td></tr>
+<tr class="memdesc:a831fa7e21690218516588aae79d7fdac"><td class="mdescLeft">&#160;</td><td class="mdescRight">UART with the AXI4 interface declaration. <br /></td></tr>
+<tr class="memitem:acf48496c20b8b56615ea8d151b0a49a8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classtypes__rocket.html#acf48496c20b8b56615ea8d151b0a49a8">nasti_irqctrl</a>&#160;</td><td class="memItemRight" valign="bottom">  <b></b>  <em><a class="el" href="classnasti__irqctrl.html">&lt;Entity nasti_irqctrl&gt; </a></em></td></tr>
+<tr class="memdesc:acf48496c20b8b56615ea8d151b0a49a8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Interrupt controller with the AXI4 interface declaration.  <a href="#acf48496c20b8b56615ea8d151b0a49a8"></a><br /></td></tr>
+<tr class="memitem:af88d736bc79cf701683c69467c66ccf5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classtypes__rocket.html#af88d736bc79cf701683c69467c66ccf5">nasti_pnp</a>&#160;</td><td class="memItemRight" valign="bottom">  <b></b>  <em><a class="el" href="classnasti__pnp.html">&lt;Entity nasti_pnp&gt; </a></em></td></tr>
+<tr class="memdesc:af88d736bc79cf701683c69467c66ccf5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Plug-n-Play support module with AXI4 interface declaration.  <a href="#af88d736bc79cf701683c69467c66ccf5"></a><br /></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="Constants"></a>
 Constants</h2></td></tr>
- <tr class="memitem:a08bab8dbc0095f0f7efc1216e428aaac"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classtypes__rocket.html#a08bab8dbc0095f0f7efc1216e428aaac">MEM_TAG_BITS</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">integer</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">6</span> <span class="vhdlchar"> </span></b></td></tr>
+ <tr class="memitem:a45014de2bd6e76a036d83a5d499fa997"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classtypes__rocket.html#a45014de2bd6e76a036d83a5d499fa997">M_XRD</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">4</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="keyword">&quot; 00000 &quot;</span><span class="vhdlchar"> </span></b></td></tr>
+<tr class="memdesc:a45014de2bd6e76a036d83a5d499fa997"><td class="mdescLeft">&#160;</td><td class="mdescRight">Memory operation types int load.  <a href="#a45014de2bd6e76a036d83a5d499fa997"></a><br /></td></tr>
+<tr class="memitem:a95ba28b71c19ff4071a389e1583e95a1"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a95ba28b71c19ff4071a389e1583e95a1"></a>
+<a class="el" href="classtypes__rocket.html#a95ba28b71c19ff4071a389e1583e95a1">M_XWR</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">4</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="keyword">&quot; 00001 &quot;</span><span class="vhdlchar"> </span></b></td></tr>
+<tr class="memdesc:a95ba28b71c19ff4071a389e1583e95a1"><td class="mdescLeft">&#160;</td><td class="mdescRight">int store <br /></td></tr>
+<tr class="memitem:a83b0004cd91104d895bc7b6856e2d9e9"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a83b0004cd91104d895bc7b6856e2d9e9"></a>
+<a class="el" href="classtypes__rocket.html#a83b0004cd91104d895bc7b6856e2d9e9">M_PFR</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">4</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="keyword">&quot; 00010 &quot;</span><span class="vhdlchar"> </span></b></td></tr>
+<tr class="memdesc:a83b0004cd91104d895bc7b6856e2d9e9"><td class="mdescLeft">&#160;</td><td class="mdescRight">prefetch with intent to read <br /></td></tr>
+<tr class="memitem:a33c01ceda6c2fe6f8a514162f5de03cd"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a33c01ceda6c2fe6f8a514162f5de03cd"></a>
+<a class="el" href="classtypes__rocket.html#a33c01ceda6c2fe6f8a514162f5de03cd">M_PFW</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">4</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="keyword">&quot; 00011 &quot;</span><span class="vhdlchar"> </span></b></td></tr>
+<tr class="memdesc:a33c01ceda6c2fe6f8a514162f5de03cd"><td class="mdescLeft">&#160;</td><td class="mdescRight">prefetch with intent to write <br /></td></tr>
+<tr class="memitem:a321e43266f277d28ca696a02eb7637a1"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a321e43266f277d28ca696a02eb7637a1"></a>
+<a class="el" href="classtypes__rocket.html#a321e43266f277d28ca696a02eb7637a1">M_XA_SWAP</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">4</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="keyword">&quot; 00100 &quot;</span><span class="vhdlchar"> </span></b></td></tr>
+<tr class="memitem:aa6f85b7174cb3cf96bb3f93cb37cee9c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa6f85b7174cb3cf96bb3f93cb37cee9c"></a>
+<a class="el" href="classtypes__rocket.html#aa6f85b7174cb3cf96bb3f93cb37cee9c">M_NOP</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">4</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="keyword">&quot; 00101 &quot;</span><span class="vhdlchar"> </span></b></td></tr>
+<tr class="memitem:a49f68bcd7d8785782a161e8a6a5f6f32"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a49f68bcd7d8785782a161e8a6a5f6f32"></a>
+<a class="el" href="classtypes__rocket.html#a49f68bcd7d8785782a161e8a6a5f6f32">M_XLR</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">4</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="keyword">&quot; 00110 &quot;</span><span class="vhdlchar"> </span></b></td></tr>
+<tr class="memitem:a145d5bd87f399b35fa0465f8a97ee7bf"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a145d5bd87f399b35fa0465f8a97ee7bf"></a>
+<a class="el" href="classtypes__rocket.html#a145d5bd87f399b35fa0465f8a97ee7bf">M_XSC</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">4</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="keyword">&quot; 00111 &quot;</span><span class="vhdlchar"> </span></b></td></tr>
+<tr class="memitem:a655fc791d12f8b04c30147dc9ae25d50"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a655fc791d12f8b04c30147dc9ae25d50"></a>
+<a class="el" href="classtypes__rocket.html#a655fc791d12f8b04c30147dc9ae25d50">M_XA_ADD</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">4</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="keyword">&quot; 01000 &quot;</span><span class="vhdlchar"> </span></b></td></tr>
+<tr class="memitem:a826ecc343cd1f8f18afec28c9cdfb411"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a826ecc343cd1f8f18afec28c9cdfb411"></a>
+<a class="el" href="classtypes__rocket.html#a826ecc343cd1f8f18afec28c9cdfb411">M_XA_XOR</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">4</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="keyword">&quot; 01001 &quot;</span><span class="vhdlchar"> </span></b></td></tr>
+<tr class="memitem:a2d38024f560e295df10eee82648e87bf"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2d38024f560e295df10eee82648e87bf"></a>
+<a class="el" href="classtypes__rocket.html#a2d38024f560e295df10eee82648e87bf">M_XA_OR</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">4</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="keyword">&quot; 01010 &quot;</span><span class="vhdlchar"> </span></b></td></tr>
+<tr class="memitem:aac10608f904bdf8359f94818149e8d8d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aac10608f904bdf8359f94818149e8d8d"></a>
+<a class="el" href="classtypes__rocket.html#aac10608f904bdf8359f94818149e8d8d">M_XA_AND</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">4</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="keyword">&quot; 01011 &quot;</span><span class="vhdlchar"> </span></b></td></tr>
+<tr class="memitem:a422a0d59d09a5b868362ee4c623729b6"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a422a0d59d09a5b868362ee4c623729b6"></a>
+<a class="el" href="classtypes__rocket.html#a422a0d59d09a5b868362ee4c623729b6">M_XA_MIN</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">4</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="keyword">&quot; 01100 &quot;</span><span class="vhdlchar"> </span></b></td></tr>
+<tr class="memitem:aeee2aad404a2c85723536bc5cb96e066"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aeee2aad404a2c85723536bc5cb96e066"></a>
+<a class="el" href="classtypes__rocket.html#aeee2aad404a2c85723536bc5cb96e066">M_XA_MAX</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">4</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="keyword">&quot; 01101 &quot;</span><span class="vhdlchar"> </span></b></td></tr>
+<tr class="memitem:adcb3449173c43adfac236c100084a0de"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="adcb3449173c43adfac236c100084a0de"></a>
+<a class="el" href="classtypes__rocket.html#adcb3449173c43adfac236c100084a0de">M_XA_MINU</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">4</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="keyword">&quot; 01110 &quot;</span><span class="vhdlchar"> </span></b></td></tr>
+<tr class="memitem:aff8dc99bd14b8b0fb9f08e6f73037d77"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aff8dc99bd14b8b0fb9f08e6f73037d77"></a>
+<a class="el" href="classtypes__rocket.html#aff8dc99bd14b8b0fb9f08e6f73037d77">M_XA_MAXU</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">4</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="keyword">&quot; 01111 &quot;</span><span class="vhdlchar"> </span></b></td></tr>
+<tr class="memitem:a4e4b9d16fe669edd13d365e7bc0b838c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4e4b9d16fe669edd13d365e7bc0b838c"></a>
+<a class="el" href="classtypes__rocket.html#a4e4b9d16fe669edd13d365e7bc0b838c">M_FLUSH</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">4</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="keyword">&quot; 10000 &quot;</span><span class="vhdlchar"> </span></b></td></tr>
+<tr class="memdesc:a4e4b9d16fe669edd13d365e7bc0b838c"><td class="mdescLeft">&#160;</td><td class="mdescRight">write back dirty data and cede R/W permissions <br /></td></tr>
+<tr class="memitem:a5304fb8fbab36c854acc22a098ea2b56"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5304fb8fbab36c854acc22a098ea2b56"></a>
+<a class="el" href="classtypes__rocket.html#a5304fb8fbab36c854acc22a098ea2b56">M_PRODUCE</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">4</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="keyword">&quot; 10001 &quot;</span><span class="vhdlchar"> </span></b></td></tr>
+<tr class="memdesc:a5304fb8fbab36c854acc22a098ea2b56"><td class="mdescLeft">&#160;</td><td class="mdescRight">write back dirty data and cede W permissions <br /></td></tr>
+<tr class="memitem:a17ad9ca4b82cbd30844290e0c76d9ea2"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a17ad9ca4b82cbd30844290e0c76d9ea2"></a>
+<a class="el" href="classtypes__rocket.html#a17ad9ca4b82cbd30844290e0c76d9ea2">M_CLEAN</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">4</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="keyword">&quot; 10011 &quot;</span><span class="vhdlchar"> </span></b></td></tr>
+<tr class="memdesc:a17ad9ca4b82cbd30844290e0c76d9ea2"><td class="mdescLeft">&#160;</td><td class="mdescRight">write back dirty data and retain R/W permissions <br /></td></tr>
+<tr class="memitem:ad63a9ce2d7b03dd395f2f9582cfa4713"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad63a9ce2d7b03dd395f2f9582cfa4713"></a>
+<a class="el" href="classtypes__rocket.html#ad63a9ce2d7b03dd395f2f9582cfa4713">ACQUIRE_GET_SINGLE_DATA_BEAT</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">2</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="keyword">&quot; 000 &quot;</span><span class="vhdlchar"> </span></b></td></tr>
+<tr class="memdesc:ad63a9ce2d7b03dd395f2f9582cfa4713"><td class="mdescLeft">&#160;</td><td class="mdescRight">&lt;tilelink.scala&gt; Object Acquire {} <br /></td></tr>
+<tr class="memitem:a4e70fdda91a9942bc64b0e19a3272c82"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4e70fdda91a9942bc64b0e19a3272c82"></a>
+<a class="el" href="classtypes__rocket.html#a4e70fdda91a9942bc64b0e19a3272c82">ACQUIRE_GET_BLOCK_DATA</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">2</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="keyword">&quot; 001 &quot;</span><span class="vhdlchar"> </span></b></td></tr>
+<tr class="memitem:a07431e9739f47bc599c39336aefff0bb"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a07431e9739f47bc599c39336aefff0bb"></a>
+<a class="el" href="classtypes__rocket.html#a07431e9739f47bc599c39336aefff0bb">ACQUIRE_PUT_SINGLE_DATA_BEAT</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">2</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="keyword">&quot; 010 &quot;</span><span class="vhdlchar"> </span></b></td></tr>
+<tr class="memitem:a5185da0c676c276fe6b13ecc2dcc43f5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5185da0c676c276fe6b13ecc2dcc43f5"></a>
+<a class="el" href="classtypes__rocket.html#a5185da0c676c276fe6b13ecc2dcc43f5">ACQUIRE_PUT_BLOCK_DATA</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">2</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="keyword">&quot; 011 &quot;</span><span class="vhdlchar"> </span></b></td></tr>
+<tr class="memitem:a4735df191a4a2dd526f30826607c9e75"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4735df191a4a2dd526f30826607c9e75"></a>
+<a class="el" href="classtypes__rocket.html#a4735df191a4a2dd526f30826607c9e75">ACQUIRE_PUT_ATOMIC_DATA</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">2</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="keyword">&quot; 100 &quot;</span><span class="vhdlchar"> </span></b></td></tr>
+<tr class="memitem:abe9122c7c746f3650643c9a7a7e88701"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="abe9122c7c746f3650643c9a7a7e88701"></a>
+<a class="el" href="classtypes__rocket.html#abe9122c7c746f3650643c9a7a7e88701">ACQUIRE_PREFETCH_BLOCK</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">2</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="keyword">&quot; 101 &quot;</span><span class="vhdlchar"> </span></b></td></tr>
+<tr class="memitem:a6fbd8d57bff998c100324e246ce98eff"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6fbd8d57bff998c100324e246ce98eff"></a>
+<a class="el" href="classtypes__rocket.html#a6fbd8d57bff998c100324e246ce98eff">GRANT_ACK_RELEASE</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">3</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="keyword">&quot; 0000 &quot;</span><span class="vhdlchar"> </span></b></td></tr>
+<tr class="memdesc:a6fbd8d57bff998c100324e246ce98eff"><td class="mdescLeft">&#160;</td><td class="mdescRight">&lt;tilelink.scala&gt; Object Grant {} <br /></td></tr>
+<tr class="memitem:a4beb02e9990a0a463fb224ad4dd02774"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4beb02e9990a0a463fb224ad4dd02774"></a>
+<a class="el" href="classtypes__rocket.html#a4beb02e9990a0a463fb224ad4dd02774">GRANT_ACK_PREFETCH</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">3</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="keyword">&quot; 0001 &quot;</span><span class="vhdlchar"> </span></b></td></tr>
+<tr class="memitem:a380d6014c5e39dc0d476a6107b3aaf99"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a380d6014c5e39dc0d476a6107b3aaf99"></a>
+<a class="el" href="classtypes__rocket.html#a380d6014c5e39dc0d476a6107b3aaf99">GRANT_ACK_NON_PREFETCH_PUT</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">3</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="keyword">&quot; 0011 &quot;</span><span class="vhdlchar"> </span></b></td></tr>
+<tr class="memitem:a7fc28e690b1b5fb1ccec66e76ddc17ae"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7fc28e690b1b5fb1ccec66e76ddc17ae"></a>
+<a class="el" href="classtypes__rocket.html#a7fc28e690b1b5fb1ccec66e76ddc17ae">GRANT_SINGLE_BEAT_GET</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">3</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="keyword">&quot; 0100 &quot;</span><span class="vhdlchar"> </span></b></td></tr>
+<tr class="memitem:ac85602fe8f83d414244ea89aeea42d94"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac85602fe8f83d414244ea89aeea42d94"></a>
+<a class="el" href="classtypes__rocket.html#ac85602fe8f83d414244ea89aeea42d94">GRANT_BLOCK_GET</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">3</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="keyword">&quot; 0101 &quot;</span><span class="vhdlchar"> </span></b></td></tr>
+<tr class="memitem:a1491fd8e5db2aa29666347fd379de444"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1491fd8e5db2aa29666347fd379de444"></a>
+<a class="el" href="classtypes__rocket.html#a1491fd8e5db2aa29666347fd379de444">CACHED_ACQUIRE_SHARED</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">2</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="keyword">&quot; 000 &quot;</span><span class="vhdlchar"> </span></b></td></tr>
+<tr class="memdesc:a1491fd8e5db2aa29666347fd379de444"><td class="mdescLeft">&#160;</td><td class="mdescRight">MESI coherence. <br /></td></tr>
+<tr class="memitem:a101ee0c4553edd32088071696bc2286a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a101ee0c4553edd32088071696bc2286a"></a>
+<a class="el" href="classtypes__rocket.html#a101ee0c4553edd32088071696bc2286a">CACHED_ACQUIRE_EXCLUSIVE</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">2</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="keyword">&quot; 001 &quot;</span><span class="vhdlchar"> </span></b></td></tr>
+<tr class="memitem:a0b7fa97b377da17189a9aee9b4ba819c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0b7fa97b377da17189a9aee9b4ba819c"></a>
+<a class="el" href="classtypes__rocket.html#a0b7fa97b377da17189a9aee9b4ba819c">CACHED_GRANT_SHARED</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">3</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="keyword">&quot; 0000 &quot;</span><span class="vhdlchar"> </span></b></td></tr>
+<tr class="memitem:a9064a9ae69f5cdae67b5f7246e8d59ec"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9064a9ae69f5cdae67b5f7246e8d59ec"></a>
+<a class="el" href="classtypes__rocket.html#a9064a9ae69f5cdae67b5f7246e8d59ec">CACHED_GRANT_EXCLUSIVE</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">3</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="keyword">&quot; 0001 &quot;</span><span class="vhdlchar"> </span></b></td></tr>
+<tr class="memitem:a37adc7f182cf7b589021d1d0a9267820"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a37adc7f182cf7b589021d1d0a9267820"></a>
+<a class="el" href="classtypes__rocket.html#a37adc7f182cf7b589021d1d0a9267820">CACHED_GRANT_EXCLUSIVE_ACK</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">3</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="keyword">&quot; 0010 &quot;</span><span class="vhdlchar"> </span></b></td></tr>
+<tr class="memitem:a725d7659dde9d86f401507ecb6b32028"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classtypes__rocket.html#a725d7659dde9d86f401507ecb6b32028">MEMOP_XSIZE_TOTAL</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">integer</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">8</span> <span class="vhdlchar"> </span></b></td></tr>
+<tr class="memdesc:a725d7659dde9d86f401507ecb6b32028"><td class="mdescLeft">&#160;</td><td class="mdescRight">Memory Operation size decoder.  <a href="#a725d7659dde9d86f401507ecb6b32028"></a><br /></td></tr>
+<tr class="memitem:a476dd0b283a505dd25fd45ac90c73a8c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a476dd0b283a505dd25fd45ac90c73a8c"></a>
+<a class="el" href="classtypes__rocket.html#a476dd0b283a505dd25fd45ac90c73a8c">opSizeToXSize</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="vhdlchar">memop_xsize_type</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><b><a class="el" href="classtypes__rocket.html#ab36a9b0b4ff02a7531c7c9c01ec79993">MT_B</a></b> <span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar">&gt;</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="keyword">&quot; 000 &quot;</span><span class="vhdlchar"> </span><span class="vhdlchar">,</span><span class="vhdlchar"> </span><b><a class="el" href="classtypes__rocket.html#a4d41053916048f3a87e34b30bebe248f">MT_BU</a></b> <span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar">&gt;</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="keyword">&quot; 000 &quot;</span><span class="vhdlchar"> </span><span class="vhdlchar">,</span><span class="vhdlchar"> </span><b><a class="el" href="classtypes__rocket.html#a54dc37ef7e88c80d124fb61194d57e05">MT_H</a></b> <span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar">&gt;</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="keyword">&quot; 001 &quot;</span><span class="vhdlchar"> </span><span class="vhdlchar">,</span><span class="vhdlchar"> </span><b><a class="el" href="classtypes__rocket.html#a2bb817e588806bd64f49d8c0038d95d7">MT_HU</a></b> <span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar">&gt;</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="keyword">&quot; 001 &quot;</span><span class="vhdlchar"> </span><span class="vhdlchar">,</span><span class="vhdlchar"> </span><b><a class="el" href="classtypes__rocket.html#a0970da23dae24a8fbeb4495d97663461">MT_W</a></b> <span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar">&gt;</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="keyword">&quot; 010 &quot;</span><span class="vhdlchar"> </span><span class="vhdlchar">,</span><span class="vhdlchar"> </span><b><a class="el" href="classtypes__rocket.html#a1bd6b6ddd140a2fba7393d39cd976574">MT_WU</a></b> <span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar">&gt;</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="keyword">&quot; 010 &quot;</span><span class="vhdlchar"> </span><span class="vhdlchar">,</span><span class="vhdlchar"> </span><b><a class="el" href="classtypes__rocket.html#a12992b024fc9687ac55eff4ba86822bc">MT_D</a></b> <span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar">&gt;</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="keyword">&quot; 011 &quot;</span><span class="vhdlchar"> </span><span class="vhdlchar">,</span><span class="vhdlchar"> </span><span class="vhdlchar">MT_Q</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar">&gt;</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">conv_std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><b><a class="el" href="classtypes__common.html#a6f2925098369e90434645973ccc031d0">log2</a></b> <span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><b><a class="el" href="classtypes__amba4.html#af74e5749b32c77c685819ebbe95b6263">CFG_NASTI_DATA_BYTES</a></b> <span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar">,</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">3</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span></b></td></tr>
+<tr class="memdesc:a476dd0b283a505dd25fd45ac90c73a8c"><td class="mdescLeft">&#160;</td><td class="mdescRight">unimplemented in scala <br /></td></tr>
+<tr class="memitem:adc106e7f7d41d2dccc2641530e11553f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classtypes__rocket.html#adc106e7f7d41d2dccc2641530e11553f">host_out_none</a> &#160;</td><td class="memItemRight" valign="bottom"><b><b><a class="el" href="classtypes__rocket.html#ad56ec7d194d93b19f9bb18bfddbf0a0f">host_out_type</a></b> <span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">'</span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">'</span><span class="vhdlchar"> </span><span class="vhdlchar">,</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">'</span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">'</span><span class="vhdlchar"> </span><span class="vhdlchar">,</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">'</span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">'</span><span class="vhdlchar"> </span><span class="vhdlchar">,</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">'</span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">'</span><span class="vhdlchar"> </span><span class="vhdlchar">,</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="keywordflow">others</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar">&gt;</span><span class="vhdlchar"> </span><span class="vhdlchar">'</span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">'</span><span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar">,</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="keywordflow">others</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar">&gt;</span><span class="vhdlchar"> </span><span class="vhdlchar">'</span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">'</span><span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar">,</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">'</span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">'</span><span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span></b></td></tr>
+<tr class="memdesc:adc106e7f7d41d2dccc2641530e11553f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Empty output signals of HostIO interface.  <a href="#adc106e7f7d41d2dccc2641530e11553f"></a><br /></td></tr>
+<tr><td colspan="2"><div class="groupHeader">Scala inherited constants.</div></td></tr>
+<tr><td colspan="2"><div class="groupText"><p>The following constants were define in Rocket-chip generator. </p>
+</div></td></tr>
+<tr class="memitem:a08bab8dbc0095f0f7efc1216e428aaac"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classtypes__rocket.html#a08bab8dbc0095f0f7efc1216e428aaac">MEM_TAG_BITS</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">integer</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">6</span> <span class="vhdlchar"> </span></b></td></tr>
 <tr class="memdesc:a08bab8dbc0095f0f7efc1216e428aaac"><td class="mdescLeft">&#160;</td><td class="mdescRight">Bits allocated for the memory tag value.  <a href="#a08bab8dbc0095f0f7efc1216e428aaac"></a><br /></td></tr>
-<tr class="memitem:a4f3874f09c8da21b7a506a40cac872e4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classtypes__rocket.html#a4f3874f09c8da21b7a506a40cac872e4">MEM_DATA_BITS</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">integer</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">CFG_NASTI_DATA_BITS</span><span class="vhdlchar"> </span></b></td></tr>
+<tr class="memitem:a4f3874f09c8da21b7a506a40cac872e4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classtypes__rocket.html#a4f3874f09c8da21b7a506a40cac872e4">MEM_DATA_BITS</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">integer</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><b><a class="el" href="classtypes__amba4.html#ae9515f04c38e433b5ed855e1763e8fdc">CFG_NASTI_DATA_BITS</a></b> <span class="vhdlchar"> </span></b></td></tr>
 <tr class="memdesc:a4f3874f09c8da21b7a506a40cac872e4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Memory data bitwise.  <a href="#a4f3874f09c8da21b7a506a40cac872e4"></a><br /></td></tr>
 <tr class="memitem:a47b87b2ba9605154ab9755934ff70acf"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a47b87b2ba9605154ab9755934ff70acf"></a>
 <a class="el" href="classtypes__rocket.html#a47b87b2ba9605154ab9755934ff70acf">MEM_ADDR_BITS</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">integer</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">26</span> <span class="vhdlchar"> </span></b></td></tr>
 <tr class="memdesc:a47b87b2ba9605154ab9755934ff70acf"><td class="mdescLeft">&#160;</td><td class="mdescRight">SCALA generated value. Not used in VHDL. <br /></td></tr>
 <tr class="memitem:a5b0a781ab35302463fc84f5b85f660db"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classtypes__rocket.html#a5b0a781ab35302463fc84f5b85f660db">HTIF_WIDTH</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">integer</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">16</span> <span class="vhdlchar"> </span></b></td></tr>
 <tr class="memdesc:a5b0a781ab35302463fc84f5b85f660db"><td class="mdescLeft">&#160;</td><td class="mdescRight">Multiplexing HTIF bus data width.  <a href="#a5b0a781ab35302463fc84f5b85f660db"></a><br /></td></tr>
+<tr><td colspan="2"><div class="groupHeader">HostIO modules unique IDs.</div></td></tr>
+<tr class="memitem:a077edd85a548a0270a7acf051216ac97"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a077edd85a548a0270a7acf051216ac97"></a>
+<a class="el" href="classtypes__rocket.html#a077edd85a548a0270a7acf051216ac97">CFG_HTIF_SRC_IRQCTRL</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">integer</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span></b></td></tr>
+<tr class="memdesc:a077edd85a548a0270a7acf051216ac97"><td class="mdescLeft">&#160;</td><td class="mdescRight">Interrupt controller. <br /></td></tr>
+<tr class="memitem:a91e1425cab08a5a1c59133dcc9b7f0e1"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a91e1425cab08a5a1c59133dcc9b7f0e1"></a>
+<a class="el" href="classtypes__rocket.html#a91e1425cab08a5a1c59133dcc9b7f0e1">CFG_HTIF_SRC_DSU</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">integer</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><b><a class="el" href="classtypes__rocket.html#a077edd85a548a0270a7acf051216ac97">CFG_HTIF_SRC_IRQCTRL</a></b> <span class="vhdlchar">+</span><span class="vhdlchar"> </span> <span class="vhdldigit">1</span> <span class="vhdlchar"> </span></b></td></tr>
+<tr class="memdesc:a91e1425cab08a5a1c59133dcc9b7f0e1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Debug Support Unit (DSU) <br /></td></tr>
+<tr class="memitem:af86ca695ae0bd7129a3659f34e8e32f6"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af86ca695ae0bd7129a3659f34e8e32f6"></a>
+<a class="el" href="classtypes__rocket.html#af86ca695ae0bd7129a3659f34e8e32f6">CFG_HTIF_SRC_TOTAL</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">integer</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><b><a class="el" href="classtypes__rocket.html#a91e1425cab08a5a1c59133dcc9b7f0e1">CFG_HTIF_SRC_DSU</a></b> <span class="vhdlchar">+</span><span class="vhdlchar"> </span> <span class="vhdldigit">1</span> <span class="vhdlchar"> </span></b></td></tr>
+<tr class="memdesc:af86ca695ae0bd7129a3659f34e8e32f6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Total number of HostIO initiators. <br /></td></tr>
+<tr><td colspan="2"><div class="groupHeader">Memory Transaction types.</div></td></tr>
+<tr><td colspan="2"><div class="groupText"><p>TileLinkIO interface uses these constant to identify the payload size of the transaction. </p>
+</div></td></tr>
+<tr class="memitem:ab36a9b0b4ff02a7531c7c9c01ec79993"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab36a9b0b4ff02a7531c7c9c01ec79993"></a>
+<a class="el" href="classtypes__rocket.html#ab36a9b0b4ff02a7531c7c9c01ec79993">MT_B</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">integer</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span></b></td></tr>
+<tr class="memdesc:ab36a9b0b4ff02a7531c7c9c01ec79993"><td class="mdescLeft">&#160;</td><td class="mdescRight">int8_t Memory Transaction. <br /></td></tr>
+<tr class="memitem:a54dc37ef7e88c80d124fb61194d57e05"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a54dc37ef7e88c80d124fb61194d57e05"></a>
+<a class="el" href="classtypes__rocket.html#a54dc37ef7e88c80d124fb61194d57e05">MT_H</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">integer</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">1</span> <span class="vhdlchar"> </span></b></td></tr>
+<tr class="memdesc:a54dc37ef7e88c80d124fb61194d57e05"><td class="mdescLeft">&#160;</td><td class="mdescRight">int16_t Memory Transaction. <br /></td></tr>
+<tr class="memitem:a0970da23dae24a8fbeb4495d97663461"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0970da23dae24a8fbeb4495d97663461"></a>
+<a class="el" href="classtypes__rocket.html#a0970da23dae24a8fbeb4495d97663461">MT_W</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">integer</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">2</span> <span class="vhdlchar"> </span></b></td></tr>
+<tr class="memdesc:a0970da23dae24a8fbeb4495d97663461"><td class="mdescLeft">&#160;</td><td class="mdescRight">int32_t Memory Transaction. <br /></td></tr>
+<tr class="memitem:a12992b024fc9687ac55eff4ba86822bc"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a12992b024fc9687ac55eff4ba86822bc"></a>
+<a class="el" href="classtypes__rocket.html#a12992b024fc9687ac55eff4ba86822bc">MT_D</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">integer</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">3</span> <span class="vhdlchar"> </span></b></td></tr>
+<tr class="memdesc:a12992b024fc9687ac55eff4ba86822bc"><td class="mdescLeft">&#160;</td><td class="mdescRight">int64_t Memory Transaction. <br /></td></tr>
+<tr class="memitem:a4d41053916048f3a87e34b30bebe248f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4d41053916048f3a87e34b30bebe248f"></a>
+<a class="el" href="classtypes__rocket.html#a4d41053916048f3a87e34b30bebe248f">MT_BU</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">integer</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">4</span> <span class="vhdlchar"> </span></b></td></tr>
+<tr class="memdesc:a4d41053916048f3a87e34b30bebe248f"><td class="mdescLeft">&#160;</td><td class="mdescRight">uint8_t Memory Transaction. <br /></td></tr>
+<tr class="memitem:a2bb817e588806bd64f49d8c0038d95d7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2bb817e588806bd64f49d8c0038d95d7"></a>
+<a class="el" href="classtypes__rocket.html#a2bb817e588806bd64f49d8c0038d95d7">MT_HU</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">integer</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">5</span> <span class="vhdlchar"> </span></b></td></tr>
+<tr class="memdesc:a2bb817e588806bd64f49d8c0038d95d7"><td class="mdescLeft">&#160;</td><td class="mdescRight">uint16_t Memory Transaction. <br /></td></tr>
+<tr class="memitem:a1bd6b6ddd140a2fba7393d39cd976574"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1bd6b6ddd140a2fba7393d39cd976574"></a>
+<a class="el" href="classtypes__rocket.html#a1bd6b6ddd140a2fba7393d39cd976574">MT_WU</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">integer</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">6</span> <span class="vhdlchar"> </span></b></td></tr>
+<tr class="memdesc:a1bd6b6ddd140a2fba7393d39cd976574"><td class="mdescLeft">&#160;</td><td class="mdescRight">uint32_t Memory Transaction. <br /></td></tr>
+<tr class="memitem:a1a24b96b7eb9ca7cf94cbd7461facd5c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1a24b96b7eb9ca7cf94cbd7461facd5c"></a>
+<a class="el" href="classtypes__rocket.html#a1a24b96b7eb9ca7cf94cbd7461facd5c">MT_Q</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">integer</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">7</span> <span class="vhdlchar"> </span></b></td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="Types"></a>
+Types</h2></td></tr>
+ <tr class="memitem:a8e01d0d318f020652c8aeaf2e508020a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8e01d0d318f020652c8aeaf2e508020a"></a>
+<b><a class="el" href="classtypes__rocket.html#a8e01d0d318f020652c8aeaf2e508020a">memop_xsize_type</a>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="keywordflow">to</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><b><a class="el" href="classtypes__rocket.html#a725d7659dde9d86f401507ecb6b32028">MEMOP_XSIZE_TOTAL</a></b> <span class="vhdlchar">-</span><span class="vhdlchar"> </span> <span class="vhdldigit">1</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">2</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span></b></b></td></tr>
+<tr class="memitem:aa0b83f22c698aa310c90159ead4a4abe"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa0b83f22c698aa310c90159ead4a4abe"></a>
+<b><a class="el" href="classtypes__rocket.html#aa0b83f22c698aa310c90159ead4a4abe">host_out_vector</a>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="keywordflow">to</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><b><a class="el" href="classtypes__rocket.html#af86ca695ae0bd7129a3659f34e8e32f6">CFG_HTIF_SRC_TOTAL</a></b> <span class="vhdlchar">-</span><span class="vhdlchar"> </span> <span class="vhdldigit">1</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><b><a class="el" href="classtypes__rocket.html#ad56ec7d194d93b19f9bb18bfddbf0a0f">host_out_type</a></b> <span class="vhdlchar"> </span></b></b></td></tr>
+<tr class="memdesc:aa0b83f22c698aa310c90159ead4a4abe"><td class="mdescLeft">&#160;</td><td class="mdescRight">Full stack of HostIO output signals from all devices. <br /></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="Records"></a>
 Records</h2></td></tr>
- <tr class="memitem:a709484c7961b01d764688492e5d10cd4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a709484c7961b01d764688492e5d10cd4"></a>
+ <tr class="memitem:a1881e9b50892ed1be1a06e5aaaffbb8e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1881e9b50892ed1be1a06e5aaaffbb8e"></a>
+<a class="el" href="classtypes__rocket.html#a1881e9b50892ed1be1a06e5aaaffbb8e">tile_cached_in_type</a> <b> &#160;</td><td class="memItemRight" valign="bottom"></b></td></tr>
+<tr class="memitem:a6e16209b09f4d481527e8f6ff1b0a5ca"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6e16209b09f4d481527e8f6ff1b0a5ca"></a>
+<a class="el" href="classtypes__rocket.html#a6e16209b09f4d481527e8f6ff1b0a5ca">acquire_ready</a> <b>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic</span><span class="vhdlchar"> </span></b></b></td></tr>
+<tr class="memitem:ab4c9f50fcd3ebcd6e1422b86040f9d3a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab4c9f50fcd3ebcd6e1422b86040f9d3a"></a>
+<a class="el" href="classtypes__rocket.html#ab4c9f50fcd3ebcd6e1422b86040f9d3a">grant_valid</a> <b>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic</span><span class="vhdlchar"> </span></b></b></td></tr>
+<tr class="memitem:a2989bd190c305a4e7b1dfed77be0161e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2989bd190c305a4e7b1dfed77be0161e"></a>
+<a class="el" href="classtypes__rocket.html#a2989bd190c305a4e7b1dfed77be0161e">grant_bits_addr_beat</a> <b>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">1</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span></b></b></td></tr>
+<tr class="memitem:a719ef57d41ac4c4322e0ea176dacddc1"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a719ef57d41ac4c4322e0ea176dacddc1"></a>
+<a class="el" href="classtypes__rocket.html#a719ef57d41ac4c4322e0ea176dacddc1">grant_bits_client_xact_id</a> <b>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">1</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span></b></b></td></tr>
+<tr class="memdesc:a719ef57d41ac4c4322e0ea176dacddc1"><td class="mdescLeft">&#160;</td><td class="mdescRight">client's transaction id <br /></td></tr>
+<tr class="memitem:a906d6d1f10079bc5642ca05e3fa5e758"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a906d6d1f10079bc5642ca05e3fa5e758"></a>
+<a class="el" href="classtypes__rocket.html#a906d6d1f10079bc5642ca05e3fa5e758">grant_bits_manager_xact_id</a> <b>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">3</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span></b></b></td></tr>
+<tr class="memitem:a19c0e1eea23ce98751fc030c63be74cf"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a19c0e1eea23ce98751fc030c63be74cf"></a>
+<a class="el" href="classtypes__rocket.html#a19c0e1eea23ce98751fc030c63be74cf">grant_bits_is_builtin_type</a> <b>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic</span><span class="vhdlchar"> </span></b></b></td></tr>
+<tr class="memitem:ab2340631e25dee0aabe992ede58b118f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab2340631e25dee0aabe992ede58b118f"></a>
+<a class="el" href="classtypes__rocket.html#ab2340631e25dee0aabe992ede58b118f">grant_bits_g_type</a> <b>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">3</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span></b></b></td></tr>
+<tr class="memitem:a809e54ce8f575b7e33214a591e0f6ef0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a809e54ce8f575b7e33214a591e0f6ef0"></a>
+<a class="el" href="classtypes__rocket.html#a809e54ce8f575b7e33214a591e0f6ef0">grant_bits_data</a> <b>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">127</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span></b></b></td></tr>
+<tr class="memitem:aa8499292850fc52fe27f6f81c14a7744"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa8499292850fc52fe27f6f81c14a7744"></a>
+<a class="el" href="classtypes__rocket.html#aa8499292850fc52fe27f6f81c14a7744">probe_valid</a> <b>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic</span><span class="vhdlchar"> </span></b></b></td></tr>
+<tr class="memitem:ac1236df8fc63d7ac99ca3b620b9a2afb"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac1236df8fc63d7ac99ca3b620b9a2afb"></a>
+<a class="el" href="classtypes__rocket.html#ac1236df8fc63d7ac99ca3b620b9a2afb">probe_bits_addr_block</a> <b>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">25</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span></b></b></td></tr>
+<tr class="memitem:ae2ac001e731649ed3e7813ab99f57939"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae2ac001e731649ed3e7813ab99f57939"></a>
+<a class="el" href="classtypes__rocket.html#ae2ac001e731649ed3e7813ab99f57939">probe_bits_p_type</a> <b>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">1</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span></b></b></td></tr>
+<tr class="memitem:addbda5da52d84390587e6824bcdfb4a5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="addbda5da52d84390587e6824bcdfb4a5"></a>
+<a class="el" href="classtypes__rocket.html#addbda5da52d84390587e6824bcdfb4a5">release_ready</a> <b>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic</span><span class="vhdlchar"> </span></b></b></td></tr>
+<tr class="memitem:a26bc23b5abdea52241fb09cfc2d15b54"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a26bc23b5abdea52241fb09cfc2d15b54"></a>
+<a class="el" href="classtypes__rocket.html#a26bc23b5abdea52241fb09cfc2d15b54">tile_cached_out_type</a> <b> &#160;</td><td class="memItemRight" valign="bottom"></b></td></tr>
+<tr class="memitem:a764dcd58a3b56febb66702881dd37000"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a764dcd58a3b56febb66702881dd37000"></a>
+<a class="el" href="classtypes__rocket.html#a764dcd58a3b56febb66702881dd37000">acquire_valid</a> <b>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic</span><span class="vhdlchar"> </span></b></b></td></tr>
+<tr class="memitem:aaa9ea8e3eb4b132e6d316db38ff165d7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aaa9ea8e3eb4b132e6d316db38ff165d7"></a>
+<a class="el" href="classtypes__rocket.html#aaa9ea8e3eb4b132e6d316db38ff165d7">acquire_bits_addr_block</a> <b>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">25</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span></b></b></td></tr>
+<tr class="memitem:a200c09a27fab3f2dcac5e15517f35dfa"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a200c09a27fab3f2dcac5e15517f35dfa"></a>
+<a class="el" href="classtypes__rocket.html#a200c09a27fab3f2dcac5e15517f35dfa">acquire_bits_client_xact_id</a> <b>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">1</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span></b></b></td></tr>
+<tr class="memitem:a6dc0ab6e5ffdd7a2d1286696f2e4eb05"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6dc0ab6e5ffdd7a2d1286696f2e4eb05"></a>
+<a class="el" href="classtypes__rocket.html#a6dc0ab6e5ffdd7a2d1286696f2e4eb05">acquire_bits_addr_beat</a> <b>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">1</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span></b></b></td></tr>
+<tr class="memitem:a247729cfc3b450f7ae9d06e9967c6856"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a247729cfc3b450f7ae9d06e9967c6856"></a>
+<a class="el" href="classtypes__rocket.html#a247729cfc3b450f7ae9d06e9967c6856">acquire_bits_is_builtin_type</a> <b>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic</span><span class="vhdlchar"> </span></b></b></td></tr>
+<tr class="memitem:a41902f495c53d5236d17bb228c423a46"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a41902f495c53d5236d17bb228c423a46"></a>
+<a class="el" href="classtypes__rocket.html#a41902f495c53d5236d17bb228c423a46">acquire_bits_a_type</a> <b>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">2</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span></b></b></td></tr>
+<tr class="memitem:aff0ab04fe90053be9dd86dd6111a6da3"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aff0ab04fe90053be9dd86dd6111a6da3"></a>
+<a class="el" href="classtypes__rocket.html#aff0ab04fe90053be9dd86dd6111a6da3">acquire_bits_union</a> <b>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">16</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span></b></b></td></tr>
+<tr class="memitem:a82a82b62a730eb2d06b6e6d40e6b4e0b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a82a82b62a730eb2d06b6e6d40e6b4e0b"></a>
+<a class="el" href="classtypes__rocket.html#a82a82b62a730eb2d06b6e6d40e6b4e0b">acquire_bits_data</a> <b>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">127</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span></b></b></td></tr>
+<tr class="memitem:a935ba6d50ca83ef971ae61488e1a2557"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a935ba6d50ca83ef971ae61488e1a2557"></a>
+<a class="el" href="classtypes__rocket.html#a935ba6d50ca83ef971ae61488e1a2557">grant_ready</a> <b>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic</span><span class="vhdlchar"> </span></b></b></td></tr>
+<tr class="memitem:a587c01d4b6d25cbe145a2beaeacee730"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a587c01d4b6d25cbe145a2beaeacee730"></a>
+<a class="el" href="classtypes__rocket.html#a587c01d4b6d25cbe145a2beaeacee730">probe_ready</a> <b>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic</span><span class="vhdlchar"> </span></b></b></td></tr>
+<tr class="memitem:a37ed6063dbb6cf72a72fd8922ac7422f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a37ed6063dbb6cf72a72fd8922ac7422f"></a>
+<a class="el" href="classtypes__rocket.html#a37ed6063dbb6cf72a72fd8922ac7422f">release_valid</a> <b>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic</span><span class="vhdlchar"> </span></b></b></td></tr>
+<tr class="memitem:a9458cfb11723c036743ed60bff030a13"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9458cfb11723c036743ed60bff030a13"></a>
+<a class="el" href="classtypes__rocket.html#a9458cfb11723c036743ed60bff030a13">release_bits_addr_beat</a> <b>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">1</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span></b></b></td></tr>
+<tr class="memitem:a55ed1fa14524b8e5650b9f8614801916"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a55ed1fa14524b8e5650b9f8614801916"></a>
+<a class="el" href="classtypes__rocket.html#a55ed1fa14524b8e5650b9f8614801916">release_bits_addr_block</a> <b>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">25</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span></b></b></td></tr>
+<tr class="memitem:a766b004b1906ffd266e5847167b8cbe3"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a766b004b1906ffd266e5847167b8cbe3"></a>
+<a class="el" href="classtypes__rocket.html#a766b004b1906ffd266e5847167b8cbe3">release_bits_client_xact_id</a> <b>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">1</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span></b></b></td></tr>
+<tr class="memitem:a0e81f72f2851088a57b27d05a51cf01a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0e81f72f2851088a57b27d05a51cf01a"></a>
+<a class="el" href="classtypes__rocket.html#a0e81f72f2851088a57b27d05a51cf01a">release_bits_r_type</a> <b>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">2</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span></b></b></td></tr>
+<tr class="memitem:ad6ce021572a5a5fe4f06e3f1009ca384"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad6ce021572a5a5fe4f06e3f1009ca384"></a>
+<a class="el" href="classtypes__rocket.html#ad6ce021572a5a5fe4f06e3f1009ca384">release_bits_voluntary</a> <b>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic</span><span class="vhdlchar"> </span></b></b></td></tr>
+<tr class="memitem:ac67f651ad35abb2fa4ee246777ff5ee8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac67f651ad35abb2fa4ee246777ff5ee8"></a>
+<a class="el" href="classtypes__rocket.html#ac67f651ad35abb2fa4ee246777ff5ee8">release_bits_data</a> <b>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">127</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span></b></b></td></tr>
+<tr class="memitem:a709484c7961b01d764688492e5d10cd4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a709484c7961b01d764688492e5d10cd4"></a>
 <a class="el" href="classtypes__rocket.html#a709484c7961b01d764688492e5d10cd4">host_in_type</a> <b> &#160;</td><td class="memItemRight" valign="bottom"></b></td></tr>
 <tr class="memdesc:a709484c7961b01d764688492e5d10cd4"><td class="mdescLeft">&#160;</td><td class="mdescRight">HostIO tile input signals. <br /></td></tr>
+<tr class="memitem:a42cb04c0f24165abf94fbeca3cdd7b23"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a42cb04c0f24165abf94fbeca3cdd7b23"></a>
+<a class="el" href="classtypes__rocket.html#a42cb04c0f24165abf94fbeca3cdd7b23">grant</a> <b>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><b><a class="el" href="classtypes__rocket.html#af86ca695ae0bd7129a3659f34e8e32f6">CFG_HTIF_SRC_TOTAL</a></b> <span class="vhdlchar">-</span><span class="vhdlchar"> </span> <span class="vhdldigit">1</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span></b></b></td></tr>
+<tr class="memitem:afe8146f0f131c43be08a2f205965402f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afe8146f0f131c43be08a2f205965402f"></a>
+<a class="el" href="classtypes__rocket.html#afe8146f0f131c43be08a2f205965402f">csr_req_ready</a> <b>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic</span><span class="vhdlchar"> </span></b></b></td></tr>
+<tr class="memitem:ad823f800705257e8ed136ba3e01dac33"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad823f800705257e8ed136ba3e01dac33"></a>
+<a class="el" href="classtypes__rocket.html#ad823f800705257e8ed136ba3e01dac33">csr_resp_valid</a> <b>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic</span><span class="vhdlchar"> </span></b></b></td></tr>
+<tr class="memitem:ace7065475079dab430a0b2c5ef4a8800"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ace7065475079dab430a0b2c5ef4a8800"></a>
+<a class="el" href="classtypes__rocket.html#ace7065475079dab430a0b2c5ef4a8800">csr_resp_bits</a> <b>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">63</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span></b></b></td></tr>
+<tr class="memitem:a894d66bb229e926fbc50f9af409a9aa7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a894d66bb229e926fbc50f9af409a9aa7"></a>
+<a class="el" href="classtypes__rocket.html#a894d66bb229e926fbc50f9af409a9aa7">debug_stats_csr</a> <b>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic</span><span class="vhdlchar"> </span></b></b></td></tr>
+<tr class="memitem:ad56ec7d194d93b19f9bb18bfddbf0a0f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad56ec7d194d93b19f9bb18bfddbf0a0f"></a>
+<a class="el" href="classtypes__rocket.html#ad56ec7d194d93b19f9bb18bfddbf0a0f">host_out_type</a> <b> &#160;</td><td class="memItemRight" valign="bottom"></b></td></tr>
+<tr class="memdesc:ad56ec7d194d93b19f9bb18bfddbf0a0f"><td class="mdescLeft">&#160;</td><td class="mdescRight">HostIO tile output signals. <br /></td></tr>
 <tr class="memitem:aba73547f4eb746eaf78a2fc2684191e3"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aba73547f4eb746eaf78a2fc2684191e3"></a>
 <a class="el" href="classtypes__rocket.html#aba73547f4eb746eaf78a2fc2684191e3">reset</a> <b>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic</span><span class="vhdlchar"> </span></b></b></td></tr>
 <tr class="memitem:a70dfb76b5b92202d32ca17e9eefd4d6a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a70dfb76b5b92202d32ca17e9eefd4d6a"></a>
@@ -191,37 +421,20 @@ Records</h2></td></tr>
 <a class="el" href="classtypes__rocket.html#ae0f843267eaf42bd6314feaf12e643c2">csr_req_bits_data</a> <b>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">63</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span></b></b></td></tr>
 <tr class="memitem:ad7ab78c42f16917f7b837bb0bb54bf85"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad7ab78c42f16917f7b837bb0bb54bf85"></a>
 <a class="el" href="classtypes__rocket.html#ad7ab78c42f16917f7b837bb0bb54bf85">csr_resp_ready</a> <b>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic</span><span class="vhdlchar"> </span></b></b></td></tr>
-<tr class="memitem:ad56ec7d194d93b19f9bb18bfddbf0a0f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad56ec7d194d93b19f9bb18bfddbf0a0f"></a>
-<a class="el" href="classtypes__rocket.html#ad56ec7d194d93b19f9bb18bfddbf0a0f">host_out_type</a> <b> &#160;</td><td class="memItemRight" valign="bottom"></b></td></tr>
-<tr class="memdesc:ad56ec7d194d93b19f9bb18bfddbf0a0f"><td class="mdescLeft">&#160;</td><td class="mdescRight">HostIO tile output signals. <br /></td></tr>
-<tr class="memitem:afe8146f0f131c43be08a2f205965402f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afe8146f0f131c43be08a2f205965402f"></a>
-<a class="el" href="classtypes__rocket.html#afe8146f0f131c43be08a2f205965402f">csr_req_ready</a> <b>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic</span><span class="vhdlchar"> </span></b></b></td></tr>
-<tr class="memitem:ad823f800705257e8ed136ba3e01dac33"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad823f800705257e8ed136ba3e01dac33"></a>
-<a class="el" href="classtypes__rocket.html#ad823f800705257e8ed136ba3e01dac33">csr_resp_valid</a> <b>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic</span><span class="vhdlchar"> </span></b></b></td></tr>
-<tr class="memitem:ace7065475079dab430a0b2c5ef4a8800"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ace7065475079dab430a0b2c5ef4a8800"></a>
-<a class="el" href="classtypes__rocket.html#ace7065475079dab430a0b2c5ef4a8800">csr_resp_bits</a> <b>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">63</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span></b></b></td></tr>
-<tr class="memitem:a894d66bb229e926fbc50f9af409a9aa7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a894d66bb229e926fbc50f9af409a9aa7"></a>
-<a class="el" href="classtypes__rocket.html#a894d66bb229e926fbc50f9af409a9aa7">debug_stats_csr</a> <b>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic</span><span class="vhdlchar"> </span></b></b></td></tr>
-<tr class="memitem:ac921be3f78d90df5c6501ffc402250d6"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac921be3f78d90df5c6501ffc402250d6"></a>
-<a class="el" href="classtypes__rocket.html#ac921be3f78d90df5c6501ffc402250d6">starter_in_type</a> <b> &#160;</td><td class="memItemRight" valign="bottom"></b></td></tr>
-<tr class="memdesc:ac921be3f78d90df5c6501ffc402250d6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Input signals of the <a class="el" href="class_starter.html">Starter</a> component. <br /></td></tr>
-<tr class="memitem:a9f937b88fd5f3d5d5ed0441f97610f15"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9f937b88fd5f3d5d5ed0441f97610f15"></a>
-<a class="el" href="classtypes__rocket.html#a9f937b88fd5f3d5d5ed0441f97610f15">in_ready</a> <b>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic</span><span class="vhdlchar"> </span></b></b></td></tr>
-<tr class="memitem:a8a8853a0e5645f245c0e4fd728aba63b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8a8853a0e5645f245c0e4fd728aba63b"></a>
-<a class="el" href="classtypes__rocket.html#a8a8853a0e5645f245c0e4fd728aba63b">out_valid</a> <b>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic</span><span class="vhdlchar"> </span></b></b></td></tr>
-<tr class="memitem:a6f9bff5286365c1b08be1a225c4a1032"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6f9bff5286365c1b08be1a225c4a1032"></a>
-<a class="el" href="classtypes__rocket.html#a6f9bff5286365c1b08be1a225c4a1032">out_bits</a> <b>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><b><a class="el" href="classtypes__rocket.html#a5b0a781ab35302463fc84f5b85f660db">HTIF_WIDTH</a></b> <span class="vhdlchar">-</span><span class="vhdlchar"> </span> <span class="vhdldigit">1</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span></b></b></td></tr>
-<tr class="memitem:ade2f0d04bac40e59a99607f0579a7b18"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ade2f0d04bac40e59a99607f0579a7b18"></a>
-<a class="el" href="classtypes__rocket.html#ade2f0d04bac40e59a99607f0579a7b18">starter_out_type</a> <b> &#160;</td><td class="memItemRight" valign="bottom"></b></td></tr>
-<tr class="memdesc:ade2f0d04bac40e59a99607f0579a7b18"><td class="mdescLeft">&#160;</td><td class="mdescRight">Output signals of the <a class="el" href="class_starter.html">Starter</a> component. <br /></td></tr>
-<tr class="memitem:a29254911bf9d4068f7c69d6ca93a5455"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a29254911bf9d4068f7c69d6ca93a5455"></a>
-<a class="el" href="classtypes__rocket.html#a29254911bf9d4068f7c69d6ca93a5455">in_valid</a> <b>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic</span><span class="vhdlchar"> </span></b></b></td></tr>
-<tr class="memitem:a7fc040915e73690019abf7aac44b3e4b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7fc040915e73690019abf7aac44b3e4b"></a>
-<a class="el" href="classtypes__rocket.html#a7fc040915e73690019abf7aac44b3e4b">in_bits</a> <b>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><b><a class="el" href="classtypes__rocket.html#a5b0a781ab35302463fc84f5b85f660db">HTIF_WIDTH</a></b> <span class="vhdlchar">-</span><span class="vhdlchar"> </span> <span class="vhdldigit">1</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span></b></b></td></tr>
-<tr class="memitem:a18a1206565102cbc98c2e8c56acd3588"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a18a1206565102cbc98c2e8c56acd3588"></a>
-<a class="el" href="classtypes__rocket.html#a18a1206565102cbc98c2e8c56acd3588">out_ready</a> <b>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic</span><span class="vhdlchar"> </span></b></b></td></tr>
-<tr class="memitem:a84b0a50d22cd955669a40dd28919ba65"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a84b0a50d22cd955669a40dd28919ba65"></a>
-<a class="el" href="classtypes__rocket.html#a84b0a50d22cd955669a40dd28919ba65">exit_t</a> <b>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">31</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span></b></b></td></tr>
+<tr class="memitem:acd608f099652cfb9689a12b5d18ae481"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classtypes__rocket.html#acd608f099652cfb9689a12b5d18ae481">htif_serdes_in_type</a> <b> &#160;</td><td class="memItemRight" valign="bottom"></b></td></tr>
+<tr class="memdesc:acd608f099652cfb9689a12b5d18ae481"><td class="mdescLeft">&#160;</td><td class="mdescRight">HTIF serializer input.  <a href="#acd608f099652cfb9689a12b5d18ae481"></a><br /></td></tr>
+<tr class="memitem:a92d951a922e62ff2edbadc5107b727e7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a92d951a922e62ff2edbadc5107b727e7"></a>
+<a class="el" href="classtypes__rocket.html#a92d951a922e62ff2edbadc5107b727e7">ready</a> <b>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic</span><span class="vhdlchar"> </span></b></b></td></tr>
+<tr class="memdesc:a92d951a922e62ff2edbadc5107b727e7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Chunk was accepted by Uncore subsytem. <br /></td></tr>
+<tr class="memitem:a6badd86e9057d7724ded4f264ea1a659"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6badd86e9057d7724ded4f264ea1a659"></a>
+<a class="el" href="classtypes__rocket.html#a6badd86e9057d7724ded4f264ea1a659">valid</a> <b>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic</span><span class="vhdlchar"> </span></b></b></td></tr>
+<tr class="memdesc:a6badd86e9057d7724ded4f264ea1a659"><td class="mdescLeft">&#160;</td><td class="mdescRight">Current chunk output is valid. <br /></td></tr>
+<tr class="memitem:a2a337600a90bcb4d577260c69f66dec2"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2a337600a90bcb4d577260c69f66dec2"></a>
+<a class="el" href="classtypes__rocket.html#a2a337600a90bcb4d577260c69f66dec2">bits</a> <b>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><b><a class="el" href="classtypes__rocket.html#a5b0a781ab35302463fc84f5b85f660db">HTIF_WIDTH</a></b> <span class="vhdlchar">-</span><span class="vhdlchar"> </span> <span class="vhdldigit">1</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span></b></b></td></tr>
+<tr class="memdesc:a2a337600a90bcb4d577260c69f66dec2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Chunk bits itself. <br /></td></tr>
+<tr class="memitem:a683940a521c7c15ca5af32897b34f727"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a683940a521c7c15ca5af32897b34f727"></a>
+<a class="el" href="classtypes__rocket.html#a683940a521c7c15ca5af32897b34f727">htif_serdes_out_type</a> <b> &#160;</td><td class="memItemRight" valign="bottom"></b></td></tr>
+<tr class="memdesc:a683940a521c7c15ca5af32897b34f727"><td class="mdescLeft">&#160;</td><td class="mdescRight">HTIF serializer output. <br /></td></tr>
 <tr class="memitem:acec82673ed9fa9784a27b2e79e4bae41"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acec82673ed9fa9784a27b2e79e4bae41"></a>
 <a class="el" href="classtypes__rocket.html#acec82673ed9fa9784a27b2e79e4bae41">uart_in_type</a> <b> &#160;</td><td class="memItemRight" valign="bottom"></b></td></tr>
 <tr class="memitem:a2814e31e52b4e45365aab4c5fa98a382"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2814e31e52b4e45365aab4c5fa98a382"></a>
@@ -236,8 +449,135 @@ Records</h2></td></tr>
 <a class="el" href="classtypes__rocket.html#a67e1723ab74f96836e8500ffb91edc29">rts</a> <b>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="comment">std_ulogic</span><span class="vhdlchar"> </span></b></b></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>TileLink configuration. </p>
-</div><h2 class="groupheader">Member Data Documentation</h2>
+<div class="textblock"><p>Declaration of components visible on SoC top level. </p>
+</div><h2 class="groupheader">Member Function Documentation</h2>
+<a class="anchor" id="a18e3ea3eccc13abb16af30f56d1d5d64"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"> <b><span class="vhdlchar"> </span></b> procedureDecodeTileAcquire</td>
+          <td>(</td>
+          <td class="paramtype"><span class="keywordtype"> </span> &#160;</td>
+          <td class="paramname"><b><span class="vhdlchar">a_type</span><span class="vhdlchar"> </span></b><span class="stringliteral"></span> <em><b><span class="keywordflow">in</span><span class="vhdlchar"> </span><span class="comment">std_logic_vector</span><span class="vhdlchar">(</span><span class="vhdlchar"> </span> <span class="vhdldigit">2</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span></b></em> , </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><span class="keywordtype"> </span> &#160;</td>
+          <td class="paramname"><b><span class="vhdlchar">built_in</span><span class="vhdlchar"> </span></b><span class="stringliteral"></span> <em><b><span class="keywordflow">in</span><span class="vhdlchar"> </span><span class="comment">std_logic</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span></b></em> , </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><span class="keywordtype"> </span> &#160;</td>
+          <td class="paramname"><b><span class="vhdlchar">u</span><span class="vhdlchar"> </span></b><span class="stringliteral"></span> <em><b><span class="keywordflow">in</span><span class="vhdlchar"> </span><span class="comment">std_logic_vector</span><span class="vhdlchar">(</span><span class="vhdlchar"> </span> <span class="vhdldigit">16</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span></b></em> , </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><span class="keywordtype"> </span> &#160;</td>
+          <td class="paramname"><b><span class="vhdlchar">write</span><span class="vhdlchar"> </span></b><span class="stringliteral"></span> <em><b><span class="keywordflow">out</span><span class="vhdlchar"> </span><span class="comment">std_logic</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span></b></em> , </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><span class="keywordtype"> </span> &#160;</td>
+          <td class="paramname"><b><span class="vhdlchar">wmask</span><span class="vhdlchar"> </span></b><span class="stringliteral"></span> <em><b><span class="keywordflow">out</span><span class="vhdlchar"> </span><span class="comment">std_logic_vector</span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><b><a class="el" href="classtypes__amba4.html#af74e5749b32c77c685819ebbe95b6263">CFG_NASTI_DATA_BYTES</a></b> <span class="vhdlchar">-</span><span class="vhdlchar"> </span> <span class="vhdldigit">1</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span></b></em> , </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><span class="keywordtype"> </span> &#160;</td>
+          <td class="paramname"><b><span class="vhdlchar">axi_sz</span><span class="vhdlchar"> </span></b><span class="stringliteral"></span> <em><b><span class="keywordflow">out</span><span class="vhdlchar"> </span><span class="comment">std_logic_vector</span><span class="vhdlchar">(</span><span class="vhdlchar"> </span> <span class="vhdldigit">2</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span></b></em> , </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><span class="keywordtype"> </span> &#160;</td>
+          <td class="paramname"><b><span class="vhdlchar">byte_addr</span><span class="vhdlchar"> </span></b><span class="stringliteral"></span> <em><b><span class="keywordflow">out</span><span class="vhdlchar"> </span><span class="comment">std_logic_vector</span><span class="vhdlchar">(</span><span class="vhdlchar"> </span> <span class="vhdldigit">3</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span></b></em> , </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><span class="keywordtype"> </span> &#160;</td>
+          <td class="paramname"><b><span class="vhdlchar">beat_cnt</span><span class="vhdlchar"> </span></b><span class="stringliteral"></span> <em><b><span class="keywordflow">out</span><span class="vhdlchar"> </span><span class="comment">integer</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span></b></em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">Procedure</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Decode Acquire request from the Cached/Uncached TileLink. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">a_type</td><td>Request type depends of the built_in flag </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">built_in</td><td>This flag defines cached or uncached request. For the uncached this value is set to 1. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">u</td><td>Union bits. This value is decoding depending of types operation (rd/wr) and cached/uncached. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<h2 class="groupheader">Member Data Documentation</h2>
+<a class="anchor" id="adc106e7f7d41d2dccc2641530e11553f"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classtypes__rocket.html#adc106e7f7d41d2dccc2641530e11553f">host_out_none</a> <b><b><a class="el" href="classtypes__rocket.html#ad56ec7d194d93b19f9bb18bfddbf0a0f">host_out_type</a></b> <span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">'</span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">'</span><span class="vhdlchar"> </span><span class="vhdlchar">,</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">'</span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">'</span><span class="vhdlchar"> </span><span class="vhdlchar">,</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">'</span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">'</span><span class="vhdlchar"> </span><span class="vhdlchar">,</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">'</span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">'</span><span class="vhdlchar"> </span><span class="vhdlchar">,</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="keywordflow">others</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar">&gt;</span><span class="vhdlchar"> </span><span class="vhdlchar">'</span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">'</span><span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar">,</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="keywordflow">others</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar">&gt;</span><span class="vhdlchar"> </span><span class="vhdlchar">'</span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">'</span><span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar">,</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">'</span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">'</span><span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span></b> </td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">Constant</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Empty output signals of HostIO interface. </p>
+<p>If device was included in the owners of the HostIO interface and was disabled by configuration parameter (for example) then its outputs must be assigned to this empty signals otherwise RTL simulation will fail with undefined states of the processor. </p>
+
+</div>
+</div>
+<a class="anchor" id="acd608f099652cfb9689a12b5d18ae481"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classtypes__rocket.html#acd608f099652cfb9689a12b5d18ae481">htif_serdes_in_type</a> <b><span class="vhdlchar"> </span></b> </td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">Record</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>HTIF serializer input. </p>
+<p>In a case of using L2-cache, 'Uncore' module implements additional layer of the transformation of 128-bits HTIF messages into chunks of HTIF_WIDTH. So we have to implement the same serdes on upper level. </p>
+
+</div>
+</div>
 <a class="anchor" id="a5b0a781ab35302463fc84f5b85f660db"></a>
 <div class="memitem">
 <div class="memproto">
@@ -261,6 +601,52 @@ Records</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="a67b023184c16d9e40e457d84ba58e953"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classtypes__rocket.html#a67b023184c16d9e40e457d84ba58e953">htifctrl</a> <b><span class="vhdlchar"> </span></b> </td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">Component</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>HostIO (HTIF) controller declaration. </p>
+<p>This device provides multiplexing of the Host messages from several sources (interrupt controller, ethernet MAC, Debug Support Unit and others) on HostIO bus that is specific for Rocket-chip implementation of RISC-V. </p><dl class="todo"><dt><b><a class="el" href="todo.html#_todo000003">Todo:</a></b></dt><dd>Make htifii as a vector to support multi-cores configuration. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="a45014de2bd6e76a036d83a5d499fa997"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classtypes__rocket.html#a45014de2bd6e76a036d83a5d499fa997">M_XRD</a> <b><span class="comment">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">4</span> <span class="vhdlchar"> </span><span class="keywordflow">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="keyword">&quot; 00000 &quot;</span><span class="vhdlchar"> </span></b> </td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">Constant</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Memory operation types int load. </p>
+<p>The union bits [5:1] contains information about current transaction </p>
+
+</div>
+</div>
 <a class="anchor" id="a4f3874f09c8da21b7a506a40cac872e4"></a>
 <div class="memitem">
 <div class="memproto">
@@ -269,7 +655,7 @@ Records</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classtypes__rocket.html#a4f3874f09c8da21b7a506a40cac872e4">MEM_DATA_BITS</a> <b><span class="comment">integer</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">CFG_NASTI_DATA_BITS</span><span class="vhdlchar"> </span></b> </td>
+          <td class="memname"><a class="el" href="classtypes__rocket.html#a4f3874f09c8da21b7a506a40cac872e4">MEM_DATA_BITS</a> <b><span class="comment">integer</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><b><a class="el" href="classtypes__amba4.html#ae9515f04c38e433b5ed855e1763e8fdc">CFG_NASTI_DATA_BITS</a></b> <span class="vhdlchar"> </span></b> </td>
         </tr>
       </table>
   </td>
@@ -307,6 +693,75 @@ Records</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="a725d7659dde9d86f401507ecb6b32028"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classtypes__rocket.html#a725d7659dde9d86f401507ecb6b32028">MEMOP_XSIZE_TOTAL</a> <b><span class="comment">integer</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">8</span> <span class="vhdlchar"> </span></b> </td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">Constant</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Memory Operation size decoder. </p>
+<p>TileLink bus has encoded Memory Operation size in the union[8:6] bits of the acquire request. </p>
+
+</div>
+</div>
+<a class="anchor" id="acf48496c20b8b56615ea8d151b0a49a8"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classtypes__rocket.html#acf48496c20b8b56615ea8d151b0a49a8">nasti_irqctrl</a> <b><span class="vhdlchar"> </span></b> </td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">Component</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Interrupt controller with the AXI4 interface declaration. </p>
+<p>To rise interrupt on certain CPU HostIO interface is used. </p>
+
+</div>
+</div>
+<a class="anchor" id="af88d736bc79cf701683c69467c66ccf5"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classtypes__rocket.html#af88d736bc79cf701683c69467c66ccf5">nasti_pnp</a> <b><span class="vhdlchar"> </span></b> </td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">Component</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Plug-n-Play support module with AXI4 interface declaration. </p>
+<p>Each device in a system hase to implements sideband signal structure 'nasti_slave_config_type' that allows FW to detect Hardware configuration in a run-time. </p><dl class="todo"><dt><b><a class="el" href="todo.html#_todo000004">Todo:</a></b></dt><dd>Implements PnP signals for all Masters devices. </dd></dl>
+
+</div>
+</div>
 <a class="anchor" id="a1d818c9830ffdbf40d76edae34fbaf13"></a>
 <div class="memitem">
 <div class="memproto">
@@ -325,12 +780,12 @@ Records</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>NoC global reset former. </p>
+<p>SOC global reset former. </p>
 <p>This module produces output reset signal in a case if button 'Reset' was pushed or PLL isn't a 'lock' state. param[in] inSysReset Button generated signal param[in] inSysClk Clock from the PLL. Bus clock. param[in] inPllLock PLL status. param[out] outReset Output reset signal with active 'High' (1 = reset). </p>
 
 </div>
 </div>
-<a class="anchor" id="a7f1e563eb73f245fde907cd93228a0dd"></a>
+<a class="anchor" id="ace90059a4a3d4b1af67b8f35008b312e"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -338,7 +793,7 @@ Records</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classtypes__rocket.html#a7f1e563eb73f245fde907cd93228a0dd">Starter</a> <b><span class="vhdlchar"> </span></b> </td>
+          <td class="memname"><a class="el" href="classtypes__rocket.html#ace90059a4a3d4b1af67b8f35008b312e">rocket_l1only</a> <b><span class="vhdlchar"> </span></b> </td>
         </tr>
       </table>
   </td>
@@ -348,8 +803,59 @@ Records</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Rocket Cores hard-reset initialization module. </p>
-<p>Everytime after hard reset Rocket core is in resetting state. Module Uncore::HTIF implements writting into MRESET CSR-register (0x784) and not allowed to CPU start execution. This reseting cycle is continuing upto external write 0-value into this MRESET register. param[in] clk Clock sinal for the HTIFIO bus. param[in] nrst Module reset signal with the active Low level. param[in] i Input interconnect signals. param[out] o Output interconnect signals. </p>
+<p>RocketTile component declaration. </p>
+<p>This module implements Risc-V Core with L1-cache, branch predictor and other stuffs of the RocketTile. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">xindex1</td><td>Cached Tile AXI master index </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">xindex2</td><td>Uncached Tile AXI master index </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">rst</td><td>Reset signal with active HIGH level. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">clk_sys</td><td>System clock (BUS/CPU clock). </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">slvo</td><td>Bus-to-Slave device signals. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">msti</td><td>Bus-to-Master device signals. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">msto1</td><td>CachedTile-to-Bus request signals. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">msto2</td><td>UncachedTile-to-Bus request signals. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">htifoi</td><td>Requests from the HostIO-connected devices. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">htifio</td><td>Response to HostIO-connected devices. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a43c8f23939080364801d76f3608df49d"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classtypes__rocket.html#a43c8f23939080364801d76f3608df49d">rocket_l2cache</a> <b><span class="vhdlchar"> </span></b> </td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">Component</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>RocketTile + Uncore component declaration. </p>
+<p>This module implements Risc-V Core with L1-cache, branch predictor and other stuffs of the RocketTile. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">xindex1</td><td>Cached Tile AXI master index </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">xindex2</td><td>Uncached Tile AXI master index </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">rst</td><td>Reset signal with active HIGH level. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">clk_sys</td><td>System clock (BUS/CPU clock). </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">slvo</td><td>Bus-to-Slave device signals. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">msti</td><td>Bus-to-Master device signals. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">msto1</td><td>CachedTile-to-Bus request signals. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">msto2</td><td>UncachedTile-to-Bus request signals. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">htifoi</td><td>Requests from the HostIO-connected devices. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">htifio</td><td>Response to HostIO-connected devices. </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>

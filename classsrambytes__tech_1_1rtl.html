@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.10"/>
-<title>RISC-V System-on-Chip: rtl Architecture  Reference</title>
+<title>RISC-V VHDL: System-on-Chip: rtl Architecture  Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -23,7 +23,7 @@
  <tbody>
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
-   <div id="projectname">RISC-V System-on-Chip
+   <div id="projectname">RISC-V VHDL: System-on-Chip
    &#160;<span id="projectnumber">1.0</span>
    </div>
   </td>
@@ -39,6 +39,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
+      <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
       <li><a href="namespaces.html"><span>Packages</span></a></li>
       <li class="current"><a href="annotated.html"><span>Design&#160;Unit&#160;List</span></a></li>
       <li><a href="files.html"><span>Files</span></a></li>
@@ -101,27 +102,31 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="Constants"></a>
 Constants</h2></td></tr>
  <tr class="memitem:a8903e01429ab067b8c3a70010f5b2e92"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8903e01429ab067b8c3a70010f5b2e92"></a>
-<a class="el" href="classsrambytes__tech_1_1rtl.html#a8903e01429ab067b8c3a70010f5b2e92">dw</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="vhdlchar">integer</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">CFG_NASTI_ADDR_OFFSET</span><span class="vhdlchar"> </span></b></td></tr>
+<a class="el" href="classsrambytes__tech_1_1rtl.html#a8903e01429ab067b8c3a70010f5b2e92">dw</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="vhdlchar">integer</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">:</span><span class="vhdlchar">=</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><b><a class="el" href="classtypes__amba4.html#a0a0e9a4d55c3d1e96e0d2f8b771476e3">CFG_NASTI_ADDR_OFFSET</a></b> <span class="vhdlchar"> </span></b></td></tr>
 <tr class="memdesc:a8903e01429ab067b8c3a70010f5b2e92"><td class="mdescLeft">&#160;</td><td class="mdescRight">reduced name of configuration constant: <br /></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="Types"></a>
 Types</h2></td></tr>
  <tr class="memitem:a2925d42ec8a93d19727061e71e7fe0fc"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2925d42ec8a93d19727061e71e7fe0fc"></a>
-<b><a class="el" href="classsrambytes__tech_1_1rtl.html#a2925d42ec8a93d19727061e71e7fe0fc">local_addr_type</a>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">to</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">CFG_NASTI_DATA_BYTES</span><span class="vhdlchar">-</span><span class="vhdlchar"> </span> <span class="vhdldigit">1</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">abits</span><span class="vhdlchar">-</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><b><a class="el" href="classsrambytes__tech_1_1rtl.html#a8903e01429ab067b8c3a70010f5b2e92">dw</a></b> <span class="vhdlchar">-</span><span class="vhdlchar"> </span> <span class="vhdldigit">1</span> <span class="vhdlchar"> </span><span class="vhdlchar">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span></b></b></td></tr>
+<b><a class="el" href="classsrambytes__tech_1_1rtl.html#a2925d42ec8a93d19727061e71e7fe0fc">local_addr_type</a>&#160;</td><td class="memItemRight" valign="bottom"><b><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">to</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><b><a class="el" href="classtypes__amba4.html#af74e5749b32c77c685819ebbe95b6263">CFG_NASTI_DATA_BYTES</a></b> <span class="vhdlchar">-</span><span class="vhdlchar"> </span> <span class="vhdldigit">1</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">abits</span><span class="vhdlchar">-</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><b><a class="el" href="classsrambytes__tech_1_1rtl.html#a8903e01429ab067b8c3a70010f5b2e92">dw</a></b> <span class="vhdlchar">-</span><span class="vhdlchar"> </span> <span class="vhdldigit">1</span> <span class="vhdlchar"> </span><span class="vhdlchar">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span></b></b></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="Signals"></a>
 Signals</h2></td></tr>
  <tr class="memitem:ab0c3d08094a623c98e6298d570b1291a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab0c3d08094a623c98e6298d570b1291a"></a>
 <a class="el" href="classsrambytes__tech_1_1rtl.html#ab0c3d08094a623c98e6298d570b1291a">address</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="vhdlchar">local_addr_type</span><span class="vhdlchar"> </span></b></td></tr>
 <tr class="memitem:a3ad4620fd905e5c4d38b98eca5e1d03d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3ad4620fd905e5c4d38b98eca5e1d03d"></a>
-<a class="el" href="classsrambytes__tech_1_1rtl.html#a3ad4620fd905e5c4d38b98eca5e1d03d">wr_ena</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="vhdlchar">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">CFG_NASTI_DATA_BYTES</span><span class="vhdlchar">-</span><span class="vhdlchar"> </span> <span class="vhdldigit">1</span> <span class="vhdlchar"> </span><span class="vhdlchar">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span></b></td></tr>
+<a class="el" href="classsrambytes__tech_1_1rtl.html#a3ad4620fd905e5c4d38b98eca5e1d03d">wr_ena</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="vhdlchar">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><b><a class="el" href="classtypes__amba4.html#af74e5749b32c77c685819ebbe95b6263">CFG_NASTI_DATA_BYTES</a></b> <span class="vhdlchar">-</span><span class="vhdlchar"> </span> <span class="vhdldigit">1</span> <span class="vhdlchar"> </span><span class="vhdlchar">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span></b></td></tr>
 <tr class="memitem:a7aad56a9c4d379472dedca3dd6af59dc"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7aad56a9c4d379472dedca3dd6af59dc"></a>
-<a class="el" href="classsrambytes__tech_1_1rtl.html#a7aad56a9c4d379472dedca3dd6af59dc">rdatax</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="vhdlchar">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">CFG_NASTI_DATA_BITS</span><span class="vhdlchar">-</span><span class="vhdlchar"> </span> <span class="vhdldigit">1</span> <span class="vhdlchar"> </span><span class="vhdlchar">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span></b></td></tr>
+<a class="el" href="classsrambytes__tech_1_1rtl.html#a7aad56a9c4d379472dedca3dd6af59dc">rdatax</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="vhdlchar">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><b><a class="el" href="classtypes__amba4.html#ae9515f04c38e433b5ed855e1763e8fdc">CFG_NASTI_DATA_BITS</a></b> <span class="vhdlchar">-</span><span class="vhdlchar"> </span> <span class="vhdldigit">1</span> <span class="vhdlchar"> </span><span class="vhdlchar">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span></b></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="Instantiations"></a>
 Instantiations</h2></td></tr>
  <tr class="memitem:aa48da42c617fdb7cf84e9a3f80aa04e8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa48da42c617fdb7cf84e9a3f80aa04e8"></a>
+<a class="el" href="classsrambytes__tech_1_1rtl.html#aa48da42c617fdb7cf84e9a3f80aa04e8">x0</a>&#160;</td><td class="memItemRight" valign="bottom">  <b>sram8_inferred_init</b>  <em><a class="el" href="classsram8__inferred__init.html">&lt;Entity sram8_inferred_init&gt;</a></em></td></tr>
+<tr class="memdesc:aa48da42c617fdb7cf84e9a3f80aa04e8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Instantiate component for RTL simulation. <br /></td></tr>
+<tr class="memitem:aa48da42c617fdb7cf84e9a3f80aa04e8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa48da42c617fdb7cf84e9a3f80aa04e8"></a>
 <a class="el" href="classsrambytes__tech_1_1rtl.html#aa48da42c617fdb7cf84e9a3f80aa04e8">x0</a>&#160;</td><td class="memItemRight" valign="bottom">  <b>sram8_inferred</b>  <em><a class="el" href="classsram8__inferred.html">&lt;Entity sram8_inferred&gt;</a></em></td></tr>
+<tr class="memdesc:aa48da42c617fdb7cf84e9a3f80aa04e8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Instantiate component for FPGA (checked with Xilinx) <br /></td></tr>
 </table>
 <hr/>The documentation for this class was generated from the following file:<ul>
 <li><a class="el" href="srambytes__tech_8vhd.html">srambytes_tech.vhd</a></li>
