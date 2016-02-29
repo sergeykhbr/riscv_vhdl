@@ -57,8 +57,10 @@ constant CFG_NASTI_SLAVE_ENGINE   : integer := CFG_NASTI_SLAVE_IRQCTRL+1;
 constant CFG_NASTI_SLAVE_RFCTRL   : integer := CFG_NASTI_SLAVE_ENGINE+1;
 --! Configuration index of the GPS-CA Fast Search Engine module.
 constant CFG_NASTI_SLAVE_FSE_GPS  : integer := CFG_NASTI_SLAVE_RFCTRL+1;
+--! Configuration index of the Ethernet MAC module.
+constant CFG_NASTI_SLAVE_ETHMAC   : integer := CFG_NASTI_SLAVE_FSE_GPS+1;
 --! Configuration index of the Plug-n-Play module.
-constant CFG_NASTI_SLAVE_PNP      : integer := CFG_NASTI_SLAVE_FSE_GPS+1;
+constant CFG_NASTI_SLAVE_PNP      : integer := CFG_NASTI_SLAVE_ETHMAC+1;
 --! Total number of the slaves devices.
 constant CFG_NASTI_SLAVES_TOTAL  : integer := CFG_NASTI_SLAVE_PNP+1;  
 --! @}
@@ -73,9 +75,9 @@ constant CFG_NASTI_MASTER_CACHED   : integer := 0;
 --! Uncached TileLinkIO bus.
 constant CFG_NASTI_MASTER_UNCACHED : integer := CFG_NASTI_MASTER_CACHED+1;
 --! Total Number of master devices on system bus.
-constant CFG_NASTI_MASTER_ETH0     : integer := CFG_NASTI_MASTER_UNCACHED+1;
+constant CFG_NASTI_MASTER_ETHMAC   : integer := CFG_NASTI_MASTER_UNCACHED+1;
 --! Total Number of master devices on system bus.
-constant CFG_NASTI_MASTER_TOTAL    : integer := CFG_NASTI_MASTER_ETH0+1;
+constant CFG_NASTI_MASTER_TOTAL    : integer := CFG_NASTI_MASTER_ETHMAC+1;
 --! @}
 
 
@@ -85,59 +87,116 @@ constant CFG_NASTI_MASTER_TOTAL    : integer := CFG_NASTI_MASTER_ETH0+1;
 --! @{
 
 --! GNSS Engine IRQ pin that generates 1 msec pulses.
-constant CFG_IRQ_GNSSENGINE      : integer := 0;
+constant CFG_IRQ_GNSSENGINE     : integer := 0;
+--! Ethernet MAC interrupt pin.
+constant CFG_IRQ_ETHMAC         : integer := CFG_IRQ_GNSSENGINE + 1;
 --! Total number of used interrupts in a system
-constant CFG_IRQ_TOTAL           : integer := CFG_IRQ_GNSSENGINE+1;
+constant CFG_IRQ_TOTAL          : integer := CFG_IRQ_ETHMAC + 1;
 --! @}
 
 --! @name   SCALA generated parameters
 --! @brief  This constant must correspond to Scala defined ones.
 --! @{
 
+--! User defined address ID bitwidth (aw_id / ar_id fields).
 constant CFG_ROCKET_ID_BITS      : integer := 5;
+--! Data bus bits width.
 constant CFG_NASTI_DATA_BITS     : integer := 128;
+--! Data bus bytes width
 constant CFG_NASTI_DATA_BYTES    : integer := CFG_NASTI_DATA_BITS / 8;
+--! Address bus bits width.
 constant CFG_NASTI_ADDR_BITS     : integer := 32;
+--! Definition of number of bits in address bus per one data transaction.
 constant CFG_NASTI_ADDR_OFFSET   : integer := log2(CFG_NASTI_DATA_BYTES);
+--! Number of address bits used for device addressing. 
+--! Default is 12 bits = 4 KB of address space minimum per each mapped device.
 constant CFG_NASTI_CFG_ADDR_BITS : integer := CFG_NASTI_ADDR_BITS-12;
 --! @}
 
 --! @name   AXI Response values
 --! @brief  AMBA 4.0 specified response types from a slave device.
-
 --! @{
+--! Normal access success. Indicates that a normal access has been
+--! successful. Can also indicate an exclusive access has failed. 
 constant NASTI_RESP_OKAY     : std_logic_vector(1 downto 0) := "00";
+--! Exclusive access okay. Indicates that either the read or write
+--! portion of an exclusive access has been successful.
 constant NASTI_RESP_EXOKAY   : std_logic_vector(1 downto 0) := "01";
+--! Slave error. Used when the access has reached the slave successfully,
+--! but the slave wishes to return an error condition to the originating
+--! master.
 constant NASTI_RESP_SLVERR   : std_logic_vector(1 downto 0) := "10";
+--! Decode error. Generated, typically by an interconnect component,
+--! to indicate that there is no slave at the transaction address.
 constant NASTI_RESP_DECERR   : std_logic_vector(1 downto 0) := "11";
 --! @}
 
 --! @name   AXI burst request type.
 --! @brief  AMBA 4.0 specified burst operation request types.
-
 --! @{
+--! The address is the same for every transfer in the burst (FIFO type)
 constant NASTI_BURST_FIXED   : std_logic_vector(1 downto 0) := "00";
+--! The address for each transfer in the burst is an increment of
+--! the address for the previous transfer. The increment value depends 
+--! on the size of the transfer.
 constant NASTI_BURST_INCR    : std_logic_vector(1 downto 0) := "01";
+--! A wrapping burst is similar to an incrementing burst, except that 
+--! the address wraps around to a lower address if an upper address 
+--! limit is reached
 constant NASTI_BURST_WRAP    : std_logic_vector(1 downto 0) := "10";
 --! @}
 
---! Vendor ID of the GNSS Sensor Ltd.
+--! @name Vendor IDs defintion.
+--! @{
+--! GNSS Sensor Ltd. vendor identificator.
 constant VENDOR_GNSSSENSOR        : std_logic_vector(15 downto 0) := X"00F1"; 
---! Device IDs definition:
-constant GNSSSENSOR_DUMMY         : std_logic_vector(15 downto 0) := X"5577";--! Dummy device
-constant GNSSSENSOR_BOOTROM       : std_logic_vector(15 downto 0) := X"0071";--! Boot ROM Device ID
-constant GNSSSENSOR_FWIMAGE       : std_logic_vector(15 downto 0) := X"0072";--! FW ROM image Device ID
-constant GNSSSENSOR_SRAM          : std_logic_vector(15 downto 0) := X"0073";--! Internal SRAM block Device ID
-constant GNSSSENSOR_PNP           : std_logic_vector(15 downto 0) := X"0074";--! Configuration Registers Module Device ID provided by gnsslib
-constant GNSSSENSOR_SPI_FLASH     : std_logic_vector(15 downto 0) := X"0075";--! SD-card controller Device ID provided by gnsslib
-constant GNSSSENSOR_GPIO          : std_logic_vector(15 downto 0) := X"0076";--! General purpose IOs Device ID provided by gnsslib
-constant GNSSSENSOR_RF_CONTROL    : std_logic_vector(15 downto 0) := X"0077";--! RF front-end controller Device ID provided by gnsslib
-constant GNSSSENSOR_ENGINE        : std_logic_vector(15 downto 0) := X"0078";--! GNSS Engine Device ID provided by gnsslib
-constant GNSSSENSOR_FSE_V2        : std_logic_vector(15 downto 0) := X"0079";--! Fast Search Engines Device ID provided by gnsslib
-constant GNSSSENSOR_UART          : std_logic_vector(15 downto 0) := X"007a";--! rs-232 UART Device ID
-constant GNSSSENSOR_ACCELEROMETER : std_logic_vector(15 downto 0) := X"007b";--! Accelerometer Device ID provided by gnsslib
-constant GNSSSENSOR_GYROSCOPE     : std_logic_vector(15 downto 0) := X"007c";--! Gyroscope Device ID provided by gnsslib
-constant GNSSSENSOR_IRQCTRL       : std_logic_vector(15 downto 0) := X"007d";--! Interrupt controller
+--! @}
+
+--! @name Master Device IDs definition:
+--! @{
+--! RISC-V "Rocket-chip" core Cached TileLink master device.
+constant RISCV_CACHED_TILELINK    : std_logic_vector(15 downto 0) := X"0500";
+--! RISC-V "Rocket-chip" core Uncached TileLink master device.
+constant RISCV_UNCACHED_TILELINK  : std_logic_vector(15 downto 0) := X"0501";
+--! Ethernet MAC master device.
+constant GAISLER_ETH_MAC_MASTER   : std_logic_vector(15 downto 0) := X"0502";
+--! Ethernet MAC master debug interface (EDCL).
+constant GAISLER_ETH_EDCL_MASTER  : std_logic_vector(15 downto 0) := X"0503";
+--! @}
+
+--! @name Slave Device IDs definition:
+--! @{
+--! Dummy device
+constant GNSSSENSOR_DUMMY         : std_logic_vector(15 downto 0) := X"5577";
+--! Boot ROM Device ID
+constant GNSSSENSOR_BOOTROM       : std_logic_vector(15 downto 0) := X"0071";
+--! FW ROM image Device ID
+constant GNSSSENSOR_FWIMAGE       : std_logic_vector(15 downto 0) := X"0072";
+--! Internal SRAM block Device ID
+constant GNSSSENSOR_SRAM          : std_logic_vector(15 downto 0) := X"0073";
+--! Configuration Registers Module Device ID provided by gnsslib
+constant GNSSSENSOR_PNP           : std_logic_vector(15 downto 0) := X"0074";
+--! SD-card controller Device ID provided by gnsslib
+constant GNSSSENSOR_SPI_FLASH     : std_logic_vector(15 downto 0) := X"0075";
+--! General purpose IOs Device ID provided by gnsslib
+constant GNSSSENSOR_GPIO          : std_logic_vector(15 downto 0) := X"0076";
+--! RF front-end controller Device ID provided by gnsslib
+constant GNSSSENSOR_RF_CONTROL    : std_logic_vector(15 downto 0) := X"0077";
+--! GNSS Engine Device ID provided by gnsslib
+constant GNSSSENSOR_ENGINE        : std_logic_vector(15 downto 0) := X"0078";
+--! Fast Search Engines Device ID provided by gnsslib
+constant GNSSSENSOR_FSE_V2        : std_logic_vector(15 downto 0) := X"0079";
+--! rs-232 UART Device ID
+constant GNSSSENSOR_UART          : std_logic_vector(15 downto 0) := X"007a";
+--! Accelerometer Device ID provided by gnsslib
+constant GNSSSENSOR_ACCELEROMETER : std_logic_vector(15 downto 0) := X"007b";
+--! Gyroscope Device ID provided by gnsslib
+constant GNSSSENSOR_GYROSCOPE     : std_logic_vector(15 downto 0) := X"007c";
+--! Interrupt controller
+constant GNSSSENSOR_IRQCTRL       : std_logic_vector(15 downto 0) := X"007d";
+--! Ethernet MAC inherited from Gaisler greth module.
+constant GNSSSENSOR_ETHMAC        : std_logic_vector(15 downto 0) := X"007f";
+--! @}
 
 
 --! @brief Burst length size decoder
@@ -156,17 +215,41 @@ constant XSizeToBytes : xsize_type := (
    7 => 128
 );
 
---! @brief   Plug-n-play descriptor structure
+--! @name Plug'n'Play descriptor constants.
+--! @{
+
+--! Undefined type of the descriptor (empty device).
+constant PNP_CFG_TYPE_NONE   : std_logic_vector := "11";
+--! AXI slave device standard descriptor.
+constant PNP_CFG_TYPE_SLAVE  : std_logic_vector := "00";
+--! AXI master device standard descriptor.
+constant PNP_CFG_TYPE_MASTER : std_logic_vector := "01";
+--! Size in bytes of the standard slave descriptor..
+--! @details Firmware uses this value instead of sizeof(nasti_slave_config_type).
+constant PNP_CFG_SLAVE_DESCR_BYTES : std_logic_vector(7 downto 0) := X"10";
+--! Size in bytes of the standard master descriptor..
+--! @details Firmware uses this value instead of sizeof(nasti_master_config_type).
+constant PNP_CFG_MASTER_DESCR_BYTES : std_logic_vector(7 downto 0) := X"01";
+--! @}
+
+
+--! @brief   Plug-n-play descriptor structure for slave device.
 --! @details Each slave device must generates this datatype output that
 --!          is connected directly to the 'pnp' slave module on system bus.
---! @todo    Add 'config structure size' field to this structure to make
---!          it more PCI capabalities style.
 type nasti_slave_config_type is record
     xindex : integer;
+    --! Base address value.
     xaddr  : std_logic_vector(CFG_NASTI_CFG_ADDR_BITS-1 downto 0);
+    --! Maskable bits of the base address.
     xmask  : std_logic_vector(CFG_NASTI_CFG_ADDR_BITS-1 downto 0);
-    vid    : std_logic_vector(15 downto 0); --! Vendor ID
-    did    : std_logic_vector(15 downto 0); --! Device ID
+     --! Vendor ID.
+    vid    : std_logic_vector(15 downto 0);
+     --! Device ID.
+    did    : std_logic_vector(15 downto 0);
+    --! Descriptor type.
+    descrtype : std_logic_vector(1 downto 0);
+    --! Descriptor size in bytes.
+    descrsize : std_logic_vector(7 downto 0);
 end record;
 
 --! @brief   Arrays of the plug-n-play descriptors.
@@ -175,10 +258,38 @@ end record;
 type nasti_slave_cfg_vector is array (0 to CFG_NASTI_SLAVES_TOTAL-1) 
        of nasti_slave_config_type;
 
-
---! Default config value
+--! Default slave config value.
 constant nasti_slave_config_none : nasti_slave_config_type := (
-    0, (others => '0'), (others => '1'), VENDOR_GNSSSENSOR, GNSSSENSOR_DUMMY);
+    0, (others => '0'), (others => '1'), VENDOR_GNSSSENSOR, GNSSSENSOR_DUMMY,
+    PNP_CFG_TYPE_NONE, PNP_CFG_SLAVE_DESCR_BYTES);
+
+
+--! @brief   Plug-n-play descriptor structure for master device.
+--! @details Each master device must generates this datatype output that
+--!          is connected directly to the 'pnp' slave module on system bus.
+type nasti_master_config_type is record
+    xindex : integer;
+     --! Vendor ID.
+    vid    : std_logic_vector(15 downto 0);
+     --! Device ID.
+    did    : std_logic_vector(15 downto 0);
+    --! Descriptor type.
+    descrtype : std_logic_vector(1 downto 0);
+    --! Descriptor size in bytes.
+    descrsize : std_logic_vector(7 downto 0);
+end record;
+
+--! @brief   Arrays of the plug-n-play descriptors.
+--! @details Configuration bus vector from all slaves to plug'n'play
+--!          NASTI device (pnp).
+type nasti_master_cfg_vector is array (0 to CFG_NASTI_MASTER_TOTAL-1) 
+       of nasti_master_config_type;
+
+--! Default master config value.
+constant nasti_master_config_none : nasti_master_config_type := (
+    0, VENDOR_GNSSSENSOR, GNSSSENSOR_DUMMY, PNP_CFG_TYPE_NONE, 
+    PNP_CFG_MASTER_DESCR_BYTES);
+
 
 --! AMBA AXI4 compliant data structure.
 type nasti_metadata_type is record

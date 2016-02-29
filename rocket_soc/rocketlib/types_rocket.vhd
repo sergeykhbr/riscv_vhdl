@@ -292,7 +292,9 @@ port (
     slvo     : in nasti_slave_in_type;
     msti     : in nasti_master_in_type;
     msto1    : out nasti_master_out_type;
+    mstcfg1  : out nasti_master_config_type;
     msto2    : out nasti_master_out_type;
+    mstcfg2  : out nasti_master_config_type;
     htifoi   : in host_out_type;
     htifio   : out host_in_type
 );
@@ -323,7 +325,9 @@ port (
     slvo     : in nasti_slave_in_type;
     msti     : in nasti_master_in_type;
     msto1    : out nasti_master_out_type;
+    mstcfg1  : out nasti_master_config_type;
     msto2    : out nasti_master_out_type;
+    mstcfg2  : out nasti_master_config_type;
     htifoi   : in host_out_type;
     htifio   : out host_in_type
 );

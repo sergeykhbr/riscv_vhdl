@@ -40,16 +40,15 @@ architecture arch_nasti_pnp of nasti_pnp is
   --! 4-bytes alignment so that all registers implemented as 32-bits
   --! width.
   constant ALIGNMENT_BYTES : integer := 8;
-  --! Total bytes for each configuration structure.
-  --! Firmware uses this value instead of sizeof(nasti_slave_config_type).
-  constant PNP_CONFIG_DEFAULT_BYTES : std_logic_vector(7 downto 0) := X"10";
 
   constant xconfig : nasti_slave_config_type := (
      xindex => xindex,
      xaddr => conv_std_logic_vector(xaddr, CFG_NASTI_CFG_ADDR_BITS),
      xmask => conv_std_logic_vector(xmask, CFG_NASTI_CFG_ADDR_BITS),
      vid => VENDOR_GNSSSENSOR,
-     did => GNSSSENSOR_PNP
+     did => GNSSSENSOR_PNP,
+     descrtype => PNP_CFG_TYPE_SLAVE,
+     descrsize => PNP_CFG_SLAVE_DESCR_BYTES
   );
 
   type local_addr_array_type is array (0 to CFG_NASTI_DATA_BYTES/ALIGNMENT_BYTES-1) 
@@ -108,7 +107,7 @@ begin
              if raddr_reg(n) = 8+2*k then 
                val := cfgvec(k).xaddr & X"000" & cfgvec(k).xmask & X"000";
              elsif raddr_reg(n) = 8+2*k+1 then 
-               val := X"000000" & PNP_CONFIG_DEFAULT_BYTES & cfgvec(k).vid & cfgvec(k).did;
+               val := X"000000" & PNP_CFG_SLAVE_DESCR_BYTES & cfgvec(k).vid & cfgvec(k).did;
              end if;
          end loop;
        end if;

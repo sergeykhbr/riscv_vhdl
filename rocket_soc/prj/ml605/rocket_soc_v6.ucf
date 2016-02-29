@@ -68,3 +68,45 @@ NET "i_antext_stat" LOC = "H32";
 NET "i_antext_detect" LOC = "K29";
 NET "o_antext_ena" LOC = "G32";
 NET "o_antint_contr" LOC = "P31";
+
+# Ethernet signals
+NET "o_egtx_clk"              LOC = "AH12";   ## 14  on U80
+NET "i_etx_clk"               LOC = "AD12";   ## 10  on U80
+NET "i_erx_clk"               LOC = "AP11";   ## 7   on U80
+NET "i_erxd(0)"               LOC = "AN13";   ## 3   on U80
+NET "i_erxd(1)"               LOC = "AF14";   ## 128 on U80
+NET "i_erxd(2)"               LOC = "AE14";   ## 126 on U80
+NET "i_erxd(3)"               LOC = "AN12";   ## 125 on U80
+#NET "i_erxd(4)"               LOC = "AM12";   ## 124 on U80
+#NET "i_erxd(5)"               LOC = "AD11";   ## 123 on U80
+#NET "i_erxd(6)"               LOC = "AC12";   ## 121 on U80
+#NET "i_erxd(7)"               LOC = "AC13";   ## 120 on U80
+NET "i_erx_dv"                LOC = "AM13";   ## 4   on U80
+NET "i_erx_er"                LOC = "AG12";   ## 9   on U80
+NET "i_erx_col"               LOC = "AK13";   ## 114 on U80
+NET "i_erx_crs"               LOC = "AL13";   ## 115 on U80
+NET "i_emdint"                LOC = "AH14";   ## 32  on U80
+NET "o_etxd(0)"               LOC = "AM11";   ## 18  on U80
+NET "o_etxd(1)"               LOC = "AL11";   ## 19  on U80
+NET "o_etxd(2)"               LOC = "AG10";   ## 20  on U80
+NET "o_etxd(3)"               LOC = "AG11";   ## 24  on U80
+#NET "o_etxd(4)"               LOC = "AL10";   ## 25  on U80
+#NET "o_etxd(5)"               LOC = "AM10";   ## 26  on U80
+#NET "o_etxd(6)"               LOC = "AE11";   ## 28  on U80
+#NET "o_etxd(7)"               LOC = "AF11";   ## 29  on U80
+NET "o_etx_en"                LOC = "AJ10";   ## 16  on U80
+NET "o_etx_er"                LOC = "AH10";   ## 13  on U80
+NET "o_emdc"                  LOC = "AP14";   ## 35  on U80
+NET "io_emdio"                LOC = "AN14";   ## 33  on U80
+NET "o_erstn"                 LOC = "AH13";   ## 36  on U80
+
+NET "i_erx_clk" PERIOD = 8.000 ;
+OFFSET = IN : 5.000 : BEFORE i_erx_clk ;
+#OFFSET = IN : 2.000 : BEFORE i_erx_clk ;
+
+NET "i_etx_clk" PERIOD = 40.000 ;
+OFFSET = OUT : 15.000 : AFTER i_etx_clk ;
+OFFSET = IN : 8.000 : BEFORE i_etx_clk ;
+
+NET "i_etx_clk" MAXSKEW= 1.0 ns;
+NET "i_erx_clk" MAXSKEW= 1.0 ns;

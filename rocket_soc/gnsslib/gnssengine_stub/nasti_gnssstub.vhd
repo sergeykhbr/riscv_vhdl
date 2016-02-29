@@ -45,7 +45,9 @@ architecture arch_gnssengine of gnssengine is
      xaddr => conv_std_logic_vector(xaddr, CFG_NASTI_CFG_ADDR_BITS),
      xmask => conv_std_logic_vector(xmask, CFG_NASTI_CFG_ADDR_BITS),
      vid => VENDOR_GNSSSENSOR,
-     did => GNSSSENSOR_ENGINE
+     did => GNSSSENSOR_ENGINE,
+     descrtype => PNP_CFG_TYPE_SLAVE,
+     descrsize => PNP_CFG_SLAVE_DESCR_BYTES
   );
 
   type local_addr_array_type is array (0 to CFG_NASTI_DATA_BYTES/ALIGNMENT_BYTES-1) 

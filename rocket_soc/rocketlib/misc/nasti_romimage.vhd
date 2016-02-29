@@ -42,7 +42,9 @@ architecture arch_nasti_romimage of nasti_romimage is
      xaddr => conv_std_logic_vector(xaddr, CFG_NASTI_CFG_ADDR_BITS),
      xmask => conv_std_logic_vector(xmask, CFG_NASTI_CFG_ADDR_BITS),
      vid => VENDOR_GNSSSENSOR,
-     did => GNSSSENSOR_FWIMAGE
+     did => GNSSSENSOR_FWIMAGE,
+     descrtype => PNP_CFG_TYPE_SLAVE,
+     descrsize => PNP_CFG_SLAVE_DESCR_BYTES
   );
 
   type registers is record

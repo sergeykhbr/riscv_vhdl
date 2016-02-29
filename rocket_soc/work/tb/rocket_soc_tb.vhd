@@ -83,7 +83,22 @@ component rocket_soc is port
   i_antext_stat   : in std_logic;
   i_antext_detect : in std_logic;
   o_antext_ena    : out std_logic;
-  o_antint_contr  : out std_logic
+  o_antint_contr  : out std_logic;
+  o_egtx_clk  : out   std_ulogic;
+  i_etx_clk   : in    std_ulogic;
+  i_erx_clk   : in    std_ulogic;
+  i_erxd      : in    std_logic_vector(3 downto 0);
+  i_erx_dv    : in    std_ulogic;
+  i_erx_er    : in    std_ulogic;
+  i_erx_col   : in    std_ulogic;
+  i_erx_crs   : in    std_ulogic;
+  i_emdint    : in std_ulogic;
+  o_etxd      : out   std_logic_vector(3 downto 0);
+  o_etx_en    : out   std_ulogic;
+  o_etx_er    : out   std_ulogic;
+  o_emdc      : out   std_ulogic;
+  io_emdio    : inout std_logic;
+  o_erstn     : out   std_ulogic
 );
 end component;
 
@@ -174,8 +189,23 @@ begin
     i_antext_stat   => i_antext_stat,
     i_antext_detect => i_antext_detect,
     o_antext_ena    => o_antext_ena,
-    o_antint_contr  => o_antint_contr
-  );
+    o_antint_contr  => o_antint_contr,
+    o_egtx_clk  => open,
+    i_etx_clk   => '0',
+    i_erx_clk   => '0',
+    i_erxd      => "0000",
+    i_erx_dv    => '0',
+    i_erx_er    => '0',
+    i_erx_col   => '0',
+    i_erx_crs   => '0',
+    i_emdint    => '0',
+    o_etxd      => open,
+    o_etx_en    => open,
+    o_etx_er    => open,
+    o_emdc      => open,
+    io_emdio    => open,
+    o_erstn     => open
+ );
 
   procCheck : process (i_rst, check_clk_bus)
   begin

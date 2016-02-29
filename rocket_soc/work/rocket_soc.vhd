@@ -32,6 +32,8 @@ use ambalib.types_amba4.all;
 library rocketlib;
 --! SOC top-level component declaration.
 use rocketlib.types_rocket.all;
+--! Ethernet related declarations.
+use rocketlib.grethpkg.all;
 
 --! GNSS Sensor Ltd proprietary library
 library gnsslib;
@@ -103,7 +105,26 @@ entity rocket_soc is port
   i_antext_stat   : in std_logic;
   i_antext_detect : in std_logic;
   o_antext_ena    : out std_logic;
-  o_antint_contr  : out std_logic
+  o_antint_contr  : out std_logic;
+  --! @}
+  
+  --! Ethernet MAC PHY interface signals
+  --! @{
+  o_egtx_clk  : out   std_ulogic;
+  i_etx_clk   : in    std_ulogic;
+  i_erx_clk   : in    std_ulogic;
+  i_erxd      : in    std_logic_vector(3 downto 0);
+  i_erx_dv    : in    std_ulogic;
+  i_erx_er    : in    std_ulogic;
+  i_erx_col   : in    std_ulogic;
+  i_erx_crs   : in    std_ulogic;
+  i_emdint    : in std_ulogic;
+  o_etxd      : out   std_logic_vector(3 downto 0);
+  o_etx_en    : out   std_ulogic;
+  o_etx_er    : out   std_ulogic;
+  o_emdc      : out   std_ulogic;
+  io_emdio    : inout std_logic;
+  o_erstn     : out   std_ulogic
 );
   --! @}
 
@@ -142,7 +163,8 @@ architecture arch_rocket_soc of rocket_soc is
   signal aximo   : nasti_master_out_vector;
   signal axisi   : nasti_slave_in_type;
   signal axiso   : nasti_slaves_out_vector;
-  signal axi_cfg : nasti_slave_cfg_vector;
+  signal slv_cfg : nasti_slave_cfg_vector;
+  signal mst_cfg : nasti_master_cfg_vector;
   
   --! From modules-to-tile requests
   signal htifo : host_out_vector;
@@ -159,6 +181,10 @@ architecture arch_rocket_soc of rocket_soc is
   
   signal fse_i : fse_in_type;
   signal fse_o : fse_out_type;
+ 
+  signal eth_i : eth_in_type;
+  signal eth_o : eth_out_type;
+
  
   signal irq_pins : std_logic_vector(CFG_IRQ_TOTAL-1 downto 0);
 begin
@@ -236,7 +262,9 @@ L1toL2ena0 : if CFG_COMMON_L1toL2_ENABLE generate
     slvo     => axisi,
     msti     => aximi,
     msto1    => aximo(CFG_NASTI_MASTER_CACHED),
+    mstcfg1  => mst_cfg(CFG_NASTI_MASTER_CACHED),
     msto2    => aximo(CFG_NASTI_MASTER_UNCACHED),
+    mstcfg2  => mst_cfg(CFG_NASTI_MASTER_UNCACHED),
     htifoi   => htifo_mux,
     htifio   => htifi
   );
@@ -253,7 +281,9 @@ L1toL2dis0 : if not CFG_COMMON_L1toL2_ENABLE generate
     slvo     => axisi,
     msti     => aximi,
     msto1    => aximo(CFG_NASTI_MASTER_CACHED),
+    mstcfg1  => mst_cfg(CFG_NASTI_MASTER_CACHED),
     msto2    => aximo(CFG_NASTI_MASTER_UNCACHED),
+    mstcfg2  => mst_cfg(CFG_NASTI_MASTER_UNCACHED),
     htifoi   => htifo_mux,
     htifio   => htifi
   );
@@ -272,7 +302,7 @@ end generate;
   ) port map (
     clk  => wClkBus,
     nrst => wNReset,
-    cfg  => axi_cfg(CFG_NASTI_SLAVE_BOOTROM),
+    cfg  => slv_cfg(CFG_NASTI_SLAVE_BOOTROM),
     i    => axisi,
     o    => axiso(CFG_NASTI_SLAVE_BOOTROM)
   );
@@ -290,7 +320,7 @@ end generate;
   ) port map (
     clk  => wClkBus,
     nrst => wNReset,
-    cfg  => axi_cfg(CFG_NASTI_SLAVE_ROMIMAGE),
+    cfg  => slv_cfg(CFG_NASTI_SLAVE_ROMIMAGE),
     i    => axisi,
     o    => axiso(CFG_NASTI_SLAVE_ROMIMAGE)
   );
@@ -309,7 +339,7 @@ end generate;
   ) port map (
     clk  => wClkBus,
     nrst => wNReset,
-    cfg  => axi_cfg(CFG_NASTI_SLAVE_SRAM),
+    cfg  => slv_cfg(CFG_NASTI_SLAVE_SRAM),
     i    => axisi,
     o    => axiso(CFG_NASTI_SLAVE_SRAM)
   );
@@ -326,7 +356,7 @@ end generate;
   ) port map (
     clk   => wClkBus,
     nrst  => wNReset,
-    cfg   => axi_cfg(CFG_NASTI_SLAVE_GPIO),
+    cfg   => slv_cfg(CFG_NASTI_SLAVE_GPIO),
     i     => axisi,
     o     => axiso(CFG_NASTI_SLAVE_GPIO),
     i_dip => ib_dip,
@@ -351,7 +381,7 @@ end generate;
   ) port map (
     nrst   => wNReset, 
     clk    => wClkbus, 
-    cfg    => axi_cfg(CFG_NASTI_SLAVE_UART1),
+    cfg    => slv_cfg(CFG_NASTI_SLAVE_UART1),
     i_uart => uart1i, 
     o_uart => uart1o,
     i_axi  => axisi,
@@ -375,7 +405,7 @@ end generate;
     clk    => wClkBus,
     nrst   => wNReset,
     i_irqs => irq_pins,
-    o_cfg  => axi_cfg(CFG_NASTI_SLAVE_IRQCTRL),
+    o_cfg  => slv_cfg(CFG_NASTI_SLAVE_IRQCTRL),
     i_axi  => axisi,
     o_axi  => axiso(CFG_NASTI_SLAVE_IRQCTRL),
     i_host => htifi_grant,
@@ -392,7 +422,7 @@ end generate;
   ) port map (
     nrst           => wNReset,
     clk            => wClkBus,
-    o_cfg          => axi_cfg(CFG_NASTI_SLAVE_RFCTRL),
+    o_cfg          => slv_cfg(CFG_NASTI_SLAVE_RFCTRL),
     i_axi          => axisi,
     o_axi          => axiso(CFG_NASTI_SLAVE_RFCTRL),
     i_gps_ld       => i_gps_ld,
@@ -432,12 +462,12 @@ geneng_ena : if CFG_GNSSLIB_ENABLE generate
   );
   
   axiso(CFG_NASTI_SLAVE_ENGINE) <= gnss_o.axi;
-  axi_cfg(CFG_NASTI_SLAVE_ENGINE)  <= gnss_o.cfg;
+  slv_cfg(CFG_NASTI_SLAVE_ENGINE)  <= gnss_o.cfg;
   irq_pins(CFG_IRQ_GNSSENGINE)      <= gnss_o.ms_pulse;
 end generate;
 geneng_dis : if not CFG_GNSSLIB_ENABLE generate 
   axiso(CFG_NASTI_SLAVE_ENGINE) <= nasti_slave_out_none;
-  axi_cfg(CFG_NASTI_SLAVE_ENGINE)  <= nasti_slave_config_none;
+  slv_cfg(CFG_NASTI_SLAVE_ENGINE)  <= nasti_slave_config_none;
   irq_pins(CFG_IRQ_GNSSENGINE)      <= '0';
 end generate;
 
@@ -468,14 +498,84 @@ end generate;
         o => fse_o
       );
   
-      axi_cfg(CFG_NASTI_SLAVE_FSE_GPS) <= fse_o.cfg;
+      slv_cfg(CFG_NASTI_SLAVE_FSE_GPS) <= fse_o.cfg;
       axiso(CFG_NASTI_SLAVE_FSE_GPS) <= fse_o.axi;
   end generate;
   --! FSE GPS disable
   fse0_dis : if CFG_GNSSLIB_FSEGPS_ENABLE = 0 generate 
-      axi_cfg(CFG_NASTI_SLAVE_FSE_GPS) <= nasti_slave_config_none;
+      slv_cfg(CFG_NASTI_SLAVE_FSE_GPS) <= nasti_slave_config_none;
       axiso(CFG_NASTI_SLAVE_FSE_GPS) <= nasti_slave_out_none;
   end generate;
+
+
+  --! @brief Ethernet MAC with the AXI4 interface.
+  --! @details Map address:
+  --!          0x80040000..0x8007ffff (256 KB total)
+  eth0_ena : if CFG_ETHERNET_ENABLE = 1 generate 
+    eth_i.tx_clk <= i_etx_clk;
+    eth_i.rx_clk <= i_erx_clk;
+    eth_i.rxd <= i_erxd;
+    eth_i.rx_dv <= i_erx_dv;
+    eth_i.rx_er <= i_erx_er;
+    eth_i.rx_col <= i_erx_col;
+    eth_i.rx_crs <= i_erx_crs;
+    eth_i.mdint <= i_emdint;
+    
+    mac0 : grethaxi generic map (
+      xslvindex => CFG_NASTI_SLAVE_ETHMAC,
+      xmstindex => CFG_NASTI_MASTER_ETHMAC,
+      xaddr => 16#80040#,
+      xmask => 16#FFFC0#,
+      xirq => CFG_IRQ_ETHMAC,
+      memtech => CFG_MEMTECH,
+      mdcscaler => 70,  --! System Bus clock in MHz
+      enable_mdio => 1,
+      fifosize => 16,
+      nsync => 1,
+      edcl => 1,
+      edclbufsz => 16,
+      macaddrh => 16#20789#,
+      macaddrl => 16#123#,
+      ipaddrh => 16#C0A8#,
+      ipaddrl => 16#33#,
+      phyrstadr => 7,
+      enable_mdint => 1,
+      maxsize => 1518
+   ) port map (
+      rst => wNReset,
+      clk => wClkBus,
+      msti => aximi,
+      msto => aximo(CFG_NASTI_MASTER_ETHMAC),
+      mstcfg => mst_cfg(CFG_NASTI_MASTER_ETHMAC),
+      msto2 => open,    -- EDCL separate access is disabled
+      mstcfg2 => open,  -- EDCL separate access is disabled
+      slvi => axisi,
+      slvo => axiso(CFG_NASTI_SLAVE_ETHMAC),
+      slvcfg => slv_cfg(CFG_NASTI_SLAVE_ETHMAC),
+      ethi => eth_i,
+      etho => eth_o,
+      irq => irq_pins(CFG_IRQ_ETHMAC)
+    );
+  
+  end generate;
+  --! Ethernet disabled
+  eth0_dis : if CFG_ETHERNET_ENABLE /= 1 generate 
+      slv_cfg(CFG_NASTI_SLAVE_ETHMAC) <= nasti_slave_config_none;
+      axiso(CFG_NASTI_SLAVE_ETHMAC) <= nasti_slave_out_none;
+      mst_cfg(CFG_NASTI_MASTER_ETHMAC) <= nasti_master_config_none;
+      aximo(CFG_NASTI_MASTER_ETHMAC) <= nasti_master_out_none;
+      irq_pins(CFG_IRQ_ETHMAC) <= '0';
+      eth_o   <= eth_out_none;
+  end generate;
+  
+  emdio_pad : iobuf_tech generic map(CFG_PADTECH) 
+        port map (eth_i.mdio_i, io_emdio, eth_i.mdio_i, eth_o.mdio_oe);
+  o_egtx_clk <= '0'; --! must output from diff. pad transceiver gigabit clock.
+  o_etxd <= eth_o.txd;
+  o_etx_en <= eth_o.tx_en;
+  o_etx_er <= eth_o.tx_er;
+  o_emdc <= eth_o.mdc;
+  o_erstn <= wNReset;
 
 
   --! @brief Plug'n'Play controller of the current configuration with the
@@ -488,11 +588,11 @@ end generate;
     xmask   => 16#fffff#,
     tech    => CFG_MEMTECH
   ) port map (
-    sys_clk => wClkbus, 
+    sys_clk => wClkBus, 
     adc_clk => wClkAdc,
     nrst   => wNReset,
-    cfgvec => axi_cfg,
-    cfg    => axi_cfg(CFG_NASTI_SLAVE_PNP),
+    cfgvec => slv_cfg,
+    cfg    => slv_cfg(CFG_NASTI_SLAVE_PNP),
     i      => axisi,
     o      => axiso(CFG_NASTI_SLAVE_PNP)
   );

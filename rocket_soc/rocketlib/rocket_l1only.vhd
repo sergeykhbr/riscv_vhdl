@@ -44,7 +44,9 @@ port (
     slvo     : in nasti_slave_in_type;
     msti     : in nasti_master_in_type;
     msto1    : out nasti_master_out_type;
+    mstcfg1  : out nasti_master_config_type;
     msto2    : out nasti_master_out_type;
+    mstcfg2  : out nasti_master_config_type;
     htifoi   : in host_out_type;
     htifio   : out host_in_type
 );
@@ -54,6 +56,23 @@ end;
 
 --! @brief SOC top-level  architecture declaration.
 architecture arch_rocket_l1only of rocket_l1only is
+
+  constant xmstconfig1 : nasti_master_config_type := (
+     xindex => xindex1,
+     vid => VENDOR_GNSSSENSOR,
+     did => RISCV_CACHED_TILELINK,
+     descrtype => PNP_CFG_TYPE_MASTER,
+     descrsize => PNP_CFG_MASTER_DESCR_BYTES
+  );
+
+  constant xmstconfig2 : nasti_master_config_type := (
+     xindex => xindex2,
+     vid => VENDOR_GNSSSENSOR,
+     did => RISCV_UNCACHED_TILELINK,
+     descrtype => PNP_CFG_TYPE_MASTER,
+     descrsize => PNP_CFG_MASTER_DESCR_BYTES
+  );
+  
   signal nrst : std_logic;
   
   signal cto : tile_cached_out_type;
@@ -145,8 +164,9 @@ architecture arch_rocket_l1only of rocket_l1only is
 
 begin
 
+  mstcfg1 <= xmstconfig1;
+  mstcfg2 <= xmstconfig2;
   nrst <= not rst;
-
    
 	inst_tile: RocketTile PORT MAP(
 		clk => clk_sys,

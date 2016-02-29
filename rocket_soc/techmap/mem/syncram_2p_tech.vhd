@@ -63,5 +63,10 @@ begin
          port map (rclk, wclk, raddress, waddress, datain, write, dataout);
   end generate;
 
+  xilinx6 : if tech = virtex6 or tech = kintex7 generate
+    x0 : syncram_2p_inferred generic map (abits, dbits, sepclk)
+         port map (rclk, wclk, raddress, waddress, datain, write, dataout);
+  end generate;
+
 end;
 

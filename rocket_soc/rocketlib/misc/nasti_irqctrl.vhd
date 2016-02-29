@@ -44,7 +44,6 @@ architecture nasti_irqctrl_rtl of nasti_irqctrl is
   --! 4-bytes alignment so that all registers implemented as 32-bits
   --! width.
   constant ALIGNMENT_BYTES : integer := 4;
-  constant HTIF_DATA_ZERO : std_logic_vector(HTIF_WIDTH-1 downto 0) := (others => '0');
   constant CSR_MIPI : std_logic_vector(11 downto 0) := X"783";
 
   constant xconfig : nasti_slave_config_type := (
@@ -52,7 +51,9 @@ architecture nasti_irqctrl_rtl of nasti_irqctrl is
      xaddr => conv_std_logic_vector(xaddr, CFG_NASTI_CFG_ADDR_BITS),
      xmask => conv_std_logic_vector(xmask, CFG_NASTI_CFG_ADDR_BITS),
      vid => VENDOR_GNSSSENSOR,
-     did => GNSSSENSOR_IRQCTRL
+     did => GNSSSENSOR_IRQCTRL,
+     descrtype => PNP_CFG_TYPE_SLAVE,
+     descrsize => PNP_CFG_SLAVE_DESCR_BYTES
   );
 
   type local_addr_array_type is array (0 to CFG_NASTI_DATA_BYTES/ALIGNMENT_BYTES-1) 
