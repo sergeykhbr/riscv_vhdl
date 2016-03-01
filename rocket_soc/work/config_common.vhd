@@ -1,17 +1,73 @@
 --! 
---! @mainpage General configuration RISC-V System-on-Chip
+--! @mainpage RISC-V System-on-Chip VHDL IP library
 --! 
---! This project provides SoC top-level template with the following features:
+--! @par Overview
+--! The IP Library is an integrated set of reusable IP cores, designed for 
+--! system-on-chip (SOC) development. The IP cores are centered around a 
+--! common on-chip AMBA AXI system bus, and use a coherent method for 
+--! simulation and synthesis. This library is vendor independent, with support
+--! for different CAD tools and target technologies. Inherited from gaisler 
+--! GRLIB library plug&play method was further developed and used to configure 
+--! and connect the IP cores without the need to modify any global resources.
+--!
+--! @par Library organization
+--! This repository is organized around VHDL libraries, where each major IP 
+--! is assigned a unique library name. Using separate libraries avoids name 
+--! clashes between IP cores and hides unnecessary implementation details 
+--! from the end user. 
+--!
+--! @par Satellite Navigation support
+--! Hardware part of the satellite navigation functionality is fully 
+--! implemented inside of the <i>gnsslib</i> library. This library is the 
+--! commercial product of GNSS Sensor limited and in this shared repository 
+--! you can find only: modules declaration, configuration parameters and 
+--! stub modules that provide enough functionality to use SOC as
+--! general purpose processor system based on RISC-V architecture.
+--! Netlists of the real GNSS IPs either as RF front-end for the FPGA
+--! development boards could be acquires via special request.
+--!
+--! @par Common Top-level structure
+--! <img src="pics/soc_top.png" alt="Top Level"> 
+--! 
+--! @par Features
 --!   <ul>
---!     <li>Pre-generated single-core \e "Rocket-chip" core (RISC-V).</li>
+--!     <li>Pre-generated single-core \e "Rocket-chip" core (RISC-V).
+--!         This is 64-bits processor with I/D caches, MMU, branch predictor,
+--!         128-bits width data bus, FPU (if enabled) and etc.</li>
 --!     <li>VHDL Bridge from TileLinks to AXI4 (NASTI) bus.</li>
---!     <li>Set of common peripheries to verify core: UART, GPIO (LEDs) etc.</li>
---!     <li>Configuration paramters to enable/disable additional functionality,
+--!     <li>Set of common peripheries: UART, GPIO (LEDs), Interrupt controller
+--!         etc.</li>
+--!     <li>Debugging via ethernet using EDCL capability of the MAC. This
+--!         capability allows to redirect UDP requests directly on system bus
+--!         and allows to use external debugger from the Reset Vector.</li>
+--!     <li>Debug Support Unit (DSU) provides access to the internal registers
+--!        of the CPUs using HostIO interface.</li>
+--!     <li>Templates for the AXI slaves and master devices with DMA access</li>
+--!     <li>Configuration parameters to enable/disable additional functionality,
 --!         like: <em><b>GNSS Engine</b>, <b>Viterbi decoder</b>, etc.</em></li>
 --!   </ul>
 --! 
---! <b>Common Top-level structure:</b>
---! <img src="pics/soc_top.png" alt="Top Level"> 
+--! @par Top-level simulation
+--! Use file <b>work/tb/rocket_soc.vhd</b> to run simulation scenario. You can
+--! get the following time diagram after simulation of 2 ms interval.
+--!
+--! <img src="pics/soc_sim.png" alt="Simulating top"> 
+--!
+--! @note Provided Firmware can detect RTL simulation target (see 
+--!       <i>fw/boot/src/main.c</i> line 35) and can speed-up simulation
+--!       by removing some delay and changing some parameters (UART speed for
+--!       example).
+--!
+--! @par Running on FPGA
+--! Supported FPGA:
+--! <ul>
+--!    <li>ML605 with Virtex6 FPGA using ISE 14.7 (default).</li>
+--!    <li>KC705 with Kintex7 FPGA using Vivado 2015.4.</li>
+--! </ul>
+--! @warning <em><b>Switch ON DIP[0] (i_int_clkrf) to enable test mode because
+--!          you most probably doesn't have RF front-end. Otherwise there 
+--!          wouldn't be generated interrupts and, as result, no UART 
+--!          output.</b></em>.
 --! 
 --! Information about GNSS (<em>Satellite Navigation Engine</em>) you can find at
 --! @link www.gnss-sensor.com.

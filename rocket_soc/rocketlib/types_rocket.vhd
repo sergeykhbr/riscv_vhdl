@@ -472,7 +472,29 @@ component nasti_irqctrl is
     i_host : in host_in_type;
     o_host : out host_out_type
   );
-end component;
+  end component;
+
+  --! @brief   Declaration of the debug SUpport Unit with the AXI interface.
+  --! @details This module provides access to processors CSRs via HostIO bus.
+  component nasti_dsu is
+  generic (
+    xindex   : integer := 0;
+    xaddr    : integer := 0;
+    xmask    : integer := 16#fffff#;
+    htif_index  : integer := 0
+  );
+  port 
+  (
+    clk    : in std_logic;
+    nrst   : in std_logic;
+    o_cfg  : out nasti_slave_config_type;
+    i_axi  : in nasti_slave_in_type;
+    o_axi  : out nasti_slave_out_type;
+    i_host : in host_in_type;
+    o_host : out host_out_type
+  );
+  end component;
+
 
 --! @brief   Plug-n-Play support module with AXI4 interface declaration.
 --! @details Each device in a system hase to implements sideband signal
@@ -490,7 +512,8 @@ component nasti_pnp is
     sys_clk : in  std_logic;
     adc_clk : in  std_logic;
     nrst   : in  std_logic;
-    cfgvec : in  nasti_slave_cfg_vector;
+    mstcfg : in  nasti_master_cfg_vector;
+    slvcfg : in  nasti_slave_cfg_vector;
     cfg    : out  nasti_slave_config_type;
     i      : in  nasti_slave_in_type;
     o      : out nasti_slave_out_type

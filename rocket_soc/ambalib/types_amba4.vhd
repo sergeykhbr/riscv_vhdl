@@ -19,27 +19,19 @@ use ieee.numeric_std.all;
 library commonlib;
 use commonlib.types_common.all;
 
---! @brief   System bus AXI4/NASTI types definition.
+--! @brief   System bus AMBA AXI(NASTI) types definition.
 --! @details This package provides general constants, data structures and
 --!          and functions description that define behaviour of all
 --!          peripheries devices implementing AXI4 interface.
 package types_amba4 is
 
---! @name    AXI4 slaves generic IDs.
---! @brief   Unique slave identificator.
+--! @name    AMBA AXI slaves generic IDs.
 --! @details Each module in a SoC has to be indexed by unique identificator.
 --!          In current implementation it is used sequential indexing for it.
 --!          Indexes are used to specify a device bus item in a vectors.
---!
---!          The first group of the memory devices are cachable in a terms of
---!          the Rocket-chip generator. But actually it doesn't take much sense
---!          because all devices are connected to the one system bus and
---!          implement identical responses. Cachable/Uncachable property
---!          of the transaction maybe used in L1toL2interconnect module of the
---!          Rocket-chip generator.
 --! @{
 
---! Configuration index of the Boot ROM module visible by the firmware.
+--! @brief Configuration index of the Boot ROM module visible by the firmware.
 constant CFG_NASTI_SLAVE_BOOTROM  : integer := 0; 
 --! Configuration index of the Firmware ROM Image module.
 constant CFG_NASTI_SLAVE_ROMIMAGE  : integer := CFG_NASTI_SLAVE_BOOTROM+1;
@@ -59,8 +51,10 @@ constant CFG_NASTI_SLAVE_RFCTRL   : integer := CFG_NASTI_SLAVE_ENGINE+1;
 constant CFG_NASTI_SLAVE_FSE_GPS  : integer := CFG_NASTI_SLAVE_RFCTRL+1;
 --! Configuration index of the Ethernet MAC module.
 constant CFG_NASTI_SLAVE_ETHMAC   : integer := CFG_NASTI_SLAVE_FSE_GPS+1;
+--! Configuration index of the Debug Support Unit module.
+constant CFG_NASTI_SLAVE_DSU      : integer := CFG_NASTI_SLAVE_ETHMAC+1;
 --! Configuration index of the Plug-n-Play module.
-constant CFG_NASTI_SLAVE_PNP      : integer := CFG_NASTI_SLAVE_ETHMAC+1;
+constant CFG_NASTI_SLAVE_PNP      : integer := CFG_NASTI_SLAVE_DSU+1;
 --! Total number of the slaves devices.
 constant CFG_NASTI_SLAVES_TOTAL  : integer := CFG_NASTI_SLAVE_PNP+1;  
 --! @}
@@ -108,25 +102,31 @@ constant CFG_NASTI_DATA_BYTES    : integer := CFG_NASTI_DATA_BITS / 8;
 constant CFG_NASTI_ADDR_BITS     : integer := 32;
 --! Definition of number of bits in address bus per one data transaction.
 constant CFG_NASTI_ADDR_OFFSET   : integer := log2(CFG_NASTI_DATA_BYTES);
---! Number of address bits used for device addressing. 
---! Default is 12 bits = 4 KB of address space minimum per each mapped device.
+--! @brief Number of address bits used for device addressing. 
+--! @details Default is 12 bits = 4 KB of address space minimum per each 
+--!          mapped device.
 constant CFG_NASTI_CFG_ADDR_BITS : integer := CFG_NASTI_ADDR_BITS-12;
 --! @}
 
 --! @name   AXI Response values
 --! @brief  AMBA 4.0 specified response types from a slave device.
 --! @{
---! Normal access success. Indicates that a normal access has been
+
+--! @brief Normal access success. 
+--! @details Indicates that a normal access has been
 --! successful. Can also indicate an exclusive access has failed. 
 constant NASTI_RESP_OKAY     : std_logic_vector(1 downto 0) := "00";
---! Exclusive access okay. Indicates that either the read or write
+--! @brief Exclusive access okay. 
+--! @details Indicates that either the read or write
 --! portion of an exclusive access has been successful.
 constant NASTI_RESP_EXOKAY   : std_logic_vector(1 downto 0) := "01";
---! Slave error. Used when the access has reached the slave successfully,
+--! @brief Slave error. 
+--! @details Used when the access has reached the slave successfully,
 --! but the slave wishes to return an error condition to the originating
 --! master.
 constant NASTI_RESP_SLVERR   : std_logic_vector(1 downto 0) := "10";
---! Decode error. Generated, typically by an interconnect component,
+--! @brief Decode error. 
+--! @details Generated, typically by an interconnect component,
 --! to indicate that there is no slave at the transaction address.
 constant NASTI_RESP_DECERR   : std_logic_vector(1 downto 0) := "11";
 --! @}
@@ -134,26 +134,33 @@ constant NASTI_RESP_DECERR   : std_logic_vector(1 downto 0) := "11";
 --! @name   AXI burst request type.
 --! @brief  AMBA 4.0 specified burst operation request types.
 --! @{
---! The address is the same for every transfer in the burst (FIFO type)
+
+--! @brief Fixed address burst operation.
+--! @details The address is the same for every transfer in the burst 
+--!          (FIFO type)
 constant NASTI_BURST_FIXED   : std_logic_vector(1 downto 0) := "00";
---! The address for each transfer in the burst is an increment of
---! the address for the previous transfer. The increment value depends 
---! on the size of the transfer.
+--! @brief Burst operation with address increment.
+--! @details The address for each transfer in the burst is an increment of
+--!        the address for the previous transfer. The increment value depends 
+--!        on the size of the transfer.
 constant NASTI_BURST_INCR    : std_logic_vector(1 downto 0) := "01";
---! A wrapping burst is similar to an incrementing burst, except that 
---! the address wraps around to a lower address if an upper address 
---! limit is reached
+--! @brief Burst operation with address increment and wrapping.
+--! @details A wrapping burst is similar to an incrementing burst, except that
+--!          the address wraps around to a lower address if an upper address 
+--!          limit is reached
 constant NASTI_BURST_WRAP    : std_logic_vector(1 downto 0) := "10";
 --! @}
 
 --! @name Vendor IDs defintion.
 --! @{
+
 --! GNSS Sensor Ltd. vendor identificator.
 constant VENDOR_GNSSSENSOR        : std_logic_vector(15 downto 0) := X"00F1"; 
 --! @}
 
 --! @name Master Device IDs definition:
 --! @{
+
 --! RISC-V "Rocket-chip" core Cached TileLink master device.
 constant RISCV_CACHED_TILELINK    : std_logic_vector(15 downto 0) := X"0500";
 --! RISC-V "Rocket-chip" core Uncached TileLink master device.
@@ -166,6 +173,7 @@ constant GAISLER_ETH_EDCL_MASTER  : std_logic_vector(15 downto 0) := X"0503";
 
 --! @name Slave Device IDs definition:
 --! @{
+
 --! Dummy device
 constant GNSSSENSOR_DUMMY         : std_logic_vector(15 downto 0) := X"5577";
 --! Boot ROM Device ID
@@ -196,10 +204,14 @@ constant GNSSSENSOR_GYROSCOPE     : std_logic_vector(15 downto 0) := X"007c";
 constant GNSSSENSOR_IRQCTRL       : std_logic_vector(15 downto 0) := X"007d";
 --! Ethernet MAC inherited from Gaisler greth module.
 constant GNSSSENSOR_ETHMAC        : std_logic_vector(15 downto 0) := X"007f";
+--! Debug Support Unit device id.
+constant GNSSSENSOR_DSU           : std_logic_vector(15 downto 0) := X"0080";
 --! @}
 
+--! @name Decoder of the transaction size.
+--! @{
 
---! @brief Burst length size decoder
+--! Burst length size decoder
 constant XSIZE_TOTAL : integer := 8;
 --! Definition of the AXI bytes converter.
 type xsize_type is array (0 to XSIZE_TOTAL-1) of integer;
@@ -214,6 +226,7 @@ constant XSizeToBytes : xsize_type := (
    6 => 64,
    7 => 128
 );
+--! @}
 
 --! @name Plug'n'Play descriptor constants.
 --! @{
@@ -224,10 +237,10 @@ constant PNP_CFG_TYPE_NONE   : std_logic_vector := "11";
 constant PNP_CFG_TYPE_SLAVE  : std_logic_vector := "00";
 --! AXI master device standard descriptor.
 constant PNP_CFG_TYPE_MASTER : std_logic_vector := "01";
---! Size in bytes of the standard slave descriptor..
+--! @brief Size in bytes of the standard slave descriptor..
 --! @details Firmware uses this value instead of sizeof(nasti_slave_config_type).
 constant PNP_CFG_SLAVE_DESCR_BYTES : std_logic_vector(7 downto 0) := X"10";
---! Size in bytes of the standard master descriptor..
+--! @brief Size in bytes of the standard master descriptor.
 --! @details Firmware uses this value instead of sizeof(nasti_master_config_type).
 constant PNP_CFG_MASTER_DESCR_BYTES : std_logic_vector(7 downto 0) := X"01";
 --! @}
@@ -237,14 +250,15 @@ constant PNP_CFG_MASTER_DESCR_BYTES : std_logic_vector(7 downto 0) := X"01";
 --! @details Each slave device must generates this datatype output that
 --!          is connected directly to the 'pnp' slave module on system bus.
 type nasti_slave_config_type is record
+    --! Index in the array of slaves devices.
     xindex : integer;
     --! Base address value.
     xaddr  : std_logic_vector(CFG_NASTI_CFG_ADDR_BITS-1 downto 0);
     --! Maskable bits of the base address.
     xmask  : std_logic_vector(CFG_NASTI_CFG_ADDR_BITS-1 downto 0);
-     --! Vendor ID.
+    --! Vendor ID.
     vid    : std_logic_vector(15 downto 0);
-     --! Device ID.
+    --! Device ID.
     did    : std_logic_vector(15 downto 0);
     --! Descriptor type.
     descrtype : std_logic_vector(1 downto 0);
@@ -258,7 +272,9 @@ end record;
 type nasti_slave_cfg_vector is array (0 to CFG_NASTI_SLAVES_TOTAL-1) 
        of nasti_slave_config_type;
 
---! Default slave config value.
+--! @brief Default slave config value.
+--! @default This value corresponds to an empty device and often used
+--!          as assignment of outputs for the disabled device.
 constant nasti_slave_config_none : nasti_slave_config_type := (
     0, (others => '0'), (others => '1'), VENDOR_GNSSSENSOR, GNSSSENSOR_DUMMY,
     PNP_CFG_TYPE_NONE, PNP_CFG_SLAVE_DESCR_BYTES);
@@ -268,10 +284,11 @@ constant nasti_slave_config_none : nasti_slave_config_type := (
 --! @details Each master device must generates this datatype output that
 --!          is connected directly to the 'pnp' slave module on system bus.
 type nasti_master_config_type is record
+    --! Index in the array of masters devices.
     xindex : integer;
-     --! Vendor ID.
+    --! Vendor ID.
     vid    : std_logic_vector(15 downto 0);
-     --! Device ID.
+    --! Device ID.
     did    : std_logic_vector(15 downto 0);
     --! Descriptor type.
     descrtype : std_logic_vector(1 downto 0);
@@ -285,13 +302,13 @@ end record;
 type nasti_master_cfg_vector is array (0 to CFG_NASTI_MASTER_TOTAL-1) 
        of nasti_master_config_type;
 
---! Default master config value.
+--! @brief Default master config value.
 constant nasti_master_config_none : nasti_master_config_type := (
     0, VENDOR_GNSSSENSOR, GNSSSENSOR_DUMMY, PNP_CFG_TYPE_NONE, 
     PNP_CFG_MASTER_DESCR_BYTES);
 
 
---! AMBA AXI4 compliant data structure.
+--! @brief AMBA AXI4 compliant data structure.
 type nasti_metadata_type is record
   --! @brief Read address.
   --! @details The read address gives the address of the first transfer
@@ -352,31 +369,36 @@ type nasti_metadata_type is record
   region : std_logic_vector(3 downto 0);
 end record;
 
---! Empty metadata value.
+--! @brief Empty metadata value.
 constant META_NONE : nasti_metadata_type := (
   (others =>'0'), X"00", "000", NASTI_BURST_INCR, '0', X"0", "000", "0000", "0000"
 );
 
---! Master device output signals
+--! @brief Master device output signals
 type nasti_master_out_type is record
   --! Write Address channel:
   aw_valid : std_logic;
+  --! metadata of the read channel.
   aw_bits : nasti_metadata_type;
   --! Write address ID. Identification tag used for a trasaction ordering.
   aw_id   : std_logic_vector(CFG_ROCKET_ID_BITS-1 downto 0);
   --! Optional user defined signal in a write address channel.
   aw_user : std_logic;
-  --! Write Data channel:
+  --! Write Data channel valid flag
   w_valid : std_logic;
+  --! Write channel data value
   w_data : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
+  --! Write Data channel last address in a burst marker.
   w_last : std_logic;
+  --! Write Data channel strob signals selecting certain bytes.
   w_strb : std_logic_vector(CFG_NASTI_DATA_BYTES-1 downto 0);
   --! Optional user defined signal in write channel.
   w_user : std_logic;
-  --! Write Response channel:
+  --! Write Response channel accepted by master.
   b_ready : std_logic;
-  --! Read Address Channel:
+  --! Read Address Channel data valid.
   ar_valid : std_logic;
+  --! Read Address channel metadata.
   ar_bits : nasti_metadata_type;
   --! Read address ID. Identification tag used for a trasaction ordering.
   ar_id   : std_logic_vector(CFG_ROCKET_ID_BITS-1 downto 0);
@@ -395,7 +417,7 @@ constant nasti_master_out_none : nasti_master_out_type := (
       '0', '0', META_NONE, (others=>'0'), '0', '0');
 
 
---! Master device input signals.
+--! @brief Master device input signals.
 type nasti_master_in_type is record
   --! How is owner of the AXI bus. It's controlled by 'axictrl' module.
   grant : std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0);
@@ -412,7 +434,8 @@ type nasti_master_in_type is record
   ar_ready : std_logic;
   --! Read valid.
   r_valid : std_logic;
-  --! Read response. This signal indicates the status of the read transfer. 
+  --! @brief Read response. 
+  --! @details This signal indicates the status of the read transfer. 
   --!  The responses are:
   --!      0b00 OKAY - Normal access success. Indicates that a normal access has
   --!                  been successful. Can also indicate an exclusive access
@@ -428,21 +451,24 @@ type nasti_master_in_type is record
   r_resp : std_logic_vector(1 downto 0);
   --! Read data
   r_data : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
-  --! Read last. This signal indicates the last transfer in a read burst.
+  --! @brief  Read last. 
+  --! @details This signal indicates the last transfer in a read burst.
   r_last : std_logic;
-  --! Read ID tag. This signal is the identification tag for the read data
-  --! group of signals generated by the slave.
+  --! @brief Read ID tag.
+  --! @details This signal is the identification tag for the read data
+  --!          group of signals generated by the slave.
   r_id   : std_logic_vector(CFG_ROCKET_ID_BITS-1 downto 0);
-  --! User signal. Optinal User-defined signal in the read channel. Supported 
-  --! only in AXI4.
-  r_user : std_logic;--_vector(0 downto 0);
+  --! @brief User signal. 
+  --! @details Optional User-defined signal in the read channel. Supported 
+  --!          only in AXI4.
+  r_user : std_logic;
 end record;
 
--- Demultiplexing slaves output to the single port:
+--! @brief Array of all masters outputs.
 type nasti_master_out_vector is array (0 to CFG_NASTI_MASTER_TOTAL-1) 
        of nasti_master_out_type;
 
-
+--! @brief Slave device AMBA AXI input signals.
 type nasti_slave_in_type is record
   --! Write Address channel:
   aw_valid : std_logic;
@@ -466,6 +492,7 @@ type nasti_slave_in_type is record
   r_ready : std_logic;
 end record;
 
+--! @brief Slave device AMBA AXI output signals.
 type nasti_slave_out_type is record
   --! Write Address channel:
   aw_ready : std_logic;
@@ -478,12 +505,10 @@ type nasti_slave_out_type is record
   b_user : std_logic;
   --! Read Address Channel
   ar_ready : std_logic;
-
   --! Read Data channel:
-
-  --! Read valid.
   r_valid : std_logic;
-  --! Read response. This signal indicates the status of the read transfer. 
+  --! @brief Read response.
+  --! @details This signal indicates the status of the read transfer. 
   --!  The responses are:
   --!      0b00 OKAY - Normal access success. Indicates that a normal access has
   --!                  been successful. Can also indicate an exclusive access
@@ -501,33 +526,38 @@ type nasti_slave_out_type is record
   r_data : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
   --! Read last. This signal indicates the last transfer in a read burst.
   r_last : std_logic;
-  --! Read ID tag. This signal is the identification tag for the read data
-  --! group of signals generated by the slave.
+  --! @brief Read ID tag. 
+  --! @details This signal is the identification tag for the read data
+  --!           group of signals generated by the slave.
   r_id   : std_logic_vector(CFG_ROCKET_ID_BITS-1 downto 0);
-  --! User signal. Optinal User-defined signal in the read channel. Supported 
-  --! only in AXI4.
+  --! @brief User signal. 
+  --! @details Optinal User-defined signal in the read channel. Supported 
+  --!          only in AXI4.
   r_user : std_logic;--_vector(0 downto 0);
 end record;
 
---! If the slave is not connected to the vector then vector value
+--! @brief Slave output signals connected to system bus.
+--! @details If the slave is not connected to the vector then vector value
 --! MUST BE initialized by this value.
 constant nasti_slave_out_none : nasti_slave_out_type := (
       '0', '0', '0', NASTI_RESP_EXOKAY,
       (others=>'0'), '0', '0', '0', NASTI_RESP_EXOKAY, (others=>'1'), 
       '0', (others=>'0'), '0');
 
--- Demultiplexing slaves output to the single port:
+--! Array of all slaves outputs.
 type nasti_slaves_out_vector is array (0 to CFG_NASTI_SLAVES_TOTAL-1) 
        of nasti_slave_out_type;
 
-
+--! Array of addresses providing one-byte aligned access.
 type global_addr_array_type is array (0 to CFG_NASTI_DATA_BYTES-1) 
        of std_logic_vector(CFG_NASTI_ADDR_BITS-1 downto 0);
 
+--! Slave device states during reading value operation.
 type nasti_slave_rstatetype is (rwait, rtrans);
+--! Slave device states during writting data operation.
 type nasti_slave_wstatetype is (wwait, wtrans, whandshake);
 
-
+--! @brief Template bank of registers for any slave device.
 type nasti_slave_bank_type is record
     rstate : nasti_slave_rstatetype;
     wstate : nasti_slave_wstatetype;
@@ -550,6 +580,7 @@ type nasti_slave_bank_type is record
     wuser  : std_logic;
 end record;
 
+--! Reset value of the template bank of registers of a slave device.
 constant NASTI_SLAVE_BANK_RESET : nasti_slave_bank_type := (
     rwait, wwait,
     NASTI_BURST_FIXED, 0, (others=>(others=>'0')), 0, (others=>'0'), NASTI_RESP_OKAY, '0', '1',
@@ -557,7 +588,11 @@ constant NASTI_SLAVE_BANK_RESET : nasti_slave_bank_type := (
 );
 
 
---! Read/write access state machines implementation.
+--! Read/write access state machines implementation for the slave device.
+--! @param [in] i Slave input signal passed from system bus.
+--! @param [in] cfg Slave confguration descriptor defining memory base address.
+--! @param [in] i_bank Bank of registers implemented by each slave device.
+--! @param [out] o_bank Updated value for the slave bank of registers.
 procedure procedureAxi4(
      i      : in nasti_slave_in_type;
      cfg    : in nasti_slave_config_type;
@@ -565,13 +600,10 @@ procedure procedureAxi4(
      o_bank : out nasti_slave_bank_type
 );
 
---! Read from the AXI4 bank latched address by index
---function functionAxi4GetRdAddr(
---     r   : nasti_slave_bank_type;
---     idx : integer) 
---return std_logic_vector(CFG_NASTI_ADDR_BITS-1 downto 0);
-
-  --! Convert bank registers into output signals.
+--! Convert slave bank registers into bus output signals.
+--! @param[in] r      Bank of registers of the slave device.
+--! @param[in] rd_val Formed by slave device read data value.
+--! @return Slave device output signals connected to system bus.
 function functionAxi4Output(
      r : nasti_slave_bank_type;
      rd_val : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0))
@@ -580,6 +612,15 @@ return nasti_slave_out_type;
 --! @brief   AXI bus controller. 
 --! @details Simplified version with the hardcoded priorities to bus access.
 --!          Lower master index has a higher priority.
+--! @param [in] clk System bus clock.
+--! @param [in] nrst Reset with active LOW level.
+--! @param [in] slvoi Vector of slaves output signals.
+--! @param [in] mstoi Vector of masters output signals.
+--! @param [out] slvio Signals of the selected slave accordingly with 
+--!                    the specified priority.
+--! @param [out] mstio Signals of the selected master accordingly with 
+--!                    the specified priority.
+--! @todo    Round-robin priority algorithm.
 component axictrl is
 port (
     clk    : in std_logic;
@@ -598,6 +639,10 @@ end; -- package declaration
 package body types_amba4 is
 
   --! Read/write access state machines implementation.
+  --! @param [in] i Slave input signal passed from system bus.
+  --! @param [in] cfg Slave confguration descriptor defining memory base address.
+  --! @param [in] i_bank Bank of registers implemented by each slave device.
+  --! @param [out] o_bank Updated value for the slave bank of registers.
   procedure procedureAxi4(
      i      : in nasti_slave_in_type;
      cfg    : in nasti_slave_config_type;

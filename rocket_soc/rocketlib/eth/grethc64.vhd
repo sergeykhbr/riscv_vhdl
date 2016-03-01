@@ -1520,9 +1520,13 @@ begin
        when start =>
          v.tmsto.addr := r.txaddr & "00"; 
          v.tmsto.write := r.write(conv_integer(r.tpnt));
+         -- AXI_ENABLE: EDCL burst length decoded from payload
+         v.tmsto.burst_bytes := r.txcnt;
          if (edclsepahbg /= 0) and (edcl /= 0) then
            v.tmsto2.addr := r.txaddr & "00"; 
            v.tmsto2.write := r.write(conv_integer(r.tpnt));
+           -- AXI_ENABLE: EDCL burst length decoded from payload
+           v.tmsto2.burst_bytes := r.txcnt;
          end if;
          if (conv_integer(r.txcnt) = 0) or (r.tarp or r.tnak) = '1' then
            v.txdstate := etdone;

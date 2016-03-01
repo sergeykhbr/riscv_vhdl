@@ -8,6 +8,7 @@
 
 #include <string.h>
 #include "axi_maps.h"
+#include "encoding.h"
 
 static const int FW_IMAGE_SIZE_BYTES = 1 << 18;
 
@@ -36,6 +37,19 @@ void copy_image() {
         memcpy(sram, fwrom, FW_IMAGE_SIZE_BYTES);
     }
     led_set(0x81);
+
+    /** Just to check access to DSU and read MCPUID via this slave device.
+     *  Verification is made on time diagram (ModelSim), no other purposes of 
+     *  these operations.
+     *        DSU base address = 0x80080000: 
+     *        CSR address: Addr[15:4] = 16 bytes alignment
+     *  3296 ns - reading (iClkCnt = 409)
+     *  3435 ns - writing (iClkCnt = 427)
+     */
+    uint64_t *arr_csrs = (uint64_t *)0x80080000;
+    uint64_t x1 = arr_csrs[CSR_MCPUID<<1]; 
+    pnp->fwdbg1 = x1;
+    arr_csrs[CSR_MCPUID<<1] = x1;
 }
 
 void _init() {
@@ -50,7 +64,7 @@ void _init() {
     print_uart("OK\r\n", 4);
 
     /** Check ADC detector that RF front-end is connected: */
-    tech = (pnp->tech >> 16) & 0xff;
+    tech = (pnp->tech >> 24) & 0xff;
     if (tech != 0xFF) {
         print_uart("ADC clock not found. Enable DIP int_rf.\r\n", 41);
     }

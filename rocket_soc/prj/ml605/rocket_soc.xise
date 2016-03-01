@@ -428,6 +428,11 @@
       <association xil_pn:name="Implementation" xil_pn:seqID="15"/>
       <library xil_pn:name="techmap"/>
     </file>
+    <file xil_pn:name="../../rocketlib/misc/nasti_dsu.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="136"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="136"/>
+      <library xil_pn:name="rocketlib"/>
+    </file>
   </files>
 
   <properties>

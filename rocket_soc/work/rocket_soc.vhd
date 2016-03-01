@@ -200,15 +200,11 @@ begin
   end generate;
   --! @todo all other in/out signals via buffers:
 
-  htifo(CFG_HTIF_SRC_DSU) <= host_out_none;
-
   ------------------------------------
   -- @brief Internal PLL device instance.
-  pll0 : SysPLL_tech generic map
-  (
+  pll0 : SysPLL_tech generic map (
     tech => CFG_FABTECH
-  )port map 
-  (
+  ) port map (
     i_reset     => ib_rst,
     i_int_clkrf => ib_dip(0),
     i_clkp	     => ib_sclk_p,
@@ -222,8 +218,7 @@ begin
 
   ------------------------------------
   --! @brief System Reset device instance.
-  rst0 : reset_global port map
-  (
+  rst0 : reset_global port map (
     inSysReset  => wSysReset,
     inSysClk    => wClkBus,
     inPllLock   => wPllLocked,
@@ -288,6 +283,27 @@ L1toL2dis0 : if not CFG_COMMON_L1toL2_ENABLE generate
     htifio   => htifi
   );
 end generate;
+
+
+  ------------------------------------
+  --! @brief Debug Support Unit with access to the CSRs
+  --! @details Map address:
+  --!          0x80080000..0x8008ffff (64 KB total)
+  dsu0 : nasti_dsu generic map (
+    xindex   => CFG_NASTI_SLAVE_DSU,
+    xaddr    => 16#80080#,
+    xmask    => 16#ffff0#,
+    htif_index  => CFG_HTIF_SRC_DSU
+  ) port map (
+    clk    => wClkBus,
+    nrst   => wNReset,
+    o_cfg  => slv_cfg(CFG_NASTI_SLAVE_DSU),
+    i_axi  => axisi,
+    o_axi  => axiso(CFG_NASTI_SLAVE_DSU),
+    i_host => htifi_grant,
+    o_host => htifo(CFG_HTIF_SRC_DSU)
+
+  );
 
   ------------------------------------
   --! @brief BOOT ROM module isntance with the AXI4 interface.
@@ -371,8 +387,7 @@ end generate;
   --! @brief UART Controller with the AXI4 interface.
   --! @details Map address:
   --!          0x80001000..0x80001fff (4 KB total)
-  uart1 : nasti_uart generic map
-  (
+  uart1 : nasti_uart generic map (
     xindex   => CFG_NASTI_SLAVE_UART1,
     xaddr    => 16#80001#,
     xmask    => 16#FFFFF#,
@@ -395,8 +410,7 @@ end generate;
   --! @brief Interrupt controller with the AXI4 interface.
   --! @details Map address:
   --!          0x80002000..0x80002fff (4 KB total)
-  irq0 : nasti_irqctrl generic map
-  (
+  irq0 : nasti_irqctrl generic map (
     xindex     => CFG_NASTI_SLAVE_IRQCTRL,
     xaddr      => 16#80002#,
     xmask      => 16#FFFFF#,
@@ -450,8 +464,7 @@ geneng_ena : if CFG_GNSSLIB_ENABLE generate
   gnss_i.glo_I    <= i_glo_I;
   gnss_i.glo_Q    <= i_glo_I;
 
-  gnss0 : gnssengine  generic map
-  (
+  gnss0 : gnssengine  generic map (
     tech    => CFG_MEMTECH,
     xindex  => CFG_NASTI_SLAVE_ENGINE,
     xaddr   => 16#80003#,
@@ -591,7 +604,8 @@ end generate;
     sys_clk => wClkBus, 
     adc_clk => wClkAdc,
     nrst   => wNReset,
-    cfgvec => slv_cfg,
+    mstcfg => mst_cfg,
+    slvcfg => slv_cfg,
     cfg    => slv_cfg(CFG_NASTI_SLAVE_PNP),
     i      => axisi,
     o      => axiso(CFG_NASTI_SLAVE_PNP)

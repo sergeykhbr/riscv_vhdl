@@ -1,3 +1,12 @@
+-----------------------------------------------------------------------------
+--! @file
+--! @copyright  Copyright 2015 GNSS Sensor Ltd. All right reserved.
+--! @author     Sergey Khabarov - sergeykhbr@gmail.com
+--! @brief      Implementation of the grethaxi device.
+--! @details    This is Ethernet MAC device with the AMBA AXI inteface
+--!             and EDCL debugging functionality.
+------------------------------------------------------------------------------
+--! Standard library
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;

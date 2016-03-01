@@ -29,7 +29,8 @@ entity nasti_pnp is
     sys_clk : in  std_logic;
     adc_clk : in  std_logic;
     nrst   : in  std_logic;
-    cfgvec : in  nasti_slave_cfg_vector;
+    mstcfg : in  nasti_master_cfg_vector;
+    slvcfg : in  nasti_slave_cfg_vector;
     cfg    : out  nasti_slave_config_type;
     i      : in  nasti_slave_in_type;
     o      : out nasti_slave_out_type
@@ -75,7 +76,7 @@ signal r_adc_detect : std_logic_vector(7 downto 0);
 
 begin
 
-  comblogic : process(i, cfgvec, r, r_adc_detect)
+  comblogic : process(i, slvcfg, r, r_adc_detect)
     variable v : registers;
     variable raddr_reg : local_addr_array_type;
     variable waddr_reg : local_addr_array_type;
@@ -95,7 +96,9 @@ begin
        val := X"badef00dcafecafe";
        if raddr_reg(n) = 0 then val := X"00000000" & X"20160115";
        elsif raddr_reg(n) = 1 then 
-          val := X"00000000" & X"00" & r_adc_detect
+          val := X"00000000" 
+              & r_adc_detect 
+              & conv_std_logic_vector(CFG_NASTI_MASTER_TOTAL,8)
               & conv_std_logic_vector(CFG_NASTI_SLAVES_TOTAL,8)
               & conv_std_logic_vector(tech,8);
        elsif raddr_reg(n) = 2 then val := r.bank0.idt;
@@ -105,9 +108,9 @@ begin
        else
          for k in 0 to CFG_NASTI_SLAVES_TOTAL-1 loop
              if raddr_reg(n) = 8+2*k then 
-               val := cfgvec(k).xaddr & X"000" & cfgvec(k).xmask & X"000";
+               val := slvcfg(k).xaddr & X"000" & slvcfg(k).xmask & X"000";
              elsif raddr_reg(n) = 8+2*k+1 then 
-               val := X"000000" & PNP_CFG_SLAVE_DESCR_BYTES & cfgvec(k).vid & cfgvec(k).did;
+               val := X"000000" & PNP_CFG_SLAVE_DESCR_BYTES & slvcfg(k).vid & slvcfg(k).did;
              end if;
          end loop;
        end if;
