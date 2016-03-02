@@ -32,7 +32,7 @@ DOXYFILE_ENCODING      = UTF-8
 # title of most generated pages and in a few other places.
 # The default value is: My Project.
 
-PROJECT_NAME           = "RISC-V System-on-Chip"
+PROJECT_NAME           = "RISC-V VHDL: System-on-Chip"
 
 # The PROJECT_NUMBER tag can be used to enter a project or revision number. This
 # could be handy for archiving the generated documentation or if some version
@@ -765,8 +765,20 @@ WARN_LOGFILE           =
 # spaces. See also FILE_PATTERNS and EXTENSION_MAPPING
 # Note: If this tag is empty the current directory is searched.
 
-INPUT = ../rocket_soc/techmap ../rocket_soc/commonlib ../rocket_soc/rocketlib ../rocket_soc/work \
-../rocket/techmap ../rocket/commonlib ../rocket/rocketlib ../rocket/work
+INPUT = \
+../rocket_soc/techmap \
+../rocket_soc/commonlib \
+../rocket_soc/ambalib \
+../rocket_soc/rocketlib \
+../rocket_soc/gnsslib \
+../rocket_soc/work \
+\
+../rocket/techmap \
+../rocket/commonlib \
+../rocket/ambalib \
+../rocket/rocketlib \
+../rocket/gnsslib \
+../rocket/work
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding. Doxygen uses
@@ -1104,7 +1116,8 @@ HTML_FOOTER            =
 # obsolete.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-HTML_STYLESHEET        =
+#HTML_STYLESHEET        = ./docs/gnss_styles.css
+HTML_STYLESHEET        = 
 
 # The HTML_EXTRA_STYLESHEET tag can be used to specify additional user-defined
 # cascading style sheets that are included after the standard style sheets
@@ -1117,7 +1130,8 @@ HTML_STYLESHEET        =
 # list). For an example see the documentation.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-HTML_EXTRA_STYLESHEET  =
+#HTML_EXTRA_STYLESHEET  = ./docs/gnss_styles.css
+HTML_EXTRA_STYLESHEET  = 
 
 # The HTML_EXTRA_FILES tag can be used to specify one or more extra images or
 # other source files which should be copied to the HTML output directory. Note

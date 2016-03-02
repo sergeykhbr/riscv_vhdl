@@ -285,6 +285,7 @@ L1toL2dis0 : if not CFG_COMMON_L1toL2_ENABLE generate
 end generate;
 
 
+dsu_ena : if CFG_DSU_ENABLE generate
   ------------------------------------
   --! @brief Debug Support Unit with access to the CSRs
   --! @details Map address:
@@ -302,8 +303,13 @@ end generate;
     o_axi  => axiso(CFG_NASTI_SLAVE_DSU),
     i_host => htifi_grant,
     o_host => htifo(CFG_HTIF_SRC_DSU)
-
   );
+end generate;
+dsu_dis : if not CFG_DSU_ENABLE generate
+      slv_cfg(CFG_NASTI_SLAVE_DSU) <= nasti_slave_config_none;
+      axiso(CFG_NASTI_SLAVE_DSU) <= nasti_slave_out_none;
+      htifo(CFG_HTIF_SRC_DSU) <= host_out_none;
+end generate;
 
   ------------------------------------
   --! @brief BOOT ROM module isntance with the AXI4 interface.
@@ -524,7 +530,7 @@ end generate;
   --! @brief Ethernet MAC with the AXI4 interface.
   --! @details Map address:
   --!          0x80040000..0x8007ffff (256 KB total)
-  eth0_ena : if CFG_ETHERNET_ENABLE = 1 generate 
+  eth0_ena : if CFG_ETHERNET_ENABLE generate 
     eth_i.tx_clk <= i_etx_clk;
     eth_i.rx_clk <= i_erx_clk;
     eth_i.rxd <= i_erxd;
@@ -572,7 +578,7 @@ end generate;
   
   end generate;
   --! Ethernet disabled
-  eth0_dis : if CFG_ETHERNET_ENABLE /= 1 generate 
+  eth0_dis : if not CFG_ETHERNET_ENABLE generate 
       slv_cfg(CFG_NASTI_SLAVE_ETHMAC) <= nasti_slave_config_none;
       axiso(CFG_NASTI_SLAVE_ETHMAC) <= nasti_slave_out_none;
       mst_cfg(CFG_NASTI_MASTER_ETHMAC) <= nasti_master_config_none;

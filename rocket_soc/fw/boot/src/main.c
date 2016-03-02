@@ -38,6 +38,7 @@ void copy_image() {
     }
     led_set(0x81);
 
+#if 0
     /** Just to check access to DSU and read MCPUID via this slave device.
      *  Verification is made on time diagram (ModelSim), no other purposes of 
      *  these operations.
@@ -50,6 +51,7 @@ void copy_image() {
     uint64_t x1 = arr_csrs[CSR_MCPUID<<1]; 
     pnp->fwdbg1 = x1;
     arr_csrs[CSR_MCPUID<<1] = x1;
+#endif
 }
 
 void _init() {

@@ -81,33 +81,37 @@ demonstration procedure. v1.0 branch implements:
   System BUS from a separate clock domains (ADC clock domain):
      * Fast Search Engines 
      * GNSS Engine
-- GNSS modules are provided as a netlist files (in \*.ngc format) or as a stubs.
+- Ethernet MAC 10/100Mb (gigabit MAC by request) with the debug function (EDCL)
+  that allows redirect UDP requests directly on system BUS.
+- Debug Support Unit (DSU) provides access to all processors CSRs.
+- GNSS modules are distributeds as a netlist files (in \*.ngc format) or as 
+  a stubs.
 - By default GNSS is disabled in *confg_common.vhd* file that makes *master*
   version very close to the *v1.0* branch by its functionality.
 - Using *master* trunk without *RF front-end* is **possible** in TEST_MODE.
   Enabling TEST_MODE in a final 2.0 version will require manual switching
-  of the configuration jumper (*i_int_adc*) on board.
+  of the configuration jumper (*i_int_clkrf*) on board.
 
-## How to create and build project using ISE Studio
+## How to build and run FPGA bitfile on ML605 board (Virtex6)
 
-  Use **rocket_soc.xise** project file to build image for the default target ML605
-(Virtex6) FPGA board or **rocket_soc_kc705.xdc** for the KC705 board. 
-Do the following steps to change target on any unsupported board yet:
-- Generate System PLL for your FPGA/ASIC with the similar to outputs pins to
-  *SysPLL_v6.vhd* and *SysPLL_k7.vhd*.
-- Add component declaration into *techmap/pll/syspll.vhd* file and put it
-  into the library *techmap*.
-- Add you own target name into *techmap/gencomp/gencomp.vhd* file.
-- Create new target configuration file *config_xx.vhd* in the *work* directory
-  and library and setup there constant defintion:
-    * CFG_FABTECH
-    * CFG_MEMTECH
-    * CFG_PADTECH
-    * CFG_JTAGTECH
-- Use your new *config_xx.vhd* file instead of default *config_v6.vhd*.
-- Add own constraint file *rocket_soc_xx.ucf* with the proper pins assignments.
-- Change FPGA type of the top-level file in ISE Studio using proper menu.
-- Make and load \*.bit file into FPGA.
+- Open project file for Xilinx ISE14.7 *prj/ml605/rocket_soc.xise*.
+- Edit two configuration constants *CFG_SIM_BOOTROM_HEX* and 
+  *CFG_SIM_FWIMAGE_HEX* in file **work/comfig_common.vhd** with the correct
+  string values accordingly with your project directory.
+- Generate programming file and load it into FPGA.
+- You should see a single output message in uart port as follow (use button 
+  "*Center*" to reset system and repead message):
+
+```
+    Boot . . .OK
+    ADC clock not found. Enable DIP int_rf.
+```
+ 
+- **Switch "ON" DIP[0]** (i_int_clkrf) to enable *TEST Mode* that enables
+  ADC clock generation as sys_clk/4.
+- Now you should see plug'n'play information messages with 1 second period.
+- For Xilinx KC705 board use Vivado project  *prj/kc705/rocket_chip.xpr*.
+
 
 ## Simulation with the ModelSim
 
