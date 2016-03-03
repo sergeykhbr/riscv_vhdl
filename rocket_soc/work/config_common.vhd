@@ -135,7 +135,7 @@ constant CFG_GNSSLIB_FSEGPS_ENABLE : integer := 0;
 constant CFG_ETHERNET_ENABLE : boolean := false;
 
 --! @brief Enable/Disable Debug Unit 
-constant CFG_DSU_ENABLE : boolean := false;
+constant CFG_DSU_ENABLE : boolean := true;
 
 
 end;

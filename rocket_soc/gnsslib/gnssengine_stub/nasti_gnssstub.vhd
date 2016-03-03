@@ -159,7 +159,7 @@ begin
   begin 
      if i.nrst = '0' then
         r.bank_adc.tmr.MsCnt <= (others => '0');
-        r.bank_adc.clk_cnt <= 25000;
+        r.bank_adc.clk_cnt <= 15000;
      elsif rising_edge(i.clk_adc) then 
         r.bank_adc <= rin.bank_adc;
      end if; 
