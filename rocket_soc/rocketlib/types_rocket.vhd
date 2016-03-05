@@ -18,24 +18,18 @@ use techmap.gencomp.all;
 library ambalib;
 use ambalib.types_amba4.all;
 
+--! @brief   Declaration of components visible on SoC top level.
+package types_rocket is
 
 --! @name Scala inherited constants.
 --! @brief The following constants were define in Rocket-chip generator.
 --! @{
-
---! @brief   Declaration of components visible on SoC top level.
-package types_rocket is
 
 --! @brief   Bits allocated for the memory tag value.
 --! @details This value is defined \i Config.scala and depends of others
 --!          configuration paramters, like number of master, clients, channels
 --!          and so on. It is not used in VHDL implemenation.
 constant MEM_TAG_BITS  : integer := 6;
---! @brief   Memory data bitwise.
---! @details We intentionally select this value equals to AXI4 bus data width.
---!          Default SCALA configurator value uses 64/128 SerDes module to
---!          access from Tile to AXI4 bus.
-constant MEM_DATA_BITS : integer := CFG_NASTI_DATA_BITS;
 --! @brief   SCALA generated value. Not used in VHDL.
 constant MEM_ADDR_BITS : integer := 26;
 --! @brief   Multiplexing HTIF bus data width.
@@ -584,7 +578,7 @@ package body types_rocket is
       when ACQUIRE_PUT_SINGLE_DATA_BEAT =>
           -- Single beat data.
           write := '1';
-          wmask := u(16 downto 1);
+          wmask := u(CFG_NASTI_DATA_BYTES downto 1);
           byte_addr := (others => '0');
           axi_sz := conv_std_logic_vector(CFG_NASTI_ADDR_OFFSET,3);
           beat_cnt := 0;
@@ -598,12 +592,16 @@ package body types_rocket is
       when ACQUIRE_PUT_ATOMIC_DATA =>
           -- Single beat data. 64 bits width
           write := '1';
-          if u(12) = '0' then
-              wmask(7 downto 0) := (others => '1');
-              wmask(15 downto 8) := (others => '0');
-          else 
-              wmask(7 downto 0) := (others => '0');
-              wmask(15 downto 8) := (others => '1');
+          if CFG_NASTI_DATA_BITS = 128 then
+              if u(12) = '0' then
+                  wmask(7 downto 0) := (others => '1');
+                  wmask(15 downto 8) := (others => '0');
+              else 
+                  wmask(7 downto 0) := (others => '0');
+                  wmask(15 downto 8) := (others => '1');
+              end if;
+          else
+              wmask := (others => '1');
           end if;
           byte_addr := (others => '0');
           axi_sz := opSizeToXSize(conv_integer(u(8 downto 6)));
@@ -627,7 +625,7 @@ package body types_rocket is
       when CACHED_ACQUIRE_EXCLUSIVE =>
           -- Single beat data.
           write := '1';
-          wmask := u(16 downto 1);
+          wmask := u(CFG_NASTI_DATA_BYTES downto 1);
           byte_addr := (others => '0');
           axi_sz := conv_std_logic_vector(CFG_NASTI_ADDR_OFFSET,3);
           beat_cnt := 0;

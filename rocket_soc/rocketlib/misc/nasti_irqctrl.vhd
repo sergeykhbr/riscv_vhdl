@@ -182,7 +182,7 @@ begin
       o_host.csr_req_valid     <= '1';
       o_host.csr_req_bits_rw   <= '1';
       o_host.csr_req_bits_addr <= CSR_MIPI;
-      o_host.csr_req_bits_data <= X"0000000000000000";
+      o_host.csr_req_bits_data <= X"0000000000000001";
     else
       o_host.csr_req_valid     <= '0';
       o_host.csr_req_bits_rw   <= '0';

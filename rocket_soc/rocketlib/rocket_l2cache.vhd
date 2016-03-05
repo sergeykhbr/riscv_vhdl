@@ -212,7 +212,7 @@ architecture arch_rocket_l2cache of rocket_l2cache is
     io_mmio_aw_bits_user : out std_logic;
     io_mmio_w_ready : in std_logic;
     io_mmio_w_valid : out std_logic;
-    io_mmio_w_bits_data : out std_logic_vector(MEM_DATA_BITS-1 downto 0);
+    io_mmio_w_bits_data : out std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
     io_mmio_w_bits_last : out std_logic;
     io_mmio_w_bits_strb : out std_logic_vector(15 downto 0);
     io_mmio_w_bits_user : out std_logic;
@@ -237,7 +237,7 @@ architecture arch_rocket_l2cache of rocket_l2cache is
     io_mmio_r_ready : out std_logic;
     io_mmio_r_valid : in std_logic;
     io_mmio_r_bits_resp : in std_logic_vector(1 downto 0);
-    io_mmio_r_bits_data : in std_logic_vector(MEM_DATA_BITS-1 downto 0);
+    io_mmio_r_bits_data : in std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
     io_mmio_r_bits_last : in std_logic;
     io_mmio_r_bits_id : in std_logic_vector(CFG_ROCKET_ID_BITS-1 downto 0);
     io_mmio_r_bits_user : in std_logic
