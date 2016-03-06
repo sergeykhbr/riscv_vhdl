@@ -54,46 +54,48 @@ architecture arch_nasti_sram of nasti_sram is
   type registers is record
     bank_axi : nasti_slave_bank_type;
   end record;
+  
+  type ram_in_type is record
+    raddr : global_addr_array_type;
+    waddr : global_addr_array_type;
+    we    : std_logic;
+    wstrb : std_logic_vector(CFG_NASTI_DATA_BYTES-1 downto 0);
+    wdata : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
+  end record;
 
 signal r, rin : registers;
 
-signal raddr_reg : global_addr_array_type;
 signal rdata : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
-
-signal waddr_reg : global_addr_array_type;
-signal we        : std_logic;
-signal wstrb     : std_logic_vector(CFG_NASTI_DATA_BYTES-1 downto 0);
-signal wdata     : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
+signal rami : ram_in_type;
 
 begin
 
   comblogic : process(i, r, rdata)
     variable v : registers;
-    variable wr_ena : std_logic;
+    variable vrami : ram_in_type;
   begin
 
     v := r;
 
+
     procedureAxi4(i, xconfig, r.bank_axi, v.bank_axi);
 
-    for n in 0 to CFG_NASTI_DATA_BYTES-1 loop
-       raddr_reg(n) <= v.bank_axi.raddr(n);
-    end loop;
+    vrami.we := '0';
+    vrami.waddr := (others => (others => '0'));
+    vrami.wdata := (others => '0');
+    vrami.wstrb := (others => '0');
+    vrami.raddr := v.bank_axi.raddr;
 
-    wr_ena := '0';
     if (i.w_valid = '1' and r.bank_axi.wstate = wtrans 
         and r.bank_axi.wresp = NASTI_RESP_OKAY) then
-      wr_ena := '1';
-      wdata <= i.w_data;
-      wstrb <= i.w_strb;
-      for n in 0 to CFG_NASTI_DATA_BYTES-1 loop
-         waddr_reg(n) <= r.bank_axi.waddr(n);
-      end loop;
+      vrami.we := '1';
+      vrami.wdata := i.w_data;
+      vrami.wstrb := i.w_strb;
+      vrami.waddr := r.bank_axi.waddr;
     end if;
 
     o <= functionAxi4Output(r.bank_axi, rdata);
-    we <= wr_ena;
-
+    rami <= vrami;
     rin <= v;
   end process;
 
@@ -105,12 +107,12 @@ begin
     init_file => init_file -- only for 'inferred'
   ) port map (
     clk     => clk,
-    raddr   => raddr_reg,
+    raddr   => rami.raddr,
     rdata   => rdata,
-    waddr   => waddr_reg,
-    we      => we,
-    wstrb   => wstrb,
-    wdata   => wdata
+    waddr   => rami.waddr,
+    we      => rami.we,
+    wstrb   => rami.wstrb,
+    wdata   => rami.wdata
   );
 
   -- registers:

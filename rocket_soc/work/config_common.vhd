@@ -132,7 +132,7 @@ constant CFG_GNSSLIB_FSEGPS_ENABLE : integer := 0;
 
 --! @brief Enabling Ethernet MAC interface.
 --! @details By default MAC module enables support of the debug feature EDCL.
-constant CFG_ETHERNET_ENABLE : boolean := true;
+constant CFG_ETHERNET_ENABLE : boolean := false;
 
 --! @brief Enable/Disable Debug Unit 
 constant CFG_DSU_ENABLE : boolean := true;

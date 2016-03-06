@@ -1,3 +1,6 @@
+`ifndef SYNTHESIS
+  `define SYNTHESIS 1
+`endif
 module Htif(input clk, input reset,
     //output io_host_clk
     //output io_host_clk_edge

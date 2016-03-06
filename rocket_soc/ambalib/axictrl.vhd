@@ -43,7 +43,7 @@ begin
     variable v : reg_type;
     variable busreq : std_logic;
     variable mstsel : std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0);
-    variable n, mstidx : integer;
+    variable n, mstidx, mstidx_cur : integer range 0 to CFG_NASTI_MASTER_TOTAL-1;
     variable cur_master : nasti_master_out_type;
     variable cur_slave  : nasti_slave_out_type;
     variable busy : std_logic;
@@ -68,32 +68,33 @@ begin
     end loop;
 
     busy := mstoi(r.mstidx).w_valid or mstoi(r.mstidx).r_ready;
-    if (mstsel = MSTZERO) or ((busreq and not busy) = '1') then
+    if (r.mstsel = MSTZERO) or ((busreq and not busy) = '1') then
        mstsel(r.mstidx) := '0';
        mstsel(mstidx) := busreq;
        v.mstidx := mstidx;
+       mstidx_cur := mstidx;
     else
-       mstidx := r.mstidx;
+       mstidx_cur := r.mstidx;
     end if;
 
-    if mstoi(mstidx).aw_valid = '1' then
-        cur_master.aw_valid := mstoi(mstidx).aw_valid;
-        cur_master.aw_bits := mstoi(mstidx).aw_bits;
-        cur_master.aw_id := mstoi(mstidx).aw_id;
-        cur_master.aw_user := mstoi(mstidx).aw_user;
+    if mstoi(mstidx_cur).aw_valid = '1' then
+        cur_master.aw_valid := mstoi(mstidx_cur).aw_valid;
+        cur_master.aw_bits := mstoi(mstidx_cur).aw_bits;
+        cur_master.aw_id := mstoi(mstidx_cur).aw_id;
+        cur_master.aw_user := mstoi(mstidx_cur).aw_user;
     end if;
-    if mstoi(mstidx).w_valid = '1' then
-        cur_master.w_valid := mstoi(mstidx).w_valid;
-        cur_master.w_data := mstoi(mstidx).w_data;
-        cur_master.w_last := mstoi(mstidx).w_last;
-        cur_master.w_strb := mstoi(mstidx).w_strb;
-        cur_master.w_user := mstoi(mstidx).w_user;
+    if mstoi(mstidx_cur).w_valid = '1' then
+        cur_master.w_valid := mstoi(mstidx_cur).w_valid;
+        cur_master.w_data := mstoi(mstidx_cur).w_data;
+        cur_master.w_last := mstoi(mstidx_cur).w_last;
+        cur_master.w_strb := mstoi(mstidx_cur).w_strb;
+        cur_master.w_user := mstoi(mstidx_cur).w_user;
     end if;
-    if mstoi(mstidx).ar_valid = '1' then
-        cur_master.ar_valid := mstoi(mstidx).ar_valid;
-        cur_master.ar_bits := mstoi(mstidx).ar_bits;
-        cur_master.ar_id := mstoi(mstidx).ar_id;
-        cur_master.ar_user := mstoi(mstidx).ar_user;
+    if mstoi(mstidx_cur).ar_valid = '1' then
+        cur_master.ar_valid := mstoi(mstidx_cur).ar_valid;
+        cur_master.ar_bits := mstoi(mstidx_cur).ar_bits;
+        cur_master.ar_id := mstoi(mstidx_cur).ar_id;
+        cur_master.ar_user := mstoi(mstidx_cur).ar_user;
     end if;
 
 

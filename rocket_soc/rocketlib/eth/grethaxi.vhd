@@ -371,7 +371,7 @@ architecture arch_grethaxi of grethaxi is
 
 begin
   
-  comb : process(r, ethi, slvi, omac_rdbgdata, omac_status) is
+  comb : process(r, ethi, slvi, omac_rdbgdata, omac_status, rst) is
       variable v        : registers;
       variable vcmd     : eth_command_type;
       variable raddr_reg : local_addr_array_type;
