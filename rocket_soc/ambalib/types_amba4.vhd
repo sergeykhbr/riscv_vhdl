@@ -68,7 +68,7 @@ constant CFG_NASTI_SLAVES_TOTAL  : integer := CFG_NASTI_SLAVE_PNP+1;
 constant CFG_NASTI_MASTER_CACHED   : integer := 0;
 --! Uncached TileLinkIO bus.
 constant CFG_NASTI_MASTER_UNCACHED : integer := CFG_NASTI_MASTER_CACHED+1;
---! Total Number of master devices on system bus.
+--! Ethernet MAC master interface generic index.
 constant CFG_NASTI_MASTER_ETHMAC   : integer := CFG_NASTI_MASTER_UNCACHED+1;
 --! Total Number of master devices on system bus.
 constant CFG_NASTI_MASTER_TOTAL    : integer := CFG_NASTI_MASTER_ETHMAC+1;
@@ -416,6 +416,10 @@ constant nasti_master_out_none : nasti_master_out_type := (
       '0', (others=>'0'), '0', (others=>'0'), '0', 
       '0', '0', META_NONE, (others=>'0'), '0', '0');
 
+--! @brief Array of all masters outputs.
+type nasti_master_out_vector is array (0 to CFG_NASTI_MASTER_TOTAL-1) 
+       of nasti_master_out_type;
+
 
 --! @brief Master device input signals.
 type nasti_master_in_type is record
@@ -464,9 +468,6 @@ type nasti_master_in_type is record
   r_user : std_logic;
 end record;
 
---! @brief Array of all masters outputs.
-type nasti_master_out_vector is array (0 to CFG_NASTI_MASTER_TOTAL-1) 
-       of nasti_master_out_type;
 
 --! @brief Slave device AMBA AXI input signals.
 type nasti_slave_in_type is record
@@ -612,6 +613,7 @@ return nasti_slave_out_type;
 --! @brief   AXI bus controller. 
 --! @details Simplified version with the hardcoded priorities to bus access.
 --!          Lower master index has a higher priority.
+--! @param [in] rdslave_with_waitstate 
 --! @param [in] clk System bus clock.
 --! @param [in] nrst Reset with active LOW level.
 --! @param [in] slvoi Vector of slaves output signals.
@@ -622,7 +624,10 @@ return nasti_slave_out_type;
 --!                    the specified priority.
 --! @todo    Round-robin priority algorithm.
 component axictrl is
-port (
+  generic (
+    rdslave_with_waitstate : boolean := false
+  );
+  port (
     clk    : in std_logic;
     nrst   : in std_logic;
     slvoi  : in  nasti_slaves_out_vector;

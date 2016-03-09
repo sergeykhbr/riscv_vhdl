@@ -28,8 +28,6 @@ end;
 
 architecture arch_sram8_inferred of sram8_inferred is
 
-constant FILE_IMAGE_LINES_TOTAL : integer := 16384;
-
 constant SRAM_LENGTH : integer := 2**abits;
 type ram_type is array (0 to SRAM_LENGTH-1) of std_logic_vector(7 downto 0);
 

@@ -12,7 +12,7 @@
 
 typedef uint64_t adr_type;
 
-static const int AXI4_SYSTEM_CLOCK = 70000000;  /// 70 MHz
+static const int AXI4_SYSTEM_CLOCK = 60000000;  /// 60 MHz
 
 #define VENDOR_GNSSSENSOR        0x00F1
 
@@ -30,6 +30,8 @@ static const int AXI4_SYSTEM_CLOCK = 70000000;  /// 70 MHz
 #define GNSSSENSOR_ACCELEROMETER 0x007b     /// Accelerometer Device ID provided by gnsslib
 #define GNSSSENSOR_GYROSCOPE     0x007c     /// Gyroscope Device ID provided by gnsslib
 #define GNSSSENSOR_IRQCTRL       0x007d     /// Interrupt controller
+#define GNSSSENSOR_ETHMAC        0x007f
+#define GNSSSENSOR_DSU           0x0080
 
 
 #define TECH_INFERRED       0

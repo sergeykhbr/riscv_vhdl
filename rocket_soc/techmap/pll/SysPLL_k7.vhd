@@ -136,15 +136,16 @@ begin
     COMPENSATION         => "ZHOLD",
     STARTUP_WAIT         => FALSE,
     DIVCLK_DIVIDE        => 10,
-    CLKFBOUT_MULT_F      => 49.875,
+    CLKFBOUT_MULT_F      => 51.000,
     CLKFBOUT_PHASE       => 0.000,
     CLKFBOUT_USE_FINE_PS => FALSE,
-    CLKOUT0_DIVIDE_F     => 14.250,
+    CLKOUT0_DIVIDE_F     => 17.000,
     CLKOUT0_PHASE        => 0.000,
     CLKOUT0_DUTY_CYCLE   => 0.500,
     CLKOUT0_USE_FINE_PS  => FALSE,
     CLKIN1_PERIOD        => 5.000,
     REF_JITTER1          => 0.010)
+  
   port map
     -- Output clocks
    (CLKFBOUT            => clkfbout,

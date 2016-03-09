@@ -65,25 +65,6 @@ architecture arch_nasti_gpio of nasti_gpio is
     bank0 : bank_type;
   end record;
 
-
-  procedure procedureReadReg(
-         bank0 : in bank_type;
-         addr   : in integer;
-         val    : out std_logic_vector(31 downto 0)) is
-  begin
-    val := X"badef00d";
-    case addr is
-      when 0 => val := bank0.led;
-      when 1 => val := bank0.dip;
-      when 2 => val := bank0.reg32_2;
-      when 3 => val := bank0.reg32_3;
-      when 4 => val := bank0.led_period;
-      when 5 => val := bank0.uart_scaler;
-      when 6 => val := bank0.reg32_6;
-      when others =>
-    end case;
-  end procedure;
-
 signal r, rin : registers;
 
 begin
@@ -103,10 +84,20 @@ begin
     procedureAxi4(i, xconfig, r.bank_axi, v.bank_axi);
 
     for n in 0 to CFG_NASTI_DATA_BYTES/ALIGNMENT_BYTES-1 loop
-       raddr_reg(n) := conv_integer(r.bank_axi.raddr(ALIGNMENT_BYTES*n)(11 downto 2));
-       procedureReadReg(r.bank0, 
-                        raddr_reg(n),
-                        rdata(8*ALIGNMENT_BYTES*(n+1)-1 downto 8*ALIGNMENT_BYTES*n));
+      raddr_reg(n) := conv_integer(r.bank_axi.raddr(ALIGNMENT_BYTES*n)(11 downto 2));
+      val := (others => '0');
+
+      case raddr_reg(n) is
+        when 0 => val := r.bank0.led;
+        when 1 => val := r.bank0.dip;
+        when 2 => val := r.bank0.reg32_2;
+        when 3 => val := r.bank0.reg32_3;
+        when 4 => val := r.bank0.led_period;
+        when 5 => val := r.bank0.uart_scaler;
+        when 6 => val := r.bank0.reg32_6;
+        when others =>
+      end case;
+      rdata(8*ALIGNMENT_BYTES*(n+1)-1 downto 8*ALIGNMENT_BYTES*n) := val;
     end loop;
 
 

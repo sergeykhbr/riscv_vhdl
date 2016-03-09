@@ -17,6 +17,9 @@ use ambalib.types_amba4.all;
 --!          Lower master index has a higher priority.
 --! @todo    Round-robin algorithm for the master selection.
 entity axictrl is
+  generic (
+    rdslave_with_waitstate : boolean := false
+  );
   port (
     clk    : in std_logic;
     nrst   : in std_logic;
@@ -34,6 +37,7 @@ architecture arch_axictrl of axictrl is
   type reg_type is record
      mstidx : integer range 0 to CFG_NASTI_MASTER_TOTAL-1;
      mstsel : std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0);
+     cur_slave  : nasti_slave_out_type;  -- 1 clock wait state
   end record;
 
   signal rin, r : reg_type;
@@ -54,7 +58,7 @@ begin
 
     busreq := '0';
     mstidx := 0;
-    cur_slave := nasti_slave_out_none;
+    v.cur_slave := nasti_slave_out_none;
     cur_master := nasti_master_out_none;
 
     -- Select master bus:
@@ -100,29 +104,34 @@ begin
 
     -- Select slave bus:
     for n in 0 to CFG_NASTI_SLAVES_TOTAL-1 loop
-       cur_slave.ar_ready := cur_slave.ar_ready or slvoi(n).ar_ready;
-       cur_slave.aw_ready := cur_slave.aw_ready or slvoi(n).aw_ready;
-       cur_slave.w_ready  := cur_slave.w_ready or slvoi(n).w_ready;
+       v.cur_slave.ar_ready := v.cur_slave.ar_ready or slvoi(n).ar_ready;
+       v.cur_slave.aw_ready := v.cur_slave.aw_ready or slvoi(n).aw_ready;
+       v.cur_slave.w_ready  := v.cur_slave.w_ready or slvoi(n).w_ready;
 
-       if cur_slave.b_valid = '0' and slvoi(n).b_valid = '1' then
-          cur_slave.b_valid := '1';
-          cur_slave.b_resp  := slvoi(n).b_resp;
-          cur_slave.b_id    := slvoi(n).b_id;
-          cur_slave.b_user  := slvoi(n).b_user;
+       if v.cur_slave.b_valid = '0' and slvoi(n).b_valid = '1' then
+          v.cur_slave.b_valid := '1';
+          v.cur_slave.b_resp  := slvoi(n).b_resp;
+          v.cur_slave.b_id    := slvoi(n).b_id;
+          v.cur_slave.b_user  := slvoi(n).b_user;
        end if;
 
-       if cur_slave.r_valid = '0' and slvoi(n).r_valid = '1' then
-          cur_slave.r_valid := '1';
-          cur_slave.r_resp  := slvoi(n).r_resp;
-          cur_slave.r_data  := slvoi(n).r_data;
-          cur_slave.r_last  := slvoi(n).r_last;
-          cur_slave.r_id    := slvoi(n).r_id;
-          cur_slave.r_user  := slvoi(n).r_user;
+       if v.cur_slave.r_valid = '0' and slvoi(n).r_valid = '1' then
+          v.cur_slave.r_valid := '1';
+          v.cur_slave.r_resp  := slvoi(n).r_resp;
+          v.cur_slave.r_data  := slvoi(n).r_data;
+          v.cur_slave.r_last  := slvoi(n).r_last;
+          v.cur_slave.r_id    := slvoi(n).r_id;
+          v.cur_slave.r_user  := slvoi(n).r_user;
        end if;
     end loop;
 
 
     v.mstsel := mstsel;
+    if rdslave_with_waitstate then
+      cur_slave := r.cur_slave;
+    else
+      cur_slave := v.cur_slave;
+    end if;
  
     rin <= v;
 

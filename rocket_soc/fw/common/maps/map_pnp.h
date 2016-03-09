@@ -10,11 +10,6 @@
 
 #include <inttypes.h>
 
-#ifdef ENABLE_FSE
-#define CFG_NASTI_SLAVES_TOTAL 9
-#else
-#define CFG_NASTI_SLAVES_TOTAL 8
-#endif
 
 #define PNP_CONFIG_DEFAULT_BYTES 16
 
@@ -36,7 +31,7 @@ typedef struct pnp_map {
     volatile uint64_t malloc_size;  /// debugging memalloc size
     volatile uint64_t fwdbg1;       /// FW debug register
     volatile uint64_t rsrv[2];
-    PnpConfigType slaves[CFG_NASTI_SLAVES_TOTAL];
+    PnpConfigType slaves[64];
 } pnp_map;
 
 #endif  // __MAP_PNP_H__

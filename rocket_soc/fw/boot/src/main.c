@@ -21,6 +21,7 @@ void print_uart(const char *buf, int sz) {
     for (int i = 0; i < sz; i++) {
         while (uart->status & UART_STATUS_TX_FULL) {}
         uart->data = buf[i];
+        led_set(0x10 + i);
     }
 }
 
@@ -30,13 +31,11 @@ void copy_image() {
     uint64_t *sram = (uint64_t *)ADDR_NASTI_SLAVE_SRAM;
     pnp_map *pnp = (pnp_map *)ADDR_NASTI_SLAVE_PNP;
 
-    led_set(0xff);
     /** Speed-up RTL simulation by skipping coping stage: */
     tech = pnp->tech & 0xFF;
     if (tech != TECH_INFERRED) {
         memcpy(sram, fwrom, FW_IMAGE_SIZE_BYTES);
     }
-    led_set(0x81);
 
 #if 0
     /** Just to check access to DSU and read MCPUID via this slave device.
@@ -59,10 +58,14 @@ void _init() {
     pnp_map *pnp = (pnp_map *)ADDR_NASTI_SLAVE_PNP;
     uart_map *uart = (uart_map *)ADDR_NASTI_SLAVE_UART1;
     // Half period of the uart = Fbus / 115200 / 2 = 70 MHz / 115200 / 2:
-    uart->scaler = 304;
+    //uart->scaler = 304;  // 70 MHz
+    uart->scaler = 260;  // 60 MHz
 
+    led_set(0x01);
     print_uart("Boot . . .", 10);
+    led_set(0x02);
     copy_image();
+    led_set(0x03);
     print_uart("OK\r\n", 4);
 
     /** Check ADC detector that RF front-end is connected: */
@@ -70,6 +73,7 @@ void _init() {
     if (tech != 0xFF) {
         print_uart("ADC clock not found. Enable DIP int_rf.\r\n", 41);
     }
+    led_set(0x04);
 }
 
 /** Not used actually */

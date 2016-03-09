@@ -42,7 +42,7 @@ entity grethaxi is
     macaddrh       : integer := 16#00005E#;
     macaddrl       : integer := 16#000000#;
     ipaddrh        : integer := 16#c0a8#;
-    ipaddrl        : integer := 16#0035#;
+    ipaddrl        : integer := 16#0135#;
     phyrstadr      : integer range 0 to 32 := 0;
     rmii           : integer range 0 to 1  := 0;
     oepol          : integer range 0 to 1  := 0; 
@@ -132,242 +132,6 @@ architecture arch_grethaxi of grethaxi is
   signal omac_rmsto          : eth_rx_ahb_in_type;
   signal imac_rmsti          : eth_rx_ahb_out_type;
   
-  procedure procedureReadReg(addr      : in std_logic_vector(15 downto 0);
-                             dbg_rdata : in std_logic_vector(31 downto 0);
-                             ir         : in eth_control_type;
-                             macstat   : in eth_mac_status_type;
-                             ovcmd     : out eth_command_type;
-                             ordata  : out std_logic_vector(31 downto 0)) is
-  begin
-   ordata := (others => '0');
-   if (ramdebug = 0) or (addr(15 downto 14) = "00") then 
-     case addr(3 downto 0) is
-     when "0000" => --ctrl reg
-       if ramdebug /= 0 then
-         ordata(13) := ir.ramdebugen;
-       end if;
-       if (edcl /= 0) then
-         ordata(31) := '1';
-         ordata(30 downto 28) := bufsize;
-         ordata(14) := ir.edcldis;
-         ordata(12) := ir.disableduplex;
-       end if;
-       if enable_mdint = 1 then
-         ordata(26) := '1';
-         ordata(10) := ir.pstatirqen;
-       end if;
-       if multicast = 1 then
-         ordata(25) := '1';
-         ordata(11) := ir.mcasten;
-       end if;
-       if rmii = 1 then
-       ordata(7) := macstat.speed;
-       end if;
-       ordata(6) := macstat.reset;
-       ordata(5) := ir.prom;
-       ordata(4) := macstat.full_duplex;
-       ordata(3) := ir.rx_irqen;
-       ordata(2) := ir.tx_irqen;
-       ordata(1) := macstat.rxen;
-       ordata(0) := macstat.txen; 
-     when "0001" => --status/int source reg
-       ordata(9) := not (macstat.edcltx_idle or macstat.edclrx_idle);
-       if enable_mdint = 1 then
-         ordata(8) := macstat.phystat;
-       end if;
-       ordata(7) := macstat.invaddr;
-       ordata(6) := macstat.toosmall;
-       ordata(5) := macstat.txahberr;
-       ordata(4) := macstat.rxahberr;
-       ordata(3) := macstat.tx_int;
-       ordata(2) := macstat.rx_int;
-       ordata(1) := macstat.tx_err;
-       ordata(0) := macstat.rx_err; 
-     when "0010" => --mac addr msb/mdio address
-       ordata(15 downto 0) := ir.mac_addr(47 downto 32);
-     when "0011" => --mac addr lsb
-       ordata := ir.mac_addr(31 downto 0); 
-     when "0100" => --mdio ctrl/status
-       ordata(31 downto 16) := macstat.mdio.cmd.data;
-       ordata(15 downto 11) := ir.mdio_phyadr;
-       ordata(10 downto 6) :=  macstat.mdio.cmd.regadr;  
-       ordata(3) := macstat.mdio.busy;
-       ordata(2) := macstat.mdio.linkfail;
-       ordata(1) := macstat.mdio.cmd.read;
-       ordata(0) := macstat.mdio.cmd.write; 
-     when "0101" => --tx descriptor 
-       ordata(31 downto 10) := ir.txdesc;
-       ordata(9 downto 3)   := macstat.txdsel;
-     when "0110" => --rx descriptor
-       ordata(31 downto 10) := ir.rxdesc;
-       ordata(9 downto 3)   := macstat.rxdsel;
-     when "0111" => --edcl ip
-       if (edcl /= 0) then
-          ordata := ir.edclip;
-       end if;
-     when "1000" =>
-       if multicast = 1 then
-         ordata := ir.hash(63 downto 32);
-       end if;
-     when "1001" =>
-       if multicast = 1 then
-         ordata := ir.hash(31 downto 0);
-       end if;
-     when "1010" =>
-       if edcl /= 0 then
-         ordata(15 downto 0) := ir.emacaddr(47 downto 32);
-       end if;
-     when "1011" =>
-       if edcl /= 0 then
-         ordata := ir.emacaddr(31 downto 0);
-       end if;
-     when others => null; 
-     end case;
-   elsif addr(15 downto 14) = "01" then
-       if ramdebug /= 0 then
-         ovcmd.dbg_access_id := DBG_ACCESS_TX_BUFFER;
-         ovcmd.dbg_rd_ena    := ir.ramdebugen;
-         ovcmd.dbg_addr      := addr(13 downto 0);
-         ordata            := dbg_rdata;
-       end if;
-   elsif addr(15 downto 14) = "10" then
-       if ramdebug /= 0 then
-         ovcmd.dbg_access_id := DBG_ACCESS_RX_BUFFER;
-         ovcmd.dbg_rd_ena    := ir.ramdebugen;
-         ovcmd.dbg_addr      := addr(13 downto 0);
-         ordata              := dbg_rdata;
-       end if;
-   elsif addr(15 downto 14) = "11" then 
-       if (ramdebug = 2) and (edcl /= 0) then
-         ovcmd.dbg_access_id := DBG_ACCESS_EDCL_BUFFER;
-         ovcmd.dbg_rd_ena    := ir.ramdebugen;
-         ovcmd.dbg_addr      := addr(13 downto 0);
-         ordata              := dbg_rdata;
-       end if;
-   end if;
-  end procedure procedureReadReg;
-
-  procedure procedureWriteReg(addr      : in std_logic_vector(15 downto 0);
-                              strobs    : in std_logic_vector(3 downto 0);
-                              wdata     : in std_logic_vector(31 downto 0);
-                              ir         : in eth_control_type;
-                              macstat   : in eth_mac_status_type;
-                              ovcmd     : out eth_command_type;
-                              ov        : out eth_control_type) is
-  begin
-    if strobs /= "0000" then
-      if (ramdebug = 0) or (addr(15 downto 14) = "00") then 
-       case addr(3 downto 0) is
-       when "0000" => --ctrl reg
-         if ramdebug /= 0 then
-           ov.ramdebugen := wdata(13);
-         end if;
-         if edcl /= 0 then
-           ov.edcldis  := wdata(14);
-           ov.disableduplex := wdata(12);
-         end if;
-         if multicast = 1 then
-           ov.mcasten := wdata(11);
-         end if;
-         if enable_mdint = 1 then
-           ov.pstatirqen  := wdata(10);
-         end if;
-         if rmii = 1 then
-           ovcmd.set_speed       := wdata(7);  
-           ovcmd.clr_speed       := not wdata(7);  
-         end if;
-         ovcmd.set_reset       := wdata(6);
-         ovcmd.clr_reset       := not wdata(6);
-         ov.prom               := wdata(5); 
-         ovcmd.set_full_duplex := wdata(4);
-         ovcmd.clr_full_duplex := not wdata(4);
-         ov.rx_irqen           := wdata(3);
-         ov.tx_irqen           := wdata(2);
-         ovcmd.set_rxena     := wdata(1);
-         ovcmd.clr_rxena     := not wdata(1);
-         ovcmd.set_txena     := wdata(0);
-         ovcmd.clr_txena     := not wdata(0);
-       when "0001" => --status/int source reg
-         if enable_mdint = 1 then
-           ovcmd.clr_status_phystat := wdata(8);
-         end if;
-         ovcmd.clr_status_invaddr  := wdata(7);
-         ovcmd.clr_status_toosmall := wdata(6);
-         ovcmd.clr_status_txahberr := wdata(5);
-         ovcmd.clr_status_rxahberr := wdata(4);
-         ovcmd.clr_status_tx_int := wdata(3);
-         ovcmd.clr_status_rx_int := wdata(2);
-         ovcmd.clr_status_tx_err := wdata(1);
-         ovcmd.clr_status_rx_err := wdata(0);
-       when "0010" => --mac addr msb
-         ov.mac_addr(47 downto 32) := wdata(15 downto 0);
-       when "0011" => --mac addr lsb
-         ov.mac_addr(31 downto 0)  := wdata(31 downto 0);
-       when "0100" => --mdio ctrl/status
-         if enable_mdio = 1 then
-           ovcmd.mdio_cmd.valid := not macstat.mdio.busy;
-           if macstat.mdio.busy = '0' then
-             ov.mdio_phyadr := wdata(15 downto 11);
-           end if;
-           ovcmd.mdio_cmd.data   := wdata(31 downto 16);
-           ovcmd.mdio_cmd.regadr := wdata(10 downto 6);
-           ovcmd.mdio_cmd.read   := wdata(1);
-           ovcmd.mdio_cmd.write  := wdata(0);
-         end if;
-       when "0101" => --tx descriptor 
-         ovcmd.set_txdsel := '1';
-         ovcmd.txdsel := wdata(9 downto 3);
-         ov.txdesc := wdata(31 downto 10);
-       when "0110" => --rx descriptor
-         ovcmd.set_rxdsel := '1';
-         ovcmd.rxdsel := wdata(9 downto 3);
-         ov.rxdesc := wdata(31 downto 10);
-       when "0111" => --edcl ip
-         if (edcl /= 0) then
-           ov.edclip := wdata;
-         end if;
-       when "1000" => --hash msb
-         if multicast = 1 then
-           ov.hash(63 downto 32) := wdata;
-         end if;
-       when "1001" => --hash lsb
-         if multicast = 1 then
-           ov.hash(31 downto 0) := wdata;
-         end if;
-       when "1010" =>
-         if edcl /= 0 then
-           ov.emacaddr(47 downto 32) := wdata(15 downto 0);
-         end if;
-       when "1011" =>
-         if edcl /= 0 then
-           ov.emacaddr(31 downto 0) := wdata;
-         end if;
-       when others => null; 
-       end case;
-     elsif addr(15 downto 14) = "01" then
-       if ramdebug /= 0 then
-         ovcmd.dbg_access_id := DBG_ACCESS_TX_BUFFER;
-         ovcmd.dbg_wr_ena    := ir.ramdebugen;
-         ovcmd.dbg_addr      := addr(13 downto 0);
-         ovcmd.dbg_wdata     := wdata;
-       end if;
-     elsif addr(15 downto 14) = "10" then  
-       if ramdebug /= 0 then
-         ovcmd.dbg_access_id := DBG_ACCESS_RX_BUFFER;
-         ovcmd.dbg_wr_ena    := ir.ramdebugen;
-         ovcmd.dbg_addr      := addr(13 downto 0);
-         ovcmd.dbg_wdata     := wdata;
-       end if;
-     elsif addr(15 downto 14) = "11" then 
-       if (ramdebug = 2) and (edcl /= 0) then
-         ovcmd.dbg_access_id := DBG_ACCESS_EDCL_BUFFER;
-         ovcmd.dbg_wr_ena    := ir.ramdebugen;
-         ovcmd.dbg_addr      := addr(13 downto 0);
-         ovcmd.dbg_wdata     := wdata;
-       end if;
-     end if;
-   end if;
-  end procedure procedureWriteReg;
 
 begin
   
@@ -378,6 +142,7 @@ begin
       variable waddr_reg : local_addr_array_type;
       variable rdata : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
       variable wdata : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
+      variable wdata32 : std_logic_vector(31 downto 0);
       variable wstrb : std_logic_vector(CFG_NASTI_DATA_BYTES-1 downto 0);
       variable val : std_logic_vector(8*ALIGNMENT_BYTES-1 downto 0);
   begin
@@ -391,12 +156,112 @@ begin
        raddr_reg(n) := r.bank_slv.raddr(ALIGNMENT_BYTES*n)(17 downto log2(ALIGNMENT_BYTES));
        val := (others => '0');
        
-       procedureReadReg(raddr_reg(n), 
-                        omac_rdbgdata, 
-                        r.ctrl,
-                        omac_status,
-                        vcmd,
-                        val);
+       if (ramdebug = 0) or (raddr_reg(n)(15 downto 14) = "00") then 
+         case raddr_reg(n)(3 downto 0) is
+         when "0000" => --ctrl reg
+           if ramdebug /= 0 then
+             val(13) := r.ctrl.ramdebugen;
+           end if;
+           if (edcl /= 0) then
+             val(31) := '1';
+             val(30 downto 28) := bufsize;
+             val(14) := r.ctrl.edcldis;
+             val(12) := r.ctrl.disableduplex;
+           end if;
+           if enable_mdint = 1 then
+             val(26) := '1';
+             val(10) := r.ctrl.pstatirqen;
+           end if;
+           if multicast = 1 then
+             val(25) := '1';
+             val(11) := r.ctrl.mcasten;
+           end if;
+           if rmii = 1 then
+           val(7) := omac_status.speed;
+           end if;
+           val(6) := omac_status.reset;
+           val(5) := r.ctrl.prom;
+           val(4) := omac_status.full_duplex;
+           val(3) := r.ctrl.rx_irqen;
+           val(2) := r.ctrl.tx_irqen;
+           val(1) := omac_status.rxen;
+           val(0) := omac_status.txen; 
+         when "0001" => --status/int source reg
+           val(9) := not (omac_status.edcltx_idle or omac_status.edclrx_idle);
+           if enable_mdint = 1 then
+             val(8) := omac_status.phystat;
+           end if;
+           val(7) := omac_status.invaddr;
+           val(6) := omac_status.toosmall;
+           val(5) := omac_status.txahberr;
+           val(4) := omac_status.rxahberr;
+           val(3) := omac_status.tx_int;
+           val(2) := omac_status.rx_int;
+           val(1) := omac_status.tx_err;
+           val(0) := omac_status.rx_err; 
+         when "0010" => --mac addr msb/mdio address
+           val(15 downto 0) := r.ctrl.mac_addr(47 downto 32);
+         when "0011" => --mac addr lsb
+           val := r.ctrl.mac_addr(31 downto 0); 
+         when "0100" => --mdio ctrl/status
+           val(31 downto 16) := omac_status.mdio.cmd.data;
+           val(15 downto 11) := r.ctrl.mdio_phyadr;
+           val(10 downto 6) :=  omac_status.mdio.cmd.regadr;  
+           val(3) := omac_status.mdio.busy;
+           val(2) := omac_status.mdio.linkfail;
+           val(1) := omac_status.mdio.cmd.read;
+           val(0) := omac_status.mdio.cmd.write; 
+         when "0101" => --tx descriptor 
+           val(31 downto 10) := r.ctrl.txdesc;
+           val(9 downto 3)   := omac_status.txdsel;
+         when "0110" => --rx descriptor
+           val(31 downto 10) := r.ctrl.rxdesc;
+           val(9 downto 3)   := omac_status.rxdsel;
+         when "0111" => --edcl ip
+           if (edcl /= 0) then
+              val := r.ctrl.edclip;
+           end if;
+         when "1000" =>
+           if multicast = 1 then
+             val := r.ctrl.hash(63 downto 32);
+           end if;
+         when "1001" =>
+           if multicast = 1 then
+             val := r.ctrl.hash(31 downto 0);
+           end if;
+         when "1010" =>
+           if edcl /= 0 then
+             val(15 downto 0) := r.ctrl.emacaddr(47 downto 32);
+           end if;
+         when "1011" =>
+           if edcl /= 0 then
+             val := r.ctrl.emacaddr(31 downto 0);
+           end if;
+         when others => null; 
+         end case;
+       elsif raddr_reg(n)(15 downto 14) = "01" then
+           if ramdebug /= 0 then
+             vcmd.dbg_access_id := DBG_ACCESS_TX_BUFFER;
+             vcmd.dbg_rd_ena    := r.ctrl.ramdebugen;
+             vcmd.dbg_addr      := raddr_reg(n)(13 downto 0);
+             val                := omac_rdbgdata;
+           end if;
+       elsif raddr_reg(n)(15 downto 14) = "10" then
+           if ramdebug /= 0 then
+             vcmd.dbg_access_id := DBG_ACCESS_RX_BUFFER;
+             vcmd.dbg_rd_ena    := r.ctrl.ramdebugen;
+             vcmd.dbg_addr      := raddr_reg(n)(13 downto 0);
+             val                := omac_rdbgdata;
+           end if;
+       elsif raddr_reg(n)(15 downto 14) = "11" then 
+           if (ramdebug = 2) and (edcl /= 0) then
+             vcmd.dbg_access_id := DBG_ACCESS_EDCL_BUFFER;
+             vcmd.dbg_rd_ena    := r.ctrl.ramdebugen;
+             vcmd.dbg_addr      := raddr_reg(n)(13 downto 0);
+             val                := omac_rdbgdata;
+           end if;
+       end if;
+
        rdata(8*ALIGNMENT_BYTES*(n+1)-1 downto 8*ALIGNMENT_BYTES*n) := val;
     end loop;
 
@@ -409,14 +274,120 @@ begin
       wstrb := slvi.w_strb;
       for n in 0 to CFG_NASTI_DATA_BYTES/ALIGNMENT_BYTES-1 loop
          waddr_reg(n) := r.bank_slv.waddr(ALIGNMENT_BYTES*n)(17 downto 2);
+         wdata32 := wdata(8*ALIGNMENT_BYTES*(n+1)-1 downto 8*ALIGNMENT_BYTES*n);
 
-         procedureWriteReg(waddr_reg(n), 
-                           wstrb(ALIGNMENT_BYTES*(n+1)-1 downto ALIGNMENT_BYTES*n), 
-                           wdata(8*ALIGNMENT_BYTES*(n+1)-1 downto 8*ALIGNMENT_BYTES*n),
-                           r.ctrl,
-                           omac_status,
-                           vcmd,
-                           v.ctrl);
+          if wstrb(ALIGNMENT_BYTES*(n+1)-1 downto ALIGNMENT_BYTES*n) /= "0000" then
+            if (ramdebug = 0) or (waddr_reg(n)(15 downto 14) = "00") then 
+             case waddr_reg(n)(3 downto 0) is
+             when "0000" => --ctrl reg
+               if ramdebug /= 0 then
+                 v.ctrl.ramdebugen := wdata32(13);
+               end if;
+               if edcl /= 0 then
+                 v.ctrl.edcldis  := wdata32(14);
+                 v.ctrl.disableduplex := wdata32(12);
+               end if;
+               if multicast = 1 then
+                 v.ctrl.mcasten := wdata32(11);
+               end if;
+               if enable_mdint = 1 then
+                 v.ctrl.pstatirqen  := wdata32(10);
+               end if;
+               if rmii = 1 then
+                 vcmd.set_speed       := wdata32(7);  
+                 vcmd.clr_speed       := not wdata32(7);  
+               end if;
+               vcmd.set_reset       := wdata32(6);
+               vcmd.clr_reset       := not wdata32(6);
+               v.ctrl.prom               := wdata32(5); 
+               vcmd.set_full_duplex := wdata32(4);
+               vcmd.clr_full_duplex := not wdata32(4);
+               v.ctrl.rx_irqen           := wdata32(3);
+               v.ctrl.tx_irqen           := wdata32(2);
+               vcmd.set_rxena     := wdata32(1);
+               vcmd.clr_rxena     := not wdata32(1);
+               vcmd.set_txena     := wdata32(0);
+               vcmd.clr_txena     := not wdata32(0);
+             when "0001" => --status/int source reg
+               if enable_mdint = 1 then
+                 vcmd.clr_status_phystat := wdata32(8);
+               end if;
+               vcmd.clr_status_invaddr  := wdata32(7);
+               vcmd.clr_status_toosmall := wdata32(6);
+               vcmd.clr_status_txahberr := wdata32(5);
+               vcmd.clr_status_rxahberr := wdata32(4);
+               vcmd.clr_status_tx_int := wdata32(3);
+               vcmd.clr_status_rx_int := wdata32(2);
+               vcmd.clr_status_tx_err := wdata32(1);
+               vcmd.clr_status_rx_err := wdata32(0);
+             when "0010" => --mac addr msb
+               v.ctrl.mac_addr(47 downto 32) := wdata32(15 downto 0);
+             when "0011" => --mac addr lsb
+               v.ctrl.mac_addr(31 downto 0)  := wdata32(31 downto 0);
+             when "0100" => --mdio ctrl/status
+               if enable_mdio = 1 then
+                 vcmd.mdio_cmd.valid := not omac_status.mdio.busy;
+                 if omac_status.mdio.busy = '0' then
+                   v.ctrl.mdio_phyadr := wdata32(15 downto 11);
+                 end if;
+                 vcmd.mdio_cmd.data   := wdata32(31 downto 16);
+                 vcmd.mdio_cmd.regadr := wdata32(10 downto 6);
+                 vcmd.mdio_cmd.read   := wdata32(1);
+                 vcmd.mdio_cmd.write  := wdata32(0);
+               end if;
+             when "0101" => --tx descriptor 
+               vcmd.set_txdsel := '1';
+               vcmd.txdsel := wdata32(9 downto 3);
+               v.ctrl.txdesc := wdata32(31 downto 10);
+             when "0110" => --rx descriptor
+               vcmd.set_rxdsel := '1';
+               vcmd.rxdsel := wdata32(9 downto 3);
+               v.ctrl.rxdesc := wdata32(31 downto 10);
+             when "0111" => --edcl ip
+               if (edcl /= 0) then
+                 v.ctrl.edclip := wdata32;
+               end if;
+             when "1000" => --hash msb
+               if multicast = 1 then
+                 v.ctrl.hash(63 downto 32) := wdata32;
+               end if;
+             when "1001" => --hash lsb
+               if multicast = 1 then
+                 v.ctrl.hash(31 downto 0) := wdata32;
+               end if;
+             when "1010" =>
+               if edcl /= 0 then
+                 v.ctrl.emacaddr(47 downto 32) := wdata32(15 downto 0);
+               end if;
+             when "1011" =>
+               if edcl /= 0 then
+                 v.ctrl.emacaddr(31 downto 0) := wdata32;
+               end if;
+             when others => null; 
+             end case;
+           elsif waddr_reg(n)(15 downto 14) = "01" then
+             if ramdebug /= 0 then
+               vcmd.dbg_access_id := DBG_ACCESS_TX_BUFFER;
+               vcmd.dbg_wr_ena    := r.ctrl.ramdebugen;
+               vcmd.dbg_addr      := waddr_reg(n)(13 downto 0);
+               vcmd.dbg_wdata     := wdata32;
+             end if;
+           elsif waddr_reg(n)(15 downto 14) = "10" then  
+             if ramdebug /= 0 then
+               vcmd.dbg_access_id := DBG_ACCESS_RX_BUFFER;
+               vcmd.dbg_wr_ena    := r.ctrl.ramdebugen;
+               vcmd.dbg_addr      := waddr_reg(n)(13 downto 0);
+               vcmd.dbg_wdata     := wdata32;
+             end if;
+           elsif waddr_reg(n)(15 downto 14) = "11" then 
+             if (ramdebug = 2) and (edcl /= 0) then
+               vcmd.dbg_access_id := DBG_ACCESS_EDCL_BUFFER;
+               vcmd.dbg_wr_ena    := r.ctrl.ramdebugen;
+               vcmd.dbg_addr      := waddr_reg(n)(13 downto 0);
+               vcmd.dbg_wdata     := wdata32;
+             end if;
+           end if;
+         end if;
       end loop;
     end if;
    

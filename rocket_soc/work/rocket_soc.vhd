@@ -547,7 +547,7 @@ end generate;
       xmask => 16#FFFC0#,
       xirq => CFG_IRQ_ETHMAC,
       memtech => CFG_MEMTECH,
-      mdcscaler => 70,  --! System Bus clock in MHz
+      mdcscaler => 60,  --! System Bus clock in MHz
       enable_mdio => 1,
       fifosize => 16,
       nsync => 1,
@@ -587,8 +587,14 @@ end generate;
       eth_o   <= eth_out_none;
   end generate;
   
-  emdio_pad : iobuf_tech generic map(CFG_PADTECH) 
-        port map (eth_i.mdio_i, io_emdio, eth_i.mdio_i, eth_o.mdio_oe);
+  emdio_pad : iobuf_tech generic map(
+      CFG_PADTECH
+  ) port map (
+      o  => eth_i.mdio_i,
+      io => io_emdio,
+      i  => eth_o.mdio_o,
+      t  => eth_o.mdio_oe
+  );
   o_egtx_clk <= '0'; --! must output from diff. pad transceiver gigabit clock.
   o_etxd <= eth_o.txd;
   o_etx_en <= eth_o.tx_en;

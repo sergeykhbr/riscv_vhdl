@@ -48,6 +48,9 @@ architecture behavior of rocket_soc_tb is
   signal o_antext_ena    : std_logic;
   signal o_antint_contr  : std_logic;
 
+  signal o_emdc    : std_logic;
+  signal io_emdio  : std_logic;
+
   signal adc_cnt : integer := 0;
   signal clk_cur: std_logic := '1';
   signal check_clk_bus : std_logic := '0';
@@ -202,8 +205,8 @@ begin
     o_etxd      => open,
     o_etx_en    => open,
     o_etx_er    => open,
-    o_emdc      => open,
-    io_emdio    => open,
+    o_emdc      => o_emdc,
+    io_emdio    => io_emdio,
     o_erstn     => open
  );
 
