@@ -99,5 +99,20 @@ package types_buf is
   );
   end component;
 
+  --! @brief Gigabit buffer with differential inputs.
+  --! @param[in] gclk_p Differential clock input.
+  --! @param[in] gclk_n Differential clock inversed input.
+  --! @param[out] o_clk Unbuffered clock output.
+  component igdsbuf_tech is
+  generic (
+    generic_tech : integer := 0
+  );
+  port (
+    gclk_p : in std_logic;
+    gclk_n : in std_logic;
+    o_clk  : out std_logic
+  );
+  end component; 
+
 
 end;

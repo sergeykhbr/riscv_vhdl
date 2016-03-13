@@ -16,7 +16,7 @@ static const int AXI4_SYSTEM_CLOCK = 60000000;  /// 60 MHz
 
 #define VENDOR_GNSSSENSOR        0x00F1
 
-#define GNSSSENSOR_DUMMY         0x5577     /// Dummy device
+#define GNSSSENSOR_EMPTY         0x5577     /// Dummy device
 #define GNSSSENSOR_BOOTROM       0x0071     /// Boot ROM Device ID
 #define GNSSSENSOR_FWIMAGE       0x0072     /// FW ROM image Device ID
 #define GNSSSENSOR_SRAM          0x0073     /// Internal SRAM block Device ID
@@ -25,6 +25,7 @@ static const int AXI4_SYSTEM_CLOCK = 60000000;  /// 60 MHz
 #define GNSSSENSOR_GPIO          0x0076     /// General purpose IOs Device ID provided by gnsslib
 #define GNSSSENSOR_RF_CONTROL    0x0077     /// RF front-end controller Device ID provided by gnsslib
 #define GNSSSENSOR_ENGINE        0x0078     /// GNSS Engine Device ID provided by gnsslib
+#define GNSSSENSOR_ENGINE_STUB   0x0068     /// GNSS Engine stub
 #define GNSSSENSOR_FSE_V2        0x0079     /// Fast Search Engines Device ID provided by gnsslib
 #define GNSSSENSOR_UART          0x007a     /// rs-232 UART Device ID
 #define GNSSSENSOR_ACCELEROMETER 0x007b     /// Accelerometer Device ID provided by gnsslib

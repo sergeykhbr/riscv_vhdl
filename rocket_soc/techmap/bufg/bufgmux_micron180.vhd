@@ -1,10 +1,9 @@
------------------------------------------------------------------------------
--- Entity:      System reset former
--- File:        tap_rstn.vhd
--- Author:      Sergey Khabarov - GNSS Sensor Ltd
--- Description: Clock multiplexer
+----------------------------------------------------------------------------
+--! @file
+--! @copyright  Copyright 2015 GNSS Sensor Ltd. All right reserved.
+--! @author     Sergey Khabarov
+--! @brief      Clock multiplexer with buffered output for Mikron 180 nm.
 ------------------------------------------------------------------------------
-
 
 library ieee;
 use ieee.std_logic_1164.all;

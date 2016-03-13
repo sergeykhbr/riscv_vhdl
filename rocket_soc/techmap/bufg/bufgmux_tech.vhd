@@ -1,8 +1,8 @@
------------------------------------------------------------------------------
--- Entity:      System reset former
--- File:        tap_rstn.vhd
--- Author:      Sergey Khabarov - GNSS Sensor Ltd
--- Description: 
+----------------------------------------------------------------------------
+--! @file
+--! @copyright  Copyright 2015 GNSS Sensor Ltd. All right reserved.
+--! @author     Sergey Khabarov
+--! @brief      Virtual clock multiplexer with buffered output.
 ------------------------------------------------------------------------------
 
 library ieee;

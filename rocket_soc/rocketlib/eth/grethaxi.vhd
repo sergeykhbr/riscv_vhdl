@@ -199,10 +199,10 @@ begin
            val(2) := omac_status.rx_int;
            val(1) := omac_status.tx_err;
            val(0) := omac_status.rx_err; 
-         when "0010" => --mac addr msb/mdio address
-           val(15 downto 0) := r.ctrl.mac_addr(47 downto 32);
-         when "0011" => --mac addr lsb
+         when "0010" => --mac addr lsb
            val := r.ctrl.mac_addr(31 downto 0); 
+         when "0011" => --mac addr msb/mdio address
+           val(15 downto 0) := r.ctrl.mac_addr(47 downto 32);
          when "0100" => --mdio ctrl/status
            val(31 downto 16) := omac_status.mdio.cmd.data;
            val(15 downto 11) := r.ctrl.mdio_phyadr;
@@ -320,10 +320,10 @@ begin
                vcmd.clr_status_rx_int := wdata32(2);
                vcmd.clr_status_tx_err := wdata32(1);
                vcmd.clr_status_rx_err := wdata32(0);
-             when "0010" => --mac addr msb
-               v.ctrl.mac_addr(47 downto 32) := wdata32(15 downto 0);
-             when "0011" => --mac addr lsb
+             when "0010" => --mac addr lsb
                v.ctrl.mac_addr(31 downto 0)  := wdata32(31 downto 0);
+             when "0011" => --mac addr msb
+               v.ctrl.mac_addr(47 downto 32) := wdata32(15 downto 0);
              when "0100" => --mdio ctrl/status
                if enable_mdio = 1 then
                  vcmd.mdio_cmd.valid := not omac_status.mdio.busy;

@@ -13,10 +13,8 @@
 
 # C:/work/rocket/rocket_chip/rocket_soc.ucf:2
 create_clock -name i_sclk_p -period 5.000 [get_ports i_sclk_p]
-# C:/work/rocket/rocket_chip/rocket_soc.ucf:3
 # The conversion of 'IOSTANDARD' constraint on 'net' object 'i_sclk_p' has been applied to the port object 'i_sclk_p'.
 set_property IOSTANDARD LVDS [get_ports i_sclk_p]
-# C:/work/rocket/rocket_chip/rocket_soc.ucf:4
 # The conversion of 'IOSTANDARD' constraint on 'net' object 'i_sclk_n' has been applied to the port object 'i_sclk_n'.
 set_property IOSTANDARD LVDS [get_ports i_sclk_n]
 set_property PACKAGE_PIN AD12 [get_ports i_sclk_p]
@@ -109,6 +107,9 @@ set_property IOSTANDARD LVCMOS25 [get_ports o_uart1_rtsn]
 set_property IOSTANDARD LVCMOS25 [get_ports o_uart1_td]
 
 # Ethernet signals
+set_property PACKAGE_PIN G8 [get_ports i_gmiiclk_p]
+set_property PACKAGE_PIN G7 [get_ports i_gmiiclk_n]
+
 set_property PACKAGE_PIN J21 [get_ports io_emdio]
 set_property IOSTANDARD LVCMOS25 [get_ports io_emdio]
 set_property PACKAGE_PIN R23 [get_ports o_emdc]

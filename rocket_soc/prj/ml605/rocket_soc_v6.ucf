@@ -10,12 +10,6 @@ NET  "i_sclk_p"   IOSTANDARD = LVDS_25;
 NET  "i_sclk_n"   LOC = "H9";
 NET  "i_sclk_n"   IOSTANDARD = LVDS_25;
 
-#NET "wClkBus" TNM_NET = "TNM_ClkBus";
-#TIMESPEC "TS_ClkBus"  = PERIOD "TNM_ClkBus" 60 MHz;
-
-#NET "wClkAdc" TNM_NET = "ADCCLK";
-#TIMESPEC "TS_ADCCLK"  = PERIOD "ADCCLK" 26 MHz HIGH 50 % PRIORITY 100;
-
 # button "Center"
 NET "i_rst" LOC = G26;
 NET "i_rst" CLOCK_DEDICATED_ROUTE = "FALSE";
@@ -76,6 +70,8 @@ NET "o_antext_ena" LOC = "G32";
 NET "o_antint_contr" LOC = "P31";
 
 # Ethernet signals
+NET "i_gmiiclk_p"             LOC = "H6";
+NET "i_gmiiclk_n"             LOC = "H5";
 NET "o_egtx_clk"              LOC = "AH12";   ## 14  on U80
 NET "i_etx_clk"               LOC = "AD12";   ## 10  on U80
 NET "i_erx_clk"               LOC = "AP11";   ## 7   on U80
@@ -98,13 +94,11 @@ NET "o_emdc"                  LOC = "AP14";   ## 35  on U80
 NET "io_emdio"                LOC = "AN14";   ## 33  on U80
 NET "o_erstn"                 LOC = "AH13";   ## 36  on U80
 
-NET "i_erx_clk" PERIOD = 8.000 ;
-OFFSET = IN : 5.000 : BEFORE i_erx_clk ;
-#OFFSET = IN : 2.000 : BEFORE i_erx_clk ;
+NET "i_gmiiclk_p"            TNM_NET = "clk_gtx";
+TIMESPEC "TS_gtx_clk"      = PERIOD "clk_gtx" 8000 ps HIGH 50 %;
 
-NET "i_etx_clk" PERIOD = 40.000 ;
-OFFSET = OUT : 15.000 : AFTER i_etx_clk ;
-OFFSET = IN : 8.000 : BEFORE i_etx_clk ;
+NET "i_erx_clk"              TNM_NET  = "clk_rx";
+TIMESPEC "TS_rx_clk"       = PERIOD "clk_rx" 40000 ps HIGH 50 %;
 
-NET "i_etx_clk" MAXSKEW= 1.0 ns;
-NET "i_erx_clk" MAXSKEW= 1.0 ns;
+NET "i_etx_clk"              TNM_NET  = "clk_tx_mac";
+TIMESPEC "TS_tx_clk_mii"   = PERIOD "clk_tx_mac" 40000 ps HIGH 50 %;

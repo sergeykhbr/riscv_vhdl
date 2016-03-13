@@ -110,6 +110,8 @@ entity rocket_soc is port
   
   --! Ethernet MAC PHY interface signals
   --! @{
+  i_gmiiclk_p : in    std_ulogic;
+  i_gmiiclk_n : in    std_ulogic;
   o_egtx_clk  : out   std_ulogic;
   i_etx_clk   : in    std_ulogic;
   i_erx_clk   : in    std_ulogic;
@@ -143,6 +145,7 @@ architecture arch_rocket_soc of rocket_soc is
   signal ib_sclk_n  : std_logic;
   signal ib_clk_adc : std_logic;
   signal ib_dip     : std_logic_vector(3 downto 0);
+  signal ib_gmiiclk : std_logic;
   --! @}
 
   signal wSysReset  : std_ulogic; -- Internal system reset. MUST NOT USED BY DEVICES.
@@ -198,6 +201,10 @@ begin
   dipx : for i in 1 to 3 generate
      idipz  : ibuf_tech generic map(CFG_PADTECH) port map (ib_dip(i), i_dip(i));
   end generate;
+  igbebuf0 : igdsbuf_tech generic map (CFG_PADTECH) port map (
+            i_gmiiclk_p, i_gmiiclk_n, ib_gmiiclk);
+
+
   --! @todo all other in/out signals via buffers:
 
   ------------------------------------
@@ -526,10 +533,24 @@ end generate;
       axiso(CFG_NASTI_SLAVE_FSE_GPS) <= nasti_slave_out_none;
   end generate;
 
+  --! Gigabit clock phase rotator with buffers
+  clkrot90 : clkp90_tech  generic map (
+    tech    => CFG_FABTECH,
+    freq    => 125000   -- KHz = 125 MHz
+  ) port map (
+    i_rst    => wReset,
+    i_clk    => ib_gmiiclk,
+    o_clk    => eth_i.gtx_clk,
+    o_clkp90 => eth_i.tx_clk_90,
+    o_clk2x  => open, -- used in gbe 'io_ref'
+    o_lock   => open
+  );
+
 
   --! @brief Ethernet MAC with the AXI4 interface.
   --! @details Map address:
   --!          0x80040000..0x8007ffff (256 KB total)
+  --!          EDCL IP: 192.168.1.51 = C0.A8.01.33
   eth0_ena : if CFG_ETHERNET_ENABLE generate 
     eth_i.tx_clk <= i_etx_clk;
     eth_i.rx_clk <= i_erx_clk;
@@ -556,7 +577,7 @@ end generate;
       macaddrh => 16#20789#,
       macaddrl => 16#123#,
       ipaddrh => 16#C0A8#,
-      ipaddrl => 16#33#,
+      ipaddrl => 16#0133#,
       phyrstadr => 7,
       enable_mdint => 1,
       maxsize => 1518
@@ -586,7 +607,8 @@ end generate;
       irq_pins(CFG_IRQ_ETHMAC) <= '0';
       eth_o   <= eth_out_none;
   end generate;
-  
+
+ 
   emdio_pad : iobuf_tech generic map(
       CFG_PADTECH
   ) port map (
@@ -595,7 +617,7 @@ end generate;
       i  => eth_o.mdio_o,
       t  => eth_o.mdio_oe
   );
-  o_egtx_clk <= '0'; --! must output from diff. pad transceiver gigabit clock.
+  o_egtx_clk <= eth_i.gtx_clk;--eth_i.tx_clk_90;
   o_etxd <= eth_o.txd;
   o_etx_en <= eth_o.tx_en;
   o_etx_er <= eth_o.tx_er;

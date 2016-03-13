@@ -1,9 +1,9 @@
------------------------------------------------------------------------------
--- Entity:      RF front-end control
--- File:        iobuf_tech.vhd
--- Author:      Sergey Khabarov - GNSS Sensor Ltd
--- Description: IO buffer selector
-------------------------------------------------------------------------------
+----------------------------------------------------------------------------
+--! @file
+--! @copyright  Copyright 2015 GNSS Sensor Ltd. All right reserved.
+--! @author     Sergey Khabarov
+--! @brief      Virtual IO buffer.
+----------------------------------------------------------------------------
 
 library ieee;
 use ieee.std_logic_1164.all;

@@ -18,6 +18,7 @@
 #include "maps/map_irqctrl.h"
 #include "maps/map_rfctrl.h"
 #include "maps/map_gnssengine.h"
+#include "maps/map_ethmac.h"
 
 #define ADDR_NASTI_SLAVE_FWIMAGE    0x00100000
 #define ADDR_NASTI_SLAVE_SRAM       0x10000000
@@ -27,6 +28,7 @@
 #define ADDR_NASTI_SLAVE_GNSSENGINE 0x80003000
 #define ADDR_NASTI_SLAVE_RFCTRL     0x80004000
 #define ADDR_NASTI_SLAVE_FSEGPS     0x8000a000
+#define ADDR_NASTI_SLAVE_ETHMAC     0x80040000
 #define ADDR_NASTI_SLAVE_PNP        0xfffff000
 
 #endif  // __AXI_MAPS_H__

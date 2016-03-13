@@ -174,8 +174,8 @@ constant GAISLER_ETH_EDCL_MASTER  : std_logic_vector(15 downto 0) := X"0503";
 --! @name Slave Device IDs definition:
 --! @{
 
---! Dummy device
-constant GNSSSENSOR_DUMMY         : std_logic_vector(15 downto 0) := X"5577";
+--! Empty slot device
+constant GNSSSENSOR_EMPTY         : std_logic_vector(15 downto 0) := X"5577";
 --! Boot ROM Device ID
 constant GNSSSENSOR_BOOTROM       : std_logic_vector(15 downto 0) := X"0071";
 --! FW ROM image Device ID
@@ -192,6 +192,8 @@ constant GNSSSENSOR_GPIO          : std_logic_vector(15 downto 0) := X"0076";
 constant GNSSSENSOR_RF_CONTROL    : std_logic_vector(15 downto 0) := X"0077";
 --! GNSS Engine Device ID provided by gnsslib
 constant GNSSSENSOR_ENGINE        : std_logic_vector(15 downto 0) := X"0078";
+--! GNSS Engine Stub device
+constant GNSSSENSOR_ENGINE_STUB   : std_logic_vector(15 downto 0) := X"0068";
 --! Fast Search Engines Device ID provided by gnsslib
 constant GNSSSENSOR_FSE_V2        : std_logic_vector(15 downto 0) := X"0079";
 --! rs-232 UART Device ID
@@ -276,7 +278,7 @@ type nasti_slave_cfg_vector is array (0 to CFG_NASTI_SLAVES_TOTAL-1)
 --! @default This value corresponds to an empty device and often used
 --!          as assignment of outputs for the disabled device.
 constant nasti_slave_config_none : nasti_slave_config_type := (
-    0, (others => '0'), (others => '1'), VENDOR_GNSSSENSOR, GNSSSENSOR_DUMMY,
+    0, (others => '0'), (others => '1'), VENDOR_GNSSSENSOR, GNSSSENSOR_EMPTY,
     PNP_CFG_TYPE_NONE, PNP_CFG_SLAVE_DESCR_BYTES);
 
 
@@ -304,7 +306,7 @@ type nasti_master_cfg_vector is array (0 to CFG_NASTI_MASTER_TOTAL-1)
 
 --! @brief Default master config value.
 constant nasti_master_config_none : nasti_master_config_type := (
-    0, VENDOR_GNSSSENSOR, GNSSSENSOR_DUMMY, PNP_CFG_TYPE_NONE, 
+    0, VENDOR_GNSSSENSOR, GNSSSENSOR_EMPTY, PNP_CFG_TYPE_NONE, 
     PNP_CFG_MASTER_DESCR_BYTES);
 
 

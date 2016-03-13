@@ -1,9 +1,9 @@
------------------------------------------------------------------------------
--- Entity:      RF front-end control
--- File:        iobuf_virtex6.vhd
--- Author:      Sergey Khabarov - GNSS Sensor Ltd
--- Description: O buffer for inferred
-------------------------------------------------------------------------------
+----------------------------------------------------------------------------
+--! @file
+--! @copyright  Copyright 2015 GNSS Sensor Ltd. All right reserved.
+--! @author     Sergey Khabarov
+--! @brief      Simple output buffer for simulation target.
+----------------------------------------------------------------------------
 
 library ieee;
 use ieee.std_logic_1164.all;

@@ -95,5 +95,27 @@ package types_pll is
     RESET       : in     std_logic;
     LOCKED      : out    std_logic );
   end component;
+
+
+  --! @brief   Virtual Clock phase rotator.
+  --! @param[in] tech Technology selector.
+  --! @param[in] freq Clock frequency in KHz.
+  --! @param[in] i_rst Reset signal. Active HIGH.
+  component clkp90_tech is
+  generic (
+    tech    : integer range 0 to NTECH := 0;
+    freq    : integer := 125000
+  );
+  port (
+    i_rst    : in  std_logic;
+    i_clk    : in  std_logic;
+    o_clk    : out std_logic;
+    o_clkp90 : out std_logic;
+    o_clk2x  : out std_logic;
+    o_lock   : out std_logic
+  );
+  end component;
+
+
   --! @}
 end;
