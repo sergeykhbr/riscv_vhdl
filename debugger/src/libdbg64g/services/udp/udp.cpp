@@ -1,0 +1,176 @@
+/**
+ * @file
+ * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
+ * @author     Sergey Khabarov - sergeykhbr@gmail.com
+ * @brief      UDP transport level implementation.
+ */
+
+#include "api_core.h"
+#include "udp.h"
+
+namespace debugger {
+
+/** Class registration in the Core */
+static UdpServiceClass local_class_;
+
+UdpService::UdpService(const char *name) 
+    : IService(name) {
+    registerInterface(static_cast<IUdp *>(this));
+
+    createDatagramSocket();
+
+    // define hardcoded remote address:
+    remote_sockaddr_ipv4_ = sockaddr_ipv4_;
+    //remote_sockaddr_ipv4_.sin_addr.s_addr = INADDR_ANY;
+    remote_sockaddr_ipv4_.sin_port = 0;
+}
+
+UdpService::~UdpService() {
+    closeDatagramSocket();
+}
+
+void UdpService::postinitService() {
+    if (!config_.is_dict()) {
+        return;
+    }
+    if (config_.has_key("Timeout")) {
+        struct timeval tv;
+#if defined(_WIN32) || defined(__CYGWIN__)
+        tv.tv_usec = 0;
+        tv.tv_sec = static_cast<long>(config_["Timeout"].to_int64());
+#else
+        tv.tv_usec = (config_["Timeout"].to_int64() % 1000) * 1000;
+        tv.tv_sec = static_cast<long>(config_["Timeout"].to_int64()/1000);
+#endif
+
+        setsockopt(hsock_, SOL_SOCKET, SO_RCVTIMEO, 
+                            (char *)&tv, sizeof(struct timeval));
+    }
+}
+
+int UdpService::registerListener(IRawListener *ilistener) { 
+    vecListeners_.push_back(ilistener);
+    return 0;
+}
+
+int UdpService::createDatagramSocket() {
+    char hostName[256];
+    if(gethostname(hostName, sizeof(hostName)) < 0) {
+        return -1;
+    }
+
+    struct addrinfo hints;
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP;
+
+    int retval;
+    struct addrinfo *result = NULL;
+    struct addrinfo *ptr = NULL;
+    retval = getaddrinfo(hostName, "0", &hints, &result);
+    if (retval != 0) {
+        return -1;
+    }
+
+    for (ptr = result; ptr != NULL; ptr = ptr->ai_next) {
+        // Find only IPV4 address, ignore others.
+        if (ptr->ai_family != AF_INET) {
+            continue;
+        }
+        sockaddr_ipv4_ = *((struct sockaddr_in *)ptr->ai_addr);
+        RISCV_sprintf(sockaddr_ipv4_str_, sizeof(sockaddr_ipv4_str_), 
+                    "%s", inet_ntoa(sockaddr_ipv4_.sin_addr));
+    }
+
+    hsock_ = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if (hsock_ < 0) {
+        //setLibError(ERR_UDPSOCKET_CREATE);
+        return -1;
+    }
+
+    sockaddr_ipv4_.sin_port = 0;
+    int res = bind(hsock_, (struct sockaddr *)&sockaddr_ipv4_, 
+                              sizeof(sockaddr_ipv4_));
+    if (res != 0) {
+        //setLibError(ERR_UDPSOCKET_BIND);
+        return -1;
+    }
+
+    addr_size_t addr_sz = sizeof(sockaddr_ipv4_);
+    res = getsockname(hsock_, (struct sockaddr *)&sockaddr_ipv4_, &addr_sz);
+    sockaddr_ipv4_port_ = ntohs(sockaddr_ipv4_.sin_port);
+
+    RISCV_info("\tIPv4 address %s:%d . . . opened", 
+                sockaddr_ipv4_str_, sockaddr_ipv4_port_);
+
+    return 0;
+}
+
+void UdpService::closeDatagramSocket() {
+    if (hsock_ < 0)
+        return;
+
+#if defined(_WIN32) || defined(__CYGWIN__)
+    closesocket(hsock_);
+#else
+    shutdown(hsock_, SHUT_RDWR);
+    close(hsock_);
+#endif
+    hsock_ = -1;
+}
+
+
+int UdpService::sendData(const char *msg, int len) {
+    int tx_bytes = sendto(hsock_, msg, len, 0, 
+                  reinterpret_cast<struct sockaddr *>(&remote_sockaddr_ipv4_),
+                  static_cast<int>(sizeof(remote_sockaddr_ipv4_)));
+
+    char xxx[1024];
+    int pos = RISCV_sprintf(xxx, sizeof(xxx), "send  %d bytes to %s:%d: ",
+                            tx_bytes,
+                            inet_ntoa(remote_sockaddr_ipv4_.sin_addr),
+                            ntohs(remote_sockaddr_ipv4_.sin_port));
+    for (int i = 0; i < len; i++) {
+        pos += RISCV_sprintf(&xxx[pos], sizeof(xxx) - pos, "%02x", msg[i]);
+    }
+    RISCV_debug("%s", xxx);
+
+    return tx_bytes;
+}
+
+int UdpService::readData(const char *buf, int maxlen) {
+    int sockerr;
+    addr_size_t sockerr_len = sizeof(sockerr);
+    addr_size_t addr_sz = sizeof(sockaddr_ipv4_);
+
+    int res = recvfrom(hsock_, rcvbuf, sizeof(rcvbuf),
+                        0, (struct sockaddr *)&sockaddr_ipv4_, &addr_sz);
+    getsockopt(hsock_, SOL_SOCKET, SO_ERROR, 
+                            (char *)&sockerr, &sockerr_len);
+
+    if (res < 0 && sockerr < 0) {
+        RISCV_error("Socket error %x", sockerr);
+        res = -1;
+    } else if (res < 0 && sockerr == 0) {
+        // Timeout:
+        res = 0;
+    } else if (res > 0) {
+        if (maxlen < res) {
+            res = maxlen;
+            RISCV_error("Receiver's buffer overflow maxlen = %d", maxlen);
+        }
+        memcpy(const_cast<char *>(buf), rcvbuf, res);
+        char xxx[1024];
+        int pos = RISCV_sprintf(xxx, sizeof(xxx), "received  %d Bytes: ", res);
+        for (int i = 0; i < res; i++) {
+            pos += RISCV_sprintf(&xxx[pos], sizeof(xxx) - pos, 
+                                "%02x", rcvbuf[i]);
+        }
+        pos += RISCV_sprintf(&xxx[pos], sizeof(xxx) - pos, "\n", NULL);
+        RISCV_debug("%s", xxx);
+    }
+    return res;
+}
+
+}  // namespace debugger

@@ -1,0 +1,67 @@
+###
+## @file
+## @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
+## @author     Sergey Khabarov - sergeykhbr@gmail.com
+##
+
+include util.mak
+
+CC=gcc
+CPP=gcc
+CFLAGS= -c -g -Wall -Werror -fpic -std=c++0x -pthread
+LDFLAGS= -shared -pthread
+INCL_KEY=-I
+DIR_KEY=-B
+
+
+# include sub-folders list
+INCL_PATH=\
+	$(TOP_DIR)src/common \
+	$(TOP_DIR)src/libdbg64g
+
+# source files directories list:
+SRC_PATH =\
+	$(TOP_DIR)src \
+	$(TOP_DIR)src/common \
+	$(TOP_DIR)src/libdbg64g \
+	$(TOP_DIR)src/libdbg64g/services/udp \
+	$(TOP_DIR)src/libdbg64g/services/boardsim
+
+VPATH = $(SRC_PATH)
+
+SOURCES = \
+	attribute \
+	autobuffer \
+	api_core \
+	api_utils \
+	udp \
+	edcl \
+	boardsim
+
+LIBS = \
+	m \
+	stdc++ \
+	dl
+
+SRC_FILES = $(addsuffix .cpp,$(SOURCES))
+OBJ_FILES = $(addsuffix .o,$(SOURCES))
+EXECUTABLE = libdbg64g.so
+
+all: libdbg64g
+
+.PHONY: $(EXECUTABLE)
+
+libdbg64g: $(EXECUTABLE)
+
+$(EXECUTABLE): $(OBJ_FILES)
+	echo $(CPP) $(LDFLAGS) $(addprefix $(OBJ_DIR)/,$(OBJ_FILES)) -o $(addprefix $(ELF_DIR)/,$@)
+	$(CPP) $(LDFLAGS) $(addprefix $(OBJ_DIR)/,$(OBJ_FILES)) -o $(addprefix $(ELF_DIR)/,$@) $(addprefix -l,$(LIBS))
+	$(ECHO) "\n  Debugger Core Library has been built successfully.\n"
+
+%.o: %.cpp
+	echo $(CPP) $(CFLAGS) $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $(addprefix $(OBJ_DIR)/,$@)
+	$(CPP) $(CFLAGS) $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $(addprefix $(OBJ_DIR)/,$@)
+
+%.o: %.c
+	echo $(CC) $(CFLAGS) $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $(addprefix $(OBJ_DIR)/,$@)
+	$(CC) $(CFLAGS) $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $(addprefix $(OBJ_DIR)/,$@)

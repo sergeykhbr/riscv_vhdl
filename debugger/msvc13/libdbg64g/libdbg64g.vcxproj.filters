@@ -1,0 +1,104 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Source Files\common">
+      <UniqueIdentifier>{b04146e4-c29a-4e9c-8628-c95faaaa9442}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\services">
+      <UniqueIdentifier>{50d2e637-34d1-4b5d-b81e-f0ad5fc2b3f5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\services\boardsim">
+      <UniqueIdentifier>{aaa9e8af-f849-437a-8239-ab8b7b0407cc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\services\udp">
+      <UniqueIdentifier>{bc603e1b-1b96-4de2-97ee-535660883158}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\include">
+      <UniqueIdentifier>{fccdb7ae-d928-45dc-9df7-7af9b6c5a9d7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\common\coreservices">
+      <UniqueIdentifier>{b1955ad2-ffb0-4b30-8e8b-4c4e4f7a20cf}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\common\attribute.cpp">
+      <Filter>Source Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\common\autobuffer.cpp">
+      <Filter>Source Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\libdbg64g\api_core.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\libdbg64g\api_utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\libdbg64g\services\udp\edcl.cpp">
+      <Filter>Source Files\services\udp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\libdbg64g\services\udp\udp.cpp">
+      <Filter>Source Files\services\udp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\libdbg64g\services\boardsim\boardsim.cpp">
+      <Filter>Source Files\services\boardsim</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\common\attribute.h">
+      <Filter>Source Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\autobuffer.h">
+      <Filter>Source Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\iface.h">
+      <Filter>Source Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\iservice.h">
+      <Filter>Source Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\api_utils.h">
+      <Filter>Source Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\iclass.h">
+      <Filter>Source Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\iattr.h">
+      <Filter>Source Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\coreservices\iboardsim.h">
+      <Filter>Source Files\common\coreservices</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\coreservices\irawlistener.h">
+      <Filter>Source Files\common\coreservices</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\coreservices\itap.h">
+      <Filter>Source Files\common\coreservices</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\coreservices\iudp.h">
+      <Filter>Source Files\common\coreservices</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\libdbg64g\services\udp\edcl.h">
+      <Filter>Source Files\services\udp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\libdbg64g\services\udp\udp.h">
+      <Filter>Source Files\services\udp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\libdbg64g\services\boardsim\boardsim.h">
+      <Filter>Source Files\services\boardsim</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\libdbg64g\include\dirent.h">
+      <Filter>Source Files\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\api_core.h">
+      <Filter>Source Files\common</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

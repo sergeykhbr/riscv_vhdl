@@ -1,0 +1,59 @@
+###
+## @file
+## @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
+## @author     Sergey Khabarov - sergeykhbr@gmail.com
+##
+
+include util.mak
+
+CC=gcc
+CPP=gcc
+CFLAGS= -c -g -Wall -Werror -fpic -std=c++0x
+LDFLAGS=-shared -L$(PLUGINS_ELF_DIR)/..
+INCL_KEY=-I
+DIR_KEY=-B
+
+
+# include sub-folders list
+INCL_PATH= \
+	$(TOP_DIR)src/common
+
+# source files directories list:
+SRC_PATH =\
+	$(TOP_DIR)src/common \
+	$(TOP_DIR)src/simple_plugin
+
+VPATH = $(SRC_PATH)
+
+SOURCES = \
+	attribute \
+	autobuffer \
+	simple_plugin
+
+LIBS = \
+	m \
+	stdc++ \
+	dbg64g
+
+SRC_FILES = $(addsuffix .cpp,$(SOURCES))
+OBJ_FILES = $(addsuffix .o,$(SOURCES))
+EXECUTABLE = simple_plugin.so
+
+all: simple_plugin
+
+.PHONY: $(EXECUTABLE)
+
+simple_plugin: $(EXECUTABLE)
+
+$(EXECUTABLE): $(OBJ_FILES)
+	echo $(CPP) $(LDFLAGS) $(addprefix $(PLUGINS_OBJ_DIR)/,$(OBJ_FILES)) -o $(addprefix $(PLUGINS_ELF_DIR)/,$@)
+	$(CPP) $(LDFLAGS) $(addprefix $(PLUGINS_OBJ_DIR)/,$(OBJ_FILES)) -o $(addprefix $(PLUGINS_ELF_DIR)/,$@) $(addprefix -l,$(LIBS))
+	$(ECHO) "\n  Plugin '"$@"' has been built successfully.\n"
+
+%.o: %.cpp
+	echo $(CPP) $(CFLAGS) $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $(addprefix $(PLUGINS_OBJ_DIR)/,$@)
+	$(CPP) $(CFLAGS) $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $(addprefix $(PLUGINS_OBJ_DIR)/,$@)
+
+%.o: %.c
+	echo $(CC) $(CFLAGS) $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $(addprefix $(PLUGINS_OBJ_DIR)/,$@)
+	$(CC) $(CFLAGS) $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $(addprefix $(PLUGINS_OBJ_DIR)/,$@)
