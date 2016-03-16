@@ -23,19 +23,19 @@ entity RomImage_inferred is
   port (
     clk     : in  std_ulogic;
     address : in  global_addr_array_type;
-    data    : out std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0)
+    data    : out unaligned_data_array_type
   );
 end;
 
 architecture rtl of RomImage_inferred is
 
 constant ROM_ADDR_WIDTH : integer := 16;
-constant ROM_LENGTH : integer := 2**(ROM_ADDR_WIDTH-4);
+constant ROM_LENGTH : integer := 2**(ROM_ADDR_WIDTH-6);
 
-type rom_block is array (0 to ROM_LENGTH-1) of std_logic_vector(7 downto 0);
-type rom_type is array (0 to CFG_NASTI_DATA_BYTES-1) of rom_block;
+type rom_block is array (0 to ROM_LENGTH-1) of std_logic_vector(31 downto 0);
+type rom_type is array (0 to CFG_WORDS_ON_BUS-1) of rom_block;
 
-type local_addr_arr is array (0 to CFG_NASTI_DATA_BYTES-1) of integer;
+type local_addr_arr is array (0 to CFG_WORDS_ON_BUS-1) of integer;
 
 impure function init_rom(file_name : in string) return rom_type is
     file rom_file : text open read_mode is file_name;
@@ -46,8 +46,8 @@ begin
     for i in 0 to (ROM_LENGTH-1) loop
         readline(rom_file, rom_line);
         hread(rom_line, temp_bv);
-        for n in 0 to (CFG_NASTI_DATA_BYTES-1) loop
-          temp_mem(n)(i) := temp_bv((n+1)*8-1 downto 8*n);
+        for n in 0 to (CFG_WORDS_ON_BUS-1) loop
+          temp_mem(n)(i) := temp_bv((n+1)*32-1 downto 32*n);
         end loop;
     end loop;
     return temp_mem;
@@ -61,9 +61,9 @@ begin
     variable t_adr : local_addr_arr;
   begin
     if rising_edge(clk) then 
-        for n in 0 to (CFG_NASTI_DATA_BYTES-1) loop
-            t_adr(n) := conv_integer(address(n)(ROM_ADDR_WIDTH-1 downto 4));
-            data((n+1)*8-1 downto 8*n) <= rom(n)(t_adr(n));
+        for n in 0 to (CFG_WORDS_ON_BUS-1) loop
+            t_adr(n) := conv_integer(address(n)(ROM_ADDR_WIDTH-1 downto log2(CFG_NASTI_DATA_BYTES)));
+            data(n) <= rom(n)(t_adr(n));
         end loop;
     end if;
   end process;

@@ -51,26 +51,27 @@ architecture arch_nasti_romimage of nasti_romimage is
     bank_axi : nasti_slave_bank_type;
   end record;
 
-
-
 signal r, rin : registers;
 
-signal raddr_reg : global_addr_array_type;
-signal rdata : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
+signal raddr_mux : global_addr_array_type;
+signal rdata_mux : unaligned_data_array_type;
 
 begin
 
-  comblogic : process(i, r, rdata)
+  comblogic : process(i, r, rdata_mux)
     variable v : registers;
+    variable rdata : unaligned_data_array_type;
   begin
 
     v := r;
 
     procedureAxi4(i, xconfig, r.bank_axi, v.bank_axi);
 
-    for n in 0 to CFG_NASTI_DATA_BYTES-1 loop
-       raddr_reg(n) <= v.bank_axi.raddr(n);
-    end loop;
+    raddr_mux <= functionAddressReorder(v.bank_axi.raddr(0)(3 downto 2),
+                                        v.bank_axi.raddr);
+
+    rdata := functionDataRestoreOrder(r.bank_axi.raddr(0)(3 downto 2),
+                                          rdata_mux);
 
     o <= functionAxi4Output(r.bank_axi, rdata);
 
@@ -84,8 +85,8 @@ begin
     sim_hexfile => sim_hexfile
   ) port map (
     clk     => clk,
-    address => raddr_reg,
-    data    => rdata
+    address => raddr_mux,
+    data    => rdata_mux
   );
 
   -- registers:

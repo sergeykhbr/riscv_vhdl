@@ -41,9 +41,6 @@ end;
 
 architecture nasti_irqctrl_rtl of nasti_irqctrl is
 
-  --! 4-bytes alignment so that all registers implemented as 32-bits
-  --! width.
-  constant ALIGNMENT_BYTES : integer := 4;
   constant CSR_MIPI : std_logic_vector(11 downto 0) := X"783";
 
   constant xconfig : nasti_slave_config_type := (
@@ -56,7 +53,7 @@ architecture nasti_irqctrl_rtl of nasti_irqctrl is
      descrsize => PNP_CFG_SLAVE_DESCR_BYTES
   );
 
-  type local_addr_array_type is array (0 to CFG_NASTI_DATA_BYTES/ALIGNMENT_BYTES-1) 
+  type local_addr_array_type is array (0 to CFG_WORDS_ON_BUS-1) 
        of integer;
 
 
@@ -90,10 +87,9 @@ begin
     variable v : registers;
     variable raddr_reg : local_addr_array_type;
     variable waddr_reg : local_addr_array_type;
-    variable rdata : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
-    variable wdata : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
-    variable wstrb : std_logic_vector(CFG_NASTI_DATA_BYTES-1 downto 0);
-    variable val : std_logic_vector(8*ALIGNMENT_BYTES-1 downto 0);
+    variable rdata : unaligned_data_array_type;
+    variable wdata : unaligned_data_array_type;
+    variable wstrb : std_logic_vector(CFG_ALIGN_BYTES-1 downto 0);
 
     variable w_generate_ipi : std_logic;
   begin
@@ -102,49 +98,48 @@ begin
 
     procedureAxi4(i_axi, xconfig, r.bank_axi, v.bank_axi);
 
-    for n in 0 to CFG_NASTI_DATA_BYTES/ALIGNMENT_BYTES-1 loop
-       raddr_reg(n) := conv_integer(r.bank_axi.raddr(ALIGNMENT_BYTES*n)(11 downto log2(ALIGNMENT_BYTES)));
-       val := (others => '0');
+    for n in 0 to CFG_WORDS_ON_BUS-1 loop
+       raddr_reg(n) := conv_integer(r.bank_axi.raddr(n)(11 downto 2));
+       rdata(n) := (others => '0');
        case raddr_reg(n) is
-         when 0      => val(CFG_IRQ_TOTAL-1 downto 0) := r.irqs_mask;     --! [RW]: 1=irq disable; 0=enable
-         when 1      => val(CFG_IRQ_TOTAL-1 downto 0) := r.irqs_pending;  --! [RO]: Rised interrupts.
-         when 2      => val := (others => '0');                           --! [WO]: Clear interrupts mask.
-         when 3      => val := (others => '0');                           --! [WO]: Rise interrupts mask.
-         when 4      => val := r.irq_handler(31 downto 0);                --! [RW]: LSB of the function address
-         when 5      => val := r.irq_handler(63 downto 32);               --! [RW]: MSB of the function address
-         when 6      => val := r.dbg_cause(31 downto 0);                  --! [RW]: Cause of the interrupt
-         when 7      => val := r.dbg_cause(63 downto 32);                 --! [RW]: 
-         when 8      => val := r.dbg_epc(31 downto 0);                    --! [RW]: Instruction pointer
-         when 9      => val := r.dbg_epc(63 downto 32);                   --! [RW]: 
-         when others => val := X"cafef00d";
+         when 0      => rdata(n)(CFG_IRQ_TOTAL-1 downto 0) := r.irqs_mask;     --! [RW]: 1=irq disable; 0=enable
+         when 1      => rdata(n)(CFG_IRQ_TOTAL-1 downto 0) := r.irqs_pending;  --! [RO]: Rised interrupts.
+         when 2      => rdata(n) := (others => '0');                           --! [WO]: Clear interrupts mask.
+         when 3      => rdata(n) := (others => '0');                           --! [WO]: Rise interrupts mask.
+         when 4      => rdata(n) := r.irq_handler(31 downto 0);                --! [RW]: LSB of the function address
+         when 5      => rdata(n) := r.irq_handler(63 downto 32);               --! [RW]: MSB of the function address
+         when 6      => rdata(n) := r.dbg_cause(31 downto 0);                  --! [RW]: Cause of the interrupt
+         when 7      => rdata(n) := r.dbg_cause(63 downto 32);                 --! [RW]: 
+         when 8      => rdata(n) := r.dbg_epc(31 downto 0);                    --! [RW]: Instruction pointer
+         when 9      => rdata(n) := r.dbg_epc(63 downto 32);                   --! [RW]: 
+         when others =>
        end case;
-       rdata(8*ALIGNMENT_BYTES*(n+1)-1 downto 8*ALIGNMENT_BYTES*n) := val;
     end loop;
 
     if i_axi.w_valid = '1' and 
        r.bank_axi.wstate = wtrans and 
        r.bank_axi.wresp = NASTI_RESP_OKAY then
 
-      wdata := i_axi.w_data;
-      wstrb := i_axi.w_strb;
-      for n in 0 to CFG_NASTI_DATA_BYTES/ALIGNMENT_BYTES-1 loop
-         waddr_reg(n) := conv_integer(r.bank_axi.waddr(ALIGNMENT_BYTES*n)(11 downto 2));
+      for n in 0 to CFG_WORDS_ON_BUS-1 loop
+         waddr_reg(n) := conv_integer(r.bank_axi.waddr(n)(11 downto 2));
+         wdata(n) := i_axi.w_data(32*(n+1)-1 downto 32*n);
+         wstrb := i_axi.w_strb(CFG_ALIGN_BYTES*(n+1)-1 downto CFG_ALIGN_BYTES*n);
 
-         if conv_integer(wstrb(ALIGNMENT_BYTES*(n+1)-1 downto ALIGNMENT_BYTES*n)) /= 0 then
-           val := wdata(8*ALIGNMENT_BYTES*(n+1)-1 downto 8*ALIGNMENT_BYTES*n);
+         if conv_integer(wstrb) /= 0 then
            case waddr_reg(n) is
-             when 0 => v.irqs_mask := val(CFG_IRQ_TOTAL-1 downto 0);
+             when 0 => v.irqs_mask := wdata(n)(CFG_IRQ_TOTAL-1 downto 0);
              when 1 =>     --! Read only
-             when 2 => v.irqs_pending := r.irqs_pending and (not val(CFG_IRQ_TOTAL-1 downto 0));
+             when 2 => 
+                v.irqs_pending := r.irqs_pending and (not wdata(n)(CFG_IRQ_TOTAL-1 downto 0));
              when 3 => 
                 w_generate_ipi := '1';
-                v.irqs_pending := (not r.irqs_mask) and val(CFG_IRQ_TOTAL-1 downto 0);
-             when 4 => v.irq_handler(31 downto 0) := val;
-             when 5 => v.irq_handler(63 downto 32) := val;
-             when 6 => v.dbg_cause(31 downto 0) := val;
-             when 7 => v.dbg_cause(63 downto 32) := val;
-             when 8 => v.dbg_epc(31 downto 0) := val;
-             when 9 => v.dbg_epc(63 downto 32) := val;
+                v.irqs_pending := (not r.irqs_mask) and wdata(n)(CFG_IRQ_TOTAL-1 downto 0);
+             when 4 => v.irq_handler(31 downto 0) := wdata(n);
+             when 5 => v.irq_handler(63 downto 32) := wdata(n);
+             when 6 => v.dbg_cause(31 downto 0) := wdata(n);
+             when 7 => v.dbg_cause(63 downto 32) := wdata(n);
+             when 8 => v.dbg_epc(31 downto 0) := wdata(n);
+             when 9 => v.dbg_epc(63 downto 32) := wdata(n);
              when others =>
            end case;
          end if;

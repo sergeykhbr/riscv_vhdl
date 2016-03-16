@@ -24,12 +24,24 @@ generic (
 );
 port (
     clk       : in std_logic;
-    address   : in std_logic_vector(CFG_NASTI_ADDR_BITS-1 downto CFG_NASTI_ADDR_OFFSET);
-    data      : out std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0)
+    address   : in global_addr_array_type;
+    data      : out unaligned_data_array_type
 );
 end;
 
 architecture rtl of BootRom_tech is
+
+  component BootRom_inferred is
+  generic (
+    hex_filename : string
+  );
+  port (
+    clk     : in  std_ulogic;
+    address : in global_addr_array_type;
+    data    : out unaligned_data_array_type
+  );
+  end component;
+
 begin
 
   genrom0 : if memtech = inferred or is_fpga(memtech) /= 0 generate

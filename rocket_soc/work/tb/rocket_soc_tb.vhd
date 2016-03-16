@@ -87,6 +87,8 @@ component rocket_soc is port
   i_antext_detect : in std_logic;
   o_antext_ena    : out std_logic;
   o_antint_contr  : out std_logic;
+  i_gmiiclk_p : in    std_ulogic;
+  i_gmiiclk_n : in    std_ulogic;
   o_egtx_clk  : out   std_ulogic;
   i_etx_clk   : in    std_ulogic;
   i_erx_clk   : in    std_ulogic;
@@ -193,6 +195,8 @@ begin
     i_antext_detect => i_antext_detect,
     o_antext_ena    => o_antext_ena,
     o_antint_contr  => o_antint_contr,
+    i_gmiiclk_p => '0',
+    i_gmiiclk_n => '1',
     o_egtx_clk  => open,
     i_etx_clk   => '0',
     i_erx_clk   => '0',

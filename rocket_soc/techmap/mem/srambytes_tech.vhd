@@ -29,11 +29,11 @@ generic (
 port (
     clk       : in std_logic;
     raddr     : in global_addr_array_type;
-    rdata     : out std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
+    rdata     : out unaligned_data_array_type;
     waddr     : in global_addr_array_type;
     we        : in std_logic;
     wstrb     : in std_logic_vector(CFG_NASTI_DATA_BYTES-1 downto 0);
-    wdata     : in std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0)
+    wdata     : in unaligned_data_array_type
 );
 end;
 
@@ -48,17 +48,54 @@ type local_addr_type is array (0 to CFG_NASTI_DATA_BYTES-1) of
 signal address : local_addr_type;
 signal wr_ena : std_logic_vector(CFG_NASTI_DATA_BYTES-1 downto 0);
 signal rdatax : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
+signal wdatax : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
+
+  --! @brief   Declaration of the one-byte SRAM element.
+  --! @details This component is used for the FPGA implementation.
+  component sram8_inferred is
+  generic (
+     abits : integer := 12;
+     byte_idx : integer := 0
+  );
+  port (
+    clk     : in  std_ulogic;
+    address : in  std_logic_vector(abits-1 downto 0);
+    rdata   : out std_logic_vector(7 downto 0);
+    we      : in  std_logic;
+    wdata   : in  std_logic_vector(7 downto 0)
+  );
+  end component;
+
+  --! @brief   Declaration of the one-byte SRAM element with init function.
+  --! @details This component is used for the RTL simulation.
+  component sram8_inferred_init is
+  generic (
+     abits     : integer := 12;
+     byte_idx  : integer := 0;
+     init_file : string
+  );
+  port (
+    clk     : in  std_ulogic;
+    address : in  std_logic_vector(abits-1 downto 0);
+    rdata   : out std_logic_vector(7 downto 0);
+    we      : in  std_logic;
+    wdata   : in  std_logic_vector(7 downto 0)
+  );
+  end component;
 
 begin
 
+     
+  wdatax <= wdata(3) & wdata(2) & wdata(1) & wdata(0);
+  
   --! Instantiate component for RTL simulation
   rtlsim0 : if memtech = inferred generate
     rx : for n in 0 to CFG_NASTI_DATA_BYTES-1 generate
 
       wr_ena(n) <= we and wstrb(n);
-      address(n) <= waddr(n)(abits-1 downto dw) when we = '1'
-            else raddr(n)(abits-1 downto dw);
-      
+      address(n) <= waddr(n / CFG_ALIGN_BYTES)(abits-1 downto dw) when we = '1'
+                else raddr(n / CFG_ALIGN_BYTES)(abits-1 downto dw);
+                  
       x0 : sram8_inferred_init generic map 
       (
           abits => abits-dw,
@@ -69,10 +106,9 @@ begin
           address => address(n),
           rdata => rdatax(8*(n+1)-1 downto 8*n),
           we => wr_ena(n), 
-          wdata => wdata(8*(n+1)-1 downto 8*n)
+          wdata => wdatax(8*(n+1)-1 downto 8*n)
       );
     end generate; -- cycle
-    rdata <= rdatax;
   end generate; -- tech=inferred
 
 
@@ -81,9 +117,9 @@ begin
     rx : for n in 0 to CFG_NASTI_DATA_BYTES-1 generate
 
       wr_ena(n) <= we and wstrb(n);
-      address(n) <= waddr(n)(abits-1 downto dw) when we = '1'
-            else raddr(n)(abits-1 downto dw);
-      
+      address(n) <= waddr(n / CFG_ALIGN_BYTES)(abits-1 downto dw) when we = '1'
+                else raddr(n / CFG_ALIGN_BYTES)(abits-1 downto dw);
+
       x0 : sram8_inferred generic map 
       (
           abits => abits-dw,
@@ -93,12 +129,16 @@ begin
           address => address(n),
           rdata => rdatax(8*(n+1)-1 downto 8*n),
           we => wr_ena(n), 
-          wdata => wdata(8*(n+1)-1 downto 8*n)
+          wdata => wdatax(8*(n+1)-1 downto 8*n)
       );
     end generate; -- cycle
-    rdata <= rdatax;
-
   end generate; -- tech=inferred
+  
+  rdata(0) <= rdatax(31 downto 0);
+  rdata(1) <= rdatax(63 downto 32);
+  rdata(2) <= rdatax(95 downto 64);
+  rdata(3) <= rdatax(127 downto 96);
+
 
 end; 
 

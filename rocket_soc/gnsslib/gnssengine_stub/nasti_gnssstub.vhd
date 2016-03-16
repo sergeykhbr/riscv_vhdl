@@ -36,10 +36,6 @@ entity gnssengine is
 end; 
  
 architecture arch_gnssengine of gnssengine is
-  --! 4-bytes alignment so that all registers implemented as 32-bits
-  --! width.
-  constant ALIGNMENT_BYTES : integer := 4;
-
   constant xconfig : nasti_slave_config_type := (
      xindex => xindex,
      xaddr => conv_std_logic_vector(xaddr, CFG_NASTI_CFG_ADDR_BITS),
@@ -50,7 +46,7 @@ architecture arch_gnssengine of gnssengine is
      descrsize => PNP_CFG_SLAVE_DESCR_BYTES
   );
 
-  type local_addr_array_type is array (0 to CFG_NASTI_DATA_BYTES/ALIGNMENT_BYTES-1) 
+  type local_addr_array_type is array (0 to CFG_WORDS_ON_BUS-1) 
        of integer;
 
 
@@ -82,10 +78,9 @@ begin
     variable v : registers;
     variable raddr_reg : local_addr_array_type;
     variable waddr_reg : local_addr_array_type;
-    variable rdata : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
-    variable wdata : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
-    variable wstrb : std_logic_vector(CFG_NASTI_DATA_BYTES-1 downto 0);
-    variable val : std_logic_vector(8*ALIGNMENT_BYTES-1 downto 0);
+    variable rdata : unaligned_data_array_type;
+    variable wdata : unaligned_data_array_type;
+    variable wstrb : std_logic_vector(CFG_ALIGN_BYTES-1 downto 0);
 
     variable rise_irq : std_logic;
   begin
@@ -105,23 +100,23 @@ begin
 
     procedureAxi4(i.axi, xconfig, r.bank_axi, v.bank_axi);
 
-    for n in 0 to CFG_NASTI_DATA_BYTES/ALIGNMENT_BYTES-1 loop
-       raddr_reg(n) := conv_integer(r.bank_axi.raddr(ALIGNMENT_BYTES*n)(11 downto log2(ALIGNMENT_BYTES)));
+    for n in 0 to CFG_WORDS_ON_BUS-1 loop
+       raddr_reg(n) := conv_integer(r.bank_axi.raddr(n)(11 downto 2));
+       rdata(n) := (others => '0');
 
        case raddr_reg(n) is
           --! Misc. bank (stub):
-          when 0 => val := X"B00BCAFE";  --! hwid of the stub
-          when 1 => val := X"00000021";  --! gnss channels configuration stub
-          when 2 => val := r.CarrierNcoTh; --!
-          when 3 => val := r.CarrierNcoIF; --!
+          when 0 => rdata(n) := X"B00BCAFE";  --! hwid of the stub
+          when 1 => rdata(n) := X"00000021";  --! gnss channels configuration stub
+          when 2 => rdata(n) := r.CarrierNcoTh; --!
+          when 3 => rdata(n) := r.CarrierNcoIF; --!
           --! Global Timers bank (stub):
-          when 16#10# => val := r.MsLength;
-          when 16#11# => val := r.bank_adc.tmr.MsCnt;
-          when 16#12# => val := r.bank_adc.tmr.TOW;
-          when 16#13# => val := r.bank_adc.tmr.TOD;
-          when others => val := X"cafef00d";
+          when 16#10# => rdata(n) := r.MsLength;
+          when 16#11# => rdata(n) := r.bank_adc.tmr.MsCnt;
+          when 16#12# => rdata(n) := r.bank_adc.tmr.TOW;
+          when 16#13# => rdata(n) := r.bank_adc.tmr.TOD;
+          when others => 
        end case;
-       rdata(8*ALIGNMENT_BYTES*(n+1)-1 downto 8*ALIGNMENT_BYTES*n) := val;
     end loop;
 
 
@@ -129,17 +124,16 @@ begin
        r.bank_axi.wstate = wtrans and 
        r.bank_axi.wresp = NASTI_RESP_OKAY then
 
-      wdata := i.axi.w_data;
-      wstrb := i.axi.w_strb;
-      for n in 0 to CFG_NASTI_DATA_BYTES/ALIGNMENT_BYTES-1 loop
-         waddr_reg(n) := conv_integer(r.bank_axi.waddr(ALIGNMENT_BYTES*n)(11 downto log2(ALIGNMENT_BYTES)));
+      for n in 0 to CFG_WORDS_ON_BUS-1 loop
+         waddr_reg(n) := conv_integer(r.bank_axi.waddr(n)(11 downto 2));
+         wdata(n) := i.axi.w_data(32*(n+1)-1 downto 32*n);
+         wstrb := i.axi.w_strb(CFG_ALIGN_BYTES*(n+1)-1 downto CFG_ALIGN_BYTES*n);
 
-         if conv_integer(wstrb(ALIGNMENT_BYTES*(n+1)-1 downto ALIGNMENT_BYTES*n)) /= 0 then
-           val := wdata(8*ALIGNMENT_BYTES*(n+1)-1 downto 8*ALIGNMENT_BYTES*n);
+         if conv_integer(wstrb) /= 0 then
            case waddr_reg(n) is
-             when 2 => v.CarrierNcoTh := val;
-             when 3 => v.CarrierNcoIF := val;
-             when 16#10# => v.MsLength := val;
+             when 2 => v.CarrierNcoTh := wdata(n);
+             when 3 => v.CarrierNcoIF := wdata(n);
+             when 16#10# => v.MsLength := wdata(n);
              when others =>
            end case;
          end if;

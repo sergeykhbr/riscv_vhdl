@@ -33,9 +33,6 @@ entity nasti_gpio is
 end; 
  
 architecture arch_nasti_gpio of nasti_gpio is
-  --! 4-bytes alignment so that all registers implemented as 32-bits
-  --! width.
-  constant ALIGNMENT_BYTES : integer := 4;
 
   constant xconfig : nasti_slave_config_type := (
      xindex => xindex,
@@ -47,7 +44,7 @@ architecture arch_nasti_gpio of nasti_gpio is
      descrsize => PNP_CFG_SLAVE_DESCR_BYTES
   );
 
-  type local_addr_array_type is array (0 to CFG_NASTI_DATA_BYTES/ALIGNMENT_BYTES-1) 
+  type local_addr_array_type is array (0 to CFG_WORDS_ON_BUS-1) 
        of integer;
 
   type bank_type is record
@@ -73,31 +70,29 @@ begin
     variable v : registers;
     variable raddr_reg : local_addr_array_type;
     variable waddr_reg : local_addr_array_type;
-    variable rdata : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
-    variable wdata : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
+    variable rdata : unaligned_data_array_type;
+    variable wdata : unaligned_data_array_type;
     variable wstrb : std_logic_vector(CFG_NASTI_DATA_BYTES-1 downto 0);
-    variable val : std_logic_vector(8*ALIGNMENT_BYTES-1 downto 0);
   begin
 
     v := r;
 
     procedureAxi4(i, xconfig, r.bank_axi, v.bank_axi);
 
-    for n in 0 to CFG_NASTI_DATA_BYTES/ALIGNMENT_BYTES-1 loop
-      raddr_reg(n) := conv_integer(r.bank_axi.raddr(ALIGNMENT_BYTES*n)(11 downto 2));
-      val := (others => '0');
+    for n in 0 to CFG_WORDS_ON_BUS-1 loop
+      raddr_reg(n) := conv_integer(r.bank_axi.raddr(n)(11 downto 2));
+      rdata(n) := (others => '0');
 
       case raddr_reg(n) is
-        when 0 => val := r.bank0.led;
-        when 1 => val := r.bank0.dip;
-        when 2 => val := r.bank0.reg32_2;
-        when 3 => val := r.bank0.reg32_3;
-        when 4 => val := r.bank0.led_period;
-        when 5 => val := r.bank0.uart_scaler;
-        when 6 => val := r.bank0.reg32_6;
+        when 0 => rdata(n) := r.bank0.led;
+        when 1 => rdata(n) := r.bank0.dip;
+        when 2 => rdata(n) := r.bank0.reg32_2;
+        when 3 => rdata(n) := r.bank0.reg32_3;
+        when 4 => rdata(n) := r.bank0.led_period;
+        when 5 => rdata(n) := r.bank0.uart_scaler;
+        when 6 => rdata(n) := r.bank0.reg32_6;
         when others =>
       end case;
-      rdata(8*ALIGNMENT_BYTES*(n+1)-1 downto 8*ALIGNMENT_BYTES*n) := val;
     end loop;
 
 
@@ -105,25 +100,24 @@ begin
        r.bank_axi.wstate = wtrans and 
        r.bank_axi.wresp = NASTI_RESP_OKAY then
 
-      wdata := i.w_data;
-      wstrb := i.w_strb;
-      for n in 0 to CFG_NASTI_DATA_BYTES/ALIGNMENT_BYTES-1 loop
-         waddr_reg(n) := conv_integer(r.bank_axi.waddr(ALIGNMENT_BYTES*n)(11 downto 2));
+       wstrb := i.w_strb;
+       for n in 0 to CFG_WORDS_ON_BUS-1 loop
+         waddr_reg(n) := conv_integer(r.bank_axi.waddr(n)(11 downto 2));
+         wdata(n) := i.w_data(32*(n+1)-1 downto 32*n);
 
-         if conv_integer(wstrb(ALIGNMENT_BYTES*(n+1)-1 downto ALIGNMENT_BYTES*n)) /= 0 then
-           val := wdata(8*ALIGNMENT_BYTES*(n+1)-1 downto 8*ALIGNMENT_BYTES*n);
+         if conv_integer(wstrb(CFG_ALIGN_BYTES*(n+1)-1 downto CFG_ALIGN_BYTES*n)) /= 0 then
            case waddr_reg(n) is
-             when 0 => v.bank0.led := val;
-             --when 1 => v.bank0.dip := val;
-             when 2 => v.bank0.reg32_2 := val;
-             when 3 => v.bank0.reg32_3 := val;
-             when 4 => v.bank0.led_period := val;
-             when 5 => v.bank0.uart_scaler := val;
-             when 6 => v.bank0.reg32_6 := val;
+             when 0 => v.bank0.led := wdata(n);
+             --when 1 => v.bank0.dip := wdata(n);
+             when 2 => v.bank0.reg32_2 := wdata(n);
+             when 3 => v.bank0.reg32_3 := wdata(n);
+             when 4 => v.bank0.led_period := wdata(n);
+             when 5 => v.bank0.uart_scaler := wdata(n);
+             when 6 => v.bank0.reg32_6 := wdata(n);
              when others =>
            end case;
          end if;
-      end loop;
+       end loop;
     end if;
 
     o <= functionAxi4Output(r.bank_axi, rdata);

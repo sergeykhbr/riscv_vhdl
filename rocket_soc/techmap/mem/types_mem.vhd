@@ -38,32 +38,11 @@ package types_mem is
   );
   port (
     clk       : in std_logic;
-    address   : in std_logic_vector(CFG_NASTI_ADDR_BITS-1 downto CFG_NASTI_ADDR_OFFSET);
-    data      : out std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0)
+    address   : in global_addr_array_type;
+    data      : out unaligned_data_array_type
   );
   end component;
 
-  --! @name    Technology specific BootRom components.
-  --! @param[in] hex_filename     Generic argument defining hex-file location.
-  --! @param[in] clk     System bus clock.
-  --! @param[in] address Input address.
-  --! @param[out] data   Output data value.
-  --! @{
-
-  --! @brief   Declaration of the BootRom component used for RTL simulation.
-  --! @details This component is also valid for the FPGA implementation so that
-  --!          it uses standard HEX file for the ROM initialization.
-  component BootRom_inferred is
-  generic (
-    hex_filename : string
-  );
-  port (
-    clk     : in  std_ulogic;
-    address : in std_logic_vector(CFG_NASTI_ADDR_BITS-1 downto CFG_NASTI_ADDR_OFFSET);
-    data    : out std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0)
-  );
-  end component;
-  --! @}
 
   --! @brief   Declaration of the "virtual" RomImage component.
   --! @details This module stores pre-built firmware image that is coping
@@ -85,32 +64,9 @@ package types_mem is
   port (
     clk       : in std_logic;
     address   : in global_addr_array_type;
-    data      : out std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0)
+    data      : out unaligned_data_array_type
   );
   end component;
-
-  --! @name    Technology specific RomImage components.
-  --! @param[in] hex_filename     Generic argument defining hex-file location.
-  --! @param[in] clk     System bus clock.
-  --! @param[in] address Input address.
-  --! @param[out] data   Output data value.
-  --! @{
-
-  --! @brief   Declaration of the RomImage component used for RTL simulation.
-  --! @details This component is also valid for the FPGA implementation so that
-  --!          it uses standard HEX file for the ROM initialization.
-  component RomImage_inferred is
-  generic (
-    hex_filename : string
-  );
-  port (
-    clk     : in  std_ulogic;
-    address : in  global_addr_array_type;
-    data    : out std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0)
-  );
-  end component;
-  --! @}
-  
 
   ------------------------------------------------------------------------------
   --! @brief   Galileo PRN codes ROM storage:
@@ -127,7 +83,6 @@ package types_mem is
     o_data      : out std_logic_vector(31 downto 0)
   );
   end component;
-
 
   --! @brief   Declaration of the "virtual" SRAM component with unaligned access.
   --! @details This module implements internal SRAM and support unaligned access 
@@ -153,44 +108,11 @@ package types_mem is
   port (
     clk       : in std_logic;
     raddr     : in global_addr_array_type;
-    rdata     : out std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
+    rdata     : out unaligned_data_array_type;
     waddr     : in global_addr_array_type;
     we        : in std_logic;
     wstrb     : in std_logic_vector(CFG_NASTI_DATA_BYTES-1 downto 0);
-    wdata     : in std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0)
-  );
-  end component;
-
-  --! @brief   Declaration of the one-byte SRAM element.
-  --! @details This component is used for the FPGA implementation.
-  component sram8_inferred is
-  generic (
-     abits : integer := 12;
-     byte_idx : integer := 0
-  );
-  port (
-    clk     : in  std_ulogic;
-    address : in  std_logic_vector(abits-1 downto 0);
-    rdata   : out std_logic_vector(7 downto 0);
-    we      : in  std_logic;
-    wdata   : in  std_logic_vector(7 downto 0)
-  );
-  end component;
-
-  --! @brief   Declaration of the one-byte SRAM element with init function.
-  --! @details This component is used for the RTL simulation.
-  component sram8_inferred_init is
-  generic (
-     abits     : integer := 12;
-     byte_idx  : integer := 0;
-     init_file : string
-  );
-  port (
-    clk     : in  std_ulogic;
-    address : in  std_logic_vector(abits-1 downto 0);
-    rdata   : out std_logic_vector(7 downto 0);
-    we      : in  std_logic;
-    wdata   : in  std_logic_vector(7 downto 0)
+    wdata     : in unaligned_data_array_type
   );
   end component;
 

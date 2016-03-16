@@ -38,9 +38,6 @@ entity nasti_pnp is
 end; 
  
 architecture arch_nasti_pnp of nasti_pnp is
-  --! 4-bytes alignment so that all registers implemented as 32-bits
-  --! width.
-  constant ALIGNMENT_BYTES : integer := 8;
 
   constant xconfig : nasti_slave_config_type := (
      xindex => xindex,
@@ -52,10 +49,11 @@ architecture arch_nasti_pnp of nasti_pnp is
      descrsize => PNP_CFG_SLAVE_DESCR_BYTES
   );
 
-  type local_addr_array_type is array (0 to CFG_NASTI_DATA_BYTES/ALIGNMENT_BYTES-1) 
+  type local_addr_array_type is array (0 to CFG_WORDS_ON_BUS-1) 
        of integer;
 
   type bank_type is record
+    fw_id : std_logic_vector(31 downto 0);
     idt : std_logic_vector(63 downto 0); --! debug counter
     malloc_addr : std_logic_vector(63 downto 0); --! dynamic allocation addr
     malloc_size : std_logic_vector(63 downto 0); --! dynamic allocation size
@@ -80,41 +78,59 @@ begin
     variable v : registers;
     variable raddr_reg : local_addr_array_type;
     variable waddr_reg : local_addr_array_type;
-    variable rdata : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
-    variable wdata : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
-    variable wstrb : std_logic_vector(CFG_NASTI_DATA_BYTES-1 downto 0);
-    variable val : std_logic_vector(8*ALIGNMENT_BYTES-1 downto 0);
+    variable rdata : unaligned_data_array_type;
+    variable wdata : unaligned_data_array_type;
+    variable wstrb : std_logic_vector(CFG_ALIGN_BYTES-1 downto 0);
   begin
 
     v := r;
 
     procedureAxi4(i, xconfig, r.bank_axi, v.bank_axi);
 
-    for n in 0 to CFG_NASTI_DATA_BYTES/ALIGNMENT_BYTES-1 loop
-       raddr_reg(n) := conv_integer(r.bank_axi.raddr(ALIGNMENT_BYTES*n)(11 downto log2(ALIGNMENT_BYTES)));
+    for n in 0 to CFG_WORDS_ON_BUS-1 loop
+       raddr_reg(n) := conv_integer(r.bank_axi.raddr(n)(11 downto 2));
 
-       val := X"badef00dcafecafe";
-       if raddr_reg(n) = 0 then val := X"00000000" & X"20160115";
+       rdata(n) := (others => '0');
+       if raddr_reg(n) = 0 then 
+          rdata(n) := X"20160316";
        elsif raddr_reg(n) = 1 then 
-          val := X"00000000" 
-              & r_adc_detect 
+          rdata(n) := r.bank0.fw_id;
+       elsif raddr_reg(n) = 2 then 
+          rdata(n) := r_adc_detect 
               & conv_std_logic_vector(CFG_NASTI_MASTER_TOTAL,8)
               & conv_std_logic_vector(CFG_NASTI_SLAVES_TOTAL,8)
               & conv_std_logic_vector(tech,8);
-       elsif raddr_reg(n) = 2 then val := r.bank0.idt;
-       elsif raddr_reg(n) = 3 then val := r.bank0.malloc_addr;
-       elsif raddr_reg(n) = 4 then val := r.bank0.malloc_size;
-       elsif raddr_reg(n) = 5 then val := r.bank0.fwdbg1;
+       elsif raddr_reg(n) = 3 then 
+          -- reserved
+       elsif raddr_reg(n) = 4 then 
+          rdata(n) := r.bank0.idt(31 downto 0);
+       elsif raddr_reg(n) = 5 then 
+          rdata(n) := r.bank0.idt(63 downto 32);
+       elsif raddr_reg(n) = 6 then 
+          rdata(n) := r.bank0.malloc_addr(31 downto 0);
+       elsif raddr_reg(n) = 7 then 
+          rdata(n) := r.bank0.malloc_addr(63 downto 32);
+       elsif raddr_reg(n) = 8 then 
+          rdata(n) := r.bank0.malloc_size(31 downto 0);
+       elsif raddr_reg(n) = 9 then 
+          rdata(n) := r.bank0.malloc_size(63 downto 32);
+       elsif raddr_reg(n) = 10 then 
+          rdata(n) := r.bank0.fwdbg1(31 downto 0);
+       elsif raddr_reg(n) = 11 then 
+          rdata(n) := r.bank0.fwdbg1(63 downto 32);
        else
          for k in 0 to CFG_NASTI_SLAVES_TOTAL-1 loop
-             if raddr_reg(n) = 8+2*k then 
-               val := slvcfg(k).xaddr & X"000" & slvcfg(k).xmask & X"000";
-             elsif raddr_reg(n) = 8+2*k+1 then 
-               val := X"000000" & PNP_CFG_SLAVE_DESCR_BYTES & slvcfg(k).vid & slvcfg(k).did;
+             if raddr_reg(n) = 16+4*k then 
+               rdata(n) := slvcfg(k).xmask & X"000";
+             elsif raddr_reg(n) = 16+4*k+1 then 
+               rdata(n) := slvcfg(k).xaddr & X"000";
+             elsif raddr_reg(n) = 16+4*k+2 then 
+               rdata(n) := slvcfg(k).vid & slvcfg(k).did;
+             elsif raddr_reg(n) = 16+4*k+3 then 
+               rdata(n) := X"000000" & PNP_CFG_SLAVE_DESCR_BYTES;
              end if;
          end loop;
        end if;
-       rdata(8*ALIGNMENT_BYTES*(n+1)-1 downto 8*ALIGNMENT_BYTES*n) := val;
     end loop;
 
 
@@ -122,18 +138,22 @@ begin
        r.bank_axi.wstate = wtrans and 
        r.bank_axi.wresp = NASTI_RESP_OKAY then
 
-      wdata := i.w_data;
-      wstrb := i.w_strb;
-      for n in 0 to CFG_NASTI_DATA_BYTES/ALIGNMENT_BYTES-1 loop
-         waddr_reg(n) := conv_integer(r.bank_axi.waddr(ALIGNMENT_BYTES*n)(11 downto log2(ALIGNMENT_BYTES)));
+      for n in 0 to CFG_WORDS_ON_BUS-1 loop
+         waddr_reg(n) := conv_integer(r.bank_axi.waddr(n)(11 downto 2));
+         wdata(n) := i.w_data(32*(n+1)-1 downto 32*n);
+         wstrb := i.w_strb(CFG_ALIGN_BYTES*(n+1)-1 downto CFG_ALIGN_BYTES*n);
 
-         if conv_integer(wstrb(ALIGNMENT_BYTES*(n+1)-1 downto ALIGNMENT_BYTES*n)) /= 0 then
-           val := wdata(8*ALIGNMENT_BYTES*(n+1)-1 downto 8*ALIGNMENT_BYTES*n);
+         if conv_integer(wstrb) /= 0 then
            case waddr_reg(n) is
-             when 2 => v.bank0.idt := val;
-             when 3 => v.bank0.malloc_addr := val;
-             when 4 => v.bank0.malloc_size := val;
-             when 5 => v.bank0.fwdbg1 := val;
+             when 1 => v.bank0.fw_id := wdata(n);
+             when 4 => v.bank0.idt(31 downto 0) := wdata(n);
+             when 5 => v.bank0.idt(63 downto 32) := wdata(n);
+             when 6 => v.bank0.malloc_addr(31 downto 0) := wdata(n);
+             when 7 => v.bank0.malloc_addr(63 downto 32) := wdata(n);
+             when 8 => v.bank0.malloc_size(31 downto 0) := wdata(n);
+             when 9 => v.bank0.malloc_size(63 downto 32) := wdata(n);
+             when 10 => v.bank0.fwdbg1(31 downto 0) := wdata(n);
+             when 11 => v.bank0.fwdbg1(63 downto 32) := wdata(n);
              when others =>
            end case;
          end if;
@@ -151,6 +171,7 @@ begin
   begin 
      if nrst = '0' then
         r.bank_axi <= NASTI_SLAVE_BANK_RESET;
+        r.bank0.fw_id <= (others => '0');
         r.bank0.idt <= (others => '0');
         r.bank0.malloc_addr <= (others => '0');
         r.bank0.malloc_size <= (others => '0');

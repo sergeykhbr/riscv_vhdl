@@ -25,11 +25,23 @@ generic (
 port (
     clk       : in std_logic;
     address   : in global_addr_array_type;
-    data      : out std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0)
+    data      : out unaligned_data_array_type
 );
 end;
 
 architecture arch_RomImage_tech of RomImage_tech is
+
+  component RomImage_inferred is
+  generic (
+    hex_filename : string
+  );
+  port (
+    clk     : in  std_ulogic;
+    address : in  global_addr_array_type;
+    data    : out unaligned_data_array_type
+  );
+  end component;
+
 begin
 
   genrom0 : if memtech = inferred or is_fpga(memtech) /= 0 generate

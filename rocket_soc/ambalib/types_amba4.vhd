@@ -106,6 +106,10 @@ constant CFG_NASTI_ADDR_OFFSET   : integer := log2(CFG_NASTI_DATA_BYTES);
 --! @details Default is 12 bits = 4 KB of address space minimum per each 
 --!          mapped device.
 constant CFG_NASTI_CFG_ADDR_BITS : integer := CFG_NASTI_ADDR_BITS-12;
+--! @brief Global alignment is set 32 bits.
+constant CFG_ALIGN_BYTES         : integer := 4;
+--! @brief  Number of parallel access to the atomic data.
+constant CFG_WORDS_ON_BUS        : integer := CFG_NASTI_DATA_BYTES/CFG_ALIGN_BYTES;
 --! @}
 
 --! @name   AXI Response values
@@ -551,9 +555,13 @@ constant nasti_slave_out_none : nasti_slave_out_type := (
 type nasti_slaves_out_vector is array (0 to CFG_NASTI_SLAVES_TOTAL-1) 
        of nasti_slave_out_type;
 
---! Array of addresses providing one-byte aligned access.
-type global_addr_array_type is array (0 to CFG_NASTI_DATA_BYTES-1) 
+--! Array of addresses providing word aligned access.
+type global_addr_array_type is array (0 to CFG_WORDS_ON_BUS-1) 
        of std_logic_vector(CFG_NASTI_ADDR_BITS-1 downto 0);
+
+--! Array of unaligned data.
+type unaligned_data_array_type is array (0 to CFG_WORDS_ON_BUS-1) 
+       of std_logic_vector(8*CFG_ALIGN_BYTES-1 downto 0);
 
 --! Slave device states during reading value operation.
 type nasti_slave_rstatetype is (rwait, rtrans);
@@ -603,13 +611,43 @@ procedure procedureAxi4(
      o_bank : out nasti_slave_bank_type
 );
 
+--! @brief Reordering elements of the address to provide 4-bytes memory access.
+--! @param[in] mux Reordering control bits.
+--! @param[in] iaddr Input addresses array.
+--! @return Reordered addresses array.
+function functionAddressReorder(
+     mux   : std_logic_vector;
+     iaddr : global_addr_array_type)
+return global_addr_array_type;
+
+procedure procedureWriteReorder(
+     ena : in std_logic;
+     mux   : in std_logic_vector(1 downto 0);
+     iwaddr : in global_addr_array_type;
+     iwstrb : in std_logic_vector(CFG_NASTI_DATA_BYTES-1 downto 0);
+     iwdata : in std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
+     owaddr : out global_addr_array_type;
+     owstrb : out std_logic_vector(CFG_NASTI_DATA_BYTES-1 downto 0);
+     owdata : out unaligned_data_array_type
+);
+
+--! @brief Complementary to address data reordring.
+--! @details This function restore data bus as there wasn't address reordering.
+--! @param[in] mux Reordering control bits.
+--! @param[in] idata Input data array.
+--! @return Restored data array.
+function functionDataRestoreOrder(
+     mux   : std_logic_vector;
+     idata : unaligned_data_array_type)
+return unaligned_data_array_type;
+
 --! Convert slave bank registers into bus output signals.
 --! @param[in] r      Bank of registers of the slave device.
 --! @param[in] rd_val Formed by slave device read data value.
 --! @return Slave device output signals connected to system bus.
 function functionAxi4Output(
      r : nasti_slave_bank_type;
-     rd_val : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0))
+     rd_val : unaligned_data_array_type)
 return nasti_slave_out_type;
 
 --! @brief   AXI bus controller. 
@@ -669,9 +707,11 @@ package body types_amba4 is
             o_bank.rstate := rtrans;
             traddr := (i.ar_bits.addr(CFG_NASTI_ADDR_BITS-1 downto 12) and (not cfg.xmask))
                    & i.ar_bits.addr(11 downto 0);
-            for n in 0 to CFG_NASTI_DATA_BYTES-1 loop
-               o_bank.raddr(n) := traddr + n;
+
+            for n in 0 to CFG_WORDS_ON_BUS-1 loop
+              o_bank.raddr(n) := traddr + n*CFG_ALIGN_BYTES;
             end loop;
+
             o_bank.rsize := XSizeToBytes(conv_integer(i.ar_bits.size));
             o_bank.rburst := i.ar_bits.burst;
             o_bank.rlen := conv_integer(i.ar_bits.len);
@@ -690,7 +730,7 @@ package body types_amba4 is
         if i.r_ready = '1' and i_bank.rwaitready = '1' then
             o_bank.rlen := i_bank.rlen - 1;
             if i_bank.rburst = NASTI_BURST_INCR then
-              for n in 0 to CFG_NASTI_DATA_BYTES-1 loop
+              for n in 0 to CFG_WORDS_ON_BUS-1 loop
                 o_bank.raddr(n) := i_bank.raddr(n) + i_bank.rsize;
               end loop;
             end if;
@@ -709,8 +749,8 @@ package body types_amba4 is
             o_bank.wstate := wtrans;
             twaddr := (i.aw_bits.addr(CFG_NASTI_ADDR_BITS-1 downto 12) and (not cfg.xmask))
                    & i.aw_bits.addr(11 downto 0);
-            for n in 0 to CFG_NASTI_DATA_BYTES-1 loop
-               o_bank.waddr(n) := twaddr + n;
+            for n in 0 to CFG_WORDS_ON_BUS-1 loop
+               o_bank.waddr(n) := twaddr + n*CFG_ALIGN_BYTES;
             end loop;
             o_bank.wsize := XSizeToBytes(conv_integer(i.aw_bits.size));
             o_bank.wburst := i.aw_bits.burst;
@@ -723,7 +763,7 @@ package body types_amba4 is
         if i.w_valid = '1' then
             o_bank.wlen := i_bank.wlen - 1;
             if i_bank.wburst = NASTI_BURST_INCR then
-              for n in 0 to CFG_NASTI_DATA_BYTES-1 loop
+              for n in 0 to CFG_WORDS_ON_BUS-1 loop
                 o_bank.waddr(n) := i_bank.waddr(n) + i_bank.wsize;
               end loop;
             end if;
@@ -740,27 +780,147 @@ package body types_amba4 is
   end; -- procedure
 
 
---! Read from the AXI4 bank latched address by index
---! @param[in] idx Index of the address
---! @return Address with the masked older bits
---function functionAxi4GetRdAddr(
---     r   : nasti_slave_bank_type;
---     idx : integer)
---return std_logic_vector(CFG_NASTI_ADDR_BITS-1 downto 0) is
---begin
---  return (r.raddr(idx));
---end;
+--! @brief Reordering elements of the address to provide 4-bytes memory access.
+--! @param[in] mux Reordering control bits.
+--! @param[in] iaddr Input addresses array.
+--! @return Reordered addresses array.
+function functionAddressReorder(
+     mux   : std_logic_vector;
+     iaddr : global_addr_array_type)
+return global_addr_array_type is
+variable oaddr :  global_addr_array_type;
+begin
+  if CFG_NASTI_DATA_BITS = 128 then
+    if mux = "00" then
+       oaddr := iaddr;
+    elsif mux = "01" then
+       oaddr(0) := iaddr(3);
+       oaddr(1) := iaddr(0);
+       oaddr(2) := iaddr(1);
+       oaddr(3) := iaddr(2);
+    elsif mux = "10" then
+       oaddr(0) := iaddr(2);
+       oaddr(1) := iaddr(3);
+       oaddr(2) := iaddr(0);
+       oaddr(3) := iaddr(1);
+    else
+       oaddr(0) := iaddr(1);
+       oaddr(1) := iaddr(2);
+       oaddr(2) := iaddr(3);
+       oaddr(3) := iaddr(0);
+    end if;
+  end if;
+  return oaddr;
+end;
 
+--! @brief Reordering elements of the write transaction to provide 4-bytes memory access.
+procedure procedureWriteReorder(
+     ena : in std_logic;
+     mux   : in std_logic_vector(1 downto 0);
+     iwaddr : in global_addr_array_type;
+     iwstrb : in std_logic_vector(CFG_NASTI_DATA_BYTES-1 downto 0);
+     iwdata : in std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
+     owaddr : out global_addr_array_type;
+     owstrb : out std_logic_vector(CFG_NASTI_DATA_BYTES-1 downto 0);
+     owdata : out unaligned_data_array_type) is
+begin
+  if CFG_NASTI_DATA_BITS = 128 and ena = '1' then
+    if mux = "00" then
+       owaddr := iwaddr;
+       
+       owdata(0) := iwdata(31 downto 0);
+       owdata(1) := iwdata(63 downto 32);
+       owdata(2) := iwdata(95 downto 64);
+       owdata(3) := iwdata(127 downto 96);
+       
+       owstrb := iwstrb;
+    elsif mux = "01" then
+       owaddr(0) := iwaddr(3);
+       owaddr(1) := iwaddr(0);
+       owaddr(2) := iwaddr(1);
+       owaddr(3) := iwaddr(2);
+       
+       owdata(0) := iwdata(127 downto 96);
+       owdata(1) := iwdata(31 downto 0);
+       owdata(2) := iwdata(63 downto 32);
+       owdata(3) := iwdata(95 downto 64);
+       
+       owstrb := iwstrb(11 downto 0) & iwstrb(15 downto 12);
+    elsif mux = "10" then
+       owaddr(0) := iwaddr(2);
+       owaddr(1) := iwaddr(3);
+       owaddr(2) := iwaddr(0);
+       owaddr(3) := iwaddr(1);
 
---! Convert bank registers into output signals.
---! param[in] r Registers bank with the AXI4 state machines
+       owdata(0) := iwdata(95 downto 64);
+       owdata(1) := iwdata(127 downto 96);
+       owdata(2) := iwdata(31 downto 0);
+       owdata(3) := iwdata(63 downto 32);
+       
+       owstrb := iwstrb(7 downto 0) & iwstrb(15 downto 8);
+    else
+       owaddr(0) := iwaddr(1);
+       owaddr(1) := iwaddr(2);
+       owaddr(2) := iwaddr(3);
+       owaddr(3) := iwaddr(0);
+
+       owdata(0) := iwdata(63 downto 32);
+       owdata(1) := iwdata(95 downto 64);
+       owdata(2) := iwdata(127 downto 96);
+       owdata(3) := iwdata(31 downto 0);
+       
+       owstrb := iwstrb(3 downto 0) & iwstrb(15 downto 4);
+    end if;
+  else
+    owaddr := (others => (others => '0'));
+    owdata := (others => (others => '0'));
+    owstrb := (others => '0');
+  end if;
+end;
+
+--! @brief Complementary to address data reordring.
+--! @details This function restore data bus as there wasn't address reordering.
+--! @param[in] mux Reordering control bits.
+--! @param[in] idata Input data array.
+--! @return Restored data array.
+function functionDataRestoreOrder(
+     mux   : std_logic_vector;
+     idata : unaligned_data_array_type)
+return unaligned_data_array_type is
+variable odata :  unaligned_data_array_type;
+begin
+  if CFG_NASTI_DATA_BITS = 128 then
+    if mux = "00" then
+       odata := idata;
+    elsif mux = "01" then
+       odata(0) := idata(1);
+       odata(1) := idata(2);
+       odata(2) := idata(3);
+       odata(3) := idata(0);
+    elsif mux = "10" then
+       odata(0) := idata(2);
+       odata(1) := idata(3);
+       odata(2) := idata(0);
+       odata(3) := idata(1);
+    else
+       odata(0) := idata(3);
+       odata(1) := idata(0);
+       odata(2) := idata(1);
+       odata(3) := idata(2);
+    end if;
+  end if;
+  return odata;
+end;
+
+--! @brief Convert bank registers into output signals
+--! @param[in] r Registers bank with the AXI4 state machines
 --!             implementaitons.
---! param[in] rd_val Read value from the device's registers bank.
+--! @param[in] rd_val Read value from the device's registers bank.
 --!                  This value fully depends of device implementation.
 --! @return NASTI output signals of the implemented slave device.
 function functionAxi4Output(
      r : nasti_slave_bank_type;
-     rd_val : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0))
+     rd_val : unaligned_data_array_type)
 return nasti_slave_out_type is
 variable ret :  nasti_slave_out_type;
 begin
@@ -784,7 +944,10 @@ begin
     else
       ret.r_valid   := '0';
     end if;
-    ret.r_data := rd_val;
+
+    for n in 0 to CFG_WORDS_ON_BUS-1 loop
+      ret.r_data(8*(n+1)*CFG_ALIGN_BYTES-1 downto 8*n*CFG_ALIGN_BYTES) := rd_val(n);
+    end loop;
 
     -- Write transfer:
     if r.wstate = wwait then

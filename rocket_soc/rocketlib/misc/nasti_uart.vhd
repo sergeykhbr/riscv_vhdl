@@ -36,9 +36,6 @@ entity nasti_uart is
 end; 
  
 architecture arch_nasti_uart of nasti_uart is
-  --! 4-bytes alignment so that all registers implemented as 32-bits
-  --! width.
-  constant ALIGNMENT_BYTES : integer := 4;
 
   constant xconfig : nasti_slave_config_type := (
      xindex => xindex,
@@ -50,8 +47,6 @@ architecture arch_nasti_uart of nasti_uart is
      descrsize => PNP_CFG_SLAVE_DESCR_BYTES
   );
 
-  type local_addr_array_type is array (0 to CFG_NASTI_DATA_BYTES/ALIGNMENT_BYTES-1) 
-       of integer;
   type fifo_type is array (0 to fifosz-1) of std_logic_vector(7 downto 0);
   type state_type is (idle, startbit, data, parity, stopbit);
 
@@ -90,12 +85,9 @@ begin
 
   comblogic : process(i_uart, i_axi, r)
     variable v : registers;
-    variable raddr_reg : local_addr_array_type;
-    variable waddr_reg : local_addr_array_type;
-    variable rdata : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
-    variable wdata : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
+    variable rdata : unaligned_data_array_type;
     variable wstrb : std_logic_vector(CFG_NASTI_DATA_BYTES-1 downto 0);
-    variable val : std_logic_vector(8*ALIGNMENT_BYTES-1 downto 0);
+    variable val : std_logic_vector(31 downto 0);
 
     variable posedge_flag : std_logic;
     variable negedge_flag : std_logic;
@@ -251,11 +243,10 @@ begin
     end if;
 
 
-    for n in 0 to CFG_NASTI_DATA_BYTES/ALIGNMENT_BYTES-1 loop
-       raddr_reg(n) := conv_integer(r.bank_axi.raddr(ALIGNMENT_BYTES*n)(11 downto 2));
+    for n in 0 to CFG_WORDS_ON_BUS-1 loop
 
        val := (others => '0');
-       case raddr_reg(n) is
+       case conv_integer(r.bank_axi.raddr(n)(11 downto 2)) is
           when 0 => 
                 if rx_fifo_empty = '0' then
                     val(7 downto 0) := r.bank0.rx_fifo(conv_integer(r.bank0.rx_rd_cnt)); 
@@ -270,7 +261,7 @@ begin
           when others => 
                 val := X"badef00d";
        end case;
-       rdata(8*ALIGNMENT_BYTES*(n+1)-1 downto 8*ALIGNMENT_BYTES*n) := val;
+       rdata(n) := val;
     end loop;
 
 
@@ -278,14 +269,12 @@ begin
        r.bank_axi.wstate = wtrans and 
        r.bank_axi.wresp = NASTI_RESP_OKAY then
 
-      wdata := i_axi.w_data;
       wstrb := i_axi.w_strb;
-      for n in 0 to CFG_NASTI_DATA_BYTES/ALIGNMENT_BYTES-1 loop
-         waddr_reg(n) := conv_integer(r.bank_axi.waddr(ALIGNMENT_BYTES*n)(11 downto 2));
+      for n in 0 to CFG_WORDS_ON_BUS-1 loop
 
-         if conv_integer(wstrb(ALIGNMENT_BYTES*(n+1)-1 downto ALIGNMENT_BYTES*n)) /= 0 then
-           val := wdata(8*ALIGNMENT_BYTES*(n+1)-1 downto 8*ALIGNMENT_BYTES*n);
-           case waddr_reg(n) is
+         if conv_integer(wstrb(CFG_ALIGN_BYTES*(n+1)-1 downto CFG_ALIGN_BYTES*n)) /= 0 then
+           val := i_axi.w_data(8*CFG_ALIGN_BYTES*(n+1)-1 downto 8*CFG_ALIGN_BYTES*n);
+           case conv_integer(r.bank_axi.waddr(n)(11 downto 2)) is
              when 0 => 
                     if tx_fifo_full = '0' then
                         v.bank0.tx_fifo(conv_integer(r.bank0.tx_wr_cnt)) := val(7 downto 0);

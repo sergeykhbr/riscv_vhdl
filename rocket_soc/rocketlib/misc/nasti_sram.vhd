@@ -60,41 +60,49 @@ architecture arch_nasti_sram of nasti_sram is
     waddr : global_addr_array_type;
     we    : std_logic;
     wstrb : std_logic_vector(CFG_NASTI_DATA_BYTES-1 downto 0);
-    wdata : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
+    wdata : unaligned_data_array_type;
   end record;
 
 signal r, rin : registers;
 
-signal rdata : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
+signal rdata_mux : unaligned_data_array_type;
 signal rami : ram_in_type;
 
 begin
 
-  comblogic : process(i, r, rdata)
+  comblogic : process(i, r, rdata_mux)
     variable v : registers;
     variable vrami : ram_in_type;
+    variable rdata : unaligned_data_array_type;
   begin
 
     v := r;
 
-
     procedureAxi4(i, xconfig, r.bank_axi, v.bank_axi);
+    
+    vrami.raddr := functionAddressReorder(v.bank_axi.raddr(0)(3 downto 2),
+                                          v.bank_axi.raddr);
 
     vrami.we := '0';
-    vrami.waddr := (others => (others => '0'));
-    vrami.wdata := (others => '0');
-    vrami.wstrb := (others => '0');
-    vrami.raddr := v.bank_axi.raddr;
-
     if (i.w_valid = '1' and r.bank_axi.wstate = wtrans 
         and r.bank_axi.wresp = NASTI_RESP_OKAY) then
       vrami.we := '1';
-      vrami.wdata := i.w_data;
-      vrami.wstrb := i.w_strb;
-      vrami.waddr := r.bank_axi.waddr;
     end if;
 
+    procedureWriteReorder(vrami.we,
+                          r.bank_axi.waddr(0)(3 downto 2),
+                          r.bank_axi.waddr,
+                          i.w_strb,
+                          i.w_data,
+                          vrami.waddr,
+                          vrami.wstrb,
+                          vrami.wdata);
+
+    rdata := functionDataRestoreOrder(r.bank_axi.raddr(0)(3 downto 2),
+                                      rdata_mux);
+
     o <= functionAxi4Output(r.bank_axi, rdata);
+    
     rami <= vrami;
     rin <= v;
   end process;
@@ -108,7 +116,7 @@ begin
   ) port map (
     clk     => clk,
     raddr   => rami.raddr,
-    rdata   => rdata,
+    rdata   => rdata_mux,
     waddr   => rami.waddr,
     we      => rami.we,
     wstrb   => rami.wstrb,

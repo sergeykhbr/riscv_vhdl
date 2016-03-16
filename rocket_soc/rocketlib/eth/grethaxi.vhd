@@ -80,10 +80,6 @@ architecture arch_grethaxi of grethaxi is
   constant bufsize : std_logic_vector(2 downto 0) :=
                        conv_std_logic_vector(log2(edclbufsz), 3);
                        
-  --! 4-bytes alignment so that all registers implemented as 32-bits
-  --! width.
-  constant ALIGNMENT_BYTES : integer := 4;
-
   constant xslvconfig : nasti_slave_config_type := (
      xindex => xslvindex,
      xaddr => conv_std_logic_vector(xaddr, CFG_NASTI_CFG_ADDR_BITS),
@@ -110,7 +106,7 @@ architecture arch_grethaxi of grethaxi is
      descrsize => PNP_CFG_MASTER_DESCR_BYTES
   );
 
-  type local_addr_array_type is array (0 to CFG_NASTI_DATA_BYTES/ALIGNMENT_BYTES-1) 
+  type local_addr_array_type is array (0 to CFG_WORDS_ON_BUS-1) 
        of std_logic_vector(15 downto 0);
 
   type registers is record
@@ -140,11 +136,11 @@ begin
       variable vcmd     : eth_command_type;
       variable raddr_reg : local_addr_array_type;
       variable waddr_reg : local_addr_array_type;
-      variable rdata : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
+      variable rdata : unaligned_data_array_type;
       variable wdata : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
       variable wdata32 : std_logic_vector(31 downto 0);
       variable wstrb : std_logic_vector(CFG_NASTI_DATA_BYTES-1 downto 0);
-      variable val : std_logic_vector(8*ALIGNMENT_BYTES-1 downto 0);
+      variable val : std_logic_vector(8*CFG_ALIGN_BYTES-1 downto 0);
   begin
 
     v := r;
@@ -152,8 +148,8 @@ begin
     
     procedureAxi4(slvi, xslvconfig, r.bank_slv, v.bank_slv);
 
-    for n in 0 to CFG_NASTI_DATA_BYTES/ALIGNMENT_BYTES-1 loop
-       raddr_reg(n) := r.bank_slv.raddr(ALIGNMENT_BYTES*n)(17 downto log2(ALIGNMENT_BYTES));
+    for n in 0 to CFG_WORDS_ON_BUS-1 loop
+       raddr_reg(n) := r.bank_slv.raddr(n)(17 downto log2(CFG_ALIGN_BYTES));
        val := (others => '0');
        
        if (ramdebug = 0) or (raddr_reg(n)(15 downto 14) = "00") then 
@@ -262,7 +258,7 @@ begin
            end if;
        end if;
 
-       rdata(8*ALIGNMENT_BYTES*(n+1)-1 downto 8*ALIGNMENT_BYTES*n) := val;
+       rdata(n) := val;
     end loop;
 
 
@@ -272,11 +268,11 @@ begin
 
       wdata := slvi.w_data;
       wstrb := slvi.w_strb;
-      for n in 0 to CFG_NASTI_DATA_BYTES/ALIGNMENT_BYTES-1 loop
-         waddr_reg(n) := r.bank_slv.waddr(ALIGNMENT_BYTES*n)(17 downto 2);
-         wdata32 := wdata(8*ALIGNMENT_BYTES*(n+1)-1 downto 8*ALIGNMENT_BYTES*n);
+      for n in 0 to CFG_WORDS_ON_BUS-1 loop
+         waddr_reg(n) := r.bank_slv.waddr(n)(17 downto 2);
+         wdata32 := wdata(8*CFG_ALIGN_BYTES*(n+1)-1 downto 8*CFG_ALIGN_BYTES*n);
 
-          if wstrb(ALIGNMENT_BYTES*(n+1)-1 downto ALIGNMENT_BYTES*n) /= "0000" then
+          if wstrb(CFG_ALIGN_BYTES*(n+1)-1 downto CFG_ALIGN_BYTES*n) /= "0000" then
             if (ramdebug = 0) or (waddr_reg(n)(15 downto 14) = "00") then 
              case waddr_reg(n)(3 downto 0) is
              when "0000" => --ctrl reg

@@ -153,7 +153,7 @@ begin
                 rgrant := not r.rx_tx;
                 v.len := r.len - 1;
                 -- Incremented on slave side
-                --v.addr += 4;
+                --v.addr = r.addr + 4;
             end if;
         end if;
 
