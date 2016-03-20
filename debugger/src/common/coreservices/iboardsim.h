@@ -33,10 +33,8 @@ public:
     virtual void runSimulator() =0;
 
     virtual void stopSimulator() =0;
-
-    virtual AttributeType getConnectionSettings() =0;
-
-    virtual void setTargetSettings(const AttributeType *target) =0;
+    
+    virtual bool isDisabled() =0;
 };
 
 }  // namespace debugger

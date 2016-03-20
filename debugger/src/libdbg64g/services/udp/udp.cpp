@@ -16,13 +16,13 @@ static UdpServiceClass local_class_;
 UdpService::UdpService(const char *name) 
     : IService(name) {
     registerInterface(static_cast<IUdp *>(this));
+    registerAttribute("Timeout", &timeout_);
+    registerAttribute("HostIP", &hostIP_);
+    registerAttribute("BoardIP", &boardIP_);
 
-    createDatagramSocket();
-
-    // define hardcoded remote address:
-    remote_sockaddr_ipv4_ = sockaddr_ipv4_;
-    //remote_sockaddr_ipv4_.sin_addr.s_addr = INADDR_ANY;
-    remote_sockaddr_ipv4_.sin_port = 0;
+    timeout_.make_int64(0);
+    hostIP_.make_string("192.168.0.53");
+    boardIP_.make_string("192.168.0.51");
 }
 
 UdpService::~UdpService() {
@@ -30,22 +30,25 @@ UdpService::~UdpService() {
 }
 
 void UdpService::postinitService() {
-    if (!config_.is_dict()) {
-        return;
-    }
-    if (config_.has_key("Timeout")) {
+    createDatagramSocket();
+    // define hardcoded remote address:
+    remote_sockaddr_ipv4_ = sockaddr_ipv4_;
+    remote_sockaddr_ipv4_.sin_addr.s_addr = inet_addr(boardIP_.to_string());
+
+    if (timeout_.to_int64()) {
         struct timeval tv;
 #if defined(_WIN32) || defined(__CYGWIN__)
         tv.tv_usec = 0;
-        tv.tv_sec = static_cast<long>(config_["Timeout"].to_int64());
+        tv.tv_sec = static_cast<long>(timeout_.to_int64());
 #else
-        tv.tv_usec = (config_["Timeout"].to_int64() % 1000) * 1000;
-        tv.tv_sec = static_cast<long>(config_["Timeout"].to_int64()/1000);
+        tv.tv_usec = (timeout_.to_int64() % 1000) * 1000;
+        tv.tv_sec = static_cast<long>(timeout_.to_int64()/1000);
 #endif
 
         setsockopt(hsock_, SOL_SOCKET, SO_RCVTIMEO, 
                             (char *)&tv, sizeof(struct timeval));
     }
+
 }
 
 int UdpService::registerListener(IRawListener *ilistener) { 
@@ -81,6 +84,11 @@ int UdpService::createDatagramSocket() {
         sockaddr_ipv4_ = *((struct sockaddr_in *)ptr->ai_addr);
         RISCV_sprintf(sockaddr_ipv4_str_, sizeof(sockaddr_ipv4_str_), 
                     "%s", inet_ntoa(sockaddr_ipv4_.sin_addr));
+
+        if (strcmp(inet_ntoa(sockaddr_ipv4_.sin_addr), 
+                   hostIP_.to_string()) == 0) {
+            break;
+        }
     }
 
     hsock_ = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -126,15 +134,22 @@ int UdpService::sendData(const char *msg, int len) {
                   reinterpret_cast<struct sockaddr *>(&remote_sockaddr_ipv4_),
                   static_cast<int>(sizeof(remote_sockaddr_ipv4_)));
 
-    char xxx[1024];
-    int pos = RISCV_sprintf(xxx, sizeof(xxx), "send  %d bytes to %s:%d: ",
-                            tx_bytes,
-                            inet_ntoa(remote_sockaddr_ipv4_.sin_addr),
-                            ntohs(remote_sockaddr_ipv4_.sin_port));
-    for (int i = 0; i < len; i++) {
-        pos += RISCV_sprintf(&xxx[pos], sizeof(xxx) - pos, "%02x", msg[i]);
+    if (tx_bytes < 0) {
+        RISCV_error("sendto() failed with error: %d\n", WSAGetLastError());
+        return 1;
+    } else {
+
+        char xxx[1024];
+        int pos = RISCV_sprintf(xxx, sizeof(xxx), "send  %d bytes to %s:%d: ",
+                                tx_bytes,
+                                inet_ntoa(remote_sockaddr_ipv4_.sin_addr),
+                                ntohs(remote_sockaddr_ipv4_.sin_port));
+        for (int i = 0; i < len; i++) {
+            pos += RISCV_sprintf(&xxx[pos], sizeof(xxx) - pos, 
+                                            "%02x", msg[i] & 0xFF);
+        }
+        RISCV_debug("%s", xxx);
     }
-    RISCV_debug("%s", xxx);
 
     return tx_bytes;
 }
@@ -165,9 +180,8 @@ int UdpService::readData(const char *buf, int maxlen) {
         int pos = RISCV_sprintf(xxx, sizeof(xxx), "received  %d Bytes: ", res);
         for (int i = 0; i < res; i++) {
             pos += RISCV_sprintf(&xxx[pos], sizeof(xxx) - pos, 
-                                "%02x", rcvbuf[i]);
+                                "%02x", rcvbuf[i] & 0xFF);
         }
-        pos += RISCV_sprintf(&xxx[pos], sizeof(xxx) - pos, "\n", NULL);
         RISCV_debug("%s", xxx);
     }
     return res;

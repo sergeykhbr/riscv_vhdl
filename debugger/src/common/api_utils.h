@@ -57,6 +57,12 @@ void RISCV_thread_join(thread_def th, int ms);
 /** Get absolute directory where core library is placed. */
 int RISCV_get_core_folder(char *out, int sz);
 
+/** Reading configuration from JSON formatted file. */
+int RISCV_read_json_file(const char *filename, char *buf, int bufsz);
+
+/** Write configuration string to JSON formatted file. */
+void RISCV_write_json_file(const char *filename, const char *s);
+
 #ifdef __cplusplus
 }
 #endif

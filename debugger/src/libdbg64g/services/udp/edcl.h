@@ -25,8 +25,6 @@ public:
     virtual void postinitService();
 
     /** ITap interface */
-    virtual AttributeType getConnectionSettings();
-    virtual void setTargetSettings(const AttributeType *target);
     virtual int read(uint64_t addr, int bytes, uint8_t *obuf);
 
 private:
@@ -34,9 +32,11 @@ private:
     int write32(uint8_t *buf, int off, uint32_t v);
 
 private:
-    uint32_t seq_cnt_;
     uint8_t datagram_[256];
+    char rx_buf_[2048];
     IUdp *itransport_;
+    AttributeType transport_;
+    AttributeType seq_cnt_;
 };
 
 class EdclServiceClass : public IClass {

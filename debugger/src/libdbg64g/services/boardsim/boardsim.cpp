@@ -16,24 +16,26 @@ static BoardSimClass local_class_;
 BoardSim::BoardSim(const char *name)  : IService(name) {
     registerInterface(static_cast<IBoardSim *>(this));
     registerInterface(static_cast<IRawListener *>(this));
+    registerAttribute("Transport", &transport_);
+    registerAttribute("Disable", &isDisable_);
+
+    isDisable_.make_boolean(true);
+    transport_.make_string("");
 }
 
 void BoardSim::postinitService() {
-    if (!config_.is_dict()) {
-        RISCV_error("Wrong configuration", NULL);
-        return;
-    }
-    const char *transport_name = config_["Transport"].to_string();
     IService *iserv = 
-        static_cast<IService *>(RISCV_get_service(transport_name));
+        static_cast<IService *>(RISCV_get_service(transport_.to_string()));
     if (!iserv) {
-        RISCV_error("Transport service '%'s not found", transport_name);
+        RISCV_error("Transport service '%'s not found", 
+                    transport_.to_string());
     }
     itransport_ = static_cast<IUdp *>(iserv->getInterface(IFACE_UDP));
     if (itransport_) {
         itransport_->registerListener(static_cast<IRawListener *>(this));
     } else {
-        RISCV_error("UDP interface '%s' not found", transport_name);
+        RISCV_error("UDP interface '%s' not found", 
+                    transport_.to_string());
     }
 }
 
@@ -60,29 +62,6 @@ void BoardSim::stopSimulator() {
     loopEnable_ = false;
 }
 
-AttributeType BoardSim::getConnectionSettings() {
-    AttributeType ret;
-    if (config_["UseHW"].to_int64()) {
-        ret.make_dict();
-        ret["IP"] = config_["HW_IP"];
-        // Port maybe any. EDCL ignores this value.
-        ret["Port"] = AttributeType(Attr_UInteger, 5555ull);
-    } else if (itransport_) {
-        ret = itransport_->getConnectionSettings();
-    } else {
-        RISCV_error("Transport not defined", NULL);
-    }
-    return ret;
-}
-
-void BoardSim::setTargetSettings(const AttributeType *target) {
-    if (!itransport_) {
-        RISCV_error("Transport not defined", NULL);
-        return;
-    }
-    itransport_->setTargetSettings(target);
-}
-
 thread_return_t BoardSim::runThread(void *arg) {
     ((BoardSim*)arg)->busyLoop();
     return 0;
@@ -90,13 +69,14 @@ thread_return_t BoardSim::runThread(void *arg) {
 
 void BoardSim::busyLoop() {
     int bytes;
-    char msg[] = "ACK\n";
+    //char msg[] = {0x00, 0x00, 0x00, 0x18, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00};
+    char msg[] = {0x04, 0x40, 0x00, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
     while (loopEnable_) {
         bytes = itransport_->readData(rxbuf, static_cast<int>(sizeof(rxbuf)));
 
         if (bytes != 0) {
-            itransport_->sendData(msg, 4);
+            itransport_->sendData(msg, sizeof(msg));
         }
     }
 }

@@ -56,6 +56,9 @@ protected:
 
 private:
     std::vector<IRawListener *> vecListeners_;
+    AttributeType timeout_;
+    AttributeType hostIP_;
+    AttributeType boardIP_;
     
     struct sockaddr_in sockaddr_ipv4_;
     char               sockaddr_ipv4_str_[16];    // 3 dots  + 4 digits each 3 symbols + '\0' = 4*3 + 3 + 1;

@@ -61,7 +61,9 @@ void AttributeType::clone(const AttributeType *v) {
             u_.dict[i].value_.clone(v->dict_value(i));
         }
     } else {
-        memcpy(this, v, sizeof(*v));
+        this->kind_ = v->kind_;
+        this->u_ = v->u_;
+        this->size_ = v->size_;
     }
 }
 
@@ -258,10 +260,18 @@ char *attribute_to_string(const AttributeType *attr) {
     return buf->getBuffer();
 }
 
+const char *skip_special_symbols(const char *cfg) {
+    const char *pcur = cfg;
+    while (*pcur == ' ' || *pcur == '\r' || *pcur == '\n' || *pcur == '\t') {
+        pcur++;
+    }
+    return pcur;
+}
+
 const char *string_to_attribute(const char *cfg, 
                           AttributeType *out) {
-    const char *pcur = cfg;
-    
+    const char *pcur = skip_special_symbols(cfg);
+   
     if (pcur[0] == '\'' || pcur[0] == '"') {
         AutoBuffer buf;
         uint8_t t1 = pcur[0];
@@ -276,30 +286,48 @@ const char *string_to_attribute(const char *cfg,
         out->make_string(buf.getBuffer());
     } else if (pcur[0] == '[') {
         pcur++;
+        pcur = skip_special_symbols(pcur);
         AttributeType new_item;
         out->make_list(0);
         while (*pcur != ']' && *pcur != '\0') {
             pcur = string_to_attribute(pcur, &new_item);
-            out->realloc_list(out->size()+1);
-            (*out)[out->size()-1] = new_item;
-            if (*pcur == ',') pcur++;
+            out->realloc_list(out->size() + 1);
+            (*out)[out->size() - 1] = new_item;
+
+            pcur = skip_special_symbols(pcur);
+            if (*pcur == ',') {
+                pcur++;
+                pcur = skip_special_symbols(pcur);
+            }
         }
         pcur++;
-    } else if (cfg[0] == '{') {
-        pcur++;
+        pcur = skip_special_symbols(pcur);
+    } else if (pcur[0] == '{') {
         AttributeType new_key;
         AttributeType new_value;
         out->make_dict();
 
+        pcur++;
+        pcur = skip_special_symbols(pcur);
         while (*pcur != '}' && *pcur != '\0') {
             pcur = string_to_attribute(pcur, &new_key);
-            if (*pcur == ':') pcur++;
+            pcur = skip_special_symbols(pcur);
+            if (*pcur == ':') {
+                pcur++;
+            }
+            pcur = skip_special_symbols(pcur);
             pcur = string_to_attribute(pcur, &new_value);
 
             (*out)[new_key.to_string()] = new_value;
-            if (*pcur == ',') pcur++;
+
+            pcur = skip_special_symbols(pcur);
+            if (*pcur == ',') {
+                pcur++;
+                pcur = skip_special_symbols(pcur);
+            }
         }
         pcur++;
+        pcur = skip_special_symbols(pcur);
 
         if (out->has_key("Type")) {
             if (strcmp((*out)["Type"].to_string(), IFACE_SERVICE) == 0) {
@@ -313,10 +341,11 @@ const char *string_to_attribute(const char *cfg,
                         "Not implemented string to dict. attribute");
             }
         }
-    } else if (cfg[0] == '(') {
+    } else if (pcur[0] == '(') {
         AutoBuffer buf;
         char byte_value;
         pcur++;
+        pcur = skip_special_symbols(pcur);
         while (*pcur != ')' && *pcur != '\0') {
             byte_value = 0;
             for (int n = 0; n < 2; n++) {
@@ -328,13 +357,18 @@ const char *string_to_attribute(const char *cfg,
                 pcur++;
             }
             buf.write_bin(&byte_value, 1);
+
+            pcur = skip_special_symbols(pcur);
             if (*pcur == ',') {
                 pcur++;
+                pcur = skip_special_symbols(pcur);
             }
         }
         out->make_data(buf.size(), buf.getBuffer());
         pcur++;
+        pcur = skip_special_symbols(pcur);
     } else {
+        pcur = skip_special_symbols(pcur);
         if (pcur[0] == 'N' && pcur[1] == 'o' && pcur[2] == 'n'
                 && pcur[3] == 'e') {
             pcur += 4;

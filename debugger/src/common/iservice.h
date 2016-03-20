@@ -10,6 +10,7 @@
 
 #include "iface.h"
 #include "attribute.h"
+#include "api_utils.h"
 
 namespace debugger {
 
@@ -23,12 +24,25 @@ public:
         listAttributes_ = AttributeType(Attr_List);
         registerInterface(static_cast<IService *>(this));
         obj_name_ = obj_name;
-        config_.make_nil();
     }
 
     virtual void initService(const AttributeType *args) {
-        if (args) {
-            config_.clone(args);
+        if (!args || !args->is_list()) {
+            return;
+        }
+        AttributeType *cur_attr;
+        for (unsigned i = 0; i < args->size(); i++) {
+            const AttributeType &item = (*args)[i];
+            if (item.size() != 2 || !item[0u].is_string()) {
+                continue;
+            }
+            cur_attr = static_cast<AttributeType *>(
+                                getAttribute(item[0u].to_string()));
+            if (cur_attr == NULL) {
+                RISCV_error("Attribute '%s' not found", item[0u].to_string());
+                continue;
+            }
+            (*cur_attr) = item[1];
         }
     }
 
@@ -57,24 +71,37 @@ public:
         listAttributes_.add_to_list(&item);
     }
 
+    virtual IAttribute *getAttribute(const char *name) {
+        IAttribute *tmp;
+        for (unsigned i = 0; i < listAttributes_.size(); i++) {
+            tmp = static_cast<IAttribute *>(listAttributes_[i].to_iface());
+            if (strcmp(name, tmp->getAttrName()) == 0) {
+                return tmp;
+            }
+        }
+        return NULL;
+    }
+
     virtual const char *getObjName() { return obj_name_; }
 
     virtual AttributeType getConfiguration() {
         AttributeType ret(Attr_Dict);
         ret["Name"] = AttributeType(getObjName());
-        ret["attr"] = AttributeType(Attr_List);
+        ret["Attr"] = AttributeType(Attr_List);
 
         IAttribute *tmp = NULL;
         for (unsigned i = 0; i < listAttributes_.size(); i++) {
             tmp = static_cast<IAttribute *>(listAttributes_[i].to_iface());
-            AttributeType val(tmp->getAttrName());
-            ret["attr"].add_to_list(&val);
+            AttributeType item;
+            item.make_list(2);
+            item[0u].make_string(tmp->getAttrName());
+            item[1] = *static_cast<AttributeType *>(tmp);
+            ret["Attr"].add_to_list(&item);
         }
         return ret;
     }
 
 protected:
-    AttributeType config_;
     AttributeType listInterfaces_;
     AttributeType listAttributes_;
     const char *obj_name_;

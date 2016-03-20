@@ -281,5 +281,101 @@ void _unload_plugins(AttributeType *list) {
     }
 }
 
+void put_char(char s, FILE *f) {
+    fputc(s, f);
+    fflush(f);
+}
+
+// check if this attribute like list with items <= 2: [a,b]
+bool is_single_line(const char *s) {
+    bool ret = false;
+    if (*s == '[') {
+        const char *pcheck = s + 1;
+        int item_cnt = 0;
+        while (*pcheck != ']') {
+            if (*pcheck == ',') {
+                item_cnt++;
+            } else if (*pcheck == '[' || *pcheck == '{') {
+                item_cnt = 100;
+                break;
+            }
+            ++pcheck;
+        }
+        if (item_cnt <= 1) {
+            ret = true;
+        }
+    }
+    return ret;
+}
+
+const char *writeAttrToFile(FILE *f, const char *s, int depth) {
+    const char *ret = s;
+    char start_symb = 0;
+    bool end_attr = false;
+    bool do_single_line = false;
+
+    if ((*s) == 0) {
+        return ret;
+    }
+
+    put_char('\n', f);
+    for (int i = 0; i < depth; i++) {
+        put_char(' ', f);
+        put_char(' ', f);
+    }
+    
+
+    while ((*ret) && !end_attr) {
+        put_char(*ret, f);
+        if ((*ret) == ',') {
+            if (!do_single_line) {
+                put_char('\n', f);
+                for (int i = 0; i < depth; i++) {
+                    put_char(' ', f);
+                    put_char(' ', f);
+                }
+            }
+        } else if ((*ret) == ']' || (*ret) == '}') {
+            if (do_single_line) {
+                do_single_line = false;
+            } else {
+                return ret;
+            }
+        } else if ((*ret) == '[' || (*ret) == '{') {
+            do_single_line = is_single_line(s);
+            if (!do_single_line) {
+                ret = writeAttrToFile(f, ret + 1, depth + 1);
+            }
+        }
+        ++ret;
+    }
+    
+    return ret;
+}
+
+void RISCV_write_json_file(const char *filename, const char *s) {
+    FILE *f = fopen(filename, "w");
+    if (!f) {
+        return;
+    }
+    writeAttrToFile(f, s, 0);
+    fclose(f);
+}
+
+int RISCV_read_json_file(const char *filename, char *buf, int bufsz) {
+    FILE *f = fopen(filename, "r");
+    if (!f) {
+        return 0;
+    }
+    fseek(f, 0, SEEK_END);
+    int sz = ftell(f);
+    if (sz > bufsz) {
+        return 0;
+    }
+
+    fseek(f, 0, SEEK_SET);
+    fread(buf, sz, 1, f);
+    return sz;
+}
 
 }  // namespace debugger

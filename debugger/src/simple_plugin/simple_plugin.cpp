@@ -15,7 +15,7 @@ namespace debugger {
 class SimplePlugin : public IService,
                      public ISimplePlugin {
 public:
-    SimplePlugin(const char *name) : IService("SimplePlugin") {
+    SimplePlugin(const char *name) : IService(name) {
         /// Interface registration
         registerInterface(static_cast<ISimplePlugin *>(this));
         /// Test attribute that will be saved/restored by core

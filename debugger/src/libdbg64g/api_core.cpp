@@ -87,8 +87,11 @@ extern "C" void RISCV_set_configuration(const char *config) {
                              Services[i]["Class"].to_string());
                 continue;
             }
-            iserv = icls->createService(Services[i]["Name"].to_string());
-            iserv->initService(&Services[i]["args"]);
+            AttributeType &Instances = Services[i]["Instances"];
+            for (unsigned n = 0; n < Instances.size(); n++) {
+                iserv = icls->createService(Instances[n]["Name"].to_string());
+                iserv->initService(&Instances[n]["Attr"]);
+            }
         }
     }
 
@@ -101,11 +104,12 @@ extern "C" void RISCV_set_configuration(const char *config) {
 
 extern "C" const char *RISCV_get_configuration() {
     IClass *icls;
-    AttributeType ret(Attr_List);
+    AttributeType ret(Attr_Dict);
+    ret["Services"].make_list(0);
     for (unsigned i = 0; i < listClasses_.size(); i++) {
         icls = static_cast<IClass *>(listClasses_[i].to_iface());
         AttributeType val = icls->getConfiguration();
-        ret.add_to_list(&val);
+        ret["Services"].add_to_list(&val);
     }
     return ret.to_config();
 }

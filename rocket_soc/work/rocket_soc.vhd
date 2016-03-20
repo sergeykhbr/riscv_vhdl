@@ -577,7 +577,7 @@ end generate;
       macaddrh => 16#20789#,
       macaddrl => 16#123#,
       ipaddrh => 16#C0A8#,
-      ipaddrl => 16#0133#,
+      ipaddrl => 16#0033#,
       phyrstadr => 7,
       enable_mdint => 1,
       maxsize => 1518

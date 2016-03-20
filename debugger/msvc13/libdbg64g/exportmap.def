@@ -2,6 +2,8 @@ LIBRARY LIBDBG64G
 EXPORTS
 	RISCV_init
 	RISCV_cleanup
+	RISCV_read_json_file
+	RISCV_write_json_file
 	RISCV_get_configuration
 	RISCV_set_configuration
 	RISCV_register_class

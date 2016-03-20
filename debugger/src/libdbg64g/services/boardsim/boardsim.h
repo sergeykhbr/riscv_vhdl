@@ -31,8 +31,7 @@ public:
     /// @{
     virtual void runSimulator();
     virtual void stopSimulator();
-    virtual AttributeType getConnectionSettings();
-    virtual void setTargetSettings(const AttributeType *target);
+    virtual bool isDisabled() { return isDisable_.to_bool(); }
     /// @}
 
     /** IRawListener interface */
@@ -47,6 +46,9 @@ private:
     LibThreadType threadInit_;
     IUdp *itransport_;
     char rxbuf[1<<12];
+
+    AttributeType transport_;
+    AttributeType isDisable_;
 };
 
 

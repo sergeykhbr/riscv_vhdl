@@ -31,8 +31,6 @@ public:
 
     virtual const char *getDetail() { return ITap_detail; }
 
-    virtual AttributeType getConnectionSettings() =0;
-    virtual void setTargetSettings(const AttributeType *target) =0;
     virtual int read(uint64_t addr, int bytes, uint8_t *obuf) =0;
 };
 

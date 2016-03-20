@@ -63,13 +63,13 @@ public:
     virtual AttributeType getConfiguration() {
         AttributeType ret(Attr_Dict);
         ret["Class"] = AttributeType(getClassName());
-        ret["Services"] = AttributeType(Attr_List);
+        ret["Instances"] = AttributeType(Attr_List);
 
         IService *tmp = NULL;
         for (unsigned i = 0; i < listInstances_.size(); i++) {
             tmp = static_cast<IService *>(listInstances_[i].to_iface());
             AttributeType val = tmp->getConfiguration();
-            ret["Services"].add_to_list(&val);
+            ret["Instances"].add_to_list(&val);
         }
         return ret;
     }

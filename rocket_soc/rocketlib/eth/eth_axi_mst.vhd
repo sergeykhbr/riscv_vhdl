@@ -60,6 +60,8 @@ begin
   variable tgrant  : std_ulogic;
   variable rgrant  : std_ulogic;
   variable vmsto   : nasti_master_out_type;
+  variable rdata_lsb : std_logic_vector(31 downto 0);
+  variable wdata_lsb : std_logic_vector(31 downto 0);
   begin
     v := r;
     vmsto := nasti_master_out_none;
@@ -139,10 +141,14 @@ begin
         when others =>
         end case;
         if r.rx_tx = '0' then
-            vmsto.w_data := rmsti.data & rmsti.data & rmsti.data & rmsti.data;
+            wdata_lsb := rmsti.data(7 downto 0) & rmsti.data(15 downto 8)
+                       & rmsti.data(23 downto 16) & rmsti.data(31 downto 24);
         else
-            vmsto.w_data := tmsti.data & tmsti.data & tmsti.data & tmsti.data;
+            wdata_lsb := tmsti.data(7 downto 0) & tmsti.data(15 downto 8)
+                       & tmsti.data(23 downto 16) & tmsti.data(31 downto 24);
         end if;
+        vmsto.w_data := wdata_lsb & wdata_lsb & wdata_lsb & wdata_lsb;
+        
         if aximi.w_ready = '1' then
             tready := r.rx_tx;
             rready := not r.rx_tx;
@@ -192,6 +198,10 @@ begin
       v.rx_tx := '0';
     end if;
 
+    -- Pre-fix for SPARC byte order.
+    -- It is better to fix in MAC itselfm but for now it will be here.
+    rdata_lsb := aximi.r_data(7 downto 0) & aximi.r_data(15 downto 8)
+               & aximi.r_data(23 downto 16) & aximi.r_data(31 downto 24);
     
     rin <= v;
     aximo <= vmsto;
@@ -200,13 +210,13 @@ begin
     tmsto.retry    <= tretry;
     tmsto.ready    <= tready;
     tmsto.grant    <= tgrant;
-    tmsto.data     <= aximi.r_data(31 downto 0);
+    tmsto.data     <= rdata_lsb;
 
     rmsto.error    <= rerror;
     rmsto.retry    <= rretry;
     rmsto.ready    <= rready;
     rmsto.grant    <= rgrant;
-    rmsto.data     <= aximi.r_data(31 downto 0);
+    rmsto.data     <= rdata_lsb;
   end process;
 
   regs : process(clk)
