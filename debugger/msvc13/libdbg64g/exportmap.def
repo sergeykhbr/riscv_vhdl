@@ -10,6 +10,7 @@ EXPORTS
 	RISCV_get_class
 	RISCV_create_service
 	RISCV_get_service
+	RISCV_get_service_iface
 	RISCV_sprintf
 	RISCV_printf
 	RISCV_print_bin

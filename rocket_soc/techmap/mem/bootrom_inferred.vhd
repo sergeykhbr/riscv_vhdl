@@ -32,7 +32,7 @@ end;
 architecture rtl of BootRom_inferred is
 
 constant ROM_ADDR_WIDTH : integer := 13;
-constant ROM_LENGTH : integer := 2**(ROM_ADDR_WIDTH-6);
+constant ROM_LENGTH : integer := 2**(ROM_ADDR_WIDTH - log2(CFG_NASTI_DATA_BYTES));
 
 type rom_block is array (0 to ROM_LENGTH-1) of std_logic_vector(31 downto 0);
 type rom_type is array (0 to CFG_WORDS_ON_BUS-1) of rom_block;

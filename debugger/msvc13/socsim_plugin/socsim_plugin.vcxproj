@@ -11,9 +11,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{B00A8DCF-6363-49B6-BE4D-40B4F867E7FB}</ProjectGuid>
+    <ProjectGuid>{D239FD3C-1B0B-4D79-9EC2-7A9094A61692}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>libdbg64g</RootNamespace>
+    <RootNamespace>socsim_plugin</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -41,13 +41,11 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>$(SolutionDir)\..\bin\win\$(Configuration)\</OutDir>
+    <OutDir>$(SolutionDir)\..\bin\win\$(Configuration)\plugins\</OutDir>
     <IntDir>$(SolutionDir)$(ProjectName)\$(Configuration)\Tmp\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>$(SolutionDir)\..\bin\win\$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)$(ProjectName)\$(Configuration)\Tmp</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -55,14 +53,15 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;DLL_EXPORT;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)../src/common;$(SolutionDir)../src/libdbg64g/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SolutionDir)../src/common;$(SolutionDir)../src/socsim_plugin/verinclude</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>libdbg64g.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)\..\bin\win\$(Configuration)\</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>$(ProjectDir)exportmap.def</ModuleDefinitionFile>
-      <AdditionalDependencies>Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -73,44 +72,38 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;_WINSOCK_DEPRECATED_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)../src/common;$(SolutionDir)../src/lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>ws2_32;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\common\attribute.cpp" />
     <ClCompile Include="..\..\src\common\autobuffer.cpp" />
-    <ClCompile Include="..\..\src\libdbg64g\api_core.cpp" />
-    <ClCompile Include="..\..\src\libdbg64g\api_utils.cpp" />
-    <ClCompile Include="..\..\src\libdbg64g\services\elfloader\elfloader.cpp" />
-    <ClCompile Include="..\..\src\libdbg64g\services\udp\edcl.cpp" />
-    <ClCompile Include="..\..\src\libdbg64g\services\udp\udp.cpp" />
+    <ClCompile Include="..\..\src\socsim_plugin\boardsim.cpp" />
+    <ClCompile Include="..\..\src\socsim_plugin\plugin_init.cpp" />
+    <ClCompile Include="..\..\src\socsim_plugin\verilated\Vtop.cpp" />
+    <ClCompile Include="..\..\src\socsim_plugin\verilated\Vtop__Syms.cpp" />
+    <ClCompile Include="..\..\src\socsim_plugin\verinclude\verilated.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\src\common\api_core.h" />
+    <ClInclude Include="..\..\src\common\api_types.h" />
     <ClInclude Include="..\..\src\common\api_utils.h" />
     <ClInclude Include="..\..\src\common\attribute.h" />
     <ClInclude Include="..\..\src\common\autobuffer.h" />
-    <ClInclude Include="..\..\src\common\coreservices\ielfloader.h" />
-    <ClInclude Include="..\..\src\common\coreservices\irawlistener.h" />
-    <ClInclude Include="..\..\src\common\coreservices\itap.h" />
-    <ClInclude Include="..\..\src\common\coreservices\iudp.h" />
     <ClInclude Include="..\..\src\common\iattr.h" />
     <ClInclude Include="..\..\src\common\iclass.h" />
     <ClInclude Include="..\..\src\common\iface.h" />
     <ClInclude Include="..\..\src\common\iservice.h" />
-    <ClInclude Include="..\..\src\libdbg64g\include\dirent.h" />
-    <ClInclude Include="..\..\src\libdbg64g\services\elfloader\elfloader.h" />
-    <ClInclude Include="..\..\src\libdbg64g\services\elfloader\elf_types.h" />
-    <ClInclude Include="..\..\src\libdbg64g\services\udp\edcl.h" />
-    <ClInclude Include="..\..\src\libdbg64g\services\udp\udp.h" />
+    <ClInclude Include="..\..\src\socsim_plugin\boardsim.h" />
+    <ClInclude Include="..\..\src\socsim_plugin\verilated\Vtop.h" />
+    <ClInclude Include="..\..\src\socsim_plugin\verilated\Vtop__Inlines.h" />
+    <ClInclude Include="..\..\src\socsim_plugin\verilated\Vtop__Syms.h" />
+    <ClInclude Include="..\..\src\socsim_plugin\verinclude\verilated.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

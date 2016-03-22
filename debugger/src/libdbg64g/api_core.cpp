@@ -50,14 +50,17 @@ extern "C" void RISCV_cleanup() {
     IClass *icls;
     IService *iserv;
     const AttributeType *objs;
+
+    // Pre-deletion
     for (unsigned i = 0; i < listClasses_.size(); i++) {
         icls = static_cast<IClass *>(listClasses_[i].to_iface());
         objs = (icls->getInstanceList());
         for (unsigned n = 0; n < objs->size(); n++) {
             iserv = static_cast<IService *>((*objs)[n].to_iface());
-            icls->deleteServices(iserv);
+            icls->predeleteServices(iserv);
         }
     }
+
 #if defined(_WIN32) || defined(__CYGWIN__)
     WSACleanup();
 #endif
@@ -149,6 +152,16 @@ extern "C" IFace *RISCV_get_service(const char *name) {
         }
     }
     return NULL;
+}
+
+extern "C" IFace *RISCV_get_service_iface(const char *servname,
+                                          const char *facename) {
+    IService *iserv = static_cast<IService *>(RISCV_get_service(servname));
+    if (iserv == NULL) {
+        RISCV_error("Service '%s' not found.", servname);
+        return NULL;
+    }
+    return iserv->getInterface(facename);
 }
 
 }  // namespace debugger

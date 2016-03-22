@@ -28,7 +28,7 @@ public:
     virtual AttributeType getConnectionSettings() {
         AttributeType ret;
         ret.make_dict();
-        ret["IP"] = AttributeType(inet_ntoa(remote_sockaddr_ipv4_.sin_addr));
+        ret["IP"] = AttributeType(inet_ntoa(sockaddr_ipv4_.sin_addr));
         ret["Port"] = AttributeType(Attr_UInteger, 
                     static_cast<uint64_t>(sockaddr_ipv4_.sin_port));
         return ret;
@@ -44,9 +44,9 @@ public:
             static_cast<uint16_t>((*target)["Port"].to_uint64());
     }
 
-    virtual int sendData(const char *msg, int len);
+    virtual int sendData(const uint8_t *msg, int len);
 
-    virtual int readData(const char *buf, int maxlen);
+    virtual int readData(const uint8_t *buf, int maxlen);
 
     virtual int registerListener(IRawListener *ilistener);
 

@@ -31,9 +31,12 @@ void copy_image() {
     uint64_t *sram = (uint64_t *)ADDR_NASTI_SLAVE_SRAM;
     pnp_map *pnp = (pnp_map *)ADDR_NASTI_SLAVE_PNP;
 
-    /** Speed-up RTL simulation by skipping coping stage: */
+    /** 
+     * Speed-up RTL simulation by skipping coping stage.
+     * Or skip this stage to avoid rewritting of externlly loaded image.
+     */
     tech = pnp->tech & 0xFF;
-    if (tech != TECH_INFERRED) {
+    if (tech != TECH_INFERRED && pnp->fwid == 0) {
         memcpy(sram, fwrom, FW_IMAGE_SIZE_BYTES);
     }
 

@@ -62,6 +62,11 @@ IFace *RISCV_create_service(IFace *iclass, const char *name,
  */
 IFace *RISCV_get_service(const char *name);
 
+/**
+ * @brief Get interface of the specified service.
+ */
+IFace *RISCV_get_service_iface(const char *servname, const char *facename);
+
 /// @todo add attributes/save/restore
 
 #ifdef __cplusplus

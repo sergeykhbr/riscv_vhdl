@@ -17,7 +17,7 @@ PLUGINS_ELF_DIR = $(TOP_DIR)linuxbuild/bin/plugins
 .SILENT:
   TEA = 2>&1 | tee _$@-comp.err
 
-all: libdbg64g simple_plugin testapp
+all: libdbg64g simple_plugin socsim_plugin testapp
 	$(ECHO) "    All done.\n"
 
 libdbg64g:
@@ -31,6 +31,10 @@ libdbg64g:
 simple_plugin:
 	$(ECHO) "    Plugin " $@ " building started:"
 	make -f make_simple_plugin TOP_DIR=$(TOP_DIR) PLUGINS_OBJ_DIR=$(PLUGINS_OBJ_DIR) PLUGINS_ELF_DIR=$(PLUGINS_ELF_DIR) $@ $(TEA)
+
+socsim_plugin:
+	$(ECHO) "    Plugin " $@ " building started:"
+	make -f make_socsim_plugin TOP_DIR=$(TOP_DIR) PLUGINS_OBJ_DIR=$(PLUGINS_OBJ_DIR) PLUGINS_ELF_DIR=$(PLUGINS_ELF_DIR) $@ $(TEA)
 
 testapp:
 	$(ECHO) "    Test application building started:"

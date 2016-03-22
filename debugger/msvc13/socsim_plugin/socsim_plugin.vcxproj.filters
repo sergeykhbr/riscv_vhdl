@@ -1,0 +1,72 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="common">
+      <UniqueIdentifier>{f5a16e1a-fd0c-436b-9f2e-d8942e1ccf15}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="verinclude">
+      <UniqueIdentifier>{888b4db2-90cf-4440-94fc-29df5fb9edfc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="verilated">
+      <UniqueIdentifier>{a717203a-9e5c-404f-8a97-b712366a9b95}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\common\attribute.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\common\autobuffer.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\socsim_plugin\boardsim.cpp" />
+    <ClCompile Include="..\..\src\socsim_plugin\plugin_init.cpp" />
+    <ClCompile Include="..\..\src\socsim_plugin\verilated\Vtop.cpp">
+      <Filter>verilated</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\socsim_plugin\verilated\Vtop__Syms.cpp">
+      <Filter>verilated</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\socsim_plugin\verinclude\verilated.cpp">
+      <Filter>verinclude</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\common\api_types.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\api_utils.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\attribute.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\autobuffer.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\iattr.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\iclass.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\iface.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\iservice.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\socsim_plugin\boardsim.h" />
+    <ClInclude Include="..\..\src\socsim_plugin\verilated\Vtop.h">
+      <Filter>verilated</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\socsim_plugin\verilated\Vtop__Inlines.h">
+      <Filter>verilated</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\socsim_plugin\verilated\Vtop__Syms.h">
+      <Filter>verilated</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\socsim_plugin\verinclude\verilated.h">
+      <Filter>verinclude</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

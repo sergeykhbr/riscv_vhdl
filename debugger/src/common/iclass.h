@@ -23,6 +23,11 @@ public:
         RISCV_register_class(static_cast<IClass *>(this));
         listInstances_ = AttributeType(Attr_List);
     }
+    virtual ~IClass() {
+        for (unsigned i = 0; i < listInstances_.size(); i++) {
+            delete static_cast<IService *>(listInstances_[i].to_iface());
+        }
+    }
 
     virtual IService *createService(const char *obj_name) =0;
 
@@ -34,18 +39,16 @@ public:
         }
     }
 
-    virtual void deleteServices(IService *inst) {
+    virtual void predeleteServices(IService *inst) {
         IService *tmp = NULL;
         for (unsigned i = 0; i < listInstances_.size(); i++) {
             tmp = static_cast<IService *>(listInstances_[i].to_iface());
             if (inst == tmp) {
-                tmp->deleteService();
-                listInstances_[i].make_nil();
-                delete inst;
-                break;
+                tmp->predeleteService();
             }
         }
     }
+
 
     virtual const char *getClassName() { return class_name_; }
 

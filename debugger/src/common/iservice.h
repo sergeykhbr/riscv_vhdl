@@ -23,8 +23,11 @@ public:
         listInterfaces_ = AttributeType(Attr_List);
         listAttributes_ = AttributeType(Attr_List);
         registerInterface(static_cast<IService *>(this));
+        registerAttribute("LogLevel", &logLevel_);
         obj_name_ = obj_name;
+        logLevel_.make_int64(LOG_ERROR);
     }
+    virtual ~IService() {}
 
     virtual void initService(const AttributeType *args) {
         if (!args || !args->is_list()) {
@@ -47,7 +50,7 @@ public:
     }
 
     virtual void postinitService() {}
-    virtual void deleteService() {}
+    virtual void predeleteService() {}
 
     virtual void registerInterface(IFace *iface) {
         AttributeType item(iface);
@@ -104,6 +107,7 @@ public:
 protected:
     AttributeType listInterfaces_;
     AttributeType listAttributes_;
+    AttributeType logLevel_;
     const char *obj_name_;
 };
 

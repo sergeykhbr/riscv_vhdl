@@ -24,9 +24,9 @@ public:
 
     virtual void setTargetSettings(const AttributeType *target) =0;
 
-    virtual int sendData(const char *msg, int len) =0;
+    virtual int sendData(const uint8_t *msg, int len) =0;
 
-    virtual int readData(const char *buf, int maxlen) =0;
+    virtual int readData(const uint8_t *buf, int maxlen) =0;
 
     virtual int registerListener(IRawListener *ilistener) =0;
 };

@@ -23,7 +23,8 @@ typedef struct PnpConfigType {
 } PnpConfigType;
 
 typedef struct pnp_map {
-    volatile uint64_t hwid;         /// Read only HW ID
+    volatile uint32_t hwid;         /// Read only HW ID
+    volatile uint32_t fwid;         /// Read/Write Firmware ID
     volatile uint32_t tech;         /// Read only technology index
     volatile uint32_t rsrv1;        /// 
     volatile uint64_t idt;          /// 

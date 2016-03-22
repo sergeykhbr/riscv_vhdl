@@ -32,6 +32,7 @@ public:
     virtual const char *getDetail() { return ITap_detail; }
 
     virtual int read(uint64_t addr, int bytes, uint8_t *obuf) =0;
+    virtual int write(uint64_t addr, int bytes, uint8_t *ibuf) =0;
 };
 
 }  // namespace debugger

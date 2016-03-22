@@ -43,7 +43,7 @@ extern "C" void RISCV_print_bin(int level, char *buf, int len) {
 
 extern "C" int RISCV_printf(void *iface, int level, 
                             const char *fmt, ...) {
-    int ret;
+    int ret = 0;
     va_list arg;
     IFace *iout = reinterpret_cast<IFace *>(iface);
 
@@ -52,6 +52,12 @@ extern "C" int RISCV_printf(void *iface, int level,
         ret = RISCV_sprintf(bufLog, sizeof(bufLog), "[%s]: ", "unknown");
     } else if (strcmp(iout->getFaceName(), IFACE_SERVICE) == 0) {
         IService *iserv = static_cast<IService *>(iout);
+        AttributeType *local_level = 
+                static_cast<AttributeType *>(iserv->getAttribute("LogLevel"));
+        if (level > static_cast<int>(local_level->to_int64())) {
+            RISCV_mutex_unlock(&mutex_printf);
+            return 0;
+        }
         ret = RISCV_sprintf(bufLog, sizeof(bufLog), "[%s]: ", 
                                                    iserv->getObjName());
     } else if (strcmp(iout->getFaceName(), IFACE_CLASS) == 0) {
@@ -310,7 +316,6 @@ bool is_single_line(const char *s) {
 
 const char *writeAttrToFile(FILE *f, const char *s, int depth) {
     const char *ret = s;
-    char start_symb = 0;
     bool end_attr = false;
     bool do_single_line = false;
 

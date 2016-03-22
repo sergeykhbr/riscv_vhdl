@@ -129,32 +129,37 @@ void UdpService::closeDatagramSocket() {
 }
 
 
-int UdpService::sendData(const char *msg, int len) {
-    int tx_bytes = sendto(hsock_, msg, len, 0, 
+int UdpService::sendData(const uint8_t *msg, int len) {
+    int tx_bytes = sendto(hsock_, reinterpret_cast<const char *>(msg), len, 0,
                   reinterpret_cast<struct sockaddr *>(&remote_sockaddr_ipv4_),
                   static_cast<int>(sizeof(remote_sockaddr_ipv4_)));
 
     if (tx_bytes < 0) {
+#if defined(_WIN32) || defined(__CYGWIN__)
         RISCV_error("sendto() failed with error: %d\n", WSAGetLastError());
+#else
+        RISCV_error("sendto() failed\n", NULL);
+#endif
         return 1;
     } else {
-
-        char xxx[1024];
-        int pos = RISCV_sprintf(xxx, sizeof(xxx), "send  %d bytes to %s:%d: ",
+        char dbg[1024];
+        int pos = RISCV_sprintf(dbg, sizeof(dbg), "send  %d bytes to %s:%d: ",
                                 tx_bytes,
                                 inet_ntoa(remote_sockaddr_ipv4_.sin_addr),
                                 ntohs(remote_sockaddr_ipv4_.sin_port));
-        for (int i = 0; i < len; i++) {
-            pos += RISCV_sprintf(&xxx[pos], sizeof(xxx) - pos, 
-                                            "%02x", msg[i] & 0xFF);
-        }
-        RISCV_debug("%s", xxx);
-    }
 
+        if (tx_bytes < 64) {
+            for (int i = 0; i < len; i++) {
+                pos += RISCV_sprintf(&dbg[pos], sizeof(dbg) - pos, 
+                                                "%02x", msg[i] & 0xFF);
+            }
+        }
+        RISCV_debug("%s", dbg);
+    }
     return tx_bytes;
 }
 
-int UdpService::readData(const char *buf, int maxlen) {
+int UdpService::readData(const uint8_t *buf, int maxlen) {
     int sockerr;
     addr_size_t sockerr_len = sizeof(sockerr);
     addr_size_t addr_sz = sizeof(sockaddr_ipv4_);
@@ -175,14 +180,16 @@ int UdpService::readData(const char *buf, int maxlen) {
             res = maxlen;
             RISCV_error("Receiver's buffer overflow maxlen = %d", maxlen);
         }
-        memcpy(const_cast<char *>(buf), rcvbuf, res);
-        char xxx[1024];
-        int pos = RISCV_sprintf(xxx, sizeof(xxx), "received  %d Bytes: ", res);
-        for (int i = 0; i < res; i++) {
-            pos += RISCV_sprintf(&xxx[pos], sizeof(xxx) - pos, 
-                                "%02x", rcvbuf[i] & 0xFF);
+        memcpy(const_cast<uint8_t *>(buf), rcvbuf, res);
+        char dbg[1024];
+        int pos = RISCV_sprintf(dbg, sizeof(dbg), "received  %d Bytes: ", res);
+        if (res < 64) {
+            for (int i = 0; i < res; i++) {
+                pos += RISCV_sprintf(&dbg[pos], sizeof(dbg) - pos, 
+                                    "%02x", rcvbuf[i] & 0xFF);
+            }
         }
-        RISCV_debug("%s", xxx);
+        RISCV_debug("%s", dbg);
     }
     return res;
 }
