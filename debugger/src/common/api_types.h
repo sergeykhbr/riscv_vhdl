@@ -15,6 +15,7 @@
 #include <windows.h>
 #include <ws2tcpip.h>
 #include <process.h>
+#include <conio.h>  // console input/output
 #else /* Linux */
 #include <netinet/in.h>
 #include <netinet/tcp.h>
@@ -28,6 +29,7 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 #include <pthread.h>
+#include <termios.h>  // work with console
 #endif
 
 namespace debugger {

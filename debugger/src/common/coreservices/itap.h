@@ -5,8 +5,8 @@
  * @brief      General interface of the hardware access.
  */
 
-#ifndef __DEBUGGER_TAP_H__
-#define __DEBUGGER_TAP_H__
+#ifndef __DEBUGGER_ITAP_H__
+#define __DEBUGGER_ITAP_H__
 
 #include "iface.h"
 #include "attribute.h"
@@ -37,4 +37,4 @@ public:
 
 }  // namespace debugger
 
-#endif  // __DEBUGGER_TAP_H__
+#endif  // __DEBUGGER_ITAP_H__

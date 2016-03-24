@@ -30,11 +30,7 @@ public:
                "significantly simplify debugging.";
     }
 
-    virtual void runSimulator() =0;
-
-    virtual void stopSimulator() =0;
-    
-    virtual bool isDisabled() =0;
+    virtual void getInfo(AttributeType *attr) =0;
 };
 
 }  // namespace debugger

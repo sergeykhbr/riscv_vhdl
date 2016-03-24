@@ -18,6 +18,7 @@
 #include "attribute.h"
 #include "iservice.h"
 #include "iclass.h"
+#include "coreservices/iconsole.h"
 
 namespace debugger {
 
@@ -27,12 +28,19 @@ typedef void (*plugin_init_proc)();
 /** Temporary buffer for the log messages. */
 static char bufLog[1<<12];
 
+/** Redirect output to specified console. */
+static IConsole *default_console = NULL;
+
 /** Mutex to avoid concurency for the output stream among threads. */
 mutex_def mutex_printf;
 
 /** Core log message interface object. */
 extern IFace *getInterface(const char *name);
 
+
+extern "C" void RISCV_set_default_output(void *iout) {
+    default_console = static_cast<IConsole *>(iout);
+}
 
 extern "C" void RISCV_print_bin(int level, char *buf, int len) {
     std::cout.write(buf, len);
@@ -78,7 +86,11 @@ extern "C" int RISCV_printf(void *iface, int level,
 
     bufLog[ret++] = '\n';
     bufLog[ret] = '\0';
-    RISCV_print_bin(level, bufLog, ret);
+    if (default_console) {
+        default_console->writeBuffer(bufLog);
+    } else {
+        RISCV_print_bin(level, bufLog, ret);
+    }
     RISCV_mutex_unlock(&mutex_printf);
     return ret;
 }

@@ -97,6 +97,10 @@ class AttributeType : public IAttribute {
         return u_.floating;
     }
 
+    bool is_integer() const {
+        return kind_ == Attr_Integer || kind_ == Attr_UInteger;
+    }
+
     bool is_int64() const {
         return kind_ == Attr_Integer;
     }

@@ -32,7 +32,7 @@ void ElfLoaderService::postinitService() {
     IService *iserv = 
         static_cast<IService *>(RISCV_get_service(tap_.to_string()));
     if (!iserv) {
-        RISCV_error("TAP access service '%'s not found", tap_.to_string());
+        RISCV_error("TAP service '%'s not found", tap_.to_string());
     }
     itap_ = static_cast<ITap *>(iserv->getInterface(IFACE_TAP));
     if (!itap_) {
@@ -185,10 +185,18 @@ void ElfLoaderService::processDebugSymbol(SectionHeaderType *sh) {
 
 uint64_t ElfLoaderService::loadMemory(uint64_t addr, 
                                       uint8_t *buf, uint64_t bufsz) {
+    itap_->write(addr, static_cast<int>(bufsz), buf);
     return bufsz;
 }
 
 uint64_t ElfLoaderService::initMemory(uint64_t addr, uint64_t bufsz) {
+    uint32_t zero = 0;
+    uint64_t cnt = 0;
+    while (cnt < bufsz) {
+        itap_->write(addr, 4, reinterpret_cast<uint8_t *>(&zero));
+        addr += 4;
+        cnt += 4;
+    }
     return bufsz;
 }
 

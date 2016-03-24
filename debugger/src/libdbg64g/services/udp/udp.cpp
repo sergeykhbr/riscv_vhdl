@@ -17,10 +17,12 @@ UdpService::UdpService(const char *name)
     : IService(name) {
     registerInterface(static_cast<IUdp *>(this));
     registerAttribute("Timeout", &timeout_);
+    registerAttribute("BlockingMode", &blockmode_);
     registerAttribute("HostIP", &hostIP_);
     registerAttribute("BoardIP", &boardIP_);
 
     timeout_.make_int64(0);
+    blockmode_.make_boolean(true);
     hostIP_.make_string("192.168.0.53");
     boardIP_.make_string("192.168.0.51");
 }
@@ -49,6 +51,10 @@ void UdpService::postinitService() {
                             (char *)&tv, sizeof(struct timeval));
     }
 
+    /** By default socket was created with Blocking mode */
+    if (!blockmode_.to_bool()) {
+        setBlockingMode(hsock_, false);
+    }
 }
 
 int UdpService::registerListener(IRawListener *ilistener) { 
@@ -128,6 +134,26 @@ void UdpService::closeDatagramSocket() {
     hsock_ = -1;
 }
 
+bool UdpService::setBlockingMode(socket_def h, bool mode) {
+    int ret;
+#if defined(_WIN32) || defined(__CYGWIN__)
+    u_long arg = mode ? 0 : 1;
+    ret = ioctlsocket(h, FIONBIO, &arg);
+#else
+    int flags = fcntl(h, F_GETFL, 0);
+    if (flags < 0) {
+        return false;
+    }
+    flags = mode ? (flags & ~O_NONBLOCK) : (flags | O_NONBLOCK);
+    ret = fcntl(h, F_SETFL, flags);
+#endif
+    if (ret == 0) {
+        // success
+        blockmode_.make_boolean(mode);
+        return true;
+    }
+    return false;
+}
 
 int UdpService::sendData(const uint8_t *msg, int len) {
     int tx_bytes = sendto(hsock_, reinterpret_cast<const char *>(msg), len, 0,

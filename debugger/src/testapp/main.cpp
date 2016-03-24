@@ -8,12 +8,11 @@
 #include "api_core.h"
 #include "iservice.h"
 #include "coreservices/iudp.h"
-#include "coreservices/itap.h"
-#include "coreservices/ielfloader.h"
+#include "coreservices/ithread.h"
 /** Plugin verification */
 #include "simple_plugin/isimple_plugin.h"
-#include "socsim_plugin/iboardsim.h"
 #include <stdio.h>
+#include <string>
 
 #define JSON_CONFIG_FILE "config.json"
 using namespace debugger;
@@ -24,12 +23,12 @@ const char *default_config =
   "'Services':["
     "{'Class':'BoardSimClass','Instances':["
           "{'Name':'boardsim','Attr':["
-                "['LogLevel',4],"
-                "['Disable',true],"
+                "['LogLevel',3],"
+                "['Enable',true],"
                 "['Transport','udpboard']]}]},"
     "{'Class':'EdclServiceClass','Instances':["
           "{'Name':'edcltap','Attr':["
-                "['LogLevel',4],"
+                "['LogLevel',1],"
                 "['Transport','udpedcl'],"
                 "['seq_cnt',0]]}]},"
     "{'Class':'UdpServiceClass','Instances':["
@@ -45,6 +44,26 @@ const char *default_config =
           "{'Name':'loader0','Attr':["
                 "['LogLevel',4],"
                 "['Tap','edcltap']]}]},"
+    "{'Class':'ConsoleServiceClass','Instances':["
+          "{'Name':'console0','Attr':["
+                "['LogLevel',4],"
+                "['Enable',true],"
+                "['Consumer','cmd0']]}]},"
+    "{'Class':'CmdParserServiceClass','Instances':["
+          "{'Name':'cmd0','Attr':["
+                "['LogLevel',4],"
+                "['Console','console0'],"
+                "['Tap','edcltap'],"
+                "['Loader','loader0'],"
+                "['History',["
+                     "'csr MCPUID',"
+                     "'read 0xfffff004 128'"
+                     "]],"
+                "['ListCSR',["
+                    "['MCPUID',0xf00,'CPU description'],"
+                    "['MRESET',0x782],"
+                    "['MEPC',0x341,'Machine exception program counter']"
+                    "]]]}]},"
     "{'Class':'SimplePluginClass','Instances':["
           "{'Name':'example0','Attr':["
                 "['LogLevel',4],"
@@ -54,27 +73,40 @@ const char *default_config =
 static char cfgbuf[1<<12];
 
 int main(int argc, char* argv[]) {
-#if 0
     int cfgsz = 0;
-#else
-    int cfgsz = RISCV_read_json_file(JSON_CONFIG_FILE, cfgbuf, 
-                                    static_cast<int>(sizeof(cfgbuf)));
-#endif
+    char path[1024];
+    bool loadConfig = true;
+
+    if (argc > 1) {
+        for (int i = 1; i < argc; i++) {
+            if (strcmp(argv[i], "-nocfg") == 0) {
+                loadConfig = false;
+            }
+        }
+    }
 
     RISCV_init();
+    RISCV_get_core_folder(path, sizeof(path));
+    std::string cfg_filename = std::string(path) 
+                    + "/" + std::string(JSON_CONFIG_FILE);
+
+    if (loadConfig) {
+        cfgsz = RISCV_read_json_file(JSON_CONFIG_FILE, cfgbuf, 
+                                    static_cast<int>(sizeof(cfgbuf)));
+    }
+
     if (cfgsz == 0) {
         RISCV_set_configuration(default_config);
     } else {
         RISCV_set_configuration(cfgbuf);
     }
 
-    IBoardSim *boardsim = static_cast<IBoardSim *>
-                (RISCV_get_service_iface("boardsim", IFACE_BOARDSIM));
-    ITap *edcltap = static_cast<ITap *>
-                (RISCV_get_service_iface("edcltap", IFACE_TAP));
-    
-    // Connect simulator to the EDCL debugger:
-    if (!boardsim->isDisabled()) {
+   
+    // Connect simulator to the EDCL debugger if enabled:
+    IThread *boardsim = static_cast<IThread *>
+                (RISCV_get_service_iface("boardsim", IFACE_THREAD));
+    if (boardsim->isEnabled()) {
+
         IUdp *iudp1 = static_cast<IUdp *>
                 (RISCV_get_service_iface("udpboard", IFACE_UDP));
         IUdp *iudp2 = static_cast<IUdp *>
@@ -85,72 +117,6 @@ int main(int argc, char* argv[]) {
         t1 = iudp2->getConnectionSettings();
         iudp1->setTargetSettings(&t1);
     }
-
-    IElfLoader *iloader = static_cast<IElfLoader *>
-        (RISCV_get_service_iface("loader0", IFACE_ELFLOADER));
-    iloader->loadFile("bootimage");
-
-    // 1. Dump boot ROM image.
-    //      Base Address = 0x00000000
-    //      Memory size  = 8 KB
-    uint32_t boot[2048];
-    FILE *fbootimage = fopen("bootimage.hex", "w");
-    edcltap->read(0x00000000, 8*1024, reinterpret_cast<uint8_t *>(boot));
-    char boot_str[256];
-    int len;
-    for (int i = 0; i < 512; i++) {
-        len = sprintf(boot_str, "%08x%08x%08x%08x\n",
-                      boot[4*i + 3], boot[4*i + 2], boot[4*i + 1], boot[4*i]);
-        fwrite(boot_str, len, 1, fbootimage);
-    }
-    fclose(fbootimage);
-
-
-#if 0
-    for (int i = 0; i < 1024; i++) {
-        boot[i] = 0xfeed0000 + i;
-    }
-    edcltap->write(0x10040000, 4096, reinterpret_cast<uint8_t *>(boot));
-    edcltap->read(0x10040000, 4096, reinterpret_cast<uint8_t *>(&boot[1024]));
-    for (int i = 0; i < 1024; i++) {
-        if (boot[i] != boot[i + 1024]) {
-            printf("Write error: %08x != %08x\n", boot[i], boot[i + 1024]);
-        }
-    }
-#endif
-
-    // 2. Write/read Firmware identificator
-    uint32_t fwid = 0x20160322;
-    edcltap->write(0xfffff004, 4, reinterpret_cast<uint8_t *>(&fwid));
-    uint32_t fwid_chk;
-    edcltap->read(0xfffff004, 4, reinterpret_cast<uint8_t *>(&fwid_chk));
-    printf("FWID <= %08x; chk = %08x\n", fwid, fwid_chk);
-
-
-    // 3. Read CSR MCPUID value
-    //      DSU Base address 0x80080000
-    //      Each CSR register value has 128-bits alignment.
-    #define CSR_MCPUID 0xf00
-    uint64_t mcpuid;
-    edcltap->read(0x80080000 + (CSR_MCPUID << 4), 8, 
-                        reinterpret_cast<uint8_t *>(&mcpuid));
-    static const char *CPU_BASE[4] = {"RV32I", "RV32E", "RV64I", "RV128I"};
-    printf("CPUID = %08x%08x\n", static_cast<uint32_t>(mcpuid >> 32),
-                                 static_cast<uint32_t>(mcpuid));
-    printf("    Base: %s", CPU_BASE[(mcpuid >> 62) & 0x3]);
-    // total 26 extensions
-    char extenstion[2] = {0};
-    for (int i = 0; i < 26; i++) {
-        if (mcpuid & (1 << i)) {
-            extenstion[0] = 'A' + i;
-            if (extenstion[0] == 'I') {
-                continue;
-            }
-            printf("%s", extenstion);
-        }
-    }
-    printf("\n");
-
 
     IService *itst = static_cast<IService *>(RISCV_get_service("example1"));
     if (itst == NULL) {
@@ -167,8 +133,17 @@ int main(int argc, char* argv[]) {
     itst_access->exampleAction(0xcafe);
 
 
+    // Working cycle with console:
+    IThread *in = static_cast<IThread *>(
+        RISCV_get_service_iface("console0", IFACE_THREAD));
+    if (in) {
+        while (in->isEnabled()) {
+            RISCV_sleep_ms(1000);
+        }
+    }
+
     const char *t1 = RISCV_get_configuration();
-    RISCV_write_json_file(JSON_CONFIG_FILE, t1);
+    RISCV_write_json_file(cfg_filename.c_str(), t1);
 
     RISCV_cleanup();
 	return 0;

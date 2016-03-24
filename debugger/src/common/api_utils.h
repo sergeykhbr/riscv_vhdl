@@ -21,6 +21,9 @@ namespace debugger {
 extern "C" {
 #endif
 
+/** Redirect output to specified console. */
+void RISCV_set_default_output(void *iout);
+
 /** Format output to string. */
 int RISCV_sprintf(char *s, size_t len, const char *fmt, ...);
 

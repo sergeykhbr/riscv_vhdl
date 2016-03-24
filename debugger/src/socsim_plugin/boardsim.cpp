@@ -47,13 +47,15 @@ struct UdpEdclCommonType {
 static BoardSimClass local_class_;
 
 BoardSim::BoardSim(const char *name)  : IService(name) {
+registerInterface(static_cast<IThread *>(this));
     registerInterface(static_cast<IBoardSim *>(this));
     registerInterface(static_cast<IRawListener *>(this));
+    registerAttribute("Enable", &isEnable_);
     registerAttribute("Transport", &transport_);
-    registerAttribute("Disable", &isDisable_);
 
-    isDisable_.make_boolean(true);
+    isEnable_.make_boolean(true);
     transport_.make_string("");
+
     memset(txbuf_, 0, sizeof(txbuf_));
     seq_cnt_ = 35;
     for (unsigned i = 0; i < sizeof(SRAM_)/4; i++) {
@@ -73,14 +75,8 @@ BoardSim::~BoardSim() {
 }
 
 void BoardSim::postinitService() {
-    IService *iserv = 
-        static_cast<IService *>(RISCV_get_service(transport_.to_string()));
-    if (!iserv) {
-        RISCV_error("Transport service '%'s not found", 
-                    transport_.to_string());
-        return;
-    }
-    itransport_ = static_cast<IUdp *>(iserv->getInterface(IFACE_UDP));
+    itransport_ = static_cast<IUdp *>(
+        RISCV_get_service_iface(transport_.to_string(), IFACE_UDP));
     if (itransport_) {
         itransport_->registerListener(static_cast<IRawListener *>(this));
     } else {
@@ -88,47 +84,23 @@ void BoardSim::postinitService() {
                     transport_.to_string());
         return;
     }
-    if (!isDisable_.to_bool()) {
-        runSimulator();
+
+    if (isEnable_.to_bool()) {
+        if (!run()) {
+            RISCV_error("Can't create thread.", NULL);
+            return;
+        }
     }
 }
 
 void BoardSim::predeleteService() {
-    stopSimulator();
-}
-
-void BoardSim::runSimulator() {
-    loopEnable_ = false;
-    threadInit_.func = (lib_thread_func)runThread;
-    threadInit_.args = this;
-    RISCV_thread_create(&threadInit_);
-
-    if (threadInit_.Handle) {
-        loopEnable_ = true;
-        RISCV_info("UDP thread was run successfully", NULL);
-    } else {
-        RISCV_error("Can't create thread.", NULL);
-    }
-}
-
-void BoardSim::stopSimulator() {
-    loopEnable_ = false;
-    if (threadInit_.Handle) {
-        RISCV_thread_join(threadInit_.Handle, 50000);
-    }
-}
-
-thread_return_t BoardSim::runThread(void *arg) {
-    ((BoardSim*)arg)->busyLoop();
-    return 0;
+    stop();
 }
 
 void BoardSim::busyLoop() {
     int bytes;
-    //char msg[] = {0x00, 0x00, 0x00, 0x18, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00};
-    //char msg[] = {0x04, 0x40, 0x00, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-
     UdpEdclCommonType req;
+    RISCV_info("Board Simulator was started", NULL);
 
     while (loopEnable_) {
         bytes = 
@@ -153,10 +125,20 @@ void BoardSim::busyLoop() {
                 memcpy(&txbuf_[10], &SRAM_[req.address & (sizeof(SRAM_) - 1)], 
                                         req.control.request.len);
                 bytes = sizeof(UdpEdclCommonType) + req.control.request.len;
+
+                RISCV_debug("Read [%08x]; size = %d; %08x..",
+                    req.address,
+                    req.control.request.len,
+                    *(reinterpret_cast<uint32_t *>(&txbuf_[10])));
             } else {
                 memcpy(&SRAM_[req.address & (sizeof(SRAM_) - 1)], &rxbuf_[10],
                                         req.control.request.len);
                 bytes = sizeof(UdpEdclCommonType);
+
+                RISCV_debug("Write [%08x]; size = %d; %08x..",
+                    req.address,
+                    req.control.request.len,
+                    *(reinterpret_cast<uint32_t *>(&rxbuf_[10])));
             }
             req.control.response.nak = 0;
             req.control.response.seqidx = seq_cnt_;
@@ -169,6 +151,8 @@ void BoardSim::busyLoop() {
             itransport_->sendData(txbuf_, bytes);
         }
     }
+    loopEnable_ = false;
+    threadInit_.Handle = NULL;
 }
 
 uint32_t BoardSim::read32(uint8_t *buf) {

@@ -43,6 +43,14 @@ public:
         remote_sockaddr_ipv4_.sin_port = 
             static_cast<uint16_t>((*target)["Port"].to_uint64());
     }
+    /**
+     * @brief Setup socket mode.
+     * @param[in] mode New value:
+     *                     true: Blocking mode
+     *                     false: Non-Blocking mode
+     * @return true value on success.
+     */
+    virtual bool setBlockingMode(socket_def h, bool mode);
 
     virtual int sendData(const uint8_t *msg, int len);
 
@@ -57,6 +65,7 @@ protected:
 private:
     std::vector<IRawListener *> vecListeners_;
     AttributeType timeout_;
+    AttributeType blockmode_;
     AttributeType hostIP_;
     AttributeType boardIP_;
     

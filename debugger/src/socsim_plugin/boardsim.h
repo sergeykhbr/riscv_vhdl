@@ -12,6 +12,7 @@
 #include "iservice.h"
 #include "coreservices/irawlistener.h"
 #include "coreservices/iudp.h"
+#include "coreservices/ithread.h"
 #include "iboardsim.h"
 #ifdef USE_VERILATED_CORE
 #include "verilated/Vtop.h"
@@ -20,6 +21,7 @@
 namespace debugger {
 
 class BoardSim : public IService, 
+                 public IThread,
                  public IBoardSim,
                  public IRawListener {
 public:
@@ -31,32 +33,27 @@ public:
     virtual void predeleteService();
 
     /** @name IBoardSim interface */
-    /// @{
-    virtual void runSimulator();
-    virtual void stopSimulator();
-    virtual bool isDisabled() { return isDisable_.to_bool(); }
-    /// @}
+    virtual void getInfo(AttributeType *attr) {}
 
     /** IRawListener interface */
     virtual void updateData(const char *buf, int buflen) {}
 
+protected:
+    /** IThread interface */
+    virtual void busyLoop();
+
 private:
-    static thread_return_t runThread(void *arg);
-    void busyLoop();
     void write32(uint8_t *buf, uint32_t v);
     uint32_t read32(uint8_t *buf);
 
 private:
-    bool loopEnable_;
-    LibThreadType threadInit_;
+    AttributeType isEnable_;
+    AttributeType transport_;
     IUdp *itransport_;
     uint8_t rxbuf_[1<<12];
     uint8_t txbuf_[1<<12];
     uint8_t SRAM_[1<<20];
     uint32_t seq_cnt_;
-
-    AttributeType transport_;
-    AttributeType isDisable_;
 
 #ifdef USE_VERILATED_CORE
     Vtop *core;
