@@ -68,5 +68,6 @@
     <ClInclude Include="..\..\src\socsim_plugin\verinclude\verilated.h">
       <Filter>verinclude</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\socsim_plugin\ringbuf.h" />
   </ItemGroup>
 </Project>

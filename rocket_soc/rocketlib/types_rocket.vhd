@@ -268,6 +268,7 @@ end record;
 --! @param[in] xindex1 Cached Tile AXI master index
 --! @param[in] xindex2 Uncached Tile AXI master index
 --! @param[in] rst     Reset signal with active HIGH level.
+--! @param[in] soft_rst Software Reset via DSU
 --! @param[in] clk_sys System clock (BUS/CPU clock).
 --! @param[in] slvo    Bus-to-Slave device signals.
 --! @param[in] msti    Bus-to-Master device signals.
@@ -282,6 +283,7 @@ generic (
 );
 port ( 
     rst      : in std_logic;
+    soft_rst : in std_logic;
     clk_sys  : in std_logic;
     slvo     : in nasti_slave_in_type;
     msti     : in nasti_master_in_type;
@@ -301,6 +303,7 @@ end component;
 --! @param[in] xindex1 Cached Tile AXI master index
 --! @param[in] xindex2 Uncached Tile AXI master index
 --! @param[in] rst     Reset signal with active HIGH level.
+--! @param[in] soft_rst Software Reset via DSU
 --! @param[in] clk_sys System clock (BUS/CPU clock).
 --! @param[in] slvo    Bus-to-Slave device signals.
 --! @param[in] msti    Bus-to-Master device signals.
@@ -315,6 +318,7 @@ generic (
 );
 port ( 
     rst      : in std_logic;
+    soft_rst : in std_logic;
     clk_sys  : in std_logic;
     slvo     : in nasti_slave_in_type;
     msti     : in nasti_master_in_type;
@@ -485,7 +489,8 @@ component nasti_irqctrl is
     i_axi  : in nasti_slave_in_type;
     o_axi  : out nasti_slave_out_type;
     i_host : in host_in_type;
-    o_host : out host_out_type
+    o_host : out host_out_type;
+    o_soft_reset : out std_logic
   );
   end component;
 

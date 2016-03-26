@@ -151,6 +151,7 @@ architecture arch_rocket_soc of rocket_soc is
   signal wSysReset  : std_ulogic; -- Internal system reset. MUST NOT USED BY DEVICES.
   signal wReset     : std_ulogic; -- Global reset active HIGH
   signal wNReset    : std_ulogic; -- Global reset active LOW
+  signal soft_rst   : std_logic; -- reset from exteranl debugger
   signal wClkBus    : std_ulogic; -- bus clock from the internal PLL (100MHz virtex6/40MHz Spartan6)
   signal wClkAdc    : std_ulogic; -- 26 MHz from the internal PLL
   signal wClkGnss   : std_ulogic; -- clock that goes to GnssEngine (config dependable)
@@ -260,6 +261,7 @@ L1toL2ena0 : if CFG_COMMON_L1toL2_ENABLE generate
     xindex2 => CFG_NASTI_MASTER_UNCACHED
   ) port map ( 
     rst      => wReset,
+    soft_rst => soft_rst,
     clk_sys  => wClkBus,
     slvo     => axisi,
     msti     => aximi,
@@ -279,6 +281,7 @@ L1toL2dis0 : if not CFG_COMMON_L1toL2_ENABLE generate
     xindex2 => CFG_NASTI_MASTER_UNCACHED
   ) port map ( 
     rst      => wReset,
+    soft_rst => soft_rst,
     clk_sys  => wClkBus,
     slvo     => axisi,
     msti     => aximi,
@@ -309,7 +312,8 @@ dsu_ena : if CFG_DSU_ENABLE generate
     i_axi  => axisi,
     o_axi  => axiso(CFG_NASTI_SLAVE_DSU),
     i_host => htifi_grant,
-    o_host => htifo(CFG_HTIF_SRC_DSU)
+    o_host => htifo(CFG_HTIF_SRC_DSU),
+    o_soft_reset => soft_rst
   );
 end generate;
 dsu_dis : if not CFG_DSU_ENABLE generate

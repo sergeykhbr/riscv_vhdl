@@ -51,6 +51,11 @@ private:
     IKeyListener *iconsumer_;
     char curline_[4096];
     std::string cmdLine_;
+#if defined(_WIN32) || defined(__CYGWIN__)
+#else
+    struct termios original_settings_;
+    int term_fd_;
+#endif
 };
 
 class ConsoleServiceClass : public IClass {

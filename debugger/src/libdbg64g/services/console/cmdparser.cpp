@@ -11,12 +11,13 @@
 
 namespace debugger {
 
-#define KB_UP       72
+#define KB_UP       0x48
 #define KB_DOWN     80
 #define KB_LEFT     75
 #define KB_RIGHT    77
 #define KB_ESCAPE   27
 static const uint8_t ARROW_PREFIX = 0xe0;
+static const uint8_t UNICODE_BACKSPACE = 0x7f;
 
 /** Class registration in the Core */
 static CmdParserServiceClass local_class_;
@@ -35,6 +36,7 @@ CmdParserService::CmdParserService(const char *name) : IService(name) {
     history_.make_list(0);
     listCSR_.make_list(0);
     history_idx_ = 0;
+    symb_seq_msk_ = 0xFF;
 }
 
 CmdParserService::~CmdParserService() {
@@ -47,6 +49,7 @@ void CmdParserService::postinitService() {
             (RISCV_get_service_iface(tap_.to_string(), IFACE_TAP));
     iloader_ = static_cast<IElfLoader *>
             (RISCV_get_service_iface(loader_.to_string(), IFACE_ELFLOADER));
+    history_idx_ = history_.size();
 }
 
 int CmdParserService::keyUp(int value) {
@@ -54,43 +57,106 @@ int CmdParserService::keyUp(int value) {
         return 0;
     }
     uint8_t symb = static_cast<uint8_t>(value);
+    bool set_history_end = true;
 
-    if (symb_z_ == ARROW_PREFIX) { 
-        switch (symb) {
-        case KB_UP:
-            break;
-        case KB_DOWN:
-            break;
-        default:;
-        }
-    } else {
-        switch (symb) {
-        case '\b':// 1. Backspace button:
-            if (cmdLine_.size()) {
-                cmdLine_.erase(cmdLine_.size() - 1);
-            }
-            break;
-        case '\n':
-            if (symb_z_ == '\r') {
-                break;
-            }
-        case '\r':// 2. Enter button:
-            memcpy(cmdbuf_, cmdLine_.c_str(), cmdLine_.size() + 1);
-            cmdLine_.clear();
-            iconsole_->writeCommand(cmdbuf_);
-            iconsole_->setCmdString(cmdLine_.c_str());
-            processLine(cmdbuf_);
-            iconsole_->writeBuffer(outbuf_);
-            break;
-        case ARROW_PREFIX:   //before array keys
-            break;
-        default:;
-            cmdLine_ += symb;
-        }
+    //printf("!!!! key = %02x\n", value);
+
+    if (!convertToWinKey(symb)) {
+        return 0;
     }
-    symb_z_ = symb;
+    switch (symb_seq_) {
+    case 0:
+        break;
+    case (ARROW_PREFIX << 8) | KB_UP:
+        set_history_end = false;
+        if (history_idx_ == history_.size()) {
+            unfinshedLine_ = cmdLine_;
+        }
+        if (history_idx_ > 0) {
+            history_idx_--;
+        }
+        cmdLine_ = std::string(history_[history_idx_].to_string());
+        break;
+    case (ARROW_PREFIX << 8) | KB_DOWN:
+        set_history_end = false;
+        if (history_idx_ == (history_.size() - 1)) {
+            history_idx_++;
+            cmdLine_ = unfinshedLine_;
+        } else if (history_idx_ < (history_.size() - 1)) {
+            history_idx_++;
+            cmdLine_ = std::string(history_[history_idx_].to_string());
+        }
+        break;
+    case '\b':// 1. Backspace button:
+        if (cmdLine_.size()) {
+            cmdLine_.erase(cmdLine_.size() - 1);
+        }
+        break;
+    case '\n':
+    case '\r':// 2. Enter button:
+        memcpy(cmdbuf_, cmdLine_.c_str(), cmdLine_.size() + 1);
+        cmdLine_.clear();
+        iconsole_->writeCommand(cmdbuf_);
+        iconsole_->setCmdString(cmdLine_.c_str());
+        processLine(cmdbuf_);
+        iconsole_->writeBuffer(outbuf_);
+        break;
+    default:;
+        cmdLine_ += symb;
+    }
+
+    if (set_history_end) {
+        history_idx_ = history_.size();
+    }
     iconsole_->setCmdString(cmdLine_.c_str());
     return 0;
+}
+
+bool CmdParserService::convertToWinKey(uint8_t symb) {
+    bool ret = true;
+    symb_seq_ <<= 8;
+    symb_seq_ |= symb;
+    symb_seq_ &= symb_seq_msk_;
+
+#if defined(_WIN32) || defined(__CYGWIN__)
+    if (symb_seq_ == ARROW_PREFIX) {
+        ret = false;
+        symb_seq_msk_ = 0xFFFF;
+    } else {
+        symb_seq_msk_ = 0xFF;
+    }
+#else
+    if (symb_seq_ == UNICODE_BACKSPACE) {
+        symb_seq_ = '\b';
+        symb_seq_msk_ = 0xFF;
+    } else if (symb_seq_ == 0x1b) {
+        symb_seq_msk_ = 0xFFFF;
+        ret = false;
+    } else if (symb_seq_ == 0x1b5b) {
+        symb_seq_msk_ = 0xFFFFFF;
+        ret = false;
+    } else if (symb_seq_ == 0x1b5b41) {
+        symb_seq_ = (ARROW_PREFIX << 8) | KB_UP;
+        symb_seq_msk_ = 0xFF;
+    } else if (symb_seq_ == 0x1b5b42) {
+        symb_seq_ = (ARROW_PREFIX << 8) | KB_DOWN;
+        symb_seq_msk_ = 0xFF;
+    } else if (symb_seq_ == 0x1b5b43) {
+        //symb_seq_ = (ARROW_PREFIX << 8) | KB_RIGHT;
+        //symb_seq_msk_ = 0xFF;
+        ret = false;
+    } else if (symb_seq_ == 0x1b5b44) {
+        //symb_seq_ = (ARROW_PREFIX << 8) | KB_LEFT;
+        //symb_seq_msk_ = 0xFF;
+        ret = false;
+    } else {
+        symb_seq_msk_ = 0xFF;
+    }
+#endif
+    if (symb_seq_ == ((uint32_t('\r') << 8) | '\n')) {
+        symb_seq_ = 0;
+    }
+    return ret;
 }
 
 void CmdParserService::processLine(const char *line) {
@@ -98,6 +164,8 @@ void CmdParserService::processLine(const char *line) {
     if (line[0] == 0) {
         return;
     }
+    addToHistory(line);
+
     AttributeType listArgs(Attr_List);
     splitLine(cmdbuf_, &listArgs);
     if (!listArgs[0u].is_string()) {
@@ -233,7 +301,7 @@ void CmdParserService::readCSR(AttributeType *listArgs) {
     uint64_t csr = 0;
     uint64_t addr = csr_socaddr(&(*listArgs)[1]);
 
-    if (addr == ~0) {
+    if (addr == ~0u) {
         outf("Unknown CSR '%s'\n", (*listArgs)[1].to_string());
         return;
     }
@@ -282,7 +350,7 @@ void CmdParserService::writeCSR(AttributeType *listArgs) {
     uint64_t addr;
     uint64_t csr;
     addr = csr_socaddr(&(*listArgs)[1]);
-    if (addr == ~0) {
+    if (addr == ~0u) {
         outf("Unknown CSR '%s'\n", (*listArgs)[1].to_string());
         return;
     }
@@ -322,11 +390,11 @@ void CmdParserService::writeMem(AttributeType *listArgs) {
     int bytes = static_cast<int>((*listArgs)[2].to_uint64());
 
     if ((*listArgs)[3].is_integer()) {
-        reinterpret_cast<uint64_t *>(tmpbuf_)[0] = (*listArgs)[3].to_uint64();
+        reinterpret_cast<uint64_t *>(tmpbuf_)[0] = val;
     } else if ((*listArgs)[3].is_list()) {
         for (unsigned i = 0; i < (*listArgs)[3].size(); i++) {
-            reinterpret_cast<uint64_t *>(tmpbuf_)[i] =
-                                            (*listArgs)[3][i].to_uint64();
+            val = (*listArgs)[3][i].to_uint64();
+            reinterpret_cast<uint64_t *>(tmpbuf_)[i] = val;
         }
     } else {
         outf("Wrong write format\n");
@@ -345,7 +413,7 @@ void CmdParserService::memDump(AttributeType *listArgs) {
     uint64_t addr = (*listArgs)[1].to_uint64();
     int len = static_cast<int>((*listArgs)[2].to_uint64());
     uint8_t *dumpbuf = tmpbuf_;
-    if (len > sizeof(tmpbuf_)) {
+    if (len > static_cast<int>(sizeof(tmpbuf_))) {
         dumpbuf = new uint8_t[len];
     }
 
@@ -385,6 +453,23 @@ int CmdParserService::outf(const char *fmt, ...) {
     outbuf_cnt_ += vsprintf(&outbuf_[outbuf_cnt_], fmt, arg);
     va_end(arg);
     return outbuf_cnt_;
+}
+
+void CmdParserService::addToHistory(const char *cmd) {
+    unsigned found = history_.size();
+    for (unsigned i = 0; i < history_.size(); i++) {
+        if (strcmp(cmd, history_[i].to_string()) == 0) {
+            found = i;
+            break;
+        }
+    }
+    if (found  ==  history_.size()) {
+        AttributeType new_cmd(cmd);
+        history_.add_to_list(&new_cmd);
+    } else if (found < (history_.size() - 1)) {
+        history_.swap_list_item(found, history_.size() - 1);
+    }
+    history_idx_ = history_.size();
 }
 
 }  // namespace debugger

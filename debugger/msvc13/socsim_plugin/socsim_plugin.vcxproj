@@ -100,6 +100,7 @@
     <ClInclude Include="..\..\src\common\iface.h" />
     <ClInclude Include="..\..\src\common\iservice.h" />
     <ClInclude Include="..\..\src\socsim_plugin\boardsim.h" />
+    <ClInclude Include="..\..\src\socsim_plugin\ringbuf.h" />
     <ClInclude Include="..\..\src\socsim_plugin\verilated\Vtop.h" />
     <ClInclude Include="..\..\src\socsim_plugin\verilated\Vtop__Inlines.h" />
     <ClInclude Include="..\..\src\socsim_plugin\verilated\Vtop__Syms.h" />

@@ -47,6 +47,7 @@ generic (
 port 
 ( 
     rst      : in std_logic;
+    soft_rst : in std_logic;
     clk_sys  : in std_logic;
     slvo     : in nasti_slave_in_type;
     msti     : in nasti_master_in_type;

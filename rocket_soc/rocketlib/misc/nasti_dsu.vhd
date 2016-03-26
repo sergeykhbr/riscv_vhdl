@@ -34,7 +34,8 @@ entity nasti_dsu is
     i_axi  : in nasti_slave_in_type;
     o_axi  : out nasti_slave_out_type;
     i_host : in host_in_type;
-    o_host : out host_out_type
+    o_host : out host_out_type;
+    o_soft_reset : out std_logic
   );
 end;
 
@@ -59,6 +60,10 @@ type registers is record
   waddr : std_logic_vector(11 downto 0);
   wdata : std_logic_vector(63 downto 0);
   rdata : std_logic_vector(63 downto 0);
+  -- Soft reset via CSR 0x782 MRESET doesn't work
+  -- so here I implement special register that will reset CPU via 'rst' input.
+  -- Otherwise I cannot load elf-file while CPU is not halted.
+  soft_reset : std_logic;
 end record;
 
 signal r, rin: registers;
@@ -79,16 +84,16 @@ begin
 
     if r.bank_axi.wstate = wtrans then
       -- 32-bits burst transaction
+      v.waddr := r.bank_axi.waddr(0)(15 downto 4);
       if r.bank_axi.wburst = NASTI_BURST_INCR and r.bank_axi.wsize = 4 then
          if r.bank_axi.waddr(0)(2) = '1' then
              v.state := writting;
-             v.wdata(31 downto 0) := i_axi.w_data(31 downto 0);
-         else
              v.wdata(63 downto 32) := i_axi.w_data(31 downto 0);
+         else
+             v.wdata(31 downto 0) := i_axi.w_data(31 downto 0);
          end if;
       else
          -- Write data on next clock.
-         v.waddr := r.bank_axi.raddr(0)(15 downto 4);
          if i_axi.w_strb(7 downto 0) /= X"00" then
             v.wdata := i_axi.w_data(63 downto 0);
          else
@@ -114,6 +119,10 @@ begin
            vhost.csr_req_bits_data := r.wdata;
            if (i_host.grant(htif_index) and i_host.csr_req_ready) = '1' then
                v.state := wait_resp;
+           end if;
+           -- Soft Reset
+           if r.waddr = X"782" then
+             v.soft_reset := r.wdata(0);
            end if;
       when wait_resp =>
            vhost.csr_resp_ready := '1';
@@ -147,6 +156,7 @@ begin
   end process;
 
   o_cfg  <= xconfig;
+  o_soft_reset <= r.soft_reset;
 
 
   -- registers:
@@ -158,6 +168,7 @@ begin
        r.waddr <= (others => '0');
        r.wdata <= (others => '0');
        r.rdata <= (others => '0');
+       r.soft_reset <= '0';
     elsif rising_edge(clk) then 
        r <= rin; 
     end if; 

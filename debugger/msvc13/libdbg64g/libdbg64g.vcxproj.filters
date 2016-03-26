@@ -27,6 +27,9 @@
     <Filter Include="Source Files\services\elfloader">
       <UniqueIdentifier>{0a033dcf-f4ce-4f06-adad-d5cbebd54ae1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\services\console">
+      <UniqueIdentifier>{05ae413a-fb17-42b1-80da-8edf4bb4cbbf}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\common\attribute.cpp">
@@ -49,6 +52,12 @@
     </ClCompile>
     <ClCompile Include="..\..\src\libdbg64g\services\elfloader\elfloader.cpp">
       <Filter>Source Files\services\elfloader</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\libdbg64g\services\console\console.cpp">
+      <Filter>Source Files\services\console</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\libdbg64g\services\console\cmdparser.cpp">
+      <Filter>Source Files\services\console</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -102,6 +111,24 @@
     </ClInclude>
     <ClInclude Include="..\..\src\libdbg64g\services\elfloader\elf_types.h">
       <Filter>Source Files\services\elfloader</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\coreservices\iconsole.h">
+      <Filter>Source Files\common\coreservices</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\coreservices\ikeylistener.h">
+      <Filter>Source Files\common\coreservices</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\libdbg64g\services\console\console.h">
+      <Filter>Source Files\services\console</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\api_types.h">
+      <Filter>Source Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\coreservices\ithread.h">
+      <Filter>Source Files\common\coreservices</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\libdbg64g\services\console\cmdparser.h">
+      <Filter>Source Files\services\console</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

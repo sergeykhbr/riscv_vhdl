@@ -219,6 +219,18 @@ class AttributeType : public IAttribute {
 
     }
 
+    void swap_list_item(unsigned n, unsigned m) {
+        unsigned tsize = u_.list[n].size_;
+        KindType tkind = u_.list[n].kind_;
+        int64_t tinteger = u_.list[n].u_.integer;
+        u_.list[n].size_ = u_.list[m].size_;
+        u_.list[n].kind_ = u_.list[m].kind_;
+        u_.list[n].u_.integer = u_.list[m].u_.integer;
+        u_.list[m].size_ = tsize;
+        u_.list[m].kind_ = tkind;
+        u_.list[m].u_.integer = tinteger;
+    }
+
     void realloc_list(unsigned size) {
         AttributeType * t1 = new AttributeType[size];
         for (unsigned i = 0; i < size_; i++) {

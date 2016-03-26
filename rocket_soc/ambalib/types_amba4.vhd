@@ -566,7 +566,7 @@ type unaligned_data_array_type is array (0 to CFG_WORDS_ON_BUS-1)
 --! Slave device states during reading value operation.
 type nasti_slave_rstatetype is (rwait, rtrans);
 --! Slave device states during writting data operation.
-type nasti_slave_wstatetype is (wwait, wtrans, whandshake);
+type nasti_slave_wstatetype is (wwait, wtrans);
 
 --! @brief Template bank of registers for any slave device.
 type nasti_slave_bank_type is record
@@ -589,13 +589,14 @@ type nasti_slave_bank_type is record
     wid    : std_logic_vector(CFG_ROCKET_ID_BITS-1 downto 0);
     wresp  : std_logic_vector(1 downto 0);  --! OK=0
     wuser  : std_logic;
+    b_valid : std_logic;
 end record;
 
 --! Reset value of the template bank of registers of a slave device.
 constant NASTI_SLAVE_BANK_RESET : nasti_slave_bank_type := (
     rwait, wwait,
     NASTI_BURST_FIXED, 0, (others=>(others=>'0')), 0, (others=>'0'), NASTI_RESP_OKAY, '0', '1',
-    NASTI_BURST_FIXED, 0, (others=>(others=>'0')), 0, (others=>'0'), NASTI_RESP_OKAY, '0'
+    NASTI_BURST_FIXED, 0, (others=>(others=>'0')), 0, (others=>'0'), NASTI_RESP_OKAY, '0', '0'
 );
 
 
@@ -769,14 +770,15 @@ package body types_amba4 is
             end if;
             -- End of transaction:
             if i_bank.wlen = 0 then
-                o_bank.wstate := whandshake;
+                o_bank.wstate := wwait;
+                o_bank.b_valid := '1';
             end if;
         end if;
-    when whandshake =>
-        if i.b_ready = '1' then
-            o_bank.wstate := wwait;
-        end if;
     end case;
+
+    if i.b_ready = '1' and i_bank.b_valid = '1' then
+        o_bank.b_valid := '0';
+    end if;
   end; -- procedure
 
 
@@ -965,11 +967,7 @@ begin
     ret.b_id := r.wid;
     ret.b_resp := r.wresp;
     ret.b_user := r.wuser;
-    if r.wstate = whandshake then
-      ret.b_valid := '1';
-    else
-      ret.b_valid := '0';
-    end if;
+    ret.b_valid := r.b_valid;
     return (ret);
 end;
 

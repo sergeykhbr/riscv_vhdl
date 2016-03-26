@@ -25,10 +25,12 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/socket.h>
+#include <sys/ioctl.h>
 #include <netdb.h>
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 #include <pthread.h>
+#include <fcntl.h>
 #include <termios.h>  // work with console
 #endif
 

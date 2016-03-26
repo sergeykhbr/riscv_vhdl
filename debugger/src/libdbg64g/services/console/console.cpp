@@ -16,31 +16,8 @@ namespace debugger {
 
 /** Class registration in the Core */
 static ConsoleServiceClass local_class_;
-/*
-static struct termios stored_settings;
-     
-void set_keypress(void) {
-    struct termios new_settings;
-     
-    tcgetattr(0,&stored_settings);
-     
-    new_settings = stored_settings;
-     
-    /// Disable canonical mode, and set buffer size to 1 byte
-    new_settings.c_lflag &= (~ICANON);
-    new_settings.c_cc[VTIME] = 0;
-    new_settings.c_cc[VMIN] = 1;
-     
-    tcsetattr(0,TCSANOW,&new_settings);
-    return;
-}
-     
-void reset_keypress(void)
-{
-    tcsetattr(0,TCSANOW,&stored_settings);
-    return;
-}
-*/
+
+static const int STDIN = 0;
 
 ConsoleService::ConsoleService(const char *name) : IService(name) {
     registerInterface(static_cast<IThread *>(this));
@@ -50,9 +27,27 @@ ConsoleService::ConsoleService(const char *name) : IService(name) {
 
     isEnable_.make_boolean(true);
     consumer_.make_string("");
+#if defined(_WIN32) || defined(__CYGWIN__)
+#else
+    struct termios new_settings;
+    tcgetattr(0, &original_settings_);
+    new_settings = original_settings_;
+     
+    /// Disable canonical mode, and set buffer size to 1 byte
+    new_settings.c_lflag &= ~(ICANON | ECHO);
+    new_settings.c_cc[VTIME] = 0;
+    new_settings.c_cc[VMIN] = 0;
+     
+    tcsetattr(STDIN, TCSANOW, &new_settings);
+    term_fd_ = fileno(stdin);
+#endif
 }
 
 ConsoleService::~ConsoleService() {
+#if defined(_WIN32) || defined(__CYGWIN__)
+#else
+    tcsetattr(STDIN, TCSANOW, &original_settings_);
+#endif
 }
 
 void ConsoleService::postinitService() {
@@ -83,7 +78,7 @@ void ConsoleService::busyLoop() {
         RISCV_sleep_ms(50);
     }
     loopEnable_ = false;
-    threadInit_.Handle = NULL;
+    threadInit_.Handle = 0;
 }
 
 void ConsoleService::writeBuffer(const char *buf) {
@@ -126,6 +121,9 @@ bool ConsoleService::isData() {
 #if defined(_WIN32) || defined(__CYGWIN__)
     return _kbhit() ? true: false;
 #else
+    int bytesWaiting;
+    ioctl(STDIN, FIONREAD, &bytesWaiting);
+    return bytesWaiting != 0;
 #endif
 }
 
@@ -133,6 +131,11 @@ int ConsoleService::getData() {
 #if defined(_WIN32) || defined(__CYGWIN__)
     return _getch();
 #else
+   unsigned char ch;
+   //int err = 
+   read(term_fd_, &ch, sizeof(ch));
+   return ch;
+    //return getchar();
 #endif
 }
 

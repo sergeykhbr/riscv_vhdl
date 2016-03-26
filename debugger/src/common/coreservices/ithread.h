@@ -20,7 +20,7 @@ public:
     IThread() : IFace(IFACE_THREAD) {
         loopEnable_ = false;
         interrupt_ = false;
-        threadInit_.Handle = NULL;
+        threadInit_.Handle = 0;
     }
 
     /** create and start seperate thread */

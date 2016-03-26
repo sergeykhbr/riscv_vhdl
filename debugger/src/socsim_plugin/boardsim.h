@@ -14,11 +14,13 @@
 #include "coreservices/iudp.h"
 #include "coreservices/ithread.h"
 #include "iboardsim.h"
+#include "ringbuf.h"
 #ifdef USE_VERILATED_CORE
 #include "verilated/Vtop.h"
 #endif
 
 namespace debugger {
+
 
 class BoardSim : public IService, 
                  public IThread,

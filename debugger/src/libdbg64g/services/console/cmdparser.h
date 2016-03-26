@@ -63,6 +63,9 @@ private:
     void regs(AttributeType *listArgs);
 
     int outf(const char *fmt, ...);
+    void addToHistory(const char *cmd);
+
+    bool convertToWinKey(uint8_t symb);
 
 private:
     AttributeType console_;
@@ -76,7 +79,9 @@ private:
     ITap *itap_;
     IElfLoader *iloader_;
     std::string cmdLine_;
-    uint8_t symb_z_;
+    std::string unfinshedLine_; // store the latest whe we look through history
+    uint32_t symb_seq_;         // symbol sequence
+    uint32_t symb_seq_msk_;
     char cmdbuf_[4096];
     char outbuf_[4096];
     int outbuf_cnt_;

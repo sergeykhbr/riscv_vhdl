@@ -40,6 +40,7 @@ generic (
 );
 port ( 
     rst      : in std_logic;
+    soft_rst : in std_logic;
     clk_sys  : in std_logic;
     slvo     : in nasti_slave_in_type;
     msti     : in nasti_master_in_type;
@@ -74,6 +75,7 @@ architecture arch_rocket_l1only of rocket_l1only is
   );
   
   signal nrst : std_logic;
+  signal cpu_rst : std_logic;
   
   signal cto : tile_cached_out_type;
   signal cti : tile_cached_in_type;
@@ -167,10 +169,11 @@ begin
   mstcfg1 <= xmstconfig1;
   mstcfg2 <= xmstconfig2;
   nrst <= not rst;
+  cpu_rst <= rst or soft_rst;
    
 	inst_tile: RocketTile PORT MAP(
 		clk => clk_sys,
-		reset => rst,
+		reset => cpu_rst,
 		io_cached_0_acquire_ready => cti.acquire_ready,
 		io_cached_0_acquire_valid => cto.acquire_valid,
 		io_cached_0_acquire_bits_addr_block => cto.acquire_bits_addr_block,

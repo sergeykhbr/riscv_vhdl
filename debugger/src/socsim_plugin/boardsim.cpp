@@ -152,7 +152,7 @@ void BoardSim::busyLoop() {
         }
     }
     loopEnable_ = false;
-    threadInit_.Handle = NULL;
+    threadInit_.Handle = 0;
 }
 
 uint32_t BoardSim::read32(uint8_t *buf) {

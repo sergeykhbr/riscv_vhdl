@@ -23,7 +23,16 @@ entity rocket_soc_tb is
 end rocket_soc_tb;
 
 architecture behavior of rocket_soc_tb is
+   constant EDCL_START_CLK : integer := 1000;
+   constant EDCL_WRITE_LEN : integer := 178;
+   constant EDCL_WRITE : std_logic_vector(EDCL_WRITE_LEN*4-1 downto 0) := 
+   X"5d207098001032badcacefebeb800000e300450000000029bf11000c8a00a00c8a00f07788556600a2ab86000000200100014000000000deef1000deef2000deef3000deef4000deef5000deef6000deef7000deef9701d69f";
+   
 
+   constant EDCL_START_CLK2 : integer := 1500;
+   constant EDCL_WR_MRESET_LEN : integer := 130;
+   constant EDCL_WR_MRESET : std_logic_vector(4*EDCL_WR_MRESET_LEN-1 downto 0):= 
+   X"5d207098001032badcacefebeb80000062004500000000293e11000c8a00a00c8a00f07788556600219673000000604000088087021000000000000000134d4ae5";
 
   -- input/output signals:
   signal i_rst : std_logic := '1';
@@ -50,6 +59,10 @@ architecture behavior of rocket_soc_tb is
 
   signal o_emdc    : std_logic;
   signal io_emdio  : std_logic;
+  signal i_rxd  : std_logic_vector(3 downto 0) := "0000";
+  signal i_rxdv : std_logic := '0';
+  signal o_txd  : std_logic_vector(3 downto 0);
+  signal o_txdv : std_logic;
 
   signal adc_cnt : integer := 0;
   signal clk_cur: std_logic := '1';
@@ -57,6 +70,7 @@ architecture behavior of rocket_soc_tb is
   signal iClkCnt : integer := 0;
   signal iErrCnt : integer := 0;
   signal iErrCheckedCnt : integer := 0;
+  signal iEdclCnt : integer := 0;
   
 component rocket_soc is port 
 ( 
@@ -127,6 +141,17 @@ begin
       clk_next := not clk_cur;
       if (clk_next = '1' and clk_cur = '0') then
         check_clk_bus <= '1';
+      elsif (clk_next = '0' and clk_cur = '1') then
+        if iClkCnt >= EDCL_START_CLK and iClkCnt < (EDCL_START_CLK + EDCL_WRITE_LEN) then
+           i_rxd <= EDCL_WRITE(4*(EDCL_WRITE_LEN - (iClkCnt-EDCL_START_CLK))-1 downto 4*(EDCL_WRITE_LEN - (iClkCnt-EDCL_START_CLK))-4);
+           i_rxdv <= '1';
+        elsif iClkCnt >= EDCL_START_CLK2 and iClkCnt < (EDCL_START_CLK2 + EDCL_WR_MRESET_LEN) then
+           i_rxd <= EDCL_WR_MRESET(4*(EDCL_WR_MRESET_LEN - (iClkCnt-EDCL_START_CLK2))-1 downto 4*(EDCL_WR_MRESET_LEN - (iClkCnt-EDCL_START_CLK2))-4);
+           --i_rxdv <= '1'; -- RESET CPU
+        else
+           i_rxd <= "0000";
+           i_rxdv <= '0';
+        end if;
       end if;
 
       wait for 1 ps;
@@ -198,16 +223,16 @@ begin
     i_gmiiclk_p => '0',
     i_gmiiclk_n => '1',
     o_egtx_clk  => open,
-    i_etx_clk   => '0',
-    i_erx_clk   => '0',
-    i_erxd      => "0000",
-    i_erx_dv    => '0',
+    i_etx_clk   => i_sclk_p,
+    i_erx_clk   => i_sclk_p,
+    i_erxd      => i_rxd,
+    i_erx_dv    => i_rxdv,
     i_erx_er    => '0',
     i_erx_col   => '0',
     i_erx_crs   => '0',
     i_emdint    => '0',
-    o_etxd      => open,
-    o_etx_en    => open,
+    o_etxd      => o_txd,
+    o_etx_en    => o_txdv,
     o_etx_er    => open,
     o_emdc      => o_emdc,
     io_emdio    => io_emdio,
