@@ -108,9 +108,9 @@ set_property IOSTANDARD LVCMOS25 [get_ports o_uart1_td]
 
 # Ethernet signals
 set_property PACKAGE_PIN G8 [get_ports i_gmiiclk_p]
-set_property IOSTANDARD LVCMOS25 [get_ports i_gmiiclk_p]
 set_property PACKAGE_PIN G7 [get_ports i_gmiiclk_n]
-set_property IOSTANDARD LVCMOS25 [get_ports i_gmiiclk_n]
+
+set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets -of [get_pins igbebuf0/xk7.x1/x1/O]]
 
 set_property PACKAGE_PIN J21 [get_ports io_emdio]
 set_property IOSTANDARD LVCMOS25 [get_ports io_emdio]

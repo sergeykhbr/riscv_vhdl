@@ -1,0 +1,62 @@
+include util.mak
+
+CC=riscv64-unknown-elf-gcc
+CPP=riscv64-unknown-elf-gcc
+OBJDUMP=riscv64-unknown-elf-objdump
+
+CFLAGS= -c -fPIC -g -O2
+LDFLAGS=-static -T app.ld -nostartfiles
+INCL_KEY=-I
+DIR_KEY=-B
+
+
+# include sub-folders list
+INCL_PATH=\
+	$(TOP_DIR)common \
+	$(TOP_DIR)helloworld/src
+
+# source files directories list:
+SRC_PATH = \
+	$(TOP_DIR)helloworld/src
+
+LIB_NAMES = \
+	gcc \
+	stdc++ \
+	c \
+	m
+
+VPATH = $(SRC_PATH)
+
+SOURCES = \
+	main \
+	helloworld
+
+OBJ_FILES = $(addsuffix .o,$(SOURCES))
+EXECUTABLE = helloworld
+DUMPFILE = $(EXECUTABLE).dump
+
+all: example
+
+.PHONY: $(EXECUTABLE)
+
+
+example: $(EXECUTABLE)
+
+$(EXECUTABLE): $(OBJ_FILES)
+	echo $(CPP) $(LDFLAGS) $(addprefix $(OBJ_DIR)/,$(OBJ_FILES)) -o $(addprefix $(ELF_DIR)/,$@) $(addprefix -l,$(LIB_NAMES))
+	$(CPP) $(LDFLAGS) $(addprefix $(OBJ_DIR)/,$(OBJ_FILES)) -o $(addprefix $(ELF_DIR)/,$@) $(addprefix -l,$(LIB_NAMES))
+	$(ECHO) "\n  helloworld has been built successfully.\n"
+
+%.o: %.cpp
+	echo $(CPP) $(CFLAGS) $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $(addprefix $(OBJ_DIR)/,$@)
+	$(CPP) $(CFLAGS) $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $(addprefix $(OBJ_DIR)/,$@)
+
+%.o: %.c
+	echo $(CC) $(CFLAGS) $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $(addprefix $(OBJ_DIR)/,$@)
+	$(CC) $(CFLAGS) $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $(addprefix $(OBJ_DIR)/,$@)
+
+%.o: %.S
+	echo $(CC) $(CFLAGS) -D__ASSEMBLY__=1 $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $(addprefix $(OBJ_DIR)/,$@)
+	$(CC) $(CFLAGS) -D__ASSEMBLY__=1 $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $(addprefix $(OBJ_DIR)/,$@)
+
+

@@ -9,6 +9,9 @@ fw/*
 !fw/common/
 !fw/boot/
 fw/boot/linuxbuild/
+!fw/helloworld/
+fw/helloworld/makefiles/obj/
+fw/helloworld/makefiles/bin/
 patches/
 work/tb/*
 !work/tb/rocket_soc_tb.vhd
