@@ -22,6 +22,7 @@ public:
     virtual void writeCommand(const char *cmd) =0;
     virtual int registerKeyListener(IFace *iface) =0;
     virtual void setCmdString(const char *buf) =0;
+    virtual void enableLogFile(const char *filename) =0;
 };
 
 }  // namespace debugger

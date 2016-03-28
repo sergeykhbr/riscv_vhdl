@@ -72,6 +72,7 @@ private:
     AttributeType tap_;
     AttributeType loader_;
     AttributeType history_;
+    AttributeType history_size_;
     // Store each CSR as list: ['Name',<address>,[description], others]
     AttributeType listCSR_;
 
@@ -83,9 +84,11 @@ private:
     uint32_t symb_seq_;         // symbol sequence
     uint32_t symb_seq_msk_;
     char cmdbuf_[4096];
-    char outbuf_[4096];
+    char *outbuf_;
+    int outbuf_size_;
     int outbuf_cnt_;
-    uint8_t tmpbuf_[4096];
+    uint8_t *tmpbuf_;
+    int tmpbuf_size_;
     unsigned history_idx_;
 };
 

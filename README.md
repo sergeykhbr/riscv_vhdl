@@ -1,9 +1,15 @@
 System-On-Chip template based on Rocket-chip (RISC-V ISA). VHDL implementation.
 =====================
 
-This repository contains all neccessary files to build ready-to-use 
-top-level of the System-on-Chip with the CPU and common set of the peripheries
-for some well-known development FPGA boards. 
+This repository provides open source System-on-Chip implementation based on
+64-bits CPU "Rocket-chip" distributed under BSD license. SOC source files 
+either include general set of peripheries, FPGA CADs projects files, own 
+implementation of the Windows/Linux debugger and several examples that help
+to run your firmware on almost any FPGA boards. 
+Satellite Navigation (GPS/GLONASS/Galileo) modules were stubbed in this 
+repository and can be requested on
+[gnss-sensor.com](http://www.gnss-sensor.com).
+
 
 ## What is Rocket-chip and [RISC-V ISA](http://www.riscv.org)?
 
@@ -16,22 +22,56 @@ at the University of California, Berkeley.
 
 Parameterized generator of the Rocket-chip can be found here:
 [https://github.com/ucb-bar](https://github.com/ucb-bar)
+
+
+## Developing functionality (master -> v3.0)
+
+We think that SOC **v2.0** configuration provides good performance and
+stability that allow us to run Satellite Navigation firmware and
+compute GPS/GLONASS positions. So, generally we will be focused on
+software and tools developing for **v3.0** release:
+
+- Porting open source Real-Time Operation System for Internet of Things 
+  Devices provided by [Zephyr Project](https://www.zephyrproject.org/). 
+  Early support for the Zephyr Project includes Intel Corporation, 
+  NXP Semiconductors N.V., Synopsys, Inc. and UbiquiOS Technology Limited.
+- Graphical User Interface (GUI) for the debugger based on QT-libraries
+  with significantly increasing of the debugger functionality.
+- Debugger integration with Python 2.7 to provide scripting tool for the
+  tests automation.
    
+
+## Implemented functionality (v2.0)
+
+To get branch *v2.0* use the following git command:
+
+    $ git clone -b v2.0 https://github.com/sergeykhbr/riscv_vhdl.git
+
+This release add to following features to *v1.0*:
+
+- **Debug Support Unit** (DSU) for the access to all CPU registers (CSRs).
+- **10/100 Ethernet MAC with EDCL** that allows to debug processor from the
+  reset vector redirecting UDP requests directly on system bus.
+- GNSS engine and RF-mezzanine card support.
+- **Test Mode** (DIP[0]=1) that allows to use SOC with or without
+  *RF-mezzanine card*.
+- Master/Slave AMBA AXI4 interface refactoring.
+- Debugger software for Windows and Linux with built-in simulator and
+  plugins support.
+- Portable asynchronous FIFO implementation allowing to connect modules to the 
+  System BUS from a separate clock domains (ADC clock domain):
+- A lot of system optimizations.
+
 
 ## Implemented functionality (v1.0)
 
-Use branch *v1.0* to get verified and simplified revision of the SOC with
-the general set of peripheries and without GNSS related functionality.
+The initial *v1.0* release provides base SOC functionality with minimal
+set of peripheries. To get this version use:
 
     $ git clone -b v1.0 https://github.com/sergeykhbr/riscv_vhdl.git
 
-Version 1.0 **doesn't require _RF front-end_ mezzanine card** and simplify
-demonstration procedure. v1.0 branch implements:
-
-- Pre-configured single *"Rocket"* core (Verilog) integrated in our VHDL top
-  level.
-- System-on-Chip top-level with the common set of peripheries with the 
-  AMBA AXI4 interfaces: GPIO, LEDs, UART, IRQ controller etc.
+- Proof-of-concept VHDL SOC based on Verilog generated core *"Rocket-chip"*.
+- Peripheries with AMBA AXI4 interfaces: GPIO, LEDs, UART, IRQ controller etc.
 - Plug'n-Play support.
 - Configuration and constraint files for ML605 (Virtex6) and KC705 (Kintex7) 
   FPGA boards.
@@ -40,16 +80,22 @@ demonstration procedure. v1.0 branch implements:
   into internal SRAM during boot-stage.
 - *"Hello World"* example.
 
-## Final result without modification of code
+
+## FPGA output in TEST_MODE
+
+FPGA pre-built images either as built from sources without modifications
+provide the following output in TEST_MODE that should be manually switched 
+using jumper DIP[0] (*i_int_clkrf* signal).
 
 * LEDs sequential switching;
-* UART outputs Plug'n'Play configuraiton message with 1 sec period
+* UART outputs Plug'n'Play configuration message with 1 sec period
   (115200 baud).
 
 ```
     Boot . . .OK
     # RISC-V: Rocket-Chip demonstration design
-    # HW version: 0x20160115
+    # HW version: 0x20160316
+    # FW id: 20160321
     # Target technology: Virtex6
     # AXI4: slv0: GNSS Sensor Ltd.    Boot ROM
     #    0x00000000...0x00001FFF, size = 8 KB
@@ -63,42 +109,40 @@ demonstration procedure. v1.0 branch implements:
     #    0x80000000...0x80000FFF, size = 4 KB
     # AXI4: slv5: GNSS Sensor Ltd.    Interrupt Controller
     #    0x80002000...0x80002FFF, size = 4 KB
-    # AXI4: slv6: GNSS Sensor Ltd.    GNSS Engine
+    # AXI4: slv6: GNSS Sensor Ltd.    GNSS Engine stub
     #    0x80003000...0x80003FFF, size = 4 KB
-    # AXI4: slv7: GNSS Sensor Ltd.    Dummy device
-    #    0x00000000...0x00000FFF, size = 4 KB
-    # AXI4: slv8: GNSS Sensor Ltd.    Plug'n'Play support
+    # AXI4: slv7: GNSS Sensor Ltd.    RF front-end controller
+    #    0x80004000...0x80004FFF, size = 4 KB
+    # AXI4: slv8: Empty slot
+    # AXI4: slv9: GNSS Sensor Ltd.    Ethernet MAC
+    #    0x80040000...0x8007FFFF, size = 256 KB
+    # AXI4: slv10: GNSS Sensor Ltd.    Debug Support Unit (DSU)
+    #    0x80080000...0x8008FFFF, size = 64 KB
+    # AXI4: slv11: GNSS Sensor Ltd.    Plug'n'Play support
     #    0xFFFFF000...0xFFFFFFFF, size = 4 KB
+      RF front-end init . . .skipped
+    !!!!!!! MAC post init !!!!!!!!!
+    gbit . . .disable
+    EDCL . . .available
+    EDCL . . .enable
+    PHYADDR = 07
+    TxTable = 0x10005b08
+    RxTable = 0x10005f08
+    !!!!!! MAC Epoch listener!!!!!!
+    control = c4000000
+    status  = 00000000
+    mdio    = 7949384a
+    MDIO is busy
+    link is OK
+    IP = 192.168.0.51
 ```
-
-## Implemented functionality (master -> v2.0)
-
-    $ git clone https://github.com/sergeykhbr/riscv_vhdl.git
-
-  Current *master* version adds new functionality to the v1.0 branch:
-
-- Portable asyncronous FIFO implementation allowing to connect modules to the 
-  System BUS from a separate clock domains (ADC clock domain):
-     * Fast Search Engines 
-     * GNSS Engine
-- Ethernet MAC 10/100Mb (gigabit MAC by request) with the debug function (EDCL)
-  that allows redirect UDP requests directly on system BUS.
-- Debug Support Unit (DSU) provides access to all processors CSRs.
-- GNSS modules are distributeds as a netlist files (in \*.ngc format) or as 
-  a stubs.
-- By default GNSS is disabled in *confg_common.vhd* file that makes *master*
-  version very close to the *v1.0* branch by its functionality.
-- Using *master* trunk without *RF front-end* is **possible** in TEST_MODE.
-  Enabling TEST_MODE in a final 2.0 version will require manual switching
-  of the configuration jumper (*i_int_clkrf*) on board.
 
 ## How to build and run FPGA bitfile on ML605 board (Virtex6)
 
 - Open project file for Xilinx ISE14.7 *prj/ml605/rocket_soc.xise*.
-- Edit two configuration constants *CFG_SIM_BOOTROM_HEX* and 
-  *CFG_SIM_FWIMAGE_HEX* in file **work/comfig_common.vhd** with the correct
-  string values accordingly with your project directory.
-- Generate programming file and load it into FPGA.
+- Edit configuration constants in file **work/comfig_common.vhd** if needed.
+  (Skip this step by default).
+- Generate bit-file and load it into FPGA.
 - You should see a single output message in uart port as follow (use button 
   "*Center*" to reset system and repead message):
 
@@ -107,42 +151,71 @@ demonstration procedure. v1.0 branch implements:
     ADC clock not found. Enable DIP int_rf.
 ```
  
-- **Switch "ON" DIP[0]** (i_int_clkrf) to enable *TEST Mode* that enables
+- **Switch "ON" DIP[0]** (i_int_clkrf) to enable *TEST_MODE* that enables
   ADC clock generation as sys_clk/4.
 - Now you should see plug'n'play information messages with 1 second period.
 - For Xilinx KC705 board use Vivado project  *prj/kc705/rocket_chip.xpr*.
 
 
-## Simulation with the ModelSim
+## Simulation with ModelSim
 
-1. Create new project.
-2. Create libraries with the following names using ModelSim **libraries** view:
+1. Open project file *prj/modelsim/rocket.mpf*.
+2. Compile project files.
+3. If you get an errors for all files remove and re-create the following 
+   library in ModelSim library view: 
      * techmap
+     * ambalib
      * commonlib
      * rocketlib
      * gnsslib
      * work (was created by default)
-3. Using project browser create the same folders structure like in the 
-   *riscv_vhdl*. On the top level of the project should be folders matching
-   to the libraries names and they should include all exist sub-folders.
-4. Add existing files into the proper folder using righ-click menu of the
-   project browser in ModelSim.
-     * Add all files ".._tech.vhd" and ".._inferred.vhd"
-     * Don't include files ".._v6.vhd", ".._k7.vhd" etc.
-5. Make sure that all files in libraries folder will be compiled into appropriate
-   VHDL library. **_By default all files will be compiled into 'work' library_** 
-   and you should fix that assignments on appropriate ones.
-6. Use *config_common.vhd* and *config_msim.vhd* to configurate target for the
-   behaviour simulation.
-7. Use *work/tb/rocket_soc_tb.vhd* to run simulation.
-8. Default firmware does the following things:
-     * Switching LEDs;
-     * Print information into UART;
-     * Check Interupt controller
+4. Use *work/tb/rocket_soc_tb.vhd* to run simulation.
+5. Testbench allows to check the following things:
+     * LEDs switching
+     * UART output 
+     * Interrupt controller
+     * UDP/EDCL transaction via Ethernet
+     * Access to CSR via Ethernet + DSU.
      * and other.
 
 
-## How to build your own firmware
+## Debugger
+
+Since revision v2.0 we provide open source platform debugger. The pre-built
+binaries can be downloaded [here](http://www.gnss-sensor.com/index.php?LinkID=2016).
+Instruction of how to connect FPGA board via Ethernet your can find here.
+Just after successful connection with FPGA target your can interact
+with RISC-V SOC by reading/writing memory, CSR register or load
+new elf-file.
+
+```
+    riscv# csr MCPUID
+    CSR[f00] => 8000000000041101
+        Base: RV64IAMS
+    riscv# read 0x204 20
+    [0000000000000200]:  00 00 02 13 00 00 01 93 00 00 01 13 .. .. .. ..
+    [0000000000000210]:  .. .. .. .. .. .. .. .. 00 00 03 13 00 00 02 93
+    riscv# exit
+```
+
+Full debugger configuration including plugins states is stored in file
+**config.json**. You can manually define CSR names and addresses, 
+enable/disable platform specific functionality. To enable SOC PC-simulator,
+for an example, change value of attribute *"Enable"* in instance of
+**BoardSimClass**:
+
+```
+     CONFIG["Services"][n]["Class"] == "BoardSimClass"
+         ["Enable",true]
+```
+
+This simulator is using [Verilated](http://www.veripool.org/wiki/verilator) 
+C++ model of CPU with functional models of other devices that exactly match
+to behavior of the real RTL simulation.
+To get more information see debugger's description.
+
+
+## Setup GCC toolchain
 
   You can find step-by-step instruction of how to build your own
 toolchain on [riscv.org](http://riscv.org/software-tools/). If you would like
@@ -160,24 +233,50 @@ as follows:
     $ tar -xzvf gnu-toolchain-rv64ima.tar.gz gnu-toolchain-rv64ima
     $ export PATH=/home/your_path/gnu-toolchain-rv64ima/bin:$PATH
 
+If you would like to generate hex-file used for ROM initialization you probably
+need tool *'elf2raw'* and *'libfesvr.so'* library that are not part of the GCC
+toolchain. I've put them into *'libexttools'* sub-folder and to use them your
+should copy files into *usr/bin* directory or define environment variable:
 
-## RISC-V Firmware example for the Rocket-chip
+    $ export LD_LIBRARY_PATH=/home/your_path/gnu-toolchain-rv64ima/libexttools
 
-  So, now you can build your own firmware image and create hex-file that
-can be directly used in VHDL SOC (*rocket_soc/work/config_common.vhd*) to 
-initialize Boot ROM image (FW ROM is the additional option).
 
-  RISC-V "Hello World" example is available in *./rocket_soc/fw/boot* 
-directory. It implements general functionality for the Rocket-chip based 
-system, such as:
-- Initial Rocket-chip boot-up
-- Interrupt handling setup
-- UART output
-- LED switching
-- Target type auto-detection (RTL simulatation or not)
-- Coping image from FW ROM to SRAM using libc method *memcpy()*
+## Build and run 'Hello World' example.
 
-To build this example use:
+Build example:
+
+    $ cd /home/your_path/rocket_soc/fw/helloworld/makefiles
+    $ make
+
+Run debugger console:
+
+    $ ./git_path/debugger/linuxbuild/bin/riscvdbg
+
+Load elf-file via Ethernet using debugger console:
+    
+    #riscv loadelf bin/helloworld
+
+You should see something like:
+
+```
+    riscv# loadelf e:/helloworld
+    [loader0]: Loading '.text' section
+    [loader0]: Loading '.eh_frame' section
+    [loader0]: Loading '.rodata.str1.8' section
+    [loader0]: Loading '.rodata' section
+    [loader0]: Loading '.data' section
+    [loader0]: Loading '.sdata' section
+    [loader0]: Loading '.sbss' section
+    [loader0]: Loading '.bss' section
+    [loader0]: Loaded: 42912 B
+```
+
+Just after image loading finished debugger clears reset CPU signal and starts
+execution. This example prints only once UART message *'Hello World - 1'*,
+so if you'd like to repeat test reload image using **loadelf** command.
+
+Now you can also generate HEX-file for ROM initialization to do that
+see other example with **bootrom** implementation
 
     $ cd rocket_soc/fw/boot/makefiles
     $ make
@@ -188,12 +287,15 @@ Opened directory contains the following files:
 - _bootimage.dump_  - disassembled file for the verification.
 - *_bootimage.hex_* - HEX-file for the Boot ROM intialization.
 
-Specify the correct path to file *_bootimage.hex_* in SOC configuraiton file
-for this open file *rocket_soc/work/config_common.vhd* and set the correct 
-value to *_CFG_SIM_BOOTROM_HEX_* constant.
+You can also check *bootimage.hex* and memory dump for consistence:
 
-I hope your are also here and run your firmware on RISC-V system.
+    #riscv dump 0 8192 dump.hex hex
 
+I hope your also have run firmware on RISC-V system successfully.
+
+My usual FPGA setup is ML605 board and debugger that is running on Windows 7
+from Visual Studio project, so other target configurations (linux + KC705)
+could contain errors that are fixing with a small delay. Let me know if see one.
 
 ## Doxygen project documentation
 

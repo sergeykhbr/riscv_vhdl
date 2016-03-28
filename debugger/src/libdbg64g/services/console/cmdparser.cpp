@@ -28,18 +28,24 @@ CmdParserService::CmdParserService(const char *name) : IService(name) {
     registerAttribute("Tap", &tap_);
     registerAttribute("Loader", &loader_);
     registerAttribute("History", &history_);
+    registerAttribute("HistorySize", &history_size_);
     registerAttribute("ListCSR", &listCSR_);
 
     console_.make_string("");
     tap_.make_string("");
     loader_.make_string("");
     history_.make_list(0);
+    history_size_.make_int64(4);
     listCSR_.make_list(0);
     history_idx_ = 0;
     symb_seq_msk_ = 0xFF;
+    tmpbuf_ = new uint8_t[tmpbuf_size_ = 4096];
+    outbuf_ = new char[outbuf_size_ = 4096];
 }
 
 CmdParserService::~CmdParserService() {
+    delete [] tmpbuf_;
+    delete [] outbuf_;
 }
 
 void CmdParserService::postinitService() {
@@ -176,6 +182,7 @@ void CmdParserService::processLine(const char *line) {
     if (strcmp(listArgs[0u].to_string(), "help") == 0) {
         outf("** List of supported commands: **\n");
         outf("      loadelf   - Load ELF-file\n");
+        outf("      log       - Enable log-file\n");
         outf("      memdump   - Dump memory to file\n");
         outf("      csr       - Access to CSR registers\n");
         outf("      write     - Write memory\n");
@@ -189,6 +196,16 @@ void CmdParserService::processLine(const char *line) {
             outf("    Load ELF-file to SOC target memory.\n");
             outf("Example:\n");
             outf("    load /home/riscv/image.elf\n");
+        }
+    } else if (strcmp(listArgs[0u].to_string(), "log") == 0) {
+        if (listArgs.size() == 2) {
+            iconsole_->enableLogFile(listArgs[1].to_string());
+        } else {
+            outf("Description:\n");
+            outf("    Write console output into specified file.\n");
+            outf("Example:\n");
+            outf("    log session.log\n");
+            outf("    log /home/riscv/session.log\n");
         }
     } else if (strcmp(listArgs[0u].to_string(), "memdump") == 0) {
         if (listArgs.size() == 4 || listArgs.size() == 5) {
@@ -363,6 +380,11 @@ void CmdParserService::readMem(AttributeType *listArgs) {
     uint64_t addr_start, addr_end, inv_i;
     uint64_t addr = (*listArgs)[1].to_uint64();
     int bytes = static_cast<int>((*listArgs)[2].to_uint64());
+    if (bytes > tmpbuf_size_) {
+        delete [] tmpbuf_;
+        tmpbuf_size_ = bytes;
+        tmpbuf_ = new uint8_t[tmpbuf_size_ + 1];
+    }
     addr_start = addr & ~0xFll;
     addr_end = (addr + bytes + 15 )& ~0xFll;
 
@@ -413,7 +435,7 @@ void CmdParserService::memDump(AttributeType *listArgs) {
     uint64_t addr = (*listArgs)[1].to_uint64();
     int len = static_cast<int>((*listArgs)[2].to_uint64());
     uint8_t *dumpbuf = tmpbuf_;
-    if (len > static_cast<int>(sizeof(tmpbuf_))) {
+    if (len > tmpbuf_size_) {
         dumpbuf = new uint8_t[len];
     }
 
@@ -448,6 +470,13 @@ void CmdParserService::regs(AttributeType *listArgs) {
 }
 
 int CmdParserService::outf(const char *fmt, ...) {
+    if (outbuf_cnt_ > (outbuf_size_ - 128)) {
+        char *t = new char [2*outbuf_size_];
+        memcpy(t, outbuf_, outbuf_size_);
+        delete [] outbuf_;
+        outbuf_size_ *= 2;
+        outbuf_ = t;
+    }
     va_list arg;
     va_start(arg, fmt);
     outbuf_cnt_ += vsprintf(&outbuf_[outbuf_cnt_], fmt, arg);
@@ -466,6 +495,11 @@ void CmdParserService::addToHistory(const char *cmd) {
     if (found  ==  history_.size()) {
         AttributeType new_cmd(cmd);
         history_.add_to_list(&new_cmd);
+
+        unsigned min_size = static_cast<unsigned>(history_size_.to_int64());
+        if (history_.size() >= 2*min_size) {
+            history_.trim_list(0, min_size);
+        }
     } else if (found < (history_.size() - 1)) {
         history_.swap_list_item(found, history_.size() - 1);
     }

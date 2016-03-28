@@ -55,6 +55,7 @@ const char *default_config =
                 "['Console','console0'],"
                 "['Tap','edcltap'],"
                 "['Loader','loader0'],"
+                "['HistorySize',64],"
                 "['History',["
                      "'csr MCPUID',"
                      "'read 0xfffff004 128'"

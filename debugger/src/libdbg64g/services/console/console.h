@@ -33,6 +33,7 @@ public:
     virtual void writeCommand(const char *cmd);
     virtual void setCmdString(const char *buf);
     virtual int registerKeyListener(IFace *iface);
+    virtual void enableLogFile(const char *filename);
 
 protected:
     /** IThread interface */
@@ -41,7 +42,6 @@ protected:
 private:
     bool isData();
     int getData();
-    void update();
     void clearLine();
 
 private:
@@ -49,8 +49,9 @@ private:
     AttributeType consumer_;
     AttributeType keyListeners_;
     IKeyListener *iconsumer_;
-    char curline_[4096];
+    char tmpbuf_[4096];
     std::string cmdLine_;
+    FILE *logfile_;
 #if defined(_WIN32) || defined(__CYGWIN__)
 #else
     struct termios original_settings_;

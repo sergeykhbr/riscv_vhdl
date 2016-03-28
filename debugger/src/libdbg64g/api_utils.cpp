@@ -310,7 +310,9 @@ bool is_single_line(const char *s) {
     if (*s == '[') {
         const char *pcheck = s + 1;
         int item_cnt = 0;
+        int symbol_cnt = 0;
         while (*pcheck != ']') {
+            symbol_cnt++;
             if (*pcheck == ',') {
                 item_cnt++;
             } else if (*pcheck == '[' || *pcheck == '{') {
@@ -319,7 +321,7 @@ bool is_single_line(const char *s) {
             }
             ++pcheck;
         }
-        if (item_cnt <= 1) {
+        if (item_cnt <= 2 && symbol_cnt < 80) {
             ret = true;
         }
     }
@@ -359,7 +361,7 @@ const char *writeAttrToFile(FILE *f, const char *s, int depth) {
                 return ret;
             }
         } else if ((*ret) == '[' || (*ret) == '{') {
-            do_single_line = is_single_line(s);
+            do_single_line = is_single_line(ret);
             if (!do_single_line) {
                 ret = writeAttrToFile(f, ret + 1, depth + 1);
             }

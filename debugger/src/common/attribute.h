@@ -216,7 +216,13 @@ class AttributeType : public IAttribute {
     void add_to_list(const AttributeType *item) {
         realloc_list(size()+1);
         (*this)[size()-1] = (*item);
+    }
 
+    void trim_list(unsigned start, unsigned end) {
+        for (unsigned i = start; i < (size_ - end); i++) {
+            u_.list[start + i] = u_.list[end + i];
+        }
+        size_ -= (end - start);
     }
 
     void swap_list_item(unsigned n, unsigned m) {

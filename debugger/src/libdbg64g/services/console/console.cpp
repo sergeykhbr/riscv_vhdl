@@ -27,6 +27,7 @@ ConsoleService::ConsoleService(const char *name) : IService(name) {
 
     isEnable_.make_boolean(true);
     consumer_.make_string("");
+    logfile_ = NULL;
 #if defined(_WIN32) || defined(__CYGWIN__)
 #else
     struct termios new_settings;
@@ -44,6 +45,9 @@ ConsoleService::ConsoleService(const char *name) : IService(name) {
 }
 
 ConsoleService::~ConsoleService() {
+    if (logfile_) {
+        fclose(logfile_);
+    }
 #if defined(_WIN32) || defined(__CYGWIN__)
 #else
     tcsetattr(STDIN, TCSANOW, &original_settings_);
@@ -63,7 +67,8 @@ void ConsoleService::postinitService() {
 
     // Redirect output stream to a this console
     RISCV_set_default_output(static_cast<IConsole *>(this));
-    update();
+    std::cout << "riscv# " << cmdLine_.c_str();
+    std::cout.flush();
 }
 
 void ConsoleService::predeleteService() {
@@ -84,21 +89,32 @@ void ConsoleService::busyLoop() {
 void ConsoleService::writeBuffer(const char *buf) {
     clearLine();
     std::cout << buf;
-    update();
+    std::cout << "riscv# " << cmdLine_.c_str();
+    std::cout.flush();
+
+    if (logfile_) {
+        fwrite(buf, strlen(buf), 1, logfile_);
+        fflush(logfile_);
+    }
 }
 
 void ConsoleService::writeCommand(const char *cmd) {
     clearLine();
     std::cout << "riscv# " << cmd << "\r\n";
+    if (logfile_) {
+        int len = sprintf(tmpbuf_, "riscv# %s\n", cmd);
+        fwrite(tmpbuf_, len, 1, logfile_);
+        fflush(logfile_);
+    }
 }
 
 void ConsoleService::setCmdString(const char *buf) {
+    if (strlen(buf) < cmdLine_.size()) {
+        clearLine();
+    } else {
+        std::cout << "\r";
+    }
     cmdLine_ = std::string(buf);
-    update();
-}
-
-void ConsoleService::update() {
-    clearLine();
     std::cout << "riscv# " << cmdLine_.c_str();
     std::cout.flush();
 }
@@ -115,6 +131,17 @@ int ConsoleService::registerKeyListener(IFace *iface) {
     AttributeType t1(iface);
     keyListeners_.add_to_list(&t1);
     return 0;
+}
+
+void ConsoleService::enableLogFile(const char *filename) {
+    if (logfile_) {
+        fclose(logfile_);
+        logfile_ = NULL;
+    }
+    logfile_ = fopen(filename, "w");
+    if (!logfile_) {
+        RISCV_error("Can not open file '%s'", filename);
+    }
 }
 
 bool ConsoleService::isData() {
