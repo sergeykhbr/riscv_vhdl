@@ -70,13 +70,13 @@ extern "C" void RISCV_cleanup() {
     RISCV_mutex_destroy(&mutex_printf);
 }
 
-extern "C" void RISCV_set_configuration(const char *config) {
+extern "C" void RISCV_set_configuration(AttributeType *cfg) {
     IClass *icls;
     IService *iserv;
 
-    Config_.from_config(config);
+    Config_.clone(cfg);
     if (!Config_.is_dict()) {
-        RISCV_error("Wrong configuration string '%s'.", config);
+        RISCV_error("Wrong configuration.", NULL);
         return;
     }
 

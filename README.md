@@ -85,7 +85,7 @@ set of peripheries. To get this version use:
 
 FPGA pre-built images either as built from sources without modifications
 provide the following output in TEST_MODE that should be manually switched 
-using jumper DIP[0] (*i_int_clkrf* signal).
+using jumper DIP0 (*i_int_clkrf* signal).
 
 * LEDs sequential switching;
 * UART outputs Plug'n'Play configuration message with 1 sec period
@@ -162,7 +162,7 @@ using jumper DIP[0] (*i_int_clkrf* signal).
 1. Open project file *prj/modelsim/rocket.mpf*.
 2. Compile project files.
 3. If you get an errors for all files remove and re-create the following 
-   library in ModelSim library view: 
+   libraries in ModelSim library view: 
      * techmap
      * ambalib
      * commonlib
@@ -200,13 +200,13 @@ new elf-file.
 
 Full debugger configuration including plugins states is stored in file
 **config.json**. You can manually define CSR names and addresses, 
-enable/disable platform specific functionality. To enable SOC PC-simulator,
-for an example, change value of attribute *"Enable"* in instance of
-**BoardSimClass**:
+enable/disable platform specific functionality, specify files pathes etc.
+Start debugger with command argument *-sim* to connect SOC PC-simulator
+instead of FPGA board:
 
 ```
-     CONFIG["Services"][n]["Class"] == "BoardSimClass"
-         ["Enable",true]
+     ./../linuxbuild/bin/appdbg64g.exe -sim
+     c:\myprj\rocket\debugger\bin\appdbg64g.exe -sim
 ```
 
 This simulator is using [Verilated](http://www.veripool.org/wiki/verilator) 

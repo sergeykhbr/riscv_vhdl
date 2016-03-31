@@ -20,7 +20,7 @@ static const uint8_t ARROW_PREFIX = 0xe0;
 static const uint8_t UNICODE_BACKSPACE = 0x7f;
 
 /** Class registration in the Core */
-static CmdParserServiceClass local_class_;
+REGISTER_CLASS(CmdParserService)
 
 CmdParserService::CmdParserService(const char *name) : IService(name) {
     registerInterface(static_cast<IKeyListener *>(this));

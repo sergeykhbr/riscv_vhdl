@@ -19,7 +19,7 @@
     <ClCompile Include="..\..\src\common\autobuffer.cpp">
       <Filter>Source Files\common</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\testapp\main.cpp">
+    <ClCompile Include="..\..\src\appdbg64g\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

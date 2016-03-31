@@ -41,23 +41,10 @@ private:
     AttributeType attr1_;
 };
 
-
-class SimplePluginClass : public IClass {
-public:
-    SimplePluginClass() : IClass("SimplePluginClass") {
-        RISCV_printf(this, LOG_INFO, "Plugin class registration");
-    }
-
-    virtual IService *createService(const char *obj_name) { 
-        SimplePlugin *serv = new SimplePlugin(obj_name);
-        AttributeType item(static_cast<IService *>(serv));
-        listInstances_.add_to_list(&item);
-        return serv;
-    }
-};
+DECLARE_CLASS(SimplePlugin)
 
 extern "C" void plugin_init(void) {
-    static SimplePluginClass local_class;
+    REGISTER_CLASS(SimplePlugin);
 }
 
 }  // namespace debugger

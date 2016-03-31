@@ -29,6 +29,12 @@ SOURCES = \
 	attribute \
 	autobuffer \
 	boardsim \
+	gnss_stub \
+	irqctrl \
+	gpio \
+	memsim \
+	uart \
+	pnp \
 	plugin_init
 
 LIBS = \

@@ -226,6 +226,9 @@ class AttributeType : public IAttribute {
     }
 
     void swap_list_item(unsigned n, unsigned m) {
+        if (n == m) {
+            return;
+        }
         unsigned tsize = u_.list[n].size_;
         KindType tkind = u_.list[n].kind_;
         int64_t tinteger = u_.list[n].u_.integer;

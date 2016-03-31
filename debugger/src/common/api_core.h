@@ -34,7 +34,7 @@ void RISCV_cleanup();
  * @details Configuration specify all instantiated services and interconnect
  *          among them.
  */
-void RISCV_set_configuration(const char *config);
+void RISCV_set_configuration(AttributeType *cfg);
 
 /** 
  * @brief Get current core configuration.

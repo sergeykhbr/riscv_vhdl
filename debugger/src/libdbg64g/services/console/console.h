@@ -48,6 +48,7 @@ private:
     AttributeType isEnable_;
     AttributeType consumer_;
     AttributeType keyListeners_;
+    AttributeType logFile_;
     IKeyListener *iconsumer_;
     char tmpbuf_[4096];
     std::string cmdLine_;
@@ -59,17 +60,7 @@ private:
 #endif
 };
 
-class ConsoleServiceClass : public IClass {
-public:
-    ConsoleServiceClass() : IClass("ConsoleServiceClass") {}
-
-    virtual IService *createService(const char *obj_name) { 
-        ConsoleService *serv = new ConsoleService(obj_name);
-        AttributeType item(static_cast<IService *>(serv));
-        listInstances_.add_to_list(&item);
-        return serv;
-    }
-};
+DECLARE_CLASS(ConsoleService)
 
 }  // namespace debugger
 

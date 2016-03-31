@@ -22,7 +22,7 @@ INCL_PATH= \
 # source files directories list:
 SRC_PATH =\
 	$(TOP_DIR)src/common \
-	$(TOP_DIR)src/testapp
+	$(TOP_DIR)src/appdbg64g
 
 VPATH = $(SRC_PATH)
 
@@ -38,13 +38,13 @@ LIBS = \
 
 SRC_FILES = $(addsuffix .cpp,$(SOURCES))
 OBJ_FILES = $(addsuffix .o,$(SOURCES))
-EXECUTABLE = testapp.exe
+EXECUTABLE = appdbg64g.exe
 
-all: testapp
+all: appdbg64g
 
 .PHONY: $(EXECUTABLE)
 
-testapp: $(EXECUTABLE)
+appdbg64g: $(EXECUTABLE)
 
 $(EXECUTABLE): $(OBJ_FILES)
 	echo $(CPP) $(LDFLAGS) $(addprefix $(OBJ_DIR)/,$(OBJ_FILES)) -o $(addprefix $(ELF_DIR)/,$@)

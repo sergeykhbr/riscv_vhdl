@@ -13,7 +13,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\src\common\attribute.cpp" />
     <ClCompile Include="..\..\src\common\autobuffer.cpp" />
-    <ClCompile Include="..\..\src\testapp\main.cpp" />
+    <ClCompile Include="..\..\src\appdbg64g\main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\api_core.h" />
@@ -30,7 +30,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{792A4E3C-BDEB-4F76-830E-7428B6C73414}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>testapp</RootNamespace>
+    <RootNamespace>appdbg64g</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">

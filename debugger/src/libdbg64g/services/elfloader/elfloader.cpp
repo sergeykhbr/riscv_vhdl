@@ -11,7 +11,7 @@
 namespace debugger {
 
 /** Class registration in the Core */
-static ElfLoaderServiceClass local_class_;
+REGISTER_CLASS(ElfLoaderService)
 
 ElfLoaderService::ElfLoaderService(const char *name) : IService(name) {
     registerInterface(static_cast<IElfLoader *>(this));

@@ -24,7 +24,8 @@ public:
         delete buf_;
     }
 
-    void put(uint8_t *buf, int sz) {
+    uint8_t *put(uint8_t *buf, int sz) {
+        uint8_t *ret = wrpos_;
         if (&buf_[size_] >= wrpos_ + sz) {
             memcpy(wrpos_, buf, sz);
             memcpy(wrpos_ + size_, buf, sz);
@@ -38,6 +39,7 @@ public:
             memcpy(buf_+ size_, &buf[part], part2);
             wrpos_ += (sz - size_);
         }
+        return ret;
     }
 
     int get(uint8_t *obuf, int sz) {

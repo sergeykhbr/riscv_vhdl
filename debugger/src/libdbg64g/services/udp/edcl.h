@@ -46,17 +46,7 @@ private:
     AttributeType seq_cnt_;
 };
 
-class EdclServiceClass : public IClass {
-public:
-    EdclServiceClass() : IClass("EdclServiceClass") {}
-
-    virtual IService *createService(const char *obj_name) { 
-        EdclService *serv = new EdclService(obj_name);
-        AttributeType item(static_cast<IService *>(serv));
-        listInstances_.add_to_list(&item);
-        return serv;
-    }
-};
+DECLARE_CLASS(EdclService)
 
 }  // namespace debugger
 

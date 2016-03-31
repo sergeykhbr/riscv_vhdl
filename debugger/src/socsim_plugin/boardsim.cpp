@@ -43,46 +43,61 @@ struct UdpEdclCommonType {
 #pragma pack()
 
 
-/** Class registration in the Core */
-static BoardSimClass local_class_;
-
 BoardSim::BoardSim(const char *name)  : IService(name) {
-registerInterface(static_cast<IThread *>(this));
+    registerInterface(static_cast<IThread *>(this));
     registerInterface(static_cast<IBoardSim *>(this));
     registerInterface(static_cast<IRawListener *>(this));
+    registerInterface(static_cast<IMemoryOperation *>(this));
+    registerInterface(static_cast<IClockListener *>(this));
     registerAttribute("Enable", &isEnable_);
+    registerAttribute("Map", &map_);
+    registerAttribute("ClkSource", &clkSource_);
     registerAttribute("Transport", &transport_);
 
     isEnable_.make_boolean(true);
+    map_.make_list(0);
+    imap_.make_list(0);
+    clkSource_.make_string("");
     transport_.make_string("");
 
     memset(txbuf_, 0, sizeof(txbuf_));
     seq_cnt_ = 35;
-    for (unsigned i = 0; i < sizeof(SRAM_)/4; i++) {
-        (reinterpret_cast<uint32_t *>(SRAM_))[i] = 
-                    static_cast<uint32_t>(0xcafe0000 + i);
-    }
-
-#ifdef USE_VERILATED_CORE
-    core = new Vtop();
-#endif
+    fifo_to_ = new TFifo<FifoMessageType>(16);
+    fifo_from_ = new TFifo<FifoMessageType>(16);
+    ring_ = new RingBufferType(4096);
 }
 
 BoardSim::~BoardSim() {
-#ifdef USE_VERILATED_CORE
-    delete core;
-#endif
+    delete ring_;
+    delete fifo_to_;
+    delete fifo_from_;
 }
 
 void BoardSim::postinitService() {
     itransport_ = static_cast<IUdp *>(
         RISCV_get_service_iface(transport_.to_string(), IFACE_UDP));
-    if (itransport_) {
-        itransport_->registerListener(static_cast<IRawListener *>(this));
-    } else {
-        RISCV_error("UDP interface '%s' not found", 
-                    transport_.to_string());
-        return;
+    if (!itransport_) {
+        RISCV_error("UDP interface '%s' not found",  transport_.to_string());
+    }
+    itransport_->registerListener(static_cast<IRawListener *>(this));
+
+    iclk_ = static_cast<IClock *>(
+        RISCV_get_service_iface(clkSource_.to_string(), IFACE_CLOCK));
+    if (!iclk_) {
+        RISCV_error("Clock interface '%s' not found", clkSource_.to_string());
+    }
+
+    for (unsigned i = 0; i < map_.size(); i++) {
+        IMemoryOperation *imem = static_cast<IMemoryOperation *>(
+                        RISCV_get_service_iface(map_[i].to_string(), 
+                                                IFACE_MEMORY_OPERATION));
+        if (!imem) {
+            RISCV_error("Memory interface '%s' not found", 
+                        map_[i].to_string());
+            continue;
+        }
+        AttributeType t1(imem);
+        imap_.add_to_list(&t1);
     }
 
     if (isEnable_.to_bool()) {
@@ -97,9 +112,38 @@ void BoardSim::predeleteService() {
     stop();
 }
 
+void BoardSim::transaction(Axi4TransactionType *payload) {
+    IMemoryOperation *imem;
+    bool unmapped = true;
+    for (unsigned i = 0; i < imap_.size(); i++) {
+        imem = static_cast<IMemoryOperation *>(imap_[i].to_iface());
+        if (imem->getBaseAddress() <= payload->addr
+            && payload->addr < (imem->getBaseAddress() + imem->getLength())) {
+            imem->transaction(payload);
+            unmapped = false;
+            break;
+            /// @todo Check memory overlapping
+        }
+    }
+
+    if (unmapped) {
+        RISCV_error("Access to unmapped address %08" RV_PRI64 "x", 
+            payload->addr);
+    }
+
+    const char *rw_str[2] = {"=>", "<="};
+    uint32_t *pdata[2] = {payload->rpayload, payload->wpayload};
+    RISCV_debug("[%08" RV_PRI64 "x] %s [%08x %08x %08x %08x]",
+        payload->addr,
+        rw_str[payload->rw],
+        pdata[payload->rw][3], pdata[payload->rw][2], 
+        pdata[payload->rw][1], pdata[payload->rw][0]);
+}
+
 void BoardSim::busyLoop() {
     int bytes;
     UdpEdclCommonType req;
+    FifoMessageType msg;
     RISCV_info("Board Simulator was started", NULL);
 
     while (loopEnable_) {
@@ -112,7 +156,6 @@ void BoardSim::busyLoop() {
 
         req.control.word = read32(&rxbuf_[2]);
         req.address      = read32(&rxbuf_[6]);
-        //req.control.request.seqidx
         if (seq_cnt_ != req.control.request.seqidx) {
             req.control.response.nak = 1;
             req.control.response.seqidx = seq_cnt_;
@@ -122,24 +165,28 @@ void BoardSim::busyLoop() {
             bytes = sizeof(UdpEdclCommonType);
         } else {
             if (req.control.request.write == 0) {
-                memcpy(&txbuf_[10], &SRAM_[req.address & (sizeof(SRAM_) - 1)], 
-                                        req.control.request.len);
+                msg.rw = 0;
+                msg.addr = req.address;
+                msg.sz = req.control.request.len;
+                msg.buf = &txbuf_[10];
+                fifo_to_->put(&msg);
                 bytes = sizeof(UdpEdclCommonType) + req.control.request.len;
-
-                RISCV_debug("Read [%08x]; size = %d; %08x..",
-                    req.address,
-                    req.control.request.len,
-                    *(reinterpret_cast<uint32_t *>(&txbuf_[10])));
             } else {
-                memcpy(&SRAM_[req.address & (sizeof(SRAM_) - 1)], &rxbuf_[10],
-                                        req.control.request.len);
+                msg.rw = 1;
+                msg.addr = req.address;
+                msg.sz = req.control.request.len;
+                msg.buf = &rxbuf_[10];
+                fifo_to_->put(&msg);
                 bytes = sizeof(UdpEdclCommonType);
-
-                RISCV_debug("Write [%08x]; size = %d; %08x..",
-                    req.address,
-                    req.control.request.len,
-                    *(reinterpret_cast<uint32_t *>(&rxbuf_[10])));
             }
+
+            iclk_->registerStepCallback(static_cast<IClockListener *>(this),
+                                        iclk_->getStepCounter() + 1);
+            while (fifo_from_->isEmpty()) {
+                RISCV_sleep_ms(1);
+            }
+            fifo_from_->get(&msg);
+
             req.control.response.nak = 0;
             req.control.response.seqidx = seq_cnt_;
             write32(&txbuf_[2], req.control.word);
@@ -147,12 +194,42 @@ void BoardSim::busyLoop() {
             seq_cnt_++;
         }
 
+
         if (bytes != 0) {
             itransport_->sendData(txbuf_, bytes);
         }
     }
     loopEnable_ = false;
     threadInit_.Handle = 0;
+}
+
+void BoardSim::stepCallback(uint64_t t) {
+    FifoMessageType msg;
+    Axi4TransactionType memop;
+    uint32_t *mem;
+    memop.bytes = 2;   // word32 AXI spec.
+    memop.xsize = 4;
+    while (!fifo_to_->isEmpty()) {
+        fifo_to_->get(&msg);
+
+        mem = reinterpret_cast<uint32_t *>(msg.buf);
+        for (unsigned i = 0; i < msg.sz / 4u; i++) {
+            memop.addr = msg.addr + 4*i;
+            if (msg.rw == 0) {
+                memop.rw = 0;
+            } else {
+                memop.rw = 1;
+                memop.wstrb = 0x000f;
+                memop.wpayload[0] = mem[i];
+            }
+
+            transaction(&memop);
+            if (msg.rw == 0) {
+                mem[i] = memop.rpayload[0];
+            }
+        }
+        fifo_from_->put(&msg);
+    }
 }
 
 uint32_t BoardSim::read32(uint8_t *buf) {

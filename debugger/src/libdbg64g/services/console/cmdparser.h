@@ -92,17 +92,7 @@ private:
     unsigned history_idx_;
 };
 
-class CmdParserServiceClass : public IClass {
-public:
-    CmdParserServiceClass() : IClass("CmdParserServiceClass") {}
-
-    virtual IService *createService(const char *obj_name) { 
-        CmdParserService *serv = new CmdParserService(obj_name);
-        AttributeType item(static_cast<IService *>(serv));
-        listInstances_.add_to_list(&item);
-        return serv;
-    }
-};
+DECLARE_CLASS(CmdParserService)
 
 }  // namespace debugger
 

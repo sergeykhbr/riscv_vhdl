@@ -15,7 +15,7 @@
 namespace debugger {
 
 /** Class registration in the Core */
-static ConsoleServiceClass local_class_;
+REGISTER_CLASS(ConsoleService)
 
 static const int STDIN = 0;
 
@@ -24,9 +24,11 @@ ConsoleService::ConsoleService(const char *name) : IService(name) {
     registerInterface(static_cast<IConsole *>(this));
     registerAttribute("Enable", &isEnable_);
     registerAttribute("Consumer", &consumer_);
+    registerAttribute("LogFile", &logFile_);
 
     isEnable_.make_boolean(true);
     consumer_.make_string("");
+    logFile_.make_string("");
     logfile_ = NULL;
 #if defined(_WIN32) || defined(__CYGWIN__)
 #else
@@ -63,6 +65,9 @@ void ConsoleService::postinitService() {
             RISCV_error("Can't create thread.", NULL);
             return;
         }
+    }
+    if (logFile_.size()) {
+        enableLogFile(logFile_.to_string());
     }
 
     // Redirect output stream to a this console

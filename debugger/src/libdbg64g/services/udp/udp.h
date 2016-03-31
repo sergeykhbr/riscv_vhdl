@@ -77,17 +77,7 @@ private:
     char rcvbuf[4096];
 };
 
-class UdpServiceClass : public IClass {
-public:
-    UdpServiceClass() : IClass("UdpServiceClass") {}
-
-    virtual IService *createService(const char *obj_name) { 
-        UdpService *serv = new UdpService(obj_name);
-        AttributeType item(static_cast<IService *>(serv));
-        listInstances_.add_to_list(&item);
-        return serv;
-    }
-};
+DECLARE_CLASS(UdpService)
 
 }  // namespace debugger
 

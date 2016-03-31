@@ -84,6 +84,29 @@ protected:
     AttributeType listInstances_;
 };
 
+/**
+ * @brief Unified macros of plugin class declaration.
+ * @see simple_plugin.cpp example
+ */
+#define DECLARE_CLASS(name) \
+class name ## Class : public IClass { \
+public: \
+    name ## Class () : IClass(# name "Class") {} \
+    virtual IService *createService(const char *obj_name) {  \
+        name *serv = new name(obj_name); \
+        AttributeType item(static_cast<IService *>(serv)); \
+        listInstances_.add_to_list(&item); \
+        return serv; \
+    } \
+};
+
+/**
+ * @brief Unified macros of plugin class registration in kernel library.
+ * @see simple_plugin.cpp example
+ */
+#define REGISTER_CLASS(name) static name ## Class local_class;
+#define REGISTER_CLASS_IDX(name, idx) static name ## Class local_class_ ## idx;
+
 }  // namespace debugger
 
 #endif  // __DEBUGGER_CLASS_H__

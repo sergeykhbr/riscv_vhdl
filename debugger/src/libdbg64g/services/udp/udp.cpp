@@ -11,7 +11,7 @@
 namespace debugger {
 
 /** Class registration in the Core */
-static UdpServiceClass local_class_;
+REGISTER_CLASS(UdpService)
 
 UdpService::UdpService(const char *name) 
     : IService(name) {

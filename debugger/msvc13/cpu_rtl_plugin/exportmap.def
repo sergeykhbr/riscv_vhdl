@@ -1,0 +1,3 @@
+LIBRARY cpu_rtl_plugin
+EXPORTS
+	plugin_init

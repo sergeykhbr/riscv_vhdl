@@ -1,0 +1,84 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="common">
+      <UniqueIdentifier>{f5a16e1a-fd0c-436b-9f2e-d8942e1ccf15}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="verilator">
+      <UniqueIdentifier>{e07ea218-0d57-40cb-9ab3-78e3dbcbbd87}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\common\attribute.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\common\autobuffer.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cpu_rtl_plugin\plugin_init.cpp" />
+    <ClCompile Include="..\..\src\cpu_rtl_plugin\cpurtl.cpp" />
+    <ClCompile Include="..\..\src\cpu_rtl_plugin\verilator\verilated.cpp">
+      <Filter>verilator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cpu_rtl_plugin\verilator\Vtop.cpp">
+      <Filter>verilator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cpu_rtl_plugin\verilator\Vtop__Syms.cpp">
+      <Filter>verilator</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\common\api_types.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\api_utils.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\attribute.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\autobuffer.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\iattr.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\iclass.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\iface.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\iservice.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_rtl_plugin\cpurtl.h" />
+    <ClInclude Include="..\..\src\cpu_rtl_plugin\verilator\verilated.h">
+      <Filter>verilator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_rtl_plugin\verilator\verilated_config.h">
+      <Filter>verilator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_rtl_plugin\verilator\verilated_heavy.h">
+      <Filter>verilator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_rtl_plugin\verilator\verilated_imp.h">
+      <Filter>verilator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_rtl_plugin\verilator\verilated_syms.h">
+      <Filter>verilator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_rtl_plugin\verilator\verilatedos.h">
+      <Filter>verilator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_rtl_plugin\verilator\Vtop.h">
+      <Filter>verilator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_rtl_plugin\verilator\Vtop__Inlines.h">
+      <Filter>verilator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_rtl_plugin\verilator\Vtop__Syms.h">
+      <Filter>verilator</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

@@ -21,11 +21,6 @@ using namespace debugger;
 const char *default_config = 
 "{"
   "'Services':["
-    "{'Class':'BoardSimClass','Instances':["
-          "{'Name':'boardsim','Attr':["
-                "['LogLevel',3],"
-                "['Enable',true],"
-                "['Transport','udpboard']]}]},"
     "{'Class':'EdclServiceClass','Instances':["
           "{'Name':'edcltap','Attr':["
                 "['LogLevel',1],"
@@ -48,6 +43,7 @@ const char *default_config =
           "{'Name':'console0','Attr':["
                 "['LogLevel',4],"
                 "['Enable',true],"
+                "['LogFile','test.log'],"
                 "['Consumer','cmd0']]}]},"
     "{'Class':'CmdParserServiceClass','Instances':["
           "{'Name':'cmd0','Attr':["
@@ -68,24 +64,114 @@ const char *default_config =
     "{'Class':'SimplePluginClass','Instances':["
           "{'Name':'example0','Attr':["
                 "['LogLevel',4],"
-                "['attr1','This is test attr value']]}]}]"
+                "['attr1','This is test attr value']]}]},"
+    "{'Class':'CpuRiscV_RTLClass','Instances':["
+          "{'Name':'core0','Attr':["
+                "['LogLevel',4],"
+                "['ParentThread','boardsim'],"
+                "['PhysMem','boardsim']]}]},"
+    "{'Class':'MemorySimClass','Instances':["
+          "{'Name':'bootrom0','Attr':["
+                "['LogLevel',1],"
+                "['InitFile','../../../rocket/fw_images/bootimage.hex'],"
+                "['ReadOnly',true],"
+                "['BaseAddress',0x0],"
+                "['Length',8192]"
+                "]}]},"
+    "{'Class':'MemorySimClass','Instances':["
+          "{'Name':'fwimage0','Attr':["
+                "['LogLevel',1],"
+                "['InitFile','../../../rocket/fw_images/fwimage.hex'],"
+                "['ReadOnly',true],"
+                "['BaseAddress',0x00100000],"
+                "['Length',0x40000]"
+                "]}]},"
+    "{'Class':'MemorySimClass','Instances':["
+          "{'Name':'sram0','Attr':["
+                "['LogLevel',1],"
+                "['InitFile','../../../rocket/fw_images/fwimage.hex'],"
+                "['ReadOnly',false],"
+                "['BaseAddress',0x10000000],"
+                "['Length',0x80000]"
+                "]}]},"
+    "{'Class':'GPIOClass','Instances':["
+          "{'Name':'gpio0','Attr':["
+                "['LogLevel',3],"
+                "['BaseAddress',0x80000000],"
+                "['Length',4096],"
+                "['DIP',0x1]"
+                "]}]},"
+    "{'Class':'UARTClass','Instances':["
+          "{'Name':'uart0','Attr':["
+                "['LogLevel',1],"
+                "['BaseAddress',0x80001000],"
+                "['Length',4096],"
+                "['Console','console0']"
+                "]}]},"
+    "{'Class':'IrqControllerClass','Instances':["
+          "{'Name':'irqctrl0','Attr':["
+                "['LogLevel',1],"
+                "['BaseAddress',0x80002000],"
+                "['Length',4096],"
+                "['HostIO','core0'],"
+                "['CSR_MIPI',0x783]"
+                "]}]},"
+    "{'Class':'DSUClass','Instances':["
+          "{'Name':'dsu0','Attr':["
+                "['LogLevel',1],"
+                "['BaseAddress',0x80080000],"
+                "['Length',0x10000],"
+                "['HostIO','core0']"
+                "]}]},"
+    "{'Class':'GNSSStubClass','Instances':["
+          "{'Name':'gnss0','Attr':["
+                "['LogLevel',1],"
+                "['BaseAddress',0x80003000],"
+                "['Length',4096],"
+                "['IrqControl','irqctrl0'],"
+                "['ClkSource','core0']"
+                "]}]},"
+    "{'Class':'PNPClass','Instances':["
+          "{'Name':'pnp0','Attr':["
+                "['LogLevel',3],"
+                "['BaseAddress',0xfffff000],"
+                "['Length',4096],"
+                "['Tech',0],"
+                "['AdcDetector',0xff]"
+                "]}]},"
+    "{'Class':'BoardSimClass','Instances':["
+          "{'Name':'boardsim','Attr':["
+                "['LogLevel',1],"
+                "['Enable',true],"
+                "['Transport','udpboard'],"
+                "['ClkSource','core0'],"
+                "['Map',['bootrom0','fwimage0','sram0','gpio0',"
+                        "'uart0','irqctrl0','gnss0','pnp0','dsu0']]"
+                "]}]}"
+  "]"
 "}";
 
 static char cfgbuf[1<<12];
+static AttributeType Config;
 
 int main(int argc, char* argv[]) {
     int cfgsz = 0;
     char path[1024];
     bool loadConfig = true;
+    bool disableSim = true;
 
+    // Parse arguments:
     if (argc > 1) {
         for (int i = 1; i < argc; i++) {
             if (strcmp(argv[i], "-nocfg") == 0) {
                 loadConfig = false;
+            } else if (strcmp(argv[i], "-sim") == 0) {
+                disableSim = false;
             }
         }
     }
 
+    // Select configuration input (default/stored file):
     RISCV_init();
     RISCV_get_core_folder(path, sizeof(path));
     std::string cfg_filename = std::string(path) 
@@ -96,12 +182,29 @@ int main(int argc, char* argv[]) {
                                     static_cast<int>(sizeof(cfgbuf)));
     }
 
+    // Convert string to attribute:
     if (cfgsz == 0) {
-        RISCV_set_configuration(default_config);
+        Config.from_config(default_config);
     } else {
-        RISCV_set_configuration(cfgbuf);
+        Config.from_config(cfgbuf);
     }
 
+    // Enable/Disable simulator option:
+    for (unsigned i = 0; i < Config["Services"].size(); i++) {
+        const AttributeType &serv = Config["Services"][i];
+        if (strcmp(serv["Class"].to_string(), "BoardSimClass") == 0) {
+            const AttributeType &attr = serv["Instances"][0u]["Attr"];
+            for (unsigned n = 0; n < attr.size(); n++) {
+                if (strcmp(attr[n][0u].to_string(), "Enable") == 0) {
+                    AttributeType &ena = 
+                        const_cast<AttributeType &>(attr[n][1]);
+                    ena.make_boolean(!disableSim);
+                }
+            }
+        }
+    }
+
+    RISCV_set_configuration(&Config);
    
     // Connect simulator to the EDCL debugger if enabled:
     IThread *boardsim = static_cast<IThread *>

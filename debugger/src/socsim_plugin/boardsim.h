@@ -13,19 +13,21 @@
 #include "coreservices/irawlistener.h"
 #include "coreservices/iudp.h"
 #include "coreservices/ithread.h"
+#include "coreservices/imemop.h"
+#include "coreservices/iclock.h"
+#include "coreservices/iclklistener.h"
 #include "iboardsim.h"
 #include "ringbuf.h"
-#ifdef USE_VERILATED_CORE
-#include "verilated/Vtop.h"
-#endif
+#include "fifo.h"
 
 namespace debugger {
-
 
 class BoardSim : public IService, 
                  public IThread,
                  public IBoardSim,
-                 public IRawListener {
+                 public IRawListener,
+                 public IMemoryOperation,
+                 public IClockListener {
 public:
     BoardSim(const char *name);
     ~BoardSim();
@@ -40,6 +42,17 @@ public:
     /** IRawListener interface */
     virtual void updateData(const char *buf, int buflen) {}
 
+    /** IMemoryOperation */
+    virtual void transaction(Axi4TransactionType *payload);
+    virtual uint64_t getBaseAddress() { return 0; }
+    virtual uint64_t getLength() { return 1LL << 32; }
+
+    /** IClockListener */
+    virtual void stepCallback(uint64_t t);
+
+    /** IThread status overloading */
+    virtual bool isEnabled() { return isEnable_.to_bool(); }
+
 protected:
     /** IThread interface */
     virtual void busyLoop();
@@ -51,29 +64,27 @@ private:
 private:
     AttributeType isEnable_;
     AttributeType transport_;
+    AttributeType clkSource_;
+    AttributeType map_;
+    AttributeType imap_;
     IUdp *itransport_;
+    IClock *iclk_;
     uint8_t rxbuf_[1<<12];
     uint8_t txbuf_[1<<12];
-    uint8_t SRAM_[1<<20];
     uint32_t seq_cnt_;
 
-#ifdef USE_VERILATED_CORE
-    Vtop *core;
-#endif
+    struct FifoMessageType {
+        uint64_t addr;
+        uint8_t rw;
+        uint8_t *buf;
+        uint32_t sz;
+    };
+    TFifo<FifoMessageType> *fifo_to_;
+    TFifo<FifoMessageType> *fifo_from_;
+    RingBufferType *ring_;
 };
 
-
-class BoardSimClass : public IClass {
-public:
-    BoardSimClass() : IClass("BoardSimClass") {}
-
-    virtual IService *createService(const char *obj_name) { 
-        BoardSim *serv = new BoardSim(obj_name);
-        AttributeType item(static_cast<IService *>(serv));
-        listInstances_.add_to_list(&item);
-        return serv;
-    }
-};
+DECLARE_CLASS(BoardSim)
 
 }  // namespace debugger
 

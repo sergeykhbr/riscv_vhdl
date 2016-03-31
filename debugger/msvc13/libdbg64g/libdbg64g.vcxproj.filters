@@ -130,5 +130,23 @@
     <ClInclude Include="..\..\src\libdbg64g\services\console\cmdparser.h">
       <Filter>Source Files\services\console</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\common\coreservices\imemop.h">
+      <Filter>Source Files\common\coreservices</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\coreservices\icpuriscv.h">
+      <Filter>Source Files\common\coreservices</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\coreservices\iclock.h">
+      <Filter>Source Files\common\coreservices</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\coreservices\iclklistener.h">
+      <Filter>Source Files\common\coreservices</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\coreservices\iwire.h">
+      <Filter>Source Files\common\coreservices</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\coreservices\ihostio.h">
+      <Filter>Source Files\common\coreservices</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
