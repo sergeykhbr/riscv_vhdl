@@ -10,6 +10,7 @@
 #include "types_amba.h"
 #include <iostream>
 #include <string.h>
+#include "coreservices/ithread.h"
 
 namespace debugger {
 
@@ -19,11 +20,13 @@ MemorySim::MemorySim(const char *name)  : IService(name) {
     registerAttribute("ReadOnly", &readOnly_);
     registerAttribute("BaseAddress", &baseAddress_);
     registerAttribute("Length", &length_);
+    registerAttribute("ParentThread", &parentThread_);
 
     initFile_.make_string("");
     readOnly_.make_boolean(false);
     baseAddress_.make_uint64(0);
     length_.make_uint64(0);
+    parentThread_.make_string("");
     mem_ = NULL;
 }
 
@@ -34,9 +37,24 @@ MemorySim::~MemorySim() {
 }
 
 void MemorySim::postinitService() {
+    IThread *ithread = static_cast<IThread *>(
+        RISCV_get_service_iface(parentThread_.to_string(), IFACE_THREAD));
+    if (ithread == 0 || !ithread->isEnabled()) {
+        return;
+    }
+
     mem_ = new uint8_t[static_cast<unsigned>(length_.to_uint64())];
     if (initFile_.size() == 0) {
         return;
+    }
+
+    std::string filename(initFile_.to_string());
+    if (strstr(initFile_.to_string(), "..") != NULL ||
+        strstr(initFile_.to_string(), "/") == NULL) {
+        char path[1024];
+        RISCV_get_core_folder(path, sizeof(path));
+        std::string spath(path);
+        filename = spath + std::string(initFile_.to_string());
     }
 
     FILE *fp = fopen(initFile_.to_string(), "r");

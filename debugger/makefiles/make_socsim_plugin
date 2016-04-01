@@ -35,6 +35,7 @@ SOURCES = \
 	memsim \
 	uart \
 	pnp \
+	dsu \
 	plugin_init
 
 LIBS = \

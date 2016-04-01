@@ -42,6 +42,7 @@ private:
     AttributeType hostio_;
     IHostIO *ihostio_;
 
+    uint64_t wdata_;
 };
 
 DECLARE_CLASS(DSU)

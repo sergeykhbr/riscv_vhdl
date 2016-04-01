@@ -76,7 +76,8 @@ const char *default_config =
                 "['InitFile','../../../rocket/fw_images/bootimage.hex'],"
                 "['ReadOnly',true],"
                 "['BaseAddress',0x0],"
-                "['Length',8192]"
+                "['Length',8192],"
+                "['ParentThread','boardsim']"
                 "]}]},"
     "{'Class':'MemorySimClass','Instances':["
           "{'Name':'fwimage0','Attr':["
@@ -84,7 +85,8 @@ const char *default_config =
                 "['InitFile','../../../rocket/fw_images/fwimage.hex'],"
                 "['ReadOnly',true],"
                 "['BaseAddress',0x00100000],"
-                "['Length',0x40000]"
+                "['Length',0x40000],"
+                "['ParentThread','boardsim']"
                 "]}]},"
     "{'Class':'MemorySimClass','Instances':["
           "{'Name':'sram0','Attr':["
@@ -92,7 +94,8 @@ const char *default_config =
                 "['InitFile','../../../rocket/fw_images/fwimage.hex'],"
                 "['ReadOnly',false],"
                 "['BaseAddress',0x10000000],"
-                "['Length',0x80000]"
+                "['Length',0x80000],"
+                "['ParentThread','boardsim']"
                 "]}]},"
     "{'Class':'GPIOClass','Instances':["
           "{'Name':'gpio0','Attr':["
@@ -151,7 +154,7 @@ const char *default_config =
   "]"
 "}";
 
-static char cfgbuf[1<<12];
+static char cfgbuf[1<<16];
 static AttributeType Config;
 
 int main(int argc, char* argv[]) {
@@ -175,10 +178,10 @@ int main(int argc, char* argv[]) {
     RISCV_init();
     RISCV_get_core_folder(path, sizeof(path));
     std::string cfg_filename = std::string(path) 
-                    + "/" + std::string(JSON_CONFIG_FILE);
+                    + std::string(JSON_CONFIG_FILE);
 
     if (loadConfig) {
-        cfgsz = RISCV_read_json_file(JSON_CONFIG_FILE, cfgbuf, 
+        cfgsz = RISCV_read_json_file(cfg_filename.c_str(), cfgbuf, 
                                     static_cast<int>(sizeof(cfgbuf)));
     }
 
