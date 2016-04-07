@@ -54,13 +54,13 @@ architecture arch_nasti_romimage of nasti_romimage is
 signal r, rin : registers;
 
 signal raddr_mux : global_addr_array_type;
-signal rdata_mux : unaligned_data_array_type;
+signal rdata_mux : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
 
 begin
 
   comblogic : process(i, r, rdata_mux)
     variable v : registers;
-    variable rdata : unaligned_data_array_type;
+    variable rdata : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
   begin
 
     v := r;

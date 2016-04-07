@@ -60,12 +60,12 @@ architecture arch_nasti_sram of nasti_sram is
     waddr : global_addr_array_type;
     we    : std_logic;
     wstrb : std_logic_vector(CFG_NASTI_DATA_BYTES-1 downto 0);
-    wdata : unaligned_data_array_type;
+    wdata : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
   end record;
 
 signal r, rin : registers;
 
-signal rdata_mux : unaligned_data_array_type;
+signal rdata_mux : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
 signal rami : ram_in_type;
 
 begin
@@ -73,7 +73,7 @@ begin
   comblogic : process(i, r, rdata_mux)
     variable v : registers;
     variable vrami : ram_in_type;
-    variable rdata : unaligned_data_array_type;
+    variable rdata : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
   begin
 
     v := r;

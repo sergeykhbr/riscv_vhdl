@@ -25,7 +25,7 @@ generic (
 port (
     clk       : in std_logic;
     address   : in global_addr_array_type;
-    data      : out unaligned_data_array_type
+    data      : out std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0)
 );
 end;
 
@@ -38,7 +38,7 @@ architecture rtl of BootRom_tech is
   port (
     clk     : in  std_ulogic;
     address : in global_addr_array_type;
-    data    : out unaligned_data_array_type
+    data    : out std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0)
   );
   end component;
 

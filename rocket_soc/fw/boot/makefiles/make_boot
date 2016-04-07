@@ -62,7 +62,7 @@ OBJDUMP=riscv64-unknown-elf-objdump
 #     The standard system libraries are used normally, unless -nostdlib 
 #     or -nodefaultlibs is used. 
 
-CFLAGS= -c -g -static -std=gnu99 -O2 -fno-common -fno-builtin-printf
+CFLAGS= -c -g -static -std=gnu99 -O0 -fno-common -fno-builtin-printf
 CFLAGS += -march=RV64IMA     # RV64IMA (no floating point). maybe skipped.
 CFLAGS += -msoft-float       # binary incompatible with the default toolcahin.
 LDFLAGS=-T test.ld -nostdlib -nostartfiles 

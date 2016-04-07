@@ -154,7 +154,6 @@ architecture arch_rocket_soc of rocket_soc is
   signal soft_rst   : std_logic; -- reset from exteranl debugger
   signal wClkBus    : std_ulogic; -- bus clock from the internal PLL (100MHz virtex6/40MHz Spartan6)
   signal wClkAdc    : std_ulogic; -- 26 MHz from the internal PLL
-  signal wClkGnss   : std_ulogic; -- clock that goes to GnssEngine (config dependable)
   signal wPllLocked : std_ulogic; -- PLL status signal. 0=Unlocked; 1=locked.
 
   

@@ -7,6 +7,8 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
+library commonlib;
+use commonlib.types_common.all;
 
 --! @brief NoC global reset former.
 --! @details This module produces output reset signal in a case if
@@ -27,29 +29,31 @@ end;
 architecture arch_reset_global of reset_global is
 
   type reg_type is record
-    PllLock : std_logic_vector(4 downto 0);
-    Reset   : std_ulogic;
+    delay_cnt : std_logic_vector(7 downto 0);
   end record;
 
-
   signal r : reg_type;
-  signal wSysReset : std_ulogic;
-
 begin
 
-  wSysReset <= inSysReset or not inPllLock;
+  proc_rst : process (inSysClk, inSysReset, inPllLock, r) 
+    variable wb_delay_cnt : std_logic_vector(7 downto 0);
+    variable sys_reset : std_logic;
+  begin
 
-
-  proc_rst : process (inSysClk, wSysReset) begin
-    if wSysReset = '1' then
-      r.PllLock <= (others => '0');
-      r.Reset <= '0';
+    sys_reset := inSysReset or not inPllLock;
+    
+    wb_delay_cnt := r.delay_cnt;
+    if r.delay_cnt(7) = '0' then
+      wb_delay_cnt := r.delay_cnt + 1;
+    end if;
+    
+    if sys_reset = '1' then
+      r.delay_cnt <= (others => '0');
     elsif rising_edge(inSysClk) then 
-      r.PllLock <= r.PllLock(3 downto 0) & '1';
-      r.Reset <= r.PllLock(4) and r.PllLock(3) and r.PllLock(2);
+      r.delay_cnt  <= wb_delay_cnt;
     end if;
   end process;
 
-  outReset <= not r.Reset;
+  outReset <= not r.delay_cnt(7);
   
 end;  

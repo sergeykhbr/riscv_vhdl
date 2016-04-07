@@ -102,8 +102,8 @@ begin
   comblogic : process(nrst, r, i_axi, i_glo_ld, i_gps_ld, inExtAntStat, inExtAntDetect)
     variable raddr_reg : local_addr_array_type;
     variable waddr_reg : local_addr_array_type;
-    variable rdata : unaligned_data_array_type;
-    variable wdata : unaligned_data_array_type;
+    variable rdata : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
+    variable tmp : std_logic_vector(31 downto 0);
     variable wstrb : std_logic_vector(CFG_ALIGN_BYTES-1 downto 0);
 
   variable v : registers;
@@ -119,25 +119,26 @@ begin
      -- read registers:
      for n in 0 to CFG_WORDS_ON_BUS-1 loop
         raddr_reg(n) := conv_integer(r.bank_axi.raddr(n)(11 downto 2));
-        rdata(n) := (others => '0');
+        tmp := (others => '0');
         case raddr_reg(n) is
-          when 0 => rdata(n)  := "0000" & r.conf1;
-          when 1 => rdata(n)  := "0000" & r.conf2;
-          when 2 => rdata(n)  := "0000" & r.conf3;
-          when 3 => rdata(n)  := "0000" & r.pllconf;
-          when 4 => rdata(n)  := "0000" & r.div;
-          when 5 => rdata(n)  := "0000" & r.fdiv;
-          when 6 => rdata(n)  := "0000" & r.strm;
-          when 7 => rdata(n)  := "0000" & r.clkdiv;
-          when 8 => rdata(n)  := "0000" & r.test1;
-          when 9 => rdata(n)  := "0000" & r.test2;
-          when 10 => rdata(n)  := r.scale;
+          when 0 => tmp  := "0000" & r.conf1;
+          when 1 => tmp  := "0000" & r.conf2;
+          when 2 => tmp  := "0000" & r.conf3;
+          when 3 => tmp  := "0000" & r.pllconf;
+          when 4 => tmp  := "0000" & r.div;
+          when 5 => tmp  := "0000" & r.fdiv;
+          when 6 => tmp  := "0000" & r.strm;
+          when 7 => tmp  := "0000" & r.clkdiv;
+          when 8 => tmp  := "0000" & r.test1;
+          when 9 => tmp  := "0000" & r.test2;
+          when 10 => tmp  := r.scale;
           when 11 => 
-            rdata(n)(9 downto 0):= conv_std_logic_vector(r.BitCnt,6) & '0' & r.loading & i_glo_ld & i_gps_ld;
+            tmp(9 downto 0):= conv_std_logic_vector(r.BitCnt,6) & '0' & r.loading & i_glo_ld & i_gps_ld;
           when 15 => 
-            rdata(n)(5 downto 0)  := inExtAntStat & inExtAntDetect & "00"& r.IntAntContr & r.ExtAntEna;
+            tmp(5 downto 0)  := inExtAntStat & inExtAntDetect & "00"& r.IntAntContr & r.ExtAntEna;
           when others =>
         end case;
+        rdata(8*CFG_ALIGN_BYTES*(n+1)-1 downto 8*CFG_ALIGN_BYTES*n) := tmp;
      end loop;
 
 
@@ -148,41 +149,41 @@ begin
 
       for n in 0 to CFG_WORDS_ON_BUS-1 loop
          waddr_reg(n) := conv_integer(r.bank_axi.waddr(n)(11 downto 2));
-         wdata(n) := i_axi.w_data(32*(n+1)-1 downto 32*n);
+         tmp := i_axi.w_data(32*(n+1)-1 downto 32*n);
          wstrb := i_axi.w_strb(CFG_ALIGN_BYTES*(n+1)-1 downto CFG_ALIGN_BYTES*n);
 
          if conv_integer(wstrb) /= 0 then
             case waddr_reg(n) is
-              when 0 => v.conf1 := wdata(n)(27 downto 0);
-              when 1 => v.conf2 := wdata(n)(27 downto 0);
-              when 2 => v.conf3 := wdata(n)(27 downto 0);
-              when 3 => v.pllconf := wdata(n)(27 downto 0);
-              when 4 => v.div := wdata(n)(27 downto 0);
-              when 5 => v.fdiv := wdata(n)(27 downto 0);
-              when 6 => v.strm := wdata(n)(27 downto 0);
-              when 7 => v.clkdiv := wdata(n)(27 downto 0);
-              when 8 => v.test1 := wdata(n)(27 downto 0);
-              when 9 => v.test2 := wdata(n)(27 downto 0);
+              when 0 => v.conf1 := tmp(27 downto 0);
+              when 1 => v.conf2 := tmp(27 downto 0);
+              when 2 => v.conf3 := tmp(27 downto 0);
+              when 3 => v.pllconf := tmp(27 downto 0);
+              when 4 => v.div := tmp(27 downto 0);
+              when 5 => v.fdiv := tmp(27 downto 0);
+              when 6 => v.strm := tmp(27 downto 0);
+              when 7 => v.clkdiv := tmp(27 downto 0);
+              when 8 => v.test1 := tmp(27 downto 0);
+              when 9 => v.test2 := tmp(27 downto 0);
               when 10 => 
-                if wdata(n)(31 downto 1) = zero32(31 downto 1) then 
+                if tmp(31 downto 1) = zero32(31 downto 1) then 
                    v.scale := conv_std_logic_vector(2,32);
                 else 
-                   v.scale := wdata(n);
+                   v.scale := tmp;
                 end if;
               when 11 => 
                 v.load_run := '1';
                 v.ScaleCnt := (others => '0');
                 v.BitCnt := 0;
-                if wdata(n) = zero32 then 
+                if tmp = zero32 then 
                   v.select_spi := "01";
-                elsif wdata(n) = conv_std_logic_vector(1,32) then 
+                elsif tmp = conv_std_logic_vector(1,32) then 
                   v.select_spi := "10";
                 else
                   v.select_spi := "00";
                 end if;
               when 15 => 
-                v.ExtAntEna   := wdata(n)(0);
-                v.IntAntContr := wdata(n)(1);
+                v.ExtAntEna   := tmp(0);
+                v.IntAntContr := tmp(1);
               when others => 
            end case;
          end if;

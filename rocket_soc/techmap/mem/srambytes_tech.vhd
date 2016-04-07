@@ -29,11 +29,11 @@ generic (
 port (
     clk       : in std_logic;
     raddr     : in global_addr_array_type;
-    rdata     : out unaligned_data_array_type;
+    rdata     : out std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
     waddr     : in global_addr_array_type;
     we        : in std_logic;
     wstrb     : in std_logic_vector(CFG_NASTI_DATA_BYTES-1 downto 0);
-    wdata     : in unaligned_data_array_type
+    wdata     : in std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0)
 );
 end;
 
@@ -47,8 +47,6 @@ type local_addr_type is array (0 to CFG_NASTI_DATA_BYTES-1) of
 
 signal address : local_addr_type;
 signal wr_ena : std_logic_vector(CFG_NASTI_DATA_BYTES-1 downto 0);
-signal rdatax : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
-signal wdatax : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
 
   --! @brief   Declaration of the one-byte SRAM element.
   --! @details This component is used for the FPGA implementation.
@@ -86,8 +84,6 @@ signal wdatax : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
 begin
 
      
-  wdatax <= wdata(3) & wdata(2) & wdata(1) & wdata(0);
-  
   --! Instantiate component for RTL simulation
   rtlsim0 : if memtech = inferred generate
     rx : for n in 0 to CFG_NASTI_DATA_BYTES-1 generate
@@ -104,9 +100,9 @@ begin
       ) port map (
           clk, 
           address => address(n),
-          rdata => rdatax(8*(n+1)-1 downto 8*n),
+          rdata => rdata(8*(n+1)-1 downto 8*n),
           we => wr_ena(n), 
-          wdata => wdatax(8*(n+1)-1 downto 8*n)
+          wdata => wdata(8*(n+1)-1 downto 8*n)
       );
     end generate; -- cycle
   end generate; -- tech=inferred
@@ -127,19 +123,13 @@ begin
       ) port map (
           clk, 
           address => address(n),
-          rdata => rdatax(8*(n+1)-1 downto 8*n),
+          rdata => rdata(8*(n+1)-1 downto 8*n),
           we => wr_ena(n), 
-          wdata => wdatax(8*(n+1)-1 downto 8*n)
+          wdata => wdata(8*(n+1)-1 downto 8*n)
       );
     end generate; -- cycle
   end generate; -- tech=inferred
   
-  rdata(0) <= rdatax(31 downto 0);
-  rdata(1) <= rdatax(63 downto 32);
-  rdata(2) <= rdatax(95 downto 64);
-  rdata(3) <= rdatax(127 downto 96);
-
-
 end; 
 
 

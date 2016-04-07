@@ -136,7 +136,7 @@ begin
       variable vcmd     : eth_command_type;
       variable raddr_reg : local_addr_array_type;
       variable waddr_reg : local_addr_array_type;
-      variable rdata : unaligned_data_array_type;
+      variable rdata : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
       variable wdata : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
       variable wdata32 : std_logic_vector(31 downto 0);
       variable wstrb : std_logic_vector(CFG_NASTI_DATA_BYTES-1 downto 0);
@@ -258,7 +258,7 @@ begin
            end if;
        end if;
 
-       rdata(n) := val;
+       rdata(8*CFG_ALIGN_BYTES*(n+1)-1 downto 8*CFG_ALIGN_BYTES*n) := val;
     end loop;
 
 

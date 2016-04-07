@@ -39,7 +39,7 @@ package types_mem is
   port (
     clk       : in std_logic;
     address   : in global_addr_array_type;
-    data      : out unaligned_data_array_type
+    data      : out std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0)
   );
   end component;
 
@@ -64,7 +64,7 @@ package types_mem is
   port (
     clk       : in std_logic;
     address   : in global_addr_array_type;
-    data      : out unaligned_data_array_type
+    data      : out std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0)
   );
   end component;
 
@@ -108,11 +108,11 @@ package types_mem is
   port (
     clk       : in std_logic;
     raddr     : in global_addr_array_type;
-    rdata     : out unaligned_data_array_type;
+    rdata     : out std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
     waddr     : in global_addr_array_type;
     we        : in std_logic;
     wstrb     : in std_logic_vector(CFG_NASTI_DATA_BYTES-1 downto 0);
-    wdata     : in unaligned_data_array_type
+    wdata     : in std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0)
   );
   end component;
 

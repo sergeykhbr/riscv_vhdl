@@ -25,7 +25,7 @@ entity BootRom_inferred is
   port (
     clk     : in  std_ulogic;
     address : in global_addr_array_type;
-    data    : out unaligned_data_array_type
+    data    : out std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0)
   );
 end;
 
@@ -65,7 +65,7 @@ begin
     if rising_edge(clk) then 
         for n in 0 to CFG_WORDS_ON_BUS-1 loop
             t_adr(n) := conv_integer(address(n)(ROM_ADDR_WIDTH-1 downto log2(CFG_NASTI_DATA_BYTES)));
-            data(n) <= rom(n)(t_adr(n));
+            data(32*(n+1)-1 downto 32*n) <= rom(n)(t_adr(n));
         end loop;
     end if;
   end process;

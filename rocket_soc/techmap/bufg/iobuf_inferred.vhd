@@ -21,7 +21,7 @@ architecture rtl of iobuf_inferred is
   signal ivalue : std_logic;
 begin
 
-  o <= to_X01(io) ;
+  o <= '0';
   io <= 'Z' when t = '1' else to_X01(i);
 
 end;

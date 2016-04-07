@@ -559,10 +559,6 @@ type nasti_slaves_out_vector is array (0 to CFG_NASTI_SLAVES_TOTAL-1)
 type global_addr_array_type is array (0 to CFG_WORDS_ON_BUS-1) 
        of std_logic_vector(CFG_NASTI_ADDR_BITS-1 downto 0);
 
---! Array of unaligned data.
-type unaligned_data_array_type is array (0 to CFG_WORDS_ON_BUS-1) 
-       of std_logic_vector(8*CFG_ALIGN_BYTES-1 downto 0);
-
 --! Slave device states during reading value operation.
 type nasti_slave_rstatetype is (rwait, rtrans);
 --! Slave device states during writting data operation.
@@ -629,7 +625,7 @@ procedure procedureWriteReorder(
      iwdata : in std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
      owaddr : out global_addr_array_type;
      owstrb : out std_logic_vector(CFG_NASTI_DATA_BYTES-1 downto 0);
-     owdata : out unaligned_data_array_type
+     owdata : out std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0)
 );
 
 --! @brief Complementary to address data reordring.
@@ -639,8 +635,8 @@ procedure procedureWriteReorder(
 --! @return Restored data array.
 function functionDataRestoreOrder(
      mux   : std_logic_vector;
-     idata : unaligned_data_array_type)
-return unaligned_data_array_type;
+     idata : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0))
+return std_logic_vector;
 
 --! Convert slave bank registers into bus output signals.
 --! @param[in] r      Bank of registers of the slave device.
@@ -648,7 +644,7 @@ return unaligned_data_array_type;
 --! @return Slave device output signals connected to system bus.
 function functionAxi4Output(
      r : nasti_slave_bank_type;
-     rd_val : unaligned_data_array_type)
+     rd_val : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0))
 return nasti_slave_out_type;
 
 --! @brief   AXI bus controller. 
@@ -824,17 +820,12 @@ procedure procedureWriteReorder(
      iwdata : in std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
      owaddr : out global_addr_array_type;
      owstrb : out std_logic_vector(CFG_NASTI_DATA_BYTES-1 downto 0);
-     owdata : out unaligned_data_array_type) is
+     owdata : out std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0)) is
 begin
   if CFG_NASTI_DATA_BITS = 128 and ena = '1' then
     if mux = "00" then
        owaddr := iwaddr;
-       
-       owdata(0) := iwdata(31 downto 0);
-       owdata(1) := iwdata(63 downto 32);
-       owdata(2) := iwdata(95 downto 64);
-       owdata(3) := iwdata(127 downto 96);
-       
+       owdata := iwdata;
        owstrb := iwstrb;
     elsif mux = "01" then
        owaddr(0) := iwaddr(3);
@@ -842,10 +833,8 @@ begin
        owaddr(2) := iwaddr(1);
        owaddr(3) := iwaddr(2);
        
-       owdata(0) := iwdata(127 downto 96);
-       owdata(1) := iwdata(31 downto 0);
-       owdata(2) := iwdata(63 downto 32);
-       owdata(3) := iwdata(95 downto 64);
+       owdata(31 downto 0) := iwdata(127 downto 96);
+       owdata(127 downto 32) := iwdata(95 downto 0);
        
        owstrb := iwstrb(11 downto 0) & iwstrb(15 downto 12);
     elsif mux = "10" then
@@ -854,10 +843,8 @@ begin
        owaddr(2) := iwaddr(0);
        owaddr(3) := iwaddr(1);
 
-       owdata(0) := iwdata(95 downto 64);
-       owdata(1) := iwdata(127 downto 96);
-       owdata(2) := iwdata(31 downto 0);
-       owdata(3) := iwdata(63 downto 32);
+       owdata(63 downto 0) := iwdata(127 downto 64);
+       owdata(127 downto 64) := iwdata(63 downto 0);
        
        owstrb := iwstrb(7 downto 0) & iwstrb(15 downto 8);
     else
@@ -866,16 +853,14 @@ begin
        owaddr(2) := iwaddr(3);
        owaddr(3) := iwaddr(0);
 
-       owdata(0) := iwdata(63 downto 32);
-       owdata(1) := iwdata(95 downto 64);
-       owdata(2) := iwdata(127 downto 96);
-       owdata(3) := iwdata(31 downto 0);
+       owdata(95 downto 0) := iwdata(127 downto 32);
+       owdata(127 downto 96) := iwdata(31 downto 0);
        
        owstrb := iwstrb(3 downto 0) & iwstrb(15 downto 4);
     end if;
   else
     owaddr := (others => (others => '0'));
-    owdata := (others => (others => '0'));
+    owdata := (others => '0');
     owstrb := (others => '0');
   end if;
 end;
@@ -887,28 +872,22 @@ end;
 --! @return Restored data array.
 function functionDataRestoreOrder(
      mux   : std_logic_vector;
-     idata : unaligned_data_array_type)
-return unaligned_data_array_type is
-variable odata :  unaligned_data_array_type;
+     idata : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0))
+return std_logic_vector is
+variable odata :  std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
 begin
   if CFG_NASTI_DATA_BITS = 128 then
     if mux = "00" then
        odata := idata;
     elsif mux = "01" then
-       odata(0) := idata(1);
-       odata(1) := idata(2);
-       odata(2) := idata(3);
-       odata(3) := idata(0);
+       odata(95 downto 0) := idata(127 downto 32);
+       odata(127 downto 96) := idata(31 downto 0);
     elsif mux = "10" then
-       odata(0) := idata(2);
-       odata(1) := idata(3);
-       odata(2) := idata(0);
-       odata(3) := idata(1);
+       odata(63 downto 0) := idata(127 downto 64);
+       odata(127 downto 64) := idata(63 downto 0);
     else
-       odata(0) := idata(3);
-       odata(1) := idata(0);
-       odata(2) := idata(1);
-       odata(3) := idata(2);
+       odata(31 downto 0) := idata(127 downto 96);
+       odata(127 downto 32) := idata(95 downto 0);
     end if;
   end if;
   return odata;
@@ -922,7 +901,7 @@ end;
 --! @return NASTI output signals of the implemented slave device.
 function functionAxi4Output(
      r : nasti_slave_bank_type;
-     rd_val : unaligned_data_array_type)
+     rd_val : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0))
 return nasti_slave_out_type is
 variable ret :  nasti_slave_out_type;
 begin
@@ -939,7 +918,7 @@ begin
     else
       ret.r_last    := '0';
     end if;
-    ret.r_resp    := r.rresp;    -- unaligned 32 bits access
+    ret.r_resp    := r.rresp;
     ret.r_user    := r.ruser;
     if r.rwaitready = '1' and r.rstate = rtrans then
       ret.r_valid   := '1';
@@ -947,9 +926,7 @@ begin
       ret.r_valid   := '0';
     end if;
 
-    for n in 0 to CFG_WORDS_ON_BUS-1 loop
-      ret.r_data(8*(n+1)*CFG_ALIGN_BYTES-1 downto 8*n*CFG_ALIGN_BYTES) := rd_val(n);
-    end loop;
+    ret.r_data := rd_val;
 
     -- Write transfer:
     if r.wstate = wwait then

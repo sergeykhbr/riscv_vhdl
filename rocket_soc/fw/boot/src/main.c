@@ -60,6 +60,7 @@ void _init() {
     uint32_t tech;
     pnp_map *pnp = (pnp_map *)ADDR_NASTI_SLAVE_PNP;
     uart_map *uart = (uart_map *)ADDR_NASTI_SLAVE_UART1;
+    gpio_map *gpio = (gpio_map *)ADDR_NASTI_SLAVE_GPIO;
     // Half period of the uart = Fbus / 115200 / 2 = 70 MHz / 115200 / 2:
     //uart->scaler = 304;  // 70 MHz
     uart->scaler = 260;  // 60 MHz
@@ -67,6 +68,7 @@ void _init() {
     led_set(0x01);
     print_uart("Boot . . .", 10);
     led_set(0x02);
+
     copy_image();
     led_set(0x03);
     print_uart("OK\r\n", 4);

@@ -144,7 +144,7 @@ begin
       elsif (clk_next = '0' and clk_cur = '1') then
         if iClkCnt >= EDCL_START_CLK and iClkCnt < (EDCL_START_CLK + EDCL_WRITE_LEN) then
            i_rxd <= EDCL_WRITE(4*(EDCL_WRITE_LEN - (iClkCnt-EDCL_START_CLK))-1 downto 4*(EDCL_WRITE_LEN - (iClkCnt-EDCL_START_CLK))-4);
-           i_rxdv <= '1';
+           --i_rxdv <= '1';
         elsif iClkCnt >= EDCL_START_CLK2 and iClkCnt < (EDCL_START_CLK2 + EDCL_WR_MRESET_LEN) then
            i_rxd <= EDCL_WR_MRESET(4*(EDCL_WR_MRESET_LEN - (iClkCnt-EDCL_START_CLK2))-1 downto 4*(EDCL_WR_MRESET_LEN - (iClkCnt-EDCL_START_CLK2))-4);
            --i_rxdv <= '1'; -- RESET CPU
@@ -185,7 +185,7 @@ begin
       
       --! @note to make sync. reset  of the logic that are clocked by
       --!       htif_clk which is clock/512 by default.
-      if iClkCnt = 5 then
+      if iClkCnt = 15 then
         i_rst <= '0';
       end if;
     end if;

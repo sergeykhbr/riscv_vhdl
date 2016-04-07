@@ -78,9 +78,9 @@ begin
     variable v : registers;
     variable raddr_reg : local_addr_array_type;
     variable waddr_reg : local_addr_array_type;
-    variable rdata : unaligned_data_array_type;
-    variable wdata : unaligned_data_array_type;
+    variable rdata : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
     variable wstrb : std_logic_vector(CFG_ALIGN_BYTES-1 downto 0);
+    variable tmp : std_logic_vector(31 downto 0);
 
     variable rise_irq : std_logic;
   begin
@@ -102,21 +102,22 @@ begin
 
     for n in 0 to CFG_WORDS_ON_BUS-1 loop
        raddr_reg(n) := conv_integer(r.bank_axi.raddr(n)(11 downto 2));
-       rdata(n) := (others => '0');
+       tmp := (others => '0');
 
        case raddr_reg(n) is
           --! Misc. bank (stub):
-          when 0 => rdata(n) := X"B00BCAFE";  --! hwid of the stub
-          when 1 => rdata(n) := X"00000021";  --! gnss channels configuration stub
-          when 2 => rdata(n) := r.CarrierNcoTh; --!
-          when 3 => rdata(n) := r.CarrierNcoIF; --!
+          when 0 => tmp := X"B00BCAFE";  --! hwid of the stub
+          when 1 => tmp := X"00000021";  --! gnss channels configuration stub
+          when 2 => tmp := r.CarrierNcoTh; --!
+          when 3 => tmp := r.CarrierNcoIF; --!
           --! Global Timers bank (stub):
-          when 16#10# => rdata(n) := r.MsLength;
-          when 16#11# => rdata(n) := r.bank_adc.tmr.MsCnt;
-          when 16#12# => rdata(n) := r.bank_adc.tmr.TOW;
-          when 16#13# => rdata(n) := r.bank_adc.tmr.TOD;
+          when 16#10# => tmp := r.MsLength;
+          when 16#11# => tmp := r.bank_adc.tmr.MsCnt;
+          when 16#12# => tmp := r.bank_adc.tmr.TOW;
+          when 16#13# => tmp := r.bank_adc.tmr.TOD;
           when others => 
        end case;
+       rdata(8*CFG_ALIGN_BYTES*(n+1)-1 downto 8*CFG_ALIGN_BYTES*n) := tmp;
     end loop;
 
 
@@ -126,14 +127,14 @@ begin
 
       for n in 0 to CFG_WORDS_ON_BUS-1 loop
          waddr_reg(n) := conv_integer(r.bank_axi.waddr(n)(11 downto 2));
-         wdata(n) := i.axi.w_data(32*(n+1)-1 downto 32*n);
+         tmp := i.axi.w_data(32*(n+1)-1 downto 32*n);
          wstrb := i.axi.w_strb(CFG_ALIGN_BYTES*(n+1)-1 downto CFG_ALIGN_BYTES*n);
 
          if conv_integer(wstrb) /= 0 then
            case waddr_reg(n) is
-             when 2 => v.CarrierNcoTh := wdata(n);
-             when 3 => v.CarrierNcoIF := wdata(n);
-             when 16#10# => v.MsLength := wdata(n);
+             when 2 => v.CarrierNcoTh := tmp;
+             when 3 => v.CarrierNcoIF := tmp;
+             when 16#10# => v.MsLength := tmp;
              when others =>
            end case;
          end if;

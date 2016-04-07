@@ -58,63 +58,27 @@ architecture arch_nasti_bootrom of nasti_bootrom is
 
 signal r, rin : registers;
 
-signal raddr_reg : global_addr_array_type;
-signal rdata     : unaligned_data_array_type;
+signal raddr_mux : global_addr_array_type;
+signal rdata_mux : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
 
 begin
 
-  comblogic : process(i, r, rdata)
+  comblogic : process(i, r, rdata_mux)
     variable v : registers;
-    variable raddr_mux : global_addr_array_type;
-    variable rdata_mux : unaligned_data_array_type;
+    variable rdata : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
   begin
 
     v := r;
 
     procedureAxi4(i, xconfig, r.bank_axi, v.bank_axi);
    
-    if v.bank_axi.raddr(0)(3 downto 2) = "00" then
-       raddr_mux := v.bank_axi.raddr;
-    elsif v.bank_axi.raddr(0)(3 downto 2) = "01" then
-       raddr_mux(0) := v.bank_axi.raddr(3);
-       raddr_mux(1) := v.bank_axi.raddr(0);
-       raddr_mux(2) := v.bank_axi.raddr(1);
-       raddr_mux(3) := v.bank_axi.raddr(2);
-    elsif v.bank_axi.raddr(0)(3 downto 2) = "10" then
-       raddr_mux(0) := v.bank_axi.raddr(2);
-       raddr_mux(1) := v.bank_axi.raddr(3);
-       raddr_mux(2) := v.bank_axi.raddr(0);
-       raddr_mux(3) := v.bank_axi.raddr(1);
-    else
-       raddr_mux(0) := v.bank_axi.raddr(1);
-       raddr_mux(1) := v.bank_axi.raddr(2);
-       raddr_mux(2) := v.bank_axi.raddr(3);
-       raddr_mux(3) := v.bank_axi.raddr(0);
-    end if;
+    raddr_mux <= functionAddressReorder(v.bank_axi.raddr(0)(3 downto 2),
+                                        v.bank_axi.raddr);
 
+    rdata := functionDataRestoreOrder(r.bank_axi.raddr(0)(3 downto 2),
+                                          rdata_mux);
 
-    if r.bank_axi.raddr(0)(3 downto 2) = "00" then
-       rdata_mux := rdata;
-    elsif r.bank_axi.raddr(0)(3 downto 2) = "01" then
-       rdata_mux(0) := rdata(1);
-       rdata_mux(1) := rdata(2);
-       rdata_mux(2) := rdata(3);
-       rdata_mux(3) := rdata(0);
-    elsif r.bank_axi.raddr(0)(3 downto 2) = "10" then
-       rdata_mux(0) := rdata(2);
-       rdata_mux(1) := rdata(3);
-       rdata_mux(2) := rdata(0);
-       rdata_mux(3) := rdata(1);
-    else
-       rdata_mux(0) := rdata(3);
-       rdata_mux(1) := rdata(0);
-       rdata_mux(2) := rdata(1);
-       rdata_mux(3) := rdata(2);
-    end if;
-
-    raddr_reg <= raddr_mux;
-
-    o <= functionAxi4Output(r.bank_axi, rdata_mux);
+    o <= functionAxi4Output(r.bank_axi, rdata);
 
     rin <= v;
   end process;
@@ -126,8 +90,8 @@ begin
     sim_hexfile => sim_hexfile
   ) port map (
     clk     => clk,
-    address => raddr_reg,
-    data    => rdata
+    address => raddr_mux,
+    data    => rdata_mux
   );
 
   -- registers:

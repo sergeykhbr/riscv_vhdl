@@ -1817,6 +1817,7 @@ begin
       v.status.reset := '0';
       if (enable_mdio = 1) then
         v.mdio_state := idle; v.status.mdio.cmd.read := '0';
+        v.status.mdio.cmd.valid := '0'; 
         v.status.mdio.cmd.write := '0'; v.status.mdio.busy := '0';
         v.status.mdio.cmd.data := (others => '0');
         v.status.mdio.cmd.regadr := (others => '0');
