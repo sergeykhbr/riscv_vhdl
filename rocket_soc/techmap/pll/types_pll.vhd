@@ -49,6 +49,7 @@ package types_pll is
   --! @param[in] CLK_IN1_P Differential clock input positive
   --! @param[in] CLK_IN1_N Differential clock input negative
   --! @param[out] CLK_OUT1 PLL clock output.
+  --! @param[out] CLK_OUT2 ADC clock simulation.
   --! @param[in] RESET Reset value. Active high.
   --! @param[out] LOCKED PLL locked status.
   --! @{
@@ -59,6 +60,7 @@ package types_pll is
     CLK_IN1_P   : in     std_logic;
     CLK_IN1_N   : in     std_logic;
     CLK_OUT1    : out    std_logic;
+    CLK_OUT2    : out    std_logic;
     RESET       : in     std_logic;
     LOCKED      : out    std_logic );
   end component;
@@ -69,7 +71,8 @@ package types_pll is
   port (
     CLK_IN1_P   : in     std_logic;
     CLK_IN1_N   : in     std_logic;
-    CLK_OUT1	: out std_logic;
+    CLK_OUT1	: out    std_logic;
+    CLK_OUT2    : out    std_logic;
     RESET	: in std_logic;
     LOCKED	: out std_logic );
   end component;
@@ -80,7 +83,8 @@ package types_pll is
   port (
     CLK_IN1_P   : in     std_logic;
     CLK_IN1_N   : in     std_logic;
-    CLK_OUT1  : out    std_logic;
+    CLK_OUT1    : out    std_logic;
+    CLK_OUT2    : out    std_logic;
     RESET     : in     std_logic;
     LOCKED    : out    std_logic );
   end component;
@@ -92,6 +96,7 @@ package types_pll is
     CLK_IN1_P   : in     std_logic;
     CLK_IN1_N   : in     std_logic;
     CLK_OUT1    : out    std_logic;
+    CLK_OUT2    : out    std_logic;
     RESET       : in     std_logic;
     LOCKED      : out    std_logic );
   end component;

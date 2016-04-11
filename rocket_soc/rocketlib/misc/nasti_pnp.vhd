@@ -69,16 +69,22 @@ architecture arch_nasti_pnp of nasti_pnp is
     bank0 : bank_type;
   end record;
 
-signal r, rin : registers;
---! @brief   Detector of the ADC clock.
---! @details If this register won't equal to 0xFF, then we suppose RF front-end
---!          not connected and FW should print message to enable 'i_int_clkrf'
---!          jumper to make possible generation of the 1 msec interrupts.
-signal r_adc_detect : std_logic_vector(7 downto 0);
+  constant RESET_VALUE : registers := (
+        NASTI_SLAVE_BANK_RESET,
+        ((others => '0'), (others => '0'), (others => '0'),
+         (others => '0'), (others => '0'), (others => '0'))
+  );
+
+  signal r, rin : registers;
+  --! @brief   Detector of the ADC clock.
+  --! @details If this register won't equal to 0xFF, then we suppose RF front-end
+  --!          not connected and FW should print message to enable 'i_int_clkrf'
+  --!          jumper to make possible generation of the 1 msec interrupts.
+  signal r_adc_detect : std_logic_vector(7 downto 0);
 
 begin
 
-  comblogic : process(i, slvcfg, r, r_adc_detect)
+  comblogic : process(i, slvcfg, r, r_adc_detect, nrst)
     variable v : registers;
     variable slvmap : slave_config_map;
     variable raddr_reg : local_addr_array_type;
@@ -168,6 +174,10 @@ begin
     end if;
 
     o <= functionAxi4Output(r.bank_axi, rdata);
+
+    if nrst = '0' then
+        v := RESET_VALUE;
+    end if;
     
     rin <= v;
   end process;
@@ -175,17 +185,9 @@ begin
   cfg <= xconfig;
 
   -- registers:
-  regs : process(sys_clk, nrst)
+  regs : process(sys_clk)
   begin 
-     if nrst = '0' then
-        r.bank_axi <= NASTI_SLAVE_BANK_RESET;
-        r.bank0.fw_id <= (others => '0');
-        r.bank0.idt <= (others => '0');
-        r.bank0.malloc_addr <= (others => '0');
-        r.bank0.malloc_size <= (others => '0');
-        r.bank0.fwdbg1 <= (others => '0');
-        r.bank0.adc_detect <= (others => '0');
-     elsif rising_edge(sys_clk) then 
+     if rising_edge(sys_clk) then 
         r <= rin;
      end if; 
   end process;
@@ -196,7 +198,7 @@ begin
      if nrst = '0' then
         r_adc_detect <= (others => '0');
      elsif rising_edge(adc_clk) then 
-        r_adc_detect <= r_adc_detect(6 downto 0) & '1';
+        r_adc_detect <= r_adc_detect(6 downto 0) & nrst;
      end if; 
   end process;
 

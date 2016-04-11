@@ -52,21 +52,29 @@ architecture arch_nasti_gpio of nasti_gpio is
     dip : std_logic_vector(31 downto 0);
     reg32_2 : std_logic_vector(31 downto 0);
     reg32_3 : std_logic_vector(31 downto 0);
-    led_period : std_logic_vector(31 downto 0);
-    uart_scaler : std_logic_vector(31 downto 0);
+    reg32_4 : std_logic_vector(31 downto 0);
+    reg32_5 : std_logic_vector(31 downto 0);
     reg32_6 : std_logic_vector(31 downto 0);
   end record;
-
+  
   type registers is record
     bank_axi : nasti_slave_bank_type;
     bank0 : bank_type;
   end record;
 
-signal r, rin : registers;
+  constant RESET_VALUE : registers := (
+        NASTI_SLAVE_BANK_RESET,
+        ((others => '0'), (others => '0'), 
+         (others => '0'), (others => '0'), (others => '0'),
+         (others => '0'), (others => '0'))
+  );
+
+  signal r, rin : registers;
+
 
 begin
 
-  comblogic : process(i, i_dip, r)
+  comblogic : process(i, i_dip, r, nrst)
     variable v : registers;
     variable raddr_reg : local_addr_array_type;
     variable waddr_reg : local_addr_array_type;
@@ -88,8 +96,8 @@ begin
         when 1 => tmp := r.bank0.dip;
         when 2 => tmp := r.bank0.reg32_2;
         when 3 => tmp := r.bank0.reg32_3;
-        when 4 => tmp := r.bank0.led_period;
-        when 5 => tmp := r.bank0.uart_scaler;
+        when 4 => tmp := r.bank0.reg32_4;
+        when 5 => tmp := r.bank0.reg32_5;
         when 6 => tmp := r.bank0.reg32_6;
         when others =>
       end case;
@@ -112,8 +120,8 @@ begin
              --when 1 => v.bank0.dip := tmp;
              when 2 => v.bank0.reg32_2 := tmp;
              when 3 => v.bank0.reg32_3 := tmp;
-             when 4 => v.bank0.led_period := tmp;
-             when 5 => v.bank0.uart_scaler := tmp;
+             when 4 => v.bank0.reg32_4 := tmp;
+             when 5 => v.bank0.reg32_5 := tmp;
              when 6 => v.bank0.reg32_6 := tmp;
              when others =>
            end case;
@@ -124,8 +132,12 @@ begin
     o <= functionAxi4Output(r.bank_axi, rdata);
 
     v.bank0.dip(3 downto 0) := i_dip;
+    
+    if nrst = '0' then
+        v := RESET_VALUE;
+    end if;
   
-  rin <= v;
+    rin <= v;
   end process;
 
   cfg  <= xconfig;
@@ -133,20 +145,9 @@ begin
   o_led <= r.bank0.led(7 downto 0);
 
   -- registers:
-  regs : process(clk, nrst)
+  regs : process(clk)
   begin 
-     if nrst = '0' then
-        r.bank_axi <= NASTI_SLAVE_BANK_RESET;
-
-        r.bank0.led <= (others => '0');
-        r.bank0.dip <= (others => '0');
-        r.bank0.reg32_2 <= (others => '0');
-        r.bank0.reg32_3 <= (others => '0');
-        r.bank0.led_period <= conv_std_logic_vector(50,32);--(others => '0');150*20000
-        r.bank0.uart_scaler <= conv_std_logic_vector(3,32);--(others => '0');
-        r.bank0.reg32_6 <= (others => '0');
-
-     elsif rising_edge(clk) then 
+     if rising_edge(clk) then 
         r <= rin;
      end if; 
   end process;

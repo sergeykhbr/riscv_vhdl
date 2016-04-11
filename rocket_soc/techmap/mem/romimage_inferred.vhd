@@ -29,7 +29,7 @@ end;
 
 architecture rtl of RomImage_inferred is
 
-constant ROM_ADDR_WIDTH : integer := 16;
+constant ROM_ADDR_WIDTH : integer := 18;
 constant ROM_LENGTH : integer := 2**(ROM_ADDR_WIDTH - log2(CFG_NASTI_DATA_BYTES));
 
 type rom_block is array (0 to ROM_LENGTH-1) of std_logic_vector(31 downto 0);

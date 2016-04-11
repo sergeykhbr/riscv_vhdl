@@ -343,6 +343,7 @@ end generate;
   --! @brief Firmware Image ROM with the AXI4 interface.
   --! @details Map address:
   --!          0x00100000..0x0013ffff (256 KB total)
+  --! @warning Don't forget to change ROM_ADDR_WIDTH in rom implementation
   img0 : nasti_romimage generic map (
     memtech  => CFG_MEMTECH,
     xindex   => CFG_NASTI_SLAVE_ROMIMAGE,

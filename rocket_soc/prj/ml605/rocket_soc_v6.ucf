@@ -23,10 +23,10 @@ NET "o_uart1_rtsn" LOC = T24;
 NET "o_uart1_td"   LOC = J25;
 
 # GPIO
-NET "i_int_clkrf"  LOC = D22;   # DIP-0. Generate ADC clock internally = sys_clk/4
-NET "i_dip[1]"  LOC = C22;   # DIP-1
-NET "i_dip[2]"  LOC = L21;   # DIP-2
-NET "i_dip[3]"  LOC = L20;   # DIP-3
+NET "i_int_clkrf"  LOC = D22 | IOSTANDARD=LVCMOS18 | PULLDOWN | SLEW=SLOW | DRIVE=2;   # DIP-0. Generate ADC clock internally = sys_clk/4
+NET "i_dip[1]"  LOC = C22 | IOSTANDARD=LVCMOS18 | PULLDOWN | SLEW=SLOW | DRIVE=2;   # DIP-1
+NET "i_dip[2]"  LOC = L21 | IOSTANDARD=LVCMOS18 | PULLDOWN | SLEW=SLOW | DRIVE=2;   # DIP-2
+NET "i_dip[3]"  LOC = L20 | IOSTANDARD=LVCMOS18 | PULLDOWN | SLEW=SLOW | DRIVE=2;   # DIP-3
 #NET "i_dip[4]"  LOC = C18;   # DIP-4
 #NET "i_dip[5]"  LOC = B18;   # DIP-5
 #NET "i_dip[6]"  LOC = K22;   # DIP-6

@@ -58,40 +58,29 @@ end SysPLL_tech;
 
 --! SysPLL_tech architecture declaration.
 architecture rtl of SysPLL_tech is
-  --! Clock bus (default 70 MHz).
+  --! Clock bus (default 60 MHz).
   signal pll_clk_bus : std_logic;
-  --! Clock divider to form internal ADC clock.
-  signal clk_divider : std_logic_vector(1 downto 0);
+  --! Clock bus Fsys / 4 (unbuffered).
+  signal adc_clk_unbuf : std_logic;
 
 begin
 
    xv6 : if tech = virtex6 generate
-     pll0 : SysPLL_v6 port map (i_clkp, i_clkn, pll_clk_bus, i_reset, o_locked);
+     pll0 : SysPLL_v6 port map (i_clkp, i_clkn, pll_clk_bus, adc_clk_unbuf, i_reset, o_locked);
    end generate;
 
    xv7 : if tech = kintex7 generate
-     pll0 : SysPLL_k7 port map (i_clkp, i_clkn, pll_clk_bus, i_reset, o_locked);
+     pll0 : SysPLL_k7 port map (i_clkp, i_clkn, pll_clk_bus, adc_clk_unbuf, i_reset, o_locked);
    end generate;
    
    inf : if tech = inferred generate
-     pll0 : SysPLL_inferred port map (i_clkp, i_clkn, pll_clk_bus, i_reset, o_locked);
+     pll0 : SysPLL_inferred port map (i_clkp, i_clkn, pll_clk_bus, adc_clk_unbuf, i_reset, o_locked);
    end generate;
    
    m180 : if tech = micron180 generate
-     pll0 : SysPLL_micron180 port map (i_clkp, i_clkn, pll_clk_bus, i_reset, o_locked);
+     pll0 : SysPLL_micron180 port map (i_clkp, i_clkn, pll_clk_bus, adc_clk_unbuf, i_reset, o_locked);
    end generate;
 
-  --! @brief Process to latch all registers values.
-  --! @details This process implements registers latching and reset logic.
-  --! @param[in] pll_clk_bus Clock used on rising edge.
-  --! @param[in] i_reset     Active high async reset.
-  regs : process(pll_clk_bus, i_reset)
-  begin 
-    if rising_edge(pll_clk_bus) then 
-      clk_divider <= clk_divider + 1; 
-    end if; 
-    if i_reset = '1' then clk_divider <= (others => '0'); end if;
-  end process;
 
 
   o_clk_bus <= pll_clk_bus;
@@ -107,7 +96,7 @@ begin
   (
     O  => o_clk_adc,
     I1 => i_clk_adc,
-    I2 => clk_divider(1),
+    I2 => adc_clk_unbuf,
     S  => i_int_clkrf
   );
 

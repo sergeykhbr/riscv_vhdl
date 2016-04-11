@@ -20,6 +20,7 @@ port
   CLK_IN1_N         : in     std_logic;
   -- Clock out ports
   CLK_OUT1          : out    std_logic;
+  CLK_OUT2          : out    std_logic;
   -- Status and control signals
   RESET             : in     std_logic;
   LOCKED            : out    std_logic
