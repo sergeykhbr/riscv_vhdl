@@ -8,7 +8,7 @@ include util.mak
 
 CC=gcc
 CPP=gcc
-CFLAGS= -c -g -Wall -Werror
+CFLAGS= -c -Wall -Werror
 LDFLAGS=-L$(ELF_DIR)
 INCL_KEY=-I
 DIR_KEY=-B

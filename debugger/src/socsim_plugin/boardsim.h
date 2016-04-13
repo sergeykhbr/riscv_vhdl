@@ -82,6 +82,7 @@ private:
     TFifo<FifoMessageType> *fifo_to_;
     TFifo<FifoMessageType> *fifo_from_;
     RingBufferType *ring_;
+    event_def event_tap_;
 };
 
 DECLARE_CLASS(BoardSim)

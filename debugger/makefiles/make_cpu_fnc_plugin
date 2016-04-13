@@ -8,7 +8,7 @@ include util.mak
 
 CC=gcc
 CPP=gcc
-CFLAGS= -c -g -Wall -Werror -fpic -std=c++0x
+CFLAGS= -c -Wall -Werror -fpic -std=c++0x
 LDFLAGS=-shared -L$(PLUGINS_ELF_DIR)/..
 INCL_KEY=-I
 DIR_KEY=-B
@@ -22,19 +22,21 @@ INCL_PATH= \
 # source files directories list:
 SRC_PATH =\
 	$(TOP_DIR)src/common \
-	$(TOP_DIR)src/cpu_rtl_plugin/verilator \
-	$(TOP_DIR)src/cpu_rtl_plugin
+	$(TOP_DIR)src/cpu_fnc_plugin
 
 VPATH = $(SRC_PATH)
 
 SOURCES = \
 	attribute \
 	autobuffer \
-	cpurtl \
-	verilated \
-	Vtop \
-	Vtop__Syms \
-	plugin_init
+	plugin_init \
+	cpu_riscv_func \
+	riscv-rv64i-user \
+	riscv-rv64i-priv \
+	instructions \
+	riscv-ext-a \
+	riscv-ext-m \
+	riscv-ext-f
 
 LIBS = \
 	m \
@@ -43,13 +45,13 @@ LIBS = \
 
 SRC_FILES = $(addsuffix .cpp,$(SOURCES))
 OBJ_FILES = $(addsuffix .o,$(SOURCES))
-EXECUTABLE = cpu_rtl_plugin.so
+EXECUTABLE = cpu_fnc_plugin.so
 
-all: cpu_rtl_plugin
+all: cpu_fnc_plugin
 
 .PHONY: $(EXECUTABLE)
 
-cpu_rtl_plugin: $(EXECUTABLE)
+cpu_fnc_plugin: $(EXECUTABLE)
 
 $(EXECUTABLE): $(OBJ_FILES)
 	echo $(CPP) $(LDFLAGS) $(addprefix $(PLUGINS_OBJ_DIR)/,$(OBJ_FILES)) -o $(addprefix $(PLUGINS_ELF_DIR)/,$@)

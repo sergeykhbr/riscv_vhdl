@@ -8,7 +8,7 @@ include util.mak
 
 CC=gcc
 CPP=gcc
-CFLAGS= -c -g -Wall -Werror -fpic -std=c++0x
+CFLAGS= -c -Wall -Werror -fpic -std=c++0x
 LDFLAGS=-shared -L$(PLUGINS_ELF_DIR)/..
 INCL_KEY=-I
 DIR_KEY=-B

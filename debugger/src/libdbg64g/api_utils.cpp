@@ -154,6 +154,60 @@ extern "C" void RISCV_thread_join(thread_def th, int ms) {
 #endif
 }
 
+extern "C" void RISCV_event_create(event_def *ev, const char *name) {
+#if defined(_WIN32) || defined(__CYGWIN__)
+    *ev = CreateEvent( 
+                NULL,               // default security attributes
+                TRUE,               // manual-reset event
+                FALSE,              // initial state is nonsignaled
+                TEXT(name)          // object name
+                ); 
+#else
+    pthread_mutex_init(&ev->mut, NULL);
+    pthread_cond_init(&ev->cond, NULL);
+    ev->state = false;
+#endif
+}
+
+extern "C" void RISCV_event_close(event_def *ev) {
+#if defined(_WIN32) || defined(__CYGWIN__)
+    CloseHandle(*ev);
+#else
+    pthread_mutex_destroy(&ev->mut);
+    pthread_cond_destroy(&ev->cond);
+#endif
+}
+
+extern "C" void RISCV_event_set(event_def *ev) {
+#if defined(_WIN32) || defined(__CYGWIN__)
+    SetEvent(*ev);
+#else
+    pthread_mutex_lock(&ev->mut);
+    ev->state = true;
+    pthread_mutex_unlock(&ev->mut);
+    pthread_cond_signal(&ev->cond);
+#endif
+}
+
+extern "C" void RISCV_event_clear(event_def *ev) {
+#if defined(_WIN32) || defined(__CYGWIN__)
+    ResetEvent(*ev);
+#else
+    ev->state = false;
+#endif
+}
+
+extern "C" void RISCV_event_wait(event_def *ev) {
+#if defined(_WIN32) || defined(__CYGWIN__)
+    WaitForSingleObject(*ev, INFINITE);
+#else
+    int result = 0;
+    do {
+        result = pthread_cond_wait(&ev->cond, &ev->mut);
+    } while (result == 0 && !ev->state);
+#endif
+}
+
 extern "C" int RISCV_mutex_init(mutex_def *mutex) {
 #if defined(_WIN32) || defined(__CYGWIN__)
     InitializeCriticalSection(mutex);

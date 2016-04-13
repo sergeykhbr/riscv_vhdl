@@ -3,3 +3,5 @@
 *.suo
 *.err
 Debug
+Release
+test.log

@@ -324,9 +324,8 @@ void CmdParserService::readCSR(AttributeType *listArgs) {
     }
 
     itap_->read(addr, 8, reinterpret_cast<uint8_t *>(&csr));
-    outf("CSR[%03x] => %08x%08x\n", static_cast<uint32_t>((addr >> 4) & 0xfff),
-                                    static_cast<uint32_t>(csr >> 32),
-                                    static_cast<uint32_t>(csr));
+    outf("CSR[%03x] => %016" RV_PRI64 "x\n", 
+        static_cast<uint32_t>((addr >> 4) & 0xfff), csr);
    
     if (!(*listArgs)[1].is_string()) {
         return;
@@ -348,6 +347,9 @@ void CmdParserService::readCSR(AttributeType *listArgs) {
             }
         }
         outf("\n");
+    } else if (strcmp((*listArgs)[1].to_string(), "MTIME") == 0) {
+        outf("    Clock: %" RV_PRI64 "d; ms: %.1f\n", csr, 
+                            static_cast<double>(csr)/60000.0);
     }
 }
 

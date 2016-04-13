@@ -8,7 +8,7 @@ include util.mak
 
 CC=gcc
 CPP=gcc
-CFLAGS= -c -g -Wall -Werror -fpic -std=c++0x -pthread
+CFLAGS= -c -Wall -Werror -fpic -std=c++0x -pthread
 LDFLAGS= -shared -pthread
 INCL_KEY=-I
 DIR_KEY=-B

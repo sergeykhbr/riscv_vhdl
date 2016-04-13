@@ -67,19 +67,17 @@ void PNP::transaction(Axi4TransactionType *payload) {
     uint64_t off = ((payload->addr - getBaseAddress()) & mask);
     uint32_t *mem_ = reinterpret_cast<uint32_t *>(&regs_);
     if (payload->rw) {
-        for (uint64_t i = 0; i < payload->xsize/4; i++) {
-            if (payload->wstrb & (0xf << 4*i)) {
-                mem_[off / 4 + i] = payload->wpayload[i];
+        for (uint64_t i = 0; i < payload->xsize; i++) {
+            if ((payload->wstrb & (1 << i)) == 0) {
+                continue;
             }
-
-            if ((off + 4*i) == (reinterpret_cast<uint32_t *>(&regs_.fwid)
-                              - reinterpret_cast<uint32_t *>(&regs_))) {
-                RISCV_info("Set FW_ID = %08x", regs_.fwid);
-            }
+            reinterpret_cast<uint8_t *>(mem_)[off + i] = 
+                reinterpret_cast<uint8_t *>(payload->wpayload)[i];
         }
     } else {
-        for (uint64_t i = 0; i < payload->xsize/4; i++) {
-            payload->rpayload[i] = mem_[i + off / 4];
+        for (uint64_t i = 0; i < payload->xsize; i++) {
+            reinterpret_cast<uint8_t *>(payload->rpayload)[i] = 
+                reinterpret_cast<uint8_t *>(mem_)[off + i];
         }
     }
 }

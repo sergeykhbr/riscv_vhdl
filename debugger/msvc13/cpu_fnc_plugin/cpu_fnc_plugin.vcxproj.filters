@@ -1,0 +1,54 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="common">
+      <UniqueIdentifier>{f5a16e1a-fd0c-436b-9f2e-d8942e1ccf15}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\common\attribute.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\common\autobuffer.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cpu_fnc_plugin\cpu_riscv_func.cpp" />
+    <ClCompile Include="..\..\src\cpu_fnc_plugin\plugin_init.cpp" />
+    <ClCompile Include="..\..\src\cpu_fnc_plugin\instructions.cpp" />
+    <ClCompile Include="..\..\src\cpu_fnc_plugin\riscv-rv64i-priv.cpp" />
+    <ClCompile Include="..\..\src\cpu_fnc_plugin\riscv-rv64i-user.cpp" />
+    <ClCompile Include="..\..\src\cpu_fnc_plugin\riscv-ext-m.cpp" />
+    <ClCompile Include="..\..\src\cpu_fnc_plugin\riscv-ext-a.cpp" />
+    <ClCompile Include="..\..\src\cpu_fnc_plugin\riscv-ext-f.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\common\api_types.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\api_utils.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\attribute.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\autobuffer.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\iattr.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\iclass.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\iface.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\iservice.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_fnc_plugin\cpu_riscv_func.h" />
+    <ClInclude Include="..\..\src\cpu_fnc_plugin\instructions.h" />
+    <ClInclude Include="..\..\src\cpu_fnc_plugin\iinstr.h" />
+    <ClInclude Include="..\..\src\cpu_fnc_plugin\riscv-isa.h" />
+  </ItemGroup>
+</Project>

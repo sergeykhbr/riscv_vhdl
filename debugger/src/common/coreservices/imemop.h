@@ -18,11 +18,10 @@ static const char *const IFACE_MEMORY_OPERATION = "IMemoryOperation";
 struct Axi4TransactionType {
     uint8_t rw;
     uint64_t addr;
-    uint32_t bytes;
     uint32_t rpayload[4];       // 128 bits data width
     uint32_t wstrb;             // 1 bit per byte
     uint32_t wpayload[4];
-    uint8_t  xsize;             //
+    uint8_t  xsize;             // [Bytes] Do not using XSize AXI format!!!.
 };
 
 class IMemoryOperation : public IFace {

@@ -57,6 +57,12 @@ int RISCV_mutex_unlock(mutex_def *mutex);
 int RISCV_mutex_destroy(mutex_def *mutex);
 void RISCV_thread_join(thread_def th, int ms);
 
+void RISCV_event_create(event_def *ev, const char *name);
+void RISCV_event_close(event_def *ev);
+void RISCV_event_set(event_def *ev);
+void RISCV_event_clear(event_def *ev);
+void RISCV_event_wait(event_def *ev);
+
 /** Get absolute directory where core library is placed. */
 int RISCV_get_core_folder(char *out, int sz);
 

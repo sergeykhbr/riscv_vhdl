@@ -41,7 +41,8 @@ namespace debugger {
     typedef int addr_size_t;
 
     typedef CRITICAL_SECTION mutex_def;
-    typedef void* thread_def; // HANDLE = void*
+    typedef void *thread_def; // HANDLE = void*
+    typedef void *event_def; // HANDLE = void*
     typedef unsigned thread_return_t;
     typedef thread_return_t (__stdcall* lib_thread_func)(void *args);
 
@@ -51,6 +52,11 @@ namespace debugger {
     typedef unsigned int addr_size_t;
     typedef pthread_t thread_def;
     typedef pthread_mutex_t mutex_def;
+    typedef struct event_def {
+        pthread_mutex_t mut;
+        pthread_cond_t cond;
+        bool state;
+    } event_def;
     typedef void *thread_return_t;
     typedef thread_return_t (*lib_thread_func)(void *args);
 

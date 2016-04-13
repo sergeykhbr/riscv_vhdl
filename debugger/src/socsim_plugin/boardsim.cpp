@@ -65,12 +65,14 @@ BoardSim::BoardSim(const char *name)  : IService(name) {
     fifo_to_ = new TFifo<FifoMessageType>(16);
     fifo_from_ = new TFifo<FifoMessageType>(16);
     ring_ = new RingBufferType(4096);
+    RISCV_event_create(&event_tap_, "event_tap");
 }
 
 BoardSim::~BoardSim() {
     delete ring_;
     delete fifo_to_;
     delete fifo_from_;
+    RISCV_event_close(&event_tap_);
 }
 
 void BoardSim::postinitService() {
@@ -127,8 +129,9 @@ void BoardSim::transaction(Axi4TransactionType *payload) {
     }
 
     if (unmapped) {
-        RISCV_error("Access to unmapped address %08" RV_PRI64 "x", 
-            payload->addr);
+        RISCV_error("[%" RV_PRI64 "d] Access to unmapped address %08" RV_PRI64 "x", 
+            iclk_->getStepCounter(), payload->addr);
+        while (1) {}
     }
 
     const char *rw_str[2] = {"=>", "<="};
@@ -182,10 +185,12 @@ void BoardSim::busyLoop() {
 
             iclk_->registerStepCallback(static_cast<IClockListener *>(this),
                                         iclk_->getStepCounter() + 1);
-            while (fifo_from_->isEmpty()) {
-                RISCV_sleep_ms(1);
+
+            RISCV_event_wait(&event_tap_);
+            RISCV_event_clear(&event_tap_);
+            while (!fifo_from_->isEmpty()) {
+                fifo_from_->get(&msg);
             }
-            fifo_from_->get(&msg);
 
             req.control.response.nak = 0;
             req.control.response.seqidx = seq_cnt_;
@@ -207,7 +212,7 @@ void BoardSim::stepCallback(uint64_t t) {
     FifoMessageType msg;
     Axi4TransactionType memop;
     uint32_t *mem;
-    memop.bytes = 2;   // word32 AXI spec.
+    //memop.bytes = 2;   // word32 AXI spec.
     memop.xsize = 4;
     while (!fifo_to_->isEmpty()) {
         fifo_to_->get(&msg);
@@ -229,6 +234,7 @@ void BoardSim::stepCallback(uint64_t t) {
             }
         }
         fifo_from_->put(&msg);
+        RISCV_event_set(&event_tap_);
     }
 }
 

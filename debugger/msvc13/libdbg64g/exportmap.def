@@ -24,4 +24,9 @@ EXPORTS
 	RISCV_mutex_lock
 	RISCV_mutex_unlock
 	RISCV_mutex_destroy
+	RISCV_event_create
+	RISCV_event_close
+	RISCV_event_set
+	RISCV_event_clear
+	RISCV_event_wait
 	RISCV_get_core_folder
