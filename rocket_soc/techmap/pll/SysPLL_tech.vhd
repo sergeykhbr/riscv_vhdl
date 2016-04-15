@@ -24,7 +24,8 @@ use techmap.types_buf.all;
 --!          depending generic technology argument.
 entity SysPLL_tech is
   generic (
-    tech    : integer range 0 to NTECH := 0 --! PLL implementation selector
+    tech    : integer range 0 to NTECH := 0; --! PLL implementation selector
+    tmode_always_ena : boolean := false
   );
   port
   (
@@ -91,7 +92,8 @@ begin
   --     otherwise pass sim_adc = bus/4 (for the self-test purposes without RF)
   buf1 : bufgmux_tech generic map
   (
-    tech => tech
+    tech => tech,
+    tmode_always_ena => tmode_always_ena
   )port map 
   (
     O  => o_clk_adc,

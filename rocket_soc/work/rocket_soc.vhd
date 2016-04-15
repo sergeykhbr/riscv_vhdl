@@ -210,7 +210,8 @@ begin
   ------------------------------------
   -- @brief Internal PLL device instance.
   pll0 : SysPLL_tech generic map (
-    tech => CFG_FABTECH
+    tech => CFG_FABTECH,
+    tmode_always_ena => CFG_TESTMODE_ON
   ) port map (
     i_reset     => ib_rst,
     i_int_clkrf => ib_dip(0),

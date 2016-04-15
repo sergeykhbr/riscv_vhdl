@@ -32,7 +32,8 @@ package types_pll is
   --! @param[out] o_locked PLL locked status.
   component SysPLL_tech is
     generic(
-      tech    : integer range 0 to NTECH := 0
+      tech    : integer range 0 to NTECH := 0;
+      tmode_always_ena : boolean := false
     );
     port (
     i_reset           : in     std_logic;

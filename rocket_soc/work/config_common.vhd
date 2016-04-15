@@ -137,5 +137,10 @@ constant CFG_ETHERNET_ENABLE : boolean := true;
 --! @brief Enable/Disable Debug Unit 
 constant CFG_DSU_ENABLE : boolean := true;
 
+--! @brief Remove BUFGMUX from project and use internaly generate ADC clock.
+--! @details We have some difficulties with Vivado + Kintex7 constrains, so
+--!          to make test-mode stable working we use this temporary config
+--!          parameter that hardcodes 'test_mode' is always enabled
+constant CFG_TESTMODE_ON : boolean := true;
 
 end;

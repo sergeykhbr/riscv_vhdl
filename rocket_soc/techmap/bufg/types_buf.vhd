@@ -25,7 +25,8 @@ package types_buf is
   --!                      0 = I1; 1 = I2.
   component bufgmux_tech is
     generic (
-      tech : integer := 0
+      tech : integer := 0;
+      tmode_always_ena : boolean := false
     );
     port (
       O        : out std_ulogic;

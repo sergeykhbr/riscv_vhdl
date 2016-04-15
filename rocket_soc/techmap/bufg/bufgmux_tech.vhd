@@ -14,7 +14,8 @@ use techmap.gencomp.all;
 entity bufgmux_tech is
   generic
   (
-    tech : integer := 0
+    tech : integer := 0;
+    tmode_always_ena : boolean := false
   );
   port (
     O        : out std_ulogic;
@@ -28,6 +29,9 @@ end;
 architecture rtl of bufgmux_tech is
 
  component bufgmux_fpga is
+  generic (
+    tmode_always_ena : boolean := false
+  );
   port (
     O       : out std_ulogic;
     I1      : in std_ulogic;
@@ -54,8 +58,9 @@ begin
    end generate;
 
    xlnx : if tech = virtex6 or tech = kintex7 generate
-      mux_buf : bufgmux_fpga
-      port map (
+      mux_buf : bufgmux_fpga generic map (
+        tmode_always_ena => tmode_always_ena
+      ) port map (
         O   => O,
         I1  => I1,
         I2  => I2,
