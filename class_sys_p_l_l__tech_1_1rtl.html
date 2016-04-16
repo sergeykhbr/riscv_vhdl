@@ -24,7 +24,7 @@
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">RISC-V VHDL: System-on-Chip
-   &#160;<span id="projectnumber">1.0</span>
+   &#160;<span id="projectnumber">2.0</span>
    </div>
   </td>
  </tr>
@@ -91,7 +91,6 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="header">
   <div class="summary">
 <a href="#Signals">Signals</a> &#124;
-<a href="#Processes">Processes</a> &#124;
 <a href="#Instantiations">Instantiations</a>  </div>
   <div class="headertitle">
 <div class="title">rtl Architecture Reference</div>  </div>
@@ -101,19 +100,14 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <p><a class="el" href="class_sys_p_l_l__tech.html" title="SysPLL_tech entity declaration (&quot;Virtual&quot; PLL). ">SysPLL_tech</a> architecture declaration.  
  <a href="class_sys_p_l_l__tech_1_1rtl.html#details">More...</a></p>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="Processes"></a>
-Processes</h2></td></tr>
- <tr class="memitem:a7d301f0dc2554634332d380bb7e39779"><td class="memItemLeft" align="right" valign="top"><a class="el" href="class_sys_p_l_l__tech_1_1rtl.html#a7d301f0dc2554634332d380bb7e39779">regs</a>&#160;</td><td class="memItemRight" valign="bottom"><b> ( <b><b><a class="el" href="class_sys_p_l_l__tech_1_1rtl.html#a852c100044fde141c44fecb9999b5fe1">pll_clk_bus</a></b> <span class="vhdlchar"> </span></b> , <b><b><a class="el" href="class_sys_p_l_l__tech.html#a8940131de7cedaaf29ae3d6c26b724d1">i_reset</a></b> <span class="vhdlchar"> </span></b> )</b></td></tr>
-<tr class="memdesc:a7d301f0dc2554634332d380bb7e39779"><td class="mdescLeft">&#160;</td><td class="mdescRight">Process to latch all registers values.  <a href="#a7d301f0dc2554634332d380bb7e39779"></a><br /></td></tr>
-</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="Signals"></a>
 Signals</h2></td></tr>
  <tr class="memitem:a852c100044fde141c44fecb9999b5fe1"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a852c100044fde141c44fecb9999b5fe1"></a>
 <a class="el" href="class_sys_p_l_l__tech_1_1rtl.html#a852c100044fde141c44fecb9999b5fe1">pll_clk_bus</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="vhdlchar">std_logic</span><span class="vhdlchar"> </span></b></td></tr>
-<tr class="memdesc:a852c100044fde141c44fecb9999b5fe1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clock bus (default 70 MHz). <br /></td></tr>
-<tr class="memitem:aed34bd7f9d390c11c2213cc6957adcda"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aed34bd7f9d390c11c2213cc6957adcda"></a>
-<a class="el" href="class_sys_p_l_l__tech_1_1rtl.html#aed34bd7f9d390c11c2213cc6957adcda">clk_divider</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="vhdlchar">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">1</span> <span class="vhdlchar"> </span><span class="vhdlchar">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span></b></td></tr>
-<tr class="memdesc:aed34bd7f9d390c11c2213cc6957adcda"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clock divider to form internal ADC clock. <br /></td></tr>
+<tr class="memdesc:a852c100044fde141c44fecb9999b5fe1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clock bus (default 60 MHz). <br /></td></tr>
+<tr class="memitem:abed32e979d2fd6d6075cdc7f5fb77004"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="abed32e979d2fd6d6075cdc7f5fb77004"></a>
+<a class="el" href="class_sys_p_l_l__tech_1_1rtl.html#abed32e979d2fd6d6075cdc7f5fb77004">adc_clk_unbuf</a> &#160;</td><td class="memItemRight" valign="bottom"><b><span class="vhdlchar">std_logic</span><span class="vhdlchar"> </span></b></td></tr>
+<tr class="memdesc:abed32e979d2fd6d6075cdc7f5fb77004"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clock bus Fsys / 4 (unbuffered). <br /></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="Instantiations"></a>
 Instantiations</h2></td></tr>
@@ -130,43 +124,7 @@ Instantiations</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p><a class="el" href="class_sys_p_l_l__tech.html" title="SysPLL_tech entity declaration (&quot;Virtual&quot; PLL). ">SysPLL_tech</a> architecture declaration. </p>
-</div><h2 class="groupheader">Member Function Documentation</h2>
-<a class="anchor" id="a7d301f0dc2554634332d380bb7e39779"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">regs </td>
-          <td>(</td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>pll_clk_bus</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>i_reset</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Process to latch all registers values. </p>
-<p>This process implements registers latching and reset logic. </p><dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">pll_clk_bus</td><td>Clock used on rising edge. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">i_reset</td><td>Active high async reset. </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<hr/>The documentation for this class was generated from the following file:<ul>
+</div><hr/>The documentation for this class was generated from the following file:<ul>
 <li><a class="el" href="_sys_p_l_l__tech_8vhd.html">SysPLL_tech.vhd</a></li>
 </ul>
 </div><!-- contents -->

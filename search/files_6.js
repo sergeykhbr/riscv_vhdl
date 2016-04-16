@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['htifctrl_2evhd',['htifctrl.vhd',['../htifctrl_8vhd.html',1,'']]],
-  ['htifserdes_2evhd',['htifserdes.vhd',['../htifserdes_8vhd.html',1,'']]]
+  ['gencomp_2evhd',['gencomp.vhd',['../gencomp_8vhd.html',1,'']]],
+  ['grethaxi_2evhd',['grethaxi.vhd',['../grethaxi_8vhd.html',1,'']]]
 ];

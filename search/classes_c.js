@@ -1,6 +1,7 @@
 var searchData=
 [
   ['nasti_5fbootrom',['nasti_bootrom',['../classnasti__bootrom.html',1,'']]],
+  ['nasti_5fdsu',['nasti_dsu',['../classnasti__dsu.html',1,'']]],
   ['nasti_5fgpio',['nasti_gpio',['../classnasti__gpio.html',1,'']]],
   ['nasti_5firqctrl',['nasti_irqctrl',['../classnasti__irqctrl.html',1,'']]],
   ['nasti_5firqctrl_5frtl',['nasti_irqctrl_rtl',['../classnasti__irqctrl_1_1nasti__irqctrl__rtl.html',1,'nasti_irqctrl']]],

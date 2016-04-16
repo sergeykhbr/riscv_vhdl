@@ -1,5 +1,8 @@
 var searchData=
 [
-  ['regadc',['regadc',['../classgnssengine_1_1arch__gnssengine.html#ac6e0dfa14d144edd8b8a9389f198490a',1,'gnssengine::arch_gnssengine']]],
-  ['regs',['regs',['../class_sys_p_l_l__tech_1_1rtl.html#a7d301f0dc2554634332d380bb7e39779',1,'SysPLL_tech.rtl::regs()'],['../classgrethc64_1_1rtl.html#a2470f93a52ce2376844ae20281413e4c',1,'grethc64.rtl.regs()'],['../classnasti__irqctrl_1_1nasti__irqctrl__rtl.html#a65817b3d6143537f567f710586f6ba2f',1,'nasti_irqctrl.nasti_irqctrl_rtl.regs()']]]
+  ['getbrief',['getBrief',['../classdebugger_1_1_i_face.html#a40be1a392d6548b18d44b13e3d4136ae',1,'debugger::IFace']]],
+  ['getbuffer',['getBuffer',['../classdebugger_1_1_auto_buffer.html#a3054cfcebda6a728dea7d7332142528a',1,'debugger::AutoBuffer']]],
+  ['getconnectionsettings',['getConnectionSettings',['../classdebugger_1_1_i_udp.html#aebe72b9175cc55226fa94660672755f7',1,'debugger::IUdp']]],
+  ['getdetail',['getDetail',['../classdebugger_1_1_i_face.html#a2c4d02c21c8b581ad2486f43debd600b',1,'debugger::IFace']]],
+  ['getfacename',['getFaceName',['../classdebugger_1_1_i_face.html#aa3e1eb4daa6e19d7febb1821006fb975',1,'debugger::IFace']]]
 ];

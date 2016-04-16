@@ -12,7 +12,6 @@ var searchData=
   ['mdio_5fcmd',['mdio_cmd',['../classgrethpkg.html#a64965dbee10537c3c604bb0154a9b87a',1,'grethpkg']]],
   ['mdio_5fphyadr',['mdio_phyadr',['../classgrethpkg.html#af90ca884199cc5054613ff9b305d07ed',1,'grethpkg']]],
   ['mem_5faddr_5fbits',['MEM_ADDR_BITS',['../classtypes__rocket.html#a47b87b2ba9605154ab9755934ff70acf',1,'types_rocket']]],
-  ['mem_5fdata_5fbits',['MEM_DATA_BITS',['../classtypes__rocket.html#a4f3874f09c8da21b7a506a40cac872e4',1,'types_rocket']]],
   ['mem_5ftag_5fbits',['MEM_TAG_BITS',['../classtypes__rocket.html#a08bab8dbc0095f0f7efc1216e428aaac',1,'types_rocket']]],
   ['memartisan',['memartisan',['../classgencomp.html#a017076d197e24ad443c568ba836ab7f6',1,'gencomp']]],
   ['memop_5fxsize_5ftotal',['MEMOP_XSIZE_TOTAL',['../classtypes__rocket.html#a725d7659dde9d86f401507ecb6b32028',1,'types_rocket']]],

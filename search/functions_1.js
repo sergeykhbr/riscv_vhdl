@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['functionaxi4output',['functionAxi4Output',['../classtypes__amba4.html#a71226427da0e90bd30e22248de95f4e4',1,'types_amba4.functionAxi4Output()'],['../class__types__amba4.html#a71226427da0e90bd30e22248de95f4e4',1,'_types_amba4.functionAxi4Output()']]]
+  ['breaksignal',['breakSignal',['../classdebugger_1_1_i_thread.html#a6c57858dde2c0c2ee1a24f9caa3c7f99',1,'debugger::IThread']]],
+  ['busyloop',['busyLoop',['../classdebugger_1_1_i_thread.html#a9a922129f4fbbb2f781803f7e475cb2c',1,'debugger::IThread']]]
 ];

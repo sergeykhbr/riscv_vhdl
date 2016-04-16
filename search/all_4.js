@@ -9,5 +9,6 @@ var searchData=
   ['did',['did',['../classtypes__amba4.html#a0c7af573dd02a54ec6e5c671804385ee',1,'types_amba4']]],
   ['divphase',['Divphase',['../class_divphase.html',1,'']]],
   ['divphase_2evhd',['divphase.vhd',['../divphase_8vhd.html',1,'']]],
+  ['debug_20support_20unit_20_28dsu_29',['Debug Support Unit (DSU)',['../dsu_link.html',1,'']]],
   ['dw',['dw',['../classsrambytes__tech_1_1rtl.html#a8903e01429ab067b8c3a70010f5b2e92',1,'srambytes_tech::rtl']]]
 ];

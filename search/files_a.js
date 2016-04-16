@@ -1,7 +1,6 @@
 var searchData=
 [
-  ['prngenfse_2evhd',['prngenfse.vhd',['../prngenfse_8vhd.html',1,'']]],
-  ['prngenfsegal_2evhd',['prngenfsegal.vhd',['../prngenfsegal_8vhd.html',1,'']]],
-  ['prngenfseglo_2evhd',['prngenfseglo.vhd',['../prngenfseglo_8vhd.html',1,'']]],
-  ['prngenfsegps_2evhd',['prngenfsegps.vhd',['../prngenfsegps_8vhd.html',1,'']]]
+  ['matrix_2evhd',['matrix.vhd',['../matrix_8vhd.html',1,'']]],
+  ['matrix1024_2evhd',['matrix1024.vhd',['../matrix1024_8vhd.html',1,'']]],
+  ['matrix24_2evhd',['matrix24.vhd',['../matrix24_8vhd.html',1,'']]]
 ];

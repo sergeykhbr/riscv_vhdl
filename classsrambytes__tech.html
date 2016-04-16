@@ -24,7 +24,7 @@
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">RISC-V VHDL: System-on-Chip
-   &#160;<span id="projectnumber">1.0</span>
+   &#160;<span id="projectnumber">2.0</span>
    </div>
   </td>
  </tr>
@@ -100,12 +100,13 @@ Inheritance diagram for srambytes_tech:</div>
  <div class="center">
   <img src="classsrambytes__tech.png" usemap="#srambytes_tech_map" alt=""/>
   <map id="srambytes_tech_map" name="srambytes_tech_map">
-<area href="classsram8__inferred__init.html" alt="sram8_inferred_init" shape="rect" coords="0,0,121,24"/>
-<area href="classsram8__inferred.html" alt="sram8_inferred" shape="rect" coords="131,0,252,24"/>
-<area href="classnasti__sram.html" alt="nasti_sram" shape="rect" coords="65,112,186,136"/>
-<area href="classrocket__soc.html" title="SOC Top-level entity declaration. " alt="rocket_soc" shape="rect" coords="0,168,121,192"/>
-<area href="class_tile2_nasti_bridge__tb.html" alt="Tile2NastiBridge_tb" shape="rect" coords="131,168,252,192"/>
-<area href="classrocket__soc__tb.html" alt="rocket_soc_tb" shape="rect" coords="0,224,121,248"/>
+<area href="classsram8__inferred__init.html" alt="sram8_inferred_init" shape="rect" coords="65,0,186,24"/>
+<area href="classsram8__inferred.html" alt="sram8_inferred" shape="rect" coords="196,0,317,24"/>
+<area href="classnasti__sram.html" alt="nasti_sram" shape="rect" coords="131,112,252,136"/>
+<area href="classgrethaxi__tb.html" alt="grethaxi_tb" shape="rect" coords="0,168,121,192"/>
+<area href="classrocket__soc.html" title="SOC Top-level entity declaration. " alt="rocket_soc" shape="rect" coords="131,168,252,192"/>
+<area href="class_tile2_nasti_bridge__tb.html" alt="Tile2NastiBridge_tb" shape="rect" coords="262,168,383,192"/>
+<area href="classrocket__soc__tb.html" alt="rocket_soc_tb" shape="rect" coords="131,224,252,248"/>
 </map>
  </div></div>
 <table class="memberdecls">
@@ -154,11 +155,11 @@ Ports</h2></td></tr>
  <tr class="memitem:a4a4609c199d30b3adebbeb3a01276ec5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4a4609c199d30b3adebbeb3a01276ec5"></a>
 <a class="el" href="classsrambytes__tech.html#a4a4609c199d30b3adebbeb3a01276ec5">clk</a> &#160;</td><td class="memItemRight" valign="bottom"> <b><b><span class="vhdlchar">in</span><span class="vhdlchar"> </span></b></b> <b><span class="vhdlchar">std_logic</span><span class="vhdlchar"> </span></b></td></tr>
 <tr class="memitem:a5c01330faedb2a03eb2b1aa3f21f8e40"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5c01330faedb2a03eb2b1aa3f21f8e40"></a>
-<a class="el" href="classsrambytes__tech.html#a5c01330faedb2a03eb2b1aa3f21f8e40">raddr</a> &#160;</td><td class="memItemRight" valign="bottom"> <b><b><span class="vhdlchar">in</span><span class="vhdlchar"> </span></b></b> <b><b><a class="el" href="classtypes__amba4.html#aefa6249e4bb22013b156721b601c8a4b">global_addr_array_type</a></b> <span class="vhdlchar"> </span></b></td></tr>
+<a class="el" href="classsrambytes__tech.html#a5c01330faedb2a03eb2b1aa3f21f8e40">raddr</a> &#160;</td><td class="memItemRight" valign="bottom"> <b><b><span class="vhdlchar">in</span><span class="vhdlchar"> </span></b></b> <b><b><a class="el" href="classtypes__amba4.html#a9afa34109ec723b47bcb25aaa6726946">global_addr_array_type</a></b> <span class="vhdlchar"> </span></b></td></tr>
 <tr class="memitem:a45b1322e09f33e89c6b120370e216b5d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a45b1322e09f33e89c6b120370e216b5d"></a>
 <a class="el" href="classsrambytes__tech.html#a45b1322e09f33e89c6b120370e216b5d">rdata</a> &#160;</td><td class="memItemRight" valign="bottom"> <b><b><span class="vhdlchar">out</span><span class="vhdlchar"> </span></b></b> <b><span class="vhdlchar">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><b><a class="el" href="classtypes__amba4.html#ae9515f04c38e433b5ed855e1763e8fdc">CFG_NASTI_DATA_BITS</a></b> <span class="vhdlchar">-</span><span class="vhdlchar"> </span> <span class="vhdldigit">1</span> <span class="vhdlchar"> </span><span class="vhdlchar">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span></b></td></tr>
 <tr class="memitem:ae42cf8b828c704c06ac1af49d330129b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae42cf8b828c704c06ac1af49d330129b"></a>
-<a class="el" href="classsrambytes__tech.html#ae42cf8b828c704c06ac1af49d330129b">waddr</a> &#160;</td><td class="memItemRight" valign="bottom"> <b><b><span class="vhdlchar">in</span><span class="vhdlchar"> </span></b></b> <b><b><a class="el" href="classtypes__amba4.html#aefa6249e4bb22013b156721b601c8a4b">global_addr_array_type</a></b> <span class="vhdlchar"> </span></b></td></tr>
+<a class="el" href="classsrambytes__tech.html#ae42cf8b828c704c06ac1af49d330129b">waddr</a> &#160;</td><td class="memItemRight" valign="bottom"> <b><b><span class="vhdlchar">in</span><span class="vhdlchar"> </span></b></b> <b><b><a class="el" href="classtypes__amba4.html#a9afa34109ec723b47bcb25aaa6726946">global_addr_array_type</a></b> <span class="vhdlchar"> </span></b></td></tr>
 <tr class="memitem:ae4f54d6b7e877c0365650880ba1f43d8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae4f54d6b7e877c0365650880ba1f43d8"></a>
 <a class="el" href="classsrambytes__tech.html#ae4f54d6b7e877c0365650880ba1f43d8">we</a> &#160;</td><td class="memItemRight" valign="bottom"> <b><b><span class="vhdlchar">in</span><span class="vhdlchar"> </span></b></b> <b><span class="vhdlchar">std_logic</span><span class="vhdlchar"> </span></b></td></tr>
 <tr class="memitem:a10d792cd8ebf34b1df905e16f5250de4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a10d792cd8ebf34b1df905e16f5250de4"></a>

@@ -24,7 +24,7 @@
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">RISC-V VHDL: System-on-Chip
-   &#160;<span id="projectnumber">1.0</span>
+   &#160;<span id="projectnumber">2.0</span>
    </div>
   </td>
  </tr>
@@ -129,10 +129,6 @@ Components</h2></td></tr>
 <tr class="memdesc:a9c2a551c89982cba2b28dd68e2bd6ff8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Galileo PRN codes ROM storage:  <a href="#a9c2a551c89982cba2b28dd68e2bd6ff8"></a><br /></td></tr>
 <tr class="memitem:aa663d9e4bda42ed999e150cd35ae4016"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classtypes__mem.html#aa663d9e4bda42ed999e150cd35ae4016">srambytes_tech</a>&#160;</td><td class="memItemRight" valign="bottom">  <b></b>  <em><a class="el" href="classsrambytes__tech.html">&lt;Entity srambytes_tech&gt; </a></em></td></tr>
 <tr class="memdesc:aa663d9e4bda42ed999e150cd35ae4016"><td class="mdescLeft">&#160;</td><td class="mdescRight">Declaration of the "virtual" SRAM component with unaligned access.  <a href="#aa663d9e4bda42ed999e150cd35ae4016"></a><br /></td></tr>
-<tr class="memitem:a5720b74db77cbce45cca353ed4985570"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classtypes__mem.html#a5720b74db77cbce45cca353ed4985570">sram8_inferred</a>&#160;</td><td class="memItemRight" valign="bottom">  <b></b>  <em><a class="el" href="classsram8__inferred.html">&lt;Entity sram8_inferred&gt; </a></em></td></tr>
-<tr class="memdesc:a5720b74db77cbce45cca353ed4985570"><td class="mdescLeft">&#160;</td><td class="mdescRight">Declaration of the one-byte SRAM element.  <a href="#a5720b74db77cbce45cca353ed4985570"></a><br /></td></tr>
-<tr class="memitem:a799a283270267854c4dac03ade1c2af7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classtypes__mem.html#a799a283270267854c4dac03ade1c2af7">sram8_inferred_init</a>&#160;</td><td class="memItemRight" valign="bottom">  <b></b>  <em><a class="el" href="classsram8__inferred__init.html">&lt;Entity sram8_inferred_init&gt; </a></em></td></tr>
-<tr class="memdesc:a799a283270267854c4dac03ade1c2af7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Declaration of the one-byte SRAM element with init function.  <a href="#a799a283270267854c4dac03ade1c2af7"></a><br /></td></tr>
 <tr class="memitem:aec6da32793d0cdfe5b2bfd9edcdf7d93"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classtypes__mem.html#aec6da32793d0cdfe5b2bfd9edcdf7d93">Ram32_tech</a>&#160;</td><td class="memItemRight" valign="bottom">  <b></b>  <em><a class="el" href="class_ram32__tech.html">&lt;Entity Ram32_tech&gt; </a></em></td></tr>
 <tr class="memdesc:aec6da32793d0cdfe5b2bfd9edcdf7d93"><td class="mdescLeft">&#160;</td><td class="mdescRight">Virtual SRAM block with fixed 32-bits data width.  <a href="#aec6da32793d0cdfe5b2bfd9edcdf7d93"></a><br /></td></tr>
 <tr class="memitem:ab1fe05a78baf51a3d2dbdf5e6d28af92"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classtypes__mem.html#ab1fe05a78baf51a3d2dbdf5e6d28af92">Ram64_tech</a>&#160;</td><td class="memItemRight" valign="bottom">  <b></b>  </td></tr>
@@ -140,59 +136,10 @@ Components</h2></td></tr>
 <tr class="memitem:a6a9ea2fadfc5c6080d84afbb4cb8961c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6a9ea2fadfc5c6080d84afbb4cb8961c"></a>
 <a class="el" href="classtypes__mem.html#a6a9ea2fadfc5c6080d84afbb4cb8961c">syncram_2p_tech</a>&#160;</td><td class="memItemRight" valign="bottom">  <b></b>  <em><a class="el" href="classsyncram__2p__tech.html">&lt;Entity syncram_2p_tech&gt; </a></em></td></tr>
 <tr class="memdesc:a6a9ea2fadfc5c6080d84afbb4cb8961c"><td class="mdescLeft">&#160;</td><td class="mdescRight">dual-port RAM declaration. <br /></td></tr>
-<tr><td colspan="2"><div class="groupHeader">Technology specific BootRom components.</div></td></tr>
-<tr><td colspan="2"><div class="groupText"><dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">hex_filename</td><td>Generic argument defining hex-file location. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">clk</td><td>System bus clock. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">address</td><td>Input address. </td></tr>
-    <tr><td class="paramdir">[out]</td><td class="paramname">data</td><td>Output data value. </td></tr>
-  </table>
-  </dd>
-</dl>
-</div></td></tr>
-<tr class="memitem:a035e9050fd7390cd0868ff589eea48fa"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classtypes__mem.html#a035e9050fd7390cd0868ff589eea48fa">BootRom_inferred</a>&#160;</td><td class="memItemRight" valign="bottom">  <b></b>  <em><a class="el" href="class_boot_rom__inferred.html">&lt;Entity BootRom_inferred&gt; </a></em></td></tr>
-<tr class="memdesc:a035e9050fd7390cd0868ff589eea48fa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Declaration of the BootRom component used for RTL simulation.  <a href="#a035e9050fd7390cd0868ff589eea48fa"></a><br /></td></tr>
-<tr><td colspan="2"><div class="groupHeader">Technology specific RomImage components.</div></td></tr>
-<tr><td colspan="2"><div class="groupText"><dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">hex_filename</td><td>Generic argument defining hex-file location. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">clk</td><td>System bus clock. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">address</td><td>Input address. </td></tr>
-    <tr><td class="paramdir">[out]</td><td class="paramname">data</td><td>Output data value. </td></tr>
-  </table>
-  </dd>
-</dl>
-</div></td></tr>
-<tr class="memitem:a563e131ed6195d1c120182c060849525"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classtypes__mem.html#a563e131ed6195d1c120182c060849525">RomImage_inferred</a>&#160;</td><td class="memItemRight" valign="bottom">  <b></b>  <em><a class="el" href="class_rom_image__inferred.html">&lt;Entity RomImage_inferred&gt; </a></em></td></tr>
-<tr class="memdesc:a563e131ed6195d1c120182c060849525"><td class="mdescLeft">&#160;</td><td class="mdescRight">Declaration of the RomImage component used for RTL simulation.  <a href="#a563e131ed6195d1c120182c060849525"></a><br /></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Declaration of 'virtual' Memory components. </p>
 </div><h2 class="groupheader">Member Data Documentation</h2>
-<a class="anchor" id="a035e9050fd7390cd0868ff589eea48fa"></a>
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classtypes__mem.html#a035e9050fd7390cd0868ff589eea48fa">BootRom_inferred</a> <b><span class="vhdlchar"> </span></b> </td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">Component</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Declaration of the BootRom component used for RTL simulation. </p>
-<p>This component is also valid for the FPGA implementation so that it uses standard HEX file for the ROM initialization. </p>
-
-</div>
-</div>
 <a class="anchor" id="ae1ee3e3f9ad2e9d47370fc8acb054a2a"></a>
 <div class="memitem">
 <div class="memproto">
@@ -271,29 +218,6 @@ Components</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a563e131ed6195d1c120182c060849525"></a>
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classtypes__mem.html#a563e131ed6195d1c120182c060849525">RomImage_inferred</a> <b><span class="vhdlchar"> </span></b> </td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">Component</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Declaration of the RomImage component used for RTL simulation. </p>
-<p>This component is also valid for the FPGA implementation so that it uses standard HEX file for the ROM initialization. </p>
-
-</div>
-</div>
 <a class="anchor" id="ab4856703a7744f6998765c5602d18c19"></a>
 <div class="memitem">
 <div class="memproto">
@@ -346,52 +270,6 @@ Components</h2></td></tr>
 
 <p>Galileo PRN codes ROM storage: </p>
 <p>This ROM is used in FSE Engine to form reference E1 reference signals. HEX-file isn't used for this ROM because 'inferred' module was built using "case when" operators. </p>
-
-</div>
-</div>
-<a class="anchor" id="a5720b74db77cbce45cca353ed4985570"></a>
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classtypes__mem.html#a5720b74db77cbce45cca353ed4985570">sram8_inferred</a> <b><span class="vhdlchar"> </span></b> </td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">Component</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Declaration of the one-byte SRAM element. </p>
-<p>This component is used for the FPGA implementation. </p>
-
-</div>
-</div>
-<a class="anchor" id="a799a283270267854c4dac03ade1c2af7"></a>
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classtypes__mem.html#a799a283270267854c4dac03ade1c2af7">sram8_inferred_init</a> <b><span class="vhdlchar"> </span></b> </td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">Component</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Declaration of the one-byte SRAM element with init function. </p>
-<p>This component is used for the RTL simulation. </p>
 
 </div>
 </div>

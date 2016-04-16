@@ -24,7 +24,7 @@
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">RISC-V VHDL: System-on-Chip
-   &#160;<span id="projectnumber">1.0</span>
+   &#160;<span id="projectnumber">2.0</span>
    </div>
   </td>
  </tr>
@@ -96,7 +96,12 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="Functions"></a>
 Functions</h2></td></tr>
- <tr class="memitem:a71226427da0e90bd30e22248de95f4e4"><td class="memItemLeft" align="right" valign="top"><b><b><span class="vhdlchar">nasti_slave_out_type</span><span class="vhdlchar"> </span></b></b>&#160;</td><td class="memItemRight" valign="bottom"> <a class="el" href="class__types__amba4.html#a71226427da0e90bd30e22248de95f4e4">functionAxi4Output</a><b> ( </b><b><span class="vhdlchar">r: </span><span class="stringliteral">in </span><span class="vhdlchar">nasti_slave_bank_type</span></b><b> , <span class="vhdlchar">rd_val: </span><span class="stringliteral">in </span><span class="vhdlchar">std_logic_vector(   CFG_NASTI_DATA_BITS- 1 downto  0)</span></b><b> )</b></td></tr>
+ <tr class="memitem:af3fce77b5af2468eeb718699306db210"><td class="memItemLeft" align="right" valign="top"><b><b><span class="vhdlchar">global_addr_array_type</span><span class="vhdlchar"> </span></b></b>&#160;</td><td class="memItemRight" valign="bottom"> <a class="el" href="class__types__amba4.html#af3fce77b5af2468eeb718699306db210">functionAddressReorder</a><b> ( </b><b><span class="vhdlchar">mux: </span><span class="stringliteral">in </span><span class="vhdlchar">std_logic_vector</span></b><b> , <span class="vhdlchar">iaddr: </span><span class="stringliteral">in </span><span class="vhdlchar">global_addr_array_type</span></b><b> )</b></td></tr>
+<tr class="memitem:a724d1d8ee116bb6672cd45ee63ab26e4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a724d1d8ee116bb6672cd45ee63ab26e4"></a>
+<b><b><span class="vhdlchar">std_logic_vector</span><span class="vhdlchar"> </span></b></b>&#160;</td><td class="memItemRight" valign="bottom"> <a class="el" href="class__types__amba4.html#a724d1d8ee116bb6672cd45ee63ab26e4">functionDataRestoreOrder</a><b> ( </b><b><span class="vhdlchar">mux: </span><span class="stringliteral">in </span><span class="vhdlchar">std_logic_vector</span></b><b> , <span class="vhdlchar">idata: </span><span class="stringliteral">in </span><span class="vhdlchar">std_logic_vector(   CFG_NASTI_DATA_BITS- 1 downto  0)</span></b><b> )</b></td></tr>
+<tr class="memdesc:a724d1d8ee116bb6672cd45ee63ab26e4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reordering elements of the write transaction to provide 4-bytes memory access. <br /></td></tr>
+<tr class="memitem:a71226427da0e90bd30e22248de95f4e4"><td class="memItemLeft" align="right" valign="top"><b><b><span class="vhdlchar">nasti_slave_out_type</span><span class="vhdlchar"> </span></b></b>&#160;</td><td class="memItemRight" valign="bottom"> <a class="el" href="class__types__amba4.html#a71226427da0e90bd30e22248de95f4e4">functionAxi4Output</a><b> ( </b><b><span class="vhdlchar">r: </span><span class="stringliteral">in </span><span class="vhdlchar">nasti_slave_bank_type</span></b><b> , <span class="vhdlchar">rd_val: </span><span class="stringliteral">in </span><span class="vhdlchar">std_logic_vector(   CFG_NASTI_DATA_BITS- 1 downto  0)</span></b><b> )</b></td></tr>
+<tr class="memdesc:a71226427da0e90bd30e22248de95f4e4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Complementary to address data reordring.  <a href="#a71226427da0e90bd30e22248de95f4e4"></a><br /></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="Procedures"></a>
 Procedures</h2></td></tr>
@@ -106,10 +111,57 @@ Procedures</h2></td></tr>
   <b><span class="vhdlchar"> </span><span class="vhdlchar">i_bank: </span><span class="stringliteral"></span> <b><span class="vhdlchar">in</span><span class="vhdlchar"> </span><span class="vhdlchar">nasti_slave_bank_type</span><span class="vhdlchar"> </span></b></b><br />
   <b><span class="vhdlchar"> </span><span class="vhdlchar">o_bank: </span><span class="stringliteral"></span> <b><span class="vhdlchar">out</span><span class="vhdlchar"> </span><span class="vhdlchar">nasti_slave_bank_type</span><span class="vhdlchar"> </span></b></b><br />
    )</td></tr>
+<tr class="memitem:a4ddc15a530a0470ea33954ea5d95f839"><td class="memItemLeft" align="right" valign="top"><b><b><span class="vhdlchar"> </span></b></b>&#160;</td><td class="memItemRight" valign="bottom"> <a class="el" href="class__types__amba4.html#a4ddc15a530a0470ea33954ea5d95f839">procedureWriteReorder</a>( <br />
+<b><span class="vhdlchar"> </span><span class="vhdlchar">ena: </span><span class="stringliteral"></span> <b><span class="vhdlchar">in</span><span class="vhdlchar"> </span><span class="vhdlchar">std_logic</span><span class="vhdlchar"> </span></b></b><br />
+  <b><span class="vhdlchar"> </span><span class="vhdlchar">mux: </span><span class="stringliteral"></span> <b><span class="vhdlchar">in</span><span class="vhdlchar"> </span><span class="vhdlchar">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">1</span> <span class="vhdlchar"> </span><span class="vhdlchar">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span></b></b><br />
+  <b><span class="vhdlchar"> </span><span class="vhdlchar">iwaddr: </span><span class="stringliteral"></span> <b><span class="vhdlchar">in</span><span class="vhdlchar"> </span><span class="vhdlchar">global_addr_array_type</span><span class="vhdlchar"> </span></b></b><br />
+  <b><span class="vhdlchar"> </span><span class="vhdlchar">iwstrb: </span><span class="stringliteral"></span> <b><span class="vhdlchar">in</span><span class="vhdlchar"> </span><span class="vhdlchar">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">CFG_NASTI_DATA_BYTES</span><span class="vhdlchar">-</span><span class="vhdlchar"> </span> <span class="vhdldigit">1</span> <span class="vhdlchar"> </span><span class="vhdlchar">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span></b></b><br />
+  <b><span class="vhdlchar"> </span><span class="vhdlchar">iwdata: </span><span class="stringliteral"></span> <b><span class="vhdlchar">in</span><span class="vhdlchar"> </span><span class="vhdlchar">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">CFG_NASTI_DATA_BITS</span><span class="vhdlchar">-</span><span class="vhdlchar"> </span> <span class="vhdldigit">1</span> <span class="vhdlchar"> </span><span class="vhdlchar">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span></b></b><br />
+  <b><span class="vhdlchar"> </span><span class="vhdlchar">owaddr: </span><span class="stringliteral"></span> <b><span class="vhdlchar">out</span><span class="vhdlchar"> </span><span class="vhdlchar">global_addr_array_type</span><span class="vhdlchar"> </span></b></b><br />
+  <b><span class="vhdlchar"> </span><span class="vhdlchar">owstrb: </span><span class="stringliteral"></span> <b><span class="vhdlchar">out</span><span class="vhdlchar"> </span><span class="vhdlchar">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">CFG_NASTI_DATA_BYTES</span><span class="vhdlchar">-</span><span class="vhdlchar"> </span> <span class="vhdldigit">1</span> <span class="vhdlchar"> </span><span class="vhdlchar">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span></b></b><br />
+  <b><span class="vhdlchar"> </span><span class="vhdlchar">owdata: </span><span class="stringliteral"></span> <b><span class="vhdlchar">out</span><span class="vhdlchar"> </span><span class="vhdlchar">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">CFG_NASTI_DATA_BITS</span><span class="vhdlchar">-</span><span class="vhdlchar"> </span> <span class="vhdldigit">1</span> <span class="vhdlchar"> </span><span class="vhdlchar">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar"> </span><span class="vhdlchar">)</span><span class="vhdlchar"> </span></b></b><br />
+   )</td></tr>
+<tr class="memdesc:a4ddc15a530a0470ea33954ea5d95f839"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reordering elements of the address to provide 4-bytes memory access.  <a href="#a4ddc15a530a0470ea33954ea5d95f839"></a><br /></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Implementation of the declared sub-programs (functions and procedures). </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
+<a class="anchor" id="af3fce77b5af2468eeb718699306db210"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"> <b><span class="vhdlchar">global_addr_array_type</span><span class="vhdlchar"> </span></b> functionAddressReorder</td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><b><span class="vhdlchar">mux</span><span class="vhdlchar"> </span></b><span class="stringliteral">in</span> <em><b><span class="vhdlchar"> </span><span class="vhdlchar">std_logic_vector</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span></b></em> , </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><b><span class="vhdlchar">iaddr</span><span class="vhdlchar"> </span></b><span class="stringliteral">in</span> <em><b><span class="vhdlchar"> </span><span class="vhdlchar">global_addr_array_type</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span></b></em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">Function</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>No Wait States by default for reading operation. </p><pre class="fragment">         User can re-assign this value directly in module to implement
+         reading wait states.
+         Example: see axi2fse.vhd bridge implementation </pre> 
+</div>
+</div>
 <a class="anchor" id="a71226427da0e90bd30e22248de95f4e4"></a>
 <div class="memitem">
 <div class="memproto">
@@ -141,9 +193,17 @@ Procedures</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>No Wait States by default for reading operation. </p><pre class="fragment">         User can re-assign this value directly in module to implement
-         reading wait states.
-         Example: see axi2fse.vhd bridge implementation </pre> 
+
+<p>Complementary to address data reordring. </p>
+<p>This function restore data bus as there wasn't address reordering. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">mux</td><td>Reordering control bits. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">idata</td><td>Input data array. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Restored data array. </dd></dl>
+
 </div>
 </div>
 <a class="anchor" id="a4689c9514e71958869ac7baa4786e188"></a>
@@ -198,6 +258,86 @@ Procedures</h2></td></tr>
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a class="anchor" id="a4ddc15a530a0470ea33954ea5d95f839"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"> <b><span class="vhdlchar"> </span></b> procedureWriteReorder</td>
+          <td>(</td>
+          <td class="paramtype"><span class="keywordtype"> </span> &#160;</td>
+          <td class="paramname"><b><span class="vhdlchar">ena</span><span class="vhdlchar"> </span></b><span class="stringliteral"></span> <em><b><span class="vhdlchar">in</span><span class="vhdlchar"> </span><span class="vhdlchar">std_logic</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span></b></em> , </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><span class="keywordtype"> </span> &#160;</td>
+          <td class="paramname"><b><span class="vhdlchar">mux</span><span class="vhdlchar"> </span></b><span class="stringliteral"></span> <em><b><span class="vhdlchar">in</span><span class="vhdlchar"> </span><span class="vhdlchar">std_logic_vector</span><span class="vhdlchar">(</span><span class="vhdlchar"> </span> <span class="vhdldigit">1</span> <span class="vhdlchar"> </span><span class="vhdlchar">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span></b></em> , </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><span class="keywordtype"> </span> &#160;</td>
+          <td class="paramname"><b><span class="vhdlchar">iwaddr</span><span class="vhdlchar"> </span></b><span class="stringliteral"></span> <em><b><span class="vhdlchar">in</span><span class="vhdlchar"> </span><span class="vhdlchar">global_addr_array_type</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span></b></em> , </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><span class="keywordtype"> </span> &#160;</td>
+          <td class="paramname"><b><span class="vhdlchar">iwstrb</span><span class="vhdlchar"> </span></b><span class="stringliteral"></span> <em><b><span class="vhdlchar">in</span><span class="vhdlchar"> </span><span class="vhdlchar">std_logic_vector</span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">CFG_NASTI_DATA_BYTES</span><span class="vhdlchar">-</span><span class="vhdlchar"> </span> <span class="vhdldigit">1</span> <span class="vhdlchar"> </span><span class="vhdlchar">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span></b></em> , </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><span class="keywordtype"> </span> &#160;</td>
+          <td class="paramname"><b><span class="vhdlchar">iwdata</span><span class="vhdlchar"> </span></b><span class="stringliteral"></span> <em><b><span class="vhdlchar">in</span><span class="vhdlchar"> </span><span class="vhdlchar">std_logic_vector</span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">CFG_NASTI_DATA_BITS</span><span class="vhdlchar">-</span><span class="vhdlchar"> </span> <span class="vhdldigit">1</span> <span class="vhdlchar"> </span><span class="vhdlchar">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span></b></em> , </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><span class="keywordtype"> </span> &#160;</td>
+          <td class="paramname"><b><span class="vhdlchar">owaddr</span><span class="vhdlchar"> </span></b><span class="stringliteral"></span> <em><b><span class="vhdlchar">out</span><span class="vhdlchar"> </span><span class="vhdlchar">global_addr_array_type</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span></b></em> , </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><span class="keywordtype"> </span> &#160;</td>
+          <td class="paramname"><b><span class="vhdlchar">owstrb</span><span class="vhdlchar"> </span></b><span class="stringliteral"></span> <em><b><span class="vhdlchar">out</span><span class="vhdlchar"> </span><span class="vhdlchar">std_logic_vector</span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">CFG_NASTI_DATA_BYTES</span><span class="vhdlchar">-</span><span class="vhdlchar"> </span> <span class="vhdldigit">1</span> <span class="vhdlchar"> </span><span class="vhdlchar">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span></b></em> , </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><span class="keywordtype"> </span> &#160;</td>
+          <td class="paramname"><b><span class="vhdlchar">owdata</span><span class="vhdlchar"> </span></b><span class="stringliteral"></span> <em><b><span class="vhdlchar">out</span><span class="vhdlchar"> </span><span class="vhdlchar">std_logic_vector</span><span class="vhdlchar">(</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar">CFG_NASTI_DATA_BITS</span><span class="vhdlchar">-</span><span class="vhdlchar"> </span> <span class="vhdldigit">1</span> <span class="vhdlchar"> </span><span class="vhdlchar">downto</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span> <span class="vhdldigit">0</span> <span class="vhdlchar">)</span><span class="vhdlchar"> </span><span class="vhdlchar"> </span><span class="vhdlchar"> </span></b></em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">Procedure</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Reordering elements of the address to provide 4-bytes memory access. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">mux</td><td>Reordering control bits. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">iaddr</td><td>Input addresses array. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Reordered addresses array. </dd></dl>
 
 </div>
 </div>

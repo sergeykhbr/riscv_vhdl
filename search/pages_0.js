@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['risc_2dv_20system_2don_2dchip_20vhdl_20ip_20library',['RISC-V System-on-Chip VHDL IP library',['../index.html',1,'']]]
+  ['debug_20support_20unit_20_28dsu_29',['Debug Support Unit (DSU)',['../dsu_link.html',1,'']]]
 ];

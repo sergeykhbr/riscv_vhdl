@@ -24,7 +24,7 @@
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">RISC-V VHDL: System-on-Chip
-   &#160;<span id="projectnumber">1.0</span>
+   &#160;<span id="projectnumber">2.0</span>
    </div>
   </td>
  </tr>
@@ -125,6 +125,8 @@ Components</h2></td></tr>
 <tr class="memdesc:a7937a9141eb9533c671ecd28a49ed924"><td class="mdescLeft">&#160;</td><td class="mdescRight">Output PAD buffer.  <a href="#a7937a9141eb9533c671ecd28a49ed924"></a><br /></td></tr>
 <tr class="memitem:a89c6232c283cbf9034d1ea63151b7af0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classtypes__buf.html#a89c6232c283cbf9034d1ea63151b7af0">iobuf_tech</a>&#160;</td><td class="memItemRight" valign="bottom">  <b></b>  <em><a class="el" href="classiobuf__tech.html">&lt;Entity iobuf_tech&gt; </a></em></td></tr>
 <tr class="memdesc:a89c6232c283cbf9034d1ea63151b7af0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Input/Output PAD buffer.  <a href="#a89c6232c283cbf9034d1ea63151b7af0"></a><br /></td></tr>
+<tr class="memitem:abb414455782756bdee4e1acc444f76cc"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classtypes__buf.html#abb414455782756bdee4e1acc444f76cc">igdsbuf_tech</a>&#160;</td><td class="memItemRight" valign="bottom">  <b></b>  <em><a class="el" href="classigdsbuf__tech.html">&lt;Entity igdsbuf_tech&gt; </a></em></td></tr>
+<tr class="memdesc:abb414455782756bdee4e1acc444f76cc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gigabit buffer with differential inputs.  <a href="#abb414455782756bdee4e1acc444f76cc"></a><br /></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Declaration of 'virtual' Buffers components. </p>
@@ -185,6 +187,36 @@ Components</h2></td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">tech</td><td>Technology selector. </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">o</td><td>Output buffered signal. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">i</td><td>Input unbuffered signal. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="abb414455782756bdee4e1acc444f76cc"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classtypes__buf.html#abb414455782756bdee4e1acc444f76cc">igdsbuf_tech</a> <b><span class="vhdlchar"> </span></b> </td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">Component</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Gigabit buffer with differential inputs. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">gclk_p</td><td>Differential clock input. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">gclk_n</td><td>Differential clock inversed input. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">o_clk</td><td>Unbuffered clock output. </td></tr>
   </table>
   </dd>
 </dl>

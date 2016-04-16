@@ -24,7 +24,7 @@
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">RISC-V VHDL: System-on-Chip
-   &#160;<span id="projectnumber">1.0</span>
+   &#160;<span id="projectnumber">2.0</span>
    </div>
   </td>
  </tr>
@@ -125,6 +125,7 @@ Components</h2></td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">CLK_IN1_P</td><td>Differential clock input positive </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">CLK_IN1_N</td><td>Differential clock input negative </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">CLK_OUT1</td><td>PLL clock output. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">CLK_OUT2</td><td>ADC clock simulation. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">RESET</td><td>Reset value. Active high. </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">LOCKED</td><td>PLL locked status. </td></tr>
   </table>
@@ -140,10 +141,42 @@ Components</h2></td></tr>
 <tr class="memdesc:a492166f49e0dadac4ea243f9da7f178c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Declaration of the PLL component used for KC705 board.  <a href="#a492166f49e0dadac4ea243f9da7f178c"></a><br /></td></tr>
 <tr class="memitem:a7a4179439946248c234bdb359c9aca30"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classtypes__pll.html#a7a4179439946248c234bdb359c9aca30">SysPLL_micron180</a>&#160;</td><td class="memItemRight" valign="bottom">  <b></b>  <em><a class="el" href="class_sys_p_l_l__micron180.html">&lt;Entity SysPLL_micron180&gt; </a></em></td></tr>
 <tr class="memdesc:a7a4179439946248c234bdb359c9aca30"><td class="mdescLeft">&#160;</td><td class="mdescRight">Declaration of the PLL component used Mikron 180nm ASIC.  <a href="#a7a4179439946248c234bdb359c9aca30"></a><br /></td></tr>
+<tr class="memitem:a2a7486a2a5cfcc93bc1f3f2daa743fb0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classtypes__pll.html#a2a7486a2a5cfcc93bc1f3f2daa743fb0">clkp90_tech</a>&#160;</td><td class="memItemRight" valign="bottom">  <b></b>  <em><a class="el" href="classclkp90__tech.html">&lt;Entity clkp90_tech&gt; </a></em></td></tr>
+<tr class="memdesc:a2a7486a2a5cfcc93bc1f3f2daa743fb0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Virtual Clock phase rotator.  <a href="#a2a7486a2a5cfcc93bc1f3f2daa743fb0"></a><br /></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Declaration of 'virtual' PLL components. </p>
 </div><h2 class="groupheader">Member Data Documentation</h2>
+<a class="anchor" id="a2a7486a2a5cfcc93bc1f3f2daa743fb0"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classtypes__pll.html#a2a7486a2a5cfcc93bc1f3f2daa743fb0">clkp90_tech</a> <b><span class="vhdlchar"> </span></b> </td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">Component</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Virtual Clock phase rotator. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">tech</td><td>Technology selector. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">freq</td><td>Clock frequency in KHz. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">i_rst</td><td>Reset signal. Active HIGH. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a class="anchor" id="a492166f49e0dadac4ea243f9da7f178c"></a>
 <div class="memitem">
 <div class="memproto">

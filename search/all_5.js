@@ -9,10 +9,12 @@ var searchData=
   ['eth_5faxi_5fmst_2evhd',['eth_axi_mst.vhd',['../eth__axi__mst_8vhd.html',1,'']]],
   ['eth_5fcommand_5ftype',['eth_command_type',['../classgrethpkg.html#a7e2843340277599515fb2d5b88e1846f',1,'grethpkg']]],
   ['eth_5fcontrol_5ftype',['eth_control_type',['../classgrethpkg.html#a7eba3b9e6de7a85035662ae60d6d2c0e',1,'grethpkg']]],
+  ['ethernet',['Ethernet',['../eth_link.html',1,'']]],
   ['eth_5frstgen',['eth_rstgen',['../classeth__rstgen.html',1,'']]],
   ['eth_5frx0_5ftb_2evhd',['eth_rx0_tb.vhd',['../eth__rx0__tb_8vhd.html',1,'']]],
   ['eth_5ftx0_5ftb_2evhd',['eth_tx0_tb.vhd',['../eth__tx0__tb_8vhd.html',1,'']]],
   ['ethaxi_5ftb_2evhd',['ethaxi_tb.vhd',['../ethaxi__tb_8vhd.html',1,'']]],
   ['ethcomp0_5ftb_2evhd',['ethcomp0_tb.vhd',['../ethcomp0__tb_8vhd.html',1,'']]],
-  ['ethcomp_5ftb',['ethcomp_tb',['../classethcomp__tb.html',1,'']]]
+  ['ethcomp_5ftb',['ethcomp_tb',['../classethcomp__tb.html',1,'']]],
+  ['event_5fdef',['event_def',['../structdebugger_1_1event__def.html',1,'debugger']]]
 ];
