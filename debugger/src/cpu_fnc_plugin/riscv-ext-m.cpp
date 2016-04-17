@@ -17,7 +17,7 @@ class DIV : public IsaProcessor {
 public:
     DIV() : IsaProcessor("DIV", "0000001??????????100?????0110011") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         ISA_R_type u;
         u.value = payload[0];
         if (data->regs[u.bits.rs2]) {
@@ -37,7 +37,7 @@ class DIVU : public IsaProcessor {
 public:
     DIVU() : IsaProcessor("DIVU", "0000001??????????101?????0110011") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         ISA_R_type u;
         u.value = payload[0];
         if (data->regs[u.bits.rs2]) {
@@ -57,7 +57,7 @@ class DIVUW : public IsaProcessor {
 public:
     DIVUW() : IsaProcessor("DIVUW", "0000001??????????101?????0111011") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         ISA_R_type u;
         u.value = payload[0];
         if (static_cast<uint32_t>(data->regs[u.bits.rs2])) {
@@ -78,7 +78,7 @@ class DIVW : public IsaProcessor {
 public:
     DIVW() : IsaProcessor("DIVW", "0000001??????????100?????0111011") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         ISA_R_type u;
         u.value = payload[0];
         int32_t divident = static_cast<int32_t>(data->regs[u.bits.rs1]);
@@ -102,7 +102,7 @@ class MUL : public IsaProcessor {
 public:
     MUL() : IsaProcessor("MUL", "0000001??????????000?????0110011") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         ISA_R_type u;
         u.value = payload[0];
         data->regs[u.bits.rd] = static_cast<int64_t>(data->regs[u.bits.rs1])
@@ -118,12 +118,13 @@ public:
  * registers, placing the sign-extension of the lower 32 bits of the result
  * into the destination register. MUL can be used to obtain the upper 32 bits
  * of the 64-bit product, but signed arguments must be proper 32-bit signed
- * values, whereas unsigned arguments must have their upper 32 bits clear. */
+ * values, whereas unsigned arguments must have their upper 32 bits clear.
+ */
 class MULW : public IsaProcessor {
 public:
     MULW() : IsaProcessor("MULW", "0000001??????????000?????0111011") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         ISA_R_type u;
         u.value = payload[0];
         int32_t m1 = static_cast<int32_t>(data->regs[u.bits.rs1]);
@@ -144,7 +145,7 @@ class REM : public IsaProcessor {
 public:
     REM() : IsaProcessor("REM", "0000001??????????110?????0110011") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         ISA_R_type u;
         u.value = payload[0];
         data->regs[u.bits.rd] = static_cast<int64_t>(data->regs[u.bits.rs1])
@@ -160,7 +161,7 @@ class REMU : public IsaProcessor {
 public:
     REMU() : IsaProcessor("REMU", "0000001??????????111?????0110011") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         ISA_R_type u;
         u.value = payload[0];
         data->regs[u.bits.rd] = 
@@ -169,7 +170,7 @@ public:
     }
 };
 
-void addIsaExtensionM(CpuDataType *data, AttributeType *out) {
+void addIsaExtensionM(CpuContextType *data, AttributeType *out) {
     addSupportedInstruction(new DIV, out);
     addSupportedInstruction(new DIVU, out);
     addSupportedInstruction(new DIVUW, out);

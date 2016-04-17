@@ -81,7 +81,7 @@ void ConsoleService::predeleteService() {
 }
 
 void ConsoleService::busyLoop() {
-    while (loopEnable_ && !interrupt_) {
+    while (isEnabled()) {
         if (isData()) {
             iconsumer_->keyUp(getData());
         }

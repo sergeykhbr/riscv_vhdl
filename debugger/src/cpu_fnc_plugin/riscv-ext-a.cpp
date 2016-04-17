@@ -11,7 +11,7 @@
 namespace debugger {
 
 
-void addIsaExtensionA(CpuDataType *data, AttributeType *out) {
+void addIsaExtensionA(CpuContextType *data, AttributeType *out) {
     // TODO
     /*
     addInstr("AMOADD_W",           "00000????????????010?????0101111", NULL, out);

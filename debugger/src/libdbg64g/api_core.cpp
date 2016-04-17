@@ -103,6 +103,13 @@ extern "C" void RISCV_set_configuration(AttributeType *cfg) {
         icls = static_cast<IClass *>(listClasses_[i].to_iface());
         icls->postinitServices();
     }
+
+    RISCV_printf(getInterface(IFACE_SERVICE), 0, "%s",
+    "\n**********************************************************\n"
+    "  RISC-V debugger\n"
+    "  Author: Sergey Khabarov - sergeykhbr@gmail.com\n"
+    "  Copyright 2016 GNSS Sensor Ltd. All right reserved.\n"
+    "**********************************************************");
 }
 
 extern "C" const char *RISCV_get_configuration() {

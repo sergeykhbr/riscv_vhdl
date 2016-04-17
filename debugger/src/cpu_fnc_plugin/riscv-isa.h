@@ -86,8 +86,6 @@ static const uint64_t EXT_SIGN_12 = 0xFFFFFFFFFFFFF000LL;
 static const uint64_t EXT_SIGN_16 = 0xFFFFFFFFFFFF0000LL;
 static const uint64_t EXT_SIGN_32 = 0xFFFFFFFF00000000LL;
 
-static const uint64_t Except_Illegal_Instruction = 1;
-
 static const char *const REG_NAMES[32] = {
     "zero",     // [0] zero
     "ra",       // [1] Return address
@@ -244,7 +242,10 @@ static const uint16_t CSR_mtvec         = 0x301;
 static const uint16_t CSR_mie           = 0x304;
 /** Scratch register for machine trap handlers. */
 static const uint16_t CSR_mscratch      = 0x340;
-/** Machine exception program counter. */
+/** Exception program counters. */
+static const uint16_t CSR_uepc          = 0x041;
+static const uint16_t CSR_sepc          = 0x141;
+static const uint16_t CSR_hepc          = 0x241;
 static const uint16_t CSR_mepc          = 0x341;
 /** Machine trap cause */
 static const uint16_t CSR_mcause        = 0x342;
@@ -256,29 +257,31 @@ static const uint16_t CSR_mip           = 0x344;
 /** Exceptions */
 
 // Instruction address misaligned
-static const uint64_t EXCEPTION_InstrMisalign   = 0;
-// Instruction access fault
-static const uint64_t EXCEPTION_InstrFault      = 1;
-// Illegal instruction
-static const uint64_t EXCEPTION_InstrIllegal    = 2;
-// Breakpoint
-static const uint64_t EXCEPTION_Breakpoint      = 3;
-// Load address misaligned
-static const uint64_t EXCEPTION_LoadMisalign    = 4;
-// Load access fault
-static const uint64_t EXCEPTION_LoadFault       = 5;
-//Store/AMO address misaligned
-static const uint64_t EXCEPTION_StoreMisalign   = 6;
-// Store/AMO access fault
-static const uint64_t EXCEPTION_StoreFault      = 7;
-//Environment call from U-mode
-static const uint64_t EXCEPTION_CallFromUmode   = 8;
-// Environment call from S-mode
-static const uint64_t EXCEPTION_CallFromSmode   = 9;
-// Environment call from H-mode
-static const uint64_t EXCEPTION_CallFromHmode   = 10;
-// Environment call from M-mode
-static const uint64_t EXCEPTION_CallFromMmode   = 11;
+enum {
+    EXCEPTION_InstrMisalign   = 0,
+    // Instruction access fault
+    EXCEPTION_InstrFault      = 1,
+    // Illegal instruction
+    EXCEPTION_InstrIllegal    = 2,
+    // Breakpoint
+    EXCEPTION_Breakpoint      = 3,
+    // Load address misaligned
+    EXCEPTION_LoadMisalign    = 4,
+    // Load access fault
+    EXCEPTION_LoadFault       = 5,
+    //Store/AMO address misaligned
+    EXCEPTION_StoreMisalign   = 6,
+    // Store/AMO access fault
+    EXCEPTION_StoreFault      = 7,
+    // Environment call from U-mode
+    EXCEPTION_CallFromUmode   = 8,
+    // Environment call from S-mode
+    EXCEPTION_CallFromSmode   = 9,
+    // Environment call from H-mode
+    EXCEPTION_CallFromHmode   = 10,
+    // Environment call from M-mode
+    EXCEPTION_CallFromMmode   = 11
+};
 
 /** Interrupts: */
 // Software interrupt
@@ -286,18 +289,18 @@ static const uint64_t IRQ_Software = 0;
 // Timer interrupt
 static const uint64_t IRQ_Timer = 1;
 
-void addIsaUserRV64I(CpuDataType *data, AttributeType *out);
-void addIsaPrivilegedRV64I(CpuDataType *data, AttributeType *out);
-void addIsaExtensionA(CpuDataType *data, AttributeType *out);
-void addIsaExtensionF(CpuDataType *data, AttributeType *out);
-void addIsaExtensionM(CpuDataType *data, AttributeType *out);
+void addIsaUserRV64I(CpuContextType *data, AttributeType *out);
+void addIsaPrivilegedRV64I(CpuContextType *data, AttributeType *out);
+void addIsaExtensionA(CpuContextType *data, AttributeType *out);
+void addIsaExtensionF(CpuContextType *data, AttributeType *out);
+void addIsaExtensionM(CpuContextType *data, AttributeType *out);
 
 
-void generateInterrupt(uint64_t code, CpuDataType *data);
-void generateException(uint64_t code, CpuDataType *data);
+void generateInterrupt(uint64_t code, CpuContextType *data);
+void generateException(uint64_t code, CpuContextType *data);
 
-uint64_t readCSR(uint32_t idx, CpuDataType *data);
-void writeCSR(uint32_t idx, uint64_t val, CpuDataType *data);
+uint64_t readCSR(uint32_t idx, CpuContextType *data);
+void writeCSR(uint32_t idx, uint64_t val, CpuContextType *data);
 
 }  // namespace debugger
 

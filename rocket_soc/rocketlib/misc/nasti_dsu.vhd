@@ -6,6 +6,31 @@
 --! @details   DSU provides access to the internal CPU registers (CSRs) via
 --!            'Rocket-chip' specific bus HostIO.
 -----------------------------------------------------------------------------
+--! 
+--! @page dsu_link Debug Support Unit (DSU)
+--! 
+--! @par Overview
+--! Debug Support Unit (DSU) was developed to simplify debugging on target
+--! hardware and provide access to the "Rocket-chip" specific HostIO bus
+--! interface. This bus provides access to the internal CPU control registers
+--! (CSRs) that store information about Core configuration, current operational
+--! mode (Machine, Hypervisor, Supervisor or User) and allows to change
+--! processor run-time behaviour by injecting interrupts for an example.
+--! General CSR registers are described in RISC-V privileged ISA
+--! specification. Take into account that CPU can have any number of platform
+--! specific CSRs that usually not entirely documented.
+--! 
+--! @par Operation
+--! DSU acts like a slave AMBA AXI4 device that is directly mapped into 
+--! physical memory. Default address location for our implementation 
+--! is 0x80020000. DSU directly transforms device offset address
+--! into CSR index by removing last 4 bits of address.
+--! All CSR values is always 64-bits width.
+--!
+--! @par Example:
+--!     Bus transaction at address <em>0x80027820</em>
+--!     will be redirected to HostIO bus with CSR index <em>0x782</em>.
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;

@@ -50,7 +50,7 @@ public:
     }
     
     /** check thread status */
-    virtual bool isEnabled() { return loopEnable_; }
+    virtual bool isEnabled() { return loopEnable_ && !interrupt_; }
 
 protected:
     /** working cycle function */

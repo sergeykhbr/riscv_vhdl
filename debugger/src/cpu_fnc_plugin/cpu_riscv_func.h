@@ -42,7 +42,7 @@ public:
 
 
     /** IClock */
-    virtual uint64_t getStepCounter() { return cpu_data_.step_cnt; }
+    virtual uint64_t getStepCounter() { return cpu_context_.step_cnt; }
     virtual void registerStepCallback(IClockListener *cb, uint64_t t);
 
 protected:
@@ -50,8 +50,11 @@ protected:
     virtual void busyLoop();
 
 private:
+    CpuContextType *getpContext() { return &cpu_context_; }
+    uint32_t hash32(uint32_t val) { return (val >> 2) & 0x1f; }
+
     void reset();
-    void handleInterrupt();
+    void handleTrap();
     void fetchInstruction();
     IInstruction *decodeInstruction(uint32_t *rpayload);
     void executeInstruction(IInstruction *instr, uint32_t *rpayload);
@@ -76,8 +79,9 @@ private:
     unsigned stepQueue_len_;    // to avoid reallocation
 
     // Registers:
-    AttributeType listInstr_;
-    CpuDataType cpu_data_;
+    static const int INSTR_HASH_TABLE_SIZE = 1 << 5;
+    AttributeType listInstr_[INSTR_HASH_TABLE_SIZE];
+    CpuContextType cpu_context_;
 };
 
 DECLARE_CLASS(CpuRiscV_Functional)

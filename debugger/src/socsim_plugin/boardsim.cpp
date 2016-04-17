@@ -111,7 +111,15 @@ void BoardSim::postinitService() {
 }
 
 void BoardSim::predeleteService() {
+    breakCpuThread();
     stop();
+}
+
+void BoardSim::breakCpuThread() {
+    IThread *icpu = static_cast<IThread *>(
+    RISCV_get_service_iface(clkSource_.to_string(), IFACE_THREAD));
+    icpu->breakSignal();
+    breakSignal();
 }
 
 void BoardSim::transaction(Axi4TransactionType *payload) {
@@ -129,9 +137,13 @@ void BoardSim::transaction(Axi4TransactionType *payload) {
     }
 
     if (unmapped) {
-        RISCV_error("[%" RV_PRI64 "d] Access to unmapped address %08" RV_PRI64 "x", 
+        RISCV_error("[%" RV_PRI64 "d] Access to unmapped address "
+                    "%08" RV_PRI64 "x",
             iclk_->getStepCounter(), payload->addr);
-        while (1) {}
+        
+        // Stop simulation
+        breakCpuThread();
+        RISCV_error("Simulation was OFF. HW AXI bus not available", NULL);
     }
 
     const char *rw_str[2] = {"=>", "<="};
@@ -149,7 +161,7 @@ void BoardSim::busyLoop() {
     FifoMessageType msg;
     RISCV_info("Board Simulator was started", NULL);
 
-    while (loopEnable_) {
+    while (isEnabled()) {
         bytes = 
             itransport_->readData(rxbuf_, static_cast<int>(sizeof(rxbuf_)));
 

@@ -2,7 +2,7 @@
  * @file
  * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
  * @author     Sergey Khabarov - sergeykhbr@gmail.com
- * @brief      CPU functional simlator class definition.
+ * @brief      CPU functional simulator class definition.
  */
 
 #include "api_core.h"
@@ -29,8 +29,9 @@ CpuRiscV_Functional::CpuRiscV_Functional(const char *name)  : IService(name) {
 
     stepQueue_.make_list(0);
     stepQueue_len_ = 0;
-    cpu_data_.step_cnt = 0;
-    memset(cpu_data_.csr, 0, sizeof(cpu_data_.csr));
+    cpu_context_.step_cnt = 0;
+    memset(cpu_context_.csr, 0, sizeof(cpu_context_.csr));
+
     reset();
 }
 
@@ -38,46 +39,33 @@ CpuRiscV_Functional::~CpuRiscV_Functional() {
 }
 
 void CpuRiscV_Functional::postinitService() {
+    CpuContextType *pContext = getpContext();
     bool isEnable = false;
     IThread *iparent = static_cast<IThread *>(
        RISCV_get_service_iface(parentThread_.to_string(), IFACE_THREAD));
     if (iparent) {
         isEnable = iparent->isEnabled();
     }
-    cpu_data_.imemop = static_cast<IMemoryOperation *>(
+    pContext->imemop = static_cast<IMemoryOperation *>(
        RISCV_get_service_iface(phys_mem_.to_string(), IFACE_MEMORY_OPERATION));
 
     // Supported instruction sets:
-    listInstr_.make_list(0);
-    addIsaUserRV64I(&cpu_data_, &listInstr_);
-    addIsaPrivilegedRV64I(&cpu_data_, &listInstr_);
+    for (int i = 0; i < INSTR_HASH_TABLE_SIZE; i++) {
+        listInstr_[i].make_list(0);
+    }
+    addIsaUserRV64I(pContext, listInstr_);
+    addIsaPrivilegedRV64I(pContext, listInstr_);
     for (unsigned i = 0; i < listExtISA_.size(); i++) {
         if (listExtISA_[i].to_string()[0] == 'A') {
-            addIsaExtensionA(&cpu_data_, &listInstr_);
+            addIsaExtensionA(pContext, listInstr_);
         } else if (listExtISA_[i].to_string()[0] == 'F') {
-            addIsaExtensionF(&cpu_data_, &listInstr_);
+            addIsaExtensionF(pContext, listInstr_);
         } else if (listExtISA_[i].to_string()[0] == 'M') {
-            addIsaExtensionM(&cpu_data_, &listInstr_);
+            addIsaExtensionM(pContext, listInstr_);
         }
     }
 
-    // Check hash uniquity:
-    /*IInstruction *instr_i, *instr_n;
-    for (unsigned i = 0; i < listInstr_.size(); i++) {
-        instr_i = static_cast<IInstruction *>(listInstr_[i].to_iface());
-        for (unsigned n = 0; n < listInstr_.size(); n++) {
-            if (i == n) {
-                continue;
-            }
-            instr_n = static_cast<IInstruction *>(listInstr_[n].to_iface());
-            if (instr_i->hash() == instr_n->hash()) {
-        
-            }
-        }
-    }*/
-
-
-    if (!cpu_data_.imemop) {
+    if (!pContext->imemop) {
         RISCV_error("Physical Memory interface '%s' not found", 
                     phys_mem_.to_string());
         return;
@@ -97,13 +85,14 @@ void CpuRiscV_Functional::predeleteService() {
 
 bool after_reset = false;
 void CpuRiscV_Functional::busyLoop() {
+    CpuContextType *pContext = getpContext();
+
     // @todo config_done event callback
     RISCV_sleep_ms(200);
+    while (isEnabled()) {
+        pContext->step_cnt++;
 
-    while (loopEnable_) {
-        cpu_data_.step_cnt++;
-
-        if (cpu_data_.csr[CSR_mreset]) {
+        if (pContext->csr[CSR_mreset]) {
             reset();
             after_reset = true;
 
@@ -118,58 +107,66 @@ void CpuRiscV_Functional::busyLoop() {
 }
 
 void CpuRiscV_Functional::reset() {
-    cpu_data_.regs[0] = 0;
-    cpu_data_.pc = RESET_VECTOR;
-    cpu_data_.npc = RESET_VECTOR;
-    cpu_data_.exception = 0;
-    cpu_data_.prv_stack_cnt = 0;
-    cpu_data_.csr[CSR_mip] = 0; // clear pending interrupts
-    cpu_data_.csr[CSR_mie] = 0; // disabling interrupts
+    CpuContextType *pContext = getpContext();
+    pContext->regs[0] = 0;
+    pContext->pc = RESET_VECTOR;
+    pContext->npc = RESET_VECTOR;
+    pContext->exception = 0;
+    pContext->csr[CSR_mimpid]   = 0x0001;   // UC Berkeley Rocket repo
+    pContext->csr[CSR_mheartid] = 0;
+    pContext->csr[CSR_mtvec]   = 0x100;     // Hardwired RO value
+    pContext->csr[CSR_mip] = 0;             // clear pending interrupts
+    pContext->csr[CSR_mie] = 0;             // disabling interrupts
     csr_mstatus_type mstat;
     mstat.value = 0;
     mstat.bits.PRV = PRV_LEVEL_M;           // Current privilege level
-    cpu_data_.csr[CSR_mstatus] = mstat.value;
+    pContext->prv_last_trap = PRV_LEVEL_M;
+    pContext->csr[CSR_mstatus] = mstat.value;
+    pContext->prv_stack_cnt = 0;
 }
 
-void CpuRiscV_Functional::handleInterrupt() {
-    if (cpu_data_.csr[CSR_mip] == 0) {
+void CpuRiscV_Functional::handleTrap() {
+    CpuContextType *pContext = getpContext();
+    csr_mstatus_type mstatus;
+    mstatus.value = pContext->csr[CSR_mstatus];
+
+    if (pContext->exception == 0 &&
+        (mstatus.bits.IE == 0 || pContext->csr[CSR_mip] == 0)) {
         return;
     }
 
-    csr_mstatus_type mstatus;
-    mstatus.value = cpu_data_.csr[CSR_mstatus];
-
-    if (cpu_data_.prv_stack_cnt) {
-        cpu_data_.prv_stack_cnt--;
-        switch (cpu_data_.prv_stack_cnt) {
-        case 0:
-            cpu_data_.csr[CSR_mepc] = cpu_data_.pc;
-            break;
-        case 1:
-            // TODO:
-            break;
-        case 2:
-            // TODO:
-            break;
-        default:;
-            // TODO:
-        }
-        cpu_data_.pc = cpu_data_.csr[CSR_mtvec] + 0x40 * mstatus.bits.PRV;
+    if (pContext->prv_stack_cnt) {
+        pContext->prv_stack_cnt--;
     }
+    // All traps handle via machine mode while CSR mdelegate
+    // doesn't setup other.
+    pContext->prv_last_trap = mstatus.bits.PRV;
+    uint64_t xepc = (pContext->prv_last_trap << 8) + 0x41;
+    pContext->csr[xepc]    = pContext->pc;
+    pContext->pc = pContext->csr[CSR_mtvec] + 0x40 * mstatus.bits.PRV;
+
+    mstatus.bits.IE = 0;
+    mstatus.bits.PRV = PRV_LEVEL_M;
+    pContext->csr[CSR_mstatus] = mstatus.value;
+
+    pContext->exception = 0;
 }
 
 void CpuRiscV_Functional::fetchInstruction() {
-    memop_.addr = cpu_data_.pc;
+    CpuContextType *pContext = getpContext();
+    memop_.addr = pContext->pc;
     memop_.rw = 0;
     memop_.xsize = CFG_NASTI_DATA_BYTES;
 
-    cpu_data_.imemop->transaction(&memop_);
+    pContext->imemop->transaction(&memop_);
 }
 
 IInstruction *CpuRiscV_Functional::decodeInstruction(uint32_t *rpayload) {
     IInstruction *instr = NULL;
-    for (unsigned i = 0; i < listInstr_.size(); i++) {
-        instr = static_cast<IInstruction *>(listInstr_[i].to_iface());
+    int hash_idx = hash32(rpayload[0]);
+    for (unsigned i = 0; i < listInstr_[hash_idx].size(); i++) {
+        instr = static_cast<IInstruction *>(
+                        listInstr_[hash_idx][i].to_iface());
         if (instr->parse(rpayload)) {
             break;
         }
@@ -181,43 +178,42 @@ IInstruction *CpuRiscV_Functional::decodeInstruction(uint32_t *rpayload) {
 
 void CpuRiscV_Functional::executeInstruction(IInstruction *instr,
                                              uint32_t *rpayload) {
-    instr->exec(memop_.rpayload, &cpu_data_);
-#if 1
-    if (after_reset) {
-        RISCV_debug("[%" RV_PRI64 "d] %08x: %08x \t %4s <ra=%016" RV_PRI64 "x; sp=%016" RV_PRI64 "x>", 
+
+    CpuContextType *pContext = getpContext();
+    instr->exec(memop_.rpayload, pContext);
+#if 0
+    if (pContext->step_cnt >= 4645) {//after_reset) {
+        RISCV_debug("[%" RV_PRI64 "d] %08x: %08x \t %4s <mstatus=%016" RV_PRI64 "x; ra=%016" RV_PRI64 "x; sp=%016" RV_PRI64 "x>", 
             getStepCounter(),
-            static_cast<uint32_t>(cpu_data_.pc),
+            static_cast<uint32_t>(pContext->pc),
             memop_.rpayload[0], instr->name(),
-            cpu_data_.regs[1],//ra
-            cpu_data_.regs[2]//sp
+            pContext->csr[CSR_mstatus],
+            pContext->regs[1],//ra
+            pContext->regs[2]//sp
             );
     }
 #endif
 
-    if (cpu_data_.regs[0] != 0) {
+    if (pContext->regs[0] != 0) {
         RISCV_error("Register x0 was modificated (not equal to zero)", NULL);
     }
 }
 
 void CpuRiscV_Functional::stepUpdate() {
-    cpu_data_.pc = cpu_data_.npc;
+    CpuContextType *pContext = getpContext();
+    pContext->pc = pContext->npc;
 
-    handleInterrupt();
+    handleTrap();
 
     fetchInstruction();
 
-#if 0
-    if (step_cnt_ >= 33 || step_cnt_ >= 0x74a5) {
-        bool st = true;
-    }
-#endif
     IInstruction *instr = decodeInstruction(memop_.rpayload);
     if (!instr) {
-        cpu_data_.npc += 4;
+        pContext->npc += 4;
         
         RISCV_error("%08x: %08x \t unimplemented",
-            static_cast<uint32_t>(cpu_data_.pc), memop_.rpayload[0]);
-        while (1) {}
+            static_cast<uint32_t>(pContext->pc), memop_.rpayload[0]);
+        generateException(EXCEPTION_InstrIllegal, pContext);
         return;
     }
 
@@ -228,6 +224,7 @@ void CpuRiscV_Functional::queueUpdate() {
     uint64_t ev_time;
     IClockListener *iclk;
     unsigned queue_len;
+    CpuContextType *pContext = getpContext();
 
     // @warning We can add new event inside of stepCallback that leads to
     //          infinite cycle.
@@ -235,10 +232,10 @@ void CpuRiscV_Functional::queueUpdate() {
     for (unsigned i = 0; i < queue_len; i++) {
         ev_time = stepQueue_[i][Queue_Time].to_uint64();
 
-        if (cpu_data_.step_cnt >= ev_time) {
+        if (pContext->step_cnt >= ev_time) {
             iclk = static_cast<IClockListener *>(
                     stepQueue_[i][Queue_IFace].to_iface());
-            iclk->stepCallback(cpu_data_.step_cnt);
+            iclk->stepCallback(pContext->step_cnt);
 
             // remove item from list
             stepQueue_.swap_list_item(i, stepQueue_.size() - 1);
@@ -268,12 +265,12 @@ void CpuRiscV_Functional::registerStepCallback(IClockListener *cb,
 }
 
 uint64_t CpuRiscV_Functional::write(uint16_t adr, uint64_t val) {
-    writeCSR(adr, val, &cpu_data_);
+    writeCSR(adr, val, getpContext());
     return 0;
 }
 
 uint64_t CpuRiscV_Functional::read(uint16_t adr, uint64_t *val) {
-    *val = readCSR(adr, &cpu_data_);
+    *val = readCSR(adr, getpContext());
     return 0;
 }
 

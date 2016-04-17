@@ -10,7 +10,7 @@
 
 namespace debugger {
 
-uint64_t readCSR(uint32_t idx, CpuDataType *data) {
+uint64_t readCSR(uint32_t idx, CpuContextType *data) {
     uint64_t ret = data->csr[idx];
     switch (idx) {
     case CSR_mtime:
@@ -21,7 +21,7 @@ uint64_t readCSR(uint32_t idx, CpuDataType *data) {
     return ret;
 }
 
-void writeCSR(uint32_t idx, uint64_t val, CpuDataType *data) {
+void writeCSR(uint32_t idx, uint64_t val, CpuContextType *data) {
     switch (idx) {
     // Read-Only registers
     case CSR_mcpuid:
@@ -52,7 +52,7 @@ class CSRRC : public IsaProcessor {
 public:
     CSRRC() : IsaProcessor("CSRRC", "?????????????????011?????1110011") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         ISA_I_type u;
         u.value = payload[0];
 
@@ -75,7 +75,7 @@ class CSRRCI : public IsaProcessor {
 public:
     CSRRCI() : IsaProcessor("CSRRCI", "?????????????????111?????1110011") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         ISA_I_type u;
         u.value = payload[0];
 
@@ -101,7 +101,7 @@ class CSRRS : public IsaProcessor {
 public:
     CSRRS() : IsaProcessor("CSRRS", "?????????????????010?????1110011") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         ISA_I_type u;
         u.value = payload[0];
 
@@ -124,7 +124,7 @@ class CSRRSI : public IsaProcessor {
 public:
     CSRRSI() : IsaProcessor("CSRRSI", "?????????????????110?????1110011") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         ISA_I_type u;
         u.value = payload[0];
 
@@ -148,7 +148,7 @@ class CSRRW : public IsaProcessor {
 public:
     CSRRW() : IsaProcessor("CSRRW", "?????????????????001?????1110011") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         ISA_I_type u;
         u.value = payload[0];
 
@@ -170,7 +170,7 @@ class CSRRWI : public IsaProcessor {
 public:
     CSRRWI() : IsaProcessor("CSRRWI", "?????????????????101?????1110011") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         ISA_I_type u;
         u.value = payload[0];
 
@@ -195,12 +195,29 @@ class ERET : public IsaProcessor {
 public:
     ERET() : IsaProcessor("ERET", "00010000000000000000000001110011") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
-        data->prv_stack_cnt++;
-        data->npc = readCSR(CSR_mepc, data);
-        if (data->prv_stack_cnt == 2) {
-            data->npc = 0x100;
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
+        csr_mstatus_type mstatus;
+        mstatus.value = readCSR(CSR_mstatus, data);
+
+        switch (data->prv_stack_cnt) {
+        case 0:
+            mstatus.bits.PRV = mstatus.bits.PRV1;
+            mstatus.bits.IE = mstatus.bits.IE1;
+            break;
+        case 1:
+            mstatus.bits.PRV = mstatus.bits.PRV2;
+            mstatus.bits.IE = mstatus.bits.IE2;
+            break;
+        case 2:
+            mstatus.bits.PRV = mstatus.bits.PRV3;
+            mstatus.bits.IE = mstatus.bits.IE3;
+            break;
+        default:;
         }
+        uint64_t xepc = (data->prv_last_trap << 8) + 0x41;
+        data->npc = readCSR(static_cast<uint32_t>(xepc), data);
+        writeCSR(CSR_mstatus, mstatus.value, data);
+        data->prv_stack_cnt++;
     }
 };
 
@@ -213,7 +230,7 @@ class FENCE : public IsaProcessor {
 public:
     FENCE() : IsaProcessor("FENCE", "?????????????????000?????0001111") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         data->npc = data->pc + 4;
     }
 };
@@ -227,13 +244,13 @@ class FENCE_I : public IsaProcessor {
 public:
     FENCE_I() : IsaProcessor("FENCE_I", "?????????????????001?????0001111") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         data->npc = data->pc + 4;
     }
 };
 
 
-void addIsaPrivilegedRV64I(CpuDataType *data, AttributeType *out) {
+void addIsaPrivilegedRV64I(CpuContextType *data, AttributeType *out) {
     addSupportedInstruction(new CSRRC, out);
     addSupportedInstruction(new CSRRCI, out);
     addSupportedInstruction(new CSRRS, out);
@@ -258,9 +275,13 @@ void addIsaPrivilegedRV64I(CpuDataType *data, AttributeType *out) {
     def EBREAK             = BitPat("b00000000000100000000000001110011")
     */
 
-    data->csr[CSR_mimpid]   = 0x0001;       // UC Berkeley Rocket repo
-    data->csr[CSR_mheartid] = 0;
-    data->csr[CSR_mtvec]   = 0x100;         // Hardwired RO value
+    /**
+     * The 'U', 'S', and 'H' bits will be set if there is support for 
+     * user, supervisor, and hypervisor privilege modes respectively.
+     */
+    data->csr[CSR_mcpuid] |= (1LL << ('U' - 'A'));
+    data->csr[CSR_mcpuid] |= (1LL << ('S' - 'A'));
+    data->csr[CSR_mcpuid] |= (1LL << ('H' - 'A'));
 }
 
 }  // namespace debugger

@@ -44,14 +44,10 @@ public:
         return ((payload[0] & mask_) == opcode_);
     }
 
-    virtual void exec(uint32_t *payload, CpuDataType *regs) =0;
+    virtual void exec(uint32_t *payload, CpuContextType *regs) =0;
 
-    virtual uint32_t hash(uint32_t *payload) {
-        uint32_t t1 = payload[0] & mask_;
-        uint32_t t2 = (t1 >> 2) & 0x1f;     // [6:2]
-        t2 |= (t1 >> 7) & 0x70;             // [14:12] -> 8 bits value {[14:12],[6:2]}
-        uint32_t t3 = ((t1 >> 24) ^ (t1 >> 16)) & 0xFF; // 8 bits xor'ed [31:24] ^ [23:16]
-        return ((t3 << 4) + t2) & 0xFFF;    // form 12 bits value: 
+    virtual uint32_t hash() {
+        return (opcode_ >> 2) & 0x1F;
     }
 
 protected:

@@ -65,19 +65,17 @@ void PNP::postinitService() {
 void PNP::transaction(Axi4TransactionType *payload) {
     uint64_t mask = (length_.to_uint64() - 1);
     uint64_t off = ((payload->addr - getBaseAddress()) & mask);
-    uint32_t *mem_ = reinterpret_cast<uint32_t *>(&regs_);
+    uint8_t *mem_ = reinterpret_cast<uint8_t *>(&regs_);
     if (payload->rw) {
         for (uint64_t i = 0; i < payload->xsize; i++) {
             if ((payload->wstrb & (1 << i)) == 0) {
                 continue;
             }
-            reinterpret_cast<uint8_t *>(mem_)[off + i] = 
-                reinterpret_cast<uint8_t *>(payload->wpayload)[i];
+            mem_[off + i] = reinterpret_cast<uint8_t *>(payload->wpayload)[i];
         }
     } else {
         for (uint64_t i = 0; i < payload->xsize; i++) {
-            reinterpret_cast<uint8_t *>(payload->rpayload)[i] = 
-                reinterpret_cast<uint8_t *>(mem_)[off + i];
+            reinterpret_cast<uint8_t *>(payload->rpayload)[i] = mem_[off + i];
         }
     }
 }

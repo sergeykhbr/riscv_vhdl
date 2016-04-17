@@ -10,7 +10,7 @@
 
 namespace debugger {
 
-void addIsaExtensionF(CpuDataType *data, AttributeType *out) {
+void addIsaExtensionF(CpuContextType *data, AttributeType *out) {
     // TODO
     /*
     addInstr("FADD_S",             "0000000??????????????????1010011", NULL, out);

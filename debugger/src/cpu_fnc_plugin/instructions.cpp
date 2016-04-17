@@ -12,17 +12,8 @@ namespace debugger {
 
 unsigned addSupportedInstruction(IsaProcessor *instr, AttributeType *out) {
     AttributeType tmp(instr);
-    out->add_to_list(&tmp);
-    return out->size();
-}
-
-void initInstructionList(AttributeType *out) {
-    //out->make_list(0);
-    //addBaseISA(out);
-    //addPrivilegedISA(out);
-    /*
-
-    */
+    out[instr->hash()].add_to_list(&tmp);
+    return 0;
 }
 
 }  // namespace debugger

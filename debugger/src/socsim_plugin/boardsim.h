@@ -51,7 +51,7 @@ public:
     virtual void stepCallback(uint64_t t);
 
     /** IThread status overloading */
-    virtual bool isEnabled() { return isEnable_.to_bool(); }
+    virtual bool isEnabled() { return !interrupt_ && isEnable_.to_bool(); }
 
 protected:
     /** IThread interface */
@@ -60,6 +60,7 @@ protected:
 private:
     void write32(uint8_t *buf, uint32_t v);
     uint32_t read32(uint8_t *buf);
+    void breakCpuThread();
 
 private:
     AttributeType isEnable_;

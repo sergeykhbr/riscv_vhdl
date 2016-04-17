@@ -17,7 +17,7 @@ class ADD : public IsaProcessor {
 public:
     ADD() : IsaProcessor("ADD", "0000000??????????000?????0110011") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         ISA_R_type u;
         u.value = payload[0];
         data->regs[u.bits.rd] = 
@@ -31,12 +31,14 @@ public:
  *
  * ADDI adds the sign-extended 12-bit immediate to register rs1. 
  * Arithmetic overflow is ignored and the result is simply the low 32-bits of
- * the result. ADDI rd, rs1, 0 is used to implement the MV rd, rs1 assembler  * pseudo-instruction. */
+ * the result. ADDI rd, rs1, 0 is used to implement the MV rd, rs1 assembler 
+ * pseudo-instruction.
+ */
 class ADDI : public IsaProcessor {
 public:
     ADDI() : IsaProcessor("ADDI", "?????????????????000?????0010011") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         ISA_I_type u;
         u.value = payload[0];
     
@@ -66,12 +68,14 @@ public:
  * immediate to register rs1 and produces the proper sign-extension of 
  * a 32-bit result in rd. Overflows are ignored and the result is the low 
  * 32 bits of the result sign-extended to 64 bits. Note, ADDIW rd, rs1, 0 
- * writes the sign-extension of the lower 32 bits of register rs1 into  * register rd (assembler pseudo-op SEXT.W). */
+ * writes the sign-extension of the lower 32 bits of register rs1 into 
+ * register rd (assembler pseudo-op SEXT.W).
+ */
 class ADDIW : public IsaProcessor {
 public:
     ADDIW() : IsaProcessor("ADDIW", "?????????????????000?????0011011") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         ISA_I_type u;
         u.value = payload[0];
     
@@ -98,12 +102,14 @@ public:
  *
  * ADDW is RV64I-only instructions that are defined analogously to 
  * ADD but operate on 32-bit values and produce signed 32-bit results.
- * Overflows are ignored, and the low 32-bits of the result is sign-extended  * to 64-bits and written to the destination register. */
+ * Overflows are ignored, and the low 32-bits of the result is sign-extended 
+ * to 64-bits and written to the destination register.
+ */
 class ADDW : public IsaProcessor {
 public:
     ADDW() : IsaProcessor("ADDW", "0000000??????????000?????0111011") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         ISA_R_type u;
         u.value = payload[0];
     
@@ -123,7 +129,7 @@ class AND : public IsaProcessor {
 public:
     AND() : IsaProcessor("AND", "0000000??????????111?????0110011") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         ISA_R_type u;
         u.value = payload[0];
         data->regs[u.bits.rd] = 
@@ -143,7 +149,7 @@ class ANDI : public IsaProcessor {
 public:
     ANDI() : IsaProcessor("ANDI", "?????????????????111?????0010011") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         ISA_I_type u;
         u.value = payload[0];
         uint64_t imm = u.bits.imm;
@@ -168,7 +174,7 @@ class AUIPC : public IsaProcessor {
 public:
     AUIPC() : IsaProcessor("AUIPC", "?????????????????????????0010111") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         ISA_U_type u;
         u.value = payload[0];
 
@@ -188,7 +194,7 @@ class BEQ : public IsaProcessor {
 public:
     BEQ() : IsaProcessor("BEQ", "?????????????????000?????1100011") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         ISA_SB_type u;
         u.value = payload[0];
     
@@ -217,7 +223,7 @@ class BGE : public IsaProcessor {
 public:
     BGE() : IsaProcessor("BGE", "?????????????????101?????1100011") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         ISA_SB_type u;
         u.value = payload[0];
     
@@ -243,7 +249,7 @@ class BGEU : public IsaProcessor {
 public:
     BGEU() : IsaProcessor("BGEU", "?????????????????111?????1100011") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         ISA_SB_type u;
         u.value = payload[0];
     
@@ -267,7 +273,7 @@ class BLT : public IsaProcessor {
 public:
     BLT() : IsaProcessor("BLT", "?????????????????100?????1100011") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         ISA_SB_type u;
         u.value = payload[0];
     
@@ -292,7 +298,7 @@ class BLTU : public IsaProcessor {
 public:
     BLTU() : IsaProcessor("BLTU", "?????????????????110?????1100011") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         ISA_SB_type u;
         u.value = payload[0];
     
@@ -316,7 +322,7 @@ class BNE : public IsaProcessor {
 public:
     BNE() : IsaProcessor("BNE", "?????????????????001?????1100011") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         ISA_SB_type u;
         u.value = payload[0];
     
@@ -339,14 +345,16 @@ public:
  * Unconditional jump. The offset is sign-extended and added to the pc to form
  * the jump target address. Jumps can therefore target a ±1 MiB range. JAL 
  * stores the address of the instruction following the jump (pc+4) into 
- * register rd. The standard software calling convention uses x1 as the return  * address register. *
+ * register rd. The standard software calling convention uses x1 as the return 
+ * address register.
+ *
  * J (pseudo-op) 0 Plain unconditional jumps are encoded as a JAL with rd=x0.
  */
 class JAL : public IsaProcessor {
 public:
     JAL() : IsaProcessor("JAL", "?????????????????????????1101111") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         ISA_UJ_type u;
         u.value = payload[0];
         uint64_t off = 0;
@@ -376,7 +384,7 @@ class JALR : public IsaProcessor {
 public:
     JALR() : IsaProcessor("JALR", "?????????????????000?????1100111") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         ISA_I_type u;
         u.value = payload[0];
         uint64_t off = u.bits.imm;
@@ -406,7 +414,7 @@ class LD : public IsaProcessor {
 public:
     LD() : IsaProcessor("LD", "?????????????????011?????0000011") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         Axi4TransactionType memop;
         ISA_I_type u;
         u.value = payload[0];
@@ -432,7 +440,7 @@ class LW : public IsaProcessor {
 public:
     LW() : IsaProcessor("LW", "?????????????????010?????0000011") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         Axi4TransactionType memop;
         ISA_I_type u;
         u.value = payload[0];
@@ -459,7 +467,7 @@ class LWU : public IsaProcessor {
 public:
     LWU() : IsaProcessor("LWU", "?????????????????110?????0000011") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         Axi4TransactionType memop;
         ISA_I_type u;
         u.value = payload[0];
@@ -483,7 +491,7 @@ class LH : public IsaProcessor {
 public:
     LH() : IsaProcessor("LH", "?????????????????001?????0000011") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         Axi4TransactionType memop;
         ISA_I_type u;
         u.value = payload[0];
@@ -510,7 +518,7 @@ class LHU : public IsaProcessor {
 public:
     LHU() : IsaProcessor("LHU", "?????????????????101?????0000011") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         Axi4TransactionType memop;
         ISA_I_type u;
         u.value = payload[0];
@@ -534,7 +542,7 @@ class LB : public IsaProcessor {
 public:
     LB() : IsaProcessor("LB", "?????????????????000?????0000011") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         Axi4TransactionType memop;
         ISA_I_type u;
         u.value = payload[0];
@@ -561,7 +569,7 @@ class LBU : public IsaProcessor {
 public:
     LBU() : IsaProcessor("LBU", "?????????????????100?????0000011") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         Axi4TransactionType memop;
         ISA_I_type u;
         u.value = payload[0];
@@ -589,7 +597,7 @@ class LUI : public IsaProcessor {
 public:
     LUI() : IsaProcessor("LUI", "?????????????????????????0110111") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         ISA_U_type u;
         u.value = payload[0];
         data->regs[u.bits.rd] = u.bits.imm31_12 << 12;
@@ -604,7 +612,7 @@ class OR : public IsaProcessor {
 public:
     OR() : IsaProcessor("OR", "0000000??????????110?????0110011") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         ISA_R_type u;
         u.value = payload[0];
         data->regs[u.bits.rd] = 
@@ -620,7 +628,7 @@ class ORI : public IsaProcessor {
 public:
     ORI() : IsaProcessor("ORI", "?????????????????110?????0010011") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         ISA_I_type u;
         u.value = payload[0];
     
@@ -640,7 +648,7 @@ class SLLI : public IsaProcessor {
 public:
     SLLI() : IsaProcessor("SLLI", "000000???????????001?????0010011") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         ISA_I_type u;
         u.value = payload[0];
         data->regs[u.bits.rd] = data->regs[u.bits.rs1] << u.bits.imm;
@@ -657,7 +665,7 @@ class SLT : public IsaProcessor {
 public:
     SLT() : IsaProcessor("SLT", "0000000??????????010?????0110011") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         ISA_R_type u;
         u.value = payload[0];
         if (static_cast<int64_t>(data->regs[u.bits.rs1]) <
@@ -681,7 +689,7 @@ class SLTI : public IsaProcessor {
 public:
     SLTI() : IsaProcessor("SLTI", "?????????????????010?????0010011") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         ISA_I_type u;
         u.value = payload[0];
     
@@ -704,12 +712,13 @@ public:
  *
  * SLTU perform unsigned compares, writing 1 to rd if rs1 < rs2, 0 otherwise.
  * @note SLTU rd, x0, rs2 sets rd to 1 if rs2 is not equal to zero, otherwise 
- * sets rd to zero (assembler pseudo-op SNEZ rd, rs). */
+ * sets rd to zero (assembler pseudo-op SNEZ rd, rs).
+ */
 class SLTU : public IsaProcessor {
 public:
     SLTU() : IsaProcessor("SLTU", "0000000??????????011?????0110011") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         ISA_R_type u;
         u.value = payload[0];
         if (data->regs[u.bits.rs1] < data->regs[u.bits.rs2]) {
@@ -733,7 +742,7 @@ class SLTIU : public IsaProcessor {
 public:
     SLTIU() : IsaProcessor("SLTIU", "?????????????????011?????0010011") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         ISA_I_type u;
         u.value = payload[0];
     
@@ -751,37 +760,21 @@ public:
 };
 
 /**
- * @brief SRAI is an arithmetic right shift.
- *
- * The original sign bit is copied into the vacated upper bits.
+ * @brief SLL logical shift left
  */
-class SRAI : public IsaProcessor {
+class SLL : public IsaProcessor {
 public:
-    SRAI() : IsaProcessor("SRAI", "010000???????????101?????0010011") {}
+    SLL() : IsaProcessor("SLL", "0000000??????????001?????0110011") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
-        ISA_I_type u;
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
+        ISA_R_type u;
         u.value = payload[0];
         data->regs[u.bits.rd] = 
-            static_cast<int64_t>(data->regs[u.bits.rs1]) >> u.bits.imm;
+            data->regs[u.bits.rs1] << (data->regs[u.bits.rs2] & 0x3F);
         data->npc = data->pc + 4;
     }
 };
 
-/**
- * @brief SRLI is a logical right shift (zeros are shifted into the upper bits)
- */
-class SRLI : public IsaProcessor {
-public:
-    SRLI() : IsaProcessor("SRLI", "000000???????????101?????0010011") {}
-
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
-        ISA_I_type u;
-        u.value = payload[0];
-        data->regs[u.bits.rd] = data->regs[u.bits.rs1] >> u.bits.imm;
-        data->npc = data->pc + 4;
-    }
-};
 
 /**
  * @brief SLLW is a left shifts by register defined value (RV64I).
@@ -790,7 +783,7 @@ class SLLW : public IsaProcessor {
 public:
     SLLW() : IsaProcessor("SLLW", "0000000??????????001?????0111011") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         ISA_R_type u;
         u.value = payload[0];
         data->regs[u.bits.rd] = data->regs[u.bits.rs1] << u.bits.rs2;
@@ -813,7 +806,7 @@ class SLLIW : public IsaProcessor {
 public:
     SLLIW() : IsaProcessor("SLLIW", "0000000??????????001?????0011011") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         ISA_I_type u;
         u.value = payload[0];
         data->regs[u.bits.rd] = data->regs[u.bits.rs1] << u.bits.imm;
@@ -822,7 +815,129 @@ public:
             data->regs[u.bits.rd] |= EXT_SIGN_32;
         }
         if (u.bits.imm >> 5) {
-            generateException(Except_Illegal_Instruction, data);
+            generateException(EXCEPTION_InstrIllegal, data);
+        }
+        data->npc = data->pc + 4;
+    }
+};
+
+/**
+ * @brief SRA arithmetic shift right
+ */
+class SRA : public IsaProcessor {
+public:
+    SRA() : IsaProcessor("SRA", "0100000??????????101?????0110011") {}
+
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
+        ISA_R_type u;
+        u.value = payload[0];
+        data->regs[u.bits.rd] = static_cast<int64_t>(data->regs[u.bits.rs1])
+                                >> (data->regs[u.bits.rs2] & 0x3F);
+        data->npc = data->pc + 4;
+    }
+};
+
+/**
+ * @brief SRAW 32-bits arithmetic shift right (RV64I)
+ */
+class SRAW : public IsaProcessor {
+public:
+    SRAW() : IsaProcessor("SRAW", "0100000??????????101?????0111011") {}
+
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
+        ISA_R_type u;
+        u.value = payload[0];
+        int32_t t1 = static_cast<int32_t>(data->regs[u.bits.rs1]);
+        data->regs[u.bits.rd] = 
+            static_cast<int64_t>(t1 >> (data->regs[u.bits.rs2] & 0x1F));
+        data->npc = data->pc + 4;
+    }
+};
+
+
+/**
+ * @brief SRAI is an arithmetic right shift.
+ *
+ * The original sign bit is copied into the vacanted upper bits.
+ */
+class SRAI : public IsaProcessor {
+public:
+    SRAI() : IsaProcessor("SRAI", "010000???????????101?????0010011") {}
+
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
+        ISA_I_type u;
+        u.value = payload[0];
+        data->regs[u.bits.rd] = 
+            static_cast<int64_t>(data->regs[u.bits.rs1]) >> u.bits.imm;
+        data->npc = data->pc + 4;
+    }
+};
+
+/**
+ * @brief SRAIW arithmetic right shift (RV64I)
+ */
+class SRAIW : public IsaProcessor {
+public:
+    SRAIW() : IsaProcessor("SRAIW", "0100000??????????101?????0011011") {}
+
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
+        ISA_I_type u;
+        u.value = payload[0];
+        int32_t t1 = static_cast<int32_t>(data->regs[u.bits.rs1]);
+        data->regs[u.bits.rd] = static_cast<int64_t>(t1 >> u.bits.imm);
+        if (u.bits.imm >> 5) {
+            generateException(EXCEPTION_InstrIllegal, data);
+        }
+        data->npc = data->pc + 4;
+    }
+};
+
+
+/**
+ * @brief SRL logical shift right
+ */
+class SRL : public IsaProcessor {
+public:
+    SRL() : IsaProcessor("SRL", "0000000??????????101?????0110011") {}
+
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
+        ISA_R_type u;
+        u.value = payload[0];
+        data->regs[u.bits.rd] = 
+            data->regs[u.bits.rs1] >> (data->regs[u.bits.rs2] & 0x3F);
+        data->npc = data->pc + 4;
+    }
+};
+
+/**
+ * @brief SRLI is a logical right shift (zeros are shifted into the upper bits)
+ */
+class SRLI : public IsaProcessor {
+public:
+    SRLI() : IsaProcessor("SRLI", "000000???????????101?????0010011") {}
+
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
+        ISA_I_type u;
+        u.value = payload[0];
+        data->regs[u.bits.rd] = data->regs[u.bits.rs1] >> u.bits.imm;
+        data->npc = data->pc + 4;
+    }
+};
+
+/**
+ * @brief SRLIW logical right shift (RV64I)
+ */
+class SRLIW : public IsaProcessor {
+public:
+    SRLIW() : IsaProcessor("SRLIW", "0000000??????????101?????0011011") {}
+
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
+        ISA_I_type u;
+        u.value = payload[0];
+        data->regs[u.bits.rd] = 
+            static_cast<uint32_t>(data->regs[u.bits.rs1]) >> u.bits.imm;
+        if (u.bits.imm >> 5) {
+            generateException(EXCEPTION_InstrIllegal, data);
         }
         data->npc = data->pc + 4;
     }
@@ -835,10 +950,11 @@ class SRLW : public IsaProcessor {
 public:
     SRLW() : IsaProcessor("SRLW", "0000000??????????101?????0111011") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         ISA_R_type u;
         u.value = payload[0];
-        data->regs[u.bits.rd] = data->regs[u.bits.rs1] >> u.bits.rs2;
+        data->regs[u.bits.rd] = 
+            data->regs[u.bits.rs1] >> data->regs[u.bits.rs2];
         data->regs[u.bits.rd] &= 0xFFFFFFFFLL;
         if (data->regs[u.bits.rd] & (1LL << 31)) {
             data->regs[u.bits.rd] |= EXT_SIGN_32;
@@ -846,26 +962,6 @@ public:
         data->npc = data->pc + 4;
     }
 };
-
-/**
- * @brief SRLIW logical right shift (RV64I)
- */
-class SRLIW : public IsaProcessor {
-public:
-    SRLIW() : IsaProcessor("SRLIW", "0000000??????????101?????0011011") {}
-
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
-        ISA_I_type u;
-        u.value = payload[0];
-        data->regs[u.bits.rd] = 
-            static_cast<uint32_t>(data->regs[u.bits.rs1]) >> u.bits.imm;
-        if (u.bits.imm >> 5) {
-            generateException(Except_Illegal_Instruction, data);
-        }
-        data->npc = data->pc + 4;
-    }
-};
-
 
 /**
  * @brief STORE instructions (SD, SW, SH, SB)
@@ -880,7 +976,7 @@ class SD : public IsaProcessor {
 public:
     SD() : IsaProcessor("SD", "?????????????????011?????0100011") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         Axi4TransactionType memop;
         ISA_S_type u;
         u.value = payload[0];
@@ -910,7 +1006,7 @@ class SW : public IsaProcessor {
 public:
     SW() : IsaProcessor("SW", "?????????????????010?????0100011") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         Axi4TransactionType memop;
         ISA_S_type u;
         u.value = payload[0];
@@ -939,7 +1035,7 @@ class SH : public IsaProcessor {
 public:
     SH() : IsaProcessor("SH", "?????????????????001?????0100011") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         Axi4TransactionType memop;
         ISA_S_type u;
         u.value = payload[0];
@@ -968,7 +1064,7 @@ class SB : public IsaProcessor {
 public:
     SB() : IsaProcessor("SB", "?????????????????000?????0100011") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         Axi4TransactionType memop;
         ISA_S_type u;
         u.value = payload[0];
@@ -997,7 +1093,7 @@ class SUB : public IsaProcessor {
 public:
     SUB() : IsaProcessor("SUB", "0100000??????????000?????0110011") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         ISA_R_type u;
         u.value = payload[0];
         data->regs[u.bits.rd] = data->regs[u.bits.rs1] - data->regs[u.bits.rs2];
@@ -1010,15 +1106,17 @@ public:
  *
  * SUBW is RV64I-only instructions that are defined analogously to 
  * SUB but operate on 32-bit values and produce signed 32-bit results.
- * Overflows are ignored, and the low 32-bits of the result is sign-extended  * to 64-bits and written to the destination register. */
+ * Overflows are ignored, and the low 32-bits of the result is sign-extended 
+ * to 64-bits and written to the destination register.
+ */
 class SUBW : public IsaProcessor {
 public:
     SUBW() : IsaProcessor("SUBW", "0100000??????????000?????0111011") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         ISA_R_type u;
         u.value = payload[0];
-    
+        
         data->regs[u.bits.rd] = 
             (data->regs[u.bits.rs1] - data->regs[u.bits.rs2]) & 0xFFFFFFFFLL;
         if (data->regs[u.bits.rd] & (1LL << 31)) {
@@ -1035,7 +1133,7 @@ class XOR : public IsaProcessor {
 public:
     XOR() : IsaProcessor("XOR", "0000000??????????100?????0110011") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         ISA_R_type u;
         u.value = payload[0];
         data->regs[u.bits.rd] = 
@@ -1047,12 +1145,14 @@ public:
 /** 
  * @brief XOR on register rs1 and the sign-extended 12-bit immediate.
  *
- * XORI rd, rs1, -1 performs a bitwise logical inversion of register rs1  * (assembler pseudo-instruction NOT rd, rs). */
+ * XORI rd, rs1, -1 performs a bitwise logical inversion of register rs1 
+ * (assembler pseudo-instruction NOT rd, rs).
+ */
 class XORI : public IsaProcessor {
 public:
     XORI() : IsaProcessor("XORI", "?????????????????100?????0010011") {}
 
-    virtual void exec(uint32_t *payload, CpuDataType *data) {
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
         ISA_I_type u;
         u.value = payload[0];
     
@@ -1065,7 +1165,7 @@ public:
     }
 };
 
-void addIsaUserRV64I(CpuDataType *data, AttributeType *out) {
+void addIsaUserRV64I(CpuContextType *data, AttributeType *out) {
     addSupportedInstruction(new ADD, out);
     addSupportedInstruction(new ADDI, out);
     addSupportedInstruction(new ADDIW, out);
@@ -1091,17 +1191,22 @@ void addIsaUserRV64I(CpuDataType *data, AttributeType *out) {
     addSupportedInstruction(new LUI, out);
     addSupportedInstruction(new OR, out);
     addSupportedInstruction(new ORI, out);
-    addSupportedInstruction(new SRAI, out);
+    addSupportedInstruction(new SLL, out);
     addSupportedInstruction(new SLLI, out);
+    addSupportedInstruction(new SLLIW, out);
     addSupportedInstruction(new SLLW, out);
     addSupportedInstruction(new SLT, out);
     addSupportedInstruction(new SLTI, out);
     addSupportedInstruction(new SLTU, out);
     addSupportedInstruction(new SLTIU, out);
+    addSupportedInstruction(new SRA, out);
+    addSupportedInstruction(new SRAI, out);
+    addSupportedInstruction(new SRAIW, out);
+    addSupportedInstruction(new SRAW, out);
+    addSupportedInstruction(new SRL, out);
     addSupportedInstruction(new SRLI, out);
-    addSupportedInstruction(new SRLW, out);
-    addSupportedInstruction(new SLLIW, out);
     addSupportedInstruction(new SRLIW, out);
+    addSupportedInstruction(new SRLW, out);
     addSupportedInstruction(new SUB, out);
     addSupportedInstruction(new SUBW, out);
     addSupportedInstruction(new SD, out);
@@ -1110,47 +1215,25 @@ void addIsaUserRV64I(CpuDataType *data, AttributeType *out) {
     addSupportedInstruction(new SB, out);
     addSupportedInstruction(new XOR, out);
     addSupportedInstruction(new XORI, out);
-    // TODO:
-    /*
-    addInstr("SLL",                "0000000??????????001?????0110011", NULL, out);
-    addInstr("SRL",                "0000000??????????101?????0110011", NULL, out);
-    addInstr("SRA",                "0100000??????????101?????0110011", NULL, out);
-    addInstr("SRAIW",              "0100000??????????101?????0011011", NULL, out);
-    addInstr("SRLW",               "0000000??????????101?????0111011", NULL, out);
-    addInstr("SRAW",               "0100000??????????101?????0111011", NULL, out);
-    addInstr("LB",                 "?????????????????000?????0000011", NULL, out);
-    def SLLI_RV32          = BitPat("b0000000??????????001?????0010011")
-    def SRLI_RV32          = BitPat("b0000000??????????101?????0010011")
-    def SRAI_RV32          = BitPat("b0100000??????????101?????0010011")
-    */
+
     data->csr[CSR_mcpuid] = 0x8000000000000000LL;
     data->csr[CSR_mcpuid] |= (1LL << ('I' - 'A'));
 }
 
-void generateInterrupt(uint64_t code, CpuDataType *data) {
+void generateInterrupt(uint64_t code, CpuContextType *data) {
     csr_mstatus_type mstatus;
     mstatus.value = data->csr[CSR_mstatus];
     if (mstatus.bits.IE == 0) {
         return;
     }
 
-    csr_mie_type mie;
     csr_mip_type mip;
-    mie.value = data->csr[CSR_mie];
     mip.value = data->csr[CSR_mip];
     switch (code) {
     case IRQ_Software:
-        if (((1LL << mstatus.bits.PRV) & mie.value) == 0) {
-            // software interrupt disabled for current mode
-            return;
-        }
         mip.bits.MSIP = 1;
         break;
     case IRQ_Timer:
-        if (((4LL << mstatus.bits.PRV) & mie.value) == 0) {
-            // timer interrupt disabled for current mode
-            return;
-        }
         mip.bits.MTIP = 1;
         break;
     default:
@@ -1166,8 +1249,30 @@ void generateInterrupt(uint64_t code, CpuDataType *data) {
     data->csr[CSR_mcause] = cause.value;
 }
 
-void generateException(uint64_t except, CpuDataType *data) {
-    data->exception = except;
+/**
+ * When a trap is taken, the stack is pushed to the left and PRV is set to the 
+ * privilege mode of the activated trap handler with
+ * IE=0.
+ *
+ * By default, all traps at any privilege level are handled in machine mode, 
+ * though a machine-mode  * handler can quickly redirect traps back to the 
+ * appropriate level using mrts and mrth instructions (Section 3.2.2). 
+ * To increase performance, implementations can provide individual read/write 
+ * bits within mtdeleg to indicate that certain traps should be processed 
+ * directly by a lower privilege level.
+ * 
+ * The machine trap delegation register (mtdeleg) is an XLEN-bit read/write 
+ * register that must be implemented, but which can contain a read-only value 
+ * of zero, indicating that hardware will always direct all traps to machine 
+ * mode.
+ */
+void generateException(uint64_t code, CpuContextType *data) {
+    csr_mcause_type cause;
+    cause.value     = 0;
+    cause.bits.irq  = 0;
+    cause.bits.code = code;
+    data->csr[CSR_mcause] = cause.value;
+    data->exception |= 1LL << code;
 }
 
 }  // namespace debugger

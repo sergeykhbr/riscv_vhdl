@@ -13,7 +13,7 @@
 
 namespace debugger {
 
-struct CpuDataType {
+struct CpuContextType {
     uint64_t regs[32];
     uint64_t csr[1<<12];
     uint64_t pc;
@@ -21,6 +21,7 @@ struct CpuDataType {
     uint64_t exception;
     uint64_t step_cnt;
     uint64_t prv_stack_cnt;
+    uint64_t prv_last_trap : 2;
     IMemoryOperation *imemop;
     char disasm[256];
 };
@@ -34,8 +35,8 @@ public:
 
     virtual const char *name() =0;
     virtual bool parse(uint32_t *payload) =0;
-    virtual void exec(uint32_t *payload, CpuDataType *regs) =0;
-    virtual uint32_t hash(uint32_t *payload) =0;
+    virtual void exec(uint32_t *payload, CpuContextType *regs) =0;
+    virtual uint32_t hash() =0;
 };
 
 }  // namespace debugger

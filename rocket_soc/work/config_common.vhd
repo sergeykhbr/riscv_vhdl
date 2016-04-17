@@ -37,7 +37,8 @@
 --!     <li>VHDL Bridge from TileLinks to AXI4 (NASTI) bus.</li>
 --!     <li>Set of common peripheries: UART, GPIO (LEDs), Interrupt controller
 --!         etc.</li>
---!     <li>Debugging via ethernet using EDCL capability of the MAC. This
+--!     <li>@link dbg_link Debugging @endlink via @link eth_link Ethernet 
+--!         @endlink using EDCL capability of the MAC. This
 --!         capability allows to redirect UDP requests directly on system bus
 --!         and allows to use external debugger from the Reset Vector.</li>
 --!     <li>Debug Support Unit (DSU) provides access to the internal registers
