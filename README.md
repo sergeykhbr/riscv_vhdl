@@ -49,15 +49,17 @@ To get branch *v2.0* use the following git command:
 
 This release add to following features to *v1.0*:
 
-- **Debug Support Unit** (DSU) for the access to all CPU registers (CSRs).
-- **10/100 Ethernet MAC with EDCL** that allows to debug processor from the
+- [**Debug Support Unit**](http://sergeykhbr.github.io/riscv_vhdl/dsu_link.html) 
+  (DSU) for the access to all CPU registers (CSRs).
+- [**10/100 Ethernet MAC with EDCL**](http://sergeykhbr.github.io/riscv_vhdl/eth_link.html) 
+  that allows to debug processor from the
   reset vector redirecting UDP requests directly on system bus.
 - GNSS engine and RF-mezzanine card support.
 - **Test Mode** (DIP[0]=1) that allows to use SOC with or without
   *RF-mezzanine card*.
 - Master/Slave AMBA AXI4 interface refactoring.
-- Debugger software for Windows and Linux with built-in simulator and
-  plugins support.
+- [**Debugger Software (C++)**](http://sergeykhbr.github.io/riscv_vhdl/dbg_link.html)
+  for Windows and Linux with built-in simulator and plugins support.
 - Portable asynchronous FIFO implementation allowing to connect modules to the 
   System BUS from a separate clock domains (ADC clock domain):
 - A lot of system optimizations.
@@ -182,8 +184,10 @@ using jumper DIP0 (*i_int_clkrf* signal).
 ## Debugger
 
 Since revision v2.0 we provide open source platform debugger. The pre-built
-binaries can be downloaded [here](http://www.gnss-sensor.com/index.php?LinkID=2016).
-Instruction of how to connect FPGA board via Ethernet your can find here.
+binaries can be downloaded [here](http://www.gnss-sensor.com/index.php?LinkID=15).
+Instruction of how to connect FPGA board via 
+[Ethernet](http://sergeykhbr.github.io/riscv_vhdl/eth_link.html) 
+your can find here.
 Just after successful connection with FPGA target your can interact
 with RISC-V SOC by reading/writing memory, CSR register or load
 new elf-file.
@@ -209,10 +213,14 @@ instead of FPGA board:
      c:\myprj\rocket\debugger\bin\appdbg64g.exe -sim
 ```
 
-This simulator is using [Verilated](http://www.veripool.org/wiki/verilator) 
-C++ model of CPU with functional models of other devices that exactly match
-to behavior of the real RTL simulation.
-To get more information see debugger's description.
+This simulator is analog of *spike* tool that is part of tools
+provided RISC-V community. But it's implemented as set of plugins for the
+Core library where each plugin is an independent device functional model.
+Set of created and connected devices through configuration JSON-file forms
+SOC platform that can include any number of different devices, including 
+GNSS engine or whatever.
+To get more information see 
+[debugger's description](http://sergeykhbr.github.io/riscv_vhdl/dbg_link.html).
 
 
 ## Setup GCC toolchain
@@ -221,7 +229,7 @@ To get more information see debugger's description.
 toolchain on [riscv.org](http://riscv.org/software-tools/). If you would like
 to use pre-build GCC binary files and libraries you can download it here:
  
-   [Ubuntu GNU GCC toolchain RV64IMA (256MB)](http://www.gnss-sensor.com/index.php?LinkID=1013)
+   [Ubuntu GNU GCC 5.1.0 toolchain RV64IMA (256MB)](http://www.gnss-sensor.com/index.php?LinkID=1013)
 
   Feature of this GCC build is the configuration *RV64IMA* (without FPU).
 Default toolchain configuration generates makefile with hardware FPU that 
