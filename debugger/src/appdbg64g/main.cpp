@@ -20,6 +20,9 @@ using namespace debugger;
 /// Use it if configuration file was not found or failed.
 const char *default_config = 
 "{"
+  "'GlobalSettings':{"
+    "'SimEnable':true"
+  "},"
   "'Services':["
     "{'Class':'EdclServiceClass','Instances':["
           "{'Name':'edcltap','Attr':["
@@ -70,8 +73,7 @@ const char *default_config =
     "{'Class':'CpuRiscV_FunctionalClass','Instances':["
           "{'Name':'core0','Attr':["
                 "['LogLevel',4],"
-                "['ParentThread','boardsim'],"
-                "['PhysMem','boardsim'],"
+                "['Bus','axi0'],"
                 "['ListExtISA',['I','M','A']],"
                 "['FreqHz',60000000]"
                 "]}]},"
@@ -81,8 +83,7 @@ const char *default_config =
                 "['InitFile','../../../rocket_soc/fw_images/bootimage.hex'],"
                 "['ReadOnly',true],"
                 "['BaseAddress',0x0],"
-                "['Length',8192],"
-                "['ParentThread','boardsim']"
+                "['Length',8192]"
                 "]}]},"
     "{'Class':'MemorySimClass','Instances':["
           "{'Name':'fwimage0','Attr':["
@@ -90,8 +91,7 @@ const char *default_config =
                 "['InitFile','../../../rocket_soc/fw_images/fwimage.hex'],"
                 "['ReadOnly',true],"
                 "['BaseAddress',0x00100000],"
-                "['Length',0x40000],"
-                "['ParentThread','boardsim']"
+                "['Length',0x40000]"
                 "]}]},"
     "{'Class':'MemorySimClass','Instances':["
           "{'Name':'sram0','Attr':["
@@ -99,8 +99,7 @@ const char *default_config =
                 "['InitFile','../../../rocket_soc/fw_images/fwimage.hex'],"
                 "['ReadOnly',false],"
                 "['BaseAddress',0x10000000],"
-                "['Length',0x80000],"
-                "['ParentThread','boardsim']"
+                "['Length',0x80000]"
                 "]}]},"
     "{'Class':'GPIOClass','Instances':["
           "{'Name':'gpio0','Attr':["
@@ -147,14 +146,25 @@ const char *default_config =
                 "['Tech',0],"
                 "['AdcDetector',0xff]"
                 "]}]},"
+    "{'Class':'GrethClass','Instances':["
+          "{'Name':'greth0','Attr':["
+                "['LogLevel',1],"
+                "['BaseAddress',0x80040000],"
+                "['Length',0x40000],"
+                "['IP',0x55667788],"
+                "['MAC',0xfeedface00],"
+                "['Bus','axi0'],"
+                "['Transport','udpboard']"
+                "]}]},"
+    "{'Class':'BusClass','Instances':["
+          "{'Name':'axi0','Attr':["
+                "['LogLevel',3],"
+                "['MapList',['bootrom0','fwimage0','sram0','gpio0',"
+                        "'uart0','irqctrl0','gnss0','pnp0','dsu0','greth0']]"
+                "]}]},"
     "{'Class':'BoardSimClass','Instances':["
           "{'Name':'boardsim','Attr':["
-                "['LogLevel',1],"
-                "['Enable',true],"
-                "['Transport','udpboard'],"
-                "['ClkSource','core0'],"
-                "['Map',['bootrom0','fwimage0','sram0','gpio0',"
-                        "'uart0','irqctrl0','gnss0','pnp0','dsu0']]"
+                "['LogLevel',1]"
                 "]}]}"
   "]"
 "}";
@@ -198,27 +208,12 @@ int main(int argc, char* argv[]) {
     }
 
     // Enable/Disable simulator option:
-    for (unsigned i = 0; i < Config["Services"].size(); i++) {
-        const AttributeType &serv = Config["Services"][i];
-        if (strcmp(serv["Class"].to_string(), "BoardSimClass") == 0) {
-            const AttributeType &attr = serv["Instances"][0u]["Attr"];
-            for (unsigned n = 0; n < attr.size(); n++) {
-                if (strcmp(attr[n][0u].to_string(), "Enable") == 0) {
-                    AttributeType &ena = 
-                        const_cast<AttributeType &>(attr[n][1]);
-                    ena.make_boolean(!disableSim);
-                }
-            }
-        }
-    }
+    Config["GlobalSettings"]["SimEnable"].make_boolean(!disableSim);
 
     RISCV_set_configuration(&Config);
    
     // Connect simulator to the EDCL debugger if enabled:
-    IThread *boardsim = static_cast<IThread *>
-                (RISCV_get_service_iface("boardsim", IFACE_THREAD));
-    if (boardsim->isEnabled()) {
-
+    if (!disableSim) {
         IUdp *iudp1 = static_cast<IUdp *>
                 (RISCV_get_service_iface("udpboard", IFACE_UDP));
         IUdp *iudp2 = static_cast<IUdp *>
@@ -250,7 +245,7 @@ int main(int argc, char* argv[]) {
         RISCV_get_service_iface("console0", IFACE_THREAD));
     if (in) {
         while (in->isEnabled()) {
-            RISCV_sleep_ms(1000);
+            RISCV_sleep_ms(100);
         }
     }
 

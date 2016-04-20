@@ -24,6 +24,8 @@ SRC_PATH =\
 	$(TOP_DIR)src \
 	$(TOP_DIR)src/common \
 	$(TOP_DIR)src/libdbg64g \
+	$(TOP_DIR)src/libdbg64g/services/mem \
+	$(TOP_DIR)src/libdbg64g/services/bus \
 	$(TOP_DIR)src/libdbg64g/services/udp \
 	$(TOP_DIR)src/libdbg64g/services/console \
 	$(TOP_DIR)src/libdbg64g/services/elfloader
@@ -35,6 +37,8 @@ SOURCES = \
 	autobuffer \
 	api_core \
 	api_utils \
+	bus \
+	memsim \
 	udp \
 	edcl \
 	elfloader \

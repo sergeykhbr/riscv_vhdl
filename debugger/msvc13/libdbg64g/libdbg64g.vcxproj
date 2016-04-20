@@ -90,9 +90,11 @@
     <ClCompile Include="..\..\src\common\autobuffer.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\api_core.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\api_utils.cpp" />
+    <ClCompile Include="..\..\src\libdbg64g\services\bus\bus.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\console\cmdparser.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\console\console.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\elfloader\elfloader.cpp" />
+    <ClCompile Include="..\..\src\libdbg64g\services\mem\memsim.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\udp\edcl.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\udp\udp.cpp" />
   </ItemGroup>
@@ -106,6 +108,7 @@
     <ClInclude Include="..\..\src\common\coreservices\iclock.h" />
     <ClInclude Include="..\..\src\common\coreservices\iconsole.h" />
     <ClInclude Include="..\..\src\common\coreservices\icpuriscv.h" />
+    <ClInclude Include="..\..\src\common\coreservices\ibus.h" />
     <ClInclude Include="..\..\src\common\coreservices\ielfloader.h" />
     <ClInclude Include="..\..\src\common\coreservices\ihostio.h" />
     <ClInclude Include="..\..\src\common\coreservices\ikeylistener.h" />
@@ -118,12 +121,15 @@
     <ClInclude Include="..\..\src\common\iattr.h" />
     <ClInclude Include="..\..\src\common\iclass.h" />
     <ClInclude Include="..\..\src\common\iface.h" />
+    <ClInclude Include="..\..\src\common\ihap.h" />
     <ClInclude Include="..\..\src\common\iservice.h" />
     <ClInclude Include="..\..\src\libdbg64g\include\dirent.h" />
+    <ClInclude Include="..\..\src\libdbg64g\services\bus\bus.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\console\cmdparser.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\console\console.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\elfloader\elfloader.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\elfloader\elf_types.h" />
+    <ClInclude Include="..\..\src\libdbg64g\services\mem\memsim.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\udp\edcl.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\udp\udp.h" />
   </ItemGroup>

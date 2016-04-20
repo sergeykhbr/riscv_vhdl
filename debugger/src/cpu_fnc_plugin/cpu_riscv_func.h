@@ -10,6 +10,7 @@
 
 #include "iclass.h"
 #include "iservice.h"
+#include "ihap.h"
 #include "coreservices/ithread.h"
 #include "coreservices/icpuriscv.h"
 #include "coreservices/imemop.h"
@@ -24,7 +25,8 @@ class CpuRiscV_Functional : public IService,
                  public IThread,
                  public ICpuRiscV,
                  public IHostIO,
-                 public IClock {
+                 public IClock,
+                 public IHap {
 public:
     CpuRiscV_Functional(const char *name);
     ~CpuRiscV_Functional();
@@ -45,6 +47,9 @@ public:
     virtual uint64_t getStepCounter() { return cpu_context_.step_cnt; }
     virtual void registerStepCallback(IClockListener *cb, uint64_t t);
 
+    /** IHap */
+    virtual void hapTriggered(EHapType type);
+
 protected:
     /** IThread interface */
     virtual void busyLoop();
@@ -63,12 +68,12 @@ private:
     void queueUpdate();
 
 private:
-    AttributeType parentThread_;
-    AttributeType phys_mem_;
+    AttributeType bus_;
     AttributeType listExtISA_;
     AttributeType freqHz_;
+    event_def config_done_;
 
-    Axi4TransactionType memop_;
+    uint32_t cacheline_[512/4];
 
     enum QueueItemNames {
         Queue_Time, 

@@ -6,7 +6,9 @@ EXPORTS
 	RISCV_write_json_file
 	RISCV_get_configuration
 	RISCV_set_configuration
+	RISCV_get_global_settings
 	RISCV_register_class
+	RISCV_register_hap
 	RISCV_get_class
 	RISCV_create_service
 	RISCV_get_service
@@ -30,3 +32,6 @@ EXPORTS
 	RISCV_event_clear
 	RISCV_event_wait
 	RISCV_get_core_folder
+	RISCV_get_services_with_iface
+	RISCV_get_clock_services
+	RISCV_break_simulation

@@ -415,20 +415,16 @@ public:
     LD() : IsaProcessor("LD", "?????????????????011?????0000011") {}
 
     virtual void exec(uint32_t *payload, CpuContextType *data) {
-        Axi4TransactionType memop;
+        uint64_t dcache;
         ISA_I_type u;
         u.value = payload[0];
         uint64_t off = u.bits.imm;
         if (off & 0x800) {
             off |= EXT_SIGN_12;
         }
-        memop.rw = 0;
-        memop.addr = data->regs[u.bits.rs1] + off;
-        memop.xsize = 8;
-        data->imemop->transaction(&memop);
-        data->regs[u.bits.rd] = 
-            (static_cast<uint64_t>(memop.rpayload[1]) << 32) 
-            | memop.rpayload[0];
+        uint64_t addr = data->regs[u.bits.rs1] + off;
+        data->ibus->read(addr, reinterpret_cast<uint8_t *>(&dcache), 8);
+        data->regs[u.bits.rd] = dcache;
         data->npc = data->pc + 4;
     }
 };
@@ -441,18 +437,16 @@ public:
     LW() : IsaProcessor("LW", "?????????????????010?????0000011") {}
 
     virtual void exec(uint32_t *payload, CpuContextType *data) {
-        Axi4TransactionType memop;
+        uint64_t dcache = 0;
         ISA_I_type u;
         u.value = payload[0];
         uint64_t off = u.bits.imm;
         if (off & 0x800) {
             off |= EXT_SIGN_12;
         }
-        memop.rw = 0;
-        memop.addr = data->regs[u.bits.rs1] + off;
-        memop.xsize = 4;
-        data->imemop->transaction(&memop);
-        data->regs[u.bits.rd] = memop.rpayload[0];
+        uint64_t addr = data->regs[u.bits.rs1] + off;
+        data->ibus->read(addr, reinterpret_cast<uint8_t *>(&dcache), 4);
+        data->regs[u.bits.rd] = dcache;
         if (data->regs[u.bits.rd] & (1LL << 31)) {
             data->regs[u.bits.rd] |= EXT_SIGN_32;
         }
@@ -468,18 +462,16 @@ public:
     LWU() : IsaProcessor("LWU", "?????????????????110?????0000011") {}
 
     virtual void exec(uint32_t *payload, CpuContextType *data) {
-        Axi4TransactionType memop;
+        uint64_t dcache = 0;
         ISA_I_type u;
         u.value = payload[0];
         uint64_t off = u.bits.imm;
         if (off & 0x800) {
             off |= EXT_SIGN_12;
         }
-        memop.rw = 0;
-        memop.addr = data->regs[u.bits.rs1] + off;
-        memop.xsize = 4;
-        data->imemop->transaction(&memop);
-        data->regs[u.bits.rd] = memop.rpayload[0];
+        uint64_t addr = data->regs[u.bits.rs1] + off;
+        data->ibus->read(addr, reinterpret_cast<uint8_t *>(&dcache), 4);
+        data->regs[u.bits.rd] = dcache;
         data->npc = data->pc + 4;
     }
 };
@@ -492,18 +484,16 @@ public:
     LH() : IsaProcessor("LH", "?????????????????001?????0000011") {}
 
     virtual void exec(uint32_t *payload, CpuContextType *data) {
-        Axi4TransactionType memop;
+        uint64_t dcache = 0;
         ISA_I_type u;
         u.value = payload[0];
         uint64_t off = u.bits.imm;
         if (off & 0x800) {
             off |= EXT_SIGN_12;
         }
-        memop.rw = 0;
-        memop.addr = data->regs[u.bits.rs1] + off;
-        memop.xsize = 2;
-        data->imemop->transaction(&memop);
-        data->regs[u.bits.rd] = memop.rpayload[0] & 0xFFFF;
+        uint64_t addr = data->regs[u.bits.rs1] + off;
+        data->ibus->read(addr, reinterpret_cast<uint8_t *>(&dcache), 2);
+        data->regs[u.bits.rd] = dcache & 0xFFFF;
         if (data->regs[u.bits.rd] & (1LL << 15)) {
             data->regs[u.bits.rd] |= EXT_SIGN_16;
         }
@@ -519,18 +509,16 @@ public:
     LHU() : IsaProcessor("LHU", "?????????????????101?????0000011") {}
 
     virtual void exec(uint32_t *payload, CpuContextType *data) {
-        Axi4TransactionType memop;
+        uint64_t dcache = 0;
         ISA_I_type u;
         u.value = payload[0];
         uint64_t off = u.bits.imm;
         if (off & 0x800) {
             off |= EXT_SIGN_12;
         }
-        memop.rw = 0;
-        memop.addr = data->regs[u.bits.rs1] + off;
-        memop.xsize = 2;
-        data->imemop->transaction(&memop);
-        data->regs[u.bits.rd] = memop.rpayload[0] & 0xFFFF;
+        uint64_t addr = data->regs[u.bits.rs1] + off;
+        data->ibus->read(addr, reinterpret_cast<uint8_t *>(&dcache), 2);
+        data->regs[u.bits.rd] = dcache & 0xFFFF;
         data->npc = data->pc + 4;
     }
 };
@@ -543,18 +531,16 @@ public:
     LB() : IsaProcessor("LB", "?????????????????000?????0000011") {}
 
     virtual void exec(uint32_t *payload, CpuContextType *data) {
-        Axi4TransactionType memop;
+        uint64_t dcache = 0;
         ISA_I_type u;
         u.value = payload[0];
         uint64_t off = u.bits.imm;
         if (off & 0x800) {
             off |= EXT_SIGN_12;
         }
-        memop.rw = 0;
-        memop.addr = data->regs[u.bits.rs1] + off;
-        memop.xsize = 1;
-        data->imemop->transaction(&memop);
-        data->regs[u.bits.rd] = memop.rpayload[0] & 0xFF;
+        uint64_t addr = data->regs[u.bits.rs1] + off;
+        data->ibus->read(addr, reinterpret_cast<uint8_t *>(&dcache), 1);
+        data->regs[u.bits.rd] = dcache & 0xFF;
         if (data->regs[u.bits.rd] & (1LL << 7)) {
             data->regs[u.bits.rd] |= EXT_SIGN_8;
         }
@@ -570,18 +556,16 @@ public:
     LBU() : IsaProcessor("LBU", "?????????????????100?????0000011") {}
 
     virtual void exec(uint32_t *payload, CpuContextType *data) {
-        Axi4TransactionType memop;
+        uint64_t dcache = 0;
         ISA_I_type u;
         u.value = payload[0];
         uint64_t off = u.bits.imm;
         if (off & 0x800) {
             off |= EXT_SIGN_12;
         }
-        memop.rw = 0;
-        memop.addr = data->regs[u.bits.rs1] + off;
-        memop.xsize = 1;
-        data->imemop->transaction(&memop);
-        data->regs[u.bits.rd] = memop.rpayload[0] & 0xFF;
+        uint64_t addr = data->regs[u.bits.rs1] + off;
+        data->ibus->read(addr, reinterpret_cast<uint8_t *>(&dcache), 1);
+        data->regs[u.bits.rd] = dcache & 0xFF;
         data->npc = data->pc + 4;
     }
 };
@@ -977,24 +961,16 @@ public:
     SD() : IsaProcessor("SD", "?????????????????011?????0100011") {}
 
     virtual void exec(uint32_t *payload, CpuContextType *data) {
-        Axi4TransactionType memop;
+        uint64_t wdata;
         ISA_S_type u;
         u.value = payload[0];
         uint64_t off = (u.bits.imm11_5 << 5) | u.bits.imm4_0;
         if (off & 0x800) {
             off |= EXT_SIGN_12;
         }
-        memop.rw = 1;
-        memop.addr = data->regs[u.bits.rs1] + off;
-        memop.xsize = 8;
-        memop.wstrb = 0x00FF;
-        memop.wpayload[0] = 
-            static_cast<uint32_t>(data->regs[u.bits.rs2]);
-        memop.wpayload[1] = 
-            static_cast<uint32_t>(data->regs[u.bits.rs2] >> 32);
-        memop.wpayload[2] = memop.wpayload[0];
-        memop.wpayload[3] = memop.wpayload[1];
-        data->imemop->transaction(&memop);
+        uint64_t addr = data->regs[u.bits.rs1] + off;
+        wdata = data->regs[u.bits.rs2];
+        data->ibus->write(addr, reinterpret_cast<uint8_t *>(&wdata), 8);
         data->npc = data->pc + 4;
     }
 };
@@ -1007,23 +983,16 @@ public:
     SW() : IsaProcessor("SW", "?????????????????010?????0100011") {}
 
     virtual void exec(uint32_t *payload, CpuContextType *data) {
-        Axi4TransactionType memop;
+        uint64_t wdata = 0;
         ISA_S_type u;
         u.value = payload[0];
         uint64_t off = (u.bits.imm11_5 << 5) | u.bits.imm4_0;
         if (off & 0x800) {
             off |= EXT_SIGN_12;
         }
-        memop.rw = 1;
-        memop.addr = data->regs[u.bits.rs1] + off;
-        memop.xsize = 4;
-        memop.wstrb = 0x000F;
-        memop.wpayload[0] = 
-            static_cast<uint32_t>(data->regs[u.bits.rs2]);
-        memop.wpayload[1] = memop.wpayload[0];
-        memop.wpayload[2] = memop.wpayload[0];
-        memop.wpayload[3] = memop.wpayload[0];
-        data->imemop->transaction(&memop);
+        uint64_t addr = data->regs[u.bits.rs1] + off;
+        wdata = data->regs[u.bits.rs2];
+        data->ibus->write(addr, reinterpret_cast<uint8_t *>(&wdata), 4);
         data->npc = data->pc + 4;
     }
 };
@@ -1036,23 +1005,16 @@ public:
     SH() : IsaProcessor("SH", "?????????????????001?????0100011") {}
 
     virtual void exec(uint32_t *payload, CpuContextType *data) {
-        Axi4TransactionType memop;
+        uint64_t wdata;
         ISA_S_type u;
         u.value = payload[0];
         uint64_t off = (u.bits.imm11_5 << 5) | u.bits.imm4_0;
         if (off & 0x800) {
             off |= EXT_SIGN_12;
         }
-        memop.rw = 1;
-        memop.addr = data->regs[u.bits.rs1] + off;
-        memop.xsize = 2;
-        memop.wstrb = 0x0003;
-        memop.wpayload[0] = 
-            static_cast<uint32_t>(data->regs[u.bits.rs2]) & 0xFFFF;
-        memop.wpayload[1] = memop.wpayload[0];
-        memop.wpayload[2] = memop.wpayload[0];
-        memop.wpayload[3] = memop.wpayload[0];
-        data->imemop->transaction(&memop);
+        uint64_t addr = data->regs[u.bits.rs1] + off;
+        wdata = data->regs[u.bits.rs2] & 0xFFFF;
+        data->ibus->write(addr, reinterpret_cast<uint8_t *>(&wdata), 2);
         data->npc = data->pc + 4;
     }
 };
@@ -1065,23 +1027,16 @@ public:
     SB() : IsaProcessor("SB", "?????????????????000?????0100011") {}
 
     virtual void exec(uint32_t *payload, CpuContextType *data) {
-        Axi4TransactionType memop;
+        uint64_t wdata;
         ISA_S_type u;
         u.value = payload[0];
         uint64_t off = (u.bits.imm11_5 << 5) | u.bits.imm4_0;
         if (off & 0x800) {
             off |= EXT_SIGN_12;
         }
-        memop.rw = 1;
-        memop.addr = data->regs[u.bits.rs1] + off;
-        memop.xsize = 1;
-        memop.wstrb = 0x0001;
-        memop.wpayload[0] = 
-            static_cast<uint32_t>(data->regs[u.bits.rs2]) & 0xFF;
-        memop.wpayload[1] = memop.wpayload[0];
-        memop.wpayload[2] = memop.wpayload[0];
-        memop.wpayload[3] = memop.wpayload[0];
-        data->imemop->transaction(&memop);
+        uint64_t addr = data->regs[u.bits.rs1] + off;
+        wdata = data->regs[u.bits.rs2] & 0xFF;
+        data->ibus->write(addr, reinterpret_cast<uint8_t *>(&wdata), 1);
         data->npc = data->pc + 4;
     }
 };

@@ -202,9 +202,9 @@ extern "C" void RISCV_event_wait(event_def *ev) {
     WaitForSingleObject(*ev, INFINITE);
 #else
     int result = 0;
-    do {
+    while (result == 0 && !ev->state) {
         result = pthread_cond_wait(&ev->cond, &ev->mut);
-    } while (result == 0 && !ev->state);
+    } 
 #endif
 }
 

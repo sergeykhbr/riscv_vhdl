@@ -6,8 +6,8 @@
  */
 
 #include "api_core.h"
-#include "types_amba.h"
 #include "pnp.h"
+#include "types_amba.h"
 
 namespace debugger {
 

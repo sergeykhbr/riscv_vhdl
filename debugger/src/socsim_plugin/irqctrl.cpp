@@ -6,7 +6,6 @@
  */
 
 #include "api_core.h"
-#include "types_amba.h"
 #include "irqctrl.h"
 
 namespace debugger {

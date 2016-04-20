@@ -7,12 +7,13 @@
 
 #include "api_core.h"
 #include "memsim.h"
-#include "types_amba.h"
 #include <iostream>
 #include <string.h>
-#include "coreservices/ithread.h"
 
 namespace debugger {
+
+/** Class registration in the Core */
+REGISTER_CLASS(MemorySim)
 
 MemorySim::MemorySim(const char *name)  : IService(name) {
     registerInterface(static_cast<IMemoryOperation *>(this));
@@ -20,13 +21,11 @@ MemorySim::MemorySim(const char *name)  : IService(name) {
     registerAttribute("ReadOnly", &readOnly_);
     registerAttribute("BaseAddress", &baseAddress_);
     registerAttribute("Length", &length_);
-    registerAttribute("ParentThread", &parentThread_);
 
     initFile_.make_string("");
     readOnly_.make_boolean(false);
     baseAddress_.make_uint64(0);
     length_.make_uint64(0);
-    parentThread_.make_string("");
     mem_ = NULL;
 }
 
@@ -37,9 +36,9 @@ MemorySim::~MemorySim() {
 }
 
 void MemorySim::postinitService() {
-    IThread *ithread = static_cast<IThread *>(
-        RISCV_get_service_iface(parentThread_.to_string(), IFACE_THREAD));
-    if (ithread == 0 || !ithread->isEnabled()) {
+    // Get global settings:
+    const AttributeType *glb = RISCV_get_global_settings();
+    if ((*glb)["SimEnable"].to_bool() == false) {
         return;
     }
 

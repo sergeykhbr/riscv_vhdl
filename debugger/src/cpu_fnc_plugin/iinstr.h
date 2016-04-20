@@ -9,7 +9,7 @@
 #define __DEBUGGER_IINSTRUCTION_H__
 
 #include <inttypes.h>
-#include "coreservices/imemop.h"
+#include "coreservices/ibus.h"
 
 namespace debugger {
 
@@ -22,7 +22,7 @@ struct CpuContextType {
     uint64_t step_cnt;
     uint64_t prv_stack_cnt;
     uint64_t prv_last_trap : 2;
-    IMemoryOperation *imemop;
+    IBus *ibus;
     char disasm[256];
 };
 

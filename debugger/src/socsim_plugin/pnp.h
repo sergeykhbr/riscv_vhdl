@@ -11,7 +11,6 @@
 #include "iclass.h"
 #include "iservice.h"
 #include "coreservices/imemop.h"
-#include "types_amba.h"
 
 namespace debugger {
 

@@ -18,6 +18,7 @@ PLUGINS_ELF_DIR = $(TOP_DIR)linuxbuild/bin/plugins
   TEA = 2>&1 | tee _$@-comp.err
 
 all: libdbg64g simple_plugin socsim_plugin cpu_fnc_plugin appdbg64g
+	$(RM) $(ELF_DIR)/config.json
 	$(ECHO) "    All done.\n"
 
 libdbg64g:

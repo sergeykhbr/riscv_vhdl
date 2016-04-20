@@ -79,6 +79,12 @@ class AttributeType : public IAttribute {
         u_.integer = 0;
     }
 
+    explicit AttributeType(bool val) {
+        kind_ = Attr_Boolean;
+        size_ = 0;
+        u_.boolean = val;
+    }
+
     AttributeType(KindType type, uint64_t v) {
         if (type == Attr_Integer) {
             make_int64(static_cast<int64_t>(v));

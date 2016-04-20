@@ -268,9 +268,7 @@ void CmdParserService::processLine(const char *line) {
             outf("    read 0xfffff004\n");
         }
     } else if (strcmp(listArgs[0u].to_string(), "exit") == 0) {
-        IThread *ith = static_cast<IThread *>
-            (RISCV_get_service_iface(console_.to_string(), IFACE_THREAD));
-        ith->breakSignal();
+        RISCV_break_simulation();
     } else {
         outf("Use 'help' to print list of the supported commands\n");
     }

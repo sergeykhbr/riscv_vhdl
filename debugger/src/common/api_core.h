@@ -180,10 +180,20 @@ void RISCV_set_configuration(AttributeType *cfg);
  */
 const char *RISCV_get_configuration();
 
+/** 
+ * @brief Get current core configuration.
+ */
+const AttributeType *RISCV_get_global_settings();
+
 /**
  * @brief Registration of the class in the library kernel.
  */
 void RISCV_register_class(IFace *icls);
+
+/**
+ * @brief Registration of the system event (hap) listener.
+ */
+void RISCV_register_hap(IFace *ihap);
 
 /**
  * @brief Get registred class interface by its name.
@@ -207,6 +217,25 @@ IFace *RISCV_get_service(const char *name);
 IFace *RISCV_get_service_iface(const char *servname, const char *facename);
 
 /// @todo add attributes/save/restore
+
+/**
+ * @brief Get list of services implementing specific interface.
+ */
+void RISCV_get_services_with_iface(const char *iname, AttributeType *list);
+
+
+/**
+ * @brief Get list of all clock generators.
+ * @details Clock generator must implement IClock (and usually IThread)
+ *          interfaces. CPU is a most general clock generator.
+ */
+void RISCV_get_clock_services(AttributeType *list);
+
+
+/**
+ * @brief Break all threads that could be run by different services.
+ */
+void RISCV_break_simulation();
 
 #ifdef __cplusplus
 }

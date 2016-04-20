@@ -44,7 +44,6 @@ private:
     AttributeType readOnly_;
     AttributeType baseAddress_;
     AttributeType length_;
-    AttributeType parentThread_;
     uint8_t *mem_;
 };
 

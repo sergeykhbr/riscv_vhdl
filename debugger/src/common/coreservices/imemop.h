@@ -2,7 +2,7 @@
  * @file
  * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
  * @author     Sergey Khabarov - sergeykhbr@gmail.com
- * @brief      Memory Operation interface.
+ * @brief      Memory Operation interface implemented by slave devices on bus.
  */
 
 #ifndef __DEBUGGER_IMEMOP_PLUGIN_H__

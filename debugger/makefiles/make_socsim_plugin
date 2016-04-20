@@ -32,10 +32,10 @@ SOURCES = \
 	gnss_stub \
 	irqctrl \
 	gpio \
-	memsim \
 	uart \
 	pnp \
 	dsu \
+	greth \
 	plugin_init
 
 LIBS = \

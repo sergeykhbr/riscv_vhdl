@@ -7,23 +7,22 @@
 
 #include "api_core.h"
 #include "cpu_riscv_func.h"
-#include "types_amba.h"
 #include "riscv-isa.h"
 
 namespace debugger {
 
-CpuRiscV_Functional::CpuRiscV_Functional(const char *name)  : IService(name) {
+CpuRiscV_Functional::CpuRiscV_Functional(const char *name)  
+    : IService(name), IHap(HAP_ConfigDone) {
     registerInterface(static_cast<IThread *>(this));
     registerInterface(static_cast<ICpuRiscV *>(this));
     registerInterface(static_cast<IClock *>(this));
     registerInterface(static_cast<IHostIO *>(this));
-    registerAttribute("ParentThread", &parentThread_);
-    registerAttribute("PhysMem", &phys_mem_);
+    registerInterface(static_cast<IHap *>(this));
+    registerAttribute("Bus", &bus_);
     registerAttribute("ListExtISA", &listExtISA_);
     registerAttribute("FreqHz", &freqHz_);
 
-    parentThread_.make_string("");
-    phys_mem_.make_string("");
+    bus_.make_string("");
     listExtISA_.make_list(0);
     freqHz_.make_uint64(1);
 
@@ -32,22 +31,26 @@ CpuRiscV_Functional::CpuRiscV_Functional(const char *name)  : IService(name) {
     cpu_context_.step_cnt = 0;
     memset(cpu_context_.csr, 0, sizeof(cpu_context_.csr));
 
+    RISCV_event_create(&config_done_, "config_done");
+    RISCV_register_hap(static_cast<IHap *>(this));
     reset();
 }
 
 CpuRiscV_Functional::~CpuRiscV_Functional() {
+    RISCV_event_close(&config_done_);
 }
 
 void CpuRiscV_Functional::postinitService() {
     CpuContextType *pContext = getpContext();
-    bool isEnable = false;
-    IThread *iparent = static_cast<IThread *>(
-       RISCV_get_service_iface(parentThread_.to_string(), IFACE_THREAD));
-    if (iparent) {
-        isEnable = iparent->isEnabled();
+
+    pContext->ibus = static_cast<IBus *>(
+       RISCV_get_service_iface(bus_.to_string(), IFACE_BUS));
+
+    if (!pContext->ibus) {
+        RISCV_error("Bus interface '%s' not found", 
+                    bus_.to_string());
+        return;
     }
-    pContext->imemop = static_cast<IMemoryOperation *>(
-       RISCV_get_service_iface(phys_mem_.to_string(), IFACE_MEMORY_OPERATION));
 
     // Supported instruction sets:
     for (int i = 0; i < INSTR_HASH_TABLE_SIZE; i++) {
@@ -65,13 +68,9 @@ void CpuRiscV_Functional::postinitService() {
         }
     }
 
-    if (!pContext->imemop) {
-        RISCV_error("Physical Memory interface '%s' not found", 
-                    phys_mem_.to_string());
-        return;
-    }
-
-    if (isEnable) {
+    // Get global settings:
+    const AttributeType *glb = RISCV_get_global_settings();
+    if ((*glb)["SimEnable"].to_bool()) {
         if (!run()) {
             RISCV_error("Can't create thread.", NULL);
             return;
@@ -83,12 +82,15 @@ void CpuRiscV_Functional::predeleteService() {
     stop();
 }
 
+void CpuRiscV_Functional::hapTriggered(EHapType type) {
+    RISCV_event_set(&config_done_);
+}
+
 bool after_reset = false;
 void CpuRiscV_Functional::busyLoop() {
     CpuContextType *pContext = getpContext();
+    RISCV_event_wait(&config_done_);
 
-    // @todo config_done event callback
-    RISCV_sleep_ms(200);
     while (isEnabled()) {
         pContext->step_cnt++;
 
@@ -154,11 +156,9 @@ void CpuRiscV_Functional::handleTrap() {
 
 void CpuRiscV_Functional::fetchInstruction() {
     CpuContextType *pContext = getpContext();
-    memop_.addr = pContext->pc;
-    memop_.rw = 0;
-    memop_.xsize = CFG_NASTI_DATA_BYTES;
-
-    pContext->imemop->transaction(&memop_);
+    pContext->ibus->read(pContext->pc, 
+                        reinterpret_cast<uint8_t *>(cacheline_), 
+                        4);
 }
 
 IInstruction *CpuRiscV_Functional::decodeInstruction(uint32_t *rpayload) {
@@ -180,13 +180,13 @@ void CpuRiscV_Functional::executeInstruction(IInstruction *instr,
                                              uint32_t *rpayload) {
 
     CpuContextType *pContext = getpContext();
-    instr->exec(memop_.rpayload, pContext);
+    instr->exec(cacheline_, pContext);
 #if 0
-    if (pContext->step_cnt >= 4645) {//after_reset) {
+    if (pContext->step_cnt >= 0) {//after_reset) {
         RISCV_debug("[%" RV_PRI64 "d] %08x: %08x \t %4s <mstatus=%016" RV_PRI64 "x; ra=%016" RV_PRI64 "x; sp=%016" RV_PRI64 "x>", 
             getStepCounter(),
             static_cast<uint32_t>(pContext->pc),
-            memop_.rpayload[0], instr->name(),
+            rpayload[0], instr->name(),
             pContext->csr[CSR_mstatus],
             pContext->regs[1],//ra
             pContext->regs[2]//sp
@@ -207,17 +207,17 @@ void CpuRiscV_Functional::stepUpdate() {
 
     fetchInstruction();
 
-    IInstruction *instr = decodeInstruction(memop_.rpayload);
+    IInstruction *instr = decodeInstruction(cacheline_);
     if (!instr) {
         pContext->npc += 4;
         
         RISCV_error("%08x: %08x \t unimplemented",
-            static_cast<uint32_t>(pContext->pc), memop_.rpayload[0]);
+            static_cast<uint32_t>(pContext->pc), cacheline_[0]);
         generateException(EXCEPTION_InstrIllegal, pContext);
         return;
     }
 
-    executeInstruction(instr, memop_.rpayload);
+    executeInstruction(instr, cacheline_);
 }
 
 void CpuRiscV_Functional::queueUpdate() {

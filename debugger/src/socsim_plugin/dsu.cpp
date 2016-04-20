@@ -6,7 +6,6 @@
  */
 
 #include "api_core.h"
-#include "types_amba.h"
 #include "dsu.h"
 
 namespace debugger {
