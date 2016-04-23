@@ -30,6 +30,10 @@ int RISCV_sprintf(char *s, size_t len, const char *fmt, ...);
 /** Format output to the default stream. */
 int RISCV_printf(void *iface, int level, const char *fmt, ...);
 
+/** Output always */
+#define RISCV_printf0(fmt, ...) \
+    RISCV_printf(getInterface(IFACE_SERVICE), 0, fmt, __VA_ARGS__)
+
 /** Output with the maximal logging level */
 #define RISCV_error(fmt, ...) \
     RISCV_printf(getInterface(IFACE_SERVICE), LOG_ERROR, fmt, __VA_ARGS__)

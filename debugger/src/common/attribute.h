@@ -137,6 +137,21 @@ class AttributeType : public IAttribute {
         return u_.string;
     }
 
+    // capitalize letters in string;
+    const char * to_upper() const {
+        if (kind_ != Attr_String) {
+            return 0;
+        }
+        char *p = u_.string;
+        while (*p) {
+            if (p[0] >= 'a' && p[0] <= 'z') {
+                p[0] = p[0] - 'a' + 'A';
+            }
+            p++;
+        }
+        return u_.string;
+    }
+
     bool is_list() const {
         return kind_ == Attr_List;
     }

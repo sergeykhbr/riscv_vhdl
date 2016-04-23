@@ -51,13 +51,13 @@ void GNSSStub::transaction(Axi4TransactionType *payload) {
             if (((payload->wstrb >> 4*i) & 0xf) == 0) {
                 continue;
             }
-            regs_.tmr.rw_MsLength = payload->wpayload[i];
-            if (regs_.tmr.rw_MsLength) {
+            if (regs_.tmr.rw_MsLength == 0 && payload->wpayload[i] != 0) {
                 iclk_->registerStepCallback(
                     static_cast<IClockListener *>(this), 
-                    iclk_->getStepCounter() + regs_.tmr.rw_MsLength);
+                    iclk_->getStepCounter() + payload->wpayload[i]);
 
             }
+            regs_.tmr.rw_MsLength = payload->wpayload[i];
             if ((off + 4*i) == OFFSET(&regs_.tmr.rw_MsLength)) {
                 RISCV_info("Set rw_MsLength = %d", regs_.tmr.rw_MsLength);
             }

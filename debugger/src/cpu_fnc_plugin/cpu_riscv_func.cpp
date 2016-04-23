@@ -29,15 +29,18 @@ CpuRiscV_Functional::CpuRiscV_Functional(const char *name)
     stepQueue_.make_list(0);
     stepQueue_len_ = 0;
     cpu_context_.step_cnt = 0;
-    memset(cpu_context_.csr, 0, sizeof(cpu_context_.csr));
 
+    RISCV_mutex_init(&mutexStepQueue_);
     RISCV_event_create(&config_done_, "config_done");
     RISCV_register_hap(static_cast<IHap *>(this));
+    cpu_context_.csr[CSR_mreset]   = 0;
+    dbg_state_ = STATE_Normal;
     reset();
 }
 
 CpuRiscV_Functional::~CpuRiscV_Functional() {
     RISCV_event_close(&config_done_);
+    RISCV_mutex_destroy(&mutexStepQueue_);
 }
 
 void CpuRiscV_Functional::postinitService() {
@@ -86,26 +89,72 @@ void CpuRiscV_Functional::hapTriggered(EHapType type) {
     RISCV_event_set(&config_done_);
 }
 
-bool after_reset = false;
 void CpuRiscV_Functional::busyLoop() {
-    CpuContextType *pContext = getpContext();
     RISCV_event_wait(&config_done_);
 
     while (isEnabled()) {
-        pContext->step_cnt++;
-
-        if (pContext->csr[CSR_mreset]) {
-            reset();
-            after_reset = true;
-
-        } else {
-            stepUpdate();
-        }
-
-        queueUpdate();
+        updatePipeline();
     }
     loopEnable_ = false;
     threadInit_.Handle = 0;
+}
+
+void CpuRiscV_Functional::updatePipeline() {
+    IInstruction *instr;
+    CpuContextType *pContext = getpContext();
+
+    pContext->pc = pContext->npc;
+    fetchInstruction();
+
+    updateState();
+
+    if (pContext->csr[CSR_mreset]) {
+        queueUpdate();
+        reset();
+        return;
+    } 
+
+    instr = decodeInstruction(cacheline_);
+    if (isRunning()) {
+        if (instr) {
+            executeInstruction(instr, cacheline_);
+        } else {
+            pContext->npc += 4;
+            generateException(EXCEPTION_InstrIllegal, pContext);
+
+            RISCV_info("[%" RV_PRI64 "d] pc:%08x: %08x \t illegal instruction",
+                        getStepCounter(),
+                        static_cast<uint32_t>(pContext->pc), cacheline_[0]);
+        }
+    }
+
+    queueUpdate();
+
+    handleTrap();
+}
+
+void CpuRiscV_Functional::updateState() {
+    CpuContextType *pContext = getpContext();
+    bool upd = true;
+    switch (dbg_state_) {
+    case STATE_Halted:
+        upd = false;
+        break;
+    case STATE_Stepping:
+        if (dbg_step_cnt_ <= pContext->step_cnt) {
+            halt();
+            upd = false;
+        }
+        break;
+    default:;
+    }
+    if (upd) {
+        pContext->step_cnt++;
+   }
+}
+
+bool CpuRiscV_Functional::isRunning() {
+    return  (dbg_state_ != STATE_Halted);
 }
 
 void CpuRiscV_Functional::reset() {
@@ -119,12 +168,18 @@ void CpuRiscV_Functional::reset() {
     pContext->csr[CSR_mtvec]   = 0x100;     // Hardwired RO value
     pContext->csr[CSR_mip] = 0;             // clear pending interrupts
     pContext->csr[CSR_mie] = 0;             // disabling interrupts
+    pContext->csr[CSR_mepc] = 0;
+    pContext->csr[CSR_mtdeleg] = 0;
+    pContext->csr[CSR_mtime] = 0;
+    pContext->csr[CSR_mtimecmp] = 0;
+    pContext->csr[CSR_uepc] = 0;
+    pContext->csr[CSR_sepc] = 0;
+    pContext->csr[CSR_hepc] = 0;
     csr_mstatus_type mstat;
     mstat.value = 0;
+    mstat.bits.IE = 0;
     mstat.bits.PRV = PRV_LEVEL_M;           // Current privilege level
-    pContext->prv_last_trap = PRV_LEVEL_M;
     pContext->csr[CSR_mstatus] = mstat.value;
-    pContext->prv_stack_cnt = 0;
 }
 
 void CpuRiscV_Functional::handleTrap() {
@@ -132,24 +187,28 @@ void CpuRiscV_Functional::handleTrap() {
     csr_mstatus_type mstatus;
     mstatus.value = pContext->csr[CSR_mstatus];
 
-    if (pContext->exception == 0 &&
-        (mstatus.bits.IE == 0 || pContext->csr[CSR_mip] == 0)) {
+    if ((pContext->exception == 0 && pContext->csr[CSR_mip] == 0)
+     || (mstatus.bits.PRV == PRV_LEVEL_M && mstatus.bits.IE == 0)) {
         return;
     }
 
-    if (pContext->prv_stack_cnt) {
-        pContext->prv_stack_cnt--;
-    }
     // All traps handle via machine mode while CSR mdelegate
     // doesn't setup other.
-    pContext->prv_last_trap = mstatus.bits.PRV;
-    uint64_t xepc = (pContext->prv_last_trap << 8) + 0x41;
-    pContext->csr[xepc]    = pContext->pc;
-    pContext->pc = pContext->csr[CSR_mtvec] + 0x40 * mstatus.bits.PRV;
-
+    // @tod delegating
+    mstatus.bits.PRV3 = mstatus.bits.PRV;
+    mstatus.bits.IE3 = mstatus.bits.IE;
     mstatus.bits.IE = 0;
     mstatus.bits.PRV = PRV_LEVEL_M;
     pContext->csr[CSR_mstatus] = mstatus.value;
+
+    uint64_t xepc = (mstatus.bits.PRV << 8) + 0x41;
+    if (pContext->exception) {
+        pContext->csr[xepc]    = pContext->pc;
+    } else {
+        // Software interrupt handled after instruction was executed
+        pContext->csr[xepc]    = pContext->npc;
+    }
+    pContext->npc = pContext->csr[CSR_mtvec] + 0x40 * mstatus.bits.PRV3;
 
     pContext->exception = 0;
 }
@@ -182,7 +241,7 @@ void CpuRiscV_Functional::executeInstruction(IInstruction *instr,
     CpuContextType *pContext = getpContext();
     instr->exec(cacheline_, pContext);
 #if 0
-    if (pContext->step_cnt >= 0) {//after_reset) {
+    if (pContext->step_cnt >= 0) {
         RISCV_debug("[%" RV_PRI64 "d] %08x: %08x \t %4s <mstatus=%016" RV_PRI64 "x; ra=%016" RV_PRI64 "x; sp=%016" RV_PRI64 "x>", 
             getStepCounter(),
             static_cast<uint32_t>(pContext->pc),
@@ -199,27 +258,6 @@ void CpuRiscV_Functional::executeInstruction(IInstruction *instr,
     }
 }
 
-void CpuRiscV_Functional::stepUpdate() {
-    CpuContextType *pContext = getpContext();
-    pContext->pc = pContext->npc;
-
-    handleTrap();
-
-    fetchInstruction();
-
-    IInstruction *instr = decodeInstruction(cacheline_);
-    if (!instr) {
-        pContext->npc += 4;
-        
-        RISCV_error("%08x: %08x \t unimplemented",
-            static_cast<uint32_t>(pContext->pc), cacheline_[0]);
-        generateException(EXCEPTION_InstrIllegal, pContext);
-        return;
-    }
-
-    executeInstruction(instr, cacheline_);
-}
-
 void CpuRiscV_Functional::queueUpdate() {
     uint64_t ev_time;
     IClockListener *iclk;
@@ -227,7 +265,7 @@ void CpuRiscV_Functional::queueUpdate() {
     CpuContextType *pContext = getpContext();
 
     // @warning We can add new event inside of stepCallback that leads to
-    //          infinite cycle.
+    //          infinite cycle if wouldn't use fixed length.
     queue_len = stepQueue_len_;
     for (unsigned i = 0; i < queue_len; i++) {
         ev_time = stepQueue_[i][Queue_Time].to_uint64();
@@ -235,13 +273,17 @@ void CpuRiscV_Functional::queueUpdate() {
         if (pContext->step_cnt >= ev_time) {
             iclk = static_cast<IClockListener *>(
                     stepQueue_[i][Queue_IFace].to_iface());
-            iclk->stepCallback(pContext->step_cnt);
 
-            // remove item from list
+            // remove item from list using swap function to avoid
+            // allocation/deallocation calls if we can avoid it.
+            RISCV_mutex_lock(&mutexStepQueue_);
             stepQueue_.swap_list_item(i, stepQueue_.size() - 1);
             stepQueue_len_--;
             queue_len--;
             i--;
+            RISCV_mutex_unlock(&mutexStepQueue_);
+
+            iclk->stepCallback(pContext->step_cnt);
         }
     }
 }
@@ -250,6 +292,9 @@ void CpuRiscV_Functional::registerStepCallback(IClockListener *cb,
                                                uint64_t t) {
     AttributeType time(Attr_UInteger, t);
     AttributeType face(cb);
+    RISCV_mutex_lock(&mutexStepQueue_);
+    // Check if allocated queue size is greater than number of used
+    // items in a list then use available item.
     if (stepQueue_len_ < stepQueue_.size()) {
         stepQueue_[stepQueue_len_][Queue_Time] = time;
         stepQueue_[stepQueue_len_][Queue_IFace] = face;
@@ -262,6 +307,7 @@ void CpuRiscV_Functional::registerStepCallback(IClockListener *cb,
         stepQueue_.add_to_list(&item);
         stepQueue_len_++;
     }
+    RISCV_mutex_unlock(&mutexStepQueue_);
 }
 
 uint64_t CpuRiscV_Functional::write(uint16_t adr, uint64_t val) {
@@ -273,6 +319,29 @@ uint64_t CpuRiscV_Functional::read(uint16_t adr, uint64_t *val) {
     *val = readCSR(adr, getpContext());
     return 0;
 }
+
+void CpuRiscV_Functional::halt() {
+    CpuContextType *pContext = getpContext();
+    dbg_state_ = STATE_Halted;
+
+    RISCV_printf0("[%" RV_PRI64 "d] pc:%016" RV_PRI64 "x: %08x \t CPU halted",
+        getStepCounter(), pContext->pc, cacheline_[0]);
+}
+
+void CpuRiscV_Functional::go() {
+    dbg_state_ = STATE_Normal;
+}
+
+void CpuRiscV_Functional::step(uint64_t cnt) {
+    CpuContextType *pContext = getpContext();
+    dbg_step_cnt_ = pContext->step_cnt + cnt;
+    dbg_state_ = STATE_Stepping;
+}
+
+uint64_t CpuRiscV_Functional::getReg(int idx) {
+    return 0;
+}
+
 
 }  // namespace debugger
 

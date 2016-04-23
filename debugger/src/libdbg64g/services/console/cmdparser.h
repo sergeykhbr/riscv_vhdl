@@ -34,6 +34,8 @@ public:
 
 private:
     static const uint64_t DSU_BASE_ADDRESS = 0x80080000;
+    // Valid only for simulation.
+    static const uint64_t DSU_CTRL_BASE_ADDRESS = 0x80090000;
 
     void processLine(const char *line);
     void splitLine(char *str, AttributeType *listArgs);
@@ -47,8 +49,9 @@ private:
         if (id->is_integer()) {
             return DSU_BASE_ADDRESS + (id->to_uint64() << 4);
         }
+        std::string tmp;
         for (unsigned i = 0; i < listCSR_.size(); i++) {
-            if (strcmp(id->to_string(), listCSR_[i][0u].to_string()) == 0) {
+            if (strcmp(id->to_upper(), listCSR_[i][0u].to_string()) == 0) {
                 return DSU_BASE_ADDRESS + (listCSR_[i][1u].to_uint64() << 4);
             }
         }
@@ -60,6 +63,10 @@ private:
     void readMem(AttributeType *listArgs);
     void writeMem(AttributeType *listArgs);
     void memDump(AttributeType *listArgs);
+
+    // Only simulation platform supports these commands (for now):
+    void halt(AttributeType *listArgs);
+    void run(AttributeType *listArgs);
     void regs(AttributeType *listArgs);
 
     int outf(const char *fmt, ...);

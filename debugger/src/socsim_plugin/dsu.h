@@ -13,6 +13,7 @@
 #include "coreservices/imemop.h"
 #include "coreservices/iwire.h"
 #include "coreservices/ihostio.h"
+#include "coreservices/icpuriscv.h"
 
 namespace debugger {
 
@@ -35,6 +36,14 @@ public:
         return length_.to_uint64();
     }
 
+private:
+    void regionCsrRd(uint64_t off, Axi4TransactionType *payload);
+    void regionCsrWr(uint64_t off, Axi4TransactionType *payload);
+    void regionControlRd(uint64_t off, Axi4TransactionType *payload);
+    void regionControlWr(uint64_t off, Axi4TransactionType *payload);
+
+    void msb_of_64(uint64_t *val, uint32_t dw);
+    void lsb_of_64(uint64_t *val, uint32_t dw);
 
 private:
     AttributeType baseAddress_;
@@ -43,6 +52,10 @@ private:
     IHostIO *ihostio_;
 
     uint64_t wdata_;
+    struct RegType {
+        uint64_t control;
+        uint64_t step_cnt;
+    } regs_;
 };
 
 DECLARE_CLASS(DSU)

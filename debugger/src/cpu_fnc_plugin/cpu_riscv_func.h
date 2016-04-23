@@ -36,12 +36,15 @@ public:
     virtual void predeleteService();
 
     /** ICpuRiscV interface */
-    virtual void halt() {}
+    virtual void halt();
+    virtual void go();
+    virtual void step(uint64_t cnt);
+    virtual uint64_t getReg(int idx);
 
     /** IHostIO */
     virtual uint64_t write(uint16_t adr, uint64_t val);
     virtual uint64_t read(uint16_t adr, uint64_t *val);
-
+    virtual ICpuRiscV *getCpuInterface() { return static_cast<ICpuRiscV *>(this); }
 
     /** IClock */
     virtual uint64_t getStepCounter() { return cpu_context_.step_cnt; }
@@ -58,13 +61,16 @@ private:
     CpuContextType *getpContext() { return &cpu_context_; }
     uint32_t hash32(uint32_t val) { return (val >> 2) & 0x1f; }
 
+    void updatePipeline();
+
+    void updateState();
+    bool isRunning();
     void reset();
     void handleTrap();
     void fetchInstruction();
     IInstruction *decodeInstruction(uint32_t *rpayload);
     void executeInstruction(IInstruction *instr, uint32_t *rpayload);
 
-    void stepUpdate();
     void queueUpdate();
 
 private:
@@ -82,11 +88,19 @@ private:
     };
     AttributeType stepQueue_;
     unsigned stepQueue_len_;    // to avoid reallocation
+    mutex_def mutexStepQueue_;
 
     // Registers:
     static const int INSTR_HASH_TABLE_SIZE = 1 << 5;
     AttributeType listInstr_[INSTR_HASH_TABLE_SIZE];
     CpuContextType cpu_context_;
+
+    enum EDebugState {
+        STATE_Halted,
+        STATE_Normal,
+        STATE_Stepping
+    } dbg_state_;
+    uint64_t dbg_step_cnt_;
 };
 
 DECLARE_CLASS(CpuRiscV_Functional)

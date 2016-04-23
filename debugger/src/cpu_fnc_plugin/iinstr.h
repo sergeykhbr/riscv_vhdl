@@ -20,8 +20,6 @@ struct CpuContextType {
     uint64_t npc;
     uint64_t exception;
     uint64_t step_cnt;
-    uint64_t prv_stack_cnt;
-    uint64_t prv_last_trap : 2;
     IBus *ibus;
     char disasm[256];
 };

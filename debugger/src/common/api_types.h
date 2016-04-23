@@ -42,7 +42,10 @@ namespace debugger {
 
     typedef CRITICAL_SECTION mutex_def;
     typedef void *thread_def; // HANDLE = void*
-    typedef void *event_def; // HANDLE = void*
+    typedef struct event_def {
+        void *cond; // HANDLE = void*
+        bool state;
+    } event_def;
     typedef unsigned thread_return_t;
     typedef thread_return_t (__stdcall* lib_thread_func)(void *args);
 

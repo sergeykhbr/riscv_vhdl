@@ -105,7 +105,7 @@ private:
     IUdp *itransport_;
     uint8_t rxbuf_[1<<12];
     uint8_t txbuf_[1<<12];
-    uint32_t seq_cnt_;
+    uint32_t seq_cnt_ : 14;
 
     struct FifoMessageType {
         uint64_t addr;

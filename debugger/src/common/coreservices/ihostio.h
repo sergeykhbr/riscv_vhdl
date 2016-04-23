@@ -10,6 +10,7 @@
 
 #include "iface.h"
 #include <inttypes.h>
+#include "coreservices/icpuriscv.h"
 
 namespace debugger {
 
@@ -25,6 +26,11 @@ public:
     virtual uint64_t write(uint16_t adr, uint64_t val) =0;
 
     virtual uint64_t read(uint16_t adr, uint64_t *val) =0;
+
+    /**
+     * CPU Debug interface (only for simulator)
+     */ 
+     virtual ICpuRiscV *getCpuInterface() =0;
 };
 
 }  // namespace debugger

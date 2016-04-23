@@ -40,6 +40,8 @@ private:
 private:
     ITap *itap_;
     AttributeType tap_;
+    AttributeType verify_ena_;  // read and compare memory after write
+
     uint8_t *image_;
     ElfHeaderType *header_;
     SectionHeaderType *sh_tbl_;

@@ -127,6 +127,7 @@ extern "C" void RISCV_set_configuration(AttributeType *cfg) {
 extern "C" const char *RISCV_get_configuration() {
     IClass *icls;
     AttributeType ret(Attr_Dict);
+    ret["GlobalSettings"] = Config_["GlobalSettings"];
     ret["Services"].make_list(0);
     for (unsigned i = 0; i < listClasses_.size(); i++) {
         icls = static_cast<IClass *>(listClasses_[i].to_iface());

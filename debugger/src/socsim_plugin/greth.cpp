@@ -122,11 +122,11 @@ void Greth::busyLoop() {
             bytes = sizeof(UdpEdclCommonType);
         }
 
+        RISCV_event_clear(&event_tap_);
         iclk0_->registerStepCallback(static_cast<IClockListener *>(this),
-                                    iclk0_->getStepCounter() + 1);
+                                    iclk0_->getStepCounter());
 
         RISCV_event_wait(&event_tap_);
-        RISCV_event_clear(&event_tap_);
         while (!fifo_from_->isEmpty()) {
             fifo_from_->get(&msg);
         }
@@ -148,7 +148,6 @@ void Greth::stepCallback(uint64_t t) {
     uint64_t addr;
     while (!fifo_to_->isEmpty()) {
         fifo_to_->get(&msg);
-
         addr = msg.addr;
         buf = msg.buf;
         for (unsigned i = 0; i < msg.sz / 4u; i++) {
@@ -161,8 +160,8 @@ void Greth::stepCallback(uint64_t t) {
             addr += 4;
         }
         fifo_from_->put(&msg);
-        RISCV_event_set(&event_tap_);
     }
+    RISCV_event_set(&event_tap_);
 }
 
 void Greth::transaction(Axi4TransactionType *payload) {

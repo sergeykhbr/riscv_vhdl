@@ -20,6 +20,9 @@ public:
     ICpuRiscV() : IFace(IFACE_CPU_RISCV) {}
 
     virtual void halt() =0;
+    virtual void go() =0;
+    virtual void step(uint64_t cnt) =0;
+    virtual uint64_t getReg(int idx) =0;
 };
 
 }  // namespace debugger

@@ -156,7 +156,8 @@ extern "C" void RISCV_thread_join(thread_def th, int ms) {
 
 extern "C" void RISCV_event_create(event_def *ev, const char *name) {
 #if defined(_WIN32) || defined(__CYGWIN__)
-    *ev = CreateEvent( 
+    ev->state = false;
+    ev->cond = CreateEvent( 
                 NULL,               // default security attributes
                 TRUE,               // manual-reset event
                 FALSE,              // initial state is nonsignaled
@@ -171,7 +172,7 @@ extern "C" void RISCV_event_create(event_def *ev, const char *name) {
 
 extern "C" void RISCV_event_close(event_def *ev) {
 #if defined(_WIN32) || defined(__CYGWIN__)
-    CloseHandle(*ev);
+    CloseHandle(ev->cond);
 #else
     pthread_mutex_destroy(&ev->mut);
     pthread_cond_destroy(&ev->cond);
@@ -180,7 +181,8 @@ extern "C" void RISCV_event_close(event_def *ev) {
 
 extern "C" void RISCV_event_set(event_def *ev) {
 #if defined(_WIN32) || defined(__CYGWIN__)
-    SetEvent(*ev);
+    ev->state = true;
+    SetEvent(ev->cond);
 #else
     pthread_mutex_lock(&ev->mut);
     ev->state = true;
@@ -191,7 +193,8 @@ extern "C" void RISCV_event_set(event_def *ev) {
 
 extern "C" void RISCV_event_clear(event_def *ev) {
 #if defined(_WIN32) || defined(__CYGWIN__)
-    ResetEvent(*ev);
+    ev->state = false;
+    ResetEvent(ev->cond);
 #else
     ev->state = false;
 #endif
@@ -199,7 +202,7 @@ extern "C" void RISCV_event_clear(event_def *ev) {
 
 extern "C" void RISCV_event_wait(event_def *ev) {
 #if defined(_WIN32) || defined(__CYGWIN__)
-    WaitForSingleObject(*ev, INFINITE);
+    WaitForSingleObject(ev->cond, INFINITE);
 #else
     int result = 0;
     while (result == 0 && !ev->state) {

@@ -31,7 +31,9 @@ void writeCSR(uint32_t idx, uint64_t val, CpuContextType *data) {
     case CSR_mtime:
         break;
     case CSR_send_ipi:
-        generateInterrupt(IRQ_Software, data);
+        if (!data->csr[CSR_mreset]) {
+            generateInterrupt(IRQ_Software, data);
+        }
         break;
     default:
         data->csr[idx] = val;
@@ -199,25 +201,25 @@ public:
         csr_mstatus_type mstatus;
         mstatus.value = readCSR(CSR_mstatus, data);
 
-        switch (data->prv_stack_cnt) {
-        case 0:
-            mstatus.bits.PRV = mstatus.bits.PRV1;
-            mstatus.bits.IE = mstatus.bits.IE1;
-            break;
-        case 1:
-            mstatus.bits.PRV = mstatus.bits.PRV2;
-            mstatus.bits.IE = mstatus.bits.IE2;
-            break;
-        case 2:
+        uint64_t xepc = (mstatus.bits.PRV << 8) + 0x41;
+        data->npc = readCSR(static_cast<uint32_t>(xepc), data);
+
+        switch (mstatus.bits.PRV) {
+        case PRV_LEVEL_M:
             mstatus.bits.PRV = mstatus.bits.PRV3;
             mstatus.bits.IE = mstatus.bits.IE3;
             break;
+        case PRV_LEVEL_H:
+            mstatus.bits.PRV = mstatus.bits.PRV2;
+            mstatus.bits.IE = mstatus.bits.IE2;
+            break;
+        case PRV_LEVEL_S:
+            mstatus.bits.PRV = mstatus.bits.PRV1;
+            mstatus.bits.IE = mstatus.bits.IE1;
+            break;
         default:;
         }
-        uint64_t xepc = (data->prv_last_trap << 8) + 0x41;
-        data->npc = readCSR(static_cast<uint32_t>(xepc), data);
         writeCSR(CSR_mstatus, mstatus.value, data);
-        data->prv_stack_cnt++;
     }
 };
 

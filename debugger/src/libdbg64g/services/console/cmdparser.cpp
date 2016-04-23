@@ -22,6 +22,18 @@ static const uint8_t UNICODE_BACKSPACE = 0x7f;
 /** Class registration in the Core */
 REGISTER_CLASS(CmdParserService)
 
+union DsuRunControlRegType {
+    struct bits_type {
+        uint64_t halt     : 1;
+        uint64_t stepping : 1;
+        uint64_t rsv1     : 2;
+        uint64_t core_id  : 16;
+        uint64_t rsv2     : 44;
+    } bits;
+    uint64_t val;
+    uint8_t  buf[8];
+};
+
 CmdParserService::CmdParserService(const char *name) : IService(name) {
     registerInterface(static_cast<IKeyListener *>(this));
     registerAttribute("Console", &console_);
@@ -269,6 +281,14 @@ void CmdParserService::processLine(const char *line) {
         }
     } else if (strcmp(listArgs[0u].to_string(), "exit") == 0) {
         RISCV_break_simulation();
+    } else if (strcmp(listArgs[0u].to_string(), "halt") == 0
+            || strcmp(listArgs[0u].to_string(), "stop") == 0
+            || strcmp(listArgs[0u].to_string(), "s") == 0) {
+        halt(&listArgs);
+    } else if (strcmp(listArgs[0u].to_string(), "run") == 0
+            || strcmp(listArgs[0u].to_string(), "go") == 0
+            || strcmp(listArgs[0u].to_string(), "c") == 0) {
+        run(&listArgs);
     } else {
         outf("Use 'help' to print list of the supported commands\n");
     }
@@ -316,7 +336,7 @@ void CmdParserService::readCSR(AttributeType *listArgs) {
     uint64_t csr = 0;
     uint64_t addr = csr_socaddr(&(*listArgs)[1]);
 
-    if (addr == ~0u) {
+    if (addr == static_cast<uint64_t>(-1)) {
         outf("Unknown CSR '%s'\n", (*listArgs)[1].to_string());
         return;
     }
@@ -367,7 +387,7 @@ void CmdParserService::writeCSR(AttributeType *listArgs) {
     uint64_t addr;
     uint64_t csr;
     addr = csr_socaddr(&(*listArgs)[1]);
-    if (addr == ~0u) {
+    if (addr == static_cast<uint64_t>(-1)) {
         outf("Unknown CSR '%s'\n", (*listArgs)[1].to_string());
         return;
     }
@@ -463,6 +483,32 @@ void CmdParserService::memDump(AttributeType *listArgs) {
     fclose(fd);
     if (dumpbuf != tmpbuf_) {
         delete [] dumpbuf;
+    }
+}
+
+void CmdParserService::halt(AttributeType *listArgs) {
+    uint64_t addr = DSU_CTRL_BASE_ADDRESS;
+    DsuRunControlRegType ctrl;
+    ctrl.val = 0x0;
+    ctrl.bits.core_id = 0;
+    ctrl.bits.halt    = 1;
+    itap_->write(addr, 8, ctrl.buf);
+}
+
+void CmdParserService::run(AttributeType *listArgs) {
+    uint64_t addr = DSU_CTRL_BASE_ADDRESS;
+    DsuRunControlRegType ctrl;
+    ctrl.val = 0x0;
+    if (listArgs->size() == 1) {
+        itap_->write(addr, 8, ctrl.buf);
+    } else if (listArgs->size() == 2) {
+        // Write number of steps:
+        ctrl.val = (*listArgs)[1].to_uint64();
+        itap_->write(addr + 8, 8, ctrl.buf);
+        // Run execution:
+        ctrl.val = 0;
+        ctrl.bits.stepping = 1;
+        itap_->write(addr, 8, ctrl.buf);
     }
 }
 

@@ -121,6 +121,13 @@ static const char *const REG_NAMES[32] = {
     "t6"        // [31] 
 };
 
+const char *const fpr_name[] = {
+  "ft0", "ft1", "ft2",  "ft3",  "ft4", "ft5", "ft6",  "ft7",
+  "fs0", "fs1", "fa0",  "fa1",  "fa2", "fa3", "fa4",  "fa5",
+  "fa6", "fa7", "fs2",  "fs3",  "fs4", "fs5", "fs6",  "fs7",
+  "fs8", "fs9", "fs10", "fs11", "ft8", "ft9", "ft10", "ft11"
+};
+
 union csr_mstatus_type {
     struct bits_type {
         uint64_t IE     : 1;    // interrupts ena for current priv. mode
@@ -217,8 +224,6 @@ static const uint16_t CSR_mimpid        = 0xf01;
  * numbered contiguously in a multiprocessor system, but at least one hart must
  * have a hart ID of zero. */
 static const uint16_t CSR_mheartid      = 0xf10;
-/** machine mode status read/write register. */
-static const uint16_t CSR_mstatus       = 0x300;
 /** Machine wall-clock time */
 static const uint16_t CSR_mtime         = 0x701;
 /** Software reset. */
@@ -226,6 +231,8 @@ static const uint16_t CSR_mreset        = 0x782;
 /** Inter-processor interrupt */
 static const uint16_t CSR_send_ipi      = 0x783;
 
+/** machine mode status read/write register. */
+static const uint16_t CSR_mstatus       = 0x300;
 /**
  * @brief The base address of the M-mode trap vector.
  *
@@ -238,8 +245,12 @@ static const uint16_t CSR_send_ipi      = 0x783;
  *      0x200 Reset vector
  */
 static const uint16_t CSR_mtvec         = 0x301;
+/** Machine trap delegation  */
+static const uint16_t CSR_mtdeleg       = 0x302;
 /** Machine interrupt enable */
 static const uint16_t CSR_mie           = 0x304;
+/** Machine wall-clock timer compare value. */
+static const uint16_t CSR_mtimecmp      = 0x321;
 /** Scratch register for machine trap handlers. */
 static const uint16_t CSR_mscratch      = 0x340;
 /** Exception program counters. */

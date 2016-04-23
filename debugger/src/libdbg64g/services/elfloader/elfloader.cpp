@@ -16,7 +16,9 @@ REGISTER_CLASS(ElfLoaderService)
 ElfLoaderService::ElfLoaderService(const char *name) : IService(name) {
     registerInterface(static_cast<IElfLoader *>(this));
     registerAttribute("Tap", &tap_);
+    registerAttribute("VerifyEna", &verify_ena_);
     tap_.make_string("");
+    verify_ena_.make_boolean(false);
     itap_ = 0;
     image_ = NULL;
     sectionNames_ = NULL;
@@ -186,6 +188,18 @@ void ElfLoaderService::processDebugSymbol(SectionHeaderType *sh) {
 uint64_t ElfLoaderService::loadMemory(uint64_t addr, 
                                       uint8_t *buf, uint64_t bufsz) {
     itap_->write(addr, static_cast<int>(bufsz), buf);
+
+    if (verify_ena_.to_bool()) {
+        uint8_t *chk = new uint8_t [static_cast<int>(bufsz) + 8];
+        itap_->read(addr, static_cast<int>(bufsz), chk);
+        for (uint64_t i = 0; i < bufsz; i++) {
+            if (buf[i] != chk[i]) {
+                RISCV_error("[%08" RV_PRI64 "x] verif. error %02x != %02x",
+                            addr + i, buf[i], chk[i]);
+            }
+        }
+        delete [] chk;
+    }
     return bufsz;
 }
 
