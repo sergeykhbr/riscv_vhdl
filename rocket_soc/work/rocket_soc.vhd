@@ -152,6 +152,7 @@ architecture arch_rocket_soc of rocket_soc is
   signal wReset     : std_ulogic; -- Global reset active HIGH
   signal wNReset    : std_ulogic; -- Global reset active LOW
   signal soft_rst   : std_logic; -- reset from exteranl debugger
+  signal bus_nrst   : std_ulogic; -- Global reset and Soft Reset active LOW
   signal wClkBus    : std_ulogic; -- bus clock from the internal PLL (100MHz virtex6/40MHz Spartan6)
   signal wClkAdc    : std_ulogic; -- 26 MHz from the internal PLL
   signal wPllLocked : std_ulogic; -- PLL status signal. 0=Unlocked; 1=locked.
@@ -233,6 +234,7 @@ begin
     outReset    => wReset
   );
   wNReset <= not wReset;
+  bus_nrst <= not (wReset or soft_rst);
 
   --! @brief AXI4 controller.
   ctrl0 : axictrl port map (
@@ -299,11 +301,11 @@ dsu_ena : if CFG_DSU_ENABLE generate
   ------------------------------------
   --! @brief Debug Support Unit with access to the CSRs
   --! @details Map address:
-  --!          0x80080000..0x8008ffff (64 KB total)
+  --!          0x80080000..0x8009ffff (128 KB total)
   dsu0 : nasti_dsu generic map (
     xindex   => CFG_NASTI_SLAVE_DSU,
     xaddr    => 16#80080#,
-    xmask    => 16#ffff0#,
+    xmask    => 16#fffe0#,
     htif_index  => CFG_HTIF_SRC_DSU
   ) port map (
     clk    => wClkBus,
@@ -435,7 +437,7 @@ end generate;
     htif_index => CFG_HTIF_SRC_IRQCTRL
   ) port map (
     clk    => wClkBus,
-    nrst   => wNReset,
+    nrst   => bus_nrst,
     i_irqs => irq_pins,
     o_cfg  => slv_cfg(CFG_NASTI_SLAVE_IRQCTRL),
     i_axi  => axisi,

@@ -30,9 +30,17 @@ architecture behavior of rocket_soc_tb is
    
 
    constant EDCL_START_CLK2 : integer := 1500;
+   constant EDCL_START_CLK3 : integer := 15000;
    constant EDCL_WR_MRESET_LEN : integer := 130;
-   constant EDCL_WR_MRESET : std_logic_vector(4*EDCL_WR_MRESET_LEN-1 downto 0):= 
-   X"5d207098001032badcacefebeb80000062004500000000293e11000c8a00a00c8a00f07788556600219673000000604000088087021000000000000000134d4ae5";
+   -- write 1 to mreset reg:
+   constant EDCL_WR_MRESET1 : std_logic_vector(4*EDCL_WR_MRESET_LEN-1 downto 0):= 
+   -- idx = 1 
+   --X"5d207098001032badcacefebeb80000062004500000000293e11000c8a00a00c8a00f07788556600219673000000604000088087021000000000000000134d4ae5";
+   -- edcl_idx = 0
+   X"5d207098001032badcacefebeb80000062004500000000293e11000c8a00a00c8a00f077885566002196b3000000204000088087021000000000000000531a1143";
+   -- write 0 to mreset reg:
+   constant EDCL_WR_MRESET0 : std_logic_vector(4*EDCL_WR_MRESET_LEN-1 downto 0):= 
+   X"5d207098001032badcacefebeb80000062004500000000293e11000c8a00a00c8a00f0778855660021a67300000060400008808702000000000000000056997ad3";
 
   -- input/output signals:
   signal i_rst : std_logic := '1';
@@ -146,8 +154,11 @@ begin
            i_rxd <= EDCL_WRITE(4*(EDCL_WRITE_LEN - (iClkCnt-EDCL_START_CLK))-1 downto 4*(EDCL_WRITE_LEN - (iClkCnt-EDCL_START_CLK))-4);
            --i_rxdv <= '1';
         elsif iClkCnt >= EDCL_START_CLK2 and iClkCnt < (EDCL_START_CLK2 + EDCL_WR_MRESET_LEN) then
-           i_rxd <= EDCL_WR_MRESET(4*(EDCL_WR_MRESET_LEN - (iClkCnt-EDCL_START_CLK2))-1 downto 4*(EDCL_WR_MRESET_LEN - (iClkCnt-EDCL_START_CLK2))-4);
-           --i_rxdv <= '1'; -- RESET CPU
+           i_rxd <= EDCL_WR_MRESET1(4*(EDCL_WR_MRESET_LEN - (iClkCnt-EDCL_START_CLK2))-1 downto 4*(EDCL_WR_MRESET_LEN - (iClkCnt-EDCL_START_CLK2))-4);
+           i_rxdv <= '1'; -- RESET CPU
+        elsif iClkCnt >= EDCL_START_CLK3 and iClkCnt < (EDCL_START_CLK3 + EDCL_WR_MRESET_LEN) then
+           i_rxd <= EDCL_WR_MRESET0(4*(EDCL_WR_MRESET_LEN - (iClkCnt-EDCL_START_CLK3))-1 downto 4*(EDCL_WR_MRESET_LEN - (iClkCnt-EDCL_START_CLK3))-4);
+           i_rxdv <= '1'; -- RESET CPU
         else
            i_rxd <= "0000";
            i_rxdv <= '0';

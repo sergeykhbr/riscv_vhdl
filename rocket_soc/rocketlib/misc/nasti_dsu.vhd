@@ -75,6 +75,7 @@ architecture arch_nasti_dsu of nasti_dsu is
      descrtype => PNP_CFG_TYPE_SLAVE,
      descrsize => PNP_CFG_SLAVE_DESCR_BYTES
   );
+  constant CSR_MRESET : std_logic_vector(11 downto 0) := X"782";
 
 type state_type is (wait_grant, writting, wait_resp, skip1);
 
@@ -82,6 +83,7 @@ type registers is record
   bank_axi : nasti_slave_bank_type;
   --! Message multiplexer to form 128 request message of writting into CSR
   state         : state_type;
+  addr16_sel : std_logic;
   waddr : std_logic_vector(11 downto 0);
   wdata : std_logic_vector(63 downto 0);
   rdata : std_logic_vector(63 downto 0);
@@ -109,6 +111,7 @@ begin
 
     if r.bank_axi.wstate = wtrans then
       -- 32-bits burst transaction
+      v.addr16_sel := r.bank_axi.waddr(0)(16);
       v.waddr := r.bank_axi.waddr(0)(15 downto 4);
       if r.bank_axi.wburst = NASTI_BURST_INCR and r.bank_axi.wsize = 4 then
          if r.bank_axi.waddr(0)(2) = '1' then
@@ -132,22 +135,41 @@ begin
       when wait_grant =>
            vhost.csr_req_bits_addr := r.bank_axi.raddr(0)(15 downto 4);
            if r.bank_axi.rstate = rtrans then
-               vhost.csr_req_valid     := '1';
-               if (i_host.grant(htif_index) and i_host.csr_req_ready) = '1' then
-                   v.state := wait_resp;
+               if r.bank_axi.raddr(0)(16) = '1' then
+                  -- Control registers (not implemented)
+                  v.bank_axi.rwaitready := '1';
+                  v.rdata := (others => '0');
+                  v.state := skip1;
+               elsif r.bank_axi.raddr(0)(15 downto 4) = CSR_MRESET then
+                  v.bank_axi.rwaitready := '1';
+                  v.rdata(0) := r.soft_reset;
+                  v.rdata(63 downto 1) := (others => '0');
+                  v.state := skip1;
+               else
+                  vhost.csr_req_valid     := '1';
+                  if (i_host.grant(htif_index) and i_host.csr_req_ready) = '1' then
+                    v.state := wait_resp;
+                  end if;
                end if;
            end if;
       when writting =>
-           vhost.csr_req_valid     := '1';
-           vhost.csr_req_bits_rw   := '1';
-           vhost.csr_req_bits_addr := r.waddr;
-           vhost.csr_req_bits_data := r.wdata;
-           if (i_host.grant(htif_index) and i_host.csr_req_ready) = '1' then
-               v.state := wait_resp;
-           end if;
-           -- Soft Reset
-           if r.waddr = X"782" then
-             v.soft_reset := r.wdata(0);
+           if r.addr16_sel = '1' then
+              -- Bank with control register (not implemented by CPU)
+              v.bank_axi.rwaitready := '1';
+              v.state := skip1;
+           elsif r.waddr = CSR_MRESET then
+              -- Soft Reset
+              v.bank_axi.rwaitready := '1';
+              v.soft_reset := r.wdata(0);
+              v.state := skip1;
+           else
+              vhost.csr_req_valid     := '1';
+              vhost.csr_req_bits_rw   := '1';
+              vhost.csr_req_bits_addr := r.waddr;
+              vhost.csr_req_bits_data := r.wdata;
+              if (i_host.grant(htif_index) and i_host.csr_req_ready) = '1' then
+                 v.state := wait_resp;
+              end if;
            end if;
       when wait_resp =>
            vhost.csr_resp_ready := '1';
@@ -190,6 +212,7 @@ begin
     if nrst = '0' then 
        r.bank_axi <= NASTI_SLAVE_BANK_RESET;
        r.state <= wait_grant;
+       r.addr16_sel <= '0';
        r.waddr <= (others => '0');
        r.wdata <= (others => '0');
        r.rdata <= (others => '0');
