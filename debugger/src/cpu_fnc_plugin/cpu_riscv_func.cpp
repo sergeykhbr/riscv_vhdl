@@ -338,10 +338,40 @@ void CpuRiscV_Functional::step(uint64_t cnt) {
     dbg_state_ = STATE_Stepping;
 }
 
-uint64_t CpuRiscV_Functional::getReg(int idx) {
+uint64_t CpuRiscV_Functional::getReg(uint64_t idx) {
+    CpuContextType *pContext = getpContext();
+    if (idx >= 0 && idx < 32) {
+        return pContext->regs[idx];
+    }
     return 0;
 }
 
+void CpuRiscV_Functional::setReg(uint64_t idx, uint64_t val) {
+    CpuContextType *pContext = getpContext();
+    if (idx >= 0 && idx < 32) {
+        pContext->regs[idx] = val;
+    }
+}
+
+uint64_t CpuRiscV_Functional::getPC() {
+    CpuContextType *pContext = getpContext();
+    return pContext->pc;
+}
+
+void CpuRiscV_Functional::setPC(uint64_t val) {
+    CpuContextType *pContext = getpContext();
+    pContext->pc = val;
+}
+
+uint64_t CpuRiscV_Functional::getNPC() {
+    CpuContextType *pContext = getpContext();
+    return pContext->npc;
+}
+
+void CpuRiscV_Functional::setNPC(uint64_t val) {
+    CpuContextType *pContext = getpContext();
+    pContext->npc = val;
+}
 
 }  // namespace debugger
 

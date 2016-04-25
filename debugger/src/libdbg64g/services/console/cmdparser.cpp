@@ -34,6 +34,8 @@ union DsuRunControlRegType {
     uint8_t  buf[8];
 };
 
+enum RegListType {REG_Name, REG_IDx};
+
 CmdParserService::CmdParserService(const char *name) : IService(name) {
     registerInterface(static_cast<IKeyListener *>(this));
     registerAttribute("Console", &console_);
@@ -42,6 +44,7 @@ CmdParserService::CmdParserService(const char *name) : IService(name) {
     registerAttribute("History", &history_);
     registerAttribute("HistorySize", &history_size_);
     registerAttribute("ListCSR", &listCSR_);
+    registerAttribute("RegNames", &regNames_);
 
     console_.make_string("");
     tap_.make_string("");
@@ -49,6 +52,7 @@ CmdParserService::CmdParserService(const char *name) : IService(name) {
     history_.make_list(0);
     history_size_.make_int64(4);
     listCSR_.make_list(0);
+    regNames_.make_list(0);
     history_idx_ = 0;
     symb_seq_msk_ = 0xFF;
     tmpbuf_ = new uint8_t[tmpbuf_size_ = 4096];
@@ -513,6 +517,67 @@ void CmdParserService::run(AttributeType *listArgs) {
 }
 
 void CmdParserService::regs(AttributeType *listArgs) {
+    uint64_t addr = DSU_CTRL_BASE_ADDRESS + 64*8;   // CPU register array
+    uint64_t regs[128] = {0};
+    for (unsigned i = 1; i < regNames_.size(); i++) {
+        itap_->read(addr + 8*i, 8, reinterpret_cast<uint8_t *>(&regs[i]));
+    }
+    outf("ra: %016" RV_PRI64 "x    \n", regs[getRegIDx("ra")]);
+
+    outf("                        ", NULL);
+    outf("s0:  %016" RV_PRI64 "x   ", regs[getRegIDx("s0")]);
+    outf("a0:  %016" RV_PRI64 "x   \n", regs[getRegIDx("a0")]);
+
+    outf("sp: %016" RV_PRI64 "x    ", regs[getRegIDx("sp")]);
+    outf("s1:  %016" RV_PRI64 "x   ", regs[getRegIDx("s1")]);
+    outf("a1:  %016" RV_PRI64 "x   \n", regs[getRegIDx("a1")]);
+
+    outf("gp: %016" RV_PRI64 "x    ", regs[getRegIDx("gp")]);
+    outf("s2:  %016" RV_PRI64 "x   ", regs[getRegIDx("s2")]);
+    outf("a2:  %016" RV_PRI64 "x   \n", regs[getRegIDx("a2")]);
+
+    outf("tp: %016" RV_PRI64 "x    ", regs[getRegIDx("tp")]);
+    outf("s3:  %016" RV_PRI64 "x   ", regs[getRegIDx("s3")]);
+    outf("a3:  %016" RV_PRI64 "x   \n", regs[getRegIDx("a3")]);
+
+    outf("                        ", NULL);
+    outf("s4:  %016" RV_PRI64 "x   ", regs[getRegIDx("s4")]);
+    outf("a4:  %016" RV_PRI64 "x   \n", regs[getRegIDx("a4")]);
+
+    outf("t0: %016" RV_PRI64 "x    ", regs[getRegIDx("t0")]);
+    outf("s5:  %016" RV_PRI64 "x   ", regs[getRegIDx("s5")]);
+    outf("a5:  %016" RV_PRI64 "x   \n", regs[getRegIDx("a5")]);
+
+    outf("t1: %016" RV_PRI64 "x    ", regs[getRegIDx("t1")]);
+    outf("s6:  %016" RV_PRI64 "x   ", regs[getRegIDx("s6")]);
+    outf("a6:  %016" RV_PRI64 "x   \n", regs[getRegIDx("a6")]);
+
+    outf("t2: %016" RV_PRI64 "x    ", regs[getRegIDx("t2")]);
+    outf("s7:  %016" RV_PRI64 "x   ", regs[getRegIDx("s7")]);
+    outf("a7:  %016" RV_PRI64 "x   \n", regs[getRegIDx("a7")]);
+    
+    outf("t3: %016" RV_PRI64 "x    ", regs[getRegIDx("t3")]);
+    outf("s8:  %016" RV_PRI64 "x   \n", regs[getRegIDx("s8")]);
+
+    outf("t4: %016" RV_PRI64 "x    ", regs[getRegIDx("t4")]);
+    outf("s9:  %016" RV_PRI64 "x   \n", regs[getRegIDx("s9")]);
+
+    outf("t5: %016" RV_PRI64 "x    ", regs[getRegIDx("t5")]);
+    outf("s10: %016" RV_PRI64 "x   ", regs[getRegIDx("s10")]);
+    outf("pc:  %016" RV_PRI64 "x  \n", regs[getRegIDx("pc")]);
+
+    outf("t6: %016" RV_PRI64 "x    ", regs[getRegIDx("t6")]);
+    outf("s11: %016" RV_PRI64 "x   ", regs[getRegIDx("s11")]);
+    outf("npc: %016" RV_PRI64 "x   \n", regs[getRegIDx("npc")]);
+}
+
+unsigned CmdParserService::getRegIDx(const char *name) {
+    for (unsigned i = 0; i < regNames_.size(); i++) {
+        if (strcmp(name, regNames_[i][REG_Name].to_string()) == 0) {
+            return static_cast<unsigned>(regNames_[i][REG_IDx].to_uint64());
+        }
+    }
+    return 0;
 }
 
 int CmdParserService::outf(const char *fmt, ...) {

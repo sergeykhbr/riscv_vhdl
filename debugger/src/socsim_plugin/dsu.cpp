@@ -19,6 +19,7 @@ DSU::DSU(const char *name)  : IService(name) {
     baseAddress_.make_uint64(0);
     length_.make_uint64(0);
     hostio_.make_string("");
+    map_ = reinterpret_cast<DsuMapType *>(0);
 }
 
 DSU::~DSU() {
@@ -45,9 +46,9 @@ void DSU::transaction(Axi4TransactionType *payload) {
         /// @warning Hardware doesn't support this features:
         off -= 0x10000;
         if (payload->rw) {
-            regionControlWr(off >> 2, payload);
+            regionControlWr(off, payload);
         } else {
-            regionControlRd(off >> 2, payload);
+            regionControlRd(off, payload);
         }
     }
 }
@@ -55,66 +56,120 @@ void DSU::transaction(Axi4TransactionType *payload) {
 void DSU::regionCsrRd(uint64_t off, Axi4TransactionType *payload) {
     uint64_t rdata;
     ihostio_->read(static_cast<uint16_t>(off), &rdata);
-    if (payload->addr & 0x4) {
-        payload->rpayload[0] = static_cast<uint32_t>(rdata >> 32);
-        payload->rpayload[1] = payload->rpayload[0];
-        payload->rpayload[2] = payload->rpayload[0];
-        payload->rpayload[3] = payload->rpayload[0];
-    } else {
-        payload->rpayload[0] = static_cast<uint32_t>(rdata);
-        payload->rpayload[1] = static_cast<uint32_t>(rdata >> 32);
-        payload->rpayload[2] = payload->rpayload[0];
-        payload->rpayload[3] = payload->rpayload[1];
-    }
+    read64(rdata, payload->addr, payload->xsize, payload->rpayload);
 }
 
 void DSU::regionCsrWr(uint64_t off, Axi4TransactionType *payload) {
-
-    if (payload->xsize == 4) {
-        if (payload->addr & 0x4) {
-            msb_of_64(&wdata_, payload->wpayload[0]);
-            ihostio_->write(static_cast<uint16_t>(off), wdata_);
-        } else {
-            lsb_of_64(&wdata_, payload->wpayload[0]);
-        }
-    } else {
-        if (payload->wstrb & 0x00FF) {
-            lsb_of_64(&wdata_, payload->wpayload[0]);
-            msb_of_64(&wdata_, payload->wpayload[1]);
-        } else if (payload->wstrb & 0xFF00) {
-            lsb_of_64(&wdata_, payload->wpayload[2]);
-            msb_of_64(&wdata_, payload->wpayload[3]);
-        }
+    if (write64(&wdata_, payload->addr, payload->xsize, payload->wpayload)) {
         ihostio_->write(static_cast<uint16_t>(off), wdata_);
     }
 }
 
 void DSU::regionControlRd(uint64_t off, Axi4TransactionType *payload) {
+    ICpuRiscV *idbg = ihostio_->getCpuInterface();
+    void *off64 = reinterpret_cast<void *>(off & ~0x7);
+    uint64_t val = 0;
+    if (off64 == &map_->control) {
+        // CPU Run Control register
+        if (idbg->isHalt()) {
+            val |= 1;
+        }
+        read64(val, off, payload->xsize, payload->rpayload);
+    } else if (off64 == &map_->step_cnt) {
+        read64(step_cnt_, off, payload->xsize, payload->rpayload);
+    } else if (off64 >= &map_->cpu_regs[0] 
+        && off64 < &map_->cpu_regs[DSU_GENERAL_CORE_REGS_NUM] ) {
+        uint64_t idx = reinterpret_cast<uint64_t>(off64) 
+                - reinterpret_cast<uint64_t>(&map_->cpu_regs);
+        idx /= 8;
+        val = idbg->getReg(idx);
+        read64(val, off, payload->xsize, payload->rpayload);
+    } else if (off64 == &map_->pc) {
+        val = idbg->getPC();
+        read64(val, off, payload->xsize, payload->rpayload);
+    } else if (off64 == &map_->npc) {
+        val = idbg->getNPC();
+        read64(val, off, payload->xsize, payload->rpayload);
+    }
 }
 
 void DSU::regionControlWr(uint64_t off, Axi4TransactionType *payload) {
     ICpuRiscV *idbg = ihostio_->getCpuInterface();
-    switch (off) {
-    case 0:     // CPU Run Control register
+    void *off64 = reinterpret_cast<void *>(off & ~0x7);
+    if (off == reinterpret_cast<uint64_t>(&map_->control)) {
+        // CPU Run Control register
         if (payload->wpayload[0] & 0x1) {
             idbg->halt();
         } else if (payload->wpayload[0] & 0x2) {
-            idbg->step(regs_.step_cnt);
+            idbg->step(step_cnt_);
         } else {
             idbg->go();
         }
-        break;
-    case 1:
-        break;
-    case 2:
-        lsb_of_64(&regs_.step_cnt, payload->wpayload[0]);
-        break;
-    case 3:
-        msb_of_64(&regs_.step_cnt, payload->wpayload[0]);
-        break;
-    default:;
+    } else if (off64 == &map_->step_cnt) {
+        write64(&step_cnt_, off, payload->xsize, payload->wpayload);
+    } else if (off64 >= &map_->cpu_regs[0] 
+        && off64 < &map_->cpu_regs[DSU_GENERAL_CORE_REGS_NUM] ) {
+        uint64_t idx = reinterpret_cast<uint64_t>(off64) 
+                - reinterpret_cast<uint64_t>(map_->cpu_regs);
+        idx /= 8;
+
+        bool rdy = write64(&wdata_, payload->addr, 
+                            payload->xsize, payload->wpayload);
+        if (rdy) {
+            idbg->setReg(idx, wdata_);
+        }
+    } else if (off64 == &map_->pc) {
+        bool rdy = write64(&wdata_, payload->addr, 
+                            payload->xsize, payload->wpayload);
+        if (rdy) {
+            idbg->setPC(wdata_);
+        }
+    } else if (off64 == &map_->npc) {
+        bool rdy = write64(&wdata_, payload->addr, 
+                            payload->xsize, payload->wpayload);
+        if (rdy) {
+            idbg->setNPC(wdata_);
+        }
     }
 }
+
+void DSU::read64(uint64_t reg, uint64_t off, 
+                uint8_t xsize, uint32_t *payload) {
+    if (xsize == 4) {
+        if ((off & 0x4) == 0) {
+            payload[0] = static_cast<uint32_t>(reg);
+            payload[1] = static_cast<uint32_t>(reg >> 32);
+            payload[2] = payload[0];
+            payload[3] = payload[1];
+        } else {
+            payload[0] = static_cast<uint32_t>(reg >> 32);
+            payload[1] = payload[0];
+            payload[2] = payload[0];
+            payload[3] = payload[0];
+        }
+    } else {
+        payload[0] = static_cast<uint32_t>(reg);
+        payload[1] = static_cast<uint32_t>(reg >> 32);
+    }
+}
+
+bool DSU::write64(uint64_t *reg, uint64_t off, 
+                    uint8_t xsize, uint32_t *payload) {
+    bool ready = true;
+    if (xsize == 4) {
+        if ((off & 0x4) == 0) {
+            lsb_of_64(reg, payload[0]);
+            ready = false;
+        } else {
+            msb_of_64(reg, payload[0]);
+        }
+    } else {
+        lsb_of_64(reg, payload[0]);
+        msb_of_64(reg, payload[1]);
+    }
+    return ready;
+}
+
 
 void DSU::msb_of_64(uint64_t *val, uint32_t dw) {
     *val &= ~0xFFFFFFFF00000000ull;

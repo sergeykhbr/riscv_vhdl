@@ -68,6 +68,7 @@ private:
     void halt(AttributeType *listArgs);
     void run(AttributeType *listArgs);
     void regs(AttributeType *listArgs);
+    unsigned getRegIDx(const char *name);
 
     int outf(const char *fmt, ...);
     void addToHistory(const char *cmd);
@@ -82,6 +83,7 @@ private:
     AttributeType history_size_;
     // Store each CSR as list: ['Name',<address>,[description], others]
     AttributeType listCSR_;
+    AttributeType regNames_;
 
     IConsole *iconsole_;
     ITap *itap_;

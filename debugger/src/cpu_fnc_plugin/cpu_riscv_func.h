@@ -36,10 +36,17 @@ public:
     virtual void predeleteService();
 
     /** ICpuRiscV interface */
+    virtual bool isHalt() { return dbg_state_ == STATE_Halted; }
     virtual void halt();
     virtual void go();
     virtual void step(uint64_t cnt);
-    virtual uint64_t getReg(int idx);
+    virtual uint64_t getReg(uint64_t idx);
+    virtual void setReg(uint64_t idx, uint64_t val);
+    virtual uint64_t getPC();
+    virtual void setPC(uint64_t val);
+    virtual uint64_t getNPC();
+    virtual void setNPC(uint64_t val);
+
 
     /** IHostIO */
     virtual uint64_t write(uint16_t adr, uint64_t val);

@@ -19,10 +19,16 @@ class ICpuRiscV : public IFace {
 public:
     ICpuRiscV() : IFace(IFACE_CPU_RISCV) {}
 
+    virtual bool isHalt() =0;
     virtual void halt() =0;
     virtual void go() =0;
     virtual void step(uint64_t cnt) =0;
-    virtual uint64_t getReg(int idx) =0;
+    virtual uint64_t getReg(uint64_t idx) =0;
+    virtual void setReg(uint64_t idx, uint64_t val) =0;
+    virtual uint64_t getPC() =0;
+    virtual void setPC(uint64_t val) =0;
+    virtual uint64_t getNPC() =0;
+    virtual void setNPC(uint64_t val) =0;
 };
 
 }  // namespace debugger

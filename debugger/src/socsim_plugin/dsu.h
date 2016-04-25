@@ -17,8 +17,20 @@
 
 namespace debugger {
 
+static const unsigned DSU_GENERAL_CORE_REGS_NUM = 32;
+
+struct DsuMapType {
+    uint32_t control;
+    uint32_t rsv1;
+    uint64_t step_cnt;
+    uint64_t rsv2[62];
+    uint64_t cpu_regs[DSU_GENERAL_CORE_REGS_NUM];
+    uint64_t pc;
+    uint64_t npc;
+};
+
 class DSU : public IService, 
-                      public IMemoryOperation {
+            public IMemoryOperation {
 public:
     DSU(const char *name);
     ~DSU();
@@ -44,6 +56,10 @@ private:
 
     void msb_of_64(uint64_t *val, uint32_t dw);
     void lsb_of_64(uint64_t *val, uint32_t dw);
+    void read64(uint64_t reg, uint64_t off, 
+                uint8_t xsize, uint32_t *payload);
+    bool write64(uint64_t *reg, uint64_t off, 
+                uint8_t xsize, uint32_t *payload);
 
 private:
     AttributeType baseAddress_;
@@ -51,11 +67,9 @@ private:
     AttributeType hostio_;
     IHostIO *ihostio_;
 
+    DsuMapType *map_;
     uint64_t wdata_;
-    struct RegType {
-        uint64_t control;
-        uint64_t step_cnt;
-    } regs_;
+    uint64_t step_cnt_;
 };
 
 DECLARE_CLASS(DSU)
