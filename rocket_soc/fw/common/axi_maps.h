@@ -31,4 +31,16 @@
 #define ADDR_NASTI_SLAVE_ETHMAC     0x80040000
 #define ADDR_NASTI_SLAVE_PNP        0xfffff000
 
+
+// Interrupt pins assignemts:
+#define CFG_IRQ_GNSSENGINE 0
+#define CFG_IRQ_UART1      1
+#define CFG_IRQ_ETHMAC     2
+#define CFG_IRQ_TOTAL      3
+
+typedef struct IsrEntryType {
+    uint64_t arg;
+    uint64_t handler;
+} IsrEntryType;
+
 #endif  // __AXI_MAPS_H__

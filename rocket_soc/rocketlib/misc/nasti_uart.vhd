@@ -21,8 +21,7 @@ entity nasti_uart is
     xindex  : integer := 0;
     xaddr   : integer := 0;
     xmask   : integer := 16#fffff#;
-    fifosz  : integer := 16;
-    parity_bit : integer := 1
+    fifosz  : integer := 16
   );
   port (
     clk    : in  std_logic;
@@ -31,7 +30,8 @@ entity nasti_uart is
     i_uart : in  uart_in_type;
     o_uart : out uart_out_type;
     i_axi  : in  nasti_slave_in_type;
-    o_axi  : out nasti_slave_out_type
+    o_axi  : out nasti_slave_out_type;
+    o_irq  : out std_logic
   );
 end; 
  
@@ -55,23 +55,32 @@ architecture arch_nasti_uart of nasti_uart is
         tx_fifo   : fifo_type;
         tx_wr_cnt : std_logic_vector(log2(fifosz)-1 downto 0);
         tx_rd_cnt : std_logic_vector(log2(fifosz)-1 downto 0);
+        tx_byte_cnt : std_logic_vector(log2(fifosz)-1 downto 0);
         tx_shift  : std_logic_vector(10 downto 0); --! stopbit=1,parity=xor,data[7:0],startbit=0
         tx_data_cnt : integer range 0 to 11;
         tx_scaler_cnt : integer;
         tx_level : std_logic;
+        tx_irq_thresh : std_logic_vector(log2(fifosz)-1 downto 0);
+        tx_more_thresh : std_logic_vector(1 downto 0);
 
         rx_state  : state_type;
         rx_fifo   : fifo_type;
         rx_wr_cnt : std_logic_vector(log2(fifosz)-1 downto 0);
         rx_rd_cnt : std_logic_vector(log2(fifosz)-1 downto 0);
+        rx_byte_cnt : std_logic_vector(log2(fifosz)-1 downto 0);
         rx_shift  : std_logic_vector(7 downto 0);
         rx_data_cnt : integer range 0 to 7;
         rx_scaler_cnt : integer;
         rx_level : std_logic;
+        rx_irq_thresh : std_logic_vector(log2(fifosz)-1 downto 0);
+        rx_more_thresh : std_logic_vector(1 downto 0);
 
         scaler : integer;
         err_parity : std_logic;
         err_stopbit : std_logic;
+        parity_bit : std_logic;
+        tx_irq_ena : std_logic;
+        rx_irq_ena : std_logic;
   end record;
 
   type registers is record
@@ -97,13 +106,33 @@ begin
     variable rx_fifo_full : std_logic;
     variable t_tx, t_rx : std_logic_vector(7 downto 0);
     variable par : std_logic;
+    variable irq_ena : std_logic;
   begin
 
     v := r;
 
     procedureAxi4(i_axi, xconfig, r.bank_axi, v.bank_axi);
 
+    -- Check FIFOs counters with thresholds:
+    v.bank0.tx_more_thresh := r.bank0.tx_more_thresh(0) & '0';
+    if r.bank0.tx_byte_cnt > r.bank0.tx_irq_thresh then
+      v.bank0.tx_more_thresh(0) := '1';
+    end if;
 
+    v.bank0.rx_more_thresh := r.bank0.rx_more_thresh(0) & '0';
+    if r.bank0.rx_byte_cnt > r.bank0.rx_irq_thresh then
+      v.bank0.rx_more_thresh(0) := '1';
+    end if;
+    
+    irq_ena := '0';
+    if (r.bank0.tx_more_thresh(1) and not r.bank0.tx_more_thresh(0)) = '1' then
+       irq_ena := r.bank0.tx_irq_ena;
+    end if;
+    if (not r.bank0.rx_more_thresh(1) and r.bank0.rx_more_thresh(0)) = '1' then
+       irq_ena := irq_ena or r.bank0.rx_irq_ena;
+    end if;
+    
+    -- system bus clock scaler to baudrate:
     posedge_flag := '0';
     negedge_flag := '0';
     if r.bank0.scaler /= 0 then
@@ -135,6 +164,7 @@ begin
     tx_fifo_empty := '0';
     if r.bank0.tx_rd_cnt = r.bank0.tx_wr_cnt then
         tx_fifo_empty := '1';
+        v.bank0.tx_byte_cnt := (others => '0');
     end if;
 
     -- Receiver's FIFO:
@@ -145,6 +175,7 @@ begin
     rx_fifo_empty := '0';
     if r.bank0.rx_rd_cnt = r.bank0.rx_wr_cnt then
         rx_fifo_empty := '1';
+        v.bank0.rx_byte_cnt := (others => '0');
     end if;
 
     -- Transmitter's state machine:
@@ -154,7 +185,7 @@ begin
             if tx_fifo_empty = '0' then
                 -- stopbit=1,parity=xor,data[7:0],startbit=0
                 t_tx := r.bank0.tx_fifo(conv_integer(r.bank0.tx_rd_cnt));
-                if parity_bit = 1 then
+                if r.bank0.parity_bit = '1' then
                     par := t_tx(7) xor t_tx(6) xor t_tx(5) xor t_tx(4)
                          xor t_tx(3) xor t_tx(2) xor t_tx(1) xor t_tx(0);
                     v.bank0.tx_shift := '1' & par & t_tx & '0';
@@ -164,13 +195,14 @@ begin
                 
                 v.bank0.tx_state := startbit;
                 v.bank0.tx_rd_cnt := r.bank0.tx_rd_cnt + 1;
+                v.bank0.tx_byte_cnt := r.bank0.tx_byte_cnt - 1;
                 v.bank0.tx_data_cnt := 0;
             end if;
         when startbit =>
             v.bank0.tx_state := data;
         when data =>
             if r.bank0.tx_data_cnt = 8 then
-                if parity_bit = 1 then
+                if r.bank0.parity_bit = '1' then
                     v.bank0.tx_state := parity;
                 else
                     v.bank0.tx_state := stopbit;
@@ -201,7 +233,7 @@ begin
         when data =>
             v.bank0.rx_shift := i_uart.rd & r.bank0.rx_shift(7 downto 1);
             if r.bank0.rx_data_cnt = 7 then
-                if parity_bit = 1 then
+                if r.bank0.parity_bit = '1' then
                     v.bank0.rx_state := parity;
                 else
                     v.bank0.rx_state := stopbit;
@@ -228,6 +260,7 @@ begin
             if rx_fifo_full = '0' then
                 v.bank0.rx_fifo(conv_integer(r.bank0.rx_wr_cnt)) := r.bank0.rx_shift;
                 v.bank0.rx_wr_cnt := r.bank0.rx_wr_cnt + 1;
+                v.bank0.rx_byte_cnt := r.bank0.rx_byte_cnt + 1;
             end if;
             v.bank0.rx_state := idle;
         when others =>
@@ -251,15 +284,18 @@ begin
                 if rx_fifo_empty = '0' then
                     tmp(7 downto 0) := r.bank0.rx_fifo(conv_integer(r.bank0.rx_rd_cnt)); 
                     v.bank0.rx_rd_cnt := r.bank0.rx_rd_cnt + 1;
+                    v.bank0.rx_byte_cnt := r.bank0.rx_byte_cnt - 1;
                 end if;
           when 1 => 
                 tmp(1 downto 0) := tx_fifo_empty & tx_fifo_full;
                 tmp(5 downto 4) := rx_fifo_empty & rx_fifo_full;
                 tmp(9 downto 8) := r.bank0.err_stopbit & r.bank0.err_parity;
+                tmp(13) := r.bank0.rx_irq_ena;
+                tmp(14) := r.bank0.tx_irq_ena;
+                tmp(15) := r.bank0.parity_bit;
           when 2 => 
                 tmp := conv_std_logic_vector(r.bank0.scaler,32);
           when others => 
-                tmp := X"badef00d";
        end case;
        rdata(8*CFG_ALIGN_BYTES*(n+1)-1 downto 8*CFG_ALIGN_BYTES*n) := tmp;
     end loop;
@@ -279,7 +315,12 @@ begin
                     if tx_fifo_full = '0' then
                         v.bank0.tx_fifo(conv_integer(r.bank0.tx_wr_cnt)) := tmp(7 downto 0);
                         v.bank0.tx_wr_cnt := r.bank0.tx_wr_cnt + 1;
+                        v.bank0.tx_byte_cnt := r.bank0.tx_byte_cnt + 1;
                     end if;
+             when 1 =>
+                    v.bank0.parity_bit := tmp(15);
+                    v.bank0.tx_irq_ena := tmp(14);
+                    v.bank0.rx_irq_ena := tmp(13);
              when 2 => 
                     v.bank0.scaler     := conv_integer(tmp);
                     v.bank0.rx_scaler_cnt := 0;
@@ -291,6 +332,7 @@ begin
     end if;
 
     o_axi <= functionAxi4Output(r.bank_axi, rdata);
+    o_irq <= irq_ena;
     rin <= v;
   end process;
 
@@ -306,16 +348,25 @@ begin
         r.bank0.tx_scaler_cnt <= 0;
         r.bank0.tx_rd_cnt <= (others => '0');
         r.bank0.tx_wr_cnt <= (others => '0');
+        r.bank0.tx_byte_cnt <= (others => '0');
+        r.bank0.tx_irq_thresh <= (others => '0');
+        r.bank0.tx_more_thresh <= (others => '0');
 
         r.bank0.rx_state <= idle;
         r.bank0.rx_level <= '1';
         r.bank0.rx_scaler_cnt <= 0;
         r.bank0.rx_rd_cnt <= (others => '0');
         r.bank0.rx_wr_cnt <= (others => '0');
+        r.bank0.rx_byte_cnt <= (others => '0');
+        r.bank0.rx_irq_thresh <= (others => '0');
+        r.bank0.rx_more_thresh <= (others => '0');
 
         r.bank0.scaler <= 0;
         r.bank0.err_parity <= '0';
         r.bank0.err_stopbit <= '0';
+        r.bank0.parity_bit <= '0';
+        r.bank0.tx_irq_ena <= '1';
+        r.bank0.rx_irq_ena <= '1';
      elsif rising_edge(clk) then 
         r <= rin;
      end if; 

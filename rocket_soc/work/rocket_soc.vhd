@@ -411,8 +411,7 @@ end generate;
     xindex   => CFG_NASTI_SLAVE_UART1,
     xaddr    => 16#80001#,
     xmask    => 16#FFFFF#,
-    fifosz   => 16,
-    parity_bit => 0
+    fifosz   => 16
   ) port map (
     nrst   => wNReset, 
     clk    => wClkbus, 
@@ -420,7 +419,8 @@ end generate;
     i_uart => uart1i, 
     o_uart => uart1o,
     i_axi  => axisi,
-    o_axi  => axiso(CFG_NASTI_SLAVE_UART1)
+    o_axi  => axiso(CFG_NASTI_SLAVE_UART1),
+    o_irq  => irq_pins(CFG_IRQ_UART1)
   );
   o_uart1_td  <= uart1o.td;
   o_uart1_rtsn <= not uart1o.rts;

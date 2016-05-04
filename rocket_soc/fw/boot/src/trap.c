@@ -19,13 +19,23 @@ long handle_trap(long cause, long epc, long long regs[32]) {
      *      csrwi mipi, 0
      */
     irqctrl_map *p_irqctrl = (irqctrl_map *)ADDR_NASTI_SLAVE_IRQCTRL;
-    IRQ_HANDLER msec_handler = (IRQ_HANDLER)p_irqctrl->irq_handler;
-    p_irqctrl->irq_clear = 0x1; // clear pending bit[0]
+    IsrEntryType *isr_table = (IsrEntryType *)p_irqctrl->isr_table;
+    IRQ_HANDLER irq_handler;
+
     p_irqctrl->dbg_cause = cause;
     p_irqctrl->dbg_epc = epc;
     if (cause == 0x8000000000000000l) {
-        /// One millisecond interrupt
-        msec_handler();
+        for (int i = 0; i < CFG_IRQ_TOTAL; i++) {
+            if (p_irqctrl->irq_pending & (0x1 << i)) {
+                irq_handler = (IRQ_HANDLER)isr_table[i].handler;
+                irq_handler((void *)isr_table[i].arg);
+                p_irqctrl->irq_clear = 0x1 << i; // clear pending bit[0]
+                
+            }
+        }
+    } else {
+       /// Exception trap
+       while (1) {}
     }
 
     return epc;

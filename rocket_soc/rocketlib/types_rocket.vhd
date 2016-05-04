@@ -437,8 +437,7 @@ component nasti_uart is
     xindex  : integer := 0;
     xaddr   : integer := 0;
     xmask   : integer := 16#fffff#;
-    fifosz  : integer := 16;
-    parity_bit : integer := 1
+    fifosz  : integer := 16
   );
   port (
     clk    : in  std_logic;
@@ -447,7 +446,8 @@ component nasti_uart is
     i_uart : in  uart_in_type;
     o_uart : out uart_out_type;
     i_axi  : in  nasti_slave_in_type;
-    o_axi  : out nasti_slave_out_type);
+    o_axi  : out nasti_slave_out_type;
+    o_irq  : out std_logic);
 end component;
 
 --! @brief   Interrupt controller with the AXI4 interface declaration.
