@@ -1,0 +1,33 @@
+subdir-ccflags-y += -I$(srctree)/include/drivers
+
+subdir-ccflags-$(CONFIG_QMSI_LIBRARY) += -I$(CONFIG_QMSI_INSTALL_PATH)/include
+subdir-ccflags-$(CONFIG_QMSI_BUILTIN) +=-I$(srctree)/drivers/qmsi/include
+subdir-ccflags-$(CONFIG_QMSI_BUILTIN) +=-I$(srctree)/drivers/qmsi/drivers/include
+subdir-ccflags-$(CONFIG_QMSI_BUILTIN) +=-I$(srctree)/drivers/qmsi/soc/$(SOC_NAME)/include/
+
+obj-y = console/
+obj-y += random/
+obj-y += serial/
+obj-$(CONFIG_SYS_CLOCK_EXISTS) += timer/
+obj-y += interrupt_controller/
+obj-$(CONFIG_GROVE) += grove/
+obj-$(CONFIG_PCI) += pci/
+obj-$(CONFIG_BLUETOOTH) += bluetooth/
+obj-$(CONFIG_SHARED_IRQ) += shared_irq/
+obj-$(CONFIG_SPI) += spi/
+obj-$(CONFIG_FLASH) += flash/
+obj-$(CONFIG_COUNTER) += counter/
+obj-$(CONFIG_GPIO) += gpio/
+obj-$(CONFIG_I2C) += i2c/
+obj-$(CONFIG_PWM) += pwm/
+obj-$(CONFIG_ADC) += adc/
+obj-$(CONFIG_ETHERNET) += ethernet/
+obj-$(CONFIG_NETWORKING_WITH_15_4) += ieee802154/
+obj-$(CONFIG_WATCHDOG) += watchdog/
+obj-$(CONFIG_RTC) += rtc/
+obj-$(CONFIG_CLOCK_CONTROL) += clock_control/
+obj-$(CONFIG_IPM) += ipm/
+obj-$(CONFIG_SENSOR) += sensor/
+obj-$(CONFIG_AIO_COMPARATOR) += aio/
+obj-$(CONFIG_PINMUX) += pinmux/
+obj-$(CONFIG_QMSI_BUILTIN) += qmsi/

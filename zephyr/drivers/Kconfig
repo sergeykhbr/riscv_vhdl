@@ -1,0 +1,74 @@
+# Kconfig - drivers configuration options
+
+#
+# Copyright (c) 2015 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+
+menu "Device Drivers"
+
+source "drivers/bluetooth/Kconfig"
+
+source "drivers/ieee802154/Kconfig"
+
+source "drivers/console/Kconfig"
+
+source "drivers/ethernet/Kconfig"
+
+source "drivers/serial/Kconfig"
+
+source "drivers/interrupt_controller/Kconfig"
+
+source "drivers/timer/Kconfig"
+
+source "drivers/random/Kconfig"
+
+source "drivers/grove/Kconfig"
+
+source "drivers/pci/Kconfig"
+
+source "drivers/gpio/Kconfig"
+
+source "drivers/shared_irq/Kconfig"
+
+source "drivers/spi/Kconfig"
+
+source "drivers/i2c/Kconfig"
+
+source "drivers/pwm/Kconfig"
+
+source "drivers/pinmux/Kconfig"
+
+source "drivers/adc/Kconfig"
+
+source "drivers/rtc/Kconfig"
+
+source "drivers/watchdog/Kconfig"
+
+source "drivers/clock_control/Kconfig"
+
+source "drivers/ipm/Kconfig"
+
+source "drivers/aio/Kconfig"
+
+source "drivers/qmsi/Kconfig"
+
+source "drivers/flash/Kconfig"
+
+source "drivers/sensor/Kconfig"
+
+source "drivers/counter/Kconfig"
+
+endmenu

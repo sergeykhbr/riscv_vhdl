@@ -1,0 +1,161 @@
+# Kconfig - console driver configuration options
+
+#
+# Copyright (c) 2014-2015 Wind River Systems, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+menuconfig CONSOLE
+	bool
+	prompt "Console drivers"
+
+if CONSOLE
+
+config CONSOLE_HAS_DRIVER
+	bool
+	default n
+	help
+	This is an option to be enabled by console drivers to signal
+	that some kind of console exists.
+
+config CONSOLE_HANDLER
+	bool
+	prompt "Enable console input handler"
+	depends on UART_CONSOLE
+	select UART_INTERRUPT_DRIVEN
+	default n
+	help
+	This option enables console input handler allowing to write simple
+	interaction between serial console and the OS.
+
+config CONSOLE_HANDLER_SHELL
+	bool
+	prompt "Enable console input handler [ Experimental ]"
+	default n
+	depends on CONSOLE_HANDLER
+	help
+	Shell implementation based on CONSOLE_HANDLER.
+
+config CONSOLE_HANDLER_SHELL_STACKSIZE
+	int
+	prompt "Console handler shell stack size"
+	default 2000
+	depends on CONSOLE_HANDLER_SHELL
+	help
+	Stack size for the console handler shell.
+
+config UART_CONSOLE
+	bool
+	prompt "Use UART for console"
+	default n
+	depends on SERIAL && SERIAL_HAS_DRIVER
+	select CONSOLE_HAS_DRIVER
+	help
+	Enable this option to use one UART for console. Make sure
+	CONFIG_UART_CONSOLE_ON_DEV_NAME is also set correctly.
+
+config UART_CONSOLE_ON_DEV_NAME
+	string "Device Name of UART Device for UART Console"
+	default "UART_0"
+	depends on UART_CONSOLE
+	help
+	This option specifies the name of UART device to be used for
+	UART console.
+
+config UART_CONSOLE_INIT_PRIORITY
+	int
+	prompt "Init priority"
+	default 60
+	depends on UART_CONSOLE
+	help
+	  Device driver initialization priority.
+	  Console has to be initialized after the UART driver
+	  it uses.
+
+config UART_CONSOLE_DEBUG_SERVER_HOOKS
+	bool
+	prompt "Debug server hooks in debug console"
+	default n
+	depends on UART_CONSOLE
+	help
+	This option allows a debug server agent such as GDB to take over the
+	handling of traffic that goes through the console logic. The debug
+	server looks at characters received and decides to handle them itself if
+	they are some sort of control characters, or let the regular console
+	code handle them if they are of no special significance to it.
+
+config RAM_CONSOLE
+	bool
+	prompt "Use RAM console"
+	select CONSOLE_HAS_DRIVER
+	default n
+	help
+	Emit console messages to a RAM buffer "ram_console" which can
+	be examined at runtime with a debugger. Useful in board bring-up
+	if there aren't any working serial drivers.
+
+config RAM_CONSOLE_BUFFER_SIZE
+	int "Ram Console buffer size"
+	default 1024
+	depends on RAM_CONSOLE
+	help
+	Size of the RAM console buffer. Messages will wrap around if the
+	length is exceeded.
+
+config IPM_CONSOLE_SENDER
+	bool
+	prompt "Inter-processor Mailbox console sender"
+	select CONSOLE_HAS_DRIVER
+	default n
+	help
+	Enable the sending side of IPM console
+
+config IPM_CONSOLE_RECEIVER
+	bool
+	prompt "Inter-processor Mailbox console receiver"
+	select RING_BUFFER
+	default n
+	help
+	Enable the receiving side of IPM console
+
+config IPM_CONSOLE_INIT_PRIORITY
+	int
+	prompt "IPM console init priority"
+	default 60
+	depends on IPM_CONSOLE_SENDER || IPM_CONSOLE_RECEIVER
+	help
+	  Device driver initialization priority.
+	  Console has to be initialized after the IPM subsystem
+	  it uses.
+
+config	UART_PIPE
+	bool
+	prompt "Enable pipe UART driver"
+	select UART_INTERRUPT_DRIVEN
+	default n
+	help
+	Enable pipe UART driver. This driver allows application to communicate
+	over UART with custom defined protocol. Driver doesn't inspect received
+	data (as contrary to console UART driver) and all aspects of received
+	protocol data are handled by application provided callback.
+
+config  UART_PIPE_ON_DEV_NAME
+	string "Device Name of UART Device for pipe UART"
+	default "UART_0"
+	depends on UART_PIPE
+	help
+	This option specifies the name of UART device to be used
+	for pipe UART.
+
+endif

@@ -1,0 +1,10 @@
+
+choice
+prompt "Board Selection"
+source "boards/*/Kconfig.board"
+endchoice
+
+
+menu "Board Options"
+source "boards/*/Kconfig"
+endmenu
