@@ -1,0 +1,445 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="zephyr">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="zephyr\include">
+      <UniqueIdentifier>{c7ada7d3-8aeb-4b92-a892-ea3d30c1c192}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zephyr\lib">
+      <UniqueIdentifier>{809e7d87-09eb-4fd2-b88d-f331b8b89565}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zephyr\lib\libc">
+      <UniqueIdentifier>{ca016d9f-6e95-4bed-984c-1947fdd251ea}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zephyr\lib\libc\minimal">
+      <UniqueIdentifier>{8c139816-0660-4a89-be5d-5731d7217620}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zephyr\lib\libc\minimal\include">
+      <UniqueIdentifier>{56ff872c-a49e-46c5-a942-cf909d5b8121}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zephyr\lib\libc\minimal\source">
+      <UniqueIdentifier>{d1443e73-7ec8-4977-8271-8527748cb91a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zephyr\lib\libc\minimal\include\bits">
+      <UniqueIdentifier>{a963877a-d74c-4342-b26a-5ce596ae1008}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zephyr\lib\libc\minimal\include\sys">
+      <UniqueIdentifier>{fd975d1f-23a9-4866-ae07-dce7bd02fa8c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zephyr\lib\libc\minimal\source\stdlib">
+      <UniqueIdentifier>{04d14cbd-1285-4f5b-8851-3ea3d392992b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zephyr\lib\libc\minimal\source\stdout">
+      <UniqueIdentifier>{170f52bc-2510-40e8-904f-b25712e031f0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zephyr\lib\libc\minimal\source\string">
+      <UniqueIdentifier>{cb182e73-0c53-407e-8d93-6e8bc9294a1d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zephyr\misc">
+      <UniqueIdentifier>{c23e49bd-d8df-4867-9f58-0899de46b232}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zephyr\include\toolchain">
+      <UniqueIdentifier>{9aa4e565-3d86-4442-9c4b-e60813a09d5c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zephyr\include\arch">
+      <UniqueIdentifier>{c611c85a-2191-43ff-a580-b835628856a5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zephyr\include\arch\riscv64">
+      <UniqueIdentifier>{853cc0a9-6ed6-448e-a2e3-8070bd759754}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zephyr\kernel">
+      <UniqueIdentifier>{80ceb020-5750-44a6-86fb-945b0f813554}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zephyr\kernel\nanokernel">
+      <UniqueIdentifier>{b0449487-c067-4ae7-8668-51b219544c95}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zephyr\kernel\nanokernel\include">
+      <UniqueIdentifier>{6d53ba02-1dce-42bc-b4ed-9ea4f3704599}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zephyr\arch">
+      <UniqueIdentifier>{f973febf-5366-41e4-accb-67af5021dd62}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zephyr\arch\riscv64">
+      <UniqueIdentifier>{fb1680ea-0bd9-45ab-9729-698247c3f42f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zephyr\arch\riscv64\include">
+      <UniqueIdentifier>{afc9c1ee-efd2-4fbe-9514-f26032e439a5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zephyr\arch\riscv64\core">
+      <UniqueIdentifier>{126b7d8c-c5c3-4bbb-850a-33e0ebbaa3df}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zephyr\include\drivers">
+      <UniqueIdentifier>{e4efcdae-559b-4e69-bf45-91e3494b6c47}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zephyr\drivers">
+      <UniqueIdentifier>{3bc83724-085d-4279-a515-6e410c5032b4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zephyr\drivers\timer">
+      <UniqueIdentifier>{091e359e-3bbd-4277-9b09-3b175933d600}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zephyr\include\generated">
+      <UniqueIdentifier>{defd420d-3296-46f2-918a-fbb38f1c80d3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zephyr\drivers\console">
+      <UniqueIdentifier>{432e2021-2ada-4df8-8f43-e6af1b31c4ea}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zephyr\include\drivers\console">
+      <UniqueIdentifier>{77732768-6b5c-4ba2-b63b-c93109f99337}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zephyr\arch\riscv64\soc">
+      <UniqueIdentifier>{97ce9e2b-5c7b-4ac9-8f34-6d30d0b659f7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zephyr\samples">
+      <UniqueIdentifier>{11229955-18f1-4d5a-9e12-4d377c86638d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zephyr\samples\shell">
+      <UniqueIdentifier>{4ccde392-55d5-4054-8163-d202a48ac0a4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zephyr\drivers\serial">
+      <UniqueIdentifier>{c80d6967-8769-4939-8e7b-7a299de9fbad}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zephyr\include\misc">
+      <UniqueIdentifier>{113c62ee-5932-4ad0-ac5d-49da1b5a6b5b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zephyr\arch\msvc">
+      <UniqueIdentifier>{fea6f8e8-787d-43be-8a62-36fcf5c4c8c4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zephyr\include\misc\debug">
+      <UniqueIdentifier>{1fa2cabf-44f6-4bc0-a8da-26198575afcb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zephyr\drivers\random">
+      <UniqueIdentifier>{082fcd7c-3a67-4024-97fb-01f283a8b0d2}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\..\lib\libc\minimal\include\bits\null.h">
+      <Filter>zephyr\lib\libc\minimal\include\bits</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\lib\libc\minimal\include\bits\restrict.h">
+      <Filter>zephyr\lib\libc\minimal\include\bits</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\lib\libc\minimal\include\bits\size_t.h">
+      <Filter>zephyr\lib\libc\minimal\include\bits</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\lib\libc\minimal\include\sys\types.h">
+      <Filter>zephyr\lib\libc\minimal\include\sys</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\lib\libc\minimal\include\ctype.h">
+      <Filter>zephyr\lib\libc\minimal\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\lib\libc\minimal\include\errno.h">
+      <Filter>zephyr\lib\libc\minimal\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\lib\libc\minimal\include\limits.h">
+      <Filter>zephyr\lib\libc\minimal\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\lib\libc\minimal\include\stdbool.h">
+      <Filter>zephyr\lib\libc\minimal\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\lib\libc\minimal\include\stddef.h">
+      <Filter>zephyr\lib\libc\minimal\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\lib\libc\minimal\include\stdint.h">
+      <Filter>zephyr\lib\libc\minimal\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\lib\libc\minimal\include\stdio.h">
+      <Filter>zephyr\lib\libc\minimal\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\lib\libc\minimal\include\stdlib.h">
+      <Filter>zephyr\lib\libc\minimal\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\lib\libc\minimal\include\string.h">
+      <Filter>zephyr\lib\libc\minimal\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\lib\libc\minimal\include\strings.h">
+      <Filter>zephyr\lib\libc\minimal\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\include\section_tags.h">
+      <Filter>zephyr\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\include\sections.h">
+      <Filter>zephyr\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\include\toolchain.h">
+      <Filter>zephyr\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\include\toolchain\common.h">
+      <Filter>zephyr\include\toolchain</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\include\toolchain\cl.h">
+      <Filter>zephyr\include\toolchain</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\include\kernel_version.h">
+      <Filter>zephyr\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\include\sys_clock.h">
+      <Filter>zephyr\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\include\nanokernel.h">
+      <Filter>zephyr\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\include\arch\cpu.h">
+      <Filter>zephyr\include\arch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\include\arch\riscv64\arch.h">
+      <Filter>zephyr\include\arch\riscv64</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\kernel\nanokernel\version.h">
+      <Filter>zephyr\kernel\nanokernel</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\kernel\nanokernel\include\gen_offset.h">
+      <Filter>zephyr\kernel\nanokernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\kernel\nanokernel\include\nano_internal.h">
+      <Filter>zephyr\kernel\nanokernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\kernel\nanokernel\include\nano_offsets.h">
+      <Filter>zephyr\kernel\nanokernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\kernel\nanokernel\include\timeout_q.h">
+      <Filter>zephyr\kernel\nanokernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\kernel\nanokernel\include\wait_q.h">
+      <Filter>zephyr\kernel\nanokernel\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\arch\riscv64\include\nano_private.h">
+      <Filter>zephyr\arch\riscv64\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\include\drivers\rand32.h">
+      <Filter>zephyr\include\drivers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\include\drivers\system_timer.h">
+      <Filter>zephyr\include\drivers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\include\device.h">
+      <Filter>zephyr\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\include\init.h">
+      <Filter>zephyr\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\include\irq.h">
+      <Filter>zephyr\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\include\generated\offsets.h">
+      <Filter>zephyr\include\generated</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\arch\riscv64\include\kernel_event_logger_arch.h">
+      <Filter>zephyr\arch\riscv64\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\include\atomic.h">
+      <Filter>zephyr\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\include\uart.h">
+      <Filter>zephyr\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\include\drivers\console\uart_console.h">
+      <Filter>zephyr\include\drivers\console</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\arch\riscv64\soc\soc.h">
+      <Filter>zephyr\arch\riscv64\soc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\arch\riscv64\soc\soc_registers.h">
+      <Filter>zephyr\arch\riscv64\soc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\include\zephyr.h">
+      <Filter>zephyr\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\include\misc\__assert.h">
+      <Filter>zephyr\include\misc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\include\misc\byteorder.h">
+      <Filter>zephyr\include\misc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\include\misc\dlist.h">
+      <Filter>zephyr\include\misc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\include\misc\event_logger.h">
+      <Filter>zephyr\include\misc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\include\misc\kernel_event_logger.h">
+      <Filter>zephyr\include\misc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\include\misc\printk.h">
+      <Filter>zephyr\include\misc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\include\misc\reboot.h">
+      <Filter>zephyr\include\misc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\include\misc\ring_buffer.h">
+      <Filter>zephyr\include\misc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\include\misc\shell.h">
+      <Filter>zephyr\include\misc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\include\misc\slist.h">
+      <Filter>zephyr\include\misc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\include\misc\stack.h">
+      <Filter>zephyr\include\misc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\include\misc\sys_log.h">
+      <Filter>zephyr\include\misc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\include\misc\util.h">
+      <Filter>zephyr\include\misc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\include\misc\debug\debug_info.h">
+      <Filter>zephyr\include\misc\debug</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\include\misc\debug\gdb_server.h">
+      <Filter>zephyr\include\misc\debug</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\include\misc\debug\mem_safe.h">
+      <Filter>zephyr\include\misc\debug</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\include\misc\debug\object_tracing.h">
+      <Filter>zephyr\include\misc\debug</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\include\misc\debug\object_tracing_common.h">
+      <Filter>zephyr\include\misc\debug</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\..\lib\libc\minimal\source\stdlib\atoi.c">
+      <Filter>zephyr\lib\libc\minimal\source\stdlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\lib\libc\minimal\source\stdlib\strtol.c">
+      <Filter>zephyr\lib\libc\minimal\source\stdlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\lib\libc\minimal\source\stdlib\strtoul.c">
+      <Filter>zephyr\lib\libc\minimal\source\stdlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\lib\libc\minimal\source\stdout\fprintf.c">
+      <Filter>zephyr\lib\libc\minimal\source\stdout</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\lib\libc\minimal\source\stdout\prf.c">
+      <Filter>zephyr\lib\libc\minimal\source\stdout</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\lib\libc\minimal\source\stdout\sprintf.c">
+      <Filter>zephyr\lib\libc\minimal\source\stdout</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\lib\libc\minimal\source\stdout\stdout_console.c">
+      <Filter>zephyr\lib\libc\minimal\source\stdout</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\lib\libc\minimal\source\string\string.c">
+      <Filter>zephyr\lib\libc\minimal\source\string</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\lib\libc\minimal\source\string\strncasecmp.c">
+      <Filter>zephyr\lib\libc\minimal\source\string</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\misc\printk.c">
+      <Filter>zephyr\misc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\kernel\nanokernel\ring_buffer.c">
+      <Filter>zephyr\kernel\nanokernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\kernel\nanokernel\version.c">
+      <Filter>zephyr\kernel\nanokernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\kernel\nanokernel\nano_fifo.c">
+      <Filter>zephyr\kernel\nanokernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\kernel\nanokernel\nano_lifo.c">
+      <Filter>zephyr\kernel\nanokernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\kernel\nanokernel\nano_sema.c">
+      <Filter>zephyr\kernel\nanokernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\kernel\nanokernel\nano_context.c">
+      <Filter>zephyr\kernel\nanokernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\arch\riscv64\core\thread.c">
+      <Filter>zephyr\arch\riscv64\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\arch\riscv64\core\swap.c">
+      <Filter>zephyr\arch\riscv64\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\arch\riscv64\core\fatal.c">
+      <Filter>zephyr\arch\riscv64\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\kernel\nanokernel\nano_fiber.c">
+      <Filter>zephyr\kernel\nanokernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\drivers\timer\riscv_systimer.c">
+      <Filter>zephyr\drivers\timer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\arch\riscv64\core\cpu_idle.c">
+      <Filter>zephyr\arch\riscv64\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\kernel\nanokernel\nano_sys_clock.c">
+      <Filter>zephyr\kernel\nanokernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\kernel\nanokernel\nano_stack.c">
+      <Filter>zephyr\kernel\nanokernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\kernel\nanokernel\nano_timer.c">
+      <Filter>zephyr\kernel\nanokernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\kernel\nanokernel\nano_sleep.c">
+      <Filter>zephyr\kernel\nanokernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\kernel\nanokernel\compiler_stack_protect.c">
+      <Filter>zephyr\kernel\nanokernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\kernel\nanokernel\device.c">
+      <Filter>zephyr\kernel\nanokernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\kernel\nanokernel\event_logger.c">
+      <Filter>zephyr\kernel\nanokernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\kernel\nanokernel\idle.c">
+      <Filter>zephyr\kernel\nanokernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\kernel\nanokernel\int_latency_bench.c">
+      <Filter>zephyr\kernel\nanokernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\kernel\nanokernel\kernel_event_logger.c">
+      <Filter>zephyr\kernel\nanokernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\kernel\nanokernel\nano_init.c">
+      <Filter>zephyr\kernel\nanokernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\drivers\console\uart_console.c">
+      <Filter>zephyr\drivers\console</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\arch\riscv64\soc\soc.c">
+      <Filter>zephyr\arch\riscv64\soc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\drivers\console\console_handler_shell.c">
+      <Filter>zephyr\drivers\console</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\arch\riscv64\core\atomic.c">
+      <Filter>zephyr\arch\riscv64\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\drivers\serial\uart_gnss.c">
+      <Filter>zephyr\drivers\serial</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\drivers\timer\sys_clock_init.c">
+      <Filter>zephyr\drivers\timer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\arch\riscv64\core\irq_manage.c">
+      <Filter>zephyr\arch\riscv64\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\arch\msvc\entry_point.c">
+      <Filter>zephyr\arch\msvc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\samples\shell\src\main.c">
+      <Filter>zephyr\samples\shell</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\drivers\random\rand32_timer.c">
+      <Filter>zephyr\drivers\random</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\drivers\random\rand32_timestamp.c">
+      <Filter>zephyr\drivers\random</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\riscv64\core\gptimers.c">
+      <Filter>zephyr\arch\riscv64\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\kernel\nanokernel\errno.c">
+      <Filter>zephyr\kernel\nanokernel</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

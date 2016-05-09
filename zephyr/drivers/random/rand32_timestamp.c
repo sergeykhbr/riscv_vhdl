@@ -28,6 +28,8 @@
 #include <arch/cpu.h>
 #include <drivers/rand32.h>
 
+extern uint32_t _do_read_cpu_timestamp32(void);
+
 /**
  *
  * @brief Initialize the random number generator

@@ -63,10 +63,6 @@ void _nano_fiber_ready(struct tcs *tcs)
 
 /* currently the fiber and task implementations are identical */
 
-FUNC_ALIAS(_fiber_start, fiber_fiber_start, nano_thread_id_t);
-FUNC_ALIAS(_fiber_start, task_fiber_start, nano_thread_id_t);
-FUNC_ALIAS(_fiber_start, fiber_start, nano_thread_id_t);
-
 nano_thread_id_t _fiber_start(char *pStack,
 		unsigned stackSize, /* stack size in bytes */
 		nano_fiber_entry_t pEntry,
@@ -115,6 +111,31 @@ nano_thread_id_t _fiber_start(char *pStack,
 
 	return tcs;
 }
+
+#ifdef _WIN32
+nano_thread_id_t fiber_fiber_start(char *pStack,
+		unsigned stackSize, nano_fiber_entry_t pEntry, int parameter1,
+		int parameter2, unsigned priority, unsigned options) {
+    return _fiber_start(pStack, stackSize, pEntry, parameter1, parameter2,
+		        priority, options);
+}
+nano_thread_id_t task_fiber_start(char *pStack,
+		unsigned stackSize,  nano_fiber_entry_t pEntry, int parameter1,
+		int parameter2, unsigned priority, unsigned options) {
+    return _fiber_start(pStack, stackSize, pEntry, parameter1, parameter2,
+		        priority, options);
+}
+nano_thread_id_t fiber_start(char *pStack,
+		unsigned stackSize,  nano_fiber_entry_t pEntry, int parameter1,
+		int parameter2, unsigned priority, unsigned options) {
+    return _fiber_start(pStack, stackSize, pEntry, parameter1, parameter2,
+		        priority, options);
+}
+#else
+FUNC_ALIAS(_fiber_start, fiber_fiber_start, nano_thread_id_t);
+FUNC_ALIAS(_fiber_start, task_fiber_start, nano_thread_id_t);
+FUNC_ALIAS(_fiber_start, fiber_start, nano_thread_id_t);
+#endif
 
 void fiber_yield(void)
 {
@@ -181,9 +202,6 @@ FUNC_NORETURN void fiber_abort(void)
 
 #include <wait_q.h>
 
-FUNC_ALIAS(fiber_delayed_start, fiber_fiber_delayed_start, nano_thread_id_t);
-FUNC_ALIAS(fiber_delayed_start, task_fiber_delayed_start, nano_thread_id_t);
-
 nano_thread_id_t fiber_delayed_start(char *stack,
 			  unsigned int stack_size_in_bytes,
 			  nano_fiber_entry_t entry_point, int param1,
@@ -205,8 +223,27 @@ nano_thread_id_t fiber_delayed_start(char *stack,
 	return tcs;
 }
 
-FUNC_ALIAS(fiber_delayed_start_cancel, fiber_fiber_delayed_start_cancel, void);
-FUNC_ALIAS(fiber_delayed_start_cancel, task_fiber_delayed_start_cancel, void);
+#ifdef _WIN32
+nano_thread_id_t fiber_fiber_delayed_start(char *stack,
+			  unsigned int stack_size_in_bytes,
+			  nano_fiber_entry_t entry_point, int param1,
+			  int param2, unsigned int priority,
+			  unsigned int options, int32_t timeout_in_ticks) {
+    return fiber_delayed_start(stack, stack_size_in_bytes, entry_point, param1,
+			  param2, priority, options, timeout_in_ticks);
+}
+nano_thread_id_t task_fiber_delayed_start(char *stack,
+			  unsigned int stack_size_in_bytes,
+			  nano_fiber_entry_t entry_point, int param1,
+			  int param2, unsigned int priority,
+			  unsigned int options, int32_t timeout_in_ticks) {
+    return fiber_delayed_start(stack, stack_size_in_bytes, entry_point, param1,
+			  param2, priority, options, timeout_in_ticks);
+}
+#else
+FUNC_ALIAS(fiber_delayed_start, fiber_fiber_delayed_start, nano_thread_id_t);
+FUNC_ALIAS(fiber_delayed_start, task_fiber_delayed_start, nano_thread_id_t);
+#endif
 
 void fiber_delayed_start_cancel(nano_thread_id_t handle)
 {
@@ -218,5 +255,17 @@ void fiber_delayed_start_cancel(nano_thread_id_t handle)
 
 	irq_unlock(key);
 }
+
+#ifdef _WIN32
+void fiber_fiber_delayed_start_cancel(nano_thread_id_t handle) {
+    fiber_delayed_start_cancel(handle);
+}
+void task_fiber_delayed_start_cancel(nano_thread_id_t handle) {
+    fiber_delayed_start_cancel(handle);
+}
+#else
+FUNC_ALIAS(fiber_delayed_start_cancel, fiber_fiber_delayed_start_cancel, void);
+FUNC_ALIAS(fiber_delayed_start_cancel, task_fiber_delayed_start_cancel, void);
+#endif
 
 #endif /* CONFIG_NANO_TIMEOUTS */

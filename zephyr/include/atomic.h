@@ -60,7 +60,7 @@ extern int atomic_cas(atomic_t *target,
  *
  *  @return 1 if the bit was set, 0 if it wasn't
  */
-static inline int atomic_test_bit(const atomic_t *addr, int bit)
+static INLINE int atomic_test_bit(const atomic_t *addr, int bit)
 {
 	atomic_val_t val = atomic_get(ATOMIC_ELEM(addr, bit));
 
@@ -80,7 +80,7 @@ static inline int atomic_test_bit(const atomic_t *addr, int bit)
  *
  *  @return 1 if the bit was set, 0 if it wasn't
  */
-static inline int atomic_test_and_clear_bit(atomic_t *addr, int bit)
+static INLINE int atomic_test_and_clear_bit(atomic_t *addr, int bit)
 {
 	atomic_val_t mask = ATOMIC_MASK(bit);
 	atomic_val_t old;
@@ -103,7 +103,7 @@ static inline int atomic_test_and_clear_bit(atomic_t *addr, int bit)
  *
  *  @return 1 if the bit was set, 0 if it wasn't
  */
-static inline int atomic_test_and_set_bit(atomic_t *addr, int bit)
+static INLINE int atomic_test_and_set_bit(atomic_t *addr, int bit)
 {
 	atomic_val_t mask = ATOMIC_MASK(bit);
 	atomic_val_t old;
@@ -124,7 +124,7 @@ static inline int atomic_test_and_set_bit(atomic_t *addr, int bit)
  *  @param addr base address to start counting from
  *  @param bit bit number counted from the base address
  */
-static inline void atomic_clear_bit(atomic_t *addr, int bit)
+static INLINE void atomic_clear_bit(atomic_t *addr, int bit)
 {
 	atomic_val_t mask = ATOMIC_MASK(bit);
 
@@ -142,7 +142,7 @@ static inline void atomic_clear_bit(atomic_t *addr, int bit)
  *  @param addr base address to start counting from
  *  @param bit bit number counted from the base address
  */
-static inline void atomic_set_bit(atomic_t *addr, int bit)
+static INLINE void atomic_set_bit(atomic_t *addr, int bit)
 {
 	atomic_val_t mask = ATOMIC_MASK(bit);
 

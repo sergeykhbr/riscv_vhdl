@@ -100,7 +100,7 @@ struct ring_buf {
  * @param data Data area for the ring buffer, typically
  *	  uint32_t data[size]
  */
-static inline void sys_ring_buf_init(struct ring_buf *buf, uint32_t size,
+static INLINE void sys_ring_buf_init(struct ring_buf *buf, uint32_t size,
 				     uint32_t *data)
 {
 	buf->head = 0;
@@ -122,7 +122,7 @@ static inline void sys_ring_buf_init(struct ring_buf *buf, uint32_t size,
  *
  * @return nonzero if the buffer is empty
  */
-static inline int sys_ring_buf_is_empty(struct ring_buf *buf)
+static INLINE int sys_ring_buf_is_empty(struct ring_buf *buf)
 {
 	return (buf->head == buf->tail);
 }
@@ -133,7 +133,7 @@ static inline int sys_ring_buf_is_empty(struct ring_buf *buf)
  * @param buf Ring buffer to examine
  * @return Available space in the buffer in 32-bit chunks
  */
-static inline int sys_ring_buf_space_get(struct ring_buf *buf)
+static INLINE int sys_ring_buf_space_get(struct ring_buf *buf)
 {
 	if (sys_ring_buf_is_empty(buf)) {
 		return buf->size - 1;

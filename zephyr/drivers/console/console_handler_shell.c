@@ -24,7 +24,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <console/uart_console.h>
+#include <drivers/console/uart_console.h>
 #include <misc/printk.h>
 #include <misc/util.h>
 

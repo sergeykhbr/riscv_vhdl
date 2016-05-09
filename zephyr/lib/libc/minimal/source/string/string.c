@@ -192,7 +192,7 @@ void *memmove(void *d, const void *s, size_t n)
 	char *dest = d;
 	const char *src  = s;
 
-	if ((size_t) (d - s) < n) {
+	if ((size_t) ((char *)d - (char *)s) < n) {
 		/*
 		 * The <src> buffer overlaps with the start of the <dest> buffer.
 		 * Copy backwards to prevent the premature corruption of <src>.

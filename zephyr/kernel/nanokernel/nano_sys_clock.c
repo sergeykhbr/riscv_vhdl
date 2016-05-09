@@ -107,7 +107,7 @@ int64_t sys_tick_get(void)
  *
  * @return tick count since reference time; undefined for first invocation
  *
- * NOTE: We use inline function for both 64-bit and 32-bit functions.
+ * NOTE: We use INLINE function for both 64-bit and 32-bit functions.
  * Compiler optimizes out 64-bit result handling in 32-bit version.
  */
 static ALWAYS_INLINE int64_t _nano_tick_delta(int64_t *reftime)
@@ -153,7 +153,7 @@ uint32_t sys_tick_delta_32(int64_t *reftime)
 #if defined(CONFIG_NANO_TIMEOUTS) || defined(CONFIG_NANO_TIMERS)
 #include <wait_q.h>
 
-static inline void handle_expired_nano_timeouts(int32_t ticks)
+static INLINE void handle_expired_nano_timeouts(int32_t ticks)
 {
 	struct _nano_timeout *head =
 		(struct _nano_timeout *)sys_dlist_peek_head(&_nanokernel.timeout_q);

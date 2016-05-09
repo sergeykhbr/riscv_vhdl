@@ -53,9 +53,6 @@ void nano_lifo_init(struct nano_lifo *lifo)
 	_TASK_PENDQ_INIT(&lifo->task_q);
 }
 
-FUNC_ALIAS(_lifo_put_non_preemptible, nano_isr_lifo_put, void);
-FUNC_ALIAS(_lifo_put_non_preemptible, nano_fiber_lifo_put, void);
-
 /** INTERNAL
  *
  * This function is capable of supporting invocations from both a fiber and an
@@ -81,6 +78,18 @@ void _lifo_put_non_preemptible(struct nano_lifo *lifo, void *data)
 
 	irq_unlock(imask);
 }
+
+#ifdef _WIN32
+void nano_isr_lifo_put(struct nano_lifo *lifo, void *data) {
+    _lifo_put_non_preemptible(lifo, data);
+}
+void nano_fiber_lifo_put(struct nano_lifo *lifo, void *data) {
+    _lifo_put_non_preemptible(lifo, data);
+}
+#else
+FUNC_ALIAS(_lifo_put_non_preemptible, nano_isr_lifo_put, void);
+FUNC_ALIAS(_lifo_put_non_preemptible, nano_fiber_lifo_put, void);
+#endif
 
 void nano_task_lifo_put(struct nano_lifo *lifo, void *data)
 {
@@ -114,9 +123,6 @@ void nano_lifo_put(struct nano_lifo *lifo, void *data)
 	func[sys_execution_context_type_get()](lifo, data);
 }
 
-FUNC_ALIAS(_lifo_get, nano_isr_lifo_get, void *);
-FUNC_ALIAS(_lifo_get, nano_fiber_lifo_get, void *);
-
 void *_lifo_get(struct nano_lifo *lifo, int32_t timeout_in_ticks)
 {
 	void *data = NULL;
@@ -137,6 +143,18 @@ void *_lifo_get(struct nano_lifo *lifo, int32_t timeout_in_ticks)
 	irq_unlock(imask);
 	return data;
 }
+
+#ifdef _WIN32
+void *nano_isr_lifo_get(struct nano_lifo *lifo, int32_t timeout_in_ticks) {
+    return _lifo_get(lifo, timeout_in_ticks);
+}
+void *nano_fiber_lifo_get(struct nano_lifo *lifo, int32_t timeout_in_ticks) {
+    return _lifo_get(lifo, timeout_in_ticks);
+}
+#else
+FUNC_ALIAS(_lifo_get, nano_isr_lifo_get, void *);
+FUNC_ALIAS(_lifo_get, nano_fiber_lifo_get, void *);
+#endif
 
 void *nano_task_lifo_get(struct nano_lifo *lifo, int32_t timeout_in_ticks)
 {

@@ -101,6 +101,9 @@ extern "C" {
  * used by the driver. Can be NULL.
  */
 
+#ifdef _WIN32
+#include "..\arch\msvc\device_link.h"
+#else
 #ifndef CONFIG_DEVICE_POWER_MANAGEMENT
 #define DEVICE_AND_API_INIT(dev_name, drv_name, init_fn, data, cfg_info, \
 			    level, prio, api) \
@@ -192,6 +195,7 @@ extern struct device_pm_ops device_pm_ops_nop;
 			    level, prio, NULL)
 
 #endif
+#endif  // _WIN32
 
 /**
  * @def DEVICE_NAME_GET
@@ -351,7 +355,7 @@ int device_pm_nop(struct device *unused_device, int unused_policy);
  * @retval 0 If successful.
  * @retval Errno Negative errno code if failure.
  */
-static inline int device_suspend(struct device *device, int pm_policy)
+static INLINE int device_suspend(struct device *device, int pm_policy)
 {
 	return device->config->dev_pm_ops->suspend(device, pm_policy);
 }
@@ -368,7 +372,7 @@ static inline int device_suspend(struct device *device, int pm_policy)
  * @retval 0 If successful.
  * @retval Errno Negative errno code if failure.
  */
-static inline int device_resume(struct device *device, int pm_policy)
+static INLINE int device_resume(struct device *device, int pm_policy)
 {
 	return device->config->dev_pm_ops->resume(device, pm_policy);
 }
@@ -440,7 +444,7 @@ typedef struct {
  *
  * @param sync A pointer to a valid device_sync_call_t
  */
-static inline void device_sync_call_init(device_sync_call_t *sync)
+static INLINE void device_sync_call_init(device_sync_call_t *sync)
 {
 	nano_sem_init(&sync->f_sem);
 }
@@ -451,7 +455,7 @@ static inline void device_sync_call_init(device_sync_call_t *sync)
  *
  * @param sync A pointer to a valid device_sync_call_t
  */
-static inline void device_sync_call_wait(device_sync_call_t *sync)
+static INLINE void device_sync_call_wait(device_sync_call_t *sync)
 {
 	nano_sem_take(&sync->f_sem, TICKS_UNLIMITED);
 }
@@ -462,7 +466,7 @@ static inline void device_sync_call_wait(device_sync_call_t *sync)
  *
  * @param sync A pointer to a valid device_sync_call_t
  */
-static inline void device_sync_call_complete(device_sync_call_t *sync)
+static INLINE void device_sync_call_complete(device_sync_call_t *sync)
 {
 	nano_sem_give(&sync->f_sem);
 }

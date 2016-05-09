@@ -16,7 +16,7 @@
 
 /**
  * @file
- * @brief Doubly-linked list inline implementation
+ * @brief Doubly-linked list INLINE implementation
  *
  * Doubly-linked list implementation.
  *
@@ -56,7 +56,7 @@ typedef struct _dnode sys_dnode_t;
  * @return N/A
  */
 
-static inline void sys_dlist_init(sys_dlist_t *list)
+static INLINE void sys_dlist_init(sys_dlist_t *list)
 {
 	list->head = (sys_dnode_t *)list;
 	list->tail = (sys_dnode_t *)list;
@@ -71,7 +71,7 @@ static inline void sys_dlist_init(sys_dlist_t *list)
  * @return 1 if node is the head, 0 otherwise
  */
 
-static inline int sys_dlist_is_head(sys_dlist_t *list, sys_dnode_t *node)
+static INLINE int sys_dlist_is_head(sys_dlist_t *list, sys_dnode_t *node)
 {
 	return list->head == node;
 }
@@ -85,7 +85,7 @@ static inline int sys_dlist_is_head(sys_dlist_t *list, sys_dnode_t *node)
  * @return 1 if node is the tail, 0 otherwise
  */
 
-static inline int sys_dlist_is_tail(sys_dlist_t *list, sys_dnode_t *node)
+static INLINE int sys_dlist_is_tail(sys_dlist_t *list, sys_dnode_t *node)
 {
 	return list->tail == node;
 }
@@ -98,7 +98,7 @@ static inline int sys_dlist_is_tail(sys_dlist_t *list, sys_dnode_t *node)
  * @return 1 if empty, 0 otherwise
  */
 
-static inline int sys_dlist_is_empty(sys_dlist_t *list)
+static INLINE int sys_dlist_is_empty(sys_dlist_t *list)
 {
 	return list->head == list;
 }
@@ -111,7 +111,7 @@ static inline int sys_dlist_is_empty(sys_dlist_t *list)
  * @return a pointer to the head element from a node, NULL if list is empty
  */
 
-static inline sys_dnode_t *sys_dlist_peek_head(sys_dlist_t *list)
+static INLINE sys_dnode_t *sys_dlist_peek_head(sys_dlist_t *list)
 {
 	return sys_dlist_is_empty(list) ? NULL : list->head;
 }
@@ -125,7 +125,7 @@ static inline sys_dnode_t *sys_dlist_peek_head(sys_dlist_t *list)
  * @return a pointer to the next element from a node, NULL if node is the tail
  */
 
-static inline sys_dnode_t *sys_dlist_peek_next(sys_dlist_t *list,
+static INLINE sys_dnode_t *sys_dlist_peek_next(sys_dlist_t *list,
 					       sys_dnode_t *node)
 {
 	return node == list->tail ? NULL : node->next;
@@ -140,7 +140,7 @@ static inline sys_dnode_t *sys_dlist_peek_next(sys_dlist_t *list,
  * @return N/A
  */
 
-static inline void sys_dlist_append(sys_dlist_t *list, sys_dnode_t *node)
+static INLINE void sys_dlist_append(sys_dlist_t *list, sys_dnode_t *node)
 {
 	node->next = list;
 	node->prev = list->tail;
@@ -158,7 +158,7 @@ static inline void sys_dlist_append(sys_dlist_t *list, sys_dnode_t *node)
  * @return N/A
  */
 
-static inline void sys_dlist_prepend(sys_dlist_t *list, sys_dnode_t *node)
+static INLINE void sys_dlist_prepend(sys_dlist_t *list, sys_dnode_t *node)
 {
 	node->next = list->head;
 	node->prev = list;
@@ -179,7 +179,7 @@ static inline void sys_dlist_prepend(sys_dlist_t *list, sys_dnode_t *node)
  * @return N/A
  */
 
-static inline void sys_dlist_insert_after(sys_dlist_t *list,
+static INLINE void sys_dlist_insert_after(sys_dlist_t *list,
 	sys_dnode_t *insert_point, sys_dnode_t *node)
 {
 	if (!insert_point) {
@@ -204,7 +204,7 @@ static inline void sys_dlist_insert_after(sys_dlist_t *list,
  * @return N/A
  */
 
-static inline void sys_dlist_insert_before(sys_dlist_t *list,
+static INLINE void sys_dlist_insert_before(sys_dlist_t *list,
 	sys_dnode_t *insert_point, sys_dnode_t *node)
 {
 	if (!insert_point) {
@@ -233,7 +233,7 @@ static inline void sys_dlist_insert_before(sys_dlist_t *list,
  * @return N/A
  */
 
-static inline void sys_dlist_insert_at(sys_dlist_t *list, sys_dnode_t *node,
+static INLINE void sys_dlist_insert_at(sys_dlist_t *list, sys_dnode_t *node,
 	int (*cond)(sys_dnode_t *, void *), void *data)
 {
 	if (sys_dlist_is_empty(list)) {
@@ -258,7 +258,7 @@ static inline void sys_dlist_insert_at(sys_dlist_t *list, sys_dnode_t *node,
  * @return N/A
  */
 
-static inline void sys_dlist_remove(sys_dnode_t *node)
+static INLINE void sys_dlist_remove(sys_dnode_t *node)
 {
 	node->prev->next = node->next;
 	node->next->prev = node->prev;
@@ -272,7 +272,7 @@ static inline void sys_dlist_remove(sys_dnode_t *node)
  * @return the first node in the list, NULL if list is empty
  */
 
-static inline sys_dnode_t *sys_dlist_get(sys_dlist_t *list)
+static INLINE sys_dnode_t *sys_dlist_get(sys_dlist_t *list)
 {
 	sys_dnode_t *node;
 

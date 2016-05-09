@@ -41,9 +41,6 @@ void fiber_sleep(int32_t timeout_in_ticks)
 	_Swap(key);
 }
 
-FUNC_ALIAS(_fiber_wakeup, isr_fiber_wakeup, void);
-FUNC_ALIAS(_fiber_wakeup, fiber_fiber_wakeup, void);
-
 void _fiber_wakeup(nano_thread_id_t fiber)
 {
 	int key = irq_lock();
@@ -55,6 +52,18 @@ void _fiber_wakeup(nano_thread_id_t fiber)
 
 	irq_unlock(key);
 }
+
+#ifdef _WIN32
+void isr_fiber_wakeup(nano_thread_id_t fiber) {
+    _fiber_wakeup(fiber);
+}
+void fiber_fiber_wakeup(nano_thread_id_t fiber) {
+    _fiber_wakeup(fiber);
+}
+#else
+FUNC_ALIAS(_fiber_wakeup, isr_fiber_wakeup, void);
+FUNC_ALIAS(_fiber_wakeup, fiber_fiber_wakeup, void);
+#endif
 
 void task_fiber_wakeup(nano_thread_id_t fiber)
 {
@@ -80,10 +89,6 @@ void fiber_wakeup(nano_thread_id_t fiber)
 	func[sys_execution_context_type_get()](fiber);
 }
 
-#ifndef CONFIG_MICROKERNEL
-FUNC_ALIAS(_nano_task_sleep, task_sleep, void);
-#endif
-
 void _nano_task_sleep(int32_t timeout_in_ticks)
 {
 	int64_t  cur_ticks, limit;
@@ -104,3 +109,13 @@ void _nano_task_sleep(int32_t timeout_in_ticks)
 
 	irq_unlock(key);
 }
+
+#ifndef CONFIG_MICROKERNEL
+#ifdef _WIN32
+void task_sleep(int32_t timeout_in_ticks) {
+    _nano_task_sleep(timeout_in_ticks);
+}
+#else
+FUNC_ALIAS(_nano_task_sleep, task_sleep, void);
+#endif
+#endif

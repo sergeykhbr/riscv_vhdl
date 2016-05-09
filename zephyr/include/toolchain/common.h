@@ -122,8 +122,10 @@
 
 /* force inlining a function */
 
-#if !defined(_ASMLANGUAGE)
-  #define ALWAYS_INLINE inline __attribute__((always_inline))
+#ifdef _WIN32
+  #define ALWAYS_INLINE INLINE
+#elif !defined(_ASMLANGUAGE)
+  #define ALWAYS_INLINE INLINE __attribute__((always_inline))
 #endif
 
 #define _STRINGIFY(x) #x
@@ -131,7 +133,11 @@
 
 /* Indicate that an array will be used for stack space. */
 
+#ifdef _WIN32
+#define __stack
+#else
 #define __stack __aligned(STACK_ALIGN)
+#endif
 
 /* concatenate the values of the arguments into one */
 #define _DO_CONCAT(x, y) x ## y

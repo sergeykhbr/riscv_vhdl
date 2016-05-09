@@ -24,7 +24,15 @@
 
 #include <nano_private.h>
 
+#ifndef CONFIG_ERRNO
+static int errno_var = 0;
+#endif
+
 FUNC_NO_FP int *_get_errno(void)
 {
+#ifdef CONFIG_ERRNO
 	return &_nanokernel.current->errno_var;
+#else
+    return &errno_var;
+#endif
 }

@@ -113,10 +113,10 @@
 #define __ASSERT_EVAL(expr1, expr2, test, fmt...) expr1
 #endif
 #else
-#define __ASSERT(test, fmt...) \
+#define __ASSERT(test, fmt, ...) \
 	do {/* nothing */      \
 	} while ((0))
-#define __ASSERT_EVAL(expr1, expr2, test, fmt...) expr1
+#define __ASSERT_EVAL(expr1, expr2, test, fmt, ...) expr1
 #endif
 
 #define __ASSERT_NO_MSG(test) __ASSERT(test, "")

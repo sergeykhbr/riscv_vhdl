@@ -49,7 +49,7 @@ struct fifo_node {
  *
  * @return N/A
  */
-static inline void data_q_init(struct _nano_queue *q)
+static INLINE void data_q_init(struct _nano_queue *q)
 {
 	q->head = NULL;
 	q->tail = &q->head;
@@ -60,7 +60,7 @@ static inline void data_q_init(struct _nano_queue *q)
  *
  * @return N/A
  */
-static inline int is_q_empty(struct _nano_queue *q)
+static INLINE int is_q_empty(struct _nano_queue *q)
 {
 	return q->head == NULL;
 }
@@ -81,16 +81,13 @@ void nano_fifo_init(struct nano_fifo *fifo)
 	SYS_TRACING_OBJ_INIT(nano_fifo, fifo);
 }
 
-FUNC_ALIAS(_fifo_put_non_preemptible, nano_isr_fifo_put, void);
-FUNC_ALIAS(_fifo_put_non_preemptible, nano_fiber_fifo_put, void);
-
 /**
  *
  * @brief Internal routine to append data to a fifo
  *
  * @return N/A
  */
-static inline void enqueue_data(struct nano_fifo *fifo, void *data)
+static INLINE void enqueue_data(struct nano_fifo *fifo, void *data)
 {
 	struct fifo_node *node = data;
 	struct fifo_node *tail = fifo->data_q.tail;
@@ -141,6 +138,18 @@ void _fifo_put_non_preemptible(struct nano_fifo *fifo, void *data)
 	irq_unlock(key);
 }
 
+#ifdef _WIN32
+void nano_isr_fifo_put(struct nano_fifo *fifo, void *data) {
+    _fifo_put_non_preemptible(fifo, data);
+}
+void nano_fiber_fifo_put(struct nano_fifo *fifo, void *data) {
+    _fifo_put_non_preemptible(fifo, data);
+}
+#else
+FUNC_ALIAS(_fifo_put_non_preemptible, nano_isr_fifo_put, void);
+FUNC_ALIAS(_fifo_put_non_preemptible, nano_fiber_fifo_put, void);
+#endif
+
 void nano_task_fifo_put(struct nano_fifo *fifo, void *data)
 {
 	struct tcs *tcs;
@@ -179,7 +188,7 @@ void nano_fifo_put(struct nano_fifo *fifo, void *data)
  *
  * @return The data item removed
  */
-static inline void *dequeue_data(struct nano_fifo *fifo)
+static INLINE void *dequeue_data(struct nano_fifo *fifo)
 {
 	struct fifo_node *head = fifo->data_q.head;
 
@@ -190,9 +199,6 @@ static inline void *dequeue_data(struct nano_fifo *fifo)
 
 	return head;
 }
-
-FUNC_ALIAS(_fifo_get, nano_isr_fifo_get, void *);
-FUNC_ALIAS(_fifo_get, nano_fiber_fifo_get, void *);
 
 void *_fifo_get(struct nano_fifo *fifo, int32_t timeout_in_ticks)
 {
@@ -213,6 +219,18 @@ void *_fifo_get(struct nano_fifo *fifo, int32_t timeout_in_ticks)
 	irq_unlock(key);
 	return data;
 }
+
+#ifdef _WIN32
+void *nano_isr_fifo_get(struct nano_fifo *fifo, int32_t timeout_in_ticks) {
+    return _fifo_get(fifo, timeout_in_ticks);
+}
+void *nano_fiber_fifo_get(struct nano_fifo *fifo, int32_t timeout_in_ticks) {
+    return _fifo_get(fifo, timeout_in_ticks);
+}
+#else
+FUNC_ALIAS(_fifo_get, nano_isr_fifo_get, void *);
+FUNC_ALIAS(_fifo_get, nano_fiber_fifo_get, void *);
+#endif
 
 void *nano_task_fifo_get(struct nano_fifo *fifo, int32_t timeout_in_ticks)
 {

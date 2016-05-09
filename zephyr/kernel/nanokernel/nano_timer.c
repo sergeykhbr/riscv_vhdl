@@ -40,11 +40,6 @@ void nano_timer_init(struct nano_timer *timer, void *data)
 }
 
 
-FUNC_ALIAS(_timer_start, nano_isr_timer_start, void);
-FUNC_ALIAS(_timer_start, nano_fiber_timer_start, void);
-FUNC_ALIAS(_timer_start, nano_task_timer_start, void);
-FUNC_ALIAS(_timer_start, nano_timer_start, void);
-
 /**
  *
  * @brief Start a nanokernel timer (generic implementation)
@@ -71,8 +66,26 @@ void _timer_start(struct nano_timer *timer, int ticks)
 	irq_unlock(key);
 }
 
-FUNC_ALIAS(_timer_stop_non_preemptible, nano_isr_timer_stop, void);
-FUNC_ALIAS(_timer_stop_non_preemptible, nano_fiber_timer_stop, void);
+#ifdef _WIN32
+void nano_isr_timer_start(struct nano_timer *timer, int ticks) {
+    _timer_start(timer, ticks);
+}
+void nano_fiber_timer_start(struct nano_timer *timer, int ticks) {
+    _timer_start(timer, ticks);
+}
+void nano_task_timer_start(struct nano_timer *timer, int ticks) {
+    _timer_start(timer, ticks);
+}
+void nano_timer_start(struct nano_timer *timer, int ticks) {
+    _timer_start(timer, ticks);
+}
+#else
+FUNC_ALIAS(_timer_start, nano_isr_timer_start, void);
+FUNC_ALIAS(_timer_start, nano_fiber_timer_start, void);
+FUNC_ALIAS(_timer_start, nano_task_timer_start, void);
+FUNC_ALIAS(_timer_start, nano_timer_start, void);
+#endif
+
 void _timer_stop_non_preemptible(struct nano_timer *timer)
 {
 	struct _nano_timeout *t = &timer->timeout_data;
@@ -100,6 +113,17 @@ void _timer_stop_non_preemptible(struct nano_timer *timer)
 	timer->user_data = NULL;
 	irq_unlock(key);
 }
+#ifdef _WIN32
+void nano_isr_timer_stop(struct nano_timer *timer) {
+    _timer_stop_non_preemptible(timer);
+}
+void nano_fiber_timer_stop(struct nano_timer *timer) {
+    _timer_stop_non_preemptible(timer);
+}
+#else
+FUNC_ALIAS(_timer_stop_non_preemptible, nano_isr_timer_stop, void);
+FUNC_ALIAS(_timer_stop_non_preemptible, nano_fiber_timer_stop, void);
+#endif
 
 #ifdef CONFIG_MICROKERNEL
 extern void _task_nano_timer_task_ready(void *uk_task_ptr);

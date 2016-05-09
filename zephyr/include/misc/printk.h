@@ -51,7 +51,7 @@ extern "C" {
 #ifdef CONFIG_PRINTK
 extern void printk(const char *fmt, ...);
 #else
-static inline void printk(const char *fmt, ...)
+static INLINE void printk(const char *fmt, ...)
 {
 	ARG_UNUSED(fmt);
 }

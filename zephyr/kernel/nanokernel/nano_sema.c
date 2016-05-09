@@ -60,9 +60,6 @@ void nano_sem_init(struct nano_sem *sem)
 	_TASK_PENDQ_INIT(&sem->task_q);
 }
 
-FUNC_ALIAS(_sem_give_non_preemptible, nano_isr_sem_give, void);
-FUNC_ALIAS(_sem_give_non_preemptible, nano_fiber_sem_give, void);
-
 #ifdef CONFIG_NANO_TIMEOUTS
 	#define set_sem_available(tcs) fiberRtnValueSet(tcs, 1)
 #else
@@ -93,6 +90,18 @@ void _sem_give_non_preemptible(struct nano_sem *sem)
 
 	irq_unlock(imask);
 }
+
+#ifdef _WIN32
+void nano_isr_sem_give(struct nano_sem *sem) {
+    _sem_give_non_preemptible(sem);
+}
+void nano_fiber_sem_give(struct nano_sem *sem) {
+    _sem_give_non_preemptible(sem);
+}
+#else
+FUNC_ALIAS(_sem_give_non_preemptible, nano_isr_sem_give, void);
+FUNC_ALIAS(_sem_give_non_preemptible, nano_fiber_sem_give, void);
+#endif
 
 void nano_task_sem_give(struct nano_sem *sem)
 {
@@ -125,9 +134,6 @@ void nano_sem_give(struct nano_sem *sem)
 	func[sys_execution_context_type_get()](sem);
 }
 
-FUNC_ALIAS(_sem_take, nano_isr_sem_take, int);
-FUNC_ALIAS(_sem_take, nano_fiber_sem_take, int);
-
 int _sem_take(struct nano_sem *sem, int32_t timeout_in_ticks)
 {
 	unsigned int key = irq_lock();
@@ -148,6 +154,17 @@ int _sem_take(struct nano_sem *sem, int32_t timeout_in_ticks)
 	return 0;
 }
 
+#ifdef _WIN32
+int nano_isr_sem_take(struct nano_sem *sem, int32_t timeout_in_ticks) {
+    return _sem_take(sem, timeout_in_ticks);
+}
+int nano_fiber_sem_take(struct nano_sem *sem, int32_t timeout_in_ticks) {
+    return _sem_take(sem, timeout_in_ticks);
+}
+#else
+FUNC_ALIAS(_sem_take, nano_isr_sem_take, int);
+FUNC_ALIAS(_sem_take, nano_fiber_sem_take, int);
+#endif
 /**
  * INTERNAL
  * Since a task cannot pend on a nanokernel object, they poll the

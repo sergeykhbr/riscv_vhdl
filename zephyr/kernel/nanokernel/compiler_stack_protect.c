@@ -29,7 +29,6 @@
 #include <toolchain.h> /* compiler specific configurations */
 
 #include <nano_private.h>
-#include <toolchain.h>
 #include <sections.h>
 
 /**
@@ -63,4 +62,10 @@ void __noinit *__stack_chk_guard;
  * This routine is invoked when a stack canary error is detected, indicating
  * a buffer overflow or stack corruption problem.
  */
+#ifdef _WIN32
+void __stack_chk_fail(void) {
+    _StackCheckHandler();
+}
+#else
 FUNC_ALIAS(_StackCheckHandler, __stack_chk_fail, void);
+#endif

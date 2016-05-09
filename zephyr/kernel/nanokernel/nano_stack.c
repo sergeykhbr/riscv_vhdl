@@ -46,9 +46,6 @@ void nano_stack_init(struct nano_stack *stack, uint32_t *data)
 	SYS_TRACING_OBJ_INIT(nano_stack, stack);
 }
 
-FUNC_ALIAS(_stack_push_non_preemptible, nano_isr_stack_push, void);
-FUNC_ALIAS(_stack_push_non_preemptible, nano_fiber_stack_push, void);
-
 /**
  *
  * @brief Push data onto a stack (no context switch)
@@ -87,6 +84,17 @@ void _stack_push_non_preemptible(struct nano_stack *stack, uint32_t data)
 
 	irq_unlock(imask);
 }
+#ifdef _WIN32
+void nano_isr_stack_push(struct nano_stack *stack, uint32_t data) {
+    _stack_push_non_preemptible(stack, data);
+}
+void nano_fiber_stack_push(struct nano_stack *stack, uint32_t data) {
+    _stack_push_non_preemptible(stack, data);
+}
+#else
+FUNC_ALIAS(_stack_push_non_preemptible, nano_isr_stack_push, void);
+FUNC_ALIAS(_stack_push_non_preemptible, nano_fiber_stack_push, void);
+#endif
 
 
 void nano_task_stack_push(struct nano_stack *stack, uint32_t data)
@@ -121,9 +129,6 @@ void nano_stack_push(struct nano_stack *stack, uint32_t data)
 
 	func[sys_execution_context_type_get()](stack, data);
 }
-
-FUNC_ALIAS(_stack_pop, nano_isr_stack_pop, int);
-FUNC_ALIAS(_stack_pop, nano_fiber_stack_pop, int);
 
 /**
  *
@@ -167,6 +172,18 @@ int _stack_pop(struct nano_stack *stack, uint32_t *pData, int32_t timeout_in_tic
 	irq_unlock(imask);
 	return 0;
 }
+
+#ifdef _WIN32
+int nano_isr_stack_pop(struct nano_stack *stack, uint32_t *pData, int32_t timeout_in_ticks) {
+    return _stack_pop(stack, pData, timeout_in_ticks);
+}
+int nano_fiber_stack_pop(struct nano_stack *stack, uint32_t *pData, int32_t timeout_in_ticks) {
+    return _stack_pop(stack, pData, timeout_in_ticks);
+}
+#else
+FUNC_ALIAS(_stack_pop, nano_isr_stack_pop, int);
+FUNC_ALIAS(_stack_pop, nano_fiber_stack_pop, int);
+#endif
 
 int nano_task_stack_pop(struct nano_stack *stack, uint32_t *pData, int32_t timeout_in_ticks)
 {

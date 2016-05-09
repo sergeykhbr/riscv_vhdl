@@ -36,7 +36,7 @@
 
 #include <board.h>
 #include <uart.h>
-#include <console/uart_console.h>
+#include <drivers/console/uart_console.h>
 #include <toolchain.h>
 #include <sections.h>
 #include <atomic.h>
@@ -156,22 +156,22 @@ static int read_uart(struct device *uart, uint8_t *buf, unsigned int size)
 	return rx;
 }
 
-static inline void cursor_forward(unsigned int count)
+static INLINE void cursor_forward(unsigned int count)
 {
 	printk("\x1b[%uC", count);
 }
 
-static inline void cursor_backward(unsigned int count)
+static INLINE void cursor_backward(unsigned int count)
 {
 	printk("\x1b[%uD", count);
 }
 
-static inline void cursor_save(void)
+static INLINE void cursor_save(void)
 {
 	printk("\x1b[s");
 }
 
-static inline void cursor_restore(void)
+static INLINE void cursor_restore(void)
 {
 	printk("\x1b[u");
 }
@@ -455,10 +455,12 @@ static int uart_console_init(struct device *arg)
 }
 
 /* UART consloe initializes after the UART device itself */
-SYS_INIT(uart_console_init,
 #if defined(CONFIG_EARLY_CONSOLE)
+SYS_INIT(uart_console_init,
 			PRIMARY,
-#else
-			SECONDARY,
-#endif
 			CONFIG_UART_CONSOLE_INIT_PRIORITY);
+#else
+SYS_INIT(uart_console_init,
+			SECONDARY,
+			CONFIG_UART_CONSOLE_INIT_PRIORITY);
+#endif

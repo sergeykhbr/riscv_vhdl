@@ -29,8 +29,8 @@
 extern "C" {
 #endif
 
-static inline int _do_nano_timeout_abort(struct _nano_timeout *t);
-static inline void _do_nano_timeout_add(struct tcs *tcs,
+static INLINE int _do_nano_timeout_abort(struct _nano_timeout *t);
+static INLINE void _do_nano_timeout_add(struct tcs *tcs,
 					struct _nano_timeout *t,
 					struct _nano_queue *wait_q,
 					int32_t timeout);
@@ -38,7 +38,7 @@ static inline void _do_nano_timeout_add(struct tcs *tcs,
 #if defined(CONFIG_NANO_TIMEOUTS)
 /* initialize the nano timeouts part of TCS when enabled in the kernel */
 
-static inline void _nano_timeout_tcs_init(struct tcs *tcs)
+static INLINE void _nano_timeout_tcs_init(struct tcs *tcs)
 {
 	/*
 	 * Must be initialized here and when dequeueing a timeout so that code
@@ -78,7 +78,7 @@ static inline void _nano_timeout_tcs_init(struct tcs *tcs)
  *
  * @return N/A
  */
-static inline void _nano_timeout_object_dequeue(
+static INLINE void _nano_timeout_object_dequeue(
 	struct tcs *tcs, struct _nano_timeout *t)
 {
 	if (t->wait_q) {
@@ -88,13 +88,13 @@ static inline void _nano_timeout_object_dequeue(
 }
 
 /* abort a timeout for a specified fiber */
-static inline int _nano_timeout_abort(struct tcs *tcs)
+static INLINE int _nano_timeout_abort(struct tcs *tcs)
 {
 	return _do_nano_timeout_abort(&tcs->nano_timeout);
 }
 
 /* put a fiber on the timeout queue and record its wait queue */
-static inline void _nano_timeout_add(struct tcs *tcs,
+static INLINE void _nano_timeout_add(struct tcs *tcs,
 				     struct _nano_queue *wait_q,
 				     int32_t timeout)
 {
@@ -112,7 +112,7 @@ static inline void _nano_timeout_add(struct tcs *tcs,
  * also sets the return value to 0/NULL.
  */
 
-static inline struct _nano_timeout *_nano_timeout_handle_one_timeout(
+static INLINE struct _nano_timeout *_nano_timeout_handle_one_timeout(
 	sys_dlist_t *timeout_q)
 {
 	struct _nano_timeout *t = (void *)sys_dlist_get(timeout_q);
@@ -132,7 +132,7 @@ static inline struct _nano_timeout *_nano_timeout_handle_one_timeout(
 }
 
 /* loop over all expired timeouts and handle them one by one */
-static inline void _nano_timeout_handle_timeouts(void)
+static INLINE void _nano_timeout_handle_timeouts(void)
 {
 	sys_dlist_t *timeout_q = &_nanokernel.timeout_q;
 	struct _nano_timeout *next;
@@ -151,7 +151,7 @@ static inline void _nano_timeout_handle_timeouts(void)
  *
  * @return 0 in success and -1 if the timer has expired
  */
-static inline int _do_nano_timeout_abort(struct _nano_timeout *t)
+static INLINE int _do_nano_timeout_abort(struct _nano_timeout *t)
 {
 	sys_dlist_t *timeout_q = &_nanokernel.timeout_q;
 
@@ -171,7 +171,7 @@ static inline int _do_nano_timeout_abort(struct _nano_timeout *t)
 	return 0;
 }
 
-static inline int _nano_timer_timeout_abort(struct _nano_timeout *t)
+static INLINE int _nano_timer_timeout_abort(struct _nano_timeout *t)
 {
 	return _do_nano_timeout_abort(t);
 }
@@ -213,7 +213,7 @@ static int _nano_timeout_insert_point_test(sys_dnode_t *test, void *timeout)
  *
  * @return N/A
  */
-static inline void _do_nano_timeout_add(struct tcs *tcs,
+static INLINE void _do_nano_timeout_add(struct tcs *tcs,
 					 struct _nano_timeout *t,
 				     struct _nano_queue *wait_q,
 				     int32_t timeout)
@@ -228,7 +228,7 @@ static inline void _do_nano_timeout_add(struct tcs *tcs,
 						&t->delta_ticks_from_prev);
 }
 
-static inline void _nano_timer_timeout_add(struct _nano_timeout *t,
+static INLINE void _nano_timer_timeout_add(struct _nano_timeout *t,
 				     struct _nano_queue *wait_q,
 				     int32_t timeout)
 {
@@ -236,7 +236,7 @@ static inline void _nano_timer_timeout_add(struct _nano_timeout *t,
 }
 
 /* find the closest deadline in the timeout queue */
-static inline uint32_t _nano_get_earliest_timeouts_deadline(void)
+static INLINE uint32_t _nano_get_earliest_timeouts_deadline(void)
 {
 	sys_dlist_t *q = &_nanokernel.timeout_q;
 	struct _nano_timeout *t = (struct _nano_timeout *)sys_dlist_peek_head(q);

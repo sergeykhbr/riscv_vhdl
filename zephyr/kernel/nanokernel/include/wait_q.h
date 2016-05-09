@@ -26,14 +26,14 @@ extern "C" {
 #endif
 
 /* reset a wait queue, call during operation */
-static inline void _nano_wait_q_reset(struct _nano_queue *wait_q)
+static INLINE void _nano_wait_q_reset(struct _nano_queue *wait_q)
 {
 	wait_q->head = (void *)0;
 	wait_q->tail = (void *)&(wait_q->head);
 }
 
 /* initialize a wait queue: call only during object initialization */
-static inline void _nano_wait_q_init(struct _nano_queue *wait_q)
+static INLINE void _nano_wait_q_init(struct _nano_queue *wait_q)
 {
 	_nano_wait_q_reset(wait_q);
 }
@@ -42,7 +42,7 @@ static inline void _nano_wait_q_init(struct _nano_queue *wait_q)
  * Remove first fiber from a wait queue and put it on the ready queue, knowing
  * that the wait queue is not empty.
  */
-static inline
+static INLINE
 struct tcs *_nano_wait_q_remove_no_check(struct _nano_queue *wait_q)
 {
 	struct tcs *tcs = wait_q->head;
@@ -62,20 +62,20 @@ struct tcs *_nano_wait_q_remove_no_check(struct _nano_queue *wait_q)
  * Remove first fiber from a wait queue and put it on the ready queue.
  * Abort and return NULL if the wait queue is empty.
  */
-static inline struct tcs *_nano_wait_q_remove(struct _nano_queue *wait_q)
+static INLINE struct tcs *_nano_wait_q_remove(struct _nano_queue *wait_q)
 {
 	return wait_q->head ? _nano_wait_q_remove_no_check(wait_q) : NULL;
 }
 
 /* put current fiber on specified wait queue */
-static inline void _nano_wait_q_put(struct _nano_queue *wait_q)
+static INLINE void _nano_wait_q_put(struct _nano_queue *wait_q)
 {
 	((struct tcs *)wait_q->tail)->link = _nanokernel.current;
 	wait_q->tail = _nanokernel.current;
 }
 
 #if defined(CONFIG_NANO_TIMEOUTS)
-static inline void _nano_timeout_remove_tcs_from_wait_q(
+static INLINE void _nano_timeout_remove_tcs_from_wait_q(
 	struct tcs *tcs, struct _nano_queue *wait_q)
 {
 	if (wait_q->head == tcs) {

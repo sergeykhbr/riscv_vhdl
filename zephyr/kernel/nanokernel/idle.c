@@ -44,7 +44,9 @@ void nano_cpu_set_idle(int32_t ticks)
 {
 	extern tNANO _nanokernel;
 
+#ifdef CONFIG_ADVANCED_POWER_MANAGEMENT
 	_nanokernel.idle = ticks;
+#endif
 }
 
 #if defined(CONFIG_NANOKERNEL) && defined(CONFIG_TICKLESS_IDLE)
@@ -52,7 +54,7 @@ void nano_cpu_set_idle(int32_t ticks)
 int32_t _sys_idle_ticks_threshold = CONFIG_TICKLESS_IDLE_THRESH;
 
 #if defined(CONFIG_NANO_TIMEOUTS) || defined(CONFIG_NANO_TIMERS)
-static inline int32_t get_next_tick_expiry(void)
+static INLINE int32_t get_next_tick_expiry(void)
 {
 	return _nano_get_earliest_timeouts_deadline();
 }
@@ -60,13 +62,13 @@ static inline int32_t get_next_tick_expiry(void)
 #define get_next_tick_expiry(void) TICKS_UNLIMITED
 #endif
 
-static inline int was_in_tickless_idle(void)
+static INLINE int was_in_tickless_idle(void)
 {
 	return	(_nanokernel.idle == TICKS_UNLIMITED) ||
 			(_nanokernel.idle >= _sys_idle_ticks_threshold);
 }
 
-static inline int must_enter_tickless_idle(void)
+static INLINE int must_enter_tickless_idle(void)
 {
 	/* uses same logic as was_in_tickless_idle() */
 	return was_in_tickless_idle();

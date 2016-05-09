@@ -28,6 +28,8 @@
 
 #ifdef __cplusplus
 	#define _Restrict __restrict__
+#elif defined (_WIN32)
+    #define _Restrict 
 #else
 	#define _Restrict restrict
 #endif

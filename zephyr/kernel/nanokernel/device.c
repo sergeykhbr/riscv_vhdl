@@ -20,6 +20,17 @@
 #include <misc/util.h>
 #include <atomic.h>
 
+#ifdef _WIN32
+extern struct device zephyr_devices[];
+
+#define __device_init_start (&zephyr_devices[0])
+#define __device_PRIMARY_start (&zephyr_devices[init_start_Total])
+#define __device_SECONDARY_start (&zephyr_devices[PRIMARY_Total])
+#define __device_NANOKERNEL_start (&zephyr_devices[SECONDARY_Total])
+#define __device_MICROKERNEL_start (&zephyr_devices[NANOKERNEL_Total])
+#define __device_APPLICATION_start (&zephyr_devices[MICROKERNEL_Total])
+#define __device_init_end (&zephyr_devices[APPLICATION_Total])
+#else
 extern struct device __device_init_start[];
 extern struct device __device_PRIMARY_start[];
 extern struct device __device_SECONDARY_start[];
@@ -27,6 +38,7 @@ extern struct device __device_NANOKERNEL_start[];
 extern struct device __device_MICROKERNEL_start[];
 extern struct device __device_APPLICATION_start[];
 extern struct device __device_init_end[];
+#endif
 
 static struct device *config_levels[] = {
 	__device_PRIMARY_start,

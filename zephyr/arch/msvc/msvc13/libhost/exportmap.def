@@ -1,0 +1,9 @@
+LIBRARY libhost
+EXPORTS
+	LIBH_create_dispatcher
+	LIBH_uart_output
+	LIBH_create_thread
+	LIBH_swap
+	LIBH_write
+	LIBH_read
+	LIBH_swap_preemptive

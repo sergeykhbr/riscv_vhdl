@@ -26,7 +26,11 @@
 				"." _STRINGIFY(hash)				\
 				"." _STRINGIFY(line))))
 
+#ifdef _WIN32
+#define __noinit     
+#else
 #define __noinit     __in_section(NOINIT,    _FILE_PATH_HASH, __COUNTER__)
+#endif
 
 #if defined(CONFIG_ARM)
 #define __scs_section  __in_section(SCS_SECTION, _FILE_PATH_HASH, __COUNTER__)

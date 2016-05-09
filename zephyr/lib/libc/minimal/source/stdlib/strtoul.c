@@ -91,7 +91,7 @@ unsigned long strtoul(const char *nptr, char **endptr, register int base)
 		acc = ULONG_MAX;
 		errno = ERANGE;
 	} else if (neg)
-		acc = -acc;
+		acc = (unsigned long)(-((long)acc));
 	if (endptr != 0)
 		*endptr = (char *)(any ? s - 1 : nptr);
 	return acc;
