@@ -1,0 +1,49 @@
+# Kconfig - AIO/Comparator configuration options
+#
+#
+# Copyright (c) 2015-2016 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+#
+# AIO/Comparator options
+#
+menuconfig AIO_COMPARATOR
+	bool
+	prompt "AIO/Comparator Configuration"
+	default n
+
+if AIO_COMPARATOR
+menuconfig AIO_QMSI_COMPARATOR
+	bool "Enable QMSI AIO/comparator driver"
+	default n
+	depends on AIO_COMPARATOR && QMSI
+	help
+	QMSI AIO/Comparator driver.
+
+config AIO_QMSI_COMPARATOR_DEV_NAME
+	string "Device name for QMSI AIO/comparator"
+	default "AIO_CMP"
+	depends on AIO_QMSI_COMPARATOR
+	help
+	Device name for the QMSI AIO/comparator.
+
+config AIO_COMPARATOR_IRQ_PRI
+	int "IRQ Priority for QMSI AIO/comparator"
+	default 3
+	depends on AIO_QMSI_COMPARATOR
+	help
+	IRQ Priority for the QMSI AIO/comparator.
+
+endif # AIO_COMPARATOR

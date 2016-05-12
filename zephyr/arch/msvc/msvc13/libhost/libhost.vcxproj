@@ -11,15 +11,14 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\..\arch\msvc\device_link.h" />
-    <ClInclude Include="..\..\..\..\arch\msvc\imapdev.h" />
-    <ClInclude Include="..\..\..\..\arch\msvc\irqctrl.h" />
-    <ClInclude Include="..\..\..\..\arch\msvc\uart.h" />
-    <ClInclude Include="..\..\..\..\arch\msvc\zephyr_threads.h" />
+    <ClInclude Include="..\..\lib\imapdev.h" />
+    <ClInclude Include="..\..\lib\irqctrl.h" />
+    <ClInclude Include="..\..\lib\uart.h" />
+    <ClInclude Include="..\..\lib\zephyr_threads.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\..\arch\msvc\dispatcher.cpp" />
-    <ClCompile Include="..\..\..\..\arch\msvc\utils.cpp" />
+    <ClCompile Include="..\..\lib\dispatcher.cpp" />
+    <ClCompile Include="..\..\lib\utils.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{232D555C-96EC-43B5-891F-CC955F1402B9}</ProjectGuid>

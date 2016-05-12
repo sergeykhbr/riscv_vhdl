@@ -35,6 +35,9 @@ config X86
 config NIOS2
 	bool "Nios II Gen 2 architecture"
 
+config RISCV64
+	bool "RISC-V architecture"
+
 endchoice
 
 #

@@ -1,0 +1,119 @@
+# Kconfig - flash driver configuration options
+
+#
+# Copyright (c) 2016 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+#
+# flash driver
+#
+menuconfig FLASH
+	bool
+	prompt "flash hardware support"
+	default n
+	help
+	  Enable support for the flash hardware.
+
+config SPI_FLASH_W25QXXDV
+	bool
+	prompt "SPI NOR Flash Winbond W25QXXDV"
+	depends on SPI && FLASH
+
+config SPI_FLASH_W25QXXDV_SPI_NAME
+	string
+	prompt "spi controller device name"
+	depends on SPI_FLASH_W25QXXDV
+	default ""
+
+config SPI_FLASH_W25QXXDV_DRV_NAME
+	string
+	prompt "spi flash device name"
+	depends on SPI_FLASH_W25QXXDV
+	default "W25QXXDV"
+
+config SPI_FLASH_W25QXXDV_INIT_PRIORITY
+	int
+	depends on SPI_FLASH_W25QXXDV
+	default 80
+	help
+	  Device driver initialization priority.
+	  Device is connected to SPI bus, it has to
+	  be initialized after SPI driver.
+
+config  SPI_FLASH_W25QXXDV_SPI_FREQ_0
+	int "SPI system frequency"
+	depends on SPI_FLASH_W25QXXDV
+	default 4
+	help
+	  This option sets the SPI controller's frequency. Beware this value
+	  depends on the SPI controller being used and also on the system
+	  clock.
+
+config	SPI_FLASH_W25QXXDV_SPI_SLAVE
+	int "SPI slave linked to spi flash"
+	depends on SPI_FLASH_W25QXXDV
+	help
+	  This option sets the SPI slave number the SPI controller has to switch
+	  to when dealing with WinBond SPI flash chip.
+
+config  SPI_FLASH_W25QXXDV_FLASH_SIZE
+	int "flash size in bytes"
+	depends on SPI_FLASH_W25QXXDV
+	default 2097152
+	help
+	  This is the flash capacity in bytes.
+
+config SPI_FLASH_W25QXXDV_MAX_DATA_LEN
+	int
+	range 1 256
+	depends on SPI_FLASH_W25QXXDV
+	default 256
+	help
+	  Maximum transmit or receive data length in one user data frame.
+
+config SOC_FLASH_QMSI
+	bool
+	prompt "QMSI flash driver"
+	depends on QMSI && FLASH
+	default n
+	help
+	  Enable QMSI quark flash driver.
+
+config SOC_FLASH_QMSI_DEV_NAME
+	string "QMSI flash device name"
+	depends on SOC_FLASH_QMSI
+	default "QUARK_FLASH"
+	help
+	  Specify the device name for the flash driver.
+
+config SOC_FLASH_QMSI_CLK_COUNT_US
+	int "system clk count per microsecond"
+	depends on SOC_FLASH_QMSI
+	default 32
+	help
+	  Specify the system clk cycles per microsecond.
+
+config SOC_FLASH_QMSI_WAIT_STATES
+	int "The number of flash wait states"
+	depends on SOC_FLASH_QMSI
+	default 1
+	help
+	  Specify the number of wait states for quark flash.
+
+config SOC_FLASH_QMSI_SYS_SIZE
+	hex "SOC system flash size"
+	depends on SOC_FLASH_QMSI
+	help
+	  Specify system flash size on the quark SOC.

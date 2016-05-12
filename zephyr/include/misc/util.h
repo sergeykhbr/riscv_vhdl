@@ -48,10 +48,12 @@ extern "C" {
 	 ~((unsigned long)align - 1))
 #define ROUND_DOWN(x, align) ((unsigned long)(x) & ~((unsigned long)align - 1))
 
+#if!defined INLINE
 #ifdef INLINED
 #define INLINE inline
 #else
 #define INLINE
+#endif
 #endif
 
 #ifndef max

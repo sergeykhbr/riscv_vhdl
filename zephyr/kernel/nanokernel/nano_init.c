@@ -21,7 +21,6 @@
  * This module contains routines that are used to initialize the nanokernel.
  */
 
-#include <offsets.h>
 #include <nanokernel.h>
 #include <misc/printk.h>
 #include <drivers/rand32.h>
@@ -265,7 +264,7 @@ FUNC_NORETURN void _Cstart(void)
 {
 	/* floating point operations are NOT performed during nanokernel init */
 
-	char dummyTCS[__tTCS_NOFLOAT_SIZEOF];
+	char dummyTCS[sizeof(struct tcs)];
 
 	/*
 	 * Initialize nanokernel data structures. This step includes

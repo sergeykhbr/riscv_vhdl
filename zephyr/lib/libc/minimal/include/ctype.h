@@ -23,6 +23,14 @@
 extern "C" {
 #endif
 
+#ifndef INLINE
+  #ifdef _WIN32
+    #define INLINE
+  #else
+    #define INLINE inline
+  #endif
+#endif
+
 static INLINE int isupper(int a)
 {
 	return ((unsigned)(a)-'A') < 26;

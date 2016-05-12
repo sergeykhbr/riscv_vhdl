@@ -27,6 +27,7 @@
 
 #ifndef _ASMLANGUAGE
 #include <toolchain.h>
+#include <misc/util.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -1,0 +1,4 @@
+
+config SOC_RISCV_GNSS
+	bool "RISC-V Processor"
+	select CPU_RISCV_RV64IMA

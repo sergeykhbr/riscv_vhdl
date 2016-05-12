@@ -7,27 +7,24 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\..\arch\msvc\device_link.h">
+    <ClInclude Include="..\..\lib\imapdev.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\arch\msvc\imapdev.h">
+    <ClInclude Include="..\..\lib\irqctrl.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\arch\msvc\irqctrl.h">
+    <ClInclude Include="..\..\lib\uart.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\arch\msvc\uart.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\arch\msvc\zephyr_threads.h">
+    <ClInclude Include="..\..\lib\zephyr_threads.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\..\arch\msvc\dispatcher.cpp">
+    <ClCompile Include="..\..\lib\dispatcher.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\arch\msvc\utils.cpp">
+    <ClCompile Include="..\..\lib\utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

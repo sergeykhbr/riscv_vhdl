@@ -19,6 +19,8 @@
 #ifndef __ATOMIC_H__
 #define __ATOMIC_H__
 
+#include <misc/util.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif

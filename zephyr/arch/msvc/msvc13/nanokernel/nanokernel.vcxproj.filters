@@ -113,6 +113,9 @@
     <Filter Include="zephyr\drivers\random">
       <UniqueIdentifier>{082fcd7c-3a67-4024-97fb-01f283a8b0d2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="zephyr\arch\msvc\core">
+      <UniqueIdentifier>{d3fa9d0a-a630-42f3-b5c7-2c634e770e9d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\lib\libc\minimal\include\bits\null.h">
@@ -354,9 +357,6 @@
     <ClCompile Include="..\..\..\..\arch\riscv64\core\thread.c">
       <Filter>zephyr\arch\riscv64\core</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\arch\riscv64\core\swap.c">
-      <Filter>zephyr\arch\riscv64\core</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\..\arch\riscv64\core\fatal.c">
       <Filter>zephyr\arch\riscv64\core</Filter>
     </ClCompile>
@@ -423,9 +423,6 @@
     <ClCompile Include="..\..\..\..\arch\riscv64\core\irq_manage.c">
       <Filter>zephyr\arch\riscv64\core</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\arch\msvc\entry_point.c">
-      <Filter>zephyr\arch\msvc</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\..\samples\shell\src\main.c">
       <Filter>zephyr\samples\shell</Filter>
     </ClCompile>
@@ -440,6 +437,12 @@
     </ClCompile>
     <ClCompile Include="..\..\..\..\kernel\nanokernel\errno.c">
       <Filter>zephyr\kernel\nanokernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\core\entry_point.c">
+      <Filter>zephyr\arch\msvc\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\core\swap.c">
+      <Filter>zephyr\arch\msvc\core</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

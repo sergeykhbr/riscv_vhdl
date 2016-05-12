@@ -1,0 +1,46 @@
+# Kconfig - Pinmux configuration options
+
+#
+# Copyright (c) 2015 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+#
+# PinMux options
+#
+menuconfig PINMUX
+        bool "Enable platform pinmux driver"
+        default n
+
+if PINMUX
+
+source "drivers/pinmux/dev/Kconfig"
+
+config PINMUX_INIT_PRIORITY
+	int
+	prompt "Init priority"
+	default 60
+	depends on PINMUX
+	help
+	  Device driver initialization priority.
+	  The device needs to be initialized after all the devices it
+	  uses.
+
+source "drivers/pinmux/galileo/Kconfig"
+
+source "drivers/pinmux/Kconfig.k64"
+
+source "drivers/pinmux/Kconfig.stm32"
+
+endif # PINMUX

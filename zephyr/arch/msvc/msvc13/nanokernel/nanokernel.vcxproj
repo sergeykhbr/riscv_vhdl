@@ -134,12 +134,10 @@
     <ClInclude Include="..\..\..\..\lib\libc\minimal\include\sys\types.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\..\arch\msvc\entry_point.c" />
     <ClCompile Include="..\..\..\..\arch\riscv64\core\atomic.c" />
     <ClCompile Include="..\..\..\..\arch\riscv64\core\cpu_idle.c" />
     <ClCompile Include="..\..\..\..\arch\riscv64\core\fatal.c" />
     <ClCompile Include="..\..\..\..\arch\riscv64\core\irq_manage.c" />
-    <ClCompile Include="..\..\..\..\arch\riscv64\core\swap.c" />
     <ClCompile Include="..\..\..\..\arch\riscv64\core\thread.c" />
     <ClCompile Include="..\..\..\..\arch\riscv64\soc\soc.c" />
     <ClCompile Include="..\..\..\..\drivers\console\console_handler_shell.c" />
@@ -180,6 +178,8 @@
     <ClCompile Include="..\..\..\..\misc\printk.c" />
     <ClCompile Include="..\..\..\..\samples\shell\src\main.c" />
     <ClCompile Include="..\..\..\riscv64\core\gptimers.c" />
+    <ClCompile Include="..\..\core\entry_point.c" />
+    <ClCompile Include="..\..\core\swap.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

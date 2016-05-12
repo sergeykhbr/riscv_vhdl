@@ -30,7 +30,7 @@ typedef unsigned int size_t;
 typedef unsigned int size_t;
 #elif defined(__NIOS2__)
 typedef unsigned int size_t;
-#elif defined(__RISCV64)
+#elif defined(CONFIG_RISCV64)
 typedef unsigned int  size_t;
 #else
 #error "The minimal libc library does not recognize the architecture!\n"

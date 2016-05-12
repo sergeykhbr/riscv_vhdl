@@ -1,0 +1,76 @@
+# Kconfig - PCI configuration options
+
+#
+# Copyright (c) 2015 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+
+menuconfig PCI
+	bool
+	prompt "PCI Settings"
+	depends on X86
+	help
+	This options enables support of PCI bus for device drivers.
+
+if PCI
+config PCI_ENUMERATION
+	bool
+	prompt "Enable PCI device enumeration"
+	default n
+	help
+	This option enables the PCI enumeration for device drivers.
+	This might be useful along with PCI_DEBUG to find out which
+	are the PCI settings of the devices. Once those are known and
+	statically set in every relevant driver's configuration, it
+	might be wise to disable this option to remove useless code.
+
+config PCI_LEGACY_BRIDGE
+	bool
+	prompt "PCI legacy bridge device support"
+	default n
+	help
+	This option adds support for PCI legacy bridge device, that
+	allows direct setup of the PCI interrupt pin to IRQ number
+	mapping.
+
+config PCI_LEGACY_BRIDGE_BUS
+        int "PCI Legacy Bridge Bus number"
+        depends on PCI_LEGACY_BRIDGE
+        default 0
+
+config PCI_LEGACY_BRIDGE_DEV
+        int "PCI Legacy Bridge Device number"
+        depends on PCI_LEGACY_BRIDGE
+        default 0
+
+config PCI_LEGACY_BRIDGE_VENDOR_ID
+        hex "PCI Legacy Bridge Vendor ID"
+        depends on PCI_LEGACY_BRIDGE
+        default 0
+
+config PCI_LEGACY_BRIDGE_DEVICE_ID
+        hex "PCI Legacy Bridge Device ID"
+        depends on PCI_LEGACY_BRIDGE
+        default 0
+
+config PCI_DEBUG
+	bool
+	prompt "Enable PCI debugging"
+	default n
+	help
+	This options enables PCI debigging functions
+
+endif
+

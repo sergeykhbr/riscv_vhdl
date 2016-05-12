@@ -27,11 +27,13 @@
 #define _RISCV_ARCH__H_
 
 #include <irq.h>
-#include <board.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#define STACK_ALIGN  8
 
 /**
  * @brief Disable all interrupts on the CPU (inline)

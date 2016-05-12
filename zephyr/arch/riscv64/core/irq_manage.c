@@ -1,6 +1,7 @@
 #include <nanokernel.h>
 #include <nano_private.h>
 #include <misc/__assert.h>
+#include <board.h>
 #include "irq.h"
 
 IsrEntryType isr_table[CONFIG_NUM_IRQS];

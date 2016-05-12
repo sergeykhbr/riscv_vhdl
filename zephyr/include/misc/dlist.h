@@ -29,6 +29,7 @@
 #define _misc_dlist__h_
 
 #include <stddef.h>
+#include "util.h"
 
 #ifdef __cplusplus
 extern "C" {

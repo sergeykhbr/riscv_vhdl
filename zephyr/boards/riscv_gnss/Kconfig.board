@@ -1,0 +1,3 @@
+
+config  BOARD_RISCV_GNSS
+        bool "RISC-V based FPGA SoC"

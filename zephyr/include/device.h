@@ -102,7 +102,7 @@ extern "C" {
  */
 
 #ifdef _WIN32
-#include "..\arch\msvc\device_link.h"
+#include "..\arch\msvc\core\device_link.h"
 #else
 #ifndef CONFIG_DEVICE_POWER_MANAGEMENT
 #define DEVICE_AND_API_INIT(dev_name, drv_name, init_fn, data, cfg_info, \
