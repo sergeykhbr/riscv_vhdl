@@ -44,9 +44,9 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(SolutionDir)../../../lib/libc/minimal/include;$(SolutionDir)../../../include;$(SolutionDir)../../../include/generated;$(SolutionDir)../../../kernel/nanokernel/include;$(SolutionDir)../../../arch/riscv64/include;$(SolutionDir)../../../arch/riscv64/soc;$(SolutionDir)../../../boards/riscv_gnss;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)../../../lib/libc/minimal/include;$(SolutionDir)../../../include;$(SolutionDir)../../../include/generated;$(SolutionDir)../../../kernel/nanokernel/include;$(SolutionDir)../../../arch/riscv64/include;$(SolutionDir)../../../arch/riscv64/soc/riscv_gnss;$(SolutionDir)../../../boards/riscv_gnss;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/D"__RISCV64" /D"INLINE=" %(AdditionalOptions)</AdditionalOptions>
-      <PreprocessorDefinitions>CONFIG_RISCV64;CONFIG_PRINTK;CONFIG_STDOUT_CONSOLE;CONFIG_SYS_CLOCK_HW_CYCLES_PER_SEC=60000000;CONFIG_SYS_CLOCK_TICKS_PER_SEC=100;CONFIG_NANO_TIMERS;CONFIG_MAIN_STACK_SIZE=16384;CONFIG_ISR_STACK_SIZE=256;CONFIG_KERNEL_EVENT_LOGGER_BUFFER_SIZE=16;CONFIG_NUM_IRQS=3;CONFIG_SW_ISR_TABLE_DYNAMIC;CONFIG_NANO_TIMEOUTS;CONFIG_NANOKERNEL;NANOKERNEL=1;CONFIG_KERNEL_EVENT_LOGGER;CONFIG_KERNEL_INIT_PRIORITY_DEFAULT=0x40;CONFIG_UART_CONSOLE;CONFIG_UART_CONSOLE_ON_DEV_NAME="UART_0";CONFIG_UART_INTERRUPT_DRIVEN;CONFIG_CONSOLE_HANDLER;CONFIG_CONSOLE_HANDLER_SHELL;CONFIG_CONSOLE_HANDLER_SHELL_STACKSIZE=2000;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>CONFIG_RISCV64;CONFIG_PRINTK;CONFIG_STDOUT_CONSOLE;CONFIG_SYS_CLOCK_HW_CYCLES_PER_SEC=60000000;CONFIG_SYS_CLOCK_TICKS_PER_SEC=100;CONFIG_NANO_TIMERS;CONFIG_MAIN_STACK_SIZE=16384;CONFIG_ISR_STACK_SIZE=256;CONFIG_KERNEL_EVENT_LOGGER_BUFFER_SIZE=16;CONFIG_NUM_IRQS=3;CONFIG_SW_ISR_TABLE_DYNAMIC;CONFIG_NANO_TIMEOUTS;CONFIG_NANOKERNEL;NANOKERNEL=1;CONFIG_KERNEL_EVENT_LOGGER;CONFIG_KERNEL_INIT_PRIORITY_DEFAULT=0x40;CONFIG_UART_CONSOLE;CONFIG_UART_CONSOLE_ON_DEV_NAME="UART_0";CONFIG_UART_INTERRUPT_DRIVEN;CONFIG_CONSOLE_HANDLER;CONFIG_CONSOLE_HANDLER_SHELL;CONFIG_CONSOLE_HANDLER_SHELL_STACKSIZE=2000;CONFIG_ERRNO;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -72,8 +72,6 @@
   <ItemGroup>
     <ClInclude Include="..\..\..\..\arch\riscv64\include\kernel_event_logger_arch.h" />
     <ClInclude Include="..\..\..\..\arch\riscv64\include\nano_private.h" />
-    <ClInclude Include="..\..\..\..\arch\riscv64\soc\soc.h" />
-    <ClInclude Include="..\..\..\..\arch\riscv64\soc\soc_registers.h" />
     <ClInclude Include="..\..\..\..\include\arch\cpu.h" />
     <ClInclude Include="..\..\..\..\include\arch\riscv64\arch.h" />
     <ClInclude Include="..\..\..\..\include\atomic.h" />
@@ -132,6 +130,8 @@
     <ClInclude Include="..\..\..\..\lib\libc\minimal\include\string.h" />
     <ClInclude Include="..\..\..\..\lib\libc\minimal\include\strings.h" />
     <ClInclude Include="..\..\..\..\lib\libc\minimal\include\sys\types.h" />
+    <ClInclude Include="..\..\..\riscv64\soc\riscv_gnss\soc.h" />
+    <ClInclude Include="..\..\..\riscv64\soc\riscv_gnss\soc_registers.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\..\arch\riscv64\core\atomic.c" />
@@ -139,7 +139,6 @@
     <ClCompile Include="..\..\..\..\arch\riscv64\core\fatal.c" />
     <ClCompile Include="..\..\..\..\arch\riscv64\core\irq_manage.c" />
     <ClCompile Include="..\..\..\..\arch\riscv64\core\thread.c" />
-    <ClCompile Include="..\..\..\..\arch\riscv64\soc\soc.c" />
     <ClCompile Include="..\..\..\..\drivers\console\console_handler_shell.c" />
     <ClCompile Include="..\..\..\..\drivers\console\uart_console.c" />
     <ClCompile Include="..\..\..\..\drivers\random\rand32_timer.c" />
@@ -178,6 +177,7 @@
     <ClCompile Include="..\..\..\..\misc\printk.c" />
     <ClCompile Include="..\..\..\..\samples\shell\src\main.c" />
     <ClCompile Include="..\..\..\riscv64\core\gptimers.c" />
+    <ClCompile Include="..\..\..\riscv64\soc\riscv_gnss\soc.c" />
     <ClCompile Include="..\..\core\entry_point.c" />
     <ClCompile Include="..\..\core\swap.c" />
   </ItemGroup>

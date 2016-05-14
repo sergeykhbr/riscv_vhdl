@@ -110,7 +110,7 @@ int64_t sys_tick_get(void)
  * NOTE: We use INLINE function for both 64-bit and 32-bit functions.
  * Compiler optimizes out 64-bit result handling in 32-bit version.
  */
-static ALWAYS_INLINE int64_t _nano_tick_delta(int64_t *reftime)
+static INLINE int64_t _nano_tick_delta(int64_t *reftime)
 {
 	int64_t  delta;
 	int64_t  saved;

@@ -36,7 +36,7 @@ extern "C" {
 
 #include <toolchain.h>
 #include <sections.h>
-#include <arch/cpu.h>
+#include <irq.h>
 #include <nanokernel.h>		   /* public nanokernel API */
 #include <../../../kernel/nanokernel/include/nano_internal.h>
 #include <stdint.h>

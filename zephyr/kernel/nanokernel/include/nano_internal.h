@@ -58,7 +58,7 @@ extern void _new_thread(char *pStack, unsigned stackSize,
 extern void _nano_fiber_ready(struct tcs *tcs);
 extern void _nano_fiber_swap(void);
 
-extern unsigned int _Swap(unsigned int);
+extern uint64_t _Swap(uint64_t);
 
 /* set and clear essential fiber/task flag */
 

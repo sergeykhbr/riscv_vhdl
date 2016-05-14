@@ -20,7 +20,6 @@
 config SOC_RISCV_GNSS
 	bool
 	depends on RISCV64
-	default y
 
 if RISCV64 && SOC_RISCV_GNSS
 

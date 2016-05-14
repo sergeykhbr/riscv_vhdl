@@ -24,6 +24,7 @@
 #include <board.h>
 #include <init.h>
 #include <uart.h>
+#include <irq.h>
 
 #define UART_STATUS_TX_FULL     0x00000001
 #define UART_STATUS_TX_EMPTY    0x00000002
@@ -59,7 +60,7 @@ static struct uart_gnss_dev_data_t uart_gnss_dev_data_0 = {
  * @return N/A
  */
 void uart_gnss_isr(struct device *dev) {
-    struct uart_gnss_dev_data_t *data = 
+    struct uart_gnss_dev_data_t *data =
         (struct uart_gnss_dev_data_t *)dev->driver_data;
     if (data->cb) {
         data->cb(dev);
@@ -182,7 +183,7 @@ static int uart_gnss_irq_update(struct device *dev)
  *
  * @return N/A
  */
-static void uart_gnss_irq_callback_set(struct device *dev, 
+static void uart_gnss_irq_callback_set(struct device *dev,
                                         uart_irq_callback_t cb)
 {
 	struct uart_gnss_dev_data_t * const dev_data = dev->driver_data;

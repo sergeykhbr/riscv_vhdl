@@ -2,7 +2,6 @@
 #include <nano_private.h>
 #include <misc/__assert.h>
 #include <board.h>
-#include "irq.h"
 
 IsrEntryType isr_table[CONFIG_NUM_IRQS];
 IsrEntryType isr_demux_table[CONFIG_NUM_IRQS];
@@ -11,7 +10,6 @@ IsrEntryType isr_demux_table[CONFIG_NUM_IRQS];
 void _IsrExit(void) {
     if ((_nanokernel.current->flags & TASK) == TASK) {
         if (_nanokernel.fiber) {
-            struct tcs *ctx = _nanokernel.fiber;
             _nanokernel.current = _nanokernel.fiber;
             _nanokernel.fiber = _nanokernel.fiber->link;
 
@@ -113,13 +111,12 @@ void _irq_handler_set(
  *
  * @return the interrupt line number
  */
-
- int _arch_irq_connect_dynamic(unsigned int irq, unsigned int priority,
+int _arch_irq_connect_dynamic(unsigned int irq, unsigned int priority,
 			     void (*routine)(void *parameter), void *parameter,
 			     uint32_t flags)
 {
 	ARG_UNUSED(flags);
-	_irq_handler_set(irq, routine, parameter);
+	_irq_handler_set(irq, func, parameter);
 	return irq;
 }
 

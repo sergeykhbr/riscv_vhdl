@@ -26,14 +26,17 @@
 #ifndef _RISCV_ARCH__H_
 #define _RISCV_ARCH__H_
 
-#include <irq.h>
 #include <stdint.h>
+#include <toolchain.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #define STACK_ALIGN  8
+
+/** interrupt/exception/error related definitions */
+typedef void (*NANO_EOI_GET_FUNC) (void *);
 
 /**
  * @brief Disable all interrupts on the CPU (inline)
@@ -110,21 +113,18 @@ extern void _arch_irq_enable(unsigned int irq);
 extern void _arch_irq_disable(unsigned int irq);
 
 /**
+ * Configure a dynamic interrupt.
  *
- * @brief Connect an ISR to an interrupt line
+ * @param irq IRQ line number
+ * @param priority Interrupt priority
+ * @param routine Interrupt service routine
+ * @param parameter ISR parameter
+ * @param flags Arch-specific IRQ configuration flags
  *
- * <isr> is connected to interrupt line <irq> (exception #<irq>+16). No prior
- * ISR can have been connected on <irq> interrupt line since the system booted.
- *
- * This routine will hang if another ISR was connected for interrupt line <irq>
- * and ASSERT_ON is enabled; if ASSERT_ON is disabled, it will fail silently.
- *
- * @return the interrupt line number
+ * @return The vector assigned to this interrupt
  */
-extern int _arch_irq_connect_dynamic(unsigned int irq,
-			     unsigned int prio,
-			     void (*isr)(void *arg),
-			     void *arg,
+extern int _arch_irq_connect_dynamic(unsigned int irq, unsigned int priority,
+			     void (*routine)(void *parameter), void *parameter,
 			     uint32_t flags);
 
 
@@ -162,9 +162,6 @@ extern int _arch_irq_connect_dynamic(unsigned int irq,
 				  flags_p)
 
 
-
-/** interrupt/exception/error related definitions */
-typedef void (*NANO_EOI_GET_FUNC) (void *);
 
 /**
  * The NANO_SOFT_IRQ macro must be used as the value for the @a irq parameter

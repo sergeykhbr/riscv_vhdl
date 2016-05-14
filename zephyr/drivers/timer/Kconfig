@@ -141,6 +141,14 @@ config CORTEX_M_SYSTICK
 	This module implements a kernel device driver for the Cortex-M processor
 	SYSTICK timer and provides the standard "system clock driver" interfaces.
 
+config RISCV_SYSTIMER
+	bool "RISC-V System timer"
+	default y
+	depends on RISCV64
+	help
+	This module implements a kernel device driver for the Rocket-chip processor
+	System timer and provides the standard "system clock driver" interfaces.
+
 config SYSTEM_CLOCK_DISABLE
 	bool "API to disable system clock"
 	default n

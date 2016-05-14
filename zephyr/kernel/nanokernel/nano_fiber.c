@@ -66,8 +66,8 @@ void _nano_fiber_ready(struct tcs *tcs)
 nano_thread_id_t _fiber_start(char *pStack,
 		unsigned stackSize, /* stack size in bytes */
 		nano_fiber_entry_t pEntry,
-		int parameter1,
-		int parameter2,
+		long parameter1,
+		long parameter2,
 		unsigned priority,
 		unsigned options)
 {
@@ -114,20 +114,20 @@ nano_thread_id_t _fiber_start(char *pStack,
 
 #ifdef _WIN32
 nano_thread_id_t fiber_fiber_start(char *pStack,
-		unsigned stackSize, nano_fiber_entry_t pEntry, int parameter1,
-		int parameter2, unsigned priority, unsigned options) {
+		unsigned stackSize, nano_fiber_entry_t pEntry, long parameter1,
+		long parameter2, unsigned priority, unsigned options) {
     return _fiber_start(pStack, stackSize, pEntry, parameter1, parameter2,
 		        priority, options);
 }
 nano_thread_id_t task_fiber_start(char *pStack,
-		unsigned stackSize,  nano_fiber_entry_t pEntry, int parameter1,
-		int parameter2, unsigned priority, unsigned options) {
+		unsigned stackSize,  nano_fiber_entry_t pEntry, long parameter1,
+		long parameter2, unsigned priority, unsigned options) {
     return _fiber_start(pStack, stackSize, pEntry, parameter1, parameter2,
 		        priority, options);
 }
 nano_thread_id_t fiber_start(char *pStack,
-		unsigned stackSize,  nano_fiber_entry_t pEntry, int parameter1,
-		int parameter2, unsigned priority, unsigned options) {
+		unsigned stackSize,  nano_fiber_entry_t pEntry, long parameter1,
+		long parameter2, unsigned priority, unsigned options) {
     return _fiber_start(pStack, stackSize, pEntry, parameter1, parameter2,
 		        priority, options);
 }
@@ -204,8 +204,8 @@ FUNC_NORETURN void fiber_abort(void)
 
 nano_thread_id_t fiber_delayed_start(char *stack,
 			  unsigned int stack_size_in_bytes,
-			  nano_fiber_entry_t entry_point, int param1,
-			  int param2, unsigned int priority,
+			  nano_fiber_entry_t entry_point, long param1,
+			  long param2, unsigned int priority,
 			  unsigned int options, int32_t timeout_in_ticks)
 {
 	unsigned int key;
@@ -226,16 +226,16 @@ nano_thread_id_t fiber_delayed_start(char *stack,
 #ifdef _WIN32
 nano_thread_id_t fiber_fiber_delayed_start(char *stack,
 			  unsigned int stack_size_in_bytes,
-			  nano_fiber_entry_t entry_point, int param1,
-			  int param2, unsigned int priority,
+			  nano_fiber_entry_t entry_point, long param1,
+			  long param2, unsigned int priority,
 			  unsigned int options, int32_t timeout_in_ticks) {
     return fiber_delayed_start(stack, stack_size_in_bytes, entry_point, param1,
 			  param2, priority, options, timeout_in_ticks);
 }
 nano_thread_id_t task_fiber_delayed_start(char *stack,
 			  unsigned int stack_size_in_bytes,
-			  nano_fiber_entry_t entry_point, int param1,
-			  int param2, unsigned int priority,
+			  nano_fiber_entry_t entry_point, long param1,
+			  long param2, unsigned int priority,
 			  unsigned int options, int32_t timeout_in_ticks) {
     return fiber_delayed_start(stack, stack_size_in_bytes, entry_point, param1,
 			  param2, priority, options, timeout_in_ticks);

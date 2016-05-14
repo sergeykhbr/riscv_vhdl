@@ -177,7 +177,7 @@ extern void sys_thread_busy_wait(uint32_t usec_to_wait);
  */
 extern nano_thread_id_t fiber_start(char *stack, unsigned stack_size,
 		nano_fiber_entry_t entry,
-		int arg1, int arg2, unsigned prio, unsigned options);
+		long arg1, long arg2, unsigned prio, unsigned options);
 
 /* Methods for fibers */
 
@@ -197,7 +197,7 @@ extern nano_thread_id_t fiber_start(char *stack, unsigned stack_size,
  * @return nanokernel thread identifier
  */
 extern nano_thread_id_t fiber_fiber_start(char *pStack, unsigned int stackSize,
-		nano_fiber_entry_t entry, int arg1, int arg2, unsigned prio,
+		nano_fiber_entry_t entry, long arg1, long arg2, unsigned prio,
 		unsigned options);
 
 /**
@@ -331,14 +331,14 @@ extern void task_sleep(int32_t timeout_in_ticks);
  */
 extern nano_thread_id_t fiber_fiber_delayed_start(char *stack,
 		unsigned int stack_size_in_bytes,
-		nano_fiber_entry_t entry_point, int param1,
-		int param2, unsigned int priority,
+		nano_fiber_entry_t entry_point, long param1,
+		long param2, unsigned int priority,
 		unsigned int options, int32_t timeout_in_ticks);
 
 extern nano_thread_id_t fiber_delayed_start(char *stack,
 		unsigned int stack_size_in_bytes,
-		nano_fiber_entry_t entry_point, int param1,
-		int param2, unsigned int priority,
+		nano_fiber_entry_t entry_point, long param1,
+		long param2, unsigned int priority,
 		unsigned int options, int32_t timeout_in_ticks);
 extern void fiber_delayed_start_cancel(nano_thread_id_t handle);
 
@@ -372,7 +372,7 @@ extern void fiber_fiber_delayed_start_cancel(nano_thread_id_t handle);
  * @sa fiber_fiber_start
  */
 extern nano_thread_id_t task_fiber_start(char *pStack, unsigned int stackSize,
-		nano_fiber_entry_t entry, int arg1, int arg2, unsigned prio,
+		nano_fiber_entry_t entry, long arg1, long arg2, unsigned prio,
 		unsigned options);
 #ifdef CONFIG_NANO_TIMEOUTS
 
@@ -383,8 +383,8 @@ extern nano_thread_id_t task_fiber_start(char *pStack, unsigned int stackSize,
  */
 extern nano_thread_id_t task_fiber_delayed_start(char *stack,
 		unsigned int stack_size_in_bytes,
-		nano_fiber_entry_t entry_point, int param1,
-		int param2, unsigned int priority,
+		nano_fiber_entry_t entry_point, long param1,
+		long param2, unsigned int priority,
 		unsigned int options, int32_t timeout_in_ticks);
 /**
  * @brief Cancel a delayed fiber start from a task.

@@ -21,6 +21,7 @@
 
 #include <misc/event_logger.h>
 #include <misc/ring_buffer.h>
+#include <irq.h>
 
 void sys_event_logger_init(struct event_logger *logger,
 	uint32_t *logger_buffer, uint32_t buffer_size)

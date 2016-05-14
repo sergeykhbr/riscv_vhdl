@@ -69,7 +69,7 @@ void _lifo_put_non_preemptible(struct nano_lifo *lifo, void *data)
 	tcs = _nano_wait_q_remove(&lifo->wait_q);
 	if (tcs) {
 		_nano_timeout_abort(tcs);
-		fiberRtnValueSet(tcs, (unsigned int) data);
+		fiberRtnValueSet(tcs, (uint64_t) data);
 	} else {
 		*(void **) data = lifo->list;
 		lifo->list = data;
@@ -100,7 +100,7 @@ void nano_task_lifo_put(struct nano_lifo *lifo, void *data)
 	tcs = _nano_wait_q_remove(&lifo->wait_q);
 	if (tcs) {
 		_nano_timeout_abort(tcs);
-		fiberRtnValueSet(tcs, (unsigned int) data);
+		fiberRtnValueSet(tcs, (uint64_t) data);
 		_Swap(imask);
 		return;
 	}

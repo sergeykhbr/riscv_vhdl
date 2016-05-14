@@ -129,7 +129,7 @@ void _fifo_put_non_preemptible(struct nano_fifo *fifo, void *data)
 	tcs = _nano_wait_q_remove(&fifo->wait_q);
 	if (tcs) {
 		_nano_timeout_abort(tcs);
-		fiberRtnValueSet(tcs, (unsigned int)data);
+		fiberRtnValueSet(tcs, (uint64_t)data);
 	} else {
 		enqueue_data(fifo, data);
 		_NANO_UNPEND_TASKS(&fifo->task_q);
@@ -159,7 +159,7 @@ void nano_task_fifo_put(struct nano_fifo *fifo, void *data)
 	tcs = _nano_wait_q_remove(&fifo->wait_q);
 	if (tcs) {
 		_nano_timeout_abort(tcs);
-		fiberRtnValueSet(tcs, (unsigned int)data);
+		fiberRtnValueSet(tcs, (uint64_t)data);
 		_Swap(key);
 		return;
 	}

@@ -37,7 +37,7 @@ config SRAM_SIZE
 	default 512 if SOC_RISCV_GNSS
 
 config SRAM_BASE_ADDRESS
-	default 0x10000000 if SOC_RISCV_GNSS
+	default 0x10000000
 
 
 endif # SOC_RISCV_GNSS

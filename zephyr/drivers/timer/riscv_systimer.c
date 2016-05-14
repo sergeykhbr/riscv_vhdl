@@ -1,3 +1,4 @@
+#include <arch/cpu.h>
 #include <nanokernel.h>
 #include <toolchain.h>
 #include <sections.h>
@@ -41,12 +42,12 @@ uint32_t sys_cycle_get_32(void)
 }
 
 #ifdef CONFIG_TICKLESS_IDLE
-static ALWAYS_INLINE void update_accumulated_count(void)
+static INLINE void update_accumulated_count(void)
 {
 	accumulated_cycle_count += (_sys_idle_elapsed_ticks * cycles_per_tick);
 }
 #else /* CONFIG_TICKLESS_IDLE */
-static ALWAYS_INLINE void update_accumulated_count(void)
+static INLINE void update_accumulated_count(void)
 {
 	accumulated_cycle_count += cycles_per_tick;
 }
@@ -93,7 +94,7 @@ int _sys_clock_driver_init(struct device *device) {
 	/* ensure that the timer will not generate interrupts */
     WRITE32(&__TIMERS->tmr[CFG_SYS_TIMER_IDX].control, 0);
 
-    sys_clock_hw_cycles_per_tick = CONFIG_SYS_CLOCK_HW_CYCLES_PER_SEC / 
+    sys_clock_hw_cycles_per_tick = CONFIG_SYS_CLOCK_HW_CYCLES_PER_SEC /
                                     sys_clock_ticks_per_sec;
 	cycles_per_tick = sys_clock_hw_cycles_per_tick;
     accumulated_cycle_count = 0;

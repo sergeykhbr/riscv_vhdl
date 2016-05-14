@@ -56,4 +56,5 @@ FUNC_NORETURN void _NanoFatalErrorHandler(unsigned int reason,
 #ifdef CONFIG_PRINTK
        printk("***** Unhandled interrupt vector %d occurred! \n", -1);
 #endif
+    while (1) {}
 }

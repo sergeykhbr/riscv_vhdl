@@ -3,7 +3,7 @@
 #include <nano_private.h>
 
 //
-unsigned int _Swap(unsigned int fl) {
+uint64_t _Swap(uint64_t fl) {
     tNANO *r1 = &_nanokernel;
     struct tcs *r2 = r1->current;
 
@@ -22,6 +22,6 @@ unsigned int _Swap(unsigned int fl) {
 #ifdef _WIN32
     _nanokernel.current->return_value = LIBH_swap((uint64_t)_nanokernel.current);
 #endif
-    return (unsigned int)_nanokernel.current->return_value;
+    return _nanokernel.current->return_value;
 }
 

@@ -147,7 +147,7 @@ int _sem_take(struct nano_sem *sem, int32_t timeout_in_ticks)
 	if (timeout_in_ticks != TICKS_NONE) {
 		_NANO_TIMEOUT_ADD(&sem->wait_q, timeout_in_ticks);
 		_nano_wait_q_put(&sem->wait_q);
-		return _Swap(key);
+		return (int)_Swap(key);
 	}
 
 	irq_unlock(key);
