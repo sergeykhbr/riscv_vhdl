@@ -39,5 +39,14 @@ config SRAM_SIZE
 config SRAM_BASE_ADDRESS
 	default 0x10000000
 
+config UART_RISCV_GNSS
+	def_bool y
+
+config UART_CONSOLE
+	def_bool y
+
+config CONSOLE_HANDLER_SHELL
+	def_bool y
+
 
 endif # SOC_RISCV_GNSS

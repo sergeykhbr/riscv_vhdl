@@ -1,0 +1,2 @@
+cd samples/shell
+make ARCH=riscv64 CROSS_COMPILE=/home/teeshina/riscv/gnu-toolchain-rv64ima/bin/riscv64-unknown-elf- BOARD=riscv_gnss 2>&1 | tee _err.log

@@ -104,7 +104,7 @@
 
   #elif defined(CONFIG_RISCV64)
 
-    #define PERFOPT_ALIGN .balign  4
+    #define PERFOPT_ALIGN .balign  8
 
   #elif defined(CONFIG_NIOS2)
 

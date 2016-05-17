@@ -565,8 +565,8 @@ export ARCH
 ifdef ZEPHYR_GCC_VARIANT
 include $(srctree)/scripts/Makefile.toolchain.$(ZEPHYR_GCC_VARIANT)
 else
-$(if $(CROSS_COMPILE),, \
-     $(error ZEPHYR_GCC_VARIANT is not set. ))
+#$(if $(CROSS_COMPILE),, \
+#     $(error ZEPHYR_GCC_VARIANT is not set. ))
 endif
 
 ifneq ($(CC),)

@@ -1,3 +1,6 @@
 
 config  BOARD_RISCV_GNSS
         bool "RISC-V based FPGA SoC"
+        depends on SOC_RISCV_GNSS
+	help
+	The RISC-v VHDL FPGA development boards

@@ -4,4 +4,5 @@ if BOARD_RISCV_GNSS
 config BOARD
         default riscv_gnss
 
+
 endif # BOARD_RISCV_GNSS

@@ -1,4 +1,3 @@
-#include <arch/cpu.h>
 #include <nanokernel.h>
 #include <toolchain.h>
 #include <sections.h>
@@ -6,6 +5,7 @@
 #include <drivers/system_timer.h>
 #include <nano_private.h>
 #include <board.h>
+#include <irq.h>
 
 #ifdef CONFIG_MICROKERNEL
 

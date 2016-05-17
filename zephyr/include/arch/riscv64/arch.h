@@ -35,6 +35,10 @@ extern "C" {
 
 #define STACK_ALIGN  8
 
+#ifdef _ASMLANGUAGE
+
+
+#else // !_ASMLANGUAGE
 /** interrupt/exception/error related definitions */
 typedef void (*NANO_EOI_GET_FUNC) (void *);
 
@@ -123,7 +127,7 @@ extern void _arch_irq_disable(unsigned int irq);
  *
  * @return The vector assigned to this interrupt
  */
-extern int _arch_irq_connect_dynamic(unsigned int irq, unsigned int priority,
+int _arch_irq_connect_dynamic(unsigned int irq, unsigned int priority,
 			     void (*routine)(void *parameter), void *parameter,
 			     uint32_t flags);
 
@@ -254,6 +258,7 @@ extern FUNC_NORETURN void _SysFatalErrorHandler(unsigned int reason,
 /** Dummy ESF for fatal errors that would otherwise not have an ESF */
 extern const NANO_ESF _default_esf;
 
+#endif  // _ASMLANGUAGE/!_ASMLANGUAGE
 
 #ifdef __cplusplus
 }

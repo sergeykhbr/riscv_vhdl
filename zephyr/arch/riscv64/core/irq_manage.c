@@ -72,7 +72,6 @@ void _arch_irq_disable(unsigned int irq)
     WRITE32(&__IRQCTRL->irq_mask, bit);
 }
 
-#if CONFIG_SW_ISR_TABLE_DYNAMIC
 /*
  * @internal
  *
@@ -112,12 +111,10 @@ void _irq_handler_set(
  * @return the interrupt line number
  */
 int _arch_irq_connect_dynamic(unsigned int irq, unsigned int priority,
-			     void (*routine)(void *parameter), void *parameter,
+			     void (*routine)(void *arg), void *parameter,
 			     uint32_t flags)
 {
 	ARG_UNUSED(flags);
-	_irq_handler_set(irq, func, parameter);
+	_irq_handler_set(irq, routine, parameter);
 	return irq;
 }
-
-#endif /* CONFIG_SW_ISR_TABLE_DYNAMIC */

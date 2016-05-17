@@ -16,6 +16,9 @@
  * limitations under the License.
  */
 
+#ifndef __INCLUDE_SHELL_H__
+#define __INCLUDE_SHELL_H__
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -62,3 +65,4 @@ void shell_register_prompt_handler(shell_prompt_function_t handler);
 }
 #endif
 
+#endif  // __INCLUDE_SHELL_H__

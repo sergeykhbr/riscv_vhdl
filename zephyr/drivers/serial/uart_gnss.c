@@ -59,7 +59,8 @@ static struct uart_gnss_dev_data_t uart_gnss_dev_data_0 = {
  *
  * @return N/A
  */
-void uart_gnss_isr(struct device *dev) {
+void uart_gnss_isr(void *arg) {
+    struct device *dev = (struct device *)arg;
     struct uart_gnss_dev_data_t *data =
         (struct uart_gnss_dev_data_t *)dev->driver_data;
     if (data->cb) {
