@@ -74,7 +74,9 @@ type registers is record
   --! irq pending bit mask
   irqs_pending  : std_logic_vector(CFG_IRQ_TOTAL-1 downto 0);
   --! interrupt handler address initialized by FW:
-  irq_handler   : std_logic_vector(63 downto 0);
+  isr_table     : std_logic_vector(63 downto 0);
+  irq_disable   : std_logic;
+  irq_cause_idx : std_logic_vector(31 downto 0);
   --! Function trap_entry copies the values of CSRs into these two regs:
   dbg_cause    : std_logic_vector(63 downto 0);
   dbg_epc      : std_logic_vector(63 downto 0);
@@ -106,12 +108,14 @@ begin
          when 1      => tmp(CFG_IRQ_TOTAL-1 downto 0) := r.irqs_pending;  --! [RO]: Rised interrupts.
          when 2      => tmp := (others => '0');                           --! [WO]: Clear interrupts mask.
          when 3      => tmp := (others => '0');                           --! [WO]: Rise interrupts mask.
-         when 4      => tmp := r.irq_handler(31 downto 0);                --! [RW]: LSB of the function address
-         when 5      => tmp := r.irq_handler(63 downto 32);               --! [RW]: MSB of the function address
+         when 4      => tmp := r.isr_table(31 downto 0);                  --! [RW]: LSB of the function address
+         when 5      => tmp := r.isr_table(63 downto 32);                 --! [RW]: MSB of the function address
          when 6      => tmp := r.dbg_cause(31 downto 0);                  --! [RW]: Cause of the interrupt
          when 7      => tmp := r.dbg_cause(63 downto 32);                 --! [RW]: 
          when 8      => tmp := r.dbg_epc(31 downto 0);                    --! [RW]: Instruction pointer
          when 9      => tmp := r.dbg_epc(63 downto 32);                   --! [RW]: 
+         when 10     => tmp(0) := r.irq_disable;
+         when 11     => tmp := r.irq_cause_idx;
          when others =>
        end case;
        rdata(8*CFG_ALIGN_BYTES*(n+1)-1 downto 8*CFG_ALIGN_BYTES*n) := tmp;
@@ -135,12 +139,14 @@ begin
              when 3 => 
                 w_generate_ipi := '1';
                 v.irqs_pending := (not r.irqs_mask) and tmp(CFG_IRQ_TOTAL-1 downto 0);
-             when 4 => v.irq_handler(31 downto 0) := tmp;
-             when 5 => v.irq_handler(63 downto 32) := tmp;
+             when 4 => v.isr_table(31 downto 0) := tmp;
+             when 5 => v.isr_table(63 downto 32) := tmp;
              when 6 => v.dbg_cause(31 downto 0) := tmp;
              when 7 => v.dbg_cause(63 downto 32) := tmp;
              when 8 => v.dbg_epc(31 downto 0) := tmp;
              when 9 => v.dbg_epc(63 downto 32) := tmp;
+             when 10 => v.irq_disable := tmp(0);
+             when 11 => v.irq_cause_idx := tmp;
              when others =>
            end case;
          end if;
@@ -150,7 +156,7 @@ begin
     v.irqs_z := i_irqs;
     v.irqs_zz := r.irqs_z;
     for n in 0 to CFG_IRQ_TOTAL-1 loop
-      if r.irqs_z(n) = '1' and r.irqs_zz(n) = '0'  then
+      if r.irq_disable = '0' and r.irqs_z(n) = '1' and r.irqs_zz(n) = '0'  then
          v.irqs_pending(n) := not r.irqs_mask(n);
          w_generate_ipi := w_generate_ipi or (not r.irqs_mask(n));
       end if;
@@ -210,7 +216,9 @@ begin
        r.irqs_pending <= (others => '0');
        r.irqs_z <= (others => '0');
        r.irqs_zz <= (others => '0');
-       r.irq_handler <= (others => '0');
+       r.isr_table <= (others => '0');
+       r.irq_disable <= '0';
+       r.irq_cause_idx <= (others => '0');
        r.dbg_cause <= (others => '0');
        r.dbg_epc <= (others => '0');
     elsif rising_edge(clk) then 

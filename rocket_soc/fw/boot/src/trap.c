@@ -28,9 +28,11 @@ long handle_trap(long cause, long epc, long long regs[32]) {
         for (int i = 0; i < CFG_IRQ_TOTAL; i++) {
             if (p_irqctrl->irq_pending & (0x1 << i)) {
                 irq_handler = (IRQ_HANDLER)isr_table[i].handler;
+                p_irqctrl->irq_cause_idx = i;
+
                 irq_handler((void *)isr_table[i].arg);
                 p_irqctrl->irq_clear = 0x1 << i; // clear pending bit[0]
-                
+
             }
         }
     } else {
@@ -40,4 +42,3 @@ long handle_trap(long cause, long epc, long long regs[32]) {
 
     return epc;
 }
-
