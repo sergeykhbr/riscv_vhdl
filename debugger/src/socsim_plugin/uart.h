@@ -11,13 +11,16 @@
 #include "iclass.h"
 #include "iservice.h"
 #include "coreservices/imemop.h"
-#include "coreservices/iconsole.h"
+#include "coreservices/iserial.h"
+#include "coreservices/iwire.h"
+#include "coreservices/irawlistener.h"
 #include <string>
 
 namespace debugger {
 
 class UART : public IService, 
-             public IMemoryOperation {
+             public IMemoryOperation,
+             public ISerial {
 public:
     UART(const char *name);
     ~UART();
@@ -35,13 +38,24 @@ public:
         return length_.to_uint64();
     }
 
+    /** ISerial */
+    virtual int writeData(const char *buf, int sz);
+    virtual void registerRawListener(IFace *listener);
+
 private:
     AttributeType baseAddress_;
     AttributeType length_;
-    AttributeType console_;
-    IConsole *iconsole_;
+    AttributeType irqLine_;
+    AttributeType irqctrl_;
+    AttributeType listeners_;  // non-registering attribute
+    IWire *iwire_;
 
     std::string input_;
+    static const int RX_FIFO_SIZE = 16;
+    char rxfifo_[RX_FIFO_SIZE];
+    char *p_rx_wr_;
+    char *p_rx_rd_;
+    int rx_total_;
 
     struct uart_map {
         volatile uint32_t data;

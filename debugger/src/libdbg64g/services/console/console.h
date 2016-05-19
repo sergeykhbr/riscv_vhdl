@@ -10,16 +10,21 @@
 
 #include "iclass.h"
 #include "iservice.h"
+#include "ihap.h"
 #include "coreservices/ithread.h"
 #include "coreservices/iconsole.h"
+#include "coreservices/iserial.h"
 #include "coreservices/ikeylistener.h"
+#include "coreservices/irawlistener.h"
 #include <string>
 
 namespace debugger {
 
 class ConsoleService : public IService,
                        public IThread,
-                       public IConsole {
+                       public IConsole,
+                       public IHap,
+                       public IRawListener {
 public:
     explicit ConsoleService(const char *name);
     virtual ~ConsoleService();
@@ -35,6 +40,12 @@ public:
     virtual int registerKeyListener(IFace *iface);
     virtual void enableLogFile(const char *filename);
 
+    /** IHap */
+    virtual void hapTriggered(EHapType type);
+
+    /** ISerial */
+    virtual void updateData(const char *buf, int buflen);
+
 protected:
     /** IThread interface */
     virtual void busyLoop();
@@ -49,9 +60,13 @@ private:
     AttributeType consumer_;
     AttributeType keyListeners_;
     AttributeType logFile_;
+    AttributeType serial_;
+    event_def config_done_;
+    mutex_def mutexConsoleOutput_;
     IKeyListener *iconsumer_;
     char tmpbuf_[4096];
     std::string cmdLine_;
+    std::string serial_input_;
     FILE *logfile_;
 #if defined(_WIN32) || defined(__CYGWIN__)
 #else

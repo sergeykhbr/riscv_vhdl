@@ -35,6 +35,7 @@ CpuRiscV_Functional::CpuRiscV_Functional(const char *name)
     RISCV_register_hap(static_cast<IHap *>(this));
     cpu_context_.csr[CSR_mreset]   = 0;
     dbg_state_ = STATE_Normal;
+    last_hit_breakpoint_ = ~0;
     reset();
 }
 
@@ -104,7 +105,9 @@ void CpuRiscV_Functional::updatePipeline() {
     CpuContextType *pContext = getpContext();
 
     pContext->pc = pContext->npc;
-    fetchInstruction();
+    if (isRunning()) {
+        fetchInstruction();
+    }
 
     updateState();
 
@@ -114,8 +117,14 @@ void CpuRiscV_Functional::updatePipeline() {
         return;
     } 
 
+#if 0
+    if (cacheline_[0] == 0x00b52023) {
+        bool st = true;
+    }
+#endif
     instr = decodeInstruction(cacheline_);
     if (isRunning()) {
+        last_hit_breakpoint_ = ~0;
         if (instr) {
             executeInstruction(instr, cacheline_);
         } else {
@@ -371,6 +380,28 @@ uint64_t CpuRiscV_Functional::getNPC() {
 void CpuRiscV_Functional::setNPC(uint64_t val) {
     CpuContextType *pContext = getpContext();
     pContext->npc = val;
+}
+
+void CpuRiscV_Functional::addBreakpoint(uint64_t addr) {
+    CpuContextType *pContext = getpContext();
+    pContext->ibus->addBreakpoint(addr);
+}
+
+void CpuRiscV_Functional::removeBreakpoint(uint64_t addr) {
+    CpuContextType *pContext = getpContext();
+    pContext->ibus->removeBreakpoint(addr);
+}
+
+void CpuRiscV_Functional::hitBreakpoint(uint64_t addr) {
+    CpuContextType *pContext = getpContext();
+    if (addr == last_hit_breakpoint_) {
+        return;
+    }
+    dbg_state_ = STATE_Halted;
+    last_hit_breakpoint_ = addr;
+
+    RISCV_printf0("[%" RV_PRI64 "d] pc:%016" RV_PRI64 "x: %08x \t stop on breakpoint",
+        getStepCounter(), pContext->pc, cacheline_[0]);
 }
 
 }  // namespace debugger

@@ -20,32 +20,61 @@ static const uint32_t UART_STATUS_ERR_STOPBIT = 0x00000200;
 
 UART::UART(const char *name)  : IService(name) {
     registerInterface(static_cast<IMemoryOperation *>(this));
+    registerInterface(static_cast<ISerial *>(this));
     registerAttribute("BaseAddress", &baseAddress_);
     registerAttribute("Length", &length_);
-    registerAttribute("Console", &console_);
+    registerAttribute("IrqLine", &irqLine_);
+    registerAttribute("IrqControl", &irqctrl_);
 
     baseAddress_.make_uint64(0);
     length_.make_uint64(0);
-    console_.make_string("");
+    irqLine_.make_uint64(0);
+    irqctrl_.make_string("");
+    listeners_.make_list(0);
 
     memset(&regs_, 0, sizeof(regs_));
     regs_.status = UART_STATUS_TX_EMPTY | UART_STATUS_RX_EMPTY;
+
+    p_rx_wr_ = rxfifo_;
+    p_rx_rd_ = rxfifo_;
+    rx_total_ = 0;
 }
 
 UART::~UART() {
 }
 
 void UART::postinitService() {
-    iconsole_ = static_cast<IConsole *>(
-        RISCV_get_service_iface(console_.to_string(), IFACE_CONSOLE));
-    if (!iconsole_) {
-        RISCV_error("Console %s not found", console_.to_string());
+    iwire_ = static_cast<IWire *>(
+        RISCV_get_service_iface(irqctrl_.to_string(), IFACE_WIRE));
+    if (!iwire_) {
+        RISCV_error("Can't find IWire interface %s", irqctrl_.to_string());
     }
+}
+
+int UART::writeData(const char *buf, int sz) {
+    if (sz > (RX_FIFO_SIZE - rx_total_)) {
+        sz = (RX_FIFO_SIZE - rx_total_);
+    }
+    for (int i = 0; i < sz; i++) {
+        rx_total_++;
+        *p_rx_wr_ = buf[i];
+        if ((++p_rx_wr_) >= (rxfifo_ + RX_FIFO_SIZE)) {
+            p_rx_wr_ = rxfifo_;
+        }
+    }
+    iwire_->raiseLine(irqLine_.to_int());
+    return sz;
+}
+
+void UART::registerRawListener(IFace *listener) {
+    AttributeType lstn(listener);
+    listeners_.add_to_list(&lstn);
 }
 
 void UART::transaction(Axi4TransactionType *payload) {
     uint64_t mask = (length_.to_uint64() - 1);
     uint64_t off = ((payload->addr - getBaseAddress()) & mask) / 4;
+    char wrdata;
     if (payload->rw) {
         for (uint64_t i = 0; i < payload->xsize/4; i++) {
             if ((payload->wstrb & (0xf << 4*i)) == 0) {
@@ -53,18 +82,13 @@ void UART::transaction(Axi4TransactionType *payload) {
             }
             switch (off + i) {
             case 0:
-                regs_.data = payload->wpayload[i];
+                wrdata = static_cast<char>(payload->wpayload[i]);
                 RISCV_info("Set data = %s", &regs_.data);
-                if (regs_.data == '\r' || regs_.data == '\n') {
-                    if (input_.size()) {
-                        input_ = "<serialconsole> " + input_ + "\n";
-                        if (iconsole_) {
-                            iconsole_->writeBuffer(input_.c_str());
-                        }
-                        input_.clear();
-                    }
-                } else {
-                    input_ += static_cast<char>(regs_.data);
+                for (unsigned n = 0; n < listeners_.size(); n++) {
+                    IRawListener *lstn = static_cast<IRawListener *>(
+                                        listeners_[n].to_iface());
+
+                    lstn->updateData(&wrdata, 1);
                 }
                 break;
             case 1:
@@ -82,10 +106,22 @@ void UART::transaction(Axi4TransactionType *payload) {
         for (uint64_t i = 0; i < payload->xsize/4; i++) {
             switch (off + i) {
             case 0:
-                RISCV_debug("Get data = %02x", regs_.data);
-                payload->rpayload[i] = 0;
+                if (rx_total_ == 0) {
+                    payload->rpayload[i] = 0;
+                } else {
+                    payload->rpayload[i] = *p_rx_rd_;
+                    rx_total_--;
+                    if ((++p_rx_rd_) >= (rxfifo_ + RX_FIFO_SIZE)) {
+                        p_rx_rd_ = rxfifo_;
+                    }
+                }
+                RISCV_debug("Get data = %02x", (payload->rpayload[i] & 0xFF));
                 break;
             case 1:
+                regs_.status = UART_STATUS_TX_EMPTY;
+                if (rx_total_ == 0) {
+                    regs_.status |= UART_STATUS_RX_EMPTY;
+                }
                 payload->rpayload[i] = regs_.status;
                 RISCV_info("Get status = %08x", regs_.status);
                 break;

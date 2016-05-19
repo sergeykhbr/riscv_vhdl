@@ -77,6 +77,8 @@ void DSU::regionControlRd(uint64_t off, Axi4TransactionType *payload) {
         read64(val, off, payload->xsize, payload->rpayload);
     } else if (off64 == &map_->step_cnt) {
         read64(step_cnt_, off, payload->xsize, payload->rpayload);
+    } else if (off64 == &map_->add_breakpoint) {
+    } else if (off64 == &map_->remove_breakpoint) {
     } else if (off64 >= &map_->cpu_regs[0] 
         && off64 < &map_->cpu_regs[DSU_GENERAL_CORE_REGS_NUM] ) {
         uint64_t idx = reinterpret_cast<uint64_t>(off64) 
@@ -107,6 +109,18 @@ void DSU::regionControlWr(uint64_t off, Axi4TransactionType *payload) {
         }
     } else if (off64 == &map_->step_cnt) {
         write64(&step_cnt_, off, payload->xsize, payload->wpayload);
+    } else if (off64 == &map_->add_breakpoint) {
+        bool rdy = write64(&wdata_, payload->addr, 
+                            payload->xsize, payload->wpayload);
+        if (rdy) {
+            idbg->addBreakpoint(wdata_);
+        }
+    } else if (off64 == &map_->remove_breakpoint) {
+        bool rdy = write64(&wdata_, payload->addr, 
+                            payload->xsize, payload->wpayload);
+        if (rdy) {
+            idbg->removeBreakpoint(wdata_);
+        }
     } else if (off64 >= &map_->cpu_regs[0] 
         && off64 < &map_->cpu_regs[DSU_GENERAL_CORE_REGS_NUM] ) {
         uint64_t idx = reinterpret_cast<uint64_t>(off64) 

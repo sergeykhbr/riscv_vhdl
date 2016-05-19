@@ -68,6 +68,7 @@ private:
     void halt(AttributeType *listArgs);
     void run(AttributeType *listArgs);
     void regs(AttributeType *listArgs);
+    void br(AttributeType *listArgs);
     unsigned getRegIDx(const char *name);
 
     int outf(const char *fmt, ...);

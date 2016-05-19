@@ -29,7 +29,7 @@ class CpuRiscV_Functional : public IService,
                  public IHap {
 public:
     CpuRiscV_Functional(const char *name);
-    ~CpuRiscV_Functional();
+    virtual ~CpuRiscV_Functional();
 
     /** IService interface */
     virtual void postinitService();
@@ -46,7 +46,9 @@ public:
     virtual void setPC(uint64_t val);
     virtual uint64_t getNPC();
     virtual void setNPC(uint64_t val);
-
+    virtual void addBreakpoint(uint64_t addr);
+    virtual void removeBreakpoint(uint64_t addr);
+    virtual void hitBreakpoint(uint64_t addr);
 
     /** IHostIO */
     virtual uint64_t write(uint16_t adr, uint64_t val);
@@ -85,6 +87,7 @@ private:
     AttributeType listExtISA_;
     AttributeType freqHz_;
     event_def config_done_;
+    uint64_t last_hit_breakpoint_;
 
     uint32_t cacheline_[512/4];
 

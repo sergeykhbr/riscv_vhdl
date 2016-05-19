@@ -25,6 +25,7 @@ IrqController::IrqController(const char *name)  : IService(name) {
 
     memset(&regs_, 0, sizeof(regs_));
     regs_.irq_mask = ~0;
+    regs_.irq_disable = 1;
 }
 
 IrqController::~IrqController() {
@@ -65,13 +66,13 @@ void IrqController::transaction(Axi4TransactionType *payload) {
                 RISCV_info("Set irq_rise = %08x", payload->wpayload[i]);
                 break;
             case 4:
-                regs_.irq_handler &= ~0xFFFFFFFFLL;
-                regs_.irq_handler |= payload->wpayload[i];
+                regs_.isr_table &= ~0xFFFFFFFFLL;
+                regs_.isr_table |= payload->wpayload[i];
                 RISCV_info("Set irq_handler[31:0] = %08x", payload->wpayload[i]);
                 break;
             case 5:
-                regs_.irq_handler &= ~0xFFFFFFFF00000000LL;
-                regs_.irq_handler |= (static_cast<uint64_t>(payload->wpayload[i]) << 32);
+                regs_.isr_table &= ~0xFFFFFFFF00000000LL;
+                regs_.isr_table |= (static_cast<uint64_t>(payload->wpayload[i]) << 32);
                 RISCV_info("Set irq_handler[63:32] = %08x", payload->wpayload[i]);
                 break;
             case 6:
@@ -93,6 +94,14 @@ void IrqController::transaction(Axi4TransactionType *payload) {
                 regs_.dbg_epc &= ~0xFFFFFFFF00000000LL;
                 regs_.dbg_epc |= (static_cast<uint64_t>(payload->wpayload[i]) << 32);
                 RISCV_info("Set dbg_epc[63:32] = %08x", payload->wpayload[i]);
+                break;
+            case 10:
+                regs_.irq_disable = payload->wpayload[i];
+                RISCV_info("Set irq_ena = %08x", payload->wpayload[i]);
+                break;
+            case 11:
+                regs_.irq_cause_idx = payload->wpayload[i];
+                RISCV_info("Set irq_cause_idx = %08x", payload->wpayload[i]);
                 break;
             default:;
             }
@@ -117,11 +126,11 @@ void IrqController::transaction(Axi4TransactionType *payload) {
                 RISCV_info("Get irq_rise = %08x", payload->rpayload[i]);
                 break;
             case 4:
-                payload->rpayload[i] = static_cast<uint32_t>(regs_.irq_handler);
+                payload->rpayload[i] = static_cast<uint32_t>(regs_.isr_table);
                 RISCV_info("Get irq_handler[31:0] = %08x", payload->rpayload[i]);
                 break;
             case 5:
-                payload->rpayload[i] = static_cast<uint32_t>(regs_.irq_handler >> 32);
+                payload->rpayload[i] = static_cast<uint32_t>(regs_.isr_table >> 32);
                 RISCV_info("Get irq_handler[63:32] = %08x", payload->rpayload[i]);
                 break;
             case 6:
@@ -140,6 +149,14 @@ void IrqController::transaction(Axi4TransactionType *payload) {
                 payload->rpayload[i] = static_cast<uint32_t>(regs_.dbg_epc >> 32);
                 RISCV_info("Get dbg_epc[63:32] = %08x", payload->rpayload[i]);
                 break;
+            case 10:
+                payload->rpayload[i] = regs_.irq_disable;
+                RISCV_info("Get irq_ena = %08x", payload->rpayload[i]);
+                break;
+            case 11:
+                payload->rpayload[i] = regs_.irq_cause_idx;
+                RISCV_info("Get irq_cause_idx = %08x", payload->rpayload[i]);
+                break;
             default:
                 payload->rpayload[i] = ~0;
             }
@@ -147,8 +164,12 @@ void IrqController::transaction(Axi4TransactionType *payload) {
     }
 }
 
-void IrqController::riseLine() {
-    if ((regs_.irq_mask & 0x1) == 0) {
+void IrqController::raiseLine(int idx) {
+    if (regs_.irq_disable) {
+        return;
+    }
+    if ((regs_.irq_mask & (0x1 << idx)) == 0) {
+        regs_.irq_pending |= (0x1 << idx);
         ihostio_->write(static_cast<uint16_t>(mipi_.to_uint64()), 1);
         RISCV_info("Raise interrupt", NULL);
     }

@@ -21,7 +21,9 @@ using namespace debugger;
 const char *default_config = 
 "{"
   "'GlobalSettings':{"
-    "'SimEnable':true"
+    "'SimEnable':true,"
+    "'GUI':'false',"
+    "'ScriptFile':''"
   "},"
   "'Services':["
     "{'Class':'EdclServiceClass','Instances':["
@@ -48,6 +50,7 @@ const char *default_config =
                 "['LogLevel',4],"
                 "['Enable',true],"
                 "['LogFile','test.log'],"
+                "['Serial','uart0'],"
                 "['Consumer','cmd0']]}]},"
     "{'Class':'CmdParserServiceClass','Instances':["
           "{'Name':'cmd0','Attr':["
@@ -124,7 +127,8 @@ const char *default_config =
                 "['LogLevel',1],"
                 "['BaseAddress',0x80001000],"
                 "['Length',4096],"
-                "['Console','console0']"
+                "['IrqLine',1],"
+                "['IrqControl','irqctrl0']"
                 "]}]},"
     "{'Class':'IrqControllerClass','Instances':["
           "{'Name':'irqctrl0','Attr':["
@@ -146,6 +150,16 @@ const char *default_config =
                 "['LogLevel',1],"
                 "['BaseAddress',0x80003000],"
                 "['Length',4096],"
+                "['IrqLine',0],"
+                "['IrqControl','irqctrl0'],"
+                "['ClkSource','core0']"
+                "]}]},"
+    "{'Class':'GPTimersClass','Instances':["
+          "{'Name':'gptmr0','Attr':["
+                "['LogLevel',1],"
+                "['BaseAddress',0x80005000],"
+                "['Length',4096],"
+                "['IrqLine',3],"
                 "['IrqControl','irqctrl0'],"
                 "['ClkSource','core0']"
                 "]}]},"
@@ -162,6 +176,8 @@ const char *default_config =
                 "['LogLevel',1],"
                 "['BaseAddress',0x80040000],"
                 "['Length',0x40000],"
+                "['IrqLine',2],"
+                "['IrqControl','irqctrl0'],"
                 "['IP',0x55667788],"
                 "['MAC',0xfeedface00],"
                 "['Bus','axi0'],"
@@ -171,7 +187,12 @@ const char *default_config =
           "{'Name':'axi0','Attr':["
                 "['LogLevel',3],"
                 "['MapList',['bootrom0','fwimage0','sram0','gpio0',"
-                        "'uart0','irqctrl0','gnss0','pnp0','dsu0','greth0']]"
+                        "'uart0','irqctrl0','gnss0','gptmr0',"
+                        "'pnp0','dsu0','greth0']]"
+                "]}]},"
+    "{'Class':'GuiPluginClass','Instances':["
+          "{'Name':'gui0','Attr':["
+                "['LogLevel',4]"
                 "]}]},"
     "{'Class':'BoardSimClass','Instances':["
           "{'Name':'boardsim','Attr':["
@@ -183,11 +204,26 @@ const char *default_config =
 static char cfgbuf[1<<16];
 static AttributeType Config;
 
+const AttributeType *getConfigOfService(const AttributeType &cfg, 
+                                        const char *name) {
+    const AttributeType &serv = cfg["Services"];
+    for (unsigned i = 0; i < serv.size(); i++) {
+        const AttributeType &inst = serv[i]["Instances"];
+        for (unsigned n = 0; n < inst.size(); n++) {
+            if (strcmp(inst[n]["Name"].to_string(), name) == 0) {
+                return &inst[n];
+            }
+        }
+    }
+    return 0;
+}
+
 int main(int argc, char* argv[]) {
     int cfgsz = 0;
     char path[1024];
     bool loadConfig = true;
     bool disableSim = true;
+    AttributeType scriptFile("");
 
     // Parse arguments:
     if (argc > 1) {
@@ -196,6 +232,9 @@ int main(int argc, char* argv[]) {
                 loadConfig = false;
             } else if (strcmp(argv[i], "-sim") == 0) {
                 disableSim = false;
+            } else if (strcmp(argv[i], "-script") == 0) {
+                i++;
+                scriptFile.make_string(argv[i]);
             }
         }
     }
@@ -220,6 +259,7 @@ int main(int argc, char* argv[]) {
 
     // Enable/Disable simulator option:
     Config["GlobalSettings"]["SimEnable"].make_boolean(!disableSim);
+    Config["GlobalSettings"]["ScriptFile"] = scriptFile;
 
     RISCV_set_configuration(&Config);
    

@@ -2,11 +2,11 @@
  * @file
  * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
  * @author     Sergey Khabarov - sergeykhbr@gmail.com
- * @brief      GNSS stub module functional model.
+ * @brief      General Purpose Timers model.
  */
 
-#ifndef __DEBUGGER_SOCSIM_PLUGIN_GNSS_STUB_H__
-#define __DEBUGGER_SOCSIM_PLUGIN_GNSS_STUB_H__
+#ifndef __DEBUGGER_SOCSIM_PLUGIN_GPTIMERS_H__
+#define __DEBUGGER_SOCSIM_PLUGIN_GPTIMERS_H__
 
 #include "iclass.h"
 #include "iservice.h"
@@ -17,12 +17,12 @@
 
 namespace debugger {
 
-class GNSSStub : public IService, 
+class GPTimers : public IService, 
                  public IMemoryOperation,
                  public IClockListener {
 public:
-    GNSSStub(const char *name);
-    ~GNSSStub();
+    GPTimers(const char *name);
+    ~GPTimers();
 
     /** IService interface */
     virtual void postinitService();
@@ -41,12 +41,6 @@ public:
     virtual void stepCallback(uint64_t t);
 
 private:
-    uint64_t OFFSET(void *addr) {
-        return reinterpret_cast<uint64_t>(addr)
-             - reinterpret_cast<uint64_t>(&regs_);
-    }
-
-private:
     AttributeType baseAddress_;
     AttributeType length_;
     AttributeType irqLine_;
@@ -55,22 +49,20 @@ private:
     IWire *iwire_;
     IClock *iclk_;
 
-    typedef struct TimerType {
-        uint32_t rw_MsLength;
-        uint32_t r_MsCnt;
-        int32_t  rw_tow;
-        int32_t  rw_tod;
-        uint32_t unused[12];
-    } TimerType;
-
-    struct gnss_map {
-        uint8_t    rsrv1[64];
-        TimerType   tmr;
+    static const uint32_t TIMER_CONTROL_ENA = 1<<0;
+    struct gptimers_map {
+        typedef struct gptimer_type {
+            volatile uint32_t control;
+            volatile uint32_t rsv1;
+            volatile uint64_t init_value;
+            volatile uint64_t cur_value;
+        } gptimer_type;
+        gptimer_type timer[2];
     } regs_;
 };
 
-DECLARE_CLASS(GNSSStub)
+DECLARE_CLASS(GPTimers)
 
 }  // namespace debugger
 
-#endif  // __DEBUGGER_SOCSIM_PLUGIN_GNSS_STUB_H__
+#endif  // __DEBUGGER_SOCSIM_PLUGIN_GPTIMERS_H__

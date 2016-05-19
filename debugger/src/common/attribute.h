@@ -111,6 +111,10 @@ class AttributeType : public IAttribute {
         return kind_ == Attr_Integer;
     }
 
+    int to_int() const {
+        return static_cast<int>(u_.integer);
+    }
+
     int64_t to_int64() const {
         return u_.integer;
     }

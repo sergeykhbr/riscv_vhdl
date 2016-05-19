@@ -29,6 +29,9 @@ public:
     virtual void setPC(uint64_t val) =0;
     virtual uint64_t getNPC() =0;
     virtual void setNPC(uint64_t val) =0;
+    virtual void addBreakpoint(uint64_t addr) =0;
+    virtual void removeBreakpoint(uint64_t addr) =0;
+    virtual void hitBreakpoint(uint64_t addr) =0;
 };
 
 }  // namespace debugger

@@ -172,5 +172,8 @@
     <ClInclude Include="..\..\src\libdbg64g\services\mem\memsim.h">
       <Filter>Source Files\services\mem</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\common\coreservices\iserial.h">
+      <Filter>Source Files\common\coreservices</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

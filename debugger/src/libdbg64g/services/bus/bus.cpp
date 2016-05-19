@@ -7,6 +7,7 @@
 
 #include "api_core.h"
 #include "bus.h"
+#include "coreservices/icpuriscv.h"
 
 namespace debugger {
 
@@ -20,6 +21,7 @@ Bus::Bus(const char *name)
 
     listMap_.make_list(0);
     imap_.make_list(0);
+    breakpoints_.make_list(0);
 }
 
 Bus::~Bus() {
@@ -55,6 +57,7 @@ int Bus::read(uint64_t addr, uint8_t *payload, int sz) {
     IMemoryOperation *imem;
     Axi4TransactionType memop;
     bool unmapped = true;
+    
     for (unsigned i = 0; i < imap_.size(); i++) {
         imem = static_cast<IMemoryOperation *>(imap_[i].to_iface());
         if (imem->getBaseAddress() <= addr
@@ -71,6 +74,8 @@ int Bus::read(uint64_t addr, uint8_t *payload, int sz) {
             /// @todo Check memory overlapping
         }
     }
+
+    checkBreakpoint(addr);
 
     if (unmapped) {
         RISCV_error("[%" RV_PRI64 "d] Read from unmapped address "
@@ -93,6 +98,7 @@ int Bus::write(uint64_t addr, uint8_t *payload, int sz) {
     IMemoryOperation *imem;
     Axi4TransactionType memop;
     bool unmapped = true;
+
     for (unsigned i = 0; i < imap_.size(); i++) {
         imem = static_cast<IMemoryOperation *>(imap_[i].to_iface());
         if (imem->getBaseAddress() <= addr
@@ -109,6 +115,8 @@ int Bus::write(uint64_t addr, uint8_t *payload, int sz) {
             /// @todo Check memory overlapping
         }
     }
+
+    checkBreakpoint(addr);
 
     if (unmapped) {
         RISCV_error("[%" RV_PRI64 "d] Write to unmapped address "
@@ -127,5 +135,38 @@ int Bus::write(uint64_t addr, uint8_t *payload, int sz) {
     return sz;
 }
 
+void Bus::addBreakpoint(uint64_t addr) {
+    AttributeType br(Attr_UInteger, addr);
+    for (unsigned i = 0; i < breakpoints_.size(); i++) {
+        if (breakpoints_[i].to_uint64() == ~0) {
+            breakpoints_[i] = br;
+            return;
+        }
+    }
+    breakpoints_.add_to_list(&br);
+}
+
+void Bus::removeBreakpoint(uint64_t addr) {
+    AttributeType br(Attr_UInteger, ~0);
+    for (unsigned i = 0; i < breakpoints_.size(); i++) {
+        if (breakpoints_[i].to_uint64() == addr) {
+            breakpoints_[i] = br;
+        }
+    }
+}
+
+void Bus::checkBreakpoint(uint64_t addr) {
+    for (unsigned i = 0; i < breakpoints_.size(); i++) {
+        if (addr == breakpoints_[i].to_uint64()) {
+            AttributeType listCpu;
+            RISCV_get_services_with_iface(IFACE_CPU_RISCV, &listCpu);
+            for (unsigned n = 0; n < listCpu.size(); n++) {
+                ICpuRiscV *iriscv = 
+                    static_cast<ICpuRiscV *>(listCpu[n].to_iface());
+                iriscv->hitBreakpoint(addr);
+            }
+        }
+    }
+}
 
 }  // namespace debugger

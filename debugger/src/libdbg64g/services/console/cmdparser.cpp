@@ -203,7 +203,13 @@ void CmdParserService::processLine(const char *line) {
         outf("      csr       - Access to CSR registers\n");
         outf("      write     - Write memory\n");
         outf("      read      - Read memory\n");
-        outf("      exit      - Exit from terminal\n\n");
+        outf("** List of supported commands by simulator only: **\n");
+        outf("      stop/break/s    - Stop simulation\n");
+        outf("      run/go/c  - Run simulation for a specify "
+                               "number of steps\n");
+        outf("      regs      - List of registers values\n");
+        outf("      br        - Breakpoint operation\n");
+        outf("\n");
     } else if (strcmp(listArgs[0u].to_string(), "loadelf") == 0) {
         if (listArgs.size() == 2) {
             loadElf(&listArgs);
@@ -237,7 +243,17 @@ void CmdParserService::processLine(const char *line) {
             outf("    memdump 0x10000000 128 \"c:/My Documents/dump.bin\"\n");
         }
     } else if (strcmp(listArgs[0u].to_string(), "regs") == 0) {
-        regs(&listArgs);
+        if (listArgs.size() == 1) {
+            regs(&listArgs);
+        } else {
+            outf("Description:\n");
+            outf("    Print values of all CPU's registers.\n");
+            outf("Usage:\n");
+            outf("    regs\n");
+            outf("    regs <cpuid>\n");
+            outf("Example:\n");
+            outf("    regs\n");
+        }
     } else if (strcmp(listArgs[0u].to_string(), "csr") == 0) {
         if (listArgs.size() == 2) {
             readCSR(&listArgs);
@@ -288,11 +304,45 @@ void CmdParserService::processLine(const char *line) {
     } else if (strcmp(listArgs[0u].to_string(), "halt") == 0
             || strcmp(listArgs[0u].to_string(), "stop") == 0
             || strcmp(listArgs[0u].to_string(), "s") == 0) {
-        halt(&listArgs);
+        if (listArgs.size() == 1) {
+            halt(&listArgs);
+        } else {
+            outf("Description:\n");
+            outf("    Stop simulation.\n");
+            outf("Example:\n");
+            outf("    halt\n");
+            outf("    stop\n");
+            outf("    s\n");
+        }
     } else if (strcmp(listArgs[0u].to_string(), "run") == 0
             || strcmp(listArgs[0u].to_string(), "go") == 0
             || strcmp(listArgs[0u].to_string(), "c") == 0) {
-        run(&listArgs);
+        if (listArgs.size() == 1 
+            || (listArgs.size() == 2 && listArgs[1].is_integer())) {
+            run(&listArgs);
+        } else {
+            outf("Description:\n");
+            outf("    Run simulation for a specified number of steps.\n");
+            outf("Usage:\n");
+            outf("    run <N steps>\n");
+            outf("Example:\n");
+            outf("    run\n");
+            outf("    go 1000\n");
+            outf("    c 1\n");
+        }
+    } else if (strcmp(listArgs[0u].to_string(), "br") == 0) {
+        if (listArgs.size() == 3 && listArgs[1].is_string()) {
+            br(&listArgs);
+        } else {
+            outf("Description:\n");
+            outf("    Add or remove memory breakpoint.\n");
+            outf("Usage:\n");
+            outf("    br add <addr>\n");
+            outf("    br rm <addr>\n");
+            outf("Example:\n");
+            outf("    br add 0x10000000\n");
+            outf("    br rm 0x10000000\n");
+        }
     } else {
         outf("Use 'help' to print list of the supported commands\n");
     }
@@ -569,6 +619,18 @@ void CmdParserService::regs(AttributeType *listArgs) {
     outf("t6: %016" RV_PRI64 "x    ", regs[getRegIDx("t6")]);
     outf("s11: %016" RV_PRI64 "x   ", regs[getRegIDx("s11")]);
     outf("npc: %016" RV_PRI64 "x   \n", regs[getRegIDx("npc")]);
+}
+
+void CmdParserService::br(AttributeType *listArgs) {
+    uint64_t value = (*listArgs)[2].to_uint64();
+    if (strcmp((*listArgs)[1].to_string(), "add") == 0) {
+        // CPU add_breakpoint register
+        uint64_t dsu_off = DSU_CTRL_BASE_ADDRESS + 16;
+        itap_->write(dsu_off, 8, reinterpret_cast<uint8_t *>(&value));
+    } else if (strcmp((*listArgs)[1].to_string(), "rm") == 0) {
+        uint64_t dsu_off = DSU_CTRL_BASE_ADDRESS + 24;
+        itap_->write(dsu_off, 8, reinterpret_cast<uint8_t *>(&value));
+    }
 }
 
 unsigned CmdParserService::getRegIDx(const char *name) {

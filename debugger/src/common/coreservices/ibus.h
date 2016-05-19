@@ -25,6 +25,10 @@ public:
     virtual int read(uint64_t addr, uint8_t *payload, int sz) =0;
 
     virtual int write(uint64_t addr, uint8_t *payload, int sz) =0;
+
+    virtual void addBreakpoint(uint64_t addr) =0;
+
+    virtual void removeBreakpoint(uint64_t addr) =0;
 };
 
 }  // namespace debugger

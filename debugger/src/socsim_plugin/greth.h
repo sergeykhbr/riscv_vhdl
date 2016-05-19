@@ -17,6 +17,7 @@
 #include "coreservices/iudp.h"
 #include "coreservices/irawlistener.h"
 #include "coreservices/iclklistener.h"
+#include "coreservices/iwire.h"
 #include "fifo.h"
 
 namespace debugger {
@@ -95,6 +96,8 @@ private:
 private:
     AttributeType baseAddress_;
     AttributeType length_;
+    AttributeType irqLine_;
+    AttributeType irqctrl_;
     AttributeType ip_;
     AttributeType mac_;
     AttributeType bus_;
@@ -103,6 +106,8 @@ private:
     IBus *ibus_;
     IClock *iclk0_;
     IUdp *itransport_;
+    IWire *iwire_;
+
     uint8_t rxbuf_[1<<12];
     uint8_t txbuf_[1<<12];
     uint32_t seq_cnt_ : 14;

@@ -37,7 +37,7 @@ public:
     }
 
     /** IWire */
-    virtual void riseLine();
+    virtual void raiseLine(int idx);
     virtual void lowerLine() {}
     virtual void setLevel(bool level) {}
 
@@ -49,13 +49,15 @@ private:
     IHostIO *ihostio_;
 
     struct irqctrl_map {
-        uint32_t irq_mask;     // [RW] 1=disable; 0=enable
-        uint32_t irq_pending;  // [RW]
-        uint32_t irq_clear;    // [WO]
-        uint32_t irq_rise;     // [WO]
-        uint64_t irq_handler;  // [RW]
-        uint64_t dbg_cause;
-        uint64_t dbg_epc;
+        uint32_t irq_mask;      // 0x00: [RW] 1=disable; 0=enable
+        uint32_t irq_pending;   // 0x04: [RW]
+        uint32_t irq_clear;     // 0x08: [WO]
+        uint32_t irq_rise;      // 0x0c: [WO]
+        uint64_t isr_table;     // 0x10: [RW]
+        uint64_t dbg_cause;     // 0x18: [RW]
+        uint64_t dbg_epc;       // 0x20: [RW]
+        uint32_t irq_disable;   // 0x28: [RW]
+        uint32_t irq_cause_idx; // 0x2c: [RW]
     } regs_;
 };
 

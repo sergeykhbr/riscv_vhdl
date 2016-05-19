@@ -23,7 +23,9 @@ struct DsuMapType {
     uint32_t control;
     uint32_t rsv1;
     uint64_t step_cnt;
-    uint64_t rsv2[62];
+    uint64_t add_breakpoint;
+    uint64_t remove_breakpoint;
+    uint64_t rsv2[60];
     uint64_t cpu_regs[DSU_GENERAL_CORE_REGS_NUM];
     uint64_t pc;
     uint64_t npc;

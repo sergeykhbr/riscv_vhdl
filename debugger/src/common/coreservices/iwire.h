@@ -19,7 +19,7 @@ class IWire : public IFace {
 public:
     IWire() : IFace(IFACE_WIRE) {}
 
-    virtual void riseLine() =0;
+    virtual void raiseLine(int idx) =0;
     virtual void lowerLine() =0;
     virtual void setLevel(bool level) =0;
 };

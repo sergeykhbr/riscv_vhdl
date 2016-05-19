@@ -20,6 +20,8 @@ Greth::Greth(const char *name)
     registerInterface(static_cast<IClockListener *>(this));
     registerAttribute("BaseAddress", &baseAddress_);
     registerAttribute("Length", &length_);
+    registerAttribute("IrqLine", &irqLine_);
+    registerAttribute("IrqControl", &irqctrl_);
     registerAttribute("IP", &ip_);
     registerAttribute("MAC", &mac_);
     registerAttribute("Bus", &bus_);
@@ -27,6 +29,8 @@ Greth::Greth(const char *name)
 
     baseAddress_.make_uint64(0);
     length_.make_uint64(0);
+    irqLine_.make_uint64(0);
+    irqctrl_.make_string("");
     ip_.make_uint64(0);
     mac_.make_uint64(0);
     bus_.make_string("");
@@ -61,6 +65,12 @@ void Greth::postinitService() {
         RISCV_error("UDP interface '%s' not found", 
                     bus_.to_string());
         return;
+    }
+
+    iwire_ = static_cast<IWire *>(
+        RISCV_get_service_iface(irqctrl_.to_string(), IFACE_WIRE));
+    if (!iwire_) {
+        RISCV_error("Can't find IWire interface %s", irqctrl_.to_string());
     }
 
     AttributeType clks;

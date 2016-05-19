@@ -15,11 +15,13 @@ GNSSStub::GNSSStub(const char *name)  : IService(name) {
     registerInterface(static_cast<IClockListener *>(this));
     registerAttribute("BaseAddress", &baseAddress_);
     registerAttribute("Length", &length_);
+    registerAttribute("IrqLine", &irqLine_);
     registerAttribute("IrqControl", &irqctrl_);
     registerAttribute("ClkSource", &clksrc_);
 
     baseAddress_.make_uint64(0);
     length_.make_uint64(0);
+    irqLine_.make_uint64(0);
     irqctrl_.make_string("");
     clksrc_.make_string("");
 
@@ -74,8 +76,7 @@ void GNSSStub::transaction(Axi4TransactionType *payload) {
 }
 
 void GNSSStub::stepCallback(uint64_t t) {
-    iwire_->riseLine();
-    iwire_->lowerLine();
+    iwire_->raiseLine(irqLine_.to_int());
     if (regs_.tmr.rw_MsLength) {
         iclk_->registerStepCallback(static_cast<IClockListener *>(this),
                                     t + regs_.tmr.rw_MsLength);
