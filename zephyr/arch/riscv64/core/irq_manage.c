@@ -28,13 +28,13 @@ void _IsrWrapper(void *arg) {
 }
 
 unsigned int _arch_irq_lock(void) {
-    unsigned int ret = READ32(&__IRQCTRL->irq_ena);
-    WRITE32(&__IRQCTRL->irq_ena, 1);
+    unsigned int ret = READ32(&__IRQCTRL->irq_disable);
+    WRITE32(&__IRQCTRL->irq_disable, 1);
     return ret;
 }
 
 void _arch_irq_unlock(unsigned int key) {
-    WRITE32(&__IRQCTRL->irq_ena, key);
+    WRITE32(&__IRQCTRL->irq_disable, key);
 }
 
 /**

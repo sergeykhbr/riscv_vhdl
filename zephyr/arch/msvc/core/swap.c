@@ -2,23 +2,22 @@
 #include <sections.h>
 #include <nano_private.h>
 
+void _save_registers(uint64_t *to) {
+}
+
 //
 uint64_t _Swap(uint64_t fl) {
-    tNANO *r1 = &_nanokernel;
-    struct tcs *r2 = r1->current;
-
-    r2 = r1->fiber;
-    if (r2 == 0) {
+    struct tcs *current;
+    if (_nanokernel.fiber == 0) {
         //_swap_to_the_task
-        r2 = _nanokernel.task;
+        current   = _nanokernel.task;
     } else {
         //_swap_to_a_fiber:
-        struct tcs *r3 = r2->link;
-        r1->fiber = r3;
+        current   = _nanokernel.fiber;
+        _nanokernel.fiber = _nanokernel.fiber->link;
     }
 
-    _nanokernel.current = r2;
-    
+    _nanokernel.current = current;
 #ifdef _WIN32
     _nanokernel.current->return_value = LIBH_swap((uint64_t)_nanokernel.current);
 #endif

@@ -5,6 +5,12 @@
 *.pyc
 *.swp
 *.swo
+*.sdf
+*.opensdf
+*.suo
+*.err
+Debug
+Release
 !arch/*/*/**/*.cmd
 *~
 cscope.*
@@ -27,3 +33,4 @@ scripts/grub
 doc/reference/kconfig/CONFIG_*
 doc/reference/kconfig/index.rst
 tags
+arch/msvc/msvc13/kconfig

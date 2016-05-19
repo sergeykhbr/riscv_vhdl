@@ -50,6 +50,14 @@
  *
  */
 
+#define tNANO_FIBER_OFFSET   0
+#define tNANO_TASK_OFFSET    8
+#define tNANO_CURRENT_OFFSET 16
+
+#define TCS_LINK_OFFSET         0
+#define TCS_RETURN_VALUE_OFFSET 8
+#define TCS_FLAGS_OFFSET        16
+
 .section ".text"
 .globl __start
 __start:
@@ -59,8 +67,24 @@ __start:
 .globl _Swap
 _Swap:
 	/* interrupts are locked, interrupt key is in r0 */
+	addi	sp,sp,-16
+	sd	s0,8(sp)	# save 
+	la s0, _nanokernel
+	ld s1,tNANO_FIBER_OFFSET(s0)
+	bnez s1, _swap_to_a_fiber
+_swap_to_the_task:
+	ld s2,tNANO_TASK_OFFSET(s0)     # current = nanokernel.task
+	j _swap_current_pointer
+_swap_to_a_fiber:
+	ld s2,tNANO_FIBER_OFFSET(s0)
+	ld s3,TCS_LINK_OFFSET(s2)	# s3 = nanokernel.fiber->link
+	ld s3,tNANO_FIBER_OFFSET(s0)	# nanokernel.fiber = s3
 
-  	fence
-	la t1, _nanokernel
-        # TODO: 
-	eret
+_swap_current_pointer:
+	sd s2,tNANO_CURRENT_OFFSET(s0)	# nanokernel.current = current
+
+	# Restore modified registered
+	ld	s0,8(sp)
+	addi	sp,sp,16
+	ret
+

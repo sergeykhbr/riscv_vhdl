@@ -43,6 +43,7 @@ extern "C" {
 #include <misc/dlist.h>
 
 #include <misc/util.h>
+#include "../core/swap_macros.h"
 
 #ifdef _DEBUG
 #include <misc/printk.h>
@@ -102,10 +103,26 @@ extern "C" {
  * These registers must be preserved by a called C function.  These are the
  * only registers that need to be saved/restored when a cooperative context
  * switch occurs.
+ *
+ *      x0      zero    Hard-wired zero             -
+ *      x1      ra      Return address              Caller
+ *      x2      s0/fp   Saved register/frame pointer Callee
+ *      x3-13   s1-11   Saved registers             Callee
+ *      x14     sp      Stack pointer               Callee
+ *      x15     tp      Thread pointer              Callee
+ *      x16-17  v0-1    Return values               Caller
+ *      x18-25  a0-7    Function arguments          Caller
+ *      x26-30  t0-4    Temporaries                 Caller
+ *      x31     gp      Global pointer              -
+ *      -------------
+ *      f0-15   fs0-15  FP saved registers          Callee
+ *      f16-17  fv0-1   FP return values            Caller
+ *      f18-25  fa0-7   FP arguments                Caller
+ *      f26-31  ft0-5   FP temporaries              Caller * 
  */
 
 typedef struct s_coopReg {
-	unsigned long esp;
+	unsigned long sp;
 
 	/*
 	 * The following registers are considered non-volatile, i.e.
@@ -119,6 +136,7 @@ typedef struct s_coopReg {
 	 *  unsigned long esi;
 	 *  unsigned long edi;
 	 */
+     uint64_t regs[32];
 
 } tCoopReg;
 
@@ -151,50 +169,6 @@ typedef struct s_preempReg {
 } tPreempReg;
 
 
-/*
- * The following structure defines the set of 'non-volatile' x87 FPU/MMX/SSE
- * registers. These registers must be preserved by a called C function.
- * These are the only registers that need to be saved/restored when a
- * cooperative context switch occurs.
- */
-
-typedef struct s_coopFloatReg {
-
-	/*
-	 * This structure intentionally left blank, i.e. the ST[0] -> ST[7] and
-	 * XMM0 -> XMM7 registers are all 'volatile'.
-	 */
-     int dummy;
-
-} tCoopFloatReg;
-
-/* empty floating point register definition */
-
-typedef struct s_FpRegSet {
-    int empty;
-} tFpRegSet;
-
-typedef struct s_FpRegSetEx {
-    int empty;
-} tFpRegSetEx;
-
-
-/*
- * The following structure defines the set of 'volatile' x87 FPU/MMX/SSE
- * registers.  These registers need not be preserved by a called C function.
- * Given that they are not preserved across function calls, they must be
- * save/restored (along with s_coopFloatReg) when a preemptive context
- * switch occurs.
- */
-
-typedef struct s_preempFloatReg {
-	union {
-		/* threads with USE_FP utilize this format */
-		tFpRegSet fpRegs;
-		/* threads with USE_SSE utilize this format */
-		tFpRegSetEx fpRegsEx;
-	} floatRegsUnion;
-} tPreempFloatReg;
 
 /*
  * The thread control stucture definition.  It contains the
@@ -209,8 +183,12 @@ struct tcs {
 	 * prioritized list of runnable fibers, or list of fibers waiting on a
 	 * nanokernel FIFO).
 	 */
-
 	struct tcs *link;
+
+    /*
+     * return value from _Swap
+     */
+    uint64_t return_value;
 
 	/*
 	 * See the above flag definitions above for valid bit settings.  This
@@ -219,20 +197,15 @@ struct tcs {
 	 * fixed
 	 * offset to read the 'flags' field.
 	 */
-
-	int flags;
+	uint64_t flags;
 
 	/*
 	 * Storage space for integer registers.  These must also remain near
 	 * the start of struct tcs for the same reason mention for
 	 * 'flags'.
 	 */
-	tCoopReg coopReg;     /* non-volatile integer register storage */
+    uint64_t coopReg[COOP_REGS_TOTAL];     /* non-volatile integer register storage */
 	tPreempReg preempReg; /* volatile integer register storage */
-    /*
-     * return value from _Swap
-     */
-    uint64_t return_value;
 
 #if defined(CONFIG_THREAD_MONITOR)
 	struct tcs *next_thread; /* next item in list of ALL fiber+tasks */
@@ -267,23 +240,6 @@ struct tcs {
 #ifdef CONFIG_ERRNO
 	int errno_var;
 #endif
-
-	/*
-	 * The location of all floating point related structures/fields MUST be
-	 * located at the end of struct tcs.  This way only the
-	 * fibers/tasks that actually utilize non-integer capabilities need to
-	 * account for the increased memory required for storing FP state when
-	 * sizing stacks.
-	 *
-	 * Given that stacks "grow down" on IA-32, and the TCS is located
-	 * at the start of a thread's "workspace" memory, the stacks of
-	 * fibers/tasks that do not utilize floating point instruction can
-	 * effectively consume the memory occupied by the 'tCoopFloatReg' and
-	 * 'tPreempFloatReg' structures without ill effect.
-	 */
-
-	tCoopFloatReg coopFloatReg; /* non-volatile float register storage */
-	tPreempFloatReg preempFloatReg; /* volatile float register storage */
 };
 
 /*

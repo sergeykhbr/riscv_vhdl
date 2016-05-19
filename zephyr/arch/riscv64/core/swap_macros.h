@@ -19,6 +19,28 @@
 #ifndef _SWAP_MACROS__H_
 #define _SWAP_MACROS__H_
 
+/** 
+ * Saved by callee function registers:
+ *      s0..s11, sp, tp 
+ */
+#define COOP_REGS_OFFSET    (3*sizeof(uint64_t))
+#define COOP_REG_S0         (COOP_REGS_OFFSET + 0*sizeof(uint64_t))
+#define COOP_REG_S1         (COOP_REGS_OFFSET + 1*sizeof(uint64_t))
+#define COOP_REG_S2         (COOP_REGS_OFFSET + 2*sizeof(uint64_t))
+#define COOP_REG_S3         (COOP_REGS_OFFSET + 3*sizeof(uint64_t))
+#define COOP_REG_S4         (COOP_REGS_OFFSET + 4*sizeof(uint64_t))
+#define COOP_REG_S5         (COOP_REGS_OFFSET + 5*sizeof(uint64_t))
+#define COOP_REG_S6         (COOP_REGS_OFFSET + 6*sizeof(uint64_t))
+#define COOP_REG_S7         (COOP_REGS_OFFSET + 7*sizeof(uint64_t))
+#define COOP_REG_S8         (COOP_REGS_OFFSET + 8*sizeof(uint64_t))
+#define COOP_REG_S9         (COOP_REGS_OFFSET + 9*sizeof(uint64_t))
+#define COOP_REG_S10        (COOP_REGS_OFFSET + 10*sizeof(uint64_t))
+#define COOP_REG_S11        (COOP_REGS_OFFSET + 11*sizeof(uint64_t))
+#define COOP_REG_SP         (COOP_REGS_OFFSET + 12*sizeof(uint64_t))
+#define COOP_REG_TP         (COOP_REGS_OFFSET + 13*sizeof(uint64_t))
+#define COOP_REGS_TOTAL     14
+#define COOP_STACKFRAME_SIZE (COOP_REGS_TOTAL*sizeof(uint64_t))
+
 
 /* entering this macro, current is in r2 */
 #define _save_callee_saved_regs() \

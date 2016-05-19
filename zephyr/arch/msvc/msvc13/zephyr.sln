@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.21005.1
+VisualStudioVersion = 12.0.40629.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "nanokernel", "nanokernel\nanokernel.vcxproj", "{449AD2B1-18DB-4E79-A52E-F67F9926649C}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -9,8 +9,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "nanokernel", "nanokernel\na
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libhost", "libhost\libhost.vcxproj", "{232D555C-96EC-43B5-891F-CC955F1402B9}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "kconfig", "kconfig\kconfig.vcxproj", "{BAAA9F6B-24FA-4697-B094-59A641296684}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -26,10 +24,6 @@ Global
 		{232D555C-96EC-43B5-891F-CC955F1402B9}.Debug|Win32.Build.0 = Debug|Win32
 		{232D555C-96EC-43B5-891F-CC955F1402B9}.Release|Win32.ActiveCfg = Release|Win32
 		{232D555C-96EC-43B5-891F-CC955F1402B9}.Release|Win32.Build.0 = Release|Win32
-		{BAAA9F6B-24FA-4697-B094-59A641296684}.Debug|Win32.ActiveCfg = Debug|Win32
-		{BAAA9F6B-24FA-4697-B094-59A641296684}.Debug|Win32.Build.0 = Debug|Win32
-		{BAAA9F6B-24FA-4697-B094-59A641296684}.Release|Win32.ActiveCfg = Release|Win32
-		{BAAA9F6B-24FA-4697-B094-59A641296684}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -60,7 +60,7 @@ typedef struct irqctrl_map {
     volatile uint64_t isr_table;    // 0x10 [RW]
     volatile uint64_t dbg_cause;    // 0x18: 
     volatile uint64_t dbg_epc;      // 0x20: 
-    volatile uint32_t irq_ena;      // 0x28: enable/disable all interrupts
+    volatile uint32_t irq_disable;  // 0x28: enable/disable all interrupts
     volatile uint32_t irq_cause_idx;// 0x2c: 
 } irqctrl_map;
 
