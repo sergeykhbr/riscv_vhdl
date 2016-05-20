@@ -446,30 +446,6 @@ end generate;
     o_host => htifo(CFG_HTIF_SRC_IRQCTRL)
   );
 
-  --! @brief RF front-end controller with the AXI4 interface.
-  --! @details Map address:
-  --!          0x80004000..0x80004fff (4 KB total)
-  rf0 : axi_rfctrl generic map (
-    xindex => CFG_NASTI_SLAVE_RFCTRL,
-    xaddr  => 16#80004#,
-    xmask  => 16#fffff#
-  ) port map (
-    nrst           => wNReset,
-    clk            => wClkBus,
-    o_cfg          => slv_cfg(CFG_NASTI_SLAVE_RFCTRL),
-    i_axi          => axisi,
-    o_axi          => axiso(CFG_NASTI_SLAVE_RFCTRL),
-    i_gps_ld       => i_gps_ld,
-    i_glo_ld       => i_glo_ld,
-    outSCLK        => o_max_sclk,
-    outSDATA       => o_max_sdata,
-    outCSn         => o_max_ncs,
-    inExtAntStat   => i_antext_stat,
-    inExtAntDetect => i_antext_detect,
-    outExtAntEna   => o_antext_ena,
-    outIntAntContr => o_antint_contr
-  );
-
   ------------------------------------
   --! @brief GNSS Engine stub with the AXI4 interface.
   --! @details Map address:
@@ -504,10 +480,50 @@ geneng_dis : if not CFG_GNSSLIB_ENABLE generate
   irq_pins(CFG_IRQ_GNSSENGINE)      <= '0';
 end generate;
 
+  --! @brief RF front-end controller with the AXI4 interface.
+  --! @details Map address:
+  --!          0x80004000..0x80004fff (4 KB total)
+  rf0 : axi_rfctrl generic map (
+    xindex => CFG_NASTI_SLAVE_RFCTRL,
+    xaddr  => 16#80004#,
+    xmask  => 16#fffff#
+  ) port map (
+    nrst           => wNReset,
+    clk            => wClkBus,
+    o_cfg          => slv_cfg(CFG_NASTI_SLAVE_RFCTRL),
+    i_axi          => axisi,
+    o_axi          => axiso(CFG_NASTI_SLAVE_RFCTRL),
+    i_gps_ld       => i_gps_ld,
+    i_glo_ld       => i_glo_ld,
+    outSCLK        => o_max_sclk,
+    outSDATA       => o_max_sdata,
+    outCSn         => o_max_ncs,
+    inExtAntStat   => i_antext_stat,
+    inExtAntDetect => i_antext_detect,
+    outExtAntEna   => o_antext_ena,
+    outIntAntContr => o_antint_contr
+  );
+
+  --! @brief Timers with the AXI4 interface.
+  --! @details Map address:
+  --!          0x80005000..0x80005fff (4 KB total)
+  gptmr0 : nasti_gptimers  generic map (
+    xindex    => CFG_NASTI_SLAVE_GPTIMERS,
+    xaddr     => 16#80005#,
+    xmask     => 16#fffff#,
+    tmr_total => 2
+  ) port map (
+    clk    => wClkBus,
+    nrst   => wNReset,
+    cfg    => slv_cfg(CFG_NASTI_SLAVE_GPTIMERS),
+    i_axi  => axisi,
+    o_axi  => axiso(CFG_NASTI_SLAVE_GPTIMERS),
+    o_irq  => irq_pins(CFG_IRQ_GPTIMERS)
+  );
 
   --! @brief GPS-CA Fast Search Engine with the AXI4 interface.
   --! @details Map address:
-  --!          0x80005000..0x80005fff (4 KB total)
+  --!          0x8000a000..0x8000afff (4 KB total)
   fse0_ena : if CFG_GNSSLIB_ENABLE and CFG_GNSSLIB_FSEGPS_ENABLE = 1 generate 
       fse_i.nrst       <= wNReset;
       fse_i.clk_bus    <= wClkBus;
@@ -523,7 +539,7 @@ end generate;
       fse0 : TopFSE generic map (
         tech   => CFG_MEMTECH,
         xindex => CFG_NASTI_SLAVE_FSE_GPS,
-        xaddr  => 16#80005#,
+        xaddr  => 16#8000a#,
         xmask  => 16#fffff#,
         sys    => GEN_SYSTEM_GPSCA
       ) port map (

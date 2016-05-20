@@ -472,7 +472,7 @@ component nasti_irqctrl is
   );
   end component;
 
-  --! @brief   Declaration of the debug SUpport Unit with the AXI interface.
+  --! @brief   Declaration of the Debug Support Unit with the AXI interface.
   --! @details This module provides access to processors CSRs via HostIO bus.
   component nasti_dsu is
   generic (
@@ -494,6 +494,25 @@ component nasti_irqctrl is
   );
   end component;
 
+  --! @brief   General Purpose Timers with the AXI interface.
+  --! @details This module provides high precision counter and
+  --!          generic number of GP timers.
+  component nasti_gptimers is
+  generic (
+    xindex  : integer := 0;
+    xaddr   : integer := 0;
+    xmask   : integer := 16#fffff#;
+    tmr_total  : integer := 2
+  );
+  port (
+    clk    : in  std_logic;
+    nrst   : in  std_logic;
+    cfg    : out nasti_slave_config_type;
+    i_axi  : in  nasti_slave_in_type;
+    o_axi  : out nasti_slave_out_type;
+    o_irq  : out std_logic
+  );
+  end component; 
 
 --! @brief   Plug-n-Play support module with AXI4 interface declaration.
 --! @details Each device in a system hase to implements sideband signal

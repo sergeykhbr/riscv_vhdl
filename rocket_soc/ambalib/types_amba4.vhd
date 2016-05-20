@@ -53,8 +53,10 @@ constant CFG_NASTI_SLAVE_FSE_GPS  : integer := CFG_NASTI_SLAVE_RFCTRL+1;
 constant CFG_NASTI_SLAVE_ETHMAC   : integer := CFG_NASTI_SLAVE_FSE_GPS+1;
 --! Configuration index of the Debug Support Unit module.
 constant CFG_NASTI_SLAVE_DSU      : integer := CFG_NASTI_SLAVE_ETHMAC+1;
+--! Configuration index of the Debug Support Unit module.
+constant CFG_NASTI_SLAVE_GPTIMERS : integer := CFG_NASTI_SLAVE_DSU+1;
 --! Configuration index of the Plug-n-Play module.
-constant CFG_NASTI_SLAVE_PNP      : integer := CFG_NASTI_SLAVE_DSU+1;
+constant CFG_NASTI_SLAVE_PNP      : integer := CFG_NASTI_SLAVE_GPTIMERS+1;
 --! Total number of the slaves devices.
 constant CFG_NASTI_SLAVES_TOTAL  : integer := CFG_NASTI_SLAVE_PNP+1;  
 --! @}
@@ -86,8 +88,10 @@ constant CFG_IRQ_GNSSENGINE     : integer := 0;
 constant CFG_IRQ_UART1          : integer := CFG_IRQ_GNSSENGINE + 1;
 --! Ethernet MAC interrupt pin.
 constant CFG_IRQ_ETHMAC         : integer := CFG_IRQ_UART1 + 1;
+--! GP Timers interrupt pin
+constant CFG_IRQ_GPTIMERS       : integer := CFG_IRQ_ETHMAC + 1;
 --! Total number of used interrupts in a system
-constant CFG_IRQ_TOTAL          : integer := CFG_IRQ_ETHMAC + 1;
+constant CFG_IRQ_TOTAL          : integer := CFG_IRQ_GPTIMERS + 1;
 --! @}
 
 --! @name   SCALA generated parameters
@@ -214,6 +218,8 @@ constant GNSSSENSOR_IRQCTRL       : std_logic_vector(15 downto 0) := X"007d";
 constant GNSSSENSOR_ETHMAC        : std_logic_vector(15 downto 0) := X"007f";
 --! Debug Support Unit device id.
 constant GNSSSENSOR_DSU           : std_logic_vector(15 downto 0) := X"0080";
+--! GP Timers device id.
+constant GNSSSENSOR_GPTIMERS      : std_logic_vector(15 downto 0) := X"0081";
 --! @}
 
 --! @name Decoder of the transaction size.

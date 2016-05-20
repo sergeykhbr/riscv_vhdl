@@ -33,6 +33,7 @@ static const int AXI4_SYSTEM_CLOCK = 60000000;  /// 60 MHz
 #define GNSSSENSOR_IRQCTRL       0x007d     /// Interrupt controller
 #define GNSSSENSOR_ETHMAC        0x007f
 #define GNSSSENSOR_DSU           0x0080
+#define GNSSSENSOR_GPTIMERS      0x0081
 
 
 #define TECH_INFERRED       0

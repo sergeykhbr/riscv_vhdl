@@ -27,6 +27,7 @@
 #define ADDR_NASTI_SLAVE_IRQCTRL    0x80002000
 #define ADDR_NASTI_SLAVE_GNSSENGINE 0x80003000
 #define ADDR_NASTI_SLAVE_RFCTRL     0x80004000
+#define ADDR_NASTI_SLAVE_GPTIMERS   0x80005000
 #define ADDR_NASTI_SLAVE_FSEGPS     0x8000a000
 #define ADDR_NASTI_SLAVE_ETHMAC     0x80040000
 #define ADDR_NASTI_SLAVE_PNP        0xfffff000
@@ -36,7 +37,8 @@
 #define CFG_IRQ_GNSSENGINE 0
 #define CFG_IRQ_UART1      1
 #define CFG_IRQ_ETHMAC     2
-#define CFG_IRQ_TOTAL      3
+#define CFG_IRQ_GPTIMERS   3
+#define CFG_IRQ_TOTAL      4
 
 typedef struct IsrEntryType {
     uint64_t arg;
