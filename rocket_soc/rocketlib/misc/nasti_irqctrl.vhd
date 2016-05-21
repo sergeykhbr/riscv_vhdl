@@ -75,7 +75,10 @@ type registers is record
   irqs_pending  : std_logic_vector(CFG_IRQ_TOTAL-1 downto 0);
   --! interrupt handler address initialized by FW:
   isr_table     : std_logic_vector(63 downto 0);
-  irq_disable   : std_logic;
+  --! hold-on generation of interrupt.
+  irq_lock      : std_logic;
+  --! delayed interrupt
+  irq_wait_unlock : std_logic_vector(CFG_IRQ_TOTAL-1 downto 0);
   irq_cause_idx : std_logic_vector(31 downto 0);
   --! Function trap_entry copies the values of CSRs into these two regs:
   dbg_cause    : std_logic_vector(63 downto 0);
@@ -114,7 +117,7 @@ begin
          when 7      => tmp := r.dbg_cause(63 downto 32);                 --! [RW]: 
          when 8      => tmp := r.dbg_epc(31 downto 0);                    --! [RW]: Instruction pointer
          when 9      => tmp := r.dbg_epc(63 downto 32);                   --! [RW]: 
-         when 10     => tmp(0) := r.irq_disable;
+         when 10     => tmp(0) := r.irq_lock;
          when 11     => tmp := r.irq_cause_idx;
          when others =>
        end case;
@@ -145,7 +148,7 @@ begin
              when 7 => v.dbg_cause(63 downto 32) := tmp;
              when 8 => v.dbg_epc(31 downto 0) := tmp;
              when 9 => v.dbg_epc(63 downto 32) := tmp;
-             when 10 => v.irq_disable := tmp(0);
+             when 10 => v.irq_lock := tmp(0);
              when 11 => v.irq_cause_idx := tmp;
              when others =>
            end case;
@@ -156,9 +159,14 @@ begin
     v.irqs_z := i_irqs;
     v.irqs_zz := r.irqs_z;
     for n in 0 to CFG_IRQ_TOTAL-1 loop
-      if r.irq_disable = '0' and r.irqs_z(n) = '1' and r.irqs_zz(n) = '0'  then
-         v.irqs_pending(n) := not r.irqs_mask(n);
-         w_generate_ipi := w_generate_ipi or (not r.irqs_mask(n));
+      if (r.irqs_z(n) = '1' and r.irqs_zz(n) = '0') or r.irq_wait_unlock(n) = '1' then
+         if r.irq_lock = '0' then
+             v.irq_wait_unlock(n) := '0';
+             v.irqs_pending(n) := not r.irqs_mask(n);
+             w_generate_ipi := w_generate_ipi or (not r.irqs_mask(n));
+         else
+             v.irq_wait_unlock(n) := '1';
+         end if;
       end if;
     end loop;
 
@@ -217,7 +225,8 @@ begin
        r.irqs_z <= (others => '0');
        r.irqs_zz <= (others => '0');
        r.isr_table <= (others => '0');
-       r.irq_disable <= '0';
+       r.irq_lock <= '0';
+       r.irq_wait_unlock <= (others => '0');
        r.irq_cause_idx <= (others => '0');
        r.dbg_cause <= (others => '0');
        r.dbg_epc <= (others => '0');
