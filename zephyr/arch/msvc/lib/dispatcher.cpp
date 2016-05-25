@@ -5,7 +5,7 @@
 #include "irqctrl.h"
 #include "uart.h"
 
-static const int IDLE_STACK_SIZE = 1<<12;
+static const int IDLE_STACK_SIZE = sizeof(tcs_simple);
 static char idle_stack[IDLE_STACK_SIZE];
 IrqController irqctrl;
 Uart uart0;
@@ -28,8 +28,9 @@ extern "C" void idle_task_entry(_thread_entry_t pEntry,
 
 extern "C" void LIBH_create_dispatcher(void *entry_point) {
     DWORD tmp;
-    ((unsigned long *)(idle_stack + IDLE_STACK_SIZE))[-5] = (unsigned long)idle_task_entry;
-    ((unsigned long *)(idle_stack + IDLE_STACK_SIZE))[-4] = (unsigned long)entry_point;
+    tcs_simple *ctx = (tcs_simple *)idle_stack;
+    ctx->regs[REG_RA] = (uint64_t)idle_task_entry;
+    ctx->regs[REG_A0] = (uint64_t)entry_point;
     LIBH_create_thread(idle_stack, IDLE_STACK_SIZE, 0, 0);
     current_idx = 0;
     //printf_s("Event[%d] idle_tick set\n", current_idx);
@@ -39,7 +40,7 @@ extern "C" void LIBH_create_dispatcher(void *entry_point) {
         tmp = SuspendThread(vecThreads[current_idx].hThread);
         wasPreemtiveSwitch = false;
 
-        irqctrl.raise_interrupt(0);
+        irqctrl.raise_interrupt(3); // GPTimer
 
         if (_kbhit()) {
             uart0.putRx(_getch());

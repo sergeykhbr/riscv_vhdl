@@ -42,9 +42,10 @@
 #define ADDR_NASTI_SLAVE_PNP        0xfffff000
 
 /* Interrupts pins assignments */
-#define CFG_IRQ_SYS_TIMER 0
-#define CFG_IRQ_UART1     1
-#define CFG_IRQ_ETH       2
+#define CFG_IRQ_GNSS_ENGINE 0
+#define CFG_IRQ_UART1       1
+#define CFG_IRQ_ETH         2
+#define CFG_IRQ_SYS_TIMER   3
 
 /* Use this general purpose timer as a system timer */
 #define CFG_SYS_TIMER_IDX 0
@@ -80,8 +81,8 @@ extern void WRITE64(volatile uint64_t *addr, uint64_t val);
 #ifdef _WIN32
 extern void LIBH_write(uint64_t addr, uint8_t *buf, int size);
 extern void LIBH_read(uint64_t addr, uint8_t *buf, int size);
-extern int LIBH_swap(uint64_t tc_addr);
-extern void LIBH_swap_preemptive(uint64_t tc_addr, uint64_t ret_addr);
+extern void LIBH_swap(uint64_t tc_addr);
+extern void LIBH_swap_preemptive(uint64_t tc_addr);
 #endif
 
 #endif /* !_ASMLANGUAGE */

@@ -2,9 +2,6 @@
 #include <sections.h>
 #include <nano_private.h>
 
-void _save_registers(uint64_t *to) {
-}
-
 //
 uint64_t _Swap(uint64_t fl) {
     struct tcs *current;
@@ -19,8 +16,8 @@ uint64_t _Swap(uint64_t fl) {
 
     _nanokernel.current = current;
 #ifdef _WIN32
-    _nanokernel.current->return_value = LIBH_swap((uint64_t)_nanokernel.current);
+    LIBH_swap((uint64_t)_nanokernel.current);
 #endif
-    return _nanokernel.current->return_value;
+    return _nanokernel.current->coopReg[COOP_REG_V0/sizeof(uint64_t)];
 }
 

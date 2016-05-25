@@ -34,19 +34,20 @@ extern "C" int LIBH_create_thread(char *pStackMem,
                               unsigned stackSize, 
                               int priority, 
                               unsigned options) {
-    unsigned long * ctx = (unsigned long *)(pStackMem + stackSize);
+    //unsigned long * ctx = (unsigned long *)(pStackMem + stackSize);
+    tcs_simple *ctx = (tcs_simple *)pStackMem;
     ThreadDataType data;
     data.idx = (int)vecThreads.size();
     data.stack_offset = (uint64_t)pStackMem;
-    data.func = (_thread_entry_asm)ctx[-5];
-    data.entry = (_thread_entry_t)ctx[-4];
-    data.args[0] = (_thread_arg_t)ctx[-3];
-    data.args[1] = (_thread_arg_t)ctx[-2];
-    data.args[2] = (_thread_arg_t)ctx[-1];
+
+    data.func = (_thread_entry_asm)ctx->regs[REG_RA];
+    data.entry = (_thread_entry_t)ctx->regs[REG_A0];
+    data.args[0] = (_thread_arg_t)ctx->regs[REG_A1];
+    data.args[1] = (_thread_arg_t)ctx->regs[REG_A2];
+    data.args[2] = (_thread_arg_t)ctx->regs[REG_A3];
     data.priority = priority;
     data.options = options;
     data.preemptive = false;
-    data.return_value = 0;
     unsigned this_idx = vecThreads.size();
 
     data.hEvent = CreateEvent(  NULL,               // default security attributes
@@ -78,7 +79,7 @@ int LIBH_get_thread_by_context(uint64_t ctx) {
     return -1;
 }
 
-extern "C" unsigned int LIBH_swap(uint64_t stack) {
+extern "C" void LIBH_swap(uint64_t stack) {
     int next_idx = LIBH_get_thread_by_context(stack);
 
     if (next_idx == current_idx) {
@@ -106,14 +107,13 @@ extern "C" unsigned int LIBH_swap(uint64_t stack) {
     } else {
      
     }
-    return (unsigned int)vecThreads[current_idx].return_value;
 }
 
-extern "C" void LIBH_swap_preemptive(uint64_t ctx_addr, uint64_t ret_addr) {
+extern "C" void LIBH_swap_preemptive(uint64_t ctx_addr) {
     int next_idx = LIBH_get_thread_by_context(ctx_addr);
     vecThreads[current_idx].preemptive = true;
     if (next_idx != -1) {
-        vecThreads[next_idx].return_value = ret_addr;
+        tcs_simple *ctx = (tcs_simple *)vecThreads[next_idx].stack_offset;
         current_idx = next_idx;
         if (vecThreads[next_idx].preemptive) {
             ResumeThread(vecThreads[next_idx].hThread);

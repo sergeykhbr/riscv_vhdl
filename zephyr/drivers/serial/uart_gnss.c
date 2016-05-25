@@ -32,6 +32,9 @@
 #define UART_STATUS_RX_EMPTY    0x00000020
 #define UART_STATUS_ERR_PARITY  0x00000100
 #define UART_STATUS_ERR_STOPBIT 0x00000200
+#define UART_CONTROL_RX_IRQ_ENA 0x00002000
+#define UART_CONTROL_TX_IRQ_ENA 0x00004000
+#define UART_CONTROL_PARITY_ENA 0x00008000
 
 
 static struct uart_driver_api uart_gnss_driver_api;
@@ -66,26 +69,6 @@ void uart_gnss_isr(void *arg) {
     if (data->cb) {
         data->cb(dev);
     }
-}
-
-/**
- * @brief Initialize fake serial port
- *
- * @param dev UART device struct
- *
- * @return DEV_OK
- */
-static int uart_gnss_init(struct device *dev)
-{
-	dev->driver_api = &uart_gnss_driver_api;
-    dev->driver_data = &uart_gnss_dev_data_0;
-
-#ifdef CONFIG_UART_INTERRUPT_DRIVEN
-	IRQ_CONNECT(CFG_IRQ_UART1, CFG_IRQ_UART1,
-		    uart_gnss_isr, dev, UART_IRQ_FLAGS);
-	irq_enable(CFG_IRQ_UART1);
-#endif
-	return 0;
 }
 
 /*
@@ -134,6 +117,34 @@ static int uart_gnss_fifo_read(struct device *dev, uint8_t *rx_data,
 	return num_rx;
 }
 
+void uart_gnss_irq_tx_enable(struct device *dev) {
+	uint32_t status = READ32(&__UART1->status);
+    status |= UART_CONTROL_TX_IRQ_ENA;
+    WRITE32(&__UART1->status, status);
+}
+
+void uart_gnss_irq_tx_disable(struct device *dev) {
+	uint32_t status = READ32(&__UART1->status);
+    status &= ~UART_CONTROL_TX_IRQ_ENA;
+    WRITE32(&__UART1->status, status);
+}
+
+void uart_gnss_irq_rx_enable(struct device *dev) {
+	uint32_t status = READ32(&__UART1->status);
+    status |= UART_CONTROL_RX_IRQ_ENA;
+    WRITE32(&__UART1->status, status);
+}
+
+void uart_gnss_irq_rx_disable(struct device *dev) {
+	uint32_t status = READ32(&__UART1->status);
+    status &= ~UART_CONTROL_RX_IRQ_ENA;
+    WRITE32(&__UART1->status, status);
+}
+
+int uart_gnss_irq_tx_empty(struct device *dev) {
+	uint32_t status = READ32(&__UART1->status);
+	return ((status & UART_STATUS_TX_EMPTY) ? 1: 0);
+}
 
 /**
  * @brief Check if Rx IRQ has been raised
@@ -199,12 +210,12 @@ static struct uart_driver_api uart_gnss_driver_api = {
 #ifdef CONFIG_UART_INTERRUPT_DRIVEN
 	NULL,//int (*fifo_fill)(struct device *dev, const uint8_t *tx_data, int len);
 	uart_gnss_fifo_read,//int (*fifo_read)(struct device *dev, uint8_t *rx_data, const int size);
-	NULL,//void (*irq_tx_enable)(struct device *dev);
-	NULL,//void (*irq_tx_disable)(struct device *dev);
+	uart_gnss_irq_tx_enable,//void (*irq_tx_enable)(struct device *dev);
+	uart_gnss_irq_tx_disable,//void (*irq_tx_disable)(struct device *dev);
 	NULL,//int (*irq_tx_ready)(struct device *dev);
-	NULL,//void (*irq_rx_enable)(struct device *dev);
-	NULL,//void (*irq_rx_disable)(struct device *dev);
-	NULL,//int (*irq_tx_empty)(struct device *dev);
+	uart_gnss_irq_rx_enable,//void (*irq_rx_enable)(struct device *dev);
+	uart_gnss_irq_rx_disable,//void (*irq_rx_disable)(struct device *dev);
+	uart_gnss_irq_tx_empty,//int (*irq_tx_empty)(struct device *dev);
 	uart_gnss_irq_rx_ready,//int (*irq_rx_ready)(struct device *dev);
 	NULL,//void (*irq_err_enable)(struct device *dev);
 	NULL,//void (*irq_err_disable)(struct device *dev);
@@ -222,6 +233,29 @@ static struct uart_driver_api uart_gnss_driver_api = {
 	NULL,//int (*drv_cmd)(struct device *dev, uint32_t cmd, uint32_t p);
 #endif
 };
+
+/**
+ * @brief Initialize fake serial port
+ *
+ * @param dev UART device struct
+ *
+ * @return DEV_OK
+ */
+static int uart_gnss_init(struct device *dev)
+{
+	dev->driver_api = &uart_gnss_driver_api;
+    dev->driver_data = &uart_gnss_dev_data_0;
+
+    WRITE32(&__UART1->scaler, CONFIG_SYS_CLOCK_HW_CYCLES_PER_SEC/115200/2);
+
+#ifdef CONFIG_UART_INTERRUPT_DRIVEN
+    //uart_gnss_irq_tx_enable(dev);
+    uart_gnss_irq_rx_enable(dev);
+	IRQ_CONNECT(CFG_IRQ_UART1, CFG_IRQ_UART1, uart_gnss_isr, dev, UART_IRQ_FLAGS);
+	irq_enable(CFG_IRQ_UART1);
+#endif
+	return 0;
+}
 
 
 DEVICE_INIT(uart_gnss0, "UART_0", &uart_gnss_init,

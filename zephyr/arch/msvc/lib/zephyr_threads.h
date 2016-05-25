@@ -28,12 +28,18 @@ struct ThreadDataType {
     HANDLE hThread;
     HANDLE hEvent;
     bool preemptive;
-    uint64_t return_value;
 };
+
+struct tcs_simple {
+    void *link;
+    uint64_t flags;
+    uint64_t regs[32];
+};
+enum ERegs {REG_RA=0, REG_V0=15, REG_A0=17, REG_A1=18, REG_A2=19, REG_A3=20, REG_A4=21};
 
 
 extern "C" int LIBH_create_thread(char *pStackMem,
                                 unsigned stackSize, 
                                 int priority, 
                                 unsigned options);
-extern "C" unsigned int LIBH_swap(uint64_t stack);
+extern "C" void LIBH_swap(uint64_t stack);

@@ -57,22 +57,25 @@ typedef struct irqctrl_map {
     volatile uint32_t irq_pending;  // 0x04: [RW]
     volatile uint32_t irq_clear;    // 0x08: [WO]
     volatile uint32_t irq_rise;     // 0x0C: [WO]
-    volatile uint64_t isr_table;    // 0x10 [RW]
+    volatile uint64_t isr_table;    // 0x10: [RW]
     volatile uint64_t dbg_cause;    // 0x18: 
     volatile uint64_t dbg_epc;      // 0x20: 
-    volatile uint32_t irq_disable;  // 0x28: enable/disable all interrupts
+    volatile uint32_t irq_lock;     // 0x28: interrupts wait while lock=1
     volatile uint32_t irq_cause_idx;// 0x2c: 
 } irqctrl_map;
 
 
 typedef struct gptimer_type {
-    uint32_t control;
-    uint32_t rsv1;
-    uint64_t init_value;
-    uint64_t cur_value;
+    volatile uint32_t control;      // [0] = count_ena; [1] = irq_ena
+    volatile uint32_t rsv1;
+    volatile uint64_t cur_value;
+    volatile uint64_t init_value;
 } gptimer_type;
 
 typedef struct gptimers_map {
+    volatile uint64_t highcnt;
+    volatile uint32_t pending;
+    uint32_t rsv1[13];
     gptimer_type tmr[2];
 } gptimer_map;
 

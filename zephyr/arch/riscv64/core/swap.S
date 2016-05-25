@@ -50,14 +50,6 @@
  *
  */
 
-#define tNANO_FIBER_OFFSET   0
-#define tNANO_TASK_OFFSET    8
-#define tNANO_CURRENT_OFFSET 16
-
-#define TCS_LINK_OFFSET         0
-#define TCS_RETURN_VALUE_OFFSET 8
-#define TCS_FLAGS_OFFSET        16
-
 .section ".text"
 .globl __start
 __start:
@@ -67,9 +59,12 @@ __start:
 .globl _Swap
 _Swap:
 	/* interrupts are locked, interrupt key is in r0 */
-	addi	sp,sp,-16
-	sd	s0,8(sp)	# save 
 	la s0, _nanokernel
+	ld s1,tNANO_CURRENT_OFFSET(s0)	# s1 = _nanokernel.current
+	ld s2,COOP_REGS_OFFSET(s1)	# s2 = _nanokernel.current->coopRegs
+	_save_context(s2)
+
+
 	ld s1,tNANO_FIBER_OFFSET(s0)
 	bnez s1, _swap_to_a_fiber
 _swap_to_the_task:
@@ -78,13 +73,30 @@ _swap_to_the_task:
 _swap_to_a_fiber:
 	ld s2,tNANO_FIBER_OFFSET(s0)
 	ld s3,TCS_LINK_OFFSET(s2)	# s3 = nanokernel.fiber->link
-	ld s3,tNANO_FIBER_OFFSET(s0)	# nanokernel.fiber = s3
+	sd s3,tNANO_FIBER_OFFSET(s0)	# nanokernel.fiber = s3
 
 _swap_current_pointer:
 	sd s2,tNANO_CURRENT_OFFSET(s0)	# nanokernel.current = current
+	ld s3,COOP_REGS_OFFSET(s2)	# s3 = current->coopRegs
+	_restore_context(s3)
+	ret
 
-	# Restore modified registered
-	ld	s0,8(sp)
-	addi	sp,sp,16
+.globl _IsrExit
+_IsrExit:
+	la s0, _nanokernel
+	ld s1,tNANO_CURRENT_OFFSET(s0)	# s1 = _nanokernel.current
+	ld s2,COOP_REGS_OFFSET(s1)	# s2 = _nanokernel.current->flags
+	andi	s2,s2,1
+	beqz	s2,_IsrExit_ending
+	ld s2,tNANO_FIBER_OFFSET(s0)
+	beqz	s2,_IsrExit_ending
+	sd s2,tNANO_CURRENT_OFFSET(s0)	# nanokernel.current = current
+	ld s3,TCS_LINK_OFFSET(s2)	# s3 = nanokernel.fiber->link
+	sd s3,tNANO_FIBER_OFFSET(s0)	# nanokernel.fiber = s3
+
+        # Set 'tp' register pointing to new task registers array, so
+        # that ROM interrupt handler will restore full context on exit
+	ld tp,COOP_REGS_OFFSET(s2)
+_IsrExit_ending:
 	ret
 

@@ -19,8 +19,8 @@ extern struct nano_stack _k_command_stack;
 static uint32_t __noinit cycles_per_tick;
 static uint32_t accumulated_cycle_count;
 
-#define GPTIMER_CONTROL_ENABLE      0x1
-#define GPTIMER_CONTROL_RUN_ONCE    0x2
+#define GPTIMER_CONTROL_COUNT_ENA   0x1
+#define GPTIMER_CONTROL_IRQ_ENA     0x2
 
 /**
  *
@@ -68,6 +68,7 @@ void _timer_int_handler(void *unused)
 
 	/* clear the interrupt by writing 0 to IP bit of the control register */
     WRITE32(&__IRQCTRL->irq_clear, (1u << CFG_IRQ_SYS_TIMER));
+    WRITE32(&__TIMERS->pending, 0);
 
 #if defined(CONFIG_TICKLESS_IDLE)
 	timer0_limit_register_set(cycles_per_tick - 1);
@@ -109,7 +110,8 @@ int _sys_clock_driver_init(struct device *device) {
 	tickless_idle_init();
 
     WRITE64(&__TIMERS->tmr[CFG_SYS_TIMER_IDX].init_value, cycles_per_tick - 1);
-    WRITE32(&__TIMERS->tmr[CFG_SYS_TIMER_IDX].control, GPTIMER_CONTROL_ENABLE);
+    WRITE32(&__TIMERS->tmr[CFG_SYS_TIMER_IDX].control, 
+        GPTIMER_CONTROL_COUNT_ENA | GPTIMER_CONTROL_IRQ_ENA);
 
 	/* everything has been configured: safe to enable the interrupt */
 

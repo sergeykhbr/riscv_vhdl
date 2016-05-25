@@ -7,19 +7,24 @@ IsrEntryType isr_table[CONFIG_NUM_IRQS];
 IsrEntryType isr_demux_table[CONFIG_NUM_IRQS];
 
 
+#ifdef _WIN32
 void _IsrExit(void) {
     if ((_nanokernel.current->flags & TASK) == TASK) {
         if (_nanokernel.fiber) {
             _nanokernel.current = _nanokernel.fiber;
             _nanokernel.fiber = _nanokernel.fiber->link;
 
-#ifdef _WIN32
-            LIBH_swap_preemptive((uint64_t)_nanokernel.current,
-                                  _nanokernel.current->return_value);
-#endif
+            LIBH_swap_preemptive((uint64_t)_nanokernel.current);
+//            register uint64_t __tmp = asm("t0");
+//            __tmp = (uint64_t)_nanokernel.current->coopReg;
+//            asm ("mv tp,t0");
+            //register void* thread_pointer asm("tp");
         }
     }
 }
+#else
+extern void _IsrExit(void);
+#endif
 
 void _IsrWrapper(void *arg) {
     uint32_t isr_idx = READ32(&__IRQCTRL->irq_cause_idx);
@@ -28,13 +33,13 @@ void _IsrWrapper(void *arg) {
 }
 
 unsigned int _arch_irq_lock(void) {
-    unsigned int ret = READ32(&__IRQCTRL->irq_disable);
-    WRITE32(&__IRQCTRL->irq_disable, 1);
+    unsigned int ret = READ32(&__IRQCTRL->irq_lock);
+    WRITE32(&__IRQCTRL->irq_lock, 1);
     return ret;
 }
 
 void _arch_irq_unlock(unsigned int key) {
-    WRITE32(&__IRQCTRL->irq_disable, key);
+    WRITE32(&__IRQCTRL->irq_lock, key);
 }
 
 /**

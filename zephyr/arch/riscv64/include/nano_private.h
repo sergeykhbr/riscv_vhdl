@@ -121,25 +121,6 @@ extern "C" {
  *      f26-31  ft0-5   FP temporaries              Caller * 
  */
 
-typedef struct s_coopReg {
-	unsigned long sp;
-
-	/*
-	 * The following registers are considered non-volatile, i.e.
-	 * callee-save,
-	 * but their values are pushed onto the stack rather than stored in the
-	 * TCS
-	 * structure:
-	 *
-	 *  unsigned long ebp;
-	 *  unsigned long ebx;
-	 *  unsigned long esi;
-	 *  unsigned long edi;
-	 */
-     uint64_t regs[32];
-
-} tCoopReg;
-
 /*
  * The following structure defines the set of 'volatile' integer registers.
  * These registers need not be preserved by a called C function.  Given that
@@ -184,11 +165,6 @@ struct tcs {
 	 * nanokernel FIFO).
 	 */
 	struct tcs *link;
-
-    /*
-     * return value from _Swap
-     */
-    uint64_t return_value;
 
 	/*
 	 * See the above flag definitions above for valid bit settings.  This
@@ -319,9 +295,7 @@ static INLINE void nanoArchInit(void)
  */
 static INLINE void fiberRtnValueSet(struct tcs *fiber, uint64_t value)
 {
-	/* write into 'eax' slot created in _Swap() entry */
-
-	fiber->return_value = value;
+	fiber->coopReg[COOP_REG_V0/sizeof(uint64_t)] = value;
 }
 
 /* definitions to support nanoCpuExcConnect() */
