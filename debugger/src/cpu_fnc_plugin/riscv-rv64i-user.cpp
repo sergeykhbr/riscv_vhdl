@@ -770,7 +770,7 @@ public:
     virtual void exec(uint32_t *payload, CpuContextType *data) {
         ISA_R_type u;
         u.value = payload[0];
-        data->regs[u.bits.rd] = data->regs[u.bits.rs1] << u.bits.rs2;
+        data->regs[u.bits.rd] = data->regs[u.bits.rs1] << data->regs[u.bits.rs2];
         data->regs[u.bits.rd] &= 0xFFFFFFFFLL;
         if (data->regs[u.bits.rd] & (1LL << 31)) {
             data->regs[u.bits.rd] |= EXT_SIGN_32;

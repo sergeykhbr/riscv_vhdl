@@ -37,8 +37,7 @@
 #define CFG_IRQ_GNSSENGINE 0
 #define CFG_IRQ_UART1      1
 #define CFG_IRQ_ETHMAC     2
-#define CFG_IRQ_GPTIMERS   3
-#define CFG_IRQ_TOTAL      4
+#define CFG_IRQ_TOTAL      3
 
 typedef struct IsrEntryType {
     uint64_t arg;

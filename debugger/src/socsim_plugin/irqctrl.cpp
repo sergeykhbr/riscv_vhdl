@@ -25,7 +25,7 @@ IrqController::IrqController(const char *name)  : IService(name) {
 
     memset(&regs_, 0, sizeof(regs_));
     regs_.irq_mask = ~0;
-    regs_.irq_disable = 1;
+    regs_.irq_lock = 1;
 }
 
 IrqController::~IrqController() {
@@ -96,7 +96,7 @@ void IrqController::transaction(Axi4TransactionType *payload) {
                 RISCV_info("Set dbg_epc[63:32] = %08x", payload->wpayload[i]);
                 break;
             case 10:
-                regs_.irq_disable = payload->wpayload[i];
+                regs_.irq_lock = payload->wpayload[i];
                 RISCV_info("Set irq_ena = %08x", payload->wpayload[i]);
                 break;
             case 11:
@@ -150,7 +150,7 @@ void IrqController::transaction(Axi4TransactionType *payload) {
                 RISCV_info("Get dbg_epc[63:32] = %08x", payload->rpayload[i]);
                 break;
             case 10:
-                payload->rpayload[i] = regs_.irq_disable;
+                payload->rpayload[i] = regs_.irq_lock;
                 RISCV_info("Get irq_ena = %08x", payload->rpayload[i]);
                 break;
             case 11:
@@ -165,7 +165,7 @@ void IrqController::transaction(Axi4TransactionType *payload) {
 }
 
 void IrqController::raiseLine(int idx) {
-    if (regs_.irq_disable) {
+    if (regs_.irq_lock) {
         return;
     }
     if ((regs_.irq_mask & (0x1 << idx)) == 0) {

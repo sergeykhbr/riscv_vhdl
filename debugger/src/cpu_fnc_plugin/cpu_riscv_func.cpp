@@ -117,11 +117,6 @@ void CpuRiscV_Functional::updatePipeline() {
         return;
     } 
 
-#if 0
-    if (cacheline_[0] == 0x00b52023) {
-        bool st = true;
-    }
-#endif
     instr = decodeInstruction(cacheline_);
     if (isRunning()) {
         last_hit_breakpoint_ = ~0;
@@ -244,20 +239,57 @@ IInstruction *CpuRiscV_Functional::decodeInstruction(uint32_t *rpayload) {
     return instr;
 }
 
+#if 1
+static const int ra = 1;       // [1] Return address
+static const int sp = 2;       // [2] Stack pointer
+static const int gp = 3;       // [3] Global pointer
+static const int tp = 4;       // [4] Thread pointer
+static const int t0 = 5;       // [5] Temporaries 0 s3
+static const int t1 = 6;       // [6] Temporaries 1 s4
+static const int t2 = 7;       // [7] Temporaries 2 s5
+static const int s0 = 8;       // [8] s0/fp Saved register/frame pointer
+static const int s1 = 9;       // [9] Saved register 1
+static const int a0 = 10;       // [10] Function argumentes 0
+static const int a1 = 11;       // [11] Function argumentes 1
+static const int a2 = 12;       // [12] Function argumentes 2
+static const int a3 = 13;       // [13] Function argumentes 3
+static const int a4 = 14;       // [14] Function argumentes 4
+static const int a5 = 15;       // [15] Function argumentes 5
+static const int a6 = 16;       // [16] Function argumentes 6
+static const int a7 = 17;       // [17] Function argumentes 7
+static const int s2 = 18;       // [18] Saved register 2
+static const int s3 = 19;       // [19] Saved register 3
+static const int s4 = 20;       // [20] Saved register 4
+static const int s5 = 21;       // [21] Saved register 5
+static const int s6 = 22;       // [22] Saved register 6
+static const int s7 = 23;       // [23] Saved register 7
+static const int s8 = 24;       // [24] Saved register 8
+static const int s9 = 25;       // [25] Saved register 9
+static const int s10 = 26;      // [26] Saved register 10
+static const int s11 = 27;      // [27] Saved register 11
+static const int t3 = 28;       // [28] 
+static const int t4 = 29;       // [29] 
+static const int t5 = 30;       // [30] 
+static const int t6 = 31;      // [31] 
+#endif
+
 void CpuRiscV_Functional::executeInstruction(IInstruction *instr,
                                              uint32_t *rpayload) {
 
     CpuContextType *pContext = getpContext();
     instr->exec(cacheline_, pContext);
 #if 0
-    if (pContext->step_cnt >= 0) {
-        RISCV_debug("[%" RV_PRI64 "d] %08x: %08x \t %4s <mstatus=%016" RV_PRI64 "x; ra=%016" RV_PRI64 "x; sp=%016" RV_PRI64 "x>", 
+    //if (pContext->pc >= 0x10000000) {
+    //if (pContext->pc >= 0x10000090 && pContext->pc <= 0x10000130) {
+    if (pContext->pc >= 0x10001928 && pContext->pc <= 0x10001960) {
+        RISCV_debug("[%" RV_PRI64 "d] %08x: %08x \t %4s <mstatus=%016" RV_PRI64 "x; ra=%016" RV_PRI64 "x; sp=%016" RV_PRI64 "x; tp=%016" RV_PRI64 "x>", 
             getStepCounter(),
             static_cast<uint32_t>(pContext->pc),
             rpayload[0], instr->name(),
             pContext->csr[CSR_mstatus],
-            pContext->regs[1],//ra
-            pContext->regs[2]//sp
+            pContext->regs[ra],
+            pContext->regs[sp],
+            pContext->regs[tp]
             );
     }
 #endif

@@ -56,7 +56,7 @@ private:
         uint64_t isr_table;     // 0x10: [RW]
         uint64_t dbg_cause;     // 0x18: [RW]
         uint64_t dbg_epc;       // 0x20: [RW]
-        uint32_t irq_disable;   // 0x28: [RW]
+        uint32_t irq_lock;      // 0x28: [RW]
         uint32_t irq_cause_idx; // 0x2c: [RW]
     } regs_;
 };

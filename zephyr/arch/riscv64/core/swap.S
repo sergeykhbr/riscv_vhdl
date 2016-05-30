@@ -61,7 +61,7 @@ _Swap:
 	/* interrupts are locked, interrupt key is in r0 */
 	la s0, _nanokernel
 	ld s1,tNANO_CURRENT_OFFSET(s0)	# s1 = _nanokernel.current
-	ld s2,COOP_REGS_OFFSET(s1)	# s2 = _nanokernel.current->coopRegs
+	addi s2,s1,COOP_REGS_OFFSET	# s2 = &_nanokernel.current->coopRegs
 	_save_context(s2)
 
 
@@ -77,7 +77,7 @@ _swap_to_a_fiber:
 
 _swap_current_pointer:
 	sd s2,tNANO_CURRENT_OFFSET(s0)	# nanokernel.current = current
-	ld s3,COOP_REGS_OFFSET(s2)	# s3 = current->coopRegs
+	addi s3,s2,COOP_REGS_OFFSET	# &s3 = &current->coopRegs
 	_restore_context(s3)
 	ret
 

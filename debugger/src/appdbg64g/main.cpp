@@ -259,6 +259,7 @@ int main(int argc, char* argv[]) {
 
     // Enable/Disable simulator option:
     Config["GlobalSettings"]["SimEnable"].make_boolean(!disableSim);
+    //scriptFile.make_string("");
     Config["GlobalSettings"]["ScriptFile"] = scriptFile;
 
     RISCV_set_configuration(&Config);
