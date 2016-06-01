@@ -14,7 +14,9 @@ uint64_t _Swap(uint64_t fl) {
         _nanokernel.fiber = _nanokernel.fiber->link;
     }
 
+    _nanokernel.current->intlock = 0;   // Cooperative switch with automatic unlocking
     _nanokernel.current = current;
+    irq_unlock(_nanokernel.current->intlock);
 #ifdef _WIN32
     LIBH_swap((uint64_t)_nanokernel.current);
 #endif

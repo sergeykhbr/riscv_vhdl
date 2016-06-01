@@ -95,6 +95,19 @@ extern void _arch_irq_unlock(unsigned int key);
 
 /**
  *
+ * @brief Read interrupts state on the CPU (inline)
+ *
+ * This routine check interrupts on the CPU.
+  * This routine can be called from either interrupt, task or fiber level.
+ *
+ * @return N/A
+ *
+ */
+
+extern unsigned int _arch_irq_lock_state();
+
+/**
+ *
  * @brief Enable an interrupt line
  *
  * Clear possible pending interrupts on the line, and enable the interrupt

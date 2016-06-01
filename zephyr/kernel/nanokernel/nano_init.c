@@ -166,6 +166,7 @@ static void nano_init(struct tcs *dummyOutContext)
 
 	dummyOutContext->flags = FIBER | ESSENTIAL;
 	dummyOutContext->prio = 0;
+    dummyOutContext->intlock = 0;
 
 
 	/*

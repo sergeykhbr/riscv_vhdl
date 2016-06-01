@@ -25,13 +25,13 @@
 
 #define TCS_LINK_OFFSET         0
 #define TCS_FLAGS_OFFSET        8
-
+#define TCS_INTLOCK_OFFSET      16
+#define TCS_COOP_REGS_OFFSET    24
 
 /** 
  * Saved by callee function registers:
  *      s0..s11, sp, tp 
  */
-#define COOP_REGS_OFFSET    16//(2*sizeof(uint64_t))
 
 /** Return address */
 #define COOP_REG_RA         0//(0*sizeof(uint64_t))
@@ -91,7 +91,6 @@
   sd s10, COOP_REG_S10(TO); \
   sd s11, COOP_REG_S11(TO); \
   sd sp, COOP_REG_SP(TO); \
-  sd tp, COOP_REG_TP(TO); \
   sd x16, COOP_REG_V0(TO); \
   sd x17, COOP_REG_V1(TO); \
   sd a0, COOP_REG_A0(TO); \
@@ -125,7 +124,6 @@
   ld s10, COOP_REG_S10(FROM); \
   ld s11, COOP_REG_S11(FROM); \
   ld sp, COOP_REG_SP(FROM); \
-  ld tp, COOP_REG_TP(FROM); \
   ld x16, COOP_REG_V0(FROM); \
   ld x17, COOP_REG_V1(FROM); \
   ld a0, COOP_REG_A0(FROM); \

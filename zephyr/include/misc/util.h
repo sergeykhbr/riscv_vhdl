@@ -30,6 +30,22 @@ extern "C" {
 
 #ifndef _ASMLANGUAGE
 
+#ifdef CONFIG_RISCV64
+#define POINTER_TO_UINT(x) ((uint64_t) (x))
+#define UINT_TO_POINTER(x) ((void *) (x))
+#define POINTER_TO_INT(x)  ((int64_t) (x))
+#define INT_TO_POINTER(x)  ((void *) (x))
+
+#define ARRAY_SIZE(array) ((uint64_t)(sizeof(array) / sizeof((array)[0])))
+#define CONTAINER_OF(ptr, type, field) \
+	((type *)(((char *)(ptr)) - offsetof(type, field)))
+
+/* round "x" up/down to next multiple of "align" (which must be a power of 2) */
+#define ROUND_UP(x, align)                                   \
+	(((uint64_t)(x) + ((uint64_t)align - 1)) & \
+	 ~((uint64_t)align - 1))
+#define ROUND_DOWN(x, align) ((uint64_t)(x) & ~((uint64_t)align - 1))
+#else
 /* Helper to pass a int as a pointer or vice-versa.
  * Those are available for 32 bits architectures:
  */
@@ -47,6 +63,7 @@ extern "C" {
 	(((unsigned long)(x) + ((unsigned long)align - 1)) & \
 	 ~((unsigned long)align - 1))
 #define ROUND_DOWN(x, align) ((unsigned long)(x) & ~((unsigned long)align - 1))
+#endif
 
 #if!defined INLINE
 #ifdef INLINED

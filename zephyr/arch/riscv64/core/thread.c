@@ -70,7 +70,7 @@ tNANO _nanokernel = {0};
  */
 void _new_thread(char *pStackMem, unsigned stackSize,
 		 void *uk_task_ptr, _thread_entry_t pEntry,
-		 void *parameter1, void *parameter2, void *parameter3,
+		 _thread_arg_t parameter1, _thread_arg_t parameter2, _thread_arg_t parameter3,
 		 int priority, unsigned options)
 {
 	/* ptr to the new task's tcs */
@@ -108,6 +108,7 @@ void _new_thread(char *pStackMem, unsigned stackSize,
 	} else {
 		tcs->flags = FIBER;
     }
+    tcs->intlock = 0;
 
 #ifdef CONFIG_THREAD_CUSTOM_DATA
 	/* Initialize custom data field (value is opaque to kernel) */

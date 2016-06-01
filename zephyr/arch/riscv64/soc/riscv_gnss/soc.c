@@ -43,6 +43,7 @@ static int riscv_gnss_soc_init(struct device *arg)
 {
 	ARG_UNUSED(arg);
     WRITE64(&__IRQCTRL->isr_table, (uint64_t)isr_table);
+    WRITE32(&__IRQCTRL->irq_lock, 0);
     WRITE32(&__UART1->scaler, 260);
 	return 0;
 }
@@ -84,4 +85,3 @@ void WRITE64(volatile uint64_t *addr, uint64_t val) {
 }
 
 SYS_INIT(riscv_gnss_soc_init, PRIMARY, CONFIG_KERNEL_INIT_PRIORITY_DEFAULT);
-

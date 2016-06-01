@@ -57,7 +57,7 @@ extern "C" {
 
 /* stacks */
 
-#define STACK_ALIGN_SIZE 4
+#define STACK_ALIGN_SIZE 8
 
 #define STACK_ROUND_UP(x) ROUND_UP(x, STACK_ALIGN_SIZE)
 #define STACK_ROUND_DOWN(x) ROUND_DOWN(x, STACK_ALIGN_SIZE)
@@ -174,6 +174,12 @@ struct tcs {
 	 * offset to read the 'flags' field.
 	 */
 	uint64_t flags;
+
+    /**
+     * interrupt key (irq_lock) when relinquishing control
+     */
+    uint32_t intlock;
+    uint32_t rsrv1;
 
 	/*
 	 * Storage space for integer registers.  These must also remain near

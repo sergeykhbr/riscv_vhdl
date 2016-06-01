@@ -33,6 +33,8 @@ struct ThreadDataType {
 struct tcs_simple {
     void *link;
     uint64_t flags;
+    uint32_t intlock;
+    uint32_t rsrv1;
     uint64_t regs[32];
 };
 enum ERegs {REG_RA=0, REG_V0=15, REG_A0=17, REG_A1=18, REG_A2=19, REG_A3=20, REG_A4=21};

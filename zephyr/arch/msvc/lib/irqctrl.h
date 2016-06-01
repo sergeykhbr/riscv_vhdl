@@ -5,7 +5,7 @@
 class IrqController : public IMappedDevice {
 public:
     IrqController() {
-        irq_enabled_ = 0;
+        irq_lock_ = 0;
         isr_mask_ = ~0;
         isr_table_ = 0;
     }
@@ -26,7 +26,7 @@ public:
             isr_table_ = *((IsrEntryType **)buf);
             break;
         case 0x28:
-            irq_enabled_ = *(uint32_t *)buf;
+            irq_lock_ = *(uint32_t *)buf;
             break;
         default:
             break;
@@ -47,7 +47,7 @@ public:
             *((IsrEntryType **)buf) = isr_table_;
             break;
         case 0x28:
-            *(uint32_t *)buf = irq_enabled_;
+            *(uint32_t *)buf = irq_lock_;
             break;
         case 0x2c:
             *(uint32_t *)buf = irq_cause_idx_;
@@ -58,7 +58,7 @@ public:
     }
 
     virtual void raise_interrupt(int idx) {
-        if (!isr_table_ || !irq_enabled_) {
+        if (!isr_table_ || irq_lock_) {
             return;
         }
         if (isr_table_[idx].func && ((isr_mask_ & (0x1 << idx)) == 0)) {
@@ -76,7 +76,7 @@ private:
         uint64_t arg;
         uint64_t func;
     } *isr_table_;
-    uint32_t irq_enabled_;
+    uint32_t irq_lock_;
     uint32_t isr_mask_;
     uint32_t isr_pending_;
     uint32_t irq_cause_idx_;

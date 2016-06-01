@@ -11,14 +11,12 @@ IsrEntryType isr_demux_table[CONFIG_NUM_IRQS];
 void _IsrExit(void) {
     if ((_nanokernel.current->flags & TASK) == TASK) {
         if (_nanokernel.fiber) {
+            _nanokernel.current->intlock = _arch_irq_lock_state();
             _nanokernel.current = _nanokernel.fiber;
             _nanokernel.fiber = _nanokernel.fiber->link;
 
+            irq_unlock(_nanokernel.current->intlock);
             LIBH_swap_preemptive((uint64_t)_nanokernel.current);
-//            register uint64_t __tmp = asm("t0");
-//            __tmp = (uint64_t)_nanokernel.current->coopReg;
-//            asm ("mv tp,t0");
-            //register void* thread_pointer asm("tp");
         }
     }
 }
@@ -39,7 +37,11 @@ unsigned int _arch_irq_lock(void) {
 }
 
 void _arch_irq_unlock(unsigned int key) {
-    WRITE32(&__IRQCTRL->irq_lock, key);
+    WRITE32(&__IRQCTRL->irq_lock, 0);
+}
+
+unsigned int _arch_irq_lock_state() {
+    return READ32(&__IRQCTRL->irq_lock);
 }
 
 /**
