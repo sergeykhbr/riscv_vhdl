@@ -51,11 +51,14 @@ private:
 
     static const uint32_t TIMER_CONTROL_ENA = 1<<0;
     struct gptimers_map {
+        uint64_t highcnt;
+        uint32_t pending;
+        uint32_t rsvr[13];
         typedef struct gptimer_type {
             volatile uint32_t control;
             volatile uint32_t rsv1;
-            volatile uint64_t init_value;
             volatile uint64_t cur_value;
+            volatile uint64_t init_value;
         } gptimer_type;
         gptimer_type timer[2];
     } regs_;

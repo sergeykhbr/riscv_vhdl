@@ -584,7 +584,11 @@ public:
     virtual void exec(uint32_t *payload, CpuContextType *data) {
         ISA_U_type u;
         u.value = payload[0];
-        data->regs[u.bits.rd] = u.bits.imm31_12 << 12;
+        uint64_t tmp = u.bits.imm31_12 << 12;
+        if (tmp & 0x80000000) {
+            tmp |= EXT_SIGN_32;
+        }
+        data->regs[u.bits.rd] = tmp;
         data->npc = data->pc + 4;
     }
 };

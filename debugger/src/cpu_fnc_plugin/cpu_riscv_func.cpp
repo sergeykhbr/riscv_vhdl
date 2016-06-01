@@ -277,11 +277,18 @@ void CpuRiscV_Functional::executeInstruction(IInstruction *instr,
                                              uint32_t *rpayload) {
 
     CpuContextType *pContext = getpContext();
+#if 1
+    if (pContext->pc == 0x100000b4) {
+        bool st = true;
+    }
+#endif
     instr->exec(cacheline_, pContext);
 #if 0
     //if (pContext->pc >= 0x10000000) {
-    //if (pContext->pc >= 0x10000090 && pContext->pc <= 0x10000130) {
-    if (pContext->pc >= 0x10001928 && pContext->pc <= 0x10001960) {
+    if ((pContext->pc >= 0x100000b4 && pContext->pc <= 0x10000130)
+    || (pContext->pc >= 0x10001ef4)
+    ) {
+    //if (pContext->pc >= 0x10001928 && pContext->pc <= 0x10001960) {
         RISCV_debug("[%" RV_PRI64 "d] %08x: %08x \t %4s <mstatus=%016" RV_PRI64 "x; ra=%016" RV_PRI64 "x; sp=%016" RV_PRI64 "x; tp=%016" RV_PRI64 "x>", 
             getStepCounter(),
             static_cast<uint32_t>(pContext->pc),
