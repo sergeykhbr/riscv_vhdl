@@ -70,7 +70,7 @@ void __printk_hook_install(int (*fn)(int))
  *
  * @return N/A
  */
-static INLINE void _vprintk(const char *fmt, va_list ap)
+static inline void _vprintk(const char *fmt, va_list ap)
 {
 	int might_format = 0; /* 1 if encountered a '%' */
 

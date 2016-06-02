@@ -48,5 +48,7 @@ config UART_CONSOLE
 config CONSOLE_HANDLER_SHELL
 	def_bool y
 
+config CONSOLE_HAS_DRIVER
+	def_bool y
 
 endif # SOC_RISCV_GNSS
