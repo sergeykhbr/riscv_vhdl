@@ -68,45 +68,22 @@ int UdpService::createDatagramSocket() {
         return -1;
     }
 
-    struct addrinfo hints;
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family = AF_UNSPEC;
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_protocol = IPPROTO_TCP;
-
-    int retval;
-    struct addrinfo *result = NULL;
-    struct addrinfo *ptr = NULL;
-    retval = getaddrinfo(hostName, "0", &hints, &result);
-    if (retval != 0) {
-        return -1;
-    }
-
-    for (ptr = result; ptr != NULL; ptr = ptr->ai_next) {
-        // Find only IPV4 address, ignore others.
-        if (ptr->ai_family != AF_INET) {
-            continue;
-        }
-        sockaddr_ipv4_ = *((struct sockaddr_in *)ptr->ai_addr);
-        RISCV_sprintf(sockaddr_ipv4_str_, sizeof(sockaddr_ipv4_str_), 
-                    "%s", inet_ntoa(sockaddr_ipv4_.sin_addr));
-
-        if (strcmp(inet_ntoa(sockaddr_ipv4_.sin_addr), 
-                   hostIP_.to_string()) == 0) {
-            break;
-        }
-    }
-
+    memset(&sockaddr_ipv4_, 0, sizeof (sockaddr_ipv4_));
+    sockaddr_ipv4_.sin_family = AF_INET;
+    inet_aton(hostIP_.to_string(), &(sockaddr_ipv4_.sin_addr));
     hsock_ = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (hsock_ < 0) {
+        perror("Fatal error: socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)");
         //setLibError(ERR_UDPSOCKET_CREATE);
         return -1;
     }
 
-    sockaddr_ipv4_.sin_port = 0;
     int res = bind(hsock_, (struct sockaddr *)&sockaddr_ipv4_, 
                               sizeof(sockaddr_ipv4_));
     if (res != 0) {
+      char err[99];
+      sprintf(err, "Fatal error: bind(hsock_, \"%s\", ...)", hostIP_.to_string());
+      perror(err);
         //setLibError(ERR_UDPSOCKET_BIND);
         return -1;
     }
