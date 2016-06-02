@@ -27,20 +27,20 @@ libdbg64g:
 	$(MKDIR) ./$(ELF_DIR)
 	$(MKDIR) ./$(PLUGINS_OBJ_DIR)
 	$(MKDIR) ./$(PLUGINS_ELF_DIR)
-	make -f make_libdbg64g TOP_DIR=$(TOP_DIR) OBJ_DIR=$(OBJ_DIR) ELF_DIR=$(ELF_DIR) $@ $(TEA)
+	make -f make_libdbg64g TOP_DIR=$(TOP_DIR) OBJ_DIR=$(OBJ_DIR) ELF_DIR=$(ELF_DIR) $(TEA)
 
 simple_plugin:
 	$(ECHO) "    Plugin " $@ " building started:"
-	make -f make_simple_plugin TOP_DIR=$(TOP_DIR) PLUGINS_OBJ_DIR=$(PLUGINS_OBJ_DIR) PLUGINS_ELF_DIR=$(PLUGINS_ELF_DIR) $@ $(TEA)
+	make -f make_simple_plugin TOP_DIR=$(TOP_DIR) PLUGINS_OBJ_DIR=$(PLUGINS_OBJ_DIR) PLUGINS_ELF_DIR=$(PLUGINS_ELF_DIR) $(TEA)
 
 socsim_plugin:
 	$(ECHO) "    Plugin " $@ " building started:"
-	make -f make_socsim_plugin TOP_DIR=$(TOP_DIR) PLUGINS_OBJ_DIR=$(PLUGINS_OBJ_DIR) PLUGINS_ELF_DIR=$(PLUGINS_ELF_DIR) $@ $(TEA)
+	make -f make_socsim_plugin TOP_DIR=$(TOP_DIR) PLUGINS_OBJ_DIR=$(PLUGINS_OBJ_DIR) PLUGINS_ELF_DIR=$(PLUGINS_ELF_DIR) $(TEA)
 
 cpu_fnc_plugin:
 	$(ECHO) "    Plugin " $@ " building started:"
-	make -f make_cpu_fnc_plugin TOP_DIR=$(TOP_DIR) PLUGINS_OBJ_DIR=$(PLUGINS_OBJ_DIR) PLUGINS_ELF_DIR=$(PLUGINS_ELF_DIR) $@ $(TEA)
+	make -f make_cpu_fnc_plugin TOP_DIR=$(TOP_DIR) PLUGINS_OBJ_DIR=$(PLUGINS_OBJ_DIR) PLUGINS_ELF_DIR=$(PLUGINS_ELF_DIR) $(TEA)
 
 appdbg64g:
 	$(ECHO) "    Debugger application building started:"
-	make -f make_appdbg64g TOP_DIR=$(TOP_DIR) OBJ_DIR=$(OBJ_DIR) ELF_DIR=$(ELF_DIR) $@ $(TEA)
+	make -f make_appdbg64g TOP_DIR=$(TOP_DIR) OBJ_DIR=$(OBJ_DIR) ELF_DIR=$(ELF_DIR) $(TEA)

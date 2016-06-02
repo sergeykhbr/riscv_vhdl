@@ -8,7 +8,7 @@ include util.mak
 
 CC=gcc
 CPP=gcc
-CFLAGS= -c -Wall -Werror -fpic -std=c++0x
+CFLAGS=-g -c -Wall -Werror -fpic -std=c++0x
 LDFLAGS=-shared -L$(PLUGINS_ELF_DIR)/..
 INCL_KEY=-I
 DIR_KEY=-B
@@ -44,24 +44,20 @@ LIBS = \
 	dbg64g
 
 SRC_FILES = $(addsuffix .cpp,$(SOURCES))
-OBJ_FILES = $(addsuffix .o,$(SOURCES))
-EXECUTABLE = cpu_fnc_plugin.so
+OBJ_FILES = $(addprefix $(PLUGINS_OBJ_DIR)/,$(addsuffix .o,$(SOURCES)))
+EXECUTABLE = $(addprefix $(PLUGINS_ELF_DIR)/,cpu_fnc_plugin.so)
 
-all: cpu_fnc_plugin
-
-.PHONY: $(EXECUTABLE)
-
-cpu_fnc_plugin: $(EXECUTABLE)
+all: $(EXECUTABLE)
 
 $(EXECUTABLE): $(OBJ_FILES)
-	echo $(CPP) $(LDFLAGS) $(addprefix $(PLUGINS_OBJ_DIR)/,$(OBJ_FILES)) -o $(addprefix $(PLUGINS_ELF_DIR)/,$@)
-	$(CPP) $(LDFLAGS) $(addprefix $(PLUGINS_OBJ_DIR)/,$(OBJ_FILES)) -o $(addprefix $(PLUGINS_ELF_DIR)/,$@) $(addprefix -l,$(LIBS))
+	echo $(CPP) $(LDFLAGS) $(OBJ_FILES) -o $@
+	$(CPP) $(LDFLAGS) $(OBJ_FILES) -o $@ $(addprefix -l,$(LIBS))
 	$(ECHO) "\n  Plugin '"$@"' has been built successfully.\n"
 
-%.o: %.cpp
-	echo $(CPP) $(CFLAGS) $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $(addprefix $(PLUGINS_OBJ_DIR)/,$@)
-	$(CPP) $(CFLAGS) $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $(addprefix $(PLUGINS_OBJ_DIR)/,$@)
+$(addprefix $(OBJ_DIR)/,%.o): %.cpp
+	echo $(CPP) $(CFLAGS) $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $@
+	$(CPP) $(CFLAGS) $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $@
 
-%.o: %.c
-	echo $(CC) $(CFLAGS) $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $(addprefix $(PLUGINS_OBJ_DIR)/,$@)
-	$(CC) $(CFLAGS) $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $(addprefix $(PLUGINS_OBJ_DIR)/,$@)
+$(addprefix $(OBJ_DIR)/,%.o): %.c
+	echo $(CC) $(CFLAGS) $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $@
+	$(CC) $(CFLAGS) $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $@
