@@ -48,7 +48,6 @@ void GPTimers::postinitService() {
 void GPTimers::transaction(Axi4TransactionType *payload) {
     uint64_t mask = (length_.to_uint64() - 1);
     uint64_t off = ((payload->addr - getBaseAddress()) & mask) / 4;
-    gptimers_map *p0 = (gptimers_map *)0;
     if (payload->rw) {
         for (uint64_t i = 0; i < payload->xsize/4; i++) {
             if ((payload->wstrb & (0xf << 4*i)) == 0) {
@@ -119,7 +118,7 @@ void GPTimers::transaction(Axi4TransactionType *payload) {
 
 void GPTimers::stepCallback(uint64_t t) {
     iwire_->raiseLine(irqLine_.to_int());
-    if (regs_.timer[0].control & 0x1) {
+    if (regs_.timer[0].control & TIMER_CONTROL_ENA) {
         iclk_->registerStepCallback(static_cast<IClockListener *>(this),
                                     t + regs_.timer[0].init_value);
     }

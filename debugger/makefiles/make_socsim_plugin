@@ -36,6 +36,7 @@ SOURCES = \
 	pnp \
 	dsu \
 	greth \
+	gptimers \
 	plugin_init
 
 LIBS = \

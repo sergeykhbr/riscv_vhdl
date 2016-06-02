@@ -138,7 +138,7 @@ int Bus::write(uint64_t addr, uint8_t *payload, int sz) {
 void Bus::addBreakpoint(uint64_t addr) {
     AttributeType br(Attr_UInteger, addr);
     for (unsigned i = 0; i < breakpoints_.size(); i++) {
-      if (breakpoints_[i].to_uint64() == (unsigned)~0) {
+        if (breakpoints_[i].to_uint64() == ~0ull) {
             breakpoints_[i] = br;
             return;
         }

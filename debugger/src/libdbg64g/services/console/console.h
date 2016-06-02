@@ -54,6 +54,7 @@ private:
     bool isData();
     int getData();
     void clearLine();
+    void processScriptCommand(const char *cmd);
 
 private:
     AttributeType isEnable_;

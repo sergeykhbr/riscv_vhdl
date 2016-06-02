@@ -282,18 +282,19 @@ int main(int argc, char* argv[]) {
         /**
          * @brief Create instance of the example plugin class.
          */
-      IFace *simple = RISCV_get_class("SimplePluginClass");
-      if (simple)
-	itst = static_cast<IService *>(RISCV_create_service(
-                      simple, "example1", NULL));
+        IFace *simple = RISCV_get_class("SimplePluginClass");
+        if (simple) {
+	        itst = static_cast<IService *>(RISCV_create_service(
+                          simple, "example1", NULL));
+        }
     }
 
     if (itst != NULL) {
-    /** Get plugin specific interface. */
-    ISimplePlugin * itst_access = static_cast<ISimplePlugin *>(
+        /** Get plugin specific interface. */
+        ISimplePlugin * itst_access = static_cast<ISimplePlugin *>(
                                 itst->getInterface(IFACE_SIMPLE_PLUGIN));
-    /** Call example method */
-    itst_access->exampleAction(0xcafe);
+        /** Call example method */
+        itst_access->exampleAction(0xcafe);
     }
 
     // Working cycle with console:

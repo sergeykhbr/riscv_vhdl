@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "api_types.h"
+#include "coreservices/iserial.h"
 
 namespace debugger {
 
@@ -104,6 +105,9 @@ void ConsoleService::hapTriggered(EHapType type) {
 
 void ConsoleService::busyLoop() {
     RISCV_event_wait(&config_done_);
+    enum EScriptState {SCRIPT_normal, SCRIPT_comment, SCRIPT_command} scr_state;
+    scr_state = SCRIPT_normal;
+    std::string strcmd;
 
     const AttributeType *glb = RISCV_get_global_settings();
     if ((*glb)["ScriptFile"].size() > 0) {
@@ -112,32 +116,42 @@ void ConsoleService::busyLoop() {
         if (!script) {
             RISCV_error("Script file '%s' not found", script_name);
         } else if (iconsumer_) {
-            bool comment = false;
             bool crlf = false;
             char symb[2];
             while (!feof(script)) {
                 fread(symb, 1, 1, script);
-                if (symb[0] == '/') {
-                    fread(&symb[1], 1, 1, script);
-                    if (symb[1] == '/') {
-                        comment = true;
-                    } else {
-                        fseek(script, -1, SEEK_CUR);
-                    }
-                }
 
-                if (!comment) {
+                switch (scr_state) {
+                case SCRIPT_normal:
                     if (crlf && symb[0] == '\n') {
                         crlf = false;
+                    } else if (symb[0] == '/') {
+                        fread(&symb[1], 1, 1, script);
+                        if (symb[1] == '/') {
+                            scr_state = SCRIPT_comment;
+                        } else {
+                            iconsumer_->keyUp(symb[0]);
+                            fseek(script, -1, SEEK_CUR);
+                        }
+                    } else if (symb[0] == '-') {
+                        scr_state = SCRIPT_command;
+                        strcmd = "";
                     } else {
                         iconsumer_->keyUp(symb[0]);
                     }
-                } else if (symb[0] == '\r') {
-                    crlf = true;
-                    comment = false;
-                } else if (symb[0] == '\n') {
-                    comment = false;
+                    break;
+                case SCRIPT_command:
+                    if (symb[0] == '\r' || symb[0] == '\n') {
+                        scr_state = SCRIPT_normal;
+                        processScriptCommand(strcmd.c_str());
+                    } else {
+                        strcmd += symb[0];
+                    }
+                    break;
+                default:;
                 }
+
+                crlf = symb[0] == '\r';
             }
             RISCV_info("Script '%s' was finished", script_name);
         }
@@ -152,6 +166,24 @@ void ConsoleService::busyLoop() {
     }
     loopEnable_ = false;
     threadInit_.Handle = 0;
+}
+
+void ConsoleService::processScriptCommand(const char *cmd) {
+    AttributeType t1;
+    t1.from_config(cmd);
+    if (!t1.is_list()) {
+        return;
+    }
+    if (strcmp(t1[0u].to_string(), "wait") == 0) {
+        RISCV_sleep_ms(static_cast<int>(t1[1].to_int64()));
+    } else if (strcmp(t1[0u].to_string(), "uart0") == 0) {
+        IService *uart = static_cast<IService *>(RISCV_get_service("uart0"));
+        if (uart) {
+            ISerial *iserial = static_cast<ISerial *>(
+                        uart->getInterface(IFACE_SERIAL));
+            iserial->writeData(t1[1].to_string(), t1[1].size());
+        }
+    }
 }
 
 void ConsoleService::updateData(const char *buf, int buflen) {

@@ -278,7 +278,16 @@ void CpuRiscV_Functional::executeInstruction(IInstruction *instr,
 
     CpuContextType *pContext = getpContext();
 #if 1
-    if (pContext->pc == 0x100000b4) {
+    if (pContext->pc == 0x10001960
+        // _main: secondary init
+        || pContext->pc == 0x000000001000105c //<_sys_clock_driver_init>:
+        || pContext->pc == 0x0000000010000b90 //<uart_console_init>:
+        // _main: kernel init
+        || pContext->pc == 0x0000000010001dec //<_sys_k_event_logger_init>:
+        // _main calls main()
+        || pContext->pc == 0x000000001000119c //<main>:
+
+    ) {
         bool st = true;
     }
 #endif

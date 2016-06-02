@@ -16,6 +16,9 @@ static const uint32_t UART_STATUS_RX_FULL     = 0x00000010;
 static const uint32_t UART_STATUS_RX_EMPTY    = 0x00000020;
 static const uint32_t UART_STATUS_ERR_PARITY  = 0x00000100;
 static const uint32_t UART_STATUS_ERR_STOPBIT = 0x00000200;
+static const uint32_t UART_CONTROL_RX_IRQ_ENA = 0x00002000;
+static const uint32_t UART_CONTROL_TX_IRQ_ENA = 0x00004000;
+static const uint32_t UART_CONTROL_PARITY_ENA = 0x00008000;
 
 
 UART::UART(const char *name)  : IService(name) {
@@ -62,7 +65,9 @@ int UART::writeData(const char *buf, int sz) {
             p_rx_wr_ = rxfifo_;
         }
     }
-    iwire_->raiseLine(irqLine_.to_int());
+    if (regs_.status & UART_CONTROL_RX_IRQ_ENA) {
+        iwire_->raiseLine(irqLine_.to_int());
+    }
     return sz;
 }
 
