@@ -65,6 +65,15 @@ int UART::writeData(const char *buf, int sz) {
             p_rx_wr_ = rxfifo_;
         }
     }
+#if 1
+    // line ending
+    rx_total_++;
+    *p_rx_wr_ = '\r';
+    if ((++p_rx_wr_) >= (rxfifo_ + RX_FIFO_SIZE)) {
+        p_rx_wr_ = rxfifo_;
+    }
+#endif
+
     if (regs_.status & UART_CONTROL_RX_IRQ_ENA) {
         iwire_->raiseLine(irqLine_.to_int());
     }

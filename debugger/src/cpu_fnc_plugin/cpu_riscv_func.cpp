@@ -11,7 +11,7 @@
 
 namespace debugger {
 
-CpuRiscV_Functional::CpuRiscV_Functional(const char *name)  
+CpuRiscV_Functional::CpuRiscV_Functional(const char *name)
     : IService(name), IHap(HAP_ConfigDone) {
     registerInterface(static_cast<IThread *>(this));
     registerInterface(static_cast<ICpuRiscV *>(this));
@@ -51,7 +51,7 @@ void CpuRiscV_Functional::postinitService() {
        RISCV_get_service_iface(bus_.to_string(), IFACE_BUS));
 
     if (!pContext->ibus) {
-        RISCV_error("Bus interface '%s' not found", 
+        RISCV_error("Bus interface '%s' not found",
                     bus_.to_string());
         return;
     }
@@ -115,7 +115,7 @@ void CpuRiscV_Functional::updatePipeline() {
         queueUpdate();
         reset();
         return;
-    } 
+    }
 
     instr = decodeInstruction(cacheline_);
     if (isRunning()) {
@@ -219,8 +219,8 @@ void CpuRiscV_Functional::handleTrap() {
 
 void CpuRiscV_Functional::fetchInstruction() {
     CpuContextType *pContext = getpContext();
-    pContext->ibus->read(pContext->pc, 
-                        reinterpret_cast<uint8_t *>(cacheline_), 
+    pContext->ibus->read(pContext->pc,
+                        reinterpret_cast<uint8_t *>(cacheline_),
                         4);
 }
 
@@ -267,25 +267,20 @@ static const int s8 = 24;       // [24] Saved register 8
 static const int s9 = 25;       // [25] Saved register 9
 static const int s10 = 26;      // [26] Saved register 10
 static const int s11 = 27;      // [27] Saved register 11
-static const int t3 = 28;       // [28] 
-static const int t4 = 29;       // [29] 
-static const int t5 = 30;       // [30] 
-static const int t6 = 31;      // [31] 
+static const int t3 = 28;       // [28]
+static const int t4 = 29;       // [29]
+static const int t5 = 30;       // [30]
+static const int t6 = 31;      // [31]
 #endif
 
 void CpuRiscV_Functional::executeInstruction(IInstruction *instr,
                                              uint32_t *rpayload) {
 
     CpuContextType *pContext = getpContext();
-#if 1
+#if 0
     if (pContext->pc == 0x10001960
-        // _main: secondary init
-        || pContext->pc == 0x000000001000105c //<_sys_clock_driver_init>:
-        || pContext->pc == 0x0000000010000b90 //<uart_console_init>:
-        // _main: kernel init
-        || pContext->pc == 0x0000000010001dec //<_sys_k_event_logger_init>:
-        // _main calls main()
-        || pContext->pc == 0x000000001000119c //<main>:
+        //|| pContext->pc == 0x0000000010000da4 //<uart_gnss_poll_out>:
+        || pContext->pc == 0x00000000100016f4 //<_fifo_put_non_preemptible>:
 
     ) {
         bool st = true;
@@ -298,7 +293,7 @@ void CpuRiscV_Functional::executeInstruction(IInstruction *instr,
     || (pContext->pc >= 0x10001ef4)
     ) {
     //if (pContext->pc >= 0x10001928 && pContext->pc <= 0x10001960) {
-        RISCV_debug("[%" RV_PRI64 "d] %08x: %08x \t %4s <mstatus=%016" RV_PRI64 "x; ra=%016" RV_PRI64 "x; sp=%016" RV_PRI64 "x; tp=%016" RV_PRI64 "x>", 
+        RISCV_debug("[%" RV_PRI64 "d] %08x: %08x \t %4s <mstatus=%016" RV_PRI64 "x; ra=%016" RV_PRI64 "x; sp=%016" RV_PRI64 "x; tp=%016" RV_PRI64 "x>",
             getStepCounter(),
             static_cast<uint32_t>(pContext->pc),
             rpayload[0], instr->name(),
@@ -453,4 +448,3 @@ void CpuRiscV_Functional::hitBreakpoint(uint64_t addr) {
 }
 
 }  // namespace debugger
-
