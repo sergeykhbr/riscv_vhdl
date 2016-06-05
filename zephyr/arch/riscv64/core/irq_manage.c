@@ -37,7 +37,7 @@ unsigned int _arch_irq_lock(void) {
 }
 
 void _arch_irq_unlock(unsigned int key) {
-    WRITE32(&__IRQCTRL->irq_lock, 0);
+    WRITE32(&__IRQCTRL->irq_lock, key);
 }
 
 unsigned int _arch_irq_lock_state() {

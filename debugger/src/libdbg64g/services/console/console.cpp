@@ -15,6 +15,34 @@
 
 namespace debugger {
 
+#ifdef DBG_ZEPHYR
+static IClock *iclk_;
+static int tst_cnt = 0;
+void ConsoleService::stepCallback(uint64_t t) {
+    IService *uart = static_cast<IService *>(RISCV_get_service("uart0"));
+    if (uart) {
+        int ttt = iclk_->getStepCounter();
+        ISerial *iserial = static_cast<ISerial *>(
+                    uart->getInterface(IFACE_SERIAL));
+        switch (tst_cnt) {
+        case 0:
+            iserial->writeData("ping", 4);
+            break;
+        case 1:
+            iserial->writeData("ticks", 5);
+            break;
+        case 2:
+            iserial->writeData("help", 4);
+            break;
+        default:;
+        }
+        tst_cnt++;
+    }
+}
+
+#endif
+
+
 /** Class registration in the Core */
 REGISTER_CLASS(ConsoleService)
 
@@ -88,6 +116,12 @@ void ConsoleService::postinitService() {
     if (logFile_.size()) {
         enableLogFile(logFile_.to_string());
     }
+#ifdef DBG_ZEPHYR
+    iclk_ = (IClock *)RISCV_get_service_iface("core0", IFACE_CLOCK);
+    iclk_->registerStepCallback(static_cast<IClockListener *>(this), 550000);
+    iclk_->registerStepCallback(static_cast<IClockListener *>(this), 1200000);
+    iclk_->registerStepCallback(static_cast<IClockListener *>(this), 2000000);//6000000);
+#endif
 
     // Redirect output stream to a this console
     RISCV_set_default_output(static_cast<IConsole *>(this));
@@ -148,6 +182,10 @@ void ConsoleService::busyLoop() {
                         strcmd += symb[0];
                     }
                     break;
+                case SCRIPT_comment:
+                    if (symb[0] == '\r' || symb[0] == '\n') {
+                        scr_state = SCRIPT_normal;
+                    }
                 default:;
                 }
 
@@ -174,6 +212,7 @@ void ConsoleService::processScriptCommand(const char *cmd) {
     if (!t1.is_list()) {
         return;
     }
+#if!defined(DBG_ZEPHYR)
     if (strcmp(t1[0u].to_string(), "wait") == 0) {
         RISCV_sleep_ms(static_cast<int>(t1[1].to_int64()));
     } else if (strcmp(t1[0u].to_string(), "uart0") == 0) {
@@ -184,6 +223,7 @@ void ConsoleService::processScriptCommand(const char *cmd) {
             iserial->writeData(t1[1].to_string(), t1[1].size());
         }
     }
+#endif
 }
 
 void ConsoleService::updateData(const char *buf, int buflen) {

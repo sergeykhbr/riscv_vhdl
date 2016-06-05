@@ -93,13 +93,6 @@ void _new_thread(char *pStackMem, unsigned stackSize,
 	 * setup for both threads are equivalent.
 	 */
 
-	/* push arguments required by _thread_entry() */
-
-	*--pInitialCtx = (unsigned long)parameter3;
-	*--pInitialCtx = (unsigned long)parameter2;
-	*--pInitialCtx = (unsigned long)parameter1;
-	*--pInitialCtx = (unsigned long)pEntry;
-	*--pInitialCtx = (unsigned long)_thread_entry;
 
 	tcs->link = (struct tcs *)NULL; /* thread not inserted into list yet */
 	tcs->prio = priority;

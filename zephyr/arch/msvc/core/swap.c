@@ -20,6 +20,6 @@ uint64_t _Swap(uint64_t fl) {
 #ifdef _WIN32
     LIBH_swap((uint64_t)_nanokernel.current);
 #endif
-    return _nanokernel.current->coopReg[COOP_REG_V0/sizeof(uint64_t)];
+    return _nanokernel.current->coopReg[COOP_REG_A0/sizeof(uint64_t)];
 }
 

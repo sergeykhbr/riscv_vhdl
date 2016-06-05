@@ -11,7 +11,7 @@
 
 namespace debugger {
 
-CpuRiscV_Functional::CpuRiscV_Functional(const char *name)
+CpuRiscV_Functional::CpuRiscV_Functional(const char *name)  
     : IService(name), IHap(HAP_ConfigDone) {
     registerInterface(static_cast<IThread *>(this));
     registerInterface(static_cast<ICpuRiscV *>(this));
@@ -51,7 +51,7 @@ void CpuRiscV_Functional::postinitService() {
        RISCV_get_service_iface(bus_.to_string(), IFACE_BUS));
 
     if (!pContext->ibus) {
-        RISCV_error("Bus interface '%s' not found",
+        RISCV_error("Bus interface '%s' not found", 
                     bus_.to_string());
         return;
     }
@@ -115,7 +115,7 @@ void CpuRiscV_Functional::updatePipeline() {
         queueUpdate();
         reset();
         return;
-    }
+    } 
 
     instr = decodeInstruction(cacheline_);
     if (isRunning()) {
@@ -219,8 +219,8 @@ void CpuRiscV_Functional::handleTrap() {
 
 void CpuRiscV_Functional::fetchInstruction() {
     CpuContextType *pContext = getpContext();
-    pContext->ibus->read(pContext->pc,
-                        reinterpret_cast<uint8_t *>(cacheline_),
+    pContext->ibus->read(pContext->pc, 
+                        reinterpret_cast<uint8_t *>(cacheline_), 
                         4);
 }
 
@@ -267,23 +267,87 @@ static const int s8 = 24;       // [24] Saved register 8
 static const int s9 = 25;       // [25] Saved register 9
 static const int s10 = 26;      // [26] Saved register 10
 static const int s11 = 27;      // [27] Saved register 11
-static const int t3 = 28;       // [28]
-static const int t4 = 29;       // [29]
-static const int t5 = 30;       // [30]
-static const int t6 = 31;      // [31]
+static const int t3 = 28;       // [28] 
+static const int t4 = 29;       // [29] 
+static const int t5 = 30;       // [30] 
+static const int t6 = 31;      // [31] 
 #endif
 
 void CpuRiscV_Functional::executeInstruction(IInstruction *instr,
                                              uint32_t *rpayload) {
 
     CpuContextType *pContext = getpContext();
-#if 0
-    if (pContext->pc == 0x10001960
-        //|| pContext->pc == 0x0000000010000da4 //<uart_gnss_poll_out>:
-        || pContext->pc == 0x00000000100016f4 //<_fifo_put_non_preemptible>:
+#if 1
+    if (pContext->pc == 0x0000000010000004) {// <_Swap>:)
+        RISCV_debug("[%" RV_PRI64 "d] tp=%08x; _Swap() enter. ra=%08x; a0=%016" RV_PRI64 "x", 
+            getStepCounter(),
+            (uint32_t)pContext->regs[tp],
+            (uint32_t)pContext->regs[ra],
+            pContext->regs[a0]
+            );
+    } else if (pContext->pc == 0x0000000010000130) {// <_Swap>:)
+        RISCV_debug("[%" RV_PRI64 "d] tp=%08x; _Swap() exit. a0=%016" RV_PRI64 "x", 
+            getStepCounter(),
+            (uint32_t)pContext->regs[tp],
+            pContext->regs[a0]
+            );
+    }
 
-    ) {
-        bool st = true;
+    if (pContext->pc == 0x0000000010000ff8) { // <_timer_int_handler>:
+        RISCV_debug("[%" RV_PRI64 "d] tp=%08x; IRQ: _timer_int_handler() enter", 
+            getStepCounter(),
+            (uint32_t)pContext->regs[tp]
+            );
+    } else if (pContext->pc == 0x0000000010000c08) {// <uart_gnss_isr>:)
+        RISCV_debug("[%" RV_PRI64 "d] tp=%08x; IRQ: uart_gnss_isr() enter", 
+            getStepCounter(),
+            (uint32_t)pContext->regs[tp]
+            );
+    } else if (pContext->pc == 0x0000000010000134) {// <_IsrExit>:)
+        RISCV_debug("[%" RV_PRI64 "d] tp=%08x; _IsrExit() enter", 
+            getStepCounter(),
+            (uint32_t)pContext->regs[tp]
+            );
+    } else if (pContext->pc == 0x00000000100001b4) {// <_IsrExit>:)
+        RISCV_debug("[%" RV_PRI64 "d] tp=%08x; _IsrExit() return. a0=%016" RV_PRI64 "x", 
+            getStepCounter(),
+            (uint32_t)pContext->regs[tp],
+            pContext->regs[a0]
+            );
+    } else if (pContext->pc == 0x0000000000000764) {// <handle_trap>:)
+        RISCV_debug("[%" RV_PRI64 "d] tp=%08x; handle_trap() return. ra=%08x; a0=%016" RV_PRI64 "x", 
+            getStepCounter(),
+            (uint32_t)pContext->regs[tp],
+            (uint32_t)pContext->regs[ra],
+            pContext->regs[a0]
+            );
+    }
+
+    if (pContext->pc == 0x0000000010001b70) {// <_thread_entry>:)
+        RISCV_debug("[%" RV_PRI64 "d] tp=%08x; _thread_entry(pEntry=%016" RV_PRI64 "x,..)", 
+            getStepCounter(),
+            (uint32_t)pContext->regs[tp],
+            pContext->regs[a0]
+            );
+    }
+
+    if (pContext->pc == 0x0000000010001730) {// <_fifo_put_non_preemptible>:)
+        RISCV_debug("[%" RV_PRI64 "d] tp=%08x; _fifo_put_non_preemptible(a0,data=%016" RV_PRI64 "x)", 
+            getStepCounter(),
+            (uint32_t)pContext->regs[tp],
+            pContext->regs[a1]
+            );
+    } else if (pContext->pc == 0x000000001000175c) {// <_fifo_put_non_preemptible>:)
+        RISCV_debug("[%" RV_PRI64 "d] tp=%08x; _fifo_put_non_preemptible tcs=%016" RV_PRI64 "x", 
+            getStepCounter(),
+            (uint32_t)pContext->regs[tp],
+            pContext->regs[s2]
+            );
+    } else if (pContext->pc == 0x00000000100017c0) {// <_fifo_put_non_preemptible>:)
+        RISCV_debug("[%" RV_PRI64 "d] tp=%08x; _fifo_put_non_preemptible call irq_unlock() and return", 
+            getStepCounter(),
+            (uint32_t)pContext->regs[tp]
+            );
     }
 #endif
     instr->exec(cacheline_, pContext);
@@ -293,7 +357,7 @@ void CpuRiscV_Functional::executeInstruction(IInstruction *instr,
     || (pContext->pc >= 0x10001ef4)
     ) {
     //if (pContext->pc >= 0x10001928 && pContext->pc <= 0x10001960) {
-        RISCV_debug("[%" RV_PRI64 "d] %08x: %08x \t %4s <mstatus=%016" RV_PRI64 "x; ra=%016" RV_PRI64 "x; sp=%016" RV_PRI64 "x; tp=%016" RV_PRI64 "x>",
+        RISCV_debug("[%" RV_PRI64 "d] %08x: %08x \t %4s <mstatus=%016" RV_PRI64 "x; ra=%016" RV_PRI64 "x; sp=%016" RV_PRI64 "x; tp=%016" RV_PRI64 "x>", 
             getStepCounter(),
             static_cast<uint32_t>(pContext->pc),
             rpayload[0], instr->name(),
@@ -329,7 +393,7 @@ void CpuRiscV_Functional::queueUpdate() {
             // remove item from list using swap function to avoid
             // allocation/deallocation calls if we can avoid it.
             RISCV_mutex_lock(&mutexStepQueue_);
-            stepQueue_.swap_list_item(i, stepQueue_.size() - 1);
+            stepQueue_.swap_list_item(i, queue_len - 1);
             stepQueue_len_--;
             queue_len--;
             i--;
@@ -448,3 +512,4 @@ void CpuRiscV_Functional::hitBreakpoint(uint64_t addr) {
 }
 
 }  // namespace debugger
+

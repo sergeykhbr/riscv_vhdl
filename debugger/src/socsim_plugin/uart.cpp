@@ -132,9 +132,15 @@ void UART::transaction(Axi4TransactionType *payload) {
                 RISCV_debug("Get data = %02x", (payload->rpayload[i] & 0xFF));
                 break;
             case 1:
-                regs_.status = UART_STATUS_TX_EMPTY;
+                if (0) {
+                    regs_.status &= ~UART_STATUS_TX_EMPTY;
+                } else {
+                    regs_.status |= UART_STATUS_TX_EMPTY;
+                }
                 if (rx_total_ == 0) {
                     regs_.status |= UART_STATUS_RX_EMPTY;
+                } else {
+                    regs_.status &= ~UART_STATUS_RX_EMPTY;
                 }
                 payload->rpayload[i] = regs_.status;
                 RISCV_info("Get status = %08x", regs_.status);

@@ -88,10 +88,9 @@ _swap_current_pointer:
 _IsrExit:
 	la s0, _nanokernel
 	ld s1,tNANO_CURRENT_OFFSET(s0)	# s1 = _nanokernel.current
-	ld s2,TCS_COOP_REGS_OFFSET(s1)	# s2 = _nanokernel.current->flags
-	andi	s2,s2,1
-	beqz	s2,_IsrExit_ending      # if(!(_nanokernel.current->flags&1)) goto _IsrExit_ending
-
+	ld s2,TCS_FLAGS_OFFSET(s1)	# s2 = _nanokernel.current->flags
+        andi s2,s2,1
+	bnez	s2,_IsrExit_ending      # ((s2 & TASK) == TASK) goto exit
 	ld s2,tNANO_FIBER_OFFSET(s0)
 	beqz	s2,_IsrExit_ending      # if(_nanokernel.current->fiber==0) goto _IsrExit_ending
 

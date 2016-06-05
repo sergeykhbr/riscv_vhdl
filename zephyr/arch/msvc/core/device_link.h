@@ -26,13 +26,13 @@
     } enum_PRIMARY;
 
     typedef enum enum_SECONDARY {
-        DEVICE_UartConsole = PRIMARY_Total,
+        DEVICE_SysClock = PRIMARY_Total,
+        DEVICE_UartConsole,
         SECONDARY_Total
     } enum_SECONDARY;
 
     typedef enum enum_NANOKERNEL {
-        DEVICE_SysClock = SECONDARY_Total,
-        DEVICE_SyskEventLogger,
+        DEVICE_SyskEventLogger = SECONDARY_Total,
         NANOKERNEL_Total
     } enum_NANOKERNEL;
 

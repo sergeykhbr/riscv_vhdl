@@ -21,7 +21,6 @@ void print_uart(const char *buf, int sz) {
     for (int i = 0; i < sz; i++) {
         while (uart->status & UART_STATUS_TX_FULL) {}
         uart->data = buf[i];
-        led_set(0x10 + i);
     }
 }
 
@@ -33,7 +32,7 @@ void copy_image() {
 
     /** 
      * Speed-up RTL simulation by skipping coping stage.
-     * Or skip this stage to avoid rewritting of externlly loaded image.
+     * Or skip this stage to avoid rewritting of externally loaded image.
      */
     tech = pnp->tech & 0xFF;
     if (tech != TECH_INFERRED && pnp->fwid == 0) {

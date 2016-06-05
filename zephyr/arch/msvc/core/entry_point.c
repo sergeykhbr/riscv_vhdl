@@ -35,8 +35,8 @@ int BaseAddress_0x40000000(int argc, char *argv[]) {
 
     zephyr_devices[DEVICE_Soc] = __device_sys_init_riscv_gnss_soc_init;
     zephyr_devices[DEVICE_Uart] = __device_uart_gnss0;
-    zephyr_devices[DEVICE_UartConsole] = __device_sys_init_uart_console_init;
     zephyr_devices[DEVICE_SysClock] = __device_sys_init__sys_clock_driver_init;
+    zephyr_devices[DEVICE_UartConsole] = __device_sys_init_uart_console_init;
     zephyr_devices[DEVICE_SyskEventLogger] = __device_sys_init__sys_k_event_logger_init;
 
     LIBH_create_dispatcher(_Cstart);

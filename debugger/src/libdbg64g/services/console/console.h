@@ -17,6 +17,11 @@
 #include "coreservices/ikeylistener.h"
 #include "coreservices/irawlistener.h"
 #include <string>
+#define DBG_ZEPHYR
+#ifdef DBG_ZEPHYR
+#include "coreservices/iclock.h"
+#endif
+
 
 namespace debugger {
 
@@ -24,7 +29,9 @@ class ConsoleService : public IService,
                        public IThread,
                        public IConsole,
                        public IHap,
-                       public IRawListener {
+                       public IRawListener
+                       ,public IClockListener 
+                       {
 public:
     explicit ConsoleService(const char *name);
     virtual ~ConsoleService();
@@ -45,6 +52,11 @@ public:
 
     /** ISerial */
     virtual void updateData(const char *buf, int buflen);
+
+#ifdef DBG_ZEPHYR
+    /** IClockListener */
+    virtual void stepCallback(uint64_t t);
+#endif
 
 protected:
     /** IThread interface */

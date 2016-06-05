@@ -301,7 +301,7 @@ static INLINE void nanoArchInit(void)
  */
 static INLINE void fiberRtnValueSet(struct tcs *fiber, uint64_t value)
 {
-	fiber->coopReg[COOP_REG_V0/sizeof(uint64_t)] = value;
+	fiber->coopReg[COOP_REG_A0/sizeof(uint64_t)] = value;
 }
 
 /* definitions to support nanoCpuExcConnect() */

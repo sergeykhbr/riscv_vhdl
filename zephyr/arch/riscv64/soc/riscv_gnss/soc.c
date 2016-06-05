@@ -85,3 +85,4 @@ void WRITE64(volatile uint64_t *addr, uint64_t val) {
 }
 
 SYS_INIT(riscv_gnss_soc_init, PRIMARY, CONFIG_KERNEL_INIT_PRIORITY_DEFAULT);
+
