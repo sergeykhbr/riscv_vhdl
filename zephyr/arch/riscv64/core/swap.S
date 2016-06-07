@@ -59,24 +59,28 @@ __start:
 .globl _Swap
 _Swap:
 	/* interrupts are locked, interrupt key is in r0 */
+	_save_context(tp)
+        sd ra,COOP_REG_MEPC(tp)
 	la s0, _nanokernel
 	ld s1,tNANO_CURRENT_OFFSET(s0)	# s1 = _nanokernel.current
 	sw x0,TCS_INTLOCK_OFFSET(s1)    # _nanokernel.current->intlock = 0
-	addi tp,s1,TCS_COOP_REGS_OFFSET	# tp = &_nanokernel.current->coopRegs
-	_save_context(tp)
-
 
 	ld s1,tNANO_FIBER_OFFSET(s0)
 	bnez s1, _swap_to_a_fiber
 _swap_to_the_task:
 	ld s2,tNANO_TASK_OFFSET(s0)     # current = nanokernel.task
-	j _swap_current_pointer
+	sd s2,tNANO_CURRENT_OFFSET(s0)	# nanokernel.current = current
+        lw a0,TCS_INTLOCK_OFFSET(s2)
+        jal _arch_irq_unlock            # _arch_irq_unlock(current->intlock)
+	addi tp,s2,TCS_COOP_REGS_OFFSET	# tp = &current->coopRegs
+	_restore_context(tp)
+        ld t6,COOP_REG_MEPC(tp)
+	jalr x0,t6
+
 _swap_to_a_fiber:
 	ld s2,tNANO_FIBER_OFFSET(s0)
 	ld s3,TCS_LINK_OFFSET(s2)	# s3 = nanokernel.fiber->link
 	sd s3,tNANO_FIBER_OFFSET(s0)	# nanokernel.fiber = s3
-
-_swap_current_pointer:
 	sd s2,tNANO_CURRENT_OFFSET(s0)	# nanokernel.current = current
         lw a0,TCS_INTLOCK_OFFSET(s2)
         jal _arch_irq_unlock            # _arch_irq_unlock(current->intlock)
@@ -86,15 +90,23 @@ _swap_current_pointer:
 
 .globl _IsrExit
 _IsrExit:
+        addi sp,sp,40
+        sd s0,0(sp)
+        sd s2,8(sp)
+        sd s3,16(sp)
+
 	la s0, _nanokernel
 	ld s1,tNANO_CURRENT_OFFSET(s0)	# s1 = _nanokernel.current
 	ld s2,TCS_FLAGS_OFFSET(s1)	# s2 = _nanokernel.current->flags
+        # Only Task may be preemptedly switched (Fibers can not)
         andi s2,s2,1
-	bnez	s2,_IsrExit_ending      # ((s2 & TASK) == TASK) goto exit
+	beqz s2,_IsrExit_ending         # ((s2 & TASK) != TASK) goto _IsrExit_ending
 	ld s2,tNANO_FIBER_OFFSET(s0)
-	beqz	s2,_IsrExit_ending      # if(_nanokernel.current->fiber==0) goto _IsrExit_ending
-
-        jal _arch_irq_lock_state
+	beqz s2,_IsrExit_ending         # if(_nanokernel.current->fiber==0) goto _IsrExit_ending
+        
+        sd ra,24(sp)
+        sd a0,32(sp)
+        jal _arch_irq_lock_state        # a0 = _arch_irq_lock_state()
         sw a0,TCS_INTLOCK_OFFSET(s1)	# _nanokernel.current->intlock=_arch_irq_lock_state()
 	sd s2,tNANO_CURRENT_OFFSET(s0)	# nanokernel.current = current
 	ld s3,TCS_LINK_OFFSET(s2)	# s3 = nanokernel.fiber->link
@@ -105,7 +117,12 @@ _IsrExit:
 
         # Set 'tp' register pointing to new task registers array, so
         # that ROM interrupt handler will restore full context on exit
-	ld tp,TCS_COOP_REGS_OFFSET(s2)
+	addi tp,s2,TCS_COOP_REGS_OFFSET
+        ld a0,32(sp)
+        ld ra,24(sp)
 _IsrExit_ending:
+        ld s0,0(sp)
+        ld s2,8(sp)
+        ld s3,16(sp)
+        addi sp,sp,-40
 	ret
-

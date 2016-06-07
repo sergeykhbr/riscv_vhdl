@@ -28,9 +28,9 @@
 #define TCS_INTLOCK_OFFSET      16
 #define TCS_COOP_REGS_OFFSET    24
 
-/** 
+/**
  * Saved by callee function registers:
- *      s0..s11, sp, tp 
+ *      s0..s11, sp, tp
  */
 
 /** Return address */
@@ -52,6 +52,7 @@
 #define COOP_REG_SP         104//(13*sizeof(uint64_t))
 /** Thread pointer */
 #define COOP_REG_TP         112//(14*sizeof(uint64_t))
+#define COOP_REG_MEPC       COOP_REG_TP//(14*sizeof(uint64_t))
 /** Return values */
 #define COOP_REG_V0         120//(15*sizeof(uint64_t))
 #define COOP_REG_V1         128//(16*sizeof(uint64_t))

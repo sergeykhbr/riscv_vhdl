@@ -277,7 +277,7 @@ void CpuRiscV_Functional::executeInstruction(IInstruction *instr,
                                              uint32_t *rpayload) {
 
     CpuContextType *pContext = getpContext();
-#if 1
+#if 0
     if (pContext->pc == 0x0000000010000004) {// <_Swap>:)
         RISCV_debug("[%" RV_PRI64 "d] tp=%08x; _Swap() enter. ra=%08x; a0=%016" RV_PRI64 "x", 
             getStepCounter(),
@@ -285,37 +285,16 @@ void CpuRiscV_Functional::executeInstruction(IInstruction *instr,
             (uint32_t)pContext->regs[ra],
             pContext->regs[a0]
             );
-    } else if (pContext->pc == 0x0000000010000130) {// <_Swap>:)
-        RISCV_debug("[%" RV_PRI64 "d] tp=%08x; _Swap() exit. a0=%016" RV_PRI64 "x", 
+    } else if (pContext->pc == 0x0000000010000128) {// <_Swap>:)
+        RISCV_debug("[%" RV_PRI64 "d] tp=%08x; _Swap() jr to task. ra=%08x; a0=%016" RV_PRI64 "x; t6=%016" RV_PRI64 "x", 
             getStepCounter(),
             (uint32_t)pContext->regs[tp],
-            pContext->regs[a0]
+            (uint32_t)pContext->regs[ra],
+            pContext->regs[a0],
+            pContext->regs[t6]
             );
-    }
-
-    if (pContext->pc == 0x0000000010000ff8) { // <_timer_int_handler>:
-        RISCV_debug("[%" RV_PRI64 "d] tp=%08x; IRQ: _timer_int_handler() enter", 
-            getStepCounter(),
-            (uint32_t)pContext->regs[tp]
-            );
-    } else if (pContext->pc == 0x0000000010000c08) {// <uart_gnss_isr>:)
-        RISCV_debug("[%" RV_PRI64 "d] tp=%08x; IRQ: uart_gnss_isr() enter", 
-            getStepCounter(),
-            (uint32_t)pContext->regs[tp]
-            );
-    } else if (pContext->pc == 0x0000000010000134) {// <_IsrExit>:)
-        RISCV_debug("[%" RV_PRI64 "d] tp=%08x; _IsrExit() enter", 
-            getStepCounter(),
-            (uint32_t)pContext->regs[tp]
-            );
-    } else if (pContext->pc == 0x00000000100001b4) {// <_IsrExit>:)
-        RISCV_debug("[%" RV_PRI64 "d] tp=%08x; _IsrExit() return. a0=%016" RV_PRI64 "x", 
-            getStepCounter(),
-            (uint32_t)pContext->regs[tp],
-            pContext->regs[a0]
-            );
-    } else if (pContext->pc == 0x0000000000000764) {// <handle_trap>:)
-        RISCV_debug("[%" RV_PRI64 "d] tp=%08x; handle_trap() return. ra=%08x; a0=%016" RV_PRI64 "x", 
+    } else if (pContext->pc == 0x00000000100001c0) {// <_Swap>:)
+        RISCV_debug("[%" RV_PRI64 "d] tp=%08x; _Swap() ret to fiber. ra=%08x; a0=%016" RV_PRI64 "x", 
             getStepCounter(),
             (uint32_t)pContext->regs[tp],
             (uint32_t)pContext->regs[ra],
@@ -323,30 +302,47 @@ void CpuRiscV_Functional::executeInstruction(IInstruction *instr,
             );
     }
 
-    if (pContext->pc == 0x0000000010001b70) {// <_thread_entry>:)
-        RISCV_debug("[%" RV_PRI64 "d] tp=%08x; _thread_entry(pEntry=%016" RV_PRI64 "x,..)", 
+    if (pContext->pc == 0x00000000000002d0) { // <trap_entry>:
+        RISCV_debug("[%" RV_PRI64 "d] tp=%08x; FENCE: trap_entry() ra=%08x; a0=%016" RV_PRI64 "x; mepc=%016" RV_PRI64 "x", 
+            getStepCounter(),
+            (uint32_t)pContext->regs[tp],
+            (uint32_t)pContext->regs[ra],
+            pContext->regs[a0],
+            pContext->csr[CSR_mepc]
+            );
+    } else if (pContext->pc == 0x0000000010001078) { // <_timer_int_handler>:
+        RISCV_debug("[%" RV_PRI64 "d] tp=%08x; IRQ: _timer_int_handler() enter", 
+            getStepCounter(),
+            (uint32_t)pContext->regs[tp]
+            );
+    } else if (pContext->pc == 0x0000000010000c88) {// <uart_gnss_isr>:)
+        RISCV_debug("[%" RV_PRI64 "d] tp=%08x; IRQ: uart_gnss_isr() enter", 
+            getStepCounter(),
+            (uint32_t)pContext->regs[tp]
+            );
+    } else if (pContext->pc == 0x0000000010000234) {// <_IsrExit>:)
+        RISCV_debug("[%" RV_PRI64 "d] tp=%08x; _IsrExit() return. a0=%016" RV_PRI64 "x", 
             getStepCounter(),
             (uint32_t)pContext->regs[tp],
             pContext->regs[a0]
             );
+    } else if (pContext->pc == 0x00000000000003e8) {// <trap_entry>: eret)
+        RISCV_debug("[%" RV_PRI64 "d] tp=%08x; ERET:  trap_entry() ra=%08x; a0=%016" RV_PRI64 "x; mepc=%016" RV_PRI64 "x", 
+            getStepCounter(),
+            (uint32_t)pContext->regs[tp],
+            (uint32_t)pContext->regs[ra],
+            pContext->regs[a0],
+            pContext->csr[CSR_mepc]
+
+            );
     }
 
-    if (pContext->pc == 0x0000000010001730) {// <_fifo_put_non_preemptible>:)
+
+    if (pContext->pc == 0x00000000100017b0) {// <_fifo_put_non_preemptible>:)
         RISCV_debug("[%" RV_PRI64 "d] tp=%08x; _fifo_put_non_preemptible(a0,data=%016" RV_PRI64 "x)", 
             getStepCounter(),
             (uint32_t)pContext->regs[tp],
             pContext->regs[a1]
-            );
-    } else if (pContext->pc == 0x000000001000175c) {// <_fifo_put_non_preemptible>:)
-        RISCV_debug("[%" RV_PRI64 "d] tp=%08x; _fifo_put_non_preemptible tcs=%016" RV_PRI64 "x", 
-            getStepCounter(),
-            (uint32_t)pContext->regs[tp],
-            pContext->regs[s2]
-            );
-    } else if (pContext->pc == 0x00000000100017c0) {// <_fifo_put_non_preemptible>:)
-        RISCV_debug("[%" RV_PRI64 "d] tp=%08x; _fifo_put_non_preemptible call irq_unlock() and return", 
-            getStepCounter(),
-            (uint32_t)pContext->regs[tp]
             );
     }
 #endif

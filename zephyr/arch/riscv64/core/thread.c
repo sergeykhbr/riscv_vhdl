@@ -133,6 +133,7 @@ void _new_thread(char *pStackMem, unsigned stackSize,
     *(uint64_t *)((uint8_t *)(tcs) + COOP_REG_SP) = (unsigned long)pInitialCtx;
 	PRINTK("\nInitial context SP = 0x%x\n", (unsigned long)pInitialCtx);
     tcs->coopReg[COOP_REG_RA/sizeof(uint64_t)] = (uint64_t)_thread_entry;
+    tcs->coopReg[COOP_REG_MEPC/sizeof(uint64_t)] = (uint64_t)_thread_entry;
     tcs->coopReg[COOP_REG_A0/sizeof(uint64_t)] = (uint64_t)pEntry;
     tcs->coopReg[COOP_REG_A1/sizeof(uint64_t)] = (uint64_t)parameter1;
     tcs->coopReg[COOP_REG_A2/sizeof(uint64_t)] = (uint64_t)parameter2;
