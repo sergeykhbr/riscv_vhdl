@@ -69,7 +69,7 @@ static int _to_hex(char *buf, uint32_t value, int alt_form, int precision, int p
 	}
 	*buf = 0;
 
-	return buf - start;
+	return (int)(buf - start);
 }
 
 static int _to_octal(char *buf, uint32_t value, int alt_form, int precision)
@@ -101,7 +101,7 @@ static int _to_octal(char *buf, uint32_t value, int alt_form, int precision)
 	}
 	*buf = 0;
 
-	return buf - start;
+	return (int)(buf - start);
 }
 
 static int _to_udec(char *buf, uint32_t value, int precision)
@@ -128,7 +128,7 @@ static int _to_udec(char *buf, uint32_t value, int precision)
 	}
 	*buf = 0;
 
-	return buf - start;
+	return (int)(buf - start);
 }
 
 static int _to_dec(char *buf, int32_t value, int fplus, int fspace, int precision)
@@ -148,7 +148,7 @@ static int _to_dec(char *buf, int32_t value, int fplus, int fspace, int precisio
 	else if (fspace)
 		*buf++ = ' ';
 
-	return (buf + _to_udec(buf, (uint32_t) value, precision)) - start;
+	return (int)((buf + _to_udec(buf, (uint32_t) value, precision)) - start);
 }
 
 static void _llshift(uint32_t value[])
@@ -334,7 +334,7 @@ static int _to_float(char *buf, uint32_t double_temp[], int full, int c,
 			*buf++ = 'N';
 		}
 		*buf = 0;
-		return buf - start;
+		return (int)(buf - start);
 	}
 
 	if ((exp | fract[1] | fract[0]) != 0) {
@@ -484,7 +484,7 @@ static int _to_float(char *buf, uint32_t double_temp[], int full, int c,
 	}
 	*buf = 0;
 
-	return buf - start;
+	return (int)(buf - start);
 }
 
 static int _atoi(char **sptr)

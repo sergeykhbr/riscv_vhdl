@@ -1,11 +1,29 @@
+/*
+ * Copyright (c) 2016, GNSS Sensor Ltd.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #include <fstream>
 #include <iostream>
 #include "zephyr_threads.h"
 #include "irqctrl.h"
 #include "uart.h"
+#include "pnp.h"
 
 extern IrqController irqctrl;
 extern Uart uart0;
+extern PNP pnp;
 extern volatile bool wasPreemtiveSwitch;
 extern int current_idx;
 extern std::vector<ThreadDataType> vecThreads;
@@ -132,6 +150,8 @@ extern "C" void LIBH_write(uint64_t addr, uint8_t *buf, int size) {
         uart0.write(addr, buf, size);
     } else if (irqctrl.isAddrValid(addr)) {
         irqctrl.write(addr, buf, size);
+    } else if (pnp.isAddrValid(addr)) {
+        pnp.write(addr, buf, size);
     } else if (addr >= 0x80005000 && addr < 0x80006000) {
         // GP timers
     } else {
@@ -146,6 +166,8 @@ extern "C" void LIBH_read(uint64_t addr, uint8_t *buf, int size) {
         uart0.read(addr, buf, size);
     } else if (irqctrl.isAddrValid(addr)) {
         irqctrl.read(addr, buf, size);
+    } else if (pnp.isAddrValid(addr)) {
+        pnp.read(addr, buf, size);
     } else if (addr >= 0x80005000 && addr < 0x80006000) {
         // GP timers
     } else {

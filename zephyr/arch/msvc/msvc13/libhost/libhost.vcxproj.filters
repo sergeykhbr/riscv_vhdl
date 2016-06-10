@@ -19,12 +19,18 @@
     <ClInclude Include="..\..\lib\zephyr_threads.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\lib\pnp.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\lib\dispatcher.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\lib\utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\lib\pnp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

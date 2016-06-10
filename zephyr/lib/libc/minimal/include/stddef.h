@@ -24,7 +24,11 @@
 
 #if !defined(__ptrdiff_t_defined)
 #define __ptrdiff_t_defined
+#ifdef _ARCH64
+typedef long long  ptrdiff_t;
+#else
 typedef int  ptrdiff_t;
+#endif
 #endif
 
 #define offsetof(type, member) ((size_t) (&((type *) NULL)->member))

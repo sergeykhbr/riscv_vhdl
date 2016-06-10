@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015, Wind River Systems, Inc.
+ * Copyright (c) 2016, GNSS Sensor Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -209,20 +209,20 @@ static struct uart_driver_api uart_gnss_driver_api = {
 
 #ifdef CONFIG_UART_INTERRUPT_DRIVEN
 	NULL,//int (*fifo_fill)(struct device *dev, const uint8_t *tx_data, int len);
-	uart_gnss_fifo_read,//int (*fifo_read)(struct device *dev, uint8_t *rx_data, const int size);
-	uart_gnss_irq_tx_enable,//void (*irq_tx_enable)(struct device *dev);
-	uart_gnss_irq_tx_disable,//void (*irq_tx_disable)(struct device *dev);
+	uart_gnss_fifo_read,
+	uart_gnss_irq_tx_enable,
+	uart_gnss_irq_tx_disable,
 	NULL,//int (*irq_tx_ready)(struct device *dev);
-	uart_gnss_irq_rx_enable,//void (*irq_rx_enable)(struct device *dev);
-	uart_gnss_irq_rx_disable,//void (*irq_rx_disable)(struct device *dev);
-	uart_gnss_irq_tx_empty,//int (*irq_tx_empty)(struct device *dev);
-	uart_gnss_irq_rx_ready,//int (*irq_rx_ready)(struct device *dev);
+	uart_gnss_irq_rx_enable,
+	uart_gnss_irq_rx_disable,
+	uart_gnss_irq_tx_empty,
+	uart_gnss_irq_rx_ready,
 	NULL,//void (*irq_err_enable)(struct device *dev);
 	NULL,//void (*irq_err_disable)(struct device *dev);
-	uart_gnss_irq_is_pending,//int (*irq_is_pending)(struct device *dev);
-	uart_gnss_irq_update,//int (*irq_update)(struct device *dev);
+	uart_gnss_irq_is_pending,
+	uart_gnss_irq_update,
 	NULL,//int (*irq_input_hook)(struct device *dev, uint8_t byte);
-    uart_gnss_irq_callback_set,//void (*irq_callback_set)(struct device *dev, uart_irq_callback_t cb);
+    uart_gnss_irq_callback_set,
 #endif
 
 #ifdef CONFIG_UART_LINE_CTRL
@@ -246,10 +246,14 @@ static int uart_gnss_init(struct device *dev)
 	dev->driver_api = &uart_gnss_driver_api;
     dev->driver_data = &uart_gnss_dev_data_0;
 
-    WRITE32(&__UART1->scaler, CONFIG_SYS_CLOCK_HW_CYCLES_PER_SEC/115200/2);
+    // Speed-up RTL simulation avoidig long polling of the status register.
+    if (soc_is_rtl_simulation() != 0) {
+        WRITE32(&__UART1->scaler, 20);
+    } else {
+        WRITE32(&__UART1->scaler, CONFIG_SYS_CLOCK_HW_CYCLES_PER_SEC/115200/2);
+    }
 
 #ifdef CONFIG_UART_INTERRUPT_DRIVEN
-    //uart_gnss_irq_tx_enable(dev);
     uart_gnss_irq_rx_enable(dev);
 	IRQ_CONNECT(CFG_IRQ_UART1, CFG_IRQ_UART1, uart_gnss_isr, dev, UART_IRQ_FLAGS);
 	irq_enable(CFG_IRQ_UART1);

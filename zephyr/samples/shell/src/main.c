@@ -17,6 +17,7 @@
 #include <zephyr.h>
 #include <misc/printk.h>
 #include <misc/shell.h>
+#include <soc.h>
 #define DEVICE_NAME "test shell"
 
 static void shell_cmd_ping(int argc, char *argv[])
@@ -34,11 +35,24 @@ static void shell_cmd_highticks(int argc, char *argv[])
 	printk("highticks: %d\n", sys_cycle_get_32());
 }
 
+/**
+ * Output SOC plug'n'Play information with detected devices
+ */
+static void shell_cmd_pnp(int argc, char *argv[])
+{
+#ifdef CONFIG_RISCV64
+    soc_print_pnp();
+#else
+    printk("pnp not available\n");
+#endif
+}
+
 
 const struct shell_cmd commands[] = {
 	{ "ping", shell_cmd_ping },
 	{ "ticks", shell_cmd_ticks },
 	{ "highticks", shell_cmd_highticks },
+    { "pnp", shell_cmd_pnp },
 	{ NULL, NULL }
 };
 

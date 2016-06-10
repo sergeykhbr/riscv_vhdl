@@ -1,6 +1,5 @@
 /*
- * Copyright (c) 2016 Intel Corporation.
- * Copyright (c) 2013-2015 Wind River Systems, Inc.
+ * Copyright (c) 2016, GNSS Sensor Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +24,36 @@
 #include <device.h>
 #include <misc/util.h>
 #include <drivers/rand32.h>
+#include <memaccess.h>
 
 #include "soc_registers.h"
+
+#define VENDOR_GNSSSENSOR        0x00F1
+
+#define GNSSSENSOR_EMPTY         0x5577     /// Dummy device
+#define GNSSSENSOR_BOOTROM       0x0071     /// Boot ROM Device ID
+#define GNSSSENSOR_FWIMAGE       0x0072     /// FW ROM image Device ID
+#define GNSSSENSOR_SRAM          0x0073     /// Internal SRAM block Device ID
+#define GNSSSENSOR_PNP           0x0074     /// Configuration Registers Module Device ID provided by gnsslib
+#define GNSSSENSOR_SPI_FLASH     0x0075     /// SD-card controller Device ID provided by gnsslib
+#define GNSSSENSOR_GPIO          0x0076     /// General purpose IOs Device ID provided by gnsslib
+#define GNSSSENSOR_RF_CONTROL    0x0077     /// RF front-end controller Device ID provided by gnsslib
+#define GNSSSENSOR_ENGINE        0x0078     /// GNSS Engine Device ID provided by gnsslib
+#define GNSSSENSOR_ENGINE_STUB   0x0068     /// GNSS Engine stub
+#define GNSSSENSOR_FSE_V2        0x0079     /// Fast Search Engines Device ID provided by gnsslib
+#define GNSSSENSOR_UART          0x007a     /// rs-232 UART Device ID
+#define GNSSSENSOR_ACCELEROMETER 0x007b     /// Accelerometer Device ID provided by gnsslib
+#define GNSSSENSOR_GYROSCOPE     0x007c     /// Gyroscope Device ID provided by gnsslib
+#define GNSSSENSOR_IRQCTRL       0x007d     /// Interrupt controller
+#define GNSSSENSOR_ETHMAC        0x007f
+#define GNSSSENSOR_DSU           0x0080
+#define GNSSSENSOR_GPTIMERS      0x0081
+
+
+#define TECH_INFERRED       0
+#define TECH_VIRTEX6        36
+#define TECH_KINTEX7        49
+
 
 
 #define ADDR_NASTI_SLAVE_FWIMAGE    0x00100000
@@ -59,6 +86,7 @@
 
 #ifndef _ASMLANGUAGE
 
+typedef uint64_t adr_type;
 
 typedef struct IsrEntryType {
     uint64_t arg;
@@ -69,21 +97,26 @@ typedef void (*IRQ_HANDLER)(void *arg);
 
 
 #define __PNP	((volatile struct pnp_map *)ADDR_NASTI_SLAVE_PNP)
+/** @todo remove hardcoded addresses except __PNP. */
 #define __UART1	((volatile struct uart_map *)ADDR_NASTI_SLAVE_UART1)
 #define __IRQCTRL	((volatile struct irqctrl_map *)ADDR_NASTI_SLAVE_IRQCTRL)
 #define __TIMERS ((volatile struct gptimers_map *)ADDR_NASTI_SLAVE_GPTIMERS)
 
-extern uint32_t READ32(volatile uint32_t *addr);
-extern uint64_t READ64(volatile uint64_t *addr);
-extern void WRITE32(volatile uint32_t *addr, uint32_t val);
-extern void WRITE64(volatile uint64_t *addr, uint64_t val);
+/** 
+ * @brief Print Plug'n'Play information
+ *
+ * Each devices in a SOC implements sideband signals that are connected to
+ * PNP module. These signals provide such information as Vendor/Device IDs,
+ * memory address and allocated memory range.
+ */
+extern void soc_print_pnp();
 
-#ifdef _WIN32
-extern void LIBH_write(uint64_t addr, uint8_t *buf, int size);
-extern void LIBH_read(uint64_t addr, uint8_t *buf, int size);
-extern void LIBH_swap(uint64_t tc_addr);
-extern void LIBH_swap_preemptive(uint64_t tc_addr);
-#endif
+/**
+ * @brief Check hardware target configuration is it inferred or not.
+ *
+ * inferred hardware target is used for RTL simulation of the whole SOC design.
+ */
+extern uint32_t soc_is_rtl_simulation();
 
 #endif /* !_ASMLANGUAGE */
 

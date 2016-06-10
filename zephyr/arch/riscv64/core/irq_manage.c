@@ -6,23 +6,7 @@
 IsrEntryType isr_table[CONFIG_NUM_IRQS];
 IsrEntryType isr_demux_table[CONFIG_NUM_IRQS];
 
-
-#ifdef _WIN32
-void _IsrExit(void) {
-    if ((_nanokernel.current->flags & TASK) == TASK) {
-        if (_nanokernel.fiber) {
-            _nanokernel.current->intlock = _arch_irq_lock_state();
-            _nanokernel.current = _nanokernel.fiber;
-            _nanokernel.fiber = _nanokernel.fiber->link;
-
-            irq_unlock(_nanokernel.current->intlock);
-            LIBH_swap_preemptive((uint64_t)_nanokernel.current);
-        }
-    }
-}
-#else
 extern void _IsrExit(void);
-#endif
 
 void _IsrWrapper(void *arg) {
     uint32_t isr_idx = READ32(&__IRQCTRL->irq_cause_idx);

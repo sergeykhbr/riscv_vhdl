@@ -1,13 +1,13 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
-    <ProjectConfiguration Include="Debug|Win32">
+    <ProjectConfiguration Include="Debug|x64">
       <Configuration>Debug</Configuration>
-      <Platform>Win32</Platform>
+      <Platform>x64</Platform>
     </ProjectConfiguration>
-    <ProjectConfiguration Include="Release|Win32">
+    <ProjectConfiguration Include="Release|x64">
       <Configuration>Release</Configuration>
-      <Platform>Win32</Platform>
+      <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -15,13 +15,13 @@
     <RootNamespace>nanokernel</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v120</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v120</PlatformToolset>
@@ -31,31 +31,31 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup />
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(SolutionDir)../../../lib/libc/minimal/include;$(SolutionDir)../../../include;$(SolutionDir)../../../include/generated;$(SolutionDir)../../../kernel/nanokernel/include;$(SolutionDir)../../../arch/riscv64/include;$(SolutionDir)../../../arch/riscv64/soc/riscv_gnss;$(SolutionDir)../../../boards/riscv_gnss;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalOptions>/D"__RISCV64" /D"INLINE=" /D"inline=" %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/D"__RISCV64" /D"INLINE=" /D"inline=" /D"_ARCH64" %(AdditionalOptions)</AdditionalOptions>
       <PreprocessorDefinitions>CONFIG_RISCV64;CONFIG_PRINTK;CONFIG_STDOUT_CONSOLE;CONFIG_SYS_CLOCK_HW_CYCLES_PER_SEC=60000000;CONFIG_SYS_CLOCK_TICKS_PER_SEC=100;CONFIG_NANO_TIMERS;CONFIG_MAIN_STACK_SIZE=16384;CONFIG_ISR_STACK_SIZE=256;CONFIG_KERNEL_EVENT_LOGGER_BUFFER_SIZE=16;CONFIG_NUM_IRQS=3;CONFIG_SW_ISR_TABLE_DYNAMIC;CONFIG_NANO_TIMEOUTS;CONFIG_NANOKERNEL;NANOKERNEL=1;CONFIG_KERNEL_EVENT_LOGGER;CONFIG_KERNEL_INIT_PRIORITY_DEFAULT=0x40;CONFIG_UART_CONSOLE;CONFIG_UART_CONSOLE_ON_DEV_NAME="UART_0";CONFIG_UART_INTERRUPT_DRIVEN;CONFIG_CONSOLE_HANDLER;CONFIG_CONSOLE_HANDLER_SHELL;CONFIG_CONSOLE_HANDLER_SHELL_STACKSIZE=2000;CONFIG_ERRNO;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>libhost.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SolutionDir)$(Configuration)\</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)$(Platform)\$(Configuration)\</AdditionalLibraryDirectories>
       <EntryPointSymbol>BaseAddress_0x40000000</EntryPointSymbol>
     </Link>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>MaxSpeed</Optimization>
@@ -130,6 +130,7 @@
     <ClInclude Include="..\..\..\..\lib\libc\minimal\include\string.h" />
     <ClInclude Include="..\..\..\..\lib\libc\minimal\include\strings.h" />
     <ClInclude Include="..\..\..\..\lib\libc\minimal\include\sys\types.h" />
+    <ClInclude Include="..\..\..\riscv64\include\memaccess.h" />
     <ClInclude Include="..\..\..\riscv64\soc\riscv_gnss\soc.h" />
     <ClInclude Include="..\..\..\riscv64\soc\riscv_gnss\soc_registers.h" />
   </ItemGroup>
@@ -177,6 +178,7 @@
     <ClCompile Include="..\..\..\..\misc\printk.c" />
     <ClCompile Include="..\..\..\..\samples\shell\src\main.c" />
     <ClCompile Include="..\..\..\riscv64\core\gptimers.c" />
+    <ClCompile Include="..\..\..\riscv64\core\memaccess.c" />
     <ClCompile Include="..\..\..\riscv64\soc\riscv_gnss\soc.c" />
     <ClCompile Include="..\..\core\entry_point.c" />
     <ClCompile Include="..\..\core\swap.c" />
