@@ -72,6 +72,10 @@ architecture behavior of rocket_soc_tb is
   signal o_txd  : std_logic_vector(3 downto 0);
   signal o_txdv : std_logic;
 
+  signal uart_wr_str : std_logic;
+  signal uart_instr : string(1 to 256);
+  signal uart_busy : std_logic;
+
   signal adc_cnt : integer := 0;
   signal clk_cur: std_logic := '1';
   signal check_clk_bus : std_logic := '0';
@@ -128,6 +132,24 @@ component rocket_soc is port
   o_erstn     : out   std_ulogic
 );
 end component;
+
+component uart_sim is 
+  generic (
+    clock_rate : integer := 10
+  ); 
+  port (
+    rst : in std_logic;
+    clk : in std_logic;
+    wr_str : in std_logic;
+    instr : in string;
+    td  : in std_logic;
+    rtsn : in std_logic;
+    rd  : out std_logic;
+    ctsn : out std_logic;
+    busy : out std_logic
+  );
+end component;
+
 
 begin
 
@@ -204,6 +226,34 @@ begin
 
   i_dip <= "000";
   i_int_clkrf <= '1';
+
+  udatagen0 : process (i_sclk_n, iClkCnt)
+  begin
+    if rising_edge(i_sclk_n) then
+        uart_wr_str <= '0';
+        if iClkCnt = 82000 then
+           uart_wr_str <= '1';
+           uart_instr(1 to 4) <= "ping";
+           uart_instr(5) <= lf;
+        end if;
+    end if;
+  end process;
+
+
+  uart0 : uart_sim generic map (
+    clock_rate => 2*20
+  ) port map (
+    rst => i_rst,
+    clk => i_sclk_p,
+    wr_str => uart_wr_str,
+    instr => uart_instr,
+    td  => o_uart1_td,
+    rtsn => o_uart1_rtsn,
+    rd  => i_uart1_rd,
+    ctsn => i_uart1_ctsn,
+    busy => uart_busy
+  );
+
 
   -- signal parsment and assignment
   tt : rocket_soc port map

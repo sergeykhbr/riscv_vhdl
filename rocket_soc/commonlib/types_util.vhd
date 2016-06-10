@@ -6,16 +6,18 @@
 ------------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 library std;
 use std.textio.all;
 
 package types_util is
 
+function strlen(s: in string) return integer;
 function StringToUVector(inStr: string) return std_ulogic_vector;
 function StringToSVector(inStr: string) return std_logic_vector;
 function UnsignedToSigned(inUnsigned: std_ulogic_vector) return std_logic_vector;
 function SignalFromString(inStr: string; ind : integer ) return std_logic;
-
+function SymbolToSVector(inStr: string; idx: integer) return std_logic_vector;
 
 function tost(v:std_logic_vector) return string;
 function tost(v:std_logic) return string;
@@ -25,6 +27,18 @@ procedure print(s : string);
 end;
 
 package body types_util is
+
+  function strlen(s: in string) return integer is
+    variable n: integer:=0; variable sj: integer:=s'left;
+  begin
+    loop
+      if    sj>s'right then exit;
+      elsif s(sj)=NUL  then exit; --sequential if protects sj > length
+      else                  sj:=sj+1; n:=n+1;
+      end if;
+    end loop;
+    return n;
+  end strlen;
 
   function SignalFromString(inStr: string; ind : integer ) return std_logic is
     variable temp: std_logic := 'X';
@@ -58,6 +72,18 @@ package body types_util is
     end loop;
     return temp(inStr'high downto 1);
   end function StringToSVector;
+
+  function SymbolToSVector(inStr: string; idx: integer) return std_logic_vector is
+    constant ss: string(1 to inStr'length) := inStr;
+    variable c : integer;
+    variable temp: std_logic_vector(7 downto 0) := (others => 'X');
+  begin
+    c := character'pos(ss(idx+1));
+    for i in 0 to 7 loop --
+      temp(i) := to_unsigned(c,8)(i);
+    end loop;
+    return temp;
+  end function SymbolToSVector;
   
 
   function UnsignedToSigned(inUnsigned: std_ulogic_vector) 
