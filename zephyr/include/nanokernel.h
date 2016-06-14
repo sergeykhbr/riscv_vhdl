@@ -64,6 +64,8 @@ struct _nano_timeout {
 	struct tcs *tcs;
 	struct _nano_queue *wait_q;
 	int32_t delta_ticks_from_prev;
+    // RISC-V: to avoid "unaligned store" exception make 8-bytes alignment
+    int32_t align_to_8bytes;
 };
 /**
  * @endcond
