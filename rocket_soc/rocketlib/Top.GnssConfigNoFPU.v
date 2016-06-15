@@ -1,6 +1,43 @@
 `ifndef SYNTHESIS
   `define SYNTHESIS 1
 `endif
+`ifdef DEBUG_REGISTER
+module dbg_reg(
+input [63:0] ra,
+input [63:0] sp,
+input [63:0] gp,
+input [63:0] tp,
+input [63:0] t0,
+input [63:0] t1,
+input [63:0] t2,
+input [63:0] s0,
+input [63:0] s1,
+input [63:0] a0,
+input [63:0] a1,
+input [63:0] a2,
+input [63:0] a3,
+input [63:0] a4,
+input [63:0] a5,
+input [63:0] a6,
+input [63:0] a7,
+input [63:0] s2,
+input [63:0] s3,
+input [63:0] s4,
+input [63:0] s5,
+input [63:0] s6,
+input [63:0] s7,
+input [63:0] s8,
+input [63:0] s9,
+input [63:0] s10,
+input [63:0] s11,
+input [63:0] t3,
+input [63:0] t4,
+input [63:0] t5,
+input [63:0] t6
+);
+endmodule
+`endif
+
 module Htif(input clk, input reset,
     //output io_host_clk
     //output io_host_clk_edge
@@ -51821,6 +51858,42 @@ module Rocket(input clk, input reset,
   assign io_host_csr_resp_bits = csr_io_host_csr_resp_bits;
   assign io_host_csr_resp_valid = csr_io_host_csr_resp_valid;
   assign io_host_csr_req_ready = csr_io_host_csr_req_ready;
+`ifdef DEBUG_REGISTER
+  dbg_reg rdbg(
+    .ra(T537[30]),
+    .sp(T537[29]),
+    .gp(T537[28]),
+    .tp(T537[27]),
+    .t0(T537[26]),
+    .t1(T537[25]),
+    .t2(T537[24]),
+    .s0(T537[23]),
+    .s1(T537[22]),
+    .a0(T537[21]),
+    .a1(T537[20]),
+    .a2(T537[19]),
+    .a3(T537[18]),
+    .a4(T537[17]),
+    .a5(T537[16]),
+    .a6(T537[15]),
+    .a7(T537[14]),
+    .s2(T537[13]),
+    .s3(T537[12]),
+    .s4(T537[11]),
+    .s5(T537[10]),
+    .s6(T537[9]),
+    .s7(T537[8]),
+    .s8(T537[7]),
+    .s9(T537[6]),
+    .s10(T537[5]),
+    .s11(T537[4]),
+    .t3(T537[3]),
+    .t4(T537[2]),
+    .t5(T537[1]),
+    .t6(T537[0])
+);
+`endif
+
   CSRFile csr(.clk(clk), .reset(reset),
        .io_host_reset( io_host_reset ),
        .io_host_id( io_host_id ),

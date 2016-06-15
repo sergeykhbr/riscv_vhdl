@@ -234,7 +234,8 @@ begin
         if iClkCnt = 82000 then
            uart_wr_str <= '1';
            uart_instr(1 to 4) <= "ping";
-           uart_instr(5) <= lf;
+           uart_instr(5) <= cr;
+           uart_instr(6) <= lf;
         end if;
     end if;
   end process;
