@@ -18,9 +18,10 @@ static const uint32_t UART_STATUS_ERR_PARITY  = 0x00000100;
 static const uint32_t UART_STATUS_ERR_STOPBIT = 0x00000200;
 
 typedef struct uart_map {
-    volatile uint32_t data;
     volatile uint32_t status;
     volatile uint32_t scaler;
+    uint32_t rsrv[2];
+    volatile uint32_t data;
 } uart_map;
 
 #endif  // __MAP_UART_H__

@@ -281,20 +281,20 @@ begin
        tmp := (others => '0');
        case conv_integer(r.bank_axi.raddr(n)(11 downto 2)) is
           when 0 => 
-                if rx_fifo_empty = '0' then
-                    tmp(7 downto 0) := r.bank0.rx_fifo(conv_integer(r.bank0.rx_rd_cnt)); 
-                    v.bank0.rx_rd_cnt := r.bank0.rx_rd_cnt + 1;
-                    v.bank0.rx_byte_cnt := r.bank0.rx_byte_cnt - 1;
-                end if;
-          when 1 => 
                 tmp(1 downto 0) := tx_fifo_empty & tx_fifo_full;
                 tmp(5 downto 4) := rx_fifo_empty & rx_fifo_full;
                 tmp(9 downto 8) := r.bank0.err_stopbit & r.bank0.err_parity;
                 tmp(13) := r.bank0.rx_irq_ena;
                 tmp(14) := r.bank0.tx_irq_ena;
                 tmp(15) := r.bank0.parity_bit;
-          when 2 => 
+          when 1 => 
                 tmp := conv_std_logic_vector(r.bank0.scaler,32);
+          when 4 => 
+                if rx_fifo_empty = '0' and r.bank_axi.rstate = rtrans then
+                    tmp(7 downto 0) := r.bank0.rx_fifo(conv_integer(r.bank0.rx_rd_cnt)); 
+                    v.bank0.rx_rd_cnt := r.bank0.rx_rd_cnt + 1;
+                    v.bank0.rx_byte_cnt := r.bank0.rx_byte_cnt - 1;
+                end if;
           when others => 
        end case;
        rdata(8*CFG_ALIGN_BYTES*(n+1)-1 downto 8*CFG_ALIGN_BYTES*n) := tmp;
@@ -311,20 +311,20 @@ begin
          if conv_integer(wstrb(CFG_ALIGN_BYTES*(n+1)-1 downto CFG_ALIGN_BYTES*n)) /= 0 then
            tmp := i_axi.w_data(8*CFG_ALIGN_BYTES*(n+1)-1 downto 8*CFG_ALIGN_BYTES*n);
            case conv_integer(r.bank_axi.waddr(n)(11 downto 2)) is
-             when 0 => 
+             when 0 =>
+                    v.bank0.parity_bit := tmp(15);
+                    v.bank0.tx_irq_ena := tmp(14);
+                    v.bank0.rx_irq_ena := tmp(13);
+             when 1 => 
+                    v.bank0.scaler     := conv_integer(tmp);
+                    v.bank0.rx_scaler_cnt := 0;
+                    v.bank0.tx_scaler_cnt := 0;
+             when 4 => 
                     if tx_fifo_full = '0' then
                         v.bank0.tx_fifo(conv_integer(r.bank0.tx_wr_cnt)) := tmp(7 downto 0);
                         v.bank0.tx_wr_cnt := r.bank0.tx_wr_cnt + 1;
                         v.bank0.tx_byte_cnt := r.bank0.tx_byte_cnt + 1;
                     end if;
-             when 1 =>
-                    v.bank0.parity_bit := tmp(15);
-                    v.bank0.tx_irq_ena := tmp(14);
-                    v.bank0.rx_irq_ena := tmp(13);
-             when 2 => 
-                    v.bank0.scaler     := conv_integer(tmp);
-                    v.bank0.rx_scaler_cnt := 0;
-                    v.bank0.tx_scaler_cnt := 0;
              when others =>
            end case;
          end if;

@@ -236,6 +236,11 @@ begin
            uart_instr(1 to 4) <= "ping";
            uart_instr(5) <= cr;
            uart_instr(6) <= lf;
+        elsif iClkCnt = 108000 then
+           uart_wr_str <= '1';
+           uart_instr(1 to 3) <= "pnp";
+           uart_instr(4) <= cr;
+           uart_instr(5) <= lf;
         end if;
     end if;
   end process;

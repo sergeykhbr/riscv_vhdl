@@ -25,7 +25,7 @@ use techmap.types_buf.all;
 entity SysPLL_tech is
   generic (
     tech    : integer range 0 to NTECH := 0; --! PLL implementation selector
-    tmode_always_ena : boolean := false
+    rf_frontend_ena : boolean := false
   );
   port
   (
@@ -93,7 +93,7 @@ begin
   buf1 : bufgmux_tech generic map
   (
     tech => tech,
-    tmode_always_ena => tmode_always_ena
+    rf_frontend_ena => rf_frontend_ena
   )port map 
   (
     O  => o_clk_adc,

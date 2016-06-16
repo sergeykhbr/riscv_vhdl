@@ -12,7 +12,7 @@ use unisim.vcomponents.all;
 
 entity bufgmux_fpga is
   generic (
-    tmode_always_ena : boolean := false
+    rf_frontend_ena : boolean := false
   );
   port (
     O       : out std_ulogic;
@@ -25,20 +25,28 @@ end;
 
 architecture rtl of bufgmux_fpga is
 begin
-  good : if not tmode_always_ena generate
-    mux_buf : BUFGMUX
+  good : if rf_frontend_ena generate
+    --! @details BUFGMUX suits much better to switch clock depending DIP[0]
+    --!          signal, but ISE studio doesn't properly synth. such logic.
+    --!          So here we will use ADC signal only.
+    --mux_buf : BUFGMUX
+    --port map (
+    --  O   => O,
+    --  I0  => I1,
+    --  I1  => I2,
+    --  S   => S
+    --);
+    mux_buf : BUFG
     port map (
-      O   => O,
-      I0  => I1,
-      I1  => I2,
-      S   => S
+      O  => O,
+      I  => I1
     );
   end generate;
   
-  bad : if tmode_always_ena generate
+  bad : if not rf_frontend_ena generate
     mux_buf : BUFG
     port map (
-      O   => O,
+      O  => O,
       I  => I2
     );
   end generate;

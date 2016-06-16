@@ -15,7 +15,7 @@ entity bufgmux_tech is
   generic
   (
     tech : integer := 0;
-    tmode_always_ena : boolean := false
+    rf_frontend_ena : boolean := false
   );
   port (
     O        : out std_ulogic;
@@ -30,7 +30,7 @@ architecture rtl of bufgmux_tech is
 
  component bufgmux_fpga is
   generic (
-    tmode_always_ena : boolean := false
+    rf_frontend_ena : boolean := false
   );
   port (
     O       : out std_ulogic;
@@ -59,7 +59,7 @@ begin
 
    xlnx : if tech = virtex6 or tech = kintex7 generate
       mux_buf : bufgmux_fpga generic map (
-        tmode_always_ena => tmode_always_ena
+        rf_frontend_ena => rf_frontend_ena
       ) port map (
         O   => O,
         I1  => I1,

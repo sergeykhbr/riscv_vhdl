@@ -33,7 +33,7 @@ package types_pll is
   component SysPLL_tech is
     generic(
       tech    : integer range 0 to NTECH := 0;
-      tmode_always_ena : boolean := false
+      rf_frontend_ena : boolean := false
     );
     port (
     i_reset           : in     std_logic;

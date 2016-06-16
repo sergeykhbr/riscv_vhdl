@@ -117,19 +117,20 @@ constant CFG_SIM_FWIMAGE_HEX : string :=
 --!          </em> (\link www.gnss-sensor.com \endlink) and it 
 --!          implements a lot of Navigation related peripheries, like: 
 --!          <ul>
+--!              <li>RF front-end synthezators controller;</li>
 --!              <li>Multi-system GNSS Engine;</li>
 --!              <li>Fast Search modules;</li>
 --!              <li>Viterbi decoders;</li>
 --!              <li>Self-test generators and so on.</li>
 --!          </ul>
---! @warning Disabling this define will tourn off source of the  msec 
---!          interrupts that makes impossible default FW execution.
---!          Source of such interrupts is the gnssengine module (stub 
---!          or full functional device).
-constant CFG_GNSSLIB_ENABLE : boolean := true;
+--! @warning This define enables RF front-end clock as a source of ADC clock.
+--! 
+constant CFG_GNSSLIB_ENABLE : boolean := false;
 
+--! @brief Enable GNSS Engine module.
+constant CFG_GNSSLIB_GNSSENGINE_ENABLE : boolean := false;
 --! @brief Enable Fast Search Engine for the GPS signals.
-constant CFG_GNSSLIB_FSEGPS_ENABLE : integer := 0;
+constant CFG_GNSSLIB_FSEGPS_ENABLE : boolean := false;
 
 --! @brief Enabling Ethernet MAC interface.
 --! @details By default MAC module enables support of the debug feature EDCL.
