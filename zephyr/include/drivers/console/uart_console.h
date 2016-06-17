@@ -27,7 +27,7 @@ extern "C" {
 
 #define MAX_LINE_LEN 256
 struct uart_console_input {
-	int64_t _unused;
+	void *_unused;
 	char line[MAX_LINE_LEN];
 };
 

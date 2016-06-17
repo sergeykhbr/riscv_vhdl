@@ -17,7 +17,7 @@
 #include "coreservices/ikeylistener.h"
 #include "coreservices/irawlistener.h"
 #include <string>
-//#define DBG_ZEPHYR
+#define DBG_ZEPHYR
 #ifdef DBG_ZEPHYR
 #include "coreservices/iclock.h"
 #endif
@@ -30,9 +30,7 @@ class ConsoleService : public IService,
                        public IConsole,
                        public IHap,
                        public IRawListener
-#ifdef DBG_ZEPHYR
                        ,public IClockListener 
-#endif
                        {
 public:
     explicit ConsoleService(const char *name);

@@ -58,9 +58,10 @@ private:
     int rx_total_;
 
     struct uart_map {
-        volatile uint32_t data;
         volatile uint32_t status;
         volatile uint32_t scaler;
+        uint32_t rsrv[2];
+        volatile uint32_t data;
     } regs_;
 };
 

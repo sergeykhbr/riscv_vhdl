@@ -34,6 +34,9 @@ void ConsoleService::stepCallback(uint64_t t) {
         case 2:
             iserial->writeData("help", 4);
             break;
+        case 3:
+            iserial->writeData("pnp", 4);
+            break;
         default:;
         }
         tst_cnt++;
@@ -121,6 +124,7 @@ void ConsoleService::postinitService() {
     iclk_->registerStepCallback(static_cast<IClockListener *>(this), 550000);
     iclk_->registerStepCallback(static_cast<IClockListener *>(this), 1200000);
     iclk_->registerStepCallback(static_cast<IClockListener *>(this), 2000000);//6000000);
+    iclk_->registerStepCallback(static_cast<IClockListener *>(this), 3500000);
 #endif
 
     // Redirect output stream to a this console

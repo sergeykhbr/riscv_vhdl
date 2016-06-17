@@ -46,9 +46,10 @@ typedef struct pnp_map {
 } pnp_map;
 
 typedef struct uart_map {
-    volatile uint32_t data;
     volatile uint32_t status;
     volatile uint32_t scaler;
+    uint32_t rsrv[2];
+    volatile uint32_t data;
 } uart_map;
 
 

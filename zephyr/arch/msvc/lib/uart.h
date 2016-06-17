@@ -30,8 +30,8 @@ public:
     }
     virtual void write(uint64_t addr, uint8_t *buf, int size) {
         uint64_t off = addr - 0x80001000;
-        switch (off) {
-        case 0x00:
+        switch (off>>2) {
+        case 0x04:
             std::cout << (char)buf[0];
             break;
         default:;
@@ -41,8 +41,14 @@ public:
     virtual void read(uint64_t addr, uint8_t *buf, int size) {
         uint64_t off = addr - 0x80001000;
         uint32_t tmp = 0;
-        switch (off) {
-        case 0x00:
+        switch (off>>2) {
+        case 0x0:
+            if (rx_cnt_ == 0) {
+                tmp |= UART_STATUS_RX_EMPTY;
+            }
+            *(uint32_t *)buf = tmp;
+            break;
+        case 0x04:
             buf[0] = *prd_;
             if (rx_cnt_) {
                 rx_cnt_--;
@@ -50,12 +56,6 @@ public:
                     prd_ = buf_;
                 }
             }
-            break;
-        case 0x4:
-            if (rx_cnt_ == 0) {
-                tmp |= UART_STATUS_RX_EMPTY;
-            }
-            *(uint32_t *)buf = tmp;
             break;
         default:;
         }
