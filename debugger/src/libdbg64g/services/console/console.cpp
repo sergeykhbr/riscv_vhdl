@@ -26,7 +26,8 @@ void ConsoleService::stepCallback(uint64_t t) {
                     uart->getInterface(IFACE_SERIAL));
         switch (tst_cnt) {
         case 0:
-            iserial->writeData("ping", 4);
+            //iserial->writeData("ping", 4);
+            iserial->writeData("dhry", 4);
             break;
         case 1:
             iserial->writeData("ticks", 5);
@@ -122,9 +123,9 @@ void ConsoleService::postinitService() {
 #ifdef DBG_ZEPHYR
     iclk_ = (IClock *)RISCV_get_service_iface("core0", IFACE_CLOCK);
     iclk_->registerStepCallback(static_cast<IClockListener *>(this), 550000);
-    iclk_->registerStepCallback(static_cast<IClockListener *>(this), 1200000);
-    iclk_->registerStepCallback(static_cast<IClockListener *>(this), 2000000);//6000000);
-    iclk_->registerStepCallback(static_cast<IClockListener *>(this), 3500000);
+    iclk_->registerStepCallback(static_cast<IClockListener *>(this), 12000000);
+    iclk_->registerStepCallback(static_cast<IClockListener *>(this), 20000000);//6000000);
+    iclk_->registerStepCallback(static_cast<IClockListener *>(this), 35000000);
 #endif
 
     // Redirect output stream to a this console

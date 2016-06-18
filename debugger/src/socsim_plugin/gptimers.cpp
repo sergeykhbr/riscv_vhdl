@@ -100,9 +100,11 @@ void GPTimers::transaction(Axi4TransactionType *payload) {
         for (uint64_t i = 0; i < payload->xsize/4; i++) {
             switch (off + i) {
             case 0:
+                regs_.highcnt = iclk_->getStepCounter();
                 payload->rpayload[i] = (uint32_t)regs_.highcnt;
                 break;
             case 1:
+                regs_.highcnt = iclk_->getStepCounter();
                 payload->rpayload[i] = (uint32_t)(regs_.highcnt >> 32);
                 break;
             case 16 + 0:

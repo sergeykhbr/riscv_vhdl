@@ -170,6 +170,46 @@ public:
     }
 };
 
+/**
+ * @brief REMW signed reminder operation
+ * 
+ * REMW and REMUW instructions are only valid
+ * for RV64, and provide the corresponding signed and unsigned remainder 
+ * operations respectively.
+ * Both REMW and REMUW sign-extend the 32-bit result to 64 bits.
+ */
+class REMW : public IsaProcessor {
+public:
+    REMW() : IsaProcessor("REMW", "0000001??????????110?????0111011") {}
+
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
+        ISA_R_type u;
+        int32_t tmp;
+        u.value = payload[0];
+        tmp = static_cast<int32_t>(data->regs[u.bits.rs1])
+            % static_cast<int32_t>(data->regs[u.bits.rs2]);
+        data->regs[u.bits.rd] = 
+            static_cast<uint64_t>(static_cast<int64_t>(tmp));
+        data->npc = data->pc + 4;
+    }
+};
+
+class REMUW : public IsaProcessor {
+public:
+    REMUW() : IsaProcessor("REMUW", "0000001??????????111?????0111011") {}
+
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
+        ISA_R_type u;
+        uint32_t tmp;
+        u.value = payload[0];
+        tmp = static_cast<uint32_t>(data->regs[u.bits.rs1])
+            % static_cast<uint32_t>(data->regs[u.bits.rs2]);
+        data->regs[u.bits.rd] = 
+            static_cast<uint64_t>(static_cast<int64_t>(tmp));
+        data->npc = data->pc + 4;
+    }
+};
+
 void addIsaExtensionM(CpuContextType *data, AttributeType *out) {
     addSupportedInstruction(new DIV, out);
     addSupportedInstruction(new DIVU, out);
@@ -179,13 +219,13 @@ void addIsaExtensionM(CpuContextType *data, AttributeType *out) {
     addSupportedInstruction(new MULW, out);
     addSupportedInstruction(new REM, out);
     addSupportedInstruction(new REMU, out);
+    addSupportedInstruction(new REMW, out);
+    addSupportedInstruction(new REMUW, out);
     // TODO
     /*
     addInstr("MULH",               "0000001??????????001?????0110011", NULL, out);
     addInstr("MULHSU",             "0000001??????????010?????0110011", NULL, out);
     addInstr("MULHU",              "0000001??????????011?????0110011", NULL, out);
-    addInstr("REMW",               "0000001??????????110?????0111011", NULL, out);
-    addInstr("REMUW",              "0000001??????????111?????0111011", NULL, out);
     */
     data->csr[CSR_mcpuid] |= (1LL << ('M' - 'A'));
 }
