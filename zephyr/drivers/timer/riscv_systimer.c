@@ -38,7 +38,8 @@ static uint32_t accumulated_cycle_count;
 
 uint32_t sys_cycle_get_32(void)
 {
-	return (uint32_t)READ64(&__TIMERS->tmr[CFG_SYS_TIMER_IDX].cur_value);
+    //return (uint32_t)READ64(&__TIMERS->tmr[CFG_SYS_TIMER_IDX].cur_value);
+	return (uint32_t)READ64(&__TIMERS->highcnt);
 }
 
 #ifdef CONFIG_TICKLESS_IDLE

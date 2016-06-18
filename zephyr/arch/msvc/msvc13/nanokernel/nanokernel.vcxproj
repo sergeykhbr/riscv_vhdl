@@ -130,6 +130,7 @@
     <ClInclude Include="..\..\..\..\lib\libc\minimal\include\string.h" />
     <ClInclude Include="..\..\..\..\lib\libc\minimal\include\strings.h" />
     <ClInclude Include="..\..\..\..\lib\libc\minimal\include\sys\types.h" />
+    <ClInclude Include="..\..\..\..\samples\shell\src\dhry.h" />
     <ClInclude Include="..\..\..\riscv64\include\memaccess.h" />
     <ClInclude Include="..\..\..\riscv64\soc\riscv_gnss\soc.h" />
     <ClInclude Include="..\..\..\riscv64\soc\riscv_gnss\soc_registers.h" />
@@ -176,6 +177,8 @@
     <ClCompile Include="..\..\..\..\lib\libc\minimal\source\string\string.c" />
     <ClCompile Include="..\..\..\..\lib\libc\minimal\source\string\strncasecmp.c" />
     <ClCompile Include="..\..\..\..\misc\printk.c" />
+    <ClCompile Include="..\..\..\..\samples\shell\src\dhry_1.c" />
+    <ClCompile Include="..\..\..\..\samples\shell\src\dhry_2.c" />
     <ClCompile Include="..\..\..\..\samples\shell\src\main.c" />
     <ClCompile Include="..\..\..\riscv64\core\gptimers.c" />
     <ClCompile Include="..\..\..\riscv64\core\memaccess.c" />

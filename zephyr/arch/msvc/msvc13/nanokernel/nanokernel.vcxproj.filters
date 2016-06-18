@@ -310,6 +310,9 @@
     <ClInclude Include="..\..\..\riscv64\include\memaccess.h">
       <Filter>zephyr\arch\riscv64\include</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\..\samples\shell\src\dhry.h">
+      <Filter>zephyr\samples\shell</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\..\lib\libc\minimal\source\stdlib\atoi.c">
@@ -452,6 +455,12 @@
     </ClCompile>
     <ClCompile Include="..\..\..\riscv64\core\memaccess.c">
       <Filter>zephyr\arch\riscv64\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\samples\shell\src\dhry_1.c">
+      <Filter>zephyr\samples\shell</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\samples\shell\src\dhry_2.c">
+      <Filter>zephyr\samples\shell</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -20,6 +20,8 @@
 #include <soc.h>
 #define DEVICE_NAME "test shell"
 
+extern void benchmark_dhrystone(int argc, char *argv[]);
+
 static void shell_cmd_ping(int argc, char *argv[])
 {
 	printk("pong\n");
@@ -53,6 +55,7 @@ const struct shell_cmd commands[] = {
 	{ "ticks", shell_cmd_ticks },
 	{ "highticks", shell_cmd_highticks },
     { "pnp", shell_cmd_pnp },
+    { "dhry", benchmark_dhrystone},
 	{ NULL, NULL }
 };
 
