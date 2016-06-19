@@ -23,6 +23,32 @@ at the University of California, Berkeley.
 Parameterized generator of the Rocket-chip can be found here:
 [https://github.com/ucb-bar](https://github.com/ucb-bar)
 
+## System-on-Chip structure and performance
+
+![SOC top](rocket_soc/docs/pics/soc_top.png)
+
+Performance analysis is based on
+[**Dhrystone v2.1. benchmark**](http://fossies.org/linux/privat/old/dhrystone-2.1.tar.gz/)
+that is very compact and entirely ported into Zephyr shell example.
+You can run it yourself and verify results (see below).
+
+**RISC-V Instruction simulator**. Always one instruction per clock.
+
+    Microseconds for one run through Dhrystone:     12.0
+    Dhrystones per Second:                       77257.0
+
+**FPGA SOC based "Rocket-chip" CPU**. Single core/single issue CPU
+with disabled L1toL2 interconnect.
+
+    Microseconds for one run through Dhrystone:     28.0
+    Dhrystones per Second:                       34964.0
+
+Access to all memory banks and peripheries in the same clock domain is always
+one clock in this SOC (without wait-states). So, this benchmark shows
+performance of the CPU with integer instructions and degradation of the CPI
+relative ideal case.
+
+
 ## Repository structure
 
 This repository consists of three sub-projects each in own subfolder:
