@@ -37,7 +37,7 @@ You can run it yourself and verify results (see below).
     Microseconds for one run through Dhrystone:     12.0
     Dhrystones per Second:                       77257.0
 
-**FPGA SOC based "Rocket-chip" CPU**. Single core/single issue CPU
+**FPGA SOC based on "Rocket-chip" CPU**. Single core/single issue CPU
 with disabled L1toL2 interconnect.
 
     Microseconds for one run through Dhrystone:     28.0
@@ -56,10 +56,10 @@ This repository consists of three sub-projects each in own subfolder:
 - **rocket_soc** is the folder with VHDL/Verilog sources of the SOC
   including generated *"Rocket-chip"* processor and peripheries. This folder
   also contains:
-      - *fw*: directory with the bootloader and FW examples.
-      - *fw_images*: directory with the ROM images in HEX-format.
-      - *prj*: project files for different CADs (Xilinx ISE, ModelSim).
-      - *tb*: VHDL testbech of the full system and utilities.
+    * *fw*: directory with the bootloader and FW examples.
+    * *fw_images*: directory with the ROM images in HEX-format.
+    * *prj*: project files for different CADs (Xilinx ISE, ModelSim).
+    * *tb*: VHDL testbech of the full system and utilities.
 - **zephyr** is the ported (by me) on RISC-V 64-bits operation system.
   Information about this Real-Time Operation System for Internet of
   Things Devices provided by [Zephyr Project](https://www.zephyrproject.org/).
@@ -77,8 +77,8 @@ This repository consists of three sub-projects each in own subfolder:
 
 ## Step-by-step tutorial of how to run Zephyr-OS on RISC-V FPGA board.
 
-To run our application as on the animated picture bellow, we should do several
-steps:
+To run our shell application as on the animated picture bellow, we should do
+several steps:
 
 1. Setup GCC toolchain
 2. Build Zephyr elf-file (shell example) and generate HEX-image to
@@ -86,7 +86,7 @@ steps:
    reprogram.
 3. Build FPGA bitfile from VHDL/Verilog sources and program FPGA.
 4. Install CP210x USB to UART bridge driver (if not installed yet) and
-   connecting to serial port of the SOC.
+   connect to serial port of the SOC.
 5. Final result should look like this:
 
 ![Zephyr demo](rocket_soc/docs/pics/zephyr_demo.gif)
@@ -156,7 +156,8 @@ Use button "*Center*" to reset FPGA system and reprint initial messages:
     shell>
 ```
 
-Out system is ready to use.
+Our system is ready to use. Shell command **pnp** prints SOC HW information,
+command **dhry** runs Dhrystone 2.1 benchmark.
 To end the session, use Ctrl-A, Shift-K
 
 ## Simulation with ModelSim
