@@ -1,3 +1,3 @@
 cd samples/shell
-export ZEPHYR_BASE=/home/teeshina/riscv/20160428_zephyr/zephyr/
+export ZEPHYR_BASE=/home/teeshina/riscv/riscv_vhdl/zephyr/
 make ARCH=riscv64 CROSS_COMPILE=/home/teeshina/riscv/gnu-toolchain-rv64ima/bin/riscv64-unknown-elf- BOARD=riscv_gnss 2>&1 | tee _err.log

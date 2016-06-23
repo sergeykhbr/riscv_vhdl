@@ -22,6 +22,9 @@
     <ClInclude Include="..\..\lib\pnp.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\lib\gptimers.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\lib\dispatcher.cpp">

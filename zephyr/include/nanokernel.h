@@ -1436,7 +1436,7 @@ extern int64_t sys_tick_get(void);
 extern uint32_t sys_tick_get_32(void);
 
 /**
- * @brief Return a time stamp in high-resolution format.
+ * @brief Return a low word of time stamp in high-resolution format.
  *
  * This routine reads the counter register on the processor's high precision
  * timer device. This counter register increments at a relatively high rate
@@ -1447,6 +1447,13 @@ extern uint32_t sys_tick_get_32(void);
  * @return The current high-precision clock value.
  */
 extern uint32_t sys_cycle_get_32(void);
+
+/**
+ * @brief Return a time stamp in high-resolution format.
+ *
+ * @return The current high-precision clock value.
+ */
+extern uint64_t sys_cycle_get_64(void);
 
 /**
  *

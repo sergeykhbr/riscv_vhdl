@@ -20,12 +20,14 @@
 #include "zephyr_threads.h"
 #include "irqctrl.h"
 #include "uart.h"
+#include "gptimers.h"
 #include "pnp.h"
 
 static const int IDLE_STACK_SIZE = sizeof(tcs_simple);
 static char idle_stack[IDLE_STACK_SIZE];
 IrqController irqctrl;
 Uart uart0;
+GPTimers tmr0;
 PNP pnp;
 volatile bool wasPreemtiveSwitch;
 int current_idx;

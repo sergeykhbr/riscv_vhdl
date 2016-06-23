@@ -11,6 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\lib\gptimers.h" />
     <ClInclude Include="..\..\lib\imapdev.h" />
     <ClInclude Include="..\..\lib\irqctrl.h" />
     <ClInclude Include="..\..\lib\pnp.h" />

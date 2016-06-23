@@ -54,8 +54,16 @@ relative ideal case.
 This repository consists of three sub-projects each in own subfolder:
 
 - **rocket_soc** is the folder with VHDL/Verilog sources of the SOC
-  including generated *"Rocket-chip"* processor and peripheries. This folder
-  also contains:
+  including synthesizable *"Rocket-chip"* processor and peripheries. 
+  Source code is portable on almost any FPGA is due to the fact that
+  technology dependant modules (like *PLL*, *IO-buffers* 
+  etc) instantiated inside of "virtual" components 
+  in a similar to Gailser's *[GRLIB library](www.gailser.com)* way. 
+  Full SOC design without FPU occupies less than 5 % of FPGA resources (Virtex6). 
+  Current *"Rocket-chip"* CPU is the modern **64-bits processor** 
+  with **L1-cache**, **branch-predictor**, **MMU** and with the 
+  **virtualization** support.
+  This sub-project also contains:
     * *fw*: directory with the bootloader and FW examples.
     * *fw_images*: directory with the ROM images in HEX-format.
     * *prj*: project files for different CADs (Xilinx ISE, ModelSim).
@@ -75,9 +83,9 @@ This repository consists of three sub-projects each in own subfolder:
   and [**Debug Support Unit (DSU)**](http://sergeykhbr.github.io/riscv_vhdl/dsu_link.html)
   devices on AMBA AXI4 bus.
 
-## Step-by-step tutorial of how to run Zephyr-OS on RISC-V FPGA board.
+## Step-by-step tutorial of how to run Zephyr-OS on FPGA board with synthesizable RISC-V processor.
 
-To run our shell application as on the animated picture bellow, we should do
+To run provided **shell** application as on the animated picture bellow, we should do
 several steps:
 
 1. Setup GCC toolchain

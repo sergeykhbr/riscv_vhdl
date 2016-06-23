@@ -42,6 +42,11 @@ uint32_t sys_cycle_get_32(void)
 	return (uint32_t)READ64(&__TIMERS->highcnt);
 }
 
+uint64_t sys_cycle_get_64(void)
+{
+	return READ64(&__TIMERS->highcnt);
+}
+
 #ifdef CONFIG_TICKLESS_IDLE
 static INLINE void update_accumulated_count(void)
 {

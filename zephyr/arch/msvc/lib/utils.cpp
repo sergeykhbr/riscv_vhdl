@@ -19,10 +19,12 @@
 #include "zephyr_threads.h"
 #include "irqctrl.h"
 #include "uart.h"
+#include "gptimers.h"
 #include "pnp.h"
 
 extern IrqController irqctrl;
 extern Uart uart0;
+extern GPTimers tmr0;
 extern PNP pnp;
 extern volatile bool wasPreemtiveSwitch;
 extern int current_idx;
@@ -152,8 +154,8 @@ extern "C" void LIBH_write(uint64_t addr, uint8_t *buf, int size) {
         irqctrl.write(addr, buf, size);
     } else if (pnp.isAddrValid(addr)) {
         pnp.write(addr, buf, size);
-    } else if (addr >= 0x80005000 && addr < 0x80006000) {
-        // GP timers
+    } else if (tmr0.isAddrValid(addr)) {
+        tmr0.write(addr, buf, size);
     } else {
         std::cout << "Unmapped access\n";
     }
@@ -168,8 +170,8 @@ extern "C" void LIBH_read(uint64_t addr, uint8_t *buf, int size) {
         irqctrl.read(addr, buf, size);
     } else if (pnp.isAddrValid(addr)) {
         pnp.read(addr, buf, size);
-    } else if (addr >= 0x80005000 && addr < 0x80006000) {
-        // GP timers
+    } else if (tmr0.isAddrValid(addr)) {
+        tmr0.read(addr, buf, size);
     } else {
         std::cout << "Unmapped access\n";
     }

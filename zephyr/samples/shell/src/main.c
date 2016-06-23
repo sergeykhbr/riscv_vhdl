@@ -34,7 +34,7 @@ static void shell_cmd_ticks(int argc, char *argv[])
 
 static void shell_cmd_highticks(int argc, char *argv[])
 {
-	printk("highticks: %d\n", sys_cycle_get_32());
+	printk("highticks: %x\n", (unsigned int)sys_cycle_get_64());
 }
 
 /**

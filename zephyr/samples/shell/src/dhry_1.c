@@ -59,7 +59,7 @@ Enumeration     Func_1 ();
 #ifdef CONFIG_RISCV64
 #define HZ 60000000  // 60 MHz
 int clock() {
-    return sys_cycle_get_32();
+    return (int)sys_cycle_get_64();
 }
 #define Too_Small_Time (2)
 
