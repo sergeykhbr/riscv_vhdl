@@ -152,16 +152,16 @@ begin
                     v.bank0.pending := tmp(tmr_total-1 downto 0);
              when others =>
                 for k in 0 to tmr_total-1 loop
-                   if raddr = (16 + 8*k) then
+                   if waddr = (16 + 8*k) then
                       v.bank0.tmr(k).count_ena := tmp(0);
                       v.bank0.tmr(k).irq_ena := tmp(1);
-                   elsif raddr = (16 + 8*k + 2) then
+                   elsif waddr = (16 + 8*k + 2) then
                       v.bank0.tmr(k).value(31 downto 0) := tmp;
-                   elsif raddr = (16 + 8*k + 3) then
+                   elsif waddr = (16 + 8*k + 3) then
                       v.bank0.tmr(k).value(63 downto 32) := tmp;
-                   elsif raddr = (16 + 8*k + 4) then
+                   elsif waddr = (16 + 8*k + 4) then
                       v.bank0.tmr(k).init_value(31 downto 0) := tmp;
-                   elsif raddr = (16 + 8*k + 5) then
+                   elsif waddr = (16 + 8*k + 5) then
                       v.bank0.tmr(k).init_value(63 downto 32) := tmp;
                    end if;
                 end loop;

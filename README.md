@@ -58,11 +58,10 @@ This repository consists of three sub-projects each in own subfolder:
   Source code is portable on almost any FPGA is due to the fact that
   technology dependant modules (like *PLL*, *IO-buffers* 
   etc) instantiated inside of "virtual" components 
-  in a similar to Gailser's *[GRLIB library](www.gailser.com)* way. 
+  in a similar to Gailser's *[GRLIB](www.gailser.com)* way.  
   Full SOC design without FPU occupies less than 5 % of FPGA resources (Virtex6). 
-  Current *"Rocket-chip"* CPU is the modern **64-bits processor** 
-  with **L1-cache**, **branch-predictor**, **MMU** and with the 
-  **virtualization** support.
+  *"Rocket-chip"* CPU itself is the modern **64-bits processor 
+  with L1-cache, branch-predictor, MMU and virtualization support**.  
   This sub-project also contains:
     * *fw*: directory with the bootloader and FW examples.
     * *fw_images*: directory with the ROM images in HEX-format.
