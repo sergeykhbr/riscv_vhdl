@@ -50,6 +50,8 @@ const char *default_config =
                 "['LogLevel',4],"
                 "['Enable',true],"
                 "['LogFile','test.log'],"
+                "['StepQueue','core0'],"
+                "['Signals','gpio0'],"
                 "['Serial','uart0'],"
                 "['Consumer','cmd0']]}]},"
     "{'Class':'CmdParserServiceClass','Instances':["

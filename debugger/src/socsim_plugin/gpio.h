@@ -11,11 +11,13 @@
 #include "iclass.h"
 #include "iservice.h"
 #include "coreservices/imemop.h"
+#include "coreservices/isignal.h"
 
 namespace debugger {
 
 class GPIO : public IService, 
-             public IMemoryOperation {
+             public IMemoryOperation,
+             public ISignal {
 public:
     GPIO(const char *name);
     ~GPIO();
@@ -33,10 +35,17 @@ public:
         return length_.to_uint64();
     }
 
+    /** ISignal interface */
+    virtual void setLevel(int start, int width, uint64_t value);
+
+    virtual void registerSignalListener(IFace *listener);
+
+
 private:
     AttributeType baseAddress_;
     AttributeType length_;
     AttributeType dip_;
+    AttributeType listOfListerners_;
 
     struct gpio_map {
         volatile uint32_t led;

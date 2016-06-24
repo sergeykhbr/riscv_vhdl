@@ -12,40 +12,9 @@
 #include <string.h>
 #include "api_types.h"
 #include "coreservices/iserial.h"
+#include "coreservices/isignal.h"
 
 namespace debugger {
-
-#ifdef DBG_ZEPHYR
-static IClock *iclk_;
-static int tst_cnt = 0;
-void ConsoleService::stepCallback(uint64_t t) {
-    IService *uart = static_cast<IService *>(RISCV_get_service("uart0"));
-    if (uart) {
-        int ttt = iclk_->getStepCounter();
-        ISerial *iserial = static_cast<ISerial *>(
-                    uart->getInterface(IFACE_SERIAL));
-        switch (tst_cnt) {
-        case 0:
-            //iserial->writeData("ping", 4);
-            iserial->writeData("dhry", 4);
-            break;
-        case 1:
-            iserial->writeData("ticks", 5);
-            break;
-        case 2:
-            iserial->writeData("help", 4);
-            break;
-        case 3:
-            iserial->writeData("pnp", 4);
-            break;
-        default:;
-        }
-        tst_cnt++;
-    }
-}
-
-#endif
-
 
 /** Class registration in the Core */
 REGISTER_CLASS(ConsoleService)
@@ -61,6 +30,8 @@ ConsoleService::ConsoleService(const char *name)
     registerAttribute("Enable", &isEnable_);
     registerAttribute("Consumer", &consumer_);
     registerAttribute("LogFile", &logFile_);
+    registerAttribute("StepQueue", &stepQueue_);
+    registerAttribute("Signals", &signals_);
     registerAttribute("Serial", &serial_);
 
     RISCV_mutex_init(&mutexConsoleOutput_);
@@ -70,9 +41,16 @@ ConsoleService::ConsoleService(const char *name)
     isEnable_.make_boolean(true);
     consumer_.make_string("");
     logFile_.make_string("");
+	stepQueue_.make_string("");
+	signals_.make_string("");
     serial_.make_string("");
 
     logfile_ = NULL;
+    iclk_ = NULL;
+#ifdef DBG_ZEPHYR
+    tst_cnt_ = 0;
+#endif
+
 #if defined(_WIN32) || defined(__CYGWIN__)
 #else
     struct termios new_settings;
@@ -120,12 +98,23 @@ void ConsoleService::postinitService() {
     if (logFile_.size()) {
         enableLogFile(logFile_.to_string());
     }
+
+    iclk_ = static_cast<IClock *>
+	    (RISCV_get_service_iface(stepQueue_.to_string(), IFACE_CLOCK));
+
+    ISignal *itmp = static_cast<ISignal *>
+        (RISCV_get_service_iface(signals_.to_string(), IFACE_SIGNAL));
+    if (itmp) {
+        itmp->registerSignalListener(static_cast<ISignalListener *>(this));
+    }
+
 #ifdef DBG_ZEPHYR
-    iclk_ = (IClock *)RISCV_get_service_iface("core0", IFACE_CLOCK);
-    iclk_->registerStepCallback(static_cast<IClockListener *>(this), 550000);
-    iclk_->registerStepCallback(static_cast<IClockListener *>(this), 12000000);
-    iclk_->registerStepCallback(static_cast<IClockListener *>(this), 20000000);//6000000);
-    iclk_->registerStepCallback(static_cast<IClockListener *>(this), 35000000);
+    if (iclk_) {
+	    iclk_->registerStepCallback(static_cast<IClockListener *>(this), 550000);
+	    iclk_->registerStepCallback(static_cast<IClockListener *>(this), 12000000);
+	    iclk_->registerStepCallback(static_cast<IClockListener *>(this), 20000000);//6000000);
+	    iclk_->registerStepCallback(static_cast<IClockListener *>(this), 35000000);
+	}
 #endif
 
     // Redirect output stream to a this console
@@ -138,8 +127,48 @@ void ConsoleService::predeleteService() {
     stop();
 }
 
+void ConsoleService::stepCallback(uint64_t t) {
+#ifdef DBG_ZEPHYR
+    if (iclk_ == NULL) {
+        return;
+    }
+    IService *uart = static_cast<IService *>(RISCV_get_service("uart0"));
+    if (uart) {
+        int ttt = iclk_->getStepCounter();
+        ISerial *iserial = static_cast<ISerial *>(
+                    uart->getInterface(IFACE_SERIAL));
+        switch (tst_cnt_) {
+        case 0:
+            //iserial->writeData("ping", 4);
+            iserial->writeData("dhry", 4);
+            break;
+        case 1:
+            iserial->writeData("ticks", 5);
+            break;
+        case 2:
+            iserial->writeData("help", 4);
+            break;
+        case 3:
+            iserial->writeData("pnp", 4);
+            break;
+        default:;
+        }
+        tst_cnt_++;
+    }
+#endif
+}
+
+
+
 void ConsoleService::hapTriggered(EHapType type) {
     RISCV_event_set(&config_done_);
+}
+
+void ConsoleService::updateSignal(int start, int width, uint64_t value) {
+    char sx[128];
+    RISCV_sprintf(sx, sizeof(sx), "<led[%d:%d]> %02" RV_PRI64 "xh\n", 
+                    start + width - 1, start, value);
+    writeBuffer(sx);
 }
 
 void ConsoleService::busyLoop() {

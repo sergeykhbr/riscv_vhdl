@@ -115,6 +115,8 @@
     <ClInclude Include="..\..\src\common\coreservices\imemop.h" />
     <ClInclude Include="..\..\src\common\coreservices\irawlistener.h" />
     <ClInclude Include="..\..\src\common\coreservices\iserial.h" />
+    <ClInclude Include="..\..\src\common\coreservices\isignal.h" />
+    <ClInclude Include="..\..\src\common\coreservices\isignallistener.h" />
     <ClInclude Include="..\..\src\common\coreservices\itap.h" />
     <ClInclude Include="..\..\src\common\coreservices\ithread.h" />
     <ClInclude Include="..\..\src\common\coreservices\iudp.h" />
