@@ -212,12 +212,17 @@ new elf-file.
 
 Full debugger configuration including plugins states is stored in file
 **config.json**. You can manually define CSR names and addresses,
-enable/disable platform specific functionality, specify files pathes etc.
+enable/disable platform specific functionality, specify files pathes etc.  
 Start debugger with command argument *-sim* to connect SOC PC-simulator
 instead of FPGA board:
 
 ```
-     ./../linuxbuild/bin/appdbg64g.exe -sim
+     Linux:
+     export LD_LIBRARY_PATH=/your_path/riscv_vhdl/debugger/linuxbuild/bin
+     cd /your_path/riscv_vhdl/debugger/linuxbuild/bin/
+     ./appdbg64g.exe -sim
+
+     Windows:
      c:\myprj\rocket\debugger\bin\appdbg64g.exe -sim
 ```
 
@@ -235,12 +240,12 @@ To get more information see
 
 Build example:
 
-    $ cd /home/your_path/rocket_soc/fw/helloworld/makefiles
+    $ cd /your_git_path/rocket_soc/fw/helloworld/makefiles
     $ make
 
 Run debugger console:
 
-    $ ./git_path/debugger/linuxbuild/bin/riscvdbg
+    $ ./your_git_path/debugger/linuxbuild/bin/appdbg64g.exe
 
 Load elf-file via Ethernet using debugger console:
 

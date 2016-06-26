@@ -134,7 +134,6 @@ void ConsoleService::stepCallback(uint64_t t) {
     }
     IService *uart = static_cast<IService *>(RISCV_get_service("uart0"));
     if (uart) {
-        int ttt = iclk_->getStepCounter();
         ISerial *iserial = static_cast<ISerial *>(
                     uart->getInterface(IFACE_SERIAL));
         switch (tst_cnt_) {
