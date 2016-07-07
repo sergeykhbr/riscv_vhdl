@@ -21,8 +21,7 @@ use commonlib.types_common.all;
 entity SysPLL_inferred is
 port
  (-- Clock in ports
-  CLK_IN1_P         : in     std_logic;
-  CLK_IN1_N         : in     std_logic;
+  CLK_IN            : in     std_logic;
   -- Clock out ports
   CLK_OUT1          : out    std_logic;
   CLK_OUT2          : out    std_logic;
@@ -37,7 +36,7 @@ architecture rtl of SysPLL_inferred is
   signal divider : std_logic_vector(1 downto 0); 
 begin
 
-  CLK_OUT1 <= CLK_IN1_P;
+  CLK_OUT1 <= CLK_IN;
   CLK_OUT2 <= divider(1);
   LOCKED <= not RESET;
 

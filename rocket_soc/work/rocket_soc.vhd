@@ -141,7 +141,7 @@ architecture arch_rocket_soc of rocket_soc is
   --!          as an empty devices but ASIC couldn't be made without buffering.
   --! @{
   signal ib_rst     : std_logic;
-  signal ib_sclk_p  : std_logic;
+  signal ib_clk200  : std_logic;
   signal ib_sclk_n  : std_logic;
   signal ib_clk_adc : std_logic;
   signal ib_dip     : std_logic_vector(3 downto 0);
@@ -156,7 +156,10 @@ architecture arch_rocket_soc of rocket_soc is
   signal wClkBus    : std_ulogic; -- bus clock from the internal PLL (100MHz virtex6/40MHz Spartan6)
   signal wClkAdc    : std_ulogic; -- 26 MHz from the internal PLL
   signal wPllLocked : std_ulogic; -- PLL status signal. 0=Unlocked; 1=locked.
-
+      -- DDR3 specific signals
+  signal pll_clk_mem : std_logic;
+  signal pll_clk     : std_logic;
+  signal pll_rd_base : std_logic;
   
   signal uart1i : uart_in_type;
   signal uart1o : uart_out_type;
@@ -195,13 +198,15 @@ begin
 
   --! PAD buffers:
   irst0   : ibuf_tech generic map(CFG_PADTECH) port map (ib_rst, i_rst);
-  iclkp0  : ibuf_tech generic map(CFG_PADTECH) port map (ib_sclk_p, i_sclk_p);
-  iclkn0  : ibuf_tech generic map(CFG_PADTECH) port map (ib_sclk_n, i_sclk_n);
   iclk1  : ibuf_tech generic map(CFG_PADTECH) port map (ib_clk_adc, i_clk_adc);
   idip0  : ibuf_tech generic map(CFG_PADTECH) port map (ib_dip(0), i_int_clkrf);
   dipx : for i in 1 to 3 generate
      idipz  : ibuf_tech generic map(CFG_PADTECH) port map (ib_dip(i), i_dip(i));
   end generate;
+
+  iclk0 : idsbuf_tech generic map (CFG_PADTECH) port map (
+         i_sclk_p, i_sclk_n, ib_clk200);
+
   igbebuf0 : igdsbuf_tech generic map (CFG_PADTECH) port map (
             i_gmiiclk_p, i_gmiiclk_n, ib_gmiiclk);
 
@@ -216,12 +221,19 @@ begin
   ) port map (
     i_reset     => ib_rst,
     i_int_clkrf => ib_dip(0),
-    i_clkp	     => ib_sclk_p,
-    i_clkn	     => ib_sclk_n,
+    i_clk_tcxo	=> ib_clk200,
     i_clk_adc   => ib_clk_adc,
     o_clk_bus   => wClkBus,
     o_clk_adc   => wClkAdc,
-    o_locked    => wPllLocked
+    o_locked    => wPllLocked,
+    -- DDR3 specific signals
+    o_clk400_buf => pll_clk_mem,
+    o_clk200_buf => pll_clk,
+    o_clk400_unbuf => pll_rd_base,
+    -- Phase Shift interface
+    i_PSEN       => '0',
+    i_PSINCDEC   => '0',
+    o_PSDONE     => open
   );
   wSysReset <= ib_rst or not wPllLocked;
 

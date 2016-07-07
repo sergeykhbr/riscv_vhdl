@@ -115,5 +115,19 @@ package types_buf is
   );
   end component; 
 
+  --! @brief Input buffer with differential inputs.
+  --! @param[in] clk_p Differential clock input.
+  --! @param[in] clk_n Differential clock inversed input.
+  --! @param[out] o_clk Unbuffered clock output.
+  component idsbuf_tech is
+  generic (
+    generic_tech : integer := 0
+  );
+  port (
+    clk_p : in std_logic;
+    clk_n : in std_logic;
+    o_clk  : out std_logic
+  );
+  end component; 
 
 end;

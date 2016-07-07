@@ -75,8 +75,7 @@ use unisim.vcomponents.all;
 entity SysPLL_k7 is
 port
  (-- Clock in ports
-  CLK_IN1_P         : in     std_logic;
-  CLK_IN1_N         : in     std_logic;
+  CLK_IN            : in     std_logic;
   -- Clock out ports
   CLK_OUT1          : out    std_logic;
   CLK_OUT2          : out    std_logic;
@@ -89,8 +88,6 @@ end SysPLL_k7;
 architecture xilinx of SysPLL_k7 is
   attribute CORE_GENERATION_INFO : string;
   attribute CORE_GENERATION_INFO of xilinx : architecture is "SysPLL_k7,clk_wiz_v3_6,{component_name=SysPLL_k7,use_phase_alignment=true,use_min_o_jitter=false,use_max_i_jitter=false,use_dyn_phase_shift=false,use_inclk_switchover=false,use_dyn_reconfig=false,feedback_source=FDBK_AUTO,primtype_sel=MMCM_ADV,num_out_clk=1,clkin1_period=5.000,clkin2_period=10.0,use_power_down=false,use_reset=true,use_locked=true,use_inclk_stopped=false,use_status=false,use_freeze=false,use_clk_valid=false,feedback_type=SINGLE,clock_mgr_type=MANUAL,manual_override=false}";
-  -- Input clock buffering / unused connectors
-  signal clkin1      : std_logic;
   -- Output clock buffering / unused connectors
   signal clkfbout         : std_logic;
   signal clkfbout_buf     : std_logic;
@@ -116,14 +113,6 @@ architecture xilinx of SysPLL_k7 is
   signal clkinstopped_unused : std_logic;
 begin
 
-
-  -- Input buffering
-  --------------------------------------
-  clkin1_buf : IBUFGDS
-  port map
-   (O  => clkin1,
-    I  => CLK_IN1_P,
-    IB => CLK_IN1_N);
 
 
   -- Clocking primitive
@@ -169,7 +158,7 @@ begin
     CLKOUT6             => clkout6_unused,
     -- Input clock control
     CLKFBIN             => clkfbout_buf,
-    CLKIN1              => clkin1,
+    CLKIN1              => CLK_IN,
     CLKIN2              => '0',
     -- Tied to always select the primary input clock
     CLKINSEL            => '1',
