@@ -7,6 +7,9 @@
     <Filter Include="MainWindow">
       <UniqueIdentifier>{0e78e5f9-ec53-44ca-924d-c7b999faf36b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="SerialWidget">
+      <UniqueIdentifier>{eb6312ac-f6ac-499e-86c1-47d8714b3d97}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\common\attribute.cpp">
@@ -17,6 +20,12 @@
     </ClCompile>
     <ClCompile Include="..\..\src\gui_plugin\gui_plugin.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\MainWindow\DbgMainWindow.cpp">
+      <Filter>MainWindow</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\SerialWidget\RawOutputWidget.cpp">
+      <Filter>SerialWidget</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\MainWindow\MdiAreaWidget.cpp">
       <Filter>MainWindow</Filter>
     </ClCompile>
   </ItemGroup>
@@ -48,6 +57,18 @@
     <ClInclude Include="..\..\src\gui_plugin\igui.h" />
     <ClInclude Include="..\..\src\gui_plugin\gui_plugin.h" />
     <ClInclude Include="..\..\src\gui_plugin\MainWindow\DbgMainWindow.h">
+      <Filter>MainWindow</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\SerialWidget\moc_RawOutputWidget.h">
+      <Filter>SerialWidget</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\SerialWidget\RawOutputWidget.h">
+      <Filter>SerialWidget</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\MainWindow\MdiAreaWidget.h">
+      <Filter>MainWindow</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\MainWindow\moc_MdiAreaWidget.h">
       <Filter>MainWindow</Filter>
     </ClInclude>
   </ItemGroup>
