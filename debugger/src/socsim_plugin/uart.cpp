@@ -65,7 +65,7 @@ int UART::writeData(const char *buf, int sz) {
             p_rx_wr_ = rxfifo_;
         }
     }
-#if 1
+#if 0
     // line ending
     rx_total_++;
     *p_rx_wr_ = '\r';

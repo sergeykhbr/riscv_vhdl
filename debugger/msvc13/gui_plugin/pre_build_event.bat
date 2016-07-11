@@ -9,4 +9,4 @@ set GUI_PLUGIN_SRC=..\..\src\gui_plugin\
 rem %QT_PATH%\rcc.exe -binary ..\resources\gui.qrc -o ..\resources\gui.rcc
 %QT_PATH%\bin\moc.exe -i %GUI_PLUGIN_SRC%\MainWindow\DbgMainWindow.h -o %GUI_PLUGIN_SRC%\MainWindow\moc_DbgMainWindow.h
 %QT_PATH%\bin\moc.exe -i %GUI_PLUGIN_SRC%\MainWindow\MdiAreaWidget.h -o %GUI_PLUGIN_SRC%\MainWindow\moc_MdiAreaWidget.h
-%QT_PATH%\bin\moc.exe -i %GUI_PLUGIN_SRC%\SerialWidget\RawOutputWidget.h -o %GUI_PLUGIN_SRC%\SerialWidget\moc_RawOutputWidget.h
+%QT_PATH%\bin\moc.exe -i %GUI_PLUGIN_SRC%\SerialWidget\ConsoleWidget.h -o %GUI_PLUGIN_SRC%\SerialWidget\moc_ConsoleWidget.h

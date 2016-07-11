@@ -19,7 +19,7 @@
 #include "coreservices/irawlistener.h"
 #include "coreservices/isignallistener.h"
 #include <string>
-#define DBG_ZEPHYR
+//#define DBG_ZEPHYR
 
 
 namespace debugger {

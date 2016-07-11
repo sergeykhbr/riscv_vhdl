@@ -22,11 +22,11 @@
     <ClCompile Include="..\..\src\gui_plugin\MainWindow\DbgMainWindow.cpp">
       <Filter>MainWindow</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\gui_plugin\SerialWidget\RawOutputWidget.cpp">
-      <Filter>SerialWidget</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\gui_plugin\MainWindow\MdiAreaWidget.cpp">
       <Filter>MainWindow</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\SerialWidget\ConsoleWidget.cpp">
+      <Filter>SerialWidget</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -59,17 +59,17 @@
     <ClInclude Include="..\..\src\gui_plugin\MainWindow\DbgMainWindow.h">
       <Filter>MainWindow</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\gui_plugin\SerialWidget\moc_RawOutputWidget.h">
-      <Filter>SerialWidget</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\gui_plugin\SerialWidget\RawOutputWidget.h">
-      <Filter>SerialWidget</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\gui_plugin\MainWindow\MdiAreaWidget.h">
       <Filter>MainWindow</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\gui_plugin\MainWindow\moc_MdiAreaWidget.h">
       <Filter>MainWindow</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\SerialWidget\moc_ConsoleWidget.h">
+      <Filter>SerialWidget</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\SerialWidget\ConsoleWidget.h">
+      <Filter>SerialWidget</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

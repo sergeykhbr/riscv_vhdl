@@ -180,7 +180,7 @@
     <ClCompile Include="..\..\src\gui_plugin\gui_plugin.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\MainWindow\DbgMainWindow.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\MainWindow\MdiAreaWidget.cpp" />
-    <ClCompile Include="..\..\src\gui_plugin\SerialWidget\RawOutputWidget.cpp" />
+    <ClCompile Include="..\..\src\gui_plugin\SerialWidget\ConsoleWidget.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\api_types.h" />
@@ -196,8 +196,8 @@
     <ClInclude Include="..\..\src\gui_plugin\MainWindow\DbgMainWindow.h" />
     <ClInclude Include="..\..\src\gui_plugin\MainWindow\MdiAreaWidget.h" />
     <ClInclude Include="..\..\src\gui_plugin\MainWindow\moc_MdiAreaWidget.h" />
-    <ClInclude Include="..\..\src\gui_plugin\SerialWidget\moc_RawOutputWidget.h" />
-    <ClInclude Include="..\..\src\gui_plugin\SerialWidget\RawOutputWidget.h" />
+    <ClInclude Include="..\..\src\gui_plugin\SerialWidget\moc_ConsoleWidget.h" />
+    <ClInclude Include="..\..\src\gui_plugin\SerialWidget\ConsoleWidget.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
