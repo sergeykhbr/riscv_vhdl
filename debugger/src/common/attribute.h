@@ -217,7 +217,7 @@ class AttributeType : public IAttribute {
     void make_string(const char *value) {
         if (value) {
             kind_ = Attr_String;
-            size_ = strlen(value);
+            size_ = (unsigned)strlen(value);
             u_.string = new char[size_ + 1];
             memcpy(u_.string, value, size_ + 1);
         } else {

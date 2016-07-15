@@ -175,5 +175,7 @@
     <ClInclude Include="..\..\src\common\coreservices\iserial.h">
       <Filter>Source Files\common\coreservices</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\common\coreservices\isignal.h" />
+    <ClInclude Include="..\..\src\common\coreservices\isignallistener.h" />
   </ItemGroup>
 </Project>

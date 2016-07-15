@@ -65,10 +65,10 @@
     <ClInclude Include="..\..\src\gui_plugin\MainWindow\moc_MdiAreaWidget.h">
       <Filter>MainWindow</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\gui_plugin\SerialWidget\moc_ConsoleWidget.h">
+    <ClInclude Include="..\..\src\gui_plugin\SerialWidget\ConsoleWidget.h">
       <Filter>SerialWidget</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\gui_plugin\SerialWidget\ConsoleWidget.h">
+    <ClInclude Include="..\..\src\gui_plugin\SerialWidget\moc_ConsoleWidget.h">
       <Filter>SerialWidget</Filter>
     </ClInclude>
   </ItemGroup>

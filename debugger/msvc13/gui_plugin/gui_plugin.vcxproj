@@ -196,8 +196,8 @@
     <ClInclude Include="..\..\src\gui_plugin\MainWindow\DbgMainWindow.h" />
     <ClInclude Include="..\..\src\gui_plugin\MainWindow\MdiAreaWidget.h" />
     <ClInclude Include="..\..\src\gui_plugin\MainWindow\moc_MdiAreaWidget.h" />
-    <ClInclude Include="..\..\src\gui_plugin\SerialWidget\moc_ConsoleWidget.h" />
     <ClInclude Include="..\..\src\gui_plugin\SerialWidget\ConsoleWidget.h" />
+    <ClInclude Include="..\..\src\gui_plugin\SerialWidget\moc_ConsoleWidget.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
