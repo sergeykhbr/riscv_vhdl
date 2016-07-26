@@ -114,7 +114,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(SolutionDir)../src/common;$(QT_PATH)\include;$(SolutionDir)../src/gui_plugin</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
@@ -177,10 +177,12 @@
   <ItemGroup>
     <ClCompile Include="..\..\src\common\attribute.cpp" />
     <ClCompile Include="..\..\src\common\autobuffer.cpp" />
+    <ClCompile Include="..\..\src\gui_plugin\ControlWidget\ConsoleWidget.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\gui_plugin.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\MainWindow\DbgMainWindow.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\MainWindow\MdiAreaWidget.cpp" />
-    <ClCompile Include="..\..\src\gui_plugin\SerialWidget\ConsoleWidget.cpp" />
+    <ClCompile Include="..\..\src\gui_plugin\PeriphWidgets\GpioWidget.cpp" />
+    <ClCompile Include="..\..\src\gui_plugin\PeriphWidgets\UartWidget.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\api_types.h" />
@@ -191,13 +193,17 @@
     <ClInclude Include="..\..\src\common\iclass.h" />
     <ClInclude Include="..\..\src\common\iface.h" />
     <ClInclude Include="..\..\src\common\iservice.h" />
+    <ClInclude Include="..\..\src\gui_plugin\ControlWidget\ConsoleWidget.h" />
+    <ClInclude Include="..\..\src\gui_plugin\ControlWidget\moc_ConsoleWidget.h" />
     <ClInclude Include="..\..\src\gui_plugin\gui_plugin.h" />
     <ClInclude Include="..\..\src\gui_plugin\igui.h" />
     <ClInclude Include="..\..\src\gui_plugin\MainWindow\DbgMainWindow.h" />
     <ClInclude Include="..\..\src\gui_plugin\MainWindow\MdiAreaWidget.h" />
     <ClInclude Include="..\..\src\gui_plugin\MainWindow\moc_MdiAreaWidget.h" />
-    <ClInclude Include="..\..\src\gui_plugin\SerialWidget\ConsoleWidget.h" />
-    <ClInclude Include="..\..\src\gui_plugin\SerialWidget\moc_ConsoleWidget.h" />
+    <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\GpioWidget.h" />
+    <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\moc_GpioWidget.h" />
+    <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\moc_UartWidget.h" />
+    <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\UartWidget.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

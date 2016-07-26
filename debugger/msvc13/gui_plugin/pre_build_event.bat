@@ -6,7 +6,9 @@ rem QT_PATH=C:\Projects\Qt\Qt5.6.1\5.6\msvc2013_64
 
 set GUI_PLUGIN_SRC=..\..\src\gui_plugin\
 
-rem %QT_PATH%\rcc.exe -binary ..\resources\gui.qrc -o ..\resources\gui.rcc
+%QT_PATH%\bin\rcc.exe -binary %GUI_PLUGIN_SRC%\resources\gui.qrc -o %GUI_PLUGIN_SRC%\resources\gui.rcc
 %QT_PATH%\bin\moc.exe -i %GUI_PLUGIN_SRC%\MainWindow\DbgMainWindow.h -o %GUI_PLUGIN_SRC%\MainWindow\moc_DbgMainWindow.h
 %QT_PATH%\bin\moc.exe -i %GUI_PLUGIN_SRC%\MainWindow\MdiAreaWidget.h -o %GUI_PLUGIN_SRC%\MainWindow\moc_MdiAreaWidget.h
-%QT_PATH%\bin\moc.exe -i %GUI_PLUGIN_SRC%\SerialWidget\ConsoleWidget.h -o %GUI_PLUGIN_SRC%\SerialWidget\moc_ConsoleWidget.h
+%QT_PATH%\bin\moc.exe -i %GUI_PLUGIN_SRC%\ControlWidget\ConsoleWidget.h -o %GUI_PLUGIN_SRC%\ControlWidget\moc_ConsoleWidget.h
+%QT_PATH%\bin\moc.exe -i %GUI_PLUGIN_SRC%\PeriphWidgets\UartWidget.h -o %GUI_PLUGIN_SRC%\PeriphWidgets\moc_UartWidget.h
+%QT_PATH%\bin\moc.exe -i %GUI_PLUGIN_SRC%\PeriphWidgets\GpioWidget.h -o %GUI_PLUGIN_SRC%\PeriphWidgets\moc_GpioWidget.h

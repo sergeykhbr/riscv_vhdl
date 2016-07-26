@@ -7,7 +7,10 @@
     <Filter Include="MainWindow">
       <UniqueIdentifier>{0e78e5f9-ec53-44ca-924d-c7b999faf36b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="SerialWidget">
+    <Filter Include="PeriphWidgets">
+      <UniqueIdentifier>{3580c681-f78c-4191-af06-26b34163ce9e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ControlWidget">
       <UniqueIdentifier>{eb6312ac-f6ac-499e-86c1-47d8714b3d97}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -25,8 +28,14 @@
     <ClCompile Include="..\..\src\gui_plugin\MainWindow\MdiAreaWidget.cpp">
       <Filter>MainWindow</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\gui_plugin\SerialWidget\ConsoleWidget.cpp">
-      <Filter>SerialWidget</Filter>
+    <ClCompile Include="..\..\src\gui_plugin\PeriphWidgets\GpioWidget.cpp">
+      <Filter>PeriphWidgets</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\ControlWidget\ConsoleWidget.cpp">
+      <Filter>ControlWidget</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\PeriphWidgets\UartWidget.cpp">
+      <Filter>PeriphWidgets</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -65,11 +74,23 @@
     <ClInclude Include="..\..\src\gui_plugin\MainWindow\moc_MdiAreaWidget.h">
       <Filter>MainWindow</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\gui_plugin\SerialWidget\ConsoleWidget.h">
-      <Filter>SerialWidget</Filter>
+    <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\GpioWidget.h">
+      <Filter>PeriphWidgets</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\gui_plugin\SerialWidget\moc_ConsoleWidget.h">
-      <Filter>SerialWidget</Filter>
+    <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\moc_GpioWidget.h">
+      <Filter>PeriphWidgets</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\ControlWidget\ConsoleWidget.h">
+      <Filter>ControlWidget</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\ControlWidget\moc_ConsoleWidget.h">
+      <Filter>ControlWidget</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\moc_UartWidget.h">
+      <Filter>PeriphWidgets</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\UartWidget.h">
+      <Filter>PeriphWidgets</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

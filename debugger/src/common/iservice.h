@@ -57,6 +57,15 @@ public:
         listInterfaces_.add_to_list(&item);
     }
 
+    virtual void unregisterInterface(IFace *iface) {
+        for (unsigned i = 0; i < listInterfaces_.size(); i++) {
+            if (listInterfaces_[i].to_iface() == iface) {
+                listInterfaces_.remove_from_list(i);
+                break;
+            }
+        }
+    }
+
     virtual IFace *getInterface(const char *name) {
         IFace *tmp;
         for (unsigned i = 0; i < listInterfaces_.size(); i++) {

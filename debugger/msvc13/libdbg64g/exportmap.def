@@ -35,3 +35,5 @@ EXPORTS
 	RISCV_get_services_with_iface
 	RISCV_get_clock_services
 	RISCV_break_simulation
+	RISCV_malloc
+	RISCV_free

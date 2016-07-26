@@ -75,4 +75,7 @@ void GPIO::registerSignalListener(IFace *listener) {
     listOfListerners_.add_to_list(&t);
 }
 
+void GPIO::unregisterSignalListener(IFace *listener) {
+}
+
 }  // namespace debugger

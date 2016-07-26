@@ -10,8 +10,10 @@
 
 #include "iclass.h"
 #include "iservice.h"
+#include "ihap.h"
 #include "coreservices/iconsole.h"
 #include "coreservices/ikeylistener.h"
+#include "coreservices/iconsolelistener.h"
 #include "coreservices/itap.h"
 #include "coreservices/ielfloader.h"
 #include <string>
@@ -20,7 +22,9 @@
 namespace debugger {
 
 class CmdParserService : public IService,
-                         public IKeyListener {
+                         public IKeyListener,
+                         public IConsoleListener,
+                         public IHap {
 public:
     explicit CmdParserService(const char *name);
     virtual ~CmdParserService();
@@ -28,9 +32,17 @@ public:
     /** IService interface */
     virtual void postinitService();
 
+    /** IHap interface */
+    virtual void hapTriggered(EHapType type);
+
     /** IKeyListener interface */
     virtual int keyDown(int value) { return 0; }
     virtual int keyUp(int value);
+
+    /** IConsoleListener */
+    virtual void udpateCommand(const char *line);
+    virtual void autocompleteCommand(const char *line) {}
+
 
 private:
     static const uint64_t DSU_BASE_ADDRESS = 0x80080000;
@@ -86,7 +98,7 @@ private:
     AttributeType listCSR_;
     AttributeType regNames_;
 
-    IConsole *iconsole_;
+    AttributeType iconsoles_;
     ITap *itap_;
     IElfLoader *iloader_;
     std::string cmdLine_;

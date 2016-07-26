@@ -33,6 +33,11 @@ public:
     * @brief Register listener of signal changing.
     */
     virtual void registerSignalListener(IFace *listener) =0;
+
+    /**
+    * @brief Unregister listener.
+    */
+    virtual void unregisterSignalListener(IFace *listener) =0;
 };
 
 }  // namespace debugger

@@ -28,7 +28,6 @@ ConsoleService::ConsoleService(const char *name)
     registerInterface(static_cast<IHap *>(this));
     registerInterface(static_cast<IRawListener *>(this));
     registerAttribute("Enable", &isEnable_);
-    registerAttribute("Consumer", &consumer_);
     registerAttribute("LogFile", &logFile_);
     registerAttribute("StepQueue", &stepQueue_);
     registerAttribute("Signals", &signals_);
@@ -39,11 +38,11 @@ ConsoleService::ConsoleService(const char *name)
     RISCV_register_hap(static_cast<IHap *>(this));
 
     isEnable_.make_boolean(true);
-    consumer_.make_string("");
     logFile_.make_string("");
 	stepQueue_.make_string("");
 	signals_.make_string("");
     serial_.make_string("");
+    keyListeners_.make_list(0);
 
     logfile_ = NULL;
     iclk_ = NULL;
@@ -86,9 +85,6 @@ void ConsoleService::postinitService() {
         uart->registerRawListener(static_cast<IRawListener *>(this));
     }
 
-    iconsumer_ = static_cast<IKeyListener *>
-            (RISCV_get_service_iface(consumer_.to_string(),
-                                    IFACE_KEY_LISTENER));
     if (isEnable_.to_bool()) {
         if (!run()) {
             RISCV_error("Can't create thread.", NULL);
@@ -182,7 +178,7 @@ void ConsoleService::busyLoop() {
         FILE *script = fopen(script_name, "r");
         if (!script) {
             RISCV_error("Script file '%s' not found", script_name);
-        } else if (iconsumer_) {
+        } else {
             bool crlf = false;
             char symb[2];
             while (!feof(script)) {
@@ -197,14 +193,14 @@ void ConsoleService::busyLoop() {
                         if (symb[1] == '/') {
                             scr_state = SCRIPT_comment;
                         } else {
-                            iconsumer_->keyUp(symb[0]);
+                            sendKeyUpEvent(symb[0]);
                             fseek(script, -1, SEEK_CUR);
                         }
                     } else if (symb[0] == '-') {
                         scr_state = SCRIPT_command;
                         strcmd = "";
                     } else {
-                        iconsumer_->keyUp(symb[0]);
+                        sendKeyUpEvent(symb[0]);
                     }
                     break;
                 case SCRIPT_command:
@@ -231,7 +227,7 @@ void ConsoleService::busyLoop() {
 
     while (isEnabled()) {
         if (isData()) {
-            iconsumer_->keyUp(getData());
+            sendKeyUpEvent(getData());
         }
         RISCV_sleep_ms(50);
     }
@@ -358,6 +354,12 @@ int ConsoleService::getData() {
    return ch;
     //return getchar();
 #endif
+}
+
+void ConsoleService::sendKeyUpEvent(int value) {
+    for (unsigned i = 0; i < keyListeners_.size(); i++) {
+        static_cast<IKeyListener *>(keyListeners_[i].to_iface())->keyUp(value);
+    }
 }
 
 }  // namespace debugger

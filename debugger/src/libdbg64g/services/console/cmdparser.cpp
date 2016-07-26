@@ -36,8 +36,10 @@ union DsuRunControlRegType {
 
 enum RegListType {REG_Name, REG_IDx};
 
-CmdParserService::CmdParserService(const char *name) : IService(name) {
+CmdParserService::CmdParserService(const char *name) 
+    : IService(name), IHap(HAP_ConfigDone) {
     registerInterface(static_cast<IKeyListener *>(this));
+    registerInterface(static_cast<IConsoleListener *>(this));
     registerAttribute("Console", &console_);
     registerAttribute("Tap", &tap_);
     registerAttribute("Loader", &loader_);
@@ -46,7 +48,8 @@ CmdParserService::CmdParserService(const char *name) : IService(name) {
     registerAttribute("ListCSR", &listCSR_);
     registerAttribute("RegNames", &regNames_);
 
-    console_.make_string("");
+    console_.make_list(0);
+    iconsoles_.make_list(0);
     tap_.make_string("");
     loader_.make_string("");
     history_.make_list(0);
@@ -65,8 +68,11 @@ CmdParserService::~CmdParserService() {
 }
 
 void CmdParserService::postinitService() {
-    iconsole_ = static_cast<IConsole *>
-            (RISCV_get_service_iface(console_.to_string(), IFACE_CONSOLE));
+    /** GUI is registering its interfaces in post-init stage
+     * so to get console interface we have to wait GUI full initialization
+     */
+    RISCV_register_hap(static_cast<IHap *>(this));
+
     itap_ = static_cast<ITap *>
             (RISCV_get_service_iface(tap_.to_string(), IFACE_TAP));
     iloader_ = static_cast<IElfLoader *>
@@ -74,10 +80,24 @@ void CmdParserService::postinitService() {
     history_idx_ = history_.size();
 }
 
+void CmdParserService::hapTriggered(EHapType type) {
+    for (unsigned i = 0; i < console_.size(); i++) {
+        IConsole *icls = static_cast<IConsole *>
+            (RISCV_get_service_iface(console_[i].to_string(), IFACE_CONSOLE));
+        if (icls) {
+            AttributeType tmp(icls);
+            iconsoles_.add_to_list(&tmp);
+            icls->registerKeyListener(static_cast<IKeyListener *>(this));
+            icls->registerConsoleListener(static_cast<IConsoleListener *>(this));
+        }
+    }
+}
+
 int CmdParserService::keyUp(int value) {
-    if (!iconsole_) {
+    if (iconsoles_.size() == 0) {
         return 0;
     }
+    IConsole *icls0 = static_cast<IConsole *>(iconsoles_[0u].to_iface());
     uint8_t symb = static_cast<uint8_t>(value);
     bool set_history_end = true;
 
@@ -118,10 +138,10 @@ int CmdParserService::keyUp(int value) {
     case '\r':// 2. Enter button:
         memcpy(cmdbuf_, cmdLine_.c_str(), cmdLine_.size() + 1);
         cmdLine_.clear();
-        iconsole_->writeCommand(cmdbuf_);
-        iconsole_->setCmdString(cmdLine_.c_str());
+        icls0->writeCommand(cmdbuf_);
+        icls0->setCmdString(cmdLine_.c_str());
         processLine(cmdbuf_);
-        iconsole_->writeBuffer(outbuf_);
+        icls0->writeBuffer(outbuf_);
         break;
     default:;
         cmdLine_ += symb;
@@ -130,8 +150,18 @@ int CmdParserService::keyUp(int value) {
     if (set_history_end) {
         history_idx_ = history_.size();
     }
-    iconsole_->setCmdString(cmdLine_.c_str());
+    icls0->setCmdString(cmdLine_.c_str());
     return 0;
+}
+
+void CmdParserService::udpateCommand(const char *line) {
+    IConsole *icls;
+    memcpy(cmdbuf_, line, strlen(line) + 1);
+    processLine(cmdbuf_);
+    for (unsigned i = 0; i < iconsoles_.size(); i++) {
+        icls = static_cast<IConsole *>(iconsoles_[i].to_iface());
+        icls->writeBuffer(outbuf_);
+    }
 }
 
 bool CmdParserService::convertToWinKey(uint8_t symb) {
@@ -221,7 +251,11 @@ void CmdParserService::processLine(const char *line) {
         }
     } else if (strcmp(listArgs[0u].to_string(), "log") == 0) {
         if (listArgs.size() == 2) {
-            iconsole_->enableLogFile(listArgs[1].to_string());
+            IConsole *icls;
+            for (unsigned i = 0; i < iconsoles_.size(); i++) {
+                icls = static_cast<IConsole *>(iconsoles_[i].to_iface());
+                icls->enableLogFile(listArgs[1].to_string());
+            }
         } else {
             outf("Description:\n");
             outf("    Write console output into specified file.\n");

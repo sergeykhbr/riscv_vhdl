@@ -378,6 +378,12 @@ void CpuRiscV_Functional::queueUpdate() {
 
     // @warning We can add new event inside of stepCallback that leads to
     //          infinite cycle if wouldn't use fixed length.
+    if (stepQueue_len_) {
+        const AttributeType &t1 = stepQueue_[0u];
+        if (!t1.is_list()) {
+            bool st = true;
+        }
+    }
     queue_len = stepQueue_len_;
     for (unsigned i = 0; i < queue_len; i++) {
         ev_time = stepQueue_[i][Queue_Time].to_uint64();
@@ -389,7 +395,7 @@ void CpuRiscV_Functional::queueUpdate() {
             // remove item from list using swap function to avoid
             // allocation/deallocation calls if we can avoid it.
             RISCV_mutex_lock(&mutexStepQueue_);
-            stepQueue_.swap_list_item(i, queue_len - 1);
+            stepQueue_.swap_list_item(i, stepQueue_len_ - 1);
             stepQueue_len_--;
             queue_len--;
             i--;

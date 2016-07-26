@@ -247,6 +247,14 @@ extern "C" int RISCV_mutex_destroy(mutex_def *mutex) {
     return 0;
 }
 
+extern "C" void *RISCV_malloc(uint64_t sz) {
+    return malloc(sz);
+}
+
+extern "C" void RISCV_free(void *p) {
+    free(p);
+}
+
 extern "C" int RISCV_get_core_folder(char *out, int sz) {
 #if defined(_WIN32) || defined(__CYGWIN__)
     HMODULE hm = NULL;

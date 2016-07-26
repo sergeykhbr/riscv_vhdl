@@ -52,12 +52,11 @@ const char *default_config =
                 "['LogFile','test.log'],"
                 "['StepQueue','core0'],"
                 "['Signals','gpio0'],"
-                "['Serial','uart0'],"
-                "['Consumer','cmd0']]}]},"
+                "['Serial','uart0']]}]},"
     "{'Class':'CmdParserServiceClass','Instances':["
           "{'Name':'cmd0','Attr':["
                 "['LogLevel',4],"
-                "['Console','console0'],"
+                "['Console',['console0','gui0']],"
                 "['Tap','edcltap'],"
                 "['Loader','loader0'],"
                 "['HistorySize',64],"
@@ -195,7 +194,8 @@ const char *default_config =
     "{'Class':'GuiPluginClass','Instances':["
                 "{'Name':'gui0','Attr':["
                 "['LogLevel',4],"
-                "['Serial','uart0']"
+                "['GuiConfig',[]],"
+                "['Tap','edcltap']"
                 "]}]},"
                 "{'Class':'BoardSimClass','Instances':["
           "{'Name':'boardsim','Attr':["
@@ -226,6 +226,7 @@ int main(int argc, char* argv[]) {
     char path[1024];
     bool loadConfig = true;
     bool disableSim = true;
+    bool disableGui = true;
     AttributeType scriptFile("");
 
     // Parse arguments:
@@ -235,6 +236,8 @@ int main(int argc, char* argv[]) {
                 loadConfig = false;
             } else if (strcmp(argv[i], "-sim") == 0) {
                 disableSim = false;
+            } else if (strcmp(argv[i], "-gui") == 0) {
+                disableGui = false;
             } else if (strcmp(argv[i], "-script") == 0) {
                 i++;
                 scriptFile.make_string(argv[i]);
@@ -262,7 +265,7 @@ int main(int argc, char* argv[]) {
 
     // Enable/Disable simulator option:
     Config["GlobalSettings"]["SimEnable"].make_boolean(!disableSim);
-    //scriptFile.make_string("");
+    Config["GlobalSettings"]["GUI"].make_boolean(!disableGui);
     Config["GlobalSettings"]["ScriptFile"] = scriptFile;
 
     RISCV_set_configuration(&Config);

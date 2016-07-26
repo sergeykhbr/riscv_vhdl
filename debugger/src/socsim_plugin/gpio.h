@@ -37,8 +37,8 @@ public:
 
     /** ISignal interface */
     virtual void setLevel(int start, int width, uint64_t value);
-
     virtual void registerSignalListener(IFace *listener);
+    virtual void unregisterSignalListener(IFace *listener);
 
 
 private:

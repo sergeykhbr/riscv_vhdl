@@ -243,6 +243,15 @@ class AttributeType : public IAttribute {
         (*this)[size()-1] = (*item);
     }
 
+    void remove_from_list(unsigned idx) {
+        if (idx == (size() - 1)) {
+            size_ -= 1;
+        } else if (idx < size ()) {
+            swap_list_item(idx, size() - 1);
+            size_ -= 1;
+        }
+    }
+
     void trim_list(unsigned start, unsigned end) {
         for (unsigned i = start; i < (size_ - end); i++) {
             u_.list[start + i] = u_.list[end + i];

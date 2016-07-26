@@ -27,6 +27,7 @@ static AttributeType listHap_(Attr_List);
 static AttributeType listPlugins_(Attr_List);
 extern mutex_def mutex_printf;
 
+
 extern void _load_plugins(AttributeType *list);
 extern void _unload_plugins(AttributeType *list);
 
@@ -94,6 +95,14 @@ extern "C" void RISCV_set_configuration(AttributeType *cfg) {
                              Services[i]["Class"].to_string());
                 continue;
             }
+            /** Special global setting for the GUI class: */
+            if (strcmp(icls->getClassName(), "GuiClassName") == 0) {
+                if (!Config_["GlobalSettings"]["GUI"].to_bool()) {
+                    RISCV_info("%s", "GUI disabled");
+                    continue;
+                }
+            }
+
             AttributeType &Instances = Services[i]["Instances"];
             for (unsigned n = 0; n < Instances.size(); n++) {
                 iserv = icls->createService(Instances[n]["Name"].to_string());

@@ -23,6 +23,9 @@ public:
     virtual int registerKeyListener(IFace *iface) =0;
     virtual void setCmdString(const char *buf) =0;
     virtual void enableLogFile(const char *filename) =0;
+
+    // remove all that above
+    virtual void registerConsoleListener(IFace *iface) =0;
 };
 
 }  // namespace debugger

@@ -45,6 +45,7 @@ public:
     virtual void setCmdString(const char *buf);
     virtual int registerKeyListener(IFace *iface);
     virtual void enableLogFile(const char *filename);
+    virtual void registerConsoleListener(IFace *iface) {}
 
     /** IHap */
     virtual void hapTriggered(EHapType type);
@@ -65,6 +66,7 @@ protected:
 private:
     bool isData();
     int getData();
+    void sendKeyUpEvent(int value);
     void clearLine();
     void processScriptCommand(const char *cmd);
 
@@ -72,14 +74,12 @@ private:
     AttributeType isEnable_;
     AttributeType stepQueue_;
     AttributeType signals_;
-    AttributeType consumer_;
     AttributeType keyListeners_;
     AttributeType logFile_;
     AttributeType serial_;
     event_def config_done_;
     mutex_def mutexConsoleOutput_;
     IClock *iclk_;
-    IKeyListener *iconsumer_;
     char tmpbuf_[4096];
     std::string cmdLine_;
     std::string serial_input_;

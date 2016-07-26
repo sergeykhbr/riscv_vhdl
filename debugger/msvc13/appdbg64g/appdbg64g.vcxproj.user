@@ -6,7 +6,7 @@
     <LocalDebuggerEnvironment>PATH=%PATH%;$(QT_PATH)/bin</LocalDebuggerEnvironment>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LocalDebuggerCommandArguments>-nocfg -sim -gui -script "runthis.cmd"</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-nocfg -sim -gui -script "runthis.cmdx"</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerEnvironment>PATH=%PATH%;$(QT_PATH)/bin</LocalDebuggerEnvironment>
   </PropertyGroup>
