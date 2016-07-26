@@ -13,6 +13,9 @@
     <Filter Include="ControlWidget">
       <UniqueIdentifier>{eb6312ac-f6ac-499e-86c1-47d8714b3d97}</UniqueIdentifier>
     </Filter>
+    <Filter Include="CpuWidget">
+      <UniqueIdentifier>{a0abd6c8-969c-4b70-88c7-cf1434f63f1b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\common\attribute.cpp">
@@ -36,6 +39,12 @@
     </ClCompile>
     <ClCompile Include="..\..\src\gui_plugin\PeriphWidgets\UartWidget.cpp">
       <Filter>PeriphWidgets</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\RegsViewWidget.cpp">
+      <Filter>CpuWidget</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\RegWidget.cpp">
+      <Filter>CpuWidget</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -91,6 +100,18 @@
     </ClInclude>
     <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\UartWidget.h">
       <Filter>PeriphWidgets</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\moc_RegsViewWidget.h">
+      <Filter>CpuWidget</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\moc_RegWidget.h">
+      <Filter>CpuWidget</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\RegsViewWidget.h">
+      <Filter>CpuWidget</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\RegWidget.h">
+      <Filter>CpuWidget</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

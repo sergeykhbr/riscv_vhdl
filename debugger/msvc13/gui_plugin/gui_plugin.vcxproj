@@ -90,7 +90,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(SolutionDir)../src/common;$(SolutionDir)../src/gui_plugin;$(QT_PATH)\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
@@ -178,6 +178,8 @@
     <ClCompile Include="..\..\src\common\attribute.cpp" />
     <ClCompile Include="..\..\src\common\autobuffer.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\ControlWidget\ConsoleWidget.cpp" />
+    <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\RegsViewWidget.cpp" />
+    <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\RegWidget.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\gui_plugin.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\MainWindow\DbgMainWindow.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\MainWindow\MdiAreaWidget.cpp" />
@@ -195,6 +197,10 @@
     <ClInclude Include="..\..\src\common\iservice.h" />
     <ClInclude Include="..\..\src\gui_plugin\ControlWidget\ConsoleWidget.h" />
     <ClInclude Include="..\..\src\gui_plugin\ControlWidget\moc_ConsoleWidget.h" />
+    <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\moc_RegsViewWidget.h" />
+    <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\moc_RegWidget.h" />
+    <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\RegsViewWidget.h" />
+    <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\RegWidget.h" />
     <ClInclude Include="..\..\src\gui_plugin\gui_plugin.h" />
     <ClInclude Include="..\..\src\gui_plugin\igui.h" />
     <ClInclude Include="..\..\src\gui_plugin\MainWindow\DbgMainWindow.h" />
