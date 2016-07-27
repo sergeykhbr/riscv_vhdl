@@ -43,13 +43,15 @@ signals:
     void signalConfigure(AttributeType *cfg);
     void signalRedrawByTimer();
     void signalClosingMainForm();
-    void signalWriteUart(QString buf);
+    void signalTargetStateChanged(bool);
 
-private slots:
-    void slotTimerUpdate();
-    void slotUartKeyPressed(QString str);
+protected slots:
+    void slotTimerRedraw();
+    void slotTimerPollingStatus();
     void slotActionAbout();
-
+    void slotActionTargetRun();
+    void slotActionTargetHalt();
+    void slotActionTargetStepInto();
 
 protected:
     virtual void closeEvent(QCloseEvent *e);
@@ -61,18 +63,24 @@ private:
     void addWidgets();
 
 private:
-    QTimer *timer;
+    QTimer *timerRedraw_;
+    QTimer *timerPollStatus_;
 
     QAction *actionAbout_;
     QAction *actionQuit_;
+    QAction *actionRun_;
+    QAction *actionHalt_;
+    QAction *actionStep_;
     QAction *actionRegs_;
 
     AttributeType config_;
     AttributeType listConsoleListeners_;
+    AttributeType cmdReadStatus_;
 
     IGui *igui_;
     event_def *initDone_;
     bool riseSyncEvent_;
+    uint64_t targetState_;
 };
 
 }  // namespace debugger

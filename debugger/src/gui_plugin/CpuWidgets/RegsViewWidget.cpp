@@ -69,7 +69,7 @@ void RegsViewWidget::slotConfigure(AttributeType *cfg) {
         if (strcmp(attr[0u].to_string(), "PollingMs") == 0) {
             int ms = static_cast<int>(attr[1].to_uint64());
             if (ms != 0) {
-                pollingTimer_->start(attr[1].to_uint64());
+                pollingTimer_->start(ms);
             }
         }
     }

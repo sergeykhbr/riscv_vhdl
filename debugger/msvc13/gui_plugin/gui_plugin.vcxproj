@@ -206,6 +206,8 @@
     <ClInclude Include="..\..\src\gui_plugin\MainWindow\DbgMainWindow.h" />
     <ClInclude Include="..\..\src\gui_plugin\MainWindow\MdiAreaWidget.h" />
     <ClInclude Include="..\..\src\gui_plugin\MainWindow\moc_MdiAreaWidget.h" />
+    <ClInclude Include="..\..\src\gui_plugin\MainWindow\moc_UnclosableQMdiSubWindow.h" />
+    <ClInclude Include="..\..\src\gui_plugin\MainWindow\UnclosableQMdiSubWindow.h" />
     <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\GpioWidget.h" />
     <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\moc_GpioWidget.h" />
     <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\moc_UartWidget.h" />

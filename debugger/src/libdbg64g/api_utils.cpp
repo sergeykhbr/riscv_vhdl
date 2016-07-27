@@ -248,7 +248,7 @@ extern "C" int RISCV_mutex_destroy(mutex_def *mutex) {
 }
 
 extern "C" void *RISCV_malloc(uint64_t sz) {
-    return malloc(sz);
+    return malloc((size_t)sz);
 }
 
 extern "C" void RISCV_free(void *p) {

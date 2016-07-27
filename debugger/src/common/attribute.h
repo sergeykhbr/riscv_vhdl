@@ -214,29 +214,11 @@ class AttributeType : public IAttribute {
         u_.boolean = value;
     }
 
-    void make_string(const char *value) {
-        if (value) {
-            kind_ = Attr_String;
-            size_ = (unsigned)strlen(value);
-            u_.string = new char[size_ + 1];
-            memcpy(u_.string, value, size_ + 1);
-        } else {
-            kind_ = Attr_Nil;
-        }
-    }
+    void make_string(const char *value);
 
-    void make_data(unsigned size, const void *data) {
-        kind_ = Attr_Data;
-        size_ = size;
-        u_.data = new uint8_t[size];
-        memcpy(u_.data, data, size);
-    }
+    void make_data(unsigned size, const void *data);
 
-    void make_list(unsigned size) {
-        kind_ = Attr_List;
-        size_ = size;
-        u_.list = new AttributeType[size];
-    }
+    void make_list(unsigned size);
 
     void add_to_list(const AttributeType *item) {
         realloc_list(size()+1);
@@ -274,17 +256,7 @@ class AttributeType : public IAttribute {
         u_.list[m].u_.integer = tinteger;
     }
 
-    void realloc_list(unsigned size) {
-        AttributeType * t1 = new AttributeType[size];
-        for (unsigned i = 0; i < size_; i++) {
-            t1[i].clone(&u_.list[i]);
-        }
-        if (size_) {
-            delete [] u_.list;
-        }
-        u_.list = t1;
-        size_ = size;
-    }
+    void realloc_list(unsigned size);
 
     void make_dict();
     void realloc_dict(unsigned size);

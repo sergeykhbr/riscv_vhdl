@@ -11,6 +11,7 @@
 #include "iface.h"
 #include <inttypes.h>
 #include "iclklistener.h"
+#include "attribute.h"
 
 namespace debugger {
 

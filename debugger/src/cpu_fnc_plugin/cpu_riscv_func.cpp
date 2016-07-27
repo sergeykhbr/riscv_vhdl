@@ -26,7 +26,9 @@ CpuRiscV_Functional::CpuRiscV_Functional(const char *name)
     listExtISA_.make_list(0);
     freqHz_.make_uint64(1);
 
-    stepQueue_.make_list(0);
+    stepPreQueued_.make_list(0);
+    stepQueue_.make_list(16);   /** it will be auto reallocated if needed */
+    stepPreQueued_len_ = 0;
     stepQueue_len_ = 0;
     cpu_context_.step_cnt = 0;
 
@@ -373,58 +375,65 @@ void CpuRiscV_Functional::executeInstruction(IInstruction *instr,
 void CpuRiscV_Functional::queueUpdate() {
     uint64_t ev_time;
     IClockListener *iclk;
-    unsigned queue_len;
     CpuContextType *pContext = getpContext();
 
-    // @warning We can add new event inside of stepCallback that leads to
-    //          infinite cycle if wouldn't use fixed length.
-    if (stepQueue_len_) {
-        const AttributeType &t1 = stepQueue_[0u];
-        if (!t1.is_list()) {
-            bool st = true;
-        }
+    if (stepPreQueued_len_) {
+        copyPreQueued();
     }
-    queue_len = stepQueue_len_;
-    for (unsigned i = 0; i < queue_len; i++) {
+
+    for (unsigned i = 0; i < stepQueue_len_; i++) {
         ev_time = stepQueue_[i][Queue_Time].to_uint64();
 
         if (pContext->step_cnt >= ev_time) {
             iclk = static_cast<IClockListener *>(
                     stepQueue_[i][Queue_IFace].to_iface());
 
-            // remove item from list using swap function to avoid
-            // allocation/deallocation calls if we can avoid it.
-            RISCV_mutex_lock(&mutexStepQueue_);
+            iclk->stepCallback(pContext->step_cnt);
+
+            // remove item from list using swap function to avoid usage
+            // of allocation/deallocation calls.
             stepQueue_.swap_list_item(i, stepQueue_len_ - 1);
             stepQueue_len_--;
-            queue_len--;
             i--;
-            RISCV_mutex_unlock(&mutexStepQueue_);
-
-            iclk->stepCallback(pContext->step_cnt);
+        }
+        /** 
+         * We check pre-queued events to provide possiblity of new events
+         * on the same step.
+         */
+        if (stepPreQueued_len_) {
+            copyPreQueued();
         }
     }
 }
 
 void CpuRiscV_Functional::registerStepCallback(IClockListener *cb,
                                                uint64_t t) {
+    AttributeType item;
+    item.make_list(Queue_Total);
     AttributeType time(Attr_UInteger, t);
     AttributeType face(cb);
+    item[Queue_Time] = time;
+    item[Queue_IFace] = face;
     RISCV_mutex_lock(&mutexStepQueue_);
-    // Check if allocated queue size is greater than number of used
-    // items in a list then use available item.
-    if (stepQueue_len_ < stepQueue_.size()) {
-        stepQueue_[stepQueue_len_][Queue_Time] = time;
-        stepQueue_[stepQueue_len_][Queue_IFace] = face;
-        stepQueue_len_++;
-    } else {
-        AttributeType item;
-        item.make_list(Queue_Total);
-        item[Queue_Time] = time;
-        item[Queue_IFace] = face;
-        stepQueue_.add_to_list(&item);
+    if (stepPreQueued_len_ == stepPreQueued_.size()) {
+        stepPreQueued_.realloc_list(2 * stepPreQueued_.size());
+    }
+    stepPreQueued_[stepPreQueued_len_] = item;
+    stepPreQueued_len_++;
+    RISCV_mutex_unlock(&mutexStepQueue_);
+}
+
+void CpuRiscV_Functional::copyPreQueued() {
+    RISCV_mutex_lock(&mutexStepQueue_);
+    for (unsigned i = 0; i < stepPreQueued_len_; i++) {
+        if (stepQueue_len_ < stepQueue_.size()) {
+            stepQueue_[stepQueue_len_] = stepPreQueued_[i];
+        } else {
+            stepQueue_.add_to_list(&stepPreQueued_[i]);
+        }
         stepQueue_len_++;
     }
+    stepPreQueued_len_ = 0;
     RISCV_mutex_unlock(&mutexStepQueue_);
 }
 

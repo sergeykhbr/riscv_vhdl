@@ -113,5 +113,11 @@
     <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\RegWidget.h">
       <Filter>CpuWidget</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\MainWindow\UnclosableQMdiSubWindow.h">
+      <Filter>MainWindow</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\MainWindow\moc_UnclosableQMdiSubWindow.h">
+      <Filter>MainWindow</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

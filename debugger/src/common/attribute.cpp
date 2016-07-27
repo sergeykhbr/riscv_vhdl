@@ -8,6 +8,7 @@
 #include "api_core.h"
 #include "autobuffer.h"
 #include "iservice.h"
+#include "api_utils.h"
 #include <cstdlib>
 
 namespace debugger {
@@ -21,20 +22,20 @@ const char *string_to_attribute(const char *cfg, AttributeType *out);
 void AttributeType::attr_free() {
     if (size()) {
         if (is_string()) {
-            delete [] u_.string;
+            RISCV_free(u_.string);
         } else if (is_data()) {
-            delete [] u_.data;
+            RISCV_free(u_.data);
         } else if (is_list()) {
             for (unsigned i = 0; i < size(); i++) {
                 u_.list[i].attr_free();
             }
-            delete [] u_.list;
+            RISCV_free(u_.list);
         } else if (is_dict()) {
             for (unsigned i = 0; i < size(); i++) {
                 u_.dict[i].key_.attr_free();
                 u_.dict[i].value_.attr_free();
             }
-            delete [] u_.dict;
+            RISCV_free(u_.dict);
         }
     }
     kind_ = Attr_Invalid;
@@ -130,6 +131,44 @@ const uint8_t &AttributeType::operator()(unsigned idx) const {
     return u_.data[idx];
 }
 
+void AttributeType::make_string(const char *value) {
+    if (value) {
+        kind_ = Attr_String;
+        size_ = (unsigned)strlen(value);
+        u_.string = static_cast<char *>(RISCV_malloc(size_ + 1));
+        memcpy(u_.string, value, size_ + 1);
+    } else {
+        kind_ = Attr_Nil;
+    }
+}
+
+void AttributeType::make_data(unsigned size, const void *data) {
+    kind_ = Attr_Data;
+    size_ = size;
+    u_.data = static_cast<uint8_t *>(RISCV_malloc(size_));
+    memcpy(u_.data, data, size);
+}
+
+void AttributeType::make_list(unsigned size) {
+    kind_ = Attr_List;
+    size_ = size;
+    u_.list = static_cast<AttributeType *>(
+            RISCV_malloc(size * sizeof(AttributeType)));
+}
+
+void AttributeType::realloc_list(unsigned size) {
+    AttributeType * t1 = static_cast<AttributeType *>(
+            RISCV_malloc(size * sizeof(AttributeType)));
+    for (unsigned i = 0; i < size_; i++) {
+        t1[i].clone(&u_.list[i]);
+    }
+    if (size_) {
+        RISCV_free(u_.list);
+    }
+    u_.list = t1;
+    size_ = size;
+}
+
 bool AttributeType::has_key(const char *key) const {
     for (unsigned i = 0; i < size(); i++) {
         if (strcmp(u_.dict[i].key_.to_string(), key) == 0
@@ -154,7 +193,6 @@ AttributeType *AttributeType::dict_value(unsigned idx) {
     return &u_.dict[idx].value_;
 }
 
-
 void AttributeType::make_dict() {
     kind_ = Attr_Dict;
     size_ = 0;
@@ -162,13 +200,14 @@ void AttributeType::make_dict() {
 }
 
 void AttributeType::realloc_dict(unsigned length) {
-    AttributePairType * t1 = new AttributePairType[length];
+    AttributePairType * t1 = static_cast<AttributePairType *>(
+            RISCV_malloc(length * sizeof(AttributePairType)));
     for (unsigned i = 0; i < size_; i++) {
         t1[i].key_.clone(&u_.dict[i].key_);
         t1[i].value_.clone(&u_.dict[i].value_);
     }
     if (size_) {
-        delete [] u_.dict;
+        RISCV_free(u_.dict);
     }
     u_.dict = t1;
     size_ = length;

@@ -9,7 +9,10 @@ MdiAreaWidget::MdiAreaWidget(AttributeType &cfg, QWidget *parent)
     Config_ = cfg;
     if (Config_["Tabbed"].to_bool()) {
         setViewMode(QMdiArea::TabbedView);
+    } else {
     }
+    setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     setTabsClosable(true);
     setTabsMovable(true);
 }

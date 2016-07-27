@@ -6,3 +6,4 @@ Debug
 Release
 test.log
 libgui
+moc_*.h

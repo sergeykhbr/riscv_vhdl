@@ -18,31 +18,6 @@
 
 namespace debugger {
 
-class MyQMdiSubWindow : public QMdiSubWindow {
-    Q_OBJECT
-public:
-    MyQMdiSubWindow(QWidget *parent = 0) : QMdiSubWindow(parent) {}
-
-signals:
-    void signalVisible(bool);
-
-private slots:
-    void slotVisible(bool val) {
-        if (val) {
-            show();
-        } else {
-            hide();
-        }
-    }
-    
-protected:
-    void closeEvent(QCloseEvent *event_) Q_DECL_OVERRIDE {
-        setVisible(false);
-        emit signalVisible(false);
-        event_->ignore();
-    }
-};
-
 class RegsViewWidget : public QWidget,
                        public IGuiCmdHandler {
     Q_OBJECT

@@ -1,4 +1,5 @@
 #include "DbgMainWindow.h"
+#include "UnclosableQMdiSubWindow.h"
 #include "moc_DbgMainWindow.h"
 #include "CpuWidgets/RegsViewWidget.h"
 #include <QtWidgets/QtWidgets>
@@ -15,6 +16,11 @@ DbgMainWindow::DbgMainWindow(IGui *igui, event_def *init_done) {
     resize(QDesktopWidget().availableGeometry(this).size() * 0.7);
 
     listConsoleListeners_.make_list(0);
+    /** DSU control region 0x80080000 + 0x10000: 
+     *              offset 0x0000 = Control register
+     */
+    cmdReadStatus_.from_config("['read',0x80090000,4]");
+    targetState_ = 0;
 
     createActions();
     createMenus();
@@ -24,10 +30,17 @@ DbgMainWindow::DbgMainWindow(IGui *igui, event_def *init_done) {
     setUnifiedTitleAndToolBarOnMac(true);
 
     riseSyncEvent_ = true;
-    timer = new QTimer(this);
-    timer->setSingleShot(false);
-    connect(timer, SIGNAL(timeout()), this, SLOT(slotTimerUpdate()));
-    timer->start(10);
+    timerRedraw_ = new QTimer(this);
+    timerRedraw_->setSingleShot(false);
+    connect(timerRedraw_, SIGNAL(timeout()), this, SLOT(slotTimerRedraw()));
+    timerRedraw_->start(10);
+
+    timerPollStatus_ = new QTimer(this);
+    timerPollStatus_->setSingleShot(false);
+    connect(timerPollStatus_, SIGNAL(timeout()), 
+            this, SLOT(slotTimerPollingStatus()));
+    timerPollStatus_->start(500);
+    int a1 = timerPollStatus_->isActive();
 // debug:
 }
 
@@ -35,11 +48,39 @@ DbgMainWindow::~DbgMainWindow() {
 }
 
 void DbgMainWindow::handleResponse(AttributeType *req, AttributeType *resp) {
+    if (!req->is_list() || req->size() != 3) {
+        return;
+    }
+    uint64_t addr = (*req)[1].to_uint64();
+    uint64_t val = 0;
+    switch (addr) {
+    case 0x80090000ull:
+        /** Bit[0] = Halt state */
+        val = (*resp)[1u].to_uint64() & 0x1ull;
+        if (targetState_ != val) {
+            emit signalTargetStateChanged(val != 0);
+        }
+        break;
+    default:;
+    }
 }
 
 void DbgMainWindow::setConfiguration(AttributeType cfg) {
+    int ms = 0;
     config_ = cfg;
+
+    for (unsigned i = 0; i < cfg.size(); i++) {
+        const AttributeType &attr = cfg[i];
+        if (strcmp(attr[0u].to_string(), "PollingMs") == 0) {
+            ms = static_cast<int>(attr[1].to_uint64());
+        }
+    }
+
     emit signalConfigure(&config_);
+
+    if (ms) {
+        timerPollStatus_->start(ms);
+    }
 }
 
 void DbgMainWindow::getConfiguration(AttributeType &cfg) {
@@ -48,7 +89,9 @@ void DbgMainWindow::getConfiguration(AttributeType &cfg) {
 
 
 void DbgMainWindow::closeEvent(QCloseEvent *e) {
-    timer->stop();
+    timerRedraw_->stop();
+    timerPollStatus_->stop();
+
     emit signalClosingMainForm();
     AttributeType exit_cmd;
     exit_cmd.from_config("['exit']");
@@ -56,48 +99,38 @@ void DbgMainWindow::closeEvent(QCloseEvent *e) {
     e->accept();
 }
 
-void DbgMainWindow::slotTimerUpdate() {
-    if (riseSyncEvent_) {
-        RISCV_event_set(initDone_);
-        riseSyncEvent_ = false;
-    }
-    emit signalRedrawByTimer();
-}
-
-
-void DbgMainWindow::slotUartKeyPressed(QString str) {
-}
-
-void DbgMainWindow::slotActionAbout() {
-    char date[128];
-    memcpy(date, __DATE__, sizeof(date));
-    QString build;
-    build.sprintf("Version: 1.0\nBuild:     %s\n", date);
-    build += tr("Author: Sergey Khabarov\n");
-    build += tr("git:    http://github.com/sergeykhbr/riscv_vhdl\n");
-    build += tr("e-mail: sergeykhbr@gmail.com\n\n")
-       + tr("\tRISC-V debugger GUI plugin is the open source application\n")
-       + tr("that upgrades the base RISC-V debugger funcitonality and can\n")
-       + tr("provide more friendly interaction interface with SoC running\n")
-       + tr("on FPGA or on simulator:\n\n");
-    build += tr("www.gnss-sensor.com\n");
-
-    QMessageBox::about(this, tr("About GUI plugin"),
-        build
-        /*tr("\tThe <b>GTerm</b> application allows to interact with the "
-               "GNSS receiver via a serial port or ethernet.\n"
-               "\tSet of plugins allow to view and analize binary data stream in "
-               "convenient user-friendly ways.")*/
-               );
-}
-
 void DbgMainWindow::createActions() {
-    actionRegs_ = new QAction(QIcon(":/images/toggle.png"), tr("&Regs"), this);
+    actionRegs_ = new QAction(QIcon(tr(":/images/toggle.png")),
+                              tr("&Regs"), this);
     actionRegs_->setToolTip(tr("CPU Registers view"));
-    actionRegs_->setShortcut(tr("Ctrl-R", "Registers"));
+    actionRegs_->setShortcut(QKeySequence("Ctrl+r"));
     actionRegs_->setCheckable(true);
     actionRegs_->setChecked(false);
-    //connect(actionRegs_, SIGNAL(triggered()), this, SLOT(slotActionRegs()));
+
+    actionRun_ = new QAction(QIcon(tr(":/images/toggle.png")),
+                             tr("&Run"), this);
+    actionRun_ ->setToolTip(tr("Start Execution"));
+    actionRun_ ->setShortcut(QKeySequence("F5"));
+    actionRun_ ->setCheckable(true);
+    actionRun_ ->setChecked(false);
+    connect(actionRun_ , SIGNAL(triggered()),
+            this, SLOT(slotActionTargetRun()));
+    connect(this, SIGNAL(signalTargetStateChanged(bool)),
+            actionRun_ , SLOT(setChecked(bool)));
+
+    actionHalt_ = new QAction(QIcon(tr(":/images/toggle.png")),
+                              tr("&Halt"), this);
+    actionHalt_ ->setToolTip(tr("Stop Execution"));
+    actionHalt_ ->setShortcut(QKeySequence("Ctrl+b"));
+    connect(actionHalt_ , SIGNAL(triggered()),
+            this, SLOT(slotActionTargetHalt()));
+
+    actionStep_ = new QAction(QIcon(tr(":/images/toggle.png")),
+                              tr("&Step Into"), this);
+    actionStep_ ->setToolTip(tr("Instruction Step"));
+    actionStep_ ->setShortcut(QKeySequence("F11"));
+    connect(actionStep_ , SIGNAL(triggered()),
+            this, SLOT(slotActionTargetStepInto()));
 
 
     actionQuit_ = new QAction(tr("&Quit"), this);
@@ -109,8 +142,13 @@ void DbgMainWindow::createActions() {
     actionAbout_->setStatusTip(tr("Show the application's About box"));
     connect(actionAbout_, SIGNAL(triggered()), this, SLOT(slotActionAbout()));
 
-    QToolBar *toolbar1 = addToolBar(tr("Tool1"));
-    toolbar1->addAction(actionRegs_);
+    QToolBar *toolbarRunControl = addToolBar(tr("toolbarRunControl"));
+    toolbarRunControl->addAction(actionRun_);
+    toolbarRunControl->addAction(actionHalt_);
+    toolbarRunControl->addAction(actionStep_);
+
+    QToolBar *toolbarCpu = addToolBar(tr("toolbarCpu"));
+    toolbarCpu->addAction(actionRegs_);
 }
 
 void DbgMainWindow::createMenus() {
@@ -138,7 +176,7 @@ void DbgMainWindow::addWidgets() {
 
 
     QWidget *pnew;
-    MyQMdiSubWindow *subw;
+    UnclosableQMdiSubWindow *subw;
 
     /** Docked Widgets: */
     QDockWidget *dock = new QDockWidget(tr("Debugger console"), this);
@@ -157,7 +195,7 @@ void DbgMainWindow::addWidgets() {
 
 
     /** MDI Widgets: */
-    subw = new MyQMdiSubWindow(this);
+    subw = new UnclosableQMdiSubWindow(this);
     subw->setWidget(pnew = new UartWidget(igui_, this));
     subw->setMinimumWidth(size().width() / 2);
     mdiArea->addSubWindow(subw);
@@ -168,7 +206,7 @@ void DbgMainWindow::addWidgets() {
     connect(this, SIGNAL(signalClosingMainForm()), 
             pnew, SLOT(slotClosingMainForm()));
 
-    subw = new MyQMdiSubWindow(this);
+    subw = new UnclosableQMdiSubWindow(this);
     subw->setWidget(pnew = new GpioWidget(igui_, this));
     mdiArea->addSubWindow(subw);
     connect(this, SIGNAL(signalConfigure(AttributeType *)), 
@@ -178,7 +216,7 @@ void DbgMainWindow::addWidgets() {
     connect(this, SIGNAL(signalClosingMainForm()), 
             pnew, SLOT(slotClosingMainForm()));
 
-    subw = new MyQMdiSubWindow(this);
+    subw = new UnclosableQMdiSubWindow(this);
     subw->setWidget(pnew = new RegsViewWidget(igui_, this));
     mdiArea->addSubWindow(subw);
     connect(actionRegs_, SIGNAL(triggered(bool)), 
@@ -187,6 +225,90 @@ void DbgMainWindow::addWidgets() {
             actionRegs_, SLOT(setChecked(bool)));
    
     subw->setVisible(false);
+}
+
+void DbgMainWindow::slotTimerRedraw() {
+    if (riseSyncEvent_) {
+        RISCV_event_set(initDone_);
+        riseSyncEvent_ = false;
+    }
+    emit signalRedrawByTimer();
+}
+
+void DbgMainWindow::slotTimerPollingStatus() {
+    igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), 
+                           &cmdReadStatus_);
+}
+
+void DbgMainWindow::slotActionAbout() {
+    char date[128];
+    memcpy(date, __DATE__, sizeof(date));
+    QString build;
+    build.sprintf("Version: 1.0\nBuild:     %s\n", date);
+    build += tr("Author: Sergey Khabarov\n");
+    build += tr("git:    http://github.com/sergeykhbr/riscv_vhdl\n");
+    build += tr("e-mail: sergeykhbr@gmail.com\n\n")
+       + tr("\tRISC-V debugger GUI plugin is the open source application\n")
+       + tr("that upgrades the base RISC-V debugger funcitonality and can\n")
+       + tr("provide more friendly interaction interface with SoC running\n")
+       + tr("on FPGA or on simulator:\n\n");
+    build += tr("www.gnss-sensor.com\n");
+
+    QMessageBox::about(this, tr("About GUI plugin"),
+        build
+        /*tr("\tThe <b>GTerm</b> application allows to interact with the "
+               "GNSS receiver via a serial port or ethernet.\n"
+               "\tSet of plugins allow to view and analize binary data stream in "
+               "convenient user-friendly ways.")*/
+               );
+}
+
+void DbgMainWindow::slotActionTargetRun() {
+    /** DSU control region 0x80080000 + 0x10000: 
+     *              offset 0x0000 = Control register
+     *  Bits[1:0]
+     *      00 = Go
+     *      01 = Halt
+     *      02 = Stepping enable
+     */
+    AttributeType cmdRun;
+    cmdRun.from_config("['write',0x80090000,4,0]");
+
+    actionRun_->setChecked(true);
+    igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), 
+                           &cmdRun);
+}
+
+void DbgMainWindow::slotActionTargetHalt() {
+    /** DSU control region 0x80080000 + 0x10000: 
+     *              offset 0x0000 = Control register
+     *  Bits[1:0]
+     *      00 = Go
+     *      01 = Halt
+     *      02 = Stepping enable
+     */
+    AttributeType cmdHalt;
+    cmdHalt.from_config("['write',0x80090000,4,0x1]");
+    igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), 
+                           &cmdHalt);
+}
+
+void DbgMainWindow::slotActionTargetStepInto() {
+    /** DSU control region 0x80080000 + 0x10000: 
+     *              offset 0x0008 = StepNumber register
+     *              offset 0x0000 = Control register
+     *  Bits[1:0]
+     *      00 = Go
+     *      01 = Halt
+     *      02 = Stepping enable
+     */
+    AttributeType cmdStep, cmdStepValue;
+    cmdStepValue.from_config("['write',0x80090008,8,1]");
+    igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), 
+                           &cmdStepValue);
+    cmdStep.from_config("['write',0x80090000,4,0x1]");
+    igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), 
+                           &cmdStep);
 }
 
 }  // namespace debugger

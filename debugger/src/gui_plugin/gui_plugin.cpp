@@ -81,8 +81,8 @@ GuiPlugin::GuiPlugin(const char *name) : IService(name) {
         RISCV_event_set(&eventUiInitDone_);
     } else {
         std::string qt_lib_path = qt_path + "bin";
-        paths.append(qt_lib_path.c_str());
-        paths.append("platforms");
+        paths.append(QString(qt_lib_path.c_str()));
+        paths.append(QString("platforms"));
         QApplication::setLibraryPaths(paths);
 
         ui_ = new UiThreadType(static_cast<IGui *>(this), 
@@ -142,13 +142,13 @@ void GuiPlugin::registerCommand(IGuiCmdHandler *src, AttributeType *cmd) {
         RISCV_error("Command queue size %d overflow.", cmdQueueCntTotal_);
         return;
     }
+    RISCV_mutex_lock(&mutexCommand_);
     if (cmdQueueWrPos_ == CMD_QUEUE_SIZE) {
         cmdQueueWrPos_ = 0;
     }
     cmdQueue_[cmdQueueWrPos_].src = src;
     cmdQueue_[cmdQueueWrPos_++].cmd = *cmd;
 
-    RISCV_mutex_lock(&mutexCommand_);
     cmdQueueCntTotal_++;
     RISCV_mutex_unlock(&mutexCommand_);
     RISCV_event_set(&eventCommandAvailable_);

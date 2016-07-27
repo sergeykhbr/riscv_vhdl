@@ -81,6 +81,7 @@ private:
     void executeInstruction(IInstruction *instr, uint32_t *rpayload);
 
     void queueUpdate();
+    void copyPreQueued();
 
 private:
     AttributeType bus_;
@@ -97,6 +98,8 @@ private:
         Queue_Total
     };
     AttributeType stepQueue_;
+    AttributeType stepPreQueued_;
+    unsigned stepPreQueued_len_;
     unsigned stepQueue_len_;    // to avoid reallocation
     mutex_def mutexStepQueue_;
 
