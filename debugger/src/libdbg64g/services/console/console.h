@@ -15,7 +15,7 @@
 #include "coreservices/iconsole.h"
 #include "coreservices/iserial.h"
 #include "coreservices/iclock.h"
-#include "coreservices/ikeylistener.h"
+#include "coreservices/iconsolelistener.h"
 #include "coreservices/irawlistener.h"
 #include "coreservices/isignallistener.h"
 #include <string>
@@ -41,16 +41,13 @@ public:
 
     /** IConsole interface */
     virtual void writeBuffer(const char *buf);
-    virtual void writeCommand(const char *cmd);
-    virtual void setCmdString(const char *buf);
-    virtual int registerKeyListener(IFace *iface);
     virtual void enableLogFile(const char *filename);
-    virtual void registerConsoleListener(IFace *iface) {}
+    virtual void registerConsoleListener(IFace *iface);
 
     /** IHap */
     virtual void hapTriggered(EHapType type);
 
-    /** ISerial */
+    /** IRawListener (serial) */
     virtual void updateData(const char *buf, int buflen);
 
     /** IClockListener */
@@ -64,25 +61,38 @@ protected:
     virtual void busyLoop();
 
 private:
+    void processScriptFile();
     bool isData();
     int getData();
-    void sendKeyUpEvent(int value);
     void clearLine();
-    void processScriptCommand(const char *cmd);
+    bool convertToWinKey(uint8_t symb);
+    void addToCommandLine(int val);
+    void processCommandLine();
+    void addToHistory(const char *cmd);
 
 private:
     AttributeType isEnable_;
     AttributeType stepQueue_;
     AttributeType signals_;
-    AttributeType keyListeners_;
+    AttributeType consoleListeners_;
     AttributeType logFile_;
     AttributeType serial_;
+    AttributeType history_;
+    AttributeType history_size_;
+
     event_def config_done_;
     mutex_def mutexConsoleOutput_;
     IClock *iclk_;
     char tmpbuf_[4096];
     std::string cmdLine_;
     std::string serial_input_;
+
+    uint32_t symb_seq_;         // symbol sequence
+    uint32_t symb_seq_msk_;
+    // History switching
+    std::string unfinshedLine_; // store the latest whe we look through history
+    unsigned history_idx_;
+
     FILE *logfile_;
 #ifdef DBG_ZEPHYR
     int tst_cnt_;

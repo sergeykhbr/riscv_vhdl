@@ -10,7 +10,6 @@
 
 #include "iclass.h"
 #include "iservice.h"
-#include "ihap.h"
 #include "coreservices/iconsole.h"
 #include "coreservices/ikeylistener.h"
 #include "coreservices/iconsolelistener.h"
@@ -22,9 +21,7 @@
 namespace debugger {
 
 class CmdParserService : public IService,
-                         public IKeyListener,
-                         public IConsoleListener,
-                         public IHap {
+                         public IConsoleListener {
 public:
     explicit CmdParserService(const char *name);
     virtual ~CmdParserService();
@@ -32,17 +29,9 @@ public:
     /** IService interface */
     virtual void postinitService();
 
-    /** IHap interface */
-    virtual void hapTriggered(EHapType type);
-
-    /** IKeyListener interface */
-    virtual int keyDown(int value) { return 0; }
-    virtual int keyUp(int value);
-
     /** IConsoleListener */
     virtual void udpateCommand(const char *line);
     virtual void autocompleteCommand(const char *line) {}
-
 
 private:
     static const uint64_t DSU_BASE_ADDRESS = 0x80080000;
@@ -84,16 +73,11 @@ private:
     unsigned getRegIDx(const char *name);
 
     int outf(const char *fmt, ...);
-    void addToHistory(const char *cmd);
-
-    bool convertToWinKey(uint8_t symb);
 
 private:
     AttributeType console_;
     AttributeType tap_;
     AttributeType loader_;
-    AttributeType history_;
-    AttributeType history_size_;
     // Store each CSR as list: ['Name',<address>,[description], others]
     AttributeType listCSR_;
     AttributeType regNames_;
@@ -102,16 +86,12 @@ private:
     ITap *itap_;
     IElfLoader *iloader_;
     std::string cmdLine_;
-    std::string unfinshedLine_; // store the latest whe we look through history
-    uint32_t symb_seq_;         // symbol sequence
-    uint32_t symb_seq_msk_;
     char cmdbuf_[4096];
     char *outbuf_;
     int outbuf_size_;
     int outbuf_cnt_;
     uint8_t *tmpbuf_;
     int tmpbuf_size_;
-    unsigned history_idx_;
 };
 
 DECLARE_CLASS(CmdParserService)

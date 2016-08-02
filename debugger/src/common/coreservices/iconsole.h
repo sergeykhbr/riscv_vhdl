@@ -19,12 +19,7 @@ public:
     IConsole() : IFace(IFACE_CONSOLE) {}
 
     virtual void writeBuffer(const char *buf) =0;
-    virtual void writeCommand(const char *cmd) =0;
-    virtual int registerKeyListener(IFace *iface) =0;
-    virtual void setCmdString(const char *buf) =0;
     virtual void enableLogFile(const char *filename) =0;
-
-    // remove all that above
     virtual void registerConsoleListener(IFace *iface) =0;
 };
 

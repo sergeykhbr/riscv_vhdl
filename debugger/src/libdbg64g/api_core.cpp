@@ -96,7 +96,7 @@ extern "C" void RISCV_set_configuration(AttributeType *cfg) {
                 continue;
             }
             /** Special global setting for the GUI class: */
-            if (strcmp(icls->getClassName(), "GuiClassName") == 0) {
+            if (strcmp(icls->getClassName(), "GuiPluginClass") == 0) {
                 if (!Config_["GlobalSettings"]["GUI"].to_bool()) {
                     RISCV_info("%s", "GUI disabled");
                     continue;

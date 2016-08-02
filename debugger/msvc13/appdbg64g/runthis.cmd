@@ -3,11 +3,11 @@
 //c 1
 //regs
 //c
--["wait",5000]
--["uart0","ping"]
--["wait",5000]
--["uart0","ticks"]
-//-["wait",3000]
-//-["uart0","highticks"]
-//-["wait",3000]
-//-["uart0","help"]
+-["wait",500]
+-["uart0","ping\r"]
+-["wait",500]
+-["uart0","ticks\r"]
+-["wait",300]
+-["uart0","highticks\r"]
+-["wait",300]
+-["uart0","help\r"]

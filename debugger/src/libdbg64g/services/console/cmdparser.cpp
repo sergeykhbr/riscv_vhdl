@@ -11,14 +11,6 @@
 
 namespace debugger {
 
-#define KB_UP       0x48
-#define KB_DOWN     80
-#define KB_LEFT     75
-#define KB_RIGHT    77
-#define KB_ESCAPE   27
-static const uint8_t ARROW_PREFIX = 0xe0;
-static const uint8_t UNICODE_BACKSPACE = 0x7f;
-
 /** Class registration in the Core */
 REGISTER_CLASS(CmdParserService)
 
@@ -37,14 +29,11 @@ union DsuRunControlRegType {
 enum RegListType {REG_Name, REG_IDx};
 
 CmdParserService::CmdParserService(const char *name) 
-    : IService(name), IHap(HAP_ConfigDone) {
-    registerInterface(static_cast<IKeyListener *>(this));
+    : IService(name) {
     registerInterface(static_cast<IConsoleListener *>(this));
     registerAttribute("Console", &console_);
     registerAttribute("Tap", &tap_);
     registerAttribute("Loader", &loader_);
-    registerAttribute("History", &history_);
-    registerAttribute("HistorySize", &history_size_);
     registerAttribute("ListCSR", &listCSR_);
     registerAttribute("RegNames", &regNames_);
 
@@ -52,12 +41,8 @@ CmdParserService::CmdParserService(const char *name)
     iconsoles_.make_list(0);
     tap_.make_string("");
     loader_.make_string("");
-    history_.make_list(0);
-    history_size_.make_int64(4);
     listCSR_.make_list(0);
     regNames_.make_list(0);
-    history_idx_ = 0;
-    symb_seq_msk_ = 0xFF;
     tmpbuf_ = new uint8_t[tmpbuf_size_ = 4096];
     outbuf_ = new char[outbuf_size_ = 4096];
 }
@@ -68,90 +53,20 @@ CmdParserService::~CmdParserService() {
 }
 
 void CmdParserService::postinitService() {
-    /** GUI is registering its interfaces in post-init stage
-     * so to get console interface we have to wait GUI full initialization
-     */
-    RISCV_register_hap(static_cast<IHap *>(this));
-
     itap_ = static_cast<ITap *>
             (RISCV_get_service_iface(tap_.to_string(), IFACE_TAP));
     iloader_ = static_cast<IElfLoader *>
             (RISCV_get_service_iface(loader_.to_string(), IFACE_ELFLOADER));
-    history_idx_ = history_.size();
-}
 
-void CmdParserService::hapTriggered(EHapType type) {
     for (unsigned i = 0; i < console_.size(); i++) {
         IConsole *icls = static_cast<IConsole *>
             (RISCV_get_service_iface(console_[i].to_string(), IFACE_CONSOLE));
         if (icls) {
             AttributeType tmp(icls);
             iconsoles_.add_to_list(&tmp);
-            icls->registerKeyListener(static_cast<IKeyListener *>(this));
             icls->registerConsoleListener(static_cast<IConsoleListener *>(this));
         }
     }
-}
-
-int CmdParserService::keyUp(int value) {
-    if (iconsoles_.size() == 0) {
-        return 0;
-    }
-    IConsole *icls0 = static_cast<IConsole *>(iconsoles_[0u].to_iface());
-    uint8_t symb = static_cast<uint8_t>(value);
-    bool set_history_end = true;
-
-    //printf("!!!! key = %02x\n", value);
-
-    if (!convertToWinKey(symb)) {
-        return 0;
-    }
-    switch (symb_seq_) {
-    case 0:
-        break;
-    case (ARROW_PREFIX << 8) | KB_UP:
-        set_history_end = false;
-        if (history_idx_ == history_.size()) {
-            unfinshedLine_ = cmdLine_;
-        }
-        if (history_idx_ > 0) {
-            history_idx_--;
-        }
-        cmdLine_ = std::string(history_[history_idx_].to_string());
-        break;
-    case (ARROW_PREFIX << 8) | KB_DOWN:
-        set_history_end = false;
-        if (history_idx_ == (history_.size() - 1)) {
-            history_idx_++;
-            cmdLine_ = unfinshedLine_;
-        } else if (history_idx_ < (history_.size() - 1)) {
-            history_idx_++;
-            cmdLine_ = std::string(history_[history_idx_].to_string());
-        }
-        break;
-    case '\b':// 1. Backspace button:
-        if (cmdLine_.size()) {
-            cmdLine_.erase(cmdLine_.size() - 1);
-        }
-        break;
-    case '\n':
-    case '\r':// 2. Enter button:
-        memcpy(cmdbuf_, cmdLine_.c_str(), cmdLine_.size() + 1);
-        cmdLine_.clear();
-        icls0->writeCommand(cmdbuf_);
-        icls0->setCmdString(cmdLine_.c_str());
-        processLine(cmdbuf_);
-        icls0->writeBuffer(outbuf_);
-        break;
-    default:;
-        cmdLine_ += symb;
-    }
-
-    if (set_history_end) {
-        history_idx_ = history_.size();
-    }
-    icls0->setCmdString(cmdLine_.c_str());
-    return 0;
 }
 
 void CmdParserService::udpateCommand(const char *line) {
@@ -164,59 +79,11 @@ void CmdParserService::udpateCommand(const char *line) {
     }
 }
 
-bool CmdParserService::convertToWinKey(uint8_t symb) {
-    bool ret = true;
-    symb_seq_ <<= 8;
-    symb_seq_ |= symb;
-    symb_seq_ &= symb_seq_msk_;
-
-#if defined(_WIN32) || defined(__CYGWIN__)
-    if (symb_seq_ == ARROW_PREFIX) {
-        ret = false;
-        symb_seq_msk_ = 0xFFFF;
-    } else {
-        symb_seq_msk_ = 0xFF;
-    }
-#else
-    if (symb_seq_ == UNICODE_BACKSPACE) {
-        symb_seq_ = '\b';
-        symb_seq_msk_ = 0xFF;
-    } else if (symb_seq_ == 0x1b) {
-        symb_seq_msk_ = 0xFFFF;
-        ret = false;
-    } else if (symb_seq_ == 0x1b5b) {
-        symb_seq_msk_ = 0xFFFFFF;
-        ret = false;
-    } else if (symb_seq_ == 0x1b5b41) {
-        symb_seq_ = (ARROW_PREFIX << 8) | KB_UP;
-        symb_seq_msk_ = 0xFF;
-    } else if (symb_seq_ == 0x1b5b42) {
-        symb_seq_ = (ARROW_PREFIX << 8) | KB_DOWN;
-        symb_seq_msk_ = 0xFF;
-    } else if (symb_seq_ == 0x1b5b43) {
-        //symb_seq_ = (ARROW_PREFIX << 8) | KB_RIGHT;
-        //symb_seq_msk_ = 0xFF;
-        ret = false;
-    } else if (symb_seq_ == 0x1b5b44) {
-        //symb_seq_ = (ARROW_PREFIX << 8) | KB_LEFT;
-        //symb_seq_msk_ = 0xFF;
-        ret = false;
-    } else {
-        symb_seq_msk_ = 0xFF;
-    }
-#endif
-    if (symb_seq_ == ((uint32_t('\r') << 8) | '\n')) {
-        symb_seq_ = 0;
-    }
-    return ret;
-}
-
 void CmdParserService::processLine(const char *line) {
     outbuf_[outbuf_cnt_ = 0] = '\0';
     if (line[0] == 0) {
         return;
     }
-    addToHistory(line);
 
     AttributeType listArgs(Attr_List);
     splitLine(cmdbuf_, &listArgs);
@@ -499,8 +366,7 @@ void CmdParserService::readMem(AttributeType *listArgs) {
     itap_->read(addr, bytes, tmpbuf_);
     for (uint64_t i = addr_start; i < addr_end; i++) {
         if ((i & 0xf) == 0) {
-            outf("[%08x%08x]: ", static_cast<uint32_t>(i >> 32),
-                                 static_cast<uint32_t>(i));
+            outf("[%016" RV_PRI64 "x]: ", i);
         }
         inv_i = (i & ~0xFll) | (0xfll - (i & 0xfll));
         if ((addr <= inv_i) && (inv_i < (addr + bytes))) {
@@ -689,28 +555,6 @@ int CmdParserService::outf(const char *fmt, ...) {
     outbuf_cnt_ += vsprintf(&outbuf_[outbuf_cnt_], fmt, arg);
     va_end(arg);
     return outbuf_cnt_;
-}
-
-void CmdParserService::addToHistory(const char *cmd) {
-    unsigned found = history_.size();
-    for (unsigned i = 0; i < history_.size(); i++) {
-        if (strcmp(cmd, history_[i].to_string()) == 0) {
-            found = i;
-            break;
-        }
-    }
-    if (found  ==  history_.size()) {
-        AttributeType new_cmd(cmd);
-        history_.add_to_list(&new_cmd);
-
-        unsigned min_size = static_cast<unsigned>(history_size_.to_int64());
-        if (history_.size() >= 2*min_size) {
-            history_.trim_list(0, min_size);
-        }
-    } else if (found < (history_.size() - 1)) {
-        history_.swap_list_item(found, history_.size() - 1);
-    }
-    history_idx_ = history_.size();
 }
 
 }  // namespace debugger
