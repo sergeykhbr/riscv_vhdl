@@ -7,6 +7,9 @@
 
 namespace debugger {
 
+static const int REDRAW_TIMER_MSEC = 10;
+#define IS_HALTED(dsu_control) ((dsu_control & 0x1ull) == 1)
+
 DbgMainWindow::DbgMainWindow(IGui *igui, event_def *init_done) {
     igui_ = igui;
     initDone_ = init_done;
@@ -20,7 +23,6 @@ DbgMainWindow::DbgMainWindow(IGui *igui, event_def *init_done) {
      *              offset 0x0000 = Control register
      */
     cmdReadStatus_.from_config("['read',0x80090000,4]");
-    targetState_ = 0;
 
     createActions();
     createMenus();
@@ -33,15 +35,19 @@ DbgMainWindow::DbgMainWindow(IGui *igui, event_def *init_done) {
     timerRedraw_ = new QTimer(this);
     timerRedraw_->setSingleShot(false);
     connect(timerRedraw_, SIGNAL(timeout()), this, SLOT(slotTimerRedraw()));
-    timerRedraw_->start(10);
+    timerRedraw_->start(REDRAW_TIMER_MSEC);
 
-    timerPollStatus_ = new QTimer(this);
-    timerPollStatus_->setSingleShot(false);
-    connect(timerPollStatus_, SIGNAL(timeout()), 
+    //timerPollStatus_ = new QTimer(this);
+    //timerPollStatus_->setSingleShot(false);
+    //connect(timerPollStatus_, SIGNAL(timeout()), 
+    //        this, SLOT(slotTimerPollingStatus()));
+
+    QTimer *tmr3 = new QTimer(this);
+    connect(tmr3, SIGNAL(timeout()), 
             this, SLOT(slotTimerPollingStatus()));
-    timerPollStatus_->start(500);
-    int a1 = timerPollStatus_->isActive();
-// debug:
+    tmr3->setSingleShot(false);
+    tmr3->start(500);
+
 }
 
 DbgMainWindow::~DbgMainWindow() {
@@ -51,14 +57,16 @@ void DbgMainWindow::handleResponse(AttributeType *req, AttributeType *resp) {
     if (!req->is_list() || req->size() != 3) {
         return;
     }
+    
     uint64_t addr = (*req)[1].to_uint64();
     uint64_t val = 0;
     switch (addr) {
     case 0x80090000ull:
-        /** Bit[0] = Halt state */
-        val = (*resp)[1u].to_uint64() & 0x1ull;
-        if (targetState_ != val) {
-            emit signalTargetStateChanged(val != 0);
+        /** Bit[0] = Halt state when is High */
+        val = resp->to_uint64();
+        if (actionRun_->isChecked() && IS_HALTED(val)
+            || !actionRun_->isChecked() && !IS_HALTED(val)) {
+            emit signalTargetStateChanged(val == 0);
         }
         break;
     default:;
@@ -79,7 +87,7 @@ void DbgMainWindow::setConfiguration(AttributeType cfg) {
     emit signalConfigure(&config_);
 
     if (ms) {
-        timerPollStatus_->start(ms);
+        //timerPollStatus_->start(ms);
     }
 }
 
@@ -90,7 +98,7 @@ void DbgMainWindow::getConfiguration(AttributeType &cfg) {
 
 void DbgMainWindow::closeEvent(QCloseEvent *e) {
     timerRedraw_->stop();
-    timerPollStatus_->stop();
+    //timerPollStatus_->stop();
 
     emit signalClosingMainForm();
     AttributeType exit_cmd;
@@ -219,10 +227,15 @@ void DbgMainWindow::addWidgets() {
     subw = new UnclosableQMdiSubWindow(this);
     subw->setWidget(pnew = new RegsViewWidget(igui_, this));
     mdiArea->addSubWindow(subw);
-    connect(actionRegs_, SIGNAL(triggered(bool)), 
+    connect(this, SIGNAL(signalConfigure(AttributeType *)),
+        pnew, SLOT(slotConfigure(AttributeType *)));
+    connect(actionRegs_, SIGNAL(triggered(bool)),
             subw, SLOT(slotVisible(bool)));
     connect(subw, SIGNAL(signalVisible(bool)), 
             actionRegs_, SLOT(setChecked(bool)));
+    connect(this, SIGNAL(signalTargetStateChanged(bool)),
+            pnew, SLOT(slotTargetStateChanged(bool)));
+
    
     subw->setVisible(false);
 }
@@ -306,7 +319,7 @@ void DbgMainWindow::slotActionTargetStepInto() {
     cmdStepValue.from_config("['write',0x80090008,8,1]");
     igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), 
                            &cmdStepValue);
-    cmdStep.from_config("['write',0x80090000,4,0x1]");
+    cmdStep.from_config("['write',0x80090000,4,2]");
     igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), 
                            &cmdStep);
 }

@@ -23,7 +23,16 @@ const char *gui_default_ =
     "['ConsoleHistory',['csr mcpuid','regs']],"
     "['Serial','uart0'],"
     "['Gpio','gpio0'],"
-    "['PollingMs',500]"
+    "['PollingMs',500],"
+    "['RegList',[['zero',0],['ra',1],['sp',2],['gp',3],"
+                "['tp',4],['t0',5],['t1',6],['t2',7],"
+                "['s0',8],['s1',9],['a0',10],['a1',11],"
+                "['a2',12],['a3',13],['a4',14],['a5',15],"
+                "['a6',16],['a7',17],['s2',18],['s3',19],"
+                "['s4',20],['s5',21],['s6',22],['s7',23],"
+                "['s8',24],['s9',25],['s10',26],['s11',27],"
+                "['t3',28],['t4',29],['t5',30],['t6',31],"
+                "['pc',32],['npc',33]]]"
 "]"
 ;
 
@@ -194,8 +203,14 @@ bool GuiPlugin::processCmdQueue() {
             uint8_t obuf[32] = {0};
             itap_->read(cmd[1].to_uint64(), bytes, obuf);
             AttributeType resp;
-            if (bytes <= 8) {
-                resp.make_uint64(reinterpret_cast<uint64_t>(obuf));
+            if (bytes == 1) {
+                resp.make_uint64(*reinterpret_cast<uint8_t *>(obuf));
+            } else if (bytes == 2) {
+                resp.make_uint64(*reinterpret_cast<uint16_t *>(obuf));
+            } else if (bytes == 4) {
+                resp.make_uint64(*reinterpret_cast<uint32_t *>(obuf));
+            } else if (bytes == 8) {
+                resp.make_uint64(*reinterpret_cast<uint64_t *>(obuf));
             } else {
                 resp.make_data(bytes, obuf);
             }

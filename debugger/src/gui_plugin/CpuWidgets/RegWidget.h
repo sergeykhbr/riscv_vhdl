@@ -17,15 +17,16 @@ namespace debugger {
 class RegWidget : public QWidget {
     Q_OBJECT
 public:
-    explicit RegWidget(const char *name, QWidget *parent);
+    explicit RegWidget(AttributeType *cfg, QWidget *parent);
 
 signals:
-    void signalChanged(const char *name, uint64_t val);
+    void signalChanged(QString &name, uint64_t val);
 private slots:
-    void slotPollingUpdate(const char *name, uint64_t val);
+    void slotUpdate(QString &name, uint64_t val);
 
 private:
-    const char *name_;
+    QString name_;
+    uint64_t addr_;
     uint64_t value_;
 };
 

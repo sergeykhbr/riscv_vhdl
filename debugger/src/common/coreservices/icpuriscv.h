@@ -15,6 +15,8 @@ namespace debugger {
 
 static const char *const IFACE_CPU_RISCV = "ICpuRiscV";
 
+static const uint64_t REG_INVALID = ~0;
+
 class ICpuRiscV : public IFace {
 public:
     ICpuRiscV() : IFace(IFACE_CPU_RISCV) {}

@@ -64,7 +64,7 @@ private:
         event_def *eventInitDone_;
     } *ui_;
 
-    static const int CMD_QUEUE_SIZE = 10;
+    static const int CMD_QUEUE_SIZE = 128;
 
     AttributeType guiConfig_;
     AttributeType tap_;

@@ -13,6 +13,7 @@
 
 #include <QtWidgets/QWidget>
 #include <QtWidgets/qmdisubwindow.h>
+#include <QtWidgets/qgridlayout.h>
 #include <QtCore/qtimer.h>
 #include <QtGui/qevent.h>
 
@@ -33,10 +34,15 @@ public:
 private slots:
     void slotConfigure(AttributeType *cfg);
     void slotPollingUpdate();
-
-protected:
+    void slotTargetStateChanged(bool);
 
 private:
+    int widgetIndexByName(const char *regname);
+    void addRegWidget(AttributeType &reg_cfg);
+
+private:
+    AttributeType listRegs_;
+    QGridLayout *gridLayout;
     QTimer *pollingTimer_;
 
     IGui *igui_;

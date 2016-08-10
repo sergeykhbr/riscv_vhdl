@@ -159,9 +159,7 @@ void AttributeType::make_list(unsigned size) {
 void AttributeType::realloc_list(unsigned size) {
     AttributeType * t1 = static_cast<AttributeType *>(
             RISCV_malloc(size * sizeof(AttributeType)));
-    for (unsigned i = 0; i < size_; i++) {
-        t1[i].clone(&u_.list[i]);
-    }
+    memcpy(t1, u_.list, size_ * sizeof(AttributeType));
     if (size_) {
         RISCV_free(u_.list);
     }

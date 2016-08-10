@@ -45,7 +45,7 @@ signals:
     void signalClosingMainForm();
     void signalTargetStateChanged(bool);
 
-protected slots:
+private slots:
     void slotTimerRedraw();
     void slotTimerPollingStatus();
     void slotActionAbout();
@@ -80,7 +80,6 @@ private:
     IGui *igui_;
     event_def *initDone_;
     bool riseSyncEvent_;
-    uint64_t targetState_;
 };
 
 }  // namespace debugger

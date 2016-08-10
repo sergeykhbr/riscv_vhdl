@@ -416,8 +416,13 @@ void CpuRiscV_Functional::registerStepCallback(IClockListener *cb,
     item[Queue_IFace] = face;
     RISCV_mutex_lock(&mutexStepQueue_);
     if (stepPreQueued_len_ == stepPreQueued_.size()) {
-        stepPreQueued_.realloc_list(2 * stepPreQueued_.size());
+        unsigned new_sz = 2 * stepPreQueued_.size();
+        if (new_sz == 0) {
+            new_sz = 1;
+        }
+        stepPreQueued_.realloc_list(new_sz);
     }
+    stepPreQueued_[stepPreQueued_len_].attr_free();
     stepPreQueued_[stepPreQueued_len_] = item;
     stepPreQueued_len_++;
     RISCV_mutex_unlock(&mutexStepQueue_);
@@ -427,6 +432,7 @@ void CpuRiscV_Functional::copyPreQueued() {
     RISCV_mutex_lock(&mutexStepQueue_);
     for (unsigned i = 0; i < stepPreQueued_len_; i++) {
         if (stepQueue_len_ < stepQueue_.size()) {
+            stepQueue_[stepQueue_len_].attr_free();
             stepQueue_[stepQueue_len_] = stepPreQueued_[i];
         } else {
             stepQueue_.add_to_list(&stepPreQueued_[i]);
@@ -470,7 +476,7 @@ uint64_t CpuRiscV_Functional::getReg(uint64_t idx) {
     if (idx >= 0 && idx < 32) {
         return pContext->regs[idx];
     }
-    return 0;
+    return REG_INVALID;
 }
 
 void CpuRiscV_Functional::setReg(uint64_t idx, uint64_t val) {

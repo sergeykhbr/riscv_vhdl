@@ -86,7 +86,7 @@ static const uint64_t EXT_SIGN_12 = 0xFFFFFFFFFFFFF000LL;
 static const uint64_t EXT_SIGN_16 = 0xFFFFFFFFFFFF0000LL;
 static const uint64_t EXT_SIGN_32 = 0xFFFFFFFF00000000LL;
 
-static const char *const REG_NAMES[32] = {
+static const char *const REG_NAMES[] = {
     "zero",     // [0] zero
     "ra",       // [1] Return address
     "sp",       // [2] Stack pointer

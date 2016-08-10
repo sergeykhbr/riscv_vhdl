@@ -7,7 +7,6 @@
 
 #include "console.h"
 #include <iostream>
-#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include "api_types.h"
@@ -252,22 +251,12 @@ void ConsoleService::processScriptFile() {
                     && script_buf[i + 1] == '/') {
                 scr_state = SCRIPT_comment;
                 i++;
-            } else if (script_buf[i] == '-') {
-                scr_state = SCRIPT_command;
             } else {
                 addToCommandLine(script_buf[i]);
             }
             break;
         case SCRIPT_command:
-            if (script_buf[i] == '\\' && script_buf[i + 1] == 'r') {
-                RISCV_mutex_lock(&mutexConsoleOutput_);
-                cmdLine_ += "\r";
-                std::cout << "\\r";
-                RISCV_mutex_unlock(&mutexConsoleOutput_);
-                i++;
-            } else {
-                addToCommandLine(script_buf[i]);
-            }
+            addToCommandLine(script_buf[i]);
         case SCRIPT_comment:
             if (script_buf[i] == '\r' || script_buf[i] == '\n') {
                 scr_state = SCRIPT_normal;
@@ -411,6 +400,8 @@ void ConsoleService::addToCommandLine(int val) {
             history_idx_--;
         }
         cmdLine_ = std::string(history_[history_idx_].to_string());
+        clearLine();
+        std::cout << ENTRYSYMBOLS << cmdLine_;
         break;
     case (ARROW_PREFIX << 8) | KB_DOWN:
         set_history_end = false;
@@ -421,6 +412,8 @@ void ConsoleService::addToCommandLine(int val) {
             history_idx_++;
             cmdLine_ = std::string(history_[history_idx_].to_string());
         }
+        clearLine();
+        std::cout << ENTRYSYMBOLS << cmdLine_;
         break;
     case '\b':// 1. Backspace button:
         if (cmdLine_.size()) {
@@ -477,12 +470,18 @@ void ConsoleService::processCommandLine() {
         if (strcmp(t1[0u].to_string(), "wait") == 0) {
             RISCV_sleep_ms(static_cast<int>(t1[1].to_int64()));
         } else if (strcmp(t1[0u].to_string(), "uart0") == 0) {
+            std::string strCmd(t1[1].to_string());
+            size_t idx = strCmd.find("\\r", 0);
+            if (idx != std::string::npos) {
+                strCmd.replace(idx, 2, "\r");
+            }
             IService *uart = 
                 static_cast<IService *>(RISCV_get_service("uart0"));
             if (uart) {
                 ISerial *iserial = static_cast<ISerial *>(
                             uart->getInterface(IFACE_SERIAL));
-                iserial->writeData(t1[1].to_string(), t1[1].size());
+                iserial->writeData(strCmd.c_str(),
+                                   static_cast<int>(strCmd.size()));
             }
         }
     } else {

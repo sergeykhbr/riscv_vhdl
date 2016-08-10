@@ -8,9 +8,14 @@
 
 namespace debugger {
 
-RegWidget::RegWidget(const char *name, QWidget *parent) : QWidget(parent) {
-    name_ = name;
+RegWidget::RegWidget(AttributeType *cfg, QWidget *parent) : QWidget(parent) {
+    name_ = QString(tr((*cfg)[0u].to_string()));
+    addr_ = (*cfg)[1u].to_uint64();
     value_ = 0;
+
+    while (name_.size() < 3) {
+        name_ += tr(" ");
+    }
 
     QFont font = QFont("Courier");
     font.setStyleHint(QFont::Monospace);
@@ -30,7 +35,7 @@ RegWidget::RegWidget(const char *name, QWidget *parent) : QWidget(parent) {
     labelSizePolicy.setVerticalStretch(0);
     labelSizePolicy.setHeightForWidth(label->sizePolicy().hasHeightForWidth());
     label->setSizePolicy(labelSizePolicy);
-    label->setText(tr(name_));
+    label->setText(name_);
     label->setAlignment(Qt::AlignRight | Qt::AlignTrailing | Qt::AlignVCenter);
     pLayout->addWidget(label);
 
@@ -44,8 +49,8 @@ RegWidget::RegWidget(const char *name, QWidget *parent) : QWidget(parent) {
     //edit->setInputMask(tr("#NHHHHHHHHHHHHHHHH"));
 }
 
-void RegWidget::slotPollingUpdate(const char *name, uint64_t val) {
-    if (strcmp(name_, name) == 0) {
+void RegWidget::slotUpdate(QString &name, uint64_t val) {
+    if (name_ == name) {
         value_ = val;
     }
 }
