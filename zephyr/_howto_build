@@ -1,0 +1,28 @@
+1. Create folder for Zephyr OS
+	mkdir zephyr_140
+	cd zephyr_140
+
+2. Clone repository (see https://www.zephyrproject.org/downloads)
+	git clone https://gerrit.zephyrproject.org/r/zephyr
+	cd zephyr
+
+3. Set environment variable:
+	export ZEPHYR_BASE=<your_path>/zephyr_140/zephyr
+
+4. Copy *.diff patch to $(ZEPHYR_BASE) and apply it:
+	cp ../../riscv_vhdl/zephyr/riscv64_master20160810.diff .
+	git apply riscv64_master20160810.diff
+
+5. Build 'shell' example and generate ROM-image for FPGA or Simulator (GCC must be installed):
+	cd samples/shell
+	make ARCH=riscv64 CROSS_COMPILE=/home/<gcc_dir>/gnu-toolchain-rv64ima/bin/riscv64-unknown-elf- BOARD=riscv_gnss 2>&1 | tee _err.log
+	elf2raw64 outdir/zephyr.elf -h -f 262144 -o fwimage.hex
+
+6. Copy fwimage.hex into <git_rep>/riscv_vhdl/rocket_soc/fw_images
+
+Your board is now udpated with the new firmware!
+
+
+INFO:
+Archives with patched Zephyr OS and others *.diff files are available here:
+	http://gnss-sensor.com/index.php?LinkID=15

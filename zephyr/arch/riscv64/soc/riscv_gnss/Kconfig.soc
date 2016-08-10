@@ -1,5 +1,0 @@
-
-config SOC_RISCV_GNSS
-	bool "RISC-V SOC by Gnss Sensor Ltd"
-	help
-	Synthezable SoC based on open ISA RISC-V.
