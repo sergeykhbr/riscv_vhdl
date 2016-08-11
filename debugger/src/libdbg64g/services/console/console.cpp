@@ -62,6 +62,7 @@ ConsoleService::ConsoleService(const char *name)
     iclk_ = NULL;
 
     symb_seq_msk_ = 0xFF;
+    symb_seq_ = 0;
 
 #ifdef DBG_ZEPHYR
     tst_cnt_ = 0;
@@ -325,10 +326,10 @@ int ConsoleService::getData() {
 #if defined(_WIN32) || defined(__CYGWIN__)
     return _getch();
 #else
-   unsigned char ch;
-   //int err = 
-   read(term_fd_, &ch, sizeof(ch));
-   return ch;
+    unsigned char ch;
+    //int err = 
+    read(term_fd_, &ch, sizeof(ch));
+    return ch;
     //return getchar();
 #endif
 }

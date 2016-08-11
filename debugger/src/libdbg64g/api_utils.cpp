@@ -335,7 +335,7 @@ void _load_plugins(AttributeType *list) {
         }
 #endif
 
-        RISCV_debug("Loading plugin file '%s'", plugin_lib.c_str());
+        RISCV_info("Loading plugin file '%s'\n", plugin_lib.c_str());
         plugin_init();
 
         AttributeType item;

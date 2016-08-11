@@ -15,12 +15,6 @@
 
 namespace debugger {
 
-class CoreService : public IService {
-public:
-    CoreService(const char *name) : IService("CoreService") {}
-};
-
-static CoreService core_("core");
 static AttributeType Config_;
 static AttributeType listClasses_(Attr_List);
 static AttributeType listHap_(Attr_List);
@@ -31,6 +25,14 @@ extern mutex_def mutex_printf;
 extern void _load_plugins(AttributeType *list);
 extern void _unload_plugins(AttributeType *list);
 
+class CoreService : public IService {
+public:
+    CoreService(const char *name) : IService("CoreService") {
+        RISCV_mutex_init(&mutex_printf);
+    }
+};
+static CoreService core_("core");
+
 
 IFace *getInterface(const char *name) {
     return core_.getInterface(name);
@@ -38,8 +40,6 @@ IFace *getInterface(const char *name) {
 
 
 extern "C" int RISCV_init() {
-    RISCV_mutex_init(&mutex_printf);
-
 #if defined(_WIN32) || defined(__CYGWIN__)
     WSADATA wsaData;
     if (WSAStartup(MAKEWORD(2, 2), &wsaData)) {

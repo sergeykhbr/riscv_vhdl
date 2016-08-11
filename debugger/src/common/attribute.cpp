@@ -154,12 +154,14 @@ void AttributeType::make_list(unsigned size) {
     size_ = size;
     u_.list = static_cast<AttributeType *>(
             RISCV_malloc(size * sizeof(AttributeType)));
+    memset(u_.list, 0, size * sizeof(AttributeType));
 }
 
 void AttributeType::realloc_list(unsigned size) {
     AttributeType * t1 = static_cast<AttributeType *>(
             RISCV_malloc(size * sizeof(AttributeType)));
     memcpy(t1, u_.list, size_ * sizeof(AttributeType));
+    memset(&t1[size_], 0, (size - size_) * sizeof(AttributeType));
     if (size_) {
         RISCV_free(u_.list);
     }
@@ -200,6 +202,7 @@ void AttributeType::make_dict() {
 void AttributeType::realloc_dict(unsigned length) {
     AttributePairType * t1 = static_cast<AttributePairType *>(
             RISCV_malloc(length * sizeof(AttributePairType)));
+    memset(t1, 0, length * sizeof(AttributePairType));
     for (unsigned i = 0; i < size_; i++) {
         t1[i].key_.clone(&u_.dict[i].key_);
         t1[i].value_.clone(&u_.dict[i].value_);

@@ -22,7 +22,7 @@ const char *default_config =
 "{"
   "'GlobalSettings':{"
     "'SimEnable':true,"
-    "'GUI':'false',"
+    "'GUI':false,"
     "'ScriptFile':''"
   "},"
   "'Services':["
