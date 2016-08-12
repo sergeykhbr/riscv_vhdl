@@ -400,9 +400,12 @@ void ConsoleService::addToCommandLine(int val) {
         if (history_idx_ > 0) {
             history_idx_--;
         }
+        RISCV_mutex_lock(&mutexConsoleOutput_);
         cmdLine_ = std::string(history_[history_idx_].to_string());
         clearLine();
         std::cout << ENTRYSYMBOLS << cmdLine_;
+        std::cout.flush();
+        RISCV_mutex_unlock(&mutexConsoleOutput_);
         break;
     case (ARROW_PREFIX << 8) | KB_DOWN:
         set_history_end = false;
@@ -413,14 +416,18 @@ void ConsoleService::addToCommandLine(int val) {
             history_idx_++;
             cmdLine_ = std::string(history_[history_idx_].to_string());
         }
+        RISCV_mutex_lock(&mutexConsoleOutput_);
         clearLine();
         std::cout << ENTRYSYMBOLS << cmdLine_;
+        std::cout.flush();
+        RISCV_mutex_unlock(&mutexConsoleOutput_);
         break;
     case '\b':// 1. Backspace button:
         if (cmdLine_.size()) {
             RISCV_mutex_lock(&mutexConsoleOutput_);
             cmdLine_.erase(cmdLine_.size() - 1);
             std::cout << "\b \b";
+            std::cout.flush();
             RISCV_mutex_unlock(&mutexConsoleOutput_);
         }
         break;
@@ -428,10 +435,11 @@ void ConsoleService::addToCommandLine(int val) {
     case '\r':// 2. Enter button:
         processCommandLine();
         break;
-    default:;
+    default:
         RISCV_mutex_lock(&mutexConsoleOutput_);
         cmdLine_ += symb;
         std::cout << symb;
+        std::cout.flush();
         RISCV_mutex_unlock(&mutexConsoleOutput_);
     }
 
