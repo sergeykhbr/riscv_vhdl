@@ -22,6 +22,13 @@ class UnclosableQMdiSubWindow : public QMdiSubWindow {
 public:
     UnclosableQMdiSubWindow(QWidget *parent = 0) : QMdiSubWindow(parent) {}
 
+public:
+    void setUnclosableWidget(QWidget *widget) {
+        setWidget(widget);
+        connect(widget, SIGNAL(signalResize(QSize)), 
+                this, SLOT(slotResize(QSize)));
+    }
+
 signals:
     void signalVisible(bool);
 
@@ -32,6 +39,9 @@ private slots:
         } else {
             hide();
         }
+    }
+    void slotResize(QSize sz) {
+        resize(sz);
     }
     
 protected:

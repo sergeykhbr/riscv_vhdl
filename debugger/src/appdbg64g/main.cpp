@@ -197,7 +197,7 @@ const char *default_config =
                 "['GuiConfig',[]],"
                 "['Tap','edcltap']"
                 "]}]},"
-                "{'Class':'BoardSimClass','Instances':["
+    "{'Class':'BoardSimClass','Instances':["
           "{'Name':'boardsim','Attr':["
                 "['LogLevel',1]"
                 "]}]}"

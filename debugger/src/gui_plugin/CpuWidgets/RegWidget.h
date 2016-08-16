@@ -11,6 +11,7 @@
 #include "attribute.h"
 
 #include <QtWidgets/QWidget>
+#include <QtWidgets/qlineedit.h>
 
 namespace debugger {
 
@@ -20,13 +21,14 @@ public:
     explicit RegWidget(AttributeType *cfg, QWidget *parent);
 
 signals:
-    void signalChanged(QString &name, uint64_t val);
+    void signalChanged(uint64_t idx, uint64_t val);
 private slots:
-    void slotUpdate(QString &name, uint64_t val);
+    void slotRegisterValue(uint64_t idx, uint64_t val);
 
 private:
     QString name_;
-    uint64_t addr_;
+    QLineEdit *edit_;
+    uint64_t idx_;
     uint64_t value_;
 };
 

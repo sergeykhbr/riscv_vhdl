@@ -2,7 +2,6 @@
 #include "moc_RegWidget.h"
 
 #include <memory>
-#include <QtWidgets/qlineedit.h>
 #include <QtWidgets/qboxlayout.h>
 #include <QtWidgets/qlabel.h>
 
@@ -10,7 +9,7 @@ namespace debugger {
 
 RegWidget::RegWidget(AttributeType *cfg, QWidget *parent) : QWidget(parent) {
     name_ = QString(tr((*cfg)[0u].to_string()));
-    addr_ = (*cfg)[1u].to_uint64();
+    idx_ = (*cfg)[1u].to_uint64();
     value_ = 0;
 
     while (name_.size() < 3) {
@@ -22,7 +21,7 @@ RegWidget::RegWidget(AttributeType *cfg, QWidget *parent) : QWidget(parent) {
     font.setPointSize(8);
     font.setFixedPitch(true);
     setFont(font);
-
+    QFontMetrics fm(font);
 
     QHBoxLayout *pLayout = new QHBoxLayout;
     pLayout->setContentsMargins(4, 1, 4, 1);
@@ -39,20 +38,25 @@ RegWidget::RegWidget(AttributeType *cfg, QWidget *parent) : QWidget(parent) {
     label->setAlignment(Qt::AlignRight | Qt::AlignTrailing | Qt::AlignVCenter);
     pLayout->addWidget(label);
 
-    QLineEdit *edit = new QLineEdit(this);
-    pLayout->addWidget(edit);
+    edit_ = new QLineEdit(this);
+    pLayout->addWidget(edit_);
     QString def = QString("0x%1").arg(0xfeedfaceull, 16, 16, QChar('0'));
-    edit->setText(def);
-    edit->setMaximumWidth(135);
-    // Line Length: sign plus/minus, '0x' and 16 digits
-    edit->setMaxLength(19);
-    //edit->setInputMask(tr("#NHHHHHHHHHHHHHHHH"));
+    edit_->setText(def);
+    edit_->setMaxLength(19);
+    edit_->setFixedWidth(fm.width(def) + 8);
+    edit_->setFixedHeight(fm.height() + 2);
+
+    setMinimumWidth(edit_->width() + fm.width(name_) + 16);
+    setMinimumHeight(edit_->height());
 }
 
-void RegWidget::slotUpdate(QString &name, uint64_t val) {
-    if (name_ == name) {
-        value_ = val;
+void RegWidget::slotRegisterValue(uint64_t idx, uint64_t val) {
+    if (idx != idx_) {
+        return;
     }
+    value_ = val;
+    QString def = QString("0x%1").arg(value_, 16, 16, QChar('0'));
+    edit_->setText(def);
 }
 
 }  // namespace debugger

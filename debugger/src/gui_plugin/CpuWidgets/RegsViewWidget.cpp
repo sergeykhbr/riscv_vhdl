@@ -26,7 +26,7 @@ static const uint64_t BASE_ADDR_DSU_REGS = 0x80090200;
 
 
 RegsViewWidget::RegsViewWidget(IGui *igui, QWidget *parent) 
-    : QWidget(parent) {
+    : UnclosableWidget(parent) {
     igui_ = igui;
 
     setWindowTitle(tr("Registers"));
@@ -44,13 +44,15 @@ RegsViewWidget::RegsViewWidget(IGui *igui, QWidget *parent)
     gridLayout->setContentsMargins(4, 4, 4, 4);
     setLayout(gridLayout);
 
-    setMinimumSize(530, 330);
+    minSizeApplied_ = false;
+
+    qRegisterMetaType<uint64_t>("uint64_t");
 }
 
 
 void RegsViewWidget::handleResponse(AttributeType *req, AttributeType *resp) {
-    RISCV_printf(NULL, LOG_INFO, "[%" RV_PRI64 "x] val=%" RV_PRI64 "x",
-        (*req)[1].to_uint64(), resp->to_uint64());
+    uint64_t reg_idx = ((*req)[1].to_uint64() - BASE_ADDR_DSU_REGS) / 8;
+    emit signalRegisterValue(reg_idx, resp->to_uint64());
 }
 
 void RegsViewWidget::slotConfigure(AttributeType *cfg) {
@@ -81,7 +83,7 @@ void RegsViewWidget::slotTargetStateChanged(bool running) {
     AttributeType cmdRdReg;
     cmdRdReg.from_config("['read',0x80090200,8]");
     for (unsigned i = 0; i < 32; i++) {
-        cmdRdReg[1].make_uint64(0x80090200 + 0x8 * i);
+        cmdRdReg[1].make_uint64(BASE_ADDR_DSU_REGS + 0x8 * i);
         igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), 
                                &cmdRdReg);
     }
@@ -89,13 +91,13 @@ void RegsViewWidget::slotTargetStateChanged(bool running) {
 }
 
 int RegsViewWidget::widgetIndexByName(const char *regname) {
-    int ret = -1;
-    for (int i = 0; i < sizeof(REG_NAMES_LAYOUT)/sizeof(const char *); i++) {
+    unsigned regs_total = sizeof(REG_NAMES_LAYOUT)/sizeof(const char *);
+    for (unsigned i = 0; i < regs_total; i++) {
         if (strcmp(regname, REG_NAMES_LAYOUT[i]) == 0) {
-            return i;
+            return static_cast<int>(i);
         }
     }
-    return ret;
+    return -1;
 }
 
 void RegsViewWidget::addRegWidget(AttributeType &reg_cfg) {
@@ -110,9 +112,17 @@ void RegsViewWidget::addRegWidget(AttributeType &reg_cfg) {
 
     pnew = new RegWidget(&reg_cfg, this);
     gridLayout->addWidget(pnew, line + 1, col);
+    connect(this, SIGNAL(signalRegisterValue(uint64_t, uint64_t)), 
+            pnew, SLOT(slotRegisterValue(uint64_t, uint64_t)));
 
     AttributeType item_cfg;
     item_cfg.make_list(2);
+
+    if (!minSizeApplied_) {
+        minSizeApplied_ = true;
+        emit signalResize(QSize(3 * (pnew->minimumWidth() + 10), 
+                          12 * (pnew->minimumHeight() + 5)));
+    }
 }
 
 

@@ -5,5 +5,7 @@
 Debug
 Release
 test.log
-libgui
+linuxbuild
+win32build
+win64build
 moc_*.h

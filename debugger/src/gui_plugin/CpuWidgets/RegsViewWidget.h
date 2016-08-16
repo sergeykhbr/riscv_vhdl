@@ -11,7 +11,7 @@
 #include "attribute.h"
 #include "igui.h"
 
-#include <QtWidgets/QWidget>
+#include "MainWindow/UnclosableWidget.h"
 #include <QtWidgets/qmdisubwindow.h>
 #include <QtWidgets/qgridlayout.h>
 #include <QtCore/qtimer.h>
@@ -19,7 +19,7 @@
 
 namespace debugger {
 
-class RegsViewWidget : public QWidget,
+class RegsViewWidget : public UnclosableWidget,
                        public IGuiCmdHandler {
     Q_OBJECT
 public:
@@ -28,8 +28,8 @@ public:
     /** IGuiCmdHandler */
     virtual void handleResponse(AttributeType *req, AttributeType *resp);
 
-//signals:
-//    void signalClose(QWidget *, AttributeType &);
+signals:
+    void signalRegisterValue(uint64_t reg_idx, uint64_t val);
 
 private slots:
     void slotConfigure(AttributeType *cfg);
@@ -46,6 +46,7 @@ private:
     QTimer *pollingTimer_;
 
     IGui *igui_;
+    bool minSizeApplied_;
 };
 
 }  // namespace debugger

@@ -1,12 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LocalDebuggerCommandArguments>-nocfg -sim -guix -script "runthis.cmdx"</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-nocfg -sim -gui -script "runthis.cmdx"</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerEnvironment>PATH=%PATH%;$(QT_PATH)/bin</LocalDebuggerEnvironment>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LocalDebuggerCommandArguments>-nocfg -sim -guix -script "runthis.cmd"</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-nocfg -sim -gui -script "runthis.cmdx"</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerEnvironment>PATH=%PATH%;$(QT_PATH)/bin</LocalDebuggerEnvironment>
   </PropertyGroup>

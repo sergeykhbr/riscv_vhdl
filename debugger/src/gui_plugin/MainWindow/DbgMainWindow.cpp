@@ -1,5 +1,6 @@
 #include "DbgMainWindow.h"
 #include "UnclosableQMdiSubWindow.h"
+#include "UnclosableWidget.h"
 #include "moc_DbgMainWindow.h"
 #include "CpuWidgets/RegsViewWidget.h"
 #include <QtWidgets/QtWidgets>
@@ -64,8 +65,8 @@ void DbgMainWindow::handleResponse(AttributeType *req, AttributeType *resp) {
     case 0x80090000ull:
         /** Bit[0] = Halt state when is High */
         val = resp->to_uint64();
-        if (actionRun_->isChecked() && IS_HALTED(val)
-            || !actionRun_->isChecked() && !IS_HALTED(val)) {
+        if ((actionRun_->isChecked() && IS_HALTED(val))
+            || (!actionRun_->isChecked() && !IS_HALTED(val))) {
             emit signalTargetStateChanged(val == 0);
         }
         break;
@@ -184,6 +185,7 @@ void DbgMainWindow::addWidgets() {
 
 
     QWidget *pnew;
+    UnclosableWidget *pnew_unclose;
     UnclosableQMdiSubWindow *subw;
 
     /** Docked Widgets: */
@@ -225,16 +227,16 @@ void DbgMainWindow::addWidgets() {
             pnew, SLOT(slotClosingMainForm()));
 
     subw = new UnclosableQMdiSubWindow(this);
-    subw->setWidget(pnew = new RegsViewWidget(igui_, this));
+    subw->setUnclosableWidget(pnew_unclose = new RegsViewWidget(igui_, this));
     mdiArea->addSubWindow(subw);
     connect(this, SIGNAL(signalConfigure(AttributeType *)),
-        pnew, SLOT(slotConfigure(AttributeType *)));
+        pnew_unclose, SLOT(slotConfigure(AttributeType *)));
     connect(actionRegs_, SIGNAL(triggered(bool)),
             subw, SLOT(slotVisible(bool)));
     connect(subw, SIGNAL(signalVisible(bool)), 
             actionRegs_, SLOT(setChecked(bool)));
     connect(this, SIGNAL(signalTargetStateChanged(bool)),
-            pnew, SLOT(slotTargetStateChanged(bool)));
+            pnew_unclose, SLOT(slotTargetStateChanged(bool)));
 
    
     subw->setVisible(false);

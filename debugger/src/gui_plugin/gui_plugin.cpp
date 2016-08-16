@@ -82,22 +82,18 @@ GuiPlugin::GuiPlugin(const char *name) : IService(name) {
 
 
     // Adding path to platform libraries:
+    char core_path[1024];
+    RISCV_get_core_folder(core_path, sizeof(core_path));
     QStringList paths = QApplication::libraryPaths();
-    std::string qt_path = std::string(getenv("QT_PATH"));
-    if (!qt_path.length()) {
-        RISCV_error("%s env.variable not set. Cannot start GUI.", 
-                    "QT_PATH");
-        RISCV_event_set(&eventUiInitDone_);
-    } else {
-        std::string qt_lib_path = qt_path + "bin";
-        paths.append(QString(qt_lib_path.c_str()));
-        paths.append(QString("platforms"));
-        QApplication::setLibraryPaths(paths);
+    std::string qt_path = std::string(core_path);
+    std::string qt_lib_path = qt_path;// + "qtlib";
+    paths.append(QString(qt_lib_path.c_str()));
+    paths.append(QString("platforms"));
+    QApplication::setLibraryPaths(paths);
 
-        ui_ = new UiThreadType(static_cast<IGui *>(this), 
-                                &eventUiInitDone_);
-        ui_->run();
-    }
+    ui_ = new UiThreadType(static_cast<IGui *>(this), 
+                            &eventUiInitDone_);
+    ui_->run();
 }
 
 GuiPlugin::~GuiPlugin() {

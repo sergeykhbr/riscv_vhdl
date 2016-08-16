@@ -29,6 +29,7 @@ class CoreService : public IService {
 public:
     CoreService(const char *name) : IService("CoreService") {
         RISCV_mutex_init(&mutex_printf);
+        //logLevel_.make_int64(LOG_DEBUG);  // default = LOG_ERROR
     }
 };
 static CoreService core_("core");

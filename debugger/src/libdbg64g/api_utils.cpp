@@ -326,16 +326,20 @@ void _load_plugins(AttributeType *list) {
         // reset errors
         dlerror();
         if ((hlib = dlopen(plugin_lib.c_str(), RTLD_LAZY)) == 0) {
+            RISCV_info("Can't open library '%s': %s", 
+                       plugin_lib.c_str(), dlerror());
             continue;
         }
         plugin_init = (plugin_init_proc)dlsym(hlib, "plugin_init");
         if (dlerror()) {
+            RISCV_info("Not found plugin_init() in file '%s'", 
+                       plugin_lib.c_str());
             dlclose(hlib);
             continue;
         }
 #endif
 
-        RISCV_info("Loading plugin file '%s'\n", plugin_lib.c_str());
+        RISCV_info("Loading plugin file '%s'", plugin_lib.c_str());
         plugin_init();
 
         AttributeType item;
