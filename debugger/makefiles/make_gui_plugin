@@ -42,7 +42,8 @@ SOURCES = \
 	UartWidget \
 	RegsViewWidget \
 	RegWidget \
-	ConsoleWidget
+	ConsoleWidget \
+	UnclosableWidget
 
 LIBS = \
 	m \
