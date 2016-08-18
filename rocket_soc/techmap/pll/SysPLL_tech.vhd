@@ -51,15 +51,7 @@ entity SysPLL_tech is
     --! ADC simulation clock = 26MHz (default).
     o_clk_adc         : out    std_logic;
     --! PLL locked status.
-    o_locked          : out    std_logic;
-    -- DDR3 specific signals
-    o_clk400_buf   : out std_logic;
-    o_clk200_buf   : out std_logic;
-    o_clk400_unbuf : out std_logic;
-    -- Phase Shift interface
-    i_PSEN         : in std_logic;
-    i_PSINCDEC     : in std_logic;
-    o_PSDONE       : out std_logic 
+    o_locked          : out    std_logic
   );
 end SysPLL_tech;
 
@@ -126,12 +118,6 @@ begin
 
 
   o_clk_bus <= pll_clk_bus;
-
-  -- DDR3 specific signals (not implemented yet)
-  o_clk400_buf   <= '0';
-  o_clk200_buf   <= '0';
-  o_clk400_unbuf <= '0';
-  o_PSDONE       <= '0';
 
   ------------------------------------
   -- Clock mux2:

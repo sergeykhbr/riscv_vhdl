@@ -40,11 +40,11 @@ begin
   CLK_OUT2 <= divider(1);
   LOCKED <= not RESET;
 
-  regs : process(CLK_IN1_P, RESET) 
+  regs : process(CLK_IN, RESET) 
   begin 
     if RESET = '1' then
        divider <= (others => '0');
-    elsif rising_edge(CLK_IN1_P) then 
+    elsif rising_edge(CLK_IN) then 
        divider <= divider + 1;
     end if;
   end process;

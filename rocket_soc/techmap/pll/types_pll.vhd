@@ -41,15 +41,7 @@ package types_pll is
     i_clk_adc         : in     std_logic;
     o_clk_bus         : out    std_logic;
     o_clk_adc         : out    std_logic;
-    o_locked          : out    std_logic;
-    -- DDR3 specific signals
-    o_clk400_buf   : out std_logic;
-    o_clk200_buf   : out std_logic;
-    o_clk400_unbuf : out std_logic;
-    -- Phase Shift interface
-    i_PSEN         : in std_logic;
-    i_PSINCDEC     : in std_logic;
-    o_PSDONE       : out std_logic );
+    o_locked          : out    std_logic );
   end component;
 
   --! @brief   Virtual Clock phase rotator.

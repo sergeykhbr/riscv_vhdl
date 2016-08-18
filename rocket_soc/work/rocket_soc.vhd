@@ -156,10 +156,6 @@ architecture arch_rocket_soc of rocket_soc is
   signal wClkBus    : std_ulogic; -- bus clock from the internal PLL (100MHz virtex6/40MHz Spartan6)
   signal wClkAdc    : std_ulogic; -- 26 MHz from the internal PLL
   signal wPllLocked : std_ulogic; -- PLL status signal. 0=Unlocked; 1=locked.
-      -- DDR3 specific signals
-  signal pll_clk_mem : std_logic;
-  signal pll_clk     : std_logic;
-  signal pll_rd_base : std_logic;
   
   signal uart1i : uart_in_type;
   signal uart1o : uart_out_type;
@@ -225,15 +221,7 @@ begin
     i_clk_adc   => ib_clk_adc,
     o_clk_bus   => wClkBus,
     o_clk_adc   => wClkAdc,
-    o_locked    => wPllLocked,
-    -- DDR3 specific signals
-    o_clk400_buf => pll_clk_mem,
-    o_clk200_buf => pll_clk,
-    o_clk400_unbuf => pll_rd_base,
-    -- Phase Shift interface
-    i_PSEN       => '0',
-    i_PSINCDEC   => '0',
-    o_PSDONE     => open
+    o_locked    => wPllLocked
   );
   wSysReset <= ib_rst or not wPllLocked;
 
