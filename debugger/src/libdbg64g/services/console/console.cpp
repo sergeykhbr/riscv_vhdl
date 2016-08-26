@@ -173,7 +173,8 @@ void ConsoleService::stepCallback(uint64_t t) {
 
 
 
-void ConsoleService::hapTriggered(EHapType type) {
+void ConsoleService::hapTriggered(IFace *isrc, EHapType type, 
+                                  const char *descr) {
     RISCV_event_set(&config_done_);
 }
 

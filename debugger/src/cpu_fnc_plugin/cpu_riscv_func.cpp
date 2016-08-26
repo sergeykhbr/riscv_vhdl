@@ -88,7 +88,8 @@ void CpuRiscV_Functional::predeleteService() {
     stop();
 }
 
-void CpuRiscV_Functional::hapTriggered(EHapType type) {
+void CpuRiscV_Functional::hapTriggered(IFace *isrc, EHapType type,
+                                       const char *descr) {
     RISCV_event_set(&config_done_);
 }
 
@@ -455,7 +456,11 @@ uint64_t CpuRiscV_Functional::read(uint16_t adr, uint64_t *val) {
 
 void CpuRiscV_Functional::halt() {
     CpuContextType *pContext = getpContext();
+    char reason[256];
     dbg_state_ = STATE_Halted;
+    RISCV_sprintf(reason, sizeof(reason), 
+                "[%" RV_PRI64 "d] pc:%016" RV_PRI64 "x: %08x \t CPU halted",
+                getStepCounter(), pContext->pc, cacheline_[0]);
 
     RISCV_printf0("[%" RV_PRI64 "d] pc:%016" RV_PRI64 "x: %08x \t CPU halted",
         getStepCounter(), pContext->pc, cacheline_[0]);

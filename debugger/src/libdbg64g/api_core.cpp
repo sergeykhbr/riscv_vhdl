@@ -129,7 +129,8 @@ extern "C" void RISCV_set_configuration(AttributeType *cfg) {
     for (unsigned i = 0; i < listHap_.size(); i++) {
         ihap = static_cast<IHap *>(listHap_[i].to_iface());
         if (ihap->getType() == HAP_ConfigDone) {
-            ihap->hapTriggered(HAP_ConfigDone);
+            ihap->hapTriggered(getInterface(IFACE_SERVICE), 
+                        HAP_ConfigDone, "Initial config done");
         }
     }
 }
@@ -160,6 +161,19 @@ extern "C" void RISCV_register_hap(IFace *ihap) {
     AttributeType item(ihap);
     listHap_.add_to_list(&item);
 }
+
+extern "C" void RISCV_trigger_hap(IFace *isrc, int type, 
+                                  const char *descr) {
+    IHap *ihap;
+    EHapType etype = static_cast<EHapType>(type);
+    for (unsigned i = 0; i < listHap_.size(); i++) {
+        ihap = static_cast<IHap *>(listHap_[i].to_iface());
+        if (ihap->getType() == etype) {
+            ihap->hapTriggered(isrc, etype, descr);
+        }
+    }
+}
+
 
 extern "C" IFace *RISCV_get_class(const char *name) {
     IClass *icls;
@@ -239,13 +253,8 @@ extern "C" void RISCV_break_simulation() {
         ith->breakSignal();
     }
 
-    IHap *ihap;
-    for (unsigned i = 0; i < listHap_.size(); i++) {
-        ihap = static_cast<IHap *>(listHap_[i].to_iface());
-        if (ihap->getType() == HAP_BreakSimulation) {
-            ihap->hapTriggered(HAP_BreakSimulation);
-        }
-    }
+    RISCV_trigger_hap(getInterface(IFACE_SERVICE),
+                      HAP_BreakSimulation, "Exiting");
 }
 
 }  // namespace debugger

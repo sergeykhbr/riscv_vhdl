@@ -49,6 +49,9 @@
     <ClCompile Include="..\..\src\gui_plugin\MainWindow\UnclosableWidget.cpp">
       <Filter>MainWindow</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\ControlWidget\PnpWidget.cpp">
+      <Filter>ControlWidget</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\api_types.h">
@@ -124,6 +127,12 @@
     </ClInclude>
     <ClInclude Include="..\..\src\gui_plugin\MainWindow\UnclosableWidget.h">
       <Filter>MainWindow</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\ControlWidget\moc_PnpWidget.h">
+      <Filter>ControlWidget</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\ControlWidget\PnpWidget.h">
+      <Filter>ControlWidget</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

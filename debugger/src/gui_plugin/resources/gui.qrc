@@ -1,5 +1,13 @@
 <!DOCTYPE RCC><RCC version="1.0">
 <qresource>
     <file>images/toggle.png</file>
+    <file>images/ml605_top.png</file>
+    <file>images/board_96x96.png</file>
+    <file>images/gpio_96x96.png</file>
+    <file>images/stepinto_96x96.png</file>
+    <file>images/start_96x96.png</file>
+    <file>images/pause_96x96.png</file>
+    <file>images/cpu_96x96.png</file>
+    <file>images/serial_96x96.png</file>
 </qresource>
 </RCC>

@@ -53,14 +53,16 @@ public:
     /** IHostIO */
     virtual uint64_t write(uint16_t adr, uint64_t val);
     virtual uint64_t read(uint16_t adr, uint64_t *val);
-    virtual ICpuRiscV *getCpuInterface() { return static_cast<ICpuRiscV *>(this); }
+    virtual ICpuRiscV *getCpuInterface() {
+        return static_cast<ICpuRiscV *>(this);
+    }
 
     /** IClock */
     virtual uint64_t getStepCounter() { return cpu_context_.step_cnt; }
     virtual void registerStepCallback(IClockListener *cb, uint64_t t);
 
     /** IHap */
-    virtual void hapTriggered(EHapType type);
+    virtual void hapTriggered(IFace *isrc, EHapType type, const char *descr);
 
 protected:
     /** IThread interface */

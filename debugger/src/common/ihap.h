@@ -27,7 +27,8 @@ public:
 
     EHapType getType() { return type_; }
 
-    virtual void hapTriggered(EHapType type) =0;
+    virtual void hapTriggered(IFace *isrc, EHapType type,
+                             const char *descr) =0;
 
 protected:
     EHapType type_;

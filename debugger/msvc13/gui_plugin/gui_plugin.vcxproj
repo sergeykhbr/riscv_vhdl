@@ -184,6 +184,7 @@
     <ClCompile Include="..\..\src\common\attribute.cpp" />
     <ClCompile Include="..\..\src\common\autobuffer.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\ControlWidget\ConsoleWidget.cpp" />
+    <ClCompile Include="..\..\src\gui_plugin\ControlWidget\PnpWidget.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\RegsViewWidget.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\RegWidget.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\gui_plugin.cpp" />
@@ -204,6 +205,8 @@
     <ClInclude Include="..\..\src\common\iservice.h" />
     <ClInclude Include="..\..\src\gui_plugin\ControlWidget\ConsoleWidget.h" />
     <ClInclude Include="..\..\src\gui_plugin\ControlWidget\moc_ConsoleWidget.h" />
+    <ClInclude Include="..\..\src\gui_plugin\ControlWidget\moc_PnpWidget.h" />
+    <ClInclude Include="..\..\src\gui_plugin\ControlWidget\PnpWidget.h" />
     <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\moc_RegsViewWidget.h" />
     <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\moc_RegWidget.h" />
     <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\RegsViewWidget.h" />

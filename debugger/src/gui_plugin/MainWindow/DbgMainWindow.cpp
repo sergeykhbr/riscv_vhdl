@@ -2,6 +2,7 @@
 #include "UnclosableQMdiSubWindow.h"
 #include "UnclosableWidget.h"
 #include "moc_DbgMainWindow.h"
+#include "ControlWidget/PnpWidget.h"
 #include "CpuWidgets/RegsViewWidget.h"
 #include <QtWidgets/QtWidgets>
 
@@ -109,14 +110,34 @@ void DbgMainWindow::closeEvent(QCloseEvent *e) {
 }
 
 void DbgMainWindow::createActions() {
-    actionRegs_ = new QAction(QIcon(tr(":/images/toggle.png")),
+    actionRegs_ = new QAction(QIcon(tr(":/images/cpu_96x96.png")),
                               tr("&Regs"), this);
     actionRegs_->setToolTip(tr("CPU Registers view"));
     actionRegs_->setShortcut(QKeySequence("Ctrl+r"));
     actionRegs_->setCheckable(true);
     actionRegs_->setChecked(false);
 
-    actionRun_ = new QAction(QIcon(tr(":/images/toggle.png")),
+    actionPnp_ = new QAction(QIcon(tr(":/images/board_96x96.png")),
+                              tr("&Pnp"), this);
+    actionPnp_->setToolTip(tr("Plug'n'play information view"));
+    actionPnp_->setShortcut(QKeySequence("Ctrl+p"));
+    actionPnp_->setCheckable(true);
+    actionPnp_->setChecked(false);
+
+    actionGpio_ = new QAction(QIcon(tr(":/images/gpio_96x96.png")),
+                              tr("&GPIO"), this);
+    actionGpio_->setToolTip(tr("GPIO control view"));
+    actionGpio_->setCheckable(true);
+    actionGpio_->setChecked(false);
+
+
+    actionSerial_ = new QAction(QIcon(tr(":/images/serial_96x96.png")),
+                              tr("&Serial port"), this);
+    actionSerial_->setToolTip(tr("Serial port console view"));
+    actionSerial_->setCheckable(true);
+    actionSerial_->setChecked(true);
+
+    actionRun_ = new QAction(QIcon(tr(":/images/start_96x96.png")),
                              tr("&Run"), this);
     actionRun_ ->setToolTip(tr("Start Execution"));
     actionRun_ ->setShortcut(QKeySequence("F5"));
@@ -127,14 +148,14 @@ void DbgMainWindow::createActions() {
     connect(this, SIGNAL(signalTargetStateChanged(bool)),
             actionRun_ , SLOT(setChecked(bool)));
 
-    actionHalt_ = new QAction(QIcon(tr(":/images/toggle.png")),
+    actionHalt_ = new QAction(QIcon(tr(":/images/pause_96x96.png")),
                               tr("&Halt"), this);
     actionHalt_ ->setToolTip(tr("Stop Execution"));
     actionHalt_ ->setShortcut(QKeySequence("Ctrl+b"));
     connect(actionHalt_ , SIGNAL(triggered()),
             this, SLOT(slotActionTargetHalt()));
 
-    actionStep_ = new QAction(QIcon(tr(":/images/toggle.png")),
+    actionStep_ = new QAction(QIcon(tr(":/images/stepinto_96x96.png")),
                               tr("&Step Into"), this);
     actionStep_ ->setToolTip(tr("Instruction Step"));
     actionStep_ ->setShortcut(QKeySequence("F11"));
@@ -158,6 +179,7 @@ void DbgMainWindow::createActions() {
 
     QToolBar *toolbarCpu = addToolBar(tr("toolbarCpu"));
     toolbarCpu->addAction(actionRegs_);
+    toolbarCpu->addAction(actionPnp_);
 }
 
 void DbgMainWindow::createMenus() {
@@ -166,6 +188,10 @@ void DbgMainWindow::createMenus() {
     menu->addSeparator();
     
     menu = menuBar()->addMenu(tr("&Views"));
+    menu->addAction(actionSerial_);
+    menu->addAction(actionGpio_);
+    menu->addAction(actionPnp_);
+    menu->addSeparator();
     menu->addAction(actionRegs_);
     
     menu = menuBar()->addMenu(tr("&Help"));
@@ -208,26 +234,38 @@ void DbgMainWindow::addWidgets() {
     subw = new UnclosableQMdiSubWindow(this);
     subw->setWidget(pnew = new UartWidget(igui_, this));
     subw->setMinimumWidth(size().width() / 2);
+    subw->setWindowIcon(actionSerial_->icon());
     mdiArea->addSubWindow(subw);
     connect(this, SIGNAL(signalConfigure(AttributeType *)), 
             pnew, SLOT(slotConfigure(AttributeType *)));
+    connect(actionSerial_, SIGNAL(triggered(bool)),
+            subw, SLOT(slotVisible(bool)));
     connect(this, SIGNAL(signalRedrawByTimer()), 
             pnew, SLOT(slotRepaintByTimer()));
     connect(this, SIGNAL(signalClosingMainForm()), 
             pnew, SLOT(slotClosingMainForm()));
+    actionSerial_->setChecked(true);
+    subw->setVisible(actionSerial_->isChecked());
+
 
     subw = new UnclosableQMdiSubWindow(this);
     subw->setWidget(pnew = new GpioWidget(igui_, this));
+    subw->setWindowIcon(actionGpio_->icon());
     mdiArea->addSubWindow(subw);
     connect(this, SIGNAL(signalConfigure(AttributeType *)), 
             pnew, SLOT(slotConfigure(AttributeType *)));
+    connect(actionGpio_, SIGNAL(triggered(bool)),
+            subw, SLOT(slotVisible(bool)));
     connect(this, SIGNAL(signalRedrawByTimer()), 
               pnew, SLOT(slotRepaintByTimer()));
     connect(this, SIGNAL(signalClosingMainForm()), 
             pnew, SLOT(slotClosingMainForm()));
+    actionGpio_->setChecked(true);
+    subw->setVisible(actionGpio_->isChecked());
 
     subw = new UnclosableQMdiSubWindow(this);
     subw->setUnclosableWidget(pnew_unclose = new RegsViewWidget(igui_, this));
+    subw->setWindowIcon(actionRegs_->icon());
     mdiArea->addSubWindow(subw);
     connect(this, SIGNAL(signalConfigure(AttributeType *)),
         pnew_unclose, SLOT(slotConfigure(AttributeType *)));
@@ -237,9 +275,21 @@ void DbgMainWindow::addWidgets() {
             actionRegs_, SLOT(setChecked(bool)));
     connect(this, SIGNAL(signalTargetStateChanged(bool)),
             pnew_unclose, SLOT(slotTargetStateChanged(bool)));
+    actionRegs_->setChecked(false);
+    subw->setVisible(actionRegs_->isChecked());
 
-   
-    subw->setVisible(false);
+    subw = new UnclosableQMdiSubWindow(this);
+    subw->setUnclosableWidget(pnew_unclose = new PnpWidget(igui_, this));
+    subw->setWindowIcon(actionPnp_->icon());
+    mdiArea->addSubWindow(subw);
+    connect(this, SIGNAL(signalConfigure(AttributeType *)),
+        pnew_unclose, SLOT(slotConfigure(AttributeType *)));
+    connect(actionPnp_, SIGNAL(triggered(bool)),
+            subw, SLOT(slotVisible(bool)));
+    connect(subw, SIGNAL(signalVisible(bool)), 
+            actionPnp_, SLOT(setChecked(bool)));
+    actionPnp_->setChecked(false);
+    subw->setVisible(actionPnp_->isChecked());
 }
 
 void DbgMainWindow::slotTimerRedraw() {

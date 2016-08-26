@@ -72,7 +72,10 @@ private:
     QAction *actionHalt_;
     QAction *actionStep_;
     QAction *actionRegs_;
-
+    QAction *actionGpio_;
+    QAction *actionPnp_;
+    QAction *actionSerial_;
+    
     AttributeType config_;
     AttributeType listConsoleListeners_;
     AttributeType cmdReadStatus_;

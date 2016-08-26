@@ -45,7 +45,7 @@ public:
     virtual void registerConsoleListener(IFace *iface);
 
     /** IHap */
-    virtual void hapTriggered(EHapType type);
+    virtual void hapTriggered(IFace *isrc, EHapType type, const char *descr);
 
     /** IRawListener (serial) */
     virtual void updateData(const char *buf, int buflen);

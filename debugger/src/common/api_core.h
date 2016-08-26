@@ -196,6 +196,11 @@ void RISCV_register_class(IFace *icls);
 void RISCV_register_hap(IFace *ihap);
 
 /**
+ * @brief Triggersystem event (hap) from Service.
+ */
+void RISCV_trigger_hap(IFace *isrc, int type, const char *descr);
+
+/**
  * @brief Get registred class interface by its name.
  */
 IFace *RISCV_get_class(const char *name);

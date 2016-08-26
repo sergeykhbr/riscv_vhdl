@@ -9,6 +9,7 @@ EXPORTS
 	RISCV_get_global_settings
 	RISCV_register_class
 	RISCV_register_hap
+	RISCV_trigger_hap
 	RISCV_get_class
 	RISCV_create_service
 	RISCV_get_service
