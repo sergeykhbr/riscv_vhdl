@@ -308,6 +308,8 @@ I'm going to merge with the latest Rocket Core repository:
 indexes, instruction ERET removed, new set of instructions xRET was added etc).
 - GCC versions (5.x) becomes obsolete.
 - I intend to enable FPU by default and provide new GCC 6.x with --hard-float.
+- HostIO bus removed.
+- New DebugUnit from SiFive (or own implementation is under estimation).
 - Updated bootloader and FW will become available soon.
 
 ### Implemented functionality (v3.1)
