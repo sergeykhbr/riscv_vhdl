@@ -23,6 +23,10 @@ at the University of California, Berkeley.
 Parameterized generator of the Rocket-chip can be found here:
 [https://github.com/ucb-bar](https://github.com/ucb-bar)
 
+**Warning:** Use tag v3.1 or older to get verified on ML605 source codes.
+Main branch is in the transition stage on the latest User-Level spec. 2.1
+that is binary incompatible with prevision revisions (see below tag v4.0).
+
 ## System-on-Chip structure and performance
 
 ![SOC top](rocket_soc/docs/pics/soc_top.png)
@@ -294,6 +298,34 @@ could contain errors that are fixing with a small delay. Let me know if see one.
 
 
 ## Versions History
+
+### v4.0 under development
+
+I'm going to merge with the latest Rocket Core repository:
+
+- Support new revision of User-Level ISA Spec. 2.1 and Privileged spec. 1.9.
+- FW will be binary incompatible with the previous Rocket-chip CPU (changed CSR's 
+indexes, instruction ERET removed, new set of instructions xRET was added etc).
+- GCC versions (5.x) becomes obsolete.
+- I intend to enable FPU by default and provide new GCC 6.x with --hard-float.
+- Updated bootloader and FW will become available soon.
+
+### Implemented functionality (v3.1)
+
+To get branch *v3.1* use the following git command:
+
+    $ git clone -b v3.1 https://github.com/sergeykhbr/riscv_vhdl.git
+
+This is the last revision of the RISC-V SOC based on ISA version 1.9.
+All afterwards updates will be **binary incompatible** with this tag.
+Tag v3.1 adds:
+
+- New Zephyr Kernel with the shell autocompletion.
+- Significantly updated GUI of the debugger.
+
+**Use this tag v3.1 instead of latest revision because the main branch will
+be incompatible with the GCC 5.1.0!**
+
 
 ### Implemented functionality (v3.0)
 
