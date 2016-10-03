@@ -108,14 +108,14 @@ several steps:
 toolchain on [riscv.org](http://riscv.org/software-tools/). If you would like
 to use pre-build GCC binary files and libraries you can download it here:
 
-   [Ubuntu GNU GCC 6.1.0 toolchain RV64D (207MB)](http://www.gnss-sensor.com/index.php?LinkID=1017)  
-   [Ubuntu GNU GCC 6.1.0 toolchain RV64IMA (204MB)](http://www.gnss-sensor.com/index.php?LinkID=1018)  
+   [Ubuntu GNU GCC 6.1.0 toolchain RV64D (207MB)](http://www.gnss-sensor.com/index.php?LinkID=1018)  
+   [Ubuntu GNU GCC 6.1.0 toolchain RV64IMA (204MB)](http://www.gnss-sensor.com/index.php?LinkID=1017)  
 
    [(obsolete) Ubuntu GNU GCC 5.1.0 toolchain RV64IMA (256MB)](http://www.gnss-sensor.com/index.php?LinkID=1013)
 
-  GCC 5.1.0 is the legacy version for *riscv_vhdl* with tag **v3.1** or older.
-GCC build with *RV64IMA* suffix doesn't use hardware FPU (*--soft-float*).
-*RV64D* build requires FPU co-processor (*--hard-float*).
+  GCC 5.1.0 is the legacy version for *riscv_vhdl* with tag **v3.1** or older.  
+**RV64IMA** build doesn't use hardware FPU (*--soft-float*). **RV64D** build 
+requires FPU co-processor (*--hard-float*).
 
   Just after you download the toolchain unpack it and set environment variable
 as follows:
@@ -167,7 +167,7 @@ Copy *fwimage.hex* to rocket_soc subdirectory
 ### 3. Build FPGA bitfile for ML605 board (Virtex6)
 
 - Open project file for Xilinx ISE14.7 *prj/ml605/rocket_soc.xise*.
-- Edit configuration constants in file **work/comfig_common.vhd** if needed.
+- Edit configuration constants in file **work/config_common.vhd** if needed.
   (Skip this step by default).
 - Generate bit-file and load it into FPGA.
 
