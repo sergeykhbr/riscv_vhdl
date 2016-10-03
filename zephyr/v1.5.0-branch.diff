@@ -4417,7 +4417,7 @@ index 0000000..e34940e
 +CONFIG_CONSOLE_HAS_DRIVER=y
 +CONFIG_PRINTK=y
 diff --git a/drivers/console/console_handler_shell.c b/drivers/console/console_handler_shell.c
-index 17ce590..2f561ac 100644
+index 17ce590..8cf0235 100644
 --- a/drivers/console/console_handler_shell.c
 +++ b/drivers/console/console_handler_shell.c
 @@ -24,7 +24,7 @@
@@ -4429,17 +4429,15 @@ index 17ce590..2f561ac 100644
  #include <misc/printk.h>
  #include <misc/util.h>
  
-@@ -207,8 +207,8 @@ static void shell(int arg1, int arg2)
+@@ -207,7 +207,7 @@ static void shell(int arg1, int arg2)
  		}
  
  		/* Execute callback with arguments */
 -		if (cb(argc, argv) < 0) {
--			show_cmd_help(argc, argv);
 +		if (cb((int)argc, argv) < 0) {
-+			show_cmd_help((int)argc, argv);
+ 			show_cmd_help(argc, argv);
  		}
  
- 		nano_fiber_fifo_put(&avail_queue, cmd);
 @@ -236,7 +236,7 @@ static uint8_t completion(char *line, uint8_t len)
  		/* more commands match, print first match */
  		if (first_match && (common_chars < 0)) {
@@ -4791,10 +4789,10 @@ index 0000000..d2250f2
 +			NULL, NULL,
 +			PRIMARY, CONFIG_KERNEL_INIT_PRIORITY_DEVICE);
 diff --git a/drivers/timer/Kconfig b/drivers/timer/Kconfig
-index dd3f426..fd25a45 100644
+index 2ca5d3e..a0fa208 100644
 --- a/drivers/timer/Kconfig
 +++ b/drivers/timer/Kconfig
-@@ -151,6 +151,14 @@ config ALTERA_AVALON_TIMER
+@@ -159,6 +159,14 @@ config ALTERA_AVALON_TIMER
  	with Nios II and possibly other Altera soft CPUs. It provides the
  	standard "system clock driver" interfaces.
  
@@ -5507,7 +5505,7 @@ index 0000000..6dca0e4
 +
 +#endif
 diff --git a/include/device.h b/include/device.h
-index e02d119..30f2687 100644
+index e02d119..aeed9a1 100644
 --- a/include/device.h
 +++ b/include/device.h
 @@ -98,6 +98,9 @@ extern "C" {
@@ -5524,7 +5522,7 @@ index e02d119..30f2687 100644
  #define DEVICE_INIT(dev_name, drv_name, init_fn, data, cfg_info, level, prio) \
  	DEVICE_AND_API_INIT(dev_name, drv_name, init_fn, data, cfg_info, \
  			    level, prio, NULL)
-+#endif  // _WIN32
++#endif
  
  /**
   * @def DEVICE_NAME_GET
@@ -5586,25 +5584,26 @@ index 8b1f1c2..5b3c21f 100644
  	#error Arch not supported.
  #endif
 diff --git a/include/misc/shell.h b/include/misc/shell.h
-index 3759bba..cf75ad9 100644
+index 3759bba..7763583 100644
 --- a/include/misc/shell.h
 +++ b/include/misc/shell.h
-@@ -15,6 +15,8 @@
-  * See the License for the specific language governing permissions and
+@@ -16,6 +16,9 @@
   * limitations under the License.
   */
+ 
 +#ifndef __INCLUDE_SHELL_H__
 +#define __INCLUDE_SHELL_H__
- 
++
  #ifdef __cplusplus
  extern "C" {
-@@ -65,3 +67,4 @@ void shell_register_prompt_handler(shell_prompt_function_t handler);
+ #endif
+@@ -65,3 +68,4 @@ void shell_register_prompt_handler(shell_prompt_function_t handler);
  }
  #endif
  
 +#endif  // __INCLUDE_SHELL_H__
 diff --git a/include/misc/util.h b/include/misc/util.h
-index 3f53ec6..0305a67 100644
+index 3f53ec6..466fa70 100644
 --- a/include/misc/util.h
 +++ b/include/misc/util.h
 @@ -32,6 +32,22 @@ extern "C" {
@@ -5634,7 +5633,7 @@ index 3f53ec6..0305a67 100644
  	(((unsigned long)(x) + ((unsigned long)align - 1)) & \
  	 ~((unsigned long)align - 1))
  #define ROUND_DOWN(x, align) ((unsigned long)(x) & ~((unsigned long)align - 1))
-+#endif  // _WIN32/!_WIN32
++#endif
  
 +#if!defined INLINE
  #ifdef INLINED
@@ -5647,7 +5646,7 @@ index 3f53ec6..0305a67 100644
  #ifndef max
  #define max(a, b) (((a) > (b)) ? (a) : (b))
 diff --git a/include/nanokernel.h b/include/nanokernel.h
-index 0135833..704437c 100644
+index 0135833..8251096 100644
 --- a/include/nanokernel.h
 +++ b/include/nanokernel.h
 @@ -69,6 +69,8 @@ struct _nano_timeout {
@@ -5749,8 +5748,8 @@ index 0135833..704437c 100644
  	nano_thread_id_t fiber;
 -	uint32_t *base;
 -	uint32_t *next;
-+	uint32_t *base;         /** @warning Invalid for 64-bits architecture */
-+	uint32_t *next;         /** @warning Invalid for 64-bits architecture */
++	uint32_t *base; /** @warning Invalid for 64-bits architecture */
++	uint32_t *next; /** @warning Invalid for 64-bits architecture */
  #ifdef CONFIG_DEBUG_TRACING_KERNEL_OBJECTS
  	struct nano_stack *__next;
  #endif
@@ -5993,7 +5992,7 @@ index b5190f1..b0969d7 100644
  
  #if defined(CONFIG_NANOKERNEL) && defined(CONFIG_TICKLESS_IDLE)
 diff --git a/kernel/nanokernel/include/nano_internal.h b/kernel/nanokernel/include/nano_internal.h
-index 6a5f7ce..f89100b 100644
+index 6a5f7ce..8734fe8 100644
 --- a/kernel/nanokernel/include/nano_internal.h
 +++ b/kernel/nanokernel/include/nano_internal.h
 @@ -73,7 +73,7 @@ extern void _new_thread(char *pStack, unsigned stackSize,
@@ -6001,7 +6000,7 @@ index 6a5f7ce..f89100b 100644
  extern void _nano_fiber_swap(void);
  
 -extern unsigned int _Swap(unsigned int);
-+extern void *_Swap(int);
++extern void *_Swap(unsigned int);
  
  /* set and clear essential fiber/task flag */
  
@@ -6072,14 +6071,14 @@ index 22a5ea8..3fb657f 100644
  	}
  
 diff --git a/kernel/nanokernel/nano_init.c b/kernel/nanokernel/nano_init.c
-index 868093a..4478829 100644
+index 868093a..4366d8b 100644
 --- a/kernel/nanokernel/nano_init.c
 +++ b/kernel/nanokernel/nano_init.c
 @@ -214,6 +214,7 @@ static void nano_init(struct tcs *dummyOutContext)
  
  	dummyOutContext->flags = FIBER | ESSENTIAL;
  	dummyOutContext->prio = 0;
-+	dummyOutContext->intlock = 0;
++    dummyOutContext->intlock = 0;
  
  
  	/*
@@ -6251,7 +6250,7 @@ index 25a2fec..ba2ed3c 100644
  #error "The minimal libc library does not recognize the architecture!\n"
  #endif
 diff --git a/lib/libc/minimal/source/stdlib/strtol.c b/lib/libc/minimal/source/stdlib/strtol.c
-index 9617c2b..12b412b 100644
+index 9617c2b..b1adefd 100644
 --- a/lib/libc/minimal/source/stdlib/strtol.c
 +++ b/lib/libc/minimal/source/stdlib/strtol.c
 @@ -88,7 +88,7 @@ long strtol(const char *nptr, char **endptr, register int base)
@@ -6259,7 +6258,7 @@ index 9617c2b..12b412b 100644
  	 * overflow.
  	 */
 -	cutoff = neg ? -(unsigned long)LONG_MIN : LONG_MAX;
-+	cutoff = neg ? (unsigned long)(-((long)LONG_MIN)) : LONG_MAX;
++    cutoff = neg ? (unsigned long)(-((long)LONG_MIN)) : LONG_MAX;
  	cutlim = cutoff % (unsigned long)base;
  	cutoff /= (unsigned long)base;
  	for (acc = 0, any = 0;; c = *s++) {
@@ -7506,7 +7505,7 @@ index 0000000..8ab9fd0
 +#pragma GCC diagnostic pop
 +#endif
 diff --git a/samples/shell/src/main.c b/samples/shell/src/main.c
-index 9ed8032..c8fbf6a 100644
+index 9ed8032..5f7d103 100644
 --- a/samples/shell/src/main.c
 +++ b/samples/shell/src/main.c
 @@ -17,8 +17,11 @@
@@ -7521,7 +7520,7 @@ index 9ed8032..c8fbf6a 100644
  static int shell_cmd_ping(int argc, char *argv[])
  {
  	printk("pong\n");
-@@ -35,16 +38,35 @@ static int shell_cmd_ticks(int argc, char *argv[])
+@@ -35,16 +38,34 @@ static int shell_cmd_ticks(int argc, char *argv[])
  
  static int shell_cmd_highticks(int argc, char *argv[])
  {
@@ -7546,7 +7545,6 @@ index 9ed8032..c8fbf6a 100644
 +#endif
 +    return 0;
 +}
-+
  
  const struct shell_cmd commands[] = {
  	{ "ping", shell_cmd_ping },
@@ -7657,14 +7655,13 @@ index 449e6ad..da86c85 100644
  
  #define PHDRSZ sizeof(Elf32_Phdr)
 diff --git a/scripts/gen_offset_header/gen_offset_header.c b/scripts/gen_offset_header/gen_offset_header.c
-index 1ed29ce..0bd49b5 100644
+index 1ed29ce..4cc0869 100644
 --- a/scripts/gen_offset_header/gen_offset_header.c
 +++ b/scripts/gen_offset_header/gen_offset_header.c
-@@ -260,12 +260,19 @@ static int ehdrLoad(int fd)
- 	}
+@@ -261,11 +261,19 @@ static int ehdrLoad(int fd)
  
  	/* 64-bit ELF module not supported (for now) */
--
+ 
 +#ifdef ARCH_64BITS
 +	if (ehdr.e_ident[EI_CLASS] != ELFCLASS64)
 +	{
@@ -7681,7 +7678,7 @@ index 1ed29ce..0bd49b5 100644
  
  	/*
  	 * Dynamically determine the endianess of the host (in the absence of
-@@ -343,7 +350,7 @@ static int shdrsLoad(int fd)
+@@ -343,7 +351,7 @@ static int shdrsLoad(int fd)
   * @param pSymTblSize ptr to symbol table size
   * @returns 0 if found, -1 if not
   */
@@ -7690,7 +7687,7 @@ index 1ed29ce..0bd49b5 100644
  {
  	unsigned  ix;    /* loop index */
  
-@@ -536,8 +543,13 @@ static void headerAbsoluteSymbolsDump(int fd, FILE *fp, Elf32_Off symTblOffset,
+@@ -536,8 +544,13 @@ static void headerAbsoluteSymbolsDump(int fd, FILE *fp, Elf32_Off symTblOffset,
  					(strstr(&pStringTable[aSym.st_name],
  						 STRUCT_SIZ_SUFFIX) != NULL))
  			{
@@ -7704,193 +7701,3 @@ index 1ed29ce..0bd49b5 100644
  			}
  		}
  	}
-diff --git a/scripts/merge_config.sh b/scripts/merge_config.sh
-new file mode 100644
-index 0000000..ab7be9d
---- /dev/null
-+++ b/scripts/merge_config.sh
-@@ -0,0 +1,172 @@
-+#!/bin/sh
-+#  merge_config.sh - Takes a list of config fragment values, and merges
-+#  them one by one. Provides warnings on overridden values, and specified
-+#  values that did not make it to the resulting .config file (due to missed
-+#  dependencies or config symbol removal).
-+#
-+#  Portions reused from kconf_check and generate_cfg:
-+#  http://git.yoctoproject.org/cgit/cgit.cgi/yocto-kernel-tools/tree/tools/kconf_check
-+#  http://git.yoctoproject.org/cgit/cgit.cgi/yocto-kernel-tools/tree/tools/generate_cfg
-+#
-+#  Copyright (c) 2009-2010 Wind River Systems, Inc.
-+#  Copyright 2011 Linaro
-+#
-+#  This program is free software; you can redistribute it and/or modify
-+#  it under the terms of the GNU General Public License version 2 as
-+#  published by the Free Software Foundation.
-+#
-+#  This program is distributed in the hope that it will be useful,
-+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-+#  See the GNU General Public License for more details.
-+
-+clean_up() {
-+	rm -f $TMP_FILE
-+	exit
-+}
-+
-+trap clean_up HUP INT TERM
-+
-+usage() {
-+	echo "Usage: $0 [OPTIONS] [CONFIG [...]]"
-+	echo "  -h    display this help text"
-+	echo "  -m    only merge the fragments, do not execute the make command"
-+	echo "  -n    use allnoconfig instead of alldefconfig"
-+	echo "  -r    list redundant entries when merging fragments"
-+	echo "  -O    dir to put generated output files"
-+}
-+
-+RUNMAKE=true
-+ECHO=echo
-+ALLTARGET=alldefconfig
-+WARNREDUN=false
-+OUTPUT=.
-+
-+while true; do
-+	case $1 in
-+	"-n")
-+		ALLTARGET=allnoconfig
-+		shift
-+		continue
-+		;;
-+	"-q")
-+		ECHO=false
-+		shift
-+		continue
-+		;;
-+	"-m")
-+		RUNMAKE=false
-+		shift
-+		continue
-+		;;
-+	"-h")
-+		usage
-+		exit
-+		;;
-+	"-r")
-+		WARNREDUN=true
-+		shift
-+		continue
-+		;;
-+	"-O")
-+		if [ -d $2 ];then
-+			OUTPUT=$(echo $2 | sed 's/\/*$//')
-+		else
-+			echo "output directory $2 does not exist" 1>&2
-+			exit 1
-+		fi
-+		shift 2
-+		continue
-+		;;
-+	*)
-+		break
-+		;;
-+	esac
-+done
-+
-+if [ "$#" -lt 2 ] ; then
-+	usage
-+	exit
-+fi
-+
-+INITFILE=$1
-+shift;
-+
-+if [ ! -r "$INITFILE" ]; then
-+	echo "The base file '$INITFILE' does not exist.  Exit." >&2
-+	exit 1
-+fi
-+
-+MERGE_LIST=$*
-+SED_CONFIG_EXP="s/^\(# \)\{0,1\}\(CONFIG_[a-zA-Z0-9_]*\)[= ].*/\2/p"
-+TMP_FILE=$(mktemp ./.tmp.config.XXXXXXXXXX)
-+
-+echo "Using $INITFILE as base"
-+cat $INITFILE > $TMP_FILE
-+
-+# Merge files, printing warnings on overridden values
-+for MERGE_FILE in $MERGE_LIST ; do
-+	echo "Merging $MERGE_FILE"
-+	if [ ! -r "$MERGE_FILE" ]; then
-+		echo "The merge file '$MERGE_FILE' does not exist.  Exit." >&2
-+		exit 1
-+	fi
-+	CFG_LIST=$(sed -n "$SED_CONFIG_EXP" $MERGE_FILE)
-+
-+	for CFG in $CFG_LIST ; do
-+		grep -q -w $CFG $TMP_FILE
-+		if [ $? -eq 0 ] ; then
-+			PREV_VAL=$(grep -w $CFG $TMP_FILE)
-+			NEW_VAL=$(grep -w $CFG $MERGE_FILE)
-+			if [ "x$PREV_VAL" != "x$NEW_VAL" ] ; then
-+			$ECHO Value of $CFG is redefined by fragment $MERGE_FILE:
-+			$ECHO Previous  value: $PREV_VAL
-+			$ECHO New value:       $NEW_VAL
-+			$ECHO
-+			elif [ "$WARNREDUN" = "true" ]; then
-+			$ECHO Value of $CFG is redundant by fragment $MERGE_FILE:
-+			fi
-+			sed -i.bak "/$CFG[ =]/d" $TMP_FILE
-+			rm $TMP_FILE.bak
-+		fi
-+	done
-+	cat $MERGE_FILE >> $TMP_FILE
-+done
-+
-+if [ "$RUNMAKE" = "false" ]; then
-+	cp $TMP_FILE $OUTPUT/.config
-+	$ECHO "#"
-+	$ECHO "# merged configuration written to $OUTPUT/.config (needs make)"
-+	$ECHO "#"
-+	clean_up
-+	exit
-+fi
-+
-+# If we have an output dir, setup the O= argument, otherwise leave
-+# it blank, since O=. will create an unnecessary ./source softlink
-+OUTPUT_ARG=""
-+if [ "$OUTPUT" != "." ] ; then
-+	OUTPUT_ARG="O=$OUTPUT"
-+fi
-+
-+
-+# Use the merged file as the starting point for:
-+# alldefconfig: Fills in any missing symbols with Kconfig default
-+# allnoconfig: Fills in any missing symbols with # CONFIG_* is not set
-+make KCONFIG_ALLCONFIG=$TMP_FILE $OUTPUT_ARG $ALLTARGET
-+
-+
-+# Check all specified config values took (might have missed-dependency issues)
-+for CFG in $(sed -n "$SED_CONFIG_EXP" $TMP_FILE); do
-+
-+	REQUESTED_VAL=$(grep -w -e "$CFG" $TMP_FILE)
-+	ACTUAL_VAL=$(grep -w -e "$CFG" $OUTPUT/.config)
-+	if [ "x$REQUESTED_VAL" != "x$ACTUAL_VAL" ] ; then
-+		$ECHO "Value requested for $CFG not in final .config"
-+		$ECHO "Requested value:  $REQUESTED_VAL"
-+		$ECHO "Actual value:     $ACTUAL_VAL"
-+		$ECHO ""
-+	fi
-+done
-+
-+clean_up
-diff --git a/scripts/sanity_chk/arches/riscv64.ini b/scripts/sanity_chk/arches/riscv64.ini
-new file mode 100644
-index 0000000..118d26a
---- /dev/null
-+++ b/scripts/sanity_chk/arches/riscv64.ini
-@@ -0,0 +1,6 @@
-+[arch]
-+name = riscv64
-+platforms = riscv_gnss
-+
-+[riscv_gnss]
-+qemu_support = false
