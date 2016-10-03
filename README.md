@@ -152,12 +152,12 @@ Build elf-file:
 Create HEX-image for ROM initialization. I use own analog of the *elf2raw*
 utility named as *elf2raw64*. You can find it in GNU tools archive.
 
-    $ elf2raw64 outdir/zephyr.elf -h -f 262144 -l 8 -o fwimage.hex
+    $ elf2raw64 outdir/zephyr.elf -h -f 524288 -l 8 -o fwimage.hex
 
 Flags:
 
     -h        -- specify HEX format of the output file.
-    -f 262144 -- specify total ROM size in bytes.
+    -f 524288 -- specify total ROM size in bytes.
     -l 8      -- specify number of bytes in one line (AXI databus width). Default is 16.
 
 Copy *fwimage.hex* to rocket_soc subdirectory
