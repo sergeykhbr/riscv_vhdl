@@ -108,11 +108,14 @@ several steps:
 toolchain on [riscv.org](http://riscv.org/software-tools/). If you would like
 to use pre-build GCC binary files and libraries you can download it here:
 
-   [Ubuntu GNU GCC 5.1.0 toolchain RV64IMA (256MB)](http://www.gnss-sensor.com/index.php?LinkID=1013)
+   [Ubuntu GNU GCC 6.1.0 toolchain RV64D (207MB)](http://www.gnss-sensor.com/index.php?LinkID=1017)  
+   [Ubuntu GNU GCC 6.1.0 toolchain RV64IMA (204MB)](http://www.gnss-sensor.com/index.php?LinkID=1018)  
 
-  Feature of this GCC build is the configuration *RV64IMA* (without FPU).
-Default toolchain configuration generates makefile with hardware FPU that
-makes *libc* library incompatible with the *_-msoft-float_* compiler key.
+   [(obsolete) Ubuntu GNU GCC 5.1.0 toolchain RV64IMA (256MB)](http://www.gnss-sensor.com/index.php?LinkID=1013)
+
+  GCC 5.1.0 is the legacy version for *riscv_vhdl* with tag **v3.1** or older.
+GCC build with *RV64IMA* suffix doesn't use hardware FPU (*--soft-float*).
+*RV64D* build requires FPU co-processor (*--hard-float*).
 
   Just after you download the toolchain unpack it and set environment variable
 as follows:
@@ -120,25 +123,42 @@ as follows:
     $ tar -xzvf gnu-toolchain-rv64ima.tar.gz gnu-toolchain-rv64ima
     $ export PATH=/home/your_path/gnu-toolchain-rv64ima/bin:$PATH
 
-If you would like to generate hex-file used for ROM initialization you probably
-need tool *'elf2raw'* and *'libfesvr.so'* library that are not part of the GCC
-toolchain. I've put them into *'libexttools'* sub-folder and to use them your
-should copy files into *usr/bin* directory or define environment variable:
+If you would like to generate hex-file and use it for ROM initialization you probably
+need tool *'elf2raw'* and *'libfesvr.so'* library that is not linked properly with GCC. 
+To solve this problem add path to *libfesvr.so* to the environment variable:
 
-    $ export LD_LIBRARY_PATH=/home/your_path/gnu-toolchain-rv64ima/libexttools
+    $ export LD_LIBRARY_PATH=/home/your_path/gnu-toolchain-rv64ima/lib
+
+Or use my utility *elf2raw64* that I've put into 'gnu_toolchain-rv64/bin'. Have fun!
 
 ### 2. Build Zephyr OS
 
+Download and patch Zephyr kernel version 1.5.0:
+
+    $ mkdir zephyr_150
+    $ cd zephyr_150
+    $ git clone https://gerrit.zephyrproject.org/r/zephyr
+    $ cd zephyr
+    $ git checkout tags/v1.5.0
+    $ cp ../../riscv_vhdl/zephyr/v1.5.0-branch.diff .
+    $ git apply v1.5.0-branch.diff
+
 Build elf-file:
 
-    $ export ZEPHYR_BASE=/home/<repository_path>/zephyr/
+    $ export ZEPHYR_BASE=/home/zephyr_150/zephyr
     $ cd zephyr/samples/shell
     $ make ARCH=riscv64 CROSS_COMPILE=/home/your_path/gnu-toolchain-rv64ima/bin/riscv64-unknown-elf- BOARD=riscv_gnss 2>&1 | tee _err.log
 
 Create HEX-image for ROM initialization. I use own analog of the *elf2raw*
 utility named as *elf2raw64*. You can find it in GNU tools archive.
 
-    $ elf2raw64 outdir/zephyr.elf -h -f 262144 -o fwimage.hex
+    $ elf2raw64 outdir/zephyr.elf -h -f 262144 -l 8 -o fwimage.hex
+
+Flags:
+
+    -h        -- specify HEX format of the output file.
+    -f 262144 -- specify total ROM size in bytes.
+    -l 8      -- specify number of bytes in one line (AXI databus width). Default is 16.
 
 Copy *fwimage.hex* to rocket_soc subdirectory
 
@@ -325,8 +345,8 @@ Tag v3.1 adds:
 - New Zephyr Kernel with the shell autocompletion.
 - Significantly updated GUI of the debugger.
 
-**Use this tag v3.1 instead of latest revision because the main branch will
-be incompatible with the GCC 5.1.0!**
+**Use tag v3.1 and GCC 5.1.0 instead of latest revision while release v4.0
+won't ready. GCC 6.1.0 and 5.1.0 are binary incompatible either as SoC itself!**
 
 
 ### Implemented functionality (v3.0)
