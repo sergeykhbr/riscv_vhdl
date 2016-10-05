@@ -16,11 +16,10 @@ SECTIONS
 {
 
   /* text: test code section */
-  . = 0x100;
+  . = 0x1000;
   .text : 
   {
     ../linuxbuild/obj/crt.o(.text)
-    *(.text)
   }
 
   /* data segment */

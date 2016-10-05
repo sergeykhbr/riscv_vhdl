@@ -17,23 +17,7 @@
 #include "encoding.h"
 
   .text
-  .align 6
-user_trap_entry:
-  j trap_entry
-
-  .align 6
-supervisor_trap_entry:
-  j supervisor_trap_entry
-
-  .align 6
-hypervisor_trap_entry:
-  j hypervisor_trap_entry
-
-  .align 6
-machine_trap_entry:
-  j trap_entry
-
-  .align 6
+  .align 8
   .globl _start
 _start:
   li  x1, 0
@@ -79,6 +63,9 @@ _start:
   #li t0, MSTATUS_FS;   csrs mstatus, t0    # enable FPU
   #li t0, MSTATUS_XS;   csrs mstatus, t0    # enable accelerator
 
+  ##! init mtvec register (see https://github.com/riscv/riscv-test-env/blob/master/p/riscv_test.h)
+  la t0, trap_entry
+  csrw mtvec, t0
   ##! enable interrupts
   csrs mstatus, MSTATUS_IE
   csrs mie, MIP_MSIP
@@ -165,7 +152,8 @@ _start:
   ##! trap occurred. In addition to manipulating the privilege stack as described in Section 3.1.5, ERET
   ##! sets the pc to the value stored in the Xepc register, where X is the privilege mode (S, H, or M) in
   ##! which the ERET instruction was executed.
-  eret
+  #eret
+  mret
 
 trap_entry:
   ##! module CSRFile rises io_fatc signal that is cause of the 'ptw.invalidate'.
@@ -193,7 +181,7 @@ trap_entry:
   ld a1,COOP_REG_TP(tp)
   csrw mepc,a1
   _restore_context(tp)
-  eret
+  mret
 
 .section ".tdata.begin"
 .globl _tdata_begin

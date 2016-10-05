@@ -4,68 +4,18 @@ CC=riscv64-unknown-elf-gcc
 CPP=riscv64-unknown-elf-gcc
 OBJDUMP=riscv64-unknown-elf-objdump
 
-### C language options:
-# -std=c++11
-#       Determine the language standard for C and C++ languages only. 
-#     gnu99, c++11 and many others
-# -fno-common
-#       In C code, controls the placement of uninitialized global variables. 
-#     Unix C compilers have traditionally permitted multiple definitions of 
-#     such variables in different compilation units by placing the variables 
-#     in a common block. This is the behavior specified by -fcommon, and is 
-#     the default for GCC on most targets. On the other hand, this behavior 
-#     is not required by ISO C, and on some targets may carry a speed or code 
-#     size penalty on variable references. The -fno-common option specifies 
-#     that the compiler should place uninitialized global variables in the 
-#     data section of the object file, rather than generating them as common 
-#     blocks. This has the effect that if the same variable is declared 
-#     (without extern) in two different compilations, you get a multiple-definition 
-#     error when you link them. In this case, you must compile with -fcommon instead. 
-#     Compiling with -fno-common is useful on targets for which it provides 
-#     better performance, or if you wish to verify that the program will work on 
-#     other systems that always treat uninitialized variable declarations this way. 
-# -fno-builtin
-# -fno-builtin-<function>
-#       Don't recognize built-in functions that do not begin with ‘__builtin_’ 
-#     as prefix. See Other built-in functions provided by GCC, for details 
-#     of the functions affected, including those which are not built-in functions 
-#     when -ansi or -std options for strict ISO C conformance are used because 
-#     they do not have an ISO standard meaning.
-### Linker options:
-# -T <script>
-#       Use script as the linker script. This option is supported by most 
-#     systems using the GNU linker. On some targets, such as bare-board 
-#     targets without an operating system, the -T option may be required 
-#     when linking to avoid references to undefined symbols. 
-# -static   (!warning! linker not a compiler)
-#       On systems that support dynamic linking, this prevents linking with 
-#     the shared libraries. On other systems, this option has no effect.
-# -nostdlib
-#       Do not use the standard system startup files or libraries when linking. 
-#     No startup files and only the libraries you specify are passed to the linker,
-#     and options specifying linkage of the system libraries, such as -static-libgcc 
-#     or -shared-libgcc, are ignored.
-#       The compiler may generate calls to memcmp, memset, memcpy and memmove. 
-#     These entries are usually resolved by entries in libc. These entry points 
-#     should be supplied through some other mechanism when this option is specified.
-#       One of the standard libraries bypassed by -nostdlib and -nodefaultlibs 
-#     is libgcc.a, a library of internal subroutines which GCC uses to overcome 
-#     shortcomings of particular machines, or special needs for some languages. 
-#     (See Interfacing to GCC Output, for more discussion of libgcc.a.) In most 
-#     cases, you need libgcc.a even when you want to avoid other standard libraries. 
-#     In other words, when you specify -nostdlib or -nodefaultlibs you should usually 
-#     specify -lgcc as well. This ensures that you have no unresolved references 
-#     to internal GCC library subroutines. (An example of such an internal 
-#     subroutine is __main, used to ensure C++ constructors are called; see collect2.) 
-# -nostartfiles
-#       Do not use the standard system startup files when linking.
-#     The standard system libraries are used normally, unless -nostdlib 
-#     or -nodefaultlibs is used. 
+FPU_ENABLED=0
 
 CFLAGS= -c -g -static -std=gnu99 -O0 -fno-common -fno-builtin-printf
-CFLAGS += -march=RV64IMA     # RV64IMA (no floating point). maybe skipped.
-CFLAGS += -msoft-float       # binary incompatible with the default toolcahin.
-LDFLAGS=-T test.ld -nostdlib -nostartfiles 
+ifeq ($(FPU_ENABLED), 1)
+  CFLAGS += -march=RV64IMFD -DFPU_ENABLED
+else
+  CFLAGS += -march=RV64IMA
+  CFLAGS += -msoft-float
+endif
+
+
+LDFLAGS=-T test.ld -nostdlib -nostartfiles
 INCL_KEY=-I
 DIR_KEY=-B
 
@@ -102,10 +52,10 @@ all: boot
 
 boot: $(EXECUTABLE) $(DUMPFILE) $(HEXFILE)
 $(HEXFILE): $(EXECUTABLE)
-	#echo elf2raw64 $(addprefix $(ELF_DIR)/,$<) -h -f 8192 -o $(addprefix $(ELF_DIR)/,$(EXECUTABLE).hex)
-	#elf2raw64 $(addprefix $(ELF_DIR)/,$<) -h -f 8192 -o $(addprefix $(ELF_DIR)/,$(EXECUTABLE).hex)
-	echo elf2hex 16 512 $(addprefix $(ELF_DIR)/,$<) > $(addprefix $(ELF_DIR)/,$@)
-	elf2hex 16 512 $(addprefix $(ELF_DIR)/,$<) > $(addprefix $(ELF_DIR)/,$@)
+	echo elf2raw64 $(addprefix $(ELF_DIR)/,$<) -h -f 8192 -l 8 -b 0x00000000 -o $(addprefix $(ELF_DIR)/,$(EXECUTABLE).hex)
+	elf2raw64 $(addprefix $(ELF_DIR)/,$<) -h -f 8192 -l 8 -b 0x00000000 -o $(addprefix $(ELF_DIR)/,$(EXECUTABLE).hex)
+	#echo elf2hex 8 1024 $(addprefix $(ELF_DIR)/,$<) > $(addprefix $(ELF_DIR)/,$@)
+	#elf2hex 8 1024 $(addprefix $(ELF_DIR)/,$<) > $(addprefix $(ELF_DIR)/,$@)
 
 $(DUMPFILE): $(EXECUTABLE)
 	echo $(OBJDUMP) --disassemble-all --disassemble-zeroes --section=.text --section=.text.startup --section=.data $(addprefix $(ELF_DIR)/,$<) > $(addprefix $(ELF_DIR)/,$@)

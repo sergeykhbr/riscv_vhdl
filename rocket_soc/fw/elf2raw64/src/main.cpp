@@ -14,6 +14,7 @@ void printHelp()
     printf("    -h    generate ROM array file in HEX format\n");
     printf("    -f    define fixed image size in Bytes, otherwise the size will be computed\n");
     printf("    -l    bytes per line (with -h only). Default 16 bytes/128 bits.\n");
+    printf("    -b    Base address.\n");
     printf("    -o    output file name\n");
     printf("Example\n");
     printf("    elf2raw input_file_name -h -f 192168 -l 8 -o output_file_name\n");
@@ -30,6 +31,7 @@ int main(int argc, char* argv[])
     EOutputFormat outfmt = Format_RAW_IMAGE;
     uint32 uiFixedSizeBytes = 0;
     uint32 uiBytesPerLine = 16;
+    uint64 ullBaseAddress = ~0;
     int infile_index = 1;
     int outfile_index = 3;
     for (int i=1; i<argc; i++) {
@@ -41,6 +43,8 @@ int main(int argc, char* argv[])
             uiFixedSizeBytes = (uint32)strtol(argv[++i], NULL, 0);
         } else if (strcmp(argv[i], "-l") == 0) {  // bytes per hex-line
             uiBytesPerLine = (uint32)strtol(argv[++i], NULL, 0);
+        } else if (strcmp(argv[i], "-b") == 0) {  // bytes per hex-line
+            ullBaseAddress = (uint64)strtoll(argv[++i], NULL, 0);
         } else if (strcmp(argv[i], "-o") == 0) {  // output file name
             outfile_index = ++i;
         } else {
@@ -64,7 +68,7 @@ int main(int argc, char* argv[])
         elf.writeRawImage(out.c_str(), uiFixedSizeBytes);
         break;
     case Format_ROMHEX:
-        elf.writeRomHexArray(out.c_str(), uiBytesPerLine, uiFixedSizeBytes);
+        elf.writeRomHexArray(out.c_str(), ullBaseAddress, uiBytesPerLine, uiFixedSizeBytes);
         break;
     default:
         printHelp();

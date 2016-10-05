@@ -325,9 +325,14 @@ void ElfReader::writeRawImage(const char *file_name, uint32 fixed_size)
 }
 
 //****************************************************************************
-void ElfReader::writeRomHexArray(const char *file_name, uint32 bytes_per_line, uint32 fixed_size)
+void ElfReader::writeRomHexArray(const char *file_name, uint64 base_addr,
+                                 uint32 bytes_per_line, uint32 fixed_size)
 {
-    if (fixed_size && fixed_size < 4*src_img.iSizeWords) {
+    if (base_addr == ~0) {
+        base_addr = src_img.entry;
+    }
+
+    if (fixed_size && fixed_size < (4*src_img.iSizeWords + src_img.entry - base_addr)) {
         printf("Warning: defined size %d is less than actual size %d\n",
             fixed_size, 4*src_img.iSizeWords);
     }
@@ -336,31 +341,34 @@ void ElfReader::writeRomHexArray(const char *file_name, uint32 bytes_per_line, u
     char chRomFile[64];
     std::string rom_file_name(file_name);
     std::ofstream osRom(rom_file_name.c_str(), std::ios::out);
-    uint32 words_per_line = bytes_per_line / 4;
 
-    uint32 words_total;
+    uint32_t bytes_total, lines_total;
     if (fixed_size == 0) {
-        words_total = src_img.iSizeWords;
+        bytes_total = src_img.iSizeWords;
     } else {
-        words_total = (fixed_size + (bytes_per_line - 1)) / bytes_per_line;
+        bytes_total = fixed_size;
     }
+    lines_total = (bytes_total + (bytes_per_line - 1)) / bytes_per_line;
+    uint32_t words_per_line = bytes_per_line / 4;
 
-    int idx;
-    for (uint32 i = 0; i < words_total; i += words_per_line) {
-        for (uint32 n = words_per_line; n > 0; n--) {
-            idx = i + n - 1;
-            if (idx < src_img.iSizeWords) {
+    int idx = (int)((int64_t)base_addr - (int64_t)src_img.entry) / 4;
+    for (uint32_t i = 0; i < lines_total; i++) {
+        idx += (words_per_line);
+        for (uint32_t n = 0; n < words_per_line; n++) {
+            idx--;
+            if ((idx >= 0) && (idx < src_img.iSizeWords)) {
                 sprintf(chRomFile,"%08X", src_img.arr[idx].val);
             } else {
                 sprintf(chRomFile,"%08X", 0);
             }
             osRom << chRomFile;
         }
+        idx += (words_per_line);
         osRom << "\n";
     }
 
 
     osRom.close();
 
-    printf("HexRom was generated: %dx32 words\n", words_total);
+    printf("HexRom was generated: %dx%d lines\n", lines_total, 8*bytes_per_line);
 }

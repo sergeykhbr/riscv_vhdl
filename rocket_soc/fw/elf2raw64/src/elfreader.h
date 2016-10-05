@@ -62,6 +62,7 @@ public:
 
     bool isOpened() { return iElfFileSize != 0; }
     void writeRawImage(const char *file_name, uint32 fixed_size=0);
-    void writeRomHexArray(const char *file_name, uint32 bytes_per_line, uint32 fixed_size=0);
+    void writeRomHexArray(const char *file_name, uint64 base_addr,
+                          uint32 bytes_per_line, uint32 fixed_size=0);
 
 };

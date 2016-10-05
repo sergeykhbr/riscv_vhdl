@@ -35,6 +35,7 @@ void copy_image() {
      * Or skip this stage to avoid rewritting of externally loaded image.
      */
     tech = pnp->tech & 0xFF;
+
     if (tech != TECH_INFERRED && pnp->fwid == 0) {
         memcpy(sram, fwrom, FW_IMAGE_SIZE_BYTES);
     }
