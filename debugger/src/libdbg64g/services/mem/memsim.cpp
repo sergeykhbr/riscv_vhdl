@@ -60,7 +60,7 @@ void MemorySim::postinitService() {
     if (fp == NULL) {
         for (uint64_t i = 0; i < length_.to_uint64()/4; i++) {
             // NOP isntruction
-            reinterpret_cast<uint32_t *>(mem_)[i] = 0x00000013; 
+            reinterpret_cast<uint32_t *>(mem_)[i] = 0x00000013;  // intialize by NOPs
         }
         RISCV_error("Can't open '%s' file", initFile_.to_string());
         return;

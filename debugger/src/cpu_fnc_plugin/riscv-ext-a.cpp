@@ -37,7 +37,7 @@ void addIsaExtensionA(CpuContextType *data, AttributeType *out) {
     addInstr("LR_D",               "00010??00000?????011?????0101111", NULL, out);
     addInstr("SC_D",               "00011????????????011?????0101111", NULL, out);
     */
-    data->csr[CSR_mcpuid] |= (1LL << ('A' - 'A'));
+    data->csr[CSR_misa] |= (1LL << ('A' - 'A'));
 }
 
 }  // namespace debugger

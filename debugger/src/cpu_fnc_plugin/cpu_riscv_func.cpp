@@ -170,13 +170,16 @@ void CpuRiscV_Functional::reset() {
     pContext->pc = RESET_VECTOR;
     pContext->npc = RESET_VECTOR;
     pContext->exception = 0;
-    pContext->csr[CSR_mimpid]   = 0x0001;   // UC Berkeley Rocket repo
-    pContext->csr[CSR_mheartid] = 0;
+    pContext->csr[CSR_mvendorid] = 0x0001;   // UC Berkeley Rocket repo
+    pContext->csr[CSR_mhartid] = 0;
+    pContext->csr[CSR_marchid] = 0;
+    pContext->csr[CSR_mimplementationid] = 0;
     pContext->csr[CSR_mtvec]   = 0x100;     // Hardwired RO value
     pContext->csr[CSR_mip] = 0;             // clear pending interrupts
     pContext->csr[CSR_mie] = 0;             // disabling interrupts
     pContext->csr[CSR_mepc] = 0;
-    pContext->csr[CSR_mtdeleg] = 0;
+    pContext->csr[CSR_medeleg] = 0;
+    pContext->csr[CSR_mideleg] = 0;
     pContext->csr[CSR_mtime] = 0;
     pContext->csr[CSR_mtimecmp] = 0;
     pContext->csr[CSR_uepc] = 0;
@@ -184,9 +187,8 @@ void CpuRiscV_Functional::reset() {
     pContext->csr[CSR_hepc] = 0;
     csr_mstatus_type mstat;
     mstat.value = 0;
-    mstat.bits.IE = 0;
-    mstat.bits.PRV = PRV_LEVEL_M;           // Current privilege level
     pContext->csr[CSR_mstatus] = mstat.value;
+    pContext->cur_prv_level = PRV_LEVEL_M;           // Current privilege level
 }
 
 void CpuRiscV_Functional::handleTrap() {
@@ -195,27 +197,27 @@ void CpuRiscV_Functional::handleTrap() {
     mstatus.value = pContext->csr[CSR_mstatus];
 
     if ((pContext->exception == 0 && pContext->csr[CSR_mip] == 0)
-     || (mstatus.bits.PRV == PRV_LEVEL_M && mstatus.bits.IE == 0)) {
+     || (pContext->cur_prv_level == PRV_LEVEL_M && mstatus.bits.MIE == 0)) {
         return;
     }
 
     // All traps handle via machine mode while CSR mdelegate
     // doesn't setup other.
-    // @tod delegating
-    mstatus.bits.PRV3 = mstatus.bits.PRV;
-    mstatus.bits.IE3 = mstatus.bits.IE;
-    mstatus.bits.IE = 0;
-    mstatus.bits.PRV = PRV_LEVEL_M;
+    // @todo delegating
+    mstatus.bits.MPP = pContext->cur_prv_level;
+    mstatus.bits.MPIE = (mstatus.value >> pContext->cur_prv_level) & 0x1;
+    mstatus.bits.MIE = 0;
+    pContext->cur_prv_level = PRV_LEVEL_M;
     pContext->csr[CSR_mstatus] = mstatus.value;
 
-    uint64_t xepc = (mstatus.bits.PRV << 8) + 0x41;
+    uint64_t xepc = (pContext->cur_prv_level << 8) + 0x41;
     if (pContext->exception) {
         pContext->csr[xepc]    = pContext->pc;
     } else {
         // Software interrupt handled after instruction was executed
         pContext->csr[xepc]    = pContext->npc;
     }
-    pContext->npc = pContext->csr[CSR_mtvec] + 0x40 * mstatus.bits.PRV3;
+    pContext->npc = pContext->csr[CSR_mtvec] + 0x40 * mstatus.bits.MPP;
 
     pContext->exception = 0;
 }
@@ -280,81 +282,13 @@ void CpuRiscV_Functional::executeInstruction(IInstruction *instr,
                                              uint32_t *rpayload) {
 
     CpuContextType *pContext = getpContext();
-#if 0
-    if (pContext->pc == 0x0000000010000004) {// <_Swap>:)
-        RISCV_debug("[%" RV_PRI64 "d] tp=%08x; _Swap() enter. ra=%08x; a0=%016" RV_PRI64 "x", 
-            getStepCounter(),
-            (uint32_t)pContext->regs[tp],
-            (uint32_t)pContext->regs[ra],
-            pContext->regs[a0]
-            );
-    } else if (pContext->pc == 0x0000000010000128) {// <_Swap>:)
-        RISCV_debug("[%" RV_PRI64 "d] tp=%08x; _Swap() jr to task. ra=%08x; a0=%016" RV_PRI64 "x; t6=%016" RV_PRI64 "x", 
-            getStepCounter(),
-            (uint32_t)pContext->regs[tp],
-            (uint32_t)pContext->regs[ra],
-            pContext->regs[a0],
-            pContext->regs[t6]
-            );
-    } else if (pContext->pc == 0x00000000100001c0) {// <_Swap>:)
-        RISCV_debug("[%" RV_PRI64 "d] tp=%08x; _Swap() ret to fiber. ra=%08x; a0=%016" RV_PRI64 "x", 
-            getStepCounter(),
-            (uint32_t)pContext->regs[tp],
-            (uint32_t)pContext->regs[ra],
-            pContext->regs[a0]
-            );
-    }
-
-    if (pContext->pc == 0x00000000000002d0) { // <trap_entry>:
-        RISCV_debug("[%" RV_PRI64 "d] tp=%08x; FENCE: trap_entry() ra=%08x; a0=%016" RV_PRI64 "x; mepc=%016" RV_PRI64 "x", 
-            getStepCounter(),
-            (uint32_t)pContext->regs[tp],
-            (uint32_t)pContext->regs[ra],
-            pContext->regs[a0],
-            pContext->csr[CSR_mepc]
-            );
-    } else if (pContext->pc == 0x0000000010001078) { // <_timer_int_handler>:
-        RISCV_debug("[%" RV_PRI64 "d] tp=%08x; IRQ: _timer_int_handler() enter", 
-            getStepCounter(),
-            (uint32_t)pContext->regs[tp]
-            );
-    } else if (pContext->pc == 0x0000000010000c88) {// <uart_gnss_isr>:)
-        RISCV_debug("[%" RV_PRI64 "d] tp=%08x; IRQ: uart_gnss_isr() enter", 
-            getStepCounter(),
-            (uint32_t)pContext->regs[tp]
-            );
-    } else if (pContext->pc == 0x0000000010000234) {// <_IsrExit>:)
-        RISCV_debug("[%" RV_PRI64 "d] tp=%08x; _IsrExit() return. a0=%016" RV_PRI64 "x", 
-            getStepCounter(),
-            (uint32_t)pContext->regs[tp],
-            pContext->regs[a0]
-            );
-    } else if (pContext->pc == 0x00000000000003e8) {// <trap_entry>: eret)
-        RISCV_debug("[%" RV_PRI64 "d] tp=%08x; ERET:  trap_entry() ra=%08x; a0=%016" RV_PRI64 "x; mepc=%016" RV_PRI64 "x", 
-            getStepCounter(),
-            (uint32_t)pContext->regs[tp],
-            (uint32_t)pContext->regs[ra],
-            pContext->regs[a0],
-            pContext->csr[CSR_mepc]
-
-            );
-    }
-
-
-    if (pContext->pc == 0x00000000100017b0) {// <_fifo_put_non_preemptible>:)
-        RISCV_debug("[%" RV_PRI64 "d] tp=%08x; _fifo_put_non_preemptible(a0,data=%016" RV_PRI64 "x)", 
-            getStepCounter(),
-            (uint32_t)pContext->regs[tp],
-            pContext->regs[a1]
-            );
-    }
-#endif
     instr->exec(cacheline_, pContext);
 #if 0
     //if (pContext->pc >= 0x10000000) {
-    if ((pContext->pc >= 0x100000b4 && pContext->pc <= 0x10000130)
-    || (pContext->pc >= 0x10001ef4)
-    ) {
+    //if ((pContext->pc >= 0x100000b4 && pContext->pc <= 0x10000130)
+    //|| (pContext->pc >= 0x10001ef4)
+    //) 
+    {
     //if (pContext->pc >= 0x10001928 && pContext->pc <= 0x10001960) {
         RISCV_debug("[%" RV_PRI64 "d] %08x: %08x \t %4s <mstatus=%016" RV_PRI64 "x; ra=%016" RV_PRI64 "x; sp=%016" RV_PRI64 "x; tp=%016" RV_PRI64 "x>", 
             getStepCounter(),

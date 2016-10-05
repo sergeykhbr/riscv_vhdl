@@ -24,9 +24,11 @@ uint64_t readCSR(uint32_t idx, CpuContextType *data) {
 void writeCSR(uint32_t idx, uint64_t val, CpuContextType *data) {
     switch (idx) {
     // Read-Only registers
-    case CSR_mcpuid:
-    case CSR_mimpid:
-    case CSR_mheartid:
+    case CSR_misa:
+    case CSR_mvendorid:
+    case CSR_marchid:
+    case CSR_mimplementationid:
+    case CSR_mhartid:
         break;
     case CSR_mtime:
         break;
@@ -39,7 +41,6 @@ void writeCSR(uint32_t idx, uint64_t val, CpuContextType *data) {
         data->csr[idx] = val;
     }
 }
-
 
 /** 
  * @brief The CSRRC (Atomic Read and Clear Bit in CSR).
@@ -186,42 +187,113 @@ public:
 };
 
 /** 
- * @brief ERET (Environment Return)
+ * @brief MRET, HRET, SRET, or URET
  *
- * After handling a trap, the ERET instruction is used to return to the 
- * privilege level at which the trap occurred. In addition to manipulating 
- * the privilege stack as described in Section 3.1.5, ERET sets the pc to 
- * the value stored in the Xepc register, where X is the privilege mode 
- * (S, H, or M) in which the ERET instruction was executed. */
-class ERET : public IsaProcessor {
+ * These instructions are used to return from traps in M-mode, Hmode, 
+ * S-mode, or U-mode respectively. When executing an xRET instruction, 
+ * supposing x PP holds the value y, y IE is set to x PIE; the privilege 
+ * mode is changed to y; x PIE is set to 1; and x PP is set to U 
+ * (or M if user-mode is not supported).
+ *
+ * User-level interrupts are an optional extension and have been allocated 
+ * the ISA extension letter N. If user-level interrupts are omitted, the UIE 
+ * and UPIE bits are hardwired to zero. For all other supported privilege 
+ * modes x, the x IE, x PIE, and x PP fields are required to be implemented.
+ */
+class URET : public IsaProcessor {
 public:
-    ERET() : IsaProcessor("ERET", "00010000000000000000000001110011") {}
+    URET() : IsaProcessor("URET", "00000000001000000000000001110011") {}
 
     virtual void exec(uint32_t *payload, CpuContextType *data) {
         csr_mstatus_type mstatus;
         mstatus.value = readCSR(CSR_mstatus, data);
 
-        uint64_t xepc = (mstatus.bits.PRV << 8) + 0x41;
+        uint64_t xepc = (PRV_LEVEL_U << 8) + 0x41;
         data->npc = readCSR(static_cast<uint32_t>(xepc), data);
 
-        switch (mstatus.bits.PRV) {
-        case PRV_LEVEL_M:
-            mstatus.bits.PRV = mstatus.bits.PRV3;
-            mstatus.bits.IE = mstatus.bits.IE3;
-            break;
-        case PRV_LEVEL_H:
-            mstatus.bits.PRV = mstatus.bits.PRV2;
-            mstatus.bits.IE = mstatus.bits.IE2;
-            break;
-        case PRV_LEVEL_S:
-            mstatus.bits.PRV = mstatus.bits.PRV1;
-            mstatus.bits.IE = mstatus.bits.IE1;
-            break;
-        default:;
+        bool is_N_extension = false;
+        if (is_N_extension) {
+            mstatus.bits.UIE = mstatus.bits.UPIE;
+            mstatus.bits.UPIE = 1;
+            // User mode not changed.
+        } else {
+            mstatus.bits.UIE = 0;
+            mstatus.bits.UPIE = 0;
         }
+        data->cur_prv_level = PRV_LEVEL_U;
         writeCSR(CSR_mstatus, mstatus.value, data);
     }
 };
+
+/**
+ * @brief MRET return from super-user mode
+ */
+class SRET : public IsaProcessor {
+public:
+    SRET() : IsaProcessor("SRET", "00010000001000000000000001110011") {}
+
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
+        csr_mstatus_type mstatus;
+        mstatus.value = readCSR(CSR_mstatus, data);
+
+        uint64_t xepc = (PRV_LEVEL_S << 8) + 0x41;
+        data->npc = readCSR(static_cast<uint32_t>(xepc), data);
+
+        mstatus.bits.SIE = mstatus.bits.SPIE;
+        mstatus.bits.SPIE = 1;
+        data->cur_prv_level = mstatus.bits.SPP;
+        mstatus.bits.SPP = PRV_LEVEL_U;
+            
+        writeCSR(CSR_mstatus, mstatus.value, data);
+    }
+};
+
+/**
+ * @brief MRET return from hypervisor mode
+ */
+class HRET : public IsaProcessor {
+public:
+    HRET() : IsaProcessor("HRET", "00100000001000000000000001110011") {}
+
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
+        csr_mstatus_type mstatus;
+        mstatus.value = readCSR(CSR_mstatus, data);
+
+        uint64_t xepc = (PRV_LEVEL_H << 8) + 0x41;
+        data->npc = readCSR(static_cast<uint32_t>(xepc), data);
+
+        mstatus.bits.HIE = mstatus.bits.HPIE;
+        mstatus.bits.HPIE = 1;
+        data->cur_prv_level = mstatus.bits.HPP;
+        mstatus.bits.HPP = PRV_LEVEL_U;
+            
+        writeCSR(CSR_mstatus, mstatus.value, data);
+    }
+};
+
+/**
+ * @brief MRET return from machine mode
+ */
+class MRET : public IsaProcessor {
+public:
+    MRET() : IsaProcessor("MRET", "00110000001000000000000001110011") {}
+
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
+        csr_mstatus_type mstatus;
+        mstatus.value = readCSR(CSR_mstatus, data);
+
+        uint64_t xepc = (PRV_LEVEL_M << 8) + 0x41;
+        data->npc = readCSR(static_cast<uint32_t>(xepc), data);
+
+        mstatus.bits.MIE = mstatus.bits.MPIE;
+        mstatus.bits.MPIE = 1;
+        data->cur_prv_level = mstatus.bits.MPP;
+        mstatus.bits.MPP = PRV_LEVEL_U;
+            
+        writeCSR(CSR_mstatus, mstatus.value, data);
+    }
+};
+
 
 /** 
  * @brief FENCE (memory barrier)
@@ -259,11 +331,22 @@ void addIsaPrivilegedRV64I(CpuContextType *data, AttributeType *out) {
     addSupportedInstruction(new CSRRSI, out);
     addSupportedInstruction(new CSRRW, out);
     addSupportedInstruction(new CSRRWI, out);
-    addSupportedInstruction(new ERET, out);
+    addSupportedInstruction(new URET, out);
+    addSupportedInstruction(new SRET, out);
+    addSupportedInstruction(new HRET, out);
+    addSupportedInstruction(new MRET, out);
     addSupportedInstruction(new FENCE, out);
     addSupportedInstruction(new FENCE_I, out);
     // TODO:
     /*
+  def URET               = BitPat("b00000000001000000000000001110011")
+  def SRET               = BitPat("b00010000001000000000000001110011")
+  def HRET               = BitPat("b00100000001000000000000001110011")
+  def MRET               = BitPat("b00110000001000000000000001110011")
+  def DRET               = BitPat("b01111011001000000000000001110011")
+  def SFENCE_VM          = BitPat("b000100000100?????000000001110011")
+  def WFI                = BitPat("b00010000010100000000000001110011")  // wait for interrupt
+
     addInstr("SCALL",              "00000000000000000000000001110011", NULL, out);
     addInstr("SBREAK",             "00000000000100000000000001110011", NULL, out);
     addInstr("SRET",               "10000000000000000000000001110011", NULL, out);
@@ -281,9 +364,9 @@ void addIsaPrivilegedRV64I(CpuContextType *data, AttributeType *out) {
      * The 'U', 'S', and 'H' bits will be set if there is support for 
      * user, supervisor, and hypervisor privilege modes respectively.
      */
-    data->csr[CSR_mcpuid] |= (1LL << ('U' - 'A'));
-    data->csr[CSR_mcpuid] |= (1LL << ('S' - 'A'));
-    data->csr[CSR_mcpuid] |= (1LL << ('H' - 'A'));
+    data->csr[CSR_misa] |= (1LL << ('U' - 'A'));
+    data->csr[CSR_misa] |= (1LL << ('S' - 'A'));
+    data->csr[CSR_misa] |= (1LL << ('H' - 'A'));
 }
 
 }  // namespace debugger

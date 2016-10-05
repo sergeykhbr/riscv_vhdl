@@ -130,19 +130,25 @@ const char *const fpr_name[] = {
 
 union csr_mstatus_type {
     struct bits_type {
-        uint64_t IE     : 1;    // interrupts ena for current priv. mode
-        uint64_t PRV    : 2;    // current priv mode value
-        uint64_t IE1    : 1;
-        uint64_t PRV1   : 2;
-        uint64_t IE2    : 1;
-        uint64_t PRV2   : 2;
-        uint64_t IE3    : 1;
-        uint64_t PRV3   : 2;
-        uint64_t FS     : 2;    // RW: FPU context status
-        uint64_t XS     : 2;    // RW: extension context status
-        uint64_t MPRV   : 1;    // [16] Memory privilege bit
-        uint64_t VM     : 5;    // [21:17] Virtualization management field
-        uint64_t rsrv   : 41;
+        uint64_t UIE    : 1;    // [0]: User level interrupts ena for current priv. mode
+        uint64_t SIE    : 1;    // [1]: Super-User level interrupts ena for current priv. mode
+        uint64_t HIE    : 1;    // [2]: Hypervisor level interrupts ena for current priv. mode
+        uint64_t MIE    : 1;    // [3]: Machine level interrupts ena for current priv. mode
+        uint64_t UPIE   : 1;    // [4]: User level interrupts ena previous value (before interrupt)
+        uint64_t SPIE   : 1;    // [5]: Super-User level interrupts ena previous value (before interrupt)
+        uint64_t HPIE   : 1;    // [6]: Hypervisor level interrupts ena previous value (before interrupt)
+        uint64_t MPIE   : 1;    // [7]: Machine level interrupts ena previous value (before interrupt)
+        uint64_t SPP    : 1;    // [8]: One bit wide. Supper-user previously priviledged level
+        uint64_t HPP    : 2;    // [10:9]: the Hypervisor previous privilege mode
+        uint64_t MPP    : 2;    // [12:11]: the Machine previous privilege mode
+        uint64_t FS     : 2;    // [14:13]: RW: FPU context status
+        uint64_t XS     : 2;    // [16:15]: RW: extension context status
+        uint64_t MPRV   : 1;    // [17] Memory privilege bit
+        uint64_t PUM    : 1;    // [18]
+        uint64_t MXR    : 1;    // [19]
+        uint64_t rsrv1  : 4;    // [23:20]
+        uint64_t VM     : 5;    // [28:24] Virtualization management field (WARL)
+        uint64_t rsrv2  : 64-30;// [62:29]
         uint64_t SD     : 1;    // RO: [63] Bit summarizes FS/XS bits
     } bits;
     uint64_t value;
@@ -185,7 +191,7 @@ union csr_mip_type {
     uint64_t value;
 };
 
-static const uint64_t RESET_VECTOR      = 0x200;
+static const uint64_t RESET_VECTOR      = 0x1000;
 
 /**
  * @name PRV bits possible values:
@@ -205,25 +211,16 @@ static const uint64_t PRV_LEVEL_M       = 3;
  * @name CSR registers.
  */
 /// @{
-/** CPU description */
-static const uint16_t CSR_mcpuid        = 0xf00;
-/**
- * Vendor ID and revision number (See table 3.2)
- *
- * Bits[15:0] Source
- *      0000            CPU ID unimplemented *      0001            UC Berkeley Rocket repo
- *      0x0002–0x7FFE   Reserved for open-source repos *      ...             
- */
-static const uint16_t CSR_mimpid        = 0xf01;
-/**
- * @brief Thread id (the same as core).
- *
- * The mhartid register is an XLEN-bit read-only register containing 
- * the integer ID of the hardware thread running the code. This register must 
- * be readable in any implementation. Hart IDs might not necessarily be 
- * numbered contiguously in a multiprocessor system, but at least one hart must
- * have a hart ID of zero. */
-static const uint16_t CSR_mheartid      = 0xf10;
+/** ISA and extensions supported. */
+static const uint16_t CSR_misa              = 0xf10;
+/** Vendor ID. */
+static const uint16_t CSR_mvendorid         = 0xf11;
+/** Architecture ID. */
+static const uint16_t CSR_marchid           = 0xf12;
+/** Vendor ID. */
+static const uint16_t CSR_mimplementationid = 0xf13;
+/** Thread id (the same as core). */
+static const uint16_t CSR_mhartid           = 0xf14;
 /** Machine wall-clock time */
 static const uint16_t CSR_mtime         = 0x701;
 /** Software reset. */
@@ -233,22 +230,14 @@ static const uint16_t CSR_send_ipi      = 0x783;
 
 /** machine mode status read/write register. */
 static const uint16_t CSR_mstatus       = 0x300;
-/**
- * @brief The base address of the M-mode trap vector.
- *
- * Low Trap Vector Addresses:
- *      0x100 Trap from user-mode
- *      0x140 Trap from supervisor-mode
- *      0x180 Trap from hypervisor-mode
- *      0x1C0 Trap from machine-mode
- *      0x1FC Non-maskable interrupt(s)
- *      0x200 Reset vector
- */
-static const uint16_t CSR_mtvec         = 0x301;
-/** Machine trap delegation  */
-static const uint16_t CSR_mtdeleg       = 0x302;
+/** Machine exception delegation  */
+static const uint16_t CSR_medeleg       = 0x302;
+/** Machine interrupt delegation  */
+static const uint16_t CSR_mideleg       = 0x303;
 /** Machine interrupt enable */
 static const uint16_t CSR_mie           = 0x304;
+/** The base address of the M-mode trap vector. */
+static const uint16_t CSR_mtvec         = 0x305;
 /** Machine wall-clock timer compare value. */
 static const uint16_t CSR_mtimecmp      = 0x321;
 /** Scratch register for machine trap handlers. */

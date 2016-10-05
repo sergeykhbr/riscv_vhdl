@@ -227,7 +227,7 @@ void addIsaExtensionM(CpuContextType *data, AttributeType *out) {
     addInstr("MULHSU",             "0000001??????????010?????0110011", NULL, out);
     addInstr("MULHU",              "0000001??????????011?????0110011", NULL, out);
     */
-    data->csr[CSR_mcpuid] |= (1LL << ('M' - 'A'));
+    data->csr[CSR_misa] |= (1LL << ('M' - 'A'));
 }
 
 }  // namespace debugger

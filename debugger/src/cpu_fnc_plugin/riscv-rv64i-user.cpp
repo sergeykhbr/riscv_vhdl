@@ -1175,14 +1175,19 @@ void addIsaUserRV64I(CpuContextType *data, AttributeType *out) {
     addSupportedInstruction(new XOR, out);
     addSupportedInstruction(new XORI, out);
 
-    data->csr[CSR_mcpuid] = 0x8000000000000000LL;
-    data->csr[CSR_mcpuid] |= (1LL << ('I' - 'A'));
+    /** Base[XLEN-1:XLEN-2]
+     *      1 = 32
+     *      2 = 64
+     *      3 = 128
+     */
+    data->csr[CSR_misa] = 0x8000000000000000LL;
+    data->csr[CSR_misa] |= (1LL << ('I' - 'A'));
 }
 
 void generateInterrupt(uint64_t code, CpuContextType *data) {
     csr_mstatus_type mstatus;
     mstatus.value = data->csr[CSR_mstatus];
-    if (mstatus.bits.IE == 0 && mstatus.bits.PRV == PRV_LEVEL_M) {
+    if (mstatus.bits.MIE == 0 && data->cur_prv_level == PRV_LEVEL_M) {
         return;
     }
     /// @todo delegate interrupt to non-machine privilege level.

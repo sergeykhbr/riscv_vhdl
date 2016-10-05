@@ -35,7 +35,7 @@ public:
     }
 
 private:
-    static const int SYMB_IN_LINE = 32/2;
+    static const int SYMB_IN_LINE = 16/2;
     bool chishex(int s);
     uint8_t chtohex(int s);
 

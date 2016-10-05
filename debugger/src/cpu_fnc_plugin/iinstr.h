@@ -20,6 +20,7 @@ struct CpuContextType {
     uint64_t npc;
     uint64_t exception;
     uint64_t step_cnt;
+    uint64_t cur_prv_level;
     IBus *ibus;
     char disasm[256];
 };

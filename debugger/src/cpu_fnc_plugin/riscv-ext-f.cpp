@@ -84,7 +84,7 @@ void addIsaExtensionF(CpuContextType *data, AttributeType *out) {
     def FSCSR              = BitPat("b000000000011?????001?????1110011")
     def FRCSR              = BitPat("b00000000001100000010?????1110011")
     */
-    data->csr[CSR_mcpuid] |= (1LL << ('F' - 'A'));
+    data->csr[CSR_misa] |= (1LL << ('F' - 'A'));
 }
 
 }  // namespace debugger
