@@ -97,7 +97,7 @@ begin
     variable wWrite     : std_logic;
     variable wbWMask    : std_logic_vector(CFG_NASTI_DATA_BYTES-1 downto 0);    
     variable wbAxiSize  : std_logic_vector(2 downto 0);    
-    variable wbByteAddr : std_logic_vector(3 downto 0);    
+    variable wbByteAddr : std_logic_vector(2 downto 0);    
     variable wbBeatCnt  : integer;
 
   begin
@@ -125,8 +125,10 @@ begin
     vtlio.acquire_ready := '0';
     vtlio.probe_valid   := '0'; -- unused
     vtlio.release_ready := '0'; -- unused
+		vtlio.grant_bits_manager_id := '0';--new signal
+    vtlio.finish_ready  := '1'; --new signal
     vtlio.grant_valid   := '0';
-    vtlio.grant_bits_addr_beat       := "00";
+    vtlio.grant_bits_addr_beat       := "000";
     vtlio.grant_bits_client_xact_id  := "00";
     vtlio.grant_bits_manager_xact_id := "0000"; -- const
     vtlio.grant_bits_is_builtin_type := '1';    -- const
@@ -144,7 +146,10 @@ begin
 
     wbAddr := tloi.acquire_bits_addr_block 
             & tloi.acquire_bits_addr_beat 
-            & "0000";--wbByteAddr;
+            & "000";--wbByteAddr;
+    -- We cannot use here wbByteAddr because Rocket Core awaits 64-bits aligned.
+    -- Rocket itself get the upper 32-bits of 64-bits data if the address
+    -- has 4-bytes access (wbByteAddr=0x4) for an example!!!!
 
     vmsto.aw_valid        := tloi.acquire_valid and wWrite;
     vmsto.ar_valid        := tloi.acquire_valid and not wWrite;
@@ -247,13 +252,13 @@ begin
         else
           vtlio.grant_valid                := '0';
         end if;
-        vtlio.grant_bits_addr_beat       := r.rd_addr(5 downto 4);
+        vtlio.grant_bits_addr_beat       := r.rd_addr(5 downto 3);--!!  depends on AXI_DATA_WIDTH
         vtlio.grant_bits_client_xact_id  := r.rd_xact_id;
         vtlio.grant_bits_g_type          := r.rd_g_type;
         vtlio.grant_bits_data            := msti.r_data;
     elsif r.wstate = writting then
         vtlio.grant_valid               := msti.w_ready;
-        vtlio.grant_bits_addr_beat      := r.wr_addr(5 downto 4);
+        vtlio.grant_bits_addr_beat      := r.wr_addr(5 downto 3);--!!  depends on AXI_DATA_WIDTH
         vtlio.grant_bits_client_xact_id := r.wr_xact_id;
         vtlio.grant_bits_g_type         := r.wr_g_type;
         vtlio.grant_bits_data           := (others => '0');

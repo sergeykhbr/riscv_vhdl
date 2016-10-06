@@ -95,13 +95,14 @@ constant HTIF_WIDTH    : integer := 16;
   function isWrite(cmd : std_logic_vector(4 downto 0)) return std_logic;
   --def isWriteIntent(cmd: UInt) = isWrite(cmd) || cmd === M_PFW || cmd === M_XLR
 
-  --! <tilelink.scala> Object Acquire {}
-  constant ACQUIRE_GET_SINGLE_DATA_BEAT : std_logic_vector(2 downto 0) := "000";
-  constant ACQUIRE_GET_BLOCK_DATA       : std_logic_vector(2 downto 0) := "001"; -- 
-  constant ACQUIRE_PUT_SINGLE_DATA_BEAT : std_logic_vector(2 downto 0) := "010"; -- Single beat data.
-  constant ACQUIRE_PUT_BLOCK_DATA       : std_logic_vector(2 downto 0) := "011"; -- For acMultibeat data.
-  constant ACQUIRE_PUT_ATOMIC_DATA      : std_logic_vector(2 downto 0) := "100"; -- Single beat data. 64 bits width
-  constant ACQUIRE_PREFETCH_BLOCK       : std_logic_vector(2 downto 0) := "101";
+  --! <Definitions.scala> Object Acquire {}
+  constant ACQUIRE_GET_SINGLE_DATA_BEAT : std_logic_vector(2 downto 0) := "000"; -- Get a single beat of data
+  constant ACQUIRE_GET_BLOCK_DATA       : std_logic_vector(2 downto 0) := "001"; -- Get a whole block of data
+  constant ACQUIRE_PUT_SINGLE_DATA_BEAT : std_logic_vector(2 downto 0) := "010"; -- Put a single beat of data.
+  constant ACQUIRE_PUT_BLOCK_DATA       : std_logic_vector(2 downto 0) := "011"; -- Put  a whole block of data.
+  constant ACQUIRE_PUT_ATOMIC_DATA      : std_logic_vector(2 downto 0) := "100"; -- Performe an atomic memory op
+  constant ACQUIRE_GET_PREFETCH_BLOCK   : std_logic_vector(2 downto 0) := "101"; -- Prefetch a whole block of data
+  constant ACQUIRE_PUT_PREFETCH_BLOCK   : std_logic_vector(2 downto 0) := "110"; -- Prefetch a whole block of data, with intent to write
   
   --! <tilelink.scala> Object Grant {}
   constant GRANT_ACK_RELEASE          : std_logic_vector(3 downto 0) := "0000"; -- For acking Releases
@@ -120,17 +121,18 @@ constant HTIF_WIDTH    : integer := 16;
 
   --! @brief Memory Operation size decoder
   --! @details TileLink bus has encoded Memory Operation size
-  --!          in the union[8:6] bits of the acquire request.
+  --!          in the union[n+1:n] bits of the acquire request.
+  --! @warning Sign bit isn't transmitted in union since 20160930.
   constant MEMOP_XSIZE_TOTAL : integer := 8;
   type memop_xsize_type is array (0 to MEMOP_XSIZE_TOTAL-1) of std_logic_vector(2 downto 0);
   constant opSizeToXSize : memop_xsize_type := (
     MT_B => "000",
-    MT_BU => "000",
     MT_H => "001",
-    MT_HU => "001",
     MT_W => "010",
-    MT_WU => "010", --! unimplemented in scala
     MT_D => "011",
+    MT_BU => "100",
+    MT_HU => "101",
+    MT_WU => "110",
     MT_Q => conv_std_logic_vector(log2(CFG_NASTI_DATA_BYTES),3)
   );
 
@@ -138,37 +140,42 @@ constant HTIF_WIDTH    : integer := 16;
 type tile_cached_in_type is record
     acquire_ready : std_logic;
     grant_valid : std_logic;
-    grant_bits_addr_beat : std_logic_vector(1 downto 0);
+    grant_bits_addr_beat : std_logic_vector(2 downto 0);--1
     --! client's transaction id
     grant_bits_client_xact_id : std_logic_vector(1 downto 0);
     grant_bits_manager_xact_id : std_logic_vector(3 downto 0);
     grant_bits_is_builtin_type : std_logic;
     grant_bits_g_type : std_logic_vector(3 downto 0);
-    grant_bits_data : std_logic_vector(127 downto 0);
+    grant_bits_data : std_logic_vector(63 downto 0);--127
     probe_valid : std_logic;
     probe_bits_addr_block : std_logic_vector(25 downto 0);
     probe_bits_p_type : std_logic_vector(1 downto 0);
     release_ready : std_logic;
+		grant_bits_manager_id : std_logic;--new signal
+    finish_ready : std_logic; --new signal
 end record;
 
 type tile_cached_out_type is record
     acquire_valid : std_logic;
     acquire_bits_addr_block : std_logic_vector(25 downto 0);
     acquire_bits_client_xact_id : std_logic_vector(1 downto 0);
-    acquire_bits_addr_beat : std_logic_vector(1 downto 0);
+    acquire_bits_addr_beat : std_logic_vector(2 downto 0);--1
     acquire_bits_is_builtin_type : std_logic;
     acquire_bits_a_type : std_logic_vector(2 downto 0);
-    acquire_bits_union : std_logic_vector(16 downto 0);
-    acquire_bits_data : std_logic_vector(127 downto 0);
+    acquire_bits_union : std_logic_vector(10 downto 0);--16
+    acquire_bits_data : std_logic_vector(63 downto 0);--127
     grant_ready : std_logic;
     probe_ready : std_logic;
     release_valid : std_logic;
-    release_bits_addr_beat : std_logic_vector(1 downto 0);
+    release_bits_addr_beat : std_logic_vector(2 downto 0);--1
     release_bits_addr_block : std_logic_vector(25 downto 0);
     release_bits_client_xact_id : std_logic_vector(1 downto 0);
     release_bits_r_type : std_logic_vector(2 downto 0);
     release_bits_voluntary : std_logic;
-    release_bits_data : std_logic_vector(127 downto 0);
+    release_bits_data : std_logic_vector(63 downto 0);--127
+    finish_valid : std_logic;--new signal
+    finish_bits_manager_xact_id : std_logic_vector(3 downto 0);--new signal
+    finish_bits_manager_id : std_logic; --new signal
 end record;
 
 
@@ -213,11 +220,11 @@ constant host_out_none : host_out_type := (
   procedure procedureDecodeTileAcquire (
     a_type    : in std_logic_vector(2 downto 0);
     built_in  : in std_logic;
-    u         : in std_logic_vector(16 downto 0);
+    u         : in std_logic_vector(10 downto 0);--was 16
     write     : out std_logic;
     wmask     : out std_logic_vector(CFG_NASTI_DATA_BYTES-1 downto 0);
     axi_sz    : out std_logic_vector(2 downto 0);
-    byte_addr : out std_logic_vector(3 downto 0);
+    byte_addr : out std_logic_vector(2 downto 0);
     beat_cnt  : out integer
   );
 
@@ -573,11 +580,11 @@ package body types_rocket is
   procedure procedureDecodeTileAcquire(
     a_type    : in std_logic_vector(2 downto 0);
     built_in  : in std_logic;
-    u         : in std_logic_vector(16 downto 0);
+    u         : in std_logic_vector(10 downto 0);--was 16
     write     : out std_logic;
     wmask     : out std_logic_vector(CFG_NASTI_DATA_BYTES-1 downto 0);
     axi_sz    : out std_logic_vector(2 downto 0);
-    byte_addr : out std_logic_vector(3 downto 0);
+    byte_addr : out std_logic_vector(2 downto 0);
     beat_cnt  : out integer
   ) is
   begin
@@ -588,20 +595,26 @@ package body types_rocket is
       when ACQUIRE_GET_SINGLE_DATA_BEAT =>
           write := '0';
           wmask := (others => '0');
-          byte_addr := u(12 downto 9);--tst.block.byte_addr;
-          axi_sz := opSizeToXSize(conv_integer(u(8 downto 6)));
+          --! union used as: 
+          --!   addr[2:0] & op_sz[1:0] & mem_op_code[M_SZ-1:0] & alloc[0]
+          --!   [10:8][7:6][5:1][0]
+          byte_addr := u(10 downto 8);--tst.block.byte_addr;
+          axi_sz := opSizeToXSize(conv_integer(u(7 downto 6)));
           beat_cnt := 0;
-      when ACQUIRE_PREFETCH_BLOCK |
+      when ACQUIRE_GET_PREFETCH_BLOCK |
+           ACQUIRE_PUT_PREFETCH_BLOCK |
            ACQUIRE_GET_BLOCK_DATA =>
           -- cache line size / data bits width
           write := '0';
           wmask := (others => '0');
           byte_addr := (others => '0');
           axi_sz := conv_std_logic_vector(CFG_NASTI_ADDR_OFFSET,3);
-          beat_cnt := 3;--tlDataBeats-1; 
+          beat_cnt := 7;--3;--tlDataBeats-1; 
       when ACQUIRE_PUT_SINGLE_DATA_BEAT =>
           -- Single beat data.
           write := '1';
+          --! union used as: 
+          --!   wmask[log2(64)-1:0] & alloc[0]
           wmask := u(CFG_NASTI_DATA_BYTES downto 1);
           byte_addr := (others => '0');
           axi_sz := conv_std_logic_vector(CFG_NASTI_ADDR_OFFSET,3);
@@ -612,23 +625,23 @@ package body types_rocket is
           wmask := (others => '1');
           byte_addr := (others => '0');
           axi_sz := conv_std_logic_vector(CFG_NASTI_ADDR_OFFSET,3);
-          beat_cnt := 3;--tlDataBeats-1; 
+          beat_cnt := 7;--3;--tlDataBeats-1; 
       when ACQUIRE_PUT_ATOMIC_DATA =>
           -- Single beat data. 64 bits width
           write := '1';
-          if CFG_NASTI_DATA_BITS = 128 then
-              if u(12) = '0' then
-                  wmask(7 downto 0) := (others => '1');
-                  wmask(15 downto 8) := (others => '0');
-              else 
-                  wmask(7 downto 0) := (others => '0');
-                  wmask(15 downto 8) := (others => '1');
-              end if;
-          else
+          --if CFG_NASTI_DATA_BITS = 128 then
+          --    if u(12) = '0' then
+          --        wmask(7 downto 0) := (others => '1');
+          --        wmask(15 downto 8) := (others => '0');
+          --    else 
+          --        wmask(7 downto 0) := (others => '0');
+          --        wmask(15 downto 8) := (others => '1');
+          --    end if;
+          --else
               wmask := (others => '1');
-          end if;
+          --end if;
           byte_addr := (others => '0');
-          axi_sz := opSizeToXSize(conv_integer(u(8 downto 6)));
+          axi_sz := opSizeToXSize(conv_integer(u(7 downto 6)));
           beat_cnt := 0; 
       when others =>
           write := '0';
@@ -638,18 +651,24 @@ package body types_rocket is
           beat_cnt := 0;
       end case;
     else --! built_in = '0'
-      -- Cached request
+      --! Cached request
       case a_type is
       when CACHED_ACQUIRE_SHARED =>
+          --! Uncore/coherence/Metadata.scala
+          --!      union = op_code[4:0] & '1';
           write := '0';
           wmask := (others => '0');
-          byte_addr := u(12 downto 9);--tst.block.byte_addr;
-          axi_sz := opSizeToXSize(conv_integer(u(8 downto 6)));
+          byte_addr := u(10 downto 8);--tst.block.byte_addr;
+          axi_sz := opSizeToXSize(conv_integer(u(7 downto 6)));
           beat_cnt := 0;
       when CACHED_ACQUIRE_EXCLUSIVE =>
           -- Single beat data.
           write := '1';
-          wmask := u(CFG_NASTI_DATA_BYTES downto 1);
+          --! Uncore/coherence/Metadata.scala
+          --!      union = op_code[4:0] & '1';
+          --! unclear how to manage it.
+          --wmask := u(CFG_NASTI_DATA_BYTES downto 1);
+          wmask := (others => '1');
           byte_addr := (others => '0');
           axi_sz := conv_std_logic_vector(CFG_NASTI_ADDR_OFFSET,3);
           beat_cnt := 0;

@@ -331,7 +331,7 @@ end generate;
   boot0 : nasti_bootrom generic map (
     memtech  => CFG_MEMTECH,
     xindex   => CFG_NASTI_SLAVE_BOOTROM,
-    xaddr    => 0,
+    xaddr    => 16#00000#,
     xmask    => 16#ffffe#,
     sim_hexfile => CFG_SIM_BOOTROM_HEX
   ) port map (
@@ -667,7 +667,7 @@ end generate;
     xindex  => CFG_NASTI_SLAVE_PNP,
     xaddr   => 16#fffff#,
     xmask   => 16#fffff#,
-    tech    => CFG_MEMTECH
+    tech    => inferred--CFG_MEMTECH
   ) port map (
     sys_clk => wClkBus, 
     adc_clk => wClkAdc,

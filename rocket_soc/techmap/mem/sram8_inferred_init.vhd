@@ -15,6 +15,10 @@ use IEEE.STD_LOGIC_TEXTIO.ALL;
 use std.textio.all;
 library commonlib;
 use commonlib.types_common.all;
+--! AMBA system bus specific library.
+library ambalib;
+--! AXI4 configuration constants.
+use ambalib.types_amba4.all;
 
 entity sram8_inferred_init is
   generic (
@@ -33,15 +37,15 @@ end;
 
 architecture arch_sram8_inferred_init of sram8_inferred_init is
 
-constant FILE_IMAGE_LINES_TOTAL : integer := 16384;
 
 constant SRAM_LENGTH : integer := 2**abits;
+constant FILE_IMAGE_LINES_TOTAL : integer := SRAM_LENGTH/CFG_NASTI_DATA_BYTES;
 type ram_type is array (0 to SRAM_LENGTH-1) of std_logic_vector(7 downto 0);
 
 impure function init_ram(file_name : in string) return ram_type is
     file ram_file : text open read_mode is file_name;
     variable ram_line : line;
-    variable temp_bv : std_logic_vector(127 downto 0);
+    variable temp_bv : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
     variable temp_mem : ram_type;
 begin
     for i in 0 to (FILE_IMAGE_LINES_TOTAL-1) loop

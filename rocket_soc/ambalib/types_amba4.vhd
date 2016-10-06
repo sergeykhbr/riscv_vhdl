@@ -101,7 +101,7 @@ constant CFG_IRQ_TOTAL          : integer := CFG_IRQ_GPTIMERS + 1;
 --! User defined address ID bitwidth (aw_id / ar_id fields).
 constant CFG_ROCKET_ID_BITS      : integer := 5;
 --! Data bus bits width.
-constant CFG_NASTI_DATA_BITS     : integer := 128;
+constant CFG_NASTI_DATA_BITS     : integer := 64;--128;
 --! Data bus bytes width
 constant CFG_NASTI_DATA_BYTES    : integer := CFG_NASTI_DATA_BITS / 8;
 --! Address bus bits width.
@@ -815,6 +815,13 @@ begin
        oaddr(2) := iaddr(3);
        oaddr(3) := iaddr(0);
     end if;
+  elsif CFG_NASTI_DATA_BITS = 64 then
+    if mux(2) = '0' then
+       oaddr := iaddr;
+    else
+       oaddr(0) := iaddr(1);
+       oaddr(1) := iaddr(0);
+    end if;
   end if;
   return oaddr;
 end;
@@ -866,6 +873,18 @@ begin
        
        owstrb := iwstrb(3 downto 0) & iwstrb(15 downto 4);
     end if;
+  elsif CFG_NASTI_DATA_BITS = 64 and ena = '1' then
+    if mux(0) = '0' then
+       owaddr := iwaddr;
+       owdata := iwdata;
+       owstrb := iwstrb;
+    else
+       owaddr(0) := iwaddr(1);
+       owaddr(1) := iwaddr(0);
+       owdata(31 downto 0) := iwdata(63 downto 32);
+       owdata(63 downto 32) := iwdata(31 downto 0);
+       owstrb := iwstrb(3 downto 0) & iwstrb(7 downto 4);
+    end if;
   else
     owaddr := (others => (others => '0'));
     owdata := (others => '0');
@@ -896,6 +915,13 @@ begin
     else
        odata(31 downto 0) := idata(127 downto 96);
        odata(127 downto 32) := idata(95 downto 0);
+    end if;
+  elsif CFG_NASTI_DATA_BITS = 64 then
+    if mux(2) = '0' then
+       odata := idata;
+    else 
+       odata(31 downto 0) := idata(63 downto 32);
+       odata(63 downto 32) := idata(31 downto 0);
     end if;
   end if;
   return odata;

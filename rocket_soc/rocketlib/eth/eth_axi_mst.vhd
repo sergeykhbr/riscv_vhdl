@@ -133,11 +133,9 @@ begin
 
     when STATE_W =>
         vmsto.w_valid := '1';
-        case r.addr(3 downto 2) is
-        when "00" => vmsto.w_strb := X"000f";
-        when "01" => vmsto.w_strb := X"00f0";
-        when "10" => vmsto.w_strb := X"0f00";
-        when "11" => vmsto.w_strb := X"f000";
+        case r.addr(2) is
+        when '0' => vmsto.w_strb := X"0f";
+        when '1' => vmsto.w_strb := X"f0";
         when others =>
         end case;
         if r.rx_tx = '0' then
@@ -147,7 +145,7 @@ begin
             wdata_lsb := tmsti.data(7 downto 0) & tmsti.data(15 downto 8)
                        & tmsti.data(23 downto 16) & tmsti.data(31 downto 24);
         end if;
-        vmsto.w_data := wdata_lsb & wdata_lsb & wdata_lsb & wdata_lsb;
+        vmsto.w_data := wdata_lsb & wdata_lsb;
         
         if aximi.w_ready = '1' then
             tready := r.rx_tx;

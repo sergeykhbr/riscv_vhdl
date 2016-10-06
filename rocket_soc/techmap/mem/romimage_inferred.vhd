@@ -43,6 +43,7 @@ impure function init_rom(file_name : in string) return rom_type is
     variable temp_bv : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
     variable temp_mem : rom_type;
 begin
+    --report "!!!!!!The value 'ROM_LENGTH' is " & integer'image(ROM_LENGTH);
     for i in 0 to (ROM_LENGTH-1) loop
         readline(rom_file, rom_line);
         hread(rom_line, temp_bv);

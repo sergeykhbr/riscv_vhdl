@@ -102,65 +102,66 @@ architecture arch_rocket_l1only of rocket_l1only is
 
 	COMPONENT RocketTile
 	PORT(
-		clk : IN std_logic;
+		clock : IN std_logic;
 		reset : IN std_logic;
 		io_cached_0_acquire_ready : IN std_logic;
-		io_cached_0_grant_valid : IN std_logic;
-		io_cached_0_grant_bits_addr_beat : IN std_logic_vector(1 downto 0);
-		io_cached_0_grant_bits_client_xact_id : IN std_logic_vector(1 downto 0);
-		io_cached_0_grant_bits_manager_xact_id : IN std_logic_vector(3 downto 0);
-		io_cached_0_grant_bits_is_builtin_type : IN std_logic;
-		io_cached_0_grant_bits_g_type : IN std_logic_vector(3 downto 0);
-		io_cached_0_grant_bits_data : IN std_logic_vector(127 downto 0);
+		io_cached_0_acquire_valid : OUT std_logic;
+		io_cached_0_acquire_bits_addr_block : OUT std_logic_vector(25 downto 0);
+		io_cached_0_acquire_bits_client_xact_id : OUT std_logic_vector(1 downto 0);
+		io_cached_0_acquire_bits_addr_beat : OUT std_logic_vector(2 downto 0);-- was 1
+		io_cached_0_acquire_bits_is_builtin_type : OUT std_logic;
+		io_cached_0_acquire_bits_a_type : OUT std_logic_vector(2 downto 0);
+		io_cached_0_acquire_bits_union : OUT std_logic_vector(10 downto 0);
+		io_cached_0_acquire_bits_data : OUT std_logic_vector(63 downto 0);--was 127
+		io_cached_0_probe_ready : OUT std_logic;
 		io_cached_0_probe_valid : IN std_logic;
 		io_cached_0_probe_bits_addr_block : IN std_logic_vector(25 downto 0);
 		io_cached_0_probe_bits_p_type : IN std_logic_vector(1 downto 0);
 		io_cached_0_release_ready : IN std_logic;
-		io_uncached_0_acquire_ready : IN std_logic;
-		io_uncached_0_grant_valid : IN std_logic;
-		io_uncached_0_grant_bits_addr_beat : IN std_logic_vector(1 downto 0);
-		io_uncached_0_grant_bits_client_xact_id : IN std_logic_vector(1 downto 0);
-		io_uncached_0_grant_bits_manager_xact_id : IN std_logic_vector(3 downto 0);
-		io_uncached_0_grant_bits_is_builtin_type : IN std_logic;
-		io_uncached_0_grant_bits_g_type : IN std_logic_vector(3 downto 0);
-		io_uncached_0_grant_bits_data : IN std_logic_vector(127 downto 0);
-		io_host_reset : IN std_logic;
-		io_host_id : IN std_logic;
-		io_host_csr_req_valid : IN std_logic;
-		io_host_csr_req_bits_rw : IN std_logic;
-		io_host_csr_req_bits_addr : IN std_logic_vector(11 downto 0);
-		io_host_csr_req_bits_data : IN std_logic_vector(63 downto 0);
-		io_host_csr_resp_ready : IN std_logic;          
-		io_cached_0_acquire_valid : OUT std_logic;
-		io_cached_0_acquire_bits_addr_block : OUT std_logic_vector(25 downto 0);
-		io_cached_0_acquire_bits_client_xact_id : OUT std_logic_vector(1 downto 0);
-		io_cached_0_acquire_bits_addr_beat : OUT std_logic_vector(1 downto 0);
-		io_cached_0_acquire_bits_is_builtin_type : OUT std_logic;
-		io_cached_0_acquire_bits_a_type : OUT std_logic_vector(2 downto 0);
-		io_cached_0_acquire_bits_union : OUT std_logic_vector(16 downto 0);
-		io_cached_0_acquire_bits_data : OUT std_logic_vector(127 downto 0);
-		io_cached_0_grant_ready : OUT std_logic;
-		io_cached_0_probe_ready : OUT std_logic;
 		io_cached_0_release_valid : OUT std_logic;
-		io_cached_0_release_bits_addr_beat : OUT std_logic_vector(1 downto 0);
+		io_cached_0_release_bits_addr_beat : OUT std_logic_vector(2 downto 0);--was 1
 		io_cached_0_release_bits_addr_block : OUT std_logic_vector(25 downto 0);
 		io_cached_0_release_bits_client_xact_id : OUT std_logic_vector(1 downto 0);
 		io_cached_0_release_bits_voluntary : OUT std_logic;
 		io_cached_0_release_bits_r_type : OUT std_logic_vector(2 downto 0);
-		io_cached_0_release_bits_data : OUT std_logic_vector(127 downto 0);
+		io_cached_0_release_bits_data : OUT std_logic_vector(63 downto 0);-- was 127
+		io_cached_0_grant_ready : OUT std_logic;
+		io_cached_0_grant_valid : IN std_logic;
+		io_cached_0_grant_bits_addr_beat : IN std_logic_vector(2 downto 0);--was 1
+		io_cached_0_grant_bits_client_xact_id : IN std_logic_vector(1 downto 0);
+		io_cached_0_grant_bits_manager_xact_id : IN std_logic_vector(3 downto 0);
+		io_cached_0_grant_bits_is_builtin_type : IN std_logic;
+		io_cached_0_grant_bits_g_type : IN std_logic_vector(3 downto 0);
+		io_cached_0_grant_bits_data : IN std_logic_vector(63 downto 0);--was 127
+		io_cached_0_grant_bits_manager_id : IN std_logic;--new signal
+		io_cached_0_finish_ready : IN std_logic;--new signal
+    io_cached_0_finish_valid : OUT std_logic;--new signal
+    io_cached_0_finish_bits_manager_xact_id : OUT std_logic_vector(3 downto 0);--new signal
+    io_cached_0_finish_bits_manager_id : OUT std_logic;--new signal
+		io_uncached_0_acquire_ready : IN std_logic;
 		io_uncached_0_acquire_valid : OUT std_logic;
 		io_uncached_0_acquire_bits_addr_block : OUT std_logic_vector(25 downto 0);
 		io_uncached_0_acquire_bits_client_xact_id : OUT std_logic_vector(1 downto 0);
-		io_uncached_0_acquire_bits_addr_beat : OUT std_logic_vector(1 downto 0);
+		io_uncached_0_acquire_bits_addr_beat : OUT std_logic_vector(2 downto 0);-- was 1
 		io_uncached_0_acquire_bits_is_builtin_type : OUT std_logic;
 		io_uncached_0_acquire_bits_a_type : OUT std_logic_vector(2 downto 0);
-		io_uncached_0_acquire_bits_union : OUT std_logic_vector(16 downto 0);
-		io_uncached_0_acquire_bits_data : OUT std_logic_vector(127 downto 0);
+		io_uncached_0_acquire_bits_union : OUT std_logic_vector(10 downto 0);
+		io_uncached_0_acquire_bits_data : OUT std_logic_vector(63 downto 0);--was 127
 		io_uncached_0_grant_ready : OUT std_logic;
-		io_host_csr_req_ready : OUT std_logic;
-		io_host_csr_resp_valid : OUT std_logic;
-		io_host_csr_resp_bits : OUT std_logic_vector(63 downto 0);
-		io_host_debug_stats_csr : OUT std_logic
+		io_uncached_0_grant_valid : IN std_logic;
+		io_uncached_0_grant_bits_addr_beat : IN std_logic_vector(2 downto 0);--was 1
+		io_uncached_0_grant_bits_client_xact_id : IN std_logic_vector(1 downto 0);
+		io_uncached_0_grant_bits_manager_xact_id : IN std_logic_vector(3 downto 0);
+		io_uncached_0_grant_bits_is_builtin_type : IN std_logic;
+		io_uncached_0_grant_bits_g_type : IN std_logic_vector(3 downto 0);
+		io_uncached_0_grant_bits_data : IN std_logic_vector(63 downto 0);--was 127
+		io_hartid : IN std_logic_vector(63 downto 0);
+    io_interrupts_debug : IN std_logic;
+    io_interrupts_mtip : IN std_logic;
+    io_interrupts_msip : IN std_logic;
+    io_interrupts_meip : IN std_logic;
+    io_interrupts_seip : IN std_logic;
+    io_resetVector : IN std_logic_vector(63 downto 0)
 		);
 	END COMPONENT;
 
@@ -172,7 +173,7 @@ begin
   cpu_rst <= rst or soft_rst;
    
 	inst_tile: RocketTile PORT MAP(
-		clk => clk_sys,
+		clock => clk_sys,
 		reset => cpu_rst,
 		io_cached_0_acquire_ready => cti.acquire_ready,
 		io_cached_0_acquire_valid => cto.acquire_valid,
@@ -196,6 +197,8 @@ begin
 		io_cached_0_probe_bits_addr_block => cti.probe_bits_addr_block,
 		io_cached_0_probe_bits_p_type => cti.probe_bits_p_type,
 		io_cached_0_release_ready => cti.release_ready,
+		io_cached_0_grant_bits_manager_id => cti.grant_bits_manager_id,--new signal
+    io_cached_0_finish_ready => cti.finish_ready, --new signal
 		io_cached_0_release_valid => cto.release_valid,
 		io_cached_0_release_bits_addr_beat => cto.release_bits_addr_beat,
 		io_cached_0_release_bits_addr_block => cto.release_bits_addr_block,
@@ -203,6 +206,9 @@ begin
 		io_cached_0_release_bits_voluntary => cto.release_bits_voluntary,
 		io_cached_0_release_bits_r_type => cto.release_bits_r_type,
 		io_cached_0_release_bits_data => cto.release_bits_data,
+    io_cached_0_finish_valid => cto.finish_valid,--new signal
+    io_cached_0_finish_bits_manager_xact_id => cto.finish_bits_manager_xact_id,--new signal
+    io_cached_0_finish_bits_manager_id => cto.finish_bits_manager_id, --new signal
 		io_uncached_0_acquire_ready => uti.acquire_ready,
 		io_uncached_0_acquire_valid => uto.acquire_valid,
 		io_uncached_0_acquire_bits_addr_block => uto.acquire_bits_addr_block,
@@ -220,19 +226,21 @@ begin
 		io_uncached_0_grant_bits_is_builtin_type => uti.grant_bits_is_builtin_type,
 		io_uncached_0_grant_bits_g_type => uti.grant_bits_g_type,
 		io_uncached_0_grant_bits_data => uti.grant_bits_data,
-		io_host_reset => htifoi.reset,
-		io_host_id => htifoi.id,
-		io_host_csr_req_ready => htifio.csr_req_ready,
-		io_host_csr_req_valid => htifoi.csr_req_valid,
-		io_host_csr_req_bits_rw => htifoi.csr_req_bits_rw,
-		io_host_csr_req_bits_addr => htifoi.csr_req_bits_addr,
-		io_host_csr_req_bits_data => htifoi.csr_req_bits_data,
-		io_host_csr_resp_ready => htifoi.csr_resp_ready,
-		io_host_csr_resp_valid => htifio.csr_resp_valid,
-		io_host_csr_resp_bits => htifio.csr_resp_bits,
-		io_host_debug_stats_csr => htifio.debug_stats_csr
+
+		io_hartid => (others => '0'),
+    io_interrupts_debug  => '0',
+    io_interrupts_mtip  => htifoi.csr_req_valid,
+    io_interrupts_msip  => '0',
+    io_interrupts_meip  => '0',
+    io_interrupts_seip  => '0',
+    io_resetVector => X"0000000000001000"
+
 	);
-  
+	htifio.csr_req_ready <= '1';
+	htifio.csr_resp_valid <= '1';
+	htifio.csr_resp_bits <= (others => '0');
+	htifio.debug_stats_csr <= '0';
+ 
  
   cbridge0 : AxiBridge 
   generic map (
