@@ -36,7 +36,9 @@ generic (
     --! Cached Tile AXI master index
     xindex1 : integer := 0;
     --! Uncached Tile AXI master index
-    xindex2 : integer := 1
+    xindex2 : integer := 1;
+    hartid : integer := 0;
+    reset_vector : integer := 16#1000#
 );
 port ( 
     rst      : in std_logic;
@@ -48,8 +50,7 @@ port (
     mstcfg1  : out nasti_master_config_type;
     msto2    : out nasti_master_out_type;
     mstcfg2  : out nasti_master_config_type;
-    htifoi   : in host_out_type;
-    htifio   : out host_in_type
+    interrupts : in std_logic_vector(CFG_CORE_IRQ_TOTAL-1 downto 0)
 );
   --! @}
 
@@ -57,6 +58,9 @@ end;
 
 --! @brief SOC top-level  architecture declaration.
 architecture arch_rocket_l1only of rocket_l1only is
+
+  constant CFG_HARTID : std_logic_vector(63 downto 0) := conv_std_logic_vector(hartid, 64);
+  constant CFG_RESET_VECTOR : std_logic_vector(63 downto 0) := conv_std_logic_vector(reset_vector, 64);
 
   constant xmstconfig1 : nasti_master_config_type := (
      xindex => xindex1,
@@ -226,21 +230,14 @@ begin
 		io_uncached_0_grant_bits_is_builtin_type => uti.grant_bits_is_builtin_type,
 		io_uncached_0_grant_bits_g_type => uti.grant_bits_g_type,
 		io_uncached_0_grant_bits_data => uti.grant_bits_data,
-
-		io_hartid => (others => '0'),
-    io_interrupts_debug  => '0',
-    io_interrupts_mtip  => htifoi.csr_req_valid,
-    io_interrupts_msip  => '0',
-    io_interrupts_meip  => '0',
-    io_interrupts_seip  => '0',
-    io_resetVector => X"0000000000001000"
-
+		io_hartid => CFG_HARTID,
+    io_interrupts_debug  => interrupts(CFG_CORE_IRQ_DEBUG),
+    io_interrupts_mtip  => interrupts(CFG_CORE_IRQ_MTIP),
+    io_interrupts_msip  => interrupts(CFG_CORE_IRQ_MSIP),
+    io_interrupts_meip  => interrupts(CFG_CORE_IRQ_MEIP),
+    io_interrupts_seip  => interrupts(CFG_CORE_IRQ_SEIP),
+    io_resetVector => CFG_RESET_VECTOR
 	);
-	htifio.csr_req_ready <= '1';
-	htifio.csr_resp_valid <= '1';
-	htifio.csr_resp_bits <= (others => '0');
-	htifio.debug_stats_csr <= '0';
- 
  
   cbridge0 : AxiBridge 
   generic map (

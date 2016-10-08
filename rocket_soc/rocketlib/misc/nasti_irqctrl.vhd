@@ -23,8 +23,7 @@ entity nasti_irqctrl is
   generic (
     xindex   : integer := 0;
     xaddr    : integer := 0;
-    xmask    : integer := 16#fffff#;
-    htif_index  : integer := 0
+    xmask    : integer := 16#fffff#
   );
   port 
  (
@@ -34,14 +33,11 @@ entity nasti_irqctrl is
     o_cfg  : out nasti_slave_config_type;
     i_axi  : in nasti_slave_in_type;
     o_axi  : out nasti_slave_out_type;
-    i_host : in host_in_type;
-    o_host : out host_out_type
+    o_irq_meip : out std_logic
   );
 end;
 
 architecture nasti_irqctrl_rtl of nasti_irqctrl is
-
-  constant CSR_MIPI : std_logic_vector(11 downto 0) := X"783";
 
   constant xconfig : nasti_slave_config_type := (
      xindex => xindex,
@@ -57,14 +53,9 @@ architecture nasti_irqctrl_rtl of nasti_irqctrl is
        of integer;
 
 
-type state_type is (idle, wait_grant, wait_resp);
-
 type registers is record
   bank_axi : nasti_slave_bank_type;
   
-  host_reset : std_logic_vector(1 downto 0);
-  --! Message multiplexer to form 128 request message of writting into CSR
-  state         : state_type;
   --! interrupt signal delay signal to detect interrupt positive edge
   irqs_z        : std_logic_vector(CFG_IRQ_TOTAL-1 downto 0);  
   irqs_zz       : std_logic_vector(CFG_IRQ_TOTAL-1 downto 0);  
@@ -88,7 +79,7 @@ end record;
 signal r, rin: registers;
 begin
 
-  comblogic : process(i_irqs, i_axi, i_host, r)
+  comblogic : process(i_irqs, i_axi, r)
     variable v : registers;
     variable raddr_reg : local_addr_array_type;
     variable waddr_reg : local_addr_array_type;
@@ -170,47 +161,14 @@ begin
       end if;
     end loop;
 
-    case r.state is
-      when idle =>
-        if w_generate_ipi = '1' then
-            v.state := wait_grant;
-        end if;
-      when wait_grant =>
-           if (i_host.grant(htif_index) and i_host.csr_req_ready) = '1' then
-               v.state := wait_resp;
-           end if;
-      when wait_resp =>
-        if i_host.csr_resp_valid = '1' then
-            v.state := idle;
-        end if;
-      when others =>
-    end case;
 
     o_axi <= functionAxi4Output(r.bank_axi, rdata);
-
-    if r.state = wait_grant then
-      o_host.csr_req_valid     <= '1';
-      o_host.csr_req_bits_rw   <= '1';
-      o_host.csr_req_bits_addr <= CSR_MIPI;
-      o_host.csr_req_bits_data <= X"0000000000000001";
-    else
-      o_host.csr_req_valid     <= '0';
-      o_host.csr_req_bits_rw   <= '0';
-      o_host.csr_req_bits_addr <= (others => '0');
-      o_host.csr_req_bits_data <= (others => '0');
-    end if;
-
-    -- delayed reset (!!!previously accidentaly was ='1' check with L2)
-    v.host_reset := r.host_reset(0) & '0'; 
+    o_irq_meip <= w_generate_ipi;
 
     rin <= v;
   end process;
 
   o_cfg  <= xconfig;
-
-  o_host.reset          <= '0';--r.host_reset(1);
-  o_host.id             <= '0';
-  o_host.csr_resp_ready <= '1';
 
 
   -- registers:
@@ -218,8 +176,6 @@ begin
   begin 
     if nrst = '0' then 
        r.bank_axi <= NASTI_SLAVE_BANK_RESET;
-       r.host_reset <= (others => '1');
-       r.state <= idle;
        r.irqs_mask <= (others => '1'); -- all interrupts disabled
        r.irqs_pending <= (others => '0');
        r.irqs_z <= (others => '0');

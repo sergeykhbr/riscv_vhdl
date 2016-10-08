@@ -168,16 +168,7 @@ architecture arch_rocket_soc of rocket_soc is
   signal axiso   : nasti_slaves_out_vector;
   signal slv_cfg : nasti_slave_cfg_vector;
   signal mst_cfg : nasti_master_cfg_vector;
-  
-  --! From modules-to-tile requests
-  signal htifo : host_out_vector;
-  --! Selected request with the highest priority.
-  signal htifo_mux : host_out_type;
-  
-  --! tile-to-module response.
-  signal htifi : host_in_type;
-  --! response with the 'grant' signal marking the exact recipient.
-  signal htifi_grant : host_in_type;
+  signal core_irqs : std_logic_vector(CFG_CORE_IRQ_TOTAL-1 downto 0);
   
   signal gnss_i : gns_in_type;
   signal gnss_o : gns_out_type;
@@ -208,6 +199,12 @@ begin
 
 
   --! @todo all other in/out signals via buffers:
+
+
+  --! Not imlpemented interrupts:
+  core_irqs(CFG_CORE_IRQ_MTIP) <= '0'; -- timer's
+  core_irqs(CFG_CORE_IRQ_MSIP) <= '0'; -- software's
+  core_irqs(CFG_CORE_IRQ_SEIP) <= '0'; -- superuser external interrupt
 
   ------------------------------------
   -- @brief Internal PLL device instance.
@@ -246,41 +243,12 @@ begin
     mstio  => aximi
   );
   
-  --! @brief HostIO controller.
-  htif0 : htifctrl port map (
-    clk    => wClkBus,
-    nrst   => wNReset,
-    srcsi  => htifo,
-    srcso  => htifo_mux,
-    htifii => htifi,
-    htifio => htifi_grant
-);
-
-L1toL2ena0 : if CFG_COMMON_L1toL2_ENABLE generate 
-  --! @brief RISC-V Processor core + Uncore.
-  cpu1 : rocket_l2cache generic map (
-    xindex1 => CFG_NASTI_MASTER_CACHED,
-    xindex2 => CFG_NASTI_MASTER_UNCACHED
-  ) port map ( 
-    rst      => wReset,
-    soft_rst => soft_rst,
-    clk_sys  => wClkBus,
-    slvo     => axisi,
-    msti     => aximi,
-    msto1    => aximo(CFG_NASTI_MASTER_CACHED),
-    mstcfg1  => mst_cfg(CFG_NASTI_MASTER_CACHED),
-    msto2    => aximo(CFG_NASTI_MASTER_UNCACHED),
-    mstcfg2  => mst_cfg(CFG_NASTI_MASTER_UNCACHED),
-    htifoi   => htifo_mux,
-    htifio   => htifi
-  );
-end generate;
-  
-L1toL2dis0 : if not CFG_COMMON_L1toL2_ENABLE generate 
   --! @brief RISC-V Processor core.
   cpu0 : rocket_l1only generic map (
     xindex1 => CFG_NASTI_MASTER_CACHED,
-    xindex2 => CFG_NASTI_MASTER_UNCACHED
+    xindex2 => CFG_NASTI_MASTER_UNCACHED,
+    hartid  => 0,
+    reset_vector => 16#1000#
   ) port map ( 
     rst      => wReset,
     soft_rst => soft_rst,
@@ -291,10 +259,8 @@ L1toL2dis0 : if not CFG_COMMON_L1toL2_ENABLE generate
     mstcfg1  => mst_cfg(CFG_NASTI_MASTER_CACHED),
     msto2    => aximo(CFG_NASTI_MASTER_UNCACHED),
     mstcfg2  => mst_cfg(CFG_NASTI_MASTER_UNCACHED),
-    htifoi   => htifo_mux,
-    htifio   => htifi
+    interrupts => core_irqs
   );
-end generate;
 
 
 dsu_ena : if CFG_DSU_ENABLE generate
@@ -305,23 +271,21 @@ dsu_ena : if CFG_DSU_ENABLE generate
   dsu0 : nasti_dsu generic map (
     xindex   => CFG_NASTI_SLAVE_DSU,
     xaddr    => 16#80080#,
-    xmask    => 16#fffe0#,
-    htif_index  => CFG_HTIF_SRC_DSU
+    xmask    => 16#fffe0#
   ) port map (
     clk    => wClkBus,
     nrst   => wNReset,
     o_cfg  => slv_cfg(CFG_NASTI_SLAVE_DSU),
     i_axi  => axisi,
     o_axi  => axiso(CFG_NASTI_SLAVE_DSU),
-    i_host => htifi_grant,
-    o_host => htifo(CFG_HTIF_SRC_DSU),
+    o_irq  => core_irqs(CFG_CORE_IRQ_DEBUG),
     o_soft_reset => soft_rst
   );
 end generate;
 dsu_dis : if not CFG_DSU_ENABLE generate
       slv_cfg(CFG_NASTI_SLAVE_DSU) <= nasti_slave_config_none;
       axiso(CFG_NASTI_SLAVE_DSU) <= nasti_slave_out_none;
-      htifo(CFG_HTIF_SRC_DSU) <= host_out_none;
+      core_irqs(CFG_CORE_IRQ_DEBUG) <= '0';
 end generate;
 
   ------------------------------------
@@ -433,8 +397,7 @@ end generate;
   irq0 : nasti_irqctrl generic map (
     xindex     => CFG_NASTI_SLAVE_IRQCTRL,
     xaddr      => 16#80002#,
-    xmask      => 16#FFFFF#,
-    htif_index => CFG_HTIF_SRC_IRQCTRL
+    xmask      => 16#FFFFF#
   ) port map (
     clk    => wClkBus,
     nrst   => bus_nrst,
@@ -442,8 +405,7 @@ end generate;
     o_cfg  => slv_cfg(CFG_NASTI_SLAVE_IRQCTRL),
     i_axi  => axisi,
     o_axi  => axiso(CFG_NASTI_SLAVE_IRQCTRL),
-    i_host => htifi_grant,
-    o_host => htifo(CFG_HTIF_SRC_IRQCTRL)
+    o_irq_meip => core_irqs(CFG_CORE_IRQ_MEIP)
   );
 
   ------------------------------------
@@ -667,7 +629,7 @@ end generate;
     xindex  => CFG_NASTI_SLAVE_PNP,
     xaddr   => 16#fffff#,
     xmask   => 16#fffff#,
-    tech    => inferred--CFG_MEMTECH
+    tech    => CFG_MEMTECH
   ) port map (
     sys_clk => wClkBus, 
     adc_clk => wClkAdc,

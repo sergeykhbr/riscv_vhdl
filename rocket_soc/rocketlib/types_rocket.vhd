@@ -32,26 +32,29 @@ package types_rocket is
 constant MEM_TAG_BITS  : integer := 6;
 --! @brief   SCALA generated value. Not used in VHDL.
 constant MEM_ADDR_BITS : integer := 26;
---! @brief   Multiplexing HTIF bus data width.
---! @details Not used in a case of disabled L2 cache.
---!          If L2 cached is enabled this value defines bitwise of the bus
---!          between \i Uncore module and external transievers.
---!          Standard message size for the HTID request is 128 bits, so this
---!          value defines number of beats required to transmit/recieve such
---!          message.
-constant HTIF_WIDTH    : integer := 16;
 --! @}
 
-  --! @name   HostIO modules unique IDs.
-  --! @{
-
-  --! Interrupt controller
-  constant CFG_HTIF_SRC_IRQCTRL : integer := 0;
-  --! Debug Support Unit (DSU)
-  constant CFG_HTIF_SRC_DSU     : integer := CFG_HTIF_SRC_IRQCTRL + 1;
-  --! Total number of HostIO initiators.
-  constant CFG_HTIF_SRC_TOTAL   : integer := CFG_HTIF_SRC_DSU + 1;
+  --! @name   Rocket Chip interrupt pins 
+  --!
+  --! Interrupts types:
+  --!    1. Local (inside tile) Software interrupts
+  --!    2. Local (inside tile) interrupts from timer
+  --!    3. External (global) interrupts from PLIC (Platorm-Level	Interrupt	Controller).
   --! @}
+  
+  constant CFG_CORE_IRQ_DEBUG : integer := 0;
+  --! Local Timer's interrupt (machine mode)
+  constant CFG_CORE_IRQ_MTIP  : integer := CFG_CORE_IRQ_DEBUG + 1;
+  --! Local sofware interrupt (machine mode)
+  constant CFG_CORE_IRQ_MSIP  : integer := CFG_CORE_IRQ_MTIP + 1;
+  --! External PLIC's interrupt (machine mode)
+  constant CFG_CORE_IRQ_MEIP  : integer := CFG_CORE_IRQ_MSIP + 1;
+  --! External PLIC's interrupt (superuser mode)
+  constant CFG_CORE_IRQ_SEIP  : integer := CFG_CORE_IRQ_MEIP + 1;
+  -- Total number of implemented interrupts
+  constant CFG_CORE_IRQ_TOTAL : integer := CFG_CORE_IRQ_SEIP + 1;
+  --! @}
+
 
   --! @name    Memory Transaction types.
   --! @details TileLinkIO interface uses these constant to identify the payload
@@ -179,38 +182,6 @@ type tile_cached_out_type is record
 end record;
 
 
---! HostIO tile input signals
-type host_in_type is record
-    grant : std_logic_vector(CFG_HTIF_SRC_TOTAL-1 downto 0);
-    csr_req_ready : std_logic;
-    csr_resp_valid : std_logic;
-    csr_resp_bits : std_logic_vector(63 downto 0);
-    debug_stats_csr : std_logic;
-end record;
-
---! HostIO tile output signals
-type host_out_type is  record
-    reset : std_logic;
-    id : std_logic;
-    csr_req_valid : std_logic;
-    csr_req_bits_rw : std_logic;
-    csr_req_bits_addr : std_logic_vector(11 downto 0);
-    csr_req_bits_data : std_logic_vector(63 downto 0);
-    csr_resp_ready : std_logic;
-end record;
-
---! Full stack of HostIO output signals from all devices.
-type host_out_vector is array (0 to CFG_HTIF_SRC_TOTAL-1) 
-       of host_out_type;
-
---! @brief   Empty output signals of HostIO interface.
---! @details If device was included in the owners of the HostIO interface and
---!          was disabled by configuration parameter (for example) then its
---!          outputs must be assigned to this empty signals otherwise 
---!          RTL simulation will fail with undefined states of the processor.
-constant host_out_none : host_out_type := (
-     '0', '0', '0', '0', (others => '0'), (others => '0'), '0');
-
   --! @brief Decode Acquire request from the Cached/Uncached TileLink
   --! @param[in] a_type   Request type depends of the built_in flag
   --! @param[in] built_in This flag defines cached or uncached request. For
@@ -229,51 +200,13 @@ constant host_out_none : host_out_type := (
   );
 
 
-
---! @brief   HostIO (HTIF) controller declaration. 
---! @details This device provides multiplexing of the Host messages
---!          from several sources (interrupt controller, ethernet MAC,
---!          Debug Support Unit and others) on HostIO bus that is 
---!          specific for Rocket-chip implementation of RISC-V.
---! @todo    Make htifii as a vector to support multi-cores 
---!          configuration.
-component htifctrl is
-  port (
-    clk    : in std_logic;
-    nrst   : in std_logic;
-    srcsi  : in host_out_vector;
-    srcso  : out host_out_type;
-    htifii : in host_in_type;
-    htifio : out host_in_type
-);
-end component; 
-
---! @brief   HTIF serializer input.
---! @details In a case of using L2-cache, 'Uncore' module implements
---!          additional layer of the transformation of 128-bits HTIF 
---!          messages into chunks of HTIF_WIDTH. So we have to 
---!          implement the same serdes on upper level.
-type htif_serdes_in_type is record
-   --! Chunk was accepted by Uncore subsytem.
-   ready  : std_logic;
-   --! Current chunk output is valid
-   valid : std_logic;
-   --! Chunk bits itself.
-   bits  : std_logic_vector(HTIF_WIDTH-1 downto 0);
-end record;
-
---! @brief   HTIF serializer output.
-type htif_serdes_out_type is record
-   valid     : std_logic;
-   bits      : std_logic_vector(HTIF_WIDTH-1 downto 0);
-   ready     : std_logic;
-end record;
-
 --! @brief   RocketTile component declaration.
 --! @details This module implements Risc-V Core with L1-cache, 
 --!          branch predictor and other stuffs of the RocketTile.
 --! @param[in] xindex1 Cached Tile AXI master index
 --! @param[in] xindex2 Uncached Tile AXI master index
+--! @param[in] hartid  Tile ID. At least 0 must be implemented.
+--! @param[in] reset_vector  Reset instruction pointer value.
 --! @param[in] rst     Reset signal with active HIGH level.
 --! @param[in] soft_rst Software Reset via DSU
 --! @param[in] clk_sys System clock (BUS/CPU clock).
@@ -281,12 +214,13 @@ end record;
 --! @param[in] msti    Bus-to-Master device signals.
 --! @param[out] msto1  CachedTile-to-Bus request signals.
 --! @param[out] msto2  UncachedTile-to-Bus request signals.
---! @param[in] htifoi  Requests from the HostIO-connected devices.
---! @param[out] htifio Response to HostIO-connected devices.
+--! @param[in] interrupts  Interrupts line supported by Rocket chip.
 component rocket_l1only is 
 generic (
     xindex1 : integer := 0;
-    xindex2 : integer := 1
+    xindex2 : integer := 1;
+    hartid : integer := 0;
+    reset_vector : integer := 16#1000#
 );
 port ( 
     rst      : in std_logic;
@@ -298,45 +232,10 @@ port (
     mstcfg1  : out nasti_master_config_type;
     msto2    : out nasti_master_out_type;
     mstcfg2  : out nasti_master_config_type;
-    htifoi   : in host_out_type;
-    htifio   : out host_in_type
+    interrupts : in std_logic_vector(CFG_CORE_IRQ_TOTAL-1 downto 0)
 );
 end component;
 
-
---! @brief   RocketTile + Uncore component declaration.
---! @details This module implements Risc-V Core with L1-cache, 
---!          branch predictor and other stuffs of the RocketTile.
---! @param[in] xindex1 Cached Tile AXI master index
---! @param[in] xindex2 Uncached Tile AXI master index
---! @param[in] rst     Reset signal with active HIGH level.
---! @param[in] soft_rst Software Reset via DSU
---! @param[in] clk_sys System clock (BUS/CPU clock).
---! @param[in] slvo    Bus-to-Slave device signals.
---! @param[in] msti    Bus-to-Master device signals.
---! @param[out] msto1  CachedTile-to-Bus request signals.
---! @param[out] msto2  UncachedTile-to-Bus request signals.
---! @param[in] htifoi  Requests from the HostIO-connected devices.
---! @param[out] htifio Response to HostIO-connected devices.
-component rocket_l2cache is 
-generic (
-    xindex1 : integer := 0;
-    xindex2 : integer := 1
-);
-port ( 
-    rst      : in std_logic;
-    soft_rst : in std_logic;
-    clk_sys  : in std_logic;
-    slvo     : in nasti_slave_in_type;
-    msti     : in nasti_master_in_type;
-    msto1    : out nasti_master_out_type;
-    mstcfg1  : out nasti_master_config_type;
-    msto2    : out nasti_master_out_type;
-    mstcfg2  : out nasti_master_config_type;
-    htifoi   : in host_out_type;
-    htifio   : out host_in_type
-);
-end component;
 
 --! @brief SOC global reset former.
 --! @details This module produces output reset signal in a case if
@@ -463,8 +362,7 @@ component nasti_irqctrl is
   generic (
     xindex   : integer := 0;
     xaddr    : integer := 0;
-    xmask    : integer := 16#fffff#;
-    htif_index  : integer := 0
+    xmask    : integer := 16#fffff#
   );
   port 
  (
@@ -474,8 +372,7 @@ component nasti_irqctrl is
     o_cfg  : out nasti_slave_config_type;
     i_axi  : in nasti_slave_in_type;
     o_axi  : out nasti_slave_out_type;
-    i_host : in host_in_type;
-    o_host : out host_out_type
+    o_irq_meip : out std_logic
   );
   end component;
 
@@ -485,8 +382,7 @@ component nasti_irqctrl is
   generic (
     xindex   : integer := 0;
     xaddr    : integer := 0;
-    xmask    : integer := 16#fffff#;
-    htif_index  : integer := 0
+    xmask    : integer := 16#fffff#
   );
   port 
   (
@@ -495,8 +391,7 @@ component nasti_irqctrl is
     o_cfg  : out nasti_slave_config_type;
     i_axi  : in nasti_slave_in_type;
     o_axi  : out nasti_slave_out_type;
-    i_host : in host_in_type;
-    o_host : out host_out_type;
+    o_irq  : out std_logic;
     o_soft_reset : out std_logic
   );
   end component;
