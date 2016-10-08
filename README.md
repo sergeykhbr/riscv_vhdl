@@ -123,13 +123,11 @@ as follows:
     $ tar -xzvf gnu-toolchain-rv64ima.tar.gz gnu-toolchain-rv64ima
     $ export PATH=/home/your_path/gnu-toolchain-rv64ima/bin:$PATH
 
-If you would like to generate hex-file and use it for ROM initialization you probably
-need tool *'elf2raw'* and *'libfesvr.so'* library that is not linked properly with GCC. 
-To solve this problem add path to *libfesvr.so* to the environment variable:
-
-    $ export LD_LIBRARY_PATH=/home/your_path/gnu-toolchain-rv64ima/lib
-
-Or use my utility *elf2raw64* that I've put into 'gnu_toolchain-rv64/bin'. Have fun!
+If you would like to generate hex-file and use it for ROM initialization you can use
+*'elf2hex'* and *'libfesvr.so'* library from the GNU toolchain but I suggest to use my version
+of such tool *'elf2raw64'*. I've put this binary into pre-built GCC archive 'gnu_toolchain-rv64/bin'. 
+If *elf2raw64* conflicts with installed LIBC version re-build it from *fw/elf2raw64/makefiles*
+directory.
 
 ### 2. Build Zephyr OS
 
