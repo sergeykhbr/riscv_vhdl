@@ -2,6 +2,7 @@
 #include "moc_UartWidget.h"
 
 #include <QtCore/QDate>
+#include <QtCore/QTimer>
 #include <QtGui/QPainter>
 #include <QtWidgets/QScrollBar>
 #include <memory>
@@ -10,7 +11,6 @@ namespace debugger {
 
 UartWidget::UartWidget(IGui *igui, QWidget *parent) : QPlainTextEdit(parent) {
     igui_ = igui;
-    igui_->registerWidgetInterface(static_cast<IRawListener *>(this));
     bNewDataAvailable_ = false;
     uart_ = 0;
 
@@ -31,8 +31,13 @@ UartWidget::UartWidget(IGui *igui, QWidget *parent) : QPlainTextEdit(parent) {
     setPalette(p);
 
     /** */
-
     RISCV_mutex_init(&mutexStr_);
+    prevSymb_ = 0;
+
+    QTimer *tmr = new QTimer(this);
+    connect(tmr, SIGNAL(timeout()), this, SLOT(slotUpdateByTimer()));
+    tmr->setSingleShot(false);
+    tmr->start(10);
 }
 
 UartWidget::~UartWidget() {
@@ -55,34 +60,29 @@ void UartWidget::closeEvent(QCloseEvent *event_) {
 void UartWidget::updateData(const char *buf, int buflen) {
     RISCV_mutex_lock(&mutexStr_);
     while (buflen--) {
+        // Zephyr kernel scan symbol '\n' and after it adds the extra
+        // symbol '\r', which I'm removing here.
+        if (prevSymb_ == '\n' && buf[0] == '\r') {
+            buf++;
+            continue;
+        }
         strOutput_ += buf[0];
+        prevSymb_ = buf[0];
         buf++;
     }
     bNewDataAvailable_ = true;
     RISCV_mutex_unlock(&mutexStr_);
 }
 
-void UartWidget::slotConfigure(AttributeType *cfg) {
-    if (!cfg->is_list()) {
-        return;
-    }
-    for (unsigned i = 0; i < cfg->size(); i++) {
-        const AttributeType &attr = (*cfg)[i];
-        if (!attr.is_list()) {
-            continue;
-        }
-        if (strcmp(attr[0u].to_string(), "Serial") == 0) {
-            AttributeType serial = attr[1];
-            uart_ = static_cast<ISerial *>
-                (RISCV_get_service_iface(serial.to_string(), IFACE_SERIAL));
-            if (uart_) {
-                uart_->registerRawListener(static_cast<IRawListener *>(this));
-            }
-        }
+void UartWidget::slotPostInit(AttributeType *cfg) {
+    uart_ = static_cast<ISerial *>
+        (RISCV_get_service_iface((*cfg)["Serial"].to_string(), IFACE_SERIAL));
+    if (uart_) {
+        uart_->registerRawListener(static_cast<IRawListener *>(this));
     }
 }
 
-void UartWidget::slotRepaintByTimer() {
+void UartWidget::slotUpdateByTimer() {
     if (!bNewDataAvailable_) {
         return;
     }

@@ -13,6 +13,7 @@
 
 namespace debugger {
 
+static const int64_t MIN_ALLOC_BYTES = 1 << 12;
 static AttributeType NilAttribute;
 static AutoBuffer strBuffer;
 
@@ -67,6 +68,14 @@ void AttributeType::clone(const AttributeType *v) {
         this->size_ = v->size_;
     }
 }
+
+bool AttributeType::is_equal(const char *v) {
+    if (!is_string()) {
+        return false;
+    }
+    return !strcmp(to_string(), v);
+}
+
 
 AttributeType &AttributeType::operator=(const AttributeType& other) {
     if (&other != this) {
@@ -132,6 +141,7 @@ const uint8_t &AttributeType::operator()(unsigned idx) const {
 }
 
 void AttributeType::make_string(const char *value) {
+    attr_free();
     if (value) {
         kind_ = Attr_String;
         size_ = (unsigned)strlen(value);
@@ -143,6 +153,7 @@ void AttributeType::make_string(const char *value) {
 }
 
 void AttributeType::make_data(unsigned size, const void *data) {
+    attr_free();
     kind_ = Attr_Data;
     size_ = size;
     u_.data = static_cast<uint8_t *>(RISCV_malloc(size_));
@@ -150,22 +161,29 @@ void AttributeType::make_data(unsigned size, const void *data) {
 }
 
 void AttributeType::make_list(unsigned size) {
+    attr_free();
     kind_ = Attr_List;
-    size_ = size;
-    u_.list = static_cast<AttributeType *>(
-            RISCV_malloc(size * sizeof(AttributeType)));
-    memset(u_.list, 0, size * sizeof(AttributeType));
+    if (size) {
+        realloc_list(size);
+    }
 }
 
 void AttributeType::realloc_list(unsigned size) {
-    AttributeType * t1 = static_cast<AttributeType *>(
-            RISCV_malloc(size * sizeof(AttributeType)));
-    memcpy(t1, u_.list, size_ * sizeof(AttributeType));
-    memset(&t1[size_], 0, (size - size_) * sizeof(AttributeType));
-    if (size_) {
-        RISCV_free(u_.list);
+    size_t req_sz = (size * sizeof(AttributeType) + MIN_ALLOC_BYTES - 1) 
+                   / MIN_ALLOC_BYTES;
+    size_t cur_sz = (size_ * sizeof(AttributeType) + MIN_ALLOC_BYTES - 1) 
+                  / MIN_ALLOC_BYTES;
+    if (req_sz > cur_sz ) {
+        AttributeType * t1 = static_cast<AttributeType *>(
+                RISCV_malloc(MIN_ALLOC_BYTES * req_sz));
+        memcpy(t1, u_.list, size_ * sizeof(AttributeType));
+        memset(&t1[size_], 0, 
+                (MIN_ALLOC_BYTES * req_sz) - size_ * sizeof(AttributeType));
+        if (size_) {
+            RISCV_free(u_.list);
+        }
+        u_.list = t1;
     }
-    u_.list = t1;
     size_ = size;
 }
 
@@ -194,24 +212,29 @@ AttributeType *AttributeType::dict_value(unsigned idx) {
 }
 
 void AttributeType::make_dict() {
+    attr_free();
     kind_ = Attr_Dict;
     size_ = 0;
     u_.dict = NULL;
 }
 
-void AttributeType::realloc_dict(unsigned length) {
-    AttributePairType * t1 = static_cast<AttributePairType *>(
-            RISCV_malloc(length * sizeof(AttributePairType)));
-    memset(t1, 0, length * sizeof(AttributePairType));
-    for (unsigned i = 0; i < size_; i++) {
-        t1[i].key_.clone(&u_.dict[i].key_);
-        t1[i].value_.clone(&u_.dict[i].value_);
+void AttributeType::realloc_dict(unsigned size) {
+    size_t req_sz = (size * sizeof(AttributePairType) + MIN_ALLOC_BYTES - 1)
+                  / MIN_ALLOC_BYTES;
+    size_t cur_sz = (size_ * sizeof(AttributePairType) + MIN_ALLOC_BYTES - 1)
+                  / MIN_ALLOC_BYTES;
+    if (req_sz > cur_sz ) {
+        AttributePairType * t1 = static_cast<AttributePairType *>(
+                RISCV_malloc(MIN_ALLOC_BYTES * req_sz));
+        memcpy(t1, u_.dict, size_ * sizeof(AttributePairType));
+        memset(&t1[size_], 0, 
+                (MIN_ALLOC_BYTES * req_sz) - size_ * sizeof(AttributePairType));
+        if (size_) {
+            RISCV_free(u_.dict);
+        }
+        u_.dict = t1;
     }
-    if (size_) {
-        RISCV_free(u_.dict);
-    }
-    u_.dict = t1;
-    size_ = length;
+    size_ = size;
 }
 
 char *AttributeType::to_config() {

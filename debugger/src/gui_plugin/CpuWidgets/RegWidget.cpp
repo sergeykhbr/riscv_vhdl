@@ -2,19 +2,24 @@
 #include "moc_RegWidget.h"
 
 #include <memory>
-#include <QtWidgets/qboxlayout.h>
-#include <QtWidgets/qlabel.h>
+#include <string.h>
+#include <QtWidgets/QBoxLayout>
+#include <QtWidgets/QLabel>
 
 namespace debugger {
 
-RegWidget::RegWidget(AttributeType *cfg, QWidget *parent) : QWidget(parent) {
-    name_ = QString(tr((*cfg)[0u].to_string()));
-    idx_ = (*cfg)[1u].to_uint64();
+RegWidget::RegWidget(const char *name, IGui *gui, QWidget *parent) 
+    : QWidget(parent) {
+    igui_ = gui;
     value_ = 0;
 
+    name_ = QString(name);
     while (name_.size() < 3) {
         name_ += tr(" ");
     }
+
+    std::string t1 = "read " + std::string(name);
+    cmdRead_.make_string(t1.c_str());
 
     QFont font = QFont("Courier");
     font.setStyleHint(QFont::Monospace);
@@ -50,13 +55,16 @@ RegWidget::RegWidget(AttributeType *cfg, QWidget *parent) : QWidget(parent) {
     setMinimumHeight(edit_->height());
 }
 
-void RegWidget::slotRegisterValue(uint64_t idx, uint64_t val) {
-    if (idx != idx_) {
-        return;
-    }
-    value_ = val;
+void RegWidget::slotUpdateByTimer() {
+    igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), 
+                            &cmdRead_, true);
+}
+
+void RegWidget::handleResponse(AttributeType *req, AttributeType *resp) {
+    value_ = resp->to_uint64();
     QString def = QString("0x%1").arg(value_, 16, 16, QChar('0'));
     edit_->setText(def);
 }
+
 
 }  // namespace debugger

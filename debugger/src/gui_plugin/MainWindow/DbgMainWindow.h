@@ -36,18 +36,20 @@ public:
     virtual void handleResponse(AttributeType *req, AttributeType *resp);
 
     /** Global methods */
-    void setConfiguration(AttributeType cfg);
+    void postInit(AttributeType cfg);
+    void configDone();
     void getConfiguration(AttributeType &cfg);
-
+    
 signals:
-    void signalConfigure(AttributeType *cfg);
-    void signalRedrawByTimer();
+    void signalPostInit(AttributeType *cfg);
+    void signalConfigDone();
+    void signalUpdateByTimer();
     void signalClosingMainForm();
     void signalTargetStateChanged(bool);
 
 private slots:
-    void slotTimerRedraw();
-    void slotTimerPollingStatus();
+    void slotConfigDone();
+    void slotUpdateByTimer();
     void slotActionAbout();
     void slotActionTargetRun();
     void slotActionTargetHalt();
@@ -63,9 +65,6 @@ private:
     void addWidgets();
 
 private:
-    QTimer *timerRedraw_;
-    QTimer *timerPollStatus_;
-
     QAction *actionAbout_;
     QAction *actionQuit_;
     QAction *actionRun_;
@@ -78,11 +77,14 @@ private:
     
     AttributeType config_;
     AttributeType listConsoleListeners_;
-    AttributeType cmdReadStatus_;
+    AttributeType cmdIsRunning_;
+    AttributeType cmdRun_;
+    AttributeType cmdHalt_;
+    AttributeType cmdStep_;
+    AttributeType cmdExit_;
 
     IGui *igui_;
     event_def *initDone_;
-    bool riseSyncEvent_;
 };
 
 }  // namespace debugger

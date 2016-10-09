@@ -36,7 +36,7 @@ void EdclService::postinitService() {
 }
 
 int EdclService::read(uint64_t addr, int bytes, uint8_t *obuf) {
-    int off;
+    int txoff, rxoff;
     UdpEdclCommonType req = {0};
     UdpEdclCommonType rsp;
 
@@ -58,24 +58,24 @@ int EdclService::read(uint64_t addr, int bytes, uint8_t *obuf) {
             req.control.request.len = static_cast<uint32_t>(bytes - rd_bytes);
         }
 
-        off = write16(tx_buf_, 0, req.offset);
-        off = write32(tx_buf_, off, req.control.word);
-        off = write32(tx_buf_, off, req.address);
+        txoff = write16(tx_buf_, 0, req.offset);
+        txoff = write32(tx_buf_, txoff, req.control.word);
+        txoff = write32(tx_buf_, txoff, req.address);
 
-        off = itransport_->sendData(tx_buf_, off);
-        if (off == -1) {
+        txoff = itransport_->sendData(tx_buf_, txoff);
+        if (txoff == -1) {
             RISCV_error("Data sending error", NULL);
             rd_bytes = -1;
             break;
         }
 
-        off = itransport_->readData(rx_buf_, sizeof(rx_buf_));
-        if (off == -1) {
+        rxoff = itransport_->readData(rx_buf_, sizeof(rx_buf_));
+        if (rxoff == -1) {
             RISCV_error("Data receiving error", NULL);
             rd_bytes = -1;
             break;
         } 
-        if (off == 0) {
+        if (rxoff == 0) {
             RISCV_error("No response. Break read transaction.", NULL);
             rd_bytes = -1;
             break;

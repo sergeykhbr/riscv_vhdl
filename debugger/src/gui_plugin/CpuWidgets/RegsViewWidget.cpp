@@ -6,6 +6,8 @@
 
 namespace debugger {
 
+//static const uint64_t BASE_ADDR_DSU_REGS = 0x80090200;
+
 /** Layout of register by name */
 static const char *REG_NAMES_LAYOUT[] = {
     "ra", "s0",  "a0",
@@ -19,11 +21,9 @@ static const char *REG_NAMES_LAYOUT[] = {
     "t3", "s8",  "",
     "t4", "s9",  "",
     "t5", "s10", "pc",
-    "t6", "s11", "npc"
+    "t6", "s11", "npc",
+    "break"
 };
-
-static const uint64_t BASE_ADDR_DSU_REGS = 0x80090200;
-
 
 RegsViewWidget::RegsViewWidget(IGui *igui, QWidget *parent) 
     : UnclosableWidget(parent) {
@@ -32,10 +32,6 @@ RegsViewWidget::RegsViewWidget(IGui *igui, QWidget *parent)
     setWindowTitle(tr("Registers"));
     setMinimumWidth(150);
     setMinimumHeight(100);
-
-    pollingTimer_ = new QTimer(this);
-    pollingTimer_->setSingleShot(false);
-    connect(pollingTimer_, SIGNAL(timeout()), this, SLOT(slotPollingUpdate()));
 
     gridLayout = new QGridLayout(this);
     gridLayout->setSpacing(4);
@@ -50,26 +46,15 @@ RegsViewWidget::RegsViewWidget(IGui *igui, QWidget *parent)
 }
 
 
-void RegsViewWidget::handleResponse(AttributeType *req, AttributeType *resp) {
-    uint64_t reg_idx = ((*req)[1].to_uint64() - BASE_ADDR_DSU_REGS) / 8;
-    emit signalRegisterValue(reg_idx, resp->to_uint64());
-}
-
 void RegsViewWidget::slotConfigure(AttributeType *cfg) {
-    for (unsigned i = 0; i < cfg->size(); i++) {
-        const AttributeType &attr = (*cfg)[i];
-        if (strcmp(attr[0u].to_string(), "RegList") == 0) {
-            listRegs_ = attr[1];
-            for (unsigned n = 0; n < listRegs_.size(); n++) {
-                addRegWidget(listRegs_[n]);
-            }
-         
-        } else if (strcmp(attr[0u].to_string(), "PollingMs") == 0) {
-            int ms = static_cast<int>(attr[1].to_uint64());
-            if (ms != 0) {
-                pollingTimer_->start(ms);
-            }
+    int n = 0;
+    while (strcmp(REG_NAMES_LAYOUT[n], "break")) {
+        if (REG_NAMES_LAYOUT[0] == '\0') {
+            n++;
+            continue;
         }
+        addRegWidget(n, REG_NAMES_LAYOUT[n]);
+        n++;
     }
 }
 
@@ -77,46 +62,14 @@ void RegsViewWidget::slotPollingUpdate() {
 }
 
 void RegsViewWidget::slotTargetStateChanged(bool running) {
-    /** DSU control region 0x80080000 + 0x10000: 
-     *              offset 0x0200 = CPU registers
-     */
-    AttributeType cmdRdReg;
-    cmdRdReg.from_config("['read',0x80090200,8]");
-    for (unsigned i = 0; i < 32; i++) {
-        cmdRdReg[1].make_uint64(BASE_ADDR_DSU_REGS + 0x8 * i);
-        igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), 
-                               &cmdRdReg);
-    }
-
 }
 
-int RegsViewWidget::widgetIndexByName(const char *regname) {
-    unsigned regs_total = sizeof(REG_NAMES_LAYOUT)/sizeof(const char *);
-    for (unsigned i = 0; i < regs_total; i++) {
-        if (strcmp(regname, REG_NAMES_LAYOUT[i]) == 0) {
-            return static_cast<int>(i);
-        }
-    }
-    return -1;
-}
-
-void RegsViewWidget::addRegWidget(AttributeType &reg_cfg) {
-    QWidget *pnew;
-
-    int idx = widgetIndexByName(reg_cfg[0u].to_string());
-    if (idx == -1) {
-        return;
-    }
+void RegsViewWidget::addRegWidget(int idx, const char *name) {
     int line = idx / 3;
     int col = idx - 3 * line;
 
-    pnew = new RegWidget(&reg_cfg, this);
+    QWidget *pnew = new RegWidget(name, igui_, this);
     gridLayout->addWidget(pnew, line + 1, col);
-    connect(this, SIGNAL(signalRegisterValue(uint64_t, uint64_t)), 
-            pnew, SLOT(slotRegisterValue(uint64_t, uint64_t)));
-
-    AttributeType item_cfg;
-    item_cfg.make_list(2);
 
     if (!minSizeApplied_) {
         minSizeApplied_ = true;

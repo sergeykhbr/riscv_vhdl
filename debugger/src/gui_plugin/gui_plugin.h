@@ -9,9 +9,11 @@
 
 #include "iclass.h"
 #include "iservice.h"
+#include "ihap.h"
 #include "igui.h"
 #include "coreservices/ithread.h"
-#include "coreservices/itap.h"
+#include "coreservices/isocinfo.h"
+#include "coreservices/icmdexec.h"
 #include "MainWindow/DbgMainWindow.h"
 
 
@@ -19,6 +21,7 @@ namespace debugger {
 
 class GuiPlugin : public IService,
                   public IThread,
+                  public IHap,
                   public IGui {
 public:
     GuiPlugin(const char *name);
@@ -29,11 +32,15 @@ public:
     virtual void postinitService();
     virtual void predeleteService();
 
+    /** IHap */
+    virtual void hapTriggered(IFace *isrc, EHapType type, const char *descr);
+
     /** IGui interface */
+    virtual IFace *getSocInfo();
     virtual void registerMainWindow(void *iwindow);
     virtual void registerWidgetInterface(IFace *iface);
     virtual void unregisterWidgetInterface(IFace *iface);
-    virtual void registerCommand(IGuiCmdHandler *src, AttributeType *cmd);
+    virtual void registerCommand(IGuiCmdHandler *src, AttributeType *cmd, bool silent);
 
 protected:
     /** IThread interface */
@@ -67,8 +74,11 @@ private:
     static const int CMD_QUEUE_SIZE = 128;
 
     AttributeType guiConfig_;
-    AttributeType tap_;
-    ITap *itap_;
+    AttributeType socInfo_;
+    AttributeType cmdExecutor_;
+
+    ISocInfo *info_;
+    ICmdExecutor *iexec_;
 
     event_def eventUiInitDone_;
     event_def eventCommandAvailable_;
@@ -77,6 +87,7 @@ private:
     struct CmdQueueItemType {
         AttributeType cmd;
         IGuiCmdHandler *src;
+        bool silent;
     } cmdQueue_[CMD_QUEUE_SIZE];
     int cmdQueueWrPos_;
     int cmdQueueRdPos_;

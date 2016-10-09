@@ -2,100 +2,130 @@
  * @file
  * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
  * @author     Sergey Khabarov - sergeykhbr@gmail.com
- * @brief      Simplified input command string parser.
+ * @brief      Command Executor implementation.
  */
 
 #include <string.h>
-#include "cmdparser.h"
-#include "coreservices/ithread.h"
+#include "cmdexec.h"
+#include "coreservices/icommand.h"
+#include "cmd/cmd_regs.h"
+#include "cmd/cmd_reg.h"
+#include "cmd/cmd_loadelf.h"
+#include "cmd/cmd_log.h"
+#include "cmd/cmd_isrunning.h"
 
 namespace debugger {
 
 /** Class registration in the Core */
-REGISTER_CLASS(CmdParserService)
+REGISTER_CLASS(CmdExecutor)
 
-union DsuRunControlRegType {
-    struct bits_type {
-        uint64_t halt     : 1;
-        uint64_t stepping : 1;
-        uint64_t rsv1     : 2;
-        uint64_t core_id  : 16;
-        uint64_t rsv2     : 44;
-    } bits;
-    uint64_t val;
-    uint8_t  buf[8];
-};
-
-enum RegListType {REG_Name, REG_IDx};
-
-CmdParserService::CmdParserService(const char *name) 
+CmdExecutor::CmdExecutor(const char *name) 
     : IService(name) {
-    registerInterface(static_cast<IConsoleListener *>(this));
-    registerAttribute("Console", &console_);
+    registerInterface(static_cast<ICmdExecutor *>(this));
     registerAttribute("Tap", &tap_);
-    registerAttribute("Loader", &loader_);
-    registerAttribute("ListCSR", &listCSR_);
-    registerAttribute("RegNames", &regNames_);
+    registerAttribute("SocInfo", &socInfo_);
 
-    console_.make_list(0);
-    iconsoles_.make_list(0);
+    //console_.make_list(0);
     tap_.make_string("");
-    loader_.make_string("");
-    listCSR_.make_list(0);
-    regNames_.make_list(0);
+    socInfo_.make_string("");
+    listeners_.make_list(0);
+
+    RISCV_mutex_init(&mutexExec_);
+
     tmpbuf_ = new uint8_t[tmpbuf_size_ = 4096];
     outbuf_ = new char[outbuf_size_ = 4096];
 }
 
-CmdParserService::~CmdParserService() {
+CmdExecutor::~CmdExecutor() {
+    RISCV_mutex_destroy(&mutexExec_);
     delete [] tmpbuf_;
     delete [] outbuf_;
+    for (unsigned i = 0; i < cmds_.size(); i++) {
+        delete cmds_.dict_value(i)->to_iface();
+    }
 }
 
-void CmdParserService::postinitService() {
+void CmdExecutor::postinitService() {
     itap_ = static_cast<ITap *>
             (RISCV_get_service_iface(tap_.to_string(), IFACE_TAP));
-    iloader_ = static_cast<IElfLoader *>
-            (RISCV_get_service_iface(loader_.to_string(), IFACE_ELFLOADER));
+    info_ = static_cast<ISocInfo *>
+            (RISCV_get_service_iface(socInfo_.to_string(), 
+                                    IFACE_SOC_INFO));
 
-    for (unsigned i = 0; i < console_.size(); i++) {
-        IConsole *icls = static_cast<IConsole *>
-            (RISCV_get_service_iface(console_[i].to_string(), IFACE_CONSOLE));
-        if (icls) {
-            AttributeType tmp(icls);
-            iconsoles_.add_to_list(&tmp);
-            icls->registerConsoleListener(static_cast<IConsoleListener *>(this));
-        }
-    }
+    cmds_.make_dict();
+
+    ICommand *t1 = new CmdRegs(itap_, info_);
+    cmds_["regs"].make_iface(t1);
+    cmds_["reg"].make_iface(new CmdReg(itap_, info_));
+    cmds_["loadelf"].make_iface(new CmdLoadElf(itap_, info_));
+    cmds_["log"].make_iface(new CmdLog(itap_, info_));
+    cmds_["isrunning"].make_iface(new CmdIsRunning(itap_, info_));
 }
 
-void CmdParserService::udpateCommand(const char *line) {
-    IConsole *icls;
-    memcpy(cmdbuf_, line, strlen(line) + 1);
-    processLine(cmdbuf_);
-    for (unsigned i = 0; i < iconsoles_.size(); i++) {
-        icls = static_cast<IConsole *>(iconsoles_[i].to_iface());
-        icls->writeBuffer(outbuf_);
+bool CmdExecutor::exec(const char *line, AttributeType *res, bool silent) {
+    RISCV_mutex_lock(&mutexExec_);
+    res->make_nil();
+
+    AttributeType cmd;
+    if (line[0] == '[' || line[0] == '}') {
+        cmd.from_config(line);
+    } else {
+        cmd.make_string(line);
     }
+
+    if (cmd.is_string()) {
+        /** Process simple string command */
+        processSimple(&cmd, res);
+    } else {
+        /** Process scripted in JSON format command */
+    }
+
+    RISCV_mutex_unlock(&mutexExec_);
+
+    /** Do not output any information into console in silent mode: */
+    if (silent) {
+        return false;
+    }
+    IRawListener *iraw;
+    for (unsigned i = 0; i < listeners_.size(); i++) {
+        iraw = static_cast<IRawListener *>(listeners_[i].to_iface());
+        iraw->updateData(outbuf_, outbuf_cnt_);
+    }
+    return (outbuf_cnt_ != 0);
+    
 }
 
-void CmdParserService::processLine(const char *line) {
+void CmdExecutor::registerRawListener(IFace *iface) {
+    AttributeType t1(iface);
+    listeners_.add_to_list(&t1);
+}
+
+void CmdExecutor::processSimple(AttributeType *cmd, AttributeType *res) {
     outbuf_[outbuf_cnt_ = 0] = '\0';
-    if (line[0] == 0) {
+    if (cmd->size() == 0) {
         return;
     }
 
     AttributeType listArgs(Attr_List);
-    splitLine(cmdbuf_, &listArgs);
+    splitLine(const_cast<char *>(cmd->to_string()), &listArgs);
     if (!listArgs[0u].is_string()) {
         outf("Wrong command format\n");
         return;
     }
 
-    if (strcmp(listArgs[0u].to_string(), "help") == 0) {
-        outf("** List of supported commands: **\n");
-        outf("      loadelf   - Load ELF-file\n");
-        outf("      log       - Enable log-file\n");
+    if (listArgs[0u].is_equal("help")) {
+        if (listArgs.size() == 1) {
+            outf("** List of supported commands: **\n");
+            for (unsigned i = 0; i < cmds_.size(); i++) {
+                ICommand *cmd = static_cast<ICommand *>(cmds_[i].to_iface());
+                outf("%13s   - %s\n", cmd->cmdName(), cmd->briefDescr());
+            }
+            outf("\n");
+        } else {
+            // @todo specific command
+        }
+        return;
+        /*
         outf("      memdump   - Dump memory to file\n");
         outf("      csr       - Access to CSR registers\n");
         outf("      write     - Write memory\n");
@@ -106,31 +136,42 @@ void CmdParserService::processLine(const char *line) {
                                "number of steps\n");
         outf("      regs      - List of registers values\n");
         outf("      br        - Breakpoint operation\n");
-        outf("\n");
-    } else if (strcmp(listArgs[0u].to_string(), "loadelf") == 0) {
-        if (listArgs.size() == 2) {
-            loadElf(&listArgs);
-        } else {
-            outf("Description:\n");
-            outf("    Load ELF-file to SOC target memory.\n");
-            outf("Example:\n");
-            outf("    load /home/riscv/image.elf\n");
+        outf("\n");*/
+    }
+
+    AttributeType u;
+    bool cmdFound = false;
+    for (unsigned i = 0; i < cmds_.size(); i++) {
+        ICommand *e = 
+            static_cast<ICommand *>(cmds_.dict_value(i)->to_iface());
+        if (e->isValid(&listArgs) == CMD_INVALID) {
+            continue;
         }
-    } else if (strcmp(listArgs[0u].to_string(), "log") == 0) {
-        if (listArgs.size() == 2) {
-            IConsole *icls;
-            for (unsigned i = 0; i < iconsoles_.size(); i++) {
-                icls = static_cast<IConsole *>(iconsoles_[i].to_iface());
-                icls->enableLogFile(listArgs[1].to_string());
-            }
-        } else {
-            outf("Description:\n");
-            outf("    Write console output into specified file.\n");
-            outf("Example:\n");
-            outf("    log session.log\n");
-            outf("    log /home/riscv/session.log\n");
+
+        cmdFound = true;
+        if (e->exec(&listArgs, res) == CMD_FAILED) {
+            outf(e->detailedDescr());
+            break;
+        } 
+        /** Command was successful: */
+        if (e->format(res, &u) == CMD_IS_OUTPUT) {
+            outf(u.to_string());
         }
-    } else if (strcmp(listArgs[0u].to_string(), "memdump") == 0) {
+        if (listArgs[0u].is_equal("log")) {
+            //@todo log enabling
+        } else if (listArgs[0u].is_equal("exit")) {
+            RISCV_break_simulation();
+        }
+        break;
+
+    }
+    if (!cmdFound) {
+        outf("Use 'help' to print list of the supported commands\n");
+    }
+
+#if 0
+    
+    if (strcmp(listArgs[0u].to_string(), "memdump") == 0) {
         if (listArgs.size() == 4 || listArgs.size() == 5) {
             memDump(&listArgs);
         } else {
@@ -143,17 +184,13 @@ void CmdParserService::processLine(const char *line) {
             outf("    memdump 0x40000000 524288 dump.hex hex\n");
             outf("    memdump 0x10000000 128 \"c:/My Documents/dump.bin\"\n");
         }
-    } else if (strcmp(listArgs[0u].to_string(), "regs") == 0) {
-        if (listArgs.size() == 1) {
-            regs(&listArgs);
-        } else {
-            outf("Description:\n");
-            outf("    Print values of all CPU's registers.\n");
-            outf("Usage:\n");
-            outf("    regs\n");
-            outf("    regs <cpuid>\n");
-            outf("Example:\n");
-            outf("    regs\n");
+    } else if (listArgs[0u].is_equal("regs") || listArgs[0u].is_equal("reg")) {
+        AttributeType u;
+        ICommand *e = static_cast<ICommand *>(cmds_["regs"].to_iface());
+        if (!e->exec(&listArgs, res)) {
+            outf(e->detailedDescr());
+        } else if (e->format(res, &u)) {
+            outf(u.to_string());
         }
     } else if (strcmp(listArgs[0u].to_string(), "csr") == 0) {
         if (listArgs.size() == 2) {
@@ -247,9 +284,10 @@ void CmdParserService::processLine(const char *line) {
     } else {
         outf("Use 'help' to print list of the supported commands\n");
     }
+#endif
 }
 
-void CmdParserService::splitLine(char *str, AttributeType *listArgs) {
+void CmdExecutor::splitLine(char *str, AttributeType *listArgs) {
     char *end = str;
     bool last = false;
     bool inside_string = false;
@@ -287,9 +325,9 @@ void CmdParserService::splitLine(char *str, AttributeType *listArgs) {
     }
 }
 
-void CmdParserService::readCSR(AttributeType *listArgs) {
+void CmdExecutor::readCSR(AttributeType *listArgs) {
     uint64_t csr = 0;
-    uint64_t addr = csr_socaddr(&(*listArgs)[1]);
+    uint64_t addr = info_->csr2addr((*listArgs)[1].to_string());
 
     if (addr == static_cast<uint64_t>(-1)) {
         outf("Unknown CSR '%s'\n", (*listArgs)[1].to_string());
@@ -326,22 +364,10 @@ void CmdParserService::readCSR(AttributeType *listArgs) {
     }
 }
 
-void CmdParserService::loadElf(AttributeType *listArgs) {
-    AttributeType attrReset("MRESET");
-    uint64_t mreset = 1;
-    uint64_t addr = csr_socaddr(&attrReset);
-
-    itap_->write(addr, 8, reinterpret_cast<uint8_t *>(&mreset));
-    iloader_->loadFile((*listArgs)[1].to_string());
-
-    mreset = 0;
-    itap_->write(addr, 8, reinterpret_cast<uint8_t *>(&mreset));
-}
-
-void CmdParserService::writeCSR(AttributeType *listArgs) {
+void CmdExecutor::writeCSR(AttributeType *listArgs) {
     uint64_t addr;
     uint64_t csr;
-    addr = csr_socaddr(&(*listArgs)[1]);
+    addr = info_->csr2addr((*listArgs)[1].to_string());
     if (addr == static_cast<uint64_t>(-1)) {
         outf("Unknown CSR '%s'\n", (*listArgs)[1].to_string());
         return;
@@ -351,7 +377,7 @@ void CmdParserService::writeCSR(AttributeType *listArgs) {
     itap_->write(addr, 8, reinterpret_cast<uint8_t *>(&csr));
 }
 
-void CmdParserService::readMem(AttributeType *listArgs) {
+void CmdExecutor::readMem(AttributeType *listArgs) {
     uint64_t addr_start, addr_end, inv_i;
     uint64_t addr = (*listArgs)[1].to_uint64();
     int bytes = static_cast<int>((*listArgs)[2].to_uint64());
@@ -380,7 +406,7 @@ void CmdParserService::readMem(AttributeType *listArgs) {
     }
 }
 
-void CmdParserService::writeMem(AttributeType *listArgs) {
+void CmdExecutor::writeMem(AttributeType *listArgs) {
     uint64_t addr = (*listArgs)[1].to_uint64();
     uint64_t val = (*listArgs)[3].to_uint64();
     int bytes = static_cast<int>((*listArgs)[2].to_uint64());
@@ -399,7 +425,7 @@ void CmdParserService::writeMem(AttributeType *listArgs) {
     itap_->write(addr, bytes, tmpbuf_);
 }
 
-void CmdParserService::memDump(AttributeType *listArgs) {
+void CmdExecutor::memDump(AttributeType *listArgs) {
     const char *filename = (*listArgs)[3].to_string();
     FILE *fd = fopen(filename, "w");
     if (fd == NULL) {
@@ -440,109 +466,134 @@ void CmdParserService::memDump(AttributeType *listArgs) {
     }
 }
 
-void CmdParserService::halt(AttributeType *listArgs) {
-    uint64_t addr = DSU_CTRL_BASE_ADDRESS;
-    DsuRunControlRegType ctrl;
-    ctrl.val = 0x0;
-    ctrl.bits.core_id = 0;
-    ctrl.bits.halt    = 1;
-    itap_->write(addr, 8, ctrl.buf);
+void CmdExecutor::halt(AttributeType *listArgs) {
+    uint8_t val[sizeof(uint64_t)];
+    *(reinterpret_cast<uint64_t *>(val)) = info_->valueHalt();
+    itap_->write(info_->addressRunControl(), 8, val);
 }
 
-void CmdParserService::run(AttributeType *listArgs) {
-    uint64_t addr = DSU_CTRL_BASE_ADDRESS;
-    DsuRunControlRegType ctrl;
-    ctrl.val = 0x0;
+void CmdExecutor::run(AttributeType *listArgs) {
+    uint8_t val[sizeof(uint64_t)];
+    *(reinterpret_cast<uint64_t *>(val)) = info_->valueRun();
     if (listArgs->size() == 1) {
-        itap_->write(addr, 8, ctrl.buf);
+        itap_->write(info_->addressRunControl(), 8, val);
     } else if (listArgs->size() == 2) {
-        // Write number of steps:
-        ctrl.val = (*listArgs)[1].to_uint64();
-        itap_->write(addr + 8, 8, ctrl.buf);
-        // Run execution:
-        ctrl.val = 0;
-        ctrl.bits.stepping = 1;
-        itap_->write(addr, 8, ctrl.buf);
+        *(reinterpret_cast<uint64_t *>(val)) = (*listArgs)[1].to_uint64();
+        itap_->write(info_->addressStepCounter(), 8, val);
+
+        *(reinterpret_cast<uint64_t *>(val)) = info_->valueRunStepping();
+        itap_->write(info_->addressRunControl(), 8, val);
     }
 }
 
-void CmdParserService::regs(AttributeType *listArgs) {
-    uint64_t addr = DSU_CTRL_BASE_ADDRESS + 64*8;   // CPU register array
-    uint64_t regs[128] = {0};
-    for (unsigned i = 1; i < regNames_.size(); i++) {
-        itap_->read(addr + 8*i, 8, reinterpret_cast<uint8_t *>(&regs[i]));
+void CmdExecutor::regs(AttributeType *listArgs, AttributeType *res) {
+    AttributeType reglst;
+    if (listArgs->size() != 1) {
+        return;
     }
-    outf("ra: %016" RV_PRI64 "x    \n", regs[getRegIDx("ra")]);
+    uint64_t val;
+    info_->getRegsList(&reglst);
+    res->make_list(reglst.size());
+    for (unsigned i = 0; i < reglst.size(); i++) {
+        itap_->read(info_->reg2addr(reglst[i].to_string()), 
+                                    8, reinterpret_cast<uint8_t *>(&val));
+        (*res)[i].make_uint64(val);
+    }
+
+    itap_->read(info_->reg2addr("ra"), 8, reinterpret_cast<uint8_t *>(&val));
+    outf("ra: %016" RV_PRI64 "x    \n", val);
 
     outf("                        ", NULL);
-    outf("s0:  %016" RV_PRI64 "x   ", regs[getRegIDx("s0")]);
-    outf("a0:  %016" RV_PRI64 "x   \n", regs[getRegIDx("a0")]);
+    itap_->read(info_->reg2addr("s0"), 8, reinterpret_cast<uint8_t *>(&val));
+    outf("s0:  %016" RV_PRI64 "x   ", val);
+    itap_->read(info_->reg2addr("a0"), 8, reinterpret_cast<uint8_t *>(&val));
+    outf("a0:  %016" RV_PRI64 "x   \n", val);
 
-    outf("sp: %016" RV_PRI64 "x    ", regs[getRegIDx("sp")]);
-    outf("s1:  %016" RV_PRI64 "x   ", regs[getRegIDx("s1")]);
-    outf("a1:  %016" RV_PRI64 "x   \n", regs[getRegIDx("a1")]);
+    itap_->read(info_->reg2addr("sp"), 8, reinterpret_cast<uint8_t *>(&val));
+    outf("sp: %016" RV_PRI64 "x    ", val);
+    itap_->read(info_->reg2addr("s1"), 8, reinterpret_cast<uint8_t *>(&val));
+    outf("s1:  %016" RV_PRI64 "x   ", val);
+    itap_->read(info_->reg2addr("a1"), 8, reinterpret_cast<uint8_t *>(&val));
+    outf("a1:  %016" RV_PRI64 "x   \n", val);
 
-    outf("gp: %016" RV_PRI64 "x    ", regs[getRegIDx("gp")]);
-    outf("s2:  %016" RV_PRI64 "x   ", regs[getRegIDx("s2")]);
-    outf("a2:  %016" RV_PRI64 "x   \n", regs[getRegIDx("a2")]);
+    itap_->read(info_->reg2addr("gp"), 8, reinterpret_cast<uint8_t *>(&val));
+    outf("gp: %016" RV_PRI64 "x    ", val);
+    itap_->read(info_->reg2addr("s2"), 8, reinterpret_cast<uint8_t *>(&val));
+    outf("s2:  %016" RV_PRI64 "x   ", val);
+    itap_->read(info_->reg2addr("a2"), 8, reinterpret_cast<uint8_t *>(&val));
+    outf("a2:  %016" RV_PRI64 "x   \n", val);
 
-    outf("tp: %016" RV_PRI64 "x    ", regs[getRegIDx("tp")]);
-    outf("s3:  %016" RV_PRI64 "x   ", regs[getRegIDx("s3")]);
-    outf("a3:  %016" RV_PRI64 "x   \n", regs[getRegIDx("a3")]);
+    itap_->read(info_->reg2addr("tp"), 8, reinterpret_cast<uint8_t *>(&val));
+    outf("tp: %016" RV_PRI64 "x    ", val);
+    itap_->read(info_->reg2addr("s3"), 8, reinterpret_cast<uint8_t *>(&val));
+    outf("s3:  %016" RV_PRI64 "x   ", val);
+    itap_->read(info_->reg2addr("a3"), 8, reinterpret_cast<uint8_t *>(&val));
+    outf("a3:  %016" RV_PRI64 "x   \n", val);
 
     outf("                        ", NULL);
-    outf("s4:  %016" RV_PRI64 "x   ", regs[getRegIDx("s4")]);
-    outf("a4:  %016" RV_PRI64 "x   \n", regs[getRegIDx("a4")]);
+    itap_->read(info_->reg2addr("s4"), 8, reinterpret_cast<uint8_t *>(&val));
+    outf("s4:  %016" RV_PRI64 "x   ", val);
+    itap_->read(info_->reg2addr("a4"), 8, reinterpret_cast<uint8_t *>(&val));
+    outf("a4:  %016" RV_PRI64 "x   \n", val);
 
-    outf("t0: %016" RV_PRI64 "x    ", regs[getRegIDx("t0")]);
-    outf("s5:  %016" RV_PRI64 "x   ", regs[getRegIDx("s5")]);
-    outf("a5:  %016" RV_PRI64 "x   \n", regs[getRegIDx("a5")]);
+    itap_->read(info_->reg2addr("t0"), 8, reinterpret_cast<uint8_t *>(&val));
+    outf("t0: %016" RV_PRI64 "x    ", val);
+    itap_->read(info_->reg2addr("s5"), 8, reinterpret_cast<uint8_t *>(&val));
+    outf("s5:  %016" RV_PRI64 "x   ", val);
+    itap_->read(info_->reg2addr("a5"), 8, reinterpret_cast<uint8_t *>(&val));
+    outf("a5:  %016" RV_PRI64 "x   \n", val);
 
-    outf("t1: %016" RV_PRI64 "x    ", regs[getRegIDx("t1")]);
-    outf("s6:  %016" RV_PRI64 "x   ", regs[getRegIDx("s6")]);
-    outf("a6:  %016" RV_PRI64 "x   \n", regs[getRegIDx("a6")]);
+    itap_->read(info_->reg2addr("t1"), 8, reinterpret_cast<uint8_t *>(&val));
+    outf("t1: %016" RV_PRI64 "x    ", val);
+    itap_->read(info_->reg2addr("s6"), 8, reinterpret_cast<uint8_t *>(&val));
+    outf("s6:  %016" RV_PRI64 "x   ", val);
+    itap_->read(info_->reg2addr("a6"), 8, reinterpret_cast<uint8_t *>(&val));
+    outf("a6:  %016" RV_PRI64 "x   \n", val);
 
-    outf("t2: %016" RV_PRI64 "x    ", regs[getRegIDx("t2")]);
-    outf("s7:  %016" RV_PRI64 "x   ", regs[getRegIDx("s7")]);
-    outf("a7:  %016" RV_PRI64 "x   \n", regs[getRegIDx("a7")]);
+    itap_->read(info_->reg2addr("t2"), 8, reinterpret_cast<uint8_t *>(&val));
+    outf("t2: %016" RV_PRI64 "x    ", val);
+    itap_->read(info_->reg2addr("s7"), 8, reinterpret_cast<uint8_t *>(&val));
+    outf("s7:  %016" RV_PRI64 "x   ", val);
+    itap_->read(info_->reg2addr("a7"), 8, reinterpret_cast<uint8_t *>(&val));
+    outf("a7:  %016" RV_PRI64 "x   \n", val);
     
-    outf("t3: %016" RV_PRI64 "x    ", regs[getRegIDx("t3")]);
-    outf("s8:  %016" RV_PRI64 "x   \n", regs[getRegIDx("s8")]);
+    itap_->read(info_->reg2addr("t3"), 8, reinterpret_cast<uint8_t *>(&val));
+    outf("t3: %016" RV_PRI64 "x    ", val);
+    itap_->read(info_->reg2addr("s8"), 8, reinterpret_cast<uint8_t *>(&val));
+    outf("s8:  %016" RV_PRI64 "x   \n", val);
 
-    outf("t4: %016" RV_PRI64 "x    ", regs[getRegIDx("t4")]);
-    outf("s9:  %016" RV_PRI64 "x   \n", regs[getRegIDx("s9")]);
+    itap_->read(info_->reg2addr("t4"), 8, reinterpret_cast<uint8_t *>(&val));
+    outf("t4: %016" RV_PRI64 "x    ", val);
+    itap_->read(info_->reg2addr("s9"), 8, reinterpret_cast<uint8_t *>(&val));
+    outf("s9:  %016" RV_PRI64 "x   \n", val);
 
-    outf("t5: %016" RV_PRI64 "x    ", regs[getRegIDx("t5")]);
-    outf("s10: %016" RV_PRI64 "x   ", regs[getRegIDx("s10")]);
-    outf("pc:  %016" RV_PRI64 "x  \n", regs[getRegIDx("pc")]);
+    itap_->read(info_->reg2addr("t5"), 8, reinterpret_cast<uint8_t *>(&val));
+    outf("t5: %016" RV_PRI64 "x    ", val);
+    itap_->read(info_->reg2addr("s10"), 8, reinterpret_cast<uint8_t *>(&val));
+    outf("s10: %016" RV_PRI64 "x   ", val);
+    itap_->read(info_->reg2addr("pc"), 8, reinterpret_cast<uint8_t *>(&val));
+    outf("pc:  %016" RV_PRI64 "x  \n", val);
 
-    outf("t6: %016" RV_PRI64 "x    ", regs[getRegIDx("t6")]);
-    outf("s11: %016" RV_PRI64 "x   ", regs[getRegIDx("s11")]);
-    outf("npc: %016" RV_PRI64 "x   \n", regs[getRegIDx("npc")]);
+    itap_->read(info_->reg2addr("t6"), 8, reinterpret_cast<uint8_t *>(&val));
+    outf("t6: %016" RV_PRI64 "x    ", val);
+    itap_->read(info_->reg2addr("s11"), 8, reinterpret_cast<uint8_t *>(&val));
+    outf("s11: %016" RV_PRI64 "x   ", val);
+    itap_->read(info_->reg2addr("npc"), 8, reinterpret_cast<uint8_t *>(&val));
+    outf("npc: %016" RV_PRI64 "x   \n", val);
 }
 
-void CmdParserService::br(AttributeType *listArgs) {
-    uint64_t value = (*listArgs)[2].to_uint64();
+void CmdExecutor::br(AttributeType *listArgs) {
+    uint8_t value[sizeof(uint64_t)];
+    *(reinterpret_cast<uint64_t *>(value)) = (*listArgs)[2].to_uint64();
     if (strcmp((*listArgs)[1].to_string(), "add") == 0) {
-        // CPU add_breakpoint register
-        uint64_t dsu_off = DSU_CTRL_BASE_ADDRESS + 16;
-        itap_->write(dsu_off, 8, reinterpret_cast<uint8_t *>(&value));
+        itap_->write(info_->addressBreakCreate(), 8, value);
     } else if (strcmp((*listArgs)[1].to_string(), "rm") == 0) {
-        uint64_t dsu_off = DSU_CTRL_BASE_ADDRESS + 24;
-        itap_->write(dsu_off, 8, reinterpret_cast<uint8_t *>(&value));
+        itap_->write(info_->addressBreakRemove(), 8, value);
     }
 }
 
-unsigned CmdParserService::getRegIDx(const char *name) {
-    for (unsigned i = 0; i < regNames_.size(); i++) {
-        if (strcmp(name, regNames_[i][REG_Name].to_string()) == 0) {
-            return static_cast<unsigned>(regNames_[i][REG_IDx].to_uint64());
-        }
-    }
-    return 0;
-}
 
-int CmdParserService::outf(const char *fmt, ...) {
+int CmdExecutor::outf(const char *fmt, ...) {
     if (outbuf_cnt_ > (outbuf_size_ - 128)) {
         char *t = new char [2*outbuf_size_];
         memcpy(t, outbuf_, outbuf_size_);

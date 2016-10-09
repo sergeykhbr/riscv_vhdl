@@ -12,21 +12,16 @@
 #include "igui.h"
 
 #include "MainWindow/UnclosableWidget.h"
-#include <QtWidgets/qmdisubwindow.h>
-#include <QtWidgets/qgridlayout.h>
-#include <QtCore/qtimer.h>
-#include <QtGui/qevent.h>
+#include <QtWidgets/QMdiSubWindow>
+#include <QtWidgets/QGridLayout>
+#include <QtCore/QEvent>
 
 namespace debugger {
 
-class RegsViewWidget : public UnclosableWidget,
-                       public IGuiCmdHandler {
+class RegsViewWidget : public UnclosableWidget {
     Q_OBJECT
 public:
     RegsViewWidget(IGui *igui, QWidget *parent = 0);
-
-    /** IGuiCmdHandler */
-    virtual void handleResponse(AttributeType *req, AttributeType *resp);
 
 signals:
     void signalRegisterValue(uint64_t reg_idx, uint64_t val);
@@ -37,14 +32,12 @@ private slots:
     void slotTargetStateChanged(bool);
 
 private:
-    int widgetIndexByName(const char *regname);
-    void addRegWidget(AttributeType &reg_cfg);
+    void addRegWidget(int idx, const char *name);
 
 private:
     AttributeType listRegs_;
     QGridLayout *gridLayout;
-    QTimer *pollingTimer_;
-
+    
     IGui *igui_;
     bool minSizeApplied_;
 };

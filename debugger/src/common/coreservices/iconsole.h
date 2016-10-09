@@ -20,7 +20,6 @@ public:
 
     virtual void writeBuffer(const char *buf) =0;
     virtual void enableLogFile(const char *filename) =0;
-    virtual void registerConsoleListener(IFace *iface) =0;
 };
 
 }  // namespace debugger

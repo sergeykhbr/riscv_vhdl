@@ -112,9 +112,9 @@ void ConsoleWidget::keyPressEvent(QKeyEvent *e) {
         verticalScrollBar()->setValue(verticalScrollBar()->maximum());
 
         for (unsigned i = 0; i < consoleListeners_.size(); i++) {
-            IConsoleListener *ilstn = 
+            /*IConsoleListener *ilstn = 
                 static_cast<IConsoleListener *>(consoleListeners_[i].to_iface());
-            ilstn->udpateCommand(cmd);
+            ilstn->udpateCommand(cmd);*/
         }
     } else {
         cursor.insertText(e->text());
@@ -128,11 +128,11 @@ void ConsoleWidget::closeEvent(QCloseEvent *event_) {
     event_->accept();
 }
 
-void ConsoleWidget::slotConfigure(AttributeType *cfg) {
+void ConsoleWidget::slotPostInit(AttributeType *cfg) {
 
 }
 
-void ConsoleWidget::slotRepaintByTimer() {
+void ConsoleWidget::slotUpdateByTimer() {
     if (strOutput_.size() == 0) {
         return;
     }
@@ -166,11 +166,6 @@ void ConsoleWidget::writeBuffer(const char *buf) {
     RISCV_mutex_lock(&mutexOutput_);
     strOutput_ += QString(buf);
     RISCV_mutex_unlock(&mutexOutput_);
-}
-
-void ConsoleWidget::registerConsoleListener(IFace *iface) {
-    AttributeType tmp(iface);
-    consoleListeners_.add_to_list(&tmp);
 }
 
 char ConsoleWidget::keyevent2char(QKeyEvent *e) {

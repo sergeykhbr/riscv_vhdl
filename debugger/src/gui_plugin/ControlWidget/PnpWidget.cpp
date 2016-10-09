@@ -1,3 +1,4 @@
+#include "coreservices/isocinfo.h"
 #include "PnpWidget.h"
 #include "moc_PnpWidget.h"
 
@@ -22,6 +23,7 @@ PnpWidget::PnpWidget(IGui *igui, QWidget *parent) : UnclosableWidget(parent) {
     setMinimumHeight(100);
     labelBoard_ = new QLabel(this);
     labelBoard_->setScaledContents(false);
+    reqCnt_ = 0;
 }
 
 PnpWidget::~PnpWidget() {
@@ -37,17 +39,32 @@ void PnpWidget::paintEvent(QPaintEvent *event) {
 }
 
 void PnpWidget::handleResponse(AttributeType *req, AttributeType *resp) {
-    QImage img(tr(":/images/ml605_top.png"));
-    pixmapBkg_ = QPixmap(size()).fromImage(img);
-    labelBoard_->setPixmap(pixmapBkg_);
+    switch (reqCnt_) {
+    case 0: // target info
+        {
+            QImage img(tr(":/images/ml605_top.png"));
+            pixmapBkg_ = QPixmap(size()).fromImage(img);
+            labelBoard_->setPixmap(pixmapBkg_);
 
-    update();
+            update();
+        }
+        break;
+    default:;
+    }
+    reqCnt_++;
 }
 
-void PnpWidget::slotConfigure(AttributeType *cfg) {
-    AttributeType cmd_rd;
-    cmd_rd.from_config("['read',0x80000000,4]");
-    igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), &cmd_rd);
+void PnpWidget::slotConfigDone() {
+    AttributeType cmd;
+    char tstr[64];
+
+    ISocInfo *info = static_cast<ISocInfo *>(igui_->getSocInfo());
+    uint32_t addr_pnp = static_cast<int>(info->addressPlugAndPlay());
+    RISCV_sprintf(tstr, sizeof(tstr), "read %08x 4", addr_pnp);
+
+    cmd.make_string(tstr);
+    igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), &cmd, true);
 }
+
 
 }  // namespace debugger

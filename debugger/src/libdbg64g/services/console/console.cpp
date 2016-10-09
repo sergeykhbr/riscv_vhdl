@@ -2,7 +2,7 @@
  * @file
  * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
  * @author     Sergey Khabarov - sergeykhbr@gmail.com
- * @brief      elf-file loader class implementation.
+ * @brief      shell console class implementation.
  */
 
 #include "console.h"
@@ -20,18 +20,10 @@ REGISTER_CLASS(ConsoleService)
 
 #define ENTRYSYMBOLS "riscv# "
 
-#define KB_UP       0x48
-#define KB_DOWN     80
-#define KB_LEFT     75
-#define KB_RIGHT    77
-#define KB_ESCAPE   27
-
 static const int STDIN = 0;
-static const uint8_t ARROW_PREFIX = 0xe0;
-static const uint8_t UNICODE_BACKSPACE = 0x7f;
 
 ConsoleService::ConsoleService(const char *name) 
-    : IService(name), IHap(HAP_ConfigDone) {
+    : IService(name), IHap(HAP_ConfigDone), portExecutor(this, "") {
     registerInterface(static_cast<IThread *>(this));
     registerInterface(static_cast<IConsole *>(this));
     registerInterface(static_cast<IHap *>(this));
@@ -39,10 +31,10 @@ ConsoleService::ConsoleService(const char *name)
     registerAttribute("Enable", &isEnable_);
     registerAttribute("LogFile", &logFile_);
     registerAttribute("StepQueue", &stepQueue_);
+    registerAttribute("AutoComplete", &autoComplete_);
+    registerAttribute("CommandExecutor", &commandExecutor_);
     registerAttribute("Signals", &signals_);
-    registerAttribute("Serial", &serial_);
-    registerAttribute("History", &history_);
-    registerAttribute("HistorySize", &history_size_);
+    registerAttribute("InputPort", &inPort_);
 
     RISCV_mutex_init(&mutexConsoleOutput_);
     RISCV_event_create(&config_done_, "config_done");
@@ -51,18 +43,14 @@ ConsoleService::ConsoleService(const char *name)
     isEnable_.make_boolean(true);
     logFile_.make_string("");
 	stepQueue_.make_string("");
+    autoComplete_.make_string("");
+    commandExecutor_.make_string("");
 	signals_.make_string("");
-    serial_.make_string("");
-    consoleListeners_.make_list(0);
-    history_.make_list(0);
-    history_size_.make_int64(4);
-    history_idx_ = 0;
+    inPort_.make_string("");
 
     logfile_ = NULL;
     iclk_ = NULL;
-
-    symb_seq_msk_ = 0xFF;
-    symb_seq_ = 0;
+    cmdSizePrev_ = 0;
 
 #ifdef DBG_ZEPHYR
     tst_cnt_ = 0;
@@ -97,10 +85,10 @@ ConsoleService::~ConsoleService() {
 }
 
 void ConsoleService::postinitService() {
-    ISerial *uart = static_cast<ISerial *>
-            (RISCV_get_service_iface(serial_.to_string(), IFACE_SERIAL));
-    if (uart) {
-        uart->registerRawListener(static_cast<IRawListener *>(this));
+    ISerial *iport = static_cast<ISerial *>
+            (RISCV_get_service_iface(inPort_.to_string(), IFACE_SERIAL));
+    if (iport) {
+        iport->registerRawListener(static_cast<IRawListener *>(this));
     }
 
     if (isEnable_.to_bool()) {
@@ -116,13 +104,30 @@ void ConsoleService::postinitService() {
     iclk_ = static_cast<IClock *>
 	    (RISCV_get_service_iface(stepQueue_.to_string(), IFACE_CLOCK));
 
+    iautocmd_ = static_cast<IAutoComplete *>(
+            RISCV_get_service_iface(autoComplete_.to_string(), 
+                                    IFACE_AUTO_COMPLETE));
+    if (!iautocmd_) {
+        RISCV_error("Can't get IAutoComplete interface %s",
+                    autoComplete_.to_string());
+    }
+
+    iexec_ = static_cast<ICmdExecutor *>(
+            RISCV_get_service_iface(commandExecutor_.to_string(), 
+                                    IFACE_CMD_EXECUTOR));
+    if (!iexec_) {
+        RISCV_error("Can't get ICmdExecutor interface %s",
+                    commandExecutor_.to_string());
+    } else {
+        iexec_->registerRawListener(
+            static_cast<IRawListener *>(&portExecutor));
+    }
+
     ISignal *itmp = static_cast<ISignal *>
         (RISCV_get_service_iface(signals_.to_string(), IFACE_SIGNAL));
     if (itmp) {
         itmp->registerSignalListener(static_cast<ISignalListener *>(this));
     }
-
-    history_idx_ = history_.size();
 
 #ifdef DBG_ZEPHYR
     if (iclk_) {
@@ -202,12 +207,42 @@ void ConsoleService::updateData(const char *buf, int buflen) {
 void ConsoleService::busyLoop() {
     RISCV_event_wait(&config_done_);
 
+    bool cmd_ready;
+    AttributeType cmd, cursor, cmdres;
     processScriptFile();
     while (isEnabled()) {
-        if (isData()) {
-            addToCommandLine(getData());
+        if (!isData()) {
+            RISCV_sleep_ms(50);
+            continue;
         }
-        RISCV_sleep_ms(50);
+
+        cmd_ready = iautocmd_->processKey(getData(), &cmd, &cursor);
+        if (cmd_ready) {
+            RISCV_mutex_lock(&mutexConsoleOutput_);
+            std::cout << "\r\n";
+            if (logfile_) {
+                fwrite(ENTRYSYMBOLS, sizeof(ENTRYSYMBOLS), 1, logfile_);
+                fwrite(cmd.to_string(), cmd.size(), 1, logfile_);
+                fwrite("\n", 1, 1, logfile_);
+                fflush(logfile_);
+            }
+            RISCV_mutex_unlock(&mutexConsoleOutput_);
+            if (!iexec_->exec(cmd.to_string(), &cmdres, false)) {
+                // No response data:
+                RISCV_mutex_lock(&mutexConsoleOutput_);
+                std::cout << '\r' << ENTRYSYMBOLS ;
+                RISCV_mutex_unlock(&mutexConsoleOutput_);
+            }
+        } else {
+            RISCV_mutex_lock(&mutexConsoleOutput_);
+            std::cout << '\r' << ENTRYSYMBOLS << cmd.to_string();
+            if (cmdSizePrev_ > cmd.size()) {
+                clearLine(static_cast<int>(cmdSizePrev_ - cmd.size()));
+            }
+            RISCV_mutex_unlock(&mutexConsoleOutput_);
+        }
+        std::cout.flush();
+        cmdSizePrev_ = cmd.size();
     }
     loopEnable_ = false;
     threadInit_.Handle = 0;
@@ -254,11 +289,11 @@ void ConsoleService::processScriptFile() {
                 scr_state = SCRIPT_comment;
                 i++;
             } else {
-                addToCommandLine(script_buf[i]);
+                //addToCommandLine(script_buf[i]);
             }
             break;
         case SCRIPT_command:
-            addToCommandLine(script_buf[i]);
+            //addToCommandLine(script_buf[i]);
         case SCRIPT_comment:
             if (script_buf[i] == '\r' || script_buf[i] == '\n') {
                 scr_state = SCRIPT_normal;
@@ -278,7 +313,7 @@ void ConsoleService::writeBuffer(const char *buf) {
         return;
     }
     RISCV_mutex_lock(&mutexConsoleOutput_);
-    clearLine();
+    clearLine(70);
     std::cout << buf;
     if (buf[sz-1] != '\r' && buf[sz-1] != '\n') {
         std::cout << "\r\n";
@@ -293,8 +328,13 @@ void ConsoleService::writeBuffer(const char *buf) {
     RISCV_mutex_unlock(&mutexConsoleOutput_);
 }
 
-void ConsoleService::clearLine() {
-    std::cout << "\r                                                      \r";
+void ConsoleService::clearLine(int num) {
+    for (int i = 0; i < num; i++) {
+        std::cout << ' ';
+    }
+    for (int i = 0; i < num; i++) {
+        std::cout << '\b';
+    }
 }
 
 void ConsoleService::enableLogFile(const char *filename) {
@@ -308,11 +348,6 @@ void ConsoleService::enableLogFile(const char *filename) {
     }
 }
 
-void ConsoleService::registerConsoleListener(IFace *iface) {
-    AttributeType t1(iface);
-    consoleListeners_.add_to_list(&t1);
-}
-
 bool ConsoleService::isData() {
 #if defined(_WIN32) || defined(__CYGWIN__)
     return _kbhit() ? true: false;
@@ -323,9 +358,9 @@ bool ConsoleService::isData() {
 #endif
 }
 
-int ConsoleService::getData() {
+uint8_t ConsoleService::getData() {
 #if defined(_WIN32) || defined(__CYGWIN__)
-    return _getch();
+    return static_cast<uint8_t>(_getch());
 #else
     unsigned char ch;
     //int err = 
@@ -335,55 +370,7 @@ int ConsoleService::getData() {
 #endif
 }
 
-bool ConsoleService::convertToWinKey(uint8_t symb) {
-    bool ret = true;
-    symb_seq_ <<= 8;
-    symb_seq_ |= symb;
-    symb_seq_ &= symb_seq_msk_;
-
-#if defined(_WIN32) || defined(__CYGWIN__)
-    if (symb_seq_ == ARROW_PREFIX) {
-        ret = false;
-        symb_seq_msk_ = 0xFFFF;
-    } else {
-        symb_seq_msk_ = 0xFF;
-    }
-#else
-    if (symb_seq_ == UNICODE_BACKSPACE) {
-        symb_seq_ = '\b';
-        symb_seq_msk_ = 0xFF;
-    } else if (symb_seq_ == 0x1b) {
-        symb_seq_msk_ = 0xFFFF;
-        ret = false;
-    } else if (symb_seq_ == 0x1b5b) {
-        symb_seq_msk_ = 0xFFFFFF;
-        ret = false;
-    } else if (symb_seq_ == 0x1b5b41) {
-        symb_seq_ = (ARROW_PREFIX << 8) | KB_UP;
-        symb_seq_msk_ = 0xFF;
-    } else if (symb_seq_ == 0x1b5b42) {
-        symb_seq_ = (ARROW_PREFIX << 8) | KB_DOWN;
-        symb_seq_msk_ = 0xFF;
-    } else if (symb_seq_ == 0x1b5b43) {
-        //symb_seq_ = (ARROW_PREFIX << 8) | KB_RIGHT;
-        //symb_seq_msk_ = 0xFF;
-        ret = false;
-    } else if (symb_seq_ == 0x1b5b44) {
-        //symb_seq_ = (ARROW_PREFIX << 8) | KB_LEFT;
-        //symb_seq_msk_ = 0xFF;
-        ret = false;
-    } else {
-        symb_seq_msk_ = 0xFF;
-    }
-#endif
-    if (symb_seq_ == ((uint32_t('\r') << 8) | '\n')) {
-        symb_seq_ = 0;
-    }
-    return ret;
-}
-
-
-void ConsoleService::addToCommandLine(int val) {
+/*void ConsoleService::addToCommandLine(int val) {
     bool set_history_end = true;
     uint8_t symb = static_cast<uint8_t>(val);
     if (!convertToWinKey(symb)) {
@@ -448,10 +435,10 @@ void ConsoleService::addToCommandLine(int val) {
         history_idx_ = history_.size();
     }
 }
-
+*/
 void ConsoleService::processCommandLine() {
-    symb_seq_ = 0;
-    addToHistory(cmdLine_.c_str());
+    //symb_seq_ = 0;
+    //addToHistory(cmdLine_.c_str());
 
     RISCV_mutex_lock(&mutexConsoleOutput_);
     char tmpStr[256];
@@ -495,37 +482,16 @@ void ConsoleService::processCommandLine() {
             }
         }
     } else {
-        for (unsigned i = 0; i < consoleListeners_.size(); i++) {
+        /*for (unsigned i = 0; i < consoleListeners_.size(); i++) {
             IConsoleListener *ilstn = 
             static_cast<IConsoleListener *>(consoleListeners_[i].to_iface());
             ilstn->udpateCommand(pStr);
-        }
+        }*/
     }
     if (pStr != tmpStr) {
         delete [] pStr;
     }
 }
 
-void ConsoleService::addToHistory(const char *cmd) {
-    unsigned found = history_.size();
-    for (unsigned i = 0; i < history_.size(); i++) {
-        if (strcmp(cmd, history_[i].to_string()) == 0) {
-            found = i;
-            break;
-        }
-    }
-    if (found  ==  history_.size()) {
-        AttributeType new_cmd(cmd);
-        history_.add_to_list(&new_cmd);
-
-        unsigned min_size = static_cast<unsigned>(history_size_.to_int64());
-        if (history_.size() >= 2*min_size) {
-            history_.trim_list(0, min_size);
-        }
-    } else if (found < (history_.size() - 1)) {
-        history_.swap_list_item(found, history_.size() - 1);
-    }
-    history_idx_ = history_.size();
-}
 
 }  // namespace debugger

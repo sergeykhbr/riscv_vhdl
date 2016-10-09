@@ -14,8 +14,10 @@
 #include "coreservices/isignallistener.h"
 
 #include <QtWidgets/QWidget>
-#include <QtCore/qtimer.h>
-#include <QtGui/qevent.h>
+#include <QtCore/QTimer>
+#include <QtGui/QResizeEvent>
+#include <QtGui/QPaintEvent>
+#include <QtGui/QCloseEvent>
 
 namespace debugger {
 
@@ -35,28 +37,23 @@ public:
 
 signals:
     void signalClose(QWidget *, AttributeType &);
+    void signalLedValue(uint32_t value);
+    void signalDipValue(uint32_t value);
+
 private slots:
-    void slotConfigure(AttributeType *cfg);
-    void slotRepaintByTimer();
+    void slotPostInit(AttributeType *cfg);
+    void slotUpdateByTimer();
     void slotClosingMainForm();
-    void slotPollingUpdate();
 
 protected:
-    void resizeEvent(QResizeEvent *);
-    void paintEvent(QPaintEvent *event_);    // call on update() or redraw()
     void closeEvent(QCloseEvent *event_) Q_DECL_OVERRIDE;
 
 private:
-    QTimer *pollingTimer_;
 
     IGui *igui_;
     ISignal *igpio_;
-    bool needUpdate_;
-    uint64_t dips_;
-    uint64_t leds_;
-    QPixmap pixmapBkg_;
-    QPixmap pixmapGreen_;
-    QPixmap pixmapGrey_;
+
+    AttributeType cmdRd_;
 };
 
 }  // namespace debugger

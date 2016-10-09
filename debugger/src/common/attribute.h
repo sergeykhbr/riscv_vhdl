@@ -141,6 +141,8 @@ class AttributeType : public IAttribute {
         return u_.string;
     }
 
+    bool is_equal(const char *v);
+
     // capitalize letters in string;
     const char * to_upper() const {
         if (kind_ != Attr_String) {
@@ -191,6 +193,11 @@ class AttributeType : public IAttribute {
         kind_ = Attr_Nil;
         size_ = 0;
         u_.integer = 0;
+    }
+
+    void make_iface(IFace *value) {
+        kind_ = Attr_Interface;
+        u_.iface = value;
     }
 
     void make_floating(double value) {

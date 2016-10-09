@@ -18,24 +18,6 @@
 
 namespace debugger {
 
-const char *gui_default_ = 
-"["
-    "['ConsoleHistory',['csr mcpuid','regs']],"
-    "['Serial','uart0'],"
-    "['Gpio','gpio0'],"
-    "['PollingMs',500],"
-    "['RegList',[['zero',0],['ra',1],['sp',2],['gp',3],"
-                "['tp',4],['t0',5],['t1',6],['t2',7],"
-                "['s0',8],['s1',9],['a0',10],['a1',11],"
-                "['a2',12],['a3',13],['a4',14],['a5',15],"
-                "['a6',16],['a7',17],['s2',18],['s3',19],"
-                "['s4',20],['s5',21],['s6',22],['s7',23],"
-                "['s8',24],['s9',25],['s10',26],['s11',27],"
-                "['t3',28],['t4',29],['t5',30],['t6',31],"
-                "['pc',32],['npc',33]]]"
-"]"
-;
-
 void GuiPlugin::UiThreadType::busyLoop() {
     int argc = 0;
     char *argv[] = {0};
@@ -55,14 +37,19 @@ void GuiPlugin::UiThreadType::busyLoop() {
     }
 }
 
-GuiPlugin::GuiPlugin(const char *name) : IService(name) {
-    /// Interface registration
+GuiPlugin::GuiPlugin(const char *name) 
+    : IService(name), IHap(HAP_ConfigDone) {
     registerInterface(static_cast<IGui *>(this));
-    registerAttribute("GuiConfig", &guiConfig_);
-    registerAttribute("Tap", &tap_);
+    registerInterface(static_cast<IHap *>(this));
+    registerAttribute("WidgetsConfig", &guiConfig_);
+    registerAttribute("SocInfo", &socInfo_);
+    registerAttribute("CommandExecutor", &cmdExecutor_);
+
+    RISCV_register_hap(static_cast<IHap *>(this));
     
-    guiConfig_.make_list(0);
-    tap_.make_string("");
+    guiConfig_.make_dict();
+    socInfo_.make_string("");
+    cmdExecutor_.make_string("");
     mainWindow_ = NULL;
 
     char coredir[4096];
@@ -111,23 +98,36 @@ void GuiPlugin::initService(const AttributeType *args) {
 }
 
 void GuiPlugin::postinitService() {
-    if (guiConfig_.size() == 0) {
-        guiConfig_.from_config(gui_default_);
+    iexec_ = static_cast<ICmdExecutor *>(
+        RISCV_get_service_iface(cmdExecutor_.to_string(), IFACE_CMD_EXECUTOR));
+    if (!iexec_) {
+        RISCV_error("ICmdExecutor interface of %s not found.", 
+                    cmdExecutor_.to_string());
     }
+
+    info_ = static_cast<ISocInfo *>(
+        RISCV_get_service_iface(socInfo_.to_string(), IFACE_SOC_INFO));
+    if (!iexec_) {
+        RISCV_error("ISocInfo interface of %s not found.", 
+                    socInfo_.to_string());
+    }
+
     if (mainWindow_) {
-        mainWindow_->setConfiguration(guiConfig_);
-    }
-    itap_ = static_cast<ITap *>(
-        RISCV_get_service_iface(tap_.to_string(), IFACE_TAP));
-    if (!itap_) {
-        RISCV_error("Tap interface of %s not found.", 
-                    tap_.to_string());
+        mainWindow_->postInit(guiConfig_);
     }
     run();
 }
 
 void GuiPlugin::predeleteService() {
     stop();
+}
+
+void GuiPlugin::hapTriggered(IFace *isrc, EHapType type, const char *descr) {
+    mainWindow_->configDone();
+}
+
+IFace *GuiPlugin::getSocInfo() {
+    return info_;
 }
 
 void GuiPlugin::registerMainWindow(void *iwindow) {
@@ -142,7 +142,9 @@ void GuiPlugin::unregisterWidgetInterface(IFace *iface) {
     unregisterInterface(iface);
 }
 
-void GuiPlugin::registerCommand(IGuiCmdHandler *src, AttributeType *cmd) {
+void GuiPlugin::registerCommand(IGuiCmdHandler *src,
+                                AttributeType *cmd,
+                                bool silent) {
     if (cmdQueueCntTotal_ >= CMD_QUEUE_SIZE) {
         RISCV_error("Command queue size %d overflow.", cmdQueueCntTotal_);
         return;
@@ -151,6 +153,7 @@ void GuiPlugin::registerCommand(IGuiCmdHandler *src, AttributeType *cmd) {
     if (cmdQueueWrPos_ == CMD_QUEUE_SIZE) {
         cmdQueueWrPos_ = 0;
     }
+    cmdQueue_[cmdQueueWrPos_].silent = silent;
     cmdQueue_[cmdQueueWrPos_].src = src;
     cmdQueue_[cmdQueueWrPos_++].cmd = *cmd;
 
@@ -173,6 +176,7 @@ void GuiPlugin::busyLoop() {
 }
 
 bool GuiPlugin::processCmdQueue() {
+    AttributeType resp;
     int total = cmdQueueCntTotal_;
     for (int i = 0; i < total; i++) {
         if (cmdQueueRdPos_ == CMD_QUEUE_SIZE) {
@@ -182,51 +186,22 @@ bool GuiPlugin::processCmdQueue() {
             cmdQueueRdPos_++;
             continue;
         }
-        const AttributeType &cmd = cmdQueue_[cmdQueueRdPos_].cmd;
-        if (!cmd[0u].is_string()) {
+        AttributeType &cmd = cmdQueue_[cmdQueueRdPos_].cmd;
+        if (!cmd.is_string()) {
+            /** Script not tested yet */
             cmdQueueRdPos_++;
             continue;
         }
 
-        if (strcmp(cmd[0u].to_string(), "exit") == 0) {
+        if (cmd.is_equal("exit")) {
             cmdQueueRdPos_++;
             return true;
         }
+        iexec_->exec(cmd.to_string(), &resp, cmdQueue_[cmdQueueRdPos_].silent);
 
-        /** Memory read access: */
-        if (strcmp(cmd[0u].to_string(), "read") == 0) {
-            int bytes = static_cast<int>(cmd[2].to_uint64());
-            uint8_t obuf[32] = {0};
-            itap_->read(cmd[1].to_uint64(), bytes, obuf);
-            AttributeType resp;
-            if (bytes == 1) {
-                resp.make_uint64(*reinterpret_cast<uint8_t *>(obuf));
-            } else if (bytes == 2) {
-                resp.make_uint64(*reinterpret_cast<uint16_t *>(obuf));
-            } else if (bytes == 4) {
-                resp.make_uint64(*reinterpret_cast<uint32_t *>(obuf));
-            } else if (bytes == 8) {
-                resp.make_uint64(*reinterpret_cast<uint64_t *>(obuf));
-            } else {
-                resp.make_data(bytes, obuf);
-            }
-            if (cmdQueue_[cmdQueueRdPos_].src) {
-                cmdQueue_[cmdQueueRdPos_].src->handleResponse(
-                            const_cast<AttributeType *>(&cmd), &resp);
-            }
-        }
-
-        /** Memory write access: */
-        if (strcmp(cmd[0u].to_string(), "write") == 0) {
-            int bytes = static_cast<int>(cmd[2].to_uint64());
-            uint64_t val64 = 0;
-            uint8_t *ibuf = reinterpret_cast<uint8_t *>(&val64);
-            if (bytes <= 8) {
-                val64 = cmd[3].to_uint64();
-            } else {
-                ibuf = const_cast<uint8_t *>(cmd[3].data());
-            }
-            itap_->write(cmd[1].to_uint64(), bytes, ibuf);
+        if (cmdQueue_[cmdQueueRdPos_].src) {
+            cmdQueue_[cmdQueueRdPos_].src->handleResponse(
+                        const_cast<AttributeType *>(&cmd), &resp);
         }
         cmdQueueRdPos_++;
     }

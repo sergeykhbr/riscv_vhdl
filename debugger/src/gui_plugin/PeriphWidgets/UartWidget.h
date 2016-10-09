@@ -36,8 +36,8 @@ public:
 signals:
     void signalClose(QWidget *, AttributeType &);
 private slots:
-    void slotConfigure(AttributeType *cfg);
-    void slotRepaintByTimer();
+    void slotPostInit(AttributeType *cfg);
+    void slotUpdateByTimer();
     void slotClosingMainForm();
 
 protected:
@@ -53,6 +53,7 @@ private:
     QString strOutput_;
     bool bNewDataAvailable_;
     mutex_def mutexStr_;
+    char prevSymb_;
 };
 
 }  // namespace debugger

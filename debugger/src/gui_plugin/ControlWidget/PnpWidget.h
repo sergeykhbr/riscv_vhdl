@@ -30,7 +30,7 @@ public:
 signals:
 
 private slots:
-    void slotConfigure(AttributeType *cfg);
+    void slotConfigDone();
 
 protected:
     void paintEvent(QPaintEvent *event_);    // call on update() or redraw()
@@ -40,6 +40,13 @@ private:
     QGridLayout *mainLayout_;
     QLabel *labelBoard_;
     QPixmap pixmapBkg_;
+    
+    AttributeType targetID_;
+    AttributeType fwID_;
+    AttributeType hwID_;
+    AttributeType lstSlaves_;
+
+    int reqCnt_;
 };
 
 }  // namespace debugger

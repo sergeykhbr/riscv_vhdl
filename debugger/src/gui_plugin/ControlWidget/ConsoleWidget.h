@@ -10,7 +10,7 @@
 #include "api_core.h"   // MUST BE BEFORE QtWidgets.h or any other Qt header.
 #include "attribute.h"
 #include "igui.h"
-#include "coreservices/iconsolelistener.h"
+#include "coreservices/iautocomplete.h"
 #include "coreservices/iconsole.h"
 
 #include <QtWidgets/QWidget>
@@ -36,13 +36,12 @@ public:
     virtual int registerKeyListener(IFace *iface) { return 0; }
     virtual void setCmdString(const char *buf) {}
     virtual void enableLogFile(const char *filename) {}
-    virtual void registerConsoleListener(IFace *iface);
 
 signals:
     void signalClose(QWidget *, AttributeType &);
 private slots:
-    void slotConfigure(AttributeType *cfg);
-    void slotRepaintByTimer();
+    void slotPostInit(AttributeType *cfg);
+    void slotUpdateByTimer();
     void slotClosingMainForm();
 
 protected:
