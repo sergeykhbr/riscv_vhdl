@@ -2,30 +2,31 @@
  * @file
  * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
  * @author     Sergey Khabarov - sergeykhbr@gmail.com
- * @brief      Log file enable/disable.
+ * @brief      Read/write memory.
  */
 
-#ifndef __DEBUGGER_CMD_LOG_H__
-#define __DEBUGGER_CMD_LOG_H__
+#ifndef __DEBUGGER_CMD_READ_H__
+#define __DEBUGGER_CMD_READ_H__
 
 #include "api_core.h"
-#include "coreservices/itap.h"
-#include "coreservices/isocinfo.h"
 #include "coreservices/icommand.h"
 
 namespace debugger {
 
-class CmdLog : public ICommand  {
+class CmdRead : public ICommand  {
 public:
-    explicit CmdLog(ITap *tap, ISocInfo *info);
+    explicit CmdRead(ITap *tap, ISocInfo *info);
+    virtual ~CmdRead();
 
     /** ICommand */
     virtual bool isValid(AttributeType *args);
     virtual bool exec(AttributeType *args, AttributeType *res);
+    virtual bool format(AttributeType *args, AttributeType *res, AttributeType *out);
 
 private:
+    AttributeType rdData_;
 };
 
 }  // namespace debugger
 
-#endif  // __DEBUGGER_CMD_LOG_H__
+#endif  // __DEBUGGER_CMD_READ_H__

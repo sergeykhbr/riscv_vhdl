@@ -25,10 +25,11 @@ public:
 
 signals:
     void signalRegisterValue(uint64_t reg_idx, uint64_t val);
+    void signalUpdateByTimer();
 
 private slots:
-    void slotConfigure(AttributeType *cfg);
-    void slotPollingUpdate();
+    void slotPostInit(AttributeType *cfg);
+    void slotUpdateByTimer();
     void slotTargetStateChanged(bool);
 
 private:

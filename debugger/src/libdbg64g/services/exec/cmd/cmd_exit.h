@@ -2,11 +2,11 @@
  * @file
  * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
  * @author     Sergey Khabarov - sergeykhbr@gmail.com
- * @brief      Log file enable/disable.
+ * @brief      Exit and close application.
  */
 
-#ifndef __DEBUGGER_CMD_LOG_H__
-#define __DEBUGGER_CMD_LOG_H__
+#ifndef __DEBUGGER_CMD_EXIT_H__
+#define __DEBUGGER_CMD_EXIT_H__
 
 #include "api_core.h"
 #include "coreservices/itap.h"
@@ -15,9 +15,9 @@
 
 namespace debugger {
 
-class CmdLog : public ICommand  {
+class CmdExit : public ICommand  {
 public:
-    explicit CmdLog(ITap *tap, ISocInfo *info);
+    explicit CmdExit(ITap *tap, ISocInfo *info);
 
     /** ICommand */
     virtual bool isValid(AttributeType *args);
@@ -28,4 +28,4 @@ private:
 
 }  // namespace debugger
 
-#endif  // __DEBUGGER_CMD_LOG_H__
+#endif  // __DEBUGGER_CMD_EXIT_H__

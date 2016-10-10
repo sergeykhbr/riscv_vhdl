@@ -182,10 +182,6 @@ bool GuiPlugin::processCmdQueue() {
         if (cmdQueueRdPos_ == CMD_QUEUE_SIZE) {
             cmdQueueRdPos_ = 0;
         }
-        if (!cmdQueue_[cmdQueueRdPos_].cmd.is_list()) {
-            cmdQueueRdPos_++;
-            continue;
-        }
         AttributeType &cmd = cmdQueue_[cmdQueueRdPos_].cmd;
         if (!cmd.is_string()) {
             /** Script not tested yet */

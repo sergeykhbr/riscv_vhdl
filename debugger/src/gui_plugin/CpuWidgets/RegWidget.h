@@ -37,6 +37,7 @@ private:
     IGui *igui_;
     QLineEdit *edit_;
     uint64_t value_;
+    uint64_t respValue_;
 };
 
 }  // namespace debugger

@@ -28,6 +28,10 @@ SRC_PATH =\
 	$(TOP_DIR)src/libdbg64g/services/bus \
 	$(TOP_DIR)src/libdbg64g/services/udp \
 	$(TOP_DIR)src/libdbg64g/services/console \
+	$(TOP_DIR)src/libdbg64g/services/exec \
+	$(TOP_DIR)src/libdbg64g/services/exec/cmd \
+	$(TOP_DIR)src/libdbg64g/services/info \
+	$(TOP_DIR)src/libdbg64g/services/comport \
 	$(TOP_DIR)src/libdbg64g/services/elfloader
 
 VPATH = $(SRC_PATH)
@@ -42,8 +46,24 @@ SOURCES = \
 	udp \
 	edcl \
 	elfloader \
+	cmd_csr \
+	cmd_halt \
+	cmd_isrunning \
+	cmd_loadelf \
+	cmd_log \
+	cmd_read \
+	cmd_write \
+	cmd_reg \
+	cmd_regs \
+	cmd_run \
+	cmd_exit \
+	cmd_memdump \
+	cmdexec \
+	soc_info \
 	console \
-	cmdparser
+	com_linux \
+	comport \
+	autocompleter
 
 LIBS = \
 	m \

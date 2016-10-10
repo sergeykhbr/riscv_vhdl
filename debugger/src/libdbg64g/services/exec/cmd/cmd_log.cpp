@@ -29,16 +29,12 @@ bool CmdLog::isValid(AttributeType *args) {
 }
 
 bool CmdLog::exec(AttributeType *args, AttributeType *res) {
-    res->make_dict();
+    res->make_nil();
     if (!isValid(args)) {
         return CMD_FAILED;
     }
     /** Do nothing, log file is enabled in Executor itself */
     return CMD_SUCCESS;
-}
-
-bool CmdLog::format(AttributeType *res, AttributeType *out) {
-    return CMD_NO_OUTPUT;
 }
 
 }  // namespace debugger

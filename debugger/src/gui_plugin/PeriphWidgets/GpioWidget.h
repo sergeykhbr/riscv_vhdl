@@ -10,8 +10,7 @@
 #include "api_core.h"   // MUST BE BEFORE QtWidgets.h or any other Qt header.
 #include "attribute.h"
 #include "igui.h"
-#include "coreservices/isignal.h"
-#include "coreservices/isignallistener.h"
+#include "coreservices/isocinfo.h"
 
 #include <QtWidgets/QWidget>
 #include <QtCore/QTimer>
@@ -22,15 +21,10 @@
 namespace debugger {
 
 class GpioWidget : public QWidget,
-                  public ISignalListener,
                   public IGuiCmdHandler {
     Q_OBJECT
 public:
     GpioWidget(IGui *igui, QWidget *parent = 0);
-    ~GpioWidget();
-
-    // ISignalListener
-    virtual void updateSignal(int start, int width, uint64_t value);
 
     /** IGuiCmdHandler */
     virtual void handleResponse(AttributeType *req, AttributeType *resp);
@@ -43,17 +37,16 @@ signals:
 private slots:
     void slotPostInit(AttributeType *cfg);
     void slotUpdateByTimer();
-    void slotClosingMainForm();
 
 protected:
     void closeEvent(QCloseEvent *event_) Q_DECL_OVERRIDE;
 
 private:
-
     IGui *igui_;
-    ISignal *igpio_;
 
     AttributeType cmdRd_;
+    GpioType value_;
+    GpioType newValue_;
 };
 
 }  // namespace debugger

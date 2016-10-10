@@ -43,6 +43,7 @@ class AttributeType : public IAttribute {
         AttributeType *list;
         AttributePairType *dict;
         uint8_t *data;
+        uint8_t data_bytes[8];  // Data without allocation
         void *py_object;
         IFace *iface;
         char *uobject;
@@ -223,6 +224,8 @@ class AttributeType : public IAttribute {
 
     void make_string(const char *value);
 
+    void make_data(unsigned size);
+
     void make_data(unsigned size, const void *data);
 
     void make_list(unsigned size);
@@ -292,8 +295,18 @@ class AttributeType : public IAttribute {
     const AttributeType *dict_value(unsigned idx) const;
     AttributeType *dict_value(unsigned idx);
 
-    const uint8_t *data() const { return u_.data; }
-    uint8_t *data() { return u_.data; }
+    const uint8_t *data() const { 
+        if (size_ > 8) {
+            return u_.data;
+        }
+        return u_.data_bytes;
+    }
+    uint8_t *data() {
+        if (size_ > 8) {
+            return u_.data;
+        }
+        return u_.data_bytes;
+    }
 
     AttributeType& operator=(const AttributeType& other);
 

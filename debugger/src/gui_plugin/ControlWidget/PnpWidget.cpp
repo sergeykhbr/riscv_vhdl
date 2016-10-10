@@ -60,7 +60,7 @@ void PnpWidget::slotConfigDone() {
 
     ISocInfo *info = static_cast<ISocInfo *>(igui_->getSocInfo());
     uint32_t addr_pnp = static_cast<int>(info->addressPlugAndPlay());
-    RISCV_sprintf(tstr, sizeof(tstr), "read %08x 4", addr_pnp);
+    RISCV_sprintf(tstr, sizeof(tstr), "read 0x%08x 4", addr_pnp);
 
     cmd.make_string(tstr);
     igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), &cmd, true);

@@ -41,12 +41,10 @@ RegsViewWidget::RegsViewWidget(IGui *igui, QWidget *parent)
     setLayout(gridLayout);
 
     minSizeApplied_ = false;
-
-    qRegisterMetaType<uint64_t>("uint64_t");
 }
 
 
-void RegsViewWidget::slotConfigure(AttributeType *cfg) {
+void RegsViewWidget::slotPostInit(AttributeType *cfg) {
     int n = 0;
     while (strcmp(REG_NAMES_LAYOUT[n], "break")) {
         if (REG_NAMES_LAYOUT[0] == '\0') {
@@ -58,7 +56,11 @@ void RegsViewWidget::slotConfigure(AttributeType *cfg) {
     }
 }
 
-void RegsViewWidget::slotPollingUpdate() {
+void RegsViewWidget::slotUpdateByTimer() {
+    if (isVisible()) {
+        emit signalUpdateByTimer();
+        update();
+    }
 }
 
 void RegsViewWidget::slotTargetStateChanged(bool running) {
@@ -70,6 +72,9 @@ void RegsViewWidget::addRegWidget(int idx, const char *name) {
 
     QWidget *pnew = new RegWidget(name, igui_, this);
     gridLayout->addWidget(pnew, line + 1, col);
+
+    connect(this, SIGNAL(signalUpdateByTimer()),
+            pnew, SLOT(slotUpdateByTimer()));
 
     if (!minSizeApplied_) {
         minSizeApplied_ = true;

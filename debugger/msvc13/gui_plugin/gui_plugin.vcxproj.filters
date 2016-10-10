@@ -52,6 +52,9 @@
     <ClCompile Include="..\..\src\gui_plugin\ControlWidget\PnpWidget.cpp">
       <Filter>ControlWidget</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\PeriphWidgets\LedArea.cpp">
+      <Filter>PeriphWidgets</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\api_types.h">
@@ -86,13 +89,7 @@
     <ClInclude Include="..\..\src\gui_plugin\MainWindow\MdiAreaWidget.h">
       <Filter>MainWindow</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\gui_plugin\MainWindow\moc_MdiAreaWidget.h">
-      <Filter>MainWindow</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\GpioWidget.h">
-      <Filter>PeriphWidgets</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\moc_GpioWidget.h">
       <Filter>PeriphWidgets</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\gui_plugin\ControlWidget\ConsoleWidget.h">
@@ -100,9 +97,6 @@
     </ClInclude>
     <ClInclude Include="..\..\src\gui_plugin\ControlWidget\moc_ConsoleWidget.h">
       <Filter>ControlWidget</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\moc_UartWidget.h">
-      <Filter>PeriphWidgets</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\UartWidget.h">
       <Filter>PeriphWidgets</Filter>
@@ -122,9 +116,6 @@
     <ClInclude Include="..\..\src\gui_plugin\MainWindow\UnclosableQMdiSubWindow.h">
       <Filter>MainWindow</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\gui_plugin\MainWindow\moc_UnclosableQMdiSubWindow.h">
-      <Filter>MainWindow</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\gui_plugin\MainWindow\UnclosableWidget.h">
       <Filter>MainWindow</Filter>
     </ClInclude>
@@ -133,6 +124,9 @@
     </ClInclude>
     <ClInclude Include="..\..\src\gui_plugin\ControlWidget\PnpWidget.h">
       <Filter>ControlWidget</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\LedArea.h">
+      <Filter>PeriphWidgets</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

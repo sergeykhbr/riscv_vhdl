@@ -192,6 +192,7 @@
     <ClCompile Include="..\..\src\gui_plugin\MainWindow\MdiAreaWidget.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\MainWindow\UnclosableWidget.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\PeriphWidgets\GpioWidget.cpp" />
+    <ClCompile Include="..\..\src\gui_plugin\PeriphWidgets\LedArea.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\PeriphWidgets\UartWidget.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -215,13 +216,10 @@
     <ClInclude Include="..\..\src\gui_plugin\igui.h" />
     <ClInclude Include="..\..\src\gui_plugin\MainWindow\DbgMainWindow.h" />
     <ClInclude Include="..\..\src\gui_plugin\MainWindow\MdiAreaWidget.h" />
-    <ClInclude Include="..\..\src\gui_plugin\MainWindow\moc_MdiAreaWidget.h" />
-    <ClInclude Include="..\..\src\gui_plugin\MainWindow\moc_UnclosableQMdiSubWindow.h" />
     <ClInclude Include="..\..\src\gui_plugin\MainWindow\UnclosableQMdiSubWindow.h" />
     <ClInclude Include="..\..\src\gui_plugin\MainWindow\UnclosableWidget.h" />
     <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\GpioWidget.h" />
-    <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\moc_GpioWidget.h" />
-    <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\moc_UartWidget.h" />
+    <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\LedArea.h" />
     <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\UartWidget.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

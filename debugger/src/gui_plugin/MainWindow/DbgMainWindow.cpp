@@ -32,6 +32,13 @@ DbgMainWindow::DbgMainWindow(IGui *igui, event_def *init_done) {
     
     setUnifiedTitleAndToolBarOnMac(true);
 
+    /** 
+     * To use the following type in SIGNAL -> SLOT definitions 
+     * we have to register them using qRegisterMetaType template
+     */
+    qRegisterMetaType<uint64_t>("uint64_t");
+    qRegisterMetaType<uint32_t>("uint32_t");
+
     connect(this, SIGNAL(signalConfigDone()), this, SLOT(slotConfigDone()));
     RISCV_event_set(initDone_);
 }
@@ -41,9 +48,9 @@ DbgMainWindow::~DbgMainWindow() {
 
 void DbgMainWindow::handleResponse(AttributeType *req, AttributeType *resp) {
     if (req->is_equal(cmdIsRunning_.to_string())) {
-        bool isrun = resp->is_bool();
+        bool isrun = resp->to_bool();
         if ((actionRun_->isChecked() && !isrun)
-            || (!actionRun_->isChecked() && !isrun)) {
+            || (!actionRun_->isChecked() && isrun)) {
             emit signalTargetStateChanged(isrun);
         }
     }
@@ -228,7 +235,9 @@ void DbgMainWindow::addWidgets() {
     subw->setWindowIcon(actionRegs_->icon());
     mdiArea->addSubWindow(subw);
     connect(this, SIGNAL(signalPostInit(AttributeType *)),
-        pnew_unclose, SLOT(slotConfigure(AttributeType *)));
+        pnew_unclose, SLOT(slotPostInit(AttributeType *)));
+    connect(this, SIGNAL(signalUpdateByTimer()),
+        pnew_unclose, SLOT(slotUpdateByTimer()));
     connect(actionRegs_, SIGNAL(triggered(bool)),
             subw, SLOT(slotVisible(bool)));
     connect(subw, SIGNAL(signalVisible(bool)), 

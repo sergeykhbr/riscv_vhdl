@@ -13,10 +13,7 @@ static const char CONSOLE_ENTRY[] = "riscv# ";
 ConsoleWidget::ConsoleWidget(IGui *igui, QWidget *parent) 
     : QPlainTextEdit(parent) {
     igui_ = igui;
-    igui_->registerWidgetInterface(static_cast<IConsole *>(this));
 
-    consoleListeners_.make_list(0);
-    
     RISCV_mutex_init(&mutexOutput_);
     sizeConv_ = 1024;
     wcsConv_ = new wchar_t[sizeConv_];
@@ -52,6 +49,10 @@ ConsoleWidget::~ConsoleWidget() {
     RISCV_mutex_destroy(&mutexOutput_);
     delete [] wcsConv_;
     delete [] mbsConv_;
+}
+
+void ConsoleWidget::handleResponse(AttributeType *req, AttributeType *resp) {
+    /** Do nothing with received data. Output via raw listner. */
 }
 
 void ConsoleWidget::keyPressEvent(QKeyEvent *e) {
@@ -111,11 +112,8 @@ void ConsoleWidget::keyPressEvent(QKeyEvent *e) {
         cursorMinPos_ = cursor.selectionStart();
         verticalScrollBar()->setValue(verticalScrollBar()->maximum());
 
-        for (unsigned i = 0; i < consoleListeners_.size(); i++) {
-            /*IConsoleListener *ilstn = 
-                static_cast<IConsoleListener *>(consoleListeners_[i].to_iface());
-            ilstn->udpateCommand(cmd);*/
-        }
+        AttributeType regcmd(cmd);
+        igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), &regcmd, false);
     } else {
         cursor.insertText(e->text());
     }
@@ -129,7 +127,14 @@ void ConsoleWidget::closeEvent(QCloseEvent *event_) {
 }
 
 void ConsoleWidget::slotPostInit(AttributeType *cfg) {
+    const char *autoobj = (*cfg)["AutoComplete"].to_string();
+    iauto_ = static_cast<IAutoComplete *>(
+        RISCV_get_service_iface(autoobj, IFACE_AUTO_COMPLETE));
 
+    const char *execobj = (*cfg)["CommandExecutor"].to_string();
+    ICmdExecutor *iexec = static_cast<ICmdExecutor *>(
+        RISCV_get_service_iface(execobj, IFACE_CMD_EXECUTOR));
+    iexec->registerRawListener(static_cast<IRawListener *>(this));
 }
 
 void ConsoleWidget::slotUpdateByTimer() {
@@ -159,10 +164,9 @@ void ConsoleWidget::slotUpdateByTimer() {
 }
 
 void ConsoleWidget::slotClosingMainForm() {
-    igui_->unregisterWidgetInterface(static_cast<IConsole *>(this));
 }
 
-void ConsoleWidget::writeBuffer(const char *buf) {
+void ConsoleWidget::updateData(const char *buf, int bufsz) {
     RISCV_mutex_lock(&mutexOutput_);
     strOutput_ += QString(buf);
     RISCV_mutex_unlock(&mutexOutput_);

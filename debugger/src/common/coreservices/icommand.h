@@ -44,7 +44,7 @@ public:
     virtual bool isValid(AttributeType *args) =0;
     virtual bool exec(AttributeType *args, AttributeType *res) =0;
 
-    virtual bool format(AttributeType *res, AttributeType *out) {
+    virtual bool format(AttributeType *args, AttributeType *res, AttributeType *out) {
         out->make_string(res->to_config());
         return out->is_invalid() || out->is_nil() ? CMD_NO_OUTPUT : CMD_IS_OUTPUT;
     }

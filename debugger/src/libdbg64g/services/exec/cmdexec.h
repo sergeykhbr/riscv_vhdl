@@ -38,16 +38,8 @@ private:
     void processScript(AttributeType *cmd, AttributeType *res);
     void splitLine(char *str, AttributeType *listArgs);
 
-    void readCSR(AttributeType *listArgs);
-    void writeCSR(AttributeType *listArgs);
-    void readMem(AttributeType *listArgs);
     void writeMem(AttributeType *listArgs);
-    void memDump(AttributeType *listArgs);
 
-    // Only simulation platform supports these commands (for now):
-    void halt(AttributeType *listArgs);
-    void run(AttributeType *listArgs);
-    void regs(AttributeType *listArgs, AttributeType *res);
     void br(AttributeType *listArgs);
 
     int outf(const char *fmt, ...);

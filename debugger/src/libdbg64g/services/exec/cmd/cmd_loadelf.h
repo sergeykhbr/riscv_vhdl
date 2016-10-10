@@ -22,7 +22,6 @@ public:
     /** ICommand */
     virtual bool isValid(AttributeType *args);
     virtual bool exec(AttributeType *args, AttributeType *res);
-    virtual bool format(AttributeType *res, AttributeType *out);
 
 private:
 };

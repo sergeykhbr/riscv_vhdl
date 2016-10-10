@@ -34,13 +34,14 @@ bool CmdReg::isValid(AttributeType *args) {
 }
 
 bool CmdReg::exec(AttributeType *args, AttributeType *res) {
-    res->make_uint64(~0);
+    res->make_nil();
     if (!isValid(args)) {
         return CMD_FAILED;
     }
 
     uint64_t val;
-    uint64_t addr = info_->reg2addr((*args)[1].to_string());
+    const char *reg_name = (*args)[1].to_string();
+    uint64_t addr = info_->reg2addr(reg_name);
     if (args->size() == 2) {
         tap_->read(addr, 8, reinterpret_cast<uint8_t *>(&val));
         res->make_uint64(val);

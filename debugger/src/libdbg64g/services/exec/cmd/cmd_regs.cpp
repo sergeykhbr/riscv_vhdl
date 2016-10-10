@@ -46,7 +46,7 @@ bool CmdRegs::exec(AttributeType *args, AttributeType *res) {
     } else {
         info_->getRegsList(&soclst);
         for (unsigned i = 0; i < soclst.size(); i++) {
-            const char *name = soclst[i][0u].to_string();
+            const char *name = soclst[i].to_string();
             (*res)[name].make_uint64(0);
         }
     }
@@ -61,7 +61,7 @@ bool CmdRegs::exec(AttributeType *args, AttributeType *res) {
     return CMD_SUCCESS;
 }
 
-bool CmdRegs::format(AttributeType *res, AttributeType *out) {
+bool CmdRegs::format(AttributeType *args, AttributeType *res, AttributeType *out) {
     if (!res->is_dict()) {
         return CMD_NO_OUTPUT;
     }
@@ -71,7 +71,7 @@ bool CmdRegs::format(AttributeType *res, AttributeType *out) {
     /** Full or not-full list of registers hould be printed: */
     if (res->size() != info_->getRegsTotal()) {
         for (unsigned i = 0; i < res->size(); i++) {
-            RISCV_sprintf(tstr, sizeof(tstr), 
+            tcnt += RISCV_sprintf(&tstr[tcnt], sizeof(tstr) - tcnt, 
             "%s: %016" RV_PRI64 "x\n", res->dict_key(i)->to_string(),
                                        res->dict_value(i)->to_uint64());
         }
@@ -79,54 +79,54 @@ bool CmdRegs::format(AttributeType *res, AttributeType *out) {
         return CMD_IS_OUTPUT;
     }
 
-    tcnt += RISCV_sprintf(tstr, sizeof(tstr) - tcnt, 
+    tcnt += RISCV_sprintf(&tstr[tcnt], sizeof(tstr) - tcnt, 
             "ra: %016" RV_PRI64 "x    \n", (*res)["ra"].to_uint64());
 
-    tcnt += RISCV_sprintf(tstr, sizeof(tstr) - tcnt,
+    tcnt += RISCV_sprintf(&tstr[tcnt], sizeof(tstr) - tcnt,
     "                        s0:  %016" RV_PRI64 "x   a0:  %016" RV_PRI64 "x\n",
     (*res)["s0"].to_uint64(), (*res)["a0"].to_uint64());
 
-    tcnt += RISCV_sprintf(tstr, sizeof(tstr) - tcnt,
+    tcnt += RISCV_sprintf(&tstr[tcnt], sizeof(tstr) - tcnt,
     "sp: %016" RV_PRI64 "x    s1:  %016" RV_PRI64 "x   a1:  %016" RV_PRI64 "x\n"
     ,(*res)["sp"].to_uint64(), (*res)["s1"].to_uint64(), (*res)["a1"].to_uint64());
 
-    tcnt += RISCV_sprintf(tstr, sizeof(tstr) - tcnt,
+    tcnt += RISCV_sprintf(&tstr[tcnt], sizeof(tstr) - tcnt,
     "gp: %016" RV_PRI64 "x    s2:  %016" RV_PRI64 "x   a2:  %016" RV_PRI64 "x\n"
     ,(*res)["gp"].to_uint64(), (*res)["s2"].to_uint64(), (*res)["a2"].to_uint64());
 
-    tcnt += RISCV_sprintf(tstr, sizeof(tstr) - tcnt,
+    tcnt += RISCV_sprintf(&tstr[tcnt], sizeof(tstr) - tcnt,
     "tp: %016" RV_PRI64 "x    s3:  %016" RV_PRI64 "x   a3:  %016" RV_PRI64 "x\n"
     ,(*res)["tp"].to_uint64(), (*res)["s3"].to_uint64(), (*res)["a3"].to_uint64());
 
-    tcnt += RISCV_sprintf(tstr, sizeof(tstr) - tcnt,
+    tcnt += RISCV_sprintf(&tstr[tcnt], sizeof(tstr) - tcnt,
     "                        s4:  %016" RV_PRI64 "x   a4:  %016" RV_PRI64 "x\n"
     ,(*res)["s4"].to_uint64(), (*res)["a4"].to_uint64());
 
-    tcnt += RISCV_sprintf(tstr, sizeof(tstr) - tcnt,
+    tcnt += RISCV_sprintf(&tstr[tcnt], sizeof(tstr) - tcnt,
     "t0: %016" RV_PRI64 "x    s5:  %016" RV_PRI64 "x   a5:  %016" RV_PRI64 "x\n"
     ,(*res)["t0"].to_uint64(), (*res)["s5"].to_uint64(), (*res)["a5"].to_uint64());
 
-    tcnt += RISCV_sprintf(tstr, sizeof(tstr) - tcnt,
+    tcnt += RISCV_sprintf(&tstr[tcnt], sizeof(tstr) - tcnt,
     "t1: %016" RV_PRI64 "x    s6:  %016" RV_PRI64 "x   a6:  %016" RV_PRI64 "x\n"
     ,(*res)["t1"].to_uint64(), (*res)["s6"].to_uint64(), (*res)["a6"].to_uint64());
 
-    tcnt += RISCV_sprintf(tstr, sizeof(tstr) - tcnt,
+    tcnt += RISCV_sprintf(&tstr[tcnt], sizeof(tstr) - tcnt,
     "t2: %016" RV_PRI64 "x    s7:  %016" RV_PRI64 "x   a7:  %016" RV_PRI64 "x\n"
     ,(*res)["t2"].to_uint64(), (*res)["s7"].to_uint64(), (*res)["a7"].to_uint64());
 
-    tcnt += RISCV_sprintf(tstr, sizeof(tstr) - tcnt,
+    tcnt += RISCV_sprintf(&tstr[tcnt], sizeof(tstr) - tcnt,
     "t3: %016" RV_PRI64 "x    s8:  %016" RV_PRI64 "x\n"
     ,(*res)["t3"].to_uint64(), (*res)["s8"].to_uint64());
     
-    tcnt += RISCV_sprintf(tstr, sizeof(tstr) - tcnt,
+    tcnt += RISCV_sprintf(&tstr[tcnt], sizeof(tstr) - tcnt,
     "t4: %016" RV_PRI64 "x    s9:  %016" RV_PRI64 "x\n"
     ,(*res)["t4"].to_uint64(), (*res)["s9"].to_uint64());
 
-    tcnt += RISCV_sprintf(tstr, sizeof(tstr) - tcnt,
+    tcnt += RISCV_sprintf(&tstr[tcnt], sizeof(tstr) - tcnt,
     "t5: %016" RV_PRI64 "x    s10: %016" RV_PRI64 "x   pc:  %016" RV_PRI64 "x\n"
     ,(*res)["t5"].to_uint64(), (*res)["s10"].to_uint64(), (*res)["pc"].to_uint64());
 
-    tcnt += RISCV_sprintf(tstr, sizeof(tstr) - tcnt,
+    tcnt += RISCV_sprintf(&tstr[tcnt], sizeof(tstr) - tcnt,
     "t6: %016" RV_PRI64 "x    s11: %016" RV_PRI64 "x   npc: %016" RV_PRI64 "x\n"
     ,(*res)["t6"].to_uint64(), (*res)["s11"].to_uint64(), (*res)["npc"].to_uint64());
 

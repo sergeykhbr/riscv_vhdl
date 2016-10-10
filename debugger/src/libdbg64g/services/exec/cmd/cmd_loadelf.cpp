@@ -29,7 +29,7 @@ bool CmdLoadElf::isValid(AttributeType *args) {
 }
 
 bool CmdLoadElf::exec(AttributeType *args, AttributeType *res) {
-    res->make_dict();
+    res->make_nil();
     if (!isValid(args)) {
         return CMD_FAILED;
     }
@@ -53,13 +53,8 @@ bool CmdLoadElf::exec(AttributeType *args, AttributeType *res) {
 
     mreset = 0;
     tap_->write(addr, 8, reinterpret_cast<uint8_t *>(&mreset));
-
-    res->make_string("success");
     return CMD_SUCCESS;
 }
 
-bool CmdLoadElf::format(AttributeType *res, AttributeType *out) {
-    return CMD_NO_OUTPUT;
-}
 
 }  // namespace debugger

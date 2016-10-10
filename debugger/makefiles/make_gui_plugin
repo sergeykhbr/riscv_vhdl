@@ -6,6 +6,10 @@
 
 include util.mak
 
+ifeq ($(QT_PATH), )
+   $(error QT_PATH variable must be defined)
+endif
+
 CC=gcc
 CPP=gcc
 CFLAGS=-g -c -Wall -Werror -fPIC -pthread
@@ -39,6 +43,7 @@ SOURCES = \
 	DbgMainWindow \
 	MdiAreaWidget \
 	GpioWidget \
+	LedArea \
 	UartWidget \
 	RegsViewWidget \
 	RegWidget \
@@ -61,15 +66,21 @@ EXECUTABLE = $(addprefix $(PLUGINS_ELF_DIR)/,gui_plugin.so)
 all: $(EXECUTABLE) deploy
 
 deploy:
-	$(MKDIR) $(ELF_DIR)/platforms
+	$(MKDIR) $(ELF_DIR)/qtlib
+	$(MKDIR) $(ELF_DIR)/qtlib/platforms
 	cp $(QT_PATH)/plugins/platforms/libqlinuxfb.so $(ELF_DIR)/platforms/
 	cp $(QT_PATH)/plugins/platforms/libqminimal.so $(ELF_DIR)/platforms/
-	cp $(QT_PATH)/lib/libicudata.* $(ELF_DIR)/
-	cp $(QT_PATH)/lib/libicui18n.* $(ELF_DIR)/
-	cp $(QT_PATH)/lib/libicuuc.* $(ELF_DIR)/
-	cp $(QT_PATH)/lib/libQt5Core.* $(ELF_DIR)/
-	cp $(QT_PATH)/lib/libQt5Gui.* $(ELF_DIR)/
-	cp $(QT_PATH)/lib/libQt5Widgets.* $(ELF_DIR)/
+	cp $(QT_PATH)/lib/libicudata.* $(ELF_DIR)/qtlib
+	cp $(QT_PATH)/lib/libicui18n.* $(ELF_DIR)/qtlib
+	cp $(QT_PATH)/lib/libicuuc.* $(ELF_DIR)/qtlib
+	cp $(QT_PATH)/lib/libQt5Core.* $(ELF_DIR)/qtlib
+	cp $(QT_PATH)/lib/libQt5Gui.* $(ELF_DIR)/qtlib
+	cp $(QT_PATH)/lib/libQt5Widgets.* $(ELF_DIR)/qtlib
+	# Generate starting scripts:
+	@echo "#!/bin/bash\nexport LD_LIBRARY_PATH=\$$(pwd):\$$(pwd)/qtlib\n./appdbg64g.exe \"\$$@\"" > $(ELF_DIR)/_run.sh
+	@echo "#!/bin/bash\nexport LD_LIBRARY_PATH=\$$(pwd):\$$(pwd)/qtlib\n./appdbg64g.exe -gui \"\$$@\"" > $(ELF_DIR)/_run_gui.sh
+	chmod +x $(ELF_DIR)/_run.sh
+	chmod +x $(ELF_DIR)/_run_gui.sh
 
 $(EXECUTABLE): prebuild $(OBJ_FILES)
 	echo $(CPP) $(LDFLAGS) $(OBJ_FILES) -o $@
@@ -94,5 +105,6 @@ prebuild:
 	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/ControlWidget/PnpWidget.h -o $(GUI_PLUGIN_SRC)/ControlWidget/moc_PnpWidget.h
 	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/PeriphWidgets/UartWidget.h -o $(GUI_PLUGIN_SRC)/PeriphWidgets/moc_UartWidget.h
 	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/PeriphWidgets/GpioWidget.h -o $(GUI_PLUGIN_SRC)/PeriphWidgets/moc_GpioWidget.h
+	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/PeriphWidgets/LedArea.h -o $(GUI_PLUGIN_SRC)/PeriphWidgets/moc_LedArea.h
 	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/CpuWidgets/RegWidget.h -o $(GUI_PLUGIN_SRC)/CpuWidgets/moc_RegWidget.h
 	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/CpuWidgets/RegsViewWidget.h -o $(GUI_PLUGIN_SRC)/CpuWidgets/moc_RegsViewWidget.h

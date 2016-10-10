@@ -36,6 +36,18 @@
     <Filter Include="Source Files\services\mem">
       <UniqueIdentifier>{a34ba3fc-ffd8-415f-9f4a-ab396b4017c2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\services\comport">
+      <UniqueIdentifier>{0d35729b-606a-4314-9be9-a5bc124e343f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\services\info">
+      <UniqueIdentifier>{58de4624-0c9f-4497-ac18-89f56fe01167}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\services\exec">
+      <UniqueIdentifier>{8023e6e2-02b2-49d5-a18d-aacbe717eb86}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\services\exec\cmd">
+      <UniqueIdentifier>{dcfb693b-4e74-4844-a550-f7e5bcdb52f9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\common\attribute.cpp">
@@ -62,14 +74,62 @@
     <ClCompile Include="..\..\src\libdbg64g\services\console\console.cpp">
       <Filter>Source Files\services\console</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\libdbg64g\services\console\cmdparser.cpp">
-      <Filter>Source Files\services\console</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\libdbg64g\services\bus\bus.cpp">
       <Filter>Source Files\services\bus</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\libdbg64g\services\mem\memsim.cpp">
       <Filter>Source Files\services\mem</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\libdbg64g\services\comport\com_win.cpp">
+      <Filter>Source Files\services\comport</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\libdbg64g\services\comport\comport.cpp">
+      <Filter>Source Files\services\comport</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\libdbg64g\services\info\soc_info.cpp">
+      <Filter>Source Files\services\info</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\libdbg64g\services\console\autocompleter.cpp">
+      <Filter>Source Files\services\console</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\libdbg64g\services\exec\cmdexec.cpp">
+      <Filter>Source Files\services\exec</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_loadelf.cpp">
+      <Filter>Source Files\services\exec\cmd</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_regs.cpp">
+      <Filter>Source Files\services\exec\cmd</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_log.cpp">
+      <Filter>Source Files\services\exec\cmd</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_isrunning.cpp">
+      <Filter>Source Files\services\exec\cmd</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_reg.cpp">
+      <Filter>Source Files\services\exec\cmd</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_read.cpp">
+      <Filter>Source Files\services\exec\cmd</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_halt.cpp">
+      <Filter>Source Files\services\exec\cmd</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_run.cpp">
+      <Filter>Source Files\services\exec\cmd</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_csr.cpp">
+      <Filter>Source Files\services\exec\cmd</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_exit.cpp">
+      <Filter>Source Files\services\exec\cmd</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_memdump.cpp">
+      <Filter>Source Files\services\exec\cmd</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_write.cpp">
+      <Filter>Source Files\services\exec\cmd</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -139,9 +199,6 @@
     <ClInclude Include="..\..\src\common\coreservices\ithread.h">
       <Filter>Source Files\common\coreservices</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\libdbg64g\services\console\cmdparser.h">
-      <Filter>Source Files\services\console</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\common\coreservices\imemop.h">
       <Filter>Source Files\common\coreservices</Filter>
     </ClInclude>
@@ -177,5 +234,65 @@
     </ClInclude>
     <ClInclude Include="..\..\src\common\coreservices\isignal.h" />
     <ClInclude Include="..\..\src\common\coreservices\isignallistener.h" />
+    <ClInclude Include="..\..\src\libdbg64g\services\comport\comport.h">
+      <Filter>Source Files\services\comport</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\coreservices\iautocomplete.h">
+      <Filter>Source Files\common\coreservices</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\coreservices\icmdexec.h">
+      <Filter>Source Files\common\coreservices</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\libdbg64g\services\info\soc_info.h">
+      <Filter>Source Files\services\info</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\coreservices\isocinfo.h">
+      <Filter>Source Files\common\coreservices</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\libdbg64g\services\console\autocompleter.h">
+      <Filter>Source Files\services\console</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\coreservices\icommand.h">
+      <Filter>Source Files\common\coreservices</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\libdbg64g\services\exec\cmdexec.h">
+      <Filter>Source Files\services\exec</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_loadelf.h">
+      <Filter>Source Files\services\exec\cmd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_regs.h">
+      <Filter>Source Files\services\exec\cmd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_log.h">
+      <Filter>Source Files\services\exec\cmd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_isrunning.h">
+      <Filter>Source Files\services\exec\cmd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_reg.h">
+      <Filter>Source Files\services\exec\cmd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_read.h">
+      <Filter>Source Files\services\exec\cmd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_halt.h">
+      <Filter>Source Files\services\exec\cmd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_run.h">
+      <Filter>Source Files\services\exec\cmd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_csr.h">
+      <Filter>Source Files\services\exec\cmd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_exit.h">
+      <Filter>Source Files\services\exec\cmd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_memdump.h">
+      <Filter>Source Files\services\exec\cmd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_write.h">
+      <Filter>Source Files\services\exec\cmd</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

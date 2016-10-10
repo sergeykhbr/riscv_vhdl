@@ -24,7 +24,7 @@ void AttributeType::attr_free() {
     if (size()) {
         if (is_string()) {
             RISCV_free(u_.string);
-        } else if (is_data()) {
+        } else if (is_data() && size() > 8) {
             RISCV_free(u_.data);
         } else if (is_list()) {
             for (unsigned i = 0; i < size(); i++) {
@@ -152,12 +152,25 @@ void AttributeType::make_string(const char *value) {
     }
 }
 
+void AttributeType::make_data(unsigned size) {
+    attr_free();
+    kind_ = Attr_Data;
+    size_ = size;
+    if (size > 8) {
+        u_.data = static_cast<uint8_t *>(RISCV_malloc(size_));
+    }
+}
+
 void AttributeType::make_data(unsigned size, const void *data) {
     attr_free();
     kind_ = Attr_Data;
     size_ = size;
-    u_.data = static_cast<uint8_t *>(RISCV_malloc(size_));
-    memcpy(u_.data, data, size);
+    if (size > 8) {
+        u_.data = static_cast<uint8_t *>(RISCV_malloc(size_));
+        memcpy(u_.data, data, size);
+    } else {
+        memcpy(u_.data_bytes, data, size);
+    }
 }
 
 void AttributeType::make_list(unsigned size) {

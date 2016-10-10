@@ -183,7 +183,7 @@ int UdpService::sendData(const uint8_t *msg, int len) {
         RISCV_error("sendto() failed\n", NULL);
 #endif
         return 1;
-    } else {
+    } else if (logLevel_.to_int() >= LOG_DEBUG) {
         char dbg[1024];
         int pos = RISCV_sprintf(dbg, sizeof(dbg), "send  %d bytes to %s:%d: ",
                                 tx_bytes,
@@ -223,15 +223,19 @@ int UdpService::readData(const uint8_t *buf, int maxlen) {
             RISCV_error("Receiver's buffer overflow maxlen = %d", maxlen);
         }
         memcpy(const_cast<uint8_t *>(buf), rcvbuf, res);
-        char dbg[1024];
-        int pos = RISCV_sprintf(dbg, sizeof(dbg), "received  %d Bytes: ", res);
-        if (res < 64) {
-            for (int i = 0; i < res; i++) {
-                pos += RISCV_sprintf(&dbg[pos], sizeof(dbg) - pos, 
-                                    "%02x", rcvbuf[i] & 0xFF);
+
+        if (logLevel_.to_int() >= LOG_DEBUG) {
+            char dbg[1024];
+            int pos = RISCV_sprintf(dbg, sizeof(dbg),
+                                    "received  %d Bytes: ", res);
+            if (res < 64) {
+                for (int i = 0; i < res; i++) {
+                    pos += RISCV_sprintf(&dbg[pos], sizeof(dbg) - pos, 
+                                        "%02x", rcvbuf[i] & 0xFF);
+                }
             }
+            RISCV_debug("%s", dbg);
         }
-        RISCV_debug("%s", dbg);
     }
     return res;
 }

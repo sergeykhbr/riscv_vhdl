@@ -18,7 +18,7 @@ RegWidget::RegWidget(const char *name, IGui *gui, QWidget *parent)
         name_ += tr(" ");
     }
 
-    std::string t1 = "read " + std::string(name);
+    std::string t1 = "reg " + std::string(name);
     cmdRead_.make_string(t1.c_str());
 
     QFont font = QFont("Courier");
@@ -45,10 +45,14 @@ RegWidget::RegWidget(const char *name, IGui *gui, QWidget *parent)
 
     edit_ = new QLineEdit(this);
     pLayout->addWidget(edit_);
-    QString def = QString("0x%1").arg(0xfeedfaceull, 16, 16, QChar('0'));
-    edit_->setText(def);
+    respValue_ = value_ = 0xfeedfaceull;
+
+    char tstr[64];
+    RISCV_sprintf(tstr, sizeof(tstr), "%016" RV_PRI64 "x", value_);
+    QString text(tstr);
+    edit_->setText(text);
     edit_->setMaxLength(19);
-    edit_->setFixedWidth(fm.width(def) + 8);
+    edit_->setFixedWidth(fm.width(text) + 8);
     edit_->setFixedHeight(fm.height() + 2);
 
     setMinimumWidth(edit_->width() + fm.width(name_) + 16);
@@ -56,15 +60,20 @@ RegWidget::RegWidget(const char *name, IGui *gui, QWidget *parent)
 }
 
 void RegWidget::slotUpdateByTimer() {
+    if (value_ != respValue_) {
+        char tstr[64];
+        value_ = respValue_;
+        RISCV_sprintf(tstr, sizeof(tstr), "%016" RV_PRI64 "x", value_);
+        QString text(tr(tstr));
+        edit_->setText(text);
+    }
+
     igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), 
                             &cmdRead_, true);
 }
 
 void RegWidget::handleResponse(AttributeType *req, AttributeType *resp) {
-    value_ = resp->to_uint64();
-    QString def = QString("0x%1").arg(value_, 16, 16, QChar('0'));
-    edit_->setText(def);
+    respValue_ = resp->to_uint64();
 }
-
 
 }  // namespace debugger

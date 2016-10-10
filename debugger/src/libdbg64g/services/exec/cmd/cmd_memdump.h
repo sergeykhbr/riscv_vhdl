@@ -2,30 +2,32 @@
  * @file
  * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
  * @author     Sergey Khabarov - sergeykhbr@gmail.com
- * @brief      Log file enable/disable.
+ * @brief      Dump memory range into file.
  */
 
-#ifndef __DEBUGGER_CMD_LOG_H__
-#define __DEBUGGER_CMD_LOG_H__
+#ifndef __DEBUGGER_CMD_MEMDUMP_H__
+#define __DEBUGGER_CMD_MEMDUMP_H__
 
 #include "api_core.h"
-#include "coreservices/itap.h"
-#include "coreservices/isocinfo.h"
 #include "coreservices/icommand.h"
 
 namespace debugger {
 
-class CmdLog : public ICommand  {
+class CmdMemDump : public ICommand  {
 public:
-    explicit CmdLog(ITap *tap, ISocInfo *info);
+    explicit CmdMemDump(ITap *tap, ISocInfo *info);
+    virtual ~CmdMemDump();
 
     /** ICommand */
     virtual bool isValid(AttributeType *args);
     virtual bool exec(AttributeType *args, AttributeType *res);
+    virtual bool format(AttributeType *args, AttributeType *res, AttributeType *out);
 
 private:
+    uint8_t *rdBuf_;
+    int rdBufSz_;
 };
 
 }  // namespace debugger
 
-#endif  // __DEBUGGER_CMD_LOG_H__
+#endif  // __DEBUGGER_CMD_MEMDUMP_H__

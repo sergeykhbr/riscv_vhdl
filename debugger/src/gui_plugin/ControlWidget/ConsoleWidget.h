@@ -11,7 +11,8 @@
 #include "attribute.h"
 #include "igui.h"
 #include "coreservices/iautocomplete.h"
-#include "coreservices/iconsole.h"
+#include "coreservices/irawlistener.h"
+#include "coreservices/icmdexec.h"
 
 #include <QtWidgets/QWidget>
 #include <QtWidgets/QPlainTextEdit>
@@ -24,18 +25,18 @@ namespace debugger {
  * QTextEdit gives smooth scrolling (line partial move up-down)
  */
 class ConsoleWidget : public QPlainTextEdit,
-                      public IConsole {
+                      public IGuiCmdHandler,
+                      public IRawListener {
     Q_OBJECT
 public:
     ConsoleWidget(IGui *igui, QWidget *parent = 0);
     ~ConsoleWidget();
 
-    // IConsole
-    virtual void writeBuffer(const char *buf);
-    virtual void writeCommand(const char *cmd) {}
-    virtual int registerKeyListener(IFace *iface) { return 0; }
-    virtual void setCmdString(const char *buf) {}
-    virtual void enableLogFile(const char *filename) {}
+    /** IGuiCmdHandler */
+    virtual void handleResponse(AttributeType *req, AttributeType *resp);
+
+    // IRawListener
+    virtual void updateData(const char *buf, int buflen);
 
 signals:
     void signalClose(QWidget *, AttributeType &);
@@ -54,9 +55,8 @@ private:
     QString getCommandLine();
 
 private:
-    AttributeType consoleListeners_;
-
     IGui *igui_;
+    IAutoComplete *iauto_;
 
     int cursorMinPos_;
     wchar_t *wcsConv_;

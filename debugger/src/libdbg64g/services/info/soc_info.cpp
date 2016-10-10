@@ -48,7 +48,7 @@ uint64_t SocInfo::csr2addr(const char *name) {
     AttributeType id(name);
     for (unsigned i = 0; i < listCSR_.size(); i++) {
         if (strcmp(id.to_upper(), listCSR_[i][0u].to_string()) == 0) {
-            return dsuBase_.to_uint64() + (listCSR_[i][1u].to_uint64() << 4);
+            return dsuBase_.to_uint64() + (listCSR_[i][2].to_uint64() << 4);
         }
     }
     return ~0;
@@ -58,7 +58,7 @@ uint64_t SocInfo::reg2addr(const char *name) {
     uint64_t REG_BASE_ADDR = dsuBase_.to_uint64() + 0x10000 + 64*8;
     for (unsigned i = 0; i < listRegs_.size(); i++) {
         if (strcmp(name, listRegs_[i][0u].to_string()) == 0) {
-            return REG_BASE_ADDR + 8 * listRegs_[i][1u].to_uint64();
+            return REG_BASE_ADDR + 8 * listRegs_[i][2].to_uint64();
         }
     }
     return ~0;

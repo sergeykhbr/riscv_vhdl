@@ -20,7 +20,7 @@ public:
     /** ICommand */
     virtual bool isValid(AttributeType *args);
     virtual bool exec(AttributeType *args, AttributeType *res);
-    virtual bool format(AttributeType *res, AttributeType *out);
+    virtual bool format(AttributeType *args, AttributeType *res, AttributeType *out);
 
 private:
 };
