@@ -21,12 +21,6 @@ static const char *IFACE_COMMAND = "ICommand";
 static const bool CMD_VALID     = true;
 static const bool CMD_INVALID   = false;
 
-static const bool CMD_SUCCESS   = true;
-static const bool CMD_FAILED    = false;
-
-static const bool CMD_IS_OUTPUT = true;
-static const bool CMD_NO_OUTPUT = false;
-
 class ICommand : public IFace {
 public:
     ICommand(const char *name, ITap *tap, ISocInfo *info) 
@@ -42,11 +36,13 @@ public:
     virtual const char *detailedDescr() { return detailedDescr_.to_string(); }
 
     virtual bool isValid(AttributeType *args) =0;
-    virtual bool exec(AttributeType *args, AttributeType *res) =0;
+    virtual void exec(AttributeType *args, AttributeType *res) =0;
 
-    virtual bool format(AttributeType *args, AttributeType *res, AttributeType *out) {
-        out->make_string(res->to_config());
-        return out->is_invalid() || out->is_nil() ? CMD_NO_OUTPUT : CMD_IS_OUTPUT;
+    virtual void generateError(AttributeType *res, const char *descr) {
+        res->make_list(3);
+        (*res)[0u].make_string("ERROR");
+        (*res)[1].make_string(cmdName_.to_string());
+        (*res)[2].make_string(descr);
     }
 
 protected:

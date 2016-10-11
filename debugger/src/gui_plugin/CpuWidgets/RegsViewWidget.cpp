@@ -47,7 +47,7 @@ RegsViewWidget::RegsViewWidget(IGui *igui, QWidget *parent)
 void RegsViewWidget::slotPostInit(AttributeType *cfg) {
     int n = 0;
     while (strcmp(REG_NAMES_LAYOUT[n], "break")) {
-        if (REG_NAMES_LAYOUT[0] == '\0') {
+        if (REG_NAMES_LAYOUT[n][0] == '\0') {
             n++;
             continue;
         }

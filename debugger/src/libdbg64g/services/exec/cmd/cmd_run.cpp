@@ -34,10 +34,11 @@ bool CmdRun::isValid(AttributeType *args) {
     return CMD_INVALID;
 }
 
-bool CmdRun::exec(AttributeType *args, AttributeType *res) {
+void CmdRun::exec(AttributeType *args, AttributeType *res) {
     res->make_nil();
     if (!isValid(args)) {
-        return CMD_FAILED;
+        generateError(res, "Wrong argument list");
+        return;
     }
 
     DsuRunControlRegType runctrl;
@@ -52,7 +53,6 @@ bool CmdRun::exec(AttributeType *args, AttributeType *res) {
         runctrl.bits.stepping = 1;
         tap_->write(info_->addressRunControl(), 8, runctrl.buf);
     }
-    return CMD_SUCCESS;
 }
 
 }  // namespace debugger

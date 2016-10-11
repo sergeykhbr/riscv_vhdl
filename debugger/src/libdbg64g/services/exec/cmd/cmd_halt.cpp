@@ -32,17 +32,17 @@ bool CmdHalt::isValid(AttributeType *args) {
     return CMD_INVALID;
 }
 
-bool CmdHalt::exec(AttributeType *args, AttributeType *res) {
+void CmdHalt::exec(AttributeType *args, AttributeType *res) {
     res->make_nil();
     if (!isValid(args)) {
-        return CMD_FAILED;
+        generateError(res, "Wrong argument list");
+        return;
     }
 
     DsuRunControlRegType runctrl;
     runctrl.val = 0;
     runctrl.bits.halt = 1;
     tap_->write(info_->addressRunControl(), 8, runctrl.buf);
-    return CMD_SUCCESS;
 }
 
 }  // namespace debugger

@@ -137,7 +137,10 @@ const uint8_t &AttributeType::operator()(unsigned idx) const {
         RISCV_printf(NULL, LOG_ERROR, "Data index '%d' out of range.", idx);
         return u_.data[0];
     }
-    return u_.data[idx];
+    if (size_ > 8) {
+        return u_.data[idx];
+    }
+    return u_.data_bytes[idx];
 }
 
 void AttributeType::make_string(const char *value) {

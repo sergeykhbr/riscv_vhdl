@@ -74,6 +74,7 @@ extern "C" void RISCV_cleanup() {
     _unload_plugins(&listPlugins_);
     RISCV_mutex_lock(&mutex_printf);
     RISCV_mutex_destroy(&mutex_printf);
+    RISCV_disable_log();
 }
 
 extern "C" void RISCV_set_configuration(AttributeType *cfg) {
@@ -244,7 +245,7 @@ extern "C" void RISCV_get_clock_services(AttributeType *list) {
 }
 
 extern "C" void RISCV_break_simulation() {
-    AttributeType t1;
+    AttributeType t1, t2;
     IThread *ith;
     RISCV_get_services_with_iface(IFACE_THREAD, &t1);
 

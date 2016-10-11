@@ -27,13 +27,13 @@ bool CmdExit::isValid(AttributeType *args) {
     return CMD_INVALID;
 }
 
-bool CmdExit::exec(AttributeType *args, AttributeType *res) {
+void CmdExit::exec(AttributeType *args, AttributeType *res) {
     res->make_nil();
     if (!isValid(args)) {
-        return CMD_FAILED;
+        generateError(res, "Wrong argument list");
+        return;
     }
     RISCV_break_simulation();
-    return CMD_SUCCESS;
 }
 
 }  // namespace debugger

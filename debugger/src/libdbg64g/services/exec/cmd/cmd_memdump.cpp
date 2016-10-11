@@ -23,12 +23,6 @@ CmdMemDump::CmdMemDump(ITap *tap, ISocInfo *info)
         "    memdump 0x0 8192 dump.bin\n"
         "    memdump 0x40000000 524288 dump.hex hex\n"
         "    memdump 0x10000000 128 \"c:/My Documents/dump.bin\"\n");
-
-    rdBuf_ = new uint8_t[rdBufSz_ = 1024];
-}
-
-CmdMemDump::~CmdMemDump() {
-    delete [] rdBuf_;
 }
 
 bool CmdMemDump::isValid(AttributeType *args) {
@@ -39,10 +33,11 @@ bool CmdMemDump::isValid(AttributeType *args) {
     return CMD_INVALID;
 }
 
-bool CmdMemDump::exec(AttributeType *args, AttributeType *res) {
+void CmdMemDump::exec(AttributeType *args, AttributeType *res) {
     res->make_nil();
     if (!isValid(args)) {
-        return CMD_FAILED;
+        generateError(res, "Wrong argument list");
+        return;
     }
 
     const char *filename = (*args)[3].to_string();
@@ -50,8 +45,8 @@ bool CmdMemDump::exec(AttributeType *args, AttributeType *res) {
     if (fd == NULL) {
         char tst[256];
         RISCV_sprintf(tst, sizeof(tst), "Can't open '%s' file", filename);
-        res->make_string(tst);
-        return CMD_IS_OUTPUT;
+        generateError(res, tst);
+        return;
     }
     uint64_t addr = (*args)[1].to_uint64();
     int len = static_cast<int>((*args)[2].to_uint64());
@@ -80,14 +75,6 @@ bool CmdMemDump::exec(AttributeType *args, AttributeType *res) {
         fwrite(dumpbuf, len, 1, fd);
     }
     fclose(fd);
-    return CMD_SUCCESS;
-}
-
-bool CmdMemDump::format(AttributeType *args, AttributeType *res, AttributeType *out) {
-    if (res->is_data()) {
-        return CMD_NO_OUTPUT;
-    }
-    return CMD_IS_OUTPUT;
 }
 
 }  // namespace debugger

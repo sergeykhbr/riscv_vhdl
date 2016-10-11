@@ -33,15 +33,23 @@ bool CmdReg::isValid(AttributeType *args) {
     return CMD_INVALID;
 }
 
-bool CmdReg::exec(AttributeType *args, AttributeType *res) {
+void CmdReg::exec(AttributeType *args, AttributeType *res) {
     res->make_nil();
     if (!isValid(args)) {
-        return CMD_FAILED;
+        generateError(res, "Wrong argument list");
+        return;
     }
 
     uint64_t val;
     const char *reg_name = (*args)[1].to_string();
     uint64_t addr = info_->reg2addr(reg_name);
+    if (addr == REG_ADDR_ERROR) {
+        char tstr[128];
+        RISCV_sprintf(tstr, sizeof(tstr), "%s not found", reg_name);
+        generateError(res, tstr);
+        return;
+    }
+
     if (args->size() == 2) {
         tap_->read(addr, 8, reinterpret_cast<uint8_t *>(&val));
         res->make_uint64(val);
@@ -49,7 +57,6 @@ bool CmdReg::exec(AttributeType *args, AttributeType *res) {
         val = (*args)[2].to_uint64();
         tap_->write(addr, 8, reinterpret_cast<uint8_t *>(&val));
     }
-    return CMD_SUCCESS;
 }
 
 }  // namespace debugger

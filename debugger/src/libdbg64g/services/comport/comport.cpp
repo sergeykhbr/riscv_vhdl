@@ -109,6 +109,7 @@ void ComPortService::busyLoop() {
             tbuf_cnt = 0;
             while (!rxFifo_.isEmpty()) {
                 tbuf[tbuf_cnt++] = rxFifo_.get();
+                tbuf[tbuf_cnt] = '\0';
             }
         }
         if (tbuf_cnt) {

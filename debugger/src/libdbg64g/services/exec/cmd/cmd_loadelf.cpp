@@ -28,10 +28,11 @@ bool CmdLoadElf::isValid(AttributeType *args) {
     return CMD_INVALID;
 }
 
-bool CmdLoadElf::exec(AttributeType *args, AttributeType *res) {
+void CmdLoadElf::exec(AttributeType *args, AttributeType *res) {
     res->make_nil();
     if (!isValid(args)) {
-        return CMD_FAILED;
+        generateError(res, "Wrong argument list");
+        return;
     }
 
     /**
@@ -40,7 +41,8 @@ bool CmdLoadElf::exec(AttributeType *args, AttributeType *res) {
     AttributeType lstServ;
     RISCV_get_services_with_iface(IFACE_ELFLOADER, &lstServ);
     if (lstServ.size() == 0) {
-        return CMD_INVALID;
+        generateError(res, "Elf-service not found");
+        return;
     }
 
     uint64_t mreset = 1;
@@ -53,7 +55,6 @@ bool CmdLoadElf::exec(AttributeType *args, AttributeType *res) {
 
     mreset = 0;
     tap_->write(addr, 8, reinterpret_cast<uint8_t *>(&mreset));
-    return CMD_SUCCESS;
 }
 
 

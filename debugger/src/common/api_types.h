@@ -77,6 +77,11 @@ typedef struct LibThreadType
     thread_def Handle;
 } LibThreadType;
 
+union Reg64Type {
+    uint8_t buf[8];
+    uint64_t val;
+};
+
 }  // namespace debugger
 
 #endif  // __DEBUGGER_API_TYPES_H__

@@ -41,6 +41,7 @@ GuiPlugin::GuiPlugin(const char *name)
     : IService(name), IHap(HAP_ConfigDone) {
     registerInterface(static_cast<IGui *>(this));
     registerInterface(static_cast<IHap *>(this));
+    registerInterface(static_cast<IThread *>(this));
     registerAttribute("WidgetsConfig", &guiConfig_);
     registerAttribute("SocInfo", &socInfo_);
     registerAttribute("CommandExecutor", &cmdExecutor_);
@@ -163,16 +164,14 @@ void GuiPlugin::registerCommand(IGuiCmdHandler *src,
 }
 
 void GuiPlugin::busyLoop() {
-    while (loopEnable_) {
+    while (isEnabled()) {
         RISCV_event_wait(&eventCommandAvailable_);
         RISCV_event_clear(&eventCommandAvailable_);
 
-        /** Exit event detected */
-        if (processCmdQueue()) {
-            loopEnable_ = false;
-            RISCV_break_simulation();
-        }
+        processCmdQueue();
     }
+    loopEnable_ = false;
+    threadInit_.Handle = 0;
 }
 
 bool GuiPlugin::processCmdQueue() {
@@ -189,10 +188,6 @@ bool GuiPlugin::processCmdQueue() {
             continue;
         }
 
-        if (cmd.is_equal("exit")) {
-            cmdQueueRdPos_++;
-            return true;
-        }
         iexec_->exec(cmd.to_string(), &resp, cmdQueue_[cmdQueueRdPos_].silent);
 
         if (cmdQueue_[cmdQueueRdPos_].src) {
@@ -208,11 +203,13 @@ bool GuiPlugin::processCmdQueue() {
 }
 
 void GuiPlugin::stop() {
+    RISCV_event_set(&eventCommandAvailable_);
     qApp->exit();
     IThread::stop();
 }
 
 void GuiPlugin::breakSignal() {
+    RISCV_event_set(&eventCommandAvailable_);
     qApp->exit();
     IThread::breakSignal();
 }

@@ -42,11 +42,11 @@ public:
     virtual void unregisterWidgetInterface(IFace *iface);
     virtual void registerCommand(IGuiCmdHandler *src, AttributeType *cmd, bool silent);
 
-protected:
     /** IThread interface */
-    virtual void busyLoop();
     virtual void stop();
     virtual void breakSignal();
+protected:
+    virtual void busyLoop();
 
 private:
     bool processCmdQueue();

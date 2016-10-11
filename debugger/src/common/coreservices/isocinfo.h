@@ -38,6 +38,8 @@ union DsuRunControlRegType {
     uint8_t  buf[8];
 };
 
+const uint64_t REG_ADDR_ERROR = 0xFFFFFFFFFFFFFFFFull;
+
 class ISocInfo : public IFace {
 public:
     ISocInfo() : IFace(IFACE_SOC_INFO) {}

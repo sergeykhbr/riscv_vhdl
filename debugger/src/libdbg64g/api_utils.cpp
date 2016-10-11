@@ -18,7 +18,7 @@
 #include "attribute.h"
 #include "iservice.h"
 #include "iclass.h"
-#include "coreservices/iconsole.h"
+#include "coreservices/irawlistener.h"
 
 namespace debugger {
 
@@ -29,7 +29,12 @@ typedef void (*plugin_init_proc)();
 static char bufLog[1<<12];
 
 /** Redirect output to specified console. */
-static IConsole *default_console = NULL;
+static AttributeType default_console(Attr_List);
+
+/** */
+static FILE *logfile_ = 0;
+
+static AttributeType log_file(Attr_String);
 
 /** Mutex to avoid concurency for the output stream among threads. */
 mutex_def mutex_printf;
@@ -38,8 +43,28 @@ mutex_def mutex_printf;
 extern IFace *getInterface(const char *name);
 
 
-extern "C" void RISCV_set_default_output(void *iout) {
-    default_console = static_cast<IConsole *>(iout);
+extern "C" void RISCV_add_default_output(void *iout) {
+    AttributeType lstn(static_cast<IRawListener *>(iout));
+    default_console.add_to_list(&lstn);
+}
+
+extern "C" int RISCV_enable_log(const char *filename) {
+    if (logfile_) {
+        fclose(logfile_);
+        logfile_ = NULL;
+    }
+    logfile_ = fopen(filename, "w");
+    if (!logfile_) {
+        return 1;
+    }
+    return 0;
+}
+
+extern "C" void RISCV_disable_log() {
+    if (logfile_) {
+        fclose(logfile_);
+    }
+    logfile_ = 0;
 }
 
 extern "C" void RISCV_print_bin(int level, char *buf, int len) {
@@ -86,10 +111,14 @@ extern "C" int RISCV_printf(void *iface, int level,
 
     bufLog[ret++] = '\n';
     bufLog[ret] = '\0';
-    if (default_console) {
-        default_console->writeBuffer(bufLog);
-    } else {
-        RISCV_print_bin(level, bufLog, ret);
+    IRawListener *ilstn;
+    for (unsigned i = 0; i < default_console.size(); i++) {
+        ilstn = static_cast<IRawListener *>(default_console[i].to_iface());
+        ilstn->updateData(bufLog, ret);
+    }
+    if (logfile_) {
+        fwrite(bufLog, ret, 1, logfile_);
+        fflush(logfile_);
     }
     RISCV_mutex_unlock(&mutex_printf);
     return ret;
@@ -450,19 +479,18 @@ void RISCV_write_json_file(const char *filename, const char *s) {
     fclose(f);
 }
 
-int RISCV_read_json_file(const char *filename, char *buf, int bufsz) {
+int RISCV_read_json_file(const char *filename, void *outattr) {
+    AttributeType *out = reinterpret_cast<AttributeType *>(outattr);
     FILE *f = fopen(filename, "r");
     if (!f) {
         return 0;
     }
     fseek(f, 0, SEEK_END);
     int sz = ftell(f);
-    if (sz > bufsz) {
-        return 0;
-    }
+    out->make_data(sz);
 
     fseek(f, 0, SEEK_SET);
-    fread(buf, sz, 1, f);
+    fread(out->data(), sz, 1, f);
     return sz;
 }
 

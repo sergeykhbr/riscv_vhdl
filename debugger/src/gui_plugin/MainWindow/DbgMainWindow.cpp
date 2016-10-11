@@ -225,8 +225,6 @@ void DbgMainWindow::addWidgets() {
             pnew, SLOT(slotUpdateByTimer()));
     connect(actionGpio_, SIGNAL(triggered(bool)),
             subw, SLOT(slotVisible(bool)));
-    connect(this, SIGNAL(signalClosingMainForm()), 
-            pnew, SLOT(slotClosingMainForm()));
     actionGpio_->setChecked(true);
     subw->setVisible(actionGpio_->isChecked());
 

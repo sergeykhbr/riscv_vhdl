@@ -16,6 +16,8 @@ CmdRegs::CmdRegs(ITap *tap, ISocInfo *info)
     detailedDescr_.make_string(
         "Description:\n"
         "    Print values of CPU's registers.\n"
+        "Return:\n"
+        "    String if no names specified, list of int64_t otherwise.\n"
         "Usage:\n"
         "    regs\n"
         "    regs name1 name2 ..\n"
@@ -31,107 +33,89 @@ bool CmdRegs::isValid(AttributeType *args) {
     return CMD_INVALID;
 }
 
-bool CmdRegs::exec(AttributeType *args, AttributeType *res) {
-    res->make_dict();
+void CmdRegs::exec(AttributeType *args, AttributeType *res) {
     if (!isValid(args)) {
-        return CMD_FAILED;
+        generateError(res, "Wrong argument list");
+        return;
     }
 
-    AttributeType soclst;
+    Reg64Type u;
     if (args->size() != 1) {
+        res->make_list(args->size() - 1);
         for (unsigned i = 1; i < args->size(); i++) {
             const char *name = (*args)[i].to_string();
-            (*res)[name].make_uint64(0);
+            tap_->read(info_->reg2addr(name), 8, u.buf);
+            (*res)[i - 1].make_uint64(u.val);
         }
-    } else {
-        info_->getRegsList(&soclst);
-        for (unsigned i = 0; i < soclst.size(); i++) {
-            const char *name = soclst[i].to_string();
-            (*res)[name].make_uint64(0);
-        }
+        return;
+    } 
+    
+    AttributeType soclst, regdict(Attr_Dict);
+    info_->getRegsList(&soclst);
+    for (unsigned i = 0; i < soclst.size(); i++) {
+        const char *name = soclst[i].to_string();
+        tap_->read(info_->reg2addr(name), 8, u.buf);
+        regdict[name].make_uint64(u.val);
     }
-
-    uint64_t val;
-    for (unsigned i = 0; i < res->size(); i++) {
-        tap_->read(info_->reg2addr(res->dict_key(i)->to_string()), 
-                                    8, reinterpret_cast<uint8_t *>(&val));
-        (*res)[i].make_uint64(val);
-    }
-
-    return CMD_SUCCESS;
+    convert_to_str(&regdict, res);
 }
 
-bool CmdRegs::format(AttributeType *args, AttributeType *res, AttributeType *out) {
-    if (!res->is_dict()) {
-        return CMD_NO_OUTPUT;
-    }
+void CmdRegs::convert_to_str(AttributeType *lst, AttributeType *res) {
     char tstr[1024];
     int tcnt = 0;
 
-    /** Full or not-full list of registers hould be printed: */
-    if (res->size() != info_->getRegsTotal()) {
-        for (unsigned i = 0; i < res->size(); i++) {
-            tcnt += RISCV_sprintf(&tstr[tcnt], sizeof(tstr) - tcnt, 
-            "%s: %016" RV_PRI64 "x\n", res->dict_key(i)->to_string(),
-                                       res->dict_value(i)->to_uint64());
-        }
-        out->make_string(tstr);
-        return CMD_IS_OUTPUT;
-    }
-
     tcnt += RISCV_sprintf(&tstr[tcnt], sizeof(tstr) - tcnt, 
-            "ra: %016" RV_PRI64 "x    \n", (*res)["ra"].to_uint64());
+            "\nra: %016" RV_PRI64 "x    \n", (*lst)["ra"].to_uint64());
 
     tcnt += RISCV_sprintf(&tstr[tcnt], sizeof(tstr) - tcnt,
     "                        s0:  %016" RV_PRI64 "x   a0:  %016" RV_PRI64 "x\n",
-    (*res)["s0"].to_uint64(), (*res)["a0"].to_uint64());
+    (*lst)["s0"].to_uint64(), (*lst)["a0"].to_uint64());
 
     tcnt += RISCV_sprintf(&tstr[tcnt], sizeof(tstr) - tcnt,
     "sp: %016" RV_PRI64 "x    s1:  %016" RV_PRI64 "x   a1:  %016" RV_PRI64 "x\n"
-    ,(*res)["sp"].to_uint64(), (*res)["s1"].to_uint64(), (*res)["a1"].to_uint64());
+    ,(*lst)["sp"].to_uint64(), (*lst)["s1"].to_uint64(), (*lst)["a1"].to_uint64());
 
     tcnt += RISCV_sprintf(&tstr[tcnt], sizeof(tstr) - tcnt,
     "gp: %016" RV_PRI64 "x    s2:  %016" RV_PRI64 "x   a2:  %016" RV_PRI64 "x\n"
-    ,(*res)["gp"].to_uint64(), (*res)["s2"].to_uint64(), (*res)["a2"].to_uint64());
+    ,(*lst)["gp"].to_uint64(), (*lst)["s2"].to_uint64(), (*lst)["a2"].to_uint64());
 
     tcnt += RISCV_sprintf(&tstr[tcnt], sizeof(tstr) - tcnt,
     "tp: %016" RV_PRI64 "x    s3:  %016" RV_PRI64 "x   a3:  %016" RV_PRI64 "x\n"
-    ,(*res)["tp"].to_uint64(), (*res)["s3"].to_uint64(), (*res)["a3"].to_uint64());
+    ,(*lst)["tp"].to_uint64(), (*lst)["s3"].to_uint64(), (*lst)["a3"].to_uint64());
 
     tcnt += RISCV_sprintf(&tstr[tcnt], sizeof(tstr) - tcnt,
     "                        s4:  %016" RV_PRI64 "x   a4:  %016" RV_PRI64 "x\n"
-    ,(*res)["s4"].to_uint64(), (*res)["a4"].to_uint64());
+    ,(*lst)["s4"].to_uint64(), (*lst)["a4"].to_uint64());
 
     tcnt += RISCV_sprintf(&tstr[tcnt], sizeof(tstr) - tcnt,
     "t0: %016" RV_PRI64 "x    s5:  %016" RV_PRI64 "x   a5:  %016" RV_PRI64 "x\n"
-    ,(*res)["t0"].to_uint64(), (*res)["s5"].to_uint64(), (*res)["a5"].to_uint64());
+    ,(*lst)["t0"].to_uint64(), (*lst)["s5"].to_uint64(), (*lst)["a5"].to_uint64());
 
     tcnt += RISCV_sprintf(&tstr[tcnt], sizeof(tstr) - tcnt,
     "t1: %016" RV_PRI64 "x    s6:  %016" RV_PRI64 "x   a6:  %016" RV_PRI64 "x\n"
-    ,(*res)["t1"].to_uint64(), (*res)["s6"].to_uint64(), (*res)["a6"].to_uint64());
+    ,(*lst)["t1"].to_uint64(), (*lst)["s6"].to_uint64(), (*lst)["a6"].to_uint64());
 
     tcnt += RISCV_sprintf(&tstr[tcnt], sizeof(tstr) - tcnt,
     "t2: %016" RV_PRI64 "x    s7:  %016" RV_PRI64 "x   a7:  %016" RV_PRI64 "x\n"
-    ,(*res)["t2"].to_uint64(), (*res)["s7"].to_uint64(), (*res)["a7"].to_uint64());
+    ,(*lst)["t2"].to_uint64(), (*lst)["s7"].to_uint64(), (*lst)["a7"].to_uint64());
 
     tcnt += RISCV_sprintf(&tstr[tcnt], sizeof(tstr) - tcnt,
     "t3: %016" RV_PRI64 "x    s8:  %016" RV_PRI64 "x\n"
-    ,(*res)["t3"].to_uint64(), (*res)["s8"].to_uint64());
+    ,(*lst)["t3"].to_uint64(), (*lst)["s8"].to_uint64());
     
     tcnt += RISCV_sprintf(&tstr[tcnt], sizeof(tstr) - tcnt,
     "t4: %016" RV_PRI64 "x    s9:  %016" RV_PRI64 "x\n"
-    ,(*res)["t4"].to_uint64(), (*res)["s9"].to_uint64());
+    ,(*lst)["t4"].to_uint64(), (*lst)["s9"].to_uint64());
 
     tcnt += RISCV_sprintf(&tstr[tcnt], sizeof(tstr) - tcnt,
     "t5: %016" RV_PRI64 "x    s10: %016" RV_PRI64 "x   pc:  %016" RV_PRI64 "x\n"
-    ,(*res)["t5"].to_uint64(), (*res)["s10"].to_uint64(), (*res)["pc"].to_uint64());
+    ,(*lst)["t5"].to_uint64(), (*lst)["s10"].to_uint64(), (*lst)["pc"].to_uint64());
 
     tcnt += RISCV_sprintf(&tstr[tcnt], sizeof(tstr) - tcnt,
     "t6: %016" RV_PRI64 "x    s11: %016" RV_PRI64 "x   npc: %016" RV_PRI64 "x\n"
-    ,(*res)["t6"].to_uint64(), (*res)["s11"].to_uint64(), (*res)["npc"].to_uint64());
+    ,(*lst)["t6"].to_uint64(), (*lst)["s11"].to_uint64(), (*lst)["npc"].to_uint64());
 
-    out->make_string(tstr);
-    return CMD_IS_OUTPUT;
+    res->make_string(tstr);
 }
 
 }  // namespace debugger

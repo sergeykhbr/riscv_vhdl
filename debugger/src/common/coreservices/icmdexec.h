@@ -19,8 +19,7 @@ class ICmdExecutor : public IFace {
 public:
     ICmdExecutor() : IFace(IFACE_CMD_EXECUTOR) {}
 
-    virtual bool exec(const char *line, AttributeType *res, bool silent) =0;
-    virtual void registerRawListener(IFace *iface) =0;
+    virtual void exec(const char *line, AttributeType *res, bool silent) =0;
 };
 
 }  // namespace debugger

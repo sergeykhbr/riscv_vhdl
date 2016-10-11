@@ -19,8 +19,10 @@ public:
 
     /** ICommand */
     virtual bool isValid(AttributeType *args);
-    virtual bool exec(AttributeType *args, AttributeType *res);
-    virtual bool format(AttributeType *args, AttributeType *res, AttributeType *out);
+    virtual void exec(AttributeType *args, AttributeType *res);
+
+private:
+    void to_string(AttributeType *args, AttributeType *res, AttributeType *out);
 
 private:
 };

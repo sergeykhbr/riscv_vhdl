@@ -52,11 +52,15 @@ ConsoleWidget::~ConsoleWidget() {
 }
 
 void ConsoleWidget::handleResponse(AttributeType *req, AttributeType *resp) {
-    /** Do nothing with received data. Output via raw listner. */
+    RISCV_mutex_lock(&mutexOutput_);
+    strOutput_ += QString(resp->to_config()) + "\n";
+    RISCV_mutex_unlock(&mutexOutput_);
+
 }
 
 void ConsoleWidget::keyPressEvent(QKeyEvent *e) {
     char value = keyevent2char(e);
+
 
     int start;
     QTextCursor end_cursor;
@@ -69,6 +73,23 @@ void ConsoleWidget::keyPressEvent(QKeyEvent *e) {
         start = cursor.selectionStart();
     }
 
+    AttributeType cmd, t2;
+    if (iauto_->processKey(static_cast<uint8_t>(value), &cmd, &t2)) {
+        cursor.movePosition(QTextCursor::End);
+        cursor.insertText(tr("\r"));
+
+        QTextCharFormat charFormat = cursor.charFormat();
+        cursor.insertText(tr(CONSOLE_ENTRY));
+        cursorMinPos_ = cursor.selectionStart();
+        verticalScrollBar()->setValue(verticalScrollBar()->maximum());
+
+        igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), &cmd, false);
+
+    } else {
+        cursor.insertText(e->text());
+    }
+
+#if 0
     switch (e->key()) {
     case Qt::Key_Left:
         if (start > cursorMinPos_) {
@@ -117,7 +138,7 @@ void ConsoleWidget::keyPressEvent(QKeyEvent *e) {
     } else {
         cursor.insertText(e->text());
     }
-
+#endif
 }
 
 void ConsoleWidget::closeEvent(QCloseEvent *event_) {
@@ -131,10 +152,7 @@ void ConsoleWidget::slotPostInit(AttributeType *cfg) {
     iauto_ = static_cast<IAutoComplete *>(
         RISCV_get_service_iface(autoobj, IFACE_AUTO_COMPLETE));
 
-    const char *execobj = (*cfg)["CommandExecutor"].to_string();
-    ICmdExecutor *iexec = static_cast<ICmdExecutor *>(
-        RISCV_get_service_iface(execobj, IFACE_CMD_EXECUTOR));
-    iexec->registerRawListener(static_cast<IRawListener *>(this));
+    RISCV_add_default_output(static_cast<IRawListener *>(this));
 }
 
 void ConsoleWidget::slotUpdateByTimer() {

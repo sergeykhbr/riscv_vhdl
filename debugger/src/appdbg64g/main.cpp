@@ -26,6 +26,18 @@ const char *default_config =
     "'ScriptFile':''"
   "},"
   "'Services':["
+    "{'Class':'GuiPluginClass','Instances':["
+                "{'Name':'gui0','Attr':["
+                "['LogLevel',4],"
+                "['WidgetsConfig',{"
+                  "'Serial':'port1',"
+                  "'AutoComplete':'autocmd0',"
+                  "'SocInfo':'info0',"
+                  "'PollingMs':250"
+                "}],"
+                "['SocInfo','info0'],"
+                "['CommandExecutor','cmdexec0']"
+                "]}]},"
     "{'Class':'EdclServiceClass','Instances':["
           "{'Name':'edcltap','Attr':["
                 "['LogLevel',1],"
@@ -56,7 +68,6 @@ const char *default_config =
           "{'Name':'console0','Attr':["
                 "['LogLevel',4],"
                 "['Enable',true],"
-                "['LogFile','test.log'],"
                 "['StepQueue','core0'],"
                 "['AutoComplete','autocmd0'],"
                 "['CommandExecutor','cmdexec0'],"
@@ -212,19 +223,6 @@ const char *default_config =
                         "'uart0','irqctrl0','gnss0','gptmr0',"
                         "'pnp0','dsu0','greth0']]"
                 "]}]},"
-    "{'Class':'GuiPluginClass','Instances':["
-                "{'Name':'gui0','Attr':["
-                "['LogLevel',4],"
-                "['WidgetsConfig',{"
-                  "'Serial':'port1',"
-                  "'AutoComplete':'autocmd0',"
-                  "'CommandExecutor':'cmdexec0',"
-                  "'SocInfo':'info0',"
-                  "'PollingMs':250"
-                "}],"
-                "['SocInfo','info0'],"
-                "['CommandExecutor','cmdexec0']"
-                "]}]},"
     "{'Class':'BoardSimClass','Instances':["
           "{'Name':'boardsim','Attr':["
                 "['LogLevel',1]"
@@ -232,7 +230,6 @@ const char *default_config =
   "]"
 "}";
 
-static char cfgbuf[1<<16];
 static AttributeType Config;
 
 const AttributeType *getConfigOfService(const AttributeType &cfg, 
@@ -250,7 +247,6 @@ const AttributeType *getConfigOfService(const AttributeType &cfg,
 }
 
 int main(int argc, char* argv[]) {
-    int cfgsz = 0;
     char path[1024];
     bool loadConfig = true;
     bool disableSim = true;
@@ -279,17 +275,15 @@ int main(int argc, char* argv[]) {
     std::string cfg_filename = std::string(path) 
                     + std::string(JSON_CONFIG_FILE);
 
+    AttributeType databuf;
     if (loadConfig) {
-        cfgsz = RISCV_read_json_file(cfg_filename.c_str(), cfgbuf, 
-                                    static_cast<int>(sizeof(cfgbuf)));
+        RISCV_read_json_file(cfg_filename.c_str(), &databuf);
+    } 
+    if (databuf.size() == 0) {
+        databuf.make_string(default_config);
     }
 
-    // Convert string to attribute:
-    if (cfgsz == 0) {
-        Config.from_config(default_config);
-    } else {
-        Config.from_config(cfgbuf);
-    }
+    Config.from_config(databuf.to_string());
 
     // Enable/Disable simulator option:
     Config["GlobalSettings"]["SimEnable"].make_boolean(!disableSim);

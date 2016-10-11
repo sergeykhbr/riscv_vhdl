@@ -27,10 +27,11 @@ bool CmdIsRunning::isValid(AttributeType *args) {
     return CMD_INVALID;
 }
 
-bool CmdIsRunning::exec(AttributeType *args, AttributeType *res) {
+void CmdIsRunning::exec(AttributeType *args, AttributeType *res) {
     res->make_boolean(false);
     if (!isValid(args)) {
-        return CMD_FAILED;
+        generateError(res, "Wrong argument list");
+        return;
     }
 
     DsuRunControlRegType val;
@@ -41,7 +42,6 @@ bool CmdIsRunning::exec(AttributeType *args, AttributeType *res) {
     } else {
         res->make_boolean(true);
     }
-    return CMD_SUCCESS;
 }
 
 }  // namespace debugger

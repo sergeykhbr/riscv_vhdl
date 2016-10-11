@@ -16,25 +16,35 @@ CmdLog::CmdLog(ITap *tap, ISocInfo *info)
     detailedDescr_.make_string(
         "Description:\n"
         "    Write console output into specified file.\n"
+        "    Close log-file if the filename not specified.\n"
         "Example:\n"
         "    log session.log\n"
         "    log /home/riscv/session.log\n");
 }
 
 bool CmdLog::isValid(AttributeType *args) {
-    if ((*args)[0u].is_equal(cmdName_.to_string()) && args->size() == 2) {
+    if ((*args)[0u].is_equal(cmdName_.to_string()) 
+        && (args->size() == 1 || args->size() == 2)) {
         return CMD_VALID;
     }
     return CMD_INVALID;
 }
 
-bool CmdLog::exec(AttributeType *args, AttributeType *res) {
+void CmdLog::exec(AttributeType *args, AttributeType *res) {
     res->make_nil();
     if (!isValid(args)) {
-        return CMD_FAILED;
+        generateError(res, "Wrong argument list");
+        return;
     }
-    /** Do nothing, log file is enabled in Executor itself */
-    return CMD_SUCCESS;
+    
+    if (args->size() == 1) {
+        RISCV_disable_log();
+    } else {
+        const char *filename = (*args)[1].to_string();
+        if (RISCV_enable_log(filename)) {
+            generateError(res, "Can't open file");
+        }
+    }
 }
 
 }  // namespace debugger

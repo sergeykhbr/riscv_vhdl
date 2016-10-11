@@ -10,6 +10,7 @@
 
 #include <stdarg.h>
 #include "api_types.h"
+#include "attribute.h"
 
 namespace debugger {
 
@@ -22,7 +23,15 @@ extern "C" {
 #endif
 
 /** Redirect output to specified console. */
-void RISCV_set_default_output(void *iout);
+void RISCV_add_default_output(void *iout);
+
+/** 
+ * @brief Write output to logfile.
+ * @return 0 on success, 1 when failed
+ */
+int RISCV_enable_log(const char *filename);
+
+void RISCV_disable_log();
 
 /** Format output to string. */
 int RISCV_sprintf(char *s, size_t len, const char *fmt, ...);
@@ -75,7 +84,7 @@ void RISCV_free(void *p);
 int RISCV_get_core_folder(char *out, int sz);
 
 /** Reading configuration from JSON formatted file. */
-int RISCV_read_json_file(const char *filename, char *buf, int bufsz);
+int RISCV_read_json_file(const char *filename, void *outattr);
 
 /** Write configuration string to JSON formatted file. */
 void RISCV_write_json_file(const char *filename, const char *s);

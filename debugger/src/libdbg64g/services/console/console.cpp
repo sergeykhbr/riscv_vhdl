@@ -23,13 +23,14 @@ REGISTER_CLASS(ConsoleService)
 static const int STDIN = 0;
 
 ConsoleService::ConsoleService(const char *name) 
-    : IService(name), IHap(HAP_ConfigDone), portExecutor(this, "") {
+    : IService(name), IHap(HAP_ConfigDone), 
+      portSerial_(this, "serialconsole", true) {
     registerInterface(static_cast<IThread *>(this));
-    registerInterface(static_cast<IConsole *>(this));
     registerInterface(static_cast<IHap *>(this));
     registerInterface(static_cast<IRawListener *>(this));
+    registerInterface(static_cast<ISignalListener *>(this));
+    registerInterface(static_cast<IClockListener *>(this));
     registerAttribute("Enable", &isEnable_);
-    registerAttribute("LogFile", &logFile_);
     registerAttribute("StepQueue", &stepQueue_);
     registerAttribute("AutoComplete", &autoComplete_);
     registerAttribute("CommandExecutor", &commandExecutor_);
@@ -41,14 +42,12 @@ ConsoleService::ConsoleService(const char *name)
     RISCV_register_hap(static_cast<IHap *>(this));
 
     isEnable_.make_boolean(true);
-    logFile_.make_string("");
 	stepQueue_.make_string("");
     autoComplete_.make_string("");
     commandExecutor_.make_string("");
 	signals_.make_string("");
     inPort_.make_string("");
 
-    logfile_ = NULL;
     iclk_ = NULL;
     cmdSizePrev_ = 0;
 
@@ -73,9 +72,6 @@ ConsoleService::ConsoleService(const char *name)
 }
 
 ConsoleService::~ConsoleService() {
-    if (logfile_) {
-        fclose(logfile_);
-    }
 #if defined(_WIN32) || defined(__CYGWIN__)
 #else
     tcsetattr(STDIN, TCSANOW, &original_settings_);
@@ -88,7 +84,9 @@ void ConsoleService::postinitService() {
     ISerial *iport = static_cast<ISerial *>
             (RISCV_get_service_iface(inPort_.to_string(), IFACE_SERIAL));
     if (iport) {
-        iport->registerRawListener(static_cast<IRawListener *>(this));
+        iport->registerRawListener(static_cast<IRawListener *>(&portSerial_));
+    } else {
+        RISCV_error("Can't connect to com-port %s.", inPort_.to_string());
     }
 
     if (isEnable_.to_bool()) {
@@ -96,9 +94,6 @@ void ConsoleService::postinitService() {
             RISCV_error("Can't create thread.", NULL);
             return;
         }
-    }
-    if (logFile_.size()) {
-        enableLogFile(logFile_.to_string());
     }
 
     iclk_ = static_cast<IClock *>
@@ -118,9 +113,6 @@ void ConsoleService::postinitService() {
     if (!iexec_) {
         RISCV_error("Can't get ICmdExecutor interface %s",
                     commandExecutor_.to_string());
-    } else {
-        iexec_->registerRawListener(
-            static_cast<IRawListener *>(&portExecutor));
     }
 
     ISignal *itmp = static_cast<ISignal *>
@@ -139,7 +131,7 @@ void ConsoleService::postinitService() {
 #endif
 
     // Redirect output stream to a this console
-    RISCV_set_default_output(static_cast<IConsole *>(this));
+    RISCV_add_default_output(static_cast<IRawListener *>(this));
 }
 
 void ConsoleService::predeleteService() {
@@ -176,8 +168,6 @@ void ConsoleService::stepCallback(uint64_t t) {
 #endif
 }
 
-
-
 void ConsoleService::hapTriggered(IFace *isrc, EHapType type, 
                                   const char *descr) {
     RISCV_event_set(&config_done_);
@@ -191,17 +181,7 @@ void ConsoleService::updateSignal(int start, int width, uint64_t value) {
 }
 
 void ConsoleService::updateData(const char *buf, int buflen) {
-    for (int i = 0; i < buflen; i++) {
-        if (buf[i] == '\r' || buf[i] == '\n') {
-            if (serial_input_.size()) {
-                serial_input_ = "<serialconsole> " + serial_input_ + "\n";
-                writeBuffer(serial_input_.c_str());
-            }
-            serial_input_ .clear();
-        } else {
-            serial_input_ += buf[i];
-        }
-    }
+    writeBuffer(buf);
 }
 
 void ConsoleService::busyLoop() {
@@ -219,20 +199,18 @@ void ConsoleService::busyLoop() {
         cmd_ready = iautocmd_->processKey(getData(), &cmd, &cursor);
         if (cmd_ready) {
             RISCV_mutex_lock(&mutexConsoleOutput_);
-            std::cout << "\r\n";
-            if (logfile_) {
-                fwrite(ENTRYSYMBOLS, sizeof(ENTRYSYMBOLS), 1, logfile_);
-                fwrite(cmd.to_string(), cmd.size(), 1, logfile_);
-                fwrite("\n", 1, 1, logfile_);
-                fflush(logfile_);
+            std::cout << "\r";
+            RISCV_mutex_unlock(&mutexConsoleOutput_);
+            
+            RISCV_printf0("%s%s", ENTRYSYMBOLS, cmd.to_string());
+
+            iexec_->exec(cmd.to_string(), &cmdres, false);
+
+            RISCV_mutex_lock(&mutexConsoleOutput_);
+            if (!cmdres.is_nil() && !cmdres.is_invalid()) {
+                RISCV_printf0("%s", cmdres.to_config());
             }
             RISCV_mutex_unlock(&mutexConsoleOutput_);
-            if (!iexec_->exec(cmd.to_string(), &cmdres, false)) {
-                // No response data:
-                RISCV_mutex_lock(&mutexConsoleOutput_);
-                std::cout << '\r' << ENTRYSYMBOLS ;
-                RISCV_mutex_unlock(&mutexConsoleOutput_);
-            }
         } else {
             RISCV_mutex_lock(&mutexConsoleOutput_);
             std::cout << '\r' << ENTRYSYMBOLS << cmd.to_string();
@@ -313,6 +291,7 @@ void ConsoleService::writeBuffer(const char *buf) {
         return;
     }
     RISCV_mutex_lock(&mutexConsoleOutput_);
+    std::cout << '\r';
     clearLine(70);
     std::cout << buf;
     if (buf[sz-1] != '\r' && buf[sz-1] != '\n') {
@@ -321,10 +300,6 @@ void ConsoleService::writeBuffer(const char *buf) {
     std::cout << ENTRYSYMBOLS << cmdLine_.c_str();
     std::cout.flush();
 
-    if (logfile_) {
-        fwrite(buf, strlen(buf), 1, logfile_);
-        fflush(logfile_);
-    }
     RISCV_mutex_unlock(&mutexConsoleOutput_);
 }
 
@@ -334,17 +309,6 @@ void ConsoleService::clearLine(int num) {
     }
     for (int i = 0; i < num; i++) {
         std::cout << '\b';
-    }
-}
-
-void ConsoleService::enableLogFile(const char *filename) {
-    if (logfile_) {
-        fclose(logfile_);
-        logfile_ = NULL;
-    }
-    logfile_ = fopen(filename, "w");
-    if (!logfile_) {
-        RISCV_error("Can not open file '%s'", filename);
     }
 }
 
@@ -370,76 +334,7 @@ uint8_t ConsoleService::getData() {
 #endif
 }
 
-/*void ConsoleService::addToCommandLine(int val) {
-    bool set_history_end = true;
-    uint8_t symb = static_cast<uint8_t>(val);
-    if (!convertToWinKey(symb)) {
-        return;
-    }
-
-    switch (symb_seq_) {
-    case 0:
-        break;
-    case (ARROW_PREFIX << 8) | KB_UP:
-        set_history_end = false;
-        if (history_idx_ == history_.size()) {
-            unfinshedLine_ = cmdLine_;
-        }
-        if (history_idx_ > 0) {
-            history_idx_--;
-        }
-        RISCV_mutex_lock(&mutexConsoleOutput_);
-        cmdLine_ = std::string(history_[history_idx_].to_string());
-        clearLine();
-        std::cout << ENTRYSYMBOLS << cmdLine_;
-        std::cout.flush();
-        RISCV_mutex_unlock(&mutexConsoleOutput_);
-        break;
-    case (ARROW_PREFIX << 8) | KB_DOWN:
-        set_history_end = false;
-        if (history_idx_ == (history_.size() - 1)) {
-            history_idx_++;
-            cmdLine_ = unfinshedLine_;
-        } else if (history_idx_ < (history_.size() - 1)) {
-            history_idx_++;
-            cmdLine_ = std::string(history_[history_idx_].to_string());
-        }
-        RISCV_mutex_lock(&mutexConsoleOutput_);
-        clearLine();
-        std::cout << ENTRYSYMBOLS << cmdLine_;
-        std::cout.flush();
-        RISCV_mutex_unlock(&mutexConsoleOutput_);
-        break;
-    case '\b':// 1. Backspace button:
-        if (cmdLine_.size()) {
-            RISCV_mutex_lock(&mutexConsoleOutput_);
-            cmdLine_.erase(cmdLine_.size() - 1);
-            std::cout << "\b \b";
-            std::cout.flush();
-            RISCV_mutex_unlock(&mutexConsoleOutput_);
-        }
-        break;
-    case '\n':
-    case '\r':// 2. Enter button:
-        processCommandLine();
-        break;
-    default:
-        RISCV_mutex_lock(&mutexConsoleOutput_);
-        cmdLine_ += symb;
-        std::cout << symb;
-        std::cout.flush();
-        RISCV_mutex_unlock(&mutexConsoleOutput_);
-    }
-
-    if (set_history_end) {
-        history_idx_ = history_.size();
-    }
-}
-*/
 void ConsoleService::processCommandLine() {
-    //symb_seq_ = 0;
-    //addToHistory(cmdLine_.c_str());
-
     RISCV_mutex_lock(&mutexConsoleOutput_);
     char tmpStr[256];
     char *pStr = tmpStr;
@@ -450,11 +345,6 @@ void ConsoleService::processCommandLine() {
     cmdLine_.clear();
 
     std::cout << "\r\n" ENTRYSYMBOLS;
-    if (logfile_) {
-        int len = sprintf(tmpbuf_, ENTRYSYMBOLS "%s\n", pStr);
-        fwrite(tmpbuf_, len, 1, logfile_);
-        fflush(logfile_);
-    }
     RISCV_mutex_unlock(&mutexConsoleOutput_);
 
     if (pStr[0] == '\0') {
@@ -481,12 +371,6 @@ void ConsoleService::processCommandLine() {
                                    static_cast<int>(strCmd.size()));
             }
         }
-    } else {
-        /*for (unsigned i = 0; i < consoleListeners_.size(); i++) {
-            IConsoleListener *ilstn = 
-            static_cast<IConsoleListener *>(consoleListeners_[i].to_iface());
-            ilstn->udpateCommand(pStr);
-        }*/
     }
     if (pStr != tmpStr) {
         delete [] pStr;

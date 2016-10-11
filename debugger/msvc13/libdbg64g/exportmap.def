@@ -14,7 +14,7 @@ EXPORTS
 	RISCV_create_service
 	RISCV_get_service
 	RISCV_get_service_iface
-	RISCV_set_default_output
+	RISCV_add_default_output
 	RISCV_sprintf
 	RISCV_printf
 	RISCV_print_bin
@@ -38,3 +38,5 @@ EXPORTS
 	RISCV_break_simulation
 	RISCV_malloc
 	RISCV_free
+	RISCV_enable_log
+	RISCV_disable_log

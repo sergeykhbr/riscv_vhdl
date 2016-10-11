@@ -30,16 +30,18 @@ bool CmdWrite::isValid(AttributeType *args) {
     return CMD_INVALID;
 }
 
-bool CmdWrite::exec(AttributeType *args, AttributeType *res) {
+void CmdWrite::exec(AttributeType *args, AttributeType *res) {
     res->make_nil();
     if (!isValid(args)) {
-        return CMD_FAILED;
+        generateError(res, "Wrong argument list");
+        return;
     }
 
     uint64_t addr = (*args)[1].to_uint64();
     uint64_t val = (*args)[3].to_uint64();
     unsigned bytes = static_cast<unsigned>((*args)[2].to_uint64());
 
+    /** aech value 8-bytes (64 bits) add 8 for bullet proofness: */
     if (wrData_.size() < (bytes + 8)) {
         wrData_.make_data(bytes + 8);
     }
@@ -54,10 +56,10 @@ bool CmdWrite::exec(AttributeType *args, AttributeType *res) {
             tmpbuf[i] = val;
         }
     } else {
-        return CMD_FAILED;
+        generateError(res, "Write value must be i or [i*]");
+        return;
     }
     tap_->write(addr, bytes, wrData_.data());
-    return CMD_SUCCESS;
 }
 
 }  // namespace debugger

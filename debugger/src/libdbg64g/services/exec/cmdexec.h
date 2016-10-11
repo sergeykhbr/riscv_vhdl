@@ -14,7 +14,7 @@
 #include "coreservices/itap.h"
 #include "coreservices/iautocomplete.h"
 #include "coreservices/isocinfo.h"
-#include "coreservices/irawlistener.h"
+#include "coreservices/icommand.h"
 #include <string>
 #include <stdarg.h>
 
@@ -30,24 +30,21 @@ public:
     virtual void postinitService();
 
     /** ICmdExecutor */
-    virtual bool exec(const char *line, AttributeType *res, bool silent);
-    virtual void registerRawListener(IFace *iface);
+    virtual void exec(const char *line, AttributeType *res, bool silent);
 
 private:
     void processSimple(AttributeType *cmd, AttributeType *res);
     void processScript(AttributeType *cmd, AttributeType *res);
     void splitLine(char *str, AttributeType *listArgs);
 
-    void writeMem(AttributeType *listArgs);
-
-    void br(AttributeType *listArgs);
-
     int outf(const char *fmt, ...);
+    bool cmdIsError(AttributeType *res);
+    ICommand *getICommand(AttributeType *args);
+    ICommand *getICommand(const char *name);
 
 private:
     AttributeType tap_;
     AttributeType socInfo_;
-    AttributeType listeners_;
     AttributeType cmds_;
 
     ITap *itap_;

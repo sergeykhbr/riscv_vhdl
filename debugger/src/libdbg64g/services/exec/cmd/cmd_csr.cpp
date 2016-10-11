@@ -32,15 +32,24 @@ bool CmdCsr::isValid(AttributeType *args) {
     return CMD_INVALID;
 }
 
-bool CmdCsr::exec(AttributeType *args, AttributeType *res) {
+void CmdCsr::exec(AttributeType *args, AttributeType *res) {
     res->make_nil();
     if (!isValid(args)) {
-        return CMD_FAILED;
+        generateError(res, "Wrong argument list");
+        return;
     }
 
     uint64_t val;
-    uint64_t addr = info_->csr2addr((*args)[1].to_string());
     int bytes = 8;
+    const char *csrname = (*args)[1].to_string();
+    uint64_t addr = info_->csr2addr(csrname);
+    if (addr == REG_ADDR_ERROR) {
+        char tstr[128];
+        RISCV_sprintf(tstr, sizeof(tstr), "%s not found", csrname);
+        generateError(res, tstr);
+        return;
+    }
+
     if (args->size() == 2) {
         tap_->read(addr, bytes, reinterpret_cast<uint8_t *>(&val));
         res->make_uint64(val);
@@ -48,13 +57,12 @@ bool CmdCsr::exec(AttributeType *args, AttributeType *res) {
         val = (*args)[2].to_uint64();
         tap_->write(addr, bytes, reinterpret_cast<uint8_t *>(&val));
     }
-    return CMD_SUCCESS;
 }
 
-bool CmdCsr::format(AttributeType *args, AttributeType *res, AttributeType *out) {
+void CmdCsr::to_string(AttributeType *args, AttributeType *res, AttributeType *out) {
     if (args->size() != 2) {
         out->make_nil();
-        return CMD_NO_OUTPUT;
+        return;
     }
 
     char tstr[256];
@@ -67,7 +75,7 @@ bool CmdCsr::format(AttributeType *args, AttributeType *res, AttributeType *out)
         RISCV_sprintf(tstr, sizeof(tstr), 
             "Unknown CSR '%s'\n", (*args)[1].to_string());
         out->make_string(tstr);
-        return CMD_IS_OUTPUT;
+        return;
     }
 
     tstrsz = RISCV_sprintf(tstr, sizeof(tstr),
@@ -75,7 +83,7 @@ bool CmdCsr::format(AttributeType *args, AttributeType *res, AttributeType *out)
         static_cast<uint32_t>((addr >> 4) & 0xfff), res->to_uint64());
    
     if (!(*args)[1].is_string()) {
-        return CMD_IS_OUTPUT;
+        return;
     }
     if ((*args)[1].is_equal("MCPUID")) {
         static const char *MCPUID_BASE[4] = {
@@ -102,7 +110,7 @@ bool CmdCsr::format(AttributeType *args, AttributeType *res, AttributeType *out)
             csr, static_cast<double>(csr)/60000.0);
     }
     out->make_string(tstr);
-    return CMD_IS_OUTPUT;
+    return;
 }
 
 }  // namespace debugger

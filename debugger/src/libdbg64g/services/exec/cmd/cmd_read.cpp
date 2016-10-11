@@ -25,9 +25,6 @@ CmdRead::CmdRead(ITap *tap, ISocInfo *info)
     rdData_.make_data(1024);
 }
 
-CmdRead::~CmdRead() {
-}
-
 bool CmdRead::isValid(AttributeType *args) {
     if ((*args)[0u].is_equal(cmdName_.to_string()) 
      && (args->size() == 2 || args->size() == 3)) {
@@ -36,10 +33,11 @@ bool CmdRead::isValid(AttributeType *args) {
     return CMD_INVALID;
 }
 
-bool CmdRead::exec(AttributeType *args, AttributeType *res) {
+void CmdRead::exec(AttributeType *args, AttributeType *res) {
     res->make_uint64(~0);
     if (!isValid(args)) {
-        return CMD_FAILED;
+        generateError(res, "Wrong argument list");
+        return;
     }
 
     uint64_t addr = (*args)[1].to_uint64();
@@ -55,10 +53,9 @@ bool CmdRead::exec(AttributeType *args, AttributeType *res) {
     tap_->read(addr, bytes, rdData_.data());
 
     res->make_data(bytes, rdData_.data());
-    return CMD_SUCCESS;
 }
 
-bool CmdRead::format(AttributeType *args, AttributeType *res, AttributeType *out) {
+void CmdRead::to_string(AttributeType *args, AttributeType *res, AttributeType *out) {
     uint64_t addr = (*args)[1].to_uint64();
     int bytes = 4;
     if (args->size() == 3) {
@@ -91,7 +88,6 @@ bool CmdRead::format(AttributeType *args, AttributeType *res, AttributeType *out
         }
     }
     out->make_string(strbuf);
-    return CMD_IS_OUTPUT;
 }
 
 }  // namespace debugger

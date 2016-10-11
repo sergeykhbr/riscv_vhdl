@@ -19,10 +19,10 @@ public:
 
     /** ICommand */
     virtual bool isValid(AttributeType *args);
-    virtual bool exec(AttributeType *args, AttributeType *res);
-    virtual bool format(AttributeType *args, AttributeType *res, AttributeType *out);
+    virtual void exec(AttributeType *args, AttributeType *res);
 
 private:
+    virtual void convert_to_str(AttributeType *lst, AttributeType *out);
 };
 
 }  // namespace debugger

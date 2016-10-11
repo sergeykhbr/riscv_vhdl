@@ -51,7 +51,7 @@ uint64_t SocInfo::csr2addr(const char *name) {
             return dsuBase_.to_uint64() + (listCSR_[i][2].to_uint64() << 4);
         }
     }
-    return ~0;
+    return REG_ADDR_ERROR;
 }
 
 uint64_t SocInfo::reg2addr(const char *name) {
@@ -61,7 +61,7 @@ uint64_t SocInfo::reg2addr(const char *name) {
             return REG_BASE_ADDR + 8 * listRegs_[i][2].to_uint64();
         }
     }
-    return ~0;
+    return REG_ADDR_ERROR;
 }
 
 uint64_t SocInfo::addressPlugAndPlay() {

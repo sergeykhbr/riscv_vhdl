@@ -12,7 +12,6 @@
 #include "iservice.h"
 #include "ihap.h"
 #include "coreservices/ithread.h"
-#include "coreservices/iconsole.h"
 #include "coreservices/iserial.h"
 #include "coreservices/iclock.h"
 #include "coreservices/iautocomplete.h"
@@ -22,12 +21,10 @@
 #include <string>
 //#define DBG_ZEPHYR
 
-
 namespace debugger {
 
 class ConsoleService : public IService,
                        public IThread,
-                       public IConsole,
                        public IHap,
                        public IRawListener,
                        public ISignalListener,
@@ -40,14 +37,10 @@ public:
     virtual void postinitService();
     virtual void predeleteService();
 
-    /** IConsole interface */
-    virtual void writeBuffer(const char *buf);
-    virtual void enableLogFile(const char *filename);
-
     /** IHap */
     virtual void hapTriggered(IFace *isrc, EHapType type, const char *descr);
 
-    /** IRawListener (serial) */
+    /** IRawListener (default stream) */
     virtual void updateData(const char *buf, int buflen);
 
     /** IClockListener */
@@ -61,6 +54,8 @@ protected:
     virtual void busyLoop();
 
 private:
+    friend class RawPortType;
+    void writeBuffer(const char *buf);
     void processScriptFile();
     bool isData();
     uint8_t getData();
@@ -69,9 +64,15 @@ private:
 
     class RawPortType : public IRawListener {
     public:
-        RawPortType(ConsoleService *parent, const char *name) {
+        RawPortType(ConsoleService *parent, const char *name, bool wait_line = false) {
             parent_ = parent;
-            name_.make_string(name);
+            waitLine_ = wait_line;
+            if (name[0]) {
+                name_ = "<" + std::string(name) + "> ";
+            } else {
+                name_ = "";
+            }
+            outdata_ = "";
         }
 
         // Fake IService method:
@@ -84,19 +85,29 @@ private:
         }
         // IRawListener
         virtual void updateData(const char *buf, int buflen) {
-            std::string outdata;
-            if (name_.size()) {
-                outdata = "<";
-                outdata += std::string(name_.to_string());
-                outdata = "> ";
+            if (!waitLine_) {
+                outdata_ = name_ + std::string(buf);
+                parent_->writeBuffer(outdata_.c_str());
+                return;
             }
-            outdata += std::string(buf);
-            parent_->writeBuffer(outdata.c_str());
+            for (int i = 0; i < buflen; i++) {
+                if (buf[i] == '\r' || buf[i] == '\n') {
+                    if (outdata_.size()) {
+                            outdata_ = name_ + outdata_ + "\n";
+                        parent_->writeBuffer(outdata_.c_str());
+                    }
+                    outdata_.clear();
+                } else {
+                    outdata_ += buf[i];
+                }
+            }
         }
 
     private:
         ConsoleService *parent_;
-        AttributeType name_;
+        std::string name_;
+        std::string outdata_;
+        bool waitLine_;
     };
 
 private:
@@ -105,7 +116,6 @@ private:
     AttributeType autoComplete_;
     AttributeType commandExecutor_;
     AttributeType signals_;
-    AttributeType logFile_;
     AttributeType inPort_;
 
     event_def config_done_;
@@ -114,15 +124,12 @@ private:
     IAutoComplete *iautocmd_;
     ICmdExecutor *iexec_;
 
-    RawPortType portExecutor;
+    RawPortType portSerial_;
 
-    char tmpbuf_[4096];
     std::string cmdLine_;
-    std::string serial_input_;
     unsigned cmdSizePrev_;  // used to clear symbols if string shorter 
                             // than previous
 
-    FILE *logfile_;
 #ifdef DBG_ZEPHYR
     int tst_cnt_;
 #endif

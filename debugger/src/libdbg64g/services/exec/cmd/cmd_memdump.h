@@ -16,16 +16,12 @@ namespace debugger {
 class CmdMemDump : public ICommand  {
 public:
     explicit CmdMemDump(ITap *tap, ISocInfo *info);
-    virtual ~CmdMemDump();
 
     /** ICommand */
     virtual bool isValid(AttributeType *args);
-    virtual bool exec(AttributeType *args, AttributeType *res);
-    virtual bool format(AttributeType *args, AttributeType *res, AttributeType *out);
+    virtual void exec(AttributeType *args, AttributeType *res);
 
 private:
-    uint8_t *rdBuf_;
-    int rdBufSz_;
 };
 
 }  // namespace debugger

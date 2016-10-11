@@ -7,7 +7,6 @@
 
 #include <string.h>
 #include "cmdexec.h"
-#include "coreservices/icommand.h"
 #include "cmd/cmd_regs.h"
 #include "cmd/cmd_reg.h"
 #include "cmd/cmd_loadelf.h"
@@ -20,6 +19,7 @@
 #include "cmd/cmd_csr.h"
 #include "cmd/cmd_exit.h"
 #include "cmd/cmd_memdump.h"
+#include "cmd/cmd_br.h"
 
 namespace debugger {
 
@@ -35,7 +35,6 @@ CmdExecutor::CmdExecutor(const char *name)
     //console_.make_list(0);
     tap_.make_string("");
     socInfo_.make_string("");
-    listeners_.make_list(0);
 
     RISCV_mutex_init(&mutexExec_);
 
@@ -48,7 +47,7 @@ CmdExecutor::~CmdExecutor() {
     delete [] tmpbuf_;
     delete [] outbuf_;
     for (unsigned i = 0; i < cmds_.size(); i++) {
-        delete cmds_.dict_value(i)->to_iface();
+        delete cmds_[i].to_iface();
     }
 }
 
@@ -59,23 +58,24 @@ void CmdExecutor::postinitService() {
             (RISCV_get_service_iface(socInfo_.to_string(), 
                                     IFACE_SOC_INFO));
 
-    cmds_.make_dict();
+    cmds_.make_list(13);
 
-    cmds_["csr"].make_iface(new CmdCsr(itap_, info_));
-    cmds_["exit"].make_iface(new CmdExit(itap_, info_));
-    cmds_["halt"].make_iface(new CmdHalt(itap_, info_));
-    cmds_["isrunning"].make_iface(new CmdIsRunning(itap_, info_));
-    cmds_["loadelf"].make_iface(new CmdLoadElf(itap_, info_));
-    cmds_["log"].make_iface(new CmdLog(itap_, info_));
-    cmds_["memdump"].make_iface(new CmdMemDump(itap_, info_));
-    cmds_["read"].make_iface(new CmdRead(itap_, info_));
-    cmds_["run"].make_iface(new CmdRun(itap_, info_));
-    cmds_["reg"].make_iface(new CmdReg(itap_, info_));
-    cmds_["regs"].make_iface(new CmdRegs(itap_, info_));
-    cmds_["write"].make_iface(new CmdWrite(itap_, info_));
+    cmds_[0u].make_iface(new CmdBr(itap_, info_));
+    cmds_[1].make_iface(new CmdCsr(itap_, info_));
+    cmds_[2].make_iface(new CmdExit(itap_, info_));
+    cmds_[3].make_iface(new CmdHalt(itap_, info_));
+    cmds_[4].make_iface(new CmdIsRunning(itap_, info_));
+    cmds_[5].make_iface(new CmdLoadElf(itap_, info_));
+    cmds_[6].make_iface(new CmdLog(itap_, info_));
+    cmds_[7].make_iface(new CmdMemDump(itap_, info_));
+    cmds_[8].make_iface(new CmdRead(itap_, info_));
+    cmds_[9].make_iface(new CmdRun(itap_, info_));
+    cmds_[10].make_iface(new CmdReg(itap_, info_));
+    cmds_[11].make_iface(new CmdRegs(itap_, info_));
+    cmds_[12].make_iface(new CmdWrite(itap_, info_));
 }
 
-bool CmdExecutor::exec(const char *line, AttributeType *res, bool silent) {
+void CmdExecutor::exec(const char *line, AttributeType *res, bool silent) {
     RISCV_mutex_lock(&mutexExec_);
     res->make_nil();
 
@@ -97,20 +97,9 @@ bool CmdExecutor::exec(const char *line, AttributeType *res, bool silent) {
 
     /** Do not output any information into console in silent mode: */
     if (silent) {
-        return false;
+        return;
     }
-    IRawListener *iraw;
-    for (unsigned i = 0; i < listeners_.size(); i++) {
-        iraw = static_cast<IRawListener *>(listeners_[i].to_iface());
-        iraw->updateData(outbuf_, outbuf_cnt_);
-    }
-    return (outbuf_cnt_ != 0);
-    
-}
-
-void CmdExecutor::registerRawListener(IFace *iface) {
-    AttributeType t1(iface);
-    listeners_.add_to_list(&t1);
+    //RISCV_printf0("%s", outbuf_);
 }
 
 void CmdExecutor::processSimple(AttributeType *cmd, AttributeType *res) {
@@ -119,90 +108,78 @@ void CmdExecutor::processSimple(AttributeType *cmd, AttributeType *res) {
         return;
     }
 
+    ICommand *icmd;
     AttributeType listArgs(Attr_List);
     splitLine(const_cast<char *>(cmd->to_string()), &listArgs);
     if (!listArgs[0u].is_string()) {
-        outf("Wrong command format\n");
+        RISCV_error("Wrong command format\n", NULL);
         return;
     }
 
     if (listArgs[0u].is_equal("help")) {
         if (listArgs.size() == 1) {
-            outf("** List of supported commands: **\n");
+            RISCV_printf0("** List of supported commands: **", NULL);
             for (unsigned i = 0; i < cmds_.size(); i++) {
-                ICommand *cmd = static_cast<ICommand *>(cmds_[i].to_iface());
-                outf("%13s   - %s\n", cmd->cmdName(), cmd->briefDescr());
+                icmd = static_cast<ICommand *>(cmds_[i].to_iface());
+                RISCV_printf0("%13s   - %s",
+                        icmd->cmdName(), icmd->briefDescr());
             }
-            outf("\n");
         } else {
-            // @todo specific command
+            const char *helpcmd = listArgs[1].to_string();
+            icmd = getICommand(helpcmd);
+            if (icmd) {
+                RISCV_printf0("\n%s", icmd->detailedDescr());
+            } else {
+                RISCV_error("Command '%s' not found", helpcmd);
+            }
         }
         return;
-        /*
-        outf("      br        - Breakpoint operation\n");
-        outf("\n");*/
     }
 
     AttributeType u;
-    bool cmdFound = false;
+    icmd = getICommand(&listArgs);
+    if (!icmd) {
+        RISCV_error("Use 'help' to print list of commands\n", NULL);
+        return;
+    }
+    icmd->exec(&listArgs, res);
+
+    if (cmdIsError(res)) {
+        RISCV_error("Command '%s' error: '%s'", 
+            (*res)[1].to_string(), (*res)[2].to_string());
+    }
+}
+
+bool CmdExecutor::cmdIsError(AttributeType *res) {
+    if (!res->is_list() || res->size() != 3) {
+        return false;
+    }
+    if (!(*res)[0u].is_string()) {
+        return false;
+    }
+    return (*res)[0u].is_equal("ERROR");
+}
+
+ICommand *CmdExecutor::getICommand(AttributeType *args) {
+    ICommand *ret = 0;
     for (unsigned i = 0; i < cmds_.size(); i++) {
-        ICommand *e = 
-            static_cast<ICommand *>(cmds_.dict_value(i)->to_iface());
-        if (e->isValid(&listArgs) == CMD_INVALID) {
-            continue;
+        ret = static_cast<ICommand *>(cmds_[i].to_iface());
+        if (ret && ret->isValid(args) == CMD_VALID) {
+            return ret;
         }
-
-        cmdFound = true;
-        if (e->exec(&listArgs, res) == CMD_FAILED) {
-            outf(e->detailedDescr());
-            break;
-        } 
-        /** Command was successful: */
-        if (e->format(&listArgs, res, &u) == CMD_IS_OUTPUT) {
-            outf(u.to_string());
-        }
-        if (listArgs[0u].is_equal("log")) {
-            //@todo log enabling
-        }
-        break;
-
     }
-    if (!cmdFound) {
-        outf("Use 'help' to print list of the supported commands\n");
-    }
+    return ret;
+}
 
-#if 0
-    
-    if (strcmp(listArgs[0u].to_string(), "write") == 0) {
-        if (listArgs.size() == 4) {
-            writeMem(&listArgs);
-        } else {
-            outf("Description:\n");
-            outf("    Write memory.\n");
-            outf("Usage:\n");
-            outf("    write <addr> <bytes> [value]\n");
-            outf("Example:\n");
-            outf("    write 0xfffff004 4 0x20160323\n");
-            outf("    write 0x10040000 16 "
-                        "[0xaabbccdd00112233, 0xaabbccdd00112233]\n");
+ICommand *CmdExecutor::getICommand(const char *name) {
+    ICommand *ret = 0;
+    for (unsigned i = 0; i < cmds_.size(); i++) {
+        ret = static_cast<ICommand *>(cmds_[i].to_iface());
+        if (ret && strcmp(ret->cmdName(), name) == 0) {
+            return ret;
         }
-    } else if (strcmp(listArgs[0u].to_string(), "br") == 0) {
-        if (listArgs.size() == 3 && listArgs[1].is_string()) {
-            br(&listArgs);
-        } else {
-            outf("Description:\n");
-            outf("    Add or remove memory breakpoint.\n");
-            outf("Usage:\n");
-            outf("    br add <addr>\n");
-            outf("    br rm <addr>\n");
-            outf("Example:\n");
-            outf("    br add 0x10000000\n");
-            outf("    br rm 0x10000000\n");
-        }
-    } else {
-        outf("Use 'help' to print list of the supported commands\n");
     }
-#endif
+    return ret;
 }
 
 void CmdExecutor::splitLine(char *str, AttributeType *listArgs) {
@@ -242,36 +219,6 @@ void CmdExecutor::splitLine(char *str, AttributeType *listArgs) {
         ++end;
     }
 }
-
-void CmdExecutor::writeMem(AttributeType *listArgs) {
-    uint64_t addr = (*listArgs)[1].to_uint64();
-    uint64_t val = (*listArgs)[3].to_uint64();
-    int bytes = static_cast<int>((*listArgs)[2].to_uint64());
-
-    if ((*listArgs)[3].is_integer()) {
-        reinterpret_cast<uint64_t *>(tmpbuf_)[0] = val;
-    } else if ((*listArgs)[3].is_list()) {
-        for (unsigned i = 0; i < (*listArgs)[3].size(); i++) {
-            val = (*listArgs)[3][i].to_uint64();
-            reinterpret_cast<uint64_t *>(tmpbuf_)[i] = val;
-        }
-    } else {
-        outf("Wrong write format\n");
-        return;
-    }
-    itap_->write(addr, bytes, tmpbuf_);
-}
-
-void CmdExecutor::br(AttributeType *listArgs) {
-    uint8_t value[sizeof(uint64_t)];
-    *(reinterpret_cast<uint64_t *>(value)) = (*listArgs)[2].to_uint64();
-    if (strcmp((*listArgs)[1].to_string(), "add") == 0) {
-        itap_->write(info_->addressBreakCreate(), 8, value);
-    } else if (strcmp((*listArgs)[1].to_string(), "rm") == 0) {
-        itap_->write(info_->addressBreakRemove(), 8, value);
-    }
-}
-
 
 int CmdExecutor::outf(const char *fmt, ...) {
     if (outbuf_cnt_ > (outbuf_size_ - 128)) {

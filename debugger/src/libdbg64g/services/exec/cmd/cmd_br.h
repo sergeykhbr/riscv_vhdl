@@ -2,20 +2,22 @@
  * @file
  * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
  * @author     Sergey Khabarov - sergeykhbr@gmail.com
- * @brief      Halt simulation.
+ * @brief      Add or remove memory breakpoint.
  */
 
-#ifndef __DEBUGGER_CMD_HALT_H__
-#define __DEBUGGER_CMD_HALT_H__
+#ifndef __DEBUGGER_CMD_BR_H__
+#define __DEBUGGER_CMD_BR_H__
 
 #include "api_core.h"
+#include "coreservices/itap.h"
+#include "coreservices/isocinfo.h"
 #include "coreservices/icommand.h"
 
 namespace debugger {
 
-class CmdHalt : public ICommand  {
+class CmdBr : public ICommand  {
 public:
-    explicit CmdHalt(ITap *tap, ISocInfo *info);
+    explicit CmdBr(ITap *tap, ISocInfo *info);
 
     /** ICommand */
     virtual bool isValid(AttributeType *args);
@@ -26,4 +28,4 @@ private:
 
 }  // namespace debugger
 
-#endif  // __DEBUGGER_CMD_HALT_H__
+#endif  // __DEBUGGER_CMD_LOG_H__
