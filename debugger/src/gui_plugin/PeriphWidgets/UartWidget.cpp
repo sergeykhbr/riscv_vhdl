@@ -11,7 +11,6 @@ namespace debugger {
 
 UartWidget::UartWidget(IGui *igui, QWidget *parent) : QPlainTextEdit(parent) {
     igui_ = igui;
-    bNewDataAvailable_ = false;
     uart_ = 0;
 
     clear();
@@ -34,10 +33,7 @@ UartWidget::UartWidget(IGui *igui, QWidget *parent) : QPlainTextEdit(parent) {
     RISCV_mutex_init(&mutexStr_);
     prevSymb_ = 0;
 
-    QTimer *tmr = new QTimer(this);
-    connect(tmr, SIGNAL(timeout()), this, SLOT(slotUpdateByTimer()));
-    tmr->setSingleShot(false);
-    tmr->start(10);
+    connect(this, SIGNAL(signalNewData()), this, SLOT(slotUpdateByData()));
 }
 
 UartWidget::~UartWidget() {
@@ -70,8 +66,9 @@ void UartWidget::updateData(const char *buf, int buflen) {
         prevSymb_ = buf[0];
         buf++;
     }
-    bNewDataAvailable_ = true;
     RISCV_mutex_unlock(&mutexStr_);
+
+    emit signalNewData();
 }
 
 void UartWidget::slotPostInit(AttributeType *cfg) {
@@ -82,13 +79,12 @@ void UartWidget::slotPostInit(AttributeType *cfg) {
     }
 }
 
-void UartWidget::slotUpdateByTimer() {
-    if (!bNewDataAvailable_) {
+void UartWidget::slotUpdateByData() {
+    if (!strOutput_.size()) {
         return;
     }
 
     RISCV_mutex_lock(&mutexStr_);
-    bNewDataAvailable_ = false;
     moveCursor(QTextCursor::End);
     QTextCursor cursor = textCursor();
     cursor.insertText(strOutput_);

@@ -203,15 +203,15 @@ bool GuiPlugin::processCmdQueue() {
 }
 
 void GuiPlugin::stop() {
-    RISCV_event_set(&eventCommandAvailable_);
-    qApp->exit();
     IThread::stop();
+    RISCV_event_set(&eventCommandAvailable_);
 }
 
 void GuiPlugin::breakSignal() {
-    RISCV_event_set(&eventCommandAvailable_);
-    qApp->exit();
     IThread::breakSignal();
+    cmdQueueCntTotal_ = 0;
+    mainWindow_->signalExitForm();
+    RISCV_event_set(&eventCommandAvailable_);
 }
 
 extern "C" void plugin_init(void) {

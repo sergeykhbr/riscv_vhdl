@@ -42,6 +42,7 @@ private:
     AttributeType history_size_;
 
     std::string cmdLine_;
+    unsigned carretPos_;
     ISocInfo *info_;
 
     uint32_t symb_seq_;         // symbol sequence

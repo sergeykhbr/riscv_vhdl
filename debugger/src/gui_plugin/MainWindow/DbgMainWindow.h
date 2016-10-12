@@ -39,6 +39,7 @@ public:
     void postInit(AttributeType cfg);
     void configDone();
     void getConfiguration(AttributeType &cfg);
+    void closeForm();
     
 signals:
     void signalPostInit(AttributeType *cfg);
@@ -46,6 +47,7 @@ signals:
     void signalUpdateByTimer();
     void signalClosingMainForm();
     void signalTargetStateChanged(bool);
+    void signalExitForm();
 
 private slots:
     void slotConfigDone();
@@ -54,6 +56,7 @@ private slots:
     void slotActionTargetRun();
     void slotActionTargetHalt();
     void slotActionTargetStepInto();
+    void slotExitForm();
 
 protected:
     virtual void closeEvent(QCloseEvent *e);

@@ -29,6 +29,7 @@ AutoCompleter::AutoCompleter(const char *name)
     symb_seq_msk_ = 0xFF;
     symb_seq_ = 0;
     cmdLine_ = "";
+    carretPos_ = 0;
 }
 
 AutoCompleter::~AutoCompleter() {
@@ -56,49 +57,88 @@ bool AutoCompleter::processKey(int key_sequence,
                                   AttributeType *cursor) {
     bool isNewLine = false;
     bool set_history_end = true;
-
-    switch (key_sequence) {
-    case 0:
-        break;
-    case (ARROW_PREFIX << 8) | KB_UP:
-        set_history_end = false;
-        if (history_idx_ == history_.size()) {
-            unfinshedLine_ = cmdLine_;
-        }
-        if (history_idx_ > 0) {
-            history_idx_--;
-        }
-        cmdLine_ = std::string(history_[history_idx_].to_string());
-        break;
-    case (ARROW_PREFIX << 8) | KB_DOWN:
-        set_history_end = false;
-        if (history_idx_ == (history_.size() - 1)) {
-            history_idx_++;
-            cmdLine_ = unfinshedLine_;
-        } else if (history_idx_ < (history_.size() - 1)) {
-            history_idx_++;
+    if (!cursor->is_list() || cursor->size() != 2) {
+        cursor->make_list(2);
+        (*cursor)[0u].make_int64(0);
+        (*cursor)[1].make_int64(0);
+    }
+    uint8_t seq1 = static_cast<uint8_t>(key_sequence >> 8);
+    uint8_t seq0 = static_cast<uint8_t>(key_sequence);
+    if (seq1 == ARROW_PREFIX) {
+        switch (seq0) {
+        case KB_UP:
+            set_history_end = false;
+            if (history_idx_ == history_.size()) {
+                unfinshedLine_ = cmdLine_;
+            }
+            if (history_idx_ > 0) {
+                history_idx_--;
+            }
             cmdLine_ = std::string(history_[history_idx_].to_string());
+            break;
+        case KB_DOWN:
+            set_history_end = false;
+            if (history_idx_ == (history_.size() - 1)) {
+                history_idx_++;
+                cmdLine_ = unfinshedLine_;
+            } else if (history_idx_ < (history_.size() - 1)) {
+                history_idx_++;
+                cmdLine_ = std::string(history_[history_idx_].to_string());
+            }
+            break;
+        case KB_LEFT:
+            if (carretPos_ < cmdLine_.size()) {
+                carretPos_++;
+            }
+            break;
+        case KB_RIGHT:
+            if (carretPos_ > 0) {
+                carretPos_--;
+            }
+            break;
+        default:;
         }
-        break;
-    case '\b':// 1. Backspace button:
-        if (cmdLine_.size()) {
-            cmdLine_.erase(cmdLine_.size() - 1);
+    } else {
+        switch (seq0) {
+        case 0:
+            break;
+        case '\b':// 1. Backspace button:
+            if (cmdLine_.size() && carretPos_ == 0) {
+                cmdLine_.erase(cmdLine_.size() - 1);
+            } else if (cmdLine_.size() && carretPos_ < cmdLine_.size()) {
+                std::string t1 = cmdLine_.substr(0, cmdLine_.size() - carretPos_ - 1);
+                cmdLine_ = t1 + cmdLine_.substr(cmdLine_.size() - carretPos_, carretPos_);
+            }
+            break;
+        case '\n':
+        case '\r':// 2. Enter button:
+            isNewLine = true;
+            break;
+        default:
+            if (carretPos_ == 0) {
+                cmdLine_ += static_cast<uint8_t>(key_sequence);
+            } else if (carretPos_ == cmdLine_.size()) {
+                std::string t1;
+                t1 += static_cast<uint8_t>(key_sequence);
+                cmdLine_ = t1 + cmdLine_;
+            } else {
+                std::string t1 = cmdLine_.substr(0, cmdLine_.size() - carretPos_);
+                t1 += static_cast<uint8_t>(key_sequence);
+                cmdLine_ = t1 + cmdLine_.substr(cmdLine_.size() - carretPos_, carretPos_);
+            }
         }
-        break;
-    case '\n':
-    case '\r':// 2. Enter button:
-        isNewLine = true;
-        break;
-    default:
-        cmdLine_ += static_cast<uint8_t>(key_sequence);
     }
 
     cmd->make_string(cmdLine_.c_str());
+
     if (isNewLine) {
         symb_seq_ = 0;
         addToHistory(cmdLine_.c_str());
         cmdLine_.clear();
+        carretPos_ = 0;
     }
+    (*cursor)[0u].make_int64(carretPos_);
+    (*cursor)[1].make_int64(carretPos_);
 
     if (set_history_end) {
         history_idx_ = history_.size();
@@ -136,13 +176,13 @@ bool AutoCompleter::convertToWinKey(uint8_t symb) {
         symb_seq_ = (ARROW_PREFIX << 8) | KB_DOWN;
         symb_seq_msk_ = 0xFF;
     } else if (symb_seq_ == 0x1b5b43) {
-        //symb_seq_ = (ARROW_PREFIX << 8) | KB_RIGHT;
-        //symb_seq_msk_ = 0xFF;
-        ret = false;
+        symb_seq_ = (ARROW_PREFIX << 8) | KB_RIGHT;
+        symb_seq_msk_ = 0xFF;
+        //ret = false;
     } else if (symb_seq_ == 0x1b5b44) {
-        //symb_seq_ = (ARROW_PREFIX << 8) | KB_LEFT;
-        //symb_seq_msk_ = 0xFF;
-        ret = false;
+        symb_seq_ = (ARROW_PREFIX << 8) | KB_LEFT;
+        symb_seq_msk_ = 0xFF;
+        //ret = false;
     } else {
         symb_seq_msk_ = 0xFF;
     }

@@ -40,9 +40,10 @@ public:
 
 signals:
     void signalClose(QWidget *, AttributeType &);
+    void signalNewData();
 private slots:
     void slotPostInit(AttributeType *cfg);
-    void slotUpdateByTimer();
+    void slotUpdateByData();
     void slotClosingMainForm();
 
 protected:
@@ -50,15 +51,17 @@ protected:
     virtual void closeEvent(QCloseEvent *event_);
 
 private:
-    char keyevent2char(QKeyEvent *e);
+    int keyevent2sequence(QKeyEvent *e, uint8_t *seq);
     char *qstring2cstr(QString s);
-    QString getCommandLine();
 
 private:
     IGui *igui_;
     IAutoComplete *iauto_;
 
+    AttributeType cursorPos_;
+
     int cursorMinPos_;
+
     wchar_t *wcsConv_;
     char *mbsConv_;
     int sizeConv_;

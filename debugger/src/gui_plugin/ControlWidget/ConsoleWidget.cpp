@@ -43,6 +43,12 @@ ConsoleWidget::ConsoleWidget(IGui *igui, QWidget *parent)
     cursor.setCharFormat(charFormat);
     setTextCursor(cursor);
     setWindowTitle(tr("simconsole"));
+
+    cursorPos_.make_list(2);
+    cursorPos_[0u].make_int64(0);
+    cursorPos_[1].make_int64(0);
+
+    connect(this, SIGNAL(signalNewData()), this, SLOT(slotUpdateByData()));
 }
 
 ConsoleWidget::~ConsoleWidget() {
@@ -52,29 +58,39 @@ ConsoleWidget::~ConsoleWidget() {
 }
 
 void ConsoleWidget::handleResponse(AttributeType *req, AttributeType *resp) {
+    if (resp->is_nil() || resp->is_invalid()) {
+        return;
+    }
     RISCV_mutex_lock(&mutexOutput_);
     strOutput_ += QString(resp->to_config()) + "\n";
     RISCV_mutex_unlock(&mutexOutput_);
-
+    emit signalNewData();
 }
 
 void ConsoleWidget::keyPressEvent(QKeyEvent *e) {
-    char value = keyevent2char(e);
+    uint8_t sequence[4];
+    int seq_sz = keyevent2sequence(e, sequence);
 
 
-    int start;
-    QTextCursor end_cursor;
+    AttributeType cmd;
     QTextCursor cursor = textCursor();
-    start = cursor.selectionStart();
-    /** Cannot edit previously printed lines */
-    if (start < cursorMinPos_) {
+    bool cmd_ready;
+    for (int i = 0; i < seq_sz; i++) {
+        cmd_ready = iauto_->processKey(sequence[i], &cmd, &cursorPos_);
+
         moveCursor(QTextCursor::End);
         cursor = textCursor();
-        start = cursor.selectionStart();
-    }
+        cursor.setPosition(cursorMinPos_, QTextCursor::KeepAnchor);
+        cursor.insertText(cmd.to_string());
+        if (cursorPos_[0u].to_int()) {
+            cursor.movePosition(QTextCursor::Left, 
+                   QTextCursor::MoveAnchor, cursorPos_[0u].to_int());
+            setTextCursor(cursor);
+        }
 
-    AttributeType cmd, t2;
-    if (iauto_->processKey(static_cast<uint8_t>(value), &cmd, &t2)) {
+        if (!cmd_ready) {
+            continue;
+        }
         cursor.movePosition(QTextCursor::End);
         cursor.insertText(tr("\r"));
 
@@ -82,63 +98,9 @@ void ConsoleWidget::keyPressEvent(QKeyEvent *e) {
         cursor.insertText(tr(CONSOLE_ENTRY));
         cursorMinPos_ = cursor.selectionStart();
         verticalScrollBar()->setValue(verticalScrollBar()->maximum());
-
+        
         igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), &cmd, false);
-
-    } else {
-        cursor.insertText(e->text());
     }
-
-#if 0
-    switch (e->key()) {
-    case Qt::Key_Left:
-        if (start > cursorMinPos_) {
-            moveCursor(QTextCursor::Left);
-        }
-        return;
-    case Qt::Key_Right:
-        moveCursor(QTextCursor::Right);
-        return;
-    case Qt::Key_Up:
-        return;
-    case Qt::Key_Down:
-        return;
-    case Qt::Key_Tab:
-        return;
-    case Qt::Key_Backspace:
-        if (start > cursorMinPos_) {
-            cursor.setPosition(start - 1, QTextCursor::KeepAnchor);
-            cursor.insertText(tr(""));
-        }
-        return;
-    case Qt::Key_Delete:
-        moveCursor(QTextCursor::End);
-        end_cursor = textCursor();
-        setTextCursor(cursor);
-        if (cursor.selectionStart() < end_cursor.selectionStart()) {
-            cursor.setPosition(start + 1, QTextCursor::KeepAnchor);
-            cursor.insertText(tr(""));
-        }
-        return;
-    default:;
-    }
-
-    if (value == '\r' || value == '\n') {
-        const char *cmd = qstring2cstr(getCommandLine()); 
-        cursor.movePosition(QTextCursor::End);
-        cursor.insertText(tr("\r"));
-
-        QTextCharFormat charFormat = cursor.charFormat();
-        cursor.insertText(tr(CONSOLE_ENTRY));
-        cursorMinPos_ = cursor.selectionStart();
-        verticalScrollBar()->setValue(verticalScrollBar()->maximum());
-
-        AttributeType regcmd(cmd);
-        igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), &regcmd, false);
-    } else {
-        cursor.insertText(e->text());
-    }
-#endif
 }
 
 void ConsoleWidget::closeEvent(QCloseEvent *event_) {
@@ -155,28 +117,30 @@ void ConsoleWidget::slotPostInit(AttributeType *cfg) {
     RISCV_add_default_output(static_cast<IRawListener *>(this));
 }
 
-void ConsoleWidget::slotUpdateByTimer() {
+void ConsoleWidget::slotUpdateByData() {
     if (strOutput_.size() == 0) {
         return;
     }
-
+    // Keep current line value:
     QTextCursor cursor = textCursor();
-    int delta = cursor.selectionStart();
     cursor.movePosition(QTextCursor::End);
-    delta = cursor.selectionStart() - delta;
-
-    cursor.movePosition(QTextCursor::StartOfLine);
-
+    cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::KeepAnchor);
+    QString cur_line = cursor.selectedText();
+    // Insert raw string:
     RISCV_mutex_lock(&mutexOutput_);
     cursor.insertText(strOutput_);
-
     cursorMinPos_ += strOutput_.size();
     strOutput_.clear();
     RISCV_mutex_unlock(&mutexOutput_);
 
+    // Restore line:
     cursor.movePosition(QTextCursor::End);
-    int end = cursor.selectionStart();
-    cursor.setPosition(end - delta, QTextCursor::MoveAnchor);
+    cursor.insertText(cur_line);
+    // Restore cursor position:
+    cursor.movePosition(QTextCursor::End);
+    cursor.movePosition(QTextCursor::Left, 
+           QTextCursor::MoveAnchor, cursorPos_[0u].to_int());
+    setTextCursor(cursor);
 
     verticalScrollBar()->setValue(verticalScrollBar()->maximum());
 }
@@ -188,10 +152,47 @@ void ConsoleWidget::updateData(const char *buf, int bufsz) {
     RISCV_mutex_lock(&mutexOutput_);
     strOutput_ += QString(buf);
     RISCV_mutex_unlock(&mutexOutput_);
+    emit signalNewData();
 }
 
-char ConsoleWidget::keyevent2char(QKeyEvent *e) {
-    return qstring2cstr(e->text())[0];
+int ConsoleWidget::keyevent2sequence(QKeyEvent *e, uint8_t *seq) {
+    int ret = 0;
+    switch (e->key()) {
+    case Qt::Key_Left:
+        seq[0] = ARROW_PREFIX;
+        seq[1] = KB_LEFT;
+        ret = 2;
+        break;
+    case Qt::Key_Right:
+        seq[0] = ARROW_PREFIX;
+        seq[1] = KB_RIGHT;
+        ret = 2;
+        break;
+    case Qt::Key_Up:
+        seq[0] = ARROW_PREFIX;
+        seq[1] = KB_UP;
+        ret = 2;
+        break;
+    case Qt::Key_Down:
+        seq[0] = ARROW_PREFIX;
+        seq[1] = KB_DOWN;
+        ret = 2;
+        break;
+    case Qt::Key_Tab:
+        break;
+    case Qt::Key_Backspace:
+        seq[0] = '\b';
+        ret = 1;
+        break;
+    case Qt::Key_Delete:
+        break;
+    case Qt::Key_End:
+        break;
+    default:
+        seq[0] = qstring2cstr(e->text())[0];
+        ret = 1;
+    }
+    return ret;
 }
 
 char *ConsoleWidget::qstring2cstr(QString s) {
@@ -207,20 +208,6 @@ char *ConsoleWidget::qstring2cstr(QString s) {
     wcstombs(mbsConv_, wcsConv_, sz);
     mbsConv_[sz] = '\0';
     return mbsConv_;
-}
-
-QString ConsoleWidget::getCommandLine() {
-    QTextCursor cursor = textCursor();
-    int prev = cursor.selectionStart();
-
-    cursor.movePosition(QTextCursor::End);
-    int start = cursor.selectionStart();
-    int end = cursorMinPos_;
-    cursor.setPosition(start, QTextCursor::MoveAnchor);
-    cursor.setPosition(end, QTextCursor::KeepAnchor);
-    QString ret = cursor.selectedText();
-    cursor.setPosition(prev, QTextCursor::MoveAnchor);
-    return ret;
 }
 
 }  // namespace debugger

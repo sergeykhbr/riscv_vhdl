@@ -49,8 +49,7 @@ void CmdLoadElf::exec(AttributeType *args, AttributeType *res) {
     uint64_t addr = info_->csr2addr("MRESET");
 
     tap_->write(addr, 8, reinterpret_cast<uint8_t *>(&mreset));
-    IElfLoader *elf = static_cast<IElfLoader *>(
-        RISCV_get_service_iface(lstServ[0u].to_string(), IFACE_ELFLOADER));
+    IElfLoader *elf = static_cast<IElfLoader *>(lstServ[0u].to_iface());
     elf->loadFile((*args)[1].to_string());
 
     mreset = 0;

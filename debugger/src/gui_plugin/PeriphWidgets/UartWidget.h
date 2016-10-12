@@ -35,9 +35,11 @@ public:
 
 signals:
     void signalClose(QWidget *, AttributeType &);
+    void signalNewData();
+
 private slots:
     void slotPostInit(AttributeType *cfg);
-    void slotUpdateByTimer();
+    void slotUpdateByData();
     void slotClosingMainForm();
 
 protected:
@@ -51,7 +53,6 @@ private:
     IGui *igui_;
     ISerial *uart_;
     QString strOutput_;
-    bool bNewDataAvailable_;
     mutex_def mutexStr_;
     char prevSymb_;
 };

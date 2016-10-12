@@ -126,6 +126,7 @@ private:
 
     RawPortType portSerial_;
 
+    AttributeType cursor_;
     std::string cmdLine_;
     unsigned cmdSizePrev_;  // used to clear symbols if string shorter 
                             // than previous

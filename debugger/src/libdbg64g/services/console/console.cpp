@@ -51,6 +51,11 @@ ConsoleService::ConsoleService(const char *name)
     iclk_ = NULL;
     cmdSizePrev_ = 0;
 
+    cursor_.make_list(2);
+    cursor_[0u].make_int64(0);
+    cursor_[1].make_int64(0);
+
+
 #ifdef DBG_ZEPHYR
     tst_cnt_ = 0;
 #endif
@@ -188,7 +193,8 @@ void ConsoleService::busyLoop() {
     RISCV_event_wait(&config_done_);
 
     bool cmd_ready;
-    AttributeType cmd, cursor, cmdres;
+    AttributeType cmd, cmdres;
+
     processScriptFile();
     while (isEnabled()) {
         if (!isData()) {
@@ -196,7 +202,7 @@ void ConsoleService::busyLoop() {
             continue;
         }
 
-        cmd_ready = iautocmd_->processKey(getData(), &cmd, &cursor);
+        cmd_ready = iautocmd_->processKey(getData(), &cmd, &cursor_);
         if (cmd_ready) {
             RISCV_mutex_lock(&mutexConsoleOutput_);
             std::cout << "\r";
@@ -216,6 +222,9 @@ void ConsoleService::busyLoop() {
             std::cout << '\r' << ENTRYSYMBOLS << cmd.to_string();
             if (cmdSizePrev_ > cmd.size()) {
                 clearLine(static_cast<int>(cmdSizePrev_ - cmd.size()));
+            }
+            for (int i = 0; i < cursor_[0u].to_int(); i++) {
+                std::cout << '\b';
             }
             RISCV_mutex_unlock(&mutexConsoleOutput_);
         }
@@ -298,6 +307,9 @@ void ConsoleService::writeBuffer(const char *buf) {
         std::cout << "\r\n";
     }
     std::cout << ENTRYSYMBOLS << cmdLine_.c_str();
+    for (int i = 0; i < cursor_[0u].to_int(); i++) {
+        std::cout << '\b';
+    }
     std::cout.flush();
 
     RISCV_mutex_unlock(&mutexConsoleOutput_);

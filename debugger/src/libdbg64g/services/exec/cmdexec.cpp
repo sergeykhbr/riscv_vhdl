@@ -112,7 +112,7 @@ void CmdExecutor::processSimple(AttributeType *cmd, AttributeType *res) {
     AttributeType listArgs(Attr_List);
     splitLine(const_cast<char *>(cmd->to_string()), &listArgs);
     if (!listArgs[0u].is_string()) {
-        RISCV_error("Wrong command format\n", NULL);
+        RISCV_error("Wrong command format", NULL);
         return;
     }
 
@@ -139,7 +139,8 @@ void CmdExecutor::processSimple(AttributeType *cmd, AttributeType *res) {
     AttributeType u;
     icmd = getICommand(&listArgs);
     if (!icmd) {
-        RISCV_error("Use 'help' to print list of commands\n", NULL);
+        RISCV_error("Command '%s' not found. Use 'help' to list commands",
+                    listArgs[0u].to_string());
         return;
     }
     icmd->exec(&listArgs, res);
@@ -164,11 +165,11 @@ ICommand *CmdExecutor::getICommand(AttributeType *args) {
     ICommand *ret = 0;
     for (unsigned i = 0; i < cmds_.size(); i++) {
         ret = static_cast<ICommand *>(cmds_[i].to_iface());
-        if (ret && ret->isValid(args) == CMD_VALID) {
+        if (ret && (ret->isValid(args) == CMD_VALID)) {
             return ret;
         }
     }
-    return ret;
+    return 0;
 }
 
 ICommand *CmdExecutor::getICommand(const char *name) {

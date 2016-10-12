@@ -40,6 +40,7 @@ DbgMainWindow::DbgMainWindow(IGui *igui, event_def *init_done) {
     qRegisterMetaType<uint32_t>("uint32_t");
 
     connect(this, SIGNAL(signalConfigDone()), this, SLOT(slotConfigDone()));
+    connect(this, SIGNAL(signalExitForm()), this, SLOT(slotExitForm()));
     RISCV_event_set(initDone_);
 }
 
@@ -67,6 +68,10 @@ void DbgMainWindow::configDone() {
 
 void DbgMainWindow::getConfiguration(AttributeType &cfg) {
     cfg = config_;
+}
+
+void DbgMainWindow::closeForm() {
+    emit signalExitForm();
 }
 
 void DbgMainWindow::closeEvent(QCloseEvent *e) {
@@ -192,8 +197,6 @@ void DbgMainWindow::addWidgets() {
     dock->setWidget(consoleWidget);
     connect(this, SIGNAL(signalPostInit(AttributeType *)),
             consoleWidget, SLOT(slotPostInit(AttributeType *)));
-    connect(this, SIGNAL(signalUpdateByTimer()),
-            consoleWidget, SLOT(slotUpdateByTimer()));
     connect(this, SIGNAL(signalClosingMainForm()), 
             consoleWidget, SLOT(slotClosingMainForm()));
 
@@ -313,6 +316,10 @@ void DbgMainWindow::slotActionTargetHalt() {
 void DbgMainWindow::slotActionTargetStepInto() {
     igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), 
                            &cmdStep_, true);
+}
+
+void DbgMainWindow::slotExitForm() {
+    close();
 }
 
 }  // namespace debugger
