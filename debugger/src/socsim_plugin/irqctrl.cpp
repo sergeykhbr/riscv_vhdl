@@ -15,12 +15,14 @@ IrqController::IrqController(const char *name)  : IService(name) {
     registerInterface(static_cast<IWire *>(this));
     registerAttribute("BaseAddress", &baseAddress_);
     registerAttribute("Length", &length_);
+    registerAttribute("CPU", &cpu_);
     registerAttribute("HostIO", &hostio_);
     registerAttribute("CSR_MIPI", &mipi_);
 
     baseAddress_.make_uint64(0);
     mipi_.make_uint64(0x783);
     length_.make_uint64(0);
+    cpu_.make_string("");
     hostio_.make_string("");
 
     memset(&regs_, 0, sizeof(regs_));
@@ -32,6 +34,12 @@ IrqController::~IrqController() {
 }
 
 void IrqController::postinitService() {
+    icpu_ = static_cast<ICpuRiscV *>(
+        RISCV_get_service_iface(cpu_.to_string(), IFACE_CPU_RISCV));
+    if (!icpu_) {
+        RISCV_error("Can't find ICpuRiscV interface %s", cpu_.to_string());
+    }
+
     ihostio_ = static_cast<IHostIO *>(
         RISCV_get_service_iface(hostio_.to_string(), IFACE_HOSTIO));
     if (!ihostio_) {
@@ -170,7 +178,7 @@ void IrqController::raiseLine(int idx) {
     }
     if ((regs_.irq_mask & (0x1 << idx)) == 0) {
         regs_.irq_pending |= (0x1 << idx);
-        ihostio_->write(static_cast<uint16_t>(mipi_.to_uint64()), 1);
+        icpu_->raiseInterrupt(1);   // PLIC interrupt (external)
         RISCV_info("Raise interrupt", NULL);
     }
 }

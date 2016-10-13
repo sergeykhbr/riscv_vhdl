@@ -56,19 +56,21 @@ _start:
   ##! csrrs - atomic read and set bit
   ##! csrc (pseudo asm instruction) - clear bit 
   ##! csrrc - atomic read and clear bit
-  li t0, MSTATUS_PRV1
-  csrc mstatus, t0    # run tests in user mode
-  li t0, MSTATUS_IE1
+
+  li t0, 0x00001800   # MPP[12:11] = 0x3 (Previous to machine mode)
+  csrc mstatus, t0    # run tests in user mode = 0, by clearing bits
+  li t0, 0x00000008   # Enable irq in machine and user modes after execution of xRET
   csrs mstatus, t0    # enable interrupts in user mode
-  #li t0, MSTATUS_FS;   csrs mstatus, t0    # enable FPU
-  #li t0, MSTATUS_XS;   csrs mstatus, t0    # enable accelerator
+  #li t0, MSTATUS_FS;
+  #csrs mstatus, t0    # enable FPU
+  #li t0, MSTATUS_XS;   
+  #csrs mstatus, t0    # enable accelerator
 
   ##! init mtvec register (see https://github.com/riscv/riscv-test-env/blob/master/p/riscv_test.h)
   la t0, trap_entry
   csrw mtvec, t0
-  ##! enable interrupts
-  csrs mstatus, MSTATUS_IE
-  csrs mie, MIP_MSIP
+  li t0, 0x00000800
+  csrs mie, t0       # Enable External irq (ftom PLIC) for M mode
 
 #if 0
   ##! see https://github.com/riscv/riscv-tests/benchmarks/common
@@ -152,7 +154,6 @@ _start:
   ##! trap occurred. In addition to manipulating the privilege stack as described in Section 3.1.5, ERET
   ##! sets the pc to the value stored in the Xepc register, where X is the privilege mode (S, H, or M) in
   ##! which the ERET instruction was executed.
-  #eret
   mret
 
 trap_entry:
@@ -172,8 +173,9 @@ trap_entry:
   csrr a1, mepc
   sd a1,COOP_REG_TP(tp)
   mv a2, sp
-  csrc mip, MIP_MSIP  #csrc pseudo asm instruction clear CSR bit.
-                      #mip Machine Interrupt Pending register  
+  # !!! Cannot reset external pending bits only via IrqController (page 28)
+  csrc mip, 0x00000800  #csrc pseudo asm instruction clear CSR bit.
+                        #[11] MEIP: machine pending external interrupt
   jal handle_trap
 
   # tp-offset in the context array is used to save mepc value. An it may be

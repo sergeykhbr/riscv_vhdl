@@ -132,9 +132,11 @@ bool AutoCompleter::processKey(int key_sequence,
     cmd->make_string(cmdLine_.c_str());
 
     if (isNewLine) {
+        if (cmdLine_.size()) {
+            addToHistory(cmdLine_.c_str());
+            cmdLine_.clear();
+        }
         symb_seq_ = 0;
-        addToHistory(cmdLine_.c_str());
-        cmdLine_.clear();
         carretPos_ = 0;
     }
     (*cursor)[0u].make_int64(carretPos_);

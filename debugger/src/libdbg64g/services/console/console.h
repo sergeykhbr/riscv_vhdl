@@ -115,6 +115,7 @@ private:
     AttributeType stepQueue_;
     AttributeType autoComplete_;
     AttributeType commandExecutor_;
+    AttributeType defaultLogFile_;
     AttributeType signals_;
     AttributeType inPort_;
 

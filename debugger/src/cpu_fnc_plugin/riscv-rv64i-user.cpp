@@ -1184,40 +1184,6 @@ void addIsaUserRV64I(CpuContextType *data, AttributeType *out) {
     data->csr[CSR_misa] |= (1LL << ('I' - 'A'));
 }
 
-void generateInterrupt(uint64_t code, CpuContextType *data) {
-    csr_mstatus_type mstatus;
-    mstatus.value = data->csr[CSR_mstatus];
-    if (mstatus.bits.MIE == 0 && data->cur_prv_level == PRV_LEVEL_M) {
-        return;
-    }
-    /// @todo delegate interrupt to non-machine privilege level.
-    ///         Here we should decide which mode is used for interrupt
-    ///         handling: Machine mode or Supervisor mode
-
-    csr_mip_type mip;
-    csr_mie_type mie;
-    mip.value = data->csr[CSR_mip];
-    mie.value = data->csr[CSR_mie];
-    switch (code) {
-    case IRQ_Software:
-        mip.bits.MSIP = mie.bits.MSIE;
-        break;
-    case IRQ_Timer:
-        mip.bits.MTIP = mie.bits.MTIE;
-        break;
-    default:
-        // unsupported software interrupt
-        return;
-    }
-    data->csr[CSR_mip] = mip.value;
-
-    csr_mcause_type cause;
-    cause.value     = 0;
-    cause.bits.irq  = 1;
-    cause.bits.code = code;
-    data->csr[CSR_mcause] = cause.value;
-}
-
 /**
  * When a trap is taken, the stack is pushed to the left and PRV is set to the 
  * privilege mode of the activated trap handler with

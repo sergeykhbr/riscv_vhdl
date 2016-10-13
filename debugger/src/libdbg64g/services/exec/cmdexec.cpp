@@ -59,7 +59,6 @@ void CmdExecutor::postinitService() {
                                     IFACE_SOC_INFO));
 
     cmds_.make_list(13);
-
     cmds_[0u].make_iface(new CmdBr(itap_, info_));
     cmds_[1].make_iface(new CmdCsr(itap_, info_));
     cmds_[2].make_iface(new CmdExit(itap_, info_));

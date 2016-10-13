@@ -156,8 +156,7 @@ union csr_mstatus_type {
 
 union csr_mcause_type {
     struct bits_type {
-        uint64_t code   : 4;
-        uint64_t rsrv   : 59;
+        uint64_t code   : 63;   // 11 - Machine external interrupt
         uint64_t irq    : 1;
     } bits;
     uint64_t value;
@@ -225,8 +224,6 @@ static const uint16_t CSR_mhartid           = 0xf14;
 static const uint16_t CSR_mtime         = 0x701;
 /** Software reset. */
 static const uint16_t CSR_mreset        = 0x782;
-/** Inter-processor interrupt */
-static const uint16_t CSR_send_ipi      = 0x783;
 
 /** machine mode status read/write register. */
 static const uint16_t CSR_mstatus       = 0x300;
@@ -287,7 +284,8 @@ enum {
 // Software interrupt
 static const uint64_t IRQ_Software = 0; 
 // Timer interrupt
-static const uint64_t IRQ_Timer = 1;
+static const uint64_t IRQ_Timer = 1;// External PLIC interrupt
+static const uint64_t IRQ_External = 2;
 
 void addIsaUserRV64I(CpuContextType *data, AttributeType *out);
 void addIsaPrivilegedRV64I(CpuContextType *data, AttributeType *out);
@@ -296,7 +294,6 @@ void addIsaExtensionF(CpuContextType *data, AttributeType *out);
 void addIsaExtensionM(CpuContextType *data, AttributeType *out);
 
 
-void generateInterrupt(uint64_t code, CpuContextType *data);
 void generateException(uint64_t code, CpuContextType *data);
 
 uint64_t readCSR(uint32_t idx, CpuContextType *data);

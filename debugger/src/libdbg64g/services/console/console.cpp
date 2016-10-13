@@ -36,6 +36,7 @@ ConsoleService::ConsoleService(const char *name)
     registerAttribute("CommandExecutor", &commandExecutor_);
     registerAttribute("Signals", &signals_);
     registerAttribute("InputPort", &inPort_);
+    registerAttribute("DefaultLogFile", &defaultLogFile_);
 
     RISCV_mutex_init(&mutexConsoleOutput_);
     RISCV_event_create(&config_done_, "config_done");
@@ -47,6 +48,7 @@ ConsoleService::ConsoleService(const char *name)
     commandExecutor_.make_string("");
 	signals_.make_string("");
     inPort_.make_string("");
+    defaultLogFile_.make_string("");
 
     iclk_ = NULL;
     cmdSizePrev_ = 0;
@@ -176,6 +178,14 @@ void ConsoleService::stepCallback(uint64_t t) {
 void ConsoleService::hapTriggered(IFace *isrc, EHapType type, 
                                   const char *descr) {
     RISCV_event_set(&config_done_);
+
+    // Enable logging:
+    if (defaultLogFile_.size()) {
+        AttributeType res;
+        std::string cmd("log ");
+        cmd += defaultLogFile_.to_string();
+        iexec_->exec(cmd.c_str(), &res, true);
+    }
 }
 
 void ConsoleService::updateSignal(int start, int width, uint64_t value) {

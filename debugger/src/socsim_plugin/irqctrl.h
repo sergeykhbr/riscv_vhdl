@@ -13,6 +13,7 @@
 #include "coreservices/imemop.h"
 #include "coreservices/iwire.h"
 #include "coreservices/ihostio.h"
+#include "coreservices/icpuriscv.h"
 
 namespace debugger {
 
@@ -46,7 +47,9 @@ private:
     AttributeType length_;
     AttributeType mipi_;
     AttributeType hostio_;
+    AttributeType cpu_;
     IHostIO *ihostio_;
+    ICpuRiscV *icpu_;
 
     struct irqctrl_map {
         uint32_t irq_mask;      // 0x00: [RW] 1=disable; 0=enable

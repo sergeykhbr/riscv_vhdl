@@ -9,6 +9,14 @@
 #include "axi_maps.h"
 #include "encoding.h"
 
+typedef union csr_mcause_type {
+    struct bits_type {
+        uint64_t code   : 63;   // 11 - Machine external interrupt
+        uint64_t irq    : 1;
+    } bits;
+    uint64_t value;
+} csr_mcause_type;
+
 long handle_trap(long cause, long epc, long long regs[32]) {
     /**
      * Pending interrupt bit is cleared in the crt.S file by calling:
@@ -22,7 +30,9 @@ long handle_trap(long cause, long epc, long long regs[32]) {
     IsrEntryType *isr_table = (IsrEntryType *)p_irqctrl->isr_table;
     IRQ_HANDLER irq_handler;
     uint32_t pending;
+    csr_mcause_type mcause;
 
+    mcause.value = cause;
     p_irqctrl->dbg_cause = cause;
     p_irqctrl->dbg_epc = epc;
 
@@ -31,7 +41,7 @@ long handle_trap(long cause, long epc, long long regs[32]) {
     p_irqctrl->irq_clear = pending;
     p_irqctrl->irq_lock = 0;
 
-    if (cause == 0x8000000000000000l) {
+    if (mcause.bits.irq == 0x1 && mcause.bits.code == 11) {
         for (int i = 0; i < CFG_IRQ_TOTAL; i++) {
             if (pending & (0x1 << i)) {
                 irq_handler = (IRQ_HANDLER)isr_table[i].handler;
@@ -42,6 +52,7 @@ long handle_trap(long cause, long epc, long long regs[32]) {
         }
     } else {
        /// Exception trap
+       ((gpio_map *)ADDR_NASTI_SLAVE_GPIO)->led = 0xF0 ^ (uint32_t)cause;
        while (1) {}
     }
 

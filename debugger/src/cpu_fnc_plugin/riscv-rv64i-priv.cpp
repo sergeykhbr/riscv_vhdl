@@ -32,11 +32,6 @@ void writeCSR(uint32_t idx, uint64_t val, CpuContextType *data) {
         break;
     case CSR_mtime:
         break;
-    case CSR_send_ipi:
-        if (!data->csr[CSR_mreset]) {
-            generateInterrupt(IRQ_Software, data);
-        }
-        break;
     default:
         data->csr[idx] = val;
     }

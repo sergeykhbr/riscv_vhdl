@@ -170,6 +170,7 @@ void CpuRiscV_Functional::reset() {
     pContext->pc = RESET_VECTOR;
     pContext->npc = RESET_VECTOR;
     pContext->exception = 0;
+    pContext->interrupt = 0;
     pContext->csr[CSR_mvendorid] = 0x0001;   // UC Berkeley Rocket repo
     pContext->csr[CSR_mhartid] = 0;
     pContext->csr[CSR_marchid] = 0;
@@ -178,6 +179,7 @@ void CpuRiscV_Functional::reset() {
     pContext->csr[CSR_mip] = 0;             // clear pending interrupts
     pContext->csr[CSR_mie] = 0;             // disabling interrupts
     pContext->csr[CSR_mepc] = 0;
+    pContext->csr[CSR_mcause] = 0;
     pContext->csr[CSR_medeleg] = 0;
     pContext->csr[CSR_mideleg] = 0;
     pContext->csr[CSR_mtime] = 0;
@@ -194,12 +196,19 @@ void CpuRiscV_Functional::reset() {
 void CpuRiscV_Functional::handleTrap() {
     CpuContextType *pContext = getpContext();
     csr_mstatus_type mstatus;
+    csr_mcause_type mcause;
     mstatus.value = pContext->csr[CSR_mstatus];
+    mcause.value = pContext->csr[CSR_mcause];
 
-    if ((pContext->exception == 0 && pContext->csr[CSR_mip] == 0)
-     || (pContext->cur_prv_level == PRV_LEVEL_M && mstatus.bits.MIE == 0)) {
+    if (pContext->exception == 0 && pContext->interrupt == 0) {
         return;
     }
+    if (pContext->interrupt == 1 && 
+        mstatus.bits.MIE == 0 && pContext->cur_prv_level == PRV_LEVEL_M) {
+        return;
+    }
+    pContext->interrupt = 0;
+    pContext->exception = 0;
 
     // All traps handle via machine mode while CSR mdelegate
     // doesn't setup other.
@@ -217,7 +226,7 @@ void CpuRiscV_Functional::handleTrap() {
         // Software interrupt handled after instruction was executed
         pContext->csr[xepc]    = pContext->npc;
     }
-    pContext->npc = pContext->csr[CSR_mtvec] + 0x40 * mstatus.bits.MPP;
+    pContext->npc = pContext->csr[CSR_mtvec];
 
     pContext->exception = 0;
 }
@@ -290,11 +299,13 @@ void CpuRiscV_Functional::executeInstruction(IInstruction *instr,
     //) 
     {
     //if (pContext->pc >= 0x10001928 && pContext->pc <= 0x10001960) {
-        RISCV_debug("[%" RV_PRI64 "d] %08x: %08x \t %4s <mstatus=%016" RV_PRI64 "x; ra=%016" RV_PRI64 "x; sp=%016" RV_PRI64 "x; tp=%016" RV_PRI64 "x>", 
+        RISCV_debug("[%" RV_PRI64 "d] %08x: %08x \t %4s <prv=%d; mstatus=%016" RV_PRI64 "x; mcause=%016" RV_PRI64 "x; ra=%016" RV_PRI64 "x; sp=%016" RV_PRI64 "x; tp=%016" RV_PRI64 "x>", 
             getStepCounter(),
             static_cast<uint32_t>(pContext->pc),
             rpayload[0], instr->name(),
+            pContext->cur_prv_level,
             pContext->csr[CSR_mstatus],
+            pContext->csr[CSR_mcause],
             pContext->regs[ra],
             pContext->regs[sp],
             pContext->regs[tp]
@@ -386,6 +397,42 @@ uint64_t CpuRiscV_Functional::write(uint16_t adr, uint64_t val) {
 uint64_t CpuRiscV_Functional::read(uint16_t adr, uint64_t *val) {
     *val = readCSR(adr, getpContext());
     return 0;
+}
+
+/** 
+ * prv-1.9.1 page 29
+ *
+ * An interrupt i will be taken if bit i is set in both mip and mie, 
+ * and if interrupts are globally enabled.  By default, M-mode interrupts 
+ * are globally enabled if the hart’s current privilege mode is less than M,
+ * or if the current privilege mode is M and the MIE bit in the mstatus
+ * register is set.
+ * If bit i in mideleg is set, however, interrupts are considered to be
+ * globally enabled if the hart’s current privilege mode equals the delegated
+ * privilege mode (H, S, or U) and that mode’s interrupt enable bit 
+ * (HIE, SIE or UIE in mstatus) is set, or if the current privilege mode is
+ * less than the delegated privilege mode.
+ */
+void CpuRiscV_Functional::raiseInterrupt(int idx) {
+    CpuContextType *pContext = getpContext();
+    csr_mstatus_type mstatus;
+    mstatus.value = pContext->csr[CSR_mstatus];
+
+    if (pContext->csr[CSR_mreset]) {
+        return;
+    }
+
+    if (mstatus.bits.MIE == 0 && pContext->cur_prv_level == PRV_LEVEL_M) {
+        return;
+    }
+    /// @todo delegate interrupt to non-machine privilege level.
+
+    csr_mcause_type cause;
+    cause.value     = 0;
+    cause.bits.irq  = 1;
+    cause.bits.code = 11;   // 11 = Machine external interrupt
+    pContext->csr[CSR_mcause] = cause.value;
+    pContext->interrupt = 1;
 }
 
 void CpuRiscV_Functional::halt() {
