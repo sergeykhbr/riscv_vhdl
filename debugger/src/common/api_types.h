@@ -79,6 +79,8 @@ typedef struct LibThreadType
 
 union Reg64Type {
     uint8_t buf[8];
+    uint16_t buf16[4];
+    uint32_t buf32[2];
     uint64_t val;
 };
 

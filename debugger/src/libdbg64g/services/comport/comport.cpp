@@ -107,7 +107,7 @@ void ComPortService::busyLoop() {
             tbuf_cnt = readSerialPort(&hPort_, tbuf, tbuf_cnt);
         } else if (isSimulation_) {
             tbuf_cnt = 0;
-            while (!rxFifo_.isEmpty()) {
+            while (!rxFifo_.isEmpty() && tbuf_cnt < sizeof(tbuf)) {
                 tbuf[tbuf_cnt++] = rxFifo_.get();
                 tbuf[tbuf_cnt] = '\0';
             }

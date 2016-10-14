@@ -20,11 +20,31 @@ namespace debugger {
 class UnclosableQMdiSubWindow : public QMdiSubWindow {
     Q_OBJECT
 public:
-    UnclosableQMdiSubWindow(QWidget *parent = 0) : QMdiSubWindow(parent) {}
+    UnclosableQMdiSubWindow(QWidget *parent = 0, bool add_scroll = false) 
+        : QMdiSubWindow(parent) {
+        if (add_scroll) {
+            scrollArea_ = new QScrollArea(parent);
+            //scrollArea_->setBackgroundRole(QPalette::Dark);
+            setWidget(scrollArea_);
+        } else {
+            scrollArea_ = 0;
+        }
+    }
 
 public:
     void setUnclosableWidget(QWidget *widget) {
-        setWidget(widget);
+        if (scrollArea_) {
+            /**
+             * Initial size of the widget won't change when we resize window,
+             * so we must specify widget size to open scroll bars.
+             */
+            scrollArea_->setWidget(widget);
+        } else {
+            /**
+             * Automatic resize widget size to the size of opened window
+             */
+            setWidget(widget);
+        }
         connect(widget, SIGNAL(signalResize(QSize)), 
                 this, SLOT(slotResize(QSize)));
     }
@@ -50,6 +70,8 @@ protected:
         emit signalVisible(false);
         event_->ignore();
     }
+private:
+    QScrollArea *scrollArea_;
 };
 
 #include "moc_UnclosableQMdiSubWindow.h"

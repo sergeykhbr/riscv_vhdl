@@ -248,7 +248,7 @@ void DbgMainWindow::addWidgets() {
     actionRegs_->setChecked(false);
     subw->setVisible(actionRegs_->isChecked());
 
-    subw = new UnclosableQMdiSubWindow(this);
+    subw = new UnclosableQMdiSubWindow(this, true);
     subw->setUnclosableWidget(pnew_unclose = new PnpWidget(igui_, this));
     subw->setWindowIcon(actionPnp_->icon());
     mdiArea->addSubWindow(subw);

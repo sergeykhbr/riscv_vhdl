@@ -11,9 +11,9 @@
 
 namespace debugger {
 
-static const pnp_map DEFAULT_CONFIG = {
+static const PnpMapType DEFAULT_CONFIG = {
         0x20151217, 0x0,
-        (0xff<<24) | (0<<16) | (CFG_NASTI_SLAVES_TOTAL << 8) | (TECH_INFERRED),
+        {TECH_INFERRED, CFG_NASTI_SLAVES_TOTAL, 0, 0xff},
         0,
         0,
         0,//malloc_addr
@@ -55,11 +55,8 @@ PNP::~PNP() {
 }
 
 void PNP::postinitService() {
-    regs_.tech &= ~0xFF;
-    regs_.tech |= static_cast<uint32_t>(tech_.to_uint64() & 0xFF);
-
-    regs_.tech &= ~0xFF000000;
-    regs_.tech |= static_cast<uint32_t>(adc_detector_.to_uint64() << 24);
+    regs_.tech.bits.tech = static_cast<uint8_t>(tech_.to_uint64());
+    regs_.tech.bits.adc_detect = static_cast<uint8_t>(adc_detector_.to_uint64());
 }
 
 void PNP::transaction(Axi4TransactionType *payload) {

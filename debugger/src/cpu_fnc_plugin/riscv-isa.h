@@ -284,8 +284,7 @@ enum {
 // Software interrupt
 static const uint64_t IRQ_Software = 0; 
 // Timer interrupt
-static const uint64_t IRQ_Timer = 1;// External PLIC interrupt
-static const uint64_t IRQ_External = 2;
+static const uint64_t IRQ_Timer = 1;
 
 void addIsaUserRV64I(CpuContextType *data, AttributeType *out);
 void addIsaPrivilegedRV64I(CpuContextType *data, AttributeType *out);

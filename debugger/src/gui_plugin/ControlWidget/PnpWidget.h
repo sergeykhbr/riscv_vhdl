@@ -28,25 +28,27 @@ public:
     virtual void handleResponse(AttributeType *req, AttributeType *resp);
 
 signals:
+    void signalUpdate();
 
 private slots:
     void slotConfigDone();
+    void slotUpdate();
 
 protected:
-    void paintEvent(QPaintEvent *event_);    // call on update() or redraw()
+    virtual void showEvent(QShowEvent *event_);
+    QLabel *getLabel(int id) {
+        return static_cast<QLabel *>(mainLayout_->itemAt(id)->widget());
+    }
 
 private:
     IGui *igui_;
     QGridLayout *mainLayout_;
-    QLabel *labelBoard_;
-    QPixmap pixmapBkg_;
     
-    AttributeType targetID_;
-    AttributeType fwID_;
-    AttributeType hwID_;
     AttributeType lstSlaves_;
+    enum ETargets {SIMULATION, ML605, KC705, TARGET_Unknown, TARGETS_total};
+    QImage imgTarget_[TARGETS_total];
 
-    int reqCnt_;
+    PnpMapType pnp_;
 };
 
 }  // namespace debugger

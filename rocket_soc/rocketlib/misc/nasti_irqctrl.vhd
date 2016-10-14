@@ -51,6 +51,8 @@ architecture nasti_irqctrl_rtl of nasti_irqctrl is
 
   type local_addr_array_type is array (0 to CFG_WORDS_ON_BUS-1) 
        of integer;
+       
+  constant IRQ_ZERO : std_logic_vector(CFG_IRQ_TOTAL-1 downto 0) := (others => '0');
 
 
 type registers is record
@@ -163,7 +165,11 @@ begin
 
 
     o_axi <= functionAxi4Output(r.bank_axi, rdata);
-    o_irq_meip <= w_generate_ipi;
+    if r.irqs_pending = IRQ_ZERO then
+      o_irq_meip <= '0';
+    else
+      o_irq_meip <= '1';
+    end if;
 
     rin <= v;
   end process;
