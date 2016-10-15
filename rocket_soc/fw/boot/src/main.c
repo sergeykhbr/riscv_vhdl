@@ -69,7 +69,8 @@ void _init() {
 
     // Half period of the uart = Fbus / 115200 / 2 = 70 MHz / 115200 / 2:
     //uart->scaler = 304;  // 70 MHz
-    uart->scaler = 260;  // 60 MHz
+    //uart->scaler = 260;  // 60 MHz
+    uart->scaler = 40000000 / 115200 / 2;  // 40 MHz
 
     led_set(0x01);
     print_uart("Boot . . .", 10);
@@ -81,7 +82,7 @@ void _init() {
 
     /** Check ADC detector that RF front-end is connected: */
     tech = (pnp->tech >> 24) & 0xff;
-    while (tech != 0xFF) {
+    if (tech != 0xFF) {
         print_uart("ADC clock not found. Enable DIP int_rf.\r\n", 41);
         tech = (pnp->tech >> 24) & 0xff;
         led_set(tech);

@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------------
 --! @file
---! @copyright  Copyright 2015 GNSS Sensor Ltd. All right reserved.
+--! @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
 --! @author     Sergey Khabarov - sergeykhbr@gmail.com
 --! @brief      Entity nasti_pnp implementation for the plug'n'play support.
 ------------------------------------------------------------------------------
@@ -113,7 +113,7 @@ begin
 
        rtmp := (others => '0');
        if raddr_reg(n) = 0 then 
-          rtmp := X"20160328";
+          rtmp := X"20161015";
        elsif raddr_reg(n) = 1 then 
           rtmp := r.bank0.fw_id;
        elsif raddr_reg(n) = 2 then 

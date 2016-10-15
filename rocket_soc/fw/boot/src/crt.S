@@ -174,8 +174,9 @@ trap_entry:
   sd a1,COOP_REG_TP(tp)
   mv a2, sp
   # !!! Cannot reset external pending bits only via IrqController (page 28)
-  csrc mip, 0x00000800  #csrc pseudo asm instruction clear CSR bit.
-                        #[11] MEIP: machine pending external interrupt
+  li t0, 0x00000800
+  csrc mip, t0      #csrc pseudo asm instruction clear CSR bit.
+                    #[11] MEIP: machine pending external interrupt
   jal handle_trap
 
   # tp-offset in the context array is used to save mepc value. An it may be
