@@ -1,12 +1,13 @@
 #include "api_types.h"
 #include "api_core.h"
 #include "attribute.h"
+#include "comport.h"
 #include <winspool.h>
 #include <cstdlib>
 
 namespace debugger {
 
-void getSerialPortList(AttributeType *list) {
+void ComPortService::getSerialPortList(AttributeType *list) {
     list->make_list(0);
 
     AttributeType portInfo;
@@ -82,7 +83,7 @@ void getSerialPortList(AttributeType *list) {
     delete [] lpPorts;
 }
 
-int openSerialPort(const char *port, int baud, void *hdl) {
+int ComPortService::openSerialPort(const char *port, int baud, void *hdl) {
     char chCom[20];
     HANDLE hFile;
   
@@ -98,6 +99,7 @@ int openSerialPort(const char *port, int baud, void *hdl) {
  	
     *static_cast<HANDLE *>(hdl) = hFile;
     if (hFile == INVALID_HANDLE_VALUE) {
+        RISCV_error("Can't open port %s", chCom);
 	    return -1;
     }
 
@@ -117,6 +119,7 @@ int openSerialPort(const char *port, int baud, void *hdl) {
     dcb.StopBits = ONESTOPBIT;   
 
     if (!SetCommState(hFile, &dcb)) {
+        RISCV_error("Can't set port %s state", chCom);
         return -1;
     }
 
@@ -129,31 +132,34 @@ int openSerialPort(const char *port, int baud, void *hdl) {
 
     SetCommTimeouts(hFile, &CommTimeOuts);
     if(!SetCommMask(hFile, EV_RXCHAR)) {
+        RISCV_error("Can't set port %s timeouts", chCom);
         return -1;
     }
+
+    RISCV_info("Serial port %s opened", chCom);
 
     PurgeComm(hFile, PURGE_RXCLEAR|PURGE_TXCLEAR|PURGE_RXABORT|PURGE_TXABORT);
     return 0;
 }
 
-void closeSerialPort(void *hdl) {
+void ComPortService::closeSerialPort(void *hdl) {
     CloseHandle(*static_cast<HANDLE *>(hdl));
 }
 
-int readSerialPort(void *hdl, char *buf, int bufsz) {
+int ComPortService::readSerialPort(void *hdl, char *buf, int bufsz) {
     DWORD dwBytesRead;
     ReadFile(*static_cast<HANDLE *>(hdl), buf, bufsz, &dwBytesRead, NULL);
     return (int)dwBytesRead;
 }
 
-int writeSerialPort(void *hdl, char *buf, int bufsz) {
+int ComPortService::writeSerialPort(void *hdl, char *buf, int bufsz) {
     DWORD lpdwBytesWrittens;
     WriteFile(*static_cast<HANDLE *>(hdl), 
                 buf, bufsz, &lpdwBytesWrittens, NULL);
     return (int)lpdwBytesWrittens;
 }
 
-void cleanSerialPort(void *hdl) {
+void ComPortService::cleanSerialPort(void *hdl) {
     PurgeComm(*static_cast<HANDLE *>(hdl), PURGE_TXCLEAR|PURGE_RXCLEAR);
 }
 

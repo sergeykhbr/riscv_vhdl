@@ -20,13 +20,6 @@ namespace debugger {
 /** Class registration in the Core */
 REGISTER_CLASS(ComPortService)
 
-extern void getSerialPortList(AttributeType &list);
-extern int openSerialPort(const char *port, int baud, void *hdl);
-extern void closeSerialPort(void *hdl);
-extern int readSerialPort(void *hdl, char *buf, int bufsz);
-extern int writeSerialPort(void *hdl, char *buf, int bufsz);
-extern void cleanSerialPort(void *hdl);
-
 ComPortService::ComPortService(const char *name) 
     : IService(name) {
     registerInterface(static_cast<IThread *>(this));
@@ -66,7 +59,7 @@ void ComPortService::postinitService() {
         int err = openSerialPort(comPortName_.to_string(), 
             comPortSpeed_.to_int(), &hPort_);
         if (err < 0) {
-            RISCV_error("Can't open %s at %d",
+            RISCV_error("Openning %s at %d . . .failed",
                         comPortName_.to_string(), comPortSpeed_.to_int());
             return;
         }
@@ -107,7 +100,8 @@ void ComPortService::busyLoop() {
             tbuf_cnt = readSerialPort(&hPort_, tbuf, tbuf_cnt);
         } else if (isSimulation_) {
             tbuf_cnt = 0;
-            while (!rxFifo_.isEmpty() && tbuf_cnt < sizeof(tbuf)) {
+            while (!rxFifo_.isEmpty()
+                && tbuf_cnt < static_cast<int>(sizeof(tbuf))) {
                 tbuf[tbuf_cnt++] = rxFifo_.get();
                 tbuf[tbuf_cnt] = '\0';
             }

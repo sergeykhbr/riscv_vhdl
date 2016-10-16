@@ -55,6 +55,12 @@
     <ClCompile Include="..\..\src\gui_plugin\PeriphWidgets\LedArea.cpp">
       <Filter>PeriphWidgets</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\PeriphWidgets\UartEditor.cpp">
+      <Filter>PeriphWidgets</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\PeriphWidgets\DipArea.cpp">
+      <Filter>PeriphWidgets</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\api_types.h">
@@ -95,17 +101,8 @@
     <ClInclude Include="..\..\src\gui_plugin\ControlWidget\ConsoleWidget.h">
       <Filter>ControlWidget</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\gui_plugin\ControlWidget\moc_ConsoleWidget.h">
-      <Filter>ControlWidget</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\UartWidget.h">
       <Filter>PeriphWidgets</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\moc_RegsViewWidget.h">
-      <Filter>CpuWidget</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\moc_RegWidget.h">
-      <Filter>CpuWidget</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\RegsViewWidget.h">
       <Filter>CpuWidget</Filter>
@@ -119,13 +116,16 @@
     <ClInclude Include="..\..\src\gui_plugin\MainWindow\UnclosableWidget.h">
       <Filter>MainWindow</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\gui_plugin\ControlWidget\moc_PnpWidget.h">
-      <Filter>ControlWidget</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\gui_plugin\ControlWidget\PnpWidget.h">
       <Filter>ControlWidget</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\LedArea.h">
+      <Filter>PeriphWidgets</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\UartEditor.h">
+      <Filter>PeriphWidgets</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\DipArea.h">
       <Filter>PeriphWidgets</Filter>
     </ClInclude>
   </ItemGroup>

@@ -22,7 +22,6 @@ public:
     UnclosableWidget(QWidget *parent = 0) : QWidget(parent) {}
 
 signals:
-    void signalResize(QSize sz);
     
 protected:
 };

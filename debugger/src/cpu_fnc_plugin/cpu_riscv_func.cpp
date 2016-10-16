@@ -196,9 +196,7 @@ void CpuRiscV_Functional::reset() {
 void CpuRiscV_Functional::handleTrap() {
     CpuContextType *pContext = getpContext();
     csr_mstatus_type mstatus;
-    csr_mcause_type mcause;
     mstatus.value = pContext->csr[CSR_mstatus];
-    mcause.value = pContext->csr[CSR_mcause];
 
     if (pContext->exception == 0 && pContext->interrupt == 0) {
         return;

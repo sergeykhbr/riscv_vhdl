@@ -24,7 +24,6 @@ public:
         : QMdiSubWindow(parent) {
         if (add_scroll) {
             scrollArea_ = new QScrollArea(parent);
-            //scrollArea_->setBackgroundRole(QPalette::Dark);
             setWidget(scrollArea_);
         } else {
             scrollArea_ = 0;
@@ -32,7 +31,7 @@ public:
     }
 
 public:
-    void setUnclosableWidget(QWidget *widget) {
+    void setUnclosableWidget(const char *title, QWidget *widget, QAction *act) {
         if (scrollArea_) {
             /**
              * Initial size of the widget won't change when we resize window,
@@ -45,8 +44,11 @@ public:
              */
             setWidget(widget);
         }
-        connect(widget, SIGNAL(signalResize(QSize)), 
-                this, SLOT(slotResize(QSize)));
+        setWindowTitle(tr(title));
+        setWindowIcon(act->icon());
+        connect(act, SIGNAL(triggered(bool)), this, SLOT(slotVisible(bool)));
+        connect(this, SIGNAL(signalVisible(bool)), act, SLOT(setChecked(bool)));
+        setVisible(act->isChecked());
     }
 
 signals:
@@ -59,9 +61,6 @@ private slots:
         } else {
             hide();
         }
-    }
-    void slotResize(QSize sz) {
-        resize(sz);
     }
     
 protected:

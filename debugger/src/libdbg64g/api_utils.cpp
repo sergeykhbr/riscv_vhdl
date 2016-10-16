@@ -48,6 +48,15 @@ extern "C" void RISCV_add_default_output(void *iout) {
     default_console.add_to_list(&lstn);
 }
 
+extern "C" void RISCV_remove_default_output(void *iout) {
+    for (unsigned i = 0; i < default_console.size(); i++) {
+        if (default_console[i].to_iface() == iout) {
+            default_console.remove_from_list(i);
+            break;
+        }
+    }
+}
+
 extern "C" int RISCV_enable_log(const char *filename) {
     if (logfile_) {
         fclose(logfile_);

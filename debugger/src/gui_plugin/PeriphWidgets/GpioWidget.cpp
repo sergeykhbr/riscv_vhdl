@@ -1,4 +1,5 @@
 #include "LedArea.h"
+#include "DipArea.h"
 #include "GpioWidget.h"
 #include "moc_GpioWidget.h"
 
@@ -11,25 +12,48 @@
 
 namespace debugger {
 
-GpioWidget::GpioWidget(IGui *igui, QWidget *parent) : QWidget(parent) {
+GpioWidget::GpioWidget(IGui *igui, QWidget *parent)
+    : UnclosableWidget(parent) {
     igui_ = igui;
     newValue_.u.val[0] = 0;
 
-    setWindowTitle(tr("gpio0"));
-    setMinimumWidth(150);
-    setMinimumHeight(100);
+    //setMinimumWidth(150);
+    //setMinimumHeight(100); 
 
+
+    QGridLayout *layout = new QGridLayout(this);
+
+    // Row 0:
+    QLabel *lbl1 = new QLabel(this);
+    lbl1->setText(tr("User defined LEDs"));
+    layout->addWidget(lbl1, 0, 0, 1, 2, Qt::AlignCenter);
+
+    // Row 1
     LedArea *ledArea = new LedArea(this);
+    layout->addWidget(ledArea, 1, 0, Qt::AlignCenter);
     connect(this, SIGNAL(signalLedValue(uint32_t)),
             ledArea, SLOT(slotUpdate(uint32_t)));
 
-    QGridLayout *layout = new QGridLayout(this);
-    setLayout(layout);
-    layout->addWidget(ledArea, 1, 1, Qt::AlignCenter);
+    QLabel *lbl2 = new QLabel(this);
+    lbl2->setText(tr("xx"));
+    layout->addWidget(lbl2, 1, 1, Qt::AlignLeft);
 
-    QLabel *lbl1 = new QLabel(this);
-    lbl1->setText(tr("User defined LEDs"));
-    layout->addWidget(ledArea, 1, 2, Qt::AlignCenter);
+    // Row 2:
+    QLabel *lbl3 = new QLabel(this);
+    lbl3->setText(tr("User defined DIPs"));
+    layout->addWidget(lbl3, 2, 0, 1, 2, Qt::AlignCenter);
+
+    // Row 3:
+    DipArea *dipArea = new DipArea(this);
+    layout->addWidget(dipArea, 3, 0, Qt::AlignCenter);
+    connect(this, SIGNAL(signalDipValue(uint32_t)),
+            dipArea, SLOT(slotUpdate(uint32_t)));
+
+    QLabel *lbl4 = new QLabel(this);
+    lbl4->setText(tr("xx"));
+    layout->addWidget(lbl4, 3, 1, Qt::AlignLeft);
+
+    setLayout(layout);
 }
 
 void GpioWidget::closeEvent(QCloseEvent *event_) {
@@ -54,14 +78,9 @@ void GpioWidget::slotUpdateByTimer() {
     if (!isVisible()) {
         return;
     }
-    if (newValue_.u.map.led != value_.u.map.led) {
-        value_.u.map.led = newValue_.u.map.led;
-        emit signalLedValue(value_.u.map.led);
-    }
-    if (newValue_.u.map.dip != value_.u.map.dip) {
-        value_.u.map.dip = newValue_.u.map.dip;
-        emit signalDipValue(value_.u.map.dip);
-    }
+    value_ = newValue_;
+    emit signalLedValue(value_.u.map.led);
+    emit signalDipValue(value_.u.map.dip);
 
     igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), &cmdRd_, true);
 }

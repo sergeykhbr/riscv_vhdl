@@ -24,6 +24,7 @@ extern "C" {
 
 /** Redirect output to specified console. */
 void RISCV_add_default_output(void *iout);
+void RISCV_remove_default_output(void *iout);
 
 /** 
  * @brief Write output to logfile.

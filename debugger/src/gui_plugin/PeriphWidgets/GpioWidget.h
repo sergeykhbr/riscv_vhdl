@@ -12,6 +12,7 @@
 #include "igui.h"
 #include "coreservices/isocinfo.h"
 
+#include "MainWindow/UnclosableWidget.h"
 #include <QtWidgets/QWidget>
 #include <QtCore/QTimer>
 #include <QtGui/QResizeEvent>
@@ -20,8 +21,8 @@
 
 namespace debugger {
 
-class GpioWidget : public QWidget,
-                  public IGuiCmdHandler {
+class GpioWidget : public UnclosableWidget,
+                   public IGuiCmdHandler {
     Q_OBJECT
 public:
     GpioWidget(IGui *igui, QWidget *parent = 0);

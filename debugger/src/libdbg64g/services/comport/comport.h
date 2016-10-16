@@ -43,6 +43,14 @@ protected:
     virtual void busyLoop();
 
 private:
+    void getSerialPortList(AttributeType *list);
+    int openSerialPort(const char *port, int baud, void *hdl);
+    void closeSerialPort(void *hdl);
+    int readSerialPort(void *hdl, char *buf, int bufsz);
+    int writeSerialPort(void *hdl, char *buf, int bufsz);
+    void cleanSerialPort(void *hdl);
+
+private:
     AttributeType isEnable_;
     AttributeType uartSim_;
     AttributeType comPortName_;

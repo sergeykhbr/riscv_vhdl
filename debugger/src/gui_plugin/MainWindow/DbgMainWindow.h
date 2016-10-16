@@ -36,20 +36,19 @@ public:
     virtual void handleResponse(AttributeType *req, AttributeType *resp);
 
     /** Global methods */
-    void postInit(AttributeType cfg);
-    void configDone();
+    void postInit(AttributeType *cfg);
     void getConfiguration(AttributeType &cfg);
     void closeForm();
     
 signals:
     void signalPostInit(AttributeType *cfg);
-    void signalConfigDone();
     void signalUpdateByTimer();
     void signalClosingMainForm();
     void signalTargetStateChanged(bool);
     void signalExitForm();
 
 private slots:
+    void slotPostInit(AttributeType *cfg);
     void slotConfigDone();
     void slotUpdateByTimer();
     void slotActionAbout();
@@ -65,6 +64,7 @@ private:
     void createActions();
     void createMenus();
     void createStatusBar();
+    void createMdiWindow();
     void addWidgets();
 
 private:
@@ -77,6 +77,8 @@ private:
     QAction *actionGpio_;
     QAction *actionPnp_;
     QAction *actionSerial_;
+    QTimer *tmrGlobal_;
+    MdiAreaWidget *mdiArea_;
     
     AttributeType config_;
     AttributeType listConsoleListeners_;

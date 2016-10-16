@@ -104,6 +104,8 @@ void ConsoleWidget::keyPressEvent(QKeyEvent *e) {
 }
 
 void ConsoleWidget::closeEvent(QCloseEvent *event_) {
+    RISCV_remove_default_output(static_cast<IRawListener *>(this));
+
     AttributeType tmp;
     emit signalClose(this, tmp);
     event_->accept();

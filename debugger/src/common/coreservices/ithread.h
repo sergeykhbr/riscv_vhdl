@@ -42,6 +42,7 @@ public:
         if (threadInit_.Handle) {
             RISCV_thread_join(threadInit_.Handle, 50000);
         }
+        threadInit_.Handle = 0;
     }
 
     /** Cannot stop thread from itself, so use this interrupt method */

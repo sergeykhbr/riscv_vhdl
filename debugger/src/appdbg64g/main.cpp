@@ -54,7 +54,7 @@ const char *default_config =
                 "['BoardIP','192.168.0.51']]}]},"
     "{'Class':'ComPortServiceClass','Instances':["
           "{'Name':'port1','Attr':["
-                "['LogLevel',1],"
+                "['LogLevel',2],"
                 "['Enable',true],"
                 "['UartSim','uart0'],"
                 "['ComPortName','COM3'],"

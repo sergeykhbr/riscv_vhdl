@@ -2,7 +2,7 @@
  * @file
  * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
  * @author     Sergey Khabarov - sergeykhbr@gmail.com
- * @brief      Serial console emulator.
+ * @brief      DIP's area renderer declaration.
  */
 
 #pragma once
@@ -10,28 +10,28 @@
 #include "api_core.h"   // MUST BE BEFORE QtWidgets.h or any other Qt header.
 #include "attribute.h"
 #include "igui.h"
-#include "coreservices/irawlistener.h"
-#include "coreservices/iserial.h"
 
-#include "MainWindow/UnclosableWidget.h"
-#include "UartEditor.h"
 #include <QtWidgets/QWidget>
+#include <QtGui/QPaintEvent>
 
 namespace debugger {
 
-class UartWidget : public UnclosableWidget {
+class DipArea : public QWidget {
     Q_OBJECT
 public:
-    UartWidget(IGui *igui, QWidget *parent = 0);
-    
-signals:
-    void signalPostInit(AttributeType *cfg);
+    DipArea(QWidget *parent = 0);
 
 private slots:
-    void slotPostInit(AttributeType *cfg);
+    void slotUpdate(uint32_t val);
+
+protected:
+    void paintEvent(QPaintEvent *event_) Q_DECL_OVERRIDE;
 
 private:
-    UartEditor *editor_;
+    AttributeType dipTotal_;
+    uint32_t dips_;
+    QPixmap pixmapBody_;
+    QPixmap pixmapDown_;
 };
 
 }  // namespace debugger

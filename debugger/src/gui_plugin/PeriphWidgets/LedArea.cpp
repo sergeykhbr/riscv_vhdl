@@ -13,27 +13,31 @@
 namespace debugger {
 
 LedArea::LedArea(QWidget *parent) : QWidget(parent) {
-    setWindowTitle(tr("gpio0"));
-    setMinimumWidth(150);
-    setMinimumHeight(100);
-    QImage img(tr(":/images/toggle.png"));
-    pixmapBkg_ = QPixmap(size()).fromImage(img);
-    pixmapGreen_ = QPixmap(QSize(6, 10));
-    pixmapGreen_ .fill(QColor("#10A010"));
-    pixmapGrey_ = QPixmap(QSize(6, 10));
-    pixmapGrey_ .fill(QColor("#101010"));
-    leds_ = 0xFF;
+    ledTotal_.make_int64(8);
+    leds_ = 0xF0;
+
+    QImage img1(tr(":/images/led_on.png"));
+    pixmapOn_ = QPixmap(size()).fromImage(img1);
+
+    QImage img2(tr(":/images/led_off.png"));
+    pixmapOff_ = QPixmap(size()).fromImage(img2);
+
+    setMinimumWidth(pixmapOff_.size().width() * ledTotal_.to_int());
+    setMinimumHeight(pixmapOff_.size().height());
 }
 
 
 void LedArea::paintEvent(QPaintEvent *event) {
     QPainter p(this);
-    p.drawPixmap(QPoint(0, 0), pixmapBkg_);
-    for (int i = 0; i < 8; i++) {
-        if (leds_ & (1ul << i)) {
-            p.drawPixmap(QPoint(10 + 14*i, 20), pixmapGreen_);
+
+    for (int i = 0; i < ledTotal_.to_int(); i++) {
+        QPoint pos(i * pixmapOff_.width(), 0);
+
+        // Count from left (LED[0]) to right (LED[n-1])
+        if (((leds_ >> (ledTotal_.to_int() - 1 - i)) & 0x1) == 0) {
+            p.drawPixmap(pos, pixmapOff_);
         } else {
-            p.drawPixmap(QPoint(10 + 14*i, 20), pixmapGrey_);
+            p.drawPixmap(pos, pixmapOn_);
         }
     }
     p.end();

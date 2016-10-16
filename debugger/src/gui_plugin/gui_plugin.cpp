@@ -29,29 +29,27 @@ void GuiPlugin::UiThreadType::busyLoop() {
         QApplication app(argc, argv);
         app.setQuitOnLastWindowClosed(true);
 
-        DbgMainWindow mainWindow(igui_, eventInitDone_);
-        mainWindow.show();
+        mainWindow_ = new DbgMainWindow(igui_, eventInitDone_);
+        mainWindow_->show();
 
         // Start its'own event thread
         app.exec();
+        delete mainWindow_;
+        mainWindow_ = 0;
     }
 }
 
 GuiPlugin::GuiPlugin(const char *name) 
-    : IService(name), IHap(HAP_ConfigDone) {
+    : IService(name) {
     registerInterface(static_cast<IGui *>(this));
-    registerInterface(static_cast<IHap *>(this));
     registerInterface(static_cast<IThread *>(this));
     registerAttribute("WidgetsConfig", &guiConfig_);
     registerAttribute("SocInfo", &socInfo_);
     registerAttribute("CommandExecutor", &cmdExecutor_);
 
-    RISCV_register_hap(static_cast<IHap *>(this));
-    
     guiConfig_.make_dict();
     socInfo_.make_string("");
     cmdExecutor_.make_string("");
-    mainWindow_ = NULL;
 
     char coredir[4096];
     RISCV_get_core_folder(coredir, sizeof(coredir));
@@ -67,7 +65,6 @@ GuiPlugin::GuiPlugin(const char *name)
     cmdQueueWrPos_ = 0;
     cmdQueueRdPos_ = 0;
     cmdQueueCntTotal_ = 0;
-
 
     // Adding path to platform libraries:
     char core_path[1024];
@@ -113,8 +110,8 @@ void GuiPlugin::postinitService() {
                     socInfo_.to_string());
     }
 
-    if (mainWindow_) {
-        mainWindow_->postInit(guiConfig_);
+    if (ui_->mainWindow()) {
+        ui_->mainWindow()->postInit(&guiConfig_);
     }
     run();
 }
@@ -123,31 +120,26 @@ void GuiPlugin::predeleteService() {
     stop();
 }
 
-void GuiPlugin::hapTriggered(IFace *isrc, EHapType type, const char *descr) {
-    mainWindow_->configDone();
-}
-
 IFace *GuiPlugin::getSocInfo() {
     return info_;
-}
-
-void GuiPlugin::registerMainWindow(void *iwindow) {
-    mainWindow_ = reinterpret_cast<DbgMainWindow *>(iwindow);
-}
-
-void GuiPlugin::registerWidgetInterface(IFace *iface) {
-    registerInterface(iface);
-}
-
-void GuiPlugin::unregisterWidgetInterface(IFace *iface) {
-    unregisterInterface(iface);
 }
 
 void GuiPlugin::registerCommand(IGuiCmdHandler *src,
                                 AttributeType *cmd,
                                 bool silent) {
-    if (cmdQueueCntTotal_ >= CMD_QUEUE_SIZE) {
-        RISCV_error("Command queue size %d overflow.", cmdQueueCntTotal_);
+    if (cmd->is_equal("exit")) {
+        /** This is a special case when queue is full (for example target 
+          * not connected) and we cannot gracefully close application
+          * without this workaround.
+          */
+        AttributeType resp;
+        RISCV_mutex_lock(&mutexCommand_);
+        cmdQueueCntTotal_ = 0;
+        RISCV_mutex_unlock(&mutexCommand_);
+        iexec_->exec(cmd->to_string(), &resp, true);
+    } else if (cmdQueueCntTotal_ >= CMD_QUEUE_SIZE) {
+        RISCV_error("Command queue size %d overflow. Target not responding",
+                    cmdQueueCntTotal_);
         return;
     }
     RISCV_mutex_lock(&mutexCommand_);
@@ -158,7 +150,9 @@ void GuiPlugin::registerCommand(IGuiCmdHandler *src,
     cmdQueue_[cmdQueueWrPos_].src = src;
     cmdQueue_[cmdQueueWrPos_++].cmd = *cmd;
 
-    cmdQueueCntTotal_++;
+    if (isEnabled()) {
+        cmdQueueCntTotal_++;
+    }
     RISCV_mutex_unlock(&mutexCommand_);
     RISCV_event_set(&eventCommandAvailable_);
 }
@@ -170,23 +164,26 @@ void GuiPlugin::busyLoop() {
 
         processCmdQueue();
     }
+    /** If the debugger was closed via RISCV_ API call then call Main Form
+     * closing event manually. */
+    if (ui_->mainWindow()) {
+        ui_->mainWindow()->closeForm();
+    }
+    ui_->stop();
     loopEnable_ = false;
     threadInit_.Handle = 0;
 }
 
 bool GuiPlugin::processCmdQueue() {
     AttributeType resp;
-    int total = cmdQueueCntTotal_;
-    for (int i = 0; i < total; i++) {
-        if (cmdQueueRdPos_ == CMD_QUEUE_SIZE) {
-            cmdQueueRdPos_ = 0;
+    while (cmdQueueCntTotal_) {
+        RISCV_mutex_lock(&mutexCommand_);
+        if (cmdQueueCntTotal_) {    // Another check under mutex to avoid 'exit' collision
+            cmdQueueCntTotal_--;
         }
+        RISCV_mutex_unlock(&mutexCommand_);
+
         AttributeType &cmd = cmdQueue_[cmdQueueRdPos_].cmd;
-        if (!cmd.is_string()) {
-            /** Script not tested yet */
-            cmdQueueRdPos_++;
-            continue;
-        }
 
         iexec_->exec(cmd.to_string(), &resp, cmdQueue_[cmdQueueRdPos_].silent);
 
@@ -194,23 +191,28 @@ bool GuiPlugin::processCmdQueue() {
             cmdQueue_[cmdQueueRdPos_].src->handleResponse(
                         const_cast<AttributeType *>(&cmd), &resp);
         }
-        cmdQueueRdPos_++;
+        if ((++cmdQueueRdPos_) >= CMD_QUEUE_SIZE) {
+            cmdQueueRdPos_ = 0;
+        }
     }
-    RISCV_mutex_lock(&mutexCommand_);
-    cmdQueueCntTotal_ -= total;
-    RISCV_mutex_unlock(&mutexCommand_);
     return false;
 }
 
 void GuiPlugin::stop() {
+    breakSignal();
     IThread::stop();
-    RISCV_event_set(&eventCommandAvailable_);
 }
 
 void GuiPlugin::breakSignal() {
     IThread::breakSignal();
+    //int totalWidgets = QApplication::topLevelWidgets().size();
+    //RISCV_error("dbg: total widgets to close %d", totalWidgets);
+    if (qApp) {
+        qApp->exit();
+    }
+    RISCV_mutex_lock(&mutexCommand_);
     cmdQueueCntTotal_ = 0;
-    mainWindow_->signalExitForm();
+    RISCV_mutex_unlock(&mutexCommand_);
     RISCV_event_set(&eventCommandAvailable_);
 }
 

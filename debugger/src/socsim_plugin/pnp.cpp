@@ -12,7 +12,7 @@
 namespace debugger {
 
 static const PnpMapType DEFAULT_CONFIG = {
-        0x20151217, 0x0,
+        0x20161011, 0xdeadcafe,
         {TECH_INFERRED, CFG_NASTI_SLAVES_TOTAL, 0, 0xff},
         0,
         0,

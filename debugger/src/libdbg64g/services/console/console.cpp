@@ -76,6 +76,8 @@ ConsoleService::ConsoleService(const char *name)
     tcsetattr(STDIN, TCSANOW, &new_settings);
     term_fd_ = fileno(stdin);
 #endif
+    // Redirect output stream to a this console
+    RISCV_add_default_output(static_cast<IRawListener *>(this));
 }
 
 ConsoleService::~ConsoleService() {
@@ -136,12 +138,10 @@ void ConsoleService::postinitService() {
 	    iclk_->registerStepCallback(static_cast<IClockListener *>(this), 35000000);
 	}
 #endif
-
-    // Redirect output stream to a this console
-    RISCV_add_default_output(static_cast<IRawListener *>(this));
 }
 
 void ConsoleService::predeleteService() {
+    RISCV_remove_default_output(static_cast<IRawListener *>(this));
     stop();
 }
 

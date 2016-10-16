@@ -10,11 +10,8 @@
 #include "api_core.h"   // MUST BE BEFORE QtWidgets.h or any other Qt header.
 #include "attribute.h"
 #include "igui.h"
-#include "coreservices/isignal.h"
-#include "coreservices/isignallistener.h"
 
 #include <QtWidgets/QWidget>
-#include <QtCore/QTimer>
 #include <QtGui/QPaintEvent>
 
 namespace debugger {
@@ -31,10 +28,10 @@ protected:
     void paintEvent(QPaintEvent *event_) Q_DECL_OVERRIDE;
 
 private:
+    AttributeType ledTotal_;
     uint32_t leds_;
-    QPixmap pixmapBkg_;
-    QPixmap pixmapGreen_;
-    QPixmap pixmapGrey_;
+    QPixmap pixmapOn_;
+    QPixmap pixmapOff_;
 };
 
 }  // namespace debugger

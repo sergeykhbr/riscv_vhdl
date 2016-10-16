@@ -21,7 +21,6 @@ namespace debugger {
 
 class GuiPlugin : public IService,
                   public IThread,
-                  public IHap,
                   public IGui {
 public:
     GuiPlugin(const char *name);
@@ -32,14 +31,8 @@ public:
     virtual void postinitService();
     virtual void predeleteService();
 
-    /** IHap */
-    virtual void hapTriggered(IFace *isrc, EHapType type, const char *descr);
-
     /** IGui interface */
     virtual IFace *getSocInfo();
-    virtual void registerMainWindow(void *iwindow);
-    virtual void registerWidgetInterface(IFace *iface);
-    virtual void unregisterWidgetInterface(IFace *iface);
     virtual void registerCommand(IGuiCmdHandler *src, AttributeType *cmd, bool silent);
 
     /** IThread interface */
@@ -62,12 +55,15 @@ private:
         UiThreadType(IGui *igui, event_def *init_done) {
             igui_ = igui;
             eventInitDone_ = init_done;
+            mainWindow_ = 0;
         }
+        DbgMainWindow *mainWindow() {return mainWindow_; }
     protected:
         /** IThread interface */
         virtual void busyLoop();
     private:
         IGui *igui_;
+        DbgMainWindow *mainWindow_;
         event_def *eventInitDone_;
     } *ui_;
 
@@ -83,7 +79,6 @@ private:
     event_def eventUiInitDone_;
     event_def eventCommandAvailable_;
     mutex_def mutexCommand_;
-    DbgMainWindow *mainWindow_;
     struct CmdQueueItemType {
         AttributeType cmd;
         IGuiCmdHandler *src;

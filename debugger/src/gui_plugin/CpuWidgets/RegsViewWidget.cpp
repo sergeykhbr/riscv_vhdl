@@ -29,10 +29,6 @@ RegsViewWidget::RegsViewWidget(IGui *igui, QWidget *parent)
     : UnclosableWidget(parent) {
     igui_ = igui;
 
-    setWindowTitle(tr("Registers"));
-    setMinimumWidth(150);
-    setMinimumHeight(100);
-
     gridLayout = new QGridLayout(this);
     gridLayout->setSpacing(4);
     gridLayout->setHorizontalSpacing(10);
@@ -40,11 +36,6 @@ RegsViewWidget::RegsViewWidget(IGui *igui, QWidget *parent)
     gridLayout->setContentsMargins(4, 4, 4, 4);
     setLayout(gridLayout);
 
-    minSizeApplied_ = false;
-}
-
-
-void RegsViewWidget::slotPostInit(AttributeType *cfg) {
     int n = 0;
     while (strcmp(REG_NAMES_LAYOUT[n], "break")) {
         if (REG_NAMES_LAYOUT[n][0] == '\0') {
@@ -56,14 +47,12 @@ void RegsViewWidget::slotPostInit(AttributeType *cfg) {
     }
 }
 
+
 void RegsViewWidget::slotUpdateByTimer() {
     if (isVisible()) {
         emit signalUpdateByTimer();
         update();
     }
-}
-
-void RegsViewWidget::slotTargetStateChanged(bool running) {
 }
 
 void RegsViewWidget::addRegWidget(int idx, const char *name) {
@@ -76,11 +65,11 @@ void RegsViewWidget::addRegWidget(int idx, const char *name) {
     connect(this, SIGNAL(signalUpdateByTimer()),
             pnew, SLOT(slotUpdateByTimer()));
 
-    if (!minSizeApplied_) {
+    /*if (!minSizeApplied_) {
         minSizeApplied_ = true;
         emit signalResize(QSize(3 * (pnew->minimumWidth() + 10), 
                           12 * (pnew->minimumHeight() + 5)));
-    }
+    }*/
 }
 
 

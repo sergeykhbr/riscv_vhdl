@@ -31,7 +31,6 @@ signals:
     void signalUpdate();
 
 private slots:
-    void slotConfigDone();
     void slotUpdate();
 
 protected:

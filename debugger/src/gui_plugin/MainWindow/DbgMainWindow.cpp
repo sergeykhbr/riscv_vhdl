@@ -12,7 +12,6 @@ namespace debugger {
 DbgMainWindow::DbgMainWindow(IGui *igui, event_def *init_done) {
     igui_ = igui;
     initDone_ = init_done;
-    igui_->registerMainWindow(this);
 
     setWindowTitle(tr("RISC-V platform debugger"));
     resize(QDesktopWidget().availableGeometry(this).size() * 0.7);
@@ -28,6 +27,15 @@ DbgMainWindow::DbgMainWindow(IGui *igui, event_def *init_done) {
     createActions();
     createMenus();
     createStatusBar();
+    createMdiWindow();
+
+    /** QT documeneted behaviour:
+     *
+     * If you add a child widget to an already visible widget 
+     * you must explicitly show the child to make it visible.
+     *
+     * @todo Fix exception with PNP when initially opened 
+     */
     addWidgets();
     
     setUnifiedTitleAndToolBarOnMac(true);
@@ -39,9 +47,15 @@ DbgMainWindow::DbgMainWindow(IGui *igui, event_def *init_done) {
     qRegisterMetaType<uint64_t>("uint64_t");
     qRegisterMetaType<uint32_t>("uint32_t");
 
-    connect(this, SIGNAL(signalConfigDone()), this, SLOT(slotConfigDone()));
+    connect(this, SIGNAL(signalPostInit(AttributeType *)),
+            this, SLOT(slotPostInit(AttributeType *)));
     connect(this, SIGNAL(signalExitForm()), this, SLOT(slotExitForm()));
-    RISCV_event_set(initDone_);
+
+    tmrGlobal_ = new QTimer(this);
+    connect(tmrGlobal_, SIGNAL(timeout()), this, SLOT(slotConfigDone()));
+    tmrGlobal_->setSingleShot(true);
+    tmrGlobal_->setInterval(1);
+    tmrGlobal_->start();
 }
 
 DbgMainWindow::~DbgMainWindow() {
@@ -57,13 +71,8 @@ void DbgMainWindow::handleResponse(AttributeType *req, AttributeType *resp) {
     }
 }
 
-void DbgMainWindow::postInit(AttributeType cfg) {
-    config_ = cfg;
-    emit signalPostInit(&config_);
-}
-
-void DbgMainWindow::configDone() {
-    emit signalConfigDone();
+void DbgMainWindow::postInit(AttributeType *cfg) {
+    emit signalPostInit(cfg);
 }
 
 void DbgMainWindow::getConfiguration(AttributeType &cfg) {
@@ -77,8 +86,8 @@ void DbgMainWindow::closeForm() {
 void DbgMainWindow::closeEvent(QCloseEvent *e) {
     emit signalClosingMainForm();
 
-    igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), 
-                           &cmdExit_, true);
+    /** Do not handle any respone */
+    igui_->registerCommand(NULL, &cmdExit_, true);
     e->accept();
 }
 
@@ -176,16 +185,11 @@ void DbgMainWindow::createStatusBar() {
     statusBar()->showMessage(tr("Ready"));
 }
 
-void DbgMainWindow::addWidgets() {
+void DbgMainWindow::createMdiWindow() {
     AttributeType cfgMdi(Attr_Dict);
     cfgMdi["Tabbed"].make_boolean(false);
-    MdiAreaWidget *mdiArea = new MdiAreaWidget(cfgMdi, this);
-    setCentralWidget(mdiArea);
-
-
-    QWidget *pnew;
-    UnclosableWidget *pnew_unclose;
-    UnclosableQMdiSubWindow *subw;
+    mdiArea_ = new MdiAreaWidget(cfgMdi, this);
+    setCentralWidget(mdiArea_);
 
     /** Docked Widgets: */
     QDockWidget *dock = new QDockWidget(tr("Debugger console"), this);
@@ -199,79 +203,64 @@ void DbgMainWindow::addWidgets() {
             consoleWidget, SLOT(slotPostInit(AttributeType *)));
     connect(this, SIGNAL(signalClosingMainForm()), 
             consoleWidget, SLOT(slotClosingMainForm()));
+}
 
+void DbgMainWindow::addWidgets() {
+    UnclosableWidget *pnew;
+    UnclosableQMdiSubWindow *subw;
 
     /** MDI Widgets: */
+    actionSerial_->setChecked(true);
     subw = new UnclosableQMdiSubWindow(this);
-    subw->setWidget(pnew = new UartWidget(igui_, this));
-    
+    pnew = new UartWidget(igui_, this);
+    subw->setUnclosableWidget("uart0", pnew, actionSerial_);
     subw->setMinimumWidth(size().width() / 2);
-    subw->setWindowIcon(actionSerial_->icon());
-    mdiArea->addSubWindow(subw);
+    mdiArea_->addSubWindow(subw);
     connect(this, SIGNAL(signalPostInit(AttributeType *)),
             pnew, SLOT(slotPostInit(AttributeType *)));
-    connect(actionSerial_, SIGNAL(triggered(bool)),
-            subw, SLOT(slotVisible(bool)));
-    connect(this, SIGNAL(signalClosingMainForm()), 
-            pnew, SLOT(slotClosingMainForm()));
-    actionSerial_->setChecked(true);
-    subw->setVisible(actionSerial_->isChecked());
 
-
+    actionGpio_->setChecked(false);
     subw = new UnclosableQMdiSubWindow(this);
-    subw->setWidget(pnew = new GpioWidget(igui_, this));
-    subw->setWindowIcon(actionGpio_->icon());
-    mdiArea->addSubWindow(subw);
+    pnew = new GpioWidget(igui_, this);
+    subw->setUnclosableWidget("gpio0", pnew, actionGpio_);
+    mdiArea_->addSubWindow(subw);
     connect(this, SIGNAL(signalPostInit(AttributeType *)),
             pnew, SLOT(slotPostInit(AttributeType *)));
     connect(this, SIGNAL(signalUpdateByTimer()),
             pnew, SLOT(slotUpdateByTimer()));
-    connect(actionGpio_, SIGNAL(triggered(bool)),
-            subw, SLOT(slotVisible(bool)));
-    actionGpio_->setChecked(true);
-    subw->setVisible(actionGpio_->isChecked());
 
-    subw = new UnclosableQMdiSubWindow(this);
-    subw->setUnclosableWidget(pnew_unclose = new RegsViewWidget(igui_, this));
-    subw->setWindowIcon(actionRegs_->icon());
-    mdiArea->addSubWindow(subw);
-    connect(this, SIGNAL(signalPostInit(AttributeType *)),
-        pnew_unclose, SLOT(slotPostInit(AttributeType *)));
-    connect(this, SIGNAL(signalUpdateByTimer()),
-        pnew_unclose, SLOT(slotUpdateByTimer()));
-    connect(actionRegs_, SIGNAL(triggered(bool)),
-            subw, SLOT(slotVisible(bool)));
-    connect(subw, SIGNAL(signalVisible(bool)), 
-            actionRegs_, SLOT(setChecked(bool)));
-    connect(this, SIGNAL(signalTargetStateChanged(bool)),
-            pnew_unclose, SLOT(slotTargetStateChanged(bool)));
     actionRegs_->setChecked(false);
-    subw->setVisible(actionRegs_->isChecked());
+    subw = new UnclosableQMdiSubWindow(this);
+    pnew = new RegsViewWidget(igui_, this);
+    subw->setUnclosableWidget("Registers", pnew, actionRegs_);
+    mdiArea_->addSubWindow(subw);
+    connect(this, SIGNAL(signalUpdateByTimer()),
+            pnew, SLOT(slotUpdateByTimer()));
 
-    subw = new UnclosableQMdiSubWindow(this, true);
-    subw->setUnclosableWidget(pnew_unclose = new PnpWidget(igui_, this));
-    subw->setWindowIcon(actionPnp_->icon());
-    mdiArea->addSubWindow(subw);
-    connect(this, SIGNAL(signalConfigDone()),
-        pnew_unclose, SLOT(slotConfigDone()));
-    connect(actionPnp_, SIGNAL(triggered(bool)),
-            subw, SLOT(slotVisible(bool)));
-    connect(subw, SIGNAL(signalVisible(bool)), 
-            actionPnp_, SLOT(setChecked(bool)));
     actionPnp_->setChecked(false);
-    subw->setVisible(actionPnp_->isChecked());
+    subw = new UnclosableQMdiSubWindow(this, true);
+    pnew = new PnpWidget(igui_, this);
+    subw->setUnclosableWidget("Plug'n'Play info", pnew, actionPnp_);
+    mdiArea_->addSubWindow(subw);
+}
+
+
+void DbgMainWindow::slotPostInit(AttributeType *cfg) {
+    config_ = *cfg;
+    // Enable polling timer:
+    connect(tmrGlobal_, SIGNAL(timeout()), this, SLOT(slotUpdateByTimer()));
+    int ms = static_cast<int>(config_["PollingMs"].to_uint64());
+    tmrGlobal_->setInterval(ms);
+    tmrGlobal_->setSingleShot(false);
+    tmrGlobal_->start(ms);
 }
 
 void DbgMainWindow::slotConfigDone() {
-    // Enable polling timer:
-    QTimer *timerPoll = new QTimer(this);
-    connect(timerPoll, SIGNAL(timeout()), this, SLOT(slotUpdateByTimer()));
-
-    int ms = static_cast<int>(config_["PollingMs"].to_uint64());
-    timerPoll->setInterval(ms);
-    timerPoll->setSingleShot(false);
-    timerPoll->start();
+    RISCV_event_set(initDone_);
+    disconnect(tmrGlobal_, SIGNAL(timeout()), this, SLOT(slotConfigDone()));
+    tmrGlobal_->stop();
 }
+
 
 void DbgMainWindow::slotUpdateByTimer() {
     igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), 
@@ -286,20 +275,18 @@ void DbgMainWindow::slotActionAbout() {
     build.sprintf("Version: 1.0\nBuild:     %s\n", date);
     build += tr("Author: Sergey Khabarov\n");
     build += tr("git:    http://github.com/sergeykhbr/riscv_vhdl\n");
-    build += tr("e-mail: sergeykhbr@gmail.com\n\n")
-       + tr("\tRISC-V debugger GUI plugin is the open source application\n")
-       + tr("that upgrades the base RISC-V debugger funcitonality and can\n")
-       + tr("provide more friendly interaction interface with SoC running\n")
-       + tr("on FPGA or on simulator:\n\n");
+    build += tr("e-mail: sergeykhbr@gmail.com\n\n\n"
+       "RISC-V debugger GUI plugin is the open source extension of\n"
+       "the base RISC-V debugger functionality providing friendly interface\n"
+       "with running SoC target or with the Simulated platform.\n"
+       "\n"
+       "This extension doesn't use any specific for GUI scripts or commands\n"
+       "and all shown information maybe achievied using debugger's console\n"
+       "commands. See 'help' command.\n\n"
+    );
     build += tr("www.gnss-sensor.com\n");
 
-    QMessageBox::about(this, tr("About GUI plugin"),
-        build
-        /*tr("\tThe <b>GTerm</b> application allows to interact with the "
-               "GNSS receiver via a serial port or ethernet.\n"
-               "\tSet of plugins allow to view and analize binary data stream in "
-               "convenient user-friendly ways.")*/
-               );
+    QMessageBox::about(this, tr("About GUI plugin"), build);
 }
 
 void DbgMainWindow::slotActionTargetRun() {

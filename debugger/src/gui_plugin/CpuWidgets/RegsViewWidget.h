@@ -24,13 +24,10 @@ public:
     RegsViewWidget(IGui *igui, QWidget *parent = 0);
 
 signals:
-    void signalRegisterValue(uint64_t reg_idx, uint64_t val);
     void signalUpdateByTimer();
 
 private slots:
-    void slotPostInit(AttributeType *cfg);
     void slotUpdateByTimer();
-    void slotTargetStateChanged(bool);
 
 private:
     void addRegWidget(int idx, const char *name);
@@ -40,7 +37,6 @@ private:
     QGridLayout *gridLayout;
     
     IGui *igui_;
-    bool minSizeApplied_;
 };
 
 }  // namespace debugger

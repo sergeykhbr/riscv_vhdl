@@ -44,6 +44,8 @@ private:
     IUdp *itransport_;
     AttributeType transport_;
     AttributeType seq_cnt_;
+
+    int dbgRdTRansactionCnt_;
 };
 
 DECLARE_CLASS(EdclService)

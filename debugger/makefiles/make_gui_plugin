@@ -44,6 +44,8 @@ SOURCES = \
 	MdiAreaWidget \
 	GpioWidget \
 	LedArea \
+	DipArea \
+	UartEditor \
 	UartWidget \
 	RegsViewWidget \
 	RegWidget \
@@ -78,9 +80,9 @@ deploy:
 	cp $(QT_PATH)/lib/libQt5Widgets.* $(ELF_DIR)/qtlib
 	# Generate starting scripts:
 	@echo "#!/bin/bash\nexport LD_LIBRARY_PATH=\$$(pwd):\$$(pwd)/qtlib\n./appdbg64g.exe \"\$$@\"" > $(ELF_DIR)/_run.sh
-	@echo "#!/bin/bash\nexport LD_LIBRARY_PATH=\$$(pwd):\$$(pwd)/qtlib\n./appdbg64g.exe -gui \"\$$@\"" > $(ELF_DIR)/_run_gui.sh
+	@echo "#!/bin/bash\nexport LD_LIBRARY_PATH=\$$(pwd):\$$(pwd)/qtlib\n./appdbg64g.exe -gui -sim \"\$$@\"" > $(ELF_DIR)/_run_gui_sim.sh
 	chmod +x $(ELF_DIR)/_run.sh
-	chmod +x $(ELF_DIR)/_run_gui.sh
+	chmod +x $(ELF_DIR)/_run_gui_sim.sh
 
 $(EXECUTABLE): prebuild $(OBJ_FILES)
 	echo $(CPP) $(LDFLAGS) $(OBJ_FILES) -o $@
@@ -104,7 +106,9 @@ prebuild:
 	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/ControlWidget/ConsoleWidget.h -o $(GUI_PLUGIN_SRC)/ControlWidget/moc_ConsoleWidget.h
 	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/ControlWidget/PnpWidget.h -o $(GUI_PLUGIN_SRC)/ControlWidget/moc_PnpWidget.h
 	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/PeriphWidgets/UartWidget.h -o $(GUI_PLUGIN_SRC)/PeriphWidgets/moc_UartWidget.h
+	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/PeriphWidgets/UartEditor.h -o $(GUI_PLUGIN_SRC)/PeriphWidgets/moc_UartEditor.h
 	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/PeriphWidgets/GpioWidget.h -o $(GUI_PLUGIN_SRC)/PeriphWidgets/moc_GpioWidget.h
 	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/PeriphWidgets/LedArea.h -o $(GUI_PLUGIN_SRC)/PeriphWidgets/moc_LedArea.h
+	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/PeriphWidgets/DipArea.h -o $(GUI_PLUGIN_SRC)/PeriphWidgets/moc_DipArea.h
 	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/CpuWidgets/RegWidget.h -o $(GUI_PLUGIN_SRC)/CpuWidgets/moc_RegWidget.h
 	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/CpuWidgets/RegsViewWidget.h -o $(GUI_PLUGIN_SRC)/CpuWidgets/moc_RegsViewWidget.h

@@ -21,8 +21,6 @@ enum EWName {
 PnpWidget::PnpWidget(IGui *igui, QWidget *parent) : UnclosableWidget(parent) {
     igui_ = igui;
 
-    setWindowTitle(tr("pnp0"));
-
     mainLayout_ = new QGridLayout(this);
 
     setMinimumWidth(150);
@@ -76,9 +74,6 @@ void PnpWidget::handleResponse(AttributeType *req, AttributeType *resp) {
     }
     memcpy(&pnp_, resp->data(), resp->size());
     emit signalUpdate();
-}
-
-void PnpWidget::slotConfigDone() {
 }
 
 void PnpWidget::slotUpdate() {

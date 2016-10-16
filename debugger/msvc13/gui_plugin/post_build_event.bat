@@ -26,3 +26,6 @@ xcopy %QT_PATH%\bin\libEGL.dll %COPY_TO%\ /F /R /Y /D
 xcopy %QT_PATH%\bin\icudt*.dll %COPY_TO%\ /F /R /Y /D
 xcopy %QT_PATH%\bin\icuin*.dll %COPY_TO%\ /F /R /Y /D
 xcopy %QT_PATH%\bin\icuuc*.dll %COPY_TO%\ /F /R /Y /D
+
+@echo off
+@echo appdbg64g.exe -sim -gui -nocfg >> %COPY_TO%\_run_gui_sim.bat

@@ -19,6 +19,8 @@ EdclService::EdclService(const char *name) : IService(name) {
     registerAttribute("seq_cnt", &seq_cnt_);
     seq_cnt_.make_uint64(0);
     itransport_ = 0;
+
+    dbgRdTRansactionCnt_ = 0;
 }
 
 void EdclService::postinitService() {
@@ -35,7 +37,6 @@ void EdclService::postinitService() {
     }
 }
 
-static int dbgRd = 0;
 int EdclService::read(uint64_t addr, int bytes, uint8_t *obuf) {
     int txoff, rxoff;
     UdpEdclCommonType req = {0};
@@ -70,7 +71,7 @@ int EdclService::read(uint64_t addr, int bytes, uint8_t *obuf) {
             break;
         }
 
-        dbgRd++;
+        dbgRdTRansactionCnt_++;
         rxoff = itransport_->readData(rx_buf_, sizeof(rx_buf_));
         if (rxoff == -1) {
             RISCV_error("Data receiving error", NULL);
@@ -78,7 +79,8 @@ int EdclService::read(uint64_t addr, int bytes, uint8_t *obuf) {
             break;
         } 
         if (rxoff == 0) {
-            RISCV_error("No response. Break read transaction. dbgRd=%d", dbgRd);
+            RISCV_error("No response. Break read transaction[%d]",
+                        dbgRdTRansactionCnt_);
             rd_bytes = -1;
             break;
         }

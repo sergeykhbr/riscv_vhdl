@@ -191,8 +191,10 @@
     <ClCompile Include="..\..\src\gui_plugin\MainWindow\DbgMainWindow.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\MainWindow\MdiAreaWidget.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\MainWindow\UnclosableWidget.cpp" />
+    <ClCompile Include="..\..\src\gui_plugin\PeriphWidgets\DipArea.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\PeriphWidgets\GpioWidget.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\PeriphWidgets\LedArea.cpp" />
+    <ClCompile Include="..\..\src\gui_plugin\PeriphWidgets\UartEditor.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\PeriphWidgets\UartWidget.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -205,11 +207,7 @@
     <ClInclude Include="..\..\src\common\iface.h" />
     <ClInclude Include="..\..\src\common\iservice.h" />
     <ClInclude Include="..\..\src\gui_plugin\ControlWidget\ConsoleWidget.h" />
-    <ClInclude Include="..\..\src\gui_plugin\ControlWidget\moc_ConsoleWidget.h" />
-    <ClInclude Include="..\..\src\gui_plugin\ControlWidget\moc_PnpWidget.h" />
     <ClInclude Include="..\..\src\gui_plugin\ControlWidget\PnpWidget.h" />
-    <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\moc_RegsViewWidget.h" />
-    <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\moc_RegWidget.h" />
     <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\RegsViewWidget.h" />
     <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\RegWidget.h" />
     <ClInclude Include="..\..\src\gui_plugin\gui_plugin.h" />
@@ -218,8 +216,10 @@
     <ClInclude Include="..\..\src\gui_plugin\MainWindow\MdiAreaWidget.h" />
     <ClInclude Include="..\..\src\gui_plugin\MainWindow\UnclosableQMdiSubWindow.h" />
     <ClInclude Include="..\..\src\gui_plugin\MainWindow\UnclosableWidget.h" />
+    <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\DipArea.h" />
     <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\GpioWidget.h" />
     <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\LedArea.h" />
+    <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\UartEditor.h" />
     <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\UartWidget.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -30,12 +30,6 @@ public:
 
     virtual IFace *getSocInfo() =0;
 
-    virtual void registerMainWindow(void *iwindow) =0;
-
-    virtual void registerWidgetInterface(IFace *iface) =0;
-
-    virtual void unregisterWidgetInterface(IFace *iface) =0;
-
     virtual void registerCommand(IGuiCmdHandler *src, AttributeType *cmd, bool silent) =0;
 };
 
