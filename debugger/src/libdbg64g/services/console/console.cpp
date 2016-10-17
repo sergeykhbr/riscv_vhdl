@@ -241,8 +241,6 @@ void ConsoleService::busyLoop() {
         std::cout.flush();
         cmdSizePrev_ = cmd.size();
     }
-    loopEnable_ = false;
-    threadInit_.Handle = 0;
 }
 
 void ConsoleService::processScriptFile() {

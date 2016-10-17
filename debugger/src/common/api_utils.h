@@ -22,6 +22,9 @@ namespace debugger {
 extern "C" {
 #endif
 
+/** Generate unique string. */
+void RISCV_generate_name(AttributeType *name);
+
 /** Redirect output to specified console. */
 void RISCV_add_default_output(void *iout);
 void RISCV_remove_default_output(void *iout);
@@ -62,6 +65,9 @@ void RISCV_sleep_ms(int ms);
 /** Get current time in milliseconds. */
 uint64_t RISCV_get_time_ms();
 
+/** Get process ID. */
+int RISCV_get_pid();
+
 void RISCV_thread_create(void *data);
 uint64_t RISCV_thread_id();
 
@@ -83,6 +89,9 @@ void RISCV_free(void *p);
 
 /** Get absolute directory where core library is placed. */
 int RISCV_get_core_folder(char *out, int sz);
+
+/** Set $(pwd) directory equals to executable location */
+void RISCV_set_current_dir();
 
 /** Reading configuration from JSON formatted file. */
 int RISCV_read_json_file(const char *filename, void *outattr);

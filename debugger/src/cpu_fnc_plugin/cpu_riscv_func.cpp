@@ -99,8 +99,17 @@ void CpuRiscV_Functional::busyLoop() {
     while (isEnabled()) {
         updatePipeline();
     }
-    loopEnable_ = false;
-    threadInit_.Handle = 0;
+
+    /** flush queue */
+    for (unsigned i = 0; i < stepQueue_len_; i++) {
+        uint64_t ev_time = stepQueue_[i][Queue_Time].to_uint64();
+        if (getpContext()->step_cnt < ev_time) {
+            continue;
+        }
+        IClockListener *iclk = static_cast<IClockListener *>(
+                stepQueue_[i][Queue_IFace].to_iface());
+        iclk->stepCallback(getpContext()->step_cnt);
+    }
 }
 
 void CpuRiscV_Functional::updatePipeline() {
@@ -352,6 +361,13 @@ void CpuRiscV_Functional::queueUpdate() {
 
 void CpuRiscV_Functional::registerStepCallback(IClockListener *cb,
                                                uint64_t t) {
+    if (!isEnabled()) {
+        if (t <= getpContext()->step_cnt) {
+            cb->stepCallback(t);
+        }
+        return;
+    }
+
     AttributeType item;
     item.make_list(Queue_Total);
     AttributeType time(Attr_UInteger, t);

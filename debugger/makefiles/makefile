@@ -17,11 +17,16 @@ PLUGINS_ELF_DIR = $(TOP_DIR)linuxbuild/bin/plugins
 .SILENT:
   TEA = 2>&1 | tee _$@-comp.err
 
-all: libdbg64g simple_plugin socsim_plugin cpu_fnc_plugin appdbg64g
+all: cleanup base gui_plugin
 	$(RM) $(ELF_DIR)/config.json
 	$(ECHO) "    All done.\n"
 
+base: libdbg64g simple_plugin socsim_plugin cpu_fnc_plugin appdbg64g
+
 gui: libdbg64g gui_plugin
+
+cleanup:
+	$(RM) $(TOP_DIR)linuxbuild
 
 libdbg64g:
 	$(MKDIR) ./$(ELF_DIR)
@@ -49,9 +54,6 @@ cpu_fnc_plugin:
 	make -f make_cpu_fnc_plugin TOP_DIR=$(TOP_DIR) PLUGINS_OBJ_DIR=$(PLUGINS_OBJ_DIR)/cpu_fnc PLUGINS_ELF_DIR=$(PLUGINS_ELF_DIR) $(TEA)
 
 gui_plugin:
-	if [ ! -d "$(QT_PATH)"]; then \
-		$(ECHO) "QT_PATH not found. GUI not available\n"; \
-	fi
 	$(MKDIR) ./$(PLUGINS_OBJ_DIR)/gui
 	$(ECHO) "    Plugin " $@ " building started:"
 	make -f make_gui_plugin TOP_DIR=$(TOP_DIR) PLUGINS_OBJ_DIR=$(PLUGINS_OBJ_DIR)/gui PLUGINS_ELF_DIR=$(PLUGINS_ELF_DIR) ELF_DIR=$(ELF_DIR) $(TEA)

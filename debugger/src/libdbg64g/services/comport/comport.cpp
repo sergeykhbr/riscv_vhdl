@@ -115,8 +115,6 @@ void ComPortService::busyLoop() {
         }
         RISCV_sleep_ms(50);
     }
-    loopEnable_ = false;
-    threadInit_.Handle = 0;
 }
 
 int ComPortService::writeData(const char *buf, int sz) {

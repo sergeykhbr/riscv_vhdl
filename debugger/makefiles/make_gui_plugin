@@ -98,7 +98,8 @@ $(addprefix $(PLUGINS_OBJ_DIR)/,%.o): %.c
 	$(CC) $(CFLAGS) -std=c99 $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $@
 
 prebuild:
-	$(QT_PATH)/bin/rcc -binary $(GUI_PLUGIN_SRC)/resources/gui.qrc -o $(GUI_PLUGIN_SRC)/resources/gui.rcc
+	$(MKDIR) $(ELF_DIR)/resources
+	$(QT_PATH)/bin/rcc -binary $(GUI_PLUGIN_SRC)/resources/gui.qrc -o $(ELF_DIR)/resources/gui.rcc
 	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/MainWindow/DbgMainWindow.h -o $(GUI_PLUGIN_SRC)/MainWindow/moc_DbgMainWindow.h
 	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/MainWindow/MdiAreaWidget.h -o $(GUI_PLUGIN_SRC)/MainWindow/moc_MdiAreaWidget.h
 	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/MainWindow/UnclosableQMdiSubWindow.h -o $(GUI_PLUGIN_SRC)/MainWindow/moc_UnclosableQMdiSubWindow.h

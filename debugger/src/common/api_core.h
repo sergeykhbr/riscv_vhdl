@@ -242,6 +242,13 @@ void RISCV_get_clock_services(AttributeType *list);
  */
 void RISCV_break_simulation();
 
+/**
+ * @brief State of the core library.
+ *
+ * Core library is active while woudln't break by RISCV_break_simulation()
+ */
+int RISCV_is_active();
+
 #ifdef __cplusplus
 }
 #endif

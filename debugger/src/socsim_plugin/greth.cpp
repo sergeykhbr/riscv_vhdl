@@ -135,7 +135,6 @@ void Greth::busyLoop() {
         RISCV_event_clear(&event_tap_);
         iclk0_->registerStepCallback(static_cast<IClockListener *>(this),
                                     iclk0_->getStepCounter());
-
         RISCV_event_wait(&event_tap_);
         while (!fifo_from_->isEmpty()) {
             fifo_from_->get(&msg);
@@ -148,8 +147,6 @@ void Greth::busyLoop() {
         seq_cnt_++;
         itransport_->sendData(txbuf_, bytes);
     }
-    loopEnable_ = false;
-    threadInit_.Handle = 0;
 }
 
 void Greth::stepCallback(uint64_t t) {

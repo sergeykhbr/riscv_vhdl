@@ -101,7 +101,7 @@
       <ModuleDefinitionFile>$(ProjectDir)exportmap.def</ModuleDefinitionFile>
     </Link>
     <PreBuildEvent>
-      <Command>call $(ProjectDir)pre_build_event.bat</Command>
+      <Command>call $(ProjectDir)pre_build_event.bat $(TargetDir)</Command>
     </PreBuildEvent>
     <PreLinkEvent>
       <Command>

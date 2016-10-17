@@ -39,16 +39,13 @@ public:
     virtual void updateData(const char *buf, int buflen);
 
 signals:
-    void signalClose(QWidget *, AttributeType &);
     void signalNewData();
 private slots:
     void slotPostInit(AttributeType *cfg);
     void slotUpdateByData();
-    void slotClosingMainForm();
 
 protected:
     virtual void keyPressEvent(QKeyEvent *e);
-    virtual void closeEvent(QCloseEvent *event_);
 
 private:
     int keyevent2sequence(QKeyEvent *e, uint8_t *seq);

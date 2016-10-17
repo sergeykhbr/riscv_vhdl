@@ -5,6 +5,7 @@
  * @brief      Elf-file loader command.
  */
 
+#include "iservice.h"
 #include "cmd_loadelf.h"
 #include "coreservices/ielfloader.h"
 
@@ -49,7 +50,10 @@ void CmdLoadElf::exec(AttributeType *args, AttributeType *res) {
     uint64_t addr = info_->csr2addr("MRESET");
 
     tap_->write(addr, 8, reinterpret_cast<uint8_t *>(&mreset));
-    IElfLoader *elf = static_cast<IElfLoader *>(lstServ[0u].to_iface());
+
+    IService *iserv = static_cast<IService *>(lstServ[0u].to_iface());
+    IElfLoader *elf = static_cast<IElfLoader *>(
+                        iserv->getInterface(IFACE_ELFLOADER));
     elf->loadFile((*args)[1].to_string());
 
     mreset = 0;

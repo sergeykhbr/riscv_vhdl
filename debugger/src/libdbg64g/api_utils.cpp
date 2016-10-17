@@ -27,6 +27,7 @@ typedef void (*plugin_init_proc)();
 
 /** Temporary buffer for the log messages. */
 static char bufLog[1<<12];
+static int uniqueIdx_ = 0;
 
 /** Redirect output to specified console. */
 static AttributeType default_console(Attr_List);
@@ -42,6 +43,11 @@ mutex_def mutex_printf;
 /** Core log message interface object. */
 extern IFace *getInterface(const char *name);
 
+extern "C" void RISCV_generate_name(AttributeType *name) {
+    char str[256];
+    RISCV_sprintf(str, sizeof(str), "obj_%08x", uniqueIdx_++);
+    name->make_string(str);
+}
 
 extern "C" void RISCV_add_default_output(void *iout) {
     AttributeType lstn(static_cast<IRawListener *>(iout));
@@ -164,6 +170,15 @@ extern "C" uint64_t RISCV_get_time_ms() {
     return 1000*tc.tv_sec + tc.tv_usec/1000;
 #endif
 }
+
+extern "C" int RISCV_get_pid() {
+#if defined(_WIN32) || defined(__CYGWIN__)
+    return _getpid();
+#else
+    return getpid();
+#endif
+}
+
 
 extern "C" void RISCV_thread_create(void *data) {
     LibThreadType *p = (LibThreadType *)data;
@@ -314,6 +329,32 @@ extern "C" int RISCV_get_core_folder(char *out, int sz) {
 
     out[n+1] = '\0';
     return 0;
+}
+
+extern "C" void RISCV_set_current_dir() {
+#if defined(_WIN32) || defined(__CYGWIN__)
+    HMODULE hMod = GetModuleHandle(NULL);
+    char path[MAX_PATH] = "";
+    GetModuleFileNameA(hMod, path, MAX_PATH);
+#else         // Linux
+    // Get path of executable.
+    char path[1024];
+    ssize_t n = readlink("/proc/self/exe", path, sizeof(path)/sizeof(path[0]) - 1);
+    if (n == -1) {
+        return;
+    }
+    path[n] = 0;
+#endif
+
+    size_t i;
+    for(i = strlen(path) - 1; i > 0 && path[i] != '/' && path[i] != '\\'; --i);
+    path[i] = '\0';
+
+#if defined(_WIN32) || defined(__CYGWIN__)
+    SetCurrentDirectoryA(path);
+#else         // Linux
+    chdir(path);
+#endif
 }
 
 /**

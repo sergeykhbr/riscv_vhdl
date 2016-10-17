@@ -21,16 +21,28 @@ static AttributeType listHap_(Attr_List);
 static AttributeType listPlugins_(Attr_List);
 extern mutex_def mutex_printf;
 
-
 extern void _load_plugins(AttributeType *list);
 extern void _unload_plugins(AttributeType *list);
 
 class CoreService : public IService {
 public:
     CoreService(const char *name) : IService("CoreService") {
+        active_ = 1;
         RISCV_mutex_init(&mutex_printf);
+        RISCV_event_create(&mutexExiting_, "mutexExiting_");
         //logLevel_.make_int64(LOG_DEBUG);  // default = LOG_ERROR
     }
+    virtual ~CoreService() {
+        RISCV_event_close(&mutexExiting_);
+    }
+
+    int isActive() { return active_; }
+    void shutdown() { active_ = 0; }
+    bool isExiting() { return mutexExiting_.state; }
+    void setExiting() { RISCV_event_set(&mutexExiting_); }
+private:
+    int active_;
+    event_def mutexExiting_;
 };
 static CoreService core_("core");
 
@@ -54,7 +66,7 @@ extern "C" int RISCV_init() {
 
 extern "C" void RISCV_cleanup() {
     IClass *icls;
-    IService *iserv;
+    //IService *iserv;
     const AttributeType *objs;
 
     // Pre-deletion
@@ -62,8 +74,10 @@ extern "C" void RISCV_cleanup() {
         icls = static_cast<IClass *>(listClasses_[i].to_iface());
         objs = (icls->getInstanceList());
         for (unsigned n = 0; n < objs->size(); n++) {
-            iserv = static_cast<IService *>((*objs)[n].to_iface());
-            icls->predeleteServices(iserv);
+            //iserv = static_cast<IService *>((*objs)[n].to_iface());
+            //printf("predelete '%s'. . . ", iserv->getObjName());
+            //icls->predeleteServices(iserv);
+            //printf("Done\n");
         }
     }
 
@@ -233,7 +247,7 @@ extern "C" void RISCV_get_services_with_iface(const char *iname,
             iserv = static_cast<IService *>((*tlist)[0u].to_iface());
             iface = iserv->getInterface(iname);
             if (iface) {
-                AttributeType t1(iface);
+                AttributeType t1(iserv);
                 list->add_to_list(&t1);
             }
         }
@@ -241,21 +255,47 @@ extern "C" void RISCV_get_services_with_iface(const char *iname,
 }
 
 extern "C" void RISCV_get_clock_services(AttributeType *list) {
+    IService *iserv;
     RISCV_get_services_with_iface(IFACE_CLOCK, list);
+    for (unsigned i = 0; i < list->size(); i++) {
+        iserv = static_cast<IService *>((*list)[i].to_iface());
+        (*list)[i].make_iface(iserv->getInterface(IFACE_CLOCK));
+    }
 }
 
-extern "C" void RISCV_break_simulation() {
+static thread_return_t safe_exit_thread(void *args) {
     AttributeType t1, t2;
+    IService *iserv;
     IThread *ith;
     RISCV_get_services_with_iface(IFACE_THREAD, &t1);
 
     for (unsigned i = 0; i < t1.size(); i++) {
-        ith = static_cast<IThread *>(static_cast<IThread *>(t1[i].to_iface()));
-        ith->breakSignal();
+        iserv = static_cast<IService *>(t1[i].to_iface());
+        ith = static_cast<IThread *>(iserv->getInterface(IFACE_THREAD));
+        printf("Stopping thread service '%s'. . .", iserv->getObjName());
+        ith->stop();
+        printf("Stopped\n");
     }
 
     RISCV_trigger_hap(getInterface(IFACE_SERVICE),
                       HAP_BreakSimulation, "Exiting");
+    core_.shutdown();
+    return 0;
+}
+
+extern "C" void RISCV_break_simulation() {
+    if (core_.isExiting()) {
+        return;
+    }
+    core_.setExiting();
+    LibThreadType data;
+    data.func = reinterpret_cast<lib_thread_func>(safe_exit_thread);
+    data.args = 0;
+    RISCV_thread_create(&data);
+}
+
+extern "C" int RISCV_is_active() {
+    return core_.isActive();
 }
 
 }  // namespace debugger

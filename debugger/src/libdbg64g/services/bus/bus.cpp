@@ -80,11 +80,8 @@ int Bus::read(uint64_t addr, uint8_t *payload, int sz) {
     if (unmapped) {
         RISCV_error("[%" RV_PRI64 "d] Read from unmapped address "
                     "%08" RV_PRI64 "x", iclk0_->getStepCounter(), addr);
-        
-        // Stop simulation
-        RISCV_break_simulation();
-        RISCV_error("Simulation was OFF. HW AXI bus not available", NULL);
-        return 0;
+        memset(payload, 0xFF, sz);
+        return sz;
     } 
 
     RISCV_debug("[%08" RV_PRI64 "x] => [%08x %08x %08x %08x]",
@@ -121,10 +118,6 @@ int Bus::write(uint64_t addr, uint8_t *payload, int sz) {
     if (unmapped) {
         RISCV_error("[%" RV_PRI64 "d] Write to unmapped address "
                     "%08" RV_PRI64 "x", iclk0_->getStepCounter(), addr);
-        
-        // Stop simulation
-        RISCV_break_simulation();
-        RISCV_error("Simulation was OFF. HW AXI bus not available", NULL);
         return 0;
     }
 
@@ -159,10 +152,12 @@ void Bus::checkBreakpoint(uint64_t addr) {
     for (unsigned i = 0; i < breakpoints_.size(); i++) {
         if (addr == breakpoints_[i].to_uint64()) {
             AttributeType listCpu;
+            IService *iserv;
             RISCV_get_services_with_iface(IFACE_CPU_RISCV, &listCpu);
             for (unsigned n = 0; n < listCpu.size(); n++) {
-                ICpuRiscV *iriscv = 
-                    static_cast<ICpuRiscV *>(listCpu[n].to_iface());
+                iserv = static_cast<IService *>(listCpu[n].to_iface());
+                ICpuRiscV *iriscv = static_cast<ICpuRiscV *>(
+                                iserv->getInterface(IFACE_CPU_RISCV));
                 iriscv->hitBreakpoint(addr);
             }
         }

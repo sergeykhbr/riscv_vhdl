@@ -38,14 +38,13 @@ public:
     /** Global methods */
     void postInit(AttributeType *cfg);
     void getConfiguration(AttributeType &cfg);
-    void closeForm();
+    void callExit();
     
 signals:
     void signalPostInit(AttributeType *cfg);
     void signalUpdateByTimer();
-    void signalClosingMainForm();
     void signalTargetStateChanged(bool);
-    void signalExitForm();
+    void signalExit();
 
 private slots:
     void slotPostInit(AttributeType *cfg);
@@ -55,10 +54,7 @@ private slots:
     void slotActionTargetRun();
     void slotActionTargetHalt();
     void slotActionTargetStepInto();
-    void slotExitForm();
-
-protected:
-    virtual void closeEvent(QCloseEvent *e);
+    void slotExit();
 
 private:
     void createActions();
@@ -86,7 +82,6 @@ private:
     AttributeType cmdRun_;
     AttributeType cmdHalt_;
     AttributeType cmdStep_;
-    AttributeType cmdExit_;
 
     IGui *igui_;
     event_def *initDone_;

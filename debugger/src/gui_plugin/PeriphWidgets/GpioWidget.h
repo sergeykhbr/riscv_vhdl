@@ -14,9 +14,6 @@
 
 #include "MainWindow/UnclosableWidget.h"
 #include <QtWidgets/QWidget>
-#include <QtCore/QTimer>
-#include <QtGui/QResizeEvent>
-#include <QtGui/QPaintEvent>
 #include <QtGui/QCloseEvent>
 
 namespace debugger {

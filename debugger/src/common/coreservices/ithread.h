@@ -18,40 +18,35 @@ static const char *const IFACE_THREAD = "IThread";
 class IThread : public IFace {
 public:
     IThread() : IFace(IFACE_THREAD) {
-        loopEnable_ = false;
-        interrupt_ = false;
+        AttributeType t1;
+        RISCV_generate_name(&t1);
+        RISCV_event_create(&loopEnable_, t1.to_string());
         threadInit_.Handle = 0;
     }
 
     /** create and start seperate thread */
     virtual bool run() {
-        loopEnable_ = false;
-        threadInit_.func = (lib_thread_func)runThread;
+        threadInit_.func = reinterpret_cast<lib_thread_func>(runThread);
         threadInit_.args = this;
         RISCV_thread_create(&threadInit_);
 
         if (threadInit_.Handle) {
-            loopEnable_ = true;
+            RISCV_event_set(&loopEnable_);
         }
-        return loopEnable_;
+        return loopEnable_.state;
     }
 
     /** @brief Stop and join thread */
     virtual void stop() {
-        loopEnable_ = false;
+        RISCV_event_clear(&loopEnable_);
         if (threadInit_.Handle) {
             RISCV_thread_join(threadInit_.Handle, 50000);
         }
         threadInit_.Handle = 0;
     }
 
-    /** Cannot stop thread from itself, so use this interrupt method */
-    virtual void breakSignal() {
-        interrupt_ = true;
-    }
-    
     /** check thread status */
-    virtual bool isEnabled() { return loopEnable_ && !interrupt_; }
+    virtual bool isEnabled() { return loopEnable_.state; }
 
 protected:
     /** working cycle function */
@@ -62,8 +57,7 @@ protected:
     }
 
 protected:
-    volatile bool loopEnable_;
-    volatile bool interrupt_;
+    event_def loopEnable_;
     LibThreadType threadInit_;
 };
 

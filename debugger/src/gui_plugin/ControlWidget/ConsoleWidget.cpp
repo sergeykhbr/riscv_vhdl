@@ -52,6 +52,7 @@ ConsoleWidget::ConsoleWidget(IGui *igui, QWidget *parent)
 }
 
 ConsoleWidget::~ConsoleWidget() {
+    RISCV_remove_default_output(static_cast<IRawListener *>(this));
     RISCV_mutex_destroy(&mutexOutput_);
     delete [] wcsConv_;
     delete [] mbsConv_;
@@ -103,14 +104,6 @@ void ConsoleWidget::keyPressEvent(QKeyEvent *e) {
     }
 }
 
-void ConsoleWidget::closeEvent(QCloseEvent *event_) {
-    RISCV_remove_default_output(static_cast<IRawListener *>(this));
-
-    AttributeType tmp;
-    emit signalClose(this, tmp);
-    event_->accept();
-}
-
 void ConsoleWidget::slotPostInit(AttributeType *cfg) {
     const char *autoobj = (*cfg)["AutoComplete"].to_string();
     iauto_ = static_cast<IAutoComplete *>(
@@ -145,9 +138,6 @@ void ConsoleWidget::slotUpdateByData() {
     setTextCursor(cursor);
 
     verticalScrollBar()->setValue(verticalScrollBar()->maximum());
-}
-
-void ConsoleWidget::slotClosingMainForm() {
 }
 
 void ConsoleWidget::updateData(const char *buf, int bufsz) {

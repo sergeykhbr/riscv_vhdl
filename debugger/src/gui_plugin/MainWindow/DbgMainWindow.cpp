@@ -22,7 +22,6 @@ DbgMainWindow::DbgMainWindow(IGui *igui, event_def *init_done) {
     cmdRun_.make_string("c");
     cmdHalt_.make_string("halt");
     cmdStep_.make_string("c 1");
-    cmdExit_.make_string("exit");
  
     createActions();
     createMenus();
@@ -49,7 +48,7 @@ DbgMainWindow::DbgMainWindow(IGui *igui, event_def *init_done) {
 
     connect(this, SIGNAL(signalPostInit(AttributeType *)),
             this, SLOT(slotPostInit(AttributeType *)));
-    connect(this, SIGNAL(signalExitForm()), this, SLOT(slotExitForm()));
+    connect(this, SIGNAL(signalExit()), this, SLOT(slotExit()));
 
     tmrGlobal_ = new QTimer(this);
     connect(tmrGlobal_, SIGNAL(timeout()), this, SLOT(slotConfigDone()));
@@ -59,6 +58,7 @@ DbgMainWindow::DbgMainWindow(IGui *igui, event_def *init_done) {
 }
 
 DbgMainWindow::~DbgMainWindow() {
+    igui_->waitQueueEmpty();
 }
 
 void DbgMainWindow::handleResponse(AttributeType *req, AttributeType *resp) {
@@ -79,16 +79,12 @@ void DbgMainWindow::getConfiguration(AttributeType &cfg) {
     cfg = config_;
 }
 
-void DbgMainWindow::closeForm() {
-    emit signalExitForm();
+void DbgMainWindow::callExit() {
+    emit signalExit();
 }
 
-void DbgMainWindow::closeEvent(QCloseEvent *e) {
-    emit signalClosingMainForm();
-
-    /** Do not handle any respone */
-    igui_->registerCommand(NULL, &cmdExit_, true);
-    e->accept();
+void DbgMainWindow::slotExit() {
+    close();
 }
 
 void DbgMainWindow::createActions() {
@@ -201,8 +197,6 @@ void DbgMainWindow::createMdiWindow() {
     dock->setWidget(consoleWidget);
     connect(this, SIGNAL(signalPostInit(AttributeType *)),
             consoleWidget, SLOT(slotPostInit(AttributeType *)));
-    connect(this, SIGNAL(signalClosingMainForm()), 
-            consoleWidget, SLOT(slotClosingMainForm()));
 }
 
 void DbgMainWindow::addWidgets() {
@@ -303,10 +297,6 @@ void DbgMainWindow::slotActionTargetHalt() {
 void DbgMainWindow::slotActionTargetStepInto() {
     igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), 
                            &cmdStep_, true);
-}
-
-void DbgMainWindow::slotExitForm() {
-    close();
 }
 
 }  // namespace debugger

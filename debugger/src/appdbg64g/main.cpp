@@ -118,6 +118,18 @@ const char *default_config =
           "{'Name':'example0','Attr':["
                 "['LogLevel',4],"
                 "['attr1','This is test attr value']]}]},"
+    "{'Class':'GrethClass','Instances':["
+          "{'Name':'greth0','Attr':["
+                "['LogLevel',1],"
+                "['BaseAddress',0x80040000],"
+                "['Length',0x40000],"
+                "['IrqLine',2],"
+                "['IrqControl','irqctrl0'],"
+                "['IP',0x55667788],"
+                "['MAC',0xfeedface00],"
+                "['Bus','axi0'],"
+                "['Transport','udpboard']"
+                "]}]},"
     "{'Class':'CpuRiscV_FunctionalClass','Instances':["
           "{'Name':'core0','Attr':["
                 "['LogLevel',4],"
@@ -206,18 +218,6 @@ const char *default_config =
                 "['Tech',0],"
                 "['AdcDetector',0xff]"
                 "]}]},"
-    "{'Class':'GrethClass','Instances':["
-          "{'Name':'greth0','Attr':["
-                "['LogLevel',1],"
-                "['BaseAddress',0x80040000],"
-                "['Length',0x40000],"
-                "['IrqLine',2],"
-                "['IrqControl','irqctrl0'],"
-                "['IP',0x55667788],"
-                "['MAC',0xfeedface00],"
-                "['Bus','axi0'],"
-                "['Transport','udpboard']"
-                "]}]},"
     "{'Class':'BusClass','Instances':["
           "{'Name':'axi0','Attr':["
                 "['LogLevel',3],"
@@ -273,6 +273,7 @@ int main(int argc, char* argv[]) {
 
     // Select configuration input (default/stored file):
     RISCV_init();
+    RISCV_set_current_dir();
     RISCV_get_core_folder(path, sizeof(path));
     std::string cfg_filename = std::string(path) 
                     + std::string(JSON_CONFIG_FILE);
@@ -328,12 +329,8 @@ int main(int argc, char* argv[]) {
     }
 
     // Working cycle with console:
-    IThread *in = static_cast<IThread *>(
-        RISCV_get_service_iface("console0", IFACE_THREAD));
-    if (in) {
-        while (in->isEnabled()) {
-            RISCV_sleep_ms(100);
-        }
+    while (RISCV_is_active()) {
+        RISCV_sleep_ms(100);
     }
 
     const char *t1 = RISCV_get_configuration();
