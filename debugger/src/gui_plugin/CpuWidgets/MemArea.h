@@ -2,7 +2,7 @@
  * @file
  * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
  * @author     Sergey Khabarov - sergeykhbr@gmail.com
- * @brief      CPU' register editor.
+ * @brief      Memory Editor area.
  */
 
 #pragma once
@@ -13,31 +13,41 @@
 #include "coreservices/isocinfo.h"
 
 #include <QtWidgets/QWidget>
-#include <QtWidgets/QLineEdit>
+#include <QtWidgets/QPlainTextEdit>
 
 namespace debugger {
 
-class RegWidget : public QWidget,
-                  public IGuiCmdHandler {
+class MemArea : public QPlainTextEdit,
+                public IGuiCmdHandler {
     Q_OBJECT
 public:
-    explicit RegWidget(const char *name, IGui *gui, QWidget *parent);
+    explicit MemArea(IGui *gui, QWidget *parent);
 
     /** IGuiCmdHandler */
     virtual void handleResponse(AttributeType *req, AttributeType *resp);
 
 signals:
-    //void signalChanged(uint64_t idx, uint64_t val);
-private slots:
+    void signalUpdateData();
+
+public slots:
+    void slotAddressChanged(AttributeType *cmd);
     void slotUpdateByTimer();
+    void slotUpdateData();
+
+private:
+    void to_string(uint64_t addr, uint64_t bytes, AttributeType *out);
 
 private:
     AttributeType cmdRead_;
     QString name_;
     IGui *igui_;
-    QLineEdit *edit_;
-    uint64_t value_;
-    uint64_t respValue_;
+
+    AttributeType data_;
+    AttributeType tmpBuf_;
+    AttributeType dataText_;
+
+    uint64_t reqAddr_;
+    unsigned reqBytes_;
 };
 
 }  // namespace debugger

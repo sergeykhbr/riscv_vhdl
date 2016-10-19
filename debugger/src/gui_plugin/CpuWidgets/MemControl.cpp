@@ -1,0 +1,88 @@
+/**
+ * @file
+ * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
+ * @author     Sergey Khabarov - sergeykhbr@gmail.com
+ * @brief      Memory Editor control panel.
+ */
+
+#include "MemControl.h"
+#include "moc_MemControl.h"
+
+#include <memory>
+#include <string.h>
+#include <QtWidgets/QBoxLayout>
+#include <QtWidgets/QLabel>
+#include <QtWidgets/QPushButton>
+
+namespace debugger {
+
+MemControl::MemControl(QWidget *parent) 
+    : QWidget(parent) {
+    QFont font = QFont("Courier");
+    font.setStyleHint(QFont::Monospace);
+    font.setPointSize(8);
+    font.setFixedPitch(true);
+    setFont(font);
+    QFontMetrics fm(font);
+
+    paletteModified_.setColor(QPalette::Base, Qt::black);
+    paletteModified_.setColor(QPalette::Text, Qt::white);
+
+    paletteDefault_.setColor(QPalette::Text, Qt::black);
+    paletteDefault_.setColor(QPalette::Base, Qt::white);
+
+
+    QGridLayout *gridLayout = new QGridLayout(this);
+    setLayout(gridLayout);
+
+
+    QLabel *lbl = new QLabel("Addr,HEX:");
+    gridLayout->addWidget(lbl, 0, 0, Qt::AlignRight);
+
+    editAddr_ = new QLineEdit(this);
+    editAddr_->setText(tr("00000000fffff000"));
+    editAddr_->setFixedWidth(8 + fm.width(editAddr_->text()));
+    editAddr_->setPalette(paletteDefault_);
+    gridLayout->addWidget(editAddr_, 0, 1, Qt::AlignLeft);
+
+    QLabel *lbl2 = new QLabel("Size,B:");
+    gridLayout->addWidget(lbl2, 0, 2, Qt::AlignRight);
+
+    editBytes_ = new QLineEdit(this);
+    editBytes_->setText(tr("20"));
+    editBytes_->setFixedWidth(8 + fm.width("0000"));
+    editBytes_->setPalette(paletteDefault_);
+    gridLayout->addWidget(editBytes_, 0, 3, Qt::AlignLeft);
+
+    QPushButton *btnUpdate = new QPushButton(tr("&Update"));
+    btnUpdate->setFlat(false);
+    btnUpdate->setCheckable(false);
+    gridLayout->addWidget(btnUpdate, 0, 4, Qt::AlignLeft);
+    gridLayout->setColumnStretch(4, 10);
+
+    connect(btnUpdate, SIGNAL(released()), this, SLOT(slotUpdate()));
+
+    cmd_.make_list(2);
+}
+
+void MemControl::slotUpdate() {
+    editAddr_->setPalette(paletteDefault_);
+    editBytes_->setPalette(paletteDefault_);
+
+    if (!isChanged()) {
+        return;
+    }
+    uint64_t adr = editAddr_->text().toLongLong(0, 16);
+    uint64_t sz = editBytes_->text().toLongLong(0, 10);
+    cmd_[0u].make_uint64(adr);
+    cmd_[1].make_uint64(sz);
+
+    emit signalAddressChanged(&cmd_);
+}
+
+bool MemControl::isChanged() {
+    return true;
+}
+
+
+}  // namespace debugger

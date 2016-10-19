@@ -264,6 +264,35 @@ extern "C" void RISCV_event_wait(event_def *ev) {
 #endif
 }
 
+extern "C" int RISCV_event_wait_ms(event_def *ev, int ms) {
+#if defined(_WIN32) || defined(__CYGWIN__)
+    DWORD wait_ms = ms;
+    if (ms == 0) {
+        wait_ms = INFINITE;
+    }
+    if (WAIT_TIMEOUT == WaitForSingleObject(ev->cond, wait_ms)) {
+        return 1;
+    }
+    return 0;
+#else
+    int result;
+    struct timeval tc;
+    struct timespec ts;
+    int next_us;
+    gettimeofday(&tc, NULL);
+    next_us = tc.tv_usec + 1000 * ms;
+    ts.tv_sec = tc.tv_sec + (next_us / 1000000);
+    next_us -= 1000000 * (next_us / 1000000);
+    ts.tv_nsec = 1000 * next_us;
+
+    result = pthread_cond_timedwait(&ev->cond, &ev->mut, &ts);
+    if (ETIMEDOUT == result) {
+        return 1;
+    }
+    return 0;
+#endif
+}
+
 extern "C" int RISCV_mutex_init(mutex_def *mutex) {
 #if defined(_WIN32) || defined(__CYGWIN__)
     InitializeCriticalSection(mutex);

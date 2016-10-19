@@ -99,17 +99,6 @@ void CpuRiscV_Functional::busyLoop() {
     while (isEnabled()) {
         updatePipeline();
     }
-
-    /** flush queue */
-    for (unsigned i = 0; i < stepQueue_len_; i++) {
-        uint64_t ev_time = stepQueue_[i][Queue_Time].to_uint64();
-        if (getpContext()->step_cnt < ev_time) {
-            continue;
-        }
-        IClockListener *iclk = static_cast<IClockListener *>(
-                stepQueue_[i][Queue_IFace].to_iface());
-        iclk->stepCallback(getpContext()->step_cnt);
-    }
 }
 
 void CpuRiscV_Functional::updatePipeline() {

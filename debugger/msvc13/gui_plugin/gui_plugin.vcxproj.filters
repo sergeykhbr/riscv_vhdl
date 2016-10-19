@@ -61,6 +61,15 @@
     <ClCompile Include="..\..\src\gui_plugin\PeriphWidgets\DipArea.cpp">
       <Filter>PeriphWidgets</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\MemArea.cpp">
+      <Filter>CpuWidget</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\MemControl.cpp">
+      <Filter>CpuWidget</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\MemViewWidget.cpp">
+      <Filter>CpuWidget</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\api_types.h">
@@ -127,6 +136,15 @@
     </ClInclude>
     <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\DipArea.h">
       <Filter>PeriphWidgets</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\MemArea.h">
+      <Filter>CpuWidget</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\MemControl.h">
+      <Filter>CpuWidget</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\MemViewWidget.h">
+      <Filter>CpuWidget</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

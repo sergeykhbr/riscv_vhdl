@@ -82,6 +82,7 @@ void RISCV_event_close(event_def *ev);
 void RISCV_event_set(event_def *ev);
 void RISCV_event_clear(event_def *ev);
 void RISCV_event_wait(event_def *ev);
+int RISCV_event_wait_ms(event_def *ev, int ms);
 
 /** Memory allocator/de-allocator */
 void *RISCV_malloc(uint64_t sz);

@@ -1,3 +1,10 @@
+/**
+ * @file
+ * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
+ * @author     Sergey Khabarov - sergeykhbr@gmail.com
+ * @brief      CPU' register editor.
+ */
+
 #include "RegWidget.h"
 #include "moc_RegWidget.h"
 

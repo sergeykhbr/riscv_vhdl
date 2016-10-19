@@ -5,6 +5,7 @@
 Debug
 Release
 *.log
+*.rcc
 linuxbuild
 win32build
 win64build

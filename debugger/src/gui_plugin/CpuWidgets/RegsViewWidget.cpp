@@ -1,3 +1,10 @@
+/**
+ * @file
+ * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
+ * @author     Sergey Khabarov - sergeykhbr@gmail.com
+ * @brief      Single CPU register form.
+ */
+
 #include "RegWidget.h"
 #include "RegsViewWidget.h"
 #include "moc_RegsViewWidget.h"
@@ -5,8 +12,6 @@
 #include <memory>
 
 namespace debugger {
-
-//static const uint64_t BASE_ADDR_DSU_REGS = 0x80090200;
 
 /** Layout of register by name */
 static const char *REG_NAMES_LAYOUT[] = {
@@ -64,12 +69,6 @@ void RegsViewWidget::addRegWidget(int idx, const char *name) {
 
     connect(this, SIGNAL(signalUpdateByTimer()),
             pnew, SLOT(slotUpdateByTimer()));
-
-    /*if (!minSizeApplied_) {
-        minSizeApplied_ = true;
-        emit signalResize(QSize(3 * (pnew->minimumWidth() + 10), 
-                          12 * (pnew->minimumHeight() + 5)));
-    }*/
 }
 
 

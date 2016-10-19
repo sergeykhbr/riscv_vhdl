@@ -4,6 +4,7 @@
 #include "moc_DbgMainWindow.h"
 #include "ControlWidget/PnpWidget.h"
 #include "CpuWidgets/RegsViewWidget.h"
+#include "CpuWidgets/MemViewWidget.h"
 #include <QtWidgets/QtWidgets>
 
 
@@ -95,6 +96,13 @@ void DbgMainWindow::createActions() {
     actionRegs_->setCheckable(true);
     actionRegs_->setChecked(false);
 
+    actionMem_ = new QAction(QIcon(tr(":/images/mem_96x96.png")),
+                              tr("&Memory"), this);
+    actionMem_->setToolTip(tr("Memory view"));
+    actionMem_->setShortcut(QKeySequence("Ctrl+m"));
+    actionMem_->setCheckable(true);
+    actionMem_->setChecked(false);
+
     actionPnp_ = new QAction(QIcon(tr(":/images/board_96x96.png")),
                               tr("&Pnp"), this);
     actionPnp_->setToolTip(tr("Plug'n'play information view"));
@@ -157,7 +165,9 @@ void DbgMainWindow::createActions() {
 
     QToolBar *toolbarCpu = addToolBar(tr("toolbarCpu"));
     toolbarCpu->addAction(actionRegs_);
-    toolbarCpu->addAction(actionPnp_);
+    toolbarCpu->addAction(actionMem_);
+    QToolBar *toolbarPeriph = addToolBar(tr("toolbarPeriph"));
+    toolbarPeriph->addAction(actionPnp_);
 }
 
 void DbgMainWindow::createMenus() {
@@ -227,6 +237,14 @@ void DbgMainWindow::addWidgets() {
     subw = new UnclosableQMdiSubWindow(this);
     pnew = new RegsViewWidget(igui_, this);
     subw->setUnclosableWidget("Registers", pnew, actionRegs_);
+    mdiArea_->addSubWindow(subw);
+    connect(this, SIGNAL(signalUpdateByTimer()),
+            pnew, SLOT(slotUpdateByTimer()));
+
+    actionMem_->setChecked(false);
+    subw = new UnclosableQMdiSubWindow(this);
+    pnew = new MemViewWidget(igui_, this);
+    subw->setUnclosableWidget("Memory", pnew, actionMem_);
     mdiArea_->addSubWindow(subw);
     connect(this, SIGNAL(signalUpdateByTimer()),
             pnew, SLOT(slotUpdateByTimer()));

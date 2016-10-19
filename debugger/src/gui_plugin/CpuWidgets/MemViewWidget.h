@@ -2,7 +2,7 @@
  * @file
  * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
  * @author     Sergey Khabarov - sergeykhbr@gmail.com
- * @brief      Single CPU register form.
+ * @brief      Memory editor form.
  */
 
 #pragma once
@@ -18,10 +18,10 @@
 
 namespace debugger {
 
-class RegsViewWidget : public UnclosableWidget {
+class MemViewWidget : public UnclosableWidget {
     Q_OBJECT
 public:
-    RegsViewWidget(IGui *igui, QWidget *parent = 0);
+    MemViewWidget(IGui *igui, QWidget *parent = 0);
 
 signals:
     void signalUpdateByTimer();
@@ -30,10 +30,7 @@ private slots:
     void slotUpdateByTimer();
 
 private:
-    void addRegWidget(int idx, const char *name);
-
-private:
-    AttributeType listRegs_;
+    AttributeType listMem_;
     QGridLayout *gridLayout;
     
     IGui *igui_;

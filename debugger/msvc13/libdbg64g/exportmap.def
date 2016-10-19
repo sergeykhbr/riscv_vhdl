@@ -35,6 +35,7 @@ EXPORTS
 	RISCV_event_set
 	RISCV_event_clear
 	RISCV_event_wait
+	RISCV_event_wait_ms
 	RISCV_get_core_folder
 	RISCV_set_current_dir
 	RISCV_get_services_with_iface

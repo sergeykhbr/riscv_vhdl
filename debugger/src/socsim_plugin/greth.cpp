@@ -135,7 +135,10 @@ void Greth::busyLoop() {
         RISCV_event_clear(&event_tap_);
         iclk0_->registerStepCallback(static_cast<IClockListener *>(this),
                                     iclk0_->getStepCounter());
-        RISCV_event_wait(&event_tap_);
+        if (RISCV_event_wait_ms(&event_tap_, 100) != 0) {
+            RISCV_error("CPU queue callback timeout", NULL);
+            continue;
+        }
         while (!fifo_from_->isEmpty()) {
             fifo_from_->get(&msg);
         }

@@ -166,14 +166,14 @@ void GuiPlugin::waitQueueEmpty() {
     cmdQueueCntTotal_ = 0;
     RISCV_event_clear(&eventCmdQueueEmpty_);
     RISCV_event_set(&eventCommandAvailable_);
-    RISCV_event_wait(&eventCmdQueueEmpty_);
+    RISCV_event_wait_ms(&eventCmdQueueEmpty_, 100);
 }
 
 void GuiPlugin::busyLoop() {
     while (isEnabled()) {
-        RISCV_event_wait(&eventCommandAvailable_);
-        if (isEnabled()) {
+        if (RISCV_event_wait_ms(&eventCommandAvailable_, 500)) {
             RISCV_event_clear(&eventCommandAvailable_);
+            continue;
         }
 
         processCmdQueue();
@@ -213,8 +213,6 @@ void GuiPlugin::stop() {
         qApp->exit(0);
     }
     ui_->stop();
-    RISCV_event_clear(&loopEnable_);
-    RISCV_event_set(&eventCommandAvailable_);
     IThread::stop();
 }
 
