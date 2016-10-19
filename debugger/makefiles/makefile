@@ -17,7 +17,7 @@ PLUGINS_ELF_DIR = $(TOP_DIR)linuxbuild/bin/plugins
 .SILENT:
   TEA = 2>&1 | tee _$@-comp.err
 
-all: cleanup base gui_plugin
+all: base gui_plugin
 	$(RM) $(ELF_DIR)/config.json
 	$(ECHO) "    All done.\n"
 
@@ -25,7 +25,7 @@ base: libdbg64g simple_plugin socsim_plugin cpu_fnc_plugin appdbg64g
 
 gui: libdbg64g gui_plugin
 
-cleanup:
+clean:
 	$(RM) $(TOP_DIR)linuxbuild
 
 libdbg64g:

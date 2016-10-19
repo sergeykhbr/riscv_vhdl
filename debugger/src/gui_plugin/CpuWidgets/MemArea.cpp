@@ -50,6 +50,9 @@ void MemArea::slotUpdateByTimer() {
     RISCV_sprintf(tstr, sizeof(tstr), "read 0x%08" RV_PRI64 "x %d",
                                         reqAddr_, reqBytes_);
     cmdRead_.make_string(tstr);
+
+    reqAddrZ_ = reqAddr_;
+    reqBytesZ_ = reqBytes_;
     igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), 
                             &cmdRead_, true);
 }
@@ -63,7 +66,7 @@ void MemArea::slotUpdateData() {
 
 void MemArea::handleResponse(AttributeType *req, AttributeType *resp) {
     bool changed = false;
-    if (resp->size() != reqBytes_) {
+    if (resp->size() != data_.size()) {
         changed = true;
     } else {
         for (unsigned i = 0; i < resp->size(); i++) {
@@ -78,18 +81,21 @@ void MemArea::handleResponse(AttributeType *req, AttributeType *resp) {
     }
 
     data_ = *resp;
-    to_string(reqAddr_, reqBytes_, &dataText_);
+    to_string(reqAddrZ_, data_.size(), &dataText_);
     emit signalUpdateData();
 }
 
-void MemArea::to_string(uint64_t addr, uint64_t bytes, AttributeType *out) {
+void MemArea::to_string(uint64_t addr, unsigned bytes, AttributeType *out) {
     const uint64_t MSK64 = 0x7ull;
     uint64_t addr_start, addr_end, inv_i;
     addr_start = addr & ~MSK64;
     addr_end = (addr + bytes + 7) & ~MSK64;
 
-    if (tmpBuf_.size() < 4 * data_.size()) {
-        tmpBuf_.make_data(4 * data_.size());
+    /** Each 8 bytes of data requires 44 bytes in string [addr]: .. ..
+        Let it be 64 bytes per 8 bytes of data
+     */
+    if (tmpBuf_.size() < 8 * data_.size()) {
+        tmpBuf_.make_data(8 * data_.size());
     }
     int strsz = 0;
 

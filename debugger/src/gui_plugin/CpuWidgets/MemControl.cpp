@@ -25,8 +25,8 @@ MemControl::MemControl(QWidget *parent)
     setFont(font);
     QFontMetrics fm(font);
 
-    paletteModified_.setColor(QPalette::Base, Qt::black);
-    paletteModified_.setColor(QPalette::Text, Qt::white);
+    paletteModified_.setColor(QPalette::Base, Qt::yellow);
+    paletteModified_.setColor(QPalette::Text, Qt::black);
 
     paletteDefault_.setColor(QPalette::Text, Qt::black);
     paletteDefault_.setColor(QPalette::Base, Qt::white);
@@ -60,9 +60,16 @@ MemControl::MemControl(QWidget *parent)
     gridLayout->addWidget(btnUpdate, 0, 4, Qt::AlignLeft);
     gridLayout->setColumnStretch(4, 10);
 
+    connect(editAddr_, SIGNAL(textChanged(const QString &)), this, SLOT(slotModified()));
+    connect(editBytes_, SIGNAL(textChanged(const QString &)), this, SLOT(slotModified()));
     connect(btnUpdate, SIGNAL(released()), this, SLOT(slotUpdate()));
 
     cmd_.make_list(2);
+}
+
+void MemControl::slotModified() {
+    editAddr_->setPalette(paletteModified_);
+    editBytes_->setPalette(paletteModified_);
 }
 
 void MemControl::slotUpdate() {

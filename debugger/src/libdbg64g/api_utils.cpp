@@ -258,9 +258,11 @@ extern "C" void RISCV_event_wait(event_def *ev) {
     WaitForSingleObject(ev->cond, INFINITE);
 #else
     int result = 0;
+    pthread_mutex_lock(&ev->mut);
     while (result == 0 && !ev->state) {
         result = pthread_cond_wait(&ev->cond, &ev->mut);
     } 
+    pthread_mutex_unlock(&ev->mut);
 #endif
 }
 
@@ -285,7 +287,11 @@ extern "C" int RISCV_event_wait_ms(event_def *ev, int ms) {
     next_us -= 1000000 * (next_us / 1000000);
     ts.tv_nsec = 1000 * next_us;
 
-    result = pthread_cond_timedwait(&ev->cond, &ev->mut, &ts);
+    pthread_mutex_lock(&ev->mut);
+    while (result == 0 && !ev->state) {
+        result = pthread_cond_timedwait(&ev->cond, &ev->mut, &ts);
+    }
+    pthread_mutex_unlock(&ev->mut);
     if (ETIMEDOUT == result) {
         return 1;
     }

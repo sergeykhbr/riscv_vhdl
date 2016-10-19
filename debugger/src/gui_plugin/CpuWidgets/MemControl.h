@@ -26,6 +26,7 @@ signals:
     void signalAddressChanged(AttributeType *cmd);
 
 public slots:
+    void slotModified();
     void slotUpdate();
 
 private:

@@ -35,7 +35,7 @@ public slots:
     void slotUpdateData();
 
 private:
-    void to_string(uint64_t addr, uint64_t bytes, AttributeType *out);
+    void to_string(uint64_t addr, unsigned bytes, AttributeType *out);
 
 private:
     AttributeType cmdRead_;
@@ -48,6 +48,8 @@ private:
 
     uint64_t reqAddr_;
     unsigned reqBytes_;
+    uint64_t reqAddrZ_;
+    unsigned reqBytesZ_;
 };
 
 }  // namespace debugger
