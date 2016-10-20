@@ -37,11 +37,11 @@ You can run it yourself and verify results (see below).
 with disabled L1toL2 interconnect.
 
 
-Target | usec per 1 dhry | **Dhrystone per sec** | MHz,max | FPU | OS
--------|-----------------|--------------|---------|-----|------
-RISC-V simulator v3.1       | 12.0 | **7725.0**  | -  | No  | Zephyr 1.3
-FPGA SoC with "Rocket" v3.1 | 28.0 | **34964.0** | 60 | No  | Zephyr 1.3
-FPGA SoC with "Rocket" v4.0 | 40.7 | **24038.0** | 40 | Yes | Zephyr 1.5
+Target | usec per 1 dhry | Dhrystone per sec | MHz,max | FPU | OS
+-------|-----------------|-------------------|---------|-----|------
+RISC-V simulator v3.1       | 12.0 | **77257.0** | -   | No  | Zephyr 1.3
+FPGA SoC with "Rocket" v3.1 | 28.0 | **34964.0** | 60  | No  | Zephyr 1.3
+FPGA SoC with "Rocket" v4.0 | 40.7 | **24038.0** | 40  | Yes | Zephyr 1.5
 
 
 Access to all memory banks and peripheries in the same clock domain is always
