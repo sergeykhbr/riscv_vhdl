@@ -32,23 +32,25 @@ Performance analysis is based on
 that is very compact and entirely ported into Zephyr shell example.
 You can run it yourself and verify results (see below).
 
-**RISC-V Instruction simulator**. Always one instruction per clock.
-**FPGA SOC based on "Rocket-chip" CPU**. Single core/single issue CPU
+**RISC-V Instruction simulator** - always one instruction per clock.  
+**FPGA SOC based on "Rocket-chip" CPU** - single core/single issue CPU
 with disabled L1toL2 interconnect.
 
 
-Target | usec per 1 dhry | dhry per sec | MHz,max | FPU | OS
+Target | usec per 1 dhry | **Dhrystone per sec** | MHz,max | FPU | OS
 -------|-----------------|--------------|---------|-----|------
-RISC-V simulator v3.1       | 12.0 | 7725.0  | -  | No  | Zephyr 1.3
-FPGA SoC with "Rocket" v3.1 | 28.0 | 34964.0 | 60 | No  | Zephyr 1.3
-FPGA SoC with "Rocket" v4.0 | 40.7 | 24038.0 | 40 | Yes | Zephyr 1.5
+RISC-V simulator v3.1       | 12.0 | **7725.0**  | -  | No  | Zephyr 1.3
+FPGA SoC with "Rocket" v3.1 | 28.0 | **34964.0** | 60 | No  | Zephyr 1.3
+FPGA SoC with "Rocket" v4.0 | 40.7 | **24038.0** | 40 | Yes | Zephyr 1.5
 
 
 Access to all memory banks and peripheries in the same clock domain is always
-one clock in this SOC (without wait-states). So, this benchmark shows
-performance of the CPU with integer instructions and degradation of the CPI
-relative ideal case. I'll continue to track changes in Dhrystone results
-for future "Rocket" chip versions.
+one clock in this SOC (without wait-states). So, this benchmark 
+result **Dhrystone per seconds** shows performance of the CPU with integer 
+instructions and degradation of the CPI relative ideal (simulation) case.
+
+I'll continue to track changes in Dhrystone results in future 
+"Rocket" chip versions.
 
 
 ## Repository structure
@@ -231,9 +233,9 @@ You can either run application as:
     $ ./appdbg64g.exe -sim -gui -nocfg
 
 where:  
-    *-sim*   Use SoC Simulator or Real Hardware (FPGA)  
-    *-gui*   Use GUI insteade of console mode  
-    *-nocfg* USe default config instead of *config.json* file  
+    *-sim*   \tUse SoC Simulator not a Real Hardware (FPGA)  
+    *-gui*   \tUse GUI instead of console mode  
+    *-nocfg* \tUse default config instead of *config.json* file  
 
 SOC simulator includes not only CPU emulator but also any number of
 custom peripheries, including GNSS engine or whatever.
