@@ -23,10 +23,6 @@ at the University of California, Berkeley.
 Parameterized generator of the Rocket-chip can be found here:
 [https://github.com/ucb-bar](https://github.com/ucb-bar)
 
-**Warning:** Use tag v3.1 or older to get verified on ML605 source codes.
-Main branch is in the transition stage on the latest User-Level spec. 2.1
-that is binary incompatible with prevision revisions (see below tag v4.0).
-
 ## System-on-Chip structure and performance
 
 ![SOC top](rocket_soc/docs/pics/soc_top.png)
@@ -37,20 +33,22 @@ that is very compact and entirely ported into Zephyr shell example.
 You can run it yourself and verify results (see below).
 
 **RISC-V Instruction simulator**. Always one instruction per clock.
-
-    Microseconds for one run through Dhrystone:     12.0
-    Dhrystones per Second:                       77257.0
-
 **FPGA SOC based on "Rocket-chip" CPU**. Single core/single issue CPU
 with disabled L1toL2 interconnect.
 
-    Microseconds for one run through Dhrystone:     28.0
-    Dhrystones per Second:                       34964.0
+
+Target | usec per 1 dhry | dhry per sec | MHz,max | FPU | OS
+-------|-----------------|--------------|---------|-----|------
+RISC-V simulator v3.1       | 12.0 | 7725.0  | -  | No  | Zephyr 1.3
+FPGA SoC with "Rocket" v3.1 | 28.0 | 34964.0 | 60 | No  | Zephyr 1.3
+FPGA SoC with "Rocket" v4.0 | 40.7 | 24038.0 | 40 | Yes | Zephyr 1.5
+
 
 Access to all memory banks and peripheries in the same clock domain is always
 one clock in this SOC (without wait-states). So, this benchmark shows
 performance of the CPU with integer instructions and degradation of the CPI
-relative ideal case.
+relative ideal case. I'll continue to track changes in Dhrystone results
+for future "Rocket" chip versions.
 
 
 ## Repository structure
@@ -85,6 +83,18 @@ This repository consists of three sub-projects each in own subfolder:
   [**10/100 Ethernet MAC with EDCL**](http://sergeykhbr.github.io/riscv_vhdl/eth_link.html)
   and [**Debug Support Unit (DSU)**](http://sergeykhbr.github.io/riscv_vhdl/dsu_link.html)
   devices on AMBA AXI4 bus.
+- **RISC-V "River" core**. I was a bit confused by CPI degradation shown by Dhrystone in
+  the latest 'Rocket' versions, so since *v4.0* I've decided to start *'another one CPU'*
+  implementation based on RISC-V ISA. I've specified the following principles for myself:
+    1. Unified Verification Methodology (UVM)
+        - */debugger/cpu_fnc_plugin*  - Functional CPU model.
+        - */debugger/cpu_sysc_plugin* - SystemC CPU model (only synthesizable syntax).
+        - */rocket_soc/riverlib*      - RTL sources with VCD-stimulus from SystemC.
+    2. Advanced debugging features: bus tracing, pipeline statistic on HW level etc.
+    3. Integration with GUI from very beginning.
+  I hope to develop the most friendly synthesizable processor for HW and SW developers.
+  And it will be interesting to compare the result of amateur and team of the professional
+  CPU developers.
 
 ## Step-by-step tutorial of how to run Zephyr-OS on FPGA board with synthesizable RISC-V processor.
 
@@ -150,12 +160,12 @@ Build elf-file:
 Create HEX-image for ROM initialization. I use own analog of the *elf2raw*
 utility named as *elf2raw64*. You can find it in GNU tools archive.
 
-    $ elf2raw64 outdir/zephyr.elf -h -f 524288 -l 8 -o fwimage.hex
+    $ elf2raw64 outdir/zephyr.elf -h -f 262144 -l 8 -o fwimage.hex
 
 Flags:
 
     -h        -- specify HEX format of the output file.
-    -f 524288 -- specify total ROM size in bytes.
+    -f 262144 -- specify total ROM size in bytes.
     -l 8      -- specify number of bytes in one line (AXI databus width). Default is 16.
 
 Copy *fwimage.hex* to rocket_soc subdirectory
@@ -181,13 +191,55 @@ Use button "*Center*" to reset FPGA system and reprint initial messages:
 
 ```
     Boot . . .OK
-    Zephyr version 1.3.0
+    Zephyr version 1.5.0
     shell>
 ```
 
 Our system is ready to use. Shell command **pnp** prints SOC HW information,
 command **dhry** runs Dhrystone 2.1 benchmark.
 To end the session, use Ctrl-A, Shift-K
+
+
+## Debugger with GUI
+
+Instruction of how to connect FPGA board via
+[Ethernet](http://sergeykhbr.github.io/riscv_vhdl/eth_link.html)
+your can find here. Simulation and Hardware targets use identical
+EDCL over UDP interface so that Debugger can work with both of them
+using the same set of commands. **Debugger doesn't implement any specific
+interface for the simulation.**
+
+To build Debugger with GUI download and install the latest QT-libraries and
+the specify environment variable QT_PATH as follow:
+
+    $ export QT_PATH=/home/you_work_dir/Qt5.7.0/5.7/gcc_64
+
+Build debugger:
+
+    $ cd .../riscv_vhdl/debugger/makefiles
+    $ make
+
+and run application. You should see something like as follow:
+
+    $ cd ../linuxbuild/bin
+    $ ./run_gui_sim.sh
+
+![Debugger demo](rocket_soc/docs/pics/debugger_demo.gif)    
+
+You can either run application as:
+
+    $ ./appdbg64g.exe -sim -gui -nocfg
+
+where:  
+    *-sim*   Use SoC Simulator or Real Hardware (FPGA)  
+    *-gui*   Use GUI insteade of console mode  
+    *-nocfg* USe default config instead of *config.json* file  
+
+SOC simulator includes not only CPU emulator but also any number of
+custom peripheries, including GNSS engine or whatever.
+To get more information see
+[debugger's description](http://sergeykhbr.github.io/riscv_vhdl/dbg_link.html).
+
 
 ## Simulation with ModelSim
 
@@ -211,53 +263,6 @@ To end the session, use Ctrl-A, Shift-K
      * and other.
 
 
-## Debugger
-
-Since revision v2.0 we provide open source platform debugger. The pre-built
-binaries can be downloaded [here](http://www.gnss-sensor.com/index.php?LinkID=15).
-Instruction of how to connect FPGA board via
-[Ethernet](http://sergeykhbr.github.io/riscv_vhdl/eth_link.html)
-your can find here.
-Just after successful connection with FPGA target your can interact
-with RISC-V SOC by reading/writing memory, CSR register or load
-new elf-file.
-
-```
-    riscv# csr MCPUID
-    CSR[f00] => 8000000000041101
-        Base: RV64IAMS
-    riscv# read 0x204 20
-    [0000000000000200]:  00 00 02 13 00 00 01 93 00 00 01 13 .. .. .. ..
-    [0000000000000210]:  .. .. .. .. .. .. .. .. 00 00 03 13 00 00 02 93
-    riscv# exit
-```
-
-Full debugger configuration including plugins states is stored in file
-**config.json**. You can manually define CSR names and addresses,
-enable/disable platform specific functionality, specify files pathes etc.  
-Start debugger with command argument *-sim* to connect SOC PC-simulator
-instead of FPGA board:
-
-```
-     Linux:
-     export LD_LIBRARY_PATH=/your_path/riscv_vhdl/debugger/linuxbuild/bin
-     cd /your_path/riscv_vhdl/debugger/linuxbuild/bin/
-     ./appdbg64g.exe -sim
-
-     Windows:
-     c:\myprj\rocket\debugger\bin\appdbg64g.exe -sim
-```
-
-This simulator is analog of *spike* tool that is part of tools
-provided RISC-V community. But it's implemented as set of plugins for the
-Core library where each plugin is an independent device functional model.
-Set of created and connected devices through configuration JSON-file forms
-SOC platform that can include any number of different devices, including
-GNSS engine or whatever.
-To get more information see
-[debugger's description](http://sergeykhbr.github.io/riscv_vhdl/dbg_link.html).
-
-
 ## Build and run 'Hello World' example.
 
 Build example:
@@ -267,7 +272,7 @@ Build example:
 
 Run debugger console:
 
-    $ ./your_git_path/debugger/linuxbuild/bin/appdbg64g.exe
+    $ ./your_git_path/debugger/linuxbuild/bin/appdbg64g.exe -sim -gui -nocfg
 
 Load elf-file via Ethernet using debugger console:
 
@@ -317,17 +322,16 @@ could contain errors that are fixing with a small delay. Let me know if see one.
 
 ## Versions History
 
-### v4.0 under development
-
-I'm going to merge with the latest Rocket Core repository:
+### Implemented functionality (v4.0)
 
 - Support new revision of User-Level ISA Spec. 2.1 and Privileged spec. 1.9.
 - FW will be binary incompatible with the previous Rocket-chip CPU (changed CSR's 
 indexes, instruction ERET removed, new set of instructions xRET was added etc).
 - GCC versions (5.x) becomes obsolete.
-- I intend to enable FPU by default and provide new GCC 6.x with --hard-float.
+- FPU enabled by default and pre-built GCC 6.x with --hard-float provided.
 - HostIO bus removed.
-- New DebugUnit from SiFive (or own implementation is under estimation).
+- HW Debug capability significantly affetcted by new DebugUnit, but Simulation
+significantly improved.
 - Updated bootloader and FW will become available soon.
 
 ### Implemented functionality (v3.1)
