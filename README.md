@@ -25,7 +25,7 @@ Parameterized generator of the Rocket-chip can be found here:
 
 ## System-on-Chip structure and performance
 
-![SOC top](rocket_soc/docs/pics/soc_top.png)
+![SOC top](rocket_soc/docs/pics/soc_top_v4.png)
 
 Performance analysis is based on
 [**Dhrystone v2.1. benchmark**](http://fossies.org/linux/privat/old/dhrystone-2.1.tar.gz/)
@@ -46,7 +46,7 @@ FPGA SoC with "Rocket" v4.0 | 40.7 | **24038.0** | 40  | Yes | Zephyr 1.5
 
 Access to all memory banks and peripheries in the same clock domain is always
 one clock in this SOC (without wait-states). So, this benchmark 
-result **Dhrystone per seconds** shows performance of the CPU with integer 
+result (**Dhrystone per seconds**) shows performance of the CPU with integer 
 instructions and degradation of the CPI relative ideal (simulation) case.
 
 I'll continue to track changes in Dhrystone results in future 
@@ -93,7 +93,7 @@ This repository consists of three sub-projects each in own subfolder:
         - */debugger/cpu_sysc_plugin* - SystemC CPU model (only synthesizable syntax).
         - */rocket_soc/riverlib*      - RTL sources with VCD-stimulus from SystemC.
     2. Advanced debugging features: bus tracing, pipeline statistic on HW level etc.
-    3. Integration with GUI from very beginning.
+    3. Integration with GUI from the very beginning.
   I hope to develop the most friendly synthesizable processor for HW and SW developers.
   And it will be interesting to compare the result of amateur and team of the professional
   CPU developers.
@@ -207,12 +207,12 @@ To end the session, use Ctrl-A, Shift-K
 Instruction of how to connect FPGA board via
 [Ethernet](http://sergeykhbr.github.io/riscv_vhdl/eth_link.html)
 your can find here. Simulation and Hardware targets use identical
-EDCL over UDP interface so that Debugger can work with both of them
+EDCL over UDP interface so that Debugger can work with any of them
 using the same set of commands. **Debugger doesn't implement any specific
 interface for the simulation.**
 
 To build Debugger with GUI download and install the latest QT-libraries and
-the specify environment variable QT_PATH as follow:
+set environment variable QT_PATH as follow:
 
     $ export QT_PATH=/home/you_work_dir/Qt5.7.0/5.7/gcc_64
 
@@ -221,7 +221,7 @@ Build debugger:
     $ cd .../riscv_vhdl/debugger/makefiles
     $ make
 
-and run application. You should see something like as follow:
+Run application as follow and you should see something like on image below:
 
     $ cd ../linuxbuild/bin
     $ ./run_gui_sim.sh
@@ -233,9 +233,9 @@ You can either run application as:
     $ ./appdbg64g.exe -sim -gui -nocfg
 
 where:  
-    *-sim*   \tUse SoC Simulator not a Real Hardware (FPGA)  
-    *-gui*   \tUse GUI instead of console mode  
-    *-nocfg* \tUse default config instead of *config.json* file  
+    *-sim*   Use SoC Simulator not a Real Hardware (FPGA)  
+    *-gui*   Use GUI instead of console mode  
+    *-nocfg* Use default config instead of *config.json* file  
 
 SOC simulator includes not only CPU emulator but also any number of
 custom peripheries, including GNSS engine or whatever.
