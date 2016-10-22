@@ -23,6 +23,42 @@ CpuRiscV_RTL::CpuRiscV_RTL(const char *name)
     freqHz_.make_uint64(1);
     RISCV_event_create(&config_done_, "config_done");
     RISCV_register_hap(static_cast<IHap *>(this));
+
+#if GENERATE_VCD
+    vcd_ = sc_create_vcd_trace_file("river_sim");
+#else
+    vcd_ = 0;
+#endif
+    sc_trace(vcd_, w_clk, "clk");
+    sc_trace(vcd_, w_nrst, "nrst");
+    sc_trace(vcd_, wb_timer, "timer");
+
+    /** Create all objects, then initilize SystemC context: */
+    wrapper_ = new RtlWrapper("wrapper");
+    w_clk = wrapper_->o_clk;
+    wrapper_->o_nrst(w_nrst);
+    wrapper_->i_timer(wb_timer);
+    wrapper_->i_req_mem_valid(w_req_mem_valid);
+    wrapper_->i_req_mem_write(w_req_mem_write);
+    wrapper_->i_req_mem_addr(wb_req_mem_addr);
+    wrapper_->i_req_mem_strob(wb_req_mem_strob);
+    wrapper_->i_req_mem_data(wb_req_mem_data);
+    wrapper_->o_resp_mem_ready(w_resp_mem_ready);
+    wrapper_->o_resp_mem_data(wb_resp_mem_data);
+
+    top_ = new RiverTop("top", vcd_);
+    top_->i_clk(wrapper_->o_clk);
+    top_->i_nrst(w_nrst);
+    top_->o_timer(wb_timer);
+    top_->o_req_mem_valid(w_req_mem_valid);
+    top_->o_req_mem_write(w_req_mem_write);
+    top_->o_req_mem_addr(wb_req_mem_addr);
+    top_->o_req_mem_strob(wb_req_mem_strob);
+    top_->o_req_mem_data(wb_req_mem_data);
+    top_->i_resp_mem_ready(w_resp_mem_ready);
+    top_->i_resp_mem_data(wb_resp_mem_data);
+
+    sc_start(0, SC_NS);
 }
 
 CpuRiscV_RTL::~CpuRiscV_RTL() {
@@ -30,14 +66,24 @@ CpuRiscV_RTL::~CpuRiscV_RTL() {
 }
 
 void CpuRiscV_RTL::postinitService() {
-    ibus_ = static_cast<IBus *>(
+    IBus *ibus = static_cast<IBus *>(
        RISCV_get_service_iface(bus_.to_string(), IFACE_BUS));
 
-    if (!ibus_) {
+    if (!ibus) {
         RISCV_error("Bus interface '%s' not found", 
                     bus_.to_string());
         return;
     }
+    wrapper_->setBus(ibus);
+
+    if (!run()) {
+        RISCV_error("Can't create thread.", NULL);
+        return;
+    }
+}
+
+void CpuRiscV_RTL::predeleteService() {
+    stop();
 }
 
 void CpuRiscV_RTL::hapTriggered(IFace *isrc, EHapType type,
@@ -45,34 +91,25 @@ void CpuRiscV_RTL::hapTriggered(IFace *isrc, EHapType type,
     RISCV_event_set(&config_done_);
 }
 
+void CpuRiscV_RTL::stop() {
+    sc_stop();
+    if (vcd_) {
+        //sc_close_vcd_trace_file(vcd_);
+    }
+
+    IThread::stop();
+}
+
 void CpuRiscV_RTL::busyLoop() {
     RISCV_event_wait(&config_done_);
 
-    IFace *cb;
-    uint64_t cur_time = 0;
-    while (isEnabled()) {
-        queue_.initProc();
-        queue_.pushPreQueued();
-        
-        while (cb = queue_.getNext(cur_time)) {
-            
-            /** 
-             * We check pre-queued events to provide possiblity of new events
-             * on the same step.
-             */
-            queue_.pushPreQueued();
-        }
-        cur_time++;
-    }
+    sc_start();
 }
 
+   
 void CpuRiscV_RTL::raiseInterrupt(int idx) {
 }
 
-void CpuRiscV_RTL::registerStepCallback(IClockListener *cb,
-                                               uint64_t t) {
-    queue_.put(t, cb);
-}
 
 }  // namespace debugger
 

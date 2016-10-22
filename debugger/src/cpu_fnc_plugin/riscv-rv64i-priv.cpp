@@ -16,6 +16,9 @@ uint64_t readCSR(uint32_t idx, CpuContextType *data) {
     case CSR_mtime:
         ret = data->step_cnt;
         break;
+    case CSR_mreset:
+        ret = data->reset;
+        break;
     default:;
     }
     return ret;
@@ -31,6 +34,9 @@ void writeCSR(uint32_t idx, uint64_t val, CpuContextType *data) {
     case CSR_mhartid:
         break;
     case CSR_mtime:
+        break;
+    case CSR_mreset:
+        data->reset = val != 0 ? true: false;
         break;
     default:
         data->csr[idx] = val;

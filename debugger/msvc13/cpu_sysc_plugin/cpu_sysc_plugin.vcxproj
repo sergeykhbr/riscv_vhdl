@@ -91,14 +91,19 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)../src/common;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)../src/common;$(SYSTEMC_SRC)</AdditionalIncludeDirectories>
+      <AdditionalOptions>/vmg %(AdditionalOptions)</AdditionalOptions>
+      <DisableSpecificWarnings>4244;4996;</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>libdbg64g.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SolutionDir)\..\win32build\$(Configuration)\</AdditionalLibraryDirectories>
+      <AdditionalDependencies>libdbg64g.lib;SystemC.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)\..\win32build\$(Configuration)\;$(SYSTEMC_LIB)\</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>$(ProjectDir)exportmap.def</ModuleDefinitionFile>
+      <OptimizeReferences>
+      </OptimizeReferences>
+      <EnableCOMDATFolding>false</EnableCOMDATFolding>
     </Link>
     <PreBuildEvent>
       <Command>
@@ -172,8 +177,10 @@
     <ClCompile Include="..\..\src\common\async_tqueue.cpp" />
     <ClCompile Include="..\..\src\common\attribute.cpp" />
     <ClCompile Include="..\..\src\common\autobuffer.cpp" />
+    <ClCompile Include="..\..\src\cpu_sysc_plugin\core\river_top.cpp" />
     <ClCompile Include="..\..\src\cpu_sysc_plugin\cpu_riscv_rtl.cpp" />
     <ClCompile Include="..\..\src\cpu_sysc_plugin\plugin_init.cpp" />
+    <ClCompile Include="..\..\src\cpu_sysc_plugin\rtl_wrapper.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\api_types.h" />
@@ -185,7 +192,10 @@
     <ClInclude Include="..\..\src\common\iclass.h" />
     <ClInclude Include="..\..\src\common\iface.h" />
     <ClInclude Include="..\..\src\common\iservice.h" />
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\core\river_cfg.h" />
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\core\river_top.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\cpu_riscv_rtl.h" />
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\rtl_wrapper.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

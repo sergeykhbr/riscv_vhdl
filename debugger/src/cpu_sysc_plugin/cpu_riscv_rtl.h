@@ -17,7 +17,9 @@
 #include "coreservices/imemop.h"
 #include "coreservices/ibus.h"
 #include "coreservices/iclock.h"
-#include "coreservices/iclklistener.h"
+#include "rtl_wrapper.h"
+#include "core/river_top.h"
+#include <systemc.h>
 
 namespace debugger {
 
@@ -32,8 +34,10 @@ public:
 
     /** IService interface */
     virtual void postinitService();
+    virtual void predeleteService();
 
     /** ICpuRiscV interface */
+    virtual void setReset(bool v) { wrapper_->setReset(v); }
     virtual void raiseInterrupt(int idx);
     virtual bool isHalt() { return false; }
     virtual void halt() {}
@@ -51,10 +55,14 @@ public:
 
     /** IClock */
     virtual uint64_t getStepCounter() { return 0; }
-    virtual void registerStepCallback(IClockListener *cb, uint64_t t);
+    virtual void registerStepCallback(IClockListener *cb, uint64_t t) {
+        wrapper_->registerStepCallback(cb, t);
+    }
 
     /** IHap */
     virtual void hapTriggered(IFace *isrc, EHapType type, const char *descr);
+
+    virtual void stop();
 
 protected:
     /** IThread interface */
@@ -67,8 +75,23 @@ private:
     AttributeType freqHz_;
     event_def config_done_;
 
-    IBus *ibus_;
-    AsyncTQueueType queue_;
+    sc_signal<bool> w_clk;
+    sc_signal<bool> w_nrst;
+    // Timer:
+    sc_signal<sc_uint<RISCV_ARCH>> wb_timer;
+    // Memory interface:
+    sc_signal<bool> w_req_mem_valid;
+    sc_signal<bool> w_req_mem_write;
+    sc_signal<sc_uint<AXI_ADDR_WIDTH>> wb_req_mem_addr;
+    sc_signal<sc_uint<AXI_DATA_BYTES>> wb_req_mem_strob;
+    sc_signal<sc_uint<AXI_DATA_WIDTH>> wb_req_mem_data;
+    sc_signal<bool> w_resp_mem_ready;
+    sc_signal<sc_uint<AXI_DATA_WIDTH>> wb_resp_mem_data;
+    // Debug interface
+
+    sc_trace_file *vcd_;
+    RiverTop *top_;
+    RtlWrapper *wrapper_;
 };
 
 DECLARE_CLASS(CpuRiscV_RTL)

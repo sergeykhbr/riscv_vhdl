@@ -11,6 +11,7 @@
 #include "iclass.h"
 #include "iservice.h"
 #include "ihap.h"
+#include "async_tqueue.h"
 #include "coreservices/ithread.h"
 #include "coreservices/icpuriscv.h"
 #include "coreservices/imemop.h"
@@ -36,6 +37,7 @@ public:
     virtual void predeleteService();
 
     /** ICpuRiscV interface */
+    virtual void setReset(bool v);
     virtual void raiseInterrupt(int idx);
     virtual bool isHalt() { return dbg_state_ == STATE_Halted; }
     virtual void halt();
@@ -74,8 +76,9 @@ private:
     uint32_t hash32(uint32_t val) { return (val >> 2) & 0x1f; }
 
     void updatePipeline();
-
     void updateState();
+    void updateQueue();
+
     bool isRunning();
     void reset();
     void handleTrap();
@@ -83,28 +86,17 @@ private:
     IInstruction *decodeInstruction(uint32_t *rpayload);
     void executeInstruction(IInstruction *instr, uint32_t *rpayload);
 
-    void queueUpdate();
-    void copyPreQueued();
 
 private:
     AttributeType bus_;
     AttributeType listExtISA_;
     AttributeType freqHz_;
     event_def config_done_;
+
+    AsyncTQueueType queue_;
     uint64_t last_hit_breakpoint_;
 
     uint32_t cacheline_[512/4];
-
-    enum QueueItemNames {
-        Queue_Time, 
-        Queue_IFace, 
-        Queue_Total
-    };
-    AttributeType stepQueue_;
-    AttributeType stepPreQueued_;
-    unsigned stepPreQueued_len_;
-    unsigned stepQueue_len_;    // to avoid reallocation
-    mutex_def mutexStepQueue_;
 
     // Registers:
     static const int INSTR_HASH_TABLE_SIZE = 1 << 5;
@@ -117,6 +109,7 @@ private:
         STATE_Stepping
     } dbg_state_;
     uint64_t dbg_step_cnt_;
+
 };
 
 DECLARE_CLASS(CpuRiscV_Functional)

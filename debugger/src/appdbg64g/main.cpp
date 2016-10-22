@@ -9,6 +9,7 @@
 #include "iservice.h"
 #include "coreservices/iudp.h"
 #include "coreservices/ithread.h"
+#include "coreservices/icpuriscv.h"
 /** Plugin verification */
 #include "simple_plugin/isimple_plugin.h"
 #include <stdio.h>
@@ -318,6 +319,20 @@ int main(int argc, char* argv[]) {
 	        itst = static_cast<IService *>(RISCV_create_service(
                           simple, "example1", NULL));
         }
+    }
+
+    /**
+     * Create "River" CPU SystemC model
+     */
+    IFace *cpu_cls = RISCV_get_class("CpuRiscV_RTLClass");
+    if (cpu_cls) {
+        AttributeType attr;
+        attr.from_config("[['Bus','axi0'],['FreqHz',60000000]]");
+        IService *core1 = static_cast<IService *>(
+                    RISCV_create_service(cpu_cls, "core1", &attr));
+        ICpuRiscV *iriver = static_cast<ICpuRiscV *>(
+                    core1->getInterface(IFACE_CPU_RISCV));
+        iriver->setReset(true);
     }
 
     if (itst != NULL) {

@@ -26,16 +26,11 @@ CpuRiscV_Functional::CpuRiscV_Functional(const char *name)
     listExtISA_.make_list(0);
     freqHz_.make_uint64(1);
 
-    stepPreQueued_.make_list(0);
-    stepQueue_.make_list(16);   /** it will be auto reallocated if needed */
-    stepPreQueued_len_ = 0;
-    stepQueue_len_ = 0;
     cpu_context_.step_cnt = 0;
 
-    RISCV_mutex_init(&mutexStepQueue_);
     RISCV_event_create(&config_done_, "config_done");
     RISCV_register_hap(static_cast<IHap *>(this));
-    cpu_context_.csr[CSR_mreset]   = 0;
+    cpu_context_.reset   = false;
     dbg_state_ = STATE_Normal;
     last_hit_breakpoint_ = ~0;
     reset();
@@ -43,7 +38,6 @@ CpuRiscV_Functional::CpuRiscV_Functional(const char *name)
 
 CpuRiscV_Functional::~CpuRiscV_Functional() {
     RISCV_event_close(&config_done_);
-    RISCV_mutex_destroy(&mutexStepQueue_);
 }
 
 void CpuRiscV_Functional::postinitService() {
@@ -111,9 +105,8 @@ void CpuRiscV_Functional::updatePipeline() {
     }
 
     updateState();
-
-    if (pContext->csr[CSR_mreset]) {
-        queueUpdate();
+    if (pContext->reset) {
+        updateQueue();
         reset();
         return;
     } 
@@ -133,7 +126,7 @@ void CpuRiscV_Functional::updatePipeline() {
         }
     }
 
-    queueUpdate();
+    updateQueue();
 
     handleTrap();
 }
@@ -158,37 +151,16 @@ void CpuRiscV_Functional::updateState() {
    }
 }
 
-bool CpuRiscV_Functional::isRunning() {
-    return  (dbg_state_ != STATE_Halted);
-}
-
-void CpuRiscV_Functional::reset() {
+void CpuRiscV_Functional::updateQueue() {
+    IFace *cb;
     CpuContextType *pContext = getpContext();
-    pContext->regs[0] = 0;
-    pContext->pc = RESET_VECTOR;
-    pContext->npc = RESET_VECTOR;
-    pContext->exception = 0;
-    pContext->interrupt = 0;
-    pContext->csr[CSR_mvendorid] = 0x0001;   // UC Berkeley Rocket repo
-    pContext->csr[CSR_mhartid] = 0;
-    pContext->csr[CSR_marchid] = 0;
-    pContext->csr[CSR_mimplementationid] = 0;
-    pContext->csr[CSR_mtvec]   = 0x100;     // Hardwired RO value
-    pContext->csr[CSR_mip] = 0;             // clear pending interrupts
-    pContext->csr[CSR_mie] = 0;             // disabling interrupts
-    pContext->csr[CSR_mepc] = 0;
-    pContext->csr[CSR_mcause] = 0;
-    pContext->csr[CSR_medeleg] = 0;
-    pContext->csr[CSR_mideleg] = 0;
-    pContext->csr[CSR_mtime] = 0;
-    pContext->csr[CSR_mtimecmp] = 0;
-    pContext->csr[CSR_uepc] = 0;
-    pContext->csr[CSR_sepc] = 0;
-    pContext->csr[CSR_hepc] = 0;
-    csr_mstatus_type mstat;
-    mstat.value = 0;
-    pContext->csr[CSR_mstatus] = mstat.value;
-    pContext->cur_prv_level = PRV_LEVEL_M;           // Current privilege level
+
+    queue_.initProc();
+    queue_.pushPreQueued();
+        
+    while (cb = queue_.getNext(pContext->step_cnt)) {
+        static_cast<IClockListener *>(cb)->stepCallback(pContext->step_cnt);
+    }
 }
 
 void CpuRiscV_Functional::handleTrap() {
@@ -225,6 +197,39 @@ void CpuRiscV_Functional::handleTrap() {
     pContext->npc = pContext->csr[CSR_mtvec];
 
     pContext->exception = 0;
+}
+
+bool CpuRiscV_Functional::isRunning() {
+    return  (dbg_state_ != STATE_Halted);
+}
+
+void CpuRiscV_Functional::reset() {
+    CpuContextType *pContext = getpContext();
+    pContext->regs[0] = 0;
+    pContext->pc = RESET_VECTOR;
+    pContext->npc = RESET_VECTOR;
+    pContext->exception = 0;
+    pContext->interrupt = 0;
+    pContext->csr[CSR_mvendorid] = 0x0001;   // UC Berkeley Rocket repo
+    pContext->csr[CSR_mhartid] = 0;
+    pContext->csr[CSR_marchid] = 0;
+    pContext->csr[CSR_mimplementationid] = 0;
+    pContext->csr[CSR_mtvec]   = 0x100;     // Hardwired RO value
+    pContext->csr[CSR_mip] = 0;             // clear pending interrupts
+    pContext->csr[CSR_mie] = 0;             // disabling interrupts
+    pContext->csr[CSR_mepc] = 0;
+    pContext->csr[CSR_mcause] = 0;
+    pContext->csr[CSR_medeleg] = 0;
+    pContext->csr[CSR_mideleg] = 0;
+    pContext->csr[CSR_mtime] = 0;
+    pContext->csr[CSR_mtimecmp] = 0;
+    pContext->csr[CSR_uepc] = 0;
+    pContext->csr[CSR_sepc] = 0;
+    pContext->csr[CSR_hepc] = 0;
+    csr_mstatus_type mstat;
+    mstat.value = 0;
+    pContext->csr[CSR_mstatus] = mstat.value;
+    pContext->cur_prv_level = PRV_LEVEL_M;           // Current privilege level
 }
 
 void CpuRiscV_Functional::fetchInstruction() {
@@ -314,40 +319,6 @@ void CpuRiscV_Functional::executeInstruction(IInstruction *instr,
     }
 }
 
-void CpuRiscV_Functional::queueUpdate() {
-    uint64_t ev_time;
-    IClockListener *iclk;
-    CpuContextType *pContext = getpContext();
-
-    if (stepPreQueued_len_) {
-        copyPreQueued();
-    }
-
-    for (unsigned i = 0; i < stepQueue_len_; i++) {
-        ev_time = stepQueue_[i][Queue_Time].to_uint64();
-
-        if (pContext->step_cnt >= ev_time) {
-            iclk = static_cast<IClockListener *>(
-                    stepQueue_[i][Queue_IFace].to_iface());
-
-            iclk->stepCallback(pContext->step_cnt);
-
-            // remove item from list using swap function to avoid usage
-            // of allocation/deallocation calls.
-            stepQueue_.swap_list_item(i, stepQueue_len_ - 1);
-            stepQueue_len_--;
-            i--;
-        }
-        /** 
-         * We check pre-queued events to provide possiblity of new events
-         * on the same step.
-         */
-        if (stepPreQueued_len_) {
-            copyPreQueued();
-        }
-    }
-}
-
 void CpuRiscV_Functional::registerStepCallback(IClockListener *cb,
                                                uint64_t t) {
     if (!isEnabled()) {
@@ -356,40 +327,7 @@ void CpuRiscV_Functional::registerStepCallback(IClockListener *cb,
         }
         return;
     }
-
-    AttributeType item;
-    item.make_list(Queue_Total);
-    AttributeType time(Attr_UInteger, t);
-    AttributeType face(cb);
-    item[Queue_Time] = time;
-    item[Queue_IFace] = face;
-    RISCV_mutex_lock(&mutexStepQueue_);
-    if (stepPreQueued_len_ == stepPreQueued_.size()) {
-        unsigned new_sz = 2 * stepPreQueued_.size();
-        if (new_sz == 0) {
-            new_sz = 1;
-        }
-        stepPreQueued_.realloc_list(new_sz);
-    }
-    stepPreQueued_[stepPreQueued_len_].attr_free();
-    stepPreQueued_[stepPreQueued_len_] = item;
-    stepPreQueued_len_++;
-    RISCV_mutex_unlock(&mutexStepQueue_);
-}
-
-void CpuRiscV_Functional::copyPreQueued() {
-    RISCV_mutex_lock(&mutexStepQueue_);
-    for (unsigned i = 0; i < stepPreQueued_len_; i++) {
-        if (stepQueue_len_ < stepQueue_.size()) {
-            stepQueue_[stepQueue_len_].attr_free();
-            stepQueue_[stepQueue_len_] = stepPreQueued_[i];
-        } else {
-            stepQueue_.add_to_list(&stepPreQueued_[i]);
-        }
-        stepQueue_len_++;
-    }
-    stepPreQueued_len_ = 0;
-    RISCV_mutex_unlock(&mutexStepQueue_);
+    queue_.put(t, cb);
 }
 
 uint64_t CpuRiscV_Functional::write(uint16_t adr, uint64_t val) {
@@ -400,6 +338,9 @@ uint64_t CpuRiscV_Functional::write(uint16_t adr, uint64_t val) {
 uint64_t CpuRiscV_Functional::read(uint16_t adr, uint64_t *val) {
     *val = readCSR(adr, getpContext());
     return 0;
+}
+
+void CpuRiscV_Functional::setReset(bool v) {
 }
 
 /** 
@@ -421,7 +362,7 @@ void CpuRiscV_Functional::raiseInterrupt(int idx) {
     csr_mstatus_type mstatus;
     mstatus.value = pContext->csr[CSR_mstatus];
 
-    if (pContext->csr[CSR_mreset]) {
+    if (pContext->reset) {
         return;
     }
 

@@ -21,6 +21,7 @@ class ICpuRiscV : public IFace {
 public:
     ICpuRiscV() : IFace(IFACE_CPU_RISCV) {}
 
+    virtual void setReset(bool) =0;
     virtual void raiseInterrupt(int idx) =0;
     virtual bool isHalt() =0;
     virtual void halt() =0;
