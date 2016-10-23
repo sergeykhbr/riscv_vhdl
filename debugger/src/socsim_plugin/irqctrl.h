@@ -46,6 +46,7 @@ private:
     AttributeType baseAddress_;
     AttributeType length_;
     AttributeType mipi_;
+    AttributeType irqTotal_;
     AttributeType hostio_;
     AttributeType cpu_;
     IHostIO *ihostio_;

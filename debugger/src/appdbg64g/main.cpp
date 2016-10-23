@@ -183,6 +183,7 @@ const char *default_config =
                 "['BaseAddress',0x80002000],"
                 "['Length',4096],"
                 "['CPU','core0'],"
+                "['IrqTotal',4],"
                 "['HostIO','core0'],"
                 "['CSR_MIPI',0x783]"
                 "]}]},"
@@ -332,7 +333,7 @@ int main(int argc, char* argv[]) {
                     RISCV_create_service(cpu_cls, "core1", &attr));
         ICpuRiscV *iriver = static_cast<ICpuRiscV *>(
                     core1->getInterface(IFACE_CPU_RISCV));
-        iriver->setReset(true);
+        iriver->raiseSignal(CPU_SIGNAL_RESET);  // Active low. Unreset CPU model.
     }
 
     if (itst != NULL) {

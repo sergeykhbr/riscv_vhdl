@@ -4,8 +4,14 @@
     <Filter Include="common">
       <UniqueIdentifier>{f5a16e1a-fd0c-436b-9f2e-d8942e1ccf15}</UniqueIdentifier>
     </Filter>
-    <Filter Include="core">
+    <Filter Include="riverlib">
       <UniqueIdentifier>{b1e09510-2732-4933-b253-219182a18f20}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="riverlib\cache">
+      <UniqueIdentifier>{684d9ce8-2ae2-4f03-a11c-9a70ed92a4b9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="riverlib\core">
+      <UniqueIdentifier>{dba86c01-b99a-43bf-89e5-74e84d5caf30}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -20,10 +26,16 @@
     <ClCompile Include="..\..\src\common\async_tqueue.cpp">
       <Filter>common</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\cpu_sysc_plugin\core\river_top.cpp">
-      <Filter>core</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\cpu_sysc_plugin\rtl_wrapper.cpp" />
+    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\river_top.cpp">
+      <Filter>riverlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\cache_top.cpp">
+      <Filter>riverlib\cache</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\proc.cpp">
+      <Filter>riverlib\core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\api_types.h">
@@ -54,12 +66,18 @@
     <ClInclude Include="..\..\src\common\async_tqueue.h">
       <Filter>common</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\cpu_sysc_plugin\core\river_top.h">
-      <Filter>core</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\cpu_sysc_plugin\core\river_cfg.h">
-      <Filter>core</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\cpu_sysc_plugin\rtl_wrapper.h" />
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\river_cfg.h">
+      <Filter>riverlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\river_top.h">
+      <Filter>riverlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\cache_top.h">
+      <Filter>riverlib\cache</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\proc.h">
+      <Filter>riverlib\core</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

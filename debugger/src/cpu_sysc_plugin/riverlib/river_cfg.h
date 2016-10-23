@@ -20,6 +20,8 @@ static const int AXI_ADDR_WIDTH = 32;
 static const int AXI_DATA_WIDTH = 64;
 static const int AXI_DATA_BYTES = AXI_DATA_WIDTH / 8;
 
+static const uint64_t RESET_VECTOR = 0x00001000;
+
 
 }  // namespace debugger
 

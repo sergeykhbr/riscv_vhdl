@@ -37,8 +37,8 @@ public:
     virtual void predeleteService();
 
     /** ICpuRiscV interface */
-    virtual void setReset(bool v);
-    virtual void raiseInterrupt(int idx);
+    virtual void raiseSignal(int idx);
+    virtual void lowerSignal(int idx);
     virtual bool isHalt() { return dbg_state_ == STATE_Halted; }
     virtual void halt();
     virtual void go();

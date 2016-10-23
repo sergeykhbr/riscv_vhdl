@@ -18,7 +18,7 @@
 #include "coreservices/ibus.h"
 #include "coreservices/iclock.h"
 #include "rtl_wrapper.h"
-#include "core/river_top.h"
+#include "riverlib/river_top.h"
 #include <systemc.h>
 
 namespace debugger {
@@ -37,8 +37,8 @@ public:
     virtual void predeleteService();
 
     /** ICpuRiscV interface */
-    virtual void setReset(bool v) { wrapper_->setReset(v); }
-    virtual void raiseInterrupt(int idx);
+    virtual void raiseSignal(int idx) { wrapper_->raiseSignal(idx); }
+    virtual void lowerSignal(int idx) { wrapper_->lowerSignal(idx); }
     virtual bool isHalt() { return false; }
     virtual void halt() {}
     virtual void go() {}
@@ -87,6 +87,8 @@ private:
     sc_signal<sc_uint<AXI_DATA_WIDTH>> wb_req_mem_data;
     sc_signal<bool> w_resp_mem_ready;
     sc_signal<sc_uint<AXI_DATA_WIDTH>> wb_resp_mem_data;
+    /** Interrupt line from external interrupts controller. */
+    sc_signal<bool> w_interrupt;
     // Debug interface
 
     sc_trace_file *vcd_;

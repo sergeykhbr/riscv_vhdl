@@ -9,8 +9,9 @@
 
 #include "async_tqueue.h"
 #include "coreservices/ibus.h"
+#include "coreservices/icpuriscv.h"
 #include "coreservices/iclklistener.h"
-#include "core/river_cfg.h"
+#include "riverlib/river_cfg.h"
 #include <systemc.h>
 
 namespace debugger {
@@ -28,17 +29,23 @@ SC_MODULE(RtlWrapper) {
     sc_in<sc_uint<AXI_DATA_WIDTH>> i_req_mem_data;
     sc_out<bool> o_resp_mem_ready;
     sc_out<sc_uint<AXI_DATA_WIDTH>> o_resp_mem_data;
+    /** Interrupt line from external interrupts controller. */
+    sc_out<bool> o_interrupt;
 
     sc_signal<bool> r_nrst;
     bool w_nrst;
 
-    sc_signal<sc_uint<AXI_DATA_WIDTH>> wb_rd_value;
-    sc_signal<sc_uint<AXI_DATA_WIDTH>> rb_rd_value;
-    sc_signal<bool> w_resp_ready;
-    sc_signal<bool> r_resp_ready;
+    sc_signal<bool> r_interrupt;
+    bool w_interrupt;
 
-    void clk_proc();
-    void mem_access();
+    struct RegistersType {
+        sc_signal<sc_uint<AXI_DATA_WIDTH>> resp_mem_data;
+        sc_signal<bool> resp_mem_ready;
+    } r, v;
+
+    void clk_gen();
+    void clk_posedge_proc();
+    void clk_negedge_proc();
 
     SC_HAS_PROCESS(RtlWrapper);
 
@@ -46,13 +53,21 @@ SC_MODULE(RtlWrapper) {
 
 public:
     void setBus(IBus *v) { ibus_ = v; }
-    void setReset(bool v) { w_nrst = v; }
-    void registerStepCallback(IClockListener *cb, uint64_t t) {
-        queue_.put(t, cb);
-    }
+
+    /** Default time resolution 1 picosecond. */
+    void setClockHz(double hz);
+   
+    void registerStepCallback(IClockListener *cb, uint64_t t);
+    void raiseSignal(int idx);
+    void lowerSignal(int idx);
+
+private:
+    uint64_t mask2offset(uint8_t mask);
+    uint32_t mask2size(uint8_t mask);       // nask with removed offset
 
 private:
     IBus *ibus_;
+    int clockCycles_;   // default in [ps]
     AsyncTQueueType queue_;
 
 };

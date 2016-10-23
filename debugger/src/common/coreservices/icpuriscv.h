@@ -15,14 +15,17 @@ namespace debugger {
 
 static const char *const IFACE_CPU_RISCV = "ICpuRiscV";
 
-static const uint64_t REG_INVALID = ~0;
+static const uint64_t REG_INVALID   = ~0;
+/** Signal types */
+static const int CPU_SIGNAL_RESET   = 0;
+static const int CPU_SIGNAL_EXT_IRQ = 1;
 
 class ICpuRiscV : public IFace {
 public:
     ICpuRiscV() : IFace(IFACE_CPU_RISCV) {}
 
-    virtual void setReset(bool) =0;
-    virtual void raiseInterrupt(int idx) =0;
+    virtual void raiseSignal(int idx) =0;
+    virtual void lowerSignal(int idx) =0;
     virtual bool isHalt() =0;
     virtual void halt() =0;
     virtual void go() =0;

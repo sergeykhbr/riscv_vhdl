@@ -45,6 +45,7 @@ CpuRiscV_RTL::CpuRiscV_RTL(const char *name)
     wrapper_->i_req_mem_data(wb_req_mem_data);
     wrapper_->o_resp_mem_ready(w_resp_mem_ready);
     wrapper_->o_resp_mem_data(wb_resp_mem_data);
+    wrapper_->o_interrupt(w_interrupt);
 
     top_ = new RiverTop("top", vcd_);
     top_->i_clk(wrapper_->o_clk);
@@ -57,6 +58,7 @@ CpuRiscV_RTL::CpuRiscV_RTL(const char *name)
     top_->o_req_mem_data(wb_req_mem_data);
     top_->i_resp_mem_ready(w_resp_mem_ready);
     top_->i_resp_mem_data(wb_resp_mem_data);
+    top_->i_interrupt(w_interrupt);
 
     sc_start(0, SC_NS);
 }
@@ -80,6 +82,8 @@ void CpuRiscV_RTL::postinitService() {
         RISCV_error("Can't create thread.", NULL);
         return;
     }
+
+    wrapper_->setClockHz(freqHz_.to_int());
 }
 
 void CpuRiscV_RTL::predeleteService() {
@@ -105,11 +109,6 @@ void CpuRiscV_RTL::busyLoop() {
 
     sc_start();
 }
-
-   
-void CpuRiscV_RTL::raiseInterrupt(int idx) {
-}
-
 
 }  // namespace debugger
 

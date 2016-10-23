@@ -340,9 +340,6 @@ uint64_t CpuRiscV_Functional::read(uint16_t adr, uint64_t *val) {
     return 0;
 }
 
-void CpuRiscV_Functional::setReset(bool v) {
-}
-
 /** 
  * prv-1.9.1 page 29
  *
@@ -357,26 +354,48 @@ void CpuRiscV_Functional::setReset(bool v) {
  * (HIE, SIE or UIE in mstatus) is set, or if the current privilege mode is
  * less than the delegated privilege mode.
  */
-void CpuRiscV_Functional::raiseInterrupt(int idx) {
+void CpuRiscV_Functional::raiseSignal(int idx) {
     CpuContextType *pContext = getpContext();
     csr_mstatus_type mstatus;
     mstatus.value = pContext->csr[CSR_mstatus];
 
-    if (pContext->reset) {
-        return;
-    }
+    switch (idx) {
+    case CPU_SIGNAL_RESET:
+        pContext->reset = true;
+        break;
+    case CPU_SIGNAL_EXT_IRQ:
+        if (pContext->reset) {
+            break;
+        }
+        if (mstatus.bits.MIE == 0 && pContext->cur_prv_level == PRV_LEVEL_M) {
+            break;
+        }
+        /// @todo delegate interrupt to non-machine privilege level.
 
-    if (mstatus.bits.MIE == 0 && pContext->cur_prv_level == PRV_LEVEL_M) {
-        return;
+        csr_mcause_type cause;
+        cause.value     = 0;
+        cause.bits.irq  = 1;
+        cause.bits.code = 11;   // 11 = Machine external interrupt
+        pContext->csr[CSR_mcause] = cause.value;
+        pContext->interrupt = 1;
+        break;
+    default:
+        RISCV_error("Unsupported signalRaise(%d)", idx);
     }
-    /// @todo delegate interrupt to non-machine privilege level.
+}
 
-    csr_mcause_type cause;
-    cause.value     = 0;
-    cause.bits.irq  = 1;
-    cause.bits.code = 11;   // 11 = Machine external interrupt
-    pContext->csr[CSR_mcause] = cause.value;
-    pContext->interrupt = 1;
+void CpuRiscV_Functional::lowerSignal(int idx) {
+    CpuContextType *pContext = getpContext();
+    switch (idx) {
+    case CPU_SIGNAL_RESET:
+        pContext->reset = false;
+        break;
+    case CPU_SIGNAL_EXT_IRQ:
+        pContext->interrupt = 0;
+        break;
+    default:
+        RISCV_error("Unsupported lowerSignal(%d)", idx);
+    }
 }
 
 void CpuRiscV_Functional::halt() {

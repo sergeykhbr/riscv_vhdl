@@ -10,6 +10,8 @@
 
 #include <systemc.h>
 #include "river_cfg.h"
+#include "core/proc.h"
+#include "cache/cache_top.h"
 
 namespace debugger {
 
@@ -26,10 +28,10 @@ SC_MODULE(RiverTop) {
     sc_out<sc_uint<AXI_DATA_WIDTH>> o_req_mem_data;
     sc_in<bool> i_resp_mem_ready;
     sc_in<sc_uint<AXI_DATA_WIDTH>> i_resp_mem_data;
+    /** Interrupt line from external interrupts controller. */
+    sc_in<bool> i_interrupt;
 
 
-    uint64_t wb_pc;
-    sc_signal<sc_uint<AXI_ADDR_WIDTH>> rb_pc;
     sc_signal<sc_uint<RISCV_ARCH>> rb_timer;
 
     void proc0();
@@ -38,6 +40,27 @@ SC_MODULE(RiverTop) {
     SC_HAS_PROCESS(RiverTop);
 
     RiverTop(sc_module_name name_, sc_trace_file *vcd=0);
+    virtual ~RiverTop();
+
+private:
+
+    Processor *core0;
+    CacheTop *cache0;
+
+    // Control path:
+    sc_signal<bool> w_req_ctrl_valid;
+    sc_signal<sc_uint<AXI_ADDR_WIDTH>> wb_req_ctrl_addr;
+    sc_signal<bool> w_resp_ctrl_ready;
+    sc_signal<sc_uint<32>> wb_resp_ctrl_data;
+    // Data path:
+    sc_signal<bool> w_req_data_valid;
+    sc_signal<bool> w_req_data_write;
+    sc_signal<sc_uint<AXI_ADDR_WIDTH>> wb_req_data_addr;
+    sc_signal<sc_uint<2>> wb_req_data_size; // 0=1bytes; 1=2bytes; 2=4bytes; 3=8bytes
+    sc_signal<sc_uint<RISCV_ARCH>> wb_req_data_data;
+    sc_signal<bool> w_resp_data_ready;
+    sc_signal<sc_uint<RISCV_ARCH>> wb_resp_data_data;
+
 };
 
 

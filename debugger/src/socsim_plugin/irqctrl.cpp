@@ -18,12 +18,14 @@ IrqController::IrqController(const char *name)  : IService(name) {
     registerAttribute("CPU", &cpu_);
     registerAttribute("HostIO", &hostio_);
     registerAttribute("CSR_MIPI", &mipi_);
+    registerAttribute("IrqTotal", &irqTotal_);
 
     baseAddress_.make_uint64(0);
     mipi_.make_uint64(0x783);
     length_.make_uint64(0);
     cpu_.make_string("");
     hostio_.make_string("");
+    irqTotal_.make_uint64(4);
 
     memset(&regs_, 0, sizeof(regs_));
     regs_.irq_mask = ~0;
@@ -50,6 +52,7 @@ void IrqController::postinitService() {
 void IrqController::transaction(Axi4TransactionType *payload) {
     uint64_t mask = (length_.to_uint64() - 1);
     uint64_t off = ((payload->addr - getBaseAddress()) & mask) / 4;
+    uint32_t t1;
     if (payload->rw) {
         for (uint64_t i = 0; i < payload->xsize/4; i++) {
             if (((payload->wstrb >> 4*i) & 0xFF) == 0) {
@@ -66,7 +69,11 @@ void IrqController::transaction(Axi4TransactionType *payload) {
                 RISCV_info("Set irq_pending = %08x", payload->wpayload[i]);
                 break;
             case 2:
+                t1 = regs_.irq_pending;
                 regs_.irq_pending &= ~payload->wpayload[i];
+                if (t1 && !regs_.irq_pending) {
+                    icpu_->lowerSignal(CPU_SIGNAL_EXT_IRQ);
+                }
                 RISCV_info("Set irq_clear = %08x", payload->wpayload[i]);
                 break;
             case 3:
@@ -178,7 +185,7 @@ void IrqController::raiseLine(int idx) {
     }
     if ((regs_.irq_mask & (0x1 << idx)) == 0) {
         regs_.irq_pending |= (0x1 << idx);
-        icpu_->raiseInterrupt(1);   // PLIC interrupt (external)
+        icpu_->raiseSignal(CPU_SIGNAL_EXT_IRQ);   // PLIC interrupt (external)
         RISCV_info("Raise interrupt", NULL);
     }
 }

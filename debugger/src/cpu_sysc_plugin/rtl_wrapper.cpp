@@ -15,22 +15,30 @@ RtlWrapper::RtlWrapper(sc_module_name name)
     o_clk("clk", 1, SC_NS),
     r_nrst("nrst", false) {
 
-    SC_METHOD(clk_proc);
+    clockCycles_ = 1000000; // 1 MHz when default resolution = 1 ps
+
+    SC_METHOD(clk_posedge_proc);
     sensitive << o_clk.posedge_event();
 
-    SC_METHOD(mem_access);
+    SC_METHOD(clk_negedge_proc);
     sensitive << o_clk.negedge_event();
 
     w_nrst = false;
-    wb_rd_value = 0;
-    w_resp_ready = 0;
+    w_interrupt = false;
+    v.resp_mem_data = 0;
+    v.resp_mem_ready = false;
 }
 
-void RtlWrapper::clk_proc() {
-    /** Latch external reset */
+void RtlWrapper::clk_gen() {
+    // todo: instead sc_clock
+}
+
+void RtlWrapper::clk_posedge_proc() {
+    /** Handle signals written out of context of current thread: */
     r_nrst.write(w_nrst);
-    rb_rd_value.write(wb_rd_value);
-    r_resp_ready.write(w_resp_ready);
+    r_interrupt.write(w_interrupt);
+    r.resp_mem_data.write(v.resp_mem_data);
+    r.resp_mem_ready.write(v.resp_mem_ready);
 
     /** Simulation events queue */
     IFace *cb;
@@ -42,21 +50,91 @@ void RtlWrapper::clk_proc() {
     }
 
     o_nrst.write(r_nrst);
-    o_resp_mem_ready.write(r_resp_ready);
+    o_resp_mem_ready.write(r.resp_mem_ready);
+    o_resp_mem_data.write(r.resp_mem_data);
+    o_interrupt.write(r_interrupt);
 }
 
-void RtlWrapper::mem_access() {
+void RtlWrapper::clk_negedge_proc() {
     /** */
-    wb_rd_value = 0;
-    w_resp_ready = 0;
+    v.resp_mem_data = 0;
+    v.resp_mem_ready = false;
     if (i_req_mem_valid.read()) {
         uint64_t addr = i_req_mem_addr.read();
         Reg64Type val;
-        ibus_->read(addr, val.buf, sizeof(val));
-        wb_rd_value = val.val;
-        w_resp_ready = true;
+        if (i_req_mem_write.read()) {
+            uint8_t strob = i_req_mem_strob.read();
+            uint64_t offset = mask2offset(strob);
+            int size = mask2size(strob >> offset);
+
+            addr += offset;
+            val.val = i_req_mem_data.read();
+            ibus_->write(addr, val.buf, size);
+            v.resp_mem_data = 0;
+        } else {
+            ibus_->read(addr, val.buf, sizeof(val));
+            v.resp_mem_data = val.val;
+        }
+        v.resp_mem_ready = true;
     }
 }
+
+uint64_t RtlWrapper::mask2offset(uint8_t mask) {
+    for (int i = 0; i < AXI_DATA_BYTES; i++) {
+        if (mask & 0x1) {
+            return static_cast<uint64_t>(i);
+        }
+        mask >>= 1;
+    }
+    return 0;
+}
+
+uint32_t RtlWrapper::mask2size(uint8_t mask) {
+    uint32_t bytes = 0;
+    for (int i = 0; i < AXI_DATA_BYTES; i++) {
+        if (!(mask & 0x1)) {
+            break;
+        }
+        bytes++;
+        mask >>= 1;
+    }
+    return bytes;
+}
+
+void RtlWrapper::setClockHz(double hz) {
+    sc_time dt = sc_get_time_resolution();
+    clockCycles_ = static_cast<int>((1.0 / hz) / dt.to_seconds() + 0.5);
+}
+    
+void RtlWrapper::registerStepCallback(IClockListener *cb, uint64_t t) {
+    queue_.put(t, cb);
+}
+
+void RtlWrapper::raiseSignal(int idx) {
+    switch (idx) {
+    case CPU_SIGNAL_RESET:
+        w_nrst = true;
+        break;
+    case CPU_SIGNAL_EXT_IRQ:
+        w_interrupt = true;
+        break;
+    default:;
+    }
+}
+
+void RtlWrapper::lowerSignal(int idx) {
+    switch (idx) {
+    case CPU_SIGNAL_RESET:
+        w_nrst = false;
+        break;
+    case CPU_SIGNAL_EXT_IRQ:
+        w_interrupt = false;
+        break;
+    default:;
+    }
+}
+
+
 
 }  // namespace debugger
 
