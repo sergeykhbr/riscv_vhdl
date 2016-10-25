@@ -26,15 +26,13 @@ SC_MODULE(RiverTop) {
     sc_out<sc_uint<AXI_ADDR_WIDTH>> o_req_mem_addr;
     sc_out<sc_uint<AXI_DATA_BYTES>> o_req_mem_strob;
     sc_out<sc_uint<AXI_DATA_WIDTH>> o_req_mem_data;
-    sc_in<bool> i_resp_mem_ready;
+    sc_in<bool> i_resp_mem_data_valid;
     sc_in<sc_uint<AXI_DATA_WIDTH>> i_resp_mem_data;
     /** Interrupt line from external interrupts controller. */
     sc_in<bool> i_interrupt;
 
 
-    sc_signal<sc_uint<RISCV_ARCH>> rb_timer;
-
-    void proc0();
+    void comb();
     void registers();
 
     SC_HAS_PROCESS(RiverTop);
@@ -44,13 +42,15 @@ SC_MODULE(RiverTop) {
 
 private:
 
-    Processor *core0;
+    Processor *proc0;
     CacheTop *cache0;
 
     // Control path:
     sc_signal<bool> w_req_ctrl_valid;
+    sc_signal<bool> w_req_ctrl_ready;
     sc_signal<sc_uint<AXI_ADDR_WIDTH>> wb_req_ctrl_addr;
-    sc_signal<bool> w_resp_ctrl_ready;
+    sc_signal<bool> w_resp_ctrl_valid;
+    sc_signal<sc_uint<AXI_ADDR_WIDTH>> wb_resp_ctrl_addr;
     sc_signal<sc_uint<32>> wb_resp_ctrl_data;
     // Data path:
     sc_signal<bool> w_req_data_valid;
@@ -61,6 +61,10 @@ private:
     sc_signal<bool> w_resp_data_ready;
     sc_signal<sc_uint<RISCV_ARCH>> wb_resp_data_data;
 
+    struct RegistersType {
+        sc_signal<sc_uint<RISCV_ARCH>> timer;
+
+    } v, r;
 };
 
 

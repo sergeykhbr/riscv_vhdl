@@ -2,19 +2,18 @@
  * @file
  * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
  * @author     Sergey Khabarov - sergeykhbr@gmail.com
- * @brief      Memory Cache Top level.
+ * @brief      Instruction Cache.
  */
 
-#ifndef __DEBUGGER_RIVERLIB_CACHE_TOP_H__
-#define __DEBUGGER_RIVERLIB_CACHE_TOP_H__
+#ifndef __DEBUGGER_RIVERLIB_ICACHE_H__
+#define __DEBUGGER_RIVERLIB_ICACHE_H__
 
 #include <systemc.h>
 #include "../river_cfg.h"
-#include "icache.h"
 
 namespace debugger {
 
-SC_MODULE(CacheTop) {
+SC_MODULE(ICache) {
     sc_in<bool> i_clk;
     sc_in<bool> i_nrst;
     // Control path:
@@ -24,14 +23,6 @@ SC_MODULE(CacheTop) {
     sc_out<bool> o_resp_ctrl_valid;
     sc_out<sc_uint<AXI_ADDR_WIDTH>> o_resp_ctrl_addr;
     sc_out<sc_uint<32>> o_resp_ctrl_data;
-    // Data path:
-    sc_in<bool> i_req_data_valid;
-    sc_in<bool> i_req_data_write;
-    sc_in<sc_uint<AXI_ADDR_WIDTH>> i_req_data_addr;
-    sc_in<sc_uint<2>> i_req_data_size; // 0=1bytes; 1=2bytes; 2=4bytes; 3=8bytes
-    sc_in<sc_uint<RISCV_ARCH>> i_req_data_data;
-    sc_out<bool> o_resp_data_ready;
-    sc_out<sc_uint<RISCV_ARCH>> o_resp_data_data;
     // Memory interface:
     sc_out<bool> o_req_mem_valid;
     sc_out<bool> o_req_mem_write;
@@ -45,25 +36,26 @@ SC_MODULE(CacheTop) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(CacheTop);
+    SC_HAS_PROCESS(ICache);
 
-    CacheTop(sc_module_name name_, sc_trace_file *vcd=0);
-    virtual ~CacheTop();
+    ICache(sc_module_name name_, sc_trace_file *vcd=0);
 
 private:
-    static const uint8_t State_Idle = 0;
-    static const uint8_t State_IMem = 1;
-    static const uint8_t State_DMem = 2;
-
     struct RegistersType {
-        sc_signal<sc_uint<2>> state;
+        sc_signal<sc_uint<AXI_ADDR_WIDTH - 3>> iline_addr;
+        sc_signal<sc_uint<AXI_DATA_WIDTH>> iline_data;
+
+        sc_uint<AXI_ADDR_WIDTH> iline_addr_req;
+        bool ihit;
+        sc_uint<32> ihit_data;
     } v, r;
 
-
-    ICache *i0;
+    sc_uint<AXI_ADDR_WIDTH - 3> wb_req_line;
+    sc_uint<AXI_ADDR_WIDTH - 3> wb_cached_addr;
+    sc_uint<AXI_DATA_WIDTH> wb_cached_data;
 };
 
 
 }  // namespace debugger
 
-#endif  // __DEBUGGER_RIVERLIB_CACHE_TOP_H__
+#endif  // __DEBUGGER_RIVERLIB_ICACHE_H__

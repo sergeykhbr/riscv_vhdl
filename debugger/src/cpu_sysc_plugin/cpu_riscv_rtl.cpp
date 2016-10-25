@@ -29,10 +29,6 @@ CpuRiscV_RTL::CpuRiscV_RTL(const char *name)
 #else
     vcd_ = 0;
 #endif
-    sc_trace(vcd_, w_clk, "clk");
-    sc_trace(vcd_, w_nrst, "nrst");
-    sc_trace(vcd_, wb_timer, "timer");
-
     /** Create all objects, then initilize SystemC context: */
     wrapper_ = new RtlWrapper("wrapper");
     w_clk = wrapper_->o_clk;
@@ -43,7 +39,7 @@ CpuRiscV_RTL::CpuRiscV_RTL(const char *name)
     wrapper_->i_req_mem_addr(wb_req_mem_addr);
     wrapper_->i_req_mem_strob(wb_req_mem_strob);
     wrapper_->i_req_mem_data(wb_req_mem_data);
-    wrapper_->o_resp_mem_ready(w_resp_mem_ready);
+    wrapper_->o_resp_mem_data_valid(w_resp_mem_data_valid);
     wrapper_->o_resp_mem_data(wb_resp_mem_data);
     wrapper_->o_interrupt(w_interrupt);
 
@@ -56,9 +52,14 @@ CpuRiscV_RTL::CpuRiscV_RTL(const char *name)
     top_->o_req_mem_addr(wb_req_mem_addr);
     top_->o_req_mem_strob(wb_req_mem_strob);
     top_->o_req_mem_data(wb_req_mem_data);
-    top_->i_resp_mem_ready(w_resp_mem_ready);
+    top_->i_resp_mem_data_valid(w_resp_mem_data_valid);
     top_->i_resp_mem_data(wb_resp_mem_data);
     top_->i_interrupt(w_interrupt);
+
+    //sc_trace(vcd_, w_req_mem_valid, "w_req_mem_valid");
+    //sc_trace(vcd_, wb_req_mem_addr, "wb_req_mem_addr");
+    //sc_trace(vcd_, w_resp_mem_ready, "w_resp_mem_ready");
+    //sc_trace(vcd_, wb_resp_mem_data, "wb_resp_mem_data");
 
     sc_start(0, SC_NS);
 }

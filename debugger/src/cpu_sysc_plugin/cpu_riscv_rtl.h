@@ -85,7 +85,7 @@ private:
     sc_signal<sc_uint<AXI_ADDR_WIDTH>> wb_req_mem_addr;
     sc_signal<sc_uint<AXI_DATA_BYTES>> wb_req_mem_strob;
     sc_signal<sc_uint<AXI_DATA_WIDTH>> wb_req_mem_data;
-    sc_signal<bool> w_resp_mem_ready;
+    sc_signal<bool> w_resp_mem_data_valid;
     sc_signal<sc_uint<AXI_DATA_WIDTH>> wb_resp_mem_data;
     /** Interrupt line from external interrupts controller. */
     sc_signal<bool> w_interrupt;

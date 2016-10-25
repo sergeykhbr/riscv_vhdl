@@ -27,24 +27,22 @@ SC_MODULE(RtlWrapper) {
     sc_in<sc_uint<AXI_ADDR_WIDTH>> i_req_mem_addr;
     sc_in<sc_uint<AXI_DATA_BYTES>> i_req_mem_strob;
     sc_in<sc_uint<AXI_DATA_WIDTH>> i_req_mem_data;
-    sc_out<bool> o_resp_mem_ready;
+    sc_out<bool> o_resp_mem_data_valid;
     sc_out<sc_uint<AXI_DATA_WIDTH>> o_resp_mem_data;
     /** Interrupt line from external interrupts controller. */
     sc_out<bool> o_interrupt;
 
-    sc_signal<bool> r_nrst;
-    bool w_nrst;
-
-    sc_signal<bool> r_interrupt;
-    bool w_interrupt;
 
     struct RegistersType {
         sc_signal<sc_uint<AXI_DATA_WIDTH>> resp_mem_data;
-        sc_signal<bool> resp_mem_ready;
+        sc_signal<bool> resp_mem_data_valid;
+        sc_signal<bool> nrst;
+        sc_signal<bool> interrupt;
     } r, v;
 
     void clk_gen();
-    void clk_posedge_proc();
+    void comb();
+    void registers();
     void clk_negedge_proc();
 
     SC_HAS_PROCESS(RtlWrapper);

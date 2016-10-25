@@ -12,34 +12,47 @@ namespace debugger {
 
 RtlWrapper::RtlWrapper(sc_module_name name)
     : sc_module(name),
-    o_clk("clk", 1, SC_NS),
-    r_nrst("nrst", false) {
+    o_clk("clk", 1, SC_NS) {
 
     clockCycles_ = 1000000; // 1 MHz when default resolution = 1 ps
 
-    SC_METHOD(clk_posedge_proc);
+    SC_METHOD(registers);
     sensitive << o_clk.posedge_event();
+
+    SC_METHOD(comb);
+    sensitive << r.nrst;
+    sensitive << r.resp_mem_data_valid;
+    sensitive << r.resp_mem_data;
+    sensitive << r.interrupt;
 
     SC_METHOD(clk_negedge_proc);
     sensitive << o_clk.negedge_event();
 
-    w_nrst = false;
-    w_interrupt = false;
+    v.nrst = false;
+    v.interrupt = false;
     v.resp_mem_data = 0;
-    v.resp_mem_ready = false;
+    v.resp_mem_data_valid = false;
 }
 
 void RtlWrapper::clk_gen() {
     // todo: instead sc_clock
 }
 
-void RtlWrapper::clk_posedge_proc() {
-    /** Handle signals written out of context of current thread: */
-    r_nrst.write(w_nrst);
-    r_interrupt.write(w_interrupt);
-    r.resp_mem_data.write(v.resp_mem_data);
-    r.resp_mem_ready.write(v.resp_mem_ready);
+void RtlWrapper::comb() {
+    o_nrst = r.nrst;
+    o_resp_mem_data_valid = r.resp_mem_data_valid;
+    o_resp_mem_data = r.resp_mem_data;
+    o_interrupt = r.interrupt;
 
+    if (!r.nrst.read()) {
+    }
+}
+
+void RtlWrapper::registers() {
+    r = v;
+}
+
+void RtlWrapper::clk_negedge_proc() {
     /** Simulation events queue */
     IFace *cb;
     queue_.initProc();
@@ -49,16 +62,9 @@ void RtlWrapper::clk_posedge_proc() {
         static_cast<IClockListener *>(cb)->stepCallback(step_cnt);
     }
 
-    o_nrst.write(r_nrst);
-    o_resp_mem_ready.write(r.resp_mem_ready);
-    o_resp_mem_data.write(r.resp_mem_data);
-    o_interrupt.write(r_interrupt);
-}
-
-void RtlWrapper::clk_negedge_proc() {
     /** */
     v.resp_mem_data = 0;
-    v.resp_mem_ready = false;
+    v.resp_mem_data_valid = false;
     if (i_req_mem_valid.read()) {
         uint64_t addr = i_req_mem_addr.read();
         Reg64Type val;
@@ -75,7 +81,7 @@ void RtlWrapper::clk_negedge_proc() {
             ibus_->read(addr, val.buf, sizeof(val));
             v.resp_mem_data = val.val;
         }
-        v.resp_mem_ready = true;
+        v.resp_mem_data_valid = true;
     }
 }
 
@@ -113,10 +119,10 @@ void RtlWrapper::registerStepCallback(IClockListener *cb, uint64_t t) {
 void RtlWrapper::raiseSignal(int idx) {
     switch (idx) {
     case CPU_SIGNAL_RESET:
-        w_nrst = true;
+        v.nrst = true;
         break;
     case CPU_SIGNAL_EXT_IRQ:
-        w_interrupt = true;
+        v.interrupt = true;
         break;
     default:;
     }
@@ -125,10 +131,10 @@ void RtlWrapper::raiseSignal(int idx) {
 void RtlWrapper::lowerSignal(int idx) {
     switch (idx) {
     case CPU_SIGNAL_RESET:
-        w_nrst = false;
+        v.nrst = false;
         break;
     case CPU_SIGNAL_EXT_IRQ:
-        w_interrupt = false;
+        v.interrupt = false;
         break;
     default:;
     }

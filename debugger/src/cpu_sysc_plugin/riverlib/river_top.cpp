@@ -11,36 +11,40 @@ namespace debugger {
 
 RiverTop::RiverTop(sc_module_name name_, sc_trace_file *vcd) 
     : sc_module(name_) {
-    SC_METHOD(proc0);
-    sensitive << i_resp_mem_ready;
+    SC_METHOD(comb);
+    sensitive << i_nrst;
+    sensitive << i_resp_mem_data_valid;
     sensitive << i_resp_mem_data;
-    sensitive << rb_timer;
+    sensitive << r.timer;
 
     SC_METHOD(registers);
-    sensitive << i_nrst;
     sensitive << i_clk.pos();
 
-    core0 = new Processor("core0", vcd);
-    core0->i_clk(i_clk);
-    core0->i_nrst(i_nrst);
-    core0->o_req_ctrl_valid(w_req_ctrl_valid);
-    core0->o_req_ctrl_addr(wb_req_ctrl_addr);
-    core0->i_resp_ctrl_ready(w_resp_ctrl_ready);
-    core0->i_resp_ctrl_data(wb_resp_ctrl_data);
-    core0->o_req_data_valid(w_req_data_valid);
-    core0->o_req_data_write(w_req_data_write);
-    core0->o_req_data_addr(wb_req_data_addr);
-    core0->o_req_data_size(wb_req_data_size);
-    core0->o_req_data_data(wb_req_data_data);
-    core0->i_resp_data_ready(w_resp_data_ready);
-    core0->i_resp_data_data(wb_resp_data_data);
+    proc0 = new Processor("proc0", vcd);
+    proc0->i_clk(i_clk);
+    proc0->i_nrst(i_nrst);
+    proc0->o_req_ctrl_valid(w_req_ctrl_valid);
+    proc0->i_req_ctrl_ready(w_req_ctrl_ready);
+    proc0->o_req_ctrl_addr(wb_req_ctrl_addr);
+    proc0->i_resp_ctrl_valid(w_resp_ctrl_valid);
+    proc0->i_resp_ctrl_addr(wb_resp_ctrl_addr);
+    proc0->i_resp_ctrl_data(wb_resp_ctrl_data);
+    proc0->o_req_data_valid(w_req_data_valid);
+    proc0->o_req_data_write(w_req_data_write);
+    proc0->o_req_data_addr(wb_req_data_addr);
+    proc0->o_req_data_size(wb_req_data_size);
+    proc0->o_req_data_data(wb_req_data_data);
+    proc0->i_resp_data_ready(w_resp_data_ready);
+    proc0->i_resp_data_data(wb_resp_data_data);
 
     cache0 = new CacheTop("cache0", vcd);
     cache0->i_clk(i_clk);
     cache0->i_nrst(i_nrst);
     cache0->i_req_ctrl_valid(w_req_ctrl_valid);
+    cache0->o_req_ctrl_ready(w_req_ctrl_ready);
     cache0->i_req_ctrl_addr(wb_req_ctrl_addr);
-    cache0->o_resp_ctrl_ready(w_resp_ctrl_ready);
+    cache0->o_resp_ctrl_valid(w_resp_ctrl_valid);
+    cache0->o_resp_ctrl_addr(wb_resp_ctrl_addr);
     cache0->o_resp_ctrl_data(wb_resp_ctrl_data);
     cache0->i_req_data_valid(w_req_data_valid);
     cache0->i_req_data_write(w_req_data_write);
@@ -54,31 +58,37 @@ RiverTop::RiverTop(sc_module_name name_, sc_trace_file *vcd)
     cache0->o_req_mem_addr(o_req_mem_addr);
     cache0->o_req_mem_strob(o_req_mem_strob);
     cache0->o_req_mem_data(o_req_mem_data);
-    cache0->i_resp_mem_ready(i_resp_mem_ready);
+    cache0->i_resp_mem_data_valid(i_resp_mem_data_valid);
     cache0->i_resp_mem_data(i_resp_mem_data);
 
-
     if (vcd) {
-        sc_trace(vcd, rb_timer, "rb_timer");
+        sc_trace(vcd, i_clk, "/top/i_clk");
+        sc_trace(vcd, i_nrst, "/top/i_nrst");
+        sc_trace(vcd, o_timer, "/top/o_timer");
+        sc_trace(vcd, o_req_mem_valid, "/top/o_req_mem_valid");
+        sc_trace(vcd, o_req_mem_addr, "/top/o_req_mem_addr");
+        sc_trace(vcd, i_resp_mem_data_valid, "/top/i_resp_mem_data_valid");
+        sc_trace(vcd, i_resp_mem_data, "/top/i_resp_mem_data");
     }
 };
 
 RiverTop::~RiverTop() {
     delete cache0;
-    delete core0;
+    delete proc0;
 }
 
-void RiverTop::proc0() {
+void RiverTop::comb() {
+    v.timer = r.timer.read() + 1;
 
-    o_timer = rb_timer;
+    if (!i_nrst.read()) {
+        v.timer = 0;
+    }
+
+    o_timer = r.timer;
 }
 
 void RiverTop::registers() {
-    if (!i_nrst.read()) {
-        rb_timer.write(0);
-    } else {
-        rb_timer.write(rb_timer.read() + 1);
-    }
+    r = v;
 }
 
 }  // namespace debugger

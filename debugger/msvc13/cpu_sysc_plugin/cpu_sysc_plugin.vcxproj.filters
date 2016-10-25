@@ -36,6 +36,18 @@
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\proc.cpp">
       <Filter>riverlib\core</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\decoder.cpp">
+      <Filter>riverlib\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\fetch.cpp">
+      <Filter>riverlib\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\execute.cpp">
+      <Filter>riverlib\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\icache.cpp">
+      <Filter>riverlib\cache</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\api_types.h">
@@ -78,6 +90,18 @@
     </ClInclude>
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\proc.h">
       <Filter>riverlib\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\decoder.h">
+      <Filter>riverlib\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\fetch.h">
+      <Filter>riverlib\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\execute.h">
+      <Filter>riverlib\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\icache.h">
+      <Filter>riverlib\cache</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
