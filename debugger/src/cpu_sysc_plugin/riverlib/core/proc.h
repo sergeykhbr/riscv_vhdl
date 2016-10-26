@@ -11,6 +11,9 @@
 #include <systemc.h>
 #include "../river_cfg.h"
 #include "fetch.h"
+#include "decoder.h"
+#include "execute.h"
+#include "regibank.h"
 
 namespace debugger {
 
@@ -52,19 +55,43 @@ private:
         sc_signal<sc_uint<AXI_ADDR_WIDTH>> pc;
         sc_signal<sc_uint<32>> instr;
         sc_signal<bool> instr_valid;
+        sc_signal<bool> sign_ext;
+        sc_signal<sc_bv<ISA_Total>> isa_type;
+        sc_signal<sc_bv<Instr_Total>> instr_vec;
+        sc_signal<bool> user_level;
+        sc_signal<bool> priv_level;
+        sc_signal<bool> exception;
+
         sc_signal<bool> jump_valid;
         sc_signal<sc_uint<AXI_ADDR_WIDTH>> jump_pc;
     };
     struct ExecuteType {
+        sc_signal<bool> valid;
+        sc_signal<sc_uint<32>> instr;
         sc_signal<sc_uint<AXI_ADDR_WIDTH>> pc;
-        sc_signal<bool> jump_valid;
-        sc_signal<sc_uint<AXI_ADDR_WIDTH>> jump_pc;
+        sc_signal<sc_uint<AXI_ADDR_WIDTH>> npc;
+
+        sc_signal<sc_uint<5>> radr1;
+        sc_signal<sc_uint<RISCV_ARCH>> rdata1;
+        sc_signal<sc_uint<5>> radr2;
+        sc_signal<sc_uint<RISCV_ARCH>> rdata2;
+        sc_signal<sc_uint<5>> res_addr;
+        sc_signal<sc_uint<RISCV_ARCH>> res_data;
+
+        sc_signal<bool> memop_load;
+        sc_signal<bool> memop_store;
+        sc_signal<sc_uint<2>> memop_size;
+
     };
     struct MemoryType {
+        sc_signal<bool> ready;  // TODO! Halt full pipeline in all stages
         sc_signal<sc_uint<AXI_ADDR_WIDTH>> pc;
     };
     struct WriteBackType {
         sc_signal<sc_uint<AXI_ADDR_WIDTH>> pc;
+        sc_signal<bool> wena;
+        sc_signal<sc_uint<5>> waddr;
+        sc_signal<sc_uint<RISCV_ARCH>> wdata;
     };
 
     struct PipelineType {
@@ -81,8 +108,15 @@ private:
     sc_signal<bool> w_jump_valid;
     sc_signal<sc_uint<AXI_ADDR_WIDTH>> wb_jump_pc;
 
+    sc_signal<sc_uint<RISCV_ARCH>> wb_ra;   // Return address
+    sc_signal<bool> w_ra_updated;
+
 
     InstrFetch *fetch0;
+    InstrDecoder *dec0;
+    InstrExecute *exec0;
+
+    RegIntBank *iregs0;
 };
 
 

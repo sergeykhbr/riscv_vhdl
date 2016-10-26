@@ -25,11 +25,9 @@ InstrFetch::InstrFetch(sc_module_name name_, sc_trace_file *vcd)
     sensitive << i_clk.pos();
 
     if (vcd) {
-        sc_trace(vcd, o_mem_addr_valid, "/top/proc0/fetch0/o_mem_addr_valid");
-        sc_trace(vcd, o_mem_addr, "/top/proc0/fetch0/o_mem_addr");
-        sc_trace(vcd, o_f_valid, "/top/proc0/fetch0/o_f_valid");
-        sc_trace(vcd, o_f_pc, "/top/proc0/fetch0/o_f_pc");
-        sc_trace(vcd, o_f_instr, "/top/proc0/fetch0/o_f_instr");
+        sc_trace(vcd, o_valid, "/top/proc0/fetch0/o_valid");
+        sc_trace(vcd, o_pc, "/top/proc0/fetch0/o_pc");
+        sc_trace(vcd, o_instr, "/top/proc0/fetch0/o_instr");
     }
 };
 
@@ -77,9 +75,9 @@ void InstrFetch::comb() {
 
     o_mem_addr_valid = r.mem_addr_valid;
     o_mem_addr = r.addr_req;
-    o_f_valid = r.f_valid;
-    o_f_pc = r.pc;
-    o_f_instr = r.instr;
+    o_valid = r.f_valid;
+    o_pc = r.pc;
+    o_instr = r.instr;
 }
 
 void InstrFetch::registers() {

@@ -25,9 +25,9 @@ SC_MODULE(InstrFetch) {
     sc_in<bool> i_jump_valid;
     sc_in<sc_uint<AXI_ADDR_WIDTH>> i_jump_pc;
 
-    sc_out<bool> o_f_valid;
-    sc_out<sc_uint<AXI_ADDR_WIDTH>> o_f_pc;
-    sc_out<sc_uint<32>> o_f_instr;
+    sc_out<bool> o_valid;
+    sc_out<sc_uint<AXI_ADDR_WIDTH>> o_pc;
+    sc_out<sc_uint<32>> o_instr;
 
 
     void comb();

@@ -22,22 +22,22 @@ ICache::ICache(sc_module_name name_, sc_trace_file *vcd)
     sensitive << i_clk.pos();
 
     if (vcd) {
-        sc_trace(vcd, i_req_ctrl_valid, "/top/cache0/i0/i_req_ctrl_valid");
-        sc_trace(vcd, o_req_ctrl_ready, "/top/cache0/i0/o_req_ctrl_ready");
-        sc_trace(vcd, i_req_ctrl_addr, "/top/cache0/i0/i_req_ctrl_addr");
-        sc_trace(vcd, o_req_mem_valid, "/top/cache0/i0/o_req_mem_valid");
-        sc_trace(vcd, o_req_mem_addr, "/top/cache0/i0/o_req_mem_addr");
-        sc_trace(vcd, i_resp_mem_data_valid, "/top/cache0/i0/i_resp_mem_data_valid");
-        sc_trace(vcd, i_resp_mem_data, "/top/cache0/i0/i_resp_mem_data");
+        //sc_trace(vcd, i_req_ctrl_valid, "/top/cache0/i0/i_req_ctrl_valid");
+        //sc_trace(vcd, o_req_ctrl_ready, "/top/cache0/i0/o_req_ctrl_ready");
+        //sc_trace(vcd, i_req_ctrl_addr, "/top/cache0/i0/i_req_ctrl_addr");
+        //sc_trace(vcd, o_req_mem_valid, "/top/cache0/i0/o_req_mem_valid");
+        //sc_trace(vcd, o_req_mem_addr, "/top/cache0/i0/o_req_mem_addr");
+        //sc_trace(vcd, i_resp_mem_data_valid, "/top/cache0/i0/i_resp_mem_data_valid");
+        //sc_trace(vcd, i_resp_mem_data, "/top/cache0/i0/i_resp_mem_data");
         sc_trace(vcd, o_resp_ctrl_valid, "/top/cache0/i0/o_resp_ctrl_valid");
         sc_trace(vcd, o_resp_ctrl_addr, "/top/cache0/i0/o_resp_ctrl_addr");
         sc_trace(vcd, o_resp_ctrl_data, "/top/cache0/i0/o_resp_ctrl_data");
-        sc_trace(vcd, r.ihit, "/top/cache0/i0/r.ihit");
-        sc_trace(vcd, r.ihit_data, "/top/cache0/i0/r.ihit_data");
-        sc_trace(vcd, r.iline_addr, "/top/cache0/i0/r.iline_addr");
-        sc_trace(vcd, wb_req_line, "/top/cache0/i0/wb_req_line");
-        sc_trace(vcd, wb_cached_addr, "/top/cache0/i0/wb_cached_addr");
-        sc_trace(vcd, wb_cached_data, "/top/cache0/i0/wb_cached_data");
+        //sc_trace(vcd, r.ihit, "/top/cache0/i0/r.ihit");
+        //sc_trace(vcd, r.ihit_data, "/top/cache0/i0/r.ihit_data");
+        //sc_trace(vcd, r.iline_addr, "/top/cache0/i0/r.iline_addr");
+        //sc_trace(vcd, wb_req_line, "/top/cache0/i0/wb_req_line");
+        //sc_trace(vcd, wb_cached_addr, "/top/cache0/i0/wb_cached_addr");
+        //sc_trace(vcd, wb_cached_data, "/top/cache0/i0/wb_cached_data");
     }
 };
 
