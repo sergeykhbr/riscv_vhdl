@@ -16,14 +16,17 @@ namespace debugger {
 SC_MODULE(InstrFetch) {
     sc_in<bool> i_clk;
     sc_in<bool> i_nrst;
+    sc_in<bool> i_hold;
     sc_out<bool> o_mem_addr_valid;
-    sc_in<bool> i_mem_addr_ready;
     sc_out<sc_uint<AXI_ADDR_WIDTH>> o_mem_addr;
     sc_in<bool> i_mem_data_valid;
     sc_in<sc_uint<AXI_ADDR_WIDTH>> i_mem_data_addr;
     sc_in<sc_uint<32>> i_mem_data;
-    sc_in<bool> i_jump_valid;
-    sc_in<sc_uint<AXI_ADDR_WIDTH>> i_jump_pc;
+
+    sc_in<bool> i_e_npc_valid;
+    sc_in<sc_uint<AXI_ADDR_WIDTH>> i_e_npc;
+    sc_in<sc_uint<AXI_ADDR_WIDTH>> i_predict_npc;
+    sc_out<bool> o_predict_miss;
 
     sc_out<bool> o_valid;
     sc_out<sc_uint<AXI_ADDR_WIDTH>> o_pc;
@@ -39,16 +42,15 @@ SC_MODULE(InstrFetch) {
 
 private:
     struct RegistersType {
-        sc_signal<bool> mem_addr_valid;
-        sc_signal<bool> mem_addr_valid_z;
         sc_signal<bool> f_valid;
-        sc_signal<sc_uint<AXI_ADDR_WIDTH>> pc;
-        sc_signal<sc_uint<AXI_ADDR_WIDTH>> addr_req;
+        sc_signal<sc_uint<AXI_ADDR_WIDTH>> pc[2];
+        sc_signal<sc_uint<AXI_ADDR_WIDTH>> raddr_not_resp_yet;
         sc_signal<sc_uint<32>> instr;
-
-        sc_signal<bool> post_jump_valid;
-        sc_signal<sc_uint<AXI_ADDR_WIDTH>> post_jump_pc;
+        bool predict_miss;
     } v, r;
+
+    sc_signal<bool> w_mem_addr_valid;
+    sc_uint<AXI_ADDR_WIDTH> wb_addr_req;
 };
 
 

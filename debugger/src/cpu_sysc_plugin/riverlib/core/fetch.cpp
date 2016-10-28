@@ -13,21 +13,32 @@ InstrFetch::InstrFetch(sc_module_name name_, sc_trace_file *vcd)
     : sc_module(name_) {
     SC_METHOD(comb);
     sensitive << i_nrst;
-    sensitive << i_mem_addr_ready;
+    sensitive << i_hold;
     sensitive << i_mem_data_valid;
     sensitive << i_mem_data;
-    sensitive << i_jump_valid;
-    sensitive << r.mem_addr_valid;
-    sensitive << r.addr_req;
-    sensitive << r.pc;
+    sensitive << i_e_npc_valid;
+    sensitive << i_e_npc;
+    sensitive << i_predict_npc;
+    sensitive << r.pc[0];
 
     SC_METHOD(registers);
     sensitive << i_clk.pos();
 
     if (vcd) {
+        sc_trace(vcd, i_mem_data_valid, "/top/proc0/fetch0/i_mem_data_valid");
+        sc_trace(vcd, i_mem_data_addr, "/top/proc0/fetch0/i_mem_data_addr");
+        sc_trace(vcd, i_e_npc_valid, "/top/proc0/fetch0/i_e_npc_valid");
+        sc_trace(vcd, i_e_npc, "/top/proc0/fetch0/i_e_npc");
+        sc_trace(vcd, i_predict_npc, "/top/proc0/fetch0/i_predict_npc");
+        sc_trace(vcd, o_mem_addr_valid, "/top/proc0/fetch0/o_mem_addr_valid");
+        sc_trace(vcd, o_mem_addr, "/top/proc0/fetch0/o_mem_addr");
         sc_trace(vcd, o_valid, "/top/proc0/fetch0/o_valid");
         sc_trace(vcd, o_pc, "/top/proc0/fetch0/o_pc");
         sc_trace(vcd, o_instr, "/top/proc0/fetch0/o_instr");
+        sc_trace(vcd, r.pc[2], "/top/proc0/fetch0/r.pc(2)");
+        sc_trace(vcd, r.pc[1], "/top/proc0/fetch0/r.pc(1)");
+        sc_trace(vcd, r.pc[0], "/top/proc0/fetch0/r.pc(0)");
+        sc_trace(vcd, o_predict_miss, "/top/proc0/fetch0/o_predict_miss");
     }
 };
 
@@ -35,49 +46,45 @@ InstrFetch::InstrFetch(sc_module_name name_, sc_trace_file *vcd)
 void InstrFetch::comb() {
     v = r;
 
-    v.mem_addr_valid = true; // todo: halt and others.
-    bool w_hold = false;
-    if (r.mem_addr_valid_z.read() && !i_mem_data_valid.read()) {
-        w_hold = true;
-    }
-    v.mem_addr_valid_z = r.mem_addr_valid;
+    w_mem_addr_valid = i_nrst.read();
 
-    if (i_mem_addr_ready.read()) {
-        if (i_jump_valid.read()) {
-            v.addr_req = i_jump_pc;
-        } else if (r.post_jump_valid.read()) {
-            v.addr_req = r.post_jump_pc;
-        } else {
-            v.addr_req = (r.addr_req.read() + 4) % 0x2000;    // !!! DEBUG for a while
-        }
-    }
+    bool wrong_address = (i_e_npc.read() != r.pc[1].read()) 
+                    && (i_e_npc.read() != r.pc[0].read())
+                    && (i_e_npc.read() != i_predict_npc.read())
+                    && (i_e_npc.read() != r.raddr_not_resp_yet.read());
 
-    v.f_valid = false;
+    v.predict_miss = 0;
+    if (i_e_npc_valid.read() && wrong_address) {
+        wb_addr_req = (i_e_npc.read()) % 0x2000;
+        v.predict_miss = 1;
+    } else {
+        wb_addr_req = (i_predict_npc.read()) % 0x2000;    // !!! DEBUG for a while
+    }
+    
+    v.f_valid = 0;
+    v.raddr_not_resp_yet = wb_addr_req; // Address already requested but probably not responded yet.
+                                        // Avoid marking such request as 'miss'.
     if (i_mem_data_valid.read()) {
+        v.f_valid = 1;
         v.instr = i_mem_data;
-        v.f_valid = true;
-        v.post_jump_valid = false;
-        v.pc = i_mem_data_addr;
-    } else if (i_jump_valid.read()) {
-        v.post_jump_valid = true;
-        v.post_jump_pc = i_jump_pc;
+        v.pc[1] = r.pc[0];
+        v.pc[0] = i_mem_data_addr.read();
     }
 
     if (!i_nrst.read()) {
-        v.mem_addr_valid = false;
-        v.mem_addr_valid_z = false;
-        v.f_valid = false;
-        v.pc = 0;
-        v.addr_req = RESET_VECTOR;
-        v.post_jump_valid = false;
-        v.post_jump_pc = 0;
+        v.f_valid = 0;
+        v.pc[0] = 0;
+        v.pc[1] = 0;
+        v.predict_miss = 0;
+        v.raddr_not_resp_yet = 0;
     }
 
-    o_mem_addr_valid = r.mem_addr_valid;
-    o_mem_addr = r.addr_req;
+    o_mem_addr_valid = w_mem_addr_valid;
+    o_mem_addr = wb_addr_req;
     o_valid = r.f_valid;
-    o_pc = r.pc;
+    o_pc = r.pc[0];
     o_instr = r.instr;
+    o_predict_miss = r.predict_miss;
 }
 
 void InstrFetch::registers() {

@@ -33,7 +33,6 @@ SC_MODULE(InstrExecute) {
     sc_out<sc_uint<5>> o_res_addr;
     sc_out<sc_uint<RISCV_ARCH>> o_res_data;
 
-    sc_in<bool> i_m_ready;
     sc_out<bool> o_memop_load;
     sc_out<bool> o_memop_store;
     sc_out<sc_uint<2>> o_memop_size; // 0=1bytes; 1=2bytes; 2=4bytes; 3=8bytes

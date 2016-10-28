@@ -24,6 +24,18 @@ InstrExecute::InstrExecute(sc_module_name name_, sc_trace_file *vcd)
     sensitive << i_clk.pos();
 
     if (vcd) {
+        sc_trace(vcd, i_d_valid, "/top/proc0/exec0/i_d_valid");
+        sc_trace(vcd, i_d_pc, "/top/proc0/exec0/i_d_pc");
+        sc_trace(vcd, o_valid, "/top/proc0/exec0/o_valid");
+        sc_trace(vcd, o_npc, "/top/proc0/exec0/o_npc");
+        sc_trace(vcd, o_pc, "/top/proc0/exec0/o_pc");
+        sc_trace(vcd, o_radr1, "/top/proc0/exec0/o_radr1");
+        sc_trace(vcd, o_radr2, "/top/proc0/exec0/o_radr2");
+        sc_trace(vcd, o_res_addr, "/top/proc0/exec0/o_res_addr");
+        sc_trace(vcd, o_res_data, "/top/proc0/exec0/o_res_data");
+        sc_trace(vcd, o_memop_load, "/top/proc0/exec0/o_memop_load");
+        sc_trace(vcd, o_memop_store, "/top/proc0/exec0/o_memop_store");
+        sc_trace(vcd, o_memop_size, "/top/proc0/exec0/o_memop_size");
     }
 };
 
@@ -105,7 +117,7 @@ void InstrExecute::comb() {
 
 
     v.valid = 0;
-    if (i_d_valid.read() && i_m_ready.read() && i_d_instr == r.npc) {
+    if (i_d_valid.read() && i_d_pc.read() == r.npc.read()) {
         v.valid = 1;
         v.pc = i_d_pc;
         v.instr = i_d_instr;

@@ -28,7 +28,8 @@ RtlWrapper::RtlWrapper(sc_module_name name)
     SC_METHOD(clk_negedge_proc);
     sensitive << o_clk.negedge_event();
 
-    v.nrst = false;
+    w_nrst = 0;
+    v.nrst = 0;
     v.interrupt = false;
     v.resp_mem_data = 0;
     v.resp_mem_data_valid = false;
@@ -39,16 +40,18 @@ void RtlWrapper::clk_gen() {
 }
 
 void RtlWrapper::comb() {
-    o_nrst = r.nrst;
+    o_nrst = r.nrst.read()[1];
     o_resp_mem_data_valid = r.resp_mem_data_valid;
     o_resp_mem_data = r.resp_mem_data;
     o_interrupt = r.interrupt;
 
-    if (!r.nrst.read()) {
+    if (!r.nrst.read()[1]) {
     }
 }
 
 void RtlWrapper::registers() {
+    v.nrst = (r.nrst.read() << 1) | w_nrst;
+
     r = v;
 }
 
@@ -119,7 +122,7 @@ void RtlWrapper::registerStepCallback(IClockListener *cb, uint64_t t) {
 void RtlWrapper::raiseSignal(int idx) {
     switch (idx) {
     case CPU_SIGNAL_RESET:
-        v.nrst = true;
+        w_nrst = 1;
         break;
     case CPU_SIGNAL_EXT_IRQ:
         v.interrupt = true;
@@ -131,7 +134,7 @@ void RtlWrapper::raiseSignal(int idx) {
 void RtlWrapper::lowerSignal(int idx) {
     switch (idx) {
     case CPU_SIGNAL_RESET:
-        v.nrst = false;
+        w_nrst = 0;
         break;
     case CPU_SIGNAL_EXT_IRQ:
         v.interrupt = false;

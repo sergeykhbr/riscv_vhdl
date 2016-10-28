@@ -13,16 +13,19 @@
 #include "fetch.h"
 #include "decoder.h"
 #include "execute.h"
+#include "memaccess.h"
+#include "execute.h"
 #include "regibank.h"
+#include "br_predic.h"
 
 namespace debugger {
 
 SC_MODULE(Processor) {
     sc_in<bool> i_clk;
     sc_in<bool> i_nrst;
+    sc_in<bool> i_hold;
     // Control path:
     sc_out<bool> o_req_ctrl_valid;
-    sc_in<bool> i_req_ctrl_ready;
     sc_out<sc_uint<AXI_ADDR_WIDTH>> o_req_ctrl_addr;
     sc_in<bool> i_resp_ctrl_valid;
     sc_in<sc_uint<AXI_ADDR_WIDTH>> i_resp_ctrl_addr;
@@ -30,10 +33,11 @@ SC_MODULE(Processor) {
     // Data path:
     sc_out<bool> o_req_data_valid;
     sc_out<bool> o_req_data_write;
-    sc_out<sc_uint<AXI_ADDR_WIDTH>> o_req_data_addr;
     sc_out<sc_uint<2>> o_req_data_size; // 0=1bytes; 1=2bytes; 2=4bytes; 3=8bytes
+    sc_out<sc_uint<AXI_ADDR_WIDTH>> o_req_data_addr;
     sc_out<sc_uint<RISCV_ARCH>> o_req_data_data;
-    sc_in<bool> i_resp_data_ready;
+    sc_in<bool> i_resp_data_valid;
+    sc_in<sc_uint<AXI_ADDR_WIDTH>> i_resp_data_addr;
     sc_in<sc_uint<RISCV_ARCH>> i_resp_data_data;
 
 
@@ -50,6 +54,9 @@ private:
         sc_signal<bool> valid;
         sc_signal<sc_uint<AXI_ADDR_WIDTH>> pc;
         sc_signal<sc_uint<32>> instr;
+        sc_signal<bool> imem_req_valid;
+        sc_signal<sc_uint<AXI_ADDR_WIDTH>> imem_req_addr;
+        sc_signal<bool> predict_miss;
     };
     struct InstructionDecodeType {
         sc_signal<sc_uint<AXI_ADDR_WIDTH>> pc;
@@ -61,9 +68,6 @@ private:
         sc_signal<bool> user_level;
         sc_signal<bool> priv_level;
         sc_signal<bool> exception;
-
-        sc_signal<bool> jump_valid;
-        sc_signal<sc_uint<AXI_ADDR_WIDTH>> jump_pc;
     };
     struct ExecuteType {
         sc_signal<bool> valid;
@@ -84,7 +88,8 @@ private:
 
     };
     struct MemoryType {
-        sc_signal<bool> ready;  // TODO! Halt full pipeline in all stages
+        sc_signal<bool> valid;
+        sc_signal<sc_uint<32>> instr;
         sc_signal<sc_uint<AXI_ADDR_WIDTH>> pc;
     };
     struct WriteBackType {
@@ -103,19 +108,19 @@ private:
     } w;
     struct RegistersType {
         sc_signal<sc_uint<3>> dbgCnt;
+        //sc_signal<sc_uint<AXI_ADDR_WIDTH>> predict_npc;
     } v, r;
 
-    sc_signal<bool> w_jump_valid;
-    sc_signal<sc_uint<AXI_ADDR_WIDTH>> wb_jump_pc;
-
+    sc_signal<sc_uint<AXI_ADDR_WIDTH>> wb_npc_predict;
     sc_signal<sc_uint<RISCV_ARCH>> wb_ra;   // Return address
-    sc_signal<bool> w_ra_updated;
 
 
     InstrFetch *fetch0;
     InstrDecoder *dec0;
     InstrExecute *exec0;
+    MemAccess *mem0;
 
+    BranchPredictor *predic0;
     RegIntBank *iregs0;
 };
 

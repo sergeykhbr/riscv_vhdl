@@ -22,6 +22,7 @@ InstrDecoder::InstrDecoder(sc_module_name name_, sc_trace_file *vcd)
     sensitive << i_clk.pos();
 
     if (vcd) {
+        sc_trace(vcd, o_valid, "/top/proc0/dec0/o_valid");
         sc_trace(vcd, o_pc, "/top/proc0/dec0/o_pc");
         sc_trace(vcd, o_instr, "/top/proc0/dec0/o_instr");
         sc_trace(vcd, o_isa_type, "/top/proc0/dec0/o_isa_type");
@@ -33,9 +34,6 @@ InstrDecoder::InstrDecoder(sc_module_name name_, sc_trace_file *vcd)
 
 void InstrDecoder::comb() {
     v = r;
-    v.pc = i_f_pc;
-    v.valid = i_f_valid;
-    v.instr = i_f_instr;
 
     bool w_error = false;
     sc_uint<5> wb_opcode1 = i_f_instr.read().range(6, 2);
@@ -346,15 +344,17 @@ void InstrDecoder::comb() {
     }
 
 
-    if (i_f_valid.read()) {
-        v.sign_ext = w_sign_ext;
-        v.user_level = w_user_level;
-        v.priv_level = w_priv_level;
-        v.isa_type = wb_isa_type;
-        v.instr_vec = wb_instr_vec;
+    v.valid = i_f_valid;
+    v.pc = i_f_pc;
+    v.instr = i_f_instr;
+
+    v.sign_ext = w_sign_ext;
+    v.user_level = w_user_level;
+    v.priv_level = w_priv_level;
+    v.isa_type = wb_isa_type;
+    v.instr_vec = wb_instr_vec;
         
-        v.instr_unimplemented = w_error;
-    }
+    v.instr_unimplemented = w_error;
 
     if (!i_nrst.read()) {
         v.valid = false;
@@ -367,7 +367,7 @@ void InstrDecoder::comb() {
         v.instr_unimplemented = false;
     }
 
-    o_valid = r.valid;
+    o_valid = r.valid.read();
     o_pc = r.pc;
     o_instr = r.instr;
     o_sign_ext = r.sign_ext;

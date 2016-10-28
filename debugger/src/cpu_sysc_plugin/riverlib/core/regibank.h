@@ -57,12 +57,11 @@ SC_MODULE(RegIntBank) {
     sc_in<sc_uint<5>> i_radr2;
     sc_out<sc_uint<RISCV_ARCH>> o_rdata2;
 
-    sc_in<sc_uint<5>> i_wadr;
+    sc_in<sc_uint<5>> i_waddr;
     sc_in<bool> i_wena;
     sc_in<sc_uint<RISCV_ARCH>> i_wdata;
 
     sc_out<sc_uint<RISCV_ARCH>> o_ra;   // Return address
-    sc_out<bool> o_ra_updated;
 
     void comb();
     void registers();
@@ -74,7 +73,6 @@ SC_MODULE(RegIntBank) {
 private:
     struct RegistersType {
         sc_uint<32> mem[Reg_Total];
-        sc_signal<bool> ra_updated;
     } v, r;
 };
 

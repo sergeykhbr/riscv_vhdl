@@ -36,9 +36,10 @@ SC_MODULE(RtlWrapper) {
     struct RegistersType {
         sc_signal<sc_uint<AXI_DATA_WIDTH>> resp_mem_data;
         sc_signal<bool> resp_mem_data_valid;
-        sc_signal<bool> nrst;
+        sc_signal<sc_bv<5>> nrst;
         sc_signal<bool> interrupt;
     } r, v;
+    bool w_nrst;
 
     void clk_gen();
     void comb();

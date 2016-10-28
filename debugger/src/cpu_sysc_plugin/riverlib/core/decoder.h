@@ -36,7 +36,7 @@ SC_MODULE(InstrDecoder) {
 
     sc_out<bool> o_valid;
     sc_out<sc_uint<AXI_ADDR_WIDTH>> o_pc;
-    sc_out<sc_uint<32>> o_instr;   // ! can be removed
+    sc_out<sc_uint<32>> o_instr;
     sc_out<bool> o_sign_ext;
     sc_out<sc_bv<ISA_Total>> o_isa_type;
     sc_out<sc_bv<Instr_Total>> o_instr_vec;
@@ -60,7 +60,7 @@ private:
         sc_signal<bool> user_level;
         sc_signal<bool> priv_level;
         sc_signal<bool> sign_ext;
-        sc_signal<sc_uint<32>> instr;   // ! can be removed
+        sc_signal<sc_uint<32>> instr;
 
         sc_signal<bool> instr_unimplemented;
     } v, r;

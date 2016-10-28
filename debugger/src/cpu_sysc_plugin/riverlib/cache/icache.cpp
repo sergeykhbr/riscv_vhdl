@@ -22,9 +22,9 @@ ICache::ICache(sc_module_name name_, sc_trace_file *vcd)
     sensitive << i_clk.pos();
 
     if (vcd) {
-        //sc_trace(vcd, i_req_ctrl_valid, "/top/cache0/i0/i_req_ctrl_valid");
+        sc_trace(vcd, i_req_ctrl_valid, "/top/cache0/i0/i_req_ctrl_valid");
         //sc_trace(vcd, o_req_ctrl_ready, "/top/cache0/i0/o_req_ctrl_ready");
-        //sc_trace(vcd, i_req_ctrl_addr, "/top/cache0/i0/i_req_ctrl_addr");
+        sc_trace(vcd, i_req_ctrl_addr, "/top/cache0/i0/i_req_ctrl_addr");
         //sc_trace(vcd, o_req_mem_valid, "/top/cache0/i0/o_req_mem_valid");
         //sc_trace(vcd, o_req_mem_addr, "/top/cache0/i0/o_req_mem_addr");
         //sc_trace(vcd, i_resp_mem_data_valid, "/top/cache0/i0/i_resp_mem_data_valid");
@@ -104,7 +104,6 @@ void ICache::comb() {
     o_req_mem_strob = 0;
     o_req_mem_data = 0;
 
-    o_req_ctrl_ready = i_req_ctrl_valid;
     o_resp_ctrl_valid = w_valid;
     o_resp_ctrl_data = wb_data;
     o_resp_ctrl_addr = r.iline_addr_req;

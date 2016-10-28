@@ -23,8 +23,8 @@ RiverTop::RiverTop(sc_module_name name_, sc_trace_file *vcd)
     proc0 = new Processor("proc0", vcd);
     proc0->i_clk(i_clk);
     proc0->i_nrst(i_nrst);
+    proc0->i_hold(w_cache_hold);
     proc0->o_req_ctrl_valid(w_req_ctrl_valid);
-    proc0->i_req_ctrl_ready(w_req_ctrl_ready);
     proc0->o_req_ctrl_addr(wb_req_ctrl_addr);
     proc0->i_resp_ctrl_valid(w_resp_ctrl_valid);
     proc0->i_resp_ctrl_addr(wb_resp_ctrl_addr);
@@ -34,14 +34,14 @@ RiverTop::RiverTop(sc_module_name name_, sc_trace_file *vcd)
     proc0->o_req_data_addr(wb_req_data_addr);
     proc0->o_req_data_size(wb_req_data_size);
     proc0->o_req_data_data(wb_req_data_data);
-    proc0->i_resp_data_ready(w_resp_data_ready);
+    proc0->i_resp_data_valid(w_resp_data_valid);
+    proc0->i_resp_data_addr(wb_resp_data_addr);
     proc0->i_resp_data_data(wb_resp_data_data);
 
     cache0 = new CacheTop("cache0", vcd);
     cache0->i_clk(i_clk);
     cache0->i_nrst(i_nrst);
     cache0->i_req_ctrl_valid(w_req_ctrl_valid);
-    cache0->o_req_ctrl_ready(w_req_ctrl_ready);
     cache0->i_req_ctrl_addr(wb_req_ctrl_addr);
     cache0->o_resp_ctrl_valid(w_resp_ctrl_valid);
     cache0->o_resp_ctrl_addr(wb_resp_ctrl_addr);
@@ -51,7 +51,8 @@ RiverTop::RiverTop(sc_module_name name_, sc_trace_file *vcd)
     cache0->i_req_data_addr(wb_req_data_addr);
     cache0->i_req_data_size(wb_req_data_size);
     cache0->i_req_data_data(wb_req_data_data);
-    cache0->o_resp_data_ready(w_resp_data_ready);
+    cache0->o_resp_data_valid(w_resp_data_valid);
+    cache0->o_resp_data_addr(wb_resp_data_addr);
     cache0->o_resp_data_data(wb_resp_data_data);
     cache0->o_req_mem_valid(o_req_mem_valid);
     cache0->o_req_mem_write(o_req_mem_write);
@@ -60,6 +61,7 @@ RiverTop::RiverTop(sc_module_name name_, sc_trace_file *vcd)
     cache0->o_req_mem_data(o_req_mem_data);
     cache0->i_resp_mem_data_valid(i_resp_mem_data_valid);
     cache0->i_resp_mem_data(i_resp_mem_data);
+    cache0->o_hold(w_cache_hold);
 
     if (vcd) {
         sc_trace(vcd, i_clk, "/top/i_clk");
@@ -69,6 +71,7 @@ RiverTop::RiverTop(sc_module_name name_, sc_trace_file *vcd)
         sc_trace(vcd, o_req_mem_addr, "/top/o_req_mem_addr");
         sc_trace(vcd, i_resp_mem_data_valid, "/top/i_resp_mem_data_valid");
         sc_trace(vcd, i_resp_mem_data, "/top/i_resp_mem_data");
+        sc_trace(vcd, w_cache_hold, "/top/w_cache_hold");
     }
 };
 

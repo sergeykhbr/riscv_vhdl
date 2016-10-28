@@ -47,7 +47,6 @@ private:
 
     // Control path:
     sc_signal<bool> w_req_ctrl_valid;
-    sc_signal<bool> w_req_ctrl_ready;
     sc_signal<sc_uint<AXI_ADDR_WIDTH>> wb_req_ctrl_addr;
     sc_signal<bool> w_resp_ctrl_valid;
     sc_signal<sc_uint<AXI_ADDR_WIDTH>> wb_resp_ctrl_addr;
@@ -58,8 +57,10 @@ private:
     sc_signal<sc_uint<AXI_ADDR_WIDTH>> wb_req_data_addr;
     sc_signal<sc_uint<2>> wb_req_data_size; // 0=1bytes; 1=2bytes; 2=4bytes; 3=8bytes
     sc_signal<sc_uint<RISCV_ARCH>> wb_req_data_data;
-    sc_signal<bool> w_resp_data_ready;
+    sc_signal<bool> w_resp_data_valid;
+    sc_signal<sc_uint<AXI_ADDR_WIDTH>> wb_resp_data_addr;
     sc_signal<sc_uint<RISCV_ARCH>> wb_resp_data_data;
+    sc_signal<bool> w_cache_hold;
 
     struct RegistersType {
         sc_signal<sc_uint<RISCV_ARCH>> timer;

@@ -17,8 +17,7 @@ RegIntBank::RegIntBank(sc_module_name name_, sc_trace_file *vcd)
     sensitive << i_radr2;
     sensitive << i_wena;
     sensitive << i_wdata;
-    sensitive << i_wadr;
-    sensitive << r.ra_updated;
+    sensitive << i_waddr;
 
     SC_METHOD(registers);
     sensitive << i_clk.pos();
@@ -31,18 +30,13 @@ RegIntBank::RegIntBank(sc_module_name name_, sc_trace_file *vcd)
 void RegIntBank::comb() {
     v = r;
 
-    v.ra_updated = 0;
     if (i_wena.read()) {
-        if (i_wadr.read()) {
-            v.mem[i_wadr.read()] = i_wdata;
-        }
-        if (i_wadr.read() == Reg_ra) {
-            v.ra_updated = 1;
+        if (i_waddr.read()) {
+            v.mem[i_waddr.read()] = i_wdata;
         }
     }
 
     if (!i_nrst.read()) {
-        v.ra_updated = false;
         for (int i = 0; i < Reg_Total; i++) {
             v.mem[i] = 0;
         }

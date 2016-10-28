@@ -18,7 +18,6 @@ SC_MODULE(ICache) {
     sc_in<bool> i_nrst;
     // Control path:
     sc_in<bool> i_req_ctrl_valid;
-    sc_out<bool> o_req_ctrl_ready;
     sc_in<sc_uint<AXI_ADDR_WIDTH>> i_req_ctrl_addr;
     sc_out<bool> o_resp_ctrl_valid;
     sc_out<sc_uint<AXI_ADDR_WIDTH>> o_resp_ctrl_addr;
