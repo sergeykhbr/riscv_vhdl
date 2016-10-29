@@ -23,7 +23,7 @@ RiverTop::RiverTop(sc_module_name name_, sc_trace_file *vcd)
     proc0 = new Processor("proc0", vcd);
     proc0->i_clk(i_clk);
     proc0->i_nrst(i_nrst);
-    proc0->i_hold(w_cache_hold);
+    proc0->i_cache_hold(w_cache_hold);
     proc0->o_req_ctrl_valid(w_req_ctrl_valid);
     proc0->o_req_ctrl_addr(wb_req_ctrl_addr);
     proc0->i_resp_ctrl_valid(w_resp_ctrl_valid);

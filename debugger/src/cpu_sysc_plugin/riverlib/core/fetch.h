@@ -16,7 +16,8 @@ namespace debugger {
 SC_MODULE(InstrFetch) {
     sc_in<bool> i_clk;
     sc_in<bool> i_nrst;
-    sc_in<bool> i_hold;
+    sc_in<bool> i_cache_hold;
+    sc_in<bool> i_pipeline_hold;
     sc_out<bool> o_mem_addr_valid;
     sc_out<sc_uint<AXI_ADDR_WIDTH>> o_mem_addr;
     sc_in<bool> i_mem_data_valid;
@@ -47,10 +48,15 @@ private:
         sc_signal<sc_uint<AXI_ADDR_WIDTH>> raddr_not_resp_yet;
         sc_signal<sc_uint<32>> instr;
         bool predict_miss;
+
+        sc_signal<bool> is_postponed;
+        sc_signal<sc_uint<AXI_ADDR_WIDTH>> postponed_pc;
+        sc_signal<sc_uint<32>> postponed_instr;
     } v, r;
 
     sc_signal<bool> w_mem_addr_valid;
     sc_uint<AXI_ADDR_WIDTH> wb_addr_req;
+    bool w_any_hold;
 };
 
 

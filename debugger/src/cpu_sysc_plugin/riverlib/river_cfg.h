@@ -99,6 +99,16 @@ enum InstuctionsType {
     Instr_MRET,
     Instr_FENCE,
     Instr_FENCE_I,
+    Instr_DIV,
+    Instr_DIVU,
+    Instr_DIVW,
+    Instr_DIVUW,
+    Instr_MUL,
+    Instr_MULW,
+    Instr_REM,
+    Instr_REMU,
+    Instr_REMW,
+    Instr_REMUW,
 
     Instr_Total
 };

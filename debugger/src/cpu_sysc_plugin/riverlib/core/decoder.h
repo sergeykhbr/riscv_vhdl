@@ -19,9 +19,9 @@ const uint8_t OPCODE_ADDI   = 0x04; // 00100: ADDI, ANDI, ORI, SLLI, SLTI, SLTIU
 const uint8_t OPCODE_AUIPC  = 0x05; // 00101: AUIPC
 const uint8_t OPCODE_ADDIW  = 0x06; // 00110: ADDIW, SLLIW, SRAIW, SRLIW
 const uint8_t OPCODE_SB     = 0x08; // 01000: SB, SH, SW, SD
-const uint8_t OPCODE_ADD    = 0x0C; // 01100: ADD, AND, OR, SLT, SLTU, SLL, SRA, SRL, SUB, XOR
+const uint8_t OPCODE_ADD    = 0x0C; // 01100: ADD, AND, OR, SLT, SLTU, SLL, SRA, SRL, SUB, XOR, DIV, DIVU, MUL, REM, REMU
 const uint8_t OPCODE_LUI    = 0x0D; // 01101: LUI
-const uint8_t OPCODE_ADDW   = 0x0E; // 01110: ADDW, SLLW, SRAW, SRLW, SUBW
+const uint8_t OPCODE_ADDW   = 0x0E; // 01110: ADDW, SLLW, SRAW, SRLW, SUBW, DIVW, DIVUW, MULW, REMW, REMUW
 const uint8_t OPCODE_BEQ    = 0x18; // 11000: BEQ, BNE, BLT, BGE, BLTU, BGEU
 const uint8_t OPCODE_JALR   = 0x19; // 11001: JALR
 const uint8_t OPCODE_JAL    = 0x1B; // 11011: JAL
@@ -30,6 +30,7 @@ const uint8_t OPCODE_CSRR   = 0x1C; // 11100: CSRRC, CSRRCI, CSRRS, CSRRSI, CSRR
 SC_MODULE(InstrDecoder) {
     sc_in<bool> i_clk;
     sc_in<bool> i_nrst;
+    sc_in<bool> i_pipeline_hold;
     sc_in<bool> i_f_valid;
     sc_in<sc_uint<AXI_ADDR_WIDTH>> i_f_pc;
     sc_in<sc_uint<32>> i_f_instr;

@@ -23,7 +23,7 @@ namespace debugger {
 SC_MODULE(Processor) {
     sc_in<bool> i_clk;
     sc_in<bool> i_nrst;
-    sc_in<bool> i_hold;
+    sc_in<bool> i_cache_hold;
     // Control path:
     sc_out<bool> o_req_ctrl_valid;
     sc_out<sc_uint<AXI_ADDR_WIDTH>> o_req_ctrl_addr;
@@ -85,6 +85,8 @@ private:
         sc_signal<bool> memop_load;
         sc_signal<bool> memop_store;
         sc_signal<sc_uint<2>> memop_size;
+        sc_signal<sc_uint<AXI_ADDR_WIDTH>> memop_addr;
+        sc_signal<bool> hazard_hold;
 
     };
     struct MemoryType {

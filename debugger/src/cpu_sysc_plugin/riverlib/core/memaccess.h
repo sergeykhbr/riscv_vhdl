@@ -61,8 +61,6 @@ private:
         sc_signal<bool> wena;
         sc_signal<sc_uint<5>> waddr;
         sc_signal<sc_uint<RISCV_ARCH>> wdata;
-
-        sc_signal<sc_uint<4>> fake_memop;
     } v, r;
 
     bool w_mem_valid;

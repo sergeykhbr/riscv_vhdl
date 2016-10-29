@@ -13,6 +13,7 @@ InstrDecoder::InstrDecoder(sc_module_name name_, sc_trace_file *vcd)
     : sc_module(name_) {
     SC_METHOD(comb);
     sensitive << i_nrst;
+    sensitive << i_pipeline_hold;
     sensitive << i_f_valid;
     sensitive << i_f_pc;
     sensitive << i_f_instr;
@@ -58,6 +59,8 @@ void InstrDecoder::comb() {
         case 0:
             if (i_f_instr.read().range(31, 25) == 0x00) {
                 wb_instr_vec[Instr_ADD] = 1;
+            } else if (i_f_instr.read().range(31, 25) == 0x01) {
+                wb_instr_vec[Instr_MUL] = 1;
             } else if (i_f_instr.read().range(31, 25) == 0x20) {
                 wb_instr_vec[Instr_SUB] = 1;
             } else {
@@ -74,11 +77,19 @@ void InstrDecoder::comb() {
             wb_instr_vec[Instr_SLTU] = 1;
             break;
         case 0x4:
-            wb_instr_vec[Instr_XOR] = 1;
+            if (i_f_instr.read().range(31, 25) == 0x00) {
+                wb_instr_vec[Instr_XOR] = 1;
+            } else if (i_f_instr.read().range(31, 25) == 0x01) {
+                wb_instr_vec[Instr_DIV] = 1;
+            } else {
+                w_error = true;
+            }
             break;
         case 0x5:
             if (i_f_instr.read().range(31, 25) == 0x00) {
                 wb_instr_vec[Instr_SRL] = 1;
+            } else if (i_f_instr.read().range(31, 25) == 0x01) {
+                wb_instr_vec[Instr_DIVU] = 1;
             } else if (i_f_instr.read().range(31, 25) == 0x20) {
                 wb_instr_vec[Instr_SRA] = 1;
             } else {
@@ -86,10 +97,22 @@ void InstrDecoder::comb() {
             }
             break;
         case 0x6:
-            wb_instr_vec[Instr_OR] = 1;
+            if (i_f_instr.read().range(31, 25) == 0x00) {
+                wb_instr_vec[Instr_OR] = 1;
+            } else if (i_f_instr.read().range(31, 25) == 0x01) {
+                wb_instr_vec[Instr_REM] = 1;
+            } else {
+                w_error = true;
+            }
             break;
         case 0x7:
-            wb_instr_vec[Instr_AND] = 1;
+            if (i_f_instr.read().range(31, 25) == 0x00) {
+                wb_instr_vec[Instr_AND] = 1;
+            } else if (i_f_instr.read().range(31, 25) == 0x01) {
+                wb_instr_vec[Instr_REMU] = 1;
+            } else {
+                w_error = true;
+            }
             break;
         default:
             w_error = true;
@@ -163,6 +186,8 @@ void InstrDecoder::comb() {
         case 0:
             if (i_f_instr.read().range(31, 25) == 0x00) {
                 wb_instr_vec[Instr_ADDW] = 1;
+            } else if (i_f_instr.read().range(31, 25) == 0x01) {
+                wb_instr_vec[Instr_MULW] = 1;
             } else if (i_f_instr.read().range(31, 25) == 0x20) {
                 wb_instr_vec[Instr_SUBW] = 1;
             } else {
@@ -172,15 +197,36 @@ void InstrDecoder::comb() {
         case 0x1:
             wb_instr_vec[Instr_SLLW] = 1;
             break;
+        case 0x4:
+            if (i_f_instr.read().range(31, 25) == 0x01) {
+                wb_instr_vec[Instr_DIVW] = 1;
+            } else {
+                w_error = true;
+            }
+            break;
         case 0x5:
             if (i_f_instr.read().range(31, 25) == 0x00) {
                 wb_instr_vec[Instr_SRLW] = 1;
+            } else if (i_f_instr.read().range(31, 25) == 0x01) {
+                wb_instr_vec[Instr_DIVUW] = 1;
             } else if (i_f_instr.read().range(31, 25) == 0x20) {
                 wb_instr_vec[Instr_SRAW] = 1;
             } else {
                 w_error = true;
             }
             break;
+        case 0x6:
+            if (i_f_instr.read().range(31, 25) == 0x01) {
+                wb_instr_vec[Instr_REMW] = 1;
+            } else {
+                w_error = true;
+            }
+        case 0x7:
+            if (i_f_instr.read().range(31, 25) == 0x01) {
+                wb_instr_vec[Instr_REMUW] = 1;
+            } else {
+                w_error = true;
+            }
         default:
             w_error = true;
         }
@@ -344,17 +390,21 @@ void InstrDecoder::comb() {
     }
 
 
-    v.valid = i_f_valid;
-    v.pc = i_f_pc;
-    v.instr = i_f_instr;
+    if (i_f_valid.read()) {
+        v.valid = 1;
+        v.pc = i_f_pc;
+        v.instr = i_f_instr;
 
-    v.sign_ext = w_sign_ext;
-    v.user_level = w_user_level;
-    v.priv_level = w_priv_level;
-    v.isa_type = wb_isa_type;
-    v.instr_vec = wb_instr_vec;
+        v.sign_ext = w_sign_ext;
+        v.user_level = w_user_level;
+        v.priv_level = w_priv_level;
+        v.isa_type = wb_isa_type;
+        v.instr_vec = wb_instr_vec;
         
-    v.instr_unimplemented = w_error;
+        v.instr_unimplemented = w_error;
+    } else if (!i_pipeline_hold.read()) {
+        v.valid = 0;
+    }
 
     if (!i_nrst.read()) {
         v.valid = false;
@@ -367,7 +417,7 @@ void InstrDecoder::comb() {
         v.instr_unimplemented = false;
     }
 
-    o_valid = r.valid.read();
+    o_valid = r.valid.read() && !i_pipeline_hold.read();
     o_pc = r.pc;
     o_instr = r.instr;
     o_sign_ext = r.sign_ext;

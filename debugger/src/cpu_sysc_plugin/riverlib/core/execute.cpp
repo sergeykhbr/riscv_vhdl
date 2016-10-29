@@ -13,6 +13,7 @@ InstrExecute::InstrExecute(sc_module_name name_, sc_trace_file *vcd)
     : sc_module(name_) {
     SC_METHOD(comb);
     sensitive << i_nrst;
+    sensitive << i_cache_hold;
     sensitive << i_d_valid;
     sensitive << i_d_pc;
     sensitive << i_d_instr;
@@ -24,6 +25,7 @@ InstrExecute::InstrExecute(sc_module_name name_, sc_trace_file *vcd)
     sensitive << i_clk.pos();
 
     if (vcd) {
+        sc_trace(vcd, i_cache_hold, "/top/proc0/exec0/i_cache_hold");
         sc_trace(vcd, i_d_valid, "/top/proc0/exec0/i_d_valid");
         sc_trace(vcd, i_d_pc, "/top/proc0/exec0/i_d_pc");
         sc_trace(vcd, o_valid, "/top/proc0/exec0/o_valid");
@@ -41,29 +43,53 @@ InstrExecute::InstrExecute(sc_module_name name_, sc_trace_file *vcd)
 
 
 void InstrExecute::comb() {
-    v = r;
-
     sc_uint<5> wb_radr1;
     sc_uint<RISCV_ARCH> wb_rdata1;
     sc_uint<5> wb_radr2;
     sc_uint<RISCV_ARCH> wb_rdata2;
     sc_uint<5> wb_res_addr = 0;
     sc_uint<RISCV_ARCH> wb_res = 0;
-    sc_uint<AXI_ADDR_WIDTH> wb_npc = i_d_pc.read() + 4;
+    sc_uint<AXI_ADDR_WIDTH> wb_npc;
     sc_uint<AXI_ADDR_WIDTH> wb_off;
+    sc_uint<RISCV_ARCH> wb_sum64;
+    sc_uint<RISCV_ARCH> wb_sub64;
+    sc_uint<RISCV_ARCH> wb_and64;
+    sc_uint<RISCV_ARCH> wb_or64;
+    sc_uint<RISCV_ARCH> wb_xor64;
+    sc_uint<RISCV_ARCH> wb_mul64;
 
-    bool w_memop_load = 0;
-    bool w_memop_store = 0;
-    sc_uint<2> wb_memop_size = 0;
+    sc_logic w_w32;
+    sc_logic w_res_wena;
+    sc_logic w_pc_jump;
 
+    sc_bv<Instr_Total> wv = i_ivec.read();
 
-    if (i_isa_type[ISA_R_type]) {
+    v = r;
+
+    v.memop_load = 0;
+    v.memop_store = 0;
+    v.memop_size = 0;
+    v.memop_addr = 0;
+#if 1
+    int tinstr_idx = -1;
+    int tisa = i_isa_type.read()[ISA_R_type];//.to_int();
+    for (int i = 0; i < Instr_Total; i++) {
+        if (wv[i].to_bool()) {
+            tinstr_idx = i;
+            break;
+        }
+    }
+    if (i_d_pc.read() >= 0x1010) {
+        bool st = true;
+    }
+#endif
+
+    if (i_isa_type.read()[ISA_R_type]) {
         wb_radr1 = i_d_instr.read().range(19, 15);
         wb_rdata1 = i_rdata1;
         wb_radr2 = i_d_instr.read().range(24, 20);
         wb_rdata2 = i_rdata2;
-        wb_res_addr = i_d_instr.read().range(11, 7);
-    } else if (i_isa_type[ISA_I_type]) {
+    } else if (i_isa_type.read()[ISA_I_type]) {
         wb_radr1 = i_d_instr.read().range(19, 15);
         wb_rdata1 = i_rdata1;
         wb_radr2 = 0;
@@ -71,21 +97,28 @@ void InstrExecute::comb() {
         if (wb_rdata2.bit(11)) {
             wb_rdata2(31, 12) = ~0;
         }
-    } else if (i_isa_type[ISA_SB_type]) {
+    } else if (i_isa_type.read()[ISA_SB_type]) {
         wb_radr1 = i_d_instr.read().range(19, 15);
         wb_rdata1 = i_rdata1;
         wb_radr2 = i_d_instr.read().range(24, 20);
         wb_rdata2 = i_rdata2;
-        if (i_d_instr[31]) {
-            wb_off(63, 12) = ~0;
+        if (i_d_instr.read()[31]) {
+            wb_off(31, 20) = ~0;
         } else {
-            wb_off(63, 12) = 0;
+            wb_off(31, 20) = 0;
         }
-        wb_off[11] = i_d_instr[7];
-        wb_off(10, 5) = i_d_instr.read()(30, 25);
-        wb_off(4, 1) = i_d_instr.read()(11, 8);
+        wb_off(19, 12) = i_d_instr.read()(19, 12);
+        wb_off[11] = i_d_instr.read()[20];
+        wb_off(10, 1) = i_d_instr.read()(30, 21);
         wb_off[0] = 0;
-    } else if (i_isa_type[ISA_U_type]) {
+    } else if (i_isa_type.read()[ISA_UJ_type]) {
+        wb_radr1 = 0;
+        wb_rdata1 = i_d_pc;
+        wb_radr2 = 0;
+        if (wb_rdata2.bit(31)) {
+            wb_rdata2(63, 32) = ~0;
+        }
+    } else if (i_isa_type.read()[ISA_U_type]) {
         wb_radr1 = 0;
         wb_rdata1 = i_d_pc;
         wb_radr2 = 0;
@@ -93,35 +126,89 @@ void InstrExecute::comb() {
         if (wb_rdata2.bit(31)) {
             wb_rdata2(63, 32) = ~0;
         }
-        wb_res_addr = i_d_instr.read().range(11, 7);
     }
 
-    if (i_ivec[Instr_ADD] || i_ivec[Instr_ADDI] || i_ivec[Instr_AUIPC]) {
-        wb_res = wb_rdata1 + wb_rdata2;
-    } else  if (i_ivec[Instr_ADDW] || i_ivec[Instr_ADDIW]) {
-        wb_res(31, 0) = wb_rdata1(31, 0) + wb_rdata2(31, 0);
-        if (wb_res[31]) {
+    // Don't modify registers on conditional jumps:
+    w_res_wena = ~(wv[Instr_BEQ] | wv[Instr_BGE] | wv[Instr_BGEU]
+               | wv[Instr_BLT] | wv[Instr_BLTU] | wv[Instr_BNE]);
+    if (w_res_wena.to_bool()) {
+        wb_res_addr = i_d_instr.read().range(11, 7);
+    } else {
+        wb_res_addr = 0;
+    }
+
+    // parallel ALU:
+    wb_sum64 = wb_rdata1 + wb_rdata2;
+    wb_sub64 = wb_rdata1 - wb_rdata2;
+    wb_and64 = wb_rdata1 & wb_rdata2;
+    wb_or64 = wb_rdata1 | wb_rdata2;
+    wb_xor64 = wb_rdata1 ^ wb_rdata2;
+    wb_mul64 = wb_rdata1 * wb_rdata2;
+
+    // Relative Jumps on some condition:
+    w_pc_jump = (wv[Instr_BEQ] & (wb_sub64 == 0))
+              || (wv[Instr_BGE] & (wb_sub64[63] == 0))
+              || (wv[Instr_BGEU] & (wb_sub64[63] == wb_rdata1[63]))
+              || (wv[Instr_BLT] & (wb_sub64[63] == 1))
+              || (wv[Instr_BLTU] & (wb_sub64[63] != wb_rdata1[63]))
+              || (wv[Instr_BEQ] & (wb_sub64 != 0))
+              || wv[Instr_JAL];
+
+    if (w_pc_jump.to_bool()) {
+        wb_npc = i_d_pc.read() + wb_off;
+    } else if (wv[Instr_JALR].to_bool()) {
+        wb_npc = wb_rdata1 + wb_off;
+        // TODO: execptions and traps:
+    } else {
+        wb_npc = i_d_pc.read() + 4;
+    }
+
+    // RV32 instructions list:
+    w_w32 = wv[Instr_ADDW] | wv[Instr_ADDIW] 
+        | wv[Instr_SLLW] | wv[Instr_SLLIW] | wv[Instr_SRAW] | wv[Instr_SRAIW]
+        | wv[Instr_SRLW] | wv[Instr_SRLIW] | wv[Instr_SUBW] 
+        | wv[Instr_DIVW] | wv[Instr_DIVUW] | wv[Instr_MULW]
+        | wv[Instr_REMW] | wv[Instr_REMUW];
+
+
+    // ALU block selector:
+    if (wv[Instr_ADD] || wv[Instr_ADDI] || wv[Instr_AUIPC]) {
+        wb_res = wb_sum64;
+    } else if (wv[Instr_ADDW] || wv[Instr_ADDIW]) {
+        wb_res(31, 0) = wb_sum64(31, 0);
+        if (wb_sum64[31]) {
             wb_res(63, 32) = ~0;
         }
-    } else if (i_ivec[Instr_ADD] || i_ivec[Instr_ADDI]) {
+    } else if (wv[Instr_AND] || wv[Instr_ANDI]) {
         wb_res = wb_rdata1 & wb_rdata2;
-    } else if (i_ivec[Instr_BEQ]) {
-        if (wb_rdata1 == wb_rdata2) {
-            wb_npc = i_d_pc.read() + wb_off;
-        }
-    } else if (i_ivec[Instr_LD]) {
-        wb_res_addr = wb_rdata1 + wb_rdata2;
-        w_memop_load = 1;
-        wb_memop_size = MEMOP_8B;
+    } else if (wv[Instr_LD]) {
+        v.memop_addr = wb_rdata1 + wb_rdata2;
+        v.memop_load = 1;
+        v.memop_size = MEMOP_8B;
+    } else if (wv[Instr_LUI]) {
+        wb_res = wb_rdata2;
     } 
 
-
+#if 1
+    int t1 = i_cache_hold.read();
+    int t2 = i_d_valid.read();
+    int t3 = i_d_pc.read();
+    int t4 = r.npc.read();
+    if(t3 == 0x1000) {
+        bool st = true;
+    }
+#endif
     v.valid = 0;
-    if (i_d_valid.read() && i_d_pc.read() == r.npc.read()) {
+    if (!i_cache_hold.read() && i_d_valid.read() && i_d_pc.read() == r.npc.read()) {
         v.valid = 1;
         v.pc = i_d_pc;
         v.instr = i_d_instr;
         v.npc = wb_npc;
+        v.res_addr = wb_res_addr;
+        v.res_val = wb_res;
+        v.hazard_addr[2] = r.hazard_addr[1];
+        v.hazard_addr[1] = r.hazard_addr[0];
+        v.hazard_addr[0] = wb_res;
     }
 
 
@@ -130,16 +217,24 @@ void InstrExecute::comb() {
         v.pc = 0;
         v.npc = RESET_VECTOR;
         v.instr = 0;
+        v.res_addr = 0;
+        v.res_val = 0;
+        v.memop_load = 0;
+        v.memop_store = 0;
+        v.memop_size = 0;
+        v.memop_addr = 0;
     }
 
     o_radr1 = wb_radr1;
     o_radr2 = wb_radr2;
-    o_res_addr = wb_res_addr;
-    o_res_data = wb_res;
+    o_res_addr = r.res_addr;
+    o_res_data = r.res_val;
+    o_hazard_hold = 0;// todo:
 
-    o_memop_load = w_memop_load;
-    o_memop_store = w_memop_store;
-    o_memop_size = wb_memop_size;
+    o_memop_load = r.memop_load;
+    o_memop_store = r.memop_store;
+    o_memop_size = r.memop_size;
+    o_memop_addr = r.memop_addr;
 
     o_valid = r.valid;
     o_pc = r.pc;

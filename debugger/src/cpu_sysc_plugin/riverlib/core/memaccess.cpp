@@ -25,19 +25,21 @@ MemAccess::MemAccess(sc_module_name name_, sc_trace_file *vcd)
     sensitive << i_mem_data_addr;
     sensitive << i_mem_data;
     sensitive << r.valid;
-    sensitive << r.fake_memop;
 
     SC_METHOD(registers);
     sensitive << i_clk.pos();
 
     if (vcd) {
-        sc_trace(vcd, r.fake_memop, "/top/proc0/mem0/r.fake_memop");
         sc_trace(vcd, o_mem_valid, "/top/proc0/mem0/o_mem_valid");
         sc_trace(vcd, o_mem_write, "/top/proc0/mem0/o_mem_write");
         sc_trace(vcd, o_mem_sz, "/top/proc0/mem0/o_mem_sz");
         sc_trace(vcd, o_mem_addr, "/top/proc0/mem0/o_mem_addr");
-        sc_trace(vcd, o_mem_data, "/top/proc0/mem0/.o_mem_data");
+        sc_trace(vcd, o_mem_data, "/top/proc0/mem0/o_mem_data");
 
+        sc_trace(vcd, o_valid, "/top/proc0/mem0/o_valid");
+        sc_trace(vcd, o_wena, "/top/proc0/mem0/o_wena");
+        sc_trace(vcd, o_waddr, "/top/proc0/mem0/o_waddr");
+        sc_trace(vcd, o_wdata, "/top/proc0/mem0/o_wdata");
     }
 };
 
@@ -51,19 +53,6 @@ void MemAccess::comb() {
     wb_mem_addr = 0;
     wb_mem_wdata = 0;
 
-    bool fake_ld = 0;
-    bool do_fake_ls = false;
-    v.fake_memop = r.fake_memop.read() + 1;
-    if (r.fake_memop.read() == 3 || r.fake_memop.read() == 4 || r.fake_memop.read() == 5) {
-        fake_ld = 1;
-        
-        w_mem_valid = 1;
-        w_mem_write = 0;
-        wb_mem_sz = 3;
-        wb_mem_addr = 0xfffff000 + (r.fake_memop.read() - 3) * 4;
-        wb_mem_wdata = 0;
-    }
-
     bool is_waiting = r.wait_resp.read() & !i_mem_data_valid.read();
     v.wait_resp = is_waiting;
 
@@ -74,31 +63,19 @@ void MemAccess::comb() {
     if (i_e_valid.read()) {
         v.valid = true;
         v.waddr = i_res_addr;
+        v.wdata = i_res_data;
+        v.wena = i_res_addr.read().or_reduce();
 
-#if 1
-        if (fake_ld) {
-            v.wait_resp = 1;
-        }
-#else
-        if (i_memop_store.read()) {
+        if (i_memop_store.read() || i_memop_load.read()) {
             v.wait_resp = 1;
             w_mem_valid = 1;
-            w_mem_write = 1;
-            wb_mem_sz = ;
-            wb_mem_addr = ;
-            wb_mem_wdata = ;
-        } else if (i_memop_load.read()) {
-            w_mem_valid = 1;
-            w_mem_write = 0;
-            wb_mem_sz = ;
-            wb_mem_addr = ;
-            wb_mem_wdata = 0;
+            w_mem_write = i_memop_store;
+            wb_mem_sz = i_memop_size;
+            wb_mem_addr = i_res_addr;
+            wb_mem_wdata = i_res_data;
         } else {
             v.wait_resp = 0;
-            v.wdata = i_res_data;
-            v.wena = 1;
         }
-#endif
     }
 
     if (r.wait_resp.read() & i_mem_data_valid.read()) {
@@ -115,7 +92,6 @@ void MemAccess::comb() {
         v.wdata = 0;
         v.wena = 0;
         v.wait_resp = 0;
-        v.fake_memop = 0;
     }
 
     o_mem_valid = w_mem_valid;
