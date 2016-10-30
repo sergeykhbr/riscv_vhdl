@@ -13,7 +13,7 @@ InstrDecoder::InstrDecoder(sc_module_name name_, sc_trace_file *vcd)
     : sc_module(name_) {
     SC_METHOD(comb);
     sensitive << i_nrst;
-    sensitive << i_pipeline_hold;
+    sensitive << i_any_hold;
     sensitive << i_f_valid;
     sensitive << i_f_pc;
     sensitive << i_f_instr;
@@ -402,7 +402,7 @@ void InstrDecoder::comb() {
         v.instr_vec = wb_instr_vec;
         
         v.instr_unimplemented = w_error;
-    } else if (!i_pipeline_hold.read()) {
+    } else if (!i_any_hold.read()) {
         v.valid = 0;
     }
 
@@ -417,7 +417,7 @@ void InstrDecoder::comb() {
         v.instr_unimplemented = false;
     }
 
-    o_valid = r.valid.read() && !i_pipeline_hold.read();
+    o_valid = r.valid.read() && !i_any_hold.read();
     o_pc = r.pc;
     o_instr = r.instr;
     o_sign_ext = r.sign_ext;

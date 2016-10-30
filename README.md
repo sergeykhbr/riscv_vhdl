@@ -41,8 +41,11 @@ Target | usec per 1 dhry | Dhrystone per sec | MHz,max | FPU | OS
 -------|-----------------|-------------------|---------|-----|------
 RISC-V simulator v3.1       | 12.0 | **77257.0** | -   | No  | Zephyr 1.3
 FPGA SoC with "Rocket" v3.1 | 28.0 | **34964.0** | 60  | No  | Zephyr 1.3
-FPGA SoC with "Rocket" v4.0 | 40.7 | **24038.0** | 40  | Yes | Zephyr 1.5
+FPGA SoC with "Rocket" v4.0 | 40.7 | **24038.0** | 60<sup>1</sup>  | Yes | Zephyr 1.5
 
+<sup>1</sup> - Actual SoC frequency is 40 MHz (to meet FPU constrains) but
+Dhrystone benchmark uses constant 60 MHz and high precision counter (in clock cycles)
+to compute results.
 
 Access to all memory banks and peripheries in the same clock domain is always
 one clock in this SOC (without wait-states). So, this benchmark 

@@ -29,11 +29,11 @@ const uint8_t OPCODE_CSRR   = 0x1C; // 11100: CSRRC, CSRRCI, CSRRS, CSRRSI, CSRR
 
 SC_MODULE(InstrDecoder) {
     sc_in<bool> i_clk;
-    sc_in<bool> i_nrst;
-    sc_in<bool> i_pipeline_hold;
-    sc_in<bool> i_f_valid;
-    sc_in<sc_uint<AXI_ADDR_WIDTH>> i_f_pc;
-    sc_in<sc_uint<32>> i_f_instr;
+    sc_in<bool> i_nrst;                     // Reset active low
+    sc_in<bool> i_any_hold;                 // Hold pipeline by any reason
+    sc_in<bool> i_f_valid;                  // Fetch input valid
+    sc_in<sc_uint<AXI_ADDR_WIDTH>> i_f_pc;  // Fetched pc
+    sc_in<sc_uint<32>> i_f_instr;           // Fetched instruction value
 
     sc_out<bool> o_valid;
     sc_out<sc_uint<AXI_ADDR_WIDTH>> o_pc;

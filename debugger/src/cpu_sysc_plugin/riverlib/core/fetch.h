@@ -49,6 +49,7 @@ private:
         sc_signal<sc_uint<32>> instr;
         bool predict_miss;
 
+        sc_signal<bool> wait_resp;
         sc_signal<bool> is_postponed;
         sc_signal<sc_uint<AXI_ADDR_WIDTH>> postponed_pc;
         sc_signal<sc_uint<32>> postponed_instr;

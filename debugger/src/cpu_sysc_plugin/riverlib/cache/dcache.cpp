@@ -30,19 +30,29 @@ DCache::DCache(sc_module_name name_, sc_trace_file *vcd)
 
 
 void DCache::comb() {
+    if (o_req_mem_valid.read()) {
+        v.req_addr = i_req_data_addr;
+        v.req_size = i_req_data_sz;
+    }
+
     if (!i_nrst.read()) {
+        v.req_addr = 0;
+        v.req_size = 0;
     }
 
     o_req_mem_valid = i_req_data_valid;
     o_req_mem_write = i_req_data_write;
     o_req_mem_addr = i_req_data_addr;
-    o_req_mem_strob = 0xff;
+    o_req_mem_strob = 0xff;             // TODO!!!!!!!!
     o_req_mem_data = i_req_data_data;
 
+    o_resp_data_valid = i_resp_mem_data_valid;
+    o_resp_data_data = i_resp_mem_data;
+    o_resp_data_addr = r.req_addr;
 }
 
 void DCache::registers() {
-    //r = v;
+    r = v;
 }
 
 }  // namespace debugger

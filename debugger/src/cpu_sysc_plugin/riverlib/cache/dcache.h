@@ -43,6 +43,11 @@ SC_MODULE(DCache) {
     DCache(sc_module_name name_, sc_trace_file *vcd=0);
 
 private:
+    struct RegistersType {
+        sc_signal<sc_uint<AXI_ADDR_WIDTH>> req_addr;
+        sc_signal<sc_uint<2>> req_size;
+    } v, r;
+
 };
 
 

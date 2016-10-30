@@ -100,6 +100,16 @@ private:
         sc_signal<sc_uint<5>> waddr;
         sc_signal<sc_uint<RISCV_ARCH>> wdata;
     };
+    struct CsrType {
+        sc_signal<sc_uint<12>> addr;
+        sc_signal<bool> wena;
+        sc_signal<sc_uint<RISCV_ARCH>> rdata;
+        sc_signal<sc_uint<RISCV_ARCH>> wdata;
+
+        sc_signal<bool> ie;                           // Interrupt enable bit
+        sc_signal<sc_uint<AXI_ADDR_WIDTH>> idt;       // Interrupt descriptor table
+        sc_signal<sc_uint<2>> mode;                   // Current processor mode
+    };
 
     struct PipelineType {
         FetchType f;
@@ -108,6 +118,7 @@ private:
         MemoryType m;
         WriteBackType w;
     } w;
+    CsrType csr;
     struct RegistersType {
         sc_signal<sc_uint<3>> dbgCnt;
         //sc_signal<sc_uint<AXI_ADDR_WIDTH>> predict_npc;
@@ -115,6 +126,7 @@ private:
 
     sc_signal<sc_uint<AXI_ADDR_WIDTH>> wb_npc_predict;
     sc_signal<sc_uint<RISCV_ARCH>> wb_ra;   // Return address
+    sc_signal<bool> w_any_hold;
 
 
     InstrFetch *fetch0;

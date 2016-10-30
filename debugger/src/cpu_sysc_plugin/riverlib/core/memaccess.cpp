@@ -21,6 +21,7 @@ MemAccess::MemAccess(sc_module_name name_, sc_trace_file *vcd)
     sensitive << i_memop_load;
     sensitive << i_memop_store;
     sensitive << i_memop_size;
+    sensitive << i_memop_addr;
     sensitive << i_mem_data_valid;
     sensitive << i_mem_data_addr;
     sensitive << i_mem_data;
@@ -35,8 +36,13 @@ MemAccess::MemAccess(sc_module_name name_, sc_trace_file *vcd)
         sc_trace(vcd, o_mem_sz, "/top/proc0/mem0/o_mem_sz");
         sc_trace(vcd, o_mem_addr, "/top/proc0/mem0/o_mem_addr");
         sc_trace(vcd, o_mem_data, "/top/proc0/mem0/o_mem_data");
+        sc_trace(vcd, i_mem_data_valid, "/top/proc0/mem0/i_mem_data_valid");
+        sc_trace(vcd, i_mem_data_addr, "/top/proc0/mem0/i_mem_data_addr");
+        sc_trace(vcd, i_mem_data, "/top/proc0/mem0/i_mem_data");
 
         sc_trace(vcd, o_valid, "/top/proc0/mem0/o_valid");
+        sc_trace(vcd, o_pc, "/top/proc0/mem0/o_pc");
+        sc_trace(vcd, o_instr, "/top/proc0/mem0/o_instr");
         sc_trace(vcd, o_wena, "/top/proc0/mem0/o_wena");
         sc_trace(vcd, o_waddr, "/top/proc0/mem0/o_waddr");
         sc_trace(vcd, o_wdata, "/top/proc0/mem0/o_wdata");
@@ -64,14 +70,14 @@ void MemAccess::comb() {
         v.valid = true;
         v.waddr = i_res_addr;
         v.wdata = i_res_data;
-        v.wena = i_res_addr.read().or_reduce();
+        v.wena = i_res_addr.read().or_reduce(); // Write if none zero
 
         if (i_memop_store.read() || i_memop_load.read()) {
             v.wait_resp = 1;
             w_mem_valid = 1;
             w_mem_write = i_memop_store;
             wb_mem_sz = i_memop_size;
-            wb_mem_addr = i_res_addr;
+            wb_mem_addr = i_memop_addr;
             wb_mem_wdata = i_res_data;
         } else {
             v.wait_resp = 0;

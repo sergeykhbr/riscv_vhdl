@@ -25,6 +25,7 @@ SC_MODULE(MemAccess) {
     sc_in<bool> i_memop_load;
     sc_in<bool> i_memop_store;
     sc_in<sc_uint<2>> i_memop_size;
+    sc_in<sc_uint<AXI_ADDR_WIDTH>> i_memop_addr;    // Memory access address
     sc_out<bool> o_wena;
     sc_out<sc_uint<5>> o_waddr;
     sc_out<sc_uint<RISCV_ARCH>> o_wdata;

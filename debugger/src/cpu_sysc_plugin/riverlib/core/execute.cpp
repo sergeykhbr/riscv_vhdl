@@ -17,9 +17,14 @@ InstrExecute::InstrExecute(sc_module_name name_, sc_trace_file *vcd)
     sensitive << i_d_valid;
     sensitive << i_d_pc;
     sensitive << i_d_instr;
+    sensitive << i_wb_done;
     sensitive << i_rdata1;
     sensitive << i_rdata2;
+    sensitive << i_csr_rdata;
     sensitive << r.valid;
+    sensitive << r.hazard_hold;
+    sensitive << r.hazard_addr[0];
+    sensitive << r.hazard_addr[1];
 
     SC_METHOD(registers);
     sensitive << i_clk.pos();
@@ -28,6 +33,10 @@ InstrExecute::InstrExecute(sc_module_name name_, sc_trace_file *vcd)
         sc_trace(vcd, i_cache_hold, "/top/proc0/exec0/i_cache_hold");
         sc_trace(vcd, i_d_valid, "/top/proc0/exec0/i_d_valid");
         sc_trace(vcd, i_d_pc, "/top/proc0/exec0/i_d_pc");
+        sc_trace(vcd, i_d_instr, "/top/proc0/exec0/i_d_instr");
+        sc_trace(vcd, i_wb_done, "/top/proc0/exec0/i_wb_done");
+        sc_trace(vcd, i_rdata1, "/top/proc0/exec0/i_rdata1");
+        sc_trace(vcd, i_rdata2, "/top/proc0/exec0/i_rdata2");
         sc_trace(vcd, o_valid, "/top/proc0/exec0/o_valid");
         sc_trace(vcd, o_npc, "/top/proc0/exec0/o_npc");
         sc_trace(vcd, o_pc, "/top/proc0/exec0/o_pc");
@@ -38,6 +47,15 @@ InstrExecute::InstrExecute(sc_module_name name_, sc_trace_file *vcd)
         sc_trace(vcd, o_memop_load, "/top/proc0/exec0/o_memop_load");
         sc_trace(vcd, o_memop_store, "/top/proc0/exec0/o_memop_store");
         sc_trace(vcd, o_memop_size, "/top/proc0/exec0/o_memop_size");
+        sc_trace(vcd, o_csr_addr, "/top/proc0/exec0/o_csr_addr");
+        sc_trace(vcd, o_csr_wena, "/top/proc0/exec0/o_csr_wena");
+        sc_trace(vcd, i_csr_rdata, "/top/proc0/exec0/i_csr_rdata");
+        sc_trace(vcd, o_csr_wdata, "/top/proc0/exec0/o_csr_wena");
+
+        sc_trace(vcd, w_hazard_detected, "/top/proc0/exec0/w_hazard_detected");
+        sc_trace(vcd, r.hazard_hold, "/top/proc0/exec0/r_hazard_hold");
+        sc_trace(vcd, r.hazard_addr[0], "/top/proc0/exec0/r_hazard_addr(0)");
+        sc_trace(vcd, r.hazard_addr[1], "/top/proc0/exec0/r_hazard_addr(1)");
     }
 };
 
@@ -198,17 +216,33 @@ void InstrExecute::comb() {
         bool st = true;
     }
 #endif
+    w_hazard_detected = (wb_radr1 != 0 && (wb_radr1 == r.hazard_addr[0]
+                                        || wb_radr1 == r.hazard_addr[1]))
+                     || (wb_radr2 != 0 && (wb_radr2 == r.hazard_addr[0]
+                                        || wb_radr2 == r.hazard_addr[1]));
+    v.hazard_hold = w_hazard_detected;
+
     v.valid = 0;
-    if (!i_cache_hold.read() && i_d_valid.read() && i_d_pc.read() == r.npc.read()) {
+    if (w_hazard_detected) {
+        // Wait 1 or 2 clocks while register's value will be updated:
+        if (i_wb_done.read()) {
+            if (!r.hazard_hold.read()) {
+                v.hazard_addr[1] = 0;
+            }
+            if (r.hazard_hold.read()) {
+                v.hazard_addr[0] = 0;
+            }
+        }
+    } else if (!i_cache_hold.read() && i_d_valid.read() 
+        && i_d_pc.read() == r.npc.read()) {
         v.valid = 1;
         v.pc = i_d_pc;
         v.instr = i_d_instr;
         v.npc = wb_npc;
         v.res_addr = wb_res_addr;
         v.res_val = wb_res;
-        v.hazard_addr[2] = r.hazard_addr[1];
         v.hazard_addr[1] = r.hazard_addr[0];
-        v.hazard_addr[0] = wb_res;
+        v.hazard_addr[0] = wb_res_addr;
     }
 
 
@@ -223,13 +257,16 @@ void InstrExecute::comb() {
         v.memop_store = 0;
         v.memop_size = 0;
         v.memop_addr = 0;
+        v.hazard_hold = 0;
+        v.hazard_addr[0] = 0;
+        v.hazard_addr[1] = 0;
     }
 
     o_radr1 = wb_radr1;
     o_radr2 = wb_radr2;
     o_res_addr = r.res_addr;
     o_res_data = r.res_val;
-    o_hazard_hold = 0;// todo:
+    o_hazard_hold = w_hazard_detected;
 
     o_memop_load = r.memop_load;
     o_memop_store = r.memop_store;

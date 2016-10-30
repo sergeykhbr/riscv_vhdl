@@ -14,6 +14,8 @@ Processor::Processor(sc_module_name name_, sc_trace_file *vcd)
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_resp_ctrl_valid;
+    sensitive << i_cache_hold;
+    sensitive << w.e.hazard_hold;
     sensitive << w.f.imem_req_valid;
     sensitive << w.f.imem_req_addr;
     sensitive << w.f.valid;
@@ -44,7 +46,7 @@ Processor::Processor(sc_module_name name_, sc_trace_file *vcd)
     dec0 = new InstrDecoder("dec0", vcd);
     dec0->i_clk(i_clk);
     dec0->i_nrst(i_nrst);
-    dec0->i_pipeline_hold(i_cache_hold);// || w.e.hazard_hold.read());
+    dec0->i_any_hold(w_any_hold);
     dec0->i_f_valid(w.f.valid);
     dec0->i_f_pc(w.f.pc);
     dec0->i_f_instr(w.f.instr);
@@ -65,11 +67,15 @@ Processor::Processor(sc_module_name name_, sc_trace_file *vcd)
     exec0->i_d_valid(w.d.instr_valid);
     exec0->i_d_pc(w.d.pc);
     exec0->i_d_instr(w.d.instr);
+    exec0->i_wb_done(w.w.wena);
     exec0->i_sign_ext(w.d.sign_ext);
     exec0->i_isa_type(w.d.isa_type);
     exec0->i_ivec(w.d.instr_vec);
     exec0->i_user_level(w.d.user_level);
     exec0->i_priv_level(w.d.priv_level);
+    exec0->i_ie(csr.ie);
+    exec0->i_idt(csr.idt);
+    exec0->i_mode(csr.mode);
     exec0->i_exception(w.d.exception);
     exec0->o_radr1(w.e.radr1);
     exec0->i_rdata1(w.e.rdata1);
@@ -78,6 +84,10 @@ Processor::Processor(sc_module_name name_, sc_trace_file *vcd)
     exec0->o_res_addr(w.e.res_addr);
     exec0->o_res_data(w.e.res_data);
     exec0->o_hazard_hold(w.e.hazard_hold);
+    exec0->o_csr_addr(csr.addr);
+    exec0->o_csr_wena(csr.wena);
+    exec0->i_csr_rdata(csr.rdata);
+    exec0->o_csr_wdata(csr.wdata);
     exec0->o_memop_load(w.e.memop_load);
     exec0->o_memop_store(w.e.memop_store);
     exec0->o_memop_size(w.e.memop_size);
@@ -98,6 +108,7 @@ Processor::Processor(sc_module_name name_, sc_trace_file *vcd)
     mem0->i_memop_load(w.e.memop_load);
     mem0->i_memop_store(w.e.memop_store);
     mem0->i_memop_size(w.e.memop_size);
+    mem0->i_memop_addr(w.e.memop_addr);
     mem0->o_waddr(w.w.waddr);
     mem0->o_wena(w.w.wena);
     mem0->o_wdata(w.w.wdata);
@@ -146,6 +157,7 @@ Processor::Processor(sc_module_name name_, sc_trace_file *vcd)
 
     //todo:
     w.w.wena = 0;
+
 };
 
 Processor::~Processor() {
@@ -167,6 +179,8 @@ void Processor::comb() {
 
     o_req_ctrl_valid = w.f.imem_req_valid;
     o_req_ctrl_addr = w.f.imem_req_addr;
+
+    w_any_hold = i_cache_hold.read() || w.e.hazard_hold.read();
 }
 
 void Processor::registers() {

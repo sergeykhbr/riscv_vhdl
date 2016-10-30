@@ -72,7 +72,8 @@ SC_MODULE(RegIntBank) {
 
 private:
     struct RegistersType {
-        sc_uint<32> mem[Reg_Total];
+        sc_uint<RISCV_ARCH> mem[Reg_Total];
+        sc_signal<bool> update;
     } v, r;
 };
 

@@ -14,14 +14,18 @@ static const uint32_t TEST_ROM[] {
     0x00000093,//          	li	ra,0
     0x00000113,//          	li	sp,0
     0x00000193,//          	li	gp,0
-    0x00000213,//          	li	tp,0
+    0x55000213,//          	li	tp,550
     0x00023083,//          	ld	ra,0(tp) # 0 <_tbss_end>
     0x00823403,//          	ld	s0,8(tp) # 8 <_tbss_end+0x8>
     0x01023483,//          	ld	s1,16(tp) # 10 <_tbss_end+0x10>
-    0x00000293,//          	li	t0,0
+    0x77700213,//          	li	tp,777
     0x00000313,//          	li	t1,0
     0x00000393,//          	li	t2,0
     0x00000413,//          	li	s0,0
+    // Check hazard
+    0x00100113,//          	li	sp,1
+    0x01311113,//          	slli	sp,sp,0x13
+    0x00228133,//          	add	sp,t0,sp
     0,
 };
 
