@@ -46,8 +46,15 @@ private:
     struct RegistersType {
         sc_signal<sc_uint<AXI_ADDR_WIDTH>> req_addr;
         sc_signal<sc_uint<2>> req_size;
+        sc_signal<bool> rena;
     } v, r;
 
+    sc_uint<AXI_ADDR_WIDTH> wb_req_addr;
+    sc_uint<AXI_DATA_BYTES> wb_req_strob;
+    sc_uint<AXI_DATA_BYTES> wb_msk;
+    sc_uint<AXI_DATA_WIDTH> wb_rdata;
+    sc_uint<AXI_DATA_WIDTH> wb_wdata;
+    sc_uint<AXI_DATA_WIDTH> wb_rtmp;
 };
 
 

@@ -47,7 +47,7 @@ private:
         sc_signal<sc_uint<AXI_ADDR_WIDTH>> pc[2];
         sc_signal<sc_uint<AXI_ADDR_WIDTH>> raddr_not_resp_yet;
         sc_signal<sc_uint<32>> instr;
-        bool predict_miss;
+        //bool predict_miss;
 
         sc_signal<bool> wait_resp;
         sc_signal<bool> is_postponed;

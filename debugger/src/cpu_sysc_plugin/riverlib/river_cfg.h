@@ -113,6 +113,14 @@ enum InstuctionsType {
     Instr_Total
 };
 
+enum PriviledgeType {
+    PRV_U,
+    PRV_S,
+    PRV_H,
+    PRV_M,
+    PRV_Total
+};
+
 
 }  // namespace debugger
 

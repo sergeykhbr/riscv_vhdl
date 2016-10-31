@@ -69,10 +69,10 @@ void InstrFetch::comb() {
                     && (i_e_npc.read() != i_predict_npc.read())
                     && (i_e_npc.read() != r.raddr_not_resp_yet.read());
 
-    v.predict_miss = 0;
+    bool w_predict_miss = 0;
     if (i_e_npc_valid.read() && wrong_address) {
         wb_addr_req = (i_e_npc.read()) % 0x2000;
-        v.predict_miss = 1;
+        w_predict_miss = 1;
     } else {
         wb_addr_req = (i_predict_npc.read()) % 0x2000;    // !!! DEBUG for a while
     }
@@ -109,7 +109,7 @@ void InstrFetch::comb() {
         v.f_valid = 0;
         v.pc[0] = 0;
         v.pc[1] = 0;
-        v.predict_miss = 0;
+        //v.predict_miss = 0;
         v.raddr_not_resp_yet = 0;
         v.is_postponed = 0;
         v.postponed_pc = 0;
@@ -122,7 +122,7 @@ void InstrFetch::comb() {
     o_valid = r.f_valid.read() && !w_any_hold;
     o_pc = r.pc[0];
     o_instr = r.instr;
-    o_predict_miss = r.predict_miss;
+    o_predict_miss = w_predict_miss;
 }
 
 void InstrFetch::registers() {

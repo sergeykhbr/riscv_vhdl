@@ -44,6 +44,7 @@ InstrExecute::InstrExecute(sc_module_name name_, sc_trace_file *vcd)
         sc_trace(vcd, o_radr2, "/top/proc0/exec0/o_radr2");
         sc_trace(vcd, o_res_addr, "/top/proc0/exec0/o_res_addr");
         sc_trace(vcd, o_res_data, "/top/proc0/exec0/o_res_data");
+        sc_trace(vcd, o_memop_addr, "/top/proc0/exec0/o_memop_addr");
         sc_trace(vcd, o_memop_load, "/top/proc0/exec0/o_memop_load");
         sc_trace(vcd, o_memop_store, "/top/proc0/exec0/o_memop_store");
         sc_trace(vcd, o_memop_size, "/top/proc0/exec0/o_memop_size");
@@ -65,7 +66,10 @@ void InstrExecute::comb() {
     sc_uint<RISCV_ARCH> wb_rdata1;
     sc_uint<5> wb_radr2;
     sc_uint<RISCV_ARCH> wb_rdata2;
+    bool w_csr_wena = 0;
     sc_uint<5> wb_res_addr = 0;
+    sc_uint<12> wb_csr_addr = 0;
+    sc_uint<RISCV_ARCH> wb_csr_wdata = 0;
     sc_uint<RISCV_ARCH> wb_res = 0;
     sc_uint<AXI_ADDR_WIDTH> wb_npc;
     sc_uint<AXI_ADDR_WIDTH> wb_off;
@@ -88,7 +92,8 @@ void InstrExecute::comb() {
     v.memop_store = 0;
     v.memop_size = 0;
     v.memop_addr = 0;
-#if 1
+#if 1   
+    int t_instr = i_d_instr.read();
     int tinstr_idx = -1;
     int tisa = i_isa_type.read()[ISA_R_type];//.to_int();
     for (int i = 0; i < Instr_Total; i++) {
@@ -97,7 +102,7 @@ void InstrExecute::comb() {
             break;
         }
     }
-    if (i_d_pc.read() >= 0x1010) {
+    if (i_d_pc.read() >= 0x104c) {
         bool st = true;
     }
 #endif
@@ -121,14 +126,16 @@ void InstrExecute::comb() {
         wb_radr2 = i_d_instr.read().range(24, 20);
         wb_rdata2 = i_rdata2;
         if (i_d_instr.read()[31]) {
-            wb_off(31, 20) = ~0;
+            wb_off(31, 12) = ~0;
         } else {
-            wb_off(31, 20) = 0;
+            wb_off(31, 12) = 0;
         }
-        wb_off(19, 12) = i_d_instr.read()(19, 12);
-        wb_off[11] = i_d_instr.read()[20];
-        wb_off(10, 1) = i_d_instr.read()(30, 21);
-        wb_off[0] = 0;
+        int x1 = wb_off[12] = i_d_instr.read()[31];
+        int x2 = wb_off[11] = i_d_instr.read()[7];
+        int x3 = wb_off(10, 5) = i_d_instr.read()(30, 25);
+        int x4 = wb_off(4, 1) = i_d_instr.read()(11, 8);
+        int x5 = wb_off[0] = 0;
+        bool st = true;
     } else if (i_isa_type.read()[ISA_UJ_type]) {
         wb_radr1 = 0;
         wb_rdata1 = i_d_pc;
@@ -205,7 +212,37 @@ void InstrExecute::comb() {
         v.memop_size = MEMOP_8B;
     } else if (wv[Instr_LUI]) {
         wb_res = wb_rdata2;
-    } 
+    } else if (wv[Instr_CSRRC]) {
+        wb_res = i_csr_rdata;
+        w_csr_wena = 1;
+        wb_csr_addr = wb_rdata2.range(11, 0);
+        wb_csr_wdata = i_csr_rdata.read() & ~i_rdata1.read();
+    } else if (wv[Instr_CSRRCI]) {
+        wb_res = i_csr_rdata;
+        w_csr_wena = 1;
+        wb_csr_addr = wb_rdata2.range(11, 0);
+        wb_csr_wdata = i_csr_rdata.read() & ~wb_radr1;  // extending to 64-bits
+    } else if (wv[Instr_CSRRS]) {
+        wb_res = i_csr_rdata;
+        w_csr_wena = 1;
+        wb_csr_addr = wb_rdata2.range(11, 0);
+        wb_csr_wdata = i_csr_rdata.read() | i_rdata1.read();
+    } else if (wv[Instr_CSRRSI]) {
+        wb_res = i_csr_rdata;
+        w_csr_wena = 1;
+        wb_csr_addr = wb_rdata2.range(11, 0);
+        wb_csr_wdata = i_csr_rdata.read() | wb_radr1;  // extending to 64-bits
+    } else if (wv[Instr_CSRRW]) {
+        wb_res = i_csr_rdata;
+        w_csr_wena = 1;
+        wb_csr_addr = wb_rdata2.range(11, 0);
+        wb_csr_wdata = i_rdata1;
+    } else if (wv[Instr_CSRRWI]) {
+        wb_res = i_csr_rdata;
+        w_csr_wena = 1;
+        wb_csr_addr = wb_rdata2.range(11, 0);
+        wb_csr_wdata = wb_radr1;  // extending to 64-bits
+    }
 
 #if 1
     int t1 = i_cache_hold.read();

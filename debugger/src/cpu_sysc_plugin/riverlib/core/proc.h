@@ -136,6 +136,7 @@ private:
 
     BranchPredictor *predic0;
     RegIntBank *iregs0;
+
 };
 
 

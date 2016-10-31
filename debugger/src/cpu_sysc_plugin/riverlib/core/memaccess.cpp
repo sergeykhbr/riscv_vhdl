@@ -31,6 +31,9 @@ MemAccess::MemAccess(sc_module_name name_, sc_trace_file *vcd)
     sensitive << i_clk.pos();
 
     if (vcd) {
+        sc_trace(vcd, i_e_valid, "/top/proc0/mem0/i_e_valid");
+        sc_trace(vcd, i_e_pc, "/top/proc0/mem0/i_e_pc");
+        sc_trace(vcd, i_e_instr, "/top/proc0/mem0/i_e_instr");
         sc_trace(vcd, o_mem_valid, "/top/proc0/mem0/o_mem_valid");
         sc_trace(vcd, o_mem_write, "/top/proc0/mem0/o_mem_write");
         sc_trace(vcd, o_mem_sz, "/top/proc0/mem0/o_mem_sz");

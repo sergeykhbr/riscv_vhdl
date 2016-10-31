@@ -26,6 +26,15 @@ BranchPredictor::BranchPredictor(sc_module_name name_, sc_trace_file *vcd)
     sensitive << i_clk.pos();
 
     if (vcd) {
+        sc_trace(vcd, i_hold, "/top/proc0/bp0/i_hold");
+        sc_trace(vcd, i_f_mem_request, "/top/proc0/bp0/i_f_mem_request");
+        sc_trace(vcd, i_f_predic_miss, "/top/proc0/bp0/i_f_predic_miss");
+        sc_trace(vcd, i_f_instr_valid, "/top/proc0/bp0/i_f_instr_valid");
+        sc_trace(vcd, i_f_instr, "/top/proc0/bp0/i_f_instr");
+        sc_trace(vcd, i_e_npc, "/top/proc0/bp0/i_e_npc");
+
+        sc_trace(vcd, o_npc_predict, "/top/proc0/bp0/o_npc_predict");
+        sc_trace(vcd, r.npc, "/top/proc0/bp0/r_npc");
     }
 };
 
