@@ -107,7 +107,7 @@ void RtlWrapper::clk_negedge_proc() {
             ibus_->write(addr, val.buf, size);
             v.resp_mem_data = 0;
         } else {
-#if 1
+#if 0
             int idx = ((addr - 0x1000) % sizeof(TEST_ROM)) / 4;
             v.resp_mem_data = *((uint64_t*)&TEST_ROM[idx]);
 #else

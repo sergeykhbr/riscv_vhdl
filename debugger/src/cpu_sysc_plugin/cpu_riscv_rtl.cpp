@@ -54,7 +54,7 @@ CpuRiscV_RTL::CpuRiscV_RTL(const char *name)
     top_->o_req_mem_data(wb_req_mem_data);
     top_->i_resp_mem_data_valid(w_resp_mem_data_valid);
     top_->i_resp_mem_data(wb_resp_mem_data);
-    top_->i_interrupt(w_interrupt);
+    top_->i_ext_irq(w_interrupt);
 
     //sc_trace(vcd_, w_req_mem_valid, "w_req_mem_valid");
     //sc_trace(vcd_, wb_req_mem_addr, "wb_req_mem_addr");

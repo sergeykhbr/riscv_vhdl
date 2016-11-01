@@ -19,6 +19,11 @@
 #include "coreservices/iclock.h"
 #include "coreservices/iclklistener.h"
 #include "instructions.h"
+#define GENERATE_DEBUG_FILE
+#ifdef GENERATE_DEBUG_FILE
+#include <fstream>
+#endif
+
 
 namespace debugger {
 
@@ -88,6 +93,7 @@ private:
 
 
 private:
+    AttributeType isEnable_;
     AttributeType bus_;
     AttributeType listExtISA_;
     AttributeType freqHz_;
@@ -110,6 +116,11 @@ private:
     } dbg_state_;
     uint64_t dbg_step_cnt_;
 
+#ifdef GENERATE_DEBUG_FILE
+    char tstr[1024];
+    std::ofstream *file_dbg;
+    uint64_t iregs_prev[32]; // to detect changes
+#endif
 };
 
 DECLARE_CLASS(CpuRiscV_Functional)

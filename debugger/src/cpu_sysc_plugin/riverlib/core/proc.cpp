@@ -19,11 +19,15 @@ Processor::Processor(sc_module_name name_, sc_trace_file *vcd)
     sensitive << w.f.imem_req_valid;
     sensitive << w.f.imem_req_addr;
     sensitive << w.f.valid;
-    //sensitive << r.predict_npc;
-    sensitive << r.dbgCnt;
+    sensitive << r.clk_cnt;
 
     SC_METHOD(registers);
     sensitive << i_clk.pos();
+
+#ifdef GENERATE_DEBUG_FILE
+    SC_METHOD(negedge_dbg_print);
+    sensitive << i_clk.neg();
+#endif
 
     fetch0 = new InstrFetch("fetch0", vcd);
     fetch0->i_clk(i_clk);
@@ -74,9 +78,10 @@ Processor::Processor(sc_module_name name_, sc_trace_file *vcd)
     exec0->i_user_level(w.d.user_level);
     exec0->i_priv_level(w.d.priv_level);
     exec0->i_ie(csr.ie);
-    exec0->i_idt(csr.idt);
+    exec0->i_idt(csr.mvec);
     exec0->i_mode(csr.mode);
-    exec0->i_exception(w.d.exception);
+    exec0->i_unsup_exception(w.d.exception);
+    exec0->i_ext_irq(i_ext_irq);
     exec0->o_radr1(w.e.radr1);
     exec0->i_rdata1(w.e.rdata1);
     exec0->o_radr2(w.e.radr2);
@@ -149,32 +154,51 @@ Processor::Processor(sc_module_name name_, sc_trace_file *vcd)
     iregs0->i_wdata(w.w.wdata);
     iregs0->o_ra(wb_ra);   // Return address
 
+    csr0 = new CsrRegs("csr0", vcd);
+    csr0->i_clk(i_clk);
+    csr0->i_nrst(i_nrst);
+    csr0->i_addr(csr.addr);
+    csr0->i_wena(csr.wena);
+    csr0->i_wdata(csr.wdata);
+    csr0->o_rdata(csr.rdata);
+    csr0->o_ie(csr.ie);
+    csr0->o_mode(csr.mode);
+    csr0->o_mvec(csr.mvec);
 
     if (vcd) {
-        //sc_trace(vcd, fetch0->o_f_pc, "top/fetch0/o_f_pc");
-        //sc_trace(vcd, fetch0->o_f_instr, "top/fetch0/o_f_instr");
+        sc_trace(vcd, r.clk_cnt, "top/r_clk_cnt");
+#ifdef GENERATE_DEBUG_FILE
+        sc_trace(vcd, line_cnt, "top/line_cnt");
+#endif
     }
 
-    //todo:
-    w.w.wena = 0;
-
+#ifdef GENERATE_DEBUG_FILE
+    file_dbg = new ofstream("river_sysc.log");
+    line_cnt = 0;
+#endif
 };
 
 Processor::~Processor() {
     delete fetch0;
+    delete dec0;
+    delete exec0;
+    delete mem0;
+    delete predic0;
+    delete iregs0;
+    delete csr0;
+#ifdef GENERATE_DEBUG_FILE
+    file_dbg->close();
+    delete file_dbg;
+#endif
 }
 
 void Processor::comb() {
+    v = r;
 
-    if (w.f.imem_req_valid.read()) {
-        //v.predict_npc = r.predict_npc.read() + 4;
-    }
-
-    v.dbgCnt = r.dbgCnt.read() + 1;
+    v.clk_cnt = r.clk_cnt.read() + 1;
 
     if (!i_nrst.read()) {
-        v.dbgCnt = 0;
-        //v.predict_npc = RESET_VECTOR;
+        v.clk_cnt = 0;
     }
 
     o_req_ctrl_valid = w.f.imem_req_valid;
@@ -186,6 +210,33 @@ void Processor::comb() {
 void Processor::registers() {
     r = v;
 }
+
+#ifdef GENERATE_DEBUG_FILE
+void Processor::negedge_dbg_print() {
+    if (w.m.valid.read()) {
+        int sz;
+        line_cnt++;
+        sz = sprintf(tstr, "%8I64d [%08x] %08x: ",
+            line_cnt,
+            w.m.pc.read().to_int(),
+            w.m.instr.read().to_int());
+        uint64_t prev_val = iregs0->r.mem[w.w.waddr.read().to_int()].to_int64();
+        uint64_t cur_val = w.w.wdata.read().to_int64();
+        if (w.w.waddr.read() == 0 || prev_val == cur_val) {
+            // not writing
+            sz += sprintf(&tstr[sz], "%s", "-\n");
+        } else {
+            sz += sprintf(&tstr[sz], "%3s <= %016I64x\n",
+                        IREGS_NAMES[w.w.waddr.read().to_int()],
+                        cur_val);
+        }
+
+        (*file_dbg) << tstr;
+        file_dbg->flush();
+    }
+}
+#endif
+
 
 }  // namespace debugger
 

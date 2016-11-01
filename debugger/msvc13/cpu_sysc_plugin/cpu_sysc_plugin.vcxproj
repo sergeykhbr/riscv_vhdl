@@ -183,6 +183,7 @@
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\dcache.cpp" />
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\icache.cpp" />
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\br_predic.cpp" />
+    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\csr.cpp" />
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\decoder.cpp" />
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\execute.cpp" />
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\fetch.cpp" />
@@ -207,6 +208,7 @@
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\dcache.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\icache.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\br_predic.h" />
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\csr.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\decoder.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\execute.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\fetch.h" />

@@ -42,14 +42,15 @@ void RegIntBank::comb() {
             v.mem[i_waddr.read()] = i_wdata;
         }
     }
+    v.update = !r.update.read();
 
-    if (!i_nrst.read()) {
-        for (int i = 0; i < Reg_Total; i++) {
-            v.mem[i] = 0;
+    if (!i_nrst.read()) {   
+        v.mem[0] = 0;
+        for (int i = 1; i < Reg_Total; i++) {
+            v.mem[i] = 0xfeedface;
         }
         v.update = 0;
     }
-    v.update = !r.update;
 
     o_rdata1 = r.mem[i_radr1.read()];
     o_rdata2 = r.mem[i_radr2.read()];

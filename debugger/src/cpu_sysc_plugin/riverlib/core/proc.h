@@ -16,33 +16,46 @@
 #include "memaccess.h"
 #include "execute.h"
 #include "regibank.h"
+#include "csr.h"
 #include "br_predic.h"
+
+#define GENERATE_DEBUG_FILE
+
+#ifdef GENERATE_DEBUG_FILE
+#include <fstream>
+#endif
+
 
 namespace debugger {
 
 SC_MODULE(Processor) {
     sc_in<bool> i_clk;
-    sc_in<bool> i_nrst;
-    sc_in<bool> i_cache_hold;
+    sc_in<bool> i_nrst;                                 // Reset. Active LOW
+    sc_in<bool> i_cache_hold;                           // Cache is busy, hold the pipeline
     // Control path:
-    sc_out<bool> o_req_ctrl_valid;
-    sc_out<sc_uint<AXI_ADDR_WIDTH>> o_req_ctrl_addr;
-    sc_in<bool> i_resp_ctrl_valid;
-    sc_in<sc_uint<AXI_ADDR_WIDTH>> i_resp_ctrl_addr;
-    sc_in<sc_uint<32>> i_resp_ctrl_data;
+    sc_out<bool> o_req_ctrl_valid;                      // Request to ICache is valid
+    sc_out<sc_uint<AXI_ADDR_WIDTH>> o_req_ctrl_addr;    // Requesting address to ICache
+    sc_in<bool> i_resp_ctrl_valid;                      // ICache response is valid
+    sc_in<sc_uint<AXI_ADDR_WIDTH>> i_resp_ctrl_addr;    // Response address must be equal to the latest request address
+    sc_in<sc_uint<32>> i_resp_ctrl_data;                // Read value
     // Data path:
-    sc_out<bool> o_req_data_valid;
-    sc_out<bool> o_req_data_write;
-    sc_out<sc_uint<2>> o_req_data_size; // 0=1bytes; 1=2bytes; 2=4bytes; 3=8bytes
-    sc_out<sc_uint<AXI_ADDR_WIDTH>> o_req_data_addr;
-    sc_out<sc_uint<RISCV_ARCH>> o_req_data_data;
-    sc_in<bool> i_resp_data_valid;
-    sc_in<sc_uint<AXI_ADDR_WIDTH>> i_resp_data_addr;
-    sc_in<sc_uint<RISCV_ARCH>> i_resp_data_data;
+    sc_out<bool> o_req_data_valid;                      // Request to DCache is valid
+    sc_out<bool> o_req_data_write;                      // Read/Write transaction
+    sc_out<sc_uint<2>> o_req_data_size;                 // Size [Bytes]: 0=1B; 1=2B; 2=4B; 3=8B
+    sc_out<sc_uint<AXI_ADDR_WIDTH>> o_req_data_addr;    // Requesting address to DCache
+    sc_out<sc_uint<RISCV_ARCH>> o_req_data_data;        // Writing value
+    sc_in<bool> i_resp_data_valid;                      // DCache response is valid
+    sc_in<sc_uint<AXI_ADDR_WIDTH>> i_resp_data_addr;    // DCache response address must be equal to the latest request address
+    sc_in<sc_uint<RISCV_ARCH>> i_resp_data_data;        // Read value
+    // External interrupt pin
+    sc_in<bool> i_ext_irq;                              // PLIC interrupt accordingly with spec
 
 
     void comb();
     void registers();
+#ifdef GENERATE_DEBUG_FILE
+    void negedge_dbg_print();
+#endif
 
     SC_HAS_PROCESS(Processor);
 
@@ -58,6 +71,7 @@ private:
         sc_signal<sc_uint<AXI_ADDR_WIDTH>> imem_req_addr;
         sc_signal<bool> predict_miss;
     };
+
     struct InstructionDecodeType {
         sc_signal<sc_uint<AXI_ADDR_WIDTH>> pc;
         sc_signal<sc_uint<32>> instr;
@@ -69,6 +83,7 @@ private:
         sc_signal<bool> priv_level;
         sc_signal<bool> exception;
     };
+
     struct ExecuteType {
         sc_signal<bool> valid;
         sc_signal<sc_uint<32>> instr;
@@ -89,44 +104,47 @@ private:
         sc_signal<bool> hazard_hold;
 
     };
+
     struct MemoryType {
         sc_signal<bool> valid;
         sc_signal<sc_uint<32>> instr;
         sc_signal<sc_uint<AXI_ADDR_WIDTH>> pc;
     };
+
     struct WriteBackType {
         sc_signal<sc_uint<AXI_ADDR_WIDTH>> pc;
         sc_signal<bool> wena;
         sc_signal<sc_uint<5>> waddr;
         sc_signal<sc_uint<RISCV_ARCH>> wdata;
     };
+
     struct CsrType {
         sc_signal<sc_uint<12>> addr;
         sc_signal<bool> wena;
         sc_signal<sc_uint<RISCV_ARCH>> rdata;
         sc_signal<sc_uint<RISCV_ARCH>> wdata;
 
-        sc_signal<bool> ie;                           // Interrupt enable bit
-        sc_signal<sc_uint<AXI_ADDR_WIDTH>> idt;       // Interrupt descriptor table
-        sc_signal<sc_uint<2>> mode;                   // Current processor mode
-    };
+        sc_signal<bool> ie;                     // Interrupt enable bit
+        sc_signal<sc_uint<AXI_ADDR_WIDTH>> mvec;// Interrupt descriptor table
+        sc_signal<sc_uint<2>> mode;             // Current processor mode
+    } csr;
 
+    /** 5-stages CPU pipeline */
     struct PipelineType {
-        FetchType f;
-        InstructionDecodeType d;
-        ExecuteType e;
-        MemoryType m;
-        WriteBackType w;
+        FetchType f;                            // Fetch instruction stage
+        InstructionDecodeType d;                // Decode instruction stage
+        ExecuteType e;                          // Execute instruction
+        MemoryType m;                           // Memory load/store
+        WriteBackType w;                        // Write back registers value
     } w;
-    CsrType csr;
+
     struct RegistersType {
-        sc_signal<sc_uint<3>> dbgCnt;
-        //sc_signal<sc_uint<AXI_ADDR_WIDTH>> predict_npc;
+        sc_signal<sc_uint<64>> clk_cnt;         // Total number of clock since reset
     } v, r;
 
     sc_signal<sc_uint<AXI_ADDR_WIDTH>> wb_npc_predict;
-    sc_signal<sc_uint<RISCV_ARCH>> wb_ra;   // Return address
-    sc_signal<bool> w_any_hold;
+    sc_signal<sc_uint<RISCV_ARCH>> wb_ra;       // Return address
+    sc_signal<bool> w_any_hold;                 // Hold pipeline by any reason
 
 
     InstrFetch *fetch0;
@@ -136,7 +154,13 @@ private:
 
     BranchPredictor *predic0;
     RegIntBank *iregs0;
+    CsrRegs *csr0;
 
+#ifdef GENERATE_DEBUG_FILE
+    char tstr[1024];
+    uint64_t line_cnt;
+    ofstream *file_dbg;
+#endif
 };
 
 

@@ -18,10 +18,12 @@ CpuRiscV_Functional::CpuRiscV_Functional(const char *name)
     registerInterface(static_cast<IClock *>(this));
     registerInterface(static_cast<IHostIO *>(this));
     registerInterface(static_cast<IHap *>(this));
+    registerAttribute("Enable", &isEnable_);
     registerAttribute("Bus", &bus_);
     registerAttribute("ListExtISA", &listExtISA_);
     registerAttribute("FreqHz", &freqHz_);
 
+    isEnable_.make_boolean(true);
     bus_.make_string("");
     listExtISA_.make_list(0);
     freqHz_.make_uint64(1);
@@ -70,16 +72,24 @@ void CpuRiscV_Functional::postinitService() {
 
     // Get global settings:
     const AttributeType *glb = RISCV_get_global_settings();
-    if ((*glb)["SimEnable"].to_bool()) {
+    if ((*glb)["SimEnable"].to_bool() && isEnable_.to_bool()) {
         if (!run()) {
             RISCV_error("Can't create thread.", NULL);
             return;
         }
+
+#ifdef GENERATE_DEBUG_FILE
+        file_dbg = new std::ofstream("river_func.log");
+#endif
     }
 }
 
 void CpuRiscV_Functional::predeleteService() {
     stop();
+#ifdef GENERATE_DEBUG_FILE
+    file_dbg->close();
+    delete file_dbg;
+#endif
 }
 
 void CpuRiscV_Functional::hapTriggered(IFace *isrc, EHapType type,
@@ -288,10 +298,20 @@ static const int t5 = 30;       // [30]
 static const int t6 = 31;      // [31] 
 #endif
 
+
 void CpuRiscV_Functional::executeInstruction(IInstruction *instr,
                                              uint32_t *rpayload) {
 
     CpuContextType *pContext = getpContext();
+#ifdef GENERATE_DEBUG_FILE
+    for (int i = 0; i < 32; i++) {
+        iregs_prev[i] = pContext->regs[i];
+    }
+    if (pContext->step_cnt == 88) {
+        bool st = true;
+    }
+#endif
+
     instr->exec(cacheline_, pContext);
 #if 0
     //if (pContext->pc >= 0x10000000) {
@@ -313,6 +333,26 @@ void CpuRiscV_Functional::executeInstruction(IInstruction *instr,
             );
     }
 #endif
+#ifdef GENERATE_DEBUG_FILE
+    int sz;
+    sz = sprintf(tstr, "%8I64d [%08x] %08x: ",
+        pContext->step_cnt, static_cast<uint32_t>(pContext->pc), rpayload[0]);
+
+    bool reg_changed = false;
+    for (int i = 0; i < 32; i++) {
+        if (iregs_prev[i] != pContext->regs[i]) {
+            reg_changed = true;
+            sz += sprintf(&tstr[sz], "%3s <= %016I64x\n",
+                        REG_NAMES[i], pContext->regs[i]);
+        }
+    }
+    if (!reg_changed) {
+        sz += sprintf(&tstr[sz], "%s", "-\n");
+    }
+    (*file_dbg) << tstr;
+    file_dbg->flush();
+#endif
+
 
     if (pContext->regs[0] != 0) {
         RISCV_error("Register x0 was modificated (not equal to zero)", NULL);

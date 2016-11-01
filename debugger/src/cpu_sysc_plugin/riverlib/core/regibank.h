@@ -14,6 +14,7 @@
 namespace debugger {
 
 enum ERegNames {
+    Reg_Zero,
     Reg_ra,// = 1;       // [1] Return address
     Reg_sp,// = 2;       // [2] Stack pointer
     Reg_gp,// = 3;       // [3] Global pointer
@@ -48,20 +49,27 @@ enum ERegNames {
     Reg_Total
 };
 
+static const char *const IREGS_NAMES[] = {
+    "zero", "ra", "sp", "gp", "tp", "t0", "t1", "t2",
+    "s0", "s1", "a0", "a1", "a2", "a3", "a4", "a5",
+    "a6", "a7", "s2", "s3", "s4", "s5", "s6", "s7",
+    "s8", "s9", "s10", "s11", "t3", "t4", "t5", "t6"
+};
+
 SC_MODULE(RegIntBank) {
-    sc_in<bool> i_clk;
-    sc_in<bool> i_nrst;
-    sc_in<sc_uint<5>> i_radr1;
-    sc_out<sc_uint<RISCV_ARCH>> o_rdata1;
+    sc_in<bool> i_clk;                      // Clock
+    sc_in<bool> i_nrst;                     // Reset. Active LOW
+    sc_in<sc_uint<5>> i_radr1;              // Port 1 read address
+    sc_out<sc_uint<RISCV_ARCH>> o_rdata1;   // Port 1 read value
 
-    sc_in<sc_uint<5>> i_radr2;
-    sc_out<sc_uint<RISCV_ARCH>> o_rdata2;
+    sc_in<sc_uint<5>> i_radr2;              // Port 2 read address
+    sc_out<sc_uint<RISCV_ARCH>> o_rdata2;   // Port 2 read value
 
-    sc_in<sc_uint<5>> i_waddr;
-    sc_in<bool> i_wena;
-    sc_in<sc_uint<RISCV_ARCH>> i_wdata;
+    sc_in<sc_uint<5>> i_waddr;              // Writing value
+    sc_in<bool> i_wena;                     // Writing is enabled
+    sc_in<sc_uint<RISCV_ARCH>> i_wdata;     // Writing value
 
-    sc_out<sc_uint<RISCV_ARCH>> o_ra;   // Return address
+    sc_out<sc_uint<RISCV_ARCH>> o_ra;       // Return address for branch predictor
 
     void comb();
     void registers();
@@ -71,9 +79,11 @@ SC_MODULE(RegIntBank) {
     RegIntBank(sc_module_name name_, sc_trace_file *vcd=0);
 
 private:
+    friend struct Processor; // for debug purposes(remove it)s
+
     struct RegistersType {
-        sc_uint<RISCV_ARCH> mem[Reg_Total];
-        sc_signal<bool> update;
+        sc_signal<bool> update;             // To generate SystemC delta event only.
+        sc_uint<RISCV_ARCH> mem[Reg_Total]; // Multi-ports memory
     } v, r;
 };
 

@@ -71,10 +71,10 @@ void InstrFetch::comb() {
 
     bool w_predict_miss = 0;
     if (i_e_npc_valid.read() && wrong_address) {
-        wb_addr_req = (i_e_npc.read()) % 0x2000;
+        wb_addr_req = i_e_npc.read();
         w_predict_miss = 1;
     } else {
-        wb_addr_req = (i_predict_npc.read()) % 0x2000;    // !!! DEBUG for a while
+        wb_addr_req = i_predict_npc.read();
     }
     
     v.raddr_not_resp_yet = wb_addr_req; // Address already requested but probably not responded yet.
@@ -109,7 +109,6 @@ void InstrFetch::comb() {
         v.f_valid = 0;
         v.pc[0] = 0;
         v.pc[1] = 0;
-        //v.predict_miss = 0;
         v.raddr_not_resp_yet = 0;
         v.is_postponed = 0;
         v.postponed_pc = 0;

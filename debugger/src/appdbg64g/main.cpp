@@ -133,6 +133,7 @@ const char *default_config =
                 "]}]},"
     "{'Class':'CpuRiscV_FunctionalClass','Instances':["
           "{'Name':'core0','Attr':["
+                "['Enable',true],"
                 "['LogLevel',4],"
                 "['Bus','axi0'],"
                 "['ListExtISA',['I','M','A']],"

@@ -72,15 +72,17 @@ void InstrExecute::comb() {
     sc_uint<RISCV_ARCH> wb_csr_wdata = 0;
     sc_uint<RISCV_ARCH> wb_res = 0;
     sc_uint<AXI_ADDR_WIDTH> wb_npc;
-    sc_uint<AXI_ADDR_WIDTH> wb_off;
+    sc_uint<RISCV_ARCH> wb_off;
     sc_uint<RISCV_ARCH> wb_sum64;
     sc_uint<RISCV_ARCH> wb_sub64;
     sc_uint<RISCV_ARCH> wb_and64;
     sc_uint<RISCV_ARCH> wb_or64;
     sc_uint<RISCV_ARCH> wb_xor64;
     sc_uint<RISCV_ARCH> wb_mul64;
+    sc_uint<RISCV_ARCH> wb_sll64;
 
     sc_logic w_w32;
+    sc_logic w_unsigned;
     sc_logic w_res_wena;
     sc_logic w_pc_jump;
 
@@ -95,15 +97,15 @@ void InstrExecute::comb() {
 #if 1   
     int t_instr = i_d_instr.read();
     int tinstr_idx = -1;
-    int tisa = i_isa_type.read()[ISA_R_type];//.to_int();
+    int tisa = i_isa_type.read()[ISA_R_type];
     for (int i = 0; i < Instr_Total; i++) {
         if (wv[i].to_bool()) {
             tinstr_idx = i;
             break;
         }
     }
-    if (i_d_pc.read() >= 0x104c) {
-        bool st = true;
+    if (i_d_pc.read() >= 0x13a4) {
+        bool st = true; // sd	ra,56(sp)
     }
 #endif
 
@@ -113,49 +115,73 @@ void InstrExecute::comb() {
         wb_radr2 = i_d_instr.read().range(24, 20);
         wb_rdata2 = i_rdata2;
     } else if (i_isa_type.read()[ISA_I_type]) {
-        wb_radr1 = i_d_instr.read().range(19, 15);
-        wb_rdata1 = i_rdata1;
-        wb_radr2 = 0;
-        wb_rdata2 = i_d_instr.read().range(31, 20);
+        uint64_t x1 = wb_radr1 = i_d_instr.read().range(19, 15);
+        uint64_t x2 = wb_rdata1 = i_rdata1;
+        uint64_t x3 = wb_radr2 = 0;
+        uint64_t x4 = wb_rdata2 = i_d_instr.read().range(31, 20);
         if (wb_rdata2.bit(11)) {
-            wb_rdata2(31, 12) = ~0;
+            wb_rdata2(63, 12) = ~0;
+            x4 = wb_rdata2;
         }
+        bool st = true;
     } else if (i_isa_type.read()[ISA_SB_type]) {
         wb_radr1 = i_d_instr.read().range(19, 15);
         wb_rdata1 = i_rdata1;
         wb_radr2 = i_d_instr.read().range(24, 20);
         wb_rdata2 = i_rdata2;
         if (i_d_instr.read()[31]) {
-            wb_off(31, 12) = ~0;
+            wb_off(RISCV_ARCH-1, 12) = ~0;
         } else {
-            wb_off(31, 12) = 0;
+            wb_off(RISCV_ARCH-1, 12) = 0;
         }
-        int x1 = wb_off[12] = i_d_instr.read()[31];
-        int x2 = wb_off[11] = i_d_instr.read()[7];
-        int x3 = wb_off(10, 5) = i_d_instr.read()(30, 25);
-        int x4 = wb_off(4, 1) = i_d_instr.read()(11, 8);
-        int x5 = wb_off[0] = 0;
+        uint64_t x1 = wb_off[12] = i_d_instr.read()[31];
+        uint64_t x2 = wb_off[11] = i_d_instr.read()[7];
+        uint64_t x3 = wb_off(10, 5) = i_d_instr.read()(30, 25);
+        uint64_t x4 = wb_off(4, 1) = i_d_instr.read()(11, 8);
+        uint64_t x5 = wb_off[0] = 0;
         bool st = true;
     } else if (i_isa_type.read()[ISA_UJ_type]) {
         wb_radr1 = 0;
-        wb_rdata1 = i_d_pc;
+        uint64_t x2, x1 = wb_rdata1 = i_d_pc;
         wb_radr2 = 0;
-        if (wb_rdata2.bit(31)) {
-            wb_rdata2(63, 32) = ~0;
+        if (i_d_instr.read()[31]) {
+            wb_off(RISCV_ARCH-1, 20) = ~0;
         }
+        wb_off(19, 12) = i_d_instr.read()(19, 12);
+        wb_off[11] = i_d_instr.read()[20];
+        wb_off(10, 1) = i_d_instr.read()(30, 21);
+        wb_off[0] = 0;
+        x2 = wb_off;
+        bool st = true;
     } else if (i_isa_type.read()[ISA_U_type]) {
         wb_radr1 = 0;
-        wb_rdata1 = i_d_pc;
+        int x1 = wb_rdata1 = i_d_pc;
         wb_radr2 = 0;
-        wb_rdata2(31, 0) = i_d_instr.read().range(31, 12) << 12;
+        int x2 = wb_rdata2(31, 0) = i_d_instr.read().range(31, 12) << 12;
         if (wb_rdata2.bit(31)) {
-            wb_rdata2(63, 32) = ~0;
+            x2 = wb_rdata2(63, 32) = ~0;
         }
+         bool stop = true;
+    } else if (i_isa_type.read()[ISA_S_type]) {
+        wb_radr1 = i_d_instr.read().range(19, 15);
+        wb_rdata1 = i_rdata1;
+        wb_radr2 = i_d_instr.read().range(24, 20);
+        wb_rdata2 = i_rdata2;
+
+
+        if (wb_rdata2.bit(31)) {
+            wb_off(RISCV_ARCH-1, 12) = ~0;
+        }
+        wb_off(11, 5) = i_d_instr.read()(31, 25);
+        wb_off(4, 0) = i_d_instr.read()(11, 7);
+        uint64_t x2 = wb_off;
+        bool stop = true;
     }
 
     // Don't modify registers on conditional jumps:
     w_res_wena = ~(wv[Instr_BEQ] | wv[Instr_BGE] | wv[Instr_BGEU]
-               | wv[Instr_BLT] | wv[Instr_BLTU] | wv[Instr_BNE]);
+               | wv[Instr_BLT] | wv[Instr_BLTU] | wv[Instr_BNE]
+               | wv[Instr_SD] | wv[Instr_SW] | wv[Instr_SH] | wv[Instr_SB]);
     if (w_res_wena.to_bool()) {
         wb_res_addr = i_d_instr.read().range(11, 7);
     } else {
@@ -163,12 +189,13 @@ void InstrExecute::comb() {
     }
 
     // parallel ALU:
-    wb_sum64 = wb_rdata1 + wb_rdata2;
+    uint64_t t_sum64 = wb_sum64 = wb_rdata1 + wb_rdata2;
     wb_sub64 = wb_rdata1 - wb_rdata2;
     wb_and64 = wb_rdata1 & wb_rdata2;
     wb_or64 = wb_rdata1 | wb_rdata2;
     wb_xor64 = wb_rdata1 ^ wb_rdata2;
     wb_mul64 = wb_rdata1 * wb_rdata2;
+    wb_sll64 = wb_rdata1 << wb_rdata2;
 
     // Relative Jumps on some condition:
     w_pc_jump = (wv[Instr_BEQ] & (wb_sub64 == 0))
@@ -176,29 +203,33 @@ void InstrExecute::comb() {
               || (wv[Instr_BGEU] & (wb_sub64[63] == wb_rdata1[63]))
               || (wv[Instr_BLT] & (wb_sub64[63] == 1))
               || (wv[Instr_BLTU] & (wb_sub64[63] != wb_rdata1[63]))
-              || (wv[Instr_BEQ] & (wb_sub64 != 0))
-              || wv[Instr_JAL];
+              || (wv[Instr_BEQ] & (wb_sub64 != 0));
 
     if (w_pc_jump.to_bool()) {
-        wb_npc = i_d_pc.read() + wb_off;
-    } else if (wv[Instr_JALR].to_bool()) {
-        wb_npc = wb_rdata1 + wb_off;
+        wb_npc = i_d_pc.read() + wb_off(AXI_ADDR_WIDTH-1, 0);
+    } else if (wv[Instr_JALR].to_bool() || wv[Instr_JAL].to_bool()) {
+        wb_res = i_d_pc.read() + 4;
+        uint64_t x1 = wb_npc = wb_rdata1 + wb_off;
         // TODO: execptions and traps:
+        bool st=true;
     } else {
         wb_npc = i_d_pc.read() + 4;
     }
 
-    // RV32 instructions list:
+    // RV32 instructions list (MOVE TO DECODER):
     w_w32 = wv[Instr_ADDW] | wv[Instr_ADDIW] 
         | wv[Instr_SLLW] | wv[Instr_SLLIW] | wv[Instr_SRAW] | wv[Instr_SRAIW]
         | wv[Instr_SRLW] | wv[Instr_SRLIW] | wv[Instr_SUBW] 
         | wv[Instr_DIVW] | wv[Instr_DIVUW] | wv[Instr_MULW]
         | wv[Instr_REMW] | wv[Instr_REMUW];
+    w_unsigned = wv[Instr_DIVUW] | wv[Instr_REMUW];
 
 
     // ALU block selector:
     if (wv[Instr_ADD] || wv[Instr_ADDI] || wv[Instr_AUIPC]) {
         wb_res = wb_sum64;
+    } else if (wv[Instr_SLL] || wv[Instr_SLLI]) {
+        wb_res = wb_sll64;
     } else if (wv[Instr_ADDW] || wv[Instr_ADDIW]) {
         wb_res(31, 0) = wb_sum64(31, 0);
         if (wb_sum64[31]) {
@@ -208,10 +239,25 @@ void InstrExecute::comb() {
         wb_res = wb_rdata1 & wb_rdata2;
     } else if (wv[Instr_LD]) {
         v.memop_addr = wb_rdata1 + wb_rdata2;
-        v.memop_load = 1;
+        v.memop_load = !w_hazard_detected;
         v.memop_size = MEMOP_8B;
-    } else if (wv[Instr_LUI]) {
+    } else if (wv[Instr_LW]) {
+        v.memop_addr = wb_rdata1 + wb_rdata2;
+        v.memop_load = !w_hazard_detected;
+        v.memop_size = MEMOP_4B;
+    } else if (wv[Instr_SD]) {
+        v.memop_addr = wb_rdata1 + wb_off;
+        v.memop_store = !w_hazard_detected;
+        v.memop_size = MEMOP_8B;
         wb_res = wb_rdata2;
+    } else if (wv[Instr_SW]) {
+        v.memop_addr = wb_rdata1 + wb_off;
+        v.memop_store = !w_hazard_detected;
+        v.memop_size = MEMOP_4B;
+        wb_res = wb_rdata2;
+    } else if (wv[Instr_LUI]) {
+        uint64_t x1 = wb_res = wb_rdata2;
+        bool stop = true;
     } else if (wv[Instr_CSRRC]) {
         wb_res = i_csr_rdata;
         w_csr_wena = 1;
@@ -244,15 +290,6 @@ void InstrExecute::comb() {
         wb_csr_wdata = wb_radr1;  // extending to 64-bits
     }
 
-#if 1
-    int t1 = i_cache_hold.read();
-    int t2 = i_d_valid.read();
-    int t3 = i_d_pc.read();
-    int t4 = r.npc.read();
-    if(t3 == 0x1000) {
-        bool st = true;
-    }
-#endif
     w_hazard_detected = (wb_radr1 != 0 && (wb_radr1 == r.hazard_addr[0]
                                         || wb_radr1 == r.hazard_addr[1]))
                      || (wb_radr2 != 0 && (wb_radr2 == r.hazard_addr[0]

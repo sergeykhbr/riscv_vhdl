@@ -16,20 +16,20 @@
 namespace debugger {
 
 SC_MODULE(RiverTop) {
-    sc_in<bool> i_clk;
-    sc_in<bool> i_nrst;
+    sc_in<bool> i_clk;                                  // CPU clock
+    sc_in<bool> i_nrst;                                 // Reset: active LOW
     // Timer:
-    sc_out<sc_uint<RISCV_ARCH>> o_timer;
+    sc_out<sc_uint<RISCV_ARCH>> o_timer;                // todo: move to debug interface
     // Memory interface:
-    sc_out<bool> o_req_mem_valid;
-    sc_out<bool> o_req_mem_write;
-    sc_out<sc_uint<AXI_ADDR_WIDTH>> o_req_mem_addr;
-    sc_out<sc_uint<AXI_DATA_BYTES>> o_req_mem_strob;
-    sc_out<sc_uint<AXI_DATA_WIDTH>> o_req_mem_data;
-    sc_in<bool> i_resp_mem_data_valid;
-    sc_in<sc_uint<AXI_DATA_WIDTH>> i_resp_mem_data;
-    /** Interrupt line from external interrupts controller. */
-    sc_in<bool> i_interrupt;
+    sc_out<bool> o_req_mem_valid;                       // AXI memory request is valid
+    sc_out<bool> o_req_mem_write;                       // AXI memory request is write type
+    sc_out<sc_uint<AXI_ADDR_WIDTH>> o_req_mem_addr;     // AXI memory request address
+    sc_out<sc_uint<AXI_DATA_BYTES>> o_req_mem_strob;    // Writing strob. 1 bit per Byte
+    sc_out<sc_uint<AXI_DATA_WIDTH>> o_req_mem_data;     // Writing data
+    sc_in<bool> i_resp_mem_data_valid;                  // AXI response is valid
+    sc_in<sc_uint<AXI_DATA_WIDTH>> i_resp_mem_data;     // Read data
+    /** Interrupt line from external interrupts controller (PLIC). */
+    sc_in<bool> i_ext_irq;
 
 
     void comb();

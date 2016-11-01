@@ -29,7 +29,8 @@ SC_MODULE(InstrExecute) {
     sc_in<bool> i_ie;                           // Interrupt enable bit
     sc_in<sc_uint<AXI_ADDR_WIDTH>> i_idt;       // Interrupt descriptor table
     sc_in<sc_uint<2>> i_mode;                   // Current processor mode
-    sc_in<bool> i_exception;
+    sc_in<bool> i_unsup_exception;              // Unsupported instruction exception
+    sc_in<bool> i_ext_irq;                      // External interrupt from PLIC (todo: timer & software interrupts)
 
     sc_out<sc_uint<5>> o_radr1;
     sc_in<sc_uint<RISCV_ARCH>> i_rdata1;
