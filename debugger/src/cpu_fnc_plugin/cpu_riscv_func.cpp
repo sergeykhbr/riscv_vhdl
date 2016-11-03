@@ -307,7 +307,7 @@ void CpuRiscV_Functional::executeInstruction(IInstruction *instr,
     for (int i = 0; i < 32; i++) {
         iregs_prev[i] = pContext->regs[i];
     }
-    if (pContext->step_cnt == 88) {
+    if (pContext->step_cnt >= 109) {
         bool st = true;
     }
 #endif

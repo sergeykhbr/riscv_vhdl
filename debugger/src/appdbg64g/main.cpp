@@ -257,11 +257,17 @@ int main(int argc, char* argv[]) {
     bool disableSim = true;
     bool disableGui = true;
     AttributeType scriptFile("");
+    AttributeType databuf;
+
+    RISCV_init();
 
     // Parse arguments:
     if (argc > 1) {
         for (int i = 1; i < argc; i++) {
-            if (strcmp(argv[i], "-nocfg") == 0) {
+            if (strcmp(argv[i], "-c") == 0) {
+                i++;
+                RISCV_read_json_file(argv[i], &databuf);
+            } else if (strcmp(argv[i], "-nocfg") == 0) {
                 loadConfig = false;
             } else if (strcmp(argv[i], "-sim") == 0) {
                 disableSim = false;
@@ -275,14 +281,11 @@ int main(int argc, char* argv[]) {
     }
 
     // Select configuration input (default/stored file):
-    RISCV_init();
     RISCV_set_current_dir();
     RISCV_get_core_folder(path, sizeof(path));
-    std::string cfg_filename = std::string(path) 
-                    + std::string(JSON_CONFIG_FILE);
-
-    AttributeType databuf;
-    if (loadConfig) {
+    if (loadConfig && databuf.size() == 0) {
+        std::string cfg_filename = std::string(path) 
+                        + std::string(JSON_CONFIG_FILE);
         RISCV_read_json_file(cfg_filename.c_str(), &databuf);
     } 
     if (databuf.size() == 0) {
@@ -324,17 +327,15 @@ int main(int argc, char* argv[]) {
     }
 
     /**
-     * Create "River" CPU SystemC model
+     * Unreset all CPUs
      */
-    IFace *cpu_cls = RISCV_get_class("CpuRiscV_RTLClass");
-    if (cpu_cls) {
-        AttributeType attr;
-        attr.from_config("[['Bus','axi0'],['FreqHz',60000000]]");
-        IService *core1 = static_cast<IService *>(
-                    RISCV_create_service(cpu_cls, "core1", &attr));
-        ICpuRiscV *iriver = static_cast<ICpuRiscV *>(
-                    core1->getInterface(IFACE_CPU_RISCV));
-        iriver->raiseSignal(CPU_SIGNAL_RESET);  // Active low. Unreset CPU model.
+    AttributeType cpu_list;
+    RISCV_get_services_with_iface(IFACE_CPU_RISCV, &cpu_list);
+    for (unsigned i = 0; i < cpu_list.size(); i++) {
+        IService *iserv = static_cast<IService *>(cpu_list[i].to_iface());
+        ICpuRiscV *icpu = static_cast<ICpuRiscV *>(
+                    iserv->getInterface(IFACE_CPU_RISCV));
+        icpu->raiseSignal(CPU_SIGNAL_RESET);  // Active low. Unreset CPU model.
     }
 
     if (itst != NULL) {
@@ -351,7 +352,7 @@ int main(int argc, char* argv[]) {
     }
 
     const char *t1 = RISCV_get_configuration();
-    RISCV_write_json_file(cfg_filename.c_str(), t1);
+    RISCV_write_json_file(JSON_CONFIG_FILE, t1);
 
     RISCV_cleanup();
 	return 0;

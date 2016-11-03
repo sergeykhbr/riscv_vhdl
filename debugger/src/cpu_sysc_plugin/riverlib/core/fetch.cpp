@@ -25,6 +25,7 @@ InstrFetch::InstrFetch(sc_module_name name_, sc_trace_file *vcd)
     sensitive << r.is_postponed;
     sensitive << r.wait_resp;
     sensitive << w_mem_addr_valid;
+    //sensitive << wb_addr_req;
 
     SC_METHOD(registers);
     sensitive << i_clk.pos();
@@ -70,7 +71,7 @@ void InstrFetch::comb() {
                     && (i_e_npc.read() != r.raddr_not_resp_yet.read());
 
     bool w_predict_miss = 0;
-    if (i_e_npc_valid.read() && wrong_address) {
+    if (wrong_address) {
         wb_addr_req = i_e_npc.read();
         w_predict_miss = 1;
     } else {

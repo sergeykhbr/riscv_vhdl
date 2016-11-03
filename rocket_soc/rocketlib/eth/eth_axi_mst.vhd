@@ -152,6 +152,7 @@ begin
             rready := not r.rx_tx;
             if r.len = 0 then
                 v.state := STATE_B;
+                vmsto.w_last := '1';
             else 
                 tgrant := r.rx_tx;
                 rgrant := not r.rx_tx;
@@ -182,6 +183,7 @@ begin
         end if;
 
     when STATE_B =>
+        vmsto.w_last := '0';
         vmsto.b_ready := '1';
         if aximi.b_valid = '1' then
             v.state := STATE_IDLE;

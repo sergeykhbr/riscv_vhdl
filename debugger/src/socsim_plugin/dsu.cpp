@@ -55,17 +55,26 @@ void DSU::transaction(Axi4TransactionType *payload) {
 
 void DSU::regionCsrRd(uint64_t off, Axi4TransactionType *payload) {
     uint64_t rdata;
+    if (!ihostio_) {
+        return;
+    }
     ihostio_->read(static_cast<uint16_t>(off), &rdata);
     read64(rdata, payload->addr, payload->xsize, payload->rpayload);
 }
 
 void DSU::regionCsrWr(uint64_t off, Axi4TransactionType *payload) {
+    if (!ihostio_) {
+        return;
+    }
     if (write64(&wdata_, payload->addr, payload->xsize, payload->wpayload)) {
         ihostio_->write(static_cast<uint16_t>(off), wdata_);
     }
 }
 
 void DSU::regionControlRd(uint64_t off, Axi4TransactionType *payload) {
+    if (!ihostio_) {
+        return;
+    }
     ICpuRiscV *idbg = ihostio_->getCpuInterface();
     void *off64 = reinterpret_cast<void *>(off & ~0x7);
     uint64_t val = 0;
@@ -96,6 +105,9 @@ void DSU::regionControlRd(uint64_t off, Axi4TransactionType *payload) {
 }
 
 void DSU::regionControlWr(uint64_t off, Axi4TransactionType *payload) {
+    if (!ihostio_) {
+        return;
+    }
     ICpuRiscV *idbg = ihostio_->getCpuInterface();
     void *off64 = reinterpret_cast<void *>(off & ~0x7);
     if (off == reinterpret_cast<uint64_t>(&map_->control)) {

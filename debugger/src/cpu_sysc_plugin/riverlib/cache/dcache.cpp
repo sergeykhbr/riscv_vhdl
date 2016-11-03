@@ -25,6 +25,17 @@ DCache::DCache(sc_module_name name_, sc_trace_file *vcd)
     sensitive << i_clk.pos();
 
     if (vcd) {
+        sc_trace(vcd, i_req_data_valid, "/top/cache0/d0/i_req_data_valid");
+        sc_trace(vcd, i_req_data_write, "/top/cache0/d0/i_req_data_write");
+        sc_trace(vcd, i_req_data_sz, "/top/cache0/d0/i_req_data_sz");
+        sc_trace(vcd, i_req_data_addr, "/top/cache0/d0/i_req_data_addr");
+        sc_trace(vcd, i_req_data_data, "/top/cache0/d0/i_req_data_data");
+        sc_trace(vcd, o_req_mem_addr, "/top/cache0/d0/o_req_mem_addr");
+        sc_trace(vcd, o_req_mem_strob, "/top/cache0/d0/o_req_mem_strob");
+        sc_trace(vcd, o_req_mem_data, "/top/cache0/d0/o_req_mem_data");
+        sc_trace(vcd, o_resp_data_valid, "/top/cache0/d0/o_resp_data_valid");
+        sc_trace(vcd, o_resp_data_addr, "/top/cache0/d0/o_resp_data_addr");
+        sc_trace(vcd, o_resp_data_data, "/top/cache0/d0/o_resp_data_data");
     }
 };
 
@@ -34,10 +45,13 @@ void DCache::comb() {
 
     wb_req_addr = 0;
     wb_req_strob = 0;
-    wb_msk = 0;
     wb_rdata = 0;
     wb_wdata = 0;
     wb_rtmp = 0;
+
+    uint64_t r1 = i_req_data_addr.read();
+    uint64_t r2 = i_resp_mem_data.read();
+    uint64_t r3 = r.req_addr.read();
 
     wb_req_addr(AXI_ADDR_WIDTH-1, 3) 
         = i_req_data_addr.read()(AXI_ADDR_WIDTH-1, 3);
@@ -51,27 +65,39 @@ void DCache::comb() {
                 i_req_data_data.read()(7, 0), i_req_data_data.read()(7, 0),
                 i_req_data_data.read()(7, 0), i_req_data_data.read()(7, 0),
                 i_req_data_data.read()(7, 0));
-            wb_msk = 0x01;
+            wb_req_strob = 1 << i_req_data_addr.read()(2, 0);
             break;
         case 1:
             wb_wdata = (i_req_data_data.read()(15, 0),
                 i_req_data_data.read()(15, 0), i_req_data_data.read()(15, 0),
                 i_req_data_data.read()(15, 0));
-            wb_msk = 0x03;
+            if (i_req_data_addr.read()(2, 1) == 0) {
+                wb_req_strob = 0x03;
+            } else if (i_req_data_addr.read()(2, 1) == 1) {
+                wb_req_strob = 0x0C;
+            } else if (i_req_data_addr.read()(2, 1) == 2) {
+                wb_req_strob = 0x30;
+            } else {
+                wb_req_strob = 0xC0;
+            }
             break;
         case 2:
             wb_wdata = (i_req_data_data.read()(31, 0),
                         i_req_data_data.read()(31, 0));
-            wb_msk = 0x0F;
+            if (i_req_data_addr.read()[2]) {
+                wb_req_strob = 0xF0;
+            } else {
+                wb_req_strob = 0x0F;
+            }
             break;
         case 3:
             wb_wdata = i_req_data_data;
-            wb_msk = 0xFF;
+            wb_req_strob = 0xFF;
             break;
         default:;
         }
-        wb_req_strob = wb_msk << i_req_data_addr.read()(2, 0);
     }
+    uint32_t x3 = wb_req_strob;
 
     switch (r.req_addr.read()(2, 0)) {
     case 1:
@@ -97,7 +123,8 @@ void DCache::comb() {
         break;
     default:
         wb_rtmp = i_resp_mem_data;
-    }
+    } 
+    uint64_t x1 = wb_rtmp;
 
     switch (r.req_size.read()) {
     case 0:
@@ -112,6 +139,7 @@ void DCache::comb() {
     default:
         wb_rdata = wb_rtmp;
     }
+    uint64_t x2 = wb_rdata;
     
     if (i_req_data_valid.read()) {
         v.req_addr = i_req_data_addr;

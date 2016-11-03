@@ -7,8 +7,17 @@
 
 #include "riscv-isa.h"
 #include "api_utils.h"
+//#define GENERATE_DEBUG_FILE
+#ifdef GENERATE_DEBUG_FILE
+#include <fstream>
+#endif
 
 namespace debugger {
+
+#ifdef GENERATE_DEBUG_FILE
+static char tstr[1024];
+static std::ofstream mem_dbg("river_func_mem.log");
+#endif
 
 /** 
  * @brief Addition. Overflows are ignored
@@ -426,6 +435,11 @@ public:
         data->ibus->read(addr, reinterpret_cast<uint8_t *>(&dcache), 8);
         data->regs[u.bits.rd] = dcache;
         data->npc = data->pc + 4;
+#ifdef GENERATE_DEBUG_FILE
+        int sz = sprintf(tstr, "[%08x] => %016I64x\n", (int)addr, dcache);
+        mem_dbg << tstr;
+        mem_dbg.flush();
+#endif
     }
 };
 
@@ -451,6 +465,11 @@ public:
             data->regs[u.bits.rd] |= EXT_SIGN_32;
         }
         data->npc = data->pc + 4;
+#ifdef GENERATE_DEBUG_FILE
+        int sz = sprintf(tstr, "[%08x] => %016I64x\n", (int)addr, dcache);
+        mem_dbg << tstr;
+        mem_dbg.flush();
+#endif
     }
 };
 
@@ -473,6 +492,11 @@ public:
         data->ibus->read(addr, reinterpret_cast<uint8_t *>(&dcache), 4);
         data->regs[u.bits.rd] = dcache;
         data->npc = data->pc + 4;
+#ifdef GENERATE_DEBUG_FILE
+        int sz = sprintf(tstr, "[%08x] => %016I64x\n", (int)addr, dcache);
+        mem_dbg << tstr;
+        mem_dbg.flush();
+#endif
     }
 };
 
@@ -498,6 +522,11 @@ public:
             data->regs[u.bits.rd] |= EXT_SIGN_16;
         }
         data->npc = data->pc + 4;
+#ifdef GENERATE_DEBUG_FILE
+        int sz = sprintf(tstr, "[%08x] => %016I64x\n", (int)addr, dcache);
+        mem_dbg << tstr;
+        mem_dbg.flush();
+#endif
     }
 };
 
@@ -520,6 +549,11 @@ public:
         data->ibus->read(addr, reinterpret_cast<uint8_t *>(&dcache), 2);
         data->regs[u.bits.rd] = dcache & 0xFFFF;
         data->npc = data->pc + 4;
+#ifdef GENERATE_DEBUG_FILE
+        int sz = sprintf(tstr, "[%08x] => %016I64x\n", (int)addr, dcache);
+        mem_dbg << tstr;
+        mem_dbg.flush();
+#endif
     }
 };
 
@@ -545,6 +579,11 @@ public:
             data->regs[u.bits.rd] |= EXT_SIGN_8;
         }
         data->npc = data->pc + 4;
+#ifdef GENERATE_DEBUG_FILE
+        int sz = sprintf(tstr, "[%08x] => %016I64x\n", (int)addr, dcache);
+        mem_dbg << tstr;
+        mem_dbg.flush();
+#endif
     }
 };
 
@@ -567,6 +606,11 @@ public:
         data->ibus->read(addr, reinterpret_cast<uint8_t *>(&dcache), 1);
         data->regs[u.bits.rd] = dcache & 0xFF;
         data->npc = data->pc + 4;
+#ifdef GENERATE_DEBUG_FILE
+        int sz = sprintf(tstr, "[%08x] => %016I64x\n", (int)addr, dcache);
+        mem_dbg << tstr;
+        mem_dbg.flush();
+#endif
     }
 };
 
@@ -976,6 +1020,11 @@ public:
         wdata = data->regs[u.bits.rs2];
         data->ibus->write(addr, reinterpret_cast<uint8_t *>(&wdata), 8);
         data->npc = data->pc + 4;
+#ifdef GENERATE_DEBUG_FILE
+        int sz = sprintf(tstr, "[%08x] <= %016I64x\n", (int)addr, wdata);
+        mem_dbg << tstr;
+        mem_dbg.flush();
+#endif
     }
 };
 
@@ -998,6 +1047,11 @@ public:
         wdata = data->regs[u.bits.rs2];
         data->ibus->write(addr, reinterpret_cast<uint8_t *>(&wdata), 4);
         data->npc = data->pc + 4;
+#ifdef GENERATE_DEBUG_FILE
+        int sz = sprintf(tstr, "[%08x] <= %016I64x\n", (int)addr, wdata);
+        mem_dbg << tstr;
+        mem_dbg.flush();
+#endif
     }
 };
 
@@ -1020,6 +1074,11 @@ public:
         wdata = data->regs[u.bits.rs2] & 0xFFFF;
         data->ibus->write(addr, reinterpret_cast<uint8_t *>(&wdata), 2);
         data->npc = data->pc + 4;
+#ifdef GENERATE_DEBUG_FILE
+        int sz = sprintf(tstr, "[%08x] <= %016I64x\n", (int)addr, wdata);
+        mem_dbg << tstr;
+        mem_dbg.flush();
+#endif
     }
 };
 
@@ -1042,6 +1101,11 @@ public:
         wdata = data->regs[u.bits.rs2] & 0xFF;
         data->ibus->write(addr, reinterpret_cast<uint8_t *>(&wdata), 1);
         data->npc = data->pc + 4;
+#ifdef GENERATE_DEBUG_FILE
+        int sz = sprintf(tstr, "[%08x] <= %016I64x\n", (int)addr, wdata);
+        mem_dbg << tstr;
+        mem_dbg.flush();
+#endif
     }
 };
 

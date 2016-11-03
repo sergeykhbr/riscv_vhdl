@@ -56,7 +56,7 @@ private:
     } v, r;
 
     sc_signal<bool> w_mem_addr_valid;
-    sc_uint<AXI_ADDR_WIDTH> wb_addr_req;
+    sc_signal<sc_uint<AXI_ADDR_WIDTH>> wb_addr_req;
     bool w_any_hold;
 };
 

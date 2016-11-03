@@ -18,6 +18,7 @@ MemAccess::MemAccess(sc_module_name name_, sc_trace_file *vcd)
     sensitive << i_e_instr;
     sensitive << i_res_addr;
     sensitive << i_res_data;
+    sensitive << i_memop_sign_ext;
     sensitive << i_memop_load;
     sensitive << i_memop_store;
     sensitive << i_memop_size;
@@ -26,6 +27,7 @@ MemAccess::MemAccess(sc_module_name name_, sc_trace_file *vcd)
     sensitive << i_mem_data_addr;
     sensitive << i_mem_data;
     sensitive << r.valid;
+    sensitive << r.wdata;
 
     SC_METHOD(registers);
     sensitive << i_clk.pos();
@@ -56,6 +58,7 @@ MemAccess::MemAccess(sc_module_name name_, sc_trace_file *vcd)
 void MemAccess::comb() {
     v = r;
 
+    bool w_memop;
     w_mem_valid = 0;
     w_mem_write = 0;
     wb_mem_sz = 0;
@@ -65,17 +68,19 @@ void MemAccess::comb() {
     bool is_waiting = r.wait_resp.read() & !i_mem_data_valid.read();
     v.wait_resp = is_waiting;
 
+    w_memop = i_memop_load.read() || i_memop_store.read();
 
     v.pc = i_e_pc;
     v.instr = i_e_instr;
-    v.valid = i_e_valid;
+    v.valid = i_e_valid.read() && !w_memop;
     if (i_e_valid.read()) {
-        v.valid = true;
         v.waddr = i_res_addr;
         v.wdata = i_res_data;
         v.wena = i_res_addr.read().or_reduce(); // Write if none zero
 
-        if (i_memop_store.read() || i_memop_load.read()) {
+        if (w_memop) {
+            v.sign_ext = i_memop_sign_ext;
+            v.size = i_memop_size;
             v.wait_resp = 1;
             w_mem_valid = 1;
             w_mem_write = i_memop_store;
@@ -88,10 +93,37 @@ void MemAccess::comb() {
     }
 
     if (r.wait_resp.read() & i_mem_data_valid.read()) {
-        wb_res_wdata = i_mem_data;
+        if (r.sign_ext.read()) {
+            switch (r.size.read()) {
+            case MEMOP_1B:
+                wb_res_wdata = i_mem_data;
+                if (i_mem_data.read()[7]) {
+                    wb_res_wdata(63, 8) = ~0;
+                }
+                break;
+            case MEMOP_2B:
+                wb_res_wdata = i_mem_data;
+                if (i_mem_data.read()[15]) {
+                    wb_res_wdata(63, 16) = ~0;
+                }
+                break;
+            case MEMOP_4B:
+                wb_res_wdata = i_mem_data;
+                if (i_mem_data.read()[31]) {
+                    wb_res_wdata(63, 32) = ~0;
+                }
+                break;
+            default:
+                wb_res_wdata = i_mem_data;
+            }
+        } else {
+            wb_res_wdata = i_mem_data;
+        }
     } else {
         wb_res_wdata = r.wdata;
     }
+
+    bool w_valid = r.valid.read() || i_mem_data_valid.read();
 
     if (!i_nrst.read()) {
         v.valid = false;
@@ -101,6 +133,8 @@ void MemAccess::comb() {
         v.wdata = 0;
         v.wena = 0;
         v.wait_resp = 0;
+        v.size = 0;
+        v.sign_ext = 0;
     }
 
     o_mem_valid = w_mem_valid;
@@ -109,10 +143,10 @@ void MemAccess::comb() {
     o_mem_addr = wb_mem_addr;
     o_mem_data = wb_mem_wdata;
 
-    o_wena = r.wena;
+    o_wena = r.wena & w_valid;
     o_waddr = r.waddr;
     o_wdata = wb_res_wdata;
-    o_valid = r.valid.read() & !is_waiting;
+    o_valid = w_valid;
     o_pc = r.pc;
     o_instr = r.instr;
 }

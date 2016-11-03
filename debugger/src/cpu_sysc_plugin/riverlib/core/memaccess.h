@@ -22,6 +22,7 @@ SC_MODULE(MemAccess) {
 
     sc_in<sc_uint<5>> i_res_addr;
     sc_in<sc_uint<RISCV_ARCH>> i_res_data;
+    sc_in<bool> i_memop_sign_ext;                   // Load data with sign extending
     sc_in<bool> i_memop_load;
     sc_in<bool> i_memop_store;
     sc_in<sc_uint<2>> i_memop_size;
@@ -61,6 +62,8 @@ private:
         sc_signal<bool> wait_resp;
         sc_signal<bool> wena;
         sc_signal<sc_uint<5>> waddr;
+        sc_signal<bool> sign_ext;
+        sc_signal<sc_uint<2>> size;
         sc_signal<sc_uint<RISCV_ARCH>> wdata;
     } v, r;
 

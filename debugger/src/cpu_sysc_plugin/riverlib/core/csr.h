@@ -37,6 +37,7 @@ private:
         sc_signal<sc_uint<RISCV_ARCH>> mvec;
         sc_signal<sc_uint<2>> mode;
         sc_signal<bool> ie;
+        sc_signal<sc_uint<RISCV_ARCH>> mepc;
     } v, r;
 };
 

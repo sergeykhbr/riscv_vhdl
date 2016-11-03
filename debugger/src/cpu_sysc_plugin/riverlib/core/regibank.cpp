@@ -27,7 +27,7 @@ RegIntBank::RegIntBank(sc_module_name name_, sc_trace_file *vcd)
         sc_trace(vcd, i_wena, "/top/proc0/regs/i_wena");
         sc_trace(vcd, i_waddr, "/top/proc0/regs/i_waddr");
         sc_trace(vcd, i_wdata, "/top/proc0/regs/i_wdata");
-        sc_trace(vcd, r.mem[4], "/top/proc0/regs/r4");
+        sc_trace(vcd, r.mem[5], "/top/proc0/regs/r4");
         sc_trace(vcd, o_rdata1, "/top/proc0/regs/o_rdata1");
         sc_trace(vcd, o_rdata2, "/top/proc0/regs/o_rdata2");
     }

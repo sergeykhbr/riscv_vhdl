@@ -51,7 +51,6 @@ private:
 
     sc_uint<AXI_ADDR_WIDTH> wb_req_addr;
     sc_uint<AXI_DATA_BYTES> wb_req_strob;
-    sc_uint<AXI_DATA_BYTES> wb_msk;
     sc_uint<AXI_DATA_WIDTH> wb_rdata;
     sc_uint<AXI_DATA_WIDTH> wb_wdata;
     sc_uint<AXI_DATA_WIDTH> wb_rtmp;

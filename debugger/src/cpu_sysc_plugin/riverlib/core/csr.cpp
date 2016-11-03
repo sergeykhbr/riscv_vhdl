@@ -60,6 +60,10 @@ void CsrRegs::comb() {
     case 0x340: // mscratch - Machine scrathc register
         break;
     case 0x341: // mepc - Machine program counter
+        wb_rdata = r.mepc;
+        if (i_wena.read()) {
+            v.mepc = i_wdata;
+        }
         break;
     case 0x342: // mcause - Machine trap cause
         break;
@@ -74,6 +78,7 @@ void CsrRegs::comb() {
         v.mvec = 0;
         v.mode = PRV_M;
         v.ie = 0;
+        v.mepc = 0;
     }
 
 

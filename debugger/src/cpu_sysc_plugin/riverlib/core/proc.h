@@ -97,6 +97,7 @@ private:
         sc_signal<sc_uint<5>> res_addr;
         sc_signal<sc_uint<RISCV_ARCH>> res_data;
 
+        sc_signal<bool> memop_sign_ext;
         sc_signal<bool> memop_load;
         sc_signal<bool> memop_store;
         sc_signal<sc_uint<2>> memop_size;
@@ -159,7 +160,11 @@ private:
 #ifdef GENERATE_DEBUG_FILE
     char tstr[1024];
     uint64_t line_cnt;
-    ofstream *file_dbg;
+    ofstream *reg_dbg;
+    ofstream *mem_dbg;
+    bool mem_dbg_write_flag;
+    uint64_t dbg_mem_value_mask;
+    uint64_t dbg_mem_write_value;
 #endif
 };
 

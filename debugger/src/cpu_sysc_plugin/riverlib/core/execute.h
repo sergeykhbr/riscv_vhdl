@@ -44,6 +44,7 @@ SC_MODULE(InstrExecute) {
     sc_in<sc_uint<RISCV_ARCH>> i_csr_rdata;     // CSR current value
     sc_out<sc_uint<RISCV_ARCH>> o_csr_wdata;    // CSR new value
 
+    sc_out<bool> o_memop_sign_ext;              // Load data with sign extending
     sc_out<bool> o_memop_load;                  // Load data instruction
     sc_out<bool> o_memop_store;                 // Store data instruction
     sc_out<sc_uint<2>> o_memop_size;            // 0=1bytes; 1=2bytes; 2=4bytes; 3=8bytes
@@ -72,13 +73,14 @@ private:
         sc_uint<RISCV_ARCH> res_val;
         bool memop_load;
         bool memop_store;
+        bool memop_sign_ext;
         sc_uint<2> memop_size;
         sc_signal<sc_uint<AXI_ADDR_WIDTH>> memop_addr;
 
         sc_signal<sc_uint<5>> hazard_addr[2];
-        sc_signal<bool> hazard_hold;
+        sc_signal<sc_uint<2>> hazard_depth;
     } v, r;
-    bool w_hazard_detected;
+    sc_signal<bool> w_hazard_detected;
 };
 
 

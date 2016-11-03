@@ -71,7 +71,7 @@ Processor::Processor(sc_module_name name_, sc_trace_file *vcd)
     exec0->i_d_valid(w.d.instr_valid);
     exec0->i_d_pc(w.d.pc);
     exec0->i_d_instr(w.d.instr);
-    exec0->i_wb_done(w.w.wena);
+    exec0->i_wb_done(w.m.valid);
     exec0->i_sign_ext(w.d.sign_ext);
     exec0->i_isa_type(w.d.isa_type);
     exec0->i_ivec(w.d.instr_vec);
@@ -93,6 +93,7 @@ Processor::Processor(sc_module_name name_, sc_trace_file *vcd)
     exec0->o_csr_wena(csr.wena);
     exec0->i_csr_rdata(csr.rdata);
     exec0->o_csr_wdata(csr.wdata);
+    exec0->o_memop_sign_ext(w.e.memop_sign_ext);
     exec0->o_memop_load(w.e.memop_load);
     exec0->o_memop_store(w.e.memop_store);
     exec0->o_memop_size(w.e.memop_size);
@@ -110,6 +111,7 @@ Processor::Processor(sc_module_name name_, sc_trace_file *vcd)
     mem0->i_e_instr(w.e.instr);
     mem0->i_res_addr(w.e.res_addr);
     mem0->i_res_data(w.e.res_data);
+    mem0->i_memop_sign_ext(w.e.memop_sign_ext);
     mem0->i_memop_load(w.e.memop_load);
     mem0->i_memop_store(w.e.memop_store);
     mem0->i_memop_size(w.e.memop_size);
@@ -173,8 +175,10 @@ Processor::Processor(sc_module_name name_, sc_trace_file *vcd)
     }
 
 #ifdef GENERATE_DEBUG_FILE
-    file_dbg = new ofstream("river_sysc.log");
+    reg_dbg = new ofstream("river_sysc.log");
+    mem_dbg = new ofstream("river_sysc_mem.log");
     line_cnt = 0;
+    mem_dbg_write_flag = false;
 #endif
 };
 
@@ -187,8 +191,10 @@ Processor::~Processor() {
     delete iregs0;
     delete csr0;
 #ifdef GENERATE_DEBUG_FILE
-    file_dbg->close();
-    delete file_dbg;
+    reg_dbg->close();
+    mem_dbg->close();
+    delete reg_dbg;
+    delete mem_dbg;
 #endif
 }
 
@@ -213,8 +219,8 @@ void Processor::registers() {
 
 #ifdef GENERATE_DEBUG_FILE
 void Processor::negedge_dbg_print() {
+    int sz;
     if (w.m.valid.read()) {
-        int sz;
         line_cnt++;
         sz = sprintf(tstr, "%8I64d [%08x] %08x: ",
             line_cnt,
@@ -231,8 +237,33 @@ void Processor::negedge_dbg_print() {
                         cur_val);
         }
 
-        (*file_dbg) << tstr;
-        file_dbg->flush();
+        (*reg_dbg) << tstr;
+        reg_dbg->flush();
+    }
+    // Memory access debug:
+    if (i_resp_data_valid.read()) {
+        sz = sprintf(tstr, "[%08x] ", i_resp_data_addr.read().to_uint());
+        if (mem_dbg_write_flag) {
+            sz += sprintf(&tstr[sz], "<= %016I64x\n", 
+                dbg_mem_write_value & dbg_mem_value_mask);
+        } else {
+            sz += sprintf(&tstr[sz], "=> %016I64x\n", 
+                i_resp_data_data.read().to_uint64() & dbg_mem_value_mask);
+        }
+        (*mem_dbg) << tstr;
+        mem_dbg->flush();
+    }
+    if (w.e.memop_store.read() || w.e.memop_load.read()) {
+        mem_dbg_write_flag = w.e.memop_store;
+        if (mem_dbg_write_flag) {
+            dbg_mem_write_value = w.e.res_data.read();
+        }
+        switch (w.e.memop_size.read()) {
+        case 0: dbg_mem_value_mask = 0xFFull; break;
+        case 1: dbg_mem_value_mask = 0xFFFFull; break;
+        case 2: dbg_mem_value_mask = 0xFFFFFFFFull; break;
+        default: dbg_mem_value_mask = ~0ull;
+        }
     }
 }
 #endif
