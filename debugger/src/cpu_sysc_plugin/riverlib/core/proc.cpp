@@ -175,7 +175,7 @@ Processor::Processor(sc_module_name name_, sc_trace_file *vcd)
     }
 
 #ifdef GENERATE_DEBUG_FILE
-    reg_dbg = new ofstream("river_sysc.log");
+    reg_dbg = new ofstream("river_sysc_regs.log");
     mem_dbg = new ofstream("river_sysc_mem.log");
     line_cnt = 0;
     mem_dbg_write_flag = false;

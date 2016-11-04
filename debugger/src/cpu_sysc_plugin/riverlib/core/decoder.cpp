@@ -138,9 +138,9 @@ void InstrDecoder::comb() {
             wb_instr_vec[Instr_XORI] = 1;
             break;
         case 0x5:
-            if (i_f_instr.read().range(31, 25) == 0x00) {
+            if (i_f_instr.read().range(31, 26) == 0x00) {
                 wb_instr_vec[Instr_SRLI] = 1;
-            } else if (i_f_instr.read().range(31, 25) == 0x20) {
+            } else if (i_f_instr.read().range(31, 26) == 0x20) {
                 wb_instr_vec[Instr_SRAI] = 1;
             } else {
                 w_error = true;

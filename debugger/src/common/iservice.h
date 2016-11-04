@@ -36,7 +36,7 @@ public:
         AttributeType *cur_attr;
         for (unsigned i = 0; i < args->size(); i++) {
             const AttributeType &item = (*args)[i];
-            if (item.size() != 2 || !item[0u].is_string()) {
+            if (item.size() < 2 || !item[0u].is_string()) {
                 continue;
             }
             cur_attr = static_cast<AttributeType *>(
@@ -46,6 +46,10 @@ public:
                 continue;
             }
             (*cur_attr) = item[1];
+            if (item.size() >= 3 && item[2].is_string()) {
+                static_cast<IAttribute *>(cur_attr)->setAttrDescription(
+                    item[2].to_string());
+            }
         }
     }
 

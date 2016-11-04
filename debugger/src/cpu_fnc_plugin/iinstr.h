@@ -9,6 +9,7 @@
 #define __DEBUGGER_IINSTRUCTION_H__
 
 #include <inttypes.h>
+#include <fstream>
 #include "coreservices/ibus.h"
 
 namespace debugger {
@@ -25,6 +26,8 @@ struct CpuContextType {
     bool reset;
     IBus *ibus;
     char disasm[256];
+    std::ofstream *reg_trace_file;
+    std::ofstream *mem_trace_file;
 };
 
 

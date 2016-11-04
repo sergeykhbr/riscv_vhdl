@@ -22,8 +22,13 @@ public:
 
     virtual const char *getAttrName() { return attr_name_; }
 
+    virtual void setAttrDescription(const char *descr) { attr_descr_ = descr; }
+
+    virtual const char *getAttrDescription() { return attr_descr_; }
+
 protected:
     const char *attr_name_;
+    const char *attr_descr_;
 };
 
 }  // namespace debugger

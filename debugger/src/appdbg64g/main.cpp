@@ -24,7 +24,8 @@ const char *default_config =
   "'GlobalSettings':{"
     "'SimEnable':true,"
     "'GUI':false,"
-    "'ScriptFile':''"
+    "'ScriptFile':'',"
+    "'Description':'This configuration instantiates functional RISC-V model'"
   "},"
   "'Services':["
     "{'Class':'GuiPluginClass','Instances':["
@@ -137,7 +138,9 @@ const char *default_config =
                 "['LogLevel',4],"
                 "['Bus','axi0'],"
                 "['ListExtISA',['I','M','A']],"
-                "['FreqHz',60000000]"
+                "['FreqHz',60000000],"
+                "['GenerateRegTraceFile',false,'Generate Registers modification file to compare with SystemC'],"
+                "['GenerateMemTraceFile',false,'Generate Memory access file to compare with SystemC']"
                 "]}]},"
     "{'Class':'MemorySimClass','Instances':["
           "{'Name':'bootrom0','Attr':["
@@ -257,6 +260,7 @@ int main(int argc, char* argv[]) {
     bool disableSim = true;
     bool disableGui = true;
     AttributeType scriptFile("");
+    AttributeType configFile(JSON_CONFIG_FILE);
     AttributeType databuf;
 
     RISCV_init();
@@ -267,6 +271,7 @@ int main(int argc, char* argv[]) {
             if (strcmp(argv[i], "-c") == 0) {
                 i++;
                 RISCV_read_json_file(argv[i], &databuf);
+                loadConfig = false;
             } else if (strcmp(argv[i], "-nocfg") == 0) {
                 loadConfig = false;
             } else if (strcmp(argv[i], "-sim") == 0) {
@@ -284,9 +289,11 @@ int main(int argc, char* argv[]) {
     RISCV_set_current_dir();
     RISCV_get_core_folder(path, sizeof(path));
     if (loadConfig && databuf.size() == 0) {
+        // Try to find config in current directory
         std::string cfg_filename = std::string(path) 
-                        + std::string(JSON_CONFIG_FILE);
-        RISCV_read_json_file(cfg_filename.c_str(), &databuf);
+                        + std::string(configFile.to_string());
+        configFile.make_string(cfg_filename.c_str());
+        RISCV_read_json_file(configFile.to_string(), &databuf);
     } 
     if (databuf.size() == 0) {
         databuf.make_string(default_config);
@@ -352,7 +359,7 @@ int main(int argc, char* argv[]) {
     }
 
     const char *t1 = RISCV_get_configuration();
-    RISCV_write_json_file(JSON_CONFIG_FILE, t1);
+    RISCV_write_json_file(configFile.to_string(), t1);
 
     RISCV_cleanup();
 	return 0;

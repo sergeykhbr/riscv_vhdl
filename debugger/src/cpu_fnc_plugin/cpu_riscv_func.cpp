@@ -22,20 +22,27 @@ CpuRiscV_Functional::CpuRiscV_Functional(const char *name)
     registerAttribute("Bus", &bus_);
     registerAttribute("ListExtISA", &listExtISA_);
     registerAttribute("FreqHz", &freqHz_);
+    registerAttribute("GenerateRegTraceFile", &generateRegTraceFile_);
+    registerAttribute("GenerateMemTraceFile", &generateMemTraceFile_);
 
     isEnable_.make_boolean(true);
     bus_.make_string("");
     listExtISA_.make_list(0);
     freqHz_.make_uint64(1);
+    generateRegTraceFile_.make_boolean(false);
+    generateMemTraceFile_.make_boolean(false);
 
     cpu_context_.step_cnt = 0;
 
     RISCV_event_create(&config_done_, "config_done");
     RISCV_register_hap(static_cast<IHap *>(this));
-    cpu_context_.reset   = false;
+    cpu_context_.reset   = true;
     dbg_state_ = STATE_Normal;
     last_hit_breakpoint_ = ~0;
     reset();
+
+    cpu_context_.reg_trace_file = 0;
+    cpu_context_.mem_trace_file = 0;
 }
 
 CpuRiscV_Functional::~CpuRiscV_Functional() {
@@ -78,18 +85,26 @@ void CpuRiscV_Functional::postinitService() {
             return;
         }
 
-#ifdef GENERATE_DEBUG_FILE
-        file_dbg = new std::ofstream("river_func.log");
-#endif
+        if (generateRegTraceFile_.to_bool()) {
+            pContext->reg_trace_file = new std::ofstream("river_func_regs.log");
+        }
+        if (generateMemTraceFile_.to_bool()) {
+            pContext->mem_trace_file = new std::ofstream("river_func_mem.log");
+        }
     }
 }
 
 void CpuRiscV_Functional::predeleteService() {
+    CpuContextType *pContext = getpContext();
     stop();
-#ifdef GENERATE_DEBUG_FILE
-    file_dbg->close();
-    delete file_dbg;
-#endif
+    if (pContext->reg_trace_file) {
+        pContext->reg_trace_file->close();
+        delete pContext->reg_trace_file;
+    }
+    if (pContext->mem_trace_file) {
+        pContext->mem_trace_file->close();
+        delete pContext->mem_trace_file;
+    }
 }
 
 void CpuRiscV_Functional::hapTriggered(IFace *isrc, EHapType type,
@@ -240,6 +255,7 @@ void CpuRiscV_Functional::reset() {
     mstat.value = 0;
     pContext->csr[CSR_mstatus] = mstat.value;
     pContext->cur_prv_level = PRV_LEVEL_M;           // Current privilege level
+    pContext->step_cnt = 0;
 }
 
 void CpuRiscV_Functional::fetchInstruction() {
@@ -303,14 +319,12 @@ void CpuRiscV_Functional::executeInstruction(IInstruction *instr,
                                              uint32_t *rpayload) {
 
     CpuContextType *pContext = getpContext();
-#ifdef GENERATE_DEBUG_FILE
-    for (int i = 0; i < 32; i++) {
-        iregs_prev[i] = pContext->regs[i];
+    if (pContext->reg_trace_file) {
+        /** Save previous reg values to find modification after exec() */
+        for (int i = 0; i < 32; i++) {
+            iregs_prev[i] = pContext->regs[i];
+        }
     }
-    if (pContext->step_cnt >= 109) {
-        bool st = true;
-    }
-#endif
 
     instr->exec(cacheline_, pContext);
 #if 0
@@ -333,25 +347,25 @@ void CpuRiscV_Functional::executeInstruction(IInstruction *instr,
             );
     }
 #endif
-#ifdef GENERATE_DEBUG_FILE
-    int sz;
-    sz = sprintf(tstr, "%8I64d [%08x] %08x: ",
-        pContext->step_cnt, static_cast<uint32_t>(pContext->pc), rpayload[0]);
+    if (pContext->reg_trace_file) {
+        int sz;
+        sz = RISCV_sprintf(tstr, sizeof(tstr),"%8I64d [%08x] %08x: ",
+            pContext->step_cnt, static_cast<uint32_t>(pContext->pc), rpayload[0]);
 
-    bool reg_changed = false;
-    for (int i = 0; i < 32; i++) {
-        if (iregs_prev[i] != pContext->regs[i]) {
-            reg_changed = true;
-            sz += sprintf(&tstr[sz], "%3s <= %016I64x\n",
-                        REG_NAMES[i], pContext->regs[i]);
+        bool reg_changed = false;
+        for (int i = 0; i < 32; i++) {
+            if (iregs_prev[i] != pContext->regs[i]) {
+                reg_changed = true;
+                sz += RISCV_sprintf(&tstr[sz], sizeof(tstr) - sz,
+                        "%3s <= %016I64x\n", REG_NAMES[i], pContext->regs[i]);
+            }
         }
+        if (!reg_changed) {
+            sz += RISCV_sprintf(&tstr[sz], sizeof(tstr) - sz, "%s", "-\n");
+        }
+        (*pContext->reg_trace_file) << tstr;
+        pContext->reg_trace_file->flush();
     }
-    if (!reg_changed) {
-        sz += sprintf(&tstr[sz], "%s", "-\n");
-    }
-    (*file_dbg) << tstr;
-    file_dbg->flush();
-#endif
 
 
     if (pContext->regs[0] != 0) {
@@ -401,7 +415,7 @@ void CpuRiscV_Functional::raiseSignal(int idx) {
 
     switch (idx) {
     case CPU_SIGNAL_RESET:
-        pContext->reset = true;
+        pContext->reset = false; // Active LOW
         break;
     case CPU_SIGNAL_EXT_IRQ:
         if (pContext->reset) {
@@ -428,7 +442,7 @@ void CpuRiscV_Functional::lowerSignal(int idx) {
     CpuContextType *pContext = getpContext();
     switch (idx) {
     case CPU_SIGNAL_RESET:
-        pContext->reset = false;
+        pContext->reset = true; // ACtive LOW
         break;
     case CPU_SIGNAL_EXT_IRQ:
         pContext->interrupt = 0;

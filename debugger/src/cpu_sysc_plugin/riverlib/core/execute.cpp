@@ -116,7 +116,7 @@ void InstrExecute::comb() {
             check_unqiue_cnt++;
         }
     }
-    if (i_d_pc.read() == 0x1444) {
+    if (i_d_pc.read() == 0x100042a8) {
         bool st = true;
     }
 #endif
@@ -210,7 +210,7 @@ void InstrExecute::comb() {
               || (wv[Instr_BGEU] & (wb_sub64[63] == wb_rdata1[63]))
               || (wv[Instr_BLT] & (wb_sub64[63] == 1))
               || (wv[Instr_BLTU] & (wb_sub64[63] != wb_rdata1[63]))
-              || (wv[Instr_BEQ] & (wb_sub64 != 0));
+              || (wv[Instr_BNE] & (wb_sub64 != 0));
 
     if (w_pc_jump) {
         wb_npc = i_d_pc.read() + wb_off(AXI_ADDR_WIDTH-1, 0);
@@ -265,6 +265,9 @@ void InstrExecute::comb() {
         }
     } else if (wv[Instr_SLL] || wv[Instr_SLLI]) {
         wb_res = wb_sll64;
+    } else if (wv[Instr_SLLW] || wv[Instr_SLLIW]) {
+        wb_res(31, 0) = wb_sll64(31, 0);
+        wb_res(63, 32) = 0;
     } else if (wv[Instr_SRL] || wv[Instr_SRLI]) {
         wb_res = wb_srl64;
     } else if (wv[Instr_SRLW] || wv[Instr_SRLIW]) {
@@ -283,6 +286,8 @@ void InstrExecute::comb() {
         wb_res = wb_or64;
     } else if (wv[Instr_XOR] || wv[Instr_XORI]) {
         wb_res = wb_xor64;
+    } else if (wv[Instr_SLTU] || wv[Instr_SLTIU]) {
+        wb_res = wb_sub64[63] ^ wb_rdata1[63];
     } else if (w_memop_load) {
         uint64_t a0 = wb_rdata1;
         uint64_t a1 = wb_rdata2;

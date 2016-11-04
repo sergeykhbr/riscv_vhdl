@@ -10,32 +10,6 @@
 
 namespace debugger {
 
-static const uint32_t TEST_ROM[] {
-    0x00000093,//          	[1000] li	ra,0
-    0x00000113,//          	[1004] li	sp,0
-    0x00000193,//          	[1008] li	gp,0
-    0x55000213,//          	[100C] li	tp,550
-    0x00023083,//          	[1010] ld	ra,0(tp) # 0 <_tbss_end>
-    0x00823403,//          	[1014] ld	s0,8(tp) # 8 <_tbss_end+0x8>
-    0x01023483,//          	[1018] ld	s1,16(tp) # 10 <_tbss_end+0x10>
-    0x77700213,//          	[101C] li	tp,777
-    0x00000313,//          	[1020] li	t1,0
-    0x00000393,//          	[1024] li	t2,0
-    0x00000413,//          	[1028] li	s0,0
-    0x00100113,//          	[102C] li	sp,1
-    0x01311113,//          	[1030] slli	sp,sp,0x13
-    0x00228133,//          	[1034] add	sp,t0,sp
-    0x00008013,//          	[1038] nop
-    0x00008013,//          	[103C] nop
-    
-    0x00100513,//          	[1040] 10b0:	li	a0,1
-    0x00008013,//          	[1044] nop
-    //0x00100593,//          	[1048] 10b0:	li	a1,1
-    0x00000593,//          	[1048] 10b0:	li	a1,0
-    0x00b57063,//          	[104C] 10b4:	bleu	a1,a0,10b4 <_start+0xb4>
-    0,
-};
-
 RtlWrapper::RtlWrapper(sc_module_name name)
     : sc_module(name),
     o_clk("clk", 1, SC_NS) {
@@ -107,13 +81,8 @@ void RtlWrapper::clk_negedge_proc() {
             ibus_->write(addr, val.buf, size);
             v.resp_mem_data = 0;
         } else {
-#if 0
-            int idx = ((addr - 0x1000) % sizeof(TEST_ROM)) / 4;
-            v.resp_mem_data = *((uint64_t*)&TEST_ROM[idx]);
-#else
             ibus_->read(addr, val.buf, sizeof(val));
             v.resp_mem_data = val.val;
-#endif
         }
         v.resp_mem_data_valid = true;
     }
