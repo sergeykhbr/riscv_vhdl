@@ -187,6 +187,8 @@
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\decoder.cpp" />
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\execute.cpp" />
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\fetch.cpp" />
+    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\int_div.cpp" />
+    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\int_mul.cpp" />
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\memaccess.cpp" />
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\proc.cpp" />
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\regibank.cpp" />
@@ -203,6 +205,7 @@
     <ClInclude Include="..\..\src\common\iclass.h" />
     <ClInclude Include="..\..\src\common\iface.h" />
     <ClInclude Include="..\..\src\common\iservice.h" />
+    <ClInclude Include="..\..\src\common\riscv-isa.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\cpu_riscv_rtl.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\cache_top.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\dcache.h" />
@@ -212,6 +215,8 @@
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\decoder.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\execute.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\fetch.h" />
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\int_div.h" />
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\int_mul.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\memaccess.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\proc.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\regibank.h" />

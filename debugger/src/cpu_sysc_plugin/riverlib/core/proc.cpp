@@ -15,7 +15,7 @@ Processor::Processor(sc_module_name name_, sc_trace_file *vcd)
     sensitive << i_nrst;
     sensitive << i_resp_ctrl_valid;
     sensitive << i_cache_hold;
-    sensitive << w.e.hazard_hold;
+    sensitive << w.e.pipeline_hold;
     sensitive << w.f.imem_req_valid;
     sensitive << w.f.imem_req_addr;
     sensitive << w.f.valid;
@@ -33,7 +33,7 @@ Processor::Processor(sc_module_name name_, sc_trace_file *vcd)
     fetch0->i_clk(i_clk);
     fetch0->i_nrst(i_nrst);
     fetch0->i_cache_hold(i_cache_hold);
-    fetch0->i_pipeline_hold(w.e.hazard_hold);
+    fetch0->i_pipeline_hold(w.e.pipeline_hold);
     fetch0->o_mem_addr_valid(w.f.imem_req_valid);
     fetch0->o_mem_addr(w.f.imem_req_addr);
     fetch0->i_mem_data_valid(i_resp_ctrl_valid);
@@ -57,11 +57,14 @@ Processor::Processor(sc_module_name name_, sc_trace_file *vcd)
     dec0->o_valid(w.d.instr_valid);
     dec0->o_pc(w.d.pc);
     dec0->o_instr(w.d.instr);
-    dec0->o_sign_ext(w.d.sign_ext);
+    dec0->o_memop_store(w.d.memop_store);
+    dec0->o_memop_load(w.d.memop_load);
+    dec0->o_memop_sign_ext(w.d.memop_sign_ext);
+    dec0->o_memop_size(w.d.memop_size);
+    dec0->o_unsigned_op(w.d.unsigned_op);
+    dec0->o_rv32(w.d.rv32);
     dec0->o_isa_type(w.d.isa_type);
     dec0->o_instr_vec(w.d.instr_vec);
-    dec0->o_user_level(w.d.user_level);
-    dec0->o_priv_level(w.d.priv_level);
     dec0->o_exception(w.d.exception);
 
     exec0 = new InstrExecute("exec0", vcd);
@@ -72,13 +75,16 @@ Processor::Processor(sc_module_name name_, sc_trace_file *vcd)
     exec0->i_d_pc(w.d.pc);
     exec0->i_d_instr(w.d.instr);
     exec0->i_wb_done(w.m.valid);
-    exec0->i_sign_ext(w.d.sign_ext);
+    exec0->i_memop_store(w.d.memop_store);
+    exec0->i_memop_load(w.d.memop_load);
+    exec0->i_memop_sign_ext(w.d.memop_sign_ext);
+    exec0->i_memop_size(w.d.memop_size);
+    exec0->i_unsigned_op(w.d.unsigned_op);
+    exec0->i_rv32(w.d.rv32);
     exec0->i_isa_type(w.d.isa_type);
     exec0->i_ivec(w.d.instr_vec);
-    exec0->i_user_level(w.d.user_level);
-    exec0->i_priv_level(w.d.priv_level);
     exec0->i_ie(csr.ie);
-    exec0->i_idt(csr.mvec);
+    exec0->i_mtvec(csr.mvec);
     exec0->i_mode(csr.mode);
     exec0->i_unsup_exception(w.d.exception);
     exec0->i_ext_irq(i_ext_irq);
@@ -88,7 +94,7 @@ Processor::Processor(sc_module_name name_, sc_trace_file *vcd)
     exec0->i_rdata2(w.e.rdata2);
     exec0->o_res_addr(w.e.res_addr);
     exec0->o_res_data(w.e.res_data);
-    exec0->o_hazard_hold(w.e.hazard_hold);
+    exec0->o_pipeline_hold(w.e.pipeline_hold);
     exec0->o_csr_addr(csr.addr);
     exec0->o_csr_wena(csr.wena);
     exec0->i_csr_rdata(csr.rdata);
@@ -210,7 +216,7 @@ void Processor::comb() {
     o_req_ctrl_valid = w.f.imem_req_valid;
     o_req_ctrl_addr = w.f.imem_req_addr;
 
-    w_any_hold = i_cache_hold.read() || w.e.hazard_hold.read();
+    w_any_hold = i_cache_hold.read() || w.e.pipeline_hold.read();
 }
 
 void Processor::registers() {

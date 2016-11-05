@@ -6,6 +6,7 @@
  */
 
 #include "execute.h"
+#include "riscv-isa.h"
 
 namespace debugger {
 
@@ -18,6 +19,12 @@ InstrExecute::InstrExecute(sc_module_name name_, sc_trace_file *vcd)
     sensitive << i_d_pc;
     sensitive << i_d_instr;
     sensitive << i_wb_done;
+    sensitive << i_memop_load;
+    sensitive << i_memop_store;
+    sensitive << i_memop_sign_ext;
+    sensitive << i_memop_size;
+    sensitive << i_unsigned_op;
+    sensitive << i_rv32;;
     sensitive << i_isa_type;
     sensitive << i_ivec;
     sensitive << i_rdata1;
@@ -28,10 +35,36 @@ InstrExecute::InstrExecute(sc_module_name name_, sc_trace_file *vcd)
     sensitive << r.hazard_depth;
     sensitive << r.hazard_addr[0];
     sensitive << r.hazard_addr[1];
+    sensitive << r.multiclock_cnt;
     sensitive << w_hazard_detected;
+    sensitive << w_multiclock_instr;
+    sensitive << wb_mul_res;
+    sensitive << wb_div_result;
+    sensitive << wb_div_residual;
 
     SC_METHOD(registers);
     sensitive << i_clk.pos();
+
+    mul0 = new IntMul("mul0", vcd);
+    mul0->i_clk(i_clk);
+    mul0->i_nrst(i_nrst);
+    mul0->i_ena(w_mul_ena);
+    mul0->i_unsigned(i_unsigned_op);
+    mul0->i_rv32(i_rv32);
+    mul0->i_a1(i_rdata1);
+    mul0->i_a2(i_rdata2);
+    mul0->o_res(wb_mul_res);
+
+    div0 = new IntDiv("div0", vcd);
+    div0->i_clk(i_clk);
+    div0->i_nrst(i_nrst);
+    div0->i_ena(w_div_ena);
+    div0->i_unsigned(i_unsigned_op);
+    div0->i_rv32(i_rv32);
+    div0->i_a1(i_rdata1);
+    div0->i_a2(i_rdata2);
+    div0->o_result(wb_div_result);
+    div0->o_residual(wb_div_residual);
 
     if (vcd) {
         sc_trace(vcd, i_cache_hold, "/top/proc0/exec0/i_cache_hold");
@@ -56,14 +89,21 @@ InstrExecute::InstrExecute(sc_module_name name_, sc_trace_file *vcd)
         sc_trace(vcd, o_csr_wena, "/top/proc0/exec0/o_csr_wena");
         sc_trace(vcd, i_csr_rdata, "/top/proc0/exec0/i_csr_rdata");
         sc_trace(vcd, o_csr_wdata, "/top/proc0/exec0/o_csr_wena");
+        sc_trace(vcd, o_pipeline_hold, "/top/proc0/exec0/o_pipeline_hold");
 
+        sc_trace(vcd, w_multiclock_instr, "/top/proc0/exec0/w_multiclock_instr");
         sc_trace(vcd, w_hazard_detected, "/top/proc0/exec0/w_hazard_detected");
         sc_trace(vcd, r.hazard_depth, "/top/proc0/exec0/r_hazard_depth");
         sc_trace(vcd, r.hazard_addr[0], "/top/proc0/exec0/r_hazard_addr(0)");
         sc_trace(vcd, r.hazard_addr[1], "/top/proc0/exec0/r_hazard_addr(1)");
+        sc_trace(vcd, r.multiclock_cnt, "/top/proc0/exec0/r_multiclock_cnt");
     }
 };
 
+InstrExecute::~InstrExecute() {
+    delete mul0;
+    delete div0;
+}
 
 void InstrExecute::comb() {
     sc_uint<5> wb_radr1;
@@ -83,18 +123,13 @@ void InstrExecute::comb() {
     sc_uint<RISCV_ARCH> wb_and64;
     sc_uint<RISCV_ARCH> wb_or64;
     sc_uint<RISCV_ARCH> wb_xor64;
-    sc_uint<RISCV_ARCH> wb_mul64;
     sc_uint<RISCV_ARCH> wb_sll64;
     sc_uint<RISCV_ARCH> wb_srl64;
     sc_uint<32> wb_srl32;
-    sc_uint<2> wb_memop_size;
-    bool w_memop_store;
-    bool w_memop_load;
+    sc_uint<6> wb_multiclock_cnt;
 
-    bool w_w32;
-    bool w_unsigned;
     bool w_res_wena;
-    bool w_pc_jump;
+    bool w_pc_branch;
 
     sc_bv<Instr_Total> wv = i_ivec.read();
 
@@ -186,7 +221,7 @@ void InstrExecute::comb() {
     w_res_wena = !(wv[Instr_BEQ] | wv[Instr_BGE] | wv[Instr_BGEU]
                | wv[Instr_BLT] | wv[Instr_BLTU] | wv[Instr_BNE]
                | wv[Instr_SD] | wv[Instr_SW] | wv[Instr_SH] | wv[Instr_SB]
-               | wv[Instr_MRET]).to_bool();
+               | wv[Instr_MRET] | wv[Instr_URET]).to_bool();
     if (w_res_wena) {
         wb_res_addr = i_d_instr.read().range(11, 7);
     } else {
@@ -199,20 +234,21 @@ void InstrExecute::comb() {
     wb_and64 = wb_rdata1 & wb_rdata2;
     wb_or64 = wb_rdata1 | wb_rdata2;
     wb_xor64 = wb_rdata1 ^ wb_rdata2;
-    wb_mul64 = wb_rdata1 * wb_rdata2;
     wb_sll64 = wb_rdata1 << wb_rdata2;
     wb_srl64 = wb_rdata1 >> wb_rdata2;
     wb_srl32 = wb_rdata1(31,0) >> wb_rdata2;
+    w_mul_ena = 0;
+    w_div_ena = 0;
 
-    // Relative Jumps on some condition:
-    w_pc_jump = (wv[Instr_BEQ] & (wb_sub64 == 0))
+    // Relative Branch on some condition:
+    w_pc_branch = (wv[Instr_BEQ] & (wb_sub64 == 0))
               || (wv[Instr_BGE] & (wb_sub64[63] == 0))
               || (wv[Instr_BGEU] & (wb_sub64[63] == wb_rdata1[63]))
               || (wv[Instr_BLT] & (wb_sub64[63] == 1))
               || (wv[Instr_BLTU] & (wb_sub64[63] != wb_rdata1[63]))
               || (wv[Instr_BNE] & (wb_sub64 != 0));
 
-    if (w_pc_jump) {
+    if (w_pc_branch) {
         wb_npc = i_d_pc.read() + wb_off(AXI_ADDR_WIDTH-1, 0);
     } else if (wv[Instr_JAL].to_bool()) {
         wb_res = i_d_pc.read() + 4;
@@ -226,37 +262,37 @@ void InstrExecute::comb() {
     } else if (wv[Instr_MRET].to_bool()) {
         wb_res = i_d_pc.read() + 4;
         w_csr_wena = 0;
-        wb_csr_addr = 0x341;
+        wb_csr_addr = CSR_mepc;
         uint64_t x1 = wb_npc = i_csr_rdata;
         bool st=true;
     } else {
         wb_npc = i_d_pc.read() + 4;
     }
 
-    // RV32 instructions list (MOVE TO DECODER):
-    w_w32 = (wv[Instr_ADDW] | wv[Instr_ADDIW] 
-        | wv[Instr_SLLW] | wv[Instr_SLLIW] | wv[Instr_SRAW] | wv[Instr_SRAIW]
-        | wv[Instr_SRLW] | wv[Instr_SRLIW] | wv[Instr_SUBW] 
-        | wv[Instr_DIVW] | wv[Instr_DIVUW] | wv[Instr_MULW]
-        | wv[Instr_REMW] | wv[Instr_REMUW]).to_bool();
-    w_unsigned = (wv[Instr_DIVUW] | wv[Instr_REMUW]).to_bool();
 
-    if (wv[Instr_LD] || wv[Instr_SD]) {
-        wb_memop_size = MEMOP_8B;
-    } else if (wv[Instr_LW] || wv[Instr_LWU] || wv[Instr_SW]) {
-        wb_memop_size = MEMOP_4B;
-    } else if (wv[Instr_LH] || wv[Instr_LHU] || wv[Instr_SH]) {
-        wb_memop_size = MEMOP_2B;
-    } else {
-        wb_memop_size = MEMOP_1B;
-    }
-    w_memop_store = (wv[Instr_SD] | wv[Instr_SW] | wv[Instr_SH] | wv[Instr_SB]).to_bool();
-    w_memop_load = (wv[Instr_LD] | wv[Instr_LW] | wv[Instr_LH] | wv[Instr_LB]
-                  | wv[Instr_LWU] | wv[Instr_LHU] | wv[Instr_LBU]).to_bool();
-    v.memop_sign_ext = (wv[Instr_LD] | wv[Instr_LW] | wv[Instr_LH] | wv[Instr_LB]).to_bool();
+    v.memop_addr = 0;
+    v.memop_load = 0;
+    v.memop_store = 0;
+    v.memop_sign_ext = 0;
+    v.memop_size = 0;
+
+    /** Default number of cycles per instruction = 0 (1 clock per instr)
+     *  If instruction is multicycle then modify this value.
+     */
+    wb_multiclock_cnt = 0;
 
     // ALU block selector:
-    if (wv[Instr_ADD] || wv[Instr_ADDI] || wv[Instr_AUIPC]) {
+    if (i_memop_load) {
+        v.memop_addr = wb_rdata1 + wb_rdata2;
+        v.memop_load = !w_hazard_detected.read();
+        v.memop_sign_ext = i_memop_sign_ext;
+        v.memop_size = i_memop_size;
+    } else if (i_memop_store) {
+        v.memop_addr = wb_rdata1 + wb_off;
+        v.memop_store = !w_hazard_detected.read();
+        v.memop_size = i_memop_size;
+        wb_res = wb_rdata2;
+    } else if (wv[Instr_ADD] || wv[Instr_ADDI] || wv[Instr_AUIPC]) {
         wb_res = wb_sum64;
     } else if (wv[Instr_ADDW] || wv[Instr_ADDIW]) {
         wb_res(31, 0) = wb_sum64(31, 0);
@@ -288,26 +324,23 @@ void InstrExecute::comb() {
         wb_res = wb_xor64;
     } else if (wv[Instr_SLTU] || wv[Instr_SLTIU]) {
         wb_res = wb_sub64[63] ^ wb_rdata1[63];
-    } else if (w_memop_load) {
-        uint64_t a0 = wb_rdata1;
-        uint64_t a1 = wb_rdata2;
-        v.memop_addr = wb_rdata1 + wb_rdata2;
-        uint64_t x1 = v.memop_addr.read();
-        v.memop_load = !w_hazard_detected.read();
-        v.memop_size = wb_memop_size;
-    } else if (w_memop_store) {
-        uint64_t a0 = wb_rdata1;
-        uint64_t a1 = wb_off;
-        v.memop_addr = wb_rdata1 + wb_off;
-        uint64_t x1 = v.memop_addr.read();
-        uint64_t x2 = wb_rdata2;
-        uint64_t x3 = i_rdata2.read();
-        v.memop_store = !w_hazard_detected.read();
-        v.memop_size = wb_memop_size;
-        wb_res = wb_rdata2;
     } else if (wv[Instr_LUI]) {
         uint64_t x1 = wb_res = wb_rdata2;
         bool stop = true;
+    } else if (wv[Instr_MUL] || wv[Instr_MULW]) {
+        w_mul_ena = 1;
+        wb_res = wb_mul_res;
+        wb_multiclock_cnt = IMUL_EXEC_DURATION_CYCLES;
+    } else if (wv[Instr_DIV] || wv[Instr_DIVU]
+            || wv[Instr_DIVW] || wv[Instr_DIVUW]) {
+        w_div_ena = 1;
+        wb_res = wb_div_result;
+        wb_multiclock_cnt = IDIV_EXEC_DURATION_CYCLES;
+    } else if (wv[Instr_REM] || wv[Instr_REMU]
+            || wv[Instr_REMW] || wv[Instr_REMUW]) {
+        w_div_ena = 1;
+        wb_res = wb_div_residual;
+        wb_multiclock_cnt = IDIV_EXEC_DURATION_CYCLES;
     } else if (wv[Instr_CSRRC]) {
         wb_res = i_csr_rdata;
         w_csr_wena = 1;
@@ -340,6 +373,12 @@ void InstrExecute::comb() {
         wb_csr_wdata = wb_radr1;  // extending to 64-bits
     }
 
+    w_multiclock_instr = 0;
+    if (r.multiclock_cnt.read() != 0) {
+        w_multiclock_instr = 1;
+        v.multiclock_cnt = r.multiclock_cnt.read() - 1;
+    }
+
     bool w_valid = 0;
 
     if (!i_cache_hold.read() && i_d_valid.read() 
@@ -352,12 +391,11 @@ void InstrExecute::comb() {
         v.res_val = wb_res;
     }
 
-
     v.valid = w_valid;
-
     if (w_valid) {
         v.hazard_addr[1] = r.hazard_addr[0];
         v.hazard_addr[0] = wb_res_addr;
+        v.multiclock_cnt = wb_multiclock_cnt;
     }
 
     if (w_valid && !i_wb_done.read()) {
@@ -395,13 +433,14 @@ void InstrExecute::comb() {
         v.hazard_depth = 0;
         v.hazard_addr[0] = 0;
         v.hazard_addr[1] = 0;
+        v.multiclock_cnt = 0;
     }
 
     o_radr1 = wb_radr1;
     o_radr2 = wb_radr2;
     o_res_addr = r.res_addr;
     o_res_data = r.res_val;
-    o_hazard_hold = w_hazard_detected;
+    o_pipeline_hold = w_hazard_detected | w_multiclock_instr;
 
     o_csr_wena = w_csr_wena;
     o_csr_addr = wb_csr_addr;

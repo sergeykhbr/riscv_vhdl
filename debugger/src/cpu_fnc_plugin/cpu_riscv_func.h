@@ -94,6 +94,7 @@ private:
     AttributeType freqHz_;
     AttributeType generateRegTraceFile_;
     AttributeType generateMemTraceFile_;
+    AttributeType resetVector_;
     event_def config_done_;
 
     AsyncTQueueType queue_;

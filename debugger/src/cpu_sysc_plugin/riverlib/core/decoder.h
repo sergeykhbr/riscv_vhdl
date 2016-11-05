@@ -29,20 +29,23 @@ const uint8_t OPCODE_CSRR   = 0x1C; // 11100: CSRRC, CSRRCI, CSRRS, CSRRSI, CSRR
 
 SC_MODULE(InstrDecoder) {
     sc_in<bool> i_clk;
-    sc_in<bool> i_nrst;                     // Reset active low
-    sc_in<bool> i_any_hold;                 // Hold pipeline by any reason
-    sc_in<bool> i_f_valid;                  // Fetch input valid
-    sc_in<sc_uint<AXI_ADDR_WIDTH>> i_f_pc;  // Fetched pc
-    sc_in<sc_uint<32>> i_f_instr;           // Fetched instruction value
+    sc_in<bool> i_nrst;                         // Reset active low
+    sc_in<bool> i_any_hold;                     // Hold pipeline by any reason
+    sc_in<bool> i_f_valid;                      // Fetch input valid
+    sc_in<sc_uint<AXI_ADDR_WIDTH>> i_f_pc;      // Fetched pc
+    sc_in<sc_uint<32>> i_f_instr;               // Fetched instruction value
 
-    sc_out<bool> o_valid;
-    sc_out<sc_uint<AXI_ADDR_WIDTH>> o_pc;
-    sc_out<sc_uint<32>> o_instr;
-    sc_out<bool> o_sign_ext;
-    sc_out<sc_bv<ISA_Total>> o_isa_type;
-    sc_out<sc_bv<Instr_Total>> o_instr_vec;
-    sc_out<bool> o_user_level;
-    sc_out<bool> o_priv_level;
+    sc_out<bool> o_valid;                       // Current output values are valid
+    sc_out<sc_uint<AXI_ADDR_WIDTH>> o_pc;       // Current instruction pointer value
+    sc_out<sc_uint<32>> o_instr;                // Current instruction value
+    sc_out<bool> o_memop_store;                 // Store to memory operation
+    sc_out<bool> o_memop_load;                  // Load from memoru operation
+    sc_out<bool> o_memop_sign_ext;              // Load memory value with sign extending
+    sc_out<sc_uint<2>> o_memop_size;            // Memory transaction size
+    sc_out<bool> o_rv32;                        // 32-bits instruction
+    sc_out<bool> o_unsigned_op;                 // Unsigned operands
+    sc_out<sc_bv<ISA_Total>> o_isa_type;        // Instruction format accordingly with ISA
+    sc_out<sc_bv<Instr_Total>> o_instr_vec;     // One bit per decoded instruction bus
     sc_out<bool> o_exception;
 
     void comb();
@@ -58,10 +61,13 @@ private:
         sc_signal<sc_uint<AXI_ADDR_WIDTH>> pc;
         sc_bv<ISA_Total> isa_type;
         sc_bv<Instr_Total> instr_vec;
-        sc_signal<bool> user_level;
-        sc_signal<bool> priv_level;
-        sc_signal<bool> sign_ext;
         sc_signal<sc_uint<32>> instr;
+        sc_signal<bool> memop_store;
+        sc_signal<bool> memop_load;
+        sc_signal<bool> memop_sign_ext;
+        sc_signal<sc_uint<2>> memop_size;
+        sc_signal<bool> unsigned_op;
+        sc_signal<bool> rv32;
 
         sc_signal<bool> instr_unimplemented;
     } v, r;

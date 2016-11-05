@@ -5,8 +5,9 @@
  * @brief      Base ISA implementation (extension I, privileged level).
  */
 
-#include "riscv-isa.h"
 #include "api_utils.h"
+#include "riscv-isa.h"
+#include "instructions.h"
 
 namespace debugger {
 
@@ -209,7 +210,7 @@ public:
         csr_mstatus_type mstatus;
         mstatus.value = readCSR(CSR_mstatus, data);
 
-        uint64_t xepc = (PRV_LEVEL_U << 8) + 0x41;
+        uint64_t xepc = (PRV_U << 8) + 0x41;
         data->npc = readCSR(static_cast<uint32_t>(xepc), data);
 
         bool is_N_extension = false;
@@ -221,7 +222,7 @@ public:
             mstatus.bits.UIE = 0;
             mstatus.bits.UPIE = 0;
         }
-        data->cur_prv_level = PRV_LEVEL_U;
+        data->cur_prv_level = PRV_U;
         writeCSR(CSR_mstatus, mstatus.value, data);
     }
 };
@@ -237,13 +238,13 @@ public:
         csr_mstatus_type mstatus;
         mstatus.value = readCSR(CSR_mstatus, data);
 
-        uint64_t xepc = (PRV_LEVEL_S << 8) + 0x41;
+        uint64_t xepc = (PRV_S << 8) + 0x41;
         data->npc = readCSR(static_cast<uint32_t>(xepc), data);
 
         mstatus.bits.SIE = mstatus.bits.SPIE;
         mstatus.bits.SPIE = 1;
         data->cur_prv_level = mstatus.bits.SPP;
-        mstatus.bits.SPP = PRV_LEVEL_U;
+        mstatus.bits.SPP = PRV_U;
             
         writeCSR(CSR_mstatus, mstatus.value, data);
     }
@@ -260,13 +261,13 @@ public:
         csr_mstatus_type mstatus;
         mstatus.value = readCSR(CSR_mstatus, data);
 
-        uint64_t xepc = (PRV_LEVEL_H << 8) + 0x41;
+        uint64_t xepc = (PRV_H << 8) + 0x41;
         data->npc = readCSR(static_cast<uint32_t>(xepc), data);
 
         mstatus.bits.HIE = mstatus.bits.HPIE;
         mstatus.bits.HPIE = 1;
         data->cur_prv_level = mstatus.bits.HPP;
-        mstatus.bits.HPP = PRV_LEVEL_U;
+        mstatus.bits.HPP = PRV_U;
             
         writeCSR(CSR_mstatus, mstatus.value, data);
     }
@@ -283,13 +284,13 @@ public:
         csr_mstatus_type mstatus;
         mstatus.value = readCSR(CSR_mstatus, data);
 
-        uint64_t xepc = (PRV_LEVEL_M << 8) + 0x41;
+        uint64_t xepc = (PRV_M << 8) + 0x41;
         data->npc = readCSR(static_cast<uint32_t>(xepc), data);
 
         mstatus.bits.MIE = mstatus.bits.MPIE;
         mstatus.bits.MPIE = 1;
         data->cur_prv_level = mstatus.bits.MPP;
-        mstatus.bits.MPP = PRV_LEVEL_U;
+        mstatus.bits.MPP = PRV_U;
             
         writeCSR(CSR_mstatus, mstatus.value, data);
     }

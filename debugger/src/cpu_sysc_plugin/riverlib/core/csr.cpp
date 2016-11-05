@@ -6,6 +6,7 @@
  */
 
 #include "csr.h"
+#include "riscv-isa.h"
 
 namespace debugger {
 
@@ -32,44 +33,44 @@ void CsrRegs::comb() {
     v = r;
 
     switch (i_addr.read()) {
-    case 0xf10: // misa
+    case CSR_misa:
         break;
-    case 0xf11: // mvendorid
+    case CSR_mvendorid:
         break;
-    case 0xf12: // marchid
+    case CSR_marchid:
         break;
-    case 0xf13: // mimplementationid
+    case CSR_mimplementationid:
         break;
-    case 0xf14: // mhartid
+    case CSR_mhartid:
         break;
-    case 0x041: // uepc - User mode program counter
+    case CSR_uepc:// - User mode program counter
         break;
-    case 0x300: // mstatus - Machine mode status register
+    case CSR_mstatus:// - Machine mode status register
         break;
-    case 0x302: // medeleg - Machine exception delegation
+    case CSR_medeleg:// - Machine exception delegation
         break;
-    case 0x303: // mideleg - Machine itnerrupt delegation
+    case CSR_mideleg:// - Machine itnerrupt delegation
         break;
-    case 0x304: // mie - Machine interrupt enable bit
+    case CSR_mie:// - Machine interrupt enable bit
         break;
-    case 0x305: // mvec
+    case CSR_mtvec:
         wb_rdata = r.mvec;
         break;
-    case 0x321: // mtimecmp - Machine wall-clock timer compare value
+    case CSR_mtimecmp:// - Machine wall-clock timer compare value
         break;
-    case 0x340: // mscratch - Machine scrathc register
+    case CSR_mscratch:// - Machine scrathc register
         break;
-    case 0x341: // mepc - Machine program counter
+    case CSR_mepc:// - Machine program counter
         wb_rdata = r.mepc;
         if (i_wena.read()) {
             v.mepc = i_wdata;
         }
         break;
-    case 0x342: // mcause - Machine trap cause
+    case CSR_mcause:// - Machine trap cause
         break;
-    case 0x343: // mbadaddr - Machine bad address
+    case CSR_mbadaddr:// - Machine bad address
         break;
-    case 0x344: // mip - Machine interrupt pending
+    case CSR_mip:// - Machine interrupt pending
         break;
     default:;
     }

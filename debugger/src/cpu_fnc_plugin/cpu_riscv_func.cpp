@@ -11,6 +11,19 @@
 
 namespace debugger {
 
+void addIsaUserRV64I(CpuContextType *data, AttributeType *out);
+void addIsaPrivilegedRV64I(CpuContextType *data, AttributeType *out);
+void addIsaExtensionA(CpuContextType *data, AttributeType *out);
+void addIsaExtensionF(CpuContextType *data, AttributeType *out);
+void addIsaExtensionM(CpuContextType *data, AttributeType *out);
+
+
+void generateException(uint64_t code, CpuContextType *data);
+
+uint64_t readCSR(uint32_t idx, CpuContextType *data);
+void writeCSR(uint32_t idx, uint64_t val, CpuContextType *data);
+
+
 CpuRiscV_Functional::CpuRiscV_Functional(const char *name)  
     : IService(name), IHap(HAP_ConfigDone) {
     registerInterface(static_cast<IThread *>(this));
@@ -24,6 +37,7 @@ CpuRiscV_Functional::CpuRiscV_Functional(const char *name)
     registerAttribute("FreqHz", &freqHz_);
     registerAttribute("GenerateRegTraceFile", &generateRegTraceFile_);
     registerAttribute("GenerateMemTraceFile", &generateMemTraceFile_);
+    registerAttribute("ResetVector", &resetVector_);
 
     isEnable_.make_boolean(true);
     bus_.make_string("");
@@ -31,6 +45,7 @@ CpuRiscV_Functional::CpuRiscV_Functional(const char *name)
     freqHz_.make_uint64(1);
     generateRegTraceFile_.make_boolean(false);
     generateMemTraceFile_.make_boolean(false);
+    resetVector_.make_uint64(0x1000);
 
     cpu_context_.step_cnt = 0;
 
@@ -197,7 +212,7 @@ void CpuRiscV_Functional::handleTrap() {
         return;
     }
     if (pContext->interrupt == 1 && 
-        mstatus.bits.MIE == 0 && pContext->cur_prv_level == PRV_LEVEL_M) {
+        mstatus.bits.MIE == 0 && pContext->cur_prv_level == PRV_M) {
         return;
     }
     pContext->interrupt = 0;
@@ -209,7 +224,7 @@ void CpuRiscV_Functional::handleTrap() {
     mstatus.bits.MPP = pContext->cur_prv_level;
     mstatus.bits.MPIE = (mstatus.value >> pContext->cur_prv_level) & 0x1;
     mstatus.bits.MIE = 0;
-    pContext->cur_prv_level = PRV_LEVEL_M;
+    pContext->cur_prv_level = PRV_M;
     pContext->csr[CSR_mstatus] = mstatus.value;
 
     uint64_t xepc = (pContext->cur_prv_level << 8) + 0x41;
@@ -231,8 +246,8 @@ bool CpuRiscV_Functional::isRunning() {
 void CpuRiscV_Functional::reset() {
     CpuContextType *pContext = getpContext();
     pContext->regs[0] = 0;
-    pContext->pc = RESET_VECTOR;
-    pContext->npc = RESET_VECTOR;
+    pContext->pc = resetVector_.to_uint64();
+    pContext->npc = resetVector_.to_uint64();
     pContext->exception = 0;
     pContext->interrupt = 0;
     pContext->csr[CSR_mvendorid] = 0x0001;   // UC Berkeley Rocket repo
@@ -254,7 +269,7 @@ void CpuRiscV_Functional::reset() {
     csr_mstatus_type mstat;
     mstat.value = 0;
     pContext->csr[CSR_mstatus] = mstat.value;
-    pContext->cur_prv_level = PRV_LEVEL_M;           // Current privilege level
+    pContext->cur_prv_level = PRV_M;           // Current privilege level
     pContext->step_cnt = 0;
 }
 
@@ -280,48 +295,13 @@ IInstruction *CpuRiscV_Functional::decodeInstruction(uint32_t *rpayload) {
     return instr;
 }
 
-#if 1
-static const int ra = 1;       // [1] Return address
-static const int sp = 2;       // [2] Stack pointer
-static const int gp = 3;       // [3] Global pointer
-static const int tp = 4;       // [4] Thread pointer
-static const int t0 = 5;       // [5] Temporaries 0 s3
-static const int t1 = 6;       // [6] Temporaries 1 s4
-static const int t2 = 7;       // [7] Temporaries 2 s5
-static const int s0 = 8;       // [8] s0/fp Saved register/frame pointer
-static const int s1 = 9;       // [9] Saved register 1
-static const int a0 = 10;       // [10] Function argumentes 0
-static const int a1 = 11;       // [11] Function argumentes 1
-static const int a2 = 12;       // [12] Function argumentes 2
-static const int a3 = 13;       // [13] Function argumentes 3
-static const int a4 = 14;       // [14] Function argumentes 4
-static const int a5 = 15;       // [15] Function argumentes 5
-static const int a6 = 16;       // [16] Function argumentes 6
-static const int a7 = 17;       // [17] Function argumentes 7
-static const int s2 = 18;       // [18] Saved register 2
-static const int s3 = 19;       // [19] Saved register 3
-static const int s4 = 20;       // [20] Saved register 4
-static const int s5 = 21;       // [21] Saved register 5
-static const int s6 = 22;       // [22] Saved register 6
-static const int s7 = 23;       // [23] Saved register 7
-static const int s8 = 24;       // [24] Saved register 8
-static const int s9 = 25;       // [25] Saved register 9
-static const int s10 = 26;      // [26] Saved register 10
-static const int s11 = 27;      // [27] Saved register 11
-static const int t3 = 28;       // [28] 
-static const int t4 = 29;       // [29] 
-static const int t5 = 30;       // [30] 
-static const int t6 = 31;      // [31] 
-#endif
-
-
 void CpuRiscV_Functional::executeInstruction(IInstruction *instr,
                                              uint32_t *rpayload) {
 
     CpuContextType *pContext = getpContext();
     if (pContext->reg_trace_file) {
         /** Save previous reg values to find modification after exec() */
-        for (int i = 0; i < 32; i++) {
+        for (int i = 0; i < Reg_Total; i++) {
             iregs_prev[i] = pContext->regs[i];
         }
     }
@@ -341,9 +321,9 @@ void CpuRiscV_Functional::executeInstruction(IInstruction *instr,
             pContext->cur_prv_level,
             pContext->csr[CSR_mstatus],
             pContext->csr[CSR_mcause],
-            pContext->regs[ra],
-            pContext->regs[sp],
-            pContext->regs[tp]
+            pContext->regs[Reg_ra],
+            pContext->regs[Reg_sp],
+            pContext->regs[Reg_tp]
             );
     }
 #endif
@@ -357,7 +337,7 @@ void CpuRiscV_Functional::executeInstruction(IInstruction *instr,
             if (iregs_prev[i] != pContext->regs[i]) {
                 reg_changed = true;
                 sz += RISCV_sprintf(&tstr[sz], sizeof(tstr) - sz,
-                        "%3s <= %016I64x\n", REG_NAMES[i], pContext->regs[i]);
+                        "%3s <= %016I64x\n", IREGS_NAMES[i], pContext->regs[i]);
             }
         }
         if (!reg_changed) {
@@ -421,7 +401,7 @@ void CpuRiscV_Functional::raiseSignal(int idx) {
         if (pContext->reset) {
             break;
         }
-        if (mstatus.bits.MIE == 0 && pContext->cur_prv_level == PRV_LEVEL_M) {
+        if (mstatus.bits.MIE == 0 && pContext->cur_prv_level == PRV_M) {
             break;
         }
         /// @todo delegate interrupt to non-machine privilege level.
@@ -442,7 +422,7 @@ void CpuRiscV_Functional::lowerSignal(int idx) {
     CpuContextType *pContext = getpContext();
     switch (idx) {
     case CPU_SIGNAL_RESET:
-        pContext->reset = true; // ACtive LOW
+        pContext->reset = true; // Active LOW
         break;
     case CPU_SIGNAL_EXT_IRQ:
         pContext->interrupt = 0;

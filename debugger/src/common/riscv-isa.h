@@ -2,12 +2,12 @@
  * @file
  * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
  * @author     Sergey Khabarov - sergeykhbr@gmail.com
- * @brief      Base ISA implementation (extension I).
+ * @brief      RISC-V ISA specified structures and constants.
  */
 #ifndef __DEBUGGER_RISCV_ISA_H__
 #define __DEBUGGER_RISCV_ISA_H__
 
-#include "instructions.h"
+#include <inttypes.h>
 
 namespace debugger {
 
@@ -86,7 +86,7 @@ static const uint64_t EXT_SIGN_12 = 0xFFFFFFFFFFFFF000LL;
 static const uint64_t EXT_SIGN_16 = 0xFFFFFFFFFFFF0000LL;
 static const uint64_t EXT_SIGN_32 = 0xFFFFFFFF00000000LL;
 
-static const char *const REG_NAMES[] = {
+static const char *const IREGS_NAMES[] = {
     "zero",     // [0] zero
     "ra",       // [1] Return address
     "sp",       // [2] Stack pointer
@@ -121,12 +121,49 @@ static const char *const REG_NAMES[] = {
     "t6"        // [31] 
 };
 
-const char *const fpr_name[] = {
+const char *const FREGS_NAME[] = {
   "ft0", "ft1", "ft2",  "ft3",  "ft4", "ft5", "ft6",  "ft7",
   "fs0", "fs1", "fa0",  "fa1",  "fa2", "fa3", "fa4",  "fa5",
   "fa6", "fa7", "fs2",  "fs3",  "fs4", "fs5", "fs6",  "fs7",
   "fs8", "fs9", "fs10", "fs11", "ft8", "ft9", "ft10", "ft11"
 };
+
+enum ERegNames {
+    Reg_Zero,
+    Reg_ra,// = 1;       // [1] Return address
+    Reg_sp,// = 2;       // [2] Stack pointer
+    Reg_gp,// = 3;       // [3] Global pointer
+    Reg_tp,// = 4;       // [4] Thread pointer
+    Reg_t0,// = 5;       // [5] Temporaries 0 s3
+    Reg_t1,// = 6;       // [6] Temporaries 1 s4
+    Reg_t2,// = 7;       // [7] Temporaries 2 s5
+    Reg_s0,// = 8;       // [8] s0/fp Saved register/frame pointer
+    Reg_s1,// = 9;       // [9] Saved register 1
+    Reg_a0,// = 10;       // [10] Function argumentes 0
+    Reg_a1,// = 11;       // [11] Function argumentes 1
+    Reg_a2,// = 12;       // [12] Function argumentes 2
+    Reg_a3,// = 13;       // [13] Function argumentes 3
+    Reg_a4,// = 14;       // [14] Function argumentes 4
+    Reg_a5,// = 15;       // [15] Function argumentes 5
+    Reg_a6,// = 16;       // [16] Function argumentes 6
+    Reg_a7,// = 17;       // [17] Function argumentes 7
+    Reg_s2,// = 18;       // [18] Saved register 2
+    Reg_s3,// = 19;       // [19] Saved register 3
+    Reg_s4,// = 20;       // [20] Saved register 4
+    Reg_s5,// = 21;       // [21] Saved register 5
+    Reg_s6,// = 22;       // [22] Saved register 6
+    Reg_s7,// = 23;       // [23] Saved register 7
+    Reg_s8,// = 24;       // [24] Saved register 8
+    Reg_s9,// = 25;       // [25] Saved register 9
+    Reg_s10,// = 26;      // [26] Saved register 10
+    Reg_s11,// = 27;      // [27] Saved register 11
+    Reg_t3,// = 28;       // [28] 
+    Reg_t4,// = 29;       // [29] 
+    Reg_t5,// = 30;       // [30] 
+    Reg_t6,// = 31;      // [31] 
+    Reg_Total
+};
+
 
 union csr_mstatus_type {
     struct bits_type {
@@ -190,20 +227,19 @@ union csr_mip_type {
     uint64_t value;
 };
 
-static const uint64_t RESET_VECTOR      = 0x1000;
 
 /**
  * @name PRV bits possible values:
  */
 /// @{
 /// User-mode
-static const uint64_t PRV_LEVEL_U       = 0;
+static const uint64_t PRV_U       = 0;
 /// super-visor mode
-static const uint64_t PRV_LEVEL_S       = 1;
+static const uint64_t PRV_S       = 1;
 /// hyper-visor mode
-static const uint64_t PRV_LEVEL_H       = 2;
+static const uint64_t PRV_H       = 2;
 //// machine mode
-static const uint64_t PRV_LEVEL_M       = 3;
+static const uint64_t PRV_M       = 3;
 /// @}
 
 /**
@@ -282,21 +318,10 @@ enum {
 
 /** Interrupts: */
 // Software interrupt
-static const uint64_t IRQ_Software = 0; 
+static const uint64_t IRQ_Software  = 0; 
 // Timer interrupt
-static const uint64_t IRQ_Timer = 1;
-
-void addIsaUserRV64I(CpuContextType *data, AttributeType *out);
-void addIsaPrivilegedRV64I(CpuContextType *data, AttributeType *out);
-void addIsaExtensionA(CpuContextType *data, AttributeType *out);
-void addIsaExtensionF(CpuContextType *data, AttributeType *out);
-void addIsaExtensionM(CpuContextType *data, AttributeType *out);
-
-
-void generateException(uint64_t code, CpuContextType *data);
-
-uint64_t readCSR(uint32_t idx, CpuContextType *data);
-void writeCSR(uint32_t idx, uint64_t val, CpuContextType *data);
+static const uint64_t IRQ_Timer     = 1;// External (PLIC) interrupt
+static const uint64_t IRQ_External  = 2;
 
 }  // namespace debugger
 

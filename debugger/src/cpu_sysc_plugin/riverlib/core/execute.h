@@ -10,6 +10,8 @@
 
 #include <systemc.h>
 #include "../river_cfg.h"
+#include "int_div.h"
+#include "int_mul.h"
 
 namespace debugger {
 
@@ -21,13 +23,16 @@ SC_MODULE(InstrExecute) {
     sc_in<sc_uint<AXI_ADDR_WIDTH>> i_d_pc;
     sc_in<sc_uint<32>> i_d_instr;
     sc_in<bool> i_wb_done;                      // write back done (Used to clear hazardness)
-    sc_in<bool> i_sign_ext;
+    sc_in<bool> i_memop_store;                  // Store to memory operation
+    sc_in<bool> i_memop_load;                   // Load from memoru operation
+    sc_in<bool> i_memop_sign_ext;               // Load memory value with sign extending
+    sc_in<sc_uint<2>> i_memop_size;             // Memory transaction size
+    sc_in<bool> i_unsigned_op;                  // Unsigned operands
+    sc_in<bool> i_rv32;                         // 32-bits instruction
     sc_in<sc_bv<ISA_Total>> i_isa_type;         // Type of the instruction's structure (ISA spec.)
     sc_in<sc_bv<Instr_Total>> i_ivec;           // One pulse per supported instruction.
-    sc_in<bool> i_user_level;                   // 
-    sc_in<bool> i_priv_level;
     sc_in<bool> i_ie;                           // Interrupt enable bit
-    sc_in<sc_uint<AXI_ADDR_WIDTH>> i_idt;       // Interrupt descriptor table
+    sc_in<sc_uint<AXI_ADDR_WIDTH>> i_mtvec;     // Interrupt descriptor table
     sc_in<sc_uint<2>> i_mode;                   // Current processor mode
     sc_in<bool> i_unsup_exception;              // Unsupported instruction exception
     sc_in<bool> i_ext_irq;                      // External interrupt from PLIC (todo: timer & software interrupts)
@@ -38,7 +43,7 @@ SC_MODULE(InstrExecute) {
     sc_in<sc_uint<RISCV_ARCH>> i_rdata2;
     sc_out<sc_uint<5>> o_res_addr;
     sc_out<sc_uint<RISCV_ARCH>> o_res_data;     // 
-    sc_out<bool> o_hazard_hold;                 // Hold pipeline while 'writeback' not done.
+    sc_out<bool> o_pipeline_hold;               // Hold pipeline while 'writeback' not done or multi-clock instruction.
     sc_out<sc_uint<12>> o_csr_addr;             // CSR address. 0 if not a CSR instruction
     sc_out<bool> o_csr_wena;                    // Write new CSR value
     sc_in<sc_uint<RISCV_ARCH>> i_csr_rdata;     // CSR current value
@@ -62,6 +67,7 @@ SC_MODULE(InstrExecute) {
     SC_HAS_PROCESS(InstrExecute);
 
     InstrExecute(sc_module_name name_, sc_trace_file *vcd=0);
+    virtual ~InstrExecute();
 
 private:
     struct RegistersType {
@@ -77,10 +83,21 @@ private:
         sc_uint<2> memop_size;
         sc_signal<sc_uint<AXI_ADDR_WIDTH>> memop_addr;
 
+        sc_signal<sc_uint<6>> multiclock_cnt;           // Instruction execution longer than 1 clock
         sc_signal<sc_uint<5>> hazard_addr[2];
         sc_signal<sc_uint<2>> hazard_depth;
     } v, r;
     sc_signal<bool> w_hazard_detected;
+    sc_signal<bool> w_multiclock_instr;
+
+    IntMul *mul0;
+    sc_signal<bool> w_mul_ena;
+    sc_signal<sc_uint<RISCV_ARCH>> wb_mul_res;
+
+    IntDiv *div0;
+    sc_signal<bool> w_div_ena;
+    sc_signal<sc_uint<RISCV_ARCH>> wb_div_result;
+    sc_signal<sc_uint<RISCV_ARCH>> wb_div_residual;
 };
 
 

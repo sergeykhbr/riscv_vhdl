@@ -184,10 +184,10 @@
     <ClInclude Include="..\..\src\common\iclass.h" />
     <ClInclude Include="..\..\src\common\iface.h" />
     <ClInclude Include="..\..\src\common\iservice.h" />
+    <ClInclude Include="..\..\src\common\riscv-isa.h" />
     <ClInclude Include="..\..\src\cpu_fnc_plugin\cpu_riscv_func.h" />
     <ClInclude Include="..\..\src\cpu_fnc_plugin\iinstr.h" />
     <ClInclude Include="..\..\src\cpu_fnc_plugin\instructions.h" />
-    <ClInclude Include="..\..\src\cpu_fnc_plugin\riscv-isa.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

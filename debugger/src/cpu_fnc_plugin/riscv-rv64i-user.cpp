@@ -5,10 +5,13 @@
  * @brief      Base ISA implementation (extension I, user level).
  */
 
-#include "riscv-isa.h"
 #include "api_utils.h"
+#include "riscv-isa.h"
+#include "instructions.h"
 
 namespace debugger {
+
+void generateException(uint64_t code, CpuContextType *data);
 
 /** 
  * @brief Addition. Overflows are ignored
@@ -51,11 +54,11 @@ public:
 
         if (u.bits.rs1 == 0) {
             RISCV_sprintf(data->disasm, sizeof(data->disasm), 
-                "li %s,%d", REG_NAMES[u.bits.rd], static_cast<uint32_t>(imm));
+                "li %s,%d", IREGS_NAMES[u.bits.rd], static_cast<uint32_t>(imm));
         } else {
             RISCV_sprintf(data->disasm, sizeof(data->disasm), 
-                "addi %s,%s,%d", REG_NAMES[u.bits.rd], 
-                                 REG_NAMES[u.bits.rs1], 
+                "addi %s,%s,%d", IREGS_NAMES[u.bits.rd], 
+                                 IREGS_NAMES[u.bits.rs1], 
                                  static_cast<uint32_t>(imm));
         }
     }

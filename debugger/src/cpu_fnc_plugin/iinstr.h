@@ -10,12 +10,13 @@
 
 #include <inttypes.h>
 #include <fstream>
+#include "riscv-isa.h"
 #include "coreservices/ibus.h"
 
 namespace debugger {
 
 struct CpuContextType {
-    uint64_t regs[32];
+    uint64_t regs[Reg_Total];
     uint64_t csr[1<<12];
     uint64_t pc;
     uint64_t npc;

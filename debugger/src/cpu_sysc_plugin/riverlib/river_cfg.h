@@ -20,14 +20,14 @@ static const int AXI_ADDR_WIDTH = 32;
 static const int AXI_DATA_WIDTH = 64;
 static const int AXI_DATA_BYTES = AXI_DATA_WIDTH / 8;
 
-static const uint64_t RESET_VECTOR = 0x00001000;
-
 static const uint8_t MEMOP_8B = 3;
 static const uint8_t MEMOP_4B = 2;
 static const uint8_t MEMOP_2B = 1;
 static const uint8_t MEMOP_1B = 0;
 
-enum IsaType {
+static const uint64_t RESET_VECTOR      = 0x1000;
+
+enum EIsaType {
     ISA_R_type,
     ISA_I_type,
     ISA_S_type,
@@ -37,7 +37,7 @@ enum IsaType {
     ISA_Total
 };
 
-enum InstuctionsType {
+enum EInstuctionsType {
     Instr_ADD,
     Instr_ADDI,
     Instr_ADDIW,
@@ -112,15 +112,6 @@ enum InstuctionsType {
 
     Instr_Total
 };
-
-enum PriviledgeType {
-    PRV_U,
-    PRV_S,
-    PRV_H,
-    PRV_M,
-    PRV_Total
-};
-
 
 }  // namespace debugger
 

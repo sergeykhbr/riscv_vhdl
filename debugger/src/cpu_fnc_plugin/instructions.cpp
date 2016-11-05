@@ -5,8 +5,9 @@
  * @brief      Instruction types parser.
  */
 
-#include "riscv-isa.h"
 #include "api_utils.h"
+#include "riscv-isa.h"
+#include "instructions.h"
 
 namespace debugger {
 

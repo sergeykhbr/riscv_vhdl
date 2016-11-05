@@ -76,11 +76,14 @@ private:
         sc_signal<sc_uint<AXI_ADDR_WIDTH>> pc;
         sc_signal<sc_uint<32>> instr;
         sc_signal<bool> instr_valid;
-        sc_signal<bool> sign_ext;
+        sc_signal<bool> memop_store;
+        sc_signal<bool> memop_load;
+        sc_signal<bool> memop_sign_ext;
+        sc_signal<sc_uint<2>> memop_size;
+        sc_signal<bool> rv32;                       // 32-bits instruction
+        sc_signal<bool> unsigned_op;                // Unsigned operands
         sc_signal<sc_bv<ISA_Total>> isa_type;
         sc_signal<sc_bv<Instr_Total>> instr_vec;
-        sc_signal<bool> user_level;
-        sc_signal<bool> priv_level;
         sc_signal<bool> exception;
     };
 
@@ -102,7 +105,7 @@ private:
         sc_signal<bool> memop_store;
         sc_signal<sc_uint<2>> memop_size;
         sc_signal<sc_uint<AXI_ADDR_WIDTH>> memop_addr;
-        sc_signal<bool> hazard_hold;
+        sc_signal<bool> pipeline_hold;           // Hold pipeline from Execution stage
 
     };
 

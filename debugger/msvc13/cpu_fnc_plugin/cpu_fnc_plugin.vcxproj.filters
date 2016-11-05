@@ -52,8 +52,10 @@
     <ClInclude Include="..\..\src\cpu_fnc_plugin\cpu_riscv_func.h" />
     <ClInclude Include="..\..\src\cpu_fnc_plugin\instructions.h" />
     <ClInclude Include="..\..\src\cpu_fnc_plugin\iinstr.h" />
-    <ClInclude Include="..\..\src\cpu_fnc_plugin\riscv-isa.h" />
     <ClInclude Include="..\..\src\common\async_tqueue.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\riscv-isa.h">
       <Filter>common</Filter>
     </ClInclude>
   </ItemGroup>
