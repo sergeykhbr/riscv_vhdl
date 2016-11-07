@@ -37,10 +37,11 @@ void InstrDecoder::comb() {
     v = r;
 
     bool w_error = false;
-    sc_uint<5> wb_opcode1 = i_f_instr.read().range(6, 2);
-    sc_uint<3> wb_opcode2 = i_f_instr.read().range(14, 12);
+    sc_uint<32> wb_instr = i_f_instr.read();
+    sc_uint<5> wb_opcode1 = wb_instr(6, 2);
+    sc_uint<3> wb_opcode2 = wb_instr(14, 12);
 
-    if (i_f_instr.read().range(1, 0) != 0x3) {
+    if (wb_instr(1, 0) != 0x3) {
         w_error = true;
     }
 
@@ -53,11 +54,11 @@ void InstrDecoder::comb() {
         wb_isa_type[ISA_R_type] = 1;
         switch (wb_opcode2) {
         case 0:
-            if (i_f_instr.read().range(31, 25) == 0x00) {
+            if (wb_instr(31, 25) == 0x00) {
                 wb_dec[Instr_ADD] = 1;
-            } else if (i_f_instr.read().range(31, 25) == 0x01) {
+            } else if (wb_instr(31, 25) == 0x01) {
                 wb_dec[Instr_MUL] = 1;
-            } else if (i_f_instr.read().range(31, 25) == 0x20) {
+            } else if (wb_instr(31, 25) == 0x20) {
                 wb_dec[Instr_SUB] = 1;
             } else {
                 w_error = true;
@@ -73,38 +74,38 @@ void InstrDecoder::comb() {
             wb_dec[Instr_SLTU] = 1;
             break;
         case 0x4:
-            if (i_f_instr.read().range(31, 25) == 0x00) {
+            if (wb_instr(31, 25) == 0x00) {
                 wb_dec[Instr_XOR] = 1;
-            } else if (i_f_instr.read().range(31, 25) == 0x01) {
+            } else if (wb_instr(31, 25) == 0x01) {
                 wb_dec[Instr_DIV] = 1;
             } else {
                 w_error = true;
             }
             break;
         case 0x5:
-            if (i_f_instr.read().range(31, 25) == 0x00) {
+            if (wb_instr(31, 25) == 0x00) {
                 wb_dec[Instr_SRL] = 1;
-            } else if (i_f_instr.read().range(31, 25) == 0x01) {
+            } else if (wb_instr(31, 25) == 0x01) {
                 wb_dec[Instr_DIVU] = 1;
-            } else if (i_f_instr.read().range(31, 25) == 0x20) {
+            } else if (wb_instr(31, 25) == 0x20) {
                 wb_dec[Instr_SRA] = 1;
             } else {
                 w_error = true;
             }
             break;
         case 0x6:
-            if (i_f_instr.read().range(31, 25) == 0x00) {
+            if (wb_instr(31, 25) == 0x00) {
                 wb_dec[Instr_OR] = 1;
-            } else if (i_f_instr.read().range(31, 25) == 0x01) {
+            } else if (wb_instr(31, 25) == 0x01) {
                 wb_dec[Instr_REM] = 1;
             } else {
                 w_error = true;
             }
             break;
         case 0x7:
-            if (i_f_instr.read().range(31, 25) == 0x00) {
+            if (wb_instr(31, 25) == 0x00) {
                 wb_dec[Instr_AND] = 1;
-            } else if (i_f_instr.read().range(31, 25) == 0x01) {
+            } else if (wb_instr(31, 25) == 0x01) {
                 wb_dec[Instr_REMU] = 1;
             } else {
                 w_error = true;
@@ -133,9 +134,9 @@ void InstrDecoder::comb() {
             wb_dec[Instr_XORI] = 1;
             break;
         case 0x5:
-            if (i_f_instr.read().range(31, 26) == 0x00) {
+            if (wb_instr(31, 26) == 0x00) {
                 wb_dec[Instr_SRLI] = 1;
-            } else if (i_f_instr.read().range(31, 26) == 0x20) {
+            } else if (wb_instr(31, 26) == 0x20) {
                 wb_dec[Instr_SRAI] = 1;
             } else {
                 w_error = true;
@@ -161,9 +162,9 @@ void InstrDecoder::comb() {
             wb_dec[Instr_SLLIW] = 1;
             break;
         case 0x5:
-            if (i_f_instr.read().range(31, 25) == 0x00) {
+            if (wb_instr(31, 25) == 0x00) {
                 wb_dec[Instr_SRLIW] = 1;
-            } else if (i_f_instr.read().range(31, 25) == 0x20) {
+            } else if (wb_instr(31, 25) == 0x20) {
                 wb_dec[Instr_SRAIW] = 1;
             } else {
                 w_error = true;
@@ -177,11 +178,11 @@ void InstrDecoder::comb() {
         wb_isa_type[ISA_R_type] = 1;
         switch (wb_opcode2) {
         case 0:
-            if (i_f_instr.read().range(31, 25) == 0x00) {
+            if (wb_instr(31, 25) == 0x00) {
                 wb_dec[Instr_ADDW] = 1;
-            } else if (i_f_instr.read().range(31, 25) == 0x01) {
+            } else if (wb_instr(31, 25) == 0x01) {
                 wb_dec[Instr_MULW] = 1;
-            } else if (i_f_instr.read().range(31, 25) == 0x20) {
+            } else if (wb_instr(31, 25) == 0x20) {
                 wb_dec[Instr_SUBW] = 1;
             } else {
                 w_error = true;
@@ -191,31 +192,31 @@ void InstrDecoder::comb() {
             wb_dec[Instr_SLLW] = 1;
             break;
         case 0x4:
-            if (i_f_instr.read().range(31, 25) == 0x01) {
+            if (wb_instr(31, 25) == 0x01) {
                 wb_dec[Instr_DIVW] = 1;
             } else {
                 w_error = true;
             }
             break;
         case 0x5:
-            if (i_f_instr.read().range(31, 25) == 0x00) {
+            if (wb_instr(31, 25) == 0x00) {
                 wb_dec[Instr_SRLW] = 1;
-            } else if (i_f_instr.read().range(31, 25) == 0x01) {
+            } else if (wb_instr(31, 25) == 0x01) {
                 wb_dec[Instr_DIVUW] = 1;
-            } else if (i_f_instr.read().range(31, 25) == 0x20) {
+            } else if (wb_instr(31, 25) == 0x20) {
                 wb_dec[Instr_SRAW] = 1;
             } else {
                 w_error = true;
             }
             break;
         case 0x6:
-            if (i_f_instr.read().range(31, 25) == 0x01) {
+            if (wb_instr(31, 25) == 0x01) {
                 wb_dec[Instr_REMW] = 1;
             } else {
                 w_error = true;
             }
         case 0x7:
-            if (i_f_instr.read().range(31, 25) == 0x01) {
+            if (wb_instr(31, 25) == 0x01) {
                 wb_dec[Instr_REMUW] = 1;
             } else {
                 w_error = true;
@@ -322,13 +323,13 @@ void InstrDecoder::comb() {
         wb_isa_type[ISA_I_type] = 1;
         switch (wb_opcode2) {
         case 0:
-            if (i_f_instr.read() == 0x00200073) {
+            if (wb_instr == 0x00200073) {
                 wb_dec[Instr_URET] = 1;
-            } else if (i_f_instr.read() == 0x10200073) {
+            } else if (wb_instr == 0x10200073) {
                 wb_dec[Instr_SRET] = 1;
-            } else if (i_f_instr.read() == 0x20200073) {
+            } else if (wb_instr == 0x20200073) {
                 wb_dec[Instr_HRET] = 1;
-            } else if (i_f_instr.read() == 0x30200073) {
+            } else if (wb_instr == 0x30200073) {
                 wb_dec[Instr_MRET] = 1;
             } else {
                 w_error = true;
@@ -377,7 +378,7 @@ void InstrDecoder::comb() {
     if (i_f_valid.read()) {
         v.valid = 1;
         v.pc = i_f_pc;
-        v.instr = i_f_instr;
+        v.instr = wb_instr;
 
         v.isa_type = wb_isa_type;
         v.instr_vec = wb_dec;

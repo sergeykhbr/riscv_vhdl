@@ -36,11 +36,14 @@ InstrExecute::InstrExecute(sc_module_name name_, sc_trace_file *vcd)
     sensitive << r.hazard_addr[0];
     sensitive << r.hazard_addr[1];
     sensitive << r.multiclock_cnt;
+    sensitive << r.multiclock_instr;
+    sensitive << r.postponed_valid;
+    sensitive << r.res_val;
     sensitive << w_hazard_detected;
-    sensitive << w_multiclock_instr;
-    sensitive << wb_mul_res;
-    sensitive << wb_div_result;
-    sensitive << wb_div_residual;
+    sensitive << r.multi_ena[Multi_MUL];
+    sensitive << r.multi_ena[Multi_DIV];
+    sensitive << wb_arith_res[Multi_MUL];
+    sensitive << wb_arith_res[Multi_DIV];
 
     SC_METHOD(registers);
     sensitive << i_clk.pos();
@@ -48,23 +51,23 @@ InstrExecute::InstrExecute(sc_module_name name_, sc_trace_file *vcd)
     mul0 = new IntMul("mul0", vcd);
     mul0->i_clk(i_clk);
     mul0->i_nrst(i_nrst);
-    mul0->i_ena(w_mul_ena);
-    mul0->i_unsigned(i_unsigned_op);
-    mul0->i_rv32(i_rv32);
-    mul0->i_a1(i_rdata1);
-    mul0->i_a2(i_rdata2);
-    mul0->o_res(wb_mul_res);
+    mul0->i_ena(r.multi_ena[Multi_MUL]);
+    mul0->i_unsigned(r.multi_unsigned);
+    mul0->i_rv32(r.multi_rv32);
+    mul0->i_a1(r.multi_a1);
+    mul0->i_a2(r.multi_a2);
+    mul0->o_res(wb_arith_res[Multi_MUL]);
 
     div0 = new IntDiv("div0", vcd);
     div0->i_clk(i_clk);
     div0->i_nrst(i_nrst);
-    div0->i_ena(w_div_ena);
-    div0->i_unsigned(i_unsigned_op);
-    div0->i_rv32(i_rv32);
-    div0->i_a1(i_rdata1);
-    div0->i_a2(i_rdata2);
-    div0->o_result(wb_div_result);
-    div0->o_residual(wb_div_residual);
+    div0->i_ena(r.multi_ena[Multi_DIV]);
+    div0->i_unsigned(r.multi_unsigned);
+    div0->i_residual(r.multi_residual);
+    div0->i_rv32(r.multi_rv32);
+    div0->i_a1(r.multi_a1);
+    div0->i_a2(r.multi_a2);
+    div0->o_res(wb_arith_res[Multi_DIV]);
 
     if (vcd) {
         sc_trace(vcd, i_cache_hold, "/top/proc0/exec0/i_cache_hold");
@@ -91,12 +94,13 @@ InstrExecute::InstrExecute(sc_module_name name_, sc_trace_file *vcd)
         sc_trace(vcd, o_csr_wdata, "/top/proc0/exec0/o_csr_wena");
         sc_trace(vcd, o_pipeline_hold, "/top/proc0/exec0/o_pipeline_hold");
 
-        sc_trace(vcd, w_multiclock_instr, "/top/proc0/exec0/w_multiclock_instr");
         sc_trace(vcd, w_hazard_detected, "/top/proc0/exec0/w_hazard_detected");
         sc_trace(vcd, r.hazard_depth, "/top/proc0/exec0/r_hazard_depth");
         sc_trace(vcd, r.hazard_addr[0], "/top/proc0/exec0/r_hazard_addr(0)");
         sc_trace(vcd, r.hazard_addr[1], "/top/proc0/exec0/r_hazard_addr(1)");
         sc_trace(vcd, r.multiclock_cnt, "/top/proc0/exec0/r_multiclock_cnt");
+        sc_trace(vcd, r.multi_ena[Multi_DIV], "/top/proc0/exec0/r_multi_ena(1)");
+        sc_trace(vcd, wb_arith_res[Multi_DIV], "/top/proc0/exec0/wb_arith_res(1)");
     }
 };
 
@@ -125,8 +129,8 @@ void InstrExecute::comb() {
     sc_uint<RISCV_ARCH> wb_xor64;
     sc_uint<RISCV_ARCH> wb_sll64;
     sc_uint<RISCV_ARCH> wb_srl64;
-    sc_uint<32> wb_srl32;
-    sc_uint<6> wb_multiclock_cnt;
+    sc_uint<RISCV_ARCH> wb_srl32;
+    sc_uint<7> wb_multiclock_cnt;       // up to 127 clocks per one instruction (maybe insreased)
 
     bool w_res_wena;
     bool w_pc_branch;
@@ -151,7 +155,7 @@ void InstrExecute::comb() {
             check_unqiue_cnt++;
         }
     }
-    if (i_d_pc.read() == 0x100042a8) {
+    if (i_d_pc.read() == 0x10001e94) {
         bool st = true;
     }
 #endif
@@ -171,50 +175,40 @@ void InstrExecute::comb() {
         wb_rdata1 = i_rdata1;
         wb_radr2 = 0;
         wb_rdata2 = (wb_mask_i31(63, 12), i_d_instr.read().range(31, 20));
-        uint64_t x4 = wb_rdata2;
-        bool st = true;
     } else if (i_isa_type.read()[ISA_SB_type]) {
         wb_radr1 = i_d_instr.read().range(19, 15);
         wb_rdata1 = i_rdata1;
         wb_radr2 = i_d_instr.read().range(24, 20);
         wb_rdata2 = i_rdata2;
         wb_off(RISCV_ARCH-1, 12) = wb_mask_i31(RISCV_ARCH-1, 12);
-        uint64_t x1 = wb_off[12] = i_d_instr.read()[31];
-        uint64_t x2 = wb_off[11] = i_d_instr.read()[7];
-        uint64_t x3 = wb_off(10, 5) = i_d_instr.read()(30, 25);
-        uint64_t x4 = wb_off(4, 1) = i_d_instr.read()(11, 8);
-        uint64_t x5 = wb_off[0] = 0;
-        bool st = true;
+        wb_off[12] = i_d_instr.read()[31];
+        wb_off[11] = i_d_instr.read()[7];
+        wb_off(10, 5) = i_d_instr.read()(30, 25);
+        wb_off(4, 1) = i_d_instr.read()(11, 8);
+        wb_off[0] = 0;
     } else if (i_isa_type.read()[ISA_UJ_type]) {
         wb_radr1 = 0;
-        uint64_t x2, x1 = wb_rdata1 = i_d_pc;
+        wb_rdata1 = i_d_pc;
         wb_radr2 = 0;
         wb_off(RISCV_ARCH-1, 20) = wb_mask_i31(RISCV_ARCH-1, 20);
         wb_off(19, 12) = i_d_instr.read()(19, 12);
         wb_off[11] = i_d_instr.read()[20];
         wb_off(10, 1) = i_d_instr.read()(30, 21);
         wb_off[0] = 0;
-        x2 = wb_off;
-        bool st = true;
     } else if (i_isa_type.read()[ISA_U_type]) {
         wb_radr1 = 0;
         wb_rdata1 = i_d_pc;
         wb_radr2 = 0;
         wb_rdata2(31, 0) = i_d_instr.read().range(31, 12) << 12;
-        wb_off(RISCV_ARCH-1, 32) = wb_mask_i31(RISCV_ARCH-1, 32);
-        uint64_t x2 = wb_rdata2;
-        bool stop = true;
+        wb_rdata2(RISCV_ARCH-1, 32) = wb_mask_i31(RISCV_ARCH-1, 32);
     } else if (i_isa_type.read()[ISA_S_type]) {
         wb_radr1 = i_d_instr.read().range(19, 15);
         wb_rdata1 = i_rdata1;
-        int a2 = wb_radr2 = i_d_instr.read().range(24, 20);
-        uint64_t rv2 = wb_rdata2 = i_rdata2;
-
+        wb_radr2 = i_d_instr.read().range(24, 20);
+        wb_rdata2 = i_rdata2;
         wb_off(RISCV_ARCH-1, 12) = wb_mask_i31(RISCV_ARCH-1, 12);
         wb_off(11, 5) = i_d_instr.read()(31, 25);
         wb_off(4, 0) = i_d_instr.read()(11, 7);
-        uint64_t x2 = wb_off;
-        bool stop = true;
     }
 
     // Don't modify registers on conditional jumps:
@@ -229,16 +223,17 @@ void InstrExecute::comb() {
     }
 
     // parallel ALU:
-    uint64_t t_sum64 = wb_sum64 = wb_rdata1 + wb_rdata2;
+    wb_sum64 = wb_rdata1 + wb_rdata2;
     wb_sub64 = wb_rdata1 - wb_rdata2;
     wb_and64 = wb_rdata1 & wb_rdata2;
     wb_or64 = wb_rdata1 | wb_rdata2;
     wb_xor64 = wb_rdata1 ^ wb_rdata2;
     wb_sll64 = wb_rdata1 << wb_rdata2;
     wb_srl64 = wb_rdata1 >> wb_rdata2;
-    wb_srl32 = wb_rdata1(31,0) >> wb_rdata2;
-    w_mul_ena = 0;
-    w_div_ena = 0;
+    wb_srl32(31, 0) = wb_rdata1(31, 0) >> wb_rdata2;
+    if (wb_srl32[31]) {
+        wb_srl32(RISCV_ARCH - 1, 32) = ~0;
+    }
 
     // Relative Branch on some condition:
     w_pc_branch = (wv[Instr_BEQ] & (wb_sub64 == 0))
@@ -252,19 +247,15 @@ void InstrExecute::comb() {
         wb_npc = i_d_pc.read() + wb_off(AXI_ADDR_WIDTH-1, 0);
     } else if (wv[Instr_JAL].to_bool()) {
         wb_res = i_d_pc.read() + 4;
-        uint64_t x1 = wb_npc = wb_rdata1 + wb_off;
-        // TODO: execptions and traps:
-        bool st=true;
+        wb_npc = wb_rdata1 + wb_off;
     } else if (wv[Instr_JALR].to_bool()) {
         wb_res = i_d_pc.read() + 4;
-        uint64_t x1 = wb_npc = wb_rdata1 + wb_rdata2;
-        bool st=true;
+        wb_npc = wb_rdata1 + wb_rdata2;
     } else if (wv[Instr_MRET].to_bool()) {
         wb_res = i_d_pc.read() + 4;
         w_csr_wena = 0;
         wb_csr_addr = CSR_mepc;
-        uint64_t x1 = wb_npc = i_csr_rdata;
-        bool st=true;
+        wb_npc = i_csr_rdata;
     } else {
         wb_npc = i_d_pc.read() + 4;
     }
@@ -280,6 +271,14 @@ void InstrExecute::comb() {
      *  If instruction is multicycle then modify this value.
      */
     wb_multiclock_cnt = 0;
+    v.multi_ena[Multi_MUL] = 0;
+    v.multi_ena[Multi_DIV] = 0;
+    v.multi_rv32 = i_rv32;
+    v.multi_unsigned = i_unsigned_op;
+    v.multi_residual = 0;
+    //v.multi_type = 0; // This value mustn't be changed during computation
+    v.multi_a1 = i_rdata1;
+    v.multi_a2 = i_rdata2;
 
     // ALU block selector:
     if (i_memop_load) {
@@ -307,15 +306,11 @@ void InstrExecute::comb() {
     } else if (wv[Instr_SRL] || wv[Instr_SRLI]) {
         wb_res = wb_srl64;
     } else if (wv[Instr_SRLW] || wv[Instr_SRLIW]) {
-        wb_res(31, 0) = wb_srl32;
-        wb_res(63, 32) = 0;
-    /*} else if (wv[Instr_SRA] || wv[Instr_SRAI]) {
+        wb_res = wb_srl32;
+    } else if (wv[Instr_SRA] || wv[Instr_SRAI]) {
         wb_res = wb_srl64;
     } else if (wv[Instr_SRAW] || wv[Instr_SRAW]) {
-        wb_res(31, 0) = wb_srl32;
-        if (wb_srl32[31]) {
-            wb_res(63, 32) = ~0;
-        }*/
+        wb_res = wb_srl32;
     } else if (wv[Instr_AND] || wv[Instr_ANDI]) {
         wb_res = wb_and64;
     } else if (wv[Instr_OR] || wv[Instr_ORI]) {
@@ -328,18 +323,19 @@ void InstrExecute::comb() {
         uint64_t x1 = wb_res = wb_rdata2;
         bool stop = true;
     } else if (wv[Instr_MUL] || wv[Instr_MULW]) {
-        w_mul_ena = 1;
-        wb_res = wb_mul_res;
+        v.multi_ena[Multi_MUL] = !r.multiclock_instr;
+        v.multi_type = Multi_MUL;
         wb_multiclock_cnt = IMUL_EXEC_DURATION_CYCLES;
     } else if (wv[Instr_DIV] || wv[Instr_DIVU]
             || wv[Instr_DIVW] || wv[Instr_DIVUW]) {
-        w_div_ena = 1;
-        wb_res = wb_div_result;
+        v.multi_ena[Multi_DIV] = !r.multiclock_instr;
+        v.multi_type = Multi_DIV;
         wb_multiclock_cnt = IDIV_EXEC_DURATION_CYCLES;
     } else if (wv[Instr_REM] || wv[Instr_REMU]
             || wv[Instr_REMW] || wv[Instr_REMUW]) {
-        w_div_ena = 1;
-        wb_res = wb_div_residual;
+        v.multi_ena[Multi_DIV] = !r.multiclock_instr;
+        v.multi_residual = 1;
+        v.multi_type = Multi_DIV;
         wb_multiclock_cnt = IDIV_EXEC_DURATION_CYCLES;
     } else if (wv[Instr_CSRRC]) {
         wb_res = i_csr_rdata;
@@ -373,16 +369,26 @@ void InstrExecute::comb() {
         wb_csr_wdata = wb_radr1;  // extending to 64-bits
     }
 
-    w_multiclock_instr = 0;
-    if (r.multiclock_cnt.read() != 0) {
-        w_multiclock_instr = 1;
+
+    bool w_cur_valid = !i_cache_hold.read() && i_d_valid.read() 
+                        && i_d_pc.read() == r.npc.read();
+
+    v.postponed_valid = 0;
+    if (w_cur_valid && wb_multiclock_cnt != 0) {
+        v.multiclock_cnt = wb_multiclock_cnt;
+        v.multiclock_instr = 1;
+    } else if (r.multiclock_cnt.read() != 0) {
+        v.res_val = wb_arith_res[r.multi_type.read()];
         v.multiclock_cnt = r.multiclock_cnt.read() - 1;
+        if (r.multiclock_cnt.read() == 1) {
+            v.multiclock_instr = 0;
+            v.postponed_valid = 1;
+        }
     }
 
-    bool w_valid = 0;
 
-    if (!i_cache_hold.read() && i_d_valid.read() 
-                && i_d_pc.read() == r.npc.read()) {
+    bool w_valid = 0;
+    if (w_cur_valid) {
         w_valid = 1;
         v.pc = i_d_pc;
         v.instr = i_d_instr;
@@ -395,7 +401,6 @@ void InstrExecute::comb() {
     if (w_valid) {
         v.hazard_addr[1] = r.hazard_addr[0];
         v.hazard_addr[0] = wb_res_addr;
-        v.multiclock_cnt = wb_multiclock_cnt;
     }
 
     if (w_valid && !i_wb_done.read()) {
@@ -404,18 +409,16 @@ void InstrExecute::comb() {
     } else if (!w_valid && i_wb_done.read()) {
         v.hazard_depth = r.hazard_depth.read() - 1;
     }
-    switch (r.hazard_depth.read()) {
-    case 1:
-        w_hazard_detected = (wb_radr1 != 0 && (wb_radr1 == r.hazard_addr[0]))
-                            || (wb_radr2 != 0 && (wb_radr2 == r.hazard_addr[0]));
-        break;
-    case 2:
-        w_hazard_detected = (wb_radr1 != 0 && (wb_radr1 == r.hazard_addr[0]
-                                            || wb_radr1 == r.hazard_addr[1]))
-                            || (wb_radr2 != 0 && (wb_radr2 == r.hazard_addr[0]
-                                            || wb_radr2 == r.hazard_addr[1]));
-        break;
-    default:
+    bool w_hazard_lvl1 = (wb_radr1 != 0 && (wb_radr1 == r.hazard_addr[0]))
+                      || (wb_radr2 != 0 && (wb_radr2 == r.hazard_addr[0]));
+    bool w_hazard_lvl2 = (wb_radr1 != 0 && (wb_radr1 == r.hazard_addr[1]))
+                      || (wb_radr2 != 0 && (wb_radr2 == r.hazard_addr[1]));
+
+    if (r.hazard_depth.read() == 1) {
+        w_hazard_detected = w_hazard_lvl1;
+    } else if (r.hazard_depth.read() == 2) {
+        w_hazard_detected = w_hazard_lvl1 | w_hazard_lvl2;
+    } else {
         w_hazard_detected = 0;
     }
 
@@ -434,13 +437,23 @@ void InstrExecute::comb() {
         v.hazard_addr[0] = 0;
         v.hazard_addr[1] = 0;
         v.multiclock_cnt = 0;
+        v.multiclock_instr = 0;
+
+        v.multi_ena[Multi_MUL] = 0;
+        v.multi_ena[Multi_DIV] = 0;
+        v.multi_rv32 = 0;
+        v.multi_unsigned = 0;
+        v.multi_residual = 0;
+        v.multi_type = 0;
+        v.multi_a1 = 0;
+        v.multi_a2 = 0;
     }
 
     o_radr1 = wb_radr1;
     o_radr2 = wb_radr2;
     o_res_addr = r.res_addr;
     o_res_data = r.res_val;
-    o_pipeline_hold = w_hazard_detected | w_multiclock_instr;
+    o_pipeline_hold = w_hazard_detected | r.multiclock_instr;
 
     o_csr_wena = w_csr_wena;
     o_csr_addr = wb_csr_addr;
@@ -452,7 +465,7 @@ void InstrExecute::comb() {
     o_memop_size = r.memop_size;
     o_memop_addr = r.memop_addr;
 
-    o_valid = r.valid;
+    o_valid = (r.valid.read() & !r.multiclock_instr) | r.postponed_valid;
     o_pc = r.pc;
     o_npc = r.npc;
     o_instr = r.instr;

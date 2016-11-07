@@ -13,6 +13,9 @@
     <Filter Include="riverlib\core">
       <UniqueIdentifier>{dba86c01-b99a-43bf-89e5-74e84d5caf30}</UniqueIdentifier>
     </Filter>
+    <Filter Include="riverlib\core\arith">
+      <UniqueIdentifier>{8f273e09-25d9-45e1-8d49-6a5c8c5a3658}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\common\attribute.cpp">
@@ -63,11 +66,11 @@
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\csr.cpp">
       <Filter>riverlib\core</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\int_div.cpp">
-      <Filter>riverlib\core</Filter>
+    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\arith\int_div.cpp">
+      <Filter>riverlib\core\arith</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\int_mul.cpp">
-      <Filter>riverlib\core</Filter>
+    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\arith\int_mul.cpp">
+      <Filter>riverlib\core\arith</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -142,11 +145,11 @@
     <ClInclude Include="..\..\src\common\riscv-isa.h">
       <Filter>common</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\int_div.h">
-      <Filter>riverlib\core</Filter>
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\arith\int_div.h">
+      <Filter>riverlib\core\arith</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\int_mul.h">
-      <Filter>riverlib\core</Filter>
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\arith\int_mul.h">
+      <Filter>riverlib\core\arith</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

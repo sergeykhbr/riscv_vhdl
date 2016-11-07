@@ -10,8 +10,8 @@
 
 #include <systemc.h>
 #include "../river_cfg.h"
-#include "int_div.h"
-#include "int_mul.h"
+#include "arith/int_div.h"
+#include "arith/int_mul.h"
 
 namespace debugger {
 
@@ -37,12 +37,12 @@ SC_MODULE(InstrExecute) {
     sc_in<bool> i_unsup_exception;              // Unsupported instruction exception
     sc_in<bool> i_ext_irq;                      // External interrupt from PLIC (todo: timer & software interrupts)
 
-    sc_out<sc_uint<5>> o_radr1;
-    sc_in<sc_uint<RISCV_ARCH>> i_rdata1;
-    sc_out<sc_uint<5>> o_radr2;
-    sc_in<sc_uint<RISCV_ARCH>> i_rdata2;
-    sc_out<sc_uint<5>> o_res_addr;
-    sc_out<sc_uint<RISCV_ARCH>> o_res_data;     // 
+    sc_out<sc_uint<5>> o_radr1;                 // Integer register index 1
+    sc_in<sc_uint<RISCV_ARCH>> i_rdata1;        // Integer register value 1
+    sc_out<sc_uint<5>> o_radr2;                 // Integer register index 2
+    sc_in<sc_uint<RISCV_ARCH>> i_rdata2;        // Integer register value 2
+    sc_out<sc_uint<5>> o_res_addr;              // Address to store result of the instruction (0=do not store)
+    sc_out<sc_uint<RISCV_ARCH>> o_res_data;     // Value to store
     sc_out<bool> o_pipeline_hold;               // Hold pipeline while 'writeback' not done or multi-clock instruction.
     sc_out<sc_uint<12>> o_csr_addr;             // CSR address. 0 if not a CSR instruction
     sc_out<bool> o_csr_wena;                    // Write new CSR value
@@ -70,34 +70,45 @@ SC_MODULE(InstrExecute) {
     virtual ~InstrExecute();
 
 private:
+    enum EMultiCycleInstruction {
+        Multi_MUL,
+        Multi_DIV,
+        Multi_Total
+    };
+
     struct RegistersType {
         sc_signal<bool> valid;
         sc_signal<sc_uint<AXI_ADDR_WIDTH>> pc;
         sc_signal<sc_uint<AXI_ADDR_WIDTH>> npc;
         sc_signal<sc_uint<32>> instr;
         sc_uint<5> res_addr;
-        sc_uint<RISCV_ARCH> res_val;
+        sc_signal<sc_uint<RISCV_ARCH>> res_val;
         bool memop_load;
         bool memop_store;
         bool memop_sign_ext;
         sc_uint<2> memop_size;
         sc_signal<sc_uint<AXI_ADDR_WIDTH>> memop_addr;
 
-        sc_signal<sc_uint<6>> multiclock_cnt;           // Instruction execution longer than 1 clock
+        sc_signal<bool> multi_ena[Multi_Total];         // Enable pulse for Operation that takes more than 1 clock
+        sc_signal<bool> multi_rv32;                     // Long operation with 32-bits operands
+        sc_signal<bool> multi_unsigned;                 // Long operation with unsiged operands
+        sc_signal<bool> multi_residual;                 // Flag for Divider module: 0=divsion output; 1=residual output
+        sc_signal<sc_uint<Multi_Total>> multi_type;     // Keep type of the multi-cycle operation
+        sc_signal<sc_uint<RISCV_ARCH>> multi_a1;        // Multi-cycle operand 1
+        sc_signal<sc_uint<RISCV_ARCH>> multi_a2;        // Multi-cycle operand 2
+
+        sc_signal<bool> multiclock_instr;
+        sc_signal<bool> postponed_valid;
+        sc_signal<sc_uint<7>> multiclock_cnt;           // up to 127 clocks per one instruction (maybe changed)
         sc_signal<sc_uint<5>> hazard_addr[2];
         sc_signal<sc_uint<2>> hazard_depth;
     } v, r;
     sc_signal<bool> w_hazard_detected;
-    sc_signal<bool> w_multiclock_instr;
+    sc_signal<sc_uint<RISCV_ARCH>> wb_arith_res[Multi_Total];
 
     IntMul *mul0;
-    sc_signal<bool> w_mul_ena;
-    sc_signal<sc_uint<RISCV_ARCH>> wb_mul_res;
 
     IntDiv *div0;
-    sc_signal<bool> w_div_ena;
-    sc_signal<sc_uint<RISCV_ARCH>> wb_div_result;
-    sc_signal<sc_uint<RISCV_ARCH>> wb_div_residual;
 };
 
 

@@ -9,7 +9,7 @@
 #define __DEBUGGER_RIVERLIB_INT_MUL_H__
 
 #include <systemc.h>
-#include "../river_cfg.h"
+#include "../../river_cfg.h"
 
 namespace debugger {
 
