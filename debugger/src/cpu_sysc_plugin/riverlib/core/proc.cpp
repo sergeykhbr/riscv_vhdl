@@ -84,7 +84,7 @@ Processor::Processor(sc_module_name name_, sc_trace_file *vcd)
     exec0->i_isa_type(w.d.isa_type);
     exec0->i_ivec(w.d.instr_vec);
     exec0->i_ie(csr.ie);
-    exec0->i_mtvec(csr.mvec);
+    exec0->i_mtvec(csr.mtvec);
     exec0->i_mode(csr.mode);
     exec0->i_unsup_exception(w.d.exception);
     exec0->i_ext_irq(i_ext_irq);
@@ -99,6 +99,9 @@ Processor::Processor(sc_module_name name_, sc_trace_file *vcd)
     exec0->o_csr_wena(csr.wena);
     exec0->i_csr_rdata(csr.rdata);
     exec0->o_csr_wdata(csr.wdata);
+    exec0->o_trap_ena(w.e.trap_ena);
+    exec0->o_trap_code(w.e.trap_code);
+    exec0->o_trap_pc(w.e.trap_pc);
     exec0->o_memop_sign_ext(w.e.memop_sign_ext);
     exec0->o_memop_load(w.e.memop_load);
     exec0->o_memop_store(w.e.memop_store);
@@ -169,9 +172,12 @@ Processor::Processor(sc_module_name name_, sc_trace_file *vcd)
     csr0->i_wena(csr.wena);
     csr0->i_wdata(csr.wdata);
     csr0->o_rdata(csr.rdata);
+    csr0->i_trap_ena(w.e.trap_ena);
+    csr0->i_trap_code(w.e.trap_code);
+    csr0->i_trap_pc(w.e.trap_pc);
     csr0->o_ie(csr.ie);
     csr0->o_mode(csr.mode);
-    csr0->o_mvec(csr.mvec);
+    csr0->o_mtvec(csr.mtvec);
 
     if (vcd) {
         sc_trace(vcd, r.clk_cnt, "top/r_clk_cnt");

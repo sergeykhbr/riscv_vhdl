@@ -30,7 +30,7 @@ InstrExecute::InstrExecute(sc_module_name name_, sc_trace_file *vcd)
     sensitive << i_rdata1;
     sensitive << i_rdata2;
     sensitive << i_csr_rdata;
-    sensitive << r.valid;
+    sensitive << r.d_valid;
     sensitive << r.npc;
     sensitive << r.hazard_depth;
     sensitive << r.hazard_addr[0];
@@ -123,7 +123,9 @@ void InstrExecute::comb() {
     sc_uint<RISCV_ARCH> wb_off;
     sc_uint<RISCV_ARCH> wb_mask_i31;    // Bits depending instr[31] bits
     sc_uint<RISCV_ARCH> wb_sum64;
+    sc_uint<RISCV_ARCH> wb_sum32;
     sc_uint<RISCV_ARCH> wb_sub64;
+    sc_uint<RISCV_ARCH> wb_sub32;
     sc_uint<RISCV_ARCH> wb_and64;
     sc_uint<RISCV_ARCH> wb_or64;
     sc_uint<RISCV_ARCH> wb_xor64;
@@ -224,7 +226,15 @@ void InstrExecute::comb() {
 
     // parallel ALU:
     wb_sum64 = wb_rdata1 + wb_rdata2;
+    wb_sum32(31, 0) = wb_rdata1(31, 0) + wb_rdata2(31, 0);
+    if (wb_sum32[31]) {
+        wb_sum32(63, 32) = ~0;
+    }
     wb_sub64 = wb_rdata1 - wb_rdata2;
+    wb_sub32(31, 0) = wb_rdata1(31, 0) - wb_rdata2(31, 0);
+    if (wb_sub32[31]) {
+        wb_sub32(63, 32) = ~0;
+    }
     wb_and64 = wb_rdata1 & wb_rdata2;
     wb_or64 = wb_rdata1 | wb_rdata2;
     wb_xor64 = wb_rdata1 ^ wb_rdata2;
@@ -251,6 +261,7 @@ void InstrExecute::comb() {
     } else if (wv[Instr_JALR].to_bool()) {
         wb_res = i_d_pc.read() + 4;
         wb_npc = wb_rdata1 + wb_rdata2;
+        wb_npc[0] = 0;
     } else if (wv[Instr_MRET].to_bool()) {
         wb_res = i_d_pc.read() + 4;
         w_csr_wena = 0;
@@ -259,7 +270,6 @@ void InstrExecute::comb() {
     } else {
         wb_npc = i_d_pc.read() + 4;
     }
-
 
     v.memop_addr = 0;
     v.memop_load = 0;
@@ -294,10 +304,11 @@ void InstrExecute::comb() {
     } else if (wv[Instr_ADD] || wv[Instr_ADDI] || wv[Instr_AUIPC]) {
         wb_res = wb_sum64;
     } else if (wv[Instr_ADDW] || wv[Instr_ADDIW]) {
-        wb_res(31, 0) = wb_sum64(31, 0);
-        if (wb_sum64[31]) {
-            wb_res(63, 32) = ~0;
-        }
+        wb_res = wb_sum32;
+    } else if (wv[Instr_SUB]) {
+        wb_res = wb_sub64;
+    } else if (wv[Instr_SUBW]) {
+        wb_res = wb_sub32;
     } else if (wv[Instr_SLL] || wv[Instr_SLLI]) {
         wb_res = wb_sll64;
     } else if (wv[Instr_SLLW] || wv[Instr_SLLIW]) {
@@ -370,11 +381,25 @@ void InstrExecute::comb() {
     }
 
 
-    bool w_cur_valid = !i_cache_hold.read() && i_d_valid.read() 
-                        && i_d_pc.read() == r.npc.read();
+    w_trap = !i_cache_hold.read() && i_d_valid.read()
+            && (r.trap_code_waiting != 0) && !r.multiclock_instr.read();
+
+    if (i_ext_irq & i_ie) {                     // Maskable traps (interrupts)
+        v.trap_code_waiting[4] = 1;
+        v.trap_code_waiting(3, 0) = 11;
+    } else if (i_unsup_exception.read()) {      // Unmaskable traps (exceptions)
+        v.trap_code_waiting[4] = 1;
+        v.trap_code_waiting(3, 0) = EXCEPTION_InstrIllegal;
+    } else if (w_trap) {
+        v.trap_code_waiting = 0;
+    }
+
+    bool w_d_valid = !i_cache_hold.read() && i_d_valid.read()
+                        && i_d_pc.read() == r.npc.read()
+                        && !w_trap;
 
     v.postponed_valid = 0;
-    if (w_cur_valid && wb_multiclock_cnt != 0) {
+    if (w_d_valid && wb_multiclock_cnt != 0) {
         v.multiclock_cnt = wb_multiclock_cnt;
         v.multiclock_instr = 1;
     } else if (r.multiclock_cnt.read() != 0) {
@@ -386,27 +411,29 @@ void InstrExecute::comb() {
         }
     }
 
-
-    bool w_valid = 0;
-    if (w_cur_valid) {
-        w_valid = 1;
+    v.trap_ena = 0;
+    if (w_trap) {
+        v.trap_ena = 1;
+        v.trap_pc = i_d_pc;
+        v.trap_code = r.trap_code_waiting;
+        v.npc = i_mtvec;
+    } else if (w_d_valid) {
         v.pc = i_d_pc;
         v.instr = i_d_instr;
         v.npc = wb_npc;
         v.res_addr = wb_res_addr;
         v.res_val = wb_res;
-    }
 
-    v.valid = w_valid;
-    if (w_valid) {
         v.hazard_addr[1] = r.hazard_addr[0];
         v.hazard_addr[0] = wb_res_addr;
     }
 
-    if (w_valid && !i_wb_done.read()) {
+    v.d_valid = w_d_valid;
+
+    if (w_d_valid && !i_wb_done.read()) {
         v.hazard_depth = r.hazard_depth.read() + 1;
         v.hazard_addr[0] = wb_res_addr;
-    } else if (!w_valid && i_wb_done.read()) {
+    } else if (!w_d_valid && i_wb_done.read()) {
         v.hazard_depth = r.hazard_depth.read() - 1;
     }
     bool w_hazard_lvl1 = (wb_radr1 != 0 && (wb_radr1 == r.hazard_addr[0]))
@@ -423,7 +450,7 @@ void InstrExecute::comb() {
     }
 
     if (!i_nrst.read()) {
-        v.valid = false;
+        v.d_valid = false;
         v.pc = 0;
         v.npc = RESET_VECTOR;
         v.instr = 0;
@@ -447,6 +474,11 @@ void InstrExecute::comb() {
         v.multi_type = 0;
         v.multi_a1 = 0;
         v.multi_a2 = 0;
+
+        v.trap_code_waiting = 0;
+        v.trap_ena = 0;
+        v.trap_code = 0;
+        v.trap_pc = 0;
     }
 
     o_radr1 = wb_radr1;
@@ -458,6 +490,9 @@ void InstrExecute::comb() {
     o_csr_wena = w_csr_wena;
     o_csr_addr = wb_csr_addr;
     o_csr_wdata = wb_csr_wdata;
+    o_trap_ena = r.trap_ena;
+    o_trap_code = r.trap_code;
+    o_trap_pc = r.trap_pc;
 
     o_memop_sign_ext = r.memop_sign_ext;
     o_memop_load = r.memop_load;
@@ -465,7 +500,7 @@ void InstrExecute::comb() {
     o_memop_size = r.memop_size;
     o_memop_addr = r.memop_addr;
 
-    o_valid = (r.valid.read() & !r.multiclock_instr) | r.postponed_valid;
+    o_valid = (r.d_valid.read() & !r.multiclock_instr) | r.postponed_valid;
     o_pc = r.pc;
     o_npc = r.npc;
     o_instr = r.instr;

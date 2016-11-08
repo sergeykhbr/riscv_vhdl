@@ -48,6 +48,10 @@ SC_MODULE(InstrExecute) {
     sc_out<bool> o_csr_wena;                    // Write new CSR value
     sc_in<sc_uint<RISCV_ARCH>> i_csr_rdata;     // CSR current value
     sc_out<sc_uint<RISCV_ARCH>> o_csr_wdata;    // CSR new value
+    sc_out<bool> o_trap_ena;                    // Trap occurs  pulse
+    sc_out<sc_uint<5>> o_trap_code;             // bit[4] : 1=interrupt; 0=exception; bits[3:0]=code
+    sc_out<sc_uint<AXI_ADDR_WIDTH>> o_trap_pc;  // trap on pc
+
 
     sc_out<bool> o_memop_sign_ext;              // Load data with sign extending
     sc_out<bool> o_memop_load;                  // Load data instruction
@@ -77,7 +81,7 @@ private:
     };
 
     struct RegistersType {
-        sc_signal<bool> valid;
+        sc_signal<bool> d_valid;                        // Valid decoded instruction latch
         sc_signal<sc_uint<AXI_ADDR_WIDTH>> pc;
         sc_signal<sc_uint<AXI_ADDR_WIDTH>> npc;
         sc_signal<sc_uint<32>> instr;
@@ -102,9 +106,16 @@ private:
         sc_signal<sc_uint<7>> multiclock_cnt;           // up to 127 clocks per one instruction (maybe changed)
         sc_signal<sc_uint<5>> hazard_addr[2];
         sc_signal<sc_uint<2>> hazard_depth;
+
+        sc_signal<bool> trap_ena;                       // Trap occur, switch mode
+        sc_uint<5> trap_code_waiting;                   // To avoid multi-cycle collision
+        sc_signal<sc_uint<5>> trap_code;                // bit[4] : 1 = interrupt; 0 = exception
+                                                        // bit[3:0] : trap code
+        sc_signal<sc_uint<AXI_ADDR_WIDTH>> trap_pc;     // trap on pc
     } v, r;
     sc_signal<bool> w_hazard_detected;
     sc_signal<sc_uint<RISCV_ARCH>> wb_arith_res[Multi_Total];
+    sc_signal<bool> w_trap;
 
     IntMul *mul0;
 

@@ -99,6 +99,9 @@ private:
         sc_signal<sc_uint<RISCV_ARCH>> rdata2;
         sc_signal<sc_uint<5>> res_addr;
         sc_signal<sc_uint<RISCV_ARCH>> res_data;
+        sc_signal<bool> trap_ena;                    // Trap pulse
+        sc_signal<sc_uint<5>> trap_code;             // bit[4] : 1=interrupt; 0=exception; bits[3:0]=code
+        sc_signal<sc_uint<AXI_ADDR_WIDTH>> trap_pc;  // trap on pc
 
         sc_signal<bool> memop_sign_ext;
         sc_signal<bool> memop_load;
@@ -129,7 +132,7 @@ private:
         sc_signal<sc_uint<RISCV_ARCH>> wdata;
 
         sc_signal<bool> ie;                     // Interrupt enable bit
-        sc_signal<sc_uint<AXI_ADDR_WIDTH>> mvec;// Interrupt descriptor table
+        sc_signal<sc_uint<AXI_ADDR_WIDTH>> mtvec;// Interrupt descriptor table
         sc_signal<sc_uint<2>> mode;             // Current processor mode
     } csr;
 
