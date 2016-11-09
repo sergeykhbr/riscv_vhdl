@@ -31,6 +31,7 @@ RtlWrapper::RtlWrapper(sc_module_name name)
     w_nrst = 0;
     v.nrst = 0;
     v.interrupt = false;
+    w_interrupt = 0;
     v.resp_mem_data = 0;
     v.resp_mem_data_valid = false;
 }
@@ -51,6 +52,12 @@ void RtlWrapper::comb() {
 
 void RtlWrapper::registers() {
     v.nrst = (r.nrst.read() << 1) | w_nrst;
+
+    v.interrupt = w_interrupt;;
+    /*if (i_timer.read() >= 15000 && i_timer.read() < 15010) {
+        v.interrupt = 1;
+    }*/
+
 
     r = v;
 }
@@ -125,7 +132,7 @@ void RtlWrapper::raiseSignal(int idx) {
         w_nrst = 1;
         break;
     case CPU_SIGNAL_EXT_IRQ:
-        v.interrupt = true;
+        w_interrupt = true;
         break;
     default:;
     }
@@ -137,7 +144,7 @@ void RtlWrapper::lowerSignal(int idx) {
         w_nrst = 0;
         break;
     case CPU_SIGNAL_EXT_IRQ:
-        v.interrupt = false;
+        w_interrupt = false;
         break;
     default:;
     }

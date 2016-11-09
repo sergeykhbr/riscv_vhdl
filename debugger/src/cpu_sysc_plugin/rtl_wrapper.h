@@ -40,6 +40,7 @@ SC_MODULE(RtlWrapper) {
         sc_signal<bool> interrupt;
     } r, v;
     bool w_nrst;
+    bool w_interrupt;
 
     void clk_gen();
     void comb();

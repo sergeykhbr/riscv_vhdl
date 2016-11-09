@@ -14,15 +14,24 @@ CsrRegs::CsrRegs(sc_module_name name_, sc_trace_file *vcd)
     : sc_module(name_) {
     SC_METHOD(comb);
     sensitive << i_nrst;
+    sensitive << i_xret;
     sensitive << i_addr;
     sensitive << i_wena;
     sensitive << i_wdata;
     sensitive << r.mode;
+    sensitive << i_trap_ena;
+    sensitive << i_trap_code;
+    sensitive << i_trap_pc;
+
 
     SC_METHOD(registers);
     sensitive << i_clk.pos();
 
     if (vcd) {
+        sc_trace(vcd, i_xret, "/top/proc0/csr0/i_xret");
+        sc_trace(vcd, o_mode, "/top/proc0/csr0/o_mode");
+        sc_trace(vcd, o_ie, "/top/proc0/csr0/o_ie");
+        sc_trace(vcd, o_rdata, "/top/proc0/csr0/o_rdata");
     }
 };
 
@@ -47,10 +56,12 @@ void CsrRegs::comb() {
         break;
     case CSR_mstatus:// - Machine mode status register
         wb_rdata = 0;
+        wb_rdata[0] = r.uie;
         wb_rdata[3] = r.mie;
         wb_rdata[7] = r.mpie;
         wb_rdata(12, 11) = r.mpp;
         if (i_wena.read()) {
+            v.uie = i_wdata.read()[0];
             v.mie = i_wdata.read()[3];
             v.mpie = i_wdata.read()[7];
             v.mpp = i_wdata.read()(12, 11);
@@ -78,6 +89,13 @@ void CsrRegs::comb() {
         break;
     case CSR_mepc:// - Machine program counter
         wb_rdata = r.mepc;
+        if (i_xret.read()) {
+            // Switch to previous mode
+            v.mie = r.mpie;
+            v.mpie = 1;
+            v.mode = r.mpp;
+            v.mpp = PRV_U;
+        }
         if (i_wena.read()) {
             v.mepc = i_wdata;
         }
@@ -95,6 +113,23 @@ void CsrRegs::comb() {
     default:;
     }
 
+    if (i_trap_ena.read()) {
+        v.mie = 0;
+        v.mpp = r.mode;
+        v.mepc = i_trap_pc.read();
+        v.trap_code = i_trap_code.read()(3, 0);
+        v.trap_irq = i_trap_code.read()[4];
+        switch (r.mode.read()) {
+        case PRV_U:
+            v.mpie = r.uie;
+            break;
+        case PRV_M:
+            v.mpie = r.mie;
+            break;
+        default:;
+        }
+    }
+
     bool w_ie = (r.mode.read() != PRV_M) || r.mie.read();
 
     if (!i_nrst.read()) {
@@ -102,12 +137,12 @@ void CsrRegs::comb() {
         v.mscratch = 0;
         v.mbadaddr = 0;
         v.mode = PRV_M;
+        v.uie = 0;
         v.mie = 0;
         v.mpie = 0;
         v.mpp = 0;
         v.mepc = 0;
         v.trap_code = 0;
-        v.trap_exception = 0;
         v.trap_irq = 0;
     }
 

@@ -102,6 +102,10 @@ private:
         sc_signal<bool> trap_ena;                    // Trap pulse
         sc_signal<sc_uint<5>> trap_code;             // bit[4] : 1=interrupt; 0=exception; bits[3:0]=code
         sc_signal<sc_uint<AXI_ADDR_WIDTH>> trap_pc;  // trap on pc
+        sc_signal<bool> xret;
+        sc_signal<sc_uint<12>> csr_addr;
+        sc_signal<bool> csr_wena;
+        sc_signal<sc_uint<RISCV_ARCH>> csr_wdata;
 
         sc_signal<bool> memop_sign_ext;
         sc_signal<bool> memop_load;
@@ -126,10 +130,7 @@ private:
     };
 
     struct CsrType {
-        sc_signal<sc_uint<12>> addr;
-        sc_signal<bool> wena;
         sc_signal<sc_uint<RISCV_ARCH>> rdata;
-        sc_signal<sc_uint<RISCV_ARCH>> wdata;
 
         sc_signal<bool> ie;                     // Interrupt enable bit
         sc_signal<sc_uint<AXI_ADDR_WIDTH>> mtvec;// Interrupt descriptor table

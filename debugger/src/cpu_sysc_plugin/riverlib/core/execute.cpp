@@ -70,6 +70,7 @@ InstrExecute::InstrExecute(sc_module_name name_, sc_trace_file *vcd)
     div0->o_res(wb_arith_res[Multi_DIV]);
 
     if (vcd) {
+        sc_trace(vcd, i_ext_irq, "/top/proc0/exec0/i_ext_irq");
         sc_trace(vcd, i_cache_hold, "/top/proc0/exec0/i_cache_hold");
         sc_trace(vcd, i_d_valid, "/top/proc0/exec0/i_d_valid");
         sc_trace(vcd, i_d_pc, "/top/proc0/exec0/i_d_pc");
@@ -91,7 +92,7 @@ InstrExecute::InstrExecute(sc_module_name name_, sc_trace_file *vcd)
         sc_trace(vcd, o_csr_addr, "/top/proc0/exec0/o_csr_addr");
         sc_trace(vcd, o_csr_wena, "/top/proc0/exec0/o_csr_wena");
         sc_trace(vcd, i_csr_rdata, "/top/proc0/exec0/i_csr_rdata");
-        sc_trace(vcd, o_csr_wdata, "/top/proc0/exec0/o_csr_wena");
+        sc_trace(vcd, o_csr_wdata, "/top/proc0/exec0/o_csr_wdata");
         sc_trace(vcd, o_pipeline_hold, "/top/proc0/exec0/o_pipeline_hold");
 
         sc_trace(vcd, w_hazard_detected, "/top/proc0/exec0/w_hazard_detected");
@@ -101,6 +102,12 @@ InstrExecute::InstrExecute(sc_module_name name_, sc_trace_file *vcd)
         sc_trace(vcd, r.multiclock_cnt, "/top/proc0/exec0/r_multiclock_cnt");
         sc_trace(vcd, r.multi_ena[Multi_DIV], "/top/proc0/exec0/r_multi_ena(1)");
         sc_trace(vcd, wb_arith_res[Multi_DIV], "/top/proc0/exec0/wb_arith_res(1)");
+
+        sc_trace(vcd, w_trap, "/top/proc0/exec0/w_trap");
+        sc_trace(vcd, r.trap_ena, "/top/proc0/exec0/r_trap_ena");
+        sc_trace(vcd, r.trap_pc, "/top/proc0/exec0/r_trap_pc");
+        sc_trace(vcd, r.trap_code, "/top/proc0/exec0/r_trap_code");
+        sc_trace(vcd, r.trap_code_waiting, "/top/proc0/exec0/r_trap_code_waiting");
     }
 };
 
@@ -114,6 +121,7 @@ void InstrExecute::comb() {
     sc_uint<RISCV_ARCH> wb_rdata1;
     sc_uint<5> wb_radr2;
     sc_uint<RISCV_ARCH> wb_rdata2;
+    bool w_xret = 0;
     bool w_csr_wena = 0;
     sc_uint<5> wb_res_addr = 0;
     sc_uint<12> wb_csr_addr = 0;
@@ -264,6 +272,7 @@ void InstrExecute::comb() {
         wb_npc[0] = 0;
     } else if (wv[Instr_MRET].to_bool()) {
         wb_res = i_d_pc.read() + 4;
+        w_xret = 1;
         w_csr_wena = 0;
         wb_csr_addr = CSR_mepc;
         wb_npc = i_csr_rdata;
@@ -380,11 +389,12 @@ void InstrExecute::comb() {
         wb_csr_wdata = wb_radr1;  // extending to 64-bits
     }
 
+    v.ext_irq_pulser = i_ext_irq & i_ie;
+    w_trap = !i_cache_hold & i_d_valid
+            & (i_d_pc.read() == r.npc.read())
+            & r.trap_code_waiting  & !r.multiclock_instr;
 
-    w_trap = !i_cache_hold.read() && i_d_valid.read()
-            && (r.trap_code_waiting != 0) && !r.multiclock_instr.read();
-
-    if (i_ext_irq & i_ie) {                     // Maskable traps (interrupts)
+    if (i_ext_irq & i_ie & !r.ext_irq_pulser) { // Maskable traps (interrupts)
         v.trap_code_waiting[4] = 1;
         v.trap_code_waiting(3, 0) = 11;
     } else if (i_unsup_exception.read()) {      // Unmaskable traps (exceptions)
@@ -396,7 +406,7 @@ void InstrExecute::comb() {
 
     bool w_d_valid = !i_cache_hold.read() && i_d_valid.read()
                         && i_d_pc.read() == r.npc.read()
-                        && !w_trap;
+                        && !w_trap.read();
 
     v.postponed_valid = 0;
     if (w_d_valid && wb_multiclock_cnt != 0) {
@@ -475,6 +485,7 @@ void InstrExecute::comb() {
         v.multi_a1 = 0;
         v.multi_a2 = 0;
 
+        v.ext_irq_pulser = 0;
         v.trap_code_waiting = 0;
         v.trap_ena = 0;
         v.trap_code = 0;
@@ -487,6 +498,7 @@ void InstrExecute::comb() {
     o_res_data = r.res_val;
     o_pipeline_hold = w_hazard_detected | r.multiclock_instr;
 
+    o_xret = w_xret;
     o_csr_wena = w_csr_wena;
     o_csr_addr = wb_csr_addr;
     o_csr_wdata = wb_csr_wdata;

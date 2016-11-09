@@ -95,10 +95,11 @@ Processor::Processor(sc_module_name name_, sc_trace_file *vcd)
     exec0->o_res_addr(w.e.res_addr);
     exec0->o_res_data(w.e.res_data);
     exec0->o_pipeline_hold(w.e.pipeline_hold);
-    exec0->o_csr_addr(csr.addr);
-    exec0->o_csr_wena(csr.wena);
+    exec0->o_xret(w.e.xret);
+    exec0->o_csr_addr(w.e.csr_addr);
+    exec0->o_csr_wena(w.e.csr_wena);
     exec0->i_csr_rdata(csr.rdata);
-    exec0->o_csr_wdata(csr.wdata);
+    exec0->o_csr_wdata(w.e.csr_wdata);
     exec0->o_trap_ena(w.e.trap_ena);
     exec0->o_trap_code(w.e.trap_code);
     exec0->o_trap_pc(w.e.trap_pc);
@@ -168,9 +169,10 @@ Processor::Processor(sc_module_name name_, sc_trace_file *vcd)
     csr0 = new CsrRegs("csr0", vcd);
     csr0->i_clk(i_clk);
     csr0->i_nrst(i_nrst);
-    csr0->i_addr(csr.addr);
-    csr0->i_wena(csr.wena);
-    csr0->i_wdata(csr.wdata);
+    csr0->i_xret(w.e.xret);
+    csr0->i_addr(w.e.csr_addr);
+    csr0->i_wena(w.e.csr_wena);
+    csr0->i_wdata(w.e.csr_wdata);
     csr0->o_rdata(csr.rdata);
     csr0->i_trap_ena(w.e.trap_ena);
     csr0->i_trap_code(w.e.trap_code);

@@ -44,7 +44,8 @@ SC_MODULE(InstrExecute) {
     sc_out<sc_uint<5>> o_res_addr;              // Address to store result of the instruction (0=do not store)
     sc_out<sc_uint<RISCV_ARCH>> o_res_data;     // Value to store
     sc_out<bool> o_pipeline_hold;               // Hold pipeline while 'writeback' not done or multi-clock instruction.
-    sc_out<sc_uint<12>> o_csr_addr;             // CSR address. 0 if not a CSR instruction
+    sc_out<bool> o_xret;                        // XRET instruction: MRET, URET or other.
+    sc_out<sc_uint<12>> o_csr_addr;             // CSR address. 0 if not a CSR instruction with xret signals mode switching
     sc_out<bool> o_csr_wena;                    // Write new CSR value
     sc_in<sc_uint<RISCV_ARCH>> i_csr_rdata;     // CSR current value
     sc_out<sc_uint<RISCV_ARCH>> o_csr_wdata;    // CSR new value
@@ -107,6 +108,7 @@ private:
         sc_signal<sc_uint<5>> hazard_addr[2];
         sc_signal<sc_uint<2>> hazard_depth;
 
+        sc_signal<bool> ext_irq_pulser;                 // Form 1 clock pulse from strob
         sc_signal<bool> trap_ena;                       // Trap occur, switch mode
         sc_uint<5> trap_code_waiting;                   // To avoid multi-cycle collision
         sc_signal<sc_uint<5>> trap_code;                // bit[4] : 1 = interrupt; 0 = exception

@@ -16,7 +16,8 @@ namespace debugger {
 SC_MODULE(CsrRegs) {
     sc_in<bool> i_clk;                      // Clock signal
     sc_in<bool> i_nrst;                     // Reset (active low)
-    sc_in<sc_uint<12>> i_addr;              // CSR address
+    sc_in<bool> i_xret;                     // XRet instruction signals mode switching
+    sc_in<sc_uint<12>> i_addr;              // CSR address, if xret=1 switch mode accordingly
     sc_in<bool> i_wena;                     // Write enable
     sc_in<sc_uint<RISCV_ARCH>> i_wdata;     // CSR writing value
     sc_out<sc_uint<RISCV_ARCH>> o_rdata;    // CSR read value
@@ -41,13 +42,13 @@ private:
         sc_signal<sc_uint<RISCV_ARCH>> mscratch;
         sc_signal<sc_uint<AXI_ADDR_WIDTH>> mbadaddr;
         sc_signal<sc_uint<2>> mode;
+        sc_signal<bool> uie;                    // User level interrupts ena for current priv. mode
         sc_signal<bool> mie;                    // Machine level interrupts ena for current priv. mode
         sc_signal<bool> mpie;                   // Previous MIE value
         sc_signal<sc_uint<2>> mpp;              // Previous mode
         sc_signal<sc_uint<RISCV_ARCH>> mepc;
 
         sc_signal<bool> trap_irq;
-        sc_signal<bool> trap_exception;
         sc_signal<sc_uint<4>> trap_code;
     } v, r;
 };
