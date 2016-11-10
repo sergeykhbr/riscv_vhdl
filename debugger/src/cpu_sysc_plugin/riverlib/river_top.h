@@ -30,6 +30,7 @@ SC_MODULE(RiverTop) {
     sc_in<sc_uint<AXI_DATA_WIDTH>> i_resp_mem_data;     // Read data
     /** Interrupt line from external interrupts controller (PLIC). */
     sc_in<bool> i_ext_irq;
+    sc_out<sc_uint<64>> o_step_cnt;                     // Number of valid executed instructions
 
 
     void comb();

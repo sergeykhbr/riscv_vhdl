@@ -7,6 +7,10 @@
 
 #include "api_core.h"
 #include "rtl_wrapper.h"
+#if 1
+#include "iservice.h"
+#include "coreservices/iserial.h"
+#endif
 
 namespace debugger {
 
@@ -54,10 +58,6 @@ void RtlWrapper::registers() {
     v.nrst = (r.nrst.read() << 1) | w_nrst;
 
     v.interrupt = w_interrupt;;
-    /*if (i_timer.read() >= 15000 && i_timer.read() < 15010) {
-        v.interrupt = 1;
-    }*/
-
 
     r = v;
 }
@@ -65,12 +65,35 @@ void RtlWrapper::registers() {
 void RtlWrapper::clk_negedge_proc() {
     /** Simulation events queue */
     IFace *cb;
-    queue_.initProc();
-    queue_.pushPreQueued();
-    uint64_t step_cnt = i_timer.read();
-    while (cb = queue_.getNext(step_cnt)) {
+
+    // Clock queue
+    clock_queue_.initProc();
+    clock_queue_.pushPreQueued();
+    uint64_t clk_cnt = i_timer.read();
+    while (cb = clock_queue_.getNext(clk_cnt)) {
+        static_cast<IClockListener *>(cb)->stepCallback(clk_cnt);
+    }
+
+    // Stepping queue (common for debug purposes)
+    step_queue_.initProc();
+    step_queue_.pushPreQueued();
+    uint64_t step_cnt = i_step_cnt.read();
+    while (cb = step_queue_.getNext(step_cnt)) {
         static_cast<IClockListener *>(cb)->stepCallback(step_cnt);
     }
+
+#if 1
+    if (step_cnt == (6000 - 3) && step_cnt != step_cnt_z) {
+        IService *uart = static_cast<IService *>(RISCV_get_service("uart0"));
+        if (uart) {
+            ISerial *iserial = static_cast<ISerial *>(
+                        uart->getInterface(IFACE_SERIAL));
+            //iserial->writeData("pnp\r\n", 5);
+            iserial->writeData("dhry\r\n", 6);
+        }
+    }
+    step_cnt_z = i_step_cnt.read();
+#endif
 
     /** */
     v.resp_mem_data = 0;
@@ -123,7 +146,11 @@ void RtlWrapper::setClockHz(double hz) {
 }
     
 void RtlWrapper::registerStepCallback(IClockListener *cb, uint64_t t) {
-    queue_.put(t, cb);
+    step_queue_.put(t, cb);
+}
+
+void RtlWrapper::registerClockCallback(IClockListener *cb, uint64_t t) {
+    clock_queue_.put(t, cb);
 }
 
 void RtlWrapper::raiseSignal(int idx) {

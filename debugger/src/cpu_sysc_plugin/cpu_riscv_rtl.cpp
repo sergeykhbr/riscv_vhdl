@@ -34,6 +34,7 @@ CpuRiscV_RTL::CpuRiscV_RTL(const char *name)
     w_clk = wrapper_->o_clk;
     wrapper_->o_nrst(w_nrst);
     wrapper_->i_timer(wb_timer);
+    wrapper_->i_step_cnt(wb_step_cnt);
     wrapper_->i_req_mem_valid(w_req_mem_valid);
     wrapper_->i_req_mem_write(w_req_mem_write);
     wrapper_->i_req_mem_addr(wb_req_mem_addr);
@@ -55,6 +56,7 @@ CpuRiscV_RTL::CpuRiscV_RTL(const char *name)
     top_->i_resp_mem_data_valid(w_resp_mem_data_valid);
     top_->i_resp_mem_data(wb_resp_mem_data);
     top_->i_ext_irq(w_interrupt);
+    top_->o_step_cnt(wb_step_cnt);
 
     //sc_trace(vcd_, w_req_mem_valid, "w_req_mem_valid");
     //sc_trace(vcd_, wb_req_mem_addr, "wb_req_mem_addr");

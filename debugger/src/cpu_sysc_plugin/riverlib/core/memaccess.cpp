@@ -28,6 +28,7 @@ MemAccess::MemAccess(sc_module_name name_, sc_trace_file *vcd)
     sensitive << i_mem_data;
     sensitive << r.valid;
     sensitive << r.wdata;
+    sensitive << r.wait_resp;
 
     SC_METHOD(registers);
     sensitive << i_clk.pos();
@@ -125,6 +126,10 @@ void MemAccess::comb() {
 
     bool w_valid = r.valid.read() || i_mem_data_valid.read();
 
+    if (w_valid) {
+        v.step_cnt = r.step_cnt + 1;
+    }
+
     if (!i_nrst.read()) {
         v.valid = false;
         v.pc = 0;
@@ -135,6 +140,7 @@ void MemAccess::comb() {
         v.wait_resp = 0;
         v.size = 0;
         v.sign_ext = 0;
+        v.step_cnt = 0;
     }
 
     o_mem_valid = w_mem_valid;
@@ -149,6 +155,7 @@ void MemAccess::comb() {
     o_valid = w_valid;
     o_pc = r.pc;
     o_instr = r.instr;
+    o_step_cnt = r.step_cnt;
 }
 
 void MemAccess::registers() {

@@ -65,9 +65,9 @@ void GPTimers::transaction(Axi4TransactionType *payload) {
             case 16 + 0:
                 regs_.timer[0].control = payload->wpayload[i];
                 if (regs_.timer[0].control & TIMER_CONTROL_ENA) {
-                    iclk_->registerStepCallback(
+                    iclk_->registerClockCallback(
                         static_cast<IClockListener *>(this), 
-                        iclk_->getStepCounter() + regs_.timer[0].init_value);
+                        iclk_->getClockCounter() + regs_.timer[0].init_value);
                 }
                 RISCV_info("Set [0].control = %08x", payload->wpayload[i]);
                 break;
@@ -100,11 +100,11 @@ void GPTimers::transaction(Axi4TransactionType *payload) {
         for (uint64_t i = 0; i < payload->xsize/4; i++) {
             switch (off + i) {
             case 0:
-                regs_.highcnt = iclk_->getStepCounter();
+                regs_.highcnt = iclk_->getClockCounter();
                 payload->rpayload[i] = (uint32_t)regs_.highcnt;
                 break;
             case 1:
-                regs_.highcnt = iclk_->getStepCounter();
+                regs_.highcnt = iclk_->getClockCounter();
                 payload->rpayload[i] = (uint32_t)(regs_.highcnt >> 32);
                 break;
             case 16 + 0:
@@ -121,7 +121,7 @@ void GPTimers::transaction(Axi4TransactionType *payload) {
 void GPTimers::stepCallback(uint64_t t) {
     iwire_->raiseLine(irqLine_.to_int());
     if (regs_.timer[0].control & TIMER_CONTROL_ENA) {
-        iclk_->registerStepCallback(static_cast<IClockListener *>(this),
+        iclk_->registerClockCallback(static_cast<IClockListener *>(this),
                                     t + regs_.timer[0].init_value);
     }
 }

@@ -89,9 +89,9 @@ Processor::Processor(sc_module_name name_, sc_trace_file *vcd)
     exec0->i_unsup_exception(w.d.exception);
     exec0->i_ext_irq(i_ext_irq);
     exec0->o_radr1(w.e.radr1);
-    exec0->i_rdata1(w.e.rdata1);
+    exec0->i_rdata1(ireg.rdata1);
     exec0->o_radr2(w.e.radr2);
-    exec0->i_rdata2(w.e.rdata2);
+    exec0->i_rdata2(ireg.rdata2);
     exec0->o_res_addr(w.e.res_addr);
     exec0->o_res_data(w.e.res_data);
     exec0->o_pipeline_hold(w.e.pipeline_hold);
@@ -140,6 +140,7 @@ Processor::Processor(sc_module_name name_, sc_trace_file *vcd)
     mem0->o_valid(w.m.valid);
     mem0->o_pc(w.m.pc);
     mem0->o_instr(w.m.instr);
+    mem0->o_step_cnt(w.m.step_cnt);
 
     predic0 = new BranchPredictor("predic0", vcd);
     predic0->i_clk(i_clk);
@@ -150,7 +151,7 @@ Processor::Processor(sc_module_name name_, sc_trace_file *vcd)
     predic0->i_f_instr_valid(w.f.valid);
     predic0->i_f_instr(w.f.instr);
     predic0->i_e_npc(w.e.npc);
-    predic0->i_ra(wb_ra);
+    predic0->i_ra(ireg.ra);
     predic0->o_npc_predict(wb_npc_predict);
 
 
@@ -158,13 +159,13 @@ Processor::Processor(sc_module_name name_, sc_trace_file *vcd)
     iregs0->i_clk(i_clk);
     iregs0->i_nrst(i_nrst);
     iregs0->i_radr1(w.e.radr1);
-    iregs0->o_rdata1(w.e.rdata1);
+    iregs0->o_rdata1(ireg.rdata1);
     iregs0->i_radr2(w.e.radr2);
-    iregs0->o_rdata2(w.e.rdata2);
+    iregs0->o_rdata2(ireg.rdata2);
     iregs0->i_waddr(w.w.waddr);
     iregs0->i_wena(w.w.wena);
     iregs0->i_wdata(w.w.wdata);
-    iregs0->o_ra(wb_ra);   // Return address
+    iregs0->o_ra(ireg.ra);   // Return address
 
     csr0 = new CsrRegs("csr0", vcd);
     csr0->i_clk(i_clk);
@@ -183,15 +184,12 @@ Processor::Processor(sc_module_name name_, sc_trace_file *vcd)
 
     if (vcd) {
         sc_trace(vcd, r.clk_cnt, "top/r_clk_cnt");
-#ifdef GENERATE_DEBUG_FILE
-        sc_trace(vcd, line_cnt, "top/line_cnt");
-#endif
+        sc_trace(vcd, w.m.step_cnt, "top/step_cnt");
     }
 
 #ifdef GENERATE_DEBUG_FILE
     reg_dbg = new ofstream("river_sysc_regs.log");
     mem_dbg = new ofstream("river_sysc_mem.log");
-    line_cnt = 0;
     mem_dbg_write_flag = false;
 #endif
 };
@@ -223,6 +221,7 @@ void Processor::comb() {
 
     o_req_ctrl_valid = w.f.imem_req_valid;
     o_req_ctrl_addr = w.f.imem_req_addr;
+    o_step_cnt = w.m.step_cnt;
 
     w_any_hold = i_cache_hold.read() || w.e.pipeline_hold.read();
 }
@@ -235,7 +234,7 @@ void Processor::registers() {
 void Processor::negedge_dbg_print() {
     int sz;
     if (w.m.valid.read()) {
-        line_cnt++;
+        uint64_t line_cnt = w.m.step_cnt.read() + 1;
         sz = sprintf(tstr, "%8I64d [%08x] %08x: ",
             line_cnt,
             w.m.pc.read().to_int(),

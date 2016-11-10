@@ -88,8 +88,8 @@ private:
         sc_signal<sc_uint<32>> instr;
         sc_uint<5> res_addr;
         sc_signal<sc_uint<RISCV_ARCH>> res_val;
-        bool memop_load;
-        bool memop_store;
+        sc_signal<bool> memop_load;
+        sc_signal<bool> memop_store;
         bool memop_sign_ext;
         sc_uint<2> memop_size;
         sc_signal<sc_uint<AXI_ADDR_WIDTH>> memop_addr;

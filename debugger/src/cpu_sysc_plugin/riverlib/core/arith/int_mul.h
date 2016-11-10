@@ -34,7 +34,7 @@ SC_MODULE(IntMul) {
 
 private:
     struct RegistersType {
-        sc_signal<bool> valid;
+        sc_signal<sc_uint<RISCV_ARCH>> result;
     } v, r;
 
 };

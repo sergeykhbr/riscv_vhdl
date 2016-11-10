@@ -23,7 +23,13 @@ public:
 
     virtual uint64_t getStepCounter() =0;
 
+    /** Executed instruction counter. One executed instruction = 1 step. */
     virtual void registerStepCallback(IClockListener *cb, uint64_t t) =0;
+
+    virtual uint64_t getClockCounter() =0;
+
+    /** For Functional models one clock always = one step. */
+    virtual void registerClockCallback(IClockListener *cb, uint64_t t) =0;
 };
 
 }  // namespace debugger

@@ -54,9 +54,20 @@ public:
     virtual void hitBreakpoint(uint64_t addr) {}
 
     /** IClock */
-    virtual uint64_t getStepCounter() { return 0; }
+    virtual uint64_t getStepCounter() {
+        return wb_step_cnt.read() + 2;
+    }
+
     virtual void registerStepCallback(IClockListener *cb, uint64_t t) {
         wrapper_->registerStepCallback(cb, t);
+    }
+
+    virtual uint64_t getClockCounter() {
+        return wb_timer.read();
+    }
+
+    virtual void registerClockCallback(IClockListener *cb, uint64_t t) {
+        wrapper_->registerClockCallback(cb, t);
     }
 
     /** IHap */
@@ -79,6 +90,7 @@ private:
     sc_signal<bool> w_nrst;
     // Timer:
     sc_signal<sc_uint<RISCV_ARCH>> wb_timer;
+    sc_signal<sc_uint<64>> wb_step_cnt;
     // Memory interface:
     sc_signal<bool> w_req_mem_valid;
     sc_signal<bool> w_req_mem_write;

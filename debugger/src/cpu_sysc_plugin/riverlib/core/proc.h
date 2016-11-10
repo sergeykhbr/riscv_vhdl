@@ -49,7 +49,7 @@ SC_MODULE(Processor) {
     sc_in<sc_uint<RISCV_ARCH>> i_resp_data_data;        // Read value
     // External interrupt pin
     sc_in<bool> i_ext_irq;                              // PLIC interrupt accordingly with spec
-
+    sc_out<sc_uint<64>> o_step_cnt;                     // Number of valid executed instructions
 
     void comb();
     void registers();
@@ -94,9 +94,7 @@ private:
         sc_signal<sc_uint<AXI_ADDR_WIDTH>> npc;
 
         sc_signal<sc_uint<5>> radr1;
-        sc_signal<sc_uint<RISCV_ARCH>> rdata1;
         sc_signal<sc_uint<5>> radr2;
-        sc_signal<sc_uint<RISCV_ARCH>> rdata2;
         sc_signal<sc_uint<5>> res_addr;
         sc_signal<sc_uint<RISCV_ARCH>> res_data;
         sc_signal<bool> trap_ena;                    // Trap pulse
@@ -120,6 +118,7 @@ private:
         sc_signal<bool> valid;
         sc_signal<sc_uint<32>> instr;
         sc_signal<sc_uint<AXI_ADDR_WIDTH>> pc;
+        sc_signal<sc_uint<64>> step_cnt;
     };
 
     struct WriteBackType {
@@ -128,6 +127,12 @@ private:
         sc_signal<sc_uint<5>> waddr;
         sc_signal<sc_uint<RISCV_ARCH>> wdata;
     };
+
+    struct IntRegsType {
+        sc_signal<sc_uint<RISCV_ARCH>> rdata1;
+        sc_signal<sc_uint<RISCV_ARCH>> rdata2;
+        sc_signal<sc_uint<RISCV_ARCH>> ra;      // Return address
+    } ireg;
 
     struct CsrType {
         sc_signal<sc_uint<RISCV_ARCH>> rdata;
@@ -151,7 +156,6 @@ private:
     } v, r;
 
     sc_signal<sc_uint<AXI_ADDR_WIDTH>> wb_npc_predict;
-    sc_signal<sc_uint<RISCV_ARCH>> wb_ra;       // Return address
     sc_signal<bool> w_any_hold;                 // Hold pipeline by any reason
 
 
@@ -166,7 +170,6 @@ private:
 
 #ifdef GENERATE_DEBUG_FILE
     char tstr[1024];
-    uint64_t line_cnt;
     ofstream *reg_dbg;
     ofstream *mem_dbg;
     bool mem_dbg_write_flag;

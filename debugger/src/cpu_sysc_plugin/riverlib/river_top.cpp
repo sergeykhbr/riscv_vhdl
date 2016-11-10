@@ -38,6 +38,7 @@ RiverTop::RiverTop(sc_module_name name_, sc_trace_file *vcd)
     proc0->i_resp_data_addr(wb_resp_data_addr);
     proc0->i_resp_data_data(wb_resp_data_data);
     proc0->i_ext_irq(i_ext_irq);
+    proc0->o_step_cnt(o_step_cnt);
 
     cache0 = new CacheTop("cache0", vcd);
     cache0->i_clk(i_clk);

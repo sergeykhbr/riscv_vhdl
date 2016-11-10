@@ -16,35 +16,35 @@ namespace debugger {
 SC_MODULE(MemAccess) {
     sc_in<bool> i_clk;
     sc_in<bool> i_nrst;
-    sc_in<bool> i_e_valid;
-    sc_in<sc_uint<AXI_ADDR_WIDTH>> i_e_pc;
-    sc_in<sc_uint<32>> i_e_instr;
+    sc_in<bool> i_e_valid;                          // Execution stage outputs are valid
+    sc_in<sc_uint<AXI_ADDR_WIDTH>> i_e_pc;          // Execution stage instruction pointer
+    sc_in<sc_uint<32>> i_e_instr;                   // Execution stage instruction value
 
-    sc_in<sc_uint<5>> i_res_addr;
-    sc_in<sc_uint<RISCV_ARCH>> i_res_data;
-    sc_in<bool> i_memop_sign_ext;                   // Load data with sign extending
-    sc_in<bool> i_memop_load;
-    sc_in<bool> i_memop_store;
-    sc_in<sc_uint<2>> i_memop_size;
+    sc_in<sc_uint<5>> i_res_addr;                   // Register address to be written (0=no writing)
+    sc_in<sc_uint<RISCV_ARCH>> i_res_data;          // Register value to be written
+    sc_in<bool> i_memop_sign_ext;                   // Load data with sign extending (if less than 8 Bytes)
+    sc_in<bool> i_memop_load;                       // Load data from memory and write to i_res_addr
+    sc_in<bool> i_memop_store;                      // Store i_res_data value into memory
+    sc_in<sc_uint<2>> i_memop_size;                 // Encoded memory transaction size in bytes: 0=1B; 1=2B; 2=4B; 3=8B
     sc_in<sc_uint<AXI_ADDR_WIDTH>> i_memop_addr;    // Memory access address
-    sc_out<bool> o_wena;
-    sc_out<sc_uint<5>> o_waddr;
-    sc_out<sc_uint<RISCV_ARCH>> o_wdata;
+    sc_out<bool> o_wena;                            // Write enable signal
+    sc_out<sc_uint<5>> o_waddr;                     // Output register address (0 = x0 = no write)
+    sc_out<sc_uint<RISCV_ARCH>> o_wdata;            // Register value
 
     // Memory interface:
-    sc_out<bool> o_mem_valid;
-    sc_out<bool> o_mem_write;
-    sc_out<sc_uint<2>> o_mem_sz;
-    sc_out<sc_uint<AXI_ADDR_WIDTH>> o_mem_addr;
-    sc_out<sc_uint<AXI_DATA_WIDTH>> o_mem_data;
-    sc_in<bool> i_mem_data_valid;
-    sc_in<sc_uint<AXI_ADDR_WIDTH>> i_mem_data_addr;
-    sc_in<sc_uint<AXI_DATA_WIDTH>> i_mem_data;
+    sc_out<bool> o_mem_valid;                       // Memory request is valid
+    sc_out<bool> o_mem_write;                       // Memory write request
+    sc_out<sc_uint<2>> o_mem_sz;                    // Encoded data size in bytes: 0=1B; 1=2B; 2=4B; 3=8B
+    sc_out<sc_uint<AXI_ADDR_WIDTH>> o_mem_addr;     // Data path requested address
+    sc_out<sc_uint<AXI_DATA_WIDTH>> o_mem_data;     // Data path requested data (write transaction)
+    sc_in<bool> i_mem_data_valid;                   // Data path memory response is valid
+    sc_in<sc_uint<AXI_ADDR_WIDTH>> i_mem_data_addr; // Data path memory response address
+    sc_in<sc_uint<AXI_DATA_WIDTH>> i_mem_data;      // Data path memory response value
 
-    sc_out<bool> o_valid;
-    sc_out<sc_uint<AXI_ADDR_WIDTH>> o_pc;
-    sc_out<sc_uint<32>> o_instr;
-
+    sc_out<bool> o_valid;                           // Output is valid
+    sc_out<sc_uint<AXI_ADDR_WIDTH>> o_pc;           // Valid instruction pointer
+    sc_out<sc_uint<32>> o_instr;                    // Valid instruction value
+    sc_out<sc_uint<64>> o_step_cnt;                // Number of valid executed instructions
 
     void comb();
     void registers();
@@ -65,6 +65,7 @@ private:
         sc_signal<bool> sign_ext;
         sc_signal<sc_uint<2>> size;
         sc_signal<sc_uint<RISCV_ARCH>> wdata;
+        sc_uint<64> step_cnt;
     } v, r;
 
     bool w_mem_valid;

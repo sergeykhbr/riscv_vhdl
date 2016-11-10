@@ -39,6 +39,8 @@ InstrExecute::InstrExecute(sc_module_name name_, sc_trace_file *vcd)
     sensitive << r.multiclock_instr;
     sensitive << r.postponed_valid;
     sensitive << r.res_val;
+    sensitive << r.memop_load;
+    sensitive << r.memop_store;
     sensitive << w_hazard_detected;
     sensitive << r.multi_ena[Multi_MUL];
     sensitive << r.multi_ena[Multi_DIV];
@@ -141,6 +143,12 @@ void InstrExecute::comb() {
     sc_uint<RISCV_ARCH> wb_srl64;
     sc_uint<RISCV_ARCH> wb_srl32;
     sc_uint<7> wb_multiclock_cnt;       // up to 127 clocks per one instruction (maybe insreased)
+    bool w_memop_load = 0;
+    bool w_memop_store = 0;
+    bool w_memop_sign_ext = 0;
+    sc_uint<2> wb_memop_size = 0;
+    sc_uint<AXI_ADDR_WIDTH> wb_memop_addr = 0;
+
 
     bool w_res_wena;
     bool w_pc_branch;
@@ -149,10 +157,6 @@ void InstrExecute::comb() {
 
     v = r;
 
-    v.memop_load = 0;
-    v.memop_store = 0;
-    v.memop_size = 0;
-    v.memop_addr = 0;
 #if 1
     int t_pc = i_d_pc.read();
     int t_instr = i_d_instr.read();
@@ -165,7 +169,7 @@ void InstrExecute::comb() {
             check_unqiue_cnt++;
         }
     }
-    if (i_d_pc.read() == 0x10001e94) {
+    if (i_d_pc.read() == 0x100012e0) {
         bool st = true;
     }
 #endif
@@ -256,9 +260,9 @@ void InstrExecute::comb() {
     // Relative Branch on some condition:
     w_pc_branch = (wv[Instr_BEQ] & (wb_sub64 == 0))
               || (wv[Instr_BGE] & (wb_sub64[63] == 0))
-              || (wv[Instr_BGEU] & (wb_sub64[63] == wb_rdata1[63]))
+              || (wv[Instr_BGEU] & (wb_rdata1 >= wb_rdata2))
               || (wv[Instr_BLT] & (wb_sub64[63] == 1))
-              || (wv[Instr_BLTU] & (wb_sub64[63] != wb_rdata1[63]))
+              || (wv[Instr_BLTU] & (wb_rdata1 < wb_rdata2))
               || (wv[Instr_BNE] & (wb_sub64 != 0));
 
     if (w_pc_branch) {
@@ -270,13 +274,18 @@ void InstrExecute::comb() {
         wb_res = i_d_pc.read() + 4;
         wb_npc = wb_rdata1 + wb_rdata2;
         wb_npc[0] = 0;
-    } else if (wv[Instr_MRET].to_bool()) {
+    } else if ((wv[Instr_MRET] | wv[Instr_URET]).to_bool()) {
         wb_res = i_d_pc.read() + 4;
         w_xret = 1;
         w_csr_wena = 0;
-        wb_csr_addr = CSR_mepc;
+        if (wv[Instr_URET].to_bool()) {
+            wb_csr_addr = CSR_uepc;
+        } else {
+            wb_csr_addr = CSR_mepc;
+        }
         wb_npc = i_csr_rdata;
     } else {
+        // Instr_HRET, Instr_SRET, Instr_FENCE, Instr_FENCE_I:
         wb_npc = i_d_pc.read() + 4;
     }
 
@@ -301,14 +310,14 @@ void InstrExecute::comb() {
 
     // ALU block selector:
     if (i_memop_load) {
-        v.memop_addr = wb_rdata1 + wb_rdata2;
-        v.memop_load = !w_hazard_detected.read();
-        v.memop_sign_ext = i_memop_sign_ext;
-        v.memop_size = i_memop_size;
+        wb_memop_addr = wb_rdata1 + wb_rdata2;
+        w_memop_load = !w_hazard_detected.read();
+        w_memop_sign_ext = i_memop_sign_ext;
+        wb_memop_size = i_memop_size;
     } else if (i_memop_store) {
-        v.memop_addr = wb_rdata1 + wb_off;
-        v.memop_store = !w_hazard_detected.read();
-        v.memop_size = i_memop_size;
+        wb_memop_addr = wb_rdata1 + wb_off;
+        w_memop_store = !w_hazard_detected.read();
+        wb_memop_size = i_memop_size;
         wb_res = wb_rdata2;
     } else if (wv[Instr_ADD] || wv[Instr_ADDI] || wv[Instr_AUIPC]) {
         wb_res = wb_sum64;
@@ -337,8 +346,10 @@ void InstrExecute::comb() {
         wb_res = wb_or64;
     } else if (wv[Instr_XOR] || wv[Instr_XORI]) {
         wb_res = wb_xor64;
+    } else if (wv[Instr_SLT] || wv[Instr_SLTI]) {
+        wb_res = wb_sub64[63];
     } else if (wv[Instr_SLTU] || wv[Instr_SLTIU]) {
-        wb_res = wb_sub64[63] ^ wb_rdata1[63];
+        wb_res = wb_rdata1 < wb_rdata2;
     } else if (wv[Instr_LUI]) {
         uint64_t x1 = wb_res = wb_rdata2;
         bool stop = true;
@@ -433,6 +444,11 @@ void InstrExecute::comb() {
         v.npc = wb_npc;
         v.res_addr = wb_res_addr;
         v.res_val = wb_res;
+        v.memop_load = w_memop_load;
+        v.memop_sign_ext = w_memop_sign_ext;
+        v.memop_store = w_memop_store;
+        v.memop_size = wb_memop_size;
+        v.memop_addr = wb_memop_addr;
 
         v.hazard_addr[1] = r.hazard_addr[0];
         v.hazard_addr[0] = wb_res_addr;
@@ -467,6 +483,7 @@ void InstrExecute::comb() {
         v.res_addr = 0;
         v.res_val = 0;
         v.memop_load = 0;
+        v.memop_sign_ext = 0;
         v.memop_store = 0;
         v.memop_size = 0;
         v.memop_addr = 0;

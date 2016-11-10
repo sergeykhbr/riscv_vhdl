@@ -18,6 +18,7 @@ IntMul::IntMul(sc_module_name name_, sc_trace_file *vcd)
     sensitive << i_rv32;
     sensitive << i_a1;
     sensitive << i_a2;
+    sensitive << r.result;
 
     SC_METHOD(registers);
     sensitive << i_clk.pos();
@@ -29,6 +30,34 @@ IntMul::IntMul(sc_module_name name_, sc_trace_file *vcd)
 
 void IntMul::comb() {
     v = r;
+
+    // todo: algorithm
+    uint64_t x1 = i_a1.read();
+    uint64_t x2 = i_a2.read();
+
+    if (i_ena.read()) {
+        if (i_a2.read() == 0) {
+            v.result = 0;
+        } else if (i_rv32.read()) {
+            if (i_unsigned.read()) {
+                v.result = (uint32_t)i_a1.read() * (uint32_t)i_a2.read();
+            } else {
+                v.result = (uint64_t)((int64_t)((int32_t)i_a1.read() * (int32_t)i_a2.read()));
+            }
+        } else {
+            if (i_unsigned.read()) {
+                v.result = i_a1.read() * i_a2.read();
+            } else {
+                v.result = (int64_t)i_a1.read() * (int64_t)i_a2.read();
+            }
+        }
+    }
+
+    if (i_nrst.read() == 0) {
+        v.result = 0;
+    }
+
+    o_res = r.result;
 }
 
 void IntMul::registers() {

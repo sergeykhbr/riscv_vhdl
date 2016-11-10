@@ -8,6 +8,9 @@
 #include "api_core.h"
 #include "cpu_riscv_func.h"
 #include "riscv-isa.h"
+#if 1
+#include "coreservices/iserial.h"
+#endif
 
 namespace debugger {
 
@@ -346,6 +349,18 @@ void CpuRiscV_Functional::executeInstruction(IInstruction *instr,
         (*pContext->reg_trace_file) << tstr;
         pContext->reg_trace_file->flush();
     }
+
+#if 1
+    if (pContext->step_cnt == 6000) {
+        IService *uart = static_cast<IService *>(RISCV_get_service("uart0"));
+        if (uart) {
+            ISerial *iserial = static_cast<ISerial *>(
+                        uart->getInterface(IFACE_SERIAL));
+            iserial->writeData("dhry\r\n", 6);
+        }
+    }
+#endif
+
 
 
     if (pContext->regs[0] != 0) {
