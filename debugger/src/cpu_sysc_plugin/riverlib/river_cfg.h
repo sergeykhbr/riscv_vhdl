@@ -12,7 +12,7 @@
 
 namespace debugger {
 
-#define GENERATE_VCD 1
+#define GENERATE_VCD 0
 
 static const int RISCV_ARCH     = 64;
 

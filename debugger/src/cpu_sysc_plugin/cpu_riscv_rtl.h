@@ -63,10 +63,12 @@ public:
     }
 
     virtual uint64_t getClockCounter() {
+        //return getStepCounter();
         return wb_timer.read();
     }
 
     virtual void registerClockCallback(IClockListener *cb, uint64_t t) {
+        //registerStepCallback(cb, t);
         wrapper_->registerClockCallback(cb, t);
     }
 

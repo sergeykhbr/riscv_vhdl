@@ -117,7 +117,11 @@ private:
     } v, r;
     sc_signal<bool> w_hazard_detected;
     sc_signal<sc_uint<RISCV_ARCH>> wb_arith_res[Multi_Total];
-    sc_signal<bool> w_trap;
+    bool w_interrupt;
+    bool w_exception;
+    bool w_exception_store;
+    bool w_exception_load;
+    sc_uint<5> wb_exception_code;
 
     IntMul *mul0;
 

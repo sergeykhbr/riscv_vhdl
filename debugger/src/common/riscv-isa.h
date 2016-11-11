@@ -290,7 +290,7 @@ static const uint16_t CSR_mip           = 0x344;
 /** Exceptions */
 
 // Instruction address misaligned
-enum {
+enum EExeption {
     EXCEPTION_InstrMisalign   = 0,
     // Instruction access fault
     EXCEPTION_InstrFault      = 1,
@@ -314,6 +314,11 @@ enum {
     EXCEPTION_CallFromHmode   = 10,
     // Environment call from M-mode
     EXCEPTION_CallFromMmode   = 11
+};
+
+enum EInterrupt {
+    // External interrupt from PLIC
+    INTERRUPT_PLIC = 11
 };
 
 /** Interrupts: */

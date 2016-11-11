@@ -215,12 +215,14 @@ void InstrDecoder::comb() {
             } else {
                 w_error = true;
             }
+            break;
         case 0x7:
             if (wb_instr(31, 25) == 0x01) {
                 wb_dec[Instr_REMUW] = 1;
             } else {
                 w_error = true;
             }
+            break;
         default:
             w_error = true;
         }

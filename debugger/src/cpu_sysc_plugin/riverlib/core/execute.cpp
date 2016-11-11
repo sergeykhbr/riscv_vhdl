@@ -105,7 +105,8 @@ InstrExecute::InstrExecute(sc_module_name name_, sc_trace_file *vcd)
         sc_trace(vcd, r.multi_ena[Multi_DIV], "/top/proc0/exec0/r_multi_ena(1)");
         sc_trace(vcd, wb_arith_res[Multi_DIV], "/top/proc0/exec0/wb_arith_res(1)");
 
-        sc_trace(vcd, w_trap, "/top/proc0/exec0/w_trap");
+        sc_trace(vcd, w_interrupt, "/top/proc0/exec0/w_interrupt");
+        sc_trace(vcd, w_exception, "/top/proc0/exec0/w_exception");
         sc_trace(vcd, r.trap_ena, "/top/proc0/exec0/r_trap_ena");
         sc_trace(vcd, r.trap_pc, "/top/proc0/exec0/r_trap_pc");
         sc_trace(vcd, r.trap_code, "/top/proc0/exec0/r_trap_code");
@@ -294,6 +295,8 @@ void InstrExecute::comb() {
     v.memop_store = 0;
     v.memop_sign_ext = 0;
     v.memop_size = 0;
+    w_exception_store = 0;
+    w_exception_load = 0;
 
     /** Default number of cycles per instruction = 0 (1 clock per instr)
      *  If instruction is multicycle then modify this value.
@@ -401,23 +404,34 @@ void InstrExecute::comb() {
     }
 
     v.ext_irq_pulser = i_ext_irq & i_ie;
-    w_trap = !i_cache_hold & i_d_valid
+    w_interrupt = !i_cache_hold & i_d_valid
             & (i_d_pc.read() == r.npc.read())
             & r.trap_code_waiting  & !r.multiclock_instr;
 
+    w_exception = !i_cache_hold & i_d_valid
+        & (i_d_pc.read() == r.npc.read())
+        & (i_unsup_exception.read() || w_exception_load || w_exception_store);
+
+    wb_exception_code = 0;
     if (i_ext_irq & i_ie & !r.ext_irq_pulser) { // Maskable traps (interrupts)
         v.trap_code_waiting[4] = 1;
-        v.trap_code_waiting(3, 0) = 11;
-    } else if (i_unsup_exception.read()) {      // Unmaskable traps (exceptions)
-        v.trap_code_waiting[4] = 1;
-        v.trap_code_waiting(3, 0) = EXCEPTION_InstrIllegal;
-    } else if (w_trap) {
+        v.trap_code_waiting(3, 0) = INTERRUPT_PLIC;
+    } else if (w_exception) {      // Unmaskable traps (exceptions)
+        wb_exception_code[4] = 0;
+        if (w_exception_load) {
+            wb_exception_code(3, 0) = EXCEPTION_LoadMisalign;
+        } else if (w_exception_store) {
+            wb_exception_code(3, 0) = EXCEPTION_StoreMisalign;
+        } else {
+            wb_exception_code(3, 0) = EXCEPTION_InstrIllegal;
+        }
+    } else if (w_interrupt) {
         v.trap_code_waiting = 0;
     }
 
     bool w_d_valid = !i_cache_hold.read() && i_d_valid.read()
                         && i_d_pc.read() == r.npc.read()
-                        && !w_trap.read();
+                        && !w_interrupt && !w_exception;
 
     v.postponed_valid = 0;
     if (w_d_valid && wb_multiclock_cnt != 0) {
@@ -433,10 +447,15 @@ void InstrExecute::comb() {
     }
 
     v.trap_ena = 0;
-    if (w_trap) {
+    if (w_interrupt) {
         v.trap_ena = 1;
         v.trap_pc = i_d_pc;
         v.trap_code = r.trap_code_waiting;
+        v.npc = i_mtvec;
+    } else if (w_exception) {
+        v.trap_ena = 1;
+        v.trap_pc = i_d_pc;
+        v.trap_code = wb_exception_code;
         v.npc = i_mtvec;
     } else if (w_d_valid) {
         v.pc = i_d_pc;

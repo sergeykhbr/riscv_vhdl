@@ -24,6 +24,22 @@ void print_uart(const char *buf, int sz) {
     }
 }
 
+void print_uart_hex(long val) {
+    unsigned char t, s;
+    uart_map *uart = (uart_map *)ADDR_NASTI_SLAVE_UART1;
+    for (int i = 0; i < 16; i++) {
+        while (uart->status & UART_STATUS_TX_FULL) {}
+        
+        t = (unsigned char)((val >> ((15 - i) * 4)) & 0xf);
+        if (t < 10) {
+            s = t + '0';
+        } else {
+            s = (t - 10) + 'a';
+        }
+        uart->data = s;
+    }
+}
+
 void copy_image() { 
     uint32_t tech;
     uint64_t *fwrom = (uint64_t *)ADDR_NASTI_SLAVE_FWIMAGE;

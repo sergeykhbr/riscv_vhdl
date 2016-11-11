@@ -83,6 +83,10 @@ void RtlWrapper::clk_negedge_proc() {
     }
 
 #if 1
+    //if (!(step_cnt % 50000) && step_cnt != step_cnt_z) {
+    //    printf("!!!!step_cnt = %d\n", (int)step_cnt);
+    //}
+
     if (step_cnt == (6000 - 3) && step_cnt != step_cnt_z) {
         IService *uart = static_cast<IService *>(RISCV_get_service("uart0"));
         if (uart) {
