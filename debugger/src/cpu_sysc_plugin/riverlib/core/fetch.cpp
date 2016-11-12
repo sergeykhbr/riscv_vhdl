@@ -21,7 +21,7 @@ InstrFetch::InstrFetch(sc_module_name name_, sc_trace_file *vcd)
     sensitive << i_e_npc_valid;
     sensitive << i_e_npc;
     sensitive << i_predict_npc;
-    sensitive << r.pc[0];
+    sensitive << r.pc_z0;
     sensitive << r.is_postponed;
     sensitive << r.wait_resp;
     sensitive << w_mem_addr_valid;
@@ -43,9 +43,8 @@ InstrFetch::InstrFetch(sc_module_name name_, sc_trace_file *vcd)
         sc_trace(vcd, o_valid, "/top/proc0/fetch0/o_valid");
         sc_trace(vcd, o_pc, "/top/proc0/fetch0/o_pc");
         sc_trace(vcd, o_instr, "/top/proc0/fetch0/o_instr");
-        sc_trace(vcd, r.pc[2], "/top/proc0/fetch0/r.pc(2)");
-        sc_trace(vcd, r.pc[1], "/top/proc0/fetch0/r.pc(1)");
-        sc_trace(vcd, r.pc[0], "/top/proc0/fetch0/r.pc(0)");
+        sc_trace(vcd, r.pc_z1, "/top/proc0/fetch0/r.pc_z1");
+        sc_trace(vcd, r.pc_z0, "/top/proc0/fetch0/r.pc_z0");
         sc_trace(vcd, r.wait_resp, "/top/proc0/fetch0/r.wait_resp");
         sc_trace(vcd, o_predict_miss, "/top/proc0/fetch0/o_predict_miss");
         sc_trace(vcd, w_mem_addr_valid, "/top/proc0/fetch0/w_mem_addr_valid");
@@ -54,6 +53,10 @@ InstrFetch::InstrFetch(sc_module_name name_, sc_trace_file *vcd)
 
 
 void InstrFetch::comb() {
+    bool w_wrong_address;
+    bool w_predict_miss;
+    bool w_o_valid;
+
     v = r;
 
     if (!i_nrst.read() || i_pipeline_hold.read() ||
@@ -65,13 +68,14 @@ void InstrFetch::comb() {
     }
     v.wait_resp = w_mem_addr_valid;
 
-    bool wrong_address = (i_e_npc.read() != r.pc[1].read()) 
-                    && (i_e_npc.read() != r.pc[0].read())
-                    && (i_e_npc.read() != i_predict_npc.read())
-                    && (i_e_npc.read() != r.raddr_not_resp_yet.read());
+    w_wrong_address = 1;
+    if (i_e_npc == r.pc_z1 || i_e_npc == r.pc_z0 || i_e_npc == i_predict_npc
+       || i_e_npc == r.raddr_not_resp_yet) {
+        w_wrong_address = 0;
+    }
 
-    bool w_predict_miss = 0;
-    if (wrong_address) {
+    w_predict_miss = 0;
+    if (w_wrong_address) {
         wb_addr_req = i_e_npc.read();
         w_predict_miss = 1;
     } else {
@@ -88,8 +92,8 @@ void InstrFetch::comb() {
         if (!w_any_hold) {
             // direct transition:
             v.instr = i_mem_data;
-            v.pc[1] = r.pc[0];
-            v.pc[0] = i_mem_data_addr.read();
+            v.pc_z1 = r.pc_z0;
+            v.pc_z0 = i_mem_data_addr.read();
         } else {
             // Postpone recieved data when gold signal down:
             v.is_postponed = 1;
@@ -99,17 +103,18 @@ void InstrFetch::comb() {
     } else if (!w_any_hold) {
         if (r.is_postponed) {
             v.instr = r.postponed_instr;
-            v.pc[1] = r.pc[0];
-            v.pc[0] = r.postponed_pc;
+            v.pc_z1 = r.pc_z0;
+            v.pc_z0 = r.postponed_pc;
         } else {
             v.f_valid = 0;
         }
     }
+    w_o_valid = r.f_valid.read() && !w_any_hold;
 
     if (!i_nrst.read()) {
         v.f_valid = 0;
-        v.pc[0] = 0;
-        v.pc[1] = 0;
+        v.pc_z0 = 0;
+        v.pc_z1 = 0;
         v.raddr_not_resp_yet = 0;
         v.is_postponed = 0;
         v.postponed_pc = 0;
@@ -119,8 +124,8 @@ void InstrFetch::comb() {
 
     o_mem_addr_valid = w_mem_addr_valid;
     o_mem_addr = wb_addr_req;
-    o_valid = r.f_valid.read() && !w_any_hold;
-    o_pc = r.pc[0];
+    o_valid = w_o_valid;
+    o_pc = r.pc_z0;
     o_instr = r.instr;
     o_predict_miss = w_predict_miss;
 }

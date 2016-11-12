@@ -23,11 +23,11 @@ SC_MODULE(RiverTop) {
     // Memory interface:
     sc_out<bool> o_req_mem_valid;                       // AXI memory request is valid
     sc_out<bool> o_req_mem_write;                       // AXI memory request is write type
-    sc_out<sc_uint<AXI_ADDR_WIDTH>> o_req_mem_addr;     // AXI memory request address
-    sc_out<sc_uint<AXI_DATA_BYTES>> o_req_mem_strob;    // Writing strob. 1 bit per Byte
-    sc_out<sc_uint<AXI_DATA_WIDTH>> o_req_mem_data;     // Writing data
+    sc_out<sc_uint<BUS_ADDR_WIDTH>> o_req_mem_addr;     // AXI memory request address
+    sc_out<sc_uint<BUS_DATA_BYTES>> o_req_mem_strob;    // Writing strob. 1 bit per Byte
+    sc_out<sc_uint<BUS_DATA_WIDTH>> o_req_mem_data;     // Writing data
     sc_in<bool> i_resp_mem_data_valid;                  // AXI response is valid
-    sc_in<sc_uint<AXI_DATA_WIDTH>> i_resp_mem_data;     // Read data
+    sc_in<sc_uint<BUS_DATA_WIDTH>> i_resp_mem_data;     // Read data
     /** Interrupt line from external interrupts controller (PLIC). */
     sc_in<bool> i_ext_irq;
     sc_out<sc_uint<64>> o_step_cnt;                     // Number of valid executed instructions
@@ -48,18 +48,18 @@ private:
 
     // Control path:
     sc_signal<bool> w_req_ctrl_valid;
-    sc_signal<sc_uint<AXI_ADDR_WIDTH>> wb_req_ctrl_addr;
+    sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_req_ctrl_addr;
     sc_signal<bool> w_resp_ctrl_valid;
-    sc_signal<sc_uint<AXI_ADDR_WIDTH>> wb_resp_ctrl_addr;
+    sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_resp_ctrl_addr;
     sc_signal<sc_uint<32>> wb_resp_ctrl_data;
     // Data path:
     sc_signal<bool> w_req_data_valid;
     sc_signal<bool> w_req_data_write;
-    sc_signal<sc_uint<AXI_ADDR_WIDTH>> wb_req_data_addr;
+    sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_req_data_addr;
     sc_signal<sc_uint<2>> wb_req_data_size; // 0=1bytes; 1=2bytes; 2=4bytes; 3=8bytes
     sc_signal<sc_uint<RISCV_ARCH>> wb_req_data_data;
     sc_signal<bool> w_resp_data_valid;
-    sc_signal<sc_uint<AXI_ADDR_WIDTH>> wb_resp_data_addr;
+    sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_resp_data_addr;
     sc_signal<sc_uint<RISCV_ARCH>> wb_resp_data_data;
     sc_signal<bool> w_cache_hold;
 

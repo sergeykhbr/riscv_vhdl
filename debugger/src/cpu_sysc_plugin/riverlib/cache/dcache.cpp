@@ -53,8 +53,8 @@ void DCache::comb() {
     uint64_t r2 = i_resp_mem_data.read();
     uint64_t r3 = r.req_addr.read();
 
-    wb_req_addr(AXI_ADDR_WIDTH-1, 3) 
-        = i_req_data_addr.read()(AXI_ADDR_WIDTH-1, 3);
+    wb_req_addr(BUS_ADDR_WIDTH-1, 3) 
+        = i_req_data_addr.read()(BUS_ADDR_WIDTH-1, 3);
 
     v.rena = !i_req_data_write.read() & i_req_data_valid.read();
     if (i_req_data_write.read()) {

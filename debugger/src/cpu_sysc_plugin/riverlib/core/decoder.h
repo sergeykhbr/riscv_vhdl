@@ -32,11 +32,11 @@ SC_MODULE(InstrDecoder) {
     sc_in<bool> i_nrst;                         // Reset active low
     sc_in<bool> i_any_hold;                     // Hold pipeline by any reason
     sc_in<bool> i_f_valid;                      // Fetch input valid
-    sc_in<sc_uint<AXI_ADDR_WIDTH>> i_f_pc;      // Fetched pc
+    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_f_pc;      // Fetched pc
     sc_in<sc_uint<32>> i_f_instr;               // Fetched instruction value
 
     sc_out<bool> o_valid;                       // Current output values are valid
-    sc_out<sc_uint<AXI_ADDR_WIDTH>> o_pc;       // Current instruction pointer value
+    sc_out<sc_uint<BUS_ADDR_WIDTH>> o_pc;       // Current instruction pointer value
     sc_out<sc_uint<32>> o_instr;                // Current instruction value
     sc_out<bool> o_memop_store;                 // Store to memory operation
     sc_out<bool> o_memop_load;                  // Load from memoru operation
@@ -58,7 +58,7 @@ SC_MODULE(InstrDecoder) {
 private:
     struct RegistersType {
         sc_signal<bool> valid;
-        sc_signal<sc_uint<AXI_ADDR_WIDTH>> pc;
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> pc;
         sc_bv<ISA_Total> isa_type;
         sc_bv<Instr_Total> instr_vec;
         sc_signal<sc_uint<32>> instr;

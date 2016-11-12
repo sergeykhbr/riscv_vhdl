@@ -16,9 +16,9 @@ namespace debugger {
 
 static const int RISCV_ARCH     = 64;
 
-static const int AXI_ADDR_WIDTH = 32;
-static const int AXI_DATA_WIDTH = 64;
-static const int AXI_DATA_BYTES = AXI_DATA_WIDTH / 8;
+static const int BUS_ADDR_WIDTH = 32;
+static const int BUS_DATA_WIDTH = 64;
+static const int BUS_DATA_BYTES = BUS_DATA_WIDTH / 8;
 
 static const uint8_t MEMOP_8B = 3;
 static const uint8_t MEMOP_4B = 2;

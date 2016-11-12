@@ -130,7 +130,7 @@ void InstrExecute::comb() {
     sc_uint<12> wb_csr_addr = 0;
     sc_uint<RISCV_ARCH> wb_csr_wdata = 0;
     sc_uint<RISCV_ARCH> wb_res = 0;
-    sc_uint<AXI_ADDR_WIDTH> wb_npc;
+    sc_uint<BUS_ADDR_WIDTH> wb_npc;
     sc_uint<RISCV_ARCH> wb_off;
     sc_uint<RISCV_ARCH> wb_mask_i31;    // Bits depending instr[31] bits
     sc_uint<RISCV_ARCH> wb_sum64;
@@ -148,7 +148,7 @@ void InstrExecute::comb() {
     bool w_memop_store = 0;
     bool w_memop_sign_ext = 0;
     sc_uint<2> wb_memop_size = 0;
-    sc_uint<AXI_ADDR_WIDTH> wb_memop_addr = 0;
+    sc_uint<BUS_ADDR_WIDTH> wb_memop_addr = 0;
 
 
     bool w_res_wena;
@@ -267,7 +267,7 @@ void InstrExecute::comb() {
               || (wv[Instr_BNE] & (wb_sub64 != 0));
 
     if (w_pc_branch) {
-        wb_npc = i_d_pc.read() + wb_off(AXI_ADDR_WIDTH-1, 0);
+        wb_npc = i_d_pc.read() + wb_off(BUS_ADDR_WIDTH-1, 0);
     } else if (wv[Instr_JAL].to_bool()) {
         wb_res = i_d_pc.read() + 4;
         wb_npc = wb_rdata1 + wb_off;
@@ -494,6 +494,9 @@ void InstrExecute::comb() {
         w_hazard_detected = 0;
     }
 
+    bool w_o_valid = (r.d_valid.read() & !r.multiclock_instr) | r.postponed_valid;
+    bool w_o_pipeline_hold = w_hazard_detected | r.multiclock_instr;
+
     if (!i_nrst.read()) {
         v.d_valid = false;
         v.pc = 0;
@@ -532,7 +535,7 @@ void InstrExecute::comb() {
     o_radr2 = wb_radr2;
     o_res_addr = r.res_addr;
     o_res_data = r.res_val;
-    o_pipeline_hold = w_hazard_detected | r.multiclock_instr;
+    o_pipeline_hold = w_o_pipeline_hold;
 
     o_xret = w_xret;
     o_csr_wena = w_csr_wena;
@@ -548,7 +551,7 @@ void InstrExecute::comb() {
     o_memop_size = r.memop_size;
     o_memop_addr = r.memop_addr;
 
-    o_valid = (r.d_valid.read() & !r.multiclock_instr) | r.postponed_valid;
+    o_valid = w_o_valid;
     o_pc = r.pc;
     o_npc = r.npc;
     o_instr = r.instr;

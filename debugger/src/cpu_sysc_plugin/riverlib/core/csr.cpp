@@ -22,6 +22,8 @@ CsrRegs::CsrRegs(sc_module_name name_, sc_trace_file *vcd)
     sensitive << i_trap_ena;
     sensitive << i_trap_code;
     sensitive << i_trap_pc;
+    sensitive << r.mode;
+    sensitive << r.mie;
 
 
     SC_METHOD(registers);
@@ -119,6 +121,7 @@ void CsrRegs::comb() {
         v.mepc = i_trap_pc.read();
         v.trap_code = i_trap_code.read()(3, 0);
         v.trap_irq = i_trap_code.read()[4];
+        v.mode = PRV_M;
         switch (r.mode.read()) {
         case PRV_U:
             v.mpie = r.uie;
@@ -150,7 +153,7 @@ void CsrRegs::comb() {
     o_rdata = wb_rdata;
     o_ie = w_ie;
     o_mode = r.mode;
-    o_mtvec = r.mtvec.read()(AXI_ADDR_WIDTH - 1, 0);
+    o_mtvec = r.mtvec.read()(BUS_ADDR_WIDTH - 1, 0);
 }
 
 void CsrRegs::registers() {

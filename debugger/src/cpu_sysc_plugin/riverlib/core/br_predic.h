@@ -35,9 +35,9 @@ SC_MODULE(BranchPredictor) {
 
 private:
     struct RegistersType {
-        sc_signal<sc_uint<AXI_ADDR_WIDTH>> npc;
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> npc;
     } v, r;
-    sc_signal<sc_uint<AXI_ADDR_WIDTH>> wb_npc;
+    sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_npc;
 };
 
 

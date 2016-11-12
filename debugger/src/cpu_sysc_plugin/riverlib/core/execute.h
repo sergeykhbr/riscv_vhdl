@@ -20,7 +20,7 @@ SC_MODULE(InstrExecute) {
     sc_in<bool> i_nrst;
     sc_in<bool> i_cache_hold;
     sc_in<bool> i_d_valid;
-    sc_in<sc_uint<AXI_ADDR_WIDTH>> i_d_pc;
+    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_d_pc;
     sc_in<sc_uint<32>> i_d_instr;
     sc_in<bool> i_wb_done;                      // write back done (Used to clear hazardness)
     sc_in<bool> i_memop_store;                  // Store to memory operation
@@ -32,7 +32,7 @@ SC_MODULE(InstrExecute) {
     sc_in<sc_bv<ISA_Total>> i_isa_type;         // Type of the instruction's structure (ISA spec.)
     sc_in<sc_bv<Instr_Total>> i_ivec;           // One pulse per supported instruction.
     sc_in<bool> i_ie;                           // Interrupt enable bit
-    sc_in<sc_uint<AXI_ADDR_WIDTH>> i_mtvec;     // Interrupt descriptor table
+    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_mtvec;     // Interrupt descriptor table
     sc_in<sc_uint<2>> i_mode;                   // Current processor mode
     sc_in<bool> i_unsup_exception;              // Unsupported instruction exception
     sc_in<bool> i_ext_irq;                      // External interrupt from PLIC (todo: timer & software interrupts)
@@ -51,18 +51,18 @@ SC_MODULE(InstrExecute) {
     sc_out<sc_uint<RISCV_ARCH>> o_csr_wdata;    // CSR new value
     sc_out<bool> o_trap_ena;                    // Trap occurs  pulse
     sc_out<sc_uint<5>> o_trap_code;             // bit[4] : 1=interrupt; 0=exception; bits[3:0]=code
-    sc_out<sc_uint<AXI_ADDR_WIDTH>> o_trap_pc;  // trap on pc
+    sc_out<sc_uint<BUS_ADDR_WIDTH>> o_trap_pc;  // trap on pc
 
 
     sc_out<bool> o_memop_sign_ext;              // Load data with sign extending
     sc_out<bool> o_memop_load;                  // Load data instruction
     sc_out<bool> o_memop_store;                 // Store data instruction
     sc_out<sc_uint<2>> o_memop_size;            // 0=1bytes; 1=2bytes; 2=4bytes; 3=8bytes
-    sc_out<sc_uint<AXI_ADDR_WIDTH>> o_memop_addr;// Memory access address
+    sc_out<sc_uint<BUS_ADDR_WIDTH>> o_memop_addr;// Memory access address
 
     sc_out<bool> o_valid;
-    sc_out<sc_uint<AXI_ADDR_WIDTH>> o_pc;
-    sc_out<sc_uint<AXI_ADDR_WIDTH>> o_npc;
+    sc_out<sc_uint<BUS_ADDR_WIDTH>> o_pc;
+    sc_out<sc_uint<BUS_ADDR_WIDTH>> o_npc;
     sc_out<sc_uint<32>> o_instr;
 
 
@@ -83,8 +83,8 @@ private:
 
     struct RegistersType {
         sc_signal<bool> d_valid;                        // Valid decoded instruction latch
-        sc_signal<sc_uint<AXI_ADDR_WIDTH>> pc;
-        sc_signal<sc_uint<AXI_ADDR_WIDTH>> npc;
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> pc;
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> npc;
         sc_signal<sc_uint<32>> instr;
         sc_uint<5> res_addr;
         sc_signal<sc_uint<RISCV_ARCH>> res_val;
@@ -92,7 +92,7 @@ private:
         sc_signal<bool> memop_store;
         bool memop_sign_ext;
         sc_uint<2> memop_size;
-        sc_signal<sc_uint<AXI_ADDR_WIDTH>> memop_addr;
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> memop_addr;
 
         sc_signal<bool> multi_ena[Multi_Total];         // Enable pulse for Operation that takes more than 1 clock
         sc_signal<bool> multi_rv32;                     // Long operation with 32-bits operands
@@ -113,7 +113,7 @@ private:
         sc_uint<5> trap_code_waiting;                   // To avoid multi-cycle collision
         sc_signal<sc_uint<5>> trap_code;                // bit[4] : 1 = interrupt; 0 = exception
                                                         // bit[3:0] : trap code
-        sc_signal<sc_uint<AXI_ADDR_WIDTH>> trap_pc;     // trap on pc
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> trap_pc;     // trap on pc
     } v, r;
     sc_signal<bool> w_hazard_detected;
     sc_signal<sc_uint<RISCV_ARCH>> wb_arith_res[Multi_Total];

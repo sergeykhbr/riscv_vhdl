@@ -45,7 +45,7 @@ ICache::ICache(sc_module_name name_, sc_trace_file *vcd)
 void ICache::comb() {
     // Instruction cache:
     bool w_mem_valid = false;
-    sc_uint<AXI_ADDR_WIDTH> wb_mem_addr;
+    sc_uint<BUS_ADDR_WIDTH> wb_mem_addr;
 
     bool w_valid = false;
     sc_uint<32> wb_data = 0;
@@ -53,14 +53,14 @@ void ICache::comb() {
     v = r;
 
     if (i_resp_mem_data_valid.read()) {
-        wb_cached_addr = r.iline_addr_req.range(AXI_ADDR_WIDTH-1, 3);
+        wb_cached_addr = r.iline_addr_req.range(BUS_ADDR_WIDTH-1, 3);
         wb_cached_data = i_resp_mem_data;
     } else {
         wb_cached_addr = r.iline_addr;
         wb_cached_data = r.iline_data;
     }
 
-    wb_req_line = i_req_ctrl_addr.read().range(AXI_ADDR_WIDTH-1, 3);
+    wb_req_line = i_req_ctrl_addr.read().range(BUS_ADDR_WIDTH-1, 3);
     v.ihit = false;
 
     if (i_req_ctrl_valid.read()) {
@@ -80,7 +80,7 @@ void ICache::comb() {
 
     if (i_resp_mem_data_valid.read()) {
         w_valid = true;
-        v.iline_addr = r.iline_addr_req.range(AXI_ADDR_WIDTH-1, 3);
+        v.iline_addr = r.iline_addr_req.range(BUS_ADDR_WIDTH-1, 3);
         v.iline_data = i_resp_mem_data;
         if (r.iline_addr_req[2] == 0) {
             wb_data = i_resp_mem_data.read().range(31, 0);

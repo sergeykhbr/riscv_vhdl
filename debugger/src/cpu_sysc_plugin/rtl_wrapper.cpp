@@ -82,10 +82,10 @@ void RtlWrapper::clk_negedge_proc() {
         static_cast<IClockListener *>(cb)->stepCallback(step_cnt);
     }
 
-#if 1
-    //if (!(step_cnt % 50000) && step_cnt != step_cnt_z) {
-    //    printf("!!!!step_cnt = %d\n", (int)step_cnt);
-    //}
+#if 0
+    if (!(step_cnt % 50000) && step_cnt != step_cnt_z) {
+        printf("!!!!step_cnt = %d\n", (int)step_cnt);
+    }
 
     if (step_cnt == (6000 - 3) && step_cnt != step_cnt_z) {
         IService *uart = static_cast<IService *>(RISCV_get_service("uart0"));
@@ -93,7 +93,8 @@ void RtlWrapper::clk_negedge_proc() {
             ISerial *iserial = static_cast<ISerial *>(
                         uart->getInterface(IFACE_SERIAL));
             //iserial->writeData("pnp\r\n", 5);
-            iserial->writeData("dhry\r\n", 6);
+            //iserial->writeData("dhry\r\n", 6);
+            iserial->writeData("ictj\r\n", 6);
         }
     }
     step_cnt_z = i_step_cnt.read();
@@ -123,7 +124,7 @@ void RtlWrapper::clk_negedge_proc() {
 }
 
 uint64_t RtlWrapper::mask2offset(uint8_t mask) {
-    for (int i = 0; i < AXI_DATA_BYTES; i++) {
+    for (int i = 0; i < BUS_DATA_BYTES; i++) {
         if (mask & 0x1) {
             return static_cast<uint64_t>(i);
         }
@@ -134,7 +135,7 @@ uint64_t RtlWrapper::mask2offset(uint8_t mask) {
 
 uint32_t RtlWrapper::mask2size(uint8_t mask) {
     uint32_t bytes = 0;
-    for (int i = 0; i < AXI_DATA_BYTES; i++) {
+    for (int i = 0; i < BUS_DATA_BYTES; i++) {
         if (!(mask & 0x1)) {
             break;
         }

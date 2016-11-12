@@ -18,18 +18,18 @@ SC_MODULE(ICache) {
     sc_in<bool> i_nrst;
     // Control path:
     sc_in<bool> i_req_ctrl_valid;
-    sc_in<sc_uint<AXI_ADDR_WIDTH>> i_req_ctrl_addr;
+    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_req_ctrl_addr;
     sc_out<bool> o_resp_ctrl_valid;
-    sc_out<sc_uint<AXI_ADDR_WIDTH>> o_resp_ctrl_addr;
+    sc_out<sc_uint<BUS_ADDR_WIDTH>> o_resp_ctrl_addr;
     sc_out<sc_uint<32>> o_resp_ctrl_data;
     // Memory interface:
     sc_out<bool> o_req_mem_valid;
     sc_out<bool> o_req_mem_write;
-    sc_out<sc_uint<AXI_ADDR_WIDTH>> o_req_mem_addr;
-    sc_out<sc_uint<AXI_DATA_BYTES>> o_req_mem_strob;
-    sc_out<sc_uint<AXI_DATA_WIDTH>> o_req_mem_data;
+    sc_out<sc_uint<BUS_ADDR_WIDTH>> o_req_mem_addr;
+    sc_out<sc_uint<BUS_DATA_BYTES>> o_req_mem_strob;
+    sc_out<sc_uint<BUS_DATA_WIDTH>> o_req_mem_data;
     sc_in<bool> i_resp_mem_data_valid;
-    sc_in<sc_uint<AXI_DATA_WIDTH>> i_resp_mem_data;
+    sc_in<sc_uint<BUS_DATA_WIDTH>> i_resp_mem_data;
 
 
     void comb();
@@ -41,17 +41,17 @@ SC_MODULE(ICache) {
 
 private:
     struct RegistersType {
-        sc_signal<sc_uint<AXI_ADDR_WIDTH - 3>> iline_addr;
-        sc_signal<sc_uint<AXI_DATA_WIDTH>> iline_data;
+        sc_signal<sc_uint<BUS_ADDR_WIDTH - 3>> iline_addr;
+        sc_signal<sc_uint<BUS_DATA_WIDTH>> iline_data;
 
-        sc_uint<AXI_ADDR_WIDTH> iline_addr_req;
+        sc_uint<BUS_ADDR_WIDTH> iline_addr_req;
         bool ihit;
         sc_uint<32> ihit_data;
     } v, r;
 
-    sc_uint<AXI_ADDR_WIDTH - 3> wb_req_line;
-    sc_uint<AXI_ADDR_WIDTH - 3> wb_cached_addr;
-    sc_uint<AXI_DATA_WIDTH> wb_cached_data;
+    sc_uint<BUS_ADDR_WIDTH - 3> wb_req_line;
+    sc_uint<BUS_ADDR_WIDTH - 3> wb_cached_addr;
+    sc_uint<BUS_DATA_WIDTH> wb_cached_data;
 };
 
 

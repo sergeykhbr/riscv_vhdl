@@ -25,17 +25,17 @@ SC_MODULE(RtlWrapper) {
     // Memory interface:
     sc_in<bool> i_req_mem_valid;
     sc_in<bool> i_req_mem_write;
-    sc_in<sc_uint<AXI_ADDR_WIDTH>> i_req_mem_addr;
-    sc_in<sc_uint<AXI_DATA_BYTES>> i_req_mem_strob;
-    sc_in<sc_uint<AXI_DATA_WIDTH>> i_req_mem_data;
+    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_req_mem_addr;
+    sc_in<sc_uint<BUS_DATA_BYTES>> i_req_mem_strob;
+    sc_in<sc_uint<BUS_DATA_WIDTH>> i_req_mem_data;
     sc_out<bool> o_resp_mem_data_valid;
-    sc_out<sc_uint<AXI_DATA_WIDTH>> o_resp_mem_data;
+    sc_out<sc_uint<BUS_DATA_WIDTH>> o_resp_mem_data;
     /** Interrupt line from external interrupts controller. */
     sc_out<bool> o_interrupt;
 
 
     struct RegistersType {
-        sc_signal<sc_uint<AXI_DATA_WIDTH>> resp_mem_data;
+        sc_signal<sc_uint<BUS_DATA_WIDTH>> resp_mem_data;
         sc_signal<bool> resp_mem_data_valid;
         sc_signal<sc_bv<5>> nrst;
         sc_signal<bool> interrupt;
