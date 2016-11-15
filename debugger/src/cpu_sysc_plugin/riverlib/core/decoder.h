@@ -13,7 +13,7 @@
 
 namespace debugger {
 
-const uint8_t OPCODE_LB     = 0x00; // 00100: LB, LH, LW, LD, LBU, LHU, LWU
+const uint8_t OPCODE_LB     = 0x00; // 00000: LB, LH, LW, LD, LBU, LHU, LWU
 const uint8_t OPCODE_FENCE  = 0x03; // 00011: FENCE, FENCE_I
 const uint8_t OPCODE_ADDI   = 0x04; // 00100: ADDI, ANDI, ORI, SLLI, SLTI, SLTIU, SRAI, SRLI, XORI
 const uint8_t OPCODE_AUIPC  = 0x05; // 00101: AUIPC

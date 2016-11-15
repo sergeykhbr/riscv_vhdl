@@ -94,17 +94,20 @@ private:
         sc_uint<2> memop_size;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> memop_addr;
 
+        sc_signal<sc_uint<5>> multi_res_addr;
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> multi_pc;
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> multi_npc;
+        sc_signal<sc_uint<32>> multi_instr;
         sc_signal<bool> multi_ena[Multi_Total];         // Enable pulse for Operation that takes more than 1 clock
         sc_signal<bool> multi_rv32;                     // Long operation with 32-bits operands
         sc_signal<bool> multi_unsigned;                 // Long operation with unsiged operands
-        sc_signal<bool> multi_residual;                 // Flag for Divider module: 0=divsion output; 1=residual output
+        sc_signal<bool> multi_residual_high;            // Flag for Divider module: 0=divsion output; 1=residual output
+                                                        // Flag for multiplier: 0=usual; 1=get high bits
+        sc_signal<bool> multiclock_ena;
         sc_signal<sc_uint<Multi_Total>> multi_type;     // Keep type of the multi-cycle operation
         sc_signal<sc_uint<RISCV_ARCH>> multi_a1;        // Multi-cycle operand 1
         sc_signal<sc_uint<RISCV_ARCH>> multi_a2;        // Multi-cycle operand 2
 
-        sc_signal<bool> multiclock_instr;
-        sc_signal<bool> postponed_valid;
-        sc_signal<sc_uint<7>> multiclock_cnt;           // up to 127 clocks per one instruction (maybe changed)
         sc_signal<sc_uint<5>> hazard_addr[2];
         sc_signal<sc_uint<2>> hazard_depth;
 
@@ -117,6 +120,8 @@ private:
     } v, r;
     sc_signal<bool> w_hazard_detected;
     sc_signal<sc_uint<RISCV_ARCH>> wb_arith_res[Multi_Total];
+    sc_signal<bool> w_arith_valid[Multi_Total];
+    sc_signal<bool> w_arith_busy[Multi_Total];
     bool w_interrupt;
     bool w_exception;
     bool w_exception_store;

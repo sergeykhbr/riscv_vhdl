@@ -2,7 +2,7 @@
 --! @file
 --! @copyright Copyright 2016 GNSS Sensor Ltd. All right reserved.
 --! @author    Sergey Khabarov - sergeykhbr@gmail.com
---! @brief     "River" CPU configuration parameters
+--! @brief     "River" CPU library external interfaces
 -----------------------------------------------------------------------------
 
 --! Standard library.
@@ -18,31 +18,6 @@ use ambalib.types_amba4.all;
 
 --! @brief   Declaration of components visible on SoC top level.
 package types_river is
-
-  --! Architecture size difinition.
-  constant RISCV_ARCH : integer := 64;
-
-  --! @name System bus parameters
-  --! @brief Constants specify AXI bus global settigns
-  --! @{
-
-  --! @brief   Address bus bit-size.
-  constant BUS_ADDR_WIDTH : integer := 32;
-  --! @brief   Data bus bit-size.
-  constant BUS_DATA_WIDTH : integer := 64;
-  --! @brief   Num of data bytes per transaction.
-  constant BUS_DATA_BYTES : integer := BUS_DATA_WIDTH / 8;
-  --! @}
-
-  --! @name   Encoded Memory operation size values
-  --! @{
-
-  constant MEMOP_8B : std_logic_vector(1 downto 0) := "11";
-  constant MEMOP_4B : std_logic_vector(1 downto 0) := "10";
-  constant MEMOP_2B : std_logic_vector(1 downto 0) := "01";
-  constant MEMOP_1B : std_logic_vector(1 downto 0) := "00";
-  --! @}
-
 
 --! @brief   RIVER CPU component declaration.
 --! @details This module implements Risc-V CPU Core named as

@@ -36,20 +36,19 @@ InstrDecoder::InstrDecoder(sc_module_name name_, sc_trace_file *vcd)
 void InstrDecoder::comb() {
     v = r;
 
+    bool w_o_valid;
     bool w_error = false;
     sc_uint<32> wb_instr = i_f_instr.read();
     sc_uint<5> wb_opcode1 = wb_instr(6, 2);
     sc_uint<3> wb_opcode2 = wb_instr(14, 12);
+    sc_bv<Instr_Total> wb_dec = 0;
+    sc_bv<ISA_Total> wb_isa_type = 0;
 
     if (wb_instr(1, 0) != 0x3) {
         w_error = true;
     }
 
-    sc_bv<Instr_Total> wb_dec = 0;
-    sc_bv<ISA_Total> wb_isa_type = 0;
-
     switch (wb_opcode1) {
-    // User level:
     case OPCODE_ADD:
         wb_isa_type[ISA_R_type] = 1;
         switch (wb_opcode2) {
@@ -415,6 +414,7 @@ void InstrDecoder::comb() {
     } else if (!i_any_hold.read()) {
         v.valid = 0;
     }
+    w_o_valid = r.valid.read() && !i_any_hold.read();
 
     if (!i_nrst.read()) {
         v.valid = false;
@@ -431,7 +431,7 @@ void InstrDecoder::comb() {
         v.instr_unimplemented = !wb_dec.or_reduce();
     }
 
-    o_valid = r.valid.read() && !i_any_hold.read();
+    o_valid = w_o_valid;
     o_pc = r.pc;
     o_instr = r.instr;
     o_memop_load = r.memop_load;

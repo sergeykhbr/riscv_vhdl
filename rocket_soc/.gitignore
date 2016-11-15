@@ -40,6 +40,8 @@ prj/modelsim/gnsslib/*
 !prj/modelsim/gnsslib/_info
 prj/modelsim/rocketlib/*
 !prj/modelsim/rocketlib/_info
+prj/modelsim/riverlib/*
+!prj/modelsim/riverlib/_info
 prj/modelsim/techmap/*
 !prj/modelsim/techmap/_info
 prj/modelsim/work/*

@@ -356,7 +356,8 @@ void CpuRiscV_Functional::executeInstruction(IInstruction *instr,
         if (uart) {
             ISerial *iserial = static_cast<ISerial *>(
                         uart->getInterface(IFACE_SERIAL));
-            iserial->writeData("dhry\r\n", 6);
+            //iserial->writeData("pnp\r\n", 6);
+            iserial->writeData("highticks\r\n", 11);
         }
     }
 #endif

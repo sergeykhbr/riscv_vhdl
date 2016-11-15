@@ -83,18 +83,18 @@ void RtlWrapper::clk_negedge_proc() {
     }
 
 #if 0
-    if (!(step_cnt % 50000) && step_cnt != step_cnt_z) {
-        printf("!!!!step_cnt = %d\n", (int)step_cnt);
-    }
+    //if (!(step_cnt % 50000) && step_cnt != step_cnt_z) {
+    //    printf("!!!!step_cnt = %d\n", (int)step_cnt);
+    //}
 
-    if (step_cnt == (6000 - 3) && step_cnt != step_cnt_z) {
+    if (step_cnt == (6000 - 1) && step_cnt != step_cnt_z) {
         IService *uart = static_cast<IService *>(RISCV_get_service("uart0"));
         if (uart) {
             ISerial *iserial = static_cast<ISerial *>(
                         uart->getInterface(IFACE_SERIAL));
             //iserial->writeData("pnp\r\n", 5);
             //iserial->writeData("dhry\r\n", 6);
-            iserial->writeData("ictj\r\n", 6);
+            iserial->writeData("highticks\r\n", 11);
         }
     }
     step_cnt_z = i_step_cnt.read();

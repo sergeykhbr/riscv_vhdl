@@ -35,17 +35,18 @@ InstrExecute::InstrExecute(sc_module_name name_, sc_trace_file *vcd)
     sensitive << r.hazard_depth;
     sensitive << r.hazard_addr[0];
     sensitive << r.hazard_addr[1];
-    sensitive << r.multiclock_cnt;
-    sensitive << r.multiclock_instr;
-    sensitive << r.postponed_valid;
     sensitive << r.res_val;
     sensitive << r.memop_load;
     sensitive << r.memop_store;
     sensitive << w_hazard_detected;
     sensitive << r.multi_ena[Multi_MUL];
     sensitive << r.multi_ena[Multi_DIV];
+    sensitive << r.multi_res_addr;
+    sensitive << r.multiclock_ena;
     sensitive << wb_arith_res[Multi_MUL];
     sensitive << wb_arith_res[Multi_DIV];
+    sensitive << w_arith_valid[Multi_MUL];
+    sensitive << w_arith_valid[Multi_DIV];
 
     SC_METHOD(registers);
     sensitive << i_clk.pos();
@@ -56,20 +57,25 @@ InstrExecute::InstrExecute(sc_module_name name_, sc_trace_file *vcd)
     mul0->i_ena(r.multi_ena[Multi_MUL]);
     mul0->i_unsigned(r.multi_unsigned);
     mul0->i_rv32(r.multi_rv32);
+    mul0->i_high(r.multi_residual_high);
     mul0->i_a1(r.multi_a1);
     mul0->i_a2(r.multi_a2);
     mul0->o_res(wb_arith_res[Multi_MUL]);
+    mul0->o_valid(w_arith_valid[Multi_MUL]);
+    mul0->o_busy(w_arith_busy[Multi_MUL]);
 
     div0 = new IntDiv("div0", vcd);
     div0->i_clk(i_clk);
     div0->i_nrst(i_nrst);
     div0->i_ena(r.multi_ena[Multi_DIV]);
     div0->i_unsigned(r.multi_unsigned);
-    div0->i_residual(r.multi_residual);
+    div0->i_residual(r.multi_residual_high);
     div0->i_rv32(r.multi_rv32);
     div0->i_a1(r.multi_a1);
     div0->i_a2(r.multi_a2);
     div0->o_res(wb_arith_res[Multi_DIV]);
+    div0->o_valid(w_arith_valid[Multi_DIV]);
+    div0->o_busy(w_arith_busy[Multi_DIV]);
 
     if (vcd) {
         sc_trace(vcd, i_ext_irq, "/top/proc0/exec0/i_ext_irq");
@@ -101,9 +107,14 @@ InstrExecute::InstrExecute(sc_module_name name_, sc_trace_file *vcd)
         sc_trace(vcd, r.hazard_depth, "/top/proc0/exec0/r_hazard_depth");
         sc_trace(vcd, r.hazard_addr[0], "/top/proc0/exec0/r_hazard_addr(0)");
         sc_trace(vcd, r.hazard_addr[1], "/top/proc0/exec0/r_hazard_addr(1)");
-        sc_trace(vcd, r.multiclock_cnt, "/top/proc0/exec0/r_multiclock_cnt");
+        sc_trace(vcd, r.multiclock_ena, "/top/proc0/exec0/r_multiclock_ena");
+        sc_trace(vcd, r.multi_ena[Multi_MUL], "/top/proc0/exec0/r_multi_ena(0)");
+        sc_trace(vcd, wb_arith_res[Multi_MUL], "/top/proc0/exec0/wb_arith_res(0)");
         sc_trace(vcd, r.multi_ena[Multi_DIV], "/top/proc0/exec0/r_multi_ena(1)");
         sc_trace(vcd, wb_arith_res[Multi_DIV], "/top/proc0/exec0/wb_arith_res(1)");
+        sc_trace(vcd, r.multi_res_addr, "/top/proc0/exec0/r_multi_res_addr");
+        sc_trace(vcd, r.multi_a1, "/top/proc0/exec0/multi_a1");
+        sc_trace(vcd, r.multi_a2, "/top/proc0/exec0/multi_a2");
 
         sc_trace(vcd, w_interrupt, "/top/proc0/exec0/w_interrupt");
         sc_trace(vcd, w_exception, "/top/proc0/exec0/w_exception");
@@ -111,6 +122,7 @@ InstrExecute::InstrExecute(sc_module_name name_, sc_trace_file *vcd)
         sc_trace(vcd, r.trap_pc, "/top/proc0/exec0/r_trap_pc");
         sc_trace(vcd, r.trap_code, "/top/proc0/exec0/r_trap_code");
         sc_trace(vcd, r.trap_code_waiting, "/top/proc0/exec0/r_trap_code_waiting");
+        sc_trace(vcd, r.ext_irq_pulser, "/top/proc0/exec0/r_ext_irq_pulser");
     }
 };
 
@@ -143,7 +155,6 @@ void InstrExecute::comb() {
     sc_uint<RISCV_ARCH> wb_sll64;
     sc_uint<RISCV_ARCH> wb_srl64;
     sc_uint<RISCV_ARCH> wb_srl32;
-    sc_uint<7> wb_multiclock_cnt;       // up to 127 clocks per one instruction (maybe insreased)
     bool w_memop_load = 0;
     bool w_memop_store = 0;
     bool w_memop_sign_ext = 0;
@@ -179,6 +190,14 @@ void InstrExecute::comb() {
     if (i_d_instr.read()[31]) {
         wb_mask_i31 = ~0ull;
     }
+
+    bool w_d_acceptable = !i_cache_hold & i_d_valid 
+                          & (i_d_pc.read() == r.npc.read())
+                          & !r.multiclock_ena;
+
+    v.ext_irq_pulser = i_ext_irq & i_ie;
+    w_interrupt = w_d_acceptable && (r.trap_code_waiting != 0);
+
 
     if (i_isa_type.read()[ISA_R_type]) {
         wb_radr1 = i_d_instr.read().range(19, 15);
@@ -226,17 +245,6 @@ void InstrExecute::comb() {
         wb_off(4, 0) = i_d_instr.read()(11, 7);
     }
 
-    // Don't modify registers on conditional jumps:
-    w_res_wena = !(wv[Instr_BEQ] | wv[Instr_BGE] | wv[Instr_BGEU]
-               | wv[Instr_BLT] | wv[Instr_BLTU] | wv[Instr_BNE]
-               | wv[Instr_SD] | wv[Instr_SW] | wv[Instr_SH] | wv[Instr_SB]
-               | wv[Instr_MRET] | wv[Instr_URET]).to_bool();
-    if (w_res_wena) {
-        wb_res_addr = i_d_instr.read().range(11, 7);
-    } else {
-        wb_res_addr = 0;
-    }
-
     // parallel ALU:
     wb_sum64 = wb_rdata1 + wb_rdata2;
     wb_sum32(31, 0) = wb_rdata1(31, 0) + wb_rdata2(31, 0);
@@ -257,6 +265,24 @@ void InstrExecute::comb() {
     if (wb_srl32[31]) {
         wb_srl32(RISCV_ARCH - 1, 32) = ~0;
     }
+
+    bool w_multi_valid = w_arith_valid[Multi_MUL] | w_arith_valid[Multi_DIV];
+
+    // Don't modify registers on conditional jumps:
+    w_res_wena = !(wv[Instr_BEQ] | wv[Instr_BGE] | wv[Instr_BGEU]
+               | wv[Instr_BLT] | wv[Instr_BLTU] | wv[Instr_BNE]
+               | wv[Instr_SD] | wv[Instr_SW] | wv[Instr_SH] | wv[Instr_SB]
+               | wv[Instr_MRET] | wv[Instr_URET]).to_bool();
+
+    if (w_multi_valid) {
+        wb_res_addr = r.multi_res_addr;
+        v.multiclock_ena = 0;
+    } else if (w_res_wena) {
+        wb_res_addr = i_d_instr.read().range(11, 7);
+    } else {
+        wb_res_addr = 0;
+    }
+
 
     // Relative Branch on some condition:
     w_pc_branch = (wv[Instr_BEQ] & (wb_sub64 == 0))
@@ -298,21 +324,41 @@ void InstrExecute::comb() {
     w_exception_store = 0;
     w_exception_load = 0;
 
+    w_exception = w_d_acceptable
+        & (i_unsup_exception.read() || w_exception_load || w_exception_store);
+
+
     /** Default number of cycles per instruction = 0 (1 clock per instr)
      *  If instruction is multicycle then modify this value.
      */
-    wb_multiclock_cnt = 0;
     v.multi_ena[Multi_MUL] = 0;
     v.multi_ena[Multi_DIV] = 0;
     v.multi_rv32 = i_rv32;
     v.multi_unsigned = i_unsigned_op;
-    v.multi_residual = 0;
+    v.multi_residual_high = 0;
     //v.multi_type = 0; // This value mustn't be changed during computation
     v.multi_a1 = i_rdata1;
     v.multi_a2 = i_rdata2;
 
+    bool w_multi_ena = (wv[Instr_MUL] | wv[Instr_MULW] | wv[Instr_DIV] 
+                    | wv[Instr_DIVU] | wv[Instr_DIVW] | wv[Instr_DIVUW]
+                    | wv[Instr_REM] | wv[Instr_REMU] | wv[Instr_REMW]
+                    | wv[Instr_REMUW]).to_bool();
+    if (w_multi_ena & w_d_acceptable & !w_exception & !w_interrupt) {
+        v.multiclock_ena = 1;
+        v.multi_res_addr = wb_res_addr;
+        v.multi_pc = i_d_pc;
+        v.multi_instr = i_d_instr;
+        v.multi_npc = wb_npc;
+    }
+
+
     // ALU block selector:
-    if (i_memop_load) {
+    if (w_arith_valid[Multi_MUL]) {
+        wb_res = wb_arith_res[Multi_MUL];
+    } else if (w_arith_valid[Multi_DIV]) {
+        wb_res = wb_arith_res[Multi_DIV];
+    } else if (i_memop_load) {
         wb_memop_addr = wb_rdata1 + wb_rdata2;
         w_memop_load = !w_hazard_detected.read();
         w_memop_sign_ext = i_memop_sign_ext;
@@ -357,20 +403,17 @@ void InstrExecute::comb() {
         uint64_t x1 = wb_res = wb_rdata2;
         bool stop = true;
     } else if (wv[Instr_MUL] || wv[Instr_MULW]) {
-        v.multi_ena[Multi_MUL] = !r.multiclock_instr;
+        v.multi_ena[Multi_MUL] = w_d_acceptable & !w_exception & !w_interrupt;
         v.multi_type = Multi_MUL;
-        wb_multiclock_cnt = IMUL_EXEC_DURATION_CYCLES;
     } else if (wv[Instr_DIV] || wv[Instr_DIVU]
             || wv[Instr_DIVW] || wv[Instr_DIVUW]) {
-        v.multi_ena[Multi_DIV] = !r.multiclock_instr;
+        v.multi_ena[Multi_DIV] = w_d_acceptable & !w_exception & !w_interrupt;
         v.multi_type = Multi_DIV;
-        wb_multiclock_cnt = IDIV_EXEC_DURATION_CYCLES;
     } else if (wv[Instr_REM] || wv[Instr_REMU]
             || wv[Instr_REMW] || wv[Instr_REMUW]) {
-        v.multi_ena[Multi_DIV] = !r.multiclock_instr;
-        v.multi_residual = 1;
+        v.multi_ena[Multi_DIV] = w_d_acceptable & !w_exception & !w_interrupt;
+        v.multi_residual_high = 1;
         v.multi_type = Multi_DIV;
-        wb_multiclock_cnt = IDIV_EXEC_DURATION_CYCLES;
     } else if (wv[Instr_CSRRC]) {
         wb_res = i_csr_rdata;
         w_csr_wena = 1;
@@ -403,15 +446,6 @@ void InstrExecute::comb() {
         wb_csr_wdata = wb_radr1;  // extending to 64-bits
     }
 
-    v.ext_irq_pulser = i_ext_irq & i_ie;
-    w_interrupt = !i_cache_hold & i_d_valid
-            & (i_d_pc.read() == r.npc.read())
-            & r.trap_code_waiting  & !r.multiclock_instr;
-
-    w_exception = !i_cache_hold & i_d_valid
-        & (i_d_pc.read() == r.npc.read())
-        & (i_unsup_exception.read() || w_exception_load || w_exception_store);
-
     wb_exception_code = 0;
     if (i_ext_irq & i_ie & !r.ext_irq_pulser) { // Maskable traps (interrupts)
         v.trap_code_waiting[4] = 1;
@@ -429,22 +463,10 @@ void InstrExecute::comb() {
         v.trap_code_waiting = 0;
     }
 
-    bool w_d_valid = !i_cache_hold.read() && i_d_valid.read()
-                        && i_d_pc.read() == r.npc.read()
-                        && !w_interrupt && !w_exception;
+    bool w_d_valid = 
+        (w_d_acceptable && !w_interrupt && !w_exception && !w_multi_ena)
+        || w_multi_valid;
 
-    v.postponed_valid = 0;
-    if (w_d_valid && wb_multiclock_cnt != 0) {
-        v.multiclock_cnt = wb_multiclock_cnt;
-        v.multiclock_instr = 1;
-    } else if (r.multiclock_cnt.read() != 0) {
-        v.res_val = wb_arith_res[r.multi_type.read()];
-        v.multiclock_cnt = r.multiclock_cnt.read() - 1;
-        if (r.multiclock_cnt.read() == 1) {
-            v.multiclock_instr = 0;
-            v.postponed_valid = 1;
-        }
-    }
 
     v.trap_ena = 0;
     if (w_interrupt) {
@@ -458,16 +480,27 @@ void InstrExecute::comb() {
         v.trap_code = wb_exception_code;
         v.npc = i_mtvec;
     } else if (w_d_valid) {
-        v.pc = i_d_pc;
-        v.instr = i_d_instr;
-        v.npc = wb_npc;
+        if (w_multi_valid) {
+            v.pc = r.multi_pc;
+            v.instr = r.multi_instr;
+            v.npc = r.multi_npc;;
+            v.memop_load = 0;
+            v.memop_sign_ext = 0;
+            v.memop_store = 0;
+            v.memop_size = 0;
+            v.memop_addr = 0;
+        } else {
+            v.pc = i_d_pc;
+            v.instr = i_d_instr;
+            v.npc = wb_npc;
+            v.memop_load = w_memop_load;
+            v.memop_sign_ext = w_memop_sign_ext;
+            v.memop_store = w_memop_store;
+            v.memop_size = wb_memop_size;
+            v.memop_addr = wb_memop_addr;
+        }
         v.res_addr = wb_res_addr;
         v.res_val = wb_res;
-        v.memop_load = w_memop_load;
-        v.memop_sign_ext = w_memop_sign_ext;
-        v.memop_store = w_memop_store;
-        v.memop_size = wb_memop_size;
-        v.memop_addr = wb_memop_addr;
 
         v.hazard_addr[1] = r.hazard_addr[0];
         v.hazard_addr[0] = wb_res_addr;
@@ -494,8 +527,8 @@ void InstrExecute::comb() {
         w_hazard_detected = 0;
     }
 
-    bool w_o_valid = (r.d_valid.read() & !r.multiclock_instr) | r.postponed_valid;
-    bool w_o_pipeline_hold = w_hazard_detected | r.multiclock_instr;
+    bool w_o_valid = r.d_valid.read();
+    bool w_o_pipeline_hold = w_hazard_detected | r.multiclock_ena;
 
     if (!i_nrst.read()) {
         v.d_valid = false;
@@ -512,14 +545,17 @@ void InstrExecute::comb() {
         v.hazard_depth = 0;
         v.hazard_addr[0] = 0;
         v.hazard_addr[1] = 0;
-        v.multiclock_cnt = 0;
-        v.multiclock_instr = 0;
 
+        v.multiclock_ena = 0;
+        v.multi_pc = 0;
+        v.multi_instr = 0;
+        v.multi_npc = 0;
+        v.multi_res_addr = 0;
         v.multi_ena[Multi_MUL] = 0;
         v.multi_ena[Multi_DIV] = 0;
         v.multi_rv32 = 0;
         v.multi_unsigned = 0;
-        v.multi_residual = 0;
+        v.multi_residual_high = 0;
         v.multi_type = 0;
         v.multi_a1 = 0;
         v.multi_a2 = 0;

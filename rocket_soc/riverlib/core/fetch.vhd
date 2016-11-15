@@ -12,7 +12,7 @@ use commonlib.types_common.all;
 --! RIVER CPU specific library.
 library riverlib;
 --! RIVER CPU configuration constants.
-use riverlib.types_river.all;
+use riverlib.river_cfg.all;
 
 
 entity InstrFetch is
