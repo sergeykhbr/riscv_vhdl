@@ -37,13 +37,23 @@ private:
     uint64_t compute_reference(bool unsign, bool rv32, bool resid,
                                uint64_t a1, uint64_t a2);
 
-    uint64_t developing(uint64_t a1, uint64_t a2);
-
     struct RegistersType {
+        sc_signal<bool> rv32;
+        sc_signal<bool> resid;
+        sc_signal<bool> invert;
         sc_signal<bool> busy;
-        sc_signal<sc_uint<64>> ena;
+        sc_signal<sc_uint<34>> ena;
         sc_signal<sc_uint<RISCV_ARCH>> result;
+        sc_uint<RISCV_ARCH> reference_div;
+        sc_biguint<128> qr;
+        sc_biguint<65> divider;
     } v, r;
+
+    // 2 stages per one clock to improve divider performance
+    sc_biguint<65> wb_diff1;
+    sc_biguint<65> wb_diff2;
+    sc_biguint<128> wb_qr1;
+    sc_biguint<128> wb_qr2;
 };
 
 
