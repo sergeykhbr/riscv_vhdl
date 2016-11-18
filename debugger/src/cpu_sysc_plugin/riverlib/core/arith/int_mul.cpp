@@ -148,7 +148,7 @@ void IntMul::registers() {
         uint64_t t1 = v.result.read()(63,0).to_uint64();
         uint64_t t2 = r.reference_mul.to_uint64();
         if (t1 != t2) {
-            printf("IntMul: error\n");
+            cout << "IntMul: error\n";
         }
     }
     r = v;

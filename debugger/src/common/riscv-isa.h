@@ -288,9 +288,8 @@ static const uint16_t CSR_mip           = 0x344;
 /// @}
 
 /** Exceptions */
-
-// Instruction address misaligned
 enum EExeption {
+    // Instruction address misaligned
     EXCEPTION_InstrMisalign   = 0,
     // Instruction access fault
     EXCEPTION_InstrFault      = 1,

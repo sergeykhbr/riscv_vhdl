@@ -17,11 +17,11 @@ namespace debugger {
 
 SC_MODULE(InstrExecute) {
     sc_in<bool> i_clk;
-    sc_in<bool> i_nrst;
-    sc_in<bool> i_cache_hold;
-    sc_in<bool> i_d_valid;
-    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_d_pc;
-    sc_in<sc_uint<32>> i_d_instr;
+    sc_in<bool> i_nrst;                         // Reset active LOW
+    sc_in<bool> i_cache_hold;                   // Hold execution while memory bus is busy
+    sc_in<bool> i_d_valid;                      // Decoded instruction is valid
+    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_d_pc;      // Instruction pointer on decoded instruction
+    sc_in<sc_uint<32>> i_d_instr;               // Decoded instruction value
     sc_in<bool> i_wb_done;                      // write back done (Used to clear hazardness)
     sc_in<bool> i_memop_store;                  // Store to memory operation
     sc_in<bool> i_memop_load;                   // Load from memoru operation
@@ -53,17 +53,16 @@ SC_MODULE(InstrExecute) {
     sc_out<sc_uint<5>> o_trap_code;             // bit[4] : 1=interrupt; 0=exception; bits[3:0]=code
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_trap_pc;  // trap on pc
 
-
     sc_out<bool> o_memop_sign_ext;              // Load data with sign extending
     sc_out<bool> o_memop_load;                  // Load data instruction
     sc_out<bool> o_memop_store;                 // Store data instruction
     sc_out<sc_uint<2>> o_memop_size;            // 0=1bytes; 1=2bytes; 2=4bytes; 3=8bytes
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_memop_addr;// Memory access address
 
-    sc_out<bool> o_valid;
-    sc_out<sc_uint<BUS_ADDR_WIDTH>> o_pc;
-    sc_out<sc_uint<BUS_ADDR_WIDTH>> o_npc;
-    sc_out<sc_uint<32>> o_instr;
+    sc_out<bool> o_valid;                       // Output is valid
+    sc_out<sc_uint<BUS_ADDR_WIDTH>> o_pc;       // Valid instruction pointer
+    sc_out<sc_uint<BUS_ADDR_WIDTH>> o_npc;      // Next instruction pointer. Next decoded pc must match to this value or will be ignored.
+    sc_out<sc_uint<32>> o_instr;                // Valid instruction value
 
 
     void comb();
@@ -81,6 +80,10 @@ private:
         Multi_Total
     };
 
+    struct multi_arith_type {
+        sc_signal<sc_uint<RISCV_ARCH>> arr[Multi_Total];
+    };
+
     struct RegistersType {
         sc_signal<bool> d_valid;                        // Valid decoded instruction latch
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> pc;
@@ -94,32 +97,32 @@ private:
         sc_uint<2> memop_size;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> memop_addr;
 
-        sc_signal<sc_uint<5>> multi_res_addr;
-        sc_signal<sc_uint<BUS_ADDR_WIDTH>> multi_pc;
-        sc_signal<sc_uint<BUS_ADDR_WIDTH>> multi_npc;
-        sc_signal<sc_uint<32>> multi_instr;
+        sc_signal<sc_uint<5>> multi_res_addr;           // latched output reg. address while multi-cycle instruction
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> multi_pc;    // latched pc-value while multi-cycle instruction
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> multi_npc;   // latched npc-value while multi-cycle instruction
+        sc_signal<sc_uint<32>> multi_instr;             // Multi-cycle instruction is under processing
         sc_signal<bool> multi_ena[Multi_Total];         // Enable pulse for Operation that takes more than 1 clock
         sc_signal<bool> multi_rv32;                     // Long operation with 32-bits operands
         sc_signal<bool> multi_unsigned;                 // Long operation with unsiged operands
         sc_signal<bool> multi_residual_high;            // Flag for Divider module: 0=divsion output; 1=residual output
                                                         // Flag for multiplier: 0=usual; 1=get high bits
         sc_signal<bool> multiclock_ena;
-        sc_signal<sc_uint<Multi_Total>> multi_type;     // Keep type of the multi-cycle operation
         sc_signal<sc_uint<RISCV_ARCH>> multi_a1;        // Multi-cycle operand 1
         sc_signal<sc_uint<RISCV_ARCH>> multi_a2;        // Multi-cycle operand 2
 
-        sc_signal<sc_uint<5>> hazard_addr[2];
-        sc_signal<sc_uint<2>> hazard_depth;
+        sc_signal<sc_uint<5>> hazard_addr0;             // Updated register address on previous step
+        sc_signal<sc_uint<5>> hazard_addr1;             // Updated register address on pre-previous step
+        sc_signal<sc_uint<2>> hazard_depth;             // Number of modificated registers that wasn't done yet
 
         sc_signal<bool> ext_irq_pulser;                 // Form 1 clock pulse from strob
         sc_signal<bool> trap_ena;                       // Trap occur, switch mode
-        sc_uint<5> trap_code_waiting;                   // To avoid multi-cycle collision
+        sc_uint<5> trap_code_waiting;                   // To avoid multi-cycle instruction collision
         sc_signal<sc_uint<5>> trap_code;                // bit[4] : 1 = interrupt; 0 = exception
                                                         // bit[3:0] : trap code
-        sc_signal<sc_uint<BUS_ADDR_WIDTH>> trap_pc;     // trap on pc
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> trap_pc;     // pc that caused a trap 
     } v, r;
     sc_signal<bool> w_hazard_detected;
-    sc_signal<sc_uint<RISCV_ARCH>> wb_arith_res[Multi_Total];
+    multi_arith_type wb_arith_res;
     sc_signal<bool> w_arith_valid[Multi_Total];
     sc_signal<bool> w_arith_busy[Multi_Total];
     bool w_interrupt;

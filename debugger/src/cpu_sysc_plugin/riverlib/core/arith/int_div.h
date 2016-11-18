@@ -47,6 +47,9 @@ private:
         sc_uint<RISCV_ARCH> reference_div;
         sc_biguint<128> qr;
         sc_biguint<65> divider;
+
+        sc_uint<64> a1_dbg;     // Store this value for output in a case of error
+        sc_uint<64> a2_dbg;
     } v, r;
 
     // 2 stages per one clock to improve divider performance

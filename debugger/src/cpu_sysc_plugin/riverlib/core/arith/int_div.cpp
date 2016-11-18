@@ -114,10 +114,13 @@ void IntDiv::comb() {
         v.resid = i_residual;
         v.invert = !i_unsigned.read() & (i_a1.read()[63] ^ i_a2.read()[63]);
 
+        v.a1_dbg = i_a1;
+        v.a2_dbg = i_a2;
         v.reference_div = compute_reference(i_unsigned.read(), i_rv32.read(),
                                      i_residual.read(),
                                      i_a1.read(), i_a2.read());
     } else if (r.ena.read()[32]) {
+        v.busy = 0;
         if (r.invert.read()) {
             v.qr = (~r.qr) + 1;
         } else {
@@ -132,10 +135,6 @@ void IntDiv::comb() {
         v.qr = wb_qr2;
     }
     
-    if (r.ena.read()[32]) {
-        v.busy = 0;
-    }
-
 
     if (i_nrst.read() == 0) {
         v.result = 0;
@@ -161,8 +160,10 @@ void IntDiv::registers() {
             char tstr[512];
             RISCV_sprintf(tstr, sizeof(tstr), 
                 "IntDiv error: rv32=%d, resid=%d, invert=%d, "
+                "(%016" RV_PRI64 "x/%016" RV_PRI64 "x) => "
                 "%016" RV_PRI64 "x != %016" RV_PRI64 "x\n",
-                r.rv32.read(), r.resid.read(), r.invert.read(), t1, t2);
+                r.rv32.read(), r.resid.read(), r.invert.read(),
+                r.a1_dbg.to_uint64(), r.a2_dbg.to_uint64(), t1, t2);
             cout << tstr;
             cout.flush();
         }
