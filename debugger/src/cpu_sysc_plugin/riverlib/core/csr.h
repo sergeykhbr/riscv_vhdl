@@ -56,4 +56,4 @@ private:
 
 }  // namespace debugger
 
-#endif  // #ifndef __DEBUGGER_RIVERLIB_CSR_H__
+#endif  // __DEBUGGER_RIVERLIB_CSR_H__

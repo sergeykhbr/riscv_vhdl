@@ -2,8 +2,8 @@
 --! @file
 --! @copyright Copyright 2016 GNSS Sensor Ltd. All right reserved.
 --! @author    Sergey Khabarov - sergeykhbr@gmail.com
---! @brief     "River" CPU internal configuration parameters that are not 
---!            depend from external bus.
+--! @brief     "River" CPU internal configuration parameters that don't 
+--!            depend of external bus.
 -----------------------------------------------------------------------------
 
 --! Standard library.
@@ -41,6 +41,43 @@ package river_cfg is
   --! @}
   
   constant RESET_VECTOR : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00001000";
+
+  --! @name   Integer Registers specified by ISA
+  --! @{
+    constant Reg_Zero : integer := 0;
+    constant Reg_ra : integer := 1;       -- [1] Return address
+    constant Reg_sp : integer := 2;       -- [2] Stack pointer
+    constant Reg_gp : integer := 3;       -- [3] Global pointer
+    constant Reg_tp : integer := 4;       -- [4] Thread pointer
+    constant Reg_t0 : integer := 5;       -- [5] Temporaries 0 s3
+    constant Reg_t1 : integer := 6;       -- [6] Temporaries 1 s4
+    constant Reg_t2 : integer := 7;       -- [7] Temporaries 2 s5
+    constant Reg_s0 : integer := 8;       -- [8] s0/fp Saved register/frame pointer
+    constant Reg_s1 : integer := 9;       -- [9] Saved register 1
+    constant Reg_a0 : integer := 10;      -- [10] Function argumentes 0
+    constant Reg_a1 : integer := 11;      -- [11] Function argumentes 1
+    constant Reg_a2 : integer := 12;      -- [12] Function argumentes 2
+    constant Reg_a3 : integer := 13;      -- [13] Function argumentes 3
+    constant Reg_a4 : integer := 14;      -- [14] Function argumentes 4
+    constant Reg_a5 : integer := 15;      -- [15] Function argumentes 5
+    constant Reg_a6 : integer := 16;      -- [16] Function argumentes 6
+    constant Reg_a7 : integer := 17;      -- [17] Function argumentes 7
+    constant Reg_s2 : integer := 18;      -- [18] Saved register 2
+    constant Reg_s3 : integer := 19;      -- [19] Saved register 3
+    constant Reg_s4 : integer := 20;      -- [20] Saved register 4
+    constant Reg_s5 : integer := 21;      -- [21] Saved register 5
+    constant Reg_s6 : integer := 22;      -- [22] Saved register 6
+    constant Reg_s7 : integer := 23;      -- [23] Saved register 7
+    constant Reg_s8 : integer := 24;      -- [24] Saved register 8
+    constant Reg_s9 : integer := 25;      -- [25] Saved register 9
+    constant Reg_s10 : integer := 26;     -- [26] Saved register 10
+    constant Reg_s11 : integer := 27;     -- [27] Saved register 11
+    constant Reg_t3 : integer := 28;      -- [28] 
+    constant Reg_t4 : integer := 29;      -- [29] 
+    constant Reg_t5 : integer := 30;      -- [30] 
+    constant Reg_t6 : integer := 31;      -- [31] 
+    constant Reg_Total : integer := 32;
+  --! @}
 
   --! @name   Instruction formats specified by ISA specification
   --! @{
@@ -130,7 +167,20 @@ package river_cfg is
   constant Instr_Total : integer := 71;
   --! @}
 
+  --! @name PRV bits possible values:
   --!
+  --! @{
+  --! User-mode
+  constant PRV_U : std_logic_vector(1 downto 0) := "00";
+  --! super-visor mode
+  constant PRV_S : std_logic_vector(1 downto 0) := "01";
+  --! hyper-visor mode
+  constant PRV_H : std_logic_vector(1 downto 0) := "10";
+  --! machine mode
+  constant PRV_M : std_logic_vector(1 downto 0) := "11";
+  --! @}
+
+
   --! @name CSR registers.
   --!
   --! @{

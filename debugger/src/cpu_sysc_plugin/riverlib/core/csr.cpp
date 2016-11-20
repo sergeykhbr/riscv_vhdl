@@ -40,6 +40,7 @@ CsrRegs::CsrRegs(sc_module_name name_, sc_trace_file *vcd)
 
 void CsrRegs::comb() {
     sc_uint<RISCV_ARCH> wb_rdata = 0;
+    bool w_ie;
 
     v = r;
 
@@ -133,7 +134,10 @@ void CsrRegs::comb() {
         }
     }
 
-    bool w_ie = (r.mode.read() != PRV_M) || r.mie.read();
+    w_ie = 0;
+    if ((r.mode.read() != PRV_M) || r.mie.read()) {
+        w_ie = 1;
+    }
 
     if (!i_nrst.read()) {
         v.mtvec = 0;
