@@ -27,6 +27,32 @@ IntDiv::IntDiv(sc_module_name name_, sc_trace_file *vcd)
     SC_METHOD(registers);
     sensitive << i_clk.pos();
 
+#if 0
+    vcd = sc_create_vcd_trace_file("intdiv");
+    vcd->set_time_unit(1, SC_PS);
+
+    sc_trace(vcd, i_clk, "i_clk");
+    sc_trace(vcd, i_nrst, "i_nrst");
+    sc_trace(vcd, i_ena, "i_ena");
+    sc_trace(vcd, i_unsigned, "i_unsigned");
+    sc_trace(vcd, i_rv32, "i_rv32");
+    sc_trace(vcd, i_residual, "i_residual");
+    sc_trace(vcd, i_a1, "i_a1");
+    /*sc_trace(vcd, i_a1.read()[63], "i_a1 [63]");
+    sc_trace(vcd, i_a1.read()[62], "i_a1 [62]");
+    sc_trace(vcd, i_a1.read()[61], "i_a1 [61]");
+    sc_trace(vcd, i_a1.read()[60], "i_a1 [60]");
+    sc_trace(vcd, i_a1.read()[59], "i_a1 [59]");
+    sc_trace(vcd, i_a1.read()[58], "i_a1 [58]");
+    sc_trace(vcd, i_a1.read()[57], "i_a1 [57]");
+    sc_trace(vcd, i_a1.read()[56], "i_a1 [56]");
+    sc_trace(vcd, i_a1.read()[55], "i_a1 [55]");
+    sc_trace(vcd, i_a1.read()[54], "i_a1 [54]");*/
+    sc_trace(vcd, i_a2, "i_a2");
+    //sc_trace(vcd, o_res, "o_res");
+    //sc_trace(vcd, o_valid, "o_valid");
+    //sc_trace(vcd, o_busy, "o_busy");
+#else
     if (vcd) {
         sc_trace(vcd, i_ena, "/top/proc0/exec0/div0/i_ena");
         sc_trace(vcd, o_res, "/top/proc0/exec0/div0/o_res");
@@ -42,6 +68,7 @@ IntDiv::IntDiv(sc_module_name name_, sc_trace_file *vcd)
         sc_trace(vcd, wb_qr2, "/top/proc0/exec0/div0/wb_qr2");
 
     }
+#endif
 };
 
 

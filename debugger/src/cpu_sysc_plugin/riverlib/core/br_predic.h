@@ -14,17 +14,16 @@
 namespace debugger {
 
 SC_MODULE(BranchPredictor) {
-    sc_in<bool> i_clk;
-    sc_in<bool> i_nrst;
-    sc_in<bool> i_hold;
-    sc_in<bool> i_f_mem_request;
-    sc_in<bool> i_f_predic_miss;
-    sc_in<bool> i_f_instr_valid;
-    sc_in<sc_uint<32>> i_f_instr;
-    sc_in<sc_uint<32>> i_e_npc;
-    sc_in<sc_uint<RISCV_ARCH>> i_ra;   // Return address
-
-    sc_out<sc_uint<32>> o_npc_predict;
+    sc_in<bool> i_clk;                  // CPU clock
+    sc_in<bool> i_nrst;                 // Reset. Active LOW.
+    sc_in<bool> i_hold;                 // Hold pipeline by any reason
+    sc_in<bool> i_f_mem_request;        // Memory request from 'fetch' is valid, form next prediction address
+    sc_in<bool> i_f_predic_miss;        // Fetch modul detects deviation between predicted and valid pc.
+    sc_in<bool> i_f_instr_valid;        // Fetched instruction is valid
+    sc_in<sc_uint<32>> i_f_instr;       // Fetched instruction value is used for fast parse 'jump/branch' in predictor
+    sc_in<sc_uint<32>> i_e_npc;         // Valid instruction value awaited by 'Executor'
+    sc_in<sc_uint<RISCV_ARCH>> i_ra;    // Return address register value
+    sc_out<sc_uint<32>> o_npc_predict;  // Predicted next instruction address
 
     void comb();
     void registers();

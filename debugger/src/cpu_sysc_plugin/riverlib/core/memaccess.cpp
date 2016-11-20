@@ -57,16 +57,20 @@ MemAccess::MemAccess(sc_module_name name_, sc_trace_file *vcd)
 
 
 void MemAccess::comb() {
+    bool is_waiting;
+    bool w_memop;
+    bool w_o_valid;
+    bool w_o_wena;
+
     v = r;
 
-    bool w_memop;
     w_mem_valid = 0;
     w_mem_write = 0;
     wb_mem_sz = 0;
     wb_mem_addr = 0;
     wb_mem_wdata = 0;
 
-    bool is_waiting = r.wait_resp.read() & !i_mem_data_valid.read();
+    is_waiting = r.wait_resp.read() & !i_mem_data_valid.read();
     v.wait_resp = is_waiting;
 
     w_memop = i_memop_load.read() || i_memop_store.read();
@@ -77,7 +81,10 @@ void MemAccess::comb() {
     if (i_e_valid.read()) {
         v.waddr = i_res_addr;
         v.wdata = i_res_data;
-        v.wena = i_res_addr.read().or_reduce(); // Write if none zero
+        v.wena = 1;
+        if (i_res_addr.read() == 0) {
+            v.wena = 0;
+        }
 
         if (w_memop) {
             v.sign_ext = i_memop_sign_ext;
@@ -124,9 +131,10 @@ void MemAccess::comb() {
         wb_res_wdata = r.wdata;
     }
 
-    bool w_valid = r.valid.read() || i_mem_data_valid.read();
+    w_o_valid = r.valid.read() || i_mem_data_valid.read();
+    w_o_wena = r.wena & w_o_valid;
 
-    if (w_valid) {
+    if (w_o_valid) {
         v.step_cnt = r.step_cnt + 1;
     }
 
@@ -149,10 +157,10 @@ void MemAccess::comb() {
     o_mem_addr = wb_mem_addr;
     o_mem_data = wb_mem_wdata;
 
-    o_wena = r.wena & w_valid;
+    o_wena = w_o_wena;
     o_waddr = r.waddr;
     o_wdata = wb_res_wdata;
-    o_valid = w_valid;
+    o_valid = w_o_valid;
     o_pc = r.pc;
     o_instr = r.instr;
     o_step_cnt = r.step_cnt;

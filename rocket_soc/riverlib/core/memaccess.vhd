@@ -1,0 +1,197 @@
+-----------------------------------------------------------------------------
+--! @file
+--! @copyright Copyright 2016 GNSS Sensor Ltd. All right reserved.
+--! @author    Sergey Khabarov - sergeykhbr@gmail.com
+--! @brief     CPU Memory Access stage.
+------------------------------------------------------------------------------
+
+library ieee;
+use ieee.std_logic_1164.all;
+library commonlib;
+use commonlib.types_common.all;
+--! RIVER CPU specific library.
+library riverlib;
+--! RIVER CPU configuration constants.
+use riverlib.river_cfg.all;
+
+
+entity MemAccess is
+  port (
+    i_clk  : in std_logic;
+    i_nrst : in std_logic;
+    i_e_valid : in std_logic;                                         -- Execution stage outputs are valid
+    i_e_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);          -- Execution stage instruction pointer
+    i_e_instr : in std_logic_vector(31 downto 0);                     -- Execution stage instruction value
+
+    i_res_addr : in std_logic_vector(4 downto 0);                     -- Register address to be written (0=no writing)
+    i_res_data : in std_logic_vector(RISCV_ARCH-1 downto 0);          -- Register value to be written
+    i_memop_sign_ext : in std_logic;                                  -- Load data with sign extending (if less than 8 Bytes)
+    i_memop_load : in std_logic;                                      -- Load data from memory and write to i_res_addr
+    i_memop_store : in std_logic;                                     -- Store i_res_data value into memory
+    i_memop_size : in std_logic_vector(1 downto 0);                   -- Encoded memory transaction size in bytes: 0=1B; 1=2B; 2=4B; 3=8B
+    i_memop_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);    -- Memory access address
+    o_wena : out std_logic;                                           -- Write enable signal
+    o_waddr : out std_logic_vector(4 downto 0);                       -- Output register address (0 = x0 = no write)
+    o_wdata : out std_logic_vector(RISCV_ARCH-1 downto 0);            -- Register value
+
+    -- Memory interface:
+    o_mem_valid : out std_logic;                                      -- Memory request is valid
+    o_mem_write : out std_logic;                                      -- Memory write request
+    o_mem_sz : out std_logic_vector(1 downto 0);                      -- Encoded data size in bytes: 0=1B; 1=2B; 2=4B; 3=8B
+    o_mem_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);     -- Data path requested address
+    o_mem_data : out std_logic_vector(BUS_DATA_WIDTH-1 downto 0);     -- Data path requested data (write transaction)
+    i_mem_data_valid : in std_logic;                                  -- Data path memory response is valid
+    i_mem_data_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0); -- Data path memory response address
+    i_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);      -- Data path memory response value
+
+    o_valid : out std_logic;                                          -- Output is valid
+    o_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);           -- Valid instruction pointer
+    o_instr : out std_logic_vector(31 downto 0);                      -- Valid instruction value
+    o_step_cnt : out std_logic_vector(63 downto 0)                    -- Number of valid executed instructions
+  );
+end; 
+ 
+architecture arch_MemAccess of MemAccess is
+
+  type RegistersType is record
+      valid : std_logic;
+      pc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+      instr : std_logic_vector(31 downto 0);
+
+      wait_resp : std_logic;
+      wena : std_logic;
+      waddr : std_logic_vector(4 downto 0);
+      sign_ext : std_logic;
+      size : std_logic_vector(1 downto 0);
+      wdata : std_logic_vector(RISCV_ARCH-1 downto 0);
+      step_cnt : std_logic_vector(63 downto 0);
+  end record;
+
+  signal r, rin : RegistersType;
+
+begin
+
+
+  comb : process(i_nrst, i_e_valid, i_e_pc, i_e_instr, i_res_addr, i_res_data,
+                i_memop_sign_ext, i_memop_load, i_memop_store, i_memop_size,
+                i_memop_addr, i_mem_data_valid, i_mem_data_addr, i_mem_data, r)
+    variable v : RegistersType;
+    variable w_mem_valid : std_logic;
+    variable w_mem_write : std_logic;
+    variable wb_mem_sz : std_logic_vector(1 downto 0);
+    variable wb_mem_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    variable wb_mem_wdata : std_logic_vector(RISCV_ARCH-1 downto 0);
+    variable wb_res_wdata : std_logic_vector(RISCV_ARCH-1 downto 0);
+    variable is_waiting : std_logic;
+    variable w_memop : std_logic;
+    variable w_o_valid : std_logic;
+    variable w_o_wena : std_logic;
+  begin
+
+    v := r;
+
+    w_mem_valid := '0';
+    w_mem_write := '0';
+    wb_mem_sz := (others => '0');
+    wb_mem_addr := (others => '0');
+    wb_mem_wdata := (others => '0');
+
+    is_waiting := r.wait_resp and not i_mem_data_valid;
+    v.wait_resp := is_waiting;
+
+    w_memop := i_memop_load or i_memop_store;
+
+    v.pc := i_e_pc;
+    v.instr := i_e_instr;
+    v.valid := i_e_valid and not w_memop;
+    if i_e_valid = '1' then
+        v.waddr := i_res_addr;
+        v.wdata := i_res_data;
+        v.wena := '1';
+        if i_res_addr = "00000" then
+            v.wena := '0';
+        end if;
+
+        if w_memop = '1' then
+            v.sign_ext := i_memop_sign_ext;
+            v.size := i_memop_size;
+            v.wait_resp := '1';
+            w_mem_valid := '1';
+            w_mem_write := i_memop_store;
+            wb_mem_sz := i_memop_size;
+            wb_mem_addr := i_memop_addr;
+            wb_mem_wdata := i_res_data;
+        else
+            v.wait_resp := '0';
+        end if;
+    end if;
+
+    if (r.wait_resp and i_mem_data_valid) = '1' then
+        if r.sign_ext = '1' then
+            case r.size is
+            when MEMOP_1B =>
+                wb_res_wdata := i_mem_data;
+                wb_res_wdata(63 downto 8) := (others => i_mem_data(7));
+            when MEMOP_2B =>
+                wb_res_wdata := i_mem_data;
+                wb_res_wdata(63 downto 16) := (others => i_mem_data(15));
+            when MEMOP_4B =>
+                wb_res_wdata := i_mem_data;
+                wb_res_wdata(63 downto 32) := (others => i_mem_data(31));
+            when others =>
+                wb_res_wdata := i_mem_data;
+            end case;
+        else
+            wb_res_wdata := i_mem_data;
+        end if;
+    else
+        wb_res_wdata := r.wdata;
+    end if;
+
+    w_o_valid := r.valid or i_mem_data_valid;
+    w_o_wena := r.wena and w_o_valid;
+
+    if w_o_valid = '1' then
+        v.step_cnt := r.step_cnt + 1;
+    end if;
+
+
+    if i_nrst = '0' then
+        v.valid := '0';
+        v.pc := (others => '0');
+        v.instr := (others => '0');
+        v.waddr := (others => '0');
+        v.wdata := (others => '0');
+        v.wena := '0';
+        v.wait_resp := '0';
+        v.size := (others => '0');
+        v.sign_ext := '0';
+        v.step_cnt := (others => '0');
+    end if;
+
+    o_mem_valid <= w_mem_valid;
+    o_mem_write <= w_mem_write;
+    o_mem_sz <= wb_mem_sz;
+    o_mem_addr <= wb_mem_addr;
+    o_mem_data <= wb_mem_wdata;
+
+    o_wena <= w_o_wena;
+    o_waddr <= r.waddr;
+    o_wdata <= wb_res_wdata;
+    o_valid <= w_o_valid;
+    o_pc <= r.pc;
+    o_instr <= r.instr;
+    o_step_cnt <= r.step_cnt;
+    
+    rin <= v;
+  end process;
+
+  -- registers:
+  regs : process(i_clk)
+  begin 
+     if rising_edge(i_clk) then 
+        r <= rin;
+     end if; 
+  end process;
+
+end;

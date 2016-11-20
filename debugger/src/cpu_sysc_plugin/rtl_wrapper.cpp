@@ -16,7 +16,7 @@ namespace debugger {
 
 RtlWrapper::RtlWrapper(sc_module_name name)
     : sc_module(name),
-    o_clk("clk", 1, SC_NS) {
+    o_clk("clk", 10, SC_NS) {
 
     clockCycles_ = 1000000; // 1 MHz when default resolution = 1 ps
 

@@ -23,9 +23,10 @@ CpuRiscV_RTL::CpuRiscV_RTL(const char *name)
     freqHz_.make_uint64(1);
     RISCV_event_create(&config_done_, "config_done");
     RISCV_register_hap(static_cast<IHap *>(this));
-
+    sc_set_default_time_unit(1, SC_NS);
 #if GENERATE_VCD
     vcd_ = sc_create_vcd_trace_file("river_sim");
+    vcd_->set_time_unit(1, SC_PS);
 #else
     vcd_ = 0;
 #endif
