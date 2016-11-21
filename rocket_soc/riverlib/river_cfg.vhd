@@ -262,4 +262,320 @@ package river_cfg is
   --! @}
 
 
+  --! @param[in] i_clk CPU clock
+  --! @param[in] i_nrst Reset. Active LOW.
+  --! @param[in] i_hold Hold pipeline by any reason
+  --! @param[in] i_f_mem_request Memory request from 'fetch' is valid, form next prediction address
+  --! @param[in] i_f_predic_miss Fetch modul detects deviation between predicted and valid pc.
+  --! @param[in] i_f_instr_valid Fetched instruction is valid
+  --! @param[in] i_f_instr Fetched instruction value is used for fast parse 'jump/branch' in predictor
+  --! @param[in] i_e_npc Valid instruction value awaited by 'Executor'
+  --! @param[in] i_ra Return address register value
+  --! @param[out] o_npc_predic Predicted next instruction address
+  component BranchPredictor is
+  port (
+    i_clk : in std_logic;
+    i_nrst : in std_logic;
+    i_hold : in std_logic;
+    i_f_mem_request : in std_logic;
+    i_f_predic_miss : in std_logic;
+    i_f_instr_valid : in std_logic;
+    i_f_instr : in std_logic_vector(31 downto 0);
+    i_e_npc : in std_logic_vector(31 downto 0);
+    i_ra : in std_logic_vector(RISCV_ARCH-1 downto 0);
+    o_npc_predict : out std_logic_vector(31 downto 0)
+  );
+  end component; 
+
+  --! @param[in] i_clk CPU clock
+  --! @param[in] i_nrst Reset. Active LOW.
+  --! @param[in] i_xret XRet instruction signals mode switching
+  --! @param[in] i_addr CSR address, if xret=1 switch mode accordingly
+  --! @param[in] i_wena Write enable
+  --! @param[in] i_wdata CSR writing value
+  --! @param[out] o_rdata CSR read value
+  --! @param[in] i_trap_ena Trap pulse
+  --! @param[in] i_trap_code bit[4] : 1=interrupt; 0=exception; bits[3:0]=code
+  --! @param[in] i_trap_pc trap on pc
+  --! @param[out] o_ie Interrupt enable bit
+  --! @param[out] o_mode CPU mode
+  --! @param[out] o_mtvec Interrupt descriptors table
+  component CsrRegs is
+  port (
+    i_clk : in std_logic;
+    i_nrst : in std_logic;
+    i_xret : in std_logic;
+    i_addr : in std_logic_vector(11 downto 0);
+    i_wena : in std_logic;
+    i_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0);
+    o_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0);
+    i_trap_ena : in std_logic;
+    i_trap_code : in std_logic_vector(4 downto 0);
+    i_trap_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_ie : out std_logic;
+    o_mode : out std_logic_vector(1 downto 0);
+    o_mtvec : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0)
+  );
+  end component; 
+
+  --! @param[in] i_clk CPU clock
+  --! @param[in] i_nrst Reset. Active LOW.
+  --! @param[in] i_any_hold Hold pipeline by any reason
+  --! @param[in] i_f_valid Fetch input valid
+  --! @param[in] i_f_pc Fetched pc
+  --! @param[in] i_f_instr Fetched instruction value
+  --! @param[out] o_valid Current output values are valid
+  --! @param[out] o_pc Current instruction pointer value
+  --! @param[out] o_instr Current instruction value
+  --! @param[out] o_memop_store Store to memory operation
+  --! @param[out] o_memop_load Load from memoru operation
+  --! @param[out] o_memop_sign_ext Load memory value with sign extending
+  --! @param[out] o_memop_size Memory transaction size
+  --! @param[out] o_rv32 32-bits instruction
+  --! @param[out] o_insigned_op Unsigned operands
+  --! @param[out] o_isa_type Instruction format accordingly with ISA
+  --! @param[out] o_instr_vec One bit per decoded instruction bus
+  --! @param[out] o_exception Unimplemented instruction
+  component InstrDecoder is
+  port (
+    i_clk  : in std_logic;
+    i_nrst : in std_logic;
+    i_any_hold : in std_logic;
+    i_f_valid : in std_logic;
+    i_f_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_f_instr : in std_logic_vector(31 downto 0);
+    o_valid : out std_logic;
+    o_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_instr : out std_logic_vector(31 downto 0);
+    o_memop_store : out std_logic;
+    o_memop_load : out std_logic;
+    o_memop_sign_ext : out std_logic;
+    o_memop_size : out std_logic_vector(1 downto 0);
+    o_rv32 : out std_logic;
+    o_unsigned_op : out std_logic;
+    o_isa_type : out std_logic_vector(ISA_Total-1 downto 0);
+    o_instr_vec : out std_logic_vector(Instr_Total-1 downto 0);
+    o_exception : out std_logic
+  );
+  end component; 
+
+
+  --! @param[in] i_clk  
+  --! @param[in] i_nrst Reset active LOW
+  --! @param[in] i_cache_hold Hold execution while memory bus is busy
+  --! @param[in] i_d_valid Decoded instruction is valid
+  --! @param[in] i_d_pc Instruction pointer on decoded instruction
+  --! @param[in] i_d_instr Decoded instruction value
+  --! @param[in] i_wb_done write back done (Used to clear hazardness)
+  --! @param[in] i_memop_store Store to memory operation
+  --! @param[in] i_memop_load Load from memoru operation
+  --! @param[in] i_memop_sign_ext Load memory value with sign extending
+  --! @param[in] i_memop_size Memory transaction size
+  --! @param[in] i_unsigned_op Unsigned operands
+  --! @param[in] i_rv32 32-bits instruction
+  --! @param[in] i_isa_type Type of the instruction's structure (ISA spec.)
+  --! @param[in] i_ivec One pulse per supported instruction.
+  --! @param[in] i_ie Interrupt enable bit
+  --! @param[in] i_mtvec Interrupt descriptor table
+  --! @param[in] i_mode Current processor mode
+  --! @param[in] i_unsup_exception Unsupported instruction exception
+  --! @param[in] i_ext_irq External interrupt from PLIC (todo: timer & software interrupts)
+  --! @param[out] o_radr1 Integer register index 1
+  --! @param[in] i_rdata1 Integer register value 1
+  --! @param[out] o_radr2 Integer register index 2
+  --! @param[in] i_rdata2 Integer register value 2
+  --! @param[out] o_res_addr Address to store result of the instruction (0=do not store)
+  --! @param[out] o_res_data Value to store
+  --! @param[out] o_pipeline_hold Hold pipeline while 'writeback' not done or multi-clock instruction.
+  --! @param[out] o_xret XRET instruction: MRET, URET or other.
+  --! @param[out] o_csr_addr CSR address. 0 if not a CSR instruction with xret signals mode switching
+  --! @param[out] o_csr_wena Write new CSR value
+  --! @param[in] i_csr_rdata CSR current value
+  --! @param[out] o_csr_wdata CSR new value
+  --! @param[out] o_trap_ena Trap occurs  pulse
+  --! @param[out] o_trap_code bit[4] : 1=interrupt; 0=exception; bits[3:0]=code
+  --! @param[out] o_trap_pc trap on pc
+  --! @param[out] o_memop_sign_ext Load data with sign extending
+  --! @param[out] o_memop_load Load data instruction
+  --! @param[out] o_memop_store Store data instruction
+  --! @param[out] o_memop_size 0=1bytes; 1=2bytes; 2=4bytes; 3=8bytes
+  --! @param[out] o_memop_addr  Memory access address
+  --! @param[out] o_valid  Output is valid
+  --! @param[out] o_pc Valid instruction pointer
+  --! @param[out] o_npc Next instruction pointer. Next decoded pc must match to this value or will be ignored.
+  --! @param[out] o_instr Valid instruction value
+  component InstrExecute is
+  port (
+    i_clk  : in std_logic;
+    i_nrst : in std_logic;
+    i_cache_hold : in std_logic;
+    i_d_valid : in std_logic;
+    i_d_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_d_instr : in std_logic_vector(31 downto 0);
+    i_wb_done : in std_logic;
+    i_memop_store : in std_logic;
+    i_memop_load : in std_logic;
+    i_memop_sign_ext : in std_logic;
+    i_memop_size : in std_logic_vector(1 downto 0);
+    i_unsigned_op : in std_logic;
+    i_rv32 : in std_logic;
+    i_isa_type : in std_logic_vector(ISA_Total-1 downto 0);
+    i_ivec : in std_logic_vector(Instr_Total-1 downto 0);
+    i_ie : in std_logic;
+    i_mtvec : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_mode : in std_logic_vector(1 downto 0);
+    i_unsup_exception : in std_logic;
+    i_ext_irq : in std_logic;
+    o_radr1 : out std_logic_vector(4 downto 0);
+    i_rdata1 : in std_logic_vector(RISCV_ARCH-1 downto 0);
+    o_radr2 : out std_logic_vector(4 downto 0);
+    i_rdata2 : in std_logic_vector(RISCV_ARCH-1 downto 0);
+    o_res_addr : out std_logic_vector(4 downto 0);
+    o_res_data : out std_logic_vector(RISCV_ARCH-1 downto 0);
+    o_pipeline_hold : out std_logic;
+    o_xret : out std_logic;
+    o_csr_addr : out std_logic_vector(11 downto 0);
+    o_csr_wena : out std_logic;
+    i_csr_rdata : in std_logic_vector(RISCV_ARCH-1 downto 0);
+    o_csr_wdata : out std_logic_vector(RISCV_ARCH-1 downto 0);
+    o_trap_ena : out std_logic;
+    o_trap_code : out std_logic_vector(4 downto 0);
+    o_trap_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_memop_sign_ext : out std_logic;
+    o_memop_load : out std_logic;
+    o_memop_store : out std_logic;
+    o_memop_size : out std_logic_vector(1 downto 0);
+    o_memop_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_valid : out std_logic;
+    o_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_npc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_instr : out std_logic_vector(31 downto 0)
+  );
+  end component; 
+
+  --! @param[in] i_clk
+  --! @param[in] i_nrst
+  --! @param[in] i_cache_hold
+  --! @param[in] i_pipeline_hold
+  --! @param[out] o_mem_addr_valid
+  --! @param[out] o_mem_addr
+  --! @param[in] i_mem_data_valid
+  --! @param[in] i_mem_data_addr
+  --! @param[in] i_mem_data
+  --! @param[in] i_e_npc_valid
+  --! @param[in] i_e_npc
+  --! @param[in] i_predict_npc
+  --! @param[out] o_predict_miss
+  --! @param[out] o_valid
+  --! @param[out] o_pc
+  --! @param[out] o_instr
+  component InstrFetch is
+  port (
+    i_clk  : in std_logic;
+    i_nrst : in std_logic;
+    i_cache_hold : in std_logic;
+    i_pipeline_hold : in std_logic;
+    o_mem_addr_valid : out std_logic;
+    o_mem_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_mem_data_valid : in std_logic;
+    i_mem_data_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_mem_data : in std_logic_vector(31 downto 0);
+
+    i_e_npc_valid : in std_logic;
+    i_e_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_predict_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_predict_miss : out std_logic;
+
+    o_valid : out std_logic;
+    o_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_instr : out std_logic_vector(31 downto 0)
+  );
+  end component; 
+
+  --! @param[in] i_clk
+  --! @param[in] i_nrst
+  --! @param[in] i_e_valid Execution stage outputs are valid
+  --! @param[in] i_e_pc Execution stage instruction pointer
+  --! @param[in] i_e_instr Execution stage instruction value
+  --! @param[in] i_res_addr Register address to be written (0=no writing)
+  --! @param[in] i_res_data Register value to be written
+  --! @param[in] i_memop_sign_ext Load data with sign extending (if less than 8 Bytes)
+  --! @param[in] i_memop_load Load data from memory and write to i_res_addr
+  --! @param[in] i_memop_store Store i_res_data value into memory
+  --! @param[in] i_memop_size Encoded memory transaction size in bytes:
+  --!                         0=1B; 1=2B; 2=4B; 3=8B
+  --! @param[in] i_memop_addr Memory access address
+  --! @param[out] o_wena Write enable signal
+  --! @param[out] o_waddr Output register address (0 = x0 = no write)
+  --! @param[out] o_wdata Register value
+  --! @param[out] o_mem_valid Memory request is valid
+  --! @param[out] o_mem_write Memory write request
+  --! @param[out] o_mem_sz Encoded data size in bytes: 0=1B; 1=2B; 2=4B; 3=8B
+  --! @param[out] o_mem_addr Data path requested address
+  --! @param[out] o_mem_data Data path requested data (write transaction)
+  --! @param[in] i_mem_data_valid Data path memory response is valid
+  --! @param[in] i_mem_data_addr Data path memory response address
+  --! @param[in] i_mem_data Data path memory response value
+  --! @param[out] o_valid Output is valid
+  --! @param[out] o_pc Valid instruction pointer
+  --! @param[out] o_instr Valid instruction value
+  --! @param[out] o_step_cnt Number of valid executed instructions
+  component MemAccess is
+  port (
+    i_clk  : in std_logic;
+    i_nrst : in std_logic;
+    i_e_valid : in std_logic;
+    i_e_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_e_instr : in std_logic_vector(31 downto 0);
+    i_res_addr : in std_logic_vector(4 downto 0);
+    i_res_data : in std_logic_vector(RISCV_ARCH-1 downto 0);
+    i_memop_sign_ext : in std_logic;
+    i_memop_load : in std_logic;
+    i_memop_store : in std_logic;
+    i_memop_size : in std_logic_vector(1 downto 0);
+    i_memop_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_wena : out std_logic;
+    o_waddr : out std_logic_vector(4 downto 0);
+    o_wdata : out std_logic_vector(RISCV_ARCH-1 downto 0);
+    o_mem_valid : out std_logic;
+    o_mem_write : out std_logic;
+    o_mem_sz : out std_logic_vector(1 downto 0);
+    o_mem_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_mem_data : out std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+    i_mem_data_valid : in std_logic;
+    i_mem_data_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+    o_valid : out std_logic;
+    o_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_instr : out std_logic_vector(31 downto 0);
+    o_step_cnt : out std_logic_vector(63 downto 0)
+  );
+  end component; 
+
+  --! @param[in] i_clk CPU clock
+  --! @param[in] i_nrst Reset. Active LOW.
+  --! @param[in] i_radr1 Port 1 read address
+  --! @param[out] o_rdata1 Port 1 read value
+  --! @param[in] i_radr2 Port 2 read address
+  --! @param[out] o_rdata2 Port 2 read value
+  --! @param[in] i_waddr Writing value
+  --! @param[in] i_wena Writing is enabled
+  --! @param[in] i_wdata Writing value
+  --! @param[out] o_ra Return address for branch predictor
+  component RegIntBank is
+  port (
+    i_clk : in std_logic;
+    i_nrst : in std_logic;
+    i_radr1 : in std_logic_vector(4 downto 0);
+    o_rdata1 : out std_logic_vector(RISCV_ARCH-1 downto 0);
+    i_radr2 : in std_logic_vector(4 downto 0);
+    o_rdata2 : out std_logic_vector(RISCV_ARCH-1 downto 0);
+    i_waddr : in std_logic_vector(4 downto 0);
+    i_wena : in std_logic;
+    i_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0);
+    o_ra : out std_logic_vector(RISCV_ARCH-1 downto 0)
+  );
+  end component; 
+
+
 end; -- package body

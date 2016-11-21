@@ -29,7 +29,7 @@
 namespace debugger {
 
 SC_MODULE(Processor) {
-    sc_in<bool> i_clk;
+    sc_in<bool> i_clk;                                  // CPU clock
     sc_in<bool> i_nrst;                                 // Reset. Active LOW
     sc_in<bool> i_cache_hold;                           // Cache is busy, hold the pipeline
     // Control path:
