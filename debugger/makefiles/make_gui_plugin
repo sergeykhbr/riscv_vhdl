@@ -83,9 +83,9 @@ deploy:
 	cp $(QT_PATH)/lib/libQt5Widgets.* $(ELF_DIR)/qtlib
 	# Generate starting scripts:
 	@echo "#!/bin/bash\nexport LD_LIBRARY_PATH=\$$(pwd):\$$(pwd)/qtlib\n./appdbg64g.exe \"\$$@\"" > $(ELF_DIR)/_run.sh
-	@echo "#!/bin/bash\nexport LD_LIBRARY_PATH=\$$(pwd):\$$(pwd)/qtlib\n./appdbg64g.exe -gui -sim \"\$$@\"" > $(ELF_DIR)/_run_gui_sim.sh
+	@echo "#!/bin/bash\nexport LD_LIBRARY_PATH=\$$(pwd):\$$(pwd)/qtlib\n./appdbg64g.exe -c ../../targets/functional_sim_gui.json \"\$$@\"" > $(ELF_DIR)/_run_functional_sim.sh
 	chmod +x $(ELF_DIR)/_run.sh
-	chmod +x $(ELF_DIR)/_run_gui_sim.sh
+	chmod +x $(ELF_DIR)/_run_functional_sim.sh
 
 $(EXECUTABLE): prebuild $(OBJ_FILES)
 	echo $(CPP) $(LDFLAGS) $(OBJ_FILES) -o $@

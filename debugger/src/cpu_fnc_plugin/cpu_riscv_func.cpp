@@ -201,7 +201,7 @@ void CpuRiscV_Functional::updateQueue() {
     queue_.initProc();
     queue_.pushPreQueued();
         
-    while (cb = queue_.getNext(pContext->step_cnt)) {
+    while ((cb = queue_.getNext(pContext->step_cnt)) != 0) {
         static_cast<IClockListener *>(cb)->stepCallback(pContext->step_cnt);
     }
 }

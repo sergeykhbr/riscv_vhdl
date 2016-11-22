@@ -6,46 +6,69 @@
 
 include util.mak
 
+ifeq ($(SYSTEMC_SRC), )
+   $(error SYSTEMC_SRC variable must be defined)
+endif
+
+ifeq ($(SYSTEMC_LIB), )
+   $(error SYSTEMC_LIB variable must be defined)
+endif
+
 CC=gcc
 CPP=gcc
 CFLAGS=-g -c -Wall -Werror -fPIC -pthread
-LDFLAGS=-shared -pthread -L$(PLUGINS_ELF_DIR)/..
+LDFLAGS=-shared -pthread -L$(SYSTEMC_LIB) -L$(PLUGINS_ELF_DIR)/..
 INCL_KEY=-I
 DIR_KEY=-B
 
 
 # include sub-folders list
 INCL_PATH= \
+	$(SYSTEMC_SRC) \
 	$(TOP_DIR)src/common
 
 # source files directories list:
 SRC_PATH =\
 	$(TOP_DIR)src/common \
-	$(TOP_DIR)src/cpu_fnc_plugin
+	$(TOP_DIR)src/cpu_sysc_plugin \
+	$(TOP_DIR)src/cpu_sysc_plugin/riverlib \
+	$(TOP_DIR)src/cpu_sysc_plugin/riverlib/core \
+	$(TOP_DIR)src/cpu_sysc_plugin/riverlib/core/arith \
+	$(TOP_DIR)src/cpu_sysc_plugin/riverlib/cache
 
 VPATH = $(SRC_PATH)
 
 SOURCES = \
 	attribute \
 	autobuffer \
-	async_tqueue \
 	plugin_init \
-	cpu_riscv_func \
-	riscv-rv64i-user \
-	riscv-rv64i-priv \
-	instructions \
-	riscv-ext-a \
-	riscv-ext-m \
-	riscv-ext-f
+	cpu_riscv_rtl \
+	rtl_wrapper \
+	river_top \
+	icache \
+	dcache \
+	cache_top \
+	int_mul \
+	int_div \
+	br_predic \
+	csr \
+	decoder \
+	execute \
+	fetch \
+	memaccess \
+	proc \
+	regibank
 
 LIBS = \
+	systemc \
+	dbg64g \
+	pthread \
 	m \
-	stdc++ \
-	dbg64g
+	stdc++
 
 SRC_FILES = $(addsuffix .cpp,$(SOURCES))
 OBJ_FILES = $(addprefix $(PLUGINS_OBJ_DIR)/,$(addsuffix .o,$(SOURCES)))
-EXECUTABLE = $(addprefix $(PLUGINS_ELF_DIR)/,cpu_fnc_plugin.so)
+EXECUTABLE = $(addprefix $(PLUGINS_ELF_DIR)/,cpu_sysc_plugin.so)
 
 all: $(EXECUTABLE)
 

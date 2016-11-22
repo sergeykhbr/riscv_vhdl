@@ -10,20 +10,44 @@ OBJ_DIR = $(TOP_DIR)linuxbuild/obj
 ELF_DIR = $(TOP_DIR)linuxbuild/bin
 PLUGINS_OBJ_DIR = $(TOP_DIR)linuxbuild/obj/plugins
 PLUGINS_ELF_DIR = $(TOP_DIR)linuxbuild/bin/plugins
-#LD_LIBRARY_PATH=$(TOP_DIR)linuxbuild/bin
-#export QT_PATH=../../../../qt/Qt5.7.0/5.7/gcc_64
+
+ifeq ($(QT_PATH), )
+  $(warning Environment variable QT_PATH not defined. Build GUI not possible.)
+endif
+
+ifeq ($(SYSTEMC_PATH), )
+$(warning WARNING: Environment variable SYSTEMC_PATH not defined.)
+$(info "    Build SystemC model of RIVER CPU not possible. Do the following steps:")
+$(info "    1. Download systemc:")
+$(info "        http://accellera.org/downloads/standards/systemc")
+$(info "    2. Unpack and build sources")
+$(info "        tar -xvzf systemc-2.3.1a.tar.gz")
+$(info "        cd systemc-2.3.1a")
+$(info "        mkdir tmp")
+$(info "        cd tmp")
+$(info "        ./../configure --prefix=/home/user/systemc-2.3.1a/build")
+$(info "       make")
+$(info "       make install")
+$(info "    3. export SYSTEMC_PATH=/home/user/systemc-2.3.1a/build")
+endif
+
+SYSTEMC_SRC = $(SYSTEMC_PATH)/include
+SYSTEMC_LIB = $(SYSTEMC_PATH)/lib-linux64
+
 
 #-----------------------------------------------------------------------------
 .SILENT:
   TEA = 2>&1 | tee _$@-comp.err
 
-all: base gui_plugin
+all: base cpu_sysc_plugin gui_plugin
 	$(RM) $(ELF_DIR)/config.json
 	$(ECHO) "    All done.\n"
 
 base: libdbg64g simple_plugin socsim_plugin cpu_fnc_plugin appdbg64g
 
 gui: libdbg64g gui_plugin
+
+sc: libdbg64g cpu_sysc_plugin
 
 clean:
 	$(RM) $(TOP_DIR)linuxbuild
@@ -52,6 +76,11 @@ cpu_fnc_plugin:
 	$(MKDIR) ./$(PLUGINS_OBJ_DIR)/cpu_fnc
 	$(ECHO) "    Plugin " $@ " building started:"
 	make -f make_cpu_fnc_plugin TOP_DIR=$(TOP_DIR) PLUGINS_OBJ_DIR=$(PLUGINS_OBJ_DIR)/cpu_fnc PLUGINS_ELF_DIR=$(PLUGINS_ELF_DIR) $(TEA)
+
+cpu_sysc_plugin:
+	$(MKDIR) ./$(PLUGINS_OBJ_DIR)/cpu_sysc
+	$(ECHO) "    Plugin " $@ " building started:"
+	make -f make_cpu_sysc_plugin TOP_DIR=$(TOP_DIR) PLUGINS_OBJ_DIR=$(PLUGINS_OBJ_DIR)/cpu_fnc PLUGINS_ELF_DIR=$(PLUGINS_ELF_DIR) SYSTEMC_SRC=$(SYSTEMC_SRC) SYSTEMC_LIB=$(SYSTEMC_LIB) $(TEA)
 
 gui_plugin:
 	$(MKDIR) ./$(PLUGINS_OBJ_DIR)/gui

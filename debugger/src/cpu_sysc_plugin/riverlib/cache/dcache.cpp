@@ -49,10 +49,6 @@ void DCache::comb() {
     wb_wdata = 0;
     wb_rtmp = 0;
 
-    uint64_t r1 = i_req_data_addr.read();
-    uint64_t r2 = i_resp_mem_data.read();
-    uint64_t r3 = r.req_addr.read();
-
     wb_req_addr(BUS_ADDR_WIDTH-1, 3) 
         = i_req_data_addr.read()(BUS_ADDR_WIDTH-1, 3);
 
@@ -97,7 +93,6 @@ void DCache::comb() {
         default:;
         }
     }
-    uint32_t x3 = wb_req_strob;
 
     switch (r.req_addr.read()(2, 0)) {
     case 1:
@@ -124,7 +119,6 @@ void DCache::comb() {
     default:
         wb_rtmp = i_resp_mem_data;
     } 
-    uint64_t x1 = wb_rtmp;
 
     switch (r.req_size.read()) {
     case 0:
@@ -139,7 +133,6 @@ void DCache::comb() {
     default:
         wb_rdata = wb_rtmp;
     }
-    uint64_t x2 = wb_rdata;
     
     if (i_req_data_valid.read()) {
         v.req_addr = i_req_data_addr;

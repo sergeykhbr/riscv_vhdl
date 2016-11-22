@@ -431,8 +431,9 @@ public:
         data->npc = data->pc + 4;
         if (data->mem_trace_file) {
             char tstr[512];
-            int sz = RISCV_sprintf(tstr, sizeof(tstr), 
-                        "[%08x] => %016I64x\n", (int)addr, dcache);
+            RISCV_sprintf(tstr, sizeof(tstr), 
+                        "[%08x] => %016" RV_PRI64 "x\n",
+                        static_cast<int>(addr), dcache);
             (*data->mem_trace_file) << tstr;
             data->mem_trace_file->flush();
         }
@@ -463,8 +464,9 @@ public:
         data->npc = data->pc + 4;
         if (data->mem_trace_file) {
             char tstr[512];
-            int sz = RISCV_sprintf(tstr, sizeof(tstr), 
-                    "[%08x] => %016I64x\n", (int)addr, dcache);
+            RISCV_sprintf(tstr, sizeof(tstr), 
+                    "[%08x] => %016" RV_PRI64 "x\n",
+                    static_cast<int>(addr), dcache);
             (*data->mem_trace_file) << tstr;
             data->mem_trace_file->flush();
         }
@@ -492,8 +494,9 @@ public:
         data->npc = data->pc + 4;
         if (data->mem_trace_file) {
             char tstr[512];
-            int sz = RISCV_sprintf(tstr, sizeof(tstr), 
-                    "[%08x] => %016I64x\n", (int)addr, dcache);
+            RISCV_sprintf(tstr, sizeof(tstr), 
+                    "[%08x] => %016" RV_PRI64 "x\n",
+                    static_cast<int>(addr), dcache);
             (*data->mem_trace_file) << tstr;
             data->mem_trace_file->flush();
         }
@@ -524,8 +527,9 @@ public:
         data->npc = data->pc + 4;
         if (data->mem_trace_file) {
             char tstr[512];
-            int sz = RISCV_sprintf(tstr, sizeof(tstr), 
-                        "[%08x] => %016I64x\n", (int)addr, dcache);
+            RISCV_sprintf(tstr, sizeof(tstr), 
+                        "[%08x] => %016" RV_PRI64 "x\n",
+                        static_cast<int>(addr), dcache);
             (*data->mem_trace_file) << tstr;
             data->mem_trace_file->flush();
         }
@@ -553,8 +557,9 @@ public:
         data->npc = data->pc + 4;
         if (data->mem_trace_file) {
             char tstr[512];
-            int sz = RISCV_sprintf(tstr, sizeof(tstr), 
-                        "[%08x] => %016I64x\n", (int)addr, dcache);
+            RISCV_sprintf(tstr, sizeof(tstr), 
+                        "[%08x] => %016" RV_PRI64 "x\n",
+                        static_cast<int>(addr), dcache);
             (*data->mem_trace_file) << tstr;
             data->mem_trace_file->flush();
         }
@@ -585,8 +590,9 @@ public:
         data->npc = data->pc + 4;
         if (data->mem_trace_file) {
             char tstr[512];
-            int sz = RISCV_sprintf(tstr, sizeof(tstr), 
-                        "[%08x] => %016I64x\n", (int)addr, dcache);
+            RISCV_sprintf(tstr, sizeof(tstr), 
+                        "[%08x] => %016" RV_PRI64 "x\n",
+                        static_cast<int>(addr), dcache);
             (*data->mem_trace_file) << tstr;
             data->mem_trace_file->flush();
         }
@@ -614,8 +620,9 @@ public:
         data->npc = data->pc + 4;
         if (data->mem_trace_file) {
             char tstr[512];
-            int sz = RISCV_sprintf(tstr, sizeof(tstr), 
-                    "[%08x] => %016I64x\n", (int)addr, dcache);
+            RISCV_sprintf(tstr, sizeof(tstr), 
+                    "[%08x] => %016" RV_PRI64 "x\n",
+                    static_cast<int>(addr), dcache);
             (*data->mem_trace_file) << tstr;
             data->mem_trace_file->flush();
         }
@@ -1030,8 +1037,9 @@ public:
         data->npc = data->pc + 4;
         if (data->mem_trace_file) {
             char tstr[512];
-            int sz = RISCV_sprintf(tstr, sizeof(tstr), 
-                        "[%08x] <= %016I64x\n", (int)addr, wdata);
+            RISCV_sprintf(tstr, sizeof(tstr), 
+                        "[%08x] <= %016" RV_PRI64 "x\n",
+                        static_cast<int>(addr), wdata);
             (*data->mem_trace_file) << tstr;
             data->mem_trace_file->flush();
         }
@@ -1059,8 +1067,9 @@ public:
         data->npc = data->pc + 4;
         if (data->mem_trace_file) {
             char tstr[512];
-            int sz = RISCV_sprintf(tstr, sizeof(tstr), 
-                        "[%08x] <= %016I64x\n", (int)addr, (uint32_t)wdata);
+            RISCV_sprintf(tstr, sizeof(tstr), 
+                        "[%08x] <= %016" RV_PRI64 "x\n",
+                        static_cast<int>(addr), wdata & 0xFFFFFFFF);
             (*data->mem_trace_file) << tstr;
             data->mem_trace_file->flush();
         }
@@ -1088,8 +1097,9 @@ public:
         data->npc = data->pc + 4;
         if (data->mem_trace_file) {
             char tstr[512];
-            int sz = RISCV_sprintf(tstr, sizeof(tstr), 
-                        "[%08x] <= %016I64x\n", (int)addr, (uint16_t)wdata);
+            RISCV_sprintf(tstr, sizeof(tstr), 
+                        "[%08x] <= %016" RV_PRI64 "x\n",
+                        static_cast<int>(addr), wdata & 0xFFFF);
             (*data->mem_trace_file) << tstr;
             data->mem_trace_file->flush();
         }
@@ -1117,7 +1127,7 @@ public:
         data->npc = data->pc + 4;
         if (data->mem_trace_file) {
             char tstr[512];
-            int sz = RISCV_sprintf(tstr, sizeof(tstr), 
+            RISCV_sprintf(tstr, sizeof(tstr), 
                         "[%08x] <= %016I64x\n", (int)addr, (uint8_t)wdata);
             (*data->mem_trace_file) << tstr;
             data->mem_trace_file->flush();

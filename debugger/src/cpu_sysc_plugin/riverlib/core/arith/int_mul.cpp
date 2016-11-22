@@ -7,6 +7,7 @@
  */
 
 #include "int_mul.h"
+#include "api_utils.h"
 
 namespace debugger {
 
@@ -148,7 +149,12 @@ void IntMul::registers() {
         uint64_t t1 = v.result.read()(63,0).to_uint64();
         uint64_t t2 = r.reference_mul.to_uint64();
         if (t1 != t2) {
-            cout << "IntMul: error\n";
+            char tstr[1024];
+            RISCV_sprintf(tstr, sizeof(tstr), 
+                "IntMul error: %016" RV_PRI64 "x != %016" RV_PRI64 "x",
+                t1, t2);
+            cout << tstr;
+            cout.flush();
         }
     }
     r = v;

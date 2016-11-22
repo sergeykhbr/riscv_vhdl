@@ -122,8 +122,6 @@ void CacheTop::comb() {
     default:;
     }
 
-    int t1 = r.state.read();
-    int t2 =  w_data_req_mem_valid.read();
     w_mem_valid = w_ctrl_req_mem_valid.read() | w_data_req_mem_valid.read();
     if (w_data_req_mem_valid.read()) {
         v.state = State_DMem;

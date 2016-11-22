@@ -190,8 +190,8 @@ void InstrExecute::comb() {
     if (i_d_pc.read() == r.npc.read()) {
         w_pc_valid = 1;
     }
-    w_d_acceptable = !i_cache_hold & i_d_valid 
-                          & w_pc_valid & !r.multiclock_ena;
+    w_d_acceptable = (!i_cache_hold) & i_d_valid 
+                          & w_pc_valid & (!r.multiclock_ena);
 
     v.ext_irq_pulser = i_ext_irq & i_ie;
     w_interrupt = 0;

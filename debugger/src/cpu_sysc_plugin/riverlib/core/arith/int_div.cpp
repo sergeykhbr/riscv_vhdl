@@ -139,7 +139,7 @@ void IntDiv::comb() {
         v.busy = 1;
         v.rv32 = i_rv32;
         v.resid = i_residual;
-        v.invert = !i_unsigned.read() & (i_a1.read()[63] ^ i_a2.read()[63]);
+        v.invert = (!i_unsigned.read()) & (i_a1.read()[63] ^ i_a2.read()[63]);
 
         v.a1_dbg = i_a1;
         v.a2_dbg = i_a2;

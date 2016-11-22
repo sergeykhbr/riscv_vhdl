@@ -6,6 +6,7 @@
  */
 
 #include "proc.h"
+#include "api_utils.h"
 
 namespace debugger {
 
@@ -235,7 +236,7 @@ void Processor::negedge_dbg_print() {
     int sz;
     if (w.m.valid.read()) {
         uint64_t line_cnt = w.m.step_cnt.read() + 1;
-        sz = sprintf(tstr, "%8I64d [%08x] %08x: ",
+        sz = RISCV_sprintf(tstr, sizeof(tstr), "%8" RV_PRI64 "d [%08x] %08x: ",
             line_cnt,
             w.m.pc.read().to_int(),
             w.m.instr.read().to_int());
@@ -243,11 +244,11 @@ void Processor::negedge_dbg_print() {
         uint64_t cur_val = w.w.wdata.read().to_int64();
         if (w.w.waddr.read() == 0 || prev_val == cur_val) {
             // not writing
-            sz += sprintf(&tstr[sz], "%s", "-\n");
+            sz += RISCV_sprintf(&tstr[sz], sizeof(tstr) - sz, "%s", "-\n");
         } else {
-            sz += sprintf(&tstr[sz], "%3s <= %016I64x\n",
-                        IREGS_NAMES[w.w.waddr.read().to_int()],
-                        cur_val);
+            sz += RISCV_sprintf(&tstr[sz], sizeof(tstr) - sz, 
+                   "%3s <= %016" RV_PRI64 "x\n", 
+                   IREGS_NAMES[w.w.waddr.read().to_int()], cur_val);
         }
 
         (*reg_dbg) << tstr;
@@ -255,12 +256,15 @@ void Processor::negedge_dbg_print() {
     }
     // Memory access debug:
     if (i_resp_data_valid.read()) {
-        sz = sprintf(tstr, "[%08x] ", i_resp_data_addr.read().to_uint());
+        sz = RISCV_sprintf(tstr, sizeof(tstr), "[%08x] ",
+                        i_resp_data_addr.read().to_uint());
         if (mem_dbg_write_flag) {
-            sz += sprintf(&tstr[sz], "<= %016I64x\n", 
+            sz += RISCV_sprintf(&tstr[sz], sizeof(tstr) - sz, 
+                "<= %016" RV_PRI64 "x\n", 
                 dbg_mem_write_value & dbg_mem_value_mask);
         } else {
-            sz += sprintf(&tstr[sz], "=> %016I64x\n", 
+            sz += RISCV_sprintf(&tstr[sz], sizeof(tstr) - sz, 
+                "=> %016" RV_PRI64 "x\n", 
                 i_resp_data_data.read().to_uint64() & dbg_mem_value_mask);
         }
         (*mem_dbg) << tstr;

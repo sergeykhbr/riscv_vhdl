@@ -70,7 +70,7 @@ void RtlWrapper::clk_negedge_proc() {
     clock_queue_.initProc();
     clock_queue_.pushPreQueued();
     uint64_t clk_cnt = i_timer.read();
-    while (cb = clock_queue_.getNext(clk_cnt)) {
+    while ((cb = clock_queue_.getNext(clk_cnt)) != 0) {
         static_cast<IClockListener *>(cb)->stepCallback(clk_cnt);
     }
 
@@ -78,7 +78,7 @@ void RtlWrapper::clk_negedge_proc() {
     step_queue_.initProc();
     step_queue_.pushPreQueued();
     uint64_t step_cnt = i_step_cnt.read();
-    while (cb = step_queue_.getNext(step_cnt)) {
+    while ((cb = step_queue_.getNext(step_cnt)) != 0) {
         static_cast<IClockListener *>(cb)->stepCallback(step_cnt);
     }
 
