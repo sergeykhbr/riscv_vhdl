@@ -133,8 +133,12 @@ void Greth::busyLoop() {
         }
 
         RISCV_event_clear(&event_tap_);
-        iclk0_->registerStepCallback(static_cast<IClockListener *>(this),
-                                    iclk0_->getStepCounter());
+        if (iclk0_) {
+            iclk0_->registerStepCallback(static_cast<IClockListener *>(this),
+                                        iclk0_->getStepCounter());
+        } else {
+            RISCV_error("Clock interface not found", NULL);
+        }
         if (RISCV_event_wait_ms(&event_tap_, 100) != 0) {
             RISCV_error("CPU queue callback timeout", NULL);
             continue;
