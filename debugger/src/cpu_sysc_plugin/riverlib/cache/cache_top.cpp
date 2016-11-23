@@ -101,6 +101,11 @@ CacheTop::~CacheTop() {
 
 
 void CacheTop::comb() {
+    bool w_mem_valid;
+    bool w_mem_write;
+    sc_uint<BUS_ADDR_WIDTH> wb_mem_addr;
+    sc_uint<BUS_DATA_BYTES> wb_mem_strob;
+    sc_uint<BUS_DATA_WIDTH> wb_mem_wdata;
     bool w_hold;
 
     v = r;

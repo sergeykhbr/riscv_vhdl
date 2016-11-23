@@ -79,12 +79,6 @@ private:
     sc_signal<bool> w_data_resp_mem_data_valid;
     sc_signal<sc_uint<BUS_DATA_WIDTH>> wb_data_resp_mem_data;
 
-    bool w_mem_valid;
-    bool w_mem_write;
-    sc_uint<BUS_ADDR_WIDTH> wb_mem_addr;
-    sc_uint<BUS_DATA_BYTES> wb_mem_strob;
-    sc_uint<BUS_DATA_WIDTH> wb_mem_wdata;
-
     ICache *i0;
     DCache *d0;
 };
