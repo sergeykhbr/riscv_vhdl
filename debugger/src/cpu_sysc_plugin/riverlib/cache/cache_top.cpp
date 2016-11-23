@@ -101,7 +101,8 @@ CacheTop::~CacheTop() {
 
 
 void CacheTop::comb() {
-   
+    bool w_hold;
+
     v = r;
 
     w_data_resp_mem_data_valid = 0;
@@ -143,9 +144,11 @@ void CacheTop::comb() {
         wb_mem_wdata = 0;
     }
 
-    bool w_hold = (!i_resp_mem_data_valid.read() && w_mem_valid
-                    && r.state.read() != State_Idle) 
-        || (w_ctrl_req_mem_valid.read() && w_data_req_mem_valid.read());
+    w_hold = 0;
+    if ((!i_resp_mem_data_valid.read() && w_mem_valid && r.state.read() != State_Idle) 
+        || (w_ctrl_req_mem_valid.read() && w_data_req_mem_valid.read())) {
+        w_hold = 1;
+    }
 
     if (!i_nrst.read()) {
         v.state = State_Idle;

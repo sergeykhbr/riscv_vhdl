@@ -41,6 +41,7 @@ VPATH = $(SRC_PATH)
 SOURCES = \
 	attribute \
 	autobuffer \
+	async_tqueue \
 	plugin_init \
 	cpu_riscv_rtl \
 	rtl_wrapper \
@@ -60,7 +61,6 @@ SOURCES = \
 	regibank
 
 LIBS = \
-	systemc \
 	dbg64g \
 	pthread \
 	m \
@@ -75,8 +75,8 @@ all: $(EXECUTABLE)
 all: $(EXECUTABLE)
 
 $(EXECUTABLE): $(OBJ_FILES)
-	echo $(CPP) $(LDFLAGS) $(OBJ_FILES) -o $@
-	$(CPP) $(LDFLAGS) $(OBJ_FILES) -o $@ $(addprefix -l,$(LIBS))
+	echo $(CPP) $(LDFLAGS) $(OBJ_FILES) -o $@ -Wl,-Bstatic -lsystemc -Wl,-Bdynamic $(addprefix -l,$(LIBS))
+	$(CPP) $(LDFLAGS) $(OBJ_FILES) -o $@ -Wl,-Bstatic -lsystemc -Wl,-Bdynamic $(addprefix -l,$(LIBS))
 	$(ECHO) "\n  Plugin '"$@"' has been built successfully.\n"
 
 $(addprefix $(PLUGINS_OBJ_DIR)/,%.o): %.cpp

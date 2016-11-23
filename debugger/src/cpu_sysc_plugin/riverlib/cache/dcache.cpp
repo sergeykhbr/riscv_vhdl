@@ -61,7 +61,23 @@ void DCache::comb() {
                 i_req_data_data.read()(7, 0), i_req_data_data.read()(7, 0),
                 i_req_data_data.read()(7, 0), i_req_data_data.read()(7, 0),
                 i_req_data_data.read()(7, 0));
-            wb_req_strob = 1 << i_req_data_addr.read()(2, 0);
+            if (i_req_data_addr.read()(2, 0) == 0x0) {
+                wb_req_strob = 0x01;
+            } else if (i_req_data_addr.read()(2, 0) == 0x1) {
+                wb_req_strob = 0x02;
+            } else if (i_req_data_addr.read()(2, 0) == 0x2) {
+                wb_req_strob = 0x04;
+            } else if (i_req_data_addr.read()(2, 0) == 0x3) {
+                wb_req_strob = 0x08;
+            } else if (i_req_data_addr.read()(2, 0) == 0x4) {
+                wb_req_strob = 0x10;
+            } else if (i_req_data_addr.read()(2, 0) == 0x5) {
+                wb_req_strob = 0x20;
+            } else if (i_req_data_addr.read()(2, 0) == 0x6) {
+                wb_req_strob = 0x40;
+            } else if (i_req_data_addr.read()(2, 0) == 0x7) {
+                wb_req_strob = 0x80;
+            }
             break;
         case 1:
             wb_wdata = (i_req_data_data.read()(15, 0),

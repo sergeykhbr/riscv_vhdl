@@ -44,13 +44,15 @@ ICache::ICache(sc_module_name name_, sc_trace_file *vcd)
 
 void ICache::comb() {
     // Instruction cache:
-    bool w_mem_valid = false;
+    bool w_mem_valid;
     sc_uint<BUS_ADDR_WIDTH> wb_mem_addr;
-
-    bool w_valid = false;
-    sc_uint<32> wb_data = 0;
+    bool w_valid;
+    sc_uint<32> wb_data;
     
     v = r;
+    w_mem_valid = false;
+    w_valid = false;
+    wb_data = 0;
 
     if (i_resp_mem_data_valid.read()) {
         wb_cached_addr = r.iline_addr_req.range(BUS_ADDR_WIDTH-1, 3);

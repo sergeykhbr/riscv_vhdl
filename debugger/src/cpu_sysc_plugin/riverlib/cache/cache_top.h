@@ -27,8 +27,8 @@ SC_MODULE(CacheTop) {
     // Data path:
     sc_in<bool> i_req_data_valid;
     sc_in<bool> i_req_data_write;
-    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_req_data_addr;
     sc_in<sc_uint<2>> i_req_data_size; // 0=1bytes; 1=2bytes; 2=4bytes; 3=8bytes
+    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_req_data_addr;
     sc_in<sc_uint<RISCV_ARCH>> i_req_data_data;
     sc_out<bool> o_resp_data_valid;
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_resp_data_addr;
@@ -79,8 +79,8 @@ private:
     sc_signal<bool> w_data_resp_mem_data_valid;
     sc_signal<sc_uint<BUS_DATA_WIDTH>> wb_data_resp_mem_data;
 
-    bool w_mem_valid = false;
-    bool w_mem_write = false;
+    bool w_mem_valid;
+    bool w_mem_write;
     sc_uint<BUS_ADDR_WIDTH> wb_mem_addr;
     sc_uint<BUS_DATA_BYTES> wb_mem_strob;
     sc_uint<BUS_DATA_WIDTH> wb_mem_wdata;
