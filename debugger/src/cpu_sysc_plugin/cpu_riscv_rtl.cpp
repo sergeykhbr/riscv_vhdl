@@ -48,7 +48,6 @@ CpuRiscV_RTL::CpuRiscV_RTL(const char *name)
     top_ = new RiverTop("top", vcd_);
     top_->i_clk(wrapper_->o_clk);
     top_->i_nrst(w_nrst);
-    top_->o_timer(wb_timer);
     top_->o_req_mem_valid(w_req_mem_valid);
     top_->o_req_mem_write(w_req_mem_write);
     top_->o_req_mem_addr(wb_req_mem_addr);
@@ -57,6 +56,7 @@ CpuRiscV_RTL::CpuRiscV_RTL(const char *name)
     top_->i_resp_mem_data_valid(w_resp_mem_data_valid);
     top_->i_resp_mem_data(wb_resp_mem_data);
     top_->i_ext_irq(w_interrupt);
+    top_->o_timer(wb_timer);
     top_->o_step_cnt(wb_step_cnt);
 
     //sc_trace(vcd_, w_req_mem_valid, "w_req_mem_valid");

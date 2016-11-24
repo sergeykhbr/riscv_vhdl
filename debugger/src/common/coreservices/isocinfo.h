@@ -83,17 +83,42 @@ struct GpioType {
     } u;
 };
 
-union DsuRunControlRegType {
-    struct bits_type {
-        uint64_t halt     : 1;
-        uint64_t stepping : 1;
-        uint64_t rsv1     : 2;
-        uint64_t core_id  : 16;
-        uint64_t rsv2     : 44;
-    } bits;
-    uint64_t val;
-    uint8_t  buf[8];
+struct DsuMapType {
+    // Base Address + 0x00000
+    uint64_t csr[1 << 12];
+    // Base Address + 0x08000
+    union ureg_type {
+        uint8_t buf[1 << (12 + 3)];
+        struct regs_type {
+            uint64_t iregs[32];     // integer registers
+            uint64_t pc;            // index = 32
+            uint64_t npc;           // index = 33
+            uint64_t rsrv;
+        } v;
+    } ureg;
+    // Base Address + 0x10000
+    union udbg_type {
+        uint8_t buf[1 << (12 + 3)];
+        struct debug_region_type {
+            union control_reg {
+                uint64_t val;
+                struct {
+                    uint64_t halt     : 1;
+                    uint64_t stepping : 1;
+                    uint64_t rsv1     : 2;
+                    uint64_t core_id  : 16;
+                    uint64_t rsv2     : 44;
+                } bits;
+            } control;
+            uint64_t step_cnt;
+            uint64_t add_breakpoint;
+            uint64_t remove_breakpoint;
+        } v;
+    } udbg;
+    // Base Address + 0x18000
+    uint64_t end;
 };
+
 
 const uint64_t REG_ADDR_ERROR = 0xFFFFFFFFFFFFFFFFull;
 

@@ -214,9 +214,6 @@
     <ClInclude Include="..\..\src\common\coreservices\iwire.h">
       <Filter>Source Files\common\coreservices</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\common\coreservices\ihostio.h">
-      <Filter>Source Files\common\coreservices</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\libdbg64g\services\bus\bus.h">
       <Filter>Source Files\services\bus</Filter>
     </ClInclude>

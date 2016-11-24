@@ -34,10 +34,12 @@ void CmdIsRunning::exec(AttributeType *args, AttributeType *res) {
         return;
     }
 
-    DsuRunControlRegType val;
+    Reg64Type t1;
+    DsuMapType::udbg_type::debug_region_type::control_reg ctrl;
     uint64_t addr = info_->addressRunControl();
-    tap_->read(addr, 8, val.buf);
-    if (val.bits.halt) {
+    tap_->read(addr, 8, t1.buf);
+    ctrl.val = t1.val;
+    if (ctrl.bits.halt) {
         res->make_boolean(false);
     } else {
         res->make_boolean(true);

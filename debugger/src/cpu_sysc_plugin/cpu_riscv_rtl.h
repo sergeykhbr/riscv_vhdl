@@ -45,6 +45,8 @@ public:
     virtual void step(uint64_t cnt) {}
     virtual uint64_t getReg(uint64_t idx) { return 0; }
     virtual void setReg(uint64_t idx, uint64_t val) {}
+    virtual uint64_t getCsr(uint64_t idx) { return 0; }
+    virtual void setCsr(uint64_t idx, uint64_t val) {}
     virtual uint64_t getPC() { return 0; }
     virtual void setPC(uint64_t val) {}
     virtual uint64_t getNPC() { return 0; }

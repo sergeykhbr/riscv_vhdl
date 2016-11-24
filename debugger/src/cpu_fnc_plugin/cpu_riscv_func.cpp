@@ -32,7 +32,6 @@ CpuRiscV_Functional::CpuRiscV_Functional(const char *name)
     registerInterface(static_cast<IThread *>(this));
     registerInterface(static_cast<ICpuRiscV *>(this));
     registerInterface(static_cast<IClock *>(this));
-    registerInterface(static_cast<IHostIO *>(this));
     registerInterface(static_cast<IHap *>(this));
     registerAttribute("Enable", &isEnable_);
     registerAttribute("Bus", &bus_);
@@ -380,15 +379,6 @@ void CpuRiscV_Functional::registerStepCallback(IClockListener *cb,
     queue_.put(t, cb);
 }
 
-uint64_t CpuRiscV_Functional::write(uint16_t adr, uint64_t val) {
-    writeCSR(adr, val, getpContext());
-    return 0;
-}
-
-uint64_t CpuRiscV_Functional::read(uint16_t adr, uint64_t *val) {
-    *val = readCSR(adr, getpContext());
-    return 0;
-}
 
 /** 
  * prv-1.9.1 page 29

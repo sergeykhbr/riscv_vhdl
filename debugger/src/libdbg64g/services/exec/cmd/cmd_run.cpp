@@ -41,7 +41,7 @@ void CmdRun::exec(AttributeType *args, AttributeType *res) {
         return;
     }
 
-    DsuRunControlRegType runctrl;
+    Reg64Type runctrl;
     if (args->size() == 1) {
         runctrl.val = 0;
         tap_->write(info_->addressRunControl(), 8, runctrl.buf);
@@ -49,8 +49,10 @@ void CmdRun::exec(AttributeType *args, AttributeType *res) {
         runctrl.val = (*args)[1].to_uint64();
         tap_->write(info_->addressStepCounter(), 8, runctrl.buf);
 
-        runctrl.val = 0;
-        runctrl.bits.stepping = 1;
+        DsuMapType::udbg_type::debug_region_type::control_reg ctrl;
+        ctrl.val = 0;
+        ctrl.bits.stepping = 1;
+        runctrl.val = ctrl.val;
         tap_->write(info_->addressRunControl(), 8, runctrl.buf);
     }
 }

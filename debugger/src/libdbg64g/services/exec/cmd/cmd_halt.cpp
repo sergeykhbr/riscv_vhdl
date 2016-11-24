@@ -39,10 +39,12 @@ void CmdHalt::exec(AttributeType *args, AttributeType *res) {
         return;
     }
 
-    DsuRunControlRegType runctrl;
-    runctrl.val = 0;
-    runctrl.bits.halt = 1;
-    tap_->write(info_->addressRunControl(), 8, runctrl.buf);
+    Reg64Type t1;
+    DsuMapType::udbg_type::debug_region_type::control_reg ctrl;
+    ctrl.val = 0;
+    ctrl.bits.halt = 1;
+    t1.val = ctrl.val;
+    tap_->write(info_->addressRunControl(), 8, t1.buf);
 }
 
 }  // namespace debugger

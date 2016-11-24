@@ -577,5 +577,129 @@ package river_cfg is
   );
   end component; 
 
+  --! @brief CPU 5-stages pipeline top-level
+  --! @param[in] i_clk             CPU clock
+  --! @param[in] i_nrst            Reset. Active LOW.
+  --! @param[in] i_cache_hold      Cache is busy, hold the pipeline
+  --! @param[out] o_req_ctrl_valid Request to ICache is valid
+  --! @param[out] o_req_ctrl_addr  Requesting address to ICache
+  --! @param[in] i_resp_ctrl_valid ICache response is valid
+  --! @param[in] i_resp_ctrl_addr  Response address must be equal to the latest request address
+  --! @param[in] i_resp_ctrl_data  Read value
+  --! @param[out] o_req_data_valid Request to DCache is valid
+  --! @param[out] o_req_data_write Read/Write transaction
+  --! @param[out] o_req_data_size  Size [Bytes]: 0=1B; 1=2B; 2=4B; 3=8B
+  --! @param[out] o_req_data_addr  Requesting address to DCache
+  --! @param[out] o_req_data_data  Writing value
+  --! @param[in] i_resp_data_valid DCache response is valid
+  --! @param[in] i_resp_data_addr  DCache response address must be equal to the latest request address
+  --! @param[in] i_resp_data_data  Read value
+  --! @param[in] i_ext_irq         PLIC interrupt accordingly with spec
+  --! @param[out] o_step_cnt       Number of valid executed instructions
+  component Processor is
+  port (
+    i_clk : in std_logic;
+    i_nrst : in std_logic;
+    i_cache_hold : in std_logic;
+    o_req_ctrl_valid : out std_logic;
+    o_req_ctrl_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_resp_ctrl_valid : in std_logic;
+    i_resp_ctrl_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_resp_ctrl_data : in std_logic_vector(31 downto 0);
+    o_req_data_valid : out std_logic;
+    o_req_data_write : out std_logic;
+    o_req_data_size : out std_logic_vector(1 downto 0);
+    o_req_data_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_req_data_data : out std_logic_vector(RISCV_ARCH-1 downto 0);
+    i_resp_data_valid : in std_logic;
+    i_resp_data_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_resp_data_data : in std_logic_vector(RISCV_ARCH-1 downto 0);
+    i_ext_irq : in std_logic;
+    o_step_cnt : out std_logic_vector(63 downto 0)
+  );
+  end component; 
+
+  --! @brief CPU cache top level
+  --! @param[in] i_clk
+  --! @param[in] i_nrst
+  --! @param[in] i_req_ctrl_valid
+  --! @param[in] i_req_ctrl_addr
+  --! @param[out] o_resp_ctrl_valid
+  --! @param[out] o_resp_ctrl_addr
+  --! @param[out] o_resp_ctrl_data
+  --! @param[in] i_req_data_valid
+  --! @param[in] i_req_data_write
+  --! @param[in] i_req_data_sz
+  --! @param[in] i_req_data_addr
+  --! @param[in] i_req_data_data
+  --! @param[out] o_resp_data_valid
+  --! @param[out] o_resp_data_addr
+  --! @param[out] o_resp_data_data
+  --! @param[out] o_req_mem_valid
+  --! @param[out] o_req_mem_write
+  --! @param[out] o_req_mem_addr
+  --! @param[out] o_req_mem_strob
+  --! @param[out] o_req_mem_data
+  --! @param[in] i_resp_mem_data_valid
+  --! @param[in] i_resp_mem_data
+  --! @param[out] o_hold
+  component CacheTop is
+  port (
+    i_clk : in std_logic;
+    i_nrst : in std_logic;
+    i_req_ctrl_valid : in std_logic;
+    i_req_ctrl_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_resp_ctrl_valid : out std_logic;
+    o_resp_ctrl_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_resp_ctrl_data : out std_logic_vector(31 downto 0);
+    i_req_data_valid : in std_logic;
+    i_req_data_write : in std_logic;
+    i_req_data_sz : in std_logic_vector(1 downto 0);
+    i_req_data_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_req_data_data : in std_logic_vector(RISCV_ARCH-1 downto 0);
+    o_resp_data_valid : out std_logic;
+    o_resp_data_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_resp_data_data : out std_logic_vector(RISCV_ARCH-1 downto 0);
+    o_req_mem_valid : out std_logic;
+    o_req_mem_write : out std_logic;
+    o_req_mem_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_req_mem_strob : out std_logic_vector(BUS_DATA_BYTES-1 downto 0);
+    o_req_mem_data : out std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+    i_resp_mem_data_valid : in std_logic;
+    i_resp_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+    o_hold : out std_logic
+  );
+  end component; 
+
+
+  --! @brief "River" CPU Top level.
+  --! @param[in] i_clk                 CPU clock
+  --! @param[in] i_nrst                Reset. Active LOW.
+  --! @param[out] o_req_mem_valid      AXI memory request is valid
+  --! @param[out] o_req_mem_write      AXI memory request is write type
+  --! @param[out] o_req_mem_addr       AXI memory request address
+  --! @param[out] o_req_mem_strob      Writing strob. 1 bit per Byte
+  --! @param[out] o_req_mem_data       Writing data
+  --! @param[in] i_resp_mem_data_valid AXI response is valid
+  --! @param[in] i_resp_mem_data       Read data
+  --! @param[in] i_ext_irq             Interrupt line from external interrupts controller (PLIC).
+  --! @param[out] o_timer              Timer
+  --! @param[out] o_step_cntout        Number of valid executed instructions
+  component RiverTop is
+  port (
+    i_clk : in std_logic;
+    i_nrst : in std_logic;
+    o_req_mem_valid : out std_logic;
+    o_req_mem_write : out std_logic;
+    o_req_mem_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_req_mem_strob : out std_logic_vector(BUS_DATA_BYTES-1 downto 0);
+    o_req_mem_data : out std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+    i_resp_mem_data_valid : in std_logic;
+    i_resp_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+    i_ext_irq : in std_logic;
+    o_timer : out std_logic_vector(RISCV_ARCH-1 downto 0);
+    o_step_cntout : out std_logic_vector(63 downto 0)
+  );
+  end component; 
 
 end; -- package body

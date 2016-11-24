@@ -12,7 +12,6 @@
 #include "iservice.h"
 #include "coreservices/imemop.h"
 #include "coreservices/iwire.h"
-#include "coreservices/ihostio.h"
 #include "coreservices/icpuriscv.h"
 
 namespace debugger {
@@ -47,9 +46,7 @@ private:
     AttributeType length_;
     AttributeType mipi_;
     AttributeType irqTotal_;
-    AttributeType hostio_;
     AttributeType cpu_;
-    IHostIO *ihostio_;
     ICpuRiscV *icpu_;
 
     struct irqctrl_map {

@@ -201,7 +201,6 @@
     <ClInclude Include="..\..\src\common\coreservices\icpuriscv.h" />
     <ClInclude Include="..\..\src\common\coreservices\ibus.h" />
     <ClInclude Include="..\..\src\common\coreservices\ielfloader.h" />
-    <ClInclude Include="..\..\src\common\coreservices\ihostio.h" />
     <ClInclude Include="..\..\src\common\coreservices\ikeylistener.h" />
     <ClInclude Include="..\..\src\common\coreservices\imemop.h" />
     <ClInclude Include="..\..\src\common\coreservices\irawlistener.h" />

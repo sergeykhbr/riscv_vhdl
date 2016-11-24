@@ -14,11 +14,11 @@ DSU::DSU(const char *name)  : IService(name) {
     registerInterface(static_cast<IMemoryOperation *>(this));
     registerAttribute("BaseAddress", &baseAddress_);
     registerAttribute("Length", &length_);
-    registerAttribute("HostIO", &hostio_);
+    registerAttribute("CPU", &cpu_);
 
     baseAddress_.make_uint64(0);
     length_.make_uint64(0);
-    hostio_.make_string("");
+    cpu_.make_string("");
     map_ = reinterpret_cast<DsuMapType *>(0);
 }
 
@@ -26,136 +26,139 @@ DSU::~DSU() {
 }
 
 void DSU::postinitService() {
-    ihostio_ = static_cast<IHostIO *>(
-        RISCV_get_service_iface(hostio_.to_string(), IFACE_HOSTIO));
-    if (!ihostio_) {
-        RISCV_error("Can't find IHostIO interface %s", hostio_.to_string());
+    icpu_ = static_cast<ICpuRiscV *>(
+        RISCV_get_service_iface(cpu_.to_string(), IFACE_CPU_RISCV));
+    if (!icpu_) {
+        RISCV_error("Can't find ICpuRiscV interface %s", cpu_.to_string());
     }
 }
 
 void DSU::transaction(Axi4TransactionType *payload) {
     uint64_t mask = (length_.to_uint64() - 1);
-    uint64_t off = ((payload->addr - getBaseAddress()) & mask);
-    if (off < 0x10000) {
+    uint64_t off64 = (payload->addr - getBaseAddress()) & mask;
+    void *poff = reinterpret_cast<void *>(off64);
+
+    if (!icpu_) {
+        return;
+    }
+
+    if (poff < &map_->ureg) {
+        // CSR region:
         if (payload->rw) {
-            regionCsrWr(off >> 4, payload);
+            regionCsrWr(off64, payload);
         } else {
-            regionCsrRd(off >> 4, payload);
+            regionCsrRd(off64, payload);
         }
-    } else {
-        /// @warning Hardware doesn't support this features:
-        off -= 0x10000;
+    } else if (poff < &map_->udbg) {
+        // CPU Registers region:
         if (payload->rw) {
-            regionControlWr(off, payload);
+            regionRegWr(off64, payload);
         } else {
-            regionControlRd(off, payload);
+            regionRegRd(off64, payload);
+        }
+    } else if (poff < &map_->end) {
+        // Debugging region:
+        if (payload->rw) {
+            regionDebugWr(off64, payload);
+        } else {
+            regionDebugRd(off64, payload);
         }
     }
 }
 
 void DSU::regionCsrRd(uint64_t off, Axi4TransactionType *payload) {
     uint64_t rdata;
-    if (!ihostio_) {
-        return;
-    }
-    ihostio_->read(static_cast<uint16_t>(off), &rdata);
+    rdata = icpu_->getCsr(off >> 3);
     read64(rdata, payload->addr, payload->xsize, payload->rpayload);
 }
 
 void DSU::regionCsrWr(uint64_t off, Axi4TransactionType *payload) {
-    if (!ihostio_) {
-        return;
-    }
+    // Transaction could be 4/5 bytes length
     if (write64(&wdata_, payload->addr, payload->xsize, payload->wpayload)) {
-        ihostio_->write(static_cast<uint16_t>(off), wdata_);
+        icpu_->setCsr(off >> 3, wdata_);
     }
 }
 
-void DSU::regionControlRd(uint64_t off, Axi4TransactionType *payload) {
-    if (!ihostio_) {
+void DSU::regionRegRd(uint64_t off64, Axi4TransactionType *payload) {
+    void *poff = reinterpret_cast<void *>(off64 & ~0x7);
+
+    uint64_t rdata = 0;
+    if (poff < &map_->ureg.v.pc) {
+        uint64_t idx = 
+            off64 - reinterpret_cast<uint64_t>(&map_->ureg.v.iregs[0]);
+        idx >>= 3;
+        rdata = icpu_->getReg(idx);
+    } else if (poff == &map_->ureg.v.pc) {
+        rdata = icpu_->getPC();
+    } else if (poff == &map_->ureg.v.npc) {
+        rdata = icpu_->getNPC();
+    }
+     read64(rdata, off64, payload->xsize, payload->rpayload);
+}
+
+void DSU::regionRegWr(uint64_t off64, Axi4TransactionType *payload) {
+    void *poff = reinterpret_cast<void *>(off64 & ~0x7);
+    bool rdy = write64(&wdata_, payload->addr, 
+                            payload->xsize, payload->wpayload);
+    if (rdy) {
         return;
     }
-    ICpuRiscV *idbg = ihostio_->getCpuInterface();
-    void *off64 = reinterpret_cast<void *>(off & ~0x7);
-    uint64_t val = 0;
-    if (off64 == &map_->control) {
-        // CPU Run Control register
-        if (idbg->isHalt()) {
-            val |= 1;
+
+    if (poff < &map_->ureg.v.pc) {
+        uint64_t idx = 
+            off64 - reinterpret_cast<uint64_t>(&map_->ureg.v.iregs[0]);
+        idx >>= 3;
+        icpu_->setReg(idx, wdata_);
+    } else if (poff == &map_->ureg.v.pc) {
+        icpu_->setPC(wdata_);
+    } else if (poff == &map_->ureg.v.npc) {
+        icpu_->setNPC(wdata_);
+    }
+}
+
+void DSU::regionDebugRd(uint64_t off64, Axi4TransactionType *payload) {
+    void *poff = reinterpret_cast<void *>(off64 & ~0x7);
+
+    uint64_t rdata = 0;
+    if (poff == &map_->udbg.v.control) {
+        if (icpu_->isHalt()) {
+            rdata |= 1;
         }
-        read64(val, off, payload->xsize, payload->rpayload);
-    } else if (off64 == &map_->step_cnt) {
-        read64(step_cnt_, off, payload->xsize, payload->rpayload);
-    } else if (off64 == &map_->add_breakpoint) {
-    } else if (off64 == &map_->remove_breakpoint) {
-    } else if (off64 >= &map_->cpu_regs[0] 
-        && off64 < &map_->cpu_regs[DSU_GENERAL_CORE_REGS_NUM] ) {
-        uint64_t idx = reinterpret_cast<uint64_t>(off64) 
-                - reinterpret_cast<uint64_t>(&map_->cpu_regs);
-        idx /= 8;
-        val = idbg->getReg(idx);
-        read64(val, off, payload->xsize, payload->rpayload);
-    } else if (off64 == &map_->pc) {
-        val = idbg->getPC();
-        read64(val, off, payload->xsize, payload->rpayload);
-    } else if (off64 == &map_->npc) {
-        val = idbg->getNPC();
-        read64(val, off, payload->xsize, payload->rpayload);
+    } else if (poff == &map_->udbg.v.step_cnt) {
+        rdata = step_cnt_;
+    } else if (poff == &map_->udbg.v.add_breakpoint) {
+        icpu_->addBreakpoint(wdata_);
+    } else if (poff == &map_->udbg.v.remove_breakpoint) {
+        icpu_->removeBreakpoint(wdata_);
     }
+    read64(rdata, off64, payload->xsize, payload->rpayload);
 }
 
-void DSU::regionControlWr(uint64_t off, Axi4TransactionType *payload) {
-    if (!ihostio_) {
+void DSU::regionDebugWr(uint64_t off64, Axi4TransactionType *payload) {
+    void *poff = reinterpret_cast<void *>(off64 & ~0x7);
+    bool rdy = write64(&wdata_, payload->addr, 
+                            payload->xsize, payload->wpayload);
+    if (rdy) {
         return;
     }
-    ICpuRiscV *idbg = ihostio_->getCpuInterface();
-    void *off64 = reinterpret_cast<void *>(off & ~0x7);
-    if (off == reinterpret_cast<uint64_t>(&map_->control)) {
+
+    if (poff == &map_->udbg.v.control) {
+        DsuMapType::udbg_type::debug_region_type::control_reg ctrl;
+        ctrl.val = wdata_;
         // CPU Run Control register
-        if (payload->wpayload[0] & 0x1) {
-            idbg->halt();
-        } else if (payload->wpayload[0] & 0x2) {
-            idbg->step(step_cnt_);
+        if (ctrl.bits.halt) {
+            icpu_->halt();
+        } else if (ctrl.bits.stepping) {
+            icpu_->step(step_cnt_);
         } else {
-            idbg->go();
+            icpu_->go();
         }
-    } else if (off64 == &map_->step_cnt) {
-        write64(&step_cnt_, off, payload->xsize, payload->wpayload);
-    } else if (off64 == &map_->add_breakpoint) {
-        bool rdy = write64(&wdata_, payload->addr, 
-                            payload->xsize, payload->wpayload);
-        if (rdy) {
-            idbg->addBreakpoint(wdata_);
-        }
-    } else if (off64 == &map_->remove_breakpoint) {
-        bool rdy = write64(&wdata_, payload->addr, 
-                            payload->xsize, payload->wpayload);
-        if (rdy) {
-            idbg->removeBreakpoint(wdata_);
-        }
-    } else if (off64 >= &map_->cpu_regs[0] 
-        && off64 < &map_->cpu_regs[DSU_GENERAL_CORE_REGS_NUM] ) {
-        uint64_t idx = reinterpret_cast<uint64_t>(off64) 
-                - reinterpret_cast<uint64_t>(map_->cpu_regs);
-        idx /= 8;
-
-        bool rdy = write64(&wdata_, payload->addr, 
-                            payload->xsize, payload->wpayload);
-        if (rdy) {
-            idbg->setReg(idx, wdata_);
-        }
-    } else if (off64 == &map_->pc) {
-        bool rdy = write64(&wdata_, payload->addr, 
-                            payload->xsize, payload->wpayload);
-        if (rdy) {
-            idbg->setPC(wdata_);
-        }
-    } else if (off64 == &map_->npc) {
-        bool rdy = write64(&wdata_, payload->addr, 
-                            payload->xsize, payload->wpayload);
-        if (rdy) {
-            idbg->setNPC(wdata_);
-        }
+    } else if (poff == &map_->udbg.v.step_cnt) {
+        step_cnt_ = wdata_;
+    } else if (poff == &map_->udbg.v.add_breakpoint) {
+        icpu_->addBreakpoint(wdata_);
+    } else if (poff == &map_->udbg.v.remove_breakpoint) {
+        icpu_->removeBreakpoint(wdata_);
     }
 }
 

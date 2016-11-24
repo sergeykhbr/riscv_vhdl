@@ -15,7 +15,6 @@
 #include "coreservices/ithread.h"
 #include "coreservices/icpuriscv.h"
 #include "coreservices/imemop.h"
-#include "coreservices/ihostio.h"
 #include "coreservices/iclock.h"
 #include "coreservices/iclklistener.h"
 #include "instructions.h"
@@ -25,7 +24,6 @@ namespace debugger {
 class CpuRiscV_Functional : public IService, 
                  public IThread,
                  public ICpuRiscV,
-                 public IHostIO,
                  public IClock,
                  public IHap {
 public:
@@ -45,6 +43,8 @@ public:
     virtual void step(uint64_t cnt);
     virtual uint64_t getReg(uint64_t idx);
     virtual void setReg(uint64_t idx, uint64_t val);
+    virtual uint64_t getCsr(uint64_t idx) { return 0; }
+    virtual void setCsr(uint64_t idx, uint64_t val) {}
     virtual uint64_t getPC();
     virtual void setPC(uint64_t val);
     virtual uint64_t getNPC();
@@ -52,13 +52,6 @@ public:
     virtual void addBreakpoint(uint64_t addr);
     virtual void removeBreakpoint(uint64_t addr);
     virtual void hitBreakpoint(uint64_t addr);
-
-    /** IHostIO */
-    virtual uint64_t write(uint16_t adr, uint64_t val);
-    virtual uint64_t read(uint16_t adr, uint64_t *val);
-    virtual ICpuRiscV *getCpuInterface() {
-        return static_cast<ICpuRiscV *>(this);
-    }
 
     /** IClock */
     virtual uint64_t getStepCounter() { return cpu_context_.step_cnt; }

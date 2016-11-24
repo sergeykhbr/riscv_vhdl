@@ -18,8 +18,6 @@ namespace debugger {
 SC_MODULE(RiverTop) {
     sc_in<bool> i_clk;                                  // CPU clock
     sc_in<bool> i_nrst;                                 // Reset: active LOW
-    // Timer:
-    sc_out<sc_uint<RISCV_ARCH>> o_timer;                // todo: move to debug interface
     // Memory interface:
     sc_out<bool> o_req_mem_valid;                       // AXI memory request is valid
     sc_out<bool> o_req_mem_write;                       // AXI memory request is write type
@@ -30,6 +28,8 @@ SC_MODULE(RiverTop) {
     sc_in<sc_uint<BUS_DATA_WIDTH>> i_resp_mem_data;     // Read data
     /** Interrupt line from external interrupts controller (PLIC). */
     sc_in<bool> i_ext_irq;
+    // Debug interface
+    sc_out<sc_uint<RISCV_ARCH>> o_timer;                // Timer.
     sc_out<sc_uint<64>> o_step_cnt;                     // Number of valid executed instructions
 
 
