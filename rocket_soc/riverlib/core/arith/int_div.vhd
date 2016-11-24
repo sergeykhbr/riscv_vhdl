@@ -126,6 +126,8 @@ begin
         v.rv32 := i_rv32;
         v.resid := i_residual;
         v.invert := not i_unsigned and (i_a1(63) xor i_a2(63));
+        v.a1 := i_a1;
+        v.a2 := i_a2;
     elsif r.ena(32) = '1' then
         v.busy := '0';
         if r.invert = '1' then
@@ -145,6 +147,8 @@ begin
     if i_nrst = '0' then
         v.result := (others => '0');
         v.ena := (others => '0');
+        v.a1 := (others => '0');
+        v.a2 := (others => '0');
         v.busy := '0';
         v.rv32 := '0';
         v.invert := '0';

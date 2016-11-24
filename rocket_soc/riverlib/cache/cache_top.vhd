@@ -28,7 +28,7 @@ entity CacheTop is
     -- Data path:
     i_req_data_valid : in std_logic;
     i_req_data_write : in std_logic;
-    i_req_data_sz : in std_logic_vector(1 downto 0);
+    i_req_data_size : in std_logic_vector(1 downto 0);
     i_req_data_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_req_data_data : in std_logic_vector(RISCV_ARCH-1 downto 0);
     o_resp_data_valid : out std_logic;
@@ -135,7 +135,7 @@ begin
         i_nrst => i_nrst,
         i_req_data_valid => i_req_data_valid,
         i_req_data_write => i_req_data_write,
-        i_req_data_sz => i_req_data_sz,
+        i_req_data_sz => i_req_data_size,
         i_req_data_addr => i_req_data_addr,
         i_req_data_data => i_req_data_data,
         o_resp_data_valid => o_resp_data_valid,

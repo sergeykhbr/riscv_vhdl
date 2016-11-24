@@ -654,7 +654,7 @@ package river_cfg is
     o_resp_ctrl_data : out std_logic_vector(31 downto 0);
     i_req_data_valid : in std_logic;
     i_req_data_write : in std_logic;
-    i_req_data_sz : in std_logic_vector(1 downto 0);
+    i_req_data_size : in std_logic_vector(1 downto 0);
     i_req_data_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_req_data_data : in std_logic_vector(RISCV_ARCH-1 downto 0);
     o_resp_data_valid : out std_logic;
@@ -684,7 +684,7 @@ package river_cfg is
   --! @param[in] i_resp_mem_data       Read data
   --! @param[in] i_ext_irq             Interrupt line from external interrupts controller (PLIC).
   --! @param[out] o_timer              Timer
-  --! @param[out] o_step_cntout        Number of valid executed instructions
+  --! @param[out] o_step_cnt           Number of valid executed instructions
   component RiverTop is
   port (
     i_clk : in std_logic;
@@ -698,7 +698,7 @@ package river_cfg is
     i_resp_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
     i_ext_irq : in std_logic;
     o_timer : out std_logic_vector(RISCV_ARCH-1 downto 0);
-    o_step_cntout : out std_logic_vector(63 downto 0)
+    o_step_cnt : out std_logic_vector(63 downto 0)
   );
   end component; 
 
