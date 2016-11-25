@@ -28,6 +28,19 @@ IntMul::IntMul(sc_module_name name_, sc_trace_file *vcd)
     SC_METHOD(registers);
     sensitive << i_clk.pos();
 
+#if 0
+    vcd = sc_create_vcd_trace_file("intmul");
+    vcd->set_time_unit(1, SC_PS);
+
+    sc_trace(vcd, i_clk, "i_clk");
+    sc_trace(vcd, i_nrst, "i_nrst");
+    sc_trace(vcd, i_ena, "i_ena");
+    sc_trace(vcd, i_unsigned, "i_unsigned");
+    sc_trace(vcd, i_rv32, "i_rv32");
+    sc_trace(vcd, i_high, "i_high");
+    sc_trace(vcd, i_a1, "i_a1");
+    sc_trace(vcd, i_a2, "i_a2");
+#else
     if (vcd) {
         sc_trace(vcd, i_a1, "/top/proc0/exec0/mul0/i_a1");
         sc_trace(vcd, i_a2, "/top/proc0/exec0/mul0/i_a2");
@@ -37,6 +50,7 @@ IntMul::IntMul(sc_module_name name_, sc_trace_file *vcd)
         sc_trace(vcd, o_busy, "/top/proc0/exec0/mul0/o_busy");
         sc_trace(vcd, r.ena, "/top/proc0/exec0/mul0/r_ena");
     }
+#endif
 };
 
 

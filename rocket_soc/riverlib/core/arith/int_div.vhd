@@ -40,8 +40,6 @@ architecture arch_IntDiv of IntDiv is
       invert : std_logic;                          -- invert result value before output
       busy : std_logic;
       ena : std_logic_vector(33 downto 0);
-      a1 : std_logic_vector(RISCV_ARCH-1 downto 0);
-      a2 : std_logic_vector(RISCV_ARCH-1 downto 0);
       qr : std_logic_vector(127 downto 0);
       divider : std_logic_vector(64 downto 0);
       result : std_logic_vector(RISCV_ARCH-1 downto 0);
@@ -87,12 +85,12 @@ begin
         wb_a2 := X"00000000" & i_a2(31 downto 0);
     end if;
 
-    if (i_unsigned or wb_a1(63)) = '0' then
+    if i_unsigned = '1' or wb_a1(63) = '0' then
         wb_divident(63 downto 0) := wb_a1;
     else
         wb_divident(63 downto 0) := (not wb_a1) + 1;
     end if;
-    if (i_unsigned or wb_a2(63)) = '0' then
+    if i_unsigned = '1' or wb_a2(63) = '0' then
         wb_divider(63 downto 0) := wb_a2;
     else
         wb_divider(63 downto 0) := (not wb_a2) + 1;
@@ -126,8 +124,6 @@ begin
         v.rv32 := i_rv32;
         v.resid := i_residual;
         v.invert := not i_unsigned and (i_a1(63) xor i_a2(63));
-        v.a1 := i_a1;
-        v.a2 := i_a2;
     elsif r.ena(32) = '1' then
         v.busy := '0';
         if r.invert = '1' then
@@ -147,8 +143,6 @@ begin
     if i_nrst = '0' then
         v.result := (others => '0');
         v.ena := (others => '0');
-        v.a1 := (others => '0');
-        v.a2 := (others => '0');
         v.busy := '0';
         v.rv32 := '0';
         v.invert := '0';
