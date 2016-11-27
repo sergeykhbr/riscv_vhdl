@@ -57,6 +57,7 @@ private:
     } v, r;
 
     sc_signal<bool> w_mem_addr_valid;
+    sc_signal<bool> w_wrong_address;
     sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_addr_req;
     bool w_any_hold;
 };

@@ -121,6 +121,7 @@ architecture arch_InstrExecute of InstrExecute is
   signal wb_arith_res : multi_arith_type;
   signal w_arith_valid : std_logic_vector(Multi_Total-1 downto 0);
   signal w_arith_busy : std_logic_vector(Multi_Total-1 downto 0);
+  signal w_hazard_detected : std_logic;
 
   component IntMul is port (
     i_clk  : in std_logic;
@@ -184,9 +185,9 @@ begin
                  i_wb_done, i_memop_load, i_memop_store, i_memop_sign_ext,
                  i_memop_size, i_unsigned_op, i_rv32, i_isa_type, i_ivec,
                  i_rdata1, i_rdata2, i_csr_rdata, 
-                 wb_arith_res, w_arith_valid, w_arith_busy, r)
+                 wb_arith_res, w_arith_valid, w_arith_busy,
+                 w_hazard_detected, r)
     variable v : RegistersType;
-    variable w_hazard_detected : std_logic;
     variable w_interrupt : std_logic;
     variable w_exception : std_logic;
     variable w_exception_store : std_logic;
@@ -240,6 +241,8 @@ begin
 
   begin
 
+    wb_radr1 := (others => '0');
+    wb_radr2 := (others => '0');
     w_xret := '0';
     w_csr_wena := '0';
     wb_res_addr := (others => '0');
@@ -381,14 +384,17 @@ begin
     if w_pc_branch = '1' then
         wb_npc := i_d_pc + wb_off(BUS_ADDR_WIDTH-1 downto 0);
     elsif wv(Instr_JAL) = '1' then
-        wb_res := i_d_pc + 4;
-        wb_npc := wb_rdata1 + wb_off;
+        wb_res(63 downto 32) := (others => '0');
+        wb_res(31 downto 0) := i_d_pc + 4;
+        wb_npc := wb_rdata1(BUS_ADDR_WIDTH-1 downto 0) + wb_off(BUS_ADDR_WIDTH-1 downto 0);
     elsif wv(Instr_JALR) = '1' then
-        wb_res := i_d_pc + 4;
-        wb_npc := wb_rdata1 + wb_rdata2;
+        wb_res(63 downto 32) := (others => '0');
+        wb_res(31 downto 0) := i_d_pc + 4;
+        wb_npc := wb_rdata1(BUS_ADDR_WIDTH-1 downto 0) + wb_rdata2(BUS_ADDR_WIDTH-1 downto 0);
         wb_npc(0) := '0';
     elsif wv(Instr_MRET) = '1' or wv(Instr_URET) = '1' then
-        wb_res := i_d_pc + 4;
+        wb_res(63 downto 32) := (others => '0');
+        wb_res(31 downto 0) := i_d_pc + 4;
         w_xret := '1';
         w_csr_wena := '0';
         if wv(Instr_URET) = '1' then
@@ -444,12 +450,14 @@ begin
     elsif w_arith_valid(Multi_DIV) = '1' then
         wb_res := wb_arith_res(Multi_DIV);
     elsif i_memop_load = '1' then
-        wb_memop_addr := wb_rdata1 + wb_rdata2;
+        wb_memop_addr := wb_rdata1(BUS_ADDR_WIDTH-1 downto 0)
+                      + wb_rdata2(BUS_ADDR_WIDTH-1 downto 0);
         w_memop_load := not w_hazard_detected;
         w_memop_sign_ext := i_memop_sign_ext;
         wb_memop_size := i_memop_size;
     elsif i_memop_store = '1' then
-        wb_memop_addr := wb_rdata1 + wb_off;
+        wb_memop_addr := wb_rdata1(BUS_ADDR_WIDTH-1 downto 0)
+                       + wb_off(BUS_ADDR_WIDTH-1 downto 0);
         w_memop_store := not w_hazard_detected;
         wb_memop_size := i_memop_size;
         wb_res := wb_rdata2;
@@ -615,11 +623,11 @@ begin
     end if;
 
     if r.hazard_depth = "01" then
-        w_hazard_detected := w_hazard_lvl1;
+        w_hazard_detected <= w_hazard_lvl1;
     elsif r.hazard_depth = "10" then
-        w_hazard_detected := w_hazard_lvl1 or w_hazard_lvl2;
+        w_hazard_detected <= w_hazard_lvl1 or w_hazard_lvl2;
     else
-        w_hazard_detected := '0';
+        w_hazard_detected <= '0';
     end if;
 
     w_o_valid := r.d_valid;

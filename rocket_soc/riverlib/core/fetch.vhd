@@ -89,13 +89,15 @@ begin
     w_predict_miss := '0';
     if w_wrong_address = '1' then
         wb_addr_req := i_e_npc;
-        w_predict_miss := '1';
+        w_predict_miss := w_mem_addr_valid;
     else
         wb_addr_req := i_predict_npc;
     end if;
     
-    v.raddr_not_resp_yet := wb_addr_req; -- Address already requested but probably not responded yet.
-                                         -- Avoid marking such request as 'miss'.
+    if w_mem_addr_valid = '1' then
+        v.raddr_not_resp_yet := wb_addr_req; -- Address already requested but probably not responded yet.
+                                             -- Avoid marking such request as 'miss'.
+    end if;
 
     w_any_hold := i_cache_hold or i_pipeline_hold;
     v.is_postponed := r.is_postponed and w_any_hold;

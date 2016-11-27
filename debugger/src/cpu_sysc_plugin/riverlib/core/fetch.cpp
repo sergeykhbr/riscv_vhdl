@@ -22,10 +22,13 @@ InstrFetch::InstrFetch(sc_module_name name_, sc_trace_file *vcd)
     sensitive << i_e_npc;
     sensitive << i_predict_npc;
     sensitive << r.pc_z0;
+    sensitive << r.pc_z1;
+    sensitive << r.raddr_not_resp_yet;
     sensitive << r.is_postponed;
     sensitive << r.wait_resp;
     sensitive << w_mem_addr_valid;
-    //sensitive << wb_addr_req;
+    sensitive << w_wrong_address;
+    sensitive << wb_addr_req;
 
     SC_METHOD(registers);
     sensitive << i_clk.pos();
@@ -40,20 +43,20 @@ InstrFetch::InstrFetch(sc_module_name name_, sc_trace_file *vcd)
         sc_trace(vcd, i_pipeline_hold, "/top/proc0/fetch0/i_pipeline_hold");
         sc_trace(vcd, o_mem_addr_valid, "/top/proc0/fetch0/o_mem_addr_valid");
         sc_trace(vcd, o_mem_addr, "/top/proc0/fetch0/o_mem_addr");
+        sc_trace(vcd, o_predict_miss, "/top/proc0/fetch0/o_predict_miss");
         sc_trace(vcd, o_valid, "/top/proc0/fetch0/o_valid");
         sc_trace(vcd, o_pc, "/top/proc0/fetch0/o_pc");
         sc_trace(vcd, o_instr, "/top/proc0/fetch0/o_instr");
         sc_trace(vcd, r.pc_z1, "/top/proc0/fetch0/r.pc_z1");
         sc_trace(vcd, r.pc_z0, "/top/proc0/fetch0/r.pc_z0");
         sc_trace(vcd, r.wait_resp, "/top/proc0/fetch0/r.wait_resp");
-        sc_trace(vcd, o_predict_miss, "/top/proc0/fetch0/o_predict_miss");
+        sc_trace(vcd, r.raddr_not_resp_yet, "/top/proc0/fetch0/r_raddr_not_resp_yet");
         sc_trace(vcd, w_mem_addr_valid, "/top/proc0/fetch0/w_mem_addr_valid");
     }
 };
 
 
 void InstrFetch::comb() {
-    bool w_wrong_address;
     bool w_predict_miss;
     bool w_o_valid;
 
@@ -77,13 +80,15 @@ void InstrFetch::comb() {
     w_predict_miss = 0;
     if (w_wrong_address) {
         wb_addr_req = i_e_npc.read();
-        w_predict_miss = 1;
+        w_predict_miss = w_mem_addr_valid;
     } else {
         wb_addr_req = i_predict_npc.read();
     }
     
-    v.raddr_not_resp_yet = wb_addr_req; // Address already requested but probably not responded yet.
-                                        // Avoid marking such request as 'miss'.
+    if (w_mem_addr_valid) {
+        v.raddr_not_resp_yet = wb_addr_req; // Address already requested but probably not responded yet.
+                                            // Avoid marking such request as 'miss'.
+    }
 
     w_any_hold = i_cache_hold.read() || i_pipeline_hold.read();
     v.is_postponed = r.is_postponed & w_any_hold;

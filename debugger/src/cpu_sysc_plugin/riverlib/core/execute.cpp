@@ -136,12 +136,12 @@ void InstrExecute::comb() {
     sc_uint<RISCV_ARCH> wb_rdata1;
     sc_uint<5> wb_radr2;
     sc_uint<RISCV_ARCH> wb_rdata2;
-    bool w_xret = 0;
-    bool w_csr_wena = 0;
-    sc_uint<5> wb_res_addr = 0;
-    sc_uint<12> wb_csr_addr = 0;
-    sc_uint<RISCV_ARCH> wb_csr_wdata = 0;
-    sc_uint<RISCV_ARCH> wb_res = 0;
+    bool w_xret;
+    bool w_csr_wena;
+    sc_uint<5> wb_res_addr;
+    sc_uint<12> wb_csr_addr;
+    sc_uint<RISCV_ARCH> wb_csr_wdata;
+    sc_uint<RISCV_ARCH> wb_res;
     sc_uint<BUS_ADDR_WIDTH> wb_npc;
     sc_uint<RISCV_ARCH> wb_off;
     sc_uint<RISCV_ARCH> wb_mask_i31;    // Bits depending instr[31] bits
@@ -155,11 +155,12 @@ void InstrExecute::comb() {
     sc_uint<RISCV_ARCH> wb_sll64;
     sc_uint<RISCV_ARCH> wb_srl64;
     sc_uint<RISCV_ARCH> wb_srl32;
-    bool w_memop_load = 0;
-    bool w_memop_store = 0;
-    bool w_memop_sign_ext = 0;
-    sc_uint<2> wb_memop_size = 0;
-    sc_uint<BUS_ADDR_WIDTH> wb_memop_addr = 0;
+    bool w_memop_load;
+    bool w_memop_store;
+    bool w_memop_sign_ext;
+    sc_uint<2> wb_memop_size;
+    sc_uint<BUS_ADDR_WIDTH> wb_memop_addr;
+    sc_bv<Instr_Total> wv;
 
     bool w_pc_valid;
     bool w_d_acceptable;
@@ -177,7 +178,20 @@ void InstrExecute::comb() {
     int shift32;
     int shift64;
 
-    sc_bv<Instr_Total> wv = i_ivec.read();
+    wb_radr1 = 0;
+    wb_radr2 = 0;
+    w_xret = 0;
+    w_csr_wena = 0;
+    wb_res_addr = 0;
+    wb_csr_addr = 0;
+    wb_csr_wdata = 0;
+    wb_res = 0;
+    w_memop_load = 0;
+    w_memop_store = 0;
+    w_memop_sign_ext = 0;
+    wb_memop_size = 0;
+    wb_memop_addr = 0;
+    wv = i_ivec.read();
 
     v = r;
 
@@ -317,10 +331,10 @@ void InstrExecute::comb() {
         wb_npc = i_d_pc.read() + wb_off(BUS_ADDR_WIDTH-1, 0);
     } else if (wv[Instr_JAL].to_bool()) {
         wb_res = i_d_pc.read() + 4;
-        wb_npc = wb_rdata1 + wb_off;
+        wb_npc = wb_rdata1(BUS_ADDR_WIDTH-1, 0) + wb_off(BUS_ADDR_WIDTH-1, 0);
     } else if (wv[Instr_JALR].to_bool()) {
         wb_res = i_d_pc.read() + 4;
-        wb_npc = wb_rdata1 + wb_rdata2;
+        wb_npc = wb_rdata1(BUS_ADDR_WIDTH-1, 0) + wb_rdata2(BUS_ADDR_WIDTH-1, 0);
         wb_npc[0] = 0;
     } else if ((wv[Instr_MRET] | wv[Instr_URET]).to_bool()) {
         wb_res = i_d_pc.read() + 4;
@@ -379,12 +393,14 @@ void InstrExecute::comb() {
     } else if (w_arith_valid[Multi_DIV]) {
         wb_res = wb_arith_res.arr[Multi_DIV];
     } else if (i_memop_load) {
-        wb_memop_addr = wb_rdata1 + wb_rdata2;
+        wb_memop_addr =
+            wb_rdata1(BUS_ADDR_WIDTH-1, 0) + wb_rdata2(BUS_ADDR_WIDTH-1, 0);
         w_memop_load = !w_hazard_detected.read();
         w_memop_sign_ext = i_memop_sign_ext;
         wb_memop_size = i_memop_size;
     } else if (i_memop_store) {
-        wb_memop_addr = wb_rdata1 + wb_off;
+        wb_memop_addr = 
+            wb_rdata1(BUS_ADDR_WIDTH-1, 0) + wb_off(BUS_ADDR_WIDTH-1, 0);
         w_memop_store = !w_hazard_detected.read();
         wb_memop_size = i_memop_size;
         wb_res = wb_rdata2;
