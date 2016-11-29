@@ -21,6 +21,28 @@ ICache::ICache(sc_module_name name_, sc_trace_file *vcd)
     SC_METHOD(registers);
     sensitive << i_clk.pos();
 
+#if 1
+    vcd = sc_create_vcd_trace_file("i_icache");
+    vcd->set_time_unit(1, SC_PS);
+    sc_trace_file *o_vcd = sc_create_vcd_trace_file("o_icache");
+    o_vcd->set_time_unit(1, SC_PS);
+
+    sc_trace(vcd, i_clk, "i_clk");
+    sc_trace(vcd, i_nrst, "i_nrst");
+    sc_trace(vcd, i_req_ctrl_valid, "i_req_ctrl_valid");
+    sc_trace(vcd, i_req_ctrl_addr, "i_req_ctrl_addr");
+    sc_trace(vcd, i_resp_mem_data_valid, "i_resp_mem_data_valid");
+    sc_trace(vcd, i_resp_mem_data, "i_resp_mem_data");
+    
+    sc_trace(o_vcd, o_resp_ctrl_valid, "o_resp_ctrl_valid");
+    sc_trace(o_vcd, o_resp_ctrl_addr, "o_resp_ctrl_addr");
+    sc_trace(o_vcd, o_resp_ctrl_data, "o_resp_ctrl_data");
+    sc_trace(o_vcd, o_req_mem_valid, "o_req_mem_valid");
+    sc_trace(o_vcd, o_req_mem_write, "o_req_mem_write");
+    sc_trace(o_vcd, o_req_mem_addr, "o_req_mem_addr");
+    sc_trace(o_vcd, o_req_mem_strob, "o_req_mem_strob");
+    sc_trace(o_vcd, o_req_mem_data, "o_req_mem_data");
+#else
     if (vcd) {
         sc_trace(vcd, i_req_ctrl_valid, "/top/cache0/i0/i_req_ctrl_valid");
         //sc_trace(vcd, o_req_ctrl_ready, "/top/cache0/i0/o_req_ctrl_ready");
@@ -39,6 +61,7 @@ ICache::ICache(sc_module_name name_, sc_trace_file *vcd)
         //sc_trace(vcd, wb_cached_addr, "/top/cache0/i0/wb_cached_addr");
         //sc_trace(vcd, wb_cached_data, "/top/cache0/i0/wb_cached_data");
     }
+#endif
 };
 
 

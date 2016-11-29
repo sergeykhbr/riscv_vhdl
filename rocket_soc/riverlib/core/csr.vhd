@@ -63,6 +63,7 @@ begin
 
     v := r;
 
+    wb_rdata := (others => '0');
     case i_addr is
     when CSR_misa =>
     when CSR_mvendorid =>
@@ -71,7 +72,6 @@ begin
     when CSR_mhartid =>
     when CSR_uepc =>    -- User mode program counter
     when CSR_mstatus => -- Machine mode status register
-        wb_rdata := (others => '0');
         wb_rdata(0) := r.uie;
         wb_rdata(3) := r.mie;
         wb_rdata(7) := r.mpie;

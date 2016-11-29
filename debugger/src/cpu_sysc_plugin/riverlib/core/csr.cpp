@@ -18,22 +18,36 @@ CsrRegs::CsrRegs(sc_module_name name_, sc_trace_file *vcd)
     sensitive << i_addr;
     sensitive << i_wena;
     sensitive << i_wdata;
-    sensitive << r.mode;
     sensitive << i_trap_ena;
     sensitive << i_trap_code;
     sensitive << i_trap_pc;
+    sensitive << r.mtvec;
+    sensitive << r.mscratch;
+    sensitive << r.mbadaddr;
     sensitive << r.mode;
+    sensitive << r.uie;
     sensitive << r.mie;
-
+    sensitive << r.mpie;
+    sensitive << r.mpp;
+    sensitive << r.mepc;
+    sensitive << r.trap_irq;
+    sensitive << r.trap_code;
 
     SC_METHOD(registers);
     sensitive << i_clk.pos();
 
     if (vcd) {
         sc_trace(vcd, i_xret, "/top/proc0/csr0/i_xret");
+        sc_trace(vcd, i_addr, "/top/proc0/csr0/i_addr");
+        sc_trace(vcd, i_wena, "/top/proc0/csr0/i_wena");
+        sc_trace(vcd, i_wdata, "/top/proc0/csr0/i_wdata");
+        sc_trace(vcd, i_trap_ena, "/top/proc0/csr0/i_trap_ena");
+        sc_trace(vcd, i_trap_code, "/top/proc0/csr0/i_trap_code");
+        sc_trace(vcd, i_trap_pc, "/top/proc0/csr0/i_trap_pc");
         sc_trace(vcd, o_mode, "/top/proc0/csr0/o_mode");
         sc_trace(vcd, o_ie, "/top/proc0/csr0/o_ie");
         sc_trace(vcd, o_rdata, "/top/proc0/csr0/o_rdata");
+        sc_trace(vcd, o_mtvec, "/top/proc0/csr0/o_mtvec");
     }
 };
 
@@ -44,6 +58,7 @@ void CsrRegs::comb() {
 
     v = r;
 
+    wb_rdata = 0;
     switch (i_addr.read()) {
     case CSR_misa:
         break;
@@ -58,7 +73,6 @@ void CsrRegs::comb() {
     case CSR_uepc:// - User mode program counter
         break;
     case CSR_mstatus:// - Machine mode status register
-        wb_rdata = 0;
         wb_rdata[0] = r.uie;
         wb_rdata[3] = r.mie;
         wb_rdata[7] = r.mpie;
