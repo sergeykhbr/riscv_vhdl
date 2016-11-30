@@ -29,6 +29,7 @@ MemAccess::MemAccess(sc_module_name name_, sc_trace_file *vcd)
     sensitive << r.valid;
     sensitive << r.wdata;
     sensitive << r.wait_resp;
+    sensitive << r.step_cnt;
 
     SC_METHOD(registers);
     sensitive << i_clk.pos();
@@ -135,7 +136,7 @@ void MemAccess::comb() {
     w_o_wena = r.wena & w_o_valid;
 
     if (w_o_valid) {
-        v.step_cnt = r.step_cnt + 1;
+        v.step_cnt = r.step_cnt.read() + 1;
     }
 
     if (!i_nrst.read()) {

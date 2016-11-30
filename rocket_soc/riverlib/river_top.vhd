@@ -109,8 +109,7 @@ begin
     variable v : RegistersType;
   begin
 
-    v := r;
-
+    v.timer := r.timer + 1;
     if i_nrst = '0' then
         v.timer := (others => '0');
     end if;

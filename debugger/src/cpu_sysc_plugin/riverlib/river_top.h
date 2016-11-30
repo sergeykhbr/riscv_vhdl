@@ -38,7 +38,8 @@ SC_MODULE(RiverTop) {
 
     SC_HAS_PROCESS(RiverTop);
 
-    RiverTop(sc_module_name name_, sc_trace_file *vcd=0);
+    RiverTop(sc_module_name name_, sc_trace_file *i_vcd=0,
+                                   sc_trace_file *o_vcd=0);
     virtual ~RiverTop();
 
 private:

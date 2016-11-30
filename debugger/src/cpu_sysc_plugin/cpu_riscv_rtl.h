@@ -107,7 +107,8 @@ private:
     sc_signal<bool> w_interrupt;
     // Debug interface
 
-    sc_trace_file *vcd_;
+    sc_trace_file *i_vcd_;      // stimulus pattern
+    sc_trace_file *o_vcd_;      // reference pattern for comparision
     RiverTop *top_;
     RtlWrapper *wrapper_;
 };

@@ -25,10 +25,13 @@ CpuRiscV_RTL::CpuRiscV_RTL(const char *name)
     RISCV_register_hap(static_cast<IHap *>(this));
     sc_set_default_time_unit(1, SC_NS);
 #if GENERATE_VCD
-    vcd_ = sc_create_vcd_trace_file("river_sim");
-    vcd_->set_time_unit(1, SC_PS);
+    i_vcd_ = sc_create_vcd_trace_file("i_river");
+    i_vcd_->set_time_unit(1, SC_PS);
+    o_vcd_ = sc_create_vcd_trace_file("o_river");
+    o_vcd_->set_time_unit(1, SC_PS);
 #else
-    vcd_ = 0;
+    i_vcd_ = 0;
+    o_vcd_ = 0;
 #endif
     /** Create all objects, then initilize SystemC context: */
     wrapper_ = new RtlWrapper("wrapper");
@@ -45,7 +48,7 @@ CpuRiscV_RTL::CpuRiscV_RTL(const char *name)
     wrapper_->o_resp_mem_data(wb_resp_mem_data);
     wrapper_->o_interrupt(w_interrupt);
 
-    top_ = new RiverTop("top", vcd_);
+    top_ = new RiverTop("top", i_vcd_, o_vcd_);
     top_->i_clk(wrapper_->o_clk);
     top_->i_nrst(w_nrst);
     top_->o_req_mem_valid(w_req_mem_valid);
@@ -58,11 +61,6 @@ CpuRiscV_RTL::CpuRiscV_RTL(const char *name)
     top_->i_ext_irq(w_interrupt);
     top_->o_timer(wb_timer);
     top_->o_step_cnt(wb_step_cnt);
-
-    //sc_trace(vcd_, w_req_mem_valid, "w_req_mem_valid");
-    //sc_trace(vcd_, wb_req_mem_addr, "wb_req_mem_addr");
-    //sc_trace(vcd_, w_resp_mem_ready, "w_resp_mem_ready");
-    //sc_trace(vcd_, wb_resp_mem_data, "wb_resp_mem_data");
 
     sc_start(0, SC_NS);
 }
@@ -101,7 +99,7 @@ void CpuRiscV_RTL::hapTriggered(IFace *isrc, EHapType type,
 
 void CpuRiscV_RTL::stop() {
     sc_stop();
-    if (vcd_) {
+    if (i_vcd_) {
         //sc_close_vcd_trace_file(vcd_);
     }
 

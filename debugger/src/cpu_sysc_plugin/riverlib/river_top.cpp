@@ -9,7 +9,8 @@
 
 namespace debugger {
 
-RiverTop::RiverTop(sc_module_name name_, sc_trace_file *vcd) 
+RiverTop::RiverTop(sc_module_name name_, sc_trace_file *i_vcd,
+                   sc_trace_file *o_vcd) 
     : sc_module(name_) {
     SC_METHOD(comb);
     sensitive << i_nrst;
@@ -20,7 +21,7 @@ RiverTop::RiverTop(sc_module_name name_, sc_trace_file *vcd)
     SC_METHOD(registers);
     sensitive << i_clk.pos();
 
-    proc0 = new Processor("proc0", vcd);
+    proc0 = new Processor("proc0", NULL);      // don't generate internal VCD signals
     proc0->i_clk(i_clk);
     proc0->i_nrst(i_nrst);
     proc0->i_cache_hold(w_cache_hold);
@@ -40,7 +41,7 @@ RiverTop::RiverTop(sc_module_name name_, sc_trace_file *vcd)
     proc0->i_ext_irq(i_ext_irq);
     proc0->o_step_cnt(o_step_cnt);
 
-    cache0 = new CacheTop("cache0", vcd);
+    cache0 = new CacheTop("cache0", NULL);     // don't generate internal VCD signals
     cache0->i_clk(i_clk);
     cache0->i_nrst(i_nrst);
     cache0->i_req_ctrl_valid(w_req_ctrl_valid);
@@ -65,15 +66,50 @@ RiverTop::RiverTop(sc_module_name name_, sc_trace_file *vcd)
     cache0->i_resp_mem_data(i_resp_mem_data);
     cache0->o_hold(w_cache_hold);
 
-    if (vcd) {
-        sc_trace(vcd, i_clk, "/top/i_clk");
-        sc_trace(vcd, i_nrst, "/top/i_nrst");
-        sc_trace(vcd, o_timer, "/top/o_timer");
-        sc_trace(vcd, o_req_mem_valid, "/top/o_req_mem_valid");
-        sc_trace(vcd, o_req_mem_addr, "/top/o_req_mem_addr");
-        sc_trace(vcd, i_resp_mem_data_valid, "/top/i_resp_mem_data_valid");
-        sc_trace(vcd, i_resp_mem_data, "/top/i_resp_mem_data");
-        sc_trace(vcd, w_cache_hold, "/top/w_cache_hold");
+    /**
+     * ModelSim commands for automatic comparision Stimulus vs SystemC reference:
+     *
+     * Convert VCD to WLF and back to VCD because ModelSim supports only 
+     * 1-bit signals, such conversion allows to create compatible VCD-file.
+     * 
+     * 1. Prepare compatible VCD/wlf files:
+     *      vcd2wlf E:/../win32build/Debug/i_river.vcd -o e:/i_river.wlf
+     *      vcd2wlf E:/../win32build/Debug/o_river.vcd -o e:/o_river.wlf
+     *      wlf2vcd e:/i_river.wlf -o e:/i_river.vcd
+     *
+     * 2. Add waves to simulation view and simulate 350 us:
+     *      vsim -t 1ps -vcdstim E:/i_river.vcd riverlib.RiverTop
+     *      vsim -view e:/o_river.wlf
+     *      add wave o_river:/SystemC/ *
+     *      add wave sim:/rivertop/ *
+     *      run 350us
+     *
+     * 3. Start automatic comparision:
+     *      compare start o_river sim
+     *      compare add -wave sim:/RiverTop/o_req_mem_valid o_river:/SystemC/o_req_mem_valid
+     *      compare add -wave sim:/RiverTop/o_req_mem_write o_river:/SystemC/o_req_mem_write
+     *      compare add -wave sim:/RiverTop/o_req_mem_addr o_river:/SystemC/o_req_mem_addr
+     *      compare add -wave sim:/RiverTop/o_req_mem_strob o_river:/SystemC/o_req_mem_strob
+     *      compare add -wave sim:/RiverTop/o_req_mem_data o_river:/SystemC/o_req_mem_data
+     *      compare add -wave sim:/RiverTop/o_step_cnt o_river:/SystemC/o_step_cnt
+     *      compare run
+     *
+     */
+    if (i_vcd) {
+        sc_trace(i_vcd, i_clk, "i_clk");
+        sc_trace(i_vcd, i_nrst, "i_nrst");
+        sc_trace(i_vcd, i_resp_mem_data_valid, "i_resp_mem_data_valid");
+        sc_trace(i_vcd, i_resp_mem_data, "i_resp_mem_data");
+        sc_trace(i_vcd, i_ext_irq, "i_ext_irq");
+    }
+    if (o_vcd) {
+        sc_trace(o_vcd, o_req_mem_valid, "o_req_mem_valid");
+        sc_trace(o_vcd, o_req_mem_write, "o_req_mem_write");
+        sc_trace(o_vcd, o_req_mem_addr, "o_req_mem_addr");
+        sc_trace(o_vcd, o_req_mem_strob, "o_req_mem_strob");
+        sc_trace(o_vcd, o_req_mem_data, "o_req_mem_data");
+        sc_trace(o_vcd, o_timer, "o_timer");
+        sc_trace(o_vcd, o_step_cnt, "o_step_cnt");
     }
 };
 

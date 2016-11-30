@@ -64,6 +64,7 @@ begin
 
     v := r;
     w_mem_valid := '0';
+    wb_mem_addr := (others => '0');
     w_valid := '0';
     wb_data := (others => '0');
 

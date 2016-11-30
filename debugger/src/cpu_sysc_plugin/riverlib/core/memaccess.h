@@ -65,7 +65,7 @@ private:
         sc_signal<bool> sign_ext;
         sc_signal<sc_uint<2>> size;
         sc_signal<sc_uint<RISCV_ARCH>> wdata;
-        sc_uint<64> step_cnt;
+        sc_signal<sc_uint<64>> step_cnt;
     } v, r;
 
     bool w_mem_valid;

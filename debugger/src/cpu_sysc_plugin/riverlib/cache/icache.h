@@ -44,8 +44,8 @@ private:
         sc_signal<sc_uint<BUS_ADDR_WIDTH - 3>> iline_addr;
         sc_signal<sc_uint<BUS_DATA_WIDTH>> iline_data;
 
-        sc_uint<BUS_ADDR_WIDTH> iline_addr_req;
-        bool ihit;
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> iline_addr_req;
+        sc_signal<bool> ihit;
         sc_uint<32> ihit_data;
     } v, r;
 
