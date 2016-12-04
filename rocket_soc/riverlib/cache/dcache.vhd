@@ -25,10 +25,13 @@ entity DCache is
     i_req_data_sz : in std_logic_vector(1 downto 0);
     i_req_data_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_req_data_data : in std_logic_vector(RISCV_ARCH-1 downto 0);
+    o_req_data_ready : out std_logic;
     o_resp_data_valid : out std_logic;
     o_resp_data_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     o_resp_data_data : out std_logic_vector(RISCV_ARCH-1 downto 0);
+    i_resp_data_ready : in std_logic;
     -- Memory interface:
+    i_req_mem_ready : in std_logic;
     o_req_mem_valid : out std_logic;
     o_req_mem_write : out std_logic;
     o_req_mem_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
@@ -45,6 +48,9 @@ architecture arch_DCache of DCache is
       req_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
       req_size : std_logic_vector(1 downto 0);
       rena : std_logic;
+      hold_ena : std_logic;
+      hold_data : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+      hold_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
   end record;
 
   signal r, rin : RegistersType;
@@ -53,13 +59,16 @@ begin
 
   comb : process(i_nrst, i_req_data_valid, i_req_data_write, i_req_data_sz, 
                 i_req_data_addr, i_req_data_data, i_resp_mem_data_valid, 
-                i_resp_mem_data, r)
+                i_resp_mem_data, i_req_mem_ready, i_resp_data_ready, r)
     variable v : RegistersType;
     variable wb_req_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     variable wb_req_strob : std_logic_vector(BUS_DATA_BYTES-1 downto 0);
     variable wb_rdata : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
     variable wb_wdata : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
     variable wb_rtmp : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+    variable w_o_valid : std_logic;
+    variable wb_o_data : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+    variable wb_o_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
   begin
 
     v := r;
@@ -68,6 +77,9 @@ begin
     wb_rdata := (others => '0');
     wb_wdata := (others => '0');
     wb_rtmp := (others => '0');
+    w_o_valid := '0';
+    wb_o_data := (others => '0');
+    wb_o_addr := (others => '0');
 
     wb_req_addr(BUS_ADDR_WIDTH-1 downto 3) 
         := i_req_data_addr(BUS_ADDR_WIDTH-1 downto 3);
@@ -156,16 +168,36 @@ begin
         wb_rdata := wb_rtmp;
     end case;
     
-    if i_req_data_valid = '1' then
+    if (i_req_data_valid and i_req_mem_ready) = '1' then
         v.req_addr := i_req_data_addr;
         v.req_size := i_req_data_sz;
     end if;
+    
+    if i_resp_mem_data_valid = '1' then
+      w_o_valid := i_resp_data_ready;
+      wb_o_data := wb_rdata;
+      wb_o_addr := r.req_addr;
+      v.hold_ena := not i_resp_data_ready;
+      v.hold_addr := r.req_addr;
+      v.hold_data := wb_rdata;
+    elsif r.hold_ena = '1' then
+      v.hold_ena := not i_resp_data_ready;
+      w_o_valid := i_resp_data_ready;
+      wb_o_data := r.hold_data;
+      wb_o_addr := r.hold_addr;
+    end if;
+
 
     if i_nrst = '0' then
         v.req_addr := (others => '0');
         v.req_size := (others => '0');
         v.rena := '0';
+        v.hold_ena := '0';
+        v.hold_addr := (others => '0');
+        v.hold_data := (others => '0');
     end if;
+
+    o_req_data_ready <= i_req_mem_ready;
 
     o_req_mem_valid <= i_req_data_valid;
     o_req_mem_write <= i_req_data_write;
@@ -173,9 +205,9 @@ begin
     o_req_mem_strob <= wb_req_strob;
     o_req_mem_data <= wb_wdata;
 
-    o_resp_data_valid <= i_resp_mem_data_valid;
-    o_resp_data_data <= wb_rdata;
-    o_resp_data_addr <= r.req_addr;
+    o_resp_data_valid <= w_o_valid;
+    o_resp_data_data <= wb_o_data;
+    o_resp_data_addr <= wb_o_addr;
     
     rin <= v;
   end process;

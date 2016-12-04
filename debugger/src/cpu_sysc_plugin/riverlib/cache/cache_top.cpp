@@ -141,7 +141,7 @@ void CacheTop::comb() {
         wb_mem_addr = wb_ctrl_req_mem_addr;
         wb_mem_strob = wb_ctrl_req_mem_strob;
         wb_mem_wdata = wb_ctrl_req_mem_data;
-    } else {
+    } else if (i_resp_mem_data_valid.read()) {
         v.state = State_Idle;
         w_mem_write = 0;
         wb_mem_addr = 0;

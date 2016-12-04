@@ -47,8 +47,8 @@ begin
   begin
 
     v := r;
-    if i_f_mem_request = '1' and i_hold = '0' then
-        if i_f_predic_miss = '1' then
+    if i_f_mem_request = '1' then
+        if i_f_predic_miss = '1' and i_hold = '0'then
             v.npc := i_e_npc + 4;
         else
             -- todo: JAL and JALR ra (return)

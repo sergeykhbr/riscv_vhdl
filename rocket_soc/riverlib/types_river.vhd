@@ -28,12 +28,12 @@ package types_river is
 --! @param[in] i_msti     Bus-to-Master device signals.
 --! @param[out] o_msto    CachedTile-to-Bus request signals.
 --! @param[in] i_ext_irq  Interrupts line supported by Rocket chip.
-component river_axi is 
+component river_amba is 
 generic (
     xindex : integer := 0
 );
 port ( 
-    i_rstn   : in std_logic;
+    i_nrst   : in std_logic;
     i_clk    : in std_logic;
     i_msti   : in nasti_master_in_type;
     o_msto   : out nasti_master_out_type;

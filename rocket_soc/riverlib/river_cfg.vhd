@@ -362,7 +362,7 @@ package river_cfg is
 
   --! @param[in] i_clk  
   --! @param[in] i_nrst Reset active LOW
-  --! @param[in] i_cache_hold Hold execution while memory bus is busy
+  --! @param[in] i_pipeline_hold Hold execution by any reason
   --! @param[in] i_d_valid Decoded instruction is valid
   --! @param[in] i_d_pc Instruction pointer on decoded instruction
   --! @param[in] i_d_instr Decoded instruction value
@@ -408,7 +408,7 @@ package river_cfg is
   port (
     i_clk  : in std_logic;
     i_nrst : in std_logic;
-    i_cache_hold : in std_logic;
+    i_pipeline_hold : in std_logic;
     i_d_valid : in std_logic;
     i_d_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_d_instr : in std_logic_vector(31 downto 0);
@@ -455,13 +455,14 @@ package river_cfg is
 
   --! @param[in] i_clk
   --! @param[in] i_nrst
-  --! @param[in] i_cache_hold
   --! @param[in] i_pipeline_hold
+  --! @param[in] i_mem_ready
   --! @param[out] o_mem_addr_valid
   --! @param[out] o_mem_addr
   --! @param[in] i_mem_data_valid
   --! @param[in] i_mem_data_addr
   --! @param[in] i_mem_data
+  --! @param[out] o_mem_ready
   --! @param[in] i_e_npc_valid
   --! @param[in] i_e_npc
   --! @param[in] i_predict_npc
@@ -469,18 +470,19 @@ package river_cfg is
   --! @param[out] o_valid
   --! @param[out] o_pc
   --! @param[out] o_instr
+  --! @param[out] o_hold
   component InstrFetch is
   port (
     i_clk  : in std_logic;
     i_nrst : in std_logic;
-    i_cache_hold : in std_logic;
     i_pipeline_hold : in std_logic;
+    i_mem_req_ready : in std_logic;
     o_mem_addr_valid : out std_logic;
     o_mem_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_mem_data_valid : in std_logic;
     i_mem_data_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_mem_data : in std_logic_vector(31 downto 0);
-
+    o_mem_resp_ready : out std_logic;
     i_e_npc_valid : in std_logic;
     i_e_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_predict_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
@@ -488,7 +490,8 @@ package river_cfg is
 
     o_valid : out std_logic;
     o_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    o_instr : out std_logic_vector(31 downto 0)
+    o_instr : out std_logic_vector(31 downto 0);
+    o_hold : out std_logic
   );
   end component; 
 
@@ -508,6 +511,7 @@ package river_cfg is
   --! @param[out] o_wena Write enable signal
   --! @param[out] o_waddr Output register address (0 = x0 = no write)
   --! @param[out] o_wdata Register value
+  --! @param[in] i_mem_req_read Memory request is acceptable
   --! @param[out] o_mem_valid Memory request is valid
   --! @param[out] o_mem_write Memory write request
   --! @param[out] o_mem_sz Encoded data size in bytes: 0=1B; 1=2B; 2=4B; 3=8B
@@ -516,6 +520,8 @@ package river_cfg is
   --! @param[in] i_mem_data_valid Data path memory response is valid
   --! @param[in] i_mem_data_addr Data path memory response address
   --! @param[in] i_mem_data Data path memory response value
+  --! @param[out] o_mem_resp_ready Data from DCache was accepted
+  --! @param[out] o_hold Hold-on pipeline while memory operation not finished
   --! @param[out] o_valid Output is valid
   --! @param[out] o_pc Valid instruction pointer
   --! @param[out] o_instr Valid instruction value
@@ -537,6 +543,7 @@ package river_cfg is
     o_wena : out std_logic;
     o_waddr : out std_logic_vector(4 downto 0);
     o_wdata : out std_logic_vector(RISCV_ARCH-1 downto 0);
+    i_mem_req_ready : in std_logic;
     o_mem_valid : out std_logic;
     o_mem_write : out std_logic;
     o_mem_sz : out std_logic_vector(1 downto 0);
@@ -545,6 +552,8 @@ package river_cfg is
     i_mem_data_valid : in std_logic;
     i_mem_data_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+    o_mem_resp_ready : out std_logic;
+    o_hold : out std_logic;
     o_valid : out std_logic;
     o_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     o_instr : out std_logic_vector(31 downto 0);
@@ -580,12 +589,14 @@ package river_cfg is
   --! @brief CPU 5-stages pipeline top-level
   --! @param[in] i_clk             CPU clock
   --! @param[in] i_nrst            Reset. Active LOW.
-  --! @param[in] i_cache_hold      Cache is busy, hold the pipeline
+  --! @param[in] i_req_ctrl_ready  ICache is ready to accept request
   --! @param[out] o_req_ctrl_valid Request to ICache is valid
   --! @param[out] o_req_ctrl_addr  Requesting address to ICache
   --! @param[in] i_resp_ctrl_valid ICache response is valid
   --! @param[in] i_resp_ctrl_addr  Response address must be equal to the latest request address
   --! @param[in] i_resp_ctrl_data  Read value
+  --! @param[out] o_resp_ctrl_ready Response from ICache is accepted
+  --! @param[in] i_req_data_ready  DCache is ready to accept request
   --! @param[out] o_req_data_valid Request to DCache is valid
   --! @param[out] o_req_data_write Read/Write transaction
   --! @param[out] o_req_data_size  Size [Bytes]: 0=1B; 1=2B; 2=4B; 3=8B
@@ -594,18 +605,21 @@ package river_cfg is
   --! @param[in] i_resp_data_valid DCache response is valid
   --! @param[in] i_resp_data_addr  DCache response address must be equal to the latest request address
   --! @param[in] i_resp_data_data  Read value
+  --! @param[out] o_resp_data_ready Response drom DCache is accepted
   --! @param[in] i_ext_irq         PLIC interrupt accordingly with spec
   --! @param[out] o_step_cnt       Number of valid executed instructions
   component Processor is
   port (
     i_clk : in std_logic;
     i_nrst : in std_logic;
-    i_cache_hold : in std_logic;
+    i_req_ctrl_ready : in std_logic;
     o_req_ctrl_valid : out std_logic;
     o_req_ctrl_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_resp_ctrl_valid : in std_logic;
     i_resp_ctrl_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_resp_ctrl_data : in std_logic_vector(31 downto 0);
+    o_resp_ctrl_ready : out std_logic;
+    i_req_data_ready : in std_logic;
     o_req_data_valid : out std_logic;
     o_req_data_write : out std_logic;
     o_req_data_size : out std_logic_vector(1 downto 0);
@@ -614,6 +628,7 @@ package river_cfg is
     i_resp_data_valid : in std_logic;
     i_resp_data_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_resp_data_data : in std_logic_vector(RISCV_ARCH-1 downto 0);
+    o_resp_data_ready : out std_logic;
     i_ext_irq : in std_logic;
     o_step_cnt : out std_logic_vector(63 downto 0)
   );
@@ -624,9 +639,12 @@ package river_cfg is
   --! @param[in] i_nrst
   --! @param[in] i_req_ctrl_valid
   --! @param[in] i_req_ctrl_addr
+  --! @param[out] o_req_ctrl_ready
   --! @param[out] o_resp_ctrl_valid
   --! @param[out] o_resp_ctrl_addr
   --! @param[out] o_resp_ctrl_data
+  --! @param[in] i_resp_ctrl_ready
+  --! @param[out] o_req_data_ready
   --! @param[in] i_req_data_valid
   --! @param[in] i_req_data_write
   --! @param[in] i_req_data_sz
@@ -635,6 +653,8 @@ package river_cfg is
   --! @param[out] o_resp_data_valid
   --! @param[out] o_resp_data_addr
   --! @param[out] o_resp_data_data
+  --! @param[in] i_resp_data_ready
+  --! @param[in] i_req_mem_ready      AXI request was accepted
   --! @param[out] o_req_mem_valid
   --! @param[out] o_req_mem_write
   --! @param[out] o_req_mem_addr
@@ -642,16 +662,18 @@ package river_cfg is
   --! @param[out] o_req_mem_data
   --! @param[in] i_resp_mem_data_valid
   --! @param[in] i_resp_mem_data
-  --! @param[out] o_hold
   component CacheTop is
   port (
     i_clk : in std_logic;
     i_nrst : in std_logic;
     i_req_ctrl_valid : in std_logic;
     i_req_ctrl_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_req_ctrl_ready : out std_logic;
     o_resp_ctrl_valid : out std_logic;
     o_resp_ctrl_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     o_resp_ctrl_data : out std_logic_vector(31 downto 0);
+    i_resp_ctrl_ready : in std_logic;
+    o_req_data_ready : out std_logic;
     i_req_data_valid : in std_logic;
     i_req_data_write : in std_logic;
     i_req_data_size : in std_logic_vector(1 downto 0);
@@ -660,14 +682,15 @@ package river_cfg is
     o_resp_data_valid : out std_logic;
     o_resp_data_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     o_resp_data_data : out std_logic_vector(RISCV_ARCH-1 downto 0);
+    i_resp_data_ready : in std_logic;
+    i_req_mem_ready : in std_logic;
     o_req_mem_valid : out std_logic;
     o_req_mem_write : out std_logic;
     o_req_mem_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     o_req_mem_strob : out std_logic_vector(BUS_DATA_BYTES-1 downto 0);
     o_req_mem_data : out std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
     i_resp_mem_data_valid : in std_logic;
-    i_resp_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
-    o_hold : out std_logic
+    i_resp_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0)
   );
   end component; 
 
@@ -675,6 +698,7 @@ package river_cfg is
   --! @brief "River" CPU Top level.
   --! @param[in] i_clk                 CPU clock
   --! @param[in] i_nrst                Reset. Active LOW.
+  --! @param[in] i_req_mem_ready       AXI request was accepted
   --! @param[out] o_req_mem_valid      AXI memory request is valid
   --! @param[out] o_req_mem_write      AXI memory request is write type
   --! @param[out] o_req_mem_addr       AXI memory request address
@@ -689,6 +713,7 @@ package river_cfg is
   port (
     i_clk : in std_logic;
     i_nrst : in std_logic;
+    i_req_mem_ready : in std_logic;
     o_req_mem_valid : out std_logic;
     o_req_mem_write : out std_logic;
     o_req_mem_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);

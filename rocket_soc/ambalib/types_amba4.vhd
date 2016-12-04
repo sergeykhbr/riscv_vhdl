@@ -701,22 +701,28 @@ package body types_amba4 is
   ) is
   variable traddr : std_logic_vector(CFG_NASTI_ADDR_BITS-1 downto 0);
   variable twaddr : std_logic_vector(CFG_NASTI_ADDR_BITS-1 downto 0);
+  variable w_ar_valid : std_logic;
   begin
     o_bank := i_bank;
 
+    traddr := (i.ar_bits.addr(CFG_NASTI_ADDR_BITS-1 downto 12) and (not cfg.xmask))
+             & i.ar_bits.addr(11 downto 0);
+    w_ar_valid := '0';
+    if i.ar_valid = '1' 
+       and ((i.ar_bits.addr(CFG_NASTI_ADDR_BITS-1 downto 12) and cfg.xmask) = cfg.xaddr) then
+       w_ar_valid := '1';
+    end if;
+
+             
     -- Reading state machine:
     case i_bank.rstate is
     when rwait =>
-        if i.ar_valid = '1' 
-          and ((i.ar_bits.addr(CFG_NASTI_ADDR_BITS-1 downto 12) and cfg.xmask) = cfg.xaddr) then
+        if w_ar_valid = '1' then
             o_bank.rstate := rtrans;
-            traddr := (i.ar_bits.addr(CFG_NASTI_ADDR_BITS-1 downto 12) and (not cfg.xmask))
-                   & i.ar_bits.addr(11 downto 0);
 
             for n in 0 to CFG_WORDS_ON_BUS-1 loop
               o_bank.raddr(n) := traddr + n*CFG_ALIGN_BYTES;
             end loop;
-
             o_bank.rsize := XSizeToBytes(conv_integer(i.ar_bits.size));
             o_bank.rburst := i.ar_bits.burst;
             o_bank.rlen := conv_integer(i.ar_bits.len);
@@ -739,9 +745,22 @@ package body types_amba4 is
                 o_bank.raddr(n) := i_bank.raddr(n) + i_bank.rsize;
               end loop;
             end if;
-            -- End of transaction:
+            -- End of transaction (or process another one):
             if i_bank.rlen = 0 then
-                o_bank.rstate := rwait;
+                if w_ar_valid = '0' then
+                    o_bank.rstate := rwait;
+                else
+                    for n in 0 to CFG_WORDS_ON_BUS-1 loop
+                      o_bank.raddr(n) := traddr + n*CFG_ALIGN_BYTES;
+                    end loop;
+                    o_bank.rsize := XSizeToBytes(conv_integer(i.ar_bits.size));
+                    o_bank.rburst := i.ar_bits.burst;
+                    o_bank.rlen := conv_integer(i.ar_bits.len);
+                    o_bank.rid := i.ar_id;
+                    o_bank.rresp := NASTI_RESP_OKAY;
+                    o_bank.ruser := i.ar_user;
+                    o_bank.rwaitready := '1';
+                end if;
             end if;
         end if;
     end case;
@@ -940,11 +959,8 @@ return nasti_slave_out_type is
 variable ret :  nasti_slave_out_type;
 begin
     -- Read transfer:
-    if r.rstate = rwait then
-      ret.ar_ready    := '1';
-    else
-      ret.ar_ready    := '0';
-    end if;
+    ret.aw_ready    := '1';
+    ret.ar_ready    := '1';
 
     ret.r_id      := r.rid;
     if r.rstate = rtrans and r.rlen = 0 then
@@ -963,13 +979,10 @@ begin
     ret.r_data := rd_val;
 
     -- Write transfer:
-    if r.wstate = wwait then
-      ret.aw_ready    := '1';
-    else
-      ret.aw_ready    := '0';
-    end if;
     if r.wstate = wtrans then
       ret.w_ready := '1';
+      ret.aw_ready    := '0';
+      ret.ar_ready    := '0';
     else
       ret.w_ready := '0';
     end if;

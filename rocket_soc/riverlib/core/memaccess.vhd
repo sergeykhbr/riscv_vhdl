@@ -35,6 +35,7 @@ entity MemAccess is
     o_wdata : out std_logic_vector(RISCV_ARCH-1 downto 0);            -- Register value
 
     -- Memory interface:
+    i_mem_req_ready : in std_logic;
     o_mem_valid : out std_logic;                                      -- Memory request is valid
     o_mem_write : out std_logic;                                      -- Memory write request
     o_mem_sz : out std_logic_vector(1 downto 0);                      -- Encoded data size in bytes: 0=1B; 1=2B; 2=4B; 3=8B
@@ -43,7 +44,9 @@ entity MemAccess is
     i_mem_data_valid : in std_logic;                                  -- Data path memory response is valid
     i_mem_data_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0); -- Data path memory response address
     i_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);      -- Data path memory response value
+    o_mem_resp_ready : out std_logic;
 
+    o_hold : out std_logic;                                           -- Memory operation is more than 1 clock
     o_valid : out std_logic;                                          -- Output is valid
     o_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);           -- Valid instruction pointer
     o_instr : out std_logic_vector(31 downto 0);                      -- Valid instruction value
@@ -58,13 +61,13 @@ architecture arch_MemAccess of MemAccess is
       pc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
       instr : std_logic_vector(31 downto 0);
 
-      wait_resp : std_logic;
       wena : std_logic;
       waddr : std_logic_vector(4 downto 0);
       sign_ext : std_logic;
       size : std_logic_vector(1 downto 0);
       wdata : std_logic_vector(RISCV_ARCH-1 downto 0);
       step_cnt : std_logic_vector(63 downto 0);
+      wait_resp : std_logic;
   end record;
 
   signal r, rin : RegistersType;
@@ -72,61 +75,58 @@ architecture arch_MemAccess of MemAccess is
 begin
 
 
-  comb : process(i_nrst, i_e_valid, i_e_pc, i_e_instr, i_res_addr, i_res_data,
+  comb : process(i_nrst, i_mem_req_ready, i_e_valid, i_e_pc, i_e_instr, i_res_addr, i_res_data,
                 i_memop_sign_ext, i_memop_load, i_memop_store, i_memop_size,
                 i_memop_addr, i_mem_data_valid, i_mem_data_addr, i_mem_data, r)
     variable v : RegistersType;
-    variable w_mem_valid : std_logic;
-    variable w_mem_write : std_logic;
-    variable wb_mem_sz : std_logic_vector(1 downto 0);
-    variable wb_mem_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    variable wb_mem_wdata : std_logic_vector(RISCV_ARCH-1 downto 0);
+    variable w_req_fire : std_logic;
+    variable w_o_mem_valid : std_logic;
+    variable w_o_mem_write : std_logic;
+    variable wb_o_mem_sz : std_logic_vector(1 downto 0);
+    variable wb_o_mem_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    variable wb_o_mem_wdata : std_logic_vector(RISCV_ARCH-1 downto 0);
     variable wb_res_wdata : std_logic_vector(RISCV_ARCH-1 downto 0);
-    variable is_waiting : std_logic;
     variable w_memop : std_logic;
     variable w_o_valid : std_logic;
     variable w_o_wena : std_logic;
+    variable w_o_hold : std_logic;
   begin
 
     v := r;
 
-    w_mem_valid := '0';
-    w_mem_write := '0';
-    wb_mem_sz := (others => '0');
-    wb_mem_addr := (others => '0');
-    wb_mem_wdata := (others => '0');
-
-    is_waiting := r.wait_resp and not i_mem_data_valid;
-    v.wait_resp := is_waiting;
-
+    w_o_mem_valid := '0';
+    w_o_mem_write := '0';
+    wb_o_mem_sz := (others => '0');
+    wb_o_mem_addr := (others => '0');
+    wb_o_mem_wdata := (others => '0');
+    v.valid := '0';
+    w_o_hold := '0';
+    
     w_memop := i_memop_load or i_memop_store;
-
-    v.pc := i_e_pc;
-    v.instr := i_e_instr;
-    v.valid := i_e_valid and not w_memop;
-    if i_e_valid = '1' then
-        v.waddr := i_res_addr;
-        v.wdata := i_res_data;
-        v.wena := '1';
-        if i_res_addr = "00000" then
-            v.wena := '0';
-        end if;
-
-        if w_memop = '1' then
-            v.sign_ext := i_memop_sign_ext;
-            v.size := i_memop_size;
-            v.wait_resp := '1';
-            w_mem_valid := '1';
-            w_mem_write := i_memop_store;
-            wb_mem_sz := i_memop_size;
-            wb_mem_addr := i_memop_addr;
-            wb_mem_wdata := i_res_data;
-        else
-            v.wait_resp := '0';
-        end if;
+    w_req_fire := i_e_valid and i_mem_req_ready;
+    
+    if w_req_fire = '1' then
+      v.valid := not w_memop;
+      v.wait_resp := w_memop;
+      v.pc := i_e_pc;
+      v.instr := i_e_instr;
+      v.waddr := i_res_addr;
+      v.wdata := i_res_data;
+      v.wena := '1';
+      if i_res_addr = "00000" then
+          v.wena := '0';
+      end if;
+      w_o_mem_valid := w_memop;
+      w_o_mem_write := i_memop_store;
+      wb_o_mem_sz := i_memop_size;
+      wb_o_mem_addr := i_memop_addr;
+      wb_o_mem_wdata := i_res_data;
+      v.sign_ext := i_memop_sign_ext;
+      v.size := i_memop_size;
     end if;
 
-    if (r.wait_resp and i_mem_data_valid) = '1' then
+    if i_mem_data_valid = '1' then
+        v.wait_resp := w_req_fire and w_memop;
         if r.sign_ext = '1' then
             case r.size is
             when MEMOP_1B =>
@@ -150,6 +150,7 @@ begin
 
     w_o_valid := r.valid or i_mem_data_valid;
     w_o_wena := r.wena and w_o_valid;
+    w_o_hold := not i_mem_req_ready or w_memop or (r.wait_resp and not i_mem_data_valid);
 
     if w_o_valid = '1' then
         v.step_cnt := r.step_cnt + 1;
@@ -163,17 +164,19 @@ begin
         v.waddr := (others => '0');
         v.wdata := (others => '0');
         v.wena := '0';
-        v.wait_resp := '0';
         v.size := (others => '0');
         v.sign_ext := '0';
         v.step_cnt := (others => '0');
+        v.wait_resp := '0';
     end if;
 
-    o_mem_valid <= w_mem_valid;
-    o_mem_write <= w_mem_write;
-    o_mem_sz <= wb_mem_sz;
-    o_mem_addr <= wb_mem_addr;
-    o_mem_data <= wb_mem_wdata;
+    o_mem_resp_ready <= '1';
+
+    o_mem_valid <= w_o_mem_valid;
+    o_mem_write <= w_o_mem_write;
+    o_mem_sz <= wb_o_mem_sz;
+    o_mem_addr <= wb_o_mem_addr;
+    o_mem_data <= wb_o_mem_wdata;
 
     o_wena <= w_o_wena;
     o_waddr <= r.waddr;
@@ -182,6 +185,7 @@ begin
     o_pc <= r.pc;
     o_instr <= r.instr;
     o_step_cnt <= r.step_cnt;
+    o_hold <= w_o_hold;
     
     rin <= v;
   end process;

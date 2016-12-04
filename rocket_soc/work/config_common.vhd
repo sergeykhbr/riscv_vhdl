@@ -90,15 +90,13 @@ use techmap.gencomp.all;
 --!          targets: behaviour simulation, FPGAs or ASICs.
 package config_common is
 
---! @brief   Disable/Enable L2-cache.
---! @details Disabling L2-cache is made by removing \e "Uncore" module
---!          from the SoC. Such configuration provides only Single-Core
---!          mode.
---! @warning There are bugs in the L2 implementation by this reason we've
---!          added this define to provide possibility of using "Rocket" 
---!          core without \e "Uncore" module.
---!          Probably these bugs will be fixed in the nearest future.
-constant CFG_COMMON_L1toL2_ENABLE : boolean := false;
+--! @brief   Disable/Enable River CPU instance.
+--! @details When enabled platform will instantiate processor named as
+--!          "RIVER" entirely written on VHDL. 
+--!          Otherwise "Rocket" will be used (developed by Berkley
+--!          team).
+--! @warning DSU available only for \e "RIVER" processor.
+constant CFG_COMMON_RIVER_CPU_ENABLE : boolean := true;
 
 --! @brief   HEX-image for the initialization of the Boot ROM.
 --! @details This file is used by \e inferred ROM implementation.

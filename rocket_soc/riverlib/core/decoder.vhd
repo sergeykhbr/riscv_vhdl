@@ -420,6 +420,7 @@ begin
     if i_nrst = '0' then
         v.valid := '0';
         v.pc := (others => '0');
+        v.instr := (others => '0');
         v.isa_type := (others => '0');
         v.instr_vec := (others => '0');
         v.memop_store := '0';

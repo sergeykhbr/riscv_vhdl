@@ -20,7 +20,7 @@ entity InstrExecute is
   port (
     i_clk  : in std_logic;
     i_nrst : in std_logic;                                      -- Reset active LOW
-    i_cache_hold : in std_logic;                                -- Hold execution while memory bus is busy
+    i_pipeline_hold : in std_logic;                             -- Hold execution by any reason
     i_d_valid : in std_logic;                                   -- Decoded instruction is valid
     i_d_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);    -- Instruction pointer on decoded instruction
     i_d_instr : in std_logic_vector(31 downto 0);               -- Decoded instruction value
@@ -181,7 +181,7 @@ begin
       o_valid => w_arith_valid(Multi_DIV),
       o_busy => w_arith_busy(Multi_DIV));
 
-  comb : process(i_nrst, i_cache_hold, i_d_valid, i_d_pc, i_d_instr,
+  comb : process(i_nrst, i_pipeline_hold, i_d_valid, i_d_pc, i_d_instr,
                  i_wb_done, i_memop_load, i_memop_store, i_memop_sign_ext,
                  i_memop_size, i_unsigned_op, i_rv32, i_isa_type, i_ivec,
                  i_rdata1, i_rdata2, i_csr_rdata, 
@@ -264,7 +264,7 @@ begin
     if i_d_pc = r.npc then
         w_pc_valid := '1';
     end if;
-    w_d_acceptable := not i_cache_hold and i_d_valid 
+    w_d_acceptable := not i_pipeline_hold and i_d_valid 
                           and w_pc_valid and not r.multiclock_ena;
 
     v.ext_irq_pulser := i_ext_irq and i_ie;

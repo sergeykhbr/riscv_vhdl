@@ -19,14 +19,16 @@ entity Processor is
   port (
     i_clk : in std_logic;                                             -- CPU clock
     i_nrst : in std_logic;                                            -- Reset. Active LOW.
-    i_cache_hold : in std_logic;                                      -- Cache is busy, hold the pipeline
     -- Control path:
+    i_req_ctrl_ready : in std_logic;                                  -- ICache is ready to accept request
     o_req_ctrl_valid : out std_logic;                                 -- Request to ICache is valid
     o_req_ctrl_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- Requesting address to ICache
     i_resp_ctrl_valid : in std_logic;                                 -- ICache response is valid
     i_resp_ctrl_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- Response address must be equal to the latest request address
     i_resp_ctrl_data : in std_logic_vector(31 downto 0);              -- Read value
+    o_resp_ctrl_ready : out std_logic;
     -- Data path:
+    i_req_data_ready : in std_logic;                                  -- DCache is ready to accept request
     o_req_data_valid : out std_logic;                                 -- Request to DCache is valid
     o_req_data_write : out std_logic;                                 -- Read/Write transaction
     o_req_data_size : out std_logic_vector(1 downto 0);               -- Size [Bytes]: 0=1B; 1=2B; 2=4B; 3=8B
@@ -35,6 +37,7 @@ entity Processor is
     i_resp_data_valid : in std_logic;                                 -- DCache response is valid
     i_resp_data_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- DCache response address must be equal to the latest request address
     i_resp_data_data : in std_logic_vector(RISCV_ARCH-1 downto 0);    -- Read value
+    o_resp_data_ready : out std_logic;
     -- External interrupt pin
     i_ext_irq : in std_logic;                                         -- PLIC interrupt accordingly with spec
     o_step_cnt : out std_logic_vector(63 downto 0)                    -- Number of valid executed instructions
@@ -139,32 +142,43 @@ architecture arch_Processor of Processor is
     signal r, rin : RegistersType;
 
     signal wb_npc_predict : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    signal w_any_hold : std_logic;                 -- Hold pipeline by any reason
+    signal w_fetch_hold : std_logic;
+    signal w_memacces_hold : std_logic;
+    
+    signal fetch_pipeline_hold : std_logic;
+    signal any_pipeline_hold : std_logic;
+    signal exec_pipeline_hold : std_logic;
 
 begin
 
+    fetch_pipeline_hold <= w.e.pipeline_hold or w_memacces_hold;
+    any_pipeline_hold <= w_fetch_hold or w.e.pipeline_hold or w_memacces_hold;
+    exec_pipeline_hold <= w_fetch_hold or w_memacces_hold;
+    
     fetch0 : InstrFetch port map (
         i_clk => i_clk,
         i_nrst => i_nrst,
-        i_cache_hold => i_cache_hold,
-        i_pipeline_hold => w.e.pipeline_hold,
+        i_pipeline_hold => fetch_pipeline_hold,
+        i_mem_req_ready => i_req_ctrl_ready,
         o_mem_addr_valid => w.f.imem_req_valid,
         o_mem_addr => w.f.imem_req_addr,
         i_mem_data_valid => i_resp_ctrl_valid,
         i_mem_data_addr => i_resp_ctrl_addr,
         i_mem_data => i_resp_ctrl_data,
+        o_mem_resp_ready => o_resp_ctrl_ready,
         i_e_npc_valid => w.e.valid,
         i_e_npc => w.e.npc,
         i_predict_npc => wb_npc_predict,
         o_predict_miss => w.f.predict_miss,
         o_valid => w.f.valid,
         o_pc => w.f.pc,
-        o_instr => w.f.instr);
-
+        o_instr => w.f.instr,
+        o_hold => w_fetch_hold);
+        
     dec0 : InstrDecoder port map (
         i_clk => i_clk,
         i_nrst => i_nrst,
-        i_any_hold => w_any_hold,
+        i_any_hold => any_pipeline_hold,
         i_f_valid => w.f.valid,
         i_f_pc => w.f.pc,
         i_f_instr => w.f.instr,
@@ -184,7 +198,7 @@ begin
     exec0 : InstrExecute port map (
         i_clk => i_clk,
         i_nrst => i_nrst,
-        i_cache_hold => i_cache_hold,
+        i_pipeline_hold => exec_pipeline_hold,
         i_d_valid => w.d.instr_valid,
         i_d_pc => w.d.pc,
         i_d_instr => w.d.instr,
@@ -243,6 +257,7 @@ begin
         o_waddr => w.w.waddr,
         o_wena => w.w.wena,
         o_wdata => w.w.wdata,
+        i_mem_req_ready => i_req_data_ready,
         o_mem_valid => o_req_data_valid,
         o_mem_write => o_req_data_write,
         o_mem_sz => o_req_data_size,
@@ -251,6 +266,8 @@ begin
         i_mem_data_valid => i_resp_data_valid,
         i_mem_data_addr => i_resp_data_addr,
         i_mem_data => i_resp_data_data,
+        o_mem_resp_ready => o_resp_data_ready,
+        o_hold => w_memacces_hold,
         o_valid => w.m.valid,
         o_pc => w.m.pc,
         o_instr => w.m.instr,
@@ -259,7 +276,7 @@ begin
     predic0 : BranchPredictor port map (
         i_clk => i_clk,
         i_nrst => i_nrst,
-        i_hold => i_cache_hold,
+        i_hold => any_pipeline_hold,
         i_f_mem_request => w.f.imem_req_valid,
         i_f_predic_miss => w.f.predict_miss,
         i_f_instr_valid => w.f.valid,
@@ -308,9 +325,6 @@ begin
         end if;
         rin <= v;
     end process;
-
-
-    w_any_hold <= i_cache_hold or w.e.pipeline_hold;
 
     o_req_ctrl_valid <= w.f.imem_req_valid;
     o_req_ctrl_addr <= w.f.imem_req_addr;
