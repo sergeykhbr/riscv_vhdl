@@ -53,6 +53,7 @@ architecture arch_Processor of Processor is
         imem_req_valid : std_logic;
         imem_req_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
         predict_miss : std_logic;
+        pipeline_hold : std_logic;
     end record;
 
     type InstructionDecodeType is record
@@ -101,6 +102,7 @@ architecture arch_Processor of Processor is
         instr : std_logic_vector(31 downto 0);
         pc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
         step_cnt : std_logic_vector(63 downto 0);
+        pipeline_hold : std_logic;
     end record;
 
     type WriteBackType is record
@@ -142,23 +144,21 @@ architecture arch_Processor of Processor is
     signal r, rin : RegistersType;
 
     signal wb_npc_predict : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    signal w_fetch_hold : std_logic;
-    signal w_memacces_hold : std_logic;
     
-    signal fetch_pipeline_hold : std_logic;
-    signal any_pipeline_hold : std_logic;
-    signal exec_pipeline_hold : std_logic;
+    signal w_fetch_pipeline_hold : std_logic;
+    signal w_any_pipeline_hold : std_logic;
+    signal w_exec_pipeline_hold : std_logic;
 
 begin
 
-    fetch_pipeline_hold <= w.e.pipeline_hold or w_memacces_hold;
-    any_pipeline_hold <= w_fetch_hold or w.e.pipeline_hold or w_memacces_hold;
-    exec_pipeline_hold <= w_fetch_hold or w_memacces_hold;
+    w_fetch_pipeline_hold <= w.e.pipeline_hold or w.m.pipeline_hold;
+    w_any_pipeline_hold <= w.f.pipeline_hold or w.e.pipeline_hold or w.m.pipeline_hold;
+    w_exec_pipeline_hold <= w.f.pipeline_hold or w.m.pipeline_hold;
     
     fetch0 : InstrFetch port map (
         i_clk => i_clk,
         i_nrst => i_nrst,
-        i_pipeline_hold => fetch_pipeline_hold,
+        i_pipeline_hold => w_fetch_pipeline_hold,
         i_mem_req_ready => i_req_ctrl_ready,
         o_mem_addr_valid => w.f.imem_req_valid,
         o_mem_addr => w.f.imem_req_addr,
@@ -173,12 +173,12 @@ begin
         o_valid => w.f.valid,
         o_pc => w.f.pc,
         o_instr => w.f.instr,
-        o_hold => w_fetch_hold);
+        o_hold => w.f.pipeline_hold);
         
     dec0 : InstrDecoder port map (
         i_clk => i_clk,
         i_nrst => i_nrst,
-        i_any_hold => any_pipeline_hold,
+        i_any_hold => w_any_pipeline_hold,
         i_f_valid => w.f.valid,
         i_f_pc => w.f.pc,
         i_f_instr => w.f.instr,
@@ -198,7 +198,7 @@ begin
     exec0 : InstrExecute port map (
         i_clk => i_clk,
         i_nrst => i_nrst,
-        i_pipeline_hold => exec_pipeline_hold,
+        i_pipeline_hold => w_exec_pipeline_hold,
         i_d_valid => w.d.instr_valid,
         i_d_pc => w.d.pc,
         i_d_instr => w.d.instr,
@@ -267,7 +267,7 @@ begin
         i_mem_data_addr => i_resp_data_addr,
         i_mem_data => i_resp_data_data,
         o_mem_resp_ready => o_resp_data_ready,
-        o_hold => w_memacces_hold,
+        o_hold => w.m.pipeline_hold,
         o_valid => w.m.valid,
         o_pc => w.m.pc,
         o_instr => w.m.instr,
@@ -276,7 +276,7 @@ begin
     predic0 : BranchPredictor port map (
         i_clk => i_clk,
         i_nrst => i_nrst,
-        i_hold => any_pipeline_hold,
+        i_hold => w_any_pipeline_hold,
         i_f_mem_request => w.f.imem_req_valid,
         i_f_predic_miss => w.f.predict_miss,
         i_f_instr_valid => w.f.valid,

@@ -41,8 +41,8 @@ BranchPredictor::BranchPredictor(sc_module_name name_, sc_trace_file *vcd)
 
 void BranchPredictor::comb() {
     v = r;
-    if (i_f_mem_request.read() && !i_hold.read()) {
-        if (i_f_predic_miss.read()) {
+    if (i_f_mem_request.read()) {
+        if (i_f_predic_miss.read() && !i_hold.read()) {
             v.npc = i_e_npc.read() + 4;
         } else {
             // todo: JAL and JALR ra (return)

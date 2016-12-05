@@ -20,6 +20,11 @@ DCache::DCache(sc_module_name name_, sc_trace_file *vcd)
     sensitive << i_req_data_data;
     sensitive << i_resp_mem_data_valid;
     sensitive << i_resp_mem_data;
+    sensitive << i_req_mem_ready;
+    sensitive << i_resp_data_ready;
+    sensitive << r.hold_ena;
+    sensitive << r.hold_addr;
+    sensitive << r.hold_data;
 
     SC_METHOD(registers);
     sensitive << i_clk.pos();
@@ -41,6 +46,15 @@ DCache::DCache(sc_module_name name_, sc_trace_file *vcd)
 
 
 void DCache::comb() {
+    sc_uint<BUS_ADDR_WIDTH> wb_req_addr;
+    sc_uint<BUS_DATA_BYTES> wb_req_strob;
+    sc_uint<BUS_DATA_WIDTH> wb_rdata;
+    sc_uint<BUS_DATA_WIDTH> wb_wdata;
+    sc_uint<BUS_DATA_WIDTH> wb_rtmp;
+    bool w_o_valid;
+    sc_uint<BUS_DATA_WIDTH> wb_o_data;
+    sc_uint<BUS_ADDR_WIDTH> wb_o_addr;
+
     v = r;
 
     wb_req_addr = 0;
@@ -48,6 +62,9 @@ void DCache::comb() {
     wb_rdata = 0;
     wb_wdata = 0;
     wb_rtmp = 0;
+    w_o_valid = 0;
+    wb_o_data = 0;
+    wb_o_addr = 0;
 
     wb_req_addr(BUS_ADDR_WIDTH-1, 3) 
         = i_req_data_addr.read()(BUS_ADDR_WIDTH-1, 3);
@@ -150,16 +167,35 @@ void DCache::comb() {
         wb_rdata = wb_rtmp;
     }
     
-    if (i_req_data_valid.read()) {
+    if (i_req_data_valid.read() && i_req_mem_ready.read()) {
         v.req_addr = i_req_data_addr;
         v.req_size = i_req_data_sz;
     }
 
+    if (i_resp_mem_data_valid.read()) {
+        w_o_valid = i_resp_data_ready;
+        wb_o_data = wb_rdata;
+        wb_o_addr = r.req_addr;
+        v.hold_ena = !i_resp_data_ready.read();
+        v.hold_addr = r.req_addr;
+        v.hold_data = wb_rdata;
+    } else if (r.hold_ena.read()) {
+        v.hold_ena = !i_resp_data_ready.read();
+        w_o_valid = i_resp_data_ready;
+        wb_o_data = r.hold_data;
+        wb_o_addr = r.hold_addr;
+    }
+ 
     if (!i_nrst.read()) {
         v.req_addr = 0;
         v.req_size = 0;
         v.rena = 0;
+        v.hold_ena = 0;
+        v.hold_addr = 0;
+        v.hold_data = 0;
     }
+
+    o_req_data_ready = i_req_mem_ready;
 
     o_req_mem_valid = i_req_data_valid;
     o_req_mem_write = i_req_data_write;
@@ -167,9 +203,9 @@ void DCache::comb() {
     o_req_mem_strob = wb_req_strob;
     o_req_mem_data = wb_wdata;
 
-    o_resp_data_valid = i_resp_mem_data_valid;
-    o_resp_data_data = wb_rdata;
-    o_resp_data_addr = r.req_addr;
+    o_resp_data_valid = w_o_valid;
+    o_resp_data_data = wb_o_data;
+    o_resp_data_addr = wb_o_addr;
 }
 
 void DCache::registers() {

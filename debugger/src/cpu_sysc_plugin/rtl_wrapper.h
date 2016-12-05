@@ -23,6 +23,7 @@ SC_MODULE(RtlWrapper) {
     sc_in<sc_uint<RISCV_ARCH>> i_timer;
     sc_in<sc_uint<64>> i_step_cnt;
     // Memory interface:
+    sc_out<bool> o_req_mem_ready;
     sc_in<bool> i_req_mem_valid;
     sc_in<bool> i_req_mem_write;
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_req_mem_addr;

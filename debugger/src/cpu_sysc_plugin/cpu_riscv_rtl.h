@@ -65,13 +65,19 @@ public:
     }
 
     virtual uint64_t getClockCounter() {
-        //return getStepCounter();
+#if (GENERATE_CORE_TRACE == 1)
+        return getStepCounter();
+#else
         return wb_timer.read();
+#endif
     }
 
     virtual void registerClockCallback(IClockListener *cb, uint64_t t) {
-        //registerStepCallback(cb, t);
+#if (GENERATE_CORE_TRACE == 1)
+        registerStepCallback(cb, t);
+#else
         wrapper_->registerClockCallback(cb, t);
+#endif
     }
 
     /** IHap */
@@ -96,6 +102,7 @@ private:
     sc_signal<sc_uint<RISCV_ARCH>> wb_timer;
     sc_signal<sc_uint<64>> wb_step_cnt;
     // Memory interface:
+    sc_signal<bool> w_req_mem_ready;
     sc_signal<bool> w_req_mem_valid;
     sc_signal<bool> w_req_mem_write;
     sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_req_mem_addr;

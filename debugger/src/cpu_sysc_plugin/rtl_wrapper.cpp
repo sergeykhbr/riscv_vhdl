@@ -49,6 +49,7 @@ void RtlWrapper::comb() {
     o_resp_mem_data_valid = r.resp_mem_data_valid;
     o_resp_mem_data = r.resp_mem_data;
     o_interrupt = r.interrupt;
+    o_req_mem_ready = 1;    // don't simulate wait states
 
     if (!r.nrst.read()[1]) {
     }
@@ -57,7 +58,7 @@ void RtlWrapper::comb() {
 void RtlWrapper::registers() {
     v.nrst = (r.nrst.read() << 1) | w_nrst;
 
-    v.interrupt = w_interrupt;;
+    v.interrupt = w_interrupt;
 
     r = v;
 }
@@ -82,7 +83,7 @@ void RtlWrapper::clk_negedge_proc() {
         static_cast<IClockListener *>(cb)->stepCallback(step_cnt);
     }
 
-#if 0
+#if (GENERATE_CORE_TRACE == 1)
     //if (!(step_cnt % 50000) && step_cnt != step_cnt_z) {
     //    printf("!!!!step_cnt = %d\n", (int)step_cnt);
     //}

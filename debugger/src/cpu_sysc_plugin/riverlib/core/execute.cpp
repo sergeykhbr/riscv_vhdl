@@ -14,7 +14,7 @@ InstrExecute::InstrExecute(sc_module_name name_, sc_trace_file *vcd)
     : sc_module(name_) {
     SC_METHOD(comb);
     sensitive << i_nrst;
-    sensitive << i_cache_hold;
+    sensitive << i_pipeline_hold;
     sensitive << i_d_valid;
     sensitive << i_d_pc;
     sensitive << i_d_instr;
@@ -79,7 +79,7 @@ InstrExecute::InstrExecute(sc_module_name name_, sc_trace_file *vcd)
 
     if (vcd) {
         sc_trace(vcd, i_ext_irq, "/top/proc0/exec0/i_ext_irq");
-        sc_trace(vcd, i_cache_hold, "/top/proc0/exec0/i_cache_hold");
+        sc_trace(vcd, i_pipeline_hold, "/top/proc0/exec0/i_pipeline_hold");
         sc_trace(vcd, i_d_valid, "/top/proc0/exec0/i_d_valid");
         sc_trace(vcd, i_d_pc, "/top/proc0/exec0/i_d_pc");
         sc_trace(vcd, i_d_instr, "/top/proc0/exec0/i_d_instr");
@@ -204,7 +204,7 @@ void InstrExecute::comb() {
     if (i_d_pc.read() == r.npc.read()) {
         w_pc_valid = 1;
     }
-    w_d_acceptable = (!i_cache_hold) & i_d_valid 
+    w_d_acceptable = (!i_pipeline_hold) & i_d_valid 
                           & w_pc_valid & (!r.multiclock_ena);
 
     v.ext_irq_pulser = i_ext_irq & i_ie;
@@ -613,8 +613,8 @@ void InstrExecute::comb() {
     o_res_data = r.res_val;
     o_pipeline_hold = w_o_pipeline_hold;
 
-    o_xret = w_xret;
-    o_csr_wena = w_csr_wena;
+    o_xret = w_xret & w_pc_valid;
+    o_csr_wena = w_csr_wena & w_pc_valid & !w_hazard_detected;
     o_csr_addr = wb_csr_addr;
     o_csr_wdata = wb_csr_wdata;
     o_trap_ena = r.trap_ena;

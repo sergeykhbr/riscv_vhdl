@@ -22,10 +22,13 @@ SC_MODULE(DCache) {
     sc_in<sc_uint<2>> i_req_data_sz;
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_req_data_addr;
     sc_in<sc_uint<RISCV_ARCH>> i_req_data_data;
+    sc_out<bool> o_req_data_ready;
     sc_out<bool> o_resp_data_valid;
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_resp_data_addr;
     sc_out<sc_uint<RISCV_ARCH>> o_resp_data_data;
+    sc_in<bool> i_resp_data_ready;
     // Memory interface:
+    sc_in<bool> i_req_mem_ready;
     sc_out<bool> o_req_mem_valid;
     sc_out<bool> o_req_mem_write;
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_req_mem_addr;
@@ -47,13 +50,11 @@ private:
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_addr;
         sc_signal<sc_uint<2>> req_size;
         sc_signal<bool> rena;
+        sc_signal<bool> hold_ena;
+        sc_signal<sc_uint<BUS_DATA_WIDTH>> hold_data;
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> hold_addr;
     } v, r;
 
-    sc_uint<BUS_ADDR_WIDTH> wb_req_addr;
-    sc_uint<BUS_DATA_BYTES> wb_req_strob;
-    sc_uint<BUS_DATA_WIDTH> wb_rdata;
-    sc_uint<BUS_DATA_WIDTH> wb_wdata;
-    sc_uint<BUS_DATA_WIDTH> wb_rtmp;
 };
 
 

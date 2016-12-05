@@ -32,6 +32,7 @@ SC_MODULE(MemAccess) {
     sc_out<sc_uint<RISCV_ARCH>> o_wdata;            // Register value
 
     // Memory interface:
+    sc_in<bool> i_mem_req_ready;                    // Data cache is ready to accept request
     sc_out<bool> o_mem_valid;                       // Memory request is valid
     sc_out<bool> o_mem_write;                       // Memory write request
     sc_out<sc_uint<2>> o_mem_sz;                    // Encoded data size in bytes: 0=1B; 1=2B; 2=4B; 3=8B
@@ -40,11 +41,13 @@ SC_MODULE(MemAccess) {
     sc_in<bool> i_mem_data_valid;                   // Data path memory response is valid
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_mem_data_addr; // Data path memory response address
     sc_in<sc_uint<BUS_DATA_WIDTH>> i_mem_data;      // Data path memory response value
+    sc_out<bool> o_mem_resp_ready;                  // Pipeline is ready to accept memory operation response
 
+    sc_out<bool> o_hold;                            // Hold pipeline by data cache wait state reason
     sc_out<bool> o_valid;                           // Output is valid
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_pc;           // Valid instruction pointer
     sc_out<sc_uint<32>> o_instr;                    // Valid instruction value
-    sc_out<sc_uint<64>> o_step_cnt;                // Number of valid executed instructions
+    sc_out<sc_uint<64>> o_step_cnt;                 // Number of valid executed instructions
 
     void comb();
     void registers();
@@ -59,21 +62,14 @@ private:
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> pc;
         sc_signal<sc_uint<32>> instr;
 
-        sc_signal<bool> wait_resp;
         sc_signal<bool> wena;
         sc_signal<sc_uint<5>> waddr;
         sc_signal<bool> sign_ext;
         sc_signal<sc_uint<2>> size;
         sc_signal<sc_uint<RISCV_ARCH>> wdata;
         sc_signal<sc_uint<64>> step_cnt;
+        sc_signal<bool> wait_resp;
     } v, r;
-
-    bool w_mem_valid;
-    bool w_mem_write;
-    sc_uint<2> wb_mem_sz;
-    sc_uint<BUS_ADDR_WIDTH> wb_mem_addr;
-    sc_uint<RISCV_ARCH> wb_mem_wdata;
-    sc_uint<RISCV_ARCH> wb_res_wdata;
 };
 
 

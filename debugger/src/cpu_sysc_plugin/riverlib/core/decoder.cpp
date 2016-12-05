@@ -419,6 +419,7 @@ void InstrDecoder::comb() {
     if (!i_nrst.read()) {
         v.valid = false;
         v.pc = 0;
+        v.instr = 0;
         v.isa_type = 0;
         v.instr_vec = 0;
         v.memop_store = 0;

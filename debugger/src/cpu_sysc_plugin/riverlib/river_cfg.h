@@ -13,6 +13,14 @@
 namespace debugger {
 
 #define GENERATE_VCD 0
+/*
+ * Generate memory access and registers modifications trace files to compare
+ * them with functional model
+ *
+ * @note When this define is enabled Core uses step counter instead 
+ *       of clock counter to generate callbacks.
+ */
+#define GENERATE_CORE_TRACE 0
 
 static const int RISCV_ARCH     = 64;
 

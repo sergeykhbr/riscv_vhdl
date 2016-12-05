@@ -675,8 +675,8 @@ begin
     o_res_data <= r.res_val;
     o_pipeline_hold <= w_o_pipeline_hold;
 
-    o_xret <= w_xret;
-    o_csr_wena <= w_csr_wena;
+    o_xret <= w_xret and w_pc_valid;
+    o_csr_wena <= w_csr_wena and w_pc_valid and not w_hazard_detected;
     o_csr_addr <= wb_csr_addr;
     o_csr_wdata <= wb_csr_wdata;
     o_trap_ena <= r.trap_ena;

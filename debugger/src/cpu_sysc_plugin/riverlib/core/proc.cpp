@@ -15,8 +15,9 @@ Processor::Processor(sc_module_name name_, sc_trace_file *vcd)
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_resp_ctrl_valid;
-    sensitive << i_cache_hold;
+    sensitive << w.f.pipeline_hold;
     sensitive << w.e.pipeline_hold;
+    sensitive << w.m.pipeline_hold;
     sensitive << w.f.imem_req_valid;
     sensitive << w.f.imem_req_addr;
     sensitive << w.f.valid;
@@ -25,7 +26,7 @@ Processor::Processor(sc_module_name name_, sc_trace_file *vcd)
     SC_METHOD(registers);
     sensitive << i_clk.pos();
 
-#ifdef GENERATE_DEBUG_FILE
+#if (GENERATE_CORE_TRACE == 1)
     SC_METHOD(negedge_dbg_print);
     sensitive << i_clk.neg();
 #endif
@@ -33,13 +34,14 @@ Processor::Processor(sc_module_name name_, sc_trace_file *vcd)
     fetch0 = new InstrFetch("fetch0", vcd);
     fetch0->i_clk(i_clk);
     fetch0->i_nrst(i_nrst);
-    fetch0->i_cache_hold(i_cache_hold);
-    fetch0->i_pipeline_hold(w.e.pipeline_hold);
+    fetch0->i_pipeline_hold(w_fetch_pipeline_hold);
+    fetch0->i_mem_req_ready(i_req_ctrl_ready);
     fetch0->o_mem_addr_valid(w.f.imem_req_valid);
     fetch0->o_mem_addr(w.f.imem_req_addr);
     fetch0->i_mem_data_valid(i_resp_ctrl_valid);
     fetch0->i_mem_data_addr(i_resp_ctrl_addr);
     fetch0->i_mem_data(i_resp_ctrl_data);
+    fetch0->o_mem_resp_ready(o_resp_ctrl_ready);
     fetch0->i_e_npc_valid(w.e.valid);
     fetch0->i_e_npc(w.e.npc);
     fetch0->i_predict_npc(wb_npc_predict);
@@ -47,11 +49,12 @@ Processor::Processor(sc_module_name name_, sc_trace_file *vcd)
     fetch0->o_valid(w.f.valid);
     fetch0->o_pc(w.f.pc);
     fetch0->o_instr(w.f.instr);
+    fetch0->o_hold(w.f.pipeline_hold);
 
     dec0 = new InstrDecoder("dec0", vcd);
     dec0->i_clk(i_clk);
     dec0->i_nrst(i_nrst);
-    dec0->i_any_hold(w_any_hold);
+    dec0->i_any_hold(w_any_pipeline_hold);
     dec0->i_f_valid(w.f.valid);
     dec0->i_f_pc(w.f.pc);
     dec0->i_f_instr(w.f.instr);
@@ -71,7 +74,7 @@ Processor::Processor(sc_module_name name_, sc_trace_file *vcd)
     exec0 = new InstrExecute("exec0", vcd);
     exec0->i_clk(i_clk);
     exec0->i_nrst(i_nrst);
-    exec0->i_cache_hold(i_cache_hold);
+    exec0->i_pipeline_hold(w_exec_pipeline_hold);
     exec0->i_d_valid(w.d.instr_valid);
     exec0->i_d_pc(w.d.pc);
     exec0->i_d_instr(w.d.instr);
@@ -130,6 +133,7 @@ Processor::Processor(sc_module_name name_, sc_trace_file *vcd)
     mem0->o_waddr(w.w.waddr);
     mem0->o_wena(w.w.wena);
     mem0->o_wdata(w.w.wdata);
+    mem0->i_mem_req_ready(i_req_data_ready);
     mem0->o_mem_valid(o_req_data_valid);
     mem0->o_mem_write(o_req_data_write);
     mem0->o_mem_sz(o_req_data_size);
@@ -138,6 +142,8 @@ Processor::Processor(sc_module_name name_, sc_trace_file *vcd)
     mem0->i_mem_data_valid(i_resp_data_valid);
     mem0->i_mem_data_addr(i_resp_data_addr);
     mem0->i_mem_data(i_resp_data_data);
+    mem0->o_mem_resp_ready(o_resp_data_ready);
+    mem0->o_hold(w.m.pipeline_hold);
     mem0->o_valid(w.m.valid);
     mem0->o_pc(w.m.pc);
     mem0->o_instr(w.m.instr);
@@ -146,7 +152,7 @@ Processor::Processor(sc_module_name name_, sc_trace_file *vcd)
     predic0 = new BranchPredictor("predic0", vcd);
     predic0->i_clk(i_clk);
     predic0->i_nrst(i_nrst);
-    predic0->i_hold(i_cache_hold);
+    predic0->i_hold(w_any_pipeline_hold);
     predic0->i_f_mem_request(w.f.imem_req_valid);
     predic0->i_f_predic_miss(w.f.predict_miss);
     predic0->i_f_instr_valid(w.f.valid);
@@ -188,7 +194,7 @@ Processor::Processor(sc_module_name name_, sc_trace_file *vcd)
         sc_trace(vcd, w.m.step_cnt, "top/step_cnt");
     }
 
-#ifdef GENERATE_DEBUG_FILE
+#if (GENERATE_CORE_TRACE == 1)
     reg_dbg = new ofstream("river_sysc_regs.log");
     mem_dbg = new ofstream("river_sysc_mem.log");
     mem_dbg_write_flag = false;
@@ -203,7 +209,7 @@ Processor::~Processor() {
     delete predic0;
     delete iregs0;
     delete csr0;
-#ifdef GENERATE_DEBUG_FILE
+#if (GENERATE_CORE_TRACE == 1)
     reg_dbg->close();
     mem_dbg->close();
     delete reg_dbg;
@@ -214,6 +220,11 @@ Processor::~Processor() {
 void Processor::comb() {
     v = r;
 
+    w_fetch_pipeline_hold = w.e.pipeline_hold | w.m.pipeline_hold;
+    w_any_pipeline_hold = w.f.pipeline_hold | w.e.pipeline_hold 
+                        | w.m.pipeline_hold;
+    w_exec_pipeline_hold = w.f.pipeline_hold | w.m.pipeline_hold;
+
     v.clk_cnt = r.clk_cnt.read() + 1;
 
     if (!i_nrst.read()) {
@@ -223,15 +234,13 @@ void Processor::comb() {
     o_req_ctrl_valid = w.f.imem_req_valid;
     o_req_ctrl_addr = w.f.imem_req_addr;
     o_step_cnt = w.m.step_cnt;
-
-    w_any_hold = i_cache_hold.read() || w.e.pipeline_hold.read();
 }
 
 void Processor::registers() {
     r = v;
 }
 
-#ifdef GENERATE_DEBUG_FILE
+#if (GENERATE_CORE_TRACE == 1)
 void Processor::negedge_dbg_print() {
     int sz;
     if (w.m.valid.read()) {

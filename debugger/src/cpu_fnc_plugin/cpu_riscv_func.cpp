@@ -349,8 +349,7 @@ void CpuRiscV_Functional::executeInstruction(IInstruction *instr,
         pContext->reg_trace_file->flush();
     }
 
-#if 1
-    if (pContext->step_cnt == 6000) {
+    if (generateRegTraceFile_.to_bool() && pContext->step_cnt == 6000) {
         IService *uart = static_cast<IService *>(RISCV_get_service("uart0"));
         if (uart) {
             ISerial *iserial = static_cast<ISerial *>(
@@ -359,8 +358,6 @@ void CpuRiscV_Functional::executeInstruction(IInstruction *instr,
             iserial->writeData("highticks\r\n", 11);
         }
     }
-#endif
-
 
 
     if (pContext->regs[0] != 0) {

@@ -18,7 +18,7 @@ namespace debugger {
 SC_MODULE(InstrExecute) {
     sc_in<bool> i_clk;
     sc_in<bool> i_nrst;                         // Reset active LOW
-    sc_in<bool> i_cache_hold;                   // Hold execution while memory bus is busy
+    sc_in<bool> i_pipeline_hold;                // Hold execution by any reason
     sc_in<bool> i_d_valid;                      // Decoded instruction is valid
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_d_pc;      // Instruction pointer on decoded instruction
     sc_in<sc_uint<32>> i_d_instr;               // Decoded instruction value

@@ -19,9 +19,7 @@
 #include "csr.h"
 #include "br_predic.h"
 
-#define GENERATE_DEBUG_FILE
-
-#ifdef GENERATE_DEBUG_FILE
+#if (GENERATE_CORE_TRACE == 1)
 #include <fstream>
 #endif
 
@@ -31,14 +29,16 @@ namespace debugger {
 SC_MODULE(Processor) {
     sc_in<bool> i_clk;                                  // CPU clock
     sc_in<bool> i_nrst;                                 // Reset. Active LOW
-    sc_in<bool> i_cache_hold;                           // Cache is busy, hold the pipeline
     // Control path:
+    sc_in<bool> i_req_ctrl_ready;                       // ICache is ready to accept request
     sc_out<bool> o_req_ctrl_valid;                      // Request to ICache is valid
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_req_ctrl_addr;    // Requesting address to ICache
     sc_in<bool> i_resp_ctrl_valid;                      // ICache response is valid
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_resp_ctrl_addr;    // Response address must be equal to the latest request address
     sc_in<sc_uint<32>> i_resp_ctrl_data;                // Read value
+    sc_out<bool> o_resp_ctrl_ready;                     // Core is ready to accept response from ICache
     // Data path:
+    sc_in<bool> i_req_data_ready;                       // DCache is ready to accept request
     sc_out<bool> o_req_data_valid;                      // Request to DCache is valid
     sc_out<bool> o_req_data_write;                      // Read/Write transaction
     sc_out<sc_uint<2>> o_req_data_size;                 // Size [Bytes]: 0=1B; 1=2B; 2=4B; 3=8B
@@ -47,13 +47,14 @@ SC_MODULE(Processor) {
     sc_in<bool> i_resp_data_valid;                      // DCache response is valid
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_resp_data_addr;    // DCache response address must be equal to the latest request address
     sc_in<sc_uint<RISCV_ARCH>> i_resp_data_data;        // Read value
+    sc_out<bool> o_resp_data_ready;                     // Core is ready to accept response from DCache
     // External interrupt pin
     sc_in<bool> i_ext_irq;                              // PLIC interrupt accordingly with spec
     sc_out<sc_uint<64>> o_step_cnt;                     // Number of valid executed instructions
 
     void comb();
     void registers();
-#ifdef GENERATE_DEBUG_FILE
+#if (GENERATE_CORE_TRACE == 1)
     void negedge_dbg_print();
 #endif
 
@@ -70,6 +71,7 @@ private:
         sc_signal<bool> imem_req_valid;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> imem_req_addr;
         sc_signal<bool> predict_miss;
+        sc_signal<bool> pipeline_hold;
     };
 
     struct InstructionDecodeType {
@@ -119,6 +121,7 @@ private:
         sc_signal<sc_uint<32>> instr;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> pc;
         sc_signal<sc_uint<64>> step_cnt;
+        sc_signal<bool> pipeline_hold;
     };
 
     struct WriteBackType {
@@ -156,8 +159,10 @@ private:
     } v, r;
 
     sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_npc_predict;
-    sc_signal<bool> w_any_hold;                 // Hold pipeline by any reason
 
+    sc_signal<bool> w_fetch_pipeline_hold;
+    sc_signal<bool> w_any_pipeline_hold;
+    sc_signal<bool> w_exec_pipeline_hold;
 
     InstrFetch *fetch0;
     InstrDecoder *dec0;
@@ -168,7 +173,7 @@ private:
     RegIntBank *iregs0;
     CsrRegs *csr0;
 
-#ifdef GENERATE_DEBUG_FILE
+#if (GENERATE_CORE_TRACE == 1)
     char tstr[1024];
     ofstream *reg_dbg;
     ofstream *mem_dbg;

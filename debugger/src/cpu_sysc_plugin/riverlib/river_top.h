@@ -19,6 +19,7 @@ SC_MODULE(RiverTop) {
     sc_in<bool> i_clk;                                  // CPU clock
     sc_in<bool> i_nrst;                                 // Reset: active LOW
     // Memory interface:
+    sc_in<bool> i_req_mem_ready;                        // System Bus is ready to accept memory operation request
     sc_out<bool> o_req_mem_valid;                       // AXI memory request is valid
     sc_out<bool> o_req_mem_write;                       // AXI memory request is write type
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_req_mem_addr;     // AXI memory request address
@@ -48,12 +49,15 @@ private:
     CacheTop *cache0;
 
     // Control path:
+    sc_signal<bool> w_req_ctrl_ready;
     sc_signal<bool> w_req_ctrl_valid;
     sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_req_ctrl_addr;
     sc_signal<bool> w_resp_ctrl_valid;
     sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_resp_ctrl_addr;
     sc_signal<sc_uint<32>> wb_resp_ctrl_data;
+    sc_signal<bool> w_resp_ctrl_ready;
     // Data path:
+    sc_signal<bool> w_req_data_ready;
     sc_signal<bool> w_req_data_valid;
     sc_signal<bool> w_req_data_write;
     sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_req_data_addr;
@@ -62,7 +66,7 @@ private:
     sc_signal<bool> w_resp_data_valid;
     sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_resp_data_addr;
     sc_signal<sc_uint<RISCV_ARCH>> wb_resp_data_data;
-    sc_signal<bool> w_cache_hold;
+    sc_signal<bool> w_resp_data_ready;
 
     struct RegistersType {
         sc_signal<sc_uint<RISCV_ARCH>> timer;

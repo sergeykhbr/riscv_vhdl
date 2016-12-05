@@ -19,10 +19,13 @@ SC_MODULE(ICache) {
     // Control path:
     sc_in<bool> i_req_ctrl_valid;
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_req_ctrl_addr;
+    sc_out<bool> o_req_ctrl_ready;
     sc_out<bool> o_resp_ctrl_valid;
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_resp_ctrl_addr;
     sc_out<sc_uint<32>> o_resp_ctrl_data;
+    sc_in<bool> i_resp_ctrl_ready;
     // Memory interface:
+    sc_in<bool> i_req_mem_ready;
     sc_out<bool> o_req_mem_valid;
     sc_out<bool> o_req_mem_write;
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_req_mem_addr;
@@ -47,6 +50,9 @@ private:
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> iline_addr_req;
         sc_signal<bool> ihit;
         sc_uint<32> ihit_data;
+        sc_signal<bool> hold_ena;
+        sc_uint<32> hold_data;
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> hold_addr;
     } v, r;
 
     sc_uint<BUS_ADDR_WIDTH - 3> wb_req_line;
