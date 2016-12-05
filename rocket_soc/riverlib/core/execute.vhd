@@ -184,7 +184,8 @@ begin
   comb : process(i_nrst, i_pipeline_hold, i_d_valid, i_d_pc, i_d_instr,
                  i_wb_done, i_memop_load, i_memop_store, i_memop_sign_ext,
                  i_memop_size, i_unsigned_op, i_rv32, i_isa_type, i_ivec,
-                 i_rdata1, i_rdata2, i_csr_rdata, 
+                 i_rdata1, i_rdata2, i_csr_rdata, i_ext_irq, i_mtvec,
+					  i_ie, i_unsup_exception,
                  wb_arith_res, w_arith_valid, w_arith_busy,
                  w_hazard_detected, r)
     variable v : RegistersType;
@@ -249,6 +250,9 @@ begin
     wb_csr_addr := (others => '0');
     wb_csr_wdata := (others => '0');
     wb_res := (others => '0');
+    wb_off := (others => '0');
+    wb_rdata1 := (others => '0');
+    wb_rdata2 := (others => '0');
     w_memop_load := '0';
     w_memop_store := '0';
     w_memop_sign_ext := '0';

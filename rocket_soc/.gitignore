@@ -23,12 +23,12 @@ work/tb/*
 docs/*.pptx
 docs/gnss_styles.css
 prj/ml605/*
-!prj/ml605/rocket_soc_v6.ucf
-!prj/ml605/rocket_soc.xise
+!prj/ml605/riscv_soc_v6.ucf
+!prj/ml605/riscv_soc.xise
 prj/kc705/*
-!prj/kc705/rocket_soc_kc705.ucf
-!prj/kc705/rocket_soc_kc705.xdc
-!prj/kc705/rocket_chip.xpr
+!prj/kc705/riscv_soc_kc705.ucf
+!prj/kc705/riscv_soc_kc705.xdc
+!prj/kc705/riscv_soc.xpr
 prj/modelsim/*.wlf
 prj/modelsim/*.mti
 prj/modelsim/*.do

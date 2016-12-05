@@ -3,7 +3,7 @@
 <!--                                                         -->
 <!-- Copyright 1986-2016 Xilinx, Inc. All Rights Reserved.   -->
 
-<Project Version="7" Minor="14" Path="E:/Projects/GitProjects/riscv_vhdl/rocket_soc/prj/kc705/rocket_chip.xpr">
+<Project Version="7" Minor="14" Path="E:/Projects/GitProjects/riscv_vhdl/rocket_soc/prj/kc705/riscv_soc.xpr">
   <DefaultLaunch Dir="$PRUNDIR"/>
   <Configuration>
     <Option Name="Id" Val="45c2e326c5c44579b18a3dcb57ad6c69"/>
@@ -22,8 +22,8 @@
     <Option Name="DefaultLib" Val="xil_defaultlib"/>
     <Option Name="EnableCoreContainer" Val="FALSE"/>
     <Option Name="CreateRefXciForCoreContainers" Val="FALSE"/>
-    <Option Name="IPUserFilesDir" Val="$PPRDIR/rocket_chip.ip_user_files"/>
-    <Option Name="IPStaticSourceDir" Val="$PPRDIR/rocket_chip.ip_user_files/ipstatic"/>
+    <Option Name="IPUserFilesDir" Val="$PPRDIR/riscv_soc.ip_user_files"/>
+    <Option Name="IPStaticSourceDir" Val="$PPRDIR/riscv_soc.ip_user_files/ipstatic"/>
     <Option Name="EnableBDX" Val="FALSE"/>
     <Option Name="DSABoardId" Val="kc705"/>
     <Option Name="WTXSimLaunchSim" Val="0"/>
@@ -51,9 +51,30 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
+      <File Path="$PPRDIR/../../riverlib/river_cfg.vhd">
+        <FileInfo>
+          <Attr Name="Library" Val="riverlib"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
       <File Path="$PPRDIR/../../ambalib/types_amba4.vhd">
         <FileInfo>
           <Attr Name="Library" Val="ambalib"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../riverlib/core/arith/int_mul.vhd">
+        <FileInfo>
+          <Attr Name="Library" Val="riverlib"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../riverlib/core/arith/int_div.vhd">
+        <FileInfo>
+          <Attr Name="Library" Val="riverlib"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
@@ -89,6 +110,69 @@
       <File Path="$PPRDIR/../../rocketlib/eth/eth_rstgen.vhd">
         <FileInfo>
           <Attr Name="Library" Val="rocketlib"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../riverlib/core/regibank.vhd">
+        <FileInfo>
+          <Attr Name="Library" Val="riverlib"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../riverlib/core/memaccess.vhd">
+        <FileInfo>
+          <Attr Name="Library" Val="riverlib"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../riverlib/core/fetch.vhd">
+        <FileInfo>
+          <Attr Name="Library" Val="riverlib"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../riverlib/core/execute.vhd">
+        <FileInfo>
+          <Attr Name="Library" Val="riverlib"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../riverlib/core/decoder.vhd">
+        <FileInfo>
+          <Attr Name="Library" Val="riverlib"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../riverlib/core/csr.vhd">
+        <FileInfo>
+          <Attr Name="Library" Val="riverlib"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../riverlib/core/bp_predic.vhd">
+        <FileInfo>
+          <Attr Name="Library" Val="riverlib"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../riverlib/cache/icache.vhd">
+        <FileInfo>
+          <Attr Name="Library" Val="riverlib"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../riverlib/cache/dcache.vhd">
+        <FileInfo>
+          <Attr Name="Library" Val="riverlib"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
@@ -153,6 +237,20 @@
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../riverlib/core/proc.vhd">
+        <FileInfo>
+          <Attr Name="Library" Val="riverlib"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../riverlib/cache/cache_top.vhd">
+        <FileInfo>
+          <Attr Name="Library" Val="riverlib"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
@@ -272,6 +370,13 @@
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../riverlib/river_top.vhd">
+        <FileInfo>
+          <Attr Name="Library" Val="riverlib"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
@@ -429,7 +534,21 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../work/rocket_soc.vhd">
+      <File Path="$PPRDIR/../../riverlib/river_amba.vhd">
+        <FileInfo>
+          <Attr Name="Library" Val="riverlib"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../riverlib/types_river.vhd">
+        <FileInfo>
+          <Attr Name="Library" Val="riverlib"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../work/riscv_soc.vhd">
         <FileInfo>
           <Attr Name="Library" Val="work"/>
           <Attr Name="UsedIn" Val="synthesis"/>
@@ -494,13 +613,13 @@
       </File>
       <Config>
         <Option Name="DesignMode" Val="RTL"/>
-        <Option Name="TopModule" Val="rocket_soc"/>
+        <Option Name="TopModule" Val="riscv_soc"/>
         <Option Name="TopAutoSet" Val="TRUE"/>
       </Config>
     </FileSet>
     <FileSet Name="constrs_1" Type="Constrs" RelSrcDir="$PSRCDIR/constrs_1">
       <Filter Type="Constrs"/>
-      <File Path="$PPRDIR/rocket_soc_kc705.xdc">
+      <File Path="$PPRDIR/riscv_soc_kc705.xdc">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
@@ -512,7 +631,7 @@
     </FileSet>
     <FileSet Name="sim_1" Type="SimulationSrcs" RelSrcDir="$PSRCDIR/sim_1">
       <Filter Type="Srcs"/>
-      <File Path="$PPRDIR/../../work/tb/rocket_soc_tb.vhd">
+      <File Path="$PPRDIR/../../work/tb/riscv_soc_tb.vhd">
         <FileInfo>
           <Attr Name="Library" Val="work"/>
           <Attr Name="UsedIn" Val="synthesis"/>
@@ -521,12 +640,12 @@
       </File>
       <Config>
         <Option Name="DesignMode" Val="RTL"/>
-        <Option Name="TopModule" Val="rocket_soc_tb"/>
+        <Option Name="TopModule" Val="riscv_soc_tb"/>
         <Option Name="TopLib" Val="xil_defaultlib"/>
         <Option Name="TransportPathDelay" Val="0"/>
         <Option Name="TransportIntDelay" Val="0"/>
         <Option Name="SrcSet" Val="sources_1"/>
-        <Option Name="XSimWcfgFile" Val="$PPRDIR/rocket_soc_tb_behav.wcfg"/>
+        <Option Name="XSimWcfgFile" Val="$PPRDIR/riscv_soc_tb_behav.wcfg"/>
       </Config>
     </FileSet>
   </FileSets>
@@ -562,7 +681,7 @@
       </Strategy>
       <GeneratedRun Dir="$PRUNDIR" File="gen_run.xml"/>
     </Run>
-    <Run Id="impl_1" Type="Ft2:EntireDesign" Part="xc7k325tffg900-2" ConstrsSet="constrs_1" Description="Vivado Implementation Defaults" State="current" Dir="$PRUNDIR/impl_1" SynthRun="synth_1" IncludeInArchive="true">
+    <Run Id="impl_1" Type="Ft2:EntireDesign" Part="xc7k325tffg900-2" ConstrsSet="constrs_1" Description="Vivado Implementation Defaults" State="current" SynthRun="synth_1" IncludeInArchive="true">
       <Strategy Version="1" Minor="2">
         <StratHandle Name="Vivado Implementation Defaults" Flow="Vivado Implementation 2015"/>
         <Step Id="init_design"/>
@@ -575,7 +694,6 @@
         <Step Id="post_route_phys_opt_design"/>
         <Step Id="write_bitstream"/>
       </Strategy>
-      <GeneratedRun Dir="$PRUNDIR" File="gen_run.xml"/>
     </Run>
   </Runs>
 </Project>

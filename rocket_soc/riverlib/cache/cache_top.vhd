@@ -171,7 +171,7 @@ begin
         w_ctrl_req_mem_valid, w_data_req_mem_valid, w_data_req_mem_write,
         wb_data_req_mem_addr, wb_data_req_mem_strob, wb_data_req_mem_wdata,
         w_ctrl_req_mem_write, wb_ctrl_req_mem_addr, wb_ctrl_req_mem_strob,
-        wb_ctrl_req_mem_wdata, r)
+        wb_ctrl_req_mem_wdata, w_data_ready, w_ctrl_ready, r)
     variable v : RegistersType;
     variable w_mem_valid : std_logic;
     variable w_mem_write : std_logic;

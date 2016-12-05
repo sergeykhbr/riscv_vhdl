@@ -30,6 +30,10 @@ InstrExecute::InstrExecute(sc_module_name name_, sc_trace_file *vcd)
     sensitive << i_rdata1;
     sensitive << i_rdata2;
     sensitive << i_csr_rdata;
+    sensitive << i_ext_irq;
+    sensitive << i_mtvec;
+    sensitive << i_ie;
+    sensitive << i_unsup_exception;
     sensitive << r.d_valid;
     sensitive << r.npc;
     sensitive << r.hazard_depth;
@@ -186,6 +190,9 @@ void InstrExecute::comb() {
     wb_csr_addr = 0;
     wb_csr_wdata = 0;
     wb_res = 0;
+    wb_off = 0;
+    wb_rdata1 = 0;
+    wb_rdata2 = 0;
     w_memop_load = 0;
     w_memop_store = 0;
     w_memop_sign_ext = 0;

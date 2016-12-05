@@ -5,13 +5,12 @@
 
 
 ####################################################################################
-# Constraints from file : 'rocket_soc.ucf'
+# Constraints from file : 'riscv_soc.ucf'
 ####################################################################################
 
 
 # All timing constraint translations are rough conversions, intended to act as a template for further manual refinement. The translations should not be expected to produce semantically identical results to the original ucf. Each xdc timing constraint must be manually inspected and verified to ensure it captures the desired intent
 
-# C:/work/rocket/rocket_chip/rocket_soc.ucf:2
 create_clock -name i_sclk_p -period 5.000 [get_ports i_sclk_p]
 # The conversion of 'IOSTANDARD' constraint on 'net' object 'i_sclk_p' has been applied to the port object 'i_sclk_p'.
 set_property IOSTANDARD LVDS [get_ports i_sclk_p]
@@ -50,59 +49,41 @@ set_property PACKAGE_PIN G19 [get_ports {o_led[5]}]
 set_property PACKAGE_PIN E18 [get_ports {o_led[6]}]
 set_property PACKAGE_PIN F16 [get_ports {o_led[7]}]
 
-# C:/work/rocket/rocket_chip/rocket_soc.ucf:38
 # The conversion of 'IOSTANDARD' constraint on 'net' object 'i_clk_adc' has been applied to the port object 'i_clk_adc'.
 set_property IOSTANDARD LVCMOS25 [get_ports i_clk_adc]
-# C:/work/rocket/rocket_chip/rocket_soc.ucf:39
 # The conversion of 'IOSTANDARD' constraint on 'net' object 'i_uart1_ctsn' has been applied to the port object 'i_uart1_ctsn'.
 set_property IOSTANDARD LVCMOS25 [get_ports i_uart1_ctsn]
-# C:/work/rocket/rocket_chip/rocket_soc.ucf:40
 # The conversion of 'IOSTANDARD' constraint on 'net' object 'i_int_clkrf' has been applied to the port object 'i_int_clkrf'.
 set_property IOSTANDARD LVCMOS25 [get_ports {i_int_clkrf}]
-# C:/work/rocket/rocket_chip/rocket_soc.ucf:41
 # The conversion of 'IOSTANDARD' constraint on 'net' object 'i_dip[1]' has been applied to the port object 'i_dip[1]'.
 set_property IOSTANDARD LVCMOS25 [get_ports {i_dip[1]}]
-# C:/work/rocket/rocket_chip/rocket_soc.ucf:42
 # The conversion of 'IOSTANDARD' constraint on 'net' object 'i_dip[2]' has been applied to the port object 'i_dip[2]'.
 set_property IOSTANDARD LVCMOS25 [get_ports {i_dip[2]}]
-# C:/work/rocket/rocket_chip/rocket_soc.ucf:43
 # The conversion of 'IOSTANDARD' constraint on 'net' object 'i_dip[3]' has been applied to the port object 'i_dip[3]'.
 set_property IOSTANDARD LVCMOS25 [get_ports {i_dip[3]}]
 
-# C:/work/rocket/rocket_chip/rocket_soc.ucf:45
 # The conversion of 'IOSTANDARD' constraint on 'net' object 'i_uart1_rd' has been applied to the port object 'i_uart1_rd'.
 set_property IOSTANDARD LVCMOS25 [get_ports i_uart1_rd]
-# C:/work/rocket/rocket_chip/rocket_soc.ucf:46
 # The conversion of 'IOSTANDARD' constraint on 'net' object 'i_rst' has been applied to the port object 'i_rst'.
 set_property IOSTANDARD LVCMOS25 [get_ports i_rst]
-# C:/work/rocket/rocket_chip/rocket_soc.ucf:47
 # The conversion of 'IOSTANDARD' constraint on 'net' object 'o_led[0]' has been applied to the port object 'o_led[0]'.
 set_property IOSTANDARD LVCMOS15 [get_ports {o_led[0]}]
-# C:/work/rocket/rocket_chip/rocket_soc.ucf:48
 # The conversion of 'IOSTANDARD' constraint on 'net' object 'o_led[1]' has been applied to the port object 'o_led[1]'.
 set_property IOSTANDARD LVCMOS15 [get_ports {o_led[1]}]
-# C:/work/rocket/rocket_chip/rocket_soc.ucf:49
 # The conversion of 'IOSTANDARD' constraint on 'net' object 'o_led[2]' has been applied to the port object 'o_led[2]'.
 set_property IOSTANDARD LVCMOS15 [get_ports {o_led[2]}]
-# C:/work/rocket/rocket_chip/rocket_soc.ucf:50
 # The conversion of 'IOSTANDARD' constraint on 'net' object 'o_led[3]' has been applied to the port object 'o_led[3]'.
 set_property IOSTANDARD LVCMOS15 [get_ports {o_led[3]}]
-# C:/work/rocket/rocket_chip/rocket_soc.ucf:51
 # The conversion of 'IOSTANDARD' constraint on 'net' object 'o_led[4]' has been applied to the port object 'o_led[4]'.
 set_property IOSTANDARD LVCMOS25 [get_ports {o_led[4]}]
-# C:/work/rocket/rocket_chip/rocket_soc.ucf:52
 # The conversion of 'IOSTANDARD' constraint on 'net' object 'o_led[5]' has been applied to the port object 'o_led[5]'.
 set_property IOSTANDARD LVCMOS25 [get_ports {o_led[5]}]
-# C:/work/rocket/rocket_chip/rocket_soc.ucf:53
 # The conversion of 'IOSTANDARD' constraint on 'net' object 'o_led[6]' has been applied to the port object 'o_led[6]'.
 set_property IOSTANDARD LVCMOS25 [get_ports {o_led[6]}]
-# C:/work/rocket/rocket_chip/rocket_soc.ucf:54
 # The conversion of 'IOSTANDARD' constraint on 'net' object 'o_led[7]' has been applied to the port object 'o_led[7]'.
 set_property IOSTANDARD LVCMOS25 [get_ports {o_led[7]}]
-# C:/work/rocket/rocket_chip/rocket_soc.ucf:55
 # The conversion of 'IOSTANDARD' constraint on 'net' object 'o_uart1_rtsn' has been applied to the port object 'o_uart1_rtsn'.
 set_property IOSTANDARD LVCMOS25 [get_ports o_uart1_rtsn]
-# C:/work/rocket/rocket_chip/rocket_soc.ucf:56
 # The conversion of 'IOSTANDARD' constraint on 'net' object 'o_uart1_td' has been applied to the port object 'o_uart1_td'.
 set_property IOSTANDARD LVCMOS25 [get_ports o_uart1_td]
 

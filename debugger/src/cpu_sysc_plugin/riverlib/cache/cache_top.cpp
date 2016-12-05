@@ -24,6 +24,8 @@ CacheTop::CacheTop(sc_module_name name_, sc_trace_file *vcd)
     sensitive << wb_data_req_mem_addr;
     sensitive << wb_data_req_mem_strob;
     sensitive << wb_data_req_mem_wdata;
+    sensitive << w_data_ready;
+    sensitive << w_ctrl_ready;
     sensitive << i_resp_mem_data_valid;
     sensitive << i_resp_mem_data;
     sensitive << r.state;
