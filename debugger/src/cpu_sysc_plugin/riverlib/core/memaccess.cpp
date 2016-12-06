@@ -138,7 +138,7 @@ void MemAccess::comb() {
 
     w_o_valid = r.valid.read() || i_mem_data_valid.read();
     w_o_wena = r.wena & w_o_valid;
-    w_o_hold = !i_mem_req_ready.read() || w_memop 
+    w_o_hold = !i_mem_req_ready.read() || w_memop
             || (r.wait_resp.read() && !i_mem_data_valid.read());
 
     if (w_o_valid) {

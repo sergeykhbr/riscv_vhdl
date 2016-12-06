@@ -399,7 +399,7 @@ begin
     elsif wv(Instr_MRET) = '1' or wv(Instr_URET) = '1' then
         wb_res(63 downto 32) := (others => '0');
         wb_res(31 downto 0) := i_d_pc + 4;
-        w_xret := '1';
+        w_xret := i_d_valid;
         w_csr_wena := '0';
         if wv(Instr_URET) = '1' then
             wb_csr_addr := CSR_uepc;
@@ -679,7 +679,7 @@ begin
     o_res_data <= r.res_val;
     o_pipeline_hold <= w_o_pipeline_hold;
 
-    o_xret <= w_xret and w_pc_valid;
+    o_xret <= w_xret;
     o_csr_wena <= w_csr_wena and w_pc_valid and not w_hazard_detected;
     o_csr_addr <= wb_csr_addr;
     o_csr_wdata <= wb_csr_wdata;

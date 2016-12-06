@@ -60,42 +60,45 @@ begin
     variable wb_a2 : std_logic_vector(RISCV_ARCH-1 downto 0);
     variable wb_divident : std_logic_vector(64 downto 0);
     variable wb_divider : std_logic_vector(64 downto 0);
+    variable w_invert64 : std_logic;
+    variable w_invert32 : std_logic;
   begin
 
     v := r;
 
+    w_invert64 := '0';
+    w_invert32 := '0';
     wb_divident(64) := '0';
     wb_divider(64) := '0';
 
     if i_rv32 = '1' then
-        wb_a1(31 downto 0) := i_a1(31 downto 0);
-        wb_a2(31 downto 0) := i_a2(31 downto 0);
+        wb_a1(63 downto 32) := (others => '0');
+        wb_a2(63 downto 32) := (others => '0');
         if i_unsigned = '1' or i_a1(31) = '0' then
-            wb_a1(63 downto 32) := (others => '0');
+            wb_a1(31 downto 0) := i_a1(31 downto 0);
         else
-            wb_a1(63 downto 32) := (others => '1');
+            wb_a1(31 downto 0) := (not i_a1(31 downto 0)) + 1;
         end if;
         if i_unsigned = '1' or i_a2(31) = '0' then
-            wb_a2(63 downto 32) := (others => '0');
+            wb_a2(31 downto 0) := i_a2(31 downto 0);
         else
-            wb_a2(63 downto 32) := (others => '1');
+            wb_a2(31 downto 0) := (not i_a2(31 downto 0)) + 1;
         end if;
     else
-        wb_a1 := X"00000000" & i_a1(31 downto 0);
-        wb_a2 := X"00000000" & i_a2(31 downto 0);
+        if i_unsigned = '1' or i_a1(63) = '0' then
+            wb_a1 := i_a1;
+        else
+            wb_a1 := (not i_a1) + 1;
+        end if;
+        if i_unsigned = '1' or i_a2(63) = '0' then
+            wb_a2 := i_a2;
+        else
+            wb_a2 := (not i_a2) + 1;
+        end if;
     end if;
 
-    if i_unsigned = '1' or wb_a1(63) = '0' then
-        wb_divident(63 downto 0) := wb_a1;
-    else
-        wb_divident(63 downto 0) := (not wb_a1) + 1;
-    end if;
-    if i_unsigned = '1' or wb_a2(63) = '0' then
-        wb_divider(63 downto 0) := wb_a2;
-    else
-        wb_divider(63 downto 0) := (not wb_a2) + 1;
-    end if;
-
+    wb_divident(63 downto 0) := wb_a1;
+    wb_divider(63 downto 0) := wb_a2;
 
     v.ena := r.ena(32 downto 0) & (i_ena and not r.busy);
 
@@ -123,18 +126,28 @@ begin
         v.busy := '1';
         v.rv32 := i_rv32;
         v.resid := i_residual;
-        v.invert := not i_unsigned and (i_a1(63) xor i_a2(63));
+        w_invert32 := not i_unsigned and
+                ((not i_residual and (i_a1(31) xor i_a2(31)))
+                or (i_residual and i_a1(31)));
+        w_invert64 := not i_unsigned and
+                ((not i_residual and (i_a1(63) xor i_a2(63)))
+                or (i_residual and i_a1(63)));
+        v.invert := (not i_rv32 and w_invert64) 
+                or (i_rv32 and w_invert32);
     elsif r.ena(32) = '1' then
         v.busy := '0';
-        if r.invert = '1' then
-            v.qr := (not r.qr) + 1;
-        else
-            v.qr := r.qr;
-        end if;
         if r.resid = '1' then
-            v.result := r.qr(127 downto 64);
+            if r.invert = '1' then
+                v.result := (not r.qr(127 downto 64)) + 1;
+            else
+                v.result := r.qr(127 downto 64);
+            end if;
         else
-            v.result := r.qr(63 downto 0);
+            if r.invert = '1' then
+                v.result := (not r.qr(63 downto 0)) + 1;
+            else
+                v.result := r.qr(63 downto 0);
+            end if;
         end if;
     elsif r.busy = '1' then
         v.qr := wb_qr2;

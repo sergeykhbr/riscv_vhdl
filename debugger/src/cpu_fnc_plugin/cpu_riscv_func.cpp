@@ -349,13 +349,47 @@ void CpuRiscV_Functional::executeInstruction(IInstruction *instr,
         pContext->reg_trace_file->flush();
     }
 
-    if (generateRegTraceFile_.to_bool() && pContext->step_cnt == 6000) {
-        IService *uart = static_cast<IService *>(RISCV_get_service("uart0"));
+    if (generateRegTraceFile_.to_bool()) {
+        char msg[16];
+        int msg_len = 0;
+        IService *uart = NULL;
+        switch (pContext->step_cnt) {
+        case 6000:
+            uart = static_cast<IService *>(RISCV_get_service("uart0"));
+            msg[0] = 'h';
+            msg[1] = 'i';
+            msg_len = 2;
+            break;
+        case 6500:
+            uart = static_cast<IService *>(RISCV_get_service("uart0"));
+            msg[0] = 'g';
+            msg[1] = 'h';
+            msg[2] = 't';
+            msg_len = 3;
+            break;
+        case 8200:
+            uart = static_cast<IService *>(RISCV_get_service("uart0"));
+            msg[0] = 'i';
+            msg[1] = 'c';
+            msg_len = 2;
+            break;
+        case 8300:
+            uart = static_cast<IService *>(RISCV_get_service("uart0"));
+            msg[0] = 'k';
+            msg[1] = 's';
+            msg[2] = '\r';
+            msg[3] = '\n';
+            msg_len = 4;
+            break;
+        default:;
+        }
+
         if (uart) {
             ISerial *iserial = static_cast<ISerial *>(
                         uart->getInterface(IFACE_SERIAL));
             //iserial->writeData("pnp\r\n", 6);
-            iserial->writeData("highticks\r\n", 11);
+            //iserial->writeData("highticks\r\n", 11);
+            iserial->writeData(msg, msg_len);
         }
     }
 

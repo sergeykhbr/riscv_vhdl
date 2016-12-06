@@ -59,6 +59,8 @@ void IntMul::comb() {
     Level0Type wb_lvl0;
     Level2Type wb_lvl2;
     Level4Type wb_lvl4;
+    sc_biguint<128> wb_lvl5;
+    sc_biguint<128> wb_res32;
     sc_uint<64> wb_res;
 
     v = r;
@@ -85,6 +87,8 @@ void IntMul::comb() {
         v.high = i_high;
 
         // Just for run-rime control (not for VHDL)
+        v.a1_dbg = i_a1;
+        v.a2_dbg = i_a2;
         v.reference_mul = compute_reference(i_unsigned.read(),
                                             i_rv32.read(),
                                             i_a1.read(),
@@ -131,8 +135,19 @@ void IntMul::comb() {
                            + sc_biguint<100>(r.lvl3.arr[2*i]);
         }
 
-        v.result = (sc_biguint<128>(wb_lvl4.arr[1]) << 32) 
-                    + sc_biguint<128>(wb_lvl4.arr[0]);
+        wb_lvl5 = (sc_biguint<128>(wb_lvl4.arr[1]) << 32) 
+                        + sc_biguint<128>(wb_lvl4.arr[0]);
+        if (r.rv32.read()) {
+            wb_res32(31, 0) = wb_lvl5(31, 0);
+            if (r.unsign.read() || wb_lvl5[31] == 0) {
+                wb_res32(127, 32) = 0;
+            } else {
+                wb_res32(127, 32) = ~0;
+            }
+            v.result = wb_res32;
+        } else {
+            v.result = wb_lvl5;
+        }
     }
 
     wb_res = r.result.read()(63, 0);
@@ -163,10 +178,13 @@ void IntMul::registers() {
         uint64_t t1 = v.result.read()(63,0).to_uint64();
         uint64_t t2 = r.reference_mul.to_uint64();
         if (t1 != t2) {
-            char tstr[1024];
+            char tstr[512];
             RISCV_sprintf(tstr, sizeof(tstr), 
-                "IntMul error: %016" RV_PRI64 "x != %016" RV_PRI64 "x",
-                t1, t2);
+                "IntMul error: unsigned=%d, rv32=%d, high=%d,  "
+                "(%016" RV_PRI64 "x/%016" RV_PRI64 "x) => "
+                "%016" RV_PRI64 "x != %016" RV_PRI64 "x\n",
+                r.unsign.read(), r.rv32.read(), r.high.read(),
+                r.a1_dbg.to_uint64(), r.a2_dbg.to_uint64(), t1, t2);
             cout << tstr;
             cout.flush();
         }

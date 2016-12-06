@@ -60,6 +60,7 @@ begin
     variable v : RegistersType;
     variable wb_addr_req : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     variable w_wrong_address : std_logic;
+    variable w_req_valid : std_logic;
     variable w_predict_miss : std_logic;
     variable w_req_fire : std_logic;
     variable w_resp_fire : std_logic;
@@ -69,7 +70,8 @@ begin
 
     v := r;
 
-    w_req_fire := i_nrst and not i_pipeline_hold and i_mem_req_ready;
+    w_req_valid := i_nrst and not i_pipeline_hold;
+    w_req_fire := w_req_valid and i_mem_req_ready;
 
     w_wrong_address := '1';
     if (i_e_npc = r.pc_z1) or (i_e_npc = i_mem_data_addr) or 

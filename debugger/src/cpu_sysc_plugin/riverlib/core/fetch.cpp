@@ -54,6 +54,7 @@ void InstrFetch::comb() {
     sc_uint<BUS_ADDR_WIDTH> wb_addr_req;
     bool w_wrong_address;
     bool w_predict_miss;
+    bool w_req_valid;
     bool w_req_fire;
     bool w_resp_fire;
     bool w_o_hold;
@@ -61,8 +62,8 @@ void InstrFetch::comb() {
 
     v = r;
 
-    w_req_fire = i_nrst.read() && !i_pipeline_hold.read() 
-                && i_mem_req_ready.read();
+    w_req_valid = i_nrst.read() && !i_pipeline_hold.read();
+    w_req_fire = w_req_valid && i_mem_req_ready.read();
 
     w_wrong_address = 1;
     if (i_e_npc == r.pc_z1 || i_e_npc == i_mem_data_addr.read()
@@ -92,7 +93,7 @@ void InstrFetch::comb() {
         v.wait_resp = 0;
     }
 
-    w_o_hold = !i_mem_req_ready.read() 
+    w_o_hold = !i_mem_req_ready.read()
             || (r.wait_resp.read() && !i_mem_data_valid.read());
     // Signal 'i_mem_req_ready' is also used to hold-on pipeline, so
     // don't accept response if cannot send request. Maybe improved.

@@ -69,6 +69,8 @@ private:
         Level3Type lvl3;
         sc_signal<sc_biguint<128>> result;
 
+        sc_uint<RISCV_ARCH> a1_dbg;
+        sc_uint<RISCV_ARCH> a2_dbg;
         sc_uint<RISCV_ARCH> reference_mul;          // Used for run-time comparision
     } v, r;
 

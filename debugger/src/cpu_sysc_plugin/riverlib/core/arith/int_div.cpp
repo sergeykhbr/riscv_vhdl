@@ -77,40 +77,43 @@ void IntDiv::comb() {
     sc_uint<64> wb_a2;
     sc_biguint<65> wb_divident = 0;
     sc_biguint<65> wb_divider = 0;
-
+    bool w_invert64;
+    bool w_invert32;
     v = r;
 
+    w_invert32 = 0;
+    w_invert64 = 0;
     wb_divident[64] = 0;
     wb_divider[64] = 0;
 
     if (i_rv32.read()) {
-        wb_a1(31, 0) = i_a1.read()(31, 0);
-        wb_a2(31, 0) = i_a2.read()(31, 0);
+        wb_a1(63, 32) = 0;
+        wb_a2(63, 32) = 0;
         if (i_unsigned.read() || i_a1.read()[31] == 0) {
-            wb_a1(63, 32) = 0;
+            wb_a1(31, 0) = i_a1.read()(31, 0);
         } else {
-            wb_a1(63, 32) = ~0;
+            wb_a1(31, 0) = (~i_a1.read()(31, 0)) + 1;
         }
         if (i_unsigned.read() || i_a2.read()[31] == 0) {
-            wb_a2(63, 32) = 0;
+            wb_a2(31, 0) = i_a2.read()(31, 0);
         } else {
-            wb_a2(63, 32) = ~0;
+            wb_a2(31, 0) = (~i_a2.read()(31, 0)) + 1;
         }
     } else {
-        wb_a1(31, 0) = i_a1;
-        wb_a2(31, 0) = i_a2;
+        if (i_unsigned.read() || i_a1.read()[63] == 0) {
+            wb_a1(63, 0) = i_a1.read();
+        } else {
+            wb_a1(63, 0) = (~i_a1.read()) + 1;
+        }
+        if (i_unsigned.read() || i_a2.read()[63] == 0) {
+            wb_a2(63, 0) = i_a2.read();
+        } else {
+            wb_a2(63, 0) = (~i_a2.read()) + 1;
+        }
     }
 
-    if (i_unsigned.read() || wb_a1[63] == 0) {
-        wb_divident(63, 0) = wb_a1;
-    } else {
-        wb_divident(63, 0) = (~wb_a1) + 1;
-    }
-    if (i_unsigned.read() || wb_a2[63] == 0) {
-        wb_divider(63, 0) = wb_a2;
-    } else {
-        wb_divider(63, 0) = (~wb_a2) + 1;
-    }
+    wb_divident(63, 0) = wb_a1;
+    wb_divider(63, 0) = wb_a2;
 
 
     v.ena = (r.ena.read() << 1) | (i_ena & !r.busy);
@@ -139,7 +142,15 @@ void IntDiv::comb() {
         v.busy = 1;
         v.rv32 = i_rv32;
         v.resid = i_residual;
-        v.invert = (!i_unsigned.read()) & (i_a1.read()[63] ^ i_a2.read()[63]);
+
+        w_invert32 = !i_unsigned.read() && 
+                ((!i_residual.read() && (i_a1.read()[31] ^ i_a2.read()[31]))
+                || (i_residual.read() && i_a1.read()[31]));
+        w_invert64 = !i_unsigned.read() &&
+                ((!i_residual.read() && (i_a1.read()[63] ^ i_a2.read()[63]))
+                || (i_residual.read() && i_a1.read()[63]));
+        v.invert = (!i_rv32.read() && w_invert64) 
+                || (i_rv32.read() && w_invert32);
 
         v.a1_dbg = i_a1;
         v.a2_dbg = i_a2;
@@ -148,20 +159,22 @@ void IntDiv::comb() {
                                      i_a1.read(), i_a2.read());
     } else if (r.ena.read()[32]) {
         v.busy = 0;
-        if (r.invert.read()) {
-            v.qr = (~r.qr) + 1;
-        } else {
-            v.qr = r.qr;
-        }
         if (r.resid.read()) {
-            v.result = r.qr(127, 64).to_uint64();
+            if (r.invert.read()) {
+                v.result = ~v.qr(127, 64).to_uint64() + 1;
+            } else {
+                v.result = v.qr(127, 64).to_uint64();
+            }
         } else {
-            v.result = r.qr(63, 0).to_uint64();
+            if (r.invert.read()) {
+                v.result = ~v.qr(63, 0).to_uint64() + 1;
+            } else {
+                v.result = v.qr(63, 0).to_uint64();
+            }
         }
     } else if (r.busy.read()) {
         v.qr = wb_qr2;
     }
-    
 
     if (i_nrst.read() == 0) {
         v.result = 0;

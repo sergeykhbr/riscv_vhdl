@@ -24,6 +24,8 @@ RtlWrapper::RtlWrapper(sc_module_name name)
     sensitive << o_clk.posedge_event();
 
     SC_METHOD(comb);
+    sensitive << i_req_mem_valid;
+    sensitive << i_req_mem_addr;
     sensitive << r.nrst;
     sensitive << r.resp_mem_data_valid;
     sensitive << r.resp_mem_data;
@@ -49,17 +51,13 @@ void RtlWrapper::comb() {
     o_resp_mem_data_valid = r.resp_mem_data_valid;
     o_resp_mem_data = r.resp_mem_data;
     o_interrupt = r.interrupt;
-    o_req_mem_ready = 1;    // don't simulate wait states
+    o_req_mem_ready = i_req_mem_valid;    // don't simulate wait states
 
     if (!r.nrst.read()[1]) {
     }
 }
 
 void RtlWrapper::registers() {
-    v.nrst = (r.nrst.read() << 1) | w_nrst;
-
-    v.interrupt = w_interrupt;
-
     r = v;
 }
 
@@ -88,7 +86,7 @@ void RtlWrapper::clk_negedge_proc() {
     //    printf("!!!!step_cnt = %d\n", (int)step_cnt);
     //}
 
-    if (step_cnt == (6000 - 1) && step_cnt != step_cnt_z) {
+    /*if (step_cnt == (6000 - 1) && step_cnt != step_cnt_z) {
         IService *uart = static_cast<IService *>(RISCV_get_service("uart0"));
         if (uart) {
             ISerial *iserial = static_cast<ISerial *>(
@@ -97,11 +95,56 @@ void RtlWrapper::clk_negedge_proc() {
             //iserial->writeData("dhry\r\n", 6);
             iserial->writeData("highticks\r\n", 11);
         }
+    }*/
+    if (step_cnt != step_cnt_z) {
+        char msg[16];
+        int msg_len = 0;
+        IService *uart = NULL;
+        switch (step_cnt + 1) {
+        case 6000:
+            uart = static_cast<IService *>(RISCV_get_service("uart0"));
+            msg[0] = 'h';
+            msg[1] = 'i';
+            msg_len = 2;
+            break;
+        case 6500:
+            uart = static_cast<IService *>(RISCV_get_service("uart0"));
+            msg[0] = 'g';
+            msg[1] = 'h';
+            msg[2] = 't';
+            msg_len = 3;
+            break;
+        case 8200:
+            uart = static_cast<IService *>(RISCV_get_service("uart0"));
+            msg[0] = 'i';
+            msg[1] = 'c';
+            msg_len = 2;
+            break;
+        case 8300:
+            uart = static_cast<IService *>(RISCV_get_service("uart0"));
+            msg[0] = 'k';
+            msg[1] = 's';
+            msg[2] = '\r';
+            msg[3] = '\n';
+            msg_len = 4;
+            break;
+        default:;
+        }
+        if (uart) {
+            ISerial *iserial = static_cast<ISerial *>(
+                        uart->getInterface(IFACE_SERIAL));
+            //iserial->writeData("pnp\r\n", 6);
+            //iserial->writeData("highticks\r\n", 11);
+            iserial->writeData(msg, msg_len);
+        }
     }
     step_cnt_z = i_step_cnt.read();
 #endif
 
     /** */
+    v.interrupt = w_interrupt;
+    v.nrst = (r.nrst.read() << 1) | w_nrst;
+
     v.resp_mem_data = 0;
     v.resp_mem_data_valid = false;
     if (i_req_mem_valid.read()) {

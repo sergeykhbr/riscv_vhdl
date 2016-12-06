@@ -64,6 +64,8 @@ begin
     variable wb_lvl0 : Level0Type;
     variable wb_lvl2 : Level2Type;
     variable wb_lvl4 : Level4Type;
+    variable wb_lvl5 : std_logic_vector(127 downto 0);
+    variable wb_res32 : std_logic_vector(127 downto 0);
     variable wb_res : std_logic_vector(RISCV_ARCH-1 downto 0);
   begin
 
@@ -130,8 +132,19 @@ begin
                         + ("00000000000000000" & r.lvl3(2*i));
         end loop;
 
-        v.result := (wb_lvl4(1)(95 downto 0) & X"00000000")
+        wb_lvl5 := (wb_lvl4(1)(95 downto 0) & X"00000000")
                  + (X"0000000" & wb_lvl4(0));
+        if r.rv32 = '1' then
+            wb_res32(31 downto 0) := wb_lvl5(31 downto 0);
+            if r.unsign = '1' or wb_lvl5(31) = '0' then
+                wb_res32(127 downto 32) := (others => '0');
+            else
+                wb_res32(127 downto 32) := (others => '1');
+            end if;
+            v.result := wb_res32;
+        else
+            v.result := wb_lvl5;
+        end if;
     end if;
 
     wb_res := r.result(63 downto 0);

@@ -1099,7 +1099,7 @@ public:
             char tstr[512];
             RISCV_sprintf(tstr, sizeof(tstr), 
                         "[%08x] <= %016" RV_PRI64 "x\n",
-                        static_cast<int>(addr), wdata & 0xFFFF);
+                        static_cast<int>(addr), wdata);
             (*data->mem_trace_file) << tstr;
             data->mem_trace_file->flush();
         }
@@ -1128,7 +1128,7 @@ public:
         if (data->mem_trace_file) {
             char tstr[512];
             RISCV_sprintf(tstr, sizeof(tstr), 
-                        "[%08x] <= %016I64x\n", (int)addr, (uint8_t)wdata);
+                        "[%08x] <= %016I64x\n", (int)addr, wdata);
             (*data->mem_trace_file) << tstr;
             data->mem_trace_file->flush();
         }

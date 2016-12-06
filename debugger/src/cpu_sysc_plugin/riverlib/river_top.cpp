@@ -118,6 +118,7 @@ RiverTop::RiverTop(sc_module_name name_, sc_trace_file *i_vcd,
         sc_trace(o_vcd, o_req_mem_data, "o_req_mem_data");
         sc_trace(o_vcd, o_timer, "o_timer");
         sc_trace(o_vcd, o_step_cnt, "o_step_cnt");
+        sc_trace(o_vcd, i_ext_irq, "i_ext_irq");
     }
 };
 
