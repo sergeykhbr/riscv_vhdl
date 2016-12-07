@@ -33,8 +33,10 @@ that is very compact and entirely ported into Zephyr shell example.
 You can run it yourself and verify results (see below).
 
 **RISC-V Instruction simulator** - always one instruction per clock.  
-**FPGA SOC based on "Rocket-chip" CPU** - single core/single issue CPU
-with disabled L1toL2 interconnect.
+**FPGA SOC based on "Rocket" CPU** - single core/single issue 64-bits CPU
+with disabled L1toL2 interconnect (Verilog generated from Scala sources).  
+**FPGA SOC based on "River" CPU** - single core/single issue 64-bits CPU is my own
+implementation of RISC-V ISA (VHDL with SystemC as reference).  
 
 
 Target | usec per 1 dhry | Dhrystone per sec | MHz,max | FPU | OS
@@ -42,6 +44,7 @@ Target | usec per 1 dhry | Dhrystone per sec | MHz,max | FPU | OS
 RISC-V simulator v3.1       | 12.0 | **77257.0** | -   | No  | Zephyr 1.3
 FPGA SoC with "Rocket" v3.1 | 28.0 | **34964.0** | 60  | No  | Zephyr 1.3
 FPGA SoC with "Rocket" v4.0 | 40.7 | **24038.0** | 60<sup>1</sup>  | Yes | Zephyr 1.5
+FPGA SoC with "River " v4.0 | 28.0 | **34807.0** | 60<sup>1</sup>  | No | Zephyr 1.5
 
 <sup>1</sup> - Actual SoC frequency is 40 MHz (to meet FPU constrains) but
 Dhrystone benchmark uses constant 60 MHz and high precision counter (in clock cycles)
@@ -52,8 +55,9 @@ one clock in this SOC (without wait-states). So, this benchmark
 result (**Dhrystone per seconds**) shows performance of the CPU with integer 
 instructions and degradation of the CPI relative ideal (simulation) case.
 
-I'll continue to track changes in Dhrystone results in future 
-"Rocket" chip versions.
+I'll continue to track changes of Dhrystone results in future 
+"Rocket" chip versions. But since v1.5 "RIVER" is the default CPU 
+(VHDL configuration parameter *CFG_COMMON_RIVER_CPU_ENABLE*=true).
 
 
 ## Repository structure
@@ -61,7 +65,7 @@ I'll continue to track changes in Dhrystone results in future
 This repository consists of three sub-projects each in own subfolder:
 
 - **rocket_soc** is the folder with VHDL/Verilog sources of the SOC
-  including synthesizable *"Rocket-chip"* processor and peripheries. 
+  including synthesizable processors *"Rocket"* and *"River"* and peripheries. 
   Source code is portable on almost any FPGA is due to the fact that
   technology dependant modules (like *PLL*, *IO-buffers* 
   etc) instantiated inside of "virtual" components 
@@ -88,18 +92,17 @@ This repository consists of three sub-projects each in own subfolder:
   [**10/100 Ethernet MAC with EDCL**](http://sergeykhbr.github.io/riscv_vhdl/eth_link.html)
   and [**Debug Support Unit (DSU)**](http://sergeykhbr.github.io/riscv_vhdl/dsu_link.html)
   devices on AMBA AXI4 bus.
-- **RISC-V "River" core**. I was a bit confused by CPI degradation shown by Dhrystone in
-  the latest 'Rocket' versions, so since *v4.0* I've decided to start *'another one CPU'*
-  implementation based on RISC-V ISA. I've specified the following principles for myself:
+- **RISC-V "River" core**. It's my own implementation of RISC-V ISA that is ideal
+  for embedded application with active usage of 64-bits computations
+  (DSP for Satellite Navigation). I've specified the following principles for myself:
     1. Unified Verification Methodology (UVM)
-        - */debugger/cpu_fnc_plugin*  - Functional CPU model.
-        - */debugger/cpu_sysc_plugin* - SystemC CPU model (only synthesizable syntax).
-        - */rocket_soc/riverlib*      - RTL sources with VCD-stimulus from SystemC.
-    2. Advanced debugging features: bus tracing, pipeline statistic on HW level etc.
+        - */debugger/cpu_fnc_plugin*  - Functional RISC-V CPU model.
+        - */debugger/cpu_sysc_plugin* - Precise SystemC RIVER CPU model.
+        - */rocket_soc/riverlib*      - RIVER VHDL sources with VCD-stimulus from SystemC.
+    2. Advanced debugging features: bus tracing, pipeline statistic (like CPI) in real-time on HW level etc.
     3. Integration with GUI from the very beginning.
-  I hope to develop the most friendly synthesizable processor for HW and SW developers.
-  And it will be interesting to compare the result of amateur and team of the professional
-  CPU developers.
+  I hope to develop the most friendly synthesizable processor for HW and SW developers
+  and provide debugging tools of professional quality.
 
 ## Step-by-step tutorial of how to run Zephyr-OS on FPGA board with synthesizable RISC-V processor.
 

@@ -153,10 +153,10 @@ Processor::Processor(sc_module_name name_, sc_trace_file *vcd)
     predic0->i_clk(i_clk);
     predic0->i_nrst(i_nrst);
     predic0->i_hold(w_any_pipeline_hold);
-    predic0->i_f_mem_request(w.f.imem_req_valid);
+    predic0->i_resp_mem_valid(i_resp_ctrl_valid);
+    predic0->i_resp_mem_addr(i_resp_ctrl_addr);
+    predic0->i_resp_mem_data(i_resp_ctrl_data);
     predic0->i_f_predic_miss(w.f.predict_miss);
-    predic0->i_f_instr_valid(w.f.valid);
-    predic0->i_f_instr(w.f.instr);
     predic0->i_e_npc(w.e.npc);
     predic0->i_ra(ireg.ra);
     predic0->o_npc_predict(wb_npc_predict);

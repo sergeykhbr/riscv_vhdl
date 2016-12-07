@@ -262,25 +262,25 @@ package river_cfg is
   --! @}
 
 
-  --! @param[in] i_clk CPU clock
-  --! @param[in] i_nrst Reset. Active LOW.
-  --! @param[in] i_hold Hold pipeline by any reason
-  --! @param[in] i_f_mem_request Memory request from 'fetch' is valid, form next prediction address
-  --! @param[in] i_f_predic_miss Fetch modul detects deviation between predicted and valid pc.
-  --! @param[in] i_f_instr_valid Fetched instruction is valid
-  --! @param[in] i_f_instr Fetched instruction value is used for fast parse 'jump/branch' in predictor
-  --! @param[in] i_e_npc Valid instruction value awaited by 'Executor'
-  --! @param[in] i_ra Return address register value
-  --! @param[out] o_npc_predic Predicted next instruction address
+  --! @param[in] i_clk             CPU clock
+  --! @param[in] i_nrst            Reset. Active LOW.
+  --! @param[in] i_hold            Hold pipeline by any reason
+  --! @param[in] i_resp_mem_valid  Memory response from ICache is valid
+  --! @param[in] i_resp_mem_addr   Memory response address
+  --! @param[in] i_resp_mem_data   Memory response value
+  --! @param[in] i_f_predic_miss   Fetch modul detects deviation between predicted and valid pc.
+  --! @param[in] i_e_npc           Valid instruction value awaited by 'Executor'
+  --! @param[in] i_ra              Return address register value
+  --! @param[out] o_npc_predic     Predicted next instruction address
   component BranchPredictor is
   port (
     i_clk : in std_logic;
     i_nrst : in std_logic;
     i_hold : in std_logic;
-    i_f_mem_request : in std_logic;
+    i_resp_mem_valid : in std_logic;
+    i_resp_mem_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_resp_mem_data : in std_logic_vector(31 downto 0);
     i_f_predic_miss : in std_logic;
-    i_f_instr_valid : in std_logic;
-    i_f_instr : in std_logic_vector(31 downto 0);
     i_e_npc : in std_logic_vector(31 downto 0);
     i_ra : in std_logic_vector(RISCV_ARCH-1 downto 0);
     o_npc_predict : out std_logic_vector(31 downto 0)

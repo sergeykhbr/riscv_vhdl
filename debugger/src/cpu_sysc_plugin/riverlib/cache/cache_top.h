@@ -61,28 +61,28 @@ private:
     static const uint8_t State_IMem = 1;
     static const uint8_t State_DMem = 2;
 
+    struct CacheOutputType {
+        sc_signal<bool> req_mem_valid;
+        sc_signal<bool> req_mem_write;
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_mem_addr;
+        sc_signal<sc_uint<BUS_DATA_BYTES>> req_mem_strob;
+        sc_signal<sc_uint<BUS_DATA_WIDTH>> req_mem_wdata;
+    };
+
     struct RegistersType {
         sc_signal<sc_uint<2>> state;
     } v, r;
 
+    CacheOutputType i, d;
+
     // Memory Control interface:
-    sc_signal<bool> w_ctrl_req_mem_valid;
-    sc_signal<bool> w_ctrl_req_mem_write;
-    sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_ctrl_req_mem_addr;
-    sc_signal<sc_uint<BUS_DATA_BYTES>> wb_ctrl_req_mem_strob;
-    sc_signal<sc_uint<BUS_DATA_WIDTH>> wb_ctrl_req_mem_wdata;
     sc_signal<bool> w_ctrl_resp_mem_data_valid;
     sc_signal<sc_uint<BUS_DATA_WIDTH>> wb_ctrl_resp_mem_data;
-    sc_signal<bool> w_ctrl_ready;
+    sc_signal<bool> w_ctrl_req_ready;
     // Memory Data interface:
-    sc_signal<bool> w_data_req_mem_valid;
-    sc_signal<bool> w_data_req_mem_write;
-    sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_data_req_mem_addr;
-    sc_signal<sc_uint<BUS_DATA_BYTES>> wb_data_req_mem_strob;
-    sc_signal<sc_uint<BUS_DATA_WIDTH>> wb_data_req_mem_wdata;
     sc_signal<bool> w_data_resp_mem_data_valid;
     sc_signal<sc_uint<BUS_DATA_WIDTH>> wb_data_resp_mem_data;
-    sc_signal<bool> w_data_ready;
+    sc_signal<bool> w_data_req_ready;
 
     ICache *i0;
     DCache *d0;

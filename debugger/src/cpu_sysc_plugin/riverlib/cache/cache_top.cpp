@@ -14,18 +14,18 @@ CacheTop::CacheTop(sc_module_name name_, sc_trace_file *vcd)
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_req_mem_ready;
-    sensitive << w_ctrl_req_mem_valid;
-    sensitive << w_ctrl_req_mem_write;
-    sensitive << wb_ctrl_req_mem_addr;
-    sensitive << wb_ctrl_req_mem_strob;
-    sensitive << wb_ctrl_req_mem_wdata;
-    sensitive << w_data_req_mem_valid;
-    sensitive << w_data_req_mem_write;
-    sensitive << wb_data_req_mem_addr;
-    sensitive << wb_data_req_mem_strob;
-    sensitive << wb_data_req_mem_wdata;
-    sensitive << w_data_ready;
-    sensitive << w_ctrl_ready;
+    sensitive << i.req_mem_valid;
+    sensitive << i.req_mem_write;
+    sensitive << i.req_mem_addr;
+    sensitive << i.req_mem_strob;
+    sensitive << i.req_mem_wdata;
+    sensitive << d.req_mem_valid;
+    sensitive << d.req_mem_write;
+    sensitive << d.req_mem_addr;
+    sensitive << d.req_mem_strob;
+    sensitive << d.req_mem_wdata;
+    sensitive << w_data_req_ready;
+    sensitive << w_ctrl_req_ready;
     sensitive << i_resp_mem_data_valid;
     sensitive << i_resp_mem_data;
     sensitive << r.state;
@@ -43,12 +43,12 @@ CacheTop::CacheTop(sc_module_name name_, sc_trace_file *vcd)
     i0->o_resp_ctrl_addr(o_resp_ctrl_addr);
     i0->o_resp_ctrl_data(o_resp_ctrl_data);
     i0->i_resp_ctrl_ready(i_resp_ctrl_ready);
-    i0->i_req_mem_ready(w_ctrl_ready);
-    i0->o_req_mem_valid(w_ctrl_req_mem_valid);
-    i0->o_req_mem_write(w_ctrl_req_mem_write);
-    i0->o_req_mem_addr(wb_ctrl_req_mem_addr);
-    i0->o_req_mem_strob(wb_ctrl_req_mem_strob);
-    i0->o_req_mem_data(wb_ctrl_req_mem_wdata);
+    i0->i_req_mem_ready(w_ctrl_req_ready);
+    i0->o_req_mem_valid(i.req_mem_valid);
+    i0->o_req_mem_write(i.req_mem_write);
+    i0->o_req_mem_addr(i.req_mem_addr);
+    i0->o_req_mem_strob(i.req_mem_strob);
+    i0->o_req_mem_data(i.req_mem_wdata);
     i0->i_resp_mem_data_valid(w_ctrl_resp_mem_data_valid);
     i0->i_resp_mem_data(wb_ctrl_resp_mem_data);
 
@@ -65,22 +65,17 @@ CacheTop::CacheTop(sc_module_name name_, sc_trace_file *vcd)
     d0->o_resp_data_addr(o_resp_data_addr);
     d0->o_resp_data_data(o_resp_data_data);
     d0->i_resp_data_ready(i_resp_data_ready);
-    d0->i_req_mem_ready(w_data_ready);
-    d0->o_req_mem_valid(w_data_req_mem_valid);
-    d0->o_req_mem_write(w_data_req_mem_write);
-    d0->o_req_mem_addr(wb_data_req_mem_addr);
-    d0->o_req_mem_strob(wb_data_req_mem_strob);
-    d0->o_req_mem_data(wb_data_req_mem_wdata);
+    d0->i_req_mem_ready(w_data_req_ready);
+    d0->o_req_mem_valid(d.req_mem_valid);
+    d0->o_req_mem_write(d.req_mem_write);
+    d0->o_req_mem_addr(d.req_mem_addr);
+    d0->o_req_mem_strob(d.req_mem_strob);
+    d0->o_req_mem_data(d.req_mem_wdata);
     d0->i_resp_mem_data_valid(w_data_resp_mem_data_valid);
     d0->i_resp_mem_data(wb_data_resp_mem_data);
 
 
     if (vcd) {
-        sc_trace(vcd, w_ctrl_req_mem_valid, "/top/cache0/i_ctrl_req_mem_valid");
-        sc_trace(vcd, w_ctrl_req_mem_write, "/top/cache0/i_ctrl_req_mem_write");
-        sc_trace(vcd, wb_ctrl_req_mem_addr, "/top/cache0/i_ctrl_req_mem_addr");
-        sc_trace(vcd, wb_ctrl_req_mem_strob, "/top/cache0/i_ctrl_req_mem_strob");
-        sc_trace(vcd, wb_ctrl_req_mem_wdata, "/top/cache0/i_ctrl_req_mem_wdata");
         sc_trace(vcd, i_req_data_valid, "/top/cache0/i_req_data_valid");
         sc_trace(vcd, i_req_data_write, "/top/cache0/i_req_data_write");
         sc_trace(vcd, i_req_data_addr, "/top/cache0/i_req_data_addr");
@@ -129,31 +124,31 @@ void CacheTop::comb() {
     w_ctrl_resp_mem_data_valid = 0;
     wb_ctrl_resp_mem_data = 0;
     if (r.state.read() == State_Idle || i_resp_mem_data_valid.read()) {
-        w_data_ready = 1;
+        w_data_req_ready = 1;
     } else {
-        w_data_ready = 0;
+        w_data_req_ready = 0;
     }
     if (r.state.read() == State_Idle 
-        || (i_resp_mem_data_valid.read() & !w_data_req_mem_valid.read())) {
-        w_ctrl_ready = 1;
+        || (i_resp_mem_data_valid.read() & !d.req_mem_valid.read())) {
+        w_ctrl_req_ready = 1;
     } else {
-        w_ctrl_ready = 0;
+        w_ctrl_req_ready = 0;
     }
 
-    if (w_data_req_mem_valid.read() && w_data_ready.read()) {
+    if (d.req_mem_valid.read() && w_data_req_ready.read()) {
         v.state = State_DMem;
         w_mem_valid = 1;
-        w_mem_write = w_data_req_mem_write;
-        wb_mem_addr = wb_data_req_mem_addr;
-        wb_mem_strob = wb_data_req_mem_strob;
-        wb_mem_wdata = wb_data_req_mem_wdata;
-    } else if (w_ctrl_req_mem_valid.read() && w_ctrl_ready.read()) {
+        w_mem_write = d.req_mem_write;
+        wb_mem_addr = d.req_mem_addr;
+        wb_mem_strob = d.req_mem_strob;
+        wb_mem_wdata = d.req_mem_wdata;
+    } else if (i.req_mem_valid.read() && w_ctrl_req_ready.read()) {
         v.state = State_IMem;
         w_mem_valid = 1;
-        w_mem_write = w_ctrl_req_mem_write;
-        wb_mem_addr = wb_ctrl_req_mem_addr;
-        wb_mem_strob = wb_ctrl_req_mem_strob;
-        wb_mem_wdata = wb_ctrl_req_mem_wdata;
+        w_mem_write = i.req_mem_write;
+        wb_mem_addr = i.req_mem_addr;
+        wb_mem_strob = i.req_mem_strob;
+        wb_mem_wdata = i.req_mem_wdata;
     } else if (i_resp_mem_data_valid.read()) {
         v.state = State_Idle;
     }

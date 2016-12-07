@@ -3,6 +3,7 @@
  * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
  * @author     Sergey Khabarov - sergeykhbr@gmail.com
  * @brief      Branch Predictor.
+ * @details    This module gives about 5% of performance improvement (CPI)
  */
 
 #include "br_predic.h"
@@ -14,10 +15,10 @@ BranchPredictor::BranchPredictor(sc_module_name name_, sc_trace_file *vcd)
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_hold;
-    sensitive << i_f_mem_request;
+    sensitive << i_resp_mem_valid;
+    sensitive << i_resp_mem_addr;
+    sensitive << i_resp_mem_data;
     sensitive << i_f_predic_miss;
-    sensitive << i_f_instr_valid;
-    sensitive << i_f_instr;
     sensitive << i_e_npc;
     sensitive << i_ra;
     sensitive << r.npc;
@@ -27,11 +28,12 @@ BranchPredictor::BranchPredictor(sc_module_name name_, sc_trace_file *vcd)
 
     if (vcd) {
         sc_trace(vcd, i_hold, "/top/proc0/bp0/i_hold");
-        sc_trace(vcd, i_f_mem_request, "/top/proc0/bp0/i_f_mem_request");
+        sc_trace(vcd, i_resp_mem_valid, "/top/proc0/bp0/i_resp_mem_valid");
+        sc_trace(vcd, i_resp_mem_addr, "/top/proc0/bp0/i_resp_mem_addr");
+        sc_trace(vcd, i_resp_mem_data, "/top/proc0/bp0/i_resp_mem_data");
         sc_trace(vcd, i_f_predic_miss, "/top/proc0/bp0/i_f_predic_miss");
-        sc_trace(vcd, i_f_instr_valid, "/top/proc0/bp0/i_f_instr_valid");
-        sc_trace(vcd, i_f_instr, "/top/proc0/bp0/i_f_instr");
         sc_trace(vcd, i_e_npc, "/top/proc0/bp0/i_e_npc");
+        sc_trace(vcd, i_ra, "/top/proc0/bp0/i_ra");
 
         sc_trace(vcd, o_npc_predict, "/top/proc0/bp0/o_npc_predict");
         sc_trace(vcd, r.npc, "/top/proc0/bp0/r_npc");
@@ -41,12 +43,37 @@ BranchPredictor::BranchPredictor(sc_module_name name_, sc_trace_file *vcd)
 
 void BranchPredictor::comb() {
     v = r;
-    if (i_f_mem_request.read()) {
-        if (i_f_predic_miss.read() && !i_hold.read()) {
-            v.npc = i_e_npc.read() + 4;
+    sc_uint<32> wb_tmp;
+    sc_uint<BUS_ADDR_WIDTH> wb_npc;
+    sc_uint<BUS_ADDR_WIDTH> wb_off;
+
+    wb_tmp = i_resp_mem_data.read();
+    if (i_f_predic_miss.read()) {
+        wb_npc = i_e_npc.read() + 4;
+    } else {
+        wb_npc = r.npc.read() + 4;
+    }
+
+
+    if (wb_tmp[31]) {
+        wb_off(BUS_ADDR_WIDTH-1, 20) = ~0;
+    } else {
+        wb_off(BUS_ADDR_WIDTH-1, 20) = 0;
+    }
+    wb_off(19, 12) = wb_tmp(19, 12);
+    wb_off[11] = wb_tmp[20];
+    wb_off(10, 1) = wb_tmp(30, 21);
+    wb_off[0] = 0;
+
+    if (i_resp_mem_valid.read()) {
+        if (wb_tmp == 0x00008067) {
+            // ret pseudo-instruction: Dhry score 34816 -> 35136
+            v.npc = i_ra.read()(BUS_ADDR_WIDTH-1, 0);
+        } else if (wb_tmp(6, 0) == 0x6f) {
+            // jal instruction: Dhry score 35136 -> 36992
+            v.npc = i_resp_mem_addr.read() + wb_off;
         } else {
-            // todo: JAL and JALR ra (return)
-            v.npc = r.npc.read() + 4;
+            v.npc = wb_npc;
         }
     }
 

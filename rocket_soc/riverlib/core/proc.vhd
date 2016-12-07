@@ -277,10 +277,10 @@ begin
         i_clk => i_clk,
         i_nrst => i_nrst,
         i_hold => w_any_pipeline_hold,
-        i_f_mem_request => w.f.imem_req_valid,
+        i_resp_mem_valid => i_resp_ctrl_valid,
+        i_resp_mem_addr => i_resp_ctrl_addr,
+        i_resp_mem_data => i_resp_ctrl_data,
         i_f_predic_miss => w.f.predict_miss,
-        i_f_instr_valid => w.f.valid,
-        i_f_instr => w.f.instr,
         i_e_npc => w.e.npc,
         i_ra => ireg.ra,
         o_npc_predict => wb_npc_predict);
