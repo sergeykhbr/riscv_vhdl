@@ -252,6 +252,7 @@ void CpuRiscV_Functional::reset() {
     pContext->npc = resetVector_.to_uint64();
     pContext->exception = 0;
     pContext->interrupt = 0;
+    pContext->interrupt_pending = 0;
     pContext->csr[CSR_mvendorid] = 0x0001;   // UC Berkeley Rocket repo
     pContext->csr[CSR_mhartid] = 0;
     pContext->csr[CSR_marchid] = 0;
@@ -439,6 +440,8 @@ void CpuRiscV_Functional::raiseSignal(int idx) {
             break;
         }
         if (mstatus.bits.MIE == 0 && pContext->cur_prv_level == PRV_M) {
+            // External Interrupt controller pending bit
+            pContext->interrupt_pending = 1;
             break;
         }
         /// @todo delegate interrupt to non-machine privilege level.
@@ -463,6 +466,7 @@ void CpuRiscV_Functional::lowerSignal(int idx) {
         break;
     case CPU_SIGNAL_EXT_IRQ:
         pContext->interrupt = 0;
+        pContext->interrupt_pending = 0;
         break;
     default:
         RISCV_error("Unsupported lowerSignal(%d)", idx);

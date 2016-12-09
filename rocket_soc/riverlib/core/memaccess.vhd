@@ -67,6 +67,11 @@ architecture arch_MemAccess of MemAccess is
       size : std_logic_vector(1 downto 0);
       wdata : std_logic_vector(RISCV_ARCH-1 downto 0);
       step_cnt : std_logic_vector(63 downto 0);
+      wait_req : std_logic;
+      wait_req_write : std_logic;
+      wait_req_sz : std_logic_vector(1 downto 0);
+      wait_req_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+      wait_req_wdata : std_logic_vector(RISCV_ARCH-1 downto 0);
       wait_resp : std_logic;
   end record;
 
@@ -90,6 +95,7 @@ begin
     variable w_o_valid : std_logic;
     variable w_o_wena : std_logic;
     variable w_o_hold : std_logic;
+    variable w_mem_fire : std_logic;
   begin
 
     v := r;
@@ -103,30 +109,66 @@ begin
     w_o_hold := '0';
     
     w_memop := i_memop_load or i_memop_store;
-    w_req_fire := i_e_valid and i_mem_req_ready;
-    
-    if w_req_fire = '1' then
+
+    if r.wait_req = '1' then
+        if i_mem_req_ready = '1' then
+            v.wait_req := '0';
+            v.wait_resp := '1';
+        end if;
+        w_o_mem_valid := '1';
+        w_o_mem_write := r.wait_req_write;
+        wb_o_mem_sz := r.wait_req_sz;
+        wb_o_mem_addr := r.wait_req_addr;
+        wb_o_mem_wdata := r.wait_req_wdata;
+    elsif i_e_valid = '1' then
       v.valid := not w_memop;
-      v.wait_resp := w_memop;
       v.pc := i_e_pc;
       v.instr := i_e_instr;
       v.waddr := i_res_addr;
       v.wdata := i_res_data;
-      v.wena := '1';
       if i_res_addr = "00000" then
           v.wena := '0';
+      else
+          v.wena := '1';
       end if;
-      w_o_mem_valid := w_memop;
-      w_o_mem_write := i_memop_store;
-      wb_o_mem_sz := i_memop_size;
-      wb_o_mem_addr := i_memop_addr;
-      wb_o_mem_wdata := i_res_data;
-      v.sign_ext := i_memop_sign_ext;
-      v.size := i_memop_size;
+
+      if w_memop = '1' then
+        w_o_mem_valid := '1';
+        w_o_mem_write := i_memop_store;
+        wb_o_mem_sz := i_memop_size;
+        wb_o_mem_addr := i_memop_addr;
+        wb_o_mem_wdata := i_res_data;
+        v.sign_ext := i_memop_sign_ext;
+        v.size := i_memop_size;
+
+        v.wait_resp := i_mem_req_ready;
+        v.wait_req := not i_mem_req_ready;
+        v.wait_req_write := i_memop_store;
+        v.wait_req_sz := i_memop_size;
+        v.wait_req_addr := i_memop_addr;
+        v.wait_req_wdata := i_res_data;
+      else
+        w_o_mem_valid := '0';
+        w_o_mem_write := '0';
+        wb_o_mem_sz := (others => '0');
+        wb_o_mem_addr := (others => '0');
+        wb_o_mem_wdata := (others => '0');
+        v.sign_ext := '0';
+        v.size := (others => '0');
+        v.wait_req_addr := (others => '0');
+        v.wait_req := '0';
+        v.wait_resp := '0';
+      end if;
+    elsif i_mem_data_valid = '1' then
+      v.wait_resp := '0';
     end if;
 
-    if i_mem_data_valid = '1' then
-        v.wait_resp := w_req_fire and w_memop;
+    w_o_hold := (i_e_valid and w_memop) or r.wait_req 
+            or (r.wait_resp and not i_mem_data_valid);
+
+    w_mem_fire := i_mem_data_valid;
+    
+    if w_mem_fire = '1' then
         if r.sign_ext = '1' then
             case r.size is
             when MEMOP_1B =>
@@ -148,9 +190,8 @@ begin
         wb_res_wdata := r.wdata;
     end if;
 
-    w_o_valid := r.valid or i_mem_data_valid;
+    w_o_valid := r.valid or w_mem_fire;
     w_o_wena := r.wena and w_o_valid;
-    w_o_hold := not i_mem_req_ready or w_memop or (r.wait_resp and not i_mem_data_valid);
 
     if w_o_valid = '1' then
         v.step_cnt := r.step_cnt + 1;
@@ -167,6 +208,11 @@ begin
         v.size := (others => '0');
         v.sign_ext := '0';
         v.step_cnt := (others => '0');
+        v.wait_req := '0';
+        v.wait_req_write := '0';
+        v.wait_req_sz := (others => '0');
+        v.wait_req_addr := (others => '0');
+        v.wait_req_wdata := (others => '0');
         v.wait_resp := '0';
     end if;
 

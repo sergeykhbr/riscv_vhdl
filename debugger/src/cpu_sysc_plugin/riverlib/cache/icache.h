@@ -43,21 +43,20 @@ SC_MODULE(ICache) {
     ICache(sc_module_name name_, sc_trace_file *vcd=0);
 
 private:
+    enum EState {
+        State_Idle,
+        State_WaitGrant,
+        State_WaitResp,
+        State_WaitAccept
+    };
+
     struct RegistersType {
         sc_signal<sc_uint<BUS_ADDR_WIDTH - 3>> iline_addr;
         sc_signal<sc_uint<BUS_DATA_WIDTH>> iline_data;
-
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> iline_addr_req;
-        sc_signal<bool> ihit;
-        sc_uint<32> ihit_data;
-        sc_signal<bool> hold_ena;
-        sc_uint<32> hold_data;
-        sc_signal<sc_uint<BUS_ADDR_WIDTH>> hold_addr;
+        sc_signal<sc_uint<3>> state;
     } v, r;
 
-    sc_uint<BUS_ADDR_WIDTH - 3> wb_req_line;
-    sc_uint<BUS_ADDR_WIDTH - 3> wb_cached_addr;
-    sc_uint<BUS_DATA_WIDTH> wb_cached_data;
 };
 
 

@@ -291,6 +291,17 @@ public:
         mstatus.bits.MPIE = 1;
         data->cur_prv_level = mstatus.bits.MPP;
         mstatus.bits.MPP = PRV_U;
+
+        // Emulating interrupt strob (not pulse from external controller)
+        if (data->interrupt_pending) {
+            csr_mcause_type cause;
+            cause.value     = 0;
+            cause.bits.irq  = 1;
+            cause.bits.code = 11;   // 11 = Machine external interrupt
+            data->csr[CSR_mcause] = cause.value;
+            data->interrupt = 1;
+            data->interrupt_pending = 0;
+        }
             
         writeCSR(CSR_mstatus, mstatus.value, data);
     }

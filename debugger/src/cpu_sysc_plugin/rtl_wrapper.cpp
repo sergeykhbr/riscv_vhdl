@@ -12,6 +12,8 @@
 #include "coreservices/iserial.h"
 #endif
 
+//#define SIMULATE_WAIT_STATES
+
 namespace debugger {
 
 RtlWrapper::RtlWrapper(sc_module_name name)
@@ -30,6 +32,7 @@ RtlWrapper::RtlWrapper(sc_module_name name)
     sensitive << r.resp_mem_data_valid;
     sensitive << r.resp_mem_data;
     sensitive << r.interrupt;
+    sensitive << r.wait_state_cnt;
 
     SC_METHOD(clk_negedge_proc);
     sensitive << o_clk.negedge_event();
@@ -47,11 +50,20 @@ void RtlWrapper::clk_gen() {
 }
 
 void RtlWrapper::comb() {
+
     o_nrst = r.nrst.read()[1];
     o_resp_mem_data_valid = r.resp_mem_data_valid;
     o_resp_mem_data = r.resp_mem_data;
     o_interrupt = r.interrupt;
-    o_req_mem_ready = i_req_mem_valid;    // don't simulate wait states
+#ifdef SIMULATE_WAIT_STATES
+    if (r.wait_state_cnt.read() == 1) {
+        o_req_mem_ready = 1;
+    } else {
+        o_req_mem_ready = 0;
+    }
+#else
+    o_req_mem_ready = i_req_mem_valid;
+#endif
 
     if (!r.nrst.read()[1]) {
     }
@@ -144,10 +156,19 @@ void RtlWrapper::clk_negedge_proc() {
     /** */
     v.interrupt = w_interrupt;
     v.nrst = (r.nrst.read() << 1) | w_nrst;
+    v.wait_state_cnt = r.wait_state_cnt.read() + 1;
+
 
     v.resp_mem_data = 0;
     v.resp_mem_data_valid = false;
-    if (i_req_mem_valid.read()) {
+    bool w_req_fire = 0;
+#ifdef SIMULATE_WAIT_STATES
+    if (r.wait_state_cnt.read() == 1)
+#endif
+    {
+        w_req_fire = i_req_mem_valid.read();
+    }
+    if (w_req_fire) {
         uint64_t addr = i_req_mem_addr.read();
         Reg64Type val;
         if (i_req_mem_write.read()) {

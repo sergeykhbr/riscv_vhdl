@@ -21,6 +21,7 @@ entity BranchPredictor is
     i_clk : in std_logic;                              -- CPU clock
     i_nrst : in std_logic;                             -- Reset. Active LOW.
     i_hold : in std_logic;                             -- Hold pipeline by any reason
+    i_req_mem_fire : in std_logic;                     -- Memory request was accepted
     i_resp_mem_valid : in std_logic;                   -- Memory response from ICache is valid
     i_resp_mem_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- Memory response address
     i_resp_mem_data : in std_logic_vector(31 downto 0);-- Memory response value
@@ -41,7 +42,7 @@ architecture arch_BranchPredictor of BranchPredictor is
 
 begin
 
-  comb : process(i_nrst, i_hold, i_resp_mem_valid, i_resp_mem_addr,
+  comb : process(i_nrst, i_hold, i_req_mem_fire, i_resp_mem_valid, i_resp_mem_addr,
                  i_resp_mem_data, i_f_predic_miss, i_e_npc, i_ra, r)
     variable v : RegistersType;
     variable wb_tmp : std_logic_vector(31 downto 0);
@@ -73,9 +74,11 @@ begin
         elsif wb_tmp(6 downto 0) = "1101111" then
             -- jal instruction: Dhry score 35136 -> 36992
             v.npc := i_resp_mem_addr + wb_off;
-        else
+        elsif i_req_mem_fire = '1' then
             v.npc := wb_npc;
         end if;
+    elsif i_req_mem_fire = '1' then
+        v.npc := wb_npc;
     end if;
 
     if i_nrst = '0' then

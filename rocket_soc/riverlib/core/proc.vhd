@@ -47,6 +47,7 @@ end;
 architecture arch_Processor of Processor is
 
     type FetchType is record
+        req_fire : std_logic;
         valid : std_logic;
         pc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
         instr : std_logic_vector(31 downto 0);
@@ -170,6 +171,7 @@ begin
         i_e_npc => w.e.npc,
         i_predict_npc => wb_npc_predict,
         o_predict_miss => w.f.predict_miss,
+        o_mem_req_fire => w.f.req_fire,
         o_valid => w.f.valid,
         o_pc => w.f.pc,
         o_instr => w.f.instr,
@@ -277,6 +279,7 @@ begin
         i_clk => i_clk,
         i_nrst => i_nrst,
         i_hold => w_any_pipeline_hold,
+        i_req_mem_fire => w.f.req_fire,
         i_resp_mem_valid => i_resp_ctrl_valid,
         i_resp_mem_addr => i_resp_ctrl_addr,
         i_resp_mem_data => i_resp_ctrl_data,

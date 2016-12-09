@@ -21,8 +21,7 @@ RiverTop::RiverTop(sc_module_name name_, sc_trace_file *i_vcd,
     SC_METHOD(registers);
     sensitive << i_clk.pos();
 
-    //proc0 = new Processor("proc0", NULL);      // don't generate internal VCD signals
-    proc0 = new Processor("proc0", o_vcd);      // don't generate internal VCD signals
+    proc0 = new Processor("proc0", o_vcd);
     proc0->i_clk(i_clk);
     proc0->i_nrst(i_nrst);
     proc0->i_req_ctrl_ready(w_req_ctrl_ready);
@@ -45,7 +44,7 @@ RiverTop::RiverTop(sc_module_name name_, sc_trace_file *i_vcd,
     proc0->i_ext_irq(i_ext_irq);
     proc0->o_step_cnt(o_step_cnt);
 
-    cache0 = new CacheTop("cache0", NULL);     // don't generate internal VCD signals
+    cache0 = new CacheTop("cache0", o_vcd);
     cache0->i_clk(i_clk);
     cache0->i_nrst(i_nrst);
     cache0->i_req_ctrl_valid(w_req_ctrl_valid);

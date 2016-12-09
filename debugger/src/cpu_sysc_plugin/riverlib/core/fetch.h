@@ -30,6 +30,7 @@ SC_MODULE(InstrFetch) {
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_predict_npc;
     sc_out<bool> o_predict_miss;
 
+    sc_out<bool> o_mem_req_fire;                    // used by branch predictor to form new npc value
     sc_out<bool> o_valid;
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_pc;
     sc_out<sc_uint<32>> o_instr;

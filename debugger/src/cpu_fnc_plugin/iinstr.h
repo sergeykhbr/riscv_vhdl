@@ -22,6 +22,7 @@ struct CpuContextType {
     uint64_t npc;
     uint64_t exception;
     uint64_t interrupt;
+    uint64_t interrupt_pending;
     uint64_t step_cnt;
     uint64_t cur_prv_level;
     bool reset;

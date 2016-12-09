@@ -15,6 +15,7 @@ BranchPredictor::BranchPredictor(sc_module_name name_, sc_trace_file *vcd)
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_hold;
+    sensitive << i_req_mem_fire;
     sensitive << i_resp_mem_valid;
     sensitive << i_resp_mem_addr;
     sensitive << i_resp_mem_data;
@@ -72,9 +73,11 @@ void BranchPredictor::comb() {
         } else if (wb_tmp(6, 0) == 0x6f) {
             // jal instruction: Dhry score 35136 -> 36992
             v.npc = i_resp_mem_addr.read() + wb_off;
-        } else {
+        } else if (i_req_mem_fire.read()) {
             v.npc = wb_npc;
         }
+    } else if (i_req_mem_fire.read()) {
+        v.npc = wb_npc;
     }
 
     if (!i_nrst.read()) {

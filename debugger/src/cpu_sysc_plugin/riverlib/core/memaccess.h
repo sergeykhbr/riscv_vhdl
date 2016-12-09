@@ -68,6 +68,11 @@ private:
         sc_signal<sc_uint<2>> size;
         sc_signal<sc_uint<RISCV_ARCH>> wdata;
         sc_signal<sc_uint<64>> step_cnt;
+        sc_signal<bool> wait_req;
+        sc_signal<bool> wait_req_write;
+        sc_signal<sc_uint<2>> wait_req_sz;
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> wait_req_addr;
+        sc_signal<sc_uint<RISCV_ARCH>> wait_req_wdata;
         sc_signal<bool> wait_resp;
     } v, r;
 };

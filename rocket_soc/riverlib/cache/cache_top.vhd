@@ -185,21 +185,20 @@ begin
     wb_mem_strob := (others => '0');
     wb_mem_wdata := (others => '0');
 
+    w_data_req_ready <= '0';
     w_data_resp_mem_data_valid <= '0';
     wb_data_resp_mem_data <= (others => '0');
+    w_ctrl_req_ready <= '0';
     w_ctrl_resp_mem_data_valid <= '0';
     wb_ctrl_resp_mem_data <= (others => '0');
     if r.state = State_Idle or i_resp_mem_data_valid = '1' then
-      w_data_req_ready <= i_req_mem_ready;
-    else 
-      w_data_req_ready <= '0';
+      if d.req_mem_valid = '1' then
+        w_data_req_ready <= i_req_mem_ready;
+      else 
+        w_ctrl_req_ready <= i_req_mem_ready;
+      end if;
     end if;
-    if r.state = State_Idle or (i_resp_mem_data_valid and not d.req_mem_valid) = '1' then
-      w_ctrl_req_ready <= i_req_mem_ready;
-    else 
-      w_ctrl_req_ready <= '0';
-    end if;
-    
+
     if (d.req_mem_valid and w_data_req_ready) = '1' then
       v.state := State_DMem;
       w_mem_valid := '1';

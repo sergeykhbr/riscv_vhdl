@@ -65,6 +65,7 @@ SC_MODULE(Processor) {
 
 private:
     struct FetchType {
+        sc_signal<bool> req_fire;
         sc_signal<bool> valid;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> pc;
         sc_signal<sc_uint<32>> instr;
