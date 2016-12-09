@@ -170,7 +170,6 @@ begin
   comb : process(i_nrst, i_req_mem_ready, i_resp_mem_data_valid, i_resp_mem_data, 
                  i, d, w_data_req_ready, w_ctrl_req_ready, r)
     variable v : RegistersType;
-    variable w_mem_valid : std_logic;
     variable w_mem_write : std_logic;
     variable wb_mem_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     variable wb_mem_strob : std_logic_vector(BUS_DATA_BYTES-1 downto 0);
@@ -179,7 +178,6 @@ begin
 
     v := r;
 
-    w_mem_valid := '0';
     w_mem_write := '0';
     wb_mem_addr := (others => '0');
     wb_mem_strob := (others => '0');
@@ -199,16 +197,18 @@ begin
       end if;
     end if;
 
-    if (d.req_mem_valid and w_data_req_ready) = '1' then
-      v.state := State_DMem;
-      w_mem_valid := '1';
+    if d.req_mem_valid = '1' then
+      if w_data_req_ready = '1' then
+        v.state := State_DMem;
+      end if;
       w_mem_write := d.req_mem_write;
       wb_mem_addr := d.req_mem_addr;
       wb_mem_strob := d.req_mem_strob;
       wb_mem_wdata := d.req_mem_wdata;
-    elsif (i.req_mem_valid and w_ctrl_req_ready) = '1' then
-      v.state := State_IMem;
-      w_mem_valid := '1';
+    elsif i.req_mem_valid = '1' then
+      if w_ctrl_req_ready = '1' then
+        v.state := State_IMem;
+      end if;
       w_mem_write := i.req_mem_write;
       wb_mem_addr := i.req_mem_addr;
       wb_mem_strob := i.req_mem_strob;
@@ -234,7 +234,7 @@ begin
         v.state := State_Idle;
     end if;
 
-    o_req_mem_valid <= w_mem_valid;
+    o_req_mem_valid <= i.req_mem_valid or d.req_mem_valid;
     o_req_mem_write <= w_mem_write;
     o_req_mem_addr <= wb_mem_addr;
     o_req_mem_strob <= wb_mem_strob;

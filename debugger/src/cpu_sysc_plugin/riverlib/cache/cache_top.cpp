@@ -106,7 +106,6 @@ CacheTop::~CacheTop() {
 
 
 void CacheTop::comb() {
-    bool w_mem_valid;
     bool w_mem_write;
     sc_uint<BUS_ADDR_WIDTH> wb_mem_addr;
     sc_uint<BUS_DATA_BYTES> wb_mem_strob;
@@ -114,7 +113,6 @@ void CacheTop::comb() {
 
     v = r;
 
-    w_mem_valid = 0;
     w_mem_write = 0;
     wb_mem_addr = 0;
     wb_mem_strob = 0;
@@ -134,14 +132,18 @@ void CacheTop::comb() {
         }
     }
 
-    if (d.req_mem_valid.read() && w_data_req_ready.read()) {
-        v.state = State_DMem;
+    if (d.req_mem_valid.read()) {
+        if (w_data_req_ready.read()) {
+            v.state = State_DMem;
+        }
         w_mem_write = d.req_mem_write;
         wb_mem_addr = d.req_mem_addr;
         wb_mem_strob = d.req_mem_strob;
         wb_mem_wdata = d.req_mem_wdata;
-    } else if (i.req_mem_valid.read() && w_ctrl_req_ready.read()) {
-        v.state = State_IMem;
+    } else if (i.req_mem_valid.read()) {
+        if (w_ctrl_req_ready.read()) {
+            v.state = State_IMem;
+        }
         w_mem_write = i.req_mem_write;
         wb_mem_addr = i.req_mem_addr;
         wb_mem_strob = i.req_mem_strob;

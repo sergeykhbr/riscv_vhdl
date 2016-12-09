@@ -156,7 +156,7 @@ begin
 
     case r.wstate is
     when wwait_acq =>
-        if vmsto.aw_valid = '1' and msti.grant(xindex) = '1' and r.rstate = rwait_acq then
+        if vmsto.aw_valid = '1' and r.rstate = rwait_acq then
                                     
           v.wr_addr      := wbAddr;
           v.wr_addr_incr := XSizeToBytes(conv_integer(wbAxiSize));
@@ -199,7 +199,7 @@ begin
 
     case r.rstate is
     when rwait_acq =>
-        if vmsto.ar_valid = '1' and msti.grant(xindex) = '1' and r.wstate = wwait_acq then
+        if vmsto.ar_valid = '1' and r.wstate = wwait_acq then
 
           v.rd_addr := wbAddr;
           v.rd_addr_incr := XSizeToBytes(conv_integer(wbAxiSize));

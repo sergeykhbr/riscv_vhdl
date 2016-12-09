@@ -437,8 +437,6 @@ type nasti_master_out_vector is array (0 to CFG_NASTI_MASTER_TOTAL-1)
 
 --! @brief Master device input signals.
 type nasti_master_in_type is record
-  --! How is owner of the AXI bus. It's controlled by 'axictrl' module.
-  grant : std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0);
   --! Write Address channel.
   aw_ready : std_logic;
   --! Write Data channel.
@@ -482,6 +480,13 @@ type nasti_master_in_type is record
   r_user : std_logic;
 end record;
 
+constant nasti_master_in_none : nasti_master_in_type := (
+      '1', '1', '0', NASTI_RESP_OKAY, (others=>'0'), '0',
+      '1', '0', NASTI_RESP_OKAY, (others=>'0'), '1', (others=>'0'), '0');
+
+type nasti_master_in_vector is array (0 to CFG_NASTI_MASTER_TOTAL-1) 
+       of nasti_master_in_type;
+
 
 --! @brief Slave device AMBA AXI input signals.
 type nasti_slave_in_type is record
@@ -506,6 +511,15 @@ type nasti_slave_in_type is record
   --! Read Data channel:
   r_ready : std_logic;
 end record;
+
+constant nasti_slave_in_none : nasti_slave_in_type := (
+      '0', META_NONE, (others=>'0'), '0', '0',
+      (others=>'0'), '0', (others=>'0'), '0', '0', '0', META_NONE,
+      (others=>'0'), '0', '0');
+
+type nasti_slave_in_vector is array (0 to CFG_NASTI_SLAVES_TOTAL-1) 
+       of nasti_slave_in_type;
+
 
 --! @brief Slave device AMBA AXI output signals.
 type nasti_slave_out_type is record
@@ -656,31 +670,36 @@ function functionAxi4Output(
 return nasti_slave_out_type;
 
 --! @brief   AXI bus controller. 
---! @details Simplified version with the hardcoded priorities to bus access.
---!          Lower master index has a higher priority.
---! @param [in] rdslave_with_waitstate 
---! @param [in] clk System bus clock.
---! @param [in] nrst Reset with active LOW level.
---! @param [in] slvoi Vector of slaves output signals.
---! @param [in] mstoi Vector of masters output signals.
---! @param [out] slvio Signals of the selected slave accordingly with 
---!                    the specified priority.
---! @param [out] mstio Signals of the selected master accordingly with 
---!                    the specified priority.
+--! @param [in] watchdog_memop 
+--! @param [in] i_clk System bus clock.
+--! @param [in] i_nrst Reset with active LOW level.
+--! @param [in] i_slvcfg Slaves configuration vector.
+--! @param [in] i_slvo Vector of slaves output signals.
+--! @param [in] i_msto Vector of masters output signals.
+--! @param [out] o_slvi Vector of slave inputs.
+--! @param [out] o_msti Vector of master inputs.
+--! @param [out] o_miss Memory miss access. May be used as a interrupt
+--! @param [out] o_miss_cnt Miss access counter (debug purpose)
+--! @param [out] o_miss_addr Miss access last address (debug purpose)
 --! @todo    Round-robin priority algorithm.
 component axictrl is
   generic (
-    rdslave_with_waitstate : boolean := false
+    watchdog_memop : integer := 0
   );
   port (
-    clk    : in std_logic;
-    nrst   : in std_logic;
-    slvoi  : in  nasti_slaves_out_vector;
-    mstoi  : in  nasti_master_out_vector;
-    slvio  : out nasti_slave_in_type;
-    mstio  : out nasti_master_in_type
+    i_clk    : in std_logic;
+    i_nrst   : in std_logic;
+    i_slvcfg : in  nasti_slave_cfg_vector;
+    i_slvo   : in  nasti_slaves_out_vector;
+    i_msto   : in  nasti_master_out_vector;
+    o_slvi   : out nasti_slave_in_vector;
+    o_msti   : out nasti_master_in_vector;
+    o_miss   : out std_logic;
+    -- Debug signals:
+    o_miss_cnt : out std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
+    o_miss_addr : out std_logic_vector(CFG_NASTI_ADDR_BITS-1 downto 0)
   );
-end component; 
+end component;
 
 end; -- package declaration
 

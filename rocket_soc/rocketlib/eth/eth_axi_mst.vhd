@@ -94,7 +94,7 @@ begin
                 vmsto.aw_bits.addr  := rmsti.addr(31 downto 4) & "0000";
                 v.len  := conv_integer(rmsti.burst_bytes(10 downto 2)) - 1;
                 vmsto.aw_bits.len := conv_std_logic_vector(v.len, 8);
-                if (aximi.grant(xindex) and aximi.aw_ready) = '1' then
+                if aximi.aw_ready = '1' then
                     rgrant := '1';
                     v.state := STATE_W;
                 end if;
@@ -102,7 +102,7 @@ begin
                 vmsto.ar_bits.addr  := rmsti.addr;
                 v.len  := conv_integer(rmsti.burst_bytes(10 downto 2)) - 1;
                 vmsto.ar_bits.len := conv_std_logic_vector(v.len, 8);
-                if (aximi.grant(xindex) and aximi.ar_ready) = '1' then
+                if aximi.ar_ready = '1' then
                     rgrant := '1';
                     v.state := STATE_R;
                 end if;
@@ -116,7 +116,7 @@ begin
                 vmsto.aw_bits.addr  := tmsti.addr(31 downto 4) & "0000";
                 v.len  := conv_integer(tmsti.burst_bytes(10 downto 2)) - 1;
                 vmsto.aw_bits.len := conv_std_logic_vector(v.len, 8);
-                if (aximi.grant(xindex) and aximi.aw_ready) = '1' then
+                if aximi.aw_ready = '1' then
                     tgrant := '1';
                     v.state := STATE_W;
                 end if;
@@ -124,7 +124,7 @@ begin
                 vmsto.ar_bits.addr  := tmsti.addr;
                 v.len  := conv_integer(tmsti.burst_bytes(10 downto 2)) - 1;
                 vmsto.ar_bits.len := conv_std_logic_vector(v.len, 8);
-                if (aximi.grant(xindex) and aximi.ar_ready) = '1' then
+                if aximi.ar_ready = '1' then
                     tgrant := '1';
                     v.state := STATE_R;
                 end if;

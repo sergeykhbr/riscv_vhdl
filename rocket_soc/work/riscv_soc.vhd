@@ -167,9 +167,9 @@ architecture arch_riscv_soc of riscv_soc is
 
   --! Arbiter is switching only slaves output signal, data from noc
   --! is connected to all slaves and to the arbiter itself.
-  signal aximi   : nasti_master_in_type;
+  signal aximi   : nasti_master_in_vector;
   signal aximo   : nasti_master_out_vector;
-  signal axisi   : nasti_slave_in_type;
+  signal axisi   : nasti_slave_in_vector;
   signal axiso   : nasti_slaves_out_vector;
   signal slv_cfg : nasti_slave_cfg_vector;
   signal mst_cfg : nasti_master_cfg_vector;
@@ -239,13 +239,19 @@ begin
   bus_nrst <= not (wReset or soft_rst);
 
   --! @brief AXI4 controller.
-  ctrl0 : axictrl port map (
-    clk    => wClkBus,
-    nrst   => wNReset,
-    slvoi  => axiso,
-    mstoi  => aximo,
-    slvio  => axisi,
-    mstio  => aximi
+  ctrl0 : axictrl generic map (
+    watchdog_memop => 0
+  ) port map (
+    i_clk    => wClkBus,
+    i_nrst   => wNReset,
+    i_slvcfg => slv_cfg,
+    i_slvo   => axiso,
+    i_msto   => aximo,
+    o_slvi   => axisi,
+    o_msti   => aximi,
+    o_miss   => open,
+    o_miss_cnt => open,
+    o_miss_addr => open
   );
   
   --! @brief RISC-V Processor core (River or Rocket).
@@ -255,7 +261,7 @@ river_ena : if CFG_COMMON_RIVER_CPU_ENABLE generate
   ) port map ( 
     i_nrst   => wNReset,
     i_clk    => wClkBus,
-    i_msti   => aximi,
+    i_msti   => aximi(CFG_NASTI_MASTER_CACHED),
     o_msto   => aximo(CFG_NASTI_MASTER_CACHED),
     o_mstcfg => mst_cfg(CFG_NASTI_MASTER_CACHED),
     i_ext_irq => core_irqs(CFG_CORE_IRQ_MEIP)
@@ -273,10 +279,10 @@ river_dis : if not CFG_COMMON_RIVER_CPU_ENABLE generate
     rst      => wReset,
     soft_rst => soft_rst,
     clk_sys  => wClkBus,
-    slvo     => axisi,
-    msti     => aximi,
+    msti1    => aximi(CFG_NASTI_MASTER_CACHED),
     msto1    => aximo(CFG_NASTI_MASTER_CACHED),
     mstcfg1  => mst_cfg(CFG_NASTI_MASTER_CACHED),
+    msti2    => aximi(CFG_NASTI_MASTER_UNCACHED),
     msto2    => aximo(CFG_NASTI_MASTER_UNCACHED),
     mstcfg2  => mst_cfg(CFG_NASTI_MASTER_UNCACHED),
     interrupts => core_irqs
@@ -296,7 +302,7 @@ dsu_ena : if CFG_DSU_ENABLE generate
     clk    => wClkBus,
     nrst   => wNReset,
     o_cfg  => slv_cfg(CFG_NASTI_SLAVE_DSU),
-    i_axi  => axisi,
+    i_axi  => axisi(CFG_NASTI_SLAVE_DSU),
     o_axi  => axiso(CFG_NASTI_SLAVE_DSU),
     o_irq  => core_irqs(CFG_CORE_IRQ_DEBUG),
     o_soft_reset => soft_rst
@@ -322,7 +328,7 @@ end generate;
     clk  => wClkBus,
     nrst => wNReset,
     cfg  => slv_cfg(CFG_NASTI_SLAVE_BOOTROM),
-    i    => axisi,
+    i    => axisi(CFG_NASTI_SLAVE_BOOTROM),
     o    => axiso(CFG_NASTI_SLAVE_BOOTROM)
   );
 
@@ -341,7 +347,7 @@ end generate;
     clk  => wClkBus,
     nrst => wNReset,
     cfg  => slv_cfg(CFG_NASTI_SLAVE_ROMIMAGE),
-    i    => axisi,
+    i    => axisi(CFG_NASTI_SLAVE_ROMIMAGE),
     o    => axiso(CFG_NASTI_SLAVE_ROMIMAGE)
   );
 
@@ -360,7 +366,7 @@ end generate;
     clk  => wClkBus,
     nrst => wNReset,
     cfg  => slv_cfg(CFG_NASTI_SLAVE_SRAM),
-    i    => axisi,
+    i    => axisi(CFG_NASTI_SLAVE_SRAM),
     o    => axiso(CFG_NASTI_SLAVE_SRAM)
   );
 
@@ -377,7 +383,7 @@ end generate;
     clk   => wClkBus,
     nrst  => wNReset,
     cfg   => slv_cfg(CFG_NASTI_SLAVE_GPIO),
-    i     => axisi,
+    i     => axisi(CFG_NASTI_SLAVE_GPIO),
     o     => axiso(CFG_NASTI_SLAVE_GPIO),
     i_dip => ib_dip,
     o_led => o_led
@@ -402,7 +408,7 @@ end generate;
     cfg    => slv_cfg(CFG_NASTI_SLAVE_UART1),
     i_uart => uart1i, 
     o_uart => uart1o,
-    i_axi  => axisi,
+    i_axi  => axisi(CFG_NASTI_SLAVE_UART1),
     o_axi  => axiso(CFG_NASTI_SLAVE_UART1),
     o_irq  => irq_pins(CFG_IRQ_UART1)
   );
@@ -423,7 +429,7 @@ end generate;
     nrst   => bus_nrst,
     i_irqs => irq_pins,
     o_cfg  => slv_cfg(CFG_NASTI_SLAVE_IRQCTRL),
-    i_axi  => axisi,
+    i_axi  => axisi(CFG_NASTI_SLAVE_IRQCTRL),
     o_axi  => axiso(CFG_NASTI_SLAVE_IRQCTRL),
     o_irq_meip => core_irqs(CFG_CORE_IRQ_MEIP)
   );
@@ -435,7 +441,7 @@ end generate;
   geneng_ena : if CFG_GNSSLIB_ENABLE and CFG_GNSSLIB_GNSSENGINE_ENABLE generate 
     gnss_i.nrst     <= wNReset;
     gnss_i.clk_bus  <= wClkBus;
-    gnss_i.axi      <= axisi;
+    gnss_i.axi      <= axisi(CFG_NASTI_SLAVE_ENGINE);
     gnss_i.clk_adc  <= wClkAdc;
     gnss_i.gps_I    <= i_gps_I;
     gnss_i.gps_Q    <= i_gps_Q;
@@ -474,7 +480,7 @@ end generate;
       nrst           => wNReset,
       clk            => wClkBus,
       o_cfg          => slv_cfg(CFG_NASTI_SLAVE_RFCTRL),
-      i_axi          => axisi,
+      i_axi          => axisi(CFG_NASTI_SLAVE_RFCTRL),
       o_axi          => axiso(CFG_NASTI_SLAVE_RFCTRL),
       i_gps_ld       => i_gps_ld,
       i_glo_ld       => i_glo_ld,
@@ -509,7 +515,7 @@ end generate;
     clk    => wClkBus,
     nrst   => wNReset,
     cfg    => slv_cfg(CFG_NASTI_SLAVE_GPTIMERS),
-    i_axi  => axisi,
+    i_axi  => axisi(CFG_NASTI_SLAVE_GPTIMERS),
     o_axi  => axiso(CFG_NASTI_SLAVE_GPTIMERS),
     o_irq  => irq_pins(CFG_IRQ_GPTIMERS)
   );
@@ -521,7 +527,7 @@ end generate;
       fse_i.nrst       <= wNReset;
       fse_i.clk_bus    <= wClkBus;
       fse_i.clk_fse    <= wClkBus;
-      fse_i.axi        <= axisi;
+      fse_i.axi        <= axisi(CFG_NASTI_SLAVE_FSE_GPS);
       fse_i.clk_adc    <= wClkAdc;
       fse_i.I          <= i_gps_I;
       fse_i.Q          <= i_gps_Q;
@@ -600,12 +606,12 @@ end generate;
    ) port map (
       rst => wNReset,
       clk => wClkBus,
-      msti => aximi,
+      msti => aximi(CFG_NASTI_MASTER_ETHMAC),
       msto => aximo(CFG_NASTI_MASTER_ETHMAC),
       mstcfg => mst_cfg(CFG_NASTI_MASTER_ETHMAC),
       msto2 => open,    -- EDCL separate access is disabled
       mstcfg2 => open,  -- EDCL separate access is disabled
-      slvi => axisi,
+      slvi => axisi(CFG_NASTI_SLAVE_ETHMAC),
       slvo => axiso(CFG_NASTI_SLAVE_ETHMAC),
       slvcfg => slv_cfg(CFG_NASTI_SLAVE_ETHMAC),
       ethi => eth_i,
@@ -657,7 +663,7 @@ end generate;
     mstcfg => mst_cfg,
     slvcfg => slv_cfg,
     cfg    => slv_cfg(CFG_NASTI_SLAVE_PNP),
-    i      => axisi,
+    i      => axisi(CFG_NASTI_SLAVE_PNP),
     o      => axiso(CFG_NASTI_SLAVE_PNP)
   );
 

@@ -226,10 +226,10 @@ port (
     rst      : in std_logic;
     soft_rst : in std_logic;
     clk_sys  : in std_logic;
-    slvo     : in nasti_slave_in_type;
-    msti     : in nasti_master_in_type;
+    msti1    : in nasti_master_in_type;
     msto1    : out nasti_master_out_type;
     mstcfg1  : out nasti_master_config_type;
+    msti2    : in nasti_master_in_type;
     msto2    : out nasti_master_out_type;
     mstcfg2  : out nasti_master_config_type;
     interrupts : in std_logic_vector(CFG_CORE_IRQ_TOTAL-1 downto 0)
