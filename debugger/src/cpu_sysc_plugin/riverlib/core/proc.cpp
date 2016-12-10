@@ -21,6 +21,7 @@ Processor::Processor(sc_module_name name_, sc_trace_file *vcd)
     sensitive << w.f.imem_req_valid;
     sensitive << w.f.imem_req_addr;
     sensitive << w.f.valid;
+    sensitive << w.m.step_cnt;
     sensitive << r.clk_cnt;
 
     SC_METHOD(registers);

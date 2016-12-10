@@ -29,6 +29,7 @@ BranchPredictor::BranchPredictor(sc_module_name name_, sc_trace_file *vcd)
 
     if (vcd) {
         sc_trace(vcd, i_hold, "/top/proc0/bp0/i_hold");
+        sc_trace(vcd, i_req_mem_fire, "/top/proc0/bp0/i_req_mem_fire");
         sc_trace(vcd, i_resp_mem_valid, "/top/proc0/bp0/i_resp_mem_valid");
         sc_trace(vcd, i_resp_mem_addr, "/top/proc0/bp0/i_resp_mem_addr");
         sc_trace(vcd, i_resp_mem_data, "/top/proc0/bp0/i_resp_mem_data");

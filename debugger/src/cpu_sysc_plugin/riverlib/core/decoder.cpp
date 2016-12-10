@@ -18,11 +18,16 @@ InstrDecoder::InstrDecoder(sc_module_name name_, sc_trace_file *vcd)
     sensitive << i_f_pc;
     sensitive << i_f_instr;
     sensitive << r.valid;
+    sensitive << r.pc;
+    sensitive << r.instr;
+    sensitive << r.memop_load;
+    sensitive << r.memop_store;
 
     SC_METHOD(registers);
     sensitive << i_clk.pos();
 
     if (vcd) {
+        sc_trace(vcd, i_any_hold, "/top/proc0/dec0/i_any_hold");
         sc_trace(vcd, o_valid, "/top/proc0/dec0/o_valid");
         sc_trace(vcd, o_pc, "/top/proc0/dec0/o_pc");
         sc_trace(vcd, o_instr, "/top/proc0/dec0/o_instr");

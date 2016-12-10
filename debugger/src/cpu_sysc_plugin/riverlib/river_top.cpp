@@ -105,6 +105,7 @@ RiverTop::RiverTop(sc_module_name name_, sc_trace_file *i_vcd,
     if (i_vcd) {
         sc_trace(i_vcd, i_clk, "i_clk");
         sc_trace(i_vcd, i_nrst, "i_nrst");
+        sc_trace(i_vcd, i_req_mem_ready, "i_req_mem_ready");
         sc_trace(i_vcd, i_resp_mem_data_valid, "i_resp_mem_data_valid");
         sc_trace(i_vcd, i_resp_mem_data, "i_resp_mem_data");
         sc_trace(i_vcd, i_ext_irq, "i_ext_irq");
@@ -117,7 +118,6 @@ RiverTop::RiverTop(sc_module_name name_, sc_trace_file *i_vcd,
         sc_trace(o_vcd, o_req_mem_data, "o_req_mem_data");
         sc_trace(o_vcd, o_timer, "o_timer");
         sc_trace(o_vcd, o_step_cnt, "o_step_cnt");
-        sc_trace(o_vcd, i_ext_irq, "i_ext_irq");
     }
 };
 
