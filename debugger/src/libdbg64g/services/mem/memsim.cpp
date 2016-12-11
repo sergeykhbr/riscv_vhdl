@@ -105,31 +105,32 @@ void MemorySim::predeleteService() {
     
 }
 
-void MemorySim::transaction(Axi4TransactionType *payload) {
+void MemorySim::b_transport(Axi4TransactionType *trans) {
     uint64_t mask = (length_.to_uint64() - 1);
-    uint64_t off = (payload->addr - getBaseAddress()) & mask;
-    if (payload->rw) {
+    uint64_t off = (trans->addr - getBaseAddress()) & mask;
+    trans->response = MemResp_Valid;
+    if (trans->action == MemAction_Write) {
         if (readOnly_.to_bool()) {
             RISCV_error("Write to READ ONLY memory", NULL);
+            trans->response = MemResp_Error;
         } else {
-            for (uint64_t i = 0; i < payload->xsize; i++) {
-                if (((payload->wstrb >> i) & 0x1) == 0) {
+            for (uint64_t i = 0; i < trans->xsize; i++) {
+                if (((trans->wstrb >> i) & 0x1) == 0) {
                     continue;
                 }
-                mem_[off + i] = (payload->wpayload[i >> 2] >> 8*(i & 0x3));
+                mem_[off + i] = trans->wpayload.b8[i];
             }
         }
     } else {
-        memcpy(payload->rpayload, &mem_[off], payload->xsize);
+        memcpy(trans->rpayload.b8, &mem_[off], trans->xsize);
     }
 
     const char *rw_str[2] = {"=>", "<="};
-    uint32_t *pdata[2] = {payload->rpayload, payload->wpayload};
-    RISCV_debug("[%08" RV_PRI64 "x] %s [%08x %08x %08x %08x]",
-        payload->addr,
-        rw_str[payload->rw],
-        pdata[payload->rw][3], pdata[payload->rw][2], 
-        pdata[payload->rw][1], pdata[payload->rw][0]);
+    uint32_t *pdata[2] = {trans->rpayload.b32, trans->wpayload.b32};
+    RISCV_debug("[%08" RV_PRI64 "x] %s [%08x %08x]",
+        trans->addr,
+        rw_str[trans->action],
+        pdata[trans->action][1], pdata[trans->action][0]);
 }
 
 bool MemorySim::chishex(int s) {

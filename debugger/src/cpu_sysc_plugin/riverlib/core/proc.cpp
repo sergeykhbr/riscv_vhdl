@@ -192,6 +192,24 @@ Processor::Processor(sc_module_name name_, sc_trace_file *vcd)
     csr0->o_mode(csr.mode);
     csr0->o_mtvec(csr.mtvec);
 
+    dbg0 = new DbgPort("dbg0", vcd);
+    dbg0->i_clk(i_clk);
+    dbg0->i_nrst(i_nrst);
+    dbg0->i_dsu_valid(i_dsu_valid);
+    dbg0->i_dsu_write(i_dsu_write);
+    dbg0->i_dsu_addr(i_dsu_addr);
+    dbg0->i_dsu_wdata(i_dsu_wdata);
+    dbg0->o_dsu_rdata(o_dsu_rdata);
+    dbg0->o_core_wdata(dbg.core_wdata);
+    dbg0->o_halt(dbg.halt);
+    dbg0->o_ireg_ena(dbg.ireg_ena);
+    dbg0->o_ireg_write(dbg.ireg_write);
+    dbg0->i_ireg_rdata(dbg.ireg_rdata);
+    dbg0->o_csr_ena(dbg.csr_ena);
+    dbg0->o_csr_write(dbg.csr_write);
+    dbg0->i_csr_rdata(dbg.csr_rdata);
+
+
     if (vcd) {
         sc_trace(vcd, r.clk_cnt, "top/r_clk_cnt");
         sc_trace(vcd, w.m.step_cnt, "top/step_cnt");
@@ -212,6 +230,7 @@ Processor::~Processor() {
     delete predic0;
     delete iregs0;
     delete csr0;
+    delete dbg0;
 #if (GENERATE_CORE_TRACE == 1)
     reg_dbg->close();
     mem_dbg->close();
@@ -236,7 +255,11 @@ void Processor::comb() {
 
     o_req_ctrl_valid = w.f.imem_req_valid;
     o_req_ctrl_addr = w.f.imem_req_addr;
-    o_step_cnt = w.m.step_cnt;
+#if GENERATE_CORE_TRACE == 1
+    o_time = w.m.step_cnt;
+#else
+    o_time = r.clk_cnt;
+#endif
 }
 
 void Processor::registers() {

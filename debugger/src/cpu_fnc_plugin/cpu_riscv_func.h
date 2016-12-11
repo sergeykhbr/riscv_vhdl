@@ -56,12 +56,6 @@ public:
     /** IClock */
     virtual uint64_t getStepCounter() { return cpu_context_.step_cnt; }
     virtual void registerStepCallback(IClockListener *cb, uint64_t t);
-    virtual uint64_t getClockCounter() {
-        return getStepCounter();
-    }
-    virtual void registerClockCallback(IClockListener *cb, uint64_t t) {
-        registerStepCallback(cb, t);
-    }
 
     /** IHap */
     virtual void hapTriggered(IFace *isrc, EHapType type, const char *descr);
@@ -99,6 +93,7 @@ private:
     AsyncTQueueType queue_;
     uint64_t last_hit_breakpoint_;
 
+    Axi4TransactionType trans_;
     uint32_t cacheline_[512/4];
 
     // Registers:

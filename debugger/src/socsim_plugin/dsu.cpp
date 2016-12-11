@@ -33,9 +33,9 @@ void DSU::postinitService() {
     }
 }
 
-void DSU::transaction(Axi4TransactionType *payload) {
+void DSU::b_transport(Axi4TransactionType *trans) {
     uint64_t mask = (length_.to_uint64() - 1);
-    uint64_t off64 = (payload->addr - getBaseAddress()) & mask;
+    uint64_t off64 = (trans->addr - getBaseAddress()) & mask;
     void *poff = reinterpret_cast<void *>(off64);
 
     if (!icpu_) {
@@ -44,42 +44,42 @@ void DSU::transaction(Axi4TransactionType *payload) {
 
     if (poff < &map_->ureg) {
         // CSR region:
-        if (payload->rw) {
-            regionCsrWr(off64, payload);
+        if (trans->action == MemAction_Write) {
+            regionCsrWr(off64, trans);
         } else {
-            regionCsrRd(off64, payload);
+            regionCsrRd(off64, trans);
         }
     } else if (poff < &map_->udbg) {
         // CPU Registers region:
-        if (payload->rw) {
-            regionRegWr(off64, payload);
+        if (trans->action == MemAction_Write) {
+            regionRegWr(off64, trans);
         } else {
-            regionRegRd(off64, payload);
+            regionRegRd(off64, trans);
         }
     } else if (poff < &map_->end) {
         // Debugging region:
-        if (payload->rw) {
-            regionDebugWr(off64, payload);
+        if (trans->action == MemAction_Write) {
+            regionDebugWr(off64, trans);
         } else {
-            regionDebugRd(off64, payload);
+            regionDebugRd(off64, trans);
         }
     }
 }
 
-void DSU::regionCsrRd(uint64_t off, Axi4TransactionType *payload) {
+void DSU::regionCsrRd(uint64_t off, Axi4TransactionType *trans) {
     uint64_t rdata;
     rdata = icpu_->getCsr(off >> 3);
-    read64(rdata, payload->addr, payload->xsize, payload->rpayload);
+    read64(rdata, trans->addr, trans->xsize, trans->rpayload.b32);
 }
 
-void DSU::regionCsrWr(uint64_t off, Axi4TransactionType *payload) {
+void DSU::regionCsrWr(uint64_t off, Axi4TransactionType *trans) {
     // Transaction could be 4/5 bytes length
-    if (write64(&wdata_, payload->addr, payload->xsize, payload->wpayload)) {
+    if (write64(&wdata_, trans->addr, trans->xsize, trans->wpayload.b32)) {
         icpu_->setCsr(off >> 3, wdata_);
     }
 }
 
-void DSU::regionRegRd(uint64_t off64, Axi4TransactionType *payload) {
+void DSU::regionRegRd(uint64_t off64, Axi4TransactionType *trans) {
     void *poff = reinterpret_cast<void *>(off64 & ~0x7);
 
     uint64_t rdata = 0;
@@ -93,13 +93,13 @@ void DSU::regionRegRd(uint64_t off64, Axi4TransactionType *payload) {
     } else if (poff == &map_->ureg.v.npc) {
         rdata = icpu_->getNPC();
     }
-     read64(rdata, off64, payload->xsize, payload->rpayload);
+     read64(rdata, off64, trans->xsize, trans->rpayload.b32);
 }
 
-void DSU::regionRegWr(uint64_t off64, Axi4TransactionType *payload) {
+void DSU::regionRegWr(uint64_t off64, Axi4TransactionType *trans) {
     void *poff = reinterpret_cast<void *>(off64 & ~0x7);
-    bool rdy = write64(&wdata_, payload->addr, 
-                            payload->xsize, payload->wpayload);
+    bool rdy = write64(&wdata_, trans->addr, 
+                            trans->xsize, trans->wpayload.b32);
     if (rdy) {
         return;
     }
@@ -116,7 +116,7 @@ void DSU::regionRegWr(uint64_t off64, Axi4TransactionType *payload) {
     }
 }
 
-void DSU::regionDebugRd(uint64_t off64, Axi4TransactionType *payload) {
+void DSU::regionDebugRd(uint64_t off64, Axi4TransactionType *trans) {
     void *poff = reinterpret_cast<void *>(off64 & ~0x7);
 
     uint64_t rdata = 0;
@@ -131,13 +131,13 @@ void DSU::regionDebugRd(uint64_t off64, Axi4TransactionType *payload) {
     } else if (poff == &map_->udbg.v.remove_breakpoint) {
         icpu_->removeBreakpoint(wdata_);
     }
-    read64(rdata, off64, payload->xsize, payload->rpayload);
+    read64(rdata, off64, trans->xsize, trans->rpayload.b32);
 }
 
-void DSU::regionDebugWr(uint64_t off64, Axi4TransactionType *payload) {
+void DSU::regionDebugWr(uint64_t off64, Axi4TransactionType *trans) {
     void *poff = reinterpret_cast<void *>(off64 & ~0x7);
-    bool rdy = write64(&wdata_, payload->addr, 
-                            payload->xsize, payload->wpayload);
+    bool rdy = write64(&wdata_, trans->addr, 
+                            trans->xsize, trans->wpayload.b32);
     if (rdy) {
         return;
     }

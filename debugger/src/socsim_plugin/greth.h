@@ -16,9 +16,7 @@
 #include "coreservices/ibus.h"
 #include "coreservices/iudp.h"
 #include "coreservices/irawlistener.h"
-#include "coreservices/iclklistener.h"
 #include "coreservices/iwire.h"
-#include "fifo.h"
 
 namespace debugger {
 
@@ -62,7 +60,7 @@ struct UdpEdclCommonType {
 class Greth : public IService, 
               public IThread,
               public IMemoryOperation,
-              public IClockListener {
+              public INbResponse {
 public:
     Greth(const char *name);
     virtual ~Greth();
@@ -72,7 +70,7 @@ public:
     virtual void predeleteService();
 
     /** IMemoryOperation */
-    virtual void transaction(Axi4TransactionType *payload);
+    virtual void b_transport(Axi4TransactionType *trans);
     
     virtual uint64_t getBaseAddress() {
         return baseAddress_.to_uint64();
@@ -81,8 +79,8 @@ public:
         return length_.to_uint64();
     }
 
-    /** IClockListener */
-    virtual void stepCallback(uint64_t t);
+    /** INbResponse */
+    virtual void nb_response(Axi4TransactionType *trans);
 
 protected:
     /** IThread interface */
@@ -112,14 +110,7 @@ private:
     uint8_t txbuf_[1<<12];
     uint32_t seq_cnt_ : 14;
 
-    struct FifoMessageType {
-        uint64_t addr;
-        uint8_t rw;
-        uint8_t *buf;
-        uint32_t sz;
-    };
-    TFifo<FifoMessageType> *fifo_to_;
-    TFifo<FifoMessageType> *fifo_from_;
+    Axi4TransactionType trans_;
     event_def event_tap_;
 
     greth_map regs_;

@@ -22,9 +22,13 @@ Bus::Bus(const char *name)
     listMap_.make_list(0);
     imap_.make_list(0);
     breakpoints_.make_list(0);
+    RISCV_mutex_init(&mutexBAccess_);
+    RISCV_mutex_init(&mutexNBAccess_);
 }
 
 Bus::~Bus() {
+    RISCV_mutex_destroy(&mutexBAccess_);
+    RISCV_mutex_destroy(&mutexNBAccess_);
 }
 
 void Bus::postinitService() {
@@ -53,11 +57,79 @@ void Bus::map(IMemoryOperation *imemop) {
     imap_.add_to_list(&t1);
 }
 
-int Bus::read(uint64_t addr, uint8_t *payload, int sz) {
+ETransStatus Bus::b_transport(Axi4TransactionType *trans) {
+    IMemoryOperation *imem;
+    bool unmapped = true;
+    ETransStatus ret = TRANS_OK;
+
+    RISCV_mutex_lock(&mutexBAccess_);
+
+    for (unsigned i = 0; i < imap_.size(); i++) {
+        imem = static_cast<IMemoryOperation *>(imap_[i].to_iface());
+        if (imem->getBaseAddress() <= trans->addr
+            && trans->addr < (imem->getBaseAddress() + imem->getLength())) {
+
+            imem->b_transport(trans);
+            unmapped = false;
+            break;
+            /// @todo Check memory overlapping
+        }
+    }
+    checkBreakpoint(trans->addr);
+
+    if (unmapped) {
+        RISCV_error("[%" RV_PRI64 "d] Read from unmapped address "
+                    "%08" RV_PRI64 "x", iclk0_->getStepCounter(), trans->addr);
+        memset(trans->rpayload.b8, 0xFF, trans->xsize);
+        ret = TRANS_ERROR;
+    } else {
+        RISCV_debug("[%08" RV_PRI64 "x] => [%08x %08x]",
+            trans->addr,
+            trans->rpayload.b32[1], trans->rpayload.b32[0]);
+    }
+    RISCV_mutex_unlock(&mutexBAccess_);
+    return ret;
+}
+
+ETransStatus Bus::nb_transport(Axi4TransactionType *trans, INbResponse *cb) {
+    IMemoryOperation *imem;
+    bool unmapped = true;
+    ETransStatus ret = TRANS_OK;
+
+    RISCV_mutex_lock(&mutexNBAccess_);
+
+    for (unsigned i = 0; i < imap_.size(); i++) {
+        imem = static_cast<IMemoryOperation *>(imap_[i].to_iface());
+        if (imem->getBaseAddress() <= trans->addr
+            && trans->addr < (imem->getBaseAddress() + imem->getLength())) {
+
+            imem->nb_transport(trans, cb);
+            unmapped = false;
+            break;
+        }
+    }
+    checkBreakpoint(trans->addr);
+
+    if (unmapped) {
+        RISCV_error("[%" RV_PRI64 "d] Non-blocking request to unmapped address "
+                    "%08" RV_PRI64 "x", iclk0_->getStepCounter(), trans->addr);
+        memset(trans->rpayload.b8, 0xFF, trans->xsize);
+        trans->response = MemResp_Error;
+        cb->nb_response(trans);
+        ret = TRANS_ERROR;
+    } else {
+        RISCV_debug("Non-blocking request to [%08" RV_PRI64 "x]",
+                    trans->addr);
+    }
+    RISCV_mutex_unlock(&mutexNBAccess_);
+    return ret;
+}
+
+/*int Bus::read(uint64_t addr, uint8_t *payload, int sz) {
     IMemoryOperation *imem;
     Axi4TransactionType memop;
     bool unmapped = true;
-    
+
     for (unsigned i = 0; i < imap_.size(); i++) {
         imem = static_cast<IMemoryOperation *>(imap_[i].to_iface());
         if (imem->getBaseAddress() <= addr
@@ -81,13 +153,12 @@ int Bus::read(uint64_t addr, uint8_t *payload, int sz) {
         RISCV_error("[%" RV_PRI64 "d] Read from unmapped address "
                     "%08" RV_PRI64 "x", iclk0_->getStepCounter(), addr);
         memset(payload, 0xFF, sz);
-        return sz;
-    } 
-
-    RISCV_debug("[%08" RV_PRI64 "x] => [%08x %08x %08x %08x]",
-        addr,
-        memop.rpayload[3], memop.rpayload[2], 
-        memop.rpayload[1], memop.rpayload[0]);
+    } else {
+        RISCV_debug("[%08" RV_PRI64 "x] => [%08x %08x %08x %08x]",
+            addr,
+            memop.rpayload[3], memop.rpayload[2], 
+            memop.rpayload[1], memop.rpayload[0]);
+    }
     return sz;
 }
 
@@ -118,15 +189,14 @@ int Bus::write(uint64_t addr, uint8_t *payload, int sz) {
     if (unmapped) {
         RISCV_error("[%" RV_PRI64 "d] Write to unmapped address "
                     "%08" RV_PRI64 "x", iclk0_->getStepCounter(), addr);
-        return 0;
+    } else {
+        RISCV_debug("[%08" RV_PRI64 "x] <= [%08x %08x %08x %08x]",
+            addr,
+            memop.wpayload[3], memop.wpayload[2], 
+            memop.wpayload[1], memop.wpayload[0]);
     }
-
-    RISCV_debug("[%08" RV_PRI64 "x] <= [%08x %08x %08x %08x]",
-        addr,
-        memop.wpayload[3], memop.wpayload[2], 
-        memop.wpayload[1], memop.wpayload[0]);
     return sz;
-}
+}*/
 
 void Bus::addBreakpoint(uint64_t addr) {
     AttributeType br(Attr_UInteger, addr);

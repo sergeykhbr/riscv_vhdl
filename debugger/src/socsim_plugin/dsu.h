@@ -27,7 +27,7 @@ public:
     virtual void postinitService();
 
     /** IMemoryOperation */
-    virtual void transaction(Axi4TransactionType *payload);
+    virtual void b_transport(Axi4TransactionType *trans);
     
     virtual uint64_t getBaseAddress() {
         return baseAddress_.to_uint64();
@@ -37,12 +37,12 @@ public:
     }
 
 private:
-    void regionCsrRd(uint64_t off, Axi4TransactionType *payload);
-    void regionCsrWr(uint64_t off, Axi4TransactionType *payload);
-    void regionRegRd(uint64_t off, Axi4TransactionType *payload);
-    void regionRegWr(uint64_t off, Axi4TransactionType *payload);
-    void regionDebugRd(uint64_t off, Axi4TransactionType *payload);
-    void regionDebugWr(uint64_t off, Axi4TransactionType *payload);
+    void regionCsrRd(uint64_t off, Axi4TransactionType *trans);
+    void regionCsrWr(uint64_t off, Axi4TransactionType *trans);
+    void regionRegRd(uint64_t off, Axi4TransactionType *trans);
+    void regionRegWr(uint64_t off, Axi4TransactionType *trans);
+    void regionDebugRd(uint64_t off, Axi4TransactionType *trans);
+    void regionDebugWr(uint64_t off, Axi4TransactionType *trans);
 
     void msb_of_64(uint64_t *val, uint32_t dw);
     void lsb_of_64(uint64_t *val, uint32_t dw);

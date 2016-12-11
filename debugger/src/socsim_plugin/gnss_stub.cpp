@@ -45,30 +45,31 @@ void GNSSStub::postinitService() {
     }
 }
 
-void GNSSStub::transaction(Axi4TransactionType *payload) {
+void GNSSStub::b_transport(Axi4TransactionType *trans) {
     uint64_t mask = (length_.to_uint64() - 1);
-    uint64_t off = ((payload->addr - getBaseAddress()) & mask);
-    if (payload->rw) {
-        for (uint64_t i = 0; i < payload->xsize/4; i++) {
-            if (((payload->wstrb >> 4*i) & 0xf) == 0) {
+    uint64_t off = ((trans->addr - getBaseAddress()) & mask);
+    trans->response = MemResp_Valid;
+    if (trans->action == MemAction_Write) {
+        for (uint64_t i = 0; i < trans->xsize/4; i++) {
+            if (((trans->wstrb >> 4*i) & 0xf) == 0) {
                 continue;
             }
-            if (regs_.tmr.rw_MsLength == 0 && payload->wpayload[i] != 0) {
+            if (regs_.tmr.rw_MsLength == 0 && trans->wpayload.b32[i] != 0) {
                 iclk_->registerStepCallback(
                     static_cast<IClockListener *>(this), 
-                    iclk_->getStepCounter() + payload->wpayload[i]);
+                    iclk_->getStepCounter() + trans->wpayload.b32[i]);
 
             }
-            regs_.tmr.rw_MsLength = payload->wpayload[i];
+            regs_.tmr.rw_MsLength = trans->wpayload.b32[i];
             if ((off + 4*i) == OFFSET(&regs_.tmr.rw_MsLength)) {
                 RISCV_info("Set rw_MsLength = %d", regs_.tmr.rw_MsLength);
             }
         }
     } else {
-        for (uint64_t i = 0; i < payload->xsize/4; i++) {
-            payload->rpayload[i] = 0;
+        for (uint64_t i = 0; i < trans->xsize/4; i++) {
+            trans->rpayload.b32[i] = 0;
             if ((off + 4*i) == OFFSET(&regs_.tmr.rw_MsLength)) {
-                payload->rpayload[i] = regs_.tmr.rw_MsLength;
+                trans->rpayload.b32[i] = regs_.tmr.rw_MsLength;
                 RISCV_info("Get rw_MsLength = %d", regs_.tmr.rw_MsLength);
             }
         }

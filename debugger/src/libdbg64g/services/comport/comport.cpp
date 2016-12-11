@@ -131,6 +131,16 @@ void ComPortService::registerRawListener(IFace *iface) {
     portListeners_.add_to_list(&t1);
 }
 
+void ComPortService::unregisterRawListener(IFace *iface) {
+    for (unsigned i = 0; i < portListeners_.size(); i++) {
+        IFace *itmp = portListeners_[i].to_iface();
+        if (itmp == iface) {
+            portListeners_.remove_from_list(i);
+            break;
+        }
+    }
+}
+
 void ComPortService::updateData(const char *buf, int buflen) {
     // Data from UART simulation:
     for (int i = 0; i < buflen; i++) {

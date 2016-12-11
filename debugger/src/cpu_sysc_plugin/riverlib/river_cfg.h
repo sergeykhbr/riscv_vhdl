@@ -20,7 +20,7 @@ namespace debugger {
  * @note When this define is enabled Core uses step counter instead 
  *       of clock counter to generate callbacks.
  */
-#define GENERATE_CORE_TRACE 1
+#define GENERATE_CORE_TRACE 0
 
 static const int RISCV_ARCH     = 64;
 

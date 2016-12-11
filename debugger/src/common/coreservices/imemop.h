@@ -14,21 +14,71 @@
 namespace debugger {
 
 static const char *const IFACE_MEMORY_OPERATION = "IMemoryOperation";
+static const char *const IFACE_NB_RESPONSE = "INBResponse";
 
-struct Axi4TransactionType {
-    uint8_t rw;
-    uint64_t addr;
-    uint32_t rpayload[4];       // 128 bits data width
-    uint32_t wstrb;             // 1 bit per byte
-    uint32_t wpayload[4];
-    uint8_t  xsize;             // [Bytes] Do not using XSize AXI format!!!.
+static const int PAYLOAD_MAX_BYTES = 8;
+
+enum EAxi4Action {
+    MemAction_Read,
+    MemAction_Write,
+    MemAction_Total
 };
 
+enum EAxi4Response {
+    MemResp_Valid,
+    MemResp_Accepted,
+    MemResp_Error
+};
+
+typedef struct Axi4TransactionType {
+    EAxi4Action action;
+    EAxi4Response response;
+    uint8_t  xsize;             // [Bytes] Do not using XSize AXI format!!!.
+    uint64_t addr;
+    uint32_t wstrb;             // 1 bit per byte
+    union {
+        uint8_t b8[PAYLOAD_MAX_BYTES];
+        uint16_t b16[PAYLOAD_MAX_BYTES/sizeof(uint16_t)];
+        uint32_t b32[PAYLOAD_MAX_BYTES/sizeof(uint32_t)];
+        uint64_t b64[PAYLOAD_MAX_BYTES/sizeof(uint64_t)];
+    } rpayload, wpayload;
+} Axi4TransactionType;
+
+/**
+ * Non-blocking memory access response interface (Initiator/Master)
+ */
+class INbResponse : public IFace {
+public:
+    INbResponse() : IFace(IFACE_NB_RESPONSE) {}
+
+    virtual void nb_response(Axi4TransactionType *trans) =0;
+};
+
+/**
+ * Slave/Targer interface
+ */
 class IMemoryOperation : public IFace {
 public:
     IMemoryOperation() : IFace(IFACE_MEMORY_OPERATION) {}
 
-    virtual void transaction(Axi4TransactionType *payload) =0;
+    /**
+     * Blocking transaction
+     *
+     * Must be implemented by any functional/systemc device mapped into memory
+     */
+    virtual void b_transport(Axi4TransactionType *trans) =0;
+
+    /**
+     * Non-blocking transaction
+     *
+     * Can be implemented for interaction with the SystemC model for an example.
+     * Default implementation re-direct to blocking transport
+     */
+    virtual void nb_transport(Axi4TransactionType *trans,
+                              INbResponse *cb) {
+        b_transport(trans);
+        cb->nb_response(trans);
+    }
 
     virtual uint64_t getBaseAddress() =0;
 

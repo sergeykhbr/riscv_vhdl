@@ -43,6 +43,10 @@ RtlWrapper::RtlWrapper(sc_module_name name)
     w_interrupt = 0;
     v.resp_mem_data = 0;
     v.resp_mem_data_valid = false;
+    memset(&dbg_port_, 0, sizeof(dbg_port_));
+}
+
+RtlWrapper::~RtlWrapper() {
 }
 
 void RtlWrapper::clk_gen() {
@@ -77,18 +81,9 @@ void RtlWrapper::clk_negedge_proc() {
     /** Simulation events queue */
     IFace *cb;
 
-    // Clock queue
-    clock_queue_.initProc();
-    clock_queue_.pushPreQueued();
-    uint64_t clk_cnt = i_timer.read();
-    while ((cb = clock_queue_.getNext(clk_cnt)) != 0) {
-        static_cast<IClockListener *>(cb)->stepCallback(clk_cnt);
-    }
-
-    // Stepping queue (common for debug purposes)
     step_queue_.initProc();
     step_queue_.pushPreQueued();
-    uint64_t step_cnt = i_step_cnt.read();
+    uint64_t step_cnt = i_time.read();
     while ((cb = step_queue_.getNext(step_cnt)) != 0) {
         static_cast<IClockListener *>(cb)->stepCallback(step_cnt);
     }
@@ -150,7 +145,7 @@ void RtlWrapper::clk_negedge_proc() {
             iserial->writeData(msg, msg_len);
         }
     }
-    step_cnt_z = i_step_cnt.read();
+    step_cnt_z = i_time.read();
 #endif
 
     /** */
@@ -169,22 +164,34 @@ void RtlWrapper::clk_negedge_proc() {
         w_req_fire = i_req_mem_valid.read();
     }
     if (w_req_fire) {
-        uint64_t addr = i_req_mem_addr.read();
-        Reg64Type val;
+        Axi4TransactionType trans;
+        trans.addr = i_req_mem_addr.read();
         if (i_req_mem_write.read()) {
             uint8_t strob = i_req_mem_strob.read();
             uint64_t offset = mask2offset(strob);
-            int size = mask2size(strob >> offset);
-
-            addr += offset;
-            val.val = i_req_mem_data.read();
-            ibus_->write(addr, val.buf, size);
+            trans.addr += offset;
+            trans.action = MemAction_Write;
+            trans.xsize = mask2size(strob >> offset);
+            trans.wstrb = (1 << trans.xsize) - 1;
+            trans.wpayload.b64[0] = i_req_mem_data.read();
+            ibus_->b_transport(&trans);
             v.resp_mem_data = 0;
         } else {
-            ibus_->read(addr, val.buf, sizeof(val));
-            v.resp_mem_data = val.val;
+            trans.action = MemAction_Read;
+            trans.xsize = BUS_DATA_BYTES;
+            ibus_->b_transport(&trans);
+            v.resp_mem_data = trans.rpayload.b64[0];
         }
         v.resp_mem_data_valid = true;
+    }
+
+    // Request from DSU into debug port handling:
+    v.dbg_access = 0;
+    if (dbg_port_.valid) {
+        v.dbg_access = 1;
+    }
+    if (r.dbg_access.read()) {
+        //
     }
 }
 
@@ -219,10 +226,6 @@ void RtlWrapper::registerStepCallback(IClockListener *cb, uint64_t t) {
     step_queue_.put(t, cb);
 }
 
-void RtlWrapper::registerClockCallback(IClockListener *cb, uint64_t t) {
-    clock_queue_.put(t, cb);
-}
-
 void RtlWrapper::raiseSignal(int idx) {
     switch (idx) {
     case CPU_SIGNAL_RESET:
@@ -247,7 +250,14 @@ void RtlWrapper::lowerSignal(int idx) {
     }
 }
 
+bool RtlWrapper::isHalt() {
+    dbg_port_.valid = 1;
+    dbg_port_.write = 0;
+    dbg_port_.addr = 0x100;
+    dbg_port_.wdata = 0;
 
+    return false;
+}
 
 }  // namespace debugger
 

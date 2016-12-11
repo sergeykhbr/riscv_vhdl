@@ -278,9 +278,12 @@ void CpuRiscV_Functional::reset() {
 
 void CpuRiscV_Functional::fetchInstruction() {
     CpuContextType *pContext = getpContext();
-    pContext->ibus->read(pContext->pc, 
-                        reinterpret_cast<uint8_t *>(cacheline_), 
-                        4);
+    trans_.action = MemAction_Read;
+    trans_.addr = pContext->pc;
+    trans_.xsize = 4;
+    trans_.wstrb = 0;
+    pContext->ibus->b_transport(&trans_);
+    cacheline_[0] = trans_.rpayload.b32[0];
 }
 
 IInstruction *CpuRiscV_Functional::decodeInstruction(uint32_t *rpayload) {

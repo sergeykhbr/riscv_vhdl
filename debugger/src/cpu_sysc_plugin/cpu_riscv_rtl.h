@@ -25,7 +25,6 @@ namespace debugger {
 
 class CpuRiscV_RTL : public IService, 
                  public IThread,
-                 public ICpuRiscV,
                  public IClock,
                  public IHap {
 public:
@@ -36,48 +35,13 @@ public:
     virtual void postinitService();
     virtual void predeleteService();
 
-    /** ICpuRiscV interface */
-    virtual void raiseSignal(int idx) { wrapper_->raiseSignal(idx); }
-    virtual void lowerSignal(int idx) { wrapper_->lowerSignal(idx); }
-    virtual bool isHalt() { return false; }
-    virtual void halt() {}
-    virtual void go() {}
-    virtual void step(uint64_t cnt) {}
-    virtual uint64_t getReg(uint64_t idx) { return 0; }
-    virtual void setReg(uint64_t idx, uint64_t val) {}
-    virtual uint64_t getCsr(uint64_t idx) { return 0; }
-    virtual void setCsr(uint64_t idx, uint64_t val) {}
-    virtual uint64_t getPC() { return 0; }
-    virtual void setPC(uint64_t val) {}
-    virtual uint64_t getNPC() { return 0; }
-    virtual void setNPC(uint64_t val) {}
-    virtual void addBreakpoint(uint64_t addr) {}
-    virtual void removeBreakpoint(uint64_t addr) {}
-    virtual void hitBreakpoint(uint64_t addr) {}
-
     /** IClock */
     virtual uint64_t getStepCounter() {
-        return wb_step_cnt.read() + 2;
+        return wb_time.read() + 2;
     }
 
     virtual void registerStepCallback(IClockListener *cb, uint64_t t) {
         wrapper_->registerStepCallback(cb, t);
-    }
-
-    virtual uint64_t getClockCounter() {
-#if (GENERATE_CORE_TRACE == 1)
-        return getStepCounter();
-#else
-        return wb_timer.read();
-#endif
-    }
-
-    virtual void registerClockCallback(IClockListener *cb, uint64_t t) {
-#if (GENERATE_CORE_TRACE == 1)
-        registerStepCallback(cb, t);
-#else
-        wrapper_->registerClockCallback(cb, t);
-#endif
     }
 
     /** IHap */
@@ -99,8 +63,7 @@ private:
     sc_signal<bool> w_clk;
     sc_signal<bool> w_nrst;
     // Timer:
-    sc_signal<sc_uint<RISCV_ARCH>> wb_timer;
-    sc_signal<sc_uint<64>> wb_step_cnt;
+    sc_signal<sc_uint<64>> wb_time;
     // Memory interface:
     sc_signal<bool> w_req_mem_ready;
     sc_signal<bool> w_req_mem_valid;
@@ -113,6 +76,12 @@ private:
     /** Interrupt line from external interrupts controller. */
     sc_signal<bool> w_interrupt;
     // Debug interface
+    sc_signal<bool> w_dsu_valid;
+    sc_signal<bool> w_dsu_write;
+    sc_signal<sc_uint<16>> wb_dsu_addr;
+    sc_signal<sc_uint<RISCV_ARCH>> wb_dsu_wdata;
+    sc_signal<sc_uint<RISCV_ARCH>> wb_dsu_rdata;
+
 
     sc_trace_file *i_vcd_;      // stimulus pattern
     sc_trace_file *o_vcd_;      // reference pattern for comparision

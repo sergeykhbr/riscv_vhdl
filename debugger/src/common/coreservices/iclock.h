@@ -23,13 +23,13 @@ public:
 
     virtual uint64_t getStepCounter() =0;
 
-    /** Executed instruction counter. One executed instruction = 1 step. */
+    /** Executed instruction counter.
+     *
+     * One executed instruction = 1 step for functional simulation.
+     * And it can be more than 1 for precise SystemC model if enabled
+     * GENERATE_CORE_TRACE.
+     */
     virtual void registerStepCallback(IClockListener *cb, uint64_t t) =0;
-
-    virtual uint64_t getClockCounter() =0;
-
-    /** For Functional models one clock always = one step. */
-    virtual void registerClockCallback(IClockListener *cb, uint64_t t) =0;
 };
 
 }  // namespace debugger

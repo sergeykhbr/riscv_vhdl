@@ -18,6 +18,7 @@
 #include "regibank.h"
 #include "csr.h"
 #include "br_predic.h"
+#include "dbg_port.h"
 
 #if (GENERATE_CORE_TRACE == 1)
 #include <fstream>
@@ -50,7 +51,13 @@ SC_MODULE(Processor) {
     sc_out<bool> o_resp_data_ready;                     // Core is ready to accept response from DCache
     // External interrupt pin
     sc_in<bool> i_ext_irq;                              // PLIC interrupt accordingly with spec
-    sc_out<sc_uint<64>> o_step_cnt;                     // Number of valid executed instructions
+    sc_out<sc_uint<64>> o_time;                         // Clock/Step counter depending define GENERATE_CORE_TRACE
+    // "RIVER" Debug interface
+    sc_in<bool> i_dsu_valid;                            // Debug access from DSU command is valid
+    sc_in<bool> i_dsu_write;                            // Write Debug value
+    sc_in<sc_uint<16>> i_dsu_addr;                      // Debug register address
+    sc_in<sc_uint<RISCV_ARCH>> i_dsu_wdata;             // Write value
+    sc_out<sc_uint<RISCV_ARCH>> o_dsu_rdata;            // Read value
 
     void comb();
     void registers();
@@ -146,6 +153,17 @@ private:
         sc_signal<sc_uint<2>> mode;             // Current processor mode
     } csr;
 
+    struct DebugType {
+        sc_signal<sc_uint<RISCV_ARCH>> core_wdata;  // Write data into Core
+        sc_signal<bool> halt;                       // Halt signal is equal to hold pipeline
+        sc_signal<bool> ireg_ena;                   // Access to integer register bank is enabled
+        sc_signal<bool> ireg_write;                 // Write integer register enabled
+        sc_signal<sc_uint<RISCV_ARCH>> ireg_rdata;  // Integer register read value
+        sc_signal<bool> csr_ena;                    // Access to CSR bank is enabled
+        sc_signal<bool> csr_write;                  // Write CSR enabled
+        sc_signal<sc_uint<RISCV_ARCH>> csr_rdata;   // CSR read value
+    } dbg;
+
     /** 5-stages CPU pipeline */
     struct PipelineType {
         FetchType f;                            // Fetch instruction stage
@@ -173,6 +191,8 @@ private:
     BranchPredictor *predic0;
     RegIntBank *iregs0;
     CsrRegs *csr0;
+
+    DbgPort *dbg0;
 
 #if (GENERATE_CORE_TRACE == 1)
     char tstr[1024];

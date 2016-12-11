@@ -56,23 +56,24 @@ PNP::~PNP() {
 
 void PNP::postinitService() {
     regs_.tech.bits.tech = static_cast<uint8_t>(tech_.to_uint64());
-    regs_.tech.bits.adc_detect = static_cast<uint8_t>(adc_detector_.to_uint64());
+    regs_.tech.bits.adc_detect =
+        static_cast<uint8_t>(adc_detector_.to_uint64());
 }
 
-void PNP::transaction(Axi4TransactionType *payload) {
+void PNP::b_transport(Axi4TransactionType *trans) {
     uint64_t mask = (length_.to_uint64() - 1);
-    uint64_t off = ((payload->addr - getBaseAddress()) & mask);
+    uint64_t off = ((trans->addr - getBaseAddress()) & mask);
     uint8_t *mem_ = reinterpret_cast<uint8_t *>(&regs_);
-    if (payload->rw) {
-        for (uint64_t i = 0; i < payload->xsize; i++) {
-            if ((payload->wstrb & (1 << i)) == 0) {
+    if (trans->action == MemAction_Write) {
+        for (uint64_t i = 0; i < trans->xsize; i++) {
+            if ((trans->wstrb & (1 << i)) == 0) {
                 continue;
             }
-            mem_[off + i] = reinterpret_cast<uint8_t *>(payload->wpayload)[i];
+            mem_[off + i] = trans->wpayload.b8[i];
         }
     } else {
-        for (uint64_t i = 0; i < payload->xsize; i++) {
-            reinterpret_cast<uint8_t *>(payload->rpayload)[i] = mem_[off + i];
+        for (uint64_t i = 0; i < trans->xsize; i++) {
+            trans->rpayload.b8[i] = mem_[off + i];
         }
     }
 }

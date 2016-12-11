@@ -41,131 +41,153 @@ void IrqController::postinitService() {
     }
 }
 
-void IrqController::transaction(Axi4TransactionType *payload) {
+void IrqController::b_transport(Axi4TransactionType *trans) {
     uint64_t mask = (length_.to_uint64() - 1);
-    uint64_t off = ((payload->addr - getBaseAddress()) & mask) / 4;
+    uint64_t off = ((trans->addr - getBaseAddress()) & mask) / 4;
     uint32_t t1;
-    if (payload->rw) {
-        for (uint64_t i = 0; i < payload->xsize/4; i++) {
-            if (((payload->wstrb >> 4*i) & 0xFF) == 0) {
+    trans->response = MemResp_Valid;
+    if (trans->action == MemAction_Write) {
+        for (uint64_t i = 0; i < trans->xsize/4; i++) {
+            if (((trans->wstrb >> 4*i) & 0xFF) == 0) {
                 continue;
             }
 
             switch (off + i) {
             case 0:
-                regs_.irq_mask = payload->wpayload[i];
-                RISCV_info("Set irq_mask = %08x", payload->wpayload[i]);
+                regs_.irq_mask = trans->wpayload.b32[i];
+                RISCV_info("Set irq_mask = %08x", trans->wpayload.b32[i]);
                 break;
             case 1:
-                regs_.irq_pending = payload->wpayload[i];
-                RISCV_info("Set irq_pending = %08x", payload->wpayload[i]);
+                regs_.irq_pending = trans->wpayload.b32[i];
+                RISCV_info("Set irq_pending = %08x", trans->wpayload.b32[i]);
                 break;
             case 2:
                 t1 = regs_.irq_pending;
-                regs_.irq_pending &= ~payload->wpayload[i];
+                regs_.irq_pending &= ~trans->wpayload.b32[i];
                 if (t1 && !regs_.irq_pending) {
                     icpu_->lowerSignal(CPU_SIGNAL_EXT_IRQ);
                 }
-                RISCV_info("Set irq_clear = %08x", payload->wpayload[i]);
+                RISCV_info("Set irq_clear = %08x", trans->wpayload.b32[i]);
                 break;
             case 3:
-                regs_.irq_pending |= payload->wpayload[i];
-                RISCV_info("Set irq_rise = %08x", payload->wpayload[i]);
+                regs_.irq_pending |= trans->wpayload.b32[i];
+                RISCV_info("Set irq_rise = %08x", trans->wpayload.b32[i]);
                 break;
             case 4:
                 regs_.isr_table &= ~0xFFFFFFFFLL;
-                regs_.isr_table |= payload->wpayload[i];
-                RISCV_info("Set irq_handler[31:0] = %08x", payload->wpayload[i]);
+                regs_.isr_table |= trans->wpayload.b32[i];
+                RISCV_info("Set irq_handler[31:0] = %08x",
+                            trans->wpayload.b32[i]);
                 break;
             case 5:
                 regs_.isr_table &= ~0xFFFFFFFF00000000LL;
-                regs_.isr_table |= (static_cast<uint64_t>(payload->wpayload[i]) << 32);
-                RISCV_info("Set irq_handler[63:32] = %08x", payload->wpayload[i]);
+                regs_.isr_table |= 
+                    (static_cast<uint64_t>(trans->wpayload.b32[i]) << 32);
+                RISCV_info("Set irq_handler[63:32] = %08x",
+                            trans->wpayload.b32[i]);
                 break;
             case 6:
                 regs_.dbg_cause &= ~0xFFFFFFFFLL;
-                regs_.dbg_cause |= payload->wpayload[i];
-                RISCV_info("Set dbg_cause[31:0] = %08x", payload->wpayload[i]);
+                regs_.dbg_cause |= trans->wpayload.b32[i];
+                RISCV_info("Set dbg_cause[31:0] = %08x",
+                            trans->wpayload.b32[i]);
                 break;
             case 7:
                 regs_.dbg_cause &= ~0xFFFFFFFF00000000LL;
-                regs_.dbg_cause |= (static_cast<uint64_t>(payload->wpayload[i]) << 32);
-                RISCV_info("Set dbg_cause[63:32] = %08x", payload->wpayload[i]);
+                regs_.dbg_cause |= 
+                    (static_cast<uint64_t>(trans->wpayload.b32[i]) << 32);
+                RISCV_info("Set dbg_cause[63:32] = %08x",
+                            trans->wpayload.b32[i]);
                 break;
             case 8:
                 regs_.dbg_epc &= ~0xFFFFFFFFLL;
-                regs_.dbg_epc |= payload->wpayload[i];
-                RISCV_info("Set dbg_epc[31:0] = %08x", payload->wpayload[i]);
+                regs_.dbg_epc |= trans->wpayload.b32[i];
+                RISCV_info("Set dbg_epc[31:0] = %08x", trans->wpayload.b32[i]);
                 break;
             case 9:
                 regs_.dbg_epc &= ~0xFFFFFFFF00000000LL;
-                regs_.dbg_epc |= (static_cast<uint64_t>(payload->wpayload[i]) << 32);
-                RISCV_info("Set dbg_epc[63:32] = %08x", payload->wpayload[i]);
+                regs_.dbg_epc |= 
+                    (static_cast<uint64_t>(trans->wpayload.b32[i]) << 32);
+                RISCV_info("Set dbg_epc[63:32] = %08x",
+                            trans->wpayload.b32[i]);
                 break;
             case 10:
-                regs_.irq_lock = payload->wpayload[i];
-                RISCV_info("Set irq_ena = %08x", payload->wpayload[i]);
+                regs_.irq_lock = trans->wpayload.b32[i];
+                RISCV_info("Set irq_ena = %08x", trans->wpayload.b32[i]);
                 break;
             case 11:
-                regs_.irq_cause_idx = payload->wpayload[i];
-                RISCV_info("Set irq_cause_idx = %08x", payload->wpayload[i]);
+                regs_.irq_cause_idx = trans->wpayload.b32[i];
+                RISCV_info("Set irq_cause_idx = %08x", trans->wpayload.b32[i]);
                 break;
             default:;
             }
         }
     } else {
-        for (uint64_t i = 0; i < payload->xsize/4; i++) {
+        for (uint64_t i = 0; i < trans->xsize/4; i++) {
             switch (off + i) {
             case 0:
-                payload->rpayload[i] = regs_.irq_mask;
-                RISCV_info("Get irq_mask = %08x", payload->rpayload[i]);
+                trans->rpayload.b32[i] = regs_.irq_mask;
+                RISCV_info("Get irq_mask = %08x", trans->rpayload.b32[i]);
                 break;
             case 1:
-                payload->rpayload[i] = regs_.irq_pending;
-                RISCV_info("Get irq_pending = %08x", payload->rpayload[i]);
+                trans->rpayload.b32[i] = regs_.irq_pending;
+                RISCV_info("Get irq_pending = %08x", trans->rpayload.b32[i]);
                 break;
             case 2:
-                payload->rpayload[i] = 0;
-                RISCV_info("Get irq_clear = %08x", payload->rpayload[i]);
+                trans->rpayload.b32[i] = 0;
+                RISCV_info("Get irq_clear = %08x", trans->rpayload.b32[i]);
                 break;
             case 3:
-                payload->rpayload[i] = 0;
-                RISCV_info("Get irq_rise = %08x", payload->rpayload[i]);
+                trans->rpayload.b32[i] = 0;
+                RISCV_info("Get irq_rise = %08x", trans->rpayload.b32[i]);
                 break;
             case 4:
-                payload->rpayload[i] = static_cast<uint32_t>(regs_.isr_table);
-                RISCV_info("Get irq_handler[31:0] = %08x", payload->rpayload[i]);
+                trans->rpayload.b32[i] =
+                    static_cast<uint32_t>(regs_.isr_table);
+                RISCV_info("Get irq_handler[31:0] = %08x",
+                            trans->rpayload.b32[i]);
                 break;
             case 5:
-                payload->rpayload[i] = static_cast<uint32_t>(regs_.isr_table >> 32);
-                RISCV_info("Get irq_handler[63:32] = %08x", payload->rpayload[i]);
+                trans->rpayload.b32[i] 
+                    = static_cast<uint32_t>(regs_.isr_table >> 32);
+                RISCV_info("Get irq_handler[63:32] = %08x",
+                            trans->rpayload.b32[i]);
                 break;
             case 6:
-                payload->rpayload[i] = static_cast<uint32_t>(regs_.dbg_cause);
-                RISCV_info("Get dbg_cause[31:0] = %08x", payload->rpayload[i]);
+                trans->rpayload.b32[i] =
+                    static_cast<uint32_t>(regs_.dbg_cause);
+                RISCV_info("Get dbg_cause[31:0] = %08x",
+                            trans->rpayload.b32[i]);
                 break;
             case 7:
-                payload->rpayload[i] = static_cast<uint32_t>(regs_.dbg_cause >> 32);
-                RISCV_info("Get dbg_cause[63:32] = %08x", payload->rpayload[i]);
+                trans->rpayload.b32[i] =
+                    static_cast<uint32_t>(regs_.dbg_cause >> 32);
+                RISCV_info("Get dbg_cause[63:32] = %08x",
+                            trans->rpayload.b32[i]);
                 break;
             case 8:
-                payload->rpayload[i] = static_cast<uint32_t>(regs_.dbg_epc);
-                RISCV_info("Get dbg_epc[31:0] = %08x", payload->rpayload[i]);
+                trans->rpayload.b32[i] = static_cast<uint32_t>(regs_.dbg_epc);
+                RISCV_info("Get dbg_epc[31:0] = %08x",
+                            trans->rpayload.b32[i]);
                 break;
             case 9:
-                payload->rpayload[i] = static_cast<uint32_t>(regs_.dbg_epc >> 32);
-                RISCV_info("Get dbg_epc[63:32] = %08x", payload->rpayload[i]);
+                trans->rpayload.b32[i] =
+                    static_cast<uint32_t>(regs_.dbg_epc >> 32);
+                RISCV_info("Get dbg_epc[63:32] = %08x",
+                            trans->rpayload.b32[i]);
                 break;
             case 10:
-                payload->rpayload[i] = regs_.irq_lock;
-                RISCV_info("Get irq_ena = %08x", payload->rpayload[i]);
+                trans->rpayload.b32[i] = regs_.irq_lock;
+                RISCV_info("Get irq_ena = %08x",
+                            trans->rpayload.b32[i]);
                 break;
             case 11:
-                payload->rpayload[i] = regs_.irq_cause_idx;
-                RISCV_info("Get irq_cause_idx = %08x", payload->rpayload[i]);
+                trans->rpayload.b32[i] = regs_.irq_cause_idx;
+                RISCV_info("Get irq_cause_idx = %08x",
+                            trans->rpayload.b32[i]);
                 break;
             default:
-                payload->rpayload[i] = ~0;
+                trans->rpayload.b32[i] = ~0;
             }
         }
     }

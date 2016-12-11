@@ -29,15 +29,14 @@ SC_MODULE(RiverTop) {
     sc_in<sc_uint<BUS_DATA_WIDTH>> i_resp_mem_data;     // Read data
     /** Interrupt line from external interrupts controller (PLIC). */
     sc_in<bool> i_ext_irq;
+    sc_out<sc_uint<64>> o_time;                         // Clock/Step counter depending define GENERATE_CORE_TRACE
     // Debug interface
-    sc_out<sc_uint<RISCV_ARCH>> o_timer;                // Timer.
-    sc_out<sc_uint<64>> o_step_cnt;                     // Number of valid executed instructions
+    sc_in<bool> i_dsu_valid;                            // Debug access from DSU command is valid
+    sc_in<bool> i_dsu_write;                            // Write Debug value
+    sc_in<sc_uint<16>> i_dsu_addr;                      // Debug register address
+    sc_in<sc_uint<RISCV_ARCH>> i_dsu_wdata;             // Write value
+    sc_out<sc_uint<RISCV_ARCH>> o_dsu_rdata;            // Read value
 
-
-    void comb();
-    void registers();
-
-    SC_HAS_PROCESS(RiverTop);
 
     RiverTop(sc_module_name name_, sc_trace_file *i_vcd=0,
                                    sc_trace_file *o_vcd=0);
@@ -68,10 +67,6 @@ private:
     sc_signal<sc_uint<RISCV_ARCH>> wb_resp_data_data;
     sc_signal<bool> w_resp_data_ready;
 
-    struct RegistersType {
-        sc_signal<sc_uint<RISCV_ARCH>> timer;
-
-    } v, r;
 };
 
 

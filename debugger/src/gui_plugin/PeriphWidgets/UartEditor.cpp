@@ -33,6 +33,9 @@ UartEditor::UartEditor(IGui *igui, QWidget *parent) : QPlainTextEdit(parent) {
 }
 
 UartEditor::~UartEditor() {
+    if (uart_) {
+        uart_->unregisterRawListener(static_cast<IRawListener *>(this));
+    }
     RISCV_mutex_destroy(&mutexStr_);
 }
 

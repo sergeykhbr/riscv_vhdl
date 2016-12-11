@@ -34,6 +34,7 @@ public:
     /** ISerial */
     virtual int writeData(const char *buf, int sz);
     virtual void registerRawListener(IFace *listener);
+    virtual void unregisterRawListener(IFace *listener);
 
     // IRawListener
     virtual void updateData(const char *buf, int buflen);

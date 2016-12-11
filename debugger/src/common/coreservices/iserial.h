@@ -25,6 +25,7 @@ public:
     virtual int writeData(const char *buf, int sz) =0;
 
     virtual void registerRawListener(IFace *listener) =0;
+    virtual void unregisterRawListener(IFace *listener) =0;
 };
 
 }  // namespace debugger

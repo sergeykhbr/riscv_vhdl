@@ -25,10 +25,11 @@ public:
     /** IService interface */
     virtual void postinitService();
 
-    /** IDma interface */
+    /** IBus interface */
     virtual void map(IMemoryOperation *imemop);
-    virtual int read(uint64_t addr, uint8_t *payload, int sz);
-    virtual int write(uint64_t addr, uint8_t *payload, int sz);
+    virtual ETransStatus b_transport(Axi4TransactionType *trans);
+    virtual ETransStatus nb_transport(Axi4TransactionType *trans,
+                                      INbResponse *cb);
     virtual void addBreakpoint(uint64_t addr);
     virtual void removeBreakpoint(uint64_t addr);
 
@@ -41,6 +42,8 @@ private:
     // Clock interface is used just to tag debug output with some step value,
     // in a case of several clocks the first found will be used.
     IClock *iclk0_;
+    mutex_def mutexBAccess_;
+    mutex_def mutexNBAccess_;
 };
 
 DECLARE_CLASS(Bus)

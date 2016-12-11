@@ -58,7 +58,8 @@ SOURCES = \
 	fetch \
 	memaccess \
 	proc \
-	regibank
+	regibank \
+	dbg_port
 
 LIBS = \
 	dbg64g \

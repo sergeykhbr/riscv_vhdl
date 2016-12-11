@@ -26,7 +26,7 @@ public:
     virtual void postinitService();
 
     /** IMemoryOperation */
-    virtual void transaction(Axi4TransactionType *payload);
+    virtual void b_transport(Axi4TransactionType *trans);
     
     virtual uint64_t getBaseAddress() {
         return baseAddress_.to_uint64();

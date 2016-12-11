@@ -34,14 +34,15 @@ void GPIO::postinitService() {
     regs_.dip = static_cast<uint32_t>(dip_.to_uint64());
 }
 
-void GPIO::transaction(Axi4TransactionType *payload) {
+void GPIO::b_transport(Axi4TransactionType *trans) {
     uint64_t mask = (length_.to_uint64() - 1);
-    uint64_t off = ((payload->addr - getBaseAddress()) & mask) / 4;
+    uint64_t off = ((trans->addr - getBaseAddress()) & mask) / 4;
     uint32_t *mem_ = reinterpret_cast<uint32_t *>(&regs_);
-    if (payload->rw) {
-        for (uint64_t i = 0; i < payload->xsize/4; i++) {
-            if (payload->wstrb & (0xf << 4*i)) {
-                mem_[off + i] = payload->wpayload[i];
+    trans->response = MemResp_Valid;
+    if (trans->action == MemAction_Write) {
+        for (uint64_t i = 0; i < trans->xsize/4; i++) {
+            if (trans->wstrb & (0xf << 4*i)) {
+                mem_[off + i] = trans->wpayload.b32[i];
             }
 
             if (off + i == (reinterpret_cast<uint64_t>(&regs_.led) 
@@ -55,8 +56,8 @@ void GPIO::transaction(Axi4TransactionType *payload) {
             }
         }
     } else {
-        for (uint64_t i = 0; i < payload->xsize/4; i++) {
-            payload->rpayload[i] = mem_[i + off];
+        for (uint64_t i = 0; i < trans->xsize/4; i++) {
+            trans->rpayload.b32[i] = mem_[i + off];
         }
     }
 }

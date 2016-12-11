@@ -17,7 +17,7 @@ Greth::Greth(const char *name)
     : IService(name) {
     registerInterface(static_cast<IThread *>(this));
     registerInterface(static_cast<IMemoryOperation *>(this));
-    registerInterface(static_cast<IClockListener *>(this));
+    registerInterface(static_cast<INbResponse *>(this));
     registerAttribute("BaseAddress", &baseAddress_);
     registerAttribute("Length", &length_);
     registerAttribute("IrqLine", &irqLine_);
@@ -38,13 +38,9 @@ Greth::Greth(const char *name)
 
     memset(txbuf_, 0, sizeof(txbuf_));
     seq_cnt_ = 35;
-    fifo_to_ = new TFifo<FifoMessageType>(16);
-    fifo_from_ = new TFifo<FifoMessageType>(16);
     RISCV_event_create(&event_tap_, "event_tap");
 }
 Greth::~Greth() {
-    delete fifo_to_;
-    delete fifo_from_;
     RISCV_event_close(&event_tap_);
 }
 
@@ -97,8 +93,8 @@ void Greth::predeleteService() {
 
 void Greth::busyLoop() {
     int bytes;
+    uint32_t *tbuf;
     UdpEdclCommonType req;
-    FifoMessageType msg;
     RISCV_info("Ethernet thread was started", NULL);
 
     while (isEnabled()) {
@@ -116,35 +112,31 @@ void Greth::busyLoop() {
             continue;
         }
 
+        trans_.addr = req.address;
+        trans_.xsize = 4;
         if (req.control.request.write == 0) {
-            msg.rw = 0;
-            msg.addr = req.address;
-            msg.sz = req.control.request.len;
-            msg.buf = &txbuf_[10];
-            fifo_to_->put(&msg);
+            trans_.action = MemAction_Read;
+            tbuf = reinterpret_cast<uint32_t *>(&txbuf_[10]);
             bytes = sizeof(UdpEdclCommonType) + req.control.request.len;
         } else {
-            msg.rw = 1;
-            msg.addr = req.address;
-            msg.sz = req.control.request.len;
-            msg.buf = &rxbuf_[10];
-            fifo_to_->put(&msg);
+            trans_.action = MemAction_Write;
+            trans_.wstrb = (1 << trans_.xsize) - 1;
+            tbuf = reinterpret_cast<uint32_t *>(&rxbuf_[10]);
             bytes = sizeof(UdpEdclCommonType);
         }
-
-        RISCV_event_clear(&event_tap_);
-        if (iclk0_) {
-            iclk0_->registerStepCallback(static_cast<IClockListener *>(this),
-                                        iclk0_->getStepCounter());
-        } else {
-            RISCV_error("Clock interface not found", NULL);
-        }
-        if (RISCV_event_wait_ms(&event_tap_, 100) != 0) {
-            RISCV_error("CPU queue callback timeout", NULL);
-            continue;
-        }
-        while (!fifo_from_->isEmpty()) {
-            fifo_from_->get(&msg);
+        for (unsigned i = 0; i < req.control.request.len / 4u; i++) {
+            if (trans_.action == MemAction_Write) {
+                trans_.wpayload.b32[0] = *tbuf;
+            }
+            RISCV_event_clear(&event_tap_);
+            ibus_->nb_transport(&trans_, this);
+            if (RISCV_event_wait_ms(&event_tap_, 100) != 0) {
+                RISCV_error("CPU queue callback timeout", NULL);
+            } else if (trans_.action == MemAction_Read) {
+                *tbuf = trans_.rpayload.b32[0];
+            }
+            tbuf++;
+            trans_.addr += 4;
         }
 
         req.control.response.nak = 0;
@@ -156,29 +148,12 @@ void Greth::busyLoop() {
     }
 }
 
-void Greth::stepCallback(uint64_t t) {
-    FifoMessageType msg;
-    uint8_t *buf;
-    uint64_t addr;
-    while (!fifo_to_->isEmpty()) {
-        fifo_to_->get(&msg);
-        addr = msg.addr;
-        buf = msg.buf;
-        for (unsigned i = 0; i < msg.sz / 4u; i++) {
-            if (msg.rw == 0) {
-                ibus_->read(addr, buf, 4);
-            } else {
-                ibus_->write(addr, buf, 4);
-            }
-            buf += 4;
-            addr += 4;
-        }
-        fifo_from_->put(&msg);
-    }
+void Greth::nb_response(Axi4TransactionType *trans) {
     RISCV_event_set(&event_tap_);
 }
 
-void Greth::transaction(Axi4TransactionType *payload) {
+
+void Greth::b_transport(Axi4TransactionType *trans) {
 }
 
 void Greth::sendNAK(UdpEdclCommonType *req) {

@@ -418,22 +418,24 @@ public:
     LD() : IsaProcessor("LD", "?????????????????011?????0000011") {}
 
     virtual void exec(uint32_t *payload, CpuContextType *data) {
-        uint64_t dcache;
+        Axi4TransactionType trans;
         ISA_I_type u;
         u.value = payload[0];
         uint64_t off = u.bits.imm;
         if (off & 0x800) {
             off |= EXT_SIGN_12;
         }
-        uint64_t addr = data->regs[u.bits.rs1] + off;
-        data->ibus->read(addr, reinterpret_cast<uint8_t *>(&dcache), 8);
-        data->regs[u.bits.rd] = dcache;
+        trans.action = MemAction_Read;
+        trans.addr = data->regs[u.bits.rs1] + off;
+        trans.xsize = 8;
+        data->ibus->b_transport(&trans);
+        data->regs[u.bits.rd] = trans.rpayload.b64[0];
         data->npc = data->pc + 4;
         if (data->mem_trace_file) {
             char tstr[512];
             RISCV_sprintf(tstr, sizeof(tstr), 
                         "[%08x] => %016" RV_PRI64 "x\n",
-                        static_cast<int>(addr), dcache);
+                        static_cast<int>(trans.addr), trans.rpayload.b64[0]);
             (*data->mem_trace_file) << tstr;
             data->mem_trace_file->flush();
         }
@@ -448,16 +450,19 @@ public:
     LW() : IsaProcessor("LW", "?????????????????010?????0000011") {}
 
     virtual void exec(uint32_t *payload, CpuContextType *data) {
-        uint64_t dcache = 0;
+        Axi4TransactionType trans;
+        trans.rpayload.b64[0] = 0;
         ISA_I_type u;
         u.value = payload[0];
         uint64_t off = u.bits.imm;
         if (off & 0x800) {
             off |= EXT_SIGN_12;
         }
-        uint64_t addr = data->regs[u.bits.rs1] + off;
-        data->ibus->read(addr, reinterpret_cast<uint8_t *>(&dcache), 4);
-        data->regs[u.bits.rd] = dcache;
+        trans.action = MemAction_Read;
+        trans.addr = data->regs[u.bits.rs1] + off;
+        trans.xsize = 4;
+        data->ibus->b_transport(&trans);
+        data->regs[u.bits.rd] = trans.rpayload.b64[0];
         if (data->regs[u.bits.rd] & (1LL << 31)) {
             data->regs[u.bits.rd] |= EXT_SIGN_32;
         }
@@ -466,7 +471,7 @@ public:
             char tstr[512];
             RISCV_sprintf(tstr, sizeof(tstr), 
                     "[%08x] => %016" RV_PRI64 "x\n",
-                    static_cast<int>(addr), dcache);
+                    static_cast<int>(trans.addr), trans.rpayload.b64[0]);
             (*data->mem_trace_file) << tstr;
             data->mem_trace_file->flush();
         }
@@ -481,22 +486,25 @@ public:
     LWU() : IsaProcessor("LWU", "?????????????????110?????0000011") {}
 
     virtual void exec(uint32_t *payload, CpuContextType *data) {
-        uint64_t dcache = 0;
+        Axi4TransactionType trans;
+        trans.rpayload.b64[0] = 0;
         ISA_I_type u;
         u.value = payload[0];
         uint64_t off = u.bits.imm;
         if (off & 0x800) {
             off |= EXT_SIGN_12;
         }
-        uint64_t addr = data->regs[u.bits.rs1] + off;
-        data->ibus->read(addr, reinterpret_cast<uint8_t *>(&dcache), 4);
-        data->regs[u.bits.rd] = dcache;
+        trans.action = MemAction_Read;
+        trans.addr = data->regs[u.bits.rs1] + off;
+        trans.xsize = 4;
+        data->ibus->b_transport(&trans);
+        data->regs[u.bits.rd] = trans.rpayload.b64[0];
         data->npc = data->pc + 4;
         if (data->mem_trace_file) {
             char tstr[512];
             RISCV_sprintf(tstr, sizeof(tstr), 
                     "[%08x] => %016" RV_PRI64 "x\n",
-                    static_cast<int>(addr), dcache);
+                    static_cast<int>(trans.addr), trans.rpayload.b64[0]);
             (*data->mem_trace_file) << tstr;
             data->mem_trace_file->flush();
         }
@@ -511,16 +519,19 @@ public:
     LH() : IsaProcessor("LH", "?????????????????001?????0000011") {}
 
     virtual void exec(uint32_t *payload, CpuContextType *data) {
-        uint64_t dcache = 0;
+        Axi4TransactionType trans;
+        trans.rpayload.b64[0] = 0;
         ISA_I_type u;
         u.value = payload[0];
         uint64_t off = u.bits.imm;
         if (off & 0x800) {
             off |= EXT_SIGN_12;
         }
-        uint64_t addr = data->regs[u.bits.rs1] + off;
-        data->ibus->read(addr, reinterpret_cast<uint8_t *>(&dcache), 2);
-        data->regs[u.bits.rd] = dcache & 0xFFFF;
+        trans.action = MemAction_Read;
+        trans.addr = data->regs[u.bits.rs1] + off;
+        trans.xsize = 2;
+        data->ibus->b_transport(&trans);
+        data->regs[u.bits.rd] = trans.rpayload.b16[0];
         if (data->regs[u.bits.rd] & (1LL << 15)) {
             data->regs[u.bits.rd] |= EXT_SIGN_16;
         }
@@ -529,7 +540,7 @@ public:
             char tstr[512];
             RISCV_sprintf(tstr, sizeof(tstr), 
                         "[%08x] => %016" RV_PRI64 "x\n",
-                        static_cast<int>(addr), dcache);
+                        static_cast<int>(trans.addr), trans.rpayload.b64[0]);
             (*data->mem_trace_file) << tstr;
             data->mem_trace_file->flush();
         }
@@ -544,22 +555,25 @@ public:
     LHU() : IsaProcessor("LHU", "?????????????????101?????0000011") {}
 
     virtual void exec(uint32_t *payload, CpuContextType *data) {
-        uint64_t dcache = 0;
+        Axi4TransactionType trans;
+        trans.rpayload.b64[0] = 0;
         ISA_I_type u;
         u.value = payload[0];
         uint64_t off = u.bits.imm;
         if (off & 0x800) {
             off |= EXT_SIGN_12;
         }
-        uint64_t addr = data->regs[u.bits.rs1] + off;
-        data->ibus->read(addr, reinterpret_cast<uint8_t *>(&dcache), 2);
-        data->regs[u.bits.rd] = dcache & 0xFFFF;
+        trans.action = MemAction_Read;
+        trans.addr = data->regs[u.bits.rs1] + off;
+        trans.xsize = 2;
+        data->ibus->b_transport(&trans);
+        data->regs[u.bits.rd] = trans.rpayload.b16[0];
         data->npc = data->pc + 4;
         if (data->mem_trace_file) {
             char tstr[512];
             RISCV_sprintf(tstr, sizeof(tstr), 
                         "[%08x] => %016" RV_PRI64 "x\n",
-                        static_cast<int>(addr), dcache);
+                        static_cast<int>(trans.addr), trans.rpayload.b64[0]);
             (*data->mem_trace_file) << tstr;
             data->mem_trace_file->flush();
         }
@@ -574,16 +588,19 @@ public:
     LB() : IsaProcessor("LB", "?????????????????000?????0000011") {}
 
     virtual void exec(uint32_t *payload, CpuContextType *data) {
-        uint64_t dcache = 0;
+        Axi4TransactionType trans;
+        trans.rpayload.b64[0] = 0;
         ISA_I_type u;
         u.value = payload[0];
         uint64_t off = u.bits.imm;
         if (off & 0x800) {
             off |= EXT_SIGN_12;
         }
-        uint64_t addr = data->regs[u.bits.rs1] + off;
-        data->ibus->read(addr, reinterpret_cast<uint8_t *>(&dcache), 1);
-        data->regs[u.bits.rd] = dcache & 0xFF;
+        trans.action = MemAction_Read;
+        trans.addr = data->regs[u.bits.rs1] + off;
+        trans.xsize = 1;
+        data->ibus->b_transport(&trans);
+        data->regs[u.bits.rd] = trans.rpayload.b8[0];
         if (data->regs[u.bits.rd] & (1LL << 7)) {
             data->regs[u.bits.rd] |= EXT_SIGN_8;
         }
@@ -592,7 +609,7 @@ public:
             char tstr[512];
             RISCV_sprintf(tstr, sizeof(tstr), 
                         "[%08x] => %016" RV_PRI64 "x\n",
-                        static_cast<int>(addr), dcache);
+                        static_cast<int>(trans.addr), trans.rpayload.b64[0]);
             (*data->mem_trace_file) << tstr;
             data->mem_trace_file->flush();
         }
@@ -607,22 +624,25 @@ public:
     LBU() : IsaProcessor("LBU", "?????????????????100?????0000011") {}
 
     virtual void exec(uint32_t *payload, CpuContextType *data) {
-        uint64_t dcache = 0;
+        Axi4TransactionType trans;
+        trans.rpayload.b64[0] = 0;
         ISA_I_type u;
         u.value = payload[0];
         uint64_t off = u.bits.imm;
         if (off & 0x800) {
             off |= EXT_SIGN_12;
         }
-        uint64_t addr = data->regs[u.bits.rs1] + off;
-        data->ibus->read(addr, reinterpret_cast<uint8_t *>(&dcache), 1);
-        data->regs[u.bits.rd] = dcache & 0xFF;
+        trans.action = MemAction_Read;
+        trans.addr = data->regs[u.bits.rs1] + off;
+        trans.xsize = 1;
+        data->ibus->b_transport(&trans);
+        data->regs[u.bits.rd] = trans.rpayload.b8[0];
         data->npc = data->pc + 4;
         if (data->mem_trace_file) {
             char tstr[512];
             RISCV_sprintf(tstr, sizeof(tstr), 
                     "[%08x] => %016" RV_PRI64 "x\n",
-                    static_cast<int>(addr), dcache);
+                    static_cast<int>(trans.addr), trans.rpayload.b64[0]);
             (*data->mem_trace_file) << tstr;
             data->mem_trace_file->flush();
         }
@@ -1024,22 +1044,25 @@ public:
     SD() : IsaProcessor("SD", "?????????????????011?????0100011") {}
 
     virtual void exec(uint32_t *payload, CpuContextType *data) {
-        uint64_t wdata;
+        Axi4TransactionType trans;
         ISA_S_type u;
         u.value = payload[0];
         uint64_t off = (u.bits.imm11_5 << 5) | u.bits.imm4_0;
         if (off & 0x800) {
             off |= EXT_SIGN_12;
         }
-        uint64_t addr = data->regs[u.bits.rs1] + off;
-        wdata = data->regs[u.bits.rs2];
-        data->ibus->write(addr, reinterpret_cast<uint8_t *>(&wdata), 8);
+        trans.action = MemAction_Write;
+        trans.xsize = 8;
+        trans.wstrb = (1 << trans.xsize) - 1;
+        trans.addr = data->regs[u.bits.rs1] + off;
+        trans.wpayload.b64[0] = data->regs[u.bits.rs2];
+        data->ibus->b_transport(&trans);
         data->npc = data->pc + 4;
         if (data->mem_trace_file) {
             char tstr[512];
             RISCV_sprintf(tstr, sizeof(tstr), 
                         "[%08x] <= %016" RV_PRI64 "x\n",
-                        static_cast<int>(addr), wdata);
+                        static_cast<int>(trans.addr), trans.wpayload.b64[0]);
             (*data->mem_trace_file) << tstr;
             data->mem_trace_file->flush();
         }
@@ -1054,22 +1077,26 @@ public:
     SW() : IsaProcessor("SW", "?????????????????010?????0100011") {}
 
     virtual void exec(uint32_t *payload, CpuContextType *data) {
-        uint64_t wdata = 0;
+        Axi4TransactionType trans;
+        trans.wpayload.b64[0] = 0;
         ISA_S_type u;
         u.value = payload[0];
         uint64_t off = (u.bits.imm11_5 << 5) | u.bits.imm4_0;
         if (off & 0x800) {
             off |= EXT_SIGN_12;
         }
-        uint64_t addr = data->regs[u.bits.rs1] + off;
-        wdata = data->regs[u.bits.rs2];
-        data->ibus->write(addr, reinterpret_cast<uint8_t *>(&wdata), 4);
+        trans.action = MemAction_Write;
+        trans.xsize = 4;
+        trans.wstrb = (1 << trans.xsize) - 1;
+        trans.addr = data->regs[u.bits.rs1] + off;
+        trans.wpayload.b64[0] = data->regs[u.bits.rs2];
+        data->ibus->b_transport(&trans);
         data->npc = data->pc + 4;
         if (data->mem_trace_file) {
             char tstr[512];
             RISCV_sprintf(tstr, sizeof(tstr), 
                         "[%08x] <= %016" RV_PRI64 "x\n",
-                        static_cast<int>(addr), wdata & 0xFFFFFFFF);
+                        static_cast<int>(trans.addr), trans.wpayload.b64[0]);
             (*data->mem_trace_file) << tstr;
             data->mem_trace_file->flush();
         }
@@ -1084,22 +1111,26 @@ public:
     SH() : IsaProcessor("SH", "?????????????????001?????0100011") {}
 
     virtual void exec(uint32_t *payload, CpuContextType *data) {
-        uint64_t wdata;
+        Axi4TransactionType trans;
+        trans.wpayload.b64[0] = 0;
         ISA_S_type u;
         u.value = payload[0];
         uint64_t off = (u.bits.imm11_5 << 5) | u.bits.imm4_0;
         if (off & 0x800) {
             off |= EXT_SIGN_12;
         }
-        uint64_t addr = data->regs[u.bits.rs1] + off;
-        wdata = data->regs[u.bits.rs2] & 0xFFFF;
-        data->ibus->write(addr, reinterpret_cast<uint8_t *>(&wdata), 2);
+        trans.action = MemAction_Write;
+        trans.xsize = 2;
+        trans.wstrb = (1 << trans.xsize) - 1;
+        trans.addr = data->regs[u.bits.rs1] + off;
+        trans.wpayload.b64[0] = data->regs[u.bits.rs2] & 0xFFFF;
+        data->ibus->b_transport(&trans);
         data->npc = data->pc + 4;
         if (data->mem_trace_file) {
             char tstr[512];
             RISCV_sprintf(tstr, sizeof(tstr), 
                         "[%08x] <= %016" RV_PRI64 "x\n",
-                        static_cast<int>(addr), wdata);
+                        static_cast<int>(trans.addr), trans.wpayload.b64[0]);
             (*data->mem_trace_file) << tstr;
             data->mem_trace_file->flush();
         }
@@ -1114,21 +1145,26 @@ public:
     SB() : IsaProcessor("SB", "?????????????????000?????0100011") {}
 
     virtual void exec(uint32_t *payload, CpuContextType *data) {
-        uint64_t wdata;
+        Axi4TransactionType trans;
+        trans.wpayload.b64[0] = 0;
         ISA_S_type u;
         u.value = payload[0];
         uint64_t off = (u.bits.imm11_5 << 5) | u.bits.imm4_0;
         if (off & 0x800) {
             off |= EXT_SIGN_12;
         }
-        uint64_t addr = data->regs[u.bits.rs1] + off;
-        wdata = data->regs[u.bits.rs2] & 0xFF;
-        data->ibus->write(addr, reinterpret_cast<uint8_t *>(&wdata), 1);
+        trans.action = MemAction_Write;
+        trans.xsize = 1;
+        trans.wstrb = (1 << trans.xsize) - 1;
+        trans.addr = data->regs[u.bits.rs1] + off;
+        trans.wpayload.b64[0] = data->regs[u.bits.rs2] & 0xFF;
+        data->ibus->b_transport(&trans);
         data->npc = data->pc + 4;
         if (data->mem_trace_file) {
             char tstr[512];
             RISCV_sprintf(tstr, sizeof(tstr), 
-                        "[%08x] <= %016I64x\n", (int)addr, wdata);
+                        "[%08x] <= %016" RV_PRI64 "x\n",
+                        static_cast<int>(trans.addr), trans.wpayload.b64[0]);
             (*data->mem_trace_file) << tstr;
             data->mem_trace_file->flush();
         }

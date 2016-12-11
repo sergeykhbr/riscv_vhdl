@@ -13,7 +13,6 @@ namespace debugger {
 CpuRiscV_RTL::CpuRiscV_RTL(const char *name)  
     : IService(name), IHap(HAP_ConfigDone) {
     registerInterface(static_cast<IThread *>(this));
-    registerInterface(static_cast<ICpuRiscV *>(this));
     registerInterface(static_cast<IClock *>(this));
     registerInterface(static_cast<IHap *>(this));
     registerAttribute("Bus", &bus_);
@@ -35,10 +34,11 @@ CpuRiscV_RTL::CpuRiscV_RTL(const char *name)
 #endif
     /** Create all objects, then initilize SystemC context: */
     wrapper_ = new RtlWrapper("wrapper");
+    registerInterface(static_cast<ICpuRiscV *>(wrapper_));
+    registerInterface(static_cast<INbResponse *>(wrapper_));
     w_clk = wrapper_->o_clk;
     wrapper_->o_nrst(w_nrst);
-    wrapper_->i_timer(wb_timer);
-    wrapper_->i_step_cnt(wb_step_cnt);
+    wrapper_->i_time(wb_time);
     wrapper_->o_req_mem_ready(w_req_mem_ready);
     wrapper_->i_req_mem_valid(w_req_mem_valid);
     wrapper_->i_req_mem_write(w_req_mem_write);
@@ -48,6 +48,12 @@ CpuRiscV_RTL::CpuRiscV_RTL(const char *name)
     wrapper_->o_resp_mem_data_valid(w_resp_mem_data_valid);
     wrapper_->o_resp_mem_data(wb_resp_mem_data);
     wrapper_->o_interrupt(w_interrupt);
+    wrapper_->i_dsu_valid(w_dsu_valid);
+    wrapper_->i_dsu_write(w_dsu_write);
+    wrapper_->i_dsu_addr(wb_dsu_addr);
+    wrapper_->i_dsu_wdata(wb_dsu_wdata);
+    wrapper_->o_dsu_rdata(wb_dsu_rdata);
+
 
     top_ = new RiverTop("top", i_vcd_, o_vcd_);
     top_->i_clk(wrapper_->o_clk);
@@ -61,8 +67,12 @@ CpuRiscV_RTL::CpuRiscV_RTL(const char *name)
     top_->i_resp_mem_data_valid(w_resp_mem_data_valid);
     top_->i_resp_mem_data(wb_resp_mem_data);
     top_->i_ext_irq(w_interrupt);
-    top_->o_timer(wb_timer);
-    top_->o_step_cnt(wb_step_cnt);
+    top_->o_time(wb_time);
+    top_->i_dsu_valid(w_dsu_valid);
+    top_->i_dsu_write(w_dsu_write);
+    top_->i_dsu_addr(wb_dsu_addr);
+    top_->i_dsu_wdata(wb_dsu_wdata);
+    top_->o_dsu_rdata(wb_dsu_rdata);
 
     sc_start(0, SC_NS);
 }

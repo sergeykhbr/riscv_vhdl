@@ -77,26 +77,37 @@ void UART::registerRawListener(IFace *listener) {
     listeners_.add_to_list(&lstn);
 }
 
-void UART::transaction(Axi4TransactionType *payload) {
+void UART::unregisterRawListener(IFace *listener) {
+    for (unsigned i = 0; i < listeners_.size(); i++) {
+        IFace *iface = listeners_[i].to_iface();
+        if (iface == listener) {
+            listeners_.remove_from_list(i);
+            break;
+        }
+    }
+}
+
+void UART::b_transport(Axi4TransactionType *trans) {
     uint64_t mask = (length_.to_uint64() - 1);
-    uint64_t off = ((payload->addr - getBaseAddress()) & mask) / 4;
+    uint64_t off = ((trans->addr - getBaseAddress()) & mask) / 4;
     char wrdata;
-    if (payload->rw) {
-        for (uint64_t i = 0; i < payload->xsize/4; i++) {
-            if ((payload->wstrb & (0xf << 4*i)) == 0) {
+    trans->response = MemResp_Valid;
+    if (trans->action == MemAction_Write) {
+        for (uint64_t i = 0; i < trans->xsize/4; i++) {
+            if ((trans->wstrb & (0xf << 4*i)) == 0) {
                 continue;
             }
             switch (off + i) {
             case 0:
-                regs_.status = payload->wpayload[i];
+                regs_.status = trans->wpayload.b32[i];
                 RISCV_info("Set status = %08x", regs_.status);
                 break;
             case 1:
-                regs_.scaler = payload->wpayload[i];
+                regs_.scaler = trans->wpayload.b32[i];
                 RISCV_info("Set scaler = %d", regs_.scaler);
                 break;
             case 4:
-                wrdata = static_cast<char>(payload->wpayload[i]);
+                wrdata = static_cast<char>(trans->wpayload.b32[i]);
                 RISCV_info("Set data = %s", &regs_.data);
                 for (unsigned n = 0; n < listeners_.size(); n++) {
                     IRawListener *lstn = static_cast<IRawListener *>(
@@ -109,7 +120,7 @@ void UART::transaction(Axi4TransactionType *payload) {
             }
         }
     } else {
-        for (uint64_t i = 0; i < payload->xsize/4; i++) {
+        for (uint64_t i = 0; i < trans->xsize/4; i++) {
             switch (off + i) {
             case 0:
                 if (0) {
@@ -122,27 +133,27 @@ void UART::transaction(Axi4TransactionType *payload) {
                 } else {
                     regs_.status &= ~UART_STATUS_RX_EMPTY;
                 }
-                payload->rpayload[i] = regs_.status;
+                trans->rpayload.b32[i] = regs_.status;
                 RISCV_info("Get status = %08x", regs_.status);
                 break;
             case 1:
-                payload->rpayload[i] = regs_.scaler;
+                trans->rpayload.b32[i] = regs_.scaler;
                 RISCV_info("Get scaler = %d", regs_.scaler);
                 break;
             case 4:
                 if (rx_total_ == 0) {
-                    payload->rpayload[i] = 0;
+                    trans->rpayload.b32[i] = 0;
                 } else {
-                    payload->rpayload[i] = *p_rx_rd_;
+                    trans->rpayload.b32[i] = *p_rx_rd_;
                     rx_total_--;
                     if ((++p_rx_rd_) >= (rxfifo_ + RX_FIFO_SIZE)) {
                         p_rx_rd_ = rxfifo_;
                     }
                 }
-                RISCV_debug("Get data = %02x", (payload->rpayload[i] & 0xFF));
+                RISCV_debug("Get data = %02x", (trans->rpayload.b32[i] & 0xFF));
                 break;
             default:
-                payload->rpayload[i] = ~0;
+                trans->rpayload.b32[i] = ~0;
             }
         }
     }
