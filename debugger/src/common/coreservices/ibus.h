@@ -41,7 +41,7 @@ public:
      * Usage with a functional models is also possible.
      */
     virtual ETransStatus nb_transport(Axi4TransactionType *trans,
-                                      INbResponse *cb) =0;
+                                      IAxi4NbResponse *cb) =0;
 
     virtual void addBreakpoint(uint64_t addr) =0;
 

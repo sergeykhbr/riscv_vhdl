@@ -29,13 +29,11 @@ public:
     virtual void map(IMemoryOperation *imemop);
     virtual ETransStatus b_transport(Axi4TransactionType *trans);
     virtual ETransStatus nb_transport(Axi4TransactionType *trans,
-                                      INbResponse *cb);
+                                      IAxi4NbResponse *cb);
     virtual void addBreakpoint(uint64_t addr);
     virtual void removeBreakpoint(uint64_t addr);
 
 private:
-    void checkBreakpoint(uint64_t addr);
-
     AttributeType listMap_;
     AttributeType imap_;
     AttributeType breakpoints_;

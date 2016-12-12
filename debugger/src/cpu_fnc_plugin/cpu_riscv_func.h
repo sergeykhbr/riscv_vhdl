@@ -37,21 +37,8 @@ public:
     /** ICpuRiscV interface */
     virtual void raiseSignal(int idx);
     virtual void lowerSignal(int idx);
-    virtual bool isHalt() { return dbg_state_ == STATE_Halted; }
-    virtual void halt();
-    virtual void go();
-    virtual void step(uint64_t cnt);
-    virtual uint64_t getReg(uint64_t idx);
-    virtual void setReg(uint64_t idx, uint64_t val);
-    virtual uint64_t getCsr(uint64_t idx) { return 0; }
-    virtual void setCsr(uint64_t idx, uint64_t val) {}
-    virtual uint64_t getPC();
-    virtual void setPC(uint64_t val);
-    virtual uint64_t getNPC();
-    virtual void setNPC(uint64_t val);
-    virtual void addBreakpoint(uint64_t addr);
-    virtual void removeBreakpoint(uint64_t addr);
-    virtual void hitBreakpoint(uint64_t addr);
+    virtual void nb_transport_debug_port(DebugPortTransactionType *trans,
+                                         IDbgNbResponse *cb);
 
     /** IClock */
     virtual uint64_t getStepCounter() { return cpu_context_.step_cnt; }
@@ -65,11 +52,26 @@ protected:
     virtual void busyLoop();
 
 private:
+    bool isHalt() { return dbg_state_ == STATE_Halted; }
+    void halt();
+    void go();
+    void step(uint64_t cnt);
+    uint64_t getReg(uint64_t idx);
+    void setReg(uint64_t idx, uint64_t val);
+    uint64_t getPC();
+    void setPC(uint64_t val);
+    uint64_t getNPC();
+    void setNPC(uint64_t val);
+    void addBreakpoint(uint64_t addr);
+    void removeBreakpoint(uint64_t addr);
+    void hitBreakpoint(uint64_t addr);
+
     CpuContextType *getpContext() { return &cpu_context_; }
     uint32_t hash32(uint32_t val) { return (val >> 2) & 0x1f; }
 
     void updatePipeline();
     void updateState();
+    void updateDebugPort();
     void updateQueue();
 
     bool isRunning();
@@ -110,6 +112,14 @@ private:
 
     char tstr[1024];
     uint64_t iregs_prev[32]; // to detect changes
+    struct DebugPortType {
+        bool valid;
+        DebugPortTransactionType *trans;
+        IDbgNbResponse *cb;
+
+        // local registers
+        uint64_t stepping_mode_steps;
+    } dport;
 };
 
 DECLARE_CLASS(CpuRiscV_Functional)

@@ -76,11 +76,13 @@ private:
     /** Interrupt line from external interrupts controller. */
     sc_signal<bool> w_interrupt;
     // Debug interface
-    sc_signal<bool> w_dsu_valid;
-    sc_signal<bool> w_dsu_write;
-    sc_signal<sc_uint<16>> wb_dsu_addr;
-    sc_signal<sc_uint<RISCV_ARCH>> wb_dsu_wdata;
-    sc_signal<sc_uint<RISCV_ARCH>> wb_dsu_rdata;
+    sc_signal<bool> w_dport_valid;
+    sc_signal<bool> w_dport_write;
+    sc_signal<sc_uint<2>> wb_dport_region;
+    sc_signal<sc_uint<12>> wb_dport_addr;
+    sc_signal<sc_uint<RISCV_ARCH>> wb_dport_wdata;
+    sc_signal<bool> w_dport_ready;
+    sc_signal<sc_uint<RISCV_ARCH>> wb_dport_rdata;
 
 
     sc_trace_file *i_vcd_;      // stimulus pattern

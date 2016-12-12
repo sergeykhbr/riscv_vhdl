@@ -35,7 +35,6 @@ CpuRiscV_RTL::CpuRiscV_RTL(const char *name)
     /** Create all objects, then initilize SystemC context: */
     wrapper_ = new RtlWrapper("wrapper");
     registerInterface(static_cast<ICpuRiscV *>(wrapper_));
-    registerInterface(static_cast<INbResponse *>(wrapper_));
     w_clk = wrapper_->o_clk;
     wrapper_->o_nrst(w_nrst);
     wrapper_->i_time(wb_time);
@@ -48,11 +47,13 @@ CpuRiscV_RTL::CpuRiscV_RTL(const char *name)
     wrapper_->o_resp_mem_data_valid(w_resp_mem_data_valid);
     wrapper_->o_resp_mem_data(wb_resp_mem_data);
     wrapper_->o_interrupt(w_interrupt);
-    wrapper_->i_dsu_valid(w_dsu_valid);
-    wrapper_->i_dsu_write(w_dsu_write);
-    wrapper_->i_dsu_addr(wb_dsu_addr);
-    wrapper_->i_dsu_wdata(wb_dsu_wdata);
-    wrapper_->o_dsu_rdata(wb_dsu_rdata);
+    wrapper_->o_dport_valid(w_dport_valid);
+    wrapper_->o_dport_write(w_dport_write);
+    wrapper_->o_dport_region(wb_dport_region);
+    wrapper_->o_dport_addr(wb_dport_addr);
+    wrapper_->o_dport_wdata(wb_dport_wdata);
+    wrapper_->i_dport_ready(w_dport_ready);
+    wrapper_->i_dport_rdata(wb_dport_rdata);
 
 
     top_ = new RiverTop("top", i_vcd_, o_vcd_);
@@ -68,11 +69,13 @@ CpuRiscV_RTL::CpuRiscV_RTL(const char *name)
     top_->i_resp_mem_data(wb_resp_mem_data);
     top_->i_ext_irq(w_interrupt);
     top_->o_time(wb_time);
-    top_->i_dsu_valid(w_dsu_valid);
-    top_->i_dsu_write(w_dsu_write);
-    top_->i_dsu_addr(wb_dsu_addr);
-    top_->i_dsu_wdata(wb_dsu_wdata);
-    top_->o_dsu_rdata(wb_dsu_rdata);
+    top_->i_dport_valid(w_dport_valid);
+    top_->i_dport_write(w_dport_write);
+    top_->i_dport_region(wb_dport_region);
+    top_->i_dport_addr(wb_dport_addr);
+    top_->i_dport_wdata(wb_dport_wdata);
+    top_->o_dport_ready(w_dport_ready);
+    top_->o_dport_rdata(wb_dport_rdata);
 
     sc_start(0, SC_NS);
 }

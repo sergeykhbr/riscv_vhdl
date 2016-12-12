@@ -60,7 +60,7 @@ struct UdpEdclCommonType {
 class Greth : public IService, 
               public IThread,
               public IMemoryOperation,
-              public INbResponse {
+              public IAxi4NbResponse {
 public:
     Greth(const char *name);
     virtual ~Greth();
@@ -79,7 +79,7 @@ public:
         return length_.to_uint64();
     }
 
-    /** INbResponse */
+    /** IAxi4NbResponse */
     virtual void nb_response(Axi4TransactionType *trans);
 
 protected:

@@ -52,15 +52,16 @@ SC_MODULE(Processor) {
     // External interrupt pin
     sc_in<bool> i_ext_irq;                              // PLIC interrupt accordingly with spec
     sc_out<sc_uint<64>> o_time;                         // Clock/Step counter depending define GENERATE_CORE_TRACE
-    // "RIVER" Debug interface
-    sc_in<bool> i_dsu_valid;                            // Debug access from DSU command is valid
-    sc_in<bool> i_dsu_write;                            // Write Debug value
-    sc_in<sc_uint<16>> i_dsu_addr;                      // Debug register address
-    sc_in<sc_uint<RISCV_ARCH>> i_dsu_wdata;             // Write value
-    sc_out<sc_uint<RISCV_ARCH>> o_dsu_rdata;            // Read value
+    // Debug interface
+    sc_in<bool> i_dport_valid;                          // Debug access from DSU is valid
+    sc_in<bool> i_dport_write;                          // Write command flag
+    sc_in<sc_uint<2>> i_dport_region;                   // Registers region ID: 0=CSR; 1=IREGS; 2=Control
+    sc_in<sc_uint<12>> i_dport_addr;                    // Register idx
+    sc_in<sc_uint<RISCV_ARCH>> i_dport_wdata;           // Write value
+    sc_out<bool> o_dport_ready;                         // Response is ready
+    sc_out<sc_uint<RISCV_ARCH>> o_dport_rdata;          // Response value
 
     void comb();
-    void registers();
 #if (GENERATE_CORE_TRACE == 1)
     void negedge_dbg_print();
 #endif
@@ -128,7 +129,6 @@ private:
         sc_signal<bool> valid;
         sc_signal<sc_uint<32>> instr;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> pc;
-        sc_signal<sc_uint<64>> step_cnt;
         sc_signal<bool> pipeline_hold;
     };
 
@@ -142,11 +142,13 @@ private:
     struct IntRegsType {
         sc_signal<sc_uint<RISCV_ARCH>> rdata1;
         sc_signal<sc_uint<RISCV_ARCH>> rdata2;
+        sc_signal<sc_uint<RISCV_ARCH>> dport_rdata;
         sc_signal<sc_uint<RISCV_ARCH>> ra;      // Return address
     } ireg;
 
     struct CsrType {
         sc_signal<sc_uint<RISCV_ARCH>> rdata;
+        sc_signal<sc_uint<RISCV_ARCH>> dport_rdata;
 
         sc_signal<bool> ie;                     // Interrupt enable bit
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> mtvec;// Interrupt descriptor table
@@ -154,14 +156,17 @@ private:
     } csr;
 
     struct DebugType {
-        sc_signal<sc_uint<RISCV_ARCH>> core_wdata;  // Write data into Core
+        sc_signal<sc_uint<12>> core_addr;           // Address of the sub-region register
+        sc_signal<sc_uint<RISCV_ARCH>> core_wdata;  // Write data
+        sc_signal<bool> csr_ena;                    // Region 0: Access to CSR bank is enabled.
+        sc_signal<bool> csr_write;                  // Region 0: CSR write enable
+        sc_signal<bool> ireg_ena;                   // Region 1: Access to integer register bank is enabled
+        sc_signal<bool> ireg_write;                 // Region 1: Integer registers bank write pulse
+        sc_signal<bool> npc_write;                  // Region 1: npc write enable
         sc_signal<bool> halt;                       // Halt signal is equal to hold pipeline
-        sc_signal<bool> ireg_ena;                   // Access to integer register bank is enabled
-        sc_signal<bool> ireg_write;                 // Write integer register enabled
-        sc_signal<sc_uint<RISCV_ARCH>> ireg_rdata;  // Integer register read value
-        sc_signal<bool> csr_ena;                    // Access to CSR bank is enabled
-        sc_signal<bool> csr_write;                  // Write CSR enabled
-        sc_signal<sc_uint<RISCV_ARCH>> csr_rdata;   // CSR read value
+        sc_signal<sc_uint<64>> clock_cnt;           // Number of clocks excluding halt state
+        sc_signal<sc_uint<64>> executed_cnt;        // Number of executed instruction
+
     } dbg;
 
     /** 5-stages CPU pipeline */
@@ -173,11 +178,11 @@ private:
         WriteBackType w;                        // Write back registers value
     } w;
 
-    struct RegistersType {
-        sc_signal<sc_uint<64>> clk_cnt;         // Total number of clock since reset
-    } v, r;
-
     sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_npc_predict;
+
+    sc_signal<sc_uint<5>> wb_ireg_dport_addr;
+    sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_exec_dport_npc;
+    sc_signal<bool> w_e_valid;
 
     sc_signal<bool> w_fetch_pipeline_hold;
     sc_signal<bool> w_any_pipeline_hold;

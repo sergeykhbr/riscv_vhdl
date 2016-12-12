@@ -3,6 +3,11 @@
  * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
  * @author     Sergey Khabarov - sergeykhbr@gmail.com
  * @brief      Debug Support Unit (DSU) functional model.
+ *
+ * @details    DSU supports both types of transaction: blocking and
+ *             non-blocking it allows to interact with SystemC in the
+ *             same manner as with the Functional model.
+ * @note       CPU Functional model must implement non-blocking interface
  */
 
 #ifndef __DEBUGGER_SOCSIM_PLUGIN_DSU_H__
@@ -13,12 +18,12 @@
 #include "coreservices/imemop.h"
 #include "coreservices/iwire.h"
 #include "coreservices/icpuriscv.h"
-#include "coreservices/isocinfo.h"
 
 namespace debugger {
 
 class DSU : public IService, 
-            public IMemoryOperation {
+            public IMemoryOperation,
+            public IDbgNbResponse {
 public:
     DSU(const char *name);
     ~DSU();
@@ -28,6 +33,9 @@ public:
 
     /** IMemoryOperation */
     virtual void b_transport(Axi4TransactionType *trans);
+    virtual void nb_transport(Axi4TransactionType *trans,
+                              IAxi4NbResponse *cb);
+
     
     virtual uint64_t getBaseAddress() {
         return baseAddress_.to_uint64();
@@ -36,30 +44,22 @@ public:
         return length_.to_uint64();
     }
 
-private:
-    void regionCsrRd(uint64_t off, Axi4TransactionType *trans);
-    void regionCsrWr(uint64_t off, Axi4TransactionType *trans);
-    void regionRegRd(uint64_t off, Axi4TransactionType *trans);
-    void regionRegWr(uint64_t off, Axi4TransactionType *trans);
-    void regionDebugRd(uint64_t off, Axi4TransactionType *trans);
-    void regionDebugWr(uint64_t off, Axi4TransactionType *trans);
+    /** IDbgNbResponse */
+    virtual void nb_response_debug_port(DebugPortTransactionType *trans);
 
-    void msb_of_64(uint64_t *val, uint32_t dw);
-    void lsb_of_64(uint64_t *val, uint32_t dw);
-    void read64(uint64_t reg, uint64_t off, 
-                uint8_t xsize, uint32_t *payload);
-    bool write64(uint64_t *reg, uint64_t off, 
-                uint8_t xsize, uint32_t *payload);
 
 private:
     AttributeType baseAddress_;
     AttributeType length_;
     AttributeType cpu_;
     ICpuRiscV *icpu_;
+    uint64_t shifter32_;
 
-    DsuMapType *map_;
-    uint64_t wdata_;
-    uint64_t step_cnt_;
+    struct nb_trans_type {
+        Axi4TransactionType *p_axi_trans;
+        IAxi4NbResponse *iaxi_cb;
+        DebugPortTransactionType dbg_trans;
+    } nb_trans_;
 };
 
 DECLARE_CLASS(DSU)

@@ -43,7 +43,7 @@ RtlWrapper::RtlWrapper(sc_module_name name)
     w_interrupt = 0;
     v.resp_mem_data = 0;
     v.resp_mem_data_valid = false;
-    memset(&dbg_port_, 0, sizeof(dbg_port_));
+    memset(&dport_, 0, sizeof(dport_));
 }
 
 RtlWrapper::~RtlWrapper() {
@@ -68,6 +68,12 @@ void RtlWrapper::comb() {
 #else
     o_req_mem_ready = i_req_mem_valid;
 #endif
+
+    o_dport_valid = r.dport_valid;
+    o_dport_write = r.dport_write;
+    o_dport_region = r.dport_region;
+    o_dport_addr = r.dport_addr;
+    o_dport_wdata = r.dport_wdata;
 
     if (!r.nrst.read()[1]) {
     }
@@ -185,13 +191,19 @@ void RtlWrapper::clk_negedge_proc() {
         v.resp_mem_data_valid = true;
     }
 
-    // Request from DSU into debug port handling:
-    v.dbg_access = 0;
-    if (dbg_port_.valid) {
-        v.dbg_access = 1;
+    // Debug port handling:
+    v.dport_valid = 0;
+    if (dport_.valid) {
+        dport_.valid = 0;
+        v.dport_valid = 1;
+        v.dport_write = dport_.trans->write;
+        v.dport_region = dport_.trans->region;
+        v.dport_addr = dport_.trans->addr;
+        v.dport_wdata = dport_.trans->wdata;
     }
-    if (r.dbg_access.read()) {
-        //
+    if (i_dport_ready.read()) {
+        dport_.trans->rdata = i_dport_rdata.read();
+        dport_.cb->nb_response_debug_port(dport_.trans);
     }
 }
 
@@ -250,13 +262,11 @@ void RtlWrapper::lowerSignal(int idx) {
     }
 }
 
-bool RtlWrapper::isHalt() {
-    dbg_port_.valid = 1;
-    dbg_port_.write = 0;
-    dbg_port_.addr = 0x100;
-    dbg_port_.wdata = 0;
-
-    return false;
+void RtlWrapper::nb_transport_debug_port(DebugPortTransactionType *trans,
+                                         IDbgNbResponse *cb) {
+    dport_.trans = trans;
+    dport_.cb = cb;
+    dport_.valid = 1;
 }
 
 }  // namespace debugger

@@ -14,7 +14,7 @@
 namespace debugger {
 
 static const char *const IFACE_MEMORY_OPERATION = "IMemoryOperation";
-static const char *const IFACE_NB_RESPONSE = "INBResponse";
+static const char *const IFACE_AXI4_NB_RESPONSE = "IAxi4NbResponse";
 
 static const int PAYLOAD_MAX_BYTES = 8;
 
@@ -47,9 +47,9 @@ typedef struct Axi4TransactionType {
 /**
  * Non-blocking memory access response interface (Initiator/Master)
  */
-class INbResponse : public IFace {
+class IAxi4NbResponse : public IFace {
 public:
-    INbResponse() : IFace(IFACE_NB_RESPONSE) {}
+    IAxi4NbResponse() : IFace(IFACE_AXI4_NB_RESPONSE) {}
 
     virtual void nb_response(Axi4TransactionType *trans) =0;
 };
@@ -75,7 +75,7 @@ public:
      * Default implementation re-direct to blocking transport
      */
     virtual void nb_transport(Axi4TransactionType *trans,
-                              INbResponse *cb) {
+                              IAxi4NbResponse *cb) {
         b_transport(trans);
         cb->nb_response(trans);
     }

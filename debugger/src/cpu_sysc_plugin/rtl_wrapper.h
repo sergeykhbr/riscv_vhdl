@@ -17,8 +17,7 @@
 namespace debugger {
 
 class RtlWrapper : public sc_module,
-                   public ICpuRiscV,
-                   public INbResponse {
+                   public ICpuRiscV {
 public:
     sc_clock o_clk;
     sc_out<bool> o_nrst;
@@ -36,11 +35,13 @@ public:
     /** Interrupt line from external interrupts controller. */
     sc_out<bool> o_interrupt;
     // Debug interface
-    sc_out<bool> i_dsu_valid;                          // Debug access from DSU command is valid
-    sc_out<bool> i_dsu_write;                          // Write Debug value
-    sc_out<sc_uint<16>> i_dsu_addr;                    // Debug register address
-    sc_out<sc_uint<RISCV_ARCH>> i_dsu_wdata;           // Write value
-    sc_in<sc_uint<RISCV_ARCH>> o_dsu_rdata;            // Read value
+    sc_out<bool> o_dport_valid;                          // Debug access from DSU is valid
+    sc_out<bool> o_dport_write;                          // Write value
+    sc_out<sc_uint<2>> o_dport_region;                   // Registers region ID: 0=CSR; 1=IREGS; 2=Control
+    sc_out<sc_uint<12>> o_dport_addr;                    // Register index
+    sc_out<sc_uint<RISCV_ARCH>> o_dport_wdata;           // Write value
+    sc_in<bool> i_dport_ready;                           // Response is ready
+    sc_in<sc_uint<RISCV_ARCH>> i_dport_rdata;            // Response value
 
 
     struct RegistersType {
@@ -49,7 +50,12 @@ public:
         sc_signal<sc_uint<3>> wait_state_cnt;
         sc_signal<sc_bv<5>> nrst;
         sc_signal<bool> interrupt;
-        sc_signal<bool> dbg_access;
+        // Debug port latches:
+        sc_signal<bool> dport_valid;
+        sc_signal<bool> dport_write;
+        sc_signal<sc_uint<2>> dport_region;
+        sc_signal<sc_uint<12>> dport_addr;
+        sc_signal<sc_uint<RISCV_ARCH>> dport_wdata;
     } r, v;
     bool w_nrst;
     bool w_interrupt;
@@ -74,24 +80,8 @@ public:
     virtual void registerStepCallback(IClockListener *cb, uint64_t t);
     virtual void raiseSignal(int idx);
     virtual void lowerSignal(int idx);
-    virtual bool isHalt();
-    virtual void halt() {}
-    virtual void go() {}
-    virtual void step(uint64_t cnt) {}
-    virtual uint64_t getReg(uint64_t idx) { return 0; }
-    virtual void setReg(uint64_t idx, uint64_t val) {}
-    virtual uint64_t getCsr(uint64_t idx) { return 0; }
-    virtual void setCsr(uint64_t idx, uint64_t val) {}
-    virtual uint64_t getPC() { return 0; }
-    virtual void setPC(uint64_t val) {}
-    virtual uint64_t getNPC() { return 0; }
-    virtual void setNPC(uint64_t val) {}
-    virtual void addBreakpoint(uint64_t addr) {}
-    virtual void removeBreakpoint(uint64_t addr) {}
-    virtual void hitBreakpoint(uint64_t addr) {}
-
-    /** INbResponse */
-    virtual void nb_response(Axi4TransactionType *trans) {}
+    virtual void nb_transport_debug_port(DebugPortTransactionType *trans,
+                                        IDbgNbResponse *cb);
 
 private:
     uint64_t mask2offset(uint8_t mask);
@@ -105,10 +95,9 @@ private:
 
     struct DebugPortType {
         bool valid;
-        bool write;
-        uint64_t addr;
-        uint64_t wdata;
-    } dbg_port_;
+        DebugPortTransactionType *trans;
+        IDbgNbResponse *cb;
+    } dport_;
 };
 
 }  // namespace debugger

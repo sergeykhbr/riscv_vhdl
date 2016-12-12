@@ -17,7 +17,7 @@ Greth::Greth(const char *name)
     : IService(name) {
     registerInterface(static_cast<IThread *>(this));
     registerInterface(static_cast<IMemoryOperation *>(this));
-    registerInterface(static_cast<INbResponse *>(this));
+    registerInterface(static_cast<IAxi4NbResponse *>(this));
     registerAttribute("BaseAddress", &baseAddress_);
     registerAttribute("Length", &length_);
     registerAttribute("IrqLine", &irqLine_);
@@ -151,7 +151,6 @@ void Greth::busyLoop() {
 void Greth::nb_response(Axi4TransactionType *trans) {
     RISCV_event_set(&event_tap_);
 }
-
 
 void Greth::b_transport(Axi4TransactionType *trans) {
 }

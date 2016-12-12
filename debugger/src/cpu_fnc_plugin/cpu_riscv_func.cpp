@@ -8,6 +8,7 @@
 #include "api_core.h"
 #include "cpu_riscv_func.h"
 #include "riscv-isa.h"
+#include "coreservices/isocinfo.h"
 #if 1
 #include "coreservices/iserial.h"
 #endif
@@ -60,6 +61,7 @@ CpuRiscV_Functional::CpuRiscV_Functional(const char *name)
 
     cpu_context_.reg_trace_file = 0;
     cpu_context_.mem_trace_file = 0;
+    dport.valid = 0;
 }
 
 CpuRiscV_Functional::~CpuRiscV_Functional() {
@@ -140,6 +142,11 @@ void CpuRiscV_Functional::busyLoop() {
 void CpuRiscV_Functional::updatePipeline() {
     IInstruction *instr;
     CpuContextType *pContext = getpContext();
+
+    if (dport.valid) {
+        dport.valid = 0;
+        updateDebugPort();
+    }
 
     pContext->pc = pContext->npc;
     if (isRunning()) {
@@ -474,6 +481,91 @@ void CpuRiscV_Functional::lowerSignal(int idx) {
     default:
         RISCV_error("Unsupported lowerSignal(%d)", idx);
     }
+}
+
+void CpuRiscV_Functional::updateDebugPort() {
+    CpuContextType *pContext = getpContext();
+    DsuMapType::udbg_type::debug_region_type::control_reg ctrl;
+    DebugPortTransactionType *trans = dport.trans;
+    trans->rdata = 0;
+    switch (trans->region) {
+    case 0:     // CSR
+        trans->rdata = pContext->csr[trans->addr];
+        if (trans->write) {
+            pContext->csr[trans->addr] = trans->wdata;
+        }
+        break;
+    case 1:     // IRegs
+        if (trans->addr < Reg_Total) { 
+            trans->rdata = pContext->regs[trans->addr];
+            if (trans->write) {
+                pContext->regs[trans->addr] = trans->wdata;
+            }
+        } else if (trans->addr == Reg_Total) {
+            /** Read only register */
+            trans->rdata = pContext->pc;
+        } else if (trans->addr == (Reg_Total + 1)) {
+            trans->rdata = pContext->npc;
+            if (trans->write) {
+                pContext->npc = trans->wdata;
+            }
+        }
+        break;
+    case 2:     // Control
+        switch (trans->addr) {
+        case 0:
+            ctrl.val = trans->wdata;
+            if (trans->write) {
+                if (ctrl.bits.halt) {
+                    halt();
+                } else if (ctrl.bits.stepping) {
+                    step(dport.stepping_mode_steps);
+                } else {
+                    go();
+                }
+            } else {
+                ctrl.val = 0;
+                ctrl.bits.halt = isHalt() ? 1: 0;
+                ctrl.bits.core_id = 0;
+            }
+            trans->rdata = ctrl.val;
+            break;
+        case 1:
+            trans->rdata = dport.stepping_mode_steps;
+            if (trans->write) {
+                dport.stepping_mode_steps = trans->wdata;
+            }
+            break;
+        case 2:
+            trans->rdata = pContext->step_cnt;
+            break;
+        case 3:
+            trans->rdata = pContext->step_cnt;
+            break;
+        case 4:
+            if (trans->write) {
+                addBreakpoint(trans->wdata);
+            }
+            break;
+        case 5:
+            if (trans->write) {
+                removeBreakpoint(trans->wdata);
+            }
+            break;
+        default:;
+        }
+        break;
+    default:;
+    }
+    dport.cb->nb_response_debug_port(dport.trans);
+}
+
+void 
+CpuRiscV_Functional::nb_transport_debug_port(DebugPortTransactionType *trans,
+                                             IDbgNbResponse *cb) {
+    dport.trans = trans;
+    dport.cb = cb;
+    dport.valid = true;
 }
 
 void CpuRiscV_Functional::halt() {

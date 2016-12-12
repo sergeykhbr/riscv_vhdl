@@ -511,7 +511,9 @@ void InstrExecute::comb() {
 
 
     v.trap_ena = 0;
-    if (w_interrupt) {
+    if (i_dport_npc_write.read()) {
+        v.npc = i_dport_npc.read();
+    } else if (w_interrupt) {
         v.trap_ena = 1;
         v.trap_pc = i_d_pc;
         v.trap_code = r.trap_code_waiting;

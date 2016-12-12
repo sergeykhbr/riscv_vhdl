@@ -47,7 +47,6 @@ SC_MODULE(MemAccess) {
     sc_out<bool> o_valid;                           // Output is valid
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_pc;           // Valid instruction pointer
     sc_out<sc_uint<32>> o_instr;                    // Valid instruction value
-    sc_out<sc_uint<64>> o_step_cnt;                 // Number of valid executed instructions
 
     void comb();
     void registers();
@@ -67,7 +66,6 @@ private:
         sc_signal<bool> sign_ext;
         sc_signal<sc_uint<2>> size;
         sc_signal<sc_uint<RISCV_ARCH>> wdata;
-        sc_signal<sc_uint<64>> step_cnt;
         sc_signal<bool> wait_req;
         sc_signal<bool> wait_req_write;
         sc_signal<sc_uint<2>> wait_req_sz;

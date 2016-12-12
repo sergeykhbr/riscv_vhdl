@@ -36,6 +36,8 @@ SC_MODULE(InstrExecute) {
     sc_in<sc_uint<2>> i_mode;                   // Current processor mode
     sc_in<bool> i_unsup_exception;              // Unsupported instruction exception
     sc_in<bool> i_ext_irq;                      // External interrupt from PLIC (todo: timer & software interrupts)
+    sc_in<bool> i_dport_npc_write;              // Write npc value from debug port
+    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_dport_npc; // Debug port npc value to write
 
     sc_out<sc_uint<5>> o_radr1;                 // Integer register index 1
     sc_in<sc_uint<RISCV_ARCH>> i_rdata1;        // Integer register value 1

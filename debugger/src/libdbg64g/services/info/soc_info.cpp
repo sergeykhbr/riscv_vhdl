@@ -83,7 +83,7 @@ uint64_t SocInfo::addressRunControl() {
 
 uint64_t SocInfo::addressStepCounter() {
     DsuMapType *dsu = reinterpret_cast<DsuMapType *>(dsuBase_.to_uint64());
-    return reinterpret_cast<uint64_t>(&dsu->udbg.v.step_cnt);
+    return reinterpret_cast<uint64_t>(&dsu->udbg.v.stepping_mode_steps);
 }
 
 uint64_t SocInfo::addressBreakCreate() {

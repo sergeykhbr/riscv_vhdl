@@ -27,6 +27,12 @@ SC_MODULE(RegIntBank) {
     sc_in<bool> i_wena;                     // Writing is enabled
     sc_in<sc_uint<RISCV_ARCH>> i_wdata;     // Writing value
 
+    sc_in<sc_uint<5>> i_dport_addr;             // Debug port address
+    sc_in<bool> i_dport_ena;                    // Debug port is enabled
+    sc_in<bool> i_dport_write;                  // Debug port write is enabled
+    sc_in<sc_uint<RISCV_ARCH>> i_dport_wdata;   // Debug port write value
+    sc_out<sc_uint<RISCV_ARCH>> o_dport_rdata;  // Debug port read value
+
     sc_out<sc_uint<RISCV_ARCH>> o_ra;       // Return address for branch predictor
 
     void comb();

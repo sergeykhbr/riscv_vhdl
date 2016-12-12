@@ -110,7 +110,9 @@ struct DsuMapType {
                     uint64_t rsv2     : 44;
                 } bits;
             } control;
-            uint64_t step_cnt;
+            uint64_t stepping_mode_steps;
+            uint64_t clock_cnt;
+            uint64_t executed_cnt;
             uint64_t add_breakpoint;
             uint64_t remove_breakpoint;
         } v;

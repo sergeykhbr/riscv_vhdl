@@ -31,11 +31,13 @@ SC_MODULE(RiverTop) {
     sc_in<bool> i_ext_irq;
     sc_out<sc_uint<64>> o_time;                         // Clock/Step counter depending define GENERATE_CORE_TRACE
     // Debug interface
-    sc_in<bool> i_dsu_valid;                            // Debug access from DSU command is valid
-    sc_in<bool> i_dsu_write;                            // Write Debug value
-    sc_in<sc_uint<16>> i_dsu_addr;                      // Debug register address
-    sc_in<sc_uint<RISCV_ARCH>> i_dsu_wdata;             // Write value
-    sc_out<sc_uint<RISCV_ARCH>> o_dsu_rdata;            // Read value
+    sc_in<bool> i_dport_valid;                          // Debug access from DSU is valid
+    sc_in<bool> i_dport_write;                          // Write command flag
+    sc_in<sc_uint<2>> i_dport_region;                   // Registers region ID: 0=CSR; 1=IREGS; 2=Control
+    sc_in<sc_uint<12>> i_dport_addr;                    // Register idx
+    sc_in<sc_uint<RISCV_ARCH>> i_dport_wdata;           // Write value
+    sc_out<bool> o_dport_ready;                         // Response is ready
+    sc_out<sc_uint<RISCV_ARCH>> o_dport_rdata;          // Response value
 
 
     RiverTop(sc_module_name name_, sc_trace_file *i_vcd=0,

@@ -31,7 +31,6 @@ MemAccess::MemAccess(sc_module_name name_, sc_trace_file *vcd)
     sensitive << r.wdata;
     sensitive << r.wait_req;
     sensitive << r.wait_resp;
-    sensitive << r.step_cnt;
 
     SC_METHOD(registers);
     sensitive << i_clk.pos();
@@ -179,10 +178,6 @@ void MemAccess::comb() {
     w_o_valid = r.valid.read() || w_mem_fire;
     w_o_wena = r.wena & w_o_valid;
 
-    if (w_o_valid) {
-        v.step_cnt = r.step_cnt.read() + 1;
-    }
-
     if (!i_nrst.read()) {
         v.valid = false;
         v.pc = 0;
@@ -192,7 +187,6 @@ void MemAccess::comb() {
         v.wena = 0;
         v.size = 0;
         v.sign_ext = 0;
-        v.step_cnt = 0;
         v.wait_req = 0;
         v.wait_req_write = 0;
         v.wait_req_sz = 0;
@@ -215,7 +209,6 @@ void MemAccess::comb() {
     o_valid = w_o_valid;
     o_pc = r.pc;
     o_instr = r.instr;
-    o_step_cnt = r.step_cnt;
     o_hold = w_o_hold;
 }
 

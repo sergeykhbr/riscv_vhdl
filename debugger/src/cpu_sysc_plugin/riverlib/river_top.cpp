@@ -35,11 +35,13 @@ RiverTop::RiverTop(sc_module_name name_, sc_trace_file *i_vcd,
     proc0->o_resp_data_ready(w_resp_data_ready);
     proc0->i_ext_irq(i_ext_irq);
     proc0->o_time(o_time);
-    proc0->i_dsu_valid(i_dsu_valid);
-    proc0->i_dsu_write(i_dsu_write);
-    proc0->i_dsu_addr(i_dsu_addr);
-    proc0->i_dsu_wdata(i_dsu_wdata);
-    proc0->o_dsu_rdata(o_dsu_rdata);
+    proc0->i_dport_valid(i_dport_valid);
+    proc0->i_dport_write(i_dport_write);
+    proc0->i_dport_region(i_dport_region);
+    proc0->i_dport_addr(i_dport_addr);
+    proc0->i_dport_wdata(i_dport_wdata);
+    proc0->o_dport_ready(o_dport_ready);
+    proc0->o_dport_rdata(o_dport_rdata);
 
     cache0 = new CacheTop("cache0", o_vcd);
     cache0->i_clk(i_clk);

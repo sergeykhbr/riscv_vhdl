@@ -75,7 +75,6 @@ ETransStatus Bus::b_transport(Axi4TransactionType *trans) {
             /// @todo Check memory overlapping
         }
     }
-    checkBreakpoint(trans->addr);
 
     if (unmapped) {
         RISCV_error("[%" RV_PRI64 "d] Read from unmapped address "
@@ -91,7 +90,8 @@ ETransStatus Bus::b_transport(Axi4TransactionType *trans) {
     return ret;
 }
 
-ETransStatus Bus::nb_transport(Axi4TransactionType *trans, INbResponse *cb) {
+ETransStatus Bus::nb_transport(Axi4TransactionType *trans,
+                               IAxi4NbResponse *cb) {
     IMemoryOperation *imem;
     bool unmapped = true;
     ETransStatus ret = TRANS_OK;
@@ -108,7 +108,6 @@ ETransStatus Bus::nb_transport(Axi4TransactionType *trans, INbResponse *cb) {
             break;
         }
     }
-    checkBreakpoint(trans->addr);
 
     if (unmapped) {
         RISCV_error("[%" RV_PRI64 "d] Non-blocking request to unmapped address "
@@ -214,22 +213,6 @@ void Bus::removeBreakpoint(uint64_t addr) {
     for (unsigned i = 0; i < breakpoints_.size(); i++) {
         if (breakpoints_[i].to_uint64() == addr) {
             breakpoints_[i] = br;
-        }
-    }
-}
-
-void Bus::checkBreakpoint(uint64_t addr) {
-    for (unsigned i = 0; i < breakpoints_.size(); i++) {
-        if (addr == breakpoints_[i].to_uint64()) {
-            AttributeType listCpu;
-            IService *iserv;
-            RISCV_get_services_with_iface(IFACE_CPU_RISCV, &listCpu);
-            for (unsigned n = 0; n < listCpu.size(); n++) {
-                iserv = static_cast<IService *>(listCpu[n].to_iface());
-                ICpuRiscV *iriscv = static_cast<ICpuRiscV *>(
-                                iserv->getInterface(IFACE_CPU_RISCV));
-                iriscv->hitBreakpoint(addr);
-            }
         }
     }
 }
