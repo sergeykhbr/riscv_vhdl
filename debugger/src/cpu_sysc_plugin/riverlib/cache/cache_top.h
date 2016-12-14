@@ -53,8 +53,10 @@ SC_MODULE(CacheTop) {
 
     SC_HAS_PROCESS(CacheTop);
 
-    CacheTop(sc_module_name name_, sc_trace_file *vcd=0);
+    CacheTop(sc_module_name name_);
     virtual ~CacheTop();
+
+    void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
 private:
     static const uint8_t State_Idle = 0;

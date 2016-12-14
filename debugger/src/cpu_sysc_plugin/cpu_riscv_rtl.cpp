@@ -17,23 +17,67 @@ CpuRiscV_RTL::CpuRiscV_RTL(const char *name)
     registerInterface(static_cast<IHap *>(this));
     registerAttribute("Bus", &bus_);
     registerAttribute("FreqHz", &freqHz_);
+    registerAttribute("InVcdFile", &InVcdFile_);
+    registerAttribute("OutVcdFile", &OutVcdFile_);
+    registerAttribute("GenerateRef", &GenerateRef_);
 
     bus_.make_string("");
     freqHz_.make_uint64(1);
+    InVcdFile_.make_string("");
+    OutVcdFile_.make_string("");
+    GenerateRef_.make_boolean(false);
     RISCV_event_create(&config_done_, "config_done");
     RISCV_register_hap(static_cast<IHap *>(this));
+
+    createSystemC();
+}
+
+CpuRiscV_RTL::~CpuRiscV_RTL() {
+    deleteSystemC();
+    RISCV_event_close(&config_done_);
+}
+
+void CpuRiscV_RTL::postinitService() {
+    ibus_ = static_cast<IBus *>(
+       RISCV_get_service_iface(bus_.to_string(), IFACE_BUS));
+
+    if (!ibus_) {
+        RISCV_error("Bus interface '%s' not found", 
+                    bus_.to_string());
+        return;
+    }
+
+    if (InVcdFile_.size()) {
+        i_vcd_ = sc_create_vcd_trace_file(InVcdFile_.to_string());
+        i_vcd_->set_time_unit(1, SC_PS);
+    } else {
+        i_vcd_ = 0;
+    }
+
+    if (OutVcdFile_.size()) {
+        o_vcd_ = sc_create_vcd_trace_file(OutVcdFile_.to_string());
+        o_vcd_->set_time_unit(1, SC_PS);
+    } else {
+        o_vcd_ = 0;
+    }
+
+    wrapper_->setBus(ibus_);
+    wrapper_->setClockHz(freqHz_.to_int());
+    wrapper_->generateRef(GenerateRef_.to_bool());
+    top_->generateRef(GenerateRef_.to_bool());
+    top_->generateVCD(i_vcd_, o_vcd_);
+
+    if (!run()) {
+        RISCV_error("Can't create thread.", NULL);
+        return;
+    }
+}
+
+void CpuRiscV_RTL::createSystemC() {
     sc_set_default_time_unit(1, SC_NS);
-#if GENERATE_VCD
-    i_vcd_ = sc_create_vcd_trace_file("i_river");
-    i_vcd_->set_time_unit(1, SC_PS);
-    o_vcd_ = sc_create_vcd_trace_file("o_river");
-    o_vcd_->set_time_unit(1, SC_PS);
-#else
-    i_vcd_ = 0;
-    o_vcd_ = 0;
-#endif
+
     /** Create all objects, then initilize SystemC context: */
-    wrapper_ = new RtlWrapper("wrapper");
+    wrapper_ = new RtlWrapper(static_cast<IService *>(this), "wrapper");
     registerInterface(static_cast<ICpuRiscV *>(wrapper_));
     w_clk = wrapper_->o_clk;
     wrapper_->o_nrst(w_nrst);
@@ -55,8 +99,7 @@ CpuRiscV_RTL::CpuRiscV_RTL(const char *name)
     wrapper_->i_dport_ready(w_dport_ready);
     wrapper_->i_dport_rdata(wb_dport_rdata);
 
-
-    top_ = new RiverTop("top", i_vcd_, o_vcd_);
+    top_ = new RiverTop("top");
     top_->i_clk(wrapper_->o_clk);
     top_->i_nrst(w_nrst);
     top_->i_req_mem_ready(w_req_mem_ready);
@@ -80,27 +123,9 @@ CpuRiscV_RTL::CpuRiscV_RTL(const char *name)
     sc_start(0, SC_NS);
 }
 
-CpuRiscV_RTL::~CpuRiscV_RTL() {
-    RISCV_event_close(&config_done_);
-}
-
-void CpuRiscV_RTL::postinitService() {
-    IBus *ibus = static_cast<IBus *>(
-       RISCV_get_service_iface(bus_.to_string(), IFACE_BUS));
-
-    if (!ibus) {
-        RISCV_error("Bus interface '%s' not found", 
-                    bus_.to_string());
-        return;
-    }
-    wrapper_->setBus(ibus);
-
-    if (!run()) {
-        RISCV_error("Can't create thread.", NULL);
-        return;
-    }
-
-    wrapper_->setClockHz(freqHz_.to_int());
+void CpuRiscV_RTL::deleteSystemC() {
+    delete wrapper_;
+    delete top_;
 }
 
 void CpuRiscV_RTL::predeleteService() {
@@ -115,9 +140,11 @@ void CpuRiscV_RTL::hapTriggered(IFace *isrc, EHapType type,
 void CpuRiscV_RTL::stop() {
     sc_stop();
     if (i_vcd_) {
-        //sc_close_vcd_trace_file(vcd_);
+        sc_close_vcd_trace_file(i_vcd_);
     }
-
+    if (o_vcd_) {
+        sc_close_vcd_trace_file(o_vcd_);
+    }
     IThread::stop();
 }
 

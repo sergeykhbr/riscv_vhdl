@@ -9,8 +9,7 @@
 
 namespace debugger {
 
-CacheTop::CacheTop(sc_module_name name_, sc_trace_file *vcd) 
-    : sc_module(name_) {
+CacheTop::CacheTop(sc_module_name name_) : sc_module(name_) {
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_req_mem_ready;
@@ -33,7 +32,7 @@ CacheTop::CacheTop(sc_module_name name_, sc_trace_file *vcd)
     SC_METHOD(registers);
     sensitive << i_clk.pos();
 
-    i0 = new ICache("i0", vcd);
+    i0 = new ICache("i0");
     i0->i_clk(i_clk);
     i0->i_nrst(i_nrst);
     i0->i_req_ctrl_valid(i_req_ctrl_valid);
@@ -52,7 +51,7 @@ CacheTop::CacheTop(sc_module_name name_, sc_trace_file *vcd)
     i0->i_resp_mem_data_valid(w_ctrl_resp_mem_data_valid);
     i0->i_resp_mem_data(wb_ctrl_resp_mem_data);
 
-    d0 = new DCache("d0", vcd);
+    d0 = new DCache("d0");
     d0->i_clk(i_clk);
     d0->i_nrst(i_nrst);
     d0->i_req_data_valid(i_req_data_valid);
@@ -73,31 +72,34 @@ CacheTop::CacheTop(sc_module_name name_, sc_trace_file *vcd)
     d0->o_req_mem_data(d.req_mem_wdata);
     d0->i_resp_mem_data_valid(w_data_resp_mem_data_valid);
     d0->i_resp_mem_data(wb_data_resp_mem_data);
-
-
-    if (vcd) {
-        sc_trace(vcd, i_req_data_valid, "/top/cache0/i_req_data_valid");
-        sc_trace(vcd, i_req_data_write, "/top/cache0/i_req_data_write");
-        sc_trace(vcd, i_req_data_addr, "/top/cache0/i_req_data_addr");
-        sc_trace(vcd, i_req_data_data, "/top/cache0/i_req_data_data");
-
-        sc_trace(vcd, w_data_resp_mem_data_valid, "/top/cache0/w_data_resp_mem_data_valid");
-        sc_trace(vcd, wb_data_resp_mem_data, "/top/cache0/wb_data_resp_mem_data");
-        sc_trace(vcd, w_ctrl_resp_mem_data_valid, "/top/cache0/w_ctrl_resp_mem_data_valid");
-        sc_trace(vcd, wb_ctrl_resp_mem_data, "/top/cache0/wb_ctrl_resp_mem_data");
-
-        sc_trace(vcd, i_req_mem_ready, "/top/cache0/i_req_mem_ready");
-        sc_trace(vcd, o_req_mem_valid, "/top/cache0/o_req_mem_valid");
-        sc_trace(vcd, o_req_mem_write, "/top/cache0/o_req_mem_write");
-        sc_trace(vcd, o_req_mem_addr, "/top/cache0/o_req_mem_addr");
-        sc_trace(vcd, o_req_mem_strob, "/top/cache0/o_req_mem_strob");
-        sc_trace(vcd, o_req_mem_data, "/top/cache0/o_req_mem_data");
-        sc_trace(vcd, i_resp_mem_data_valid, "/top/cache0/i_resp_mem_data_valid");
-        sc_trace(vcd, i_resp_mem_data, "/top/cache0/i_resp_mem_data");
-
-        sc_trace(vcd, r.state, "/top/cache0/r.state");
-    }
 };
+
+void CacheTop::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
+    if (o_vcd) {
+        sc_trace(o_vcd, i_req_data_valid, "/top/cache0/i_req_data_valid");
+        sc_trace(o_vcd, i_req_data_write, "/top/cache0/i_req_data_write");
+        sc_trace(o_vcd, i_req_data_addr, "/top/cache0/i_req_data_addr");
+        sc_trace(o_vcd, i_req_data_data, "/top/cache0/i_req_data_data");
+
+        sc_trace(o_vcd, w_data_resp_mem_data_valid, "/top/cache0/w_data_resp_mem_data_valid");
+        sc_trace(o_vcd, wb_data_resp_mem_data, "/top/cache0/wb_data_resp_mem_data");
+        sc_trace(o_vcd, w_ctrl_resp_mem_data_valid, "/top/cache0/w_ctrl_resp_mem_data_valid");
+        sc_trace(o_vcd, wb_ctrl_resp_mem_data, "/top/cache0/wb_ctrl_resp_mem_data");
+
+        sc_trace(o_vcd, i_req_mem_ready, "/top/cache0/i_req_mem_ready");
+        sc_trace(o_vcd, o_req_mem_valid, "/top/cache0/o_req_mem_valid");
+        sc_trace(o_vcd, o_req_mem_write, "/top/cache0/o_req_mem_write");
+        sc_trace(o_vcd, o_req_mem_addr, "/top/cache0/o_req_mem_addr");
+        sc_trace(o_vcd, o_req_mem_strob, "/top/cache0/o_req_mem_strob");
+        sc_trace(o_vcd, o_req_mem_data, "/top/cache0/o_req_mem_data");
+        sc_trace(o_vcd, i_resp_mem_data_valid, "/top/cache0/i_resp_mem_data_valid");
+        sc_trace(o_vcd, i_resp_mem_data, "/top/cache0/i_resp_mem_data");
+
+        sc_trace(o_vcd, r.state, "/top/cache0/r.state");
+    }
+    i0->generateVCD(i_vcd, o_vcd);
+    d0->generateVCD(i_vcd, o_vcd);
+}
 
 CacheTop::~CacheTop() {
     delete i0;

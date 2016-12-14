@@ -9,8 +9,7 @@
 
 namespace debugger {
 
-ICache::ICache(sc_module_name name_, sc_trace_file *vcd) 
-    : sc_module(name_) {
+ICache::ICache(sc_module_name name_) : sc_module(name_) {
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_req_ctrl_valid;
@@ -26,31 +25,32 @@ ICache::ICache(sc_module_name name_, sc_trace_file *vcd)
 
     SC_METHOD(registers);
     sensitive << i_clk.pos();
-
-    if (vcd) {
-        sc_trace(vcd, i_nrst, "/top/cache0/i0/i_nrst");
-        sc_trace(vcd, i_req_ctrl_valid, "/top/cache0/i0/i_req_ctrl_valid");
-        sc_trace(vcd, i_req_ctrl_addr, "/top/cache0/i0/i_req_ctrl_addr");
-        sc_trace(vcd, o_req_ctrl_ready, "/top/cache0/i0/o_req_ctrl_ready");
-        sc_trace(vcd, o_req_mem_valid, "/top/cache0/i0/o_req_mem_valid");
-        sc_trace(vcd, o_req_mem_addr, "/top/cache0/i0/o_req_mem_addr");
-        sc_trace(vcd, i_req_mem_ready, "/top/cache0/i0/i_req_mem_ready");
-        sc_trace(vcd, i_resp_mem_data_valid, "/top/cache0/i0/i_resp_mem_data_valid");
-        sc_trace(vcd, i_resp_mem_data, "/top/cache0/i0/i_resp_mem_data");
-        sc_trace(vcd, o_resp_ctrl_valid, "/top/cache0/i0/o_resp_ctrl_valid");
-        sc_trace(vcd, i_resp_ctrl_ready, "/top/cache0/i0/i_resp_ctrl_ready");
-        sc_trace(vcd, o_resp_ctrl_addr, "/top/cache0/i0/o_resp_ctrl_addr");
-        sc_trace(vcd, o_resp_ctrl_data, "/top/cache0/i0/o_resp_ctrl_data");
-        sc_trace(vcd, r.iline_addr, "/top/cache0/i0/r_iline_addr");
-        sc_trace(vcd, r.iline_data, "/top/cache0/i0/r_iline_data");
-        sc_trace(vcd, r.iline_addr_req, "/top/cache0/i0/r_iline_addr_req");
-        sc_trace(vcd, r.state, "/top/cache0/i0/r_state");
-        //sc_trace(vcd, wb_req_line, "/top/cache0/i0/wb_req_line");
-        //sc_trace(vcd, wb_cached_addr, "/top/cache0/i0/wb_cached_addr");
-        //sc_trace(vcd, wb_cached_data, "/top/cache0/i0/wb_cached_data");
-    }
 };
 
+void ICache::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
+    if (o_vcd) {
+        sc_trace(o_vcd, i_nrst, "/top/cache0/i0/i_nrst");
+        sc_trace(o_vcd, i_req_ctrl_valid, "/top/cache0/i0/i_req_ctrl_valid");
+        sc_trace(o_vcd, i_req_ctrl_addr, "/top/cache0/i0/i_req_ctrl_addr");
+        sc_trace(o_vcd, o_req_ctrl_ready, "/top/cache0/i0/o_req_ctrl_ready");
+        sc_trace(o_vcd, o_req_mem_valid, "/top/cache0/i0/o_req_mem_valid");
+        sc_trace(o_vcd, o_req_mem_addr, "/top/cache0/i0/o_req_mem_addr");
+        sc_trace(o_vcd, i_req_mem_ready, "/top/cache0/i0/i_req_mem_ready");
+        sc_trace(o_vcd, i_resp_mem_data_valid, "/top/cache0/i0/i_resp_mem_data_valid");
+        sc_trace(o_vcd, i_resp_mem_data, "/top/cache0/i0/i_resp_mem_data");
+        sc_trace(o_vcd, o_resp_ctrl_valid, "/top/cache0/i0/o_resp_ctrl_valid");
+        sc_trace(o_vcd, i_resp_ctrl_ready, "/top/cache0/i0/i_resp_ctrl_ready");
+        sc_trace(o_vcd, o_resp_ctrl_addr, "/top/cache0/i0/o_resp_ctrl_addr");
+        sc_trace(o_vcd, o_resp_ctrl_data, "/top/cache0/i0/o_resp_ctrl_data");
+        sc_trace(o_vcd, r.iline_addr, "/top/cache0/i0/r_iline_addr");
+        sc_trace(o_vcd, r.iline_data, "/top/cache0/i0/r_iline_data");
+        sc_trace(o_vcd, r.iline_addr_req, "/top/cache0/i0/r_iline_addr_req");
+        sc_trace(o_vcd, r.state, "/top/cache0/i0/r_state");
+        //sc_trace(o_vcd, wb_req_line, "/top/cache0/i0/wb_req_line");
+        //sc_trace(o_vcd, wb_cached_addr, "/top/cache0/i0/wb_cached_addr");
+        //sc_trace(o_vcd, wb_cached_data, "/top/cache0/i0/wb_cached_data");
+    }
+}
 
 void ICache::comb() {
     // Instruction cache:

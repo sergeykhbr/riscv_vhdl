@@ -9,8 +9,7 @@
 
 namespace debugger {
 
-DCache::DCache(sc_module_name name_, sc_trace_file *vcd) 
-    : sc_module(name_) {
+DCache::DCache(sc_module_name name_) : sc_module(name_) {
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_req_data_valid;
@@ -28,22 +27,23 @@ DCache::DCache(sc_module_name name_, sc_trace_file *vcd)
 
     SC_METHOD(registers);
     sensitive << i_clk.pos();
-
-    if (vcd) {
-        sc_trace(vcd, i_req_data_valid, "/top/cache0/d0/i_req_data_valid");
-        sc_trace(vcd, i_req_data_write, "/top/cache0/d0/i_req_data_write");
-        sc_trace(vcd, i_req_data_sz, "/top/cache0/d0/i_req_data_sz");
-        sc_trace(vcd, i_req_data_addr, "/top/cache0/d0/i_req_data_addr");
-        sc_trace(vcd, i_req_data_data, "/top/cache0/d0/i_req_data_data");
-        sc_trace(vcd, o_req_mem_addr, "/top/cache0/d0/o_req_mem_addr");
-        sc_trace(vcd, o_req_mem_strob, "/top/cache0/d0/o_req_mem_strob");
-        sc_trace(vcd, o_req_mem_data, "/top/cache0/d0/o_req_mem_data");
-        sc_trace(vcd, o_resp_data_valid, "/top/cache0/d0/o_resp_data_valid");
-        sc_trace(vcd, o_resp_data_addr, "/top/cache0/d0/o_resp_data_addr");
-        sc_trace(vcd, o_resp_data_data, "/top/cache0/d0/o_resp_data_data");
-    }
 };
 
+void DCache::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
+    if (o_vcd) {
+        sc_trace(o_vcd, i_req_data_valid, "/top/cache0/d0/i_req_data_valid");
+        sc_trace(o_vcd, i_req_data_write, "/top/cache0/d0/i_req_data_write");
+        sc_trace(o_vcd, i_req_data_sz, "/top/cache0/d0/i_req_data_sz");
+        sc_trace(o_vcd, i_req_data_addr, "/top/cache0/d0/i_req_data_addr");
+        sc_trace(o_vcd, i_req_data_data, "/top/cache0/d0/i_req_data_data");
+        sc_trace(o_vcd, o_req_mem_addr, "/top/cache0/d0/o_req_mem_addr");
+        sc_trace(o_vcd, o_req_mem_strob, "/top/cache0/d0/o_req_mem_strob");
+        sc_trace(o_vcd, o_req_mem_data, "/top/cache0/d0/o_req_mem_data");
+        sc_trace(o_vcd, o_resp_data_valid, "/top/cache0/d0/o_resp_data_valid");
+        sc_trace(o_vcd, o_resp_data_addr, "/top/cache0/d0/o_resp_data_addr");
+        sc_trace(o_vcd, o_resp_data_data, "/top/cache0/d0/o_resp_data_data");
+    }
+}
 
 void DCache::comb() {
     sc_uint<BUS_ADDR_WIDTH> wb_req_addr;

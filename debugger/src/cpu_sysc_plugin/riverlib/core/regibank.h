@@ -40,7 +40,9 @@ SC_MODULE(RegIntBank) {
 
     SC_HAS_PROCESS(RegIntBank);
 
-    RegIntBank(sc_module_name name_, sc_trace_file *vcd=0);
+    RegIntBank(sc_module_name name_);
+
+    void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
 private:
     friend struct Processor; // for debug purposes(remove it)s

@@ -10,8 +10,7 @@
 
 namespace debugger {
 
-InstrExecute::InstrExecute(sc_module_name name_, sc_trace_file *vcd) 
-    : sc_module(name_) {
+InstrExecute::InstrExecute(sc_module_name name_)  : sc_module(name_) {
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_pipeline_hold;
@@ -34,6 +33,8 @@ InstrExecute::InstrExecute(sc_module_name name_, sc_trace_file *vcd)
     sensitive << i_mtvec;
     sensitive << i_ie;
     sensitive << i_unsup_exception;
+    sensitive << i_dport_npc_write;
+    sensitive << i_dport_npc;
     sensitive << r.d_valid;
     sensitive << r.npc;
     sensitive << r.hazard_depth;
@@ -55,7 +56,7 @@ InstrExecute::InstrExecute(sc_module_name name_, sc_trace_file *vcd)
     SC_METHOD(registers);
     sensitive << i_clk.pos();
 
-    mul0 = new IntMul("mul0", vcd);
+    mul0 = new IntMul("mul0");
     mul0->i_clk(i_clk);
     mul0->i_nrst(i_nrst);
     mul0->i_ena(r.multi_ena[Multi_MUL]);
@@ -68,7 +69,7 @@ InstrExecute::InstrExecute(sc_module_name name_, sc_trace_file *vcd)
     mul0->o_valid(w_arith_valid[Multi_MUL]);
     mul0->o_busy(w_arith_busy[Multi_MUL]);
 
-    div0 = new IntDiv("div0", vcd);
+    div0 = new IntDiv("div0");
     div0->i_clk(i_clk);
     div0->i_nrst(i_nrst);
     div0->i_ena(r.multi_ena[Multi_DIV]);
@@ -81,58 +82,63 @@ InstrExecute::InstrExecute(sc_module_name name_, sc_trace_file *vcd)
     div0->o_valid(w_arith_valid[Multi_DIV]);
     div0->o_busy(w_arith_busy[Multi_DIV]);
 
-    if (vcd) {
-        sc_trace(vcd, i_ext_irq, "/top/proc0/exec0/i_ext_irq");
-        sc_trace(vcd, i_pipeline_hold, "/top/proc0/exec0/i_pipeline_hold");
-        sc_trace(vcd, i_d_valid, "/top/proc0/exec0/i_d_valid");
-        sc_trace(vcd, i_d_pc, "/top/proc0/exec0/i_d_pc");
-        sc_trace(vcd, i_d_instr, "/top/proc0/exec0/i_d_instr");
-        sc_trace(vcd, i_wb_done, "/top/proc0/exec0/i_wb_done");
-        sc_trace(vcd, i_rdata1, "/top/proc0/exec0/i_rdata1");
-        sc_trace(vcd, i_rdata2, "/top/proc0/exec0/i_rdata2");
-        sc_trace(vcd, o_valid, "/top/proc0/exec0/o_valid");
-        sc_trace(vcd, o_npc, "/top/proc0/exec0/o_npc");
-        sc_trace(vcd, o_pc, "/top/proc0/exec0/o_pc");
-        sc_trace(vcd, o_radr1, "/top/proc0/exec0/o_radr1");
-        sc_trace(vcd, o_radr2, "/top/proc0/exec0/o_radr2");
-        sc_trace(vcd, o_res_addr, "/top/proc0/exec0/o_res_addr");
-        sc_trace(vcd, o_res_data, "/top/proc0/exec0/o_res_data");
-        sc_trace(vcd, o_memop_addr, "/top/proc0/exec0/o_memop_addr");
-        sc_trace(vcd, o_memop_load, "/top/proc0/exec0/o_memop_load");
-        sc_trace(vcd, o_memop_store, "/top/proc0/exec0/o_memop_store");
-        sc_trace(vcd, o_memop_size, "/top/proc0/exec0/o_memop_size");
-        sc_trace(vcd, o_csr_addr, "/top/proc0/exec0/o_csr_addr");
-        sc_trace(vcd, o_csr_wena, "/top/proc0/exec0/o_csr_wena");
-        sc_trace(vcd, i_csr_rdata, "/top/proc0/exec0/i_csr_rdata");
-        sc_trace(vcd, o_csr_wdata, "/top/proc0/exec0/o_csr_wdata");
-        sc_trace(vcd, o_pipeline_hold, "/top/proc0/exec0/o_pipeline_hold");
-
-        sc_trace(vcd, w_hazard_detected, "/top/proc0/exec0/w_hazard_detected");
-        sc_trace(vcd, r.hazard_depth, "/top/proc0/exec0/r_hazard_depth");
-        sc_trace(vcd, r.hazard_addr0, "/top/proc0/exec0/r_hazard_addr0");
-        sc_trace(vcd, r.hazard_addr1, "/top/proc0/exec0/r_hazard_addr1");
-        sc_trace(vcd, r.multiclock_ena, "/top/proc0/exec0/r_multiclock_ena");
-        sc_trace(vcd, r.multi_ena[Multi_MUL], "/top/proc0/exec0/r_multi_ena(0)");
-        sc_trace(vcd, wb_arith_res.arr[Multi_MUL], "/top/proc0/exec0/wb_arith_res(0)");
-        sc_trace(vcd, r.multi_ena[Multi_DIV], "/top/proc0/exec0/r_multi_ena(1)");
-        sc_trace(vcd, wb_arith_res.arr[Multi_DIV], "/top/proc0/exec0/wb_arith_res(1)");
-        sc_trace(vcd, r.multi_res_addr, "/top/proc0/exec0/r_multi_res_addr");
-        sc_trace(vcd, r.multi_a1, "/top/proc0/exec0/multi_a1");
-        sc_trace(vcd, r.multi_a2, "/top/proc0/exec0/multi_a2");
-
-        sc_trace(vcd, w_interrupt, "/top/proc0/exec0/w_interrupt");
-        sc_trace(vcd, w_exception, "/top/proc0/exec0/w_exception");
-        sc_trace(vcd, r.trap_ena, "/top/proc0/exec0/r_trap_ena");
-        sc_trace(vcd, r.trap_pc, "/top/proc0/exec0/r_trap_pc");
-        sc_trace(vcd, r.trap_code, "/top/proc0/exec0/r_trap_code");
-        sc_trace(vcd, r.trap_code_waiting, "/top/proc0/exec0/r_trap_code_waiting");
-        sc_trace(vcd, r.ext_irq_pulser, "/top/proc0/exec0/r_ext_irq_pulser");
-    }
 };
 
 InstrExecute::~InstrExecute() {
     delete mul0;
     delete div0;
+}
+
+void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
+    if (o_vcd) {
+        sc_trace(o_vcd, i_ext_irq, "/top/proc0/exec0/i_ext_irq");
+        sc_trace(o_vcd, i_pipeline_hold, "/top/proc0/exec0/i_pipeline_hold");
+        sc_trace(o_vcd, i_d_valid, "/top/proc0/exec0/i_d_valid");
+        sc_trace(o_vcd, i_d_pc, "/top/proc0/exec0/i_d_pc");
+        sc_trace(o_vcd, i_d_instr, "/top/proc0/exec0/i_d_instr");
+        sc_trace(o_vcd, i_wb_done, "/top/proc0/exec0/i_wb_done");
+        sc_trace(o_vcd, i_rdata1, "/top/proc0/exec0/i_rdata1");
+        sc_trace(o_vcd, i_rdata2, "/top/proc0/exec0/i_rdata2");
+        sc_trace(o_vcd, o_valid, "/top/proc0/exec0/o_valid");
+        sc_trace(o_vcd, o_npc, "/top/proc0/exec0/o_npc");
+        sc_trace(o_vcd, o_pc, "/top/proc0/exec0/o_pc");
+        sc_trace(o_vcd, o_radr1, "/top/proc0/exec0/o_radr1");
+        sc_trace(o_vcd, o_radr2, "/top/proc0/exec0/o_radr2");
+        sc_trace(o_vcd, o_res_addr, "/top/proc0/exec0/o_res_addr");
+        sc_trace(o_vcd, o_res_data, "/top/proc0/exec0/o_res_data");
+        sc_trace(o_vcd, o_memop_addr, "/top/proc0/exec0/o_memop_addr");
+        sc_trace(o_vcd, o_memop_load, "/top/proc0/exec0/o_memop_load");
+        sc_trace(o_vcd, o_memop_store, "/top/proc0/exec0/o_memop_store");
+        sc_trace(o_vcd, o_memop_size, "/top/proc0/exec0/o_memop_size");
+        sc_trace(o_vcd, o_csr_addr, "/top/proc0/exec0/o_csr_addr");
+        sc_trace(o_vcd, o_csr_wena, "/top/proc0/exec0/o_csr_wena");
+        sc_trace(o_vcd, i_csr_rdata, "/top/proc0/exec0/i_csr_rdata");
+        sc_trace(o_vcd, o_csr_wdata, "/top/proc0/exec0/o_csr_wdata");
+        sc_trace(o_vcd, o_pipeline_hold, "/top/proc0/exec0/o_pipeline_hold");
+
+        sc_trace(o_vcd, w_hazard_detected, "/top/proc0/exec0/w_hazard_detected");
+        sc_trace(o_vcd, r.hazard_depth, "/top/proc0/exec0/r_hazard_depth");
+        sc_trace(o_vcd, r.hazard_addr0, "/top/proc0/exec0/r_hazard_addr0");
+        sc_trace(o_vcd, r.hazard_addr1, "/top/proc0/exec0/r_hazard_addr1");
+        sc_trace(o_vcd, r.multiclock_ena, "/top/proc0/exec0/r_multiclock_ena");
+        sc_trace(o_vcd, r.multi_ena[Multi_MUL], "/top/proc0/exec0/r_multi_ena(0)");
+        sc_trace(o_vcd, wb_arith_res.arr[Multi_MUL], "/top/proc0/exec0/wb_arith_res(0)");
+        sc_trace(o_vcd, r.multi_ena[Multi_DIV], "/top/proc0/exec0/r_multi_ena(1)");
+        sc_trace(o_vcd, wb_arith_res.arr[Multi_DIV], "/top/proc0/exec0/wb_arith_res(1)");
+        sc_trace(o_vcd, r.multi_res_addr, "/top/proc0/exec0/r_multi_res_addr");
+        sc_trace(o_vcd, r.multi_a1, "/top/proc0/exec0/multi_a1");
+        sc_trace(o_vcd, r.multi_a2, "/top/proc0/exec0/multi_a2");
+
+        sc_trace(o_vcd, w_interrupt, "/top/proc0/exec0/w_interrupt");
+        sc_trace(o_vcd, w_exception, "/top/proc0/exec0/w_exception");
+        sc_trace(o_vcd, r.trap_ena, "/top/proc0/exec0/r_trap_ena");
+        sc_trace(o_vcd, r.trap_pc, "/top/proc0/exec0/r_trap_pc");
+        sc_trace(o_vcd, r.trap_code, "/top/proc0/exec0/r_trap_code");
+        sc_trace(o_vcd, r.trap_code_waiting, "/top/proc0/exec0/r_trap_code_waiting");
+        sc_trace(o_vcd, r.ext_irq_pulser, "/top/proc0/exec0/r_ext_irq_pulser");
+    }
+    mul0->generateVCD(i_vcd, o_vcd);
+    div0->generateVCD(i_vcd, o_vcd);
 }
 
 void InstrExecute::comb() {

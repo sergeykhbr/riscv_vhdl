@@ -130,7 +130,7 @@ void Greth::busyLoop() {
             }
             RISCV_event_clear(&event_tap_);
             ibus_->nb_transport(&trans_, this);
-            if (RISCV_event_wait_ms(&event_tap_, 100) != 0) {
+            if (RISCV_event_wait_ms(&event_tap_, 500) != 0) {
                 RISCV_error("CPU queue callback timeout", NULL);
             } else if (trans_.action == MemAction_Read) {
                 *tbuf = trans_.rpayload.b32[0];
@@ -153,6 +153,7 @@ void Greth::nb_response(Axi4TransactionType *trans) {
 }
 
 void Greth::b_transport(Axi4TransactionType *trans) {
+    RISCV_error("ETH Slave registers not implemented", NULL);
 }
 
 void Greth::sendNAK(UdpEdclCommonType *req) {

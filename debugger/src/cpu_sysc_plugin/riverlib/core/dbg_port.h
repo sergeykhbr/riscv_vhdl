@@ -37,7 +37,8 @@ SC_MODULE(DbgPort) {
     sc_in<sc_uint<RISCV_ARCH>> i_ireg_rdata;            // Region 1: Integer register read value
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_pc;                // Region 1: Instruction pointer
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_npc;               // Region 1: Next Instruction pointer
-    sc_in<bool> i_e_valid;                              // To compute number of valid executed instruction
+    sc_in<bool> i_e_valid;                              // Stepping control signal
+    sc_in<bool> i_m_valid;                              // To compute number of valid executed instruction
     sc_out<sc_uint<64>> o_clock_cnt;                    // Number of clocks excluding halt state
     sc_out<sc_uint<64>> o_executed_cnt;                 // Number of executed instructions
     sc_out<bool> o_halt;                                // Halt signal is equal to hold pipeline
@@ -47,7 +48,9 @@ SC_MODULE(DbgPort) {
 
     SC_HAS_PROCESS(DbgPort);
 
-    DbgPort(sc_module_name name_, sc_trace_file *vcd=0);
+    DbgPort(sc_module_name name_);
+
+    void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
 private:
     struct RegistersType {

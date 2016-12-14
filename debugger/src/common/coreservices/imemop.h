@@ -33,9 +33,9 @@ enum EAxi4Response {
 typedef struct Axi4TransactionType {
     EAxi4Action action;
     EAxi4Response response;
-    uint8_t  xsize;             // [Bytes] Do not using XSize AXI format!!!.
-    uint64_t addr;
+    uint32_t xsize;             // [Bytes] Isn't used XSize AXI format!!!.
     uint32_t wstrb;             // 1 bit per byte
+    uint64_t addr;
     union {
         uint8_t b8[PAYLOAD_MAX_BYTES];
         uint16_t b16[PAYLOAD_MAX_BYTES/sizeof(uint16_t)];

@@ -32,7 +32,9 @@ SC_MODULE(IntMul) {
 
     SC_HAS_PROCESS(IntMul);
 
-    IntMul(sc_module_name name_, sc_trace_file *vcd=0);
+    IntMul(sc_module_name name_);
+
+    void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
 private:
     uint64_t compute_reference(bool unsign, bool rv32, uint64_t a1, uint64_t a2);

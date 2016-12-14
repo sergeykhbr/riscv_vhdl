@@ -9,11 +9,10 @@
 
 namespace debugger {
 
-RiverTop::RiverTop(sc_module_name name_, sc_trace_file *i_vcd,
-                   sc_trace_file *o_vcd) 
+RiverTop::RiverTop(sc_module_name name_) 
     : sc_module(name_) {
 
-    proc0 = new Processor("proc0", o_vcd);
+    proc0 = new Processor("proc0");
     proc0->i_clk(i_clk);
     proc0->i_nrst(i_nrst);
     proc0->i_req_ctrl_ready(w_req_ctrl_ready);
@@ -43,7 +42,7 @@ RiverTop::RiverTop(sc_module_name name_, sc_trace_file *i_vcd,
     proc0->o_dport_ready(o_dport_ready);
     proc0->o_dport_rdata(o_dport_rdata);
 
-    cache0 = new CacheTop("cache0", o_vcd);
+    cache0 = new CacheTop("cache0");
     cache0->i_clk(i_clk);
     cache0->i_nrst(i_nrst);
     cache0->i_req_ctrl_valid(w_req_ctrl_valid);
@@ -71,7 +70,14 @@ RiverTop::RiverTop(sc_module_name name_, sc_trace_file *i_vcd,
     cache0->o_req_mem_data(o_req_mem_data);
     cache0->i_resp_mem_data_valid(i_resp_mem_data_valid);
     cache0->i_resp_mem_data(i_resp_mem_data);
+};
 
+RiverTop::~RiverTop() {
+    delete cache0;
+    delete proc0;
+}
+
+void RiverTop::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     /**
      * ModelSim commands for automatic comparision Stimulus vs SystemC reference:
      *
@@ -117,11 +123,9 @@ RiverTop::RiverTop(sc_module_name name_, sc_trace_file *i_vcd,
         sc_trace(o_vcd, o_req_mem_data, "o_req_mem_data");
         sc_trace(o_vcd, o_time, "o_time");
     }
-};
 
-RiverTop::~RiverTop() {
-    delete cache0;
-    delete proc0;
+    proc0->generateVCD(i_vcd, o_vcd);
+    cache0->generateVCD(i_vcd, o_vcd);
 }
 
 }  // namespace debugger

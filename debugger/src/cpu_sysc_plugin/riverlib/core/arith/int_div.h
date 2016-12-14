@@ -31,7 +31,9 @@ SC_MODULE(IntDiv) {
 
     SC_HAS_PROCESS(IntDiv);
 
-    IntDiv(sc_module_name name_, sc_trace_file *vcd=0);
+    IntDiv(sc_module_name name_);
+
+    void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
 private:
     uint64_t compute_reference(bool unsign, bool rv32, bool resid,

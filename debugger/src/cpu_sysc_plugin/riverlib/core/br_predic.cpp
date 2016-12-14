@@ -10,8 +10,7 @@
 
 namespace debugger {
 
-BranchPredictor::BranchPredictor(sc_module_name name_, sc_trace_file *vcd)
-    : sc_module(name_) {
+BranchPredictor::BranchPredictor(sc_module_name name_) : sc_module(name_) {
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_hold;
@@ -26,22 +25,23 @@ BranchPredictor::BranchPredictor(sc_module_name name_, sc_trace_file *vcd)
 
     SC_METHOD(registers);
     sensitive << i_clk.pos();
-
-    if (vcd) {
-        sc_trace(vcd, i_hold, "/top/proc0/bp0/i_hold");
-        sc_trace(vcd, i_req_mem_fire, "/top/proc0/bp0/i_req_mem_fire");
-        sc_trace(vcd, i_resp_mem_valid, "/top/proc0/bp0/i_resp_mem_valid");
-        sc_trace(vcd, i_resp_mem_addr, "/top/proc0/bp0/i_resp_mem_addr");
-        sc_trace(vcd, i_resp_mem_data, "/top/proc0/bp0/i_resp_mem_data");
-        sc_trace(vcd, i_f_predic_miss, "/top/proc0/bp0/i_f_predic_miss");
-        sc_trace(vcd, i_e_npc, "/top/proc0/bp0/i_e_npc");
-        sc_trace(vcd, i_ra, "/top/proc0/bp0/i_ra");
-
-        sc_trace(vcd, o_npc_predict, "/top/proc0/bp0/o_npc_predict");
-        sc_trace(vcd, r.npc, "/top/proc0/bp0/r_npc");
-    }
 };
 
+void BranchPredictor::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
+    if (o_vcd) {
+        sc_trace(o_vcd, i_hold, "/top/proc0/bp0/i_hold");
+        sc_trace(o_vcd, i_req_mem_fire, "/top/proc0/bp0/i_req_mem_fire");
+        sc_trace(o_vcd, i_resp_mem_valid, "/top/proc0/bp0/i_resp_mem_valid");
+        sc_trace(o_vcd, i_resp_mem_addr, "/top/proc0/bp0/i_resp_mem_addr");
+        sc_trace(o_vcd, i_resp_mem_data, "/top/proc0/bp0/i_resp_mem_data");
+        sc_trace(o_vcd, i_f_predic_miss, "/top/proc0/bp0/i_f_predic_miss");
+        sc_trace(o_vcd, i_e_npc, "/top/proc0/bp0/i_e_npc");
+        sc_trace(o_vcd, i_ra, "/top/proc0/bp0/i_ra");
+
+        sc_trace(o_vcd, o_npc_predict, "/top/proc0/bp0/o_npc_predict");
+        sc_trace(o_vcd, r.npc, "/top/proc0/bp0/r_npc");
+    }
+}
 
 void BranchPredictor::comb() {
     v = r;

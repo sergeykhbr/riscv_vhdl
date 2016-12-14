@@ -34,7 +34,9 @@ SC_MODULE(CsrRegs) {
 
     SC_HAS_PROCESS(CsrRegs);
 
-    CsrRegs(sc_module_name name_, sc_trace_file *vcd=0);
+    CsrRegs(sc_module_name name_);
+
+    void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
 private:
     struct RegistersType {

@@ -19,10 +19,7 @@
 #include "csr.h"
 #include "br_predic.h"
 #include "dbg_port.h"
-
-#if (GENERATE_CORE_TRACE == 1)
 #include <fstream>
-#endif
 
 
 namespace debugger {
@@ -51,7 +48,7 @@ SC_MODULE(Processor) {
     sc_out<bool> o_resp_data_ready;                     // Core is ready to accept response from DCache
     // External interrupt pin
     sc_in<bool> i_ext_irq;                              // PLIC interrupt accordingly with spec
-    sc_out<sc_uint<64>> o_time;                         // Clock/Step counter depending define GENERATE_CORE_TRACE
+    sc_out<sc_uint<64>> o_time;                         // Clock/Step counter depending attribute "GenerateRef"
     // Debug interface
     sc_in<bool> i_dport_valid;                          // Debug access from DSU is valid
     sc_in<bool> i_dport_write;                          // Write command flag
@@ -62,13 +59,13 @@ SC_MODULE(Processor) {
     sc_out<sc_uint<RISCV_ARCH>> o_dport_rdata;          // Response value
 
     void comb();
-#if (GENERATE_CORE_TRACE == 1)
     void negedge_dbg_print();
-#endif
+    void generateRef(bool v);
+    void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
     SC_HAS_PROCESS(Processor);
 
-    Processor(sc_module_name name_, sc_trace_file *vcd=0);
+    Processor(sc_module_name name_);
     virtual ~Processor();
 
 private:
@@ -182,7 +179,6 @@ private:
 
     sc_signal<sc_uint<5>> wb_ireg_dport_addr;
     sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_exec_dport_npc;
-    sc_signal<bool> w_e_valid;
 
     sc_signal<bool> w_fetch_pipeline_hold;
     sc_signal<bool> w_any_pipeline_hold;
@@ -199,14 +195,15 @@ private:
 
     DbgPort *dbg0;
 
-#if (GENERATE_CORE_TRACE == 1)
+    /** Used only for reference trace generation to compare with
+        functional model */
+    bool generate_ref_;
     char tstr[1024];
     ofstream *reg_dbg;
     ofstream *mem_dbg;
     bool mem_dbg_write_flag;
     uint64_t dbg_mem_value_mask;
     uint64_t dbg_mem_write_value;
-#endif
 };
 
 

@@ -53,7 +53,9 @@ SC_MODULE(InstrDecoder) {
 
     SC_HAS_PROCESS(InstrDecoder);
 
-    InstrDecoder(sc_module_name name_, sc_trace_file *vcd=0);
+    InstrDecoder(sc_module_name name_);
+
+    void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
 private:
     struct RegistersType {

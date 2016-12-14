@@ -29,7 +29,7 @@ SC_MODULE(RiverTop) {
     sc_in<sc_uint<BUS_DATA_WIDTH>> i_resp_mem_data;     // Read data
     /** Interrupt line from external interrupts controller (PLIC). */
     sc_in<bool> i_ext_irq;
-    sc_out<sc_uint<64>> o_time;                         // Clock/Step counter depending define GENERATE_CORE_TRACE
+    sc_out<sc_uint<64>> o_time;                         // Clock/Step counter depending attribute "GenerateRef"
     // Debug interface
     sc_in<bool> i_dport_valid;                          // Debug access from DSU is valid
     sc_in<bool> i_dport_write;                          // Write command flag
@@ -40,10 +40,11 @@ SC_MODULE(RiverTop) {
     sc_out<sc_uint<RISCV_ARCH>> o_dport_rdata;          // Response value
 
 
-    RiverTop(sc_module_name name_, sc_trace_file *i_vcd=0,
-                                   sc_trace_file *o_vcd=0);
+    RiverTop(sc_module_name name_);
     virtual ~RiverTop();
 
+    void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
+    void generateRef(bool v) { proc0->generateRef(v); }
 private:
 
     Processor *proc0;

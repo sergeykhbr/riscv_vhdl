@@ -49,7 +49,8 @@ int RISCV_printf(void *iface, int level, const char *fmt, ...);
 
 /** Output with the maximal logging level */
 #define RISCV_error(fmt, ...) \
-    RISCV_printf(getInterface(IFACE_SERVICE), LOG_ERROR, fmt, __VA_ARGS__)
+    RISCV_printf(getInterface(IFACE_SERVICE), LOG_ERROR, "%s:%d " fmt, \
+                 __FILE__, __LINE__, __VA_ARGS__)
 
 /** Output with the information logging level */
 #define RISCV_info(fmt, ...) \
@@ -80,6 +81,7 @@ void RISCV_thread_join(thread_def th, int ms);
 void RISCV_event_create(event_def *ev, const char *name);
 void RISCV_event_close(event_def *ev);
 void RISCV_event_set(event_def *ev);
+int RISCV_event_is_set(event_def *ev);
 void RISCV_event_clear(event_def *ev);
 void RISCV_event_wait(event_def *ev);
 int RISCV_event_wait_ms(event_def *ev, int ms);

@@ -16,10 +16,10 @@
 
 namespace debugger {
 
-RtlWrapper::RtlWrapper(sc_module_name name)
-    : sc_module(name),
+RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
     o_clk("clk", 10, SC_NS) {
-
+    iparent_ = parent;
+    generate_ref_ = false;
     clockCycles_ = 1000000; // 1 MHz when default resolution = 1 ps
 
     SC_METHOD(registers);
@@ -43,10 +43,13 @@ RtlWrapper::RtlWrapper(sc_module_name name)
     w_interrupt = 0;
     v.resp_mem_data = 0;
     v.resp_mem_data_valid = false;
-    memset(&dport_, 0, sizeof(dport_));
+    RISCV_event_create(&dport_.valid, "dport_valid");
+    dport_.trans_idx_up = 0;
+    dport_.trans_idx_down = 0;
 }
 
 RtlWrapper::~RtlWrapper() {
+    RISCV_event_close(&dport_.valid);
 }
 
 void RtlWrapper::clk_gen() {
@@ -94,22 +97,7 @@ void RtlWrapper::clk_negedge_proc() {
         static_cast<IClockListener *>(cb)->stepCallback(step_cnt);
     }
 
-#if (GENERATE_CORE_TRACE == 1)
-    //if (!(step_cnt % 50000) && step_cnt != step_cnt_z) {
-    //    printf("!!!!step_cnt = %d\n", (int)step_cnt);
-    //}
-
-    /*if (step_cnt == (6000 - 1) && step_cnt != step_cnt_z) {
-        IService *uart = static_cast<IService *>(RISCV_get_service("uart0"));
-        if (uart) {
-            ISerial *iserial = static_cast<ISerial *>(
-                        uart->getInterface(IFACE_SERIAL));
-            //iserial->writeData("pnp\r\n", 5);
-            //iserial->writeData("dhry\r\n", 6);
-            iserial->writeData("highticks\r\n", 11);
-        }
-    }*/
-    if (step_cnt != step_cnt_z) {
+    if (generate_ref_ && step_cnt != step_cnt_z) {
         char msg[16];
         int msg_len = 0;
         IService *uart = NULL;
@@ -146,13 +134,10 @@ void RtlWrapper::clk_negedge_proc() {
         if (uart) {
             ISerial *iserial = static_cast<ISerial *>(
                         uart->getInterface(IFACE_SERIAL));
-            //iserial->writeData("pnp\r\n", 6);
-            //iserial->writeData("highticks\r\n", 11);
             iserial->writeData(msg, msg_len);
         }
     }
     step_cnt_z = i_time.read();
-#endif
 
     /** */
     v.interrupt = w_interrupt;
@@ -193,16 +178,23 @@ void RtlWrapper::clk_negedge_proc() {
 
     // Debug port handling:
     v.dport_valid = 0;
-    if (dport_.valid) {
-        dport_.valid = 0;
+    if (RISCV_event_is_set(&dport_.valid)) {
+        RISCV_event_clear(&dport_.valid);
         v.dport_valid = 1;
         v.dport_write = dport_.trans->write;
         v.dport_region = dport_.trans->region;
         v.dport_addr = dport_.trans->addr;
         v.dport_wdata = dport_.trans->wdata;
     }
+    dport_.idx_missmatch = 0;
     if (i_dport_ready.read()) {
-        dport_.trans->rdata = i_dport_rdata.read();
+        dport_.trans->rdata = i_dport_rdata.read().to_uint64();
+        dport_.trans_idx_down++;
+        if (dport_.trans_idx_down != dport_.trans_idx_up) {
+            dport_.idx_missmatch = 1;
+            RISCV_error("error: sync. is lost: up=%d, down=%d",
+                         dport_.trans_idx_up, dport_.trans_idx_down);
+        }
         dport_.cb->nb_response_debug_port(dport_.trans);
     }
 }
@@ -266,7 +258,8 @@ void RtlWrapper::nb_transport_debug_port(DebugPortTransactionType *trans,
                                          IDbgNbResponse *cb) {
     dport_.trans = trans;
     dport_.cb = cb;
-    dport_.valid = 1;
+    dport_.trans_idx_up++;
+    RISCV_event_set(&dport_.valid);
 }
 
 }  // namespace debugger

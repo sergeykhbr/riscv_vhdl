@@ -244,6 +244,10 @@ extern "C" void RISCV_event_set(event_def *ev) {
 #endif
 }
 
+extern "C" int RISCV_event_is_set(event_def *ev) {
+    return ev->state ? 1: 0;
+}
+
 extern "C" void RISCV_event_clear(event_def *ev) {
 #if defined(_WIN32) || defined(__CYGWIN__)
     ev->state = false;
@@ -277,10 +281,10 @@ extern "C" int RISCV_event_wait_ms(event_def *ev, int ms) {
     }
     return 0;
 #else
-    int result;
     struct timeval tc;
     struct timespec ts;
     int next_us;
+    int result = 0;
     gettimeofday(&tc, NULL);
     next_us = tc.tv_usec + 1000 * ms;
     ts.tv_sec = tc.tv_sec + (next_us / 1000000);

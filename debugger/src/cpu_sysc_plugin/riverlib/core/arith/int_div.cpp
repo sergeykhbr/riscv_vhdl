@@ -10,7 +10,7 @@
 
 namespace debugger {
 
-IntDiv::IntDiv(sc_module_name name_, sc_trace_file *vcd)
+IntDiv::IntDiv(sc_module_name name_)
     : sc_module(name_) {
     SC_METHOD(comb);
     sensitive << i_nrst;
@@ -26,51 +26,36 @@ IntDiv::IntDiv(sc_module_name name_, sc_trace_file *vcd)
 
     SC_METHOD(registers);
     sensitive << i_clk.pos();
-
-#if 0
-    vcd = sc_create_vcd_trace_file("intdiv");
-    vcd->set_time_unit(1, SC_PS);
-
-    sc_trace(vcd, i_clk, "i_clk");
-    sc_trace(vcd, i_nrst, "i_nrst");
-    sc_trace(vcd, i_ena, "i_ena");
-    sc_trace(vcd, i_unsigned, "i_unsigned");
-    sc_trace(vcd, i_rv32, "i_rv32");
-    sc_trace(vcd, i_residual, "i_residual");
-    sc_trace(vcd, i_a1, "i_a1");
-    /*sc_trace(vcd, i_a1.read()[63], "i_a1 [63]");
-    sc_trace(vcd, i_a1.read()[62], "i_a1 [62]");
-    sc_trace(vcd, i_a1.read()[61], "i_a1 [61]");
-    sc_trace(vcd, i_a1.read()[60], "i_a1 [60]");
-    sc_trace(vcd, i_a1.read()[59], "i_a1 [59]");
-    sc_trace(vcd, i_a1.read()[58], "i_a1 [58]");
-    sc_trace(vcd, i_a1.read()[57], "i_a1 [57]");
-    sc_trace(vcd, i_a1.read()[56], "i_a1 [56]");
-    sc_trace(vcd, i_a1.read()[55], "i_a1 [55]");
-    sc_trace(vcd, i_a1.read()[54], "i_a1 [54]");*/
-    sc_trace(vcd, i_a2, "i_a2");
-    //sc_trace(vcd, o_res, "o_res");
-    //sc_trace(vcd, o_valid, "o_valid");
-    //sc_trace(vcd, o_busy, "o_busy");
-#else
-    if (vcd) {
-        sc_trace(vcd, i_ena, "/top/proc0/exec0/div0/i_ena");
-        sc_trace(vcd, o_res, "/top/proc0/exec0/div0/o_res");
-        sc_trace(vcd, o_valid, "/top/proc0/exec0/div0/o_valid");
-        sc_trace(vcd, r.ena, "/top/proc0/exec0/div0/r_ena");
-        sc_trace(vcd, r.busy, "/top/proc0/exec0/div0/r_busy");
-        sc_trace(vcd, r.qr, "/top/proc0/exec0/div0/r_qr");
-        sc_trace(vcd, r.invert, "/top/proc0/exec0/div0/r_invert");
-        sc_trace(vcd, r.rv32, "/top/proc0/exec0/div0/r_rv32");
-        sc_trace(vcd, r.resid, "/top/proc0/exec0/div0/r_resid");
-        sc_trace(vcd, r.reference_div, "/top/proc0/exec0/div0/r_reference_div");
-        sc_trace(vcd, wb_qr1, "/top/proc0/exec0/div0/wb_qr1");
-        sc_trace(vcd, wb_qr2, "/top/proc0/exec0/div0/wb_qr2");
-
-    }
-#endif
 };
 
+void IntDiv::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
+#if 0
+    sc_trace_file *t_vcd = sc_create_vcd_trace_file("intdiv");
+    t_vcd->set_time_unit(1, SC_PS);
+    sc_trace(t_vcd, i_clk, "i_clk");
+    sc_trace(t_vcd, i_nrst, "i_nrst");
+    sc_trace(t_vcd, i_ena, "i_ena");
+    sc_trace(t_vcd, i_unsigned, "i_unsigned");
+    sc_trace(t_vcd, i_rv32, "i_rv32");
+    sc_trace(t_vcd, i_residual, "i_residual");
+    sc_trace(t_vcd, i_a1, "i_a1");
+    sc_trace(t_vcd, i_a2, "i_a2");
+#endif
+    if (o_vcd) {
+        sc_trace(o_vcd, i_ena, "/top/proc0/exec0/div0/i_ena");
+        sc_trace(o_vcd, o_res, "/top/proc0/exec0/div0/o_res");
+        sc_trace(o_vcd, o_valid, "/top/proc0/exec0/div0/o_valid");
+        sc_trace(o_vcd, r.ena, "/top/proc0/exec0/div0/r_ena");
+        sc_trace(o_vcd, r.busy, "/top/proc0/exec0/div0/r_busy");
+        sc_trace(o_vcd, r.qr, "/top/proc0/exec0/div0/r_qr");
+        sc_trace(o_vcd, r.invert, "/top/proc0/exec0/div0/r_invert");
+        sc_trace(o_vcd, r.rv32, "/top/proc0/exec0/div0/r_rv32");
+        sc_trace(o_vcd, r.resid, "/top/proc0/exec0/div0/r_resid");
+        sc_trace(o_vcd, r.reference_div, "/top/proc0/exec0/div0/r_reference_div");
+        sc_trace(o_vcd, wb_qr1, "/top/proc0/exec0/div0/wb_qr1");
+        sc_trace(o_vcd, wb_qr2, "/top/proc0/exec0/div0/wb_qr2");
+    }
+}
 
 void IntDiv::comb() {
     sc_uint<64> wb_a1;

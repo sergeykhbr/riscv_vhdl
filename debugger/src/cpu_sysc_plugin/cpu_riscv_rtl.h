@@ -3,6 +3,15 @@
  * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
  * @author     Sergey Khabarov - sergeykhbr@gmail.com
  * @brief      CPU synthesizable SystemC class declaration.
+ *
+ * @details    Use the following targets attributes to generate trace files:
+ *             GenerateRef - Generate memory and registers write accesses
+ *                           trace files to compare them with functional model
+ *             InVcdFile   - Stimulus VCD file
+ *             OutVcdFile  - Reference VCD file with any number of signals
+ *
+ * @note       When GenerateRef is true Core uses step counter instead 
+ *             of clock counter to generate callbacks.
  */
 
 #ifndef __DEBUGGER_CPU_RISCV_RTL_H__
@@ -54,11 +63,17 @@ protected:
     virtual void busyLoop();
 
 private:
+    void createSystemC();
+    void deleteSystemC();
 
 private:
     AttributeType bus_;
     AttributeType freqHz_;
+    AttributeType InVcdFile_;
+    AttributeType OutVcdFile_;
+    AttributeType GenerateRef_;
     event_def config_done_;
+    IBus *ibus_;
 
     sc_signal<bool> w_clk;
     sc_signal<bool> w_nrst;

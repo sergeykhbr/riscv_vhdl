@@ -11,8 +11,7 @@
 
 namespace debugger {
 
-IntMul::IntMul(sc_module_name name_, sc_trace_file *vcd)
-    : sc_module(name_) {
+IntMul::IntMul(sc_module_name name_) : sc_module(name_) {
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_ena;
@@ -27,7 +26,9 @@ IntMul::IntMul(sc_module_name name_, sc_trace_file *vcd)
 
     SC_METHOD(registers);
     sensitive << i_clk.pos();
+};
 
+void IntMul::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 #if 0
     vcd = sc_create_vcd_trace_file("intmul");
     vcd->set_time_unit(1, SC_PS);
@@ -40,19 +41,17 @@ IntMul::IntMul(sc_module_name name_, sc_trace_file *vcd)
     sc_trace(vcd, i_high, "i_high");
     sc_trace(vcd, i_a1, "i_a1");
     sc_trace(vcd, i_a2, "i_a2");
-#else
-    if (vcd) {
-        sc_trace(vcd, i_a1, "/top/proc0/exec0/mul0/i_a1");
-        sc_trace(vcd, i_a2, "/top/proc0/exec0/mul0/i_a2");
-        sc_trace(vcd, i_ena, "/top/proc0/exec0/mul0/i_ena");
-        sc_trace(vcd, o_res, "/top/proc0/exec0/mul0/o_res");
-        sc_trace(vcd, o_valid, "/top/proc0/exec0/mul0/o_valid");
-        sc_trace(vcd, o_busy, "/top/proc0/exec0/mul0/o_busy");
-        sc_trace(vcd, r.ena, "/top/proc0/exec0/mul0/r_ena");
-    }
 #endif
-};
-
+    if (o_vcd) {
+        sc_trace(o_vcd, i_a1, "/top/proc0/exec0/mul0/i_a1");
+        sc_trace(o_vcd, i_a2, "/top/proc0/exec0/mul0/i_a2");
+        sc_trace(o_vcd, i_ena, "/top/proc0/exec0/mul0/i_ena");
+        sc_trace(o_vcd, o_res, "/top/proc0/exec0/mul0/o_res");
+        sc_trace(o_vcd, o_valid, "/top/proc0/exec0/mul0/o_valid");
+        sc_trace(o_vcd, o_busy, "/top/proc0/exec0/mul0/o_busy");
+        sc_trace(o_vcd, r.ena, "/top/proc0/exec0/mul0/r_ena");
+    }
+}
 
 void IntMul::comb() {
     sc_uint<2> wb_mux_lvl0;

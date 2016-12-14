@@ -10,8 +10,7 @@
 
 namespace debugger {
 
-CsrRegs::CsrRegs(sc_module_name name_, sc_trace_file *vcd) 
-    : sc_module(name_) {
+CsrRegs::CsrRegs(sc_module_name name_) : sc_module(name_) {
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_xret;
@@ -35,22 +34,23 @@ CsrRegs::CsrRegs(sc_module_name name_, sc_trace_file *vcd)
 
     SC_METHOD(registers);
     sensitive << i_clk.pos();
-
-    if (vcd) {
-        sc_trace(vcd, i_xret, "/top/proc0/csr0/i_xret");
-        sc_trace(vcd, i_addr, "/top/proc0/csr0/i_addr");
-        sc_trace(vcd, i_wena, "/top/proc0/csr0/i_wena");
-        sc_trace(vcd, i_wdata, "/top/proc0/csr0/i_wdata");
-        sc_trace(vcd, i_trap_ena, "/top/proc0/csr0/i_trap_ena");
-        sc_trace(vcd, i_trap_code, "/top/proc0/csr0/i_trap_code");
-        sc_trace(vcd, i_trap_pc, "/top/proc0/csr0/i_trap_pc");
-        sc_trace(vcd, o_mode, "/top/proc0/csr0/o_mode");
-        sc_trace(vcd, o_ie, "/top/proc0/csr0/o_ie");
-        sc_trace(vcd, o_rdata, "/top/proc0/csr0/o_rdata");
-        sc_trace(vcd, o_mtvec, "/top/proc0/csr0/o_mtvec");
-    }
 };
 
+void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
+    if (o_vcd) {
+        sc_trace(o_vcd, i_xret, "/top/proc0/csr0/i_xret");
+        sc_trace(o_vcd, i_addr, "/top/proc0/csr0/i_addr");
+        sc_trace(o_vcd, i_wena, "/top/proc0/csr0/i_wena");
+        sc_trace(o_vcd, i_wdata, "/top/proc0/csr0/i_wdata");
+        sc_trace(o_vcd, i_trap_ena, "/top/proc0/csr0/i_trap_ena");
+        sc_trace(o_vcd, i_trap_code, "/top/proc0/csr0/i_trap_code");
+        sc_trace(o_vcd, i_trap_pc, "/top/proc0/csr0/i_trap_pc");
+        sc_trace(o_vcd, o_mode, "/top/proc0/csr0/o_mode");
+        sc_trace(o_vcd, o_ie, "/top/proc0/csr0/o_ie");
+        sc_trace(o_vcd, o_rdata, "/top/proc0/csr0/o_rdata");
+        sc_trace(o_vcd, o_mtvec, "/top/proc0/csr0/o_mtvec");
+    }
+}
 
 void CsrRegs::comb() {
     sc_uint<RISCV_ARCH> wb_rdata = 0;

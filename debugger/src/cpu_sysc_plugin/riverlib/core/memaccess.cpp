@@ -9,7 +9,7 @@
 
 namespace debugger {
 
-MemAccess::MemAccess(sc_module_name name_, sc_trace_file *vcd) 
+MemAccess::MemAccess(sc_module_name name_) 
     : sc_module(name_) {
     SC_METHOD(comb);
     sensitive << i_nrst;
@@ -34,33 +34,34 @@ MemAccess::MemAccess(sc_module_name name_, sc_trace_file *vcd)
 
     SC_METHOD(registers);
     sensitive << i_clk.pos();
-
-    if (vcd) {
-        sc_trace(vcd, i_e_valid, "/top/proc0/mem0/i_e_valid");
-        sc_trace(vcd, i_e_pc, "/top/proc0/mem0/i_e_pc");
-        sc_trace(vcd, i_e_instr, "/top/proc0/mem0/i_e_instr");
-        sc_trace(vcd, o_mem_valid, "/top/proc0/mem0/o_mem_valid");
-        sc_trace(vcd, o_mem_write, "/top/proc0/mem0/o_mem_write");
-        sc_trace(vcd, i_mem_req_ready, "/top/proc0/mem0/i_mem_req_ready");
-        sc_trace(vcd, o_mem_sz, "/top/proc0/mem0/o_mem_sz");
-        sc_trace(vcd, o_mem_addr, "/top/proc0/mem0/o_mem_addr");
-        sc_trace(vcd, o_mem_data, "/top/proc0/mem0/o_mem_data");
-        sc_trace(vcd, i_mem_data_valid, "/top/proc0/mem0/i_mem_data_valid");
-        sc_trace(vcd, i_mem_data_addr, "/top/proc0/mem0/i_mem_data_addr");
-        sc_trace(vcd, i_mem_data, "/top/proc0/mem0/i_mem_data");
-        sc_trace(vcd, o_mem_resp_ready, "/top/proc0/mem0/o_mem_resp_ready");
-
-        sc_trace(vcd, o_valid, "/top/proc0/mem0/o_valid");
-        sc_trace(vcd, o_pc, "/top/proc0/mem0/o_pc");
-        sc_trace(vcd, o_instr, "/top/proc0/mem0/o_instr");
-        sc_trace(vcd, o_wena, "/top/proc0/mem0/o_wena");
-        sc_trace(vcd, o_waddr, "/top/proc0/mem0/o_waddr");
-        sc_trace(vcd, o_wdata, "/top/proc0/mem0/o_wdata");
-        sc_trace(vcd, o_hold, "/top/proc0/mem0/o_hold");
-        sc_trace(vcd, r.wait_resp, "/top/proc0/mem0/r.wait_resp");
-    }
 };
 
+void MemAccess::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
+    if (o_vcd) {
+        sc_trace(o_vcd, i_e_valid, "/top/proc0/mem0/i_e_valid");
+        sc_trace(o_vcd, i_e_pc, "/top/proc0/mem0/i_e_pc");
+        sc_trace(o_vcd, i_e_instr, "/top/proc0/mem0/i_e_instr");
+        sc_trace(o_vcd, o_mem_valid, "/top/proc0/mem0/o_mem_valid");
+        sc_trace(o_vcd, o_mem_write, "/top/proc0/mem0/o_mem_write");
+        sc_trace(o_vcd, i_mem_req_ready, "/top/proc0/mem0/i_mem_req_ready");
+        sc_trace(o_vcd, o_mem_sz, "/top/proc0/mem0/o_mem_sz");
+        sc_trace(o_vcd, o_mem_addr, "/top/proc0/mem0/o_mem_addr");
+        sc_trace(o_vcd, o_mem_data, "/top/proc0/mem0/o_mem_data");
+        sc_trace(o_vcd, i_mem_data_valid, "/top/proc0/mem0/i_mem_data_valid");
+        sc_trace(o_vcd, i_mem_data_addr, "/top/proc0/mem0/i_mem_data_addr");
+        sc_trace(o_vcd, i_mem_data, "/top/proc0/mem0/i_mem_data");
+        sc_trace(o_vcd, o_mem_resp_ready, "/top/proc0/mem0/o_mem_resp_ready");
+
+        sc_trace(o_vcd, o_valid, "/top/proc0/mem0/o_valid");
+        sc_trace(o_vcd, o_pc, "/top/proc0/mem0/o_pc");
+        sc_trace(o_vcd, o_instr, "/top/proc0/mem0/o_instr");
+        sc_trace(o_vcd, o_wena, "/top/proc0/mem0/o_wena");
+        sc_trace(o_vcd, o_waddr, "/top/proc0/mem0/o_waddr");
+        sc_trace(o_vcd, o_wdata, "/top/proc0/mem0/o_wdata");
+        sc_trace(o_vcd, o_hold, "/top/proc0/mem0/o_hold");
+        sc_trace(o_vcd, r.wait_resp, "/top/proc0/mem0/r.wait_resp");
+    }
+}
 
 void MemAccess::comb() {
     bool w_o_mem_valid;

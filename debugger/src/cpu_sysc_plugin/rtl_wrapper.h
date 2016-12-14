@@ -13,6 +13,7 @@
 #include "coreservices/iclklistener.h"
 #include "riverlib/river_cfg.h"
 #include <systemc.h>
+#include "api_utils.h"
 
 namespace debugger {
 
@@ -67,12 +68,12 @@ public:
 
     SC_HAS_PROCESS(RtlWrapper);
 
-    RtlWrapper(sc_module_name name);
+    RtlWrapper(IFace *parent, sc_module_name name);
     virtual ~RtlWrapper();
 
 public:
+    void generateRef(bool v) { generate_ref_ = v; }
     void setBus(IBus *v) { ibus_ = v; }
-
     /** Default time resolution 1 picosecond. */
     void setClockHz(double hz);
    
@@ -84,19 +85,28 @@ public:
                                         IDbgNbResponse *cb);
 
 private:
+    IFace *getInterface(const char *name) { return iparent_; }
     uint64_t mask2offset(uint8_t mask);
     uint32_t mask2size(uint8_t mask);       // nask with removed offset
 
 private:
     IBus *ibus_;
+    IFace *iparent_;    // pointer on parent module object (used for logging)
     int clockCycles_;   // default in [ps]
     AsyncTQueueType step_queue_;
     uint64_t step_cnt_z;
+    bool generate_ref_;
+
+    sc_uint<32> t_trans_idx_up;
+    sc_uint<32> t_trans_idx_down;
 
     struct DebugPortType {
-        bool valid;
+        event_def valid;
         DebugPortTransactionType *trans;
         IDbgNbResponse *cb;
+        unsigned trans_idx_up;
+        unsigned trans_idx_down;
+        unsigned idx_missmatch;
     } dport_;
 };
 

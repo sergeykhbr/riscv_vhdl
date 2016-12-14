@@ -10,8 +10,8 @@
 
 namespace debugger {
 
-Processor::Processor(sc_module_name name_, sc_trace_file *vcd) 
-    : sc_module(name_) {
+Processor::Processor(sc_module_name name_) : sc_module(name_) {
+
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_resp_ctrl_valid;
@@ -28,12 +28,10 @@ Processor::Processor(sc_module_name name_, sc_trace_file *vcd)
     sensitive << dbg.halt;
     sensitive << dbg.core_wdata;
 
-#if (GENERATE_CORE_TRACE == 1)
     SC_METHOD(negedge_dbg_print);
     sensitive << i_clk.neg();
-#endif
 
-    fetch0 = new InstrFetch("fetch0", vcd);
+    fetch0 = new InstrFetch("fetch0");
     fetch0->i_clk(i_clk);
     fetch0->i_nrst(i_nrst);
     fetch0->i_pipeline_hold(w_fetch_pipeline_hold);
@@ -54,7 +52,7 @@ Processor::Processor(sc_module_name name_, sc_trace_file *vcd)
     fetch0->o_instr(w.f.instr);
     fetch0->o_hold(w.f.pipeline_hold);
 
-    dec0 = new InstrDecoder("dec0", vcd);
+    dec0 = new InstrDecoder("dec0");
     dec0->i_clk(i_clk);
     dec0->i_nrst(i_nrst);
     dec0->i_any_hold(w_any_pipeline_hold);
@@ -74,7 +72,7 @@ Processor::Processor(sc_module_name name_, sc_trace_file *vcd)
     dec0->o_instr_vec(w.d.instr_vec);
     dec0->o_exception(w.d.exception);
 
-    exec0 = new InstrExecute("exec0", vcd);
+    exec0 = new InstrExecute("exec0");
     exec0->i_clk(i_clk);
     exec0->i_nrst(i_nrst);
     exec0->i_pipeline_hold(w_exec_pipeline_hold);
@@ -122,7 +120,7 @@ Processor::Processor(sc_module_name name_, sc_trace_file *vcd)
     exec0->o_npc(w.e.npc);
     exec0->o_instr(w.e.instr);
 
-    mem0 = new MemAccess("mem0", vcd);
+    mem0 = new MemAccess("mem0");
     mem0->i_clk(i_clk);
     mem0->i_nrst(i_nrst);
     mem0->i_e_valid(w.e.valid);
@@ -153,7 +151,7 @@ Processor::Processor(sc_module_name name_, sc_trace_file *vcd)
     mem0->o_pc(w.m.pc);
     mem0->o_instr(w.m.instr);
 
-    predic0 = new BranchPredictor("predic0", vcd);
+    predic0 = new BranchPredictor("predic0");
     predic0->i_clk(i_clk);
     predic0->i_nrst(i_nrst);
     predic0->i_hold(w_any_pipeline_hold);
@@ -167,7 +165,7 @@ Processor::Processor(sc_module_name name_, sc_trace_file *vcd)
     predic0->o_npc_predict(wb_npc_predict);
 
 
-    iregs0 = new RegIntBank("iregs0", vcd);
+    iregs0 = new RegIntBank("iregs0");
     iregs0->i_clk(i_clk);
     iregs0->i_nrst(i_nrst);
     iregs0->i_radr1(w.e.radr1);
@@ -185,7 +183,7 @@ Processor::Processor(sc_module_name name_, sc_trace_file *vcd)
 
     iregs0->o_ra(ireg.ra);   // Return address
 
-    csr0 = new CsrRegs("csr0", vcd);
+    csr0 = new CsrRegs("csr0");
     csr0->i_clk(i_clk);
     csr0->i_nrst(i_nrst);
     csr0->i_xret(w.e.xret);
@@ -200,7 +198,7 @@ Processor::Processor(sc_module_name name_, sc_trace_file *vcd)
     csr0->o_mode(csr.mode);
     csr0->o_mtvec(csr.mtvec);
 
-    dbg0 = new DbgPort("dbg0", vcd);
+    dbg0 = new DbgPort("dbg0");
     dbg0->i_clk(i_clk);
     dbg0->i_nrst(i_nrst);
     dbg0->i_dport_valid(i_dport_valid);
@@ -221,22 +219,14 @@ Processor::Processor(sc_module_name name_, sc_trace_file *vcd)
     dbg0->i_ireg_rdata(ireg.dport_rdata);
     dbg0->i_pc(w.e.pc);
     dbg0->i_npc(w.e.npc);
-    dbg0->i_e_valid(w_e_valid);
+    dbg0->i_e_valid(w.e.valid);
+    dbg0->i_m_valid(w.m.valid);
     dbg0->o_clock_cnt(dbg.clock_cnt);
     dbg0->o_executed_cnt(dbg.executed_cnt);
     dbg0->o_halt(dbg.halt);
 
-
-    if (vcd) {
-        sc_trace(vcd, dbg.clock_cnt, "top/dbg_clock_cnt");
-        sc_trace(vcd, dbg.executed_cnt, "top/dbg_executed_cnt");
-    }
-
-#if (GENERATE_CORE_TRACE == 1)
-    reg_dbg = new ofstream("river_sysc_regs.log");
-    mem_dbg = new ofstream("river_sysc_mem.log");
-    mem_dbg_write_flag = false;
-#endif
+    reg_dbg = 0;
+    mem_dbg = 0;
 };
 
 Processor::~Processor() {
@@ -248,13 +238,31 @@ Processor::~Processor() {
     delete iregs0;
     delete csr0;
     delete dbg0;
-#if (GENERATE_CORE_TRACE == 1)
-    reg_dbg->close();
-    mem_dbg->close();
-    delete reg_dbg;
-    delete mem_dbg;
-#endif
+    if (reg_dbg) {
+        reg_dbg->close();
+        delete reg_dbg;
+    }
+    if (mem_dbg) {
+        mem_dbg->close();
+        delete mem_dbg;
+    }
 }
+
+void Processor::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
+    if (o_vcd) {
+        sc_trace(o_vcd, dbg.clock_cnt, "top/dbg_clock_cnt");
+        sc_trace(o_vcd, dbg.executed_cnt, "top/dbg_executed_cnt");
+    }
+    predic0->generateVCD(i_vcd, o_vcd);
+    csr0->generateVCD(i_vcd, o_vcd);
+    dbg0->generateVCD(i_vcd, o_vcd);
+    dec0->generateVCD(i_vcd, o_vcd);
+    exec0->generateVCD(i_vcd, o_vcd);
+    fetch0->generateVCD(i_vcd, o_vcd);
+    mem0->generateVCD(i_vcd, o_vcd);
+    iregs0->generateVCD(i_vcd, o_vcd);
+}
+
 
 void Processor::comb() {
 
@@ -263,26 +271,34 @@ void Processor::comb() {
                         | w.m.pipeline_hold | dbg.halt;
     w_exec_pipeline_hold = w.f.pipeline_hold | w.m.pipeline_hold | dbg.halt;
 
-    w_e_valid = w.e.valid & !(w.f.pipeline_hold | w.e.pipeline_hold 
-                        | w.m.pipeline_hold);
     wb_ireg_dport_addr = dbg.core_addr.read()(4, 0);
     wb_exec_dport_npc = dbg.core_wdata.read()(BUS_ADDR_WIDTH-1, 0);
 
     o_req_ctrl_valid = w.f.imem_req_valid;
     o_req_ctrl_addr = w.f.imem_req_addr;
-#if GENERATE_CORE_TRACE == 1
-    o_time = dbg.executed_cnt;
-#else
-    o_time = dbg.clock_cnt;
-#endif
+    if (generate_ref_) {
+        o_time = dbg.executed_cnt;
+    } else {
+        o_time = dbg.clock_cnt;
+    }
 }
 
+void Processor::generateRef(bool v) {
+    generate_ref_ = v;
+    if (generate_ref_) {
+        reg_dbg = new ofstream("river_sysc_regs.log");
+        mem_dbg = new ofstream("river_sysc_mem.log");
+        mem_dbg_write_flag = false;
+    }
+}
 
-#if (GENERATE_CORE_TRACE == 1)
 void Processor::negedge_dbg_print() {
+    if (!generate_ref_) {
+        return;
+    }
     int sz;
     if (w.m.valid.read()) {
-        uint64_t line_cnt = w.m.step_cnt.read() + 1;
+        uint64_t line_cnt = dbg.executed_cnt.read() + 1;
         sz = RISCV_sprintf(tstr, sizeof(tstr), "%8" RV_PRI64 "d [%08x] %08x: ",
             line_cnt,
             w.m.pc.read().to_int(),
@@ -330,7 +346,6 @@ void Processor::negedge_dbg_print() {
         }
     }
 }
-#endif
 
 
 }  // namespace debugger

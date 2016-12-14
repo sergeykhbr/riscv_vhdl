@@ -40,7 +40,9 @@ SC_MODULE(ICache) {
 
     SC_HAS_PROCESS(ICache);
 
-    ICache(sc_module_name name_, sc_trace_file *vcd=0);
+    ICache(sc_module_name name_);
+
+    void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
 private:
     enum EState {

@@ -33,6 +33,7 @@ EXPORTS
 	RISCV_event_create
 	RISCV_event_close
 	RISCV_event_set
+	RISCV_event_is_set
 	RISCV_event_clear
 	RISCV_event_wait
 	RISCV_event_wait_ms

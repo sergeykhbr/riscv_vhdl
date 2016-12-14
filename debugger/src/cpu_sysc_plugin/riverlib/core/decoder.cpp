@@ -9,8 +9,7 @@
 
 namespace debugger {
 
-InstrDecoder::InstrDecoder(sc_module_name name_, sc_trace_file *vcd) 
-    : sc_module(name_) {
+InstrDecoder::InstrDecoder(sc_module_name name_) : sc_module(name_) {
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_any_hold;
@@ -25,18 +24,19 @@ InstrDecoder::InstrDecoder(sc_module_name name_, sc_trace_file *vcd)
 
     SC_METHOD(registers);
     sensitive << i_clk.pos();
-
-    if (vcd) {
-        sc_trace(vcd, i_any_hold, "/top/proc0/dec0/i_any_hold");
-        sc_trace(vcd, o_valid, "/top/proc0/dec0/o_valid");
-        sc_trace(vcd, o_pc, "/top/proc0/dec0/o_pc");
-        sc_trace(vcd, o_instr, "/top/proc0/dec0/o_instr");
-        sc_trace(vcd, o_isa_type, "/top/proc0/dec0/o_isa_type");
-        sc_trace(vcd, o_instr_vec, "/top/proc0/dec0/o_instr_vec");
-        sc_trace(vcd, o_exception, "/top/proc0/dec0/o_exception");
-    }
 };
 
+void InstrDecoder::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
+    if (o_vcd) {
+        sc_trace(o_vcd, i_any_hold, "/top/proc0/dec0/i_any_hold");
+        sc_trace(o_vcd, o_valid, "/top/proc0/dec0/o_valid");
+        sc_trace(o_vcd, o_pc, "/top/proc0/dec0/o_pc");
+        sc_trace(o_vcd, o_instr, "/top/proc0/dec0/o_instr");
+        sc_trace(o_vcd, o_isa_type, "/top/proc0/dec0/o_isa_type");
+        sc_trace(o_vcd, o_instr_vec, "/top/proc0/dec0/o_instr_vec");
+        sc_trace(o_vcd, o_exception, "/top/proc0/dec0/o_exception");
+    }
+}
 
 void InstrDecoder::comb() {
     v = r;

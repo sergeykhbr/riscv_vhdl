@@ -9,8 +9,7 @@
 
 namespace debugger {
 
-RegIntBank::RegIntBank(sc_module_name name_, sc_trace_file *vcd) 
-    : sc_module(name_) {
+RegIntBank::RegIntBank(sc_module_name name_) : sc_module(name_) {
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_radr1;
@@ -26,18 +25,19 @@ RegIntBank::RegIntBank(sc_module_name name_, sc_trace_file *vcd)
 
     SC_METHOD(registers);
     sensitive << i_clk.pos();
-
-    if (vcd) {
-        sc_trace(vcd, i_wena, "/top/proc0/regs/i_wena");
-        sc_trace(vcd, i_waddr, "/top/proc0/regs/i_waddr");
-        sc_trace(vcd, i_wdata, "/top/proc0/regs/i_wdata");
-        sc_trace(vcd, r.mem[5], "/top/proc0/regs/r4");
-        sc_trace(vcd, o_rdata1, "/top/proc0/regs/o_rdata1");
-        sc_trace(vcd, o_rdata2, "/top/proc0/regs/o_rdata2");
-        sc_trace(vcd, o_dport_rdata, "/top/proc0/regs/o_dport_rdata");
-    }
 };
 
+void RegIntBank::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
+    if (o_vcd) {
+        sc_trace(o_vcd, i_wena, "/top/proc0/regs/i_wena");
+        sc_trace(o_vcd, i_waddr, "/top/proc0/regs/i_waddr");
+        sc_trace(o_vcd, i_wdata, "/top/proc0/regs/i_wdata");
+        sc_trace(o_vcd, r.mem[5], "/top/proc0/regs/r4");
+        sc_trace(o_vcd, o_rdata1, "/top/proc0/regs/o_rdata1");
+        sc_trace(o_vcd, o_rdata2, "/top/proc0/regs/o_rdata2");
+        sc_trace(o_vcd, o_dport_rdata, "/top/proc0/regs/o_dport_rdata");
+    }
+}
 
 void RegIntBank::comb() {
     v = r;

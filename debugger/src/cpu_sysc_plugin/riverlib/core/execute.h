@@ -72,8 +72,10 @@ SC_MODULE(InstrExecute) {
 
     SC_HAS_PROCESS(InstrExecute);
 
-    InstrExecute(sc_module_name name_, sc_trace_file *vcd=0);
+    InstrExecute(sc_module_name name_);
     virtual ~InstrExecute();
+
+    void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
 private:
     enum EMultiCycleInstruction {

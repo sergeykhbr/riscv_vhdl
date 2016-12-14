@@ -10,8 +10,7 @@
 
 namespace debugger {
 
-DbgPort::DbgPort(sc_module_name name_, sc_trace_file *vcd)
-    : sc_module(name_) {
+DbgPort::DbgPort(sc_module_name name_) : sc_module(name_) {
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_dport_valid;
@@ -21,6 +20,10 @@ DbgPort::DbgPort(sc_module_name name_, sc_trace_file *vcd)
     sensitive << i_dport_wdata;
     sensitive << i_ireg_rdata;
     sensitive << i_csr_rdata;
+    sensitive << i_pc;
+    sensitive << i_npc;
+    sensitive << i_e_valid;
+    sensitive << i_m_valid;
     sensitive << r.ready;
     sensitive << r.rdata;
     sensitive << r.halt;
@@ -31,12 +34,31 @@ DbgPort::DbgPort(sc_module_name name_, sc_trace_file *vcd)
 
     SC_METHOD(registers);
     sensitive << i_clk.pos();
-
-    if (vcd) {
-        //sc_trace(vcd, i_hold, "/top/proc0/bp0/i_hold");
-    }
 };
 
+void DbgPort::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
+    if (o_vcd) {
+        sc_trace(o_vcd, i_dport_valid, "/top/proc0/dbg0/i_dport_valid");
+        sc_trace(o_vcd, i_dport_write, "/top/proc0/dbg0/i_dport_write");
+        sc_trace(o_vcd, i_dport_region, "/top/proc0/dbg0/i_dport_region");
+        sc_trace(o_vcd, i_dport_addr, "/top/proc0/dbg0/i_dport_addr");
+        sc_trace(o_vcd, i_dport_wdata, "/top/proc0/dbg0/i_dport_wdata");
+        sc_trace(o_vcd, o_dport_ready, "/top/proc0/dbg0/o_dport_ready");
+        sc_trace(o_vcd, o_dport_rdata, "/top/proc0/dbg0/o_dport_rdata");
+        sc_trace(o_vcd, i_e_valid, "/top/proc0/dbg0/i_e_valid");
+        sc_trace(o_vcd, i_m_valid, "/top/proc0/dbg0/i_m_valid");
+
+        sc_trace(o_vcd, o_halt, "/top/proc0/dbg0/o_halt");
+        sc_trace(o_vcd, o_core_addr, "/top/proc0/dbg0/o_core_addr");
+        sc_trace(o_vcd, o_core_wdata, "/top/proc0/dbg0/o_core_wdata");
+        sc_trace(o_vcd, o_ireg_ena, "/top/proc0/dbg0/o_ireg_ena");
+        sc_trace(o_vcd, o_npc_write, "/top/proc0/dbg0/o_npc_write");
+        sc_trace(o_vcd, o_ireg_write, "/top/proc0/dbg0/o_ireg_write");
+        sc_trace(o_vcd, r.clock_cnt, "/top/proc0/dbg0/r_clock_cnt");
+        sc_trace(o_vcd, r.stepping_mode_cnt, "/top/proc0/dbg0/r_stepping_mode_cnt");
+        sc_trace(o_vcd, r.stepping_mode, "/top/proc0/dbg0/r_stepping_mode");
+    }
+}
 
 void DbgPort::comb() {
     sc_uint<12> wb_o_core_addr;
@@ -48,6 +70,7 @@ void DbgPort::comb() {
     bool w_o_ireg_ena;
     bool w_o_ireg_write;
     bool w_o_npc_write;
+    bool w_cur_halt;
 
 
     v = r;
@@ -63,19 +86,23 @@ void DbgPort::comb() {
     w_o_npc_write = 0;
 
     v.ready = i_dport_valid.read();
+
+    w_cur_halt = 0;
     if (i_e_valid.read()) {
         if (r.stepping_mode_cnt.read() != 0) {
             v.stepping_mode_cnt = r.stepping_mode_cnt.read() - 1;
-        }
-        if (v.stepping_mode_cnt.read() == 0) {
-            v.halt = r.stepping_mode;
+            if (r.stepping_mode_cnt.read() == 1) {
+                v.halt = 1;
+                w_cur_halt = 1;
+                v.stepping_mode = 0;
+            }
         }
     }
 
     if (r.halt == 0) {
         v.clock_cnt = r.clock_cnt.read() + 1;
     }
-    if (i_e_valid.read()) {
+    if (i_m_valid.read()) {
         v.executed_cnt = r.executed_cnt.read() + 1;
     }
 
@@ -117,7 +144,9 @@ void DbgPort::comb() {
                 if (i_dport_write.read()) {
                     v.halt = i_dport_wdata.read()[0];
                     v.stepping_mode = i_dport_wdata.read()[1];
-                    v.stepping_mode_cnt = r.stepping_mode_steps;
+                    if (i_dport_wdata.read()[1]) {
+                        v.stepping_mode_cnt = r.stepping_mode_steps;
+                    }
                 }
                 break;
             case 1:
@@ -166,7 +195,7 @@ void DbgPort::comb() {
     o_npc_write = w_o_npc_write;
     o_clock_cnt = r.clock_cnt;
     o_executed_cnt = r.executed_cnt;
-    o_halt = r.halt;
+    o_halt = r.halt | w_cur_halt;
 
     o_dport_ready = r.ready;
     o_dport_rdata = r.rdata;
