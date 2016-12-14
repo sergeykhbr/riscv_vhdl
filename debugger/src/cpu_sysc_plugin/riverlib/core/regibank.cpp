@@ -44,7 +44,9 @@ void RegIntBank::comb() {
 
     /** Debug port has higher priority. Collision must be controlled by SW */
     if (i_dport_ena.read() && i_dport_write.read()) {
-        v.mem[i_dport_addr.read()] = i_dport_wdata;
+        if (i_dport_addr.read() != 0) {
+            v.mem[i_dport_addr.read()] = i_dport_wdata;
+        }
     } else if (i_wena.read()) {
         if (i_waddr.read() != 0) {
             v.mem[i_waddr.read()] = i_wdata;

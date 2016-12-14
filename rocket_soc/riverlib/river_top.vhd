@@ -29,19 +29,20 @@ entity RiverTop is
     i_resp_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0); -- Read data
     -- Interrupt line from external interrupts controller (PLIC).
     i_ext_irq : in std_logic;
+    o_time : out std_logic_vector(63 downto 0);                       -- Timer. Clock counter except halt state.
     -- Debug interface:
-    o_timer : out std_logic_vector(RISCV_ARCH-1 downto 0);            -- Timer.
-    o_step_cnt : out std_logic_vector(63 downto 0)                 -- Number of valid executed instructions
+    i_dport_valid : in std_logic;                                     -- Debug access from DSU is valid
+    i_dport_write : in std_logic;                                     -- Write command flag
+    i_dport_region : in std_logic_vector(1 downto 0);                 -- Registers region ID: 0=CSR; 1=IREGS; 2=Control
+    i_dport_addr : in std_logic_vector(11 downto 0);                  -- Register idx
+    i_dport_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0);       -- Write value
+    o_dport_ready : out std_logic;                                    -- Response is ready
+    o_dport_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0)       -- Response value
   );
 end;
  
 architecture arch_RiverTop of RiverTop is
 
-  type RegistersType is record
-      timer : std_logic_vector(RISCV_ARCH-1 downto 0);
-  end record;
-
-  signal r, rin : RegistersType;
   -- Control path:
   signal w_req_ctrl_ready : std_logic;
   signal w_req_ctrl_valid : std_logic;
@@ -85,7 +86,14 @@ begin
         i_resp_data_data => wb_resp_data_data,
         o_resp_data_ready => w_resp_data_ready,
         i_ext_irq => i_ext_irq,
-        o_step_cnt => o_step_cnt);
+        o_time => o_time,
+        i_dport_valid => i_dport_valid,
+        i_dport_write => i_dport_write,
+        i_dport_region => i_dport_region,
+        i_dport_addr => i_dport_addr,
+        i_dport_wdata => i_dport_wdata,
+        o_dport_ready => o_dport_ready,
+        o_dport_rdata => o_dport_rdata);
 
     cache0 :  CacheTop port map (
         i_clk => i_clk,
@@ -115,27 +123,5 @@ begin
         o_req_mem_data => o_req_mem_data,
         i_resp_mem_data_valid => i_resp_mem_data_valid,
         i_resp_mem_data => i_resp_mem_data);
-
-  comb : process(i_nrst, r)
-    variable v : RegistersType;
-  begin
-
-    v.timer := r.timer + 1;
-    if i_nrst = '0' then
-        v.timer := (others => '0');
-    end if;
-
-    rin <= v;
-  end process;
-
-  o_timer <= r.timer;
-
-  -- registers:
-  regs : process(i_clk)
-  begin 
-     if rising_edge(i_clk) then 
-        r <= rin;
-     end if; 
-  end process;
 
 end;

@@ -174,6 +174,8 @@ architecture arch_riscv_soc of riscv_soc is
   signal slv_cfg : nasti_slave_cfg_vector;
   signal mst_cfg : nasti_master_cfg_vector;
   signal core_irqs : std_logic_vector(CFG_CORE_IRQ_TOTAL-1 downto 0);
+  signal dport_i : dport_in_type;
+  signal dport_o : dport_out_type;
   
   signal gnss_i : gns_in_type;
   signal gnss_o : gns_out_type;
@@ -253,6 +255,12 @@ begin
     o_miss_cnt => open,
     o_miss_addr => open
   );
+
+dport_i.valid <= '0';
+dport_i.write <= '0';
+dport_i.region <= (others => '0');
+dport_i.addr <= (others => '0');
+dport_i.wdata <= (others => '0');
   
   --! @brief RISC-V Processor core (River or Rocket).
 river_ena : if CFG_COMMON_RIVER_CPU_ENABLE generate
@@ -264,6 +272,8 @@ river_ena : if CFG_COMMON_RIVER_CPU_ENABLE generate
     i_msti   => aximi(CFG_NASTI_MASTER_CACHED),
     o_msto   => aximo(CFG_NASTI_MASTER_CACHED),
     o_mstcfg => mst_cfg(CFG_NASTI_MASTER_CACHED),
+    i_dport => dport_i,
+    o_dport => dport_o,
     i_ext_irq => core_irqs(CFG_CORE_IRQ_MEIP)
   );
   aximo(CFG_NASTI_MASTER_UNCACHED) <= nasti_master_out_none;

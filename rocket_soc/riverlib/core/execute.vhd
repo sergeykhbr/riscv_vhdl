@@ -38,6 +38,8 @@ entity InstrExecute is
     i_mode : in std_logic_vector(1 downto 0);                   -- Current processor mode
     i_unsup_exception : in std_logic;                           -- Unsupported instruction exception
     i_ext_irq : in std_logic;                                   -- External interrupt from PLIC (todo: timer & software interrupts)
+    i_dport_npc_write : in std_logic;                           -- Write npc value from debug port
+    i_dport_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- Debug port npc value to write
 
     o_radr1 : out std_logic_vector(4 downto 0);                 -- Integer register index 1
     i_rdata1 : in std_logic_vector(RISCV_ARCH-1 downto 0);      -- Integer register value 1
@@ -184,8 +186,8 @@ begin
   comb : process(i_nrst, i_pipeline_hold, i_d_valid, i_d_pc, i_d_instr,
                  i_wb_done, i_memop_load, i_memop_store, i_memop_sign_ext,
                  i_memop_size, i_unsigned_op, i_rv32, i_isa_type, i_ivec,
-                 i_rdata1, i_rdata2, i_csr_rdata, i_ext_irq, i_mtvec,
-					  i_ie, i_unsup_exception,
+                 i_rdata1, i_rdata2, i_csr_rdata, i_ext_irq, i_dport_npc_write,
+                 i_dport_npc, i_mtvec, i_ie, i_unsup_exception,
                  wb_arith_res, w_arith_valid, w_arith_busy,
                  w_hazard_detected, r)
     variable v : RegistersType;
@@ -570,7 +572,9 @@ begin
 
 
     v.trap_ena := '0';
-    if w_interrupt = '1' then
+    if i_dport_npc_write = '1' then
+        v.npc := i_dport_npc;
+    elsif w_interrupt = '1' then
         v.trap_ena := '1';
         v.trap_pc := i_d_pc;
         v.trap_code := r.trap_code_waiting;

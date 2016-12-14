@@ -17,6 +17,8 @@ use ambalib.types_amba4.all;
 library riverlib;
 --! RIVER CPU configuration constants.
 use riverlib.river_cfg.all;
+--! River top level with AMBA interface module declaration
+use riverlib.types_river.all;
 
 entity river_amba is 
 generic (
@@ -28,6 +30,8 @@ port (
     i_msti   : in nasti_master_in_type;
     o_msto   : out nasti_master_out_type;
     o_mstcfg : out nasti_master_config_type;
+    i_dport  : in dport_in_type;
+    o_dport  : out dport_out_type;
     i_ext_irq : in std_logic
 );
 end;
@@ -69,9 +73,14 @@ begin
       i_resp_mem_data_valid => w_resp_mem_data_valid,
       i_resp_mem_data => i_msti.r_data,
       i_ext_irq => i_ext_irq,
-      o_timer => open,
-      o_step_cnt => open
-  );
+      o_time => open,
+      i_dport_valid => i_dport.valid,
+      i_dport_write => i_dport.write,
+      i_dport_region => i_dport.region,
+      i_dport_addr => i_dport.addr,
+      i_dport_wdata => i_dport.wdata,
+      o_dport_ready => o_dport.ready,
+      o_dport_rdata => o_dport.rdata);
 
   comb : process(i_nrst, w_req_mem_valid, w_req_mem_write, wb_req_mem_addr,
                  wb_req_mem_strob, wb_req_mem_data, i_msti, r)

@@ -49,8 +49,7 @@ entity MemAccess is
     o_hold : out std_logic;                                           -- Memory operation is more than 1 clock
     o_valid : out std_logic;                                          -- Output is valid
     o_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);           -- Valid instruction pointer
-    o_instr : out std_logic_vector(31 downto 0);                      -- Valid instruction value
-    o_step_cnt : out std_logic_vector(63 downto 0)                    -- Number of valid executed instructions
+    o_instr : out std_logic_vector(31 downto 0)                       -- Valid instruction value
   );
 end; 
  
@@ -66,7 +65,6 @@ architecture arch_MemAccess of MemAccess is
       sign_ext : std_logic;
       size : std_logic_vector(1 downto 0);
       wdata : std_logic_vector(RISCV_ARCH-1 downto 0);
-      step_cnt : std_logic_vector(63 downto 0);
       wait_req : std_logic;
       wait_req_write : std_logic;
       wait_req_sz : std_logic_vector(1 downto 0);
@@ -193,11 +191,6 @@ begin
     w_o_valid := r.valid or w_mem_fire;
     w_o_wena := r.wena and w_o_valid;
 
-    if w_o_valid = '1' then
-        v.step_cnt := r.step_cnt + 1;
-    end if;
-
-
     if i_nrst = '0' then
         v.valid := '0';
         v.pc := (others => '0');
@@ -207,7 +200,6 @@ begin
         v.wena := '0';
         v.size := (others => '0');
         v.sign_ext := '0';
-        v.step_cnt := (others => '0');
         v.wait_req := '0';
         v.wait_req_write := '0';
         v.wait_req_sz := (others => '0');
@@ -230,7 +222,6 @@ begin
     o_valid <= w_o_valid;
     o_pc <= r.pc;
     o_instr <= r.instr;
-    o_step_cnt <= r.step_cnt;
     o_hold <= w_o_hold;
     
     rin <= v;

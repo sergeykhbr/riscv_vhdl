@@ -15,9 +15,26 @@ use commonlib.types_common.all;
 library ambalib;
 --! AXI4 configuration constants.
 use ambalib.types_amba4.all;
+--! RIVER CPU specific library.
+library riverlib;
+--! RIVER CPU configuration constants.
+use riverlib.river_cfg.all;
 
 --! @brief   Declaration of components visible on SoC top level.
 package types_river is
+
+type dport_in_type is record
+    valid : std_logic;
+    write : std_logic;
+    region : std_logic_vector(1 downto 0);
+    addr : std_logic_vector(11 downto 0);
+    wdata : std_logic_vector(RISCV_ARCH-1 downto 0);
+end record;
+
+type dport_out_type is record
+    ready : std_logic;
+    rdata : std_logic_vector(RISCV_ARCH-1 downto 0);
+end record;
 
 --! @brief   RIVER CPU component declaration.
 --! @details This module implements Risc-V CPU Core named as
@@ -38,6 +55,8 @@ port (
     i_msti   : in nasti_master_in_type;
     o_msto   : out nasti_master_out_type;
     o_mstcfg : out nasti_master_config_type;
+    i_dport  : in dport_in_type;
+    o_dport  : out dport_out_type;
     i_ext_irq : in std_logic
 );
 end component;

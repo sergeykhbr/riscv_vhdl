@@ -380,8 +380,10 @@ package river_cfg is
   --! @param[in] i_ie Interrupt enable bit
   --! @param[in] i_mtvec Interrupt descriptor table
   --! @param[in] i_mode Current processor mode
-  --! @param[in] i_unsup_exception Unsupported instruction exception
-  --! @param[in] i_ext_irq External interrupt from PLIC (todo: timer & software interrupts)
+  --! @param[in] i_unsup_exception   Unsupported instruction exception
+  --! @param[in] i_ext_irq           External interrupt from PLIC (todo: timer & software interrupts)
+  --! @param[in] i_dport_npc_write   Write npc value from debug port
+  --! @param[in] i_dport_npc         Debug port npc value to write
   --! @param[out] o_radr1 Integer register index 1
   --! @param[in] i_rdata1 Integer register value 1
   --! @param[out] o_radr2 Integer register index 2
@@ -428,6 +430,8 @@ package river_cfg is
     i_mode : in std_logic_vector(1 downto 0);
     i_unsup_exception : in std_logic;
     i_ext_irq : in std_logic;
+    i_dport_npc_write : in std_logic;
+    i_dport_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     o_radr1 : out std_logic_vector(4 downto 0);
     i_rdata1 : in std_logic_vector(RISCV_ARCH-1 downto 0);
     o_radr2 : out std_logic_vector(4 downto 0);
@@ -529,7 +533,6 @@ package river_cfg is
   --! @param[out] o_valid Output is valid
   --! @param[out] o_pc Valid instruction pointer
   --! @param[out] o_instr Valid instruction value
-  --! @param[out] o_step_cnt Number of valid executed instructions
   component MemAccess is
   port (
     i_clk  : in std_logic;
@@ -560,8 +563,7 @@ package river_cfg is
     o_hold : out std_logic;
     o_valid : out std_logic;
     o_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    o_instr : out std_logic_vector(31 downto 0);
-    o_step_cnt : out std_logic_vector(63 downto 0)
+    o_instr : out std_logic_vector(31 downto 0)
   );
   end component; 
 
@@ -574,7 +576,12 @@ package river_cfg is
   --! @param[in] i_waddr Writing value
   --! @param[in] i_wena Writing is enabled
   --! @param[in] i_wdata Writing value
-  --! @param[out] o_ra Return address for branch predictor
+  --! @param[in] i_dport_addr    Debug port address
+  --! @param[in] i_dport_ena     Debug port is enabled
+  --! @param[in] i_dport_write   Debug port write is enabled
+  --! @param[in] i_dport_wdata   Debug port write value
+  --! @param[out] o_dport_rdata  Debug port read value
+  --! @param[out] o_ra           Return address for branch predictor
   component RegIntBank is
   port (
     i_clk : in std_logic;
@@ -586,7 +593,67 @@ package river_cfg is
     i_waddr : in std_logic_vector(4 downto 0);
     i_wena : in std_logic;
     i_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0);
+    i_dport_addr : in std_logic_vector(4 downto 0);
+    i_dport_ena : in std_logic;
+    i_dport_write : in std_logic;
+    i_dport_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0);
+    o_dport_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0);
     o_ra : out std_logic_vector(RISCV_ARCH-1 downto 0)
+  );
+  end component; 
+
+  --! @param[in] i_clk            CPU clock
+  --! @param[in] i_nrst           Reset. Active LOW.
+  --! @param[in] i_dport_valid    Debug access from DSU is valid
+  --! @param[in] i_dport_write    Write command flag
+  --! @param[in] i_dport_region   Registers region ID: 0=CSR; 1=IREGS; 2=Control
+  --! @param[in] i_dport_addr     Register idx
+  --! @param[in] i_dport_wdata    Write value
+  --! @param[out] o_dport_ready   Response is ready
+  --! @param[out] o_dport_rdata   Response value
+  --! @param[out] o_core_addr     Address of the sub-region register
+  --! @param[out] o_core_wdata    Write data
+  --! @param[out] o_csr_ena       Region 0: Access to CSR bank is enabled.
+  --! @param[out] o_csr_write     Region 0: CSR write enable
+  --! @param[in] i_csr_rdata      Region 0: CSR read value
+  --! @param[out] o_ireg_ena      Region 1: Access to integer register bank is enabled
+  --! @param[out] o_ireg_write    Region 1: Integer registers bank write pulse
+  --! @param[out] o_npc_write     Region 1: npc write enable
+  --! @param[in] i_ireg_rdata     Region 1: Integer register read value
+  --! @param[in] i_pc             Region 1: Instruction pointer
+  --! @param[in] i_npc            Region 1: Next Instruction pointer
+  --! @param[in] i_e_valid        Stepping control signal
+  --! @param[in] i_m_valid        To compute number of valid executed instruction
+  --! @param[out] o_clock_cnt     Number of clocks excluding halt state
+  --! @param[out] o_executed_cnt  Number of executed instructions
+  --! @param[out] o_halt          Halt signal is equal to hold pipeline
+  component DbgPort
+  is port (
+    i_clk : in std_logic;
+    i_nrst : in std_logic;
+    i_dport_valid : in std_logic;
+    i_dport_write : in std_logic;
+    i_dport_region : in std_logic_vector(1 downto 0);
+    i_dport_addr : in std_logic_vector(11 downto 0);
+    i_dport_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0);
+    o_dport_ready : out std_logic;
+    o_dport_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0);
+    o_core_addr : out std_logic_vector(11 downto 0);
+    o_core_wdata : out std_logic_vector(RISCV_ARCH-1 downto 0);
+    o_csr_ena : out std_logic;
+    o_csr_write : out std_logic;
+    i_csr_rdata : in std_logic_vector(RISCV_ARCH-1 downto 0);
+    o_ireg_ena : out std_logic;
+    o_ireg_write : out std_logic;
+    o_npc_write : out std_logic;
+    i_ireg_rdata : in std_logic_vector(RISCV_ARCH-1 downto 0);
+    i_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_e_valid : in std_logic;
+    i_m_valid : in std_logic;
+    o_clock_cnt : out std_logic_vector(63 downto 0);
+    o_executed_cnt : out std_logic_vector(63 downto 0);
+    o_halt : out std_logic
   );
   end component; 
 
@@ -611,7 +678,14 @@ package river_cfg is
   --! @param[in] i_resp_data_data  Read value
   --! @param[out] o_resp_data_ready Response drom DCache is accepted
   --! @param[in] i_ext_irq         PLIC interrupt accordingly with spec
-  --! @param[out] o_step_cnt       Number of valid executed instructions
+  --! @param[out] o_time           Timer in clock except halt state
+  --! @param[in] i_dport_valid     Debug access from DSU is valid
+  --! @param[in] i_dport_write     Write command flag
+  --! @param[in] i_dport_region    Registers region ID: 0=CSR; 1=IREGS; 2=Control
+  --! @param[in] i_dport_addr      Register idx
+  --! @param[in] i_dport_wdata     Write value
+  --! @param[out] o_dport_ready    Response is ready
+  --! @param[out] o_dport_rdata    Response value
   component Processor is
   port (
     i_clk : in std_logic;
@@ -634,7 +708,14 @@ package river_cfg is
     i_resp_data_data : in std_logic_vector(RISCV_ARCH-1 downto 0);
     o_resp_data_ready : out std_logic;
     i_ext_irq : in std_logic;
-    o_step_cnt : out std_logic_vector(63 downto 0)
+    o_time : out std_logic_vector(63 downto 0);
+    i_dport_valid : in std_logic;
+    i_dport_write : in std_logic;
+    i_dport_region : in std_logic_vector(1 downto 0);
+    i_dport_addr : in std_logic_vector(11 downto 0);
+    i_dport_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0);
+    o_dport_ready : out std_logic;
+    o_dport_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0)
   );
   end component; 
 
@@ -711,8 +792,14 @@ package river_cfg is
   --! @param[in] i_resp_mem_data_valid AXI response is valid
   --! @param[in] i_resp_mem_data       Read data
   --! @param[in] i_ext_irq             Interrupt line from external interrupts controller (PLIC).
-  --! @param[out] o_timer              Timer
-  --! @param[out] o_step_cnt           Number of valid executed instructions
+  --! @param[out] o_time               Timer. Clock counter except halt state.
+  --! @param[in] i_dport_valid         Debug access from DSU is valid
+  --! @param[in] i_dport_write         Write command flag
+  --! @param[in] i_dport_region        Registers region ID: 0=CSR; 1=IREGS; 2=Control
+  --! @param[in] i_dport_addr          Register idx
+  --! @param[in] i_dport_wdata         Write value
+  --! @param[out] o_dport_ready        Response is ready
+  --! @param[out] o_dport_rdata        Response value
   component RiverTop is
   port (
     i_clk : in std_logic;
@@ -726,8 +813,14 @@ package river_cfg is
     i_resp_mem_data_valid : in std_logic;
     i_resp_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
     i_ext_irq : in std_logic;
-    o_timer : out std_logic_vector(RISCV_ARCH-1 downto 0);
-    o_step_cnt : out std_logic_vector(63 downto 0)
+    o_time : out std_logic_vector(63 downto 0);
+    i_dport_valid : in std_logic;
+    i_dport_write : in std_logic;
+    i_dport_region : in std_logic_vector(1 downto 0);
+    i_dport_addr : in std_logic_vector(11 downto 0);
+    i_dport_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0);
+    o_dport_ready : out std_logic;
+    o_dport_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0)
   );
   end component; 
 

@@ -40,7 +40,15 @@ entity Processor is
     o_resp_data_ready : out std_logic;
     -- External interrupt pin
     i_ext_irq : in std_logic;                                         -- PLIC interrupt accordingly with spec
-    o_step_cnt : out std_logic_vector(63 downto 0)                    -- Number of valid executed instructions
+    o_time : out std_logic_vector(63 downto 0);                       -- Timer in clock except halt state
+    -- Debug interface:
+    i_dport_valid : in std_logic;                                     -- Debug access from DSU is valid
+    i_dport_write : in std_logic;                                     -- Write command flag
+    i_dport_region : in std_logic_vector(1 downto 0);                 -- Registers region ID: 0=CSR; 1=IREGS; 2=Control
+    i_dport_addr : in std_logic_vector(11 downto 0);                  -- Register idx
+    i_dport_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0);       -- Write value
+    o_dport_ready : out std_logic;                                    -- Response is ready
+    o_dport_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0)       -- Response value
   );
 end; 
  
@@ -102,7 +110,6 @@ architecture arch_Processor of Processor is
         valid : std_logic;
         instr : std_logic_vector(31 downto 0);
         pc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-        step_cnt : std_logic_vector(63 downto 0);
         pipeline_hold : std_logic;
     end record;
 
@@ -116,11 +123,13 @@ architecture arch_Processor of Processor is
     type IntRegsType is record
         rdata1 : std_logic_vector(RISCV_ARCH-1 downto 0);
         rdata2 : std_logic_vector(RISCV_ARCH-1 downto 0);
+        dport_rdata : std_logic_vector(RISCV_ARCH-1 downto 0);
         ra : std_logic_vector(RISCV_ARCH-1 downto 0);       -- Return address
     end record;
 
     type CsrType is record
         rdata : std_logic_vector(RISCV_ARCH-1 downto 0);
+        dport_rdata : std_logic_vector(RISCV_ARCH-1 downto 0);
         ie : std_logic;                                     -- Interrupt enable bit
         mtvec : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- Interrupt descriptor table
         mode : std_logic_vector(1 downto 0);                -- Current processor mode
@@ -135,16 +144,28 @@ architecture arch_Processor of Processor is
         w : WriteBackType;                        -- Write back registers value
     end record;
 
-    type RegistersType is record
-      clk_cnt : std_logic_vector(63 downto 0);
+    type DebugType is record
+        core_addr : std_logic_vector(11 downto 0);           -- Address of the sub-region register
+        core_wdata : std_logic_vector(RISCV_ARCH-1 downto 0);-- Write data
+        csr_ena : std_logic;                                 -- Region 0: Access to CSR bank is enabled.
+        csr_write : std_logic;                               -- Region 0: CSR write enable
+        ireg_ena : std_logic;                                -- Region 1: Access to integer register bank is enabled
+        ireg_write : std_logic;                              -- Region 1: Integer registers bank write pulse
+        npc_write : std_logic;                               -- Region 1: npc write enable
+        halt : std_logic;                                    -- Halt signal is equal to hold pipeline
+        clock_cnt : std_logic_vector(63 downto 0);           -- Number of clocks excluding halt state
+        executed_cnt : std_logic_vector(63 downto 0);        -- Number of executed instruction
     end record;
 
     signal ireg : IntRegsType;
     signal csr : CsrType;
     signal w : PipelineType;
-    signal r, rin : RegistersType;
+    signal dbg : DebugType;
 
     signal wb_npc_predict : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+
+    signal wb_ireg_dport_addr : std_logic_vector(4 downto 0);
+    signal wb_exec_dport_npc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     
     signal w_fetch_pipeline_hold : std_logic;
     signal w_any_pipeline_hold : std_logic;
@@ -152,9 +173,13 @@ architecture arch_Processor of Processor is
 
 begin
 
-    w_fetch_pipeline_hold <= w.e.pipeline_hold or w.m.pipeline_hold;
-    w_any_pipeline_hold <= w.f.pipeline_hold or w.e.pipeline_hold or w.m.pipeline_hold;
-    w_exec_pipeline_hold <= w.f.pipeline_hold or w.m.pipeline_hold;
+    w_fetch_pipeline_hold <= w.e.pipeline_hold or w.m.pipeline_hold or dbg.halt;
+    w_any_pipeline_hold <= w.f.pipeline_hold or w.e.pipeline_hold 
+                          or w.m.pipeline_hold  or dbg.halt;
+    w_exec_pipeline_hold <= w.f.pipeline_hold or w.m.pipeline_hold or dbg.halt;
+
+    wb_ireg_dport_addr <= dbg.core_addr(4 downto 0);
+    wb_exec_dport_npc <= dbg.core_wdata(BUS_ADDR_WIDTH-1 downto 0);
     
     fetch0 : InstrFetch port map (
         i_clk => i_clk,
@@ -218,6 +243,8 @@ begin
         i_mode => csr.mode,
         i_unsup_exception => w.d.exception,
         i_ext_irq => i_ext_irq,
+        i_dport_npc_write => dbg.npc_write,
+        i_dport_npc => wb_exec_dport_npc,
         o_radr1 => w.e.radr1,
         i_rdata1 => ireg.rdata1,
         o_radr2 => w.e.radr2,
@@ -272,8 +299,7 @@ begin
         o_hold => w.m.pipeline_hold,
         o_valid => w.m.valid,
         o_pc => w.m.pc,
-        o_instr => w.m.instr,
-        o_step_cnt => w.m.step_cnt);
+        o_instr => w.m.instr);
 
     predic0 : BranchPredictor port map (
         i_clk => i_clk,
@@ -299,6 +325,11 @@ begin
         i_waddr => w.w.waddr,
         i_wena => w.w.wena,
         i_wdata => w.w.wdata,
+        i_dport_addr => wb_ireg_dport_addr,
+        i_dport_ena => dbg.ireg_ena,
+        i_dport_write => dbg.ireg_write,
+        i_dport_wdata => dbg.core_wdata,
+        o_dport_rdata => ireg.dport_rdata,
         o_ra => ireg.ra);   -- Return address
 
     csr0 : CsrRegs port map (
@@ -317,27 +348,35 @@ begin
         o_mtvec => csr.mtvec);
 
 
-    comb : process(i_nrst, r)
-        variable v : RegistersType;
-    begin
-        v := r;
-        v.clk_cnt := r.clk_cnt + 1;
-
-        if i_nrst = '0' then
-            v.clk_cnt := (others => '0');
-        end if;
-        rin <= v;
-    end process;
+    dbg0 : DbgPort port map (
+        i_clk => i_clk,
+        i_nrst => i_nrst,
+        i_dport_valid => i_dport_valid,
+        i_dport_write => i_dport_write,
+        i_dport_region => i_dport_region,
+        i_dport_addr => i_dport_addr,
+        i_dport_wdata => i_dport_wdata,
+        o_dport_ready => o_dport_ready,
+        o_dport_rdata => o_dport_rdata,
+        o_core_addr => dbg.core_addr,
+        o_core_wdata => dbg.core_wdata,
+        o_csr_ena => dbg.csr_ena,
+        o_csr_write => dbg.csr_write,
+        i_csr_rdata => csr.dport_rdata,
+        o_ireg_ena => dbg.ireg_ena,
+        o_ireg_write => dbg.ireg_write,
+        o_npc_write => dbg.npc_write,
+        i_ireg_rdata => ireg.dport_rdata,
+        i_pc => w.e.pc,
+        i_npc => w.e.npc,
+        i_e_valid => w.e.valid,
+        i_m_valid => w.m.valid,
+        o_clock_cnt => dbg.clock_cnt,
+        o_executed_cnt => dbg.executed_cnt,
+        o_halt => dbg.halt);
 
     o_req_ctrl_valid <= w.f.imem_req_valid;
     o_req_ctrl_addr <= w.f.imem_req_addr;
-    o_step_cnt <= w.m.step_cnt;
-
-    -- registers:
-    regs : process(i_clk)  begin 
-       if rising_edge(i_clk) then 
-          r <= rin;
-       end if; 
-    end process;
+    o_time <= dbg.clock_cnt;
 
 end;
