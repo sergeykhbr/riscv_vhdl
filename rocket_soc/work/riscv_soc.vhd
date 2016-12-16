@@ -251,8 +251,7 @@ begin
     i_msto   => aximo,
     o_slvi   => axisi,
     o_msti   => aximi,
-    o_miss   => open,
-    o_miss_cnt => open,
+    o_miss_irq  => open,
     o_miss_addr => open
   );
 

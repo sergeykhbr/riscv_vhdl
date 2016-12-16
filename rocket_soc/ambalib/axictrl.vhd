@@ -28,9 +28,7 @@ entity axictrl is
     i_msto   : in  nasti_master_out_vector;
     o_slvi   : out nasti_slave_in_vector;
     o_msti   : out nasti_master_in_vector;
-    o_miss   : out std_logic;
-    -- Debug signals:
-    o_miss_cnt : out std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
+    o_miss_irq  : out std_logic;
     o_miss_addr : out std_logic_vector(CFG_NASTI_ADDR_BITS-1 downto 0)
   );
 end; 
@@ -59,8 +57,6 @@ architecture arch_axictrl of axictrl is
      b_mst_idx : integer range 0 to CFG_NASTI_MASTER_TOTAL-1;
      b_slv_idx : integer range 0 to CFG_NASTI_SLAVES_TOTAL; -- +1 miss access
 
-     -- Debug missaccess signals
-     miss_cnt : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
      miss_addr : std_logic_vector(CFG_NASTI_ADDR_BITS-1 downto 0);
   end record;
 
@@ -198,12 +194,10 @@ begin
 
     if aw_fire = '1' and aw_slv_idx = CFG_NASTI_SLAVES_TOTAL then
        missaccess := '1';
-       v.miss_cnt := r.miss_cnt + 1;
        v.miss_addr := i_msto(aw_mst_idx).aw_bits.addr;
     end if;
     if ar_fire = '1' and ar_slv_idx = CFG_NASTI_SLAVES_TOTAL then
        missaccess := '1';
-       v.miss_cnt := r.miss_cnt + 1;
        v.miss_addr := i_msto(ar_mst_idx).ar_bits.addr;
     end if;
 
@@ -217,7 +211,6 @@ begin
       v.b_busy := '0';
       v.b_mst_idx := 0;
       v.b_slv_idx := CFG_NASTI_SLAVES_TOTAL;
-      v.miss_cnt := (others => '0');
       v.miss_addr := (others => '0');
     end if;
  
@@ -227,8 +220,7 @@ begin
     for k in 0 to CFG_NASTI_SLAVES_TOTAL-1 loop
        o_slvi(k) <= vslvi(k);
     end loop;
-    o_miss <= missaccess;
-    o_miss_cnt <= r.miss_cnt;
+    o_miss_irq <= missaccess;
     o_miss_addr <= r.miss_addr;
   end process;
 

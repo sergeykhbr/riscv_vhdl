@@ -171,6 +171,8 @@ constant VENDOR_GNSSSENSOR        : std_logic_vector(15 downto 0) := X"00F1";
 --! @name Master Device IDs definition:
 --! @{
 
+--! Empty master slot device
+constant MST_DID_EMPTY            : std_logic_vector(15 downto 0) := X"7755";
 --! RISC-V "Rocket-chip" core Cached TileLink master device.
 constant RISCV_CACHED_TILELINK    : std_logic_vector(15 downto 0) := X"0500";
 --! RISC-V "Rocket-chip" core Uncached TileLink master device.
@@ -179,13 +181,15 @@ constant RISCV_UNCACHED_TILELINK  : std_logic_vector(15 downto 0) := X"0501";
 constant GAISLER_ETH_MAC_MASTER   : std_logic_vector(15 downto 0) := X"0502";
 --! Ethernet MAC master debug interface (EDCL).
 constant GAISLER_ETH_EDCL_MASTER  : std_logic_vector(15 downto 0) := X"0503";
+--! "River" CPU Device ID.
+constant RISCV_RIVER_CPU          : std_logic_vector(15 downto 0) := X"0505";
 --! @}
 
 --! @name Slave Device IDs definition:
 --! @{
 
---! Empty slot device
-constant GNSSSENSOR_EMPTY         : std_logic_vector(15 downto 0) := X"5577";
+--! Empty slave slot device
+constant SLV_DID_EMPTY           : std_logic_vector(15 downto 0) := X"5577";
 --! Boot ROM Device ID
 constant GNSSSENSOR_BOOTROM       : std_logic_vector(15 downto 0) := X"0071";
 --! FW ROM image Device ID
@@ -244,19 +248,18 @@ constant XSizeToBytes : xsize_type := (
 
 --! @name Plug'n'Play descriptor constants.
 --! @{
-
 --! Undefined type of the descriptor (empty device).
-constant PNP_CFG_TYPE_NONE   : std_logic_vector := "11";
+constant PNP_CFG_TYPE_INVALID   : std_logic_vector := "00";
 --! AXI slave device standard descriptor.
-constant PNP_CFG_TYPE_SLAVE  : std_logic_vector := "00";
+constant PNP_CFG_TYPE_MASTER  : std_logic_vector := "01";
 --! AXI master device standard descriptor.
-constant PNP_CFG_TYPE_MASTER : std_logic_vector := "01";
+constant PNP_CFG_TYPE_SLAVE : std_logic_vector := "10";
 --! @brief Size in bytes of the standard slave descriptor..
 --! @details Firmware uses this value instead of sizeof(nasti_slave_config_type).
 constant PNP_CFG_SLAVE_DESCR_BYTES : std_logic_vector(7 downto 0) := X"10";
 --! @brief Size in bytes of the standard master descriptor.
 --! @details Firmware uses this value instead of sizeof(nasti_master_config_type).
-constant PNP_CFG_MASTER_DESCR_BYTES : std_logic_vector(7 downto 0) := X"01";
+constant PNP_CFG_MASTER_DESCR_BYTES : std_logic_vector(7 downto 0) := X"08";
 --! @}
 
 
@@ -264,8 +267,14 @@ constant PNP_CFG_MASTER_DESCR_BYTES : std_logic_vector(7 downto 0) := X"01";
 --! @details Each slave device must generates this datatype output that
 --!          is connected directly to the 'pnp' slave module on system bus.
 type nasti_slave_config_type is record
-    --! Index in the array of slaves devices.
+    --! Index in the array of slave devices.
     xindex : integer;
+    --! Descriptor size in bytes.
+    descrsize : std_logic_vector(7 downto 0);
+    --! Descriptor type.
+    descrtype : std_logic_vector(1 downto 0);
+    --! Descriptor size in bytes.
+    irq_idx : integer;
     --! Base address value.
     xaddr  : std_logic_vector(CFG_NASTI_CFG_ADDR_BITS-1 downto 0);
     --! Maskable bits of the base address.
@@ -274,10 +283,6 @@ type nasti_slave_config_type is record
     vid    : std_logic_vector(15 downto 0);
     --! Device ID.
     did    : std_logic_vector(15 downto 0);
-    --! Descriptor type.
-    descrtype : std_logic_vector(1 downto 0);
-    --! Descriptor size in bytes.
-    descrsize : std_logic_vector(7 downto 0);
 end record;
 
 --! @brief   Arrays of the plug-n-play descriptors.
@@ -290,8 +295,8 @@ type nasti_slave_cfg_vector is array (0 to CFG_NASTI_SLAVES_TOTAL-1)
 --! @default This value corresponds to an empty device and often used
 --!          as assignment of outputs for the disabled device.
 constant nasti_slave_config_none : nasti_slave_config_type := (
-    0, (others => '0'), (others => '1'), VENDOR_GNSSSENSOR, GNSSSENSOR_EMPTY,
-    PNP_CFG_TYPE_NONE, PNP_CFG_SLAVE_DESCR_BYTES);
+    0, PNP_CFG_SLAVE_DESCR_BYTES, PNP_CFG_TYPE_SLAVE, 0, 
+    (others => '0'), (others => '1'), VENDOR_GNSSSENSOR, SLV_DID_EMPTY);
 
 
 --! @brief   Plug-n-play descriptor structure for master device.
@@ -300,14 +305,14 @@ constant nasti_slave_config_none : nasti_slave_config_type := (
 type nasti_master_config_type is record
     --! Index in the array of masters devices.
     xindex : integer;
+    --! Descriptor size in bytes.
+    descrsize : std_logic_vector(7 downto 0);
+    --! Descriptor type.
+    descrtype : std_logic_vector(1 downto 0);
     --! Vendor ID.
     vid    : std_logic_vector(15 downto 0);
     --! Device ID.
     did    : std_logic_vector(15 downto 0);
-    --! Descriptor type.
-    descrtype : std_logic_vector(1 downto 0);
-    --! Descriptor size in bytes.
-    descrsize : std_logic_vector(7 downto 0);
 end record;
 
 --! @brief   Arrays of the plug-n-play descriptors.
@@ -318,8 +323,8 @@ type nasti_master_cfg_vector is array (0 to CFG_NASTI_MASTER_TOTAL-1)
 
 --! @brief Default master config value.
 constant nasti_master_config_none : nasti_master_config_type := (
-    0, VENDOR_GNSSSENSOR, GNSSSENSOR_EMPTY, PNP_CFG_TYPE_NONE, 
-    PNP_CFG_MASTER_DESCR_BYTES);
+    0, PNP_CFG_MASTER_DESCR_BYTES, PNP_CFG_TYPE_MASTER, 
+    VENDOR_GNSSSENSOR, MST_DID_EMPTY);
 
 
 --! @brief AMBA AXI4 compliant data structure.
@@ -678,8 +683,7 @@ return nasti_slave_out_type;
 --! @param [in] i_msto Vector of masters output signals.
 --! @param [out] o_slvi Vector of slave inputs.
 --! @param [out] o_msti Vector of master inputs.
---! @param [out] o_miss Memory miss access. May be used as a interrupt
---! @param [out] o_miss_cnt Miss access counter (debug purpose)
+--! @param [out] o_miss_irq Memory miss access signal. May be used as a interrupt or for debugging
 --! @param [out] o_miss_addr Miss access last address (debug purpose)
 --! @todo    Round-robin priority algorithm.
 component axictrl is
@@ -694,9 +698,7 @@ component axictrl is
     i_msto   : in  nasti_master_out_vector;
     o_slvi   : out nasti_slave_in_vector;
     o_msti   : out nasti_master_in_vector;
-    o_miss   : out std_logic;
-    -- Debug signals:
-    o_miss_cnt : out std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
+    o_miss_irq  : out std_logic;
     o_miss_addr : out std_logic_vector(CFG_NASTI_ADDR_BITS-1 downto 0)
   );
 end component;

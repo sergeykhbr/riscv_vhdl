@@ -816,10 +816,10 @@ index 0000000..a1d48eb
 +
 diff --git a/arch/msvc/lib/pnp.cpp b/arch/msvc/lib/pnp.cpp
 new file mode 100644
-index 0000000..2b1bd00
+index 0000000..c7da952
 --- /dev/null
 +++ b/arch/msvc/lib/pnp.cpp
-@@ -0,0 +1,144 @@
+@@ -0,0 +1,121 @@
 +/*
 + * Copyright (c) 2016, GNSS Sensor Ltd.
 + *
@@ -839,7 +839,16 @@ index 0000000..2b1bd00
 +
 +#define VENDOR_GNSSSENSOR        0x00F1
 +
-+#define GNSSSENSOR_EMPTY         0x5577     /// Dummy device
++#define MST_DID_EMPTY            0x7755
++#define SLV_DID_EMPTY            0x5577     /// Dummy device
++
++/// Known master device IDs
++#define RISCV_CACHED_TILELINK    0x0500
++#define RISCV_UNCACHED_TILELINK  0x0501
++#define GAISLER_ETH_MAC_MASTER   0x0502
++#define GAISLER_ETH_EDCL_MASTER  0x0503
++#define RISCV_RIVER_CPU          0x0505
++/// Known slave device IDs
 +#define GNSSSENSOR_BOOTROM       0x0071     /// Boot ROM Device ID
 +#define GNSSSENSOR_FWIMAGE       0x0072     /// FW ROM image Device ID
 +#define GNSSSENSOR_SRAM          0x0073     /// Internal SRAM block Device ID
@@ -858,6 +867,9 @@ index 0000000..2b1bd00
 +#define GNSSSENSOR_DSU           0x0080
 +#define GNSSSENSOR_GPTIMERS      0x0081
 +
++#define PNP_CFG_TYPE_INVALID     0
++#define PNP_CFG_TYPE_MASTER      1
++#define PNP_CFG_TYPE_SLAVE       2
 +
 +#define TECH_INFERRED       0
 +#define TECH_VIRTEX6        36
@@ -881,96 +893,60 @@ index 0000000..2b1bd00
 +        map_.rsrv1 =  0;
 +        map_.idt = 0;
 +
-+        int idx = 0;
-+        map_.slaves[idx].xmask = 0xffffe000;
-+        map_.slaves[idx].xaddr = 0;
-+        map_.slaves[idx].did = GNSSSENSOR_BOOTROM;
-+        map_.slaves[idx].vid = VENDOR_GNSSSENSOR;
-+        map_.slaves[idx].size = PNP_CONFIG_DEFAULT_BYTES;
++        memset(&map_, 0, sizeof(map_));
++        iter_.buf = map_.cfg_table;
++        map_.hwid = 0x20161011;
++        map_.fwid = 0xdeadcafe;
++        map_.tech.bits.tech = TECH_VIRTEX6;
++        map_.tech.bits.mst_total = 4;
++        map_.tech.bits.slv_total = 13;
 +
-+        idx++;
-+        map_.slaves[idx].xmask = 0xfffc0000;
-+        map_.slaves[idx].xaddr = 0x00100000;
-+        map_.slaves[idx].did = GNSSSENSOR_FWIMAGE;
-+        map_.slaves[idx].vid = VENDOR_GNSSSENSOR;
-+        map_.slaves[idx].size = PNP_CONFIG_DEFAULT_BYTES;
++        addMaster(0, VENDOR_GNSSSENSOR, RISCV_RIVER_CPU);
++        addMaster(1, VENDOR_GNSSSENSOR, MST_DID_EMPTY);
++        addMaster(2, VENDOR_GNSSSENSOR, GAISLER_ETH_MAC_MASTER);
++        addMaster(3, VENDOR_GNSSSENSOR, GAISLER_ETH_EDCL_MASTER);
 +
-+        idx++;
-+        map_.slaves[idx].xmask = 0xfff80000;
-+        map_.slaves[idx].xaddr = 0x10000000;
-+        map_.slaves[idx].did = GNSSSENSOR_SRAM;
-+        map_.slaves[idx].vid = VENDOR_GNSSSENSOR;
-+        map_.slaves[idx].size = PNP_CONFIG_DEFAULT_BYTES;
-+
-+        idx++;
-+        map_.slaves[idx].xmask = 0xfffff000;
-+        map_.slaves[idx].xaddr = ADDR_NASTI_SLAVE_GPIO;
-+        map_.slaves[idx].did = GNSSSENSOR_GPIO;
-+        map_.slaves[idx].vid = VENDOR_GNSSSENSOR;
-+        map_.slaves[idx].size = PNP_CONFIG_DEFAULT_BYTES;
-+
-+        idx++;
-+        map_.slaves[idx].xmask = 0xfffff000;
-+        map_.slaves[idx].xaddr = ADDR_NASTI_SLAVE_UART1;
-+        map_.slaves[idx].did = GNSSSENSOR_UART;
-+        map_.slaves[idx].vid = VENDOR_GNSSSENSOR;
-+        map_.slaves[idx].size = PNP_CONFIG_DEFAULT_BYTES;
-+
-+        idx++;
-+        map_.slaves[idx].xmask = 0xfffff000;
-+        map_.slaves[idx].xaddr = ADDR_NASTI_SLAVE_IRQCTRL;
-+        map_.slaves[idx].did = GNSSSENSOR_IRQCTRL;
-+        map_.slaves[idx].vid = VENDOR_GNSSSENSOR;
-+        map_.slaves[idx].size = PNP_CONFIG_DEFAULT_BYTES;
-+
-+        idx++;
-+        map_.slaves[idx].xmask = 0xfffff000;
-+        map_.slaves[idx].xaddr = ADDR_NASTI_SLAVE_GNSSENGINE;
-+        map_.slaves[idx].did = GNSSSENSOR_ENGINE_STUB;
-+        map_.slaves[idx].vid = VENDOR_GNSSSENSOR;
-+        map_.slaves[idx].size = PNP_CONFIG_DEFAULT_BYTES;
-+
-+        idx++;
-+        map_.slaves[idx].xmask = 0xfffff000;
-+        map_.slaves[idx].xaddr = ADDR_NASTI_SLAVE_GPTIMERS;
-+        map_.slaves[idx].did = GNSSSENSOR_GPTIMERS;
-+        map_.slaves[idx].vid = VENDOR_GNSSSENSOR;
-+        map_.slaves[idx].size = PNP_CONFIG_DEFAULT_BYTES;
-+
-+        idx++;
-+        map_.slaves[idx].xmask = 0xfffff000;
-+        map_.slaves[idx].xaddr = ADDR_NASTI_SLAVE_RFCTRL;
-+        map_.slaves[idx].did = GNSSSENSOR_RF_CONTROL;
-+        map_.slaves[idx].vid = VENDOR_GNSSSENSOR;
-+        map_.slaves[idx].size = PNP_CONFIG_DEFAULT_BYTES;
-+
-+#ifdef ENABLE_FSE
-+        idx++;
-+        map_.slaves[idx].xmask = 0xfffff000;
-+        map_.slaves[idx].xaddr = ADDR_NASTI_SLAVE_FSEGPS;
-+        map_.slaves[idx].did = GNSSSENSOR_FSE_V2;
-+        map_.slaves[idx].vid = VENDOR_GNSSSENSOR;
-+        map_.slaves[idx].size = PNP_CONFIG_DEFAULT_BYTES;
-+#endif
-+
-+#ifdef ENABLE_MAC
-+        idx++;
-+        map_.slaves[idx].xmask = 0xfffc0000;
-+        map_.slaves[idx].xaddr = 0x80040000;
-+        map_.slaves[idx].did = GNSSSENSOR_ETHMAC;
-+        map_.slaves[idx].vid = VENDOR_GNSSSENSOR;
-+        map_.slaves[idx].size = PNP_CONFIG_DEFAULT_BYTES;
-+#endif
-+
-+        map_.tech =  ((idx + 1) << 8) | (TECH_VIRTEX6);
++        addSlave(0, 8*1024, 0, VENDOR_GNSSSENSOR, GNSSSENSOR_BOOTROM);
++        addSlave(0x00100000, 256*1024, 0, VENDOR_GNSSSENSOR, GNSSSENSOR_FWIMAGE);
++        addSlave(0x10000000, 512*1024, 0, VENDOR_GNSSSENSOR, GNSSSENSOR_SRAM);
++        addSlave(0x80000000, 4*1024, 0, VENDOR_GNSSSENSOR, GNSSSENSOR_GPIO);
++        addSlave(0x80001000, 4*1024, 1, VENDOR_GNSSSENSOR, GNSSSENSOR_UART);
++        addSlave(0x80002000, 4*1024, 0, VENDOR_GNSSSENSOR, GNSSSENSOR_IRQCTRL);
++        addSlave(0x80003000, 4*1024, 0, VENDOR_GNSSSENSOR, GNSSSENSOR_ENGINE_STUB);
++        addSlave(0x80004000, 4*1024, 0, VENDOR_GNSSSENSOR, SLV_DID_EMPTY);//rfctrl
++        addSlave(0x80005000, 4*1024, 3, VENDOR_GNSSSENSOR, GNSSSENSOR_GPTIMERS);
++        addSlave(0x80006000, 4*1024, 2, VENDOR_GNSSSENSOR, SLV_DID_EMPTY);//mac
++        addSlave(0x80007000, 4*1024, 0, VENDOR_GNSSSENSOR, SLV_DID_EMPTY);//dsu
++        addSlave(0x80008000, 4*1024, 0, VENDOR_GNSSSENSOR, SLV_DID_EMPTY);//fse
++        addSlave(0xfffff000, 4*1024, 0, VENDOR_GNSSSENSOR, GNSSSENSOR_PNP);
 +}
-\ No newline at end of file
++
++void PNP::addMaster(unsigned idx, unsigned vid, unsigned did) {
++    iter_.item->mst.vid = vid;
++    iter_.item->mst.did = did;
++    iter_.item->mst.descr.bits.master_idx = idx;
++    iter_.item->mst.descr.bits.descrtype = PNP_CFG_TYPE_MASTER;
++    iter_.item->mst.descr.bits.descrsize = sizeof(MasterConfigType);
++    iter_.buf += sizeof(MasterConfigType);
++}
++
++void PNP::addSlave(uint64_t addr, uint64_t size, unsigned irq, unsigned vid, unsigned did) {
++    iter_.item->slv.vid = vid;
++    iter_.item->slv.did = did;
++    iter_.item->slv.descr.bits.descrtype = PNP_CFG_TYPE_SLAVE;
++    iter_.item->slv.descr.bits.descrsize = sizeof(SlaveConfigType);
++    iter_.item->slv.descr.bits.bar_total = 1;
++    iter_.item->slv.descr.bits.irq_idx = irq;
++    iter_.item->slv.xaddr = static_cast<uint32_t>(addr);
++    iter_.item->slv.xmask = static_cast<uint32_t>(~(size - 1));
++    iter_.buf += sizeof(SlaveConfigType);
++}
 diff --git a/arch/msvc/lib/pnp.h b/arch/msvc/lib/pnp.h
 new file mode 100644
-index 0000000..e452658
+index 0000000..5c1015a
 --- /dev/null
 +++ b/arch/msvc/lib/pnp.h
-@@ -0,0 +1,64 @@
+@@ -0,0 +1,104 @@
 +/*
 + * Copyright (c) 2016, GNSS Sensor Ltd.
 + *
@@ -1009,29 +985,69 @@ index 0000000..e452658
 +
 +
 +private:
-+    static const int PNP_CONFIG_DEFAULT_BYTES = 16;
++    void addMaster(unsigned idx, unsigned vid, unsigned did);
++    void addSlave(uint64_t addr, uint64_t size, unsigned irq, unsigned vid, unsigned did);
 +
-+    typedef struct PnpConfigType {
-+        uint32_t xmask;
-+        uint32_t xaddr;
++    typedef struct MasterConfigType {
++        union DescrType {
++            struct bits_type {
++                uint32_t descrsize : 8;
++                uint32_t descrtype : 2;
++                uint32_t rsrv : 14;
++                uint32_t master_idx : 8;
++            } bits;
++            uint32_t val;
++        } descr;
 +        uint16_t did;
 +        uint16_t vid;
-+        uint8_t size;
-+        uint8_t rsrv[3];
-+    } PnpConfigType;
++    } MasterConfigType;
 +
-+    typedef struct pnp_map {
-+        volatile uint32_t hwid;         /// Read only HW ID
-+        volatile uint32_t fwid;         /// Read/Write Firmware ID
-+        volatile uint32_t tech;         /// Read only technology index
-+        volatile uint32_t rsrv1;        /// 
-+        volatile uint64_t idt;          /// 
-+        volatile uint64_t malloc_addr;  /// debuggind memalloc pointer
-+        volatile uint64_t malloc_size;  /// debugging memalloc size
-+        volatile uint64_t fwdbg1;       /// FW debug register
-+        volatile uint64_t rsrv[2];
-+        PnpConfigType slaves[64];
++    typedef struct SlaveConfigType {
++        union DescrType {
++            struct bits_type {
++                uint32_t descrsize : 8;
++                uint32_t descrtype : 2;
++                uint32_t bar_total : 2;
++                uint32_t rsrv1 : 4;
++                uint32_t irq_idx : 8;
++                uint32_t rsrv2 : 8;
++            } bits;
++            uint32_t val;
++        } descr;
++        uint16_t did;
++        uint16_t vid;
++        uint32_t xmask;
++        uint32_t xaddr;
++    } SlaveConfigType;
++
++    typedef struct PnpMapType {
++        uint32_t hwid;              /// 0xfffff000: RO: HW ID
++        uint32_t fwid;              /// 0xfffff004: RW: FW ID
++        union TechType {
++            struct bits_type {
++                uint8_t tech;
++                uint8_t slv_total;
++                uint8_t mst_total;
++                uint8_t adc_detect;
++            } bits;
++            uint32_t val;
++        } tech;                     /// 0xfffff008: RO: technology index
++        uint32_t rsrv1;             /// 0xfffff00c: 
++        uint64_t idt;               /// 0xfffff010: 
++        uint64_t malloc_addr;       /// 0xfffff018: RW: debuggind memalloc pointer 0x18
++        uint64_t malloc_size;       /// 0xfffff020: RW: debugging memalloc size 0x20
++        uint64_t fwdbg1;            /// 0xfffff028: RW: FW debug register
++        uint64_t rsrv[2];           /// 0xfffff030, 0xfffff038
++        uint8_t cfg_table[(1 << 12) - 0x40];/// 0xfffff040: RO: PNP configuration
 +    } pnp_map;
++
++    union DescriptorTableType {
++        union DescriptorItemType {
++            MasterConfigType mst;
++            SlaveConfigType slv;
++        } *item;
++        uint8_t *buf;
++    } iter_;
 +    pnp_map map_;
 +};
 +
@@ -1543,7 +1559,7 @@ index 0000000..b79e885
 \ No newline at end of file
 diff --git a/arch/msvc/msvc13/nanokernel/nanokernel.vcxproj b/arch/msvc/msvc13/nanokernel/nanokernel.vcxproj
 new file mode 100644
-index 0000000..af5cdbe
+index 0000000..e26b9f5
 --- /dev/null
 +++ b/arch/msvc/msvc13/nanokernel/nanokernel.vcxproj
 @@ -0,0 +1,206 @@
@@ -3239,7 +3255,7 @@ index 0000000..86eba16
 +}
 diff --git a/arch/riscv64/defconfig b/arch/riscv64/defconfig
 new file mode 100644
-index 0000000..9e9e21d
+index 0000000..7d47d5e
 --- /dev/null
 +++ b/arch/riscv64/defconfig
 @@ -0,0 +1,9 @@
@@ -3887,10 +3903,10 @@ index 0000000..202191c
 +}
 diff --git a/arch/riscv64/soc/riscv_gnss/soc.c b/arch/riscv64/soc/riscv_gnss/soc.c
 new file mode 100644
-index 0000000..349e06d
+index 0000000..b25680f
 --- /dev/null
 +++ b/arch/riscv64/soc/riscv_gnss/soc.c
-@@ -0,0 +1,183 @@
+@@ -0,0 +1,225 @@
 +/*
 + * Copyright (c) 2016, GNSS Sensor Ltd.
 + *
@@ -3921,15 +3937,33 @@ index 0000000..349e06d
 +#include <soc.h>
 +#include <misc/printk.h>
 +
++typedef union DescriptorTableType {
++    union DescriptorItemType {
++        MasterConfigType mst;
++        SlaveConfigType slv;
++    } *item;
++    uint8_t *buf;
++} DescriptorTableType;
++
 +extern IsrEntryType isr_table[CONFIG_NUM_IRQS];
 +
 +const char *const VENDOR_NAME = "GNSS Sensor Ltd.";
 +
-+const char *const EMPTY_ID_NAME = "Empty slot";
++const char *const MST_DID_EMPTY_NAME = "Empty master slot";
++const char *const SLV_DID_EMPTY_NAME = "Empty slave slot";
 +
 +const char *const UNKOWN_ID_NAME = "Unknown";
 +
-+static const char *const GNSS_SENSOR_DEVICE_NAMES[] = {
++static const char *const GNSS_SENSOR_MST_DEVICE_NAMES[] = {
++    "Rocket Cached TileLink",           // 0x500
++    "Rocket Uncached TileLink",         // 0x501
++    "Gaisler Ethernet MAC with DMA",    // 0x502
++    "Gaisler Ethernet EDCL with DMA",   // 0x503
++    "Reserved",                         // 0x504
++    "RISC-V River CPU",                 // 0x505
++};
++
++static const char *const GNSS_SENSOR_SLV_DEVICE_NAMES[] = {
 +    "GNSS Engine stub",         // 0x68
 +    "Reserved",                 // 0x69
 +    "Reserved",                 // 0x6a
@@ -3991,13 +4025,19 @@ index 0000000..349e06d
 +    if (vid != VENDOR_GNSSSENSOR) {
 +        return UNKOWN_ID_NAME;
 +    }
-+    if (did == GNSSSENSOR_EMPTY) {
-+        return EMPTY_ID_NAME;
++    if (did == MST_DID_EMPTY) {
++        return MST_DID_EMPTY_NAME;
 +    }
-+    if (did < GNSSSENSOR_ENGINE_STUB || did > GNSSSENSOR_GPTIMERS) {
-+        return UNKOWN_ID_NAME;
++    if (did == SLV_DID_EMPTY) {
++        return SLV_DID_EMPTY_NAME;
 +    }
-+    return GNSS_SENSOR_DEVICE_NAMES[did - GNSSSENSOR_ENGINE_STUB];
++    if (did >= GNSSSENSOR_ENGINE_STUB && did <= GNSSSENSOR_GPTIMERS) {
++        return GNSS_SENSOR_SLV_DEVICE_NAMES[did - GNSSSENSOR_ENGINE_STUB];
++    }
++    if (did >= RISCV_CACHED_TILELINK && did <= RISCV_RIVER_CPU) {
++        return GNSS_SENSOR_MST_DEVICE_NAMES[did - RISCV_CACHED_TILELINK];
++    }
++    return UNKOWN_ID_NAME;
 +}
 +
 +/**
@@ -4011,6 +4051,9 @@ index 0000000..349e06d
 +    uint32_t slaves_total, tech, hwid;
 +    uint16_t vid, did;
 +    adr_type xaddr, xmask, xsize;
++    volatile uint32_t *iter;
++    MasterDescrWord mcfg;
++    int mst_cnt=0, slv_cnt=0;
 +
 +    tech = READ32(&__PNP->tech);
 +    slaves_total = (tech >> 8) & 0xff;
@@ -4021,26 +4064,41 @@ index 0000000..349e06d
 +    printk("# FW id:   0x%x\n", hwid);
 +    printk("# Target technology: %s\n", get_tech_name(tech & 0xFF));
 +
-+    for (uint32_t i = 0; i < slaves_total; i++) {
-+        vid = READ16(&__PNP->slaves[i].vid);
-+        did = READ16(&__PNP->slaves[i].did);
-+        xaddr = READ32(&__PNP->slaves[i].xaddr);
-+        xmask = READ32(&__PNP->slaves[i].xmask);
-+        xmask ^= 0xFFFFFFFF;
-+        xsize = xmask + 1;
-+
-+        printk("# AXI4: slv%d: %s    %s\n", i, 
-+            get_vendor_name(vid), get_device_name(vid, did));
-+
-+        printk("#    %x...%x, size = ",
-+            (unsigned long)xaddr, (unsigned long)(xaddr + xmask));
-+        if (xsize < 1024) {
-+            printk("%d bytes\n", (int)xsize);
-+        } else if (xsize < 1024*1024) {
-+            printk("%d KB\n", (int)(xsize >> 10));
++    iter = (volatile uint32_t *)__PNP->cfg_table;
++    mcfg.val = READ32(iter);
++    while (mcfg.bits.descrtype != PNP_CFG_TYPE_INVALID) {
++        if (mcfg.bits.descrtype == PNP_CFG_TYPE_MASTER) {
++            MasterConfigType *pmst = (MasterConfigType *)iter;
++            vid = READ16(&pmst->vid);
++            did = READ16(&pmst->did);
++            printk("# AXI4: mst%d: %s    %s\n", mst_cnt++, 
++                get_vendor_name(vid), get_device_name(vid, did));
 +        } else {
-+            printk("%d MB\n", (int)(xsize >> 20));
++            SlaveConfigType *pslv = (SlaveConfigType *)iter;
++            vid = READ16(&pslv->vid);
++            did = READ16(&pslv->did);
++            printk("# AXI4: slv%d: %s    %s\n", slv_cnt++, 
++                get_vendor_name(vid), get_device_name(vid, did));
++
++            xaddr = READ32(&pslv->xaddr);
++            xmask = READ32(&pslv->xmask);
++            xmask ^= 0xFFFFFFFF;
++            xsize = xmask + 1;
++
++
++            printk("#    %x...%x, size = ",
++                (unsigned long)xaddr, (unsigned long)(xaddr + xmask));
++            if (xsize < 1024) {
++                printk("%d bytes\n", (int)xsize);
++            } else if (xsize < 1024*1024) {
++                printk("%d KB\n", (int)(xsize >> 10));
++            } else {
++                printk("%d MB\n", (int)(xsize >> 20));
++            }
 +        }
++
++        iter = (volatile uint32_t *)((uint8_t *)iter + mcfg.bits.descrsize);
++        mcfg.val = READ32(iter);
 +    }
 +}
 +
@@ -4076,10 +4134,10 @@ index 0000000..349e06d
 +
 diff --git a/arch/riscv64/soc/riscv_gnss/soc.h b/arch/riscv64/soc/riscv_gnss/soc.h
 new file mode 100644
-index 0000000..cba59aa
+index 0000000..cae049b
 --- /dev/null
 +++ b/arch/riscv64/soc/riscv_gnss/soc.h
-@@ -0,0 +1,123 @@
+@@ -0,0 +1,134 @@
 +/*
 + * Copyright (c) 2016, GNSS Sensor Ltd.
 + *
@@ -4112,7 +4170,16 @@ index 0000000..cba59aa
 +
 +#define VENDOR_GNSSSENSOR        0x00F1
 +
-+#define GNSSSENSOR_EMPTY         0x5577     /// Dummy device
++#define MST_DID_EMPTY            0x7755
++#define SLV_DID_EMPTY            0x5577     /// Dummy device
++
++/// Known master device IDs
++#define RISCV_CACHED_TILELINK    0x0500
++#define RISCV_UNCACHED_TILELINK  0x0501
++#define GAISLER_ETH_MAC_MASTER   0x0502
++#define GAISLER_ETH_EDCL_MASTER  0x0503
++#define RISCV_RIVER_CPU          0x0505
++/// Known slave device IDs
 +#define GNSSSENSOR_BOOTROM       0x0071     /// Boot ROM Device ID
 +#define GNSSSENSOR_FWIMAGE       0x0072     /// FW ROM image Device ID
 +#define GNSSSENSOR_SRAM          0x0073     /// Internal SRAM block Device ID
@@ -4131,11 +4198,13 @@ index 0000000..cba59aa
 +#define GNSSSENSOR_DSU           0x0080
 +#define GNSSSENSOR_GPTIMERS      0x0081
 +
++#define PNP_CFG_TYPE_INVALID     0
++#define PNP_CFG_TYPE_MASTER      1
++#define PNP_CFG_TYPE_SLAVE       2
 +
-+#define TECH_INFERRED       0
-+#define TECH_VIRTEX6        36
-+#define TECH_KINTEX7        49
-+
++#define TECH_INFERRED            0
++#define TECH_VIRTEX6             36
++#define TECH_KINTEX7             49
 +
 +
 +#define ADDR_NASTI_SLAVE_FWIMAGE    0x00100000
@@ -4205,10 +4274,10 @@ index 0000000..cba59aa
 +#endif /* _RISCV_SOC_GNSS_H_ */
 diff --git a/arch/riscv64/soc/riscv_gnss/soc_registers.h b/arch/riscv64/soc/riscv_gnss/soc_registers.h
 new file mode 100644
-index 0000000..4c53a46
+index 0000000..888187e
 --- /dev/null
 +++ b/arch/riscv64/soc/riscv_gnss/soc_registers.h
-@@ -0,0 +1,83 @@
+@@ -0,0 +1,114 @@
 +/*
 + * Copyright (c) 2016, GNSS Sensor Ltd.
 + *
@@ -4234,14 +4303,45 @@ index 0000000..4c53a46
 +#ifndef _RISCV_GNSS_SOC_REGS_H_
 +#define _RISCV_GNSS_SOC_REGS_H_
 +
-+typedef struct PnpConfigType {
-+    uint32_t xmask;
-+    uint32_t xaddr;
++typedef struct MasterDescrWordBits {
++    uint32_t descrsize : 8;
++    uint32_t descrtype : 2;
++    uint32_t rsrv : 14;
++    uint32_t master_idx : 8;
++} MasterDescrWordBits;
++
++typedef union MasterDescrWord {
++    MasterDescrWordBits bits;
++    uint32_t val;
++} MasterDescrWord;
++
++typedef struct MasterConfigType {
++    MasterDescrWord descr;
 +    uint16_t did;
 +    uint16_t vid;
-+    uint8_t size;
-+    uint8_t rsrv[3];
-+} PnpConfigType;
++} MasterConfigType;
++
++typedef struct SlaveDescrWordBits {
++    uint32_t descrsize : 8;
++    uint32_t descrtype : 2;
++    uint32_t bar_total : 2;
++    uint32_t rsrv1 : 4;
++    uint32_t irq_idx : 8;
++    uint32_t rsrv2 : 8;
++} SlaveDescrWordBits;
++
++typedef union SlaveDescrWord {
++    SlaveDescrWordBits bits;
++    uint32_t val;
++} SlaveDescrWord;
++
++typedef struct SlaveConfigType {
++    SlaveDescrWord descr;
++    uint16_t did;
++    uint16_t vid;
++    uint32_t xmask;
++    uint32_t xaddr;
++} SlaveConfigType;
 +
 +typedef struct pnp_map {
 +    volatile uint32_t hwid;         /// Read only HW ID
@@ -4253,7 +4353,7 @@ index 0000000..4c53a46
 +    volatile uint64_t malloc_size;  /// debugging memalloc size
 +    volatile uint64_t fwdbg1;       /// FW debug register
 +    volatile uint64_t rsrv[2];
-+    PnpConfigType slaves[64];
++    uint8_t cfg_table[(1 << 12) - 0x40];    /// 0xfffff040: RO: PNP configuration
 +} pnp_map;
 +
 +typedef struct uart_map {
@@ -4386,7 +4486,7 @@ index 0000000..55029f6
 +#endif /* __INC_BOARD_H */
 diff --git a/boards/riscv_gnss/riscv_gnss_defconfig b/boards/riscv_gnss/riscv_gnss_defconfig
 new file mode 100644
-index 0000000..e34940e
+index 0000000..d1961bf
 --- /dev/null
 +++ b/boards/riscv_gnss/riscv_gnss_defconfig
 @@ -0,0 +1,26 @@

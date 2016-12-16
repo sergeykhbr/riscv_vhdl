@@ -64,18 +64,18 @@ architecture arch_rocket_l1only of rocket_l1only is
 
   constant xmstconfig1 : nasti_master_config_type := (
      xindex => xindex1,
-     vid => VENDOR_GNSSSENSOR,
-     did => RISCV_CACHED_TILELINK,
+     descrsize => PNP_CFG_MASTER_DESCR_BYTES,
      descrtype => PNP_CFG_TYPE_MASTER,
-     descrsize => PNP_CFG_MASTER_DESCR_BYTES
+     vid => VENDOR_GNSSSENSOR,
+     did => RISCV_CACHED_TILELINK
   );
 
   constant xmstconfig2 : nasti_master_config_type := (
      xindex => xindex2,
-     vid => VENDOR_GNSSSENSOR,
-     did => RISCV_UNCACHED_TILELINK,
+     descrsize => PNP_CFG_MASTER_DESCR_BYTES,
      descrtype => PNP_CFG_TYPE_MASTER,
-     descrsize => PNP_CFG_MASTER_DESCR_BYTES
+     vid => VENDOR_GNSSSENSOR,
+     did => RISCV_UNCACHED_TILELINK
   );
   
   signal nrst : std_logic;

@@ -15,9 +15,18 @@ namespace debugger {
 
 static const char *IFACE_SOC_INFO = "ISocInfo";
 
-static const uint16_t VENDOR_GNSSSENSOR        = 0x00F1;
+static const uint16_t MST_DID_EMPTY            = 0x7755;
+static const uint16_t SLV_DID_EMPTY            = 0x5577;
 
-static const uint16_t GNSSSENSOR_DUMMY         = 0x5577;
+static const uint16_t VENDOR_GNSSSENSOR        = 0x00F1;
+// Masters IDs
+static const uint16_t RISCV_CACHED_TILELINK    = 0x0500;
+static const uint16_t RISCV_UNCACHED_TILELINK  = 0x0501;
+static const uint16_t GAISLER_ETH_MAC_MASTER   = 0x0502;
+static const uint16_t GAISLER_ETH_EDCL_MASTER  = 0x0503;
+static const uint16_t RISCV_RIVER_CPU          = 0x0505;
+
+// Slaves IDs
 static const uint16_t GNSSSENSOR_BOOTROM       = 0x0071;
 static const uint16_t GNSSSENSOR_FWIMAGE       = 0x0072;
 static const uint16_t GNSSSENSOR_SRAM          = 0x0073;
@@ -35,25 +44,49 @@ static const uint16_t GNSSSENSOR_IRQCTRL       = 0x007d;
 static const uint16_t GNSSSENSOR_ETHMAC        = 0x007f;
 static const uint16_t GNSSSENSOR_GPTIMERS      = 0x0081;
 
-static const uint8_t PNP_CONFIG_DEFAULT_BYTES  = 16;
+static const uint32_t PNP_CFG_TYPE_INVALID     = 0;
+static const uint32_t PNP_CFG_TYPE_MASTER      = 1;
+static const uint32_t PNP_CFG_TYPE_SLAVE       = 2;
 
 static const uint32_t TECH_INFERRED            = 0;
 static const uint32_t TECH_VIRTEX6             = 36;
 static const uint32_t TECH_KINTEX7             = 49;
 
-
-typedef struct PnpConfigType {
-    uint32_t xmask;
-    uint32_t xaddr;
+typedef struct MasterConfigType {
+    union DescrType {
+        struct bits_type {
+            uint32_t descrsize : 8;
+            uint32_t descrtype : 2;
+            uint32_t rsrv : 14;
+            uint32_t xindex : 8;
+        } bits;
+        uint32_t val;
+    } descr;
     uint16_t did;
     uint16_t vid;
-    uint8_t size;
-    uint8_t rsrv[3];
-} PnpConfigType;
+} MasterConfigType;
+
+typedef struct SlaveConfigType {
+    union DescrType {
+        struct bits_type {
+            uint32_t descrsize : 8;
+            uint32_t descrtype : 2;
+            uint32_t bar_total : 2;
+            uint32_t rsrv1 : 4;
+            uint32_t irq_idx : 8;
+            uint32_t xindex : 8;
+        } bits;
+        uint32_t val;
+    } descr;
+    uint16_t did;
+    uint16_t vid;
+    uint32_t xmask;
+    uint32_t xaddr;
+} SlaveConfigType;
 
 typedef struct PnpMapType {
-    uint32_t hwid;         /// RO: HW ID
-    uint32_t fwid;         /// RW: FW ID
+    uint32_t hwid;              /// 0xfffff000: RO: HW ID
+    uint32_t fwid;              /// 0xfffff004: RW: FW ID
     union TechType {
         struct bits_type {
             uint8_t tech;
@@ -62,14 +95,14 @@ typedef struct PnpMapType {
             uint8_t adc_detect;
         } bits;
         uint32_t val;
-    } tech;         /// RO: technology index
-    uint32_t rsrv1;        /// 
-    uint64_t idt;          /// 
-    uint64_t malloc_addr;  /// RW: debuggind memalloc pointer 0x18
-    uint64_t malloc_size;  /// RW: debugging memalloc size 0x20
-    uint64_t fwdbg1;       /// RW: FW debug register
-    uint64_t rsrv[2];
-    PnpConfigType slaves[256];  // RO: slaves config
+    } tech;                     /// 0xfffff008: RO: technology index
+    uint32_t rsrv1;             /// 0xfffff00c: 
+    uint64_t idt;               /// 0xfffff010: 
+    uint64_t malloc_addr;       /// 0xfffff018: RW: debuggind memalloc pointer 0x18
+    uint64_t malloc_size;       /// 0xfffff020: RW: debugging memalloc size 0x20
+    uint64_t fwdbg1;            /// 0xfffff028: RW: FW debug register
+    uint64_t rsrv[2];           /// 0xfffff030, 0xfffff038
+    uint8_t cfg_table[(1 << 12) - 0x40];/// 0xfffff040: RO: PNP configuration
 } PnpMapType;
 
 struct GpioType {

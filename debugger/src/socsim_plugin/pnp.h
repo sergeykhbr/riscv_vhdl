@@ -35,12 +35,22 @@ public:
     }
 
 private:
+    void addMaster(unsigned idx, unsigned vid, unsigned did);
+    void addSlave(uint64_t addr, uint64_t size, unsigned irq, unsigned vid, unsigned did);
+
     AttributeType baseAddress_;
     AttributeType length_;
     AttributeType tech_;
     AttributeType adc_detector_;
 
     PnpMapType regs_;
+    union DescriptorTableType {
+        union DescriptorItemType {
+            MasterConfigType mst;
+            SlaveConfigType slv;
+        } *item;
+        uint8_t *buf;
+    } iter_;
 };
 
 DECLARE_CLASS(PNP)

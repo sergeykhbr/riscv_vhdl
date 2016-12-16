@@ -55,12 +55,13 @@ architecture rtl of axi_rfctrl is
 
   constant xconfig : nasti_slave_config_type := (
      xindex => xindex,
+     descrtype => PNP_CFG_TYPE_SLAVE,
+     descrsize => PNP_CFG_SLAVE_DESCR_BYTES,
+     irq_idx => 0,
      xaddr => conv_std_logic_vector(xaddr, CFG_NASTI_CFG_ADDR_BITS),
      xmask => conv_std_logic_vector(xmask, CFG_NASTI_CFG_ADDR_BITS),
      vid => VENDOR_GNSSSENSOR,
-     did => GNSSSENSOR_RF_CONTROL,
-     descrtype => PNP_CFG_TYPE_SLAVE,
-     descrsize => PNP_CFG_SLAVE_DESCR_BYTES
+     did => GNSSSENSOR_RF_CONTROL
   );
 
   type local_addr_array_type is array (0 to CFG_WORDS_ON_BUS-1) 

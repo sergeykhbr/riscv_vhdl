@@ -38,6 +38,14 @@ end;
  
 architecture arch_river_amba of river_amba is
 
+  constant xconfig : nasti_master_config_type := (
+     xindex => xindex,
+     descrsize => PNP_CFG_MASTER_DESCR_BYTES,
+     descrtype => PNP_CFG_TYPE_MASTER,
+     vid => VENDOR_GNSSSENSOR,
+     did => RISCV_RIVER_CPU
+  );
+
   type RegistersType is record
       w_valid : std_logic;
       w_last : std_logic;
@@ -58,7 +66,7 @@ architecture arch_river_amba of river_amba is
 
 begin
 
-  o_mstcfg <= nasti_master_config_none;
+  o_mstcfg <= xconfig;
   w_resp_mem_data_valid <= i_msti.r_valid or (r.b_ready and i_msti.b_valid);
   
   river0 : RiverTop  port map (

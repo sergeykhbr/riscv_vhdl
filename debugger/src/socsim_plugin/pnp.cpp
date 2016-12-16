@@ -11,31 +11,6 @@
 
 namespace debugger {
 
-static const PnpMapType DEFAULT_CONFIG = {
-        0x20161011, 0xdeadcafe,
-        {TECH_INFERRED, CFG_NASTI_SLAVES_TOTAL, 0, 0xff},
-        0,
-        0,
-        0,//malloc_addr
-        0,
-        0,
-        {0,0},
-        {
-          {0xffffe000, 0,          GNSSSENSOR_BOOTROM,      VENDOR_GNSSSENSOR, PNP_CONFIG_DEFAULT_BYTES},
-          {0xfffc0000, 0x00100000, GNSSSENSOR_FWIMAGE,      VENDOR_GNSSSENSOR, PNP_CONFIG_DEFAULT_BYTES},
-          {0xfff80000, 0x10000000, GNSSSENSOR_SRAM,         VENDOR_GNSSSENSOR, PNP_CONFIG_DEFAULT_BYTES},
-          {0xfffff000, 0x80001000, GNSSSENSOR_UART,         VENDOR_GNSSSENSOR, PNP_CONFIG_DEFAULT_BYTES},
-          {0xfffff000, 0x80000000, GNSSSENSOR_GPIO,         VENDOR_GNSSSENSOR, PNP_CONFIG_DEFAULT_BYTES},
-          {0xfffff000, 0x80002000, GNSSSENSOR_IRQCTRL,      VENDOR_GNSSSENSOR, PNP_CONFIG_DEFAULT_BYTES},
-          {0xfffff000, 0x80003000, GNSSSENSOR_ENGINE_STUB,  VENDOR_GNSSSENSOR, PNP_CONFIG_DEFAULT_BYTES},
-          {0xfffff000, 0x00000000, GNSSSENSOR_DUMMY,        VENDOR_GNSSSENSOR, PNP_CONFIG_DEFAULT_BYTES},//rfctrl
-          {0xfffff000, 0x00000000, GNSSSENSOR_DUMMY,        VENDOR_GNSSSENSOR, PNP_CONFIG_DEFAULT_BYTES},//fse
-          {0xfffff000, 0x00000000, GNSSSENSOR_DUMMY,        VENDOR_GNSSSENSOR, PNP_CONFIG_DEFAULT_BYTES},//mac
-          {0xfffff000, 0x00000000, GNSSSENSOR_DUMMY,        VENDOR_GNSSSENSOR, PNP_CONFIG_DEFAULT_BYTES},//dsu
-          {0xfffff000, 0xfffff000, GNSSSENSOR_PNP,          VENDOR_GNSSSENSOR, PNP_CONFIG_DEFAULT_BYTES}
-        }
-    };
-
 PNP::PNP(const char *name)  : IService(name) {
     registerInterface(static_cast<IMemoryOperation *>(this));
     registerAttribute("BaseAddress", &baseAddress_);
@@ -48,10 +23,55 @@ PNP::PNP(const char *name)  : IService(name) {
     tech_.make_uint64(0);
     adc_detector_.make_uint64(0);
 
-    regs_ = DEFAULT_CONFIG;
+    memset(&regs_, 0, sizeof(regs_));
+    iter_.buf = regs_.cfg_table;
+    regs_.hwid = 0x20161011;
+    regs_.fwid = 0xdeadcafe;
+    regs_.tech.bits.tech = TECH_INFERRED;
+    regs_.tech.bits.mst_total = 4;
+    regs_.tech.bits.slv_total = 13;
+
+    addMaster(0, VENDOR_GNSSSENSOR, RISCV_RIVER_CPU);
+    addMaster(1, VENDOR_GNSSSENSOR, MST_DID_EMPTY);
+    addMaster(2, VENDOR_GNSSSENSOR, GAISLER_ETH_MAC_MASTER);
+    addMaster(3, VENDOR_GNSSSENSOR, GAISLER_ETH_EDCL_MASTER);
+
+    addSlave(0, 8*1024, 0, VENDOR_GNSSSENSOR, GNSSSENSOR_BOOTROM);
+    addSlave(0x00100000, 256*1024, 0, VENDOR_GNSSSENSOR, GNSSSENSOR_FWIMAGE);
+    addSlave(0x10000000, 512*1024, 0, VENDOR_GNSSSENSOR, GNSSSENSOR_SRAM);
+    addSlave(0x80000000, 4*1024, 0, VENDOR_GNSSSENSOR, GNSSSENSOR_GPIO);
+    addSlave(0x80001000, 4*1024, 1, VENDOR_GNSSSENSOR, GNSSSENSOR_UART);
+    addSlave(0x80002000, 4*1024, 0, VENDOR_GNSSSENSOR, GNSSSENSOR_IRQCTRL);
+    addSlave(0x80003000, 4*1024, 0, VENDOR_GNSSSENSOR, GNSSSENSOR_ENGINE_STUB);
+    addSlave(0x80004000, 4*1024, 0, VENDOR_GNSSSENSOR, SLV_DID_EMPTY);//rfctrl
+    addSlave(0x80005000, 4*1024, 3, VENDOR_GNSSSENSOR, GNSSSENSOR_GPTIMERS);
+    addSlave(0x80006000, 4*1024, 2, VENDOR_GNSSSENSOR, SLV_DID_EMPTY);//mac
+    addSlave(0x80007000, 4*1024, 0, VENDOR_GNSSSENSOR, SLV_DID_EMPTY);//dsu
+    addSlave(0x80008000, 4*1024, 0, VENDOR_GNSSSENSOR, SLV_DID_EMPTY);//fse
+    addSlave(0xfffff000, 4*1024, 0, VENDOR_GNSSSENSOR, GNSSSENSOR_PNP);
 }
 
 PNP::~PNP() {
+}
+
+void PNP::addMaster(unsigned idx, unsigned vid, unsigned did) {
+    iter_.item->mst.vid = vid;
+    iter_.item->mst.did = did;
+    iter_.item->mst.descr.bits.descrtype = PNP_CFG_TYPE_MASTER;
+    iter_.item->mst.descr.bits.descrsize = sizeof(MasterConfigType);
+    iter_.buf += sizeof(MasterConfigType);
+}
+
+void PNP::addSlave(uint64_t addr, uint64_t size, unsigned irq, unsigned vid, unsigned did) {
+    iter_.item->slv.vid = vid;
+    iter_.item->slv.did = did;
+    iter_.item->slv.descr.bits.descrtype = PNP_CFG_TYPE_SLAVE;
+    iter_.item->slv.descr.bits.descrsize = sizeof(SlaveConfigType);
+    iter_.item->slv.descr.bits.bar_total = 1;
+    iter_.item->slv.descr.bits.irq_idx = irq;
+    iter_.item->slv.xaddr = static_cast<uint32_t>(addr);
+    iter_.item->slv.xmask = static_cast<uint32_t>(~(size - 1));
+    iter_.buf += sizeof(SlaveConfigType);
 }
 
 void PNP::postinitService() {

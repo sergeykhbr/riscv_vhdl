@@ -39,12 +39,13 @@ architecture arch_nasti_uart of nasti_uart is
 
   constant xconfig : nasti_slave_config_type := (
      xindex => xindex,
+     descrtype => PNP_CFG_TYPE_SLAVE,
+     descrsize => PNP_CFG_SLAVE_DESCR_BYTES,
+     irq_idx => CFG_IRQ_UART1,
      xaddr => conv_std_logic_vector(xaddr, CFG_NASTI_CFG_ADDR_BITS),
      xmask => conv_std_logic_vector(xmask, CFG_NASTI_CFG_ADDR_BITS),
      vid => VENDOR_GNSSSENSOR,
-     did => GNSSSENSOR_UART,
-     descrtype => PNP_CFG_TYPE_SLAVE,
-     descrsize => PNP_CFG_SLAVE_DESCR_BYTES
+     did => GNSSSENSOR_UART
   );
 
   type fifo_type is array (0 to fifosz-1) of std_logic_vector(7 downto 0);

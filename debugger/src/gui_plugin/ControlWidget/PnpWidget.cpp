@@ -60,7 +60,8 @@ void PnpWidget::showEvent(QShowEvent *event_) {
 
     ISocInfo *info = static_cast<ISocInfo *>(igui_->getSocInfo());
     uint32_t addr_pnp = static_cast<int>(info->addressPlugAndPlay());
-    RISCV_sprintf(tstr, sizeof(tstr), "read 0x%08x 256", addr_pnp);
+    RISCV_sprintf(tstr, sizeof(tstr),
+                "read 0x%08x %d", addr_pnp, sizeof(PnpMapType));
 
     cmd.make_string(tstr);
     igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), &cmd, true);
@@ -80,6 +81,7 @@ void PnpWidget::slotUpdate() {
     char tstr[256];
     QPixmap pixmapBkg;
     QString targetText;
+
     switch (pnp_.tech.bits.tech) {
     case TECH_INFERRED:
         targetText = QString("Target: Simulation");
@@ -120,21 +122,51 @@ void PnpWidget::slotUpdate() {
     /**
      * Lines with index 5 and 6 are empty.
      */
-
+    SlaveConfigType *pslv;
+    MasterConfigType *pmst;
     uint32_t adr1, adr2;
-    for (uint8_t i = 0; i < pnp_.tech.bits.slv_total; i++) {
-        adr1 = pnp_.slaves[i].xaddr;
-        adr2 = adr1 + ~pnp_.slaves[i].xmask;
-        RISCV_sprintf(tstr, sizeof(tstr), "0x%08x .. 0x%08x", adr1, adr2);
+    uint64_t did;
+    int i = 0;
+    iter_.buf = pnp_.cfg_table;
+    while (iter_.item->slv.descr.bits.descrtype != PNP_CFG_TYPE_INVALID) {
+        if (iter_.item->slv.descr.bits.descrtype == PNP_CFG_TYPE_MASTER) {
+            pmst = &iter_.item->mst;
+            did = pmst->did;
+            RISCV_sprintf(tstr, sizeof(tstr), "mst: ", NULL);
+        } else {
+            pslv = &iter_.item->slv;
+            adr1 = pslv->xaddr;
+            adr2 = adr1 + ~pslv->xmask;
+            did = pslv->did;
+            RISCV_sprintf(tstr, sizeof(tstr), "slv: 0x%08x .. 0x%08x", adr1, adr2);
+        }
         if ((W_Total + 2*i) < mainLayout_->count()) {
             getLabel(W_Total + 2*i)->setText(QString(tstr));
         } else {
             mainLayout_->addWidget(new QLabel(tstr), 7 + 2*i, 0, Qt::AlignLeft);
         }
 
-        switch (pnp_.slaves[i].did) {
-        case GNSSSENSOR_DUMMY:
-            RISCV_sprintf(tstr, sizeof(tstr), "Dummy/Empty slot", NULL);
+        switch (did) {
+        case MST_DID_EMPTY:
+            RISCV_sprintf(tstr, sizeof(tstr), "Empty master slot", NULL);
+            break;
+        case RISCV_CACHED_TILELINK:
+            RISCV_sprintf(tstr, sizeof(tstr), "Rocket CPU Cached tile", NULL);
+            break;
+        case RISCV_UNCACHED_TILELINK:
+            RISCV_sprintf(tstr, sizeof(tstr), "Rocket CPU Uncached tile", NULL);
+            break;
+        case GAISLER_ETH_MAC_MASTER:
+            RISCV_sprintf(tstr, sizeof(tstr), "Ethernet MAC with DMA interface", NULL);
+            break;
+        case GAISLER_ETH_EDCL_MASTER:
+            RISCV_sprintf(tstr, sizeof(tstr), "EDCL debug with DMA interface", NULL);
+            break;
+        case RISCV_RIVER_CPU:
+            RISCV_sprintf(tstr, sizeof(tstr), "Risc-V RIVER CPU", NULL);
+            break;
+        case SLV_DID_EMPTY:
+            RISCV_sprintf(tstr, sizeof(tstr), "Empty slave slot", NULL);
             break;
         case GNSSSENSOR_BOOTROM:
             RISCV_sprintf(tstr, sizeof(tstr), "Boot ROM", NULL);
@@ -176,6 +208,8 @@ void PnpWidget::slotUpdate() {
         }
 
         h += 8 + fm.height();
+        i++;
+        iter_.buf += iter_.item->mst.descr.bits.descrsize;
     }
 
     resize(QSize(w, h));

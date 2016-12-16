@@ -41,16 +41,20 @@ architecture arch_nasti_pnp of nasti_pnp is
 
   constant xconfig : nasti_slave_config_type := (
      xindex => xindex,
+     descrsize => PNP_CFG_SLAVE_DESCR_BYTES,
+     descrtype => PNP_CFG_TYPE_SLAVE,
+     irq_idx => 0,
      xaddr => conv_std_logic_vector(xaddr, CFG_NASTI_CFG_ADDR_BITS),
      xmask => conv_std_logic_vector(xmask, CFG_NASTI_CFG_ADDR_BITS),
      vid => VENDOR_GNSSSENSOR,
-     did => GNSSSENSOR_PNP,
-     descrtype => PNP_CFG_TYPE_SLAVE,
-     descrsize => PNP_CFG_SLAVE_DESCR_BYTES
+     did => GNSSSENSOR_PNP
   );
 
   type local_addr_array_type is array (0 to CFG_WORDS_ON_BUS-1) 
        of integer;
+
+  type master_config_map is array (0 to 2*CFG_NASTI_MASTER_TOTAL-1)
+       of std_logic_vector(31 downto 0);
        
   type slave_config_map is array (0 to 4*CFG_NASTI_SLAVES_TOTAL-1)
        of std_logic_vector(31 downto 0);
@@ -84,8 +88,9 @@ architecture arch_nasti_pnp of nasti_pnp is
 
 begin
 
-  comblogic : process(i, slvcfg, r, r_adc_detect, nrst)
+  comblogic : process(i, slvcfg, mstcfg, r, r_adc_detect, nrst)
     variable v : registers;
+    variable mstmap : master_config_map;
     variable slvmap : slave_config_map;
     variable raddr_reg : local_addr_array_type;
     variable waddr_reg : local_addr_array_type;
@@ -98,11 +103,19 @@ begin
     v := r;
     v.bank0.adc_detect := r_adc_detect;
 
+    for k in 0 to CFG_NASTI_MASTER_TOTAL-1 loop
+      mstmap(2*k) := conv_std_logic_vector(mstcfg(k).xindex,8) & "00" & X"000" 
+                     & mstcfg(k).descrtype & mstcfg(k).descrsize;
+      mstmap(2*k+1) := mstcfg(k).vid & mstcfg(k).did;
+    end loop;
+
     for k in 0 to CFG_NASTI_SLAVES_TOTAL-1 loop
-      slvmap(4*k)   := slvcfg(k).xmask & X"000";
-      slvmap(4*k+1) := slvcfg(k).xaddr & X"000";
-      slvmap(4*k+2) := slvcfg(k).vid & slvcfg(k).did;
-      slvmap(4*k+3) := X"000000" & PNP_CFG_SLAVE_DESCR_BYTES;
+      slvmap(4*k) := conv_std_logic_vector(slvcfg(k).xindex,8) & 
+                     conv_std_logic_vector(slvcfg(k).irq_idx,8) & "000000" &
+                     slvcfg(k).descrtype & slvcfg(k).descrsize;
+      slvmap(4*k+1) := slvcfg(k).vid & slvcfg(k).did;
+      slvmap(4*k+2)   := slvcfg(k).xmask & X"000";
+      slvmap(4*k+3) := slvcfg(k).xaddr & X"000";
     end loop;
 
 
@@ -113,7 +126,7 @@ begin
 
        rtmp := (others => '0');
        if raddr_reg(n) = 0 then 
-          rtmp := X"20161015";
+          rtmp := X"20161216";
        elsif raddr_reg(n) = 1 then 
           rtmp := r.bank0.fw_id;
        elsif raddr_reg(n) = 2 then 
@@ -139,8 +152,11 @@ begin
           rtmp := r.bank0.fwdbg1(31 downto 0);
        elsif raddr_reg(n) = 11 then 
           rtmp := r.bank0.fwdbg1(63 downto 32);
-       elsif raddr_reg(n) >= 16 and raddr_reg(n) < 16+4*CFG_NASTI_SLAVES_TOTAL then
-          rtmp := slvmap(raddr_reg(n) - 16);
+       elsif raddr_reg(n) >= 16 and raddr_reg(n) < 16+2*CFG_NASTI_MASTER_TOTAL then
+          rtmp := mstmap(raddr_reg(n) - 16);
+       elsif raddr_reg(n) >= 16+2*CFG_NASTI_MASTER_TOTAL 
+             and raddr_reg(n) < 16+2*CFG_NASTI_MASTER_TOTAL+4*CFG_NASTI_SLAVES_TOTAL then
+          rtmp := slvmap(raddr_reg(n) - 16 - 2*CFG_NASTI_MASTER_TOTAL);
        end if;
        
        rdata(32*(n+1)-1 downto 32*n) := rtmp;

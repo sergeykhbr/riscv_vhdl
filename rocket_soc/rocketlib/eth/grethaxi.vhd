@@ -196,28 +196,29 @@ architecture arch_grethaxi of grethaxi is
                        
   constant xslvconfig : nasti_slave_config_type := (
      xindex => xslvindex,
+     descrtype => PNP_CFG_TYPE_SLAVE,
+     descrsize => PNP_CFG_SLAVE_DESCR_BYTES,
+     irq_idx => CFG_IRQ_ETHMAC,
      xaddr => conv_std_logic_vector(xaddr, CFG_NASTI_CFG_ADDR_BITS),
      xmask => conv_std_logic_vector(xmask, CFG_NASTI_CFG_ADDR_BITS),
      vid => VENDOR_GNSSSENSOR,
-     did => GNSSSENSOR_ETHMAC,
-     descrtype => PNP_CFG_TYPE_SLAVE,
-     descrsize => PNP_CFG_SLAVE_DESCR_BYTES
+     did => GNSSSENSOR_ETHMAC
   );
 
   constant xmstconfig : nasti_master_config_type := (
      xindex => xmstindex,
-     vid => VENDOR_GNSSSENSOR,
-     did => GAISLER_ETH_MAC_MASTER,
+     descrsize => PNP_CFG_MASTER_DESCR_BYTES,
      descrtype => PNP_CFG_TYPE_MASTER,
-     descrsize => PNP_CFG_MASTER_DESCR_BYTES
+     vid => VENDOR_GNSSSENSOR,
+     did => GAISLER_ETH_MAC_MASTER
   );
 
   constant xmstconfig2 : nasti_master_config_type := (
      xindex => xmstindex2,
-     vid => VENDOR_GNSSSENSOR,
-     did => GAISLER_ETH_EDCL_MASTER,
+     descrsize => PNP_CFG_MASTER_DESCR_BYTES,
      descrtype => PNP_CFG_TYPE_MASTER,
-     descrsize => PNP_CFG_MASTER_DESCR_BYTES
+     vid => VENDOR_GNSSSENSOR,
+     did => GAISLER_ETH_EDCL_MASTER
   );
 
   type local_addr_array_type is array (0 to CFG_WORDS_ON_BUS-1) 

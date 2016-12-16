@@ -48,6 +48,13 @@ private:
     QImage imgTarget_[TARGETS_total];
 
     PnpMapType pnp_;
+    union DescriptorTableType {
+        union DescriptorItemType {
+            MasterConfigType mst;
+            SlaveConfigType slv;
+        } *item;
+        uint8_t *buf;
+    } iter_;
 };
 
 }  // namespace debugger
