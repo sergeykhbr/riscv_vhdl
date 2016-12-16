@@ -2,7 +2,7 @@
 --! @file
 --! @copyright Copyright 2015 GNSS Sensor Ltd. All right reserved.
 --! @author    Sergey Khabarov - sergeykhbr@gmail.com
---! @brief     Implementation of nasti_dsu (Debug Support Unit).
+--! @brief     Implementation of Debug Support Unit (DSU) with AXI4 interface.
 --! @details   DSU provides access to the internal CPU registers (CSRs) via
 --!            'Rocket-chip' specific bus HostIO.
 -----------------------------------------------------------------------------
@@ -10,26 +10,33 @@
 --! @page dsu_link Debug Support Unit (DSU)
 --! 
 --! @par Overview
---! Debug Support Unit (DSU) was developed to simplify debugging on target
---! hardware and provide access to the "Rocket-chip" specific HostIO bus
---! interface. This bus provides access to the internal CPU control registers
---! (CSRs) that store information about Core configuration, current operational
---! mode (Machine, Hypervisor, Supervisor or User) and allows to change
---! processor run-time behaviour by injecting interrupts for an example.
---! General CSR registers are described in RISC-V privileged ISA
---! specification. Take into account that CPU can have any number of platform
---! specific CSRs that usually not entirely documented.
+--! Debug Support Unit (DSU) was developed to interact with "RIVER" CPU
+--! via its debug port interace. This bus provides access to all internal CPU
+--! registers and states and may be additionally extended by request.
+--! Run control functionality like 'run', 'halt', 'step' or 'breakpoints'
+--! imlemented using proprietary algorithms and intend to simplify integration
+--! with debugger application.
+--!
+--! Set of general registers and control registers (CSR) are described in 
+--! RISC-V privileged ISA specification and also available for read and write
+--! access via debug port.
+--!
+--! @note Take into account that CPU can have any number of
+--! platform specific CSRs that usually not entirely documented.
 --! 
 --! @par Operation
 --! DSU acts like a slave AMBA AXI4 device that is directly mapped into 
 --! physical memory. Default address location for our implementation 
 --! is 0x80020000. DSU directly transforms device offset address
---! into CSR index by removing last 4 bits of address.
---! All CSR values is always 64-bits width.
+--! into one of regions of the debug port:
+--!    Region 1: CSR registers.
+--!    Region 2: General set of registers.
+--!    Region 3: Run control and debugging registers.
+--!    Region 4: Local DSU region that doesn't send into debug port.
 --!
 --! @par Example:
---!     Bus transaction at address <em>0x80027820</em>
---!     will be redirected to HostIO bus with CSR index <em>0x782</em>.
+--!     Bus transaction at address <em>0x80023C10</em>
+--!     will be redirected to Debug port with CSR index <em>0x782</em>.
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -40,13 +47,15 @@ use commonlib.types_common.all;
 library ambalib;
 --! AXI4 configuration constants.
 use ambalib.types_amba4.all;
---! RISCV specific funcionality.
-library rocketlib;
-use rocketlib.types_rocket.all;
+--! RIVER CPU specific library.
+library riverlib;
+--! RIVER CPU configuration constants.
+use riverlib.river_cfg.all;
+--! River top level with AMBA interface module declaration
+use riverlib.types_river.all;
 
-entity nasti_dsu is
+entity axi_dsu is
   generic (
-    xindex   : integer := 0;
     xaddr    : integer := 0;
     xmask    : integer := 16#fffff#
   );
@@ -62,10 +71,9 @@ entity nasti_dsu is
   );
 end;
 
-architecture arch_nasti_dsu of nasti_dsu is
+architecture arch_axi_dsu of axi_dsu is
 
   constant xconfig : nasti_slave_config_type := (
-     xindex => xindex,
      descrtype => PNP_CFG_TYPE_SLAVE,
      descrsize => PNP_CFG_SLAVE_DESCR_BYTES,
      irq_idx => 0,

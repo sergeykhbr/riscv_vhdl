@@ -19,9 +19,6 @@ library rocketlib;
 use rocketlib.grethpkg.all;
 
 entity eth_axi_mst is
-  generic (
-    xindex : integer := 0
-  );
   port(
     rst     : in  std_ulogic;
     clk     : in  std_ulogic;
@@ -75,11 +72,11 @@ begin
     rgrant := '0';
 
     vmsto.ar_user       := '0';
-    vmsto.ar_id         := conv_std_logic_vector(xindex, CFG_ROCKET_ID_BITS);
+    vmsto.ar_id         := conv_std_logic_vector(0, CFG_ROCKET_ID_BITS);
     vmsto.ar_bits.size  := "010"; -- 4 bytes
     vmsto.ar_bits.burst := NASTI_BURST_INCR;
     vmsto.aw_user       := '0';
-    vmsto.aw_id         := conv_std_logic_vector(xindex, CFG_ROCKET_ID_BITS);
+    vmsto.aw_id         := conv_std_logic_vector(0, CFG_ROCKET_ID_BITS);
     vmsto.aw_bits.size  := "010"; -- 4 bytes
     vmsto.aw_bits.burst := NASTI_BURST_INCR;
 

@@ -163,6 +163,9 @@ void GuiPlugin::waitQueueEmpty() {
     if (!isEnabled()) {
         return;
     }
+    for (unsigned i = 0; i < CMD_QUEUE_SIZE; i++) {
+        cmdQueue_[i].src = NULL;
+    }
     cmdQueueCntTotal_ = 0;
     RISCV_event_clear(&eventCmdQueueEmpty_);
     RISCV_event_set(&eventCommandAvailable_);

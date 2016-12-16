@@ -136,9 +136,6 @@ use rocketlib.grethpkg.all;
 
 entity grethaxi is
   generic(
-    xslvindex      : integer := 0;
-    xmstindex      : integer := 0;
-    xmstindex2     : integer := 1;
     xaddr          : integer := 0;
     xmask          : integer := 16#FFFFF#;
     xirq           : integer := 0;
@@ -195,10 +192,9 @@ architecture arch_grethaxi of grethaxi is
                        conv_std_logic_vector(log2(edclbufsz), 3);
                        
   constant xslvconfig : nasti_slave_config_type := (
-     xindex => xslvindex,
      descrtype => PNP_CFG_TYPE_SLAVE,
      descrsize => PNP_CFG_SLAVE_DESCR_BYTES,
-     irq_idx => CFG_IRQ_ETHMAC,
+     irq_idx => xirq,
      xaddr => conv_std_logic_vector(xaddr, CFG_NASTI_CFG_ADDR_BITS),
      xmask => conv_std_logic_vector(xmask, CFG_NASTI_CFG_ADDR_BITS),
      vid => VENDOR_GNSSSENSOR,
@@ -206,7 +202,6 @@ architecture arch_grethaxi of grethaxi is
   );
 
   constant xmstconfig : nasti_master_config_type := (
-     xindex => xmstindex,
      descrsize => PNP_CFG_MASTER_DESCR_BYTES,
      descrtype => PNP_CFG_TYPE_MASTER,
      vid => VENDOR_GNSSSENSOR,
@@ -214,7 +209,6 @@ architecture arch_grethaxi of grethaxi is
   );
 
   constant xmstconfig2 : nasti_master_config_type := (
-     xindex => xmstindex2,
      descrsize => PNP_CFG_MASTER_DESCR_BYTES,
      descrtype => PNP_CFG_TYPE_MASTER,
      vid => VENDOR_GNSSSENSOR,
@@ -629,9 +623,7 @@ end process;
   etho.gbit <= '0';
 
   --! AXI Master interface providing DMA access
-  axi0 : eth_axi_mst generic map (
-     xindex => xmstindex
-  ) port map (
+  axi0 : eth_axi_mst port map (
      rst, 
      clk, 
      msti, 
@@ -643,9 +635,7 @@ end process;
   );
 
   edclmst_on : if edclsepahbg = 1 generate
-    axi1 : eth_axi_mst generic map (
-        xindex => xmstindex2
-      ) port map (
+    axi1 : eth_axi_mst port map (
         rst, 
         clk,
         msti,

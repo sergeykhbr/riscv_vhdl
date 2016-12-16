@@ -24,7 +24,6 @@ use ambalib.types_amba4.all;
 entity nasti_sram is
   generic (
     memtech  : integer := inferred;
-    xindex   : integer := 0;
     xaddr    : integer := 0;
     xmask    : integer := 16#fffff#;
     abits    : integer := 17;
@@ -42,7 +41,6 @@ end;
 architecture arch_nasti_sram of nasti_sram is
 
   constant xconfig : nasti_slave_config_type := (
-     xindex => xindex,
      descrtype => PNP_CFG_TYPE_SLAVE,
      descrsize => PNP_CFG_SLAVE_DESCR_BYTES,
      irq_idx => 0,

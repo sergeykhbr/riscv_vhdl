@@ -21,9 +21,6 @@ use riverlib.river_cfg.all;
 use riverlib.types_river.all;
 
 entity river_amba is 
-generic (
-    xindex : integer := 0
-);
 port ( 
     i_nrst   : in std_logic;
     i_clk    : in std_logic;
@@ -39,7 +36,6 @@ end;
 architecture arch_river_amba of river_amba is
 
   constant xconfig : nasti_master_config_type := (
-     xindex => xindex,
      descrsize => PNP_CFG_MASTER_DESCR_BYTES,
      descrtype => PNP_CFG_TYPE_MASTER,
      vid => VENDOR_GNSSSENSOR,
@@ -103,7 +99,7 @@ begin
     vmsto.ar_bits.addr  := wb_req_mem_addr;
     vmsto.ar_bits.len   := X"00";  -- Cache not support burst transaction (for now)
     vmsto.ar_user       := '0';
-    vmsto.ar_id         := conv_std_logic_vector(xindex, CFG_ROCKET_ID_BITS);
+    vmsto.ar_id         := conv_std_logic_vector(0, CFG_ROCKET_ID_BITS);
     vmsto.ar_bits.size  := "011"; -- 8 bytes
     vmsto.ar_bits.burst := NASTI_BURST_INCR;
 
@@ -111,7 +107,7 @@ begin
     vmsto.aw_bits.addr  := wb_req_mem_addr;
     vmsto.aw_bits.len   := X"00";
     vmsto.aw_user       := '0';
-    vmsto.aw_id         := conv_std_logic_vector(xindex, CFG_ROCKET_ID_BITS);
+    vmsto.aw_id         := conv_std_logic_vector(0, CFG_ROCKET_ID_BITS);
     vmsto.aw_bits.size  := "011"; -- 8 bytes
     vmsto.aw_bits.burst := NASTI_BURST_INCR;
 

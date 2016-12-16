@@ -85,9 +85,11 @@ void ComPortService::getSerialPortList(AttributeType *list) {
 
 int ComPortService::openSerialPort(const char *port, int baud, void *hdl) {
     char chCom[20];
+    char chBaud[16];
     HANDLE hFile;
   
     size_t szComLen = RISCV_sprintf(chCom, sizeof(chCom), "\\\\.\\%s", port) + 1;
+    RISCV_sprintf(chBaud, sizeof(chBaud), "%d", baud);
  
     hFile = CreateFile(chCom,
                         GENERIC_READ|GENERIC_WRITE,
@@ -99,27 +101,30 @@ int ComPortService::openSerialPort(const char *port, int baud, void *hdl) {
  	
     *static_cast<HANDLE *>(hdl) = hFile;
     if (hFile == INVALID_HANDLE_VALUE) {
-        RISCV_error("Can't open port %s", chCom);
+        if (GetLastError() == ERROR_ACCESS_DENIED) {
+            RISCV_error("%s is locked by another device", chCom);
+        } else {
+            RISCV_error("Can't open port %s", chCom);
+        }
 	    return -1;
     }
 
     // Read capabilities:
     COMMPROP CommProp;
-    GetCommProperties(hFile, &CommProp );
-
     DCB dcb;
-    GetCommState(hFile, &dcb);
-    memset(&dcb, 0, sizeof(dcb));
+    GetCommProperties(hFile, &CommProp );
+    FillMemory(&dcb, sizeof(dcb), 0);
+
     dcb.DCBlength = sizeof(dcb);
-    // Parse string with the paramaters of COM connection to the dcb structure:
-    //????BuildCommDCB(); 
-    dcb.BaudRate = baud;
-    dcb.ByteSize = 8;             
-    dcb.Parity   = NOPARITY;        
-    dcb.StopBits = ONESTOPBIT;   
+    if (!BuildCommDCB(chBaud, &dcb)) {   
+        RISCV_error("Can't BuildCommDCB(%s,)", chBaud);
+        CloseHandle(hFile);
+        return -1;
+    }
 
     if (!SetCommState(hFile, &dcb)) {
         RISCV_error("Can't set port %s state", chCom);
+        CloseHandle(hFile);
         return -1;
     }
 
@@ -133,6 +138,7 @@ int ComPortService::openSerialPort(const char *port, int baud, void *hdl) {
     SetCommTimeouts(hFile, &CommTimeOuts);
     if(!SetCommMask(hFile, EV_RXCHAR)) {
         RISCV_error("Can't set port %s timeouts", chCom);
+        CloseHandle(hFile);
         return -1;
     }
 

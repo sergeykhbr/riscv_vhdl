@@ -20,7 +20,6 @@ use ambalib.types_amba4.all;
 --!            and interacts with the antenna control signals.
 entity axi_rfctrl is
   generic (
-    xindex   : integer := 0;
     xaddr    : integer := 0;
     xmask    : integer := 16#fffff#
   );
@@ -54,7 +53,6 @@ end;
 architecture rtl of axi_rfctrl is
 
   constant xconfig : nasti_slave_config_type := (
-     xindex => xindex,
      descrtype => PNP_CFG_TYPE_SLAVE,
      descrsize => PNP_CFG_SLAVE_DESCR_BYTES,
      irq_idx => 0,

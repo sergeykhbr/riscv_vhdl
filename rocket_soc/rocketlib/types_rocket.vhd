@@ -217,8 +217,6 @@ end record;
 --! @param[in] interrupts  Interrupts line supported by Rocket chip.
 component rocket_l1only is 
 generic (
-    xindex1 : integer := 0;
-    xindex2 : integer := 1;
     hartid : integer := 0;
     reset_vector : integer := 16#1000#
 );
@@ -257,7 +255,6 @@ end component;
 component nasti_bootrom is
   generic (
     memtech  : integer := inferred;
-    xindex   : integer := 0;
     xaddr    : integer := 0;
     xmask    : integer := 16#fffff#;
     sim_hexfile : string
@@ -275,7 +272,6 @@ end component;
   component nasti_romimage is
   generic (
     memtech  : integer := inferred;
-    xindex   : integer := 0;
     xaddr    : integer := 0;
     xmask    : integer := 16#fffff#;
     sim_hexfile : string
@@ -293,7 +289,6 @@ end component;
 component nasti_sram is
   generic (
     memtech  : integer := inferred;
-    xindex   : integer := 0;
     xaddr    : integer := 0;
     xmask    : integer := 16#fffff#;
     abits    : integer := 17;
@@ -312,9 +307,9 @@ end component;
 --! @brief NASTI (AXI4) GPIO controller
 component nasti_gpio is
   generic (
-    xindex   : integer := 0;
     xaddr    : integer := 0;
-    xmask    : integer := 16#fffff#
+    xmask    : integer := 16#fffff#;
+	 xirq     : integer := 0
   );
   port (
     clk  : in std_logic;
@@ -340,9 +335,9 @@ end record;
 --! UART with the AXI4 interface declaration.
 component nasti_uart is
   generic (
-    xindex  : integer := 0;
     xaddr   : integer := 0;
     xmask   : integer := 16#fffff#;
+    xirq    : integer := 0;
     fifosz  : integer := 16
   );
   port (
@@ -360,7 +355,6 @@ end component;
 --! @details To rise interrupt on certain CPU HostIO interface is used.
 component nasti_irqctrl is
   generic (
-    xindex   : integer := 0;
     xaddr    : integer := 0;
     xmask    : integer := 16#fffff#
   );
@@ -368,31 +362,11 @@ component nasti_irqctrl is
  (
     clk    : in std_logic;
     nrst   : in std_logic;
-    i_irqs : in std_logic_vector(CFG_IRQ_TOTAL-1 downto 0);
+    i_irqs : in std_logic_vector(CFG_IRQ_TOTAL-1 downto 1);
     o_cfg  : out nasti_slave_config_type;
     i_axi  : in nasti_slave_in_type;
     o_axi  : out nasti_slave_out_type;
     o_irq_meip : out std_logic
-  );
-  end component;
-
-  --! @brief   Declaration of the Debug Support Unit with the AXI interface.
-  --! @details This module provides access to processors CSRs via HostIO bus.
-  component nasti_dsu is
-  generic (
-    xindex   : integer := 0;
-    xaddr    : integer := 0;
-    xmask    : integer := 16#fffff#
-  );
-  port 
-  (
-    clk    : in std_logic;
-    nrst   : in std_logic;
-    o_cfg  : out nasti_slave_config_type;
-    i_axi  : in nasti_slave_in_type;
-    o_axi  : out nasti_slave_out_type;
-    o_irq  : out std_logic;
-    o_soft_reset : out std_logic
   );
   end component;
 
@@ -401,9 +375,9 @@ component nasti_irqctrl is
   --!          generic number of GP timers.
   component nasti_gptimers is
   generic (
-    xindex  : integer := 0;
     xaddr   : integer := 0;
     xmask   : integer := 16#fffff#;
+    xirq    : integer := 0;
     tmr_total  : integer := 2
   );
   port (
@@ -423,7 +397,6 @@ component nasti_irqctrl is
 --! @todo Implements PnP signals for all Masters devices.
 component nasti_pnp is
   generic (
-    xindex  : integer := 0;
     xaddr   : integer := 0;
     xmask   : integer := 16#fffff#;
     tech    : integer := 0

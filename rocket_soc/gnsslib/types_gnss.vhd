@@ -135,9 +135,9 @@ package types_gnss is
   generic
   (
     tech   : integer range 0 to NTECH := 0;
-    xindex : integer := 0;
     xaddr  : integer := 0;
-    xmask  : integer := 16#FFFFF#
+    xmask  : integer := 16#FFFFF#;
+	 xirq   : integer := 0
   );
   port
   (
@@ -172,7 +172,6 @@ package types_gnss is
   generic
   (
     tech   : integer := 0;
-    xindex : integer := 0;
     xaddr  : integer := 0;
     xmask  : integer := 16#FFFFF#;
     sys    : integer := GEN_SYSTEM_GPSCA
@@ -189,7 +188,6 @@ package types_gnss is
   generic
   (
     tech   : integer := 0;
-    xindex : integer := 0;
     xaddr  : integer := 0;
     xmask  : integer := 16#FFFFF#;
     sys    : integer := GEN_SYSTEM_GPSCA
@@ -206,7 +204,6 @@ package types_gnss is
   --!            and interacts with the antenna control signals.
   component axi_rfctrl is
   generic (
-    xindex   : integer := 0;
     xaddr    : integer := 0;
     xmask    : integer := 16#fffff#
   );
@@ -242,7 +239,6 @@ end component;
 
   component gyrospi is
   generic (
-    xindex   : integer := 0;
     xaddr    : integer := 0;
     xmask    : integer := 16#fffff#
   );
@@ -265,7 +261,6 @@ end component;
 
   component accelspi is
     generic (
-      xindex   : integer := 0;
       xaddr    : integer := 0;
       xmask    : integer := 16#fffff#
     );

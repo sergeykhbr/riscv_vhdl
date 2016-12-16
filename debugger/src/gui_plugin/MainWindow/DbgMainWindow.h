@@ -46,6 +46,9 @@ signals:
     void signalTargetStateChanged(bool);
     void signalExit();
 
+protected:
+    virtual void closeEvent(QCloseEvent *ev_);
+
 private slots:
     void slotPostInit(AttributeType *cfg);
     void slotConfigDone();

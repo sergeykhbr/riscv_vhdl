@@ -187,7 +187,7 @@ architecture arch_riscv_soc of riscv_soc is
   signal eth_o : eth_out_type;
 
  
-  signal irq_pins : std_logic_vector(CFG_IRQ_TOTAL-1 downto 0);
+  signal irq_pins : std_logic_vector(CFG_IRQ_TOTAL-1 downto 1);
 begin
 
   --! PAD buffers:
@@ -263,9 +263,7 @@ dport_i.wdata <= (others => '0');
   
   --! @brief RISC-V Processor core (River or Rocket).
 river_ena : if CFG_COMMON_RIVER_CPU_ENABLE generate
-  cpu0 : river_amba generic map (
-    xindex => CFG_NASTI_MASTER_CACHED
-  ) port map ( 
+  cpu0 : river_amba port map ( 
     i_nrst   => wNReset,
     i_clk    => wClkBus,
     i_msti   => aximi(CFG_NASTI_MASTER_CACHED),
@@ -280,8 +278,6 @@ river_ena : if CFG_COMMON_RIVER_CPU_ENABLE generate
 end generate;
 river_dis : if not CFG_COMMON_RIVER_CPU_ENABLE generate
   cpu0 : rocket_l1only generic map (
-    xindex1 => CFG_NASTI_MASTER_CACHED,
-    xindex2 => CFG_NASTI_MASTER_UNCACHED,
     hartid  => 0,
     reset_vector => 16#1000#
   ) port map ( 
@@ -303,8 +299,7 @@ dsu_ena : if CFG_DSU_ENABLE generate
   --! @brief Debug Support Unit with access to the CSRs
   --! @details Map address:
   --!          0x80080000..0x8009ffff (128 KB total)
-  dsu0 : nasti_dsu generic map (
-    xindex   => CFG_NASTI_SLAVE_DSU,
+  dsu0 : axi_dsu generic map (
     xaddr    => 16#80080#,
     xmask    => 16#fffe0#
   ) port map (
@@ -329,7 +324,6 @@ end generate;
   --!          0x00000000..0x00001fff (8 KB total)
   boot0 : nasti_bootrom generic map (
     memtech  => CFG_MEMTECH,
-    xindex   => CFG_NASTI_SLAVE_BOOTROM,
     xaddr    => 16#00000#,
     xmask    => 16#ffffe#,
     sim_hexfile => CFG_SIM_BOOTROM_HEX
@@ -348,7 +342,6 @@ end generate;
   --! @warning Don't forget to change ROM_ADDR_WIDTH in rom implementation
   img0 : nasti_romimage generic map (
     memtech  => CFG_MEMTECH,
-    xindex   => CFG_NASTI_SLAVE_ROMIMAGE,
     xaddr    => 16#00100#,
     xmask    => 16#fffc0#,
     sim_hexfile => CFG_SIM_FWIMAGE_HEX
@@ -366,7 +359,6 @@ end generate;
   --!          0x10000000..0x1007ffff (512 KB total)
   sram0 : nasti_sram generic map (
     memtech  => CFG_MEMTECH,
-    xindex   => CFG_NASTI_SLAVE_SRAM,
     xaddr    => 16#10000#,
     xmask    => 16#fff80#,            -- 512 KB mask
     abits    => (10 + log2(512)),     -- 512 KB address
@@ -385,9 +377,9 @@ end generate;
   --! @details Map address:
   --!          0x80000000..0x80000fff (4 KB total)
   gpio0 : nasti_gpio generic map (
-    xindex   => CFG_NASTI_SLAVE_GPIO,
     xaddr    => 16#80000#,
-    xmask    => 16#fffff#
+    xmask    => 16#fffff#,
+    xirq     => 0
   ) port map (
     clk   => wClkBus,
     nrst  => wNReset,
@@ -407,9 +399,9 @@ end generate;
   --! @details Map address:
   --!          0x80001000..0x80001fff (4 KB total)
   uart1 : nasti_uart generic map (
-    xindex   => CFG_NASTI_SLAVE_UART1,
     xaddr    => 16#80001#,
     xmask    => 16#FFFFF#,
+	 xirq     => CFG_IRQ_UART1,
     fifosz   => 16
   ) port map (
     nrst   => wNReset, 
@@ -430,7 +422,6 @@ end generate;
   --! @details Map address:
   --!          0x80002000..0x80002fff (4 KB total)
   irq0 : nasti_irqctrl generic map (
-    xindex     => CFG_NASTI_SLAVE_IRQCTRL,
     xaddr      => 16#80002#,
     xmask      => 16#FFFFF#
   ) port map (
@@ -459,9 +450,9 @@ end generate;
 
     gnss0 : gnssengine  generic map (
       tech    => CFG_MEMTECH,
-      xindex  => CFG_NASTI_SLAVE_ENGINE,
       xaddr   => 16#80003#,
-      xmask   => 16#FFFFF#
+      xmask   => 16#FFFFF#,
+		xirq    => CFG_IRQ_GNSSENGINE
     ) port map (
       i      => gnss_i,
       o      => gnss_o
@@ -482,7 +473,6 @@ end generate;
   --!          0x80004000..0x80004fff (4 KB total)
   rf_ena : if CFG_GNSSLIB_ENABLE generate
     rf0 : axi_rfctrl generic map (
-      xindex => CFG_NASTI_SLAVE_RFCTRL,
       xaddr  => 16#80004#,
       xmask  => 16#fffff#
     ) port map (
@@ -516,9 +506,9 @@ end generate;
   --! @details Map address:
   --!          0x80005000..0x80005fff (4 KB total)
   gptmr0 : nasti_gptimers  generic map (
-    xindex    => CFG_NASTI_SLAVE_GPTIMERS,
     xaddr     => 16#80005#,
     xmask     => 16#fffff#,
+	 xirq      => CFG_IRQ_GPTIMERS,
     tmr_total => 2
   ) port map (
     clk    => wClkBus,
@@ -546,7 +536,6 @@ end generate;
 
       fse0 : TopFSE generic map (
         tech   => CFG_MEMTECH,
-        xindex => CFG_NASTI_SLAVE_FSE_GPS,
         xaddr  => 16#8000a#,
         xmask  => 16#fffff#,
         sys    => GEN_SYSTEM_GPSCA
@@ -593,8 +582,6 @@ end generate;
     eth_i.mdint <= i_emdint;
     
     mac0 : grethaxi generic map (
-      xslvindex => CFG_NASTI_SLAVE_ETHMAC,
-      xmstindex => CFG_NASTI_MASTER_ETHMAC,
       xaddr => 16#80040#,
       xmask => 16#FFFC0#,
       xirq => CFG_IRQ_ETHMAC,
@@ -661,7 +648,6 @@ end generate;
   --! @details Map address:
   --!          0xfffff000..0xffffffff (4 KB total)
   pnp0 : nasti_pnp generic map (
-    xindex  => CFG_NASTI_SLAVE_PNP,
     xaddr   => 16#fffff#,
     xmask   => 16#fffff#,
     tech    => CFG_MEMTECH

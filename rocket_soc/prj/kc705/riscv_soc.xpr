@@ -429,9 +429,9 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../rocketlib/misc/nasti_dsu.vhd">
+      <File Path="$PPRDIR/../../riverlib/dsu/axi_dsu.vhd">
         <FileInfo>
-          <Attr Name="Library" Val="rocketlib"/>
+          <Attr Name="Library" Val="riverlib"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>

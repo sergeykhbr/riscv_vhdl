@@ -83,15 +83,17 @@ constant CFG_NASTI_MASTER_TOTAL    : integer := CFG_NASTI_MASTER_ETHMAC+1;
 --! @{
 
 --! GNSS Engine IRQ pin that generates 1 msec pulses.
-constant CFG_IRQ_GNSSENGINE     : integer := 0;
+constant CFG_IRQ_UNUSED         : integer := 0;
 --! UART_A interrupt pin.
-constant CFG_IRQ_UART1          : integer := CFG_IRQ_GNSSENGINE + 1;
+constant CFG_IRQ_UART1          : integer := CFG_IRQ_UNUSED + 1;
 --! Ethernet MAC interrupt pin.
 constant CFG_IRQ_ETHMAC         : integer := CFG_IRQ_UART1 + 1;
 --! GP Timers interrupt pin
 constant CFG_IRQ_GPTIMERS       : integer := CFG_IRQ_ETHMAC + 1;
+--! GNSS Engine IRQ pin that generates 1 msec pulses.
+constant CFG_IRQ_GNSSENGINE     : integer := CFG_IRQ_GPTIMERS + 1;
 --! Total number of used interrupts in a system
-constant CFG_IRQ_TOTAL          : integer := CFG_IRQ_GPTIMERS + 1;
+constant CFG_IRQ_TOTAL          : integer := CFG_IRQ_GNSSENGINE + 1;
 --! @}
 
 --! @name   SCALA generated parameters
@@ -267,8 +269,6 @@ constant PNP_CFG_MASTER_DESCR_BYTES : std_logic_vector(7 downto 0) := X"08";
 --! @details Each slave device must generates this datatype output that
 --!          is connected directly to the 'pnp' slave module on system bus.
 type nasti_slave_config_type is record
-    --! Index in the array of slave devices.
-    xindex : integer;
     --! Descriptor size in bytes.
     descrsize : std_logic_vector(7 downto 0);
     --! Descriptor type.
@@ -295,7 +295,7 @@ type nasti_slave_cfg_vector is array (0 to CFG_NASTI_SLAVES_TOTAL-1)
 --! @default This value corresponds to an empty device and often used
 --!          as assignment of outputs for the disabled device.
 constant nasti_slave_config_none : nasti_slave_config_type := (
-    0, PNP_CFG_SLAVE_DESCR_BYTES, PNP_CFG_TYPE_SLAVE, 0, 
+    PNP_CFG_SLAVE_DESCR_BYTES, PNP_CFG_TYPE_SLAVE, 0, 
     (others => '0'), (others => '1'), VENDOR_GNSSSENSOR, SLV_DID_EMPTY);
 
 
@@ -303,8 +303,6 @@ constant nasti_slave_config_none : nasti_slave_config_type := (
 --! @details Each master device must generates this datatype output that
 --!          is connected directly to the 'pnp' slave module on system bus.
 type nasti_master_config_type is record
-    --! Index in the array of masters devices.
-    xindex : integer;
     --! Descriptor size in bytes.
     descrsize : std_logic_vector(7 downto 0);
     --! Descriptor type.
@@ -323,7 +321,7 @@ type nasti_master_cfg_vector is array (0 to CFG_NASTI_MASTER_TOTAL-1)
 
 --! @brief Default master config value.
 constant nasti_master_config_none : nasti_master_config_type := (
-    0, PNP_CFG_MASTER_DESCR_BYTES, PNP_CFG_TYPE_MASTER, 
+    PNP_CFG_MASTER_DESCR_BYTES, PNP_CFG_TYPE_MASTER, 
     VENDOR_GNSSSENSOR, MST_DID_EMPTY);
 
 

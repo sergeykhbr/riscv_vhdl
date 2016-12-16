@@ -18,9 +18,9 @@ use rocketlib.types_rocket.all;
 
 entity nasti_gptimers is
   generic (
-    xindex  : integer := 0;
     xaddr   : integer := 0;
     xmask   : integer := 16#fffff#;
+    xirq    : integer := 0;
     tmr_total  : integer := 2
   );
   port (
@@ -36,10 +36,9 @@ end;
 architecture arch_nasti_gptimers of nasti_gptimers is
 
   constant xconfig : nasti_slave_config_type := (
-     xindex => xindex,
      descrtype => PNP_CFG_TYPE_SLAVE,
      descrsize => PNP_CFG_SLAVE_DESCR_BYTES,
-     irq_idx => CFG_IRQ_GPTIMERS,
+     irq_idx => xirq,
      xaddr => conv_std_logic_vector(xaddr, CFG_NASTI_CFG_ADDR_BITS),
      xmask => conv_std_logic_vector(xmask, CFG_NASTI_CFG_ADDR_BITS),
      vid => VENDOR_GNSSSENSOR,

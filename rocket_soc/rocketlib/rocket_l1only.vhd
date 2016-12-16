@@ -33,10 +33,6 @@ use work.all;
 --!          branch predictor and other stuffs of the RocketTile.
 entity rocket_l1only is 
 generic (
-    --! Cached Tile AXI master index
-    xindex1 : integer := 0;
-    --! Uncached Tile AXI master index
-    xindex2 : integer := 1;
     hartid : integer := 0;
     reset_vector : integer := 16#1000#
 );
@@ -63,7 +59,6 @@ architecture arch_rocket_l1only of rocket_l1only is
   constant CFG_RESET_VECTOR : std_logic_vector(63 downto 0) := conv_std_logic_vector(reset_vector, 64);
 
   constant xmstconfig1 : nasti_master_config_type := (
-     xindex => xindex1,
      descrsize => PNP_CFG_MASTER_DESCR_BYTES,
      descrtype => PNP_CFG_TYPE_MASTER,
      vid => VENDOR_GNSSSENSOR,
@@ -71,7 +66,6 @@ architecture arch_rocket_l1only of rocket_l1only is
   );
 
   constant xmstconfig2 : nasti_master_config_type := (
-     xindex => xindex2,
      descrsize => PNP_CFG_MASTER_DESCR_BYTES,
      descrtype => PNP_CFG_TYPE_MASTER,
      vid => VENDOR_GNSSSENSOR,
@@ -88,10 +82,7 @@ architecture arch_rocket_l1only of rocket_l1only is
   signal uti : tile_cached_in_type;
   
 
-  component AxiBridge is generic (
-     xindex : integer := 0
-  );
-  port (
+  component AxiBridge is port (
     clk   : in  std_logic;
     nrst  : in  std_logic;
 
@@ -239,10 +230,7 @@ begin
     io_resetVector => CFG_RESET_VECTOR
 	);
  
-  cbridge0 : AxiBridge 
-  generic map (
-    xindex => xindex1
-  ) port map (
+  cbridge0 : AxiBridge  port map (
     clk => clk_sys,
     nrst => nrst,
     --! Tile-to-AXI direction
@@ -253,10 +241,7 @@ begin
     tlio => cti
   );
 
-  ubridge0 : AxiBridge 
-  generic map (
-    xindex => xindex2
-  ) port map (
+  ubridge0 : AxiBridge port map (
     clk => clk_sys,
     nrst => nrst,
     --! Tile-to-AXI direction

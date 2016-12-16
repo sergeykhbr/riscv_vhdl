@@ -17,9 +17,6 @@ library rocketlib;
 use rocketlib.types_rocket.all;
 
 entity AxiBridge is
-  generic (
-     xindex : integer := 0
-  );
   port (
     clk   : in  std_logic;
     nrst  : in  std_logic;

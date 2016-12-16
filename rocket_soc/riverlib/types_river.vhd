@@ -36,6 +36,26 @@ type dport_out_type is record
     rdata : std_logic_vector(RISCV_ARCH-1 downto 0);
 end record;
 
+  --! @brief   Declaration of the Debug Support Unit with the AXI interface.
+  --! @details This module provides access to processors CSRs via HostIO bus.
+  component axi_dsu is
+  generic (
+    xaddr    : integer := 0;
+    xmask    : integer := 16#fffff#
+  );
+  port 
+  (
+    clk    : in std_logic;
+    nrst   : in std_logic;
+    o_cfg  : out nasti_slave_config_type;
+    i_axi  : in nasti_slave_in_type;
+    o_axi  : out nasti_slave_out_type;
+    o_irq  : out std_logic;
+    o_soft_reset : out std_logic
+  );
+  end component;
+
+
 --! @brief   RIVER CPU component declaration.
 --! @details This module implements Risc-V CPU Core named as
 --!          "RIVER" with AXI interface.
@@ -46,9 +66,6 @@ end record;
 --! @param[out] o_msto    CachedTile-to-Bus request signals.
 --! @param[in] i_ext_irq  Interrupts line supported by Rocket chip.
 component river_amba is 
-generic (
-    xindex : integer := 0
-);
 port ( 
     i_nrst   : in std_logic;
     i_clk    : in std_logic;

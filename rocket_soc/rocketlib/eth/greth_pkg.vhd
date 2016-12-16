@@ -408,9 +408,6 @@ package grethpkg is
   end component;
   
   component eth_axi_mst is
-  generic (
-    xindex : integer := 0
-  );
   port(
     rst     : in  std_ulogic;
     clk     : in  std_ulogic;
@@ -701,9 +698,6 @@ package grethpkg is
 
   component grethaxi is
   generic(
-    xslvindex      : integer := 0;
-    xmstindex      : integer := 0;
-    xmstindex2     : integer := 1;
     xaddr          : integer := 0;
     xmask          : integer := 16#FFFFF#;
     xirq           : integer := 0;

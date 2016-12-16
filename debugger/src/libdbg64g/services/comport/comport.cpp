@@ -36,6 +36,7 @@ ComPortService::ComPortService(const char *name)
     comPortSpeed_.make_int64(115200);
     portListeners_.make_list(0);
     iuartSim_ = 0;
+    portOpened_ = false;
 }
 
 ComPortService::~ComPortService() {
@@ -55,14 +56,6 @@ void ComPortService::postinitService() {
         } else {
             iuartSim_->registerRawListener(static_cast<IRawListener *>(this));
         }
-    } else {
-        int err = openSerialPort(comPortName_.to_string(), 
-            comPortSpeed_.to_int(), &hPort_);
-        if (err < 0) {
-            RISCV_error("Openning %s at %d . . .failed",
-                        comPortName_.to_string(), comPortSpeed_.to_int());
-            return;
-        }
     }
 
     if (isEnable_.to_bool()) {
@@ -80,12 +73,24 @@ void ComPortService::predeleteService() {
 void ComPortService::busyLoop() {
     char tbuf[4096];
     int tbuf_cnt;
+
     while (isEnabled()) {
+        if (!isSimulation_ && !portOpened_) {
+            int err = openSerialPort(comPortName_.to_string(), 
+                comPortSpeed_.to_int(), &hPort_);
+            if (err < 0) {
+                RISCV_error("Openning %s at %d . . .failed",
+                        comPortName_.to_string(), comPortSpeed_.to_int());
+                RISCV_sleep_ms(1000);
+                continue;
+            } else {
+                portOpened_ = true;
+            }
+        }
         // Sending...
         tbuf_cnt = 0;
         while (!txFifo_.isEmpty()) {
             tbuf[tbuf_cnt++] = txFifo_.get();
-
         }
         if (tbuf_cnt) {
             if (isSimulation_ && iuartSim_) {
@@ -97,7 +102,7 @@ void ComPortService::busyLoop() {
 
         // Receiveing...
         if (!isSimulation_ && hPort_) {
-            tbuf_cnt = readSerialPort(&hPort_, tbuf, tbuf_cnt);
+            tbuf_cnt = readSerialPort(&hPort_, tbuf, sizeof(tbuf) - tbuf_cnt);
         } else if (isSimulation_) {
             tbuf_cnt = 0;
             while (!rxFifo_.isEmpty()

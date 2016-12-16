@@ -65,6 +65,7 @@ private:
 #endif
 
     bool isSimulation_;
+    bool portOpened_;
     ISerial *iuartSim_;
 
     class SimpleFifoType {

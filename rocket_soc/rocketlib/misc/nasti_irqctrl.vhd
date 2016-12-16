@@ -21,7 +21,6 @@ use rocketlib.types_rocket.all;
 
 entity nasti_irqctrl is
   generic (
-    xindex   : integer := 0;
     xaddr    : integer := 0;
     xmask    : integer := 16#fffff#
   );
@@ -29,7 +28,7 @@ entity nasti_irqctrl is
  (
     clk    : in std_logic;
     nrst   : in std_logic;
-    i_irqs : in std_logic_vector(CFG_IRQ_TOTAL-1 downto 0);
+    i_irqs : in std_logic_vector(CFG_IRQ_TOTAL-1 downto 1);
     o_cfg  : out nasti_slave_config_type;
     i_axi  : in nasti_slave_in_type;
     o_axi  : out nasti_slave_out_type;
@@ -40,7 +39,6 @@ end;
 architecture nasti_irqctrl_rtl of nasti_irqctrl is
 
   constant xconfig : nasti_slave_config_type := (
-     xindex => xindex,
      descrtype => PNP_CFG_TYPE_SLAVE,
      descrsize => PNP_CFG_SLAVE_DESCR_BYTES,
      irq_idx => 0,
@@ -53,26 +51,26 @@ architecture nasti_irqctrl_rtl of nasti_irqctrl is
   type local_addr_array_type is array (0 to CFG_WORDS_ON_BUS-1) 
        of integer;
        
-  constant IRQ_ZERO : std_logic_vector(CFG_IRQ_TOTAL-1 downto 0) := (others => '0');
+  constant IRQ_ZERO : std_logic_vector(CFG_IRQ_TOTAL-1 downto 1) := (others => '0');
 
 
 type registers is record
   bank_axi : nasti_slave_bank_type;
   
   --! interrupt signal delay signal to detect interrupt positive edge
-  irqs_z        : std_logic_vector(CFG_IRQ_TOTAL-1 downto 0);  
-  irqs_zz       : std_logic_vector(CFG_IRQ_TOTAL-1 downto 0);  
+  irqs_z        : std_logic_vector(CFG_IRQ_TOTAL-1 downto 1);  
+  irqs_zz       : std_logic_vector(CFG_IRQ_TOTAL-1 downto 1);  
 
   --! mask irq disabled: 1=disabled; 0=enabled
-  irqs_mask     : std_logic_vector(CFG_IRQ_TOTAL-1 downto 0);
+  irqs_mask     : std_logic_vector(CFG_IRQ_TOTAL-1 downto 1);
   --! irq pending bit mask
-  irqs_pending  : std_logic_vector(CFG_IRQ_TOTAL-1 downto 0);
+  irqs_pending  : std_logic_vector(CFG_IRQ_TOTAL-1 downto 1);
   --! interrupt handler address initialized by FW:
   isr_table     : std_logic_vector(63 downto 0);
   --! hold-on generation of interrupt.
   irq_lock      : std_logic;
   --! delayed interrupt
-  irq_wait_unlock : std_logic_vector(CFG_IRQ_TOTAL-1 downto 0);
+  irq_wait_unlock : std_logic_vector(CFG_IRQ_TOTAL-1 downto 1);
   irq_cause_idx : std_logic_vector(31 downto 0);
   --! Function trap_entry copies the values of CSRs into these two regs:
   dbg_cause    : std_logic_vector(63 downto 0);
@@ -101,8 +99,8 @@ begin
        raddr_reg(n) := conv_integer(r.bank_axi.raddr(n)(11 downto 2));
        tmp := (others => '0');
        case raddr_reg(n) is
-         when 0      => tmp(CFG_IRQ_TOTAL-1 downto 0) := r.irqs_mask;     --! [RW]: 1=irq disable; 0=enable
-         when 1      => tmp(CFG_IRQ_TOTAL-1 downto 0) := r.irqs_pending;  --! [RO]: Rised interrupts.
+         when 0      => tmp(CFG_IRQ_TOTAL-1 downto 1) := r.irqs_mask;     --! [RW]: 1=irq disable; 0=enable
+         when 1      => tmp(CFG_IRQ_TOTAL-1 downto 1) := r.irqs_pending;  --! [RO]: Rised interrupts.
          when 2      => tmp := (others => '0');                           --! [WO]: Clear interrupts mask.
          when 3      => tmp := (others => '0');                           --! [WO]: Rise interrupts mask.
          when 4      => tmp := r.isr_table(31 downto 0);                  --! [RW]: LSB of the function address
@@ -129,13 +127,13 @@ begin
 
          if conv_integer(wstrb) /= 0 then
            case waddr_reg(n) is
-             when 0 => v.irqs_mask := tmp(CFG_IRQ_TOTAL-1 downto 0);
+             when 0 => v.irqs_mask := tmp(CFG_IRQ_TOTAL-1 downto 1);
              when 1 =>     --! Read only
              when 2 => 
-                v.irqs_pending := r.irqs_pending and (not tmp(CFG_IRQ_TOTAL-1 downto 0));
+                v.irqs_pending := r.irqs_pending and (not tmp(CFG_IRQ_TOTAL-1 downto 1));
              when 3 => 
                 w_generate_ipi := '1';
-                v.irqs_pending := (not r.irqs_mask) and tmp(CFG_IRQ_TOTAL-1 downto 0);
+                v.irqs_pending := (not r.irqs_mask) and tmp(CFG_IRQ_TOTAL-1 downto 1);
              when 4 => v.isr_table(31 downto 0) := tmp;
              when 5 => v.isr_table(63 downto 32) := tmp;
              when 6 => v.dbg_cause(31 downto 0) := tmp;
@@ -152,7 +150,7 @@ begin
 
     v.irqs_z := i_irqs;
     v.irqs_zz := r.irqs_z;
-    for n in 0 to CFG_IRQ_TOTAL-1 loop
+    for n in 1 to CFG_IRQ_TOTAL-1 loop
       if (r.irqs_z(n) = '1' and r.irqs_zz(n) = '0') or r.irq_wait_unlock(n) = '1' then
          if r.irq_lock = '0' then
              v.irq_wait_unlock(n) := '0';

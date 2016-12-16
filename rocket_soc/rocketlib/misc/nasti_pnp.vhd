@@ -20,7 +20,6 @@ use ambalib.types_amba4.all;
 --! @brief Hardware Configuration storage with the AMBA AXI4 interface.
 entity nasti_pnp is
   generic (
-    xindex  : integer := 0;
     xaddr   : integer := 0;
     xmask   : integer := 16#fffff#;
     tech    : integer := 0
@@ -40,7 +39,6 @@ end;
 architecture arch_nasti_pnp of nasti_pnp is
 
   constant xconfig : nasti_slave_config_type := (
-     xindex => xindex,
      descrsize => PNP_CFG_SLAVE_DESCR_BYTES,
      descrtype => PNP_CFG_TYPE_SLAVE,
      irq_idx => 0,
@@ -104,13 +102,12 @@ begin
     v.bank0.adc_detect := r_adc_detect;
 
     for k in 0 to CFG_NASTI_MASTER_TOTAL-1 loop
-      mstmap(2*k) := conv_std_logic_vector(mstcfg(k).xindex,8) & "00" & X"000" 
-                     & mstcfg(k).descrtype & mstcfg(k).descrsize;
+      mstmap(2*k) := "00" & X"00000" & mstcfg(k).descrtype & mstcfg(k).descrsize;
       mstmap(2*k+1) := mstcfg(k).vid & mstcfg(k).did;
     end loop;
 
     for k in 0 to CFG_NASTI_SLAVES_TOTAL-1 loop
-      slvmap(4*k) := conv_std_logic_vector(slvcfg(k).xindex,8) & 
+      slvmap(4*k) := X"00" & 
                      conv_std_logic_vector(slvcfg(k).irq_idx,8) & "000000" &
                      slvcfg(k).descrtype & slvcfg(k).descrsize;
       slvmap(4*k+1) := slvcfg(k).vid & slvcfg(k).did;

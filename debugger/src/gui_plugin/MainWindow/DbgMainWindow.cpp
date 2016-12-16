@@ -59,7 +59,12 @@ DbgMainWindow::DbgMainWindow(IGui *igui, event_def *init_done) {
 }
 
 DbgMainWindow::~DbgMainWindow() {
+}
+
+void DbgMainWindow::closeEvent(QCloseEvent *ev) {
     igui_->waitQueueEmpty();
+    tmrGlobal_->stop();
+    ev->accept();
 }
 
 void DbgMainWindow::handleResponse(AttributeType *req, AttributeType *resp) {

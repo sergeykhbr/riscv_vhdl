@@ -100,7 +100,7 @@
     </file>
     <file xil_pn:name="../../rocketlib/misc/nasti_bootrom.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="20"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="68"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="67"/>
       <library xil_pn:name="rocketlib"/>
     </file>
     <file xil_pn:name="../../rocketlib/misc/nasti_sram.vhd" xil_pn:type="FILE_VHDL">
@@ -249,7 +249,7 @@
     </file>
     <file xil_pn:name="../../rocketlib/eth/grethaxi.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="129"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="69"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="68"/>
       <library xil_pn:name="rocketlib"/>
     </file>
     <file xil_pn:name="../../rocketlib/eth/grethc64.vhd" xil_pn:type="FILE_VHDL">
@@ -267,10 +267,10 @@
       <association xil_pn:name="Implementation" xil_pn:seqID="21"/>
       <library xil_pn:name="techmap"/>
     </file>
-    <file xil_pn:name="../../rocketlib/misc/nasti_dsu.vhd" xil_pn:type="FILE_VHDL">
+    <file xil_pn:name="../../riverlib/dsu/axi_dsu.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="136"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="67"/>
-      <library xil_pn:name="rocketlib"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="70"/>
+      <library xil_pn:name="riverlib"/>
     </file>
     <file xil_pn:name="../../techmap/bufg/igdsbuf_tech.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="142"/>
@@ -321,7 +321,7 @@
     </file>
     <file xil_pn:name="../../riverlib/river_amba.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="114"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="70"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="69"/>
       <library xil_pn:name="riverlib"/>
     </file>
     <file xil_pn:name="../../riverlib/river_cfg.vhd" xil_pn:type="FILE_VHDL">
