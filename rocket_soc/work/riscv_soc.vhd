@@ -153,14 +153,14 @@ architecture arch_riscv_soc of riscv_soc is
   signal ib_gmiiclk : std_logic;
   --! @}
 
-  signal wSysReset  : std_ulogic; -- Internal system reset. MUST NOT USED BY DEVICES.
-  signal wReset     : std_ulogic; -- Global reset active HIGH
-  signal wNReset    : std_ulogic; -- Global reset active LOW
-  signal soft_rst   : std_logic; -- reset from exteranl debugger
-  signal bus_nrst   : std_ulogic; -- Global reset and Soft Reset active LOW
-  signal wClkBus    : std_ulogic; -- bus clock from the internal PLL (100MHz virtex6/40MHz Spartan6)
-  signal wClkAdc    : std_ulogic; -- 26 MHz from the internal PLL
-  signal wPllLocked : std_ulogic; -- PLL status signal. 0=Unlocked; 1=locked.
+  signal w_ext_reset : std_ulogic; -- External system reset or PLL unlcoked. MUST NOT USED BY DEVICES.
+  signal w_glob_rst  : std_ulogic; -- Global reset active HIGH
+  signal w_glob_nrst : std_ulogic; -- Global reset active LOW
+  signal w_soft_rst : std_ulogic; -- Software reset (acitve HIGH) from DSU
+  signal w_bus_nrst : std_ulogic; -- Global reset and Soft Reset active LOW
+  signal w_clk_bus  : std_ulogic; -- bus clock from the internal PLL (100MHz virtex6/40MHz Spartan6)
+  signal w_clk_adc  : std_ulogic; -- 26 MHz from the internal PLL
+  signal w_pll_lock : std_ulogic; -- PLL status signal. 0=Unlocked; 1=locked.
   
   signal uart1i : uart_in_type;
   signal uart1o : uart_out_type;
@@ -176,6 +176,9 @@ architecture arch_riscv_soc of riscv_soc is
   signal core_irqs : std_logic_vector(CFG_CORE_IRQ_TOTAL-1 downto 0);
   signal dport_i : dport_in_type;
   signal dport_o : dport_out_type;
+  signal wb_miss_addr : std_logic_vector(CFG_NASTI_ADDR_BITS-1 downto 0);
+  signal wb_bus_util_w : std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0);
+  signal wb_bus_util_r : std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0);
   
   signal gnss_i : gns_in_type;
   signal gnss_o : gns_out_type;
@@ -185,7 +188,6 @@ architecture arch_riscv_soc of riscv_soc is
  
   signal eth_i : eth_in_type;
   signal eth_o : eth_out_type;
-
  
   signal irq_pins : std_logic_vector(CFG_IRQ_TOTAL-1 downto 1);
 begin
@@ -207,12 +209,6 @@ begin
 
   --! @todo all other in/out signals via buffers:
 
-
-  --! Not imlpemented interrupts:
-  core_irqs(CFG_CORE_IRQ_MTIP) <= '0'; -- timer's
-  core_irqs(CFG_CORE_IRQ_MSIP) <= '0'; -- software's
-  core_irqs(CFG_CORE_IRQ_SEIP) <= '0'; -- superuser external interrupt
-
   ------------------------------------
   -- @brief Internal PLL device instance.
   pll0 : SysPLL_tech generic map (
@@ -223,49 +219,45 @@ begin
     i_int_clkrf => ib_dip(0),
     i_clk_tcxo	=> ib_clk200,
     i_clk_adc   => ib_clk_adc,
-    o_clk_bus   => wClkBus,
-    o_clk_adc   => wClkAdc,
-    o_locked    => wPllLocked
+    o_clk_bus   => w_clk_bus,
+    o_clk_adc   => w_clk_adc,
+    o_locked    => w_pll_lock
   );
-  wSysReset <= ib_rst or not wPllLocked;
+  w_ext_reset <= ib_rst or not w_pll_lock;
 
   ------------------------------------
   --! @brief System Reset device instance.
   rst0 : reset_global port map (
-    inSysReset  => wSysReset,
-    inSysClk    => wClkBus,
-    inPllLock   => wPllLocked,
-    outReset    => wReset
+    inSysReset  => w_ext_reset,
+    inSysClk    => w_clk_bus,
+    inPllLock   => w_pll_lock,
+    outReset    => w_glob_rst
   );
-  wNReset <= not wReset;
-  bus_nrst <= not (wReset or soft_rst);
+  w_glob_nrst <= not w_glob_rst;
+  w_bus_nrst <= not (w_glob_rst or w_soft_rst);
 
   --! @brief AXI4 controller.
   ctrl0 : axictrl generic map (
     watchdog_memop => 0
   ) port map (
-    i_clk    => wClkBus,
-    i_nrst   => wNReset,
+    i_clk    => w_clk_bus,
+    i_nrst   => w_glob_nrst,
     i_slvcfg => slv_cfg,
     i_slvo   => axiso,
     i_msto   => aximo,
     o_slvi   => axisi,
     o_msti   => aximi,
-    o_miss_irq  => open,
-    o_miss_addr => open
+    o_miss_irq  => irq_pins(CFG_IRQ_MISS_ACCESS),
+    o_miss_addr => wb_miss_addr,
+    o_bus_util_w => wb_bus_util_w, -- Bus write access utilization per master statistic
+    o_bus_util_r => wb_bus_util_r  -- Bus read access utilization per master statistic
   );
 
-dport_i.valid <= '0';
-dport_i.write <= '0';
-dport_i.region <= (others => '0');
-dport_i.addr <= (others => '0');
-dport_i.wdata <= (others => '0');
-  
   --! @brief RISC-V Processor core (River or Rocket).
 river_ena : if CFG_COMMON_RIVER_CPU_ENABLE generate
   cpu0 : river_amba port map ( 
-    i_nrst   => wNReset,
-    i_clk    => wClkBus,
+    i_nrst   => w_bus_nrst,
+    i_clk    => w_clk_bus,
     i_msti   => aximi(CFG_NASTI_MASTER_CACHED),
     o_msto   => aximo(CFG_NASTI_MASTER_CACHED),
     o_mstcfg => mst_cfg(CFG_NASTI_MASTER_CACHED),
@@ -276,20 +268,27 @@ river_ena : if CFG_COMMON_RIVER_CPU_ENABLE generate
   aximo(CFG_NASTI_MASTER_UNCACHED) <= nasti_master_out_none;
   mst_cfg(CFG_NASTI_MASTER_UNCACHED) <= nasti_master_config_none;
 end generate;
+
+--! DSU doesn't support Rocket-chip CPU
 river_dis : if not CFG_COMMON_RIVER_CPU_ENABLE generate
+  --! Not imlpemented interrupts:
+  core_irqs(CFG_CORE_IRQ_MTIP) <= '0'; -- timer's
+  core_irqs(CFG_CORE_IRQ_MSIP) <= '0'; -- software's
+  core_irqs(CFG_CORE_IRQ_SEIP) <= '0'; -- superuser external interrupt
+  core_irqs(CFG_CORE_IRQ_DEBUG) <= '0';
+
   cpu0 : rocket_l1only generic map (
     hartid  => 0,
     reset_vector => 16#1000#
   ) port map ( 
-    rst      => wReset,
-    soft_rst => soft_rst,
-    clk_sys  => wClkBus,
-    msti1    => aximi(CFG_NASTI_MASTER_CACHED),
-    msto1    => aximo(CFG_NASTI_MASTER_CACHED),
-    mstcfg1  => mst_cfg(CFG_NASTI_MASTER_CACHED),
-    msti2    => aximi(CFG_NASTI_MASTER_UNCACHED),
-    msto2    => aximo(CFG_NASTI_MASTER_UNCACHED),
-    mstcfg2  => mst_cfg(CFG_NASTI_MASTER_UNCACHED),
+    nrst      => w_bus_nrst,
+    clk_sys   => w_clk_bus,
+    msti1     => aximi(CFG_NASTI_MASTER_CACHED),
+    msto1     => aximo(CFG_NASTI_MASTER_CACHED),
+    mstcfg1   => mst_cfg(CFG_NASTI_MASTER_CACHED),
+    msti2     => aximi(CFG_NASTI_MASTER_UNCACHED),
+    msto2     => aximo(CFG_NASTI_MASTER_UNCACHED),
+    mstcfg2   => mst_cfg(CFG_NASTI_MASTER_UNCACHED),
     interrupts => core_irqs
   );
 end generate;
@@ -303,19 +302,25 @@ dsu_ena : if CFG_DSU_ENABLE generate
     xaddr    => 16#80080#,
     xmask    => 16#fffe0#
   ) port map (
-    clk    => wClkBus,
-    nrst   => wNReset,
+    clk    => w_clk_bus,
+    nrst   => w_glob_nrst,
     o_cfg  => slv_cfg(CFG_NASTI_SLAVE_DSU),
     i_axi  => axisi(CFG_NASTI_SLAVE_DSU),
     o_axi  => axiso(CFG_NASTI_SLAVE_DSU),
-    o_irq  => core_irqs(CFG_CORE_IRQ_DEBUG),
-    o_soft_reset => soft_rst
+    o_dporti => dport_i,
+    i_dporto => dport_o,
+    o_soft_rst => w_soft_rst,
+    -- Run time platform statistic signals:
+    i_miss_irq  => irq_pins(CFG_IRQ_MISS_ACCESS),
+    i_miss_addr => wb_miss_addr,
+    i_bus_util_w => wb_bus_util_w, -- Write access bus utilization per master statistic
+    i_bus_util_r => wb_bus_util_r  -- Read access bus utilization per master statistic
   );
 end generate;
 dsu_dis : if not CFG_DSU_ENABLE generate
-      slv_cfg(CFG_NASTI_SLAVE_DSU) <= nasti_slave_config_none;
-      axiso(CFG_NASTI_SLAVE_DSU) <= nasti_slave_out_none;
-      core_irqs(CFG_CORE_IRQ_DEBUG) <= '0';
+    slv_cfg(CFG_NASTI_SLAVE_DSU) <= nasti_slave_config_none;
+    axiso(CFG_NASTI_SLAVE_DSU) <= nasti_slave_out_none;
+    dport_i <= dport_in_none;
 end generate;
 
   ------------------------------------
@@ -328,8 +333,8 @@ end generate;
     xmask    => 16#ffffe#,
     sim_hexfile => CFG_SIM_BOOTROM_HEX
   ) port map (
-    clk  => wClkBus,
-    nrst => wNReset,
+    clk  => w_clk_bus,
+    nrst => w_glob_nrst,
     cfg  => slv_cfg(CFG_NASTI_SLAVE_BOOTROM),
     i    => axisi(CFG_NASTI_SLAVE_BOOTROM),
     o    => axiso(CFG_NASTI_SLAVE_BOOTROM)
@@ -346,8 +351,8 @@ end generate;
     xmask    => 16#fffc0#,
     sim_hexfile => CFG_SIM_FWIMAGE_HEX
   ) port map (
-    clk  => wClkBus,
-    nrst => wNReset,
+    clk  => w_clk_bus,
+    nrst => w_glob_nrst,
     cfg  => slv_cfg(CFG_NASTI_SLAVE_ROMIMAGE),
     i    => axisi(CFG_NASTI_SLAVE_ROMIMAGE),
     o    => axiso(CFG_NASTI_SLAVE_ROMIMAGE)
@@ -364,8 +369,8 @@ end generate;
     abits    => (10 + log2(512)),     -- 512 KB address
     init_file => CFG_SIM_FWIMAGE_HEX  -- Used only for inferred
   ) port map (
-    clk  => wClkBus,
-    nrst => wNReset,
+    clk  => w_clk_bus,
+    nrst => w_glob_nrst,
     cfg  => slv_cfg(CFG_NASTI_SLAVE_SRAM),
     i    => axisi(CFG_NASTI_SLAVE_SRAM),
     o    => axiso(CFG_NASTI_SLAVE_SRAM)
@@ -381,8 +386,8 @@ end generate;
     xmask    => 16#fffff#,
     xirq     => 0
   ) port map (
-    clk   => wClkBus,
-    nrst  => wNReset,
+    clk   => w_clk_bus,
+    nrst  => w_glob_nrst,
     cfg   => slv_cfg(CFG_NASTI_SLAVE_GPIO),
     i     => axisi(CFG_NASTI_SLAVE_GPIO),
     o     => axiso(CFG_NASTI_SLAVE_GPIO),
@@ -404,8 +409,8 @@ end generate;
 	 xirq     => CFG_IRQ_UART1,
     fifosz   => 16
   ) port map (
-    nrst   => wNReset, 
-    clk    => wClkbus, 
+    nrst   => w_glob_nrst, 
+    clk    => w_clk_bus, 
     cfg    => slv_cfg(CFG_NASTI_SLAVE_UART1),
     i_uart => uart1i, 
     o_uart => uart1o,
@@ -425,8 +430,8 @@ end generate;
     xaddr      => 16#80002#,
     xmask      => 16#FFFFF#
   ) port map (
-    clk    => wClkBus,
-    nrst   => bus_nrst,
+    clk    => w_clk_bus,
+    nrst   => w_bus_nrst,
     i_irqs => irq_pins,
     o_cfg  => slv_cfg(CFG_NASTI_SLAVE_IRQCTRL),
     i_axi  => axisi(CFG_NASTI_SLAVE_IRQCTRL),
@@ -439,10 +444,10 @@ end generate;
   --! @details Map address:
   --!          0x80003000..0x80003fff (4 KB total)
   geneng_ena : if CFG_GNSSLIB_ENABLE and CFG_GNSSLIB_GNSSENGINE_ENABLE generate 
-    gnss_i.nrst     <= wNReset;
-    gnss_i.clk_bus  <= wClkBus;
+    gnss_i.nrst     <= w_glob_nrst;
+    gnss_i.clk_bus  <= w_clk_bus;
     gnss_i.axi      <= axisi(CFG_NASTI_SLAVE_ENGINE);
-    gnss_i.clk_adc  <= wClkAdc;
+    gnss_i.clk_adc  <= w_clk_adc;
     gnss_i.gps_I    <= i_gps_I;
     gnss_i.gps_Q    <= i_gps_Q;
     gnss_i.glo_I    <= i_glo_I;
@@ -476,8 +481,8 @@ end generate;
       xaddr  => 16#80004#,
       xmask  => 16#fffff#
     ) port map (
-      nrst           => wNReset,
-      clk            => wClkBus,
+      nrst           => w_glob_nrst,
+      clk            => w_clk_bus,
       o_cfg          => slv_cfg(CFG_NASTI_SLAVE_RFCTRL),
       i_axi          => axisi(CFG_NASTI_SLAVE_RFCTRL),
       o_axi          => axiso(CFG_NASTI_SLAVE_RFCTRL),
@@ -511,8 +516,8 @@ end generate;
 	 xirq      => CFG_IRQ_GPTIMERS,
     tmr_total => 2
   ) port map (
-    clk    => wClkBus,
-    nrst   => wNReset,
+    clk    => w_clk_bus,
+    nrst   => w_glob_nrst,
     cfg    => slv_cfg(CFG_NASTI_SLAVE_GPTIMERS),
     i_axi  => axisi(CFG_NASTI_SLAVE_GPTIMERS),
     o_axi  => axiso(CFG_NASTI_SLAVE_GPTIMERS),
@@ -523,11 +528,11 @@ end generate;
   --! @details Map address:
   --!          0x8000a000..0x8000afff (4 KB total)
   fse0_ena : if CFG_GNSSLIB_ENABLE and CFG_GNSSLIB_FSEGPS_ENABLE generate 
-      fse_i.nrst       <= wNReset;
-      fse_i.clk_bus    <= wClkBus;
-      fse_i.clk_fse    <= wClkBus;
+      fse_i.nrst       <= w_glob_nrst;
+      fse_i.clk_bus    <= w_clk_bus;
+      fse_i.clk_fse    <= w_clk_bus;
       fse_i.axi        <= axisi(CFG_NASTI_SLAVE_FSE_GPS);
-      fse_i.clk_adc    <= wClkAdc;
+      fse_i.clk_adc    <= w_clk_adc;
       fse_i.I          <= i_gps_I;
       fse_i.Q          <= i_gps_Q;
       fse_i.ms_pulse   <= gnss_o.ms_pulse;
@@ -558,7 +563,7 @@ end generate;
     tech    => CFG_FABTECH,
     freq    => 125000   -- KHz = 125 MHz
   ) port map (
-    i_rst    => wReset,
+    i_rst    => w_glob_rst,
     i_clk    => ib_gmiiclk,
     o_clk    => eth_i.gtx_clk,
     o_clkp90 => eth_i.tx_clk_90,
@@ -600,8 +605,8 @@ end generate;
       enable_mdint => 1,
       maxsize => 1518
    ) port map (
-      rst => wNReset,
-      clk => wClkBus,
+      rst => w_glob_nrst,
+      clk => w_clk_bus,
       msti => aximi(CFG_NASTI_MASTER_ETHMAC),
       msto => aximo(CFG_NASTI_MASTER_ETHMAC),
       mstcfg => mst_cfg(CFG_NASTI_MASTER_ETHMAC),
@@ -640,7 +645,7 @@ end generate;
   o_etx_en <= eth_o.tx_en;
   o_etx_er <= eth_o.tx_er;
   o_emdc <= eth_o.mdc;
-  o_erstn <= wNReset;
+  o_erstn <= w_glob_nrst;
 
 
   --! @brief Plug'n'Play controller of the current configuration with the
@@ -652,9 +657,9 @@ end generate;
     xmask   => 16#fffff#,
     tech    => CFG_MEMTECH
   ) port map (
-    sys_clk => wClkBus, 
-    adc_clk => wClkAdc,
-    nrst   => wNReset,
+    sys_clk => w_clk_bus, 
+    adc_clk => w_clk_adc,
+    nrst   => w_glob_nrst,
     mstcfg => mst_cfg,
     slvcfg => slv_cfg,
     cfg    => slv_cfg(CFG_NASTI_SLAVE_PNP),

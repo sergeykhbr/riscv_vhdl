@@ -31,6 +31,9 @@ type dport_in_type is record
     wdata : std_logic_vector(RISCV_ARCH-1 downto 0);
 end record;
 
+constant dport_in_none : dport_in_type := (
+  '0', '0', (others => '0'), (others => '0'), (others => '0'));
+
 type dport_out_type is record
     ready : std_logic;
     rdata : std_logic_vector(RISCV_ARCH-1 downto 0);
@@ -38,6 +41,17 @@ end record;
 
   --! @brief   Declaration of the Debug Support Unit with the AXI interface.
   --! @details This module provides access to processors CSRs via HostIO bus.
+  --! @param[in] clk           System clock (BUS/CPU clock).
+  --! @param[in] rstn          Reset signal with active LOW level.
+  --! @param[in] i_axi         Slave slot input signals.
+  --! @param[out] o_axi        Slave slot output signals.
+  --! @param[out] o_dporti     Debug port output signals connected to River CPU.
+  --! @param[in] i_dporto      River CPU debug port response signals.
+  --! @param[out] o_soft_rstn  Software reset CPU and interrupt controller. Active HIGH
+  --! @param[in] i_miss_irq    Miss access counter update signal
+  --! @param[in] i_miss_addr   Miss accessed memory address
+  --! @param[in] i_bus_util_w  Write bus access utilization per master statistic
+  --! @param[in] i_bus_util_r  Write bus access utilization per master statistic
   component axi_dsu is
   generic (
     xaddr    : integer := 0;
@@ -50,8 +64,13 @@ end record;
     o_cfg  : out nasti_slave_config_type;
     i_axi  : in nasti_slave_in_type;
     o_axi  : out nasti_slave_out_type;
-    o_irq  : out std_logic;
-    o_soft_reset : out std_logic
+    o_dporti : out dport_in_type;
+    i_dporto : in dport_out_type;
+    o_soft_rst : out std_logic;
+    i_miss_irq  : in std_logic;
+    i_miss_addr : in std_logic_vector(CFG_NASTI_ADDR_BITS-1 downto 0);
+    i_bus_util_w : in std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0);
+    i_bus_util_r : in std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0)
   );
   end component;
 

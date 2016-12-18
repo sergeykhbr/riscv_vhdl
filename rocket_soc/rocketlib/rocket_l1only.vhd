@@ -37,13 +37,12 @@ generic (
     reset_vector : integer := 16#1000#
 );
 port ( 
-    rst      : in std_logic;
-    soft_rst : in std_logic;
+    nrst     : in std_logic;
     clk_sys  : in std_logic;
-    slvo     : in nasti_slave_in_type;
-    msti     : in nasti_master_in_type;
+    msti1    : in nasti_master_in_type;
     msto1    : out nasti_master_out_type;
     mstcfg1  : out nasti_master_config_type;
+    msti2    : in nasti_master_in_type;
     msto2    : out nasti_master_out_type;
     mstcfg2  : out nasti_master_config_type;
     interrupts : in std_logic_vector(CFG_CORE_IRQ_TOTAL-1 downto 0)
@@ -72,7 +71,6 @@ architecture arch_rocket_l1only of rocket_l1only is
      did => RISCV_UNCACHED_TILELINK
   );
   
-  signal nrst : std_logic;
   signal cpu_rst : std_logic;
   
   signal cto : tile_cached_out_type;
@@ -164,8 +162,7 @@ begin
 
   mstcfg1 <= xmstconfig1;
   mstcfg2 <= xmstconfig2;
-  nrst <= not rst;
-  cpu_rst <= rst or soft_rst;
+  cpu_rst <= not nrst;
    
 	inst_tile: RocketTile PORT MAP(
 		clock => clk_sys,
@@ -237,7 +234,7 @@ begin
     tloi => cto,
     msto => msto1,
     --! AXI-to-Tile direction
-    msti => msti,
+    msti => msti1,
     tlio => cti
   );
 
@@ -248,7 +245,7 @@ begin
     tloi => uto,
     msto => msto2,
     --! AXI-to-Tile direction
-    msti => msti,
+    msti => msti2,
     tlio => uti
   );
 

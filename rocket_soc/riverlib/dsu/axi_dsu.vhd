@@ -66,8 +66,15 @@ entity axi_dsu is
     o_cfg  : out nasti_slave_config_type;
     i_axi  : in nasti_slave_in_type;
     o_axi  : out nasti_slave_out_type;
-    o_irq  : out std_logic;
-    o_soft_reset : out std_logic
+    o_dporti : out dport_in_type;
+    i_dporto : in dport_out_type;
+    --! reset CPU and interrupt controller
+    o_soft_rst : out std_logic;
+    -- Platfrom run-time statistic
+    i_miss_irq  : in std_logic;
+    i_miss_addr : in std_logic_vector(CFG_NASTI_ADDR_BITS-1 downto 0);
+    i_bus_util_w : in std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0);
+    i_bus_util_r : in std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0)
   );
 end;
 
@@ -82,32 +89,70 @@ architecture arch_axi_dsu of axi_dsu is
      vid => VENDOR_GNSSSENSOR,
      did => GNSSSENSOR_DSU
   );
-  constant CSR_MRESET : std_logic_vector(11 downto 0) := X"782";
 
-type state_type is (reading, writting);
+type state_type is (reading, writting, dport_response, ready);
+  
+type mst_utilization_type is array (0 to CFG_NASTI_MASTER_TOTAL-1) 
+       of std_logic_vector(63 downto 0);
+
+type mst_utilization_map_type is array (0 to 2*CFG_NASTI_MASTER_TOTAL-1) 
+       of std_logic_vector(63 downto 0);
 
 type registers is record
   bank_axi : nasti_slave_bank_type;
-  --! Message multiplexer to form 128 request message of writting into CSR
+  --! Message multiplexer to form 32->64 request message
   state         : state_type;
-  addr16_sel : std_logic;
-  waddr : std_logic_vector(11 downto 0);
+  waddr : std_logic_vector(13 downto 0);
   wdata : std_logic_vector(63 downto 0);
   rdata : std_logic_vector(63 downto 0);
-  -- Soft reset via CSR 0x782 MRESET doesn't work
-  -- so here I implement special register that will reset CPU via 'rst' input.
-  -- Otherwise I cannot load elf-file while CPU is not halted.
-  soft_reset : std_logic;
+  soft_rst : std_logic;
+  -- Platform statistic:
+  clk_cnt : std_logic_vector(63 downto 0);
+  miss_access_cnt : std_logic_vector(63 downto 0);
+  miss_access_addr : std_logic_vector(CFG_NASTI_ADDR_BITS-1 downto 0);
+  util_w_cnt : mst_utilization_type;
+  util_r_cnt : mst_utilization_type;
 end record;
 
 signal r, rin: registers;
 begin
 
-  comblogic : process(i_axi, r)
+  comblogic : process(i_axi, i_dporto, i_miss_irq, i_miss_addr,
+                      i_bus_util_w, i_bus_util_r, r)
     variable v : registers;
-    variable rdata : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
+    variable mux_rdata : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
+    variable vdporti : dport_in_type;
+    variable iraddr : integer;
+    variable wb_bus_util_map : mst_utilization_map_type;
   begin
     v := r;
+    v.rdata := (others => '0');
+    vdporti.valid := '0';
+    vdporti.write := '0';
+    vdporti.region := (others => '0');
+    vdporti.addr := (others => '0');
+    vdporti.wdata := (others => '0');
+    
+    -- Update statistic:
+    v.clk_cnt := r.clk_cnt + 1;
+    if i_miss_irq = '1' then
+      v.miss_access_addr := i_miss_addr;
+      v.miss_access_cnt := r.miss_access_cnt + 1;
+    end if;
+
+    for n in 0 to CFG_NASTI_MASTER_TOTAL-1 loop
+       if i_bus_util_w(n) = '1' then
+         v.util_w_cnt(n) := r.util_w_cnt(n) + 1;
+       end if;
+       if i_bus_util_r(n) = '1' then
+         v.util_r_cnt(n) := r.util_r_cnt(n) + 1;
+       end if;
+    end loop;
+
+    for n in 0 to CFG_NASTI_MASTER_TOTAL-1 loop
+      wb_bus_util_map(2*n) := r.util_w_cnt(n);
+      wb_bus_util_map(2*n+1) := r.util_r_cnt(n);
+    end loop;
 
     procedureAxi4(i_axi, xconfig, r.bank_axi, v.bank_axi);
     --! redefine value 'always ready' inserting waiting states.
@@ -115,8 +160,7 @@ begin
 
     if r.bank_axi.wstate = wtrans then
       -- 32-bits burst transaction
-      v.addr16_sel := r.bank_axi.waddr(0)(16);
-      v.waddr := r.bank_axi.waddr(0)(15 downto 4);
+      v.waddr := r.bank_axi.waddr(0)(16 downto 3);
       if r.bank_axi.wburst = NASTI_BURST_INCR and r.bank_axi.wsize = 4 then
          if r.bank_axi.waddr(0)(2) = '1' then
              v.state := writting;
@@ -136,42 +180,76 @@ begin
     case r.state is
       when reading =>
            if r.bank_axi.rstate = rtrans then
-               if r.bank_axi.raddr(0)(16) = '1' then
-                  -- Control registers (not implemented)
-                  v.bank_axi.rwaitready := '1';
-               elsif r.bank_axi.raddr(0)(15 downto 4) = CSR_MRESET then
-                  v.rdata(0) := r.soft_reset;
-                  v.rdata(63 downto 1) := (others => '0');
-               else
-               end if;
+              if r.bank_axi.raddr(0)(16 downto 15) = "11" then
+                --! local region
+                v.bank_axi.rwaitready := '1';
+                iraddr := conv_integer(r.bank_axi.raddr(0)(14 downto 3));
+                case iraddr is
+                when 0 =>
+                  v.rdata(0) := r.soft_rst;
+                when 1 =>
+                  v.rdata := r.miss_access_cnt;
+                when 2 =>
+                  v.rdata(CFG_NASTI_ADDR_BITS-1 downto 0) := r.miss_access_addr;
+                when others =>
+                  if (iraddr >= 8) and (iraddr < (8 + 2*CFG_NASTI_MASTER_TOTAL)) then
+                      v.rdata := wb_bus_util_map(iraddr - 8);
+                  end if;
+                end case;
+                v.state := ready;
+              else
+                --! debug port regions: 0 to 2
+                vdporti.valid := '1';
+                vdporti.write := '0';
+                vdporti.region := r.bank_axi.raddr(0)(16 downto 15);
+                vdporti.addr := r.bank_axi.raddr(0)(14 downto 3);
+                vdporti.wdata := (others => '0');
+                v.state := dport_response;
+              end if;
            end if;
       when writting =>
            v.state := reading;
-           if r.addr16_sel = '1' then
-              -- Bank with control register (not implemented by CPU)
-           elsif r.waddr = CSR_MRESET then
-              -- Soft Reset
-              v.soft_reset := r.wdata(0);
+           if r.waddr(13 downto 12) = "11" then
+             --! local region
+             case conv_integer(r.waddr(11 downto 0)) is
+             when 0 =>
+               v.soft_rst := r.wdata(0);
+             when others =>
+             end case;
+           else
+             --! debug port regions: 0 to 2
+             vdporti.valid := '1';
+             vdporti.write := '1';
+             vdporti.region := r.waddr(13 downto 12);
+             vdporti.addr := r.waddr(11 downto 0);
+             vdporti.wdata := r.wdata;
            end if;
+      when dport_response =>
+             v.state := ready;
+             v.bank_axi.rwaitready := '1';
+             v.rdata := i_dporto.rdata;
+      when ready =>
+             v.state := reading;
       when others =>
     end case;
 
     if r.bank_axi.raddr(0)(2) = '0' then
-       rdata(31 downto 0) := r.rdata(31 downto 0);
+       mux_rdata(31 downto 0) := r.rdata(31 downto 0);
     else
        -- 32-bits aligned access (can be generated by MAC)
-       rdata(31 downto 0) := r.rdata(63 downto 32);
+       mux_rdata(31 downto 0) := r.rdata(63 downto 32);
     end if;
-    rdata(63 downto 32) := r.rdata(63 downto 32);
+    mux_rdata(63 downto 32) := r.rdata(63 downto 32);
 
-    o_axi <= functionAxi4Output(r.bank_axi, rdata);
+    o_axi <= functionAxi4Output(r.bank_axi, mux_rdata);
 
     rin <= v;
+
+    o_dporti <= vdporti;
   end process;
 
   o_cfg  <= xconfig;
-  o_soft_reset <= r.soft_reset;
-  o_irq <= '0';
+  o_soft_rst <= r.soft_rst;
 
 
   -- registers:
@@ -180,11 +258,15 @@ begin
     if nrst = '0' then 
        r.bank_axi <= NASTI_SLAVE_BANK_RESET;
        r.state <= reading;
-       r.addr16_sel <= '0';
        r.waddr <= (others => '0');
        r.wdata <= (others => '0');
        r.rdata <= (others => '0');
-       r.soft_reset <= '0';
+       r.soft_rst <= '0';
+       r.clk_cnt <= (others => '0');
+       r.miss_access_cnt <= (others => '0');
+       r.miss_access_addr <= (others => '0');
+       r.util_w_cnt <= (others => (others => '0'));
+       r.util_r_cnt <= (others => (others => '0'));
     elsif rising_edge(clk) then 
        r <= rin; 
     end if; 

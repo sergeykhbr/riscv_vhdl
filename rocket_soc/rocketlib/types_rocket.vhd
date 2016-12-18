@@ -221,8 +221,7 @@ generic (
     reset_vector : integer := 16#1000#
 );
 port ( 
-    rst      : in std_logic;
-    soft_rst : in std_logic;
+    nrst     : in std_logic;
     clk_sys  : in std_logic;
     msti1    : in nasti_master_in_type;
     msto1    : out nasti_master_out_type;

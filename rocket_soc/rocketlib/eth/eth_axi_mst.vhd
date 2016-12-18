@@ -88,7 +88,7 @@ begin
             vmsto.ar_valid      := not rmsti.write;
             vmsto.aw_valid      := rmsti.write;
             if rmsti.write = '1' then
-                vmsto.aw_bits.addr  := rmsti.addr(31 downto 4) & "0000";
+                vmsto.aw_bits.addr  := rmsti.addr(31 downto 3) & "000";
                 v.len  := conv_integer(rmsti.burst_bytes(10 downto 2)) - 1;
                 vmsto.aw_bits.len := conv_std_logic_vector(v.len, 8);
                 if aximi.aw_ready = '1' then
@@ -110,7 +110,7 @@ begin
             vmsto.ar_valid      := not tmsti.write;
             vmsto.aw_valid      := tmsti.write;
             if tmsti.write = '1' then
-                vmsto.aw_bits.addr  := tmsti.addr(31 downto 4) & "0000";
+                vmsto.aw_bits.addr  := tmsti.addr(31 downto 3) & "000";
                 v.len  := conv_integer(tmsti.burst_bytes(10 downto 2)) - 1;
                 vmsto.aw_bits.len := conv_std_logic_vector(v.len, 8);
                 if aximi.aw_ready = '1' then

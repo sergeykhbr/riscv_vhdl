@@ -29,7 +29,9 @@ entity axictrl is
     o_slvi   : out nasti_slave_in_vector;
     o_msti   : out nasti_master_in_vector;
     o_miss_irq  : out std_logic;
-    o_miss_addr : out std_logic_vector(CFG_NASTI_ADDR_BITS-1 downto 0)
+    o_miss_addr : out std_logic_vector(CFG_NASTI_ADDR_BITS-1 downto 0);
+    o_bus_util_w : out std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0);
+    o_bus_util_r : out std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0)
   );
 end; 
  
@@ -81,11 +83,17 @@ begin
     variable r_available : std_logic;
     variable b_fire : std_logic;    
     variable b_available : std_logic;
+    -- Bus statistic signals
+    variable wb_bus_util_w : std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0);
+    variable wb_bus_util_r : std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0);
+
   begin
 
     v := r;
 
     missaccess := '0';
+    wb_bus_util_w := (others => '0');
+    wb_bus_util_r := (others => '0');
     ar_mst_idx := 0;                        -- Default master
     aw_mst_idx := 0;                        -- Default master
     ar_slv_idx := CFG_NASTI_SLAVES_TOTAL;   -- miss access index
@@ -122,7 +130,12 @@ begin
           aw_slv_idx := k;
       end if;
     end loop;
+    
+    -- Statistic
+    wb_bus_util_w(r.w_mst_idx) := r.w_busy;
+    wb_bus_util_r(r.r_mst_idx) := r.r_busy;
 
+    -- Pipeline
     vmsti(ar_mst_idx).ar_ready := vslvo(ar_slv_idx).ar_ready;
     vslvi(ar_slv_idx).ar_valid := i_msto(ar_mst_idx).ar_valid;
     vslvi(ar_slv_idx).ar_bits  := i_msto(ar_mst_idx).ar_bits;
@@ -155,7 +168,7 @@ begin
     -- Write Handshake channel:
     b_fire := i_msto(r.b_mst_idx).b_ready and vslvo(r.b_slv_idx).b_valid;
     b_available := not r.b_busy or (r.b_busy and b_fire);
-    if (b_available and w_fire) = '1' then
+    if (b_available and w_fire and i_msto(r.w_mst_idx).w_last) = '1' then
         v.w_busy := '0';
         v.b_busy := '1';
         v.b_slv_idx := r.w_slv_idx;
@@ -180,7 +193,7 @@ begin
         v.r_slv_idx := ar_slv_idx;
         v.r_mst_idx := ar_mst_idx;
     end if;
-    if r_fire = '1' then
+    if (r_fire and vslvo(r.r_slv_idx).r_last) = '1' then
         v.r_busy := ar_fire;
     end if;
 
@@ -222,6 +235,8 @@ begin
     end loop;
     o_miss_irq <= missaccess;
     o_miss_addr <= r.miss_addr;
+    o_bus_util_w <= wb_bus_util_w;
+    o_bus_util_r <= wb_bus_util_r;
   end process;
 
   reg0 : process(i_clk) begin
