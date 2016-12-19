@@ -297,11 +297,16 @@ package river_cfg is
   --! @param[in] i_wdata CSR writing value
   --! @param[out] o_rdata CSR read value
   --! @param[in] i_trap_ena Trap pulse
-  --! @param[in] i_trap_code bit[4] : 1=interrupt; 0=exception; bits[3:0]=code
-  --! @param[in] i_trap_pc trap on pc
-  --! @param[out] o_ie Interrupt enable bit
-  --! @param[out] o_mode CPU mode
-  --! @param[out] o_mtvec Interrupt descriptors table
+  --! @param[in] i_trap_code    bit[4] : 1=interrupt; 0=exception; bits[3:0]=code
+  --! @param[in] i_trap_pc      trap on pc
+  --! @param[out] o_ie          Interrupt enable bit
+  --! @param[out] o_mode        CPU mode
+  --! @param[out] o_mtvec       Interrupt descriptors table
+  --! @param[in] i_dport_ena    Debug port request is enabled
+  --! @param[in] i_dport_write  Debug port Write enable
+  --! @param[in] i_dport_addr   Debug port CSR address
+  --! @param[in] i_dport_wdata  Debug port CSR writing value
+--! @param[out] o_dport_rdata   Debug port CSR read value
   component CsrRegs is
   port (
     i_clk : in std_logic;
@@ -316,7 +321,12 @@ package river_cfg is
     i_trap_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     o_ie : out std_logic;
     o_mode : out std_logic_vector(1 downto 0);
-    o_mtvec : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0)
+    o_mtvec : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_dport_ena : in std_logic;
+    i_dport_write : in std_logic;
+    i_dport_addr : in std_logic_vector(11 downto 0);
+    i_dport_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0);
+    o_dport_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0)
   );
   end component; 
 

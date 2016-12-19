@@ -89,10 +89,20 @@
                             ['pc',8,32,'Instruction Pointer'],
                             ['npc',8,33,'Next IP']]],
                 ['ListCSR',[
-                    ['MCPUID',8,0xf00,'CPU description'],
-                    ['MRESET',8,0x782],
+                    ['MISA',8,0xf10,'Architecture and supported set of instructions'],
+                    ['MVENDORID',8,0xf11,'Vecndor ID'],
+                    ['MARCHID',8,0xf12,'Architecture ID'],
+                    ['MIMPLEMENTATIONID',8,0xf13,'Implementation ID'],
+                    ['MHARTID',8,0xf14,'Thread ID'],
                     ['MTIME',8,0x701,'Machine wall-clock time.'],
-                    ['MEPC',8,0x341,'Machine exception program counter']
+                    ['MSTATUS',8,0x300,'Machine mode status register.'],
+                    ['MIE',8,0x304,'Machine interrupt enable register.'],
+                    ['MTVEC',8,0x305,'Machine mode trap vector register.'],
+                    ['MSCRATCH',8,0x340,'Machine mode scratch register.'],
+                    ['MEPC',8,0x341,'Machine exception program counter'],
+                    ['MCAUSE',8,0x342,'Machine cause trap register'],
+                    ['MBADADDR',8,0x343,'Machine mode bad address register'],
+                    ['MIP',8,0x344,'Machine mode interrupt pending bits register']
                     ]]]}]},
     {'Class':'SimplePluginClass','Instances':[
           {'Name':'example0','Attr':[

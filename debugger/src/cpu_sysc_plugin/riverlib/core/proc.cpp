@@ -197,6 +197,11 @@ Processor::Processor(sc_module_name name_) : sc_module(name_) {
     csr0->o_ie(csr.ie);
     csr0->o_mode(csr.mode);
     csr0->o_mtvec(csr.mtvec);
+    csr0->i_dport_ena(dbg.csr_ena);
+    csr0->i_dport_write(dbg.csr_write);
+    csr0->i_dport_addr(dbg.core_addr);
+    csr0->i_dport_wdata(dbg.core_wdata);
+    csr0->o_dport_rdata(csr.dport_rdata);
 
     dbg0 = new DbgPort("dbg0");
     dbg0->i_clk(i_clk);

@@ -345,7 +345,12 @@ begin
         i_trap_pc => w.e.trap_pc,
         o_ie => csr.ie,
         o_mode => csr.mode,
-        o_mtvec => csr.mtvec);
+        o_mtvec => csr.mtvec,
+        i_dport_ena => dbg.csr_ena,
+        i_dport_write => dbg.csr_write,
+        i_dport_addr => dbg.core_addr,
+        i_dport_wdata => dbg.core_wdata,
+        o_dport_rdata => csr.dport_rdata);
 
 
     dbg0 : DbgPort port map (

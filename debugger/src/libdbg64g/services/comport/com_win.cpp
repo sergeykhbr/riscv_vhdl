@@ -85,11 +85,16 @@ void ComPortService::getSerialPortList(AttributeType *list) {
 
 int ComPortService::openSerialPort(const char *port, int baud, void *hdl) {
     char chCom[20];
-    char chBaud[16];
+    char chConfig[64];
     HANDLE hFile;
   
     size_t szComLen = RISCV_sprintf(chCom, sizeof(chCom), "\\\\.\\%s", port) + 1;
-    RISCV_sprintf(chBaud, sizeof(chBaud), "%d", baud);
+    /** COMx[:][baud=b][parity=p][data=d][stop=s][to={on|off}]
+     *         [xon={on|off}][odsr={on|off}][octs={on|off}][dtr={on|off|hs}]
+     *         [rts={on|off|hs|tg}][idsr={on|off}]
+     */
+    // baud=115200 parity=N data=8 stop=1
+    RISCV_sprintf(chConfig, sizeof(chConfig), "%d:n,8,1", baud);
  
     hFile = CreateFile(chCom,
                         GENERIC_READ|GENERIC_WRITE,

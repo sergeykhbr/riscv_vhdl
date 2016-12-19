@@ -20,8 +20,8 @@ CmdCsr::CmdCsr(ITap *tap, ISocInfo *info)
         "    READ:  csr <addr|name>\n"
         "    WRITE: csr <addr|name> <value>\n"
         "Example:\n"
-        "    csr MCPUID\n"
-        "    csr 0x762 1\n");
+        "    csr MISA\n"
+        "    csr 0xf10 1\n");
 }
 
 bool CmdCsr::isValid(AttributeType *args) {
@@ -85,12 +85,12 @@ void CmdCsr::to_string(AttributeType *args, AttributeType *res, AttributeType *o
     if (!(*args)[1].is_string()) {
         return;
     }
-    if ((*args)[1].is_equal("MCPUID")) {
-        static const char *MCPUID_BASE[4] = {
+    if ((*args)[1].is_equal("MISA")) {
+        static const char *MISA_BASE[4] = {
             "RV32I", "RV32E", "RV64I", "RV128I"
         };
         tstrsz += RISCV_sprintf(&tstr[tstrsz], sizeof(tstr) - tstrsz,
-            "    Base: %s", MCPUID_BASE[(csr >> 62) & 0x3]);
+            "    Base: %s", MISA_BASE[(csr >> 62) & 0x3]);
         // total 26 extensions
         char extenstion[2] = {0};
         for (int i = 0; i < 26; i++) {

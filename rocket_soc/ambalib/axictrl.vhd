@@ -47,6 +47,9 @@ architecture arch_axictrl of axictrl is
 
   type nasti_slave_in_vector_miss is array (0 to CFG_NASTI_SLAVES_TOTAL) 
        of nasti_slave_in_type;
+       
+  type slave_selector_type is array (0 to CFG_NASTI_MASTER_TOTAL-1)
+      of integer range 0 to CFG_NASTI_SLAVES_TOTAL;
 
   type reg_type is record
      w_busy : std_logic;
@@ -136,22 +139,28 @@ begin
     wb_bus_util_r(r.r_mst_idx) := r.r_busy;
 
     -- Pipeline
-    vmsti(ar_mst_idx).ar_ready := vslvo(ar_slv_idx).ar_ready;
+
+    -- Read Channel:
+    ar_fire := i_msto(ar_mst_idx).ar_valid and vslvo(ar_slv_idx).ar_ready;
+    r_fire := i_msto(r.r_mst_idx).r_ready and vslvo(r.r_slv_idx).r_valid and vslvo(r.r_slv_idx).r_last;
+    r_available := not r.r_busy or (r.r_busy and r_fire);
+    -- Write channel:
+    aw_fire := i_msto(aw_mst_idx).aw_valid and vslvo(aw_slv_idx).aw_ready;
+    w_fire := i_msto(r.w_mst_idx).w_valid and vslvo(r.w_slv_idx).w_ready and i_msto(r.w_mst_idx).w_last;
+    w_available := not r.w_busy or (r.w_busy and w_fire);
+
+    vmsti(ar_mst_idx).ar_ready := vslvo(ar_slv_idx).ar_ready and r_available;
     vslvi(ar_slv_idx).ar_valid := i_msto(ar_mst_idx).ar_valid;
     vslvi(ar_slv_idx).ar_bits  := i_msto(ar_mst_idx).ar_bits;
     vslvi(ar_slv_idx).ar_id    := i_msto(ar_mst_idx).ar_id;
     vslvi(ar_slv_idx).ar_user  := i_msto(ar_mst_idx).ar_user;
 
-    vmsti(aw_mst_idx).aw_ready := vslvo(aw_slv_idx).aw_ready;
+    vmsti(aw_mst_idx).aw_ready := vslvo(aw_slv_idx).aw_ready and w_available;
     vslvi(aw_slv_idx).aw_valid := i_msto(aw_mst_idx).aw_valid;
     vslvi(aw_slv_idx).aw_bits  := i_msto(aw_mst_idx).aw_bits;
     vslvi(aw_slv_idx).aw_id    := i_msto(aw_mst_idx).aw_id;
     vslvi(aw_slv_idx).aw_user  := i_msto(aw_mst_idx).aw_user;
 
-    -- Write channel:
-    aw_fire := i_msto(aw_mst_idx).aw_valid and vslvo(aw_slv_idx).aw_ready;
-    w_fire := i_msto(r.w_mst_idx).w_valid and vslvo(r.w_slv_idx).w_ready;
-    w_available := not r.w_busy or (r.w_busy and w_fire);
     if (w_available and aw_fire) = '1' then
         v.w_busy := '1';
         v.w_slv_idx := aw_slv_idx;
@@ -168,7 +177,7 @@ begin
     -- Write Handshake channel:
     b_fire := i_msto(r.b_mst_idx).b_ready and vslvo(r.b_slv_idx).b_valid;
     b_available := not r.b_busy or (r.b_busy and b_fire);
-    if (b_available and w_fire and i_msto(r.w_mst_idx).w_last) = '1' then
+    if (b_available and w_fire) = '1' then
         v.w_busy := '0';
         v.b_busy := '1';
         v.b_slv_idx := r.w_slv_idx;
@@ -184,16 +193,12 @@ begin
     vmsti(r.b_mst_idx).b_user := vslvo(r.b_slv_idx).b_user;
     vslvi(r.b_slv_idx).b_ready := i_msto(r.b_mst_idx).b_ready;
 
-    -- Read Channel:
-    ar_fire := i_msto(ar_mst_idx).ar_valid and vslvo(ar_slv_idx).ar_ready;
-    r_fire := i_msto(r.r_mst_idx).r_ready and vslvo(r.r_slv_idx).r_valid;
-    r_available := not r.r_busy or (r.r_busy and r_fire);
     if (r_available and ar_fire) = '1' then
         v.r_busy := '1';
         v.r_slv_idx := ar_slv_idx;
         v.r_mst_idx := ar_mst_idx;
     end if;
-    if (r_fire and vslvo(r.r_slv_idx).r_last) = '1' then
+    if r_fire = '1' then
         v.r_busy := ar_fire;
     end if;
 

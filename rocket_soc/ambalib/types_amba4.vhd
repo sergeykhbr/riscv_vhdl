@@ -486,8 +486,8 @@ type nasti_master_in_type is record
 end record;
 
 constant nasti_master_in_none : nasti_master_in_type := (
-      '1', '1', '0', NASTI_RESP_OKAY, (others=>'0'), '0',
-      '1', '0', NASTI_RESP_OKAY, (others=>'0'), '1', (others=>'0'), '0');
+      '0', '0', '0', NASTI_RESP_OKAY, (others=>'0'), '0',
+      '0', '0', NASTI_RESP_OKAY, (others=>'0'), '0', (others=>'0'), '0');
 
 type nasti_master_in_vector is array (0 to CFG_NASTI_MASTER_TOTAL-1) 
        of nasti_master_in_type;

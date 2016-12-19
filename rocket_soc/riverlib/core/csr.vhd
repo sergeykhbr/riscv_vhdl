@@ -29,7 +29,13 @@ entity CsrRegs is
 
     o_ie : out std_logic;                                    -- Interrupt enable bit
     o_mode : out std_logic_vector(1 downto 0);               -- CPU mode
-    o_mtvec : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0)-- Interrupt descriptors table
+    o_mtvec : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- Interrupt descriptors table
+
+    i_dport_ena : in std_logic;                              -- Debug port request is enabled
+    i_dport_write : in std_logic;                            -- Debug port Write enable
+    i_dport_addr : in std_logic_vector(11 downto 0);         -- Debug port CSR address
+    i_dport_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0);-- Debug port CSR writing value
+    o_dport_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0)-- Debug port CSR read value
   );
 end; 
  
@@ -51,73 +57,128 @@ architecture arch_CsrRegs of CsrRegs is
   end record;
 
   signal r, rin : RegistersType;
-
-begin
-
-  comb : process(i_nrst, i_xret, i_addr, i_wena, i_wdata, i_trap_ena,
-                 i_trap_code, i_trap_pc, r)
-    variable v : RegistersType;
-    variable wb_rdata : std_logic_vector(RISCV_ARCH-1 downto 0);
-    variable w_ie : std_logic;
+  
+  procedure procedure_RegAccess(
+     iaddr  : in std_logic_vector(11 downto 0);
+     iwena  : in std_logic;
+     iwdata : in std_logic_vector(RISCV_ARCH-1 downto 0);
+     ir : in RegistersType;
+     ov : out RegistersType;
+     ordata : out std_logic_vector(RISCV_ARCH-1 downto 0)) is
   begin
-
-    v := r;
-
-    wb_rdata := (others => '0');
-    case i_addr is
+    ordata := (others => '0');
+    case iaddr is
     when CSR_misa =>
+        --! Base[XLEN-1:XLEN-2]
+        --!     1 = 32
+        --!     2 = 64
+        --!     3 = 128
+        --!
+        ordata(RISCV_ARCH-1 downto RISCV_ARCH-2) := "10";
+        --! BitCharacterDescription
+        --! 0  A Atomic extension
+        --! 1  B Tentatively reserved for Bit operations extension
+        --! 2  C Compressed extension3DDouble-precision Foating-point extension
+        --! 4  E RV32E base ISA
+        --! 5  F Single-precision Foating-point extension
+        --! 6  G Additional standard extensions present
+        --! 7  H Hypervisor mode implemented
+        --! 8  I RV32I/64I/128I base ISA
+        --! 9  J Reserved
+        --! 10 K Reserved
+        --! 11 L Tentatively reserved for Decimal Floating-Point extension
+        --! 12 M Integer Multiply/Divide extension
+        --! 13 N User-level interrupts supported
+        --! 14 O Reserved
+        --! 15 P Tentatively reserved for Packed-SIMD extension
+        --! 16 Q Quad-precision Foating-point extension
+        --! 17 R Reserved
+        --! 18 S Supervisor mode implemented
+        --! 19 T Tentatively reserved for Transactional Memory extension
+        --! 20 U User mode implemented
+        --! 21 V Tentatively reserved for Vector extension
+        --! 22 W Reserved
+        --! 23 X Non-standard extensions present
+        --! 24 Y Reserved
+        --! 25 Z Reserve
+        --!
+        ordata(8) := '1';
+        ordata(12) := '1';
+        ordata(20) := '1';
     when CSR_mvendorid =>
     when CSR_marchid =>
     when CSR_mimplementationid =>
     when CSR_mhartid =>
     when CSR_uepc =>    -- User mode program counter
     when CSR_mstatus => -- Machine mode status register
-        wb_rdata(0) := r.uie;
-        wb_rdata(3) := r.mie;
-        wb_rdata(7) := r.mpie;
-        wb_rdata(12 downto 11) := r.mpp;
-        if i_wena = '1' then
-            v.uie := i_wdata(0);
-            v.mie := i_wdata(3);
-            v.mpie := i_wdata(7);
-            v.mpp := i_wdata(12 downto 11);
+        ordata(0) := ir.uie;
+        ordata(3) := ir.mie;
+        ordata(7) := ir.mpie;
+        ordata(12 downto 11) := ir.mpp;
+        if iwena = '1' then
+            ov.uie := iwdata(0);
+            ov.mie := iwdata(3);
+            ov.mpie := iwdata(7);
+            ov.mpp := iwdata(12 downto 11);
         end if;
     when CSR_medeleg => -- Machine exception delegation
-    when CSR_mideleg => -- Machine itnerrupt delegation
+    when CSR_mideleg => -- Machine interrupt delegation
     when CSR_mie =>     -- Machine interrupt enable bit
     when CSR_mtvec =>
-        wb_rdata := r.mtvec;
-        if i_wena = '1' then
-            v.mtvec := i_wdata;
+        ordata := ir.mtvec;
+        if iwena = '1' then
+            ov.mtvec := iwdata;
         end if;
     when CSR_mtimecmp => -- Machine wall-clock timer compare value
     when CSR_mscratch => -- Machine scratch register
-        wb_rdata := r.mscratch;
-        if i_wena = '1' then
-            v.mscratch := i_wdata;
+        ordata := ir.mscratch;
+        if iwena = '1' then
+            ov.mscratch := iwdata;
         end if;
     when CSR_mepc => -- Machine program counter
-        wb_rdata := r.mepc;
-        if i_xret = '1' then
-            -- Switch to previous mode
-            v.mie := r.mpie;
-            v.mpie := '1';
-            v.mode := r.mpp;
-            v.mpp := PRV_U;
-        end if;
-        if i_wena = '1' then
-            v.mepc := i_wdata;
+        ordata := ir.mepc;
+        if iwena = '1' then
+            ov.mepc := iwdata;
         end if;
     when CSR_mcause => -- Machine trap cause
-        wb_rdata := (others => '0');
-        wb_rdata(63) := r.trap_irq;
-        wb_rdata(3 downto 0) := r.trap_code;
+        ordata(63) := ir.trap_irq;
+        ordata(3 downto 0) := ir.trap_code;
     when CSR_mbadaddr => -- Machine bad address
-        wb_rdata(RISCV_ARCH-1 downto BUS_ADDR_WIDTH) := (others => '0');
-        wb_rdata(BUS_ADDR_WIDTH-1 downto 0) := r.mbadaddr;
+        ordata(BUS_ADDR_WIDTH-1 downto 0) := ir.mbadaddr;
     when CSR_mip =>      -- Machine interrupt pending
     when others =>
     end case;
+  end;
+
+begin
+
+  comb : process(i_nrst, i_xret, i_addr, i_wena, i_wdata, i_trap_ena,
+                 i_dport_ena, i_dport_write, i_dport_addr, i_dport_wdata,
+                 i_trap_code, i_trap_pc, r)
+    variable v : RegistersType;
+    variable wb_rdata : std_logic_vector(RISCV_ARCH-1 downto 0);
+    variable wb_dport_rdata : std_logic_vector(RISCV_ARCH-1 downto 0);
+    variable w_ie : std_logic;
+    variable w_dport_wena : std_logic;
+  begin
+
+    v := r;
+
+    w_dport_wena := i_dport_ena and i_dport_write;
+
+    procedure_RegAccess(i_addr, i_wena, i_wdata,
+                        r, v, wb_rdata);
+
+    procedure_RegAccess(i_dport_addr, w_dport_wena,
+                        i_dport_wdata, r, v, wb_dport_rdata);
+
+    if i_addr = CSR_mepc and i_xret = '1' then
+        -- Switch to previous mode
+        v.mie := r.mpie;
+        v.mpie := '1';
+        v.mode := r.mpp;
+        v.mpp := PRV_U;
+    end if;
 
     if i_trap_ena = '1' then
         v.mie := '0';
@@ -159,6 +220,7 @@ begin
     o_ie <= w_ie;
     o_mode <= r.mode;
     o_mtvec <= r.mtvec(BUS_ADDR_WIDTH-1 downto 0);
+    o_dport_rdata <= wb_dport_rdata;
     
     rin <= v;
   end process;

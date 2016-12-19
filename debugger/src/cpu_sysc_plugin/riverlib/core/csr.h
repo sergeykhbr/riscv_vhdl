@@ -29,6 +29,12 @@ SC_MODULE(CsrRegs) {
     sc_out<sc_uint<2>> o_mode;              // CPU mode
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_mtvec;// Interrupt descriptors table
 
+    sc_in<bool> i_dport_ena;                  // Debug port request is enabled
+    sc_in<bool> i_dport_write;                // Debug port Write enable
+    sc_in<sc_uint<12>> i_dport_addr;          // Debug port CSR address
+    sc_in<sc_uint<RISCV_ARCH>> i_dport_wdata; // Debug port CSR writing value
+    sc_out<sc_uint<RISCV_ARCH>> o_dport_rdata;// Debug port CSR read value
+
     void comb();
     void registers();
 
@@ -53,6 +59,11 @@ private:
         sc_signal<bool> trap_irq;
         sc_signal<sc_uint<4>> trap_code;
     } v, r;
+
+    void procedure_RegAccess(uint64_t iaddr, bool iwena,
+                             sc_uint<RISCV_ARCH> iwdata,
+                             RegistersType &ir, RegistersType *ov,
+                             sc_uint<RISCV_ARCH> *ordata);
 };
 
 
