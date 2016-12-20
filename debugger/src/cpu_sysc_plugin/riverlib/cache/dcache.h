@@ -48,13 +48,18 @@ SC_MODULE(DCache) {
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
 private:
+    enum EState {
+        State_Idle,
+        State_WaitGrant,
+        State_WaitResp,
+        State_WaitAccept
+    };
+
     struct RegistersType {
-        sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_addr;
-        sc_signal<sc_uint<2>> req_size;
-        sc_signal<bool> rena;
-        sc_signal<bool> hold_ena;
-        sc_signal<sc_uint<BUS_DATA_WIDTH>> hold_data;
-        sc_signal<sc_uint<BUS_ADDR_WIDTH>> hold_addr;
+        sc_signal<sc_uint<BUS_DATA_WIDTH>> dline_data;
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> dline_addr_req;
+        sc_signal<sc_uint<2>> dline_size_req;
+        sc_signal<sc_uint<2>> state;
     } v, r;
 
 };

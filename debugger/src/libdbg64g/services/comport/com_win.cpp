@@ -121,8 +121,8 @@ int ComPortService::openSerialPort(const char *port, int baud, void *hdl) {
     FillMemory(&dcb, sizeof(dcb), 0);
 
     dcb.DCBlength = sizeof(dcb);
-    if (!BuildCommDCB(chBaud, &dcb)) {   
-        RISCV_error("Can't BuildCommDCB(%s,)", chBaud);
+    if (!BuildCommDCB(chConfig, &dcb)) {   
+        RISCV_error("Can't BuildCommDCB(%s,)", chConfig);
         CloseHandle(hFile);
         return -1;
     }

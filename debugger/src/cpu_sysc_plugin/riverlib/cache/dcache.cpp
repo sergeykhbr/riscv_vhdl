@@ -21,9 +21,10 @@ DCache::DCache(sc_module_name name_) : sc_module(name_) {
     sensitive << i_resp_mem_data;
     sensitive << i_req_mem_ready;
     sensitive << i_resp_data_ready;
-    sensitive << r.hold_ena;
-    sensitive << r.hold_addr;
-    sensitive << r.hold_data;
+    sensitive << r.dline_data;
+    sensitive << r.dline_addr_req;
+    sensitive << r.dline_size_req;
+    sensitive << r.state;
 
     SC_METHOD(registers);
     sensitive << i_clk.pos();
@@ -42,170 +43,213 @@ void DCache::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_resp_data_valid, "/top/cache0/d0/o_resp_data_valid");
         sc_trace(o_vcd, o_resp_data_addr, "/top/cache0/d0/o_resp_data_addr");
         sc_trace(o_vcd, o_resp_data_data, "/top/cache0/d0/o_resp_data_data");
+        sc_trace(o_vcd, r.dline_data, "/top/cache0/d0/r_dline_data");
+        sc_trace(o_vcd, r.dline_addr_req, "/top/cache0/d0/r_dline_addr_req");
+        sc_trace(o_vcd, r.dline_size_req, "/top/cache0/d0/r_dline_size_req");
+        sc_trace(o_vcd, r.state, "/top/cache0/d0/r_state");
     }
 }
 
 void DCache::comb() {
-    sc_uint<BUS_ADDR_WIDTH> wb_req_addr;
-    sc_uint<BUS_DATA_BYTES> wb_req_strob;
-    sc_uint<BUS_DATA_WIDTH> wb_rdata;
-    sc_uint<BUS_DATA_WIDTH> wb_wdata;
+    bool w_o_req_data_ready;
+    bool w_o_req_mem_valid;
+    sc_uint<BUS_ADDR_WIDTH> wb_o_req_mem_addr;
+    sc_uint<BUS_DATA_BYTES> wb_o_req_strob;
+    sc_uint<BUS_DATA_WIDTH> wb_o_req_wdata;
+    bool w_req_fire;
+    bool w_o_resp_valid;
+    sc_uint<BUS_ADDR_WIDTH> wb_o_resp_addr;
+    sc_uint<BUS_DATA_WIDTH> wb_resp_data_mux;
+    sc_uint<BUS_DATA_WIDTH> wb_o_resp_data;
     sc_uint<BUS_DATA_WIDTH> wb_rtmp;
-    bool w_o_valid;
-    sc_uint<BUS_DATA_WIDTH> wb_o_data;
-    sc_uint<BUS_ADDR_WIDTH> wb_o_addr;
 
     v = r;
 
-    wb_req_addr = 0;
-    wb_req_strob = 0;
-    wb_rdata = 0;
-    wb_wdata = 0;
+    wb_o_req_strob = 0;
+    wb_o_req_wdata = 0;
     wb_rtmp = 0;
-    w_o_valid = 0;
-    wb_o_data = 0;
-    wb_o_addr = 0;
 
-    wb_req_addr(BUS_ADDR_WIDTH-1, 3) 
-        = i_req_data_addr.read()(BUS_ADDR_WIDTH-1, 3);
-
-    v.rena = !i_req_data_write.read() & i_req_data_valid.read();
-    if (i_req_data_write.read()) {
-        switch (i_req_data_sz.read()) {
-        case 0:
-            wb_wdata = (i_req_data_data.read()(7, 0),
-                i_req_data_data.read()(7, 0), i_req_data_data.read()(7, 0),
-                i_req_data_data.read()(7, 0), i_req_data_data.read()(7, 0),
-                i_req_data_data.read()(7, 0), i_req_data_data.read()(7, 0),
-                i_req_data_data.read()(7, 0));
-            if (i_req_data_addr.read()(2, 0) == 0x0) {
-                wb_req_strob = 0x01;
-            } else if (i_req_data_addr.read()(2, 0) == 0x1) {
-                wb_req_strob = 0x02;
-            } else if (i_req_data_addr.read()(2, 0) == 0x2) {
-                wb_req_strob = 0x04;
-            } else if (i_req_data_addr.read()(2, 0) == 0x3) {
-                wb_req_strob = 0x08;
-            } else if (i_req_data_addr.read()(2, 0) == 0x4) {
-                wb_req_strob = 0x10;
-            } else if (i_req_data_addr.read()(2, 0) == 0x5) {
-                wb_req_strob = 0x20;
-            } else if (i_req_data_addr.read()(2, 0) == 0x6) {
-                wb_req_strob = 0x40;
-            } else if (i_req_data_addr.read()(2, 0) == 0x7) {
-                wb_req_strob = 0x80;
-            }
-            break;
-        case 1:
-            wb_wdata = (i_req_data_data.read()(15, 0),
-                i_req_data_data.read()(15, 0), i_req_data_data.read()(15, 0),
-                i_req_data_data.read()(15, 0));
-            if (i_req_data_addr.read()(2, 1) == 0) {
-                wb_req_strob = 0x03;
-            } else if (i_req_data_addr.read()(2, 1) == 1) {
-                wb_req_strob = 0x0C;
-            } else if (i_req_data_addr.read()(2, 1) == 2) {
-                wb_req_strob = 0x30;
-            } else {
-                wb_req_strob = 0xC0;
-            }
-            break;
-        case 2:
-            wb_wdata = (i_req_data_data.read()(31, 0),
-                        i_req_data_data.read()(31, 0));
-            if (i_req_data_addr.read()[2]) {
-                wb_req_strob = 0xF0;
-            } else {
-                wb_req_strob = 0x0F;
-            }
-            break;
-        case 3:
-            wb_wdata = i_req_data_data;
-            wb_req_strob = 0xFF;
-            break;
-        default:;
+    switch (i_req_data_sz.read()) {
+    case 0:
+        wb_o_req_wdata = (i_req_data_data.read()(7, 0),
+            i_req_data_data.read()(7, 0), i_req_data_data.read()(7, 0),
+            i_req_data_data.read()(7, 0), i_req_data_data.read()(7, 0),
+            i_req_data_data.read()(7, 0), i_req_data_data.read()(7, 0),
+            i_req_data_data.read()(7, 0));
+        if (i_req_data_addr.read()(2, 0) == 0x0) {
+            wb_o_req_strob = 0x01;
+        } else if (i_req_data_addr.read()(2, 0) == 0x1) {
+            wb_o_req_strob = 0x02;
+        } else if (i_req_data_addr.read()(2, 0) == 0x2) {
+            wb_o_req_strob = 0x04;
+        } else if (i_req_data_addr.read()(2, 0) == 0x3) {
+            wb_o_req_strob = 0x08;
+        } else if (i_req_data_addr.read()(2, 0) == 0x4) {
+            wb_o_req_strob = 0x10;
+        } else if (i_req_data_addr.read()(2, 0) == 0x5) {
+            wb_o_req_strob = 0x20;
+        } else if (i_req_data_addr.read()(2, 0) == 0x6) {
+            wb_o_req_strob = 0x40;
+        } else if (i_req_data_addr.read()(2, 0) == 0x7) {
+            wb_o_req_strob = 0x80;
         }
-    }
-
-    switch (r.req_addr.read()(2, 0)) {
+        break;
     case 1:
-        wb_rtmp = i_resp_mem_data.read()(63, 8);
+        wb_o_req_wdata = (i_req_data_data.read()(15, 0),
+            i_req_data_data.read()(15, 0), i_req_data_data.read()(15, 0),
+            i_req_data_data.read()(15, 0));
+        if (i_req_data_addr.read()(2, 1) == 0) {
+            wb_o_req_strob = 0x03;
+        } else if (i_req_data_addr.read()(2, 1) == 1) {
+            wb_o_req_strob = 0x0C;
+        } else if (i_req_data_addr.read()(2, 1) == 2) {
+            wb_o_req_strob = 0x30;
+        } else {
+            wb_o_req_strob = 0xC0;
+        }
         break;
     case 2:
-        wb_rtmp = i_resp_mem_data.read()(63, 16);
+        wb_o_req_wdata = (i_req_data_data.read()(31, 0),
+                    i_req_data_data.read()(31, 0));
+        if (i_req_data_addr.read()[2]) {
+            wb_o_req_strob = 0xF0;
+        } else {
+            wb_o_req_strob = 0x0F;
+        }
         break;
     case 3:
-        wb_rtmp = i_resp_mem_data.read()(63, 24);
+        wb_o_req_wdata = i_req_data_data;
+        wb_o_req_strob = 0xFF;
         break;
-    case 4:
-        wb_rtmp = i_resp_mem_data.read()(63, 32);
-        break;
-    case 5:
-        wb_rtmp = i_resp_mem_data.read()(63, 40);
-        break;
-    case 6:
-        wb_rtmp = i_resp_mem_data.read()(63, 48);
-        break;
-    case 7:
-        wb_rtmp = i_resp_mem_data.read()(63, 56);
-        break;
-    default:
-        wb_rtmp = i_resp_mem_data;
-    } 
+    default:;
+    }
 
-    switch (r.req_size.read()) {
-    case 0:
-        wb_rdata = wb_rtmp(7, 0);
+    w_o_req_mem_valid = i_req_data_valid.read();
+    wb_o_req_mem_addr = i_req_data_addr.read()(BUS_ADDR_WIDTH-1, 3) << 3;
+    w_o_req_data_ready = i_req_mem_ready.read();
+    w_req_fire = i_req_data_valid.read() && w_o_req_data_ready;
+    switch (r.state.read()) {
+    case State_Idle:
+        if (i_req_data_valid.read()) {
+            if (i_req_mem_ready.read()) {
+                v.state = State_WaitResp;
+            } else {
+                v.state = State_WaitGrant;
+            }
+        }
         break;
+    case State_WaitGrant:
+        if (i_req_mem_ready.read()) {
+            v.state = State_WaitResp;
+        }
+        break;
+    case State_WaitResp:
+        if (i_resp_mem_data_valid.read()) {
+            if (!i_resp_data_ready.read()) {
+                v.state = State_WaitAccept;
+            } else if (!i_req_data_valid.read()) {
+                v.state = State_Idle;
+            } else {
+                // New request
+                if (i_req_mem_ready.read()) {
+                    v.state = State_WaitResp;
+                } else {
+                    v.state = State_WaitGrant;
+                }
+            }
+        }
+        break;
+    case State_WaitAccept:
+        if (i_resp_data_ready.read()) {
+            if (!i_req_data_valid.read()) {
+                v.state = State_Idle;
+            } else {
+                if (i_req_mem_ready.read()) {
+                    v.state = State_WaitResp;
+                } else {
+                    v.state = State_WaitGrant;
+                }
+            }
+        }
+        break;
+    default:;
+    }
+
+    if (w_req_fire) {
+        v.dline_addr_req = i_req_data_addr;
+        v.dline_size_req = i_req_data_sz;
+    }
+    if (i_resp_mem_data_valid.read()) {
+        v.dline_data =  i_resp_mem_data;
+    }
+
+    wb_o_resp_addr = r.dline_addr_req;
+    if (r.state.read() == State_WaitAccept) {
+        w_o_resp_valid = 1;
+        wb_resp_data_mux = r.dline_data;
+    } else {
+        w_o_resp_valid = i_resp_mem_data_valid;
+        wb_resp_data_mux = i_resp_mem_data;
+    }
+
+    switch (r.dline_addr_req.read()(2, 0)) {
     case 1:
-        wb_rdata = wb_rtmp(15, 0);
+        wb_rtmp = wb_resp_data_mux(63, 8);
         break;
     case 2:
-        wb_rdata = wb_rtmp(31, 0);
+        wb_rtmp = wb_resp_data_mux(63, 16);
+        break;
+    case 3:
+        wb_rtmp = wb_resp_data_mux(63, 24);
+        break;
+    case 4:
+        wb_rtmp = wb_resp_data_mux(63, 32);
+        break;
+    case 5:
+        wb_rtmp = wb_resp_data_mux(63, 40);
+        break;
+    case 6:
+        wb_rtmp = wb_resp_data_mux(63, 48);
+        break;
+    case 7:
+        wb_rtmp = wb_resp_data_mux(63, 56);
         break;
     default:
-        wb_rdata = wb_rtmp;
+        wb_rtmp = wb_resp_data_mux;
+    } 
+
+    switch (r.dline_size_req.read()) {
+    case 0:
+        wb_o_resp_data = wb_rtmp(7, 0);
+        break;
+    case 1:
+        wb_o_resp_data = wb_rtmp(15, 0);
+        break;
+    case 2:
+        wb_o_resp_data = wb_rtmp(31, 0);
+        break;
+    default:
+        wb_o_resp_data = wb_rtmp;
     }
     
-    if (i_req_data_valid.read() && i_req_mem_ready.read()) {
-        v.req_addr = i_req_data_addr;
-        v.req_size = i_req_data_sz;
-    }
-
-    if (i_resp_mem_data_valid.read()) {
-        w_o_valid = i_resp_data_ready;
-        wb_o_data = wb_rdata;
-        wb_o_addr = r.req_addr;
-        v.hold_ena = !i_resp_data_ready.read();
-        v.hold_addr = r.req_addr;
-        v.hold_data = wb_rdata;
-    } else if (r.hold_ena.read()) {
-        v.hold_ena = !i_resp_data_ready.read();
-        w_o_valid = i_resp_data_ready;
-        wb_o_data = r.hold_data;
-        wb_o_addr = r.hold_addr;
-    }
- 
     if (!i_nrst.read()) {
-        v.req_addr = 0;
-        v.req_size = 0;
-        v.rena = 0;
-        v.hold_ena = 0;
-        v.hold_addr = 0;
-        v.hold_data = 0;
+        v.dline_addr_req = 0;
+        v.dline_size_req = 0;
+        v.dline_data = 0;
+        v.state = State_Idle;
     }
 
-    o_req_data_ready = i_req_mem_ready;
+    o_req_data_ready = w_o_req_data_ready;
 
-    o_req_mem_valid = i_req_data_valid;
+    o_req_mem_valid = w_o_req_mem_valid;
+    o_req_mem_addr = wb_o_req_mem_addr;
     o_req_mem_write = i_req_data_write;
-    o_req_mem_addr = wb_req_addr;
-    o_req_mem_strob = wb_req_strob;
-    o_req_mem_data = wb_wdata;
+    o_req_mem_strob = wb_o_req_strob;
+    o_req_mem_data = wb_o_req_wdata;
 
-    o_resp_data_valid = w_o_valid;
-    o_resp_data_data = wb_o_data;
-    o_resp_data_addr = wb_o_addr;
+    o_resp_data_valid = w_o_resp_valid;
+    o_resp_data_data = wb_o_resp_data;
+    o_resp_data_addr = wb_o_resp_addr;
 }
 
 void DCache::registers() {

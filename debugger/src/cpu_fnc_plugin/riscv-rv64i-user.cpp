@@ -1096,7 +1096,8 @@ public:
             char tstr[512];
             RISCV_sprintf(tstr, sizeof(tstr), 
                         "[%08x] <= %016" RV_PRI64 "x\n",
-                        static_cast<int>(trans.addr), trans.wpayload.b64[0]);
+                        static_cast<int>(trans.addr),
+                        static_cast<uint64_t>(trans.wpayload.b32[0]));
             (*data->mem_trace_file) << tstr;
             data->mem_trace_file->flush();
         }
@@ -1130,7 +1131,8 @@ public:
             char tstr[512];
             RISCV_sprintf(tstr, sizeof(tstr), 
                         "[%08x] <= %016" RV_PRI64 "x\n",
-                        static_cast<int>(trans.addr), trans.wpayload.b64[0]);
+                        static_cast<int>(trans.addr),
+                        static_cast<uint64_t>(trans.wpayload.b16[0]));
             (*data->mem_trace_file) << tstr;
             data->mem_trace_file->flush();
         }
@@ -1164,7 +1166,8 @@ public:
             char tstr[512];
             RISCV_sprintf(tstr, sizeof(tstr), 
                         "[%08x] <= %016" RV_PRI64 "x\n",
-                        static_cast<int>(trans.addr), trans.wpayload.b64[0]);
+                        static_cast<int>(trans.addr),
+                        static_cast<uint64_t>(trans.wpayload.b8[0]));
             (*data->mem_trace_file) << tstr;
             data->mem_trace_file->flush();
         }
