@@ -168,7 +168,7 @@ begin
         i_resp_mem_data => wb_data_resp_mem_data);
 
   comb : process(i_nrst, i_req_mem_ready, i_resp_mem_data_valid, i_resp_mem_data, 
-                 i, d, w_data_req_ready, w_ctrl_req_ready, r)
+                 i, d, r)
     variable v : RegistersType;
     variable w_mem_write : std_logic;
     variable wb_mem_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
@@ -189,41 +189,70 @@ begin
     w_ctrl_req_ready <= '0';
     w_ctrl_resp_mem_data_valid <= '0';
     wb_ctrl_resp_mem_data <= (others => '0');
-    if r.state = State_Idle or i_resp_mem_data_valid = '1' then
-      if d.req_mem_valid = '1' then
-        w_data_req_ready <= i_req_mem_ready;
-      else 
-        w_ctrl_req_ready <= i_req_mem_ready;
-      end if;
-    end if;
-
-    if d.req_mem_valid = '1' then
-      if w_data_req_ready = '1' then
-        v.state := State_DMem;
-      end if;
-      w_mem_write := d.req_mem_write;
-      wb_mem_addr := d.req_mem_addr;
-      wb_mem_strob := d.req_mem_strob;
-      wb_mem_wdata := d.req_mem_wdata;
-    elsif i.req_mem_valid = '1' then
-      if w_ctrl_req_ready = '1' then
-        v.state := State_IMem;
-      end if;
-      w_mem_write := i.req_mem_write;
-      wb_mem_addr := i.req_mem_addr;
-      wb_mem_strob := i.req_mem_strob;
-      wb_mem_wdata := i.req_mem_wdata;
-    elsif i_resp_mem_data_valid = '1' then
-      v.state := State_Idle;
-    end if;
-    
+   
     case r.state is
     when State_Idle =>
+        if d.req_mem_valid = '1' then
+          w_data_req_ready <= i_req_mem_ready;
+          w_mem_write := d.req_mem_write;
+          wb_mem_addr := d.req_mem_addr;
+          wb_mem_strob := d.req_mem_strob;
+          wb_mem_wdata := d.req_mem_wdata;
+          if i_req_mem_ready = '1' then
+            v.state := State_DMem;
+          end if;
+        elsif i.req_mem_valid = '1' then
+          w_ctrl_req_ready <= i_req_mem_ready;
+          w_mem_write := i.req_mem_write;
+          wb_mem_addr := i.req_mem_addr;
+          wb_mem_strob := i.req_mem_strob;
+          wb_mem_wdata := i.req_mem_wdata;
+          if i_req_mem_ready = '1' then
+            v.state := State_IMem;
+          end if;
+        end if;
+
     when State_DMem =>
+        w_data_req_ready <= i_req_mem_ready;
+        w_mem_write := d.req_mem_write;
+        wb_mem_addr := d.req_mem_addr;
+        wb_mem_strob := d.req_mem_strob;
+        wb_mem_wdata := d.req_mem_wdata;
+        if i_resp_mem_data_valid = '1' then
+          if (not d.req_mem_valid and i.req_mem_valid) = '1' then
+            v.state := State_IMem;
+            w_data_req_ready <= '0';
+            w_ctrl_req_ready <= i_req_mem_ready;
+            w_mem_write := i.req_mem_write;
+            wb_mem_addr := i.req_mem_addr;
+            wb_mem_strob := i.req_mem_strob;
+            wb_mem_wdata := i.req_mem_wdata;
+          elsif (d.req_mem_valid or i.req_mem_valid) = '0' then
+            v.state := State_Idle;
+          end if;
+        end if;
         w_data_resp_mem_data_valid <= i_resp_mem_data_valid;
         wb_data_resp_mem_data <= i_resp_mem_data;
         
     when State_IMem =>
+        w_ctrl_req_ready <= i_req_mem_ready;
+        w_mem_write := i.req_mem_write;
+        wb_mem_addr := i.req_mem_addr;
+        wb_mem_strob := i.req_mem_strob;
+        wb_mem_wdata := i.req_mem_wdata;
+        if i_resp_mem_data_valid = '1' then
+          if d.req_mem_valid = '1' then
+            v.state := State_DMem;
+            w_data_req_ready <= i_req_mem_ready;
+            w_ctrl_req_ready <= '0';
+            w_mem_write := d.req_mem_write;
+            wb_mem_addr := d.req_mem_addr;
+            wb_mem_strob := d.req_mem_strob;
+            wb_mem_wdata := d.req_mem_wdata;
+          elsif (d.req_mem_valid or i.req_mem_valid) = '0' then
+            v.state := State_Idle;
+          end if;
+        end if;
         w_ctrl_resp_mem_data_valid <= i_resp_mem_data_valid;
         wb_ctrl_resp_mem_data <= i_resp_mem_data;
         

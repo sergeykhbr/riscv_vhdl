@@ -94,7 +94,7 @@ int ComPortService::openSerialPort(const char *port, int baud, void *hdl) {
      *         [rts={on|off|hs|tg}][idsr={on|off}]
      */
     // baud=115200 parity=N data=8 stop=1
-    RISCV_sprintf(chConfig, sizeof(chConfig), "%d:n,8,1", baud);
+    RISCV_sprintf(chConfig, sizeof(chConfig), "baud=%d parity=N data=8 stop=1", baud);
  
     hFile = CreateFile(chCom,
                         GENERIC_READ|GENERIC_WRITE,

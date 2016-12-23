@@ -146,7 +146,7 @@ begin
 
     rin <= v;
     o_msto <= vmsto;
-    w_req_mem_ready <= i_msti.aw_ready and i_msti.ar_ready;
+    w_req_mem_ready <= i_msti.aw_ready or i_msti.ar_ready;
   end process;
 
   -- registers:
