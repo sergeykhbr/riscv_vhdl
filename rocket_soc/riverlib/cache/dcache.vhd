@@ -44,13 +44,16 @@ end;
  
 architecture arch_DCache of DCache is
 
+  constant State_Idle : std_logic_vector(1 downto 0) := "00";
+  constant State_WaitGrant : std_logic_vector(1 downto 0) := "01";
+  constant State_WaitResp : std_logic_vector(1 downto 0) := "10";
+  constant State_WaitAccept : std_logic_vector(1 downto 0) := "11";
+
   type RegistersType is record
-      req_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-      req_size : std_logic_vector(1 downto 0);
-      rena : std_logic;
-      hold_ena : std_logic;
-      hold_data : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
-      hold_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+      dline_data : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+      dline_addr_req : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+      dline_size_req : std_logic_vector(1 downto 0);
+      state : std_logic_vector(1 downto 0);
   end record;
 
   signal r, rin : RegistersType;
@@ -61,153 +64,188 @@ begin
                 i_req_data_addr, i_req_data_data, i_resp_mem_data_valid, 
                 i_resp_mem_data, i_req_mem_ready, i_resp_data_ready, r)
     variable v : RegistersType;
-    variable wb_req_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    variable wb_req_strob : std_logic_vector(BUS_DATA_BYTES-1 downto 0);
-    variable wb_rdata : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
-    variable wb_wdata : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+    variable w_o_req_data_ready : std_logic;
+    variable w_o_req_mem_valid : std_logic;
+    variable wb_o_req_mem_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    variable wb_o_req_strob : std_logic_vector(BUS_DATA_BYTES-1 downto 0);
+    variable wb_o_req_wdata : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+    variable w_req_fire : std_logic;
+    variable w_o_resp_valid : std_logic;
+    variable wb_o_resp_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    variable wb_resp_data_mux : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+    variable wb_o_resp_data : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
     variable wb_rtmp : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
-    variable w_o_valid : std_logic;
-    variable wb_o_data : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
-    variable wb_o_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
   begin
 
     v := r;
-    wb_req_addr := (others => '0');
-    wb_req_strob := (others => '0');
-    wb_rdata := (others => '0');
-    wb_wdata := (others => '0');
+    wb_o_req_strob := (others => '0');
+    wb_o_req_wdata := (others => '0');
     wb_rtmp := (others => '0');
-    w_o_valid := '0';
-    wb_o_data := (others => '0');
-    wb_o_addr := (others => '0');
 
-    wb_req_addr(BUS_ADDR_WIDTH-1 downto 3) 
-        := i_req_data_addr(BUS_ADDR_WIDTH-1 downto 3);
-
-    v.rena := not i_req_data_write and i_req_data_valid;
-    if i_req_data_write = '1' then
-        case i_req_data_sz is
-        when "00" =>
-            wb_wdata := i_req_data_data(7 downto 0) &
-                i_req_data_data(7 downto 0) & i_req_data_data(7 downto 0) &
-                i_req_data_data(7 downto 0) & i_req_data_data(7 downto 0) &
-                i_req_data_data(7 downto 0) & i_req_data_data(7 downto 0) &
-                i_req_data_data(7 downto 0);
-            if i_req_data_addr(2 downto 0) = "000" then
-                wb_req_strob := X"01";
-            elsif i_req_data_addr(2 downto 0) = "001" then
-                wb_req_strob := X"02";
-            elsif i_req_data_addr(2 downto 0) = "010" then
-                wb_req_strob := X"04";
-            elsif i_req_data_addr(2 downto 0) = "011" then
-                wb_req_strob := X"08";
-            elsif i_req_data_addr(2 downto 0) = "100" then
-                wb_req_strob := X"10";
-            elsif i_req_data_addr(2 downto 0) = "101" then
-                wb_req_strob := X"20";
-            elsif i_req_data_addr(2 downto 0) = "110" then
-                wb_req_strob := X"40";
-            elsif i_req_data_addr(2 downto 0) = "111" then
-                wb_req_strob := X"80";
-            end if;
-        when "01" =>
-            wb_wdata := i_req_data_data(15 downto 0) &
-                i_req_data_data(15 downto 0) & i_req_data_data(15 downto 0) &
-                i_req_data_data(15 downto 0);
-            if i_req_data_addr(2 downto 1) = "00" then
-                wb_req_strob := X"03";
-            elsif i_req_data_addr(2 downto 1) = "01" then
-                wb_req_strob := X"0C";
-            elsif i_req_data_addr(2 downto 1) = "10" then
-                wb_req_strob := X"30";
-            else
-                wb_req_strob := X"C0";
-            end if;
-        when "10" =>
-            wb_wdata := i_req_data_data(31 downto 0) &
-                        i_req_data_data(31 downto 0);
-            if i_req_data_addr(2) = '1' then
-                wb_req_strob := X"F0";
-            else
-                wb_req_strob := X"0F";
-            end if;
-        when "11" =>
-            wb_wdata := i_req_data_data;
-            wb_req_strob := X"FF";
-        when others =>
-        end case;
-    end if;
-
-    case r.req_addr(2 downto 0) is
-    when "001" =>
-        wb_rtmp := X"00" & i_resp_mem_data(63 downto 8);
-    when "010" =>
-        wb_rtmp := X"0000" & i_resp_mem_data(63 downto 16);
-    when "011" =>
-        wb_rtmp := X"000000" & i_resp_mem_data(63 downto 24);
-    when "100" =>
-        wb_rtmp := X"00000000" & i_resp_mem_data(63 downto 32);
-    when "101" =>
-        wb_rtmp := X"0000000000" & i_resp_mem_data(63 downto 40);
-    when "110" =>
-        wb_rtmp := X"000000000000" & i_resp_mem_data(63 downto 48);
-    when "111" =>
-        wb_rtmp := X"00000000000000" & i_resp_mem_data(63 downto 56);
-    when others =>
-        wb_rtmp := i_resp_mem_data;
-    end case;
-
-    case r.req_size is
+    case i_req_data_sz is
     when "00" =>
-        wb_rdata(7 downto 0) := wb_rtmp(7 downto 0);
+        wb_o_req_wdata := i_req_data_data(7 downto 0) &
+            i_req_data_data(7 downto 0) & i_req_data_data(7 downto 0) &
+            i_req_data_data(7 downto 0) & i_req_data_data(7 downto 0) &
+            i_req_data_data(7 downto 0) & i_req_data_data(7 downto 0) &
+            i_req_data_data(7 downto 0);
+        if i_req_data_addr(2 downto 0) = "000" then
+            wb_o_req_strob := X"01";
+        elsif i_req_data_addr(2 downto 0) = "001" then
+            wb_o_req_strob := X"02";
+        elsif i_req_data_addr(2 downto 0) = "010" then
+            wb_o_req_strob := X"04";
+        elsif i_req_data_addr(2 downto 0) = "011" then
+            wb_o_req_strob := X"08";
+        elsif i_req_data_addr(2 downto 0) = "100" then
+            wb_o_req_strob := X"10";
+        elsif i_req_data_addr(2 downto 0) = "101" then
+            wb_o_req_strob := X"20";
+        elsif i_req_data_addr(2 downto 0) = "110" then
+            wb_o_req_strob := X"40";
+        elsif i_req_data_addr(2 downto 0) = "111" then
+            wb_o_req_strob := X"80";
+        end if;
     when "01" =>
-        wb_rdata(15 downto 0) := wb_rtmp(15 downto 0);
+        wb_o_req_wdata := i_req_data_data(15 downto 0) &
+            i_req_data_data(15 downto 0) & i_req_data_data(15 downto 0) &
+            i_req_data_data(15 downto 0);
+        if i_req_data_addr(2 downto 1) = "00" then
+            wb_o_req_strob := X"03";
+        elsif i_req_data_addr(2 downto 1) = "01" then
+            wb_o_req_strob := X"0C";
+        elsif i_req_data_addr(2 downto 1) = "10" then
+            wb_o_req_strob := X"30";
+        else
+            wb_o_req_strob := X"C0";
+        end if;
     when "10" =>
-        wb_rdata(31 downto 0) := wb_rtmp(31 downto 0);
+        wb_o_req_wdata := i_req_data_data(31 downto 0) &
+                          i_req_data_data(31 downto 0);
+        if i_req_data_addr(2) = '1' then
+            wb_o_req_strob := X"F0";
+        else
+            wb_o_req_strob := X"0F";
+        end if;
+    when "11" =>
+        wb_o_req_wdata := i_req_data_data;
+        wb_o_req_strob := X"FF";
     when others =>
-        wb_rdata := wb_rtmp;
+    end case;
+
+
+    w_o_req_mem_valid := i_req_data_valid;
+    wb_o_req_mem_addr := i_req_data_addr(BUS_ADDR_WIDTH-1 downto 3) & "000";
+    w_o_req_data_ready := i_req_mem_ready;
+    w_req_fire := i_req_data_valid and w_o_req_data_ready;
+    case r.state is
+    when State_Idle =>
+        if i_req_data_valid = '1' then
+            if i_req_mem_ready = '1' then
+                v.state := State_WaitResp;
+            else
+                v.state := State_WaitGrant;
+            end if;
+        end if;
+    when State_WaitGrant =>
+        if i_req_mem_ready = '1' then
+            v.state := State_WaitResp;
+        end if;
+    when State_WaitResp =>
+        if i_resp_mem_data_valid = '1' then
+            if i_resp_data_ready = '0' then
+                v.state := State_WaitAccept;
+            elsif i_req_data_valid = '0' then
+                v.state := State_Idle;
+            else
+                -- New request
+                if i_req_mem_ready = '1' then
+                    v.state := State_WaitResp;
+                else
+                    v.state := State_WaitGrant;
+                end if;
+            end if;
+        end if;
+    when State_WaitAccept =>
+        if i_resp_data_ready = '1' then
+            if i_req_data_valid = '0' then
+                v.state := State_Idle;
+            else
+                if i_req_mem_ready = '1' then
+                    v.state := State_WaitResp;
+                else
+                    v.state := State_WaitGrant;
+                end if;
+            end if;
+        end if;
+    when others =>
+    end case;
+
+    if w_req_fire = '1' then
+        v.dline_addr_req := i_req_data_addr;
+        v.dline_size_req := i_req_data_sz;
+    end if;
+    if i_resp_mem_data_valid = '1' then
+        v.dline_data := i_resp_mem_data;
+    end if;
+
+    wb_o_resp_addr := r.dline_addr_req;
+    if r.state = State_WaitAccept then
+        w_o_resp_valid := '1';
+        wb_resp_data_mux := r.dline_data;
+    else
+        w_o_resp_valid := i_resp_mem_data_valid;
+        wb_resp_data_mux := i_resp_mem_data;
+    end if;
+
+    case r.dline_addr_req(2 downto 0) is
+    when "001" =>
+        wb_rtmp := X"00" & wb_resp_data_mux(63 downto 8);
+    when "010" =>
+        wb_rtmp := X"0000" & wb_resp_data_mux(63 downto 16);
+    when "011" =>
+        wb_rtmp := X"000000" & wb_resp_data_mux(63 downto 24);
+    when "100" =>
+        wb_rtmp := X"00000000" & wb_resp_data_mux(63 downto 32);
+    when "101" =>
+        wb_rtmp := X"0000000000" & wb_resp_data_mux(63 downto 40);
+    when "110" =>
+        wb_rtmp := X"000000000000" & wb_resp_data_mux(63 downto 48);
+    when "111" =>
+        wb_rtmp := X"00000000000000" & wb_resp_data_mux(63 downto 56);
+    when others =>
+        wb_rtmp := wb_resp_data_mux;
+    end case;
+
+    case r.dline_size_req is
+    when "00" =>
+        wb_o_resp_data(7 downto 0) := wb_rtmp(7 downto 0);
+    when "01" =>
+        wb_o_resp_data(15 downto 0) := wb_rtmp(15 downto 0);
+    when "10" =>
+        wb_o_resp_data(31 downto 0) := wb_rtmp(31 downto 0);
+    when others =>
+        wb_o_resp_data := wb_rtmp;
     end case;
     
-    if (i_req_data_valid and i_req_mem_ready) = '1' then
-        v.req_addr := i_req_data_addr;
-        v.req_size := i_req_data_sz;
-    end if;
-    
-    if i_resp_mem_data_valid = '1' then
-      w_o_valid := i_resp_data_ready;
-      wb_o_data := wb_rdata;
-      wb_o_addr := r.req_addr;
-      v.hold_ena := not i_resp_data_ready;
-      v.hold_addr := r.req_addr;
-      v.hold_data := wb_rdata;
-    elsif r.hold_ena = '1' then
-      v.hold_ena := not i_resp_data_ready;
-      w_o_valid := i_resp_data_ready;
-      wb_o_data := r.hold_data;
-      wb_o_addr := r.hold_addr;
-    end if;
-
-
     if i_nrst = '0' then
-        v.req_addr := (others => '0');
-        v.req_size := (others => '0');
-        v.rena := '0';
-        v.hold_ena := '0';
-        v.hold_addr := (others => '0');
-        v.hold_data := (others => '0');
+        v.dline_addr_req := (others => '0');
+        v.dline_size_req := (others => '0');
+        v.dline_data := (others => '0');
+        v.state := State_Idle;
     end if;
 
-    o_req_data_ready <= i_req_mem_ready;
+    o_req_data_ready <= w_o_req_data_ready;
 
-    o_req_mem_valid <= i_req_data_valid;
+    o_req_mem_valid <= w_o_req_mem_valid;
+    o_req_mem_addr <= wb_o_req_mem_addr;
     o_req_mem_write <= i_req_data_write;
-    o_req_mem_addr <= wb_req_addr;
-    o_req_mem_strob <= wb_req_strob;
-    o_req_mem_data <= wb_wdata;
+    o_req_mem_strob <= wb_o_req_strob;
+    o_req_mem_data <= wb_o_req_wdata;
 
-    o_resp_data_valid <= w_o_valid;
-    o_resp_data_data <= wb_o_data;
-    o_resp_data_addr <= wb_o_addr;
+    o_resp_data_valid <= w_o_resp_valid;
+    o_resp_data_data <= wb_o_resp_data;
+    o_resp_data_addr <= wb_o_resp_addr;
     
     rin <= v;
   end process;

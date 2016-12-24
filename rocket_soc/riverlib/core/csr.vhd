@@ -185,6 +185,7 @@ begin
         v.mpp := r.mode;
         v.mepc(RISCV_ARCH-1 downto BUS_ADDR_WIDTH) := (others => '0');
         v.mepc(BUS_ADDR_WIDTH-1 downto 0) := i_trap_pc;
+        v.mbadaddr := i_trap_pc;
         v.trap_code := i_trap_code(3 downto 0);
         v.trap_irq := i_trap_code(4);
         v.mode := PRV_M;

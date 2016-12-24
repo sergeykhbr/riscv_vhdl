@@ -139,12 +139,6 @@ void CpuRiscV_RTL::hapTriggered(IFace *isrc, EHapType type,
 
 void CpuRiscV_RTL::stop() {
     sc_stop();
-    if (i_vcd_) {
-        sc_close_vcd_trace_file(i_vcd_);
-    }
-    if (o_vcd_) {
-        sc_close_vcd_trace_file(o_vcd_);
-    }
     IThread::stop();
 }
 
@@ -152,6 +146,13 @@ void CpuRiscV_RTL::busyLoop() {
     RISCV_event_wait(&config_done_);
 
     sc_start();
+
+    if (i_vcd_) {
+        sc_close_vcd_trace_file(i_vcd_);
+    }
+    if (o_vcd_) {
+        sc_close_vcd_trace_file(o_vcd_);
+    }
 }
 
 }  // namespace debugger

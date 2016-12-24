@@ -726,23 +726,16 @@ package body types_amba4 is
   ) is
   variable traddr : std_logic_vector(CFG_NASTI_ADDR_BITS-1 downto 0);
   variable twaddr : std_logic_vector(CFG_NASTI_ADDR_BITS-1 downto 0);
-  variable w_ar_valid : std_logic;
   begin
     o_bank := i_bank;
 
     traddr := (i.ar_bits.addr(CFG_NASTI_ADDR_BITS-1 downto 12) and (not cfg.xmask))
              & i.ar_bits.addr(11 downto 0);
-    w_ar_valid := '0';
-    if i.ar_valid = '1' 
-       and ((i.ar_bits.addr(CFG_NASTI_ADDR_BITS-1 downto 12) and cfg.xmask) = cfg.xaddr) then
-       w_ar_valid := '1';
-    end if;
-
              
     -- Reading state machine:
     case i_bank.rstate is
     when rwait =>
-        if w_ar_valid = '1' then
+        if i.ar_valid = '1' then
             o_bank.rstate := rtrans;
 
             for n in 0 to CFG_WORDS_ON_BUS-1 loop
@@ -772,7 +765,7 @@ package body types_amba4 is
             end if;
             -- End of transaction (or process another one):
             if i_bank.rlen = 0 then
-                if w_ar_valid = '0' then
+                if i.ar_valid = '0' then
                     o_bank.rstate := rwait;
                 else
                     for n in 0 to CFG_WORDS_ON_BUS-1 loop
@@ -793,8 +786,7 @@ package body types_amba4 is
     -- Writting state machine:
     case i_bank.wstate is
     when wwait =>
-        if i.aw_valid = '1'
-          and ((i.aw_bits.addr(CFG_NASTI_ADDR_BITS-1 downto 12) and cfg.xmask) = cfg.xaddr) then
+        if i.aw_valid = '1' then
             o_bank.wstate := wtrans;
             twaddr := (i.aw_bits.addr(CFG_NASTI_ADDR_BITS-1 downto 12) and (not cfg.xmask))
                    & i.aw_bits.addr(11 downto 0);

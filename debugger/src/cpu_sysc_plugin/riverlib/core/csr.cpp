@@ -182,6 +182,7 @@ void CsrRegs::comb() {
         v.mie = 0;
         v.mpp = r.mode;
         v.mepc = i_trap_pc.read();
+        v.mbadaddr = i_trap_pc.read();
         v.trap_code = i_trap_code.read()(3, 0);
         v.trap_irq = i_trap_code.read()[4];
         v.mode = PRV_M;

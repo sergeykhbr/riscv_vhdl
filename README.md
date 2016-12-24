@@ -25,7 +25,7 @@ Parameterized generator of the Rocket-chip can be found here:
 
 ## System-on-Chip structure and performance
 
-![SOC top](rocket_soc/docs/pics/soc_top_v4.png)
+![SOC top](rocket_soc/docs/pics/soc_top_v5.png)
 
 Performance analysis is based on
 [**Dhrystone v2.1. benchmark**](http://fossies.org/linux/privat/old/dhrystone-2.1.tar.gz/)
