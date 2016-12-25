@@ -25,7 +25,6 @@ SC_MODULE(InstrFetch) {
     sc_in<sc_uint<32>> i_mem_data;
     sc_out<bool> o_mem_resp_ready;
 
-    sc_in<bool> i_e_npc_valid;
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_e_npc;
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_predict_npc;
     sc_out<bool> o_predict_miss;

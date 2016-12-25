@@ -42,7 +42,6 @@ Processor::Processor(sc_module_name name_) : sc_module(name_) {
     fetch0->i_mem_data_addr(i_resp_ctrl_addr);
     fetch0->i_mem_data(i_resp_ctrl_data);
     fetch0->o_mem_resp_ready(o_resp_ctrl_ready);
-    fetch0->i_e_npc_valid(w.e.valid);
     fetch0->i_e_npc(w.e.npc);
     fetch0->i_predict_npc(wb_npc_predict);
     fetch0->o_predict_miss(w.f.predict_miss);
@@ -154,7 +153,6 @@ Processor::Processor(sc_module_name name_) : sc_module(name_) {
     predic0 = new BranchPredictor("predic0");
     predic0->i_clk(i_clk);
     predic0->i_nrst(i_nrst);
-    predic0->i_hold(w_any_pipeline_hold);
     predic0->i_req_mem_fire(w.f.req_fire);
     predic0->i_resp_mem_valid(i_resp_ctrl_valid);
     predic0->i_resp_mem_addr(i_resp_ctrl_addr);

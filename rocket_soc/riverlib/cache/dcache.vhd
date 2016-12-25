@@ -80,6 +80,7 @@ begin
     v := r;
     wb_o_req_strob := (others => '0');
     wb_o_req_wdata := (others => '0');
+	 wb_o_resp_data := (others => '0');
     wb_rtmp := (others => '0');
 
     case i_req_data_sz is

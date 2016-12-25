@@ -28,7 +28,6 @@ entity InstrFetch is
     i_mem_data : in std_logic_vector(31 downto 0);
     o_mem_resp_ready : out std_logic;
 
-    i_e_npc_valid : in std_logic;
     i_e_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_predict_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     o_predict_miss : out std_logic;
@@ -56,7 +55,7 @@ begin
 
 
   comb : process(i_nrst, i_pipeline_hold, i_mem_req_ready, i_mem_data_valid,
-                i_mem_data_addr, i_mem_data, i_e_npc_valid, i_e_npc,
+                i_mem_data_addr, i_mem_data, i_e_npc,
                 i_predict_npc, r)
     variable v : RegistersType;
     variable wb_o_addr_req : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);

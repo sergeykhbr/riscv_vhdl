@@ -67,6 +67,7 @@ void DCache::comb() {
 
     wb_o_req_strob = 0;
     wb_o_req_wdata = 0;
+    wb_o_resp_data = 0;
     wb_rtmp = 0;
 
     switch (i_req_data_sz.read()) {

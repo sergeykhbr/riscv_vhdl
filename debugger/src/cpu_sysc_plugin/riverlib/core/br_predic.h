@@ -16,7 +16,6 @@ namespace debugger {
 SC_MODULE(BranchPredictor) {
     sc_in<bool> i_clk;                  // CPU clock
     sc_in<bool> i_nrst;                 // Reset. Active LOW.
-    sc_in<bool> i_hold;                 // Hold pipeline by any reason
     sc_in<bool> i_req_mem_fire;         // Memory request was accepted
     sc_in<bool> i_resp_mem_valid;       // Memory response from ICache is valid
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_resp_mem_addr; // Memory response address

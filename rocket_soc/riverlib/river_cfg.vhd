@@ -264,7 +264,6 @@ package river_cfg is
 
   --! @param[in] i_clk             CPU clock
   --! @param[in] i_nrst            Reset. Active LOW.
-  --! @param[in] i_hold            Hold pipeline by any reason
   --! @param[in] i_req_mem_fire    Memory request was accepted
   --! @param[in] i_resp_mem_valid  Memory response from ICache is valid
   --! @param[in] i_resp_mem_addr   Memory response address
@@ -277,7 +276,6 @@ package river_cfg is
   port (
     i_clk : in std_logic;
     i_nrst : in std_logic;
-    i_hold : in std_logic;
     i_req_mem_fire : in std_logic;
     i_resp_mem_valid : in std_logic;
     i_resp_mem_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
@@ -479,7 +477,6 @@ package river_cfg is
   --! @param[in] i_mem_data_addr
   --! @param[in] i_mem_data
   --! @param[out] o_mem_ready
-  --! @param[in] i_e_npc_valid
   --! @param[in] i_e_npc
   --! @param[in] i_predict_npc
   --! @param[out] o_predict_miss
@@ -500,7 +497,6 @@ package river_cfg is
     i_mem_data_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_mem_data : in std_logic_vector(31 downto 0);
     o_mem_resp_ready : out std_logic;
-    i_e_npc_valid : in std_logic;
     i_e_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_predict_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     o_predict_miss : out std_logic;

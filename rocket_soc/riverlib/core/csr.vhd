@@ -66,6 +66,7 @@ architecture arch_CsrRegs of CsrRegs is
      ov : out RegistersType;
      ordata : out std_logic_vector(RISCV_ARCH-1 downto 0)) is
   begin
+    ov := ir;
     ordata := (others => '0');
     case iaddr is
     when CSR_misa =>
@@ -167,10 +168,10 @@ begin
     w_dport_wena := i_dport_ena and i_dport_write;
 
     procedure_RegAccess(i_addr, i_wena, i_wdata,
-                        r, v, wb_rdata);
+                        v, v, wb_rdata);
 
     procedure_RegAccess(i_dport_addr, w_dport_wena,
-                        i_dport_wdata, r, v, wb_dport_rdata);
+                        i_dport_wdata, v, v, wb_dport_rdata);
 
     if i_addr = CSR_mepc and i_xret = '1' then
         -- Switch to previous mode

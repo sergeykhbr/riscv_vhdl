@@ -192,7 +192,6 @@ begin
         i_mem_data_addr => i_resp_ctrl_addr,
         i_mem_data => i_resp_ctrl_data,
         o_mem_resp_ready => o_resp_ctrl_ready,
-        i_e_npc_valid => w.e.valid,
         i_e_npc => w.e.npc,
         i_predict_npc => wb_npc_predict,
         o_predict_miss => w.f.predict_miss,
@@ -304,7 +303,6 @@ begin
     predic0 : BranchPredictor port map (
         i_clk => i_clk,
         i_nrst => i_nrst,
-        i_hold => w_any_pipeline_hold,
         i_req_mem_fire => w.f.req_fire,
         i_resp_mem_valid => i_resp_ctrl_valid,
         i_resp_mem_addr => i_resp_ctrl_addr,

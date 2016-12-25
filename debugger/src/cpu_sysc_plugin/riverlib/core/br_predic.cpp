@@ -13,7 +13,6 @@ namespace debugger {
 BranchPredictor::BranchPredictor(sc_module_name name_) : sc_module(name_) {
     SC_METHOD(comb);
     sensitive << i_nrst;
-    sensitive << i_hold;
     sensitive << i_req_mem_fire;
     sensitive << i_resp_mem_valid;
     sensitive << i_resp_mem_addr;
@@ -29,7 +28,6 @@ BranchPredictor::BranchPredictor(sc_module_name name_) : sc_module(name_) {
 
 void BranchPredictor::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
-        sc_trace(o_vcd, i_hold, "/top/proc0/bp0/i_hold");
         sc_trace(o_vcd, i_req_mem_fire, "/top/proc0/bp0/i_req_mem_fire");
         sc_trace(o_vcd, i_resp_mem_valid, "/top/proc0/bp0/i_resp_mem_valid");
         sc_trace(o_vcd, i_resp_mem_addr, "/top/proc0/bp0/i_resp_mem_addr");

@@ -140,16 +140,29 @@ int ComPortService::openSerialPort(const char *port, int baud, void *hdl) {
     CommTimeOuts.WriteTotalTimeoutMultiplier = 0;
     CommTimeOuts.WriteTotalTimeoutConstant   = 0;//1000;
 
-    SetCommTimeouts(hFile, &CommTimeOuts);
-    if(!SetCommMask(hFile, EV_RXCHAR)) {
+
+    if(!SetCommTimeouts(hFile, &CommTimeOuts)) {
         RISCV_error("Can't set port %s timeouts", chCom);
         CloseHandle(hFile);
         return -1;
     }
+    
+    DWORD dwStoredFlags = EV_BREAK | EV_CTS  | EV_DSR | EV_ERR | EV_RING |
+                EV_RLSD | EV_RXCHAR | EV_RXFLAG | EV_TXEMPTY;
+    if(!SetCommMask(hFile, dwStoredFlags)) {
+        RISCV_error("Can't set mask %s", chCom);
+        CloseHandle(hFile);
+        return -1;
+    }
+
+    /*COMSTAT comStat;
+    DWORD   dwErrors;
+    ClearCommError(hFile, &dwErrors, &comStat);*/
 
     RISCV_info("Serial port %s opened", chCom);
 
     PurgeComm(hFile, PURGE_RXCLEAR|PURGE_TXCLEAR|PURGE_RXABORT|PURGE_TXABORT);
+
     return 0;
 }
 
@@ -160,7 +173,7 @@ void ComPortService::closeSerialPort(void *hdl) {
 int ComPortService::readSerialPort(void *hdl, char *buf, int bufsz) {
     DWORD dwBytesRead;
     ReadFile(*static_cast<HANDLE *>(hdl), buf, bufsz, &dwBytesRead, NULL);
-    return (int)dwBytesRead;
+    return static_cast<int>(dwBytesRead);
 }
 
 int ComPortService::writeSerialPort(void *hdl, char *buf, int bufsz) {

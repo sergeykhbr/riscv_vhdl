@@ -17,7 +17,6 @@ InstrFetch::InstrFetch(sc_module_name name_) : sc_module(name_) {
     sensitive << i_mem_data_addr;
     sensitive << i_mem_data_valid;
     sensitive << i_mem_data;
-    sensitive << i_e_npc_valid;
     sensitive << i_e_npc;
     sensitive << i_predict_npc;
     sensitive << r.pc_z1;
@@ -35,7 +34,6 @@ void InstrFetch::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_mem_data_addr, "/top/proc0/fetch0/i_mem_data_addr");
         sc_trace(o_vcd, i_mem_data, "/top/proc0/fetch0/i_mem_data");
         sc_trace(o_vcd, o_mem_resp_ready, "/top/proc0/fetch0/o_mem_resp_ready");
-        sc_trace(o_vcd, i_e_npc_valid, "/top/proc0/fetch0/i_e_npc_valid");
         sc_trace(o_vcd, i_e_npc, "/top/proc0/fetch0/i_e_npc");
         sc_trace(o_vcd, i_predict_npc, "/top/proc0/fetch0/i_predict_npc");
         sc_trace(o_vcd, i_pipeline_hold, "/top/proc0/fetch0/i_pipeline_hold");
