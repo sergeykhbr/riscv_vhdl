@@ -51,6 +51,7 @@ SOURCES = \
 	cache_top \
 	int_mul \
 	int_div \
+	shift \
 	br_predic \
 	csr \
 	decoder \
