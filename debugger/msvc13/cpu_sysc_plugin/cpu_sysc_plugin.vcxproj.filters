@@ -75,6 +75,9 @@
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\dbg_port.cpp">
       <Filter>riverlib\core</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\arith\shift.cpp">
+      <Filter>riverlib\core\arith</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\api_types.h">
@@ -156,6 +159,9 @@
     </ClInclude>
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\dbg_port.h">
       <Filter>riverlib\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\arith\shift.h">
+      <Filter>riverlib\core\arith</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

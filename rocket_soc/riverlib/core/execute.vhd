@@ -125,6 +125,15 @@ architecture arch_InstrExecute of InstrExecute is
   signal w_arith_busy : std_logic_vector(Multi_Total-1 downto 0);
   signal w_hazard_detected : std_logic;
 
+  signal wb_shifter_a1 : std_logic_vector(RISCV_ARCH-1 downto 0);  -- Shifters operand 1
+  signal wb_shifter_a2 : std_logic_vector(5 downto 0);             -- Shifters operand 2
+  signal wb_sll : std_logic_vector(RISCV_ARCH-1 downto 0);
+  signal wb_sllw : std_logic_vector(RISCV_ARCH-1 downto 0);
+  signal wb_srl : std_logic_vector(RISCV_ARCH-1 downto 0);
+  signal wb_srlw : std_logic_vector(RISCV_ARCH-1 downto 0);
+  signal wb_sra : std_logic_vector(RISCV_ARCH-1 downto 0);
+  signal wb_sraw : std_logic_vector(RISCV_ARCH-1 downto 0);
+
   component IntMul is port (
     i_clk  : in std_logic;
     i_nrst : in std_logic;
@@ -153,7 +162,19 @@ architecture arch_InstrExecute of InstrExecute is
     o_valid : out std_logic;
     o_busy : out std_logic
   );
-  end component; 
+  end component;
+  
+  component Shifter is port (
+    i_a1 : in std_logic_vector(RISCV_ARCH-1 downto 0);
+    i_a2 : in std_logic_vector(5 downto 0);
+    o_sll : out std_logic_vector(RISCV_ARCH-1 downto 0);
+    o_sllw : out std_logic_vector(RISCV_ARCH-1 downto 0);
+    o_srl : out std_logic_vector(RISCV_ARCH-1 downto 0);
+    o_sra : out std_logic_vector(RISCV_ARCH-1 downto 0);
+    o_srlw : out std_logic_vector(RISCV_ARCH-1 downto 0);
+    o_sraw : out std_logic_vector(RISCV_ARCH-1 downto 0)
+  );
+  end component;
 
 begin
 
@@ -182,14 +203,24 @@ begin
       o_res => wb_arith_res(Multi_DIV),
       o_valid => w_arith_valid(Multi_DIV),
       o_busy => w_arith_busy(Multi_DIV));
+      
+  sh0 : Shifter port map (
+      i_a1 => wb_shifter_a1,
+      i_a2 => wb_shifter_a2,
+      o_sll => wb_sll,
+      o_sllw => wb_sllw,
+      o_srl => wb_srl,
+      o_sra => wb_sra,
+      o_srlw => wb_srlw,
+      o_sraw => wb_sraw);
 
   comb : process(i_nrst, i_pipeline_hold, i_d_valid, i_d_pc, i_d_instr,
                  i_wb_done, i_memop_load, i_memop_store, i_memop_sign_ext,
                  i_memop_size, i_unsigned_op, i_rv32, i_isa_type, i_ivec,
                  i_rdata1, i_rdata2, i_csr_rdata, i_ext_irq, i_dport_npc_write,
                  i_dport_npc, i_mtvec, i_ie, i_unsup_exception,
-                 wb_arith_res, w_arith_valid, w_arith_busy,
-                 w_hazard_detected, r)
+                 wb_arith_res, w_arith_valid, w_arith_busy, w_hazard_detected,
+                 wb_sll, wb_sllw, wb_srl, wb_srlw, wb_sra, wb_sraw, r)
     variable v : RegistersType;
     variable w_interrupt : std_logic;
     variable w_exception : std_logic;
@@ -216,9 +247,6 @@ begin
     variable wb_and64 : std_logic_vector(RISCV_ARCH-1 downto 0);
     variable wb_or64 : std_logic_vector(RISCV_ARCH-1 downto 0);
     variable wb_xor64 : std_logic_vector(RISCV_ARCH-1 downto 0);
-    variable wb_sll64 : std_logic_vector(RISCV_ARCH-1 downto 0);
-    variable wb_srl64 : std_logic_vector(RISCV_ARCH-1 downto 0);
-    variable wb_srl32 : std_logic_vector(RISCV_ARCH-1 downto 0);
     variable w_memop_load : std_logic;
     variable w_memop_store : std_logic;
     variable w_memop_sign_ext : std_logic;
@@ -238,8 +266,6 @@ begin
     variable w_o_pipeline_hold : std_logic;
     variable w_less : std_logic;
     variable w_gr_equal : std_logic;
-    variable shift32 : integer;
-    variable shift64 : integer;
     variable wv : std_logic_vector(Instr_Total-1 downto 0);
 
   begin
@@ -335,21 +361,9 @@ begin
     wb_and64 := wb_rdata1 and wb_rdata2;
     wb_or64 := wb_rdata1 or wb_rdata2;
     wb_xor64 := wb_rdata1 xor wb_rdata2;
-    shift64 := conv_integer(wb_rdata2(5 downto 0));
-    shift32 := conv_integer(wb_rdata2(4 downto 0));
-    if shift64 = 0 then
-        wb_sll64 := wb_rdata1;
-        wb_srl64 := wb_rdata1;
-    else
-        wb_sll64 := wb_rdata1(63-shift64 downto 0) & zero64(shift64-1 downto 0);
-        wb_srl64 := zero64(shift64-1 downto 0) & wb_rdata1(63 downto shift64);
-    end if;
-    if shift32 = 0 then
-        wb_srl32(31 downto 0) := wb_rdata1(31 downto 0);
-    else
-        wb_srl32(31 downto 0) := zero64(shift32-1 downto 0) & wb_rdata1(31 downto shift32);
-    end if;
-    wb_srl32(RISCV_ARCH-1 downto 32) := (others => wb_srl32(31));
+    
+    wb_shifter_a1 <= wb_rdata1;
+    wb_shifter_a2 <= wb_rdata2(5 downto 0);
 
     w_multi_valid := w_arith_valid(Multi_MUL) or w_arith_valid(Multi_DIV);
 
@@ -476,18 +490,17 @@ begin
     elsif wv(Instr_SUBW) = '1' then
         wb_res := wb_sub32;
     elsif (wv(Instr_SLL) or wv(Instr_SLLI)) = '1' then
-        wb_res := wb_sll64;
+        wb_res := wb_sll;
     elsif (wv(Instr_SLLW) or wv(Instr_SLLIW)) = '1' then
-        wb_res(31 downto 0) := wb_sll64(31 downto 0);
-        wb_res(63 downto 32) := (others => '0');
+        wb_res := wb_sllw;
     elsif (wv(Instr_SRL) or wv(Instr_SRLI)) = '1' then
-        wb_res := wb_srl64;
+        wb_res := wb_srl;
     elsif (wv(Instr_SRLW) or wv(Instr_SRLIW)) = '1' then
-        wb_res := wb_srl32;
+        wb_res := wb_srlw;
     elsif (wv(Instr_SRA) or wv(Instr_SRAI)) = '1' then
-        wb_res := wb_srl64;
+        wb_res := wb_sra;
     elsif (wv(Instr_SRAW) or wv(Instr_SRAW)) = '1' then
-        wb_res := wb_srl32;
+        wb_res := wb_sraw;
     elsif (wv(Instr_AND) or wv(Instr_ANDI)) = '1' then
         wb_res := wb_and64;
     elsif (wv(Instr_OR) or wv(Instr_ORI)) = '1' then

@@ -52,6 +52,12 @@ InstrExecute::InstrExecute(sc_module_name name_)  : sc_module(name_) {
     sensitive << wb_arith_res.arr[Multi_DIV];
     sensitive << w_arith_valid[Multi_MUL];
     sensitive << w_arith_valid[Multi_DIV];
+    sensitive << wb_sll;
+    sensitive << wb_sllw;
+    sensitive << wb_srl;
+    sensitive << wb_srlw;
+    sensitive << wb_sra;
+    sensitive << wb_sraw;
 
     SC_METHOD(registers);
     sensitive << i_clk.pos();
@@ -82,11 +88,21 @@ InstrExecute::InstrExecute(sc_module_name name_)  : sc_module(name_) {
     div0->o_valid(w_arith_valid[Multi_DIV]);
     div0->o_busy(w_arith_busy[Multi_DIV]);
 
+    sh0 = new Shifter("sh0");
+    sh0->i_a1(wb_shifter_a1);
+    sh0->i_a2(wb_shifter_a2);
+    sh0->o_sll(wb_sll);
+    sh0->o_sllw(wb_sllw);
+    sh0->o_srl(wb_srl);
+    sh0->o_sra(wb_sra);
+    sh0->o_srlw(wb_srlw);
+    sh0->o_sraw(wb_sraw);
 };
 
 InstrExecute::~InstrExecute() {
     delete mul0;
     delete div0;
+    delete sh0;
 }
 
 void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
@@ -162,9 +178,6 @@ void InstrExecute::comb() {
     sc_uint<RISCV_ARCH> wb_and64;
     sc_uint<RISCV_ARCH> wb_or64;
     sc_uint<RISCV_ARCH> wb_xor64;
-    sc_uint<RISCV_ARCH> wb_sll64;
-    sc_uint<RISCV_ARCH> wb_srl64;
-    sc_uint<RISCV_ARCH> wb_srl32;
     bool w_memop_load;
     bool w_memop_store;
     bool w_memop_sign_ext;
@@ -185,8 +198,6 @@ void InstrExecute::comb() {
     bool w_o_pipeline_hold;
     bool w_less;
     bool w_gr_equal;
-    int shift32;
-    int shift64;
 
     wb_radr1 = 0;
     wb_radr2 = 0;
@@ -286,23 +297,9 @@ void InstrExecute::comb() {
     wb_and64 = wb_rdata1 & wb_rdata2;
     wb_or64 = wb_rdata1 | wb_rdata2;
     wb_xor64 = wb_rdata1 ^ wb_rdata2;
-    shift64 = wb_rdata2(5, 0).to_int();
-    shift32 = wb_rdata2(4, 0).to_int();
-    if (shift64 == 0) {
-        wb_sll64 = wb_rdata1;
-        wb_srl64 = wb_rdata1;
-    } else {
-        wb_sll64 = wb_rdata1 << shift64;
-        wb_srl64 = wb_rdata1 >> shift64;
-    }
-    if (shift32 == 0) {
-        wb_srl32(31, 0) = wb_rdata1(31, 0);
-    } else {
-        wb_srl32(31, 0) = wb_rdata1(31, 0) >> shift32;
-    }
-    if (wb_srl32[31]) {
-        wb_srl32(RISCV_ARCH - 1, 32) = ~0;
-    }
+
+    wb_shifter_a1 = wb_rdata1;
+    wb_shifter_a2 = wb_rdata2(5, 0);
 
     w_multi_valid = w_arith_valid[Multi_MUL] | w_arith_valid[Multi_DIV];
 
@@ -426,18 +423,17 @@ void InstrExecute::comb() {
     } else if (wv[Instr_SUBW]) {
         wb_res = wb_sub32;
     } else if (wv[Instr_SLL] || wv[Instr_SLLI]) {
-        wb_res = wb_sll64;
+        wb_res = wb_sll;
     } else if (wv[Instr_SLLW] || wv[Instr_SLLIW]) {
-        wb_res(31, 0) = wb_sll64(31, 0);
-        wb_res(63, 32) = 0;
+        wb_res = wb_sllw;
     } else if (wv[Instr_SRL] || wv[Instr_SRLI]) {
-        wb_res = wb_srl64;
+        wb_res = wb_srl;
     } else if (wv[Instr_SRLW] || wv[Instr_SRLIW]) {
-        wb_res = wb_srl32;
+        wb_res = wb_srlw;
     } else if (wv[Instr_SRA] || wv[Instr_SRAI]) {
-        wb_res = wb_srl64;
+        wb_res = wb_sra;
     } else if (wv[Instr_SRAW] || wv[Instr_SRAW]) {
-        wb_res = wb_srl32;
+        wb_res = wb_sraw;
     } else if (wv[Instr_AND] || wv[Instr_ANDI]) {
         wb_res = wb_and64;
     } else if (wv[Instr_OR] || wv[Instr_ORI]) {

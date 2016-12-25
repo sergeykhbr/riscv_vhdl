@@ -12,6 +12,7 @@
 #include "../river_cfg.h"
 #include "arith/int_div.h"
 #include "arith/int_mul.h"
+#include "arith/shift.h"
 
 namespace debugger {
 
@@ -135,9 +136,18 @@ private:
     bool w_exception_load;
     sc_uint<5> wb_exception_code;
 
-    IntMul *mul0;
+    sc_signal<sc_uint<RISCV_ARCH>> wb_shifter_a1;      // Shifters operand 1
+    sc_signal<sc_uint<6>> wb_shifter_a2;               // Shifters operand 2
+    sc_signal<sc_uint<RISCV_ARCH>> wb_sll;
+    sc_signal<sc_uint<RISCV_ARCH>> wb_sllw;
+    sc_signal<sc_uint<RISCV_ARCH>> wb_srl;
+    sc_signal<sc_uint<RISCV_ARCH>> wb_srlw;
+    sc_signal<sc_uint<RISCV_ARCH>> wb_sra;
+    sc_signal<sc_uint<RISCV_ARCH>> wb_sraw;
 
+    IntMul *mul0;
     IntDiv *div0;
+    Shifter *sh0;
 };
 
 
