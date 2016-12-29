@@ -46,18 +46,19 @@ void CmdLoadElf::exec(AttributeType *args, AttributeType *res) {
         return;
     }
 
-    uint64_t mreset = 1;
-    uint64_t addr = info_->csr2addr("MRESET");
+    DsuMapType *dsu = info_->getpDsu();
+    uint64_t soft_reset = 1;
+    uint64_t addr = reinterpret_cast<uint32_t>(&dsu->ulocal.v.soft_reset);
 
-    tap_->write(addr, 8, reinterpret_cast<uint8_t *>(&mreset));
+    tap_->write(addr, 8, reinterpret_cast<uint8_t *>(&soft_reset));
 
     IService *iserv = static_cast<IService *>(lstServ[0u].to_iface());
     IElfLoader *elf = static_cast<IElfLoader *>(
                         iserv->getInterface(IFACE_ELFLOADER));
     elf->loadFile((*args)[1].to_string());
 
-    mreset = 0;
-    tap_->write(addr, 8, reinterpret_cast<uint8_t *>(&mreset));
+    soft_reset = 0;
+    tap_->write(addr, 8, reinterpret_cast<uint8_t *>(&soft_reset));
 }
 
 

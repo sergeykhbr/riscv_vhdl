@@ -32,6 +32,10 @@ public:
     virtual uint64_t csr2addr(const char *name);
     virtual uint64_t reg2addr(const char *name);
 
+    virtual DsuMapType *getpDsu() {
+        return reinterpret_cast<DsuMapType *>(dsuBase_.to_uint64());
+    }
+
     virtual uint64_t addressPlugAndPlay();
     virtual uint64_t addressGpio();
     virtual uint64_t addressBreakCreate();

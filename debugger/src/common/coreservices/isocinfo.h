@@ -117,9 +117,9 @@ struct GpioType {
 };
 
 struct DsuMapType {
-    // Base Address + 0x00000
+    // Base Address + 0x00000 (Region 0)
     uint64_t csr[1 << 12];
-    // Base Address + 0x08000
+    // Base Address + 0x08000 (Region 1)
     union ureg_type {
         uint8_t buf[1 << (12 + 3)];
         struct regs_type {
@@ -129,7 +129,7 @@ struct DsuMapType {
             uint64_t rsrv;
         } v;
     } ureg;
-    // Base Address + 0x10000
+    // Base Address + 0x10000 (Region 2)
     union udbg_type {
         uint8_t buf[1 << (12 + 3)];
         struct debug_region_type {
@@ -150,8 +150,21 @@ struct DsuMapType {
             uint64_t remove_breakpoint;
         } v;
     } udbg;
-    // Base Address + 0x18000
-    uint64_t end;
+    // Base Address + 0x18000 (Region 3)
+    union local_regs_type {
+        uint8_t buf[1 << (12 + 3)];
+        struct local_region_type {
+            uint64_t soft_reset;
+            uint64_t miss_access_cnt;
+            uint64_t miss_access_addr;
+            uint64_t rsrv[1];
+            // Bus utilization registers
+            struct mst_bus_util_type {
+                uint64_t w_cnt;
+                uint64_t r_cnt;
+            } util[3];  // CFG_NASTI_MASTER_TOTAL
+        } v;
+    } ulocal;
 };
 
 
@@ -167,6 +180,8 @@ public:
     virtual void getCsrList(AttributeType *lst) =0;
     virtual uint64_t csr2addr(const char *name) =0;
     virtual uint64_t reg2addr(const char *name) =0;
+
+    virtual DsuMapType *getpDsu() =0;
 
     virtual uint64_t addressPlugAndPlay() =0;
     virtual uint64_t addressGpio() =0;
