@@ -108,6 +108,9 @@
           {'Name':'example0','Attr':[
                 ['LogLevel',4],
                 ['attr1','This is test attr value']]}]},
+    {'Class':'SourceServiceClass','Instances':[
+          {'Name':'src0','Attr':[
+                ['LogLevel',4]]}]},
     {'Class':'GrethClass','Instances':[
           {'Name':'greth0','Attr':[
                 ['LogLevel',1],

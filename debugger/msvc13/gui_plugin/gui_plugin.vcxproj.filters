@@ -70,6 +70,15 @@
     <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\MemViewWidget.cpp">
       <Filter>CpuWidget</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\AsmArea.cpp">
+      <Filter>CpuWidget</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\AsmControl.cpp">
+      <Filter>CpuWidget</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\AsmViewWidget.cpp">
+      <Filter>CpuWidget</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\api_types.h">
@@ -144,6 +153,15 @@
       <Filter>CpuWidget</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\MemViewWidget.h">
+      <Filter>CpuWidget</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\AsmArea.h">
+      <Filter>CpuWidget</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\AsmControl.h">
+      <Filter>CpuWidget</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\AsmViewWidget.h">
       <Filter>CpuWidget</Filter>
     </ClInclude>
   </ItemGroup>

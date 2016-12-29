@@ -46,6 +46,7 @@ SOURCES = \
 	udp \
 	edcl \
 	elfloader \
+	srcproc \
 	cmd_br \
 	cmd_csr \
 	cmd_halt \

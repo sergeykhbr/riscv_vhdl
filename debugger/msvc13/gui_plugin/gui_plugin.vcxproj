@@ -186,6 +186,9 @@
     <ClCompile Include="..\..\src\common\autobuffer.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\ControlWidget\ConsoleWidget.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\ControlWidget\PnpWidget.cpp" />
+    <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\AsmArea.cpp" />
+    <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\AsmControl.cpp" />
+    <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\AsmViewWidget.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\MemArea.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\MemControl.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\MemViewWidget.cpp" />
@@ -212,6 +215,9 @@
     <ClInclude Include="..\..\src\common\iservice.h" />
     <ClInclude Include="..\..\src\gui_plugin\ControlWidget\ConsoleWidget.h" />
     <ClInclude Include="..\..\src\gui_plugin\ControlWidget\PnpWidget.h" />
+    <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\AsmArea.h" />
+    <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\AsmControl.h" />
+    <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\AsmViewWidget.h" />
     <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\MemArea.h" />
     <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\MemControl.h" />
     <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\MemViewWidget.h" />

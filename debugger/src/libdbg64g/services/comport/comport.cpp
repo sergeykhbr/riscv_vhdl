@@ -103,6 +103,10 @@ void ComPortService::busyLoop() {
         // Receiveing...
         if (!isSimulation_ && hPort_) {
             tbuf_cnt = readSerialPort(&hPort_, tbuf, sizeof(tbuf) - tbuf_cnt);
+            if (tbuf_cnt < 0) {
+                portOpened_ = false;
+                continue;
+            }
         } else if (isSimulation_) {
             tbuf_cnt = 0;
             while (!rxFifo_.isEmpty()
@@ -118,6 +122,7 @@ void ComPortService::busyLoop() {
                 ilstn->updateData(tbuf, tbuf_cnt);
             }
         }
+
         RISCV_sleep_ms(50);
     }
 }

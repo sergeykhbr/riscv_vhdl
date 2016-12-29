@@ -73,6 +73,7 @@ private:
     QAction *actionHalt_;
     QAction *actionStep_;
     QAction *actionRegs_;
+    QAction *actionAsm_;
     QAction *actionMem_;
     QAction *actionGpio_;
     QAction *actionPnp_;

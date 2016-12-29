@@ -168,6 +168,7 @@
     <ClCompile Include="..\..\src\libdbg64g\services\console\autocompleter.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\console\console.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\elfloader\elfloader.cpp" />
+    <ClCompile Include="..\..\src\libdbg64g\services\elfloader\srcproc.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmdexec.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_br.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_csr.cpp" />
@@ -208,6 +209,7 @@
     <ClInclude Include="..\..\src\common\coreservices\isignal.h" />
     <ClInclude Include="..\..\src\common\coreservices\isignallistener.h" />
     <ClInclude Include="..\..\src\common\coreservices\isocinfo.h" />
+    <ClInclude Include="..\..\src\common\coreservices\isrccode.h" />
     <ClInclude Include="..\..\src\common\coreservices\itap.h" />
     <ClInclude Include="..\..\src\common\coreservices\ithread.h" />
     <ClInclude Include="..\..\src\common\coreservices\iudp.h" />
@@ -224,6 +226,7 @@
     <ClInclude Include="..\..\src\libdbg64g\services\console\console.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\elfloader\elfloader.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\elfloader\elf_types.h" />
+    <ClInclude Include="..\..\src\libdbg64g\services\elfloader\srcproc.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmdexec.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_br.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_csr.h" />

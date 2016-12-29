@@ -4,6 +4,7 @@
 #include "moc_DbgMainWindow.h"
 #include "ControlWidget/PnpWidget.h"
 #include "CpuWidgets/RegsViewWidget.h"
+#include "CpuWidgets/AsmViewWidget.h"
 #include "CpuWidgets/MemViewWidget.h"
 #include <QtWidgets/QtWidgets>
 
@@ -101,6 +102,13 @@ void DbgMainWindow::createActions() {
     actionRegs_->setCheckable(true);
     actionRegs_->setChecked(false);
 
+    actionAsm_ = new QAction(QIcon(tr(":/images/mem_96x96.png")),
+                              tr("&Memory"), this);
+    actionAsm_->setToolTip(tr("Disassembler view"));
+    actionAsm_->setShortcut(QKeySequence("Ctrl+d"));
+    actionAsm_->setCheckable(true);
+    actionAsm_->setChecked(true);
+
     actionMem_ = new QAction(QIcon(tr(":/images/mem_96x96.png")),
                               tr("&Memory"), this);
     actionMem_->setToolTip(tr("Memory view"));
@@ -137,7 +145,7 @@ void DbgMainWindow::createActions() {
     connect(actionRun_ , SIGNAL(triggered()),
             this, SLOT(slotActionTargetRun()));
     connect(this, SIGNAL(signalTargetStateChanged(bool)),
-            actionRun_ , SLOT(setChecked(bool)));
+            actionRun_, SLOT(setChecked(bool)));
 
     actionHalt_ = new QAction(QIcon(tr(":/images/pause_96x96.png")),
                               tr("&Halt"), this);
@@ -169,6 +177,7 @@ void DbgMainWindow::createActions() {
     toolbarRunControl->addAction(actionStep_);
 
     QToolBar *toolbarCpu = addToolBar(tr("toolbarCpu"));
+    toolbarCpu->addAction(actionAsm_);
     toolbarCpu->addAction(actionRegs_);
     toolbarCpu->addAction(actionMem_);
     QToolBar *toolbarPeriph = addToolBar(tr("toolbarPeriph"));
@@ -232,6 +241,16 @@ void DbgMainWindow::addWidgets() {
     subw = new UnclosableQMdiSubWindow(this);
     pnew = new GpioWidget(igui_, this);
     subw->setUnclosableWidget("gpio0", pnew, actionGpio_);
+    mdiArea_->addSubWindow(subw);
+    connect(this, SIGNAL(signalPostInit(AttributeType *)),
+            pnew, SLOT(slotPostInit(AttributeType *)));
+    connect(this, SIGNAL(signalUpdateByTimer()),
+            pnew, SLOT(slotUpdateByTimer()));
+
+    actionAsm_->setChecked(true);
+    subw = new UnclosableQMdiSubWindow(this);
+    pnew = new AsmViewWidget(igui_, this);
+    subw->setUnclosableWidget("Disassembler", pnew, actionAsm_);
     mdiArea_->addSubWindow(subw);
     connect(this, SIGNAL(signalPostInit(AttributeType *)),
             pnew, SLOT(slotPostInit(AttributeType *)));

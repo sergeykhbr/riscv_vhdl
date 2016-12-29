@@ -49,6 +49,9 @@ SOURCES = \
 	UartWidget \
 	RegsViewWidget \
 	RegWidget \
+	AsmViewWidget \
+	AsmArea \
+	AsmControl \
 	MemViewWidget \
 	MemArea \
 	MemControl \
@@ -109,6 +112,9 @@ prebuild:
 	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/PeriphWidgets/GpioWidget.h -o $(GUI_PLUGIN_SRC)/PeriphWidgets/moc_GpioWidget.h
 	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/PeriphWidgets/LedArea.h -o $(GUI_PLUGIN_SRC)/PeriphWidgets/moc_LedArea.h
 	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/PeriphWidgets/DipArea.h -o $(GUI_PLUGIN_SRC)/PeriphWidgets/moc_DipArea.h
+	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/CpuWidgets/AsmViewWidget.h -o $(GUI_PLUGIN_SRC)/CpuWidgets/moc_AsmViewWidget.h
+	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/CpuWidgets/AsmArea.h -o $(GUI_PLUGIN_SRC)/CpuWidgets/moc_AsmArea.h
+	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/CpuWidgets/AsmControl.h -o $(GUI_PLUGIN_SRC)/CpuWidgets/moc_AsmControl.h
 	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/CpuWidgets/MemViewWidget.h -o $(GUI_PLUGIN_SRC)/CpuWidgets/moc_MemViewWidget.h
 	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/CpuWidgets/MemArea.h -o $(GUI_PLUGIN_SRC)/CpuWidgets/moc_MemArea.h
 	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/CpuWidgets/MemControl.h -o $(GUI_PLUGIN_SRC)/CpuWidgets/moc_MemControl.h
