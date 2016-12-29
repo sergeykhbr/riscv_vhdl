@@ -14,6 +14,11 @@
 
 namespace debugger {
 
+typedef int (*disasm_opcode_f)(uint64_t pc,
+                                uint32_t code,
+                                AttributeType *mnemonic,
+                                AttributeType *comment);
+
 class SourceService : public IService,
                       public ISourceCode {
 public:
@@ -31,6 +36,7 @@ public:
                        AttributeType *comment);
 
 private:
+    disasm_opcode_f tblOpcode1_[32];
 };
 
 DECLARE_CLASS(SourceService)

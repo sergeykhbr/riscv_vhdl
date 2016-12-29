@@ -37,6 +37,7 @@ public slots:
     void slotHandleResponse();
 
 private:
+    bool isNeedUpdate();
     void outLines();
     void outLine(int idx, AttributeType &data);
     void data2lines(uint64_t npc, AttributeType &data, AttributeType &lines);
@@ -62,8 +63,9 @@ private:
     AttributeType tmpBuf_;
     AttributeType dataText_;
     int lineHeight_;
-    uint64_t adrRequest_;
-    uint64_t bytesRequest_;
+    uint64_t npc_;
+    uint64_t addrStart_;
+    uint64_t addrSize_;
 };
 
 }  // namespace debugger

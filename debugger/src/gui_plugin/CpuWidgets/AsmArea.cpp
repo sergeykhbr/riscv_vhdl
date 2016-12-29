@@ -35,8 +35,10 @@ AsmArea::AsmArea(IGui *gui, QWidget *parent)
     setContentsMargins(QMargins(0, 0, 0, 0));
     QFontMetrics fm(font);
     setMinimumWidth(50 + fm.width(tr(
-    "   :0011223344556677  11223344 1: addw r0,r1,0xaabbccdd  ; commment")));
+    "   :0011223344556677  11223344 1: addw    r0,r1,0xaabbccdd  ; commment")));
     lineHeight_ = fm.height() + 4;
+    addrStart_ = ~0;
+    addrSize_ = 0;
 
     setColumnCount(COL_Total);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -64,7 +66,7 @@ AsmArea::AsmArea(IGui *gui, QWidget *parent)
     setColumnWidth(0, 10 + fm.width(tr("   :0011223344556677")));
     setColumnWidth(1, 10 + fm.width(tr("00112233")));
     setColumnWidth(2, 10 + fm.width(tr("0")));
-    setColumnWidth(3, 10 + fm.width(tr("addw r1,r2,0x11223344")));
+    setColumnWidth(3, 10 + fm.width(tr("addw    r1,r2,0x112233445566")));
 
     asmLines_[0u].make_list(2);
     asmLines_[0u][COL_addrline].make_uint64(751);
@@ -74,7 +76,7 @@ AsmArea::AsmArea(IGui *gui, QWidget *parent)
     asmLines_[1][COL_addrline].make_uint64(0x0000000000001000);
     asmLines_[1][COL_code].make_uint64(0x94503213);
     asmLines_[1][COL_label].make_string("");
-    asmLines_[1][COL_mnemonic].make_string("add r1,r2,r4");
+    asmLines_[1][COL_mnemonic].make_string("add     r1,r2,r4");
     asmLines_[1][COL_comment].make_string("'; test");
     outLines();
 
@@ -104,19 +106,32 @@ void AsmArea::slotHandleResponse() {
     outLines();
 }
 
+bool AsmArea::isNeedUpdate() {
+    if (npc_ >= addrStart_ && npc_ < (addrStart_ + addrSize_/2)) {
+        return false;
+    }
+    return true;
+}
+
 void AsmArea::handleResponse(AttributeType *req, AttributeType *resp) {
     if ((*req).is_equal(cmdRegs_.to_string())) {
         char tstr[128];
-        adrRequest_ = resp->to_uint64();
-        bytesRequest_ = 4 * rowCount();
+        npc_ = resp->to_uint64();
+        if (!isNeedUpdate()) {
+            emit signalHandleResponse();
+            return;
+        }
+
+        addrStart_ = npc_;
+        addrSize_ = 4 * rowCount();
         RISCV_sprintf(tstr, sizeof(tstr), "read 0x%08" RV_PRI64 "x %d",
-                                            adrRequest_, bytesRequest_);
+                                            addrStart_, addrSize_);
         cmdReadMem_.make_string(tstr);
         igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), 
                                 &cmdReadMem_, true);
 
     } else if (resp->is_data()) {
-        data2lines(adrRequest_, *resp, asmLines_);
+        data2lines(addrStart_, *resp, asmLines_);
         emit signalHandleResponse();
     } 
 }
@@ -124,6 +139,10 @@ void AsmArea::handleResponse(AttributeType *req, AttributeType *resp) {
 void AsmArea::outLines() {
     for (unsigned i = 0; i < asmLines_.size(); i++) {
         outLine(static_cast<int>(i), asmLines_[i]);
+
+        if (npc_ == asmLines_[i][COL_addrline].to_uint64()) {
+            selectRow(i);
+        }
     }
 }
 
@@ -162,8 +181,8 @@ void AsmArea::outLine(int idx, AttributeType &line) {
         
         pw->setText(QString(stmp));
 
-        pw = item(idx, COL_comment);
-        pw->setText(QString(line[COL_comment].to_string()));
+        pw = item(idx, COL_label);
+        pw->setText(QString(line[COL_label].to_string()));
 
         pw = item(idx, COL_mnemonic);
         pw->setText(QString(line[COL_mnemonic].to_string()));
