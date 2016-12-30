@@ -138,6 +138,10 @@ void AsmArea::handleResponse(AttributeType *req, AttributeType *resp) {
 
 void AsmArea::outLines() {
     for (unsigned i = 0; i < asmLines_.size(); i++) {
+        AttributeType &asmLine = asmLines_[i];
+        if (!asmLine.is_list()) {
+            continue;
+        }
         outLine(static_cast<int>(i), asmLines_[i]);
 
         if (npc_ == asmLines_[i][COL_addrline].to_uint64()) {

@@ -45,7 +45,6 @@ protected:
 
 private:
     void getSerialPortList(AttributeType *list);
-    void previousProps(void *hdl);
     int openSerialPort(const char *port, int baud, void *hdl);
     void closeSerialPort(void *hdl);
     int readSerialPort(void *hdl, char *buf, int bufsz);

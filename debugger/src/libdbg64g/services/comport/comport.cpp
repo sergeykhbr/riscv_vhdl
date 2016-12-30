@@ -103,7 +103,8 @@ void ComPortService::busyLoop() {
         // Receiveing...
         if (!isSimulation_ && hPort_) {
             tbuf_cnt = readSerialPort(&hPort_, tbuf, sizeof(tbuf) - tbuf_cnt);
-            if (tbuf_cnt < 0) {
+            if (tbuf_cnt < 0) { 
+                closeSerialPort(&hPort_);
                 portOpened_ = false;
                 continue;
             }
