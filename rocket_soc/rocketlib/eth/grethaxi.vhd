@@ -85,7 +85,12 @@
 --!    -# MAC supports only ARP and EDCL requests on hardware level and it cannot
 --! respond on others without properly installed software. By this reason ping 
 --! won't work without running OS on FPGA target but it maybe usefull to ping 
---! FPGA target so that it can force updating of the ARP table.
+--! FPGA target so that it can force updating of the ARP table or use the
+--! commands:
+--! @verbatim
+--!    ipconfig /release
+--!    ipconfig /renew
+--! @endverbatim
 --!
 --! @section eth_cfglin Configure Linux Host
 --!

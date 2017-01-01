@@ -90,6 +90,7 @@ private:
 
     IGui *igui_;
     event_def *initDone_;
+    bool statusRequested_;
 };
 
 }  // namespace debugger

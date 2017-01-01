@@ -25,6 +25,7 @@ AsmArea::AsmArea(IGui *gui, QWidget *parent)
     tmpBuf_.make_data(1024);
     dataText_.make_string("");
     isrc_ = 0;
+    state_ = CMD_idle;
 
     clear();
     QFont font("Courier");
@@ -98,8 +99,14 @@ void AsmArea::slotPostInit(AttributeType *cfg) {
 }
 
 void AsmArea::slotUpdateByTimer() {
-    igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), 
-                            &cmdRegs_, true);
+    switch (state_) {
+    case CMD_idle:
+        igui_->registerCommand(static_cast<IGuiCmdHandler *>(this),
+                                &cmdRegs_, true);
+        state_ = CMD_npc;
+        break;
+    default:;
+    }
 }
 
 void AsmArea::slotHandleResponse() {
@@ -114,14 +121,22 @@ bool AsmArea::isNeedUpdate() {
 }
 
 void AsmArea::handleResponse(AttributeType *req, AttributeType *resp) {
-    if ((*req).is_equal(cmdRegs_.to_string())) {
-        char tstr[128];
+    char tstr[128];
+    switch (state_) {
+    case CMD_idle:
+        break;
+    case CMD_npc:
+        if (!resp->is_integer()) {
+            state_ = CMD_idle;
+            return;
+        }
         npc_ = resp->to_uint64();
         if (!isNeedUpdate()) {
             emit signalHandleResponse();
+            state_ = CMD_idle;
             return;
         }
-
+        state_ = CMD_memdata;
         addrStart_ = npc_;
         addrSize_ = 4 * rowCount();
         RISCV_sprintf(tstr, sizeof(tstr), "read 0x%08" RV_PRI64 "x %d",
@@ -129,11 +144,17 @@ void AsmArea::handleResponse(AttributeType *req, AttributeType *resp) {
         cmdReadMem_.make_string(tstr);
         igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), 
                                 &cmdReadMem_, true);
-
-    } else if (resp->is_data()) {
+        break;
+    case CMD_memdata:
+        state_ = CMD_idle;
+        if (!resp->is_data()) {
+            return;
+        }
         data2lines(addrStart_, *resp, asmLines_);
         emit signalHandleResponse();
-    } 
+        break;
+    default:;
+    }
 }
 
 void AsmArea::outLines() {

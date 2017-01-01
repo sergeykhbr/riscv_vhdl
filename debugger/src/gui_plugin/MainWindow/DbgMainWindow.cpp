@@ -14,6 +14,7 @@ namespace debugger {
 DbgMainWindow::DbgMainWindow(IGui *igui, event_def *init_done) {
     igui_ = igui;
     initDone_ = init_done;
+    statusRequested_ = false;
 
     setWindowTitle(tr("RISC-V platform debugger"));
     resize(QDesktopWidget().availableGeometry(this).size() * 0.7);
@@ -70,6 +71,7 @@ void DbgMainWindow::closeEvent(QCloseEvent *ev) {
 
 void DbgMainWindow::handleResponse(AttributeType *req, AttributeType *resp) {
     if (req->is_equal(cmdIsRunning_.to_string())) {
+        statusRequested_ = false;
         bool isrun = resp->to_bool();
         if ((actionRun_->isChecked() && !isrun)
             || (!actionRun_->isChecked() && isrun)) {
@@ -102,7 +104,7 @@ void DbgMainWindow::createActions() {
     actionRegs_->setCheckable(true);
     actionRegs_->setChecked(false);
 
-    actionAsm_ = new QAction(QIcon(tr(":/images/mem_96x96.png")),
+    actionAsm_ = new QAction(QIcon(tr(":/images/asm_96x96.png")),
                               tr("&Memory"), this);
     actionAsm_->setToolTip(tr("Disassembler view"));
     actionAsm_->setShortcut(QKeySequence("Ctrl+d"));
@@ -299,8 +301,11 @@ void DbgMainWindow::slotConfigDone() {
 
 
 void DbgMainWindow::slotUpdateByTimer() {
-    igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), 
-                           &cmdIsRunning_, true);
+    if (!statusRequested_) {
+        statusRequested_ = true;
+        igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), 
+                               &cmdIsRunning_, true);
+    }
     emit signalUpdateByTimer();
 }
 

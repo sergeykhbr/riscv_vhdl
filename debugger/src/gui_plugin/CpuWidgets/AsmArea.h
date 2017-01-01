@@ -59,10 +59,17 @@ private:
         COL_Total
     };
 
+    enum ECmdState {
+        CMD_idle,
+        CMD_npc,
+        CMD_memdata
+    };
+
     AttributeType data_;
     AttributeType tmpBuf_;
     AttributeType dataText_;
     int lineHeight_;
+    ECmdState state_;
     uint64_t npc_;
     uint64_t addrStart_;
     uint64_t addrSize_;
