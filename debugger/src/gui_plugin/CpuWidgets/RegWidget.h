@@ -9,32 +9,26 @@
 
 #include "api_core.h"   // MUST BE BEFORE QtWidgets.h or any other Qt header.
 #include "attribute.h"
-#include "igui.h"
-#include "coreservices/isocinfo.h"
 
 #include <QtWidgets/QWidget>
 #include <QtWidgets/QLineEdit>
 
 namespace debugger {
 
-class RegWidget : public QWidget,
-                  public IGuiCmdHandler {
+class RegWidget : public QWidget {
     Q_OBJECT
 public:
-    explicit RegWidget(const char *name, IGui *gui, QWidget *parent);
-
-    /** IGuiCmdHandler */
-    virtual void handleResponse(AttributeType *req, AttributeType *resp);
+    explicit RegWidget(const char *name, QWidget *parent);
 
 signals:
     //void signalChanged(uint64_t idx, uint64_t val);
 private slots:
-    void slotUpdateByTimer();
+    void slotHandleResponse(AttributeType *resp);
 
 private:
+    AttributeType regName_;
     AttributeType cmdRead_;
     QString name_;
-    IGui *igui_;
     QLineEdit *edit_;
     uint64_t value_;
     uint64_t respValue_;

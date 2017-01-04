@@ -29,7 +29,7 @@ public:
     virtual int loadFile(const char *filename);
 
 private:
-    void readElfHeader();
+    int readElfHeader();
     int loadSections();
     void processStringTable(SectionHeaderType *sh);
     void processDebugSymbol(SectionHeaderType *sh);

@@ -47,6 +47,9 @@ public:
     /** IDbgNbResponse */
     virtual void nb_response_debug_port(DebugPortTransactionType *trans);
 
+private:
+    void readLocal(uint64_t off, Axi4TransactionType *trans);
+    void writeLocal(uint64_t off, Axi4TransactionType *trans);
 
 private:
     AttributeType baseAddress_;
@@ -54,6 +57,8 @@ private:
     AttributeType cpu_;
     ICpuRiscV *icpu_;
     uint64_t shifter32_;
+    uint64_t wdata64_;
+    uint64_t soft_reset_;
 
     struct nb_trans_type {
         Axi4TransactionType *p_axi_trans;

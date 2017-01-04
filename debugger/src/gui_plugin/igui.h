@@ -31,6 +31,7 @@ public:
     virtual IFace *getSocInfo() =0;
 
     virtual void registerCommand(IGuiCmdHandler *src, AttributeType *cmd, bool silent) =0;
+    virtual void removeFromQueue(IFace *iface) =0;
     virtual void waitQueueEmpty() =0;
 };
 

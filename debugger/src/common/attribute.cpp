@@ -320,7 +320,6 @@ char *attribute_to_string(const AttributeType *attr) {
         }
         buf->write_string(')');
     } else if (attr->is_iface()) {
-        
         IFace *iface = attr->to_iface();
         if (strcmp(iface->getFaceName(), IFACE_SERVICE) == 0) {
             iserv = static_cast<IService *>(iface);
@@ -334,7 +333,10 @@ char *attribute_to_string(const AttributeType *attr) {
             RISCV_printf(NULL, LOG_ERROR, 
                         "Not implemented interface to dict. method");
         }
-
+    } else if (attr->is_floating()) {
+        char fstr[64];
+        RISCV_sprintf(fstr, sizeof(fstr), "%.4f", attr->to_float());
+        buf->write_string(fstr);
     }
     return buf->getBuffer();
 }

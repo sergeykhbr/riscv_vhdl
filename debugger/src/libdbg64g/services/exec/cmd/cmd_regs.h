@@ -22,7 +22,6 @@ public:
     virtual void exec(AttributeType *args, AttributeType *res);
 
 private:
-    virtual void convert_to_str(AttributeType *lst, AttributeType *out);
 };
 
 }  // namespace debugger

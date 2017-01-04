@@ -15,11 +15,11 @@
 
 namespace debugger {
 
-RegWidget::RegWidget(const char *name, IGui *gui, QWidget *parent) 
+RegWidget::RegWidget(const char *name, QWidget *parent) 
     : QWidget(parent) {
-    igui_ = gui;
     value_ = 0;
 
+    regName_.make_string(name);
     name_ = QString(name);
     while (name_.size() < 3) {
         name_ += tr(" ");
@@ -66,7 +66,14 @@ RegWidget::RegWidget(const char *name, IGui *gui, QWidget *parent)
     setMinimumHeight(edit_->height());
 }
 
-void RegWidget::slotUpdateByTimer() {
+void RegWidget::slotHandleResponse(AttributeType *resp) {
+    if (!resp->is_dict()) {
+        return;
+    }
+    if (!resp->has_key(regName_.to_string())) {
+        return;
+    }
+    respValue_ = (*resp)[regName_.to_string()].to_uint64();
     if (value_ != respValue_) {
         char tstr[64];
         value_ = respValue_;
@@ -74,13 +81,6 @@ void RegWidget::slotUpdateByTimer() {
         QString text(tr(tstr));
         edit_->setText(text);
     }
-
-    igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), 
-                            &cmdRead_, true);
-}
-
-void RegWidget::handleResponse(AttributeType *req, AttributeType *resp) {
-    respValue_ = resp->to_uint64();
 }
 
 }  // namespace debugger

@@ -20,6 +20,7 @@
 #include "cmd/cmd_exit.h"
 #include "cmd/cmd_memdump.h"
 #include "cmd/cmd_br.h"
+#include "cmd/cmd_cpi.h"
 
 namespace debugger {
 
@@ -58,20 +59,21 @@ void CmdExecutor::postinitService() {
             (RISCV_get_service_iface(socInfo_.to_string(), 
                                     IFACE_SOC_INFO));
 
-    cmds_.make_list(13);
+    cmds_.make_list(14);
     cmds_[0u].make_iface(new CmdBr(itap_, info_));
-    cmds_[1].make_iface(new CmdCsr(itap_, info_));
-    cmds_[2].make_iface(new CmdExit(itap_, info_));
-    cmds_[3].make_iface(new CmdHalt(itap_, info_));
-    cmds_[4].make_iface(new CmdIsRunning(itap_, info_));
-    cmds_[5].make_iface(new CmdLoadElf(itap_, info_));
-    cmds_[6].make_iface(new CmdLog(itap_, info_));
-    cmds_[7].make_iface(new CmdMemDump(itap_, info_));
-    cmds_[8].make_iface(new CmdRead(itap_, info_));
-    cmds_[9].make_iface(new CmdRun(itap_, info_));
-    cmds_[10].make_iface(new CmdReg(itap_, info_));
-    cmds_[11].make_iface(new CmdRegs(itap_, info_));
-    cmds_[12].make_iface(new CmdWrite(itap_, info_));
+    cmds_[1].make_iface(new CmdCpi(itap_, info_));
+    cmds_[2].make_iface(new CmdCsr(itap_, info_));
+    cmds_[3].make_iface(new CmdExit(itap_, info_));
+    cmds_[4].make_iface(new CmdHalt(itap_, info_));
+    cmds_[5].make_iface(new CmdIsRunning(itap_, info_));
+    cmds_[6].make_iface(new CmdLoadElf(itap_, info_));
+    cmds_[7].make_iface(new CmdLog(itap_, info_));
+    cmds_[8].make_iface(new CmdMemDump(itap_, info_));
+    cmds_[9].make_iface(new CmdRead(itap_, info_));
+    cmds_[10].make_iface(new CmdRun(itap_, info_));
+    cmds_[11].make_iface(new CmdReg(itap_, info_));
+    cmds_[12].make_iface(new CmdRegs(itap_, info_));
+    cmds_[13].make_iface(new CmdWrite(itap_, info_));
 }
 
 void CmdExecutor::exec(const char *line, AttributeType *res, bool silent) {

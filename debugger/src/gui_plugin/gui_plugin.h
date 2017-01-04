@@ -34,6 +34,7 @@ public:
     /** IGui interface */
     virtual IFace *getSocInfo();
     virtual void registerCommand(IGuiCmdHandler *src, AttributeType *cmd, bool silent);
+    virtual void removeFromQueue(IFace *iface);
     virtual void waitQueueEmpty();
 
     /** IThread interface */

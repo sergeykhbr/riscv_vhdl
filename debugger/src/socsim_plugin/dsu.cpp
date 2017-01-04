@@ -20,6 +20,7 @@ DSU::DSU(const char *name)  : IService(name) {
     baseAddress_.make_uint64(0);
     length_.make_uint64(0);
     cpu_.make_string("");
+    soft_reset_ = 0x1;  // Active LOW
 }
 
 DSU::~DSU() {
@@ -41,13 +42,19 @@ void DSU::b_transport(Axi4TransactionType *trans) {
         return;
     }
     uint64_t region = (off64 >> 15) & 0x3;
-    //uint64_t addr = (off64 >> 3) & 0xFFF;
 
     if (region < 3) {
         RISCV_error("b_transport() to debug port NOT SUPPORTED", NULL);
         trans->response = MemResp_Error;
         return;
     }
+
+    if (trans->action == MemAction_Read) {
+        readLocal(off64 & 0x7fff, trans);
+    } else {
+        writeLocal(off64 & 0x7fff, trans);
+    }
+
     trans->response = MemResp_Valid;
     // @todo Memory mapped registers not related to debug port
 }
@@ -82,9 +89,8 @@ void DSU::nb_transport(Axi4TransactionType *trans, IAxi4NbResponse *cb) {
     nb_trans_.dbg_trans.addr = (off64 >> 3) & 0xFFF;
     nb_trans_.dbg_trans.region = (off64 >> 15) & 0x3;
     if (nb_trans_.dbg_trans.region == 3) {
-        // @todo Memory mapped registers not related to debug port
-        trans->response = MemResp_Valid;
-        trans->rpayload.b64[0] = 0;
+        
+        b_transport(trans);
         cb->nb_response(trans);
     } else if (skip) {
         trans->response = MemResp_Valid;
@@ -105,6 +111,44 @@ void DSU::nb_response_debug_port(DebugPortTransactionType *trans) {
     }
     nb_trans_.iaxi_cb->nb_response(nb_trans_.p_axi_trans);
 }
+
+void DSU::readLocal(uint64_t off, Axi4TransactionType *trans) {
+    switch (off >> 3) {
+    case 0:
+        trans->rpayload.b64[0] = soft_reset_;
+        break;
+    default:
+        trans->rpayload.b64[0] = 0;
+    }
+    if (trans->xsize == 4 && (off & 0x4) == 1) {
+        trans->rpayload.b64[0] >>= 32;
+    }
+}
+
+void DSU::writeLocal(uint64_t off, Axi4TransactionType *trans) {
+    if (trans->xsize == 4) {
+        if ((off & 0x4) == 0) {
+            wdata64_ = trans->wpayload.b32[0];
+            return;
+        } else {
+            wdata64_ |= static_cast<uint64_t>(trans->wpayload.b32[0]) << 32;
+        }
+    } else {
+        wdata64_ = trans->wpayload.b64[0];
+    }
+    switch (off >> 3) {
+    case 0: // soft reset
+        if (wdata64_ & 0x1) {
+            icpu_->raiseSignal(CPU_SIGNAL_RESET);
+        } else {
+            icpu_->lowerSignal(CPU_SIGNAL_RESET);
+        }
+        soft_reset_ = wdata64_;
+        break;
+    default:;
+    }
+}
+
 
 }  // namespace debugger
 

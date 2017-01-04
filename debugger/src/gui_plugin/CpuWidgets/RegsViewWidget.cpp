@@ -40,6 +40,8 @@ RegsViewWidget::RegsViewWidget(IGui *igui, QWidget *parent)
     gridLayout->setVerticalSpacing(0);
     gridLayout->setContentsMargins(4, 4, 4, 4);
     setLayout(gridLayout);
+    cmdRegs_.make_string("regs");
+    waitingResp_ = false;
 
     int n = 0;
     while (strcmp(REG_NAMES_LAYOUT[n], "break")) {
@@ -52,23 +54,37 @@ RegsViewWidget::RegsViewWidget(IGui *igui, QWidget *parent)
     }
 }
 
+RegsViewWidget::~RegsViewWidget() {
+    igui_->removeFromQueue(static_cast<IGuiCmdHandler *>(this));
+}
+
+void RegsViewWidget::handleResponse(AttributeType *req, AttributeType *resp) {
+    resp_ = *resp;
+    emit signalHandleResponse(&resp_);
+    waitingResp_ = false;
+}
 
 void RegsViewWidget::slotUpdateByTimer() {
-    if (isVisible()) {
-        emit signalUpdateByTimer();
-        update();
+    if (!isVisible()) {
+        return;
     }
+    if (waitingResp_) {
+        return;
+    }
+    igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), 
+                            &cmdRegs_, true);
+    waitingResp_ = true;
 }
 
 void RegsViewWidget::addRegWidget(int idx, const char *name) {
     int line = idx / 3;
     int col = idx - 3 * line;
 
-    QWidget *pnew = new RegWidget(name, igui_, this);
+    QWidget *pnew = new RegWidget(name, this);
     gridLayout->addWidget(pnew, line + 1, col);
 
-    connect(this, SIGNAL(signalUpdateByTimer()),
-            pnew, SLOT(slotUpdateByTimer()));
+    connect(this, SIGNAL(signalHandleResponse(AttributeType *)),
+            pnew, SLOT(slotHandleResponse(AttributeType *)));
 }
 
 

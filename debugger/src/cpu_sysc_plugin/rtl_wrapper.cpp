@@ -227,13 +227,19 @@ void RtlWrapper::setClockHz(double hz) {
 }
     
 void RtlWrapper::registerStepCallback(IClockListener *cb, uint64_t t) {
-    step_queue_.put(t, cb);
+    if (!w_nrst) {
+        if (i_time.read() == t) {
+            cb->stepCallback(t);
+        }
+    } else {
+        step_queue_.put(t, cb);
+    }
 }
 
 void RtlWrapper::raiseSignal(int idx) {
     switch (idx) {
     case CPU_SIGNAL_RESET:
-        w_nrst = 1;
+        w_nrst = 0;
         break;
     case CPU_SIGNAL_EXT_IRQ:
         w_interrupt = true;
@@ -245,7 +251,7 @@ void RtlWrapper::raiseSignal(int idx) {
 void RtlWrapper::lowerSignal(int idx) {
     switch (idx) {
     case CPU_SIGNAL_RESET:
-        w_nrst = 0;
+        w_nrst = 1;
         break;
     case CPU_SIGNAL_EXT_IRQ:
         w_interrupt = false;

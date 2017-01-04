@@ -99,7 +99,7 @@ int main(int argc, char* argv[]) {
         IService *iserv = static_cast<IService *>(cpu_list[i].to_iface());
         ICpuRiscV *icpu = static_cast<ICpuRiscV *>(
                     iserv->getInterface(IFACE_CPU_RISCV));
-        icpu->raiseSignal(CPU_SIGNAL_RESET);  // Active low. Unreset CPU model.
+        icpu->lowerSignal(CPU_SIGNAL_RESET);  // Active HIGH. Unreset CPU model.
     }
 
     if (itst != NULL) {

@@ -443,7 +443,7 @@ void CpuRiscV_Functional::raiseSignal(int idx) {
 
     switch (idx) {
     case CPU_SIGNAL_RESET:
-        pContext->reset = false; // Active LOW
+        pContext->reset = true; // Active HIGH
         break;
     case CPU_SIGNAL_EXT_IRQ:
         if (pContext->reset) {
@@ -472,7 +472,7 @@ void CpuRiscV_Functional::lowerSignal(int idx) {
     CpuContextType *pContext = getpContext();
     switch (idx) {
     case CPU_SIGNAL_RESET:
-        pContext->reset = true; // Active LOW
+        pContext->reset = false; // Active HIGH
         break;
     case CPU_SIGNAL_EXT_IRQ:
         pContext->interrupt = 0;

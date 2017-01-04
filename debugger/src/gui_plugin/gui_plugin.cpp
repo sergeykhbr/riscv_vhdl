@@ -159,6 +159,16 @@ void GuiPlugin::registerCommand(IGuiCmdHandler *src,
     RISCV_event_set(&eventCommandAvailable_);
 }
 
+void GuiPlugin::removeFromQueue(IFace *iface) {
+    RISCV_mutex_lock(&mutexCommand_);
+    for (unsigned i = 0; i < CMD_QUEUE_SIZE; i++) {
+        if (iface == cmdQueue_[i].src) {
+            cmdQueue_[i].src = NULL;
+        }
+    }
+    RISCV_mutex_unlock(&mutexCommand_);
+}
+
 void GuiPlugin::waitQueueEmpty() {
     if (!isEnabled()) {
         return;

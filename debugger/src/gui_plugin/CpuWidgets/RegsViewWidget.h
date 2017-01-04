@@ -18,13 +18,18 @@
 
 namespace debugger {
 
-class RegsViewWidget : public UnclosableWidget {
+class RegsViewWidget : public UnclosableWidget,
+                       public IGuiCmdHandler {
     Q_OBJECT
 public:
     RegsViewWidget(IGui *igui, QWidget *parent = 0);
+    virtual ~RegsViewWidget();
+
+    /** IGuiCmdHandler */
+    virtual void handleResponse(AttributeType *req, AttributeType *resp);
 
 signals:
-    void signalUpdateByTimer();
+    void signalHandleResponse(AttributeType *resp);
 
 private slots:
     void slotUpdateByTimer();
@@ -33,10 +38,13 @@ private:
     void addRegWidget(int idx, const char *name);
 
 private:
+    AttributeType cmdRegs_;
     AttributeType listRegs_;
+    AttributeType resp_;
     QGridLayout *gridLayout;
     
     IGui *igui_;
+    bool waitingResp_;
 };
 
 }  // namespace debugger

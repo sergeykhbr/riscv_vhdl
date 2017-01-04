@@ -59,7 +59,10 @@ int ElfLoaderService::loadFile(const char *filename) {
     image_ = new uint8_t[sz];
     fread(image_, 1, sz, fp);
 
-    readElfHeader();
+    if (readElfHeader() != 0) {
+        fclose(fp);
+        return 0;
+    }
 
     if (!header_->e_shoff) {
         fclose(fp);
@@ -89,14 +92,15 @@ int ElfLoaderService::loadFile(const char *filename) {
     return 0;
 }
 
-void ElfLoaderService::readElfHeader() {
+int ElfLoaderService::readElfHeader() {
     header_ = reinterpret_cast<ElfHeaderType *>(image_);
     for (int i = 0; i < 4; i++) {
         if (header_->e_ident[i] != MAGIC_BYTES[i]) {
             RISCV_error("File format is not ELF", NULL);
-            return;
+            return -1;
         }
     }
+    return 0;
 }
 
 int ElfLoaderService::loadSections() {
