@@ -32,156 +32,181 @@ entity eth_axi_mst is
 end entity;
 
 architecture rtl of eth_axi_mst is
-  constant STATE_IDLE : integer := 0;
-  constant STATE_W    : integer := STATE_IDLE+1;
-  constant STATE_R    : integer := STATE_W+1;
-  constant STATE_B    : integer := STATE_R+1;
+  constant STATE_IDLE   : integer := 0;
+  constant STATE_W      : integer := STATE_IDLE+1;
+  constant STATE_R_WAIT_RESP   : integer := STATE_W+1;
+  constant STATE_R_WAIT_NEXT : integer := STATE_R_WAIT_RESP+1;
+  constant STATE_B      : integer := STATE_R_WAIT_NEXT+1;
+  
+  constant Rx : integer := 0;
+  constant Tx : integer := 1;
+
+  type eth_in_type is record
+    req     : std_ulogic;
+    write   : std_ulogic;
+    addr    : std_logic_vector(31 downto 0);
+    data    : std_logic_vector(31 downto 0);
+    burst_bytes : std_logic_vector(10 downto 0);
+  end record;
+
+  type eth_out_type is record
+    grant    : std_ulogic;
+    data     : std_logic_vector(31 downto 0);
+    ready    : std_ulogic;
+    error    : std_ulogic;
+    retry    : std_ulogic;
+  end record;
+
+  type eth_out_vector is array (0 to 1) of eth_out_type;
 
   type reg_type is record
     state    : integer range 0 to STATE_B;
-    addr     : std_logic_vector(31 downto 0);
     len      : integer;
-    rx_tx    : std_logic;
+    x        : integer range 0 to 1;
+    waddr2   : std_logic;
   end record;
 
   signal r, rin : reg_type;
 begin
   comb : process(rst, r, tmsti, rmsti,  aximi) is
   variable v       : reg_type;
-  variable tretry  : std_ulogic;
-  variable rretry  : std_ulogic;
-  variable rready  : std_ulogic;
-  variable tready  : std_ulogic;
-  variable rerror  : std_ulogic;
-  variable terror  : std_ulogic;
-  variable tgrant  : std_ulogic;
-  variable rgrant  : std_ulogic;
-  variable vmsto   : nasti_master_out_type;
+  variable xmsti : eth_in_type;
+  variable xmsto : eth_out_vector;
+  variable vaximo   : nasti_master_out_type;
   variable rdata_lsb : std_logic_vector(31 downto 0);
   variable wdata_lsb : std_logic_vector(31 downto 0);
   begin
     v := r;
-    vmsto := nasti_master_out_none;
-    rready := '0';
-    tready := '0';
-    tretry := '0';
-    rretry := '0';
-    rerror := '0';
-    terror := '0';
-    tgrant := '0';
-    rgrant := '0';
 
-    vmsto.ar_user       := '0';
-    vmsto.ar_id         := conv_std_logic_vector(0, CFG_ROCKET_ID_BITS);
-    vmsto.ar_bits.size  := "010"; -- 4 bytes
-    vmsto.ar_bits.burst := NASTI_BURST_INCR;
-    vmsto.aw_user       := '0';
-    vmsto.aw_id         := conv_std_logic_vector(0, CFG_ROCKET_ID_BITS);
-    vmsto.aw_bits.size  := "010"; -- 4 bytes
-    vmsto.aw_bits.burst := NASTI_BURST_INCR;
+    
+    vaximo := nasti_master_out_none;
+    vaximo.ar_user       := '0';
+    vaximo.ar_id         := conv_std_logic_vector(0, CFG_ROCKET_ID_BITS);
+    vaximo.ar_bits.size  := "010"; -- 4 bytes
+    vaximo.ar_bits.burst := NASTI_BURST_INCR;
+    vaximo.aw_user       := '0';
+    vaximo.aw_id         := conv_std_logic_vector(0, CFG_ROCKET_ID_BITS);
+    vaximo.aw_bits.size  := "010"; -- 4 bytes
+    vaximo.aw_bits.burst := NASTI_BURST_INCR;
+    
+    xmsto := (others => ('0', rdata_lsb, '0', '0', '0'));
+
+    if r.x = Rx then
+      xmsti.req := rmsti.req;
+      xmsti.write := rmsti.write;
+      xmsti.addr := rmsti.addr;
+      xmsti.data := rmsti.data;
+      xmsti.burst_bytes := rmsti.burst_bytes;
+    else
+      xmsti.req := tmsti.req;
+      xmsti.write := tmsti.write;
+      xmsti.addr := tmsti.addr;
+      xmsti.data := tmsti.data;
+      xmsti.burst_bytes := tmsti.burst_bytes;
+    end if;
+
+    -- Pre-fix for SPARC byte order.
+    -- It is better to fix in MAC itselfm but for now it will be here.
+    wdata_lsb := xmsti.data(7 downto 0) & xmsti.data(15 downto 8)
+               & xmsti.data(23 downto 16) & xmsti.data(31 downto 24);
+    rdata_lsb := aximi.r_data(7 downto 0) & aximi.r_data(15 downto 8)
+               & aximi.r_data(23 downto 16) & aximi.r_data(31 downto 24);
 
     case r.state is
     when STATE_IDLE =>
         if rmsti.req = '1' then
-            v.rx_tx := '0';
-            v.addr := rmsti.addr;
-            vmsto.ar_valid      := not rmsti.write;
-            vmsto.aw_valid      := rmsti.write;
+            v.x := Rx;
+            vaximo.ar_valid      := not rmsti.write;
+            vaximo.aw_valid      := rmsti.write;
             if rmsti.write = '1' then
-                vmsto.aw_bits.addr  := rmsti.addr(31 downto 3) & "000";
+                vaximo.aw_bits.addr  := rmsti.addr(31 downto 3) & "000";
+                v.waddr2 := rmsti.addr(2);
                 v.len  := conv_integer(rmsti.burst_bytes(10 downto 2)) - 1;
-                vmsto.aw_bits.len := conv_std_logic_vector(v.len, 8);
+                vaximo.aw_bits.len := conv_std_logic_vector(v.len, 8);
                 if aximi.aw_ready = '1' then
-                    rgrant := '1';
+                    xmsto(Rx).grant := '1';
                     v.state := STATE_W;
                 end if;
             else
-                vmsto.ar_bits.addr  := rmsti.addr;
+                vaximo.ar_bits.addr  := rmsti.addr;
                 v.len  := conv_integer(rmsti.burst_bytes(10 downto 2)) - 1;
-                vmsto.ar_bits.len := conv_std_logic_vector(v.len, 8);
+                vaximo.ar_bits.len := conv_std_logic_vector(v.len, 8);
                 if aximi.ar_ready = '1' then
-                    rgrant := '1';
-                    v.state := STATE_R;
+                    xmsto(Rx).grant := '1';
+                    v.state := STATE_R_WAIT_RESP;
                 end if;
             end if;
         elsif tmsti.req = '1' then
-            v.rx_tx := '1';
-            v.addr := tmsti.addr;
-            vmsto.ar_valid      := not tmsti.write;
-            vmsto.aw_valid      := tmsti.write;
+            v.x := Tx;
+            vaximo.ar_valid      := not tmsti.write;
+            vaximo.aw_valid      := tmsti.write;
             if tmsti.write = '1' then
-                vmsto.aw_bits.addr  := tmsti.addr(31 downto 3) & "000";
+                vaximo.aw_bits.addr  := tmsti.addr(31 downto 3) & "000";
+                v.waddr2 := tmsti.addr(2);
                 v.len  := conv_integer(tmsti.burst_bytes(10 downto 2)) - 1;
-                vmsto.aw_bits.len := conv_std_logic_vector(v.len, 8);
+                vaximo.aw_bits.len := conv_std_logic_vector(v.len, 8);
                 if aximi.aw_ready = '1' then
-                    tgrant := '1';
+                    xmsto(Tx).grant := '1';
                     v.state := STATE_W;
                 end if;
             else
-                vmsto.ar_bits.addr  := tmsti.addr;
+                vaximo.ar_bits.addr  := tmsti.addr;
                 v.len  := conv_integer(tmsti.burst_bytes(10 downto 2)) - 1;
-                vmsto.ar_bits.len := conv_std_logic_vector(v.len, 8);
+                vaximo.ar_bits.len := conv_std_logic_vector(v.len, 8);
                 if aximi.ar_ready = '1' then
-                    tgrant := '1';
-                    v.state := STATE_R;
+                    xmsto(Tx).grant := '1';
+                    v.state := STATE_R_WAIT_RESP;
+                end if;
+            end if;
+        end if;
+        
+      
+    when STATE_R_WAIT_RESP =>
+        vaximo.r_ready := '1';
+        if aximi.r_valid = '1' then
+            xmsto(r.x).ready := '1';
+            if aximi.r_last = '1' then
+                v.state := STATE_IDLE;
+            else
+                if xmsti.req = '1' then
+                    xmsto(r.x).grant := '1';
+                else
+                    v.state := STATE_R_WAIT_NEXT;
                 end if;
             end if;
         end if;
 
+    when STATE_R_WAIT_NEXT =>
+        if xmsti.req = '1' then
+            xmsto(r.x).grant := '1';
+            v.state := STATE_R_WAIT_RESP;
+        end if;
+
     when STATE_W =>
-        vmsto.w_valid := '1';
-        case r.addr(2) is
-        when '0' => vmsto.w_strb := X"0f";
-        when '1' => vmsto.w_strb := X"f0";
+        vaximo.w_valid := '1';
+        case r.waddr2 is
+        when '0' => vaximo.w_strb := X"0f";
+        when '1' => vaximo.w_strb := X"f0";
         when others =>
         end case;
-        if r.rx_tx = '0' then
-            wdata_lsb := rmsti.data(7 downto 0) & rmsti.data(15 downto 8)
-                       & rmsti.data(23 downto 16) & rmsti.data(31 downto 24);
-        else
-            wdata_lsb := tmsti.data(7 downto 0) & tmsti.data(15 downto 8)
-                       & tmsti.data(23 downto 16) & tmsti.data(31 downto 24);
-        end if;
-        vmsto.w_data := wdata_lsb & wdata_lsb;
+        vaximo.w_data := wdata_lsb & wdata_lsb;
         
         if aximi.w_ready = '1' then
-            tready := r.rx_tx;
-            rready := not r.rx_tx;
+            xmsto(r.x).ready := '1';
             if r.len = 0 then
                 v.state := STATE_B;
-                vmsto.w_last := '1';
+                vaximo.w_last := '1';
             else 
-                tgrant := r.rx_tx;
-                rgrant := not r.rx_tx;
+                xmsto(r.x).grant := '1';
                 v.len := r.len - 1;
-                -- Incremented on slave side
-                --v.addr = r.addr + 4;
-            end if;
-        end if;
-
-    when STATE_R =>
-        vmsto.r_ready := '1';
-        if aximi.r_valid = '1' then
-            if aximi.r_resp = NASTI_RESP_OKAY then
-                tready := r.rx_tx;
-                rready := not r.rx_tx;
-            else
-                terror := r.rx_tx;
-                rerror := not r.rx_tx;
-            end if;
-
-            if r.len = 0 then
-                v.state := state_idle;
-            else
-                tgrant := r.rx_tx;
-                rgrant := not r.rx_tx;
-                v.len := r.len - 1;
+                -- Address will be incremented on slave side
+                --v.waddr2 := not r.waddr2;
             end if;
         end if;
 
     when STATE_B =>
-        vmsto.w_last := '0';
-        vmsto.b_ready := '1';
+        vaximo.w_last := '0';
+        vaximo.b_ready := '1';
         if aximi.b_valid = '1' then
             v.state := STATE_IDLE;
         end if;
@@ -190,30 +215,26 @@ begin
 
     if rst = '0' then
       v.state := STATE_IDLE;
-      v.addr := (others => '0');
+      v.waddr2 := '0';
       v.len := 0;
-      v.rx_tx := '0';
+      v.x := Rx;
     end if;
 
-    -- Pre-fix for SPARC byte order.
-    -- It is better to fix in MAC itselfm but for now it will be here.
-    rdata_lsb := aximi.r_data(7 downto 0) & aximi.r_data(15 downto 8)
-               & aximi.r_data(23 downto 16) & aximi.r_data(31 downto 24);
     
     rin <= v;
-    aximo <= vmsto;
+    aximo <= vaximo;
 
-    tmsto.error    <= terror;
-    tmsto.retry    <= tretry;
-    tmsto.ready    <= tready;
-    tmsto.grant    <= tgrant;
-    tmsto.data     <= rdata_lsb;
+    tmsto.grant   <= xmsto(Tx).grant;
+    tmsto.data    <= xmsto(Tx).data;
+    tmsto.ready   <= xmsto(Tx).ready;
+    tmsto.error   <= xmsto(Tx).error;
+    tmsto.retry   <= xmsto(Tx).retry;
 
-    rmsto.error    <= rerror;
-    rmsto.retry    <= rretry;
-    rmsto.ready    <= rready;
-    rmsto.grant    <= rgrant;
-    rmsto.data     <= rdata_lsb;
+    rmsto.grant   <= xmsto(Rx).grant;
+    rmsto.data    <= xmsto(Rx).data;
+    rmsto.ready   <= xmsto(Rx).ready;
+    rmsto.error   <= xmsto(Rx).error;
+    rmsto.retry   <= xmsto(Rx).retry;
   end process;
 
   regs : process(clk)

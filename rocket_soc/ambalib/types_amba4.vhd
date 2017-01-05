@@ -735,7 +735,7 @@ package body types_amba4 is
     -- Reading state machine:
     case i_bank.rstate is
     when rwait =>
-        if i.ar_valid = '1' then
+        if i.ar_valid = '1' and i_bank.wstate /= wtrans then
             o_bank.rstate := rtrans;
 
             for n in 0 to CFG_WORDS_ON_BUS-1 loop

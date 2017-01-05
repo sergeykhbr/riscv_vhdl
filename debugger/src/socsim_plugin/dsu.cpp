@@ -20,7 +20,7 @@ DSU::DSU(const char *name)  : IService(name) {
     baseAddress_.make_uint64(0);
     length_.make_uint64(0);
     cpu_.make_string("");
-    soft_reset_ = 0x1;  // Active LOW
+    soft_reset_ = 0x0;  // Active LOW
 }
 
 DSU::~DSU() {
