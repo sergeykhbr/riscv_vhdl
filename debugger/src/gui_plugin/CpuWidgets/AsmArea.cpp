@@ -40,6 +40,7 @@ AsmArea::AsmArea(IGui *gui, QWidget *parent)
     lineHeight_ = fm.height() + 4;
     addrStart_ = ~0;
     addrSize_ = 0;
+    breakpointUpdate_ = false;
 
     setColumnCount(COL_Total);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -56,6 +57,7 @@ AsmArea::AsmArea(IGui *gui, QWidget *parent)
     for (int i = 0; i < rowCount(); i++) {
         for (int n = 0; n < COL_Total; n++) {
             setItem(i, n, new QTableWidgetItem());
+            item(i, n)->setFlags(item(i, n)->flags() & ~Qt::ItemIsEditable);
         }
         setRowHeight(i, lineHeight_);
         item(i, 0)->setBackgroundColor(Qt::lightGray);
@@ -86,6 +88,8 @@ AsmArea::AsmArea(IGui *gui, QWidget *parent)
 
     connect(this, SIGNAL(signalHandleResponse()),
             this, SLOT(slotHandleResponse()));
+    connect(this, SIGNAL(cellDoubleClicked(int, int)),
+            this, SLOT(slotCellDoubleClicked(int, int)));
 }
 
 void AsmArea::slotPostInit(AttributeType *cfg) {
@@ -113,15 +117,35 @@ void AsmArea::slotHandleResponse() {
     outLines();
 }
 
+void AsmArea::slotCellDoubleClicked(int row, int column) {
+    if (column != 0) {
+        return;
+    }
+    char tstr[128];
+    uint64_t addr = asmLines_[row][COL_addrline].to_uint64();
+    RISCV_sprintf(tstr, sizeof(tstr), "br add 0x%" RV_PRI64 "x", addr);
+    AttributeType brAdd(tstr);
+    igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), 
+                            &brAdd, true);
+}
+
 bool AsmArea::isNeedUpdate() {
-    if (npc_ >= addrStart_ && npc_ < (addrStart_ + addrSize_/2)) {
+    if (npc_ >= addrStart_ && npc_ < (addrStart_ + addrSize_/2)
+        && !breakpointUpdate_) {
         return false;
     }
+    breakpointUpdate_ = false;
     return true;
 }
 
 void AsmArea::handleResponse(AttributeType *req, AttributeType *resp) {
     char tstr[128];
+    if (strstr(req->to_string(), "br ")) {
+        // Do not handle breakpoint responses
+        breakpointUpdate_ = true;
+        return;
+    }
+
     switch (state_) {
     case CMD_idle:
         break;

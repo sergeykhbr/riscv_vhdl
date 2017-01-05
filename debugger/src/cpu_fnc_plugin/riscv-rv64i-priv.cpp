@@ -11,6 +11,9 @@
 
 namespace debugger {
 
+void generateException(uint64_t code, CpuContextType *data);
+void generateInterrupt(uint64_t code, CpuContextType *data);
+
 uint64_t readCSR(uint32_t idx, CpuContextType *data) {
     uint64_t ret = data->csr[idx];
     switch (idx) {
@@ -228,7 +231,7 @@ public:
 };
 
 /**
- * @brief MRET return from super-user mode
+ * @brief SRET return from super-user mode
  */
 class SRET : public IsaProcessor {
 public:
@@ -251,7 +254,7 @@ public:
 };
 
 /**
- * @brief MRET return from hypervisor mode
+ * @brief HRET return from hypervisor mode
  */
 class HRET : public IsaProcessor {
 public:
@@ -294,12 +297,7 @@ public:
 
         // Emulating interrupt strob (not pulse from external controller)
         if (data->interrupt_pending) {
-            csr_mcause_type cause;
-            cause.value     = 0;
-            cause.bits.irq  = 1;
-            cause.bits.code = 11;   // 11 = Machine external interrupt
-            data->csr[CSR_mcause] = cause.value;
-            data->interrupt = 1;
+            generateInterrupt(INTERRUPT_MExternal, data);
             data->interrupt_pending = 0;
         }
             
@@ -336,6 +334,48 @@ public:
     }
 };
 
+/**
+ * @brief EBREAK (breakpoint instruction)
+ *
+ * The EBREAK instruction is used by debuggers to cause control to be
+ * transferred back to a debug-ging environment.
+ */
+class EBREAK : public IsaProcessor {
+public:
+    EBREAK() : IsaProcessor("EBREAK", "00000000000100000000000001110011") {}
+
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
+        data->npc = data->pc + 4;
+        generateException(EXCEPTION_Breakpoint, data);
+    }
+};
+
+/**
+ * @brief ECALL (environment call instruction)
+ *
+ * The ECALL instruction is used to make a request to the supporting execution
+ * environment, which isusually an operating system. The ABI for the system
+ * will define how parameters for the environment request are passed, but usually
+ * these will be in defined locations in the integer register file.
+ */
+class ECALL : public IsaProcessor {
+public:
+    ECALL() : IsaProcessor("ECALL", "00000000000000000000000001110011") {}
+
+    virtual void exec(uint32_t *payload, CpuContextType *data) {
+        data->npc = data->pc + 4;
+        switch (data->cur_prv_level) {
+        case PRV_M:
+            generateException(EXCEPTION_CallFromMmode, data);
+            break;
+        case PRV_U:
+            generateException(EXCEPTION_CallFromUmode, data);
+            break;
+        default:;
+        }
+    }
+};
+
 
 void addIsaPrivilegedRV64I(CpuContextType *data, AttributeType *out) {
     addSupportedInstruction(new CSRRC, out);
@@ -350,19 +390,14 @@ void addIsaPrivilegedRV64I(CpuContextType *data, AttributeType *out) {
     addSupportedInstruction(new MRET, out);
     addSupportedInstruction(new FENCE, out);
     addSupportedInstruction(new FENCE_I, out);
+    addSupportedInstruction(new ECALL, out);
+    addSupportedInstruction(new EBREAK, out);
     // TODO:
     /*
-  def URET               = BitPat("b00000000001000000000000001110011")
-  def SRET               = BitPat("b00010000001000000000000001110011")
-  def HRET               = BitPat("b00100000001000000000000001110011")
-  def MRET               = BitPat("b00110000001000000000000001110011")
   def DRET               = BitPat("b01111011001000000000000001110011")
   def SFENCE_VM          = BitPat("b000100000100?????000000001110011")
   def WFI                = BitPat("b00010000010100000000000001110011")  // wait for interrupt
 
-    addInstr("SCALL",              "00000000000000000000000001110011", NULL, out);
-    addInstr("SBREAK",             "00000000000100000000000001110011", NULL, out);
-    addInstr("SRET",               "10000000000000000000000001110011", NULL, out);
     def RDCYCLE            = BitPat("b11000000000000000010?????1110011")
     def RDTIME             = BitPat("b11000000000100000010?????1110011")
     def RDINSTRET          = BitPat("b11000000001000000010?????1110011")

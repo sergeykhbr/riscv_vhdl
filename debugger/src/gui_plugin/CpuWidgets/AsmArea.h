@@ -35,6 +35,7 @@ public slots:
     void slotPostInit(AttributeType *cfg);
     void slotUpdateByTimer();
     void slotHandleResponse();
+    void slotCellDoubleClicked(int row, int column);
 
 private:
     bool isNeedUpdate();
@@ -70,6 +71,7 @@ private:
     AttributeType dataText_;
     int lineHeight_;
     ECmdState state_;
+    bool breakpointUpdate_;
     uint64_t npc_;
     uint64_t addrStart_;
     uint64_t addrSize_;

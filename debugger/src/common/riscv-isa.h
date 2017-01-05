@@ -316,16 +316,38 @@ enum EExeption {
 };
 
 enum EInterrupt {
-    // External interrupt from PLIC
-    INTERRUPT_PLIC = 11
+    // User software interrupt
+    INTERRUPT_USoftware      = 0,
+    // Superuser software interrupt
+    INTERRUPT_SSoftware      = 1,
+    // Hypervisor software itnerrupt
+    INTERRUPT_HSoftware      = 2,
+    // Machine software interrupt
+    INTERRUPT_MSoftware      = 3,
+    // User timer interrupt
+    INTERRUPT_UTimer         = 4,
+    // Superuser timer interrupt
+    INTERRUPT_STimer         = 5,
+    // Hypervisor timer interrupt
+    INTERRUPT_HTimer         = 6,
+    // Machine timer interrupt
+    INTERRUPT_MTimer         = 7,
+    // User external interrupt
+    INTERRUPT_UExternal      = 8,
+    // Superuser external interrupt
+    INTERRUPT_SExternal      = 9,
+    // Hypervisor external interrupt
+    INTERRUPT_HExternal      = 10,
+    // Machine external interrupt (from PLIC)
+    INTERRUPT_MExternal      = 11,
 };
 
 /** Interrupts: */
 // Software interrupt
-static const uint64_t IRQ_Software  = 0; 
+/*static const uint64_t IRQ_Software  = 0; 
 // Timer interrupt
 static const uint64_t IRQ_Timer     = 1;// External (PLIC) interrupt
-static const uint64_t IRQ_External  = 2;
+static const uint64_t IRQ_External  = 2;*/
 
 }  // namespace debugger
 

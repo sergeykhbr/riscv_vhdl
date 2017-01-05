@@ -35,8 +35,18 @@ public:
                        AttributeType *mnemonic,
                        AttributeType *comment);
 
+    virtual void registerBreakpoint(uint64_t addr, uint32_t instr,
+                                    uint64_t flags);
+
+    virtual int unregisterBreakpoint(uint64_t addr, uint32_t *instr,
+                                     uint64_t *flags);
+
+    virtual void getBreakpointList(AttributeType *list);
+
+
 private:
     disasm_opcode_f tblOpcode1_[32];
+    AttributeType brList_;
 };
 
 DECLARE_CLASS(SourceService)

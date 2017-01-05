@@ -493,7 +493,7 @@ void InstrExecute::comb() {
     wb_exception_code = 0;
     if (i_ext_irq & i_ie & !r.ext_irq_pulser) { // Maskable traps (interrupts)
         v.trap_code_waiting[4] = 1;
-        v.trap_code_waiting(3, 0) = INTERRUPT_PLIC;
+        v.trap_code_waiting(3, 0) = INTERRUPT_MExternal;
     } else if (w_exception) {      // Unmaskable traps (exceptions)
         wb_exception_code[4] = 0;
         if (w_exception_load) {

@@ -16,6 +16,8 @@ namespace debugger {
 
 static const char *const IFACE_SOURCE_CODE = "ISourceCode";
 
+static const uint64_t BreakFlag_HW = (1 << 0);
+
 class ISourceCode : public IFace {
 public:
     ISourceCode() : IFace(IFACE_SOURCE_CODE) {}
@@ -29,6 +31,33 @@ public:
                        int offset,
                        AttributeType *mnemonic,
                        AttributeType *comment) =0;
+
+    /** Register breakpoint at specified address.
+     *
+     * @param[in] addr  Breakpoint location
+     * @param[in] instr Current instruction value at specified address.
+     *                  For HW breakpoint may have any value so that memory
+     *                  won't be modified.
+     * @param[in] hw    Breakpoint flags
+     */
+    virtual void registerBreakpoint(uint64_t addr, uint32_t instr,
+                                    uint64_t flags) =0;
+
+    /** Unregister breakpoint at specified address.
+     *
+     * @param[in]  addr  Breakpoint location
+     * @param[out] instr Original instruction value.
+     * @param[out] flags Breakpoint flags.
+     * @return 0 if no errors
+     */
+    virtual int unregisterBreakpoint(uint64_t addr, uint32_t *instr,
+                                     uint64_t *flags) =0;
+
+    /** Get list of breakpoints.
+     *
+     * @param[out] lst Breakpoint list.
+     */
+    virtual void getBreakpointList(AttributeType *list) =0;
 };
 
 }  // namespace debugger

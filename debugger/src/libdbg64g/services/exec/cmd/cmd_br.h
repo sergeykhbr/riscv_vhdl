@@ -9,9 +9,11 @@
 #define __DEBUGGER_CMD_BR_H__
 
 #include "api_core.h"
+#include "iservice.h"
 #include "coreservices/itap.h"
 #include "coreservices/isocinfo.h"
 #include "coreservices/icommand.h"
+#include "coreservices/isrccode.h"
 
 namespace debugger {
 
@@ -24,6 +26,7 @@ public:
     virtual void exec(AttributeType *args, AttributeType *res);
 
 private:
+    ISourceCode *isrc_;
 };
 
 }  // namespace debugger

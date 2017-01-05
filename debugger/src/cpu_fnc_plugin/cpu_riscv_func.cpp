@@ -21,8 +21,8 @@ void addIsaExtensionA(CpuContextType *data, AttributeType *out);
 void addIsaExtensionF(CpuContextType *data, AttributeType *out);
 void addIsaExtensionM(CpuContextType *data, AttributeType *out);
 
-
 void generateException(uint64_t code, CpuContextType *data);
+void generateInterrupt(uint64_t code, CpuContextType *data);
 
 uint64_t readCSR(uint32_t idx, CpuContextType *data);
 void writeCSR(uint32_t idx, uint64_t val, CpuContextType *data);
@@ -455,13 +455,7 @@ void CpuRiscV_Functional::raiseSignal(int idx) {
             break;
         }
         /// @todo delegate interrupt to non-machine privilege level.
-
-        csr_mcause_type cause;
-        cause.value     = 0;
-        cause.bits.irq  = 1;
-        cause.bits.code = 11;   // 11 = Machine external interrupt
-        pContext->csr[CSR_mcause] = cause.value;
-        pContext->interrupt = 1;
+        generateInterrupt(INTERRUPT_MExternal, pContext);
         break;
     default:
         RISCV_error("Unsupported signalRaise(%d)", idx);

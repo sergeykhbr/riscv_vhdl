@@ -1339,4 +1339,13 @@ void generateException(uint64_t code, CpuContextType *data) {
     data->exception |= 1LL << code;
 }
 
+void generateInterrupt(uint64_t code, CpuContextType *data) {
+    csr_mcause_type cause;
+    cause.value     = 0;
+    cause.bits.irq  = 1;
+    cause.bits.code = code;
+    data->csr[CSR_mcause] = cause.value;
+    data->interrupt = 1;
+}
+
 }  // namespace debugger

@@ -60,12 +60,65 @@ SourceService::SourceService(const char *name) : IService(name) {
     tblOpcode1_[0x19] = &opcode_0x19;
     tblOpcode1_[0x1B] = &opcode_0x1B;
     tblOpcode1_[0x1C] = &opcode_0x1C;
+
+    brList_.make_list(0);
 }
 
 SourceService::~SourceService() {
 }
 
 void SourceService::postinitService() {
+}
+
+void SourceService::registerBreakpoint(uint64_t addr, uint32_t instr,
+                                       uint64_t flags) {
+    AttributeType item;
+    item.make_list(3);
+    item[0u].make_uint64(addr);
+    item[1].make_uint64(instr);
+    item[2].make_uint64(flags);
+
+    bool not_found = true;
+    for (unsigned i = 0; i < brList_.size(); i++) {
+        AttributeType &br = brList_[i];
+        if (addr == br[0u].to_uint64()) {
+            not_found = false;
+        }
+    }
+    if (not_found) {
+        brList_.add_to_list(&item);
+    }
+}
+
+int SourceService::unregisterBreakpoint(uint64_t addr, uint32_t *instr,
+                                        uint64_t *flags) {
+    for (unsigned i = 0; i < brList_.size(); i++) {
+        AttributeType &br = brList_[i];
+        if (addr == br[0u].to_uint64()) {
+            *instr = static_cast<uint32_t>(br[1].to_uint64());
+            *flags = br[2].to_uint64();
+            brList_.remove_from_list(i);
+            return 0;
+        }
+    }
+    return 1;
+}
+
+void SourceService::getBreakpointList(AttributeType *list) {
+    if (!list->is_list() || list->size() != brList_.size()) {
+        list->make_list(brList_.size());
+    }
+
+    for (unsigned i = 0; i < brList_.size(); i++) {
+        AttributeType &item = (*list)[i];
+        AttributeType &br = brList_[i];
+        if (!item.is_list() || item.size() != 3) {
+            item.make_list(3);
+        }
+        item[0u] = br[0u];
+        item[1] = br[1];
+        item[2] = br[2];
+    }
 }
 
 int SourceService::disasm(uint64_t pc,
@@ -608,7 +661,11 @@ int opcode_0x1C(uint64_t pc, uint32_t code,
 
     switch (i.bits.funct3) {
     case 0:
-        if (code == 0x00200073) {
+        if (code == 0x00000073) {
+            RISCV_sprintf(tstr, sizeof(tstr), "%s", "ecall");
+        } else if (code == 0x00100073) {
+            RISCV_sprintf(tstr, sizeof(tstr), "%s", "ebreak");
+        } else if (code == 0x00200073) {
             RISCV_sprintf(tstr, sizeof(tstr), "%s", "uret");
         } else if (code == 0x10200073) {
             RISCV_sprintf(tstr, sizeof(tstr), "%s", "sret");
