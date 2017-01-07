@@ -122,21 +122,16 @@ void SourceService::getBreakpointList(AttributeType *list) {
 }
 
 int SourceService::disasm(uint64_t pc,
-                       AttributeType *data,
+                       uint8_t *data,
                        int offset,
                        AttributeType *mnemonic,
                        AttributeType *comment) {
-    uint32_t val = (*data)(offset + 3);
-    val = (val << 8) | (*data)(offset + 2);
-    val = (val << 8) | (*data)(offset + 1);
-    val = (val << 8) | (*data)(offset);
-
-    if ((val & 0x3) != 0x3) {
+    if ((data[offset] & 0x3) != 0x3) {
         mnemonic->make_string("err");
         comment->make_string("");
         return 4;
     }
-
+    uint32_t val = *reinterpret_cast<uint32_t*>(&data[offset]);
     uint32_t opcode1 = (val >> 2) & 0x1f;
     if (tblOpcode1_[opcode1]) {
         return tblOpcode1_[opcode1](pc + static_cast<uint64_t>(offset),

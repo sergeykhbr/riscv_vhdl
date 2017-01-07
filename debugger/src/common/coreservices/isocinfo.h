@@ -138,7 +138,8 @@ struct DsuMapType {
                 struct {
                     uint64_t halt     : 1;
                     uint64_t stepping : 1;
-                    uint64_t rsv1     : 2;
+                    uint64_t breakpoint : 1;
+                    uint64_t rsv1     : 1;
                     uint64_t core_id  : 16;
                     uint64_t rsv2     : 44;
                 } bits;
@@ -146,8 +147,29 @@ struct DsuMapType {
             uint64_t stepping_mode_steps;
             uint64_t clock_cnt;
             uint64_t executed_cnt;
+            union breakpoint_control_reg {
+                uint64_t val;
+                struct {
+                    /** Trap on instruction:
+                     *      0 = Halt pipeline on ECALL instruction
+                     *      1 = Generate trap on ECALL instruction
+                     */
+                    uint64_t trap_on_break : 1;
+                    uint64_t rsv1          : 63;
+                } bits;
+            } br_ctrl;
             uint64_t add_breakpoint;
             uint64_t remove_breakpoint;
+            /**
+             * Don't fetch instruction from this address use specified
+             * below instead.
+             */
+            uint64_t br_address_fetch;
+            /**
+             * True instruction value instead of injected one. Use this
+             * instruction instead of memory.
+             */
+            uint64_t br_instr_fetch;
         } v;
     } udbg;
     // Base Address + 0x18000 (Region 3)

@@ -53,7 +53,7 @@ protected:
 
 private:
     bool isHalt() { return dbg_state_ == STATE_Halted; }
-    void halt();
+    void halt(const char *descr=NULL);
     void go();
     void step(uint64_t cnt);
     uint64_t getReg(uint64_t idx);

@@ -44,6 +44,7 @@ signals:
     void signalPostInit(AttributeType *cfg);
     void signalUpdateByTimer();
     void signalTargetStateChanged(bool);
+    void signalBreakpoint();
     void signalExit();
 
 protected:
@@ -83,7 +84,7 @@ private:
     
     AttributeType config_;
     AttributeType listConsoleListeners_;
-    AttributeType cmdIsRunning_;
+    AttributeType cmdStatus_;
     AttributeType cmdRun_;
     AttributeType cmdHalt_;
     AttributeType cmdStep_;

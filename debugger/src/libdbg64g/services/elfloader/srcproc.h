@@ -30,7 +30,7 @@ public:
 
     /** ISourceCode interface */
     virtual int disasm(uint64_t pc,
-                       AttributeType *data,
+                       uint8_t *data,
                        int offset,
                        AttributeType *mnemonic,
                        AttributeType *comment);

@@ -203,6 +203,28 @@ void AttributeType::realloc_list(unsigned size) {
     size_ = size;
 }
 
+void AttributeType::insert_to_list(unsigned idx, const AttributeType *item) {
+    if (idx > size_) {
+        RISCV_printf(NULL, LOG_ERROR, "%s", "Insert index out of bound");
+        return;
+    }
+    size_t new_sz = ((size_ + 1) * sizeof(AttributeType) + MIN_ALLOC_BYTES - 1)
+                  / MIN_ALLOC_BYTES;
+    AttributeType * t1 = static_cast<AttributeType *>(
+                RISCV_malloc(MIN_ALLOC_BYTES * new_sz));
+
+    memcpy(t1, u_.list, idx * sizeof(AttributeType));
+    t1[idx].clone(item);
+    memcpy(&t1[idx + 1], &u_.list[idx], (size_ - idx) * sizeof(AttributeType));
+    memset(&t1[size_ + 1], 0, 
+          (MIN_ALLOC_BYTES * new_sz) - (size_ + 1) * sizeof(AttributeType));
+    if (size_) {
+        RISCV_free(u_.list);
+    }
+    u_.list = t1;
+    size_++;
+}
+
 bool AttributeType::has_key(const char *key) const {
     for (unsigned i = 0; i < size(); i++) {
         if (strcmp(u_.dict[i].key_.to_string(), key) == 0

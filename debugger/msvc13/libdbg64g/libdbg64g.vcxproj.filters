@@ -140,6 +140,9 @@
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_cpi.cpp">
       <Filter>Source Files\services\exec\cmd</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_status.cpp">
+      <Filter>Source Files\services\exec\cmd</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\attribute.h">
@@ -307,6 +310,9 @@
       <Filter>Source Files\services\elfloader</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_cpi.h">
+      <Filter>Source Files\services\exec\cmd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_status.h">
       <Filter>Source Files\services\exec\cmd</Filter>
     </ClInclude>
   </ItemGroup>

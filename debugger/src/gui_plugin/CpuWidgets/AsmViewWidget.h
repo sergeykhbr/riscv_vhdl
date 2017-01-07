@@ -26,10 +26,12 @@ public:
 signals:
     void signalPostInit(AttributeType *cfg);
     void signalUpdateByTimer();
+    void signalBreakpoint();
 
 private slots:
     void slotPostInit(AttributeType *cfg);
     void slotUpdateByTimer();
+    void slotBreakpoint();
 
 private:
     AttributeType listMem_;

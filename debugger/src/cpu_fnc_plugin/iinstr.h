@@ -12,6 +12,7 @@
 #include <fstream>
 #include "riscv-isa.h"
 #include "coreservices/ibus.h"
+#include "coreservices/isocinfo.h"
 
 namespace debugger {
 
@@ -25,6 +26,11 @@ struct CpuContextType {
     uint64_t interrupt_pending;
     uint64_t step_cnt;
     uint64_t cur_prv_level;
+    DsuMapType::udbg_type::debug_region_type::breakpoint_control_reg br_ctrl;
+    bool br_status_ena;     // show breakpoint bit in common status register
+    bool br_inject_fetch;
+    uint64_t br_address_fetch;
+    uint32_t br_instr_fetch;
     bool reset;
     IBus *ibus;
     char disasm[256];

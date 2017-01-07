@@ -21,7 +21,7 @@ DbgMainWindow::DbgMainWindow(IGui *igui, event_def *init_done) {
 
     listConsoleListeners_.make_list(0);
     /** Console commands used by main window: */
-    cmdIsRunning_.make_string("isrunning");
+    cmdStatus_.make_string("status");
     cmdRun_.make_string("c");
     cmdHalt_.make_string("halt");
     cmdStep_.make_string("c 1");
@@ -70,12 +70,16 @@ void DbgMainWindow::closeEvent(QCloseEvent *ev) {
 }
 
 void DbgMainWindow::handleResponse(AttributeType *req, AttributeType *resp) {
-    if (req->is_equal(cmdIsRunning_.to_string())) {
-        statusRequested_ = false;
-        bool isrun = resp->to_bool();
-        if ((actionRun_->isChecked() && !isrun)
-            || (!actionRun_->isChecked() && isrun)) {
-            emit signalTargetStateChanged(isrun);
+    statusRequested_ = false;
+    if (req->is_equal(cmdStatus_.to_string())) {
+        DsuMapType::udbg_type::debug_region_type::control_reg ctrl;
+        ctrl.val = resp->to_uint64();
+        if ((actionRun_->isChecked() && ctrl.bits.halt)
+            || (!actionRun_->isChecked() && !ctrl.bits.halt)) {
+            emit signalTargetStateChanged(ctrl.bits.halt == 0);
+        }
+        if (ctrl.bits.breakpoint) {
+            emit signalBreakpoint();
         }
     }
 }
@@ -258,6 +262,8 @@ void DbgMainWindow::addWidgets() {
             pnew, SLOT(slotPostInit(AttributeType *)));
     connect(this, SIGNAL(signalUpdateByTimer()),
             pnew, SLOT(slotUpdateByTimer()));
+    connect(this, SIGNAL(signalBreakpoint()),
+            pnew, SLOT(slotBreakpoint()));
 
     actionRegs_->setChecked(false);
     subw = new UnclosableQMdiSubWindow(this);
@@ -304,7 +310,7 @@ void DbgMainWindow::slotUpdateByTimer() {
     if (!statusRequested_) {
         statusRequested_ = true;
         igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), 
-                               &cmdIsRunning_, true);
+                               &cmdStatus_, true);
     }
     emit signalUpdateByTimer();
 }

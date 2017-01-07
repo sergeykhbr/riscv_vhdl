@@ -16,6 +16,8 @@
 
 namespace debugger {
 
+static const int LINES_MAX = 20;    // remove it
+
 AsmArea::AsmArea(IGui *gui, QWidget *parent)
     : QTableWidget(parent) {
     igui_ = gui;
@@ -38,26 +40,32 @@ AsmArea::AsmArea(IGui *gui, QWidget *parent)
     setMinimumWidth(50 + fm.width(tr(
     "   :0011223344556677  11223344 1: addw    r0,r1,0xaabbccdd  ; commment")));
     lineHeight_ = fm.height() + 4;
-    addrStart_ = ~0;
-    addrSize_ = 0;
-    breakpointUpdate_ = false;
+    portBreak_ = 0;
 
     setColumnCount(COL_Total);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    setRowCount(20); //height() / lineHeight_);
-    asmLines_.make_list(20);
+    setRowCount(LINES_MAX); //height() / lineHeight_);
+    asmLines_.make_list(LINES_MAX);
+    rangeModel_.setMaxLines(LINES_MAX);
+    brList_.make_list(0);
     
     verticalHeader()->setVisible(false);        // remove row indexes
     setShowGrid(false);                         // remove borders
+    setSelectionMode(QAbstractItemView::SingleSelection);
     setSelectionBehavior(QAbstractItemView::SelectRows); //select full row
+
     // change selected row color
     QPalette *palette = new QPalette();
     palette->setColor(QPalette::Highlight, Qt::gray);
     setPalette(*palette);
+    Qt::ItemFlags fl;
     for (int i = 0; i < rowCount(); i++) {
         for (int n = 0; n < COL_Total; n++) {
             setItem(i, n, new QTableWidgetItem());
-            item(i, n)->setFlags(item(i, n)->flags() & ~Qt::ItemIsEditable);
+            fl = item(i, n)->flags();
+            fl &= ~Qt::ItemIsEditable;
+            fl &= ~Qt::ItemIsSelectable;
+            item(i, n)->setFlags(fl);
         }
         setRowHeight(i, lineHeight_);
         item(i, 0)->setBackgroundColor(Qt::lightGray);
@@ -71,7 +79,8 @@ AsmArea::AsmArea(IGui *gui, QWidget *parent)
     setColumnWidth(2, 10 + fm.width(tr("0")));
     setColumnWidth(3, 10 + fm.width(tr("addw    r1,r2,0x112233445566")));
 
-    asmLines_[0u].make_list(2);
+    asmLines_.make_list(0);
+    /*asmLines_[0u].make_list(2);
     asmLines_[0u][COL_addrline].make_uint64(751);
     asmLines_[0u][COL_code].make_string("Some piece of code");
 
@@ -83,13 +92,19 @@ AsmArea::AsmArea(IGui *gui, QWidget *parent)
     asmLines_[1][COL_comment].make_string("'; test");
     outLines();
 
-    selectRow(0);
+    selectRow(0);*/
     //hideRow(0);
 
     connect(this, SIGNAL(signalHandleResponse()),
             this, SLOT(slotHandleResponse()));
     connect(this, SIGNAL(cellDoubleClicked(int, int)),
             this, SLOT(slotCellDoubleClicked(int, int)));
+}
+
+AsmArea::~AsmArea() {
+    if (portBreak_) {
+        delete portBreak_;
+    }
 }
 
 void AsmArea::slotPostInit(AttributeType *cfg) {
@@ -100,6 +115,14 @@ void AsmArea::slotPostInit(AttributeType *cfg) {
     }
     IService *iserv = static_cast<IService *>(src_list[0u].to_iface());
     isrc_ = static_cast<ISourceCode *>(iserv->getInterface(IFACE_SOURCE_CODE));
+
+    ISocInfo *isoc = static_cast<ISocInfo *>(igui_->getSocInfo());
+    DsuMapType *dsu = isoc->getpDsu();
+
+    portBreak_ = new BreakpointInjectPort(igui_, isrc_);
+
+    addrBrAddrFetch_.make_uint64(
+        reinterpret_cast<uint64_t>(&dsu->udbg.v.br_address_fetch));
 }
 
 void AsmArea::slotUpdateByTimer() {
@@ -113,39 +136,45 @@ void AsmArea::slotUpdateByTimer() {
     }
 }
 
-void AsmArea::slotHandleResponse() {
-    outLines();
+void AsmArea::slotBreakpoint() {
+    portBreak_->injectFetch();
 }
 
 void AsmArea::slotCellDoubleClicked(int row, int column) {
-    if (column != 0) {
+    if (row >= static_cast<int>(asmLines_.size())) {
+        return;
+    }
+    if (!asmLines_[row].is_list() || !asmLines_[row].size()) {
         return;
     }
     char tstr[128];
     uint64_t addr = asmLines_[row][COL_addrline].to_uint64();
-    RISCV_sprintf(tstr, sizeof(tstr), "br add 0x%" RV_PRI64 "x", addr);
-    AttributeType brAdd(tstr);
-    igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), 
-                            &brAdd, true);
+    isrc_->getBreakpointList(&brList_);
+
+    bool br_add = true;
+    for (unsigned i = 0; i < brList_.size(); i++) {
+        const AttributeType &br = brList_[i];
+        if (br[0u].to_uint64() == addr) {
+            br_add = false;
+            RISCV_sprintf(tstr, sizeof(tstr), "br rm 0x%" RV_PRI64 "x", addr);
+            break;
+        }
+    }
+    if (br_add) {
+        RISCV_sprintf(tstr, sizeof(tstr), "br add 0x%" RV_PRI64 "x", addr);
+    }
+    AttributeType brcmd(tstr);
+    // Do not handle breakpoint responses:
+    igui_->registerCommand(NULL, &brcmd, true);
+    rangeModel_.updateAddr(addr);
 }
 
-bool AsmArea::isNeedUpdate() {
-    if (npc_ >= addrStart_ && npc_ < (addrStart_ + addrSize_/2)
-        && !breakpointUpdate_) {
-        return false;
-    }
-    breakpointUpdate_ = false;
-    return true;
+void AsmArea::slotHandleResponse() {
+    outLines();
 }
 
 void AsmArea::handleResponse(AttributeType *req, AttributeType *resp) {
     char tstr[128];
-    if (strstr(req->to_string(), "br ")) {
-        // Do not handle breakpoint responses
-        breakpointUpdate_ = true;
-        return;
-    }
-
     switch (state_) {
     case CMD_idle:
         break;
@@ -154,34 +183,55 @@ void AsmArea::handleResponse(AttributeType *req, AttributeType *resp) {
             state_ = CMD_idle;
             return;
         }
-        npc_ = resp->to_uint64();
-        if (!isNeedUpdate()) {
+        rangeModel_.setPC(resp->to_uint64());
+        if (rangeModel_.getReqSize() == 0) {
             emit signalHandleResponse();
             state_ = CMD_idle;
             return;
         }
         state_ = CMD_memdata;
-        addrStart_ = npc_;
-        addrSize_ = 4 * rowCount();
         RISCV_sprintf(tstr, sizeof(tstr), "read 0x%08" RV_PRI64 "x %d",
-                                            addrStart_, addrSize_);
+                                          rangeModel_.getReqAddr(),
+                                          rangeModel_.getReqSize());
         cmdReadMem_.make_string(tstr);
         igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), 
                                 &cmdReadMem_, true);
         break;
     case CMD_memdata:
-        state_ = CMD_idle;
         if (!resp->is_data()) {
+            state_ = CMD_idle;
             return;
         }
-        data2lines(addrStart_, *resp, asmLines_);
+        data2lines(rangeModel_.getReqAddr(), *resp, asmLines_);
+        rangeModel_.updateRange();
         emit signalHandleResponse();
+        state_ = CMD_idle;
         break;
     default:;
     }
 }
 
 void AsmArea::outLines() {
+    int asm_cnt = static_cast<int>(asmLines_.size());
+    if (rowCount() < asm_cnt) {
+        Qt::ItemFlags fl;
+        setRowCount(asm_cnt);
+        for (int i = rowCount(); i < asm_cnt; i++) {
+            for (int n = 0; n < COL_Total; n++) {
+                setItem(i, n, new QTableWidgetItem());
+                fl = item(i, n)->flags();
+                fl &= ~Qt::ItemIsEditable;
+                fl &= ~Qt::ItemIsSelectable;
+                item(i, n)->setFlags(fl);
+            }
+            setRowHeight(i, lineHeight_);
+            item(i, 0)->setBackgroundColor(Qt::lightGray);
+            item(i, 0)->setTextAlignment(Qt::AlignRight);
+        }
+    }
+
+    // Output visible assembler lines:
+    int sel_row = -1;
     for (unsigned i = 0; i < asmLines_.size(); i++) {
         AttributeType &asmLine = asmLines_[i];
         if (!asmLine.is_list()) {
@@ -189,9 +239,22 @@ void AsmArea::outLines() {
         }
         outLine(static_cast<int>(i), asmLines_[i]);
 
-        if (npc_ == asmLines_[i][COL_addrline].to_uint64()) {
-            selectRow(i);
+        if (rangeModel_.getPC() == asmLine[COL_addrline].to_uint64()) {
+            sel_row = static_cast<int>(i);
         }
+        item(i, 0)->setFlags(item(i, 0)->flags() & ~Qt::ItemIsSelectable);
+    }
+
+    // Hide unused lines:
+    for (int i = static_cast<int>(asmLines_.size()); i < rowCount(); i++) {
+        hideRow(i);
+    }
+
+    if (sel_row != -1) {
+        QTableWidgetItem *p_item = item(sel_row, 0);
+        p_item->setFlags(p_item->flags() | Qt::ItemIsSelectable);
+        selectRow(sel_row);
+        //scrollTo(sel_row, QAbstractItemView::EnsureVisible);
     }
 }
 
@@ -226,8 +289,16 @@ void AsmArea::outLine(int idx, AttributeType &line) {
         pw->setTextColor(QColor(Qt::black));
 
         pw = item(idx, COL_code);
-        RISCV_sprintf(stmp, sizeof(stmp), "%08x", line[COL_code].to_int());
-        
+        uint32_t instr = static_cast<uint32_t>(line[COL_code].to_uint64());
+        if (instr == 0x00100073) {
+            pw->setBackgroundColor(Qt::red);
+            RISCV_sprintf(stmp, sizeof(stmp), "%08x", instr);
+        } else {
+            if (pw->backgroundColor() != Qt::lightGray) {
+                pw->setBackgroundColor(Qt::lightGray);
+            }
+            RISCV_sprintf(stmp, sizeof(stmp), "%08x", instr);
+        }
         pw->setText(QString(stmp));
 
         pw = item(idx, COL_label);
@@ -245,38 +316,82 @@ void AsmArea::outLine(int idx, AttributeType &line) {
     }
 }
 
-void AsmArea::data2lines(uint64_t npc, AttributeType &data,
-                                       AttributeType &lines) {
-    uint64_t code;
-    unsigned off = 0;
-    if (rowCount() != static_cast<int>(lines.size())) {
-        return;
+int AsmArea::makeAsmAttr(uint64_t addr, uint8_t *data, int offset,
+                         AttributeType &out) {
+    int ret = 4;
+    if (!out.is_list() || out.size() != COL_Total) {
+        out.make_list(COL_Total);
     }
-    for (int i = 0; i < rowCount(); i++) {
-        AttributeType &line = lines[i];
-        if (!line.is_list())  {
-            line.make_list(COL_Total);
+    out[COL_addrline].make_uint64(addr + offset);
+    out[COL_label].make_string("");
+    if (isrc_) {
+        ret = isrc_->disasm(addr, data, offset,
+                            &out[COL_mnemonic],
+                            &out[COL_comment]);
+        
+        switch (ret) {
+        case 2:
+            // To support Compressed ISA extension:
+            out[COL_code].make_uint64(
+                *reinterpret_cast<uint16_t *>(&data[offset]));
+            break;
+        case 4:
+            out[COL_code].make_uint64(
+                *reinterpret_cast<uint32_t *>(&data[offset]));
+            break;
+        default:
+            out[COL_code].make_uint64(~0);
         }
-        if (line.size() < COL_Total) {
-            setSpan(i, COL_code, 1, 1);
-            line.make_list(COL_Total);
-        }
-        line[COL_addrline].make_uint64(npc + off);
+    } else {
+        out[COL_mnemonic].make_string("no disassembler");
+        out[COL_comment].make_string("");
+        out[COL_code].make_uint64(
+            *reinterpret_cast<uint32_t *>(&data[offset]));
+    }
+    return ret;
+}
 
-        code = 0;
-        for (unsigned n = 0; n < 4; n++) {
-            code = (code << 8) | data(off + (3 - n));
+void AsmArea::data2lines(uint64_t addr, AttributeType &resp,
+                                        AttributeType &lines) {
+    unsigned off = 0;
+    uint64_t asm_addr_start = 0;
+    uint64_t asm_addr_end = 0;
+    AttributeType tattr;
+    if (lines.size()) {
+        asm_addr_start = lines[0u][COL_addrline].to_uint64();
+        asm_addr_end = lines[lines.size() - 1][COL_addrline].to_uint64();
+    }
+    tattr.make_list(COL_Total);
+    if (addr + resp.size() == asm_addr_start) {
+        // Joint lines at the beginning of current list:
+        int idx = 0;
+        while (off < resp.size()) {
+            off += makeAsmAttr(addr, resp.data(), off, tattr);
+            lines.insert_to_list(idx++, &tattr);
         }
-        line[COL_code].make_uint64(code);
-        line[COL_label].make_string("");
-        if (isrc_) {
-            off += isrc_->disasm(npc, &data, off,
-                                 &line[COL_mnemonic],
-                                 &line[COL_comment]);
-        } else {
-            line[COL_mnemonic].make_string("no disassembler");
-            line[COL_comment].make_string("");
-            off += 4;
+    } else if (addr >= asm_addr_start && addr <= asm_addr_end) {
+        // Modify lines values:
+        for (unsigned i = 0; i < lines.size(); i++) {
+            AttributeType &ln = lines[i];
+            if ((addr + off) == ln[COL_addrline].to_uint64()) {
+                off += makeAsmAttr(addr, resp.data(), off, ln);
+            }
+            if (off >= resp.size()) {
+                break;
+            }
+        }
+    } else if (addr == asm_addr_end + 4) {  // fixme
+        // Joint lines to end of the current list:
+        while (off < resp.size()) {
+            off += makeAsmAttr(addr, resp.data(), off, tattr);
+            lines.add_to_list(&tattr);
+        }
+    } else {
+        // Create new list of assembler lines:
+        lines.make_list(0);
+        while (off < resp.size()) {
+            off += makeAsmAttr(addr, resp.data(), off, tattr);
+            lines.add_to_list(&tattr);
         }
     }
 }

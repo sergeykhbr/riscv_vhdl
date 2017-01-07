@@ -235,7 +235,10 @@ class AttributeType : public IAttribute {
         (*this)[size()-1] = (*item);
     }
 
+    void insert_to_list(unsigned idx, const AttributeType *item);
+
     void remove_from_list(unsigned idx) {
+        (*this)[idx].attr_free();
         if (idx == (size() - 1)) {
             size_ -= 1;
         } else if (idx < size ()) {
@@ -246,6 +249,7 @@ class AttributeType : public IAttribute {
 
     void trim_list(unsigned start, unsigned end) {
         for (unsigned i = start; i < (size_ - end); i++) {
+            u_.list[start + i].attr_free();
             u_.list[start + i] = u_.list[end + i];
         }
         size_ -= (end - start);

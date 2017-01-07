@@ -59,6 +59,7 @@ SOURCES = \
 	cmd_reg \
 	cmd_regs \
 	cmd_run \
+	cmd_status \
 	cmd_exit \
 	cmd_memdump \
 	cmdexec \

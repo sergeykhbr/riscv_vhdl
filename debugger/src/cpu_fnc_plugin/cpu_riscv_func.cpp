@@ -8,7 +8,6 @@
 #include "api_core.h"
 #include "cpu_riscv_func.h"
 #include "riscv-isa.h"
-#include "coreservices/isocinfo.h"
 #if 1
 #include "coreservices/iserial.h"
 #endif
@@ -189,7 +188,7 @@ void CpuRiscV_Functional::updateState() {
         break;
     case STATE_Stepping:
         if (dbg_step_cnt_ <= pContext->step_cnt) {
-            halt();
+            halt("Stepping breakpoint");
             upd = false;
         }
         break;
@@ -224,6 +223,14 @@ void CpuRiscV_Functional::handleTrap() {
         mstatus.bits.MIE == 0 && pContext->cur_prv_level == PRV_M) {
         return;
     }
+    if (pContext->csr[CSR_mcause] == EXCEPTION_Breakpoint
+        && pContext->br_ctrl.bits.trap_on_break == 0) {
+        pContext->exception = 0;
+        pContext->npc = pContext->pc;
+        halt("EBREAK Breakpoint");
+        return;
+    }
+
     pContext->interrupt = 0;
     pContext->exception = 0;
 
@@ -281,10 +288,19 @@ void CpuRiscV_Functional::reset() {
     pContext->csr[CSR_mstatus] = mstat.value;
     pContext->cur_prv_level = PRV_M;           // Current privilege level
     pContext->step_cnt = 0;
+    pContext->br_ctrl.val = 0;
+    pContext->br_inject_fetch = false;
+    pContext->br_status_ena = false;
 }
 
 void CpuRiscV_Functional::fetchInstruction() {
     CpuContextType *pContext = getpContext();
+    if (pContext->br_inject_fetch
+        && pContext->pc == pContext->br_address_fetch) {
+        pContext->br_inject_fetch = false;
+        cacheline_[0] = pContext->br_instr_fetch;
+        return;
+    }
     trans_.action = MemAction_Read;
     trans_.addr = pContext->pc;
     trans_.xsize = 4;
@@ -520,6 +536,9 @@ void CpuRiscV_Functional::updateDebugPort() {
             } else {
                 ctrl.val = 0;
                 ctrl.bits.halt = isHalt() ? 1: 0;
+                if (pContext->br_status_ena) {
+                    ctrl.bits.breakpoint = 1;
+                }
                 ctrl.bits.core_id = 0;
             }
             trans->rdata = ctrl.val;
@@ -537,13 +556,33 @@ void CpuRiscV_Functional::updateDebugPort() {
             trans->rdata = pContext->step_cnt;
             break;
         case 4:
+            trans->rdata = pContext->br_ctrl.val;
             if (trans->write) {
-                addBreakpoint(trans->wdata);
+                pContext->br_ctrl.val = trans->wdata;
             }
             break;
         case 5:
             if (trans->write) {
+                addBreakpoint(trans->wdata);
+            }
+            break;
+        case 6:
+            if (trans->write) {
                 removeBreakpoint(trans->wdata);
+            }
+            break;
+        case 7:
+            trans->rdata = pContext->br_address_fetch;
+            if (trans->write) {
+                pContext->br_address_fetch = trans->wdata;
+            }
+            break;
+        case 8:
+            trans->rdata = pContext->br_instr_fetch;
+            if (trans->write) {
+                pContext->br_inject_fetch = true;
+                pContext->br_status_ena = false;
+                pContext->br_instr_fetch = static_cast<uint32_t>(trans->wdata);
             }
             break;
         default:;
@@ -562,16 +601,18 @@ CpuRiscV_Functional::nb_transport_debug_port(DebugPortTransactionType *trans,
     dport.valid = true;
 }
 
-void CpuRiscV_Functional::halt() {
+void CpuRiscV_Functional::halt(const char *descr) {
     CpuContextType *pContext = getpContext();
-    char reason[256];
     dbg_state_ = STATE_Halted;
-    RISCV_sprintf(reason, sizeof(reason), 
-                "[%" RV_PRI64 "d] pc:%016" RV_PRI64 "x: %08x \t CPU halted",
-                getStepCounter(), pContext->pc, cacheline_[0]);
 
-    RISCV_printf0("[%" RV_PRI64 "d] pc:%016" RV_PRI64 "x: %08x \t CPU halted",
-        getStepCounter(), pContext->pc, cacheline_[0]);
+    if (descr == NULL) {
+        RISCV_printf0(
+            "[%" RV_PRI64 "d] pc:%016" RV_PRI64 "x: %08x \t CPU halted",
+            getStepCounter(), pContext->pc, cacheline_[0]);
+    } else {
+        RISCV_printf0("[%" RV_PRI64 "d] pc:%016" RV_PRI64 "x: %08x \t %s",
+            getStepCounter(), pContext->pc, cacheline_[0], descr);
+    }
 }
 
 void CpuRiscV_Functional::go() {

@@ -27,7 +27,7 @@ public:
      * @return disassembled instruction length
      */
     virtual int disasm(uint64_t pc,
-                       AttributeType *data,
+                       uint8_t *data,
                        int offset,
                        AttributeType *mnemonic,
                        AttributeType *comment) =0;

@@ -37,6 +37,9 @@ AsmViewWidget::AsmViewWidget(IGui *igui, QWidget *parent)
 
     connect(this, SIGNAL(signalUpdateByTimer()),
             parea, SLOT(slotUpdateByTimer()));
+
+    connect(this, SIGNAL(signalBreakpoint()),
+            parea, SLOT(slotBreakpoint()));
 }
 
 void AsmViewWidget::slotPostInit(AttributeType *cfg) {
@@ -48,6 +51,13 @@ void AsmViewWidget::slotUpdateByTimer() {
         return;
     }
     emit signalUpdateByTimer();
+}
+
+void AsmViewWidget::slotBreakpoint() {
+    if (!isVisible()) {
+        return;
+    }
+    emit signalBreakpoint();
 }
 
 }  // namespace debugger

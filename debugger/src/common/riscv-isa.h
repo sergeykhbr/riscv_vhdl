@@ -258,8 +258,6 @@ static const uint16_t CSR_mimplementationid = 0xf13;
 static const uint16_t CSR_mhartid           = 0xf14;
 /** Machine wall-clock time */
 static const uint16_t CSR_mtime         = 0x701;
-/** Software reset. */
-static const uint16_t CSR_mreset        = 0x782;
 
 /** machine mode status read/write register. */
 static const uint16_t CSR_mstatus       = 0x300;
@@ -341,13 +339,6 @@ enum EInterrupt {
     // Machine external interrupt (from PLIC)
     INTERRUPT_MExternal      = 11,
 };
-
-/** Interrupts: */
-// Software interrupt
-/*static const uint64_t IRQ_Software  = 0; 
-// Timer interrupt
-static const uint64_t IRQ_Timer     = 1;// External (PLIC) interrupt
-static const uint64_t IRQ_External  = 2;*/
 
 }  // namespace debugger
 
