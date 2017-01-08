@@ -200,10 +200,11 @@ void AsmArea::handleResponse(AttributeType *req, AttributeType *resp) {
 
 void AsmArea::outLines() {
     int asm_cnt = static_cast<int>(asmLines_.size());
-    if (rowCount() < asm_cnt) {
+    int row_cnt = rowCount();
+    if (row_cnt < asm_cnt) {
         Qt::ItemFlags fl;
         setRowCount(asm_cnt);
-        for (int i = rowCount(); i < asm_cnt; i++) {
+        for (int i = row_cnt; i < asm_cnt; i++) {
             for (int n = 0; n < COL_Total; n++) {
                 setItem(i, n, new QTableWidgetItem());
                 fl = item(i, n)->flags();

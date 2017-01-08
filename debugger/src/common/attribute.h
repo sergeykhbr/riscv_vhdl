@@ -244,38 +244,11 @@ class AttributeType : public IAttribute {
 
     void insert_to_list(unsigned idx, const AttributeType *item);
 
-    void remove_from_list(unsigned idx) {
-        (*this)[idx].attr_free();
-        if (idx == (size() - 1)) {
-            size_ -= 1;
-        } else if (idx < size ()) {
-            swap_list_item(idx, size() - 1);
-            size_ -= 1;
-        }
-    }
+    void remove_from_list(unsigned idx);
 
-    void trim_list(unsigned start, unsigned end) {
-        for (unsigned i = start; i < (size_ - end); i++) {
-            u_.list[start + i].attr_free();
-            u_.list[start + i] = u_.list[end + i];
-        }
-        size_ -= (end - start);
-    }
+    void trim_list(unsigned start, unsigned end);
 
-    void swap_list_item(unsigned n, unsigned m) {
-        if (n == m) {
-            return;
-        }
-        unsigned tsize = u_.list[n].size_;
-        KindType tkind = u_.list[n].kind_;
-        int64_t tinteger = u_.list[n].u_.integer;
-        u_.list[n].size_ = u_.list[m].size_;
-        u_.list[n].kind_ = u_.list[m].kind_;
-        u_.list[n].u_.integer = u_.list[m].u_.integer;
-        u_.list[m].size_ = tsize;
-        u_.list[m].kind_ = tkind;
-        u_.list[m].u_.integer = tinteger;
-    }
+    void swap_list_item(unsigned n, unsigned m);
 
     void realloc_list(unsigned size);
 

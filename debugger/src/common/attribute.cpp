@@ -225,6 +225,44 @@ void AttributeType::insert_to_list(unsigned idx, const AttributeType *item) {
     size_++;
 }
 
+void AttributeType::remove_from_list(unsigned idx) {
+    if (idx >= size_) {
+        RISCV_printf(NULL, LOG_ERROR, "%s", "Remove index out of range");
+        return;
+    }
+    (*this)[idx].attr_free();
+    if (idx == (size() - 1)) {
+        size_ -= 1;
+    } else if (idx < size ()) {
+        swap_list_item(idx, size() - 1);
+        size_ -= 1;
+    }
+}
+
+void AttributeType::trim_list(unsigned start, unsigned end) {
+    for (unsigned i = start; i < (size_ - end); i++) {
+        u_.list[start + i].attr_free();
+        u_.list[start + i] = u_.list[end + i];
+    }
+    size_ -= (end - start);
+}
+
+void AttributeType::swap_list_item(unsigned n, unsigned m) {
+    if (n == m) {
+        return;
+    }
+    unsigned tsize = u_.list[n].size_;
+    KindType tkind = u_.list[n].kind_;
+    int64_t tinteger = u_.list[n].u_.integer;
+    u_.list[n].size_ = u_.list[m].size_;
+    u_.list[n].kind_ = u_.list[m].kind_;
+    u_.list[n].u_.integer = u_.list[m].u_.integer;
+    u_.list[m].size_ = tsize;
+    u_.list[m].kind_ = tkind;
+    u_.list[m].u_.integer = tinteger;
+}
+
+
 bool AttributeType::has_key(const char *key) const {
     for (unsigned i = 0; i < size(); i++) {
         if (strcmp(u_.dict[i].key_.to_string(), key) == 0
