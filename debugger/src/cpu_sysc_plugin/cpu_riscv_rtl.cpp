@@ -128,10 +128,6 @@ void CpuRiscV_RTL::deleteSystemC() {
     delete top_;
 }
 
-void CpuRiscV_RTL::predeleteService() {
-    stop();
-}
-
 void CpuRiscV_RTL::hapTriggered(IFace *isrc, EHapType type,
                                 const char *descr) {
     RISCV_event_set(&config_done_);

@@ -51,6 +51,7 @@ ConsoleService::ConsoleService(const char *name)
     defaultLogFile_.make_string("");
 
     iclk_ = NULL;
+    isrc_ = NULL;
     cmdSizePrev_ = 0;
 
     cursor_.make_list(2);
@@ -130,6 +131,14 @@ void ConsoleService::postinitService() {
         itmp->registerSignalListener(static_cast<ISignalListener *>(this));
     }
 
+    AttributeType src_list;
+    RISCV_get_services_with_iface(IFACE_SOURCE_CODE, &src_list);
+    if (src_list.is_list() && src_list.size()) {
+        IService *iserv = static_cast<IService *>(src_list[0u].to_iface());
+        isrc_ = static_cast<ISourceCode *>(
+                    iserv->getInterface(IFACE_SOURCE_CODE));
+    }
+
 #ifdef DBG_ZEPHYR
     if (iclk_) {
 	    iclk_->registerStepCallback(static_cast<IClockListener *>(this), 550000);
@@ -141,8 +150,18 @@ void ConsoleService::postinitService() {
 }
 
 void ConsoleService::predeleteService() {
+    if (isrc_) {
+        char stmp[128];
+        AttributeType brList, res;
+        isrc_->getBreakpointList(&brList);
+        for (unsigned i = 0; i < brList.size(); i++) {
+            const AttributeType &br = brList[i];
+            RISCV_sprintf(stmp, sizeof(stmp), "br rm 0x%" RV_PRI64 "x",
+                           br[BrkList_address].to_uint64());
+            iexec_->exec(stmp, &res, true);
+        }
+    }
     RISCV_remove_default_output(static_cast<IRawListener *>(this));
-    stop();
 }
 
 void ConsoleService::stepCallback(uint64_t t) {

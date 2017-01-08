@@ -67,7 +67,6 @@ public:
 
     /** IService interface */
     virtual void postinitService();
-    virtual void predeleteService();
 
     /** IMemoryOperation */
     virtual void b_transport(Axi4TransactionType *trans);

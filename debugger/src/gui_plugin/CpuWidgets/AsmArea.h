@@ -109,6 +109,7 @@ private:
     void outLines();
     void outLine(int idx, AttributeType &data);
     void data2lines(uint64_t addr, AttributeType &resp, AttributeType &lines);
+    bool addrIsBreakpoint(uint64_t addr, uint8_t *instr, AttributeType *obr);
     int makeAsmAttr(uint64_t addr, uint8_t *data, int offset,
                     AttributeType &out);
 
@@ -190,6 +191,9 @@ private:
         COL_label,
         COL_mnemonic,
         COL_comment,
+        // not present in view
+        COL_codesize,
+        COL_breakpoint,
         COL_Total
     };
 

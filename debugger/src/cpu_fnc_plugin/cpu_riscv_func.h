@@ -32,7 +32,6 @@ public:
 
     /** IService interface */
     virtual void postinitService();
-    virtual void predeleteService();
 
     /** ICpuRiscV interface */
     virtual void raiseSignal(int idx);

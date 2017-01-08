@@ -80,20 +80,6 @@ AsmArea::AsmArea(IGui *gui, QWidget *parent)
     setColumnWidth(3, 10 + fm.width(tr("addw    r1,r2,0x112233445566")));
 
     asmLines_.make_list(0);
-    /*asmLines_[0u].make_list(2);
-    asmLines_[0u][COL_addrline].make_uint64(751);
-    asmLines_[0u][COL_code].make_string("Some piece of code");
-
-    asmLines_[1].make_list(COL_Total);
-    asmLines_[1][COL_addrline].make_uint64(0x0000000000001000);
-    asmLines_[1][COL_code].make_uint64(0x94503213);
-    asmLines_[1][COL_label].make_string("");
-    asmLines_[1][COL_mnemonic].make_string("add     r1,r2,r4");
-    asmLines_[1][COL_comment].make_string("'; test");
-    outLines();
-
-    selectRow(0);*/
-    //hideRow(0);
 
     connect(this, SIGNAL(signalHandleResponse()),
             this, SLOT(slotHandleResponse()));
@@ -202,6 +188,7 @@ void AsmArea::handleResponse(AttributeType *req, AttributeType *resp) {
             state_ = CMD_idle;
             return;
         }
+        isrc_->getBreakpointList(&brList_);
         data2lines(rangeModel_.getReqAddr(), *resp, asmLines_);
         rangeModel_.updateRange();
         emit signalHandleResponse();
@@ -261,6 +248,7 @@ void AsmArea::outLines() {
 void AsmArea::outLine(int idx, AttributeType &line) {
     char stmp[256];
     QTableWidgetItem *pw;
+    uint64_t addr;
     if (idx >= rowCount()) {
         return;
     }
@@ -268,9 +256,10 @@ void AsmArea::outLine(int idx, AttributeType &line) {
         return;
     }
     
+    addr = line[COL_addrline].to_uint64();
     if (line.size() == 2) {
         pw = item(idx, COL_addrline);
-        RISCV_sprintf(stmp, sizeof(stmp), "%d", line[COL_addrline].to_int());
+        RISCV_sprintf(stmp, sizeof(stmp), "%d", static_cast<int>(addr));
         pw->setText(QString(stmp));
         pw->setTextColor(QColor(Qt::darkBlue));
 
@@ -283,22 +272,20 @@ void AsmArea::outLine(int idx, AttributeType &line) {
         item(idx, COL_comment)->setText(tr(""));
     } else {
         pw = item(idx, COL_addrline);
-        RISCV_sprintf(stmp, sizeof(stmp), 
-                      "%016" RV_PRI64 "x", line[COL_addrline].to_uint64());
+        RISCV_sprintf(stmp, sizeof(stmp), "%016" RV_PRI64 "x", addr);
         pw->setText(QString(stmp));
         pw->setTextColor(QColor(Qt::black));
 
         pw = item(idx, COL_code);
         uint32_t instr = static_cast<uint32_t>(line[COL_code].to_uint64());
-        if (instr == 0x00100073) {
+        if (line[COL_breakpoint].to_bool()) {
             pw->setBackgroundColor(Qt::red);
-            RISCV_sprintf(stmp, sizeof(stmp), "%08x", instr);
-        } else {
-            if (pw->backgroundColor() != Qt::lightGray) {
-                pw->setBackgroundColor(Qt::lightGray);
-            }
-            RISCV_sprintf(stmp, sizeof(stmp), "%08x", instr);
+            pw->setTextColor(Qt::white);
+        } else if (pw->backgroundColor() != Qt::lightGray) {
+            pw->setBackgroundColor(Qt::lightGray);
+            pw->setTextColor(Qt::black);
         }
+        RISCV_sprintf(stmp, sizeof(stmp), "%08x", instr);
         pw->setText(QString(stmp));
 
         pw = item(idx, COL_label);
@@ -316,6 +303,22 @@ void AsmArea::outLine(int idx, AttributeType &line) {
     }
 }
 
+bool AsmArea::addrIsBreakpoint(uint64_t addr, uint8_t *data,
+                               AttributeType *obr) {
+    uint32_t instr = *reinterpret_cast<uint32_t *>(data);
+    if (instr != 0x00100073) {
+        return false;
+    }
+    for (unsigned i = 0; i < brList_.size(); i++) {
+        const AttributeType &br = brList_[i];
+        if (addr == br[BrkList_address].to_uint64()) {
+            *obr = br;
+            break;
+        }
+    }
+    return true;
+}
+
 int AsmArea::makeAsmAttr(uint64_t addr, uint8_t *data, int offset,
                          AttributeType &out) {
     int ret = 4;
@@ -324,20 +327,29 @@ int AsmArea::makeAsmAttr(uint64_t addr, uint8_t *data, int offset,
     }
     out[COL_addrline].make_uint64(addr + offset);
     out[COL_label].make_string("");
+    out[COL_breakpoint].make_boolean(false);
     if (isrc_) {
-        ret = isrc_->disasm(addr, data, offset,
-                            &out[COL_mnemonic],
-                            &out[COL_comment]);
+        AttributeType br;
+        uint8_t *pinstr = data + offset;
+        if (addrIsBreakpoint(addr + offset, data + offset, &br)) {
+            out[COL_breakpoint].make_boolean(true);
+            pinstr = br[BrkList_instr].data();
+            ret = isrc_->disasm(addr + offset, pinstr, 0,
+                                &out[COL_mnemonic],
+                                &out[COL_comment]);
+        } else {
+            ret = isrc_->disasm(addr, data, offset,
+                                &out[COL_mnemonic],
+                                &out[COL_comment]);
+        }
         
         switch (ret) {
         case 2:
             // To support Compressed ISA extension:
-            out[COL_code].make_uint64(
-                *reinterpret_cast<uint16_t *>(&data[offset]));
+            out[COL_code].make_uint64(*reinterpret_cast<uint16_t *>(pinstr));
             break;
         case 4:
-            out[COL_code].make_uint64(
-                *reinterpret_cast<uint32_t *>(&data[offset]));
+            out[COL_code].make_uint64(*reinterpret_cast<uint32_t *>(pinstr));
             break;
         default:
             out[COL_code].make_uint64(~0);
@@ -348,6 +360,7 @@ int AsmArea::makeAsmAttr(uint64_t addr, uint8_t *data, int offset,
         out[COL_code].make_uint64(
             *reinterpret_cast<uint32_t *>(&data[offset]));
     }
+    out[COL_codesize].make_uint64(ret);
     return ret;
 }
 

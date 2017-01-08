@@ -16,6 +16,7 @@
 #include "coreservices/iclock.h"
 #include "coreservices/iautocomplete.h"
 #include "coreservices/icmdexec.h"
+#include "coreservices/isrccode.h"
 #include "coreservices/irawlistener.h"
 #include "coreservices/isignallistener.h"
 #include <string>
@@ -124,6 +125,7 @@ private:
     IClock *iclk_;
     IAutoComplete *iautocmd_;
     ICmdExecutor *iexec_;
+    ISourceCode *isrc_;
 
     RawPortType portSerial_;
 

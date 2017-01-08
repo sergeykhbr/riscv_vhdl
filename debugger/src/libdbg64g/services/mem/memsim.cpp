@@ -101,10 +101,6 @@ void MemorySim::postinitService() {
     fclose(fp);
 }
 
-void MemorySim::predeleteService() {
-    
-}
-
 void MemorySim::b_transport(Axi4TransactionType *trans) {
     uint64_t mask = (length_.to_uint64() - 1);
     uint64_t off = (trans->addr - getBaseAddress()) & mask;

@@ -116,6 +116,10 @@ class AttributeType : public IAttribute {
         return static_cast<int>(u_.integer);
     }
 
+    int to_uint32() const {
+        return static_cast<uint32_t>(u_.integer);
+    }
+
     int64_t to_int64() const {
         return u_.integer;
     }
@@ -203,16 +207,19 @@ class AttributeType : public IAttribute {
 
     void make_floating(double value) {
         kind_ = Attr_Floating;
+        size_ = 0;
         u_.floating = value;
     }
 
     void make_int64(int64_t value) {
         kind_ = Attr_Integer;
+        size_ = 0;
         u_.integer = value;
     }
 
     void make_uint64(uint64_t value) {
         kind_ = Attr_UInteger;
+        size_ = 0;
         u_.integer = value;
     }
 

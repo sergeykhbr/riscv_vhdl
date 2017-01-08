@@ -16,6 +16,13 @@ namespace debugger {
 
 static const char *const IFACE_SOURCE_CODE = "ISourceCode";
 
+enum EBreakList {
+    BrkList_address,
+    BrkList_instr,
+    BrkList_hwflag,
+    BrkList_Total
+};
+
 static const uint64_t BreakFlag_HW = (1 << 0);
 
 class ISourceCode : public IFace {

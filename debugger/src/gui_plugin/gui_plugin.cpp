@@ -127,10 +127,6 @@ void GuiPlugin::postinitService() {
     run();
 }
 
-void GuiPlugin::predeleteService() {
-    stop();
-}
-
 IFace *GuiPlugin::getSocInfo() {
     return info_;
 }

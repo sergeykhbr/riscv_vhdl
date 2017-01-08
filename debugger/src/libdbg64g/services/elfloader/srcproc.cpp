@@ -73,15 +73,15 @@ void SourceService::postinitService() {
 void SourceService::registerBreakpoint(uint64_t addr, uint32_t instr,
                                        uint64_t flags) {
     AttributeType item;
-    item.make_list(3);
-    item[0u].make_uint64(addr);
-    item[1].make_uint64(instr);
-    item[2].make_uint64(flags);
+    item.make_list(BrkList_Total);
+    item[BrkList_address].make_uint64(addr);
+    item[BrkList_instr].make_uint64(instr);
+    item[BrkList_hwflag].make_uint64(flags);
 
     bool not_found = true;
     for (unsigned i = 0; i < brList_.size(); i++) {
         AttributeType &br = brList_[i];
-        if (addr == br[0u].to_uint64()) {
+        if (addr == br[BrkList_address].to_uint64()) {
             not_found = false;
         }
     }
@@ -94,9 +94,9 @@ int SourceService::unregisterBreakpoint(uint64_t addr, uint32_t *instr,
                                         uint64_t *flags) {
     for (unsigned i = 0; i < brList_.size(); i++) {
         AttributeType &br = brList_[i];
-        if (addr == br[0u].to_uint64()) {
-            *instr = static_cast<uint32_t>(br[1].to_uint64());
-            *flags = br[2].to_uint64();
+        if (addr == br[BrkList_address].to_uint64()) {
+            *instr = static_cast<uint32_t>(br[BrkList_instr].to_uint64());
+            *flags = br[BrkList_hwflag].to_uint64();
             brList_.remove_from_list(i);
             return 0;
         }
@@ -113,11 +113,11 @@ void SourceService::getBreakpointList(AttributeType *list) {
         AttributeType &item = (*list)[i];
         AttributeType &br = brList_[i];
         if (!item.is_list() || item.size() != 3) {
-            item.make_list(3);
+            item.make_list(BrkList_Total);
         }
-        item[0u] = br[0u];
-        item[1] = br[1];
-        item[2] = br[2];
+        item[BrkList_address] = br[BrkList_address];
+        item[BrkList_instr] = br[BrkList_instr];
+        item[BrkList_hwflag] = br[BrkList_hwflag];
     }
 }
 

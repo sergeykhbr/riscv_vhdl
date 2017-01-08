@@ -29,7 +29,6 @@ public:
     /** IService interface */
     virtual void initService(const AttributeType *args);
     virtual void postinitService();
-    virtual void predeleteService();
 
     /** IGui interface */
     virtual IFace *getSocInfo();

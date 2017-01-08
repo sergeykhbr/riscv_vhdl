@@ -66,10 +66,6 @@ void ComPortService::postinitService() {
     }
 }
 
-void ComPortService::predeleteService() {
-    stop();
-}
-
 void ComPortService::busyLoop() {
     char tbuf[4096];
     int tbuf_cnt;

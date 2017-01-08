@@ -29,7 +29,6 @@ public:
 
     /** IService interface */
     virtual void postinitService();
-    virtual void predeleteService();
 
     /** ISerial */
     virtual int writeData(const char *buf, int sz);

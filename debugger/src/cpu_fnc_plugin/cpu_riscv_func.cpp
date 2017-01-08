@@ -64,6 +64,15 @@ CpuRiscV_Functional::CpuRiscV_Functional(const char *name)
 }
 
 CpuRiscV_Functional::~CpuRiscV_Functional() {
+    CpuContextType *pContext = getpContext();
+    if (pContext->reg_trace_file) {
+        pContext->reg_trace_file->close();
+        delete pContext->reg_trace_file;
+    }
+    if (pContext->mem_trace_file) {
+        pContext->mem_trace_file->close();
+        delete pContext->mem_trace_file;
+    }
     RISCV_event_close(&config_done_);
 }
 
@@ -109,19 +118,6 @@ void CpuRiscV_Functional::postinitService() {
         if (generateMemTraceFile_.to_bool()) {
             pContext->mem_trace_file = new std::ofstream("river_func_mem.log");
         }
-    }
-}
-
-void CpuRiscV_Functional::predeleteService() {
-    CpuContextType *pContext = getpContext();
-    stop();
-    if (pContext->reg_trace_file) {
-        pContext->reg_trace_file->close();
-        delete pContext->reg_trace_file;
-    }
-    if (pContext->mem_trace_file) {
-        pContext->mem_trace_file->close();
-        delete pContext->mem_trace_file;
     }
 }
 

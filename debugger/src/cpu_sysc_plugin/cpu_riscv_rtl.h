@@ -42,7 +42,6 @@ public:
 
     /** IService interface */
     virtual void postinitService();
-    virtual void predeleteService();
 
     /** IClock */
     virtual uint64_t getStepCounter() {

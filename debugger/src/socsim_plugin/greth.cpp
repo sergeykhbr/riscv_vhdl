@@ -87,10 +87,6 @@ void Greth::postinitService() {
     }
 }
 
-void Greth::predeleteService() {
-    stop();
-}
-
 void Greth::busyLoop() {
     int bytes;
     uint32_t *tbuf;
