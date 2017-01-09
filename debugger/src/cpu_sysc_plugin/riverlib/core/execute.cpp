@@ -48,6 +48,8 @@ InstrExecute::InstrExecute(sc_module_name name_)  : sc_module(name_) {
     sensitive << r.multi_ena[Multi_DIV];
     sensitive << r.multi_res_addr;
     sensitive << r.multiclock_ena;
+    sensitive << r.trap_ena;
+    sensitive << r.breakpoint;
     sensitive << wb_arith_res.arr[Multi_MUL];
     sensitive << wb_arith_res.arr[Multi_DIV];
     sensitive << w_arith_valid[Multi_MUL];
@@ -131,6 +133,7 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_csr_rdata, "/top/proc0/exec0/i_csr_rdata");
         sc_trace(o_vcd, o_csr_wdata, "/top/proc0/exec0/o_csr_wdata");
         sc_trace(o_vcd, o_pipeline_hold, "/top/proc0/exec0/o_pipeline_hold");
+        sc_trace(o_vcd, o_breakpoint, "/top/proc0/exec0/o_breakpoint");
 
         sc_trace(o_vcd, w_hazard_detected, "/top/proc0/exec0/w_hazard_detected");
         sc_trace(o_vcd, r.hazard_depth, "/top/proc0/exec0/r_hazard_depth");
@@ -218,6 +221,7 @@ void InstrExecute::comb() {
     wv = i_ivec.read();
 
     v = r;
+    v.breakpoint = 0;
 
     wb_mask_i31 = 0;
     if (i_d_instr.read()[31]) {
@@ -307,7 +311,8 @@ void InstrExecute::comb() {
     w_res_wena = !(wv[Instr_BEQ] | wv[Instr_BGE] | wv[Instr_BGEU]
                | wv[Instr_BLT] | wv[Instr_BLTU] | wv[Instr_BNE]
                | wv[Instr_SD] | wv[Instr_SW] | wv[Instr_SH] | wv[Instr_SB]
-               | wv[Instr_MRET] | wv[Instr_URET]).to_bool();
+               | wv[Instr_MRET] | wv[Instr_URET]
+               | wv[Instr_ECALL] | wv[Instr_EBREAK]).to_bool();
 
     if (w_multi_valid) {
         wb_res_addr = r.multi_res_addr;
@@ -370,7 +375,8 @@ void InstrExecute::comb() {
     w_exception_load = 0;
 
     w_exception = w_d_acceptable
-        & (i_unsup_exception.read() || w_exception_load || w_exception_store);
+        & (i_unsup_exception.read() || w_exception_load || w_exception_store
+           || wv[Instr_ECALL] || wv[Instr_EBREAK]);
 
 
     /** Default number of cycles per instruction = 0 (1 clock per instr)
@@ -500,6 +506,15 @@ void InstrExecute::comb() {
             wb_exception_code(3, 0) = EXCEPTION_LoadMisalign;
         } else if (w_exception_store) {
             wb_exception_code(3, 0) = EXCEPTION_StoreMisalign;
+        } else if (wv[Instr_ECALL]) {
+            if (i_mode.read() == PRV_M) {
+                wb_exception_code(3, 0) = EXCEPTION_CallFromMmode;
+            } else {
+                wb_exception_code(3, 0) = EXCEPTION_CallFromUmode;
+            }
+        } else if (wv[Instr_EBREAK]) {
+            v.breakpoint = 1;
+            wb_exception_code(3, 0) = EXCEPTION_Breakpoint;
         } else {
             wb_exception_code(3, 0) = EXCEPTION_InstrIllegal;
         }
@@ -524,7 +539,11 @@ void InstrExecute::comb() {
         v.trap_ena = 1;
         v.trap_pc = i_d_pc;
         v.trap_code = wb_exception_code;
-        v.npc = i_mtvec;
+        if (wv[Instr_EBREAK] && i_break_mode.read()) {
+            v.npc = i_mtvec;
+        } else {
+            v.npc = i_d_pc;
+        }
     } else if (w_d_valid) {
         if (w_multi_valid) {
             v.pc = r.multi_pc;
@@ -642,6 +661,7 @@ void InstrExecute::comb() {
     o_pc = r.pc;
     o_npc = r.npc;
     o_instr = r.instr;
+    o_breakpoint = r.breakpoint;
 }
 
 void InstrExecute::registers() {

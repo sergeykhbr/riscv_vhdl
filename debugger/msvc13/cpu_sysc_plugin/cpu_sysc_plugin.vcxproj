@@ -91,7 +91,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)../src/common;$(SYSTEMC_SRC)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)../src/common;$(SYSTEMC_PATH)/src</AdditionalIncludeDirectories>
       <AdditionalOptions>/vmg %(AdditionalOptions)</AdditionalOptions>
       <DisableSpecificWarnings>4244;4996;</DisableSpecificWarnings>
     </ClCompile>
@@ -99,7 +99,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>libdbg64g.lib;SystemC.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SolutionDir)\..\win32build\$(Configuration)\;$(SYSTEMC_LIB)\</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)\..\win32build\$(Configuration)\;$(SYSTEMC_PATH)\msvc80\SystemC\Debug</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>$(ProjectDir)exportmap.def</ModuleDefinitionFile>
       <OptimizeReferences>
       </OptimizeReferences>

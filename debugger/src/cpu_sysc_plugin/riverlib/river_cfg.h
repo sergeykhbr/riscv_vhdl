@@ -107,6 +107,8 @@ enum EInstuctionsType {
     Instr_REMU,
     Instr_REMW,
     Instr_REMUW,
+    Instr_ECALL,
+    Instr_EBREAK,
 
     Instr_Total
 };

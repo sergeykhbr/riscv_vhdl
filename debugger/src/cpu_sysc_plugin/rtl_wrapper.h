@@ -73,6 +73,7 @@ public:
 
 public:
     void generateRef(bool v) { generate_ref_ = v; }
+    void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
     void setBus(IBus *v) { ibus_ = v; }
     /** Default time resolution 1 picosecond. */
     void setClockHz(double hz);

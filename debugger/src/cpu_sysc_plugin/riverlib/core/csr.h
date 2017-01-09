@@ -21,6 +21,8 @@ SC_MODULE(CsrRegs) {
     sc_in<bool> i_wena;                     // Write enable
     sc_in<sc_uint<RISCV_ARCH>> i_wdata;     // CSR writing value
     sc_out<sc_uint<RISCV_ARCH>> o_rdata;    // CSR read value
+    sc_in<bool> i_break_mode;               // Behaviour on EBREAK instruction: 0 = halt; 1 = generate trap
+    sc_in<bool> i_breakpoint;               // Breakpoint (Trap or not depends of mode)
     sc_in<bool> i_trap_ena;                 // Trap pulse
     sc_in<sc_uint<5>> i_trap_code;          // bit[4] : 1=interrupt; 0=exception; bits[3:0]=code
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_trap_pc;// trap on pc

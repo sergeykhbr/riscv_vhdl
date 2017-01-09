@@ -42,6 +42,11 @@ SC_MODULE(DbgPort) {
     sc_out<sc_uint<64>> o_clock_cnt;                    // Number of clocks excluding halt state
     sc_out<sc_uint<64>> o_executed_cnt;                 // Number of executed instructions
     sc_out<bool> o_halt;                                // Halt signal is equal to hold pipeline
+    sc_in<bool> i_ebreak;                               // ebreak instruction decoded
+    sc_out<bool> o_break_mode;                          // Behaviour on EBREAK instruction: 0 = halt; 1 = generate trap
+    sc_out<bool> o_br_fetch_valid;                      // Fetch injection address/instr are valid
+    sc_out<sc_uint<BUS_ADDR_WIDTH>> o_br_address_fetch; // Fetch injection address to skip ebreak instruciton only once
+    sc_out<sc_uint<32>> o_br_instr_fetch;               // Real instruction value that was replaced by ebreak
 
     void comb();
     void registers();
@@ -56,8 +61,13 @@ private:
     struct RegistersType {
         sc_signal<bool> ready;
         sc_signal<bool> halt;
+        sc_signal<bool> breakpoint;
         sc_signal<bool> stepping_mode;
         sc_signal<sc_uint<RISCV_ARCH>> stepping_mode_cnt;
+        sc_signal<bool> trap_on_break;
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> br_address_fetch;
+        sc_signal<sc_uint<32>> br_instr_fetch;
+        sc_signal<bool> br_fetch_valid;
 
         sc_signal<sc_uint<RISCV_ARCH>> rdata;
         sc_signal<sc_uint<RISCV_ARCH>> stepping_mode_steps; // Number of steps before halt in stepping mode

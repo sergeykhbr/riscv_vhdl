@@ -329,7 +329,11 @@ void InstrDecoder::comb() {
         wb_isa_type[ISA_I_type] = 1;
         switch (wb_opcode2) {
         case 0:
-            if (wb_instr == 0x00200073) {
+            if (wb_instr == 0x00000073) {
+                wb_dec[Instr_ECALL] = 1;
+            } else if (wb_instr == 0x00100073) {
+                wb_dec[Instr_EBREAK] = 1;
+            } else if (wb_instr == 0x00200073) {
                 wb_dec[Instr_URET] = 1;
             } else if (wb_instr == 0x10200073) {
                 wb_dec[Instr_SRET] = 1;

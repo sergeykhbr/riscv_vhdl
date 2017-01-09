@@ -22,6 +22,7 @@
 #include "cmd/cmd_br.h"
 #include "cmd/cmd_cpi.h"
 #include "cmd/cmd_status.h"
+#include "cmd/cmd_reset.h"
 
 namespace debugger {
 
@@ -60,7 +61,7 @@ void CmdExecutor::postinitService() {
             (RISCV_get_service_iface(socInfo_.to_string(), 
                                     IFACE_SOC_INFO));
 
-    cmds_.make_list(15);
+    cmds_.make_list(16);
     cmds_[0u].make_iface(new CmdBr(itap_, info_));
     cmds_[1].make_iface(new CmdCpi(itap_, info_));
     cmds_[2].make_iface(new CmdCsr(itap_, info_));
@@ -74,8 +75,9 @@ void CmdExecutor::postinitService() {
     cmds_[10].make_iface(new CmdRun(itap_, info_));
     cmds_[11].make_iface(new CmdReg(itap_, info_));
     cmds_[12].make_iface(new CmdRegs(itap_, info_));
-    cmds_[13].make_iface(new CmdStatus(itap_, info_));
-    cmds_[14].make_iface(new CmdWrite(itap_, info_));
+    cmds_[13].make_iface(new CmdReset(itap_, info_));
+    cmds_[14].make_iface(new CmdStatus(itap_, info_));
+    cmds_[15].make_iface(new CmdWrite(itap_, info_));
 }
 
 void CmdExecutor::exec(const char *line, AttributeType *res, bool silent) {
@@ -103,6 +105,23 @@ void CmdExecutor::exec(const char *line, AttributeType *res, bool silent) {
         return;
     }
     //RISCV_printf0("%s", outbuf_);
+}
+
+void CmdExecutor::commands(const char *substr, AttributeType *res) {
+    if (!res->is_list()) {
+        res->make_list(0);
+    }
+    AttributeType item;
+    item.make_list(3);
+    for (unsigned i = 0; i < cmds_.size(); i++) {
+        ICommand *icmd = static_cast<ICommand *>(cmds_[i].to_iface());
+        if (strstr(icmd->cmdName(), substr)) {
+            item[0u].make_string(icmd->cmdName());
+            item[1].make_string(icmd->briefDescr());
+            item[2].make_string(icmd->detailedDescr());
+            res->add_to_list(&item);
+        }
+    }
 }
 
 void CmdExecutor::processSimple(AttributeType *cmd, AttributeType *res) {

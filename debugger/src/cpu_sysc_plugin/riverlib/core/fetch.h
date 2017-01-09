@@ -33,8 +33,10 @@ SC_MODULE(InstrFetch) {
     sc_out<bool> o_valid;
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_pc;
     sc_out<sc_uint<32>> o_instr;
-    sc_out<bool> o_hold;
-
+    sc_out<bool> o_hold;                                // Hold due no response from icache yet
+    sc_in<bool> i_br_fetch_valid;                       // Fetch injection address/instr are valid
+    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_br_address_fetch;  // Fetch injection address to skip ebreak instruciton only once
+    sc_in<sc_uint<32>> i_br_instr_fetch;                // Real instruction value that was replaced by ebreak
 
     void comb();
     void registers();
@@ -51,6 +53,8 @@ private:
         sc_signal<sc_uint<5>> pipeline_init;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> pc_z1;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> raddr_not_resp_yet;
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> br_address;
+        sc_signal<sc_uint<32>> br_instr;
     } v, r;
 };
 

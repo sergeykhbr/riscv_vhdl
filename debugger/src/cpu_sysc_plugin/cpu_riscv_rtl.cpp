@@ -64,6 +64,7 @@ void CpuRiscV_RTL::postinitService() {
     wrapper_->setBus(ibus_);
     wrapper_->setClockHz(freqHz_.to_int());
     wrapper_->generateRef(GenerateRef_.to_bool());
+    wrapper_->generateVCD(i_vcd_, o_vcd_);
     top_->generateRef(GenerateRef_.to_bool());
     top_->generateVCD(i_vcd_, o_vcd_);
 

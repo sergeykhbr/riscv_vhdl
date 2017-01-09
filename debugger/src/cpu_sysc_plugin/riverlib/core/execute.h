@@ -35,6 +35,7 @@ SC_MODULE(InstrExecute) {
     sc_in<bool> i_ie;                           // Interrupt enable bit
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_mtvec;     // Interrupt descriptor table
     sc_in<sc_uint<2>> i_mode;                   // Current processor mode
+    sc_in<bool> i_break_mode;                   // Behaviour on EBREAK instruction: 0 = halt; 1 = generate trap
     sc_in<bool> i_unsup_exception;              // Unsupported instruction exception
     sc_in<bool> i_ext_irq;                      // External interrupt from PLIC (todo: timer & software interrupts)
     sc_in<bool> i_dport_npc_write;              // Write npc value from debug port
@@ -66,6 +67,7 @@ SC_MODULE(InstrExecute) {
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_pc;       // Valid instruction pointer
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_npc;      // Next instruction pointer. Next decoded pc must match to this value or will be ignored.
     sc_out<sc_uint<32>> o_instr;                // Valid instruction value
+    sc_out<bool> o_breakpoint;                  // ebreak instruction
 
 
     void comb();
@@ -121,6 +123,7 @@ private:
 
         sc_signal<bool> ext_irq_pulser;                 // Form 1 clock pulse from strob
         sc_signal<bool> trap_ena;                       // Trap occur, switch mode
+        sc_signal<bool> breakpoint;
         sc_uint<5> trap_code_waiting;                   // To avoid multi-cycle instruction collision
         sc_signal<sc_uint<5>> trap_code;                // bit[4] : 1 = interrupt; 0 = exception
                                                         // bit[3:0] : trap code

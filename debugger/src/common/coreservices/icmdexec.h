@@ -19,7 +19,11 @@ class ICmdExecutor : public IFace {
 public:
     ICmdExecutor() : IFace(IFACE_CMD_EXECUTOR) {}
 
+    /** Execute string as a command */
     virtual void exec(const char *line, AttributeType *res, bool silent) =0;
+
+    /** Get list of supported comands starting with substring 'substr' */
+    virtual void commands(const char *substr, AttributeType *res) =0;
 };
 
 }  // namespace debugger

@@ -31,6 +31,7 @@ public:
 
     /** ICmdExecutor */
     virtual void exec(const char *line, AttributeType *res, bool silent);
+    virtual void commands(const char *substr, AttributeType *res);
 
 private:
     void processSimple(AttributeType *cmd, AttributeType *res);

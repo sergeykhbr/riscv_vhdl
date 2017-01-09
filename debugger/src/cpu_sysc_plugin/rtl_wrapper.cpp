@@ -52,6 +52,15 @@ RtlWrapper::~RtlWrapper() {
     RISCV_event_close(&dport_.valid);
 }
 
+void RtlWrapper::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
+    if (i_vcd) {
+    }
+    if (o_vcd) {
+        sc_trace(o_vcd, w_nrst, "wrapper0/w_nrst");
+        sc_trace(o_vcd, r.nrst, "wrapper0/r_nrst");
+    }
+}
+
 void RtlWrapper::clk_gen() {
     // todo: instead sc_clock
 }
@@ -194,6 +203,7 @@ void RtlWrapper::clk_negedge_proc() {
             dport_.idx_missmatch = 1;
             RISCV_error("error: sync. is lost: up=%d, down=%d",
                          dport_.trans_idx_up, dport_.trans_idx_down);
+            dport_.trans_idx_down = dport_.trans_idx_up;
         }
         dport_.cb->nb_response_debug_port(dport_.trans);
     }

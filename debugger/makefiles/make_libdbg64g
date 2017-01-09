@@ -58,6 +58,7 @@ SOURCES = \
 	cmd_write \
 	cmd_reg \
 	cmd_regs \
+	cmd_reset \
 	cmd_run \
 	cmd_status \
 	cmd_exit \

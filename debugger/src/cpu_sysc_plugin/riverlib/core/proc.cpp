@@ -50,6 +50,9 @@ Processor::Processor(sc_module_name name_) : sc_module(name_) {
     fetch0->o_pc(w.f.pc);
     fetch0->o_instr(w.f.instr);
     fetch0->o_hold(w.f.pipeline_hold);
+    fetch0->i_br_fetch_valid(dbg.br_fetch_valid);
+    fetch0->i_br_address_fetch(dbg.br_address_fetch);
+    fetch0->i_br_instr_fetch(dbg.br_instr_fetch);
 
     dec0 = new InstrDecoder("dec0");
     dec0->i_clk(i_clk);
@@ -90,6 +93,7 @@ Processor::Processor(sc_module_name name_) : sc_module(name_) {
     exec0->i_ie(csr.ie);
     exec0->i_mtvec(csr.mtvec);
     exec0->i_mode(csr.mode);
+    exec0->i_break_mode(dbg.break_mode);
     exec0->i_unsup_exception(w.d.exception);
     exec0->i_ext_irq(i_ext_irq);
     exec0->i_dport_npc_write(dbg.npc_write);
@@ -118,6 +122,7 @@ Processor::Processor(sc_module_name name_) : sc_module(name_) {
     exec0->o_pc(w.e.pc);
     exec0->o_npc(w.e.npc);
     exec0->o_instr(w.e.instr);
+    exec0->o_breakpoint(w.e.breakpoint);
 
     mem0 = new MemAccess("mem0");
     mem0->i_clk(i_clk);
@@ -189,6 +194,8 @@ Processor::Processor(sc_module_name name_) : sc_module(name_) {
     csr0->i_wena(w.e.csr_wena);
     csr0->i_wdata(w.e.csr_wdata);
     csr0->o_rdata(csr.rdata);
+    csr0->i_break_mode(dbg.break_mode);
+    csr0->i_breakpoint(w.e.breakpoint);
     csr0->i_trap_ena(w.e.trap_ena);
     csr0->i_trap_code(w.e.trap_code);
     csr0->i_trap_pc(w.e.trap_pc);
@@ -227,6 +234,11 @@ Processor::Processor(sc_module_name name_) : sc_module(name_) {
     dbg0->o_clock_cnt(dbg.clock_cnt);
     dbg0->o_executed_cnt(dbg.executed_cnt);
     dbg0->o_halt(dbg.halt);
+    dbg0->i_ebreak(w.e.breakpoint);
+    dbg0->o_break_mode(dbg.break_mode);
+    dbg0->o_br_fetch_valid(dbg.br_fetch_valid);
+    dbg0->o_br_address_fetch(dbg.br_address_fetch);
+    dbg0->o_br_instr_fetch(dbg.br_instr_fetch);
 
     reg_dbg = 0;
     mem_dbg = 0;

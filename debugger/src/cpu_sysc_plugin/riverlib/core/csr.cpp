@@ -17,6 +17,8 @@ CsrRegs::CsrRegs(sc_module_name name_) : sc_module(name_) {
     sensitive << i_addr;
     sensitive << i_wena;
     sensitive << i_wdata;
+    sensitive << i_break_mode;
+    sensitive << i_breakpoint;
     sensitive << i_trap_ena;
     sensitive << i_trap_code;
     sensitive << i_trap_pc;
@@ -178,7 +180,7 @@ void CsrRegs::comb() {
         v.mpp = PRV_U;
     }
 
-    if (i_trap_ena.read()) {
+    if (i_trap_ena.read() && (i_break_mode.read() || !i_breakpoint.read())) {
         v.mie = 0;
         v.mpp = r.mode;
         v.mepc = i_trap_pc.read();

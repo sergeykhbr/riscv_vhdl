@@ -119,6 +119,7 @@ private:
         sc_signal<sc_uint<2>> memop_size;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> memop_addr;
         sc_signal<bool> pipeline_hold;           // Hold pipeline from Execution stage
+        sc_signal<bool> breakpoint;
 
     };
 
@@ -163,7 +164,10 @@ private:
         sc_signal<bool> halt;                       // Halt signal is equal to hold pipeline
         sc_signal<sc_uint<64>> clock_cnt;           // Number of clocks excluding halt state
         sc_signal<sc_uint<64>> executed_cnt;        // Number of executed instruction
-
+        sc_signal<bool> break_mode;                          // Behaviour on EBREAK instruction: 0 = halt; 1 = generate trap
+        sc_signal<bool> br_fetch_valid;                      // Fetch injection address/instr are valid
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> br_address_fetch; // Fetch injection address to skip ebreak instruciton only once
+        sc_signal<sc_uint<32>> br_instr_fetch;               // Real instruction value that was replaced by ebreak
     } dbg;
 
     /** 5-stages CPU pipeline */
