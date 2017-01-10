@@ -104,6 +104,7 @@ architecture arch_Processor of Processor is
         memop_size : std_logic_vector(1 downto 0);
         memop_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
         pipeline_hold : std_logic;                            -- Hold pipeline from Execution stage
+        breakpoint : std_logic;
     end record;
 
     type MemoryType is record
@@ -155,6 +156,10 @@ architecture arch_Processor of Processor is
         halt : std_logic;                                    -- Halt signal is equal to hold pipeline
         clock_cnt : std_logic_vector(63 downto 0);           -- Number of clocks excluding halt state
         executed_cnt : std_logic_vector(63 downto 0);        -- Number of executed instruction
+        break_mode : std_logic;                              -- Behaviour on EBREAK instruction: 0 = halt; 1 = generate trap
+        br_fetch_valid : std_logic;                          -- Fetch injection address/instr are valid
+        br_address_fetch : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0); -- Fetch injection address to skip ebreak instruciton only once
+        br_instr_fetch : std_logic_vector(31 downto 0);      -- Real instruction value that was replaced by ebreak
     end record;
 
     signal ireg : IntRegsType;
@@ -199,7 +204,10 @@ begin
         o_valid => w.f.valid,
         o_pc => w.f.pc,
         o_instr => w.f.instr,
-        o_hold => w.f.pipeline_hold);
+        o_hold => w.f.pipeline_hold,
+        i_br_fetch_valid => dbg.br_fetch_valid,
+        i_br_address_fetch => dbg.br_address_fetch,
+        i_br_instr_fetch => dbg.br_instr_fetch);
         
     dec0 : InstrDecoder port map (
         i_clk => i_clk,
@@ -240,6 +248,7 @@ begin
         i_ie => csr.ie,
         i_mtvec => csr.mtvec,
         i_mode => csr.mode,
+        i_break_mode => dbg.break_mode,
         i_unsup_exception => w.d.exception,
         i_ext_irq => i_ext_irq,
         i_dport_npc_write => dbg.npc_write,
@@ -267,7 +276,8 @@ begin
         o_valid => w.e.valid,
         o_pc => w.e.pc,
         o_npc => w.e.npc,
-        o_instr => w.e.instr);
+        o_instr => w.e.instr,
+        o_breakpoint => w.e.breakpoint);
 
     mem0 : MemAccess port map (
         i_clk => i_clk,
@@ -338,6 +348,8 @@ begin
         i_wena => w.e.csr_wena,
         i_wdata => w.e.csr_wdata,
         o_rdata => csr.rdata,
+        i_break_mode => dbg.break_mode,
+        i_breakpoint => w.e.breakpoint,
         i_trap_ena => w.e.trap_ena,
         i_trap_code => w.e.trap_code,
         i_trap_pc => w.e.trap_pc,
@@ -376,7 +388,12 @@ begin
         i_m_valid => w.m.valid,
         o_clock_cnt => dbg.clock_cnt,
         o_executed_cnt => dbg.executed_cnt,
-        o_halt => dbg.halt);
+        o_halt => dbg.halt,
+        i_ebreak => w.e.breakpoint,
+        o_break_mode => dbg.break_mode,
+        o_br_fetch_valid => dbg.br_fetch_valid,
+        o_br_address_fetch => dbg.br_address_fetch,
+        o_br_instr_fetch => dbg.br_instr_fetch);
 
     o_req_ctrl_valid <= w.f.imem_req_valid;
     o_req_ctrl_addr <= w.f.imem_req_addr;

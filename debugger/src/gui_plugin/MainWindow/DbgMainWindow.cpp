@@ -61,6 +61,7 @@ DbgMainWindow::DbgMainWindow(IGui *igui, event_def *init_done) {
 }
 
 DbgMainWindow::~DbgMainWindow() {
+    igui_->removeFromQueue(static_cast<IGuiCmdHandler *>(this));
 }
 
 void DbgMainWindow::closeEvent(QCloseEvent *ev) {

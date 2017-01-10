@@ -48,13 +48,16 @@ $(EXECUTABLE): $(OBJ_FILES)
 	# Generate starting scripts:
 	@echo "#!/bin/bash\nexport LD_LIBRARY_PATH=\$$(pwd):\$$(pwd)/qtlib\n./appdbg64g.exe -c ../../targets/functional_sim_gui.json \"\$$@\"" > $(ELF_DIR)/_run_functional_sim.sh
 	@echo "#!/bin/bash\nexport LD_LIBRARY_PATH=\$$(pwd):\$$(pwd)/qtlib\n./appdbg64g.exe -c ../../targets/sysc_river_gui.json \"\$$@\"" > $(ELF_DIR)/_run_systemc_sim.sh
+	@echo "#!/bin/bash\nexport LD_LIBRARY_PATH=\$$(pwd):\$$(pwd)/qtlib\n./appdbg64g.exe -c ../../targets/fpga_gui.json \"\$$@\"" > $(ELF_DIR)/_run_fpga_gui.sh
 	chmod +x $(ELF_DIR)/_run_functional_sim.sh
 	chmod +x $(ELF_DIR)/_run_systemc_sim.sh
+	chmod +x $(ELF_DIR)/_run_fpga_gui.sh
 	$(ECHO) "\n  Debugger Test application has been built successfully."
 	$(ECHO) "  To start debugger use one of the prepared targets scripts:."
 	$(ECHO) "      cd ../linuxbuild/bin"
 	$(ECHO) "      ./_run_functional_sim.sh     - Start functional simulation"
 	$(ECHO) "      ./_run_systemc_sim.sh        - Start cycle-true SystemC simulation\n"
+	$(ECHO) "      ./_run_fpga_gui.sh           - Start with FPGA (default COM3, IP:195.168.0.51)\n"
 
 $(addprefix $(OBJ_DIR)/,%.o): %.cpp
 	echo $(CPP) $(CFLAGS) $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $@

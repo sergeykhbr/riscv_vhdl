@@ -30,8 +30,10 @@ InstrExecute::InstrExecute(sc_module_name name_)  : sc_module(name_) {
     sensitive << i_rdata2;
     sensitive << i_csr_rdata;
     sensitive << i_ext_irq;
-    sensitive << i_mtvec;
     sensitive << i_ie;
+    sensitive << i_mtvec;
+    sensitive << i_mode;
+    sensitive << i_break_mode;
     sensitive << i_unsup_exception;
     sensitive << i_dport_npc_write;
     sensitive << i_dport_npc;

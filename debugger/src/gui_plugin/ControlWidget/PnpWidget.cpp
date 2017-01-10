@@ -28,7 +28,7 @@ PnpWidget::PnpWidget(IGui *igui, QWidget *parent) : UnclosableWidget(parent) {
 
     imgTarget_[SIMULATION] = QImage(tr(":/images/ml605_top.png"));
     imgTarget_[ML605] = QImage(tr(":/images/ml605_top.png"));
-    imgTarget_[KC705] = QImage(tr(":/images/ml605_top.png"));
+    imgTarget_[KC705] = QImage(tr(":/images/kc705_top.png"));
     imgTarget_[TARGET_Unknown] = QImage(tr(":/images/ml605_top.png"));
 
 

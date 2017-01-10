@@ -36,6 +36,7 @@ entity InstrExecute is
     i_ie : in std_logic;                                        -- Interrupt enable bit
     i_mtvec : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);   -- Interrupt descriptor table
     i_mode : in std_logic_vector(1 downto 0);                   -- Current processor mode
+    i_break_mode : in std_logic;                                -- Behaviour on EBREAK instruction: 0 = halt; 1 = generate trap
     i_unsup_exception : in std_logic;                           -- Unsupported instruction exception
     i_ext_irq : in std_logic;                                   -- External interrupt from PLIC (todo: timer & software interrupts)
     i_dport_npc_write : in std_logic;                           -- Write npc value from debug port
@@ -66,7 +67,8 @@ entity InstrExecute is
     o_valid : out std_logic;                                    -- Output is valid
     o_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);     -- Valid instruction pointer
     o_npc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);    -- Next instruction pointer. Next decoded pc must match to this value or will be ignored.
-    o_instr : out std_logic_vector(31 downto 0)                 -- Valid instruction value
+    o_instr : out std_logic_vector(31 downto 0);                -- Valid instruction value
+    o_breakpoint : out std_logic                                -- ebreak instruction
   );
 end; 
  
@@ -112,6 +114,7 @@ architecture arch_InstrExecute of InstrExecute is
 
         ext_irq_pulser : std_logic;                            -- Form 1 clock pulse from strob
         trap_ena : std_logic;                                  -- Trap occur, switch mode
+        breakpoint : std_logic;
         trap_code_waiting : std_logic_vector(4 downto 0);      -- To avoid multi-cycle instruction collision
         trap_code : std_logic_vector(4 downto 0);              -- bit[4] : 1 = interrupt; 0 = exception
                                                                -- bit[3:0] : trap code
@@ -218,7 +221,7 @@ begin
                  i_wb_done, i_memop_load, i_memop_store, i_memop_sign_ext,
                  i_memop_size, i_unsigned_op, i_rv32, i_isa_type, i_ivec,
                  i_rdata1, i_rdata2, i_csr_rdata, i_ext_irq, i_dport_npc_write,
-                 i_dport_npc, i_mtvec, i_ie, i_unsup_exception,
+                 i_dport_npc, i_ie, i_mtvec, i_mode, i_break_mode, i_unsup_exception,
                  wb_arith_res, w_arith_valid, w_arith_busy, w_hazard_detected,
                  wb_sll, wb_sllw, wb_srl, wb_srlw, wb_sra, wb_sraw, r)
     variable v : RegistersType;
@@ -289,6 +292,7 @@ begin
     wv := i_ivec;
 
     v := r;
+    v.breakpoint := '0';
 
     wb_mask_i31 := (others => i_d_instr(31));
 
@@ -371,7 +375,8 @@ begin
     w_res_wena := not (wv(Instr_BEQ) or wv(Instr_BGE) or wv(Instr_BGEU)
                or wv(Instr_BLT) or wv(Instr_BLTU) or wv(Instr_BNE)
                or wv(Instr_SD) or wv(Instr_SW) or wv(Instr_SH) or wv(Instr_SB)
-               or wv(Instr_MRET) or wv(Instr_URET));
+               or wv(Instr_MRET) or wv(Instr_URET)
+               or wv(Instr_ECALL) or wv(Instr_EBREAK));
 
     if w_multi_valid = '1' then
         wb_res_addr := r.multi_res_addr;
@@ -437,7 +442,8 @@ begin
     w_exception_load := '0';
 
     w_exception := w_d_acceptable
-        and (i_unsup_exception or w_exception_load or w_exception_store);
+        and (i_unsup_exception or w_exception_load or w_exception_store
+             or wv(Instr_ECALL) or wv(Instr_EBREAK));
 
 
     --! Default number of cycles per instruction = 0 (1 clock per instr)
@@ -565,13 +571,22 @@ begin
     wb_exception_code := (others => '0');
     if (i_ext_irq and i_ie and not r.ext_irq_pulser) = '1' then -- Maskable traps (interrupts)
         v.trap_code_waiting(4) := '1';
-        v.trap_code_waiting(3 downto 0) := INTERRUPT_PLIC;
+        v.trap_code_waiting(3 downto 0) := INTERRUPT_MExternal;
     elsif w_exception = '1' then      -- Unmaskable traps (exceptions)
         wb_exception_code(4) := '0';
         if w_exception_load = '1' then
             wb_exception_code(3 downto 0) := EXCEPTION_LoadMisalign;
         elsif w_exception_store = '1' then
             wb_exception_code(3 downto 0) := EXCEPTION_StoreMisalign;
+        elsif wv(Instr_ECALL) = '1' then
+            if i_mode = PRV_M then
+                wb_exception_code(3 downto 0) := EXCEPTION_CallFromMmode;
+            else
+                wb_exception_code(3 downto 0) := EXCEPTION_CallFromUmode;
+            end if;
+        elsif wv(Instr_EBREAK) = '1' then
+            v.breakpoint := '1';
+            wb_exception_code(3 downto 0) := EXCEPTION_Breakpoint;
         else
             wb_exception_code(3 downto 0) := EXCEPTION_InstrIllegal;
         end if;
@@ -596,7 +611,11 @@ begin
         v.trap_ena := '1';
         v.trap_pc := i_d_pc;
         v.trap_code := wb_exception_code;
-        v.npc := i_mtvec;
+        if (wv(Instr_EBREAK) and i_break_mode) = '1' then
+            v.npc := i_mtvec;
+        else
+            v.npc := i_d_pc;
+        end if;
     elsif w_d_valid = '1' then
         if w_multi_valid = '1' then
             v.pc := r.multi_pc;
@@ -714,6 +733,7 @@ begin
     o_pc <= r.pc;
     o_npc <= r.npc;
     o_instr <= r.instr;
+    o_breakpoint <= r.breakpoint;
     
     rin <= v;
   end process;

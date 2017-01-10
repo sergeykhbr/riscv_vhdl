@@ -336,7 +336,11 @@ begin
         wb_isa_type(ISA_I_type) := '1';
         case wb_opcode2 is
         when "000" =>
-            if wb_instr = X"00200073" then
+            if wb_instr = X"00000073" then
+                wb_dec(Instr_ECALL) := '1';
+            elsif wb_instr = X"00100073" then
+                wb_dec(Instr_EBREAK) := '1';
+            elsif wb_instr = X"00200073" then
                 wb_dec(Instr_URET) := '1';
             elsif wb_instr = X"10200073" then
                 wb_dec(Instr_SRET) := '1';

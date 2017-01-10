@@ -23,6 +23,17 @@ enum EBreakList {
     BrkList_Total
 };
 
+enum EColumnNames {
+    ASM_addrline,
+    ASM_code,
+    ASM_label,
+    ASM_mnemonic,
+    ASM_comment,
+    ASM_codesize,
+    ASM_breakpoint,
+    ASM_Total
+};
+
 static const uint64_t BreakFlag_HW = (1 << 0);
 
 class ISourceCode : public IFace {

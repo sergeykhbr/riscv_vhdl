@@ -112,55 +112,41 @@ private:
     bool addrIsBreakpoint(uint64_t addr, uint8_t *instr, AttributeType *obr);
     int makeAsmAttr(uint64_t addr, uint8_t *data, int offset,
                     AttributeType &out);
+    // Ports:
+    class BreakpointListPort : public IGuiCmdHandler {
+    public:
+        BreakpointListPort(IGui *gui, AttributeType *list)
+            : igui_(gui), p_brList_(list) {
+            cmdBr_.make_string("br");
+        }
+        /** IGuiCmdHandler */
+        virtual void handleResponse(AttributeType *req, AttributeType *resp);
+
+        void update() {
+            igui_->registerCommand(static_cast<IGuiCmdHandler *>(this),
+                                    &cmdBr_, true);
+        }
+    private:
+        IGui *igui_;
+        AttributeType *p_brList_;
+        AttributeType cmdBr_;
+    };
 
     class BreakpointInjectPort : public IGuiCmdHandler {
     public:
-        BreakpointInjectPort(IGui *gui, ISourceCode *src) {
+        BreakpointInjectPort(IGui *gui, AttributeType *list) {
             igui_ = gui;
-            isrc_ = src;
+            p_brList_ = list;
             readNpc_.make_string("reg npc");
-            ISocInfo *isoc = static_cast<ISocInfo *>(igui_->getSocInfo());
-            DsuMapType *dsu = isoc->getpDsu();
-            dsu_sw_br_ =
-                reinterpret_cast<uint64_t>(&dsu->udbg.v.br_address_fetch);
-            dsu_hw_br_ =
-                reinterpret_cast<uint64_t>(&dsu->udbg.v.remove_breakpoint);
+            dsu_sw_br_ = ~0;
+            dsu_hw_br_ = ~0;
         }
 
+        void setBrAddressFetch(uint64_t addr) { dsu_sw_br_ = addr; }
+        void setHwRemoveBreakpoint(uint64_t addr) { dsu_hw_br_ = addr; }
+
         /** IGuiCmdHandler */
-        virtual void handleResponse(AttributeType *req, AttributeType *resp) {
-            char tstr[128];
-            AttributeType memWrite;
-            if (!resp->is_integer()) {
-                return;
-            }
-            uint64_t br_addr = resp->to_uint64();
-            uint32_t br_instr = 0;
-            bool br_hw;
-            isrc_->getBreakpointList(&brList_);
-            for (unsigned i = 0; i < brList_.size(); i++) {
-                const AttributeType &br = brList_[i];
-                if (br_addr == br[0u].to_uint64()) {
-                    br_instr = br[1].to_int();
-                    br_hw = br[2].to_bool();
-                    break;
-                }
-            }
-            if (br_instr == 0) {
-                return;
-            }
-            if (br_hw) {
-                RISCV_sprintf(tstr, sizeof(tstr),
-                        "write 0x%08" RV_PRI64 "x 8 0x%" RV_PRI64 "x",
-                        dsu_hw_br_, br_addr);
-            } else {
-                RISCV_sprintf(tstr, sizeof(tstr),
-                        "write 0x%08" RV_PRI64 "x 16 [0x%" RV_PRI64 "x,0x%x]",
-                        dsu_sw_br_, br_addr, br_instr);
-            }
-            memWrite.make_string(tstr);
-            igui_->registerCommand(NULL, &memWrite, true);
-        }
+        virtual void handleResponse(AttributeType *req, AttributeType *resp);
 
         /** Write address and instruction into fetcher to skip EBREAK once */
         void injectFetch() {
@@ -170,21 +156,13 @@ private:
 
     private:
         AttributeType readNpc_;
-        AttributeType brList_;
+        AttributeType *p_brList_;
         IGui *igui_;
-        ISourceCode *isrc_;
         uint64_t dsu_sw_br_;
         uint64_t dsu_hw_br_;
     }; 
 
 private:
-    AttributeType cmdReadMem_;
-    AttributeType cmdRegs_;
-    AttributeType asmLines_;
-    QString name_;
-    IGui *igui_;
-    ISourceCode *isrc_;
-
     enum EColumnNames {
         COL_addrline,
         COL_code,
@@ -203,15 +181,22 @@ private:
         CMD_memdata,
     };
 
+    AttributeType cmdReadMem_;
+    AttributeType cmdRegs_;
+    AttributeType asmLines_;
+    QString name_;
+    IGui *igui_;
+    ISourceCode *isrc_;
+
     AttributeType data_;
     AttributeType tmpBuf_;
     AttributeType dataText_;
     AttributeType brList_;
-    AttributeType addrBrAddrFetch_;
 
     int lineHeight_;
     ECmdState state_;
     LinesViewModel rangeModel_;
+    BreakpointListPort *portBrList_;
     BreakpointInjectPort *portBreak_;
 };
 

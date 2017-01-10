@@ -21,12 +21,12 @@ static const int LINES_MAX = 20;    // remove it
 AsmArea::AsmArea(IGui *gui, QWidget *parent)
     : QTableWidget(parent) {
     igui_ = gui;
+    isrc_ = 0;
     cmdRegs_.make_string("reg npc");
     cmdReadMem_.make_string("read 0x80000000 20");
     data_.make_data(8);
     tmpBuf_.make_data(1024);
     dataText_.make_string("");
-    isrc_ = 0;
     state_ = CMD_idle;
 
     clear();
@@ -48,6 +48,8 @@ AsmArea::AsmArea(IGui *gui, QWidget *parent)
     asmLines_.make_list(LINES_MAX);
     rangeModel_.setMaxLines(LINES_MAX);
     brList_.make_list(0);
+    portBrList_ = new BreakpointListPort(igui_, &brList_);
+    portBreak_ = new BreakpointInjectPort(igui_, &brList_);
     
     verticalHeader()->setVisible(false);        // remove row indexes
     setShowGrid(false);                         // remove borders
@@ -88,9 +90,11 @@ AsmArea::AsmArea(IGui *gui, QWidget *parent)
 }
 
 AsmArea::~AsmArea() {
-    if (portBreak_) {
-        delete portBreak_;
-    }
+    igui_->removeFromQueue(static_cast<IGuiCmdHandler *>(this));
+    igui_->removeFromQueue(static_cast<IGuiCmdHandler *>(portBrList_));
+    igui_->removeFromQueue(static_cast<IGuiCmdHandler *>(portBreak_));
+    delete portBrList_;
+    delete portBreak_;
 }
 
 void AsmArea::slotPostInit(AttributeType *cfg) {
@@ -102,16 +106,18 @@ void AsmArea::slotPostInit(AttributeType *cfg) {
     IService *iserv = static_cast<IService *>(src_list[0u].to_iface());
     isrc_ = static_cast<ISourceCode *>(iserv->getInterface(IFACE_SOURCE_CODE));
 
+    // Prepare commands that don't change in run-time:
     ISocInfo *isoc = static_cast<ISocInfo *>(igui_->getSocInfo());
     DsuMapType *dsu = isoc->getpDsu();
 
-    portBreak_ = new BreakpointInjectPort(igui_, isrc_);
-
-    addrBrAddrFetch_.make_uint64(
+    portBreak_->setBrAddressFetch(
         reinterpret_cast<uint64_t>(&dsu->udbg.v.br_address_fetch));
+    portBreak_->setHwRemoveBreakpoint(
+        reinterpret_cast<uint64_t>(&dsu->udbg.v.remove_breakpoint));
 }
 
 void AsmArea::slotUpdateByTimer() {
+    portBrList_->update();      // doesn't use tap interface
     switch (state_) {
     case CMD_idle:
         igui_->registerCommand(static_cast<IGuiCmdHandler *>(this),
@@ -134,10 +140,8 @@ void AsmArea::slotCellDoubleClicked(int row, int column) {
         return;
     }
     char tstr[128];
-    uint64_t addr = asmLines_[row][COL_addrline].to_uint64();
-    isrc_->getBreakpointList(&brList_);
-
     bool br_add = true;
+    uint64_t addr = asmLines_[row][COL_addrline].to_uint64();
     for (unsigned i = 0; i < brList_.size(); i++) {
         const AttributeType &br = brList_[i];
         if (br[0u].to_uint64() == addr) {
@@ -152,11 +156,65 @@ void AsmArea::slotCellDoubleClicked(int row, int column) {
     AttributeType brcmd(tstr);
     // Do not handle breakpoint responses:
     igui_->registerCommand(NULL, &brcmd, true);
+    portBrList_->update();
     rangeModel_.updateAddr(addr);
 }
 
 void AsmArea::slotHandleResponse() {
     outLines();
+}
+
+void AsmArea::BreakpointListPort::handleResponse(AttributeType *req,
+                                                AttributeType *resp) {
+    if (!resp->is_list()) {
+        return;
+    }
+    if (resp->size() != p_brList_->size()) {
+        (*p_brList_) = (*resp);
+        return;
+    }
+    for (unsigned i = 0; i < resp->size(); i++) {
+        const AttributeType &br1 = (*resp)[i];
+        AttributeType &br2 = (*p_brList_)[i];
+        if (br1[BrkList_address].to_uint64() 
+            != br2[BrkList_address].to_uint64()) {
+            br2 = br1;
+        }
+    }
+}
+
+void AsmArea::BreakpointInjectPort::handleResponse(AttributeType *req,
+                                                   AttributeType *resp) {
+    char tstr[128];
+    AttributeType memWrite;
+    if (!resp->is_integer()) {
+        return;
+    }
+    uint64_t br_addr = resp->to_uint64();
+    uint32_t br_instr = 0;
+    bool br_hw;
+    for (unsigned i = 0; i < (*p_brList_).size(); i++) {
+        const AttributeType &br = (*p_brList_)[i];
+        if (br_addr == br[BrkList_address].to_uint64()) {
+            br_instr = br[BrkList_instr].to_int();
+            br_hw = br[BrkList_hwflag].to_bool();
+            break;
+        }
+    }
+    if (br_instr == 0) {
+        return;
+    }
+    if (br_hw) {
+        RISCV_sprintf(tstr, sizeof(tstr),
+                "write 0x%08" RV_PRI64 "x 8 0x%" RV_PRI64 "x",
+                dsu_hw_br_, br_addr);
+    } else {
+        RISCV_sprintf(tstr, sizeof(tstr),
+                "write 0x%08" RV_PRI64 "x 16 [0x%" RV_PRI64 "x,0x%x]",
+                dsu_sw_br_, br_addr, br_instr);
+    }
+    memWrite.make_string(tstr);
+    igui_->registerCommand(NULL, &memWrite, true);
 }
 
 void AsmArea::handleResponse(AttributeType *req, AttributeType *resp) {
@@ -188,7 +246,6 @@ void AsmArea::handleResponse(AttributeType *req, AttributeType *resp) {
             state_ = CMD_idle;
             return;
         }
-        isrc_->getBreakpointList(&brList_);
         data2lines(rangeModel_.getReqAddr(), *resp, asmLines_);
         rangeModel_.updateRange();
         emit signalHandleResponse();

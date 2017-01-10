@@ -15,12 +15,19 @@ CmdBr::CmdBr(ITap *tap, ISocInfo *info)
     briefDescr_.make_string("Add or remove breakpoint.");
     detailedDescr_.make_string(
         "Description:\n"
-        "    Add or remove memory breakpoint (software/hardware).\n"
+        "    Get breakpoints list or add/remove breakpoint with specified\n"
+        "    flags.\n"
+        "Response:\n"
+        "    List of lists [[iii]*] if breakpoint list was requested, where:\n"
+        "        i    - uint64_t address value\n"
+        "        i    - uint32_t instruction value\n"
+        "        i    - uint64_t Breakpoint flags: hardware,...\n"
+        "    Nil in a case of add/rm breakpoint\n"
         "Usage:\n"
+        "    br"
         "    br add <addr>\n"
         "    br rm <addr>\n"
         "    br add <addr> hw\n"
-        "    br rm <addr> hw\n"
         "Example:\n"
         "    br add 0x10000000\n"
         "    br add 0x00020040 hw\n"
@@ -38,7 +45,8 @@ CmdBr::CmdBr(ITap *tap, ISocInfo *info)
 
 bool CmdBr::isValid(AttributeType *args) {
     if ((*args)[0u].is_equal(cmdName_.to_string()) 
-        && (args->size() >= 3 && (*args)[1].is_string())) {
+        && (args->size() == 1 || (args->size() >= 3 && (*args)[1].is_string()))
+        ) {
         return CMD_VALID;
     }
     return CMD_INVALID;
@@ -50,6 +58,11 @@ void CmdBr::exec(AttributeType *args, AttributeType *res) {
         generateError(res, "Wrong argument list");
         return;
     }
+    if (args->size() == 1) {
+        isrc_->getBreakpointList(res);
+        return;
+    }
+
     uint64_t flags = 0;
     if (args->size() == 4 && (*args)[3].is_equal("hw")) {
         flags |= BreakFlag_HW;

@@ -41,9 +41,14 @@ entity DbgPort is
     i_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);   -- Region 1: Next Instruction pointer
     i_e_valid : in std_logic;                                 -- Stepping control signal
     i_m_valid : in std_logic;                                 -- To compute number of valid executed instruction
-    o_clock_cnt : out std_logic_vector(63 downto 0);           -- Number of clocks excluding halt state
-    o_executed_cnt : out std_logic_vector(63 downto 0);        -- Number of executed instructions
-    o_halt : out std_logic                                    -- Halt signal is equal to hold pipeline
+    o_clock_cnt : out std_logic_vector(63 downto 0);          -- Number of clocks excluding halt state
+    o_executed_cnt : out std_logic_vector(63 downto 0);       -- Number of executed instructions
+    o_halt : out std_logic;                                   -- Halt signal is equal to hold pipeline
+    i_ebreak : in std_logic;                                  -- ebreak instruction decoded
+    o_break_mode : out std_logic;                             -- Behaviour on EBREAK instruction: 0 = halt; 1 = generate trap
+    o_br_fetch_valid : out std_logic;                         -- Fetch injection address/instr are valid
+    o_br_address_fetch : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0); -- Fetch injection address to skip ebreak instruciton only once
+    o_br_instr_fetch : out std_logic_vector(31 downto 0)      -- Real instruction value that was replaced by ebreak
   );
 end; 
  
@@ -55,8 +60,13 @@ architecture arch_DbgPort of DbgPort is
   type RegistersType is record
       ready : std_logic;
       halt : std_logic;
+      breakpoint : std_logic;
       stepping_mode : std_logic;
       stepping_mode_cnt : std_logic_vector(RISCV_ARCH-1 downto 0);
+      trap_on_break : std_logic;
+      br_address_fetch : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+      br_instr_fetch : std_logic_vector(31 downto 0);
+      br_fetch_valid : std_logic;
 
       rdata : std_logic_vector(RISCV_ARCH-1 downto 0);
       stepping_mode_steps : std_logic_vector(RISCV_ARCH-1 downto 0); -- Number of steps before halt in stepping mode
@@ -70,7 +80,7 @@ begin
 
   comb : process(i_nrst, i_dport_valid, i_dport_write, i_dport_region, 
                  i_dport_addr, i_dport_wdata, i_ireg_rdata, i_csr_rdata,
-                 i_pc, i_npc, i_e_valid, i_m_valid, r)
+                 i_pc, i_npc, i_e_valid, i_m_valid, i_ebreak, r)
     variable v : RegistersType;
     variable wb_o_core_addr : std_logic_vector(11 downto 0);
     variable wb_o_core_wdata : std_logic_vector(RISCV_ARCH-1 downto 0);
@@ -95,6 +105,7 @@ begin
     w_o_ireg_ena := '0';
     w_o_ireg_write := '0';
     w_o_npc_write := '0';
+    v.br_fetch_valid := '0';
 
     v.ready := i_dport_valid;
 
@@ -116,6 +127,13 @@ begin
     if i_m_valid = '1' then
         v.executed_cnt := r.executed_cnt + 1;
     end if;
+    if i_ebreak = '1' then
+        v.breakpoint := '1';
+        if r.trap_on_break = '0' then
+            v.halt := '1';
+        end if;
+    end if;
+
 
     if i_dport_valid = '1' then
         case i_dport_region is
@@ -150,6 +168,7 @@ begin
             case wb_idx is
             when 0 =>
                 wb_rdata(0) := r.halt;
+                wb_rdata(2) := r.breakpoint;
                 if i_dport_write = '1' then
                     v.halt := i_dport_wdata(0);
                     v.stepping_mode := i_dport_wdata(1);
@@ -167,9 +186,29 @@ begin
             when 3 =>
                 wb_rdata := r.executed_cnt;
             when 4 =>
-                -- todo: add hardware breakpoint
+                --! Trap on instruction:
+                --!      0 = Halt pipeline on ECALL instruction
+                --!      1 = Generate trap on ECALL instruction
+                wb_rdata(0) := r.trap_on_break;
+                if i_dport_write = '1' then
+                    v.trap_on_break := i_dport_wdata(0);
+                end if;
             when 5 =>
+                -- todo: add hardware breakpoint
+            when 6 =>
                 -- todo: remove hardware breakpoint
+            when 7 =>
+                wb_rdata(BUS_ADDR_WIDTH-1 downto 0) := r.br_address_fetch;
+                if i_dport_write = '1' then
+                    v.br_address_fetch := i_dport_wdata(BUS_ADDR_WIDTH-1 downto 0);
+                end if;
+            when 8 =>
+                wb_rdata(31 downto 0) := r.br_instr_fetch;
+                if i_dport_write = '1' then
+                    v.br_fetch_valid := '1';
+                    v.breakpoint := '0';
+                    v.br_instr_fetch := i_dport_wdata(31 downto 0);
+                end if;
             when others =>
             end case;
         when others =>
@@ -180,12 +219,17 @@ begin
     if i_nrst = '0' then
         v.ready := '0';
         v.halt := '0';
+        v.breakpoint := '0';
         v.stepping_mode := '0';
         v.rdata := (others => '0');
         v.stepping_mode_cnt := (others => '0');
         v.stepping_mode_steps := (others => '0');
         v.clock_cnt := (others => '0');
         v.executed_cnt := (others => '0');
+        v.trap_on_break := '0';
+        v.br_address_fetch := (others => '0');
+        v.br_instr_fetch := (others => '0');
+        v.br_fetch_valid := '0';
     end if;
 
     rin <= v;
@@ -200,6 +244,10 @@ begin
     o_clock_cnt <= r.clock_cnt;
     o_executed_cnt <= r.executed_cnt;
     o_halt <= r.halt or w_cur_halt;
+    o_break_mode <= r.trap_on_break;
+    o_br_fetch_valid <= r.br_fetch_valid;
+    o_br_address_fetch <= r.br_address_fetch;
+    o_br_instr_fetch <= r.br_instr_fetch;
 
     o_dport_ready <= r.ready;
     o_dport_rdata <= r.rdata;

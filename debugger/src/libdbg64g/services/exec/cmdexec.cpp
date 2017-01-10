@@ -23,6 +23,7 @@
 #include "cmd/cmd_cpi.h"
 #include "cmd/cmd_status.h"
 #include "cmd/cmd_reset.h"
+#include "cmd/cmd_disas.h"
 
 namespace debugger {
 
@@ -61,23 +62,24 @@ void CmdExecutor::postinitService() {
             (RISCV_get_service_iface(socInfo_.to_string(), 
                                     IFACE_SOC_INFO));
 
-    cmds_.make_list(16);
+    cmds_.make_list(17);
     cmds_[0u].make_iface(new CmdBr(itap_, info_));
     cmds_[1].make_iface(new CmdCpi(itap_, info_));
     cmds_[2].make_iface(new CmdCsr(itap_, info_));
-    cmds_[3].make_iface(new CmdExit(itap_, info_));
-    cmds_[4].make_iface(new CmdHalt(itap_, info_));
-    cmds_[5].make_iface(new CmdIsRunning(itap_, info_));
-    cmds_[6].make_iface(new CmdLoadElf(itap_, info_));
-    cmds_[7].make_iface(new CmdLog(itap_, info_));
-    cmds_[8].make_iface(new CmdMemDump(itap_, info_));
-    cmds_[9].make_iface(new CmdRead(itap_, info_));
-    cmds_[10].make_iface(new CmdRun(itap_, info_));
-    cmds_[11].make_iface(new CmdReg(itap_, info_));
-    cmds_[12].make_iface(new CmdRegs(itap_, info_));
-    cmds_[13].make_iface(new CmdReset(itap_, info_));
-    cmds_[14].make_iface(new CmdStatus(itap_, info_));
-    cmds_[15].make_iface(new CmdWrite(itap_, info_));
+    cmds_[3].make_iface(new CmdDisas(itap_, info_));
+    cmds_[4].make_iface(new CmdExit(itap_, info_));
+    cmds_[5].make_iface(new CmdHalt(itap_, info_));
+    cmds_[6].make_iface(new CmdIsRunning(itap_, info_));
+    cmds_[7].make_iface(new CmdLoadElf(itap_, info_));
+    cmds_[8].make_iface(new CmdLog(itap_, info_));
+    cmds_[9].make_iface(new CmdMemDump(itap_, info_));
+    cmds_[10].make_iface(new CmdRead(itap_, info_));
+    cmds_[11].make_iface(new CmdRun(itap_, info_));
+    cmds_[12].make_iface(new CmdReg(itap_, info_));
+    cmds_[13].make_iface(new CmdRegs(itap_, info_));
+    cmds_[14].make_iface(new CmdReset(itap_, info_));
+    cmds_[15].make_iface(new CmdStatus(itap_, info_));
+    cmds_[16].make_iface(new CmdWrite(itap_, info_));
 }
 
 void CmdExecutor::exec(const char *line, AttributeType *res, bool silent) {
@@ -91,12 +93,14 @@ void CmdExecutor::exec(const char *line, AttributeType *res, bool silent) {
         cmd.make_string(line);
     }
 
+    AttributeType listArgs(Attr_List), *cmd_parsed;
     if (cmd.is_string()) {
-        /** Process simple string command */
-        processSimple(&cmd, res);
+        splitLine(const_cast<char *>(cmd.to_string()), &listArgs);
+        cmd_parsed = &listArgs;
     } else {
-        /** Process scripted in JSON format command */
+        cmd_parsed = &cmd;
     }
+    processSimple(cmd_parsed, res);
 
     RISCV_mutex_unlock(&mutexExec_);
 
@@ -131,15 +135,13 @@ void CmdExecutor::processSimple(AttributeType *cmd, AttributeType *res) {
     }
 
     ICommand *icmd;
-    AttributeType listArgs(Attr_List);
-    splitLine(const_cast<char *>(cmd->to_string()), &listArgs);
-    if (!listArgs[0u].is_string()) {
+    if (!(*cmd)[0u].is_string()) {
         RISCV_error("Wrong command format", NULL);
         return;
     }
 
-    if (listArgs[0u].is_equal("help")) {
-        if (listArgs.size() == 1) {
+    if ((*cmd)[0u].is_equal("help")) {
+        if (cmd->size() == 1) {
             RISCV_printf0("** List of supported commands: **", NULL);
             for (unsigned i = 0; i < cmds_.size(); i++) {
                 icmd = static_cast<ICommand *>(cmds_[i].to_iface());
@@ -147,7 +149,7 @@ void CmdExecutor::processSimple(AttributeType *cmd, AttributeType *res) {
                         icmd->cmdName(), icmd->briefDescr());
             }
         } else {
-            const char *helpcmd = listArgs[1].to_string();
+            const char *helpcmd = (*cmd)[1].to_string();
             icmd = getICommand(helpcmd);
             if (icmd) {
                 RISCV_printf0("\n%s", icmd->detailedDescr());
@@ -159,13 +161,13 @@ void CmdExecutor::processSimple(AttributeType *cmd, AttributeType *res) {
     }
 
     AttributeType u;
-    icmd = getICommand(&listArgs);
+    icmd = getICommand(cmd);
     if (!icmd) {
         RISCV_error("Command '%s' not found. Use 'help' to list commands",
-                    listArgs[0u].to_string());
+                    (*cmd)[0u].to_string());
         return;
     }
-    icmd->exec(&listArgs, res);
+    icmd->exec(cmd, res);
 
     if (cmdIsError(res)) {
         RISCV_error("Command '%s' error: '%s'", 

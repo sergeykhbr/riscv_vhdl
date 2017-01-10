@@ -23,6 +23,8 @@ entity CsrRegs is
     i_wena : in std_logic;                                  -- Write enable
     i_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0);   -- CSR writing value
     o_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0);  -- CSR read value
+    i_break_mode : in std_logic;                            -- Behaviour on EBREAK instruction: 0 = halt; 1 = generate trap
+    i_breakpoint : in std_logic;                            -- Breakpoint (Trap or not depends of mode)
     i_trap_ena : in std_logic;                              -- Trap pulse
     i_trap_code : in std_logic_vector(4 downto 0);          -- bit[4] : 1=interrupt; 0=exception; bits[3:0]=code
     i_trap_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- trap on pc
@@ -153,7 +155,8 @@ architecture arch_CsrRegs of CsrRegs is
 
 begin
 
-  comb : process(i_nrst, i_xret, i_addr, i_wena, i_wdata, i_trap_ena,
+  comb : process(i_nrst, i_xret, i_addr, i_wena, i_wdata, 
+                 i_break_mode, i_breakpoint, i_trap_ena,
                  i_dport_ena, i_dport_write, i_dport_addr, i_dport_wdata,
                  i_trap_code, i_trap_pc, r)
     variable v : RegistersType;
@@ -181,7 +184,7 @@ begin
         v.mpp := PRV_U;
     end if;
 
-    if i_trap_ena = '1' then
+    if (i_trap_ena and (i_break_mode or not i_breakpoint)) = '1' then
         v.mie := '0';
         v.mpp := r.mode;
         v.mepc(RISCV_ARCH-1 downto BUS_ADDR_WIDTH) := (others => '0');

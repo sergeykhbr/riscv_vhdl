@@ -164,7 +164,9 @@ package river_cfg is
   constant Instr_REMU : integer := 68;
   constant Instr_REMW : integer := 69;
   constant Instr_REMUW : integer := 70;
-  constant Instr_Total : integer := 71;
+  constant Instr_ECALL : integer := 71;
+  constant Instr_EBREAK : integer := 72;
+  constant Instr_Total : integer := 73;
   --! @}
 
   --! @name PRV bits possible values:
@@ -257,8 +259,30 @@ package river_cfg is
 
   --! @name   Interrupts
   --! @{
-  -- External interrupt from PLIC
-  constant INTERRUPT_PLIC : std_logic_vector(3 downto 0) := X"B";
+  -- User software interrupt
+  constant INTERRUPT_USoftware       : std_logic_vector(3 downto 0) := X"0";
+  -- Superuser software interrupt
+  constant INTERRUPT_SSoftware       : std_logic_vector(3 downto 0) := X"1";
+  -- Hypervisor software itnerrupt
+  constant INTERRUPT_HSoftware       : std_logic_vector(3 downto 0) := X"2";
+  -- Machine software interrupt
+  constant INTERRUPT_MSoftware       : std_logic_vector(3 downto 0) := X"3";
+  -- User timer interrupt
+  constant INTERRUPT_UTimer          : std_logic_vector(3 downto 0) := X"4";
+  -- Superuser timer interrupt
+  constant INTERRUPT_STimer          : std_logic_vector(3 downto 0) := X"5";
+  -- Hypervisor timer interrupt
+  constant INTERRUPT_HTimer          : std_logic_vector(3 downto 0) := X"6";
+  -- Machine timer interrupt
+  constant INTERRUPT_MTimer          : std_logic_vector(3 downto 0) := X"7";
+  -- User external interrupt
+  constant INTERRUPT_UExternal       : std_logic_vector(3 downto 0) := X"8";
+  -- Superuser external interrupt
+  constant INTERRUPT_SExternal       : std_logic_vector(3 downto 0) := X"9";
+  -- Hypervisor external interrupt
+  constant INTERRUPT_HExternal       : std_logic_vector(3 downto 0) := X"A";
+  -- Machine external interrupt (from PLIC)
+  constant INTERRUPT_MExternal       : std_logic_vector(3 downto 0) := X"B";
   --! @}
 
 
@@ -287,14 +311,16 @@ package river_cfg is
   );
   end component; 
 
-  --! @param[in] i_clk CPU clock
-  --! @param[in] i_nrst Reset. Active LOW.
-  --! @param[in] i_xret XRet instruction signals mode switching
-  --! @param[in] i_addr CSR address, if xret=1 switch mode accordingly
-  --! @param[in] i_wena Write enable
-  --! @param[in] i_wdata CSR writing value
-  --! @param[out] o_rdata CSR read value
-  --! @param[in] i_trap_ena Trap pulse
+  --! @param[in] i_clk          CPU clock
+  --! @param[in] i_nrst         Reset. Active LOW.
+  --! @param[in] i_xret         XRet instruction signals mode switching
+  --! @param[in] i_addr         CSR address, if xret=1 switch mode accordingly
+  --! @param[in] i_wena         Write enable
+  --! @param[in] i_wdata        CSR writing value
+  --! @param[out] o_rdata       CSR read value
+  --! @param[in] i_break_mode   Behaviour on EBREAK instruction: 0 = halt; 1 = generate trap
+  --! @param[in] i_breakpoint   Breakpoint (Trap or not depends of mode)
+  --! @param[in] i_trap_ena     Trap pulse
   --! @param[in] i_trap_code    bit[4] : 1=interrupt; 0=exception; bits[3:0]=code
   --! @param[in] i_trap_pc      trap on pc
   --! @param[out] o_ie          Interrupt enable bit
@@ -304,7 +330,7 @@ package river_cfg is
   --! @param[in] i_dport_write  Debug port Write enable
   --! @param[in] i_dport_addr   Debug port CSR address
   --! @param[in] i_dport_wdata  Debug port CSR writing value
---! @param[out] o_dport_rdata   Debug port CSR read value
+  --! @param[out] o_dport_rdata Debug port CSR read value
   component CsrRegs is
   port (
     i_clk : in std_logic;
@@ -314,6 +340,8 @@ package river_cfg is
     i_wena : in std_logic;
     i_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0);
     o_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0);
+    i_break_mode : in std_logic;
+    i_breakpoint : in std_logic;
     i_trap_ena : in std_logic;
     i_trap_code : in std_logic_vector(4 downto 0);
     i_trap_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
@@ -388,6 +416,7 @@ package river_cfg is
   --! @param[in] i_ie Interrupt enable bit
   --! @param[in] i_mtvec Interrupt descriptor table
   --! @param[in] i_mode Current processor mode
+  --! @param[in] i_break_mode        Behaviour on EBREAK instruction: 0 = halt; 1 = generate trap
   --! @param[in] i_unsup_exception   Unsupported instruction exception
   --! @param[in] i_ext_irq           External interrupt from PLIC (todo: timer & software interrupts)
   --! @param[in] i_dport_npc_write   Write npc value from debug port
@@ -412,10 +441,11 @@ package river_cfg is
   --! @param[out] o_memop_store Store data instruction
   --! @param[out] o_memop_size 0=1bytes; 1=2bytes; 2=4bytes; 3=8bytes
   --! @param[out] o_memop_addr  Memory access address
-  --! @param[out] o_valid  Output is valid
-  --! @param[out] o_pc Valid instruction pointer
-  --! @param[out] o_npc Next instruction pointer. Next decoded pc must match to this value or will be ignored.
-  --! @param[out] o_instr Valid instruction value
+  --! @param[out] o_valid       Output is valid
+  --! @param[out] o_pc          Valid instruction pointer
+  --! @param[out] o_npc         Next instruction pointer. Next decoded pc must match to this value or will be ignored.
+  --! @param[out] o_instr       Valid instruction value
+  --! @param[out] o_breakpoint  ebreak instruction
   component InstrExecute is
   port (
     i_clk  : in std_logic;
@@ -436,6 +466,7 @@ package river_cfg is
     i_ie : in std_logic;
     i_mtvec : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_mode : in std_logic_vector(1 downto 0);
+    i_break_mode : in std_logic;
     i_unsup_exception : in std_logic;
     i_ext_irq : in std_logic;
     i_dport_npc_write : in std_logic;
@@ -463,7 +494,8 @@ package river_cfg is
     o_valid : out std_logic;
     o_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     o_npc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    o_instr : out std_logic_vector(31 downto 0)
+    o_instr : out std_logic_vector(31 downto 0);
+    o_breakpoint : out std_logic
   );
   end component; 
 
@@ -480,11 +512,15 @@ package river_cfg is
   --! @param[in] i_e_npc
   --! @param[in] i_predict_npc
   --! @param[out] o_predict_miss
-  --! @param[out] o_mem_req_fire   Used by branch predictor to form new npc value
+  --! @param[out] o_mem_req_fire    Used by branch predictor to form new npc value
   --! @param[out] o_valid
   --! @param[out] o_pc
   --! @param[out] o_instr
-  --! @param[out] o_hold
+  --! @param[out] o_hold            Hold due no response from icache yet
+  --! @param[in] i_br_fetch_valid   Fetch injection address/instr are valid
+  --! @param[in] i_br_address_fetch Fetch injection address to skip ebreak instruciton only once
+  --! @param[in] i_br_instr_fetch   Real instruction value that was replaced by ebreak
+
   component InstrFetch is
   port (
     i_clk  : in std_logic;
@@ -505,7 +541,10 @@ package river_cfg is
     o_valid : out std_logic;
     o_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     o_instr : out std_logic_vector(31 downto 0);
-    o_hold : out std_logic
+    o_hold : out std_logic;
+    i_br_fetch_valid : in std_logic;
+    i_br_address_fetch : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_br_instr_fetch : in std_logic_vector(31 downto 0)
   );
   end component; 
 
@@ -633,6 +672,11 @@ package river_cfg is
   --! @param[out] o_clock_cnt     Number of clocks excluding halt state
   --! @param[out] o_executed_cnt  Number of executed instructions
   --! @param[out] o_halt          Halt signal is equal to hold pipeline
+  --! @param[in] i_ebreak            ebreak instruction decoded
+  --! @param[out] o_break_mode       Behaviour on EBREAK instruction: 0 = halt; 1 = generate trap
+  --! @param[out] o_br_fetch_valid   Fetch injection address/instr are valid
+  --! @param[out] o_br_address_fetch Fetch injection address to skip ebreak instruciton only once
+  --! @param[out] o_br_instr_fetch   Real instruction value that was replaced by ebreak
   component DbgPort
   is port (
     i_clk : in std_logic;
@@ -659,7 +703,12 @@ package river_cfg is
     i_m_valid : in std_logic;
     o_clock_cnt : out std_logic_vector(63 downto 0);
     o_executed_cnt : out std_logic_vector(63 downto 0);
-    o_halt : out std_logic
+    o_halt : out std_logic;
+    i_ebreak : in std_logic;
+    o_break_mode : out std_logic;
+    o_br_fetch_valid : out std_logic;
+    o_br_address_fetch : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_br_instr_fetch : out std_logic_vector(31 downto 0)
   );
   end component; 
 

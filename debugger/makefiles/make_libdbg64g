@@ -50,6 +50,7 @@ SOURCES = \
 	cmd_br \
 	cmd_cpi \
 	cmd_csr \
+	cmd_disas \
 	cmd_halt \
 	cmd_isrunning \
 	cmd_loadelf \

@@ -31,3 +31,4 @@ xcopy %GUI_PLUGIN_SRC%\resources\gui.rcc %COPY_TO%\resources\ /F /R /Y /D
 @echo off
 @echo appdbg64g.exe -c ../../targets/functional_sim_gui.json > %COPY_TO%\_run_functional_sim.bat
 @echo appdbg64g.exe -c ../../targets/sysc_river_gui.json > %COPY_TO%\_run_systemc_sim.bat
+@echo appdbg64g.exe -c ../../targets/fpga_gui.json > %COPY_TO%\_run_fpga_gui.bat
