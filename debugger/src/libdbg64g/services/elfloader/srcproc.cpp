@@ -145,6 +145,68 @@ int SourceService::disasm(uint64_t pc,
     return 4;
 }
 
+void SourceService::disasm(uint64_t pc,
+                          AttributeType *idata,
+                          AttributeType *asmlist) {
+    asmlist->make_list(0);
+    if (!idata->is_data()) {
+        return;
+    }
+    uint8_t *data = idata->data();
+
+    AttributeType asm_item;
+    asm_item.make_list(ASM_Total);
+    uint64_t off = 0;
+    uint32_t val, opcode1;
+    int codesz;
+
+    while (static_cast<unsigned>(off) < idata->size()) {
+        val = *reinterpret_cast<uint32_t*>(&data[off]);
+        opcode1 = (val >> 2) & 0x1f;
+        asm_item[ASM_addrline].make_uint64(pc + off);
+        asm_item[ASM_code].make_uint64(val);
+        asm_item[ASM_breakpoint].make_boolean(false);
+        asm_item[ASM_label].make_string("");
+        if ((val & 0x3) != 0x3) {
+            asm_item[ASM_mnemonic].make_string("err");
+            asm_item[ASM_comment].make_string("");
+            asm_item[ASM_codesize].make_uint64(4);
+            asmlist->add_to_list(&asm_item);
+            off += 4;
+            continue;
+        }
+        if (!tblOpcode1_[opcode1]) {
+            asm_item[ASM_mnemonic].make_string("unimpl");
+            asm_item[ASM_comment].make_string("");
+            asm_item[ASM_codesize].make_uint64(4);
+            asmlist->add_to_list(&asm_item);
+            off += 4;
+            continue;
+        }
+
+        if (val == 0x00100073) {
+            asm_item[ASM_breakpoint].make_boolean(true);
+            for (unsigned i = 0; i < brList_.size(); i++) {
+                const AttributeType &br = brList_[i];
+                if ((pc + off) == br[BrkList_address].to_uint64()) {
+                    val = br[BrkList_instr].to_uint32();
+                    opcode1 = (val >> 2) & 0x1f;
+                    asm_item[ASM_code].make_uint64(val);
+                    break;
+                }
+            }
+            
+        }
+        codesz = tblOpcode1_[opcode1](pc + off,
+                                      val,
+                                      &asm_item[ASM_mnemonic],
+                                      &asm_item[ASM_comment]);
+        asm_item[ASM_codesize].make_uint64(codesz);
+        asmlist->add_to_list(&asm_item);
+        off += codesz;
+    }
+}
+
 int opcode_0x00(uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment) {
     char tstr[128] = "unimpl";

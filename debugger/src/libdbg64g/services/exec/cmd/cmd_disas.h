@@ -26,6 +26,9 @@ public:
     virtual void exec(AttributeType *args, AttributeType *res);
 
 private:
+    void format(AttributeType *asmbuf, AttributeType *fmtstr);
+
+private:
     ISourceCode *isrc_;
 };
 

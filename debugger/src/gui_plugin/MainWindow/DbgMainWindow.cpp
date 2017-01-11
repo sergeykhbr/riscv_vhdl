@@ -145,10 +145,10 @@ void DbgMainWindow::createActions() {
 
     actionRun_ = new QAction(QIcon(tr(":/images/start_96x96.png")),
                              tr("&Run"), this);
-    actionRun_ ->setToolTip(tr("Start Execution"));
-    actionRun_ ->setShortcut(QKeySequence("F5"));
-    actionRun_ ->setCheckable(true);
-    actionRun_ ->setChecked(false);
+    actionRun_->setToolTip(tr("Start Execution (F5)"));
+    actionRun_->setShortcut(QKeySequence("F5"));
+    actionRun_->setCheckable(true);
+    actionRun_->setChecked(false);
     connect(actionRun_ , SIGNAL(triggered()),
             this, SLOT(slotActionTargetRun()));
     connect(this, SIGNAL(signalTargetStateChanged(bool)),
@@ -156,15 +156,15 @@ void DbgMainWindow::createActions() {
 
     actionHalt_ = new QAction(QIcon(tr(":/images/pause_96x96.png")),
                               tr("&Halt"), this);
-    actionHalt_ ->setToolTip(tr("Stop Execution"));
-    actionHalt_ ->setShortcut(QKeySequence("Ctrl+b"));
+    actionHalt_->setToolTip(tr("Stop Execution (Ctrl+Alt+F5)"));
+    actionHalt_->setShortcut(QKeySequence("Ctrl+Alt+F5"));
     connect(actionHalt_ , SIGNAL(triggered()),
             this, SLOT(slotActionTargetHalt()));
 
     actionStep_ = new QAction(QIcon(tr(":/images/stepinto_96x96.png")),
                               tr("&Step Into"), this);
-    actionStep_ ->setToolTip(tr("Instruction Step"));
-    actionStep_ ->setShortcut(QKeySequence("F11"));
+    actionStep_->setToolTip(tr("Instruction Step (F11)"));
+    actionStep_->setShortcut(QKeySequence("F11"));
     connect(actionStep_ , SIGNAL(triggered()),
             this, SLOT(slotActionTargetStepInto()));
 

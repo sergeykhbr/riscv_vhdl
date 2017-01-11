@@ -26,11 +26,11 @@ enum EBreakList {
 enum EColumnNames {
     ASM_addrline,
     ASM_code,
+    ASM_codesize,
+    ASM_breakpoint,
     ASM_label,
     ASM_mnemonic,
     ASM_comment,
-    ASM_codesize,
-    ASM_breakpoint,
     ASM_Total
 };
 
@@ -49,6 +49,10 @@ public:
                        int offset,
                        AttributeType *mnemonic,
                        AttributeType *comment) =0;
+    virtual void disasm(uint64_t pc,
+                       AttributeType *idata,
+                       AttributeType *asmlist) =0;
+
 
     /** Register breakpoint at specified address.
      *

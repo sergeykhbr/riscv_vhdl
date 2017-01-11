@@ -34,6 +34,9 @@ public:
                        int offset,
                        AttributeType *mnemonic,
                        AttributeType *comment);
+    virtual void disasm(uint64_t pc,
+                       AttributeType *idata,
+                       AttributeType *asmlist);
 
     virtual void registerBreakpoint(uint64_t addr, uint32_t instr,
                                     uint64_t flags);

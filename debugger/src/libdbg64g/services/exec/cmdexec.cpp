@@ -39,6 +39,7 @@ CmdExecutor::CmdExecutor(const char *name)
     //console_.make_list(0);
     tap_.make_string("");
     socInfo_.make_string("");
+    cmds_.make_list(0);
 
     RISCV_mutex_init(&mutexExec_);
 
@@ -62,24 +63,29 @@ void CmdExecutor::postinitService() {
             (RISCV_get_service_iface(socInfo_.to_string(), 
                                     IFACE_SOC_INFO));
 
-    cmds_.make_list(17);
-    cmds_[0u].make_iface(new CmdBr(itap_, info_));
-    cmds_[1].make_iface(new CmdCpi(itap_, info_));
-    cmds_[2].make_iface(new CmdCsr(itap_, info_));
-    cmds_[3].make_iface(new CmdDisas(itap_, info_));
-    cmds_[4].make_iface(new CmdExit(itap_, info_));
-    cmds_[5].make_iface(new CmdHalt(itap_, info_));
-    cmds_[6].make_iface(new CmdIsRunning(itap_, info_));
-    cmds_[7].make_iface(new CmdLoadElf(itap_, info_));
-    cmds_[8].make_iface(new CmdLog(itap_, info_));
-    cmds_[9].make_iface(new CmdMemDump(itap_, info_));
-    cmds_[10].make_iface(new CmdRead(itap_, info_));
-    cmds_[11].make_iface(new CmdRun(itap_, info_));
-    cmds_[12].make_iface(new CmdReg(itap_, info_));
-    cmds_[13].make_iface(new CmdRegs(itap_, info_));
-    cmds_[14].make_iface(new CmdReset(itap_, info_));
-    cmds_[15].make_iface(new CmdStatus(itap_, info_));
-    cmds_[16].make_iface(new CmdWrite(itap_, info_));
+    // Core commands registration:
+    registerCommand(new CmdBr(itap_, info_));
+    registerCommand(new CmdCpi(itap_, info_));
+    registerCommand(new CmdCsr(itap_, info_));
+    registerCommand(new CmdDisas(itap_, info_));
+    registerCommand(new CmdExit(itap_, info_));
+    registerCommand(new CmdHalt(itap_, info_));
+    registerCommand(new CmdIsRunning(itap_, info_));
+    registerCommand(new CmdLoadElf(itap_, info_));
+    registerCommand(new CmdLog(itap_, info_));
+    registerCommand(new CmdMemDump(itap_, info_));
+    registerCommand(new CmdRead(itap_, info_));
+    registerCommand(new CmdRun(itap_, info_));
+    registerCommand(new CmdReg(itap_, info_));
+    registerCommand(new CmdRegs(itap_, info_));
+    registerCommand(new CmdReset(itap_, info_));
+    registerCommand(new CmdStatus(itap_, info_));
+    registerCommand(new CmdWrite(itap_, info_));
+}
+
+void CmdExecutor::registerCommand(ICommand *icmd) {
+    AttributeType t1(icmd);
+    cmds_.add_to_list(&t1);
 }
 
 void CmdExecutor::exec(const char *line, AttributeType *res, bool silent) {
@@ -230,7 +236,8 @@ void CmdExecutor::splitLine(char *str, AttributeType *listArgs) {
         if (*end == '\0') {
             AttributeType item;
             if ((str[0] >= '0' && str[0] <= '9')
-             || (str[0] == '[') || (str[0] == '"') || (str[0] == '\'')) {
+             || (str[0] == '[') || (str[0] == '"') || (str[0] == '\'')
+             || (str[0] == '{') || (str[0] == '(')) {
                 item.from_config(str);
             } else {
                 item.make_string(str);

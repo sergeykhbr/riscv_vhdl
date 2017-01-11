@@ -10,6 +10,7 @@
 
 #include "iface.h"
 #include "attribute.h"
+#include "icommand.h"
 
 namespace debugger {
 
@@ -18,6 +19,9 @@ static const char *IFACE_CMD_EXECUTOR = "ICmdExecutor";
 class ICmdExecutor : public IFace {
 public:
     ICmdExecutor() : IFace(IFACE_CMD_EXECUTOR) {}
+
+    /** Register command with ICommand interface */
+    virtual void registerCommand(ICommand *icmd) =0;
 
     /** Execute string as a command */
     virtual void exec(const char *line, AttributeType *res, bool silent) =0;

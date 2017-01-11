@@ -5,6 +5,7 @@
  * @brief      Disassemble data block command.
  */
 
+#include <string>
 #include "cmd_disas.h"
 
 namespace debugger {
@@ -17,20 +18,16 @@ CmdDisas::CmdDisas(ITap *tap, ISocInfo *info)
         "Description:\n"
         "    Disassemble memory range or a block of data. Convert result\n"
         "    to a list of assembler items where each of them has\n"
-        "    the following format:\n"
-        "Response:\n"
-        "    List of lists [[iii]*] if breakpoint list was requested, where:\n"
-        "        i    - uint64_t address value\n"
-        "        i    - uint32_t instruction value\n"
-        "        i    - uint64_t Breakpoint flags: hardware,...\n"
-        "    Nil in a case of add/rm breakpoint\n"
+        "    ASM_Total sub-items. You can add 'str' flag to receive\n"
+        "    formatted text output.\n"
         "Usage:\n"
-        "    disas <addr> <byte>\n"
-        "    disas <addr> <data>\n"
+        "    disas <addr> <byte> [str]\n"
+        "    disas <addr> <data> [str]\n"
         "Example:\n"
         "    data 0x40000000 100\n"
-        "    data 0x1000 (0x73,0x00,0x10,0x00)\n"
-        "    ['data',0x1000,(0x73,0x00,0x10,0x00)]\n");
+        "    data 0x40000000 100 str\n"
+        "    data 0x1000 (73,00,10,00)\n"
+        "    ['data',0x1000,(73,00,10,00)]\n");
 
     AttributeType lstServ;
     RISCV_get_services_with_iface(IFACE_SOURCE_CODE, &lstServ);
@@ -60,28 +57,45 @@ void CmdDisas::exec(AttributeType *args, AttributeType *res) {
     res->make_list(0);
 
     uint64_t addr = (*args)[1].to_uint64();
-    AttributeType *data_ibuf;
-    AttributeType tbuf;
+    AttributeType *mem_data, *asm_data;
+    AttributeType membuf, asmbuf;
     if ((*args)[2].is_integer()) {
-        uint32_t sz = (*args)[2].to_uint32();
-        tbuf.make_data(sz);
-        data_ibuf = &tbuf;
-        tap_->read(addr, sz, tbuf.data());
+        // 4-bytes alignment
+        uint32_t sz = ((*args)[2].to_uint32() + 3) & ~0x3;
+        membuf.make_data(sz);
+        mem_data = &membuf;
+        tap_->read(addr, sz, membuf.data());
     } else {
-        data_ibuf = &(*args)[2];
+        mem_data = &(*args)[2];
     }
 
-    isrc_->getBreakpointList(res);
-
-    unsigned off = 0;
-    AttributeType asm_item;
-    asm_item.make_list(ASM_Total);
-    while (off < data_ibuf->size()) {
-        off += isrc_->disasm(addr, data_ibuf->data(), off,
-                &asm_item[ASM_mnemonic], &asm_item[ASM_comment]);
-        res->add_to_list(&asm_item);
+    asm_data = res;
+    bool do_format = false;
+    if (args->size() == 4 && (*args)[3].is_equal("str")) {
+        asm_data = &asmbuf;
+        do_format = true;
     }
 
+    isrc_->disasm(addr, mem_data, asm_data);
+
+    if (do_format) {
+        format(asm_data, res);
+    }
+}
+
+void CmdDisas::format(AttributeType *asmbuf, AttributeType *fmtstr) {
+    char tstr[128];
+    std::string tout;
+    for (unsigned i = 0; i < asmbuf->size(); i++) {
+        const AttributeType &line = (*asmbuf)[i];
+        RISCV_sprintf(tstr, sizeof(tstr), "%016" RV_PRI64 "x: %08x    %s\n",
+                line[ASM_addrline].to_uint64(),
+                line[ASM_code].to_uint32(),
+                line[ASM_mnemonic].to_string()
+                );
+        tout += tstr;
+    }
+    fmtstr->make_string(tout.c_str());
 }
 
 }  // namespace debugger

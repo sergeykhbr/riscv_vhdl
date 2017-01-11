@@ -16,6 +16,7 @@
 
 #include <QtWidgets/QWidget>
 #include <QtWidgets/QTableWidget>
+#include <QtGui/QResizeEvent>
 
 namespace debugger {
 
@@ -73,6 +74,24 @@ public:
         req_size_ = 0;
     }
 
+    void insrease(int delta) {
+        if (delta >= 0) {
+            if (start_ >= 16) {
+                req_start_ = start_ - 16;
+                req_size_ = 16;
+                start_ -= 16;
+            } else if (start_ > 0) {
+                req_start_ = 0;
+                req_size_ = start_;
+                start_ = 0;
+            }
+        } else {
+            req_start_ = end_;
+            req_size_ = 16;
+            end_ += 16;
+        }
+    }
+
     uint64_t getReqAddr() { return req_start_; }
     int getReqSize() { return req_size_; }
 
@@ -96,50 +115,36 @@ public:
     virtual void handleResponse(AttributeType *req, AttributeType *resp);
 
 signals:
-    void signalHandleResponse();
+    void signalNpcChanged(uint64_t npc);
+    void signalAsmListChanged();
 
 public slots:
     void slotPostInit(AttributeType *cfg);
+    void slotNpcChanged(uint64_t npc);
+    void slotAsmListChanged();
     void slotUpdateByTimer();
     void slotBreakpoint();
-    void slotHandleResponse();
     void slotCellDoubleClicked(int row, int column);
+
+protected:
+    void resizeEvent(QResizeEvent *ev) Q_DECL_OVERRIDE;
+    void wheelEvent(QWheelEvent * ev) Q_DECL_OVERRIDE;
 
 private:
     void outLines();
     void outLine(int idx, AttributeType &data);
-    void data2lines(uint64_t addr, AttributeType &resp, AttributeType &lines);
-    bool addrIsBreakpoint(uint64_t addr, uint8_t *instr, AttributeType *obr);
-    int makeAsmAttr(uint64_t addr, uint8_t *data, int offset,
-                    AttributeType &out);
+    void addMemBlock(AttributeType &resp, AttributeType &lines);
     // Ports:
-    class BreakpointListPort : public IGuiCmdHandler {
-    public:
-        BreakpointListPort(IGui *gui, AttributeType *list)
-            : igui_(gui), p_brList_(list) {
-            cmdBr_.make_string("br");
-        }
-        /** IGuiCmdHandler */
-        virtual void handleResponse(AttributeType *req, AttributeType *resp);
-
-        void update() {
-            igui_->registerCommand(static_cast<IGuiCmdHandler *>(this),
-                                    &cmdBr_, true);
-        }
-    private:
-        IGui *igui_;
-        AttributeType *p_brList_;
-        AttributeType cmdBr_;
-    };
 
     class BreakpointInjectPort : public IGuiCmdHandler {
     public:
-        BreakpointInjectPort(IGui *gui, AttributeType *list) {
+        BreakpointInjectPort(IGui *gui) {
             igui_ = gui;
-            p_brList_ = list;
+            readBr_.make_string("br");
             readNpc_.make_string("reg npc");
             dsu_sw_br_ = ~0;
             dsu_hw_br_ = ~0;
+            is_waiting_ = false;
         }
 
         void setBrAddressFetch(uint64_t addr) { dsu_sw_br_ = addr; }
@@ -149,17 +154,16 @@ private:
         virtual void handleResponse(AttributeType *req, AttributeType *resp);
 
         /** Write address and instruction into fetcher to skip EBREAK once */
-        void injectFetch() {
-            igui_->registerCommand(static_cast<IGuiCmdHandler *>(this),
-                                    &readNpc_, true);
-        }
+        void injectFetch();
 
     private:
+        AttributeType readBr_;
         AttributeType readNpc_;
-        AttributeType *p_brList_;
+        AttributeType brList_;
         IGui *igui_;
         uint64_t dsu_sw_br_;
         uint64_t dsu_hw_br_;
+        bool is_waiting_;
     }; 
 
 private:
@@ -169,9 +173,6 @@ private:
         COL_label,
         COL_mnemonic,
         COL_comment,
-        // not present in view
-        COL_codesize,
-        COL_breakpoint,
         COL_Total
     };
 
@@ -186,17 +187,12 @@ private:
     AttributeType asmLines_;
     QString name_;
     IGui *igui_;
-    ISourceCode *isrc_;
 
-    AttributeType data_;
-    AttributeType tmpBuf_;
-    AttributeType dataText_;
-    AttributeType brList_;
-
+    int selRowIdx;
+    int hideLineIdx_;
     int lineHeight_;
     ECmdState state_;
     LinesViewModel rangeModel_;
-    BreakpointListPort *portBrList_;
     BreakpointInjectPort *portBreak_;
 };
 

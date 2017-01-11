@@ -30,6 +30,7 @@ public:
     virtual void postinitService();
 
     /** ICmdExecutor */
+    virtual void registerCommand(ICommand *icmd);
     virtual void exec(const char *line, AttributeType *res, bool silent);
     virtual void commands(const char *substr, AttributeType *res);
 
