@@ -78,16 +78,17 @@ This repository consists of three sub-projects each in own subfolder:
     * *fw_images*: directory with the ROM images in HEX-format.
     * *prj*: project files for different CADs (Xilinx ISE, ModelSim).
     * *tb*: VHDL testbech of the full system and utilities.
-- **zephyr** is the ported (by me) on RISC-V 64-bits operation system.
+    * *bit_files*: Pre-built FPGA images for ML605 and KC705 boards.
+- **zephyr** is the ported on RISC-V 64-bits operation system.
   Information about this Real-Time Operation System for Internet of
   Things Devices provided by [Zephyr Project](https://www.zephyrproject.org/).
   Early support for the Zephyr Project includes Intel Corporation,
   NXP Semiconductors N.V., Synopsys, Inc. and UbiquiOS Technology Limited.
 - **debugger**. The last piece of the ready-to-use open HW/SW system is
   [Software Debugger (C++)](http://sergeykhbr.github.io/riscv_vhdl/dbg_link.html)
-  with the system simulator available as a plug-in (either as GUI
-  or any other extension). Debugger interacts with the target (FPGA or
-  Simulator) via [Ethernet](http://sergeykhbr.github.io/riscv_vhdl/eth_link.html)
+  with the full system simulator available as a plug-in.
+  Debugger interacts with the target (FPGA or Software Simulator) 
+  via [Ethernet](http://sergeykhbr.github.io/riscv_vhdl/eth_link.html)
   using EDCL protocol over UDP. To provide this functionality SOC includes
   [**10/100 Ethernet MAC with EDCL**](http://sergeykhbr.github.io/riscv_vhdl/eth_link.html)
   and [**Debug Support Unit (DSU)**](http://sergeykhbr.github.io/riscv_vhdl/dsu_link.html)
@@ -104,21 +105,122 @@ This repository consists of three sub-projects each in own subfolder:
   I hope to develop the most friendly synthesizable processor for HW and SW developers
   and provide debugging tools of professional quality.
 
-## Step-by-step tutorial of how to run Zephyr-OS on FPGA board with synthesizable RISC-V processor.
 
-To run provided **shell** application as on the animated picture bellow, we should do
-several steps:
+## Step I: Simple FPGA test.
 
-1. Setup GCC toolchain
-2. Build Zephyr elf-file (shell example) and generate HEX-image to
-   initialize ROM so that our FPGA board was ready to use without additional
-   reprogram.
-3. Build FPGA bitfile from VHDL/Verilog sources and program FPGA.
-4. Install CP210x USB to UART bridge driver (if not installed yet) and
-   connect to serial port of the SOC.
-5. Final result should look like this:
+You can use the pre-built FPGA image (for Xilinx ML605 or KC705 board) and any serial
+console application (*putty*, *screen* or other).
+
+1. Unpack and load file image *riscv_soc.bit* from */rocket_soc/bit_files/* into FPGA board.
+2. Connect to serial port. I use standard console utility *screen* on Ubuntu.
+
+    $ sudo apt-get install screen
+    $ sudo screen /dev/ttyUSB0 115200
+
+3. Use button "*Center*" to reset FPGA system and reprint initial messages:
+
+```
+    Boot . . .OK
+    Zephyr version 1.5.0
+    shell>
+```
+
+Our system is ready to use. Shell command **pnp** prints SOC HW information,
+command **dhry** runs Dhrystone 2.1 benchmark.
+To end the session, use Ctrl-A, Shift-K
 
 ![Zephyr demo](rocket_soc/docs/pics/zephyr_demo.gif)
+
+
+## Step II: Build and run Software models with GUI.
+
+At this step we're going to build: functional models of CPU and peripheries,
+precise SystemC model of 'River' CPU and RISC-V Debugger with GUI
+(MS Visual Studio project for Windows is also available).  
+This step **doesn't require any Hardware** and the final result will look as on
+the following animated picture:
+
+![Debugger demo](rocket_soc/docs/pics/debugger_demo.gif)  
+
+There's dependency of two others open source projects:
+    * [**Qt-libraries**](https://www.qt.io/download/)
+    * [**SystemC library**](http://accellera.org/downloads/standards/systemc)
+
+1. Download and install Qt-package (checked with version 5.7).
+2. Specify environment variable QT_PATH:
+
+        $ export QT_PATH=/home/install_dir/Qt5.7.0/5.7/gcc_64
+
+3. If you would like to run SystemC models download the systemc archive.
+4. Unpack and build sources:
+
+        $ tar -xvzf systemc-2.3.1a.tar.gz
+        $ cd systemc-2.3.1a
+        $ mkdir tmp
+        $ cd tmp
+        $ ./../configure --prefix=/home/user/systemc-2.3.1a/build
+        $ make
+        $ make install
+
+5. Specify environment variable SYSTEMC_PATH:
+
+        $ export SYSTEMC_PATH=/home/user/systemc-2.3.1a/build")
+
+**Note: System Simulator supports blocking and non-blocking accesses to the simulated
+devices. You can request additional information of how to connect your
+SystemC device to this SoC.**  
+
+6. Build project:
+
+        $ cd debugger/makefiles
+        $ make
+
+7. In a case of successful build start desired configuration:
+
+        $ cd ../linuxbuild/bin
+
+Start Configuration        | Description
+---------------------------|-----------------
+$ ./_run_functional_sim.sh | Functional RISC-V Full System Model
+$ ./_run_systemc_sim.sh    | Use SystemC Precise Model of RIVER CPU
+$ ./_run_fpga_gui.sh       | FPGA board. Default port 'COM3', TAP IP = 192.168.0.51
+
+**Note:** Specify correct serial port in the file *debugger/targets/fpga_gui.json* 
+(COM3 -> ttyUSB0) if you run debugger on linux.
+
+**Note:** Instruction of how to connect FPGA board via
+Ethernet your can find [here](http://sergeykhbr.github.io/riscv_vhdl/eth_link.html).  
+Simulation and Hardware targets use identical EDCL over UDP interface so that 
+[Debugger](http://sergeykhbr.github.io/riscv_vhdl/dbg_link.html) can work 
+with any target using the same set of commands.  
+**Debugger doesn't implement any specific interface for the simulation.**
+
+
+## Step III: Build FPGA image
+
+Default VHDL configuration enables River CPU with full debug support.
+
+![River top](rocket_soc/docs/pics/river_top.png)
+
+You can enable usage of "Rocket-chip" CPU instead of "River" disabling the
+configuration parameter in */rocket_soc/work/config_common.vhd* 
+CFG_COMMON_RIVER_CPU_ENABLE.
+
+1. Open ML605 project file for Xilinx ISE14.7 *prj/ml605/riscv_soc.xise*
+   or KC705 project file for Xilinx Vivado *prj/kc705/riscv_soc.xpr*.
+2. Edit configuration constants in file **work/config_common.vhd** if needed.
+   (Skip this step by default).
+3. Use *rocket_soc/work/tb/riscv_soc_tb.vhd"* testbench file to verify
+   full system including *CPU*, *UART*, *Timers*, *Ethernet*, *GPIO* etc.
+4. Generate bit-file and load it into FPGA.
+
+
+## Step IV: Tutorial "How to build custom Software for RISC-V architecture"
+
+As an example we're going to build two programs:
+
+* Zephyr OS kernel with ROM-image generation.
+* 'Hello world' example. Then load it into the target using Debugger's command.
 
 ### 1. Setup GCC toolchain
 
@@ -180,96 +282,6 @@ Copy *fwimage.hex* to rocket_soc subdirectory
 
     $ cp fwimage.hex ../../../rocket_soc/fw_images
 
-### 3. Build FPGA bitfile for ML605 board (Virtex6)
-
-- Open project file for Xilinx ISE14.7 *prj/ml605/rocket_soc.xise*.
-- Edit configuration constants in file **work/config_common.vhd** if needed.
-  (Skip this step by default).
-- Generate bit-file and load it into FPGA.
-
-### 4. Connecting to serial port
-
-Usually I use special client to interact with target but in general case
-let's use standard Ubuntu utility 'screen'
-
-    $ sudo apt-get install screen
-    $ sudo screen /dev/ttyUSB0 115200
-
-Use button "*Center*" to reset FPGA system and reprint initial messages:
-
-```
-    Boot . . .OK
-    Zephyr version 1.5.0
-    shell>
-```
-
-Our system is ready to use. Shell command **pnp** prints SOC HW information,
-command **dhry** runs Dhrystone 2.1 benchmark.
-To end the session, use Ctrl-A, Shift-K
-
-
-## Debugger with GUI
-
-Instruction of how to connect FPGA board via
-[Ethernet](http://sergeykhbr.github.io/riscv_vhdl/eth_link.html)
-your can find here. Simulation and Hardware targets use identical
-EDCL over UDP interface so that Debugger can work with any of them
-using the same set of commands. **Debugger doesn't implement any specific
-interface for the simulation.**
-
-To build Debugger with GUI download and install the latest QT-libraries and
-set environment variable QT_PATH as follow:
-
-    $ export QT_PATH=/home/you_work_dir/Qt5.7.0/5.7/gcc_64
-
-Build debugger:
-
-    $ cd .../riscv_vhdl/debugger/makefiles
-    $ make
-
-Run application as follow and you should see something like on image below:
-
-    $ cd ../linuxbuild/bin
-    $ ./run_gui_sim.sh
-
-![Debugger demo](rocket_soc/docs/pics/debugger_demo.gif)    
-
-You can either run application as:
-
-    $ ./appdbg64g.exe -sim -gui -nocfg
-
-where:  
-    *-sim*   Use SoC Simulator not a Real Hardware (FPGA)  
-    *-gui*   Use GUI instead of console mode  
-    *-nocfg* Use default config instead of *config.json* file  
-
-SOC simulator includes not only CPU emulator but also any number of
-custom peripheries, including GNSS engine or whatever.
-To get more information see
-[debugger's description](http://sergeykhbr.github.io/riscv_vhdl/dbg_link.html).
-
-
-## Simulation with ModelSim
-
-1. Open project file *prj/modelsim/rocket.mpf*.
-2. Compile project files.
-3. If you get an errors for all files remove and re-create the following
-   libraries in ModelSim library view:
-     * techmap
-     * ambalib
-     * commonlib
-     * rocketlib
-     * gnsslib
-     * work (was created by default)
-4. Use *work/tb/rocket_soc_tb.vhd* to run simulation.
-5. Testbench allows to check the following things:
-     * LEDs switching
-     * UART output
-     * Interrupt controller
-     * UDP/EDCL transaction via Ethernet
-     * Access to CSR via Ethernet + DSU.
-     * and other.
-
 
 ## Build and run 'Hello World' example.
 
@@ -278,11 +290,11 @@ Build example:
     $ cd /your_git_path/rocket_soc/fw/helloworld/makefiles
     $ make
 
-Run debugger console:
+Run Risc-V Debugger application:
 
-    $ ./your_git_path/debugger/linuxbuild/bin/appdbg64g.exe -sim -gui -nocfg
+    $ ./your_git_path/debugger/linuxbuild/bin/_run_functional_sim.sh
 
-Load elf-file via Ethernet using debugger console:
+Load elf-file using debugger's console:
 
     #riscv loadelf bin/helloworld
 
@@ -301,11 +313,12 @@ You should see something like:
     [loader0]: Loaded: 42912 B
 ```
 
-Just after image loading finished debugger clears reset CPU signal and starts
-execution. This example prints only once UART message *'Hello World - 1'*,
+Just after image loading has been finished debugger clears reset CPU signal.
+Start the simulation manually (F5) if the processor was in 'halt' state.  
+This example prints only once UART message *'Hello World - 1'*,
 so if you'd like to repeat test reload image using **loadelf** command.
 
-Now you can also generate HEX-file for ROM initialization to do that
+Now we can also generate HEX-file for ROM initialization to do that
 see other example with **bootrom** implementation
 
     $ cd rocket_soc/fw/boot/makefiles
@@ -329,6 +342,15 @@ could contain errors that are fixing with a small delay. Let me know if see one.
 
 
 ## Versions History
+
+### Implemented functionality (v5.0)
+
+- New CPU implemented ("RIVER").
+- SystemC support was added with the precise CPU model and VCD-stimulus generator.
+- Debugger functionality is now oriented only on RIVER implementation
+  and includes a lot of new features: breakpoints, disassembler,
+  CPI meter and others.
+- AXI bus controller significantly improved
 
 ### Implemented functionality (v4.0)
 
