@@ -114,8 +114,8 @@ console application (*putty*, *screen* or other).
 1. Unpack and load file image *riscv_soc.bit* from */rocket_soc/bit_files/* into FPGA board.
 2. Connect to serial port. I use standard console utility *screen* on Ubuntu.
 
-    $ sudo apt-get install screen
-    $ sudo screen /dev/ttyUSB0 115200
+        $ sudo apt-get install screen
+        $ sudo screen /dev/ttyUSB0 115200
 
 3. Use button "*Center*" to reset FPGA system and reprint initial messages:
 
@@ -143,6 +143,7 @@ the following animated picture:
 ![Debugger demo](rocket_soc/docs/pics/debugger_demo.gif)  
 
 There's dependency of two others open source projects:
+
     * [**Qt-libraries**](https://www.qt.io/download/)
     * [**SystemC library**](http://accellera.org/downloads/standards/systemc)
 
