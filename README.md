@@ -144,8 +144,8 @@ the following animated picture:
 
 There's dependency of two others open source projects:
 
-    * [**Qt-libraries**](https://www.qt.io/download/)
-    * [**SystemC library**](http://accellera.org/downloads/standards/systemc)
+* **[Qt-libraries](https://www.qt.io/download/)**
+* **[SystemC library](http://accellera.org/downloads/standards/systemc)**
 
 1. Download and install Qt-package (checked with version 5.7).
 2. Specify environment variable QT_PATH:
@@ -167,9 +167,9 @@ There's dependency of two others open source projects:
 
         $ export SYSTEMC_PATH=/home/user/systemc-2.3.1a/build")
 
-**Note: System Simulator supports blocking and non-blocking accesses to the simulated
-devices. You can request additional information of how to connect your
-SystemC device to this SoC.**  
+   **Note: System Simulator supports blocking and non-blocking accesses to the simulated
+   devices. You can request additional information of how to connect your
+   SystemC device to this SoC.**  
 
 6. Build project:
 
@@ -194,7 +194,9 @@ Ethernet your can find [here](http://sergeykhbr.github.io/riscv_vhdl/eth_link.ht
 Simulation and Hardware targets use identical EDCL over UDP interface so that 
 [Debugger](http://sergeykhbr.github.io/riscv_vhdl/dbg_link.html) can work 
 with any target using the same set of commands.  
-**Debugger doesn't implement any specific interface for the simulation.**
+
+**Debugger doesn't implement any specific interface for the simulation.
+Debugger uses only architectural access via TAP (EDCL over UDP) for all targets.**
 
 
 ## Step III: Build FPGA image

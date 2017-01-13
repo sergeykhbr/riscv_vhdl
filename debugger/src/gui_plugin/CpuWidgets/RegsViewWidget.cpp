@@ -76,6 +76,10 @@ void RegsViewWidget::slotUpdateByTimer() {
     waitingResp_ = true;
 }
 
+void RegsViewWidget::slotRegChanged(AttributeType *wrcmd) {
+    igui_->registerCommand(0, wrcmd, true);
+}
+
 void RegsViewWidget::addRegWidget(int idx, const char *name) {
     int line = idx / 3;
     int col = idx - 3 * line;
@@ -85,7 +89,9 @@ void RegsViewWidget::addRegWidget(int idx, const char *name) {
 
     connect(this, SIGNAL(signalHandleResponse(AttributeType *)),
             pnew, SLOT(slotHandleResponse(AttributeType *)));
-}
 
+    connect(pnew, SIGNAL(signalChanged(AttributeType *)),
+            this, SLOT(slotRegChanged(AttributeType *)));
+}
 
 }  // namespace debugger

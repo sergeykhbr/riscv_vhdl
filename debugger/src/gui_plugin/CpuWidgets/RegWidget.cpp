@@ -64,6 +64,9 @@ RegWidget::RegWidget(const char *name, QWidget *parent)
 
     setMinimumWidth(edit_->width() + fm.width(name_) + 16);
     setMinimumHeight(edit_->height());
+
+    connect(edit_, SIGNAL(editingFinished()),
+            this, SLOT(slotEditingFinished()));
 }
 
 void RegWidget::slotHandleResponse(AttributeType *resp) {
@@ -80,6 +83,27 @@ void RegWidget::slotHandleResponse(AttributeType *resp) {
         RISCV_sprintf(tstr, sizeof(tstr), "%016" RV_PRI64 "x", value_);
         QString text(tr(tstr));
         edit_->setText(text);
+    }
+}
+
+void RegWidget::slotEditingFinished() {
+    wchar_t wcsConv[128];
+    char mbsConv[128];
+    int sz = edit_->text().toWCharArray(wcsConv);
+    uint64_t new_val;
+    wcstombs(mbsConv, wcsConv, sz);
+    mbsConv[sz] = '\0';
+
+    new_val = strtoull(mbsConv, 0, 16);
+
+    if (new_val != value_) {
+        char tstr[128];
+        RISCV_sprintf(tstr, sizeof(tstr), "reg %s 0x%s",
+                      regName_.to_string(), mbsConv);
+        cmdWrite_.make_string(tstr);
+
+        emit signalChanged(&cmdWrite_);
+        setFocus();
     }
 }
 

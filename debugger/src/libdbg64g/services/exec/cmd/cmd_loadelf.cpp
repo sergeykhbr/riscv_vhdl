@@ -19,7 +19,7 @@ CmdLoadElf::CmdLoadElf(ITap *tap, ISocInfo *info)
         "Description:\n"
         "    Load ELF-file to SOC target memory.\n"
         "Example:\n"
-        "    load /home/riscv/image.elf\n");
+        "    loadelf /home/riscv/image.elf\n");
 }
 
 bool CmdLoadElf::isValid(AttributeType *args) {

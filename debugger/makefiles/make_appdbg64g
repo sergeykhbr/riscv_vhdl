@@ -57,7 +57,7 @@ $(EXECUTABLE): $(OBJ_FILES)
 	$(ECHO) "      cd ../linuxbuild/bin"
 	$(ECHO) "      ./_run_functional_sim.sh     - Start functional simulation"
 	$(ECHO) "      ./_run_systemc_sim.sh        - Start cycle-true SystemC simulation"
-	$(ECHO) "      ./_run_fpga_gui.sh           - Start with FPGA (COM3, 195.168.0.51)\n"
+	$(ECHO) "      ./_run_fpga_gui.sh           - Start with FPGA (COM3, 195.168.0.53)\n"
 
 $(addprefix $(OBJ_DIR)/,%.o): %.cpp
 	echo $(CPP) $(CFLAGS) $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $@

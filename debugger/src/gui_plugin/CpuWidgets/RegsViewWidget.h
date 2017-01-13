@@ -33,6 +33,7 @@ signals:
 
 private slots:
     void slotUpdateByTimer();
+    void slotRegChanged(AttributeType *wrcmd);
 
 private:
     void addRegWidget(int idx, const char *name);

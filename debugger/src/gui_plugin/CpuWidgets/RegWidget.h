@@ -21,13 +21,15 @@ public:
     explicit RegWidget(const char *name, QWidget *parent);
 
 signals:
-    //void signalChanged(uint64_t idx, uint64_t val);
+    void signalChanged(AttributeType *req);
 private slots:
     void slotHandleResponse(AttributeType *resp);
+    void slotEditingFinished();
 
 private:
     AttributeType regName_;
     AttributeType cmdRead_;
+    AttributeType cmdWrite_;
     QString name_;
     QLineEdit *edit_;
     uint64_t value_;

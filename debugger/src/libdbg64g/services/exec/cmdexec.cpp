@@ -210,7 +210,7 @@ ICommand *CmdExecutor::getICommand(const char *name) {
             return ret;
         }
     }
-    return ret;
+    return 0;
 }
 
 void CmdExecutor::splitLine(char *str, AttributeType *listArgs) {
