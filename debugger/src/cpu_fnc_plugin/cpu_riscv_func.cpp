@@ -58,6 +58,7 @@ CpuRiscV_Functional::CpuRiscV_Functional(const char *name)
     last_hit_breakpoint_ = ~0;
     reset();
 
+    trans_.source_idx = CFG_NASTI_MASTER_CACHED;
     cpu_context_.reg_trace_file = 0;
     cpu_context_.mem_trace_file = 0;
     dport.valid = 0;
@@ -657,13 +658,11 @@ void CpuRiscV_Functional::setNPC(uint64_t val) {
 }
 
 void CpuRiscV_Functional::addBreakpoint(uint64_t addr) {
-    CpuContextType *pContext = getpContext();
-    pContext->ibus->addBreakpoint(addr);
+    //CpuContextType *pContext = getpContext();
 }
 
 void CpuRiscV_Functional::removeBreakpoint(uint64_t addr) {
-    CpuContextType *pContext = getpContext();
-    pContext->ibus->removeBreakpoint(addr);
+    //CpuContextType *pContext = getpContext();
 }
 
 void CpuRiscV_Functional::hitBreakpoint(uint64_t addr) {

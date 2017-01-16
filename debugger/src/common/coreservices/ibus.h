@@ -22,6 +22,11 @@ enum ETransStatus {
     TRANS_ERROR
 };
 
+struct BusUtilType {
+    uint64_t w_cnt;
+    uint64_t r_cnt;
+};
+
 /**
  * Bus interface
  */
@@ -43,9 +48,11 @@ public:
     virtual ETransStatus nb_transport(Axi4TransactionType *trans,
                                       IAxi4NbResponse *cb) =0;
 
-    virtual void addBreakpoint(uint64_t addr) =0;
-
-    virtual void removeBreakpoint(uint64_t addr) =0;
+    /**
+     * This method emulates connection between bus controller and DSU module.
+     * It allows to read bus utilization statistic via mapped DSU registers.
+     */
+    virtual BusUtilType *bus_utilization() =0;
 };
 
 }  // namespace debugger

@@ -22,6 +22,16 @@ SocInfo::SocInfo(const char *name)
 void SocInfo::postinitService() {
 }
 
+unsigned SocInfo::getMastersTotal() {
+    // todo: via reading PNP configuration
+    return CFG_NASTI_MASTER_TOTAL;
+}
+
+unsigned SocInfo::getSlavesTotal() {
+    // todo: via reading PNP configuration
+    return 0;
+}
+
 unsigned SocInfo::getRegsTotal() {
     return listRegs_.size();
 }
@@ -73,48 +83,6 @@ uint64_t SocInfo::addressPlugAndPlay() {
 
 uint64_t SocInfo::addressGpio() {
     return gpioBase_.to_uint64();
-}
-
-
-uint64_t SocInfo::addressRunControl() {
-    DsuMapType *dsu = reinterpret_cast<DsuMapType *>(dsuBase_.to_uint64());
-    return reinterpret_cast<uint64_t>(&dsu->udbg.v.control);
-}
-
-uint64_t SocInfo::addressStepCounter() {
-    DsuMapType *dsu = reinterpret_cast<DsuMapType *>(dsuBase_.to_uint64());
-    return reinterpret_cast<uint64_t>(&dsu->udbg.v.stepping_mode_steps);
-}
-
-uint64_t SocInfo::addressBreakCreate() {
-    DsuMapType *dsu = reinterpret_cast<DsuMapType *>(dsuBase_.to_uint64());
-    return reinterpret_cast<uint64_t>(&dsu->udbg.v.add_breakpoint);
-}
-
-uint64_t SocInfo::addressBreakRemove() {
-    DsuMapType *dsu = reinterpret_cast<DsuMapType *>(dsuBase_.to_uint64());
-    return reinterpret_cast<uint64_t>(&dsu->udbg.v.remove_breakpoint);
-}
-
-uint64_t SocInfo::valueHalt() {
-    DsuMapType::udbg_type::debug_region_type::control_reg ctrl;
-    ctrl.val = 0x0;
-    ctrl.bits.core_id = 0;
-    ctrl.bits.halt    = 1;
-    return ctrl.val;
-}
-
-uint64_t SocInfo::valueRun() {
-    DsuMapType::udbg_type::debug_region_type::control_reg ctrl;
-    ctrl.val = 0x0;
-    return ctrl.val;
-}
-
-uint64_t SocInfo::valueRunStepping() {
-    DsuMapType::udbg_type::debug_region_type::control_reg ctrl;
-    ctrl.val = 0x0;
-    ctrl.bits.stepping = 1;
-    return ctrl.val;
 }
 
 }  // namespace debugger

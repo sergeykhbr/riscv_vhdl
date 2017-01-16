@@ -16,6 +16,7 @@ DSU::DSU(const char *name)  : IService(name) {
     registerAttribute("BaseAddress", &baseAddress_);
     registerAttribute("Length", &length_);
     registerAttribute("CPU", &cpu_);
+    registerAttribute("Bus", &bus_);
 
     baseAddress_.make_uint64(0);
     length_.make_uint64(0);
@@ -31,6 +32,11 @@ void DSU::postinitService() {
         RISCV_get_service_iface(cpu_.to_string(), IFACE_CPU_RISCV));
     if (!icpu_) {
         RISCV_error("Can't find ICpuRiscV interface %s", cpu_.to_string());
+    }
+    ibus_ = static_cast<IBus *>(
+        RISCV_get_service_iface(bus_.to_string(), IFACE_BUS));
+    if (!ibus_) {
+        RISCV_error("Can't find IBus interface %s", bus_.to_string());
     }
 }
 
@@ -117,10 +123,22 @@ void DSU::readLocal(uint64_t off, Axi4TransactionType *trans) {
     case 0:
         trans->rpayload.b64[0] = soft_reset_;
         break;
+    case 8:
+        trans->rpayload.b64[0] = ibus_->bus_utilization()[0].w_cnt;
+        break;
+    case 9:
+        trans->rpayload.b64[0] = ibus_->bus_utilization()[0].r_cnt;
+        break;
+    case 12:
+        trans->rpayload.b64[0] = ibus_->bus_utilization()[2].w_cnt;
+        break;
+    case 13:
+        trans->rpayload.b64[0] = ibus_->bus_utilization()[2].r_cnt;
+        break;
     default:
         trans->rpayload.b64[0] = 0;
     }
-    if (trans->xsize == 4 && (off & 0x4) == 1) {
+    if (trans->xsize == 4 && (off & 0x4) == 0x4) {
         trans->rpayload.b64[0] >>= 32;
     }
 }

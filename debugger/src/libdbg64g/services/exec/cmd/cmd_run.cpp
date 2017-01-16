@@ -40,20 +40,24 @@ void CmdRun::exec(AttributeType *args, AttributeType *res) {
         generateError(res, "Wrong argument list");
         return;
     }
-
+    DsuMapType *dsu = info_->getpDsu();
     Reg64Type runctrl;
+    uint64_t addr_run_ctrl = reinterpret_cast<uint64_t>(&dsu->udbg.v.control);
+    uint64_t addr_step_cnt = 
+        reinterpret_cast<uint64_t>(&dsu->udbg.v.stepping_mode_steps);
+
     if (args->size() == 1) {
         runctrl.val = 0;
-        tap_->write(info_->addressRunControl(), 8, runctrl.buf);
+        tap_->write(addr_run_ctrl, 8, runctrl.buf);
     } else if (args->size() == 2) {
         runctrl.val = (*args)[1].to_uint64();
-        tap_->write(info_->addressStepCounter(), 8, runctrl.buf);
+        tap_->write(addr_step_cnt, 8, runctrl.buf);
 
         DsuMapType::udbg_type::debug_region_type::control_reg ctrl;
         ctrl.val = 0;
         ctrl.bits.stepping = 1;
         runctrl.val = ctrl.val;
-        tap_->write(info_->addressRunControl(), 8, runctrl.buf);
+        tap_->write(addr_run_ctrl, 8, runctrl.buf);
     }
 }
 

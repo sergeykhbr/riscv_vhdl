@@ -92,6 +92,7 @@ void Greth::busyLoop() {
     uint32_t *tbuf;
     UdpEdclCommonType req;
     RISCV_info("Ethernet thread was started", NULL);
+    trans_.source_idx = CFG_NASTI_MASTER_ETHMAC;          // Hardcoded in VHDL value
 
     while (isEnabled()) {
         bytes = 

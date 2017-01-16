@@ -10,6 +10,7 @@
 
 #include "iface.h"
 #include <inttypes.h>
+#include "isocinfo.h"
 
 namespace debugger {
 
@@ -42,6 +43,7 @@ typedef struct Axi4TransactionType {
         uint32_t b32[PAYLOAD_MAX_BYTES/sizeof(uint32_t)];
         uint64_t b64[PAYLOAD_MAX_BYTES/sizeof(uint64_t)];
     } rpayload, wpayload;
+    int source_idx;             // Need for bus utilization statistic
 } Axi4TransactionType;
 
 /**

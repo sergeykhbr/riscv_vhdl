@@ -21,9 +21,9 @@ Bus::Bus(const char *name)
 
     listMap_.make_list(0);
     imap_.make_list(0);
-    breakpoints_.make_list(0);
     RISCV_mutex_init(&mutexBAccess_);
     RISCV_mutex_init(&mutexNBAccess_);
+    memset(info_, 0, sizeof(info_));
 }
 
 Bus::~Bus() {
@@ -86,6 +86,13 @@ ETransStatus Bus::b_transport(Axi4TransactionType *trans) {
             trans->addr,
             trans->rpayload.b32[1], trans->rpayload.b32[0]);
     }
+
+    // Update Bus utilization counters:
+    if (trans->action == MemAction_Read) {
+        info_[trans->source_idx].r_cnt++;
+    } else if (trans->action == MemAction_Write) {
+        info_[trans->source_idx].w_cnt++;
+    }
     RISCV_mutex_unlock(&mutexBAccess_);
     return ret;
 }
@@ -120,101 +127,19 @@ ETransStatus Bus::nb_transport(Axi4TransactionType *trans,
         RISCV_debug("Non-blocking request to [%08" RV_PRI64 "x]",
                     trans->addr);
     }
+
+    // Update Bus utilization counters:
+    if (trans->action == MemAction_Read) {
+        info_[trans->source_idx].r_cnt++;
+    } else if (trans->action == MemAction_Write) {
+        info_[trans->source_idx].w_cnt++;
+    }
     RISCV_mutex_unlock(&mutexNBAccess_);
     return ret;
 }
 
-/*int Bus::read(uint64_t addr, uint8_t *payload, int sz) {
-    IMemoryOperation *imem;
-    Axi4TransactionType memop;
-    bool unmapped = true;
-
-    for (unsigned i = 0; i < imap_.size(); i++) {
-        imem = static_cast<IMemoryOperation *>(imap_[i].to_iface());
-        if (imem->getBaseAddress() <= addr
-            && addr < (imem->getBaseAddress() + imem->getLength())) {
-
-            memop.addr = addr;
-            memop.rw = 0;
-            memop.wstrb = 0;
-            memop.xsize = sz;
-            imem->transaction(&memop);
-            memcpy(payload, memop.rpayload, sz);
-            unmapped = false;
-            break;
-            /// @todo Check memory overlapping
-        }
-    }
-
-    checkBreakpoint(addr);
-
-    if (unmapped) {
-        RISCV_error("[%" RV_PRI64 "d] Read from unmapped address "
-                    "%08" RV_PRI64 "x", iclk0_->getStepCounter(), addr);
-        memset(payload, 0xFF, sz);
-    } else {
-        RISCV_debug("[%08" RV_PRI64 "x] => [%08x %08x %08x %08x]",
-            addr,
-            memop.rpayload[3], memop.rpayload[2], 
-            memop.rpayload[1], memop.rpayload[0]);
-    }
-    return sz;
-}
-
-int Bus::write(uint64_t addr, uint8_t *payload, int sz) {
-    IMemoryOperation *imem;
-    Axi4TransactionType memop;
-    bool unmapped = true;
-
-    for (unsigned i = 0; i < imap_.size(); i++) {
-        imem = static_cast<IMemoryOperation *>(imap_[i].to_iface());
-        if (imem->getBaseAddress() <= addr
-            && addr < (imem->getBaseAddress() + imem->getLength())) {
-
-            memop.addr = addr;
-            memop.rw = 1;
-            memop.wstrb = (1 << sz) - 1;
-            memop.xsize = sz;
-            memcpy(memop.wpayload, payload, sz);
-            imem->transaction(&memop);
-            unmapped = false;
-            break;
-            /// @todo Check memory overlapping
-        }
-    }
-
-    checkBreakpoint(addr);
-
-    if (unmapped) {
-        RISCV_error("[%" RV_PRI64 "d] Write to unmapped address "
-                    "%08" RV_PRI64 "x", iclk0_->getStepCounter(), addr);
-    } else {
-        RISCV_debug("[%08" RV_PRI64 "x] <= [%08x %08x %08x %08x]",
-            addr,
-            memop.wpayload[3], memop.wpayload[2], 
-            memop.wpayload[1], memop.wpayload[0]);
-    }
-    return sz;
-}*/
-
-void Bus::addBreakpoint(uint64_t addr) {
-    AttributeType br(Attr_UInteger, addr);
-    for (unsigned i = 0; i < breakpoints_.size(); i++) {
-        if (breakpoints_[i].to_uint64() == ~0ull) {
-            breakpoints_[i] = br;
-            return;
-        }
-    }
-    breakpoints_.add_to_list(&br);
-}
-
-void Bus::removeBreakpoint(uint64_t addr) {
-    AttributeType br(Attr_UInteger, ~0);
-    for (unsigned i = 0; i < breakpoints_.size(); i++) {
-        if (breakpoints_[i].to_uint64() == addr) {
-            breakpoints_[i] = br;
-        }
-    }
+BusUtilType *Bus::bus_utilization() {
+    return info_;
 }
 
 }  // namespace debugger

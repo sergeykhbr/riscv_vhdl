@@ -425,6 +425,7 @@ public:
         if (off & 0x800) {
             off |= EXT_SIGN_12;
         }
+        trans.source_idx = CFG_NASTI_MASTER_CACHED;
         trans.action = MemAction_Read;
         trans.addr = data->regs[u.bits.rs1] + off;
         trans.xsize = 8;
@@ -451,6 +452,7 @@ public:
 
     virtual void exec(uint32_t *payload, CpuContextType *data) {
         Axi4TransactionType trans;
+        trans.source_idx = CFG_NASTI_MASTER_CACHED;
         trans.rpayload.b64[0] = 0;
         ISA_I_type u;
         u.value = payload[0];
@@ -487,6 +489,7 @@ public:
 
     virtual void exec(uint32_t *payload, CpuContextType *data) {
         Axi4TransactionType trans;
+        trans.source_idx = CFG_NASTI_MASTER_CACHED;
         trans.rpayload.b64[0] = 0;
         ISA_I_type u;
         u.value = payload[0];
@@ -520,6 +523,7 @@ public:
 
     virtual void exec(uint32_t *payload, CpuContextType *data) {
         Axi4TransactionType trans;
+        trans.source_idx = CFG_NASTI_MASTER_CACHED;
         trans.rpayload.b64[0] = 0;
         ISA_I_type u;
         u.value = payload[0];
@@ -556,6 +560,7 @@ public:
 
     virtual void exec(uint32_t *payload, CpuContextType *data) {
         Axi4TransactionType trans;
+        trans.source_idx = CFG_NASTI_MASTER_CACHED;
         trans.rpayload.b64[0] = 0;
         ISA_I_type u;
         u.value = payload[0];
@@ -589,6 +594,7 @@ public:
 
     virtual void exec(uint32_t *payload, CpuContextType *data) {
         Axi4TransactionType trans;
+        trans.source_idx = CFG_NASTI_MASTER_CACHED;
         trans.rpayload.b64[0] = 0;
         ISA_I_type u;
         u.value = payload[0];
@@ -625,6 +631,7 @@ public:
 
     virtual void exec(uint32_t *payload, CpuContextType *data) {
         Axi4TransactionType trans;
+        trans.source_idx = CFG_NASTI_MASTER_CACHED;
         trans.rpayload.b64[0] = 0;
         ISA_I_type u;
         u.value = payload[0];
@@ -1046,6 +1053,7 @@ public:
     virtual void exec(uint32_t *payload, CpuContextType *data) {
         Axi4TransactionType trans;
         ISA_S_type u;
+        trans.source_idx = CFG_NASTI_MASTER_CACHED;
         u.value = payload[0];
         uint64_t off = (u.bits.imm11_5 << 5) | u.bits.imm4_0;
         if (off & 0x800) {
@@ -1078,6 +1086,7 @@ public:
 
     virtual void exec(uint32_t *payload, CpuContextType *data) {
         Axi4TransactionType trans;
+        trans.source_idx = CFG_NASTI_MASTER_CACHED;
         trans.wpayload.b64[0] = 0;
         ISA_S_type u;
         u.value = payload[0];
@@ -1113,6 +1122,7 @@ public:
 
     virtual void exec(uint32_t *payload, CpuContextType *data) {
         Axi4TransactionType trans;
+        trans.source_idx = CFG_NASTI_MASTER_CACHED;
         trans.wpayload.b64[0] = 0;
         ISA_S_type u;
         u.value = payload[0];
@@ -1148,6 +1158,7 @@ public:
 
     virtual void exec(uint32_t *payload, CpuContextType *data) {
         Axi4TransactionType trans;
+        trans.source_idx = CFG_NASTI_MASTER_CACHED;
         trans.wpayload.b64[0] = 0;
         ISA_S_type u;
         u.value = payload[0];

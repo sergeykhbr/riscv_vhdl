@@ -187,7 +187,8 @@
                 ['LogLevel',1],
                 ['BaseAddress',0x80080000],
                 ['Length',0x20000],
-                ['CPU','core0']
+                ['CPU','core0'],
+                ['Bus','axi0']
                 ]}]},
     {'Class':'GNSSStubClass','Instances':[
           {'Name':'gnss0','Attr':[

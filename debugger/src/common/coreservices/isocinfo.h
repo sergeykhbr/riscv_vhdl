@@ -15,6 +15,11 @@ namespace debugger {
 
 static const char *IFACE_SOC_INFO = "ISocInfo";
 
+static const int CFG_NASTI_MASTER_CACHED    = 0;
+static const int CFG_NASTI_MASTER_UNCACHED  = 1;
+static const int CFG_NASTI_MASTER_ETHMAC    = 2;
+static const int CFG_NASTI_MASTER_TOTAL     = 3;
+
 static const uint16_t MST_DID_EMPTY            = 0x7755;
 static const uint16_t SLV_DID_EMPTY            = 0x5577;
 
@@ -179,12 +184,12 @@ struct DsuMapType {
             uint64_t soft_reset;
             uint64_t miss_access_cnt;
             uint64_t miss_access_addr;
-            uint64_t rsrv[1];
+            uint64_t rsrv[5];
             // Bus utilization registers
             struct mst_bus_util_type {
                 uint64_t w_cnt;
                 uint64_t r_cnt;
-            } util[3];  // CFG_NASTI_MASTER_TOTAL
+            } bus_util[CFG_NASTI_MASTER_TOTAL];
         } v;
     } ulocal;
 };
@@ -196,6 +201,8 @@ class ISocInfo : public IFace {
 public:
     ISocInfo() : IFace(IFACE_SOC_INFO) {}
 
+    virtual unsigned getMastersTotal() =0;
+    virtual unsigned getSlavesTotal() =0;
     virtual unsigned getRegsTotal() =0;
     virtual void getRegsList(AttributeType *lst) =0;
     virtual unsigned getCsrTotal() =0;
@@ -207,13 +214,6 @@ public:
 
     virtual uint64_t addressPlugAndPlay() =0;
     virtual uint64_t addressGpio() =0;
-    virtual uint64_t addressBreakCreate() =0;
-    virtual uint64_t addressBreakRemove() =0;
-    virtual uint64_t addressRunControl() =0;
-    virtual uint64_t addressStepCounter() =0;
-    virtual uint64_t valueHalt() =0;
-    virtual uint64_t valueRun() =0;
-    virtual uint64_t valueRunStepping() =0;
 };
 
 }  // namespace debugger

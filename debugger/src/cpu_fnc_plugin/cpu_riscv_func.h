@@ -82,6 +82,8 @@ private:
 
 
 private:
+    static const int INSTR_HASH_TABLE_SIZE = 1 << 5;
+
     AttributeType isEnable_;
     AttributeType bus_;
     AttributeType listExtISA_;
@@ -98,7 +100,6 @@ private:
     uint32_t cacheline_[512/4];
 
     // Registers:
-    static const int INSTR_HASH_TABLE_SIZE = 1 << 5;
     AttributeType listInstr_[INSTR_HASH_TABLE_SIZE];
     CpuContextType cpu_context_;
 

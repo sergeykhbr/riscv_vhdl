@@ -48,6 +48,7 @@ SOURCES = \
 	elfloader \
 	srcproc \
 	cmd_br \
+	cmd_busutil \
 	cmd_cpi \
 	cmd_csr \
 	cmd_disas \

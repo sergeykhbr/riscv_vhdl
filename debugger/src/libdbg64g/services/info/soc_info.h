@@ -25,6 +25,8 @@ public:
     virtual void postinitService();
 
     /** ISocInfo */
+    virtual unsigned getMastersTotal();
+    virtual unsigned getSlavesTotal();
     virtual unsigned getRegsTotal();
     virtual void getRegsList(AttributeType *lst);
     virtual unsigned getCsrTotal();
@@ -38,13 +40,6 @@ public:
 
     virtual uint64_t addressPlugAndPlay();
     virtual uint64_t addressGpio();
-    virtual uint64_t addressBreakCreate();
-    virtual uint64_t addressBreakRemove();
-    virtual uint64_t addressRunControl();
-    virtual uint64_t addressStepCounter();
-    virtual uint64_t valueHalt();
-    virtual uint64_t valueRun();
-    virtual uint64_t valueRunStepping();
 
 private:
     AttributeType pnpBase_;

@@ -24,6 +24,7 @@
 #include "cmd/cmd_status.h"
 #include "cmd/cmd_reset.h"
 #include "cmd/cmd_disas.h"
+#include "cmd/cmd_busutil.h"
 
 namespace debugger {
 
@@ -65,6 +66,7 @@ void CmdExecutor::postinitService() {
 
     // Core commands registration:
     registerCommand(new CmdBr(itap_, info_));
+    registerCommand(new CmdBusUtil(itap_, info_));
     registerCommand(new CmdCpi(itap_, info_));
     registerCommand(new CmdCsr(itap_, info_));
     registerCommand(new CmdDisas(itap_, info_));

@@ -18,6 +18,7 @@
 #include "coreservices/imemop.h"
 #include "coreservices/iwire.h"
 #include "coreservices/icpuriscv.h"
+#include "coreservices/ibus.h"
 
 namespace debugger {
 
@@ -55,7 +56,9 @@ private:
     AttributeType baseAddress_;
     AttributeType length_;
     AttributeType cpu_;
+    AttributeType bus_;
     ICpuRiscV *icpu_;
+    IBus *ibus_;
     uint64_t shifter32_;
     uint64_t wdata64_;
     uint64_t soft_reset_;
