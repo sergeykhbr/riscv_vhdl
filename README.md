@@ -45,6 +45,8 @@ RISC-V simulator v3.1       | 12.0 | **77257.0** | -   | No  | Zephyr 1.3
 FPGA SoC with "Rocket" v3.1 | 28.0 | **34964.0** | 60  | No  | Zephyr 1.3
 FPGA SoC with "Rocket" v4.0 | 40.7 | **24038.0** | 60<sup>1</sup>  | Yes | Zephyr 1.5
 FPGA SoC with "River " v4.0 | 28.0 | **35259.0** | 60<sup>1</sup>  | No | Zephyr 1.5
+FPGA SoC with "Rocket" v5.0 | 41.0 | **24170.0** | 60<sup>1</sup>  | Yes | Zephyr 1.5
+FPGA SoC with "River " v5.0 | 28.0 | **35261.0** | 60<sup>1</sup>  | No | Zephyr 1.5
 
 <sup>1</sup> - Actual SoC frequency is 40 MHz (to meet FPU constrains) but
 Dhrystone benchmark uses constant 60 MHz and high precision counter (in clock cycles)
@@ -349,6 +351,7 @@ could contain errors that are fixing with a small delay. Let me know if see one.
 ### Implemented functionality (v5.0)
 
 - New CPU implemented ("RIVER").
+- "Rocket-chip" CPU updated to date 18 Jan 2017. TileLink interface was totally redesigned.
 - SystemC support was added with the precise CPU model and VCD-stimulus generator.
 - Debugger functionality is now oriented only on RIVER implementation
   and includes a lot of new features: breakpoints, disassembler,

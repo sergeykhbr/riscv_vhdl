@@ -140,45 +140,50 @@ constant MEM_ADDR_BITS : integer := 26;
   );
 
 
-type tile_cached_in_type is record
-    acquire_ready : std_logic;
-    grant_valid : std_logic;
-    grant_bits_addr_beat : std_logic_vector(2 downto 0);--1
-    --! client's transaction id
-    grant_bits_client_xact_id : std_logic_vector(1 downto 0);
-    grant_bits_manager_xact_id : std_logic_vector(3 downto 0);
-    grant_bits_is_builtin_type : std_logic;
-    grant_bits_g_type : std_logic_vector(3 downto 0);
-    grant_bits_data : std_logic_vector(63 downto 0);--127
-    probe_valid : std_logic;
-    probe_bits_addr_block : std_logic_vector(25 downto 0);
-    probe_bits_p_type : std_logic_vector(1 downto 0);
-    release_ready : std_logic;
-		grant_bits_manager_id : std_logic;--new signal
-    finish_ready : std_logic; --new signal
+type tile_in_type is record
+    a_ready : std_logic;
+    b_valid : std_logic;
+    b_opcode : std_logic_vector(2 downto 0);
+    b_param : std_logic_vector(1 downto 0);
+    b_size : std_logic_vector(3 downto 0);
+    b_source : std_logic_vector(2 downto 0);
+    b_address : std_logic_vector(31 downto 0);
+    b_mask : std_logic_vector(7 downto 0);
+    b_data : std_logic_vector(63 downto 0);
+    c_ready : std_logic;
+    d_valid : std_logic;
+    d_opcode : std_logic_vector(2 downto 0);
+    d_param : std_logic_vector(1 downto 0);
+    d_size : std_logic_vector(3 downto 0);
+    d_source : std_logic_vector(2 downto 0);
+    d_sink : std_logic_vector(3 downto 0);
+    d_addr_lo : std_logic_vector(2 downto 0);
+    d_data : std_logic_vector(63 downto 0);
+    d_error : std_logic;
+    e_ready : std_logic;
 end record;
 
-type tile_cached_out_type is record
-    acquire_valid : std_logic;
-    acquire_bits_addr_block : std_logic_vector(25 downto 0);
-    acquire_bits_client_xact_id : std_logic_vector(1 downto 0);
-    acquire_bits_addr_beat : std_logic_vector(2 downto 0);--1
-    acquire_bits_is_builtin_type : std_logic;
-    acquire_bits_a_type : std_logic_vector(2 downto 0);
-    acquire_bits_union : std_logic_vector(10 downto 0);--16
-    acquire_bits_data : std_logic_vector(63 downto 0);--127
-    grant_ready : std_logic;
-    probe_ready : std_logic;
-    release_valid : std_logic;
-    release_bits_addr_beat : std_logic_vector(2 downto 0);--1
-    release_bits_addr_block : std_logic_vector(25 downto 0);
-    release_bits_client_xact_id : std_logic_vector(1 downto 0);
-    release_bits_r_type : std_logic_vector(2 downto 0);
-    release_bits_voluntary : std_logic;
-    release_bits_data : std_logic_vector(63 downto 0);--127
-    finish_valid : std_logic;--new signal
-    finish_bits_manager_xact_id : std_logic_vector(3 downto 0);--new signal
-    finish_bits_manager_id : std_logic; --new signal
+type tile_out_type is record
+    a_valid : std_logic;
+    a_opcode : std_logic_vector(2 downto 0);
+    a_param : std_logic_vector(2 downto 0);
+    a_size : std_logic_vector(3 downto 0);
+    a_source : std_logic_vector(2 downto 0);
+    a_address : std_logic_vector(31 downto 0);
+    a_mask : std_logic_vector(7 downto 0);
+    a_data : std_logic_vector(63 downto 0);
+    b_ready : std_logic;
+    c_valid : std_logic;
+    c_opcode : std_logic_vector(2 downto 0);
+    c_param : std_logic_vector(2 downto 0);
+    c_size : std_logic_vector(3 downto 0);
+    c_source : std_logic_vector(2 downto 0);
+    c_address : std_logic_vector(31 downto 0);
+    c_data : std_logic_vector(63 downto 0);
+    c_error : std_logic;
+    d_ready : std_logic;
+    e_valid : std_logic;
+    e_sink : std_logic_vector(3 downto 0);
 end record;
 
 

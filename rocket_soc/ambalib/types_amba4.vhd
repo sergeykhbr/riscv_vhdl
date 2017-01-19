@@ -603,7 +603,8 @@ type nasti_slave_bank_type is record
     rid    : std_logic_vector(CFG_ROCKET_ID_BITS-1 downto 0);
     rresp  : std_logic_vector(1 downto 0);  --! OK=0
     ruser  : std_logic;
-    rwaitready : std_logic;                 --! Reading wait state flag: 0=waiting
+    rwait_while_write : std_logic;          --! Writing request has higher priority than read and can interrupt reading
+    rwaitready : std_logic;                 --! Reading wait state flag: 0=waiting. User's waitstates
     
     wburst : std_logic_vector(1 downto 0);  -- 0=INCREMENT
     wsize  : integer;                       -- code in range 0=1 Bytes upto 7=128 Bytes. 
@@ -618,7 +619,7 @@ end record;
 --! Reset value of the template bank of registers of a slave device.
 constant NASTI_SLAVE_BANK_RESET : nasti_slave_bank_type := (
     rwait, wwait,
-    NASTI_BURST_FIXED, 0, (others=>(others=>'0')), 0, (others=>'0'), NASTI_RESP_OKAY, '0', '1',
+    NASTI_BURST_FIXED, 0, (others=>(others=>'0')), 0, (others=>'0'), NASTI_RESP_OKAY, '0', '0', '1',
     NASTI_BURST_FIXED, 0, (others=>(others=>'0')), 0, (others=>'0'), NASTI_RESP_OKAY, '0', '0'
 );
 
@@ -731,7 +732,8 @@ package body types_amba4 is
 
     traddr := (i.ar_bits.addr(CFG_NASTI_ADDR_BITS-1 downto 12) and (not cfg.xmask))
              & i.ar_bits.addr(11 downto 0);
-             
+
+    o_bank.rwait_while_write := '0';
     -- Reading state machine:
     case i_bank.rstate is
     when rwait =>
@@ -754,9 +756,11 @@ package body types_amba4 is
             --! reading wait states.
             --! Example: see axi2fse.vhd bridge implementation
             o_bank.rwaitready := '1';
+            o_bank.rwait_while_write := i.aw_valid;
         end if;
     when rtrans =>
-        if i.r_ready = '1' and i_bank.rwaitready = '1' then
+        o_bank.rwait_while_write := i.aw_valid or i.w_valid;
+        if i.r_ready = '1' and i_bank.rwaitready = '1' and i_bank.rwait_while_write = '0' then
             o_bank.rlen := i_bank.rlen - 1;
             if i_bank.rburst = NASTI_BURST_INCR then
               for n in 0 to CFG_WORDS_ON_BUS-1 loop
@@ -987,7 +991,7 @@ begin
     end if;
     ret.r_resp    := r.rresp;
     ret.r_user    := r.ruser;
-    if r.rwaitready = '1' and r.rstate = rtrans then
+    if r.rwaitready = '1' and r.rstate = rtrans and r.rwait_while_write = '0' then
       ret.r_valid   := '1';
     else
       ret.r_valid   := '0';
