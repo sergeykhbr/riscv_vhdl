@@ -18,7 +18,7 @@ fw/elf2raw64/makefiles/obj/
 fw/elf2raw64/makefiles/elf/
 patches/
 work/tb/*
-!work/tb/rocket_soc_tb.vhd
+!work/tb/riscv_soc_tb.vhd
 !work/tb/uart_sim.vhd
 docs/*.pptx
 docs/gnss_styles.css
