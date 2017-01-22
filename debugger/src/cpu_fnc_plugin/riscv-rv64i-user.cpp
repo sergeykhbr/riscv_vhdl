@@ -725,7 +725,8 @@ public:
     virtual void exec(uint32_t *payload, CpuContextType *data) {
         ISA_I_type u;
         u.value = payload[0];
-        data->regs[u.bits.rd] = data->regs[u.bits.rs1] << u.bits.imm;
+        uint32_t shamt = u.bits.imm & 0x3f;
+        data->regs[u.bits.rd] = data->regs[u.bits.rs1] << shamt;
         data->npc = data->pc + 4;
     }
 };
@@ -883,12 +884,13 @@ public:
     virtual void exec(uint32_t *payload, CpuContextType *data) {
         ISA_I_type u;
         u.value = payload[0];
-        data->regs[u.bits.rd] = data->regs[u.bits.rs1] << u.bits.imm;
+        uint32_t shamt = u.bits.imm & 0x1f;
+        data->regs[u.bits.rd] = data->regs[u.bits.rs1] << shamt;
         data->regs[u.bits.rd] &= 0xFFFFFFFFLL;
         if (data->regs[u.bits.rd] & (1LL << 31)) {
             data->regs[u.bits.rd] |= EXT_SIGN_32;
         }
-        if (u.bits.imm >> 5) {
+        if ((u.bits.imm >> 5) & 0x1) {
             generateException(EXCEPTION_InstrIllegal, data);
         }
         data->npc = data->pc + 4;
@@ -941,8 +943,9 @@ public:
     virtual void exec(uint32_t *payload, CpuContextType *data) {
         ISA_I_type u;
         u.value = payload[0];
+        uint32_t shamt = u.bits.imm & 0x3f;
         data->regs[u.bits.rd] = 
-            static_cast<int64_t>(data->regs[u.bits.rs1]) >> u.bits.imm;
+            static_cast<int64_t>(data->regs[u.bits.rs1]) >> shamt;
         data->npc = data->pc + 4;
     }
 };
@@ -958,8 +961,9 @@ public:
         ISA_I_type u;
         u.value = payload[0];
         int32_t t1 = static_cast<int32_t>(data->regs[u.bits.rs1]);
-        data->regs[u.bits.rd] = static_cast<int64_t>(t1 >> u.bits.imm);
-        if (u.bits.imm >> 5) {
+        uint32_t shamt = u.bits.imm & 0x1f;
+        data->regs[u.bits.rd] = static_cast<int64_t>(t1 >> shamt);
+        if ((u.bits.imm >> 5) & 0x1) {
             generateException(EXCEPTION_InstrIllegal, data);
         }
         data->npc = data->pc + 4;
@@ -993,7 +997,8 @@ public:
     virtual void exec(uint32_t *payload, CpuContextType *data) {
         ISA_I_type u;
         u.value = payload[0];
-        data->regs[u.bits.rd] = data->regs[u.bits.rs1] >> u.bits.imm;
+        uint32_t shamt = u.bits.imm & 0x3f;
+        data->regs[u.bits.rd] = data->regs[u.bits.rs1] >> shamt;
         data->npc = data->pc + 4;
     }
 };
@@ -1008,9 +1013,10 @@ public:
     virtual void exec(uint32_t *payload, CpuContextType *data) {
         ISA_I_type u;
         u.value = payload[0];
+        uint32_t shamt = u.bits.imm & 0x1f;
         data->regs[u.bits.rd] = 
-            static_cast<uint32_t>(data->regs[u.bits.rs1]) >> u.bits.imm;
-        if (u.bits.imm >> 5) {
+            static_cast<uint32_t>(data->regs[u.bits.rs1]) >> shamt;
+        if ((u.bits.imm >> 5) & 0x1) {
             generateException(EXCEPTION_InstrIllegal, data);
         }
         data->npc = data->pc + 4;
