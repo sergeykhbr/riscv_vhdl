@@ -79,7 +79,7 @@ private:
     void fetchInstruction();
     IInstruction *decodeInstruction(uint32_t *rpayload);
     void executeInstruction(IInstruction *instr, uint32_t *rpayload);
-
+    void debugRegOutput(const char *marker, CpuContextType *pContext);
 
 private:
     static const int INSTR_HASH_TABLE_SIZE = 1 << 5;

@@ -60,6 +60,7 @@ private:
         uint32_t irq_lock;      // 0x28: [RW]
         uint32_t irq_cause_idx; // 0x2c: [RW]
     } regs_;
+    uint32_t irq_wait_unlock;
 };
 
 DECLARE_CLASS(IrqController)

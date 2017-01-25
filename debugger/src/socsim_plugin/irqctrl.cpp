@@ -28,6 +28,7 @@ IrqController::IrqController(const char *name)  : IService(name) {
     memset(&regs_, 0, sizeof(regs_));
     regs_.irq_mask = ~0;
     regs_.irq_lock = 1;
+    irq_wait_unlock = 0;
 }
 
 IrqController::~IrqController() {
@@ -114,6 +115,13 @@ void IrqController::b_transport(Axi4TransactionType *trans) {
             case 10:
                 regs_.irq_lock = trans->wpayload.b32[i];
                 RISCV_info("Set irq_ena = %08x", trans->wpayload.b32[i]);
+                if (regs_.irq_lock == 0 && (regs_.irq_pending ||irq_wait_unlock)) {
+                    regs_.irq_pending |= irq_wait_unlock;
+                    icpu_->raiseSignal(CPU_SIGNAL_EXT_IRQ);
+                    irq_wait_unlock = 0;
+                } else if (regs_.irq_lock == 1 && regs_.irq_pending) {
+                    icpu_->lowerSignal(CPU_SIGNAL_EXT_IRQ);
+                }
                 break;
             case 11:
                 regs_.irq_cause_idx = trans->wpayload.b32[i];
@@ -195,6 +203,7 @@ void IrqController::b_transport(Axi4TransactionType *trans) {
 
 void IrqController::raiseLine(int idx) {
     if (regs_.irq_lock) {
+        irq_wait_unlock |= (~regs_.irq_mask & (1 << idx));
         return;
     }
     if ((regs_.irq_mask & (0x1 << idx)) == 0) {

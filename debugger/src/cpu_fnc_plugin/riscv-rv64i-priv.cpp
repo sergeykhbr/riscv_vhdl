@@ -292,7 +292,6 @@ public:
         // Emulating interrupt strob (not pulse from external controller)
         if (data->interrupt_pending) {
             generateInterrupt(INTERRUPT_MExternal, data);
-            data->interrupt_pending = 0;
         }
             
         writeCSR(CSR_mstatus, mstatus.value, data);

@@ -435,7 +435,8 @@ public:
         if (data->mem_trace_file) {
             char tstr[512];
             RISCV_sprintf(tstr, sizeof(tstr), 
-                        "[%08x] => %016" RV_PRI64 "x\n",
+                        "%08x: [%08x] => %016" RV_PRI64 "x\n",
+                        static_cast<int>(data->pc),
                         static_cast<int>(trans.addr), trans.rpayload.b64[0]);
             (*data->mem_trace_file) << tstr;
             data->mem_trace_file->flush();
@@ -1075,7 +1076,8 @@ public:
         if (data->mem_trace_file) {
             char tstr[512];
             RISCV_sprintf(tstr, sizeof(tstr), 
-                        "[%08x] <= %016" RV_PRI64 "x\n",
+                        "%08x: [%08x] <= %016" RV_PRI64 "x\n",
+                        static_cast<int>(data->pc),
                         static_cast<int>(trans.addr), trans.wpayload.b64[0]);
             (*data->mem_trace_file) << tstr;
             data->mem_trace_file->flush();

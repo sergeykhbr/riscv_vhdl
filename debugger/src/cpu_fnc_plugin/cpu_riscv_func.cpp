@@ -211,16 +211,18 @@ void CpuRiscV_Functional::updateQueue() {
 void CpuRiscV_Functional::handleTrap() {
     CpuContextType *pContext = getpContext();
     csr_mstatus_type mstatus;
+    csr_mcause_type mcause;
     mstatus.value = pContext->csr[CSR_mstatus];
+    mcause.value =  pContext->csr[CSR_mcause];
 
     if (pContext->exception == 0 && pContext->interrupt == 0) {
         return;
     }
-    if (pContext->interrupt == 1 && 
+    if (pContext->interrupt && 
         mstatus.bits.MIE == 0 && pContext->cur_prv_level == PRV_M) {
         return;
     }
-    if (pContext->csr[CSR_mcause] == EXCEPTION_Breakpoint
+    if (mcause.value == EXCEPTION_Breakpoint
         && pContext->br_ctrl.bits.trap_on_break == 0) {
         pContext->exception = 0;
         pContext->npc = pContext->pc;
@@ -321,6 +323,31 @@ IInstruction *CpuRiscV_Functional::decodeInstruction(uint32_t *rpayload) {
     return instr;
 }
 
+void CpuRiscV_Functional::debugRegOutput(const char *marker,
+                                         CpuContextType *pContext) {
+        RISCV_debug("%s[%" RV_PRI64 "d] %d %08x: "
+                    "1:%016" RV_PRI64 "x; 2:%016" RV_PRI64 "x; 3:%016" RV_PRI64 "x; 4:%016" RV_PRI64 "x " 
+                    "5:%016" RV_PRI64 "x; 6:%016" RV_PRI64 "x; 7:%016" RV_PRI64 "x; 8:%016" RV_PRI64 "x " 
+                    "9:%016" RV_PRI64 "x; 10:%016" RV_PRI64 "x; 11:%016" RV_PRI64 "x; 12:%016" RV_PRI64 "x "
+                    "13:%016" RV_PRI64 "x; 14:%016" RV_PRI64 "x; 15:%016" RV_PRI64 "x; 16:%016" RV_PRI64 "x "
+                    "17:%016" RV_PRI64 "x; 18:%016" RV_PRI64 "x; 19:%016" RV_PRI64 "x; 20:%016" RV_PRI64 "x " 
+                    "21:%016" RV_PRI64 "x; 22:%016" RV_PRI64 "x; 24:%016" RV_PRI64 "x; 25:%016" RV_PRI64 "x " 
+                    "25:%016" RV_PRI64 "x; 26:%016" RV_PRI64 "x; 27:%016" RV_PRI64 "x; 28:%016" RV_PRI64 "x " 
+                    "29:%016" RV_PRI64 "x; 30:%016" RV_PRI64 "x; 31:%016" RV_PRI64 "x",
+            marker,
+            getStepCounter(),
+            (int)pContext->cur_prv_level,
+            (uint32_t)pContext->csr[CSR_mepc],
+            pContext->regs[1], pContext->regs[2], pContext->regs[3], pContext->regs[4],
+            pContext->regs[5], pContext->regs[6], pContext->regs[7], pContext->regs[8],
+            pContext->regs[9], pContext->regs[10], pContext->regs[11], pContext->regs[12],
+            pContext->regs[13], pContext->regs[14], pContext->regs[15], pContext->regs[16],
+            pContext->regs[17], pContext->regs[18], pContext->regs[19], pContext->regs[20],
+            pContext->regs[21], pContext->regs[22], pContext->regs[23], pContext->regs[24],
+            pContext->regs[25], pContext->regs[26], pContext->regs[27], pContext->regs[28],
+            pContext->regs[29], pContext->regs[30], pContext->regs[31]);
+}
+
 void CpuRiscV_Functional::executeInstruction(IInstruction *instr,
                                              uint32_t *rpayload) {
 
@@ -334,23 +361,18 @@ void CpuRiscV_Functional::executeInstruction(IInstruction *instr,
 
     instr->exec(cacheline_, pContext);
 #if 0
-    //if (pContext->pc >= 0x10000000) {
-    //if ((pContext->pc >= 0x100000b4 && pContext->pc <= 0x10000130)
-    //|| (pContext->pc >= 0x10001ef4)
-    //) 
-    {
-    //if (pContext->pc >= 0x10001928 && pContext->pc <= 0x10001960) {
-        RISCV_debug("[%" RV_PRI64 "d] %08x: %08x \t %4s <prv=%d; mstatus=%016" RV_PRI64 "x; mcause=%016" RV_PRI64 "x; ra=%016" RV_PRI64 "x; sp=%016" RV_PRI64 "x; tp=%016" RV_PRI64 "x>", 
+    if (pContext->pc == 0x10000148 && pContext->regs[Reg_a0] != 3) {
+        RISCV_debug("IstWrapper [%" RV_PRI64 "d]: idx=%" RV_PRI64 "d",
+            getStepCounter(), pContext->regs[Reg_a0]);
+    }
+    if (pContext->pc == 0x1000246c) {
+        RISCV_debug("new_thread [%" RV_PRI64 "d]: "
+                    "Stack:%016" RV_PRI64 "x; StackSize:%" RV_PRI64 "d; Entry:%08" RV_PRI64 "x " 
+                    "tp:%016" RV_PRI64 "x => %016" RV_PRI64 "x; prio=%" RV_PRI64 "d",
             getStepCounter(),
-            static_cast<uint32_t>(pContext->pc),
-            rpayload[0], instr->name(),
-            pContext->cur_prv_level,
-            pContext->csr[CSR_mstatus],
-            pContext->csr[CSR_mcause],
-            pContext->regs[Reg_ra],
-            pContext->regs[Reg_sp],
-            pContext->regs[Reg_tp]
-            );
+            pContext->regs[Reg_a0], pContext->regs[Reg_a1], pContext->regs[Reg_a2],
+            pContext->regs[Reg_tp], pContext->regs[Reg_a0]+96,
+            pContext->regs[Reg_a6]);
     }
 #endif
     if (pContext->reg_trace_file) {
@@ -378,32 +400,23 @@ void CpuRiscV_Functional::executeInstruction(IInstruction *instr,
         int msg_len = 0;
         IService *uart = NULL;
         switch (pContext->step_cnt) {
-        case 6000:
+        case 22066:
             uart = static_cast<IService *>(RISCV_get_service("uart0"));
             msg[0] = 'h';
-            msg[1] = 'i';
+            msg_len = 1;
+            break;
+        case 22500:
+            uart = static_cast<IService *>(RISCV_get_service("uart0"));
+            msg[0] = 'e';
+            msg[1] = 'l';
             msg_len = 2;
             break;
-        case 6500:
+        case 24337:
             uart = static_cast<IService *>(RISCV_get_service("uart0"));
-            msg[0] = 'g';
-            msg[1] = 'h';
-            msg[2] = 't';
+            msg[0] = 'p';
+            msg[1] = '\r';
+            msg[2] = '\n';
             msg_len = 3;
-            break;
-        case 8200:
-            uart = static_cast<IService *>(RISCV_get_service("uart0"));
-            msg[0] = 'i';
-            msg[1] = 'c';
-            msg_len = 2;
-            break;
-        case 8300:
-            uart = static_cast<IService *>(RISCV_get_service("uart0"));
-            msg[0] = 'k';
-            msg[1] = 's';
-            msg[2] = '\r';
-            msg[3] = '\n';
-            msg_len = 4;
             break;
         default:;
         }
@@ -462,9 +475,9 @@ void CpuRiscV_Functional::raiseSignal(int idx) {
         if (pContext->reset) {
             break;
         }
+        // External Interrupt controller pending bit
+        pContext->interrupt_pending |= (1ull << idx);
         if (mstatus.bits.MIE == 0 && pContext->cur_prv_level == PRV_M) {
-            // External Interrupt controller pending bit
-            pContext->interrupt_pending = 1;
             break;
         }
         /// @todo delegate interrupt to non-machine privilege level.
@@ -482,8 +495,7 @@ void CpuRiscV_Functional::lowerSignal(int idx) {
         pContext->reset = false; // Active HIGH
         break;
     case CPU_SIGNAL_EXT_IRQ:
-        pContext->interrupt = 0;
-        pContext->interrupt_pending = 0;
+        pContext->interrupt_pending &= ~(1 << idx);
         break;
     default:
         RISCV_error("Unsupported lowerSignal(%d)", idx);
