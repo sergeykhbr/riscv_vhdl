@@ -140,7 +140,7 @@ void InstrDecoder::comb() {
         case 0x5:
             if (wb_instr(31, 26) == 0x00) {
                 wb_dec[Instr_SRLI] = 1;
-            } else if (wb_instr(31, 26) == 0x20) {
+            } else if (wb_instr(31, 26) == 0x10) {
                 wb_dec[Instr_SRAI] = 1;
             } else {
                 w_error = true;

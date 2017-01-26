@@ -502,7 +502,10 @@ void Shifter::comb() {
     }
 
     o_sll = wb_sll;
-    o_sllw = wb_sll(31, 0).to_uint64();;
+    if (wb_sll[31]) {
+        wb_sll(63, 32) = ~0;
+    }
+    o_sllw = wb_sll;
     o_srl = wb_srl;
     o_sra = wb_sra;
     o_srlw = wb_srlw.to_uint64();

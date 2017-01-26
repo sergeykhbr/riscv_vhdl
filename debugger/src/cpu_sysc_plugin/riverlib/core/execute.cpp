@@ -380,7 +380,6 @@ void InstrExecute::comb() {
         & (i_unsup_exception.read() || w_exception_load || w_exception_store
            || wv[Instr_ECALL] || wv[Instr_EBREAK]);
 
-
     /** Default number of cycles per instruction = 0 (1 clock per instr)
      *  If instruction is multicycle then modify this value.
      */
@@ -541,10 +540,10 @@ void InstrExecute::comb() {
         v.trap_ena = 1;
         v.trap_pc = i_d_pc;
         v.trap_code = wb_exception_code;
-        if (wv[Instr_EBREAK] && i_break_mode.read()) {
-            v.npc = i_mtvec;
-        } else {
+        if (wv[Instr_EBREAK] && i_break_mode.read() == 0) {
             v.npc = i_d_pc;
+        } else {
+            v.npc = i_mtvec;
         }
     } else if (w_d_valid) {
         if (w_multi_valid) {

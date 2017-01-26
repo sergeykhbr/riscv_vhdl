@@ -187,7 +187,7 @@ begin
         when "101" =>
             if wb_instr(31 downto 26) = "000000" then
                 wb_dec(Instr_SRLI) := '1';
-            elsif wb_instr(31 downto 26) = "100000" then
+            elsif wb_instr(31 downto 26) = "010000" then
                 wb_dec(Instr_SRAI) := '1';
             else
                 w_error := '1';

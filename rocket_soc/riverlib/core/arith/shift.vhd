@@ -415,7 +415,8 @@ begin
     end case;
 
     o_sll <= wb_sll;
-    o_sllw <= X"00000000" & wb_sll(31 downto 0);
+    o_sllw(31 downto 0) <= wb_sll(31 downto 0);
+    o_sllw(63 downto 32) <= (others => wb_sll(31));
     o_srl <= wb_srl;
     o_sra <= wb_sra;
     o_srlw <= X"00000000" & wb_srlw;

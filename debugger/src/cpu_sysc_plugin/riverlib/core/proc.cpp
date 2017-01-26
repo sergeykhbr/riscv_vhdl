@@ -331,10 +331,16 @@ void Processor::negedge_dbg_print() {
 
         (*reg_dbg) << tstr;
         reg_dbg->flush();
+#if 1
+    if (line_cnt >= 25565) {
+        bool st = true;
+    }
+#endif
     }
     // Memory access debug:
     if (i_resp_data_valid.read()) {
-        sz = RISCV_sprintf(tstr, sizeof(tstr), "[%08x] ",
+        sz = RISCV_sprintf(tstr, sizeof(tstr), "%08x: [%08x] ",
+                        w.m.pc.read().to_uint(),
                         i_resp_data_addr.read().to_uint());
         if (mem_dbg_write_flag) {
             sz += RISCV_sprintf(&tstr[sz], sizeof(tstr) - sz, 

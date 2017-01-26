@@ -611,10 +611,10 @@ begin
         v.trap_ena := '1';
         v.trap_pc := i_d_pc;
         v.trap_code := wb_exception_code;
-        if (wv(Instr_EBREAK) and i_break_mode) = '1' then
-            v.npc := i_mtvec;
-        else
+        if wv(Instr_EBREAK) = '1' and i_break_mode = '0' then
             v.npc := i_d_pc;
+        else
+            v.npc := i_mtvec;
         end if;
     elsif w_d_valid = '1' then
         if w_multi_valid = '1' then

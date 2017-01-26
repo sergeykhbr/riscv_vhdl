@@ -2,7 +2,7 @@
 *.obj
 *.dump
 *.err
-zephyr.lst
+*.lst
 html
 gnsslib/fse_v2/*
 gnsslib/gnssengine/*

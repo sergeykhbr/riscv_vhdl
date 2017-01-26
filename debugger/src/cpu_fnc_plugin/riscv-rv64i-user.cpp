@@ -429,9 +429,14 @@ public:
         trans.action = MemAction_Read;
         trans.addr = data->regs[u.bits.rs1] + off;
         trans.xsize = 8;
-        data->ibus->b_transport(&trans);
+        if (trans.addr & 0x7) {
+            trans.rpayload.b64[0] = 0;
+            generateException(EXCEPTION_LoadMisalign, data);
+        } else {
+            data->ibus->b_transport(&trans);
+            data->npc = data->pc + 4;
+        }
         data->regs[u.bits.rd] = trans.rpayload.b64[0];
-        data->npc = data->pc + 4;
         if (data->mem_trace_file) {
             char tstr[512];
             RISCV_sprintf(tstr, sizeof(tstr), 
@@ -464,16 +469,22 @@ public:
         trans.action = MemAction_Read;
         trans.addr = data->regs[u.bits.rs1] + off;
         trans.xsize = 4;
-        data->ibus->b_transport(&trans);
+        if (trans.addr & 0x3) {
+            trans.rpayload.b64[0] = 0;
+            generateException(EXCEPTION_LoadMisalign, data);
+        } else {
+            data->ibus->b_transport(&trans);
+            data->npc = data->pc + 4;
+        }
         data->regs[u.bits.rd] = trans.rpayload.b64[0];
         if (data->regs[u.bits.rd] & (1LL << 31)) {
             data->regs[u.bits.rd] |= EXT_SIGN_32;
         }
-        data->npc = data->pc + 4;
         if (data->mem_trace_file) {
             char tstr[512];
             RISCV_sprintf(tstr, sizeof(tstr), 
-                    "[%08x] => %016" RV_PRI64 "x\n",
+                    "%08x: [%08x] => %016" RV_PRI64 "x\n",
+                    static_cast<int>(data->pc),
                     static_cast<int>(trans.addr), trans.rpayload.b64[0]);
             (*data->mem_trace_file) << tstr;
             data->mem_trace_file->flush();
@@ -501,13 +512,19 @@ public:
         trans.action = MemAction_Read;
         trans.addr = data->regs[u.bits.rs1] + off;
         trans.xsize = 4;
-        data->ibus->b_transport(&trans);
+        if (trans.addr & 0x3) {
+            trans.rpayload.b64[0] = 0;
+            generateException(EXCEPTION_LoadMisalign, data);
+        } else {
+            data->ibus->b_transport(&trans);
+            data->npc = data->pc + 4;
+        }
         data->regs[u.bits.rd] = trans.rpayload.b64[0];
-        data->npc = data->pc + 4;
         if (data->mem_trace_file) {
             char tstr[512];
             RISCV_sprintf(tstr, sizeof(tstr), 
-                    "[%08x] => %016" RV_PRI64 "x\n",
+                    "%08x: [%08x] => %016" RV_PRI64 "x\n",
+                    static_cast<int>(data->pc),
                     static_cast<int>(trans.addr), trans.rpayload.b64[0]);
             (*data->mem_trace_file) << tstr;
             data->mem_trace_file->flush();
@@ -535,16 +552,22 @@ public:
         trans.action = MemAction_Read;
         trans.addr = data->regs[u.bits.rs1] + off;
         trans.xsize = 2;
-        data->ibus->b_transport(&trans);
+        if (trans.addr & 0x1) {
+            trans.rpayload.b64[0] = 0;
+            generateException(EXCEPTION_LoadMisalign, data);
+        } else {
+            data->ibus->b_transport(&trans);
+            data->npc = data->pc + 4;
+        }
         data->regs[u.bits.rd] = trans.rpayload.b16[0];
         if (data->regs[u.bits.rd] & (1LL << 15)) {
             data->regs[u.bits.rd] |= EXT_SIGN_16;
         }
-        data->npc = data->pc + 4;
         if (data->mem_trace_file) {
             char tstr[512];
             RISCV_sprintf(tstr, sizeof(tstr), 
-                        "[%08x] => %016" RV_PRI64 "x\n",
+                        "%08x: [%08x] => %016" RV_PRI64 "x\n",
+                        static_cast<int>(data->pc),
                         static_cast<int>(trans.addr), trans.rpayload.b64[0]);
             (*data->mem_trace_file) << tstr;
             data->mem_trace_file->flush();
@@ -572,13 +595,19 @@ public:
         trans.action = MemAction_Read;
         trans.addr = data->regs[u.bits.rs1] + off;
         trans.xsize = 2;
-        data->ibus->b_transport(&trans);
+        if (trans.addr & 0x1) {
+            trans.rpayload.b64[0] = 0;
+            generateException(EXCEPTION_LoadMisalign, data);
+        } else {
+            data->ibus->b_transport(&trans);
+            data->npc = data->pc + 4;
+        }
         data->regs[u.bits.rd] = trans.rpayload.b16[0];
-        data->npc = data->pc + 4;
         if (data->mem_trace_file) {
             char tstr[512];
             RISCV_sprintf(tstr, sizeof(tstr), 
-                        "[%08x] => %016" RV_PRI64 "x\n",
+                        "%08x: [%08x] => %016" RV_PRI64 "x\n",
+                        static_cast<int>(data->pc),
                         static_cast<int>(trans.addr), trans.rpayload.b64[0]);
             (*data->mem_trace_file) << tstr;
             data->mem_trace_file->flush();
@@ -615,7 +644,8 @@ public:
         if (data->mem_trace_file) {
             char tstr[512];
             RISCV_sprintf(tstr, sizeof(tstr), 
-                        "[%08x] => %016" RV_PRI64 "x\n",
+                        "%08x: [%08x] => %016" RV_PRI64 "x\n",
+                        static_cast<int>(data->pc),
                         static_cast<int>(trans.addr), trans.rpayload.b64[0]);
             (*data->mem_trace_file) << tstr;
             data->mem_trace_file->flush();
@@ -649,7 +679,8 @@ public:
         if (data->mem_trace_file) {
             char tstr[512];
             RISCV_sprintf(tstr, sizeof(tstr), 
-                    "[%08x] => %016" RV_PRI64 "x\n",
+                    "%08x: [%08x] => %016" RV_PRI64 "x\n",
+                    static_cast<int>(data->pc),
                     static_cast<int>(trans.addr), trans.rpayload.b64[0]);
             (*data->mem_trace_file) << tstr;
             data->mem_trace_file->flush();
@@ -1071,8 +1102,12 @@ public:
         trans.wstrb = (1 << trans.xsize) - 1;
         trans.addr = data->regs[u.bits.rs1] + off;
         trans.wpayload.b64[0] = data->regs[u.bits.rs2];
-        data->ibus->b_transport(&trans);
-        data->npc = data->pc + 4;
+        if (trans.addr & 0x7) {
+            generateException(EXCEPTION_LoadMisalign, data);
+        } else {
+            data->ibus->b_transport(&trans);
+            data->npc = data->pc + 4;
+        }
         if (data->mem_trace_file) {
             char tstr[512];
             RISCV_sprintf(tstr, sizeof(tstr), 
@@ -1107,12 +1142,17 @@ public:
         trans.wstrb = (1 << trans.xsize) - 1;
         trans.addr = data->regs[u.bits.rs1] + off;
         trans.wpayload.b64[0] = data->regs[u.bits.rs2];
-        data->ibus->b_transport(&trans);
-        data->npc = data->pc + 4;
+        if (trans.addr & 0x3) {
+            generateException(EXCEPTION_LoadMisalign, data);
+        } else {
+            data->ibus->b_transport(&trans);
+            data->npc = data->pc + 4;
+        }
         if (data->mem_trace_file) {
             char tstr[512];
             RISCV_sprintf(tstr, sizeof(tstr), 
-                        "[%08x] <= %016" RV_PRI64 "x\n",
+                        "%08x: [%08x] <= %016" RV_PRI64 "x\n",
+                        static_cast<int>(data->pc),
                         static_cast<int>(trans.addr),
                         static_cast<uint64_t>(trans.wpayload.b32[0]));
             (*data->mem_trace_file) << tstr;
@@ -1143,12 +1183,17 @@ public:
         trans.wstrb = (1 << trans.xsize) - 1;
         trans.addr = data->regs[u.bits.rs1] + off;
         trans.wpayload.b64[0] = data->regs[u.bits.rs2] & 0xFFFF;
-        data->ibus->b_transport(&trans);
-        data->npc = data->pc + 4;
+        if (trans.addr & 0x1) {
+            generateException(EXCEPTION_LoadMisalign, data);
+        } else {
+            data->ibus->b_transport(&trans);
+            data->npc = data->pc + 4;
+        }
         if (data->mem_trace_file) {
             char tstr[512];
             RISCV_sprintf(tstr, sizeof(tstr), 
-                        "[%08x] <= %016" RV_PRI64 "x\n",
+                        "%08x: [%08x] <= %016" RV_PRI64 "x\n",
+                        static_cast<int>(data->pc),
                         static_cast<int>(trans.addr),
                         static_cast<uint64_t>(trans.wpayload.b16[0]));
             (*data->mem_trace_file) << tstr;
@@ -1184,7 +1229,8 @@ public:
         if (data->mem_trace_file) {
             char tstr[512];
             RISCV_sprintf(tstr, sizeof(tstr), 
-                        "[%08x] <= %016" RV_PRI64 "x\n",
+                        "%08x: [%08x] <= %016" RV_PRI64 "x\n",
+                        static_cast<int>(data->pc),
                         static_cast<int>(trans.addr),
                         static_cast<uint64_t>(trans.wpayload.b8[0]));
             (*data->mem_trace_file) << tstr;

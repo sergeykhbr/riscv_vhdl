@@ -10,7 +10,7 @@
 
 #include <inttypes.h>
 
-typedef void (*IRQ_HANDLER)(void *arg);
+typedef void (*IRQ_HANDLER)(int idx, void *arg);
 
 typedef struct irqctrl_map {
     volatile uint32_t irq_mask;     // 0x00: [RW] 1=disable; 0=enable

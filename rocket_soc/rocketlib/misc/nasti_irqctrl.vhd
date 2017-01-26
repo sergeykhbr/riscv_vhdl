@@ -164,7 +164,7 @@ begin
 
 
     o_axi <= functionAxi4Output(r.bank_axi, rdata);
-    if r.irqs_pending = IRQ_ZERO then
+    if r.irqs_pending = IRQ_ZERO or r.irq_lock = '1' then
       o_irq_meip <= '0';
     else
       o_irq_meip <= '1';

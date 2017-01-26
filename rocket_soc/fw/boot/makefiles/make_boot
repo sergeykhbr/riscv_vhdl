@@ -44,6 +44,7 @@ OBJ_FILES = $(addsuffix .o,$(SOURCES))
 EXECUTABLE = bootimage
 DUMPFILE = $(EXECUTABLE).dump
 HEXFILE = $(EXECUTABLE).hex
+LSTFILE = $(EXECUTABLE).lst
 
 all: boot
 
@@ -60,6 +61,7 @@ $(HEXFILE): $(EXECUTABLE)
 $(DUMPFILE): $(EXECUTABLE)
 	echo $(OBJDUMP) --disassemble-all --disassemble-zeroes --section=.text --section=.text.startup --section=.data $(addprefix $(ELF_DIR)/,$<) > $(addprefix $(ELF_DIR)/,$@)
 	$(OBJDUMP) --disassemble-all --disassemble-zeroes --section=.text --section=.text.startup --section=.data $(addprefix $(ELF_DIR)/,$<) > $(addprefix $(ELF_DIR)/,$@)
+	$(OBJDUMP) -S $(addprefix $(ELF_DIR)/,$<) > $(addprefix $(ELF_DIR)/,$(LSTFILE))
 
 
 $(EXECUTABLE): $(OBJ_FILES)

@@ -30,8 +30,7 @@ long handle_trap(long cause, long epc, long long regs[32]) {
      *      csrwi mipi, 0
      */
     irqctrl_map *p_irqctrl = (irqctrl_map *)ADDR_NASTI_SLAVE_IRQCTRL;
-    IsrEntryType *isr_table = (IsrEntryType *)p_irqctrl->isr_table;
-    IRQ_HANDLER irq_handler;
+    IRQ_HANDLER irq_handler = (IRQ_HANDLER *)p_irqctrl->isr_table;
     uint32_t pending;
     csr_mcause_type mcause;
 
@@ -46,12 +45,11 @@ long handle_trap(long cause, long epc, long long regs[32]) {
 
     if (mcause.bits.irq == 0x1 && mcause.bits.code == 11) {
         for (int i = 0; i < CFG_IRQ_TOTAL; i++) {
-            if (pending & (0x1 << i)) {
-                irq_handler = (IRQ_HANDLER)isr_table[i].handler;
+            if (pending & 0x1) {
                 p_irqctrl->irq_cause_idx = i;
-
-                irq_handler((void *)isr_table[i].arg);
+                irq_handler(i, NULL);
             }
+            pending >>= 1;
         }
     } else {
        print_uart("mcause:", 7);
