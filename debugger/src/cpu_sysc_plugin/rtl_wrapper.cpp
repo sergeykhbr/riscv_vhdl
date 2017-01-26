@@ -111,7 +111,7 @@ void RtlWrapper::clk_negedge_proc() {
         int msg_len = 0;
         IService *uart = NULL;
         switch (step_cnt) {
-        case 22064://3:
+        case 22063:
             uart = static_cast<IService *>(RISCV_get_service("uart0"));
             msg[0] = 'h';
             msg_len = 1;

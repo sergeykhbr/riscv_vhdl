@@ -37,12 +37,9 @@ void DCache::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_req_data_sz, "/top/cache0/d0/i_req_data_sz");
         sc_trace(o_vcd, i_req_data_addr, "/top/cache0/d0/i_req_data_addr");
         sc_trace(o_vcd, i_req_data_data, "/top/cache0/d0/i_req_data_data");
-        sc_trace(o_vcd, o_req_mem_valid, "/top/cache0/d0/o_req_mem_valid");
         sc_trace(o_vcd, o_req_mem_addr, "/top/cache0/d0/o_req_mem_addr");
         sc_trace(o_vcd, o_req_mem_strob, "/top/cache0/d0/o_req_mem_strob");
         sc_trace(o_vcd, o_req_mem_data, "/top/cache0/d0/o_req_mem_data");
-        sc_trace(o_vcd, i_resp_mem_data_valid, "/top/cache0/d0/i_resp_mem_data_valid");
-        sc_trace(o_vcd, i_resp_mem_data, "/top/cache0/d0/i_resp_mem_data");
         sc_trace(o_vcd, o_resp_data_valid, "/top/cache0/d0/o_resp_data_valid");
         sc_trace(o_vcd, o_resp_data_addr, "/top/cache0/d0/o_resp_data_addr");
         sc_trace(o_vcd, o_resp_data_data, "/top/cache0/d0/o_resp_data_data");

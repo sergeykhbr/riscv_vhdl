@@ -127,9 +127,9 @@
           {'Name':'core0','Attr':[
                 ['LogLevel',4],
                 ['Bus','axi0'],
-                ['GenerateRef',true,'Generate Registers/Memory access trace file to compare it with functional model'],
+                ['GenerateRef',false,'Generate Registers/Memory access trace file to compare it with functional model'],
                 ['InVcdFile','','Non empty string enables generation of stimulus VCD file'],
-                ['OutVcdFile','o_river','Non empty string enables VCD file with reference signals'],
+                ['OutVcdFile','','Non empty string enables VCD file with reference signals'],
                 ['FreqHz',60000000]
                 ]}]},
     {'Class':'MemorySimClass','Instances':[

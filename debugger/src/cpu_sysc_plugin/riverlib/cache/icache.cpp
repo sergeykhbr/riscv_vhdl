@@ -61,19 +61,26 @@ void ICache::comb() {
     bool w_o_resp_valid;
     sc_uint<BUS_ADDR_WIDTH> wb_o_resp_addr;
     sc_uint<32> wb_o_resp_data;
+    bool w_hit_req;
+    bool w_hit_line;
     bool w_hit;
     sc_uint<BUS_ADDR_WIDTH - 3> wb_req_line;
 
     
     v = r;
+    w_hit_req = 0;
+    w_hit_line = 0;
     w_hit = 0;
 
     wb_req_line = i_req_ctrl_addr.read()(BUS_ADDR_WIDTH-1, 3);
-    if ((wb_req_line == r.iline_addr.read())
-      || (i_resp_mem_data_valid.read() 
-      && (wb_req_line == r.iline_addr_req.read()(BUS_ADDR_WIDTH-1, 3)))) {
-        w_hit = 1;
+    if (i_resp_mem_data_valid.read() 
+      && (wb_req_line == r.iline_addr_req.read()(BUS_ADDR_WIDTH-1, 3))) {
+        w_hit_req = 1;
     }
+    if (wb_req_line == r.iline_addr.read()) {
+        w_hit_line = 1;
+    }
+    w_hit = w_hit_req || w_hit_line;
 
     w_o_req_mem_valid = !w_hit & i_req_ctrl_valid.read();
     wb_o_req_mem_addr = i_req_ctrl_addr.read()(BUS_ADDR_WIDTH-1, 3) << 3;
@@ -82,7 +89,7 @@ void ICache::comb() {
     switch (r.state.read()) {
     case State_Idle:
         if (i_req_ctrl_valid.read()) {
-            if (w_hit) {
+            if (w_hit_line) {
                 v.state = State_WaitAccept;
             } else if (i_req_mem_ready.read()) {
                 v.state = State_WaitResp;

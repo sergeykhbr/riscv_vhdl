@@ -130,8 +130,8 @@
                 ['Bus','axi0'],
                 ['ListExtISA',['I','M','A']],
                 ['FreqHz',60000000],
-                ['GenerateRegTraceFile',true,'Generate Registers modification file to compare with SystemC'],
-                ['GenerateMemTraceFile',true,'Generate Memory access file to compare with SystemC'],
+                ['GenerateRegTraceFile',false,'Generate Registers modification file to compare with SystemC'],
+                ['GenerateMemTraceFile',false,'Generate Memory access file to compare with SystemC'],
                 ['ResetVector',0x1000,'Initial intruction pointer value (config parameter)'],
                 ]}]},
     {'Class':'MemorySimClass','Instances':[
