@@ -111,7 +111,7 @@ void RtlWrapper::clk_negedge_proc() {
         int msg_len = 0;
         IService *uart = NULL;
         switch (step_cnt) {
-        case 22063:
+        case 22077:
             uart = static_cast<IService *>(RISCV_get_service("uart0"));
             msg[0] = 'h';
             msg_len = 1;
@@ -122,7 +122,7 @@ void RtlWrapper::clk_negedge_proc() {
             msg[1] = 'l';
             msg_len = 2;
             break;
-        case 24334:
+        case 24347:
             uart = static_cast<IService *>(RISCV_get_service("uart0"));
             msg[0] = 'p';
             msg[1] = '\r';

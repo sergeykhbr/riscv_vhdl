@@ -56,7 +56,10 @@ private:
         sc_signal<sc_uint<BUS_ADDR_WIDTH - 3>> iline_addr;
         sc_signal<sc_uint<BUS_DATA_WIDTH>> iline_data;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> iline_addr_req;
+        sc_signal<sc_uint<32>> iline_data_hit;
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> iline_addr_hit;
         sc_signal<sc_uint<2>> state;
+        sc_signal<bool> hit_line;
     } v, r;
 
 };

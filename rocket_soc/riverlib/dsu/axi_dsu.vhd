@@ -2,14 +2,18 @@
 --! @file
 --! @copyright Copyright 2015 GNSS Sensor Ltd. All right reserved.
 --! @author    Sergey Khabarov - sergeykhbr@gmail.com
---! @brief     Implementation of Debug Support Unit (DSU) with AXI4 interface.
---! @details   DSU provides access to the internal CPU registers (CSRs) via
---!            'Rocket-chip' specific bus HostIO.
+--! @brief     Debug Support Unit (DSU) with AXI4 interface.
+--! @details   DSU provides access to the internal CPU registers via
+--!            'Debug port' bus interface available only on <b>RIVER</b> CPU.
+--!            It is also implements a set of registers collecting bus
+--!            utilization statistic and additional debug information.
 -----------------------------------------------------------------------------
 --! 
 --! @page dsu_link Debug Support Unit (DSU)
 --! 
---! @par Overview
+--! @tableofcontents
+--!
+--! @section dsu_overview Overview
 --! Debug Support Unit (DSU) was developed to interact with "RIVER" CPU
 --! via its debug port interace. This bus provides access to all internal CPU
 --! registers and states and may be additionally extended by request.
@@ -24,19 +28,60 @@
 --! @note Take into account that CPU can have any number of
 --! platform specific CSRs that usually not entirely documented.
 --! 
---! @par Operation
+--! @section dsu_regs DSU registers mapping
 --! DSU acts like a slave AMBA AXI4 device that is directly mapped into 
 --! physical memory. Default address location for our implementation 
 --! is 0x80020000. DSU directly transforms device offset address
 --! into one of regions of the debug port:
---!    Region 1: CSR registers.
---!    Region 2: General set of registers.
---!    Region 3: Run control and debugging registers.
---!    Region 4: Local DSU region that doesn't send into debug port.
+--! <ul>
+--!    <li><b>0x00000..0x08000 (Region 1):</b> CSR registers.</li>
+--!    <li><b>0x08000..0x10000 (Region 2):</b>General set of registers.</li>
+--!    <li><b>0x10000..0x18000 (Region 3):</b> Run control and debug support registers.</li>
+--!    <li><b>0x18000..0x20000 (Region 4):</b> Local DSU region that doesn't access CPU debug port.</li>
+--! </ul>
 --!
 --! @par Example:
 --!     Bus transaction at address <em>0x80023C10</em>
 --!     will be redirected to Debug port with CSR index <em>0x782</em>.
+--!     
+--! @subsection dsu_csr CSR Region (32 KB)
+--!
+--! @par User mode exception program counter (0x00208)
+--! |Bits|Type| Reset |  Name         | Definition 
+--! |:--:|:--:|:-----:|:-------------:|---------------------------------------------|
+--! | 64 | RO | 64h'0 | <tt>CSR_UEPC</tt> |<b>User mode exception program counter</b>.<br>ISA offset 0x041.
+--!
+--! @par User mode exception program counter (0x01A08)
+--! |Bits|Type| Reset | Name              | Definition 
+--! |:--:|:--:|:-----:|:-----------------:|:---------------------------------------------:|
+--! | 64 | RO | 64h'0 | <tt>CSR_MEPC</tt> |<b>Machine mode exception program counter</b>. <br>ISA offset 0x341.
+--!
+--! @par ISA and extensions supported (0x07880)
+--! |Bits|Type| Reset | Name              | Definition 
+--! |:--:|:--:|:-----:|:-----------------:|:---------------------------------------------:|
+--! | 64 | RO | 64h'0 | <tt>CSR_MISA</tt> |<b>ISA and extensions supported</b>. <br>ISA offset 0xf10.
+--!
+--! @par Vendor ID (0x07888)
+--! |Bits|Type| Reset            | Name          | Definition 
+--! |:--:|:--:|:----------------:|:-------------:|:---------------------------------------------:|
+--! | 64 | RO | 64h'0 | CSR_mvendorid |<b>Vendor ID</b>. <br>ISA offset 0xf11.
+--!
+--! @par Architecture ID (0x07890)
+--! |Bits|Type| Reset            | Name          | Definition 
+--! |:--:|:--:|:----------------:|:-------------:|:---------------------------------------------:|
+--! | 64 | RO | 64h'0 | CSR_marchid   |<b>Architecture ID</b>. <br>ISA offset 0xf12.
+--!
+--! @par User mode exception program counter (0x07898)
+--! |Bits|Type| Reset            | Name          | Definition 
+--! |:--:|:--:|:----------------:|:-------------:|:---------------------------------------------:|
+--! | 64 | RO | 64h'0 | CSR_mimplid   |<b>Implementation ID</b>. <br>ISA offset 0xf13.
+--!
+--! @par Thread ID (0x078A0)
+--! |Bits|Type| Reset            | Name          | Definition 
+--! |:--:|:--:|:----------------:|:-------------:|:---------------------------------------------:|
+--! | 64 | RO | 64h'0 | CSR_mhartid   |<b>Trhead ID</b>. Same as Core ID.<br>ISA offset 0xf13.
+--!
+--!
 
 library ieee;
 use ieee.std_logic_1164.all;

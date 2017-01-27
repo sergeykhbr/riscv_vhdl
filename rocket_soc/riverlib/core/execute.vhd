@@ -433,6 +433,14 @@ begin
         wb_npc := i_d_pc + 4;
     end if;
 
+    if i_memop_load = '1' then
+        wb_memop_addr := wb_rdata1(BUS_ADDR_WIDTH-1 downto 0)
+                      + wb_rdata2(BUS_ADDR_WIDTH-1 downto 0);
+    elsif i_memop_store = '1' then
+        wb_memop_addr := wb_rdata1(BUS_ADDR_WIDTH-1 downto 0)
+                       + wb_off(BUS_ADDR_WIDTH-1 downto 0);
+    end if;
+
     v.memop_addr := (others => '0');
     v.memop_load := '0';
     v.memop_store := '0';
@@ -440,6 +448,17 @@ begin
     v.memop_size := (others => '0');
     w_exception_store := '0';
     w_exception_load := '0';
+
+    if ((wv(Instr_LD) = '1' and wb_memop_addr(2 downto 0) /= "000")
+        or ((wv(Instr_LW) or wv(Instr_LWU)) = '1' and wb_memop_addr(1 downto 0) /= "00")
+        or ((wv(Instr_LH) or wv(Instr_LHU)) = '1' and wb_memop_addr(0) /= '0'))  then
+        w_exception_load := not w_hazard_detected;
+    end if;
+    if ((wv(Instr_SD) = '1' and wb_memop_addr(2 downto 0) /= "000")
+        or (wv(Instr_SW) = '1' and wb_memop_addr(1 downto 0) /= "00")
+        or (wv(Instr_SH) = '1' and wb_memop_addr(0) /= '0')) then
+        w_exception_store := not w_hazard_detected;
+    end if;
 
     w_exception := w_d_acceptable
         and (i_unsup_exception or w_exception_load or w_exception_store
@@ -476,14 +495,10 @@ begin
     elsif w_arith_valid(Multi_DIV) = '1' then
         wb_res := wb_arith_res(Multi_DIV);
     elsif i_memop_load = '1' then
-        wb_memop_addr := wb_rdata1(BUS_ADDR_WIDTH-1 downto 0)
-                      + wb_rdata2(BUS_ADDR_WIDTH-1 downto 0);
         w_memop_load := not w_hazard_detected;
         w_memop_sign_ext := i_memop_sign_ext;
         wb_memop_size := i_memop_size;
     elsif i_memop_store = '1' then
-        wb_memop_addr := wb_rdata1(BUS_ADDR_WIDTH-1 downto 0)
-                       + wb_off(BUS_ADDR_WIDTH-1 downto 0);
         w_memop_store := not w_hazard_detected;
         wb_memop_size := i_memop_size;
         wb_res := wb_rdata2;

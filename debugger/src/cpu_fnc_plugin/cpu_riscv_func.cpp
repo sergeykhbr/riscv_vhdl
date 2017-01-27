@@ -400,7 +400,7 @@ void CpuRiscV_Functional::executeInstruction(IInstruction *instr,
         int msg_len = 0;
         IService *uart = NULL;
         switch (pContext->step_cnt) {
-        case 22066:
+        case 22080:
             uart = static_cast<IService *>(RISCV_get_service("uart0"));
             msg[0] = 'h';
             msg_len = 1;
@@ -411,7 +411,7 @@ void CpuRiscV_Functional::executeInstruction(IInstruction *instr,
             msg[1] = 'l';
             msg_len = 2;
             break;
-        case 24337:
+        case 24350:
             uart = static_cast<IService *>(RISCV_get_service("uart0"));
             msg[0] = 'p';
             msg[1] = '\r';

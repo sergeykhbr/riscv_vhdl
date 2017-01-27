@@ -40,18 +40,19 @@ implementation of RISC-V ISA (VHDL with SystemC as reference).
 
 
 Target | usec per 1 dhry | Dhrystone per sec | MHz,max | FPU | OS
--------|-----------------|-------------------|---------|-----|------
+-------|:-----------------:|:-------------------:|:---------:|:-----:|------
 RISC-V simulator v3.1       | 12.0 | **77257.0** | -   | No  | Zephyr 1.3
 FPGA SoC with "Rocket" v3.1 | 28.0 | **34964.0** | 60  | No  | Zephyr 1.3
 FPGA SoC with "Rocket" v4.0 | 40.7 | **24038.0** | 60<sup>1</sup>  | Yes | Zephyr 1.5
 FPGA SoC with "River " v4.0 | 28.0 | **35259.0** | 60<sup>1</sup>  | No | Zephyr 1.5
 RISC-V simulator v5.1       | 12.0 | **76719.0** | -   | No  | Zephyr 1.6
-FPGA SoC with "Rocket" v5.1 | 41.0 | **24170.0** | 60<sup>1</sup>  | Yes | Zephyr 1.6
-FPGA SoC with "River " v5.1 | 28.0 | **35261.0** | 60<sup>1</sup>  | No | Zephyr 1.6
+FPGA SoC with "Rocket" v5.1 | 41.0 | **23999.0** | 60<sup>1</sup>  | Yes | Zephyr 1.6
+FPGA SoC with "River " v5.1 | 28.0 | **35121.0** | 60<sup>1</sup>  | No | Zephyr 1.6
 
 <sup>1</sup> - Actual SoC frequency is 40 MHz (to meet FPU constrains) but
 Dhrystone benchmark uses constant 60 MHz and high precision counter (in clock cycles)
-to compute results.
+to compute results in msec. Timer value doesn't depend of clock frequency. 
+You can FPGA bit-files with Rocket and River CPUs in the repository.
 
 Access to all memory banks and peripheries in the same clock domain is always
 one clock in this SOC (without wait-states). So, this benchmark 
@@ -109,7 +110,7 @@ This repository consists of three sub-projects each in own subfolder:
   and provide debugging tools of professional quality.
 
 
-## Step I: Simple FPGA test.
+# Step I: Simple FPGA test.
 
 You can use the pre-built FPGA image (for Xilinx ML605 or KC705 board) and any serial
 console application (*putty*, *screen* or other).
@@ -134,8 +135,19 @@ To end the session, use Ctrl-A, Shift-K
 
 ![Zephyr demo](rocket_soc/docs/pics/zephyr_demo.gif)
 
+Zephyr kernel v1.6 supports shell commands from different kernel modules, to switch
+one module to another use command **set_module**:
 
-## Step II: Build and run Software models with GUI.
+```
+    shell> set_module kernel
+    shell> version
+    shell> set_module soc
+    shell> dhry
+    shell> pnp
+    ...
+```
+
+# Step II: Build and run Software models with GUI.
 
 At this step we're going to build: functional models of CPU and peripheries,
 precise SystemC model of 'River' CPU and RISC-V Debugger with GUI
@@ -202,7 +214,7 @@ with any target using the same set of commands.
 Debugger uses only architectural access via TAP (EDCL over UDP) for all targets.**
 
 
-## Step III: Build FPGA image
+# Step III: Build FPGA image
 
 Default VHDL configuration enables River CPU with full debug support.
 
@@ -221,14 +233,14 @@ CFG_COMMON_RIVER_CPU_ENABLE.
 4. Generate bit-file and load it into FPGA.
 
 
-## Step IV: Tutorial "How to build custom Software for RISC-V architecture"
+# Step IV: How to build 64-bits Zephyr v1.6.0 for RISC-V or other custom firmware
 
 As an example we're going to build two programs:
 
 * Zephyr OS kernel with ROM-image generation.
 * 'Hello world' example. Then load it into the target using Debugger's command.
 
-### 1. Setup GCC toolchain
+## 1. Setup GCC toolchain
 
   You can find step-by-step instruction of how to build your own
 toolchain on [riscv.org](http://riscv.org/software-tools/). If you would like
@@ -255,21 +267,25 @@ of such tool *'elf2raw64'*. I've put this binary into pre-built GCC archive 'gnu
 If *elf2raw64* conflicts with installed LIBC version re-build it from *fw/elf2raw64/makefiles*
 directory.
 
-### 2. Build Zephyr OS
+## 2. Patch and build Zephyr OS v1.6.0 binary
 
-Download and patch Zephyr kernel version 1.5.0:
-
-    $ mkdir zephyr_150
-    $ cd zephyr_150
+    $ mkdir zephyr_160
+    $ cd zephyr_160
     $ git clone https://gerrit.zephyrproject.org/r/zephyr
     $ cd zephyr
-    $ git checkout tags/v1.5.0
-    $ cp ../../riscv_vhdl/zephyr/v1.5.0-branch.diff .
-    $ git apply v1.5.0-branch.diff
+    $ git checkout tags/v1.6.0
+    $ cp ../../riscv_vhdl/zephyr/v1.6.0-riscv64-base.diff .
+    $ cp ../../riscv_vhdl/zephyr/v1.6.0-riscv64-exten.diff .
+    $ git apply v1.6.0-riscv64-base.diff
+    $ git apply v1.6.0-riscv64-exten.diff
+
+The first patch adds base functionality for RISC-V 64-bits architecture.  
+The second one extends it by adding Dhrystone 2.1. benchmark and
+MS Visual Studio target and maybe something else.
 
 Build elf-file:
 
-    $ export ZEPHYR_BASE=/home/zephyr_150/zephyr
+    $ export ZEPHYR_BASE=/home/zephyr_160/zephyr
     $ cd zephyr/samples/shell
     $ make ARCH=riscv64 CROSS_COMPILE=/home/your_path/gnu-toolchain-rv64ima/bin/riscv64-unknown-elf- BOARD=riscv_gnss 2>&1 | tee _err.log
 
@@ -289,7 +305,7 @@ Copy *fwimage.hex* to rocket_soc subdirectory
     $ cp fwimage.hex ../../../rocket_soc/fw_images
 
 
-## Build and run 'Hello World' example.
+## 3. Build and run custom FW like 'Hello World' example.
 
 Build example:
 
@@ -348,6 +364,11 @@ could contain errors that are fixing with a small delay. Let me know if see one.
 
 
 ## Versions History
+
+### Implemented functionality (v5.1)
+
+- "RIVER" critical bugs fixed:Not decoded  SRAI instrucion, missed exception generation.
+- Zephyr v1.6.0 ported with *unikernel* instead of the obsolete *nanokernel*.
 
 ### Implemented functionality (v5.0)
 

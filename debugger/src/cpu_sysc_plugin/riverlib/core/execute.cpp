@@ -368,6 +368,14 @@ void InstrExecute::comb() {
         wb_npc = i_d_pc.read() + 4;
     }
 
+    if (i_memop_load) {
+        wb_memop_addr =
+            wb_rdata1(BUS_ADDR_WIDTH-1, 0) + wb_rdata2(BUS_ADDR_WIDTH-1, 0);
+    } else if (i_memop_store) {
+        wb_memop_addr = 
+            wb_rdata1(BUS_ADDR_WIDTH-1, 0) + wb_off(BUS_ADDR_WIDTH-1, 0);
+    }
+
     v.memop_addr = 0;
     v.memop_load = 0;
     v.memop_store = 0;
@@ -375,6 +383,17 @@ void InstrExecute::comb() {
     v.memop_size = 0;
     w_exception_store = 0;
     w_exception_load = 0;
+
+    if ((wv[Instr_LD] && wb_memop_addr(2, 0) != 0)
+        || ((wv[Instr_LW] || wv[Instr_LWU]) && wb_memop_addr(1, 0) != 0)
+        || ((wv[Instr_LH] || wv[Instr_LHU]) && wb_memop_addr[0] != 0)) {
+        w_exception_load = !w_hazard_detected.read();
+    }
+    if ((wv[Instr_SD] && wb_memop_addr(2, 0) != 0)
+        || (wv[Instr_SW] && wb_memop_addr(1, 0) != 0)
+        || (wv[Instr_SH] && wb_memop_addr[0] != 0)) {
+        w_exception_store = !w_hazard_detected.read();
+    }
 
     w_exception = w_d_acceptable
         & (i_unsup_exception.read() || w_exception_load || w_exception_store
@@ -403,21 +422,16 @@ void InstrExecute::comb() {
         v.multi_npc = wb_npc;
     }
 
-
     // ALU block selector:
     if (w_arith_valid[Multi_MUL]) {
         wb_res = wb_arith_res.arr[Multi_MUL];
     } else if (w_arith_valid[Multi_DIV]) {
         wb_res = wb_arith_res.arr[Multi_DIV];
     } else if (i_memop_load) {
-        wb_memop_addr =
-            wb_rdata1(BUS_ADDR_WIDTH-1, 0) + wb_rdata2(BUS_ADDR_WIDTH-1, 0);
         w_memop_load = !w_hazard_detected.read();
         w_memop_sign_ext = i_memop_sign_ext;
         wb_memop_size = i_memop_size;
     } else if (i_memop_store) {
-        wb_memop_addr = 
-            wb_rdata1(BUS_ADDR_WIDTH-1, 0) + wb_off(BUS_ADDR_WIDTH-1, 0);
         w_memop_store = !w_hazard_detected.read();
         wb_memop_size = i_memop_size;
         wb_res = wb_rdata2;
