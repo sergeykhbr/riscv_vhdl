@@ -39,30 +39,33 @@ with disabled L1toL2 interconnect (Verilog generated from Scala sources).
 implementation of RISC-V ISA (VHDL with SystemC as reference).  
 
 
-Target | usec per 1 dhry | Dhrystone per sec | MHz,max | FPU | OS
--------|:-----------------:|:-------------------:|:---------:|:-----:|------
-RISC-V simulator v3.1       | 12.0 | **77257.0** | -   | No  | Zephyr 1.3
-FPGA SoC with "Rocket" v3.1 | 28.0 | **34964.0** | 60  | No  | Zephyr 1.3
-FPGA SoC with "Rocket" v4.0 | 40.7 | **24038.0** | 60<sup>1</sup>  | Yes | Zephyr 1.5
-FPGA SoC with "River " v4.0 | 28.0 | **35259.0** | 60<sup>1</sup>  | No | Zephyr 1.5
-RISC-V simulator v5.1       | 12.0 | **76719.0** | -   | No  | Zephyr 1.6
-FPGA SoC with "Rocket" v5.1 | 41.0 | **23999.0** | 60<sup>1</sup>  | Yes | Zephyr 1.6
-FPGA SoC with "River " v5.1 | 28.0 | **35121.0** | 60<sup>1</sup>  | No | Zephyr 1.6
+Target | usec per<br> 1 dhry | Dhrystone<br> per sec | MHz,<br> max | FPU | OS | Optim.
+-------|:-------------------:|:---------------------:|:------------:|:---:|----|----
+RISC-V simulator v3.1       | 12.0 | **77257.0** | -   | No  | Zephyr 1.3 | -O2
+FPGA SoC with "Rocket" v3.1 | 28.0 | **34964.0** | 60  | No  | Zephyr 1.3 | -O2
+FPGA SoC with "Rocket" v4.0 | 40.7 | **24038.0** | 60<sup>1</sup>  | Yes | Zephyr 1.5 | -O2
+FPGA SoC with "River " v4.0 | 28.0 | **35259.0** | 60<sup>1</sup>  | No | Zephyr 1.5 | -O2
+RISC-V simulator v5.1       | 12.0 | **65652.0** | -   | No  | Zephyr 1.6 | -O0
+RISC-V simulator v5.1       | 12.0 | **76719.0** | -   | No  | Zephyr 1.6 | -O2
+FPGA SoC with "Rocket" v5.1 | 41.0 | **23999.0** | 60<sup>1</sup>  | Yes | Zephyr 1.6 | -O2
+FPGA SoC with "River" v5.1  | 28.0 | **35121.0** | 60<sup>1</sup>  | No | Zephyr 1.6 | -O2
+FPGA SoC with "LEON3" SPARC | 20.0 | **48229.0** | 60  | No | Bare metal | -O0
+FPGA SoC with "LEON3" SPARC | 8.0 | **119515.0** | 60  | No | Bare metal | -O2
 
 <sup>1</sup> - Actual SoC frequency is 40 MHz (to meet FPU constrains) but
 Dhrystone benchmark uses constant 60 MHz and high precision counter (in clock cycles)
 to compute results in msec. Timer value doesn't depend of clock frequency. 
-You can FPGA bit-files with Rocket and River CPUs in the repository.
+You can find FPGA bit-files with Rocket and River CPUs in the repository. I am
+also ready to share my framework for Leon3 SPARC V8 processor (SoC and FW) by request.
 
 Access to all memory banks and peripheries in the same clock domain is always
 one clock in this SOC (without wait-states). So, this benchmark 
 result (**Dhrystone per seconds**) shows performance of the CPU with integer 
 instructions and degradation of the CPI relative ideal (simulation) case.
 
-I'll continue to track changes of Dhrystone results in future 
-"Rocket" chip versions. But since v1.5 "RIVER" is the default CPU 
-(VHDL configuration parameter *CFG_COMMON_RIVER_CPU_ENABLE*=true).
-
+** In my opinion compiler affects on benchmark results much stronger that hardware
+architecture and there's a lot of things should be optimized for RISC-V.  
+Use as new compiler as possible.**
 
 ## Repository structure
 
