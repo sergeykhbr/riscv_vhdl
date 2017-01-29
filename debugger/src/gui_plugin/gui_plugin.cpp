@@ -11,10 +11,6 @@
 #include "coreservices/irawlistener.h"
 #include <string>
 #include <QtWidgets/QApplication>
-//#include <QtCore/QtPlugin>
-
-
-//Q_IMPORT_PLUGIN(QWindowsIntegrationPlugin)
 
 namespace debugger {
 
@@ -63,8 +59,6 @@ GuiPlugin::GuiPlugin(const char *name)
     ui_ = NULL;
     RISCV_event_create(&eventUiInitDone_, "eventUiInitDone_");
     RISCV_event_create(&eventCommandAvailable_, "eventCommandAvailable_");
-    RISCV_event_create(&eventCmdQueueEmpty_, "eventCmdQueueEmpty_");
-    RISCV_event_set(&eventCmdQueueEmpty_);  // init true value
     RISCV_mutex_init(&mutexCommand_);
 
     cmdQueueWrPos_ = 0;
@@ -97,7 +91,6 @@ GuiPlugin::~GuiPlugin() {
     }
     RISCV_event_close(&eventUiInitDone_);
     RISCV_event_close(&eventCommandAvailable_);
-    RISCV_event_close(&eventCmdQueueEmpty_);
     RISCV_mutex_destroy(&mutexCommand_);
 }
 
@@ -143,15 +136,15 @@ void GuiPlugin::registerCommand(IGuiCmdHandler *src,
     if (cmdQueueWrPos_ == CMD_QUEUE_SIZE) {
         cmdQueueWrPos_ = 0;
     }
+    RISCV_mutex_lock(&mutexCommand_);
     cmdQueue_[cmdQueueWrPos_].silent = silent;
     cmdQueue_[cmdQueueWrPos_].src = src;
     cmdQueue_[cmdQueueWrPos_++].cmd = *cmd;
 
     if (isEnabled()) {
-        RISCV_mutex_lock(&mutexCommand_);
         cmdQueueCntTotal_++;
-        RISCV_mutex_unlock(&mutexCommand_);
     }
+    RISCV_mutex_unlock(&mutexCommand_);
     RISCV_event_set(&eventCommandAvailable_);
 }
 
@@ -165,19 +158,6 @@ void GuiPlugin::removeFromQueue(IFace *iface) {
     RISCV_mutex_unlock(&mutexCommand_);
 }
 
-void GuiPlugin::waitQueueEmpty() {
-    if (!isEnabled()) {
-        return;
-    }
-    for (unsigned i = 0; i < CMD_QUEUE_SIZE; i++) {
-        cmdQueue_[i].src = NULL;
-    }
-    cmdQueueCntTotal_ = 0;
-    RISCV_event_clear(&eventCmdQueueEmpty_);
-    RISCV_event_set(&eventCommandAvailable_);
-    RISCV_event_wait_ms(&eventCmdQueueEmpty_, 100);
-}
-
 void GuiPlugin::busyLoop() {
     while (isEnabled()) {
         if (RISCV_event_wait_ms(&eventCommandAvailable_, 500)) {
@@ -186,7 +166,6 @@ void GuiPlugin::busyLoop() {
         }
 
         processCmdQueue();
-        RISCV_event_set(&eventCmdQueueEmpty_);
     }
 }
 
@@ -197,6 +176,7 @@ bool GuiPlugin::processCmdQueue() {
 
         iexec_->exec(cmd.to_string(), &resp, cmdQueue_[cmdQueueRdPos_].silent);
 
+        RISCV_mutex_lock(&mutexCommand_);
         if (cmdQueue_[cmdQueueRdPos_].src) {
             cmdQueue_[cmdQueueRdPos_].src->handleResponse(
                         const_cast<AttributeType *>(&cmd), &resp);
@@ -204,7 +184,6 @@ bool GuiPlugin::processCmdQueue() {
         if ((++cmdQueueRdPos_) >= CMD_QUEUE_SIZE) {
             cmdQueueRdPos_ = 0;
         }
-        RISCV_mutex_lock(&mutexCommand_);
         cmdQueueCntTotal_--;
         RISCV_mutex_unlock(&mutexCommand_);
     }

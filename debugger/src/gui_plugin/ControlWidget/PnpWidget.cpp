@@ -52,6 +52,7 @@ PnpWidget::PnpWidget(IGui *igui, QWidget *parent) : UnclosableWidget(parent) {
 }
 
 PnpWidget::~PnpWidget() {
+    igui_->removeFromQueue(static_cast<IGuiCmdHandler *>(this));
 }
 
 void PnpWidget::showEvent(QShowEvent *event_) {

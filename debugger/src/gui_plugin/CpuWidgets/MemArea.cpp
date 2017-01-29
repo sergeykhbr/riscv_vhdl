@@ -40,6 +40,10 @@ MemArea::MemArea(IGui *gui, QWidget *parent)
     connect(this, SIGNAL(signalUpdateData()), this, SLOT(slotUpdateData()));
 }
 
+MemArea::~MemArea() {
+    igui_->removeFromQueue(static_cast<IGuiCmdHandler *>(this));
+}
+
 void MemArea::slotAddressChanged(AttributeType *cmd) {
     reqAddr_ = (*cmd)[0u].to_uint64();
     reqBytes_ = static_cast<unsigned>((*cmd)[1].to_int());

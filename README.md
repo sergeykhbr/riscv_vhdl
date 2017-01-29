@@ -63,9 +63,9 @@ one clock in this SOC (without wait-states). So, this benchmark
 result (**Dhrystone per seconds**) shows performance of the CPU with integer 
 instructions and degradation of the CPI relative ideal (simulation) case.
 
-** In my opinion compiler affects on benchmark results much stronger that hardware
-architecture and there's a lot of things should be optimized for RISC-V.  
-Use as new compiler as possible.**
+   **In my opinion compiler affects on benchmark results much more than hardware
+   architecture and there's a lot of work for RISC-V compiler developers.
+   So, use as new compiler as possible.**
 
 ## Repository structure
 

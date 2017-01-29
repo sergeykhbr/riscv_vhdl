@@ -23,6 +23,7 @@ class GpioWidget : public UnclosableWidget,
     Q_OBJECT
 public:
     GpioWidget(IGui *igui, QWidget *parent = 0);
+    virtual ~GpioWidget();
 
     /** IGuiCmdHandler */
     virtual void handleResponse(AttributeType *req, AttributeType *resp);

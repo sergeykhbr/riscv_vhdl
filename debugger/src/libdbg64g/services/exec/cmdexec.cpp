@@ -90,6 +90,15 @@ void CmdExecutor::registerCommand(ICommand *icmd) {
     cmds_.add_to_list(&t1);
 }
 
+void CmdExecutor::unregisterCommand(ICommand *icmd) {
+    for (unsigned i = 0; i < cmds_.size(); i++) {
+        if (cmds_[i].to_iface() == icmd) {
+            cmds_.remove_from_list(i);
+            break;
+        }
+    }
+}
+
 void CmdExecutor::exec(const char *line, AttributeType *res, bool silent) {
     RISCV_mutex_lock(&mutexExec_);
     res->make_nil();

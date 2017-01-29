@@ -66,19 +66,11 @@ extern "C" int RISCV_init() {
 
 extern "C" void RISCV_cleanup() {
     IClass *icls;
-    //IService *iserv;
-    const AttributeType *objs;
 
     // Pre-deletion
     for (unsigned i = 0; i < listClasses_.size(); i++) {
         icls = static_cast<IClass *>(listClasses_[i].to_iface());
-        objs = (icls->getInstanceList());
-        for (unsigned n = 0; n < objs->size(); n++) {
-            //iserv = static_cast<IService *>((*objs)[n].to_iface());
-            //printf("predelete '%s'. . . ", iserv->getObjName());
-            //icls->predeleteServices(iserv);
-            //printf("Done\n");
-        }
+        icls->predeleteServices();
     }
 
 #if defined(_WIN32) || defined(__CYGWIN__)
@@ -91,14 +83,14 @@ extern "C" void RISCV_cleanup() {
     RISCV_disable_log();
 }
 
-extern "C" void RISCV_set_configuration(AttributeType *cfg) {
+extern "C" int RISCV_set_configuration(AttributeType *cfg) {
     IClass *icls;
     IService *iserv;
 
     Config_.clone(cfg);
     if (!Config_.is_dict()) {
         RISCV_error("Wrong configuration.", NULL);
-        return;
+        return -1;
     }
 
     AttributeType &Services = Config_["Services"];
@@ -109,7 +101,7 @@ extern "C" void RISCV_set_configuration(AttributeType *cfg) {
             if (icls == NULL) {
                 RISCV_error("Class %s not found", 
                              Services[i]["Class"].to_string());
-                continue;
+                return -1;
             }
             /** Special global setting for the GUI class: */
             if (strcmp(icls->getClassName(), "GuiPluginClass") == 0) {
@@ -148,6 +140,7 @@ extern "C" void RISCV_set_configuration(AttributeType *cfg) {
                         HAP_ConfigDone, "Initial config done");
         }
     }
+    return 0;
 }
 
 extern "C" const char *RISCV_get_configuration() {

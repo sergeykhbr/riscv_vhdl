@@ -65,8 +65,6 @@ DbgMainWindow::~DbgMainWindow() {
 }
 
 void DbgMainWindow::closeEvent(QCloseEvent *ev) {
-    igui_->waitQueueEmpty();
-    tmrGlobal_->stop();
     ev->accept();
 }
 

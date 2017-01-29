@@ -22,6 +22,7 @@ public:
 
     /** Register command with ICommand interface */
     virtual void registerCommand(ICommand *icmd) =0;
+    virtual void unregisterCommand(ICommand *icmd) =0;
 
     /** Execute string as a command */
     virtual void exec(const char *line, AttributeType *res, bool silent) =0;

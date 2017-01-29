@@ -52,6 +52,7 @@ ConsoleWidget::ConsoleWidget(IGui *igui, QWidget *parent)
 }
 
 ConsoleWidget::~ConsoleWidget() {
+    igui_->removeFromQueue(static_cast<IGuiCmdHandler *>(this));
     RISCV_remove_default_output(static_cast<IRawListener *>(this));
     RISCV_mutex_destroy(&mutexOutput_);
     delete [] wcsConv_;
@@ -100,7 +101,8 @@ void ConsoleWidget::keyPressEvent(QKeyEvent *e) {
         cursorMinPos_ = cursor.selectionStart();
         verticalScrollBar()->setValue(verticalScrollBar()->maximum());
         
-        igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), &cmd, false);
+        igui_->registerCommand(
+            static_cast<IGuiCmdHandler *>(this), &cmd, false);
     }
 }
 

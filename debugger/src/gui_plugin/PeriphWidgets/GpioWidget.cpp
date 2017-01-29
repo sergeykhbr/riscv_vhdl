@@ -56,6 +56,10 @@ GpioWidget::GpioWidget(IGui *igui, QWidget *parent)
     setLayout(layout);
 }
 
+GpioWidget::~GpioWidget() {
+    igui_->removeFromQueue(static_cast<IGuiCmdHandler *>(this));
+}
+
 void GpioWidget::closeEvent(QCloseEvent *event_) {
     AttributeType tmp;
     emit signalClose(this, tmp);

@@ -22,7 +22,7 @@ class PnpWidget : public UnclosableWidget,
     Q_OBJECT
 public:
     PnpWidget(IGui *igui, QWidget *parent = 0);
-    ~PnpWidget();
+    virtual ~PnpWidget();
 
     /** IGuiCmdHandler */
     virtual void handleResponse(AttributeType *req, AttributeType *resp);

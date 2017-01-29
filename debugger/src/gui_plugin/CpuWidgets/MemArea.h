@@ -22,6 +22,7 @@ class MemArea : public QPlainTextEdit,
     Q_OBJECT
 public:
     explicit MemArea(IGui *gui, QWidget *parent);
+    virtual ~MemArea();
 
     /** IGuiCmdHandler */
     virtual void handleResponse(AttributeType *req, AttributeType *resp);

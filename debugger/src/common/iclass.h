@@ -39,16 +39,13 @@ public:
         }
     }
 
-    virtual void predeleteServices(IService *inst) {
+    virtual void predeleteServices() {
         IService *tmp = NULL;
         for (unsigned i = 0; i < listInstances_.size(); i++) {
             tmp = static_cast<IService *>(listInstances_[i].to_iface());
-            if (inst == tmp) {
-                tmp->predeleteService();
-            }
+            tmp->predeleteService();
         }
     }
-
 
     virtual const char *getClassName() { return class_name_; }
 

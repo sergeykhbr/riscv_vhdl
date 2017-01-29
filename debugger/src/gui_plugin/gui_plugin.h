@@ -34,7 +34,6 @@ public:
     virtual IFace *getSocInfo();
     virtual void registerCommand(IGuiCmdHandler *src, AttributeType *cmd, bool silent);
     virtual void removeFromQueue(IFace *iface);
-    virtual void waitQueueEmpty();
 
     /** IThread interface */
     virtual void stop();
@@ -78,7 +77,6 @@ private:
 
     event_def eventUiInitDone_;
     event_def eventCommandAvailable_;
-    event_def eventCmdQueueEmpty_;
     mutex_def mutexCommand_;
     struct CmdQueueItemType {
         AttributeType cmd;

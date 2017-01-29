@@ -63,7 +63,10 @@ int main(int argc, char* argv[]) {
     Config.from_config(databuf.to_string());
     Config["GlobalSettings"]["ScriptFile"] = scriptFile;
 
-    RISCV_set_configuration(&Config);
+    if (RISCV_set_configuration(&Config)) {
+        printf("Error: can't instantiate configuration\n");
+        return 0;
+    }
    
     // Connect simulator to the EDCL debugger if enabled:
     if (Config["GlobalSettings"]["SimEnable"].to_bool()) {
@@ -78,7 +81,7 @@ int main(int argc, char* argv[]) {
         iudp1->setTargetSettings(&t1);
     }
 
-    IService *itst = static_cast<IService *>(RISCV_get_service("example1"));
+    IService *itst = static_cast<IService *>(RISCV_get_service("example0"));
     if (itst == NULL) {
         /**
          * @brief Create instance of the example plugin class.
@@ -86,7 +89,7 @@ int main(int argc, char* argv[]) {
         IFace *simple = RISCV_get_class("SimplePluginClass");
         if (simple) {
 	        itst = static_cast<IService *>(RISCV_create_service(
-                          simple, "example1", NULL));
+                          simple, "example0", NULL));
         }
     }
 
