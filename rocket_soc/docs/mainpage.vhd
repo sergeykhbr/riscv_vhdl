@@ -1,0 +1,111 @@
+--! 
+--! @mainpage RISC-V System-on-Chip VHDL IP library
+--! 
+--! @par Overview
+--! The IP Library is an integrated set of reusable IP cores, designed for 
+--! system-on-chip (SOC) development. The IP cores are centered around a 
+--! common on-chip AMBA AXI system bus, and use a coherent method for 
+--! simulation and synthesis. This library is vendor independent, with support
+--! for different CAD tools and target technologies. Inherited from gaisler 
+--! GRLIB library plug&play method was further developed and used to configure 
+--! and connect the IP cores without the need to modify any global resources.
+--!
+--! @par Library organization
+--! This repository is organized around VHDL libraries, where each major IP 
+--! is assigned a unique library name. Using separate libraries avoids name 
+--! clashes between IP cores and hides unnecessary implementation details 
+--! from the end user. 
+--!
+--! @par Satellite Navigation support
+--! Hardware part of the satellite navigation functionality is fully 
+--! implemented inside of the <i>gnsslib</i> library. This library is the 
+--! commercial product of GNSS Sensor limited and in this shared repository 
+--! you can find only: modules declaration, configuration parameters and 
+--! stub modules that provide enough functionality to use SOC as
+--! general purpose processor system based on RISC-V architecture.
+--! Netlists of the real GNSS IPs either as RF front-end for the FPGA
+--! development boards could be acquires via special request.
+--!
+--! @par Common Top-level structure
+--!
+--! <img src="pics/soc_top_v5.png" alt="Top Level"> 
+--! @latexonly {\includegraphics{pics/soc_top_v5.png}} @endlatexonly
+--! 
+--! @par Features
+--!   <ul>
+--!     <li>Pre-generated single-core \e "Rocket-chip" core (RISC-V).
+--!         This is 64-bits processor with I/D caches, MMU, branch predictor,
+--!         128-bits width data bus, FPU (if enabled) and etc.</li>
+--!     <li>Custom 64-bits single-core CPU \e "River"(RISC-V).</li>
+--!     <li>Set of common peripheries: UART, GPIO (LEDs), Interrupt controller,
+--!         General Purpose timers and etc.</li>
+--!     <li>@link sw_debugger_api_link Debugging @endlink via @link eth_link Ethernet 
+--!         @endlink using EDCL capability of the MAC. This
+--!         capability allows to redirect UDP requests directly on system bus
+--!         and allows to use external debugger from the Reset Vector.</li>
+--!     <li>Debug Support Unit (DSU) for the RIVER CPU with full debugging
+--!        functionality support: run/halt, breakpoints, stepping,
+--!        registers/CSRs and memory access. Also it provides general SoC
+--!        run-time information: Clock Per Instruction (CPI), Bus Utilisization
+--!        for each master device and etc.</li>
+--!     <li>Templates for the AXI slaves and master devices with DMA access</li>
+--!     <li>Configuration parameters to enable/disable additional functionality,
+--!         like: <em><b>GNSS Engine</b>, <b>Viterbi decoder</b>, etc.</em></li>
+--!   </ul>
+--! 
+--!
+--!
+--! Information about GNSS (<em>Satellite Navigation Engine</em>) you can find at
+--! @link www.gnss-sensor.com. @endlink
+--!
+--!   @subpage generic_page  
+--!
+--!   @subpage verification_page 
+--!
+--!   @subpage peripheries_page
+--!
+--!   @subpage debugger_page  
+
+
+--! @page generic_page VHDL Generic Parameters
+--!   @subpage generic_page_1
+--!
+--!   @subpage generic_page_2
+--!
+--! @page generic_page_1 SoC configuration constants
+--! @ref config_common_group
+--!
+--! @page generic_page_2 AXI4 System Bus constants
+--! @ref axi4_config_generic_group
+
+--! @defgroup generic_group VHDL Generic Parameters
+--! @details VHDL generic parameters.
+
+--! @defgroup axi4_config_generic_group AXI4 System Bus Generic Parameters
+--! @ingroup generic_group
+--! @details Definition of System Bus configuraiton parameters and templates
+--!          methods that should be used by any master/slave device to be 
+--!          compatible with Bus Controller device.
+
+--! @page peripheries_page Peripheries
+--!   @subpage periphery_page_1
+--!
+--! @page periphery_page_1 Debug Support Unit (DSU)
+--! @copydoc dsu_link
+--!
+
+--! @defgroup peripheries_group Peripheries
+--! @details Peripheries list.
+--!
+
+
+--! @page verification_page RTL Verification
+--!   @subpage sim_tb_link
+--!
+
+
+--! @page debugger_page RISC-V debugger
+--!   @subpage eth_link
+--!
+--!   @subpage sw_debugger_api_link
+--!

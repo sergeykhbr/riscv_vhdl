@@ -13,10 +13,13 @@
 
 --! Standard library
 library ieee;
+--! Standard signal types import
 use ieee.std_logic_1164.all;
+--! Standard numerical types import
 use ieee.numeric_std.all;
 --! Common constants and data conversion functions library
 library commonlib;
+--! Import SoC specific types common for all devices
 use commonlib.types_common.all;
 
 --! @brief   System bus AMBA AXI(NASTI) types definition.
@@ -25,7 +28,33 @@ use commonlib.types_common.all;
 --!          peripheries devices implementing AXI4 interface.
 package types_amba4 is
 
---! @name    AMBA AXI slaves generic IDs.
+--! @defgroup scala_cfg_group SCALA generated parameters
+--! @ingroup axi4_config_generic_group
+--! @details  This constant must correspond to Scala defined ones.
+--! @{
+
+--! User defined address ID bitwidth (aw_id / ar_id fields).
+constant CFG_ROCKET_ID_BITS      : integer := 5;
+--! Data bus bits width.
+constant CFG_NASTI_DATA_BITS     : integer := 64;--128;
+--! Data bus bytes width
+constant CFG_NASTI_DATA_BYTES    : integer := CFG_NASTI_DATA_BITS / 8;
+--! Address bus bits width.
+constant CFG_NASTI_ADDR_BITS     : integer := 32;
+--! Definition of number of bits in address bus per one data transaction.
+constant CFG_NASTI_ADDR_OFFSET   : integer := log2(CFG_NASTI_DATA_BYTES);
+--! @brief Number of address bits used for device addressing. 
+--! @details Default is 12 bits = 4 KB of address space minimum per each 
+--!          mapped device.
+constant CFG_NASTI_CFG_ADDR_BITS : integer := CFG_NASTI_ADDR_BITS-12;
+--! @brief Global alignment is set 32 bits.
+constant CFG_ALIGN_BYTES         : integer := 4;
+--! @brief  Number of parallel access to the atomic data.
+constant CFG_WORDS_ON_BUS        : integer := CFG_NASTI_DATA_BYTES/CFG_ALIGN_BYTES;
+--! @}
+
+--! @defgroup slave_id_group AMBA AXI slaves generic IDs.
+--! @ingroup axi4_config_generic_group
 --! @details Each module in a SoC has to be indexed by unique identificator.
 --!          In current implementation it is used sequential indexing for it.
 --!          Indexes are used to specify a device bus item in a vectors.
@@ -61,7 +90,8 @@ constant CFG_NASTI_SLAVE_PNP      : integer := CFG_NASTI_SLAVE_GPTIMERS+1;
 constant CFG_NASTI_SLAVES_TOTAL  : integer := CFG_NASTI_SLAVE_PNP+1;  
 --! @}
 
---! @name    AXI4 masters generic IDs.
+--! @defgroup master_id_group AXI4 masters generic IDs.
+--! @ingroup axi4_config_generic_group
 --! @details Each master must be assigned to a specific ID that used
 --!          as an index in the vector array of AXI master bus.
 --! @{
@@ -77,7 +107,8 @@ constant CFG_NASTI_MASTER_TOTAL    : integer := CFG_NASTI_MASTER_ETHMAC+1;
 --! @}
 
 
---! @name    AXI4 interrupt generic IDs.
+--! @defgroup irq_id_group AXI4 interrupt generic IDs.
+--! @ingroup axi4_config_generic_group
 --! @details Unique indentificator of the interrupt pin also used
 --!          as an index in the interrupts bus.
 --! @{
@@ -96,30 +127,6 @@ constant CFG_IRQ_MISS_ACCESS    : integer := CFG_IRQ_GPTIMERS + 1;
 constant CFG_IRQ_GNSSENGINE     : integer := CFG_IRQ_MISS_ACCESS + 1;
 --! Total number of used interrupts in a system
 constant CFG_IRQ_TOTAL          : integer := CFG_IRQ_GNSSENGINE + 1;
---! @}
-
---! @name   SCALA generated parameters
---! @brief  This constant must correspond to Scala defined ones.
---! @{
-
---! User defined address ID bitwidth (aw_id / ar_id fields).
-constant CFG_ROCKET_ID_BITS      : integer := 5;
---! Data bus bits width.
-constant CFG_NASTI_DATA_BITS     : integer := 64;--128;
---! Data bus bytes width
-constant CFG_NASTI_DATA_BYTES    : integer := CFG_NASTI_DATA_BITS / 8;
---! Address bus bits width.
-constant CFG_NASTI_ADDR_BITS     : integer := 32;
---! Definition of number of bits in address bus per one data transaction.
-constant CFG_NASTI_ADDR_OFFSET   : integer := log2(CFG_NASTI_DATA_BYTES);
---! @brief Number of address bits used for device addressing. 
---! @details Default is 12 bits = 4 KB of address space minimum per each 
---!          mapped device.
-constant CFG_NASTI_CFG_ADDR_BITS : integer := CFG_NASTI_ADDR_BITS-12;
---! @brief Global alignment is set 32 bits.
-constant CFG_ALIGN_BYTES         : integer := 4;
---! @brief  Number of parallel access to the atomic data.
-constant CFG_WORDS_ON_BUS        : integer := CFG_NASTI_DATA_BYTES/CFG_ALIGN_BYTES;
 --! @}
 
 --! @name   AXI Response values

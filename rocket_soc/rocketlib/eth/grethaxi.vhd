@@ -7,7 +7,7 @@
 --!             and EDCL debugging functionality.
 ------------------------------------------------------------------------------
 --! 
---! @page eth_link Ethernet
+--! @page eth_link Ethernet setup
 --! 
 --! @par Overview
 --! The Ethernet Media Access Controller (GRETH) provides an interface between
@@ -39,6 +39,7 @@
 --! ports and different subnets (192.168.0.x and 192.168.1.x accordingly).
 --!
 --! <img src="pics/eth_common.png" alt="Ethernet config"> 
+--! @latexonly {\includegraphics{pics/eth_common.png}} @endlatexonly
 --!
 --! @par Host IP and subnet definition:
 --!    -# Open \c cmd console.
@@ -60,15 +61,27 @@
 --!    -# Load pre-built image file into FPGA board (located in 
 --! <i>./rocket_soc/bit_files/</i> folder) or use your own one.<br>
 --!    -# Open <b>Network and Sharing Center</b> via Control Panel
+--!
 --! <img src="pics/eth_win1.png" alt="ControlPanel"> 
+--! @latexonly {\includegraphics[scale=0.7]{pics/eth_win1.png}} @endlatexonly
+--!
 --!    -# Click on <b>Local Area Connection 2</b> link
---! <img src="pics/eth_win2.png" alt="ControlPanel"> 
+--!
+--! <img src="pics/eth_win2.png" alt="ControlPanel">
+--! @latexonly {\includegraphics{pics/eth_win2.png}} @endlatexonly
+--!
 --!    -# Click on <b>Properties</b> to open properties dialog.
+--!
 --! <img src="pics/eth_win3.png" alt="ControlPanel"> 
+--! @latexonly {\includegraphics{pics/eth_win3.png}} @endlatexonly
+--!
 --!    -# Disable all network services except <b>Internet Protocol Version 4</b>
 --! as shown on figure above.<br>
 --!    -# Select enabled service and click on <b>Properties</b> button.
+--!
 --! <img src="pics/eth_win4.png" alt="ControlPanel"> 
+--! @latexonly {\includegraphics{pics/eth_win4.png}} @endlatexonly
+--!
 --!    -# Specify unique IP as shown above so that FPGA and your Local
 --! Connection were placed <b>in the same subnet</b>.<br>
 --!    -# Leave the subnet mask set to the default value 255.255.255.0.<br>
@@ -81,7 +94,10 @@
 --! @verbatim
 --!    arp -a -v
 --! @endverbatim
+--!
 --! <img src="pics/eth_check1.png" alt="Check arp"> 
+--! @latexonly {\includegraphics{pics/eth_check1.png}} @endlatexonly
+--!
 --!    -# MAC supports only ARP and EDCL requests on hardware level and it cannot
 --! respond on others without properly installed software. By this reason ping 
 --! won't work without running OS on FPGA target but it maybe usefull to ping 

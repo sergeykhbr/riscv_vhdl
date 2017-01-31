@@ -5,21 +5,25 @@
  * @brief      Core API methods declaration.
  */
 /**
- * @page dbg_link SW Debugger (C++)
+ * @page sw_debugger_api_link SW Debugger API
  * 
  * @par Overview
  *      This debugger was specially developed as a software utility to interact
- *      with our SOC implementation in \c rocket_soc repository. The main 
+ *      with our SOC implementation in \c riscv_soc repository. The main
  *      purpose was to provide convinient way to develop and debug our 
  *      Satellite Navigation firmware that can not be debugged by any other 
- *      tool provided RISC-V community (for now).
- *      Debugger provides base functionality such as read/write memory 
- *      and CSR registers, reloading FW image and reset target. Also we are
- *      developing own version of the CPU simulator (analog of \c spike) 
- *      and Full SOC simulators. These extensions for the debugger simplify
+ *      tool provided RISC-V community. Additionally, we would like to use
+ *      the single unified application capable to work with Real and Simulated
+ *      platforms without any modification of source code.
+ *      Debugger provides base functionality such as: run control,
+ *      read/write memory, registers and CSRs, breakpoints. It allows to
+ *      reload FW image and reset target.
+ *      Also we are developing own version of the CPU simulator
+ *      (analog of \c spike) that can be extended with peripheries models to
+ *      Full SOC simulator. These extensions for the debugger simplify
  *      porting procedure of the Operating System (Zephyr project) so that 
- *      simulation doesn't require any hardware and allow to see CPU registers
- *      on each step and logging them into file.
+ *      simulation doesn't require any hardware and allow develop SW
+ *      simultaneously with HW developing.
  *
  * @section dbg_1 Project structure
  *
@@ -27,7 +31,7 @@
  * providing API methods for registering \c classes, \c services, \c attributes
  * and methods to interact with them. Each extension plugin registers one or 
  * several class services performing some usefull work. All plugins are 
- * built as an independent libraries that are opening by \Core library
+ * built as an independent libraries that are opening by \c Core library
  * at initialization stage with the call of method <b>plugin_init()</b>.
  * All Core API methods start with \c RISCV_... prefix:
  * @code
@@ -41,13 +45,14 @@
  * @endcode
  *
  * Configuration of the debugger and plugins is fully described in JSON
- * formatted configuraiton file <b>config.json</b>. This file stores all
- * instantiated services names, attributes values and interconnect among
- * plugins. This configuration can be saved to/load from file at any
+ * formatted configuration files <b>targets/target_name.json</b>.
+ * These files store all instantiated services names, attributes values
+ * and interconnect among plugins.
+ * This configuration can be saved to/load from file at any
  * time. By default command \c exit will save current debugger state into
  * file (including full command history). 
  *
- * @note You can manually add/change new CSR registers names and indexes
+ * @note You can manually add/change new Registers/CSRs names and indexes
  *       by modifying this config file without changing source code. If you
  *       accidently corrupt the JSON format you can return default setting
  *       by starting debugger with \c -nocfg key.
@@ -69,37 +74,40 @@
  * 
  * @section dbg_target Debug Target
  *
- * We provide two targets that can run your software (bootloader, firmware
- * or user application) without modifications:
- *     -# Platform simulator. Use it if you haven't ML605 or KC705 FPGA boards
- * that are used in our developemnt porjects or just for fun.
- *     -# FPGA boards. We provide bit-files for ML605 (Virtex6) and KC705
- * (Kintex7) boards that can be used without synthesis procedure.
+ * We provide several targets that can run your software (bootloader, firmware
+ * or user application) without source code modifications:
+ * 
+ * Start Configuration            | Description
+ * -------------------------------|-----------------
+ * $ ./_run_functional_sim.sh[bat]| Functional RISC-V Full System Model
+ * $ ./_run_systemc_sim.sh[bat]   | Use SystemC Precise Model of RIVER CPU
+ * $ ./_run_fpga_gui.sh[bat]      | FPGA board. Default port 'COM3', TAP IP = 192.168.0.51
  *
- * @subsection dbg_sim Debug SOC simulator
- *      To run simulation board that reproduce behaviour of the full system
- *      (GPIO, UART, GNSS engine etc) it is enough to start debugger executable 
- *      file with key <b> -sim </b>.
- *
- * @verbatim bin/release/appdbg64g.exe -sim  @endverbatim
+ * @verbatim
+ *     e:\> cd rocket_soc/debugger/win32build/debug
+ *     e:\rocket_soc\debugger\win32build> _run_functional_sim.bat
+ * @endverbatim
  *
  * In this case common structure will be look as follow:
  *
  * <img src="pics/dbg_sim.png" alt="sim debug"> 
+ * @latexonly {\includegraphics[scale=0.7]{pics/dbg_sim.png}} @endlatexonly
  *
  * If you'll get the error messages that image files not found
  *
  * <img src="pics/dbg_err1.png" alt="File not found"> 
+ * @latexonly {\includegraphics[scale=0.8]{pics/dbg_err1.png}} @endlatexonly
  * 
  * To fix this problem do the following steps:
  *     -# Close debugger console using \c exit command.
- *     -# Open <em>config.json</em> file in any editor.
+ *     -# Open <em>config_file_name.json</em> file in any editor.
  *     -# Find strings that specify these paths and correct them. Simulator 
  * uses the same images as VHDL platform for ROMs intialization. You can find
  * them in <em>'rocket_soc/fw_images'</em> directory. After that you should
  * see something like follow:
  *
  * <img src="pics/dbg_simout1.png" alt="Simulator output"> 
+ * @latexonly {\includegraphics[scale=0.8]{pics/dbg_simout1.png}} @endlatexonly
  *
  * Debug your target. All commands that are available for Real Hardware
  * absolutely valid for the Simulation. Debugger doesn't see any difference
@@ -116,7 +124,7 @@
  *    -# You should properly @link eth_link setup network connection @endlink
  * and see FPGA board in ARP-table.
  *    -# If you've changed default FPGA IP address:
- *          -# Open <em>config.json</em>
+ *          -# Open <em>fpga_gui.json</em>
  *          -# Change value <b>['BoardIP','192.168.0.51']</b> on your one.
  *    -# Run debugger
  *
@@ -125,12 +133,13 @@
  * In this case connection scheme with FPGA board looks as follow:
  *
  * <img src="pics/dbg_fpga.png" alt="fpga debug"> 
+ * @latexonly {\includegraphics[scale=0.8]{pics/dbg_fpga.png}} @endlatexonly
  *
  * Example of debugging session (Switch ON all User LEDs on board):
  * @code
+ *      riscv# help                     -- Print full list of commands
  *      riscv# csr MCPUID               -- Read supported ISA extensions
  *      riscv# read 0xfffff000 20       -- Read 20 bytes from PNP module
- *      riscv# csr MRESET 1             -- Raise CPU reset signal
  *      riscv# write 0x80000000 4 0xff  -- Write into GPIO new LED value
  *      riscv# loadelf helloworld       -- Load elf-file to board RAM and run
  * @endcode
@@ -138,10 +147,12 @@
  * Debugger console view
  *
  * <img src="pics/dbg_testhw.png" alt="HW debug example"> 
+ * @latexonly {\includegraphics{pics/dbg_testhw.png}} @endlatexonly
  *
  * FPGA serial console output:
  *
  * <img src="pics/dbg_testhw2.png" alt="Serial output"> 
+ * @latexonly {\includegraphics{pics/dbg_testhw2.png}} @endlatexonly
  */
 
 #ifndef __DEBUGGER_API_CORE_H__

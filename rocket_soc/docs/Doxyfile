@@ -647,14 +647,14 @@ MAX_INITIALIZER_LINES  = 30
 # list will mention the files that were used to generate the documentation.
 # The default value is: YES.
 
-SHOW_USED_FILES        = YES
+SHOW_USED_FILES        = NO
 
 # Set the SHOW_FILES tag to NO to disable the generation of the Files page. This
 # will remove the Files entry from the Quick Index and from the Folder Tree View
 # (if specified).
 # The default value is: YES.
 
-SHOW_FILES             = YES
+SHOW_FILES             = NO
 
 # Set the SHOW_NAMESPACES tag to NO to disable the generation of the Namespaces
 # page. This will remove the Namespaces entry from the Quick Index and from the
@@ -766,20 +766,14 @@ WARN_LOGFILE           =
 # Note: If this tag is empty the current directory is searched.
 
 INPUT = \
-../rocket_soc/techmap \
-../rocket_soc/commonlib \
-../rocket_soc/ambalib \
-../rocket_soc/rocketlib \
-../rocket_soc/gnsslib \
-../rocket_soc/work \
-\
-../rocket/techmap \
-../rocket/commonlib \
-../rocket/ambalib \
-../rocket/rocketlib \
-../rocket/gnsslib \
-../rocket/work \
-../../CppProjects/20160329_riscvdebugger/src/common
+../rocket_soc/docs/mainpage.vhd \
+../rocket_soc/rocketlib/eth/grethaxi.vhd \
+../rocket_soc/riverlib/dsu/axi_dsu.vhd \
+../rocket_soc/work/tb/riscv_soc_tb.vhd \
+../debugger/src/common/api_core.h \
+../rocket_soc/work/config_common.vhd \
+../rocket_soc/ambalib/types_amba4.vhd
+
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding. Doxygen uses
@@ -1606,7 +1600,7 @@ EXTRA_SEARCH_MAPPINGS  =
 # If the GENERATE_LATEX tag is set to YES, doxygen will generate LaTeX output.
 # The default value is: YES.
 
-GENERATE_LATEX         = NO
+GENERATE_LATEX         = YES
 
 # The LATEX_OUTPUT tag is used to specify where the LaTeX docs will be put. If a
 # relative path is entered the value of OUTPUT_DIRECTORY will be put in front of
@@ -1707,7 +1701,7 @@ LATEX_EXTRA_STYLESHEET =
 # markers available.
 # This tag requires that the tag GENERATE_LATEX is set to YES.
 
-LATEX_EXTRA_FILES      =
+LATEX_EXTRA_FILES      = 
 
 # If the PDF_HYPERLINKS tag is set to YES, the LaTeX that is generated is
 # prepared for conversion to PDF (using ps2pdf or pdflatex). The PDF file will
