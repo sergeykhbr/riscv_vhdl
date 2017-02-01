@@ -4,6 +4,7 @@
 *.err
 *.lst
 html
+latex
 gnsslib/fse_v2/*
 gnsslib/gnssengine/*
 fw/*

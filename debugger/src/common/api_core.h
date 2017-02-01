@@ -25,7 +25,7 @@
  *      simulation doesn't require any hardware and allow develop SW
  *      simultaneously with HW developing.
  *
- * @section dbg_1 Project structure
+ * @section dbg_1 C++ Project structure
  *
  * General idea of the project is to develop one \c Core library 
  * providing API methods for registering \c classes, \c services, \c attributes
@@ -53,9 +53,7 @@
  * file (including full command history). 
  *
  * @note You can manually add/change new Registers/CSRs names and indexes
- *       by modifying this config file without changing source code. If you
- *       accidently corrupt the JSON format you can return default setting
- *       by starting debugger with \c -nocfg key.
+ *       by modifying this config file without changing source code.
  * 
  * @par Folders description
  *    -# \b libdgb64g - Core library (so/dll) that provides standard API 
@@ -66,6 +64,8 @@
  *      -# \b simple_plugin - Simple plugin (so/dll library) just for
  *                      demonstration of the integration with debugger.
  *      -# \b cpu_fnc_plugin - Functional model of the RISC-V CPU 
+ *                     (so/dll library).
+ *      -# \b cpu_sysc_plugin - Precise SystemC model of RIVER CPU
  *                     (so/dll library).
  *      -# \b socsim_plugin - Functional models of the peripheries 
  *                     and assembled board (so/dll library). This plugin
@@ -83,15 +83,33 @@
  * $ ./_run_systemc_sim.sh[bat]   | Use SystemC Precise Model of RIVER CPU
  * $ ./_run_fpga_gui.sh[bat]      | FPGA board. Default port 'COM3', TAP IP = 192.168.0.51
  *
+ * To run debugger with real FPGA target connected via Ethernet do:
  * @verbatim
- *     e:\> cd rocket_soc/debugger/win32build/debug
- *     e:\rocket_soc\debugger\win32build> _run_functional_sim.bat
+ *     # cd rocket_soc/debugger/win32build/debug
+ *     # _run_functional_sim.bat
  * @endverbatim
  *
- * In this case common structure will be look as follow:
+ * The result should look like on the picture below:
+ * 
+ * <img src="pics/dbg_fpga_gui1.png" alt="debugger FPGA+GUI"> 
+ * @latexonly {\includegraphics[scale=0.8]{pics/dbg_fpga_gui1.png}} @endlatexonly
+ *
+ * @subsection sw_debug_ss1 Plugins interaction structure
+ *
+ * Core library uses UDP protocol to communicate with all targets: FPGA or
+ * simulators. The general structure is looking like on the following figure:
  *
  * <img src="pics/dbg_sim.png" alt="sim debug"> 
- * @latexonly {\includegraphics[scale=0.7]{pics/dbg_sim.png}} @endlatexonly
+ * @latexonly {\includegraphics[scale=0.9]{pics/dbg_sim.png}} @endlatexonly
+ *
+ * or with real Hardware
+ *
+ * <img src="pics/dbg_fpga.png" alt="fpga debug"> 
+ * @latexonly {\includegraphics[scale=0.8]{pics/dbg_fpga.png}} @endlatexonly
+ *
+ * @section sw_debug_troubles Troubleshooting
+ *
+ * @subsection sw_problem_1 Image Files not found
  *
  * If you'll get the error messages that image files not found
  *
@@ -118,22 +136,20 @@
  *      simulated platform with its own UART/GPIO or Ethernet outputs
  *      and serial console window.
  *
- * @subsection dbg_hw Debug Real Hardware
+ * @subsection sw_problem_2 Can't open COM3 when FPGA is used
+ *    -# Open <em>fpga_gui.json</em>
+ *    -# Change value <b>['ComPortName','COM3'],</b> on your one
+ *       (for an example on \c ttyUSB0).
  *
-   Before you start pass through the following checklist:
+ * @subsection sw_problem_3 EDCL: No response. Break read transaction
+ * This erros means that host cannot locate board with specified IP address.
+ * Before you continue pass through the following checklist:
  *    -# You should properly @link eth_link setup network connection @endlink
  * and see FPGA board in ARP-table.
  *    -# If you've changed default FPGA IP address:
  *          -# Open <em>fpga_gui.json</em>
  *          -# Change value <b>['BoardIP','192.168.0.51']</b> on your one.
  *    -# Run debugger
- *
- * @verbatim bin/release/appdbg64g.exe @endverbatim
- *
- * In this case connection scheme with FPGA board looks as follow:
- *
- * <img src="pics/dbg_fpga.png" alt="fpga debug"> 
- * @latexonly {\includegraphics[scale=0.8]{pics/dbg_fpga.png}} @endlatexonly
  *
  * Example of debugging session (Switch ON all User LEDs on board):
  * @code
@@ -149,10 +165,6 @@
  * <img src="pics/dbg_testhw.png" alt="HW debug example"> 
  * @latexonly {\includegraphics{pics/dbg_testhw.png}} @endlatexonly
  *
- * FPGA serial console output:
- *
- * <img src="pics/dbg_testhw2.png" alt="Serial output"> 
- * @latexonly {\includegraphics{pics/dbg_testhw2.png}} @endlatexonly
  */
 
 #ifndef __DEBUGGER_API_CORE_H__

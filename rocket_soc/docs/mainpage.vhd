@@ -90,19 +90,18 @@
 --! @page peripheries_page Peripheries
 --!   @subpage periphery_page_1
 --!
+--!   @subpage periphery_page_2
+--!
 --! @page periphery_page_1 Debug Support Unit (DSU)
 --! @copydoc dsu_link
+--!
+--! @page periphery_page_2 GPIO
+--! @copydoc gpio_page
 --!
 
 --! @defgroup peripheries_group Peripheries
 --! @details Peripheries list.
 --!
-
-
---! @page verification_page RTL Verification
---!   @subpage sim_tb_link
---!
-
 
 --! @page debugger_page RISC-V debugger
 --!   @subpage eth_link
