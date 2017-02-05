@@ -25,6 +25,9 @@ Parameterized generator of the Rocket-chip can be found here:
 
 ## System-on-Chip structure and performance
 
+SoC documentation in [.pdf](rocket_soc/docs/riscv_soc_descr.pdf) and 
+[.html](http://sergeykhbr.github.io/riscv_vhdl/) formats.
+
 ![SOC top](rocket_soc/docs/pics/soc_top_v5.png)
 
 Performance analysis is based on
@@ -92,13 +95,13 @@ This repository consists of three sub-projects each in own subfolder:
   Early support for the Zephyr Project includes Intel Corporation,
   NXP Semiconductors N.V., Synopsys, Inc. and UbiquiOS Technology Limited.
 - **debugger**. The last piece of the ready-to-use open HW/SW system is
-  [Software Debugger (C++)](http://sergeykhbr.github.io/riscv_vhdl/dbg_link.html)
+  [Software Debugger (C++)](http://sergeykhbr.github.io/riscv_vhdl/sw_debugger_api_link.html)
   with the full system simulator available as a plug-in.
   Debugger interacts with the target (FPGA or Software Simulator) 
   via [Ethernet](http://sergeykhbr.github.io/riscv_vhdl/eth_link.html)
   using EDCL protocol over UDP. To provide this functionality SOC includes
   [**10/100 Ethernet MAC with EDCL**](http://sergeykhbr.github.io/riscv_vhdl/eth_link.html)
-  and [**Debug Support Unit (DSU)**](http://sergeykhbr.github.io/riscv_vhdl/dsu_link.html)
+  and [**Debug Support Unit (DSU)**](http://sergeykhbr.github.io/riscv_vhdl/periphery_page_1.html)
   devices on AMBA AXI4 bus.
 - **RISC-V "River" core**. It's my own implementation of RISC-V ISA that is ideal
   for embedded application with active usage of 64-bits computations
@@ -210,7 +213,7 @@ $ ./_run_fpga_gui.sh       | FPGA board. Default port 'COM3', TAP IP = 192.168.0
 **Note:** Instruction of how to connect FPGA board via
 Ethernet your can find [here](http://sergeykhbr.github.io/riscv_vhdl/eth_link.html).  
 Simulation and Hardware targets use identical EDCL over UDP interface so that 
-[Debugger](http://sergeykhbr.github.io/riscv_vhdl/dbg_link.html) can work 
+[Debugger](http://sergeykhbr.github.io/riscv_vhdl/sw_debugger_api_link.html) can work 
 with any target using the same set of commands.  
 
 **Debugger doesn't implement any specific interface for the simulation.
@@ -433,17 +436,15 @@ To get branch *v2.0* use the following git command:
 
 This release add to following features to *v1.0*:
 
-- [**Debug Support Unit**](http://sergeykhbr.github.io/riscv_vhdl/dsu_link.html)
-  (DSU) for the access to all CPU registers (CSRs).
-- [**10/100 Ethernet MAC with EDCL**](http://sergeykhbr.github.io/riscv_vhdl/eth_link.html)
-  that allows to debug processor from the
+- *Debug Support Unit* (DSU) for the access to all CPU registers (CSRs).
+- *10/100 Ethernet MAC with EDCL* that allows to debug processor from the
   reset vector redirecting UDP requests directly on system bus.
 - GNSS engine and RF-mezzanine card support.
 - **Test Mode** (DIP[0]=1) that allows to use SOC with or without
   *RF-mezzanine card*.
 - Master/Slave AMBA AXI4 interface refactoring.
-- [**Debugger Software (C++)**](http://sergeykhbr.github.io/riscv_vhdl/dbg_link.html)
-  for Windows and Linux with built-in simulator and plugins support.
+- *Debugger Software (C++)* for Windows and Linux with built-in simulator 
+  and plugins support.
 - Portable asynchronous FIFO implementation allowing to connect modules to the
   System BUS from a separate clock domains (ADC clock domain):
 - A lot of system optimizations.
