@@ -1,7 +1,8 @@
 var searchData=
 [
-  ['umc',['umc',['../classgencomp.html#a27ae0c0c3963aa04797596906597f166',1,'gencomp']]],
-  ['ut130',['ut130',['../classgencomp.html#ae09231798d09743b23e343fb943d63b8',1,'gencomp']]],
-  ['ut25',['ut25',['../classgencomp.html#a8fb959f43d05256014a97b4165cade89',1,'gencomp']]],
-  ['ut90',['ut90',['../classgencomp.html#a02f724ddc856ff508697a920e0c6a8e0',1,'gencomp']]]
+  ['xaddr',['xaddr',['../classtypes__amba4.html#a74e7b9e334c54a49ec73bbe8f5b5115a',1,'types_amba4']]],
+  ['xmask',['xmask',['../classtypes__amba4.html#a10e15893c0167b609f03c6267bda127c',1,'types_amba4']]],
+  ['xsize_5ftotal',['XSIZE_TOTAL',['../classtypes__amba4.html#a0560e8e60443f73e9314b0ad1bf7adff',1,'types_amba4']]],
+  ['xsize_5ftype',['xsize_type',['../classtypes__amba4.html#a3e6bca54b0f7a18b3b0aab81480ce3d6',1,'types_amba4']]],
+  ['xsizetobytes',['XSizeToBytes',['../classtypes__amba4.html#a637cd0ea471d69d9bf08c86185f11d3a',1,'types_amba4']]]
 ];

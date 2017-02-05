@@ -1,25 +1,10 @@
 var searchData=
 [
-  ['peregrine',['peregrine',['../classgencomp.html#a8dc1b2e8a9a2fbdf16340b51fd787163',1,'gencomp']]],
-  ['pll_5fclk_5fbus',['pll_clk_bus',['../class_sys_p_l_l__tech_1_1rtl.html#a852c100044fde141c44fecb9999b5fe1',1,'SysPLL_tech::rtl']]],
-  ['pnp_5fcfg_5fmaster_5fdescr_5fbytes',['PNP_CFG_MASTER_DESCR_BYTES',['../classtypes__amba4.html#a8d9bf6e55df99c69731adb2014d59ef3',1,'types_amba4']]],
-  ['pnp_5fcfg_5fslave_5fdescr_5fbytes',['PNP_CFG_SLAVE_DESCR_BYTES',['../classtypes__amba4.html#a5f690c2e72148363c295eba9379eee4a',1,'types_amba4']]],
-  ['pnp_5fcfg_5ftype_5fmaster',['PNP_CFG_TYPE_MASTER',['../classtypes__amba4.html#a580d6ae3325ab77a2af262e0225fcd62',1,'types_amba4']]],
-  ['pnp_5fcfg_5ftype_5fnone',['PNP_CFG_TYPE_NONE',['../classtypes__amba4.html#a15f4bcdf23ccdca27bd241a03404c880',1,'types_amba4']]],
-  ['pnp_5fcfg_5ftype_5fslave',['PNP_CFG_TYPE_SLAVE',['../classtypes__amba4.html#a44873c04daf9345d9fe05f57ea745009',1,'types_amba4']]],
-  ['prngeneratorfse',['PrnGeneratorFse',['../class_prn_generator_fse.html',1,'']]],
-  ['prngeneratorfsegal',['PrnGeneratorFseGal',['../class_prn_generator_fse_gal.html',1,'']]],
-  ['prngeneratorfseglo',['PrnGeneratorFseGlo',['../class_prn_generator_fse_glo.html',1,'']]],
-  ['prngeneratorfsegps',['PrnGeneratorFseGps',['../class_prn_generator_fse_gps.html',1,'']]],
-  ['prngenfse_2evhd',['prngenfse.vhd',['../prngenfse_8vhd.html',1,'']]],
-  ['prngenfsegal_2evhd',['prngenfsegal.vhd',['../prngenfsegal_8vhd.html',1,'']]],
-  ['prngenfseglo_2evhd',['prngenfseglo.vhd',['../prngenfseglo_8vhd.html',1,'']]],
-  ['prngenfsegps_2evhd',['prngenfsegps.vhd',['../prngenfsegps_8vhd.html',1,'']]],
-  ['proasic',['proasic',['../classgencomp.html#ad07c86580ee759761a948749a13b69d7',1,'gencomp']]],
-  ['procedureaxi4',['procedureAxi4',['../classtypes__amba4.html#a4689c9514e71958869ac7baa4786e188',1,'types_amba4.procedureAxi4()'],['../class__types__amba4.html#a4689c9514e71958869ac7baa4786e188',1,'_types_amba4.procedureAxi4()']]],
-  ['proceduredecodetileacquire',['procedureDecodeTileAcquire',['../classtypes__rocket.html#a18e3ea3eccc13abb16af30f56d1d5d64',1,'types_rocket.procedureDecodeTileAcquire()'],['../class__types__rocket.html#a18e3ea3eccc13abb16af30f56d1d5d64',1,'_types_rocket.procedureDecodeTileAcquire()']]],
-  ['procedurewritereorder',['procedureWriteReorder',['../class__types__amba4.html#a4ddc15a530a0470ea33954ea5d95f839',1,'_types_amba4']]],
-  ['procreadingfile',['procReadingFile',['../classgreth__rx__tb_1_1behavior.html#aa6f9bafe88628651e8197c3916adcbf3',1,'greth_rx_tb.behavior.procReadingFile()'],['../classgreth__tx__tb_1_1behavior.html#aa6f9bafe88628651e8197c3916adcbf3',1,'greth_tx_tb.behavior.procReadingFile()'],['../classgrethaxi__tb_1_1behavior.html#aa6f9bafe88628651e8197c3916adcbf3',1,'grethaxi_tb.behavior.procReadingFile()'],['../classethcomp__tb_1_1behavior.html#aa6f9bafe88628651e8197c3916adcbf3',1,'ethcomp_tb.behavior.procReadingFile()']]],
-  ['procsignal',['procSignal',['../classrocket__soc__tb_1_1behavior.html#ae8a453afeadd4e8fcb5f07490636cc33',1,'rocket_soc_tb::behavior']]],
-  ['prot',['prot',['../classtypes__amba4.html#aa4783c9f0cbdc7f7d41f77a21b8be7a1',1,'types_amba4']]]
+  ['soc_20configuration_20constants',['SoC configuration constants',['../group__config__common__group.html',1,'']]],
+  ['soc_20configuration_20constants',['SoC configuration constants',['../generic_page_1.html',1,'generic_page']]],
+  ['size',['size',['../classtypes__amba4.html#a1d8278cd5f6ddbded60faeaf103fef61',1,'types_amba4']]],
+  ['slv_5fdid_5fempty',['SLV_DID_EMPTY',['../classtypes__amba4.html#a8a3b9cd58a0d9d5f708777be82852d01',1,'types_amba4']]],
+  ['state',['state',['../classaxi__dsu_1_1arch__axi__dsu.html#ad5c908d9d78df85b2f0aa3b36b05c3a5',1,'axi_dsu::arch_axi_dsu']]],
+  ['std_5flogic_5f1164',['std_logic_1164',['../classgrethaxi.html#acd03516902501cd1c7296a98e22c6fcb',1,'grethaxi.std_logic_1164()'],['../classaxi__dsu.html#acd03516902501cd1c7296a98e22c6fcb',1,'axi_dsu.std_logic_1164()'],['../classtypes__amba4.html#acd03516902501cd1c7296a98e22c6fcb',1,'types_amba4.std_logic_1164()']]],
+  ['sw_20debugger_20api',['SW Debugger API',['../sw_debugger_api_link.html',1,'debugger_page']]]
 ];

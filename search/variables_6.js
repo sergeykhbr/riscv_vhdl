@@ -1,31 +1,5 @@
 var searchData=
 [
-  ['gaisler_5feth_5fedcl_5fmaster',['GAISLER_ETH_EDCL_MASTER',['../classtypes__amba4.html#aace4b67e7600a950b382319cc63a2803',1,'types_amba4']]],
-  ['gaisler_5feth_5fmac_5fmaster',['GAISLER_ETH_MAC_MASTER',['../classtypes__amba4.html#a6aa11752f3c09833f194ff9286f14a08',1,'types_amba4']]],
-  ['gencomp',['gencomp',['../classrocket__l1only.html#a842f38e0ce3d6925c35aebc3851b3909',1,'rocket_l1only.gencomp()'],['../classrocket__l2cache.html#a842f38e0ce3d6925c35aebc3851b3909',1,'rocket_l2cache.gencomp()'],['../classrocket__soc.html#a842f38e0ce3d6925c35aebc3851b3909',1,'rocket_soc.gencomp()']]],
-  ['gf65',['gf65',['../classgencomp.html#ad2dc423257aa32188c797343a429b8c3',1,'gencomp']]],
-  ['global_5faddr_5farray_5ftype',['global_addr_array_type',['../classtypes__amba4.html#a9afa34109ec723b47bcb25aaa6726946',1,'types_amba4']]],
-  ['gnsslib',['gnsslib',['../class_fse_control.html#ab9bee9c137484b445d903b649862fe5c',1,'FseControl.gnsslib()'],['../class_top_f_s_e.html#ab9bee9c137484b445d903b649862fe5c',1,'TopFSE.gnsslib()'],['../classgnssengine.html#ab9bee9c137484b445d903b649862fe5c',1,'gnssengine.gnsslib()'],['../classrocket__soc.html#ab9bee9c137484b445d903b649862fe5c',1,'rocket_soc.gnsslib()']]],
-  ['gnsssensor_5faccelerometer',['GNSSSENSOR_ACCELEROMETER',['../classtypes__amba4.html#a72ee8c894756da7f44e56a59dc3517a2',1,'types_amba4']]],
-  ['gnsssensor_5fbootrom',['GNSSSENSOR_BOOTROM',['../classtypes__amba4.html#a44d39c408a36495df1b688315af24bcb',1,'types_amba4']]],
-  ['gnsssensor_5fdsu',['GNSSSENSOR_DSU',['../classtypes__amba4.html#af0cb755db931f567e82752863c388e0a',1,'types_amba4']]],
-  ['gnsssensor_5fempty',['GNSSSENSOR_EMPTY',['../classtypes__amba4.html#a99fc62756a30ecad973b0c9f9b7d6ba1',1,'types_amba4']]],
-  ['gnsssensor_5fengine',['GNSSSENSOR_ENGINE',['../classtypes__amba4.html#ab88b38b005dbca62bd4bab37b6b7f086',1,'types_amba4']]],
-  ['gnsssensor_5fengine_5fstub',['GNSSSENSOR_ENGINE_STUB',['../classtypes__amba4.html#a2c8031005d2d8ad3a8828997a00c25e1',1,'types_amba4']]],
-  ['gnsssensor_5fethmac',['GNSSSENSOR_ETHMAC',['../classtypes__amba4.html#ab2cebb3a52dde97a95db7707457ad859',1,'types_amba4']]],
-  ['gnsssensor_5ffse_5fv2',['GNSSSENSOR_FSE_V2',['../classtypes__amba4.html#a6758ea7b35378ae46a94616f31466dd9',1,'types_amba4']]],
-  ['gnsssensor_5ffwimage',['GNSSSENSOR_FWIMAGE',['../classtypes__amba4.html#a999cc70312fa9f3597bea41eee56c0a8',1,'types_amba4']]],
-  ['gnsssensor_5fgpio',['GNSSSENSOR_GPIO',['../classtypes__amba4.html#a1b62f9b19c96e058078febfc0c229596',1,'types_amba4']]],
-  ['gnsssensor_5fgyroscope',['GNSSSENSOR_GYROSCOPE',['../classtypes__amba4.html#ab2b4b6ddc1b61fea4be95566ec6cca87',1,'types_amba4']]],
-  ['gnsssensor_5firqctrl',['GNSSSENSOR_IRQCTRL',['../classtypes__amba4.html#a16a3df841b9146e6d8fdcdbefb8cf95c',1,'types_amba4']]],
-  ['gnsssensor_5fpnp',['GNSSSENSOR_PNP',['../classtypes__amba4.html#aec177be1a5ce34689ef3bd67fc4aafc0',1,'types_amba4']]],
-  ['gnsssensor_5frf_5fcontrol',['GNSSSENSOR_RF_CONTROL',['../classtypes__amba4.html#aa87296468fb41863ed05441e6cfb1795',1,'types_amba4']]],
-  ['gnsssensor_5fspi_5fflash',['GNSSSENSOR_SPI_FLASH',['../classtypes__amba4.html#a14cda480104b8b83fed427d167db0d0f',1,'types_amba4']]],
-  ['gnsssensor_5fsram',['GNSSSENSOR_SRAM',['../classtypes__amba4.html#a353865f3c6e25e9c91bcba1883c56921',1,'types_amba4']]],
-  ['gnsssensor_5fuart',['GNSSSENSOR_UART',['../classtypes__amba4.html#a55b04ad14763cb2a91526e8c520329fd',1,'types_amba4']]],
-  ['grant',['grant',['../classtypes__amba4.html#aa12a722317f29f0aa428880bd3e92aed',1,'types_amba4']]],
-  ['grant_5fack_5frelease',['GRANT_ACK_RELEASE',['../classtypes__rocket.html#a6fbd8d57bff998c100324e246ce98eff',1,'types_rocket']]],
-  ['grant_5fbits_5fclient_5fxact_5fid',['grant_bits_client_xact_id',['../classtypes__rocket.html#a719ef57d41ac4c4322e0ea176dacddc1',1,'types_rocket']]],
-  ['grethc64',['grethc64',['../classgrethpkg.html#a49305e8c7fc1ed176a18dee10cf123af',1,'grethpkg']]],
-  ['grethpkg',['grethpkg',['../classrocket__soc.html#a3cd4210933ec3b1f975fee1ff20fd376',1,'rocket_soc']]]
+  ['len',['len',['../classtypes__amba4.html#aa5e209549fa8d7729992f3b42160572d',1,'types_amba4']]],
+  ['lock',['lock',['../classtypes__amba4.html#aa225afb9e216cbef70721f337292694c',1,'types_amba4']]]
 ];

@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['fifosection',['FifoSection',['../class_fifo_section.html',1,'']]],
-  ['fsecontrol',['FseControl',['../class_fse_control.html',1,'']]]
+  ['riscv_5fsoc_5ftb',['riscv_soc_tb',['../classriscv__soc__tb.html',1,'']]]
 ];

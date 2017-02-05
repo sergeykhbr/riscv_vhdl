@@ -1,9 +1,7 @@
 var searchData=
 [
-  ['o_5fclk_5fadc',['o_clk_adc',['../class_sys_p_l_l__tech.html#ae979c1b90a48db7c603f297a230aae7a',1,'SysPLL_tech']]],
-  ['o_5fclk_5fbus',['o_clk_bus',['../class_sys_p_l_l__tech.html#a6060bf57830d8ad9b28d999c17d981c9',1,'SysPLL_tech']]],
-  ['o_5fled',['o_led',['../classrocket__soc.html#a43c233140f6d5d4dcb2fa29a2a7539c7',1,'rocket_soc']]],
-  ['o_5flocked',['o_locked',['../class_sys_p_l_l__tech.html#abf2b239292f42b7248060c3518b76a42',1,'SysPLL_tech']]],
-  ['obuf_5ftech',['obuf_tech',['../classtypes__buf.html#a7937a9141eb9533c671ecd28a49ed924',1,'types_buf']]],
-  ['opsizetoxsize',['opSizeToXSize',['../classtypes__rocket.html#a476dd0b283a505dd25fd45ac90c73a8c',1,'types_rocket']]]
+  ['size',['size',['../classtypes__amba4.html#a1d8278cd5f6ddbded60faeaf103fef61',1,'types_amba4']]],
+  ['slv_5fdid_5fempty',['SLV_DID_EMPTY',['../classtypes__amba4.html#a8a3b9cd58a0d9d5f708777be82852d01',1,'types_amba4']]],
+  ['state',['state',['../classaxi__dsu_1_1arch__axi__dsu.html#ad5c908d9d78df85b2f0aa3b36b05c3a5',1,'axi_dsu::arch_axi_dsu']]],
+  ['std_5flogic_5f1164',['std_logic_1164',['../classgrethaxi.html#acd03516902501cd1c7296a98e22c6fcb',1,'grethaxi.std_logic_1164()'],['../classaxi__dsu.html#acd03516902501cd1c7296a98e22c6fcb',1,'axi_dsu.std_logic_1164()'],['../classtypes__amba4.html#acd03516902501cd1c7296a98e22c6fcb',1,'types_amba4.std_logic_1164()']]]
 ];

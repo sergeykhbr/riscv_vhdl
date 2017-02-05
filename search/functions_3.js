@@ -1,6 +1,4 @@
 var searchData=
 [
-  ['functionaddressreorder',['functionAddressReorder',['../classtypes__amba4.html#af3fce77b5af2468eeb718699306db210',1,'types_amba4.functionAddressReorder()'],['../class__types__amba4.html#af3fce77b5af2468eeb718699306db210',1,'_types_amba4.functionAddressReorder()']]],
-  ['functionaxi4output',['functionAxi4Output',['../classtypes__amba4.html#a71226427da0e90bd30e22248de95f4e4',1,'types_amba4.functionAxi4Output()'],['../class__types__amba4.html#a71226427da0e90bd30e22248de95f4e4',1,'_types_amba4.functionAxi4Output()']]],
-  ['functiondatarestoreorder',['functionDataRestoreOrder',['../classtypes__amba4.html#a724d1d8ee116bb6672cd45ee63ab26e4',1,'types_amba4.functionDataRestoreOrder()'],['../class__types__amba4.html#a724d1d8ee116bb6672cd45ee63ab26e4',1,'_types_amba4.functionDataRestoreOrder()']]]
+  ['regs',['regs',['../classaxi__dsu_1_1arch__axi__dsu.html#a65817b3d6143537f567f710586f6ba2f',1,'axi_dsu.arch_axi_dsu.regs()'],['../classnasti__irqctrl_1_1nasti__irqctrl__rtl.html#a65817b3d6143537f567f710586f6ba2f',1,'nasti_irqctrl.nasti_irqctrl_rtl.regs()']]]
 ];

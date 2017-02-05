@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['decimator',['Decimator',['../class_decimator.html',1,'']]],
-  ['divphase',['Divphase',['../class_divphase.html',1,'']]]
+  ['grethaxi',['grethaxi',['../classgrethaxi.html',1,'']]]
 ];
