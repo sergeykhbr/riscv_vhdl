@@ -11,6 +11,11 @@
 --! and connect the IP cores without the need to modify any global resources.
 --!
 --! @par Library organization
+--! Open source repository with VHLD libraries, Debugger, SW and debugger
+--! is available at:
+--!
+--!        https://github.com/sergeykhbr/riscv_vhdl
+--!
 --! This repository is organized around VHDL libraries, where each major IP 
 --! is assigned a unique library name. Using separate libraries avoids name 
 --! clashes between IP cores and hides unnecessary implementation details 
@@ -62,6 +67,8 @@
 --!
 --!   @subpage verification_page 
 --!
+--!   @subpage riscv_core_page
+--!
 --!   @subpage peripheries_page
 --!
 --!   @subpage debugger_page  
@@ -92,11 +99,26 @@
 --!
 --!   @subpage periphery_page_2
 --!
+--!   @subpage periphery_page_3
+--!
+--!   @subpage periphery_page_4
+--!
+--!   @subpage periphery_page_5
+--!
 --! @page periphery_page_1 Debug Support Unit (DSU)
 --! @copydoc dsu_link
 --!
---! @page periphery_page_2 GPIO
+--! @page periphery_page_2 GPIO Controller
 --! @copydoc gpio_page
+--!
+--! @page periphery_page_3 General Purpose Timers
+--! @copydoc gptimers_page
+--!
+--! @page periphery_page_4 Interrupt Controller
+--! @copydoc irqmp_page
+--!
+--! @page periphery_page_5 UART
+--! @copydoc uart_page
 --!
 
 --! @defgroup peripheries_group Peripheries

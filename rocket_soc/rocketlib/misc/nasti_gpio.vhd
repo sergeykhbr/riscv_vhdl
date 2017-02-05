@@ -5,12 +5,12 @@
 --! @brief     Controller of the GPIOs with the AMBA AXI4 interface.
 ------------------------------------------------------------------------------
 
---! @defgroup gpio_page GPIO
+--! @defgroup gpio_page GPIO Controller
 --! @ingroup peripheries_group
 --! 
 --! @section gpio_regs GPIO registers mapping
---! DSU acts like a slave AMBA AXI4 device that is directly mapped into 
---! physical memory. Default address location for our implementation 
+--! GPIO Controller acts like a slave AMBA AXI4 device that is directly mapped
+--! into physical memory. Default address location for our implementation 
 --! is defined by 0x80000000. Memory size is 4 KB.
 --!
 --! @par LED register (0x000).

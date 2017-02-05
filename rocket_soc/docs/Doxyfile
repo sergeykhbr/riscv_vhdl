@@ -769,7 +769,11 @@ INPUT = \
 ../rocket_soc/docs/mainpage.vhd \
 ../rocket_soc/rocketlib/eth/grethaxi.vhd \
 ../rocket_soc/riverlib/dsu/axi_dsu.vhd \
+../rocket_soc/riverlib/types_river.vhd \
 ../rocket_soc/rocketlib/misc/nasti_gpio.vhd \
+../rocket_soc/rocketlib/misc/nasti_irqctrl.vhd \
+../rocket_soc/rocketlib/misc/nasti_uart.vhd \
+../rocket_soc/rocketlib/misc/nasti_gptimers.vhd \
 ../rocket_soc/work/tb/riscv_soc_tb.vhd \
 ../debugger/src/common/api_core.h \
 ../rocket_soc/work/config_common.vhd \
