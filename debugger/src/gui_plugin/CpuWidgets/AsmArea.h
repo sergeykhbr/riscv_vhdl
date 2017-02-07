@@ -194,6 +194,7 @@ private:
     ECmdState state_;
     LinesViewModel rangeModel_;
     BreakpointInjectPort *portBreak_;
+    mutex_def mutexAsmGaurd_;
 };
 
 }  // namespace debugger

@@ -82,11 +82,14 @@ AsmArea::AsmArea(IGui *gui, QWidget *parent)
             this, SLOT(slotAsmListChanged()));
     connect(this, SIGNAL(cellDoubleClicked(int, int)),
             this, SLOT(slotCellDoubleClicked(int, int)));
+
+    RISCV_mutex_init(&mutexAsmGaurd_);
 }
 
 AsmArea::~AsmArea() {
     igui_->removeFromQueue(static_cast<IGuiCmdHandler *>(this));
     igui_->removeFromQueue(static_cast<IGuiCmdHandler *>(portBreak_));
+    RISCV_mutex_destroy(&mutexAsmGaurd_);
     delete portBreak_;
 }
 
@@ -157,6 +160,7 @@ void AsmArea::handleResponse(AttributeType *req, AttributeType *resp) {
 void AsmArea::slotNpcChanged(uint64_t npc) {
     int sel_row_new = -1;
 
+    RISCV_mutex_lock(&mutexAsmGaurd_);
     for (unsigned i = 0; i < asmLines_.size(); i++) {
         AttributeType &asmLine = asmLines_[i];
         if (!asmLine.is_list()) {
@@ -167,6 +171,7 @@ void AsmArea::slotNpcChanged(uint64_t npc) {
             break;
         }
     }
+    RISCV_mutex_unlock(&mutexAsmGaurd_);
 
     QTableWidgetItem *p;
     if (sel_row_new != -1) {
@@ -349,7 +354,7 @@ void AsmArea::outLine(int idx, AttributeType &line) {
     }
     
     addr = line[ASM_addrline].to_uint64();
-    if (line.size() == 2) {
+    if (line.size() == 2 && line[ASM_code].is_string()) {
         pw = item(idx, COL_addrline);
         RISCV_sprintf(stmp, sizeof(stmp), "%d", static_cast<int>(addr));
         pw->setText(QString(stmp));
@@ -362,7 +367,7 @@ void AsmArea::outLine(int idx, AttributeType &line) {
         item(idx, COL_label)->setText(tr(""));
         item(idx, COL_mnemonic)->setText(tr(""));
         item(idx, COL_comment)->setText(tr(""));
-    } else {
+    } else if (line.size() == ASM_Total) {
         pw = item(idx, COL_addrline);
         RISCV_sprintf(stmp, sizeof(stmp), "%016" RV_PRI64 "x", addr);
         pw->setText(QString(stmp));
@@ -398,6 +403,9 @@ void AsmArea::addMemBlock(AttributeType &resp,
     if (!resp.is_list() || !resp.size()) {
         return;
     }
+    if (!resp[0u].is_list() || !resp[resp.size() - 1].is_list()) {
+        return;
+    }
     if (lines.size()) {
         asm_addr_start = lines[0u][ASM_addrline].to_uint64();
         asm_addr_end = lines[lines.size() - 1][ASM_addrline].to_uint64();
@@ -405,6 +413,8 @@ void AsmArea::addMemBlock(AttributeType &resp,
     uint64_t resp_addr_start = resp[0u][ASM_addrline].to_uint64();
     uint64_t resp_addr_next = resp[resp.size() - 1][ASM_addrline].to_uint64();
     resp_addr_next += resp[resp.size() - 1][ASM_codesize].to_uint64();
+
+    RISCV_mutex_lock(&mutexAsmGaurd_);
     if (resp_addr_next == asm_addr_start) {
         // Joint lines at the beginning of current list:
         for (unsigned i = 0; i < resp.size(); i++) {
@@ -436,6 +446,7 @@ void AsmArea::addMemBlock(AttributeType &resp,
     } else {
         lines = resp;
     }
+    RISCV_mutex_unlock(&mutexAsmGaurd_);
 }
 
 }  // namespace debugger

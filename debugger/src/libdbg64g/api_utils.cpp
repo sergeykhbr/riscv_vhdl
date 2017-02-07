@@ -344,7 +344,9 @@ extern "C" void *RISCV_malloc(uint64_t sz) {
 }
 
 extern "C" void RISCV_free(void *p) {
-    free(p);
+    if (p) {
+        free(p);
+    }
 }
 
 extern "C" int RISCV_get_core_folder(char *out, int sz) {

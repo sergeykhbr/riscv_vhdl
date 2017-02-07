@@ -41,6 +41,7 @@ void AttributeType::attr_free() {
     }
     kind_ = Attr_Invalid;
     size_ = 0;
+    u_.integer = 0;
 }
 
 void AttributeType::clone(const AttributeType *v) {
@@ -212,6 +213,7 @@ void AttributeType::insert_to_list(unsigned idx, const AttributeType *item) {
                   / MIN_ALLOC_BYTES;
     AttributeType * t1 = static_cast<AttributeType *>(
                 RISCV_malloc(MIN_ALLOC_BYTES * new_sz));
+    memset(t1 + idx, 0, sizeof(AttributeType));  // Fix bug request #4
 
     memcpy(t1, u_.list, idx * sizeof(AttributeType));
     t1[idx].clone(item);
