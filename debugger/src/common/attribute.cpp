@@ -265,6 +265,53 @@ void AttributeType::swap_list_item(unsigned n, unsigned m) {
 }
 
 
+int partition(AttributeType *A, int lo, int hi) {
+    AttributeType *pivot = &(*A)[hi];
+    bool do_swap;
+    int i = lo - 1;
+    for (int j = lo; j < hi; j++) {
+        AttributeType &item = (*A)[j];
+        do_swap = false;
+        if (item.is_string()) {
+            if (strcmp(item.to_string(), pivot->to_string()) <= 0) {
+                do_swap = true;
+            }
+        } else if (item.is_int64()) {
+            if (item.to_int64() <= pivot->to_int64()) {
+                do_swap = true;
+            }
+        } else {
+            RISCV_printf(NULL, LOG_ERROR, "%s", 
+                        "Not supported attribute type for sorting");
+            return i + 1;
+        }
+
+        if (do_swap) {
+            i = i + 1;
+            A->swap_list_item(i, j);
+        }
+    }
+    A->swap_list_item(i + 1, hi);
+    return i + 1;
+}
+
+void quicksort(AttributeType *A, int lo, int hi) {
+    if (lo >= hi) {
+        return;
+    }
+    int p = partition(A, lo, hi);
+    quicksort(A, lo, p - 1);
+    quicksort(A, p + 1, hi);
+}
+
+void AttributeType::sort() {
+    if (!is_list()) {
+        RISCV_printf(NULL, LOG_ERROR, "%s", 
+                    "Sort algorithm can applied only to list attribute");
+    }
+    quicksort(this, 0, static_cast<int>(size()) - 1);
+}
+
 bool AttributeType::has_key(const char *key) const {
     for (unsigned i = 0; i < size(); i++) {
         if (strcmp(u_.dict[i].key_.to_string(), key) == 0

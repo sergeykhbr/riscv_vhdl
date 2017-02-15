@@ -271,6 +271,9 @@ class AttributeType : public IAttribute {
         return &u_.list[idx];
     }
 
+    /* Quicksort algorithm with 'list' attribute */
+    void sort();
+
     bool has_key(const char *key) const;
 
     const AttributeType *dict_key(unsigned idx) const;
