@@ -48,10 +48,6 @@ protected:
     virtual void keyPressEvent(QKeyEvent *e);
 
 private:
-    int keyevent2sequence(QKeyEvent *e, uint8_t *seq);
-    char *qstring2cstr(QString s);
-
-private:
     IGui *igui_;
     IAutoComplete *iauto_;
 

@@ -29,7 +29,10 @@ public:
 
     /** ICommand */
     virtual bool isValid(AttributeType *args) {
-        return CMD_VALID;
+        if ((*args)[0u].is_equal("democmd")) {
+            return CMD_VALID;
+        }
+        return CMD_INVALID;
     }
     virtual void exec(AttributeType *args, AttributeType *res) {
         Reg64Type t1;

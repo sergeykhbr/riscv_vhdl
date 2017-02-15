@@ -70,40 +70,36 @@ void ConsoleWidget::handleResponse(AttributeType *req, AttributeType *resp) {
 }
 
 void ConsoleWidget::keyPressEvent(QKeyEvent *e) {
-    uint8_t sequence[4];
-    int seq_sz = keyevent2sequence(e, sequence);
-
-
     AttributeType cmd;
     QTextCursor cursor = textCursor();
-    bool cmd_ready;
-    for (int i = 0; i < seq_sz; i++) {
-        cmd_ready = iauto_->processKey(sequence[i], &cmd, &cursorPos_);
+    uint32_t vt_key = static_cast<uint32_t>(e->nativeVirtualKey());
+    //printf("vt_key = %08x\n", vt_key);
+    
+    bool cmd_ready = iauto_->processKey(vt_key, &cmd, &cursorPos_);
 
-        moveCursor(QTextCursor::End);
-        cursor = textCursor();
-        cursor.setPosition(cursorMinPos_, QTextCursor::KeepAnchor);
-        cursor.insertText(cmd.to_string());
-        if (cursorPos_[0u].to_int()) {
-            cursor.movePosition(QTextCursor::Left, 
-                   QTextCursor::MoveAnchor, cursorPos_[0u].to_int());
-            setTextCursor(cursor);
-        }
-
-        if (!cmd_ready) {
-            continue;
-        }
-        cursor.movePosition(QTextCursor::End);
-        cursor.insertText(tr("\r"));
-
-        QTextCharFormat charFormat = cursor.charFormat();
-        cursor.insertText(tr(CONSOLE_ENTRY));
-        cursorMinPos_ = cursor.selectionStart();
-        verticalScrollBar()->setValue(verticalScrollBar()->maximum());
-        
-        igui_->registerCommand(
-            static_cast<IGuiCmdHandler *>(this), &cmd, false);
+    moveCursor(QTextCursor::End);
+    cursor = textCursor();
+    cursor.setPosition(cursorMinPos_, QTextCursor::KeepAnchor);
+    cursor.insertText(cmd.to_string());
+    if (cursorPos_[0u].to_int()) {
+        cursor.movePosition(QTextCursor::Left, 
+                QTextCursor::MoveAnchor, cursorPos_[0u].to_int());
+        setTextCursor(cursor);
     }
+
+    if (!cmd_ready) {
+        return;
+    }
+    cursor.movePosition(QTextCursor::End);
+    cursor.insertText(tr("\r"));
+
+    QTextCharFormat charFormat = cursor.charFormat();
+    cursor.insertText(tr(CONSOLE_ENTRY));
+    cursorMinPos_ = cursor.selectionStart();
+    verticalScrollBar()->setValue(verticalScrollBar()->maximum());
+        
+    igui_->registerCommand(
+        static_cast<IGuiCmdHandler *>(this), &cmd, false);
 }
 
 void ConsoleWidget::slotPostInit(AttributeType *cfg) {
@@ -147,61 +143,6 @@ void ConsoleWidget::updateData(const char *buf, int bufsz) {
     strOutput_ += QString(buf);
     RISCV_mutex_unlock(&mutexOutput_);
     emit signalNewData();
-}
-
-int ConsoleWidget::keyevent2sequence(QKeyEvent *e, uint8_t *seq) {
-    int ret = 0;
-    switch (e->key()) {
-    case Qt::Key_Left:
-        seq[0] = ARROW_PREFIX;
-        seq[1] = KB_LEFT;
-        ret = 2;
-        break;
-    case Qt::Key_Right:
-        seq[0] = ARROW_PREFIX;
-        seq[1] = KB_RIGHT;
-        ret = 2;
-        break;
-    case Qt::Key_Up:
-        seq[0] = ARROW_PREFIX;
-        seq[1] = KB_UP;
-        ret = 2;
-        break;
-    case Qt::Key_Down:
-        seq[0] = ARROW_PREFIX;
-        seq[1] = KB_DOWN;
-        ret = 2;
-        break;
-    case Qt::Key_Tab:
-        break;
-    case Qt::Key_Backspace:
-        seq[0] = '\b';
-        ret = 1;
-        break;
-    case Qt::Key_Delete:
-        break;
-    case Qt::Key_End:
-        break;
-    default:
-        seq[0] = qstring2cstr(e->text())[0];
-        ret = 1;
-    }
-    return ret;
-}
-
-char *ConsoleWidget::qstring2cstr(QString s) {
-    int sz = s.size();
-    if (sz >= sizeConv_) {
-        sizeConv_ = sz + 1;
-        delete [] wcsConv_;
-        delete [] mbsConv_;
-        wcsConv_ = new wchar_t[sizeConv_];
-        mbsConv_ = new char[sizeConv_];
-    }
-    sz = s.toWCharArray(wcsConv_);
-    wcstombs(mbsConv_, wcsConv_, sz);
-    mbsConv_[sz] = '\0';
-    return mbsConv_;
 }
 
 }  // namespace debugger

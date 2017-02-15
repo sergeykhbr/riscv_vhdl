@@ -241,11 +241,9 @@ void ConsoleService::busyLoop() {
 
             iexec_->exec(cmd.to_string(), &cmdres, false);
 
-            RISCV_mutex_lock(&mutexConsoleOutput_);
             if (!cmdres.is_nil() && !cmdres.is_invalid()) {
                 RISCV_printf0("%s", cmdres.to_config());
             }
-            RISCV_mutex_unlock(&mutexConsoleOutput_);
         } else {
             RISCV_mutex_lock(&mutexConsoleOutput_);
             std::cout << '\r' << ENTRYSYMBOLS << cmd.to_string();
@@ -361,16 +359,86 @@ bool ConsoleService::isData() {
 #endif
 }
 
-uint8_t ConsoleService::getData() {
+uint32_t ConsoleService::getData() {
+    Reg64Type tbuf = {0};
+    int pos = 0;
+    while (isData()) {
+        tbuf.val <<= 8;
 #if defined(_WIN32) || defined(__CYGWIN__)
-    return static_cast<uint8_t>(_getch());
+        tbuf.buf[pos++] = static_cast<uint8_t>(_getch());
 #else
-    unsigned char ch;
-    //int err = 
-    read(term_fd_, &ch, sizeof(ch));
-    return ch;
-    //return getchar();
+        read(term_fd_, &tbuf.buf[pos], 1);
+        pos++;
 #endif
+    }
+    //printf("\nkey_code=%08x\n", tbuf.buf32[0]);
+    switch (tbuf.buf32[0]) {
+    case 0x000d:
+    case 0x000a:
+    case 0x0d0a:
+        tbuf.buf32[0] = KB_Return;
+        break;
+    case 0x001b:
+        tbuf.buf32[0] = KB_Escape;
+        break;
+#if defined(_WIN32) || defined(__CYGWIN__)
+    case 0x0008:
+        tbuf.buf32[0] = KB_Backspace;
+        break;
+    case VK_UP:
+    case 0x4800:
+        tbuf.buf32[0] = KB_Up;
+        break;
+    case VK_LEFT:
+    case 0x4b00:
+        tbuf.buf32[0] = KB_Left;
+        break;
+    case VK_RIGHT:
+    case 0x4d00:
+        tbuf.buf32[0] = KB_Right;
+        break;
+    case VK_DOWN:
+    case 0x5000:
+        tbuf.buf32[0] = KB_Down;
+        break;
+    case VK_DELETE:
+    case 0x5300:
+        tbuf.buf32[0] = KB_Delete;
+        break;
+    case VK_TAB:
+    case 0x5301:
+        tbuf.buf32[0] = KB_Tab;
+        break;
+#else
+    case 0x007f:
+        tbuf.buf32[0] = KB_Backspace;
+        break;
+    case 0x1b5b41:
+    case 0x410000:
+        tbuf.buf32[0] = KB_Up;
+        break;
+    case 0x1b5b44:
+    case 0x440000:
+        tbuf.buf32[0] = KB_Left;
+        break;
+    case 0x1b5b43:
+    case 0x430000:
+        tbuf.buf32[0] = KB_Right;
+        break;
+    case 0x1b5b42:
+    case 0x420000:
+        tbuf.buf32[0] = KB_Down;
+        break;
+    case 0x7e000000:
+        tbuf.buf32[0] = KB_Delete;
+        break;
+    case 0x0009:
+        tbuf.buf32[0] = KB_Tab;
+        break;
+#endif
+    default:;
+    }
+    return tbuf.buf32[0];
 }
 
 void ConsoleService::processCommandLine() {

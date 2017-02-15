@@ -59,7 +59,7 @@ private:
     void writeBuffer(const char *buf);
     void processScriptFile();
     bool isData();
-    uint8_t getData();
+    uint32_t getData();
     void clearLine(int num);
     void processCommandLine();
 

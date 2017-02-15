@@ -39,15 +39,21 @@ void CmdCsr::exec(AttributeType *args, AttributeType *res) {
         return;
     }
 
+    AttributeType &arg1 = (*args)[1];
     uint64_t val;
     int bytes = 8;
-    const char *csrname = (*args)[1].to_string();
-    uint64_t addr = info_->csr2addr(csrname);
-    if (addr == REG_ADDR_ERROR) {
-        char tstr[128];
-        RISCV_sprintf(tstr, sizeof(tstr), "%s not found", csrname);
-        generateError(res, tstr);
-        return;
+    uint64_t addr;
+    if (arg1.is_string()) {
+        const char *csrname = arg1.to_string();
+        addr = info_->csr2addr(csrname);
+        if (addr == REG_ADDR_ERROR) {
+            char tstr[128];
+            RISCV_sprintf(tstr, sizeof(tstr), "%s not found", csrname);
+            generateError(res, tstr);
+            return;
+        }
+    } else {
+        addr = arg1.to_uint64();
     }
 
     if (args->size() == 2) {

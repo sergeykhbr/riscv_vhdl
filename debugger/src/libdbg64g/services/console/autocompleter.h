@@ -27,12 +27,11 @@ public:
     virtual void postinitService();
 
     /** IAutoComplete */
-    virtual bool processKey(uint8_t symb, AttributeType *cmd, AttributeType *cursor);
-    virtual bool processKey(int key_sequence, AttributeType *cmd, AttributeType *cursor);
+    virtual bool processKey(uint32_t qt_key, AttributeType *cmd,
+                            AttributeType *cursor);
 
 
 private:
-    bool convertToWinKey(uint8_t symb);
     void addToHistory(const char *cmd);
 
 private:
@@ -45,8 +44,6 @@ private:
     unsigned carretPos_;
     ISocInfo *info_;
 
-    uint32_t symb_seq_;         // symbol sequence
-    uint32_t symb_seq_msk_;
     // History switching
     std::string unfinshedLine_; // store the latest whe we look through history
     unsigned history_idx_;
