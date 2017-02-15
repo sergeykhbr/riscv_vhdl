@@ -6,13 +6,18 @@
 --! @details    This file defines constants and the system paramters that are
 --!    	        valid for any ASIC, FPGA and Simulation projects.
 ------------------------------------------------------------------------------
---!
+
 --! @defgroup config_common_group SoC configuration constants
 --! @ingroup generic_group
 --! @details Target independible constants that are the same for FPGA, ASIC 
 --!          and behaviour simulation.
 --! @{
 --!
+
+--! Standard library
+library IEEE;
+--! Standard signal definitions
+use IEEE.STD_LOGIC_1164.ALL;
 
 --! Technology definition library
 library techmap;
@@ -42,6 +47,12 @@ constant CFG_SIM_BOOTROM_HEX : string :=
 constant CFG_SIM_FWIMAGE_HEX : string := 
                 "../../fw_images/fwimage.hex";
                 
+
+--! @brief Hardware SoC Identificator.
+--!
+--! @details Read Only unique platform identificator that could be
+--!          read by firmware from the Plug'n'Play support module.
+constant CFG_HW_ID : std_logic_vector(31 downto 0) := X"20170214";
 
 --! @brief Disable/Enable usage of the <em><b>gnsslib library</b></em>.
 --!

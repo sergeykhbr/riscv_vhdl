@@ -655,7 +655,8 @@ end generate;
   pnp0 : nasti_pnp generic map (
     xaddr   => 16#fffff#,
     xmask   => 16#fffff#,
-    tech    => CFG_MEMTECH
+    tech    => CFG_MEMTECH,
+    hw_id   => CFG_HW_ID
   ) port map (
     sys_clk => w_clk_bus, 
     adc_clk => w_clk_adc,

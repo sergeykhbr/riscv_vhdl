@@ -34,7 +34,7 @@
                 ['LogLevel',2],
                 ['Enable',true],
                 ['UartSim',''],
-                ['ComPortName','COM3'],
+                ['ComPortName','COM5'],
                 ['ComPortSpeed',115200]]}]},
     {'Class':'ElfLoaderServiceClass','Instances':[
           {'Name':'loader0','Attr':[

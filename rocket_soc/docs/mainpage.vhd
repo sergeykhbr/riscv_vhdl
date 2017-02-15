@@ -11,7 +11,7 @@
 --! and connect the IP cores without the need to modify any global resources.
 --!
 --! @par Library organization
---! Open source repository with VHLD libraries, Debugger, SW and debugger
+--! Open source repository with VHLD libraries, Debugger and SW examples
 --! is available at:
 --!
 --!        https://github.com/sergeykhbr/riscv_vhdl
@@ -85,15 +85,6 @@
 --! @page generic_page_2 AXI4 System Bus constants
 --! @ref axi4_config_generic_group
 
---! @defgroup generic_group VHDL Generic Parameters
---! @details VHDL generic parameters.
-
---! @defgroup axi4_config_generic_group AXI4 System Bus Generic Parameters
---! @ingroup generic_group
---! @details Definition of System Bus configuraiton parameters and templates
---!          methods that should be used by any master/slave device to be 
---!          compatible with Bus Controller device.
-
 --! @page peripheries_page Peripheries
 --!   @subpage periphery_page_1
 --!
@@ -104,6 +95,8 @@
 --!   @subpage periphery_page_4
 --!
 --!   @subpage periphery_page_5
+--!
+--!   @subpage periphery_page_6
 --!
 --! @page periphery_page_1 Debug Support Unit (DSU)
 --! @copydoc dsu_link
@@ -120,9 +113,8 @@
 --! @page periphery_page_5 UART
 --! @copydoc uart_page
 --!
-
---! @defgroup peripheries_group Peripheries
---! @details Peripheries list.
+--! @page periphery_page_6 PNP support
+--! @copydoc pnp_page
 --!
 
 --! @page debugger_page RISC-V debugger
@@ -130,3 +122,5 @@
 --!
 --!   @subpage sw_debugger_api_link
 --!
+
+

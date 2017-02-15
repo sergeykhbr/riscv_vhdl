@@ -403,7 +403,8 @@ component nasti_pnp is
   generic (
     xaddr   : integer := 0;
     xmask   : integer := 16#fffff#;
-    tech    : integer := 0
+    tech    : integer := 0;
+    hw_id   : std_logic_vector(31 downto 0) := X"20170101"
   );
   port (
     sys_clk : in  std_logic;
