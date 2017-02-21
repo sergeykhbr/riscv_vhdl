@@ -113,7 +113,7 @@ constant CFG_NASTI_MASTER_TOTAL    : integer := CFG_NASTI_MASTER_ETHMAC+1;
 --!          as an index in the interrupts bus.
 --! @{
 
---! GNSS Engine IRQ pin that generates 1 msec pulses.
+--! Zero interrupt index must be unused.
 constant CFG_IRQ_UNUSED         : integer := 0;
 --! UART_A interrupt pin.
 constant CFG_IRQ_UART1          : integer := CFG_IRQ_UNUSED + 1;

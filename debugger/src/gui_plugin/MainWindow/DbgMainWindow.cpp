@@ -254,7 +254,7 @@ void DbgMainWindow::addWidgets() {
             pnew, SLOT(slotUpdateByTimer()));
 
     slotCpuAsmView(true);
-    new AsmQMdiSubWindow(igui_, mdiArea_, this, NULL, 0x1000);
+    //new AsmQMdiSubWindow(igui_, mdiArea_, this, NULL, 0x1000);
 
     actionRegs_->setChecked(false);
     subw = new UnclosableQMdiSubWindow(this);
