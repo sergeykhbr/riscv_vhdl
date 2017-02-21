@@ -73,8 +73,12 @@ void ConsoleWidget::keyPressEvent(QKeyEvent *e) {
     AttributeType cmd;
     QTextCursor cursor = textCursor();
     uint32_t vt_key = static_cast<uint32_t>(e->nativeVirtualKey());
+    char vt_char = static_cast<char>(vt_key);
+    if (vt_char >= 'A' && vt_char <= 'Z' && e->modifiers() == Qt::NoModifier) {
+        vt_key -= static_cast<uint32_t>('A');
+        vt_key += static_cast<uint32_t>('a');
+    }
     //printf("vt_key = %08x\n", vt_key);
-    
     bool cmd_ready = iauto_->processKey(vt_key, &cmd, &cursorPos_);
 
     moveCursor(QTextCursor::End);

@@ -22,6 +22,7 @@ ElfLoaderService::ElfLoaderService(const char *name) : IService(name) {
     itap_ = 0;
     image_ = NULL;
     sectionNames_ = NULL;
+    symbolList_.make_list(0);
 }
 
 ElfLoaderService::~ElfLoaderService() {
@@ -106,6 +107,7 @@ int ElfLoaderService::readElfHeader() {
 int ElfLoaderService::loadSections() {
     SectionHeaderType *sh;
     uint64_t total_bytes = 0;
+    AttributeType tsymb;
 
     for (int i = 0; i < header_->e_shnum; i++) {
         sh = &sh_tbl_[i];

@@ -17,7 +17,7 @@
 
 namespace debugger {
 
-AsmArea::AsmArea(IGui *gui, QWidget *parent)
+AsmArea::AsmArea(IGui *gui, QWidget *parent, uint64_t fixaddr)
     : QTableWidget(parent) {
     igui_ = gui;
     cmdRegs_.make_string("reg npc");
@@ -25,6 +25,7 @@ AsmArea::AsmArea(IGui *gui, QWidget *parent)
     state_ = CMD_idle;
     hideLineIdx_ = 0;
     selRowIdx = -1;
+    fixaddr_ = fixaddr;
 
     clear();
     QFont font("Courier");
@@ -84,6 +85,7 @@ AsmArea::AsmArea(IGui *gui, QWidget *parent)
             this, SLOT(slotCellDoubleClicked(int, int)));
 
     RISCV_mutex_init(&mutexAsmGaurd_);
+    initSocAddresses();
 }
 
 AsmArea::~AsmArea() {
@@ -91,6 +93,24 @@ AsmArea::~AsmArea() {
     igui_->removeFromQueue(static_cast<IGuiCmdHandler *>(portBreak_));
     RISCV_mutex_destroy(&mutexAsmGaurd_);
     delete portBreak_;
+}
+
+void AsmArea::initSocAddresses() {
+    // Prepare commands that don't change in run-time:
+    ISocInfo *isoc = static_cast<ISocInfo *>(igui_->getSocInfo());
+    if (!isoc) {
+        return;
+    }
+    DsuMapType *dsu = isoc->getpDsu();
+
+    portBreak_->setBrAddressFetch(
+        reinterpret_cast<uint64_t>(&dsu->udbg.v.br_address_fetch));
+    portBreak_->setHwRemoveBreakpoint(
+        reinterpret_cast<uint64_t>(&dsu->udbg.v.remove_breakpoint));
+
+    if (fixaddr_ != ~0ull) {
+        emit signalNpcChanged(fixaddr_);
+    }
 }
 
 void AsmArea::resizeEvent(QResizeEvent *ev) {
@@ -130,14 +150,7 @@ void AsmArea::wheelEvent(QWheelEvent * ev) {
 }
 
 void AsmArea::slotPostInit(AttributeType *cfg) {
-    // Prepare commands that don't change in run-time:
-    ISocInfo *isoc = static_cast<ISocInfo *>(igui_->getSocInfo());
-    DsuMapType *dsu = isoc->getpDsu();
-
-    portBreak_->setBrAddressFetch(
-        reinterpret_cast<uint64_t>(&dsu->udbg.v.br_address_fetch));
-    portBreak_->setHwRemoveBreakpoint(
-        reinterpret_cast<uint64_t>(&dsu->udbg.v.remove_breakpoint));
+    initSocAddresses();
 }
 
 void AsmArea::slotUpdateByTimer() {

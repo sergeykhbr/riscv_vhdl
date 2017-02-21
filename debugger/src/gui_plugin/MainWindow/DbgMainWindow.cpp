@@ -107,12 +107,13 @@ void DbgMainWindow::createActions() {
     actionRegs_->setCheckable(true);
     actionRegs_->setChecked(false);
 
-    actionAsm_ = new QAction(QIcon(tr(":/images/asm_96x96.png")),
+    actionCpuAsm_ = new QAction(QIcon(tr(":/images/asm_96x96.png")),
                               tr("&Memory"), this);
-    actionAsm_->setToolTip(tr("Disassembler view"));
-    actionAsm_->setShortcut(QKeySequence("Ctrl+d"));
-    actionAsm_->setCheckable(true);
-    actionAsm_->setChecked(true);
+    actionCpuAsm_->setToolTip(tr("Disassembler view"));
+    actionCpuAsm_->setShortcut(QKeySequence("Ctrl+d"));
+    actionCpuAsm_->setCheckable(true);
+    connect(actionCpuAsm_, SIGNAL(triggered(bool)),
+            this, SLOT(slotCpuAsmView(bool)));
 
     actionMem_ = new QAction(QIcon(tr(":/images/mem_96x96.png")),
                               tr("&Memory"), this);
@@ -182,7 +183,7 @@ void DbgMainWindow::createActions() {
     toolbarRunControl->addAction(actionStep_);
 
     QToolBar *toolbarCpu = addToolBar(tr("toolbarCpu"));
-    toolbarCpu->addAction(actionAsm_);
+    toolbarCpu->addAction(actionCpuAsm_);
     toolbarCpu->addAction(actionRegs_);
     toolbarCpu->addAction(actionMem_);
     QToolBar *toolbarPeriph = addToolBar(tr("toolbarPeriph"));
@@ -252,17 +253,8 @@ void DbgMainWindow::addWidgets() {
     connect(this, SIGNAL(signalUpdateByTimer()),
             pnew, SLOT(slotUpdateByTimer()));
 
-    actionAsm_->setChecked(true);
-    subw = new UnclosableQMdiSubWindow(this);
-    pnew = new AsmViewWidget(igui_, this);
-    subw->setUnclosableWidget("Disassembler", pnew, actionAsm_);
-    mdiArea_->addSubWindow(subw);
-    connect(this, SIGNAL(signalPostInit(AttributeType *)),
-            pnew, SLOT(slotPostInit(AttributeType *)));
-    connect(this, SIGNAL(signalUpdateByTimer()),
-            pnew, SLOT(slotUpdateByTimer()));
-    connect(this, SIGNAL(signalBreakpoint()),
-            pnew, SLOT(slotBreakpoint()));
+    slotCpuAsmView(true);
+    new AsmQMdiSubWindow(igui_, mdiArea_, this, NULL, 0x1000);
 
     actionRegs_->setChecked(false);
     subw = new UnclosableQMdiSubWindow(this);
@@ -287,6 +279,14 @@ void DbgMainWindow::addWidgets() {
     mdiArea_->addSubWindow(subw);
 }
 
+void DbgMainWindow::slotCpuAsmView(bool val) {
+    if (val) {
+        viewCpuAsm_ = 
+            new AsmQMdiSubWindow(igui_, mdiArea_, this, actionCpuAsm_);
+    } else {
+        viewCpuAsm_->close();
+    }
+}
 
 void DbgMainWindow::slotPostInit(AttributeType *cfg) {
     config_ = *cfg;

@@ -108,7 +108,7 @@ class AsmArea : public QTableWidget,
                 public IGuiCmdHandler {
     Q_OBJECT
 public:
-    explicit AsmArea(IGui *gui, QWidget *parent);
+    explicit AsmArea(IGui *gui, QWidget *parent, uint64_t fixaddr);
     virtual ~AsmArea();
 
     /** IGuiCmdHandler */
@@ -131,6 +131,7 @@ protected:
     void wheelEvent(QWheelEvent * ev) Q_DECL_OVERRIDE;
 
 private:
+    void initSocAddresses();
     void outLines();
     void outLine(int idx, AttributeType &data);
     void addMemBlock(AttributeType &resp, AttributeType &lines);
@@ -188,6 +189,7 @@ private:
     QString name_;
     IGui *igui_;
 
+    uint64_t fixaddr_;
     int selRowIdx;
     int hideLineIdx_;
     int lineHeight_;

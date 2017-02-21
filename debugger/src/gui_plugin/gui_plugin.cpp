@@ -56,6 +56,7 @@ GuiPlugin::GuiPlugin(const char *name)
     QResource::registerResource(
         topDir + "resources/gui.rcc");
 
+    info_ = 0;
     ui_ = NULL;
     RISCV_event_create(&eventUiInitDone_, "eventUiInitDone_");
     RISCV_event_create(&eventCommandAvailable_, "eventCommandAvailable_");

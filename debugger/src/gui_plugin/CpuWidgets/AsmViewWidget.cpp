@@ -14,8 +14,8 @@
 
 namespace debugger {
 
-AsmViewWidget::AsmViewWidget(IGui *igui, QWidget *parent) 
-    : UnclosableWidget(parent) {
+AsmViewWidget::AsmViewWidget(IGui *igui, QWidget *parent, uint64_t fixaddr) 
+    : QWidget(parent) {
     igui_ = igui;
 
     gridLayout = new QGridLayout(this);
@@ -27,7 +27,7 @@ AsmViewWidget::AsmViewWidget(IGui *igui, QWidget *parent)
 
     AsmControl *pctrl = new AsmControl(this);
 
-    AsmArea *parea = new AsmArea(igui, this);
+    AsmArea *parea = new AsmArea(igui, this, fixaddr);
     gridLayout->addWidget(pctrl , 0, 0);
     gridLayout->addWidget(parea, 1, 0);
     gridLayout->setRowStretch(1, 10);

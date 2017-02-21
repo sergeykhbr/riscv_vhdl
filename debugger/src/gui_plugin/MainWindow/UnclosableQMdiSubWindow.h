@@ -20,13 +20,19 @@ namespace debugger {
 class UnclosableQMdiSubWindow : public QMdiSubWindow {
     Q_OBJECT
 public:
-    UnclosableQMdiSubWindow(QWidget *parent = 0, bool add_scroll = false) 
+    UnclosableQMdiSubWindow(QWidget *parent = 0, 
+                            bool add_scroll = false,
+                            bool donot_close = true)
         : QMdiSubWindow(parent) {
+        donot_close_ = donot_close;
         if (add_scroll) {
             scrollArea_ = new QScrollArea(parent);
             setWidget(scrollArea_);
         } else {
             scrollArea_ = 0;
+        }
+        if (donot_close == false) {
+            setAttribute(Qt::WA_DeleteOnClose);
         }
     }
 
@@ -67,10 +73,15 @@ protected:
     void closeEvent(QCloseEvent *event_) Q_DECL_OVERRIDE {
         setVisible(false);
         emit signalVisible(false);
-        event_->ignore();
+        if (donot_close_) {
+            event_->ignore();
+        } else {
+            event_->accept();
+        }
     }
 private:
     QScrollArea *scrollArea_;
+    bool donot_close_;
 };
 
 #include "moc_UnclosableQMdiSubWindow.h"
