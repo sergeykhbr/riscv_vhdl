@@ -52,6 +52,9 @@ SOURCES = \
 	AsmViewWidget \
 	AsmArea \
 	AsmControl \
+	SymbolBrowserWidget \
+	SymbolBrowserArea \
+	SymbolBrowserControl \
 	MemViewWidget \
 	MemArea \
 	MemControl \
@@ -120,3 +123,6 @@ prebuild:
 	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/CpuWidgets/MemControl.h -o $(GUI_PLUGIN_SRC)/CpuWidgets/moc_MemControl.h
 	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/CpuWidgets/RegWidget.h -o $(GUI_PLUGIN_SRC)/CpuWidgets/moc_RegWidget.h
 	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/CpuWidgets/RegsViewWidget.h -o $(GUI_PLUGIN_SRC)/CpuWidgets/moc_RegsViewWidget.h
+	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/CpuWidgets/SymbolBrowserWidget.h -o $(GUI_PLUGIN_SRC)/CpuWidgets/moc_SymbolBrowserWidget.h
+	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/CpuWidgets/SymbolBrowserArea.h -o $(GUI_PLUGIN_SRC)/CpuWidgets/moc_SymbolBrowserArea.h
+	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/CpuWidgets/SymbolBrowserControl.h -o $(GUI_PLUGIN_SRC)/CpuWidgets/moc_SymbolBrowserControl.h

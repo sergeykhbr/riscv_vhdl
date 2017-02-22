@@ -59,6 +59,7 @@ private slots:
     void slotActionTargetHalt();
     void slotActionTargetStepInto();
     void slotCpuAsmView(bool val);
+    void slotSymbolBrowser();
     void slotExit();
 
 private:
@@ -77,6 +78,7 @@ private:
     QAction *actionRegs_;
     QAction *actionCpuAsm_;
     QMdiSubWindow *viewCpuAsm_;
+    QAction *actionSymbolBrowser_;
     QAction *actionMem_;
     QAction *actionGpio_;
     QAction *actionPnp_;

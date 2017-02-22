@@ -36,11 +36,9 @@
                 ['UartSim',''],
                 ['ComPortName','COM5'],
                 ['ComPortSpeed',115200]]}]},
-    {'Class':'ElfLoaderServiceClass','Instances':[
+    {'Class':'ElfReaderServiceClass','Instances':[
           {'Name':'loader0','Attr':[
-                ['LogLevel',4],
-                ['Tap','edcltap'],
-                ['VerifyEna',true]]}]},
+                ['LogLevel',4]]}]},
     {'Class':'ConsoleServiceClass','Instances':[
           {'Name':'console0','Attr':[
                 ['LogLevel',4],

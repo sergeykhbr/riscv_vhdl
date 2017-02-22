@@ -272,7 +272,7 @@ class AttributeType : public IAttribute {
     }
 
     /* Quicksort algorithm with 'list' attribute */
-    void sort();
+    void sort(int idx = 0);
 
     bool has_key(const char *key) const;
 

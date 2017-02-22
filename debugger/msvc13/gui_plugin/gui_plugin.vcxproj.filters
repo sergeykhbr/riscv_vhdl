@@ -79,6 +79,15 @@
     <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\AsmViewWidget.cpp">
       <Filter>CpuWidget</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\SymbolBrowserArea.cpp">
+      <Filter>CpuWidget</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\SymbolBrowserControl.cpp">
+      <Filter>CpuWidget</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\SymbolBrowserWidget.cpp">
+      <Filter>CpuWidget</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\api_types.h">
@@ -162,6 +171,15 @@
       <Filter>CpuWidget</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\AsmViewWidget.h">
+      <Filter>CpuWidget</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\SymbolBrowserArea.h">
+      <Filter>CpuWidget</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\SymbolBrowserControl.h">
+      <Filter>CpuWidget</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\SymbolBrowserWidget.h">
       <Filter>CpuWidget</Filter>
     </ClInclude>
   </ItemGroup>

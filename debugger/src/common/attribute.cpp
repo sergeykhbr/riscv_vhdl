@@ -265,7 +265,7 @@ void AttributeType::swap_list_item(unsigned n, unsigned m) {
 }
 
 
-int partition(AttributeType *A, int lo, int hi) {
+int partition(AttributeType *A, int lo, int hi, int lst_idx) {
     AttributeType *pivot = &(*A)[hi];
     bool do_swap;
     int i = lo - 1;
@@ -278,6 +278,22 @@ int partition(AttributeType *A, int lo, int hi) {
             }
         } else if (item.is_int64()) {
             if (item.to_int64() <= pivot->to_int64()) {
+                do_swap = true;
+            }
+        } else if (item.is_uint64()) {
+            if (item.to_uint64() <= pivot->to_uint64()) {
+                do_swap = true;
+            }
+        } else if (item.is_list()) {
+            AttributeType &t1 = item[lst_idx];
+            if (t1.is_string() &&
+                strcmp(t1.to_string(), (*pivot)[lst_idx].to_string()) <= 0) {
+                do_swap = true;
+            } else if (t1.is_int64() &&
+                t1.to_int64() <= (*pivot)[lst_idx].to_int64()) {
+                do_swap = true;
+            } else if (t1.is_uint64() &&
+                t1.to_uint64() <= (*pivot)[lst_idx].to_uint64()) {
                 do_swap = true;
             }
         } else {
@@ -295,21 +311,21 @@ int partition(AttributeType *A, int lo, int hi) {
     return i + 1;
 }
 
-void quicksort(AttributeType *A, int lo, int hi) {
+void quicksort(AttributeType *A, int lo, int hi, int lst_idx) {
     if (lo >= hi) {
         return;
     }
-    int p = partition(A, lo, hi);
-    quicksort(A, lo, p - 1);
-    quicksort(A, p + 1, hi);
+    int p = partition(A, lo, hi, lst_idx);
+    quicksort(A, lo, p - 1, lst_idx);
+    quicksort(A, p + 1, hi, lst_idx);
 }
 
-void AttributeType::sort() {
+void AttributeType::sort(int idx) {
     if (!is_list()) {
         RISCV_printf(NULL, LOG_ERROR, "%s", 
                     "Sort algorithm can applied only to list attribute");
     }
-    quicksort(this, 0, static_cast<int>(size()) - 1);
+    quicksort(this, 0, static_cast<int>(size()) - 1, idx);
 }
 
 bool AttributeType::has_key(const char *key) const {

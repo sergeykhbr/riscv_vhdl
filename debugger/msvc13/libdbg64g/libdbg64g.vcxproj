@@ -167,7 +167,7 @@
     <ClCompile Include="..\..\src\libdbg64g\services\comport\com_win.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\console\autocompleter.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\console\console.cpp" />
-    <ClCompile Include="..\..\src\libdbg64g\services\elfloader\elfloader.cpp" />
+    <ClCompile Include="..\..\src\libdbg64g\services\elfloader\elfreader.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\elfloader\srcproc.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmdexec.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_br.cpp" />
@@ -187,6 +187,7 @@
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_reset.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_run.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_status.cpp" />
+    <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_symb.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_write.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\info\soc_info.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\mem\memsim.cpp" />
@@ -206,7 +207,7 @@
     <ClInclude Include="..\..\src\common\coreservices\iautocomplete.h" />
     <ClInclude Include="..\..\src\common\coreservices\icpuriscv.h" />
     <ClInclude Include="..\..\src\common\coreservices\ibus.h" />
-    <ClInclude Include="..\..\src\common\coreservices\ielfloader.h" />
+    <ClInclude Include="..\..\src\common\coreservices\ielfreader.h" />
     <ClInclude Include="..\..\src\common\coreservices\ikeylistener.h" />
     <ClInclude Include="..\..\src\common\coreservices\imemop.h" />
     <ClInclude Include="..\..\src\common\coreservices\irawlistener.h" />
@@ -229,7 +230,7 @@
     <ClInclude Include="..\..\src\libdbg64g\services\comport\comport.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\console\autocompleter.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\console\console.h" />
-    <ClInclude Include="..\..\src\libdbg64g\services\elfloader\elfloader.h" />
+    <ClInclude Include="..\..\src\libdbg64g\services\elfloader\elfreader.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\elfloader\elf_types.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\elfloader\srcproc.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmdexec.h" />
@@ -250,6 +251,7 @@
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_reset.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_run.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_status.h" />
+    <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_symb.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_write.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\info\soc_info.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\mem\memsim.h" />

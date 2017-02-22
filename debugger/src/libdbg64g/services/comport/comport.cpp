@@ -107,7 +107,7 @@ void ComPortService::busyLoop() {
         } else if (isSimulation_) {
             tbuf_cnt = 0;
             while (!rxFifo_.isEmpty()
-                && tbuf_cnt < static_cast<int>(sizeof(tbuf))) {
+                && tbuf_cnt < static_cast<int>(sizeof(tbuf) - 1)) {
                 tbuf[tbuf_cnt++] = rxFifo_.get();
                 tbuf[tbuf_cnt] = '\0';
             }

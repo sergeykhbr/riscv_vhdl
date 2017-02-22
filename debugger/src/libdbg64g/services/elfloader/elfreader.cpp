@@ -5,45 +5,32 @@
  * @brief      elf-file loader class implementation.
  */
 
-#include "elfloader.h"
+#include "elfreader.h"
 #include <iostream>
 
 namespace debugger {
 
 /** Class registration in the Core */
-REGISTER_CLASS(ElfLoaderService)
+REGISTER_CLASS(ElfReaderService)
 
-ElfLoaderService::ElfLoaderService(const char *name) : IService(name) {
-    registerInterface(static_cast<IElfLoader *>(this));
-    registerAttribute("Tap", &tap_);
-    registerAttribute("VerifyEna", &verify_ena_);
-    tap_.make_string("");
-    verify_ena_.make_boolean(false);
-    itap_ = 0;
+ElfReaderService::ElfReaderService(const char *name) : IService(name) {
+    registerInterface(static_cast<IElfReader *>(this));
     image_ = NULL;
     sectionNames_ = NULL;
     symbolList_.make_list(0);
+    loadSectionList_.make_list(0);
 }
 
-ElfLoaderService::~ElfLoaderService() {
+ElfReaderService::~ElfReaderService() {
     if (image_) {
         delete image_;
     }
 }
 
-void ElfLoaderService::postinitService() {
-    IService *iserv = 
-        static_cast<IService *>(RISCV_get_service(tap_.to_string()));
-    if (!iserv) {
-        RISCV_error("TAP service '%'s not found", tap_.to_string());
-    }
-    itap_ = static_cast<ITap *>(iserv->getInterface(IFACE_TAP));
-    if (!itap_) {
-        RISCV_error("ITap interface '%s' not found", tap_.to_string());
-    }
+void ElfReaderService::postinitService() {
 }
 
-int ElfLoaderService::loadFile(const char *filename) {
+int ElfReaderService::readFile(const char *filename) {
     FILE *fp = fopen(filename, "rb");
     if (!fp) {
         RISCV_error("File '%s' not found", filename);
@@ -72,8 +59,8 @@ int ElfLoaderService::loadFile(const char *filename) {
 
     /** Init names */
     SectionHeaderType *sh;
-    sh_tbl_ = reinterpret_cast<SectionHeaderType *>
-                                (&image_[header_->e_shoff]);
+    sh_tbl_ =
+        reinterpret_cast<SectionHeaderType *>(&image_[header_->e_shoff]);
     for (int i = 0; i < header_->e_shnum; i++) {
         sh = &sh_tbl_[i];
         if (sh->sh_type == SHT_STRTAB) {
@@ -93,7 +80,7 @@ int ElfLoaderService::loadFile(const char *filename) {
     return 0;
 }
 
-int ElfLoaderService::readElfHeader() {
+int ElfReaderService::readElfHeader() {
     header_ = reinterpret_cast<ElfHeaderType *>(image_);
     for (int i = 0; i < 4; i++) {
         if (header_->e_ident[i] != MAGIC_BYTES[i]) {
@@ -104,7 +91,7 @@ int ElfLoaderService::readElfHeader() {
     return 0;
 }
 
-int ElfLoaderService::loadSections() {
+int ElfReaderService::loadSections() {
     SectionHeaderType *sh;
     uint64_t total_bytes = 0;
     AttributeType tsymb;
@@ -115,24 +102,33 @@ int ElfLoaderService::loadSections() {
         if (sh->sh_size == 0) {
             continue;
         }
-        if ((sh->sh_flags & SHF_ALLOC) == 0) {
-            continue;
+
+        if (sectionNames_ && (sh->sh_flags & SHF_ALLOC)) {
+            RISCV_info("Reading '%s' section", &sectionNames_[sh->sh_name]);
         }
 
-        if (sectionNames_) {
-            RISCV_info("Loading '%s' section", &sectionNames_[sh->sh_name]);
-        }
-
-        if (sh->sh_type == SHT_PROGBITS) {
+        if (sh->sh_type == SHT_PROGBITS && (sh->sh_flags & SHF_ALLOC) != 0) {
             /**
              * @brief   Instructions or other processor's information
              * @details This section holds information defined by the program, 
              *          whose format and meaning are determined solely by the
              *          program.
              */
-            total_bytes += 
-                loadMemory(sh->sh_addr, &image_[sh->sh_offset], sh->sh_size);
-        } else if (sh->sh_type == SHT_NOBITS) {
+            AttributeType loadsec;
+            loadsec.make_list(LoadSh_Total);
+            if (sectionNames_) {
+                loadsec[LoadSh_name].make_string(&sectionNames_[sh->sh_name]);
+            } else {
+                loadsec[LoadSh_name].make_string("unknown");
+            }
+            loadsec[LoadSh_addr].make_uint64(sh->sh_addr);
+            loadsec[LoadSh_size].make_uint64(sh->sh_size);
+            loadsec[LoadSh_data].make_data(static_cast<unsigned>(sh->sh_size),
+                                           &image_[sh->sh_offset]);
+            loadSectionList_.add_to_list(&loadsec);
+            total_bytes += sh->sh_size;
+        } else if (sh->sh_type == SHT_NOBITS
+                    && (sh->sh_flags & SHF_ALLOC) != 0) {
             /**
              * @brief   Initialized data
              * @details A section of this type occupies no space in  the file
@@ -140,15 +136,29 @@ int ElfLoaderService::loadSections() {
              *          section contains no bytes, the sh_offset member
              *          contains the conceptual file offset.
              */
-             total_bytes += initMemory(sh->sh_addr, sh->sh_size);
+            AttributeType loadsec;
+            loadsec.make_list(LoadSh_Total);
+            if (sectionNames_) {
+                loadsec[LoadSh_name].make_string(&sectionNames_[sh->sh_name]);
+            } else {
+                loadsec[LoadSh_name].make_string("unknown");
+            }
+            loadsec[LoadSh_addr].make_uint64(sh->sh_addr);
+            loadsec[LoadSh_size].make_uint64(sh->sh_size);
+            loadsec[LoadSh_data].make_data(static_cast<unsigned>(sh->sh_size));
+            memset(loadsec[LoadSh_data].data(), 
+                        0, static_cast<size_t>(sh->sh_size));
+            loadSectionList_.add_to_list(&loadsec);
+            total_bytes += sh->sh_size;
         } else if (sh->sh_type == SHT_SYMTAB || sh->sh_type == SHT_DYNSYM) {
             processDebugSymbol(sh);
         }
     }
+    symbolList_.sort(LoadSh_name);
     return static_cast<int>(total_bytes);
 }
 
-void ElfLoaderService::processStringTable(SectionHeaderType *sh) {
+void ElfReaderService::processStringTable(SectionHeaderType *sh) {
     if (sectionNames_ == NULL) {
         sectionNames_ = reinterpret_cast<char *>(&image_[sh->sh_offset]);
         if (strcmp(sectionNames_ + sh->sh_name, ".shstrtab") != 0) {
@@ -171,13 +181,22 @@ void ElfLoaderService::processStringTable(SectionHeaderType *sh) {
     }
 }
 
-void ElfLoaderService::processDebugSymbol(SectionHeaderType *sh) {
+void ElfReaderService::processDebugSymbol(SectionHeaderType *sh) {
     uint64_t symbol_off = 0;
     SymbolTableType *st;
+    AttributeType tsymb;
+    uint8_t st_type;
+    const char *symb_name;
+    //const char *file_name = 0;
+
+    if (!symbolNames_) {
+        return;
+    }
 
     while (symbol_off < sh->sh_size) {
         st = reinterpret_cast<SymbolTableType *>
                     (&image_[sh->sh_offset + symbol_off]);
+        symb_name = &symbolNames_[st->st_name];
 
         if (sh->sh_entsize) {
             // section with elements of fixed size
@@ -187,37 +206,18 @@ void ElfLoaderService::processDebugSymbol(SectionHeaderType *sh) {
         } else {
             symbol_off += sizeof(SymbolTableType);
         }
-        //debug_symbols.push_back(*st);
-    }
-}
 
-uint64_t ElfLoaderService::loadMemory(uint64_t addr, 
-                                      uint8_t *buf, uint64_t bufsz) {
-    itap_->write(addr, static_cast<int>(bufsz), buf);
-
-    if (verify_ena_.to_bool()) {
-        uint8_t *chk = new uint8_t [static_cast<int>(bufsz) + 8];
-        itap_->read(addr, static_cast<int>(bufsz), chk);
-        for (uint64_t i = 0; i < bufsz; i++) {
-            if (buf[i] != chk[i]) {
-                RISCV_error("[%08" RV_PRI64 "x] verif. error %02x != %02x",
-                            addr + i, buf[i], chk[i]);
-            }
+        st_type = st->st_info & 0xF;
+        if ((st_type == STT_OBJECT || st_type == STT_FUNC) && st->st_value) {
+            tsymb.make_list(Symbol_Total);
+            tsymb[Symbol_Name].make_string(symb_name);
+            tsymb[Symbol_Addr].make_uint64(st->st_value);
+            tsymb[Symbol_Size].make_uint64(st->st_size);
+            symbolList_.add_to_list(&tsymb);
+        } else if (st_type == STT_FILE) {
+            //file_name = symb_name;
         }
-        delete [] chk;
     }
-    return bufsz;
-}
-
-uint64_t ElfLoaderService::initMemory(uint64_t addr, uint64_t bufsz) {
-    uint32_t zero = 0;
-    uint64_t cnt = 0;
-    while (cnt < bufsz) {
-        itap_->write(addr, 4, reinterpret_cast<uint8_t *>(&zero));
-        addr += 4;
-        cnt += 4;
-    }
-    return bufsz;
 }
 
 }  // namespace debugger

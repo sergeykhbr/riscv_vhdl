@@ -68,9 +68,6 @@
     <ClCompile Include="..\..\src\libdbg64g\services\udp\udp.cpp">
       <Filter>Source Files\services\udp</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\libdbg64g\services\elfloader\elfloader.cpp">
-      <Filter>Source Files\services\elfloader</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\libdbg64g\services\console\console.cpp">
       <Filter>Source Files\services\console</Filter>
     </ClCompile>
@@ -152,6 +149,12 @@
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_busutil.cpp">
       <Filter>Source Files\services\exec\cmd</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_symb.cpp">
+      <Filter>Source Files\services\exec\cmd</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\libdbg64g\services\elfloader\elfreader.cpp">
+      <Filter>Source Files\services\elfloader</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\attribute.h">
@@ -195,12 +198,6 @@
     </ClInclude>
     <ClInclude Include="..\..\src\common\api_core.h">
       <Filter>Source Files\common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\common\coreservices\ielfloader.h">
-      <Filter>Source Files\common\coreservices</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\libdbg64g\services\elfloader\elfloader.h">
-      <Filter>Source Files\services\elfloader</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\libdbg64g\services\elfloader\elf_types.h">
       <Filter>Source Files\services\elfloader</Filter>
@@ -332,6 +329,15 @@
     </ClInclude>
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_busutil.h">
       <Filter>Source Files\services\exec\cmd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_symb.h">
+      <Filter>Source Files\services\exec\cmd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\coreservices\ielfreader.h">
+      <Filter>Source Files\common\coreservices</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\libdbg64g\services\elfloader\elfreader.h">
+      <Filter>Source Files\services\elfloader</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

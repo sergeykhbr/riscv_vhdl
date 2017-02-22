@@ -1,0 +1,54 @@
+/**
+ * @file
+ * @copyright  Copyright 2017 GNSS Sensor Ltd. All right reserved.
+ * @author     Sergey Khabarov - sergeykhbr@gmail.com
+ * @brief      Symbol Browser main area.
+ */
+
+#pragma once
+
+#include "api_core.h"   // MUST BE BEFORE QtWidgets.h or any other Qt header.
+#include "attribute.h"
+#include "igui.h"
+#include "iservice.h"
+#include "coreservices/isocinfo.h"
+#include "coreservices/isrccode.h"
+
+#include <QtWidgets/QWidget>
+#include <QtWidgets/QTableWidget>
+
+namespace debugger {
+
+class SymbolBrowserArea : public QTableWidget,
+                          public IGuiCmdHandler {
+    Q_OBJECT
+public:
+    explicit SymbolBrowserArea(IGui *gui, QWidget *parent);
+    virtual ~SymbolBrowserArea();
+
+    /** IGuiCmdHandler */
+    virtual void handleResponse(AttributeType *req, AttributeType *resp);
+
+public slots:
+    void slotCellDoubleClicked(int row, int column);
+    void slotFilterApply(AttributeType *flt);
+    void slotSymbolsUpdated();
+
+signals:
+    void signalSymbolsUpdated();
+
+private:
+    enum EColumnNames {
+        COL_symbol,
+        COL_type,
+        COL_address,
+        COL_Total
+    };
+
+    AttributeType symbolList_;
+    AttributeType symbolFilter_;
+    IGui *igui_;
+    int lineHeight_;
+};
+
+}  // namespace debugger

@@ -45,7 +45,7 @@ SOURCES = \
 	memsim \
 	udp \
 	edcl \
-	elfloader \
+	elfreader \
 	srcproc \
 	cmd_br \
 	cmd_busutil \
@@ -63,6 +63,7 @@ SOURCES = \
 	cmd_reset \
 	cmd_run \
 	cmd_status \
+	cmd_symb \
 	cmd_exit \
 	cmd_memdump \
 	cmdexec \

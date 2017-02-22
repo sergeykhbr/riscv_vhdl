@@ -6,6 +6,7 @@
 #include "CpuWidgets/RegsViewWidget.h"
 #include "CpuWidgets/AsmViewWidget.h"
 #include "CpuWidgets/MemViewWidget.h"
+#include "CpuWidgets/SymbolBrowserWidget.h"
 #include <QtWidgets/QtWidgets>
 
 
@@ -115,6 +116,14 @@ void DbgMainWindow::createActions() {
     connect(actionCpuAsm_, SIGNAL(triggered(bool)),
             this, SLOT(slotCpuAsmView(bool)));
 
+    actionSymbolBrowser_ = new QAction(QIcon(tr(":/images/asm_96x96.png")),
+                              tr("&Symbols"), this);
+    actionSymbolBrowser_->setToolTip(tr("Symbol Browser"));
+    actionSymbolBrowser_->setShortcut(QKeySequence("Ctrl+s"));
+    actionSymbolBrowser_->setCheckable(false);
+    connect(actionSymbolBrowser_, SIGNAL(triggered()),
+            this, SLOT(slotSymbolBrowser()));
+
     actionMem_ = new QAction(QIcon(tr(":/images/mem_96x96.png")),
                               tr("&Memory"), this);
     actionMem_->setToolTip(tr("Memory view"));
@@ -201,6 +210,7 @@ void DbgMainWindow::createMenus() {
     menu->addAction(actionPnp_);
     menu->addSeparator();
     menu->addAction(actionRegs_);
+    menu->addAction(actionSymbolBrowser_);
     
     menu = menuBar()->addMenu(tr("&Help"));
     menu->addAction(actionAbout_);
@@ -286,6 +296,10 @@ void DbgMainWindow::slotCpuAsmView(bool val) {
     } else {
         viewCpuAsm_->close();
     }
+}
+
+void DbgMainWindow::slotSymbolBrowser() {
+    new SymbolBrowserQMdiSubWindow(igui_, mdiArea_, this);
 }
 
 void DbgMainWindow::slotPostInit(AttributeType *cfg) {

@@ -11,7 +11,6 @@
 #include "attribute.h"
 #include "igui.h"
 
-#include "MainWindow/UnclosableWidget.h"
 #include <QtWidgets/QMdiArea>
 #include <QtWidgets/QMdiSubWindow>
 #include <QtWidgets/QGridLayout>
@@ -54,10 +53,9 @@ public:
             area_ = area;
             setWindowTitle(tr("Disassembler"));
             QWidget *pnew = new AsmViewWidget(igui, this, fixaddr);
+            setWindowIcon(QIcon(tr(":/images/asm_96x96.png")));
             if (act) {
                 act->setChecked(true);
-                setWindowIcon(act->icon());
-
                 connect(parent, SIGNAL(signalUpdateByTimer()),
                         pnew, SLOT(slotUpdateByTimer()));
             }

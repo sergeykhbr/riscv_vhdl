@@ -23,6 +23,9 @@ set GUI_PLUGIN_SRC=..\..\src\gui_plugin\
 %QT_PATH%\bin\moc.exe -i %GUI_PLUGIN_SRC%\CpuWidgets\AsmArea.h -o %GUI_PLUGIN_SRC%\CpuWidgets\moc_AsmArea.h
 %QT_PATH%\bin\moc.exe -i %GUI_PLUGIN_SRC%\CpuWidgets\AsmControl.h -o %GUI_PLUGIN_SRC%\CpuWidgets\moc_AsmControl.h
 %QT_PATH%\bin\moc.exe -i %GUI_PLUGIN_SRC%\CpuWidgets\AsmViewWidget.h -o %GUI_PLUGIN_SRC%\CpuWidgets\moc_AsmViewWidget.h
+%QT_PATH%\bin\moc.exe -i %GUI_PLUGIN_SRC%\CpuWidgets\SymbolBrowserArea.h -o %GUI_PLUGIN_SRC%\CpuWidgets\moc_SymbolBrowserArea.h
+%QT_PATH%\bin\moc.exe -i %GUI_PLUGIN_SRC%\CpuWidgets\SymbolBrowserControl.h -o %GUI_PLUGIN_SRC%\CpuWidgets\moc_SymbolBrowserControl.h
+%QT_PATH%\bin\moc.exe -i %GUI_PLUGIN_SRC%\CpuWidgets\SymbolBrowserWidget.h -o %GUI_PLUGIN_SRC%\CpuWidgets\moc_SymbolBrowserWidget.h
 %QT_PATH%\bin\moc.exe -i %GUI_PLUGIN_SRC%\CpuWidgets\MemArea.h -o %GUI_PLUGIN_SRC%\CpuWidgets\moc_MemArea.h
 %QT_PATH%\bin\moc.exe -i %GUI_PLUGIN_SRC%\CpuWidgets\MemControl.h -o %GUI_PLUGIN_SRC%\CpuWidgets\moc_MemControl.h
 %QT_PATH%\bin\moc.exe -i %GUI_PLUGIN_SRC%\CpuWidgets\MemViewWidget.h -o %GUI_PLUGIN_SRC%\CpuWidgets\moc_MemViewWidget.h

@@ -1,12 +1,12 @@
 /**
  * @file
- * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
+ * @copyright  Copyright 2017 GNSS Sensor Ltd. All right reserved.
  * @author     Sergey Khabarov - sergeykhbr@gmail.com
- * @brief      Elf-file loader command.
+ * @brief      Browse symbols command.
  */
 
-#ifndef __DEBUGGER_CMD_LOADELF_H__
-#define __DEBUGGER_CMD_LOADELF_H__
+#ifndef __DEBUGGER_CMD_SYMB_H__
+#define __DEBUGGER_CMD_SYMB_H__
 
 #include "api_core.h"
 #include "coreservices/itap.h"
@@ -15,9 +15,9 @@
 
 namespace debugger {
 
-class CmdLoadElf : public ICommand  {
+class CmdSymb : public ICommand  {
 public:
-    explicit CmdLoadElf(ITap *tap, ISocInfo *info);
+    explicit CmdSymb(ITap *tap, ISocInfo *info);
 
     /** ICommand */
     virtual bool isValid(AttributeType *args);
@@ -28,4 +28,4 @@ private:
 
 }  // namespace debugger
 
-#endif  // __DEBUGGER_CMD_LOADELF_H__
+#endif  // __DEBUGGER_CMD_SYMB_H__
