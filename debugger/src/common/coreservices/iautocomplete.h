@@ -33,6 +33,7 @@ static const uint32_t KB_Up = 0x0026;
 static const uint32_t KB_Right = 0x0027;
 static const uint32_t KB_Down = 0x0028;
 static const uint32_t KB_Delete = 0x002e;
+static const uint32_t KB_Dot = 0x00be;
 #else
 static const uint32_t KB_Backspace = 0xff08;
 static const uint32_t KB_Tab = 0xff09;
@@ -50,6 +51,7 @@ static const uint32_t KB_Up = 0xff26;
 static const uint32_t KB_Right = 0xff22;
 static const uint32_t KB_Down = 0xff8d;
 static const uint32_t KB_Delete = 0xff61;
+static const uint32_t KB_Dot = 0x002e;
 #endif
 
 

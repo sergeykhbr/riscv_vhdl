@@ -5,16 +5,16 @@
  * @brief      Disassembler viewer form.
  */
 
-#include "AsmArea.h"
-#include "AsmControl.h"
-#include "AsmViewWidget.h"
-#include "moc_AsmViewWidget.h"
+#include "SymbolBrowserArea.h"
+#include "SymbolBrowserControl.h"
+#include "SymbolBrowserWidget.h"
+#include "moc_SymbolBrowserWidget.h"
 
 #include <memory>
 
 namespace debugger {
 
-AsmViewWidget::AsmViewWidget(IGui *igui, QWidget *parent, uint64_t fixaddr) 
+SymbolBrowserWidget::SymbolBrowserWidget(IGui *igui, QWidget *parent)
     : QWidget(parent) {
     igui_ = igui;
 
@@ -25,39 +25,21 @@ AsmViewWidget::AsmViewWidget(IGui *igui, QWidget *parent, uint64_t fixaddr)
     gridLayout->setContentsMargins(4, 4, 4, 4);
     setLayout(gridLayout);
 
-    AsmControl *pctrl = new AsmControl(this);
+    SymbolBrowserControl *pctrl = new SymbolBrowserControl(this);
 
-    AsmArea *parea = new AsmArea(igui, this, fixaddr);
+    SymbolBrowserArea *parea = new SymbolBrowserArea(igui, this);
     gridLayout->addWidget(pctrl , 0, 0);
     gridLayout->addWidget(parea, 1, 0);
     gridLayout->setRowStretch(1, 10);
 
-    connect(this, SIGNAL(signalPostInit(AttributeType *)),
-            parea, SLOT(slotPostInit(AttributeType *)));
+    connect(pctrl, SIGNAL(signalFilterChanged(const QString &)),
+            parea, SLOT(slotFilterChanged(const QString &)));
 
-    connect(this, SIGNAL(signalUpdateByTimer()),
-            parea, SLOT(slotUpdateByTimer()));
+    connect(parea, SIGNAL(signalShowFunction(uint64_t, uint64_t)),
+            this, SLOT(slotShowFunction(uint64_t, uint64_t)));
 
-    connect(this, SIGNAL(signalBreakpoint()),
-            parea, SLOT(slotBreakpoint()));
-}
-
-void AsmViewWidget::slotPostInit(AttributeType *cfg) {
-    emit signalPostInit(cfg);
-}
-
-void AsmViewWidget::slotUpdateByTimer() {
-    if (!isVisible()) {
-        return;
-    }
-    emit signalUpdateByTimer();
-}
-
-void AsmViewWidget::slotBreakpoint() {
-    if (!isVisible()) {
-        return;
-    }
-    emit signalBreakpoint();
+    connect(parea, SIGNAL(signalShowData(uint64_t, uint64_t)),
+            this, SLOT(slotShowData(uint64_t, uint64_t)));
 }
 
 }  // namespace debugger

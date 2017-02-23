@@ -24,6 +24,8 @@ public:
     virtual void exec(AttributeType *args, AttributeType *res);
 
 private:
+    void applyFilter(const char *filt, AttributeType *in, AttributeType *out);
+    bool filt_pass(const char *filt, const char *symbname);
 };
 
 }  // namespace debugger

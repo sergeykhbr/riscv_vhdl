@@ -116,7 +116,7 @@ void DbgMainWindow::createActions() {
     connect(actionCpuAsm_, SIGNAL(triggered(bool)),
             this, SLOT(slotCpuAsmView(bool)));
 
-    actionSymbolBrowser_ = new QAction(QIcon(tr(":/images/asm_96x96.png")),
+    actionSymbolBrowser_ = new QAction(QIcon(tr(":/images/info_96x96.png")),
                               tr("&Symbols"), this);
     actionSymbolBrowser_->setToolTip(tr("Symbol Browser"));
     actionSymbolBrowser_->setShortcut(QKeySequence("Ctrl+s"));
@@ -264,7 +264,6 @@ void DbgMainWindow::addWidgets() {
             pnew, SLOT(slotUpdateByTimer()));
 
     slotCpuAsmView(true);
-    //new AsmQMdiSubWindow(igui_, mdiArea_, this, NULL, 0x1000);
 
     actionRegs_->setChecked(false);
     subw = new UnclosableQMdiSubWindow(this);
@@ -300,6 +299,14 @@ void DbgMainWindow::slotCpuAsmView(bool val) {
 
 void DbgMainWindow::slotSymbolBrowser() {
     new SymbolBrowserQMdiSubWindow(igui_, mdiArea_, this);
+}
+
+void DbgMainWindow::slotOpenDisasm(uint64_t addr, uint64_t sz) {
+    new AsmQMdiSubWindow(igui_, mdiArea_, this, NULL, addr);
+}
+
+void DbgMainWindow::slotOpenMemory(uint64_t addr, uint64_t sz) {
+    // TODO: not implemented yet
 }
 
 void DbgMainWindow::slotPostInit(AttributeType *cfg) {

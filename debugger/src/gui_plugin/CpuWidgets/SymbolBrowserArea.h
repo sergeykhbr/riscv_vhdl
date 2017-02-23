@@ -31,11 +31,16 @@ public:
 
 public slots:
     void slotCellDoubleClicked(int row, int column);
-    void slotFilterApply(AttributeType *flt);
-    void slotSymbolsUpdated();
+    void slotFilterChanged(const QString &flt);
+    void slotHandleResponse();
 
 signals:
-    void signalSymbolsUpdated();
+    void signalHandleResponse();
+    void signalShowFunction(uint64_t addr, uint64_t sz);
+    void signalShowData(uint64_t addr, uint64_t sz);
+
+private:
+    void setListSize(int sz);
 
 private:
     enum EColumnNames {
@@ -49,6 +54,7 @@ private:
     AttributeType symbolFilter_;
     IGui *igui_;
     int lineHeight_;
+    int hideLineIdx_;
 };
 
 }  // namespace debugger

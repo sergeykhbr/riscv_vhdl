@@ -61,7 +61,8 @@
                      'csr MCPUID',
                      'csr MTIME',
                      'read 0xfffff004 128',
-                     'loadelf helloworld'
+                     'loadelf helloworld',
+                     'loadelf zephyr.elf nocode'
                      ]]
                 ]}]},
     {'Class':'CmdExecutorClass','Instances':[

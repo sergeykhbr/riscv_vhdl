@@ -107,10 +107,6 @@ void AsmArea::initSocAddresses() {
         reinterpret_cast<uint64_t>(&dsu->udbg.v.br_address_fetch));
     portBreak_->setHwRemoveBreakpoint(
         reinterpret_cast<uint64_t>(&dsu->udbg.v.remove_breakpoint));
-
-    if (fixaddr_ != ~0ull) {
-        emit signalNpcChanged(fixaddr_);
-    }
 }
 
 void AsmArea::resizeEvent(QResizeEvent *ev) {
@@ -121,6 +117,10 @@ void AsmArea::resizeEvent(QResizeEvent *ev) {
     rangeModel_.setMaxLines(h / lineHeight_ + 2);
     QWidget::resizeEvent(ev);
     //scrollToItem(item(0,0));
+
+    if (fixaddr_ != ~0ull) {
+        emit signalNpcChanged(fixaddr_);
+    }
 }
 
 void AsmArea::wheelEvent(QWheelEvent * ev) {

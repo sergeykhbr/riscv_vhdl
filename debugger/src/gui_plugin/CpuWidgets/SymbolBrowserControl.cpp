@@ -25,9 +25,6 @@ SymbolBrowserControl::SymbolBrowserControl(QWidget *parent)
     setFont(font);
     QFontMetrics fm(font);
 
-    paletteModified_.setColor(QPalette::Base, Qt::yellow);
-    paletteModified_.setColor(QPalette::Text, Qt::black);
-
     paletteDefault_.setColor(QPalette::Text, Qt::black);
     paletteDefault_.setColor(QPalette::Base, Qt::white);
 
@@ -36,25 +33,24 @@ SymbolBrowserControl::SymbolBrowserControl(QWidget *parent)
     setLayout(gridLayout);
 
 
-    QLabel *lbl = new QLabel("Source view:");
+    QLabel *lbl = new QLabel("Filter:");
     gridLayout->addWidget(lbl, 0, 0, Qt::AlignRight);
 
+    editFilter_ = new QLineEdit(this);
+    editFilter_->setText(tr("*"));
+    editFilter_->setFixedWidth(fm.width(tr("*some_test_func*")));
+    editFilter_->setPalette(paletteDefault_);
+    gridLayout->addWidget(editFilter_, 0, 1, Qt::AlignLeft);
+    gridLayout->setColumnStretch(1, 10);
 
-    cmd_.make_list(2);
+    connect(editFilter_, SIGNAL(returnPressed()),
+            this, SLOT(slotFilterEditingFinished()));
 }
 
-void SymbolBrowserControl::slotModified() {
+void SymbolBrowserControl::slotFilterEditingFinished() {
+    emit signalFilterChanged(editFilter_->text());
 }
 
-void SymbolBrowserControl::slotUpdate() {
-    if (!isChanged()) {
-        return;
-    }
-}
-
-bool SymbolBrowserControl::isChanged() {
-    return true;
-}
 
 
 }  // namespace debugger

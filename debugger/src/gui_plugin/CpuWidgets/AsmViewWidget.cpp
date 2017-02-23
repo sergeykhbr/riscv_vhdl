@@ -5,16 +5,16 @@
  * @brief      Disassembler viewer form.
  */
 
-#include "SymbolBrowserArea.h"
-#include "SymbolBrowserControl.h"
-#include "SymbolBrowserWidget.h"
-#include "moc_SymbolBrowserWidget.h"
+#include "AsmArea.h"
+#include "AsmControl.h"
+#include "AsmViewWidget.h"
+#include "moc_AsmViewWidget.h"
 
 #include <memory>
 
 namespace debugger {
 
-SymbolBrowserWidget::SymbolBrowserWidget(IGui *igui, QWidget *parent)
+AsmViewWidget::AsmViewWidget(IGui *igui, QWidget *parent, uint64_t fixaddr) 
     : QWidget(parent) {
     igui_ = igui;
 
@@ -25,12 +25,39 @@ SymbolBrowserWidget::SymbolBrowserWidget(IGui *igui, QWidget *parent)
     gridLayout->setContentsMargins(4, 4, 4, 4);
     setLayout(gridLayout);
 
-    SymbolBrowserControl *pctrl = new SymbolBrowserControl(this);
+    AsmControl *pctrl = new AsmControl(this);
 
-    SymbolBrowserArea *parea = new SymbolBrowserArea(igui, this);
+    AsmArea *parea = new AsmArea(igui, this, fixaddr);
     gridLayout->addWidget(pctrl , 0, 0);
     gridLayout->addWidget(parea, 1, 0);
     gridLayout->setRowStretch(1, 10);
+
+    connect(this, SIGNAL(signalPostInit(AttributeType *)),
+            parea, SLOT(slotPostInit(AttributeType *)));
+
+    connect(this, SIGNAL(signalUpdateByTimer()),
+            parea, SLOT(slotUpdateByTimer()));
+
+    connect(this, SIGNAL(signalBreakpoint()),
+            parea, SLOT(slotBreakpoint()));
+}
+
+void AsmViewWidget::slotPostInit(AttributeType *cfg) {
+    emit signalPostInit(cfg);
+}
+
+void AsmViewWidget::slotUpdateByTimer() {
+    if (!isVisible()) {
+        return;
+    }
+    emit signalUpdateByTimer();
+}
+
+void AsmViewWidget::slotBreakpoint() {
+    if (!isVisible()) {
+        return;
+    }
+    emit signalBreakpoint();
 }
 
 }  // namespace debugger

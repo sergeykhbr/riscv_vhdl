@@ -23,21 +23,14 @@ public:
     explicit SymbolBrowserControl(QWidget *parent);
 
 signals:
-    void signalAddressChanged(AttributeType *cmd);
+    void signalFilterChanged(const QString &flt);
 
 public slots:
-    void slotModified();
-    void slotUpdate();
+    void slotFilterEditingFinished();
 
 private:
-    bool isChanged();
-
-private:
-    QLineEdit *editAddr_;
-    QLineEdit *editBytes_;
+    QLineEdit *editFilter_;
     QPalette paletteDefault_;
-    QPalette paletteModified_;
-    AttributeType cmd_;
 };
 
 }  // namespace debugger

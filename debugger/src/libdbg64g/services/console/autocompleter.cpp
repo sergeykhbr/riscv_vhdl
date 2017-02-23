@@ -42,6 +42,7 @@ void AutoCompleter::postinitService() {
 bool AutoCompleter::processKey(uint32_t qt_key,
                                 AttributeType *cmd,
                                 AttributeType *cursor) {
+    bool add_symbol = false;
     bool isNewLine = false;
     bool set_history_end = true;
     if (!cursor->is_list() || cursor->size() != 2) {
@@ -97,7 +98,15 @@ bool AutoCompleter::processKey(uint32_t qt_key,
     case KB_Control:
     case KB_Alt:
         break;
+    case KB_Dot:
+        qt_key = '.';
+        add_symbol = true;
+        break;
     default:
+        add_symbol = true;
+    }
+
+    if (add_symbol) {
         if (carretPos_ == 0) {
             cmdLine_ += static_cast<uint8_t>(qt_key);
         } else if (carretPos_ == cmdLine_.size()) {

@@ -16,10 +16,17 @@ namespace debugger {
 
 static const char *const IFACE_ELFREADER = "IElfReader";
 
+enum ESymbolType {
+    SYMBOL_TYPE_FILE     = 0x01,
+    SYMBOL_TYPE_FUNCTION = 0x02,
+    SYMBOL_TYPE_DATA     = 0x04
+};
+
 enum ESymbolInfoListItem {
     Symbol_Name,
     Symbol_Addr,
     Symbol_Size,
+    Symbol_Type,
     Symbol_Total
 };
 

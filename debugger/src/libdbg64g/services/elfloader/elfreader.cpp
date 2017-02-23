@@ -213,6 +213,11 @@ void ElfReaderService::processDebugSymbol(SectionHeaderType *sh) {
             tsymb[Symbol_Name].make_string(symb_name);
             tsymb[Symbol_Addr].make_uint64(st->st_value);
             tsymb[Symbol_Size].make_uint64(st->st_size);
+            if (st_type == STT_FUNC) {
+                tsymb[Symbol_Type].make_uint64(SYMBOL_TYPE_FUNCTION);
+            } else {
+                tsymb[Symbol_Type].make_uint64(SYMBOL_TYPE_DATA);
+            }
             symbolList_.add_to_list(&tsymb);
         } else if (st_type == STT_FILE) {
             //file_name = symb_name;

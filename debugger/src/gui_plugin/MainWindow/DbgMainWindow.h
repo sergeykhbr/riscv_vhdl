@@ -60,6 +60,8 @@ private slots:
     void slotActionTargetStepInto();
     void slotCpuAsmView(bool val);
     void slotSymbolBrowser();
+    void slotOpenDisasm(uint64_t addr, uint64_t sz);
+    void slotOpenMemory(uint64_t addr, uint64_t sz);
     void slotExit();
 
 private:

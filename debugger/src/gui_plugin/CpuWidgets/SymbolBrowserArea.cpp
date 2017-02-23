@@ -33,10 +33,11 @@ SymbolBrowserArea::SymbolBrowserArea(IGui *gui, QWidget *parent)
     setMinimumWidth(50 + fm.width(tr(
     "some_test_function  (void ())       P:aabbccdd--aabbffff")));
     lineHeight_ = fm.height() + 4;
+    hideLineIdx_ = 0;
 
     setColumnCount(COL_Total);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    setRowCount(1);
+    setListSize(1);
     
     verticalHeader()->setVisible(false);        // remove row indexes
     setShowGrid(false);                         // remove borders
@@ -47,17 +48,6 @@ SymbolBrowserArea::SymbolBrowserArea(IGui *gui, QWidget *parent)
     QPalette *palette = new QPalette();
     palette->setColor(QPalette::Highlight, Qt::gray);
     setPalette(*palette);
-    Qt::ItemFlags fl;
-    for (int i = 0; i < rowCount(); i++) {
-        for (int n = 0; n < COL_Total; n++) {
-            setItem(i, n, new QTableWidgetItem());
-            fl = item(i, n)->flags();
-            fl &= ~Qt::ItemIsEditable;
-            fl &= ~Qt::ItemIsSelectable;
-            item(i, n)->setFlags(fl);
-        }
-        setRowHeight(i, lineHeight_);
-    }
 
     setHorizontalHeaderLabels(
         QString("symbol;type;address").split(";"));
@@ -68,8 +58,8 @@ SymbolBrowserArea::SymbolBrowserArea(IGui *gui, QWidget *parent)
     connect(this, SIGNAL(cellDoubleClicked(int, int)),
             this, SLOT(slotCellDoubleClicked(int, int)));
 
-    connect(this, SIGNAL(signalSymbolsUpdated()),
-            this, SLOT(slotSymbolsUpdated()));
+    connect(this, SIGNAL(signalHandleResponse()),
+            this, SLOT(slotHandleResponse()));
 
     AttributeType tcmd("symb");
     igui_->registerCommand(static_cast<IGuiCmdHandler *>(this),
@@ -80,42 +70,70 @@ SymbolBrowserArea::~SymbolBrowserArea() {
     igui_->removeFromQueue(static_cast<IGuiCmdHandler *>(this));
 }
 
+void SymbolBrowserArea::setListSize(int sz) {
+    if (sz > rowCount()) {
+        for (int i = hideLineIdx_; i < rowCount(); i++) {
+            showRow(i);
+        }
+        hideLineIdx_ = sz;
+
+        Qt::ItemFlags fl;
+        int rowcnt_cur = rowCount();
+        setRowCount(sz);
+        for (int i = rowcnt_cur; i < rowCount(); i++) {
+            for (int n = 0; n < COL_Total; n++) {
+                setItem(i, n, new QTableWidgetItem());
+                fl = item(i, n)->flags();
+                fl &= ~Qt::ItemIsEditable;
+                //fl &= ~Qt::ItemIsSelectable;
+                item(i, n)->setFlags(fl);
+            }
+            setRowHeight(i, lineHeight_);
+        }
+    } else {
+        for (int i = hideLineIdx_; i < sz; i++) {
+            showRow(i);
+        }
+        hideLineIdx_ = sz;
+        for (int i = sz; i < rowCount(); i++) {
+            hideRow(i);
+        }
+    }
+}
+
 void SymbolBrowserArea::handleResponse(AttributeType *req,
                                        AttributeType *resp) {
     if (strstr(req->to_string(), "symb") == 0) {
         return;
     }
     symbolList_ = *resp;
-    emit signalSymbolsUpdated();
+    emit signalHandleResponse();
 }
 
-void SymbolBrowserArea::slotSymbolsUpdated() {
-    if (!symbolList_.size() || !symbolList_.is_list()) {
+void SymbolBrowserArea::slotHandleResponse() {
+    if (!symbolList_.is_list()) {
         return;
     }
     QTableWidgetItem *pw;
     Qt::ItemFlags fl;
     char tstr[256];
     uint64_t addr;
-    int rowcnt_cur = rowCount();
-    
-    setRowCount(symbolList_.size());
-    for (int i = rowcnt_cur; i < rowCount(); i++) {
-        for (int n = 0; n < COL_Total; n++) {
-            setItem(i, n, new QTableWidgetItem());
-            fl = item(i, n)->flags();
-            fl &= ~Qt::ItemIsEditable;
-            fl &= ~Qt::ItemIsSelectable;
-            item(i, n)->setFlags(fl);
-        }
-        setRowHeight(i, lineHeight_);
-    }
+    int list_sz = static_cast<int>(symbolList_.size());
+    setListSize(list_sz);
 
-    for (int i = 0; i < rowCount(); i++) {
+    for (int i = 0; i < list_sz; i++) {
         AttributeType &symb = symbolList_[i];
 
         pw = item(i, COL_symbol);
         pw->setText(QString(symb[Symbol_Name].to_string()));
+
+        pw = item(i, COL_type);
+        if (symb[Symbol_Type].to_uint64() & SYMBOL_TYPE_FUNCTION) {
+            pw->setText(tr("function"));
+        } else if (symb[Symbol_Type].to_uint64() & SYMBOL_TYPE_DATA) {
+            pw->setText(tr("data"));
+        } else {
+        }
 
         pw = item(i, COL_address);
         addr = symb[Symbol_Addr].to_uint64();
@@ -126,19 +144,29 @@ void SymbolBrowserArea::slotSymbolsUpdated() {
     }
 }
 
-void SymbolBrowserArea::slotFilterApply(AttributeType *flt) {
-    char tstr[1024] = "symb";
+void SymbolBrowserArea::slotFilterChanged(const QString &flt) {
     AttributeType tcmd;
-    if (flt->size() && !flt->is_equal("*")) {
-        RISCV_sprintf(tstr, sizeof(tstr), "symb %s", flt->to_string());
-    }
-    tcmd.make_string(tstr);
+    QByteArray flt_buf;
+    flt_buf.append("symb " + flt);
+    tcmd.make_string(flt_buf.data());
     igui_->registerCommand(static_cast<IGuiCmdHandler *>(this),
                            &tcmd, true);
 }
 
 void SymbolBrowserArea::slotCellDoubleClicked(int row, int column) {
-    
+    if (row >= static_cast<int>(symbolList_.size())) {
+        return;
+    }
+
+    AttributeType &symb = symbolList_[row];
+    uint64_t addr = symb[Symbol_Addr].to_uint64();
+    uint64_t sz = symb[Symbol_Size].to_uint64();
+
+    if (symb[Symbol_Type].to_uint64() & SYMBOL_TYPE_FUNCTION) {
+        emit signalShowFunction(addr, sz);
+    } else {
+        emit signalShowData(addr, sz);
+    }
 }
 
 }  // namespace debugger

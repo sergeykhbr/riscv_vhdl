@@ -60,8 +60,10 @@ MemControl::MemControl(QWidget *parent)
     gridLayout->addWidget(btnUpdate, 0, 4, Qt::AlignLeft);
     gridLayout->setColumnStretch(4, 10);
 
-    connect(editAddr_, SIGNAL(textChanged(const QString &)), this, SLOT(slotModified()));
-    connect(editBytes_, SIGNAL(textChanged(const QString &)), this, SLOT(slotModified()));
+    connect(editAddr_, SIGNAL(textChanged(const QString &)),
+                       this, SLOT(slotModified()));
+    connect(editBytes_, SIGNAL(textChanged(const QString &)),
+                        this, SLOT(slotModified()));
     connect(btnUpdate, SIGNAL(released()), this, SLOT(slotUpdate()));
 
     cmd_.make_list(2);
