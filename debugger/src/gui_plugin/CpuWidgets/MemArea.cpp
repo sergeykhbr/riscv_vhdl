@@ -15,11 +15,13 @@
 
 namespace debugger {
 
-MemArea::MemArea(IGui *gui, QWidget *parent) 
+MemArea::MemArea(IGui *gui, QWidget *parent, uint64_t addr, uint64_t sz) 
     : QPlainTextEdit(parent) {
     igui_ = gui;
+    reqAddr_ = addr;
+    reqBytes_ = sz;
     cmdRead_.make_string("read 0x80000000 20");
-    data_.make_data(8);
+    data_.make_data(0);
     tmpBuf_.make_data(1024);
     dataText_.make_string("");
 
@@ -34,10 +36,8 @@ MemArea::MemArea(IGui *gui, QWidget *parent)
 
     ensureCursorVisible();
 
-    reqAddr_ = 0xfffff000;
-    reqBytes_ = 20;
-
     connect(this, SIGNAL(signalUpdateData()), this, SLOT(slotUpdateData()));
+    slotUpdateByTimer();
 }
 
 MemArea::~MemArea() {
@@ -66,6 +66,7 @@ void MemArea::slotUpdateData() {
     moveCursor(QTextCursor::Start, QTextCursor::KeepAnchor);
     QTextCursor cursor = textCursor();
     cursor.insertText(tr(dataText_.to_string()));
+    update();
 }
 
 void MemArea::handleResponse(AttributeType *req, AttributeType *resp) {

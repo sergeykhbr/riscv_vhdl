@@ -30,7 +30,10 @@ public:
 
     virtual IFace *getSocInfo() =0;
 
-    virtual void registerCommand(IGuiCmdHandler *src, AttributeType *cmd, bool silent) =0;
+    virtual void getWidgetsAttribute(const char *name, AttributeType *out) =0;
+
+    virtual void registerCommand(IGuiCmdHandler *src, AttributeType *cmd,
+                                bool silent) =0;
     virtual void removeFromQueue(IFace *iface) =0;
 };
 

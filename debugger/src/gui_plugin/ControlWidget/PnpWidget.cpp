@@ -18,8 +18,9 @@ enum EWName {
     W_Total
 };
 
-PnpWidget::PnpWidget(IGui *igui, QWidget *parent) : UnclosableWidget(parent) {
+PnpWidget::PnpWidget(IGui *igui, QWidget *parent) : QWidget(parent) {
     igui_ = igui;
+    parent_ = parent;
 
     mainLayout_ = new QGridLayout(this);
 
@@ -67,7 +68,7 @@ void PnpWidget::showEvent(QShowEvent *event_) {
     cmd.make_string(tstr);
     igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), &cmd, true);
     
-    UnclosableWidget::showEvent(event_);
+    QWidget::showEvent(event_);
 }
 
 void PnpWidget::handleResponse(AttributeType *req, AttributeType *resp) {
@@ -109,7 +110,7 @@ void PnpWidget::slotUpdate() {
 
     RISCV_sprintf(tstr, sizeof(tstr), "HW_ID: 0x%08x", pnp_.hwid);
     getLabel(WHW_ID)->setText(QString(tstr));
-    w += fm.width(QString(tstr)) + 40;
+    w += 2 * fm.width(QString(tstr));
 
     RISCV_sprintf(tstr, sizeof(tstr), "FW_ID: 0x%08x", pnp_.fwid);
     getLabel(WFW_ID)->setText(QString(tstr));
@@ -213,7 +214,7 @@ void PnpWidget::slotUpdate() {
         iter_.buf += iter_.item->mst.descr.bits.descrsize;
     }
 
-    resize(QSize(w, h));
+    parent_->resize(QSize(w, h));
     update();
 }
 

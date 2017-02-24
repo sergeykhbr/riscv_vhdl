@@ -7,7 +7,7 @@
 namespace debugger {
 
 UartWidget::UartWidget(IGui *igui, QWidget *parent) 
-    : UnclosableWidget(parent) {
+    : QWidget(parent) {
 
     QHBoxLayout *layout = new QHBoxLayout;
     editor_ = new UartEditor(igui, this);

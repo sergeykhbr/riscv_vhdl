@@ -21,7 +21,7 @@ class MemArea : public QPlainTextEdit,
                 public IGuiCmdHandler {
     Q_OBJECT
 public:
-    explicit MemArea(IGui *gui, QWidget *parent);
+    explicit MemArea(IGui *gui, QWidget *parent, uint64_t addr, uint64_t sz);
     virtual ~MemArea();
 
     /** IGuiCmdHandler */

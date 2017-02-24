@@ -16,7 +16,7 @@
 
 namespace debugger {
 
-MemControl::MemControl(QWidget *parent) 
+MemControl::MemControl(QWidget *parent, uint64_t addr, uint64_t sz) 
     : QWidget(parent) {
     QFont font = QFont("Courier");
     font.setStyleHint(QFont::Monospace);
@@ -40,7 +40,7 @@ MemControl::MemControl(QWidget *parent)
     gridLayout->addWidget(lbl, 0, 0, Qt::AlignRight);
 
     editAddr_ = new QLineEdit(this);
-    editAddr_->setText(tr("00000000fffff000"));
+    editAddr_->setText(QString("%1").arg(addr, 16, 16, QChar('0')));
     editAddr_->setFixedWidth(8 + fm.width(editAddr_->text()));
     editAddr_->setPalette(paletteDefault_);
     gridLayout->addWidget(editAddr_, 0, 1, Qt::AlignLeft);
@@ -49,8 +49,8 @@ MemControl::MemControl(QWidget *parent)
     gridLayout->addWidget(lbl2, 0, 2, Qt::AlignRight);
 
     editBytes_ = new QLineEdit(this);
-    editBytes_->setText(tr("20"));
-    editBytes_->setFixedWidth(8 + fm.width("0000"));
+    editBytes_->setText(QString("%1").arg(sz, 0, 10));
+    editBytes_->setFixedWidth(8 + fm.width("000000"));
     editBytes_->setPalette(paletteDefault_);
     gridLayout->addWidget(editBytes_, 0, 3, Qt::AlignLeft);
 

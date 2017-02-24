@@ -125,6 +125,13 @@ IFace *GuiPlugin::getSocInfo() {
     return info_;
 }
 
+void GuiPlugin::getWidgetsAttribute(const char *name, AttributeType *out) {
+    out->make_nil();
+    if (guiConfig_.has_key(name)) {
+        *out = guiConfig_[name];
+    }   
+}
+
 void GuiPlugin::registerCommand(IGuiCmdHandler *src,
                                 AttributeType *cmd,
                                 bool silent) {

@@ -58,8 +58,13 @@ private slots:
     void slotActionTargetRun();
     void slotActionTargetHalt();
     void slotActionTargetStepInto();
-    void slotCpuAsmView(bool val);
-    void slotSymbolBrowser();
+    void slotActionTriggerUart0(bool val);
+    void slotActionTriggerRegs(bool val);
+    void slotActionTriggerCpuAsmView(bool val);
+    void slotActionTriggerMemView(bool val);
+    void slotActionTriggerGpio(bool val);
+    void slotActionTriggerPnp(bool val);
+    void slotActionTriggerSymbolBrowser();
     void slotOpenDisasm(uint64_t addr, uint64_t sz);
     void slotOpenMemory(uint64_t addr, uint64_t sz);
     void slotExit();
@@ -77,14 +82,19 @@ private:
     QAction *actionRun_;
     QAction *actionHalt_;
     QAction *actionStep_;
+    QAction *actionSymbolBrowser_;
     QAction *actionRegs_;
+    QMdiSubWindow *viewRegs_;
     QAction *actionCpuAsm_;
     QMdiSubWindow *viewCpuAsm_;
-    QAction *actionSymbolBrowser_;
     QAction *actionMem_;
+    QMdiSubWindow *viewMem_;
     QAction *actionGpio_;
+    QMdiSubWindow *viewGpio_;
     QAction *actionPnp_;
+    QMdiSubWindow *viewPnp_;
     QAction *actionSerial_;
+    QMdiSubWindow *viewUart0_;
     QTimer *tmrGlobal_;
     MdiAreaWidget *mdiArea_;
     

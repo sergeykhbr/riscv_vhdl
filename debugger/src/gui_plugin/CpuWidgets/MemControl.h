@@ -20,7 +20,7 @@ namespace debugger {
 class MemControl : public QWidget {
     Q_OBJECT
 public:
-    explicit MemControl(QWidget *parent);
+    explicit MemControl(QWidget *parent, uint64_t addr, uint64_t sz);
 
 signals:
     void signalAddressChanged(AttributeType *cmd);

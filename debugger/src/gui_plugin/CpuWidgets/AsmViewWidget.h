@@ -48,27 +48,26 @@ public:
     AsmQMdiSubWindow(IGui *igui, QMdiArea *area, QWidget *parent = 0,
                     QAction *act = 0, uint64_t fixaddr = ~0ull)
         : QMdiSubWindow(parent) {
-            setAttribute(Qt::WA_DeleteOnClose);
-            action_ = act;
-            area_ = area;
-            setWindowTitle(tr("Disassembler"));
-            QWidget *pnew = new AsmViewWidget(igui, this, fixaddr);
-            setWindowIcon(QIcon(tr(":/images/asm_96x96.png")));
-            if (act) {
-                act->setChecked(true);
-                connect(parent, SIGNAL(signalUpdateByTimer()),
-                        pnew, SLOT(slotUpdateByTimer()));
-            }
-            connect(parent, SIGNAL(signalPostInit(AttributeType *)),
-                    pnew, SLOT(slotPostInit(AttributeType *)));
-            connect(parent, SIGNAL(signalBreakpoint()),
-                    pnew, SLOT(slotBreakpoint()));
-            setWidget(pnew);
-            area_->addSubWindow(this);
-            show();
+        setAttribute(Qt::WA_DeleteOnClose);
+        action_ = act;
+        area_ = area;
+        setWindowTitle(tr("Disassembler"));
+        QWidget *pnew = new AsmViewWidget(igui, this, fixaddr);
+        setWindowIcon(QIcon(tr(":/images/asm_96x96.png")));
+        if (act) {
+            act->setChecked(true);
+            connect(parent, SIGNAL(signalUpdateByTimer()),
+                    pnew, SLOT(slotUpdateByTimer()));
+        }
+        connect(parent, SIGNAL(signalPostInit(AttributeType *)),
+                pnew, SLOT(slotPostInit(AttributeType *)));
+        connect(parent, SIGNAL(signalBreakpoint()),
+                pnew, SLOT(slotBreakpoint()));
+        setWidget(pnew);
+        area_->addSubWindow(this);
+        show();
     }
 
-    
 protected:
     void closeEvent(QCloseEvent *event_) Q_DECL_OVERRIDE {
         if (action_) {
@@ -81,7 +80,5 @@ private:
     QAction *action_;
     QMdiArea *area_;
 };
-
-
 
 }  // namespace debugger

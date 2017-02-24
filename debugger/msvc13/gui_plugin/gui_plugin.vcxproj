@@ -200,7 +200,6 @@
     <ClCompile Include="..\..\src\gui_plugin\gui_plugin.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\MainWindow\DbgMainWindow.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\MainWindow\MdiAreaWidget.cpp" />
-    <ClCompile Include="..\..\src\gui_plugin\MainWindow\UnclosableWidget.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\PeriphWidgets\DipArea.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\PeriphWidgets\GpioWidget.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\PeriphWidgets\LedArea.cpp" />
@@ -233,8 +232,6 @@
     <ClInclude Include="..\..\src\gui_plugin\igui.h" />
     <ClInclude Include="..\..\src\gui_plugin\MainWindow\DbgMainWindow.h" />
     <ClInclude Include="..\..\src\gui_plugin\MainWindow\MdiAreaWidget.h" />
-    <ClInclude Include="..\..\src\gui_plugin\MainWindow\UnclosableQMdiSubWindow.h" />
-    <ClInclude Include="..\..\src\gui_plugin\MainWindow\UnclosableWidget.h" />
     <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\DipArea.h" />
     <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\GpioWidget.h" />
     <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\LedArea.h" />

@@ -46,9 +46,6 @@
     <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\RegWidget.cpp">
       <Filter>CpuWidget</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\gui_plugin\MainWindow\UnclosableWidget.cpp">
-      <Filter>MainWindow</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\gui_plugin\ControlWidget\PnpWidget.cpp">
       <Filter>ControlWidget</Filter>
     </ClCompile>
@@ -136,12 +133,6 @@
     </ClInclude>
     <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\RegWidget.h">
       <Filter>CpuWidget</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\gui_plugin\MainWindow\UnclosableQMdiSubWindow.h">
-      <Filter>MainWindow</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\gui_plugin\MainWindow\UnclosableWidget.h">
-      <Filter>MainWindow</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\gui_plugin\ControlWidget\PnpWidget.h">
       <Filter>ControlWidget</Filter>

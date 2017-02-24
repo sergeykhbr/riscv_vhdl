@@ -13,7 +13,7 @@
 namespace debugger {
 
 GpioWidget::GpioWidget(IGui *igui, QWidget *parent)
-    : UnclosableWidget(parent) {
+    : QWidget(parent) {
     igui_ = igui;
     newValue_.u.val[0] = 0;
 
@@ -54,28 +54,20 @@ GpioWidget::GpioWidget(IGui *igui, QWidget *parent)
     layout->addWidget(lbl4, 3, 1, Qt::AlignLeft);
 
     setLayout(layout);
+
+    char tstr[64];
+    ISocInfo *info = static_cast<ISocInfo *>(igui_->getSocInfo());
+    uint32_t addr_gpio = static_cast<int>(info->addressGpio());
+    RISCV_sprintf(tstr, sizeof(tstr), "read 0x%08x 8", addr_gpio);
+    cmdRd_.make_string(tstr);
 }
 
 GpioWidget::~GpioWidget() {
     igui_->removeFromQueue(static_cast<IGuiCmdHandler *>(this));
 }
 
-void GpioWidget::closeEvent(QCloseEvent *event_) {
-    AttributeType tmp;
-    emit signalClose(this, tmp);
-    event_->accept();
-}
-
 void GpioWidget::handleResponse(AttributeType *req, AttributeType *resp) {
     newValue_.u.val[0] = resp->to_uint64();
-}
-
-void GpioWidget::slotPostInit(AttributeType *cfg) {
-    char tstr[64];
-    ISocInfo *info = static_cast<ISocInfo *>(igui_->getSocInfo());
-    uint32_t addr_gpio = static_cast<int>(info->addressGpio());
-    RISCV_sprintf(tstr, sizeof(tstr), "read 0x%08x 8", addr_gpio);
-    cmdRd_.make_string(tstr);
 }
 
 void GpioWidget::slotUpdateByTimer() {

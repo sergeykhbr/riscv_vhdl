@@ -31,7 +31,7 @@ static const char *REG_NAMES_LAYOUT[] = {
 };
 
 RegsViewWidget::RegsViewWidget(IGui *igui, QWidget *parent) 
-    : UnclosableWidget(parent) {
+    : QWidget(parent) {
     igui_ = igui;
 
     gridLayout = new QGridLayout(this);

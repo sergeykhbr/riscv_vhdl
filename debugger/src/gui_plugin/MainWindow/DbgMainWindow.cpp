@@ -1,6 +1,4 @@
 #include "DbgMainWindow.h"
-#include "UnclosableQMdiSubWindow.h"
-#include "UnclosableWidget.h"
 #include "moc_DbgMainWindow.h"
 #include "ControlWidget/PnpWidget.h"
 #include "CpuWidgets/RegsViewWidget.h"
@@ -36,8 +34,6 @@ DbgMainWindow::DbgMainWindow(IGui *igui, event_def *init_done) {
      *
      * If you add a child widget to an already visible widget 
      * you must explicitly show the child to make it visible.
-     *
-     * @todo Fix exception with PNP when initially opened 
      */
     addWidgets();
     
@@ -107,6 +103,8 @@ void DbgMainWindow::createActions() {
     actionRegs_->setShortcut(QKeySequence("Ctrl+r"));
     actionRegs_->setCheckable(true);
     actionRegs_->setChecked(false);
+    connect(actionRegs_, SIGNAL(triggered(bool)),
+            this, SLOT(slotActionTriggerRegs(bool)));
 
     actionCpuAsm_ = new QAction(QIcon(tr(":/images/asm_96x96.png")),
                               tr("&Memory"), this);
@@ -114,7 +112,7 @@ void DbgMainWindow::createActions() {
     actionCpuAsm_->setShortcut(QKeySequence("Ctrl+d"));
     actionCpuAsm_->setCheckable(true);
     connect(actionCpuAsm_, SIGNAL(triggered(bool)),
-            this, SLOT(slotCpuAsmView(bool)));
+            this, SLOT(slotActionTriggerCpuAsmView(bool)));
 
     actionSymbolBrowser_ = new QAction(QIcon(tr(":/images/info_96x96.png")),
                               tr("&Symbols"), this);
@@ -122,7 +120,7 @@ void DbgMainWindow::createActions() {
     actionSymbolBrowser_->setShortcut(QKeySequence("Ctrl+s"));
     actionSymbolBrowser_->setCheckable(false);
     connect(actionSymbolBrowser_, SIGNAL(triggered()),
-            this, SLOT(slotSymbolBrowser()));
+            this, SLOT(slotActionTriggerSymbolBrowser()));
 
     actionMem_ = new QAction(QIcon(tr(":/images/mem_96x96.png")),
                               tr("&Memory"), this);
@@ -130,6 +128,8 @@ void DbgMainWindow::createActions() {
     actionMem_->setShortcut(QKeySequence("Ctrl+m"));
     actionMem_->setCheckable(true);
     actionMem_->setChecked(false);
+    connect(actionMem_, SIGNAL(triggered(bool)),
+            this, SLOT(slotActionTriggerMemView(bool)));
 
     actionPnp_ = new QAction(QIcon(tr(":/images/board_96x96.png")),
                               tr("&Pnp"), this);
@@ -137,19 +137,24 @@ void DbgMainWindow::createActions() {
     actionPnp_->setShortcut(QKeySequence("Ctrl+p"));
     actionPnp_->setCheckable(true);
     actionPnp_->setChecked(false);
+    connect(actionPnp_, SIGNAL(triggered(bool)),
+            this, SLOT(slotActionTriggerPnp(bool)));
 
     actionGpio_ = new QAction(QIcon(tr(":/images/gpio_96x96.png")),
                               tr("&GPIO"), this);
     actionGpio_->setToolTip(tr("GPIO control view"));
     actionGpio_->setCheckable(true);
     actionGpio_->setChecked(false);
-
+    connect(actionGpio_, SIGNAL(triggered(bool)),
+            this, SLOT(slotActionTriggerGpio(bool)));
 
     actionSerial_ = new QAction(QIcon(tr(":/images/serial_96x96.png")),
                               tr("&Serial port"), this);
     actionSerial_->setToolTip(tr("Serial port console view"));
     actionSerial_->setCheckable(true);
-    actionSerial_->setChecked(true);
+    actionSerial_->setChecked(false);
+    connect(actionSerial_, SIGNAL(triggered(bool)),
+            this, SLOT(slotActionTriggerUart0(bool)));
 
     actionRun_ = new QAction(QIcon(tr(":/images/start_96x96.png")),
                              tr("&Run"), this);
@@ -240,55 +245,20 @@ void DbgMainWindow::createMdiWindow() {
 }
 
 void DbgMainWindow::addWidgets() {
-    UnclosableWidget *pnew;
-    UnclosableQMdiSubWindow *subw;
-
-    /** MDI Widgets: */
-    actionSerial_->setChecked(true);
-    subw = new UnclosableQMdiSubWindow(this);
-    pnew = new UartWidget(igui_, this);
-    subw->setUnclosableWidget("uart0", pnew, actionSerial_);
-    subw->setMinimumWidth(size().width() / 2);
-    mdiArea_->addSubWindow(subw);
-    connect(this, SIGNAL(signalPostInit(AttributeType *)),
-            pnew, SLOT(slotPostInit(AttributeType *)));
-
-    actionGpio_->setChecked(false);
-    subw = new UnclosableQMdiSubWindow(this);
-    pnew = new GpioWidget(igui_, this);
-    subw->setUnclosableWidget("gpio0", pnew, actionGpio_);
-    mdiArea_->addSubWindow(subw);
-    connect(this, SIGNAL(signalPostInit(AttributeType *)),
-            pnew, SLOT(slotPostInit(AttributeType *)));
-    connect(this, SIGNAL(signalUpdateByTimer()),
-            pnew, SLOT(slotUpdateByTimer()));
-
-    slotCpuAsmView(true);
-
-    actionRegs_->setChecked(false);
-    subw = new UnclosableQMdiSubWindow(this);
-    pnew = new RegsViewWidget(igui_, this);
-    subw->setUnclosableWidget("Registers", pnew, actionRegs_);
-    mdiArea_->addSubWindow(subw);
-    connect(this, SIGNAL(signalUpdateByTimer()),
-            pnew, SLOT(slotUpdateByTimer()));
-
-    actionMem_->setChecked(false);
-    subw = new UnclosableQMdiSubWindow(this);
-    pnew = new MemViewWidget(igui_, this);
-    subw->setUnclosableWidget("Memory", pnew, actionMem_);
-    mdiArea_->addSubWindow(subw);
-    connect(this, SIGNAL(signalUpdateByTimer()),
-            pnew, SLOT(slotUpdateByTimer()));
-
-    actionPnp_->setChecked(false);
-    subw = new UnclosableQMdiSubWindow(this, true);
-    pnew = new PnpWidget(igui_, this);
-    subw->setUnclosableWidget("Plug'n'Play info", pnew, actionPnp_);
-    mdiArea_->addSubWindow(subw);
+    slotActionTriggerUart0(true);
+    slotActionTriggerCpuAsmView(true);
 }
 
-void DbgMainWindow::slotCpuAsmView(bool val) {
+void DbgMainWindow::slotActionTriggerUart0(bool val) {
+    if (val) {
+        viewUart0_ = 
+            new UartQMdiSubWindow(igui_, mdiArea_, this, actionSerial_);
+    } else {
+        viewUart0_->close();
+    }
+}
+
+void DbgMainWindow::slotActionTriggerCpuAsmView(bool val) {
     if (val) {
         viewCpuAsm_ = 
             new AsmQMdiSubWindow(igui_, mdiArea_, this, actionCpuAsm_);
@@ -297,7 +267,43 @@ void DbgMainWindow::slotCpuAsmView(bool val) {
     }
 }
 
-void DbgMainWindow::slotSymbolBrowser() {
+void DbgMainWindow::slotActionTriggerRegs(bool val) {
+    if (val) {
+        viewRegs_ = new RegsQMdiSubWindow(igui_, mdiArea_, this,
+                                        actionRegs_);
+    } else {
+        viewRegs_->close();
+    }
+}
+
+void DbgMainWindow::slotActionTriggerMemView(bool val) {
+    if (val) {
+        viewMem_ = new MemQMdiSubWindow(igui_, mdiArea_, this,
+                                        0xfffff000, 20, actionMem_);
+    } else {
+        viewMem_->close();
+    }
+}
+
+void DbgMainWindow::slotActionTriggerGpio(bool val) {
+    if (val) {
+        viewGpio_ = new GpioQMdiSubWindow(igui_, mdiArea_, this,
+                                        actionGpio_);
+    } else {
+        viewGpio_->close();
+    }
+}
+
+void DbgMainWindow::slotActionTriggerPnp(bool val) {
+    if (val) {
+        viewPnp_ = new PnpQMdiSubWindow(igui_, mdiArea_, this,
+                                        actionPnp_);
+    } else {
+        viewPnp_->close();
+    }
+}
+
+void DbgMainWindow::slotActionTriggerSymbolBrowser() {
     new SymbolBrowserQMdiSubWindow(igui_, mdiArea_, this);
 }
 
@@ -306,7 +312,7 @@ void DbgMainWindow::slotOpenDisasm(uint64_t addr, uint64_t sz) {
 }
 
 void DbgMainWindow::slotOpenMemory(uint64_t addr, uint64_t sz) {
-    // TODO: not implemented yet
+    new MemQMdiSubWindow(igui_, mdiArea_, this, addr, sz);
 }
 
 void DbgMainWindow::slotPostInit(AttributeType *cfg) {

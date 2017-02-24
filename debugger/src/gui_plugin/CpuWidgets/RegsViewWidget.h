@@ -11,14 +11,17 @@
 #include "attribute.h"
 #include "igui.h"
 
-#include "MainWindow/UnclosableWidget.h"
+#include <QtWidgets/QWidget>
+#include <QtWidgets/QMdiArea>
 #include <QtWidgets/QMdiSubWindow>
 #include <QtWidgets/QGridLayout>
+#include <QtWidgets/QAction>
 #include <QtCore/QEvent>
+#include <QtGui/qevent.h>
 
 namespace debugger {
 
-class RegsViewWidget : public UnclosableWidget,
+class RegsViewWidget : public QWidget,
                        public IGuiCmdHandler {
     Q_OBJECT
 public:
@@ -46,6 +49,43 @@ private:
     
     IGui *igui_;
     bool waitingResp_;
+};
+
+class RegsQMdiSubWindow : public QMdiSubWindow {
+    Q_OBJECT
+public:
+    RegsQMdiSubWindow(IGui *igui, QMdiArea *area, QWidget *parent,
+                      QAction *act = 0)
+        : QMdiSubWindow(parent) {
+        setAttribute(Qt::WA_DeleteOnClose);
+        action_ = act;
+        area_ = area;
+
+        setWindowTitle(tr("Registers"));
+        setWindowIcon(QIcon(tr(":/images/cpu_96x96.png")));
+        QWidget *pnew = new RegsViewWidget(igui, this);
+        if (act) {
+            act->setChecked(true);
+        }
+        connect(parent, SIGNAL(signalUpdateByTimer()),
+                pnew, SLOT(slotUpdateByTimer()));
+
+        setWidget(pnew);
+        area_->addSubWindow(this);
+        show();
+    }
+    
+protected:
+    void closeEvent(QCloseEvent *event_) Q_DECL_OVERRIDE {
+        if (action_) {
+            action_->setChecked(false);
+        }
+        area_->removeSubWindow(this);
+        event_->accept();
+    }
+private:
+    QAction *action_;
+    QMdiArea *area_;
 };
 
 }  // namespace debugger

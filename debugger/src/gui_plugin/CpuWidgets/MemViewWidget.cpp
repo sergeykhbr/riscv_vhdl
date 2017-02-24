@@ -14,8 +14,8 @@
 
 namespace debugger {
 
-MemViewWidget::MemViewWidget(IGui *igui, QWidget *parent) 
-    : UnclosableWidget(parent) {
+MemViewWidget::MemViewWidget(IGui *igui, QWidget *parent,
+    uint64_t addr, uint64_t sz) : QWidget(parent) {
     igui_ = igui;
 
     gridLayout = new QGridLayout(this);
@@ -25,9 +25,9 @@ MemViewWidget::MemViewWidget(IGui *igui, QWidget *parent)
     gridLayout->setContentsMargins(4, 4, 4, 4);
     setLayout(gridLayout);
 
-    MemControl *pctrl = new MemControl(this);
+    MemControl *pctrl = new MemControl(this, addr, sz);
 
-    MemArea *parea = new MemArea(igui, this);
+    MemArea *parea = new MemArea(igui, this, addr, sz);
     gridLayout->addWidget(pctrl , 0, 0);
     gridLayout->addWidget(parea, 1, 0);
     gridLayout->setRowStretch(1, 10);
