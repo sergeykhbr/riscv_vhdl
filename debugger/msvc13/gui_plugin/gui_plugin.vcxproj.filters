@@ -85,6 +85,12 @@
     <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\SymbolBrowserWidget.cpp">
       <Filter>CpuWidget</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\StackTraceArea.cpp">
+      <Filter>CpuWidget</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\StackTraceWidget.cpp">
+      <Filter>CpuWidget</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\api_types.h">
@@ -171,6 +177,12 @@
       <Filter>CpuWidget</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\SymbolBrowserWidget.h">
+      <Filter>CpuWidget</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\StackTraceArea.h">
+      <Filter>CpuWidget</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\StackTraceWidget.h">
       <Filter>CpuWidget</Filter>
     </ClInclude>
   </ItemGroup>

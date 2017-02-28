@@ -26,6 +26,7 @@
 #include "cmd/cmd_disas.h"
 #include "cmd/cmd_busutil.h"
 #include "cmd/cmd_symb.h"
+#include "cmd/cmd_stack.h"
 
 namespace debugger {
 
@@ -82,6 +83,7 @@ void CmdExecutor::postinitService() {
     registerCommand(new CmdReg(itap_, info_));
     registerCommand(new CmdRegs(itap_, info_));
     registerCommand(new CmdReset(itap_, info_));
+    registerCommand(new CmdStack(itap_, info_));
     registerCommand(new CmdStatus(itap_, info_));
     registerCommand(new CmdSymb(itap_, info_));
     registerCommand(new CmdWrite(itap_, info_));

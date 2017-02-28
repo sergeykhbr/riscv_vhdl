@@ -131,7 +131,9 @@ struct DsuMapType {
             uint64_t iregs[32];     // integer registers
             uint64_t pc;            // index = 32
             uint64_t npc;           // index = 33
-            uint64_t rsrv;
+            uint64_t stack_trace_cnt; // index 34
+            uint64_t rsrv[128 - 35];
+            uint64_t stack_trace_buf[1];
         } v;
     } ureg;
     // Base Address + 0x10000 (Region 2)

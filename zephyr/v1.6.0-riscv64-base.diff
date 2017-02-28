@@ -493,8 +493,8 @@ index 0000000..a8492f7
 +
 +#ifdef _WIN32
 +extern int LIBH_create_thread(char *pStackMem,
-+                              unsigned stackSize, 
-+                              int priority, 
++                              unsigned stackSize,
++                              int priority,
 +                              unsigned options);
 +#endif
 +
@@ -573,7 +573,7 @@ index 0000000..a8492f7
 +	thread->custom_data = NULL;
 +#endif
 +	thread->callee_saved.key = 0;
-+ 	thread->callee_saved.preemptive = 0;
++	thread->callee_saved.preemptive = 0;
 +	/* Leave the rest of thread->callee_saved junk */
 +
 +	thread_monitor_init(thread);
@@ -586,7 +586,7 @@ index 0000000..a8492f7
 +    thread->callee_saved.r[COOP_REG_A1/sizeof(uint64_t)] = (uint64_t)p1;
 +    thread->callee_saved.r[COOP_REG_A2/sizeof(uint64_t)] = (uint64_t)p2;
 +    thread->callee_saved.r[COOP_REG_A3/sizeof(uint64_t)] = (uint64_t)p3;
-+    thread->callee_saved.r[COOP_REG_SP/sizeof(uint64_t)] = 
++    thread->callee_saved.r[COOP_REG_SP/sizeof(uint64_t)] =
 +        (uint64_t)(pStack + stackSize);
 +#ifdef _WIN32
 +    LIBH_create_thread(pStack, (unsigned int)stackSize, prio, options);
@@ -765,7 +765,7 @@ index 0000000..8ead287
 +	call run_isr_handler
 +
 +	ld sp,0(sp)
-+	
++
 +	# Check reschedule condition 
 +	jal _get_next_ready_thread
 +	beqz a0,_IsrExit_ending         # _get_next_ready_thread() == 0 goto ending

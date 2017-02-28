@@ -194,6 +194,8 @@
     <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\MemViewWidget.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\RegsViewWidget.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\RegWidget.cpp" />
+    <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\StackTraceArea.cpp" />
+    <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\StackTraceWidget.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\SymbolBrowserArea.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\SymbolBrowserControl.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\SymbolBrowserWidget.cpp" />
@@ -225,6 +227,8 @@
     <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\MemViewWidget.h" />
     <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\RegsViewWidget.h" />
     <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\RegWidget.h" />
+    <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\StackTraceArea.h" />
+    <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\StackTraceWidget.h" />
     <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\SymbolBrowserArea.h" />
     <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\SymbolBrowserControl.h" />
     <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\SymbolBrowserWidget.h" />

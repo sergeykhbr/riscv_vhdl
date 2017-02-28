@@ -371,6 +371,13 @@ public:
             data->regs[u.bits.rd] = data->pc + 4;
         }
         data->npc = data->pc + off;
+        if (u.bits.rd == Reg_ra) {
+            if (data->stack_trace_cnt < STACK_TRACE_BUF_SIZE) {
+                data->stack_trace_buf[data->stack_trace_cnt] = data->pc;
+                data->stack_trace_buf[data->stack_trace_cnt] &= ~0x1;
+            }
+            data->stack_trace_cnt++;
+        }
     }
 };
 
@@ -398,6 +405,16 @@ public:
         off &= ~0x1LL;
         if (u.bits.rd != 0) {
             data->regs[u.bits.rd] = data->pc + 4;
+        }
+        if (u.bits.rd == Reg_ra) {
+            if (data->stack_trace_cnt < STACK_TRACE_BUF_SIZE) {
+                data->stack_trace_buf[data->stack_trace_cnt] = data->pc;
+                data->stack_trace_buf[data->stack_trace_cnt] &= ~0x1;
+            }
+            data->stack_trace_cnt++;
+        } else if (u.bits.imm == 0 && u.bits.rs1 == Reg_ra
+            && data->stack_trace_cnt) {
+            data->stack_trace_cnt--;
         }
         data->npc = off;
     }

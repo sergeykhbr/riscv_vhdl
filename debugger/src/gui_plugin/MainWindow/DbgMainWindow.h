@@ -61,6 +61,7 @@ private slots:
     void slotActionTriggerUart0(bool val);
     void slotActionTriggerRegs(bool val);
     void slotActionTriggerCpuAsmView(bool val);
+    void slotActionTriggerStackTraceView(bool val);
     void slotActionTriggerMemView(bool val);
     void slotActionTriggerGpio(bool val);
     void slotActionTriggerPnp(bool val);
@@ -87,6 +88,8 @@ private:
     QMdiSubWindow *viewRegs_;
     QAction *actionCpuAsm_;
     QMdiSubWindow *viewCpuAsm_;
+    QAction *actionStackTrace_;
+    QMdiSubWindow *viewStackTrace_;
     QAction *actionMem_;
     QMdiSubWindow *viewMem_;
     QAction *actionGpio_;

@@ -155,6 +155,9 @@
     <ClCompile Include="..\..\src\libdbg64g\services\elfloader\elfreader.cpp">
       <Filter>Source Files\services\elfloader</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_stack.cpp">
+      <Filter>Source Files\services\exec\cmd</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\attribute.h">
@@ -338,6 +341,9 @@
     </ClInclude>
     <ClInclude Include="..\..\src\libdbg64g\services\elfloader\elfreader.h">
       <Filter>Source Files\services\elfloader</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_stack.h">
+      <Filter>Source Files\services\exec\cmd</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -55,6 +55,8 @@ SOURCES = \
 	SymbolBrowserWidget \
 	SymbolBrowserArea \
 	SymbolBrowserControl \
+	StackTraceWidget \
+	StackTraceArea \
 	MemViewWidget \
 	MemArea \
 	MemControl \
@@ -123,3 +125,5 @@ prebuild:
 	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/CpuWidgets/SymbolBrowserWidget.h -o $(GUI_PLUGIN_SRC)/CpuWidgets/moc_SymbolBrowserWidget.h
 	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/CpuWidgets/SymbolBrowserArea.h -o $(GUI_PLUGIN_SRC)/CpuWidgets/moc_SymbolBrowserArea.h
 	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/CpuWidgets/SymbolBrowserControl.h -o $(GUI_PLUGIN_SRC)/CpuWidgets/moc_SymbolBrowserControl.h
+	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/CpuWidgets/StackTraceWidget.h -o $(GUI_PLUGIN_SRC)/CpuWidgets/moc_StackTraceWidget.h
+	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/CpuWidgets/StackTraceArea.h -o $(GUI_PLUGIN_SRC)/CpuWidgets/moc_StackTraceArea.h

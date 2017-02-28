@@ -186,6 +186,7 @@
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_halt.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_reset.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_run.cpp" />
+    <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_stack.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_status.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_symb.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_write.cpp" />
@@ -250,6 +251,7 @@
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_halt.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_reset.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_run.h" />
+    <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_stack.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_status.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_symb.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_write.h" />

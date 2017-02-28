@@ -16,6 +16,8 @@
 
 namespace debugger {
 
+static const int STACK_TRACE_BUF_SIZE = 256;
+
 struct CpuContextType {
     uint64_t regs[Reg_Total];
     uint64_t csr[1<<12];
@@ -36,6 +38,8 @@ struct CpuContextType {
     char disasm[256];
     std::ofstream *reg_trace_file;
     std::ofstream *mem_trace_file;
+    uint64_t stack_trace_buf[STACK_TRACE_BUF_SIZE];
+    int stack_trace_cnt;
 };
 
 

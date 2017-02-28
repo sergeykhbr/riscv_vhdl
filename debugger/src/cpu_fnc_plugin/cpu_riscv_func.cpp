@@ -50,6 +50,7 @@ CpuRiscV_Functional::CpuRiscV_Functional(const char *name)
     resetVector_.make_uint64(0x1000);
 
     cpu_context_.step_cnt = 0;
+    cpu_context_.stack_trace_cnt = 0;
 
     RISCV_event_create(&config_done_, "config_done");
     RISCV_register_hap(static_cast<IHap *>(this));
@@ -528,6 +529,14 @@ void CpuRiscV_Functional::updateDebugPort() {
             if (trans->write) {
                 pContext->npc = trans->wdata;
             }
+        } else if (trans->addr == (Reg_Total + 2)) {
+            trans->rdata = pContext->stack_trace_cnt;
+            if (trans->write) {
+                pContext->stack_trace_cnt = static_cast<int>(trans->wdata);
+            }
+        } else if (trans->addr >= 128 && 
+                    trans->addr < (128 + STACK_TRACE_BUF_SIZE)) {
+            trans->rdata = pContext->stack_trace_buf[trans->addr - 128];
         }
         break;
     case 2:     // Control

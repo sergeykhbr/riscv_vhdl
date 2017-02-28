@@ -5,6 +5,7 @@
 #include "CpuWidgets/AsmViewWidget.h"
 #include "CpuWidgets/MemViewWidget.h"
 #include "CpuWidgets/SymbolBrowserWidget.h"
+#include "CpuWidgets/StackTraceWidget.h"
 #include <QtWidgets/QtWidgets>
 
 
@@ -114,6 +115,14 @@ void DbgMainWindow::createActions() {
     connect(actionCpuAsm_, SIGNAL(triggered(bool)),
             this, SLOT(slotActionTriggerCpuAsmView(bool)));
 
+    actionStackTrace_ = new QAction(QIcon(tr(":/images/stack_96x96.png")),
+                              tr("&Stack"), this);
+    actionStackTrace_->setToolTip(tr("Stack trace"));
+    actionStackTrace_->setShortcut(QKeySequence("Ctrl+t"));
+    actionStackTrace_->setCheckable(true);
+    connect(actionStackTrace_, SIGNAL(triggered(bool)),
+            this, SLOT(slotActionTriggerStackTraceView(bool)));
+
     actionSymbolBrowser_ = new QAction(QIcon(tr(":/images/info_96x96.png")),
                               tr("&Symbols"), this);
     actionSymbolBrowser_->setToolTip(tr("Symbol Browser"));
@@ -199,6 +208,7 @@ void DbgMainWindow::createActions() {
     QToolBar *toolbarCpu = addToolBar(tr("toolbarCpu"));
     toolbarCpu->addAction(actionCpuAsm_);
     toolbarCpu->addAction(actionRegs_);
+    toolbarCpu->addAction(actionStackTrace_);
     toolbarCpu->addAction(actionMem_);
     QToolBar *toolbarPeriph = addToolBar(tr("toolbarPeriph"));
     toolbarPeriph->addAction(actionPnp_);
@@ -273,6 +283,15 @@ void DbgMainWindow::slotActionTriggerRegs(bool val) {
                                         actionRegs_);
     } else {
         viewRegs_->close();
+    }
+}
+
+void DbgMainWindow::slotActionTriggerStackTraceView(bool val) {
+    if (val) {
+        viewStackTrace_ = 
+            new StackTraceQMdiSubWindow(igui_, mdiArea_, this, actionStackTrace_);
+    } else {
+        viewCpuAsm_->close();
     }
 }
 
