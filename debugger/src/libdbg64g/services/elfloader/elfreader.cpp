@@ -225,4 +225,20 @@ void ElfReaderService::processDebugSymbol(SectionHeaderType *sh) {
     }
 }
 
+void ElfReaderService::addressToSymbol(uint64_t addr, AttributeType *name) {
+    if (symbolList_.size() == 0) {
+        name->make_string("no symbols");
+        return;
+    }
+    // todo: search in sorted linst
+    name->make_string("not found");
+    for (unsigned i = 0; i < symbolList_.size(); i++) {
+        AttributeType &symb = symbolList_[i][Symbol_Addr];
+        if (symb.to_uint64() == addr) {
+            *name = symbolList_[i][Symbol_Name];
+            return;
+        }
+    }
+}
+
 }  // namespace debugger

@@ -50,6 +50,8 @@ public:
 
     virtual void getSymbols(AttributeType *list) { *list = symbolList_; }
 
+    virtual void addressToSymbol(uint64_t addr, AttributeType *name);
+
 private:
     int readElfHeader();
     int loadSections();

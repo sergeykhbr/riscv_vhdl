@@ -372,9 +372,10 @@ public:
         }
         data->npc = data->pc + off;
         if (u.bits.rd == Reg_ra) {
-            if (data->stack_trace_cnt < STACK_TRACE_BUF_SIZE) {
-                data->stack_trace_buf[data->stack_trace_cnt] = data->pc;
-                data->stack_trace_buf[data->stack_trace_cnt] &= ~0x1;
+            if (data->stack_trace_cnt < STACK_TRACE_BUF_SIZE/2) {
+                data->stack_trace_buf[2*data->stack_trace_cnt] = data->pc;
+                data->stack_trace_buf[2*data->stack_trace_cnt] &= ~0x1;
+                data->stack_trace_buf[2*data->stack_trace_cnt+1] = data->npc;
             }
             data->stack_trace_cnt++;
         }
@@ -406,17 +407,20 @@ public:
         if (u.bits.rd != 0) {
             data->regs[u.bits.rd] = data->pc + 4;
         }
+        data->npc = off;
+
+        // Stack trace buffer:
         if (u.bits.rd == Reg_ra) {
-            if (data->stack_trace_cnt < STACK_TRACE_BUF_SIZE) {
-                data->stack_trace_buf[data->stack_trace_cnt] = data->pc;
-                data->stack_trace_buf[data->stack_trace_cnt] &= ~0x1;
+            if (data->stack_trace_cnt < STACK_TRACE_BUF_SIZE/2) {
+                data->stack_trace_buf[2*data->stack_trace_cnt] = data->pc;
+                data->stack_trace_buf[2*data->stack_trace_cnt] &= ~0x1;
+                data->stack_trace_buf[2*data->stack_trace_cnt+1] = data->npc;
             }
             data->stack_trace_cnt++;
         } else if (u.bits.imm == 0 && u.bits.rs1 == Reg_ra
             && data->stack_trace_cnt) {
             data->stack_trace_cnt--;
         }
-        data->npc = off;
     }
 };
 

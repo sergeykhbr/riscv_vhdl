@@ -38,7 +38,7 @@ struct CpuContextType {
     char disasm[256];
     std::ofstream *reg_trace_file;
     std::ofstream *mem_trace_file;
-    uint64_t stack_trace_buf[STACK_TRACE_BUF_SIZE];
+    uint64_t stack_trace_buf[STACK_TRACE_BUF_SIZE]; // [[from,to],*]
     int stack_trace_cnt;
 };
 

@@ -48,6 +48,8 @@ public:
     virtual uint8_t *sectionData(unsigned idx) =0;
 
     virtual void getSymbols(AttributeType *list) =0;
+
+    virtual void addressToSymbol(uint64_t addr, AttributeType *name) =0;
 };
 
 }  // namespace debugger

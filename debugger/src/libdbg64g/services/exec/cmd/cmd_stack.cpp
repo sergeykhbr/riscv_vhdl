@@ -6,6 +6,8 @@
  */
 
 #include "cmd_stack.h"
+#include "iservice.h"
+#include "coreservices/ielfreader.h"
 
 namespace debugger {
 
@@ -26,7 +28,7 @@ CmdStack::CmdStack(ITap *tap, ISocInfo *info)
 
 bool CmdStack::isValid(AttributeType *args) {
     if ((*args)[0u].is_equal(cmdName_.to_string()) && (args->size() == 1
-       || args->size() == 2 && (*args)[1].is_integer())) {
+       || (args->size() == 2 && (*args)[1].is_integer()))) {
         return CMD_VALID;
     }
     return CMD_INVALID;
@@ -55,15 +57,32 @@ void CmdStack::exec(AttributeType *args, AttributeType *res) {
         return;
     }
 
-    AttributeType tbuf;
+    AttributeType tbuf, lstServ;
     uint64_t *p_data;
-    tbuf.make_data(8*trace_sz);
+    IElfReader *elf = 0;
+    uint64_t to_addr;
+    tbuf.make_data(16*trace_sz);
     tap_->read(addr, tbuf.size(), tbuf.data());
+
+    RISCV_get_services_with_iface(IFACE_ELFREADER, &lstServ);
+    if (lstServ.size() >= 0) {
+        IService *iserv = static_cast<IService *>(lstServ[0u].to_iface());
+        elf = static_cast<IElfReader *>(iserv->getInterface(IFACE_ELFREADER));
+    }
 
     res->make_list(t1.buf32[0]);
     p_data = reinterpret_cast<uint64_t *>(tbuf.data());
     for (unsigned i = 0; i < trace_sz; i++) {
-        (*res)[i].make_uint64(p_data[trace_sz - 1 - i]);
+        AttributeType &item = (*res)[i];
+        item.make_list(3);             // [from, to, 'symbol_name']
+        item[0u].make_uint64(p_data[2*(trace_sz - i) - 2]);
+        to_addr = p_data[2*(trace_sz - i) - 1];
+        item[1].make_uint64(to_addr);
+        if (elf) {
+            elf->addressToSymbol(to_addr, &item[2]);
+        } else {
+            item[2].make_string("no elf-reader");
+        }
     }
 }
 
