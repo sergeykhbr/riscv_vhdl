@@ -30,22 +30,27 @@ public:
     virtual void handleResponse(AttributeType *req, AttributeType *resp);
 
 public slots:
+    void slotUpdateByTimer();
     void slotHandleResponse();
+    void slotCellDoubleClicked(int row, int column);
 
 signals:
     void signalHandleResponse();
+    void signalShowFunction(uint64_t addr, uint64_t sz);
 
 private:
     void setListSize(int sz);
+    QString makeSymbolQString(uint64_t addr, AttributeType &info);
 
 private:
     enum EColumnNames {
-        COL_address,
-        COL_symbol,
+        COL_call_addr,
+        COL_at_addr,
         COL_Total
     };
 
     AttributeType symbolList_;
+    AttributeType symbolAddr_;
     IGui *igui_;
     int lineHeight_;
     int hideLineIdx_;

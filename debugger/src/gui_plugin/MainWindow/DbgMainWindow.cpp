@@ -291,7 +291,7 @@ void DbgMainWindow::slotActionTriggerStackTraceView(bool val) {
         viewStackTrace_ = 
             new StackTraceQMdiSubWindow(igui_, mdiArea_, this, actionStackTrace_);
     } else {
-        viewCpuAsm_->close();
+        viewStackTrace_->close();
     }
 }
 

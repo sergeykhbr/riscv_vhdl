@@ -155,6 +155,8 @@ int ElfReaderService::loadSections() {
         }
     }
     symbolList_.sort(LoadSh_name);
+    symbolListSortByAddr_ = symbolList_;
+    symbolListSortByAddr_.sort(LoadSh_addr);
     return static_cast<int>(total_bytes);
 }
 
@@ -225,17 +227,21 @@ void ElfReaderService::processDebugSymbol(SectionHeaderType *sh) {
     }
 }
 
-void ElfReaderService::addressToSymbol(uint64_t addr, AttributeType *name) {
-    if (symbolList_.size() == 0) {
-        name->make_string("no symbols");
+void ElfReaderService::addressToSymbol(uint64_t addr, AttributeType *info) {
+    info->make_list(2);
+    if (symbolListSortByAddr_.size() == 0) {
         return;
     }
-    // todo: search in sorted linst
-    name->make_string("not found");
-    for (unsigned i = 0; i < symbolList_.size(); i++) {
-        AttributeType &symb = symbolList_[i][Symbol_Addr];
-        if (symb.to_uint64() == addr) {
-            *name = symbolList_[i][Symbol_Name];
+
+    // todo: search in sorted list
+    uint64_t sadr, send;
+    for (unsigned i = 0; i < symbolListSortByAddr_.size(); i++) {
+        AttributeType &symb = symbolListSortByAddr_[i];
+        sadr = symb[Symbol_Addr].to_uint64();
+        send = sadr + symb[Symbol_Size].to_uint64();
+        if (sadr <= addr && addr < send) {
+            (*info)[0u] = symb[Symbol_Name];
+            (*info)[1].make_uint64(addr - sadr);
             return;
         }
     }

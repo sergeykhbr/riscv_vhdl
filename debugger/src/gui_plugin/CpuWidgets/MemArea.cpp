@@ -57,7 +57,7 @@ void MemArea::slotUpdateByTimer() {
 
     reqAddrZ_ = reqAddr_;
     reqBytesZ_ = reqBytes_;
-    igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), 
+    igui_->registerCommand(static_cast<IGuiCmdHandler *>(this),
                             &cmdRead_, true);
 }
 

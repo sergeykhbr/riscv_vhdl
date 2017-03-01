@@ -31,9 +31,10 @@ StackTraceArea::StackTraceArea(IGui *gui, QWidget *parent)
     setContentsMargins(QMargins(0, 0, 0, 0));
     QFontMetrics fm(font);
     setMinimumWidth(50 + fm.width(tr(
-    "some_test_function  (void ())       P:aabbccdd--aabbffff")));
+    "0x0001040 (some_symbol_name+0x40)  0x0001040 (some_symbol_name+0x40)")));
     lineHeight_ = fm.height() + 4;
     hideLineIdx_ = 0;
+    symbolList_.make_nil();
 
     setColumnCount(COL_Total);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -50,13 +51,27 @@ StackTraceArea::StackTraceArea(IGui *gui, QWidget *parent)
     setPalette(*palette);
 
     setHorizontalHeaderLabels(
-        QString("address;symbol").split(";"));
-    setColumnWidth(COL_address, 10 + fm.width(tr("0x0000000000001040 ")));
-    setColumnWidth(COL_symbol, 10 + fm.width(tr("some_symbol_name      ")));
+        QString("call;at address").split(";"));
+    setColumnWidth(COL_at_addr,
+        10 + fm.width(tr("0x0001040 (some_symbol_name+0x40)")));
+    setColumnWidth(COL_call_addr,
+        10 + fm.width(tr("0x0001040 (some_symbol_name+0x40)")));
+
+    connect(this, SIGNAL(signalHandleResponse()),
+            this, SLOT(slotHandleResponse()));
+
+    connect(this, SIGNAL(cellDoubleClicked(int, int)),
+            this, SLOT(slotCellDoubleClicked(int, int)));
 }
 
 StackTraceArea::~StackTraceArea() {
     igui_->removeFromQueue(static_cast<IGuiCmdHandler *>(this));
+}
+
+void StackTraceArea::slotUpdateByTimer() {
+    AttributeType cmdStack("stack");
+    igui_->registerCommand(static_cast<IGuiCmdHandler *>(this),
+                            &cmdStack, true);
 }
 
 void StackTraceArea::setListSize(int sz) {
@@ -95,6 +110,9 @@ void StackTraceArea::handleResponse(AttributeType *req,
     if (strstr(req->to_string(), "stack") == 0) {
         return;
     }
+    if (!symbolList_.is_nil()) {
+        return;
+    }
     symbolList_ = *resp;
     emit signalHandleResponse();
 }
@@ -104,25 +122,56 @@ void StackTraceArea::slotHandleResponse() {
         return;
     }
     QTableWidgetItem *pw;
-    Qt::ItemFlags fl;
-    char tstr[256];
     uint64_t addr;
     int list_sz = static_cast<int>(symbolList_.size());
     setListSize(list_sz);
+    symbolAddr_.make_list(list_sz);
 
     for (int i = 0; i < list_sz; i++) {
         AttributeType &symb = symbolList_[i];
+        AttributeType &saddr = symbolAddr_[i];
+        saddr.make_list(2);
 
-        pw = item(i, COL_symbol);
-        pw->setText(QString(symb[Symbol_Name].to_string()));
+        // [from, ['symb_name',symb_offset], to, ['symb_name',symb_offset]]
+        addr = symb[2].to_uint64();
+        saddr[COL_call_addr].make_uint64(addr);
+        pw = item(i, COL_call_addr);
+        pw->setText(makeSymbolQString(addr, symb[3]));
 
-        pw = item(i, COL_address);
-        addr = symb[Symbol_Addr].to_uint64();
-        RISCV_sprintf(tstr, sizeof(tstr),
-                    "%08" RV_PRI64 "x--%08" RV_PRI64 "x",
-                    addr, addr + symb[Symbol_Size].to_uint64());
-        pw->setText(QString(tstr));
+        addr = symb[0u].to_uint64();
+        saddr[COL_at_addr].make_uint64(addr);
+        pw = item(i, COL_at_addr);
+        pw->setText(makeSymbolQString(addr, symb[1]));
     }
+    symbolList_.make_nil();
+}
+
+QString StackTraceArea::makeSymbolQString(uint64_t addr, AttributeType &info) {
+    QString ret = QString("%1 ").arg(addr, 8, 16, QChar('0'));
+    if (!info.is_list() || info.size() != 2) {
+        return ret;
+    }
+    if (!info[0u].is_string() || info[0u].size() == 0) {
+        return ret;
+    }
+    ret += "(";
+    ret += QString(tr(info[0u].to_string()));
+    uint64_t offset = info[1].to_uint64();
+    if (offset) {
+        ret += QString("+%1h").arg(offset, 0, 16);
+    }
+    ret += ")";
+    return ret;
+}
+
+void StackTraceArea::slotCellDoubleClicked(int row, int column) {
+    uint64_t addr;
+    if (row >= static_cast<int>(symbolAddr_.size())) {
+        return;
+    }
+    addr = symbolAddr_[row][column].to_uint64();
+
+    emit signalShowFunction(addr, 0);
 }
 
 }  // namespace debugger

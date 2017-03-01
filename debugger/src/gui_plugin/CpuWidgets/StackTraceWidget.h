@@ -24,8 +24,17 @@ class StackTraceWidget : public QWidget {
 public:
     StackTraceWidget(IGui *igui, QWidget *parent);
 
+signals:
+    void signalUpdateByTimer();
+    void signalShowFunction(uint64_t addr, uint64_t sz);
+
 private slots:
-    void slotUpdateByTimer() {}
+    void slotUpdateByTimer() {
+        emit signalUpdateByTimer();
+    }
+    void slotShowFunction(uint64_t addr, uint64_t sz) {
+        emit signalShowFunction(addr, sz);
+    }
 
 private:
     QGridLayout *gridLayout;
@@ -51,6 +60,9 @@ public:
         }
         connect(parent, SIGNAL(signalUpdateByTimer()),
                 pnew, SLOT(slotUpdateByTimer()));
+
+        connect(pnew, SIGNAL(signalShowFunction(uint64_t, uint64_t)),
+                parent, SLOT(slotOpenDisasm(uint64_t, uint64_t)));
 
         area_->addSubWindow(this);
         setAttribute(Qt::WA_DeleteOnClose);

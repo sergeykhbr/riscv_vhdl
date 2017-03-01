@@ -60,7 +60,7 @@ void CmdStack::exec(AttributeType *args, AttributeType *res) {
     AttributeType tbuf, lstServ;
     uint64_t *p_data;
     IElfReader *elf = 0;
-    uint64_t to_addr;
+    uint64_t from_addr, to_addr;
     tbuf.make_data(16*trace_sz);
     tap_->read(addr, tbuf.size(), tbuf.data());
 
@@ -74,14 +74,15 @@ void CmdStack::exec(AttributeType *args, AttributeType *res) {
     p_data = reinterpret_cast<uint64_t *>(tbuf.data());
     for (unsigned i = 0; i < trace_sz; i++) {
         AttributeType &item = (*res)[i];
-        item.make_list(3);             // [from, to, 'symbol_name']
-        item[0u].make_uint64(p_data[2*(trace_sz - i) - 2]);
+        from_addr = p_data[2*(trace_sz - i) - 2];
         to_addr = p_data[2*(trace_sz - i) - 1];
-        item[1].make_uint64(to_addr);
+        // [from, ['symb_name',symb_offset], to, ['symb_name',symb_offset]]
+        item.make_list(4);
+        item[0u].make_uint64(from_addr);
+        item[2].make_uint64(to_addr);
         if (elf) {
-            elf->addressToSymbol(to_addr, &item[2]);
-        } else {
-            item[2].make_string("no elf-reader");
+            elf->addressToSymbol(from_addr, &item[1]);
+            elf->addressToSymbol(to_addr, &item[3]);
         }
     }
 }

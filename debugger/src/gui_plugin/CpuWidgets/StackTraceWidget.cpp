@@ -27,6 +27,12 @@ StackTraceWidget::StackTraceWidget(IGui *igui, QWidget *parent)
     StackTraceArea *parea = new StackTraceArea(igui, this);
     gridLayout->addWidget(parea, 0, 0);
     gridLayout->setRowStretch(0, 10);
+
+    connect(this, SIGNAL(signalUpdateByTimer()),
+            parea, SLOT(slotUpdateByTimer()));
+
+    connect(parea, SIGNAL(signalShowFunction(uint64_t, uint64_t)),
+            this, SLOT(slotShowFunction(uint64_t, uint64_t)));
 }
 
 }  // namespace debugger

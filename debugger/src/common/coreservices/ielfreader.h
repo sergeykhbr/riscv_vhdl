@@ -49,7 +49,7 @@ public:
 
     virtual void getSymbols(AttributeType *list) =0;
 
-    virtual void addressToSymbol(uint64_t addr, AttributeType *name) =0;
+    virtual void addressToSymbol(uint64_t addr, AttributeType *info) =0;
 };
 
 }  // namespace debugger
