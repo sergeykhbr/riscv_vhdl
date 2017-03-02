@@ -228,21 +228,61 @@ void ElfReaderService::processDebugSymbol(SectionHeaderType *sh) {
 }
 
 void ElfReaderService::addressToSymbol(uint64_t addr, AttributeType *info) {
+    uint64_t sadr, send;
+    int sz = static_cast<int>(symbolListSortByAddr_.size());
+
     info->make_list(2);
-    if (symbolListSortByAddr_.size() == 0) {
+    (*info)[0u].make_string("");
+    (*info)[1].make_uint64(0);
+    if (sz == 0) {
+        return;
+    }
+    sadr = symbolListSortByAddr_[0u][Symbol_Addr].to_uint64();
+    if (addr < sadr) {
         return;
     }
 
-    // todo: search in sorted list
-    uint64_t sadr, send;
-    for (unsigned i = 0; i < symbolListSortByAddr_.size(); i++) {
-        AttributeType &symb = symbolListSortByAddr_[i];
+    bool search = true;
+    int dist, pos = sz / 2;
+    dist = pos;
+    while (search) {
+        AttributeType &symb = symbolListSortByAddr_[pos];
         sadr = symb[Symbol_Addr].to_uint64();
         send = sadr + symb[Symbol_Size].to_uint64();
         if (sadr <= addr && addr < send) {
             (*info)[0u] = symb[Symbol_Name];
             (*info)[1].make_uint64(addr - sadr);
             return;
+        }
+        
+        if (addr < sadr) {
+            if (dist == 0 || pos == 0) {
+                search = false;
+            } else if (dist == 1) {
+                dist = 0;
+                pos--;
+            } else {
+                int incr = dist / 2;
+                pos -= incr;
+                dist = (dist / 2) + (dist & 0x1);
+                if (pos < 0) {
+                    pos = 0;
+                }
+            }
+        } else {
+            if (dist == 0 || pos == (sz - 1)) {
+                search = false;
+            } else if (dist == 1) {
+                dist = 0;
+                pos++;
+            } else {
+                int incr = dist / 2;
+                pos += incr;
+                dist = (dist / 2) + (dist & 0x1);
+                if (pos >= sz) {
+                    pos = sz - 1;
+                }
+            }
         }
     }
 }

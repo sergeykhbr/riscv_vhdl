@@ -44,7 +44,8 @@ signals:
     void signalPostInit(AttributeType *cfg);
     void signalUpdateByTimer();
     void signalTargetStateChanged(bool);
-    void signalBreakpoint();
+    void signalBreakpointHalt();
+    void signalRedrawDisasm();
     void signalExit();
 
 protected:
@@ -68,6 +69,7 @@ private slots:
     void slotActionTriggerSymbolBrowser();
     void slotOpenDisasm(uint64_t addr, uint64_t sz);
     void slotOpenMemory(uint64_t addr, uint64_t sz);
+    void slotBreakpointsChanged();
     void slotExit();
 
 private:

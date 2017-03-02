@@ -76,7 +76,7 @@ void DbgMainWindow::handleResponse(AttributeType *req, AttributeType *resp) {
             emit signalTargetStateChanged(ctrl.bits.halt == 0);
         }
         if (ctrl.bits.breakpoint) {
-            emit signalBreakpoint();
+            emit signalBreakpointHalt();
         }
     }
 }
@@ -395,6 +395,11 @@ void DbgMainWindow::slotActionTargetHalt() {
 void DbgMainWindow::slotActionTargetStepInto() {
     igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), 
                            &cmdStep_, true);
+}
+
+/** Redraw all opened disassembler views */
+void DbgMainWindow::slotBreakpointsChanged() {
+    emit signalRedrawDisasm();
 }
 
 }  // namespace debugger

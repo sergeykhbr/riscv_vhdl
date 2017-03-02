@@ -117,13 +117,15 @@ public:
 signals:
     void signalNpcChanged(uint64_t npc);
     void signalAsmListChanged();
+    void signalBreakpointsChanged();
 
 public slots:
     void slotPostInit(AttributeType *cfg);
     void slotNpcChanged(uint64_t npc);
     void slotAsmListChanged();
     void slotUpdateByTimer();
-    void slotBreakpoint();
+    void slotBreakpointHalt();
+    void slotRedrawDisasm();
     void slotCellDoubleClicked(int row, int column);
 
 protected:

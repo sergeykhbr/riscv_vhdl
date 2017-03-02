@@ -67,7 +67,7 @@ AsmArea::AsmArea(IGui *gui, QWidget *parent, uint64_t fixaddr)
         }
         setRowHeight(i, lineHeight_);
         item(i, 0)->setBackgroundColor(Qt::lightGray);
-        item(i, 0)->setTextAlignment(Qt::AlignRight);
+        item(i, 0)->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
     }
 
     setHorizontalHeaderLabels(
@@ -76,6 +76,7 @@ AsmArea::AsmArea(IGui *gui, QWidget *parent, uint64_t fixaddr)
     setColumnWidth(1, 10 + fm.width(tr("00112233")));
     setColumnWidth(2, 10 + fm.width(tr("0")));
     setColumnWidth(3, 10 + fm.width(tr("addw    r1,r2,0x112233445566")));
+    setColumnWidth(4, 10 + fm.width(tr("some very long long comment+offset")));
 
     connect(this, SIGNAL(signalNpcChanged(uint64_t)),
             this, SLOT(slotNpcChanged(uint64_t)));
@@ -164,6 +165,8 @@ void AsmArea::slotUpdateByTimer() {
 void AsmArea::handleResponse(AttributeType *req, AttributeType *resp) {
     if (req->is_equal("reg npc")) {
         emit signalNpcChanged(resp->to_uint64());
+    } else if (strstr(req->to_string(), "br ")) {
+        emit signalBreakpointsChanged();
     } else if (strstr(req->to_string(), "disas")) {
         addMemBlock(*resp, asmLines_);
         emit signalAsmListChanged();
@@ -221,7 +224,11 @@ void AsmArea::slotAsmListChanged() {
     state_ = CMD_idle;
 }
 
-void AsmArea::slotBreakpoint() {
+void AsmArea::slotBreakpointHalt() {
+    portBreak_->injectFetch();
+}
+
+void AsmArea::slotRedrawDisasm() {
     portBreak_->injectFetch();
 }
 
@@ -242,8 +249,7 @@ void AsmArea::slotCellDoubleClicked(int row, int column) {
         RISCV_sprintf(tstr, sizeof(tstr), "br add 0x%" RV_PRI64 "x", addr);
     }
     AttributeType brcmd(tstr);
-    // Do not handle breakpoint responses:
-    igui_->registerCommand(NULL, &brcmd, true);
+    igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), &brcmd, true);
 
     // Update disassembler list:
     rangeModel_.updateAddr(addr);
@@ -319,7 +325,7 @@ void AsmArea::outLines() {
             }
             setRowHeight(i, lineHeight_);
             item(i, 0)->setBackgroundColor(Qt::lightGray);
-            item(i, 0)->setTextAlignment(Qt::AlignRight);
+            item(i, 0)->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
         }
     } 
     if (hideLineIdx_ < asm_cnt) {
@@ -356,7 +362,6 @@ void AsmArea::outLines() {
 }
 
 void AsmArea::outLine(int idx, AttributeType &line) {
-    char stmp[256];
     QTableWidgetItem *pw;
     uint64_t addr;
     if (idx >= rowCount()) {
@@ -367,24 +372,30 @@ void AsmArea::outLine(int idx, AttributeType &line) {
     }
     
     addr = line[ASM_addrline].to_uint64();
-    if (line.size() == 2 && line[ASM_code].is_string()) {
+    if (line[ASM_list_type].to_int() == AsmList_symbol) {
+        setSpan(idx, COL_label, 1, 3);
+
         pw = item(idx, COL_addrline);
-        RISCV_sprintf(stmp, sizeof(stmp), "%d", static_cast<int>(addr));
-        pw->setText(QString(stmp));
+        pw->setText(QString("<%1>").arg(addr, 16, 16, QChar('0')));
         pw->setTextColor(QColor(Qt::darkBlue));
 
         pw = item(idx, COL_code);
-        setSpan(idx, COL_code, 1, 4);
-        pw->setText(QString(line[ASM_code].to_string()));
+        pw->setBackgroundColor(Qt::lightGray);
+        pw->setText(tr(""));
 
-        item(idx, COL_label)->setText(tr(""));
+        pw = item(idx, COL_label);
+        pw->setText(QString(line[ASM_code].to_string()));
+        pw->setTextColor(QColor(Qt::darkBlue));
+
         item(idx, COL_mnemonic)->setText(tr(""));
         item(idx, COL_comment)->setText(tr(""));
-    } else if (line.size() == ASM_Total) {
+    } else if (line[ASM_list_type].to_int() == AsmList_disasm) {
+        setSpan(idx, COL_label, 1, 1);
+
         pw = item(idx, COL_addrline);
-        RISCV_sprintf(stmp, sizeof(stmp), "%016" RV_PRI64 "x", addr);
-        pw->setText(QString(stmp));
+        pw->setText(QString("%1").arg(addr, 16, 16, QChar('0')));
         pw->setTextColor(QColor(Qt::black));
+        pw->setBackgroundColor(Qt::lightGray);
 
         pw = item(idx, COL_code);
         uint32_t instr = line[ASM_code].to_uint32();
@@ -395,10 +406,10 @@ void AsmArea::outLine(int idx, AttributeType &line) {
             pw->setBackgroundColor(Qt::lightGray);
             pw->setTextColor(Qt::black);
         }
-        RISCV_sprintf(stmp, sizeof(stmp), "%08x", instr);
-        pw->setText(QString(stmp));
+        pw->setText(QString("%1").arg(instr, 8, 16, QChar('0')));
 
         pw = item(idx, COL_label);
+        pw->setTextColor(Qt::black);
         pw->setText(QString(line[ASM_label].to_string()));
 
         pw = item(idx, COL_mnemonic);

@@ -88,6 +88,9 @@ void CmdDisas::format(AttributeType *asmbuf, AttributeType *fmtstr) {
     std::string tout;
     for (unsigned i = 0; i < asmbuf->size(); i++) {
         const AttributeType &line = (*asmbuf)[i];
+        if (line[ASM_list_type].to_int() != AsmList_disasm) {
+            continue;
+        }
         RISCV_sprintf(tstr, sizeof(tstr), "%016" RV_PRI64 "x: %08x    %s\n",
                 line[ASM_addrline].to_uint64(),
                 line[ASM_code].to_uint32(),

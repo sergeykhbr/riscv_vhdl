@@ -74,28 +74,45 @@ void CmdSymb::applyFilter(const char *filt, AttributeType *in,
 }
 
 bool CmdSymb::filt_pass(const char *filt, const char *symbname) {
+    bool sequence;
+    const char *pf, *ps;
     while ((*filt) && (*symbname)) {
         if (filt[0] == '*') {
             filt++;
-            if (filt[0] == '\0') {
+            pf = filt;
+            sequence = false;
+            if (pf[0] == '\0') {
                 return true;
             }
-            while (symbname[0] && symbname[0] != filt[0]) {
+            while (symbname[0] != '\0') {
+                if (pf[0] == '\0') {
+                    return true;
+                } else if (pf[0] == '*') {
+                    return filt_pass(pf, symbname);
+                } else if (pf[0] == symbname[0]) {
+                    pf++;
+                    if (!sequence) {
+                        sequence = true;
+                        ps = symbname;
+                    }
+                } else if (sequence) {
+                    sequence = false;
+                    pf = filt;
+                    symbname = ps;
+                }
                 symbname++;
             }
-            if (symbname[0] != filt[0]) {
-                return false;
+            if ((pf[0] != 0) && (pf[0] != '*') && (pf[0] != '?')) {
+                sequence = false;
             }
-        } else if (filt[0] != '?' && symbname[0] != filt[0]) {
-            return false;
-        } else {
+            return sequence;
+        } else if (filt[0] == '?' || symbname[0] == filt[0]) {
             filt++;
-            symbname++;
+        } else if (symbname[0] != filt[0]) {
+            return false;
         }
-    }
-    if (symbname[0] == 0 && 
-        (filt[0] == 0 || (filt[0] == '*' && filt[1] == 0))) {
-        return true;
+
+        symbname++;
     }
     return false;
 }

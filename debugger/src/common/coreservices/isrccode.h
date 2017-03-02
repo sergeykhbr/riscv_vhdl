@@ -23,7 +23,13 @@ enum EBreakList {
     BrkList_Total
 };
 
+enum EListTypes {
+    AsmList_disasm,
+    AsmList_symbol,
+};
+
 enum EColumnNames {
+    ASM_list_type,
     ASM_addrline,
     ASM_code,
     ASM_codesize,

@@ -11,10 +11,12 @@
 #include "iclass.h"
 #include "iservice.h"
 #include "coreservices/isrccode.h"
+#include "coreservices/ielfreader.h"
 
 namespace debugger {
 
-typedef int (*disasm_opcode_f)(uint64_t pc,
+typedef int (*disasm_opcode_f)(IElfReader *ielf,
+                                uint64_t pc,
                                 uint32_t code,
                                 AttributeType *mnemonic,
                                 AttributeType *comment);
@@ -50,6 +52,7 @@ public:
 private:
     disasm_opcode_f tblOpcode1_[32];
     AttributeType brList_;
+    IElfReader *ielf_;
 };
 
 DECLARE_CLASS(SourceService)

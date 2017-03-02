@@ -27,12 +27,30 @@ public:
 signals:
     void signalPostInit(AttributeType *cfg);
     void signalUpdateByTimer();
-    void signalBreakpoint();
+    void signalBreakpointHalt();
+    void signalBreakpointsChanged();
+    void signalRedrawDisasm();
 
 private slots:
-    void slotPostInit(AttributeType *cfg);
-    void slotUpdateByTimer();
-    void slotBreakpoint();
+    void slotPostInit(AttributeType *cfg) {
+        emit signalPostInit(cfg);
+    }
+
+    void slotUpdateByTimer() {
+        emit signalUpdateByTimer();
+    }
+
+    void slotBreakpointHalt() {
+        emit signalBreakpointHalt();
+    }
+
+    void slotBreakpointsChanged() {
+        emit signalBreakpointsChanged();
+    }
+
+    void slotRedrawDisasm() {
+        emit signalRedrawDisasm();
+    }
 
 private:
     AttributeType listMem_;
@@ -61,8 +79,13 @@ public:
         }
         connect(parent, SIGNAL(signalPostInit(AttributeType *)),
                 pnew, SLOT(slotPostInit(AttributeType *)));
-        connect(parent, SIGNAL(signalBreakpoint()),
-                pnew, SLOT(slotBreakpoint()));
+        connect(parent, SIGNAL(signalBreakpointHalt()),
+                pnew, SLOT(slotBreakpointHalt()));
+
+        connect(pnew, SIGNAL(signalBreakpointsChanged()),
+                parent, SLOT(slotBreakpointsChanged()));
+        connect(parent, SIGNAL(signalRedrawDisasm()),
+                pnew, SLOT(slotRedrawDisasm()));
         setWidget(pnew);
         area_->addSubWindow(this);
         show();
