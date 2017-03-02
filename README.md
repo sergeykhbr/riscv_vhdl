@@ -298,7 +298,7 @@ Build elf-file:
 Create HEX-image for ROM initialization. I use own analog of the *elf2raw*
 utility named as *elf2raw64*. You can find it in GNU tools archive.
 
-    $ elf2raw64 outdir/zephyr.elf -h -f 262144 -l 8 -o fwimage.hex
+    $ elf2raw64 outdir/riscv_gnss/zephyr.elf -h -f 262144 -l 8 -o fwimage.hex
 
 Flags:
 
@@ -310,8 +310,21 @@ Copy *fwimage.hex* to rocket_soc subdirectory
 
     $ cp fwimage.hex ../../../rocket_soc/fw_images
 
+## 3. Debug Zephyr kernel with debug symbols.
 
-## 3. Build and run custom FW like 'Hello World' example.
+Our debugger allows to use debug information from the elf-file as on the
+picture bellow:
+
+![GUI debug](rocket_soc/docs/pics/dbg_gui_symb.png)
+
+To achieve such results just use the console command *'loadelf'*:
+
+    riscv# loadelf zephyr.elf
+    riscv# loadelf zephyr.elf nocode
+
+The second command loads debug information without target reprogramming.
+
+## 4. Build and run custom FW like 'Hello World' example.
 
 Build example:
 
