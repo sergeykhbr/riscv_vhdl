@@ -334,6 +334,7 @@ void AsmArea::outLines() {
         }
         hideLineIdx_ = asm_cnt;
     }
+    clearSpans();
 
     // Output visible assembler lines:
     for (unsigned i = 0; i < asmLines_.size(); i++) {
@@ -390,8 +391,6 @@ void AsmArea::outLine(int idx, AttributeType &line) {
         item(idx, COL_mnemonic)->setText(tr(""));
         item(idx, COL_comment)->setText(tr(""));
     } else if (line[ASM_list_type].to_int() == AsmList_disasm) {
-        setSpan(idx, COL_label, 1, 1);
-
         pw = item(idx, COL_addrline);
         pw->setText(QString("%1").arg(addr, 16, 16, QChar('0')));
         pw->setTextColor(QColor(Qt::black));

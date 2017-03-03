@@ -30,12 +30,5 @@
 
 --! @defgroup debugger_group 5. RISC-V debugger
 --! @ingroup main_group
---! @copydoc debugger_page
 
---! @defgroup eth_setup_group Ethernet setup
---! @ingroup debugger_group
---! @copydoc eth_link
 
---! @defgroup debugger_api_group SW Debugger API
---! @ingroup debugger_group
---! @copydoc sw_debugger_api_link

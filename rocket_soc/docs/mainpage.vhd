@@ -118,9 +118,17 @@
 --!
 
 --! @page debugger_page RISC-V debugger
+--! @copydoc dbg_overview
+--!
+--!   @subpage dbg_prj_structure
+--!
 --!   @subpage eth_link
 --!
---!   @subpage sw_debugger_api_link
+--!   @subpage dbg_connect
+--!
+--!   @subpage dbg_troubles
+--!
+--!   @subpage dbg_core_api_p
 --!
 
 

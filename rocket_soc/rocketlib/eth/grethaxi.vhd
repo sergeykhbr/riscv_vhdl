@@ -7,6 +7,8 @@
 --!             and EDCL debugging functionality.
 ------------------------------------------------------------------------------
 --! 
+--! @defgroup eth_setup_group Ethernet setup
+--! @ingroup debugger_group
 --! @page eth_link Ethernet setup
 --! 
 --! @par Overview
