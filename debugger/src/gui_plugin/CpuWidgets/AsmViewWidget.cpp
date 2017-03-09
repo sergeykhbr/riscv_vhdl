@@ -32,14 +32,8 @@ AsmViewWidget::AsmViewWidget(IGui *igui, QWidget *parent, uint64_t fixaddr)
     gridLayout->addWidget(parea, 1, 0);
     gridLayout->setRowStretch(1, 10);
 
-    connect(this, SIGNAL(signalPostInit(AttributeType *)),
-            parea, SLOT(slotPostInit(AttributeType *)));
-
     connect(this, SIGNAL(signalUpdateByTimer()),
             parea, SLOT(slotUpdateByTimer()));
-
-    connect(this, SIGNAL(signalBreakpointHalt()),
-            parea, SLOT(slotBreakpointHalt()));
 
     connect(parea, SIGNAL(signalBreakpointsChanged()),
             this, SLOT(slotBreakpointsChanged()));

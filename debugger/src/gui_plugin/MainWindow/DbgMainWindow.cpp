@@ -15,6 +15,7 @@ DbgMainWindow::DbgMainWindow(IGui *igui, event_def *init_done) {
     igui_ = igui;
     initDone_ = init_done;
     statusRequested_ = false;
+    ebreak_ = 0;
 
     setWindowTitle(tr("RISC-V platform debugger"));
     resize(QDesktopWidget().availableGeometry(this).size() * 0.7);
@@ -59,6 +60,9 @@ DbgMainWindow::DbgMainWindow(IGui *igui, event_def *init_done) {
 }
 
 DbgMainWindow::~DbgMainWindow() {
+    if (ebreak_) {
+        delete ebreak_;
+    }
     igui_->removeFromQueue(static_cast<IGuiCmdHandler *>(this));
 }
 
@@ -75,8 +79,8 @@ void DbgMainWindow::handleResponse(AttributeType *req, AttributeType *resp) {
             || (!actionRun_->isChecked() && !ctrl.bits.halt)) {
             emit signalTargetStateChanged(ctrl.bits.halt == 0);
         }
-        if (ctrl.bits.breakpoint) {
-            emit signalBreakpointHalt();
+        if (ctrl.bits.breakpoint && ebreak_) {
+            ebreak_->skip();
         }
     }
 }
@@ -342,6 +346,17 @@ void DbgMainWindow::slotPostInit(AttributeType *cfg) {
     tmrGlobal_->setInterval(ms);
     tmrGlobal_->setSingleShot(false);
     tmrGlobal_->start(ms);
+
+    ISocInfo *isoc = static_cast<ISocInfo *>(igui_->getSocInfo());
+    if (isoc) {
+        DsuMapType *dsu = isoc->getpDsu();
+        ebreak_ = new EBreakHandler(igui_);
+
+        ebreak_->setBrAddressFetch(
+            reinterpret_cast<uint64_t>(&dsu->udbg.v.br_address_fetch));
+        ebreak_->setHwRemoveBreakpoint(
+            reinterpret_cast<uint64_t>(&dsu->udbg.v.remove_breakpoint));
+    }
 }
 
 void DbgMainWindow::slotConfigDone() {

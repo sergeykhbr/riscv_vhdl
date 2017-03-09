@@ -9,6 +9,7 @@
 
 #include "api_core.h"   // MUST BE BEFORE QtWidgets.h or any other Qt header.
 #include "igui.h"
+#include "ebreakhandler.h"
 
 #include <QtWidgets/QMainWindow>
 #include "MdiAreaWidget.h"
@@ -44,7 +45,6 @@ signals:
     void signalPostInit(AttributeType *cfg);
     void signalUpdateByTimer();
     void signalTargetStateChanged(bool);
-    void signalBreakpointHalt();
     void signalRedrawDisasm();
     void signalExit();
 
@@ -113,6 +113,7 @@ private:
     IGui *igui_;
     event_def *initDone_;
     bool statusRequested_;
+    EBreakHandler *ebreak_;
 };
 
 }  // namespace debugger

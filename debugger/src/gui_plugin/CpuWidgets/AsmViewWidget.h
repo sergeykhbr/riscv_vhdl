@@ -16,6 +16,7 @@
 #include <QtWidgets/QGridLayout>
 #include <QtWidgets/QAction>
 #include <QtCore/QEvent>
+#include <QtGui/qevent.h>
 
 namespace debugger {
 
@@ -25,23 +26,13 @@ public:
     AsmViewWidget(IGui *igui, QWidget *parent, uint64_t fixaddr);
 
 signals:
-    void signalPostInit(AttributeType *cfg);
     void signalUpdateByTimer();
-    void signalBreakpointHalt();
     void signalBreakpointsChanged();
     void signalRedrawDisasm();
 
 private slots:
-    void slotPostInit(AttributeType *cfg) {
-        emit signalPostInit(cfg);
-    }
-
     void slotUpdateByTimer() {
         emit signalUpdateByTimer();
-    }
-
-    void slotBreakpointHalt() {
-        emit signalBreakpointHalt();
     }
 
     void slotBreakpointsChanged() {
@@ -77,10 +68,6 @@ public:
             connect(parent, SIGNAL(signalUpdateByTimer()),
                     pnew, SLOT(slotUpdateByTimer()));
         }
-        connect(parent, SIGNAL(signalPostInit(AttributeType *)),
-                pnew, SLOT(slotPostInit(AttributeType *)));
-        connect(parent, SIGNAL(signalBreakpointHalt()),
-                pnew, SLOT(slotBreakpointHalt()));
 
         connect(pnew, SIGNAL(signalBreakpointsChanged()),
                 parent, SLOT(slotBreakpointsChanged()));
