@@ -269,7 +269,6 @@ extern "C" {
 #endif
 
 /**
- * @page dbg_core_api_p Core API methods
  * @defgroup dbg_core_api_g Core API methods
  * @ingroup debugger_group
  * @details Core methods that allow create, modify and delete base library
@@ -363,7 +362,7 @@ IFace *RISCV_get_service(const char *name);
 /**
  * @brief Get interface of the specified ervice.
  * @details This method can be used in runtime to implement dynamic connection
- *          of different service
+ *          of different services
  * @code
  *     ...
  *     IUdp *iudp1 = static_cast<IUdp *>

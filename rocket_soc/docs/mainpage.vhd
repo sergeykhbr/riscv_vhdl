@@ -128,7 +128,5 @@
 --!
 --!   @subpage dbg_troubles
 --!
---!   @subpage dbg_core_api_p
---!
 
 

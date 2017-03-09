@@ -201,6 +201,7 @@
     <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\SymbolBrowserWidget.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\gui_plugin.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\MainWindow\DbgMainWindow.cpp" />
+    <ClCompile Include="..\..\src\gui_plugin\MainWindow\ebreakhandler.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\MainWindow\MdiAreaWidget.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\PeriphWidgets\DipArea.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\PeriphWidgets\GpioWidget.cpp" />
@@ -235,6 +236,7 @@
     <ClInclude Include="..\..\src\gui_plugin\gui_plugin.h" />
     <ClInclude Include="..\..\src\gui_plugin\igui.h" />
     <ClInclude Include="..\..\src\gui_plugin\MainWindow\DbgMainWindow.h" />
+    <ClInclude Include="..\..\src\gui_plugin\MainWindow\ebreakhandler.h" />
     <ClInclude Include="..\..\src\gui_plugin\MainWindow\MdiAreaWidget.h" />
     <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\DipArea.h" />
     <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\GpioWidget.h" />
