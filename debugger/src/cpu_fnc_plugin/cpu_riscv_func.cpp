@@ -291,6 +291,7 @@ void CpuRiscV_Functional::reset() {
     pContext->br_ctrl.val = 0;
     pContext->br_inject_fetch = false;
     pContext->br_status_ena = false;
+    pContext->stack_trace_cnt = 0;
 }
 
 void CpuRiscV_Functional::fetchInstruction() {

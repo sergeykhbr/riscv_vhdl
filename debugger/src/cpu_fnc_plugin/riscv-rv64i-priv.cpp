@@ -204,6 +204,10 @@ public:
     URET() : IsaProcessor("URET", "00000000001000000000000001110011") {}
 
     virtual void exec(uint32_t *payload, CpuContextType *data) {
+        if (data->cur_prv_level != PRV_U) {
+            generateException(EXCEPTION_InstrIllegal, data);
+            return;
+        }
         csr_mstatus_type mstatus;
         mstatus.value = readCSR(CSR_mstatus, data);
 
@@ -232,6 +236,10 @@ public:
     SRET() : IsaProcessor("SRET", "00010000001000000000000001110011") {}
 
     virtual void exec(uint32_t *payload, CpuContextType *data) {
+        if (data->cur_prv_level != PRV_S) {
+            generateException(EXCEPTION_InstrIllegal, data);
+            return;
+        }
         csr_mstatus_type mstatus;
         mstatus.value = readCSR(CSR_mstatus, data);
 
@@ -255,6 +263,10 @@ public:
     HRET() : IsaProcessor("HRET", "00100000001000000000000001110011") {}
 
     virtual void exec(uint32_t *payload, CpuContextType *data) {
+        if (data->cur_prv_level != PRV_H) {
+            generateException(EXCEPTION_InstrIllegal, data);
+            return;
+        }
         csr_mstatus_type mstatus;
         mstatus.value = readCSR(CSR_mstatus, data);
 
@@ -278,6 +290,10 @@ public:
     MRET() : IsaProcessor("MRET", "00110000001000000000000001110011") {}
 
     virtual void exec(uint32_t *payload, CpuContextType *data) {
+        if (data->cur_prv_level != PRV_M) {
+            generateException(EXCEPTION_InstrIllegal, data);
+            return;
+        }
         csr_mstatus_type mstatus;
         mstatus.value = readCSR(CSR_mstatus, data);
 
