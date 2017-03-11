@@ -1,0 +1,17 @@
+*.wlf
+*.mti
+*.do
+ambalib/*
+!ambalib/_info
+commonlib/*
+!commonlib/_info
+gnsslib/*
+!gnsslib/_info
+rocketlib/*
+!rocketlib/_info
+riverlib/*
+!riverlib/_info
+techmap/*
+!techmap/_info
+work/*
+!work/_info

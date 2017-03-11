@@ -96,25 +96,13 @@ architecture behavior of riscv_soc_tb is
   signal i_rst : std_logic := '1';
   signal i_sclk_p : std_logic;
   signal i_sclk_n : std_logic;
-  signal i_clk_adc : std_logic := '0';
-  signal i_int_clkrf : std_logic;
-  signal i_dip : std_logic_vector(3 downto 1);
+  signal i_dip : std_logic_vector(3 downto 0);
   signal o_led : std_logic_vector(7 downto 0);
   signal i_uart1_ctsn : std_logic := '0';
   signal i_uart1_rd : std_logic := '1';
   signal o_uart1_td : std_logic;
   signal o_uart1_rtsn : std_logic;
   
-  signal i_gps_ld    : std_logic := '0';--'1';
-  signal i_glo_ld    : std_logic := '0';--'1';
-  signal o_max_sclk  : std_logic;
-  signal o_max_sdata : std_logic;
-  signal o_max_ncs   : std_logic_vector(1 downto 0);
-  signal i_antext_stat   : std_logic := '0';
-  signal i_antext_detect : std_logic := '0';
-  signal o_antext_ena    : std_logic;
-  signal o_antint_contr  : std_logic;
-
   signal o_emdc    : std_logic;
   signal io_emdio  : std_logic;
   signal i_rxd  : std_logic_vector(3 downto 0) := "0000";
@@ -126,7 +114,6 @@ architecture behavior of riscv_soc_tb is
   signal uart_instr : string(1 to 256);
   signal uart_busy : std_logic;
 
-  signal adc_cnt : integer := 0;
   signal clk_cur: std_logic := '1';
   signal check_clk_bus : std_logic := '0';
   signal iClkCnt : integer := 0;
@@ -139,30 +126,14 @@ component riscv_soc is port
   i_rst     : in std_logic; -- button "Center"
   i_sclk_p  : in std_logic;
   i_sclk_n  : in std_logic;
-  i_clk_adc : in std_logic;
-  i_int_clkrf : in std_logic;
-  i_dip     : in std_logic_vector(3 downto 1);
+  i_dip     : in std_logic_vector(3 downto 0);
   o_led     : out std_logic_vector(7 downto 0);
   -- uart1
   i_uart1_ctsn : in std_logic;
   i_uart1_rd   : in std_logic;
   o_uart1_td   : out std_logic;
   o_uart1_rtsn : out std_logic;
-  -- ADC samples
-  i_gps_I  : in std_logic_vector(1 downto 0);
-  i_gps_Q  : in std_logic_vector(1 downto 0);
-  i_glo_I  : in std_logic_vector(1 downto 0);
-  i_glo_Q  : in std_logic_vector(1 downto 0);
-  -- rf front-end
-  i_gps_ld    : in std_logic;
-  i_glo_ld    : in std_logic;
-  o_max_sclk  : out std_logic;
-  o_max_sdata : out std_logic;
-  o_max_ncs   : out std_logic_vector(1 downto 0);
-  i_antext_stat   : in std_logic;
-  i_antext_detect : in std_logic;
-  o_antext_ena    : out std_logic;
-  o_antint_contr  : out std_logic;
+  -- Ethernet
   i_gmiiclk_p : in    std_ulogic;
   i_gmiiclk_n : in    std_ulogic;
   o_egtx_clk  : out   std_ulogic;
@@ -272,12 +243,6 @@ begin
   begin
 
     wait for INCR_TIME;
-    if (adc_cnt + 26000000) >= 70000000 then
-      adc_cnt <= (adc_cnt + 26000000) - 70000000;
-      i_clk_adc <= not i_clk_adc;
-    else
-      adc_cnt <= (adc_cnt + 26000000);
-    end if;
 
     while true loop
       clk_next := not clk_cur;
@@ -316,12 +281,6 @@ begin
       if clk_cur = '1' then
         iClkCnt <= iClkCnt + 1;
       end if;
-      if (adc_cnt + 26000000) >= 70000000 then
-        adc_cnt <= (adc_cnt + 26000000) - 70000000;
-        i_clk_adc <= not i_clk_adc;
-      else
-        adc_cnt <= (adc_cnt + 26000000);
-      end if;
 
     end loop;
     report "Total clocks checked: " & tost(iErrCheckedCnt) & " Errors: " & tost(iErrCnt);
@@ -345,8 +304,7 @@ begin
     end if;
   end process procSignal;
 
-  i_dip <= "000";
-  i_int_clkrf <= '1';
+  i_dip <= "0001";
 
   udatagen0 : process (i_sclk_n, iClkCnt)
   begin
@@ -388,27 +346,12 @@ begin
     i_rst     => i_rst,
     i_sclk_p  => i_sclk_p,
     i_sclk_n  => i_sclk_n,
-    i_clk_adc => '0',--i_clk_adc,
-    i_int_clkrf => i_int_clkrf,
     i_dip     => i_dip,
     o_led     => o_led,
     i_uart1_ctsn => i_uart1_ctsn,
     i_uart1_rd   => i_uart1_rd,
     o_uart1_td   => o_uart1_td,
     o_uart1_rtsn => o_uart1_rtsn,
-    i_gps_I  => "01",
-    i_gps_Q  => "11",
-    i_glo_I  => "11",
-    i_glo_Q  => "01",
-    i_gps_ld    => i_gps_ld,
-    i_glo_ld    => i_glo_ld,
-    o_max_sclk  => o_max_sclk,
-    o_max_sdata => o_max_sdata,
-    o_max_ncs   => o_max_ncs,
-    i_antext_stat   => i_antext_stat,
-    i_antext_detect => i_antext_detect,
-    o_antext_ena    => o_antext_ena,
-    o_antint_contr  => o_antint_contr,
     i_gmiiclk_p => '0',
     i_gmiiclk_n => '1',
     o_egtx_clk  => open,

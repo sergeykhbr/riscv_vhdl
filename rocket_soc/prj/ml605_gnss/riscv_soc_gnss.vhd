@@ -40,6 +40,10 @@ library riverlib;
 --! River top level with AMBA interface module declaration
 use riverlib.types_river.all;
 
+--! GNSS Sensor Ltd proprietary library
+library gnsslib;
+use gnsslib.types_gnss.all;
+
  --! Top-level implementaion library
 library work;
 --! Target dependable configuration: RTL, FPGA or ASIC.
@@ -50,25 +54,67 @@ use work.config_common.all;
 --! @brief   SOC Top-level entity declaration.
 --! @details This module implements full SOC functionality and all IO signals
 --!          are available on FPGA/ASIC IO pins.
-entity riscv_soc is port 
+entity riscv_soc_gnss is port 
 ( 
   --! Input reset. Active High. Usually assigned to button "Center".
   i_rst     : in std_logic;
+
+  --! @name Clocks:
+  --! @{
 
   --! Differential clock (LVDS) positive signal.
   i_sclk_p  : in std_logic;
   --! Differential clock (LVDS) negative signal.
   i_sclk_n  : in std_logic;
+  --! External ADC clock (default 26 MHz).
+  i_clk_adc : in std_logic;
+  --! @}
+ 
+  --! @name User's IOs:
+  --! @{
+
   --! DIP switch.
-  i_dip     : in std_logic_vector(3 downto 0);
+  i_int_clkrf : in std_logic;
+  i_dip     : in std_logic_vector(3 downto 1);
   --! LEDs.
   o_led     : out std_logic_vector(7 downto 0);
-  --! UART1 signals:
+  --! @}
+ 
+  --! @name  UART1 signals:
+  --! @{
   i_uart1_ctsn : in std_logic;
   i_uart1_rd   : in std_logic;
   o_uart1_td   : out std_logic;
   o_uart1_rtsn : out std_logic;
+  --! @}
+  
+  --! @name ADC channel A inputs (1575.4 GHz):
+  --! @{
+  i_gps_I  : in std_logic_vector(1 downto 0);
+  i_gps_Q  : in std_logic_vector(1 downto 0);
+  --! @}
+
+  --! @name ADC channel B inputs (1602 GHz):
+  --! @{
+  i_glo_I  : in std_logic_vector(1 downto 0);
+  i_glo_Q  : in std_logic_vector(1 downto 0);
+  --! @}
+  
+  --! @name MAX2769 SPIs and antenna controls signals:
+  --! @{
+  i_gps_ld    : in std_logic;
+  i_glo_ld    : in std_logic;
+  o_max_sclk  : out std_logic;
+  o_max_sdata : out std_logic;
+  o_max_ncs   : out std_logic_vector(1 downto 0);
+  i_antext_stat   : in std_logic;
+  i_antext_detect : in std_logic;
+  o_antext_ena    : out std_logic;
+  o_antint_contr  : out std_logic;
+  --! @}
+  
   --! Ethernet MAC PHY interface signals
+  --! @{
   i_gmiiclk_p : in    std_ulogic;
   i_gmiiclk_n : in    std_ulogic;
   o_egtx_clk  : out   std_ulogic;
@@ -89,10 +135,10 @@ entity riscv_soc is port
 );
   --! @}
 
-end riscv_soc;
+end riscv_soc_gnss;
 
 --! @brief SOC top-level  architecture declaration.
-architecture arch_riscv_soc of riscv_soc is
+architecture arch_riscv_soc_gnss of riscv_soc_gnss is
 
   --! @name Buffered in/out signals.
   --! @details All signals that are connected with in/out pads must be passed
@@ -100,8 +146,9 @@ architecture arch_riscv_soc of riscv_soc is
   --!          as an empty devices but ASIC couldn't be made without buffering.
   --! @{
   signal ib_rst     : std_logic;
-  signal ib_clk_tcxo : std_logic;
+  signal ib_clk200  : std_logic;
   signal ib_sclk_n  : std_logic;
+  signal ib_clk_adc : std_logic;
   signal ib_dip     : std_logic_vector(3 downto 0);
   signal ib_gmiiclk : std_logic;
   --! @}
@@ -112,6 +159,7 @@ architecture arch_riscv_soc of riscv_soc is
   signal w_soft_rst : std_ulogic; -- Software reset (acitve HIGH) from DSU
   signal w_bus_nrst : std_ulogic; -- Global reset and Soft Reset active LOW
   signal w_clk_bus  : std_ulogic; -- bus clock from the internal PLL (100MHz virtex6/40MHz Spartan6)
+  signal w_clk_adc  : std_ulogic; -- 26 MHz from the internal PLL
   signal w_pll_lock : std_ulogic; -- PLL status signal. 0=Unlocked; 1=locked.
   
   signal uart1i : uart_in_type;
@@ -132,6 +180,12 @@ architecture arch_riscv_soc of riscv_soc is
   signal wb_bus_util_w : std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0);
   signal wb_bus_util_r : std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0);
   
+  signal gnss_i : gns_in_type;
+  signal gnss_o : gns_out_type;
+  
+  signal fse_i : fse_in_type;
+  signal fse_o : fse_out_type;
+ 
   signal eth_i : eth_in_type;
   signal eth_o : eth_out_type;
  
@@ -140,12 +194,14 @@ begin
 
   --! PAD buffers:
   irst0   : ibuf_tech generic map(CFG_PADTECH) port map (ib_rst, i_rst);
-  dipx : for i in 0 to 3 generate
+  iclk1  : ibuf_tech generic map(CFG_PADTECH) port map (ib_clk_adc, i_clk_adc);
+  idip0  : ibuf_tech generic map(CFG_PADTECH) port map (ib_dip(0), i_int_clkrf);
+  dipx : for i in 1 to 3 generate
      idipz  : ibuf_tech generic map(CFG_PADTECH) port map (ib_dip(i), i_dip(i));
   end generate;
 
   iclk0 : idsbuf_tech generic map (CFG_PADTECH) port map (
-         i_sclk_p, i_sclk_n, ib_clk_tcxo);
+         i_sclk_p, i_sclk_n, ib_clk200);
 
   igbebuf0 : igdsbuf_tech generic map (CFG_PADTECH) port map (
             i_gmiiclk_p, i_gmiiclk_n, ib_gmiiclk);
@@ -153,28 +209,18 @@ begin
 
   --! @todo all other in/out signals via buffers:
 
-  -- Nullify emty AXI-slots:  
-  axiso(CFG_NASTI_SLAVE_ENGINE) <= nasti_slave_out_none;
-  slv_cfg(CFG_NASTI_SLAVE_ENGINE)  <= nasti_slave_config_none;
-  irq_pins(CFG_IRQ_GNSSENGINE)      <= '0';
-  slv_cfg(CFG_NASTI_SLAVE_RFCTRL) <= nasti_slave_config_none;
-  axiso(CFG_NASTI_SLAVE_RFCTRL) <= nasti_slave_out_none;
-  slv_cfg(CFG_NASTI_SLAVE_FSE_GPS) <= nasti_slave_config_none;
-  axiso(CFG_NASTI_SLAVE_FSE_GPS) <= nasti_slave_out_none;
-
-
   ------------------------------------
   -- @brief Internal PLL device instance.
   pll0 : SysPLL_tech generic map (
     tech => CFG_FABTECH,
-    rf_frontend_ena => false
+    rf_frontend_ena => CFG_GNSSLIB_ENABLE
   ) port map (
     i_reset     => ib_rst,
-    i_int_clkrf => '1',
-    i_clk_tcxo	=> ib_clk_tcxo,
-    i_clk_adc   => '0',
+    i_int_clkrf => ib_dip(0),
+    i_clk_tcxo	=> ib_clk200,
+    i_clk_adc   => ib_clk_adc,
     o_clk_bus   => w_clk_bus,
-    o_clk_adc   => open,
+    o_clk_adc   => w_clk_adc,
     o_locked    => w_pll_lock
   );
   w_ext_reset <= ib_rst or not w_pll_lock;
@@ -393,6 +439,74 @@ end generate;
     o_irq_meip => core_irqs(CFG_CORE_IRQ_MEIP)
   );
 
+  ------------------------------------
+  --! @brief GNSS Engine stub with the AXI4 interface.
+  --! @details Map address:
+  --!          0x80003000..0x80003fff (4 KB total)
+  geneng_ena : if CFG_GNSSLIB_ENABLE and CFG_GNSSLIB_GNSSENGINE_ENABLE generate 
+    gnss_i.nrst     <= w_glob_nrst;
+    gnss_i.clk_bus  <= w_clk_bus;
+    gnss_i.axi      <= axisi(CFG_NASTI_SLAVE_ENGINE);
+    gnss_i.clk_adc  <= w_clk_adc;
+    gnss_i.gps_I    <= i_gps_I;
+    gnss_i.gps_Q    <= i_gps_Q;
+    gnss_i.glo_I    <= i_glo_I;
+    gnss_i.glo_Q    <= i_glo_I;
+
+    gnss0 : gnssengine  generic map (
+      tech    => CFG_MEMTECH,
+      xaddr   => 16#80003#,
+      xmask   => 16#FFFFF#,
+		xirq    => CFG_IRQ_GNSSENGINE
+    ) port map (
+      i      => gnss_i,
+      o      => gnss_o
+    );
+  
+    axiso(CFG_NASTI_SLAVE_ENGINE) <= gnss_o.axi;
+    slv_cfg(CFG_NASTI_SLAVE_ENGINE)  <= gnss_o.cfg;
+    irq_pins(CFG_IRQ_GNSSENGINE)      <= gnss_o.ms_pulse;
+  end generate;
+  geneng_dis : if not (CFG_GNSSLIB_ENABLE and CFG_GNSSLIB_GNSSENGINE_ENABLE) generate 
+    axiso(CFG_NASTI_SLAVE_ENGINE) <= nasti_slave_out_none;
+    slv_cfg(CFG_NASTI_SLAVE_ENGINE)  <= nasti_slave_config_none;
+    irq_pins(CFG_IRQ_GNSSENGINE)      <= '0';
+  end generate;
+
+  --! @brief RF front-end controller with the AXI4 interface.
+  --! @details Map address:
+  --!          0x80004000..0x80004fff (4 KB total)
+  rf_ena : if CFG_GNSSLIB_ENABLE generate
+    rf0 : axi_rfctrl generic map (
+      xaddr  => 16#80004#,
+      xmask  => 16#fffff#
+    ) port map (
+      nrst           => w_glob_nrst,
+      clk            => w_clk_bus,
+      o_cfg          => slv_cfg(CFG_NASTI_SLAVE_RFCTRL),
+      i_axi          => axisi(CFG_NASTI_SLAVE_RFCTRL),
+      o_axi          => axiso(CFG_NASTI_SLAVE_RFCTRL),
+      i_gps_ld       => i_gps_ld,
+      i_glo_ld       => i_glo_ld,
+      outSCLK        => o_max_sclk,
+      outSDATA       => o_max_sdata,
+      outCSn         => o_max_ncs,
+      inExtAntStat   => i_antext_stat,
+      inExtAntDetect => i_antext_detect,
+      outExtAntEna   => o_antext_ena,
+      outIntAntContr => o_antint_contr
+    );
+  end generate;
+  rf_dis : if not CFG_GNSSLIB_ENABLE generate
+    axiso(CFG_NASTI_SLAVE_RFCTRL) <= nasti_slave_out_none;
+    slv_cfg(CFG_NASTI_SLAVE_RFCTRL) <= nasti_slave_config_none;
+    o_max_sclk <= '0';
+    o_max_sdata <= '0';
+    o_max_ncs <= "11";
+    o_antext_ena <= '0';
+    o_antint_contr <= '0';
+  end generate;
+
   --! @brief Timers with the AXI4 interface.
   --! @details Map address:
   --!          0x80005000..0x80005fff (4 KB total)
@@ -409,6 +523,40 @@ end generate;
     o_axi  => axiso(CFG_NASTI_SLAVE_GPTIMERS),
     o_irq  => irq_pins(CFG_IRQ_GPTIMERS)
   );
+
+  --! @brief GPS-CA Fast Search Engine with the AXI4 interface.
+  --! @details Map address:
+  --!          0x8000a000..0x8000afff (4 KB total)
+  fse0_ena : if CFG_GNSSLIB_ENABLE and CFG_GNSSLIB_FSEGPS_ENABLE generate 
+      fse_i.nrst       <= w_glob_nrst;
+      fse_i.clk_bus    <= w_clk_bus;
+      fse_i.clk_fse    <= w_clk_bus;
+      fse_i.axi        <= axisi(CFG_NASTI_SLAVE_FSE_GPS);
+      fse_i.clk_adc    <= w_clk_adc;
+      fse_i.I          <= i_gps_I;
+      fse_i.Q          <= i_gps_Q;
+      fse_i.ms_pulse   <= gnss_o.ms_pulse;
+      fse_i.pps        <= gnss_o.pps;
+      fse_i.test_mode  <= '0';
+
+      fse0 : TopFSE generic map (
+        tech   => CFG_MEMTECH,
+        xaddr  => 16#8000a#,
+        xmask  => 16#fffff#,
+        sys    => GEN_SYSTEM_GPSCA
+      ) port map (
+        i => fse_i,
+        o => fse_o
+      );
+  
+      slv_cfg(CFG_NASTI_SLAVE_FSE_GPS) <= fse_o.cfg;
+      axiso(CFG_NASTI_SLAVE_FSE_GPS) <= fse_o.axi;
+  end generate;
+  --! FSE GPS disable
+  fse0_dis : if not (CFG_GNSSLIB_ENABLE and CFG_GNSSLIB_FSEGPS_ENABLE) generate 
+      slv_cfg(CFG_NASTI_SLAVE_FSE_GPS) <= nasti_slave_config_none;
+      axiso(CFG_NASTI_SLAVE_FSE_GPS) <= nasti_slave_out_none;
+  end generate;
 
   --! Gigabit clock phase rotator with buffers
   clkrot90 : clkp90_tech  generic map (
@@ -511,7 +659,7 @@ end generate;
     hw_id   => CFG_HW_ID
   ) port map (
     sys_clk => w_clk_bus, 
-    adc_clk => '0',
+    adc_clk => w_clk_adc,
     nrst   => w_glob_nrst,
     mstcfg => mst_cfg,
     slvcfg => slv_cfg,
@@ -521,4 +669,4 @@ end generate;
   );
 
 
-end arch_riscv_soc;
+end arch_riscv_soc_gnss;

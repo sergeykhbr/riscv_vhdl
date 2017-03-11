@@ -52,28 +52,7 @@ constant CFG_SIM_FWIMAGE_HEX : string :=
 --!
 --! @details Read Only unique platform identificator that could be
 --!          read by firmware from the Plug'n'Play support module.
-constant CFG_HW_ID : std_logic_vector(31 downto 0) := X"20170214";
-
---! @brief Disable/Enable usage of the <em><b>gnsslib library</b></em>.
---!
---! @details This \e  'gnsslib' is the property of the <em>"GNSS Sensor ltd"
---!          </em> (\link www.gnss-sensor.com \endlink) and it 
---!          implements a lot of Navigation related peripheries, like: 
---!          <ul>
---!              <li>RF front-end synthezators controller;</li>
---!              <li>Multi-system GNSS Engine;</li>
---!              <li>Fast Search modules;</li>
---!              <li>Viterbi decoders;</li>
---!              <li>Self-test generators and so on.</li>
---!          </ul>
---! @warning This define enables RF front-end clock as a source of ADC clock.
---! 
-constant CFG_GNSSLIB_ENABLE : boolean := false;
-
---! @brief Enable GNSS Engine module.
-constant CFG_GNSSLIB_GNSSENGINE_ENABLE : boolean := false;
---! @brief Enable Fast Search Engine for the GPS signals.
-constant CFG_GNSSLIB_FSEGPS_ENABLE : boolean := false;
+constant CFG_HW_ID : std_logic_vector(31 downto 0) := X"20170311";
 
 --! @brief Enabling Ethernet MAC interface.
 --! @details By default MAC module enables support of the debug feature EDCL.
@@ -81,12 +60,6 @@ constant CFG_ETHERNET_ENABLE : boolean := true;
 
 --! @brief Enable/Disable Debug Unit 
 constant CFG_DSU_ENABLE : boolean := true;
-
---! @brief Remove BUFGMUX from project and use internaly generate ADC clock.
---! @details We have some difficulties with Vivado + Kintex7 constrains, so
---!          to make test-mode stable working we use this temporary config
---!          parameter that hardcodes 'test_mode' is always enabled
-constant CFG_TESTMODE_ON : boolean := true;
 
 end;
 
