@@ -44,9 +44,11 @@ use ambalib.types_amba4.all;
 --!   </ul>
 package types_gnss is
 
-
   --! Maximal input bus width per complex component
   constant ADC_BIT_WIDTH             : integer := 2;
+
+  --! GPS FSE module enable/disable
+  constant CFG_GNSSLIB_FSEGPS_ENABLE : boolean := true;
 
   --! @brief Recording time interval for the FSE samples in msec.
   --! @details Fast Search Engine processing is splitted on two phases:

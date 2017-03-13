@@ -146,7 +146,7 @@ architecture arch_riscv_soc_gnss of riscv_soc_gnss is
   --!          as an empty devices but ASIC couldn't be made without buffering.
   --! @{
   signal ib_rst     : std_logic;
-  signal ib_clk200  : std_logic;
+  signal ib_clk_tcxo  : std_logic;
   signal ib_sclk_n  : std_logic;
   signal ib_clk_adc : std_logic;
   signal ib_dip     : std_logic_vector(3 downto 0);
@@ -201,7 +201,7 @@ begin
   end generate;
 
   iclk0 : idsbuf_tech generic map (CFG_PADTECH) port map (
-         i_sclk_p, i_sclk_n, ib_clk200);
+         i_sclk_p, i_sclk_n, ib_clk_tcxo);
 
   igbebuf0 : igdsbuf_tech generic map (CFG_PADTECH) port map (
             i_gmiiclk_p, i_gmiiclk_n, ib_gmiiclk);
@@ -213,11 +213,11 @@ begin
   -- @brief Internal PLL device instance.
   pll0 : SysPLL_tech generic map (
     tech => CFG_FABTECH,
-    rf_frontend_ena => CFG_GNSSLIB_ENABLE
+    rf_frontend_ena => true
   ) port map (
     i_reset     => ib_rst,
     i_int_clkrf => ib_dip(0),
-    i_clk_tcxo	=> ib_clk200,
+    i_clk_tcxo	=> ib_clk_tcxo,
     i_clk_adc   => ib_clk_adc,
     o_clk_bus   => w_clk_bus,
     o_clk_adc   => w_clk_adc,
@@ -349,7 +349,7 @@ end generate;
     memtech  => CFG_MEMTECH,
     xaddr    => 16#00100#,
     xmask    => 16#fffc0#,
-    sim_hexfile => CFG_SIM_FWIMAGE_HEX
+    sim_hexfile => "../../fw_images/gnssfw.hex"--CFG_SIM_FWIMAGE_HEX
   ) port map (
     clk  => w_clk_bus,
     nrst => w_glob_nrst,
@@ -367,7 +367,7 @@ end generate;
     xaddr    => 16#10000#,
     xmask    => 16#fff80#,            -- 512 KB mask
     abits    => (10 + log2(512)),     -- 512 KB address
-    init_file => CFG_SIM_FWIMAGE_HEX  -- Used only for inferred
+    init_file => "../../fw_images/gnssfw.hex"--CFG_SIM_FWIMAGE_HEX  -- Used only for inferred
   ) port map (
     clk  => w_clk_bus,
     nrst => w_glob_nrst,
@@ -443,7 +443,6 @@ end generate;
   --! @brief GNSS Engine stub with the AXI4 interface.
   --! @details Map address:
   --!          0x80003000..0x80003fff (4 KB total)
-  geneng_ena : if CFG_GNSSLIB_ENABLE and CFG_GNSSLIB_GNSSENGINE_ENABLE generate 
     gnss_i.nrst     <= w_glob_nrst;
     gnss_i.clk_bus  <= w_clk_bus;
     gnss_i.axi      <= axisi(CFG_NASTI_SLAVE_ENGINE);
@@ -466,17 +465,10 @@ end generate;
     axiso(CFG_NASTI_SLAVE_ENGINE) <= gnss_o.axi;
     slv_cfg(CFG_NASTI_SLAVE_ENGINE)  <= gnss_o.cfg;
     irq_pins(CFG_IRQ_GNSSENGINE)      <= gnss_o.ms_pulse;
-  end generate;
-  geneng_dis : if not (CFG_GNSSLIB_ENABLE and CFG_GNSSLIB_GNSSENGINE_ENABLE) generate 
-    axiso(CFG_NASTI_SLAVE_ENGINE) <= nasti_slave_out_none;
-    slv_cfg(CFG_NASTI_SLAVE_ENGINE)  <= nasti_slave_config_none;
-    irq_pins(CFG_IRQ_GNSSENGINE)      <= '0';
-  end generate;
 
   --! @brief RF front-end controller with the AXI4 interface.
   --! @details Map address:
   --!          0x80004000..0x80004fff (4 KB total)
-  rf_ena : if CFG_GNSSLIB_ENABLE generate
     rf0 : axi_rfctrl generic map (
       xaddr  => 16#80004#,
       xmask  => 16#fffff#
@@ -496,16 +488,6 @@ end generate;
       outExtAntEna   => o_antext_ena,
       outIntAntContr => o_antint_contr
     );
-  end generate;
-  rf_dis : if not CFG_GNSSLIB_ENABLE generate
-    axiso(CFG_NASTI_SLAVE_RFCTRL) <= nasti_slave_out_none;
-    slv_cfg(CFG_NASTI_SLAVE_RFCTRL) <= nasti_slave_config_none;
-    o_max_sclk <= '0';
-    o_max_sdata <= '0';
-    o_max_ncs <= "11";
-    o_antext_ena <= '0';
-    o_antint_contr <= '0';
-  end generate;
 
   --! @brief Timers with the AXI4 interface.
   --! @details Map address:
@@ -527,7 +509,7 @@ end generate;
   --! @brief GPS-CA Fast Search Engine with the AXI4 interface.
   --! @details Map address:
   --!          0x8000a000..0x8000afff (4 KB total)
-  fse0_ena : if CFG_GNSSLIB_ENABLE and CFG_GNSSLIB_FSEGPS_ENABLE generate 
+  fse0_ena : if CFG_GNSSLIB_FSEGPS_ENABLE generate 
       fse_i.nrst       <= w_glob_nrst;
       fse_i.clk_bus    <= w_clk_bus;
       fse_i.clk_fse    <= w_clk_bus;
@@ -553,7 +535,7 @@ end generate;
       axiso(CFG_NASTI_SLAVE_FSE_GPS) <= fse_o.axi;
   end generate;
   --! FSE GPS disable
-  fse0_dis : if not (CFG_GNSSLIB_ENABLE and CFG_GNSSLIB_FSEGPS_ENABLE) generate 
+  fse0_dis : if not CFG_GNSSLIB_FSEGPS_ENABLE generate 
       slv_cfg(CFG_NASTI_SLAVE_FSE_GPS) <= nasti_slave_config_none;
       axiso(CFG_NASTI_SLAVE_FSE_GPS) <= nasti_slave_out_none;
   end generate;
