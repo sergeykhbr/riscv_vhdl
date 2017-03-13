@@ -12,7 +12,7 @@
 
 typedef uint64_t adr_type;
 
-static const int AXI4_SYSTEM_CLOCK = 60000000;  /// 60 MHz
+static const int AXI4_SYSTEM_CLOCK = 40000000;  /// 40 MHz
 
 #define VENDOR_GNSSSENSOR        0x00F1
 
@@ -34,6 +34,25 @@ static const int AXI4_SYSTEM_CLOCK = 60000000;  /// 60 MHz
 #define GNSSSENSOR_ETHMAC        0x007f
 #define GNSSSENSOR_DSU           0x0080
 #define GNSSSENSOR_GPTIMERS      0x0081
+
+#define CFG_NASTI_MASTER_CACHED     0
+#define CFG_NASTI_MASTER_UNCACHED   1
+#define CFG_NASTI_MASTER_ETHMAC     2
+#define CFG_NASTI_MASTER_TOTAL      3
+
+#define MST_DID_EMPTY             0x7755
+#define SLV_DID_EMPTY             0x5577
+
+// Masters IDs
+#define RISCV_CACHED_TILELINK     0x0500
+#define RISCV_UNCACHED_TILELINK   0x0501
+#define GAISLER_ETH_MAC_MASTER    0x0502
+#define GAISLER_ETH_EDCL_MASTER   0x0503
+#define RISCV_RIVER_CPU           0x0505
+
+#define PNP_CFG_TYPE_INVALID      0
+#define PNP_CFG_TYPE_MASTER       1
+#define PNP_CFG_TYPE_SLAVE        2
 
 
 #define TECH_INFERRED       0

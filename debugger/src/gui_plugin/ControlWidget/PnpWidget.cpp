@@ -182,17 +182,26 @@ void PnpWidget::slotUpdate() {
         case GNSSSENSOR_IRQCTRL:
             RISCV_sprintf(tstr, sizeof(tstr), "Interrupt Controller", NULL);
             break;
+        case GNSSSENSOR_FSE_V2:
+            RISCV_sprintf(tstr, sizeof(tstr), "GPS Fast Search Engine", NULL);
+            break;
         case GNSSSENSOR_UART:
             RISCV_sprintf(tstr, sizeof(tstr), "UART", NULL);
             break;
         case GNSSSENSOR_GPIO:
             RISCV_sprintf(tstr, sizeof(tstr), "GPIO/LEDs", NULL);
             break;
+        case GNSSSENSOR_RF_CONTROL:
+            RISCV_sprintf(tstr, sizeof(tstr), "RF fron-end Controller", NULL);
+            break;
         case GNSSSENSOR_ENGINE_STUB:
             RISCV_sprintf(tstr, sizeof(tstr), "GNSS Enginge stub", NULL);
             break;
         case GNSSSENSOR_ETHMAC:
             RISCV_sprintf(tstr, sizeof(tstr), "Ethernet MAC 10/100", NULL);
+            break;
+        case GNSSSENSOR_DSU:
+            RISCV_sprintf(tstr, sizeof(tstr), "Debug Support Unit", NULL);
             break;
         case GNSSSENSOR_GPTIMERS:
             RISCV_sprintf(tstr, sizeof(tstr), "GP Timers", NULL);

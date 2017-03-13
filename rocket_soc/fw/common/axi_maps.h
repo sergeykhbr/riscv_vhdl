@@ -42,9 +42,5 @@
 #define CFG_IRQ_GNSSENGINE  5
 #define CFG_IRQ_TOTAL       6
 
-typedef struct IsrEntryType {
-    uint64_t arg;
-    uint64_t handler;
-} IsrEntryType;
 
 #endif  // __AXI_MAPS_H__

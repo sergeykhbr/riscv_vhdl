@@ -47,6 +47,7 @@ static const uint16_t GNSSSENSOR_ACCELEROMETER = 0x007b;
 static const uint16_t GNSSSENSOR_GYROSCOPE     = 0x007c;
 static const uint16_t GNSSSENSOR_IRQCTRL       = 0x007d;
 static const uint16_t GNSSSENSOR_ETHMAC        = 0x007f;
+static const uint16_t GNSSSENSOR_DSU           = 0x0080;
 static const uint16_t GNSSSENSOR_GPTIMERS      = 0x0081;
 
 static const uint32_t PNP_CFG_TYPE_INVALID     = 0;

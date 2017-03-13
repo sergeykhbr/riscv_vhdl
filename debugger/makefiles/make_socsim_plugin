@@ -37,6 +37,8 @@ SOURCES = \
 	dsu \
 	greth \
 	gptimers \
+	fsev2 \
+	rfctrl \
 	plugin_init
 
 LIBS = \

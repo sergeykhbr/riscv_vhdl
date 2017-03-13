@@ -166,6 +166,7 @@
     <ClCompile Include="..\..\src\common\autobuffer.cpp" />
     <ClCompile Include="..\..\src\socsim_plugin\boardsim.cpp" />
     <ClCompile Include="..\..\src\socsim_plugin\dsu.cpp" />
+    <ClCompile Include="..\..\src\socsim_plugin\fsev2.cpp" />
     <ClCompile Include="..\..\src\socsim_plugin\gnss_stub.cpp" />
     <ClCompile Include="..\..\src\socsim_plugin\gpio.cpp" />
     <ClCompile Include="..\..\src\socsim_plugin\gptimers.cpp" />
@@ -173,6 +174,7 @@
     <ClCompile Include="..\..\src\socsim_plugin\irqctrl.cpp" />
     <ClCompile Include="..\..\src\socsim_plugin\plugin_init.cpp" />
     <ClCompile Include="..\..\src\socsim_plugin\pnp.cpp" />
+    <ClCompile Include="..\..\src\socsim_plugin\rfctrl.cpp" />
     <ClCompile Include="..\..\src\socsim_plugin\uart.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -187,12 +189,14 @@
     <ClInclude Include="..\..\src\socsim_plugin\boardsim.h" />
     <ClInclude Include="..\..\src\socsim_plugin\dsu.h" />
     <ClInclude Include="..\..\src\socsim_plugin\fifo.h" />
+    <ClInclude Include="..\..\src\socsim_plugin\fsev2.h" />
     <ClInclude Include="..\..\src\socsim_plugin\gnss_stub.h" />
     <ClInclude Include="..\..\src\socsim_plugin\gpio.h" />
     <ClInclude Include="..\..\src\socsim_plugin\gptimers.h" />
     <ClInclude Include="..\..\src\socsim_plugin\greth.h" />
     <ClInclude Include="..\..\src\socsim_plugin\irqctrl.h" />
     <ClInclude Include="..\..\src\socsim_plugin\pnp.h" />
+    <ClInclude Include="..\..\src\socsim_plugin\rfctrl.h" />
     <ClInclude Include="..\..\src\socsim_plugin\ringbuf.h" />
     <ClInclude Include="..\..\src\socsim_plugin\uart.h" />
   </ItemGroup>

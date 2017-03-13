@@ -22,6 +22,8 @@
     <ClCompile Include="..\..\src\socsim_plugin\dsu.cpp" />
     <ClCompile Include="..\..\src\socsim_plugin\greth.cpp" />
     <ClCompile Include="..\..\src\socsim_plugin\gptimers.cpp" />
+    <ClCompile Include="..\..\src\socsim_plugin\rfctrl.cpp" />
+    <ClCompile Include="..\..\src\socsim_plugin\fsev2.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\api_types.h">
@@ -59,5 +61,7 @@
     <ClInclude Include="..\..\src\socsim_plugin\dsu.h" />
     <ClInclude Include="..\..\src\socsim_plugin\greth.h" />
     <ClInclude Include="..\..\src\socsim_plugin\gptimers.h" />
+    <ClInclude Include="..\..\src\socsim_plugin\rfctrl.h" />
+    <ClInclude Include="..\..\src\socsim_plugin\fsev2.h" />
   </ItemGroup>
 </Project>

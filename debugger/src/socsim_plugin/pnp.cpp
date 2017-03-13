@@ -25,11 +25,11 @@ PNP::PNP(const char *name)  : IService(name) {
 
     memset(&regs_, 0, sizeof(regs_));
     iter_.buf = regs_.cfg_table;
-    regs_.hwid = 0x20161011;
+    regs_.hwid = 0x20170313;
     regs_.fwid = 0xdeadcafe;
     regs_.tech.bits.tech = TECH_INFERRED;
-    regs_.tech.bits.mst_total = 4;
-    regs_.tech.bits.slv_total = 13;
+    regs_.tech.bits.mst_total = 0;
+    regs_.tech.bits.slv_total = 0;
 
     addMaster(0, VENDOR_GNSSSENSOR, RISCV_RIVER_CPU);
     addMaster(1, VENDOR_GNSSSENSOR, MST_DID_EMPTY);
@@ -42,12 +42,12 @@ PNP::PNP(const char *name)  : IService(name) {
     addSlave(0x80000000, 4*1024, 0, VENDOR_GNSSSENSOR, GNSSSENSOR_GPIO);
     addSlave(0x80001000, 4*1024, 1, VENDOR_GNSSSENSOR, GNSSSENSOR_UART);
     addSlave(0x80002000, 4*1024, 0, VENDOR_GNSSSENSOR, GNSSSENSOR_IRQCTRL);
-    addSlave(0x80003000, 4*1024, 0, VENDOR_GNSSSENSOR, GNSSSENSOR_ENGINE_STUB);
-    addSlave(0x80004000, 4*1024, 0, VENDOR_GNSSSENSOR, SLV_DID_EMPTY);//rfctrl
+    addSlave(0x80003000, 4*1024, 5, VENDOR_GNSSSENSOR, GNSSSENSOR_ENGINE_STUB);
+    addSlave(0x80004000, 4*1024, 0, VENDOR_GNSSSENSOR, GNSSSENSOR_RF_CONTROL);
     addSlave(0x80005000, 4*1024, 3, VENDOR_GNSSSENSOR, GNSSSENSOR_GPTIMERS);
-    addSlave(0x80006000, 4*1024, 2, VENDOR_GNSSSENSOR, SLV_DID_EMPTY);//mac
-    addSlave(0x80007000, 4*1024, 0, VENDOR_GNSSSENSOR, SLV_DID_EMPTY);//dsu
-    addSlave(0x80008000, 4*1024, 0, VENDOR_GNSSSENSOR, SLV_DID_EMPTY);//fse
+    addSlave(0x80006000, 4*1024, 2, VENDOR_GNSSSENSOR, GNSSSENSOR_ETHMAC);
+    addSlave(0x80007000, 4*1024, 0, VENDOR_GNSSSENSOR, GNSSSENSOR_DSU);
+    addSlave(0x80008000, 4*1024, 0, VENDOR_GNSSSENSOR, GNSSSENSOR_FSE_V2);
     addSlave(0xfffff000, 4*1024, 0, VENDOR_GNSSSENSOR, GNSSSENSOR_PNP);
 }
 
@@ -55,6 +55,7 @@ PNP::~PNP() {
 }
 
 void PNP::addMaster(unsigned idx, unsigned vid, unsigned did) {
+    regs_.tech.bits.mst_total++;
     iter_.item->mst.vid = vid;
     iter_.item->mst.did = did;
     iter_.item->mst.descr.bits.descrtype = PNP_CFG_TYPE_MASTER;
@@ -63,6 +64,7 @@ void PNP::addMaster(unsigned idx, unsigned vid, unsigned did) {
 }
 
 void PNP::addSlave(uint64_t addr, uint64_t size, unsigned irq, unsigned vid, unsigned did) {
+    regs_.tech.bits.slv_total++;
     iter_.item->slv.vid = vid;
     iter_.item->slv.did = did;
     iter_.item->slv.descr.bits.descrtype = PNP_CFG_TYPE_SLAVE;

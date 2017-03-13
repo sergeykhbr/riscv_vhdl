@@ -102,11 +102,11 @@ typedef struct GnssMisc_fields {
     volatile uint32_t InputCfg;     // select selftest, change bin/off to sign/mag
 } GnssMisc_fields;
 
-typedef struct GnssEngine_fields {
+typedef struct GnssEngine_map {
     GnssMisc_fields    misc;
     GnssTimer_fields   tmr;
     GnssNoise_fields   noise;
     GnssChannel_fields chn[256];    // any number.
-} GnssEngine_fields;
+} GnssEngine_map;
 
 #endif  // __MAP_GNSSENGINE_H__
