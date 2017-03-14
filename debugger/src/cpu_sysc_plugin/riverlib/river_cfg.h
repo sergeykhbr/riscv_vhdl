@@ -25,6 +25,9 @@ static const uint8_t MEMOP_1B = 0;
 
 static const uint64_t RESET_VECTOR      = 0x1000;
 
+/** Number of elements each 2*CFG_ADDR_WIDTH in stack trace buffer: */
+static const int CFG_STACK_TRACE_BUF_SIZE = 32;
+
 enum EIsaType {
     ISA_R_type,
     ISA_I_type,

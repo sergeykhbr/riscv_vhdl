@@ -38,6 +38,8 @@ SC_MODULE(DbgPort) {
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_pc;                // Region 1: Instruction pointer
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_npc;               // Region 1: Next Instruction pointer
     sc_in<bool> i_e_valid;                              // Stepping control signal
+    sc_in<bool> i_e_call;                               // pseudo-instruction CALL
+    sc_in<bool> i_e_ret;                                // pseudo-instruction RET
     sc_in<bool> i_m_valid;                              // To compute number of valid executed instruction
     sc_out<sc_uint<64>> o_clock_cnt;                    // Number of clocks excluding halt state
     sc_out<sc_uint<64>> o_executed_cnt;                 // Number of executed instructions
@@ -73,6 +75,9 @@ private:
         sc_signal<sc_uint<RISCV_ARCH>> stepping_mode_steps; // Number of steps before halt in stepping mode
         sc_signal<sc_uint<64>> clock_cnt;                   // Timer in clocks.
         sc_signal<sc_uint<64>> executed_cnt;                // Number of valid executed instructions
+        sc_signal<sc_uint<64>> stack_trace_cnt;             // Stack trace buffer counter
+
+        sc_biguint<2*BUS_ADDR_WIDTH> stackbuf[CFG_STACK_TRACE_BUF_SIZE]; // [pc, npc]
     } v, r;
 };
 

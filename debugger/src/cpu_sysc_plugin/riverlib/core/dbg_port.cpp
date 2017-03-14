@@ -22,6 +22,8 @@ DbgPort::DbgPort(sc_module_name name_) : sc_module(name_) {
     sensitive << i_csr_rdata;
     sensitive << i_pc;
     sensitive << i_npc;
+    sensitive << i_e_call;
+    sensitive << i_e_ret;
     sensitive << i_e_valid;
     sensitive << i_m_valid;
     sensitive << i_ebreak;
@@ -50,6 +52,8 @@ void DbgPort::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_dport_rdata, "/top/proc0/dbg0/o_dport_rdata");
         sc_trace(o_vcd, i_e_valid, "/top/proc0/dbg0/i_e_valid");
         sc_trace(o_vcd, i_m_valid, "/top/proc0/dbg0/i_m_valid");
+        sc_trace(o_vcd, i_e_call, "/top/proc0/dbg0/i_e_call");
+        sc_trace(o_vcd, i_e_ret, "/top/proc0/dbg0/i_e_ret");
         sc_trace(o_vcd, i_ebreak, "/top/proc0/dbg0/i_ebreak");
         sc_trace(o_vcd, o_break_mode, "/top/proc0/dbg0/o_break_mode");
         sc_trace(o_vcd, o_br_fetch_valid, "/top/proc0/dbg0/o_br_fetch_valid");
@@ -122,6 +126,14 @@ void DbgPort::comb() {
         }
     }
 
+    if (i_e_call.read() && 
+        r.stack_trace_cnt.read() != (CFG_STACK_TRACE_BUF_SIZE - 1)) {
+        v.stackbuf[r.stack_trace_cnt.read()] = (i_npc, i_pc);
+        v.stack_trace_cnt = r.stack_trace_cnt.read() + 1;
+    } else if (i_e_ret.read() && r.stack_trace_cnt.read() != 0) {
+        v.stack_trace_cnt = r.stack_trace_cnt.read() - 1;
+    }
+
     if (i_dport_valid.read()) {
         switch (i_dport_region.read()) {
         case 0:
@@ -150,6 +162,21 @@ void DbgPort::comb() {
                 if (i_dport_write.read()) {
                     w_o_npc_write = 1;
                     wb_o_core_wdata = i_dport_wdata;
+                }
+            } else if (wb_idx == 34) {
+                wb_rdata = r.stack_trace_cnt;
+                if (i_dport_write.read()) {
+                    v.stack_trace_cnt = i_dport_wdata;
+                }
+            } else if (wb_idx >= 128 
+                && wb_idx < (128 + 2 * CFG_STACK_TRACE_BUF_SIZE)) {
+                if ((wb_idx & 0x1) == 0) {
+                    wb_rdata = 
+                        r.stackbuf[(wb_idx - 128) / 2](BUS_ADDR_WIDTH-1, 0);
+                } else {
+                    wb_rdata = 
+                        r.stackbuf[(wb_idx - 128) / 2](2*BUS_ADDR_WIDTH-1,
+                                                        BUS_ADDR_WIDTH);
                 }
             }
             break;
@@ -230,6 +257,7 @@ void DbgPort::comb() {
         v.br_address_fetch = 0;
         v.br_instr_fetch = 0;
         v.br_fetch_valid = 0;
+        v.stack_trace_cnt = 0;
     }
 
     o_core_addr = wb_o_core_addr;

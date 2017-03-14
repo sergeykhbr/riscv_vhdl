@@ -136,6 +136,8 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_csr_wdata, "/top/proc0/exec0/o_csr_wdata");
         sc_trace(o_vcd, o_pipeline_hold, "/top/proc0/exec0/o_pipeline_hold");
         sc_trace(o_vcd, o_breakpoint, "/top/proc0/exec0/o_breakpoint");
+        sc_trace(o_vcd, o_call, "/top/proc0/exec0/o_call");
+        sc_trace(o_vcd, o_ret, "/top/proc0/exec0/o_ret");
 
         sc_trace(o_vcd, w_hazard_detected, "/top/proc0/exec0/w_hazard_detected");
         sc_trace(o_vcd, r.hazard_depth, "/top/proc0/exec0/r_hazard_depth");
@@ -383,6 +385,7 @@ void InstrExecute::comb() {
     v.memop_size = 0;
     w_exception_store = 0;
     w_exception_load = 0;
+    w_exception_xret = 0;
 
     if ((wv[Instr_LD] && wb_memop_addr(2, 0) != 0)
         || ((wv[Instr_LW] || wv[Instr_LWU]) && wb_memop_addr(1, 0) != 0)
@@ -394,10 +397,14 @@ void InstrExecute::comb() {
         || (wv[Instr_SH] && wb_memop_addr[0] != 0)) {
         w_exception_store = !w_hazard_detected.read();
     }
+    if ((wv[Instr_MRET] && i_mode.read() != PRV_M)
+        || (wv[Instr_URET] && i_mode.read() != PRV_U)) {
+        w_exception_xret = 1;
+    }
 
     w_exception = w_d_acceptable
         & (i_unsup_exception.read() || w_exception_load || w_exception_store
-           || wv[Instr_ECALL] || wv[Instr_EBREAK]);
+           || w_exception_xret || wv[Instr_ECALL] || wv[Instr_EBREAK]);
 
     /** Default number of cycles per instruction = 0 (1 clock per instr)
      *  If instruction is multicycle then modify this value.
@@ -521,6 +528,8 @@ void InstrExecute::comb() {
             wb_exception_code(3, 0) = EXCEPTION_LoadMisalign;
         } else if (w_exception_store) {
             wb_exception_code(3, 0) = EXCEPTION_StoreMisalign;
+        } else if (w_exception_xret) {
+            wb_exception_code(3, 0) = EXCEPTION_InstrIllegal;
         } else if (wv[Instr_ECALL]) {
             if (i_mode.read() == PRV_M) {
                 wb_exception_code(3, 0) = EXCEPTION_CallFromMmode;
@@ -543,6 +552,8 @@ void InstrExecute::comb() {
 
 
     v.trap_ena = 0;
+    v.call = 0;
+    v.ret = 0;
     if (i_dport_npc_write.read()) {
         v.npc = i_dport_npc.read();
     } else if (w_interrupt) {
@@ -584,6 +595,17 @@ void InstrExecute::comb() {
 
         v.hazard_addr1 = r.hazard_addr0;
         v.hazard_addr0 = wb_res_addr;
+
+        if (wv[Instr_JAL] && wb_res_addr == Reg_ra) {
+            v.call = 1;
+        }
+        if (wv[Instr_JALR]) {
+            if (wb_res_addr == Reg_ra) {
+                v.call = 1;
+            } else if (wb_rdata2 == 0 && wb_radr1 == Reg_ra) {
+                v.ret = 1;
+            }
+        }
     }
 
     v.d_valid = w_d_valid;
@@ -650,6 +672,8 @@ void InstrExecute::comb() {
         v.trap_ena = 0;
         v.trap_code = 0;
         v.trap_pc = 0;
+        v.call = 0;
+        v.ret = 0;
     }
 
     o_radr1 = wb_radr1;
@@ -677,6 +701,8 @@ void InstrExecute::comb() {
     o_npc = r.npc;
     o_instr = r.instr;
     o_breakpoint = r.breakpoint;
+    o_call = r.call;
+    o_ret = r.ret;
 }
 
 void InstrExecute::registers() {

@@ -123,6 +123,8 @@ Processor::Processor(sc_module_name name_) : sc_module(name_) {
     exec0->o_npc(w.e.npc);
     exec0->o_instr(w.e.instr);
     exec0->o_breakpoint(w.e.breakpoint);
+    exec0->o_call(w.e.call);
+    exec0->o_ret(w.e.ret);
 
     mem0 = new MemAccess("mem0");
     mem0->i_clk(i_clk);
@@ -229,6 +231,8 @@ Processor::Processor(sc_module_name name_) : sc_module(name_) {
     dbg0->i_ireg_rdata(ireg.dport_rdata);
     dbg0->i_pc(w.e.pc);
     dbg0->i_npc(w.e.npc);
+    dbg0->i_e_call(w.e.call);
+    dbg0->i_e_ret(w.e.ret);
     dbg0->i_e_valid(w.e.valid);
     dbg0->i_m_valid(w.m.valid);
     dbg0->o_clock_cnt(dbg.clock_cnt);

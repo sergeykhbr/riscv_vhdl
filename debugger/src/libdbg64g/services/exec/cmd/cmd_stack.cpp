@@ -44,6 +44,7 @@ void CmdStack::exec(AttributeType *args, AttributeType *res) {
     Reg64Type t1;
     DsuMapType *pdsu = info_->getpDsu();
     uint64_t addr = reinterpret_cast<uint64_t>(&pdsu->ureg.v.stack_trace_cnt);
+    t1.val = 0;
     tap_->read(addr, 8, t1.buf);
 
     addr = reinterpret_cast<uint64_t>(&pdsu->ureg.v.stack_trace_buf[0]);

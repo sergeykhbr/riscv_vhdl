@@ -151,25 +151,6 @@ package types_gnss is
 
   ------------------------------------------------------------------------------
   -- Fast Search Engine v.2 (GPS only, 32 channels)
-
-  type fse_in_type is record
-    nrst       : std_logic;
-    clk_bus    : std_logic;
-    clk_fse    : std_logic;
-    axi        : nasti_slave_in_type;
-    clk_adc    : std_logic;
-    I          : std_logic_vector(1 downto 0);
-    Q          : std_logic_vector(1 downto 0);
-    ms_pulse   : std_logic;
-    pps        : std_logic;
-    test_mode  : std_logic;
-  end record;
-
-  type fse_out_type is record
-    axi        : nasti_slave_out_type;
-    cfg        : nasti_slave_config_type;
-  end record;
-
   component TopFSE is
   generic
   (
@@ -179,28 +160,20 @@ package types_gnss is
     sys    : integer := GEN_SYSTEM_GPSCA
   );
   port (
-    i : in fse_in_type;
-    o : out fse_out_type
+    nrst         : in std_logic;
+    clk_bus      : in std_logic;
+    clk_adc      : in std_logic;
+    o_cfg        : out nasti_slave_config_type;
+    i_axi        : in  nasti_slave_in_type;
+    o_axi        : out nasti_slave_out_type;
+    i_I          : in std_logic_vector(1 downto 0);
+    i_Q          : in std_logic_vector(1 downto 0);
+    i_ms_pulse   : in std_logic;
+    i_pps        : in std_logic;
+    i_test_mode  : in std_logic
   );
   end component;
 
-
-  -- Use this stub-version when CFG_FSE_ENABLE == 0 
-  component TopFSE_stub is
-  generic
-  (
-    tech   : integer := 0;
-    xaddr  : integer := 0;
-    xmask  : integer := 16#FFFFF#;
-    sys    : integer := GEN_SYSTEM_GPSCA
-  );
-  port (
-    i : in fse_in_type;
-    o : out fse_out_type
-  );
-  end component;
-
-  
   --! @brief     RF-front controller based on MAX2769 ICs.
   --! @details   This unit implements SPI interface with MAX2769 ICs
   --!            and interacts with the antenna control signals.

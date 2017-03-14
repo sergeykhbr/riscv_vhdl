@@ -183,9 +183,6 @@ architecture arch_riscv_soc_gnss of riscv_soc_gnss is
   signal gnss_i : gns_in_type;
   signal gnss_o : gns_out_type;
   
-  signal fse_i : fse_in_type;
-  signal fse_o : fse_out_type;
- 
   signal eth_i : eth_in_type;
   signal eth_o : eth_out_type;
  
@@ -510,29 +507,24 @@ end generate;
   --! @details Map address:
   --!          0x8000a000..0x8000afff (4 KB total)
   fse0_ena : if CFG_GNSSLIB_FSEGPS_ENABLE generate 
-      fse_i.nrst       <= w_glob_nrst;
-      fse_i.clk_bus    <= w_clk_bus;
-      fse_i.clk_fse    <= w_clk_bus;
-      fse_i.axi        <= axisi(CFG_NASTI_SLAVE_FSE_GPS);
-      fse_i.clk_adc    <= w_clk_adc;
-      fse_i.I          <= i_gps_I;
-      fse_i.Q          <= i_gps_Q;
-      fse_i.ms_pulse   <= gnss_o.ms_pulse;
-      fse_i.pps        <= gnss_o.pps;
-      fse_i.test_mode  <= '0';
-
       fse0 : TopFSE generic map (
         tech   => CFG_MEMTECH,
         xaddr  => 16#8000a#,
         xmask  => 16#fffff#,
         sys    => GEN_SYSTEM_GPSCA
       ) port map (
-        i => fse_i,
-        o => fse_o
+        nrst         => w_glob_nrst,
+        clk_bus      => w_clk_bus,
+        clk_adc      => w_clk_adc,
+        o_cfg        => slv_cfg(CFG_NASTI_SLAVE_FSE_GPS),
+        i_axi        => axisi(CFG_NASTI_SLAVE_FSE_GPS),
+        o_axi        => axiso(CFG_NASTI_SLAVE_FSE_GPS),
+        i_I          => i_gps_I,
+        i_Q          => i_gps_Q,
+        i_ms_pulse   => gnss_o.ms_pulse,
+        i_pps        => gnss_o.pps,
+        i_test_mode  => '0'
       );
-  
-      slv_cfg(CFG_NASTI_SLAVE_FSE_GPS) <= fse_o.cfg;
-      axiso(CFG_NASTI_SLAVE_FSE_GPS) <= fse_o.axi;
   end generate;
   --! FSE GPS disable
   fse0_dis : if not CFG_GNSSLIB_FSEGPS_ENABLE generate 

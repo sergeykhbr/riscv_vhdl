@@ -120,7 +120,8 @@ private:
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> memop_addr;
         sc_signal<bool> pipeline_hold;           // Hold pipeline from Execution stage
         sc_signal<bool> breakpoint;
-
+        sc_signal<bool> call;                       // pseudo-instruction CALL
+        sc_signal<bool> ret;                        // pseudo-instruction RET
     };
 
     struct MemoryType {

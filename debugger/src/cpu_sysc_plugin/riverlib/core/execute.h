@@ -68,7 +68,8 @@ SC_MODULE(InstrExecute) {
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_npc;      // Next instruction pointer. Next decoded pc must match to this value or will be ignored.
     sc_out<sc_uint<32>> o_instr;                // Valid instruction value
     sc_out<bool> o_breakpoint;                  // ebreak instruction
-
+    sc_out<bool> o_call;                        // CALL pseudo instruction detected
+    sc_out<bool> o_ret;                         // RET pseudoinstruction detected
 
     void comb();
     void registers();
@@ -128,6 +129,8 @@ private:
         sc_signal<sc_uint<5>> trap_code;                // bit[4] : 1 = interrupt; 0 = exception
                                                         // bit[3:0] : trap code
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> trap_pc;     // pc that caused a trap 
+        sc_signal<bool> call;
+        sc_signal<bool> ret;
     } v, r;
     sc_signal<bool> w_hazard_detected;
     multi_arith_type wb_arith_res;
@@ -137,6 +140,7 @@ private:
     bool w_exception;
     bool w_exception_store;
     bool w_exception_load;
+    bool w_exception_xret;
     sc_uint<5> wb_exception_code;
 
     sc_signal<sc_uint<RISCV_ARCH>> wb_shifter_a1;      // Shifters operand 1

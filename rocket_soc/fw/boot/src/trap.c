@@ -1,6 +1,6 @@
 /******************************************************************************
  * @file
- * @copyright Copyright 2015 GNSS Sensor Ltd. All right reserved.
+ * @copyright Copyright 2017 GNSS Sensor Ltd. All right reserved.
  * @author    Sergey Khabarov - sergeykhbr@gmail.com
  * @brief     General interrupt handler called from assembler.
 ******************************************************************************/
@@ -8,6 +8,8 @@
 #include <string.h>
 #include "axi_maps.h"
 #include "encoding.h"
+
+typedef void (*IRQ_HANDLER)(int idx, void *args);
 
 typedef union csr_mcause_type {
     struct bits_type {
