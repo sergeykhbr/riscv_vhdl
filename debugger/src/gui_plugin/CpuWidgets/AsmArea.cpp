@@ -27,6 +27,7 @@ AsmArea::AsmArea(IGui *gui, QWidget *parent, uint64_t fixaddr)
     hideLineIdx_ = 0;
     selRowIdx = -1;
     fixaddr_ = fixaddr;
+    waitRegNpc_ = false;
 
     clear();
     QFont font("Courier");
@@ -148,11 +149,16 @@ void AsmArea::wheelEvent(QWheelEvent * ev) {
 }
 
 void AsmArea::slotUpdateByTimer() {
+    if (waitRegNpc_) {
+        return;
+    }
+    waitRegNpc_ = true;
     igui_->registerCommand(static_cast<IGuiCmdHandler *>(this),
                             &cmdRegs_, true);
 }
 
 void AsmArea::handleResponse(AttributeType *req, AttributeType *resp) {
+    waitRegNpc_ = false;
     if (req->is_equal("reg npc")) {
         npc_ = resp->to_uint64();
         emit signalNpcChanged();

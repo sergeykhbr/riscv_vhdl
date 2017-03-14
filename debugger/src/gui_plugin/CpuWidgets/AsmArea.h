@@ -81,6 +81,7 @@ private:
     int visibleLinesTotal_;
     uint64_t startAddr_;
     uint64_t endAddr_;
+    bool waitRegNpc_;
 };
 
 }  // namespace debugger

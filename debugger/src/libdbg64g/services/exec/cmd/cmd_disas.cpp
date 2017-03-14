@@ -64,7 +64,9 @@ void CmdDisas::exec(AttributeType *args, AttributeType *res) {
         uint32_t sz = ((*args)[2].to_uint32() + 3) & ~0x3;
         membuf.make_data(sz);
         mem_data = &membuf;
-        tap_->read(addr, sz, membuf.data());
+        if (tap_->read(addr, sz, membuf.data()) == -1) {
+            return;
+        }
     } else {
         mem_data = &(*args)[2];
     }
