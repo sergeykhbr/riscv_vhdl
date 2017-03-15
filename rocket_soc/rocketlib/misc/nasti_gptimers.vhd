@@ -153,7 +153,7 @@ signal r, rin : registers;
 
 begin
 
-  comblogic : process(i_axi, r)
+  comblogic : process(nrst, i_axi, r)
     variable v : registers;
     variable rdata : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
     variable wstrb : std_logic_vector(CFG_NASTI_DATA_BYTES-1 downto 0);
@@ -249,6 +249,15 @@ begin
       end loop;
     end if;
 
+    if nrst = '0' then
+        v.bank_axi := NASTI_SLAVE_BANK_RESET;
+        v.bank0.highcnt := (others => '0');
+        v.bank0.pending := (others => '0');
+        for k in 0 to tmr_total-1 loop
+           v.bank0.tmr(k) := timer_type_reset;
+        end loop;
+    end if;
+
     o_axi <= functionAxi4Output(r.bank_axi, rdata);
     o_irq <= irq_ena;
     rin <= v;
@@ -257,16 +266,9 @@ begin
   cfg <= xconfig;
 
   -- registers:
-  regs : process(clk, nrst)
+  regs : process(clk)
   begin 
-     if nrst = '0' then
-        r.bank_axi <= NASTI_SLAVE_BANK_RESET;
-        r.bank0.highcnt <= (others => '0');
-        r.bank0.pending <= (others => '0');
-        for k in 0 to tmr_total-1 loop
-           r.bank0.tmr(k) <= timer_type_reset;
-        end loop;
-     elsif rising_edge(clk) then 
+     if rising_edge(clk) then 
         r <= rin;
      end if; 
   end process;

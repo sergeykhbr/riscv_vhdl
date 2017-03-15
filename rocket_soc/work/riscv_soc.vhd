@@ -166,15 +166,11 @@ begin
   ------------------------------------
   -- @brief Internal PLL device instance.
   pll0 : SysPLL_tech generic map (
-    tech => CFG_FABTECH,
-    rf_frontend_ena => false
+    tech => CFG_FABTECH
   ) port map (
     i_reset     => ib_rst,
-    i_int_clkrf => '1',
     i_clk_tcxo	=> ib_clk_tcxo,
-    i_clk_adc   => '0',
     o_clk_bus   => w_clk_bus,
-    o_clk_adc   => open,
     o_locked    => w_pll_lock
   );
   w_ext_reset <= ib_rst or not w_pll_lock;

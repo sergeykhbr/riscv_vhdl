@@ -30,8 +30,18 @@ entity gnssengine is
     xirq   : integer := 0
   );
   port (
-    i : in gns_in_type;
-    o : out gns_out_type
+    nrst         : in std_logic;
+    clk_bus      : in std_logic;
+    clk_adc      : in std_logic;
+    o_cfg        : out nasti_slave_config_type;
+    i_axi        : in  nasti_slave_in_type;
+    o_axi        : out nasti_slave_out_type;
+    i_gps_I      : in std_logic_vector(1 downto 0);
+    i_gps_Q      : in std_logic_vector(1 downto 0);
+    i_glo_I      : in std_logic_vector(1 downto 0);
+    i_glo_Q      : in std_logic_vector(1 downto 0);
+    o_ms_pulse   : out std_logic;
+    o_pps        : out std_logic
   );
 end; 
  
@@ -56,49 +66,37 @@ architecture arch_gnssengine of gnssengine is
     TOD            : std_logic_vector(31 downto 0); --! 
   end record;
 
-  type adc_bank_type is record
+  type adc_registers is record
     tmr  : bank_tmr_stub_type;
-    clk_cnt        : integer; --! 
+    clk_cnt        : integer; 
+    irq : std_logic;
   end record;
 
-  type registers is record
+  type bus_registers is record
     bank_axi : nasti_slave_bank_type;
-    bank_adc : adc_bank_type;
     --! Registers clocked by system bus
     MsLength : std_logic_vector(31 downto 0); --! 
     CarrierNcoTh   : std_logic_vector(31 downto 0); --!
     CarrierNcoIF   : std_logic_vector(31 downto 0); --!
   end record;
 
-signal r, rin : registers;
+signal ra, rain : adc_registers;
+signal r, rin : bus_registers;
 
 begin
 
-  comblogic : process(i, r)
-    variable v : registers;
+  comblogic : process(nrst, i_axi, r, ra)
+    variable v : bus_registers;
     variable raddr_reg : local_addr_array_type;
     variable waddr_reg : local_addr_array_type;
     variable rdata : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
     variable wstrb : std_logic_vector(CFG_ALIGN_BYTES-1 downto 0);
     variable tmp : std_logic_vector(31 downto 0);
-
-    variable rise_irq : std_logic;
   begin
 
     v := r;
-    rise_irq := '0';
 
-    if conv_integer(r.MsLength) /= 0 then
-       if (r.bank_adc.clk_cnt + 1) = conv_integer(r.MsLength) then
-         v.bank_adc.clk_cnt := 0;
-         rise_irq := '1';
-         v.bank_adc.tmr.MsCnt := r.bank_adc.tmr.MsCnt + 1;
-       else
-         v.bank_adc.clk_cnt := r.bank_adc.clk_cnt + 1;
-      end if;
-    end if;
-
-    procedureAxi4(i.axi, xconfig, r.bank_axi, v.bank_axi);
+    procedureAxi4(i_axi, xconfig, r.bank_axi, v.bank_axi);
 
     for n in 0 to CFG_WORDS_ON_BUS-1 loop
        raddr_reg(n) := conv_integer(r.bank_axi.raddr(n)(11 downto 2));
@@ -112,23 +110,23 @@ begin
           when 3 => tmp := r.CarrierNcoIF; --!
           --! Global Timers bank (stub):
           when 16#10# => tmp := r.MsLength;
-          when 16#11# => tmp := r.bank_adc.tmr.MsCnt;
-          when 16#12# => tmp := r.bank_adc.tmr.TOW;
-          when 16#13# => tmp := r.bank_adc.tmr.TOD;
+          when 16#11# => tmp := ra.tmr.MsCnt;
+          when 16#12# => tmp := ra.tmr.TOW;
+          when 16#13# => tmp := ra.tmr.TOD;
           when others => 
        end case;
        rdata(8*CFG_ALIGN_BYTES*(n+1)-1 downto 8*CFG_ALIGN_BYTES*n) := tmp;
     end loop;
 
 
-    if i.axi.w_valid = '1' and 
+    if i_axi.w_valid = '1' and 
        r.bank_axi.wstate = wtrans and 
        r.bank_axi.wresp = NASTI_RESP_OKAY then
 
       for n in 0 to CFG_WORDS_ON_BUS-1 loop
          waddr_reg(n) := conv_integer(r.bank_axi.waddr(n)(11 downto 2));
-         tmp := i.axi.w_data(32*(n+1)-1 downto 32*n);
-         wstrb := i.axi.w_strb(CFG_ALIGN_BYTES*(n+1)-1 downto CFG_ALIGN_BYTES*n);
+         tmp := i_axi.w_data(32*(n+1)-1 downto 32*n);
+         wstrb := i_axi.w_strb(CFG_ALIGN_BYTES*(n+1)-1 downto CFG_ALIGN_BYTES*n);
 
          if conv_integer(wstrb) /= 0 then
            case waddr_reg(n) is
@@ -141,34 +139,48 @@ begin
       end loop;
     end if;
 
-    o.ms_pulse <= rise_irq;
-    o.pps <= '0';
-    o.axi <= functionAxi4Output(r.bank_axi, rdata);
+    if nrst = '0' then
+        v.bank_axi := NASTI_SLAVE_BANK_RESET;
+        v.MsLength := (others => '0');
+        v.CarrierNcoIF := (others => '0');
+        v.CarrierNcoTh := (others => '0');
+    end if;
+
+    o_axi <= functionAxi4Output(r.bank_axi, rdata);
+
     rin <= v;
   end process;
 
-  o.cfg  <= xconfig;
+  o_cfg  <= xconfig;
+  o_pps <= '0';
+  o_ms_pulse <= ra.irq;
 
   -- registers:
-  regadc : process(i.clk_adc, i.nrst)
+  regadc : process(clk_adc)
   begin 
-     if i.nrst = '0' then
-        r.bank_adc.tmr.MsCnt <= (others => '0');
-        r.bank_adc.clk_cnt <= 15000;
-     elsif rising_edge(i.clk_adc) then 
-        r.bank_adc <= rin.bank_adc;
+     if rising_edge(clk_adc) then
+        ra.irq <= '0';
+        if nrst = '0' then
+            ra.tmr.TOW <= (others => '0');
+            ra.tmr.TOD <= (others => '0');
+            ra.tmr.MsCnt <= (others => '0');
+            ra.clk_cnt <= 15000;
+        elsif conv_integer(r.MsLength) /= 0 then
+            if ra.clk_cnt = (conv_integer(r.MsLength) - 1) then
+                ra.clk_cnt <= 0;
+                ra.tmr.MsCnt <= ra.tmr.MsCnt + 1;
+                ra.irq <= '1';
+            else
+                ra.clk_cnt <= ra.clk_cnt + 1;
+            end if;
+        end if;
      end if; 
   end process;
 
-  regs : process(i.clk_bus, i.nrst)
-  begin 
-     if i.nrst = '0' then
-        r.bank_axi <= NASTI_SLAVE_BANK_RESET;
-        r.MsLength <= (others => '0');
-     elsif rising_edge(i.clk_bus) then 
-        r.bank_axi <= rin.bank_axi;
-        r.MsLength <= rin.MsLength;
-     end if; 
+  regs : process(clk_bus) begin 
+    if rising_edge(clk_bus) then 
+       r <= rin; 
+    end if;
   end process;
 
 end;

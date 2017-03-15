@@ -22,12 +22,12 @@ architecture rtl of GrayCounter is
     end record;
     signal r : regs;
 begin
-    process (i_clk, i_nrst) begin
-        if i_nrst = '0' then
-            r.bin_cnt  <= conv_std_logic_vector(1, generic_width);
-            r.grey_cnt <= (others=>'0');
-        elsif (rising_edge(i_clk)) then
-            if i_ena = '1' then
+    proc0 : process (i_clk) begin
+        if (rising_edge(i_clk)) then
+            if i_nrst = '0' then
+                r.bin_cnt  <= conv_std_logic_vector(1, generic_width);
+                r.grey_cnt <= (others=>'0');
+            elsif i_ena = '1' then
                 r.bin_cnt  <= r.bin_cnt + 1;
                 r.grey_cnt <= r.bin_cnt(generic_width-1) & 
                                  (r.bin_cnt(generic_width-2 downto 0) xor 

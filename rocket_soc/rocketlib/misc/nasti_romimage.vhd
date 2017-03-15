@@ -57,7 +57,7 @@ signal rdata_mux : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
 
 begin
 
-  comblogic : process(i, r, rdata_mux)
+  comblogic : process(nrst, i, r, rdata_mux)
     variable v : registers;
     variable rdata : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
   begin
@@ -74,6 +74,10 @@ begin
 
     o <= functionAxi4Output(r.bank_axi, rdata);
 
+    if nrst = '0' then
+       v.bank_axi := NASTI_SLAVE_BANK_RESET;
+    end if;
+
     rin <= v;
   end process;
 
@@ -89,11 +93,9 @@ begin
   );
 
   -- registers:
-  regs : process(clk, nrst)
+  regs : process(clk)
   begin 
-     if nrst = '0' then
-        r.bank_axi <= NASTI_SLAVE_BANK_RESET;
-     elsif rising_edge(clk) then 
+     if rising_edge(clk) then 
         r <= rin;
      end if; 
   end process;

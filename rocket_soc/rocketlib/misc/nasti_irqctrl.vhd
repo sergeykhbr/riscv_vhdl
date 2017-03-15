@@ -181,7 +181,7 @@ end record;
 signal r, rin: registers;
 begin
 
-  comblogic : process(i_irqs, i_axi, r)
+  comblogic : process(nrst, i_irqs, i_axi, r)
     variable v : registers;
     variable raddr_reg : local_addr_array_type;
     variable waddr_reg : local_addr_array_type;
@@ -271,6 +271,20 @@ begin
       o_irq_meip <= '1';
     end if;
 
+    if nrst = '0' then 
+       v.bank_axi := NASTI_SLAVE_BANK_RESET;
+       v.irqs_mask := (others => '1'); -- all interrupts disabled
+       v.irqs_pending := (others => '0');
+       v.irqs_z := (others => '0');
+       v.irqs_zz := (others => '0');
+       v.isr_table := (others => '0');
+       v.irq_lock := '0';
+       v.irq_wait_unlock := (others => '0');
+       v.irq_cause_idx := (others => '0');
+       v.dbg_cause := (others => '0');
+       v.dbg_epc := (others => '0');
+    end if;
+
     rin <= v;
   end process;
 
@@ -278,21 +292,9 @@ begin
 
 
   -- registers:
-  regs : process(clk, nrst)
+  regs : process(clk)
   begin 
-    if nrst = '0' then 
-       r.bank_axi <= NASTI_SLAVE_BANK_RESET;
-       r.irqs_mask <= (others => '1'); -- all interrupts disabled
-       r.irqs_pending <= (others => '0');
-       r.irqs_z <= (others => '0');
-       r.irqs_zz <= (others => '0');
-       r.isr_table <= (others => '0');
-       r.irq_lock <= '0';
-       r.irq_wait_unlock <= (others => '0');
-       r.irq_cause_idx <= (others => '0');
-       r.dbg_cause <= (others => '0');
-       r.dbg_epc <= (others => '0');
-    elsif rising_edge(clk) then 
+    if rising_edge(clk) then 
        r <= rin; 
     end if; 
   end process;

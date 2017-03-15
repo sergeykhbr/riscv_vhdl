@@ -55,7 +55,7 @@ architecture rtl of afifo is
     end component;
 begin
 
-    process (i_rclk) begin
+    proc_rclk0 : process (i_rclk) begin
         if (rising_edge(i_rclk)) then
             if (i_rd_ena = '1' and empty = '0') then
                 o_data <= Mem(conv_integer(pNextWordToRead));
@@ -64,7 +64,7 @@ begin
     end process;
             
     --'Data_in' logic:
-    process (i_wclk) begin
+    proc_wclk0 : process (i_wclk) begin
         if (rising_edge(i_wclk)) then
             if (i_wr_ena = '1' and full = '0') then
                 Mem(conv_integer(pNextWordToWrite)) <= i_data;
@@ -101,7 +101,7 @@ begin
     EqualAddresses <= '1' when (pNextWordToWrite = pNextWordToRead) else '0';
 
     --'Quadrant selectors' logic:
-    process (pNextWordToWrite, pNextWordToRead)
+    proc0 : process (pNextWordToWrite, pNextWordToRead)
         variable set_status_bit0 :std_logic;
         variable set_status_bit1 :std_logic;
         variable rst_status_bit0 :std_logic;
@@ -118,7 +118,7 @@ begin
     
     --'Status' latch logic:
     r_stat <= Rst_Status or (not i_nrst);
-    process (i_rclk, Set_Status, r_stat) begin--D Latch w/ Asynchronous Clear & Preset.
+    latch0 : process (i_rclk, Set_Status, r_stat) begin--D Latch w/ Asynchronous Clear & Preset.
         if r_stat = '1' then 
             Status <= '0';
         elsif (Set_Status = '1') then
@@ -131,7 +131,7 @@ begin
     --'Full_out' logic for the writing port:
     PresetFull <= Status and EqualAddresses;  --'Full' Fifo.
     
-    process (i_wclk, PresetFull) begin --D Flip-Flop w/ Asynchronous Preset.
+    latch1 : process (i_wclk, PresetFull) begin --D Flip-Flop w/ Asynchronous Preset.
         if (PresetFull = '1') then
             full <= '1';
         elsif (rising_edge(i_wclk)) then
@@ -143,7 +143,7 @@ begin
     --'Empty_out' logic for the reading port:
     PresetEmpty <= not Status and EqualAddresses;  --'Empty' Fifo.
     
-    process (i_rclk, PresetEmpty) begin --D Flip-Flop w/ Asynchronous Preset.
+    latch2 : process (i_rclk, PresetEmpty) begin --D Flip-Flop w/ Asynchronous Preset.
         if (PresetEmpty = '1') then
             empty <= '1';
         elsif (rising_edge(i_rclk)) then

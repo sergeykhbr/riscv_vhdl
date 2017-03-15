@@ -78,7 +78,6 @@ port
   CLK_IN            : in     std_logic;
   -- Clock out ports
   CLK_OUT1          : out    std_logic;
-  CLK_OUT2          : out    std_logic;
   -- Status and control signals
   RESET             : in     std_logic;
   LOCKED            : out    std_logic
@@ -94,7 +93,7 @@ architecture xilinx of SysPLL_v6 is
   signal clkfboutb_unused : std_logic;
   signal clkout0          : std_logic;
   signal clkout0b_unused  : std_logic;
-  signal clkout1          : std_logic;
+  signal clkout1_unused   : std_logic;
   signal clkout1b_unused  : std_logic;
   signal clkout2_unused   : std_logic;
   signal clkout2b_unused  : std_logic;
@@ -134,11 +133,6 @@ begin
     CLKOUT0_PHASE        => 0.000,
     CLKOUT0_DUTY_CYCLE   => 0.500,
     CLKOUT0_USE_FINE_PS  => FALSE,
-    CLKOUT1_DIVIDE       => 100,
-    CLKOUT1_PHASE        => 0.000,
-    CLKOUT1_DUTY_CYCLE   => 0.500,
-    CLKOUT1_USE_FINE_PS  => FALSE,
-    CLKIN1_PERIOD        => 5.000,
     REF_JITTER1          => 0.010)
   port map
     -- Output clocks
@@ -146,7 +140,7 @@ begin
     CLKFBOUTB           => clkfboutb_unused,
     CLKOUT0             => clkout0,
     CLKOUT0B            => clkout0b_unused,
-    CLKOUT1             => clkout1,
+    CLKOUT1             => clkout1_unused,
     CLKOUT1B            => clkout1b_unused,
     CLKOUT2             => clkout2_unused,
     CLKOUT2B            => clkout2b_unused,
@@ -193,9 +187,5 @@ begin
   port map
    (O   => CLK_OUT1,
     I   => clkout0);
-
-
-
-  CLK_OUT2 <= clkout1;
 
 end xilinx;

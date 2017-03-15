@@ -233,7 +233,7 @@ end component;
    constant EDCL_MSG6 : std_logic_vector(EDCL_MSG6_LEN*4-1 downto 0) := 
    X"5d207098001032badcacefebeb800000e500450000000039b111000c8a00a00c8a00f07788556600a4705b0000006102000130d004111111112222222233333333444444445555555566666666777777778888888899999999aaaaaaaabbbbbbbbcccccccceeeeeeeefffffffffeebfeebefacefacc3875a17";   
 
-   constant ETH_ENABLE : std_logic := '0';
+   constant ETH_ENABLE : std_logic := '1';
 begin
 
 

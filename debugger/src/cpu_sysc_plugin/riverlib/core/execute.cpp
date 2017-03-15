@@ -460,7 +460,7 @@ void InstrExecute::comb() {
         wb_res = wb_srlw;
     } else if (wv[Instr_SRA] || wv[Instr_SRAI]) {
         wb_res = wb_sra;
-    } else if (wv[Instr_SRAW] || wv[Instr_SRAW]) {
+    } else if (wv[Instr_SRAW] || wv[Instr_SRAW] || wv[Instr_SRAIW]) {
         wb_res = wb_sraw;
     } else if (wv[Instr_AND] || wv[Instr_ANDI]) {
         wb_res = wb_and64;

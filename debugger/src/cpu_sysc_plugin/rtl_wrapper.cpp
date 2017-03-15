@@ -105,7 +105,6 @@ void RtlWrapper::clk_negedge_proc() {
     while ((cb = step_queue_.getNext(step_cnt)) != 0) {
         static_cast<IClockListener *>(cb)->stepCallback(step_cnt);
     }
-
     if (generate_ref_ && step_cnt != step_cnt_z) {
         char msg[16];
         int msg_len = 0;

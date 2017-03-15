@@ -299,12 +299,14 @@ begin
   end process;
 
   -- ADC clock detector:
-  regsadc : process(adc_clk, nrst)
+  regsadc : process(adc_clk)
   begin 
-     if nrst = '0' then
-        r_adc_detect <= (others => '0');
-     elsif rising_edge(adc_clk) then 
-        r_adc_detect <= r_adc_detect(6 downto 0) & nrst;
+     if rising_edge(adc_clk) then 
+        if nrst = '0' then
+            r_adc_detect <= (others => '0');
+        else
+            r_adc_detect <= r_adc_detect(6 downto 0) & nrst;
+        end if;
      end if; 
   end process;
 

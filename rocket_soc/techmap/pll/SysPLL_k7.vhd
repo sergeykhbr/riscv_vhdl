@@ -78,7 +78,6 @@ port
   CLK_IN            : in     std_logic;
   -- Clock out ports
   CLK_OUT1          : out    std_logic;
-  CLK_OUT2          : out    std_logic;
   -- Status and control signals
   RESET             : in     std_logic;
   LOCKED            : out    std_logic
@@ -194,9 +193,5 @@ begin
   port map
    (O   => CLK_OUT1,
     I   => clkout0);
-
-
-
-  CLK_OUT2 <= clkout1;
 
 end xilinx;

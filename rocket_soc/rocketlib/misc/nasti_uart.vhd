@@ -141,7 +141,7 @@ signal r, rin : registers;
 
 begin
 
-  comblogic : process(i_uart, i_axi, r)
+  comblogic : process(nrst, i_uart, i_axi, r)
     variable v : registers;
     variable rdata : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
     variable wstrb : std_logic_vector(CFG_NASTI_DATA_BYTES-1 downto 0);
@@ -380,6 +380,34 @@ begin
       end loop;
     end if;
 
+    if nrst = '0' then
+        v.bank_axi := NASTI_SLAVE_BANK_RESET;
+        v.bank0.tx_state := idle;
+        v.bank0.tx_level := '0';
+        v.bank0.tx_scaler_cnt := 0;
+        v.bank0.tx_rd_cnt := (others => '0');
+        v.bank0.tx_wr_cnt := (others => '0');
+        v.bank0.tx_byte_cnt := (others => '0');
+        v.bank0.tx_irq_thresh := (others => '0');
+        v.bank0.tx_more_thresh := (others => '0');
+
+        v.bank0.rx_state := idle;
+        v.bank0.rx_level := '1';
+        v.bank0.rx_scaler_cnt := 0;
+        v.bank0.rx_rd_cnt := (others => '0');
+        v.bank0.rx_wr_cnt := (others => '0');
+        v.bank0.rx_byte_cnt := (others => '0');
+        v.bank0.rx_irq_thresh := (others => '0');
+        v.bank0.rx_more_thresh := (others => '0');
+
+        v.bank0.scaler := 0;
+        v.bank0.err_parity := '0';
+        v.bank0.err_stopbit := '0';
+        v.bank0.parity_bit := '0';
+        v.bank0.tx_irq_ena := '1';
+        v.bank0.rx_irq_ena := '1';
+    end if;
+
     o_axi <= functionAxi4Output(r.bank_axi, rdata);
     o_irq <= irq_ena;
     rin <= v;
@@ -388,35 +416,9 @@ begin
   cfg <= xconfig;
 
   -- registers:
-  regs : process(clk, nrst)
+  regs : process(clk)
   begin 
-     if nrst = '0' then
-        r.bank_axi <= NASTI_SLAVE_BANK_RESET;
-        r.bank0.tx_state <= idle;
-        r.bank0.tx_level <= '0';
-        r.bank0.tx_scaler_cnt <= 0;
-        r.bank0.tx_rd_cnt <= (others => '0');
-        r.bank0.tx_wr_cnt <= (others => '0');
-        r.bank0.tx_byte_cnt <= (others => '0');
-        r.bank0.tx_irq_thresh <= (others => '0');
-        r.bank0.tx_more_thresh <= (others => '0');
-
-        r.bank0.rx_state <= idle;
-        r.bank0.rx_level <= '1';
-        r.bank0.rx_scaler_cnt <= 0;
-        r.bank0.rx_rd_cnt <= (others => '0');
-        r.bank0.rx_wr_cnt <= (others => '0');
-        r.bank0.rx_byte_cnt <= (others => '0');
-        r.bank0.rx_irq_thresh <= (others => '0');
-        r.bank0.rx_more_thresh <= (others => '0');
-
-        r.bank0.scaler <= 0;
-        r.bank0.err_parity <= '0';
-        r.bank0.err_stopbit <= '0';
-        r.bank0.parity_bit <= '0';
-        r.bank0.tx_irq_ena <= '1';
-        r.bank0.rx_irq_ena <= '1';
-     elsif rising_edge(clk) then 
+     if rising_edge(clk) then 
         r <= rin;
      end if; 
   end process;

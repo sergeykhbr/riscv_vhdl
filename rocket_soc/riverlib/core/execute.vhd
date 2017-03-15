@@ -520,7 +520,7 @@ begin
         wb_res := wb_srlw;
     elsif (wv(Instr_SRA) or wv(Instr_SRAI)) = '1' then
         wb_res := wb_sra;
-    elsif (wv(Instr_SRAW) or wv(Instr_SRAW)) = '1' then
+    elsif (wv(Instr_SRAW) or wv(Instr_SRAW) or wv(Instr_SRAIW)) = '1' then
         wb_res := wb_sraw;
     elsif (wv(Instr_AND) or wv(Instr_ANDI)) = '1' then
         wb_res := wb_and64;

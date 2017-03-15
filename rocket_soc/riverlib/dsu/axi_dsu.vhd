@@ -356,7 +356,7 @@ end record;
 signal r, rin: registers;
 begin
 
-  comblogic : process(i_axi, i_dporto, i_miss_irq, i_miss_addr,
+  comblogic : process(nrst, i_axi, i_dporto, i_miss_irq, i_miss_addr,
                       i_bus_util_w, i_bus_util_r, r)
     variable v : registers;
     variable mux_rdata : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
@@ -482,6 +482,20 @@ begin
 
     o_axi <= functionAxi4Output(r.bank_axi, mux_rdata);
 
+    if nrst = '0' then 
+       v.bank_axi := NASTI_SLAVE_BANK_RESET;
+       v.state := reading;
+       v.waddr := (others => '0');
+       v.wdata := (others => '0');
+       v.rdata := (others => '0');
+       v.soft_rst := '0';
+       v.clk_cnt := (others => '0');
+       v.miss_access_cnt := (others => '0');
+       v.miss_access_addr := (others => '0');
+       v.util_w_cnt := (others => (others => '0'));
+       v.util_r_cnt := (others => (others => '0'));
+    end if;
+
     rin <= v;
 
     o_dporti <= vdporti;
@@ -492,21 +506,9 @@ begin
 
 
   -- registers:
-  regs : process(clk, nrst)
+  regs : process(clk)
   begin 
-    if nrst = '0' then 
-       r.bank_axi <= NASTI_SLAVE_BANK_RESET;
-       r.state <= reading;
-       r.waddr <= (others => '0');
-       r.wdata <= (others => '0');
-       r.rdata <= (others => '0');
-       r.soft_rst <= '0';
-       r.clk_cnt <= (others => '0');
-       r.miss_access_cnt <= (others => '0');
-       r.miss_access_addr <= (others => '0');
-       r.util_w_cnt <= (others => (others => '0'));
-       r.util_r_cnt <= (others => (others => '0'));
-    elsif rising_edge(clk) then 
+    if rising_edge(clk) then 
        r <= rin; 
     end if; 
   end process;

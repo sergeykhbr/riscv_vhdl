@@ -180,8 +180,7 @@ architecture arch_riscv_soc_gnss of riscv_soc_gnss is
   signal wb_bus_util_w : std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0);
   signal wb_bus_util_r : std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0);
   
-  signal gnss_i : gns_in_type;
-  signal gnss_o : gns_out_type;
+  signal w_gnss_pps : std_logic;
   
   signal eth_i : eth_in_type;
   signal eth_o : eth_out_type;
@@ -209,18 +208,16 @@ begin
   ------------------------------------
   -- @brief Internal PLL device instance.
   pll0 : SysPLL_tech generic map (
-    tech => CFG_FABTECH,
-    rf_frontend_ena => true
+    tech => CFG_FABTECH
   ) port map (
     i_reset     => ib_rst,
-    i_int_clkrf => ib_dip(0),
     i_clk_tcxo	=> ib_clk_tcxo,
-    i_clk_adc   => ib_clk_adc,
     o_clk_bus   => w_clk_bus,
-    o_clk_adc   => w_clk_adc,
     o_locked    => w_pll_lock
   );
   w_ext_reset <= ib_rst or not w_pll_lock;
+
+  w_clk_adc <= ib_clk_adc;
 
   ------------------------------------
   --! @brief System Reset device instance.
@@ -440,28 +437,25 @@ end generate;
   --! @brief GNSS Engine stub with the AXI4 interface.
   --! @details Map address:
   --!          0x80003000..0x80003fff (4 KB total)
-    gnss_i.nrst     <= w_glob_nrst;
-    gnss_i.clk_bus  <= w_clk_bus;
-    gnss_i.axi      <= axisi(CFG_NASTI_SLAVE_ENGINE);
-    gnss_i.clk_adc  <= w_clk_adc;
-    gnss_i.gps_I    <= i_gps_I;
-    gnss_i.gps_Q    <= i_gps_Q;
-    gnss_i.glo_I    <= i_glo_I;
-    gnss_i.glo_Q    <= i_glo_I;
-
     gnss0 : gnssengine  generic map (
       tech    => CFG_MEMTECH,
       xaddr   => 16#80003#,
       xmask   => 16#FFFFF#,
-		xirq    => CFG_IRQ_GNSSENGINE
+      xirq    => CFG_IRQ_GNSSENGINE
     ) port map (
-      i      => gnss_i,
-      o      => gnss_o
+      nrst         => w_glob_nrst,
+      clk_bus      => w_clk_bus,
+      clk_adc      => w_clk_adc,
+      o_cfg        => slv_cfg(CFG_NASTI_SLAVE_ENGINE),
+      i_axi        => axisi(CFG_NASTI_SLAVE_ENGINE),
+      o_axi        => axiso(CFG_NASTI_SLAVE_ENGINE),
+      i_gps_I      => i_gps_I,
+      i_gps_Q      => i_gps_Q,
+      i_glo_I      => i_glo_I,
+      i_glo_Q      => i_glo_Q,
+      o_ms_pulse   => irq_pins(CFG_IRQ_GNSSENGINE),
+      o_pps        => w_gnss_pps
     );
-  
-    axiso(CFG_NASTI_SLAVE_ENGINE) <= gnss_o.axi;
-    slv_cfg(CFG_NASTI_SLAVE_ENGINE)  <= gnss_o.cfg;
-    irq_pins(CFG_IRQ_GNSSENGINE)      <= gnss_o.ms_pulse;
 
   --! @brief RF front-end controller with the AXI4 interface.
   --! @details Map address:
@@ -521,8 +515,8 @@ end generate;
         o_axi        => axiso(CFG_NASTI_SLAVE_FSE_GPS),
         i_I          => i_gps_I,
         i_Q          => i_gps_Q,
-        i_ms_pulse   => gnss_o.ms_pulse,
-        i_pps        => gnss_o.pps,
+        i_ms_pulse   => irq_pins(CFG_IRQ_GNSSENGINE),
+        i_pps        => w_gnss_pps,
         i_test_mode  => '0'
       );
   end generate;

@@ -21,26 +21,17 @@ package types_pll is
   --!          depending generic argument.
   --! @param[in] tech Generic PLL implementation selector
   --! @param[in] i_reset Reset value. Active high.
-  --! @param[in] i_int_clkrf ADC source select:
-  --!            0 = External ADC clock (Real RF front-end)
-  --!            1 = Disable external ADC/enable internal ADC simulation.
   --! @param[in] i_clk_tcxo Input clock from the external oscillator (default 200 MHz)
-  --! @param[in] i_clk_adc External ADC clock
   --! @param[out] o_clk_bus System Bus clock 100MHz/40MHz (Virtex6/Spartan6)
-  --! @param[out] o_clk_adc ADC simulation clock = 26MHz (default).
   --! @param[out] o_locked PLL locked status.
   component SysPLL_tech is
     generic(
-      tech    : integer range 0 to NTECH := 0;
-      rf_frontend_ena : boolean := false
+      tech    : integer range 0 to NTECH := 0
     );
     port (
     i_reset           : in     std_logic;
-    i_int_clkrf       : in     std_logic;
     i_clk_tcxo        : in     std_logic;
-    i_clk_adc         : in     std_logic;
     o_clk_bus         : out    std_logic;
-    o_clk_adc         : out    std_logic;
     o_locked          : out    std_logic );
   end component;
 

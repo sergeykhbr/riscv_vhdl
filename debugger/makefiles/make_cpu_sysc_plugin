@@ -60,6 +60,7 @@ SOURCES = \
 	memaccess \
 	proc \
 	regibank \
+	stacktrbuf \
 	dbg_port
 
 LIBS = \

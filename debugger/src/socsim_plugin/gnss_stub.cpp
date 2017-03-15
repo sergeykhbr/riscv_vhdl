@@ -58,7 +58,6 @@ void GNSSStub::b_transport(Axi4TransactionType *trans) {
                 iclk_->registerStepCallback(
                     static_cast<IClockListener *>(this), 
                     iclk_->getStepCounter() + trans->wpayload.b32[i]);
-
             }
             regs_.tmr.rw_MsLength = trans->wpayload.b32[i];
             if ((off + 4*i) == OFFSET(&regs_.tmr.rw_MsLength)) {

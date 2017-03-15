@@ -114,25 +114,6 @@ package types_gnss is
 
   ------------------------------------------------------------------------------
   -- GNSS Engine, top level
-
-  type gns_in_type is record
-    nrst     : std_ulogic;
-    clk_bus  : std_ulogic;
-    axi      : nasti_slave_in_type;
-    clk_adc  : std_ulogic;
-    gps_I    : std_logic_vector(1 downto 0);
-    gps_Q    : std_logic_vector(1 downto 0);
-    glo_I    : std_logic_vector(1 downto 0);
-    glo_Q    : std_logic_vector(1 downto 0);
-  end record;
-
-  type gns_out_type is record
-    ms_pulse : std_logic;
-    pps      : std_logic;
-    axi      : nasti_slave_out_type;
-    cfg      : nasti_slave_config_type;
-  end record;
-
   component gnssengine is
   generic
   (
@@ -143,8 +124,18 @@ package types_gnss is
   );
   port
   (
-    i : in gns_in_type;
-    o : out gns_out_type
+    nrst         : in std_logic;
+    clk_bus      : in std_logic;
+    clk_adc      : in std_logic;
+    o_cfg        : out nasti_slave_config_type;
+    i_axi        : in  nasti_slave_in_type;
+    o_axi        : out nasti_slave_out_type;
+    i_gps_I      : in std_logic_vector(1 downto 0);
+    i_gps_Q      : in std_logic_vector(1 downto 0);
+    i_glo_I      : in std_logic_vector(1 downto 0);
+    i_glo_Q      : in std_logic_vector(1 downto 0);
+    o_ms_pulse   : out std_logic;
+    o_pps        : out std_logic
   );
   end component;
 
