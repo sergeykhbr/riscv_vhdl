@@ -105,6 +105,8 @@ architecture arch_Processor of Processor is
         memop_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
         pipeline_hold : std_logic;                            -- Hold pipeline from Execution stage
         breakpoint : std_logic;
+        call : std_logic;
+        ret : std_logic;
     end record;
 
     type MemoryType is record
@@ -277,7 +279,9 @@ begin
         o_pc => w.e.pc,
         o_npc => w.e.npc,
         o_instr => w.e.instr,
-        o_breakpoint => w.e.breakpoint);
+        o_breakpoint => w.e.breakpoint,
+        o_call => w.e.call,
+        o_ret => w.e.ret);
 
     mem0 : MemAccess port map (
         i_clk => i_clk,
@@ -385,6 +389,8 @@ begin
         i_pc => w.e.pc,
         i_npc => w.e.npc,
         i_e_valid => w.e.valid,
+        i_e_call => w.e.call,
+        i_e_ret => w.e.ret,
         i_m_valid => w.m.valid,
         o_clock_cnt => dbg.clock_cnt,
         o_executed_cnt => dbg.executed_cnt,

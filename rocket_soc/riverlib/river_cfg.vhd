@@ -42,6 +42,9 @@ package river_cfg is
   
   constant RESET_VECTOR : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00001000";
 
+  --! Number of elements each 2*CFG_ADDR_WIDTH in stack trace buffer, 0 = disabled
+  constant CFG_STACK_TRACE_BUF_SIZE : integer := 32;
+
   --! @name   Integer Registers specified by ISA
   --! @{
     constant Reg_Zero : integer := 0;
@@ -446,6 +449,8 @@ package river_cfg is
   --! @param[out] o_npc         Next instruction pointer. Next decoded pc must match to this value or will be ignored.
   --! @param[out] o_instr       Valid instruction value
   --! @param[out] o_breakpoint  ebreak instruction
+  --! @param[out] o_call        CALL pseudo instruction detected
+  --! @param[out] o_ret         RET pseudoinstruction detected
   component InstrExecute is
   port (
     i_clk  : in std_logic;
@@ -495,7 +500,9 @@ package river_cfg is
     o_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     o_npc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     o_instr : out std_logic_vector(31 downto 0);
-    o_breakpoint : out std_logic
+    o_breakpoint : out std_logic;
+    o_call : out std_logic;
+    o_ret : out std_logic
   );
   end component; 
 
@@ -668,6 +675,8 @@ package river_cfg is
   --! @param[in] i_pc             Region 1: Instruction pointer
   --! @param[in] i_npc            Region 1: Next Instruction pointer
   --! @param[in] i_e_valid        Stepping control signal
+  --! @param[in] i_e_call         Pseudo-instruction CALL
+  --! @param[in] i_e_ret          Pseudo-instruction RET
   --! @param[in] i_m_valid        To compute number of valid executed instruction
   --! @param[out] o_clock_cnt     Number of clocks excluding halt state
   --! @param[out] o_executed_cnt  Number of executed instructions
@@ -700,6 +709,8 @@ package river_cfg is
     i_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_e_valid : in std_logic;
+    i_e_call : in std_logic;
+    i_e_ret : in std_logic;
     i_m_valid : in std_logic;
     o_clock_cnt : out std_logic_vector(63 downto 0);
     o_executed_cnt : out std_logic_vector(63 downto 0);

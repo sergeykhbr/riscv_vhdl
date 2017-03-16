@@ -158,8 +158,8 @@ void AsmArea::slotUpdateByTimer() {
 }
 
 void AsmArea::handleResponse(AttributeType *req, AttributeType *resp) {
-    waitRegNpc_ = false;
     if (req->is_equal("reg npc")) {
+        waitRegNpc_ = false;
         npc_ = resp->to_uint64();
         emit signalNpcChanged();
     } else if (strstr(req->to_string(), "br ")) {

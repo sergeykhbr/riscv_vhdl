@@ -40,6 +40,8 @@ entity DbgPort is
     i_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);    -- Region 1: Instruction pointer
     i_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);   -- Region 1: Next Instruction pointer
     i_e_valid : in std_logic;                                 -- Stepping control signal
+    i_e_call : in std_logic;                                  -- pseudo-instruction CALL
+    i_e_ret : in std_logic;                                   -- pseudo-instruction RET
     i_m_valid : in std_logic;                                 -- To compute number of valid executed instruction
     o_clock_cnt : out std_logic_vector(63 downto 0);          -- Number of clocks excluding halt state
     o_executed_cnt : out std_logic_vector(63 downto 0);       -- Number of executed instructions
@@ -56,6 +58,7 @@ architecture arch_DbgPort of DbgPort is
 
   constant zero64 : std_logic_vector(63 downto 0) := (others => '0');
   constant one64 : std_logic_vector(63 downto 0) := X"0000000000000001";
+  constant STACKTR_ADRSZ : integer := log2(CFG_STACK_TRACE_BUF_SIZE);
 
   type RegistersType is record
       ready : std_logic;
@@ -72,19 +75,59 @@ architecture arch_DbgPort of DbgPort is
       stepping_mode_steps : std_logic_vector(RISCV_ARCH-1 downto 0); -- Number of steps before halt in stepping mode
       clock_cnt : std_logic_vector(63 downto 0);               -- Timer in clocks.
       executed_cnt : std_logic_vector(63 downto 0);            -- Number of valid executed instructions
+      stack_trace_cnt : integer range 0 to CFG_STACK_TRACE_BUF_SIZE-1; -- Stack trace buffer counter
+      rd_trbuf_ena : std_logic;
+      rd_trbuf_addr0 : std_logic;
   end record;
 
   signal r, rin : RegistersType;
+  signal wb_stack_raddr : std_logic_vector(STACKTR_ADRSZ-1 downto 0);
+  signal wb_stack_rdata : std_logic_vector(2*BUS_ADDR_WIDTH-1 downto 0);
+  signal w_stack_we : std_logic;
+  signal wb_stack_waddr : std_logic_vector(STACKTR_ADRSZ-1 downto 0);
+  signal wb_stack_wdata : std_logic_vector(2*BUS_ADDR_WIDTH-1 downto 0);
+
+  component StackTraceBuffer is
+  generic (
+    abits : integer := 5;
+    dbits : integer := 64
+  );
+  port (
+    i_clk   : in std_logic;
+    i_raddr : in std_logic_vector(abits-1 downto 0);
+    o_rdata : out std_logic_vector(dbits-1 downto 0);
+    i_we    : in std_logic;
+    i_waddr : in std_logic_vector(abits-1 downto 0);
+    i_wdata : in std_logic_vector(dbits-1 downto 0)
+  );
+  end component;
 
 begin
 
+
+  stacktr_ena : if CFG_STACK_TRACE_BUF_SIZE /= 0 generate 
+    stacktr0 : StackTraceBuffer generic map (
+      abits => STACKTR_ADRSZ,
+      dbits => 2*BUS_ADDR_WIDTH
+    ) port map (
+      i_clk   => i_clk,
+      i_raddr => wb_stack_raddr,
+      o_rdata => wb_stack_rdata,
+      i_we    => w_stack_we,
+      i_waddr => wb_stack_waddr,
+      i_wdata => wb_stack_wdata
+    );
+  end generate;
+
   comb : process(i_nrst, i_dport_valid, i_dport_write, i_dport_region, 
                  i_dport_addr, i_dport_wdata, i_ireg_rdata, i_csr_rdata,
-                 i_pc, i_npc, i_e_valid, i_m_valid, i_ebreak, r)
+                 i_pc, i_npc, i_e_valid, i_m_valid, i_ebreak, r,
+                 wb_stack_rdata, i_call, i_ret)
     variable v : RegistersType;
     variable wb_o_core_addr : std_logic_vector(11 downto 0);
     variable wb_o_core_wdata : std_logic_vector(RISCV_ARCH-1 downto 0);
     variable wb_rdata : std_logic_vector(63 downto 0);
+    variable wb_o_rdata : std_logic_vector(63 downto 0);
     variable wb_idx : integer range 0 to 4095;
     variable w_o_csr_ena : std_logic;
     variable w_o_csr_write : std_logic;
@@ -99,6 +142,7 @@ begin
     wb_o_core_addr := (others => '0');
     wb_o_core_wdata := (others => '0');
     wb_rdata := (others => '0');
+    wb_o_rdata := (others => '0');
     wb_idx := conv_integer(i_dport_addr);
     w_o_csr_ena := '0';
     w_o_csr_write := '0';
@@ -106,6 +150,11 @@ begin
     w_o_ireg_write := '0';
     w_o_npc_write := '0';
     v.br_fetch_valid := '0';
+    v.rd_trbuf_ena := '0';
+    wb_stack_raddr <= (others => '0');
+    w_stack_we <= '0';
+    wb_stack_waddr <= (others => '0');
+    wb_stack_wdata <= (others => '0');
 
     v.ready := i_dport_valid;
 
@@ -134,6 +183,16 @@ begin
         end if;
     end if;
 
+    if CFG_STACK_TRACE_BUF_SIZE /= 0 then
+        if i_e_call = '1' and r.stack_trace_cnt /= (CFG_STACK_TRACE_BUF_SIZE - 1) then
+            w_stack_we <= '1';
+            wb_stack_waddr <= conv_std_logic_vector(r.stack_trace_cnt, STACKTR_ADRSZ);
+            wb_stack_wdata <= i_npc & i_pc;
+            v.stack_trace_cnt := r.stack_trace_cnt + 1;
+        elsif i_e_ret = '1' and r.stack_trace_cnt /= 0 then
+            v.stack_trace_cnt := r.stack_trace_cnt - 1;
+        end if;
+    end if;
 
     if i_dport_valid = '1' then
         case i_dport_region is
@@ -163,6 +222,16 @@ begin
                     w_o_npc_write := '1';
                     wb_o_core_wdata := i_dport_wdata;
                 end if;
+            elsif wb_idx = 34 then
+                wb_rdata(STACKTR_ADRSZ-1 downto 0) := 
+							conv_std_logic_vector(r.stack_trace_cnt, STACKTR_ADRSZ);
+                if i_dport_write = '1' then
+                    v.stack_trace_cnt := conv_integer(i_dport_wdata);
+                end if;
+            elsif (wb_idx >= 128) and (wb_idx < (128 + 2 * CFG_STACK_TRACE_BUF_SIZE)) then
+                    v.rd_trbuf_ena := '1';
+                    v.rd_trbuf_addr0 := conv_std_logic_vector(wb_idx, 1)(0);
+                    wb_stack_raddr <= conv_std_logic_vector((wb_idx - 128) / 2, STACKTR_ADRSZ);
             end if;
         when "10" =>
             case wb_idx is
@@ -215,6 +284,18 @@ begin
         end case;
     end if;
     v.rdata := wb_rdata;
+    if r.rd_trbuf_ena = '1' then
+        if r.rd_trbuf_addr0 = '0' then
+            wb_o_rdata(BUS_ADDR_WIDTH-1 downto 0) :=
+					wb_stack_rdata(BUS_ADDR_WIDTH-1 downto 0);
+        else
+            wb_o_rdata(BUS_ADDR_WIDTH-1 downto 0) :=
+					wb_stack_rdata(2*BUS_ADDR_WIDTH-1 downto BUS_ADDR_WIDTH);
+        end if;
+    else
+        wb_o_rdata := r.rdata;
+    end if;
+
 
     if i_nrst = '0' then
         v.ready := '0';
@@ -230,6 +311,9 @@ begin
         v.br_address_fetch := (others => '0');
         v.br_instr_fetch := (others => '0');
         v.br_fetch_valid := '0';
+        v.stack_trace_cnt := 0;
+        v.rd_trbuf_ena := '0';
+        v.rd_trbuf_addr0 := '0';
     end if;
 
     rin <= v;
@@ -250,7 +334,7 @@ begin
     o_br_instr_fetch <= r.br_instr_fetch;
 
     o_dport_ready <= r.ready;
-    o_dport_rdata <= r.rdata;
+    o_dport_rdata <= wb_o_rdata;
   end process;
 
 

@@ -68,7 +68,9 @@ entity InstrExecute is
     o_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);     -- Valid instruction pointer
     o_npc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);    -- Next instruction pointer. Next decoded pc must match to this value or will be ignored.
     o_instr : out std_logic_vector(31 downto 0);                -- Valid instruction value
-    o_breakpoint : out std_logic                                -- ebreak instruction
+    o_breakpoint : out std_logic;                               -- ebreak instruction
+    o_call : out std_logic;                                     -- CALL pseudo instruction detected
+    o_ret : out std_logic                                       -- RET pseudoinstruction detected
   );
 end; 
  
@@ -119,6 +121,8 @@ architecture arch_InstrExecute of InstrExecute is
         trap_code : std_logic_vector(4 downto 0);              -- bit[4] : 1 = interrupt; 0 = exception
                                                                -- bit[3:0] : trap code
         trap_pc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0); -- pc that caused a trap 
+        call : std_logic;
+        ret : std_logic;
   end record;
 
   signal r, rin : RegistersType;
@@ -615,6 +619,8 @@ begin
 
 
     v.trap_ena := '0';
+    v.call := '0';
+    v.ret := '0';
     if i_dport_npc_write = '1' then
         v.npc := i_dport_npc;
     elsif w_interrupt = '1' then
@@ -656,6 +662,17 @@ begin
 
         v.hazard_addr1 := r.hazard_addr0;
         v.hazard_addr0 := wb_res_addr;
+
+        if wv(Instr_JAL) = '1' and conv_integer(wb_res_addr) = Reg_ra then
+            v.call := '1';
+        end if;
+        if wv(Instr_JALR) = '1' then
+            if conv_integer(wb_res_addr) = Reg_ra then
+                v.call := '1';
+            elsif wb_rdata2 = zero64 and conv_integer(wb_radr1) = Reg_ra then
+                v.ret := '1';
+            end if;
+        end if;
     end if;
 
     v.d_valid := w_d_valid;
@@ -722,6 +739,8 @@ begin
         v.trap_ena := '0';
         v.trap_code := (others => '0');
         v.trap_pc := (others => '0');
+        v.call := '0';
+        v.ret := '0';
     end if;
 
     o_radr1 <= wb_radr1;
@@ -749,6 +768,8 @@ begin
     o_npc <= r.npc;
     o_instr <= r.instr;
     o_breakpoint <= r.breakpoint;
+    o_call <= r.call;
+    o_ret <= r.ret;
     
     rin <= v;
   end process;

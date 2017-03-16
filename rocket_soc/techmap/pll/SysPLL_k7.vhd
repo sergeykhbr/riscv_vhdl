@@ -55,8 +55,7 @@
 -- "Output    Output      Phase     Duty      Pk-to-Pk        Phase"
 -- "Clock    Freq (MHz) (degrees) Cycle (%) Jitter (ps)  Error (ps)"
 ------------------------------------------------------------------------------
--- CLK_OUT1____40.000
--- CLK_OUT2____10.000
+-- CLK_OUT1____40.000______0.000______50.0______135.255_____89.971
 --
 ------------------------------------------------------------------------------
 -- "Input Clock   Freq (MHz)    Input Jitter (UI)"
@@ -93,7 +92,7 @@ architecture xilinx of SysPLL_k7 is
   signal clkfboutb_unused : std_logic;
   signal clkout0          : std_logic;
   signal clkout0b_unused  : std_logic;
-  signal clkout1          : std_logic;
+  signal clkout1_unused   : std_logic;
   signal clkout1b_unused  : std_logic;
   signal clkout2_unused   : std_logic;
   signal clkout2b_unused  : std_logic;
@@ -111,7 +110,6 @@ architecture xilinx of SysPLL_k7 is
   signal clkfbstopped_unused : std_logic;
   signal clkinstopped_unused : std_logic;
 begin
-
 
 
   -- Clocking primitive
@@ -133,20 +131,15 @@ begin
     CLKOUT0_PHASE        => 0.000,
     CLKOUT0_DUTY_CYCLE   => 0.500,
     CLKOUT0_USE_FINE_PS  => FALSE,
-    CLKOUT1_DIVIDE       => 100,
-    CLKOUT1_PHASE        => 0.000,
-    CLKOUT1_DUTY_CYCLE   => 0.500,
-    CLKOUT1_USE_FINE_PS  => FALSE,
     CLKIN1_PERIOD        => 5.000,
     REF_JITTER1          => 0.010)
-  
   port map
     -- Output clocks
    (CLKFBOUT            => clkfbout,
     CLKFBOUTB           => clkfboutb_unused,
     CLKOUT0             => clkout0,
     CLKOUT0B            => clkout0b_unused,
-    CLKOUT1             => clkout1,
+    CLKOUT1             => clkout1_unused,
     CLKOUT1B            => clkout1b_unused,
     CLKOUT2             => clkout2_unused,
     CLKOUT2B            => clkout2b_unused,
@@ -193,5 +186,7 @@ begin
   port map
    (O   => CLK_OUT1,
     I   => clkout0);
+
+
 
 end xilinx;

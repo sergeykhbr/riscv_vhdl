@@ -36,10 +36,27 @@ DbgPort::DbgPort(sc_module_name name_) : sc_module(name_) {
     sensitive << r.executed_cnt;
     sensitive << r.stepping_mode_cnt;
     sensitive << r.trap_on_break;
+    sensitive << wb_stack_rdata;
 
     SC_METHOD(registers);
     sensitive << i_clk.pos();
+
+    if (CFG_STACK_TRACE_BUF_SIZE != 0) {
+        trbuf0 = new StackTraceBuffer("trbuf0");
+        trbuf0->i_clk(i_clk);
+        trbuf0->i_raddr(wb_stack_raddr);
+        trbuf0->o_rdata(wb_stack_rdata);
+        trbuf0->i_we(w_stack_we);
+        trbuf0->i_waddr(wb_stack_waddr);
+        trbuf0->i_wdata(wb_stack_wdata);
+    }
 };
+
+DbgPort::~DbgPort() {
+    if (CFG_STACK_TRACE_BUF_SIZE != 0) {
+        delete trbuf0;
+    }
+}
 
 void DbgPort::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
@@ -71,6 +88,9 @@ void DbgPort::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.stepping_mode, "/top/proc0/dbg0/r_stepping_mode");
         sc_trace(o_vcd, r.breakpoint, "/top/proc0/dbg0/r_breakpoint");
     }
+    if (CFG_STACK_TRACE_BUF_SIZE != 0) {
+        trbuf0->generateVCD(i_vcd, o_vcd);
+    }
 }
 
 void DbgPort::comb() {
@@ -78,6 +98,7 @@ void DbgPort::comb() {
     sc_uint<RISCV_ARCH> wb_o_core_wdata;
     sc_uint<64> wb_rdata;
     sc_uint<12> wb_idx;
+    sc_uint<64> wb_o_rdata;
     bool w_o_csr_ena;
     bool w_o_csr_write;
     bool w_o_ireg_ena;
@@ -85,12 +106,12 @@ void DbgPort::comb() {
     bool w_o_npc_write;
     bool w_cur_halt;
 
-
     v = r;
 
     wb_o_core_addr = 0;
     wb_o_core_wdata = 0;
     wb_rdata = 0;
+    wb_o_rdata = 0;
     wb_idx = i_dport_addr.read();
     w_o_csr_ena = 0;
     w_o_csr_write = 0;
@@ -98,6 +119,11 @@ void DbgPort::comb() {
     w_o_ireg_write = 0;
     w_o_npc_write = 0;
     v.br_fetch_valid = 0;
+    v.rd_trbuf_ena = 0;
+    wb_stack_raddr = 0;
+    w_stack_we = 0;
+    wb_stack_waddr = 0;
+    wb_stack_wdata = 0;
 
     v.ready = i_dport_valid.read();
 
@@ -126,12 +152,16 @@ void DbgPort::comb() {
         }
     }
 
-    if (i_e_call.read() && 
-        r.stack_trace_cnt.read() != (CFG_STACK_TRACE_BUF_SIZE - 1)) {
-        v.stackbuf[r.stack_trace_cnt.read()] = (i_npc, i_pc);
-        v.stack_trace_cnt = r.stack_trace_cnt.read() + 1;
-    } else if (i_e_ret.read() && r.stack_trace_cnt.read() != 0) {
-        v.stack_trace_cnt = r.stack_trace_cnt.read() - 1;
+    if (CFG_STACK_TRACE_BUF_SIZE != 0) {
+        if (i_e_call.read() && 
+            r.stack_trace_cnt.read() != (CFG_STACK_TRACE_BUF_SIZE - 1)) {
+            w_stack_we = 1;
+            wb_stack_waddr = r.stack_trace_cnt.read();
+            wb_stack_wdata = (i_npc, i_pc);
+            v.stack_trace_cnt = r.stack_trace_cnt.read() + 1;
+        } else if (i_e_ret.read() && r.stack_trace_cnt.read() != 0) {
+            v.stack_trace_cnt = r.stack_trace_cnt.read() - 1;
+        }
     }
 
     if (i_dport_valid.read()) {
@@ -166,18 +196,13 @@ void DbgPort::comb() {
             } else if (wb_idx == 34) {
                 wb_rdata = r.stack_trace_cnt;
                 if (i_dport_write.read()) {
-                    v.stack_trace_cnt = i_dport_wdata;
+                    v.stack_trace_cnt = i_dport_wdata.read()(4, 0);
                 }
             } else if (wb_idx >= 128 
                 && wb_idx < (128 + 2 * CFG_STACK_TRACE_BUF_SIZE)) {
-                if ((wb_idx & 0x1) == 0) {
-                    wb_rdata = 
-                        r.stackbuf[(wb_idx - 128) / 2](BUS_ADDR_WIDTH-1, 0);
-                } else {
-                    wb_rdata = 
-                        r.stackbuf[(wb_idx - 128) / 2](2*BUS_ADDR_WIDTH-1,
-                                                        BUS_ADDR_WIDTH);
-                }
+                    v.rd_trbuf_ena = 1;
+                    v.rd_trbuf_addr0 = wb_idx & 0x1;
+                    wb_stack_raddr = (wb_idx - 128) / 2;
             }
             break;
         case 2:
@@ -242,6 +267,16 @@ void DbgPort::comb() {
         }
     }
     v.rdata = wb_rdata;
+    if (r.rd_trbuf_ena.read()) {
+        if (r.rd_trbuf_addr0.read() == 0) {
+            wb_o_rdata = wb_stack_rdata.read()(BUS_ADDR_WIDTH-1, 0);
+        } else {
+            wb_o_rdata = wb_stack_rdata.read()(2*BUS_ADDR_WIDTH-1,
+                                               BUS_ADDR_WIDTH);
+        }
+    } else {
+        wb_o_rdata = r.rdata;
+    }
 
     if (!i_nrst.read()) {
         v.ready = 0;
@@ -258,6 +293,8 @@ void DbgPort::comb() {
         v.br_instr_fetch = 0;
         v.br_fetch_valid = 0;
         v.stack_trace_cnt = 0;
+        v.rd_trbuf_ena = 0;
+        v.rd_trbuf_addr0 = 0;
     }
 
     o_core_addr = wb_o_core_addr;
@@ -276,7 +313,7 @@ void DbgPort::comb() {
     o_br_instr_fetch = r.br_instr_fetch;
 
     o_dport_ready = r.ready;
-    o_dport_rdata = r.rdata;
+    o_dport_rdata = wb_o_rdata;
 }
 
 void DbgPort::registers() {

@@ -93,6 +93,13 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
+      <File Path="$PPRDIR/../../riverlib/core/stacktrbuf.vhd">
+        <FileInfo>
+          <Attr Name="Library" Val="riverlib"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
       <File Path="$PPRDIR/../../techmap/gencomp/gencomp.vhd">
         <FileInfo>
           <Attr Name="Library" Val="techmap"/>
@@ -226,13 +233,6 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../techmap/bufg/bufgmux_fpga.vhd">
-        <FileInfo>
-          <Attr Name="Library" Val="techmap"/>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
       <File Path="$PPRDIR/../../techmap/mem/sram8_inferred.vhd">
         <FileInfo>
           <Attr Name="Library" Val="techmap"/>
@@ -331,28 +331,7 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../techmap/pll/types_pll.vhd">
-        <FileInfo>
-          <Attr Name="Library" Val="techmap"/>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PPRDIR/../../techmap/bufg/types_buf.vhd">
-        <FileInfo>
-          <Attr Name="Library" Val="techmap"/>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
       <File Path="$PPRDIR/../../techmap/bufg/ibuf_inferred.vhd">
-        <FileInfo>
-          <Attr Name="Library" Val="techmap"/>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PPRDIR/../../techmap/bufg/bufgmux_tech.vhd">
         <FileInfo>
           <Attr Name="Library" Val="techmap"/>
           <Attr Name="UsedIn" Val="synthesis"/>
@@ -404,6 +383,20 @@
       <File Path="$PPRDIR/../../rocketlib/tl2axi.vhd">
         <FileInfo>
           <Attr Name="Library" Val="rocketlib"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../techmap/pll/types_pll.vhd">
+        <FileInfo>
+          <Attr Name="Library" Val="techmap"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../techmap/bufg/types_buf.vhd">
+        <FileInfo>
+          <Attr Name="Library" Val="techmap"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
@@ -565,6 +558,22 @@
       <File Path="$PPRDIR/../../work/riscv_soc.vhd">
         <FileInfo>
           <Attr Name="Library" Val="work"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../techmap/bufg/bufgmux_fpga.vhd">
+        <FileInfo>
+          <Attr Name="Library" Val="techmap"/>
+          <Attr Name="AutoDisabled" Val="1"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../techmap/bufg/bufgmux_tech.vhd">
+        <FileInfo>
+          <Attr Name="Library" Val="techmap"/>
+          <Attr Name="AutoDisabled" Val="1"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>

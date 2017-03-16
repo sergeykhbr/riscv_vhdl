@@ -11,6 +11,7 @@
 
 #include <systemc.h>
 #include "../river_cfg.h"
+#include "stacktrbuf.h"
 
 namespace debugger {
 
@@ -56,6 +57,7 @@ SC_MODULE(DbgPort) {
     SC_HAS_PROCESS(DbgPort);
 
     DbgPort(sc_module_name name_);
+    virtual ~DbgPort();
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
@@ -75,10 +77,18 @@ private:
         sc_signal<sc_uint<RISCV_ARCH>> stepping_mode_steps; // Number of steps before halt in stepping mode
         sc_signal<sc_uint<64>> clock_cnt;                   // Timer in clocks.
         sc_signal<sc_uint<64>> executed_cnt;                // Number of valid executed instructions
-        sc_signal<sc_uint<64>> stack_trace_cnt;             // Stack trace buffer counter
-
-        sc_biguint<2*BUS_ADDR_WIDTH> stackbuf[CFG_STACK_TRACE_BUF_SIZE]; // [pc, npc]
+        sc_signal<sc_uint<5>> stack_trace_cnt;              // Stack trace buffer counter (Log2[CFG_STACK_TRACE_BUF_SIZE])
+        sc_signal<bool> rd_trbuf_ena;
+        sc_signal<bool> rd_trbuf_addr0;
     } v, r;
+
+    sc_signal<sc_uint<5>> wb_stack_raddr;
+    sc_signal<sc_biguint<2*BUS_ADDR_WIDTH>> wb_stack_rdata;
+    sc_signal<bool> w_stack_we;
+    sc_signal<sc_uint<5>> wb_stack_waddr;
+    sc_signal<sc_biguint<2*BUS_ADDR_WIDTH>> wb_stack_wdata;
+
+    StackTraceBuffer *trbuf0;
 };
 
 

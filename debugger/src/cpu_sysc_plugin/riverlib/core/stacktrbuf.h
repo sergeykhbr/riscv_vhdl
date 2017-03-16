@@ -31,6 +31,7 @@ SC_MODULE(StackTraceBuffer) {
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
 private:
+    sc_signal<sc_uint<5>> raddr;
     sc_signal<sc_biguint<2*BUS_ADDR_WIDTH>> stackbuf[CFG_STACK_TRACE_BUF_SIZE]; // [pc, npc]
 };
 
