@@ -71,8 +71,11 @@ void DbgMainWindow::closeEvent(QCloseEvent *ev) {
 }
 
 void DbgMainWindow::handleResponse(AttributeType *req, AttributeType *resp) {
-    statusRequested_ = false;
     if (req->is_equal(cmdStatus_.to_string())) {
+        statusRequested_ = false;
+        if (resp->is_nil()) {
+            return;
+        }
         DsuMapType::udbg_type::debug_region_type::control_reg ctrl;
         ctrl.val = resp->to_uint64();
         if ((actionRun_->isChecked() && ctrl.bits.halt)

@@ -122,7 +122,7 @@ begin
   comb : process(i_nrst, i_dport_valid, i_dport_write, i_dport_region, 
                  i_dport_addr, i_dport_wdata, i_ireg_rdata, i_csr_rdata,
                  i_pc, i_npc, i_e_valid, i_m_valid, i_ebreak, r,
-                 wb_stack_rdata, i_call, i_ret)
+                 wb_stack_rdata, i_e_call, i_e_ret)
     variable v : RegistersType;
     variable wb_o_core_addr : std_logic_vector(11 downto 0);
     variable wb_o_core_wdata : std_logic_vector(RISCV_ARCH-1 downto 0);

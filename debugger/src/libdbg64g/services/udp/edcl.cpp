@@ -48,7 +48,7 @@ int EdclService::read(uint64_t addr, int bytes, uint8_t *obuf) {
     }
 
     int rd_bytes = 0;
-    while (rd_bytes < bytes && rd_bytes != -1) {
+    while (rd_bytes < bytes && rd_bytes != TAP_ERROR) {
         req.control.request.seqidx = 
                     static_cast<uint32_t>(seq_cnt_.to_uint64());
         req.control.request.write = 0;
@@ -67,7 +67,7 @@ int EdclService::read(uint64_t addr, int bytes, uint8_t *obuf) {
         txoff = itransport_->sendData(tx_buf_, txoff);
         if (txoff == -1) {
             RISCV_error("Data sending error", NULL);
-            rd_bytes = -1;
+            rd_bytes = TAP_ERROR;
             break;
         }
 
@@ -75,13 +75,13 @@ int EdclService::read(uint64_t addr, int bytes, uint8_t *obuf) {
         rxoff = itransport_->readData(rx_buf_, sizeof(rx_buf_));
         if (rxoff == -1) {
             RISCV_error("Data receiving error", NULL);
-            rd_bytes = -1;
+            rd_bytes = TAP_ERROR;
             break;
         } 
         if (rxoff == 0) {
             RISCV_error("No response. Break read transaction[%d]",
                         dbgRdTRansactionCnt_);
-            rd_bytes = -1;
+            rd_bytes = TAP_ERROR;
             break;
         }
 

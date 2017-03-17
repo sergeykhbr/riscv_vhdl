@@ -34,11 +34,11 @@ bool CmdReg::isValid(AttributeType *args) {
 }
 
 void CmdReg::exec(AttributeType *args, AttributeType *res) {
-    res->make_nil();
     if (!isValid(args)) {
         generateError(res, "Wrong argument list");
         return;
     }
+    res->make_nil();
 
     uint64_t val;
     const char *reg_name = (*args)[1].to_string();
@@ -51,7 +51,10 @@ void CmdReg::exec(AttributeType *args, AttributeType *res) {
     }
 
     if (args->size() == 2) {
-        tap_->read(addr, 8, reinterpret_cast<uint8_t *>(&val));
+        int err = tap_->read(addr, 8, reinterpret_cast<uint8_t *>(&val));
+        if (err == TAP_ERROR) {
+            return;
+        }
         res->make_uint64(val);
     } else {
         val = (*args)[2].to_uint64();

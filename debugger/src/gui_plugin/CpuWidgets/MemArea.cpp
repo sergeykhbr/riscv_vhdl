@@ -24,6 +24,7 @@ MemArea::MemArea(IGui *gui, QWidget *parent, uint64_t addr, uint64_t sz)
     data_.make_data(0);
     tmpBuf_.make_data(1024);
     dataText_.make_string("");
+    waitingResponse_ = false;
 
     clear();
     QFont font("Courier");
@@ -51,6 +52,9 @@ void MemArea::slotAddressChanged(AttributeType *cmd) {
 
 void MemArea::slotUpdateByTimer() {
     char tstr[128];
+    if (waitingResponse_) {
+        waitingResponse_ = true;
+    }
     RISCV_sprintf(tstr, sizeof(tstr), "read 0x%08" RV_PRI64 "x %d",
                                         reqAddr_, reqBytes_);
     cmdRead_.make_string(tstr);
@@ -71,6 +75,10 @@ void MemArea::slotUpdateData() {
 
 void MemArea::handleResponse(AttributeType *req, AttributeType *resp) {
     bool changed = false;
+    waitingResponse_ = false;
+    if (resp->is_nil()) {
+        return;
+    }
     if (resp->size() != data_.size()) {
         changed = true;
     } else {

@@ -50,6 +50,7 @@ bool CmdDisas::isValid(AttributeType *args) {
 }
 
 void CmdDisas::exec(AttributeType *args, AttributeType *res) {
+    res->make_nil();
     if (!isrc_ || !isValid(args)) {
         generateError(res, "Wrong argument list");
         return;
@@ -64,7 +65,8 @@ void CmdDisas::exec(AttributeType *args, AttributeType *res) {
         uint32_t sz = ((*args)[2].to_uint32() + 3) & ~0x3;
         membuf.make_data(sz);
         mem_data = &membuf;
-        if (tap_->read(addr, sz, membuf.data()) == -1) {
+        if (tap_->read(addr, sz, membuf.data()) == TAP_ERROR) {
+            res->make_nil();
             return;
         }
     } else {

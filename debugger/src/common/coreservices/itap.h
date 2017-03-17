@@ -23,6 +23,8 @@ static const char *const ITap_detail =
 "This interface is used for the direct access to the Hardware. "
 "Typically, it is doing via JTAG or other transport interface.";
 
+static const int TAP_ERROR = -1;
+
 class ITap : public IFace {
 public:
     ITap() : IFace(IFACE_TAP) {}

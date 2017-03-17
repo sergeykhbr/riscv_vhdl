@@ -280,7 +280,7 @@ begin
 
 
   -- registers:
-  regs : process(clk, nrst) begin 
+  regs : process(clk) begin 
     if rising_edge(clk) then 
        r <= rin; 
     end if;

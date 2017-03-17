@@ -51,6 +51,7 @@ private:
     unsigned reqBytes_;
     uint64_t reqAddrZ_;
     unsigned reqBytesZ_;
+    bool waitingResponse_;
 };
 
 }  // namespace debugger

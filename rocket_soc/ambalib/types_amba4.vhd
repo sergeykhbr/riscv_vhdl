@@ -235,6 +235,8 @@ constant GNSSSENSOR_ETHMAC        : std_logic_vector(15 downto 0) := X"007f";
 constant GNSSSENSOR_DSU           : std_logic_vector(15 downto 0) := X"0080";
 --! GP Timers device id.
 constant GNSSSENSOR_GPTIMERS      : std_logic_vector(15 downto 0) := X"0081";
+--! ADC samples recorder
+constant GNSSSENSOR_ADC_RECORDER  : std_logic_vector(15 downto 0) := X"0082";
 --! @}
 
 --! @name Decoder of the transaction size.

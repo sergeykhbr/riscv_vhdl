@@ -33,16 +33,18 @@ bool CmdStatus::isValid(AttributeType *args) {
 }
 
 void CmdStatus::exec(AttributeType *args, AttributeType *res) {
-    res->make_boolean(false);
     if (!isValid(args)) {
         generateError(res, "Wrong argument list");
         return;
     }
+    res->make_nil();
 
     Reg64Type t1;
     DsuMapType *pdsu = info_->getpDsu();
     uint64_t addr = reinterpret_cast<uint64_t>(&pdsu->udbg.v.control);
-    tap_->read(addr, 8, t1.buf);
+    if (tap_->read(addr, 8, t1.buf) == TAP_ERROR) {
+        return;
+    }
     res->make_uint64(t1.val);
 }
 

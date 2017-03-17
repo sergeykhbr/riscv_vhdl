@@ -160,11 +160,13 @@ void AsmArea::slotUpdateByTimer() {
 void AsmArea::handleResponse(AttributeType *req, AttributeType *resp) {
     if (req->is_equal("reg npc")) {
         waitRegNpc_ = false;
-        npc_ = resp->to_uint64();
-        emit signalNpcChanged();
-    } else if (strstr(req->to_string(), "br ")) {
+        if (!resp->is_nil()) {
+            npc_ = resp->to_uint64();
+            emit signalNpcChanged();
+        }
+    } else if (strstr(req->to_string(), "br ") && !resp->is_nil()) {
         emit signalBreakpointsChanged();
-    } else if (strstr(req->to_string(), "disas")) {
+    } else if (strstr(req->to_string(), "disas") && !resp->is_nil()) {
         addMemBlock(*resp, asmLines_);
         emit signalAsmListChanged();
     }

@@ -37,7 +37,9 @@ architecture arch_syncram_2p_inferred of syncram_2p_inferred is
     variable temp_mem : dregtype;
   begin
     for i in 0 to (2**abits - 1) loop
-        if dbits = 32 then
+        if dbits = 64 then
+           temp_mem(i) := X"0000000000000000";--X"CCCCCCCC";
+        elsif dbits = 32 then
            temp_mem(i) := X"00000000";--X"CCCCCCCC";
         else
            temp_mem(i) := X"0000";--X"CCCC";

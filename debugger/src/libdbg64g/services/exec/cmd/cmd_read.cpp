@@ -34,7 +34,7 @@ bool CmdRead::isValid(AttributeType *args) {
 }
 
 void CmdRead::exec(AttributeType *args, AttributeType *res) {
-    res->make_uint64(~0);
+    res->make_nil();
     if (!isValid(args)) {
         generateError(res, "Wrong argument list");
         return;
@@ -50,7 +50,10 @@ void CmdRead::exec(AttributeType *args, AttributeType *res) {
         rdData_.make_data(4 * bytes);
     }
 
-    tap_->read(addr, bytes, rdData_.data());
+    if (tap_->read(addr, bytes, rdData_.data()) == TAP_ERROR) {
+        res->make_nil();
+        return;
+    }
 
     res->make_data(bytes, rdData_.data());
 }

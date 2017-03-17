@@ -141,6 +141,7 @@ void GuiPlugin::registerCommand(IGuiCmdHandler *src,
                     cmdQueueCntTotal_);
         return;
     }
+    //RISCV_info("CMD %s", cmd->to_string());
     if (cmdQueueWrPos_ == CMD_QUEUE_SIZE) {
         cmdQueueWrPos_ = 0;
     }
@@ -148,10 +149,7 @@ void GuiPlugin::registerCommand(IGuiCmdHandler *src,
     cmdQueue_[cmdQueueWrPos_].silent = silent;
     cmdQueue_[cmdQueueWrPos_].src = src;
     cmdQueue_[cmdQueueWrPos_++].cmd = *cmd;
-
-    if (isEnabled()) {
-        cmdQueueCntTotal_++;
-    }
+    cmdQueueCntTotal_++;
     RISCV_mutex_unlock(&mutexCommand_);
     RISCV_event_set(&eventCommandAvailable_);
 }
