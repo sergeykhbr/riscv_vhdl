@@ -48,6 +48,7 @@ CacheTop::CacheTop(sc_module_name name_) : sc_module(name_) {
     i0->o_req_mem_data(i.req_mem_wdata);
     i0->i_resp_mem_data_valid(w_ctrl_resp_mem_data_valid);
     i0->i_resp_mem_data(wb_ctrl_resp_mem_data);
+    i0->o_istate(o_istate);
 
     d0 = new DCache("d0");
     d0->i_clk(i_clk);
@@ -70,6 +71,7 @@ CacheTop::CacheTop(sc_module_name name_) : sc_module(name_) {
     d0->o_req_mem_data(d.req_mem_wdata);
     d0->i_resp_mem_data_valid(w_data_resp_mem_data_valid);
     d0->i_resp_mem_data(wb_data_resp_mem_data);
+    d0->o_dstate(o_dstate);
 };
 
 void CacheTop::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
@@ -92,8 +94,9 @@ void CacheTop::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_req_mem_data, "/top/cache0/o_req_mem_data");
         sc_trace(o_vcd, i_resp_mem_data_valid, "/top/cache0/i_resp_mem_data_valid");
         sc_trace(o_vcd, i_resp_mem_data, "/top/cache0/i_resp_mem_data");
-
-        sc_trace(o_vcd, r.state, "/top/cache0/r.state");
+        sc_trace(o_vcd, o_istate, "/top/cache0/o_istate");
+        sc_trace(o_vcd, o_dstate, "/top/cache0/o_dstate");
+        sc_trace(o_vcd, o_cstate, "/top/cache0/o_cstate");
     }
     i0->generateVCD(i_vcd, o_vcd);
     d0->generateVCD(i_vcd, o_vcd);
@@ -205,6 +208,7 @@ void CacheTop::comb() {
     o_req_mem_addr = wb_mem_addr;
     o_req_mem_strob = wb_mem_strob;
     o_req_mem_data = wb_mem_wdata;
+    o_cstate = r.state;
 }
 
 void CacheTop::registers() {

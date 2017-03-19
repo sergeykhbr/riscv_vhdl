@@ -46,7 +46,11 @@ entity CacheTop is
     o_req_mem_strob : out std_logic_vector(BUS_DATA_BYTES-1 downto 0);
     o_req_mem_data : out std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
     i_resp_mem_data_valid : in std_logic;
-    i_resp_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0)
+    i_resp_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+    -- Debug signals:
+    o_istate : out std_logic_vector(1 downto 0);                      -- ICache state machine value
+    o_dstate : out std_logic_vector(1 downto 0);                      -- DCache state machine value
+    o_cstate : out std_logic_vector(1 downto 0)                       -- cachetop state machine value
   );
 end; 
  
@@ -96,7 +100,8 @@ architecture arch_CacheTop of CacheTop is
     o_req_mem_strob : out std_logic_vector(BUS_DATA_BYTES-1 downto 0);
     o_req_mem_data : out std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
     i_resp_mem_data_valid : in std_logic;
-    i_resp_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0)
+    i_resp_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+    o_istate : out std_logic_vector(1 downto 0)
   );
   end component; 
 
@@ -120,7 +125,8 @@ architecture arch_CacheTop of CacheTop is
     o_req_mem_strob : out std_logic_vector(BUS_DATA_BYTES-1 downto 0);
     o_req_mem_data : out std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
     i_resp_mem_data_valid : in std_logic;
-    i_resp_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0)
+    i_resp_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+    o_dstate : out std_logic_vector(1 downto 0)
   );
   end component; 
 
@@ -143,7 +149,8 @@ begin
         o_req_mem_strob => i.req_mem_strob,
         o_req_mem_data => i.req_mem_wdata,
         i_resp_mem_data_valid => w_ctrl_resp_mem_data_valid,
-        i_resp_mem_data => wb_ctrl_resp_mem_data);
+        i_resp_mem_data => wb_ctrl_resp_mem_data,
+        o_istate => o_istate);
 
     d0 : DCache port map (
         i_clk => i_clk,
@@ -165,7 +172,8 @@ begin
         o_req_mem_strob => d.req_mem_strob,
         o_req_mem_data => d.req_mem_wdata,
         i_resp_mem_data_valid => w_data_resp_mem_data_valid,
-        i_resp_mem_data => wb_data_resp_mem_data);
+        i_resp_mem_data => wb_data_resp_mem_data,
+        o_dstate => o_dstate);
 
   comb : process(i_nrst, i_req_mem_ready, i_resp_mem_data_valid, i_resp_mem_data, 
                  i, d, r)
@@ -268,6 +276,7 @@ begin
     o_req_mem_addr <= wb_mem_addr;
     o_req_mem_strob <= wb_mem_strob;
     o_req_mem_data <= wb_mem_wdata;
+    o_cstate <= r.state;
     
     rin <= v;
   end process;

@@ -48,7 +48,11 @@ entity Processor is
     i_dport_addr : in std_logic_vector(11 downto 0);                  -- Register idx
     i_dport_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0);       -- Write value
     o_dport_ready : out std_logic;                                    -- Response is ready
-    o_dport_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0)       -- Response value
+    o_dport_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0);      -- Response value
+    -- Debug signals:
+    i_istate : in std_logic_vector(1 downto 0);                       -- ICache state machine value
+    i_dstate : in std_logic_vector(1 downto 0);                       -- DCache state machine value
+    i_cstate : in std_logic_vector(1 downto 0)                        -- CacheTop state machine value
   );
 end; 
  
@@ -399,7 +403,10 @@ begin
         o_break_mode => dbg.break_mode,
         o_br_fetch_valid => dbg.br_fetch_valid,
         o_br_address_fetch => dbg.br_address_fetch,
-        o_br_instr_fetch => dbg.br_instr_fetch);
+        o_br_instr_fetch => dbg.br_instr_fetch,
+        i_istate => i_istate,
+        i_dstate => i_dstate,
+        i_cstate => i_cstate);
 
     o_req_ctrl_valid <= w.f.imem_req_valid;
     o_req_ctrl_addr <= w.f.imem_req_addr;

@@ -50,7 +50,11 @@ entity DbgPort is
     o_break_mode : out std_logic;                             -- Behaviour on EBREAK instruction: 0 = halt; 1 = generate trap
     o_br_fetch_valid : out std_logic;                         -- Fetch injection address/instr are valid
     o_br_address_fetch : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0); -- Fetch injection address to skip ebreak instruciton only once
-    o_br_instr_fetch : out std_logic_vector(31 downto 0)      -- Real instruction value that was replaced by ebreak
+    o_br_instr_fetch : out std_logic_vector(31 downto 0);     -- Real instruction value that was replaced by ebreak
+    -- Debug signals:
+    i_istate : in std_logic_vector(1 downto 0);               -- ICache state machine value
+    i_dstate : in std_logic_vector(1 downto 0);               -- DCache state machine value
+    i_cstate : in std_logic_vector(1 downto 0)                -- CacheTop state machine value
   );
 end; 
  
@@ -122,7 +126,8 @@ begin
   comb : process(i_nrst, i_dport_valid, i_dport_write, i_dport_region, 
                  i_dport_addr, i_dport_wdata, i_ireg_rdata, i_csr_rdata,
                  i_pc, i_npc, i_e_valid, i_m_valid, i_ebreak, r,
-                 wb_stack_rdata, i_e_call, i_e_ret)
+                 wb_stack_rdata, i_e_call, i_e_ret, i_istate, i_dstate,
+                 i_cstate)
     variable v : RegistersType;
     variable wb_o_core_addr : std_logic_vector(11 downto 0);
     variable wb_o_core_wdata : std_logic_vector(RISCV_ARCH-1 downto 0);
@@ -238,6 +243,9 @@ begin
             when 0 =>
                 wb_rdata(0) := r.halt;
                 wb_rdata(2) := r.breakpoint;
+                wb_rdata(33 downto 32) := i_istate;
+                wb_rdata(37 downto 36) := i_dstate;
+                wb_rdata(41 downto 40) := i_cstate;
                 if i_dport_write = '1' then
                     v.halt := i_dport_wdata(0);
                     v.stepping_mode := i_dport_wdata(1);

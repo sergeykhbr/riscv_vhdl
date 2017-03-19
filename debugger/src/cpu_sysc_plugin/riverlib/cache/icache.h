@@ -33,6 +33,7 @@ SC_MODULE(ICache) {
     sc_out<sc_uint<BUS_DATA_WIDTH>> o_req_mem_data;
     sc_in<bool> i_resp_mem_data_valid;
     sc_in<sc_uint<BUS_DATA_WIDTH>> i_resp_mem_data;
+    sc_out<sc_uint<2>> o_istate;
 
 
     void comb();

@@ -46,7 +46,10 @@ SC_MODULE(CacheTop) {
     sc_out<sc_uint<BUS_DATA_WIDTH>> o_req_mem_data;     // Writing value
     sc_in<bool> i_resp_mem_data_valid;                  // Memory operation from system bus is completed
     sc_in<sc_uint<BUS_DATA_WIDTH>> i_resp_mem_data;     // Read value
-
+    // Debug signals:
+    sc_out<sc_uint<2>> o_istate;                        // ICache state machine value
+    sc_out<sc_uint<2>> o_dstate;                        // DCache state machine value
+    sc_out<sc_uint<2>> o_cstate;                        // cachetop state machine value
 
     void comb();
     void registers();

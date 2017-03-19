@@ -34,7 +34,9 @@ entity ICache is
     o_req_mem_strob : out std_logic_vector(BUS_DATA_BYTES-1 downto 0);
     o_req_mem_data : out std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
     i_resp_mem_data_valid : in std_logic;
-    i_resp_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0)
+    i_resp_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+    -- Debug Signals:
+    o_istate : out std_logic_vector(1 downto 0)
   );
 end; 
  
@@ -203,6 +205,7 @@ begin
     o_resp_ctrl_valid <= w_o_resp_valid;
     o_resp_ctrl_data <= wb_o_resp_data;
     o_resp_ctrl_addr <= wb_o_resp_addr;
+    o_istate <= r.state;
     
     rin <= v;
   end process;

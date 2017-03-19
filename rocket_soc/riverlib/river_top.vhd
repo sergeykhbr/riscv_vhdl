@@ -62,6 +62,9 @@ architecture arch_RiverTop of RiverTop is
   signal wb_resp_data_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
   signal wb_resp_data_data : std_logic_vector(RISCV_ARCH-1 downto 0);
   signal w_resp_data_ready : std_logic;
+  signal wb_istate : std_logic_vector(1 downto 0);
+  signal wb_dstate : std_logic_vector(1 downto 0);
+  signal wb_cstate : std_logic_vector(1 downto 0);
 
 begin
 
@@ -93,7 +96,10 @@ begin
         i_dport_addr => i_dport_addr,
         i_dport_wdata => i_dport_wdata,
         o_dport_ready => o_dport_ready,
-        o_dport_rdata => o_dport_rdata);
+        o_dport_rdata => o_dport_rdata,
+        i_istate => wb_istate,
+        i_dstate => wb_dstate,
+        i_cstate => wb_cstate);
 
     cache0 :  CacheTop port map (
         i_clk => i_clk,
@@ -122,6 +128,9 @@ begin
         o_req_mem_strob => o_req_mem_strob,
         o_req_mem_data => o_req_mem_data,
         i_resp_mem_data_valid => i_resp_mem_data_valid,
-        i_resp_mem_data => i_resp_mem_data);
+        i_resp_mem_data => i_resp_mem_data,
+        o_istate => wb_istate,
+        o_dstate => wb_dstate,
+        o_cstate => wb_cstate);
 
 end;

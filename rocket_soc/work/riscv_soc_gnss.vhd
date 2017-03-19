@@ -501,24 +501,40 @@ end generate;
   --! @details Map address:
   --!          0x8000a000..0x8000afff (4 KB total)
   fse0_ena : if CFG_GNSSLIB_FSEGPS_ENABLE generate 
-      fse0 : TopFSE generic map (
-        tech   => CFG_MEMTECH,
-        xaddr  => 16#8000a#,
-        xmask  => 16#fffff#,
-        sys    => GEN_SYSTEM_GPSCA
-      ) port map (
-        nrst         => w_glob_nrst,
-        clk_bus      => w_clk_bus,
-        clk_adc      => w_clk_adc,
-        o_cfg        => slv_cfg(CFG_NASTI_SLAVE_FSE_GPS),
-        i_axi        => axisi(CFG_NASTI_SLAVE_FSE_GPS),
-        o_axi        => axiso(CFG_NASTI_SLAVE_FSE_GPS),
-        i_I          => i_gps_I,
-        i_Q          => i_gps_Q,
-        i_ms_pulse   => irq_pins(CFG_IRQ_GNSSENGINE),
-        i_pps        => w_gnss_pps,
-        i_test_mode  => '0'
-      );
+--      fse0 : TopFSE generic map (
+--        tech   => CFG_MEMTECH,
+--        xaddr  => 16#8000a#,
+--        xmask  => 16#fffff#,
+--        sys    => GEN_SYSTEM_GPSCA
+--      ) port map (
+--        nrst         => w_glob_nrst,
+--        clk_bus      => w_clk_bus,
+--        clk_adc      => w_clk_adc,
+--        o_cfg        => slv_cfg(CFG_NASTI_SLAVE_FSE_GPS),
+--        i_axi        => axisi(CFG_NASTI_SLAVE_FSE_GPS),
+--        o_axi        => axiso(CFG_NASTI_SLAVE_FSE_GPS),
+--        i_I          => i_gps_I,
+--        i_Q          => i_gps_Q,
+--        i_ms_pulse   => irq_pins(CFG_IRQ_GNSSENGINE),
+--        i_pps        => w_gnss_pps,
+--        i_test_mode  => '0'
+--      );
+      
+  axi0 : axi_recorder generic map (
+    tech     => CFG_MEMTECH,
+    xaddr    => 16#800a0#,   -- 64 KB
+    xmask    => 16#ffff0#
+  ) port map (
+    nrst     => w_glob_nrst,
+    clk_bus  => w_clk_bus,
+    clk_adc  => w_clk_adc,
+    o_cfg    => slv_cfg(CFG_NASTI_SLAVE_FSE_GPS),
+    i_axi    => axisi(CFG_NASTI_SLAVE_FSE_GPS),
+    o_axi    => axiso(CFG_NASTI_SLAVE_FSE_GPS),
+    i_gps_I  => i_gps_I,
+    i_gps_Q  => i_gps_Q
+  );
+
   end generate;
   --! FSE GPS disable
   fse0_dis : if not CFG_GNSSLIB_FSEGPS_ENABLE generate 

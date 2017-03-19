@@ -243,6 +243,9 @@ Processor::Processor(sc_module_name name_) : sc_module(name_) {
     dbg0->o_br_fetch_valid(dbg.br_fetch_valid);
     dbg0->o_br_address_fetch(dbg.br_address_fetch);
     dbg0->o_br_instr_fetch(dbg.br_instr_fetch);
+    dbg0->i_istate(i_istate);
+    dbg0->i_dstate(i_dstate);
+    dbg0->i_cstate(i_cstate);
 
     reg_dbg = 0;
     mem_dbg = 0;

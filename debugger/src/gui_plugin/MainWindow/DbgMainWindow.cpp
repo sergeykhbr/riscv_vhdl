@@ -85,6 +85,13 @@ void DbgMainWindow::handleResponse(AttributeType *req, AttributeType *resp) {
         if (ctrl.bits.breakpoint && ebreak_) {
             ebreak_->skip();
         }
+#if 0
+        static const char *xSTATES[] = {"Idle", "WaitGrant", "WaitResp", "WaitAccept"};
+        static const char *CSTATES[] = {"Idle", "IMem", "DMem"};
+        printf("istate=%s; dstate=%s; cstate=%s;\n",
+          xSTATES[ctrl.bits.istate], xSTATES[ctrl.bits.dstate],
+          CSTATES[ctrl.bits.cstate]);
+#endif
     }
 }
 

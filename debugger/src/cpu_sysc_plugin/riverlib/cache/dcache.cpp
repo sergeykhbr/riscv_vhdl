@@ -251,6 +251,7 @@ void DCache::comb() {
     o_resp_data_valid = w_o_resp_valid;
     o_resp_data_data = wb_o_resp_data;
     o_resp_data_addr = wb_o_resp_addr;
+    o_dstate = r.state;
 }
 
 void DCache::registers() {

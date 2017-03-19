@@ -149,7 +149,13 @@ struct DsuMapType {
                     uint64_t breakpoint : 1;
                     uint64_t rsv1     : 1;
                     uint64_t core_id  : 16;
-                    uint64_t rsv2     : 44;
+                    uint64_t rsv2     : 12;
+                    uint64_t istate   : 2;  // [33:32] icache state
+                    uint64_t rsv3     : 2;  // [35:34]
+                    uint64_t dstate   : 2;  // [37:36] dcache state
+                    uint64_t rsv4     : 2;  // [39:38]
+                    uint64_t cstate   : 2;  // [41:40] cachetop state
+                    uint64_t rsv5     : 22;
                 } bits;
             } control;
             uint64_t stepping_mode_steps;

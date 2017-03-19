@@ -58,18 +58,22 @@ void CmdMemDump::exec(AttributeType *args, AttributeType *res) {
     if (args->size() == 5 && (*args)[4].is_equal("hex")) {
         char t1[256];
         int t1_cnt = 0;
-        for (int i = 0; i < len; i++) {
+        int idx;
+        for (int i = 0; i < ((len + 0xf) & ~0xf); i++) {
+            idx = (i & ~0xf) | (0xf - (i & 0xf));
+            if (idx > len) {
+                t1[t1_cnt++] = ' ';
+                t1[t1_cnt++] = ' ';
+                continue;
+            }
             t1_cnt += RISCV_sprintf(&t1[t1_cnt], sizeof(t1) - t1_cnt, "%02x",
-                                    dumpbuf[(i & ~0xf) | (0xf - (i & 0xf))]);
+                                    dumpbuf[idx]);
             if ((i & 0xf) != 0xf) {
                 continue;
             }
             t1_cnt += RISCV_sprintf(&t1[t1_cnt], sizeof(t1) - t1_cnt, "\n");
             fwrite(t1, t1_cnt, 1, fd);
             t1_cnt = 0;
-        }
-        if (len & 0xf) {
-            fwrite(t1, t1_cnt, 1, fd);
         }
     } else {
         fwrite(dumpbuf, len, 1, fd);

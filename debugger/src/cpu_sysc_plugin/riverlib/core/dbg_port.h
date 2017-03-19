@@ -50,6 +50,10 @@ SC_MODULE(DbgPort) {
     sc_out<bool> o_br_fetch_valid;                      // Fetch injection address/instr are valid
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_br_address_fetch; // Fetch injection address to skip ebreak instruciton only once
     sc_out<sc_uint<32>> o_br_instr_fetch;               // Real instruction value that was replaced by ebreak
+    // Cache debug signals:
+    sc_in<sc_uint<2>> i_istate;                         // ICache transaction state
+    sc_in<sc_uint<2>> i_dstate;                         // DCache transaction state
+    sc_in<sc_uint<2>> i_cstate;                         // CacheTop state machine value
 
     void comb();
     void registers();

@@ -200,6 +200,24 @@ package types_gnss is
   );
 end component; 
 
+  component axi_recorder is generic (
+    tech     : integer := 0;
+    xaddr    : integer := 0;
+    xmask    : integer := 16#ffff0#
+  );
+  port (
+    nrst    : in  std_logic;
+    clk_bus : in  std_logic;
+    clk_adc : in  std_logic;
+    o_cfg   : out nasti_slave_config_type;
+    i_axi   : in  nasti_slave_in_type;
+    o_axi   : out nasti_slave_out_type;
+    i_gps_I : in std_logic_vector(1 downto 0);
+    i_gps_Q : in std_logic_vector(1 downto 0)
+  );
+  end component; 
+
+
   ------------------------------------------------------------------------------
   -- 3-axis STMicroelectronics Gyroscope SPI controller (4-wires mode)
 

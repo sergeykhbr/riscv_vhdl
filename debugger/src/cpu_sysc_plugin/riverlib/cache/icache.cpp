@@ -207,6 +207,7 @@ void ICache::comb() {
     o_resp_ctrl_valid = w_o_resp_valid;
     o_resp_ctrl_data = wb_o_resp_data;
     o_resp_ctrl_addr = wb_o_resp_addr;
+    o_istate = r.state;
 }
 
 void ICache::registers() {
