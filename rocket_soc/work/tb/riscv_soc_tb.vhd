@@ -154,7 +154,7 @@ component riscv_soc is port
 );
 end component;
 
-component uart_sim is 
+  component uart_sim is 
   generic (
     clock_rate : integer := 10
   ); 
@@ -169,73 +169,17 @@ component uart_sim is
     ctsn : out std_logic;
     busy : out std_logic
   );
-end component;
+  end component;
 
-   -- Use '20150601_riscv' project to generate network nibbles in string format:
-   --   Open grethaxi.cpp (line 855)
-   --   Use methods sendEdclRead/sendEdclWrite and generate_tb_string.
-
-   -- Message 1: Read npc register from debug port of RIVER CPU:
-   --    edcl index = 0
-   --    address = 0x80088000 | (33 << 3) = 0x80088108
-   --    size = 2 x word32 = 8 bytes
-   constant EDCL_MSG1_START : integer := 1000;
-   constant EDCL_MSG1_LEN : integer := 114;
-   constant EDCL_MSG1 : std_logic_vector(EDCL_MSG1_LEN*4-1 downto 0) := 
-   X"5d207098001032badcacefebeb800000e100450000000029bd11000c8a00a00c8a00f07788556600a01655000000004000088018802a32c544";
-   
-   -- Message 2: Write CSR register mtimecmp to debug port of RIVER CPU:
-   --    edcl index = 1
-   --    address = 0x8008000 | (321 << 3)
-   --    size = 8 bytes
-   --    wdata = 0x8877665544332211
-   constant EDCL_MSG2_START : integer := 2000;
-   constant EDCL_MSG2_LEN : integer := 130;
-   constant EDCL_MSG2 : std_logic_vector(EDCL_MSG2_LEN*4-1 downto 0) := 
-   X"5d207098001032badcacefebeb80000062004500000000293e11000c8a00a00c8a00f07788556600217baf000000604000088091801122334455667788ec10d362";
-
-
-   -- Message 3: Read 32 x words32 from ROM (romimage):
-   --    edcl index = 2
-   --    address = 0x00100000
-   --    size = 32 x word32 = 256 bytes
-   constant EDCL_MSG3_START : integer := 3000;
-   constant EDCL_MSG3_LEN : integer := 114;
-   constant EDCL_MSG3 : std_logic_vector(EDCL_MSG3_LEN*4-1 downto 0) := 
-   X"5d207098001032badcacefebeb800000e100450000000029bd11000c8a00a00c8a00f07788556600a062e40000008004000001000048d5979f";
-   
-   -- Message 4: Read 20 x words32 from SRAM:
-   --    edcl index = 3
-   --    address = 0x10001450
-   --    size = 20 x word32 = 80 bytes
-   constant EDCL_MSG4_START : integer := 4000;
-   constant EDCL_MSG4_LEN : integer := 114;
-   constant EDCL_MSG4 : std_logic_vector(EDCL_MSG4_LEN*4-1 downto 0) := 
-   X"5d207098001032badcacefebeb800000e100450000000029bd11000c8a00a00c8a00f07788556600a0a1a0000000c082000100410560799d79";
-   
-   -- Message 5: Read 10 x words32 from SRAM:
-   --    edcl index = 4
-   --    address = 0x10001D60
-   --    size = 10 x word32 = 40 bytes
-   constant EDCL_MSG5_START : integer := 5000-22;
-   constant EDCL_MSG5_LEN : integer := 114;
-   constant EDCL_MSG5 : std_logic_vector(EDCL_MSG5_LEN*4-1 downto 0) := 
-   X"5d207098001032badcacefebeb800000e100450000000029bd11000c8a00a00c8a00f07788556600a0426f0000000141000100d106e3d35cdc";
-
-   -- Message 6: Write 8 x 64-bits (64 bytes) into SRAM:
-   --    edcl index = 5
-   --    address = 0x10030d40
-   --    uint64_t wdata6[8] = {0x2222222211111111ull, 0x4444444433333333ull, 0x6666666655555555ull, 0x8888888877777777ull,
-   --                          0xaaaaaaaa99999999ull, 0xccccccccbbbbbbbbull, 0xffffffffeeeeeeeeull, 0xcafecafebeefbeefull};
-   --    size = 64 bytes
-   constant EDCL_MSG6_START : integer := 6000;
-   constant EDCL_MSG6_LEN : integer := 242;
-   constant EDCL_MSG6 : std_logic_vector(EDCL_MSG6_LEN*4-1 downto 0) := 
-   X"5d207098001032badcacefebeb800000e500450000000039b111000c8a00a00c8a00f07788556600a4705b0000006102000130d004111111112222222233333333444444445555555566666666777777778888888899999999aaaaaaaabbbbbbbbcccccccceeeeeeeefffffffffeebfeebefacefacc3875a17";   
-
-   constant ETH_ENABLE : std_logic := '1';
+  component ethphy_sim is 
+  port (
+    rst : in std_logic;
+    clk : in std_logic;
+    o_rxd  : out std_logic_vector(3 downto 0);
+    o_rxdv : out std_logic
+  );
+  end component;
 begin
-
 
   -- Process of reading
   procReadingFile : process
@@ -248,29 +192,6 @@ begin
       clk_next := not clk_cur;
       if (clk_next = '1' and clk_cur = '0') then
         check_clk_bus <= '1';
-      elsif (clk_next = '0' and clk_cur = '1') then
-        if iClkCnt >= EDCL_MSG1_START and iClkCnt < (EDCL_MSG1_START + EDCL_MSG1_LEN) then
-           i_rxd <= EDCL_MSG1(4*(EDCL_MSG1_LEN - (iClkCnt-EDCL_MSG1_START))-1 downto 4*(EDCL_MSG1_LEN - (iClkCnt-EDCL_MSG1_START))-4);
-           i_rxdv <= ETH_ENABLE;
-        elsif iClkCnt >= EDCL_MSG2_START and iClkCnt < (EDCL_MSG2_START + EDCL_MSG2_LEN) then
-           i_rxd <= EDCL_MSG2(4*(EDCL_MSG2_LEN - (iClkCnt-EDCL_MSG2_START))-1 downto 4*(EDCL_MSG2_LEN - (iClkCnt-EDCL_MSG2_START))-4);
-           i_rxdv <= ETH_ENABLE;
-        elsif iClkCnt >= EDCL_MSG3_START and iClkCnt < (EDCL_MSG3_START + EDCL_MSG3_LEN) then
-           i_rxd <= EDCL_MSG3(4*(EDCL_MSG3_LEN - (iClkCnt-EDCL_MSG3_START))-1 downto 4*(EDCL_MSG3_LEN - (iClkCnt-EDCL_MSG3_START))-4);
-           i_rxdv <= ETH_ENABLE;
-        elsif iClkCnt >= EDCL_MSG4_START and iClkCnt < (EDCL_MSG4_START + EDCL_MSG4_LEN) then
-           i_rxd <= EDCL_MSG4(4*(EDCL_MSG4_LEN - (iClkCnt-EDCL_MSG4_START))-1 downto 4*(EDCL_MSG4_LEN - (iClkCnt-EDCL_MSG4_START))-4);
-           i_rxdv <= ETH_ENABLE;
-        elsif iClkCnt >= EDCL_MSG5_START and iClkCnt < (EDCL_MSG5_START + EDCL_MSG5_LEN) then
-           i_rxd <= EDCL_MSG5(4*(EDCL_MSG5_LEN - (iClkCnt-EDCL_MSG5_START))-1 downto 4*(EDCL_MSG5_LEN - (iClkCnt-EDCL_MSG5_START))-4);
-           i_rxdv <= ETH_ENABLE;
-        elsif iClkCnt >= EDCL_MSG6_START and iClkCnt < (EDCL_MSG6_START + EDCL_MSG6_LEN) then
-           i_rxd <= EDCL_MSG6(4*(EDCL_MSG6_LEN - (iClkCnt-EDCL_MSG6_START))-1 downto 4*(EDCL_MSG6_LEN - (iClkCnt-EDCL_MSG6_START))-4);
-           i_rxdv <= ETH_ENABLE;
-        else
-           i_rxd <= "0000";
-           i_rxdv <= '0';
-        end if;
       end if;
 
       wait for 1 ps;
@@ -339,6 +260,12 @@ begin
     busy => uart_busy
   );
 
+  phy0 : ethphy_sim port map (
+    rst => i_rst,
+    clk  => i_sclk_p,
+    o_rxd  => i_rxd,
+    o_rxdv => i_rxdv
+  );
 
   -- signal parsment and assignment
   tt : riscv_soc port map
