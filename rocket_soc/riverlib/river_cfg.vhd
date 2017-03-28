@@ -687,6 +687,7 @@ package river_cfg is
   --! @param[out] o_br_address_fetch Fetch injection address to skip ebreak instruciton only once
   --! @param[out] o_br_instr_fetch   Real instruction value that was replaced by ebreak
   --! @param[in] i_istate         ICache state machine value
+  --! @param[in] i_istate_z       ICache previous state (debug purpose)
   --! @param[in] i_dstate         DCache state machine value
   --! @param[in] i_cstate         CacheTop state machine value
   component DbgPort
@@ -724,6 +725,7 @@ package river_cfg is
     o_br_address_fetch : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     o_br_instr_fetch : out std_logic_vector(31 downto 0);
     i_istate : in std_logic_vector(1 downto 0);
+    i_istate_z : in std_logic_vector(1 downto 0);
     i_dstate : in std_logic_vector(1 downto 0);
     i_cstate : in std_logic_vector(1 downto 0)
   );
@@ -759,6 +761,7 @@ package river_cfg is
   --! @param[out] o_dport_ready    Response is ready
   --! @param[out] o_dport_rdata    Response value
   --! @param[in] i_istate          ICache state machine value
+  --! @param[in] i_istate_z        ICache previous state (debug purpose)
   --! @param[in] i_dstate          DCache state machine value
   --! @param[in] i_cstate          cachetop state machine value
   component Processor is
@@ -792,6 +795,7 @@ package river_cfg is
     o_dport_ready : out std_logic;
     o_dport_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0);
     i_istate : in std_logic_vector(1 downto 0);
+    i_istate_z : in std_logic_vector(1 downto 0);
     i_dstate : in std_logic_vector(1 downto 0);
     i_cstate : in std_logic_vector(1 downto 0)
   );
@@ -826,6 +830,7 @@ package river_cfg is
   --! @param[in] i_resp_mem_data_valid
   --! @param[in] i_resp_mem_data
   --! @param[out] o_istate        ICache state machine value
+  --! @param[out] o_istate_z      ICache previous state (debug purpose)
   --! @param[out] o_dstate        DCache state machine value
   --! @param[out] o_cstate        cachetop state machine value
   component CacheTop is
@@ -858,6 +863,7 @@ package river_cfg is
     i_resp_mem_data_valid : in std_logic;
     i_resp_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
     o_istate : out std_logic_vector(1 downto 0);
+    o_istate_z : out std_logic_vector(1 downto 0);
     o_dstate : out std_logic_vector(1 downto 0);
     o_cstate : out std_logic_vector(1 downto 0)
   );

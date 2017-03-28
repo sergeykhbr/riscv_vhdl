@@ -49,6 +49,7 @@ entity CacheTop is
     i_resp_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
     -- Debug signals:
     o_istate : out std_logic_vector(1 downto 0);                      -- ICache state machine value
+    o_istate_z : out std_logic_vector(1 downto 0);                    -- ICache previous state (debug purpose)
     o_dstate : out std_logic_vector(1 downto 0);                      -- DCache state machine value
     o_cstate : out std_logic_vector(1 downto 0)                       -- cachetop state machine value
   );
@@ -101,7 +102,8 @@ architecture arch_CacheTop of CacheTop is
     o_req_mem_data : out std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
     i_resp_mem_data_valid : in std_logic;
     i_resp_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
-    o_istate : out std_logic_vector(1 downto 0)
+    o_istate : out std_logic_vector(1 downto 0);
+    o_istate_z : out std_logic_vector(1 downto 0)
   );
   end component; 
 
@@ -150,7 +152,8 @@ begin
         o_req_mem_data => i.req_mem_wdata,
         i_resp_mem_data_valid => w_ctrl_resp_mem_data_valid,
         i_resp_mem_data => wb_ctrl_resp_mem_data,
-        o_istate => o_istate);
+        o_istate => o_istate,
+        o_istate_z => o_istate_z);
 
     d0 : DCache port map (
         i_clk => i_clk,

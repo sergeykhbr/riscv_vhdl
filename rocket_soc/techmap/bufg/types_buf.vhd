@@ -46,6 +46,17 @@ package types_buf is
     i  : in std_logic
   );
   end component; 
+
+  --! @brief Input clocking PAD buffer.
+  --! @param[in] tech  Technology selector.
+  --! @param[out] o    Output buffered clock signal.
+  --! @param[in] i     Input unbuffered clock signal.
+  component ibufg_tech is generic (tech : integer := 0);
+  port (
+    O    : out std_ulogic;
+    I    : in std_ulogic
+    );
+  end component;
   
   --! @brief Output PAD buffer.
   --! @details This buffer makes sense only for ASIC implementation.

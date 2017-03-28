@@ -36,7 +36,8 @@ entity ICache is
     i_resp_mem_data_valid : in std_logic;
     i_resp_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
     -- Debug Signals:
-    o_istate : out std_logic_vector(1 downto 0)
+    o_istate : out std_logic_vector(1 downto 0);
+    o_istate_z : out std_logic_vector(1 downto 0)
   );
 end; 
  
@@ -54,6 +55,7 @@ architecture arch_ICache of ICache is
       iline_addr_hit : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
       iline_data_hit : std_logic_vector(31 downto 0);
       state : std_logic_vector(1 downto 0);
+      state_z : std_logic_vector(1 downto 0);
       hit_line : std_logic;
   end record;
 
@@ -144,6 +146,11 @@ begin
     when others =>
     end case;
 
+    if v.state /= r.state then
+        v.state_z := r.state;
+    end if;
+
+
     if w_req_fire = '1' then
         v.iline_addr_req := i_req_ctrl_addr;
         v.hit_line := '0';
@@ -189,6 +196,7 @@ begin
         v.iline_addr := (others => '1');
         v.iline_data := (others => '0');
         v.state := State_Idle;
+        v.state_z := State_Idle;
         v.iline_addr_hit := (others => '1');
         v.iline_data_hit := (others => '0');
         v.hit_line := '0';
@@ -206,6 +214,7 @@ begin
     o_resp_ctrl_data <= wb_o_resp_data;
     o_resp_ctrl_addr <= wb_o_resp_addr;
     o_istate <= r.state;
+    o_istate_z <= r.state_z;
     
     rin <= v;
   end process;

@@ -161,7 +161,7 @@ package types_gnss is
     i_Q          : in std_logic_vector(1 downto 0);
     i_ms_pulse   : in std_logic;
     i_pps        : in std_logic;
-    i_test_mode  : in std_logic
+    i_2ms_only   : in std_logic
   );
   end component;
 

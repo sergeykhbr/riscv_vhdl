@@ -59,6 +59,7 @@ SC_MODULE(Processor) {
     sc_out<sc_uint<RISCV_ARCH>> o_dport_rdata;          // Response value
     // Cache debug signals:
     sc_in<sc_uint<2>> i_istate;                         // ICache transaction state
+    sc_in<sc_uint<2>> i_istate_z;                       // ICache previous state (debug fpga purpose)
     sc_in<sc_uint<2>> i_dstate;                         // DCache transaction state
     sc_in<sc_uint<2>> i_cstate;                         // CacheTop state machine value
 

@@ -42,6 +42,7 @@ RiverTop::RiverTop(sc_module_name name_)
     proc0->o_dport_ready(o_dport_ready);
     proc0->o_dport_rdata(o_dport_rdata);
     proc0->i_istate(wb_istate);
+    proc0->i_istate_z(wb_istate_z);
     proc0->i_dstate(wb_dstate);
     proc0->i_cstate(wb_cstate);
 
@@ -74,6 +75,7 @@ RiverTop::RiverTop(sc_module_name name_)
     cache0->i_resp_mem_data_valid(i_resp_mem_data_valid);
     cache0->i_resp_mem_data(i_resp_mem_data);
     cache0->o_istate(wb_istate);
+    cache0->o_istate_z(wb_istate_z);
     cache0->o_dstate(wb_dstate);
     cache0->o_cstate(wb_cstate);
 };

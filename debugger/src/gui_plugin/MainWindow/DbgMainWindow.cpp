@@ -88,8 +88,9 @@ void DbgMainWindow::handleResponse(AttributeType *req, AttributeType *resp) {
 #if 0
         static const char *xSTATES[] = {"Idle", "WaitGrant", "WaitResp", "WaitAccept"};
         static const char *CSTATES[] = {"Idle", "IMem", "DMem"};
-        printf("istate=%s; dstate=%s; cstate=%s;\n",
-          xSTATES[ctrl.bits.istate], xSTATES[ctrl.bits.dstate],
+        printf("istate=%s (z=%s); dstate=%s; cstate=%s;\n",
+          xSTATES[ctrl.bits.istate], xSTATES[ctrl.bits.istate_z],
+          xSTATES[ctrl.bits.dstate],
           CSTATES[ctrl.bits.cstate]);
 #endif
     }

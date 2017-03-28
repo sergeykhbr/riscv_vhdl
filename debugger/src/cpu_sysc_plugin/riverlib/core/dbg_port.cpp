@@ -28,6 +28,7 @@ DbgPort::DbgPort(sc_module_name name_) : sc_module(name_) {
     sensitive << i_m_valid;
     sensitive << i_ebreak;
     sensitive << i_istate;
+    sensitive << i_istate_z;
     sensitive << i_dstate;
     sensitive << i_cstate;
     sensitive << r.ready;
@@ -217,6 +218,7 @@ void DbgPort::comb() {
                 wb_rdata[0] = r.halt;
                 wb_rdata[2] = r.breakpoint;
                 wb_rdata(33, 32) = i_istate.read();
+                wb_rdata(35, 34) = i_istate_z.read();
                 wb_rdata(37, 36) = i_dstate.read();
                 wb_rdata(41, 40) = i_cstate.read();
                 if (i_dport_write.read()) {

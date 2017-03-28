@@ -34,7 +34,7 @@ SC_MODULE(ICache) {
     sc_in<bool> i_resp_mem_data_valid;
     sc_in<sc_uint<BUS_DATA_WIDTH>> i_resp_mem_data;
     sc_out<sc_uint<2>> o_istate;
-
+    sc_out<sc_uint<2>> o_istate_z;  // debug bug purpose
 
     void comb();
     void registers();
@@ -60,6 +60,7 @@ private:
         sc_signal<sc_uint<32>> iline_data_hit;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> iline_addr_hit;
         sc_signal<sc_uint<2>> state;
+        sc_signal<sc_uint<2>> state_z;  // debug bug purpose
         sc_signal<bool> hit_line;
     } v, r;
 

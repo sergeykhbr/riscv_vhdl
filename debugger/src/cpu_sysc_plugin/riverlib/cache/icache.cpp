@@ -25,6 +25,7 @@ ICache::ICache(sc_module_name name_) : sc_module(name_) {
     sensitive << r.iline_addr_req;
     sensitive << r.hit_line;
     sensitive << r.state;
+    sensitive << r.state_z;
 
     SC_METHOD(registers);
     sensitive << i_clk.pos();
@@ -144,6 +145,9 @@ void ICache::comb() {
         break;
     default:;
     }
+    if (v.state != r.state) {
+        v.state_z = r.state;
+    }
 
     if (w_req_fire) {
         v.iline_addr_req = i_req_ctrl_addr;
@@ -194,6 +198,7 @@ void ICache::comb() {
         v.iline_data_hit = 0;
         v.hit_line = 0;
         v.state = State_Idle;
+        v.state_z = State_Idle;
     }
 
     o_req_ctrl_ready = w_o_req_ctrl_ready;
@@ -208,6 +213,7 @@ void ICache::comb() {
     o_resp_ctrl_data = wb_o_resp_data;
     o_resp_ctrl_addr = wb_o_resp_addr;
     o_istate = r.state;
+    o_istate_z = r.state_z;
 }
 
 void ICache::registers() {

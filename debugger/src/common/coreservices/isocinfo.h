@@ -151,7 +151,7 @@ struct DsuMapType {
                     uint64_t core_id  : 16;
                     uint64_t rsv2     : 12;
                     uint64_t istate   : 2;  // [33:32] icache state
-                    uint64_t rsv3     : 2;  // [35:34]
+                    uint64_t istate_z : 2;  // [35:34] icache previous state
                     uint64_t dstate   : 2;  // [37:36] dcache state
                     uint64_t rsv4     : 2;  // [39:38]
                     uint64_t cstate   : 2;  // [41:40] cachetop state

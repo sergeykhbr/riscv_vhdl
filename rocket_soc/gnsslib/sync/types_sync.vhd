@@ -15,28 +15,20 @@ package types_sync is
 
   ------------------------------------------------------------------------------
   -- Reclocking from ADC to FSE clock domain
-  type reclk_in_type is record
-    nrst             : std_logic;
-    clk_fse          : std_logic;
-    clk_adc          : std_logic;
-    I                : std_logic_vector(1 downto 0);
-    Q                : std_logic_vector(1 downto 0);
-    ms_pulse         : std_logic;
-    pps              : std_logic;
-  end record;
-
-  type reclk_out_type is record
-    I                : std_logic_vector(1 downto 0);
-    Q                : std_logic_vector(1 downto 0);
-    ms_pulse         : std_logic;
-    pps              : std_logic;
-    adc_valid        : std_logic;
-  end record;
-
-  component Reclk
+  component Reclk is
   port (
-      i : in reclk_in_type;
-      o : out reclk_out_type
+    nrst       : in std_logic;
+    clk_bus    : in std_logic;
+    clk_adc    : in std_logic;
+    i_I        : in std_logic_vector(1 downto 0);
+    i_Q        : in std_logic_vector(1 downto 0);
+    i_ms_pulse : in std_logic;
+    i_pps      : in std_logic;
+    o_I        : out std_logic_vector(1 downto 0);
+    o_Q        : out std_logic_vector(1 downto 0);
+    o_ms_pulse : out std_logic;
+    o_pps      : out std_logic;
+    o_valid    : out std_logic
   );
   end component;
 

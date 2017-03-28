@@ -9,7 +9,8 @@
 
 #include <inttypes.h>
 
-#define TIMER_CONTROL_ENA  (1 << 0)
+#define TIMER_CONTROL_ENA      (1 << 0)
+#define TIMER_CONTROL_IRQ_ENA  (1 << 1)
 
 typedef struct gptimer_type {
     volatile uint32_t control;

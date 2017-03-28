@@ -52,6 +52,7 @@ SC_MODULE(DbgPort) {
     sc_out<sc_uint<32>> o_br_instr_fetch;               // Real instruction value that was replaced by ebreak
     // Cache debug signals:
     sc_in<sc_uint<2>> i_istate;                         // ICache transaction state
+    sc_in<sc_uint<2>> i_istate_z;                       // ICache previous state (debug purpose)
     sc_in<sc_uint<2>> i_dstate;                         // DCache transaction state
     sc_in<sc_uint<2>> i_cstate;                         // CacheTop state machine value
 
