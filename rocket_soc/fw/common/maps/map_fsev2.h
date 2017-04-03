@@ -14,6 +14,7 @@
 
 static const uint32_t FSE2_CONTROL_ENA      = (1 << 31);  // 0=disable; 1=enable
 static const uint32_t FSE2_CONTROL_ADC      = (1 << 30);  // 0=bin offset; 1=sign/magn
+static const uint32_t FSE2_REC_DISABLE      = (1 << 29);
 static const uint32_t FSE2_STATE_NXT_DOPLER = (1 << 21);
 static const uint32_t FSE2_STATE_PROCESSING = (1 << 20);
 static const uint32_t FSE2_STATE_SELCHAN    = (1 << 19);
@@ -42,7 +43,10 @@ typedef struct fsev2_map {
    volatile uint32_t code_nco_th;
    volatile int32_t carr_nco_if;
    volatile uint32_t code_nco;
-   uint32_t reserved;
+   volatile uint32_t recram_msb; // most signficant bits of address (valid bits [13:11])
+
+   uint8_t rsrv[2048 - FSE2_CHAN_MAX*sizeof(fsev2_chan_fields) - 8*sizeof(uint32_t)];
+   uint64_t rec_mem[2048/sizeof(uint64_t)];
 } fsev2_map;
 
 

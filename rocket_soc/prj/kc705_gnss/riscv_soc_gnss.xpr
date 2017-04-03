@@ -58,6 +58,20 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
+      <File Path="$PPRDIR/../../ambalib/types_amba4.vhd">
+        <FileInfo>
+          <Attr Name="Library" Val="ambalib"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../techmap/gencomp/gencomp.vhd">
+        <FileInfo>
+          <Attr Name="Library" Val="techmap"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
       <File Path="$PPRDIR/../../riverlib/river_cfg.vhd">
         <FileInfo>
           <Attr Name="Library" Val="riverlib"/>
@@ -65,9 +79,16 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../ambalib/types_amba4.vhd">
+      <File Path="$PPRDIR/../../gnsslib/types_gnss.vhd">
         <FileInfo>
-          <Attr Name="Library" Val="ambalib"/>
+          <Attr Name="Library" Val="gnsslib"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../techmap/mem/romprn_inferred.vhd">
+        <FileInfo>
+          <Attr Name="Library" Val="techmap"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
@@ -93,14 +114,28 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../techmap/gencomp/gencomp.vhd">
+      <File Path="$PPRDIR/../../techmap/mem/types_mem.vhd">
         <FileInfo>
           <Attr Name="Library" Val="techmap"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../techmap/mem/types_mem.vhd">
+      <File Path="$PPRDIR/../../gnsslib/fse_v2/types_fse_v2.vhd">
+        <FileInfo>
+          <Attr Name="Library" Val="gnsslib"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../techmap/mem/romprn_tech.vhd">
+        <FileInfo>
+          <Attr Name="Library" Val="techmap"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../techmap/mem/ram32_inferred.vhd">
         <FileInfo>
           <Attr Name="Library" Val="techmap"/>
           <Attr Name="UsedIn" Val="synthesis"/>
@@ -205,6 +240,20 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
+      <File Path="$PPRDIR/../../gnsslib/fse_v2/matrix24.vhd">
+        <FileInfo>
+          <Attr Name="Library" Val="gnsslib"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../techmap/mem/ram32_tech.vhd">
+        <FileInfo>
+          <Attr Name="Library" Val="techmap"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
       <File Path="$PPRDIR/../../techmap/mem/syncram_2p_tech.vhd">
         <FileInfo>
           <Attr Name="Library" Val="techmap"/>
@@ -272,6 +321,55 @@
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../techmap/mem/ram32x2_tech.vhd">
+        <FileInfo>
+          <Attr Name="Library" Val="techmap"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../gnsslib/fse_v2/matrix1024.vhd">
+        <FileInfo>
+          <Attr Name="Library" Val="gnsslib"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../gnsslib/fse_v2/prngenfsegps.vhd">
+        <FileInfo>
+          <Attr Name="Library" Val="gnsslib"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../gnsslib/fse_v2/lpf.vhd">
+        <FileInfo>
+          <Attr Name="Library" Val="gnsslib"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../gnsslib/fse_v2/prngenfsegal.vhd">
+        <FileInfo>
+          <Attr Name="Library" Val="gnsslib"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../gnsslib/fse_v2/prngenfseglo.vhd">
+        <FileInfo>
+          <Attr Name="Library" Val="gnsslib"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../gnsslib/fse_v2/divphase.vhd">
+        <FileInfo>
+          <Attr Name="Library" Val="gnsslib"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
@@ -387,6 +485,83 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
+      <File Path="$PPRDIR/../../gnsslib/fse_v2/control.vhd">
+        <FileInfo>
+          <Attr Name="Library" Val="gnsslib"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../gnsslib/sync/reclk.vhd">
+        <FileInfo>
+          <Attr Name="Library" Val="gnsslib"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../gnsslib/fse_v2/carr_nco.vhd">
+        <FileInfo>
+          <Attr Name="Library" Val="gnsslib"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../gnsslib/fse_v2/decim.vhd">
+        <FileInfo>
+          <Attr Name="Library" Val="gnsslib"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../gnsslib/fse_v2/recorder.vhd">
+        <FileInfo>
+          <Attr Name="Library" Val="gnsslib"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../gnsslib/fse_v2/matrix.vhd">
+        <FileInfo>
+          <Attr Name="Library" Val="gnsslib"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../gnsslib/fse_v2/accum.vhd">
+        <FileInfo>
+          <Attr Name="Library" Val="gnsslib"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../gnsslib/fse_v2/requant.vhd">
+        <FileInfo>
+          <Attr Name="Library" Val="gnsslib"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../gnsslib/fse_v2/prngenfse.vhd">
+        <FileInfo>
+          <Attr Name="Library" Val="gnsslib"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../gnsslib/fse_v2/fifo.vhd">
+        <FileInfo>
+          <Attr Name="Library" Val="gnsslib"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../gnsslib/sync/types_sync.vhd">
+        <FileInfo>
+          <Attr Name="Library" Val="gnsslib"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
       <File Path="$PPRDIR/../../techmap/pll/types_pll.vhd">
         <FileInfo>
           <Attr Name="Library" Val="techmap"/>
@@ -404,13 +579,6 @@
       <File Path="$PPRDIR/../../techmap/bufg/idsbuf_tech.vhd">
         <FileInfo>
           <Attr Name="Library" Val="techmap"/>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PPRDIR/../../gnsslib/types_gnss.vhd">
-        <FileInfo>
-          <Attr Name="Library" Val="gnsslib"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
@@ -569,6 +737,27 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
+      <File Path="$PPRDIR/../../gnsslib/gnssengine_stub/nasti_gnssstub.vhd">
+        <FileInfo>
+          <Attr Name="Library" Val="gnsslib"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../gnsslib/fse_v2/topfse.vhd">
+        <FileInfo>
+          <Attr Name="Library" Val="gnsslib"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../gnsslib/rf3b/axi_rfctrl.vhd">
+        <FileInfo>
+          <Attr Name="Library" Val="gnsslib"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
       <File Path="$PPRDIR/../../work/riscv_soc_gnss.vhd">
         <FileInfo>
           <Attr Name="Library" Val="work"/>
@@ -595,38 +784,6 @@
       <File Path="$PPRDIR/../../rocketlib/tilelink/axibridge.vhd">
         <FileInfo>
           <Attr Name="Library" Val="rocketlib"/>
-          <Attr Name="AutoDisabled" Val="1"/>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PPRDIR/../../techmap/mem/romprn_inferred.vhd">
-        <FileInfo>
-          <Attr Name="Library" Val="techmap"/>
-          <Attr Name="AutoDisabled" Val="1"/>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PPRDIR/../../techmap/mem/romprn_tech.vhd">
-        <FileInfo>
-          <Attr Name="Library" Val="techmap"/>
-          <Attr Name="AutoDisabled" Val="1"/>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PPRDIR/../../techmap/mem/ram32_inferred.vhd">
-        <FileInfo>
-          <Attr Name="Library" Val="techmap"/>
-          <Attr Name="AutoDisabled" Val="1"/>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PPRDIR/../../techmap/mem/ram32_tech.vhd">
-        <FileInfo>
-          <Attr Name="Library" Val="techmap"/>
           <Attr Name="AutoDisabled" Val="1"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>

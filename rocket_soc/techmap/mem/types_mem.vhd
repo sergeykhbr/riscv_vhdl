@@ -136,6 +136,23 @@ package types_mem is
 
   --! @brief Virtual SRAM block with fixed 64-bits data width.
   --! @details This module doesn't support byte access and always implements
+  --!          4-bytes alignment.
+  component Ram32x2_tech
+  generic (
+    generic_tech   : integer := 0;
+    generic_kWords : integer := 1
+  );
+  port (
+    i_clk      : in std_logic;
+    i_address  : in std_logic_vector(10+log2(generic_kWords)-1 downto 0);
+    i_wr_ena   : in std_logic_vector(1 downto 0);
+    i_data     : in std_logic_vector(63 downto 0);
+    o_data     : out std_logic_vector(63 downto 0)
+  );
+  end component;
+
+  --! @brief Virtual SRAM block with fixed 64-bits data width.
+  --! @details This module doesn't support byte access and always implements
   --!          8-bytes alignment.
   component Ram64_tech
   generic (
