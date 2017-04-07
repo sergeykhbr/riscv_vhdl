@@ -52,6 +52,7 @@ entity Processor is
     -- Debug signals:
     i_istate : in std_logic_vector(1 downto 0);                       -- ICache state machine value
     i_istate_z : in std_logic_vector(1 downto 0);                     -- ICache previous state (debug purpose)
+    i_ierr_state : in std_logic;                                      -- ICache check error condition (debug purpose)
     i_dstate : in std_logic_vector(1 downto 0);                       -- DCache state machine value
     i_cstate : in std_logic_vector(1 downto 0)                        -- CacheTop state machine value
   );
@@ -68,6 +69,7 @@ architecture arch_Processor of Processor is
         imem_req_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
         predict_miss : std_logic;
         pipeline_hold : std_logic;
+        instr_buf : std_logic_vector(DBG_FETCH_TRACE_SIZE*64-1 downto 0);
     end record;
 
     type InstructionDecodeType is record
@@ -214,7 +216,8 @@ begin
         o_hold => w.f.pipeline_hold,
         i_br_fetch_valid => dbg.br_fetch_valid,
         i_br_address_fetch => dbg.br_address_fetch,
-        i_br_instr_fetch => dbg.br_instr_fetch);
+        i_br_instr_fetch => dbg.br_instr_fetch,
+        o_instr_buf => w.f.instr_buf);
         
     dec0 : InstrDecoder port map (
         i_clk => i_clk,
@@ -407,8 +410,10 @@ begin
         o_br_instr_fetch => dbg.br_instr_fetch,
         i_istate => i_istate,
         i_istate_z => i_istate_z,
+        i_ierr_state => i_ierr_state,
         i_dstate => i_dstate,
-        i_cstate => i_cstate);
+        i_cstate => i_cstate,
+        i_instr_buf => w.f.instr_buf);
 
     o_req_ctrl_valid <= w.f.imem_req_valid;
     o_req_ctrl_addr <= w.f.imem_req_addr;

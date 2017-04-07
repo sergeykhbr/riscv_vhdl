@@ -39,7 +39,8 @@ entity InstrFetch is
     o_hold : out std_logic;                                -- Hold due no response from icache yet
     i_br_fetch_valid : in std_logic;                       -- Fetch injection address/instr are valid
     i_br_address_fetch : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0); -- Fetch injection address to skip ebreak instruciton only once
-    i_br_instr_fetch : in std_logic_vector(31 downto 0)    -- Real instruction value that was replaced by ebreak
+    i_br_instr_fetch : in std_logic_vector(31 downto 0);   -- Real instruction value that was replaced by ebreak
+    o_instr_buf : out std_logic_vector(DBG_FETCH_TRACE_SIZE*64-1 downto 0)    -- trace last fetched instructions
   );
 end; 
  
@@ -52,6 +53,7 @@ architecture arch_InstrFetch of InstrFetch is
       raddr_not_resp_yet : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
       br_address : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
       br_instr : std_logic_vector(31 downto 0);
+      instr_buf : std_logic_vector(DBG_FETCH_TRACE_SIZE*64-1 downto 0);
   end record;
 
   signal r, rin : RegistersType;
@@ -95,6 +97,20 @@ begin
         wb_o_addr_req := i_predict_npc;
     end if;
 
+    -- Debug last fetched instructions buffer:
+    if w_o_req_fire = '1' then
+        v.instr_buf(DBG_FETCH_TRACE_SIZE*64-1 downto 64) := 
+             r.instr_buf((DBG_FETCH_TRACE_SIZE-1)*64-1 downto 0);
+        if w_resp_fire = '1' then
+            v.instr_buf(95 downto 64) := i_mem_data;
+        end if;
+        v.instr_buf(63 downto 32) := wb_o_addr_req;
+        v.instr_buf(31 downto 0) := (others => '0');
+    elsif w_resp_fire = '1' then
+        v.instr_buf(31 downto 0) := i_mem_data;
+    end if;
+
+
     if w_o_req_fire = '1'then
       v.wait_resp := '1';
       v.pc_z1 := r.raddr_not_resp_yet;
@@ -128,6 +144,7 @@ begin
         v.raddr_not_resp_yet := (others => '0');
         v.br_address := (others => '1');
         v.br_instr := (others => '0');
+        v.instr_buf := (others => '0');
     end if;
 
     o_mem_addr_valid <= w_o_req_valid;
@@ -139,6 +156,7 @@ begin
     o_predict_miss <= w_predict_miss;
     o_mem_resp_ready <= w_o_mem_resp_ready;
     o_hold <= not w_resp_fire;
+    o_instr_buf <= r.instr_buf;
     
     rin <= v;
   end process;

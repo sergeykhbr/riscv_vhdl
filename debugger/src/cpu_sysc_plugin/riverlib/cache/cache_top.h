@@ -49,6 +49,7 @@ SC_MODULE(CacheTop) {
     // Debug signals:
     sc_out<sc_uint<2>> o_istate;                        // ICache state machine value
     sc_out<sc_uint<2>> o_istate_z;                      // ICache previous state (debug purpose)
+    sc_out<bool> o_ierr_state;                          // ICache check error condition (debug purpose)
     sc_out<sc_uint<2>> o_dstate;                        // DCache state machine value
     sc_out<sc_uint<2>> o_cstate;                        // cachetop state machine value
 
@@ -92,6 +93,9 @@ private:
 
     ICache *i0;
     DCache *d0;
+#ifdef DBG_ICACHE_TB
+    ICache_tb *i0_tb;
+#endif
 };
 
 

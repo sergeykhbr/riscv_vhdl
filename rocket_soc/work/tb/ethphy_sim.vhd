@@ -59,8 +59,12 @@ architecture ethphy_sim_rtl of ethphy_sim is
             X"bdbdf21c", X"cabac28a", X"53b39330", X"24b4a3a6", X"bad03605", X"cdd70693", X"54de5729", X"23d967bf",
             X"b3667a2e", X"c4614ab8", X"5d681b02", X"2a6f2b94", X"b40bbe37", X"c30c8ea1", X"5a05df1b", X"2d02ef8d");
 
+   --constant EDCL0 : std_logic_vector(455 downto 0) := 
+   --X"5d207098001032badcacefebeb800000e100450000000029bd11000c8a00a00c8a00f07788556600a02266000000002300010020009ac7c2dc";
+
+   -- edcl_idx=6, read 0x80090000, 1 word (4 bytes)
    constant EDCL0 : std_logic_vector(455 downto 0) := 
-   X"5d207098001032badcacefebeb800000e100450000000029bd11000c8a00a00c8a00f07788556600a02266000000002300010020009ac7c2dc";
+   X"5d207098001032badcacefebeb800000e100450000000029bd11000c8a00a00c8a00f07788556600a04e44000000812000089000002ea59ac7";
 
   function gen_msg(edcl_idx : in integer) return std_logic_vector is
     variable crc : std_logic_vector(31 downto 0);

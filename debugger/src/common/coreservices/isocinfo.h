@@ -133,8 +133,10 @@ struct DsuMapType {
             uint64_t pc;            // index = 32
             uint64_t npc;           // index = 33
             uint64_t stack_trace_cnt; // index 34
-            uint64_t rsrv[128 - 35];
+            uint64_t rsrv1[128 - 35];
             uint64_t stack_trace_buf[1];
+            uint64_t rsrv2[128 - 1];
+            uint64_t instr_buf[4];  // index 256..259: Bits[63:0] (addr,instr)
         } v;
     } ureg;
     // Base Address + 0x10000 (Region 2)
@@ -155,7 +157,9 @@ struct DsuMapType {
                     uint64_t dstate   : 2;  // [37:36] dcache state
                     uint64_t rsv4     : 2;  // [39:38]
                     uint64_t cstate   : 2;  // [41:40] cachetop state
-                    uint64_t rsv5     : 22;
+                    uint64_t rsv5     : 21;
+                    uint64_t ierr_state : 1;// [63] detected condition
+                                            // in ICache that leads to error
                 } bits;
             } control;
             uint64_t stepping_mode_steps;

@@ -108,6 +108,8 @@ void ICache::comb() {
     case State_WaitGrant:
         if (i_req_mem_ready.read()) {
             v.state = State_WaitResp;
+        } else if (w_hit) {
+            v.err_state = 1;
         }
         break;
     case State_WaitResp:
@@ -199,6 +201,7 @@ void ICache::comb() {
         v.hit_line = 0;
         v.state = State_Idle;
         v.state_z = State_Idle;
+        v.err_state = 0;
     }
 
     o_req_ctrl_ready = w_o_req_ctrl_ready;
@@ -214,11 +217,87 @@ void ICache::comb() {
     o_resp_ctrl_addr = wb_o_resp_addr;
     o_istate = r.state;
     o_istate_z = r.state_z;
+    o_ierr_state = r.err_state;
 }
 
 void ICache::registers() {
     r = v;
 }
+
+#ifdef DBG_ICACHE_TB
+void ICache_tb::comb0() {
+    v = r;
+    v.clk_cnt = r.clk_cnt.read() + 1;
+
+    if (r.clk_cnt.read() < 10) {
+        w_nrst = 0;
+        return;
+    }
+    w_nrst = 1;
+
+    w_req_ctrl_valid = 0;
+    wb_req_ctrl_addr = 0;
+    w_resp_ctrl_ready = 0;
+
+    w_req_mem_ready = 0;
+    w_resp_mem_data_valid = 0;
+
+    switch (r.clk_cnt.read()) {
+    case 15:
+        w_req_ctrl_valid = 1;
+        wb_req_ctrl_addr = 0x100008f4;
+        w_req_mem_ready = 1;
+        break;
+    case 16:
+        w_resp_mem_data_valid = 1;
+        wb_resp_mem_data = 0xffdff06f;
+        w_resp_ctrl_ready = 1;
+
+        w_req_ctrl_valid = 1;
+        wb_req_ctrl_addr = 0x100007b0; 
+        w_req_mem_ready = 1;
+        break;
+    case 17:
+        w_resp_mem_data_valid = 1;
+        wb_resp_mem_data = 0x00004a17;
+        w_resp_ctrl_ready = 1;
+
+        w_req_ctrl_valid = 1;
+        wb_req_ctrl_addr = 0x100008f0;
+        w_req_mem_ready = 1;
+        break;
+    case 18:
+        w_resp_mem_data_valid = 1;
+        wb_resp_mem_data = 0xea9ff0ef;
+        //w_resp_ctrl_ready = 1;
+        break;
+
+    case 19:
+        w_resp_ctrl_ready = 1;
+        w_req_ctrl_valid = 1;
+        wb_req_ctrl_addr = 0x100007b4;
+        break;
+
+    case 25:
+        w_req_mem_ready = 1;
+        //w_resp_mem_data_valid = 1;
+        //wb_resp_mem_data = 0xfa0a0a13;
+        break;
+
+    case 26:
+        w_resp_ctrl_ready = 1;
+        break;
+
+    default:;
+    }
+
+    if (w_req_ctrl_valid && w_req_ctrl_ready) {
+        v.wait_resp = 1;
+    } else if (w_resp_ctrl_valid && w_resp_ctrl_ready) {
+        v.wait_resp = 0;
+    }
+}
+#endif
 
 }  // namespace debugger
 

@@ -41,6 +41,7 @@ package river_cfg is
   --! @}
   
   constant RESET_VECTOR : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00001000";
+  constant DBG_FETCH_TRACE_SIZE : integer := 4;
 
   --! Number of elements each 2*CFG_ADDR_WIDTH in stack trace buffer, 0 = disabled
   constant CFG_STACK_TRACE_BUF_SIZE : integer := 32;
@@ -527,7 +528,7 @@ package river_cfg is
   --! @param[in] i_br_fetch_valid   Fetch injection address/instr are valid
   --! @param[in] i_br_address_fetch Fetch injection address to skip ebreak instruciton only once
   --! @param[in] i_br_instr_fetch   Real instruction value that was replaced by ebreak
-
+  --! @param[out] o_instr_buf
   component InstrFetch is
   port (
     i_clk  : in std_logic;
@@ -551,7 +552,8 @@ package river_cfg is
     o_hold : out std_logic;
     i_br_fetch_valid : in std_logic;
     i_br_address_fetch : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    i_br_instr_fetch : in std_logic_vector(31 downto 0)
+    i_br_instr_fetch : in std_logic_vector(31 downto 0);
+    o_instr_buf : out std_logic_vector(DBG_FETCH_TRACE_SIZE*64-1 downto 0)
   );
   end component; 
 
@@ -688,8 +690,9 @@ package river_cfg is
   --! @param[out] o_br_instr_fetch   Real instruction value that was replaced by ebreak
   --! @param[in] i_istate         ICache state machine value
   --! @param[in] i_istate_z       ICache previous state (debug purpose)
+  --! @param[in] i_ierr_state      ICache check error condition (debug purpose)
   --! @param[in] i_dstate         DCache state machine value
-  --! @param[in] i_cstate         CacheTop state machine value
+  --! @param[in] i_instr_buf
   component DbgPort
   is port (
     i_clk : in std_logic;
@@ -726,8 +729,10 @@ package river_cfg is
     o_br_instr_fetch : out std_logic_vector(31 downto 0);
     i_istate : in std_logic_vector(1 downto 0);
     i_istate_z : in std_logic_vector(1 downto 0);
+    i_ierr_state : in std_logic;
     i_dstate : in std_logic_vector(1 downto 0);
-    i_cstate : in std_logic_vector(1 downto 0)
+    i_cstate : in std_logic_vector(1 downto 0);
+    i_instr_buf : in std_logic_vector(DBG_FETCH_TRACE_SIZE*64-1 downto 0)
   );
   end component; 
 
@@ -762,6 +767,7 @@ package river_cfg is
   --! @param[out] o_dport_rdata    Response value
   --! @param[in] i_istate          ICache state machine value
   --! @param[in] i_istate_z        ICache previous state (debug purpose)
+  --! @param[in] i_ierr_state      ICache check error condition (debug purpose)
   --! @param[in] i_dstate          DCache state machine value
   --! @param[in] i_cstate          cachetop state machine value
   component Processor is
@@ -796,6 +802,7 @@ package river_cfg is
     o_dport_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0);
     i_istate : in std_logic_vector(1 downto 0);
     i_istate_z : in std_logic_vector(1 downto 0);
+    i_ierr_state : in std_logic;
     i_dstate : in std_logic_vector(1 downto 0);
     i_cstate : in std_logic_vector(1 downto 0)
   );
@@ -831,6 +838,7 @@ package river_cfg is
   --! @param[in] i_resp_mem_data
   --! @param[out] o_istate        ICache state machine value
   --! @param[out] o_istate_z      ICache previous state (debug purpose)
+  --! @param[out] o_ierr_state    ICache check error condition (debug purpose)
   --! @param[out] o_dstate        DCache state machine value
   --! @param[out] o_cstate        cachetop state machine value
   component CacheTop is
@@ -864,6 +872,7 @@ package river_cfg is
     i_resp_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
     o_istate : out std_logic_vector(1 downto 0);
     o_istate_z : out std_logic_vector(1 downto 0);
+    o_ierr_state : out std_logic;
     o_dstate : out std_logic_vector(1 downto 0);
     o_cstate : out std_logic_vector(1 downto 0)
   );

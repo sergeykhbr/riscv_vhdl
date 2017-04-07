@@ -50,6 +50,7 @@ CacheTop::CacheTop(sc_module_name name_) : sc_module(name_) {
     i0->i_resp_mem_data(wb_ctrl_resp_mem_data);
     i0->o_istate(o_istate);
     i0->o_istate_z(o_istate_z);
+    i0->o_ierr_state(o_ierr_state);
 
     d0 = new DCache("d0");
     d0->i_clk(i_clk);
@@ -73,6 +74,10 @@ CacheTop::CacheTop(sc_module_name name_) : sc_module(name_) {
     d0->i_resp_mem_data_valid(w_data_resp_mem_data_valid);
     d0->i_resp_mem_data(wb_data_resp_mem_data);
     d0->o_dstate(o_dstate);
+
+#ifdef DBG_ICACHE_TB
+    i0_tb = new ICache_tb("ictb0");
+#endif
 };
 
 void CacheTop::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {

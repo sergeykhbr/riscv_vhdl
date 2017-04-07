@@ -29,8 +29,10 @@ DbgPort::DbgPort(sc_module_name name_) : sc_module(name_) {
     sensitive << i_ebreak;
     sensitive << i_istate;
     sensitive << i_istate_z;
+    sensitive << i_ierr_state;
     sensitive << i_dstate;
     sensitive << i_cstate;
+    sensitive << i_instr_buf;
     sensitive << r.ready;
     sensitive << r.rdata;
     sensitive << r.halt;
@@ -210,6 +212,14 @@ void DbgPort::comb() {
                     v.rd_trbuf_ena = 1;
                     v.rd_trbuf_addr0 = wb_idx & 0x1;
                     wb_stack_raddr = (wb_idx - 128) / 2;
+            } else if (wb_idx == 256) {
+                wb_rdata = i_instr_buf.read()(63, 0);
+            } else if (wb_idx == 257) {
+                wb_rdata = i_instr_buf.read()(127, 64);
+            } else if (wb_idx == 258) {
+                wb_rdata = i_instr_buf.read()(191, 128);
+            } else if (wb_idx == 259) {
+                wb_rdata = i_instr_buf.read()(255, 192);
             }
             break;
         case 2:
@@ -221,6 +231,7 @@ void DbgPort::comb() {
                 wb_rdata(35, 34) = i_istate_z.read();
                 wb_rdata(37, 36) = i_dstate.read();
                 wb_rdata(41, 40) = i_cstate.read();
+                wb_rdata[63] = i_ierr_state.read();
                 if (i_dport_write.read()) {
                     v.halt = i_dport_wdata.read()[0];
                     v.stepping_mode = i_dport_wdata.read()[1];

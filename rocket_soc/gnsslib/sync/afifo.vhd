@@ -14,6 +14,7 @@ entity afifo is
         i_rd_ena    : in  std_logic;
         o_data      : out std_logic_vector (dbits-1 downto 0);
         o_empty     : out std_logic;
+        o_valid     : out std_logic;
         -- Writing port.
         i_wclk      : in  std_logic;
         i_wr_ena    : in  std_logic;
@@ -57,8 +58,10 @@ begin
 
     proc_rclk0 : process (i_rclk) begin
         if (rising_edge(i_rclk)) then
+            o_valid <= '0';
             if (i_rd_ena = '1' and empty = '0') then
                 o_data <= Mem(conv_integer(pNextWordToRead));
+                o_valid <= '1';
             end if;
         end if;
     end process;

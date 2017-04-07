@@ -88,6 +88,22 @@ void InstrFetch::comb() {
     }
     
 
+    // Debug last fetched instructions buffer:
+    sc_biguint<DBG_FETCH_TRACE_SIZE*64> wb_instr_buf = r.instr_buf;
+    if (w_o_req_fire) {
+        wb_instr_buf(DBG_FETCH_TRACE_SIZE*64-1, 64) =
+            wb_instr_buf((DBG_FETCH_TRACE_SIZE-1)*64-1, 0);
+        if (w_resp_fire) {
+            wb_instr_buf(95, 64) = i_mem_data.read();
+        }
+        wb_instr_buf(63, 32) = wb_o_addr_req;
+        wb_instr_buf(31, 0) = 0;
+    } else if (w_resp_fire) {
+        wb_instr_buf(31, 0) = i_mem_data.read();
+    }
+    v.instr_buf = wb_instr_buf;
+
+
     if (w_o_req_fire) {
         v.wait_resp = 1;
         v.pc_z1 = r.raddr_not_resp_yet;
@@ -120,6 +136,7 @@ void InstrFetch::comb() {
         v.raddr_not_resp_yet = 0;
         v.br_address = ~0;
         v.br_instr = 0;
+        v.instr_buf = 0;
     }
 
     o_mem_addr_valid = w_o_req_valid;
@@ -131,6 +148,7 @@ void InstrFetch::comb() {
     o_predict_miss = w_predict_miss;
     o_mem_resp_ready = w_o_mem_resp_ready;
     o_hold = !w_resp_fire;
+    o_instr_buf = r.instr_buf;
 }
 
 void InstrFetch::registers() {

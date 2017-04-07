@@ -88,8 +88,8 @@ void DbgMainWindow::handleResponse(AttributeType *req, AttributeType *resp) {
 #if 0
         static const char *xSTATES[] = {"Idle", "WaitGrant", "WaitResp", "WaitAccept"};
         static const char *CSTATES[] = {"Idle", "IMem", "DMem"};
-        printf("istate=%s (z=%s); dstate=%s; cstate=%s;\n",
-          xSTATES[ctrl.bits.istate], xSTATES[ctrl.bits.istate_z],
+        RISCV_printf(0, 0, "istate=%s (z=%s,err=%d); dstate=%s; cstate=%s",
+          xSTATES[ctrl.bits.istate], xSTATES[ctrl.bits.istate_z], (int)ctrl.bits.ierr_state,
           xSTATES[ctrl.bits.dstate],
           CSTATES[ctrl.bits.cstate]);
 #endif

@@ -71,6 +71,7 @@ private:
     sc_signal<bool> w_resp_data_ready;
     sc_signal<sc_uint<2>> wb_istate;
     sc_signal<sc_uint<2>> wb_istate_z;
+    sc_signal<bool> w_ierr_state;                          // ICache check error condition (debug purpose)
     sc_signal<sc_uint<2>> wb_dstate;
     sc_signal<sc_uint<2>> wb_cstate;
 };

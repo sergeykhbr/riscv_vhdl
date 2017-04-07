@@ -65,6 +65,7 @@ package types_sync is
         i_rd_ena    : in  std_logic;
         o_data      : out std_logic_vector (dbits-1 downto 0);
         o_empty     : out std_logic;
+        o_valid     : out std_logic;
         -- Writing port.
         i_wclk      : in  std_logic;
         i_wr_ena    : in  std_logic;
