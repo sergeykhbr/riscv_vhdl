@@ -21,6 +21,7 @@ namespace debugger {
 
 class GuiPlugin : public IService,
                   public IThread,
+                  public IHap,
                   public IGui {
 public:
     GuiPlugin(const char *name);
@@ -29,6 +30,9 @@ public:
     /** IService interface */
     virtual void initService(const AttributeType *args);
     virtual void postinitService();
+
+    /** IHap */
+    virtual void hapTriggered(IFace *isrc, EHapType type, const char *descr);
 
     /** IGui interface */
     virtual IFace *getSocInfo();
@@ -79,6 +83,7 @@ private:
 
     event_def eventUiInitDone_;
     event_def eventCommandAvailable_;
+    event_def config_done_;
     mutex_def mutexCommand_;
     struct CmdQueueItemType {
         AttributeType cmd;

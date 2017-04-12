@@ -1,6 +1,6 @@
 /**
  * @file
- * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
+ * @copyright  Copyright 2017 GNSS Sensor Ltd. All right reserved.
  * @author     Sergey Khabarov - sergeykhbr@gmail.com
  * @brief      Instruction Cache.
  */
@@ -36,8 +36,6 @@ SC_MODULE(ICache) {
     sc_in<bool> i_resp_mem_data_valid;
     sc_in<sc_uint<BUS_DATA_WIDTH>> i_resp_mem_data;
     sc_out<sc_uint<2>> o_istate;
-    sc_out<sc_uint<2>> o_istate_z;  // debug bug purpose
-    sc_out<bool> o_ierr_state;  // debug bug purpose
 
     void comb();
     void registers();
@@ -63,10 +61,11 @@ private:
         sc_signal<sc_uint<32>> iline_data_hit;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> iline_addr_hit;
         sc_signal<sc_uint<2>> state;
-        sc_signal<sc_uint<2>> state_z;  // debug bug purpose
         sc_signal<bool> hit_line;
-        sc_signal<bool> err_state;
     } v, r;
+    bool w_hit_req;
+    bool w_hit_line;
+    bool w_hit;
 };
 
 
@@ -99,9 +98,13 @@ SC_MODULE(ICache_tb) {
         sensitive << w_resp_mem_data_valid;
         sensitive << wb_resp_mem_data;
         sensitive << wb_istate;
-        sensitive << wb_istate_z;
-        sensitive << w_ierr_state;
         sensitive << r.clk_cnt;
+        sensitive << r.mem_raddr;
+        sensitive << r.mem_state;
+        sensitive << r.mem_cnt;
+        sensitive << r.mem_wait_cnt;
+        sensitive << r.fetch_state;
+        sensitive << r.fetch_cnt;
 
         SC_METHOD(registers);
         sensitive << w_clk.posedge_event();
@@ -125,8 +128,6 @@ SC_MODULE(ICache_tb) {
         tt->i_resp_mem_data_valid(w_resp_mem_data_valid);
         tt->i_resp_mem_data(wb_resp_mem_data);
         tt->o_istate(wb_istate);
-        tt->o_istate_z(wb_istate_z);
-        tt->o_ierr_state(w_ierr_state);
 
         tb_vcd = sc_create_vcd_trace_file("icache_tb");
         tb_vcd->set_time_unit(1, SC_PS);
@@ -151,7 +152,8 @@ SC_MODULE(ICache_tb) {
         sc_trace(tb_vcd, wb_istate, "wb_istate");
         sc_trace(tb_vcd, wb_istate_z, "wb_istate_z");
         sc_trace(tb_vcd, w_ierr_state, "w_ierr_state");
-        sc_trace(tb_vcd, r.wait_resp, "r_wait_resp");
+        sc_trace(tb_vcd, r.mem_state, "r_mem_state");
+        sc_trace(tb_vcd, r.mem_raddr, "r_mem_raddr");
 
         tt->generateVCD(tb_vcd, tb_vcd);
     }
@@ -179,12 +181,16 @@ private:
     sc_signal<bool> w_resp_mem_data_valid;
     sc_signal<sc_uint<BUS_DATA_WIDTH>> wb_resp_mem_data;
     sc_signal<sc_uint<2>> wb_istate;
-    sc_signal<sc_uint<2>> wb_istate_z;  // debug bug purpose
-    sc_signal<bool> w_ierr_state;  // debug bug purpose
 
     struct RegistersType {
         sc_signal<sc_uint<32>> clk_cnt;
-        sc_signal<bool> wait_resp;
+        sc_signal<sc_uint<2>> fetch_state;
+        sc_signal<sc_uint<8>> fetch_cnt;
+        sc_signal<sc_uint<8>> fetch_wait_cnt;
+        sc_signal<sc_uint<2>> mem_state;
+        sc_signal<sc_uint<32>> mem_raddr;
+        sc_signal<sc_uint<8>> mem_cnt;
+        sc_signal<sc_uint<8>> mem_wait_cnt;
     } v, r;
     sc_trace_file *tb_vcd;
 };

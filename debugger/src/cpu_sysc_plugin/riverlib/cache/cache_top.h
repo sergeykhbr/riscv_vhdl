@@ -48,8 +48,6 @@ SC_MODULE(CacheTop) {
     sc_in<sc_uint<BUS_DATA_WIDTH>> i_resp_mem_data;     // Read value
     // Debug signals:
     sc_out<sc_uint<2>> o_istate;                        // ICache state machine value
-    sc_out<sc_uint<2>> o_istate_z;                      // ICache previous state (debug purpose)
-    sc_out<bool> o_ierr_state;                          // ICache check error condition (debug purpose)
     sc_out<sc_uint<2>> o_dstate;                        // DCache state machine value
     sc_out<sc_uint<2>> o_cstate;                        // cachetop state machine value
 

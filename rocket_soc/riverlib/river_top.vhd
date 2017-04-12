@@ -63,8 +63,6 @@ architecture arch_RiverTop of RiverTop is
   signal wb_resp_data_data : std_logic_vector(RISCV_ARCH-1 downto 0);
   signal w_resp_data_ready : std_logic;
   signal wb_istate : std_logic_vector(1 downto 0);
-  signal wb_istate_z : std_logic_vector(1 downto 0);
-  signal w_ierr_state : std_logic;
   signal wb_dstate : std_logic_vector(1 downto 0);
   signal wb_cstate : std_logic_vector(1 downto 0);
 
@@ -100,8 +98,6 @@ begin
         o_dport_ready => o_dport_ready,
         o_dport_rdata => o_dport_rdata,
         i_istate => wb_istate,
-        i_istate_z => wb_istate_z,
-        i_ierr_state => w_ierr_state,
         i_dstate => wb_dstate,
         i_cstate => wb_cstate);
 
@@ -134,8 +130,6 @@ begin
         i_resp_mem_data_valid => i_resp_mem_data_valid,
         i_resp_mem_data => i_resp_mem_data,
         o_istate => wb_istate,
-        o_istate_z => wb_istate_z,
-        o_ierr_state => w_ierr_state,
         o_dstate => wb_dstate,
         o_cstate => wb_cstate);
 

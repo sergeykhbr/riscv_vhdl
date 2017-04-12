@@ -26,7 +26,7 @@ CpuRiscV_RTL::CpuRiscV_RTL(const char *name)
     InVcdFile_.make_string("");
     OutVcdFile_.make_string("");
     GenerateRef_.make_boolean(false);
-    RISCV_event_create(&config_done_, "config_done");
+    RISCV_event_create(&config_done_, "riscv_sysc_config_done");
     RISCV_register_hap(static_cast<IHap *>(this));
 
     createSystemC();

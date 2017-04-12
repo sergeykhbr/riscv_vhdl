@@ -55,6 +55,12 @@ private:
     IWire *iwire_;
     IClock *iclk_;
 
+    typedef struct MiscType {
+        volatile uint32_t Date;
+        volatile uint32_t GenericChanCfg;
+        uint64_t hide[7];
+    } MiscType;
+
     typedef struct TimerType {
         uint32_t rw_MsLength;
         uint32_t r_MsCnt;
@@ -64,8 +70,10 @@ private:
     } TimerType;
 
     struct gnss_map {
-        uint8_t    rsrv1[64];
+        MiscType misc;
         TimerType   tmr;
+        uint64_t noise[8];
+        uint64_t chan[256*8];
     } regs_;
 };
 

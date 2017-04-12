@@ -53,11 +53,9 @@ entity DbgPort is
     o_br_instr_fetch : out std_logic_vector(31 downto 0);     -- Real instruction value that was replaced by ebreak
     -- Debug signals:
     i_istate : in std_logic_vector(1 downto 0);               -- ICache state machine value
-    i_istate_z : in std_logic_vector(1 downto 0);             -- ICache previous state (debug purpose)
-    i_ierr_state : in std_logic;                              -- ICache check error condition (debug purpose)
     i_dstate : in std_logic_vector(1 downto 0);               -- DCache state machine value
     i_cstate : in std_logic_vector(1 downto 0);               -- CacheTop state machine value
-    i_instr_buf : in std_logic_vector(DBG_FETCH_TRACE_SIZE*64-1 downto 0)        -- trace last fetched instructions
+    i_instr_buf : in std_logic_vector(DBG_FETCH_TRACE_SIZE*64-1 downto 0) -- trace last fetched instructions
   );
 end; 
  
@@ -130,7 +128,7 @@ begin
                  i_dport_addr, i_dport_wdata, i_ireg_rdata, i_csr_rdata,
                  i_pc, i_npc, i_e_valid, i_m_valid, i_ebreak, r,
                  wb_stack_rdata, i_e_call, i_e_ret, i_istate, i_dstate,
-                 i_cstate, i_istate_z, i_ierr_state, i_instr_buf)
+                 i_cstate, i_instr_buf)
     variable v : RegistersType;
     variable wb_o_core_addr : std_logic_vector(11 downto 0);
     variable wb_o_core_wdata : std_logic_vector(RISCV_ARCH-1 downto 0);
@@ -255,10 +253,8 @@ begin
                 wb_rdata(0) := r.halt;
                 wb_rdata(2) := r.breakpoint;
                 wb_rdata(33 downto 32) := i_istate;
-                wb_rdata(35 downto 34) := i_istate_z;
                 wb_rdata(37 downto 36) := i_dstate;
                 wb_rdata(41 downto 40) := i_cstate;
-                wb_rdata(63) := i_ierr_state;
                 if i_dport_write = '1' then
                     v.halt := i_dport_wdata(0);
                     v.stepping_mode := i_dport_wdata(1);

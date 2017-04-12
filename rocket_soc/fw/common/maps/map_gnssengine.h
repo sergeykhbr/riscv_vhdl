@@ -9,15 +9,6 @@
 
 #include <inttypes.h>
 
-/**
- * @brief   Maximal number of satellites per NAvigation system.
- * @details These values are defined by system satellites constellation. They
- *          are used in Satellites Monitor module.
- */
-static const int32_t  GPSSAT_MAX          = 32;
-static const int32_t  GLOSAT_MAX          = 15;
-static const int32_t  GALSAT_MAX          = 32;
-
 static const uint32_t GNSS_FLAG_ACC_READY    = 0x80000000;
 static const uint32_t GNSS_FLAG_WAS_COREPOCH = 0x40000000;
 static const uint32_t GNSS_FLAG_SYMBSYNC_SET = 0x20000000;
@@ -33,10 +24,8 @@ static const uint32_t GNSS_MISC_GLO_MAGN_OFF = 0x00000008;  // 0=binary offset; 
 typedef struct ReadChannel_fields {
     volatile uint32_t PrnEpochCnt;
     volatile uint32_t Flags;
-    volatile uint32_t MeasCodeAcc_lsb;
-    volatile uint32_t MeasCodeAcc_msb;
-    volatile uint32_t MeasCarr_lsb;
-    volatile int32_t MeasCarr_msb;
+    volatile uint64_t MeasCodeAcc;
+    volatile uint64_t MeasCarr;
     volatile int32_t Q;
     volatile int32_t I;
     volatile int32_t QmF;

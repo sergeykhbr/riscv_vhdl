@@ -1,6 +1,6 @@
 /**
  * @file
- * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
+ * @copyright  Copyright 2017 GNSS Sensor Ltd. All right reserved.
  * @author     Sergey Khabarov - sergeykhbr@gmail.com
  * @brief      Instruction Cache.
  */
@@ -25,7 +25,6 @@ ICache::ICache(sc_module_name name_) : sc_module(name_) {
     sensitive << r.iline_addr_req;
     sensitive << r.hit_line;
     sensitive << r.state;
-    sensitive << r.state_z;
 
     SC_METHOD(registers);
     sensitive << i_clk.pos();
@@ -53,6 +52,9 @@ void ICache::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.iline_addr_req, "/top/cache0/i0/r_iline_addr_req");
         sc_trace(o_vcd, r.hit_line, "/top/cache0/i0/r_hit_line");
         sc_trace(o_vcd, r.state, "/top/cache0/i0/r_state");
+        sc_trace(o_vcd, w_hit, "/top/cache0/i0/w_hit");
+        sc_trace(o_vcd, w_hit_line, "/top/cache0/i0/w_hit_line");
+        sc_trace(o_vcd, w_hit_req, "/top/cache0/i0/w_hit_req");
         //sc_trace(o_vcd, wb_req_line, "/top/cache0/i0/wb_req_line");
         //sc_trace(o_vcd, wb_cached_addr, "/top/cache0/i0/wb_cached_addr");
         //sc_trace(o_vcd, wb_cached_data, "/top/cache0/i0/wb_cached_data");
@@ -68,11 +70,7 @@ void ICache::comb() {
     bool w_o_resp_valid;
     sc_uint<BUS_ADDR_WIDTH> wb_o_resp_addr;
     sc_uint<32> wb_o_resp_data;
-    bool w_hit_req;
-    bool w_hit_line;
-    bool w_hit;
     sc_uint<BUS_ADDR_WIDTH - 3> wb_req_line;
-
     
     v = r;
     w_hit_req = 0;
@@ -109,7 +107,9 @@ void ICache::comb() {
         if (i_req_mem_ready.read()) {
             v.state = State_WaitResp;
         } else if (w_hit) {
-            v.err_state = 1;
+            /** Fetcher can change request address while request wasn't
+             *  accepteed. */
+            v.state = State_WaitAccept;
         }
         break;
     case State_WaitResp:
@@ -146,9 +146,6 @@ void ICache::comb() {
         }
         break;
     default:;
-    }
-    if (v.state != r.state) {
-        v.state_z = r.state;
     }
 
     if (w_req_fire) {
@@ -200,8 +197,6 @@ void ICache::comb() {
         v.iline_data_hit = 0;
         v.hit_line = 0;
         v.state = State_Idle;
-        v.state_z = State_Idle;
-        v.err_state = 0;
     }
 
     o_req_ctrl_ready = w_o_req_ctrl_ready;
@@ -216,8 +211,6 @@ void ICache::comb() {
     o_resp_ctrl_data = wb_o_resp_data;
     o_resp_ctrl_addr = wb_o_resp_addr;
     o_istate = r.state;
-    o_istate_z = r.state_z;
-    o_ierr_state = r.err_state;
 }
 
 void ICache::registers() {
@@ -231,6 +224,10 @@ void ICache_tb::comb0() {
 
     if (r.clk_cnt.read() < 10) {
         w_nrst = 0;
+        v.mem_state = 0;
+        v.mem_cnt = 0;
+        v.fetch_state = 0;
+        v.fetch_cnt = 0;
         return;
     }
     w_nrst = 1;
@@ -239,63 +236,181 @@ void ICache_tb::comb0() {
     wb_req_ctrl_addr = 0;
     w_resp_ctrl_ready = 0;
 
+    struct FetchDelayType {
+        uint32_t raddr;
+        int req_wait;
+        int accept_wait;
+    };
+    static const FetchDelayType RADDR[4] = {{0x100008f4, 0, 0}, {0x100007b0, 0, 0}, {0x100008f0, 2, 0}, {0x100007b4, 0, 0}};
+    struct MemDelayType {
+        unsigned rdy_wait;
+        unsigned valid_wait;
+    };
+    //static const MemDelayType MEM_DELAY[4] = {{2,3}, {2,3}, {0,0}, {0,0}};
+    static const MemDelayType MEM_DELAY[4] = {{0,0}, {0,0}, {5,0}, {5,0}};
+
+
+    // fetch model:
+    w_resp_ctrl_ready = 0;
+    if (r.clk_cnt.read() >= 15) {
+        switch (r.fetch_state.read()) {
+        case 0:
+            if (r.fetch_cnt.read() < 4) {
+                if (RADDR[r.fetch_cnt.read()].req_wait == 0) {
+                    w_req_ctrl_valid = 1;
+                    wb_req_ctrl_addr = RADDR[r.fetch_cnt.read()].raddr;
+                    if (w_req_ctrl_ready) {
+                        v.fetch_state = 3;
+                        v.fetch_cnt = r.fetch_cnt.read() + 1;
+                        v.fetch_wait_cnt = RADDR[r.fetch_cnt.read()].accept_wait;
+                    } else {
+                        v.fetch_state = 2;
+                    }
+                } else {
+                    if (RADDR[r.fetch_cnt.read()].req_wait == 1) {
+                        v.fetch_state = 2;
+                    } else {
+                        v.fetch_state = 1;
+                    }
+                    v.fetch_wait_cnt = RADDR[r.fetch_cnt.read()].req_wait;
+                }
+            }
+            break;
+        case 1:
+            // wait to request:
+            v.fetch_wait_cnt = r.fetch_wait_cnt.read() - 1;
+            if (r.fetch_wait_cnt.read() == 1) {
+                v.fetch_state = 2;
+            }
+            break;
+        case 2:// wait ready signal
+            w_req_ctrl_valid = 1;
+            wb_req_ctrl_addr = RADDR[r.fetch_cnt.read()].raddr;
+            if (w_req_ctrl_ready) {
+                v.fetch_state = 3;
+                v.fetch_cnt = r.fetch_cnt.read() + 1;
+                v.fetch_wait_cnt = RADDR[r.fetch_cnt.read()].accept_wait;
+            }
+            break;
+        case 3: // wait valid signal:
+            if (w_resp_ctrl_valid) {
+                w_resp_ctrl_ready = 1;
+                if (r.fetch_wait_cnt.read()) {
+                    v.fetch_wait_cnt = r.fetch_wait_cnt.read() - 1;
+                    w_resp_ctrl_ready = 0;
+                } else if (r.fetch_cnt.read() < 4) {
+                    if (RADDR[r.fetch_cnt.read()].req_wait == 0) {
+                        w_req_ctrl_valid = 1;
+                        wb_req_ctrl_addr = RADDR[r.fetch_cnt.read()].raddr;
+                        if (w_req_ctrl_ready) {
+                            v.fetch_state = 3;
+                            v.fetch_cnt = r.fetch_cnt.read() + 1;
+                            v.fetch_wait_cnt = RADDR[r.fetch_cnt.read()].accept_wait;
+                        } else {
+                            v.fetch_state = 2;
+                        }
+                    } else {
+                        if (RADDR[r.fetch_cnt.read()].req_wait == 1) {
+                            v.fetch_state = 2;
+                        } else {
+                            v.fetch_state = 1;
+                        }
+                        v.fetch_wait_cnt = RADDR[r.fetch_cnt.read()].req_wait;
+                    }
+                } else {
+                    v.fetch_state = 0;
+                }
+            }
+            break;
+        default:;
+        }
+    }
+
+    if (r.clk_cnt.read() == 21) {
+        wb_req_ctrl_addr = 0x100008f8;
+    } else if (r.clk_cnt.read() == 22) {
+        wb_req_ctrl_addr = 0x100007b4;
+    }
+
+
+    // Memory model:
     w_req_mem_ready = 0;
     w_resp_mem_data_valid = 0;
 
-    switch (r.clk_cnt.read()) {
-    case 15:
-        w_req_ctrl_valid = 1;
-        wb_req_ctrl_addr = 0x100008f4;
-        w_req_mem_ready = 1;
+    switch (r.mem_state.read()) {
+    case 0: // MemIdle
+        if (w_req_mem_valid && r.mem_cnt.read() < 4) {
+            if (MEM_DELAY[r.mem_cnt.read()].rdy_wait == 0) {
+                if (MEM_DELAY[r.mem_cnt.read()].valid_wait == 0) {
+                    v.mem_state = 3;
+                    v.mem_raddr = wb_req_mem_addr;
+                    w_req_mem_ready = 1;
+                    v.mem_cnt = r.mem_cnt.read() + 1;
+                } else {
+                    v.mem_state = 2;
+                    v.mem_wait_cnt = MEM_DELAY[r.mem_cnt.read()].valid_wait;
+                }
+            } else {
+                v.mem_state = 1;
+                v.mem_wait_cnt = MEM_DELAY[r.mem_cnt.read()].rdy_wait;
+            }
+        }
         break;
-    case 16:
+    case 1: 
+        v.mem_wait_cnt = r.mem_wait_cnt.read() - 1;
+        if (r.mem_wait_cnt.read() == 1) {
+            if (w_req_mem_valid) {
+                v.mem_raddr = wb_req_mem_addr;
+                w_req_mem_ready = 1;
+                v.mem_cnt = r.mem_cnt.read() + 1;
+                if (MEM_DELAY[r.mem_cnt.read()].valid_wait == 0) {
+                    v.mem_state = 3;
+                } else {
+                    v.mem_state = 2;
+                    v.mem_wait_cnt = MEM_DELAY[r.mem_cnt.read()].valid_wait;
+                }
+            } else {
+                v.mem_state = 0;
+            }
+        }
+        break;
+    case 2:
+        v.mem_wait_cnt = r.mem_wait_cnt.read() - 1;
+        if (r.mem_wait_cnt.read() == 1) {
+            v.mem_state = 3;
+        }
+        break;
+    case 3:
         w_resp_mem_data_valid = 1;
-        wb_resp_mem_data = 0xffdff06f;
-        w_resp_ctrl_ready = 1;
+        if (r.mem_raddr.read() == 0x100008f0) {
+            wb_resp_mem_data = 0xffdff06fea9ff0efull;
+        } else if (r.mem_raddr.read() == 0x100007b0) {
+            wb_resp_mem_data = 0xfa0a0a1300004a17;
+        }
 
-        w_req_ctrl_valid = 1;
-        wb_req_ctrl_addr = 0x100007b0; 
-        w_req_mem_ready = 1;
+        if (w_req_mem_valid && r.mem_cnt.read() < 4) {
+            if (MEM_DELAY[r.mem_cnt.read()].rdy_wait == 0) {
+                if (MEM_DELAY[r.mem_cnt.read()].valid_wait == 0) {
+                    v.mem_state = 3;
+                    v.mem_raddr = wb_req_mem_addr;
+                    w_req_mem_ready = 1;
+                    v.mem_cnt = r.mem_cnt.read() + 1;
+                } else {
+                    v.mem_state = 2;
+                    v.mem_wait_cnt = MEM_DELAY[r.mem_cnt.read()].valid_wait;
+                }
+            } else {
+                v.mem_state = 1;
+                v.mem_wait_cnt = MEM_DELAY[r.mem_cnt.read()].rdy_wait;
+            }
+        } else {
+            v.mem_state = 0;
+        }
         break;
-    case 17:
-        w_resp_mem_data_valid = 1;
-        wb_resp_mem_data = 0x00004a17;
-        w_resp_ctrl_ready = 1;
-
-        w_req_ctrl_valid = 1;
-        wb_req_ctrl_addr = 0x100008f0;
-        w_req_mem_ready = 1;
-        break;
-    case 18:
-        w_resp_mem_data_valid = 1;
-        wb_resp_mem_data = 0xea9ff0ef;
-        //w_resp_ctrl_ready = 1;
-        break;
-
-    case 19:
-        w_resp_ctrl_ready = 1;
-        w_req_ctrl_valid = 1;
-        wb_req_ctrl_addr = 0x100007b4;
-        break;
-
-    case 25:
-        w_req_mem_ready = 1;
-        //w_resp_mem_data_valid = 1;
-        //wb_resp_mem_data = 0xfa0a0a13;
-        break;
-
-    case 26:
-        w_resp_ctrl_ready = 1;
-        break;
-
     default:;
     }
 
-    if (w_req_ctrl_valid && w_req_ctrl_ready) {
-        v.wait_resp = 1;
-    } else if (w_resp_ctrl_valid && w_resp_ctrl_ready) {
-        v.wait_resp = 0;
-    }
+
 }
 #endif
 

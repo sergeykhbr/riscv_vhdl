@@ -39,9 +39,10 @@ void GuiPlugin::UiThreadType::busyLoop() {
 }
 
 GuiPlugin::GuiPlugin(const char *name) 
-    : IService(name) {
+    : IService(name), IHap(HAP_ConfigDone) {
     registerInterface(static_cast<IGui *>(this));
     registerInterface(static_cast<IThread *>(this));
+    registerInterface(static_cast<IHap *>(this));
     registerAttribute("WidgetsConfig", &guiConfig_);
     registerAttribute("SocInfo", &socInfo_);
     registerAttribute("CommandExecutor", &cmdExecutor_);
@@ -60,6 +61,8 @@ GuiPlugin::GuiPlugin(const char *name)
     ui_ = NULL;
     RISCV_event_create(&eventUiInitDone_, "eventUiInitDone_");
     RISCV_event_create(&eventCommandAvailable_, "eventCommandAvailable_");
+    RISCV_event_create(&config_done_, "eventGuiGonfigGone");
+    RISCV_register_hap(static_cast<IHap *>(this));
     RISCV_mutex_init(&mutexCommand_);
 
     cmdQueueWrPos_ = 0;
@@ -90,6 +93,7 @@ GuiPlugin::~GuiPlugin() {
     if (ui_) {
         delete ui_;
     }
+    RISCV_event_close(&config_done_);
     RISCV_event_close(&eventUiInitDone_);
     RISCV_event_close(&eventCommandAvailable_);
     RISCV_mutex_destroy(&mutexCommand_);
@@ -164,7 +168,14 @@ void GuiPlugin::removeFromQueue(IFace *iface) {
     RISCV_mutex_unlock(&mutexCommand_);
 }
 
+void GuiPlugin::hapTriggered(IFace *isrc, EHapType type, 
+                                  const char *descr) {
+    RISCV_event_set(&config_done_);
+}
+
 void GuiPlugin::busyLoop() {
+    RISCV_event_wait(&config_done_);
+
     while (isEnabled()) {
         if (RISCV_event_wait_ms(&eventCommandAvailable_, 500)) {
             RISCV_event_clear(&eventCommandAvailable_);

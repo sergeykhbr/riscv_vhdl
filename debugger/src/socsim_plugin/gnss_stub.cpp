@@ -26,6 +26,13 @@ GNSSStub::GNSSStub(const char *name)  : IService(name) {
     clksrc_.make_string("");
 
     memset(&regs_, 0, sizeof(regs_));
+    
+#if 1
+    regs_.misc.GenericChanCfg = 12;       // [4:0] gps
+    regs_.misc.GenericChanCfg |= 12 << 5; // [8:5] glo
+    regs_.misc.GenericChanCfg |= 2 << 9;  // [10:9] sbas
+    regs_.misc.GenericChanCfg |= 6 << 11; // [14:11] gal
+#endif
 }
 
 GNSSStub::~GNSSStub() {
@@ -65,19 +72,16 @@ void GNSSStub::b_transport(Axi4TransactionType *trans) {
             }
         }
     } else {
-        for (uint64_t i = 0; i < trans->xsize/4; i++) {
-            trans->rpayload.b32[i] = 0;
-            if ((off + 4*i) == OFFSET(&regs_.tmr.rw_MsLength)) {
-                trans->rpayload.b32[i] = regs_.tmr.rw_MsLength;
-                RISCV_info("Get rw_MsLength = %d", regs_.tmr.rw_MsLength);
-            }
-        }
+        uint8_t *m = reinterpret_cast<uint8_t *>(&regs_);
+        memcpy(trans->rpayload.b8, &m[off], trans->xsize);
     }
 }
 
 void GNSSStub::stepCallback(uint64_t t) {
     iwire_->raiseLine(irqLine_.to_int());
     if (regs_.tmr.rw_MsLength) {
+        regs_.tmr.rw_tow++;
+        regs_.tmr.rw_tod++;
         iclk_->registerStepCallback(static_cast<IClockListener *>(this),
                                     t + regs_.tmr.rw_MsLength);
     }

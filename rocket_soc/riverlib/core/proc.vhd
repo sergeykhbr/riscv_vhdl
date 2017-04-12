@@ -51,8 +51,6 @@ entity Processor is
     o_dport_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0);      -- Response value
     -- Debug signals:
     i_istate : in std_logic_vector(1 downto 0);                       -- ICache state machine value
-    i_istate_z : in std_logic_vector(1 downto 0);                     -- ICache previous state (debug purpose)
-    i_ierr_state : in std_logic;                                      -- ICache check error condition (debug purpose)
     i_dstate : in std_logic_vector(1 downto 0);                       -- DCache state machine value
     i_cstate : in std_logic_vector(1 downto 0)                        -- CacheTop state machine value
   );
@@ -409,8 +407,6 @@ begin
         o_br_address_fetch => dbg.br_address_fetch,
         o_br_instr_fetch => dbg.br_instr_fetch,
         i_istate => i_istate,
-        i_istate_z => i_istate_z,
-        i_ierr_state => i_ierr_state,
         i_dstate => i_dstate,
         i_cstate => i_cstate,
         i_instr_buf => w.f.instr_buf);

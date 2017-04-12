@@ -49,8 +49,6 @@ CacheTop::CacheTop(sc_module_name name_) : sc_module(name_) {
     i0->i_resp_mem_data_valid(w_ctrl_resp_mem_data_valid);
     i0->i_resp_mem_data(wb_ctrl_resp_mem_data);
     i0->o_istate(o_istate);
-    i0->o_istate_z(o_istate_z);
-    i0->o_ierr_state(o_ierr_state);
 
     d0 = new DCache("d0");
     d0->i_clk(i_clk);

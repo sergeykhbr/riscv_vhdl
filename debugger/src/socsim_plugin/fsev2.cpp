@@ -31,7 +31,12 @@ FseV2::FseV2(const char *name)  : IService(name) {
     regs_.hw_id = (16 << 16) | 5;   // 16 msec accum, 5=id
     for (int i = 0; i < FSE2_CHAN_MAX; i++) {
         regs_.chan[i].dopler = 1000 << 4;
+        regs_.chan[i].noise = 1872 << 12;
+        regs_.chan[i].ind = 100 + i;
     }
+    // Check float comparision with threshold (=2.1*noise):
+    regs_.chan[14].max = static_cast<uint32_t>(1872.0 * 2.11);
+    regs_.chan[15].max = static_cast<uint32_t>(1872.0 * 2.09);
 }
 
 void FseV2::b_transport(Axi4TransactionType *trans) {

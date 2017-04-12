@@ -52,7 +52,7 @@ CpuRiscV_Functional::CpuRiscV_Functional(const char *name)
     cpu_context_.step_cnt = 0;
     cpu_context_.stack_trace_cnt = 0;
 
-    RISCV_event_create(&config_done_, "config_done");
+    RISCV_event_create(&config_done_, "riscv_func_config_done");
     RISCV_register_hap(static_cast<IHap *>(this));
     cpu_context_.reset   = true;
     dbg_state_ = STATE_Normal;

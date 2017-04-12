@@ -36,9 +36,7 @@ entity ICache is
     i_resp_mem_data_valid : in std_logic;
     i_resp_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
     -- Debug Signals:
-    o_istate : out std_logic_vector(1 downto 0);
-    o_istate_z : out std_logic_vector(1 downto 0);
-    o_ierr_state : out std_logic
+    o_istate : out std_logic_vector(1 downto 0)
   );
 end; 
  
@@ -56,9 +54,7 @@ architecture arch_ICache of ICache is
       iline_addr_hit : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
       iline_data_hit : std_logic_vector(31 downto 0);
       state : std_logic_vector(1 downto 0);
-      state_z : std_logic_vector(1 downto 0);
       hit_line : std_logic;
-      err_state : std_logic;
   end record;
 
   signal r, rin : RegistersType;
@@ -114,7 +110,9 @@ begin
         if i_req_mem_ready = '1' then
             v.state := State_WaitResp;
         elsif w_hit = '1' then
-            v.err_state := '1';
+            --! Fetcher can change request address while request wasn't
+            --! accepteed.
+            v.state := State_WaitAccept;
         end if;
     when State_WaitResp =>
         if i_resp_mem_data_valid = '1' then
@@ -149,10 +147,6 @@ begin
         end if;
     when others =>
     end case;
-
-    if v.state /= r.state then
-        v.state_z := r.state;
-    end if;
 
 
     if w_req_fire = '1' then
@@ -200,11 +194,9 @@ begin
         v.iline_addr := (others => '1');
         v.iline_data := (others => '0');
         v.state := State_Idle;
-        v.state_z := State_Idle;
         v.iline_addr_hit := (others => '1');
         v.iline_data_hit := (others => '0');
         v.hit_line := '0';
-        v.err_state := '0';
     end if;
 
     o_req_ctrl_ready <= w_o_req_ctrl_ready;
@@ -219,8 +211,6 @@ begin
     o_resp_ctrl_data <= wb_o_resp_data;
     o_resp_ctrl_addr <= wb_o_resp_addr;
     o_istate <= r.state;
-    o_istate_z <= r.state_z;
-    o_ierr_state <= r.err_state;
     
     rin <= v;
   end process;

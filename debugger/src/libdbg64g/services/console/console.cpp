@@ -39,7 +39,7 @@ ConsoleService::ConsoleService(const char *name)
     registerAttribute("DefaultLogFile", &defaultLogFile_);
 
     RISCV_mutex_init(&mutexConsoleOutput_);
-    RISCV_event_create(&config_done_, "config_done");
+    RISCV_event_create(&config_done_, "console_config_done");
     RISCV_register_hap(static_cast<IHap *>(this));
 
     isEnable_.make_boolean(true);
