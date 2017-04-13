@@ -182,7 +182,7 @@ void PnpWidget::slotUpdate() {
         case GNSSSENSOR_IRQCTRL:
             RISCV_sprintf(tstr, sizeof(tstr), "Interrupt Controller", NULL);
             break;
-        case GNSSSENSOR_FSE_V2:
+        case GNSSSENSOR_FSE_V2_GPS:
             RISCV_sprintf(tstr, sizeof(tstr), "GPS Fast Search Engine", NULL);
             break;
         case GNSSSENSOR_UART:

@@ -6,7 +6,6 @@
 html
 latex
 gnsslib
-fw_images/gnssfw*
 fw/*
 !fw/common/
 !fw/boot/

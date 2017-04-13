@@ -32,6 +32,10 @@ static const uint16_t GAISLER_ETH_EDCL_MASTER  = 0x0503;
 static const uint16_t RISCV_RIVER_CPU          = 0x0505;
 
 // Slaves IDs
+static const uint16_t GNSSSENSOR_ENGINE_STUB   = 0x0068;
+static const uint16_t GNSSSENSOR_FSE_V2_GPS    = 0x0069;
+static const uint16_t GNSSSENSOR_FSE_V2_GLO    = 0x006a;
+static const uint16_t GNSSSENSOR_FSE_V2_GAL    = 0x006c;
 static const uint16_t GNSSSENSOR_BOOTROM       = 0x0071;
 static const uint16_t GNSSSENSOR_FWIMAGE       = 0x0072;
 static const uint16_t GNSSSENSOR_SRAM          = 0x0073;
@@ -40,8 +44,6 @@ static const uint16_t GNSSSENSOR_SPI_FLASH     = 0x0075;
 static const uint16_t GNSSSENSOR_GPIO          = 0x0076;
 static const uint16_t GNSSSENSOR_RF_CONTROL    = 0x0077;
 static const uint16_t GNSSSENSOR_ENGINE        = 0x0078;
-static const uint16_t GNSSSENSOR_ENGINE_STUB   = 0x0068;
-static const uint16_t GNSSSENSOR_FSE_V2        = 0x0079;
 static const uint16_t GNSSSENSOR_UART          = 0x007a;
 static const uint16_t GNSSSENSOR_ACCELEROMETER = 0x007b;
 static const uint16_t GNSSSENSOR_GYROSCOPE     = 0x007c;

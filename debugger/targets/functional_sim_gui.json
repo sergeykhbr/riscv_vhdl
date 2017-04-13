@@ -62,7 +62,8 @@
                      'csr MTIME',
                      'read 0xfffff004 128',
                      'loadelf helloworld',
-                     'loadelf zephyr.elf nocode'
+                     'loadelf zephyr.elf nocode',
+                     'loadelf gnssfw nocode',
                      ]]
                 ]}]},
     {'Class':'CmdExecutorClass','Instances':[

@@ -201,6 +201,10 @@ constant RISCV_RIVER_CPU          : std_logic_vector(15 downto 0) := X"0505";
 
 --! Empty slave slot device
 constant SLV_DID_EMPTY           : std_logic_vector(15 downto 0) := X"5577";
+--! GNSS Engine Stub device
+constant GNSSSENSOR_ENGINE_STUB   : std_logic_vector(15 downto 0) := X"0068";
+--! Fast Search Engines Device ID provided by gnsslib
+constant GNSSSENSOR_FSE_V2_GPS    : std_logic_vector(15 downto 0) := X"0069";
 --! Boot ROM Device ID
 constant GNSSSENSOR_BOOTROM       : std_logic_vector(15 downto 0) := X"0071";
 --! FW ROM image Device ID
@@ -217,10 +221,6 @@ constant GNSSSENSOR_GPIO          : std_logic_vector(15 downto 0) := X"0076";
 constant GNSSSENSOR_RF_CONTROL    : std_logic_vector(15 downto 0) := X"0077";
 --! GNSS Engine Device ID provided by gnsslib
 constant GNSSSENSOR_ENGINE        : std_logic_vector(15 downto 0) := X"0078";
---! GNSS Engine Stub device
-constant GNSSSENSOR_ENGINE_STUB   : std_logic_vector(15 downto 0) := X"0068";
---! Fast Search Engines Device ID provided by gnsslib
-constant GNSSSENSOR_FSE_V2        : std_logic_vector(15 downto 0) := X"0079";
 --! rs-232 UART Device ID
 constant GNSSSENSOR_UART          : std_logic_vector(15 downto 0) := X"007a";
 --! Accelerometer Device ID provided by gnsslib

@@ -39,7 +39,9 @@ architecture arch_sram8_inferred_init of sram8_inferred_init is
 
 
 constant SRAM_LENGTH : integer := 2**abits;
-constant FILE_IMAGE_LINES_TOTAL : integer := SRAM_LENGTH/CFG_NASTI_DATA_BYTES;
+-- romimage only 256 KB, but SRAM is 512 KB so we initialize one
+-- half of sram = 32768 * 8 = 256 KB
+constant FILE_IMAGE_LINES_TOTAL : integer := 32768;
 type ram_type is array (0 to SRAM_LENGTH-1) of std_logic_vector(7 downto 0);
 
 impure function init_ram(file_name : in string) return ram_type is

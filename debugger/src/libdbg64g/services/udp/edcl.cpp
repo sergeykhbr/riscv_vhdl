@@ -79,8 +79,8 @@ int EdclService::read(uint64_t addr, int bytes, uint8_t *obuf) {
             break;
         } 
         if (rxoff == 0) {
-            RISCV_error("No response. Break read transaction[%d]",
-                        dbgRdTRansactionCnt_);
+            RISCV_error("No response. Break read transaction[%d] at %08x",
+                        dbgRdTRansactionCnt_, req.address);
             rd_bytes = TAP_ERROR;
             break;
         }

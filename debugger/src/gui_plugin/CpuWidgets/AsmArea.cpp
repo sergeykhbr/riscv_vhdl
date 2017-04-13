@@ -108,6 +108,11 @@ void AsmArea::resizeEvent(QResizeEvent *ev) {
         h = 4 * lineHeight_;
     }
     visibleLinesTotal_ = h / lineHeight_ + 2;
+
+    if (isNpcTrackEna() && npc_ == ~0ull) {
+        return;
+    }
+
     int line_cnt = static_cast<int>(asmLinesOut_.size());
     if (visibleLinesTotal_ > line_cnt) {
         char tstr[256];
@@ -164,7 +169,7 @@ void AsmArea::handleResponse(AttributeType *req, AttributeType *resp) {
             npc_ = resp->to_uint64();
             emit signalNpcChanged();
         }
-    } else if (strstr(req->to_string(), "br ") && !resp->is_nil()) {
+    } else if (strstr(req->to_string(), "br ")) {
         emit signalBreakpointsChanged();
     } else if (strstr(req->to_string(), "disas") && !resp->is_nil()) {
         addMemBlock(*resp, asmLines_);
