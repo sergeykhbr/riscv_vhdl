@@ -58,13 +58,13 @@ package types_gnss is
   constant CFG_FSE_MSEC_MAX          : integer := 16;
 
   --! Instantiated number of the GPS L1-CA channels. 0 is the valid value.
-  constant CFG_GNSS_GPS_L1CA_NUM     : integer := 12;
+  constant CFG_GNSS_GPS_L1CA_NUM     : integer := 4;--12;
   --! Instantiated number of the Glonass L1-CA channels. 0 is the valid value.
-  constant CFG_GNSS_GLONASS_L1_NUM   : integer := 12;
+  constant CFG_GNSS_GLONASS_L1_NUM   : integer := 0;--12;
   --! Instantiated number of the SBAS L1-CA channels. 0 is the valid value.
-  constant CFG_GNSS_SBAS_L1_NUM      : integer := 2; 
+  constant CFG_GNSS_SBAS_L1_NUM      : integer := 0;--2; 
   --! Instantiated number of the Galileo E1 channels. 0 is the valid value.
-  constant CFG_GNSS_GALILEO_E1_NUM   : integer := 6;
+  constant CFG_GNSS_GALILEO_E1_NUM   : integer := 0;--6;
   --! @brief Total number of the instantiated channels
   --! @details This value computes as a sum of all channels and is limited
   --!          only by address bus width that connects System Bus and GNSS
@@ -120,7 +120,7 @@ package types_gnss is
     tech   : integer range 0 to NTECH := 0;
     xaddr  : integer := 0;
     xmask  : integer := 16#FFFFF#;
-	 xirq   : integer := 0
+    xirq   : integer := 0
   );
   port
   (

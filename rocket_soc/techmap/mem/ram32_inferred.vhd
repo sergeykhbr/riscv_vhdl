@@ -12,11 +12,11 @@ use commonlib.types_common.all;
 
 entity Ram32_inferred is
 generic (
-    generic_kWords    : integer := 1
+    generic_abits    : integer := 10
 );
 port (
     i_clk         : in std_logic;
-    i_address     : in std_logic_vector(10+log2(generic_kWords)-1 downto 0);
+    i_address     : in std_logic_vector(generic_abits-1 downto 0);
     i_wr_ena      : in std_logic;
     i_data       : in std_logic_vector(31 downto 0);
     o_data       : out std_logic_vector(31 downto 0)
@@ -25,11 +25,9 @@ end;
 
 architecture rtl of Ram32_inferred is
 
-constant RAM32_ADR_WIDTH : integer := 10+log2(generic_kWords);
-
-type ram_type is array ((2**RAM32_ADR_WIDTH)-1 downto 0) of std_logic_vector (31 downto 0);
+type ram_type is array ((2**generic_abits)-1 downto 0) of std_logic_vector (31 downto 0);
 signal RAM       : ram_type;
-signal adr       : std_logic_vector(10+log2(generic_kWords)-1 downto 0);
+signal adr       : std_logic_vector(generic_abits-1 downto 0);
 
 begin
 

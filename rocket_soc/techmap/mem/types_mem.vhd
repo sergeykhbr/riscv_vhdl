@@ -123,11 +123,11 @@ package types_mem is
   component Ram32_tech
   generic (
     generic_tech   : integer := 0;
-    generic_kWords : integer := 1
+    generic_abits : integer := 10
   );
   port (
     i_clk      : in std_logic;
-    i_address  : in std_logic_vector(10+log2(generic_kWords)-1 downto 0);
+    i_address  : in std_logic_vector(generic_abits-1 downto 0);
     i_wr_ena   : in std_logic;
     i_data     : in std_logic_vector(31 downto 0);
     o_data     : out std_logic_vector(31 downto 0)

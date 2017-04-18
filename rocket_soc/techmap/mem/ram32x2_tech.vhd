@@ -31,11 +31,11 @@ architecture rtl of Ram32x2_tech is
 
   component Ram32_inferred
   generic (
-    generic_kWords    : integer := 1
+    generic_abits    : integer := 10
   );
   port (
     i_clk         : in std_logic;
-    i_address     : in std_logic_vector(10+log2(generic_kWords)-1 downto 0);
+    i_address     : in std_logic_vector(generic_abits-1 downto 0);
     i_wr_ena      : in std_logic;
     i_data       : in std_logic_vector(31 downto 0);
     o_data       : out std_logic_vector(31 downto 0)
@@ -47,7 +47,7 @@ begin
   genmem0 : if generic_tech = inferred or is_fpga(generic_tech) /= 0 generate
       ramx0 : Ram32_inferred generic map
       (
-        generic_kWords => generic_kWords
+        generic_abits => 10+log2(generic_kWords)
       ) port map
       (
         i_clk,
@@ -59,7 +59,7 @@ begin
 
       ramx1 : Ram32_inferred generic map
       (
-        generic_kWords => generic_kWords
+        generic_abits => 10+log2(generic_kWords)
       ) port map
       (
         i_clk,
