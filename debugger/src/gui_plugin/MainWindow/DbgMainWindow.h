@@ -12,16 +12,9 @@
 #include "ebreakhandler.h"
 
 #include <QtWidgets/QMainWindow>
+#include <QtWidgets/QMenu>
+#include <QtWidgets/QAction>
 #include "MdiAreaWidget.h"
-#include "ControlWidget/ConsoleWidget.h"
-#include "PeriphWidgets/UartWidget.h"
-#include "PeriphWidgets/GpioWidget.h"
-
-
-QT_BEGIN_NAMESPACE
-class QAction;
-class QMenu;
-QT_END_NAMESPACE
 
 namespace debugger {
 
@@ -66,6 +59,7 @@ private slots:
     void slotActionTriggerMemView(bool val);
     void slotActionTriggerGpio(bool val);
     void slotActionTriggerPnp(bool val);
+    void slotActionTriggerGnssMap(bool val);
     void slotActionTriggerSymbolBrowser();
     void slotOpenDisasm(uint64_t addr, uint64_t sz);
     void slotOpenMemory(uint64_t addr, uint64_t sz);
@@ -100,6 +94,8 @@ private:
     QMdiSubWindow *viewPnp_;
     QAction *actionSerial_;
     QMdiSubWindow *viewUart0_;
+    QAction *actionGnssMap_;
+    QMdiSubWindow *viewGnssMap_;
     QTimer *tmrGlobal_;
     MdiAreaWidget *mdiArea_;
     

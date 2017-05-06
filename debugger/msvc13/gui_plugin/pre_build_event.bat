@@ -29,3 +29,5 @@ set GUI_PLUGIN_SRC=..\..\src\gui_plugin\
 %QT_PATH%\bin\moc.exe -i %GUI_PLUGIN_SRC%\CpuWidgets\MemArea.h -o %GUI_PLUGIN_SRC%\CpuWidgets\moc_MemArea.h
 %QT_PATH%\bin\moc.exe -i %GUI_PLUGIN_SRC%\CpuWidgets\MemControl.h -o %GUI_PLUGIN_SRC%\CpuWidgets\moc_MemControl.h
 %QT_PATH%\bin\moc.exe -i %GUI_PLUGIN_SRC%\CpuWidgets\MemViewWidget.h -o %GUI_PLUGIN_SRC%\CpuWidgets\moc_MemViewWidget.h
+%QT_PATH%\bin\moc.exe -i %GUI_PLUGIN_SRC%\GnssWidgets\StreetMapObject.h -o %GUI_PLUGIN_SRC%\GnssWidgets\moc_StreetMapObject.h
+%QT_PATH%\bin\moc.exe -i %GUI_PLUGIN_SRC%\GnssWidgets\MapWidget.h -o %GUI_PLUGIN_SRC%\GnssWidgets\moc_MapWidget.h

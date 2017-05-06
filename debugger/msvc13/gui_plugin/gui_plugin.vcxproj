@@ -97,7 +97,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>libdbg64g.lib;Qt5Core.lib;Qt5Gui.lib;Qt5Widgets.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libdbg64g.lib;Qt5Core.lib;Qt5Gui.lib;Qt5Widgets.lib;Qt5Network.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)\..\win32build\$(Configuration)\;$(QT_PATH)\lib</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>$(ProjectDir)exportmap.def</ModuleDefinitionFile>
     </Link>
@@ -124,7 +124,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>libdbg64g.lib;Qt5Core.lib;Qt5Gui.lib;Qt5Widgets.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libdbg64g.lib;Qt5Core.lib;Qt5Gui.lib;Qt5Widgets.lib;Qt5Network.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)\..\win64build\$(Configuration)\;$(QT_PATH)\lib</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>$(ProjectDir)exportmap.def</ModuleDefinitionFile>
     </Link>
@@ -199,6 +199,8 @@
     <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\SymbolBrowserArea.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\SymbolBrowserControl.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\SymbolBrowserWidget.cpp" />
+    <ClCompile Include="..\..\src\gui_plugin\GnssWidgets\MapWidget.cpp" />
+    <ClCompile Include="..\..\src\gui_plugin\GnssWidgets\StreetMapObject.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\gui_plugin.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\MainWindow\DbgMainWindow.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\MainWindow\ebreakhandler.cpp" />
@@ -233,6 +235,8 @@
     <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\SymbolBrowserArea.h" />
     <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\SymbolBrowserControl.h" />
     <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\SymbolBrowserWidget.h" />
+    <ClInclude Include="..\..\src\gui_plugin\GnssWidgets\MapWidget.h" />
+    <ClInclude Include="..\..\src\gui_plugin\GnssWidgets\StreetMapObject.h" />
     <ClInclude Include="..\..\src\gui_plugin\gui_plugin.h" />
     <ClInclude Include="..\..\src\gui_plugin\igui.h" />
     <ClInclude Include="..\..\src\gui_plugin\MainWindow\DbgMainWindow.h" />

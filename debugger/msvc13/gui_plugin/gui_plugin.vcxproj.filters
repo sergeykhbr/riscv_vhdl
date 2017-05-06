@@ -16,6 +16,9 @@
     <Filter Include="CpuWidget">
       <UniqueIdentifier>{a0abd6c8-969c-4b70-88c7-cf1434f63f1b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="GnssWidgets">
+      <UniqueIdentifier>{e364f867-cafb-45ff-b74d-d1799078831c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\common\attribute.cpp">
@@ -93,6 +96,12 @@
     </ClCompile>
     <ClCompile Include="..\..\src\gui_plugin\MainWindow\ebreakhandler.cpp">
       <Filter>MainWindow</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\GnssWidgets\StreetMapObject.cpp">
+      <Filter>GnssWidgets</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\GnssWidgets\MapWidget.cpp">
+      <Filter>GnssWidgets</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -190,6 +199,12 @@
     </ClInclude>
     <ClInclude Include="..\..\src\gui_plugin\MainWindow\ebreakhandler.h">
       <Filter>MainWindow</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\GnssWidgets\StreetMapObject.h">
+      <Filter>GnssWidgets</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\GnssWidgets\MapWidget.h">
+      <Filter>GnssWidgets</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -6,8 +6,11 @@
 #include "CpuWidgets/MemViewWidget.h"
 #include "CpuWidgets/SymbolBrowserWidget.h"
 #include "CpuWidgets/StackTraceWidget.h"
+#include "ControlWidget/ConsoleWidget.h"
+#include "PeriphWidgets/UartWidget.h"
+#include "PeriphWidgets/GpioWidget.h"
+#include "GnssWidgets/MapWidget.h"
 #include <QtWidgets/QtWidgets>
-
 
 namespace debugger {
 
@@ -180,6 +183,14 @@ void DbgMainWindow::createActions() {
     connect(actionSerial_, SIGNAL(triggered(bool)),
             this, SLOT(slotActionTriggerUart0(bool)));
 
+    actionGnssMap_ = new QAction(QIcon(tr(":/images/serial_96x96.png")),
+                              tr("&OpenStreetMap"), this);
+    actionGnssMap_->setToolTip(tr("Open Street map with GNSS tracks view"));
+    actionGnssMap_->setCheckable(true);
+    actionGnssMap_->setChecked(false);
+    connect(actionGnssMap_, SIGNAL(triggered(bool)),
+            this, SLOT(slotActionTriggerGnssMap(bool)));
+
     actionRun_ = new QAction(QIcon(tr(":/images/start_96x96.png")),
                              tr("&Run"), this);
     actionRun_->setToolTip(tr("Start Execution (F5)"));
@@ -241,6 +252,9 @@ void DbgMainWindow::createMenus() {
     menu->addSeparator();
     menu->addAction(actionRegs_);
     menu->addAction(actionSymbolBrowser_);
+
+    menu = menuBar()->addMenu(tr("&GNSS"));
+    menu->addAction(actionGnssMap_);
     
     menu = menuBar()->addMenu(tr("&Help"));
     menu->addAction(actionAbout_);
@@ -336,6 +350,16 @@ void DbgMainWindow::slotActionTriggerPnp(bool val) {
         viewPnp_->close();
     }
 }
+
+void DbgMainWindow::slotActionTriggerGnssMap(bool val) {
+    if (val) {
+        viewGnssMap_ = 
+            new MapQMdiSubWindow(igui_, mdiArea_, this, actionGnssMap_);
+    } else {
+        viewGnssMap_->close();
+    }
+}
+
 
 void DbgMainWindow::slotActionTriggerSymbolBrowser() {
     new SymbolBrowserQMdiSubWindow(igui_, mdiArea_, this);
