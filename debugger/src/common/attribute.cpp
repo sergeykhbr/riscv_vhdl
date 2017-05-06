@@ -587,7 +587,7 @@ const char *string_to_attribute(const char *cfg,
             pcur += 4;
             out->make_boolean(true);
         } else {
-            char digits[32] = {0};
+            char digits[64] = {0};
             int digits_cnt = 0;
             if (pcur[0] == '0' && pcur[1] == 'x') {
                 pcur += 2;
@@ -598,9 +598,26 @@ const char *string_to_attribute(const char *cfg,
                 || (*pcur >= 'a' && *pcur <= 'f')
                 || (*pcur >= 'A' && *pcur <= 'F')) {
                 digits[digits_cnt++] = *pcur++;
+                digits[digits_cnt] = 0;
             }
             int64_t t1 = strtoull(digits, NULL, 0);
-            out->make_int64(t1);
+            if (pcur[0] == '.') {
+                digits_cnt = 0;
+                digits[0] = 0;
+                double divrate = 1.0;
+                double d1 = static_cast<double>(t1);
+                pcur++;
+                while (*pcur >= '0' && *pcur <= '9') {
+                    digits[digits_cnt++] = *pcur++;
+                    digits[digits_cnt] = 0;
+                    divrate *= 10.0;
+                }
+                t1 = strtoull(digits, NULL, 0);
+                d1 += static_cast<double>(t1)/divrate;
+                out->make_floating(d1);
+            } else {
+                out->make_int64(t1);
+            }
         }
     }
     return pcur;

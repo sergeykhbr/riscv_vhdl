@@ -211,6 +211,10 @@ class AttributeType : public IAttribute {
         u_.floating = value;
     }
 
+    void force_to_floating() {
+        kind_ = Attr_Floating;
+    }
+
     void make_int64(int64_t value) {
         kind_ = Attr_Integer;
         size_ = 0;

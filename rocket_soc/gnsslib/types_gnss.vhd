@@ -58,9 +58,9 @@ package types_gnss is
   constant CFG_FSE_MSEC_MAX          : integer := 16;
 
   --! Instantiated number of the GPS L1-CA channels. 0 is the valid value.
-  constant CFG_GNSS_GPS_L1CA_NUM     : integer := 4;--12;
+  constant CFG_GNSS_GPS_L1CA_NUM     : integer := 8;--12;
   --! Instantiated number of the Glonass L1-CA channels. 0 is the valid value.
-  constant CFG_GNSS_GLONASS_L1_NUM   : integer := 0;--12;
+  constant CFG_GNSS_GLONASS_L1_NUM   : integer := 8;--12;
   --! Instantiated number of the SBAS L1-CA channels. 0 is the valid value.
   constant CFG_GNSS_SBAS_L1_NUM      : integer := 0;--2; 
   --! Instantiated number of the Galileo E1 channels. 0 is the valid value.

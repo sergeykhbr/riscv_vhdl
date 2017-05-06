@@ -27,11 +27,13 @@ ComPortService::ComPortService(const char *name)
     registerInterface(static_cast<IRawListener *>(this));
     registerAttribute("Enable", &isEnable_);
     registerAttribute("UartSim", &uartSim_);
+    registerAttribute("LogFile", &logFile_);
     registerAttribute("ComPortName", &comPortName_);
     registerAttribute("ComPortSpeed", &comPortSpeed_);
 
     isEnable_.make_boolean(true);
     uartSim_.make_string("");
+    logFile_.make_string("uart0.log");
     comPortName_.make_string("");
     comPortSpeed_.make_int64(115200);
     portListeners_.make_list(0);
@@ -40,6 +42,10 @@ ComPortService::ComPortService(const char *name)
 }
 
 ComPortService::~ComPortService() {
+    if (logfile_) {
+        fclose(logfile_);
+        logfile_ = NULL;
+    }
 }
 
 void ComPortService::postinitService() {
@@ -63,6 +69,14 @@ void ComPortService::postinitService() {
             RISCV_error("Can't create thread.", NULL);
             return;
         }
+    }
+
+    logfile_ = 0;
+    if (logFile_.size()) {
+        char tst[256];
+        RISCV_sprintf(tst, sizeof(tst), "Can't open '%s' file",
+                      logFile_.to_string());
+        logfile_ = fopen(logFile_.to_string(), "w");
     }
 }
 
@@ -117,6 +131,10 @@ void ComPortService::busyLoop() {
                 IRawListener *ilstn = static_cast<IRawListener *>(
                                 portListeners_[i].to_iface());
                 ilstn->updateData(tbuf, tbuf_cnt);
+            }
+            if (logfile_) {
+                fwrite(tbuf, tbuf_cnt, 1, logfile_);
+                fflush(logfile_);
             }
         }
 

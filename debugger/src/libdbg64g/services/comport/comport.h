@@ -53,10 +53,12 @@ private:
 private:
     AttributeType isEnable_;
     AttributeType uartSim_;
+    AttributeType logFile_;
     AttributeType comPortName_;
     AttributeType comPortSpeed_;
     AttributeType portListeners_;
 
+    FILE *logfile_;
 #if defined(_WIN32) || defined(__CYGWIN__)
     HANDLE hPort_;
 #else
