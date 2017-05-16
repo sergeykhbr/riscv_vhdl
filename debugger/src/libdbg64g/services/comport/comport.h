@@ -35,7 +35,7 @@ public:
     virtual void registerRawListener(IFace *listener);
     virtual void unregisterRawListener(IFace *listener);
 
-    // IRawListener
+    /** IRawListener */
     virtual void updateData(const char *buf, int buflen);
 
 protected:
@@ -107,6 +107,7 @@ private:
     };
     SimpleFifoType txFifo_;
     SimpleFifoType rxFifo_;
+    mutex_def mutexListeners_;
 };
 
 DECLARE_CLASS(ComPortService)

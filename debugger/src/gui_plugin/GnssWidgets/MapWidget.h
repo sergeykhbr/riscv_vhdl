@@ -10,6 +10,8 @@
 #include "api_core.h"   // MUST BE BEFORE QtWidgets.h or any other Qt header.
 #include "attribute.h"
 #include "igui.h"
+#include "coreservices/irawlistener.h"
+#include "coreservices/iserial.h"
 
 #include <QtCore/QBasicTimer>
 #include <QtWidgets/QMenu>
@@ -21,30 +23,68 @@
 
 namespace debugger {
 
+class SlideAverageType {
+public:
+    SlideAverageType(int sz = 32) {
+        size_ = sz;
+        data_ = new double [2*sz];
+        pcur_ = &data_[sz];
+        avg_cnt_ = 0;
+        avg_sum_ = 0;
+        memset(data_, 0, 2*sz*sizeof(double));
+    }
+    ~SlideAverageType() {
+        delete [] data_;
+    }
+    void put(double v) {
+        if (--pcur_ < data_) {
+            pcur_ = &data_[size_ - 1];
+        }
+        avg_sum_ -= *pcur_;
+        *pcur_ = *(pcur_ + size_) = v;
+        avg_sum_ += v;
+        if (avg_cnt_ < size_) {
+            avg_cnt_++;
+        }
+    }
+    double *getp() {
+        return pcur_;
+    }
+    double get_avg() {
+        return avg_cnt_ == 0 ? 0 : avg_sum_/avg_cnt_;
+    }
+    int size() {
+        return avg_cnt_;
+    }
+private:
+    int size_;
+    double *data_;
+    double *pcur_;
+    double avg_cnt_;
+    double avg_sum_;
+};
+
 class MapWidget : public QWidget,
-                  public IGuiCmdHandler {
+                  public IRawListener {
     Q_OBJECT
 public:
     MapWidget(IGui *igui, QWidget *parent);
     virtual ~MapWidget();
 
-    /** IGuiCmdHandler */
-    virtual void handleResponse(AttributeType *req, AttributeType *resp);
+    /** IRawListener */
+    virtual void updateData(const char *buf, int buflen);
 
 signals:
     void signalRequestNetworkData();
+    void signalUpdateGnssRaw();
 public slots:
-    void slotMapUpdated(QRect);
+    void slotUpdateGnssRaw();
+    void slotTilesUpdated(QRect);
     void slotRightClickMenu(const QPoint &p);
-    //void slotEpochUpdated(EpochDataType *, GuiStorageType *);
     void slotActionClear();
     void slotActionNightMode();
-    //void slotRepaintByTimer();
-    //void slotAddPosition(Json &cfg);
-    //void slotRemovePosition(Json &cfg);
 
 protected:
-    void setCentralPointByAverage();
     void renderAll();
     void renderMinimap();
     void renderPosInfo(QPainter &p);
@@ -59,6 +99,18 @@ protected:
     void keyPressEvent(QKeyEvent *event);
 
 private:
+    IGui *igui_;
+    ISerial *uart_;
+
+    // Gnss parser's data
+    char gnssBuf_[1 << 16];
+    int gnssBufCnt_;
+    int gnssBraceCnt_;
+    Reg64Type gnssMagicNumber_;
+    bool gnssIsParsing_;
+    AttributeType gnssRawMeas_;
+
+
     bool bNewDataAvailable;
 
     StreetMap *m_normalMap;
@@ -83,15 +135,8 @@ private:
     QMenu *contextMenu;
     bool invert;
 
-    int TrackHistory;
-    /*struct TrackType {
-        bool ena;
-        LineCommon *lineLat;
-        LineCommon *lineLon;
-        QColor color;
-        std::string name;
-        int used;
-    } PosTrack[POS_Total];*/
+    SlideAverageType gpsLat_;
+    SlideAverageType gpsLon_;
 };
 
 class MapQMdiSubWindow : public QMdiSubWindow {
@@ -106,6 +151,7 @@ public:
 
         setWindowTitle(tr("Map"));
         setMinimumWidth(parent->size().width() / 2);
+        setMinimumHeight(parent->size().height() / 2);
         QWidget *pnew = new MapWidget(igui, this);
         setWindowIcon(act->icon());
         act->setChecked(true);
@@ -126,7 +172,6 @@ private:
     QAction *action_;
     QMdiArea *area_;
 };
-
 
 }  // namespace debugger
 

@@ -211,12 +211,6 @@ void GuiPlugin::stop() {
     if (ui_->mainWindow()) {
         ui_->mainWindow()->callExit();
     }
-    if (qApp) {
-        //int totalWidgets = QApplication::topLevelWidgets().size();
-        //RISCV_error("dbg: total widgets to close %d", totalWidgets);
-        qApp->closeAllWindows();
-        qApp->exit(0);
-    }
     ui_->stop();
     IThread::stop();
 }

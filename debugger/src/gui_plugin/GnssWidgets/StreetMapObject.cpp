@@ -2,6 +2,7 @@
 #include "moc_StreetMapObject.h"
 
 #include <QtWidgets/QtWidgets>
+#include <QtCore/QDateTime>
 #include <QtNetwork/QtNetwork>
 #include <math.h>
 
@@ -51,18 +52,35 @@ StreetMap::StreetMap(QObject *parent, int zoom_)
     width = 400;
     height = 300;
     zoom = zoom_;
-    latitude = 55.7085;
-    longitude = 37.655;
+
+    latitude = 0;
+    longitude = 0;
 
     m_emptyTile = QPixmap(TILE_SIZE, TILE_SIZE);
     m_emptyTile.fill(Qt::lightGray);
 
-    QNetworkDiskCache *cache = new QNetworkDiskCache;
+#if 0
+    m_proxy.setType(QNetworkProxy::HttpProxy);
+    m_proxy.setHostName(tr("http://proxy.server.com"));
+    m_proxy.setPort(911);
+    m_manager.setProxy(m_proxy);
+#endif
+
+    QNetworkDiskCache *cache = new QNetworkDiskCache(this);
     cache->setCacheDirectory(
         QStandardPaths::writableLocation(QStandardPaths::CacheLocation));
     m_manager.setCache(cache);
     connect(&m_manager, SIGNAL(finished(QNetworkReply*)),
             this, SLOT(handleNetworkData(QNetworkReply*)));
+}
+
+StreetMap::~StreetMap() {
+    QNetworkSession session(m_manager.configuration());
+    session.close();
+    foreach(QPoint tp, m_tilePixmaps.keys()) {
+        m_tilePixmaps.remove(tp);
+    }
+    m_tilePixmaps.clear();
 }
 
 QPoint StreetMap::coordToPixpos(QPointF coord) {
@@ -106,7 +124,7 @@ void StreetMap::setCenterCoord(QPointF coord) {
     longitude = coord.y();
 
     // Normalize lat/lon to range (0.0...1.0)*(1<<scale)
-    // I suppose, it means that full world map will be splitted on (1<<scale) x (1<<scale) rectangles.
+    // It means that full world map will be splitted on (1<<scale) x (1<<scale) rectangles.
     // If scale =12, then full map 4096 x 4096 tiles
     ct = tileForCoordinate(latitude, longitude, zoom);
     qreal tx = ct.x();
@@ -137,18 +155,8 @@ void StreetMap::setCenterCoord(QPointF coord) {
     int xe = static_cast<int>(tx) + aftertile_x;
     int ye = static_cast<int>(ty) + aftertile_y;
 
-    //qreal coord_per_px = 360.0 / (double)((1 << zoom) * TILE_SIZE);
-    //qreal xtot = width * coord_per_px;
-    //qreal lon_min = longitudeFromTile(xs, zoom);
-    //qreal lon_max = longitudeFromTile(xe, zoom);
-    //qreal lat_min = latitudeFromTile(ys, zoom);
-    //qreal lat_max = latitudeFromTile(ye, zoom);
-
     // build a rect
     m_tilesRect = QRect(xs, ys, xe - xs + 1, ye - ys + 1);
-
-    //if (m_url.isEmpty())
-    //    download();
 }
 
 QPointF StreetMap::getCenterCoord() {
@@ -175,7 +183,6 @@ void StreetMap::render(QPainter *p, const QRect &rect) {
             }
         }
     }
-    //emit updated(QRect(0, 0, width, height));
 }
 
 void StreetMap::pan(const QPoint &delta) {
@@ -201,10 +208,11 @@ void StreetMap::handleNetworkData(QNetworkReply *reply) {
     }
     reply->deleteLater();
     m_tilePixmaps[tp] = QPixmap::fromImage(img);
-    if (img.isNull())
+    if (img.isNull()) {
         m_tilePixmaps[tp] = m_emptyTile;
+    }
 
-    emit updated(tileRect(tp));
+    emit signalTilesUpdated(tileRect(tp));
 
     // purge unused spaces
     QRect bound = m_tilesRect.adjusted(-2, -2, 2, 2);
@@ -218,7 +226,7 @@ void StreetMap::handleNetworkData(QNetworkReply *reply) {
 
 void StreetMap::download() {
     QPoint grab(0, 0);
-    for (int x = 0; x <= m_tilesRect.width(); ++x)
+    for (int x = 0; x <= m_tilesRect.width(); ++x) {
         for (int y = 0; y <= m_tilesRect.height(); ++y) {
             QPoint tp = m_tilesRect.topLeft() + QPoint(x, y);
             if (!m_tilePixmaps.contains(tp)) {
@@ -226,9 +234,10 @@ void StreetMap::download() {
                 break;
             }
         }
+    }
     if (grab == QPoint(0, 0)) {
         m_url = QUrl();
-        emit updated(QRect());
+        emit signalTilesUpdated(QRect());
         return;
     }
 

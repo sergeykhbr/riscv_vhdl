@@ -618,6 +618,12 @@ const char *string_to_attribute(const char *cfg,
             } else {
                 out->make_int64(t1);
             }
+
+            /** Guard to skip wrong formatted string and avoid hanging: */
+            while ((pcur[0] >= 'a' && pcur[0] <= 'z')
+                || (pcur[0] >= 'A' && pcur[0] <= 'Z')) {
+                pcur++;
+            }
         }
     }
     return pcur;

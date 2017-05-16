@@ -27,12 +27,10 @@ GNSSStub::GNSSStub(const char *name)  : IService(name) {
 
     memset(&regs_, 0, sizeof(regs_));
     
-#if 1
     regs_.misc.GenericChanCfg = 12;       // [4:0] gps
     regs_.misc.GenericChanCfg |= 12 << 5; // [8:5] glo
     regs_.misc.GenericChanCfg |= 2 << 9;  // [10:9] sbas
     regs_.misc.GenericChanCfg |= 6 << 11; // [14:11] gal
-#endif
 }
 
 GNSSStub::~GNSSStub() {

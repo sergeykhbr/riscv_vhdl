@@ -38,7 +38,6 @@ UartEditor::UartEditor(IGui *igui, QWidget *parent) : QPlainTextEdit(parent) {
         if (uart_) {
             uart_->registerRawListener(static_cast<IRawListener *>(this));
         }
-
     }
 }
 

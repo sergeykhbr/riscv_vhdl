@@ -20,6 +20,7 @@ static AttributeType listClasses_(Attr_List);
 static AttributeType listHap_(Attr_List);
 static AttributeType listPlugins_(Attr_List);
 extern mutex_def mutex_printf;
+extern mutex_def mutexDefaultConsoles_;
 
 extern void _load_plugins(AttributeType *list);
 extern void _unload_plugins(AttributeType *list);
@@ -29,6 +30,7 @@ public:
     CoreService(const char *name) : IService("CoreService") {
         active_ = 1;
         RISCV_mutex_init(&mutex_printf);
+        RISCV_mutex_init(&mutexDefaultConsoles_);
         RISCV_event_create(&mutexExiting_, "mutexExiting_");
         //logLevel_.make_int64(LOG_DEBUG);  // default = LOG_ERROR
     }
@@ -80,6 +82,8 @@ extern "C" void RISCV_cleanup() {
     _unload_plugins(&listPlugins_);
     RISCV_mutex_lock(&mutex_printf);
     RISCV_mutex_destroy(&mutex_printf);
+    RISCV_mutex_lock(&mutexDefaultConsoles_);
+    RISCV_mutex_destroy(&mutexDefaultConsoles_);
     RISCV_disable_log();
 }
 
@@ -272,6 +276,7 @@ static thread_return_t safe_exit_thread(void *args) {
 
     RISCV_trigger_hap(getInterface(IFACE_SERVICE),
                       HAP_BreakSimulation, "Exiting");
+    printf("All threads were stopped!\n");
     core_.shutdown();
     return 0;
 }

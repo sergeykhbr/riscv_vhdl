@@ -31,6 +31,7 @@ static int uniqueIdx_ = 0;
 
 /** Redirect output to specified console. */
 static AttributeType default_console(Attr_List);
+mutex_def mutexDefaultConsoles_;
 
 /** */
 static FILE *logfile_ = 0;
@@ -51,16 +52,20 @@ extern "C" void RISCV_generate_name(AttributeType *name) {
 
 extern "C" void RISCV_add_default_output(void *iout) {
     AttributeType lstn(static_cast<IRawListener *>(iout));
+    RISCV_mutex_lock(&mutexDefaultConsoles_);
     default_console.add_to_list(&lstn);
+    RISCV_mutex_unlock(&mutexDefaultConsoles_);
 }
 
 extern "C" void RISCV_remove_default_output(void *iout) {
+    RISCV_mutex_lock(&mutexDefaultConsoles_);
     for (unsigned i = 0; i < default_console.size(); i++) {
         if (default_console[i].to_iface() == iout) {
             default_console.remove_from_list(i);
             break;
         }
     }
+    RISCV_mutex_unlock(&mutexDefaultConsoles_);
 }
 
 extern "C" int RISCV_enable_log(const char *filename) {
@@ -127,10 +132,12 @@ extern "C" int RISCV_printf(void *iface, int level,
     bufLog[ret++] = '\n';
     bufLog[ret] = '\0';
     IRawListener *ilstn;
+    RISCV_mutex_lock(&mutexDefaultConsoles_);
     for (unsigned i = 0; i < default_console.size(); i++) {
         ilstn = static_cast<IRawListener *>(default_console[i].to_iface());
         ilstn->updateData(bufLog, ret);
     }
+    RISCV_mutex_unlock(&mutexDefaultConsoles_);
     if (logfile_) {
         fwrite(bufLog, ret, 1, logfile_);
         fflush(logfile_);

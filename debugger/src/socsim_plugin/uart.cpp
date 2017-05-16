@@ -34,6 +34,7 @@ UART::UART(const char *name)  : IService(name) {
     irqLine_.make_uint64(0);
     irqctrl_.make_string("");
     listeners_.make_list(0);
+    RISCV_mutex_init(&mutexListeners_);
 
     memset(&regs_, 0, sizeof(regs_));
     regs_.status = UART_STATUS_TX_EMPTY | UART_STATUS_RX_EMPTY;
@@ -44,6 +45,7 @@ UART::UART(const char *name)  : IService(name) {
 }
 
 UART::~UART() {
+    RISCV_mutex_destroy(&mutexListeners_);
 }
 
 void UART::postinitService() {
@@ -74,14 +76,18 @@ int UART::writeData(const char *buf, int sz) {
 
 void UART::registerRawListener(IFace *listener) {
     AttributeType lstn(listener);
+    RISCV_mutex_lock(&mutexListeners_);
     listeners_.add_to_list(&lstn);
+    RISCV_mutex_unlock(&mutexListeners_);
 }
 
 void UART::unregisterRawListener(IFace *listener) {
     for (unsigned i = 0; i < listeners_.size(); i++) {
         IFace *iface = listeners_[i].to_iface();
         if (iface == listener) {
+            RISCV_mutex_lock(&mutexListeners_);
             listeners_.remove_from_list(i);
+            RISCV_mutex_unlock(&mutexListeners_);
             break;
         }
     }
@@ -109,12 +115,14 @@ void UART::b_transport(Axi4TransactionType *trans) {
             case 4:
                 wrdata = static_cast<char>(trans->wpayload.b32[i]);
                 RISCV_info("Set data = %s", &regs_.data);
+                RISCV_mutex_lock(&mutexListeners_);
                 for (unsigned n = 0; n < listeners_.size(); n++) {
                     IRawListener *lstn = static_cast<IRawListener *>(
                                         listeners_[n].to_iface());
 
                     lstn->updateData(&wrdata, 1);
                 }
+                RISCV_mutex_unlock(&mutexListeners_);
                 break;
             default:;
             }

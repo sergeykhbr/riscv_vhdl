@@ -16,7 +16,6 @@
 #include "coreservices/icmdexec.h"
 #include "MainWindow/DbgMainWindow.h"
 
-
 namespace debugger {
 
 class GuiPlugin : public IService,

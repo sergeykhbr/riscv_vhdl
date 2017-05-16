@@ -32,6 +32,7 @@ SRC_PATH =\
 	$(TOP_DIR)src/gui_plugin/MainWindow \
 	$(TOP_DIR)src/gui_plugin/ControlWidget \
 	$(TOP_DIR)src/gui_plugin/CpuWidgets \
+	$(TOP_DIR)src/gui_plugin/GnssWidgets \
 	$(TOP_DIR)src/gui_plugin/PeriphWidgets
 
 VPATH = $(SRC_PATH)
@@ -72,6 +73,7 @@ LIBS = \
 	dbg64g \
 	Qt5Core \
 	Qt5Gui \
+	Qt5Network \
 	Qt5Widgets
 
 SRC_FILES = $(addsuffix .cpp,$(SOURCES))
@@ -91,6 +93,7 @@ deploy:
 	cp $(QT_PATH)/lib/libQt5Core.* $(ELF_DIR)/qtlib
 	cp $(QT_PATH)/lib/libQt5Gui.* $(ELF_DIR)/qtlib
 	cp $(QT_PATH)/lib/libQt5Widgets.* $(ELF_DIR)/qtlib
+	cp $(QT_PATH)/lib/libQt5Network.* $(ELF_DIR)/qtlib
 
 $(EXECUTABLE): prebuild $(OBJ_FILES)
 	echo $(CPP) $(LDFLAGS) $(OBJ_FILES) -o $@

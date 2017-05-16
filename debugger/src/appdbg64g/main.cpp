@@ -120,7 +120,6 @@ int main(int argc, char* argv[]) {
 
     //const char *t1 = RISCV_get_configuration();
     //RISCV_write_json_file(configFile.to_string(), t1);
-
     RISCV_cleanup();
 	return 0;
 }

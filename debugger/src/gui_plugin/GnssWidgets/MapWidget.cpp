@@ -4,20 +4,38 @@
 
 namespace debugger {
 
+/** Start marker of GNSS raw measurements that receiver generates in JSON
+ *  format.
+ */
+const Reg64Type MAGIC_GNSS = {"{'Epoch"};
+
+/** Test points that will shown even if no position availbale */
+QPointF defaultPos[] = {
+    {55.929967, 37.516868},     // MIPT, Dolgoprudniy (Moscow area)
+    {37.871853, -122.258423},   // University of California, Berkely
+    {59.336187, 18.068777}      // Sweden, Gaisler (Leon3) office location
+};
+
 MapWidget::MapWidget(IGui *igui, QWidget *parent)
     : QWidget(parent) {
+    igui_ = igui;
+    gnssIsParsing_ = false;
     bNewDataAvailable = true;
     pressed = false;
     invert = false;
 
     m_normalMap = new StreetMap(this, 17);
     m_miniMap = new StreetMap(this, 12);
-    // This signal force redrawing when new data were download
-    connect(m_normalMap, SIGNAL(updated(QRect)), SLOT(slotMapUpdated(QRect)));   
-    //connect(m_miniMap, SIGNAL(updated(QRect)), SLOT(slotMapUpdated(QRect)));
+    // This signal force redrawing when new data were downloaded
+    connect(m_normalMap, SIGNAL(signalTilesUpdated(QRect)),
+            this, SLOT(slotTilesUpdated(QRect)));   
+    connect(m_miniMap, SIGNAL(signalTilesUpdated(QRect)),
+            this, SLOT(slotTilesUpdated(QRect)));
 
-    connect(this, SIGNAL(signalRequestNetworkData()), m_normalMap, SLOT(slotRequestNetworkData()));
-    connect(this, SIGNAL(signalRequestNetworkData()), m_miniMap, SLOT(slotRequestNetworkData()));
+    connect(this, SIGNAL(signalRequestNetworkData()),
+            m_normalMap, SLOT(slotRequestNetworkData()));
+    connect(this, SIGNAL(signalRequestNetworkData()),
+            m_miniMap, SLOT(slotRequestNetworkData()));
 
     setFocusPolicy(Qt::ClickFocus);
 
@@ -26,131 +44,117 @@ MapWidget::MapWidget(IGui *igui, QWidget *parent)
     contextMenu->addAction(tr("Nightmode"), this, SLOT(slotActionNightMode()));
 
     setContextMenuPolicy(Qt::CustomContextMenu);
-    connect(this, SIGNAL(customContextMenuRequested(const QPoint &)), SLOT(slotRightClickMenu(const QPoint &)));   
+    connect(this, SIGNAL(customContextMenuRequested(const QPoint &)),
+                  SLOT(slotRightClickMenu(const QPoint &)));   
+
+    connect(this, SIGNAL(signalUpdateGnssRaw()),
+                  SLOT(slotUpdateGnssRaw()));
 
     setWindowTitle(tr("Map"));
 
     posinfoSize = QSize(340, 200);
     posinfoPixmap = QPixmap(posinfoSize);
 
-    //memset(&PosTrack, 0, sizeof(PosTrack));
+    AttributeType serial_name;
+    igui_->getWidgetsAttribute("Serial", &serial_name);
+    if (serial_name.is_string()) {
+        uart_ = static_cast<ISerial *>
+            (RISCV_get_service_iface(serial_name.to_string(), IFACE_SERIAL));
+        if (uart_) {
+            uart_->registerRawListener(static_cast<IRawListener *>(this));
+        }
+    }
+
+    QDateTime sd = QDateTime::currentDateTime();
+    qsrand(sd.toTime_t());
+    int pos_init_idx =
+        qrand() % static_cast<int>(sizeof(defaultPos)/sizeof(QPointF));
+
+    m_normalMap->setCenterCoord(defaultPos[pos_init_idx]);
+    m_miniMap->setCenterCoord(defaultPos[pos_init_idx]);
 }
 
 MapWidget::~MapWidget() {
+    if (uart_) {
+        uart_->unregisterRawListener(static_cast<IRawListener *>(this));
+    }
 }
 
-void MapWidget::handleResponse(AttributeType *req, AttributeType *resp) {
+void MapWidget::updateData(const char *buf, int buflen) {
+    for (int i = 0; i < buflen; i++) {
+        gnssMagicNumber_.buf[7] = buf[i];
+        gnssMagicNumber_.val >>= 8;
+        if (!gnssIsParsing_) {
+            if (gnssMagicNumber_.val == MAGIC_GNSS.val) {
+                memcpy(gnssBuf_, MAGIC_GNSS.buf, 8);
+                gnssBufCnt_ = 7;
+                gnssBraceCnt_ = 1;
+                gnssIsParsing_ = true;
+            }
+            continue;
+        }
+        gnssBuf_[gnssBufCnt_++] = buf[i];
+        gnssBuf_[gnssBufCnt_] = '\0';
+        if (buf[i] == '{') {
+            gnssBraceCnt_++;
+            continue;
+        } 
+        if (buf[i] != '}') {
+            continue;
+        }
+        if (--gnssBraceCnt_ == 0) {
+            gnssIsParsing_ = false;
+            gnssRawMeas_.from_config(gnssBuf_);
+            emit signalUpdateGnssRaw();
+        }
+    }
 }
 
-void MapWidget::setCentralPointByAverage() {
-    double avgLat = 0, avgLon;
-    /*int start;
-    if (PosTrack[POS_RMC].ena) {
-        start = PosTrack[POS_RMC].lineLat->size() - TrackHistory;
-        if (start < 0) {
-            start = 0;
-        }
-        PosTrack[POS_RMC].lineLat->getAverageOf(start, TrackHistory, avgLat);
-        PosTrack[POS_RMC].lineLon->getAverageOf(start, TrackHistory, avgLon);
+void MapWidget::slotUpdateGnssRaw() {
+    if (!gnssRawMeas_.is_dict()) {
+        return;
     }
-    else if (PosTrack[POS_GPSLMS].ena) {
-        start = PosTrack[POS_GPSLMS].lineLat->size() - TrackHistory;
-        if (start < 0) {
-            start = 0;
-        }
-        PosTrack[POS_GPSLMS].lineLat->getAverageOf(start, TrackHistory, avgLat);
-        PosTrack[POS_GPSLMS].lineLon->getAverageOf(start, TrackHistory, avgLon);
+    AttributeType &gps = gnssRawMeas_["GPS"];
+    if (!gps.is_dict()) {
+        return;
     }
-    else if (PosTrack[POS_GLOLMS].ena) {
-        start = PosTrack[POS_GLOLMS].lineLat->size() - TrackHistory;
-        if (start < 0) {
-            start = 0;
-        }
-        PosTrack[POS_GLOLMS].lineLat->getAverageOf(start, TrackHistory, avgLat);
-        PosTrack[POS_GLOLMS].lineLon->getAverageOf(start, TrackHistory, avgLon);
+    AttributeType &lms = gps["LMS"];
+    if (!lms.is_list() || lms.size() < 8) {
+        return;
     }
-    else if (PosTrack[POS_LMSAVG].ena) {
-        start = PosTrack[POS_LMSAVG].lineLat->size() - TrackHistory;
-        if (start < 0) {
-            start = 0;
-        }
-        PosTrack[POS_LMSAVG].lineLat->getAverageOf(start, TrackHistory, avgLat);
-        PosTrack[POS_LMSAVG].lineLon->getAverageOf(start, TrackHistory, avgLon);
-    }*/
+    double lat, lon;
+    lat = static_cast<double>(lms[1].to_int());
+    lat += lms[2].to_float() / 60.0;
+    if (lms[3].is_equal("S")) {
+        lat = -lat;
+    }
 
-    if (avgLat) {
-        QPointF coord(avgLat, avgLon);
+    lon = static_cast<double>(lms[4].to_int());
+    lon += lms[5].to_float() / 60.0;
+    if (lms[6].is_equal("W")) {
+        lon = -lon;
+    }
+    if (lat == 0 || lon == 0) {
+        return;
+    }
+    gpsLat_.put(lat);
+    gpsLon_.put(lon);
+
+    if (!pressed) {
+        QPointF coord(gpsLat_.get_avg(), gpsLon_.get_avg());
         m_normalMap->setCenterCoord(coord);
         m_miniMap->setCenterCoord(coord);
     }
+    emit signalRequestNetworkData();
 }
 
 
-/*void MapWidget::slotAddPosition(Json &cfg)
-{
-    int posIdx = -1;
-    if (cfg["Name"].getString() == "RMC") {
-        posIdx = POS_RMC;
-    } else if (cfg["Name"].getString() == "GPS LMS") {
-        posIdx = POS_GPSLMS;
-    } else if (cfg["Name"].getString() == "GLO LMS") {
-        posIdx = POS_GLOLMS;
-    } else if (cfg["Name"].getString() == "LMS avg") {
-        posIdx = POS_LMSAVG;
-    }
-
-    if (posIdx == -1)
-        return;
-
-    PosTrack[posIdx].ena = true;
-    PosTrack[posIdx].lineLat = (LineCommon *)cfg["Lat"].getData();
-    PosTrack[posIdx].lineLon = (LineCommon *)cfg["Lon"].getData();
-    PosTrack[posIdx].color = QColor(cfg["Color"].getString().c_str());
-    PosTrack[posIdx].name = cfg["Name"].getString();
-
-    setCentralPointByAverage();
-
+void MapWidget::slotTilesUpdated(QRect rect) {
     renderAll();
     update();
 }
 
-void MapWidget::slotRemovePosition(Json &cfg)
-{
-    int posIdx = -1;
-    if (cfg["Name"].getString() == "RMC") {
-        posIdx = POS_RMC;
-    } else if (cfg["Name"].getString() == "GPS LMS") {
-        posIdx = POS_GPSLMS;
-    } else if (cfg["Name"].getString() == "GLO LMS") {
-        posIdx = POS_GLOLMS;
-    } else if (cfg["Name"].getString() == "LMS avg") {
-        posIdx = POS_LMSAVG;
-    }
-
-    if (posIdx == -1)
-        return;
-
-    PosTrack[posIdx].ena = false;
-    renderAll();
-    update();
-}*/
-
-void MapWidget::slotMapUpdated(QRect rect)
-{
-    renderAll();
-    update();
-}
-
-/*void MapWidget::slotRepaintByTimer()
-{
-    if (bNewDataAvailable) {
-        bNewDataAvailable = false;
-        emit signalRequestNetworkData();
-    }
-}*/
-
-void MapWidget::slotActionClear()
-{
+void MapWidget::slotActionClear() {
     //for (int i=0; i<DataTotal; i++) {
         //pPosTrack[i]->clear();
     //}
@@ -158,36 +162,19 @@ void MapWidget::slotActionClear()
     update();
 }
 
-void MapWidget::slotActionNightMode()
-{
+void MapWidget::slotActionNightMode() {
     invert = !invert;
     renderAll();
     update();
 }
 
-void MapWidget::slotRightClickMenu(const QPoint &p)
-{
+void MapWidget::slotRightClickMenu(const QPoint &p) {
     QPoint globalPos = mapToGlobal(p);
     //contextMenu->exec(globalPos);
     contextMenu->popup(globalPos);
 }
 
-/*void MapWidget::slotEpochUpdated(EpochDataType *pEpoch, GuiStorageType *pStorage)
-{
-    if (pEpoch->posTotal == 0)
-        return;
-
-    if (!pressed) {
-        setCentralPointByAverage();
-    }
-    // WARNING: 
-    //        We may call this methods several time at once, so wait timer event
-    //        to request updates:
-    bNewDataAvailable = true;
-}
-*/
-void MapWidget::resizeEvent(QResizeEvent *ev)
-{
+void MapWidget::resizeEvent(QResizeEvent *ev) {
     if (ev->size().height() == 0 || ev->size().width() == 0) {
         // Warning: When window inactive the height=0
         return;
@@ -204,16 +191,19 @@ void MapWidget::resizeEvent(QResizeEvent *ev)
 
     renderAll();
     update();
+
+    if (bNewDataAvailable) {
+        bNewDataAvailable = false;
+        emit signalRequestNetworkData();
+    }
 }
 
-void MapWidget::renderAll()
-{
+void MapWidget::renderAll() {
     renderMinimap();
     renderMainMap();      // Rendering of the mainMap will cause update signal
 }
 
-void MapWidget::renderMainMap()
-{
+void MapWidget::renderMainMap() {
     // only set the dimension to the magnified portion
     if (mainmapPixmap.size() != mainmapSize) {
         mainmapPixmap = QPixmap(mainmapSize);
@@ -224,55 +214,41 @@ void MapWidget::renderMainMap()
     m_normalMap->render(&p_map, QRect(QPoint(0,0), mainmapSize));
     p_map.setPen(Qt::black);
     p_map.drawText(rect(),  Qt::AlignBottom | Qt::TextWordWrap,
-                "Map data CCBYSA 2017 OpenStreetMap.org contributors");
+                tr("Map data CCBYSA 2017 OpenStreetMap.org contributors"));
 
     // Draw Position track:
     p_map.translate(20,20);
     fontPos.setPixelSize(16);
     p_map.setFont(fontPos);
 
-    /*int trkIdx = 0;
-    for (int i=0; i<POS_Total; i++) {
-        if (!PosTrack[i].ena)
-             continue;
-
-        renderTrack(i, p_map);
-    }*/
+    renderTrack(0, p_map);
 
     p_map.end();
 }
 
-void MapWidget::renderTrack(int trkIdx, QPainter &p)
-{
-/*
+void MapWidget::renderTrack(int trkIdx, QPainter &p) {
     // Draw semi-transparent background for coordinates output:
-    TrackType *pos = &PosTrack[trkIdx];
-    int sz = pos->lineLat->size();
-    int start = 0;
-    if (sz > TrackHistory) {
-        start = sz - TrackHistory;
-        sz = TrackHistory;
-    }
-
-    QColor trackColor(pos->color);
-    QPen pointPen(trackColor, 0, Qt::SolidLine, Qt::RoundCap);
-    trackColor.setAlpha(0xa0);
-    QPen linePen = QPen(trackColor, 0, Qt::SolidLine, Qt::RoundCap);
+    QColor trackLineColor(tr("#008F8F"));
+    QColor trackPointColor(tr("#004848"));
+    QColor trackTextColor;
+    QPen pointPen(trackPointColor, 0, Qt::SolidLine, Qt::RoundCap);
+    trackLineColor.setAlpha(0xa0);
+    trackPointColor.setAlpha(0xa0);
+    QPen linePen = QPen(trackLineColor, 0, Qt::SolidLine, Qt::RoundCap);
 
     p.setPen(pointPen);
     p.setRenderHint(QPainter::Antialiasing);
 
     QPoint xy;
-    double lat, lon;
-    pos->lineLat->getDoubleByIdx(start, lat);
-    pos->lineLon->getDoubleByIdx(start, lon);
+    double lat = gpsLat_.getp()[0];
+    double lon = gpsLon_.getp()[0];
     QPoint xy0 = m_normalMap->coordToPixpos(QPointF(lat, lon));
     p.drawLine(xy0.x() - 2, xy0.y(), xy0.x() + 2, xy0.y());
-    p.drawLine(xy0.x(), xy0.y()+2, xy0.x(), xy0.y()-2);
+    p.drawLine(xy0.x(), xy0.y() + 2, xy0.x(), xy0.y() - 2);
 
-    for (int i=start+1; i<start+sz; i++) {
-        pos->lineLat->getDoubleByIdx(i, lat);
-        pos->lineLon->getDoubleByIdx(i, lon);
+    for (int i = 0; i < gpsLat_.size(); i++) {
+        lat = gpsLat_.getp()[i];
+        lon = gpsLon_.getp()[i];
         xy = m_normalMap->coordToPixpos(QPointF(lat, lon));
         p.setPen(linePen);
         p.drawLine(xy0.x(), xy0.y(), xy.x(), xy.y());
@@ -284,14 +260,31 @@ void MapWidget::renderTrack(int trkIdx, QPainter &p)
     }
     
     QString strPosition;
-    strPosition.sprintf("%8s: Lat %.4f; Lon %.4f (%d)", pos->name.c_str(), lat, lon, pos->used);
+    strPosition.sprintf("GPS LMS: Lat %.4f; Lon %.4f", lat, lon);
     int h = p.fontMetrics().size(Qt::TextSingleLine, strPosition).height();
 
-    QRect rect = QRect(QPoint(0,trkIdx*(h+5)), QPoint(340, (trkIdx+1)*(h+5)));
+    QRect rect = QRect(QPoint(0, trkIdx * (h + 5)),
+                       QPoint(340, (trkIdx + 1) * (h + 5)));
     p.fillRect(rect, QBrush(QColor(128, 128, 128, 128)));
-    p.drawLine(0, trkIdx*(h+5) + h/2, 30, trkIdx*(h+5) + h/2);
-    p.drawText(35, h + trkIdx*(h+5), strPosition);
-    */
+    // Draw axis line template:
+    int marginy = trkIdx*(h + 5)/2;
+    int startx = 5;
+    int starty = marginy + (h + 5)/2;
+    int endx = 30;
+    int endy = marginy + (h + 5)/2;
+    p.setPen(linePen);
+    p.drawLine(startx, starty, endx, endy);
+    p.setPen(pointPen);
+    p.drawLine(startx - 2, starty, startx + 2, starty);
+    p.drawLine(startx, starty + 2, startx, starty - 2);
+    p.drawLine(endx - 2, endy, endx + 2, endy);
+    p.drawLine(endx, endy + 2, endx, endy - 2);
+
+    trackTextColor.setRgb(0xff, 0xff, 0xff, 0xc0);
+    p.drawText(endx + 6, h + trkIdx*(h + 5) + 1, strPosition);
+    trackTextColor.setRgb(0x20, 0x20, 0x20, 0xff);
+    p.setPen(trackTextColor);
+    p.drawText(endx + 5, h + trkIdx*(h + 5), strPosition);
 }
 
 void MapWidget::renderPosInfo(QPainter &p)
@@ -318,8 +311,7 @@ void MapWidget::renderPosInfo(QPainter &p)
 }
 
 
-void MapWidget::renderMinimap()
-{
+void MapWidget::renderMinimap() {
     if (minimapSize.width() == 0 || minimapSize.height() == 0) {
         // At the beging there occurs strange resizeEvent()
         return;
@@ -384,8 +376,7 @@ void MapWidget::renderMinimap()
 }
 
 
-void MapWidget::paintEvent(QPaintEvent *event)
-{
+void MapWidget::paintEvent(QPaintEvent *event) {
     QPainter p;
     p.begin(this);
 
@@ -442,8 +433,7 @@ void MapWidget::mouseMoveEvent(QMouseEvent *event)
     }
 }
 
-void MapWidget::mouseReleaseEvent(QMouseEvent *)
-{
+void MapWidget::mouseReleaseEvent(QMouseEvent *) {
     pressed = false;
     emit signalRequestNetworkData();
 }

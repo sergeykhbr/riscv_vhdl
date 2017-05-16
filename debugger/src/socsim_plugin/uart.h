@@ -57,6 +57,7 @@ private:
     char *p_rx_wr_;
     char *p_rx_rd_;
     int rx_total_;
+    mutex_def mutexListeners_;
 
     struct uart_map {
         volatile uint32_t status;

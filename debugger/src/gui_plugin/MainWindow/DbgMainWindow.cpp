@@ -66,7 +66,9 @@ DbgMainWindow::~DbgMainWindow() {
     if (ebreak_) {
         delete ebreak_;
     }
+    tmrGlobal_->stop();
     igui_->removeFromQueue(static_cast<IGuiCmdHandler *>(this));
+    qApp->quit();
 }
 
 void DbgMainWindow::closeEvent(QCloseEvent *ev) {
@@ -392,6 +394,9 @@ void DbgMainWindow::slotPostInit(AttributeType *cfg) {
         ebreak_->setHwRemoveBreakpoint(
             reinterpret_cast<uint64_t>(&dsu->udbg.v.remove_breakpoint));
     }
+
+    // Debug:
+    //slotActionTriggerGnssMap(true);
 }
 
 void DbgMainWindow::slotConfigDone() {

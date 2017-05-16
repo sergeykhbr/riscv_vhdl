@@ -19,6 +19,7 @@
 #include <QtGui/QPainter>
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QNetworkReply>
+#include <QtNetwork/QNetworkProxy>
 
 namespace debugger {
 
@@ -27,6 +28,8 @@ class StreetMap: public QObject {
 
 public:
     StreetMap(QObject *parent = 0, int zoom_=12);
+    virtual ~StreetMap();
+
     void setZoom(int v) { zoom = v; }
     int getZoom() { return zoom; }
     // x = latitude; y = longitude
@@ -43,7 +46,7 @@ public:
 
 
 signals:
-    void updated(const QRect &rect);
+    void signalTilesUpdated(const QRect &rect);
 
 private slots:
     void slotRequestNetworkData();
@@ -66,6 +69,7 @@ private:
     QPixmap m_emptyTile;
     QHash<QPoint, QPixmap> m_tilePixmaps;
     QNetworkAccessManager m_manager;
+    QNetworkProxy m_proxy;
     QUrl m_url;
 };
 

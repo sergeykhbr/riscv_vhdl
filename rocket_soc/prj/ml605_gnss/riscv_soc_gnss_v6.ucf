@@ -44,30 +44,30 @@ NET "o_led[6]" LOC = AE24;
 NET "o_led[7]" LOC = AD24;
 
 # ADC samples:
-NET "i_clk_adc" LOC = "A10";
+NET "i_clk_adc" LOC = "A10" | IOSTANDARD=LVCMOS25;
 NET "i_clk_adc" TNM_NET = TNM_AdcClk;
 TIMESPEC "TS_AdcClk" = PERIOD "TNM_AdcClk" 24 ns ;
-NET "i_gps_I[1]" LOC = "P32";
-NET "i_gps_I[0]" LOC = "N34";
-NET "i_gps_Q[1]" LOC = "P30";
-NET "i_gps_Q[0]" LOC = "N32";
-NET "i_gps_ld" LOC = "N33";
-NET "i_glo_I[1]" LOC = "B34";#"M25";
-NET "i_glo_I[0]" LOC = "C33";#"N25";
-NET "i_glo_Q[1]" LOC = "G30";#"K32";
-NET "i_glo_Q[0]" LOC = "F30";#"K31";
-NET "i_glo_ld" LOC = "M33";
+NET "i_gps_I[1]" LOC = "P32" | IOSTANDARD=LVCMOS25;
+NET "i_gps_I[0]" LOC = "N34" | IOSTANDARD=LVCMOS25;
+NET "i_gps_Q[1]" LOC = "P30" | IOSTANDARD=LVCMOS25;
+NET "i_gps_Q[0]" LOC = "N32" | IOSTANDARD=LVCMOS25;
+NET "i_gps_ld" LOC = "N33" | IOSTANDARD=LVCMOS25;
+NET "i_glo_I[1]" LOC = "B34" | IOSTANDARD=LVCMOS25;#"M25";
+NET "i_glo_I[0]" LOC = "C33" | IOSTANDARD=LVCMOS25;#"N25";
+NET "i_glo_Q[1]" LOC = "G30" | IOSTANDARD=LVCMOS25;#"K32";
+NET "i_glo_Q[0]" LOC = "F30" | IOSTANDARD=LVCMOS25;#"K31";
+NET "i_glo_ld" LOC = "M33" | IOSTANDARD=LVCMOS25;
 
 
 # RF control:
-NET "o_max_sclk" LOC = "L31";
-NET "o_max_sdata" LOC = "M31";
-NET "o_max_ncs[1]" LOC = "M26";
-NET "o_max_ncs[0]" LOC = "P34";
-NET "i_antext_stat" LOC = "H32";
-NET "i_antext_detect" LOC = "K29";
-NET "o_antext_ena" LOC = "G32";
-NET "o_antint_contr" LOC = "P31";
+NET "o_max_sclk" LOC = "L31" | IOSTANDARD=LVCMOS25;
+NET "o_max_sdata" LOC = "M31" | IOSTANDARD=LVCMOS25;
+NET "o_max_ncs[1]" LOC = "M26" | IOSTANDARD=LVCMOS25;
+NET "o_max_ncs[0]" LOC = "P34" | IOSTANDARD=LVCMOS25;
+NET "i_antext_stat" LOC = "H32" | IOSTANDARD=LVCMOS25;
+NET "i_antext_detect" LOC = "K29" | IOSTANDARD=LVCMOS25;
+NET "o_antext_ena" LOC = "G32" | IOSTANDARD=LVCMOS25;
+NET "o_antint_contr" LOC = "P31" | IOSTANDARD=LVCMOS25;
 
 # Ethernet signals
 NET "i_gmiiclk_p"             LOC = "H6";

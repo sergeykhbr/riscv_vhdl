@@ -39,9 +39,11 @@ ComPortService::ComPortService(const char *name)
     portListeners_.make_list(0);
     iuartSim_ = 0;
     portOpened_ = false;
+    RISCV_mutex_init(&mutexListeners_);
 }
 
 ComPortService::~ComPortService() {
+    RISCV_mutex_destroy(&mutexListeners_);
     if (logfile_) {
         fclose(logfile_);
         logfile_ = NULL;
@@ -127,11 +129,13 @@ void ComPortService::busyLoop() {
             }
         }
         if (tbuf_cnt) {
+            RISCV_mutex_lock(&mutexListeners_);
             for (unsigned i = 0; i < portListeners_.size(); i++) {
                 IRawListener *ilstn = static_cast<IRawListener *>(
                                 portListeners_[i].to_iface());
                 ilstn->updateData(tbuf, tbuf_cnt);
             }
+            RISCV_mutex_unlock(&mutexListeners_);
             if (logfile_) {
                 fwrite(tbuf, tbuf_cnt, 1, logfile_);
                 fflush(logfile_);
@@ -153,10 +157,13 @@ int ComPortService::writeData(const char *buf, int sz) {
 
 void ComPortService::registerRawListener(IFace *iface) {
     AttributeType t1(iface);
+    RISCV_mutex_lock(&mutexListeners_);
     portListeners_.add_to_list(&t1);
+    RISCV_mutex_unlock(&mutexListeners_);
 }
 
 void ComPortService::unregisterRawListener(IFace *iface) {
+    RISCV_mutex_lock(&mutexListeners_);
     for (unsigned i = 0; i < portListeners_.size(); i++) {
         IFace *itmp = portListeners_[i].to_iface();
         if (itmp == iface) {
@@ -164,6 +171,7 @@ void ComPortService::unregisterRawListener(IFace *iface) {
             break;
         }
     }
+    RISCV_mutex_unlock(&mutexListeners_);
 }
 
 void ComPortService::updateData(const char *buf, int buflen) {
