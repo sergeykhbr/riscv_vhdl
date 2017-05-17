@@ -70,6 +70,17 @@ MapWidget::MapWidget(IGui *igui, QWidget *parent)
     int pos_init_idx =
         qrand() % static_cast<int>(sizeof(defaultPos)/sizeof(QPointF));
 
+#if 0
+    pos_init_idx = 0;
+    double lat = defaultPos[pos_init_idx].x() + (double)(rand() & 0x1f)/100000.0;
+    double lon = defaultPos[pos_init_idx].y()+ (double)(rand() & 0x1f)/100000.0;
+    for (int x = 0; x < 20; x++) {
+        gpsLat_.put(lat);
+        gpsLon_.put(lon);
+        lat = defaultPos[pos_init_idx].x() + (double)(rand() & 0x1f)/100000.0;
+        lon = defaultPos[pos_init_idx].y() + (double)(rand() & 0x1f)/100000.0;
+    }
+#endif
     m_normalMap->setCenterCoord(defaultPos[pos_init_idx]);
     m_miniMap->setCenterCoord(defaultPos[pos_init_idx]);
 }
@@ -122,6 +133,9 @@ void MapWidget::slotUpdateGnssRaw() {
     if (!lms.is_list() || lms.size() < 8) {
         return;
     }
+    if (lms[0u].to_int() == 0) {
+        return;
+    }
     double lat, lon;
     lat = static_cast<double>(lms[1].to_int());
     lat += lms[2].to_float() / 60.0;
@@ -158,6 +172,8 @@ void MapWidget::slotActionClear() {
     //for (int i=0; i<DataTotal; i++) {
         //pPosTrack[i]->clear();
     //}
+    gpsLat_.clear();
+    gpsLon_.clear();
     renderAll();
     update();
 }
@@ -281,6 +297,7 @@ void MapWidget::renderTrack(int trkIdx, QPainter &p) {
     p.drawLine(endx, endy + 2, endx, endy - 2);
 
     trackTextColor.setRgb(0xff, 0xff, 0xff, 0xc0);
+    p.setPen(trackTextColor);
     p.drawText(endx + 6, h + trkIdx*(h + 5) + 1, strPosition);
     trackTextColor.setRgb(0x20, 0x20, 0x20, 0xff);
     p.setPen(trackTextColor);

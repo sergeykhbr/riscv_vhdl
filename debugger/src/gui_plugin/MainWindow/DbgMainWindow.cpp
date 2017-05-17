@@ -185,7 +185,7 @@ void DbgMainWindow::createActions() {
     connect(actionSerial_, SIGNAL(triggered(bool)),
             this, SLOT(slotActionTriggerUart0(bool)));
 
-    actionGnssMap_ = new QAction(QIcon(tr(":/images/serial_96x96.png")),
+    actionGnssMap_ = new QAction(QIcon(tr(":/images/opmap_96x96.png")),
                               tr("&OpenStreetMap"), this);
     actionGnssMap_->setToolTip(tr("Open Street map with GNSS tracks view"));
     actionGnssMap_->setCheckable(true);

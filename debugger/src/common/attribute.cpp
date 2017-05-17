@@ -477,6 +477,7 @@ const char *skip_special_symbols(const char *cfg) {
 const char *string_to_attribute(const char *cfg, 
                           AttributeType *out) {
     const char *pcur = skip_special_symbols(cfg);
+    const char *checkstart = pcur;
    
     if (pcur[0] == '\'' || pcur[0] == '"') {
         AutoBuffer buf;
@@ -589,10 +590,14 @@ const char *string_to_attribute(const char *cfg,
         } else {
             char digits[64] = {0};
             int digits_cnt = 0;
+            bool negative = false;
             if (pcur[0] == '0' && pcur[1] == 'x') {
                 pcur += 2;
                 digits[digits_cnt++] = '0';
                 digits[digits_cnt++] = 'x';
+            } else if (pcur[0] == '-') {
+                negative = true;
+                pcur++;
             }
             while ((*pcur >= '0' && *pcur <= '9') 
                 || (*pcur >= 'a' && *pcur <= 'f')
@@ -614,16 +619,22 @@ const char *string_to_attribute(const char *cfg,
                 }
                 t1 = strtoull(digits, NULL, 0);
                 d1 += static_cast<double>(t1)/divrate;
+                if (negative) {
+                    d1 = -d1;
+                }
                 out->make_floating(d1);
             } else {
+                if (negative) {
+                    t1 = -t1;
+                }
                 out->make_int64(t1);
             }
-
-            /** Guard to skip wrong formatted string and avoid hanging: */
-            while ((pcur[0] >= 'a' && pcur[0] <= 'z')
-                || (pcur[0] >= 'A' && pcur[0] <= 'Z')) {
-                pcur++;
-            }
+        }
+    }
+    /** Guard to skip wrong formatted string and avoid hanging: */
+    if (pcur == checkstart) {
+        while (*pcur) {
+            pcur++;
         }
     }
     return pcur;

@@ -28,10 +28,7 @@ public:
     SlideAverageType(int sz = 32) {
         size_ = sz;
         data_ = new double [2*sz];
-        pcur_ = &data_[sz];
-        avg_cnt_ = 0;
-        avg_sum_ = 0;
-        memset(data_, 0, 2*sz*sizeof(double));
+        clear();
     }
     ~SlideAverageType() {
         delete [] data_;
@@ -55,6 +52,12 @@ public:
     }
     int size() {
         return avg_cnt_;
+    }
+    void clear() {
+        pcur_ = &data_[size_];
+        avg_cnt_ = 0;
+        avg_sum_ = 0;
+        memset(data_, 0, 2*size_*sizeof(double));
     }
 private:
     int size_;
