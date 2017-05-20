@@ -286,6 +286,7 @@ struct TimerType {
     void *args;
     int interval;
     int delta;
+    int single_shot;
 };
 
 static const int TIMERS_MAX = 2;
@@ -319,6 +320,10 @@ extern "C" void RISCV_dispatcher_start() {
             if (tmr->delta <= 0) {
                 tmr->cb(tmr->args);
                 tmr->delta += tmr->interval;
+                if (tmr->single_shot) {
+                    RISCV_unregister_timer(tmr->cb);
+                    continue;
+                }
             }
             if (delta > tmr->delta) {
                 delta = tmr->delta;
@@ -329,11 +334,8 @@ extern "C" void RISCV_dispatcher_start() {
     }
 }
 
-extern "C" void RISCV_register_timer(int msec,
-                                    timer_callback_type cb, void *args) {
-    if (!core_.isActive() || core_.isExiting()) {
-        return;
-    }
+extern "C" void RISCV_register_timer(int msec, int single_shot,
+                                     timer_callback_type cb, void *args) {
     TimerType *tmr = 0;
     for (int i = 0; i < TIMERS_MAX; i++) {
         if (timers_[i].cb == 0) {
@@ -349,6 +351,7 @@ extern "C" void RISCV_register_timer(int msec,
     tmr->args = args;
     tmr->interval = msec;
     tmr->delta = msec;
+    tmr->single_shot = single_shot;
 }
 
 extern "C" void RISCV_unregister_timer(timer_callback_type cb) {
@@ -358,6 +361,7 @@ extern "C" void RISCV_unregister_timer(timer_callback_type cb) {
             timers_[i].args = 0;
             timers_[i].interval = 0;
             timers_[i].delta = 0;
+            timers_[i].single_shot = 0;
         }
     }
 }

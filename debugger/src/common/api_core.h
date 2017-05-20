@@ -408,8 +408,8 @@ typedef void (*timer_callback_type)(void *args);
 /**
  * @brief Register timer's callback in main loop
  */
-void RISCV_register_timer(int msec, timer_callback_type cb,
-                          void *args);
+void RISCV_register_timer(int msec, int single_shot,
+                          timer_callback_type cb, void *args);
 
 /**
  * @brief Unregister timer's callback from main loop

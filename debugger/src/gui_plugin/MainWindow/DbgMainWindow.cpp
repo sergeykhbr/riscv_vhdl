@@ -278,7 +278,7 @@ void DbgMainWindow::addWidgets() {
     slotActionTriggerUart0(true);
     slotActionTriggerCpuAsmView(true);
 
-    slotActionTriggerGnssMap(true);
+    //slotActionTriggerGnssMap(true);
 }
 
 void DbgMainWindow::slotActionTriggerUart0(bool val) {

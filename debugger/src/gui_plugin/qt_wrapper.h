@@ -2,7 +2,7 @@
  * @file
  * @copyright  Copyright 2017 GNSS Sensor Ltd. All right reserved.
  * @author     Sergey Khabarov - sergeykhbr@gmail.com
- * @brief      QT Wrapper to connect it to debugger core library.
+ * @brief      QT Wrapper connects QT libs to debugger core library.
  */
 #ifndef __DEBUGGER_UI_QTHREAD_H__
 #define __DEBUGGER_UI_QTHREAD_H__
@@ -14,11 +14,6 @@
 
 namespace debugger {
 
-    /**
-     * This UiThread and UiInitDone event allow us to register all widgets
-     * interfaces before PostInit stage started and as results make them 
-     * visible to all other plugins.
-     */
 class QtWrapper : public QObject {
     Q_OBJECT
 public:
@@ -28,6 +23,7 @@ public:
     void postInit(AttributeType *gui_cfg);
     void eventsUpdate();
     void pollingUpdate();
+    void gracefulClose();
 
 signals:
     void signalPollingUpdate();
@@ -41,6 +37,8 @@ private:
     QApplication *app_;
     DbgMainWindow *mainWindow_;
     event_def eventAppDestroyed_;
+    bool first_start_;
+    bool is_graceful_closing_;
 };
 
 }  // namespace debugger

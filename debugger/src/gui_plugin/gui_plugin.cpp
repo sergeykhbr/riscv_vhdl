@@ -143,10 +143,6 @@ void GuiPlugin::busyLoop() {
         processCmdQueue();
     }
     delete ui_;
-    qApp->processEvents();
-    qApp->quit();
-    qApp->processEvents();
-    delete qApp;
 }
 
 bool GuiPlugin::processCmdQueue() {

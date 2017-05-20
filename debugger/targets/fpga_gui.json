@@ -13,7 +13,8 @@
                   'Serial':'port1',
                   'AutoComplete':'autocmd0',
                   'SocInfo':'info0',
-                  'PollingMs':250
+                  'PollingMs':250,
+                  'EventsLoopMs':10
                 }],
                 ['SocInfo','info0'],
                 ['CommandExecutor','cmdexec0']
