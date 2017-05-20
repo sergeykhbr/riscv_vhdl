@@ -113,10 +113,7 @@ int main(int argc, char* argv[]) {
         itst_access->exampleAction(0xcafe);
     }
 
-    // Working cycle with console:
-    while (RISCV_is_active()) {
-        RISCV_sleep_ms(100);
-    }
+    RISCV_dispatcher_start();
 
     //const char *t1 = RISCV_get_configuration();
     //RISCV_write_json_file(configFile.to_string(), t1);

@@ -41,6 +41,7 @@ SOURCES = \
 	attribute \
 	autobuffer \
 	gui_plugin \
+	qt_wrapper \
 	ebreakhandler \
 	DbgMainWindow \
 	MdiAreaWidget \
@@ -111,6 +112,7 @@ $(addprefix $(PLUGINS_OBJ_DIR)/,%.o): %.c
 prebuild:
 	$(MKDIR) $(ELF_DIR)/resources
 	$(QT_PATH)/bin/rcc -binary $(GUI_PLUGIN_SRC)/resources/gui.qrc -o $(ELF_DIR)/resources/gui.rcc
+	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/qt_wrapper.h -o $(GUI_PLUGIN_SRC)/moc_qt_wrapper.h
 	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/MainWindow/DbgMainWindow.h -o $(GUI_PLUGIN_SRC)/MainWindow/moc_DbgMainWindow.h
 	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/MainWindow/MdiAreaWidget.h -o $(GUI_PLUGIN_SRC)/MainWindow/moc_MdiAreaWidget.h
 	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/ControlWidget/ConsoleWidget.h -o $(GUI_PLUGIN_SRC)/ControlWidget/moc_ConsoleWidget.h

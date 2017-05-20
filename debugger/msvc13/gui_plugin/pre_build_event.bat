@@ -7,6 +7,7 @@ rem QT_PATH=C:\Projects\Qt\Qt5.6.1\5.6\msvc2013_64
 set GUI_PLUGIN_SRC=..\..\src\gui_plugin\
 
 %QT_PATH%\bin\rcc.exe -binary %GUI_PLUGIN_SRC%\resources\gui.qrc -o %GUI_PLUGIN_SRC%\resources\gui.rcc
+%QT_PATH%\bin\moc.exe -i %GUI_PLUGIN_SRC%\qt_wrapper.h -o %GUI_PLUGIN_SRC%\moc_qt_wrapper.h
 %QT_PATH%\bin\moc.exe -i %GUI_PLUGIN_SRC%\MainWindow\DbgMainWindow.h -o %GUI_PLUGIN_SRC%\MainWindow\moc_DbgMainWindow.h
 %QT_PATH%\bin\moc.exe -i %GUI_PLUGIN_SRC%\MainWindow\MdiAreaWidget.h -o %GUI_PLUGIN_SRC%\MainWindow\moc_MdiAreaWidget.h
 %QT_PATH%\bin\moc.exe -i %GUI_PLUGIN_SRC%\ControlWidget\ConsoleWidget.h -o %GUI_PLUGIN_SRC%\ControlWidget\moc_ConsoleWidget.h

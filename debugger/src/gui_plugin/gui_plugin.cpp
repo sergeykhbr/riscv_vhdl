@@ -10,33 +10,8 @@
 #include "coreservices/iserial.h"
 #include "coreservices/irawlistener.h"
 #include <string>
-#include <QtWidgets/QApplication>
 
 namespace debugger {
-
-void GuiPlugin::UiThreadType::busyLoop() {
-    int argc = 0;
-    char *argv[] = {0};
-
-    // Only one instance of QApplication is possible that is accessible
-    // via global pointer qApp for all widgets.
-    if (!qApp) {
-        // Creating GUI thread
-        QApplication app(argc, argv);
-        app.setQuitOnLastWindowClosed(true);
-
-        mainWindow_ = new DbgMainWindow(igui_, eventInitDone_);
-        mainWindow_->show();
-
-        // Start its'own event thread
-        app.exec();
-        QMainWindow *t = mainWindow_;
-        mainWindow_ = 0;
-        delete t;
-    }
-    threadInit_.Handle = 0;
-    RISCV_break_simulation();
-}
 
 GuiPlugin::GuiPlugin(const char *name) 
     : IService(name), IHap(HAP_ConfigDone) {
@@ -59,7 +34,6 @@ GuiPlugin::GuiPlugin(const char *name)
 
     info_ = 0;
     ui_ = NULL;
-    RISCV_event_create(&eventUiInitDone_, "eventUiInitDone_");
     RISCV_event_create(&eventCommandAvailable_, "eventCommandAvailable_");
     RISCV_event_create(&config_done_, "eventGuiGonfigGone");
     RISCV_register_hap(static_cast<IHap *>(this));
@@ -84,24 +58,13 @@ GuiPlugin::GuiPlugin(const char *name)
     paths.append(QString("platforms"));
     QApplication::setLibraryPaths(paths);
 
-    ui_ = new UiThreadType(static_cast<IGui *>(this),
-                            &eventUiInitDone_);
-    ui_->run();
+    ui_ = new QtWrapper(static_cast<IGui *>(this));
 }
 
 GuiPlugin::~GuiPlugin() {
-    if (ui_) {
-        delete ui_;
-    }
     RISCV_event_close(&config_done_);
-    RISCV_event_close(&eventUiInitDone_);
     RISCV_event_close(&eventCommandAvailable_);
     RISCV_mutex_destroy(&mutexCommand_);
-}
-
-void GuiPlugin::initService(const AttributeType *args) {
-    IService::initService(args);
-    RISCV_event_wait(&eventUiInitDone_);
 }
 
 void GuiPlugin::postinitService() {
@@ -119,9 +82,7 @@ void GuiPlugin::postinitService() {
                     socInfo_.to_string());
     }
 
-    if (ui_->mainWindow()) {
-        ui_->mainWindow()->postInit(&guiConfig_);
-    }
+    ui_->postInit(&guiConfig_);
     run();
 }
 
@@ -129,11 +90,8 @@ IFace *GuiPlugin::getSocInfo() {
     return info_;
 }
 
-void GuiPlugin::getWidgetsAttribute(const char *name, AttributeType *out) {
-    out->make_nil();
-    if (guiConfig_.has_key(name)) {
-        *out = guiConfig_[name];
-    }   
+const AttributeType *GuiPlugin::getpConfig() {
+    return &guiConfig_;
 }
 
 void GuiPlugin::registerCommand(IGuiCmdHandler *src,
@@ -184,6 +142,11 @@ void GuiPlugin::busyLoop() {
 
         processCmdQueue();
     }
+    delete ui_;
+    qApp->processEvents();
+    qApp->quit();
+    qApp->processEvents();
+    delete qApp;
 }
 
 bool GuiPlugin::processCmdQueue() {
@@ -208,10 +171,6 @@ bool GuiPlugin::processCmdQueue() {
 }
 
 void GuiPlugin::stop() {
-    if (ui_->mainWindow()) {
-        ui_->mainWindow()->callExit();
-    }
-    ui_->stop();
     IThread::stop();
 }
 

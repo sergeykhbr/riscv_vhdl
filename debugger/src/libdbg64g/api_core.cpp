@@ -281,6 +281,16 @@ static thread_return_t safe_exit_thread(void *args) {
     return 0;
 }
 
+struct TimerType {
+    timer_callback_type cb;
+    void *args;
+    int interval;
+    int delta;
+};
+
+static const int TIMERS_MAX = 2;
+static TimerType timers_[TIMERS_MAX] = {{0}};
+
 extern "C" void RISCV_break_simulation() {
     if (core_.isExiting()) {
         return;
@@ -292,8 +302,64 @@ extern "C" void RISCV_break_simulation() {
     RISCV_thread_create(&data);
 }
 
-extern "C" int RISCV_is_active() {
-    return core_.isActive();
+
+extern "C" void RISCV_dispatcher_start() {
+    TimerType *tmr;
+    int sleep_interval = 20;
+    int delta;
+    while (core_.isActive()) {
+        delta = 20;
+        for (int i = 0; i < TIMERS_MAX; i++) {
+            tmr = &timers_[i];
+            if (!tmr->cb || !tmr->interval) {
+                continue;
+            }
+
+            tmr->delta -= sleep_interval;
+            if (tmr->delta <= 0) {
+                tmr->cb(tmr->args);
+                tmr->delta += tmr->interval;
+            }
+            if (delta > tmr->delta) {
+                delta = tmr->delta;
+            }
+        }
+        sleep_interval = delta;
+        RISCV_sleep_ms(sleep_interval);
+    }
+}
+
+extern "C" void RISCV_register_timer(int msec,
+                                    timer_callback_type cb, void *args) {
+    if (!core_.isActive() || core_.isExiting()) {
+        return;
+    }
+    TimerType *tmr = 0;
+    for (int i = 0; i < TIMERS_MAX; i++) {
+        if (timers_[i].cb == 0) {
+            tmr = &timers_[i];
+            break;
+        }
+    }
+    if (tmr == 0) {
+        RISCV_error("%s", "No available timer slot");
+        return;
+    }
+    tmr->cb = cb;
+    tmr->args = args;
+    tmr->interval = msec;
+    tmr->delta = msec;
+}
+
+extern "C" void RISCV_unregister_timer(timer_callback_type cb) {
+    for (int i = 0; i < TIMERS_MAX; i++) {
+        if (timers_[i].cb == cb) {
+            timers_[i].cb = 0;
+            timers_[i].args = 0;
+            timers_[i].interval = 0;
+            timers_[i].delta = 0;
+        }
+    }
 }
 
 }  // namespace debugger

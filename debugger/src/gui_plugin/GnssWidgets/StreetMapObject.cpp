@@ -66,7 +66,7 @@ StreetMap::StreetMap(QObject *parent, int zoom_)
     m_manager.setProxy(m_proxy);
 #endif
 
-    QNetworkDiskCache *cache = new QNetworkDiskCache(this);
+    QNetworkDiskCache *cache = new QNetworkDiskCache;
     cache->setCacheDirectory(
         QStandardPaths::writableLocation(QStandardPaths::CacheLocation));
     m_manager.setCache(cache);
@@ -75,12 +75,6 @@ StreetMap::StreetMap(QObject *parent, int zoom_)
 }
 
 StreetMap::~StreetMap() {
-    QNetworkSession session(m_manager.configuration());
-    session.close();
-    foreach(QPoint tp, m_tilePixmaps.keys()) {
-        m_tilePixmaps.remove(tp);
-    }
-    m_tilePixmaps.clear();
 }
 
 QPoint StreetMap::coordToPixpos(QPointF coord) {

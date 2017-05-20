@@ -30,7 +30,7 @@ public:
 
     virtual IFace *getSocInfo() =0;
 
-    virtual void getWidgetsAttribute(const char *name, AttributeType *out) =0;
+    virtual const AttributeType *getpConfig() =0;
 
     virtual void registerCommand(IGuiCmdHandler *src, AttributeType *cmd,
                                 bool silent) =0;

@@ -103,6 +103,7 @@
     <ClCompile Include="..\..\src\gui_plugin\GnssWidgets\MapWidget.cpp">
       <Filter>GnssWidgets</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\qt_wrapper.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\api_types.h">
@@ -206,5 +207,6 @@
     <ClInclude Include="..\..\src\gui_plugin\GnssWidgets\MapWidget.h">
       <Filter>GnssWidgets</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\qt_wrapper.h" />
   </ItemGroup>
 </Project>

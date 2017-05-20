@@ -49,6 +49,12 @@ ConsoleWidget::ConsoleWidget(IGui *igui, QWidget *parent)
     cursorPos_[1].make_int64(0);
 
     connect(this, SIGNAL(signalNewData()), this, SLOT(slotUpdateByData()));
+
+    const char *autoobj = (*igui_->getpConfig())["AutoComplete"].to_string();
+    iauto_ = static_cast<IAutoComplete *>(
+        RISCV_get_service_iface(autoobj, IFACE_AUTO_COMPLETE));
+
+    RISCV_add_default_output(static_cast<IRawListener *>(this));
 }
 
 ConsoleWidget::~ConsoleWidget() {
@@ -104,14 +110,6 @@ void ConsoleWidget::keyPressEvent(QKeyEvent *e) {
         
     igui_->registerCommand(
         static_cast<IGuiCmdHandler *>(this), &cmd, false);
-}
-
-void ConsoleWidget::slotPostInit(AttributeType *cfg) {
-    const char *autoobj = (*cfg)["AutoComplete"].to_string();
-    iauto_ = static_cast<IAutoComplete *>(
-        RISCV_get_service_iface(autoobj, IFACE_AUTO_COMPLETE));
-
-    RISCV_add_default_output(static_cast<IRawListener *>(this));
 }
 
 void ConsoleWidget::slotUpdateByData() {

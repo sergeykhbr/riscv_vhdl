@@ -38,7 +38,6 @@ signals:
     void signalNewData();
 
 private slots:
-    void slotPostInit(AttributeType *cfg);
     void slotUpdateByData();
     
 protected:

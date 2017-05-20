@@ -14,9 +14,9 @@
 
 namespace debugger {
 
-DbgMainWindow::DbgMainWindow(IGui *igui, event_def *init_done) {
+DbgMainWindow::DbgMainWindow(IGui *igui) : QMainWindow() {
     igui_ = igui;
-    initDone_ = init_done;
+    //initDone_ = init_done;
     statusRequested_ = false;
     ebreak_ = 0;
 
@@ -44,36 +44,44 @@ DbgMainWindow::DbgMainWindow(IGui *igui, event_def *init_done) {
     
     setUnifiedTitleAndToolBarOnMac(true);
 
+    ISocInfo *isoc = static_cast<ISocInfo *>(igui_->getSocInfo());
+    if (isoc) {
+        DsuMapType *dsu = isoc->getpDsu();
+        ebreak_ = new EBreakHandler(igui_);
+
+        ebreak_->setBrAddressFetch(
+            reinterpret_cast<uint64_t>(&dsu->udbg.v.br_address_fetch));
+        ebreak_->setHwRemoveBreakpoint(
+            reinterpret_cast<uint64_t>(&dsu->udbg.v.remove_breakpoint));
+    }
+
     /** 
      * To use the following type in SIGNAL -> SLOT definitions 
      * we have to register them using qRegisterMetaType template
      */
     qRegisterMetaType<uint64_t>("uint64_t");
     qRegisterMetaType<uint32_t>("uint32_t");
-
-    connect(this, SIGNAL(signalPostInit(AttributeType *)),
-            this, SLOT(slotPostInit(AttributeType *)));
-    connect(this, SIGNAL(signalExit()), this, SLOT(slotExit()));
-
-    tmrGlobal_ = new QTimer(this);
-    connect(tmrGlobal_, SIGNAL(timeout()), this, SLOT(slotConfigDone()));
-    tmrGlobal_->setSingleShot(true);
-    tmrGlobal_->setInterval(1);
-    tmrGlobal_->start();
 }
 
 DbgMainWindow::~DbgMainWindow() {
     if (ebreak_) {
         delete ebreak_;
     }
-    tmrGlobal_->stop();
     igui_->removeFromQueue(static_cast<IGuiCmdHandler *>(this));
-    qApp->quit();
 }
 
 void DbgMainWindow::closeEvent(QCloseEvent *ev) {
     ev->accept();
+    emit signalAboutToClose();
 }
+
+#ifndef QT_NO_CONTEXTMENU
+void DbgMainWindow::contextMenuEvent(QContextMenuEvent *ev_) {
+    QMenu menu(this);
+    menu.addAction(actionRegs_);
+    menu.exec(ev_->globalPos());
+}
+#endif
 
 void DbgMainWindow::handleResponse(AttributeType *req, AttributeType *resp) {
     if (req->is_equal(cmdStatus_.to_string())) {
@@ -101,27 +109,11 @@ void DbgMainWindow::handleResponse(AttributeType *req, AttributeType *resp) {
     }
 }
 
-void DbgMainWindow::postInit(AttributeType *cfg) {
-    emit signalPostInit(cfg);
-}
-
-void DbgMainWindow::getConfiguration(AttributeType &cfg) {
-    cfg = config_;
-}
-
-void DbgMainWindow::callExit() {
-    emit signalExit();
-}
-
-void DbgMainWindow::slotExit() {
-    close();
-}
-
 void DbgMainWindow::createActions() {
     actionRegs_ = new QAction(QIcon(tr(":/images/cpu_96x96.png")),
                               tr("&Regs"), this);
     actionRegs_->setToolTip(tr("CPU Registers view"));
-    actionRegs_->setShortcut(QKeySequence("Ctrl+r"));
+    actionRegs_->setShortcut(QKeySequence(tr("Ctrl+r")));
     actionRegs_->setCheckable(true);
     actionRegs_->setChecked(false);
     connect(actionRegs_, SIGNAL(triggered(bool)),
@@ -130,7 +122,7 @@ void DbgMainWindow::createActions() {
     actionCpuAsm_ = new QAction(QIcon(tr(":/images/asm_96x96.png")),
                               tr("&Memory"), this);
     actionCpuAsm_->setToolTip(tr("Disassembler view"));
-    actionCpuAsm_->setShortcut(QKeySequence("Ctrl+d"));
+    actionCpuAsm_->setShortcut(QKeySequence(tr("Ctrl+d")));
     actionCpuAsm_->setCheckable(true);
     connect(actionCpuAsm_, SIGNAL(triggered(bool)),
             this, SLOT(slotActionTriggerCpuAsmView(bool)));
@@ -138,7 +130,7 @@ void DbgMainWindow::createActions() {
     actionStackTrace_ = new QAction(QIcon(tr(":/images/stack_96x96.png")),
                               tr("&Stack"), this);
     actionStackTrace_->setToolTip(tr("Stack trace"));
-    actionStackTrace_->setShortcut(QKeySequence("Ctrl+t"));
+    actionStackTrace_->setShortcut(QKeySequence(tr("Ctrl+t")));
     actionStackTrace_->setCheckable(true);
     connect(actionStackTrace_, SIGNAL(triggered(bool)),
             this, SLOT(slotActionTriggerStackTraceView(bool)));
@@ -146,7 +138,7 @@ void DbgMainWindow::createActions() {
     actionSymbolBrowser_ = new QAction(QIcon(tr(":/images/info_96x96.png")),
                               tr("&Symbols"), this);
     actionSymbolBrowser_->setToolTip(tr("Symbol Browser"));
-    actionSymbolBrowser_->setShortcut(QKeySequence("Ctrl+s"));
+    actionSymbolBrowser_->setShortcut(QKeySequence(tr("Ctrl+s")));
     actionSymbolBrowser_->setCheckable(false);
     connect(actionSymbolBrowser_, SIGNAL(triggered()),
             this, SLOT(slotActionTriggerSymbolBrowser()));
@@ -154,7 +146,7 @@ void DbgMainWindow::createActions() {
     actionMem_ = new QAction(QIcon(tr(":/images/mem_96x96.png")),
                               tr("&Memory"), this);
     actionMem_->setToolTip(tr("Memory view"));
-    actionMem_->setShortcut(QKeySequence("Ctrl+m"));
+    actionMem_->setShortcut(QKeySequence(tr("Ctrl+m")));
     actionMem_->setCheckable(true);
     actionMem_->setChecked(false);
     connect(actionMem_, SIGNAL(triggered(bool)),
@@ -163,7 +155,7 @@ void DbgMainWindow::createActions() {
     actionPnp_ = new QAction(QIcon(tr(":/images/board_96x96.png")),
                               tr("&Pnp"), this);
     actionPnp_->setToolTip(tr("Plug'n'play information view"));
-    actionPnp_->setShortcut(QKeySequence("Ctrl+p"));
+    actionPnp_->setShortcut(QKeySequence(tr("Ctrl+p")));
     actionPnp_->setCheckable(true);
     actionPnp_->setChecked(false);
     connect(actionPnp_, SIGNAL(triggered(bool)),
@@ -196,7 +188,7 @@ void DbgMainWindow::createActions() {
     actionRun_ = new QAction(QIcon(tr(":/images/start_96x96.png")),
                              tr("&Run"), this);
     actionRun_->setToolTip(tr("Start Execution (F5)"));
-    actionRun_->setShortcut(QKeySequence("F5"));
+    actionRun_->setShortcut(QKeySequence(tr("F5")));
     actionRun_->setCheckable(true);
     actionRun_->setChecked(false);
     connect(actionRun_ , SIGNAL(triggered()),
@@ -207,14 +199,14 @@ void DbgMainWindow::createActions() {
     actionHalt_ = new QAction(QIcon(tr(":/images/pause_96x96.png")),
                               tr("&Halt"), this);
     actionHalt_->setToolTip(tr("Stop Execution (Ctrl+Alt+F5)"));
-    actionHalt_->setShortcut(QKeySequence("Ctrl+Alt+F5"));
+    actionHalt_->setShortcut(QKeySequence(tr("Ctrl+Alt+F5")));
     connect(actionHalt_ , SIGNAL(triggered()),
             this, SLOT(slotActionTargetHalt()));
 
     actionStep_ = new QAction(QIcon(tr(":/images/stepinto_96x96.png")),
                               tr("&Step Into"), this);
     actionStep_->setToolTip(tr("Instruction Step (F11)"));
-    actionStep_->setShortcut(QKeySequence("F11"));
+    actionStep_->setShortcut(QKeySequence(tr("F11")));
     connect(actionStep_ , SIGNAL(triggered()),
             this, SLOT(slotActionTargetStepInto()));
 
@@ -278,16 +270,15 @@ void DbgMainWindow::createMdiWindow() {
     dock->setAllowedAreas(Qt::BottomDockWidgetArea);
     addDockWidget(Qt::BottomDockWidgetArea, dock);
     
-
     ConsoleWidget *consoleWidget = new ConsoleWidget(igui_, this);
     dock->setWidget(consoleWidget);
-    connect(this, SIGNAL(signalPostInit(AttributeType *)),
-            consoleWidget, SLOT(slotPostInit(AttributeType *)));
 }
 
 void DbgMainWindow::addWidgets() {
     slotActionTriggerUart0(true);
     slotActionTriggerCpuAsmView(true);
+
+    slotActionTriggerGnssMap(true);
 }
 
 void DbgMainWindow::slotActionTriggerUart0(bool val) {
@@ -375,36 +366,19 @@ void DbgMainWindow::slotOpenMemory(uint64_t addr, uint64_t sz) {
     new MemQMdiSubWindow(igui_, mdiArea_, this, addr, sz);
 }
 
-void DbgMainWindow::slotPostInit(AttributeType *cfg) {
-    config_ = *cfg;
+//void DbgMainWindow::slotPostInit(AttributeType *cfg) {
+//    config_ = *cfg;
     // Enable polling timer:
-    connect(tmrGlobal_, SIGNAL(timeout()), this, SLOT(slotUpdateByTimer()));
-    int ms = static_cast<int>(config_["PollingMs"].to_uint64());
-    tmrGlobal_->setInterval(ms);
-    tmrGlobal_->setSingleShot(false);
-    tmrGlobal_->start(ms);
+    //connect(tmrGlobal_, SIGNAL(timeout()), this, SLOT(slotUpdateByTimer()));
+    //int ms = static_cast<int>(config_["PollingMs"].to_uint64());
+    //tmrGlobal_->setInterval(ms);
+    //tmrGlobal_->setSingleShot(false);
+    //tmrGlobal_->start(ms);
 
-    ISocInfo *isoc = static_cast<ISocInfo *>(igui_->getSocInfo());
-    if (isoc) {
-        DsuMapType *dsu = isoc->getpDsu();
-        ebreak_ = new EBreakHandler(igui_);
-
-        ebreak_->setBrAddressFetch(
-            reinterpret_cast<uint64_t>(&dsu->udbg.v.br_address_fetch));
-        ebreak_->setHwRemoveBreakpoint(
-            reinterpret_cast<uint64_t>(&dsu->udbg.v.remove_breakpoint));
-    }
 
     // Debug:
     //slotActionTriggerGnssMap(true);
-}
-
-void DbgMainWindow::slotConfigDone() {
-    RISCV_event_set(initDone_);
-    disconnect(tmrGlobal_, SIGNAL(timeout()), this, SLOT(slotConfigDone()));
-    tmrGlobal_->stop();
-}
-
+//}
 
 void DbgMainWindow::slotUpdateByTimer() {
     if (!statusRequested_) {

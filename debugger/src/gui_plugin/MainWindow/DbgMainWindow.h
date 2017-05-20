@@ -9,6 +9,7 @@
 
 #include "api_core.h"   // MUST BE BEFORE QtWidgets.h or any other Qt header.
 #include "igui.h"
+#include "coreservices/isocinfo.h"
 #include "ebreakhandler.h"
 
 #include <QtWidgets/QMainWindow>
@@ -23,30 +24,25 @@ class DbgMainWindow : public QMainWindow,
     Q_OBJECT
 
 public:
-    DbgMainWindow(IGui *igui, event_def *init_done);
+    DbgMainWindow(IGui *igui);
     virtual ~DbgMainWindow();
 
     /** IGuiCmdHandler */
     virtual void handleResponse(AttributeType *req, AttributeType *resp);
 
-    /** Global methods */
-    void postInit(AttributeType *cfg);
-    void getConfiguration(AttributeType &cfg);
-    void callExit();
-    
 signals:
-    void signalPostInit(AttributeType *cfg);
     void signalUpdateByTimer();
     void signalTargetStateChanged(bool);
     void signalRedrawDisasm();
-    void signalExit();
+    void signalAboutToClose();
 
 protected:
     virtual void closeEvent(QCloseEvent *ev_);
+#ifndef QT_NO_CONTEXTMENU
+    void contextMenuEvent(QContextMenuEvent *ev_) override;
+#endif // QT_NO_CONTEXTMENU
 
 private slots:
-    void slotPostInit(AttributeType *cfg);
-    void slotConfigDone();
     void slotUpdateByTimer();
     void slotActionAbout();
     void slotActionTargetRun();
@@ -64,7 +60,6 @@ private slots:
     void slotOpenDisasm(uint64_t addr, uint64_t sz);
     void slotOpenMemory(uint64_t addr, uint64_t sz);
     void slotBreakpointsChanged();
-    void slotExit();
 
 private:
     void createActions();
@@ -96,7 +91,7 @@ private:
     QMdiSubWindow *viewUart0_;
     QAction *actionGnssMap_;
     QMdiSubWindow *viewGnssMap_;
-    QTimer *tmrGlobal_;
+    //QTimer *tmrGlobal_;
     MdiAreaWidget *mdiArea_;
     
     AttributeType config_;
@@ -107,7 +102,7 @@ private:
     AttributeType cmdStep_;
 
     IGui *igui_;
-    event_def *initDone_;
+    //event_def *initDone_;
     bool statusRequested_;
     EBreakHandler *ebreak_;
 };

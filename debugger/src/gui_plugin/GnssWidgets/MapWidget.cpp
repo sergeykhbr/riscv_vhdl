@@ -55,8 +55,8 @@ MapWidget::MapWidget(IGui *igui, QWidget *parent)
     posinfoSize = QSize(340, 200);
     posinfoPixmap = QPixmap(posinfoSize);
 
-    AttributeType serial_name;
-    igui_->getWidgetsAttribute("Serial", &serial_name);
+    const AttributeType *cfg = igui_->getpConfig();
+    const AttributeType &serial_name = (*cfg)["Serial"];
     if (serial_name.is_string()) {
         uart_ = static_cast<ISerial *>
             (RISCV_get_service_iface(serial_name.to_string(), IFACE_SERIAL));

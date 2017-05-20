@@ -15,6 +15,7 @@
 #include "coreservices/isocinfo.h"
 #include "coreservices/icmdexec.h"
 #include "MainWindow/DbgMainWindow.h"
+#include "qt_wrapper.h"
 
 namespace debugger {
 
@@ -27,7 +28,6 @@ public:
     ~GuiPlugin();
 
     /** IService interface */
-    virtual void initService(const AttributeType *args);
     virtual void postinitService();
 
     /** IHap */
@@ -35,7 +35,7 @@ public:
 
     /** IGui interface */
     virtual IFace *getSocInfo();
-    virtual void getWidgetsAttribute(const char *name, AttributeType *out);
+    virtual const AttributeType *getpConfig();
     virtual void registerCommand(IGuiCmdHandler *src, AttributeType *cmd,
                                  bool silent);
     virtual void removeFromQueue(IFace *iface);
@@ -49,28 +49,6 @@ private:
     bool processCmdQueue();
 
 private:
-    /**
-     * This UiThread and UiInitDone event allow us to register all widgets
-     * interfaces before PostInit stage started and as results make them 
-     * visible to all other plugins.
-     */
-    class UiThreadType : public IThread {
-    public:
-        UiThreadType(IGui *igui, event_def *init_done) {
-            igui_ = igui;
-            eventInitDone_ = init_done;
-            mainWindow_ = 0;
-        }
-        DbgMainWindow *mainWindow() { return mainWindow_; }
-    protected:
-        /** IThread interface */
-        virtual void busyLoop();
-    private:
-        IGui *igui_;
-        DbgMainWindow *mainWindow_;
-        event_def *eventInitDone_;
-    } *ui_;
-
     static const int CMD_QUEUE_SIZE = 128;
 
     AttributeType guiConfig_;
@@ -79,8 +57,8 @@ private:
 
     ISocInfo *info_;
     ICmdExecutor *iexec_;
+    QtWrapper *ui_;
 
-    event_def eventUiInitDone_;
     event_def eventCommandAvailable_;
     event_def config_done_;
     mutex_def mutexCommand_;

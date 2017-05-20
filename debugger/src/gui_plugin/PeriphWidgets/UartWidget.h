@@ -26,12 +26,6 @@ class UartWidget : public QWidget {
     Q_OBJECT
 public:
     UartWidget(IGui *igui, QWidget *parent);
-    
-signals:
-    void signalPostInit(AttributeType *cfg);
-
-private slots:
-    void slotPostInit(AttributeType *cfg);
 
 private:
     UartEditor *editor_;
@@ -54,8 +48,6 @@ public:
         if (act) {
             act->setChecked(true);
         }
-        connect(parent, SIGNAL(signalPostInit(AttributeType *)),
-                pnew, SLOT(slotPostInit(AttributeType *)));
         setWidget(pnew);
         area_->addSubWindow(this);
         show();

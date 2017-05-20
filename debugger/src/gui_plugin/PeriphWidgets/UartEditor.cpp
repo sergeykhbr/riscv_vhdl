@@ -30,8 +30,8 @@ UartEditor::UartEditor(IGui *igui, QWidget *parent) : QPlainTextEdit(parent) {
     prevSymb_ = 0;
 
     connect(this, SIGNAL(signalNewData()), this, SLOT(slotUpdateByData()));
-    AttributeType serial_name;
-    igui_->getWidgetsAttribute("Serial", &serial_name);
+    const AttributeType *cfg = igui_->getpConfig();
+    const AttributeType &serial_name = (*cfg)["Serial"];
     if (serial_name.is_string()) {
         uart_ = static_cast<ISerial *>
             (RISCV_get_service_iface(serial_name.to_string(), IFACE_SERIAL));
@@ -77,18 +77,6 @@ void UartEditor::updateData(const char *buf, int buflen) {
     RISCV_mutex_unlock(&mutexStr_);
 
     emit signalNewData();
-}
-
-void UartEditor::slotPostInit(AttributeType *cfg) {
-    if (uart_) {
-        /* To avoid double registration */
-        return;
-    }
-    uart_ = static_cast<ISerial *>
-        (RISCV_get_service_iface((*cfg)["Serial"].to_string(), IFACE_SERIAL));
-    if (uart_) {
-        uart_->registerRawListener(static_cast<IRawListener *>(this));
-    }
 }
 
 void UartEditor::slotUpdateByData() {

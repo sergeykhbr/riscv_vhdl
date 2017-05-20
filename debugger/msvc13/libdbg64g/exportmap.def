@@ -42,8 +42,10 @@ EXPORTS
 	RISCV_get_services_with_iface
 	RISCV_get_clock_services
 	RISCV_break_simulation
-	RISCV_is_active
 	RISCV_malloc
 	RISCV_free
 	RISCV_enable_log
 	RISCV_disable_log
+	RISCV_dispatcher_start
+	RISCV_register_timer
+	RISCV_unregister_timer

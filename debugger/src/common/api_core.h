@@ -396,15 +396,25 @@ void RISCV_get_clock_services(AttributeType *list);
 void RISCV_break_simulation();
 
 /**
- * @brief State of the core library.
- * @details Core library is active while woudln't break 
- *          by RISCV_break_simulation()
+ * @brief Run main loop in main thread
  */
-int RISCV_is_active();
+void RISCV_dispatcher_start();
 
 /**
- * @}
+ * @brief callback from the main thread function prototype
  */
+typedef void (*timer_callback_type)(void *args);
+
+/**
+ * @brief Register timer's callback in main loop
+ */
+void RISCV_register_timer(int msec, timer_callback_type cb,
+                          void *args);
+
+/**
+ * @brief Unregister timer's callback from main loop
+ */
+void RISCV_unregister_timer(timer_callback_type cb);
 
 
 #ifdef __cplusplus

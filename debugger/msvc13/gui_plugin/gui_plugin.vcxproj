@@ -210,6 +210,7 @@
     <ClCompile Include="..\..\src\gui_plugin\PeriphWidgets\LedArea.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\PeriphWidgets\UartEditor.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\PeriphWidgets\UartWidget.cpp" />
+    <ClCompile Include="..\..\src\gui_plugin\qt_wrapper.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\api_types.h" />
@@ -247,6 +248,7 @@
     <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\LedArea.h" />
     <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\UartEditor.h" />
     <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\UartWidget.h" />
+    <ClInclude Include="..\..\src\gui_plugin\qt_wrapper.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
