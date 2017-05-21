@@ -18,7 +18,7 @@ static AttributeType NilAttribute;
 static AutoBuffer strBuffer;
 
 char *attribute_to_string(const AttributeType *attr);
-const char *string_to_attribute(const char *cfg, AttributeType *out);
+int string_to_attribute(const char *cfg, int &off, AttributeType *out);
 
 void AttributeType::attr_free() {
     if (size()) {
@@ -385,7 +385,8 @@ char *AttributeType::to_config() {
 }
 
 void AttributeType::from_config(const char *str) {
-    string_to_attribute(str, this);
+    int off = 0;
+    string_to_attribute(str, off, this);
 }
 
 char *attribute_to_string(const AttributeType *attr) {
@@ -466,75 +467,104 @@ char *attribute_to_string(const AttributeType *attr) {
     return buf->getBuffer();
 }
 
-const char *skip_special_symbols(const char *cfg) {
-    const char *pcur = cfg;
+int skip_special_symbols(const char *cfg, int off) {
+    const char *pcur = &cfg[off];
     while (*pcur == ' ' || *pcur == '\r' || *pcur == '\n' || *pcur == '\t') {
         pcur++;
+        off++;
     }
-    return pcur;
+    return off;
 }
 
-const char *string_to_attribute(const char *cfg, 
-                          AttributeType *out) {
-    const char *pcur = skip_special_symbols(cfg);
-    const char *checkstart = pcur;
-   
-    if (pcur[0] == '\'' || pcur[0] == '"') {
+int string_to_attribute(const char *cfg, int &off,
+                         AttributeType *out) {
+    off = skip_special_symbols(cfg, off);
+    int checkstart = off;
+    if (cfg[off] == '\'' || cfg[off] == '"') {
         AutoBuffer buf;
-        uint8_t t1 = pcur[0];
+        uint8_t t1 = cfg[off];
         int str_sz = 0;
-        pcur++;
+        const char *pcur = &cfg[++off];
         while (*pcur != t1 && *pcur != '\0') {
             pcur++;
             str_sz++;
         }
-        buf.write_bin(&cfg[1], str_sz);
-        pcur++;
+        buf.write_bin(&cfg[off], str_sz);
         out->make_string(buf.getBuffer());
-    } else if (pcur[0] == '[') {
-        pcur++;
-        pcur = skip_special_symbols(pcur);
+        off += str_sz;
+        if (cfg[off] != t1) {
+            RISCV_printf(NULL, LOG_ERROR, 
+                        "JSON parser error: Wrong string format");
+            out->attr_free();
+            return -1;
+        }
+        off = skip_special_symbols(cfg, off + 1);
+    } else if (cfg[off] == '[') {
+        off = skip_special_symbols(cfg, off + 1);
         AttributeType new_item;
         out->make_list(0);
-        while (*pcur != ']' && *pcur != '\0') {
-            pcur = string_to_attribute(pcur, &new_item);
+        while (cfg[off] != ']' && cfg[off] != '\0') {
+            if (string_to_attribute(cfg, off, &new_item)) {
+                /* error handling */
+                out->attr_free();
+                return -1;
+            }
             out->realloc_list(out->size() + 1);
             (*out)[out->size() - 1] = new_item;
 
-            pcur = skip_special_symbols(pcur);
-            if (*pcur == ',') {
-                pcur++;
-                pcur = skip_special_symbols(pcur);
+            off = skip_special_symbols(cfg, off);
+            if (cfg[off] == ',') {
+                off = skip_special_symbols(cfg, off + 1);
             }
         }
-        pcur++;
-        pcur = skip_special_symbols(pcur);
-    } else if (pcur[0] == '{') {
+        if (cfg[off] != ']') {
+            RISCV_printf(NULL, LOG_ERROR, 
+                        "JSON parser error: Wrong list format");
+            out->attr_free();
+            return -1;
+        }
+        off = skip_special_symbols(cfg, off + 1);
+    } else if (cfg[off] == '{') {
         AttributeType new_key;
         AttributeType new_value;
         out->make_dict();
-
-        pcur++;
-        pcur = skip_special_symbols(pcur);
-        while (*pcur != '}' && *pcur != '\0') {
-            pcur = string_to_attribute(pcur, &new_key);
-            pcur = skip_special_symbols(pcur);
-            if (*pcur == ':') {
-                pcur++;
+        off = skip_special_symbols(cfg, off + 1);
+        while (cfg[off] != '}' && cfg[off] != '\0') {
+            if (string_to_attribute(cfg, off, &new_key)) {
+                RISCV_printf(NULL, LOG_ERROR, 
+                            "JSON parser error: Wrong dictionary key");
+                out->attr_free();
+                return -1;
             }
-            pcur = skip_special_symbols(pcur);
-            pcur = string_to_attribute(pcur, &new_value);
+            off = skip_special_symbols(cfg, off);
+            if (cfg[off] != ':') {
+                out->attr_free();
+                RISCV_printf(NULL, LOG_ERROR, 
+                            "JSON parser error: Wrong dictionary delimiter");
+                return -1;
+            }
+            off = skip_special_symbols(cfg, off + 1);
+            if (string_to_attribute(cfg, off, &new_value)) {
+                RISCV_printf(NULL, LOG_ERROR, 
+                            "JSON parser error: Wrong dictionary value");
+                out->attr_free();
+                return -1;
+            }
 
             (*out)[new_key.to_string()] = new_value;
 
-            pcur = skip_special_symbols(pcur);
-            if (*pcur == ',') {
-                pcur++;
-                pcur = skip_special_symbols(pcur);
+            off = skip_special_symbols(cfg, off);
+            if (cfg[off] == ',') {
+                off = skip_special_symbols(cfg, off + 1);
             }
         }
-        pcur++;
-        pcur = skip_special_symbols(pcur);
+        if (cfg[off] != '}') {
+            RISCV_printf(NULL, LOG_ERROR, 
+                        "JSON parser error: Wrong dictionary format");
+            out->attr_free();
+            return -1;
+        }
+        off = skip_special_symbols(cfg, off + 1);
 
         if (out->has_key("Type")) {
             if (strcmp((*out)["Type"].to_string(), IFACE_SERVICE) == 0) {
@@ -548,96 +578,103 @@ const char *string_to_attribute(const char *cfg,
                         "Not implemented string to dict. attribute");
             }
         }
-    } else if (pcur[0] == '(') {
+    } else if (cfg[off] == '(') {
         AutoBuffer buf;
         char byte_value;
-        pcur++;
-        pcur = skip_special_symbols(pcur);
-        while (*pcur != ')' && *pcur != '\0') {
+        off = skip_special_symbols(cfg, off);
+        while (cfg[off] != ')' && cfg[off] != '\0') {
             byte_value = 0;
             for (int n = 0; n < 2; n++) {
-                if (*pcur >= 'A' && *pcur <= 'F') {
-                    byte_value = (byte_value << 4) | ((*pcur - 'A') + 10);
+                if (cfg[off] >= 'A' && cfg[off] <= 'F') {
+                    byte_value = (byte_value << 4) | ((cfg[off] - 'A') + 10);
                 } else {
-                    byte_value = (byte_value << 4) | (*pcur - '0');
+                    byte_value = (byte_value << 4) | (cfg[off] - '0');
                 }
-                pcur++;
+                off++;
             }
             buf.write_bin(&byte_value, 1);
 
-            pcur = skip_special_symbols(pcur);
-            if (*pcur == ',') {
-                pcur++;
-                pcur = skip_special_symbols(pcur);
+            off = skip_special_symbols(cfg, off);
+            if (cfg[off] != ',') {
+                RISCV_printf(NULL, LOG_ERROR, 
+                            "JSON parser error: Wrong data dytes delimiter");
+                out->attr_free();
+                return -1;
             }
+            off = skip_special_symbols(cfg, off + 1);
+        }
+        if (cfg[off] != ')') {
+            RISCV_printf(NULL, LOG_ERROR, 
+                        "JSON parser error: Wrong data format");
+            out->attr_free();
+            return -1;
         }
         out->make_data(buf.size(), buf.getBuffer());
-        pcur++;
-        pcur = skip_special_symbols(pcur);
+        off = skip_special_symbols(cfg, off + 1);
+    } else if (cfg[off] == 'N' && cfg[off + 1] == 'o' && cfg[off + 2] == 'n'
+                && cfg[off + 3] == 'e') {
+        out->make_nil();
+        off = skip_special_symbols(cfg, off + 4);
+    } else if (cfg[off] == 'f' && cfg[off + 1] == 'a' && cfg[off + 2] == 'l'
+                && cfg[off + 3] == 's' && cfg[off + 4] == 'e') {
+        out->make_boolean(false);
+        off = skip_special_symbols(cfg, off + 5);
+    } else if (cfg[off] == 't' && cfg[off + 1] == 'r' && cfg[off + 2] == 'u'
+            && cfg[off + 3] == 'e') {
+        out->make_boolean(true);
+        off = skip_special_symbols(cfg, off + 4);
     } else {
-        pcur = skip_special_symbols(pcur);
-        if (pcur[0] == 'N' && pcur[1] == 'o' && pcur[2] == 'n'
-                && pcur[3] == 'e') {
-            pcur += 4;
-        } else if (pcur[0] == 'f' && pcur[1] == 'a' && pcur[2] == 'l'
-                && pcur[3] == 's' && pcur[4] == 'e') {
-            pcur += 5;
-            out->make_boolean(false);
-        } else if (pcur[0] == 't' && pcur[1] == 'r' && pcur[2] == 'u'
-                && pcur[3] == 'e') {
-            pcur += 4;
-            out->make_boolean(true);
-        } else {
-            char digits[64] = {0};
-            int digits_cnt = 0;
-            bool negative = false;
-            if (pcur[0] == '0' && pcur[1] == 'x') {
-                pcur += 2;
-                digits[digits_cnt++] = '0';
-                digits[digits_cnt++] = 'x';
-            } else if (pcur[0] == '-') {
-                negative = true;
-                pcur++;
-            }
-            while ((*pcur >= '0' && *pcur <= '9') 
-                || (*pcur >= 'a' && *pcur <= 'f')
-                || (*pcur >= 'A' && *pcur <= 'F')) {
-                digits[digits_cnt++] = *pcur++;
-                digits[digits_cnt] = 0;
-            }
-            int64_t t1 = strtoull(digits, NULL, 0);
-            if (pcur[0] == '.') {
-                digits_cnt = 0;
-                digits[0] = 0;
-                double divrate = 1.0;
-                double d1 = static_cast<double>(t1);
-                pcur++;
-                while (*pcur >= '0' && *pcur <= '9') {
-                    digits[digits_cnt++] = *pcur++;
-                    digits[digits_cnt] = 0;
-                    divrate *= 10.0;
-                }
-                t1 = strtoull(digits, NULL, 0);
-                d1 += static_cast<double>(t1)/divrate;
-                if (negative) {
-                    d1 = -d1;
-                }
-                out->make_floating(d1);
-            } else {
-                if (negative) {
-                    t1 = -t1;
-                }
-                out->make_int64(t1);
-            }
+        char digits[64] = {0};
+        int digits_cnt = 0;
+        bool negative = false;
+        if (cfg[off] == '0' && cfg[off + 1] == 'x') {
+            off += 2;
+            digits[digits_cnt++] = '0';
+            digits[digits_cnt++] = 'x';
+        } else if (cfg[off] == '-') {
+            negative = true;
+            off++;
         }
+        while (digits_cnt < 63 && ((cfg[off] >= '0' && cfg[off] <= '9')
+            || (cfg[off] >= 'a' && cfg[off] <= 'f')
+            || (cfg[off] >= 'A' && cfg[off] <= 'F'))) {
+            digits[digits_cnt++] = cfg[off++];
+            digits[digits_cnt] = 0;
+        }
+        int64_t t1 = strtoull(digits, NULL, 0);
+        if (cfg[off] == '.') {
+            digits_cnt = 0;
+            digits[0] = 0;
+            double divrate = 1.0;
+            double d1 = static_cast<double>(t1);
+            off++;
+            while (digits_cnt < 63 && cfg[off] >= '0' && cfg[off] <= '9') {
+                digits[digits_cnt++] = cfg[off++];
+                digits[digits_cnt] = 0;
+                divrate *= 10.0;
+            }
+            t1 = strtoull(digits, NULL, 0);
+            d1 += static_cast<double>(t1)/divrate;
+            if (negative) {
+                d1 = -d1;
+            }
+            out->make_floating(d1);
+        } else {
+            if (negative) {
+                t1 = -t1;
+            }
+            out->make_int64(t1);
+        }
+        off = skip_special_symbols(cfg, off);
     }
     /** Guard to skip wrong formatted string and avoid hanging: */
-    if (pcur == checkstart) {
-        while (*pcur) {
-            pcur++;
-        }
+    if (off == checkstart) {
+        RISCV_printf(NULL, LOG_ERROR, 
+                    "JSON parser error: Can't detect format");
+        out->attr_free();
+        return -1;
     }
-    return pcur;
+    return 0;
 }
 
 }  // namespace debugger
