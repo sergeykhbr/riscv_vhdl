@@ -78,7 +78,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>$(SolutionDir)\..\bin\$(Configuration)\plugins\</OutDir>
+    <OutDir>$(SolutionDir)\..\win32build\$(Configuration)\plugins\</OutDir>
     <IntDir>$(SolutionDir)$(ProjectName)\$(Configuration)\Tmp\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -148,17 +148,23 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)../src/common;$(SolutionDir)../src/gui_plugin/Qt4.5.1</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)../src/common;$(SolutionDir)../src/gui_plugin;$(QT_PATH)\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(SolutionDir)\..\bin\$(Configuration)\;$(SolutionDir)\..\libgui\libqtwin32\</AdditionalLibraryDirectories>
-      <AdditionalDependencies>libdbg64g.lib;Qt5Core.lib;Qt5Gui.lib;Qt5Widgets.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)\..\win32build\$(Configuration)\;$(QT_PATH)\lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>libdbg64g.lib;Qt5Core.lib;Qt5Gui.lib;Qt5Widgets.lib;Qt5Network.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>$(ProjectDir)exportmap.def</ModuleDefinitionFile>
     </Link>
+    <PreBuildEvent>
+      <Command>call $(ProjectDir)pre_build_event.bat $(TargetDir)</Command>
+    </PreBuildEvent>
+    <PostBuildEvent>
+      <Command>call $(ProjectDir)post_build_event.bat $(TargetDir)</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>

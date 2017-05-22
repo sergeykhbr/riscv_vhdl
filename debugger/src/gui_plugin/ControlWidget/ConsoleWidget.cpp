@@ -31,11 +31,18 @@ ConsoleWidget::ConsoleWidget(IGui *igui, QWidget *parent)
 
     ensureCursorVisible();
 
-    
     QTextCursor cursor = textCursor();
     QTextCharFormat charFormat = cursor.charFormat();
     charFormat.setFont(fontRISCV_);
     cursor.setCharFormat(charFormat);
+
+    cursor.insertText(tr(
+    "**********************************************************\n"
+    "  RISC-V debugger\n"
+    "  Author: Sergey Khabarov - sergeykhbr@gmail.com\n"
+    "  Copyright 2017 GNSS Sensor Ltd. All right reserved.\n"
+    "**********************************************************\n"));
+
     cursor.insertText(tr(CONSOLE_ENTRY));
     cursorMinPos_ = cursor.selectionStart();
     

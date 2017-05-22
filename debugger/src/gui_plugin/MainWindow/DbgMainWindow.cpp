@@ -16,7 +16,6 @@ namespace debugger {
 
 DbgMainWindow::DbgMainWindow(IGui *igui) : QMainWindow() {
     igui_ = igui;
-    //initDone_ = init_done;
     statusRequested_ = false;
     ebreak_ = 0;
 
@@ -61,6 +60,17 @@ DbgMainWindow::DbgMainWindow(IGui *igui) : QMainWindow() {
      */
     qRegisterMetaType<uint64_t>("uint64_t");
     qRegisterMetaType<uint32_t>("uint32_t");
+
+    tmrGlobal_ = new QTimer(this);
+    connect(tmrGlobal_, SIGNAL(timeout()), this, SLOT(slotUpdateByTimer()));
+    tmrGlobal_->setSingleShot(false);
+    const AttributeType &cfg = *igui->getpConfig();
+    int t1 = cfg["PollingMs"].to_int();
+    if (t1 < 10) {
+        t1 = 10;
+    }
+    tmrGlobal_->setInterval(t1);
+    tmrGlobal_->start();
 }
 
 DbgMainWindow::~DbgMainWindow() {
@@ -71,6 +81,8 @@ DbgMainWindow::~DbgMainWindow() {
 }
 
 void DbgMainWindow::closeEvent(QCloseEvent *ev) {
+    tmrGlobal_->stop();
+    delete tmrGlobal_;
     ev->accept();
     emit signalAboutToClose();
 }
@@ -365,20 +377,6 @@ void DbgMainWindow::slotOpenDisasm(uint64_t addr, uint64_t sz) {
 void DbgMainWindow::slotOpenMemory(uint64_t addr, uint64_t sz) {
     new MemQMdiSubWindow(igui_, mdiArea_, this, addr, sz);
 }
-
-//void DbgMainWindow::slotPostInit(AttributeType *cfg) {
-//    config_ = *cfg;
-    // Enable polling timer:
-    //connect(tmrGlobal_, SIGNAL(timeout()), this, SLOT(slotUpdateByTimer()));
-    //int ms = static_cast<int>(config_["PollingMs"].to_uint64());
-    //tmrGlobal_->setInterval(ms);
-    //tmrGlobal_->setSingleShot(false);
-    //tmrGlobal_->start(ms);
-
-
-    // Debug:
-    //slotActionTriggerGnssMap(true);
-//}
 
 void DbgMainWindow::slotUpdateByTimer() {
     if (!statusRequested_) {

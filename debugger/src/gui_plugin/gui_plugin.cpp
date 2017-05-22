@@ -142,6 +142,7 @@ void GuiPlugin::busyLoop() {
 
         processCmdQueue();
     }
+    ui_->gracefulClose();
     delete ui_;
 }
 

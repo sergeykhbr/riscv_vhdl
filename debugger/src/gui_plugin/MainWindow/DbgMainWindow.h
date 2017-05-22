@@ -91,7 +91,7 @@ private:
     QMdiSubWindow *viewUart0_;
     QAction *actionGnssMap_;
     QMdiSubWindow *viewGnssMap_;
-    //QTimer *tmrGlobal_;
+    QTimer *tmrGlobal_;
     MdiAreaWidget *mdiArea_;
     
     AttributeType config_;

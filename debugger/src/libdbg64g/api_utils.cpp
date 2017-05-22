@@ -480,17 +480,26 @@ void _load_plugins(AttributeType *list) {
 }
 
 void _unload_plugins(AttributeType *list) {
+    const char *plugin_name;
     for (unsigned i = 0; i < list->size(); i++) {
         if (!(*list)[i].is_list()) {
             RISCV_error("Can't free plugin[%d] library", i);
             continue;
         }
+        plugin_name = (*list)[i][0u].to_string();
 #if defined(_WIN32) || defined(__CYGWIN__)
         HMODULE hlib = reinterpret_cast<HMODULE>((*list)[i][1].to_uint64());
         FreeLibrary(hlib);
 #else
         void *hlib = reinterpret_cast<void *>((*list)[i][1].to_uint64());
-        dlclose(hlib);
+        if (strstr(plugin_name, "gui_plugin") == 0) {
+            /** It's a workaround to avoid SIGSEGV on application exiting.
+             *  It's a specific of dynamically linked QT-libraries. They 
+             *  create and use global variable freeing on application
+             *  closing.
+             */
+            dlclose(hlib);
+        }
 #endif
     }
 }

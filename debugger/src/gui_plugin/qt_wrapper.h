@@ -22,7 +22,6 @@ public:
 
     void postInit(AttributeType *gui_cfg);
     void eventsUpdate();
-    void pollingUpdate();
     void gracefulClose();
 
 signals:
@@ -30,15 +29,11 @@ signals:
 
 private slots:
     void slotMainWindowAboutToClose();
-    void slotAppDestroyed(QObject *obj);
 
 private:
     IGui *igui_;
-    QApplication *app_;
     DbgMainWindow *mainWindow_;
-    event_def eventAppDestroyed_;
-    bool first_start_;
-    bool is_graceful_closing_;
+    bool exiting_;
 };
 
 }  // namespace debugger
