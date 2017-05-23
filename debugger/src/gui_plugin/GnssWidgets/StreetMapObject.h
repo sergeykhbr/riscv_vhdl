@@ -70,6 +70,7 @@ private:
     QHash<QPoint, QPixmap> m_tilePixmaps;
     QNetworkAccessManager m_manager;
     QNetworkProxy m_proxy;
+    QNetworkRequest m_request;
     QUrl m_url;
 };
 

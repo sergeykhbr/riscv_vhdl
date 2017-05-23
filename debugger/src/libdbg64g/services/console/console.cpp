@@ -242,7 +242,7 @@ void ConsoleService::busyLoop() {
             iexec_->exec(cmd.to_string(), &cmdres, false);
 
             if (!cmdres.is_nil() && !cmdres.is_invalid()) {
-                RISCV_printf0("%s", cmdres.to_config());
+                RISCV_printf0("%s", cmdres.to_config().to_string());
             }
         } else {
             RISCV_mutex_lock(&mutexConsoleOutput_);

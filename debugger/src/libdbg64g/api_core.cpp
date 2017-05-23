@@ -147,17 +147,17 @@ extern "C" int RISCV_set_configuration(AttributeType *cfg) {
     return 0;
 }
 
-extern "C" const char *RISCV_get_configuration() {
+extern "C" void RISCV_get_configuration(AttributeType *cfg) {
     IClass *icls;
-    AttributeType ret(Attr_Dict);
-    ret["GlobalSettings"] = Config_["GlobalSettings"];
-    ret["Services"].make_list(0);
+    cfg->make_dict();
+    (*cfg)["GlobalSettings"] = Config_["GlobalSettings"];
+    (*cfg)["Services"].make_list(0);
     for (unsigned i = 0; i < listClasses_.size(); i++) {
         icls = static_cast<IClass *>(listClasses_[i].to_iface());
         AttributeType val = icls->getConfiguration();
-        ret["Services"].add_to_list(&val);
+        (*cfg)["Services"].add_to_list(&val);
     }
-    return ret.to_config();
+    cfg->to_config();
 }
 
 extern "C" const AttributeType *RISCV_get_global_settings() {

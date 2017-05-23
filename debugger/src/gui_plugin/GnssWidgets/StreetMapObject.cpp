@@ -56,6 +56,7 @@ StreetMap::StreetMap(QObject *parent, int zoom_)
     latitude = 0;
     longitude = 0;
 
+    m_request.setRawHeader("User-Agent", "sergeykhbr (RISC-V debugger)");
     m_emptyTile = QPixmap(TILE_SIZE, TILE_SIZE);
     m_emptyTile.fill(Qt::lightGray);
 
@@ -201,9 +202,10 @@ void StreetMap::handleNetworkData(QNetworkReply *reply) {
         }
     }
     reply->deleteLater();
-    m_tilePixmaps[tp] = QPixmap::fromImage(img);
     if (img.isNull()) {
         m_tilePixmaps[tp] = m_emptyTile;
+    } else {
+        m_tilePixmaps[tp] = QPixmap::fromImage(img);
     }
 
     emit signalTilesUpdated(tileRect(tp));
@@ -237,11 +239,10 @@ void StreetMap::download() {
 
     QString path = "http://tile.openstreetmap.org/%1/%2/%3.png";
     m_url = QUrl(path.arg(zoom).arg(grab.x()).arg(grab.y()));
-    QNetworkRequest request;
-    request.setUrl(m_url);
-    request.setRawHeader("User-Agent", "sergeykhbr (RISC-V debugger)");
-    request.setAttribute(QNetworkRequest::User, QVariant(grab));
-    m_manager.get(request);
+    m_request.setUrl(m_url);
+    QVariant arg(grab);
+    m_request.setAttribute(QNetworkRequest::User, arg);
+    m_manager.get(m_request);
 }
 
 QRect StreetMap::tileRect(const QPoint &tp) {

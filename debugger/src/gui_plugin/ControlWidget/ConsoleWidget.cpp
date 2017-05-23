@@ -77,7 +77,7 @@ void ConsoleWidget::handleResponse(AttributeType *req, AttributeType *resp) {
         return;
     }
     RISCV_mutex_lock(&mutexOutput_);
-    strOutput_ += QString(resp->to_config()) + "\n";
+    strOutput_ += QString(resp->to_config().to_string()) + "\n";
     RISCV_mutex_unlock(&mutexOutput_);
     emit signalNewData();
 }

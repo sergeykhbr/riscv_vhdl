@@ -303,7 +303,7 @@ int RISCV_set_configuration(AttributeType *cfg);
  *          into the file in JSON format. Afterward configuration can be
  *          restored.
  */
-const char *RISCV_get_configuration();
+void RISCV_get_configuration(AttributeType *cfg);
 
 /** 
  * @brief Get current core configuration.

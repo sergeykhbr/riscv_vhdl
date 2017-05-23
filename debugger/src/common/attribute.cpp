@@ -15,9 +15,8 @@ namespace debugger {
 
 static const int64_t MIN_ALLOC_BYTES = 1 << 12;
 static AttributeType NilAttribute;
-static AutoBuffer strBuffer;
 
-char *attribute_to_string(const AttributeType *attr);
+void attribute_to_string(const AttributeType *attr, AutoBuffer *buf);
 int string_to_attribute(const char *cfg, int &off, AttributeType *out);
 
 void AttributeType::attr_free() {
@@ -378,10 +377,11 @@ void AttributeType::realloc_dict(unsigned size) {
     size_ = size;
 }
 
-char *AttributeType::to_config() {
-    strBuffer.clear();
-    attribute_to_string(this);
-    return strBuffer.getBuffer();
+const AttributeType& AttributeType::to_config() {
+    AutoBuffer strBuffer;
+    attribute_to_string(this, &strBuffer);
+    make_string(strBuffer.getBuffer());
+    return (*this);
 }
 
 void AttributeType::from_config(const char *str) {
@@ -389,9 +389,8 @@ void AttributeType::from_config(const char *str) {
     string_to_attribute(str, off, this);
 }
 
-char *attribute_to_string(const AttributeType *attr) {
+void attribute_to_string(const AttributeType *attr, AutoBuffer *buf) {
     IService *iserv;
-    AutoBuffer *buf = &strBuffer;
     if (attr->is_nil()) {
         buf->write_string("None");
     } else if (attr->is_int64() || attr->is_uint64()) {
@@ -412,7 +411,7 @@ char *attribute_to_string(const AttributeType *attr) {
         buf->write_string('[');
         for (unsigned i = 0; i < list_sz; i++) {
             list_item = (*attr)[i];
-            attribute_to_string(&list_item);
+            attribute_to_string(&list_item, buf);
             if (i < (list_sz - 1)) {
                 buf->write_string(',');
             }
@@ -429,7 +428,7 @@ char *attribute_to_string(const AttributeType *attr) {
             buf->write_string('\'');
             buf->write_string(':');
             const AttributeType &dict_value = (*attr)[i];
-            attribute_to_string(&dict_value);
+            attribute_to_string(&dict_value, buf);
             if (i < (dict_sz - 1)) {
                 buf->write_string(',');
             }
@@ -464,7 +463,6 @@ char *attribute_to_string(const AttributeType *attr) {
         RISCV_sprintf(fstr, sizeof(fstr), "%.4f", attr->to_float());
         buf->write_string(fstr);
     }
-    return buf->getBuffer();
 }
 
 int skip_special_symbols(const char *cfg, int off) {

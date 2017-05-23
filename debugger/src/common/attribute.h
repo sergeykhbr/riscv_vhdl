@@ -320,7 +320,7 @@ class AttributeType : public IAttribute {
      */
     const uint8_t& operator()(unsigned idx) const;
 
-    char *to_config();
+    const AttributeType& to_config();
     void from_config(const char *str);
 };
 
