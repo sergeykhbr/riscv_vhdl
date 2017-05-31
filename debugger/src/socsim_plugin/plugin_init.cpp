@@ -15,6 +15,7 @@
 #include "dsu.h"
 #include "rfctrl.h"
 #include "fsev2.h"
+#include "uartmst.h"
 
 namespace debugger {
 
@@ -29,6 +30,7 @@ extern "C" void plugin_init(void) {
     REGISTER_CLASS_IDX(GPTimers, 9);
     REGISTER_CLASS_IDX(RfController, 10);
     REGISTER_CLASS_IDX(FseV2, 11);
+    REGISTER_CLASS_IDX(UartMst, 12);
 }
 
 }  // namespace debugger

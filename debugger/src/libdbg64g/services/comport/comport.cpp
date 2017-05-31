@@ -82,6 +82,12 @@ void ComPortService::postinitService() {
     }
 }
 
+void ComPortService::predeleteService() {
+    if (isSimulation_ && iuartSim_) {
+        iuartSim_->unregisterRawListener(static_cast<IRawListener *>(this));
+    }
+}
+
 //#define READ_RAWDATA_FROM_FILE
 void ComPortService::busyLoop() {
     char tbuf[4096];

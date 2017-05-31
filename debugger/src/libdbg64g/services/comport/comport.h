@@ -29,13 +29,14 @@ public:
 
     /** IService interface */
     virtual void postinitService();
+    virtual void predeleteService();
 
     /** ISerial */
     virtual int writeData(const char *buf, int sz);
     virtual void registerRawListener(IFace *listener);
     virtual void unregisterRawListener(IFace *listener);
 
-    /** IRawListener */
+    /** IRawListener (simulation only) */
     virtual void updateData(const char *buf, int buflen);
 
 protected:

@@ -18,7 +18,8 @@ static const char *IFACE_SOC_INFO = "ISocInfo";
 static const int CFG_NASTI_MASTER_CACHED    = 0;
 static const int CFG_NASTI_MASTER_UNCACHED  = 1;
 static const int CFG_NASTI_MASTER_ETHMAC    = 2;
-static const int CFG_NASTI_MASTER_TOTAL     = 3;
+static const int CFG_NASTI_MASTER_UARTMST   = 3;
+static const int CFG_NASTI_MASTER_TOTAL     = 4;
 
 static const uint16_t MST_DID_EMPTY            = 0x7755;
 static const uint16_t SLV_DID_EMPTY            = 0x5577;

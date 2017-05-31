@@ -23,6 +23,7 @@ EXPORTS
 	RISCV_sleep_ms
 	RISCV_get_time_ms
 	RISCV_get_pid
+	RISCV_memory_barrier
 	RISCV_thread_create
 	RISCV_thread_id
 	RISCV_thread_join

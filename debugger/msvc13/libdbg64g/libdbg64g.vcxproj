@@ -167,6 +167,9 @@
     <ClCompile Include="..\..\src\libdbg64g\services\comport\com_win.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\console\autocompleter.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\console\console.cpp" />
+    <ClCompile Include="..\..\src\libdbg64g\services\debug\edcl.cpp" />
+    <ClCompile Include="..\..\src\libdbg64g\services\debug\serial_dbglink.cpp" />
+    <ClCompile Include="..\..\src\libdbg64g\services\debug\udp_dbglink.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\elfloader\elfreader.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\elfloader\srcproc.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmdexec.cpp" />
@@ -192,8 +195,6 @@
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_write.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\info\soc_info.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\mem\memsim.cpp" />
-    <ClCompile Include="..\..\src\libdbg64g\services\udp\edcl.cpp" />
-    <ClCompile Include="..\..\src\libdbg64g\services\udp\udp.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\api_core.h" />
@@ -210,6 +211,7 @@
     <ClInclude Include="..\..\src\common\coreservices\ibus.h" />
     <ClInclude Include="..\..\src\common\coreservices\ielfreader.h" />
     <ClInclude Include="..\..\src\common\coreservices\ikeylistener.h" />
+    <ClInclude Include="..\..\src\common\coreservices\ilink.h" />
     <ClInclude Include="..\..\src\common\coreservices\imemop.h" />
     <ClInclude Include="..\..\src\common\coreservices\irawlistener.h" />
     <ClInclude Include="..\..\src\common\coreservices\iserial.h" />
@@ -219,7 +221,6 @@
     <ClInclude Include="..\..\src\common\coreservices\isrccode.h" />
     <ClInclude Include="..\..\src\common\coreservices\itap.h" />
     <ClInclude Include="..\..\src\common\coreservices\ithread.h" />
-    <ClInclude Include="..\..\src\common\coreservices\iudp.h" />
     <ClInclude Include="..\..\src\common\coreservices\iwire.h" />
     <ClInclude Include="..\..\src\common\iattr.h" />
     <ClInclude Include="..\..\src\common\iclass.h" />
@@ -231,6 +232,10 @@
     <ClInclude Include="..\..\src\libdbg64g\services\comport\comport.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\console\autocompleter.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\console\console.h" />
+    <ClInclude Include="..\..\src\libdbg64g\services\debug\edcl.h" />
+    <ClInclude Include="..\..\src\libdbg64g\services\debug\edcl_types.h" />
+    <ClInclude Include="..\..\src\libdbg64g\services\debug\serial_dbglink.h" />
+    <ClInclude Include="..\..\src\libdbg64g\services\debug\udp_dbglink.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\elfloader\elfreader.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\elfloader\elf_types.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\elfloader\srcproc.h" />
@@ -257,8 +262,6 @@
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_write.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\info\soc_info.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\mem\memsim.h" />
-    <ClInclude Include="..\..\src\libdbg64g\services\udp\edcl.h" />
-    <ClInclude Include="..\..\src\libdbg64g\services\udp\udp.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

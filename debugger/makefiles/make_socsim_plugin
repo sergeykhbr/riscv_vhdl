@@ -39,6 +39,7 @@ SOURCES = \
 	gptimers \
 	fsev2 \
 	rfctrl \
+	uartmst \
 	plugin_init
 
 LIBS = \

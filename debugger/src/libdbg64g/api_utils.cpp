@@ -186,6 +186,13 @@ extern "C" int RISCV_get_pid() {
 #endif
 }
 
+extern "C" void RISCV_memory_barrier() {
+#if defined(_WIN32) || defined(__CYGWIN__)
+    MemoryBarrier();
+#else
+    __sync_synchronize();
+#endif
+}
 
 extern "C" void RISCV_thread_create(void *data) {
     LibThreadType *p = (LibThreadType *)data;

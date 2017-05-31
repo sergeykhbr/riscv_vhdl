@@ -38,7 +38,7 @@ Greth::Greth(const char *name)
 
     memset(txbuf_, 0, sizeof(txbuf_));
     seq_cnt_ = 35;
-    RISCV_event_create(&event_tap_, "event_tap");
+    RISCV_event_create(&event_tap_, "UART_event_tap");
 }
 Greth::~Greth() {
     RISCV_event_close(&event_tap_);
@@ -54,8 +54,8 @@ void Greth::postinitService() {
         return;
     }
 
-    itransport_ = static_cast<IUdp *>(
-        RISCV_get_service_iface(transport_.to_string(), IFACE_UDP));
+    itransport_ = static_cast<ILink *>(
+        RISCV_get_service_iface(transport_.to_string(), IFACE_LINK));
 
     if (!itransport_) {
         RISCV_error("UDP interface '%s' not found", 

@@ -176,6 +176,7 @@
     <ClCompile Include="..\..\src\socsim_plugin\pnp.cpp" />
     <ClCompile Include="..\..\src\socsim_plugin\rfctrl.cpp" />
     <ClCompile Include="..\..\src\socsim_plugin\uart.cpp" />
+    <ClCompile Include="..\..\src\socsim_plugin\uartmst.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\api_types.h" />
@@ -199,6 +200,7 @@
     <ClInclude Include="..\..\src\socsim_plugin\rfctrl.h" />
     <ClInclude Include="..\..\src\socsim_plugin\ringbuf.h" />
     <ClInclude Include="..\..\src\socsim_plugin\uart.h" />
+    <ClInclude Include="..\..\src\socsim_plugin\uartmst.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

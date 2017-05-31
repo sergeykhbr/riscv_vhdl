@@ -14,7 +14,7 @@
 #include "coreservices/iclock.h"
 #include "coreservices/imemop.h"
 #include "coreservices/ibus.h"
-#include "coreservices/iudp.h"
+#include "coreservices/ilink.h"
 #include "coreservices/irawlistener.h"
 #include "coreservices/iwire.h"
 
@@ -102,7 +102,7 @@ private:
 
     IBus *ibus_;
     IClock *iclk0_;
-    IUdp *itransport_;
+    ILink *itransport_;
     IWire *iwire_;
 
     uint8_t rxbuf_[1<<12];

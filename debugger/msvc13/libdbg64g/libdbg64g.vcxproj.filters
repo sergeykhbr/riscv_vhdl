@@ -15,9 +15,6 @@
     <Filter Include="Source Files\services">
       <UniqueIdentifier>{50d2e637-34d1-4b5d-b81e-f0ad5fc2b3f5}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\services\udp">
-      <UniqueIdentifier>{bc603e1b-1b96-4de2-97ee-535660883158}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\include">
       <UniqueIdentifier>{fccdb7ae-d928-45dc-9df7-7af9b6c5a9d7}</UniqueIdentifier>
     </Filter>
@@ -48,6 +45,9 @@
     <Filter Include="Source Files\services\exec\cmd">
       <UniqueIdentifier>{dcfb693b-4e74-4844-a550-f7e5bcdb52f9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\services\debug">
+      <UniqueIdentifier>{bc603e1b-1b96-4de2-97ee-535660883158}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\common\attribute.cpp">
@@ -61,12 +61,6 @@
     </ClCompile>
     <ClCompile Include="..\..\src\libdbg64g\api_utils.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\libdbg64g\services\udp\edcl.cpp">
-      <Filter>Source Files\services\udp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\libdbg64g\services\udp\udp.cpp">
-      <Filter>Source Files\services\udp</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\libdbg64g\services\console\console.cpp">
       <Filter>Source Files\services\console</Filter>
@@ -158,6 +152,15 @@
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_stack.cpp">
       <Filter>Source Files\services\exec\cmd</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\libdbg64g\services\debug\edcl.cpp">
+      <Filter>Source Files\services\debug</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\libdbg64g\services\debug\serial_dbglink.cpp">
+      <Filter>Source Files\services\debug</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\libdbg64g\services\debug\udp_dbglink.cpp">
+      <Filter>Source Files\services\debug</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\attribute.h">
@@ -186,15 +189,6 @@
     </ClInclude>
     <ClInclude Include="..\..\src\common\coreservices\itap.h">
       <Filter>Source Files\common\coreservices</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\common\coreservices\iudp.h">
-      <Filter>Source Files\common\coreservices</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\libdbg64g\services\udp\edcl.h">
-      <Filter>Source Files\services\udp</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\libdbg64g\services\udp\udp.h">
-      <Filter>Source Files\services\udp</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\libdbg64g\include\dirent.h">
       <Filter>Source Files\include</Filter>
@@ -344,6 +338,21 @@
     </ClInclude>
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_stack.h">
       <Filter>Source Files\services\exec\cmd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\coreservices\ilink.h">
+      <Filter>Source Files\common\coreservices</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\libdbg64g\services\debug\edcl.h">
+      <Filter>Source Files\services\debug</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\libdbg64g\services\debug\edcl_types.h">
+      <Filter>Source Files\services\debug</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\libdbg64g\services\debug\serial_dbglink.h">
+      <Filter>Source Files\services\debug</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\libdbg64g\services\debug\udp_dbglink.h">
+      <Filter>Source Files\services\debug</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

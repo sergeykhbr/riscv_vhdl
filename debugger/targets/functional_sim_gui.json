@@ -19,6 +19,11 @@
                 ['SocInfo','info0'],
                 ['CommandExecutor','cmdexec0']
                 ]}]},
+    {'Class':'SerialDbgServiceClass','Instances':[
+          {'Name':'uarttap','Attr':[
+                ['LogLevel',1],
+                ['Port','uartmst0'],
+                ['Timeout',500]]}]},
     {'Class':'EdclServiceClass','Instances':[
           {'Name':'edcltap','Attr':[
                 ['LogLevel',1],
@@ -214,6 +219,11 @@
                 ['IrqLine',3],
                 ['IrqControl','irqctrl0'],
                 ['ClkSource','core0']
+                ]}]},
+    {'Class':'UartMstClass','Instances':[
+          {'Name':'uartmst0','Attr':[
+                ['LogLevel',1],
+                ['Bus','axi0']
                 ]}]},
     {'Class':'FseV2Class','Instances':[
           {'Name':'fsegps0','Attr':[

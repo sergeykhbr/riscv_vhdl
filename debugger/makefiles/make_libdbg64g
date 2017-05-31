@@ -26,7 +26,7 @@ SRC_PATH =\
 	$(TOP_DIR)src/libdbg64g \
 	$(TOP_DIR)src/libdbg64g/services/mem \
 	$(TOP_DIR)src/libdbg64g/services/bus \
-	$(TOP_DIR)src/libdbg64g/services/udp \
+	$(TOP_DIR)src/libdbg64g/services/debug \
 	$(TOP_DIR)src/libdbg64g/services/console \
 	$(TOP_DIR)src/libdbg64g/services/exec \
 	$(TOP_DIR)src/libdbg64g/services/exec/cmd \
@@ -43,7 +43,8 @@ SOURCES = \
 	api_utils \
 	bus \
 	memsim \
-	udp \
+	serial_dbglink \
+	udp_dbglink \
 	edcl \
 	elfreader \
 	srcproc \

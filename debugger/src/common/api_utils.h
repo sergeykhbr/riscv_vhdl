@@ -69,6 +69,9 @@ uint64_t RISCV_get_time_ms();
 /** Get process ID. */
 int RISCV_get_pid();
 
+/** Memory barrier */
+void RISCV_memory_barrier();
+
 void RISCV_thread_create(void *data);
 uint64_t RISCV_thread_id();
 

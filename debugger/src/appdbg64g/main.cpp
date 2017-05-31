@@ -7,7 +7,7 @@
 
 #include "api_core.h"
 #include "iservice.h"
-#include "coreservices/iudp.h"
+#include "coreservices/ilink.h"
 #include "coreservices/ithread.h"
 #include "coreservices/icpuriscv.h"
 /** Plugin verification */
@@ -70,15 +70,16 @@ int main(int argc, char* argv[]) {
    
     // Connect simulator to the EDCL debugger if enabled:
     if (Config["GlobalSettings"]["SimEnable"].to_bool()) {
-        IUdp *iudp1 = static_cast<IUdp *>
-                (RISCV_get_service_iface("udpboard", IFACE_UDP));
-        IUdp *iudp2 = static_cast<IUdp *>
-                (RISCV_get_service_iface("udpedcl", IFACE_UDP));
+        ILink *iudp1 = static_cast<ILink *>
+                (RISCV_get_service_iface("udpboard", IFACE_LINK));
+        ILink *iudp2 = static_cast<ILink *>
+                (RISCV_get_service_iface("udpedcl", IFACE_LINK));
 
-        AttributeType t1 = iudp1->getConnectionSettings();
-        iudp2->setTargetSettings(&t1);
-        t1 = iudp2->getConnectionSettings();
-        iudp1->setTargetSettings(&t1);
+        AttributeType t1;
+        iudp1->getConnectionSettings(&t1);
+        iudp2->setConnectionSettings(&t1);
+        iudp2->getConnectionSettings(&t1);
+        iudp1->setConnectionSettings(&t1);
     }
 
     IService *itst = static_cast<IService *>(RISCV_get_service("example0"));
