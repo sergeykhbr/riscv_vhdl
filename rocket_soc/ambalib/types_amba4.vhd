@@ -194,6 +194,8 @@ constant GAISLER_ETH_MAC_MASTER   : std_logic_vector(15 downto 0) := X"0502";
 constant GAISLER_ETH_EDCL_MASTER  : std_logic_vector(15 downto 0) := X"0503";
 --! "River" CPU Device ID.
 constant RISCV_RIVER_CPU          : std_logic_vector(15 downto 0) := X"0505";
+--! UART with DMA: Test Access Point (TAP)
+constant GNSSSENSOR_UART_TAP      : std_logic_vector(15 downto 0) := X"050A";
 --! @}
 
 --! @name Slave Device IDs definition:
