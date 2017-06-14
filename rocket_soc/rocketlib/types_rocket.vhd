@@ -355,6 +355,20 @@ component nasti_uart is
     o_irq  : out std_logic);
 end component;
 
+--! Test Access Point via UART (debug access)
+component uart_tap is
+  port (
+    nrst     : in std_logic;
+    clk      : in std_logic;
+    i_uart   : in  uart_in_type;
+    o_uart   : out uart_out_type;
+    i_msti   : in nasti_master_in_type;
+    o_msto   : out nasti_master_out_type;
+    o_mstcfg : out nasti_master_config_type
+  );
+end component; 
+
+
 --! @brief   Interrupt controller with the AXI4 interface declaration.
 --! @details To rise interrupt on certain CPU HostIO interface is used.
 component nasti_irqctrl is

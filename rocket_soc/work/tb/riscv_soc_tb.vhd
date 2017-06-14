@@ -102,6 +102,10 @@ architecture behavior of riscv_soc_tb is
   signal i_uart1_rd : std_logic := '1';
   signal o_uart1_td : std_logic;
   signal o_uart1_rtsn : std_logic;
+  signal i_uart2_ctsn : std_logic := '0';
+  signal i_uart2_rd : std_logic := '1';
+  signal o_uart2_td : std_logic;
+  signal o_uart2_rtsn : std_logic;
   
   signal o_emdc    : std_logic;
   signal io_emdio  : std_logic;
@@ -113,6 +117,8 @@ architecture behavior of riscv_soc_tb is
   signal uart_wr_str : std_logic;
   signal uart_instr : string(1 to 256);
   signal uart_busy : std_logic;
+  signal uart_bin_data : std_logic_vector(63 downto 0);
+  signal uart_bin_bytes_sz : integer;
 
   signal clk_cur: std_logic := '1';
   signal check_clk_bus : std_logic := '0';
@@ -133,6 +139,11 @@ component riscv_soc is port
   i_uart1_rd   : in std_logic;
   o_uart1_td   : out std_logic;
   o_uart1_rtsn : out std_logic;
+  -- uart2 (debug port)
+  i_uart2_ctsn : in std_logic;
+  i_uart2_rd   : in std_logic;
+  o_uart2_td   : out std_logic;
+  o_uart2_rtsn : out std_logic;
   -- Ethernet
   i_gmiiclk_p : in    std_ulogic;
   i_gmiiclk_n : in    std_ulogic;
@@ -156,13 +167,17 @@ end component;
 
   component uart_sim is 
   generic (
-    clock_rate : integer := 10
+    clock_rate : integer := 10;
+    binary_bytes_max : integer := 8;
+    use_binary : boolean := false
   ); 
   port (
     rst : in std_logic;
     clk : in std_logic;
     wr_str : in std_logic;
     instr : in string;
+    bin_data : in std_logic_vector(8*binary_bytes_max-1 downto 0);
+    bin_bytes_sz : in integer;
     td  : in std_logic;
     rtsn : in std_logic;
     rd  : out std_logic;
@@ -253,6 +268,8 @@ begin
     clk => i_sclk_p,
     wr_str => uart_wr_str,
     instr => uart_instr,
+    bin_data => uart_bin_data,
+    bin_bytes_sz => uart_bin_bytes_sz,
     td  => o_uart1_td,
     rtsn => o_uart1_rtsn,
     rd  => i_uart1_rd,
@@ -279,6 +296,10 @@ begin
     i_uart1_rd   => i_uart1_rd,
     o_uart1_td   => o_uart1_td,
     o_uart1_rtsn => o_uart1_rtsn,
+    i_uart2_ctsn => i_uart2_ctsn,
+    i_uart2_rd   => i_uart2_rd,
+    o_uart2_td   => o_uart2_td,
+    o_uart2_rtsn => o_uart2_rtsn,
     i_gmiiclk_p => '0',
     i_gmiiclk_n => '1',
     o_egtx_clk  => open,

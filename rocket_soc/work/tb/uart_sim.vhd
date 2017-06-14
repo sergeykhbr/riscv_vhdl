@@ -14,13 +14,17 @@ use commonlib.types_util.all;
 
 entity uart_sim is 
   generic (
-    clock_rate : integer := 10
+    clock_rate : integer := 10;
+    binary_bytes_max : integer := 8;
+    use_binary : boolean := false
   ); 
   port (
     rst : in std_logic;
     clk : in std_logic;
     wr_str : in std_logic;
     instr : in string;
+    bin_data : in std_logic_vector(8*binary_bytes_max-1 downto 0);
+    bin_bytes_sz : in integer;
     td  : in std_logic;
     rtsn : in std_logic;
     rd  : out std_logic;
@@ -45,6 +49,7 @@ architecture uart_sim_rtl of uart_sim is
       msg_symb_cnt : integer range 0 to 256;
       msg_len : integer;
       msg : string(1 to 256);
+      msg_bin : std_logic_vector(8*binary_bytes_max-1 downto 0);
       is_data : std_logic;
   end record;
   
@@ -64,8 +69,13 @@ begin
      end if;
 
      if wr_str = '1' then
-        v.msg := instr;
-        v.msg_len := strlen(instr);
+        if use_binary = true then
+            v.msg_bin := bin_data;
+            v.msg_len := bin_bytes_sz;
+        else
+            v.msg := instr;
+            v.msg_len := strlen(instr);
+        end if;
         v.is_data := '1';
      end if;
 
@@ -75,7 +85,12 @@ begin
         if r.is_data = '1' and RATE_EVENT = '1' then
            v.txstate := STATE_startbit;
            v.is_data := '0';
-           symbol := SymbolToSVector(r.msg, r.msg_symb_cnt);
+           if use_binary = true then
+               symbol := r.msg_bin(8*binary_bytes_max-1 downto 8*binary_bytes_max-8);
+               v.msg_bin := r.msg_bin(8*(binary_bytes_max-1)-1 downto 0) & X"00";
+           else
+               symbol := SymbolToSVector(r.msg, r.msg_symb_cnt);
+           end if;
            v.tx_data := "01" & symbol & '0'; -- [stopbit=1, ?parity? (skiped), data, start_bit=0]
         elsif r.is_data = '1' then
           -- do nothing

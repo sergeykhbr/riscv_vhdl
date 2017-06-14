@@ -83,6 +83,7 @@ architecture arch_uart_tap of uart_tap is
     rd_z : std_logic;
     baud_speed_detected : std_logic;
     baud_speed_cnt : std_logic_vector(32 downto 0);
+    baud_speed_cnt_z : std_logic_vector(31 downto 0);
     scaler : std_logic_vector(31 downto 0);
     scale_cnt : std_logic_vector(31 downto 0);
     level : std_logic;
@@ -93,7 +94,6 @@ architecture arch_uart_tap of uart_tap is
     tx_byte_cnt : std_logic_vector(3 downto 0); -- always 32-bits word output
     tx_state : uart_state_type;
 
-    rx_word   : std_logic_vector(31 downto 0);
     rx_shift  : std_logic_vector(7 downto 0);
     rx_data_cnt : integer range 0 to 7;
     rx_state : uart_state_type;
@@ -111,7 +111,7 @@ architecture arch_uart_tap of uart_tap is
   end record;
 
   signal r, rin : registers;
-
+  signal dma_response : dma_response_type;
 
 procedure procedureAxi4DMA(
       i_request : in dma_request_type;
@@ -154,7 +154,7 @@ begin
                 o_bank.state := DMA_STATE_W;
             end if;
         elsif i_request.valid = '1' and i_request.write = '0' then
-            o_msto.ar_bits.addr  := i_request.addr(CFG_NASTI_ADDR_BITS-1 downto 3) & "000";
+            o_msto.ar_bits.addr  := i_request.addr;
             o_bank.addr2         := i_request.addr(2);
             o_bank.len  := tmp_len;
             o_msto.ar_bits.len := conv_std_logic_vector(tmp_len, 8);
@@ -167,6 +167,7 @@ begin
       
     when DMA_STATE_R_WAIT_RESP =>
         o_msto.r_ready := i_request.ready;
+        o_response.valid := i_msti.r_valid;
         if (i_request.ready and i_msti.r_valid) = '1' then
             if i_bank.addr2 = '1' then
                 o_response.rdata := i_msti.r_data(63 downto 32) & i_msti.r_data(31 downto 0);
@@ -235,7 +236,7 @@ end; -- procedure
 
 begin
 
-  comblogic : process(nrst, i_msti, i_uart, r)
+  comblogic : process(nrst, i_msti, i_uart, r, dma_response)
     variable v : registers;
     variable wb_dma_request : dma_request_type;
     variable wb_dma_response : dma_response_type;
@@ -263,11 +264,12 @@ begin
         if r.rd_z /= i_uart.rd then
             negedge_flag := '1';
             v.baud_speed_cnt := (others => '0');
+            v.baud_speed_cnt_z := r.baud_speed_cnt(32 downto 1);
         end if;
 
         if r.rx_byte_ready = '1' and r.rx_byte = X"55" then
             v.baud_speed_detected := '1';
-            v.scaler := r.baud_speed_cnt(32 downto 1);
+            v.scaler := r.baud_speed_cnt_z;
             v.scale_cnt := (others => '0');
             v.level := '1';
         end if;
@@ -365,7 +367,6 @@ begin
         when DMAREQ_ADDR =>
             if r.rx_byte_ready = '1' then
                 v.dma_req_addr := r.rx_byte & r.dma_req_addr(63 downto 8);
-                v.dma_byte_cnt := r.dma_byte_cnt + 1;
                 if r.dma_byte_cnt = 7 then
                     if r.dma_req_write = '1' then
                         v.dma_req_state := DMAREQ_WDATA;
@@ -373,6 +374,8 @@ begin
                     else
                         v.dma_req_state := DMAREQ_READ;
                     end if;
+                else
+                    v.dma_byte_cnt := r.dma_byte_cnt + 1;
                 end if;
             end if;
         when DMAREQ_READ =>
@@ -383,13 +386,13 @@ begin
             wb_dma_request.addr := r.dma_req_addr(CFG_NASTI_ADDR_BITS-1 downto 0);
             wb_dma_request.bytes := conv_std_logic_vector(4, 11);
             wb_dma_request.wdata := (others => '0');
-            if wb_dma_response.ready = '1' then
+            if dma_response.ready = '1' then
                 v.dma_req_state := DMAREQ_WAIT_READ_RESP;
             end if;
         when DMAREQ_WAIT_READ_RESP =>
             wb_dma_request.ready := '1';
-            if wb_dma_response.valid = '1' then
-                v.rword := wb_dma_response.rdata(31 downto 0);
+            if dma_response.valid = '1' then
+                v.rword := dma_response.rdata(31 downto 0);
                 v.rword_valid := '1';
                 if r.dma_req_len = 0 then
                     v.dma_req_state := DMAREQ_IDLE;
@@ -411,7 +414,7 @@ begin
             wb_dma_request.addr := r.dma_req_addr(CFG_NASTI_ADDR_BITS-1 downto 0);
             wb_dma_request.bytes := conv_std_logic_vector(4, 11);
             wb_dma_request.wdata := r.dma_req_wdata & r.dma_req_wdata;
-            if wb_dma_response.ready = '1' then
+            if dma_response.ready = '1' then
                 if r.dma_req_len = 0 then
                     v.dma_req_state := DMAREQ_IDLE;
                 else
@@ -433,7 +436,7 @@ begin
         i_msti => i_msti,
         o_msto => wb_msto
     );
-
+    dma_response <= wb_dma_response;
 
     o_uart.rts <= '1';
     if r.tx_state = idle then
@@ -447,12 +450,19 @@ begin
         v.rd_z := i_uart.rd;
         v.baud_speed_detected := '0';
         v.baud_speed_cnt := (others => '0');
+        v.baud_speed_cnt_z := (others => '0');
         v.scaler := (others => '0');
         v.scale_cnt := (others => '0');
         v.level := '0';
 
         v.tx_state := idle;
         v.rx_state := idle;
+        v.tx_byte_cnt := (others => '0');
+
+        v.dma.state := DMA_STATE_IDLE;
+        v.dma.addr2 := '0';
+        v.dma.len := 0;
+        v.dma.wdata := (others => '0');
 
         v.dma_req_state := DMAREQ_IDLE;
         v.dma_req_write := '0';

@@ -22,6 +22,12 @@ NET "i_uart1_rd"   LOC = J24;
 NET "o_uart1_rtsn" LOC = T24;
 NET "o_uart1_td"   LOC = J25;
 
+# UART2 interface (debug port). Assign to HPC
+NET "i_uart2_ctsn" LOC = AL23;#C33;
+NET "i_uart2_rd"   LOC = AM23;#B34;
+NET "o_uart2_rtsn" LOC = AN23;#F30;
+NET "o_uart2_td"   LOC = AP22;#G30;
+
 # GPIO
 NET "i_int_clkrf"  LOC = D22 | IOSTANDARD=LVCMOS18 | PULLDOWN | SLEW=SLOW | DRIVE=2;   # DIP-0. Generate ADC clock internally = sys_clk/4
 NET "i_dip[1]"  LOC = C22 | IOSTANDARD=LVCMOS18 | PULLDOWN | SLEW=SLOW | DRIVE=2;   # DIP-1

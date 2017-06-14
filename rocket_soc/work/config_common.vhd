@@ -52,7 +52,7 @@ constant CFG_SIM_FWIMAGE_HEX : string :=
 --!
 --! @details Read Only unique platform identificator that could be
 --!          read by firmware from the Plug'n'Play support module.
-constant CFG_HW_ID : std_logic_vector(31 downto 0) := X"20170311";
+constant CFG_HW_ID : std_logic_vector(31 downto 0) := X"20170614";
 
 --! @brief Enabling Ethernet MAC interface.
 --! @details By default MAC module enables support of the debug feature EDCL.

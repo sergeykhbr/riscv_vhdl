@@ -102,8 +102,10 @@ constant CFG_NASTI_MASTER_CACHED   : integer := 0;
 constant CFG_NASTI_MASTER_UNCACHED : integer := CFG_NASTI_MASTER_CACHED+1;
 --! Ethernet MAC master interface generic index.
 constant CFG_NASTI_MASTER_ETHMAC   : integer := CFG_NASTI_MASTER_UNCACHED+1;
+--! Tap via UART (debug port) generic index.
+constant CFG_NASTI_MASTER_MSTUART    : integer := CFG_NASTI_MASTER_ETHMAC+1;
 --! Total Number of master devices on system bus.
-constant CFG_NASTI_MASTER_TOTAL    : integer := CFG_NASTI_MASTER_ETHMAC+1;
+constant CFG_NASTI_MASTER_TOTAL    : integer := CFG_NASTI_MASTER_MSTUART+1;
 --! @}
 
 

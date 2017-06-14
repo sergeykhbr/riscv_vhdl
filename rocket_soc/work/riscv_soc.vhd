@@ -68,6 +68,11 @@ entity riscv_soc is port
   i_uart1_rd   : in std_logic;
   o_uart1_td   : out std_logic;
   o_uart1_rtsn : out std_logic;
+  --! UART2 (debug port) signals:
+  i_uart2_ctsn : in std_logic;
+  i_uart2_rd   : in std_logic;
+  o_uart2_td   : out std_logic;
+  o_uart2_rtsn : out std_logic;
   --! Ethernet MAC PHY interface signals
   i_gmiiclk_p : in    std_ulogic;
   i_gmiiclk_n : in    std_ulogic;
@@ -116,6 +121,8 @@ architecture arch_riscv_soc of riscv_soc is
   
   signal uart1i : uart_in_type;
   signal uart1o : uart_out_type;
+  signal uart2i : uart_in_type;
+  signal uart2o : uart_out_type;
 
   --! Arbiter is switching only slaves output signal, data from noc
   --! is connected to all slaves and to the arbiter itself.
@@ -272,6 +279,22 @@ dsu_dis : if not CFG_DSU_ENABLE generate
     axiso(CFG_NASTI_SLAVE_DSU) <= nasti_slave_out_none;
     dport_i <= dport_in_none;
 end generate;
+
+  ------------------------------------
+  --! @brief TAP via UART (debug port) with master interface.
+  uart2i.cts   <= not i_uart2_ctsn;
+  uart2i.rd    <= i_uart2_rd;
+  uart2 : uart_tap  port map (
+    nrst   => w_glob_nrst, 
+    clk    => w_clk_bus, 
+    i_uart   => uart2i,
+    o_uart   => uart2o,
+    i_msti   => aximi(CFG_NASTI_MASTER_MSTUART),
+    o_msto   => aximo(CFG_NASTI_MASTER_MSTUART),
+    o_mstcfg => mst_cfg(CFG_NASTI_MASTER_MSTUART)
+  );
+  o_uart2_td  <= uart2o.td;
+  o_uart2_rtsn <= not uart2o.rts;
 
   ------------------------------------
   --! @brief BOOT ROM module isntance with the AXI4 interface.
