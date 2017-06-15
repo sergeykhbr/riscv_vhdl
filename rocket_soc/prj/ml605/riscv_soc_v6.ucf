@@ -22,11 +22,17 @@ NET "i_uart1_rd"   LOC = J24;
 NET "o_uart1_rtsn" LOC = T24;
 NET "o_uart1_td"   LOC = J25;
 
-# UART2 interface (debug port). Assign to HPC
-NET "i_uart2_ctsn" LOC = AL23;#C33;
-NET "i_uart2_rd"   LOC = AM23;#B34;
-NET "o_uart2_rtsn" LOC = AN23;#F30;
-NET "o_uart2_td"   LOC = AP22;#G30;
+# UART2 interface (debug port).
+# Assign to HPC:
+NET "i_uart2_ctsn" LOC = AL23; # HPC H20
+NET "i_uart2_rd"   LOC = AM23; # HPC H19
+NET "o_uart2_rtsn" LOC = AN23; # HPC G19
+NET "o_uart2_td"   LOC = AP22; # HPC G18
+# Assign to LPC:
+#NET "i_uart2_ctsn" LOC = C33; # LPC C18
+#NET "i_uart2_rd"   LOC = B34; # LPC C19
+#NET "o_uart2_rtsn" LOC = F30; # LPC C14
+#NET "o_uart2_td"   LOC = G30; # LPC C15
 
 # GPIO
 NET "i_dip[0]"  LOC = D22 | IOSTANDARD=LVCMOS18 | PULLDOWN | SLEW=SLOW | DRIVE=2;   # DIP-0.

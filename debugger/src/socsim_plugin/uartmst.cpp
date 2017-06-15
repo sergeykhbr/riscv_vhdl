@@ -67,7 +67,7 @@ void UartMst::postinitService() {
 void UartMst::busyLoop() {
     UartMstPacketType packet;
     RISCV_info("UartMst thread was started", NULL);
-    trans_.source_idx = CFG_NASTI_MASTER_UARTMST;          // Hardcoded in VHDL value
+    trans_.source_idx = CFG_NASTI_MASTER_MSTUART;          // Hardcoded in VHDL value
 
     int burst_sz;
     while (isEnabled()) {

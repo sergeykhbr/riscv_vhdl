@@ -637,6 +637,60 @@ constant NASTI_SLAVE_BANK_RESET : nasti_slave_bank_type := (
 );
 
 
+  type dma_state_type is (
+     DMA_STATE_IDLE,
+     DMA_STATE_R_WAIT_RESP,
+     DMA_STATE_R_WAIT_NEXT,
+     DMA_STATE_W,
+     DMA_STATE_W_WAIT_REQ,
+     DMA_STATE_B
+  );
+
+--! @brief Master device to DMA engine request signals
+  type dma_request_type is record
+    valid : std_logic; -- response is valid
+    ready : std_logic; -- ready to accept response
+    write : std_logic;
+    addr : std_logic_vector(CFG_NASTI_ADDR_BITS-1 downto 0);
+    bytes : std_logic_vector(10 downto 0);
+    size  : std_logic_vector(2 downto 0); -- 010=4 bytes; 011=8 bytes
+    wdata : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
+  end record;
+
+--! @brief DMA engine to Master device response signals
+  type dma_response_type is record
+    ready : std_logic;  -- ready to accespt request
+    valid : std_logic;  -- response is valid
+    rdata : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
+  end record;
+
+--! DMA engine registers bank
+  type dma_bank_type is record
+    state : dma_state_type;
+    addr2 : std_logic;	          -- addr[2] bits to select low/high dword
+    len   : integer range 0 to 255; -- burst (length-1)
+    op32  : std_logic;
+    wdata : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
+  end record;
+
+  constant DMA_BANK_RESET : dma_bank_type := (DMA_STATE_IDLE, '0', 0, '0', (others => '0'));
+
+--! Device's DMA engine template procedure with AXI interface.
+--! @param [in]  i_request Device to DMA engine request.
+--! @param [out] o_response DMA Engine to Device response.
+--! @param [in]  i_bank Bank of registers implemented by master device.
+--! @param [out] o_bank Updated value for the master bank of registers.
+--! @param [in]  i_msti AMBA to AXI master device signal.
+--! @param [out] o_msto AXI master device signal to AMBA controller signals.
+procedure procedureAxi4DMA(
+      i_request : in dma_request_type;
+      o_response : out dma_response_type;
+      i_bank : in dma_bank_type;
+      o_bank : out dma_bank_type;
+      i_msti : in nasti_master_in_type;
+      o_msto : out nasti_master_out_type
+);
+
 --! Read/write access state machines implementation for the slave device.
 --! @param [in] i Slave input signal passed from system bus.
 --! @param [in] cfg Slave confguration descriptor defining memory base address.
@@ -726,6 +780,144 @@ end; -- package declaration
 --! Implementation of the declared sub-programs (functions and
 --! procedures).
 package body types_amba4 is
+
+  --! Device's DMA engine template procedure with AXI interface.
+  --! @param [in]  i_request Device to DMA engine request.
+  --! @param [out] o_response DMA Engine to Device response.
+  --! @param [in]  i_bank Bank of registers implemented by master device.
+  --! @param [out] o_bank Updated value for the master bank of registers.
+  --! @param [in]  i_msti AMBA to AXI master device signal.
+  --! @param [out] o_msto AXI master device signal to AMBA controller signals.
+  procedure procedureAxi4DMA(
+      i_request : in dma_request_type;
+      o_response : out dma_response_type;
+      i_bank : in dma_bank_type;
+      o_bank : out dma_bank_type;
+      i_msti : in nasti_master_in_type;
+      o_msto : out nasti_master_out_type
+  ) is
+    variable tmp_len : integer;
+  begin
+    o_bank := i_bank;
+    o_msto := nasti_master_out_none;
+    o_msto.ar_user       := '0';
+    o_msto.ar_id         := conv_std_logic_vector(0, CFG_ROCKET_ID_BITS);
+    o_msto.ar_bits.size  := (others => '0');
+    o_msto.ar_bits.burst := NASTI_BURST_INCR;
+    o_msto.aw_user       := '0';
+    o_msto.aw_id         := conv_std_logic_vector(0, CFG_ROCKET_ID_BITS);
+    o_msto.aw_bits.size  := (others => '0');
+    o_msto.aw_bits.burst := NASTI_BURST_INCR;
+
+    o_response.ready := '0';
+    o_response.valid := '0';
+    o_response.rdata := (others => '0');
+
+    case i_bank.state is
+    when DMA_STATE_IDLE =>
+        o_msto.ar_valid := i_request.valid and not i_request.write;
+        o_msto.aw_valid := i_request.valid and i_request.write;
+        tmp_len := conv_integer(i_request.bytes(10 downto 2)) - 1;
+        if i_request.valid = '1' and i_request.write = '1' then
+            o_msto.aw_bits.addr  := i_request.addr(CFG_NASTI_ADDR_BITS-1 downto 3) & "000";
+            o_bank.addr2         := i_request.addr(2);
+            o_bank.len  := tmp_len;
+            o_msto.aw_bits.size  := i_request.size; -- 4/8 bytes
+            o_msto.aw_bits.len := conv_std_logic_vector(tmp_len, 8);
+            o_bank.wdata := i_request.wdata;
+            if i_msti.aw_ready = '1' then
+                o_response.ready := '1';
+                o_bank.state := DMA_STATE_W;
+            end if;
+        elsif i_request.valid = '1' and i_request.write = '0' then
+            o_msto.ar_bits.addr  := i_request.addr;
+            o_bank.addr2         := i_request.addr(2);
+            o_bank.len  := tmp_len;
+            o_msto.ar_bits.size  := i_request.size; -- 4/8 bytes
+            o_msto.ar_bits.len := conv_std_logic_vector(tmp_len, 8);
+            if i_msti.ar_ready = '1' then
+                o_response.ready := '1';
+                o_bank.state := DMA_STATE_R_WAIT_RESP;
+            end if;
+        end if;
+        if i_request.size = "010" then
+           o_bank.op32 := '1';
+        else
+           o_bank.op32 := '0';
+        end if;
+      
+    when DMA_STATE_R_WAIT_RESP =>
+        o_msto.r_ready := i_request.ready;
+        o_response.valid := i_msti.r_valid;
+        if (i_request.ready and i_msti.r_valid) = '1' then
+            if i_bank.op32 = '1' and i_bank.addr2 = '1' then
+                o_response.rdata := i_msti.r_data(63 downto 32) & i_msti.r_data(31 downto 0);
+            else
+                o_response.rdata := i_msti.r_data;
+            end if;
+
+            if i_msti.r_last = '1' then
+                o_bank.state := DMA_STATE_IDLE;
+            else
+                if i_request.valid = '1' and i_request.write = '0' then
+                    o_response.ready := '1';
+                else
+                    o_bank.state := DMA_STATE_R_WAIT_NEXT;
+                end if;
+            end if;
+        end if;
+
+    when DMA_STATE_R_WAIT_NEXT =>
+        if i_request.valid = '1' and i_request.write = '0' then
+            o_response.ready := '1';
+            o_bank.state := DMA_STATE_R_WAIT_RESP;
+        end if;
+
+    when DMA_STATE_W =>
+        o_msto.w_valid := '1';
+        if i_bank.op32 = '1' then
+            case i_bank.addr2 is
+            when '0' => o_msto.w_strb := X"0f";
+            when '1' => o_msto.w_strb := X"f0";
+            when others =>
+            end case;
+        else
+            o_msto.w_strb := X"ff";
+        end if;
+        o_msto.w_data := i_bank.wdata;
+        
+        if i_msti.w_ready = '1' then
+            if i_bank.len = 0 then
+                o_bank.state := DMA_STATE_B;
+                o_msto.w_last := '1';
+            elsif i_request.valid = '1' and i_request.write = '1' then
+                o_bank.len := i_bank.len - 1;
+                o_bank.wdata := i_request.wdata;
+                o_response.ready := '1';
+                -- Address will be incremented on slave side
+                --v.waddr2 := not r.waddr2;
+            else
+                o_bank.state := DMA_STATE_W_WAIT_REQ;
+            end if;
+        end if;
+
+    when DMA_STATE_W_WAIT_REQ =>
+        if i_request.valid = '1' and i_request.write = '1' then
+            o_bank.len := i_bank.len - 1;
+            o_bank.wdata := i_request.wdata;
+            o_response.ready := '1';
+            o_bank.state := DMA_STATE_W;
+        end if;
+
+    when DMA_STATE_B =>
+        o_msto.w_last := '0';
+        o_msto.b_ready := '1';
+        if i_msti.b_valid = '1' then
+            o_bank.state := DMA_STATE_IDLE;
+        end if;
+    when others =>
+    end case;
+  end; -- procedure
 
   --! Read/write access state machines implementation.
   --! @param [in] i Slave input signal passed from system bus.
