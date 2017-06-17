@@ -56,6 +56,7 @@ private slots:
     void slotActionTriggerGpio(bool val);
     void slotActionTriggerPnp(bool val);
     void slotActionTriggerGnssMap(bool val);
+    void slotActionTriggerGnssPlot(bool val);
     void slotActionTriggerSymbolBrowser();
     void slotOpenDisasm(uint64_t addr, uint64_t sz);
     void slotOpenMemory(uint64_t addr, uint64_t sz);
@@ -91,6 +92,8 @@ private:
     QMdiSubWindow *viewUart0_;
     QAction *actionGnssMap_;
     QMdiSubWindow *viewGnssMap_;
+    QAction *actionGnssPlot_;
+    QMdiSubWindow *viewGnssPlot_;
     QTimer *tmrGlobal_;
     MdiAreaWidget *mdiArea_;
     

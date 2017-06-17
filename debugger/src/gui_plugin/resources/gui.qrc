@@ -19,5 +19,6 @@
     <file>images/led_on.png</file>
     <file>images/led_off.png</file>
     <file>images/opmap_96x96.png</file>
+    <file>images/plot_96x96.png</file>
 </qresource>
 </RCC>

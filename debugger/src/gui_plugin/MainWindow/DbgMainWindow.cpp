@@ -10,7 +10,12 @@
 #include "PeriphWidgets/UartWidget.h"
 #include "PeriphWidgets/GpioWidget.h"
 #include "GnssWidgets/MapWidget.h"
+#include "GnssWidgets/PlotWidget.h"
 #include <QtWidgets/QtWidgets>
+
+#ifdef WIN32
+#define GITHUB_SCREENSHOT_SIZE
+#endif
 
 namespace debugger {
 
@@ -20,7 +25,11 @@ DbgMainWindow::DbgMainWindow(IGui *igui) : QMainWindow() {
     ebreak_ = 0;
 
     setWindowTitle(tr("RISC-V platform debugger"));
+#ifdef GITHUB_SCREENSHOT_SIZE
+    resize(QSize(872, 600));
+#else
     resize(QDesktopWidget().availableGeometry(this).size() * 0.7);
+#endif
 
     listConsoleListeners_.make_list(0);
     /** Console commands used by main window: */
@@ -197,6 +206,14 @@ void DbgMainWindow::createActions() {
     connect(actionGnssMap_, SIGNAL(triggered(bool)),
             this, SLOT(slotActionTriggerGnssMap(bool)));
 
+    actionGnssPlot_ = new QAction(QIcon(tr(":/images/plot_96x96.png")),
+                              tr("HW Statistic"), this);
+    actionGnssPlot_->setToolTip(tr("Open HW statistic"));
+    actionGnssPlot_->setCheckable(true);
+    actionGnssPlot_->setChecked(false);
+    connect(actionGnssPlot_, SIGNAL(triggered(bool)),
+            this, SLOT(slotActionTriggerGnssPlot(bool)));
+
     actionRun_ = new QAction(QIcon(tr(":/images/start_96x96.png")),
                              tr("&Run"), this);
     actionRun_->setToolTip(tr("Start Execution (F5)"));
@@ -261,6 +278,7 @@ void DbgMainWindow::createMenus() {
 
     menu = menuBar()->addMenu(tr("&GNSS"));
     menu->addAction(actionGnssMap_);
+    menu->addAction(actionGnssPlot_);
     
     menu = menuBar()->addMenu(tr("&Help"));
     menu->addAction(actionAbout_);
@@ -284,6 +302,12 @@ void DbgMainWindow::createMdiWindow() {
     
     ConsoleWidget *consoleWidget = new ConsoleWidget(igui_, this);
     dock->setWidget(consoleWidget);
+
+#ifdef GITHUB_SCREENSHOT_SIZE
+    double desired_h = 
+        QDesktopWidget().availableGeometry(this).size().height() * 0.1;
+    consoleWidget->setFixedHeight(desired_h);
+#endif
 }
 
 void DbgMainWindow::addWidgets() {
@@ -365,6 +389,14 @@ void DbgMainWindow::slotActionTriggerGnssMap(bool val) {
     }
 }
 
+void DbgMainWindow::slotActionTriggerGnssPlot(bool val) {
+    if (val) {
+        viewGnssPlot_ = 
+            new PlotQMdiSubWindow(igui_, mdiArea_, this, actionGnssPlot_);
+    } else {
+        viewGnssPlot_->close();
+    }
+}
 
 void DbgMainWindow::slotActionTriggerSymbolBrowser() {
     new SymbolBrowserQMdiSubWindow(igui_, mdiArea_, this);

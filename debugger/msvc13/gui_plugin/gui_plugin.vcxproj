@@ -205,7 +205,9 @@
     <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\SymbolBrowserArea.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\SymbolBrowserControl.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\SymbolBrowserWidget.cpp" />
+    <ClCompile Include="..\..\src\gui_plugin\GnssWidgets\linecommon.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\GnssWidgets\MapWidget.cpp" />
+    <ClCompile Include="..\..\src\gui_plugin\GnssWidgets\PlotWidget.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\GnssWidgets\StreetMapObject.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\gui_plugin.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\MainWindow\DbgMainWindow.cpp" />
@@ -242,7 +244,9 @@
     <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\SymbolBrowserArea.h" />
     <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\SymbolBrowserControl.h" />
     <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\SymbolBrowserWidget.h" />
+    <ClInclude Include="..\..\src\gui_plugin\GnssWidgets\linecommon.h" />
     <ClInclude Include="..\..\src\gui_plugin\GnssWidgets\MapWidget.h" />
+    <ClInclude Include="..\..\src\gui_plugin\GnssWidgets\PlotWidget.h" />
     <ClInclude Include="..\..\src\gui_plugin\GnssWidgets\StreetMapObject.h" />
     <ClInclude Include="..\..\src\gui_plugin\gui_plugin.h" />
     <ClInclude Include="..\..\src\gui_plugin\igui.h" />

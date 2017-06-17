@@ -37,14 +37,18 @@ set_property IOSTANDARD LVCMOS25 [get_ports o_uart1_td]
 
 # UART2 interface (debug port)
 # Assign to HPC:
-set_property PACKAGE_PIN B24 [get_ports i_uart2_ctsn] # HPC H20
-set_property PACKAGE_PIN C24 [get_ports i_uart2_rd]   # HPC H19
-set_property PACKAGE_PIN A27 [get_ports o_uart2_rtsn] # HPC G19
-set_property PACKAGE_PIN B27 [get_ports o_uart2_td]   # HPC G18
+ # HPC H20
+set_property PACKAGE_PIN B24 [get_ports i_uart2_ctsn]
+# HPC H19
+set_property PACKAGE_PIN C24 [get_ports i_uart2_rd]
+# HPC G19
+set_property PACKAGE_PIN A27 [get_ports o_uart2_rtsn]
+# HPC G18
+set_property PACKAGE_PIN B27 [get_ports o_uart2_td]
 set_property IOSTANDARD LVCMOS25 [get_ports i_uart2_ctsn]
 set_property IOSTANDARD LVCMOS25 [get_ports i_uart2_rd]
-set_property IOSTANDARD LVCMOS25 [get_ports i_uart2_rtsn]
-set_property IOSTANDARD LVCMOS25 [get_ports i_uart2_td]
+set_property IOSTANDARD LVCMOS25 [get_ports o_uart2_rtsn]
+set_property IOSTANDARD LVCMOS25 [get_ports o_uart2_td]
 
 #/ User's LEDs:
 set_property PACKAGE_PIN AB8 [get_ports {o_led[0]}]

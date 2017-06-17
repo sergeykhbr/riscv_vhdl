@@ -104,6 +104,12 @@
       <Filter>GnssWidgets</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\gui_plugin\qt_wrapper.cpp" />
+    <ClCompile Include="..\..\src\gui_plugin\GnssWidgets\linecommon.cpp">
+      <Filter>GnssWidgets</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\GnssWidgets\PlotWidget.cpp">
+      <Filter>GnssWidgets</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\api_types.h">
@@ -208,5 +214,11 @@
       <Filter>GnssWidgets</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\gui_plugin\qt_wrapper.h" />
+    <ClInclude Include="..\..\src\gui_plugin\GnssWidgets\linecommon.h">
+      <Filter>GnssWidgets</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\GnssWidgets\PlotWidget.h">
+      <Filter>GnssWidgets</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

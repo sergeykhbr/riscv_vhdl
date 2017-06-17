@@ -16,7 +16,8 @@ namespace debugger {
 CmdBusUtil::CmdBusUtil(ITap *tap, ISocInfo *info) 
     : ICommand ("busutil", tap, info) {
 
-    briefDescr_.make_string("Compute Clocks Per Instruction (CPI) rate");
+    briefDescr_.make_string("Read per master bus utilization in percentage "
+                            "of time");
     detailedDescr_.make_string(
         "Description:\n"
         "    Read and normalize per master bus utilization statistic\n"

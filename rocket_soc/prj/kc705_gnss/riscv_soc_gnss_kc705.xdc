@@ -38,8 +38,8 @@ set_property PACKAGE_PIN A27 [get_ports o_uart2_rtsn] # HPC G19
 set_property PACKAGE_PIN B27 [get_ports o_uart2_td]   # HPC G18
 set_property IOSTANDARD LVCMOS25 [get_ports i_uart2_ctsn]
 set_property IOSTANDARD LVCMOS25 [get_ports i_uart2_rd]
-set_property IOSTANDARD LVCMOS25 [get_ports i_uart2_rtsn]
-set_property IOSTANDARD LVCMOS25 [get_ports i_uart2_td]
+set_property IOSTANDARD LVCMOS25 [get_ports o_uart2_rtsn]
+set_property IOSTANDARD LVCMOS25 [get_ports o_uart2_td]
 
 
 #/ User's LEDs:

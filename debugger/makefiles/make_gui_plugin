@@ -65,7 +65,9 @@ SOURCES = \
 	MemControl \
 	ConsoleWidget \
 	StreetMapObject \
+	linecommon \
 	MapWidget \
+	PlotWidget \
 	PnpWidget
 
 LIBS = \
@@ -137,3 +139,4 @@ prebuild:
 	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/CpuWidgets/StackTraceArea.h -o $(GUI_PLUGIN_SRC)/CpuWidgets/moc_StackTraceArea.h
 	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/GnssWidgets/StreetMapObject.h -o $(GUI_PLUGIN_SRC)/GnssWidgets/moc_StreetMapObject.h
 	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/GnssWidgets/MapWidget.h -o $(GUI_PLUGIN_SRC)/GnssWidgets/moc_MapWidget.h
+	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/GnssWidgets/PlotWidget.h -o $(GUI_PLUGIN_SRC)/GnssWidgets/moc_PlotWidget.h
