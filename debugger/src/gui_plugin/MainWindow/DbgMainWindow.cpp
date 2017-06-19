@@ -14,7 +14,7 @@
 #include <QtWidgets/QtWidgets>
 
 #ifdef WIN32
-#define GITHUB_SCREENSHOT_SIZE
+//#define GITHUB_SCREENSHOT_SIZE
 #endif
 
 namespace debugger {
@@ -275,10 +275,10 @@ void DbgMainWindow::createMenus() {
     menu->addSeparator();
     menu->addAction(actionRegs_);
     menu->addAction(actionSymbolBrowser_);
+    menu->addAction(actionGnssPlot_);
 
     menu = menuBar()->addMenu(tr("&GNSS"));
     menu->addAction(actionGnssMap_);
-    menu->addAction(actionGnssPlot_);
     
     menu = menuBar()->addMenu(tr("&Help"));
     menu->addAction(actionAbout_);
