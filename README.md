@@ -312,12 +312,8 @@ Copy *fwimage.hex* to rocket_soc subdirectory
 
 ## 3. Debug Zephyr kernel with debug symbols.
 
-Our debugger allows to use debug information from the elf-file as on the
-picture bellow:
-
-![GUI debug](rocket_soc/docs/pics/dbg_gui_symb.png)
-
-To achieve such results just use the console command *'loadelf'*:
+Use the following debugger's console commands to load symbols information
+from elf-file:
 
     riscv# loadelf zephyr.elf
     riscv# loadelf zephyr.elf nocode
@@ -380,6 +376,10 @@ I hope your also have run firmware on RISC-V system successfully.
 My usual FPGA setup is ML605 board and debugger that is running on Windows 7
 from Visual Studio project, so other target configurations (linux + KC705)
 could contain errors that are fixing with a small delay. Let me know if see one.
+
+## 5. Example of debug session with RF front-end and GNSS IPs on ML605 board.
+
+![GUI gnss](rocket_soc/docs/pics/dbg_gnss.png)
 
 
 ## Versions History

@@ -305,7 +305,7 @@ void DbgMainWindow::createMdiWindow() {
 
 #ifdef GITHUB_SCREENSHOT_SIZE
     double desired_h = 
-        QDesktopWidget().availableGeometry(this).size().height() * 0.1;
+        QDesktopWidget().availableGeometry(this).size().height() * 0.07;
     consoleWidget->setFixedHeight(desired_h);
 #endif
 }

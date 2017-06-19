@@ -99,6 +99,18 @@ void ComPortService::busyLoop() {
 #endif
 
     while (isEnabled()) {
+#ifdef READ_RAWDATA_FROM_FILE
+        logbuf_sz = fread(logbuf, 1, sizeof(logbuf), script);
+        if (logbuf_sz) {
+            for (unsigned i = 0; i < portListeners_.size(); i++) {
+                IRawListener *ilstn = static_cast<IRawListener *>(
+                                portListeners_[i].to_iface());
+                ilstn->updateData(logbuf, logbuf_sz);
+            }
+        } else {
+            fseek(script, 0, SEEK_SET);
+        }
+#endif
         if (!isSimulation_ && !portOpened_) {
             int err = openSerialPort(comPortName_.to_string(), 
                 comPortSpeed_.to_int(), &hPort_);
@@ -106,16 +118,6 @@ void ComPortService::busyLoop() {
                 RISCV_error("Openning %s at %d . . .failed",
                         comPortName_.to_string(), comPortSpeed_.to_int());
                 RISCV_sleep_ms(1000);
-#ifdef READ_RAWDATA_FROM_FILE
-                logbuf_sz = fread(logbuf, 1, sizeof(logbuf), script);
-                if (logbuf_sz) {
-                    for (unsigned i = 0; i < portListeners_.size(); i++) {
-                        IRawListener *ilstn = static_cast<IRawListener *>(
-                                        portListeners_[i].to_iface());
-                        ilstn->updateData(logbuf, logbuf_sz);
-                    }
-                }
-#endif
                 continue;
             } else {
                 portOpened_ = true;

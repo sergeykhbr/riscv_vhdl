@@ -74,7 +74,7 @@ MapWidget::MapWidget(IGui *igui, QWidget *parent)
     pos_init_idx = 0;
     double lat = defaultPos[pos_init_idx].x() + (double)(rand() & 0x1f)/100000.0;
     double lon = defaultPos[pos_init_idx].y()+ (double)(rand() & 0x1f)/100000.0;
-    for (int x = 0; x < 20; x++) {
+    for (int x = 0; x < 50; x++) {
         gpsLat_.put(lat);
         gpsLon_.put(lon);
         lat = defaultPos[pos_init_idx].x() + (double)(rand() & 0x1f)/100000.0;
