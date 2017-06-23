@@ -167,6 +167,9 @@ void PnpWidget::slotUpdate() {
         case RISCV_RIVER_CPU:
             RISCV_sprintf(tstr, sizeof(tstr), "Risc-V RIVER CPU", NULL);
             break;
+        case GNSSSENSOR_UART_TAP:
+            RISCV_sprintf(tstr, sizeof(tstr), "AXI UART TAP with DMA", NULL);
+            break;
         case SLV_DID_EMPTY:
             RISCV_sprintf(tstr, sizeof(tstr), "Empty slave slot", NULL);
             break;

@@ -36,8 +36,7 @@ set_property PACKAGE_PIN K24 [get_ports o_uart1_td]
 set_property IOSTANDARD LVCMOS25 [get_ports o_uart1_td]
 
 # UART2 interface (debug port)
-# Assign to HPC:
- # HPC H20
+# HPC H20
 set_property PACKAGE_PIN B24 [get_ports i_uart2_ctsn]
 # HPC H19
 set_property PACKAGE_PIN C24 [get_ports i_uart2_rd]

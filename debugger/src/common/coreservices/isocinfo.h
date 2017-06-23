@@ -31,6 +31,7 @@ static const uint16_t RISCV_UNCACHED_TILELINK  = 0x0501;
 static const uint16_t GAISLER_ETH_MAC_MASTER   = 0x0502;
 static const uint16_t GAISLER_ETH_EDCL_MASTER  = 0x0503;
 static const uint16_t RISCV_RIVER_CPU          = 0x0505;
+static const uint16_t GNSSSENSOR_UART_TAP      = 0x050A;
 
 // Slaves IDs
 static const uint16_t GNSSSENSOR_ENGINE_STUB   = 0x0068;
