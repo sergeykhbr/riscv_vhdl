@@ -151,7 +151,7 @@
     {'Class':'MemorySimClass','Instances':[
           {'Name':'fwimage0','Attr':[
                 ['LogLevel',1],
-                ['InitFile','../../../rocket_soc/fw_images/gnssfw.hex'],
+                ['InitFile','../../../rocket_soc/fw_images/fwimage.hex'],
                 ['ReadOnly',true],
                 ['BaseAddress',0x00100000],
                 ['Length',0x40000]
@@ -159,7 +159,7 @@
     {'Class':'MemorySimClass','Instances':[
           {'Name':'sram0','Attr':[
                 ['LogLevel',1],
-                ['InitFile','../../../rocket_soc/fw_images/gnssfw.hex'],
+                ['InitFile','../../../rocket_soc/fw_images/fwimage.hex'],
                 ['ReadOnly',false],
                 ['BaseAddress',0x10000000],
                 ['Length',0x80000]
