@@ -119,39 +119,20 @@ This repository consists of three sub-projects each in own subfolder:
 # Step I: Simple FPGA test.
 
 You can use the pre-built FPGA image (for Xilinx ML605 or KC705 board) and any serial
-console application (*putty*, *screen* or other).
+console application (*putty*, *screen* or other) to run Dhrystone v2.1 benchmark as 
+on the animated picture below.
+
+![Zephyr demo](rocket_soc/docs/pics/zephyr_demo.gif)
 
 1. Unpack and load file image *riscv_soc.bit* from */rocket_soc/bit_files/* into FPGA board.
-2. Connect to serial port. I use standard console utility *screen* on Ubuntu.
+2. Connect to serial port. I used standard console utility *screen* on Ubuntu.
 
         $ sudo apt-get install screen
         $ sudo screen /dev/ttyUSB0 115200
 
-3. Use button "*Center*" to reset FPGA system and reprint initial messages:
+3. Use button "*Center*" to reset FPGA system and reprint initial messages (or just press Enter):
 
-```
-    Boot . . .OK
-    Zephyr version 1.5.0
-    shell>
-```
-
-Our system is ready to use. Shell command **pnp** prints SOC HW information,
-command **dhry** runs Dhrystone 2.1 benchmark.
-To end the session, use Ctrl-A, Shift-K
-
-![Zephyr demo](rocket_soc/docs/pics/zephyr_demo.gif)
-
-Zephyr kernel v1.6 supports shell commands from different kernel modules, to switch
-one module to another use command **set_module**:
-
-```
-    shell> set_module kernel
-    shell> version
-    shell> set_module soc
-    shell> dhry
-    shell> pnp
-    ...
-```
+To end the session, use *Ctrl-A*, *Shift-K*
 
 # Step II: Build and run Software models with GUI.
 
@@ -383,6 +364,13 @@ could contain errors that are fixing with a small delay. Let me know if see one.
 
 
 ## Versions History
+
+### Implemented functionality (v6.0)
+
+- GNSS IPs successfully integrated into RISC-V based SoC.
+- Add Test Access (TAP) over Serial port.
+- Add GUI integration with Open Street Maps and position tracking.
+- Add performance analisys tool into GUI.
 
 ### Implemented functionality (v5.1)
 
