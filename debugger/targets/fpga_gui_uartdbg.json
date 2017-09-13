@@ -1,0 +1,106 @@
+{
+  'GlobalSettings':{
+    'SimEnable':false,
+    'GUI':true,
+    'ScriptFile':'',
+    'Description':'This configuration instantiates functional RISC-V model'
+  },
+  'Services':[
+    {'Class':'GuiPluginClass','Instances':[
+                {'Name':'gui0','Attr':[
+                ['LogLevel',4],
+                ['WidgetsConfig',{
+                  'Serial':'port1',
+                  'AutoComplete':'autocmd0',
+                  'SocInfo':'info0',
+                  'PollingMs':250,
+                  'EventsLoopMs':10
+                }],
+                ['SocInfo','info0'],
+                ['CommandExecutor','cmdexec0']
+                ]}]},
+    {'Class':'SerialDbgServiceClass','Instances':[
+          {'Name':'uarttap','Attr':[
+                ['LogLevel',1],
+                ['Timeout',1000],
+                ['Port','port1']]}]},
+    {'Class':'ComPortServiceClass','Instances':[
+          {'Name':'port1','Attr':[
+                ['LogLevel',2],
+                ['Enable',true],
+                ['UartSim',''],
+                ['LogFile','uart0.log'],
+                ['ComPortName','COM3'],
+                ['ComPortSpeed',115200]]}]},
+    {'Class':'ElfReaderServiceClass','Instances':[
+          {'Name':'loader0','Attr':[
+                ['LogLevel',4]]}]},
+    {'Class':'ConsoleServiceClass','Instances':[
+          {'Name':'console0','Attr':[
+                ['LogLevel',4],
+                ['Enable',true],
+                ['StepQueue','core0'],
+                ['AutoComplete','autocmd0'],
+                ['CommandExecutor','cmdexec0'],
+                ['DefaultLogFile','default.log'],
+                ['Signals','gpio0'],
+                ['InputPort','port1']]}]},
+    {'Class':'AutoCompleterClass','Instances':[
+          {'Name':'autocmd0','Attr':[
+                ['LogLevel',4],
+                ['SocInfo','info0']
+                ['HistorySize',64],
+                ['History',[
+                     'csr MCPUID',
+                     'csr MTIME',
+                     'read 0xfffff004 128',
+                     'loadelf helloworld'
+                     ]]
+                ]}]},
+    {'Class':'CmdExecutorClass','Instances':[
+          {'Name':'cmdexec0','Attr':[
+                ['LogLevel',4],
+                ['Tap','uarttap'],
+                ['SocInfo','info0']
+                ]}]},
+    {'Class':'SocInfoClass','Instances':[
+          {'Name':'info0','Attr':[
+                ['LogLevel',4],
+                ['PnpBaseAddress',0xFFFFF000],
+                ['GpioBaseAddress',0x80000000],
+                ['DsuBaseAddress',0x80080000],
+                ['ListRegs',[['zero',8,0],['ra',8,1],['sp',8,2],['gp',8,3],
+                            ['tp',8,4],['t0',8,5],['t1',8,6],['t2',8,7],
+                            ['s0',8,8],['s1',8,9],['a0',8,10],['a1',8,11],
+                            ['a2',8,12],['a3',8,13],['a4',8,14],['a5',8,15],
+                            ['a6',8,16],['a7',8,17],['s2',8,18],['s3',8,19],
+                            ['s4',8,20],['s5',8,21],['s6',8,22],['s7',8,23],
+                            ['s8',8,24],['s9',8,25],['s10',8,26],['s11',8,27],
+                            ['t3',8,28],['t4',8,29],['t5',8,30],['t6',8,31],
+                            ['pc',8,32,'Instruction Pointer'],
+                            ['npc',8,33,'Next IP']]],
+                ['ListCSR',[
+                    ['MISA',8,0xf10,'Architecture and supported set of instructions'],
+                    ['MVENDORID',8,0xf11,'Vecndor ID'],
+                    ['MARCHID',8,0xf12,'Architecture ID'],
+                    ['MIMPLEMENTATIONID',8,0xf13,'Implementation ID'],
+                    ['MHARTID',8,0xf14,'Thread ID'],
+                    ['MTIME',8,0x701,'Machine wall-clock time.'],
+                    ['MSTATUS',8,0x300,'Machine mode status register.'],
+                    ['MIE',8,0x304,'Machine interrupt enable register.'],
+                    ['MTVEC',8,0x305,'Machine mode trap vector register.'],
+                    ['MSCRATCH',8,0x340,'Machine mode scratch register.'],
+                    ['MEPC',8,0x341,'Machine exception program counter'],
+                    ['MCAUSE',8,0x342,'Machine cause trap register'],
+                    ['MBADADDR',8,0x343,'Machine mode bad address register'],
+                    ['MIP',8,0x344,'Machine mode interrupt pending bits register']
+                    ]]]}]},
+    {'Class':'SourceServiceClass','Instances':[
+          {'Name':'src0','Attr':[
+                ['LogLevel',4]]}]},
+    {'Class':'SimplePluginClass','Instances':[
+          {'Name':'example0','Attr':[
+                ['LogLevel',4],
+                ['attr1','This is test attr value']]}]},
+  ]
+}

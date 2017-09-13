@@ -373,7 +373,8 @@ void AsmArea::outAsmLine(int idx, AttributeType &line) {
         pw->setBackgroundColor(Qt::lightGray);
         pw->setTextColor(Qt::black);
     }
-    pw->setText(QString("%1").arg(instr, 8, 16, QChar('0')));
+    int codesz = line[ASM_codesize].to_int();
+    pw->setText(QString("%1").arg(instr, 2*codesz, 16, QChar('0')));
 
     pw = item(idx, COL_label);
     pw->setTextColor(Qt::black);

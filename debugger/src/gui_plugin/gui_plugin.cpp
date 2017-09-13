@@ -150,6 +150,11 @@ bool GuiPlugin::processCmdQueue() {
     AttributeType resp;
     while (cmdQueueCntTotal_ > 0) {
         AttributeType &cmd = cmdQueue_[cmdQueueRdPos_].cmd;
+        if (cmd.is_invalid()) {
+            RISCV_error("Invalid command string: rdpos=%d; wrpos=%d, total=%d",
+                    cmdQueueRdPos_, cmdQueueWrPos_, cmdQueueCntTotal_);
+            continue;
+        }
 
         iexec_->exec(cmd.to_string(), &resp, cmdQueue_[cmdQueueRdPos_].silent);
 
@@ -158,6 +163,8 @@ bool GuiPlugin::processCmdQueue() {
             cmdQueue_[cmdQueueRdPos_].src->handleResponse(
                         const_cast<AttributeType *>(&cmd), &resp);
         }
+        cmd.attr_free();
+        resp.attr_free();
         if ((++cmdQueueRdPos_) >= CMD_QUEUE_SIZE) {
             cmdQueueRdPos_ = 0;
         }
