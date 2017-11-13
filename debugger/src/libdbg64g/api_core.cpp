@@ -46,15 +46,17 @@ private:
     int active_;
     event_def mutexExiting_;
 };
-static CoreService core_("core");
+static CoreService *pcore_ = NULL;
 
 
 IFace *getInterface(const char *name) {
-    return core_.getInterface(name);
+    return pcore_->getInterface(name);
 }
 
 
 extern "C" int RISCV_init() {
+    pcore_ = new CoreService("core");
+
 #if defined(_WIN32) || defined(__CYGWIN__)
     WSADATA wsaData;
     if (WSAStartup(MAKEWORD(2, 2), &wsaData)) {
@@ -84,6 +86,7 @@ extern "C" void RISCV_cleanup() {
     RISCV_mutex_destroy(&mutex_printf);
     RISCV_mutex_lock(&mutexDefaultConsoles_);
     RISCV_mutex_destroy(&mutexDefaultConsoles_);
+    delete pcore_;
     RISCV_disable_log();
 }
 
@@ -100,8 +103,8 @@ extern "C" int RISCV_set_configuration(AttributeType *cfg) {
     AttributeType &Services = Config_["Services"];
     if (Services.is_list()) {
         for (unsigned i = 0; i < Services.size(); i++) {
-            icls = static_cast<IClass *>(
-                RISCV_get_class(Services[i]["Class"].to_string()));
+            const char *clsname = Services[i]["Class"].to_string();
+            icls = static_cast<IClass *>(RISCV_get_class(clsname));
             if (icls == NULL) {
                 RISCV_error("Class %s not found", 
                              Services[i]["Class"].to_string());
@@ -229,6 +232,17 @@ extern "C" IFace *RISCV_get_service_iface(const char *servname,
     return iserv->getInterface(facename);
 }
 
+extern "C" IFace *RISCV_get_service_port_iface(const char *servname,
+                                               const char *portname,
+                                               const char *facename) {
+    IService *iserv = static_cast<IService *>(RISCV_get_service(servname));
+    if (iserv == NULL) {
+        RISCV_error("Service '%s' not found.", servname);
+        return NULL;
+    }
+    return iserv->getPortInterface(portname, facename);
+}
+
 extern "C" void RISCV_get_services_with_iface(const char *iname,  
                                              AttributeType *list) {
     IClass *icls;
@@ -277,7 +291,7 @@ static thread_return_t safe_exit_thread(void *args) {
     RISCV_trigger_hap(getInterface(IFACE_SERVICE),
                       HAP_BreakSimulation, "Exiting");
     printf("All threads were stopped!\n");
-    core_.shutdown();
+    pcore_->shutdown();
     return 0;
 }
 
@@ -293,10 +307,10 @@ static const int TIMERS_MAX = 2;
 static TimerType timers_[TIMERS_MAX] = {{0}};
 
 extern "C" void RISCV_break_simulation() {
-    if (core_.isExiting()) {
+    if (pcore_->isExiting()) {
         return;
     }
-    core_.setExiting();
+    pcore_->setExiting();
     LibThreadType data;
     data.func = reinterpret_cast<lib_thread_func>(safe_exit_thread);
     data.args = 0;
@@ -308,7 +322,7 @@ extern "C" void RISCV_dispatcher_start() {
     TimerType *tmr;
     int sleep_interval = 20;
     int delta;
-    while (core_.isActive()) {
+    while (pcore_->isActive()) {
         delta = 20;
         for (int i = 0; i < TIMERS_MAX; i++) {
             tmr = &timers_[i];

@@ -12,6 +12,7 @@
 #include "iservice.h"
 #include "coreservices/itap.h"
 #include "coreservices/ielfreader.h"
+#include "coreservices/isrccode.h"
 #include "elf_types.h"
 
 namespace debugger {
@@ -48,15 +49,16 @@ public:
         return loadSectionList_[idx][LoadSh_data].data();
     }
 
-    virtual void getSymbols(AttributeType *list) { *list = symbolList_; }
-
-    virtual void addressToSymbol(uint64_t addr, AttributeType *info);
-
 private:
     int readElfHeader();
     int loadSections();
     void processStringTable(SectionHeaderType *sh);
     void processDebugSymbol(SectionHeaderType *sh);
+    void swap_elfheader(ElfHeaderType *h);
+    void swap_secheader(SectionHeaderType *sh);
+    void swap_symbheader(SymbolTableType *symb);
+    void SwapBytes(Elf32_Half& v);
+    void SwapBytes(Elf32_Word& v);
 
 private:
     enum ELoadSectionItem {
@@ -67,10 +69,11 @@ private:
         LoadSh_Total,
     };
 
+    AttributeType sourceProc_;
     AttributeType symbolList_;
-    AttributeType symbolListSortByAddr_;
     AttributeType loadSectionList_;
 
+    ISourceCode *isrc_;
     uint8_t *image_;
     ElfHeaderType *header_;
     SectionHeaderType *sh_tbl_;

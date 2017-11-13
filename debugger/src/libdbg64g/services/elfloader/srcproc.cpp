@@ -62,7 +62,8 @@ SourceService::SourceService(const char *name) : IService(name) {
     tblOpcode1_[0x1C] = &opcode_0x1C;
 
     brList_.make_list(0);
-    ielf_ = 0;
+    symbolListSortByName_.make_list(0);
+    symbolListSortByAddr_.make_list(0);
 }
 
 SourceService::~SourceService() {
@@ -71,13 +72,119 @@ SourceService::~SourceService() {
 void SourceService::postinitService() {
 }
 
-void SourceService::registerBreakpoint(uint64_t addr, uint32_t instr,
-                                       uint64_t flags) {
+void SourceService::addFileSymbol(const char *name, uint64_t addr, int sz) {
+    AttributeType symb(Attr_List);
+    symb.make_list(Symbol_Total);
+    symb[Symbol_Name].make_string(name);
+    symb[Symbol_Addr].make_uint64(addr);
+    symb[Symbol_Size].make_int64(sz);
+
+    symbolListSortByName_.add_to_list(&symb);
+    symbolListSortByName_.sort(Symbol_Name);
+
+    symbolListSortByAddr_.add_to_list(&symb);
+    symbolListSortByAddr_.sort(Symbol_Addr);
+}
+
+void SourceService::addFunctionSymbol(const char *name,
+                                      uint64_t addr, int sz) {
+    addFileSymbol(name, addr, sz);
+}
+
+void SourceService::addDataSymbol(const char *name, uint64_t addr, int sz) {
+    addFileSymbol(name, addr, sz);
+}
+
+void SourceService::addSymbols(AttributeType *list) {
+    for (unsigned i = 0; i < list->size(); i++) {
+        AttributeType &item = (*list)[i];
+        symbolListSortByName_.add_to_list(&item);
+        symbolListSortByAddr_.add_to_list(&item);
+    }
+    symbolListSortByName_.sort(Symbol_Name);
+    symbolListSortByAddr_.sort(Symbol_Addr);
+}
+
+void SourceService::addressToSymbol(uint64_t addr, AttributeType *info) {
+    uint64_t sadr, send;
+    int sz = static_cast<int>(symbolListSortByAddr_.size());
+
+    info->make_list(2);
+    (*info)[0u].make_string("");
+    (*info)[1].make_uint64(0);
+    if (sz == 0) {
+        return;
+    }
+    sadr = symbolListSortByAddr_[0u][Symbol_Addr].to_uint64();
+    if (addr < sadr) {
+        return;
+    }
+
+    bool search = true;
+    int dist, pos = sz / 2;
+    dist = pos;
+    while (search) {
+        AttributeType &symb = symbolListSortByAddr_[pos];
+        sadr = symb[Symbol_Addr].to_uint64();
+        if (pos < static_cast<int>(symbolListSortByAddr_.size()) - 1) {
+            send = symbolListSortByAddr_[pos + 1][Symbol_Addr].to_uint64();
+        } else {
+            send = sadr + symb[Symbol_Size].to_uint64();
+        }
+        if (sadr <= addr && addr < send) {
+            (*info)[0u] = symb[Symbol_Name];
+            (*info)[1].make_uint64(addr - sadr);
+            return;
+        }
+        
+        if (addr < sadr) {
+            if (dist == 0 || pos == 0) {
+                search = false;
+            } else if (dist == 1) {
+                dist = 0;
+                pos--;
+            } else {
+                int incr = dist / 2;
+                pos -= incr;
+                dist = (dist / 2) + (dist & 0x1);
+                if (pos < 0) {
+                    pos = 0;
+                }
+            }
+        } else {
+            if (dist == 0 || pos == (sz - 1)) {
+                search = false;
+            } else if (dist == 1) {
+                dist = 0;
+                pos++;
+            } else {
+                int incr = dist / 2;
+                pos += incr;
+                dist = (dist / 2) + (dist & 0x1);
+                if (pos >= sz) {
+                    pos = sz - 1;
+                }
+            }
+        }
+    }
+}
+
+int SourceService::symbol2Address(const char *name, uint64_t *addr) {
+    for (unsigned i = 0; i < symbolListSortByName_.size(); i++) {
+        AttributeType &item = symbolListSortByName_[i];
+        if (item[Symbol_Name].is_equal(name)) {
+            *addr = item[Symbol_Addr].to_uint64();
+            return 0;
+        }
+    }
+    return -1;
+}
+
+void SourceService::registerBreakpoint(uint64_t addr, uint64_t flags) {
     AttributeType item;
     item.make_list(BrkList_Total);
     item[BrkList_address].make_uint64(addr);
-    item[BrkList_instr].make_uint64(instr);
-    item[BrkList_hwflag].make_uint64(flags);
+    item[BrkList_flags].make_uint64(flags);
 
     bool not_found = true;
     for (unsigned i = 0; i < brList_.size(); i++) {
@@ -91,13 +198,11 @@ void SourceService::registerBreakpoint(uint64_t addr, uint32_t instr,
     }
 }
 
-int SourceService::unregisterBreakpoint(uint64_t addr, uint32_t *instr,
-                                        uint64_t *flags) {
+int SourceService::unregisterBreakpoint(uint64_t addr, uint64_t *flags) {
     for (unsigned i = 0; i < brList_.size(); i++) {
         AttributeType &br = brList_[i];
         if (addr == br[BrkList_address].to_uint64()) {
-            *instr = static_cast<uint32_t>(br[BrkList_instr].to_uint64());
-            *flags = br[BrkList_hwflag].to_uint64();
+            *flags = br[BrkList_flags].to_uint64();
             brList_.remove_from_list(i);
             return 0;
         }
@@ -117,9 +222,18 @@ void SourceService::getBreakpointList(AttributeType *list) {
             item.make_list(BrkList_Total);
         }
         item[BrkList_address] = br[BrkList_address];
-        item[BrkList_instr] = br[BrkList_instr];
-        item[BrkList_hwflag] = br[BrkList_hwflag];
+        item[BrkList_flags] = br[BrkList_flags];
     }
+}
+
+bool SourceService::isBreakpoint(uint64_t addr) {
+    for (unsigned i = 0; i < brList_.size(); i++) {
+        uint64_t bradr = brList_[i][BrkList_address].to_uint64();
+        if (addr == bradr) {
+            return true;
+        }
+    }
+    return false;
 }
 
 int SourceService::disasm(uint64_t pc,
@@ -154,15 +268,6 @@ void SourceService::disasm(uint64_t pc,
     if (!idata->is_data()) {
         return;
     }
-    if (ielf_ == 0) {
-        AttributeType lstServ;
-        RISCV_get_services_with_iface(IFACE_ELFREADER, &lstServ);
-        if (lstServ.size()) {
-            IService *iserv = static_cast<IService *>(lstServ[0u].to_iface());
-            ielf_ = static_cast<IElfReader *>(
-                                iserv->getInterface(IFACE_ELFREADER));
-        }
-    }
     uint8_t *data = idata->data();
 
     AttributeType asm_item, symb_item, info;
@@ -171,60 +276,40 @@ void SourceService::disasm(uint64_t pc,
     asm_item[ASM_list_type].make_int64(AsmList_disasm);
     symb_item[ASM_list_type].make_int64(AsmList_symbol);
     uint64_t off = 0;
-    uint32_t val, opcode1;
+    Reg64Type code;
     int codesz;
 
     while (static_cast<unsigned>(off) < idata->size()) {
-        val = *reinterpret_cast<uint32_t*>(&data[off]);
-        opcode1 = (val >> 2) & 0x1f;
+        code.val = *reinterpret_cast<uint32_t*>(&data[off]);
 
-        if (ielf_) {
-            ielf_->addressToSymbol(pc + off, &info);
-            if (info[0u].size() != 0 && info[1].to_int() == 0) {
-                symb_item[1].make_uint64(pc + off);
-                symb_item[2].make_string(info[0u].to_string());
-                asmlist->add_to_list(&symb_item);
-            }
+        addressToSymbol(pc + off, &info);
+        if (info[0u].size() != 0 && info[1].to_int() == 0) {
+            symb_item[1].make_uint64(pc + off);
+            symb_item[2].make_string(info[0u].to_string());
+            asmlist->add_to_list(&symb_item);
         }
         asm_item[ASM_addrline].make_uint64(pc + off);
-        asm_item[ASM_code].make_uint64(val);
         asm_item[ASM_breakpoint].make_boolean(false);
         asm_item[ASM_label].make_string("");
-        if ((val & 0x3) != 0x3) {
-            asm_item[ASM_mnemonic].make_string("err");
-            asm_item[ASM_comment].make_string("");
-            asm_item[ASM_codesize].make_uint64(4);
-            asmlist->add_to_list(&asm_item);
-            off += 4;
-            continue;
-        }
-        if (!tblOpcode1_[opcode1]) {
-            asm_item[ASM_mnemonic].make_string("unimpl");
-            asm_item[ASM_comment].make_string("");
-            asm_item[ASM_codesize].make_uint64(4);
-            asmlist->add_to_list(&asm_item);
-            off += 4;
-            continue;
-        }
 
-        if (val == 0x00100073) {
+        if (isBreakpoint(pc + off)) {
             asm_item[ASM_breakpoint].make_boolean(true);
-            for (unsigned i = 0; i < brList_.size(); i++) {
-                const AttributeType &br = brList_[i];
-                if ((pc + off) == br[BrkList_address].to_uint64()) {
-                    val = br[BrkList_instr].to_uint32();
-                    opcode1 = (val >> 2) & 0x1f;
-                    asm_item[ASM_code].make_uint64(val);
-                    break;
-                }
-            }
-            
         }
-        codesz = tblOpcode1_[opcode1](ielf_,
-                                      pc + off,
-                                      val,
-                                      &asm_item[ASM_mnemonic],
-                                      &asm_item[ASM_comment]);
+        codesz = disasm(pc + off,
+                        code.buf,
+                        0,
+                        &asm_item[ASM_mnemonic],
+                        &asm_item[ASM_comment]);
+
+#if 1
+        uint64_t swap = code.data;
+#else
+        uint64_t swap = 0;
+        for (int i = 0; i < codesz; i++) {
+            swap = (swap << 8) | code.buf[i];
+        }
+#endif
+        asm_item[ASM_code].make_uint64(swap);
         asm_item[ASM_codesize].make_uint64(codesz);
         asmlist->add_to_list(&asm_item);
         off += codesz;

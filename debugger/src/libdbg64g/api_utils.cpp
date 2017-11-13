@@ -6,6 +6,7 @@
  */
 
 #include <string.h>
+#include <stdlib.h>
 #include <time.h>
 #include <iostream>
 #include <dirent.h>
@@ -26,7 +27,7 @@ namespace debugger {
 typedef void (*plugin_init_proc)();
 
 /** Temporary buffer for the log messages. */
-static char bufLog[1<<12];
+static char bufLog[1024*1024];
 static int uniqueIdx_ = 0;
 
 /** Redirect output to specified console. */

@@ -11,7 +11,6 @@
 #include <string.h>
 #include "api_types.h"
 #include "coreservices/iserial.h"
-#include "coreservices/isignal.h"
 
 namespace debugger {
 
@@ -28,7 +27,6 @@ ConsoleService::ConsoleService(const char *name)
     registerInterface(static_cast<IThread *>(this));
     registerInterface(static_cast<IHap *>(this));
     registerInterface(static_cast<IRawListener *>(this));
-    registerInterface(static_cast<ISignalListener *>(this));
     registerInterface(static_cast<IClockListener *>(this));
     registerAttribute("Enable", &isEnable_);
     registerAttribute("StepQueue", &stepQueue_);
@@ -125,12 +123,6 @@ void ConsoleService::postinitService() {
                     commandExecutor_.to_string());
     }
 
-    ISignal *itmp = static_cast<ISignal *>
-        (RISCV_get_service_iface(signals_.to_string(), IFACE_SIGNAL));
-    if (itmp) {
-        itmp->registerSignalListener(static_cast<ISignalListener *>(this));
-    }
-
     AttributeType src_list;
     RISCV_get_services_with_iface(IFACE_SOURCE_CODE, &src_list);
     if (src_list.is_list() && src_list.size()) {
@@ -205,13 +197,6 @@ void ConsoleService::hapTriggered(IFace *isrc, EHapType type,
         cmd += defaultLogFile_.to_string();
         iexec_->exec(cmd.c_str(), &res, true);
     }
-}
-
-void ConsoleService::updateSignal(int start, int width, uint64_t value) {
-    char sx[128];
-    RISCV_sprintf(sx, sizeof(sx), "<led[%d:%d]> %02" RV_PRI64 "xh\n", 
-                    start + width - 1, start, value);
-    writeBuffer(sx);
 }
 
 void ConsoleService::updateData(const char *buf, int buflen) {
@@ -360,7 +345,8 @@ bool ConsoleService::isData() {
 }
 
 uint32_t ConsoleService::getData() {
-    Reg64Type tbuf = {0};
+    Reg64Type tbuf;
+    tbuf.val = 0;
     int pos = 0;
     while (isData()) {
         tbuf.val <<= 8;

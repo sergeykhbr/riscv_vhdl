@@ -101,9 +101,26 @@ int EdclService::read(uint64_t addr, int bytes, uint8_t *obuf) {
             continue;
         }
 
+        // Try to receive next packet:
+        if (rsp.control.response.seqidx != seq_cnt_.to_uint32()) {
+            RISCV_error("Wrong ID received %d != %d. Try again.",
+                        seq_cnt_.to_uint32(), rsp.control.response.seqidx);
+
+            rxoff = itransport_->readData(rx_buf_, sizeof(rx_buf_));
+            if (rxoff <= 0) {
+                rd_bytes = TAP_ERROR;
+                break;
+            }
+            rsp.control.word = read32(&rx_buf_[2]);
+            if (rsp.control.response.seqidx != seq_cnt_.to_uint32()) {
+                rd_bytes = TAP_ERROR;
+                break;
+            }
+        }
+
         memcpy(&obuf[rd_bytes], &rx_buf_[10], rsp.control.response.len);
         rd_bytes += rsp.control.response.len;
-        seq_cnt_.make_uint64(seq_cnt_.to_uint64() + 1);
+        seq_cnt_.make_uint64((seq_cnt_.to_uint64() + 1) & 0x3FFF);
     }
     return rd_bytes;
 }

@@ -18,6 +18,7 @@ namespace debugger {
 #ifdef ARCH_64BITS
 typedef uint64_t   Elf32_Addr;
 typedef uint64_t   Elf32_Off;
+typedef uint64_t   Elf32_DWord;
 #else
 typedef unsigned int   Elf32_Addr;
 typedef unsigned int   Elf32_Off;
@@ -73,9 +74,9 @@ typedef struct ElfHeaderType
     Elf32_Half e_type;      // Shared/Executable/Rellocalable etc
     Elf32_Half e_machine;   // SPARC, X86 etc
     Elf32_Word e_version;   //
-    uint64_t e_entry;     // entry point
-    uint64_t  e_phoff;     // Program header offset
-    uint64_t  e_shoff;     // Section Header offset
+    Elf32_Addr e_entry;     // entry point
+    Elf32_Off  e_phoff;     // Program header offset
+    Elf32_Off  e_shoff;     // Section Header offset
     Elf32_Word e_flags;
     Elf32_Half e_ehsize;
     Elf32_Half e_phentsize; // size of one entry in the Program header. All entries are the same size
@@ -111,14 +112,26 @@ typedef struct SectionHeaderType
 {
     Elf32_Word    sh_name;//Index in a header section table (gives name of section)
     Elf32_Word    sh_type;
-    uint64_t        sh_flags;
-    uint64_t        sh_addr;
-    uint64_t        sh_offset;
-    uint64_t        sh_size;
+#ifdef ARCH_64BITS
+    Elf32_DWord   sh_flags;
+    Elf32_Addr    sh_addr;
+    Elf32_Off     sh_offset;
+    Elf32_DWord   sh_size;
+#else
+ 	Elf32_Word	sh_flags;	/* SHF_... */
+ 	Elf32_Addr	sh_addr;
+ 	Elf32_Off	sh_offset;
+ 	Elf32_Word	sh_size;
+#endif
     Elf32_Word    sh_link;
     Elf32_Word    sh_info;
-    uint64_t    sh_addralign;
-    uint64_t    sh_entsize;
+#ifdef ARCH_64BITS
+    Elf32_DWord   sh_addralign;
+    Elf32_DWord   sh_entsize;
+#else
+    Elf32_Word   sh_addralign;
+    Elf32_Word   sh_entsize;
+#endif
 } SectionHeaderType;
 
 
@@ -143,11 +156,19 @@ static const unsigned char STT_HIPROC  = 15;
 typedef struct SymbolTableType
 {
     Elf32_Word    st_name;
-    uint8_t st_info;
-    uint8_t st_other;
-    Elf32_Half    st_shndx;
-    uint64_t    st_value;
-    uint64_t    st_size;
+#ifdef ARCH_64BITS
+	unsigned char	st_info;
+	unsigned char	st_other;
+	Elf32_Half	st_shndx;
+	Elf32_Addr	st_value;
+	Elf32_DWord	st_size;
+#else
+ 	Elf32_Addr	st_value;
+ 	Elf32_Word	st_size;
+ 	unsigned char	st_info;
+ 	unsigned char	st_other;
+ 	Elf32_Half	st_shndx;
+#endif
 } SymbolTableType;
 
 
@@ -168,10 +189,17 @@ typedef struct ProgramHeaderType
   uint32_t    p_offset;
   uint64_t    p_vaddr;
   uint64_t    p_paddr;
-  uint64_t    p_filesz;
-  uint64_t    p_memsz;
-  uint64_t    p_flags;
-  uint64_t    p_align;
+#ifdef ARCH_64BITS
+    Elf32_DWord	p_filesz;
+    Elf32_DWord	p_memsz;
+    Elf32_DWord	p_flags;
+    Elf32_DWord	p_align;
+#else
+ 	Elf32_Word	p_filesz;
+ 	Elf32_Word	p_memsz;
+ 	Elf32_Word	p_flags;
+ 	Elf32_Word	p_align;
+#endif
 } ProgramHeaderType;
 
 }  // namespace debugger

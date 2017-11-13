@@ -7,7 +7,7 @@
 
 #include "api_core.h"
 #include "bus.h"
-#include "coreservices/icpuriscv.h"
+#include "coreservices/icpugen.h"
 
 namespace debugger {
 
@@ -16,14 +16,9 @@ REGISTER_CLASS(Bus)
 
 Bus::Bus(const char *name) 
     : IService(name) {
-    registerInterface(static_cast<IBus *>(this));
-    registerAttribute("MapList", &listMap_);
-
-    listMap_.make_list(0);
-    imap_.make_list(0);
+    registerInterface(static_cast<IMemoryOperation *>(this));
     RISCV_mutex_init(&mutexBAccess_);
     RISCV_mutex_init(&mutexNBAccess_);
-    memset(info_, 0, sizeof(info_));
 }
 
 Bus::~Bus() {
@@ -34,13 +29,29 @@ Bus::~Bus() {
 void Bus::postinitService() {
     IMemoryOperation *imem;
     for (unsigned i = 0; i < listMap_.size(); i++) {
-        imem = static_cast<IMemoryOperation *>(RISCV_get_service_iface(
-                listMap_[i].to_string(), IFACE_MEMORY_OPERATION));
-        if (imem == 0) {
-            RISCV_error("Can't find slave device %s", listMap_[i].to_string());
-            continue;
+        const AttributeType &dev = listMap_[i];
+        if (dev.is_string()) {
+            imem = static_cast<IMemoryOperation *>(RISCV_get_service_iface(
+                    dev.to_string(), IFACE_MEMORY_OPERATION));
+            if (imem == 0) {
+                RISCV_error("Can't find slave device %s", dev.to_string());
+                continue;
+            }
+            map(imem);
+        } else if (dev.is_list() && dev.size() == 2) {
+            const AttributeType &devname = dev[0u];
+            const AttributeType &portname = dev[1];
+            imem = static_cast<IMemoryOperation *>(
+                RISCV_get_service_port_iface(devname.to_string(),
+                                             portname.to_string(),
+                                             IFACE_MEMORY_OPERATION));
+            if (imem == 0) {
+                RISCV_error("Can't find slave device %s:%s", 
+                    dev[0u].to_string(), dev[1].to_string());
+                continue;
+            }
+            map(imem);
         }
-        map(imem);
     }
 
     AttributeType clks;
@@ -52,36 +63,32 @@ void Bus::postinitService() {
     }
 }
 
-void Bus::map(IMemoryOperation *imemop) {
-    AttributeType t1(imemop);
-    imap_.add_to_list(&t1);
-}
-
 ETransStatus Bus::b_transport(Axi4TransactionType *trans) {
     IMemoryOperation *imem;
-    bool unmapped = true;
     ETransStatus ret = TRANS_OK;
 
     RISCV_mutex_lock(&mutexBAccess_);
 
+    IMemoryOperation *memdev = 0;
+    uint64_t bar, barsz;
     for (unsigned i = 0; i < imap_.size(); i++) {
         imem = static_cast<IMemoryOperation *>(imap_[i].to_iface());
-        if (imem->getBaseAddress() <= trans->addr
-            && trans->addr < (imem->getBaseAddress() + imem->getLength())) {
-
-            imem->b_transport(trans);
-            unmapped = false;
-            break;
-            /// @todo Check memory overlapping
+        bar = imem->getBaseAddress();
+        barsz = imem->getLength();
+        if (bar <= trans->addr && trans->addr < (bar + barsz)) {
+            if (!memdev || imem->getPriority() > memdev->getPriority()) {
+                memdev = imem;
+            }
         }
     }
 
-    if (unmapped) {
-        RISCV_error("[%" RV_PRI64 "d] Read from unmapped address "
+    if (memdev == 0) {
+        RISCV_error("[%" RV_PRI64 "d] Blocking request to unmapped address "
                     "%08" RV_PRI64 "x", iclk0_->getStepCounter(), trans->addr);
         memset(trans->rpayload.b8, 0xFF, trans->xsize);
         ret = TRANS_ERROR;
     } else {
+        memdev->b_transport(trans);
         RISCV_debug("[%08" RV_PRI64 "x] => [%08x %08x]",
             trans->addr,
             trans->rpayload.b32[1], trans->rpayload.b32[0]);
@@ -100,23 +107,24 @@ ETransStatus Bus::b_transport(Axi4TransactionType *trans) {
 ETransStatus Bus::nb_transport(Axi4TransactionType *trans,
                                IAxi4NbResponse *cb) {
     IMemoryOperation *imem;
-    bool unmapped = true;
     ETransStatus ret = TRANS_OK;
+    IMemoryOperation *memdev = 0;
+    uint64_t bar, barsz;
 
     RISCV_mutex_lock(&mutexNBAccess_);
 
     for (unsigned i = 0; i < imap_.size(); i++) {
         imem = static_cast<IMemoryOperation *>(imap_[i].to_iface());
-        if (imem->getBaseAddress() <= trans->addr
-            && trans->addr < (imem->getBaseAddress() + imem->getLength())) {
-
-            imem->nb_transport(trans, cb);
-            unmapped = false;
-            break;
+        bar = imem->getBaseAddress();
+        barsz = imem->getLength();
+        if (bar <= trans->addr && trans->addr < (bar + barsz)) {
+            if (!memdev || imem->getPriority() > memdev->getPriority()) {
+                memdev = imem;
+            }
         }
     }
 
-    if (unmapped) {
+    if (memdev == 0) {
         RISCV_error("[%" RV_PRI64 "d] Non-blocking request to unmapped address "
                     "%08" RV_PRI64 "x", iclk0_->getStepCounter(), trans->addr);
         memset(trans->rpayload.b8, 0xFF, trans->xsize);
@@ -124,6 +132,7 @@ ETransStatus Bus::nb_transport(Axi4TransactionType *trans,
         cb->nb_response(trans);
         ret = TRANS_ERROR;
     } else {
+        memdev->nb_transport(trans, cb);
         RISCV_debug("Non-blocking request to [%08" RV_PRI64 "x]",
                     trans->addr);
     }

@@ -15,10 +15,13 @@ REGISTER_CLASS(ElfReaderService)
 
 ElfReaderService::ElfReaderService(const char *name) : IService(name) {
     registerInterface(static_cast<IElfReader *>(this));
+    registerAttribute("SourceProc", &sourceProc_);
     image_ = NULL;
     sectionNames_ = NULL;
     symbolList_.make_list(0);
     loadSectionList_.make_list(0);
+    sourceProc_.make_string("");
+    isrc_ = 0;
 }
 
 ElfReaderService::~ElfReaderService() {
@@ -28,6 +31,55 @@ ElfReaderService::~ElfReaderService() {
 }
 
 void ElfReaderService::postinitService() {
+    isrc_ = static_cast<ISourceCode *>(
+       RISCV_get_service_iface(sourceProc_.to_string(),
+                               IFACE_SOURCE_CODE));
+    if (!isrc_) {
+        RISCV_error("SourceCode interface '%s' not found", 
+                    sourceProc_.to_string());
+    }
+}
+
+void ElfReaderService::SwapBytes(Elf32_Half& v) {
+     v = ((v>>8)&0xff) | ((v&0xFF)<<8);
+}
+
+void ElfReaderService::SwapBytes(Elf32_Word& v) {
+    v = ((v>>24)&0xff) | ((v>>8)&0xff00) | ((v<<8)&0xff0000) | ((v&0xFF)<<24);
+}
+
+void ElfReaderService::swap_elfheader(ElfHeaderType *h) {
+    if (header_->e_ident[EI_DATA] != ELFDATA2MSB) {
+        return;
+    }
+    SwapBytes(h->e_shoff);
+    SwapBytes(h->e_shnum);
+}
+
+void ElfReaderService::swap_secheader(SectionHeaderType *sh) {
+    if (header_->e_ident[EI_DATA] != ELFDATA2MSB) {
+        return;
+    }
+    SwapBytes(sh->sh_name);
+    SwapBytes(sh->sh_type);
+    SwapBytes(sh->sh_flags);
+    SwapBytes(sh->sh_addr);
+    SwapBytes(sh->sh_offset);
+    SwapBytes(sh->sh_size);
+    SwapBytes(sh->sh_link);
+    SwapBytes(sh->sh_info);
+    SwapBytes(sh->sh_addralign);
+    SwapBytes(sh->sh_entsize);
+}
+
+void ElfReaderService::swap_symbheader(SymbolTableType *symb) {
+    if (header_->e_ident[EI_DATA] != ELFDATA2MSB) {
+        return;
+    }
+    SwapBytes(symb->st_name);
+    SwapBytes(symb->st_value);
+    SwapBytes(symb->st_size);
+    SwapBytes(symb->st_shndx);
 }
 
 int ElfReaderService::readFile(const char *filename) {
@@ -52,6 +104,8 @@ int ElfReaderService::readFile(const char *filename) {
         return 0;
     }
 
+    symbolNames_ = 0;
+    swap_elfheader(header_);
     if (!header_->e_shoff) {
         fclose(fp);
         return 0;
@@ -63,6 +117,7 @@ int ElfReaderService::readFile(const char *filename) {
         reinterpret_cast<SectionHeaderType *>(&image_[header_->e_shoff]);
     for (int i = 0; i < header_->e_shnum; i++) {
         sh = &sh_tbl_[i];
+        swap_secheader(sh);
         if (sh->sh_type == SHT_STRTAB) {
             processStringTable(sh);
         }
@@ -155,8 +210,9 @@ int ElfReaderService::loadSections() {
         }
     }
     symbolList_.sort(LoadSh_name);
-    symbolListSortByAddr_ = symbolList_;
-    symbolListSortByAddr_.sort(LoadSh_addr);
+    if (isrc_) {
+        isrc_->addSymbols(&symbolList_);
+    }
     return static_cast<int>(total_bytes);
 }
 
@@ -198,6 +254,7 @@ void ElfReaderService::processDebugSymbol(SectionHeaderType *sh) {
     while (symbol_off < sh->sh_size) {
         st = reinterpret_cast<SymbolTableType *>
                     (&image_[sh->sh_offset + symbol_off]);
+        swap_symbheader(st);
         symb_name = &symbolNames_[st->st_name];
 
         if (sh->sh_entsize) {
@@ -223,66 +280,6 @@ void ElfReaderService::processDebugSymbol(SectionHeaderType *sh) {
             symbolList_.add_to_list(&tsymb);
         } else if (st_type == STT_FILE) {
             //file_name = symb_name;
-        }
-    }
-}
-
-void ElfReaderService::addressToSymbol(uint64_t addr, AttributeType *info) {
-    uint64_t sadr, send;
-    int sz = static_cast<int>(symbolListSortByAddr_.size());
-
-    info->make_list(2);
-    (*info)[0u].make_string("");
-    (*info)[1].make_uint64(0);
-    if (sz == 0) {
-        return;
-    }
-    sadr = symbolListSortByAddr_[0u][Symbol_Addr].to_uint64();
-    if (addr < sadr) {
-        return;
-    }
-
-    bool search = true;
-    int dist, pos = sz / 2;
-    dist = pos;
-    while (search) {
-        AttributeType &symb = symbolListSortByAddr_[pos];
-        sadr = symb[Symbol_Addr].to_uint64();
-        send = sadr + symb[Symbol_Size].to_uint64();
-        if (sadr <= addr && addr < send) {
-            (*info)[0u] = symb[Symbol_Name];
-            (*info)[1].make_uint64(addr - sadr);
-            return;
-        }
-        
-        if (addr < sadr) {
-            if (dist == 0 || pos == 0) {
-                search = false;
-            } else if (dist == 1) {
-                dist = 0;
-                pos--;
-            } else {
-                int incr = dist / 2;
-                pos -= incr;
-                dist = (dist / 2) + (dist & 0x1);
-                if (pos < 0) {
-                    pos = 0;
-                }
-            }
-        } else {
-            if (dist == 0 || pos == (sz - 1)) {
-                search = false;
-            } else if (dist == 1) {
-                dist = 0;
-                pos++;
-            } else {
-                int incr = dist / 2;
-                pos += incr;
-                dist = (dist / 2) + (dist & 0x1);
-                if (pos >= sz) {
-                    pos = sz - 1;
-                }
-            }
         }
     }
 }

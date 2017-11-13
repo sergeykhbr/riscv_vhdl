@@ -18,7 +18,6 @@
 #include "coreservices/icmdexec.h"
 #include "coreservices/isrccode.h"
 #include "coreservices/irawlistener.h"
-#include "coreservices/isignallistener.h"
 #include <string>
 //#define DBG_ZEPHYR
 
@@ -28,7 +27,6 @@ class ConsoleService : public IService,
                        public IThread,
                        public IHap,
                        public IRawListener,
-                       public ISignalListener,
                        public IClockListener {
 public:
     explicit ConsoleService(const char *name);
@@ -46,9 +44,6 @@ public:
 
     /** IClockListener */
     virtual void stepCallback(uint64_t t);
-
-    /** ISignalListener */
-    virtual void updateSignal(int start, int width, uint64_t value);
 
 protected:
     /** IThread interface */

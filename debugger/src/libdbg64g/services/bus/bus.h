@@ -11,13 +11,13 @@
 #include "iclass.h"
 #include "iservice.h"
 #include "coreservices/iclock.h"
-#include "coreservices/ibus.h"
+#include "coreservices/imemop.h"
 #include <string>
 
 namespace debugger {
 
 class Bus : public IService,
-            public IBus {
+            public IMemoryOperation {
 public:
     explicit Bus(const char *name);
     virtual ~Bus();
@@ -25,16 +25,13 @@ public:
     /** IService interface */
     virtual void postinitService();
 
-    /** IBus interface */
-    virtual void map(IMemoryOperation *imemop);
+    /** IMemoryOperation interface */
     virtual ETransStatus b_transport(Axi4TransactionType *trans);
     virtual ETransStatus nb_transport(Axi4TransactionType *trans,
                                       IAxi4NbResponse *cb);
     virtual BusUtilType *bus_utilization();
 
 private:
-    AttributeType listMap_;
-    AttributeType imap_;
     // Clock interface is used just to tag debug output with some step value,
     // in a case of several clocks the first found will be used.
     IClock *iclk0_;

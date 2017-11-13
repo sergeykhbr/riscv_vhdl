@@ -11,15 +11,8 @@
 #include "iclass.h"
 #include "iservice.h"
 #include "coreservices/isrccode.h"
-#include "coreservices/ielfreader.h"
 
 namespace debugger {
-
-typedef int (*disasm_opcode_f)(IElfReader *ielf,
-                                uint64_t pc,
-                                uint32_t code,
-                                AttributeType *mnemonic,
-                                AttributeType *comment);
 
 class SourceService : public IService,
                       public ISourceCode {
@@ -31,6 +24,20 @@ public:
     virtual void postinitService();
 
     /** ISourceCode interface */
+    virtual void addFileSymbol(const char *name, uint64_t addr, int sz);
+
+    virtual void addFunctionSymbol(const char *name, uint64_t addr, int sz);
+
+    virtual void addDataSymbol(const char *name, uint64_t addr, int sz);
+
+    virtual void addSymbols(AttributeType *list);
+
+    virtual void getSymbols(AttributeType *list) { *list = symbolListSortByName_; }
+
+    virtual void addressToSymbol(uint64_t addr, AttributeType *info);
+
+    virtual int symbol2Address(const char *name, uint64_t *addr);
+
     virtual int disasm(uint64_t pc,
                        uint8_t *data,
                        int offset,
@@ -40,19 +47,19 @@ public:
                        AttributeType *idata,
                        AttributeType *asmlist);
 
-    virtual void registerBreakpoint(uint64_t addr, uint32_t instr,
-                                    uint64_t flags);
+    virtual void registerBreakpoint(uint64_t addr, uint64_t flags);
 
-    virtual int unregisterBreakpoint(uint64_t addr, uint32_t *instr,
-                                     uint64_t *flags);
+    virtual int unregisterBreakpoint(uint64_t addr, uint64_t *flags);
 
     virtual void getBreakpointList(AttributeType *list);
 
+    virtual bool isBreakpoint(uint64_t addr);
 
 private:
     disasm_opcode_f tblOpcode1_[32];
     AttributeType brList_;
-    IElfReader *ielf_;
+    AttributeType symbolListSortByName_;
+    AttributeType symbolListSortByAddr_;
 };
 
 DECLARE_CLASS(SourceService)

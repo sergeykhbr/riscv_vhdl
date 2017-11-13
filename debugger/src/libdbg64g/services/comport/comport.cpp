@@ -11,7 +11,6 @@
 #include "api_types.h"
 #include "api_core.h"
 #include "coreservices/iserial.h"
-#include "coreservices/isignal.h"
 #include "comport.h"
 
 
@@ -34,6 +33,7 @@ ComPortService::ComPortService(const char *name)
     isEnable_.make_boolean(true);
     uartSim_.make_string("");
     logFile_.make_string("uart0.log");
+    logfile_ = NULL;
     comPortName_.make_string("");
     comPortSpeed_.make_int64(115200);
     portListeners_.make_list(0);
