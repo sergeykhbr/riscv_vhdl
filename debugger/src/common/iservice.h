@@ -11,6 +11,7 @@
 #include "iface.h"
 #include "attribute.h"
 #include "api_utils.h"
+#include "coreservices/imemop.h"
 
 namespace debugger {
 
@@ -22,12 +23,21 @@ public:
         : IFace(IFACE_SERVICE) {
         listInterfaces_ = AttributeType(Attr_List);
         listAttributes_ = AttributeType(Attr_List);
+        listPorts_ = AttributeType(Attr_List);
         registerInterface(static_cast<IService *>(this));
         registerAttribute("LogLevel", &logLevel_);
-        obj_name_ = obj_name;
+        obj_name_.make_string(obj_name);
         logLevel_.make_int64(LOG_ERROR);
     }
-    virtual ~IService() {}
+    virtual ~IService() {
+        // @warning: NEED to unregister attribute from class destructor
+        /*for (unsigned i = 0; i < listAttributes_.size(); i++) {
+            IAttribute *iattr = static_cast<IAttribute *>(
+                                    listAttributes_[i].to_iface());
+            iattr->freeAttrName();
+            iattr->freeAttrDescription();
+        }*/
+    }
 
     virtual void initService(const AttributeType *args) {
         if (!args || !args->is_list()) {
@@ -47,7 +57,7 @@ public:
             }
             (*cur_attr) = item[1];
             if (item.size() >= 3 && item[2].is_string()) {
-                static_cast<IAttribute *>(cur_attr)->setAttrDescription(
+                static_cast<IAttribute *>(cur_attr)->allocAttrDescription(
                     item[2].to_string());
             }
         }
@@ -59,6 +69,20 @@ public:
     virtual void registerInterface(IFace *iface) {
         AttributeType item(iface);
         listInterfaces_.add_to_list(&item);
+        if (strcmp(iface->getFaceName(), IFACE_MEMORY_OPERATION) == 0) {
+            IMemoryOperation *imemop = static_cast<IMemoryOperation *>(iface);
+            registerAttribute("MapList", &imemop->listMap_);
+            registerAttribute("BaseAddress", &imemop->baseAddress_);
+            registerAttribute("Length", &imemop->length_);
+            registerAttribute("Priority", &imemop->priority_);
+        }
+    }
+    virtual void registerPortInterface(const char *portname, IFace *iface) {
+        AttributeType item;
+        item.make_list(2);
+        item[0u].make_string(portname);
+        item[1].make_iface(iface);
+        listPorts_.add_to_list(&item);
     }
 
     virtual void unregisterInterface(IFace *iface) {
@@ -81,9 +105,25 @@ public:
         return NULL;
     }
 
+    virtual IFace *getPortInterface(const char *portname,
+                                    const char *facename) {
+        IFace *tmp;
+        for (unsigned i = 0; i < listPorts_.size(); i++) {
+            AttributeType &item = listPorts_[i];
+            if (!item[0u].is_equal(portname)) {
+                continue;
+            }
+            tmp = item[1].to_iface();
+            if (strcmp(facename, tmp->getFaceName()) == 0) {
+                return tmp;
+            }
+        }
+        return NULL;
+    }
+
     virtual void registerAttribute(const char *name, IAttribute *iface) {
         AttributeType item(iface);
-        iface->setAttrName(name);
+        iface->allocAttrName(name);
         listAttributes_.add_to_list(&item);
     }
 
@@ -98,7 +138,7 @@ public:
         return NULL;
     }
 
-    virtual const char *getObjName() { return obj_name_; }
+    virtual const char *getObjName() { return obj_name_.to_string(); }
 
     virtual AttributeType getConfiguration() {
         AttributeType ret(Attr_Dict);
@@ -119,9 +159,10 @@ public:
 
 protected:
     AttributeType listInterfaces_;
+    AttributeType listPorts_;       // [['portname',iface],*]
     AttributeType listAttributes_;
     AttributeType logLevel_;
-    const char *obj_name_;
+    AttributeType obj_name_;
 };
 
 }  // namespace debugger

@@ -32,6 +32,7 @@
 #include <pthread.h>
 #include <fcntl.h>
 #include <termios.h>  // work with console
+#include <errno.h>
 #endif
 
 namespace debugger {
@@ -76,6 +77,45 @@ typedef struct LibThreadType
     void *args;
     thread_def Handle;
 } LibThreadType;
+
+union Reg8Type {
+    uint8_t byte;
+    int8_t sbyte;
+    struct bits_type {
+        uint8_t b0 : 1;
+        uint8_t b1 : 1;
+        uint8_t b2 : 1;
+        uint8_t b3 : 1;
+        uint8_t b4 : 1;
+        uint8_t b5 : 1;
+        uint8_t b6 : 1;
+        uint8_t b7 : 1;
+    } bits;
+};
+
+union Reg16Type {
+    Reg8Type r8[2];
+    uint16_t word;
+    struct bits_type {
+        uint16_t b0 : 1;
+        uint16_t b1 : 1;
+        uint16_t b2 : 1;
+        uint16_t b3 : 1;
+        uint16_t b4 : 1;
+        uint16_t b5 : 1;
+        uint16_t b6 : 1;
+        uint16_t b7 : 1;
+        uint16_t b8 : 1;
+        uint16_t b9 : 1;
+        uint16_t b10 : 1;
+        uint16_t b11 : 1;
+        uint16_t b12 : 1;
+        uint16_t b13 : 1;
+        uint16_t b14 : 1;
+        uint16_t b15 : 1;
+    } bits;
+    Reg16Type() : word(0) {}
+};
 
 union Reg64Type {
     uint8_t buf[8];

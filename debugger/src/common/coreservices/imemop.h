@@ -9,10 +9,11 @@
 #define __DEBUGGER_IMEMOP_PLUGIN_H__
 
 #include "iface.h"
+#include "attribute.h"
 #include <inttypes.h>
-#include "isocinfo.h"
 
 namespace debugger {
+class IService;
 
 static const char *const IFACE_MEMORY_OPERATION = "IMemoryOperation";
 static const char *const IFACE_AXI4_NB_RESPONSE = "IAxi4NbResponse";
@@ -29,6 +30,16 @@ enum EAxi4Response {
     MemResp_Valid,
     MemResp_Accepted,
     MemResp_Error
+};
+
+enum ETransStatus {
+    TRANS_OK,
+    TRANS_ERROR
+};
+
+struct BusUtilType {
+    uint64_t w_cnt;
+    uint64_t r_cnt;
 };
 
 typedef struct Axi4TransactionType {
@@ -61,14 +72,28 @@ public:
  */
 class IMemoryOperation : public IFace {
 public:
-    IMemoryOperation() : IFace(IFACE_MEMORY_OPERATION) {}
+    IMemoryOperation() : IFace(IFACE_MEMORY_OPERATION) {
+        imap_.make_list(0);
+        listMap_.make_list(0);
+        baseAddress_.make_uint64(0);
+        length_.make_uint64(0);
+    }
+
+    /** 
+     * Add new device to memory space. Mapping device has to implement
+     * IMemoryOperaton interface.
+     */
+    virtual void map(IMemoryOperation *imemop) {
+        AttributeType t1(imemop);
+        imap_.add_to_list(&t1);
+    }
 
     /**
      * Blocking transaction
      *
      * Must be implemented by any functional/systemc device mapped into memory
      */
-    virtual void b_transport(Axi4TransactionType *trans) =0;
+    virtual ETransStatus b_transport(Axi4TransactionType *trans) =0;
 
     /**
      * Non-blocking transaction
@@ -76,15 +101,28 @@ public:
      * Can be implemented for interaction with the SystemC model for an example.
      * Default implementation re-direct to blocking transport
      */
-    virtual void nb_transport(Axi4TransactionType *trans,
+    virtual ETransStatus nb_transport(Axi4TransactionType *trans,
                               IAxi4NbResponse *cb) {
-        b_transport(trans);
+        ETransStatus ret = b_transport(trans);
         cb->nb_response(trans);
+        return ret;
     }
 
-    virtual uint64_t getBaseAddress() =0;
+    virtual uint64_t getBaseAddress() { return baseAddress_.to_uint64(); }
+    virtual void setBaseAddress(uint64_t addr) { baseAddress_.make_uint64(addr); }
 
-    virtual uint64_t getLength() =0;
+    virtual uint64_t getLength() { return length_.to_uint64(); }
+
+    /** Higher value, higher priority */
+    virtual int getPriority() { return priority_.to_int(); }
+
+protected:
+    friend class IService;
+    AttributeType listMap_;
+    AttributeType imap_;
+    AttributeType baseAddress_;
+    AttributeType length_;
+    AttributeType priority_;
 };
 
 }  // namespace debugger

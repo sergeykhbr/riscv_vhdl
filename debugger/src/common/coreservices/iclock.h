@@ -30,6 +30,8 @@ public:
      * GENERATE_CORE_TRACE.
      */
     virtual void registerStepCallback(IClockListener *cb, uint64_t t) =0;
+
+    virtual double getFreqHz() =0;
 };
 
 }  // namespace debugger

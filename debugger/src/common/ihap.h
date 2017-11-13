@@ -18,6 +18,7 @@ static const char *const IFACE_HAP = "IHap";
 enum EHapType {
     HAP_All,
     HAP_ConfigDone,
+    HAP_Halt,
     HAP_BreakSimulation
 };
 

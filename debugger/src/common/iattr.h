@@ -16,19 +16,21 @@ static const char *const IFACE_ATTRIBUTE = "IAttribute";
 
 class IAttribute : public IFace {
 public:
-    IAttribute() : IFace(IFACE_ATTRIBUTE), attr_name_ (NULL) {}
+    IAttribute() : IFace(IFACE_ATTRIBUTE), attr_name_ (NULL), attr_descr_(NULL) {}
 
-    virtual void setAttrName(const char *name) { attr_name_ = name; }
-
+    virtual void allocAttrName(const char *name) =0;
+    virtual void freeAttrName() =0;
     virtual const char *getAttrName() { return attr_name_; }
 
-    virtual void setAttrDescription(const char *descr) { attr_descr_ = descr; }
-
+    virtual void allocAttrDescription(const char *descr) =0;
+    virtual void freeAttrDescription() =0;
     virtual const char *getAttrDescription() { return attr_descr_; }
 
+    virtual void postinitAttribute() {}
+
 protected:
-    const char *attr_name_;
-    const char *attr_descr_;
+    char *attr_name_;
+    char *attr_descr_;
 };
 
 }  // namespace debugger

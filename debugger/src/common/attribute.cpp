@@ -19,6 +19,30 @@ static AttributeType NilAttribute;
 void attribute_to_string(const AttributeType *attr, AutoBuffer *buf);
 int string_to_attribute(const char *cfg, int &off, AttributeType *out);
 
+void AttributeType::allocAttrName(const char *name) {
+    size_t len = strlen(name) + 1;
+    attr_name_ = static_cast<char *>(RISCV_malloc(len));
+    memcpy(attr_name_, name, len);
+}
+
+void AttributeType::freeAttrName() {
+    if (attr_name_) {
+        RISCV_free(attr_name_);
+    }
+}
+
+void AttributeType::allocAttrDescription(const char *descr) {
+    size_t len = strlen(descr) + 1;
+    attr_descr_ = static_cast<char *>(RISCV_malloc(len));
+    memcpy(attr_descr_, descr, len);
+}
+
+void AttributeType::freeAttrDescription() {
+    if (attr_descr_) {
+        RISCV_free(attr_descr_);
+    }
+}
+
 void AttributeType::attr_free() {
     if (size()) {
         if (is_string()) {
@@ -329,8 +353,8 @@ void AttributeType::sort(int idx) {
 
 bool AttributeType::has_key(const char *key) const {
     for (unsigned i = 0; i < size(); i++) {
-        if (strcmp(u_.dict[i].key_.to_string(), key) == 0
-            && !u_.dict[i].value_.is_nil()) {
+        AttributePairType &pair = u_.dict[i];
+        if (pair.key_.is_equal(key) && !pair.value_.is_nil()) {
             return true;
         }
     }
@@ -579,12 +603,14 @@ int string_to_attribute(const char *cfg, int &off,
     } else if (cfg[off] == '(') {
         AutoBuffer buf;
         char byte_value;
-        off = skip_special_symbols(cfg, off);
+        off = skip_special_symbols(cfg, off + 1);
         while (cfg[off] != ')' && cfg[off] != '\0') {
             byte_value = 0;
             for (int n = 0; n < 2; n++) {
                 if (cfg[off] >= 'A' && cfg[off] <= 'F') {
                     byte_value = (byte_value << 4) | ((cfg[off] - 'A') + 10);
+                } else if (cfg[off] >= 'a' && cfg[off] <= 'f') {
+                    byte_value = (byte_value << 4) | ((cfg[off] - 'a') + 10);
                 } else {
                     byte_value = (byte_value << 4) | (cfg[off] - '0');
                 }
@@ -593,6 +619,9 @@ int string_to_attribute(const char *cfg, int &off,
             buf.write_bin(&byte_value, 1);
 
             off = skip_special_symbols(cfg, off);
+            if (cfg[off] == ')') {
+                break;
+            }
             if (cfg[off] != ',') {
                 RISCV_printf(NULL, LOG_ERROR, 
                             "JSON parser error: Wrong data dytes delimiter");
@@ -646,7 +675,14 @@ int string_to_attribute(const char *cfg, int &off,
             double divrate = 1.0;
             double d1 = static_cast<double>(t1);
             off++;
+            bool trim_zeros = true;
             while (digits_cnt < 63 && cfg[off] >= '0' && cfg[off] <= '9') {
+                if (trim_zeros && cfg[off] == '0') {
+                    off++;
+                    divrate *= 10;      // Fix: strtoull(0008) gives 0 
+                    continue;
+                }
+                trim_zeros = false;
                 digits[digits_cnt++] = cfg[off++];
                 digits[digits_cnt] = 0;
                 divrate *= 10.0;

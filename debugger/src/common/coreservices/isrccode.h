@@ -16,10 +16,24 @@ namespace debugger {
 
 static const char *const IFACE_SOURCE_CODE = "ISourceCode";
 
+enum ESymbolType {
+    SYMBOL_TYPE_FILE     = 0x01,
+    SYMBOL_TYPE_FUNCTION = 0x02,
+    SYMBOL_TYPE_DATA     = 0x04
+};
+
+enum ESymbolInfoListItem {
+    Symbol_Name,
+    Symbol_Addr,
+    Symbol_Size,
+    Symbol_Type,
+    Symbol_Total
+};
+
+
 enum EBreakList {
     BrkList_address,
-    BrkList_instr,
-    BrkList_hwflag,
+    BrkList_flags,
     BrkList_Total
 };
 
@@ -46,6 +60,21 @@ class ISourceCode : public IFace {
 public:
     ISourceCode() : IFace(IFACE_SOURCE_CODE) {}
 
+    /** Control Debug Symbols */
+    virtual void addFileSymbol(const char *name, uint64_t addr, int sz) =0;
+
+    virtual void addFunctionSymbol(const char *name, uint64_t addr, int sz) =0;
+
+    virtual void addDataSymbol(const char *name, uint64_t addr, int sz) =0;
+
+    virtual void addSymbols(AttributeType *list) =0;
+
+    virtual void getSymbols(AttributeType *list) =0;
+
+    virtual void addressToSymbol(uint64_t addr, AttributeType *info) =0;
+
+    virtual int symbol2Address(const char *name, uint64_t *addr) =0;
+
     /** Disasm input data buffer.
      *
      * @return disassembled instruction length
@@ -68,8 +97,7 @@ public:
      *                  won't be modified.
      * @param[in] hw    Breakpoint flags
      */
-    virtual void registerBreakpoint(uint64_t addr, uint32_t instr,
-                                    uint64_t flags) =0;
+    virtual void registerBreakpoint(uint64_t addr, uint64_t flags) =0;
 
     /** Unregister breakpoint at specified address.
      *
@@ -78,14 +106,16 @@ public:
      * @param[out] flags Breakpoint flags.
      * @return 0 if no errors
      */
-    virtual int unregisterBreakpoint(uint64_t addr, uint32_t *instr,
-                                     uint64_t *flags) =0;
+    virtual int unregisterBreakpoint(uint64_t addr, uint64_t *flags) =0;
 
     /** Get list of breakpoints.
      *
      * @param[out] lst Breakpoint list.
      */
     virtual void getBreakpointList(AttributeType *list) =0;
+
+    /** Check specified address on breakpoint */
+    virtual bool isBreakpoint(uint64_t addr) =0;
 };
 
 }  // namespace debugger

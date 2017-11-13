@@ -19,7 +19,8 @@ static const char *const IFACE_CLASS = "IClass";
 class IClass : public IFace {
 public:
     IClass(const char *class_name) 
-        : IFace(IFACE_CLASS), class_name_(class_name) {
+        : IFace(IFACE_CLASS) {
+        class_name_.make_string(class_name);
         RISCV_register_class(static_cast<IClass *>(this));
         listInstances_ = AttributeType(Attr_List);
     }
@@ -47,7 +48,7 @@ public:
         }
     }
 
-    virtual const char *getClassName() { return class_name_; }
+    virtual const char *getClassName() { return class_name_.to_string(); }
 
     virtual IService *getInstance(const char *name) {
         IService *ret = NULL;
@@ -77,7 +78,7 @@ public:
     virtual const AttributeType *getInstanceList() { return &listInstances_; }
 
 protected:
-    const char *class_name_;
+    AttributeType class_name_;
     AttributeType listInstances_;
 };
 

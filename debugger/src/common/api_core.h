@@ -373,6 +373,22 @@ IFace *RISCV_get_service(const char *name);
 IFace *RISCV_get_service_iface(const char *servname, const char *facename);
 
 /**
+ * @brief Get interface of the specified device:port.
+ * @details This method can be used in runtime to implement dynamic connection
+ *          of different services and their ports
+ * @code
+ *     ...
+ *     IMemoryOperation *imem = static_cast<IMemoryOperation *>
+ *              (RISCV_get_service_port_iface("mem0", "port0",
+ *                                        IFACE_MEMORY_OPERATION));
+ *     ...
+ * @endcode
+ */
+IFace *RISCV_get_service_port_iface(const char *servname,
+                                    const char *portname,
+                                    const char *facename);
+
+/**
  * @brief Get list of services implementing specific interface.
  * @details This method can return list of services of different classes
  *          and implementing different functionality.

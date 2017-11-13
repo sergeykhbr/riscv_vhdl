@@ -63,6 +63,12 @@ class AttributeType : public IAttribute {
         attr_free();
     }
 
+    /** IAttribute */
+    virtual void allocAttrName(const char *name);
+    virtual void freeAttrName();
+    virtual void allocAttrDescription(const char *descr);
+    virtual void freeAttrDescription();
+
     void attr_free();
 
     explicit AttributeType(const char *str) {
@@ -116,7 +122,7 @@ class AttributeType : public IAttribute {
         return static_cast<int>(u_.integer);
     }
 
-    int to_uint32() const {
+    uint32_t to_uint32() const {
         return static_cast<uint32_t>(u_.integer);
     }
 

@@ -16,21 +16,6 @@ namespace debugger {
 
 static const char *const IFACE_ELFREADER = "IElfReader";
 
-enum ESymbolType {
-    SYMBOL_TYPE_FILE     = 0x01,
-    SYMBOL_TYPE_FUNCTION = 0x02,
-    SYMBOL_TYPE_DATA     = 0x04
-};
-
-enum ESymbolInfoListItem {
-    Symbol_Name,
-    Symbol_Addr,
-    Symbol_Size,
-    Symbol_Type,
-    Symbol_Total
-};
-
-
 class IElfReader : public IFace {
 public:
     IElfReader() : IFace(IFACE_ELFREADER) {}
@@ -46,10 +31,6 @@ public:
     virtual uint64_t sectionSize(unsigned idx) =0;
 
     virtual uint8_t *sectionData(unsigned idx) =0;
-
-    virtual void getSymbols(AttributeType *list) =0;
-
-    virtual void addressToSymbol(uint64_t addr, AttributeType *info) =0;
 };
 
 }  // namespace debugger
