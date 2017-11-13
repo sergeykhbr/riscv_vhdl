@@ -10,6 +10,7 @@
 
 #include "iface.h"
 #include "attribute.h"
+#include "iservice.h"
 
 namespace debugger {
 
@@ -27,6 +28,8 @@ public:
 class IGui : public IFace {
 public:
     IGui() : IFace(IFACE_GUI_PLUGIN) {}
+
+    virtual IService *getParentService() =0;
 
     virtual IFace *getSocInfo() =0;
 

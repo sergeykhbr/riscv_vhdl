@@ -37,11 +37,6 @@ GuiPlugin::GuiPlugin(const char *name)
     RISCV_event_create(&eventCommandAvailable_, "eventCommandAvailable_");
     RISCV_event_create(&config_done_, "eventGuiGonfigGone");
     RISCV_register_hap(static_cast<IHap *>(this));
-    RISCV_mutex_init(&mutexCommand_);
-
-    cmdQueueWrPos_ = 0;
-    cmdQueueRdPos_ = 0;
-    cmdQueueCntTotal_ = 0;
 
     // Adding path to platform libraries:
     char core_path[1024];
@@ -64,7 +59,6 @@ GuiPlugin::GuiPlugin(const char *name)
 GuiPlugin::~GuiPlugin() {
     RISCV_event_close(&config_done_);
     RISCV_event_close(&eventCommandAvailable_);
-    RISCV_mutex_destroy(&mutexCommand_);
 }
 
 void GuiPlugin::postinitService() {
@@ -86,6 +80,10 @@ void GuiPlugin::postinitService() {
     run();
 }
 
+IService *GuiPlugin::getParentService() {
+    return static_cast<IService *>(this);
+}
+
 IFace *GuiPlugin::getSocInfo() {
     return info_;
 }
@@ -97,33 +95,12 @@ const AttributeType *GuiPlugin::getpConfig() {
 void GuiPlugin::registerCommand(IGuiCmdHandler *src,
                                 AttributeType *cmd,
                                 bool silent) {
-   
-    if (cmdQueueCntTotal_ >= CMD_QUEUE_SIZE) {
-        RISCV_error("Command queue size %d overflow. Target not responding",
-                    cmdQueueCntTotal_);
-        return;
-    }
-    //RISCV_info("CMD %s", cmd->to_string());
-    if (cmdQueueWrPos_ == CMD_QUEUE_SIZE) {
-        cmdQueueWrPos_ = 0;
-    }
-    RISCV_mutex_lock(&mutexCommand_);
-    cmdQueue_[cmdQueueWrPos_].silent = silent;
-    cmdQueue_[cmdQueueWrPos_].src = src;
-    cmdQueue_[cmdQueueWrPos_++].cmd = *cmd;
-    cmdQueueCntTotal_++;
-    RISCV_mutex_unlock(&mutexCommand_);
+    queue_.put(src, cmd, silent);
     RISCV_event_set(&eventCommandAvailable_);
 }
 
 void GuiPlugin::removeFromQueue(IFace *iface) {
-    RISCV_mutex_lock(&mutexCommand_);
-    for (unsigned i = 0; i < CMD_QUEUE_SIZE; i++) {
-        if (iface == cmdQueue_[i].src) {
-            cmdQueue_[i].src = NULL;
-        }
-    }
-    RISCV_mutex_unlock(&mutexCommand_);
+    queue_.remove(iface);
 }
 
 void GuiPlugin::hapTriggered(IFace *isrc, EHapType type, 
@@ -148,28 +125,21 @@ void GuiPlugin::busyLoop() {
 
 bool GuiPlugin::processCmdQueue() {
     AttributeType resp;
-    while (cmdQueueCntTotal_ > 0) {
-        AttributeType &cmd = cmdQueue_[cmdQueueRdPos_].cmd;
-        if (cmd.is_invalid()) {
-            RISCV_error("Invalid command string: rdpos=%d; wrpos=%d, total=%d",
-                    cmdQueueRdPos_, cmdQueueWrPos_, cmdQueueCntTotal_);
-            continue;
-        }
+    AttributeType cmd;
+    IFace *iresp;
+    bool silent;
 
-        iexec_->exec(cmd.to_string(), &resp, cmdQueue_[cmdQueueRdPos_].silent);
+    queue_.initProc();
+    queue_.pushPreQueued();
 
-        RISCV_mutex_lock(&mutexCommand_);
-        if (cmdQueue_[cmdQueueRdPos_].src) {
-            cmdQueue_[cmdQueueRdPos_].src->handleResponse(
-                        const_cast<AttributeType *>(&cmd), &resp);
+    while (queue_.getNext(&iresp, cmd, silent)) {
+        iexec_->exec(cmd.to_string(), &resp, silent);
+
+        if (iresp) {
+            static_cast<IGuiCmdHandler *>(iresp)->handleResponse(&cmd, &resp);
         }
         cmd.attr_free();
         resp.attr_free();
-        if ((++cmdQueueRdPos_) >= CMD_QUEUE_SIZE) {
-            cmdQueueRdPos_ = 0;
-        }
-        cmdQueueCntTotal_--;
-        RISCV_mutex_unlock(&mutexCommand_);
     }
     return false;
 }

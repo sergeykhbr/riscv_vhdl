@@ -110,6 +110,9 @@
     <ClCompile Include="..\..\src\gui_plugin\GnssWidgets\PlotWidget.cpp">
       <Filter>GnssWidgets</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\common\async_tqueue.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\api_types.h">
@@ -219,6 +222,9 @@
     </ClInclude>
     <ClInclude Include="..\..\src\gui_plugin\GnssWidgets\PlotWidget.h">
       <Filter>GnssWidgets</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\async_tqueue.h">
+      <Filter>common</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

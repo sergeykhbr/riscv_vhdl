@@ -188,6 +188,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\src\common\async_tqueue.cpp" />
     <ClCompile Include="..\..\src\common\attribute.cpp" />
     <ClCompile Include="..\..\src\common\autobuffer.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\ControlWidget\ConsoleWidget.cpp" />
@@ -223,6 +224,7 @@
   <ItemGroup>
     <ClInclude Include="..\..\src\common\api_types.h" />
     <ClInclude Include="..\..\src\common\api_utils.h" />
+    <ClInclude Include="..\..\src\common\async_tqueue.h" />
     <ClInclude Include="..\..\src\common\attribute.h" />
     <ClInclude Include="..\..\src\common\autobuffer.h" />
     <ClInclude Include="..\..\src\common\iattr.h" />

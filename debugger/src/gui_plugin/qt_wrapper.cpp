@@ -22,6 +22,7 @@ void ui_events_update(void *args) {
     QtWrapper *ui = reinterpret_cast<QtWrapper *>(args);
     ui->eventsUpdate();
     RISCV_event_set(&eventAppDestroyed_);
+    //RISCV_event_close(&eventAppDestroyed_);
 }
 
 QtWrapper::QtWrapper(IGui *igui) 
@@ -51,6 +52,8 @@ void QtWrapper::eventsUpdate() {
 
     mainWindow_->show();
     app.exec();
+    RISCV_unregister_timer(ui_events_update);
+
     delete mainWindow_;
     app.quit();
 }
@@ -61,7 +64,6 @@ void QtWrapper::gracefulClose() {
         mainWindow_->close();
         RISCV_event_wait_ms(&eventAppDestroyed_, 10000);
     }
-    RISCV_event_close(&eventAppDestroyed_);
 }
 
 void QtWrapper::slotMainWindowAboutToClose() {

@@ -11,6 +11,7 @@
 #include "iservice.h"
 #include "ihap.h"
 #include "igui.h"
+#include "async_tqueue.h"
 #include "coreservices/ithread.h"
 #include "coreservices/isocinfo.h"
 #include "coreservices/icmdexec.h"
@@ -34,6 +35,7 @@ public:
     virtual void hapTriggered(IFace *isrc, EHapType type, const char *descr);
 
     /** IGui interface */
+    virtual IService *getParentService();
     virtual IFace *getSocInfo();
     virtual const AttributeType *getpConfig();
     virtual void registerCommand(IGuiCmdHandler *src, AttributeType *cmd,
@@ -59,17 +61,10 @@ private:
     ICmdExecutor *iexec_;
     QtWrapper *ui_;
 
+    GuiAsyncTQueueType queue_;
+
     event_def eventCommandAvailable_;
     event_def config_done_;
-    mutex_def mutexCommand_;
-    struct CmdQueueItemType {
-        AttributeType cmd;
-        IGuiCmdHandler *src;
-        bool silent;
-    } cmdQueue_[CMD_QUEUE_SIZE];
-    int cmdQueueWrPos_;
-    int cmdQueueRdPos_;
-    int cmdQueueCntTotal_;
 };
 
 DECLARE_CLASS(GuiPlugin)
