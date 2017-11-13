@@ -19,7 +19,7 @@ CmdBr::CmdBr(ITap *tap, ISocInfo *info)
         "    flags.\n"
         "Response:\n"
         "    List of lists [[iii]*] if breakpoint list was requested, where:\n"
-        "        i    - uint64_t address value\n"
+        "        i|s  - uint64_t address value or 'string' symbol name\n"
         "        i    - uint32_t instruction value\n"
         "        i    - uint64_t Breakpoint flags: hardware,...\n"
         "    Nil in a case of add/rm breakpoint\n"
@@ -27,11 +27,14 @@ CmdBr::CmdBr(ITap *tap, ISocInfo *info)
         "    br"
         "    br add <addr>\n"
         "    br rm <addr>\n"
+        "    br rm 'symbol_name'\n"
         "    br add <addr> hw\n"
         "Example:\n"
         "    br add 0x10000000\n"
         "    br add 0x00020040 hw\n"
-        "    br rm 0x10000000\n");
+        "    br add 'func1'\n"
+        "    br rm 0x10000000\n"
+        "    br rm 'func1'\n");
 
     AttributeType lstServ;
     RISCV_get_services_with_iface(IFACE_SOURCE_CODE, &lstServ);
@@ -68,22 +71,35 @@ void CmdBr::exec(AttributeType *args, AttributeType *res) {
         flags |= BreakFlag_HW;
     }
 
-    Reg64Type instr;
-    uint64_t addr = (*args)[2].to_uint64();
-    tap_->read(addr, 4, instr.buf);
-    isrc_->registerBreakpoint(addr, instr.buf32[0], flags);
+    DsuMapType *pdsu = info_->getpDsu();
 
-    instr.buf32[0] = 0x00100073;   // EBREAK instruction
-
+    Reg64Type braddr;
+    AttributeType &bpadr = (*args)[2];
+    if (bpadr.is_integer()) {
+        braddr.val = bpadr.to_uint64();
+    } else if (bpadr.is_string()) {
+        if (isrc_->symbol2Address(bpadr.to_string(), &braddr.val) < 0) {
+            generateError(res, "Symbol not found");
+            return;
+        }
+    } else {
+        generateError(res, "Wrong command format");
+        return;
+    }
+    
     if ((*args)[1].is_equal("add")) {
-        tap_->write(addr, 4, instr.buf);
+        uint64_t dsuaddr = 
+            reinterpret_cast<uint64_t>(&pdsu->udbg.v.add_breakpoint);
+        isrc_->registerBreakpoint(braddr.val, flags);
+        tap_->write(dsuaddr, 8, braddr.buf);
         return;
     } 
     
     if ((*args)[1].is_equal("rm")) {
-        if (!isrc_->unregisterBreakpoint(addr, instr.buf32, &flags)) {
-            tap_->write(addr, 4, instr.buf);
-        }
+        uint64_t dsuaddr = 
+            reinterpret_cast<uint64_t>(&pdsu->udbg.v.remove_breakpoint);
+        isrc_->unregisterBreakpoint(braddr.val, &flags);
+        tap_->write(dsuaddr, 8, braddr.buf);
     }
 }
 

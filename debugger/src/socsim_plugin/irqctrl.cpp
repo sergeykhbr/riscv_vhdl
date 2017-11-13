@@ -7,21 +7,23 @@
 
 #include "api_core.h"
 #include "irqctrl.h"
+#include "coreservices/icpuriscv.h"
 
 namespace debugger {
 
 IrqController::IrqController(const char *name)  : IService(name) {
     registerInterface(static_cast<IMemoryOperation *>(this));
-    registerInterface(static_cast<IWire *>(this));
-    registerAttribute("BaseAddress", &baseAddress_);
-    registerAttribute("Length", &length_);
     registerAttribute("CPU", &cpu_);
     registerAttribute("CSR_MIPI", &mipi_);
     registerAttribute("IrqTotal", &irqTotal_);
 
-    baseAddress_.make_uint64(0);
+    char portname[256];
+    for (int i = 0; i < IRQ_MAX; i++) {
+        RISCV_sprintf(portname, sizeof(portname), "irq%d", i);
+        irqlines_[i] = new IrqPort(this, portname);
+    }
+
     mipi_.make_uint64(0x783);
-    length_.make_uint64(0);
     cpu_.make_string("");
     irqTotal_.make_uint64(4);
 
@@ -35,14 +37,14 @@ IrqController::~IrqController() {
 }
 
 void IrqController::postinitService() {
-    icpu_ = static_cast<ICpuRiscV *>(
-        RISCV_get_service_iface(cpu_.to_string(), IFACE_CPU_RISCV));
+    icpu_ = static_cast<ICpuGeneric *>(
+        RISCV_get_service_iface(cpu_.to_string(), IFACE_CPU_GENERIC));
     if (!icpu_) {
         RISCV_error("Can't find ICpuRiscV interface %s", cpu_.to_string());
     }
 }
 
-void IrqController::b_transport(Axi4TransactionType *trans) {
+ETransStatus IrqController::b_transport(Axi4TransactionType *trans) {
     uint64_t mask = (length_.to_uint64() - 1);
     uint64_t off = ((trans->addr - getBaseAddress()) & mask) / 4;
     uint32_t t1;
@@ -199,9 +201,10 @@ void IrqController::b_transport(Axi4TransactionType *trans) {
             }
         }
     }
+    return TRANS_OK;
 }
 
-void IrqController::raiseLine(int idx) {
+/*void IrqController::raiseLine(int idx) {
     if (regs_.irq_lock) {
         irq_wait_unlock |= (~regs_.irq_mask & (1 << idx));
         return;
@@ -211,7 +214,7 @@ void IrqController::raiseLine(int idx) {
         icpu_->raiseSignal(CPU_SIGNAL_EXT_IRQ);   // PLIC interrupt (external)
         RISCV_info("Raise interrupt", NULL);
     }
-}
+}*/
 
 }  // namespace debugger
 

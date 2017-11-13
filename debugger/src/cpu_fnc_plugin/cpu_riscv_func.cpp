@@ -30,8 +30,9 @@ void writeCSR(uint32_t idx, uint64_t val, CpuContextType *data);
 CpuRiscV_Functional::CpuRiscV_Functional(const char *name)  
     : IService(name), IHap(HAP_ConfigDone) {
     registerInterface(static_cast<IThread *>(this));
-    registerInterface(static_cast<ICpuRiscV *>(this));
     registerInterface(static_cast<IClock *>(this));
+    registerInterface(static_cast<ICpuGeneric *>(this));
+    registerInterface(static_cast<ICpuRiscV *>(this));
     registerInterface(static_cast<IHap *>(this));
     registerAttribute("Enable", &isEnable_);
     registerAttribute("Bus", &bus_);
@@ -81,8 +82,8 @@ CpuRiscV_Functional::~CpuRiscV_Functional() {
 void CpuRiscV_Functional::postinitService() {
     CpuContextType *pContext = getpContext();
 
-    pContext->ibus = static_cast<IBus *>(
-       RISCV_get_service_iface(bus_.to_string(), IFACE_BUS));
+    pContext->ibus = static_cast<IMemoryOperation *>(
+       RISCV_get_service_iface(bus_.to_string(), IFACE_MEMORY_OPERATION));
 
     if (!pContext->ibus) {
         RISCV_error("Bus interface '%s' not found", 

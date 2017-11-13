@@ -25,21 +25,13 @@ public:
     virtual void postinitService();
 
     /** IMemoryOperation */
-    virtual void b_transport(Axi4TransactionType *trans);
-    
-    virtual uint64_t getBaseAddress() {
-        return baseAddress_.to_uint64();
-    }
-    virtual uint64_t getLength() {
-        return length_.to_uint64();
-    }
+    virtual ETransStatus b_transport(Axi4TransactionType *trans);
 
 private:
     void addMaster(unsigned idx, unsigned vid, unsigned did);
-    void addSlave(uint64_t addr, uint64_t size, unsigned irq, unsigned vid, unsigned did);
+    void addSlave(uint64_t addr, uint64_t size, unsigned irq,
+                  unsigned vid, unsigned did);
 
-    AttributeType baseAddress_;
-    AttributeType length_;
     AttributeType tech_;
     AttributeType adc_detector_;
 

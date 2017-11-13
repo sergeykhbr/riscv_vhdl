@@ -11,13 +11,13 @@
 #include "iclass.h"
 #include "iservice.h"
 #include "coreservices/imemop.h"
-#include "coreservices/isignal.h"
+#include "coreservices/iwire.h"
 
 namespace debugger {
 
 class GPIO : public IService, 
              public IMemoryOperation,
-             public ISignal {
+             public IWire {
 public:
     GPIO(const char *name);
     ~GPIO();
@@ -26,26 +26,16 @@ public:
     virtual void postinitService();
 
     /** IMemoryOperation */
-    virtual void b_transport(Axi4TransactionType *trans);
-    
-    virtual uint64_t getBaseAddress() {
-        return baseAddress_.to_uint64();
-    }
-    virtual uint64_t getLength() {
-        return length_.to_uint64();
-    }
+    virtual ETransStatus b_transport(Axi4TransactionType *trans);
 
-    /** ISignal interface */
-    virtual void setLevel(int start, int width, uint64_t value);
-    virtual void registerSignalListener(IFace *listener);
-    virtual void unregisterSignalListener(IFace *listener);
-
+    /** IWire interface */
+    virtual void raiseLine() {}
+    virtual void lowerLine() {}
+    virtual void setLevel(bool level) {}
+    virtual bool getLevel() { return 0; }
 
 private:
-    AttributeType baseAddress_;
-    AttributeType length_;
     AttributeType dip_;
-    AttributeType listOfListerners_;
 
     struct gpio_map {
         volatile uint32_t led;

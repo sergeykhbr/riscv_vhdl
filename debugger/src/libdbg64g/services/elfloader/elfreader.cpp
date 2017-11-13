@@ -41,11 +41,28 @@ void ElfReaderService::postinitService() {
 }
 
 void ElfReaderService::SwapBytes(Elf32_Half& v) {
+    if (header_->e_ident[EI_DATA] != ELFDATA2MSB) {
+        return;
+    }
      v = ((v>>8)&0xff) | ((v&0xFF)<<8);
 }
 
 void ElfReaderService::SwapBytes(Elf32_Word& v) {
-    v = ((v>>24)&0xff) | ((v>>8)&0xff00) | ((v<<8)&0xff0000) | ((v&0xFF)<<24);
+    if (header_->e_ident[EI_DATA] != ELFDATA2MSB) {
+        return;
+    }
+    v = ((v >> 24) & 0xff) | ((v >> 8) & 0xff00) 
+      | ((v << 8) & 0xff0000) | ((v & 0xFF) << 24);
+}
+
+void ElfReaderService::SwapBytes(Elf32_DWord& v) {
+    if (header_->e_ident[EI_DATA] != ELFDATA2MSB) {
+        return;
+    }
+    v = ((v >> 56) & 0xffull) | ((v >> 48) & 0xff00ull) 
+      | ((v >> 40) & 0xff0000ull) | ((v >> 32) & 0xff000000ull)
+      | ((v << 8) & 0xff000000ull) | ((v << 16) & 0xff0000000000ull)
+      | ((v << 24) & 0xff0000000000ull) | ((v << 32) & 0xff00000000000000ull);
 }
 
 void ElfReaderService::swap_elfheader(ElfHeaderType *h) {

@@ -13,7 +13,6 @@
 #include "coreservices/ithread.h"
 #include "coreservices/iclock.h"
 #include "coreservices/imemop.h"
-#include "coreservices/ibus.h"
 #include "coreservices/ilink.h"
 #include "coreservices/irawlistener.h"
 #include "coreservices/iwire.h"
@@ -69,15 +68,8 @@ public:
     virtual void postinitService();
 
     /** IMemoryOperation */
-    virtual void b_transport(Axi4TransactionType *trans);
+    virtual ETransStatus b_transport(Axi4TransactionType *trans);
     
-    virtual uint64_t getBaseAddress() {
-        return baseAddress_.to_uint64();
-    }
-    virtual uint64_t getLength() {
-        return length_.to_uint64();
-    }
-
     /** IAxi4NbResponse */
     virtual void nb_response(Axi4TransactionType *trans);
 
@@ -91,8 +83,6 @@ private:
     void sendNAK(UdpEdclCommonType *req);
 
 private:
-    AttributeType baseAddress_;
-    AttributeType length_;
     AttributeType irqLine_;
     AttributeType irqctrl_;
     AttributeType ip_;
@@ -100,7 +90,7 @@ private:
     AttributeType bus_;
     AttributeType transport_;
 
-    IBus *ibus_;
+    IMemoryOperation *ibus_;
     IClock *iclk0_;
     ILink *itransport_;
     IWire *iwire_;

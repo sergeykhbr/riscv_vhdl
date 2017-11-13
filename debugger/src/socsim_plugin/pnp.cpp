@@ -13,13 +13,9 @@ namespace debugger {
 
 PNP::PNP(const char *name)  : IService(name) {
     registerInterface(static_cast<IMemoryOperation *>(this));
-    registerAttribute("BaseAddress", &baseAddress_);
-    registerAttribute("Length", &length_);
     registerAttribute("Tech", &tech_);
     registerAttribute("AdcDetector", &adc_detector_);
 
-    baseAddress_.make_uint64(0);
-    length_.make_uint64(0);
     tech_.make_uint64(0);
     adc_detector_.make_uint64(0);
 
@@ -82,7 +78,7 @@ void PNP::postinitService() {
         static_cast<uint8_t>(adc_detector_.to_uint64());
 }
 
-void PNP::b_transport(Axi4TransactionType *trans) {
+ETransStatus PNP::b_transport(Axi4TransactionType *trans) {
     uint64_t mask = (length_.to_uint64() - 1);
     uint64_t off = ((trans->addr - getBaseAddress()) & mask);
     uint8_t *mem_ = reinterpret_cast<uint8_t *>(&regs_);
@@ -98,6 +94,7 @@ void PNP::b_transport(Axi4TransactionType *trans) {
             trans->rpayload.b8[i] = mem_[off + i];
         }
     }
+    return TRANS_OK;
 }
 
 }  // namespace debugger

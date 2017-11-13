@@ -15,7 +15,7 @@
 #include "coreservices/iserial.h"
 #include "coreservices/iwire.h"
 #include "coreservices/irawlistener.h"
-#include "coreservices/ibus.h"
+#include "coreservices/imemop.h"
 #include <string>
 
 namespace debugger {
@@ -57,7 +57,7 @@ private:
     AttributeType listeners_;  // non-registering attribute
     AttributeType bus_;
 
-    IBus *ibus_;
+    IMemoryOperation *ibus_;
     ISerial *itransport_;
 
     Axi4TransactionType trans_;

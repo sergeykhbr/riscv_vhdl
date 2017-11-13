@@ -201,8 +201,7 @@
                 ['LogLevel',1],
                 ['BaseAddress',0x80003000],
                 ['Length',4096],
-                ['IrqLine',5],
-                ['IrqControl','irqctrl0'],
+                ['IrqControl',['irqctrl0','irq5']],
                 ['ClkSource','core0']
                 ]}]},
     {'Class':'RfControllerClass','Instances':[
@@ -216,8 +215,7 @@
                 ['LogLevel',1],
                 ['BaseAddress',0x80005000],
                 ['Length',4096],
-                ['IrqLine',3],
-                ['IrqControl','irqctrl0'],
+                ['IrqControl',['irqctrl0','irq3']],
                 ['ClkSource','core0']
                 ]}]},
     {'Class':'UartMstClass','Instances':[

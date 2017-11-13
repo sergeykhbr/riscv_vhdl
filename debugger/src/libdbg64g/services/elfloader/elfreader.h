@@ -59,6 +59,7 @@ private:
     void swap_symbheader(SymbolTableType *symb);
     void SwapBytes(Elf32_Half& v);
     void SwapBytes(Elf32_Word& v);
+    void SwapBytes(Elf32_DWord& v);
 
 private:
     enum ELoadSectionItem {

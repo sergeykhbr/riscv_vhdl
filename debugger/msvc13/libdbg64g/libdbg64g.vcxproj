@@ -207,8 +207,8 @@
     <ClInclude Include="..\..\src\common\coreservices\icmdexec.h" />
     <ClInclude Include="..\..\src\common\coreservices\icommand.h" />
     <ClInclude Include="..\..\src\common\coreservices\iautocomplete.h" />
+    <ClInclude Include="..\..\src\common\coreservices\icpugen.h" />
     <ClInclude Include="..\..\src\common\coreservices\icpuriscv.h" />
-    <ClInclude Include="..\..\src\common\coreservices\ibus.h" />
     <ClInclude Include="..\..\src\common\coreservices\ielfreader.h" />
     <ClInclude Include="..\..\src\common\coreservices\ikeylistener.h" />
     <ClInclude Include="..\..\src\common\coreservices\ilink.h" />

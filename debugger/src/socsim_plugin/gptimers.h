@@ -28,22 +28,12 @@ public:
     virtual void postinitService();
 
     /** IMemoryOperation */
-    virtual void b_transport(Axi4TransactionType *trans);
-    
-    virtual uint64_t getBaseAddress() {
-        return baseAddress_.to_uint64();
-    }
-    virtual uint64_t getLength() {
-        return length_.to_uint64();
-    }
+    virtual ETransStatus b_transport(Axi4TransactionType *trans);
 
     /** IClockListener */
     virtual void stepCallback(uint64_t t);
 
 private:
-    AttributeType baseAddress_;
-    AttributeType length_;
-    AttributeType irqLine_;
     AttributeType irqctrl_;
     AttributeType clksrc_;
     IWire *iwire_;

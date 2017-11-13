@@ -24,8 +24,6 @@ static const uint32_t UART_CONTROL_PARITY_ENA = 0x00008000;
 UART::UART(const char *name)  : IService(name) {
     registerInterface(static_cast<IMemoryOperation *>(this));
     registerInterface(static_cast<ISerial *>(this));
-    registerAttribute("BaseAddress", &baseAddress_);
-    registerAttribute("Length", &length_);
     registerAttribute("IrqLine", &irqLine_);
     registerAttribute("IrqControl", &irqctrl_);
 
@@ -69,7 +67,7 @@ int UART::writeData(const char *buf, int sz) {
     }
 
     if (regs_.status & UART_CONTROL_RX_IRQ_ENA) {
-        iwire_->raiseLine(irqLine_.to_int());
+        iwire_->raiseLine();//irqLine_.to_int());
     }
     return sz;
 }
@@ -93,7 +91,7 @@ void UART::unregisterRawListener(IFace *listener) {
     }
 }
 
-void UART::b_transport(Axi4TransactionType *trans) {
+ETransStatus UART::b_transport(Axi4TransactionType *trans) {
     uint64_t mask = (length_.to_uint64() - 1);
     uint64_t off = ((trans->addr - getBaseAddress()) & mask) / 4;
     char wrdata;
@@ -165,6 +163,7 @@ void UART::b_transport(Axi4TransactionType *trans) {
             }
         }
     }
+    return TRANS_OK;
 }
 
 }  // namespace debugger

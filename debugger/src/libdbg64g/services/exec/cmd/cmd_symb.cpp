@@ -7,7 +7,7 @@
 
 #include "iservice.h"
 #include "cmd_symb.h"
-#include "coreservices/ielfreader.h"
+#include "coreservices/isrccode.h"
 
 namespace debugger {
 
@@ -42,21 +42,21 @@ void CmdSymb::exec(AttributeType *args, AttributeType *res) {
     }
 
     AttributeType lstServ;
-    RISCV_get_services_with_iface(IFACE_ELFREADER, &lstServ);
+    RISCV_get_services_with_iface(IFACE_SOURCE_CODE, &lstServ);
     if (lstServ.size() == 0) {
-        generateError(res, "Elf-service not found");
+        generateError(res, "SourceCode service not found");
         return;
     }
     IService *iserv = static_cast<IService *>(lstServ[0u].to_iface());
-    IElfReader *elf = static_cast<IElfReader *>(
-                        iserv->getInterface(IFACE_ELFREADER));
+    ISourceCode *isrc = static_cast<ISourceCode *>(
+                        iserv->getInterface(IFACE_SOURCE_CODE));
 
     if (args->size() == 2 && (*args)[1].is_string()) {
         AttributeType allSymb;
-        elf->getSymbols(&allSymb);
+        isrc->getSymbols(&allSymb);
         applyFilter((*args)[1].to_string(), &allSymb, res);
     } else {
-        elf->getSymbols(res);
+        isrc->getSymbols(res);
     }
 }
 

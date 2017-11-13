@@ -20,19 +20,9 @@ public:
     FseV2(const char *name);
 
     /** IMemoryOperation */
-    virtual void b_transport(Axi4TransactionType *trans);
-    
-    virtual uint64_t getBaseAddress() {
-        return baseAddress_.to_uint64();
-    }
-    virtual uint64_t getLength() {
-        return length_.to_uint64();
-    }
+    virtual ETransStatus b_transport(Axi4TransactionType *trans);
 
 private:
-    AttributeType baseAddress_;
-    AttributeType length_;
-
     static const int FSE2_CHAN_MAX = 32;
 
     struct fsev2_chan_fields {

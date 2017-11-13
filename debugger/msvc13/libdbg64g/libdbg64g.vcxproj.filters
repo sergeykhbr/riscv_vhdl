@@ -229,9 +229,6 @@
     <ClInclude Include="..\..\src\libdbg64g\services\bus\bus.h">
       <Filter>Source Files\services\bus</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\common\coreservices\ibus.h">
-      <Filter>Source Files\common\coreservices</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\common\ihap.h">
       <Filter>Source Files\common</Filter>
     </ClInclude>
@@ -353,6 +350,9 @@
     </ClInclude>
     <ClInclude Include="..\..\src\libdbg64g\services\debug\udp_dbglink.h">
       <Filter>Source Files\services\debug</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\coreservices\icpugen.h">
+      <Filter>Source Files\common\coreservices</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

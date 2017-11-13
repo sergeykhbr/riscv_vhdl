@@ -13,6 +13,7 @@
 
 #include "api_core.h"
 #include "uartmst.h"
+#include "coreservices/isocinfo.h"
 
 namespace debugger {
 
@@ -56,8 +57,8 @@ UartMst::~UartMst() {
 }
 
 void UartMst::postinitService() {
-    ibus_ = static_cast<IBus *>(
-        RISCV_get_service_iface(bus_.to_string(), IFACE_BUS));
+    ibus_ = static_cast<IMemoryOperation *>(
+        RISCV_get_service_iface(bus_.to_string(), IFACE_MEMORY_OPERATION));
     if (!ibus_) {
         RISCV_error("Can't find IBus interface %s", bus_.to_string());
     }

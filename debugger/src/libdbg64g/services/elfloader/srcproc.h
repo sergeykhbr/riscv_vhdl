@@ -14,6 +14,9 @@
 
 namespace debugger {
 
+typedef int (*disasm_opcode_f)(ISourceCode *isrc, uint64_t pc, uint32_t code,
+                              AttributeType *mnemonic, AttributeType *comment);
+
 class SourceService : public IService,
                       public ISourceCode {
 public:

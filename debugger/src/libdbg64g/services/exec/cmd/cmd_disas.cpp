@@ -61,8 +61,7 @@ void CmdDisas::exec(AttributeType *args, AttributeType *res) {
     AttributeType *mem_data, *asm_data;
     AttributeType membuf, asmbuf;
     if ((*args)[2].is_integer()) {
-        // 4-bytes alignment
-        uint32_t sz = ((*args)[2].to_uint32() + 3) & ~0x3;
+        uint32_t sz = (*args)[2].to_uint32();
         membuf.make_data(sz);
         mem_data = &membuf;
         if (tap_->read(addr, sz, membuf.data()) == TAP_ERROR) {

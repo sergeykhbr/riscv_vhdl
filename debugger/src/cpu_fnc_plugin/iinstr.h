@@ -11,7 +11,7 @@
 #include <inttypes.h>
 #include <fstream>
 #include "riscv-isa.h"
-#include "coreservices/ibus.h"
+#include "coreservices/imemop.h"
 #include "coreservices/isocinfo.h"
 
 namespace debugger {
@@ -34,7 +34,7 @@ struct CpuContextType {
     uint64_t br_address_fetch;
     uint32_t br_instr_fetch;
     bool reset;
-    IBus *ibus;
+    IMemoryOperation *ibus;
     char disasm[256];
     std::ofstream *reg_trace_file;
     std::ofstream *mem_trace_file;

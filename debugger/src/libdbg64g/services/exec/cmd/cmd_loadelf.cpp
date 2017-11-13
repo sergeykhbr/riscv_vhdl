@@ -71,10 +71,12 @@ void CmdLoadElf::exec(AttributeType *args, AttributeType *res) {
     uint64_t addr = reinterpret_cast<uint64_t>(&dsu->ulocal.v.soft_reset);
     tap_->write(addr, 8, reinterpret_cast<uint8_t *>(&soft_reset));
 
+    uint64_t sec_addr;
+    int sec_sz;
     for (unsigned i = 0; i < elf->loadableSectionTotal(); i++) {
-        tap_->write(elf->sectionAddress(i),
-                    static_cast<int>(elf->sectionSize(i)),
-                    elf->sectionData(i));
+        sec_addr = elf->sectionAddress(i);
+        sec_sz = static_cast<int>(elf->sectionSize(i));
+        tap_->write(sec_addr, sec_sz, elf->sectionData(i));
     }
 
     soft_reset = 0;

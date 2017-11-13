@@ -9,6 +9,7 @@
 #include "iservice.h"
 #include "coreservices/ilink.h"
 #include "coreservices/ithread.h"
+#include "coreservices/icpugen.h"
 #include "coreservices/icpuriscv.h"
 /** Plugin verification */
 #include "simple_plugin/isimple_plugin.h"
@@ -101,8 +102,8 @@ int main(int argc, char* argv[]) {
     RISCV_get_services_with_iface(IFACE_CPU_RISCV, &cpu_list);
     for (unsigned i = 0; i < cpu_list.size(); i++) {
         IService *iserv = static_cast<IService *>(cpu_list[i].to_iface());
-        ICpuRiscV *icpu = static_cast<ICpuRiscV *>(
-                    iserv->getInterface(IFACE_CPU_RISCV));
+        ICpuGeneric *icpu = static_cast<ICpuGeneric *>(
+                    iserv->getInterface(IFACE_CPU_GENERIC));
         icpu->lowerSignal(CPU_SIGNAL_RESET);  // Active HIGH. Unreset CPU model.
     }
 

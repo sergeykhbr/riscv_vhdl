@@ -45,8 +45,8 @@ void EBreakHandler::handleResponse(AttributeType *req,
     for (unsigned i = 0; i < brList_.size(); i++) {
         const AttributeType &br = brList_[i];
         if (br_addr == br[BrkList_address].to_uint64()) {
-            br_instr = br[BrkList_instr].to_int();
-            br_hw = br[BrkList_hwflag].to_bool();
+            //br_instr = br[BrkList_instr].to_int();
+            br_hw = br[BrkList_flags].to_bool();
             break;
         }
     }

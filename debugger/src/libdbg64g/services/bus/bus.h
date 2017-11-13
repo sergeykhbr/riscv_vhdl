@@ -12,6 +12,7 @@
 #include "iservice.h"
 #include "coreservices/iclock.h"
 #include "coreservices/imemop.h"
+#include "coreservices/isocinfo.h"
 #include <string>
 
 namespace debugger {

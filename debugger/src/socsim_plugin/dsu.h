@@ -17,8 +17,8 @@
 #include "iservice.h"
 #include "coreservices/imemop.h"
 #include "coreservices/iwire.h"
-#include "coreservices/icpuriscv.h"
-#include "coreservices/ibus.h"
+#include "coreservices/icpugen.h"
+#include "coreservices/imemop.h"
 
 namespace debugger {
 
@@ -33,17 +33,9 @@ public:
     virtual void postinitService();
 
     /** IMemoryOperation */
-    virtual void b_transport(Axi4TransactionType *trans);
-    virtual void nb_transport(Axi4TransactionType *trans,
-                              IAxi4NbResponse *cb);
-
-    
-    virtual uint64_t getBaseAddress() {
-        return baseAddress_.to_uint64();
-    }
-    virtual uint64_t getLength() {
-        return length_.to_uint64();
-    }
+    virtual ETransStatus b_transport(Axi4TransactionType *trans);
+    virtual ETransStatus nb_transport(Axi4TransactionType *trans,
+                                      IAxi4NbResponse *cb);
 
     /** IDbgNbResponse */
     virtual void nb_response_debug_port(DebugPortTransactionType *trans);
@@ -53,12 +45,10 @@ private:
     void writeLocal(uint64_t off, Axi4TransactionType *trans);
 
 private:
-    AttributeType baseAddress_;
-    AttributeType length_;
     AttributeType cpu_;
     AttributeType bus_;
-    ICpuRiscV *icpu_;
-    IBus *ibus_;
+    ICpuGeneric *icpu_;
+    IMemoryOperation *ibus_;
     uint64_t shifter32_;
     uint64_t wdata64_;
     uint64_t soft_reset_;

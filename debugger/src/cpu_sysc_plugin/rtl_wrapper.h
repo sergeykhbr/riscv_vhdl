@@ -8,7 +8,8 @@
 #define __DEBUGGER_RTL_WRAPPER_H__
 
 #include "async_tqueue.h"
-#include "coreservices/ibus.h"
+#include "coreservices/imemop.h"
+#include "coreservices/icpugen.h"
 #include "coreservices/icpuriscv.h"
 #include "coreservices/iclklistener.h"
 #include "riverlib/river_cfg.h"
@@ -18,6 +19,7 @@
 namespace debugger {
 
 class RtlWrapper : public sc_module,
+                   public ICpuGeneric,
                    public ICpuRiscV {
 public:
     sc_clock o_clk;
@@ -74,11 +76,11 @@ public:
 public:
     void generateRef(bool v) { generate_ref_ = v; }
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
-    void setBus(IBus *v) { ibus_ = v; }
+    void setBus(IMemoryOperation *v) { ibus_ = v; }
     /** Default time resolution 1 picosecond. */
     void setClockHz(double hz);
    
-    /** ICpuRiscV interface */
+    /** ICpuGeneric interface */
     virtual void registerStepCallback(IClockListener *cb, uint64_t t);
     virtual void raiseSignal(int idx);
     virtual void lowerSignal(int idx);
@@ -91,10 +93,10 @@ private:
     uint32_t mask2size(uint8_t mask);       // nask with removed offset
 
 private:
-    IBus *ibus_;
+    IMemoryOperation *ibus_;
     IFace *iparent_;    // pointer on parent module object (used for logging)
     int clockCycles_;   // default in [ps]
-    AsyncTQueueType step_queue_;
+    ClockAsyncTQueueType step_queue_;
     uint64_t step_cnt_z;
     bool generate_ref_;
 

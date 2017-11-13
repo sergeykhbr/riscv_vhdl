@@ -19,13 +19,11 @@ MemorySim::MemorySim(const char *name)  : IService(name) {
     registerInterface(static_cast<IMemoryOperation *>(this));
     registerAttribute("InitFile", &initFile_);
     registerAttribute("ReadOnly", &readOnly_);
-    registerAttribute("BaseAddress", &baseAddress_);
-    registerAttribute("Length", &length_);
+    registerAttribute("BinaryFile", &binaryFile_);
 
     initFile_.make_string("");
     readOnly_.make_boolean(false);
-    baseAddress_.make_uint64(0);
-    length_.make_uint64(0);
+    binaryFile_.make_boolean(false);
     mem_ = NULL;
 }
 
@@ -66,44 +64,53 @@ void MemorySim::postinitService() {
         return;
     }
 
-    bool bhalf = false;
-    int rd_symb;
-    uint8_t symb;
-    int linecnt = 0;
-    int symbinline = SYMB_IN_LINE - 1;
-    while (!feof(fp)) {
-        rd_symb = fgetc(fp);
-        if (!chishex(rd_symb))
-            continue;
+    if (binaryFile_.to_bool()) {
+        fseek(fp, 0, SEEK_END);
+        uint64_t fsz = ftell(fp);
+        if (fsz > length_.to_uint64()) {
+            fsz = length_.to_uint64();
+        }
+        fseek(fp, 0, SEEK_SET);
+        fread(mem_, 1, static_cast<size_t>(fsz), fp);
+    } else {
+        bool bhalf = false;
+        int rd_symb;
+        uint8_t symb;
+        int linecnt = 0;
+        int symbinline = SYMB_IN_LINE - 1;
+        while (!feof(fp)) {
+            rd_symb = fgetc(fp);
+            if (!chishex(rd_symb))
+                continue;
 
-        if (!bhalf) {
-            bhalf = true;
-            symb = chtohex(rd_symb) << 4;
-            continue;
-        } 
+            if (!bhalf) {
+                bhalf = true;
+                symb = chtohex(rd_symb) << 4;
+                continue;
+            } 
 
-        bhalf = false;
-        symb |= chtohex(rd_symb) & 0xf;
+            bhalf = false;
+            symb |= chtohex(rd_symb) & 0xf;
 
-        if ((SYMB_IN_LINE * linecnt + symbinline) >= 
-                    static_cast<int>(length_.to_uint64())) {
-            RISCV_error("HEX file tries to write out "
-                        "of allocated array\n", NULL);
-            break;
-        } 
+            if ((SYMB_IN_LINE * linecnt + symbinline) >= 
+                        static_cast<int>(length_.to_uint64())) {
+                RISCV_error("HEX file tries to write out "
+                            "of allocated array\n", NULL);
+                break;
+            } 
 
-        mem_[SYMB_IN_LINE * linecnt + symbinline] = symb;
-        if (--symbinline < 0) {
-            linecnt++;
-            symbinline = SYMB_IN_LINE - 1;
+            mem_[SYMB_IN_LINE * linecnt + symbinline] = symb;
+            if (--symbinline < 0) {
+                linecnt++;
+                symbinline = SYMB_IN_LINE - 1;
+            }
         }
     }
     fclose(fp);
 }
 
-void MemorySim::b_transport(Axi4TransactionType *trans) {
-    uint64_t mask = (length_.to_uint64() - 1);
-    uint64_t off = (trans->addr - getBaseAddress()) & mask;
+ETransStatus MemorySim::b_transport(Axi4TransactionType *trans) {
+    uint64_t off = (trans->addr - getBaseAddress()) % length_.to_int();
     trans->response = MemResp_Valid;
     if (trans->action == MemAction_Write) {
         if (readOnly_.to_bool()) {
@@ -127,6 +134,7 @@ void MemorySim::b_transport(Axi4TransactionType *trans) {
         trans->addr,
         rw_str[trans->action],
         pdata[trans->action][1], pdata[trans->action][0]);
+    return TRANS_OK;
 }
 
 bool MemorySim::chishex(int s) {

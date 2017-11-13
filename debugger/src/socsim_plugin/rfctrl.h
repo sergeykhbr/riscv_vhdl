@@ -24,19 +24,9 @@ public:
     virtual void postinitService();
 
     /** IMemoryOperation */
-    virtual void b_transport(Axi4TransactionType *trans);
+    virtual ETransStatus b_transport(Axi4TransactionType *trans);
     
-    virtual uint64_t getBaseAddress() {
-        return baseAddress_.to_uint64();
-    }
-    virtual uint64_t getLength() {
-        return length_.to_uint64();
-    }
-
 private:
-    AttributeType baseAddress_;
-    AttributeType length_;
-
     struct rfctrl_map {
         volatile uint32_t conf1;		// 0x00
         volatile uint32_t conf2;		// 0x04

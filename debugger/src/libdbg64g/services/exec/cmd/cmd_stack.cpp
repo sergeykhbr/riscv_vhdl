@@ -7,7 +7,7 @@
 
 #include "cmd_stack.h"
 #include "iservice.h"
-#include "coreservices/ielfreader.h"
+#include "coreservices/isrccode.h"
 
 namespace debugger {
 
@@ -60,15 +60,16 @@ void CmdStack::exec(AttributeType *args, AttributeType *res) {
 
     AttributeType tbuf, lstServ;
     uint64_t *p_data;
-    IElfReader *elf = 0;
+    ISourceCode *isrc = 0;
     uint64_t from_addr, to_addr;
     tbuf.make_data(16*trace_sz);
     tap_->read(addr, tbuf.size(), tbuf.data());
 
-    RISCV_get_services_with_iface(IFACE_ELFREADER, &lstServ);
+    RISCV_get_services_with_iface(IFACE_SOURCE_CODE, &lstServ);
     if (lstServ.size() >= 0) {
         IService *iserv = static_cast<IService *>(lstServ[0u].to_iface());
-        elf = static_cast<IElfReader *>(iserv->getInterface(IFACE_ELFREADER));
+        isrc = static_cast<ISourceCode *>(
+                iserv->getInterface(IFACE_SOURCE_CODE));
     }
 
     res->make_list(t1.buf32[0]);
@@ -81,9 +82,9 @@ void CmdStack::exec(AttributeType *args, AttributeType *res) {
         item.make_list(4);
         item[0u].make_uint64(from_addr);
         item[2].make_uint64(to_addr);
-        if (elf) {
-            elf->addressToSymbol(from_addr, &item[1]);
-            elf->addressToSymbol(to_addr, &item[3]);
+        if (isrc) {
+            isrc->addressToSymbol(from_addr, &item[1]);
+            isrc->addressToSymbol(to_addr, &item[3]);
         }
     }
 }

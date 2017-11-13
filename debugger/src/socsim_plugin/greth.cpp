@@ -7,6 +7,7 @@
 
 #include "api_core.h"
 #include "greth.h"
+#include "coreservices/isocinfo.h"
 
 namespace debugger {
 
@@ -18,8 +19,6 @@ Greth::Greth(const char *name)
     registerInterface(static_cast<IThread *>(this));
     registerInterface(static_cast<IMemoryOperation *>(this));
     registerInterface(static_cast<IAxi4NbResponse *>(this));
-    registerAttribute("BaseAddress", &baseAddress_);
-    registerAttribute("Length", &length_);
     registerAttribute("IrqLine", &irqLine_);
     registerAttribute("IrqControl", &irqctrl_);
     registerAttribute("IP", &ip_);
@@ -27,8 +26,6 @@ Greth::Greth(const char *name)
     registerAttribute("Bus", &bus_);
     registerAttribute("Transport", &transport_);
 
-    baseAddress_.make_uint64(0);
-    length_.make_uint64(0);
     irqLine_.make_uint64(0);
     irqctrl_.make_string("");
     ip_.make_uint64(0);
@@ -45,8 +42,8 @@ Greth::~Greth() {
 }
 
 void Greth::postinitService() {
-    ibus_ = static_cast<IBus *>(
-       RISCV_get_service_iface(bus_.to_string(), IFACE_BUS));
+    ibus_ = static_cast<IMemoryOperation *>(
+       RISCV_get_service_iface(bus_.to_string(), IFACE_MEMORY_OPERATION));
 
     if (!ibus_) {
         RISCV_error("Bus interface '%s' not found", 
@@ -89,7 +86,8 @@ void Greth::postinitService() {
 
 void Greth::busyLoop() {
     int bytes;
-    uint32_t *tbuf;
+    uint8_t *tbuf;
+    uint32_t bytes_to_read;
     UdpEdclCommonType req;
     RISCV_info("Ethernet thread was started", NULL);
     trans_.source_idx = CFG_NASTI_MASTER_ETHMAC;          // Hardcoded in VHDL value
@@ -110,30 +108,36 @@ void Greth::busyLoop() {
         }
 
         trans_.addr = req.address;
-        trans_.xsize = 4;
         if (req.control.request.write == 0) {
             trans_.action = MemAction_Read;
-            tbuf = reinterpret_cast<uint32_t *>(&txbuf_[10]);
+            trans_.wstrb = 0;
+            tbuf = &txbuf_[10];
             bytes = sizeof(UdpEdclCommonType) + req.control.request.len;
         } else {
             trans_.action = MemAction_Write;
-            trans_.wstrb = (1 << trans_.xsize) - 1;
-            tbuf = reinterpret_cast<uint32_t *>(&rxbuf_[10]);
+            tbuf = &rxbuf_[10];
             bytes = sizeof(UdpEdclCommonType);
         }
-        for (unsigned i = 0; i < req.control.request.len / 4u; i++) {
+        bytes_to_read = req.control.request.len;
+        while (bytes_to_read) {
+            trans_.xsize = bytes_to_read;
+            if (trans_.xsize > 8) {
+                trans_.xsize = 8;
+            }
             if (trans_.action == MemAction_Write) {
-                trans_.wpayload.b32[0] = *tbuf;
+                memcpy(trans_.wpayload.b8, tbuf, trans_.xsize);
+                trans_.wstrb = (1 << trans_.xsize) - 1;
             }
             RISCV_event_clear(&event_tap_);
             ibus_->nb_transport(&trans_, this);
             if (RISCV_event_wait_ms(&event_tap_, 500) != 0) {
                 RISCV_error("CPU queue callback timeout", NULL);
             } else if (trans_.action == MemAction_Read) {
-                *tbuf = trans_.rpayload.b32[0];
+                memcpy(tbuf, trans_.rpayload.b8, trans_.xsize);
             }
-            tbuf++;
-            trans_.addr += 4;
+            tbuf += trans_.xsize;
+            trans_.addr += trans_.xsize;
+            bytes_to_read -= trans_.xsize;
         }
 
         req.control.response.nak = 0;
@@ -149,8 +153,9 @@ void Greth::nb_response(Axi4TransactionType *trans) {
     RISCV_event_set(&event_tap_);
 }
 
-void Greth::b_transport(Axi4TransactionType *trans) {
+ETransStatus Greth::b_transport(Axi4TransactionType *trans) {
     RISCV_error("ETH Slave registers not implemented", NULL);
+    return TRANS_OK;
 }
 
 void Greth::sendNAK(UdpEdclCommonType *req) {

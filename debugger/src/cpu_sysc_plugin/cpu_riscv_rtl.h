@@ -24,7 +24,6 @@
 #include "coreservices/ithread.h"
 #include "coreservices/icpuriscv.h"
 #include "coreservices/imemop.h"
-#include "coreservices/ibus.h"
 #include "coreservices/iclock.h"
 #include "rtl_wrapper.h"
 #include "riverlib/river_top.h"
@@ -52,6 +51,8 @@ public:
         wrapper_->registerStepCallback(cb, t);
     }
 
+    virtual double getFreqHz() { return 1.0; }
+
     /** IHap */
     virtual void hapTriggered(IFace *isrc, EHapType type, const char *descr);
 
@@ -72,7 +73,7 @@ private:
     AttributeType OutVcdFile_;
     AttributeType GenerateRef_;
     event_def config_done_;
-    IBus *ibus_;
+    IMemoryOperation *ibus_;
 
     sc_signal<bool> w_clk;
     sc_signal<bool> w_nrst;

@@ -7,10 +7,9 @@
 
 #include "api_core.h"
 #include "rtl_wrapper.h"
-#if 1
 #include "iservice.h"
 #include "coreservices/iserial.h"
-#endif
+#include "coreservices/isocinfo.h"
 
 //#define SIMULATE_WAIT_STATES
 

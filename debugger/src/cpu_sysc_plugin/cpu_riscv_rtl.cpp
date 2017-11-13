@@ -38,8 +38,8 @@ CpuRiscV_RTL::~CpuRiscV_RTL() {
 }
 
 void CpuRiscV_RTL::postinitService() {
-    ibus_ = static_cast<IBus *>(
-       RISCV_get_service_iface(bus_.to_string(), IFACE_BUS));
+    ibus_ = static_cast<IMemoryOperation *>(
+       RISCV_get_service_iface(bus_.to_string(), IFACE_MEMORY_OPERATION));
 
     if (!ibus_) {
         RISCV_error("Bus interface '%s' not found", 

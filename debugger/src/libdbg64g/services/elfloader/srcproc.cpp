@@ -16,31 +16,31 @@ REGISTER_CLASS(SourceService)
 
 const char *const *RN = IREGS_NAMES;
 
-int opcode_0x00(IElfReader *ielf, uint64_t pc, uint32_t code,
+int opcode_0x00(ISourceCode *isrc, uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment);
-int opcode_0x03(IElfReader *ielf, uint64_t pc, uint32_t code,
+int opcode_0x03(ISourceCode *isrc, uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment);
-int opcode_0x04(IElfReader *ielf, uint64_t pc, uint32_t code,
+int opcode_0x04(ISourceCode *isrc, uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment);
-int opcode_0x05(IElfReader *ielf, uint64_t pc, uint32_t code,
+int opcode_0x05(ISourceCode *isrc, uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment);
-int opcode_0x06(IElfReader *ielf, uint64_t pc, uint32_t code,
+int opcode_0x06(ISourceCode *isrc, uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment);
-int opcode_0x08(IElfReader *ielf, uint64_t pc, uint32_t code,
+int opcode_0x08(ISourceCode *isrc, uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment);
-int opcode_0x0C(IElfReader *ielf, uint64_t pc, uint32_t code,
+int opcode_0x0C(ISourceCode *isrc, uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment);
-int opcode_0x0D(IElfReader *ielf, uint64_t pc, uint32_t code,
+int opcode_0x0D(ISourceCode *isrc, uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment);
-int opcode_0x0E(IElfReader *ielf, uint64_t pc, uint32_t code,
+int opcode_0x0E(ISourceCode *isrc, uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment);
-int opcode_0x18(IElfReader *ielf, uint64_t pc, uint32_t code,
+int opcode_0x18(ISourceCode *isrc, uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment);
-int opcode_0x19(IElfReader *ielf, uint64_t pc, uint32_t code,
+int opcode_0x19(ISourceCode *isrc, uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment);
-int opcode_0x1B(IElfReader *ielf, uint64_t pc, uint32_t code,
+int opcode_0x1B(ISourceCode *isrc, uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment);
-int opcode_0x1C(IElfReader *ielf, uint64_t pc, uint32_t code,
+int opcode_0x1C(ISourceCode *isrc, uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment);
 
 
@@ -249,7 +249,7 @@ int SourceService::disasm(uint64_t pc,
     uint32_t val = *reinterpret_cast<uint32_t*>(&data[offset]);
     uint32_t opcode1 = (val >> 2) & 0x1f;
     if (tblOpcode1_[opcode1]) {
-        return tblOpcode1_[opcode1](ielf_,
+        return tblOpcode1_[opcode1](static_cast<ISourceCode *>(this),
                                     pc + static_cast<uint64_t>(offset),
                                     val,
                                     mnemonic,
@@ -302,7 +302,7 @@ void SourceService::disasm(uint64_t pc,
                         &asm_item[ASM_comment]);
 
 #if 1
-        uint64_t swap = code.data;
+        uint64_t swap = code.val;
 #else
         uint64_t swap = 0;
         for (int i = 0; i < codesz; i++) {
@@ -316,7 +316,7 @@ void SourceService::disasm(uint64_t pc,
     }
 }
 
-int opcode_0x00(IElfReader *ielf, uint64_t pc, uint32_t code,
+int opcode_0x00(ISourceCode *isrc, uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment) {
     char tstr[128] = "unimpl";
     char tcomm[128] = "";
@@ -361,7 +361,7 @@ int opcode_0x00(IElfReader *ielf, uint64_t pc, uint32_t code,
     return 4;
 }
 
-int opcode_0x03(IElfReader *ielf, uint64_t pc, uint32_t code,
+int opcode_0x03(ISourceCode *isrc, uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment) {
     char tstr[128] = "unimpl";
     char tcomm[128] = "";
@@ -382,7 +382,7 @@ int opcode_0x03(IElfReader *ielf, uint64_t pc, uint32_t code,
     return 4;
 }
 
-int opcode_0x04(IElfReader *ielf, uint64_t pc, uint32_t code,
+int opcode_0x04(ISourceCode *isrc, uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment) {
     char tstr[128] = "unimpl";
     char tcomm[128] = "";
@@ -444,7 +444,7 @@ int opcode_0x04(IElfReader *ielf, uint64_t pc, uint32_t code,
     return 4;
 }
 
-int opcode_0x05(IElfReader *ielf, uint64_t pc, uint32_t code,
+int opcode_0x05(ISourceCode *isrc, uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment) {
     char tstr[128] = "unimpl";
     char tcomm[128] = "";
@@ -463,7 +463,7 @@ int opcode_0x05(IElfReader *ielf, uint64_t pc, uint32_t code,
     return 4;
 }
 
-int opcode_0x06(IElfReader *ielf, uint64_t pc, uint32_t code,
+int opcode_0x06(ISourceCode *isrc, uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment) {
     char tstr[128] = "unimpl";
     char tcomm[128] = "";
@@ -497,7 +497,7 @@ int opcode_0x06(IElfReader *ielf, uint64_t pc, uint32_t code,
     return 4;
 }
 
-int opcode_0x08(IElfReader *ielf, uint64_t pc, uint32_t code,
+int opcode_0x08(ISourceCode *isrc, uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment) {
     char tstr[128] = "unimpl";
     char tcomm[128] = "";
@@ -533,7 +533,7 @@ int opcode_0x08(IElfReader *ielf, uint64_t pc, uint32_t code,
 }
 
 
-int opcode_0x0C(IElfReader *ielf, uint64_t pc, uint32_t code,
+int opcode_0x0C(ISourceCode *isrc, uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment) {
     char tstr[128] = "unimpl";
     char tcomm[128] = "";
@@ -610,7 +610,7 @@ int opcode_0x0C(IElfReader *ielf, uint64_t pc, uint32_t code,
     return 4;
 }
 
-int opcode_0x0D(IElfReader *ielf, uint64_t pc, uint32_t code,
+int opcode_0x0D(ISourceCode *isrc, uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment) {
     char tstr[128] = "unimpl";
     char tcomm[128] = "";
@@ -623,7 +623,7 @@ int opcode_0x0D(IElfReader *ielf, uint64_t pc, uint32_t code,
     return 4;
 }
 
-int opcode_0x0E(IElfReader *ielf, uint64_t pc, uint32_t code,
+int opcode_0x0E(ISourceCode *isrc, uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment) {
     char tstr[128] = "unimpl";
     char tcomm[128] = "";
@@ -684,7 +684,7 @@ int opcode_0x0E(IElfReader *ielf, uint64_t pc, uint32_t code,
     return 4;
 }
 
-int opcode_0x18(IElfReader *ielf, uint64_t pc, uint32_t code,
+int opcode_0x18(ISourceCode *isrc, uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment) {
     char tstr[128] = "unimpl";
     char tcomm[128] = "";
@@ -756,9 +756,9 @@ int opcode_0x18(IElfReader *ielf, uint64_t pc, uint32_t code,
     default:;
     }
 
-    if (ielf) {
+    if (isrc) {
         AttributeType info;
-        ielf->addressToSymbol(imm64, &info);
+        isrc->addressToSymbol(imm64, &info);
         if (info[0u].size()) {
             if (info[1].to_uint32() == 0) {
                 RISCV_sprintf(tcomm, sizeof(tcomm), "%s",
@@ -774,7 +774,7 @@ int opcode_0x18(IElfReader *ielf, uint64_t pc, uint32_t code,
     return 4;
 }
 
-int opcode_0x19(IElfReader *ielf, uint64_t pc, uint32_t code,
+int opcode_0x19(ISourceCode *isrc, uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment) {
     char tstr[128] = "unimpl";
     char tcomm[128] = "";
@@ -802,7 +802,7 @@ int opcode_0x19(IElfReader *ielf, uint64_t pc, uint32_t code,
     return 4;
 }
 
-int opcode_0x1B(IElfReader *ielf, uint64_t pc, uint32_t code,
+int opcode_0x1B(ISourceCode *isrc, uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment) {
     char tstr[128] = "unimpl";
     char tcomm[128] = "";
@@ -825,9 +825,9 @@ int opcode_0x1B(IElfReader *ielf, uint64_t pc, uint32_t code,
             pc + imm64);
     }
 
-    if (ielf) {
+    if (isrc) {
         AttributeType info;
-        ielf->addressToSymbol(pc + imm64, &info);
+        isrc->addressToSymbol(pc + imm64, &info);
         if (info[0u].size()) {
             if (info[1].to_uint32() == 0) {
                 RISCV_sprintf(tcomm, sizeof(tcomm), "%s",
@@ -843,7 +843,7 @@ int opcode_0x1B(IElfReader *ielf, uint64_t pc, uint32_t code,
     return 4;
 }
 
-int opcode_0x1C(IElfReader *ielf, uint64_t pc, uint32_t code,
+int opcode_0x1C(ISourceCode *isrc, uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment) {
     char tstr[128] = "unimpl";
     char tcomm[128] = "";

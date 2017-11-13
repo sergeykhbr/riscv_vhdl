@@ -12,11 +12,6 @@ namespace debugger {
 
 RfController::RfController(const char *name)  : IService(name) {
     registerInterface(static_cast<IMemoryOperation *>(this));
-    registerAttribute("BaseAddress", &baseAddress_);
-    registerAttribute("Length", &length_);
-
-    baseAddress_.make_uint64(0);
-    length_.make_uint64(0);
 
     memset(&regs_, 0, sizeof(regs_));
 }
@@ -27,7 +22,7 @@ RfController::~RfController() {
 void RfController::postinitService() {
 }
 
-void RfController::b_transport(Axi4TransactionType *trans) {
+ETransStatus RfController::b_transport(Axi4TransactionType *trans) {
     uint64_t mask = (length_.to_uint64() - 1);
     uint64_t off = ((trans->addr - getBaseAddress()) & mask) / 4;
     trans->response = MemResp_Valid;
@@ -63,6 +58,7 @@ void RfController::b_transport(Axi4TransactionType *trans) {
             }
         }
     }
+    return TRANS_OK;
 }
 
 }  // namespace debugger

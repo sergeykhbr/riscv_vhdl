@@ -12,13 +12,29 @@
 #include "iservice.h"
 #include "coreservices/imemop.h"
 #include "coreservices/iwire.h"
-#include "coreservices/icpuriscv.h"
+#include "coreservices/icpugen.h"
 
 namespace debugger {
 
+class IrqPort : public IWire {
+public:
+    IrqPort(IService *parent, const char *portname) {
+        parent_ = parent;
+        parent->registerPortInterface(portname, static_cast<IWire *>(this));
+    };
+
+    /** IWire interface */
+    virtual void raiseLine() {}
+    virtual void lowerLine() {}
+    virtual void setLevel(bool level) {}
+    virtual bool getLevel() { return false; }
+
+protected:
+    IService *parent_;
+};
+
 class IrqController : public IService, 
-                      public IMemoryOperation,
-                      public IWire {
+                      public IMemoryOperation {
 public:
     IrqController(const char *name);
     ~IrqController();
@@ -27,27 +43,15 @@ public:
     virtual void postinitService();
 
     /** IMemoryOperation */
-    virtual void b_transport(Axi4TransactionType *payload);
-    
-    virtual uint64_t getBaseAddress() {
-        return baseAddress_.to_uint64();
-    }
-    virtual uint64_t getLength() {
-        return length_.to_uint64();
-    }
-
-    /** IWire */
-    virtual void raiseLine(int idx);
-    virtual void lowerLine() {}
-    virtual void setLevel(bool level) {}
+    virtual ETransStatus b_transport(Axi4TransactionType *payload);
 
 private:
-    AttributeType baseAddress_;
-    AttributeType length_;
     AttributeType mipi_;
     AttributeType irqTotal_;
     AttributeType cpu_;
-    ICpuRiscV *icpu_;
+    ICpuGeneric *icpu_;
+    static const int IRQ_MAX = 32;
+    IrqPort *irqlines_[IRQ_MAX];
 
     struct irqctrl_map {
         uint32_t irq_mask;      // 0x00: [RW] 1=disable; 0=enable

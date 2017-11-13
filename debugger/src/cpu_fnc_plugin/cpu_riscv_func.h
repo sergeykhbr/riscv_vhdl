@@ -13,6 +13,7 @@
 #include "ihap.h"
 #include "async_tqueue.h"
 #include "coreservices/ithread.h"
+#include "coreservices/icpugen.h"
 #include "coreservices/icpuriscv.h"
 #include "coreservices/imemop.h"
 #include "coreservices/iclock.h"
@@ -23,6 +24,7 @@ namespace debugger {
 
 class CpuRiscV_Functional : public IService, 
                  public IThread,
+                 public ICpuGeneric,
                  public ICpuRiscV,
                  public IClock,
                  public IHap {
@@ -33,15 +35,18 @@ public:
     /** IService interface */
     virtual void postinitService();
 
-    /** ICpuRiscV interface */
+    /** ICpuGeneric interface */
     virtual void raiseSignal(int idx);
     virtual void lowerSignal(int idx);
     virtual void nb_transport_debug_port(DebugPortTransactionType *trans,
                                          IDbgNbResponse *cb);
 
+    /** ICpuRiscV interface */
+
     /** IClock */
     virtual uint64_t getStepCounter() { return cpu_context_.step_cnt; }
     virtual void registerStepCallback(IClockListener *cb, uint64_t t);
+    virtual double getFreqHz() { return freqHz_.to_float(); }
 
     /** IHap */
     virtual void hapTriggered(IFace *isrc, EHapType type, const char *descr);
@@ -93,7 +98,7 @@ private:
     AttributeType resetVector_;
     event_def config_done_;
 
-    AsyncTQueueType queue_;
+    ClockAsyncTQueueType queue_;
     uint64_t last_hit_breakpoint_;
 
     Axi4TransactionType trans_;
