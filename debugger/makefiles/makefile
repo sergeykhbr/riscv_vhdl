@@ -54,6 +54,7 @@ sc: libdbg64g cpu_sysc_plugin
 
 clean:
 	$(RM) $(TOP_DIR)linuxbuild
+	$(RM) *.err
 
 libdbg64g:
 	$(MKDIR) ./$(ELF_DIR)

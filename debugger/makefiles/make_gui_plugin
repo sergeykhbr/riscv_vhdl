@@ -40,6 +40,7 @@ VPATH = $(SRC_PATH)
 SOURCES = \
 	attribute \
 	autobuffer \
+	async_tqueue \
 	gui_plugin \
 	qt_wrapper \
 	ebreakhandler \

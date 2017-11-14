@@ -24,13 +24,8 @@ static const uint32_t UART_CONTROL_PARITY_ENA = 0x00008000;
 UART::UART(const char *name)  : IService(name) {
     registerInterface(static_cast<IMemoryOperation *>(this));
     registerInterface(static_cast<ISerial *>(this));
-    registerAttribute("IrqLine", &irqLine_);
     registerAttribute("IrqControl", &irqctrl_);
 
-    baseAddress_.make_uint64(0);
-    length_.make_uint64(0);
-    irqLine_.make_uint64(0);
-    irqctrl_.make_string("");
     listeners_.make_list(0);
     RISCV_mutex_init(&mutexListeners_);
 
@@ -48,9 +43,11 @@ UART::~UART() {
 
 void UART::postinitService() {
     iwire_ = static_cast<IWire *>(
-        RISCV_get_service_iface(irqctrl_.to_string(), IFACE_WIRE));
+        RISCV_get_service_port_iface(irqctrl_[0u].to_string(),
+                                     irqctrl_[1].to_string(),
+                                     IFACE_WIRE));
     if (!iwire_) {
-        RISCV_error("Can't find IWire interface %s", irqctrl_.to_string());
+        RISCV_error("Can't find IWire interface %s", irqctrl_[0u].to_string());
     }
 }
 
@@ -67,7 +64,7 @@ int UART::writeData(const char *buf, int sz) {
     }
 
     if (regs_.status & UART_CONTROL_RX_IRQ_ENA) {
-        iwire_->raiseLine();//irqLine_.to_int());
+        iwire_->raiseLine();
     }
     return sz;
 }

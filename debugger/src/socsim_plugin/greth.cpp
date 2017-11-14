@@ -19,19 +19,11 @@ Greth::Greth(const char *name)
     registerInterface(static_cast<IThread *>(this));
     registerInterface(static_cast<IMemoryOperation *>(this));
     registerInterface(static_cast<IAxi4NbResponse *>(this));
-    registerAttribute("IrqLine", &irqLine_);
     registerAttribute("IrqControl", &irqctrl_);
     registerAttribute("IP", &ip_);
     registerAttribute("MAC", &mac_);
     registerAttribute("Bus", &bus_);
     registerAttribute("Transport", &transport_);
-
-    irqLine_.make_uint64(0);
-    irqctrl_.make_string("");
-    ip_.make_uint64(0);
-    mac_.make_uint64(0);
-    bus_.make_string("");
-    transport_.make_string("");
 
     memset(txbuf_, 0, sizeof(txbuf_));
     seq_cnt_ = 35;
@@ -61,9 +53,11 @@ void Greth::postinitService() {
     }
 
     iwire_ = static_cast<IWire *>(
-        RISCV_get_service_iface(irqctrl_.to_string(), IFACE_WIRE));
+        RISCV_get_service_port_iface(irqctrl_[0u].to_string(),
+                                     irqctrl_[1].to_string(),
+                                     IFACE_WIRE));
     if (!iwire_) {
-        RISCV_error("Can't find IWire interface %s", irqctrl_.to_string());
+        RISCV_error("Can't find IWire interface %s", irqctrl_[0u].to_string());
     }
 
     AttributeType clks;

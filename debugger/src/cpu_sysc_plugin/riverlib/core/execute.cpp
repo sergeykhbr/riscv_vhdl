@@ -337,12 +337,12 @@ void InstrExecute::comb() {
 
     // Relative Branch on some condition:
     w_pc_branch = 0;
-    if ((wv[Instr_BEQ] & (wb_sub64 == 0))
-        || (wv[Instr_BGE] & (wb_sub64[63] == 0))
-        || (wv[Instr_BGEU] & (w_gr_equal))
-        || (wv[Instr_BLT] & (wb_sub64[63] == 1))
-        || (wv[Instr_BLTU] & (w_less))
-        || (wv[Instr_BNE] & (wb_sub64 != 0))) {
+    if ((wv[Instr_BEQ].to_bool() & (wb_sub64 == 0))
+        || (wv[Instr_BGE].to_bool() & (wb_sub64[63] == 0))
+        || (wv[Instr_BGEU].to_bool() & (w_gr_equal))
+        || (wv[Instr_BLT].to_bool() & (wb_sub64[63] == 1))
+        || (wv[Instr_BLTU].to_bool() & (w_less))
+        || (wv[Instr_BNE].to_bool() & (wb_sub64 != 0))) {
         w_pc_branch = 1;
     }
 

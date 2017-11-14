@@ -15,10 +15,6 @@ GPIO::GPIO(const char *name)  : IService(name) {
     registerInterface(static_cast<IWire *>(this));
     registerAttribute("DIP", &dip_);
 
-    baseAddress_.make_uint64(0);
-    length_.make_uint64(0);
-    dip_.make_uint64(0);
-
     memset(&regs_, 0, sizeof(regs_));
 }
 

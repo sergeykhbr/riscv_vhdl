@@ -115,8 +115,7 @@
                 ['LogLevel',1],
                 ['BaseAddress',0x80040000],
                 ['Length',0x40000],
-                ['IrqLine',2],
-                ['IrqControl','irqctrl0'],
+                ['IrqControl',['irqctrl0','irq2']],
                 ['IP',0x55667788],
                 ['MAC',0xfeedface00],
                 ['Bus','axi0'],
@@ -167,8 +166,7 @@
                 ['LogLevel',1],
                 ['BaseAddress',0x80001000],
                 ['Length',4096],
-                ['IrqLine',1],
-                ['IrqControl','irqctrl0']
+                ['IrqControl',['irqctrl0','irq1']]
                 ]}]},
     {'Class':'IrqControllerClass','Instances':[
           {'Name':'irqctrl0','Attr':[

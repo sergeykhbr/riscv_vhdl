@@ -682,10 +682,12 @@ void CpuRiscV_Functional::setNPC(uint64_t val) {
 
 void CpuRiscV_Functional::addBreakpoint(uint64_t addr) {
     //CpuContextType *pContext = getpContext();
+    RISCV_error("Hardware breakpoints not implemented", 0);
 }
 
 void CpuRiscV_Functional::removeBreakpoint(uint64_t addr) {
     //CpuContextType *pContext = getpContext();
+    RISCV_error("Hardware breakpoints not implemented", 0);
 }
 
 void CpuRiscV_Functional::hitBreakpoint(uint64_t addr) {

@@ -37,9 +37,6 @@ public:
     virtual void unregisterRawListener(IFace *listener);
 
 private:
-    AttributeType baseAddress_;
-    AttributeType length_;
-    AttributeType irqLine_;
     AttributeType irqctrl_;
     AttributeType listeners_;  // non-registering attribute
     IWire *iwire_;

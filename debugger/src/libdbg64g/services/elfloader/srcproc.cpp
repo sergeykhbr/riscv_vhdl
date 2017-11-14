@@ -14,6 +14,12 @@ namespace debugger {
 /** Class registration in the Core */
 REGISTER_CLASS(SourceService)
 
+enum ESymbInfo {
+    SymbInfo_Name,
+    SymbInfo_Address,
+    SymbInfo_Total,
+};
+
 const char *const *RN = IREGS_NAMES;
 
 int opcode_0x00(ISourceCode *isrc, uint64_t pc, uint32_t code,
@@ -109,9 +115,9 @@ void SourceService::addressToSymbol(uint64_t addr, AttributeType *info) {
     uint64_t sadr, send;
     int sz = static_cast<int>(symbolListSortByAddr_.size());
 
-    info->make_list(2);
-    (*info)[0u].make_string("");
-    (*info)[1].make_uint64(0);
+    info->make_list(SymbInfo_Total);
+    (*info)[SymbInfo_Name].make_string("");
+    (*info)[SymbInfo_Address].make_uint64(0);
     if (sz == 0) {
         return;
     }
@@ -132,8 +138,8 @@ void SourceService::addressToSymbol(uint64_t addr, AttributeType *info) {
             send = sadr + symb[Symbol_Size].to_uint64();
         }
         if (sadr <= addr && addr < send) {
-            (*info)[0u] = symb[Symbol_Name];
-            (*info)[1].make_uint64(addr - sadr);
+            (*info)[SymbInfo_Name] = symb[Symbol_Name];
+            (*info)[SymbInfo_Address].make_uint64(addr - sadr);
             return;
         }
         
@@ -180,11 +186,13 @@ int SourceService::symbol2Address(const char *name, uint64_t *addr) {
     return -1;
 }
 
-void SourceService::registerBreakpoint(uint64_t addr, uint64_t flags) {
+void SourceService::registerBreakpoint(uint64_t addr, uint64_t flags,
+                                       uint64_t instr) {
     AttributeType item;
     item.make_list(BrkList_Total);
     item[BrkList_address].make_uint64(addr);
     item[BrkList_flags].make_uint64(flags);
+    item[BrkList_instr].make_uint64(instr);
 
     bool not_found = true;
     for (unsigned i = 0; i < brList_.size(); i++) {
@@ -198,11 +206,13 @@ void SourceService::registerBreakpoint(uint64_t addr, uint64_t flags) {
     }
 }
 
-int SourceService::unregisterBreakpoint(uint64_t addr, uint64_t *flags) {
+int SourceService::unregisterBreakpoint(uint64_t addr, uint64_t *flags,
+                                       uint64_t *instr) {
     for (unsigned i = 0; i < brList_.size(); i++) {
         AttributeType &br = brList_[i];
         if (addr == br[BrkList_address].to_uint64()) {
             *flags = br[BrkList_flags].to_uint64();
+            *instr = br[BrkList_instr].to_uint64();
             brList_.remove_from_list(i);
             return 0;
         }
@@ -223,13 +233,15 @@ void SourceService::getBreakpointList(AttributeType *list) {
         }
         item[BrkList_address] = br[BrkList_address];
         item[BrkList_flags] = br[BrkList_flags];
+        item[BrkList_instr] = br[BrkList_instr];
     }
 }
 
-bool SourceService::isBreakpoint(uint64_t addr) {
+bool SourceService::isBreakpoint(uint64_t addr, AttributeType *outbr) {
     for (unsigned i = 0; i < brList_.size(); i++) {
         uint64_t bradr = brList_[i][BrkList_address].to_uint64();
         if (addr == bradr) {
+            *outbr = brList_[i];
             return true;
         }
     }
@@ -270,7 +282,7 @@ void SourceService::disasm(uint64_t pc,
     }
     uint8_t *data = idata->data();
 
-    AttributeType asm_item, symb_item, info;
+    AttributeType asm_item, symb_item, info, brpoint;
     asm_item.make_list(ASM_Total);
     symb_item.make_list(3);
     asm_item[ASM_list_type].make_int64(AsmList_disasm);
@@ -283,17 +295,21 @@ void SourceService::disasm(uint64_t pc,
         code.val = *reinterpret_cast<uint32_t*>(&data[off]);
 
         addressToSymbol(pc + off, &info);
-        if (info[0u].size() != 0 && info[1].to_int() == 0) {
+        if (info[SymbInfo_Name].size() != 0 && 
+            info[SymbInfo_Address].to_int() == 0) {
             symb_item[1].make_uint64(pc + off);
-            symb_item[2].make_string(info[0u].to_string());
+            symb_item[2].make_string(info[SymbInfo_Name].to_string());
             asmlist->add_to_list(&symb_item);
         }
         asm_item[ASM_addrline].make_uint64(pc + off);
         asm_item[ASM_breakpoint].make_boolean(false);
         asm_item[ASM_label].make_string("");
 
-        if (isBreakpoint(pc + off)) {
+        if (isBreakpoint(pc + off, &brpoint)) {
             asm_item[ASM_breakpoint].make_boolean(true);
+            if (!(brpoint[BrkList_flags].to_uint64() & BreakFlag_HW)) {
+                code.val = brpoint[BrkList_instr].to_uint32();
+            }
         }
         codesz = disasm(pc + off,
                         code.buf,

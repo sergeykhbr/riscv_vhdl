@@ -18,19 +18,18 @@ namespace debugger {
 
 class IrqPort : public IWire {
 public:
-    IrqPort(IService *parent, const char *portname) {
-        parent_ = parent;
-        parent->registerPortInterface(portname, static_cast<IWire *>(this));
-    };
+    IrqPort(IService *parent, const char *portname, int idx);
 
     /** IWire interface */
-    virtual void raiseLine() {}
-    virtual void lowerLine() {}
-    virtual void setLevel(bool level) {}
-    virtual bool getLevel() { return false; }
+    virtual void raiseLine();
+    virtual void lowerLine() { level_ = false; }
+    virtual void setLevel(bool level);
+    virtual bool getLevel() { return level_; }
 
 protected:
     IService *parent_;
+    int idx_;
+    bool level_;
 };
 
 class IrqController : public IService, 
@@ -44,6 +43,9 @@ public:
 
     /** IMemoryOperation */
     virtual ETransStatus b_transport(Axi4TransactionType *payload);
+
+    /** Controller specific methods visible for ports */
+    void requestInterrupt(int idx);
 
 private:
     AttributeType mipi_;

@@ -35,7 +35,9 @@ public:
 
     virtual void addSymbols(AttributeType *list);
 
-    virtual void getSymbols(AttributeType *list) { *list = symbolListSortByName_; }
+    virtual void getSymbols(AttributeType *list) {
+        *list = symbolListSortByName_;
+    }
 
     virtual void addressToSymbol(uint64_t addr, AttributeType *info);
 
@@ -50,13 +52,15 @@ public:
                        AttributeType *idata,
                        AttributeType *asmlist);
 
-    virtual void registerBreakpoint(uint64_t addr, uint64_t flags);
+    virtual void registerBreakpoint(uint64_t addr, uint64_t flags,
+                                    uint64_t instr);
 
-    virtual int unregisterBreakpoint(uint64_t addr, uint64_t *flags);
+    virtual int unregisterBreakpoint(uint64_t addr, uint64_t *flags,
+                                    uint64_t *instr);
 
     virtual void getBreakpointList(AttributeType *list);
 
-    virtual bool isBreakpoint(uint64_t addr);
+    virtual bool isBreakpoint(uint64_t addr, AttributeType *outbr);
 
 private:
     disasm_opcode_f tblOpcode1_[32];

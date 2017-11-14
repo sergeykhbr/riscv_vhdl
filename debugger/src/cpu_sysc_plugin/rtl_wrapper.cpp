@@ -66,7 +66,7 @@ void RtlWrapper::clk_gen() {
 
 void RtlWrapper::comb() {
 
-    o_nrst = r.nrst.read()[1];
+    o_nrst = r.nrst.read()[1].to_bool();
     o_resp_mem_data_valid = r.resp_mem_data_valid;
     o_resp_mem_data = r.resp_mem_data;
     o_interrupt = r.interrupt;

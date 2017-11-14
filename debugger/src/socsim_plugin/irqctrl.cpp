@@ -11,6 +11,26 @@
 
 namespace debugger {
 
+IrqPort::IrqPort(IService *parent, const char *portname, int idx) {
+    parent_ = parent;
+    parent->registerPortInterface(portname, static_cast<IWire *>(this));
+    idx_ = idx;
+    level_ = false;
+};
+
+void IrqPort::raiseLine() {
+    level_ = true;
+    static_cast<IrqController *>(parent_)->requestInterrupt(idx_);
+}
+
+void IrqPort::setLevel(bool level) {
+    if (!level_ && level) {
+        raiseLine();
+    } else if (level_ && !level) {
+        lowerLine();
+    }
+}
+
 IrqController::IrqController(const char *name)  : IService(name) {
     registerInterface(static_cast<IMemoryOperation *>(this));
     registerAttribute("CPU", &cpu_);
@@ -18,9 +38,9 @@ IrqController::IrqController(const char *name)  : IService(name) {
     registerAttribute("IrqTotal", &irqTotal_);
 
     char portname[256];
-    for (int i = 0; i < IRQ_MAX; i++) {
+    for (int i = 1; i < IRQ_MAX; i++) {
         RISCV_sprintf(portname, sizeof(portname), "irq%d", i);
-        irqlines_[i] = new IrqPort(this, portname);
+        irqlines_[i] = new IrqPort(this, portname, i);
     }
 
     mipi_.make_uint64(0x783);
@@ -204,7 +224,7 @@ ETransStatus IrqController::b_transport(Axi4TransactionType *trans) {
     return TRANS_OK;
 }
 
-/*void IrqController::raiseLine(int idx) {
+void IrqController::requestInterrupt(int idx) {
     if (regs_.irq_lock) {
         irq_wait_unlock |= (~regs_.irq_mask & (1 << idx));
         return;
@@ -214,7 +234,7 @@ ETransStatus IrqController::b_transport(Axi4TransactionType *trans) {
         icpu_->raiseSignal(CPU_SIGNAL_EXT_IRQ);   // PLIC interrupt (external)
         RISCV_info("Raise interrupt", NULL);
     }
-}*/
+}
 
 }  // namespace debugger
 

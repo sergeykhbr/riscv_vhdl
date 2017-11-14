@@ -41,19 +41,19 @@ void EBreakHandler::handleResponse(AttributeType *req,
     }
     uint64_t br_addr = resp->to_uint64();
     uint32_t br_instr = 0;
-    bool br_hw;
+    uint64_t br_flags;
     for (unsigned i = 0; i < brList_.size(); i++) {
         const AttributeType &br = brList_[i];
         if (br_addr == br[BrkList_address].to_uint64()) {
-            //br_instr = br[BrkList_instr].to_int();
-            br_hw = br[BrkList_flags].to_bool();
+            br_instr = br[BrkList_instr].to_int();
+            br_flags = br[BrkList_flags].to_uint64();
             break;
         }
     }
     if (br_instr == 0) {
         return;
     }
-    if (br_hw) {
+    if (br_flags & BreakFlag_HW) {
         RISCV_sprintf(tstr, sizeof(tstr),
                 "write 0x%08" RV_PRI64 "x 8 0x%" RV_PRI64 "x",
                 dsu_hw_br_, br_addr);

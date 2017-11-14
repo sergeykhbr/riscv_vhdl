@@ -99,7 +99,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>libdbg64g.lib;SystemC.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SolutionDir)\..\win32build\$(Configuration)\;$(SYSTEMC_PATH)\msvc80\SystemC\Debug</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)\..\win32build\$(Configuration)\;$(SYSTEMC_PATH)\msvc10\SystemC\Debug;$(SYSTEMC_PATH)\msvc80\SystemC\Debug</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>$(ProjectDir)exportmap.def</ModuleDefinitionFile>
       <OptimizeReferences>
       </OptimizeReferences>

@@ -83,7 +83,6 @@ private:
     void sendNAK(UdpEdclCommonType *req);
 
 private:
-    AttributeType irqLine_;
     AttributeType irqctrl_;
     AttributeType ip_;
     AttributeType mac_;

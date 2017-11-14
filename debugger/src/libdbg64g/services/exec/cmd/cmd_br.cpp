@@ -74,6 +74,7 @@ void CmdBr::exec(AttributeType *args, AttributeType *res) {
     DsuMapType *pdsu = info_->getpDsu();
 
     Reg64Type braddr;
+    Reg64Type brinstr;
     AttributeType &bpadr = (*args)[2];
     if (bpadr.is_integer()) {
         braddr.val = bpadr.to_uint64();
@@ -88,18 +89,30 @@ void CmdBr::exec(AttributeType *args, AttributeType *res) {
     }
     
     if ((*args)[1].is_equal("add")) {
-        uint64_t dsuaddr = 
-            reinterpret_cast<uint64_t>(&pdsu->udbg.v.add_breakpoint);
-        isrc_->registerBreakpoint(braddr.val, flags);
-        tap_->write(dsuaddr, 8, braddr.buf);
+        brinstr.val = 0;
+        tap_->read(braddr.val, 4, brinstr.buf);
+
+        isrc_->registerBreakpoint(braddr.val, flags, brinstr.val);
+        if (flags & BreakFlag_HW) {
+            uint64_t dsuaddr = 
+                reinterpret_cast<uint64_t>(&pdsu->udbg.v.add_breakpoint);
+            tap_->write(dsuaddr, 8, braddr.buf);
+        } else {
+            brinstr.buf32[0] = 0x00100073;   // EBREAK instruction
+            tap_->write(braddr.val, 4, brinstr.buf);
+        }
         return;
     } 
     
     if ((*args)[1].is_equal("rm")) {
-        uint64_t dsuaddr = 
-            reinterpret_cast<uint64_t>(&pdsu->udbg.v.remove_breakpoint);
-        isrc_->unregisterBreakpoint(braddr.val, &flags);
-        tap_->write(dsuaddr, 8, braddr.buf);
+        isrc_->unregisterBreakpoint(braddr.val, &flags, &brinstr.val);
+        if (flags & BreakFlag_HW) {
+            uint64_t dsuaddr = 
+                reinterpret_cast<uint64_t>(&pdsu->udbg.v.remove_breakpoint);
+            tap_->write(dsuaddr, 8, braddr.buf);
+        } else {
+            tap_->write(braddr.val, 4, brinstr.buf);
+        }
     }
 }
 
