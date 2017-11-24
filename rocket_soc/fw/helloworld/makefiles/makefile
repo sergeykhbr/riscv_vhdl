@@ -1,4 +1,4 @@
-include util.mak
+include makeutil.mak
 
 TOP_DIR=../../
 OBJ_DIR = $(TOP_DIR)helloworld/makefiles/obj
