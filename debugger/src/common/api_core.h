@@ -360,7 +360,7 @@ IFace *RISCV_create_service(IFace *iclass, const char *name,
 IFace *RISCV_get_service(const char *name);
 
 /**
- * @brief Get interface of the specified ervice.
+ * @brief Get interface of the specified device.
  * @details This method can be used in runtime to implement dynamic connection
  *          of different services
  * @code

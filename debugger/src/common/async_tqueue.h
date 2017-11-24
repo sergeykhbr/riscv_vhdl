@@ -19,6 +19,9 @@ public:
     AsyncTQueueType();
     ~AsyncTQueueType();
 
+    /** Power ON/OFF cycle */
+    void hardReset();
+
     /** Thread safe method of the callbacks registration */
     void put(AttributeType *item);
 

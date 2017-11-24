@@ -425,9 +425,9 @@ void attribute_to_string(const AttributeType *attr, AutoBuffer *buf) {
         buf->write_string('\'');
     } else if (attr->is_bool()) {
         if (attr->to_bool()) {
-            buf->write_string("true");
+            buf->write_string("True");
         } else {
-            buf->write_string("false");
+            buf->write_string("False");
         }
     } else if (attr->is_list()) {
         AttributeType list_item;
@@ -642,12 +642,13 @@ int string_to_attribute(const char *cfg, int &off,
                 && cfg[off + 3] == 'e') {
         out->make_nil();
         off = skip_special_symbols(cfg, off + 4);
-    } else if (cfg[off] == 'f' && cfg[off + 1] == 'a' && cfg[off + 2] == 'l'
-                && cfg[off + 3] == 's' && cfg[off + 4] == 'e') {
+    } else if ((cfg[off] == 'f' || cfg[off] == 'F') && cfg[off + 1] == 'a'
+            && cfg[off + 2] == 'l' && cfg[off + 3] == 's' 
+            && cfg[off + 4] == 'e') {
         out->make_boolean(false);
         off = skip_special_symbols(cfg, off + 5);
-    } else if (cfg[off] == 't' && cfg[off + 1] == 'r' && cfg[off + 2] == 'u'
-            && cfg[off + 3] == 'e') {
+    } else if ((cfg[off] == 't' || cfg[off] == 'T') && cfg[off + 1] == 'r'
+            && cfg[off + 2] == 'u' && cfg[off + 3] == 'e') {
         out->make_boolean(true);
         off = skip_special_symbols(cfg, off + 4);
     } else {

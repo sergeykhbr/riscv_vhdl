@@ -11,16 +11,20 @@
 namespace debugger {
 
 AsyncTQueueType::AsyncTQueueType() {
-    preLen_ = 0;
-    curLen_ = 0;
-    curIdx_ = 0;
     stepPreQueued_.make_list(0);
     stepQueue_.make_list(16);   /** it will be auto reallocated if needed */
     RISCV_mutex_init(&mutex_);
+    hardReset();
 }
 
 AsyncTQueueType::~AsyncTQueueType() {
     RISCV_mutex_destroy(&mutex_);
+}
+
+void AsyncTQueueType::hardReset() {
+    preLen_ = 0;
+    curLen_ = 0;
+    curIdx_ = 0;
 }
 
 void AsyncTQueueType::put(AttributeType *item) {

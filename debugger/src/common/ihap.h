@@ -19,7 +19,9 @@ enum EHapType {
     HAP_All,
     HAP_ConfigDone,
     HAP_Halt,
-    HAP_BreakSimulation
+    HAP_BreakSimulation,
+    HAP_CpuTurnON,
+    HAP_CpuTurnOFF
 };
 
 class IHap : public IFace {
