@@ -183,7 +183,7 @@ extern "C" void RISCV_trigger_hap(IFace *isrc, int type,
     EHapType etype = static_cast<EHapType>(type);
     for (unsigned i = 0; i < listHap_.size(); i++) {
         ihap = static_cast<IHap *>(listHap_[i].to_iface());
-        if (ihap->getType() == etype) {
+        if (ihap->getType() == HAP_All || ihap->getType() == etype) {
             ihap->hapTriggered(isrc, etype, descr);
         }
     }
@@ -254,8 +254,8 @@ extern "C" void RISCV_get_services_with_iface(const char *iname,
     for (unsigned i = 0; i < listClasses_.size(); i++) {
         icls = static_cast<IClass *>(listClasses_[i].to_iface());
         tlist = icls->getInstanceList();
-        if (tlist->size()) {
-            iserv = static_cast<IService *>((*tlist)[0u].to_iface());
+        for (unsigned n = 0; n < tlist->size(); n++) {
+            iserv = static_cast<IService *>((*tlist)[n].to_iface());
             iface = iserv->getInterface(iname);
             if (iface) {
                 AttributeType t1(iserv);
