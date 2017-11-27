@@ -17,7 +17,7 @@
 #include "encoding.h"
 
   .text
-  .align 8
+  .align 4
   .globl _start
 _start:
   li  x1, 0

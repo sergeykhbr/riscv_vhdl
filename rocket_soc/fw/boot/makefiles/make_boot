@@ -10,8 +10,8 @@ CFLAGS= -c -g -static -std=gnu99 -O0 -fno-common -fno-builtin-printf
 ifeq ($(FPU_ENABLED), 1)
   CFLAGS += -march=RV64IMFD -DFPU_ENABLED
 else
-  CFLAGS += -march=RV64IMA
-  CFLAGS += -msoft-float
+#  CFLAGS += -march=RV64IMA
+#  CFLAGS += -msoft-float
 endif
 
 
@@ -53,8 +53,8 @@ all: boot
 
 boot: $(EXECUTABLE) $(DUMPFILE) $(HEXFILE)
 $(HEXFILE): $(EXECUTABLE)
-	echo elf2raw64 $(addprefix $(ELF_DIR)/,$<) -h -f 8192 -l 8 -b 0x00000000 -o $(addprefix $(ELF_DIR)/,$(EXECUTABLE).hex)
-	elf2raw64 $(addprefix $(ELF_DIR)/,$<) -h -f 8192 -l 8 -b 0x00000000 -o $(addprefix $(ELF_DIR)/,$(EXECUTABLE).hex)
+	echo elf2raw64 $(addprefix $(ELF_DIR)/,$<) -h -f 8192 -l 8 -b 0x00010000 -o $(addprefix $(ELF_DIR)/,$(EXECUTABLE).hex)
+	elf2raw64 $(addprefix $(ELF_DIR)/,$<) -h -f 8192 -l 8 -b 0x00010000 -o $(addprefix $(ELF_DIR)/,$(EXECUTABLE).hex)
 	#echo elf2hex 8 1024 $(addprefix $(ELF_DIR)/,$<) > $(addprefix $(ELF_DIR)/,$@)
 	#elf2hex 8 1024 $(addprefix $(ELF_DIR)/,$<) > $(addprefix $(ELF_DIR)/,$@)
 
