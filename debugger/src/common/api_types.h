@@ -10,7 +10,8 @@
 
 #include <inttypes.h>
 #if defined(_WIN32) || defined(__CYGWIN__)
-#define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
+// Exclude rarely-used stuff from Windows headers
+#define WIN32_LEAN_AND_MEAN
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #include <windows.h>
 #include <ws2tcpip.h>
@@ -28,7 +29,6 @@
 #include <sys/ioctl.h>
 #include <netdb.h>
 #define __STDC_FORMAT_MACROS
-#include <inttypes.h>
 #include <pthread.h>
 #include <fcntl.h>
 #include <termios.h>  // work with console
@@ -42,9 +42,9 @@ namespace debugger {
     typedef int addr_size_t;
 
     typedef CRITICAL_SECTION mutex_def;
-    typedef void *thread_def; // HANDLE = void*
+    typedef void *thread_def;   // HANDLE = void*
     typedef struct event_def {
-        void *cond; // HANDLE = void*
+        void *cond;             // HANDLE = void*
         bool state;
     } event_def;
     typedef unsigned thread_return_t;
@@ -71,8 +71,7 @@ namespace debugger {
     # endif
 #endif
 
-typedef struct LibThreadType
-{
+typedef struct LibThreadType {
     lib_thread_func func;
     void *args;
     thread_def Handle;

@@ -18,7 +18,7 @@ namespace debugger {
  * @details This buffer is used to form configuration string of the kernel.
  */
 class AutoBuffer {
-  public:
+ public:
     /** Create empty string buffer. */
     AutoBuffer();
     ~AutoBuffer();
@@ -61,14 +61,14 @@ class AutoBuffer {
     /** Get total number of written symbols. */
     int size() { return buf_len_; }
     /** Reset buffer's value. */
-    void clear() { 
+    void clear() {
         buf_len_ = 0;
         if (buf_) {
             buf_[buf_len_] = 0;
         }
-    } 
+    }
 
-  private:
+ private:
     char *buf_;
     int buf_len_;
     int buf_size_;

@@ -51,8 +51,8 @@ void QtWrapper::eventsUpdate() {
             this, SLOT(slotMainWindowAboutToClose()));
 
     mainWindow_->show();
-    app.exec();
     RISCV_unregister_timer(ui_events_update);
+    app.exec();
 
     delete mainWindow_;
     app.quit();

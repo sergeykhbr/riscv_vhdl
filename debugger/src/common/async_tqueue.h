@@ -8,14 +8,14 @@
 #ifndef __DEBUGGER_ASYNC_TQUEUE_H__
 #define __DEBUGGER_ASYNC_TQUEUE_H__
 
-#include "api_types.h"
-#include "iface.h"
-#include "attribute.h"
+#include <api_types.h>
+#include <iface.h>
+#include <attribute.h>
 
 namespace debugger {
 
 class AsyncTQueueType {
-public:
+ public:
     AsyncTQueueType();
     ~AsyncTQueueType();
 
@@ -31,7 +31,7 @@ public:
     /** Reset proccessed counter at the begining of each iteration */
     void initProc();
 
-protected:
+ protected:
     AttributeType item_;
     AttributeType stepQueue_;
     AttributeType stepPreQueued_;
@@ -43,7 +43,7 @@ protected:
 
 
 class ClockAsyncTQueueType : public AsyncTQueueType {
-public:
+ public:
     ClockAsyncTQueueType();
 
     /** Thread safe method of the callbacks registration */
@@ -54,17 +54,17 @@ public:
      */
     IFace *getNext(uint64_t step_cnt);
 
-private:
+ private:
     enum QueueItemNames {
-        Queue_Time, 
-        Queue_IFace, 
+        Queue_Time,
+        Queue_IFace,
         Queue_Total
     };
 };
 
 
 class GuiAsyncTQueueType : public AsyncTQueueType {
-public:
+ public:
     GuiAsyncTQueueType();
 
     /** Thread safe method of the callbacks registration */
@@ -72,10 +72,10 @@ public:
     bool getNext(IFace **src, AttributeType &cmd, bool &silent);
     void remove(IFace *src);
 
-private:
+ private:
     enum QueueItemNames {
-        Queue_Source, 
-        Queue_Command, 
+        Queue_Source,
+        Queue_Command,
         Queue_Silent,
         Queue_Total
     };

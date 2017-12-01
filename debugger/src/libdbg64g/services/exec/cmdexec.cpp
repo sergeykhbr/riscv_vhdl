@@ -175,7 +175,7 @@ void CmdExecutor::processSimple(AttributeType *cmd, AttributeType *res) {
             if (icmd) {
                 RISCV_printf0("\n%s", icmd->detailedDescr());
             } else {
-                RISCV_error("Command '%s' not found", helpcmd);
+                RISCV_error("Command \\'%s\\' not found", helpcmd);
             }
         }
         return;
@@ -184,14 +184,14 @@ void CmdExecutor::processSimple(AttributeType *cmd, AttributeType *res) {
     AttributeType u;
     icmd = getICommand(cmd);
     if (!icmd) {
-        RISCV_error("Command '%s' not found. Use 'help' to list commands",
-                    (*cmd)[0u].to_string());
+         RISCV_error("Command \\'%s\\' not found. "
+                    "Use \\'help\\' to list commands", (*cmd)[0u].to_string());
         return;
     }
     icmd->exec(cmd, res);
 
     if (cmdIsError(res)) {
-        RISCV_error("Command '%s' error: '%s'", 
+        RISCV_error("Command \\'%s\\' error: \\'%s\\'", 
             (*res)[1].to_string(), (*res)[2].to_string());
     }
 }

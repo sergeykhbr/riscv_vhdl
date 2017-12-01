@@ -258,9 +258,9 @@
 #ifndef __DEBUGGER_API_CORE_H__
 #define __DEBUGGER_API_CORE_H__
 
-#include "api_utils.h"
-#include "iface.h"
-#include "attribute.h"
+#include <api_utils.h>
+#include <iface.h>
+#include <attribute.h>
 
 namespace debugger {
 
@@ -349,7 +349,7 @@ IFace *RISCV_get_class(const char *name);
  * @details This method creates intstance of Service and assignes all
  *          registered attributes to its initial values.
  */
-IFace *RISCV_create_service(IFace *iclass, const char *name, 
+IFace *RISCV_create_service(IFace *iclass, const char *name,
                                         AttributeType *args);
 
 /**

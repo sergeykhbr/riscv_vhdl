@@ -5,8 +5,8 @@
  * @brief      Dynamically allocated buffer implementation.
  */
 
-#include "api_core.h"
-#include "autobuffer.h"
+#include <autobuffer.h>
+#include <api_core.h>
 #include <cstdio>
 #include <cstring>  // memcpy definition
 
@@ -54,7 +54,7 @@ void AutoBuffer::write_string(const char *s) {
 
 void AutoBuffer::write_uint64(uint64_t v) {
     char tmp[128];
-    int sz = RISCV_sprintf(tmp, sizeof(tmp),"0x%" RV_PRI64 "x", v);
+    int sz = RISCV_sprintf(tmp, sizeof(tmp), "0x%" RV_PRI64 "x", v);
     write_bin(tmp, sz);
 }
 

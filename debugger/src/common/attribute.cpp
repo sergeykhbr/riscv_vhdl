@@ -5,11 +5,14 @@
  * @brief      Core attribute methods implementation.
  */
 
-#include "api_core.h"
-#include "autobuffer.h"
-#include "iservice.h"
-#include "api_utils.h"
+#include <attribute.h>
+#include <api_core.h>
+#include <autobuffer.h>
+#include <iservice.h>
+#include <api_utils.h>
 #include <cstdlib>
+#include <string>
+#include <algorithm>
 
 namespace debugger {
 
@@ -76,13 +79,13 @@ void AttributeType::clone(const AttributeType *v) {
         this->make_data(v->size(), v->data());
     } else if (v->is_list()) {
         make_list(v->size());
-        for (unsigned i = 0; i < v->size(); i++ ) {
+        for (unsigned i = 0; i < v->size(); i++) {
             u_.list[i].clone(v->list(i));
         }
     } else if (v->is_dict()) {
         make_dict();
         realloc_dict(v->size());
-        for (unsigned i = 0; i < v->size(); i++ ) {
+        for (unsigned i = 0; i < v->size(); i++) {
             u_.dict[i].key_.make_string(v->dict_key(i)->to_string());
             u_.dict[i].value_.clone(v->dict_value(i));
         }
@@ -209,15 +212,15 @@ void AttributeType::make_list(unsigned size) {
 }
 
 void AttributeType::realloc_list(unsigned size) {
-    size_t req_sz = (size * sizeof(AttributeType) + MIN_ALLOC_BYTES - 1) 
+    size_t req_sz = (size * sizeof(AttributeType) + MIN_ALLOC_BYTES - 1)
                    / MIN_ALLOC_BYTES;
-    size_t cur_sz = (size_ * sizeof(AttributeType) + MIN_ALLOC_BYTES - 1) 
+    size_t cur_sz = (size_ * sizeof(AttributeType) + MIN_ALLOC_BYTES - 1)
                   / MIN_ALLOC_BYTES;
-    if (req_sz > cur_sz ) {
+    if (req_sz > cur_sz) {
         AttributeType * t1 = static_cast<AttributeType *>(
                 RISCV_malloc(MIN_ALLOC_BYTES * req_sz));
         memcpy(t1, u_.list, size_ * sizeof(AttributeType));
-        memset(&t1[size_], 0, 
+        memset(&t1[size_], 0,
                 (MIN_ALLOC_BYTES * req_sz) - size_ * sizeof(AttributeType));
         if (size_) {
             RISCV_free(u_.list);
@@ -241,7 +244,7 @@ void AttributeType::insert_to_list(unsigned idx, const AttributeType *item) {
     memcpy(t1, u_.list, idx * sizeof(AttributeType));
     t1[idx].clone(item);
     memcpy(&t1[idx + 1], &u_.list[idx], (size_ - idx) * sizeof(AttributeType));
-    memset(&t1[size_ + 1], 0, 
+    memset(&t1[size_ + 1], 0,
           (MIN_ALLOC_BYTES * new_sz) - (size_ + 1) * sizeof(AttributeType));
     if (size_) {
         RISCV_free(u_.list);
@@ -258,7 +261,7 @@ void AttributeType::remove_from_list(unsigned idx) {
     (*this)[idx].attr_free();
     if (idx == (size() - 1)) {
         size_ -= 1;
-    } else if (idx < size ()) {
+    } else if (idx < size()) {
         swap_list_item(idx, size() - 1);
         size_ -= 1;
     }
@@ -320,7 +323,7 @@ int partition(AttributeType *A, int lo, int hi, int lst_idx) {
                 do_swap = true;
             }
         } else {
-            RISCV_printf(NULL, LOG_ERROR, "%s", 
+            RISCV_printf(NULL, LOG_ERROR, "%s",
                         "Not supported attribute type for sorting");
             return i + 1;
         }
@@ -345,7 +348,7 @@ void quicksort(AttributeType *A, int lo, int hi, int lst_idx) {
 
 void AttributeType::sort(int idx) {
     if (!is_list()) {
-        RISCV_printf(NULL, LOG_ERROR, "%s", 
+        RISCV_printf(NULL, LOG_ERROR, "%s",
                     "Sort algorithm can applied only to list attribute");
     }
     quicksort(this, 0, static_cast<int>(size()) - 1, idx);
@@ -387,11 +390,11 @@ void AttributeType::realloc_dict(unsigned size) {
                   / MIN_ALLOC_BYTES;
     size_t cur_sz = (size_ * sizeof(AttributePairType) + MIN_ALLOC_BYTES - 1)
                   / MIN_ALLOC_BYTES;
-    if (req_sz > cur_sz ) {
+    if (req_sz > cur_sz) {
         AttributePairType * t1 = static_cast<AttributePairType *>(
                 RISCV_malloc(MIN_ALLOC_BYTES * req_sz));
         memcpy(t1, u_.dict, size_ * sizeof(AttributePairType));
-        memset(&t1[size_], 0, 
+        memset(&t1[size_], 0,
                 (MIN_ALLOC_BYTES * req_sz) - size_ * sizeof(AttributePairType));
         if (size_) {
             RISCV_free(u_.dict);
@@ -479,7 +482,7 @@ void attribute_to_string(const AttributeType *attr, AutoBuffer *buf) {
             buf->write_string(iserv->getObjName());
             buf->write_string("'}");
         } else {
-            RISCV_printf(NULL, LOG_ERROR, 
+            RISCV_printf(NULL, LOG_ERROR,
                         "Not implemented interface to dict. method");
         }
     } else if (attr->is_floating()) {
@@ -515,7 +518,7 @@ int string_to_attribute(const char *cfg, int &off,
         out->make_string(buf.getBuffer());
         off += str_sz;
         if (cfg[off] != t1) {
-            RISCV_printf(NULL, LOG_ERROR, 
+            RISCV_printf(NULL, LOG_ERROR,
                         "JSON parser error: Wrong string format");
             out->attr_free();
             return -1;
@@ -540,7 +543,7 @@ int string_to_attribute(const char *cfg, int &off,
             }
         }
         if (cfg[off] != ']') {
-            RISCV_printf(NULL, LOG_ERROR, 
+            RISCV_printf(NULL, LOG_ERROR,
                         "JSON parser error: Wrong list format");
             out->attr_free();
             return -1;
@@ -553,7 +556,7 @@ int string_to_attribute(const char *cfg, int &off,
         off = skip_special_symbols(cfg, off + 1);
         while (cfg[off] != '}' && cfg[off] != '\0') {
             if (string_to_attribute(cfg, off, &new_key)) {
-                RISCV_printf(NULL, LOG_ERROR, 
+                RISCV_printf(NULL, LOG_ERROR,
                             "JSON parser error: Wrong dictionary key");
                 out->attr_free();
                 return -1;
@@ -561,13 +564,13 @@ int string_to_attribute(const char *cfg, int &off,
             off = skip_special_symbols(cfg, off);
             if (cfg[off] != ':') {
                 out->attr_free();
-                RISCV_printf(NULL, LOG_ERROR, 
+                RISCV_printf(NULL, LOG_ERROR,
                             "JSON parser error: Wrong dictionary delimiter");
                 return -1;
             }
             off = skip_special_symbols(cfg, off + 1);
             if (string_to_attribute(cfg, off, &new_value)) {
-                RISCV_printf(NULL, LOG_ERROR, 
+                RISCV_printf(NULL, LOG_ERROR,
                             "JSON parser error: Wrong dictionary value");
                 out->attr_free();
                 return -1;
@@ -581,7 +584,7 @@ int string_to_attribute(const char *cfg, int &off,
             }
         }
         if (cfg[off] != '}') {
-            RISCV_printf(NULL, LOG_ERROR, 
+            RISCV_printf(NULL, LOG_ERROR,
                         "JSON parser error: Wrong dictionary format");
             out->attr_free();
             return -1;
@@ -590,13 +593,13 @@ int string_to_attribute(const char *cfg, int &off,
 
         if (out->has_key("Type")) {
             if (strcmp((*out)["Type"].to_string(), IFACE_SERVICE) == 0) {
-                IService *iserv; 
+                IService *iserv;
                 iserv = static_cast<IService *>(
                         RISCV_get_service((*out)["ModuleName"].to_string()));
                 out->attr_free();
                 *out = AttributeType(iserv);
             } else {
-                RISCV_printf(NULL, LOG_ERROR, 
+                RISCV_printf(NULL, LOG_ERROR,
                         "Not implemented string to dict. attribute");
             }
         }
@@ -623,7 +626,7 @@ int string_to_attribute(const char *cfg, int &off,
                 break;
             }
             if (cfg[off] != ',') {
-                RISCV_printf(NULL, LOG_ERROR, 
+                RISCV_printf(NULL, LOG_ERROR,
                             "JSON parser error: Wrong data dytes delimiter");
                 out->attr_free();
                 return -1;
@@ -631,7 +634,7 @@ int string_to_attribute(const char *cfg, int &off,
             off = skip_special_symbols(cfg, off + 1);
         }
         if (cfg[off] != ')') {
-            RISCV_printf(NULL, LOG_ERROR, 
+            RISCV_printf(NULL, LOG_ERROR,
                         "JSON parser error: Wrong data format");
             out->attr_free();
             return -1;
@@ -643,7 +646,7 @@ int string_to_attribute(const char *cfg, int &off,
         out->make_nil();
         off = skip_special_symbols(cfg, off + 4);
     } else if ((cfg[off] == 'f' || cfg[off] == 'F') && cfg[off + 1] == 'a'
-            && cfg[off + 2] == 'l' && cfg[off + 3] == 's' 
+            && cfg[off + 2] == 'l' && cfg[off + 3] == 's'
             && cfg[off + 4] == 'e') {
         out->make_boolean(false);
         off = skip_special_symbols(cfg, off + 5);
@@ -680,7 +683,7 @@ int string_to_attribute(const char *cfg, int &off,
             while (digits_cnt < 63 && cfg[off] >= '0' && cfg[off] <= '9') {
                 if (trim_zeros && cfg[off] == '0') {
                     off++;
-                    divrate *= 10;      // Fix: strtoull(0008) gives 0 
+                    divrate *= 10;      // Fix: strtoull(0008) gives 0
                     continue;
                 }
                 trim_zeros = false;
@@ -704,7 +707,7 @@ int string_to_attribute(const char *cfg, int &off,
     }
     /** Guard to skip wrong formatted string and avoid hanging: */
     if (off == checkstart) {
-        RISCV_printf(NULL, LOG_ERROR, 
+        RISCV_printf(NULL, LOG_ERROR,
                     "JSON parser error: Can't detect format");
         out->attr_free();
         return -1;

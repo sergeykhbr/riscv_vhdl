@@ -48,6 +48,9 @@ public:
     /** check thread status */
     virtual bool isEnabled() { return loopEnable_.state; }
 
+    /** Pass data from the parent thread */
+    virtual void setExtArgument(void *args) {}
+
 protected:
     /** working cycle function */
     virtual void busyLoop() =0;

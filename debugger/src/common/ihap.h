@@ -8,7 +8,7 @@
 #ifndef __DEBUGGER_IHAP_H__
 #define __DEBUGGER_IHAP_H__
 
-#include "iface.h"
+#include <iface.h>
 #include <stdarg.h>
 
 namespace debugger {
@@ -25,15 +25,15 @@ enum EHapType {
 };
 
 class IHap : public IFace {
-public:
-    IHap(EHapType type = HAP_All) : IFace(IFACE_HAP), type_(type) {}
+ public:
+    explicit IHap(EHapType type = HAP_All) : IFace(IFACE_HAP), type_(type) {}
 
     EHapType getType() { return type_; }
 
     virtual void hapTriggered(IFace *isrc, EHapType type,
-                             const char *descr) =0;
+                             const char *descr) = 0;
 
-protected:
+ protected:
     EHapType type_;
 };
 

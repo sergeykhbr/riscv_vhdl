@@ -13,70 +13,70 @@ namespace debugger {
 
 union ISA_R_type {
     struct bits_type {
-        uint32_t opcode : 7;  // [6:0] 
-        uint32_t rd     : 5;  // [11:7] 
-        uint32_t funct3 : 3;  // [14:12] 
-        uint32_t rs1    : 5;  // [19:15] 
-        uint32_t rs2    : 5;  // [24:20] 
-        uint32_t funct7 : 7;  // [31:25] 
+        uint32_t opcode : 7;  // [6:0]
+        uint32_t rd     : 5;  // [11:7]
+        uint32_t funct3 : 3;  // [14:12]
+        uint32_t rs1    : 5;  // [19:15]
+        uint32_t rs2    : 5;  // [24:20]
+        uint32_t funct7 : 7;  // [31:25]
     } bits;
     uint32_t value;
 };
 
 union ISA_I_type {
     struct bits_type {
-        uint32_t opcode : 7;  // [6:0] 
-        uint32_t rd     : 5;  // [11:7] 
-        uint32_t funct3 : 3;  // [14:12] 
-        uint32_t rs1    : 5;  // [19:15] 
-        uint32_t imm    : 12;  // [31:20] 
+        uint32_t opcode : 7;  // [6:0]
+        uint32_t rd     : 5;  // [11:7]
+        uint32_t funct3 : 3;  // [14:12]
+        uint32_t rs1    : 5;  // [19:15]
+        uint32_t imm    : 12;  // [31:20]
     } bits;
     uint32_t value;
 };
 
 union ISA_S_type {
     struct bits_type {
-        uint32_t opcode : 7;  // [6:0] 
-        uint32_t imm4_0 : 5;  // [11:7] 
-        uint32_t funct3 : 3;  // [14:12] 
-        uint32_t rs1    : 5;  // [19:15] 
-        uint32_t rs2    : 5;  // [24:20] 
-        uint32_t imm11_5 : 7;  // [31:25] 
+        uint32_t opcode : 7;  // [6:0]
+        uint32_t imm4_0 : 5;  // [11:7]
+        uint32_t funct3 : 3;  // [14:12]
+        uint32_t rs1    : 5;  // [19:15]
+        uint32_t rs2    : 5;  // [24:20]
+        uint32_t imm11_5 : 7;  // [31:25]
     } bits;
     uint32_t value;
 };
 
 union ISA_SB_type {
     struct bits_type {
-        uint32_t opcode : 7;  // [6:0] 
-        uint32_t imm11  : 1;  // [7] 
-        uint32_t imm4_1 : 4;  // [11:8] 
-        uint32_t funct3 : 3;  // [14:12] 
-        uint32_t rs1    : 5;  // [19:15] 
-        uint32_t rs2    : 5;  // [24:20] 
-        uint32_t imm10_5 : 6;  // [30:25] 
-        uint32_t imm12   : 1;  // [31] 
+        uint32_t opcode : 7;  // [6:0]
+        uint32_t imm11  : 1;  // [7]
+        uint32_t imm4_1 : 4;  // [11:8]
+        uint32_t funct3 : 3;  // [14:12]
+        uint32_t rs1    : 5;  // [19:15]
+        uint32_t rs2    : 5;  // [24:20]
+        uint32_t imm10_5 : 6;  // [30:25]
+        uint32_t imm12   : 1;  // [31]
     } bits;
     uint32_t value;
 };
 
 union ISA_U_type {
     struct bits_type {
-        uint32_t opcode : 7;  // [6:0] 
-        uint32_t rd     : 5;  // [11:7] 
-        uint32_t imm31_12 : 20;  // [31:12] 
+        uint32_t opcode : 7;  // [6:0]
+        uint32_t rd     : 5;  // [11:7]
+        uint32_t imm31_12 : 20;  // [31:12]
     } bits;
     uint32_t value;
 };
 
 union ISA_UJ_type {
     struct bits_type {
-        uint32_t opcode   : 7;   // [6:0] 
-        uint32_t rd       : 5;   // [11:7] 
-        uint32_t imm19_12 : 8;   // [19:12] 
-        uint32_t imm11    : 1;   // [20] 
-        uint32_t imm10_1  : 10;  // [30:21] 
-        uint32_t imm20    : 1;   // [31] 
+        uint32_t opcode   : 7;   // [6:0]
+        uint32_t rd       : 5;   // [11:7]
+        uint32_t imm19_12 : 8;   // [19:12]
+        uint32_t imm11    : 1;   // [20]
+        uint32_t imm10_1  : 10;  // [30:21]
+        uint32_t imm20    : 1;   // [31]
     } bits;
     uint32_t value;
 };
@@ -115,10 +115,10 @@ static const char *const IREGS_NAMES[] = {
     "s9",       // [25] Saved register 9
     "s10",      // [26] Saved register 10
     "s11",      // [27] Saved register 11
-    "t3",       // [28] 
-    "t4",       // [29] 
-    "t5",       // [30] 
-    "t6"        // [31] 
+    "t3",       // [28]
+    "t4",       // [29]
+    "t5",       // [30]
+    "t6"        // [31]
 };
 
 const char *const FREGS_NAME[] = {
@@ -130,62 +130,71 @@ const char *const FREGS_NAME[] = {
 
 enum ERegNames {
     Reg_Zero,
-    Reg_ra,// = 1;       // [1] Return address
-    Reg_sp,// = 2;       // [2] Stack pointer
-    Reg_gp,// = 3;       // [3] Global pointer
-    Reg_tp,// = 4;       // [4] Thread pointer
-    Reg_t0,// = 5;       // [5] Temporaries 0 s3
-    Reg_t1,// = 6;       // [6] Temporaries 1 s4
-    Reg_t2,// = 7;       // [7] Temporaries 2 s5
-    Reg_s0,// = 8;       // [8] s0/fp Saved register/frame pointer
-    Reg_s1,// = 9;       // [9] Saved register 1
-    Reg_a0,// = 10;       // [10] Function argumentes 0
-    Reg_a1,// = 11;       // [11] Function argumentes 1
-    Reg_a2,// = 12;       // [12] Function argumentes 2
-    Reg_a3,// = 13;       // [13] Function argumentes 3
-    Reg_a4,// = 14;       // [14] Function argumentes 4
-    Reg_a5,// = 15;       // [15] Function argumentes 5
-    Reg_a6,// = 16;       // [16] Function argumentes 6
-    Reg_a7,// = 17;       // [17] Function argumentes 7
-    Reg_s2,// = 18;       // [18] Saved register 2
-    Reg_s3,// = 19;       // [19] Saved register 3
-    Reg_s4,// = 20;       // [20] Saved register 4
-    Reg_s5,// = 21;       // [21] Saved register 5
-    Reg_s6,// = 22;       // [22] Saved register 6
-    Reg_s7,// = 23;       // [23] Saved register 7
-    Reg_s8,// = 24;       // [24] Saved register 8
-    Reg_s9,// = 25;       // [25] Saved register 9
-    Reg_s10,// = 26;      // [26] Saved register 10
-    Reg_s11,// = 27;      // [27] Saved register 11
-    Reg_t3,// = 28;       // [28] 
-    Reg_t4,// = 29;       // [29] 
-    Reg_t5,// = 30;       // [30] 
-    Reg_t6,// = 31;      // [31] 
+    Reg_ra,       // [1] Return address
+    Reg_sp,       // [2] Stack pointer
+    Reg_gp,       // [3] Global pointer
+    Reg_tp,       // [4] Thread pointer
+    Reg_t0,       // [5] Temporaries 0 s3
+    Reg_t1,       // [6] Temporaries 1 s4
+    Reg_t2,       // [7] Temporaries 2 s5
+    Reg_s0,       // [8] s0/fp Saved register/frame pointer
+    Reg_s1,       // [9] Saved register 1
+    Reg_a0,       // [10] Function argumentes 0
+    Reg_a1,       // [11] Function argumentes 1
+    Reg_a2,       // [12] Function argumentes 2
+    Reg_a3,       // [13] Function argumentes 3
+    Reg_a4,       // [14] Function argumentes 4
+    Reg_a5,       // [15] Function argumentes 5
+    Reg_a6,       // [16] Function argumentes 6
+    Reg_a7,       // [17] Function argumentes 7
+    Reg_s2,       // [18] Saved register 2
+    Reg_s3,       // [19] Saved register 3
+    Reg_s4,       // [20] Saved register 4
+    Reg_s5,       // [21] Saved register 5
+    Reg_s6,       // [22] Saved register 6
+    Reg_s7,       // [23] Saved register 7
+    Reg_s8,       // [24] Saved register 8
+    Reg_s9,       // [25] Saved register 9
+    Reg_s10,      // [26] Saved register 10
+    Reg_s11,      // [27] Saved register 11
+    Reg_t3,       // [28]
+    Reg_t4,       // [29]
+    Reg_t5,       // [30]
+    Reg_t6,       // [31]
     Reg_Total
 };
 
 
 union csr_mstatus_type {
     struct bits_type {
-        uint64_t UIE    : 1;    // [0]: User level interrupts ena for current priv. mode
-        uint64_t SIE    : 1;    // [1]: Super-User level interrupts ena for current priv. mode
-        uint64_t HIE    : 1;    // [2]: Hypervisor level interrupts ena for current priv. mode
-        uint64_t MIE    : 1;    // [3]: Machine level interrupts ena for current priv. mode
-        uint64_t UPIE   : 1;    // [4]: User level interrupts ena previous value (before interrupt)
-        uint64_t SPIE   : 1;    // [5]: Super-User level interrupts ena previous value (before interrupt)
-        uint64_t HPIE   : 1;    // [6]: Hypervisor level interrupts ena previous value (before interrupt)
-        uint64_t MPIE   : 1;    // [7]: Machine level interrupts ena previous value (before interrupt)
-        uint64_t SPP    : 1;    // [8]: One bit wide. Supper-user previously priviledged level
-        uint64_t HPP    : 2;    // [10:9]: the Hypervisor previous privilege mode
-        uint64_t MPP    : 2;    // [12:11]: the Machine previous privilege mode
+        uint64_t UIE    : 1;    // [0]: User level interrupts ena for current
+                                //      priv. mode
+        uint64_t SIE    : 1;    // [1]: Super-User level interrupts ena for
+                                //      current priv. mode
+        uint64_t HIE    : 1;    // [2]: Hypervisor level interrupts ena for
+                                //      current priv. mode
+        uint64_t MIE    : 1;    // [3]: Machine level interrupts ena for
+                                //      current priv. mode
+        uint64_t UPIE   : 1;    // [4]: User level interrupts ena previous
+                                //      value (before interrupt)
+        uint64_t SPIE   : 1;    // [5]: Super-User level interrupts ena
+                                //      previous value (before interrupt)
+        uint64_t HPIE   : 1;    // [6]: Hypervisor level interrupts ena
+                                //      previous value (before interrupt)
+        uint64_t MPIE   : 1;    // [7]: Machine level interrupts ena previous
+                                //      value (before interrupt)
+        uint64_t SPP    : 1;    // [8]: One bit wide. Supper-user previously
+                                //      priviledged level
+        uint64_t HPP    : 2;    // [10:9]: the Hypervisor previous priv mode
+        uint64_t MPP    : 2;    // [12:11]: the Machine previous priv mode
         uint64_t FS     : 2;    // [14:13]: RW: FPU context status
         uint64_t XS     : 2;    // [16:15]: RW: extension context status
         uint64_t MPRV   : 1;    // [17] Memory privilege bit
         uint64_t PUM    : 1;    // [18]
         uint64_t MXR    : 1;    // [19]
         uint64_t rsrv1  : 4;    // [23:20]
-        uint64_t VM     : 5;    // [28:24] Virtualization management field (WARL)
-        uint64_t rsrv2  : 64-30;// [62:29]
+        uint64_t VM     : 5;    // [28:24] Virtualization management field
+        uint64_t rsv2 : 64-30;  // [62:29]
         uint64_t SD     : 1;    // RO: [63] Bit summarizes FS/XS bits
     } bits;
     uint64_t value;
@@ -299,7 +308,7 @@ enum EExeption {
     EXCEPTION_LoadMisalign    = 4,
     // Load access fault
     EXCEPTION_LoadFault       = 5,
-    //Store/AMO address misaligned
+    // Store/AMO address misaligned
     EXCEPTION_StoreMisalign   = 6,
     // Store/AMO access fault
     EXCEPTION_StoreFault      = 7,

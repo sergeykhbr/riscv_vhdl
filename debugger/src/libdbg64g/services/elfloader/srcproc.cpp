@@ -101,6 +101,11 @@ void SourceService::addDataSymbol(const char *name, uint64_t addr, int sz) {
     addFileSymbol(name, addr, sz);
 }
 
+void SourceService::clearSymbols() {
+    symbolListSortByName_.make_list(0);
+    symbolListSortByAddr_.make_list(0);
+}
+
 void SourceService::addSymbols(AttributeType *list) {
     for (unsigned i = 0; i < list->size(); i++) {
         AttributeType &item = (*list)[i];

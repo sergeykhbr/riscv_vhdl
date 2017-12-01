@@ -8,9 +8,9 @@
 #ifndef __DEBUGGER_SERVICE_H__
 #define __DEBUGGER_SERVICE_H__
 
-#include "iface.h"
-#include "attribute.h"
-#include "api_utils.h"
+#include <iface.h>
+#include <attribute.h>
+#include <api_utils.h>
 #include "coreservices/imemop.h"
 
 namespace debugger {
@@ -18,9 +18,8 @@ namespace debugger {
 static const char *const IFACE_SERVICE = "IService";
 
 class IService : public IFace {
-public:
-    IService(const char *obj_name) 
-        : IFace(IFACE_SERVICE) {
+ public:
+    IService(const char *obj_name) : IFace(IFACE_SERVICE) {
         listInterfaces_ = AttributeType(Attr_List);
         listAttributes_ = AttributeType(Attr_List);
         listPorts_ = AttributeType(Attr_List);
@@ -157,7 +156,7 @@ public:
         return ret;
     }
 
-protected:
+ protected:
     AttributeType listInterfaces_;
     AttributeType listPorts_;       // [['portname',iface],*]
     AttributeType listAttributes_;

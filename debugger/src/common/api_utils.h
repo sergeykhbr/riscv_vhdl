@@ -9,14 +9,15 @@
 #define __DEBUGGER_API_UTILS_H__
 
 #include <stdarg.h>
-#include "api_types.h"
-#include "attribute.h"
+#include <api_types.h>
+#include <attribute.h>
 
 namespace debugger {
 
-#define LOG_ERROR 1
-#define LOG_INFO  3
-#define LOG_DEBUG 4
+#define LOG_ERROR     1
+#define LOG_IMPORTANT 2   // can be used for the autotest messages
+#define LOG_INFO      3
+#define LOG_DEBUG     4
 
 #ifdef __cplusplus
 extern "C" {
@@ -51,6 +52,10 @@ int RISCV_printf(void *iface, int level, const char *fmt, ...);
 #define RISCV_error(fmt, ...) \
     RISCV_printf(getInterface(IFACE_SERVICE), LOG_ERROR, "%s:%d " fmt, \
                  __FILE__, __LINE__, __VA_ARGS__)
+
+/** Output with the information logging level */
+#define RISCV_important(fmt, ...) \
+    RISCV_printf(getInterface(IFACE_SERVICE), LOG_IMPORTANT, fmt, __VA_ARGS__)
 
 /** Output with the information logging level */
 #define RISCV_info(fmt, ...) \

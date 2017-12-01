@@ -58,23 +58,25 @@ enum EColumnNames {
 static const uint64_t BreakFlag_HW = (1 << 0);
 
 class ISourceCode : public IFace {
-public:
+ public:
     ISourceCode() : IFace(IFACE_SOURCE_CODE) {}
 
     /** Control Debug Symbols */
-    virtual void addFileSymbol(const char *name, uint64_t addr, int sz) =0;
+    virtual void addFileSymbol(const char *name, uint64_t addr, int sz) = 0;
 
-    virtual void addFunctionSymbol(const char *name, uint64_t addr, int sz) =0;
+    virtual void addFunctionSymbol(const char *name, uint64_t addr,
+                                   int sz) = 0;
 
-    virtual void addDataSymbol(const char *name, uint64_t addr, int sz) =0;
+    virtual void addDataSymbol(const char *name, uint64_t addr, int sz) = 0;
 
-    virtual void addSymbols(AttributeType *list) =0;
+    virtual void clearSymbols() = 0;
+    virtual void addSymbols(AttributeType *list) = 0;
 
-    virtual void getSymbols(AttributeType *list) =0;
+    virtual void getSymbols(AttributeType *list) = 0;
 
-    virtual void addressToSymbol(uint64_t addr, AttributeType *info) =0;
+    virtual void addressToSymbol(uint64_t addr, AttributeType *info) = 0;
 
-    virtual int symbol2Address(const char *name, uint64_t *addr) =0;
+    virtual int symbol2Address(const char *name, uint64_t *addr) = 0;
 
     /** Disasm input data buffer.
      *
@@ -84,10 +86,10 @@ public:
                        uint8_t *data,
                        int offset,
                        AttributeType *mnemonic,
-                       AttributeType *comment) =0;
+                       AttributeType *comment) = 0;
     virtual void disasm(uint64_t pc,
                        AttributeType *idata,
-                       AttributeType *asmlist) =0;
+                       AttributeType *asmlist) = 0;
 
 
     /** Register breakpoint at specified address.
@@ -100,7 +102,7 @@ public:
      * @param[in] instr Original opcode before EBREAK instruction injection.
      */
     virtual void registerBreakpoint(uint64_t addr, uint64_t flags,
-                                    uint64_t instr) =0;
+                                    uint64_t instr) = 0;
 
     /** Unregister breakpoint at specified address.
      *
@@ -111,16 +113,16 @@ public:
      * @return 0 if no errors
      */
     virtual int unregisterBreakpoint(uint64_t addr, uint64_t *flags,
-                                    uint64_t *instr) =0;
+                                    uint64_t *instr) = 0;
 
     /** Get list of breakpoints.
      *
      * @param[out] lst Breakpoint list.
      */
-    virtual void getBreakpointList(AttributeType *list) =0;
+    virtual void getBreakpointList(AttributeType *list) = 0;
 
     /** Check specified address on breakpoint */
-    virtual bool isBreakpoint(uint64_t addr, AttributeType *outbr) =0;
+    virtual bool isBreakpoint(uint64_t addr, AttributeType *outbr) = 0;
 };
 
 }  // namespace debugger

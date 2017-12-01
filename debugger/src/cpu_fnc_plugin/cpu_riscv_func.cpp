@@ -48,7 +48,6 @@ CpuRiscV_Functional::CpuRiscV_Functional(const char *name)
     freqHz_.make_uint64(1);
     generateRegTraceFile_.make_boolean(false);
     generateMemTraceFile_.make_boolean(false);
-    resetVector_.make_uint64(0x1000);
 
     cpu_context_.step_cnt = 0;
     cpu_context_.stack_trace_cnt = 0;
@@ -58,7 +57,6 @@ CpuRiscV_Functional::CpuRiscV_Functional(const char *name)
     cpu_context_.reset   = true;
     dbg_state_ = STATE_Normal;
     last_hit_breakpoint_ = ~0;
-    reset();
 
     trans_.source_idx = CFG_NASTI_MASTER_CACHED;
     cpu_context_.reg_trace_file = 0;
@@ -80,6 +78,8 @@ CpuRiscV_Functional::~CpuRiscV_Functional() {
 }
 
 void CpuRiscV_Functional::postinitService() {
+    reset();
+
     CpuContextType *pContext = getpContext();
 
     pContext->ibus = static_cast<IMemoryOperation *>(

@@ -5,8 +5,8 @@
  * @brief      Asynchronous queue with time markers.
  */
 
-#include "api_utils.h"
-#include "async_tqueue.h"
+#include <api_utils.h>
+#include <async_tqueue.h>
 
 namespace debugger {
 
@@ -54,7 +54,7 @@ void AsyncTQueueType::pushPreQueued() {
         }
         curLen_++;
     }
-    preLen_= 0;
+    preLen_ = 0;
     RISCV_mutex_unlock(&mutex_);
 }
 

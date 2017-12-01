@@ -10,7 +10,7 @@
 
 #include <stdint.h>
 #include <string.h>
-#include "iattr.h"
+#include <iattr.h>
 
 namespace debugger {
 
@@ -32,7 +32,7 @@ enum KindType {
 class AttributePairType;
 
 class AttributeType : public IAttribute {
-  public:
+ public:
     KindType kind_;
     unsigned size_;
     union {
@@ -292,7 +292,7 @@ class AttributeType : public IAttribute {
     const AttributeType *dict_value(unsigned idx) const;
     AttributeType *dict_value(unsigned idx);
 
-    const uint8_t *data() const { 
+    const uint8_t *data() const {
         if (size_ > 8) {
             return u_.data;
         }
@@ -331,7 +331,7 @@ class AttributeType : public IAttribute {
 };
 
 class AttributePairType {
-  public:
+ public:
     AttributeType key_;
     AttributeType value_;
 };

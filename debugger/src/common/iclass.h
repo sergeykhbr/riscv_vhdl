@@ -8,17 +8,17 @@
 #ifndef __DEBUGGER_CLASS_H__
 #define __DEBUGGER_CLASS_H__
 
-#include "iface.h"
-#include "iservice.h"
-#include "api_core.h"
+#include <iface.h>
+#include <iservice.h>
+#include <api_core.h>
 
 namespace debugger {
 
 static const char *const IFACE_CLASS = "IClass";
 
 class IClass : public IFace {
-public:
-    IClass(const char *class_name) 
+ public:
+    explicit IClass(const char *class_name)
         : IFace(IFACE_CLASS) {
         class_name_.make_string(class_name);
         RISCV_register_class(static_cast<IClass *>(this));
@@ -30,7 +30,7 @@ public:
         }
     }
 
-    virtual IService *createService(const char *obj_name) =0;
+    virtual IService *createService(const char *obj_name) = 0;
 
     virtual void postinitServices() {
         IService *tmp = NULL;
@@ -77,7 +77,7 @@ public:
 
     virtual const AttributeType *getInstanceList() { return &listInstances_; }
 
-protected:
+ protected:
     AttributeType class_name_;
     AttributeType listInstances_;
 };
@@ -88,8 +88,8 @@ protected:
  */
 #define DECLARE_CLASS(name) \
 class name ## Class : public IClass { \
-public: \
-    name ## Class () : IClass(# name "Class") {} \
+ public: \
+    name ## Class() : IClass(# name "Class") {} \
     virtual IService *createService(const char *obj_name) {  \
         name *serv = new name(obj_name); \
         AttributeType item(static_cast<IService *>(serv)); \

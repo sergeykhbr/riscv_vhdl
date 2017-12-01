@@ -35,6 +35,8 @@ public:
 
     virtual void addSymbols(AttributeType *list);
 
+    virtual void clearSymbols();
+
     virtual void getSymbols(AttributeType *list) {
         *list = symbolListSortByName_;
     }

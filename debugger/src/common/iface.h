@@ -11,8 +11,8 @@
 namespace debugger {
 
 class IFace {
-public:
-    IFace(const char *name) : ifname_(name) {}
+ public:
+    explicit IFace(const char *name) : ifname_(name) {}
     virtual ~IFace() {}
 
     /** Get brief information. */
@@ -24,7 +24,7 @@ public:
     /** Get interface name. */
     const char *getFaceName() { return ifname_; }
 
-protected:
+ protected:
     const char *ifname_;
 };
 
