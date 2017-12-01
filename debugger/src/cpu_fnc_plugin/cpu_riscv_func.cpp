@@ -633,6 +633,7 @@ void CpuRiscV_Functional::halt(const char *descr) {
         RISCV_printf0("[%" RV_PRI64 "d] pc:%016" RV_PRI64 "x: %08x \t %s",
             getStepCounter(), pContext->pc, cacheline_[0], descr);
     }
+    RISCV_trigger_hap(getInterface(IFACE_SERVICE), HAP_Halt, "halt");
 }
 
 void CpuRiscV_Functional::go() {

@@ -48,6 +48,9 @@
     <Filter Include="Source Files\services\debug">
       <UniqueIdentifier>{bc603e1b-1b96-4de2-97ee-535660883158}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\services\remote">
+      <UniqueIdentifier>{c29d4c75-9edd-4536-9910-1c6854c36fcb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\common\attribute.cpp">
@@ -160,6 +163,15 @@
     </ClCompile>
     <ClCompile Include="..\..\src\libdbg64g\services\debug\udp_dbglink.cpp">
       <Filter>Source Files\services\debug</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\libdbg64g\services\remote\tcpclient.cpp">
+      <Filter>Source Files\services\remote</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\libdbg64g\services\remote\tcpcmd.cpp">
+      <Filter>Source Files\services\remote</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\libdbg64g\services\remote\tcpserver.cpp">
+      <Filter>Source Files\services\remote</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -353,6 +365,15 @@
     </ClInclude>
     <ClInclude Include="..\..\src\common\coreservices\icpugen.h">
       <Filter>Source Files\common\coreservices</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\libdbg64g\services\remote\tcpclient.h">
+      <Filter>Source Files\services\remote</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\libdbg64g\services\remote\tcpcmd.h">
+      <Filter>Source Files\services\remote</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\libdbg64g\services\remote\tcpserver.h">
+      <Filter>Source Files\services\remote</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

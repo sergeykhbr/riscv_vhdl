@@ -46,7 +46,7 @@ public:
     /** IClock */
     virtual uint64_t getStepCounter() { return cpu_context_.step_cnt; }
     virtual void registerStepCallback(IClockListener *cb, uint64_t t);
-    virtual double getFreqHz() { return freqHz_.to_float(); }
+    virtual double getFreqHz() { return freqHz_.to_int(); }
 
     /** IHap */
     virtual void hapTriggered(IFace *isrc, EHapType type, const char *descr);
