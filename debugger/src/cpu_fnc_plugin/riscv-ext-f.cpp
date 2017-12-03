@@ -7,11 +7,11 @@
 
 #include "api_utils.h"
 #include "riscv-isa.h"
-#include "instructions.h"
+#include "cpu_riscv_func.h"
 
 namespace debugger {
 
-void addIsaExtensionF(CpuContextType *data, AttributeType *out) {
+void CpuRiver_Functional::addIsaExtensionF() {
     // TODO
     /*
     addInstr("FADD_S",             "0000000??????????????????1010011", NULL, out);
@@ -85,7 +85,9 @@ void addIsaExtensionF(CpuContextType *data, AttributeType *out) {
     def FSCSR              = BitPat("b000000000011?????001?????1110011")
     def FRCSR              = BitPat("b00000000001100000010?????1110011")
     */
-    data->csr[CSR_misa] |= (1LL << ('F' - 'A'));
+    uint64_t isa = portCSR_.read(CSR_misa).val;
+    isa |= (1LL << ('F' - 'A'));
+    portCSR_.write(CSR_misa, isa);
 }
 
 }  // namespace debugger

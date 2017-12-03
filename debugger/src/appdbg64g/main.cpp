@@ -98,14 +98,14 @@ int main(int argc, char* argv[]) {
     /**
      * Unreset all CPUs
      */
-    AttributeType cpu_list;
+    /*AttributeType cpu_list;
     RISCV_get_services_with_iface(IFACE_CPU_RISCV, &cpu_list);
     for (unsigned i = 0; i < cpu_list.size(); i++) {
         IService *iserv = static_cast<IService *>(cpu_list[i].to_iface());
         ICpuGeneric *icpu = static_cast<ICpuGeneric *>(
                     iserv->getInterface(IFACE_CPU_GENERIC));
         icpu->lowerSignal(CPU_SIGNAL_RESET);  // Active HIGH. Unreset CPU model.
-    }
+    }*/
 
     if (itst != NULL) {
         /** Get plugin specific interface. */

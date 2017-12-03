@@ -295,58 +295,59 @@ static const uint16_t CSR_mip           = 0x344;
 /// @}
 
 /** Exceptions */
-enum EExeption {
+enum ESignals {
     // Instruction address misaligned
-    EXCEPTION_InstrMisalign   = 0,
+    EXCEPTION_InstrMisalign,
     // Instruction access fault
-    EXCEPTION_InstrFault      = 1,
+    EXCEPTION_InstrFault,
     // Illegal instruction
-    EXCEPTION_InstrIllegal    = 2,
+    EXCEPTION_InstrIllegal,
     // Breakpoint
-    EXCEPTION_Breakpoint      = 3,
+    EXCEPTION_Breakpoint,
     // Load address misaligned
-    EXCEPTION_LoadMisalign    = 4,
+    EXCEPTION_LoadMisalign,
     // Load access fault
-    EXCEPTION_LoadFault       = 5,
+    EXCEPTION_LoadFault,
     // Store/AMO address misaligned
-    EXCEPTION_StoreMisalign   = 6,
+    EXCEPTION_StoreMisalign,
     // Store/AMO access fault
-    EXCEPTION_StoreFault      = 7,
+    EXCEPTION_StoreFault,
     // Environment call from U-mode
-    EXCEPTION_CallFromUmode   = 8,
+    EXCEPTION_CallFromUmode,
     // Environment call from S-mode
-    EXCEPTION_CallFromSmode   = 9,
+    EXCEPTION_CallFromSmode,
     // Environment call from H-mode
-    EXCEPTION_CallFromHmode   = 10,
+    EXCEPTION_CallFromHmode,
     // Environment call from M-mode
-    EXCEPTION_CallFromMmode   = 11
-};
+    EXCEPTION_CallFromMmode,
 
-enum EInterrupt {
     // User software interrupt
-    INTERRUPT_USoftware      = 0,
+    INTERRUPT_USoftware,
     // Superuser software interrupt
-    INTERRUPT_SSoftware      = 1,
+    INTERRUPT_SSoftware,
     // Hypervisor software itnerrupt
-    INTERRUPT_HSoftware      = 2,
+    INTERRUPT_HSoftware,
     // Machine software interrupt
-    INTERRUPT_MSoftware      = 3,
+    INTERRUPT_MSoftware,
     // User timer interrupt
-    INTERRUPT_UTimer         = 4,
+    INTERRUPT_UTimer,
     // Superuser timer interrupt
-    INTERRUPT_STimer         = 5,
+    INTERRUPT_STimer,
     // Hypervisor timer interrupt
-    INTERRUPT_HTimer         = 6,
+    INTERRUPT_HTimer,
     // Machine timer interrupt
-    INTERRUPT_MTimer         = 7,
+    INTERRUPT_MTimer,
     // User external interrupt
-    INTERRUPT_UExternal      = 8,
+    INTERRUPT_UExternal,
     // Superuser external interrupt
-    INTERRUPT_SExternal      = 9,
+    INTERRUPT_SExternal,
     // Hypervisor external interrupt
-    INTERRUPT_HExternal      = 10,
+    INTERRUPT_HExternal,
     // Machine external interrupt (from PLIC)
-    INTERRUPT_MExternal      = 11,
+    INTERRUPT_MExternal,
+
+    SIGNAL_HardReset,
+    SIGNAL_Total
 };
 
 }  // namespace debugger

@@ -137,16 +137,22 @@
                 ['Bus','axi0'],
                 ['Transport','udpboard']
                 ]}]},
-    {'Class':'CpuRiscV_FunctionalClass','Instances':[
+    {'Class':'CpuRiver_FunctionalClass','Instances':[
           {'Name':'core0','Attr':[
                 ['Enable',true],
-                ['LogLevel',4],
-                ['Bus','axi0'],
+                ['LogLevel',3],
+                ['SysBusMasterID',0,'Used to gather Bus statistic'],
+                ['SysBus','axi0'],
+                ['DbgBus','dbgbus0'],
+                ['SourceCode','src0'],
                 ['ListExtISA',['I','M','A']],
+                ['StackTraceSize',128],
                 ['FreqHz',60000000],
+                ['VendorID',0x0001,'Hardcoded in CSR mvendorid value: UC Berkeley Rocket repo'],
+                ['VectorTable',0x100,'Hardcoded in CSR mtvec value: interrupts vector table address'],
+                ['ResetVector',0x1000,'Initial intruction pointer value (config parameter)'],
                 ['GenerateRegTraceFile',false,'Generate Registers modification file to compare with SystemC'],
                 ['GenerateMemTraceFile',false,'Generate Memory access file to compare with SystemC'],
-                ['ResetVector',0x1000,'Initial intruction pointer value (config parameter)'],
                 ]}]},
     {'Class':'MemorySimClass','Instances':[
           {'Name':'bootrom0','Attr':[
@@ -250,6 +256,19 @@
                 ['MapList',['bootrom0','fwimage0','sram0','gpio0',
                         'uart0','irqctrl0','gnss0','gptmr0',
                         'pnp0','dsu0','greth0','rfctrl0','fsegps0']]
+                ]}]},
+    {'Class':'BusClass','Instances':[
+          {'Name':'dbgbus0','Attr':[
+                ['LogLevel',3],
+                ['MapList',[['core0','pc'],
+                            ['core0','npc'],
+                            ['core0','status'],
+                            ['core0','csr'],
+                            ['core0','regs'],
+                            ['core0','stepping_cnt'],
+                            ['core0','stack_trace_cnt'],
+                            ['core0','stack_trace_buf'],
+                           ]]
                 ]}]},
     {'Class':'BoardSimClass','Instances':[
           {'Name':'boardsim','Attr':[

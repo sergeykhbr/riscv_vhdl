@@ -8,6 +8,7 @@
 #include "api_core.h"
 #include "rtl_wrapper.h"
 #include "iservice.h"
+#include <riscv-isa.h>
 #include "coreservices/iserial.h"
 #include "coreservices/isocinfo.h"
 
@@ -238,10 +239,10 @@ void RtlWrapper::registerStepCallback(IClockListener *cb, uint64_t t) {
 
 void RtlWrapper::raiseSignal(int idx) {
     switch (idx) {
-    case CPU_SIGNAL_RESET:
+    case SIGNAL_HardReset:
         w_nrst = 0;
         break;
-    case CPU_SIGNAL_EXT_IRQ:
+    case INTERRUPT_MExternal:
         w_interrupt = true;
         break;
     default:;
@@ -250,10 +251,10 @@ void RtlWrapper::raiseSignal(int idx) {
 
 void RtlWrapper::lowerSignal(int idx) {
     switch (idx) {
-    case CPU_SIGNAL_RESET:
+    case SIGNAL_HardReset:
         w_nrst = 1;
         break;
-    case CPU_SIGNAL_EXT_IRQ:
+    case INTERRUPT_MExternal:
         w_interrupt = false;
         break;
     default:;

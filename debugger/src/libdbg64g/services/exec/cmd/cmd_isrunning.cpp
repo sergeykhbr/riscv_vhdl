@@ -35,7 +35,7 @@ void CmdIsRunning::exec(AttributeType *args, AttributeType *res) {
     }
 
     Reg64Type t1;
-    DsuMapType::udbg_type::debug_region_type::control_reg ctrl;
+    GenericCpuControlType ctrl;
     DsuMapType *pdsu = info_->getpDsu();
     uint64_t addr = reinterpret_cast<uint64_t>(&pdsu->udbg.v.control);
     tap_->read(addr, 8, t1.buf);

@@ -41,7 +41,7 @@ void CmdHalt::exec(AttributeType *args, AttributeType *res) {
 
     Reg64Type t1;
     DsuMapType *dsu = info_->getpDsu();
-    DsuMapType::udbg_type::debug_region_type::control_reg ctrl;
+    GenericCpuControlType ctrl;
     uint64_t addr_run_ctrl = reinterpret_cast<uint64_t>(&dsu->udbg.v.control);
     ctrl.val = 0;
     ctrl.bits.halt = 1;

@@ -126,6 +126,24 @@ struct GpioType {
     } u;
 };
 
+union GenericCpuControlType {
+    uint64_t val;
+    struct {
+        uint64_t halt     : 1;
+        uint64_t stepping : 1;
+        uint64_t breakpoint : 1;
+        uint64_t rsv1     : 1;
+        uint64_t core_id  : 16;
+        uint64_t rsv2     : 12;
+        uint64_t istate   : 2;  // [33:32] icache state
+        uint64_t rsv3     : 2;  // [35:34] 
+        uint64_t dstate   : 2;  // [37:36] dcache state
+        uint64_t rsv4     : 2;  // [39:38]
+        uint64_t cstate   : 2;  // [41:40] cachetop state
+        uint64_t rsv5     : 22;
+    } bits;
+};
+
 struct DsuMapType {
     // Base Address + 0x00000 (Region 0)
     uint64_t csr[1 << 12];
@@ -148,23 +166,7 @@ struct DsuMapType {
     union udbg_type {
         uint8_t buf[1 << (12 + 3)];
         struct debug_region_type {
-            union control_reg {
-                uint64_t val;
-                struct {
-                    uint64_t halt     : 1;
-                    uint64_t stepping : 1;
-                    uint64_t breakpoint : 1;
-                    uint64_t rsv1     : 1;
-                    uint64_t core_id  : 16;
-                    uint64_t rsv2     : 12;
-                    uint64_t istate   : 2;  // [33:32] icache state
-                    uint64_t rsv3     : 2;  // [35:34] 
-                    uint64_t dstate   : 2;  // [37:36] dcache state
-                    uint64_t rsv4     : 2;  // [39:38]
-                    uint64_t cstate   : 2;  // [41:40] cachetop state
-                    uint64_t rsv5     : 22;
-                } bits;
-            } control;
+            GenericCpuControlType control;
             uint64_t stepping_mode_steps;
             uint64_t clock_cnt;
             uint64_t executed_cnt;

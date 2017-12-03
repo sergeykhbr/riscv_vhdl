@@ -8,19 +8,15 @@
 #ifndef __DEBUGGER_CPU_RISCV_FUNCTIONAL_H__
 #define __DEBUGGER_CPU_RISCV_FUNCTIONAL_H__
 
-#include "iclass.h"
-#include "iservice.h"
-#include "ihap.h"
-#include "async_tqueue.h"
-#include "coreservices/ithread.h"
-#include "coreservices/icpugen.h"
-#include "coreservices/icpuriscv.h"
-#include "coreservices/imemop.h"
-#include "coreservices/iclock.h"
-#include "coreservices/iclklistener.h"
+#include <cpu_generic.h>
+#include <riscv-isa.h>
 #include "instructions.h"
+#include "coreservices/icpuriscv.h"
+#include "coreservices/isocinfo.h"
 
 namespace debugger {
+
+#ifdef ENABLE_OBOSOLETE
 
 class CpuRiscV_Functional : public IService, 
                  public IThread,
@@ -28,7 +24,7 @@ class CpuRiscV_Functional : public IService,
                  public ICpuRiscV,
                  public IClock,
                  public IHap {
-public:
+ public:
     CpuRiscV_Functional(const char *name);
     virtual ~CpuRiscV_Functional();
 
@@ -51,7 +47,7 @@ public:
     /** IHap */
     virtual void hapTriggered(IFace *isrc, EHapType type, const char *descr);
 
-protected:
+ protected:
     /** IThread interface */
     virtual void busyLoop();
 
@@ -127,7 +123,63 @@ private:
     } dport;
 };
 
-DECLARE_CLASS(CpuRiscV_Functional)
+#endif
+
+class CpuRiver_Functional : public CpuGeneric,
+                            public ICpuRiscV {
+ public:
+    explicit CpuRiver_Functional(const char *name);
+    virtual ~CpuRiver_Functional();
+
+    /** IService interface */
+    virtual void postinitService();
+
+    /** IResetListener itnterface */
+    virtual void reset(bool active);
+
+    /** ICpuGeneric interface */
+    virtual void raiseSignal(int idx);
+    virtual void lowerSignal(int idx);
+
+    // Common River methods shared with instructions:
+    uint64_t *getpRegs() { return portRegs_.getpR64(); }
+    uint64_t readCSR(int idx);
+    void writeCSR(int idx, uint64_t val);
+
+ protected:
+    /** CpuGeneric common methods */
+    virtual bool isBreakpoint() { return false; }
+    virtual GenericInstruction *decodeInstruction(Reg64Type *cache);
+    virtual void generateIllegalOpcode();
+    virtual void handleTrap();
+
+    void addIsaUserRV64I();
+    void addIsaPrivilegedRV64I();
+    void addIsaExtensionA();
+    void addIsaExtensionF();
+    void addIsaExtensionM();
+    unsigned addSupportedInstruction(RiscvInstruction *instr);
+    uint32_t hash32(uint32_t val) { return (val >> 2) & 0x1f; }
+
+ private:
+    AttributeType listExtISA_;
+    AttributeType vendorID_;
+    AttributeType vectorTable_;
+
+    static const int INSTR_HASH_TABLE_SIZE = 1 << 5;
+    AttributeType listInstr_[INSTR_HASH_TABLE_SIZE];
+
+    GenericReg64Bank portCSR_;
+    GenericReg64Bank portRegs_;
+
+    DsuMapType::udbg_type::debug_region_type::breakpoint_control_reg br_ctrl;
+    bool br_status_ena;     // show breakpoint bit in common status register
+    bool br_inject_fetch;
+    uint64_t br_address_fetch;
+    uint32_t br_instr_fetch;
+};
+
+DECLARE_CLASS(CpuRiver_Functional)
 
 }  // namespace debugger
 

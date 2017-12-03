@@ -16,8 +16,8 @@ namespace debugger {
 static const char *const IFACE_CPU_RISCV = "ICpuRiscV";
 
 /** Signal types */
-static const int CPU_SIGNAL_RESET   = 0;
-static const int CPU_SIGNAL_EXT_IRQ = 1;
+//static const int CPU_SIGNAL_RESET   = 0;
+//static const int CPU_SIGNAL_EXT_IRQ = 1;
 
 class ICpuRiscV : public IFace {
 public:

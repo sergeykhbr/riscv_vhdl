@@ -110,7 +110,7 @@ void DbgMainWindow::handleResponse(AttributeType *req, AttributeType *resp) {
         if (resp->is_nil()) {
             return;
         }
-        DsuMapType::udbg_type::debug_region_type::control_reg ctrl;
+        GenericCpuControlType ctrl;
         ctrl.val = resp->to_uint64();
         if ((actionRun_->isChecked() && ctrl.bits.halt)
             || (!actionRun_->isChecked() && !ctrl.bits.halt)) {

@@ -53,7 +53,7 @@ void CmdRun::exec(AttributeType *args, AttributeType *res) {
         runctrl.val = (*args)[1].to_uint64();
         tap_->write(addr_step_cnt, 8, runctrl.buf);
 
-        DsuMapType::udbg_type::debug_region_type::control_reg ctrl;
+        GenericCpuControlType ctrl;
         ctrl.val = 0;
         ctrl.bits.stepping = 1;
         runctrl.val = ctrl.val;

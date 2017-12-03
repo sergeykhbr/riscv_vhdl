@@ -12,9 +12,24 @@
 
 namespace debugger {
 
-static const char *const IFACE_CPU_GENERIC = "ICpuGeneric";
-static const char *const IFACE_DBG_NB_RESPONSE = "IDbgNbResponse";
+static const char *const IFACE_INSTRUCTION = "IInstruction";
 
+class IInstruction : public IFace {
+ public:
+    IInstruction() : IFace(IFACE_INSTRUCTION) {}
+
+    virtual const char *name() = 0;
+    /** Return instruction size */
+    virtual int exec(Reg64Type *payload) = 0;
+};
+
+class GenericInstruction : public IInstruction {
+ public:
+    GenericInstruction() : IInstruction() {}
+};
+
+
+static const char *const IFACE_CPU_GENERIC = "ICpuGeneric";
 static const uint64_t REG_INVALID   = ~0;
 
 struct DebugPortTransactionType {
@@ -26,16 +41,17 @@ struct DebugPortTransactionType {
     uint64_t rdata;
 };
 
+static const char *const IFACE_DBG_NB_RESPONSE = "IDbgNbResponse";
+
 class IDbgNbResponse : public IFace {
-public:
+ public:
     IDbgNbResponse() : IFace(IFACE_DBG_NB_RESPONSE) {}
 
     virtual void nb_response_debug_port(DebugPortTransactionType *trans) =0;
 };
 
-
 class ICpuGeneric : public IFace {
-public:
+ public:
     ICpuGeneric() : IFace(IFACE_CPU_GENERIC) {}
 
     virtual void raiseSignal(int idx) =0;

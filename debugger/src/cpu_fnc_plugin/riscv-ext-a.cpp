@@ -7,12 +7,11 @@
 
 #include "api_utils.h"
 #include "riscv-isa.h"
-#include "instructions.h"
+#include "cpu_riscv_func.h"
 
 namespace debugger {
 
-
-void addIsaExtensionA(CpuContextType *data, AttributeType *out) {
+void CpuRiver_Functional::addIsaExtensionA() {
     // TODO
     /*
     addInstr("AMOADD_W",           "00000????????????010?????0101111", NULL, out);
@@ -38,7 +37,8 @@ void addIsaExtensionA(CpuContextType *data, AttributeType *out) {
     addInstr("LR_D",               "00010??00000?????011?????0101111", NULL, out);
     addInstr("SC_D",               "00011????????????011?????0101111", NULL, out);
     */
-    data->csr[CSR_misa] |= (1LL << ('A' - 'A'));
+    uint64_t isa = portCSR_.read(CSR_misa).val;
+    portCSR_.write(CSR_misa, isa | (1LL << ('A' - 'A')));
 }
 
 }  // namespace debugger

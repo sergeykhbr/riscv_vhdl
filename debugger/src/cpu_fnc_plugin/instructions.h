@@ -1,6 +1,6 @@
 /**
  * @file
- * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
+ * @copyright  Copyright 2017 GNSS Sensor Ltd. All right reserved.
  * @author     Sergey Khabarov - sergeykhbr@gmail.com
  * @brief      Instruction object declaration.
  */
@@ -9,54 +9,35 @@
 #define __DEBUGGER_CPU_RISCV_INSTRUCTIONS_H__
 
 #include <inttypes.h>
-#include "iface.h"
-#include "attribute.h"
-#include "iinstr.h"
+#include <cpu_generic.h>
 
 namespace debugger {
 
-class IsaProcessor : public IInstruction {
+class CpuRiver_Functional;
+
+class RiscvInstruction : public GenericInstruction {
 public:
-    IsaProcessor(const char *name, const char *bits) {
-        name_ = name;
-        mask_ = 0;
-        opcode_ = 0;
-        for (int i = 0; i < 32; i++) {
-            switch (bits[i]) {
-            case '0':
-                break;
-            case '1':
-                opcode_ |= (1 << (31 - i));
-                break;
-            case '?':
-                mask_ |= (1 << (31 - i));
-                break;
-            default:;
-            }
-        }
-        mask_ ^= ~0;
-    }
+    RiscvInstruction(CpuRiver_Functional *icpu, const char *name,
+                    const char *bits);
 
     // IInstruction interface:
-    virtual const char *name() { return name_; }
+    virtual const char *name() { return name_.to_string(); }
 
     virtual bool parse(uint32_t *payload) {
         return ((payload[0] & mask_) == opcode_);
     }
-
-    virtual void exec(uint32_t *payload, CpuContextType *regs) =0;
 
     virtual uint32_t hash() {
         return (opcode_ >> 2) & 0x1F;
     }
 
 protected:
-    const char *name_;
+    AttributeType name_;
+    CpuRiver_Functional *icpu_;
     uint32_t mask_;
     uint32_t opcode_;
+    uint64_t *R;
 };
-
-unsigned addSupportedInstruction(IsaProcessor *instr, AttributeType *out);
 
 }  // namespace debugger
 

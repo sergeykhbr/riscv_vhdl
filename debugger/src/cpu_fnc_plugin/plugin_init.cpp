@@ -10,7 +10,10 @@
 namespace debugger {
 
 extern "C" void plugin_init(void) {
+#ifdef ENABLE_OBOSOLETE
     REGISTER_CLASS(CpuRiscV_Functional);
+#endif
+    REGISTER_CLASS(CpuRiver_Functional);
 }
 
 }  // namespace debugger

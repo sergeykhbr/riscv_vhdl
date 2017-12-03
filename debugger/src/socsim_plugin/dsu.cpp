@@ -8,6 +8,7 @@
 #include "api_core.h"
 #include "dsu.h"
 #include "coreservices/icpuriscv.h"
+#include <riscv-isa.h>
 
 namespace debugger {
 
@@ -153,9 +154,9 @@ void DSU::writeLocal(uint64_t off, Axi4TransactionType *trans) {
     switch (off >> 3) {
     case 0: // soft reset
         if (wdata64_ & 0x1) {
-            icpu_->raiseSignal(CPU_SIGNAL_RESET);
+            icpu_->raiseSignal(SIGNAL_HardReset);
         } else {
-            icpu_->lowerSignal(CPU_SIGNAL_RESET);
+            icpu_->lowerSignal(SIGNAL_HardReset);
         }
         soft_reset_ = wdata64_;
         break;

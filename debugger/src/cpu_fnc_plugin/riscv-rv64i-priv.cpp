@@ -7,39 +7,9 @@
 
 #include "api_utils.h"
 #include "riscv-isa.h"
-#include "instructions.h"
+#include "cpu_riscv_func.h"
 
 namespace debugger {
-
-void generateException(uint64_t code, CpuContextType *data);
-void generateInterrupt(uint64_t code, CpuContextType *data);
-
-uint64_t readCSR(uint32_t idx, CpuContextType *data) {
-    uint64_t ret = data->csr[idx];
-    switch (idx) {
-    case CSR_mtime:
-        ret = data->step_cnt;
-        break;
-    default:;
-    }
-    return ret;
-}
-
-void writeCSR(uint32_t idx, uint64_t val, CpuContextType *data) {
-    switch (idx) {
-    // Read-Only registers
-    case CSR_misa:
-    case CSR_mvendorid:
-    case CSR_marchid:
-    case CSR_mimplementationid:
-    case CSR_mhartid:
-        break;
-    case CSR_mtime:
-        break;
-    default:
-        data->csr[idx] = val;
-    }
-}
 
 /** 
  * @brief The CSRRC (Atomic Read and Clear Bit in CSR).
@@ -50,21 +20,22 @@ void writeCSR(uint32_t idx, uint64_t val, CpuContextType *data) {
  * is high in rs1 will cause the corresponding bit to be cleared in the CSR,
  * if that CSR bit is writable. Other bits in the CSR are unaffected.
  */
-class CSRRC : public IsaProcessor {
+class CSRRC : public RiscvInstruction {
 public:
-    CSRRC() : IsaProcessor("CSRRC", "?????????????????011?????1110011") {}
+    CSRRC(CpuRiver_Functional *icpu) :
+        RiscvInstruction(icpu, "CSRRC", "?????????????????011?????1110011") {}
 
-    virtual void exec(uint32_t *payload, CpuContextType *data) {
+    virtual int exec(Reg64Type *payload) {
         ISA_I_type u;
-        u.value = payload[0];
+        u.value = payload->buf32[0];
 
-        uint64_t clr_mask = ~data->regs[u.bits.rs1];
-        uint64_t csr = readCSR(u.bits.imm, data);
+        uint64_t clr_mask = ~R[u.bits.rs1];
+        uint64_t csr = icpu_->readCSR(u.bits.imm);
         if (u.bits.rd) {
-            data->regs[u.bits.rd] = csr;
+            R[u.bits.rd] = csr;
         }
-        writeCSR(u.bits.imm, (csr & clr_mask), data);
-        data->npc = data->pc + 4;
+        icpu_->writeCSR(u.bits.imm, (csr & clr_mask));
+        return 4;
     }
 };
 
@@ -73,21 +44,22 @@ public:
  *
  * Similar to CSRRC except it updates the CSR using a 5-bit zero-extended 
  * immediate (zimm[4:0]) encoded in the rs1 field instead of a value from  * an integer register. */
-class CSRRCI : public IsaProcessor {
+class CSRRCI : public RiscvInstruction {
 public:
-    CSRRCI() : IsaProcessor("CSRRCI", "?????????????????111?????1110011") {}
+    CSRRCI(CpuRiver_Functional *icpu) :
+        RiscvInstruction(icpu, "CSRRCI", "?????????????????111?????1110011") {}
 
-    virtual void exec(uint32_t *payload, CpuContextType *data) {
+    virtual int exec(Reg64Type *payload) {
         ISA_I_type u;
-        u.value = payload[0];
+        u.value = payload->buf32[0];
 
         uint64_t clr_mask = ~static_cast<uint64_t>((u.bits.rs1));
-        uint64_t csr = readCSR(u.bits.imm, data);
+        uint64_t csr = icpu_->readCSR(u.bits.imm);
         if (u.bits.rd) {
-            data->regs[u.bits.rd] = csr;
+            R[u.bits.rd] = csr;
         }
-        writeCSR(u.bits.imm, (csr & clr_mask), data);
-        data->npc = data->pc + 4;
+        icpu_->writeCSR(u.bits.imm, (csr & clr_mask));
+        return 4;
     }
 };
 
@@ -99,21 +71,22 @@ public:
  * register rs1 specifies bit positions to be set in the CSR. Any bit that is
  * high in rs1 will cause the corresponding bit to be set in the CSR, if that
  * CSR bit is writable. Other bits in the CSR are unaffected (though CSRs  * might have side effects when written). *   The CSRR pseudo instruction (read CSR), when rs1 = 0. */
-class CSRRS : public IsaProcessor {
+class CSRRS : public RiscvInstruction {
 public:
-    CSRRS() : IsaProcessor("CSRRS", "?????????????????010?????1110011") {}
+    CSRRS(CpuRiver_Functional *icpu) :
+        RiscvInstruction(icpu, "CSRRS", "?????????????????010?????1110011") {}
 
-    virtual void exec(uint32_t *payload, CpuContextType *data) {
+    virtual int exec(Reg64Type *payload) {
         ISA_I_type u;
-        u.value = payload[0];
+        u.value = payload->buf32[0];
 
-        uint64_t set_mask = data->regs[u.bits.rs1];
-        uint64_t csr = readCSR(u.bits.imm, data);
+        uint64_t set_mask = R[u.bits.rs1];
+        uint64_t csr = icpu_->readCSR(u.bits.imm);
         if (u.bits.rd) {
-            data->regs[u.bits.rd] = csr;
+            R[u.bits.rd] = csr;
         }
-        writeCSR(u.bits.imm, (csr | set_mask), data);
-        data->npc = data->pc + 4;
+        icpu_->writeCSR(u.bits.imm, (csr | set_mask));
+        return 4;
     }
 };
 
@@ -122,21 +95,22 @@ public:
  *
  * Similar to CSRRS except it updates the CSR using a 5-bit zero-extended 
  * immediate (zimm[4:0]) encoded in the rs1 field instead of a value from  * an integer register. */
-class CSRRSI : public IsaProcessor {
+class CSRRSI : public RiscvInstruction {
 public:
-    CSRRSI() : IsaProcessor("CSRRSI", "?????????????????110?????1110011") {}
+    CSRRSI(CpuRiver_Functional *icpu) :
+        RiscvInstruction(icpu, "CSRRSI", "?????????????????110?????1110011") {}
 
-    virtual void exec(uint32_t *payload, CpuContextType *data) {
+    virtual int exec(Reg64Type *payload) {
         ISA_I_type u;
-        u.value = payload[0];
+        u.value = payload->buf32[0];
 
         uint64_t set_mask = u.bits.rs1;
-        uint64_t csr = readCSR(u.bits.imm, data);
+        uint64_t csr = icpu_->readCSR(u.bits.imm);
         if (u.bits.rd) {
-            data->regs[u.bits.rd] = csr;
+            R[u.bits.rd] = csr;
         }
-        writeCSR(u.bits.imm, (csr | set_mask), data);
-        data->npc = data->pc + 4;
+        icpu_->writeCSR(u.bits.imm, (csr | set_mask));
+        return 4;
     }
 };
 
@@ -146,20 +120,21 @@ public:
  *   Instruction atomically swaps values in the CSRs and integer registers. 
  * CSRRW reads the old value of the CSR, zero-extends the value to XLEN bits,
  * then writes it to integer register rd. The initial value in rs1 is written * to the CSR. *   The CSRW pseudo instruction (write CSR), when rs1 = 0. */
-class CSRRW : public IsaProcessor {
+class CSRRW : public RiscvInstruction {
 public:
-    CSRRW() : IsaProcessor("CSRRW", "?????????????????001?????1110011") {}
+    CSRRW(CpuRiver_Functional *icpu) :
+        RiscvInstruction(icpu, "CSRRW", "?????????????????001?????1110011") {}
 
-    virtual void exec(uint32_t *payload, CpuContextType *data) {
+    virtual int exec(Reg64Type *payload) {
         ISA_I_type u;
-        u.value = payload[0];
+        u.value = payload->buf32[0];
 
-        uint64_t wr_value = data->regs[u.bits.rs1];
+        uint64_t wr_value = R[u.bits.rs1];
         if (u.bits.rd) {
-            data->regs[u.bits.rd] = readCSR(u.bits.imm, data);
+            R[u.bits.rd] = icpu_->readCSR(u.bits.imm);
         }
-        writeCSR(u.bits.imm, wr_value, data);
-        data->npc = data->pc + 4;
+        icpu_->writeCSR(u.bits.imm, wr_value);
+        return 4;
     }
 };
 
@@ -168,20 +143,21 @@ public:
  *
  * Similar to CSRRW except it updates the CSR using a 5-bit zero-extended 
  * immediate (zimm[4:0]) encoded in the rs1 field instead of a value from  * an integer register. */
-class CSRRWI : public IsaProcessor {
+class CSRRWI : public RiscvInstruction {
 public:
-    CSRRWI() : IsaProcessor("CSRRWI", "?????????????????101?????1110011") {}
+    CSRRWI(CpuRiver_Functional *icpu) :
+        RiscvInstruction(icpu, "CSRRWI", "?????????????????101?????1110011") {}
 
-    virtual void exec(uint32_t *payload, CpuContextType *data) {
+    virtual int exec(Reg64Type *payload) {
         ISA_I_type u;
-        u.value = payload[0];
+        u.value = payload->buf32[0];
 
         uint64_t wr_value = u.bits.rs1;
         if (u.bits.rd) {
-            data->regs[u.bits.rd] = readCSR(u.bits.imm, data);
+            R[u.bits.rd] = icpu_->readCSR(u.bits.imm);
         }
-        writeCSR(u.bits.imm, wr_value, data);
-        data->npc = data->pc + 4;
+        icpu_->writeCSR(u.bits.imm, wr_value);
+        return 4;
     }
 };
 
@@ -199,20 +175,21 @@ public:
  * and UPIE bits are hardwired to zero. For all other supported privilege 
  * modes x, the x IE, x PIE, and x PP fields are required to be implemented.
  */
-class URET : public IsaProcessor {
+class URET : public RiscvInstruction {
 public:
-    URET() : IsaProcessor("URET", "00000000001000000000000001110011") {}
+    URET(CpuRiver_Functional *icpu) :
+        RiscvInstruction(icpu, "URET", "00000000001000000000000001110011") {}
 
-    virtual void exec(uint32_t *payload, CpuContextType *data) {
-        if (data->cur_prv_level != PRV_U) {
-            generateException(EXCEPTION_InstrIllegal, data);
-            return;
+    virtual int exec(Reg64Type *payload) {
+        if (icpu_->getPrvLevel() != PRV_U) {
+            icpu_->raiseSignal(EXCEPTION_InstrIllegal);
+            return 4;
         }
         csr_mstatus_type mstatus;
-        mstatus.value = readCSR(CSR_mstatus, data);
+        mstatus.value = icpu_->readCSR(CSR_mstatus);
 
         uint64_t xepc = (PRV_U << 8) + 0x41;
-        data->npc = readCSR(static_cast<uint32_t>(xepc), data);
+        icpu_->setBranch(icpu_->readCSR(static_cast<uint32_t>(xepc)));
 
         bool is_N_extension = false;
         if (is_N_extension) {
@@ -223,94 +200,96 @@ public:
             mstatus.bits.UIE = 0;
             mstatus.bits.UPIE = 0;
         }
-        data->cur_prv_level = PRV_U;
-        writeCSR(CSR_mstatus, mstatus.value, data);
+        icpu_->setPrvLevel(PRV_U);
+        icpu_->writeCSR(CSR_mstatus, mstatus.value);
+        return 4;
     }
 };
 
 /**
  * @brief SRET return from super-user mode
  */
-class SRET : public IsaProcessor {
+class SRET : public RiscvInstruction {
 public:
-    SRET() : IsaProcessor("SRET", "00010000001000000000000001110011") {}
+    SRET(CpuRiver_Functional *icpu) :
+        RiscvInstruction(icpu, "SRET", "00010000001000000000000001110011") {}
 
-    virtual void exec(uint32_t *payload, CpuContextType *data) {
-        if (data->cur_prv_level != PRV_S) {
-            generateException(EXCEPTION_InstrIllegal, data);
-            return;
+    virtual int exec(Reg64Type *payload) {
+        if (icpu_->getPrvLevel() != PRV_S) {
+            icpu_->raiseSignal(EXCEPTION_InstrIllegal);
+            return 4;
         }
         csr_mstatus_type mstatus;
-        mstatus.value = readCSR(CSR_mstatus, data);
+        mstatus.value = icpu_->readCSR(CSR_mstatus);
 
         uint64_t xepc = (PRV_S << 8) + 0x41;
-        data->npc = readCSR(static_cast<uint32_t>(xepc), data);
+        icpu_->setBranch(icpu_->readCSR(static_cast<uint32_t>(xepc)));
 
         mstatus.bits.SIE = mstatus.bits.SPIE;
         mstatus.bits.SPIE = 1;
-        data->cur_prv_level = mstatus.bits.SPP;
+        icpu_->setPrvLevel(mstatus.bits.SPP);
         mstatus.bits.SPP = PRV_U;
             
-        writeCSR(CSR_mstatus, mstatus.value, data);
+        icpu_->writeCSR(CSR_mstatus, mstatus.value);
+        return 4;
     }
 };
 
 /**
  * @brief HRET return from hypervisor mode
  */
-class HRET : public IsaProcessor {
+class HRET : public RiscvInstruction {
 public:
-    HRET() : IsaProcessor("HRET", "00100000001000000000000001110011") {}
+    HRET(CpuRiver_Functional *icpu) :
+        RiscvInstruction(icpu, "HRET", "00100000001000000000000001110011") {}
 
-    virtual void exec(uint32_t *payload, CpuContextType *data) {
-        if (data->cur_prv_level != PRV_H) {
-            generateException(EXCEPTION_InstrIllegal, data);
-            return;
+    virtual int exec(Reg64Type *payload) {
+        if (icpu_->getPrvLevel() != PRV_H) {
+            icpu_->raiseSignal(EXCEPTION_InstrIllegal);
+            return 4;
         }
         csr_mstatus_type mstatus;
-        mstatus.value = readCSR(CSR_mstatus, data);
+        mstatus.value = icpu_->readCSR(CSR_mstatus);
 
         uint64_t xepc = (PRV_H << 8) + 0x41;
-        data->npc = readCSR(static_cast<uint32_t>(xepc), data);
+        icpu_->setBranch(icpu_->readCSR(static_cast<uint32_t>(xepc)));
 
         mstatus.bits.HIE = mstatus.bits.HPIE;
         mstatus.bits.HPIE = 1;
-        data->cur_prv_level = mstatus.bits.HPP;
+        icpu_->setPrvLevel(mstatus.bits.HPP);
         mstatus.bits.HPP = PRV_U;
             
-        writeCSR(CSR_mstatus, mstatus.value, data);
+        icpu_->writeCSR(CSR_mstatus, mstatus.value);
+        return 4;
     }
 };
 
 /**
  * @brief MRET return from machine mode
  */
-class MRET : public IsaProcessor {
+class MRET : public RiscvInstruction {
 public:
-    MRET() : IsaProcessor("MRET", "00110000001000000000000001110011") {}
+    MRET(CpuRiver_Functional *icpu) :
+        RiscvInstruction(icpu, "MRET", "00110000001000000000000001110011") {}
 
-    virtual void exec(uint32_t *payload, CpuContextType *data) {
-        if (data->cur_prv_level != PRV_M) {
-            generateException(EXCEPTION_InstrIllegal, data);
-            return;
+    virtual int exec(Reg64Type *payload) {
+        if (icpu_->getPrvLevel() != PRV_M) {
+            icpu_->raiseSignal(EXCEPTION_InstrIllegal);
+            return 4;
         }
         csr_mstatus_type mstatus;
-        mstatus.value = readCSR(CSR_mstatus, data);
+        mstatus.value = icpu_->readCSR(CSR_mstatus);
 
         uint64_t xepc = (PRV_M << 8) + 0x41;
-        data->npc = readCSR(static_cast<uint32_t>(xepc), data);
+        icpu_->setBranch(icpu_->readCSR(static_cast<uint32_t>(xepc)));
 
         mstatus.bits.MIE = mstatus.bits.MPIE;
         mstatus.bits.MPIE = 1;
-        data->cur_prv_level = mstatus.bits.MPP;
+        icpu_->setPrvLevel(mstatus.bits.MPP);
         mstatus.bits.MPP = PRV_U;
 
-        // Emulating interrupt strob (not pulse from external controller)
-        if (data->interrupt_pending) {
-            generateInterrupt(INTERRUPT_MExternal, data);
-        }
-            
-        writeCSR(CSR_mstatus, mstatus.value, data);
+        icpu_->writeCSR(CSR_mstatus, mstatus.value);
+        return 4;
     }
 };
 
@@ -320,12 +299,13 @@ public:
  *
  * Not used in functional model so that cache is not modeling.
  */
-class FENCE : public IsaProcessor {
+class FENCE : public RiscvInstruction {
 public:
-    FENCE() : IsaProcessor("FENCE", "?????????????????000?????0001111") {}
+    FENCE(CpuRiver_Functional *icpu) :
+        RiscvInstruction(icpu, "FENCE", "?????????????????000?????0001111") {}
 
-    virtual void exec(uint32_t *payload, CpuContextType *data) {
-        data->npc = data->pc + 4;
+    virtual int exec(Reg64Type *payload) {
+        return 4;
     }
 };
 
@@ -334,12 +314,13 @@ public:
  *
  * Not used in functional model so that cache is not modeling.
  */
-class FENCE_I : public IsaProcessor {
+class FENCE_I : public RiscvInstruction {
 public:
-    FENCE_I() : IsaProcessor("FENCE_I", "?????????????????001?????0001111") {}
+    FENCE_I(CpuRiver_Functional *icpu) :
+        RiscvInstruction(icpu, "FENCE_I", "?????????????????001?????0001111") {}
 
-    virtual void exec(uint32_t *payload, CpuContextType *data) {
-        data->npc = data->pc + 4;
+    virtual int exec(Reg64Type *payload) {
+        return 4;
     }
 };
 
@@ -349,14 +330,14 @@ public:
  * The EBREAK instruction is used by debuggers to cause control to be
  * transferred back to a debug-ging environment.
  */
-class EBREAK : public IsaProcessor {
+class EBREAK : public RiscvInstruction {
 public:
-    EBREAK() : IsaProcessor("EBREAK", "00000000000100000000000001110011") {}
+    EBREAK(CpuRiver_Functional *icpu) :
+        RiscvInstruction(icpu, "EBREAK", "00000000000100000000000001110011") {}
 
-    virtual void exec(uint32_t *payload, CpuContextType *data) {
-        data->npc = data->pc + 4;
-        data->br_status_ena = true;
-        generateException(EXCEPTION_Breakpoint, data);
+    virtual int exec(Reg64Type *payload) {
+        icpu_->raiseSignal(EXCEPTION_Breakpoint);
+        return 4;
     }
 };
 
@@ -368,40 +349,42 @@ public:
  * will define how parameters for the environment request are passed, but usually
  * these will be in defined locations in the integer register file.
  */
-class ECALL : public IsaProcessor {
+class ECALL : public RiscvInstruction {
 public:
-    ECALL() : IsaProcessor("ECALL", "00000000000000000000000001110011") {}
+    ECALL(CpuRiver_Functional *icpu) :
+        RiscvInstruction(icpu, "ECALL", "00000000000000000000000001110011") {}
 
-    virtual void exec(uint32_t *payload, CpuContextType *data) {
-        data->npc = data->pc + 4;
-        switch (data->cur_prv_level) {
+    virtual int exec(Reg64Type *payload) {
+        switch (icpu_->getPrvLevel()) {
         case PRV_M:
-            generateException(EXCEPTION_CallFromMmode, data);
+            icpu_->raiseSignal(EXCEPTION_CallFromMmode);
             break;
         case PRV_U:
-            generateException(EXCEPTION_CallFromUmode, data);
+            icpu_->raiseSignal(EXCEPTION_CallFromUmode);
             break;
         default:;
         }
+        return 4;
     }
 };
 
 
-void addIsaPrivilegedRV64I(CpuContextType *data, AttributeType *out) {
-    addSupportedInstruction(new CSRRC, out);
-    addSupportedInstruction(new CSRRCI, out);
-    addSupportedInstruction(new CSRRS, out);
-    addSupportedInstruction(new CSRRSI, out);
-    addSupportedInstruction(new CSRRW, out);
-    addSupportedInstruction(new CSRRWI, out);
-    addSupportedInstruction(new URET, out);
-    addSupportedInstruction(new SRET, out);
-    addSupportedInstruction(new HRET, out);
-    addSupportedInstruction(new MRET, out);
-    addSupportedInstruction(new FENCE, out);
-    addSupportedInstruction(new FENCE_I, out);
-    addSupportedInstruction(new ECALL, out);
-    addSupportedInstruction(new EBREAK, out);
+void CpuRiver_Functional::addIsaPrivilegedRV64I() {
+    addSupportedInstruction(new CSRRC(this));
+    addSupportedInstruction(new CSRRCI(this));
+    addSupportedInstruction(new CSRRS(this));
+    addSupportedInstruction(new CSRRSI(this));
+    addSupportedInstruction(new CSRRW(this));
+    addSupportedInstruction(new CSRRWI(this));
+    addSupportedInstruction(new URET(this));
+    addSupportedInstruction(new SRET(this));
+    addSupportedInstruction(new HRET(this));
+    addSupportedInstruction(new MRET(this));
+    addSupportedInstruction(new FENCE(this));
+    addSupportedInstruction(new FENCE_I(this));
+    addSupportedInstruction(new ECALL(this));
+    addSupportedInstruction(new EBREAK(this));
+
     // TODO:
     /*
   def DRET               = BitPat("b01111011001000000000000001110011")
@@ -422,9 +405,11 @@ void addIsaPrivilegedRV64I(CpuContextType *data, AttributeType *out) {
      * The 'U', 'S', and 'H' bits will be set if there is support for 
      * user, supervisor, and hypervisor privilege modes respectively.
      */
-    data->csr[CSR_misa] |= (1LL << ('U' - 'A'));
-    data->csr[CSR_misa] |= (1LL << ('S' - 'A'));
-    data->csr[CSR_misa] |= (1LL << ('H' - 'A'));
+    uint64_t isa = portCSR_.read(CSR_misa).val;
+    isa |= (1LL << ('U' - 'A'));
+    isa |= (1LL << ('S' - 'A'));
+    isa |= (1LL << ('H' - 'A'));
+    portCSR_.write(CSR_misa, isa);
 }
 
 }  // namespace debugger

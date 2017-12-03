@@ -165,6 +165,8 @@
     <ClCompile Include="..\..\src\common\async_tqueue.cpp" />
     <ClCompile Include="..\..\src\common\attribute.cpp" />
     <ClCompile Include="..\..\src\common\autobuffer.cpp" />
+    <ClCompile Include="..\..\src\common\cpu_generic.cpp" />
+    <ClCompile Include="..\..\src\common\mapreg.cpp" />
     <ClCompile Include="..\..\src\cpu_fnc_plugin\cpu_riscv_func.cpp" />
     <ClCompile Include="..\..\src\cpu_fnc_plugin\instructions.cpp" />
     <ClCompile Include="..\..\src\cpu_fnc_plugin\plugin_init.cpp" />
@@ -180,13 +182,14 @@
     <ClInclude Include="..\..\src\common\async_tqueue.h" />
     <ClInclude Include="..\..\src\common\attribute.h" />
     <ClInclude Include="..\..\src\common\autobuffer.h" />
+    <ClInclude Include="..\..\src\common\cpu_generic.h" />
     <ClInclude Include="..\..\src\common\iattr.h" />
     <ClInclude Include="..\..\src\common\iclass.h" />
     <ClInclude Include="..\..\src\common\iface.h" />
     <ClInclude Include="..\..\src\common\iservice.h" />
+    <ClInclude Include="..\..\src\common\mapreg.h" />
     <ClInclude Include="..\..\src\common\riscv-isa.h" />
     <ClInclude Include="..\..\src\cpu_fnc_plugin\cpu_riscv_func.h" />
-    <ClInclude Include="..\..\src\cpu_fnc_plugin\iinstr.h" />
     <ClInclude Include="..\..\src\cpu_fnc_plugin\instructions.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

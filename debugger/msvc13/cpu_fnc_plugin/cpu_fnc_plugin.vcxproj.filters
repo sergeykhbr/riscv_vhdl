@@ -14,7 +14,6 @@
     </ClCompile>
     <ClCompile Include="..\..\src\cpu_fnc_plugin\cpu_riscv_func.cpp" />
     <ClCompile Include="..\..\src\cpu_fnc_plugin\plugin_init.cpp" />
-    <ClCompile Include="..\..\src\cpu_fnc_plugin\instructions.cpp" />
     <ClCompile Include="..\..\src\cpu_fnc_plugin\riscv-rv64i-priv.cpp" />
     <ClCompile Include="..\..\src\cpu_fnc_plugin\riscv-rv64i-user.cpp" />
     <ClCompile Include="..\..\src\cpu_fnc_plugin\riscv-ext-m.cpp" />
@@ -23,6 +22,13 @@
     <ClCompile Include="..\..\src\common\async_tqueue.cpp">
       <Filter>common</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\common\cpu_generic.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\common\mapreg.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cpu_fnc_plugin\instructions.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\api_types.h">
@@ -50,13 +56,18 @@
       <Filter>common</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\cpu_fnc_plugin\cpu_riscv_func.h" />
-    <ClInclude Include="..\..\src\cpu_fnc_plugin\instructions.h" />
-    <ClInclude Include="..\..\src\cpu_fnc_plugin\iinstr.h" />
     <ClInclude Include="..\..\src\common\async_tqueue.h">
       <Filter>common</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\common\riscv-isa.h">
       <Filter>common</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\common\cpu_generic.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\mapreg.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_fnc_plugin\instructions.h" />
   </ItemGroup>
 </Project>

@@ -7,6 +7,7 @@
 
 #include "api_core.h"
 #include "irqctrl.h"
+#include <riscv-isa.h>
 #include "coreservices/icpuriscv.h"
 
 namespace debugger {
@@ -88,7 +89,7 @@ ETransStatus IrqController::b_transport(Axi4TransactionType *trans) {
                 t1 = regs_.irq_pending;
                 regs_.irq_pending &= ~trans->wpayload.b32[i];
                 if (t1 && !regs_.irq_pending) {
-                    icpu_->lowerSignal(CPU_SIGNAL_EXT_IRQ);
+                    icpu_->lowerSignal(INTERRUPT_MExternal);
                 }
                 RISCV_info("Set irq_clear = %08x", trans->wpayload.b32[i]);
                 break;
@@ -139,10 +140,10 @@ ETransStatus IrqController::b_transport(Axi4TransactionType *trans) {
                 RISCV_info("Set irq_ena = %08x", trans->wpayload.b32[i]);
                 if (regs_.irq_lock == 0 && (regs_.irq_pending ||irq_wait_unlock)) {
                     regs_.irq_pending |= irq_wait_unlock;
-                    icpu_->raiseSignal(CPU_SIGNAL_EXT_IRQ);
+                    icpu_->raiseSignal(INTERRUPT_MExternal);
                     irq_wait_unlock = 0;
                 } else if (regs_.irq_lock == 1 && regs_.irq_pending) {
-                    icpu_->lowerSignal(CPU_SIGNAL_EXT_IRQ);
+                    icpu_->lowerSignal(INTERRUPT_MExternal);
                 }
                 break;
             case 11:
@@ -231,7 +232,7 @@ void IrqController::requestInterrupt(int idx) {
     }
     if ((regs_.irq_mask & (0x1 << idx)) == 0) {
         regs_.irq_pending |= (0x1 << idx);
-        icpu_->raiseSignal(CPU_SIGNAL_EXT_IRQ);   // PLIC interrupt (external)
+        icpu_->raiseSignal(INTERRUPT_MExternal);   // PLIC interrupt (external)
         RISCV_info("Raise interrupt", NULL);
     }
 }
