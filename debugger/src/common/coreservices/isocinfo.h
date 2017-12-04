@@ -131,8 +131,8 @@ union GenericCpuControlType {
     struct {
         uint64_t halt     : 1;
         uint64_t stepping : 1;
-        uint64_t breakpoint : 1;
-        uint64_t rsv1     : 1;
+        uint64_t sw_breakpoint : 1;
+        uint64_t hw_breakpoint : 1;
         uint64_t core_id  : 16;
         uint64_t rsv2     : 12;
         uint64_t istate   : 2;  // [33:32] icache state
@@ -212,6 +212,7 @@ struct DsuMapType {
     } ulocal;
 };
 
+#define DSUREG(x) (reinterpret_cast<uint64_t>(&((DsuMapType*)0)->x))
 
 const uint64_t REG_ADDR_ERROR = 0xFFFFFFFFFFFFFFFFull;
 

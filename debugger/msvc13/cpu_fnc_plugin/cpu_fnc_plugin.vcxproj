@@ -175,6 +175,7 @@
     <ClCompile Include="..\..\src\cpu_fnc_plugin\riscv-ext-m.cpp" />
     <ClCompile Include="..\..\src\cpu_fnc_plugin\riscv-rv64i-priv.cpp" />
     <ClCompile Include="..\..\src\cpu_fnc_plugin\riscv-rv64i-user.cpp" />
+    <ClCompile Include="..\..\src\cpu_fnc_plugin\srcproc\srcproc.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\api_types.h" />
@@ -191,6 +192,7 @@
     <ClInclude Include="..\..\src\common\riscv-isa.h" />
     <ClInclude Include="..\..\src\cpu_fnc_plugin\cpu_riscv_func.h" />
     <ClInclude Include="..\..\src\cpu_fnc_plugin\instructions.h" />
+    <ClInclude Include="..\..\src\cpu_fnc_plugin\srcproc\srcproc.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

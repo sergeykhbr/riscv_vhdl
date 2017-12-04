@@ -34,6 +34,7 @@ void IrqPort::setLevel(bool level) {
 
 IrqController::IrqController(const char *name)  : IService(name) {
     registerInterface(static_cast<IMemoryOperation *>(this));
+    registerInterface(static_cast<IClockListener *>(this));
     registerAttribute("CPU", &cpu_);
     registerAttribute("CSR_MIPI", &mipi_);
     registerAttribute("IrqTotal", &irqTotal_);
@@ -51,18 +52,27 @@ IrqController::IrqController(const char *name)  : IService(name) {
     memset(&regs_, 0, sizeof(regs_));
     regs_.irq_mask = ~0;
     regs_.irq_lock = 1;
-    irq_wait_unlock = 0;
 }
 
 IrqController::~IrqController() {
 }
 
 void IrqController::postinitService() {
+    iclk_ = static_cast<IClock *>(
+        RISCV_get_service_iface(cpu_.to_string(), IFACE_CLOCK));
+    if (!iclk_) {
+        RISCV_error("Can't find IClock interface %s", cpu_.to_string());
+        return;
+    }
+
     icpu_ = static_cast<ICpuGeneric *>(
         RISCV_get_service_iface(cpu_.to_string(), IFACE_CPU_GENERIC));
     if (!icpu_) {
         RISCV_error("Can't find ICpuRiscV interface %s", cpu_.to_string());
+        return;
     }
+    uint64_t t = iclk_->getStepCounter();
+    iclk_->registerStepCallback(static_cast<IClockListener *>(this), t + 1);
 }
 
 ETransStatus IrqController::b_transport(Axi4TransactionType *trans) {
@@ -138,11 +148,7 @@ ETransStatus IrqController::b_transport(Axi4TransactionType *trans) {
             case 10:
                 regs_.irq_lock = trans->wpayload.b32[i];
                 RISCV_info("Set irq_ena = %08x", trans->wpayload.b32[i]);
-                if (regs_.irq_lock == 0 && (regs_.irq_pending ||irq_wait_unlock)) {
-                    regs_.irq_pending |= irq_wait_unlock;
-                    icpu_->raiseSignal(INTERRUPT_MExternal);
-                    irq_wait_unlock = 0;
-                } else if (regs_.irq_lock == 1 && regs_.irq_pending) {
+                if (regs_.irq_lock == 0 && regs_.irq_pending) {
                     icpu_->lowerSignal(INTERRUPT_MExternal);
                 }
                 break;
@@ -225,16 +231,20 @@ ETransStatus IrqController::b_transport(Axi4TransactionType *trans) {
     return TRANS_OK;
 }
 
-void IrqController::requestInterrupt(int idx) {
-    if (regs_.irq_lock) {
-        irq_wait_unlock |= (~regs_.irq_mask & (1 << idx));
+void IrqController::stepCallback(uint64_t t) {
+    iclk_->registerStepCallback(static_cast<IClockListener *>(this), t + 1);
+    if (regs_.irq_lock == 0) {
         return;
     }
-    if ((regs_.irq_mask & (0x1 << idx)) == 0) {
-        regs_.irq_pending |= (0x1 << idx);
+    if (~regs_.irq_mask & regs_.irq_pending) {
         icpu_->raiseSignal(INTERRUPT_MExternal);   // PLIC interrupt (external)
-        RISCV_info("Raise interrupt", NULL);
+        RISCV_debug("Raise interrupt", NULL);
     }
+}
+
+void IrqController::requestInterrupt(int idx) {
+    regs_.irq_pending |= (0x1 << idx);
+    RISCV_info("request Interrupt %d", idx);
 }
 
 }  // namespace debugger

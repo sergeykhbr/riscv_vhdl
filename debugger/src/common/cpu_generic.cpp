@@ -13,12 +13,17 @@ namespace debugger {
 
 CpuGeneric::CpuGeneric(const char *name)  
     : IService(name), IHap(HAP_ConfigDone),
-    status_(this, "status", 0x10000),
-    stepping_cnt_(this, "stepping_cnt", 0x10008),
-    pc_(this, "pc", 0x1020 << 3),
-    npc_(this, "npc", 0x1021 << 3),
-    stackTraceCnt_(this, "stack_trace_cnt", 0x1022 << 3),
-    stackTraceBuf_(this, "stack_trace_buf", 0x1080 << 3, 0) {
+    pc_(this, "pc", DSUREG(ureg.v.pc)),
+    npc_(this, "npc", DSUREG(ureg.v.npc)),
+    status_(this, "status", DSUREG(udbg.v.control)),
+    stepping_cnt_(this, "stepping_cnt", DSUREG(udbg.v.stepping_mode_steps)),
+    stackTraceCnt_(this, "stack_trace_cnt", DSUREG(ureg.v.stack_trace_cnt)),
+    stackTraceBuf_(this, "stack_trace_buf", DSUREG(ureg.v.stack_trace_buf), 0),
+    br_control_(this, "br_control", DSUREG(udbg.v.br_ctrl)),
+    br_fetch_addr_(this, "br_fetch_addr", DSUREG(udbg.v.br_address_fetch)),
+    br_fetch_instr_(this, "br_fetch_instr", DSUREG(udbg.v.br_instr_fetch)),
+    br_hw_add_(this, "br_hw_add", DSUREG(udbg.v.add_breakpoint)),
+    br_hw_remove_(this, "br_hw_remove", DSUREG(udbg.v.remove_breakpoint)) {
     registerInterface(static_cast<IThread *>(this));
     registerInterface(static_cast<IClock *>(this));
     registerInterface(static_cast<ICpuGeneric *>(this));
@@ -45,6 +50,9 @@ CpuGeneric::CpuGeneric(const char *name)
     step_cnt_ = 0;
     hw_stepping_break_ = 0;
     interrupt_pending_ = 0;
+    sw_breakpoint_ = false;
+    hw_breakpoint_ = false;
+    hwBreakpoints_.make_list(0);
 
     dport_.valid = 0;
     reg_trace_file = 0;
@@ -133,14 +141,18 @@ void CpuGeneric::updatePipeline() {
     branch_ = false;
     oplen_ = 0;
 
-    if (!isBreakpoint()) {
+    if (!checkHwBreakpoint()) {
         fetchILine();
         GenericInstruction *instr = decodeInstruction(cacheline_);
+
+        trackContextStart();
         if (instr) {
             oplen_ = instr->exec(cacheline_);
         } else {
             generateIllegalOpcode();
         }
+        trackContextEnd();
+
         pc_z_ = pc_.getValue();
     }
 
@@ -193,6 +205,10 @@ void CpuGeneric::fetchILine() {
     trans_.source_idx = sysBusMasterID_.to_int();
     isysbus_->b_transport(&trans_);
     cacheline_[0].val = trans_.rpayload.b64[0];
+    if (skip_breakpoint_ && trans_.addr == br_fetch_addr_.getValue().val) {
+        skip_breakpoint_ = false;
+        cacheline_[0].buf32[0] = br_fetch_instr_.getValue().buf32[0];
+    }
 }
 
 void CpuGeneric::registerStepCallback(IClockListener *cb,
@@ -275,9 +291,14 @@ void CpuGeneric::halt(const char *descr) {
         return;
     }
     char strop[32];
+    uint8_t tbyte;
     for (unsigned i = 0; i < oplen_; i++) {
-        RISCV_sprintf(&strop[2*i], sizeof(strop)-2*i, "%02x",
-                      cacheline_[0].buf[i]);
+        if (endianess() == LittleEndian) {
+            tbyte = cacheline_[0].buf[oplen_-i-1];
+        } else {
+            tbyte = cacheline_[0].buf[i];
+        }
+        RISCV_sprintf(&strop[2*i], sizeof(strop)-2*i, "%02x", tbyte);
     }
     
     if (descr == NULL) {
@@ -293,8 +314,8 @@ void CpuGeneric::halt(const char *descr) {
 
 void CpuGeneric::reset(bool active) {
     interrupt_pending_ = 0;
-    stackTraceCnt_.reset(active);
     status_.reset(active);
+    stackTraceCnt_.reset(active);
     pc_.setValue(resetVector_.to_uint64());
     npc_.setValue(resetVector_.to_uint64());
     if (!active && estate_ == CORE_OFF) {
@@ -308,6 +329,8 @@ void CpuGeneric::reset(bool active) {
         RISCV_trigger_hap(static_cast<IService *>(this),
                             HAP_CpuTurnOFF, "CPU Turned OFF");
     }
+    hw_breakpoint_ = false;
+    sw_breakpoint_ = false;
 }
 
 void CpuGeneric::updateDebugPort() {
@@ -329,111 +352,6 @@ void CpuGeneric::updateDebugPort() {
 
     trans->rdata = tr.rpayload.b64[0];;
     dport_.cb->nb_response_debug_port(trans);
-
-    /*DsuMapType::udbg_type::debug_region_type::control_reg ctrl;
-    DebugPortTransactionType *trans = dport.trans;
-    trans->rdata = 0;
-    switch (trans->region) {
-    case 0:     // CSR
-        trans->rdata = pContext->csr[trans->addr];
-        if (trans->write) {
-            pContext->csr[trans->addr] = trans->wdata;
-        }
-        break;
-    case 1:     // IRegs
-        if (trans->addr < Reg_Total) { 
-            trans->rdata = pContext->regs[trans->addr];
-            if (trans->write) {
-                pContext->regs[trans->addr] = trans->wdata;
-            }
-        } else if (trans->addr == Reg_Total) {
-            // Read only register
-            trans->rdata = pContext->pc;
-        } else if (trans->addr == (Reg_Total + 1)) {
-            trans->rdata = pContext->npc;
-            if (trans->write) {
-                pContext->npc = trans->wdata;
-            }
-        } else if (trans->addr == (Reg_Total + 2)) {
-            trans->rdata = pContext->stack_trace_cnt;
-            if (trans->write) {
-                pContext->stack_trace_cnt = static_cast<int>(trans->wdata);
-            }
-        } else if (trans->addr >= 128 && 
-                    trans->addr < (128 + STACK_TRACE_BUF_SIZE)) {
-            trans->rdata = pContext->stack_trace_buf[trans->addr - 128];
-        }
-        break;
-    case 2:     // Control
-        switch (trans->addr) {
-        case 0:
-            ctrl.val = trans->wdata;
-            if (trans->write) {
-                if (ctrl.bits.halt) {
-                    halt();
-                } else if (ctrl.bits.stepping) {
-                    step(dport.stepping_mode_steps);
-                } else {
-                    go();
-                }
-            } else {
-                ctrl.val = 0;
-                ctrl.bits.halt = isHalt() ? 1: 0;
-                if (pContext->br_status_ena) {
-                    ctrl.bits.breakpoint = 1;
-                }
-                ctrl.bits.core_id = 0;
-            }
-            trans->rdata = ctrl.val;
-            break;
-        case 1:
-            trans->rdata = dport.stepping_mode_steps;
-            if (trans->write) {
-                dport.stepping_mode_steps = trans->wdata;
-            }
-            break;
-        case 2:
-            trans->rdata = pContext->step_cnt;
-            break;
-        case 3:
-            trans->rdata = pContext->step_cnt;
-            break;
-        case 4:
-            trans->rdata = pContext->br_ctrl.val;
-            if (trans->write) {
-                pContext->br_ctrl.val = trans->wdata;
-            }
-            break;
-        case 5:
-            if (trans->write) {
-                addBreakpoint(trans->wdata);
-            }
-            break;
-        case 6:
-            if (trans->write) {
-                removeBreakpoint(trans->wdata);
-            }
-            break;
-        case 7:
-            trans->rdata = pContext->br_address_fetch;
-            if (trans->write) {
-                pContext->br_address_fetch = trans->wdata;
-            }
-            break;
-        case 8:
-            trans->rdata = pContext->br_instr_fetch;
-            if (trans->write) {
-                pContext->br_inject_fetch = true;
-                pContext->br_status_ena = false;
-                pContext->br_instr_fetch = static_cast<uint32_t>(trans->wdata);
-            }
-            break;
-        default:;
-        }
-        break;
-    default:;
-    }
-    dport.cb->nb_response_debug_port(dport.trans);*/
 }
 
 void CpuGeneric::nb_transport_debug_port(DebugPortTransactionType *trans,
@@ -443,12 +361,58 @@ void CpuGeneric::nb_transport_debug_port(DebugPortTransactionType *trans,
     dport_.valid = true;
 }
 
+void CpuGeneric::addHwBreakpoint(uint64_t addr) {
+    AttributeType item;
+    item.make_uint64(addr);
+    hwBreakpoints_.add_to_list(&item);
+    hwBreakpoints_.sort();
+    for (unsigned i = 0; i < hwBreakpoints_.size(); i++) {
+        RISCV_debug("Breakpoint[%d]: 0x%04" RV_PRI64 "x",
+                    i, hwBreakpoints_[i].to_uint64());
+    }
+}
+
+void CpuGeneric::removeHwBreakpoint(uint64_t addr) {
+    for (unsigned i = 0; i < hwBreakpoints_.size(); i++) {
+        if (addr == hwBreakpoints_[i].to_uint64()) {
+            hwBreakpoints_.remove_from_list(i);
+            hwBreakpoints_.sort();
+            return;
+        }
+    }
+}
+
+bool CpuGeneric::checkHwBreakpoint() {
+    uint64_t pc = pc_.getValue().val;
+    for (unsigned i = 0; i < hwBreakpoints_.size(); i++) {
+        uint64_t bradr = hwBreakpoints_[i].to_uint64();
+        if (pc < bradr) {
+            // Sorted list
+            break;
+        }
+        if (pc == bradr) {
+            hw_breakpoint_ = true;
+            halt("Hw breakpoint");
+            return true;
+        }
+    }
+    return false;
+}
+
+void CpuGeneric::skipBreakpoint() {
+    skip_breakpoint_ = true;
+    hw_breakpoint_ = false;
+    sw_breakpoint_ = false;
+}
+
+
 uint64_t GenericStatusType::aboutToRead(uint64_t cur_val) {
     GenericCpuControlType ctrl;
     CpuGeneric *pcpu = static_cast<CpuGeneric *>(parent_);
     ctrl.val = 0;
     ctrl.bits.halt = pcpu->isHalt() ? 1 : 0;
-    ctrl.bits.breakpoint = breakpoint_ ? 1 : 0;
+    ctrl.bits.sw_breakpoint = pcpu->isSwBreakpoint() ? 1 : 0;
+    ctrl.bits.hw_breakpoint = pcpu->isHwBreakpoint() ? 1 : 0;
     return ctrl.val;
 }
 
@@ -463,6 +427,24 @@ uint64_t GenericStatusType::aboutToWrite(uint64_t new_val) {
     } else {
         pcpu->go();
     }
+    return new_val;
+}
+
+uint64_t FetchedBreakpointType::aboutToWrite(uint64_t new_val) {
+    CpuGeneric *pcpu = static_cast<CpuGeneric *>(parent_);
+    pcpu->skipBreakpoint();
+    return new_val;
+}
+
+uint64_t AddBreakpointType::aboutToWrite(uint64_t new_val) {
+    CpuGeneric *pcpu = static_cast<CpuGeneric *>(parent_);
+    pcpu->addHwBreakpoint(new_val);
+    return new_val;
+}
+
+uint64_t RemoveBreakpointType::aboutToWrite(uint64_t new_val) {
+    CpuGeneric *pcpu = static_cast<CpuGeneric *>(parent_);
+    pcpu->removeHwBreakpoint(new_val);
     return new_val;
 }
 

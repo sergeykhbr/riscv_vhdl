@@ -166,7 +166,6 @@ int TcpServer::createServerSocket() {
 }
 
 void TcpServer::setRcvTimeout(socket_def skt, int timeout_ms) {
-    int err = 0;
     if (!timeout_ms) {
         return;
     }
@@ -182,8 +181,8 @@ void TcpServer::setRcvTimeout(socket_def skt, int timeout_ms) {
     tv.tv_usec = (timeout_ms % 1000) * 1000;
     tv.tv_sec = timeout_ms / 1000;
 #endif
-    err = setsockopt(skt, SOL_SOCKET, SO_RCVTIMEO,
-                    reinterpret_cast<char *>(&tv), sizeof(struct timeval));
+    setsockopt(skt, SOL_SOCKET, SO_RCVTIMEO,
+               reinterpret_cast<char *>(&tv), sizeof(struct timeval));
 }
 
 bool TcpServer::setBlockingMode(bool mode) {

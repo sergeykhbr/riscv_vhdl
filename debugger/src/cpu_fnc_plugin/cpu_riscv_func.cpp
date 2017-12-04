@@ -15,60 +15,21 @@
 namespace debugger {
 
 #ifdef ENABLE_OBOSOLETE
-void addIsaUserRV64I(CpuContextType *data, AttributeType *out);
-void addIsaPrivilegedRV64I(CpuContextType *data, AttributeType *out);
-void addIsaExtensionA(CpuContextType *data, AttributeType *out);
-void addIsaExtensionF(CpuContextType *data, AttributeType *out);
-void addIsaExtensionM(CpuContextType *data, AttributeType *out);
-
-void generateException(uint64_t code, CpuContextType *data);
-void generateInterrupt(uint64_t code, CpuContextType *data);
-
-uint64_t readCSR(uint32_t idx, CpuContextType *data);
-void writeCSR(uint32_t idx, uint64_t val, CpuContextType *data);
 
 CpuRiscV_Functional::CpuRiscV_Functional(const char *name)  
     : IService(name), IHap(HAP_ConfigDone) {
-    registerInterface(static_cast<IThread *>(this));
-    registerInterface(static_cast<IClock *>(this));
-    registerInterface(static_cast<ICpuGeneric *>(this));
-    registerInterface(static_cast<ICpuRiscV *>(this));
-    registerInterface(static_cast<IHap *>(this));
-    registerAttribute("Enable", &isEnable_);
-    registerAttribute("Bus", &bus_);
-    registerAttribute("ListExtISA", &listExtISA_);
-    registerAttribute("FreqHz", &freqHz_);
-    registerAttribute("GenerateRegTraceFile", &generateRegTraceFile_);
-    registerAttribute("GenerateMemTraceFile", &generateMemTraceFile_);
-    registerAttribute("ResetVector", &resetVector_);
 
-    isEnable_.make_boolean(true);
-    bus_.make_string("");
-    listExtISA_.make_list(0);
-    freqHz_.make_uint64(1);
-    generateRegTraceFile_.make_boolean(false);
-    generateMemTraceFile_.make_boolean(false);
-
-    cpu_context_.step_cnt = 0;
-    cpu_context_.stack_trace_cnt = 0;
-
-    RISCV_event_create(&config_done_, "riscv_func_config_done");
-    RISCV_register_hap(static_cast<IHap *>(this));
     cpu_context_.reset   = true;
     dbg_state_ = STATE_Normal;
     last_hit_breakpoint_ = ~0;
-
-    trans_.source_idx = CFG_NASTI_MASTER_CACHED;
-    cpu_context_.reg_trace_file = 0;
-    cpu_context_.mem_trace_file = 0;
-    dport.valid = 0;
 }
 #endif
 
 CpuRiver_Functional::CpuRiver_Functional(const char *name) :
     CpuGeneric(name),
-    portRegs_(static_cast<IService *>(this), "regs", 1<<15, Reg_Total*8),
-    portCSR_(static_cast<IService *>(this), "csr", 0x0, (1<<12)*8) {
+    portRegs_(this, "regs", 1<<15, Reg_Total*8),
+    portSavedRegs_(this, "savedregs", 0, Reg_Total*8),  // not mapped !!!
+    portCSR_(this, "csr", 0x0, (1<<12)*8) {
     registerInterface(static_cast<ICpuRiscV *>(this));
     registerAttribute("ListExtISA", &listExtISA_);
     registerAttribute("VendorID", &vendorID_);
@@ -151,26 +112,6 @@ void CpuRiscV_Functional::updatePipeline() {
 
     handleTrap();
 }
-
-void CpuRiscV_Functional::updateState() {
-    CpuContextType *pContext = getpContext();
-    bool upd = true;
-    switch (dbg_state_) {
-    case STATE_Halted:
-        upd = false;
-        break;
-    case STATE_Stepping:
-        if (dbg_step_cnt_ <= pContext->step_cnt) {
-            halt("Stepping breakpoint");
-            upd = false;
-        }
-        break;
-    default:;
-    }
-    if (upd) {
-        pContext->step_cnt++;
-   }
-}
 #endif
 
 void CpuRiver_Functional::handleTrap() {
@@ -187,12 +128,16 @@ void CpuRiver_Functional::handleTrap() {
         mstatus.bits.MIE == 0 && cur_prv_level == PRV_M) {
         return;
     }
-    if (mcause.value == EXCEPTION_Breakpoint
-        && br_ctrl.bits.trap_on_break == 0) {
-        interrupt_pending_ &= ~(1ull << EXCEPTION_Breakpoint);
-        npc_.setValue(pc_.getValue());
-        halt("EBREAK Breakpoint");
-        return;
+    if (mcause.value == EXCEPTION_Breakpoint) {
+        DsuMapType::udbg_type::debug_region_type::breakpoint_control_reg t1;
+        t1.val = br_control_.getValue().val;
+        if (t1.bits.trap_on_break == 0) {
+            sw_breakpoint_ = true;
+            interrupt_pending_ &= ~(1ull << EXCEPTION_Breakpoint);
+            npc_.setValue(pc_.getValue());
+            halt("EBREAK Breakpoint");
+            return;
+        }
     }
 
     // All traps handle via machine mode while CSR mdelegate
@@ -217,43 +162,11 @@ void CpuRiver_Functional::handleTrap() {
 }
 
 #ifdef ENABLE_OBOSOLETE
-bool CpuRiscV_Functional::isRunning() {
-    return  (dbg_state_ != STATE_Halted);
-}
-
 void CpuRiscV_Functional::reset() {
     CpuContextType *pContext = getpContext();
-    pContext->regs[0] = 0;
-    pContext->pc = resetVector_.to_uint64();
-    pContext->npc = resetVector_.to_uint64();
-    pContext->exception = 0;
-    pContext->interrupt = 0;
-    pContext->interrupt_pending = 0;
-    pContext->csr[CSR_mvendorid] = 0x0001;   // UC Berkeley Rocket repo
-    pContext->csr[CSR_mhartid] = 0;
-    pContext->csr[CSR_marchid] = 0;
-    pContext->csr[CSR_mimplementationid] = 0;
-    pContext->csr[CSR_mtvec]   = 0x100;     // Hardwired RO value
-    pContext->csr[CSR_mip] = 0;             // clear pending interrupts
-    pContext->csr[CSR_mie] = 0;             // disabling interrupts
-    pContext->csr[CSR_mepc] = 0;
-    pContext->csr[CSR_mcause] = 0;
-    pContext->csr[CSR_medeleg] = 0;
-    pContext->csr[CSR_mideleg] = 0;
-    pContext->csr[CSR_mtime] = 0;
-    pContext->csr[CSR_mtimecmp] = 0;
-    pContext->csr[CSR_uepc] = 0;
-    pContext->csr[CSR_sepc] = 0;
-    pContext->csr[CSR_hepc] = 0;
-    csr_mstatus_type mstat;
-    mstat.value = 0;
-    pContext->csr[CSR_mstatus] = mstat.value;
-    pContext->cur_prv_level = PRV_M;           // Current privilege level
-    pContext->step_cnt = 0;
     pContext->br_ctrl.val = 0;
     pContext->br_inject_fetch = false;
     pContext->br_status_ena = false;
-    pContext->stack_trace_cnt = 0;
 }
 #endif
 
@@ -265,9 +178,6 @@ void CpuRiver_Functional::reset(bool active) {
     portCSR_.write(CSR_mtvec, vectorTable_.to_uint64());
 
     cur_prv_level = PRV_M;           // Current privilege level
-    br_ctrl.val = 0;
-    br_inject_fetch = false;
-    br_status_ena = false;
 }
 
 
@@ -306,99 +216,44 @@ GenericInstruction *CpuRiver_Functional::decodeInstruction(Reg64Type *cache) {
 
 void CpuRiver_Functional::generateIllegalOpcode() {
     raiseSignal(EXCEPTION_InstrIllegal);
-    RISCV_error("Illegal instruction at 0x%"RV_PRI64 "08x", getPC());
+    RISCV_error("Illegal instruction at 0x%" RV_PRI64 "08x", getPC());
 }
 
-#ifdef ENABLE_OBOSOLETE
-void CpuRiscV_Functional::executeInstruction(IInstruction *instr,
-                                             uint32_t *rpayload) {
-
-    CpuContextType *pContext = getpContext();
-    if (pContext->reg_trace_file) {
-        /** Save previous reg values to find modification after exec() */
-        for (int i = 0; i < Reg_Total; i++) {
-            iregs_prev[i] = pContext->regs[i];
-        }
+void CpuRiver_Functional::trackContextStart() {
+    if (reg_trace_file == 0) {
+        return;
     }
-
-    instr->exec(cacheline_, pContext);
-    if (pContext->reg_trace_file) {
-        int sz;
-        sz = RISCV_sprintf(tstr, sizeof(tstr),"%8I64d [%08x] %08x: ",
-            pContext->step_cnt, static_cast<uint32_t>(pContext->pc), rpayload[0]);
-
-        bool reg_changed = false;
-        for (int i = 0; i < 32; i++) {
-            if (iregs_prev[i] != pContext->regs[i]) {
-                reg_changed = true;
-                sz += RISCV_sprintf(&tstr[sz], sizeof(tstr) - sz,
-                        "%3s <= %016I64x\n", IREGS_NAMES[i], pContext->regs[i]);
-            }
-        }
-        if (!reg_changed) {
-            sz += RISCV_sprintf(&tstr[sz], sizeof(tstr) - sz, "%s", "-\n");
-        }
-        (*pContext->reg_trace_file) << tstr;
-        pContext->reg_trace_file->flush();
-    }
-}
-#endif
-
-#ifdef ENABLE_OBOSOLETE
-/** 
- * prv-1.9.1 page 29
- *
- * An interrupt i will be taken if bit i is set in both mip and mie, 
- * and if interrupts are globally enabled.  By default, M-mode interrupts 
- * are globally enabled if the hart’s current privilege mode is less than M,
- * or if the current privilege mode is M and the MIE bit in the mstatus
- * register is set.
- * If bit i in mideleg is set, however, interrupts are considered to be
- * globally enabled if the hart’s current privilege mode equals the delegated
- * privilege mode (H, S, or U) and that mode’s interrupt enable bit 
- * (HIE, SIE or UIE in mstatus) is set, or if the current privilege mode is
- * less than the delegated privilege mode.
- */
-void CpuRiscV_Functional::raiseSignal(int idx) {
-    CpuContextType *pContext = getpContext();
-    csr_mstatus_type mstatus;
-    mstatus.value = pContext->csr[CSR_mstatus];
-
-    switch (idx) {
-    case CPU_SIGNAL_RESET:
-        pContext->reset = true; // Active HIGH
-        break;
-    case CPU_SIGNAL_EXT_IRQ:
-        if (pContext->reset) {
-            break;
-        }
-        // External Interrupt controller pending bit
-        pContext->interrupt_pending |= (1ull << idx);
-        if (mstatus.bits.MIE == 0 && pContext->cur_prv_level == PRV_M) {
-            break;
-        }
-        /// @todo delegate interrupt to non-machine privilege level.
-        generateInterrupt(INTERRUPT_MExternal, pContext);
-        break;
-    default:
-        RISCV_error("Unsupported signalRaise(%d)", idx);
-    }
+    /** Save previous reg values to find modification after exec() */
+    uint64_t *dst = portSavedRegs_.getpR64();
+    uint64_t *src = portRegs_.getpR64();
+    memcpy(dst, src, Reg_Total*sizeof(uint64_t));
 }
 
-void CpuRiscV_Functional::lowerSignal(int idx) {
-    CpuContextType *pContext = getpContext();
-    switch (idx) {
-    case CPU_SIGNAL_RESET:
-        pContext->reset = false; // Active HIGH
-        break;
-    case CPU_SIGNAL_EXT_IRQ:
-        pContext->interrupt_pending &= ~(1 << idx);
-        break;
-    default:
-        RISCV_error("Unsupported lowerSignal(%d)", idx);
+void CpuRiver_Functional::trackContextEnd() {
+    if (reg_trace_file == 0) {
+        return;
     }
+    int sz;
+    char tstr[1024];
+    sz = RISCV_sprintf(tstr, sizeof(tstr),"%8I64d [%08x] %08x: ",
+        step_cnt_, pc_.getValue().buf32[0], cacheline_[0].buf32[0]);  
+
+    bool reg_changed = false;
+    uint64_t *prev = portSavedRegs_.getpR64();
+    uint64_t *cur = portRegs_.getpR64();
+    for (int i = 0; i < Reg_Total; i++) {
+        if (prev[i] != cur[i]) {
+            reg_changed = true;
+            sz += RISCV_sprintf(&tstr[sz], sizeof(tstr) - sz,
+                    "%3s <= %016I64x\n", IREGS_NAMES[i], cur[i]);
+        }
+    }
+    if (!reg_changed) {
+        sz += RISCV_sprintf(&tstr[sz], sizeof(tstr) - sz, "%s", "-\n");
+    }
+    (*reg_trace_file) << tstr;
+    reg_trace_file->flush();
 }
-#endif
 
 void CpuRiver_Functional::raiseSignal(int idx) {
     if (idx < INTERRUPT_USoftware) {
@@ -409,9 +264,6 @@ void CpuRiver_Functional::raiseSignal(int idx) {
         cause.bits.code = idx;
         portCSR_.write(CSR_mcause, cause.value);
         interrupt_pending_ |= 1LL << idx;
-        if (idx == EXCEPTION_Breakpoint) {
-            br_status_ena = true;
-        }
     } else if (idx < SIGNAL_HardReset) {
         csr_mcause_type cause;
         cause.value     = 0;

@@ -107,7 +107,7 @@
           {'Name':'example0','Attr':[
                 ['LogLevel',4],
                 ['attr1','This is test attr value']]}]},
-    {'Class':'SourceServiceClass','Instances':[
+    {'Class':'RiscvSourceServiceClass','Instances':[
           {'Name':'src0','Attr':[
                 ['LogLevel',4]]}]},
     {'Class':'GrethClass','Instances':[

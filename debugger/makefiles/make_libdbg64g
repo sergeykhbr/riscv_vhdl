@@ -32,7 +32,8 @@ SRC_PATH =\
 	$(TOP_DIR)src/libdbg64g/services/exec/cmd \
 	$(TOP_DIR)src/libdbg64g/services/info \
 	$(TOP_DIR)src/libdbg64g/services/comport \
-	$(TOP_DIR)src/libdbg64g/services/elfloader
+	$(TOP_DIR)src/libdbg64g/services/elfloader \
+	$(TOP_DIR)src/libdbg64g/services/remote
 
 VPATH = $(SRC_PATH)
 
@@ -47,7 +48,6 @@ SOURCES = \
 	udp_dbglink \
 	edcl \
 	elfreader \
-	srcproc \
 	cmd_br \
 	cmd_busutil \
 	cmd_cpi \
@@ -56,6 +56,7 @@ SOURCES = \
 	cmd_halt \
 	cmd_isrunning \
 	cmd_loadelf \
+	cmd_loadsrec \
 	cmd_log \
 	cmd_read \
 	cmd_write \
@@ -73,7 +74,10 @@ SOURCES = \
 	console \
 	com_linux \
 	comport \
-	autocompleter
+	autocompleter \
+	tcpserver \
+	tcpclient \
+	tcpcmd
 
 LIBS = \
 	m \

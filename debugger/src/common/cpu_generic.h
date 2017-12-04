@@ -25,25 +25,46 @@
 
 namespace debugger {
 
-class GenericStatusType : MappedReg64Type {
+enum EEndianessType {
+    LittleEndian,
+    BigEndian,
+};
+
+class GenericStatusType : public MappedReg64Type {
  public:
     GenericStatusType(IService *parent, const char *name, uint64_t addr) :
         MappedReg64Type(parent, name, addr) {
-        breakpoint_ = 0;
     }
-    /** IResetListener interface */
-    virtual void reset(bool active) {
-        MappedReg64Type::reset(active);
-        breakpoint_ = false;
-    }
-
-    void setBreakpointBit(bool v) { breakpoint_ = v; }
-
  protected:
     virtual uint64_t aboutToRead(uint64_t cur_val);
     virtual uint64_t aboutToWrite(uint64_t new_val);
- private:
-    bool breakpoint_;
+};
+
+class FetchedBreakpointType : public MappedReg64Type {
+ public:
+    FetchedBreakpointType(IService *parent, const char *name, uint64_t addr)
+        : MappedReg64Type(parent, name, addr) {
+    }
+ protected:
+    virtual uint64_t aboutToWrite(uint64_t new_val);
+};
+
+class AddBreakpointType : public MappedReg64Type {
+ public:
+    AddBreakpointType(IService *parent, const char *name, uint64_t addr)
+        : MappedReg64Type(parent, name, addr) {
+    }
+ protected:
+    virtual uint64_t aboutToWrite(uint64_t new_val);
+};
+
+class RemoveBreakpointType : public MappedReg64Type {
+ public:
+    RemoveBreakpointType(IService *parent, const char *name, uint64_t addr)
+        : MappedReg64Type(parent, name, addr) {
+    }
+ protected:
+    virtual uint64_t aboutToWrite(uint64_t new_val);
 };
 
 class CpuGeneric : public IService,
@@ -91,22 +112,33 @@ class CpuGeneric : public IService,
     void go();
     void halt(const char *descr);
     void step();
+    /** Common Breakpoints control */
+    bool isSwBreakpoint() { return sw_breakpoint_; }
+    bool isHwBreakpoint() { return hw_breakpoint_; }
+    void addHwBreakpoint(uint64_t addr);
+    void removeHwBreakpoint(uint64_t addr);
+    void skipBreakpoint();
 
  protected:
     /** IThread interface */
     virtual void busyLoop();
 
     /** CPU internal methods */
-    virtual bool isBreakpoint() = 0;
+    virtual EEndianessType endianess() = 0;
     virtual GenericInstruction *decodeInstruction(Reg64Type *cache) = 0;
     virtual void generateIllegalOpcode() = 0;
     virtual void handleTrap() = 0;
+    /** Tack Registers changes during execution */
+    virtual void trackContextStart() {}
+    /** // Stop tracking and write trace file */
+    virtual void trackContextEnd() {}
 
     void updatePipeline();
     bool updateState();
     void fetchILine();
     void updateDebugPort();
     void updateQueue();
+    bool checkHwBreakpoint();
 
  protected:
     AttributeType isEnable_;
@@ -119,6 +151,7 @@ class CpuGeneric : public IService,
     AttributeType generateMemTraceFile_;
     AttributeType resetVector_;
     AttributeType sysBusMasterID_;
+    AttributeType hwBreakpoints_;
 
     ISourceCode *isrc_;
     IMemoryOperation *isysbus_;
@@ -132,11 +165,19 @@ class CpuGeneric : public IService,
     MappedReg64Type npc_;
     GenericStatusType status_;
     MappedReg64Type stepping_cnt_;
-    GenericReg64Bank stackTraceBuf_;    // [[from,to],*]
-    MappedReg64Type stackTraceCnt_;
+    MappedReg64Type stackTraceCnt_;         // Hardware stack trace buffer
+    GenericReg64Bank stackTraceBuf_;        // [[from,to],*]
+    MappedReg64Type br_control_;            // Enable/disable Trap on break
+    MappedReg64Type br_fetch_addr_;         // Skip breakpoint at address
+    FetchedBreakpointType br_fetch_instr_;  // Use this instruction on address
+    AddBreakpointType br_hw_add_;
+    RemoveBreakpointType br_hw_remove_;
 
     Reg64Type pc_z_;
     uint64_t interrupt_pending_;
+    bool sw_breakpoint_;
+    bool hw_breakpoint_;
+    bool skip_breakpoint_;
 
     event_def eventConfigDone_;
     ClockAsyncTQueueType queue_;

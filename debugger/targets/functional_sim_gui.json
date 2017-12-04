@@ -123,7 +123,7 @@
           {'Name':'example0','Attr':[
                 ['LogLevel',4],
                 ['attr1','This is test attr value']]}]},
-    {'Class':'SourceServiceClass','Instances':[
+    {'Class':'RiscvSourceServiceClass','Instances':[
           {'Name':'src0','Attr':[
                 ['LogLevel',4]]}]},
     {'Class':'GrethClass','Instances':[
@@ -268,6 +268,10 @@
                             ['core0','stepping_cnt'],
                             ['core0','stack_trace_cnt'],
                             ['core0','stack_trace_buf'],
+                            ['core0','br_fetch_addr'],
+                            ['core0','br_fetch_instr'],
+                            ['core0','br_hw_add'],
+                            ['core0','br_hw_remove'],
                            ]]
                 ]}]},
     {'Class':'BoardSimClass','Instances':[

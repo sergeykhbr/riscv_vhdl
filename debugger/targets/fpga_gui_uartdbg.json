@@ -95,7 +95,7 @@
                     ['MBADADDR',8,0x343,'Machine mode bad address register'],
                     ['MIP',8,0x344,'Machine mode interrupt pending bits register']
                     ]]]}]},
-    {'Class':'SourceServiceClass','Instances':[
+    {'Class':'RiscvSourceServiceClass','Instances':[
           {'Name':'src0','Attr':[
                 ['LogLevel',4]]}]},
     {'Class':'SimplePluginClass','Instances':[

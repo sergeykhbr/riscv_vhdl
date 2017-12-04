@@ -21,7 +21,8 @@ INCL_PATH= \
 # source files directories list:
 SRC_PATH =\
 	$(TOP_DIR)src/common \
-	$(TOP_DIR)src/cpu_fnc_plugin
+	$(TOP_DIR)src/cpu_fnc_plugin \
+	$(TOP_DIR)src/cpu_fnc_plugin/srcproc
 
 VPATH = $(SRC_PATH)
 
@@ -29,6 +30,8 @@ SOURCES = \
 	attribute \
 	autobuffer \
 	async_tqueue \
+	cpu_generic \
+	mapreg \
 	plugin_init \
 	cpu_riscv_func \
 	riscv-rv64i-user \
@@ -36,7 +39,8 @@ SOURCES = \
 	instructions \
 	riscv-ext-a \
 	riscv-ext-m \
-	riscv-ext-f
+	riscv-ext-f \
+	srcproc
 
 LIBS = \
 	m \

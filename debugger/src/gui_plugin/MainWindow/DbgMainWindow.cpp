@@ -116,7 +116,7 @@ void DbgMainWindow::handleResponse(AttributeType *req, AttributeType *resp) {
             || (!actionRun_->isChecked() && !ctrl.bits.halt)) {
             emit signalTargetStateChanged(ctrl.bits.halt == 0);
         }
-        if (ctrl.bits.breakpoint && ebreak_) {
+        if ((ctrl.bits.sw_breakpoint || ctrl.bits.hw_breakpoint) && ebreak_) {
             ebreak_->skip();
         }
 #if 0

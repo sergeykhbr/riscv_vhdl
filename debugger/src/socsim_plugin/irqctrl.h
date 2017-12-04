@@ -8,8 +8,9 @@
 #ifndef __DEBUGGER_SOCSIM_PLUGIN_IRQCTRL_H__
 #define __DEBUGGER_SOCSIM_PLUGIN_IRQCTRL_H__
 
-#include "iclass.h"
-#include "iservice.h"
+#include <iclass.h>
+#include <iservice.h>
+#include "coreservices/iclock.h"
 #include "coreservices/imemop.h"
 #include "coreservices/iwire.h"
 #include "coreservices/icpugen.h"
@@ -17,7 +18,7 @@
 namespace debugger {
 
 class IrqPort : public IWire {
-public:
+ public:
     IrqPort(IService *parent, const char *portname, int idx);
 
     /** IWire interface */
@@ -26,15 +27,16 @@ public:
     virtual void setLevel(bool level);
     virtual bool getLevel() { return level_; }
 
-protected:
+ protected:
     IService *parent_;
     int idx_;
     bool level_;
 };
 
 class IrqController : public IService, 
-                      public IMemoryOperation {
-public:
+                      public IMemoryOperation,
+                      public IClockListener {
+ public:
     IrqController(const char *name);
     ~IrqController();
 
@@ -44,14 +46,18 @@ public:
     /** IMemoryOperation */
     virtual ETransStatus b_transport(Axi4TransactionType *payload);
 
+    /** IClockListener interface */
+    virtual void stepCallback(uint64_t t);
+
     /** Controller specific methods visible for ports */
     void requestInterrupt(int idx);
 
-private:
+ private:
     AttributeType mipi_;
     AttributeType irqTotal_;
     AttributeType cpu_;
     ICpuGeneric *icpu_;
+    IClock *iclk_;
     static const int IRQ_MAX = 32;
     IrqPort *irqlines_[IRQ_MAX];
 
@@ -66,7 +72,6 @@ private:
         uint32_t irq_lock;      // 0x28: [RW]
         uint32_t irq_cause_idx; // 0x2c: [RW]
     } regs_;
-    uint32_t irq_wait_unlock;
 };
 
 DECLARE_CLASS(IrqController)

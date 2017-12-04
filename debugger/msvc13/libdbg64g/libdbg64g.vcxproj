@@ -171,7 +171,6 @@
     <ClCompile Include="..\..\src\libdbg64g\services\debug\serial_dbglink.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\debug\udp_dbglink.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\elfloader\elfreader.cpp" />
-    <ClCompile Include="..\..\src\libdbg64g\services\elfloader\srcproc.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmdexec.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_br.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_busutil.cpp" />
@@ -241,7 +240,6 @@
     <ClInclude Include="..\..\src\libdbg64g\services\debug\udp_dbglink.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\elfloader\elfreader.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\elfloader\elf_types.h" />
-    <ClInclude Include="..\..\src\libdbg64g\services\elfloader\srcproc.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmdexec.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_br.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_busutil.h" />

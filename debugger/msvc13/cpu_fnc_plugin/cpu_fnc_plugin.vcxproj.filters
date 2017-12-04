@@ -4,6 +4,9 @@
     <Filter Include="common">
       <UniqueIdentifier>{f5a16e1a-fd0c-436b-9f2e-d8942e1ccf15}</UniqueIdentifier>
     </Filter>
+    <Filter Include="srcproc">
+      <UniqueIdentifier>{0d0dd17a-12fc-43f3-a942-96f9ecd87808}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\common\attribute.cpp">
@@ -29,6 +32,9 @@
       <Filter>common</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\cpu_fnc_plugin\instructions.cpp" />
+    <ClCompile Include="..\..\src\cpu_fnc_plugin\srcproc\srcproc.cpp">
+      <Filter>srcproc</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\api_types.h">
@@ -69,5 +75,8 @@
       <Filter>common</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\cpu_fnc_plugin\instructions.h" />
+    <ClInclude Include="..\..\src\cpu_fnc_plugin\srcproc\srcproc.h">
+      <Filter>srcproc</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
