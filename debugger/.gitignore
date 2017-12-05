@@ -3,6 +3,7 @@
 *.suo
 *.err
 Debug
+!src/common/debug
 Release
 *.log
 *.rcc
