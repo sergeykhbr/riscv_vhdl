@@ -10,6 +10,7 @@
 #include "cmd/cmd_regs.h"
 #include "cmd/cmd_reg.h"
 #include "cmd/cmd_loadelf.h"
+#include "cmd/cmd_loadsrec.h"
 #include "cmd/cmd_log.h"
 #include "cmd/cmd_isrunning.h"
 #include "cmd/cmd_read.h"
@@ -76,6 +77,7 @@ void CmdExecutor::postinitService() {
     registerCommand(new CmdHalt(itap_, info_));
     registerCommand(new CmdIsRunning(itap_, info_));
     registerCommand(new CmdLoadElf(itap_, info_));
+    registerCommand(new CmdLoadSrec(itap_, info_));
     registerCommand(new CmdLog(itap_, info_));
     registerCommand(new CmdMemDump(itap_, info_));
     registerCommand(new CmdRead(itap_, info_));

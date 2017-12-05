@@ -131,7 +131,6 @@
                 ['LogLevel',1],
                 ['BaseAddress',0x80040000],
                 ['Length',0x40000],
-                ['IrqControl',['irqctrl0','irq2']],
                 ['IP',0x55667788],
                 ['MAC',0xfeedface00],
                 ['Bus','axi0'],
@@ -207,7 +206,8 @@
                 ['BaseAddress',0x80080000],
                 ['Length',0x20000],
                 ['CPU','core0'],
-                ['Bus','axi0']
+                ['Bus','axi0'],
+                ['Reset','reset0']
                 ]}]},
     {'Class':'GNSSStubClass','Instances':[
           {'Name':'gnss0','Attr':[
@@ -266,6 +266,8 @@
                             ['core0','csr'],
                             ['core0','regs'],
                             ['core0','stepping_cnt'],
+                            ['core0','clock_cnt'],
+                            ['core0','executed_cnt'],
                             ['core0','stack_trace_cnt'],
                             ['core0','stack_trace_buf'],
                             ['core0','br_fetch_addr'],
@@ -273,6 +275,13 @@
                             ['core0','br_hw_add'],
                             ['core0','br_hw_remove'],
                            ]]
+                ]}]},
+    {'Class':'HardResetClass','Instances':[
+          {'Name':'reset0','Attr':[
+                ['LogLevel',4],
+                ['ResetDevices',[
+                                  'core0'
+                                ]]
                 ]}]},
     {'Class':'BoardSimClass','Instances':[
           {'Name':'boardsim','Attr':[

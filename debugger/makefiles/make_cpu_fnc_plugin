@@ -21,6 +21,7 @@ INCL_PATH= \
 # source files directories list:
 SRC_PATH =\
 	$(TOP_DIR)src/common \
+	$(TOP_DIR)src/common/generic \
 	$(TOP_DIR)src/cpu_fnc_plugin \
 	$(TOP_DIR)src/cpu_fnc_plugin/srcproc
 

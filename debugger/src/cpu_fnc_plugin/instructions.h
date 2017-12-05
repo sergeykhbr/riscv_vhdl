@@ -9,7 +9,7 @@
 #define __DEBUGGER_CPU_RISCV_INSTRUCTIONS_H__
 
 #include <inttypes.h>
-#include <cpu_generic.h>
+#include "generic/cpu_generic.h"
 
 namespace debugger {
 

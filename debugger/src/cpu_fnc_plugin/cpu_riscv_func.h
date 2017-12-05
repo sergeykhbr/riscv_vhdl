@@ -8,9 +8,9 @@
 #ifndef __DEBUGGER_CPU_RISCV_FUNCTIONAL_H__
 #define __DEBUGGER_CPU_RISCV_FUNCTIONAL_H__
 
-#include <cpu_generic.h>
 #include <riscv-isa.h>
 #include "instructions.h"
+#include "generic/cpu_generic.h"
 #include "coreservices/icpuriscv.h"
 #include "coreservices/isocinfo.h"
 

@@ -170,6 +170,9 @@
     <ClCompile Include="..\..\src\libdbg64g\services\remote\tcpserver.cpp">
       <Filter>Source Files\services\remote</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_loadsrec.cpp">
+      <Filter>Source Files\services\exec\cmd</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\attribute.h">
@@ -368,6 +371,9 @@
     </ClInclude>
     <ClInclude Include="..\..\src\libdbg64g\services\remote\tcpserver.h">
       <Filter>Source Files\services\remote</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_loadsrec.h">
+      <Filter>Source Files\services\exec\cmd</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

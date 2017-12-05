@@ -5,31 +5,16 @@
  * @brief      CPU functional simulator class definition.
  */
 
-#include "api_core.h"
+#include <api_core.h>
 #include "cpu_riscv_func.h"
-#include "riscv-isa.h"
-#if 1
-#include "coreservices/iserial.h"
-#endif
 
 namespace debugger {
 
-#ifdef ENABLE_OBOSOLETE
-
-CpuRiscV_Functional::CpuRiscV_Functional(const char *name)  
-    : IService(name), IHap(HAP_ConfigDone) {
-
-    cpu_context_.reset   = true;
-    dbg_state_ = STATE_Normal;
-    last_hit_breakpoint_ = ~0;
-}
-#endif
-
 CpuRiver_Functional::CpuRiver_Functional(const char *name) :
     CpuGeneric(name),
-    portRegs_(this, "regs", 1<<15, Reg_Total*8),
+    portRegs_(this, "regs", DSUREG(ureg.v.iregs), Reg_Total*8),
     portSavedRegs_(this, "savedregs", 0, Reg_Total*8),  // not mapped !!!
-    portCSR_(this, "csr", 0x0, (1<<12)*8) {
+    portCSR_(this, "csr", DSUREG(csr), (1<<12)*8) {
     registerInterface(static_cast<ICpuRiscV *>(this));
     registerAttribute("ListExtISA", &listExtISA_);
     registerAttribute("VendorID", &vendorID_);
@@ -68,51 +53,6 @@ unsigned CpuRiver_Functional::addSupportedInstruction(
     listInstr_[instr->hash()].add_to_list(&tmp);
     return 0;
 }
-
-
-#ifdef ENABLE_OBOSOLETE
-
-void CpuRiscV_Functional::updatePipeline() {
-    IInstruction *instr;
-    CpuContextType *pContext = getpContext();
-
-    if (dport.valid) {
-        dport.valid = 0;
-        updateDebugPort();
-    }
-
-    pContext->pc = pContext->npc;
-    if (isRunning()) {
-        fetchInstruction();
-    }
-
-    updateState();
-    if (pContext->reset) {
-        updateQueue();
-        reset();
-        return;
-    } 
-
-    instr = decodeInstruction(cacheline_);
-    if (isRunning()) {
-        last_hit_breakpoint_ = ~0;
-        if (instr) {
-            executeInstruction(instr, cacheline_);
-        } else {
-            pContext->npc += 4;
-            generateException(EXCEPTION_InstrIllegal, pContext);
-
-            RISCV_info("[%" RV_PRI64 "d] pc:%08x: %08x \t illegal instruction",
-                        getStepCounter(),
-                        static_cast<uint32_t>(pContext->pc), cacheline_[0]);
-        }
-    }
-
-    updateQueue();
-
-    handleTrap();
-}
-#endif
 
 void CpuRiver_Functional::handleTrap() {
     csr_mstatus_type mstatus;
@@ -161,15 +101,6 @@ void CpuRiver_Functional::handleTrap() {
     interrupt_pending_ = 0;
 }
 
-#ifdef ENABLE_OBOSOLETE
-void CpuRiscV_Functional::reset() {
-    CpuContextType *pContext = getpContext();
-    pContext->br_ctrl.val = 0;
-    pContext->br_inject_fetch = false;
-    pContext->br_status_ena = false;
-}
-#endif
-
 void CpuRiver_Functional::reset(bool active) {
     CpuGeneric::reset(active);
     portRegs_.reset();
@@ -179,26 +110,6 @@ void CpuRiver_Functional::reset(bool active) {
 
     cur_prv_level = PRV_M;           // Current privilege level
 }
-
-
-#ifdef ENABLE_OBOSOLETE
-void CpuRiscV_Functional::fetchInstruction() {
-    CpuContextType *pContext = getpContext();
-    if (pContext->br_inject_fetch
-        && pContext->pc == pContext->br_address_fetch) {
-        pContext->br_inject_fetch = false;
-        cacheline_[0] = pContext->br_instr_fetch;
-        return;
-    }
-    trans_.action = MemAction_Read;
-    trans_.addr = pContext->pc;
-    trans_.xsize = 4;
-    trans_.wstrb = 0;
-    pContext->ibus->b_transport(&trans_);
-    cacheline_[0] = trans_.rpayload.b32[0];
-}
-
-#endif
 
 GenericInstruction *CpuRiver_Functional::decodeInstruction(Reg64Type *cache) {
     RiscvInstruction *instr = NULL;
@@ -308,140 +219,6 @@ void CpuRiver_Functional::writeCSR(int idx, uint64_t val) {
         portCSR_.write(idx, val);
     }
 }
-
-
-#ifdef ENABLE_OBOSOLETE
-void CpuRiscV_Functional::updateDebugPort() {
-    CpuContextType *pContext = getpContext();
-    DsuMapType::udbg_type::debug_region_type::control_reg ctrl;
-    DebugPortTransactionType *trans = dport.trans;
-    trans->rdata = 0;
-    switch (trans->region) {
-    case 0:     // CSR
-        trans->rdata = pContext->csr[trans->addr];
-        if (trans->write) {
-            pContext->csr[trans->addr] = trans->wdata;
-        }
-        break;
-    case 1:     // IRegs
-        if (trans->addr < Reg_Total) { 
-            trans->rdata = pContext->regs[trans->addr];
-            if (trans->write) {
-                pContext->regs[trans->addr] = trans->wdata;
-            }
-        } else if (trans->addr == Reg_Total) {
-            /** Read only register */
-            trans->rdata = pContext->pc;
-        } else if (trans->addr == (Reg_Total + 1)) {
-            trans->rdata = pContext->npc;
-            if (trans->write) {
-                pContext->npc = trans->wdata;
-            }
-        } else if (trans->addr == (Reg_Total + 2)) {
-            trans->rdata = pContext->stack_trace_cnt;
-            if (trans->write) {
-                pContext->stack_trace_cnt = static_cast<int>(trans->wdata);
-            }
-        } else if (trans->addr >= 128 && 
-                    trans->addr < (128 + STACK_TRACE_BUF_SIZE)) {
-            trans->rdata = pContext->stack_trace_buf[trans->addr - 128];
-        }
-        break;
-    case 2:     // Control
-        switch (trans->addr) {
-        case 0:
-            ctrl.val = trans->wdata;
-            if (trans->write) {
-                if (ctrl.bits.halt) {
-                    halt();
-                } else if (ctrl.bits.stepping) {
-                    step(dport.stepping_mode_steps);
-                } else {
-                    go();
-                }
-            } else {
-                ctrl.val = 0;
-                ctrl.bits.halt = isHalt() ? 1: 0;
-                if (pContext->br_status_ena) {
-                    ctrl.bits.breakpoint = 1;
-                }
-                ctrl.bits.core_id = 0;
-            }
-            trans->rdata = ctrl.val;
-            break;
-        case 1:
-            trans->rdata = dport.stepping_mode_steps;
-            if (trans->write) {
-                dport.stepping_mode_steps = trans->wdata;
-            }
-            break;
-        case 2:
-            trans->rdata = pContext->step_cnt;
-            break;
-        case 3:
-            trans->rdata = pContext->step_cnt;
-            break;
-        case 4:
-            trans->rdata = pContext->br_ctrl.val;
-            if (trans->write) {
-                pContext->br_ctrl.val = trans->wdata;
-            }
-            break;
-        case 5:
-            if (trans->write) {
-                addBreakpoint(trans->wdata);
-            }
-            break;
-        case 6:
-            if (trans->write) {
-                removeBreakpoint(trans->wdata);
-            }
-            break;
-        case 7:
-            trans->rdata = pContext->br_address_fetch;
-            if (trans->write) {
-                pContext->br_address_fetch = trans->wdata;
-            }
-            break;
-        case 8:
-            trans->rdata = pContext->br_instr_fetch;
-            if (trans->write) {
-                pContext->br_inject_fetch = true;
-                pContext->br_status_ena = false;
-                pContext->br_instr_fetch = static_cast<uint32_t>(trans->wdata);
-            }
-            break;
-        default:;
-        }
-        break;
-    default:;
-    }
-    dport.cb->nb_response_debug_port(dport.trans);
-}
-
-
-void CpuRiscV_Functional::addBreakpoint(uint64_t addr) {
-    //CpuContextType *pContext = getpContext();
-    RISCV_error("Hardware breakpoints not implemented", 0);
-}
-
-void CpuRiscV_Functional::removeBreakpoint(uint64_t addr) {
-    //CpuContextType *pContext = getpContext();
-    RISCV_error("Hardware breakpoints not implemented", 0);
-}
-
-void CpuRiscV_Functional::hitBreakpoint(uint64_t addr) {
-    CpuContextType *pContext = getpContext();
-    if (addr == last_hit_breakpoint_) {
-        return;
-    }
-    dbg_state_ = STATE_Halted;
-    last_hit_breakpoint_ = addr;
-
-    RISCV_printf0("[%" RV_PRI64 "d] pc:%016" RV_PRI64 "x: %08x \t stop on breakpoint",
-        getStepCounter(), pContext->pc, cacheline_[0]);
-}
-#endif
 
 }  // namespace debugger
 

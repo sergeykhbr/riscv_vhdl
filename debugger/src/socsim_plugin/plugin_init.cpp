@@ -12,10 +12,12 @@
 #include "irqctrl.h"
 #include "gnss_stub.h"
 #include "gptimers.h"
-#include "dsu.h"
 #include "rfctrl.h"
 #include "fsev2.h"
 #include "uartmst.h"
+#include "hardreset.h"
+#include "debug/dsu.h"
+#include "debug/greth.h"
 
 namespace debugger {
 
@@ -31,6 +33,8 @@ extern "C" void plugin_init(void) {
     REGISTER_CLASS_IDX(RfController, 10);
     REGISTER_CLASS_IDX(FseV2, 11);
     REGISTER_CLASS_IDX(UartMst, 12);
+    REGISTER_CLASS_IDX(Greth, 13);
+    REGISTER_CLASS_IDX(HardReset, 14);
 }
 
 }  // namespace debugger

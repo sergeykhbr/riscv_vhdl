@@ -180,6 +180,7 @@
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_exit.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_isrunning.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_loadelf.cpp" />
+    <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_loadsrec.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_log.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_memdump.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_read.cpp" />
@@ -249,6 +250,7 @@
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_exit.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_isrunning.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_loadelf.h" />
+    <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_loadsrec.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_log.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_memdump.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_read.h" />

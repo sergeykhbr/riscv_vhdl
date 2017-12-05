@@ -21,6 +21,7 @@ INCL_PATH= \
 # source files directories list:
 SRC_PATH =\
 	$(TOP_DIR)src/common \
+	$(TOP_DIR)src/common/debug \
 	$(TOP_DIR)src/socsim_plugin
 
 VPATH = $(SRC_PATH)
@@ -40,6 +41,7 @@ SOURCES = \
 	fsev2 \
 	rfctrl \
 	uartmst \
+	hardreset \
 	plugin_init
 
 LIBS = \
