@@ -215,10 +215,8 @@ void CpuGeneric::fetchILine() {
 
 void CpuGeneric::registerStepCallback(IClockListener *cb,
                                                uint64_t t) {
-    if (!isEnabled()) {
-        if (t <= step_cnt_) {
-            cb->stepCallback(t);
-        }
+    if (!isEnabled() && t <= step_cnt_) {
+        cb->stepCallback(t);
         return;
     }
     queue_.put(t, cb);
