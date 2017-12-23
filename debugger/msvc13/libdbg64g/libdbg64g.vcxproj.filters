@@ -211,9 +211,6 @@
     <ClInclude Include="..\..\src\libdbg64g\services\elfloader\elf_types.h">
       <Filter>Source Files\services\elfloader</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\common\coreservices\ikeylistener.h">
-      <Filter>Source Files\common\coreservices</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\libdbg64g\services\console\console.h">
       <Filter>Source Files\services\console</Filter>
     </ClInclude>
@@ -374,6 +371,48 @@
     </ClInclude>
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_loadsrec.h">
       <Filter>Source Files\services\exec\cmd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\coreservices\icpu_hc08.h">
+      <Filter>Source Files\common\coreservices</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\coreservices\idisplay.h">
+      <Filter>Source Files\common\coreservices</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\coreservices\iencoder.h">
+      <Filter>Source Files\common\coreservices</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\coreservices\ii2c.h">
+      <Filter>Source Files\common\coreservices</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\coreservices\iioport.h">
+      <Filter>Source Files\common\coreservices</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\coreservices\ikeyboard.h">
+      <Filter>Source Files\common\coreservices</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\coreservices\immu.h">
+      <Filter>Source Files\common\coreservices</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\coreservices\imotor.h">
+      <Filter>Source Files\common\coreservices</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\coreservices\ipll.h">
+      <Filter>Source Files\common\coreservices</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\coreservices\ireset.h">
+      <Filter>Source Files\common\coreservices</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\coreservices\isensor.h">
+      <Filter>Source Files\common\coreservices</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\coreservices\isound.h">
+      <Filter>Source Files\common\coreservices</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\coreservices\icpufunctional.h">
+      <Filter>Source Files\common\coreservices</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\coreservices\idsugen.h">
+      <Filter>Source Files\common\coreservices</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

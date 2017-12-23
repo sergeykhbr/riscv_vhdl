@@ -45,7 +45,7 @@ void CmdCsr::exec(AttributeType *args, AttributeType *res) {
     uint64_t addr;
     if (arg1.is_string()) {
         const char *csrname = arg1.to_string();
-        addr = info_->csr2addr(csrname);
+        addr = 0;//!!!info_->csr2addr(csrname);
         if (addr == REG_ADDR_ERROR) {
             char tstr[128];
             RISCV_sprintf(tstr, sizeof(tstr), "%s not found", csrname);
@@ -74,7 +74,7 @@ void CmdCsr::to_string(AttributeType *args, AttributeType *res, AttributeType *o
     char tstr[256];
     int tstrsz;
     uint64_t csr = res->to_uint64();
-    uint64_t addr = info_->csr2addr((*args)[1].to_string());
+    uint64_t addr = 0;//info_->csr2addr((*args)[1].to_string());
 
     tstr[0] = '\0';
     if (addr == static_cast<uint64_t>(-1)) {

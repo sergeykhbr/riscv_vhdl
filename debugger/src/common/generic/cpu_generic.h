@@ -12,23 +12,19 @@
 #include <iservice.h>
 #include <ihap.h>
 #include <async_tqueue.h>
-#include "generic/mapreg.h"
 #include "coreservices/ithread.h"
 #include "coreservices/icpugen.h"
-#include "coreservices/icpuriscv.h"
+#include "coreservices/icpufunctional.h"
 #include "coreservices/imemop.h"
 #include "coreservices/iclock.h"
 #include "coreservices/iclklistener.h"
 #include "coreservices/ireset.h"
 #include "coreservices/isrccode.h"
+#include "generic/mapreg.h"
+#include "debug/debugmap.h"
 #include <fstream>
 
 namespace debugger {
-
-enum EEndianessType {
-    LittleEndian,
-    BigEndian,
-};
 
 class GenericStatusType : public MappedReg64Type {
  public:
@@ -79,6 +75,7 @@ class StepCounterType : public MappedReg64Type {
 class CpuGeneric : public IService,
                    public IThread,
                    public ICpuGeneric,
+                   public ICpuFunctional,
                    public IClock,
                    public IResetListener,
                    public IHap {
@@ -95,6 +92,34 @@ class CpuGeneric : public IService,
     virtual void nb_transport_debug_port(DebugPortTransactionType *trans,
                                          IDbgNbResponse *cb);
 
+    /** ICpuFunctional */
+    virtual uint64_t getPC() { return pc_.getValue().val; }
+    virtual void setBranch(uint64_t npc);
+    virtual void pushStackTrace();
+    virtual void popStackTrace();
+    virtual uint64_t getPrvLevel() { return cur_prv_level; }
+    virtual void setPrvLevel(uint64_t lvl) { cur_prv_level = lvl; }
+    virtual void dma_memop(Axi4TransactionType *tr);
+    virtual bool isOn() { return estate_ != CORE_OFF; }
+    virtual bool isHalt() { return estate_ == CORE_Halted; }
+    virtual bool isSwBreakpoint() { return sw_breakpoint_; }
+    virtual bool isHwBreakpoint() { return hw_breakpoint_; }
+    virtual void go();
+    virtual void halt(const char *descr);
+    virtual void step();
+    virtual void addHwBreakpoint(uint64_t addr);
+    virtual void removeHwBreakpoint(uint64_t addr);
+    virtual void skipBreakpoint();
+ protected:
+    virtual uint64_t getResetAddress() { return resetVector_.to_uint64(); }
+    virtual EEndianessType endianess() = 0;
+    virtual GenericInstruction *decodeInstruction(Reg64Type *cache) = 0;
+    virtual void generateIllegalOpcode() = 0;
+    virtual void handleTrap() = 0;
+    virtual void trackContextStart() {}
+    virtual void trackContextEnd() {}
+
+ public:
     /** IClock */
     virtual uint64_t getStepCounter() { return step_cnt_; }
     virtual void registerStepCallback(IClockListener *cb, uint64_t t);
@@ -102,45 +127,15 @@ class CpuGeneric : public IService,
         return static_cast<double>(freqHz_.to_int64());
     }
 
-    /** IResetListener itnterface */
+    /** IResetListener interface */
     virtual void reset(bool active);
 
     /** IHap */
     virtual void hapTriggered(IFace *isrc, EHapType type, const char *descr);
 
-    /** CpuGeneric public methods: */
-    uint64_t getPC() { return pc_.getValue().val; }
-    void setBranch(uint64_t npc);
-    void pushStackTrace();
-    void popStackTrace();
-    uint64_t getPrvLevel() { return cur_prv_level; }
-    void setPrvLevel(uint64_t lvl) { cur_prv_level = lvl; }
-    void dma_memop(Axi4TransactionType *tr);
-    bool isOn() { return estate_ != CORE_OFF; }
-    bool isHalt() { return estate_ == CORE_Halted; }
-    void go();
-    void halt(const char *descr);
-    void step();
-    /** Common Breakpoints control */
-    bool isSwBreakpoint() { return sw_breakpoint_; }
-    bool isHwBreakpoint() { return hw_breakpoint_; }
-    void addHwBreakpoint(uint64_t addr);
-    void removeHwBreakpoint(uint64_t addr);
-    void skipBreakpoint();
-
  protected:
     /** IThread interface */
     virtual void busyLoop();
-
-    /** CPU internal methods */
-    virtual EEndianessType endianess() = 0;
-    virtual GenericInstruction *decodeInstruction(Reg64Type *cache) = 0;
-    virtual void generateIllegalOpcode() = 0;
-    virtual void handleTrap() = 0;
-    /** Tack Registers changes during execution */
-    virtual void trackContextStart() {}
-    /** // Stop tracking and write trace file */
-    virtual void trackContextEnd() {}
 
     void updatePipeline();
     bool updateState();
@@ -154,6 +149,7 @@ class CpuGeneric : public IService,
     AttributeType freqHz_;
     AttributeType sysBus_;
     AttributeType dbgBus_;
+    AttributeType sysBusWidthBytes_;
     AttributeType sourceCode_;
     AttributeType stackTraceSize_;
     AttributeType generateRegTraceFile_;
@@ -187,8 +183,9 @@ class CpuGeneric : public IService,
     Reg64Type pc_z_;
     uint64_t interrupt_pending_;
     bool sw_breakpoint_;
+    bool skip_sw_breakpoint_;
     bool hw_breakpoint_;
-    bool skip_breakpoint_;
+    uint64_t hw_break_addr_;   // Last hit breakpoint to skip it on next step
 
     event_def eventConfigDone_;
     ClockAsyncTQueueType queue_;

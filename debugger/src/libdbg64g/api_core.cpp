@@ -134,9 +134,10 @@ extern "C" int RISCV_set_configuration(AttributeType *cfg) {
 
     RISCV_printf(getInterface(IFACE_SERVICE), 0, "%s",
     "\n**********************************************************\n"
-    "  RISC-V debugger\n"
-    "  Author: Sergey Khabarov - sergeykhbr@gmail.com\n"
-    "  Copyright 2016 GNSS Sensor Ltd. All right reserved.\n"
+    "  System Emulator and Debugger\n"
+    "  Copyright (c) 2017 Sergey Khabarov.\n"
+    "  All rights reserved.\n"
+    "  e-mail: sergeykhbr@gmail.com\n"
     "**********************************************************");
 
     IHap *ihap;

@@ -31,6 +31,8 @@ class CpuRiver_Functional : public CpuGeneric,
     /** ICpuGeneric interface */
     virtual void raiseSignal(int idx);
     virtual void lowerSignal(int idx);
+    virtual void raiseSoftwareIrq() {}
+    virtual uint64_t getIrqAddress(int idx) { return readCSR(CSR_mtvec); }
 
     // Common River methods shared with instructions:
     uint64_t *getpRegs() { return portRegs_.getpR64(); }

@@ -8,9 +8,9 @@
 #ifndef __DEBUGGER_PLUGIN_ISRCCODE_H__
 #define __DEBUGGER_PLUGIN_ISRCCODE_H__
 
-#include "iface.h"
 #include <inttypes.h>
-#include "attribute.h"
+#include <iface.h>
+#include <attribute.h>
 
 namespace debugger {
 
@@ -107,7 +107,6 @@ class ISourceCode : public IFace {
     /** Unregister breakpoint at specified address.
      *
      * @param[in]  addr  Breakpoint location
-     * @param[out] instr Original instruction value.
      * @param[out] flags Breakpoint flags.
      * @param[out] instr Original opcode rewriten by EBREAK instruction.
      * @return 0 if no errors

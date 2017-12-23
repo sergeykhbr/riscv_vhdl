@@ -461,13 +461,13 @@ void _load_plugins(AttributeType *list) {
         // reset errors
         dlerror();
         if ((hlib = dlopen(plugin_lib.c_str(), RTLD_LAZY)) == 0) {
-            printf("Can't open library '%s': %s\n", 
+            printf("Can't open library '%s': %s\n",
                        plugin_lib.c_str(), dlerror());
             continue;
         }
         plugin_init = (plugin_init_proc)dlsym(hlib, "plugin_init");
         if (dlerror()) {
-            printf("Not found plugin_init() in file '%s'\n", 
+            printf("Not found plugin_init() in file '%s'\n",
                        plugin_lib.c_str());
             dlclose(hlib);
             continue;

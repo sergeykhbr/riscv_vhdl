@@ -5,11 +5,11 @@
  * @brief      Autocompleter's interface.
  */
 
-#ifndef __DEBUGGER_IAUTOCOMPLETE_H__
-#define __DEBUGGER_IAUTOCOMPLETE_H__
+#ifndef __DEBUGGER_COMMON_CORESERVICES_IAUTOCOMPLETE_H__
+#define __DEBUGGER_COMMON_CORESERVICES_IAUTOCOMPLETE_H__
 
-#include "iface.h"
-#include "attribute.h"
+#include <iface.h>
+#include <attribute.h>
 
 namespace debugger {
 
@@ -44,8 +44,8 @@ static const uint32_t KB_Alt = 0xffe9;
 static const uint32_t KB_Escape = 0xff1b;
 static const uint32_t KB_PageUp = 0xff25;
 static const uint32_t KB_PageDown = 0xffe4;
-//static const uint32_t KB_End = 0x0000;
-//static const uint32_t KB_Home = 0x0000;
+//  static const uint32_t KB_End = 0x0000;
+//  static const uint32_t KB_Home = 0x0000;
 static const uint32_t KB_Left = 0xff23;
 static const uint32_t KB_Up = 0xff26;
 static const uint32_t KB_Right = 0xff22;
@@ -56,16 +56,16 @@ static const uint32_t KB_Dot = 0x002e;
 
 
 class IAutoComplete : public IFace {
-public:
+ public:
     IAutoComplete() : IFace(IFACE_AUTO_COMPLETE) {}
 
     /**
      * @return New command ready flag
      */
     virtual bool processKey(uint32_t qt_key, AttributeType *cmd,
-                            AttributeType *cursor) =0;
+                            AttributeType *cursor) = 0;
 };
 
 }  // namespace debugger
 
-#endif  // __DEBUGGER_IAUTOCOMPLETE_H__
+#endif  // __DEBUGGER_COMMON_CORESERVICES_IAUTOCOMPLETE_H__

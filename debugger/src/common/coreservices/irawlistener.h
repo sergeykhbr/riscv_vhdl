@@ -5,8 +5,8 @@
  * @brief      Raw Data listener interface declaration.
  */
 
-#ifndef __DEBUGGER_IRAW_LISTENER_H__
-#define __DEBUGGER_IRAW_LISTENER_H__
+#ifndef __DEBUGGER_COMMON_CORESERVICES_IRAWLISTENER_H__
+#define __DEBUGGER_COMMON_CORESERVICES_IRAWLISTENER_H__
 
 #include <iface.h>
 
@@ -15,7 +15,7 @@ namespace debugger {
 static const char *IFACE_RAW_LISTENER = "IRawListener";
 
 class IRawListener : public IFace {
-public:
+ public:
     IRawListener() : IFace(IFACE_RAW_LISTENER) {}
 
     virtual void updateData(const char *buf, int buflen) = 0;
@@ -23,4 +23,4 @@ public:
 
 }  // namespace debugger
 
-#endif  // __DEBUGGER_IRAW_LISTENER_H__
+#endif  // __DEBUGGER_COMMON_CORESERVICES_IRAWLISTENER_H__

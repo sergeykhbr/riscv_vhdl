@@ -2,11 +2,11 @@
  * @file
  * @copyright  Copyright 2017 GNSS Sensor Ltd. All right reserved.
  * @author     Sergey Khabarov - sergeykhbr@gmail.com
- * @brief      Templates for the memory mapped registers.
+ * @brief      Templates for the memory mapped registers and banks.
  */
 
-#ifndef __DEBUGGER_COMMON_MAPREG_H__
-#define __DEBUGGER_COMMON_MAPREG_H__
+#ifndef __DEBUGGER_COMMON_GENERIC_MAPREG_H__
+#define __DEBUGGER_COMMON_GENERIC_MAPREG_H__
 
 #include <iclass.h>
 #include <iservice.h>
@@ -56,8 +56,10 @@ class MappedReg64Type : public IMemoryOperation,
 
 class GenericReg64Bank : public IMemoryOperation {
  public:
-    GenericReg64Bank(IService *parent, const char *name, uint64_t addr, int len) {
-        parent->registerPortInterface(name, static_cast<IMemoryOperation *>(this));
+    GenericReg64Bank(IService *parent, const char *name,
+                    uint64_t addr, int len) {
+        parent->registerPortInterface(name,
+                                      static_cast<IMemoryOperation *>(this));
         regs_ = 0;
         bankName_.make_string(name);
         baseAddress_.make_uint64(addr);
@@ -70,7 +72,7 @@ class GenericReg64Bank : public IMemoryOperation {
     }
 
     /** IMemoryOperation methods */
-    virtual ETransStatus b_transport(Axi4TransactionType *trans) ;
+    virtual ETransStatus b_transport(Axi4TransactionType *trans);
 
     /** IResetListener interface */
     virtual void reset();
@@ -80,6 +82,7 @@ class GenericReg64Bank : public IMemoryOperation {
     Reg64Type read(int idx) { return regs_[idx]; }
     void write(int idx, Reg64Type val) { regs_[idx] = val; }
     void write(int idx, uint64_t val) { regs_[idx].val = val; }
+    Reg64Type *getp() { return regs_; }
     uint64_t *getpR64() { return &regs_[0].val; }
 
  protected:
@@ -89,4 +92,4 @@ class GenericReg64Bank : public IMemoryOperation {
 
 }  // namespace debugger
 
-#endif  // __DEBUGGER_COMMON_MAPREG_H__
+#endif  // __DEBUGGER_COMMON_GENERIC_MAPREG_H__

@@ -29,11 +29,13 @@ CpuGeneric::CpuGeneric(const char *name)
     registerInterface(static_cast<IThread *>(this));
     registerInterface(static_cast<IClock *>(this));
     registerInterface(static_cast<ICpuGeneric *>(this));
+    registerInterface(static_cast<ICpuFunctional *>(this));
     registerInterface(static_cast<IResetListener *>(this));
     registerInterface(static_cast<IHap *>(this));
     registerAttribute("Enable", &isEnable_);
     registerAttribute("SysBus", &sysBus_);
     registerAttribute("DbgBus", &dbgBus_);
+    registerAttribute("SysBusWidthBytes", &sysBusWidthBytes_);
     registerAttribute("SourceCode", &sourceCode_);
     registerAttribute("StackTraceSize", &stackTraceSize_);
     registerAttribute("FreqHz", &freqHz_);
@@ -50,6 +52,7 @@ CpuGeneric::CpuGeneric(const char *name)
     isysbus_ = 0;
     estate_ = CORE_OFF;
     step_cnt_ = 0;
+    pc_z_.val = 0;
     hw_stepping_break_ = 0;
     interrupt_pending_ = 0;
     sw_breakpoint_ = false;
@@ -207,8 +210,8 @@ void CpuGeneric::fetchILine() {
     trans_.source_idx = sysBusMasterID_.to_int();
     isysbus_->b_transport(&trans_);
     cacheline_[0].val = trans_.rpayload.b64[0];
-    if (skip_breakpoint_ && trans_.addr == br_fetch_addr_.getValue().val) {
-        skip_breakpoint_ = false;
+    if (skip_sw_breakpoint_ && trans_.addr == br_fetch_addr_.getValue().val) {
+        skip_sw_breakpoint_ = false;
         cacheline_[0].buf32[0] = br_fetch_instr_.getValue().buf32[0];
     }
 }
@@ -229,10 +232,11 @@ void CpuGeneric::setBranch(uint64_t npc) {
 
 void CpuGeneric::pushStackTrace() {
     int cnt = static_cast<int>(stackTraceCnt_.getValue().val);
-    if (cnt < stackTraceSize_.to_int()) {
-        stackTraceBuf_.write(2*cnt, pc_.getValue().val);
-        stackTraceBuf_.write(2*cnt + 1,  npc_.getValue().val);
+    if (cnt >= stackTraceSize_.to_int()) {
+        return;
     }
+    stackTraceBuf_.write(2*cnt, pc_.getValue().val);
+    stackTraceBuf_.write(2*cnt + 1,  npc_.getValue().val);
     stackTraceCnt_.setValue(cnt + 1);
 }
 
@@ -245,7 +249,24 @@ void CpuGeneric::popStackTrace() {
 
 void CpuGeneric::dma_memop(Axi4TransactionType *tr) {
     tr->source_idx = sysBusMasterID_.to_int();
-    isysbus_->b_transport(tr);
+    if (tr->xsize <= sysBusWidthBytes_.to_uint32()) {
+        isysbus_->b_transport(tr);
+    } else {
+        // 1-byte access for HC08
+        Axi4TransactionType tr1 = *tr;
+        tr1.xsize = 1;
+        tr1.wstrb = 1;
+        for (unsigned i = 0; i < tr->xsize; i++) {
+            tr1.addr = tr->addr + i;
+            if (tr->action == MemAction_Write) {
+                tr1.wpayload.b8[0] = tr->wpayload.b8[i];
+            }
+            isysbus_->b_transport(&tr1);
+            if (tr->action == MemAction_Read) {
+                tr->rpayload.b8[i] = tr1.rpayload.b8[0];
+            }
+        }
+    }
     if (!mem_trace_file) {
         return;
     }
@@ -292,9 +313,13 @@ void CpuGeneric::halt(const char *descr) {
     }
     char strop[32];
     uint8_t tbyte;
-    for (unsigned i = 0; i < oplen_; i++) {
+    unsigned bytetot = oplen_;
+    if (!bytetot) {
+        bytetot = 1;
+    }
+    for (unsigned i = 0; i < bytetot; i++) {
         if (endianess() == LittleEndian) {
-            tbyte = cacheline_[0].buf[oplen_-i-1];
+            tbyte = cacheline_[0].buf[bytetot-i-1];
         } else {
             tbyte = cacheline_[0].buf[i];
         }
@@ -316,8 +341,8 @@ void CpuGeneric::reset(bool active) {
     interrupt_pending_ = 0;
     status_.reset(active);
     stackTraceCnt_.reset(active);
-    pc_.setValue(resetVector_.to_uint64());
-    npc_.setValue(resetVector_.to_uint64());
+    pc_.setValue(getResetAddress());
+    npc_.setValue(getResetAddress());
     if (!active && estate_ == CORE_OFF) {
         // Turn ON:
         estate_ = CORE_Normal;
@@ -383,6 +408,12 @@ void CpuGeneric::removeHwBreakpoint(uint64_t addr) {
 
 bool CpuGeneric::checkHwBreakpoint() {
     uint64_t pc = pc_.getValue().val;
+    if (hw_breakpoint_ && pc == hw_break_addr_) {
+        hw_breakpoint_ = false;
+        return false;
+    }
+    hw_breakpoint_ = false;
+
     for (unsigned i = 0; i < hwBreakpoints_.size(); i++) {
         uint64_t bradr = hwBreakpoints_[i].to_uint64();
         if (pc < bradr) {
@@ -390,6 +421,7 @@ bool CpuGeneric::checkHwBreakpoint() {
             break;
         }
         if (pc == bradr) {
+            hw_break_addr_ = pc;
             hw_breakpoint_ = true;
             halt("Hw breakpoint");
             return true;
@@ -399,8 +431,7 @@ bool CpuGeneric::checkHwBreakpoint() {
 }
 
 void CpuGeneric::skipBreakpoint() {
-    skip_breakpoint_ = true;
-    hw_breakpoint_ = false;
+    skip_sw_breakpoint_ = true;
     sw_breakpoint_ = false;
 }
 
@@ -409,7 +440,7 @@ uint64_t GenericStatusType::aboutToRead(uint64_t cur_val) {
     GenericCpuControlType ctrl;
     CpuGeneric *pcpu = static_cast<CpuGeneric *>(parent_);
     ctrl.val = 0;
-    ctrl.bits.halt = pcpu->isHalt() ? 1 : 0;
+    ctrl.bits.halt = pcpu->isHalt() || !pcpu->isOn() ? 1 : 0;
     ctrl.bits.sw_breakpoint = pcpu->isSwBreakpoint() ? 1 : 0;
     ctrl.bits.hw_breakpoint = pcpu->isHwBreakpoint() ? 1 : 0;
     return ctrl.val;

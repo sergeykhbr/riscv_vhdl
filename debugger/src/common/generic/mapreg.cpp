@@ -2,7 +2,7 @@
  * @file
  * @copyright  Copyright 2017 GNSS Sensor Ltd. All right reserved.
  * @author     Sergey Khabarov - sergeykhbr@gmail.com
- * @brief      Templates for the memory mapped registers.
+ * @brief      Template for the Mapped/IO register logic.
  */
 
 #include <api_core.h>
@@ -14,8 +14,10 @@ MappedReg64Type::MappedReg64Type(IService *parent, const char *name,
                   uint64_t addr, int len, int priority) {
     if (parent == NULL) {
     } else {
-        parent->registerPortInterface(name, static_cast<IMemoryOperation *>(this));
-        parent->registerPortInterface(name, static_cast<IResetListener *>(this));
+        parent->registerPortInterface(name,
+                static_cast<IMemoryOperation *>(this));
+        parent->registerPortInterface(name,
+                static_cast<IResetListener *>(this));
     }
     parent_ = parent;
     portListeners_.make_list(0);
@@ -61,11 +63,11 @@ ETransStatus MappedReg64Type::b_transport(Axi4TransactionType *trans) {
 }
 
 ETransStatus GenericReg64Bank::b_transport(Axi4TransactionType *trans) {
-    uint64_t off = trans->addr - getBaseAddress();
+    int idx = static_cast<int>((trans->addr - getBaseAddress()) >> 3);
     if (trans->action == MemAction_Read) {
-        memcpy(trans->rpayload.b8, &regs_->buf[off], trans->xsize);
+        trans->rpayload.b64[0] = read(idx).val;
     } else {
-        memcpy(&regs_->buf[off], trans->wpayload.b8, trans->xsize);
+        write(idx, trans->wpayload.b64[0]);
     }
     return TRANS_OK;
 }

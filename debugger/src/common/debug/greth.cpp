@@ -5,15 +5,16 @@
  * @brief      Ethernet MAC device functional model.
  */
 
-#include "api_core.h"
+#include <api_core.h>
 #include "greth.h"
 #include "coreservices/isocinfo.h"
 
 namespace debugger {
 
 /** Class registration in the Core */
+REGISTER_CLASS(Greth)
 
-Greth::Greth(const char *name) 
+Greth::Greth(const char *name)
     : IService(name) {
     registerInterface(static_cast<IThread *>(this));
     registerInterface(static_cast<IMemoryOperation *>(this));
@@ -22,6 +23,7 @@ Greth::Greth(const char *name)
     registerAttribute("MAC", &mac_);
     registerAttribute("Bus", &bus_);
     registerAttribute("Transport", &transport_);
+    registerAttribute("SysBusMasterID", &sysBusMasterID_);
 
     memset(txbuf_, 0, sizeof(txbuf_));
     seq_cnt_ = 35;
@@ -36,7 +38,7 @@ void Greth::postinitService() {
        RISCV_get_service_iface(bus_.to_string(), IFACE_MEMORY_OPERATION));
 
     if (!ibus_) {
-        RISCV_error("Bus interface '%s' not found", 
+        RISCV_error("Bus interface '%s' not found",
                     bus_.to_string());
         return;
     }
@@ -45,7 +47,7 @@ void Greth::postinitService() {
         RISCV_get_service_iface(transport_.to_string(), IFACE_LINK));
 
     if (!itransport_) {
-        RISCV_error("UDP interface '%s' not found", 
+        RISCV_error("UDP interface '%s' not found",
                     bus_.to_string());
         return;
     }
@@ -74,10 +76,10 @@ void Greth::busyLoop() {
     uint32_t bytes_to_read;
     UdpEdclCommonType req;
     RISCV_info("Ethernet thread was started", NULL);
-    trans_.source_idx = CFG_NASTI_MASTER_ETHMAC;          // Hardcoded in VHDL value
+    trans_.source_idx = sysBusMasterID_.to_int();
 
     while (isEnabled()) {
-        bytes = 
+        bytes =
             itransport_->readData(rxbuf_, static_cast<int>(sizeof(rxbuf_)));
 
         if (bytes == 0) {
@@ -157,10 +159,10 @@ uint32_t Greth::read32(uint8_t *buf) {
 }
 
 void Greth::write32(uint8_t *buf, uint32_t v) {
-    buf[0] = (char)((v >> 24) & 0xFF);
-    buf[1] = (char)((v >> 16) & 0xFF);
-    buf[2] = (char)((v >> 8) & 0xFF);
-    buf[3] = (char)(v & 0xFF);
+    buf[0] = static_cast<char>((v >> 24) & 0xFF);
+    buf[1] = static_cast<char>((v >> 16) & 0xFF);
+    buf[2] = static_cast<char>((v >> 8) & 0xFF);
+    buf[3] = static_cast<char>(v & 0xFF);
 }
 
 }  // namespace debugger

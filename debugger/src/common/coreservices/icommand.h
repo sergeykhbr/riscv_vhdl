@@ -5,14 +5,13 @@
  * @brief      User's command interface.
  */
 
-#ifndef __DEBUGGER_ICOMMAND_H__
-#define __DEBUGGER_ICOMMAND_H__
+#ifndef __DEBUGGER_COMMON_CORESERVICES_ICOMMAND_H__
+#define __DEBUGGER_COMMON_CORESERVICES_ICOMMAND_H__
 
-#include "iface.h"
-#include "attribute.h"
+#include <iface.h>
+#include <attribute.h>
 #include "coreservices/itap.h"
 #include "coreservices/isocinfo.h"
-
 
 namespace debugger {
 
@@ -22,8 +21,8 @@ static const bool CMD_VALID     = true;
 static const bool CMD_INVALID   = false;
 
 class ICommand : public IFace {
-public:
-    ICommand(const char *name, ITap *tap, ISocInfo *info) 
+ public:
+    ICommand(const char *name, ITap *tap, ISocInfo *info)
         : IFace(IFACE_COMMAND) {
         cmdName_.make_string(name);
         tap_ = tap;
@@ -35,8 +34,8 @@ public:
     virtual const char *briefDescr() { return briefDescr_.to_string(); }
     virtual const char *detailedDescr() { return detailedDescr_.to_string(); }
 
-    virtual bool isValid(AttributeType *args) =0;
-    virtual void exec(AttributeType *args, AttributeType *res) =0;
+    virtual bool isValid(AttributeType *args) = 0;
+    virtual void exec(AttributeType *args, AttributeType *res) = 0;
 
     virtual void generateError(AttributeType *res, const char *descr) {
         res->make_list(3);
@@ -45,7 +44,7 @@ public:
         (*res)[2].make_string(descr);
     }
 
-protected:
+ protected:
     AttributeType cmdName_;
     AttributeType briefDescr_;
     AttributeType detailedDescr_;
@@ -55,4 +54,4 @@ protected:
 
 }  // namespace debugger
 
-#endif  // __DEBUGGER_ICOMMAND_H__
+#endif  // __DEBUGGER_COMMON_CORESERVICES_ICOMMAND_H__

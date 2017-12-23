@@ -47,7 +47,7 @@ bool CmdBusUtil::isValid(AttributeType *args) {
 }
 
 void CmdBusUtil::exec(AttributeType *args, AttributeType *res) {
-    unsigned mst_total = info_->getMastersTotal();
+    unsigned mst_total = 4;//info_->getMastersTotal();
     res->make_list(mst_total);
     if (!isValid(args)) {
         generateError(res, "Wrong argument list");

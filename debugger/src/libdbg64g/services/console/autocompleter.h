@@ -11,7 +11,6 @@
 #include "iclass.h"
 #include "iservice.h"
 #include "coreservices/iautocomplete.h"
-#include "coreservices/isocinfo.h"
 #include <string>
 #include <stdarg.h>
 
@@ -42,7 +41,6 @@ private:
 
     std::string cmdLine_;
     unsigned carretPos_;
-    ISocInfo *info_;
 
     // History switching
     std::string unfinshedLine_; // store the latest whe we look through history

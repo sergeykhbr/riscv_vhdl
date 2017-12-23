@@ -53,7 +53,7 @@ public:
     virtual int read(uint64_t addr, int bytes, uint8_t *obuf);
     virtual int write(uint64_t addr, int bytes, uint8_t *ibuf);
 
-    /** IRawListener */
+    /** IRawListener interface */
     virtual void updateData(const char *buf, int buflen);
 
 private:

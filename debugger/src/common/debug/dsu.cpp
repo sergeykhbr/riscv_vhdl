@@ -13,11 +13,11 @@ namespace debugger {
 DSU::DSU(const char *name)  : IService(name) {
     registerInterface(static_cast<IMemoryOperation *>(this));
     registerInterface(static_cast<IDbgNbResponse *>(this));
+    registerInterface(static_cast<IDsuGeneric *>(this));
     registerAttribute("CPU", &cpu_);
     registerAttribute("Bus", &bus_);
-    registerAttribute("Reset", &reset_);
 
-    cpu_.make_string("");
+    memset(&info_, 0, sizeof(info_));
     soft_reset_ = 0x0;  // Active LOW
 }
 
@@ -30,15 +30,16 @@ void DSU::postinitService() {
     if (!icpu_) {
         RISCV_error("Can't find ICpuGeneric interface %s", cpu_.to_string());
     }
+    icpurst_ = static_cast<IResetListener *>(
+        RISCV_get_service_iface(cpu_.to_string(), IFACE_RESET_LISTENER));
+    if (!icpurst_) {
+        RISCV_error("Can't find IResetListener interface %s",
+                    cpu_.to_string());
+    }
     ibus_ = static_cast<IMemoryOperation *>(
         RISCV_get_service_iface(bus_.to_string(), IFACE_MEMORY_OPERATION));
     if (!ibus_) {
         RISCV_error("Can't find IBus interface %s", bus_.to_string());
-    }
-    irst_ = static_cast<IReset *>(
-        RISCV_get_service_iface(reset_.to_string(), IFACE_RESET));
-    if (!irst_) {
-        RISCV_error("Can't find IReset interface %s", reset_.to_string());
     }
 }
 
@@ -112,16 +113,16 @@ void DSU::readLocal(uint64_t off, Axi4TransactionType *trans) {
         trans->rpayload.b64[0] = soft_reset_;
         break;
     case 8:
-        //trans->rpayload.b64[0] = ibus_->bus_utilization()[0].w_cnt;
+        trans->rpayload.b64[0] = info_[0].w_cnt;
         break;
     case 9:
-        //trans->rpayload.b64[0] = ibus_->bus_utilization()[0].r_cnt;
+        trans->rpayload.b64[0] = info_[0].r_cnt;
         break;
     case 12:
-        //trans->rpayload.b64[0] = ibus_->bus_utilization()[2].w_cnt;
+        trans->rpayload.b64[0] = info_[2].w_cnt;
         break;
     case 13:
-        //trans->rpayload.b64[0] = ibus_->bus_utilization()[2].r_cnt;
+        trans->rpayload.b64[0] = info_[2].r_cnt;
         break;
     default:
         trans->rpayload.b64[0] = 0;
@@ -143,11 +144,11 @@ void DSU::writeLocal(uint64_t off, Axi4TransactionType *trans) {
         wdata64_ = trans->wpayload.b64[0];
     }
     switch (off >> 3) {
-    case 0: // soft reset
+    case 0:     // soft reset
         if (wdata64_ & 0x1) {
-            irst_->powerOnPressed();
+            icpurst_->reset(true);
         } else {
-            irst_->powerOnReleased();
+            icpurst_->reset(false);
         }
         soft_reset_ = wdata64_;
         break;
@@ -155,6 +156,13 @@ void DSU::writeLocal(uint64_t off, Axi4TransactionType *trans) {
     }
 }
 
+void DSU::incrementRdAccess(int mst_id) {
+    info_[mst_id].r_cnt++;
+}
+
+void DSU::incrementWrAccess(int mst_id) {
+    info_[mst_id].w_cnt++;
+}
 
 }  // namespace debugger
 

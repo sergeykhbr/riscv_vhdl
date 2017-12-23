@@ -1,15 +1,15 @@
 /**
  * @file
- * @copyright  Copyright 2017 GNSS Sensor Ltd. All right reserved.
+ * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
  * @author     Sergey Khabarov - sergeykhbr@gmail.com
  * @brief      Ethernet MAC device functional model.
  */
 
-#ifndef __COMMON_DEBUG_GRETH_H__
-#define __COMMON_DEBUG_GRETH_H__
+#ifndef __DEBUGGER_COMMON_DEBUG_GRETH_H__
+#define __DEBUGGER_COMMON_DEBUG_GRETH_H__
 
-#include "iclass.h"
-#include "iservice.h"
+#include <iclass.h>
+#include <iservice.h>
 #include "coreservices/ithread.h"
 #include "coreservices/iclock.h"
 #include "coreservices/imemop.h"
@@ -19,7 +19,7 @@
 namespace debugger {
 
 struct greth_map {
-    uint32_t rsrv1;        /// 
+    uint32_t rsrv1;
     uint64_t rsrv[2];
 };
 
@@ -29,7 +29,7 @@ struct EdclControlRequestType {
     uint32_t len    : 10;
     uint32_t write  : 1;    // read = 0; write = 1
     uint32_t seqidx : 14;   // sequence id
-    //uint32 data; // 0 to 242 words
+    /* uint32 data; */      // 0 to 242 words
 };
 
 
@@ -39,7 +39,7 @@ struct EdclControlResponseType {
     uint32_t len    : 10;
     uint32_t nak    : 1;    // ACK = 0; NAK = 1
     uint32_t seqidx : 14;   // sequence id
-    //uint32 data; // 0 to 242 words
+    /* uint32 data; */      // 0 to 242 words
 };
 
 #pragma pack(1)
@@ -51,16 +51,16 @@ struct UdpEdclCommonType {
         EdclControlResponseType response;
     } control;
     uint32_t address;
-    //uint32 data; // 0 to 242 words
+    /* uint32 data; */      // 0 to 242 words
 };
 #pragma pack()
 
-class Greth : public IService, 
+class Greth : public IService,
               public IThread,
               public IMemoryOperation,
               public IAxi4NbResponse {
  public:
-    Greth(const char *name);
+    explicit Greth(const char *name);
     virtual ~Greth();
 
     /** IService interface */
@@ -68,7 +68,7 @@ class Greth : public IService,
 
     /** IMemoryOperation */
     virtual ETransStatus b_transport(Axi4TransactionType *trans);
-    
+
     /** IAxi4NbResponse */
     virtual void nb_response(Axi4TransactionType *trans);
 
@@ -86,6 +86,7 @@ class Greth : public IService,
     AttributeType mac_;
     AttributeType bus_;
     AttributeType transport_;
+    AttributeType sysBusMasterID_;
 
     IMemoryOperation *ibus_;
     IClock *iclk0_;
@@ -105,4 +106,4 @@ DECLARE_CLASS(Greth)
 
 }  // namespace debugger
 
-#endif  // __COMMON_DEBUG_GRETH_H__
+#endif  // __DEBUGGER_COMMON_DEBUG_GRETH_H__

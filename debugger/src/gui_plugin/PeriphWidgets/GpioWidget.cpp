@@ -56,8 +56,7 @@ GpioWidget::GpioWidget(IGui *igui, QWidget *parent)
     setLayout(layout);
 
     char tstr[64];
-    ISocInfo *info = static_cast<ISocInfo *>(igui_->getSocInfo());
-    uint32_t addr_gpio = static_cast<int>(info->addressGpio());
+    uint32_t addr_gpio = 0x80000000;
     RISCV_sprintf(tstr, sizeof(tstr), "read 0x%08x 8", addr_gpio);
     cmdRd_.make_string(tstr);
 }

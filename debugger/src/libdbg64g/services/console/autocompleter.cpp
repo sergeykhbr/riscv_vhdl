@@ -17,7 +17,6 @@ REGISTER_CLASS(AutoCompleter)
 AutoCompleter::AutoCompleter(const char *name) 
     : IService(name) {
     registerInterface(static_cast<IAutoComplete *>(this));
-    registerAttribute("SocInfo", &socInfo_);
     registerAttribute("History", &history_);
     registerAttribute("HistorySize", &history_size_);
 
@@ -34,8 +33,6 @@ AutoCompleter::~AutoCompleter() {
 }
 
 void AutoCompleter::postinitService() {
-    info_ = static_cast<ISocInfo *>
-            (RISCV_get_service_iface(socInfo_.to_string(), IFACE_SOC_INFO));
     history_idx_ = history_.size();
 }
 

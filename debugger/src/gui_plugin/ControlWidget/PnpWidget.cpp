@@ -60,8 +60,7 @@ void PnpWidget::showEvent(QShowEvent *event_) {
     AttributeType cmd;
     char tstr[64];
 
-    ISocInfo *info = static_cast<ISocInfo *>(igui_->getSocInfo());
-    uint32_t addr_pnp = static_cast<int>(info->addressPlugAndPlay());
+    uint32_t addr_pnp = 0xFFFFF000;
     RISCV_sprintf(tstr, sizeof(tstr),
                 "read 0x%08x %d", addr_pnp, sizeof(PnpMapType));
 

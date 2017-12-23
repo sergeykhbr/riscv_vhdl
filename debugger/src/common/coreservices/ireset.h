@@ -1,5 +1,6 @@
 /**
  * @file
+ * @copyright  Copyright 2017 GNSS Sensor Ltd. All right reserved.
  * @author     Sergey Khabarov - sergeykhbr@gmail.com
  * @brief      Generic reset interface.
  */
@@ -7,26 +8,25 @@
 #ifndef __DEBUGGER_PLUGIN_IRESET_H__
 #define __DEBUGGER_PLUGIN_IRESET_H__
 
-#include "iface.h"
-#include "attribute.h"
 #include <inttypes.h>
+#include <iface.h>
+#include <attribute.h>
 
 namespace debugger {
 
 static const char *IFACE_RESET_LISTENER = "IResetListener";
 
 class IResetListener : public IFace {
-public:
+ public:
     IResetListener() : IFace(IFACE_RESET_LISTENER) {}
 
-    virtual void reset(bool active) =0;
+    virtual void reset(bool active) = 0;
 };
-
 
 static const char *const IFACE_RESET = "IReset";
 
 class IReset : public IFace {
-public:
+ public:
     IReset() : IFace(IFACE_RESET) {
         resetListeners_.make_list(0);
     }
@@ -54,10 +54,10 @@ public:
         }
     }
 
-    virtual void powerOnPressed() =0;
-    virtual void powerOnReleased() =0;
+    virtual void powerOnPressed() = 0;
+    virtual void powerOnReleased() = 0;
 
-protected:
+ protected:
     AttributeType resetListeners_;
 };
 

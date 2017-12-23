@@ -182,7 +182,7 @@ void TcpServer::setRcvTimeout(socket_def skt, int timeout_ms) {
     tv.tv_sec = timeout_ms / 1000;
 #endif
     setsockopt(skt, SOL_SOCKET, SO_RCVTIMEO,
-               reinterpret_cast<char *>(&tv), sizeof(struct timeval));
+                    reinterpret_cast<char *>(&tv), sizeof(struct timeval));
 }
 
 bool TcpServer::setBlockingMode(bool mode) {

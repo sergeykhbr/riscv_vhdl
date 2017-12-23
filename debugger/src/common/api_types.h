@@ -5,8 +5,8 @@
  * @brief      Common library types definition.
  */
 
-#ifndef __DEBUGGER_API_TYPES_H__
-#define __DEBUGGER_API_TYPES_H__
+#ifndef __DEBUGGER_COMMON_API_TYPES_H__
+#define __DEBUGGER_COMMON_API_TYPES_H__
 
 #include <inttypes.h>
 #if defined(_WIN32) || defined(__CYGWIN__)
@@ -93,8 +93,9 @@ union Reg8Type {
 };
 
 union Reg16Type {
-    Reg8Type r8[2];
+    uint8_t buf[2];
     uint16_t word;
+    Reg8Type r8[2];
     struct bits_type {
         uint16_t b0 : 1;
         uint16_t b1 : 1;
@@ -113,7 +114,6 @@ union Reg16Type {
         uint16_t b14 : 1;
         uint16_t b15 : 1;
     } bits;
-    Reg16Type() : word(0) {}
 };
 
 union Reg64Type {
@@ -121,8 +121,44 @@ union Reg64Type {
     uint16_t buf16[4];
     uint32_t buf32[2];
     uint64_t val;
+    Reg8Type r8[8];
+    Reg16Type r16[4];
+    struct bits_type {
+        uint64_t b0 : 1;
+        uint64_t b1 : 1;
+        uint64_t b2 : 1;
+        uint64_t b3 : 1;
+        uint64_t b4 : 1;
+        uint64_t b5 : 1;
+        uint64_t b6 : 1;
+        uint64_t b7 : 1;
+        uint64_t b8 : 1;
+        uint64_t b9 : 1;
+        uint64_t b10 : 1;
+        uint64_t b11 : 1;
+        uint64_t b12 : 1;
+        uint64_t b13 : 1;
+        uint64_t b14 : 1;
+        uint64_t b15 : 1;
+        uint64_t b16 : 1;
+        uint64_t b17 : 1;
+        uint64_t b18 : 1;
+        uint64_t b19 : 1;
+        uint64_t b20 : 1;
+        uint64_t b21 : 1;
+        uint64_t b22 : 1;
+        uint64_t b23 : 1;
+        uint64_t b24 : 1;
+        uint64_t b25 : 1;
+        uint64_t b26 : 1;
+        uint64_t b27 : 1;
+        uint64_t b28 : 1;
+        uint64_t b29 : 1;
+        uint64_t b30 : 1;
+        uint64_t b31 : 1;
+    } bits;
 };
 
 }  // namespace debugger
 
-#endif  // __DEBUGGER_API_TYPES_H__
+#endif  // __DEBUGGER_COMMON_API_TYPES_H__

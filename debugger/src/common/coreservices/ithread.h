@@ -8,15 +8,15 @@
 #ifndef __DEBUGGER_ITHREAD_H__
 #define __DEBUGGER_ITHREAD_H__
 
-#include "iface.h"
-#include "api_core.h"
+#include <iface.h>
+#include <api_core.h>
 
 namespace debugger {
 
 static const char *const IFACE_THREAD = "IThread";
 
 class IThread : public IFace {
-public:
+ public:
     IThread() : IFace(IFACE_THREAD) {
         AttributeType t1;
         RISCV_generate_name(&t1);
@@ -51,7 +51,7 @@ public:
     /** Pass data from the parent thread */
     virtual void setExtArgument(void *args) {}
 
-protected:
+ protected:
     /** working cycle function */
     virtual void busyLoop() =0;
 
@@ -59,7 +59,7 @@ protected:
         reinterpret_cast<IThread *>(arg)->busyLoop();
     }
 
-protected:
+ protected:
     event_def loopEnable_;
     LibThreadType threadInit_;
 };

@@ -1,6 +1,6 @@
 /**
  * @file
- * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
+ * @copyright  Copyright 2017 GNSS Sensor Ltd. All right reserved.
  * @author     Sergey Khabarov - sergeykhbr@gmail.com
  * @brief      UDP transport level implementation.
  */
@@ -40,6 +40,10 @@ void UdpService::postinitService() {
     if (timeout_.to_int64()) {
         struct timeval tv;
 #if defined(_WIN32) || defined(__CYGWIN__)
+        /** On windows timeout of the setsockopt() function is the DWORD
+         * size variable in msec, so we use only the first field in timeval
+         * struct and directly assgign argument.
+         */
         tv.tv_usec = 0;
         tv.tv_sec = static_cast<long>(timeout_.to_int64());
 #else
@@ -59,7 +63,7 @@ void UdpService::postinitService() {
 
 int UdpService::createDatagramSocket() {
     char hostName[256];
-    if(gethostname(hostName, sizeof(hostName)) < 0) {
+    if (gethostname(hostName, sizeof(hostName)) < 0) {
         return -1;
     }
 

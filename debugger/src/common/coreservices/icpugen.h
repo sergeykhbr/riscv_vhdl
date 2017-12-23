@@ -1,33 +1,18 @@
 /**
  * @file
+ * @copyright  Copyright 2017 GNSS Sensor Ltd. All right reserved.
  * @author     Sergey Khabarov - sergeykhbr@gmail.com
  * @brief      Generic CPU simulating interface.
  */
 
-#ifndef __DEBUGGER_INCLUDE_CPU_GENERIC_H__
-#define __DEBUGGER_INCLUDE_CPU_GENERIC_H__
+#ifndef __DEBUGGER_COMMON_CORESERVICES_ICPUGEN_H__
+#define __DEBUGGER_COMMON_CORESERVICES_ICPUGEN_H__
 
-#include "iface.h"
 #include <inttypes.h>
+#include <iface.h>
+#include "coreservices/imemop.h"
 
 namespace debugger {
-
-static const char *const IFACE_INSTRUCTION = "IInstruction";
-
-class IInstruction : public IFace {
- public:
-    IInstruction() : IFace(IFACE_INSTRUCTION) {}
-
-    virtual const char *name() = 0;
-    /** Return instruction size */
-    virtual int exec(Reg64Type *payload) = 0;
-};
-
-class GenericInstruction : public IInstruction {
- public:
-    GenericInstruction() : IInstruction() {}
-};
-
 
 static const char *const IFACE_CPU_GENERIC = "ICpuGeneric";
 static const uint64_t REG_INVALID   = ~0;
@@ -47,19 +32,19 @@ class IDbgNbResponse : public IFace {
  public:
     IDbgNbResponse() : IFace(IFACE_DBG_NB_RESPONSE) {}
 
-    virtual void nb_response_debug_port(DebugPortTransactionType *trans) =0;
+    virtual void nb_response_debug_port(DebugPortTransactionType *trans) = 0;
 };
 
 class ICpuGeneric : public IFace {
  public:
     ICpuGeneric() : IFace(IFACE_CPU_GENERIC) {}
 
-    virtual void raiseSignal(int idx) =0;
-    virtual void lowerSignal(int idx) =0;
+    virtual void raiseSignal(int idx) = 0;
+    virtual void lowerSignal(int idx) = 0;
     virtual void nb_transport_debug_port(DebugPortTransactionType *trans,
-                                         IDbgNbResponse *cb) =0;
+                                         IDbgNbResponse *cb) = 0;
 };
 
 }  // namespace debugger
 
-#endif  // __DEBUGGER_INCLUDE_CPU_GENERIC_H__
+#endif  // __DEBUGGER_COMMON_CORESERVICES_ICPUGEN_H__

@@ -5,8 +5,8 @@
  * @brief      Core Service interface declaration.
  */
 
-#ifndef __DEBUGGER_SERVICE_H__
-#define __DEBUGGER_SERVICE_H__
+#ifndef __DEBUGGER_COMMON_ISERVICE_H__
+#define __DEBUGGER_COMMON_ISERVICE_H__
 
 #include <iface.h>
 #include <attribute.h>
@@ -19,7 +19,7 @@ static const char *const IFACE_SERVICE = "IService";
 
 class IService : public IFace {
  public:
-    IService(const char *obj_name) : IFace(IFACE_SERVICE) {
+    explicit IService(const char *obj_name) : IFace(IFACE_SERVICE) {
         listInterfaces_ = AttributeType(Attr_List);
         listAttributes_ = AttributeType(Attr_List);
         listPorts_ = AttributeType(Attr_List);
@@ -166,4 +166,4 @@ class IService : public IFace {
 
 }  // namespace debugger
 
-#endif  // __DEBUGGER_SERVICE_H__
+#endif  // __DEBUGGER_COMMON_ISERVICE_H__

@@ -166,6 +166,7 @@
     <ClCompile Include="..\..\src\common\attribute.cpp" />
     <ClCompile Include="..\..\src\common\autobuffer.cpp" />
     <ClCompile Include="..\..\src\common\generic\cpu_generic.cpp" />
+    <ClCompile Include="..\..\src\common\generic\iotypes.cpp" />
     <ClCompile Include="..\..\src\common\generic\mapreg.cpp" />
     <ClCompile Include="..\..\src\cpu_fnc_plugin\cpu_riscv_func.cpp" />
     <ClCompile Include="..\..\src\cpu_fnc_plugin\instructions.cpp" />
@@ -184,6 +185,7 @@
     <ClInclude Include="..\..\src\common\attribute.h" />
     <ClInclude Include="..\..\src\common\autobuffer.h" />
     <ClInclude Include="..\..\src\common\generic\cpu_generic.h" />
+    <ClInclude Include="..\..\src\common\generic\iotypes.h" />
     <ClInclude Include="..\..\src\common\generic\mapreg.h" />
     <ClInclude Include="..\..\src\common\iattr.h" />
     <ClInclude Include="..\..\src\common\iclass.h" />

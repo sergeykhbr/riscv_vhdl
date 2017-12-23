@@ -38,6 +38,9 @@
     <ClCompile Include="..\..\src\common\generic\mapreg.cpp">
       <Filter>generic</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\common\generic\iotypes.cpp">
+      <Filter>generic</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\api_types.h">
@@ -79,6 +82,9 @@
       <Filter>generic</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\common\generic\mapreg.h">
+      <Filter>generic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\generic\iotypes.h">
       <Filter>generic</Filter>
     </ClInclude>
   </ItemGroup>

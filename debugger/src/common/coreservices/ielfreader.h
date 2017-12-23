@@ -9,28 +9,28 @@
 #define __DEBUGGER_ELFREADER_H__
 
 #include <stdint.h>
-#include "iface.h"
-#include "attribute.h"
+#include <iface.h>
+#include <attribute.h>
 
 namespace debugger {
 
 static const char *const IFACE_ELFREADER = "IElfReader";
 
 class IElfReader : public IFace {
-public:
+ public:
     IElfReader() : IFace(IFACE_ELFREADER) {}
 
-    virtual int readFile(const char *filename) =0;
+    virtual int readFile(const char *filename) = 0;
 
-    virtual unsigned loadableSectionTotal() =0;
+    virtual unsigned loadableSectionTotal() = 0;
 
-    virtual const char *sectionName(unsigned idx) =0;
+    virtual const char *sectionName(unsigned idx) = 0;
 
-    virtual uint64_t sectionAddress(unsigned idx) =0;
+    virtual uint64_t sectionAddress(unsigned idx) = 0;
 
-    virtual uint64_t sectionSize(unsigned idx) =0;
+    virtual uint64_t sectionSize(unsigned idx) = 0;
 
-    virtual uint8_t *sectionData(unsigned idx) =0;
+    virtual uint8_t *sectionData(unsigned idx) = 0;
 };
 
 }  // namespace debugger

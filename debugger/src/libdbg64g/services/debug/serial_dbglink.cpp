@@ -25,8 +25,6 @@ SerialDbgService::SerialDbgService(const char *name)
     registerAttribute("Timeout", &timeout_);
     registerAttribute("Port", &port_);
 
-    timeout_.make_int64(100);
-    port_.make_string("");
     RISCV_event_create(&event_block_, "SerialDbg_event_block");
 }
 

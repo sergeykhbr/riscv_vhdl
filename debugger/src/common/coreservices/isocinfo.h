@@ -5,11 +5,12 @@
  * @brief      SOC Information interface.
  */
 
-#ifndef __DEBUGGER_ISOCINFO_H__
-#define __DEBUGGER_ISOCINFO_H__
+#ifndef __DEBUGGER_COMMON_CORESERVICES_ISOCINFO_H__
+#define __DEBUGGER_COMMON_CORESERVICES_ISOCINFO_H__
 
-#include "iface.h"
-#include "attribute.h"
+#include <iface.h>
+#include <attribute.h>
+#include "debug/debugmap.h"
 
 namespace debugger {
 
@@ -106,13 +107,13 @@ typedef struct PnpMapType {
         } bits;
         uint32_t val;
     } tech;                     /// 0xfffff008: RO: technology index
-    uint32_t rsrv1;             /// 0xfffff00c: 
-    uint64_t idt;               /// 0xfffff010: 
-    uint64_t malloc_addr;       /// 0xfffff018: RW: debuggind memalloc pointer 0x18
-    uint64_t malloc_size;       /// 0xfffff020: RW: debugging memalloc size 0x20
+    uint32_t rsrv1;             /// 0xfffff00c:
+    uint64_t idt;               /// 0xfffff010:
+    uint64_t malloc_addr;       /// 0xfffff018: RW: memalloc pointer 0x18
+    uint64_t malloc_size;       /// 0xfffff020: RW: memalloc size 0x20
     uint64_t fwdbg1;            /// 0xfffff028: RW: FW debug register
     uint64_t rsrv[2];           /// 0xfffff030, 0xfffff038
-    uint8_t cfg_table[(1 << 12) - 0x40];/// 0xfffff040: RO: PNP configuration
+    uint8_t cfg_table[(1 << 12) - 0x40];  /// 0xfffff040: RO: PNP configuration
 } PnpMapType;
 
 struct GpioType {
@@ -126,24 +127,6 @@ struct GpioType {
     } u;
 };
 
-union GenericCpuControlType {
-    uint64_t val;
-    struct {
-        uint64_t halt     : 1;
-        uint64_t stepping : 1;
-        uint64_t sw_breakpoint : 1;
-        uint64_t hw_breakpoint : 1;
-        uint64_t core_id  : 16;
-        uint64_t rsv2     : 12;
-        uint64_t istate   : 2;  // [33:32] icache state
-        uint64_t rsv3     : 2;  // [35:34] 
-        uint64_t dstate   : 2;  // [37:36] dcache state
-        uint64_t rsv4     : 2;  // [39:38]
-        uint64_t cstate   : 2;  // [41:40] cachetop state
-        uint64_t rsv5     : 22;
-    } bits;
-};
-
 struct DsuMapType {
     // Base Address + 0x00000 (Region 0)
     uint64_t csr[1 << 12];
@@ -151,14 +134,14 @@ struct DsuMapType {
     union ureg_type {
         uint8_t buf[1 << (12 + 3)];
         struct regs_type {
-            uint64_t iregs[32];     // integer registers
-            uint64_t pc;            // index = 32
-            uint64_t npc;           // index = 33
-            uint64_t stack_trace_cnt; // index 34
+            uint64_t iregs[32];         // integer registers
+            uint64_t pc;
+            uint64_t npc;
+            uint64_t stack_trace_cnt;   // index 34
             uint64_t rsrv1[128 - 35];
             uint64_t stack_trace_buf[1];
             uint64_t rsrv2[128 - 1];
-            uint64_t instr_buf[4];  // index 256..259: Bits[63:0] (addr,instr)
+            uint64_t instr_buf[4];      // Bits[63:0] (addr,instr)
             uint64_t dbg1[4];
         } v;
     } ureg;
@@ -212,29 +195,23 @@ struct DsuMapType {
     } ulocal;
 };
 
-#define DSUREG(x) (reinterpret_cast<uint64_t>(&((DsuMapType*)0)->x))
 
 const uint64_t REG_ADDR_ERROR = 0xFFFFFFFFFFFFFFFFull;
 
+#define DSUREG(x) (reinterpret_cast<uint64_t>(& \
+        (reinterpret_cast<DsuMapType*>(0))->x))
+
 class ISocInfo : public IFace {
-public:
+ public:
     ISocInfo() : IFace(IFACE_SOC_INFO) {}
 
-    virtual unsigned getMastersTotal() =0;
-    virtual unsigned getSlavesTotal() =0;
-    virtual unsigned getRegsTotal() =0;
-    virtual void getRegsList(AttributeType *lst) =0;
-    virtual unsigned getCsrTotal() =0;
-    virtual void getCsrList(AttributeType *lst) =0;
-    virtual uint64_t csr2addr(const char *name) =0;
-    virtual uint64_t reg2addr(const char *name) =0;
+    virtual unsigned getRegsTotal() = 0;
+    virtual void getRegsList(AttributeType *lst) = 0;
+    virtual uint64_t reg2addr(const char *name) = 0;
 
-    virtual DsuMapType *getpDsu() =0;
-
-    virtual uint64_t addressPlugAndPlay() =0;
-    virtual uint64_t addressGpio() =0;
+    virtual DsuMapType *getpDsu() = 0;
 };
 
 }  // namespace debugger
 
-#endif  // __DEBUGGER_ISOCINFO_H__
+#endif  // __DEBUGGER_COMMON_CORESERVICES_ISOCINFO_H__

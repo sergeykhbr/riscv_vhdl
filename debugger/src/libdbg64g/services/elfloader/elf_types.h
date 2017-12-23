@@ -18,7 +18,6 @@ namespace debugger {
 #ifdef ARCH_64BITS
 typedef uint64_t   Elf32_Addr;
 typedef uint64_t   Elf32_Off;
-typedef uint64_t   Elf32_DWord;
 #else
 typedef unsigned int   Elf32_Addr;
 typedef unsigned int   Elf32_Off;
@@ -26,6 +25,7 @@ typedef unsigned int   Elf32_Off;
 typedef unsigned short Elf32_Half;
 typedef signed   int   Elf32_Sword;
 typedef unsigned int   Elf32_Word;
+typedef uint64_t       Elf32_DWord;
 
 static const char MAGIC_BYTES[]  = {0x7f,'E','L','F',0};
 

@@ -5,34 +5,34 @@
  * @brief      Link interface declaration.
  */
 
-#ifndef __DEBUGGER_ILINK_H__
-#define __DEBUGGER_ILINK_H__
+#ifndef __DEBUGGER_COMMON_CORESERVICES_ILINK_H__
+#define __DEBUGGER_COMMON_CORESERVICES_ILINK_H__
 
-#include "iface.h"
+#include <iface.h>
+#include <attribute.h>
 #include "irawlistener.h"
-#include "attribute.h"
 
 namespace debugger {
 
 static const char *const IFACE_LINK = "ILink";
 
 class ILink : public IFace {
-public:
+ public:
     ILink() : IFace(IFACE_LINK) {}
 
     /** Get opened socket connection settings. */
-    virtual void getConnectionSettings(AttributeType *settings) =0;
+    virtual void getConnectionSettings(AttributeType *settings) = 0;
 
     /** Setup remote host settings */
-    virtual void setConnectionSettings(const AttributeType *target) =0;
+    virtual void setConnectionSettings(const AttributeType *target) = 0;
 
     /** Send datagram buffer. */
-    virtual int sendData(const uint8_t *msg, int len) =0;
+    virtual int sendData(const uint8_t *msg, int len) = 0;
 
     /** Read datagram buffer. */
-    virtual int readData(const uint8_t *buf, int maxlen) =0;
+    virtual int readData(const uint8_t *buf, int maxlen) = 0;
 };
 
 }  // namespace debugger
 
-#endif  // __DEBUGGER_ILINK_H__
+#endif  // __DEBUGGER_COMMON_CORESERVICES_ILINK_H__

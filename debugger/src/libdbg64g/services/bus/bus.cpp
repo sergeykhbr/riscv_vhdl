@@ -1,11 +1,11 @@
 /**
  * @file
- * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
+ * @copyright  Copyright 2017 GNSS Sensor Ltd. All right reserved.
  * @author     Sergey Khabarov - sergeykhbr@gmail.com
  * @brief      System Bus class declaration (AMBA or whatever).
  */
 
-#include "api_core.h"
+#include <api_core.h>
 #include "bus.h"
 #include "coreservices/icpugen.h"
 
@@ -17,6 +17,7 @@ REGISTER_CLASS(Bus)
 Bus::Bus(const char *name) 
     : IService(name) {
     registerInterface(static_cast<IMemoryOperation *>(this));
+    registerAttribute("DSU", &dsu_);
     RISCV_mutex_init(&mutexBAccess_);
     RISCV_mutex_init(&mutexNBAccess_);
 }
@@ -27,6 +28,15 @@ Bus::~Bus() {
 }
 
 void Bus::postinitService() {
+    if (dsu_.is_string()) {
+        idsu_ = static_cast<IDsuGeneric *>(
+            RISCV_get_service_iface(dsu_.to_string(), IFACE_DSU_GENERIC));
+        if (!idsu_) {
+            RISCV_debug("Can't find IDsuGeneric interface %s",
+                        dsu_.to_string());
+        }
+    }
+
     IMemoryOperation *imem;
     for (unsigned i = 0; i < listMap_.size(); i++) {
         const AttributeType &dev = listMap_[i];
@@ -64,23 +74,13 @@ void Bus::postinitService() {
 }
 
 ETransStatus Bus::b_transport(Axi4TransactionType *trans) {
-    IMemoryOperation *imem;
     ETransStatus ret = TRANS_OK;
+    uint32_t sz;
+    IMemoryOperation *memdev = 0;
 
     RISCV_mutex_lock(&mutexBAccess_);
 
-    IMemoryOperation *memdev = 0;
-    uint64_t bar, barsz;
-    for (unsigned i = 0; i < imap_.size(); i++) {
-        imem = static_cast<IMemoryOperation *>(imap_[i].to_iface());
-        bar = imem->getBaseAddress();
-        barsz = imem->getLength();
-        if (bar <= trans->addr && trans->addr < (bar + barsz)) {
-            if (!memdev || imem->getPriority() > memdev->getPriority()) {
-                memdev = imem;
-            }
-        }
-    }
+    getMapedDevice(trans, &memdev, &sz);
 
     if (memdev == 0) {
         RISCV_error("[%" RV_PRI64 "d] Blocking request to unmapped address "
@@ -95,10 +95,12 @@ ETransStatus Bus::b_transport(Axi4TransactionType *trans) {
     }
 
     // Update Bus utilization counters:
-    if (trans->action == MemAction_Read) {
-        info_[trans->source_idx].r_cnt++;
-    } else if (trans->action == MemAction_Write) {
-        info_[trans->source_idx].w_cnt++;
+    if (idsu_) {
+        if (trans->action == MemAction_Read) {
+            idsu_->incrementRdAccess(trans->source_idx);
+        } else if (trans->action == MemAction_Write) {
+            idsu_->incrementWrAccess(trans->source_idx);
+        }
     }
     RISCV_mutex_unlock(&mutexBAccess_);
     return ret;
@@ -106,23 +108,13 @@ ETransStatus Bus::b_transport(Axi4TransactionType *trans) {
 
 ETransStatus Bus::nb_transport(Axi4TransactionType *trans,
                                IAxi4NbResponse *cb) {
-    IMemoryOperation *imem;
     ETransStatus ret = TRANS_OK;
     IMemoryOperation *memdev = 0;
-    uint64_t bar, barsz;
+    uint32_t sz;
 
     RISCV_mutex_lock(&mutexNBAccess_);
 
-    for (unsigned i = 0; i < imap_.size(); i++) {
-        imem = static_cast<IMemoryOperation *>(imap_[i].to_iface());
-        bar = imem->getBaseAddress();
-        barsz = imem->getLength();
-        if (bar <= trans->addr && trans->addr < (bar + barsz)) {
-            if (!memdev || imem->getPriority() > memdev->getPriority()) {
-                memdev = imem;
-            }
-        }
-    }
+    getMapedDevice(trans, &memdev, &sz);
 
     if (memdev == 0) {
         RISCV_error("[%" RV_PRI64 "d] Non-blocking request to unmapped address "
@@ -138,17 +130,33 @@ ETransStatus Bus::nb_transport(Axi4TransactionType *trans,
     }
 
     // Update Bus utilization counters:
-    if (trans->action == MemAction_Read) {
-        info_[trans->source_idx].r_cnt++;
-    } else if (trans->action == MemAction_Write) {
-        info_[trans->source_idx].w_cnt++;
+    if (idsu_) {
+        if (trans->action == MemAction_Read) {
+            idsu_->incrementRdAccess(trans->source_idx);
+        } else if (trans->action == MemAction_Write) {
+            idsu_->incrementWrAccess(trans->source_idx);
+        }
     }
     RISCV_mutex_unlock(&mutexNBAccess_);
     return ret;
 }
 
-BusUtilType *Bus::bus_utilization() {
-    return info_;
+void Bus::getMapedDevice(Axi4TransactionType *trans,
+                         IMemoryOperation **pdev, uint32_t *sz) {
+    IMemoryOperation *imem;
+    uint64_t bar, barsz;
+    *pdev = 0;
+    *sz = 0;
+    for (unsigned i = 0; i < imap_.size(); i++) {
+        imem = static_cast<IMemoryOperation *>(imap_[i].to_iface());
+        bar = imem->getBaseAddress();
+        barsz = imem->getLength();
+        if (bar <= trans->addr && trans->addr < (bar + barsz)) {
+            if (!(*pdev) || imem->getPriority() > (*pdev)->getPriority()) {
+                *pdev = imem;
+            }
+        }
+    }
 }
 
 }  // namespace debugger

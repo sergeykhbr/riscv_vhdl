@@ -5,23 +5,23 @@
  * @brief      Clock listener interface.
  */
 
-#ifndef __DEBUGGER_PLUGIN_ICLOCK_LISTENER_H__
-#define __DEBUGGER_PLUGIN_ICLOCK_LISTENER_H__
+#ifndef __DEBUGGER_COMMON_CORESERVICES_ICLKLISTENER_H__
+#define __DEBUGGER_COMMON_CORESERVICES_ICLKLISTENER_H__
 
-#include "iface.h"
 #include <inttypes.h>
+#include <iface.h>
 
 namespace debugger {
 
 static const char *const IFACE_CLOCK_LISTENER = "IClockListener";
 
 class IClockListener : public IFace {
-public:
+ public:
     IClockListener() : IFace(IFACE_CLOCK_LISTENER) {}
 
-    virtual void stepCallback(uint64_t t) =0;
+    virtual void stepCallback(uint64_t t) = 0;
 };
 
 }  // namespace debugger
 
-#endif  // __DEBUGGER_PLUGIN_ICLOCK_LISTENER_H__
+#endif  // __DEBUGGER_COMMON_CORESERVICES_ICLKLISTENER_H__
