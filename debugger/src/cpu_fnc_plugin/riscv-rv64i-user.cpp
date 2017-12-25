@@ -1280,6 +1280,11 @@ void CpuRiver_Functional::addIsaUserRV64I() {
     addSupportedInstruction(new XOR(this));
     addSupportedInstruction(new XORI(this));
 
+  /*
+  def SLLI_RV32          = BitPat("b0000000??????????001?????0010011")
+  def SRLI_RV32          = BitPat("b0000000??????????101?????0010011")
+  def SRAI_RV32          = BitPat("b0100000??????????101?????0010011")
+  */
     /** Base[XLEN-1:XLEN-2]
      *      1 = 32
      *      2 = 64

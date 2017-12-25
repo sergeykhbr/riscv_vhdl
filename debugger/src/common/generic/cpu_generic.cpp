@@ -345,7 +345,7 @@ void CpuGeneric::reset(bool active) {
     npc_.setValue(getResetAddress());
     if (!active && estate_ == CORE_OFF) {
         // Turn ON:
-        estate_ = CORE_Normal;
+        estate_ = CORE_Halted;//CORE_Normal;
         RISCV_trigger_hap(static_cast<IService *>(this),
                             HAP_CpuTurnON, "CPU Turned ON");
     } else if (active) {

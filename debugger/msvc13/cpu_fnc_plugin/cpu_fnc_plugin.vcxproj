@@ -172,6 +172,7 @@
     <ClCompile Include="..\..\src\cpu_fnc_plugin\instructions.cpp" />
     <ClCompile Include="..\..\src\cpu_fnc_plugin\plugin_init.cpp" />
     <ClCompile Include="..\..\src\cpu_fnc_plugin\riscv-ext-a.cpp" />
+    <ClCompile Include="..\..\src\cpu_fnc_plugin\riscv-ext-c.cpp" />
     <ClCompile Include="..\..\src\cpu_fnc_plugin\riscv-ext-f.cpp" />
     <ClCompile Include="..\..\src\cpu_fnc_plugin\riscv-ext-m.cpp" />
     <ClCompile Include="..\..\src\cpu_fnc_plugin\riscv-rv64i-priv.cpp" />

@@ -53,17 +53,23 @@ class CpuRiver_Functional : public CpuGeneric,
     void addIsaUserRV64I();
     void addIsaPrivilegedRV64I();
     void addIsaExtensionA();
+    void addIsaExtensionC();
     void addIsaExtensionF();
     void addIsaExtensionM();
     unsigned addSupportedInstruction(RiscvInstruction *instr);
     uint32_t hash32(uint32_t val) { return (val >> 2) & 0x1f; }
+    /** Compressed instruction */
+    uint32_t hash16(uint16_t val) {
+        uint32_t t1 = val & 0x3;
+        return 0x20 | ((val >> 13) << 2) | t1;
+    }
 
  private:
     AttributeType listExtISA_;
     AttributeType vendorID_;
     AttributeType vectorTable_;
 
-    static const int INSTR_HASH_TABLE_SIZE = 1 << 5;
+    static const int INSTR_HASH_TABLE_SIZE = 1 << 6;
     AttributeType listInstr_[INSTR_HASH_TABLE_SIZE];
 
     GenericReg64Bank portRegs_;

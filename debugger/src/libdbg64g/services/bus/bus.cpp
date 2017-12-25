@@ -20,6 +20,7 @@ Bus::Bus(const char *name)
     registerAttribute("DSU", &dsu_);
     RISCV_mutex_init(&mutexBAccess_);
     RISCV_mutex_init(&mutexNBAccess_);
+    idsu_ = 0;
 }
 
 Bus::~Bus() {

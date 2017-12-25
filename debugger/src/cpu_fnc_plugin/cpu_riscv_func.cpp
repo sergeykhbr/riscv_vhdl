@@ -34,6 +34,8 @@ void CpuRiver_Functional::postinitService() {
     for (unsigned i = 0; i < listExtISA_.size(); i++) {
         if (listExtISA_[i].to_string()[0] == 'A') {
             addIsaExtensionA();
+        } else if (listExtISA_[i].to_string()[0] == 'C') {
+            addIsaExtensionC();
         } else if (listExtISA_[i].to_string()[0] == 'F') {
             addIsaExtensionF();
         } else if (listExtISA_[i].to_string()[0] == 'M') {
@@ -122,12 +124,24 @@ GenericInstruction *CpuRiver_Functional::decodeInstruction(Reg64Type *cache) {
         }
         instr = NULL;
     }
+    // Check compressed instructions:
+    if (instr == NULL) {
+        hash_idx = hash16(cacheline_[0].buf16[0]);
+        for (unsigned i = 0; i < listInstr_[hash_idx].size(); i++) {
+            instr = static_cast<RiscvInstruction *>(
+                            listInstr_[hash_idx][i].to_iface());
+            if (instr->parse(cacheline_[0].buf32)) {
+                break;
+            }
+            instr = NULL;
+        }
+    }
     return instr;
 }
 
 void CpuRiver_Functional::generateIllegalOpcode() {
     raiseSignal(EXCEPTION_InstrIllegal);
-    RISCV_error("Illegal instruction at 0x%" RV_PRI64 "08x", getPC());
+    RISCV_error("Illegal instruction at 0x%08" RV_PRI64 "x", getPC());
 }
 
 void CpuRiver_Functional::trackContextStart() {

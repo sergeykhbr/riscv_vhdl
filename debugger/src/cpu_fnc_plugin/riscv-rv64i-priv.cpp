@@ -388,7 +388,7 @@ void CpuRiver_Functional::addIsaPrivilegedRV64I() {
     // TODO:
     /*
   def DRET               = BitPat("b01111011001000000000000001110011")
-  def SFENCE_VM          = BitPat("b000100000100?????000000001110011")
+  def SFENCE_VMA         = BitPat("b0001001??????????000000001110011")
   def WFI                = BitPat("b00010000010100000000000001110011")  // wait for interrupt
 
     def RDCYCLE            = BitPat("b11000000000000000010?????1110011")
@@ -397,8 +397,6 @@ void CpuRiver_Functional::addIsaPrivilegedRV64I() {
     def RDCYCLEH           = BitPat("b11001000000000000010?????1110011")
     def RDTIMEH            = BitPat("b11001000000100000010?????1110011")
     def RDINSTRETH         = BitPat("b11001000001000000010?????1110011")
-    def ECALL              = BitPat("b00000000000000000000000001110011")
-    def EBREAK             = BitPat("b00000000000100000000000001110011")
     */
 
     /**

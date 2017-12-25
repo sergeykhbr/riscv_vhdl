@@ -31,6 +31,11 @@ public:
         return (opcode_ >> 2) & 0x1F;
     }
 
+    uint16_t hash16() {
+        uint16_t t1 = static_cast<uint16_t>(opcode_) & 0x3;
+        return 0x20 | ((static_cast<uint16_t>(opcode_) >> 13) << 2) | t1;
+    }
+
 protected:
     AttributeType name_;
     CpuRiver_Functional *icpu_;
@@ -38,6 +43,19 @@ protected:
     uint32_t opcode_;
     uint64_t *R;
 };
+
+class RiscvInstruction16 : public RiscvInstruction {
+public:
+    RiscvInstruction16(CpuRiver_Functional *icpu, const char *name,
+                    const char *bits) : RiscvInstruction(icpu, name, bits) {}
+
+    // IInstruction interface:
+    virtual uint32_t hash() {
+        uint16_t t1 = static_cast<uint16_t>(opcode_) & 0x3;
+        return 0x20 | ((static_cast<uint16_t>(opcode_) >> 13) << 2) | t1;
+    }
+};
+
 
 }  // namespace debugger
 

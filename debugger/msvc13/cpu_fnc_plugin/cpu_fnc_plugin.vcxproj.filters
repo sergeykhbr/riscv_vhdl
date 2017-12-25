@@ -41,6 +41,7 @@
     <ClCompile Include="..\..\src\common\generic\iotypes.cpp">
       <Filter>generic</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\cpu_fnc_plugin\riscv-ext-c.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\api_types.h">
