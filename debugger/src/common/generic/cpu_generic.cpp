@@ -148,11 +148,16 @@ void CpuGeneric::updatePipeline() {
 
     if (!checkHwBreakpoint()) {
         fetchILine();
-        GenericInstruction *instr = decodeInstruction(cacheline_);
+        instr_ = decodeInstruction(cacheline_);
 
+#if 1
+    if (step_cnt_ >= 552) {
+        bool st = true;
+    }
+#endif
         trackContextStart();
-        if (instr) {
-            oplen_ = instr->exec(cacheline_);
+        if (instr_) {
+            oplen_ = instr_->exec(cacheline_);
         } else {
             generateIllegalOpcode();
         }
@@ -232,7 +237,7 @@ void CpuGeneric::setBranch(uint64_t npc) {
 
 void CpuGeneric::pushStackTrace() {
     int cnt = static_cast<int>(stackTraceCnt_.getValue().val);
-    if (cnt >= stackTraceSize_.to_int()) {
+    if (cnt >= stackTraceSize_.to_int() / 2) {
         return;
     }
     stackTraceBuf_.write(2*cnt, pc_.getValue().val);
@@ -267,26 +272,27 @@ void CpuGeneric::dma_memop(Axi4TransactionType *tr) {
             }
         }
     }
-    if (!mem_trace_file) {
+    //if (!mem_trace_file) {
+    if (!reg_trace_file) {
         return;
     }
 
     char tstr[512];
     if (tr->action == MemAction_Read) {
         RISCV_sprintf(tstr, sizeof(tstr),
-                    "%08x: [%08x] => %016" RV_PRI64 "x\n",
+                    "         [%08x] [%08x] => %016" RV_PRI64 "x, %d\n",
                     pc_.getValue().buf32[0],
                     static_cast<int>(tr->addr),
-                    tr->rpayload.b64[0]);
+                    tr->rpayload.b64[0], tr->xsize);
     } else {
         RISCV_sprintf(tstr, sizeof(tstr),
-                    "%08x: [%08x] <= %016" RV_PRI64 "x\n",
+                    "         [%08x] [%08x] <= %016" RV_PRI64 "x, %d\n",
                     pc_.getValue().buf32[0],
                     static_cast<int>(tr->addr),
-                    tr->wpayload.b64[0]);
+                    tr->wpayload.b64[0], tr->xsize);
     }
-    (*mem_trace_file) << tstr;
-    mem_trace_file->flush();
+    (*reg_trace_file) << tstr;
+    reg_trace_file->flush();
 }
 
 void CpuGeneric::go() {

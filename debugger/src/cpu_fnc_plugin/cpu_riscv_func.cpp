@@ -170,11 +170,13 @@ void CpuRiver_Functional::trackContextEnd() {
         if (prev[i] != cur[i]) {
             reg_changed = true;
             sz += RISCV_sprintf(&tstr[sz], sizeof(tstr) - sz,
-                    "%3s <= %016I64x\n", IREGS_NAMES[i], cur[i]);
+                    "%3s <= %016I64x, %s\n",
+                    IREGS_NAMES[i], cur[i], instr_->name());
         }
     }
     if (!reg_changed) {
-        sz += RISCV_sprintf(&tstr[sz], sizeof(tstr) - sz, "%s", "-\n");
+        sz += RISCV_sprintf(&tstr[sz], sizeof(tstr) - sz, "-, %s\n",
+                            instr_->name());
     }
     (*reg_trace_file) << tstr;
     reg_trace_file->flush();

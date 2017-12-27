@@ -84,7 +84,7 @@ void GenericReg64Bank::setLength(int len) {
         delete [] regs_;
     }
     length_.make_int64(len);
-    regs_ = new Reg64Type[len / sizeof(Reg64Type)];
+    regs_ = new Reg64Type[len];
     reset();
 }
 

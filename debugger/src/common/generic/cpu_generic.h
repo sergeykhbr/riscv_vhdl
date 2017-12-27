@@ -161,6 +161,7 @@ class CpuGeneric : public IService,
     ISourceCode *isrc_;
     IMemoryOperation *isysbus_;
     IMemoryOperation *idbgbus_;
+    GenericInstruction *instr_;
 
     uint64_t step_cnt_;
     uint64_t hw_stepping_break_;
