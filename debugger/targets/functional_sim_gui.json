@@ -146,13 +146,13 @@
                 ['DbgBus','dbgbus0'],
                 ['SysBusWidthBytes',8,'Split dma transactions from CPU'],
                 ['SourceCode','src0'],
-                ['ListExtISA',['I','M','A']],
-                ['StackTraceSize',128],
+                ['ListExtISA',['I','M','A','C']],
+                ['StackTraceSize',64,'Number of 16-bytes entries'],
                 ['FreqHz',60000000],
                 ['VendorID',0x0001,'Hardcoded in CSR mvendorid value: UC Berkeley Rocket repo'],
                 ['VectorTable',0x100,'Hardcoded in CSR mtvec value: interrupts vector table address'],
                 ['ResetVector',0x1000,'Initial intruction pointer value (config parameter)'],
-                ['GenerateRegTraceFile',false,'Generate Registers modification file to compare with SystemC'],
+                ['GenerateRegTraceFile',true,'Generate Registers modification file to compare with SystemC'],
                 ['GenerateMemTraceFile',false,'Generate Memory access file to compare with SystemC'],
                 ]}]},
     {'Class':'MemorySimClass','Instances':[
@@ -166,7 +166,7 @@
     {'Class':'MemorySimClass','Instances':[
           {'Name':'fwimage0','Attr':[
                 ['LogLevel',1],
-                ['InitFile','../../../rocket_soc/fw_images/fwimage.hex'],
+                ['InitFile','../../../rocket_soc/fw_images/gcc711/helloworld.hex'],
                 ['ReadOnly',true],
                 ['BaseAddress',0x00100000],
                 ['Length',0x40000]
@@ -174,7 +174,7 @@
     {'Class':'MemorySimClass','Instances':[
           {'Name':'sram0','Attr':[
                 ['LogLevel',1],
-                ['InitFile','../../../rocket_soc/fw_images/fwimage.hex'],
+                ['InitFile','../../../rocket_soc/fw_images/gcc711/helloworld.hex'],
                 ['ReadOnly',false],
                 ['BaseAddress',0x10000000],
                 ['Length',0x80000]

@@ -233,20 +233,20 @@ As an example we're going to build two programs:
 toolchain on [riscv.org](http://riscv.org/software-tools/). If you would like
 to use pre-build GCC binary files and libraries you can download it here:
 
-   [Ubuntu GNU GCC 6.1.0 toolchain RV64D (207MB)](http://www.gnss-sensor.com/index.php?LinkID=1018)  
+   GCC 7.1 from [SiFive](https://www.sifive.com/products/tools/) for Linux, Windows and macOS  
+   GCC 7.1 from [SysProgs](http://gnutoolchains.com/risc-v/) for Windows
+
+I'm on transition stage to a new v7.0 release with implemented Compressed
+instructions set (C-extensions). It will allow to use the latest GCC builds without modifications.
+Some fatal errors can be found during this time, sorry.
+
+Previous obsolete GCC builds:
+
+* Upto release tag v6.0 was used
    [Ubuntu GNU GCC 6.1.0 toolchain RV64IMA (204MB)](http://www.gnss-sensor.com/index.php?LinkID=1017)  
 
-   [(obsolete) Ubuntu GNU GCC 5.1.0 toolchain RV64IMA (256MB)](http://www.gnss-sensor.com/index.php?LinkID=1013)
-
-  GCC 5.1.0 is the legacy version for *riscv_vhdl* with tag **v3.1** or older.  
-**RV64IMA** build doesn't use hardware FPU (*--soft-float*). **RV64D** build 
-requires FPU co-processor (*--hard-float*).
-
-  Just after you download the toolchain unpack it and set environment variable
-as follows:
-
-    $ tar -xzvf gnu-toolchain-rv64ima.tar.gz gnu-toolchain-rv64ima
-    $ export PATH=/home/your_path/gnu-toolchain-rv64ima/bin:$PATH
+* Upto release tag v3.1 was used
+   [Ubuntu GNU GCC 5.1.0 toolchain RV64IMA (256MB)](http://www.gnss-sensor.com/index.php?LinkID=1013)
 
 If you would like to generate hex-file and use it for ROM initialization you can use
 *'elf2hex'* and *'libfesvr.so'* library from the GNU toolchain but I suggest to use my version
@@ -258,7 +258,7 @@ directory.
 
     $ mkdir zephyr_160
     $ cd zephyr_160
-    $ git clone https://gerrit.zephyrproject.org/r/zephyr
+    $ git clone https://github.com/zephyrproject-rtos/zephyr.git
     $ cd zephyr
     $ git checkout tags/v1.6.0
     $ cp ../../riscv_vhdl/zephyr/v1.6.0-riscv64-base.diff .

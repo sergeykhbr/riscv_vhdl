@@ -63,7 +63,7 @@ class GenericReg64Bank : public IMemoryOperation {
         regs_ = 0;
         bankName_.make_string(name);
         baseAddress_.make_uint64(addr);
-        setLength(len);
+        setRegTotal(len);
     }
     virtual ~GenericReg64Bank() {
         if (regs_) {
@@ -78,7 +78,7 @@ class GenericReg64Bank : public IMemoryOperation {
     virtual void reset();
 
     /** General access methods: */
-    void setLength(int len);
+    void setRegTotal(int len);
     Reg64Type read(int idx) { return regs_[idx]; }
     void write(int idx, Reg64Type val) { regs_[idx] = val; }
     void write(int idx, uint64_t val) { regs_[idx].val = val; }

@@ -12,9 +12,9 @@ namespace debugger {
 
 CpuRiver_Functional::CpuRiver_Functional(const char *name) :
     CpuGeneric(name),
-    portRegs_(this, "regs", DSUREG(ureg.v.iregs), Reg_Total*8),
-    portSavedRegs_(this, "savedregs", 0, Reg_Total*8),  // not mapped !!!
-    portCSR_(this, "csr", DSUREG(csr), (1<<12)*8) {
+    portRegs_(this, "regs", DSUREG(ureg.v.iregs), Reg_Total),
+    portSavedRegs_(this, "savedregs", 0, Reg_Total),  // not mapped !!!
+    portCSR_(this, "csr", DSUREG(csr), 1<<12) {
     registerInterface(static_cast<ICpuRiscV *>(this));
     registerAttribute("ListExtISA", &listExtISA_);
     registerAttribute("VendorID", &vendorID_);

@@ -76,14 +76,14 @@ void GenericReg64Bank::reset() {
     memset(regs_, 0, length_.to_int());
 }
 
-void GenericReg64Bank::setLength(int len) {
-    if (len == length_.to_int()) {
+void GenericReg64Bank::setRegTotal(int len) {
+    if (len * sizeof(Reg64Type) == length_.to_int()) {
         return;
     }
     if (regs_) {
         delete [] regs_;
     }
-    length_.make_int64(len);
+    length_.make_int64(len * sizeof(Reg64Type));
     regs_ = new Reg64Type[len];
     reset();
 }

@@ -13,7 +13,7 @@ ElfReader::ElfReader(const char *file_name)
         pisElf->seekg(0, std::ios::end);
         iElfFileSize = (int)pisElf->tellg();
         if(iElfFileSize) {
-            elf_img = new uint8 [iElfFileSize];
+            elf_img = new uint8_t[iElfFileSize];
             pisElf->seekg(0, std::ios::beg);
             pisElf->read((char *)elf_img, iElfFileSize);
         }
@@ -66,19 +66,18 @@ void ElfReader::SwapBytes(uint64_t& v)
 }
 
 //****************************************************************************
-uint32 ElfReader::read32(uint32 off)
-{
-    uint32 word;
+uint32_t ElfReader::read32(uint32_t off) {
+    uint32_t word;
     if(Elf32_Ehdr->e_ident[EI_DATA] == ELFDATA2MSB)  {
-        word = uint32(elf_img[off+0])<<24;
-        word |= uint32(elf_img[off+1])<<16;
-        word |= uint32(elf_img[off+2])<<8;
-        word |= uint32(elf_img[off+3])<<0;
+        word = uint32_t(elf_img[off+0])<<24;
+        word |= uint32_t(elf_img[off+1])<<16;
+        word |= uint32_t(elf_img[off+2])<<8;
+        word |= uint32_t(elf_img[off+3])<<0;
     } else {
-        word = uint32(elf_img[off+3])<<24;
-        word |= uint32(elf_img[off+2])<<16;
-        word |= uint32(elf_img[off+1])<<8;
-        word |= uint32(elf_img[off+0])<<0;
+        word = uint32_t(elf_img[off+3])<<24;
+        word |= uint32_t(elf_img[off+2])<<16;
+        word |= uint32_t(elf_img[off+1])<<8;
+        word |= uint32_t(elf_img[off+0])<<0;
     }
     return word;
 }
@@ -115,10 +114,11 @@ void ElfReader::readSections()
 {
     SectionHeaderType *sh;
     SymbolTableType *st;
-    uiRawImageBytes = Elf32_Ehdr->e_entry; // Compute relative Base Address
+    // Compute relative Base Address
+    uiRawImageBytes = static_cast<uint32_t>(Elf32_Ehdr->e_entry);
 
-    uint32 symbol_off;
-    uint32 section_off = Elf32_Ehdr->e_shoff;
+    uint32_t symbol_off;
+    uint64_t section_off = Elf32_Ehdr->e_shoff;
 
     for(int i=0; i<Elf32_Ehdr->e_shnum; i++) {
         sh = (SectionHeaderType *)&elf_img[section_off];
@@ -146,7 +146,8 @@ void ElfReader::readSections()
             } else if (strcmp(pSectionNames+sh->sh_name, ".strtab") == 0) {
                 pSymbolName  = (char *)&elf_img[sh->sh_offset];
             } else {
-                printf("err: unsupported string section %s\n", pSectionNames+sh->sh_name);
+                printf("err: unsupported string section %s\n",
+                        pSectionNames+sh->sh_name);
             }
             break;
 
@@ -154,7 +155,8 @@ void ElfReader::readSections()
         case SHT_NOBITS:    // initialized data
             if (sh->sh_flags & SHF_ALLOC) {
                 if ((sh->sh_addr + sh->sh_size) > uiRawImageBytes)
-                    uiRawImageBytes = sh->sh_addr + sh->sh_size;
+                    uiRawImageBytes = 
+                        static_cast<uint32_t>(sh->sh_addr + sh->sh_size);
             }
             break;
 
@@ -169,9 +171,14 @@ void ElfReader::readSections()
                 SwapBytes(st->st_size);
                 SwapBytes(st->st_shndx);
 
-                if(sh->sh_entsize)   symbol_off += sh->sh_entsize;    // section with elements of fixed size
-                else if(st->st_size) symbol_off += st->st_size;
-                else                 symbol_off += sizeof(SymbolTableType);
+                // section with elements of fixed size
+                if (sh->sh_entsize) {
+                    symbol_off += static_cast<uint32_t>(sh->sh_entsize);
+                } else if (st->st_size) {
+                    symbol_off += static_cast<uint32_t>(st->st_size);
+                } else {
+                    symbol_off += sizeof(SymbolTableType);
+                }
 
                 debug_symbols.push_back(*st);
             }
@@ -183,40 +190,42 @@ void ElfReader::readSections()
         section_off += sizeof(SectionHeaderType);
     }
 
-    uiRawImageBytes -= Elf32_Ehdr->e_entry;
+    uiRawImageBytes -= static_cast<uint32_t>(Elf32_Ehdr->e_entry);
 }
 
 //****************************************************************************
 void ElfReader::createRawImage()
 {
-    src_img.entry = Elf32_Ehdr->e_entry;
+    src_img.entry = static_cast<uint32_t>(Elf32_Ehdr->e_entry);
     src_img.iSizeWords = (uiRawImageBytes+3)/4;
     src_img.arr = new SrcElement[src_img.iSizeWords];
     memset(src_img.arr, 0, src_img.iSizeWords*sizeof(SrcElement));
 
     // print Program defined section:
-    uint32 adr;
-    uint32 word;
+    uint32_t adr;
+    uint32_t word;
     SectionHeaderType *sh;
-    for (unsigned i=0; i<section.size(); i++) {
+    for (unsigned i = 0; i < section.size(); i++) {
 
         sh = &section[i];
 
         if (sh->sh_size == 0) continue;
         if ((sh->sh_flags & SHF_ALLOC) == 0) continue;
 
-        adr = (sh->sh_addr - src_img.entry)/4;
+        adr = static_cast<uint32_t>((sh->sh_addr - src_img.entry) / 4);
         if ((adr + sh->sh_size/4) > src_img.iSizeWords) {
-            printf("err: section address %08x is out of range of the allocated image\n", adr);
+            printf("err: section address %08x is out of range "
+                   "of the allocated image\n", adr);
             continue;
         }
 
-        src_img.arr[adr].pSectionName = (uint8 *)(pSectionNames + sh->sh_name);
+        src_img.arr[adr].pSectionName =
+            reinterpret_cast<uint8_t *>(pSectionNames + sh->sh_name);
         if ((sh->sh_type == SHT_PROGBITS) || (sh->sh_type == SHT_NOBITS)) {
 
-            for (uint32 n=0; n<sh->sh_size; n+=4) {
+            for (uint32_t n = 0; n < sh->sh_size; n += 4) {
                 if (sh->sh_type == SHT_PROGBITS) {
-                    word = read32(sh->sh_offset+n);
+                    word = read32(static_cast<uint32_t>(sh->sh_offset + n));
                 } else if(sh->sh_type == SHT_NOBITS) {
                     word = 0;
                 }
@@ -227,13 +236,11 @@ void ElfReader::createRawImage()
     }
 }
 
-//****************************************************************************
-void ElfReader::readProgramHeader()
-{
+void ElfReader::readProgramHeader() {
     ProgramHeaderType *pr;
-    uint32 pr_offset = Elf32_Ehdr->e_phoff;
+    uint64_t pr_offset = Elf32_Ehdr->e_phoff;
   
-    for(uint32 i=0; i<Elf32_Ehdr->e_phnum; i++) {
+    for (uint32_t i = 0; i < Elf32_Ehdr->e_phnum; i++) {
         pr = (ProgramHeaderType *)&elf_img[pr_offset];
         SwapBytes(pr->p_type);
         SwapBytes(pr->p_offset);
@@ -250,28 +257,31 @@ void ElfReader::readProgramHeader()
 
 
 //****************************************************************************
-void ElfReader::attachSymbolsToRawImage()
-{
+void ElfReader::attachSymbolsToRawImage() {
     SymbolTableType *st;
-    uint32 offset;
-    for (uint32 i=0; i<debug_symbols.size(); i++) {
+    uint64_t offset;
+    for (uint32_t i = 0; i < debug_symbols.size(); i++) {
         st = &debug_symbols[i];
         offset = (st->st_value - src_img.entry)/4;  // TODO: byte access
 
         if (offset > src_img.iSizeWords) {
-            printf("err: Symbol has address %08x out of image range\n", offset);
+            printf("err: Symbol has address %08x out of image range\n",
+                static_cast<uint32_t>(offset));
             continue;
         }
 
         switch(ELF32_ST_TYPE(st->st_info)) {
         case STT_OBJECT:
-            src_img.arr[offset].pDataName = (uint8 *)(pSymbolName + st->st_name);
+            src_img.arr[offset].pDataName =
+                reinterpret_cast<uint8_t *>(pSymbolName + st->st_name);
             break;
         case STT_FUNC:
-            src_img.arr[offset].pFuncName = (uint8 *)(pSymbolName + st->st_name);
+            src_img.arr[offset].pFuncName =
+                reinterpret_cast<uint8_t *>(pSymbolName + st->st_name);
             break;
         case STT_FILE:
-            src_img.arr[offset].pFileName = (uint8 *)(pSymbolName + st->st_name);
+            src_img.arr[offset].pFileName =
+            reinterpret_cast<uint8_t *>(pSymbolName + st->st_name);
             break;
         default:;
         }
@@ -279,7 +289,7 @@ void ElfReader::attachSymbolsToRawImage()
 }
 
 //****************************************************************************
-void ElfReader::writeRawImage(const char *file_name, uint32 fixed_size)
+void ElfReader::writeRawImage(const char *file_name, uint32_t fixed_size)
 {
     SrcElement *e;
     std::ofstream osraw(file_name, std::ios::binary);
@@ -293,7 +303,7 @@ void ElfReader::writeRawImage(const char *file_name, uint32 fixed_size)
     }
 
     char ss;
-    for(uint32 i=0; i<src_img.iSizeWords; i++) {
+    for (uint32_t i = 0; i < src_img.iSizeWords; i++) {
         e = &src_img.arr[i];
 
         for (int n=0; n<4; n++) {
@@ -303,9 +313,9 @@ void ElfReader::writeRawImage(const char *file_name, uint32 fixed_size)
     }
 
     if (fixed_size) {
-        uint32 fix_word = (fixed_size+3)/4;
-        for (uint32 i=src_img.iSizeWords; i<fix_word; i++) {
-            uint32 fix_zero = 0;
+        uint32_t fix_word = (fixed_size+3)/4;
+        for (uint32_t i = src_img.iSizeWords; i < fix_word; i++) {
+            uint32_t fix_zero = 0;
             osraw.write((char *)&fix_zero, 4);
         }
     }
@@ -325,9 +335,9 @@ void ElfReader::writeRawImage(const char *file_name, uint32 fixed_size)
 }
 
 //****************************************************************************
-void ElfReader::writeRomHexArray(const char *file_name, uint64 base_addr,
-                                 uint32 bytes_per_line, uint32 fixed_size)
-{
+void ElfReader::writeRomHexArray(const char *file_name, uint64_t base_addr,
+                                 uint32_t bytes_per_line,
+                                 uint32_t fixed_size) {
     if (base_addr == ~0) {
         base_addr = src_img.entry;
     }
@@ -356,7 +366,7 @@ void ElfReader::writeRomHexArray(const char *file_name, uint64 base_addr,
         idx += (words_per_line);
         for (uint32_t n = 0; n < words_per_line; n++) {
             idx--;
-            if ((idx >= 0) && (idx < src_img.iSizeWords)) {
+            if (idx >= 0 && idx < static_cast<int>(src_img.iSizeWords)) {
                 sprintf(chRomFile,"%08X", src_img.arr[idx].val);
             } else {
                 sprintf(chRomFile,"%08X", 0);

@@ -3,8 +3,9 @@
 #include "stdtypes.h"
 #include <inttypes.h>
 
+#define ARCH64BIT
 //#define EI_NIDENT 16
-#if 1
+#ifdef ARCH64BIT
 typedef uint64_t   Elf32_Addr;
 typedef uint64_t   Elf32_Off;
 #else
@@ -28,16 +29,16 @@ enum E_EI {
     EI_PAD,
     EI_NIDENT=16
 };
-static const uint8 ELFCLASSNONE = 0;
-static const uint8 ELFCLASS32   = 1;
-static const uint8 ELFCLASS64   = 2;
+static const uint8_t ELFCLASSNONE = 0;
+static const uint8_t ELFCLASS32   = 1;
+static const uint8_t ELFCLASS64   = 2;
 
-static const uint8 ELFDATANONE  = 0;
-static const uint8 ELFDATA2LSB  = 1;
-static const uint8 ELFDATA2MSB  = 2;
+static const uint8_t ELFDATANONE  = 0;
+static const uint8_t ELFDATA2LSB  = 1;
+static const uint8_t ELFDATA2MSB  = 2;
 
-static const uint8 EV_NONE      = 0;            // Invalid version
-static const uint8 EV_CURRENT   = 1;            // Current version
+static const uint8_t EV_NONE      = 0;            // Invalid version
+static const uint8_t EV_CURRENT   = 1;            // Current version
 //etype values:
 static const Elf32_Half ET_NONE      = 0;       // no file type
 static const Elf32_Half ET_REL       = 1;       // rellocatable file

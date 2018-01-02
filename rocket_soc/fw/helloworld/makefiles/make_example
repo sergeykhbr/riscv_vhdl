@@ -4,7 +4,7 @@ CC=riscv64-unknown-elf-gcc
 CPP=riscv64-unknown-elf-gcc
 OBJDUMP=riscv64-unknown-elf-objdump
 
-CFLAGS= -c -fPIC -g -O2
+CFLAGS= -c -fPIC -g -O0
 LDFLAGS=-static -T app.ld -nostartfiles
 INCL_KEY=-I
 DIR_KEY=-B
@@ -34,22 +34,29 @@ SOURCES = \
 OBJ_FILES = $(addsuffix .o,$(SOURCES))
 EXECUTABLE = helloworld
 DUMPFILE = $(EXECUTABLE).dump
+HEXFILE = $(EXECUTABLE).hex
+LSTFILE = $(EXECUTABLE).lst
 
 all: example
 
 .PHONY: $(EXECUTABLE)
 
 
-example: $(EXECUTABLE) $(DUMPFILE)
+example: $(EXECUTABLE) $(DUMPFILE) $(HEXFILE)
+
+$(HEXFILE): $(EXECUTABLE)
+	echo elf2raw64 $(addprefix $(ELF_DIR)/,$<) -h -f 262144 -l 8 -o $(addprefix $(ELF_DIR)/,$(EXECUTABLE).hex)
+	elf2raw64 $(addprefix $(ELF_DIR)/,$<) -h -f 262144 -l 8 -o $(addprefix $(ELF_DIR)/,$(EXECUTABLE).hex)
+
+$(DUMPFILE): $(EXECUTABLE)
+	echo $(OBJDUMP) --disassemble-all --disassemble-zeroes --section=.text --section=.text.startup --section=.data $(addprefix $(ELF_DIR)/,$<) > $(addprefix $(ELF_DIR)/,$@)
+	$(OBJDUMP) --disassemble-all --disassemble-zeroes --section=.text --section=.text.startup --section=.data $(addprefix $(ELF_DIR)/,$<) > $(addprefix $(ELF_DIR)/,$@)
+	$(OBJDUMP) -S $(addprefix $(ELF_DIR)/,$<) > $(addprefix $(ELF_DIR)/,$(LSTFILE))
 
 $(EXECUTABLE): $(OBJ_FILES)
 	echo $(CPP) $(LDFLAGS) $(addprefix $(OBJ_DIR)/,$(OBJ_FILES)) -o $(addprefix $(ELF_DIR)/,$@) $(addprefix -l,$(LIB_NAMES))
 	$(CPP) $(LDFLAGS) $(addprefix $(OBJ_DIR)/,$(OBJ_FILES)) -o $(addprefix $(ELF_DIR)/,$@) $(addprefix -l,$(LIB_NAMES))
 	$(ECHO) "\n  helloworld has been built successfully.\n"
-
-$(DUMPFILE): $(EXECUTABLE)
-	echo $(OBJDUMP) --disassemble-all --disassemble-zeroes --section=.text --section=.text.startup --section=.data $(addprefix $(ELF_DIR)/,$<) > $(addprefix $(ELF_DIR)/,$@)
-	$(OBJDUMP) --disassemble-all --disassemble-zeroes --section=.text --section=.text.startup --section=.data $(addprefix $(ELF_DIR)/,$<) > $(addprefix $(ELF_DIR)/,$@)
 
 %.o: %.cpp
 	echo $(CPP) $(CFLAGS) $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $(addprefix $(OBJ_DIR)/,$@)

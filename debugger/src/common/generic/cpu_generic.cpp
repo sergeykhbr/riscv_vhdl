@@ -101,7 +101,7 @@ void CpuGeneric::postinitService() {
         return;
     }
 
-    stackTraceBuf_.setLength(2 * stackTraceSize_.to_int());
+    stackTraceBuf_.setRegTotal(2 * stackTraceSize_.to_int());
 
     // Get global settings:
     const AttributeType *glb = RISCV_get_global_settings();
@@ -150,11 +150,6 @@ void CpuGeneric::updatePipeline() {
         fetchILine();
         instr_ = decodeInstruction(cacheline_);
 
-#if 1
-    if (step_cnt_ >= 552) {
-        bool st = true;
-    }
-#endif
         trackContextStart();
         if (instr_) {
             oplen_ = instr_->exec(cacheline_);
@@ -237,7 +232,7 @@ void CpuGeneric::setBranch(uint64_t npc) {
 
 void CpuGeneric::pushStackTrace() {
     int cnt = static_cast<int>(stackTraceCnt_.getValue().val);
-    if (cnt >= stackTraceSize_.to_int() / 2) {
+    if (cnt >= stackTraceSize_.to_int()) {
         return;
     }
     stackTraceBuf_.write(2*cnt, pc_.getValue().val);
