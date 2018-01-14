@@ -77,7 +77,7 @@ void GenericReg64Bank::reset() {
 }
 
 void GenericReg64Bank::setRegTotal(int len) {
-    if (len * sizeof(Reg64Type) == length_.to_int()) {
+    if (len * (int)sizeof(Reg64Type) == length_.to_int()) {
         return;
     }
     if (regs_) {
