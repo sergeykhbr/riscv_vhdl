@@ -233,7 +233,7 @@ ETransStatus IrqController::b_transport(Axi4TransactionType *trans) {
 
 void IrqController::stepCallback(uint64_t t) {
     iclk_->registerStepCallback(static_cast<IClockListener *>(this), t + 1);
-    if (regs_.irq_lock == 0) {
+    if (regs_.irq_lock == 1) {
         return;
     }
     if (~regs_.irq_mask & regs_.irq_pending) {
