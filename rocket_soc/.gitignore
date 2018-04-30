@@ -16,6 +16,9 @@ fw/helloworld/makefiles/bin/
 !fw/elf2raw64/
 fw/elf2raw64/makefiles/obj/
 fw/elf2raw64/makefiles/elf/
+!fw/isrdemo/
+fw/isrdemo/makefiles/obj/
+fw/isrdemo/makefiles/bin/
 patches/
 work/tb/*
 !work/tb/riscv_soc_tb.vhd
