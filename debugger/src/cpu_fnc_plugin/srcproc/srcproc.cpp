@@ -258,19 +258,20 @@ int RiscvSourceService::disasm(uint64_t pc,
                        int offset,
                        AttributeType *mnemonic,
                        AttributeType *comment) {
-    if ((data[offset] & 0x3) != 0x3) {
-        mnemonic->make_string("err");
+    if ((data[offset] & 0x3) < 3) {
+        mnemonic->make_string("compr");
         comment->make_string("");
-        return 4;
-    }
-    uint32_t val = *reinterpret_cast<uint32_t*>(&data[offset]);
-    uint32_t opcode1 = (val >> 2) & 0x1f;
-    if (tblOpcode1_[opcode1]) {
-        return tblOpcode1_[opcode1](static_cast<ISourceCode *>(this),
-                                    pc + static_cast<uint64_t>(offset),
-                                    val,
-                                    mnemonic,
-                                    comment);
+        return 2;
+    } else if ((data[offset] & 0x3) == 0x3) {
+        uint32_t val = *reinterpret_cast<uint32_t*>(&data[offset]);
+        uint32_t opcode1 = (val >> 2) & 0x1f;
+        if (tblOpcode1_[opcode1]) {
+            return tblOpcode1_[opcode1](static_cast<ISourceCode *>(this),
+                                        pc + static_cast<uint64_t>(offset),
+                                        val,
+                                        mnemonic,
+                                        comment);
+        }
     }
 
     mnemonic->make_string("unimpl");
@@ -324,6 +325,9 @@ void RiscvSourceService::disasm(uint64_t pc,
 
 #if 1
         uint64_t swap = code.val;
+        if (codesz == 2) {
+            swap = code.buf16[0];
+        }
 #else
         uint64_t swap = 0;
         for (int i = 0; i < codesz; i++) {
