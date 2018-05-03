@@ -17,6 +17,10 @@ namespace debugger {
 typedef int (*disasm_opcode_f)(ISourceCode *isrc, uint64_t pc, uint32_t code,
                               AttributeType *mnemonic, AttributeType *comment);
 
+typedef int (*disasm_opcode16_f)(ISourceCode *isrc, uint64_t pc,
+                                Reg16Type code, AttributeType *mnemonic,
+                                AttributeType *comment);
+
 class RiscvSourceService : public IService,
                            public ISourceCode {
 public:
@@ -66,6 +70,7 @@ public:
 
 private:
     disasm_opcode_f tblOpcode1_[32];
+    disasm_opcode16_f tblCompressed_[32];
     AttributeType brList_;
     AttributeType symbolListSortByName_;
     AttributeType symbolListSortByAddr_;

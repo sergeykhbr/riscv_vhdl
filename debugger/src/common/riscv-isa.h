@@ -81,6 +81,161 @@ union ISA_UJ_type {
     uint32_t value;
 };
 
+/**
+ * Compressed extension types:
+ */
+
+// Regsiter
+union ISA_CR_type {
+    struct bits_type {
+        uint16_t opcode : 2;  // [1:0]
+        uint16_t rs2    : 5;  // [6:2]
+        uint16_t rdrs1  : 5;  // [11:7]
+        uint16_t funct4 : 4;  // [15:12]
+    } bits;
+    uint16_t value;
+};
+
+// Immediate
+union ISA_CI_type {
+    struct bits_type {
+        uint16_t opcode : 2;  // [1:0]
+        uint16_t imm    : 5;  // [6:2]
+        uint16_t rdrs   : 5;  // [11:7]
+        uint16_t imm6   : 1;  // [12]
+        uint16_t funct3 : 3;  // [15:13]
+    } bits;
+    struct sp_bits_type {
+        uint16_t opcode : 2;  // [1:0]
+        uint16_t imm5    : 1; // [2]
+        uint16_t imm8_7  : 2; // [4:3]
+        uint16_t imm6  : 1;   // [5]
+        uint16_t imm4  : 1;   // [6]
+        uint16_t sp    : 5;   // [11:7]
+        uint16_t imm9   : 1;  // [12]
+        uint16_t funct3 : 3;  // [15:13]
+    } spbits;
+    struct ldsp_bits_type {
+        uint16_t opcode : 2;  // [1:0]
+        uint16_t off8_6 : 3;  // [4:2]
+        uint16_t off4_3 : 2;  // [6:5]
+        uint16_t rd     : 5;  // [11:7]
+        uint16_t off5   : 1;  // [12]
+        uint16_t funct3 : 3;  // [15:13]
+    } ldspbits;
+    struct lwsp_bits_type {
+        uint16_t opcode : 2;  // [1:0]
+        uint16_t off7_6 : 2;  // [3:2]
+        uint16_t off4_2 : 3;  // [6:4]
+        uint16_t rd     : 5;  // [11:7]
+        uint16_t off5   : 1;  // [12]
+        uint16_t funct3 : 3;  // [15:13]
+    } lwspbits;
+    uint16_t value;
+};
+
+// Stack relative Store
+union ISA_CSS_type {
+    struct w_bits_type {
+        uint16_t opcode : 2;  // [1:0]
+        uint16_t rs2    : 5;  // [6:2]
+        uint16_t imm7_6 : 2;  // [8:7]
+        uint16_t imm5_2 : 4;  // [12:9]
+        uint16_t funct3 : 3;  // [15:13]
+    } wbits;
+    struct d_bits_type {
+        uint16_t opcode : 2;  // [1:0]
+        uint16_t rs2    : 5;  // [6:2]
+        uint16_t imm8_6 : 3;  // [9:7]
+        uint16_t imm5_3 : 3;  // [12:10]
+        uint16_t funct3 : 3;  // [15:13]
+    } dbits;
+    uint16_t value;
+};
+
+// Wide immediate
+union ISA_CIW_type {
+    struct bits_type {
+        uint16_t opcode : 2;  // [1:0]
+        uint16_t rd     : 3;  // [4:2]
+        uint16_t imm3   : 1;  // [5]
+        uint16_t imm2   : 1;  // [6]
+        uint16_t imm9_6 : 4;  // [10:7]
+        uint16_t imm5_4 : 2;  // [12:11]
+        uint16_t funct3 : 3;  // [15:13]
+    } bits;
+    uint16_t value;
+};
+
+// Load
+union ISA_CL_type {
+    struct bits_type {
+        uint16_t opcode : 2;  // [1:0]
+        uint16_t rd     : 3;  // [4:2]
+        uint16_t imm6   : 1;  // [5]
+        uint16_t imm27  : 1;  // [6]
+        uint16_t rs1    : 3;  // [9:7]
+        uint16_t imm5_3 : 3;  // [12:10]
+        uint16_t funct3 : 3;  // [15:13]
+    } bits;
+    uint16_t value;
+};
+
+// Store
+union ISA_CS_type {
+    struct bits_type {
+        uint16_t opcode : 2;  // [1:0]
+        uint16_t rs2    : 3;  // [4:2]
+        uint16_t imm6   : 1;  // [5]
+        uint16_t imm27  : 1;  // [6]
+        uint16_t rs1    : 3;  // [9:7]
+        uint16_t imm5_3 : 3;  // [12:10]
+        uint16_t funct3 : 3;  // [15:13]
+    } bits;
+    uint16_t value;
+};
+
+// Branch
+union ISA_CB_type {
+    struct bits_type {
+        uint16_t opcode : 2;  // [1:0]
+        uint16_t off5   : 1;  // [2]
+        uint16_t off2_1 : 2;  // [4:3]
+        uint16_t off7_6 : 2;  // [6:5]
+        uint16_t rs1    : 3;  // [9:7]
+        uint16_t off4_3 : 2;  // [11:10]
+        uint16_t off8   : 1;  // [12]
+        uint16_t funct3 : 3;  // [15:13]
+    } bits;
+    struct sh_bits_type {
+        uint16_t opcode : 2;  // [1:0]
+        uint16_t shamt  : 5;  // [6:2]
+        uint16_t rd     : 3;  // [9:7]
+        uint16_t funct2 : 2;  // [11:10]
+        uint16_t shamt5 : 1;  // [12]
+        uint16_t funct3 : 3;  // [15:13]
+    } shbits;
+    uint16_t value;
+};
+
+// Jump
+union ISA_CJ_type {
+    struct bits_type {
+        uint16_t opcode : 2;  // [1:0]
+        uint16_t off5   : 1;  // [2]
+        uint16_t off3_1 : 3;  // [5:3]
+        uint16_t off7   : 1;  // [6]
+        uint16_t off6   : 1;  // [7]
+        uint16_t off10  : 1;  // [8]
+        uint16_t off9_8 : 2;  // [10:9]
+        uint16_t off4   : 1;  // [11]
+        uint16_t off11  : 1;  // [12]
+        uint16_t funct3 : 3;  // [15:13]
+    } bits;
+    uint16_t value;
+};
+
+
 static const uint64_t EXT_SIGN_5  = 0xFFFFFFFFFFFFFFF0LL;
 static const uint64_t EXT_SIGN_6  = 0xFFFFFFFFFFFFFFE0LL;
 static const uint64_t EXT_SIGN_8  = 0xFFFFFFFFFFFFFF80LL;

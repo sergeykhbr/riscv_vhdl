@@ -47,6 +47,27 @@ int opcode_0x1B(ISourceCode *isrc, uint64_t pc, uint32_t code,
 int opcode_0x1C(ISourceCode *isrc, uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment);
 
+int C_JR_MV_EBREAK_JALR_ADD(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+                AttributeType *mnemonic, AttributeType *comment);
+int C_NOP_ADDI(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+                AttributeType *mnemonic, AttributeType *comment);
+int C_ADDI16SP_LUI(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+                AttributeType *mnemonic, AttributeType *comment);
+int C_ADDI4SPN(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+                AttributeType *mnemonic, AttributeType *comment);
+int C_JAL_ADDIW(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+                AttributeType *mnemonic, AttributeType *comment);
+int C_LD(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+                AttributeType *mnemonic, AttributeType *comment);
+int C_LI(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+                AttributeType *mnemonic, AttributeType *comment);
+int C_LDSP(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+                AttributeType *mnemonic, AttributeType *comment);
+int C_LW(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+                AttributeType *mnemonic, AttributeType *comment);
+int C_LWSP(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+                AttributeType *mnemonic, AttributeType *comment);
+
 
 RiscvSourceService::RiscvSourceService(const char *name) : IService(name) {
     registerInterface(static_cast<ISourceCode *>(this));
@@ -64,6 +85,19 @@ RiscvSourceService::RiscvSourceService(const char *name) : IService(name) {
     tblOpcode1_[0x19] = &opcode_0x19;
     tblOpcode1_[0x1B] = &opcode_0x1B;
     tblOpcode1_[0x1C] = &opcode_0x1C;
+
+    memset(tblCompressed_, 0, sizeof(tblCompressed_));
+    // page 82, table 12.5 " RISC-V spec. v2.2"
+    tblCompressed_[0x00] = &C_ADDI4SPN;
+    tblCompressed_[0x01] = &C_NOP_ADDI;
+    tblCompressed_[0x05] = &C_JAL_ADDIW;
+    tblCompressed_[0x08] = &C_LW;
+    tblCompressed_[0x09] = &C_LI;
+    tblCompressed_[0x0A] = &C_LWSP;
+    tblCompressed_[0x0C] = &C_LD;
+    tblCompressed_[0x0D] = &C_ADDI16SP_LUI;
+    tblCompressed_[0x0E] = &C_LDSP;
+    tblCompressed_[0x12] = &C_JR_MV_EBREAK_JALR_ADD;
 
     brList_.make_list(0);
     symbolListSortByName_.make_list(0);
@@ -258,13 +292,24 @@ int RiscvSourceService::disasm(uint64_t pc,
                        int offset,
                        AttributeType *mnemonic,
                        AttributeType *comment) {
+    int oplen;
     if ((data[offset] & 0x3) < 3) {
-        mnemonic->make_string("compr");
-        comment->make_string("");
-        return 2;
+        Reg16Type val;
+        uint32_t hash;
+        val.word = *reinterpret_cast<uint16_t*>(&data[offset]);
+        hash = ((val.word >> 11) & 0x1C) | (val.word & 0x3);
+        oplen = 2;
+        if (tblCompressed_[hash]) {
+            return tblCompressed_[hash](static_cast<ISourceCode *>(this),
+                                        pc + static_cast<uint64_t>(offset),
+                                        val,
+                                        mnemonic,
+                                        comment);
+        }
     } else if ((data[offset] & 0x3) == 0x3) {
         uint32_t val = *reinterpret_cast<uint32_t*>(&data[offset]);
         uint32_t opcode1 = (val >> 2) & 0x1f;
+        oplen = 4;
         if (tblOpcode1_[opcode1]) {
             return tblOpcode1_[opcode1](static_cast<ISourceCode *>(this),
                                         pc + static_cast<uint64_t>(offset),
@@ -276,7 +321,7 @@ int RiscvSourceService::disasm(uint64_t pc,
 
     mnemonic->make_string("unimpl");
     comment->make_string("");
-    return 4;
+    return oplen;
 }
 
 void RiscvSourceService::disasm(uint64_t pc,
@@ -843,7 +888,7 @@ int opcode_0x1B(ISourceCode *isrc, uint64_t pc, uint32_t code,
     imm64 |= (uj.bits.imm11 << 11);
     imm64 |= (uj.bits.imm10_1 << 1);
     if (uj.bits.rd) {
-        RISCV_sprintf(tstr, sizeof(tstr), "jal     %08" RV_PRI64 "x",
+        RISCV_sprintf(tstr, sizeof(tstr), "jal     ra,%08" RV_PRI64 "x",
             pc + imm64);
     } else {
         RISCV_sprintf(tstr, sizeof(tstr), "j       %08" RV_PRI64 "x",
@@ -960,5 +1005,222 @@ int opcode_0x1C(ISourceCode *isrc, uint64_t pc, uint32_t code,
     comment->make_string(tcomm);
     return 4;
 }
+
+/**
+ * C-extension  disassembler
+ */
+int C_JR_MV_EBREAK_JALR_ADD(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+                AttributeType *mnemonic, AttributeType *comment) {
+    char tstr[128] = "unimpl";
+    char tcomm[128] = "";
+    ISA_CR_type u;
+    u.value = code.word;
+    if (u.bits.funct4 == 0x8) {
+        if (u.bits.rdrs1 && !u.bits.rs2) {
+            if (u.bits.rdrs1 == 1) {
+                RISCV_sprintf(tstr, sizeof(tstr), "%s", "ret");
+            } else {
+                RISCV_sprintf(tstr, sizeof(tstr), "jr      %s",
+                    RN[u.bits.rdrs1]);
+            }
+        } else {
+            RISCV_sprintf(tstr, sizeof(tstr), "mv      %s,%s",
+                RN[u.bits.rdrs1], RN[u.bits.rs2]);
+        }
+    } else {
+        if (!u.bits.rdrs1 && !u.bits.rs2) {
+            RISCV_sprintf(tstr, sizeof(tstr), "%s", "ebreak");
+        } else if (u.bits.rdrs1 && !u.bits.rs2) {
+            RISCV_sprintf(tstr, sizeof(tstr), "jalr    ra,%s,0",
+                RN[u.bits.rdrs1]);
+        } else {
+            RISCV_sprintf(tstr, sizeof(tstr), "add     %s,%s,%s",
+                RN[u.bits.rdrs1], RN[u.bits.rdrs1], RN[u.bits.rs2]);
+        }
+    }
+
+    mnemonic->make_string(tstr);
+    comment->make_string(tcomm);
+    return 2;
+}
+
+int C_NOP_ADDI(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+                AttributeType *mnemonic, AttributeType *comment) {
+    char tstr[128];
+    char tcomm[128] = "";
+    ISA_CI_type u;
+    u.value = code.word;
+    uint64_t imm = u.bits.imm;
+    if (u.bits.imm6) {
+        imm |= EXT_SIGN_6;
+    }
+    if (u.value == 0x1) {
+        RISCV_sprintf(tstr, sizeof(tstr), "%s", "nop");
+    } else {
+        RISCV_sprintf(tstr, sizeof(tstr), "addi    %s,%s,%d",
+            RN[u.bits.rdrs], RN[u.bits.rdrs], static_cast<int>(imm));
+    }
+
+    mnemonic->make_string(tstr);
+    comment->make_string(tcomm);
+    return 2;
+}
+
+int C_ADDI16SP_LUI(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+                AttributeType *mnemonic, AttributeType *comment) {
+    char tstr[128];
+    char tcomm[128] = "";
+    ISA_CI_type u;
+    u.value = code.word;
+    if (u.spbits.sp == 0x2) {
+        uint64_t imm = (u.spbits.imm8_7 << 3) | (u.spbits.imm6 << 2)
+                    | (u.spbits.imm5 << 1) | u.spbits.imm4;
+        if (u.spbits.imm9) {
+            imm |= EXT_SIGN_6;
+        }
+        imm <<= 4;
+        RISCV_sprintf(tstr, sizeof(tstr), "addi    sp,sp,%d",
+            static_cast<int>(imm));
+    } else {
+        uint64_t imm = u.bits.imm;
+        if (u.bits.imm6) {
+            imm |= EXT_SIGN_6;
+        }
+        imm <<= 12;
+        RISCV_sprintf(tstr, sizeof(tstr), "lui     %s,0x%x",
+            RN[u.bits.rdrs], static_cast<uint32_t>(imm));
+
+    }
+
+    mnemonic->make_string(tstr);
+    comment->make_string(tcomm);
+    return 2;
+}
+
+int C_ADDI4SPN(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+                AttributeType *mnemonic, AttributeType *comment) {
+    char tstr[128];
+    char tcomm[128] = "";
+    ISA_CIW_type u;
+    u.value = code.word;
+    uint64_t imm = (u.bits.imm9_6 << 4) | (u.bits.imm5_4 << 2)
+                | (u.bits.imm3 << 1) | u.bits.imm2;
+    imm <<= 2;
+    RISCV_sprintf(tstr, sizeof(tstr), "addi    %s,sp,%d",
+        RN[8 + u.bits.rd], static_cast<int>(imm));
+
+    mnemonic->make_string(tstr);
+    comment->make_string(tcomm);
+    return 2;
+}
+
+int C_JAL_ADDIW(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+                AttributeType *mnemonic, AttributeType *comment) {
+    char tstr[128];
+    char tcomm[128] = "";
+    ISA_CI_type u;
+    u.value = code.word;
+    uint64_t imm = u.bits.imm;
+    if (u.bits.imm6) {
+        imm |= EXT_SIGN_6;
+    }
+    // JAL is th RV32C only instruction
+    RISCV_sprintf(tstr, sizeof(tstr), "addiw   %s,%s,%d",
+        RN[u.bits.rdrs], RN[u.bits.rdrs], static_cast<int>(imm));
+
+    mnemonic->make_string(tstr);
+    comment->make_string(tcomm);
+    return 2;
+}
+
+int C_LD(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+                AttributeType *mnemonic, AttributeType *comment) {
+    char tstr[128];
+    char tcomm[128] = "";
+    ISA_CL_type u;
+    u.value = code.word;
+    uint32_t off = (u.bits.imm27 << 4) | (u.bits.imm6 << 3) | u.bits.imm5_3;
+    off <<= 3;
+
+    RISCV_sprintf(tstr, sizeof(tstr), "ld      %s,%d(%s)",
+        RN[8 + u.bits.rd], off, RN[8 + u.bits.rs1]);
+
+    mnemonic->make_string(tstr);
+    comment->make_string(tcomm);
+    return 2;
+}
+
+int C_LDSP(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+           AttributeType *mnemonic, AttributeType *comment) {
+    char tstr[128];
+    char tcomm[128] = "";
+    ISA_CI_type u;
+    u.value = code.word;
+    uint64_t off = (u.ldspbits.off8_6 << 3) | (u.ldspbits.off5 << 2)
+                    | u.ldspbits.off4_3;
+    off <<= 3;
+
+    RISCV_sprintf(tstr, sizeof(tstr), "ld      %s,%d(sp)",
+        RN[u.ldspbits.rd], off);
+
+    mnemonic->make_string(tstr);
+    comment->make_string(tcomm);
+    return 2;
+}
+
+int C_LI(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+                AttributeType *mnemonic, AttributeType *comment) {
+    char tstr[128];
+    char tcomm[128] = "";
+    ISA_CI_type u;
+    u.value = code.word;
+    uint64_t imm = u.bits.imm;
+    if (u.bits.imm6) {
+        imm |= EXT_SIGN_6;
+    }
+
+    RISCV_sprintf(tstr, sizeof(tstr), "li      %s,%d",
+        RN[u.bits.rdrs], static_cast<int>(imm));
+
+    mnemonic->make_string(tstr);
+    comment->make_string(tcomm);
+    return 2;
+}
+
+int C_LW(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+                AttributeType *mnemonic, AttributeType *comment) {
+    char tstr[128];
+    char tcomm[128] = "";
+    ISA_CL_type u;
+    u.value = code.word;
+    uint32_t off = (u.bits.imm6 << 4) | (u.bits.imm5_3 << 1) | u.bits.imm27;
+    off <<= 2;
+
+    RISCV_sprintf(tstr, sizeof(tstr), "lw      %s,%d(%s)",
+        RN[8 + u.bits.rd], off, RN[8 + u.bits.rs1]);
+
+    mnemonic->make_string(tstr);
+    comment->make_string(tcomm);
+    return 2;
+}
+
+int C_LWSP(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+           AttributeType *mnemonic, AttributeType *comment) {
+    char tstr[128];
+    char tcomm[128] = "";
+    ISA_CI_type u;
+    u.value = code.word;
+    uint64_t off = (u.lwspbits.off7_6 << 4) | (u.lwspbits.off5 << 3)
+                     | u.lwspbits.off4_2;
+    off <<= 2;
+
+    RISCV_sprintf(tstr, sizeof(tstr), "lw      %s,%d(sp)",
+        RN[u.lwspbits.rd], off);
+
+    mnemonic->make_string(tstr);
+    comment->make_string(tcomm);
+    return 2;
+}
+
 
 }  // namespace debugger
