@@ -239,6 +239,7 @@ union ISA_CJ_type {
 static const uint64_t EXT_SIGN_5  = 0xFFFFFFFFFFFFFFF0LL;
 static const uint64_t EXT_SIGN_6  = 0xFFFFFFFFFFFFFFE0LL;
 static const uint64_t EXT_SIGN_8  = 0xFFFFFFFFFFFFFF80LL;
+static const uint64_t EXT_SIGN_9  = 0xFFFFFFFFFFFFFF00LL;
 static const uint64_t EXT_SIGN_11 = 0xFFFFFFFFFFFFF800LL;
 static const uint64_t EXT_SIGN_12 = 0xFFFFFFFFFFFFF000LL;
 static const uint64_t EXT_SIGN_16 = 0xFFFFFFFFFFFF0000LL;

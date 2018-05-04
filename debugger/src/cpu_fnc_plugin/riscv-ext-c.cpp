@@ -253,7 +253,7 @@ public:
                     | (u.bits.off4_3 << 2) | u.bits.off2_1;
             imm <<= 1;
             if (u.bits.off8) {
-                imm |= EXT_SIGN_8;
+                imm |= EXT_SIGN_9;
             }
             icpu_->setBranch(icpu_->getPC() + imm);
         }
@@ -282,7 +282,7 @@ public:
                     | (u.bits.off4_3 << 2) | u.bits.off2_1;
             imm <<= 1;
             if (u.bits.off8) {
-                imm |= EXT_SIGN_8;
+                imm |= EXT_SIGN_9;
             }
             icpu_->setBranch(icpu_->getPC() + imm);
         }
@@ -768,7 +768,7 @@ public:
 /** 
  * @brief Arith shift right
  *
- * C.SRAI is dened analogously to C.SRLI, but instead performs an arithmetic
+ * C.SRAI is defined analogously to C.SRLI, but instead performs an arithmetic
  * right shift. C.SRAI expands to srai rd', rd', shamt[5:0].
  */
 class C_SRAI : public RiscvInstruction16 {
