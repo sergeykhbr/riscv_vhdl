@@ -291,6 +291,24 @@ public:
 };
 
 /**
+ * @brief C.EBREAK (breakpoint instruction)
+ *
+ * The C.EBREAK instruction is used by debuggers to cause control to be
+ * transferred back to a debug-ging environment.
+ */
+class C_EBREAK : public RiscvInstruction16 {
+public:
+    C_EBREAK(CpuRiver_Functional *icpu) : RiscvInstruction16(icpu,
+        "C_EBREAK", "????????????????1001000000000010") {}
+
+    virtual int exec(Reg64Type *payload) {
+        icpu_->raiseSignal(EXCEPTION_Breakpoint);
+        return 2;
+    }
+};
+
+
+/**
  * @brief Unconditional jump
  *
  * C.J performs an unconditional control transfer. The offset is sign-extended
@@ -952,6 +970,7 @@ void CpuRiver_Functional::addIsaExtensionC() {
     addSupportedInstruction(new C_ANDI(this));
     addSupportedInstruction(new C_BEQZ(this));
     addSupportedInstruction(new C_BNEZ(this));
+    addSupportedInstruction(new C_EBREAK(this));
     addSupportedInstruction(new C_J(this));
 #ifdef RV32C_ONLY
     addSupportedInstruction(new C_JAL(this));

@@ -98,7 +98,11 @@ void CmdBr::exec(AttributeType *args, AttributeType *res) {
                 reinterpret_cast<uint64_t>(&pdsu->udbg.v.add_breakpoint);
             tap_->write(dsuaddr, 8, braddr.buf);
         } else {
-            brinstr.buf32[0] = 0x00100073;   // EBREAK instruction
+            if ((brinstr.val & 0x3) == 0x3) {
+                brinstr.buf32[0] = 0x00100073;  // EBREAK instruction
+            } else {
+                brinstr.buf16[0] = 0x9002;      // C.EBREAK instruction
+            }
             tap_->write(braddr.val, 4, brinstr.buf);
         }
         return;
