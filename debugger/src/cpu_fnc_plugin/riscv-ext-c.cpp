@@ -531,8 +531,8 @@ public:
 /**
  * @brief LOAD instructions with sign extending.
  *
- * C.LWloads a 32-bit value from memory into register rd0. It computes an
- * effective address by adding the zero-extended oset, scaled by 4, to the
+ * C.LW loads a 32-bit value from memory into register rd0. It computes an
+ * effective address by adding the zero-extended offset, scaled by 4, to the
  * base address in register rs10. It expands to lw rd0, offset[6:2](rs10).
  */ 
 class C_LW : public RiscvInstruction16 {
@@ -549,6 +549,7 @@ public:
         trans.action = MemAction_Read;
         trans.addr = R[8 + u.bits.rs1] + off;
         trans.xsize = 4;
+        trans.rpayload.b64[0] = 0;
         if (trans.addr & 0x3) {
             trans.rpayload.b64[0] = 0;
             icpu_->raiseSignal(EXCEPTION_LoadMisalign);

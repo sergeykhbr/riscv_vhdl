@@ -128,16 +128,45 @@ int ElfReaderService::readFile(const char *filename) {
         return 0;
     }
 
-    /** Init names */
     SectionHeaderType *sh;
+    /** Search .shstrtab section */
     sh_tbl_ =
         reinterpret_cast<SectionHeaderType *>(&image_[header_->e_shoff]);
     for (int i = 0; i < header_->e_shnum; i++) {
         sh = &sh_tbl_[i];
         swap_secheader(sh);
-        if (sh->sh_type == SHT_STRTAB) {
-            processStringTable(sh);
+        sectionNames_ = reinterpret_cast<char *>(&image_[sh->sh_offset]);
+        if (sh->sh_type == SHT_STRTAB && 
+            strcmp(sectionNames_ + sh->sh_name, ".shstrtab") != 0) {
+            sectionNames_ = NULL;
         }
+    }
+    if (!sectionNames_) {
+        printf("err: section .shstrtab not found.\n");
+    }
+
+    /** Search ".strtab" section with Debug symbols */
+    sh_tbl_ =
+        reinterpret_cast<SectionHeaderType *>(&image_[header_->e_shoff]);
+    for (int i = 0; i < header_->e_shnum; i++) {
+        sh = &sh_tbl_[i];
+        if (sectionNames_ == NULL || sh->sh_type != SHT_STRTAB) {
+            continue;
+        }
+        if (strcmp(sectionNames_ + sh->sh_name, ".strtab")) {
+            continue;
+        }
+        /** 
+            * This section holds strings, most commonly the strings that
+            * represent the names associated with symbol table entries. 
+            * If the file has a loadable segment that includes the symbol
+            * string table, the section's attributes will include the
+            * SHF_ALLOC bit; otherwise, that bit will be turned off.
+            */
+        symbolNames_ = reinterpret_cast<char *>(&image_[sh->sh_offset]);
+    }
+    if (!symbolNames_) {
+        printf("err: section .strtab not found. No debug symbols.\n");
     }
 
     /** Direct loading via tap interface: */
@@ -231,29 +260,6 @@ int ElfReaderService::loadSections() {
         isrc_->addSymbols(&symbolList_);
     }
     return static_cast<int>(total_bytes);
-}
-
-void ElfReaderService::processStringTable(SectionHeaderType *sh) {
-    if (sectionNames_ == NULL) {
-        sectionNames_ = reinterpret_cast<char *>(&image_[sh->sh_offset]);
-        if (strcmp(sectionNames_ + sh->sh_name, ".shstrtab") != 0) {
-            /** This section holds section names. */
-            printf("err: undefined .shstrtab section\n");
-            sectionNames_ = NULL;
-        }
-    } else if (strcmp(sectionNames_ + sh->sh_name, ".strtab") == 0) {
-        /** 
-         * This section holds strings, most commonly the strings that
-         * represent the names associated with symbol table entries. 
-         * If the file has a loadable segment that includes the symbol
-         * string table, the section's attributes will include the
-         * SHF_ALLOC bit; otherwise, that bit will be turned off.
-         */
-        symbolNames_ = reinterpret_cast<char *>(&image_[sh->sh_offset]);
-    } else {
-        RISCV_error("Unsupported string section %s",
-                            sectionNames_ + sh->sh_name);
-    }
 }
 
 void ElfReaderService::processDebugSymbol(SectionHeaderType *sh) {

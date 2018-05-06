@@ -52,7 +52,6 @@ public:
 private:
     int readElfHeader();
     int loadSections();
-    void processStringTable(SectionHeaderType *sh);
     void processDebugSymbol(SectionHeaderType *sh);
     void swap_elfheader(ElfHeaderType *h);
     void swap_secheader(SectionHeaderType *sh);

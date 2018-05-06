@@ -77,8 +77,7 @@
                      'csr MTIME',
                      'read 0xfffff004 128',
                      'loadelf helloworld',
-                     'loadelf zephyr.elf nocode',
-                     'loadelf gnssfw nocode',
+                     'loadelf e:/zephyr.elf nocode',
                      ]]
                 ]}]},
     {'Class':'CmdExecutorClass','Instances':[
@@ -166,7 +165,7 @@
     {'Class':'MemorySimClass','Instances':[
           {'Name':'fwimage0','Attr':[
                 ['LogLevel',1],
-                ['InitFile','../../../rocket_soc/fw_images/gcc711/isrdemo.hex'],
+                ['InitFile','../../../rocket_soc/fw_images/gcc711/zephyr.hex'],
                 ['ReadOnly',true],
                 ['BaseAddress',0x00100000],
                 ['Length',0x40000]
@@ -174,7 +173,7 @@
     {'Class':'MemorySimClass','Instances':[
           {'Name':'sram0','Attr':[
                 ['LogLevel',1],
-                ['InitFile','../../../rocket_soc/fw_images/gcc711/isrdemo.hex'],
+                ['InitFile','../../../rocket_soc/fw_images/gcc711/zephyr.hex'],
                 ['ReadOnly',false],
                 ['BaseAddress',0x10000000],
                 ['Length',0x80000]
