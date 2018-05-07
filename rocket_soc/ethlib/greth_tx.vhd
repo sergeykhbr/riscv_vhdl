@@ -27,8 +27,8 @@ library ieee;
 use ieee.std_logic_1164.all;
 library commonlib;
 use commonlib.types_common.all;
-library rocketlib;
-use rocketlib.grethpkg.all;
+library ethlib;
+use ethlib.types_eth.all;
 
 entity greth_tx is
   generic(

@@ -42,7 +42,7 @@
     </file>
     <file xil_pn:name="../../techmap/pll/SysPLL_tech.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="6"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="50"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="51"/>
       <library xil_pn:name="techmap"/>
     </file>
     <file xil_pn:name="../../techmap/pll/SysPLL_v6.vhd" xil_pn:type="FILE_VHDL">
@@ -55,28 +55,13 @@
       <association xil_pn:name="Implementation" xil_pn:seqID="28"/>
       <library xil_pn:name="rocketlib"/>
     </file>
-    <file xil_pn:name="../../rocketlib/misc/nasti_gpio.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="9"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="66"/>
-      <library xil_pn:name="rocketlib"/>
-    </file>
     <file xil_pn:name="../../work/config_common.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="10"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="48"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="49"/>
     </file>
     <file xil_pn:name="config_v6.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="11"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="71"/>
-    </file>
-    <file xil_pn:name="../../rocketlib/misc/nasti_uart.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="13"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="60"/>
-      <library xil_pn:name="rocketlib"/>
-    </file>
-    <file xil_pn:name="../../rocketlib/misc/reset_glb.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="15"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="59"/>
-      <library xil_pn:name="rocketlib"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="61"/>
     </file>
     <file xil_pn:name="../../techmap/mem/bootrom_inferred.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="16"/>
@@ -98,21 +83,6 @@
       <association xil_pn:name="Implementation" xil_pn:seqID="36"/>
       <library xil_pn:name="techmap"/>
     </file>
-    <file xil_pn:name="../../rocketlib/misc/nasti_bootrom.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="20"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="67"/>
-      <library xil_pn:name="rocketlib"/>
-    </file>
-    <file xil_pn:name="../../rocketlib/misc/nasti_sram.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="21"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="61"/>
-      <library xil_pn:name="rocketlib"/>
-    </file>
-    <file xil_pn:name="../../rocketlib/misc/nasti_romimage.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="22"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="62"/>
-      <library xil_pn:name="rocketlib"/>
-    </file>
     <file xil_pn:name="../../techmap/mem/romimage_inferred.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="23"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="26"/>
@@ -128,19 +98,9 @@
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
       <library xil_pn:name="rocketlib"/>
     </file>
-    <file xil_pn:name="../../rocketlib/misc/nasti_pnp.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="26"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="63"/>
-      <library xil_pn:name="rocketlib"/>
-    </file>
-    <file xil_pn:name="../../rocketlib/misc/nasti_irqctrl.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="27"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="64"/>
-      <library xil_pn:name="rocketlib"/>
-    </file>
     <file xil_pn:name="../../techmap/pll/types_pll.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="28"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="49"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="50"/>
       <library xil_pn:name="techmap"/>
     </file>
     <file xil_pn:name="../../techmap/mem/types_mem.vhd" xil_pn:type="FILE_VHDL">
@@ -150,7 +110,7 @@
     </file>
     <file xil_pn:name="../../techmap/bufg/types_buf.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="30"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="52"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="53"/>
       <library xil_pn:name="techmap"/>
     </file>
     <file xil_pn:name="../../techmap/mem/ram32_inferred.vhd" xil_pn:type="FILE_VHDL">
@@ -180,12 +140,12 @@
     </file>
     <file xil_pn:name="../../techmap/bufg/ibuf_tech.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="61"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="56"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="57"/>
       <library xil_pn:name="techmap"/>
     </file>
     <file xil_pn:name="../../techmap/bufg/iobuf_tech.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="62"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="53"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="54"/>
       <library xil_pn:name="techmap"/>
     </file>
     <file xil_pn:name="../../techmap/bufg/iobuf_virtex6.vhd" xil_pn:type="FILE_VHDL">
@@ -205,52 +165,17 @@
     </file>
     <file xil_pn:name="../../rocketlib/rocket_l1only.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="67"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="57"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="58"/>
     </file>
     <file xil_pn:name="../../ambalib/axictrl.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="72"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="72"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="73"/>
       <library xil_pn:name="ambalib"/>
     </file>
     <file xil_pn:name="../../ambalib/types_amba4.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="73"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="7"/>
       <library xil_pn:name="ambalib"/>
-    </file>
-    <file xil_pn:name="../../rocketlib/eth/eth_axi_mst.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="124"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="45"/>
-      <library xil_pn:name="rocketlib"/>
-    </file>
-    <file xil_pn:name="../../rocketlib/eth/eth_rstgen.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="125"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="12"/>
-      <library xil_pn:name="rocketlib"/>
-    </file>
-    <file xil_pn:name="../../rocketlib/eth/greth_pkg.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="126"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="11"/>
-      <library xil_pn:name="rocketlib"/>
-    </file>
-    <file xil_pn:name="../../rocketlib/eth/greth_rx.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="127"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="31"/>
-      <library xil_pn:name="rocketlib"/>
-    </file>
-    <file xil_pn:name="../../rocketlib/eth/greth_tx.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="128"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="30"/>
-      <library xil_pn:name="rocketlib"/>
-    </file>
-    <file xil_pn:name="../../rocketlib/eth/grethaxi.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="129"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="68"/>
-      <library xil_pn:name="rocketlib"/>
-    </file>
-    <file xil_pn:name="../../rocketlib/eth/grethc64.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="130"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="44"/>
-      <library xil_pn:name="rocketlib"/>
     </file>
     <file xil_pn:name="../../techmap/mem/syncram_2p_inferred.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="131"/>
@@ -264,12 +189,12 @@
     </file>
     <file xil_pn:name="../../riverlib/dsu/axi_dsu.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="136"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="70"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="60"/>
       <library xil_pn:name="riverlib"/>
     </file>
     <file xil_pn:name="../../techmap/bufg/igdsbuf_tech.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="142"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="54"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="55"/>
       <library xil_pn:name="techmap"/>
     </file>
     <file xil_pn:name="../../techmap/bufg/igdsbuf_v6.vhd" xil_pn:type="FILE_VHDL">
@@ -279,7 +204,7 @@
     </file>
     <file xil_pn:name="../../techmap/pll/clkp90_tech.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="144"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="51"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="52"/>
       <library xil_pn:name="techmap"/>
     </file>
     <file xil_pn:name="../../techmap/pll/clkp90_v6.vhd" xil_pn:type="FILE_VHDL">
@@ -287,14 +212,9 @@
       <association xil_pn:name="Implementation" xil_pn:seqID="35"/>
       <library xil_pn:name="techmap"/>
     </file>
-    <file xil_pn:name="../../rocketlib/misc/nasti_gptimers.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="146"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="65"/>
-      <library xil_pn:name="rocketlib"/>
-    </file>
     <file xil_pn:name="../../techmap/bufg/idsbuf_tech.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="66"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="55"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="56"/>
       <library xil_pn:name="techmap"/>
     </file>
     <file xil_pn:name="../../techmap/bufg/idsbuf_xilinx.vhd" xil_pn:type="FILE_VHDL">
@@ -304,7 +224,7 @@
     </file>
     <file xil_pn:name="../../rocketlib/behav_srams.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="116"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="13"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="11"/>
     </file>
     <file xil_pn:name="../../rocketlib/rocketchip.GnssConfig.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="117"/>
@@ -312,11 +232,11 @@
     </file>
     <file xil_pn:name="../../work/riscv_soc.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="113"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="73"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="74"/>
     </file>
     <file xil_pn:name="../../riverlib/river_amba.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="114"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="69"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="59"/>
       <library xil_pn:name="riverlib"/>
     </file>
     <file xil_pn:name="../../riverlib/river_cfg.vhd" xil_pn:type="FILE_VHDL">
@@ -326,52 +246,52 @@
     </file>
     <file xil_pn:name="../../riverlib/river_top.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="116"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="47"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="45"/>
       <library xil_pn:name="riverlib"/>
     </file>
     <file xil_pn:name="../../riverlib/types_river.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="117"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="46"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="44"/>
       <library xil_pn:name="riverlib"/>
     </file>
     <file xil_pn:name="../../riverlib/core/bp_predic.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="118"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="21"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="19"/>
       <library xil_pn:name="riverlib"/>
     </file>
     <file xil_pn:name="../../riverlib/core/csr.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="119"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="20"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="18"/>
       <library xil_pn:name="riverlib"/>
     </file>
     <file xil_pn:name="../../riverlib/core/decoder.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="120"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="18"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="16"/>
       <library xil_pn:name="riverlib"/>
     </file>
     <file xil_pn:name="../../riverlib/core/execute.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="121"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="17"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="15"/>
       <library xil_pn:name="riverlib"/>
     </file>
     <file xil_pn:name="../../riverlib/core/fetch.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="122"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="16"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="14"/>
       <library xil_pn:name="riverlib"/>
     </file>
     <file xil_pn:name="../../riverlib/core/memaccess.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="123"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="15"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="13"/>
       <library xil_pn:name="riverlib"/>
     </file>
     <file xil_pn:name="../../riverlib/core/proc.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="124"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="32"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="30"/>
       <library xil_pn:name="riverlib"/>
     </file>
     <file xil_pn:name="../../riverlib/core/regibank.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="125"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="14"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="12"/>
       <library xil_pn:name="riverlib"/>
     </file>
     <file xil_pn:name="../../riverlib/core/arith/int_div.vhd" xil_pn:type="FILE_VHDL">
@@ -386,17 +306,17 @@
     </file>
     <file xil_pn:name="../../riverlib/cache/cache_top.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="128"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="33"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="31"/>
       <library xil_pn:name="riverlib"/>
     </file>
     <file xil_pn:name="../../riverlib/cache/dcache.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="129"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="23"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="21"/>
       <library xil_pn:name="riverlib"/>
     </file>
     <file xil_pn:name="../../riverlib/cache/icache.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="130"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="22"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="20"/>
       <library xil_pn:name="riverlib"/>
     </file>
     <file xil_pn:name="../../work/tb/riscv_soc_tb.vhd" xil_pn:type="FILE_VHDL">
@@ -410,7 +330,7 @@
     </file>
     <file xil_pn:name="../../riverlib/core/dbg_port.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="131"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="19"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="17"/>
       <library xil_pn:name="riverlib"/>
     </file>
     <file xil_pn:name="../../riverlib/core/arith/shift.vhd" xil_pn:type="FILE_VHDL">
@@ -427,10 +347,95 @@
       <association xil_pn:name="Implementation" xil_pn:seqID="3"/>
       <library xil_pn:name="riverlib"/>
     </file>
-    <file xil_pn:name="../../rocketlib/misc/tap_uart.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="134"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="58"/>
-      <library xil_pn:name="rocketlib"/>
+    <file xil_pn:name="../../ethlib/eth_axi_mst.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="86"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="48"/>
+      <library xil_pn:name="ethlib"/>
+    </file>
+    <file xil_pn:name="../../ethlib/eth_rstgen.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="87"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="23"/>
+      <library xil_pn:name="ethlib"/>
+    </file>
+    <file xil_pn:name="../../ethlib/greth_rx.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="88"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="33"/>
+      <library xil_pn:name="ethlib"/>
+    </file>
+    <file xil_pn:name="../../ethlib/greth_tx.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="89"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="32"/>
+      <library xil_pn:name="ethlib"/>
+    </file>
+    <file xil_pn:name="../../ethlib/grethaxi.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="90"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="72"/>
+      <library xil_pn:name="ethlib"/>
+    </file>
+    <file xil_pn:name="../../ethlib/grethc64.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="91"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="47"/>
+      <library xil_pn:name="ethlib"/>
+    </file>
+    <file xil_pn:name="../../ethlib/types_eth.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="92"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="22"/>
+      <library xil_pn:name="ethlib"/>
+    </file>
+    <file xil_pn:name="../../misclib/nasti_bootrom.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="93"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="71"/>
+      <library xil_pn:name="misclib"/>
+    </file>
+    <file xil_pn:name="../../misclib/nasti_gpio.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="94"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="70"/>
+      <library xil_pn:name="misclib"/>
+    </file>
+    <file xil_pn:name="../../misclib/nasti_gptimers.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="95"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="69"/>
+      <library xil_pn:name="misclib"/>
+    </file>
+    <file xil_pn:name="../../misclib/nasti_irqctrl.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="96"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="68"/>
+      <library xil_pn:name="misclib"/>
+    </file>
+    <file xil_pn:name="../../misclib/nasti_pnp.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="97"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="67"/>
+      <library xil_pn:name="misclib"/>
+    </file>
+    <file xil_pn:name="../../misclib/nasti_romimage.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="98"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="66"/>
+      <library xil_pn:name="misclib"/>
+    </file>
+    <file xil_pn:name="../../misclib/nasti_sram.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="99"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="65"/>
+      <library xil_pn:name="misclib"/>
+    </file>
+    <file xil_pn:name="../../misclib/nasti_uart.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="100"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="64"/>
+      <library xil_pn:name="misclib"/>
+    </file>
+    <file xil_pn:name="../../misclib/reset_glb.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="101"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="63"/>
+      <library xil_pn:name="misclib"/>
+    </file>
+    <file xil_pn:name="../../misclib/tap_uart.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="102"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="62"/>
+      <library xil_pn:name="misclib"/>
+    </file>
+    <file xil_pn:name="../../misclib/types_misc.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="103"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="46"/>
+      <library xil_pn:name="misclib"/>
     </file>
   </files>
 
@@ -767,6 +772,8 @@
   <libraries>
     <library xil_pn:name="ambalib"/>
     <library xil_pn:name="commonlib"/>
+    <library xil_pn:name="ethlib"/>
+    <library xil_pn:name="misclib"/>
     <library xil_pn:name="riverlib"/>
     <library xil_pn:name="rocketlib"/>
     <library xil_pn:name="techmap"/>

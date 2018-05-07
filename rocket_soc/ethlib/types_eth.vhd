@@ -27,7 +27,7 @@ library ambalib;
 --! AXI4 configuration constants.
 use ambalib.types_amba4.all;
 
-package grethpkg is
+package types_eth is
   --gigabit sync types
   type data_sync_type is array (0 to 3) of std_logic_vector(31 downto 0);
   type ctrl_sync_type is array (0 to 3) of std_logic_vector(1 downto 0);
@@ -750,7 +750,7 @@ package grethpkg is
 
 end package;
 
-package body grethpkg is
+package body types_eth is
 
   function mirror(din : in std_logic_vector)
                         return std_logic_vector is

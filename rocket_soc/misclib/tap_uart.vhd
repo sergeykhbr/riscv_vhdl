@@ -13,8 +13,8 @@ use commonlib.types_common.all;
 library ambalib;
 --! AXI4 configuration constants.
 use ambalib.types_amba4.all;
-library rocketlib;
-use rocketlib.types_rocket.all;
+library misclib;
+use misclib.types_misc.all;
 
 entity uart_tap is
   port (

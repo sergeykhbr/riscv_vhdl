@@ -27,13 +27,17 @@ use techmap.types_buf.all;
 library ambalib;
 --! AXI4 configuration constants.
 use ambalib.types_amba4.all;
+--! Misc modules library
+library misclib;
+use misclib.types_misc.all;
+--! Ethernet related declarations.
+library ethlib;
+use ethlib.types_eth.all;
 
 --! Rocket-chip specific library
 library rocketlib;
 --! SOC top-level component declaration.
 use rocketlib.types_rocket.all;
---! Ethernet related declarations.
-use rocketlib.grethpkg.all;
 
 --! River CPU specific library
 library riverlib;

@@ -32,8 +32,8 @@ use commonlib.types_common.all;
 library techmap;
 use techmap.gencomp.all;
 use techmap.types_mem.all;
-library rocketlib;
-use rocketlib.grethpkg.all;
+library ethlib;
+use ethlib.types_eth.all;
 
 entity grethc64 is
   generic(

@@ -154,8 +154,8 @@ library ambalib;
 --! AXI4 configuration constants.
 use ambalib.types_amba4.all;
 --! Ethernet specific declarations.
-library rocketlib;
-use rocketlib.grethpkg.all;
+library ethlib;
+use ethlib.types_eth.all;
 
 entity grethaxi is
   generic(

@@ -15,8 +15,8 @@ library ambalib;
 --! AXI4 configuration constants.
 use ambalib.types_amba4.all;
 --! Rocket-chip specific library
-library rocketlib;
-use rocketlib.grethpkg.all;
+library ethlib;
+use ethlib.types_eth.all;
 
 entity eth_axi_mst is
   port(
