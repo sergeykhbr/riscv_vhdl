@@ -25,10 +25,10 @@ Parameterized generator of the Rocket-chip can be found here:
 
 ## System-on-Chip structure and performance
 
-SoC documentation in [.pdf](rocket_soc/docs/riscv_soc_descr.pdf) and 
+SoC documentation in [.pdf](docs/riscv_vhdl_trm.pdf) and 
 [.html](http://sergeykhbr.github.io/riscv_vhdl/) formats.
 
-![SOC top](rocket_soc/docs/pics/soc_top_v5.png)
+![SOC top](docs/doxygen/pics/soc_top_v5.png)
 
 Performance analysis is based on
 [**Dhrystone v2.1. benchmark**](http://fossies.org/linux/privat/old/dhrystone-2.1.tar.gz/)
@@ -74,7 +74,7 @@ instructions and degradation of the CPI relative ideal (simulation) case.
 
 This repository consists of three sub-projects each in own subfolder:
 
-- **rocket_soc** is the folder with VHDL/Verilog sources of the SOC
+- **rtl** is the folder with VHDL/Verilog sources of the SOC
   including synthesizable processors *"Rocket"* and *"River"* and peripheries. 
   Source code is portable on almost any FPGA is due to the fact that
   technology dependant modules (like *PLL*, *IO-buffers* 
@@ -109,7 +109,7 @@ This repository consists of three sub-projects each in own subfolder:
     1. Unified Verification Methodology (UVM)
         - */debugger/cpu_fnc_plugin*  - Functional RISC-V CPU model.
         - */debugger/cpu_sysc_plugin* - Precise SystemC RIVER CPU model.
-        - */rocket_soc/riverlib*      - RIVER VHDL sources with VCD-stimulus from SystemC.
+        - */rtl/riverlib*      - RIVER VHDL sources with VCD-stimulus from SystemC.
     2. Advanced debugging features: bus tracing, pipeline statistic (like CPI) in real-time on HW level etc.
     3. Integration with GUI from the very beginning.
   I hope to develop the most friendly synthesizable processor for HW and SW developers
@@ -122,9 +122,9 @@ You can use the pre-built FPGA image (for Xilinx ML605 or KC705 board) and any s
 console application (*putty*, *screen* or other) to run Dhrystone v2.1 benchmark as 
 on the animated picture below.
 
-![Zephyr demo](rocket_soc/docs/pics/zephyr_demo.gif)
+![Zephyr demo](docs/doxygen/pics/zephyr_demo.gif)
 
-1. Unpack and load file image *riscv_soc.bit* from */rocket_soc/bit_files/* into FPGA board.
+1. Unpack and load file image *riscv_soc.bit* from */rtl/bit_files/* into FPGA board.
 2. Connect to serial port. I used standard console utility *screen* on Ubuntu.
 
         $ sudo apt-get install screen
@@ -142,7 +142,7 @@ precise SystemC model of 'River' CPU and RISC-V Debugger with GUI
 This step **doesn't require any Hardware** and the final result will look as on
 the following animated picture:
 
-![Debugger demo](rocket_soc/docs/pics/debugger_demo.gif)  
+![Debugger demo](docs/doxygen/pics/debugger_demo.gif)  
 
 There's dependency of two others open source projects:
 
@@ -205,17 +205,17 @@ Debugger uses only architectural access via TAP (EDCL over UDP) for all targets.
 
 Default VHDL configuration enables River CPU with full debug support.
 
-![River top](rocket_soc/docs/pics/river_top.png)
+![River top](docs/doxygen/pics/river_top.png)
 
 You can enable usage of "Rocket-chip" CPU instead of "River" disabling the
-configuration parameter in */rocket_soc/work/config_common.vhd* 
+configuration parameter in */rtl/work/config_common.vhd* 
 CFG_COMMON_RIVER_CPU_ENABLE.
 
 1. Open ML605 project file for Xilinx ISE14.7 *prj/ml605/riscv_soc.xise*
    or KC705 project file for Xilinx Vivado *prj/kc705/riscv_soc.xpr*.
 2. Edit configuration constants in file **work/config_common.vhd** if needed.
    (Skip this step by default).
-3. Use *rocket_soc/work/tb/riscv_soc_tb.vhd"* testbench file to verify
+3. Use *rtl/work/tb/riscv_soc_tb.vhd"* testbench file to verify
    full system including *CPU*, *UART*, *Timers*, *Ethernet*, *GPIO* etc.
 4. Generate bit-file and load it into FPGA.
 
@@ -287,9 +287,9 @@ Flags:
     -f 262144 -- specify total ROM size in bytes.
     -l 8      -- specify number of bytes in one line (AXI databus width). Default is 16.
 
-Copy *fwimage.hex* to rocket_soc subdirectory
+Copy *fwimage.hex* to rtl subdirectory
 
-    $ cp fwimage.hex ../../../rocket_soc/fw_images
+    $ cp fwimage.hex ../../../rtl/fw_images
 
 ## 3. Debug Zephyr kernel with debug symbols.
 
@@ -305,7 +305,7 @@ The second command loads debug information without target reprogramming.
 
 Build example:
 
-    $ cd /your_git_path/rocket_soc/fw/helloworld/makefiles
+    $ cd /your_git_path/rtl/fw/helloworld/makefiles
     $ make
 
 Run Risc-V Debugger application:
@@ -339,7 +339,7 @@ so if you'd like to repeat test reload image using **loadelf** command.
 Now we can also generate HEX-file for ROM initialization to do that
 see other example with **bootrom** implementation
 
-    $ cd rocket_soc/fw/boot/makefiles
+    $ cd rtl/fw/boot/makefiles
     $ make
     $ cd ../linuxbuild/bin
 
@@ -360,7 +360,7 @@ could contain errors that are fixing with a small delay. Let me know if see one.
 
 ## 5. Example of debug session with RF front-end and GNSS IPs on ML605 board.
 
-![GUI gnss](rocket_soc/docs/pics/dbg_gnss.png)
+![GUI gnss](docs/doxygen/pics/dbg_gnss.png)
 
 
 ## Versions History
