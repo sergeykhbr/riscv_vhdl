@@ -1,0 +1,356 @@
+/**
+ @page debugger_page RISC-V debugger
+
+ @section dbg_overview_section Overview
+ 
+ This debugger was specially developed as a software utility to interact
+ with our SOC implementation in \c riscv_soc repository. The main
+ purpose was to provide convinient way to develop and debug our 
+ Satellite Navigation firmware that can not be debugged by any other 
+ tool provided RISC-V community. Additionally, we would like to use
+ the single unified application capable to work with Real and Simulated
+ platforms without any modification of source code.
+ Debugger provides base functionality such as: run control,
+ read/write memory, registers and CSRs, breakpoints. It allows to
+ reload FW image and reset target.
+ Also we are developing own version of the CPU simulator
+ (analog of \c spike) that can be extended with peripheries models to
+ Full SOC simulator. These extensions for the debugger simplify
+ porting procedure (Zephyr OS for an example) so that 
+ simulation doesn't require any hardware and allows to develop SW and HW
+ simultaneously.
+ 
+ @section dbg_prj_structure_section Project structure
+ 
+ General idea of the project is to develop one \c Core library 
+ providing API methods for registering \c classes, \c services, \c attributes
+ and methods to interact with them. Each extension plugin registers one or 
+ several class services performing some usefull work. All plugins are 
+ built as an independent libraries that are opening by \c Core library
+ at initialization stage with the call of method <b>plugin_init()</b>.
+ All Core API methods start with \c RISCV_... prefix:
+
+ @code
+   void RISCV_register_class(IFace *icls);
+ *
+   IFace *RISCV_create_service(IFace *iclass, const char *name, 
+                               AttributeType *args);
+ *
+   IFace *RISCV_get_service(const char *name);
+   ...
+ @endcode
+ 
+ Configuration of the debugger and plugins is fully described in JSON
+ formatted configuration files <b>targets/target_name.json</b>.
+ These files store all instantiated services names, attributes values
+ and interconnect among plugins.
+ 
+ This configuration can be saved to/load from file at any
+ time. By default command \c exit will save current debugger state into
+ file (including full command history). 
+ 
+ @note You can manually add/change new Registers/CSRs names and indexes
+       by modifying this config file without changing source code.
+ 
+ @par Folders description
+    -# \b libdgb64g - Core library (so/dll) that provides standard API 
+ methods defined in file \c api_core.h.
+    -# \b appdbg64g - Executable (exe) file implements functionality of 
+                      the console debugger.
+    -# \a Plugins:
+      -# \b simple_plugin - Simple plugin (so/dll library) just for
+                      demonstration of the integration with debugger.
+      -# \b cpu_fnc_plugin - Functional model of the RISC-V CPU 
+                     (so/dll library).
+      -# \b cpu_sysc_plugin - Precise SystemC model of RIVER CPU
+                     (so/dll library).
+      -# \b socsim_plugin - Functional models of the peripheries 
+                     and assembled board (so/dll library). This plugin
+                     registers several classes: \c UART, \c GPIO, \c SRAM,
+                     \c ROMs and etc.
+
+
+ @section eth_link_section Ethernet setup
+ 
+ The Ethernet Media Access Controller (GRETH) provides an interface between
+ an AMBA-AXI bus and Ethernet network. It supports 10/100 Mbit speed in both
+ full- and half-duplex modes. Integrated EDCL submodule implements hardware 
+ decoding of UDP traffic and redirects EDCL request directly on AXI system 
+ bus. The AMBA interface consists of an AXI slave
+ interface for configuration and control and an AXI master interface
+ for transmit and receive data. There is one DMA engine for the transmitter
+ and one for receiver. EDCL submodule and both DMA engines share the same
+ AXI master interface.
+
+ @subsection eth_confgure_section Configure Host Computer
+ To make development board visible in your local network your should 
+ properly specify connection properties. In this chapter I will show how to
+ configure the host computer (Windows 7 or Linux) to communicate with the
+ FPGA hardware over Ethernet.
+
+ @note <em>If you also want simultaneous Internet access your host computer 
+       requires a second Ethernet port. I couldn't find workable
+       configuration via router.</em> 
+
+ @warning I recommend you to make restore point before you start.
+
+ @subsection eth_cfgwin Configure Windows Host
+
+ Let's setup the following network configuration that allows to work with 
+ FPGA board and to be connected to Internet. I use different Ethernet 
+ ports and different subnets (192.168.0.x and 192.168.1.x accordingly).
+
+ <img src="../doxygen/pics/eth_common.png" alt="Ethernet config"> 
+ @latexonly {\includegraphics{../doxygen/pics/eth_common.png}} @endlatexonly
+
+ @par Host IP and subnet definition:
+    -# Open \c cmd console.
+    -# Use \c ipconfig command to determine network settings.</b>
+ @verbatim
+    ipconfig /all
+ @endverbatim
+    -# Find your IP address (in my case it's 192.168.1.4)
+    -# Check and change if needed default IP address of SOC as follow.
+
+ @par Setup hard-reset FPGA IP address:
+    -# Open in editor <i>rocket_soc.vhd</i>.
+    -# Find place where <i>grethaxi</i> module is instantiated.
+    -# Change generic <b>ipaddrh</b> and <b>ipaddrl</b> parameters so that 
+ they belonged another subnet (Default values: C0A8.0033 corresponding
+ to 192.168.0.51) than Internet connection.
+
+ @par Configure the Ethernet card for your FPGA hardware
+    -# Load pre-built image file into FPGA board (located in 
+ <i>./rocket_soc/bit_files/</i> folder) or use your own one.<br>
+    -# Open <b>Network and Sharing Center</b> via Control Panel
+
+ <img src="../doxygen/pics/eth_win1.png" alt="ControlPanel"> 
+ @latexonly {\includegraphics[scale=0.7]{../doxygen/pics/eth_win1.png}} @endlatexonly
+
+    -# Click on <b>Local Area Connection 2</b> link
+
+ <img src="../doxygen/pics/eth_win2.png" alt="ControlPanel">
+ @latexonly {\includegraphics{../doxygen/pics/eth_win2.png}} @endlatexonly
+
+    -# Click on <b>Properties</b> to open properties dialog.
+
+ <img src="../doxygen/pics/eth_win3.png" alt="ControlPanel"> 
+ @latexonly {\includegraphics{../doxygen/pics/eth_win3.png}} @endlatexonly
+
+    -# Disable all network services except <b>Internet Protocol Version 4</b>
+ as shown on figure above.<br>
+    -# Select enabled service and click on <b>Properties</b> button.
+
+ <img src="../doxygen/pics/eth_win4.png" alt="ControlPanel"> 
+ @latexonly {\includegraphics{../doxygen/pics/eth_win4.png}} @endlatexonly
+
+    -# Specify unique IP as shown above so that FPGA and your Local
+ Connection were placed <b>in the same subnet</b>.<br>
+    -# Leave the subnet mask set to the default value 255.255.255.0.<br>
+    -# Click OK.
+
+ @par Check connection
+    -# Check presence of the Ethernet activity by blinking LEDs near the 
+ Ethernet connector on FPGA board
+    -# Run \c arp command to see arp table entries.
+ @verbatim
+    arp -a -v
+ @endverbatim
+
+ <img src="../doxygen/pics/eth_check1.png" alt="Check arp"> 
+ @latexonly {\includegraphics{../doxygen/pics/eth_check1.png}} @endlatexonly
+
+    -# MAC supports only ARP and EDCL requests on hardware level and it cannot
+ respond on others without properly installed software. By this reason ping 
+ won't work without running OS on FPGA target but it maybe usefull to ping 
+ FPGA target so that it can force updating of the ARP table or use the
+ commands:
+ @verbatim
+    ipconfig /release
+    ipconfig /renew
+ @endverbatim
+
+ @subsection eth_cfglin_section Configure Linux Host
+
+ Let's setup the similar network configuration on Linux host.
+    -# Check <b>ipaddrh</b> and <b>ipaddrl</b> values that are hardcoded
+ on top-level of SOC (default values: C0A8.0033 corresponding 
+ to 192.168.0.51).
+    -# Set host IP value in the same subnet using the \c ifconfig command.
+ You might need to enter a password to use the \c sudo command.
+ @verbatim   
+      % sudo ifconfig eth0 192.168.0.53 netmask 255.255.255.0 
+ @endverbatim
+    -# Enter the following command in the shell to check that the changes 
+ took effect:
+ @verbatim   
+      % ifconfig eth0
+ @endverbatim
+
+ @subsection eth_appl_section Run Application
+ 
+ Now your FPGA board is ready to interact with the host computer via Ethernet.
+ You can find detailed information about MAC (GRETH) 
+ in [GRLIB IP Core User's Manual](http://gaisler.com/products/grlib/grip.pdf).
+
+ There you can find:
+   -# DMA Configuration registers description (Rx/Tx Descriptors tables and entries).
+   -# EDCL message format.
+   -# \c GRLIB itself includes C-example that configure MAC Rx/Tx queues
+ and start transmission of the 1500 Mbyte of data to define Bitrate in Mbps.
+
+ We provide debugger functionality via Ethernet. 
+ See @link dbg_link Debugger description @endlink page.
+
+
+
+ @section dbg_connect_section Debug session
+ 
+ @subsection dbg_connect_1 Plugins interaction
+ 
+ Core library uses UDP protocol to communicate with all targets: FPGA or
+ simulators. The general structure is looking like on the following figure:
+ 
+ <img src="../doxygen/pics/dbg_sim.png" alt="sim debug"> 
+ @latexonly {\includegraphics[scale=0.9]{../doxygen/pics/dbg_sim.png}} @endlatexonly
+ 
+ or with real Hardware
+ 
+ <img src="../doxygen/pics/dbg_fpga.png" alt="fpga debug"> 
+ @latexonly {\includegraphics[scale=0.8]{../doxygen/pics/dbg_fpga.png}} @endlatexonly
+ 
+ GUI plugin uses QT-libraries and interacts with the core library using the
+ text console input interface. GUI generates the same text commands 
+ that are available in debugger console for any who's using this debugger.
+ That's why any presented in GUI widgets information can be achieved
+ in console mode.
+ 
+ @subsection dbg_connect_2 Start Debugger
+ 
+ We provide several targets that can run software (bootloader, firmware
+ or user specific application) without any source code modifications:
+ 
+ Start Configuration            | Description
+ -------------------------------|-----------------
+ $ ./_run_functional_sim.sh[bat]| Functional RISC-V Full System Model
+ $ ./_run_systemc_sim.sh[bat]   | Use SystemC Precise Model of RIVER CPU
+ $ ./_run_fpga_gui.sh[bat]      | FPGA board. Default port 'COM3', TAP IP = 192.168.0.51
+ *
+ To run debugger with the real FPGA target connected via Ethernet do:
+
+ @code
+     # cd rocket_soc/debugger/win32build/debug
+     # _run_functional_sim.bat
+ @endcode
+ 
+ The result should look like on the picture below:
+ 
+ <img src="../doxygen/pics/dbg_gui_start.png" alt="debugger 1-st look"> 
+ @latexonly {\includegraphics[scale=0.8]{../doxygen/pics/dbg_gui_start.png}} @endlatexonly
+ 
+ @par Example of the debug session
+ Switch ON all User LEDs on board:
+ @code
+      riscv# help                     -- Print full list of commands
+      riscv# csr MCPUID               -- Read supported ISA extensions
+      riscv# read 0xfffff000 20       -- Read 20 bytes from PNP module
+      riscv# write 0x80000000 4 0xff  -- Write into GPIO new LED value
+      riscv# loadelf helloworld       -- Load elf-file to board RAM and run
+ @endcode
+          
+ Console mode view
+ 
+ <img src="../doxygen/pics/dbg_testhw.png" alt="HW debug example"> 
+ @latexonly {\includegraphics{../doxygen/pics/dbg_testhw.png}} @endlatexonly
+ 
+ @subsection dbg_connect_3 Debug Zephyr OS kernel with symbols
+ 
+ Build Zephyr kernel from scratch using our patches enabling 64-bits RISC-V
+ architecture support:
+ @code
+     $ mkdir zephyr_160
+     $ cd zephyr_160
+     $ git clone https://gerrit.zephyrproject.org/r/zephyr
+     $ cd zephyr
+     $ git checkout tags/v1.6.0
+     $ cp ../../riscv_vhdl/zephyr/v1.6.0-riscv64-base.diff .
+     $ cp ../../riscv_vhdl/zephyr/v1.6.0-riscv64-exten.diff .
+     $ git apply v1.6.0-riscv64-base.diff
+     $ git apply v1.6.0-riscv64-exten.diff
+ @endcode
+ 
+ Then build elf-file:
+ @code
+    $ export ZEPHYR_BASE=/home/zephyr_160/zephyr
+    $ cd zephyr/samples/shell
+    $ make ARCH=riscv64 CROSS_COMPILE=/home/your_path/gnu-toolchain-rv64ima/bin/riscv64-unknown-elf- BOARD=riscv_gnss 2>&1
+ @endcode
+ 
+ Load debug symbols from elf-file without target reprogramming (or with):
+ @code
+    riscv# loadelf zephyr.elf
+    riscv# loadelf zephyr.elf nocode
+ @endcode
+ 
+ <img src="../doxygen/pics/dbg_gui_symb.png" alt="debugger symbols"> 
+ @latexonly {\includegraphics[scale=1.0]{../doxygen/pics/dbg_gui_symb.png}} @endlatexonly
+ 
+ Now becomes available the following features:
+ - Stack trace with function names
+ - Function names in Disassembler including additional information for
+   branch and jump instructions in column \c 'comment'.
+ - Symbol Browser with filter.
+ - Opening Disassembler and Memory Viewer widgets in a new window by name.
+ 
+ Debugger provides additional features that could simplify software
+ development: 
+ - Clock Per Instruction (CPI) hardware measure
+ - Bus utilization information 
+ - Others. List of a new features is constantly increasing.
+ 
+ <img src="../doxygen/pics/dbg_fpga_gui1.png" alt="debugger FPGA+GUI"> 
+ @latexonly {\includegraphics[scale=0.8]{../doxygen/pics/dbg_fpga_gui1.png}} @endlatexonly
+ 
+ @section dbg_troubles_section Troubleshooting
+
+ @subsection dbg_trouble_1 Image Files not found
+
+ If you'll get the error messages that image files not found
+ 
+ <img src="../doxygen/pics/dbg_err1.png" alt="File not found"> 
+ @latexonly {\includegraphics[scale=0.8]{../doxygen/pics/dbg_err1.png}} @endlatexonly
+ 
+ To fix this problem do the following steps:
+     -# Close debugger console using \c exit command.
+     -# Open <em>config_file_name.json</em> file in any editor.
+     -# Find strings that specify these paths and correct them. Simulator 
+ uses the same images as VHDL platform for ROMs intialization. You can find
+ them in <em>'rocket_soc/fw_images'</em> directory. After that you should
+ see something like follow:
+ 
+ <img src="../doxygen/pics/dbg_simout1.png" alt="Simulator output"> 
+ @latexonly {\includegraphics[scale=0.8]{../doxygen/pics/dbg_simout1.png}} @endlatexonly
+ 
+ Debug your target. All commands that are available for Real Hardware
+ absolutely valid for the Simulation. Users shouldn't see any difference
+ between these targets this is our purpose.
+
+ @subsection dbg_trouble_2 Can't open COM3 when FPGA is used
+ 
+    -# Open <em>fpga_gui.json</em>
+    -# Change value <b>['ComPortName','COM3'],</b> on your one
+       (for an example on \c ttyUSB0).
+ 
+ @subsection dbg_trouble_3 EDCL: No response. Break read transaction
+ 
+ This error means that host cannot locate board with specified IP address.
+ Before you continue pass through the following checklist:
+    -# You should properly @link eth_link setup network connection @endlink
+ and see FPGA board in ARP-table.
+    -# If you've changed default FPGA IP address:
+          -# Open <em>_run_fpga_gui.bat (*.sh)</em>
+          -# Change value <b>['BoardIP','192.168.0.51']</b> on your one.
+    -# Run debugger
+ 
+
+*/

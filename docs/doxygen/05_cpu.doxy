@@ -1,0 +1,36 @@
+/** @page riscv_core_page RISC-V Processor
+
+ @section core_overview Overview
+
+ Current repository supports two synthesizable processors: \c Rocket and
+ \c River. Both of them implement open RISC-V ISA. To select what processor
+ to use there's special generic parameter:
+
+      CFG_COMMON_RIVER_CPU_ENABLE
+
+ @section core_rocket Rocket CPU
+
+ Rocket is the 64-bits single issue, in-order processor developed in Berkley 
+ and shared as the sources writen on SCALA language. It uses specally developed
+ library \c Chisel to generate Verilog implementation from SCALA sources.
+ 
+ Rocket Core usually implements all features of the latest ISA specification,
+ either as multi-core support with L2-cache implementation and many other.
+ But it has a set of disadvantages: bad integration with other devices not
+ writen on SCALA, not very-good integration with RTL simulators, no reference
+ model. It shows worse performance than RIVER CPU (for now).
+
+ @section core_river River CPU
+
+ River is my implementation of RISC-V ISA writen on VHDL either as all
+ others parts of shared SoC implementation.
+ There's also availabel precise SystemC model integrated into Simulator
+ which is used as a stimulus during RTL simulation and garantee consistency 
+ of functional and SystemC models either as RTL.
+
+ River CPU is the 5-stage processor with the classical pipeline structure:
+
+ <img src="../doxygen/pics/river_top.png" alt="Top Level"> 
+ @latexonly {\includegraphics{../doxygen/pics/river_top.png}} @endlatexonly
+
+*/

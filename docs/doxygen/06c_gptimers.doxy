@@ -1,0 +1,78 @@
+/** @page gptimers_page General Purpose Timers
+ 
+ @section gptimers_overview GPTimers overview
+
+ This GPTimers implementation can be additionally configured using the following
+ generic parameters.
+
+ | Name | Default   | Description
+ |:-----|:---------:|:------------
+ |irqx  | 0         | <b>Interrupt pin index</b> This value is used only as argument in output Plug'n'Play configuration.
+ |tmr_total| 2      | <b>Total Number of Timers.</b> Each timer is the 64-bits counter that can be used for interrupt generation or without.
+
+ @section gptimers_regs GPTimers registers mapping
+ GPTimers device acts like a slave AMBA AXI4 device that is directly mapped
+ into physical memory. Default address location for our implementation 
+ is defined by 0x80005000. Memory size is 4 KB.
+
+ @par High Precision Timer register (Least Word) (0x000).
+
+ | Bits |Type| Reset |Field Name| Bits  | Description 
+ |:----:|:--:|:-----:|:---------|:-----:|:------------------------------------------------------------|
+ | 64   | RW | 64h'0 | highcnt  | 63:0  | <b>High precision counter</b>. This counter isn't used as a source of interrupt and cannot be stopped from SW.
+
+ @par High Precision Timer register (Most Word) (0x004).
+
+ | Bits |Type| Reset |Field Name| Bits  | Description 
+ |:----:|:--:|:-----:|:---------|:-----:|:------------------------------------------------------------|
+ | 64   | RW | 64h'0 | highcnt  | 63:0  | <b>High precision counter</b>. This counter isn't used as a source of interrupt and cannot be stopped from SW.
+
+ @par Pending Timer IRQ register (0x008).
+
+ | Bits |Type| Reset |Field Name| Bits  | Description 
+ |:----:|:--:|:-----:|:---------|:-----:|:------------------------------------------------------------|
+ | 32-tmr_total | RW | 0 | reserved  | 31:tmr_total  | Reserved.
+ | tmr_total  | RW | 0 | pending  | tmr_total-1:0  | <b>Pending Bit</b>. Each timer can be configured to generate interrupt. Simaltenously with interrupt is rising pending bit that has to be lowed by Software.
+
+ @par Timer[0] Control register (0x040).
+
+ | Bits |Type| Reset |Field Name| Bits  | Description 
+ |:----:|:--:|:-----:|:---------|:-----:|:------------------------------------------------------------|
+ | 30 | RW | 30h'0 | reserved  | 31:2  | Reserved.
+ | 1  | RW | 1b'0 | irq_ena    | 1  | <b>Interrupt Enable</b>. Enable the interrupt generation when the timer reaches zero value.
+ | 0  | RW | 1b'0 | count_ena  | 0  | <b>Count Enable</b>. Enable/Disable counter.
+
+ @par Timer[0] Current Value register (0x048).
+
+ | Bits |Type| Reset |Field Name| Bits  | Description 
+ |:----:|:--:|:-----:|:---------|:-----:|:------------------------------------------------------------|
+ | 64 | RW | 64h'0 | value  | 63:0  | <b>Timer Value</b>. Read/Write register with counter's value. When it equals to 0 the 'init_value' will be used to re-initialize counter.
+
+ @par Timer[0] Init Value register (0x050).
+
+ | Bits |Type| Reset |Field Name| Bits  | Description 
+ |:----:|:--:|:-----:|:---------|:-----:|:------------------------------------------------------------|
+ | 64 | RW | 64h'0 | init_value  | 63:0  | <b>Timer Init Value</b>. Read/Write register is used for cycle timer re-initializtion. If init_value = 0 and value != 0 then the timer is used as a 'single shot' timer.
+
+ @par Timer[1] Control register (0x060 = 0x040 + Idx * 32).
+
+ | Bits |Type| Reset |Field Name| Bits  | Description 
+ |:----:|:--:|:-----:|:---------|:-----:|:------------------------------------------------------------|
+ | 30 | RW | 30h'0 | reserved  | 31:2  | Reserved.
+ | 1  | RW | 1b'0 | irq_ena    | 1  | <b>Interrupt Enable</b>. Enable the interrupt generation when the timer reaches zero value.
+ | 0  | RW | 1b'0 | count_ena  | 0  | <b>Count Enable</b>. Enable/Disable counter.
+
+ @par Timer[1] Current Value register (0x068 = 0x48 + Idx * 32).
+
+ | Bits |Type| Reset |Field Name| Bits  | Description 
+ |:----:|:--:|:-----:|:---------|:-----:|:------------------------------------------------------------|
+ | 64 | RW | 64h'0 | value  | 63:0  | <b>Timer Value</b>. Read/Write register with counter's value. When it equals to 0 the 'init_value' will be used to re-initialize counter.
+
+ @par Timer[1] Init Value register (0x070 = 0x050 + Idx * 32).
+
+ | Bits |Type| Reset |Field Name| Bits  | Description 
+ |:----:|:--:|:-----:|:---------|:-----:|:------------------------------------------------------------|
+ | 64 | RW | 64h'0 | init_value  | 63:0  | <b>Timer Init Value</b>. Read/Write register is used for cycle timer re-initializtion. If init_value = 0 and value != 0 then the timer is used as a 'single shot' timer.
+
+
+*/

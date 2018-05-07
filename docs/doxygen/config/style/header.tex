@@ -15,6 +15,7 @@
 \usepackage{textcomp}
 \usepackage[nointegrals]{wasysym}
 \usepackage[table]{xcolor}
+\usepackage{array}
 
 % Font selection
 \usepackage[T1]{fontenc}
@@ -45,6 +46,7 @@
 \tolerance=750
 \hfuzz=15pt
 \hbadness=750
+\textheight=662pt% default 674 see https://www.sharelatex.com/learn/Page_size_and_margins
 \setlength{\emergencystretch}{15pt}
 \setlength{\parindent}{0cm}
 \setlength{\parskip}{0.2cm}
@@ -61,21 +63,20 @@
 }
 \makeatother
 
+
 % Headers & footers
 \usepackage{fancyhdr}
 \pagestyle{fancyplain}
-\fancyhead[LE]{\fancyplain{}{\bfseries\thepage}}
-\fancyhead[CE]{\fancyplain{}{}}
-\fancyhead[RE]{\fancyplain{}{\bfseries\leftmark}}
-\fancyhead[LO]{\fancyplain{}{\bfseries\rightmark}}
-\fancyhead[CO]{\fancyplain{}{}}
-\fancyhead[RO]{\fancyplain{}{\bfseries\thepage}}
-\fancyfoot[LE]{\fancyplain{}{}}
-\fancyfoot[CE]{\fancyplain{}{}}
-\fancyfoot[RE]{\fancyplain{}{\bfseries\scriptsize Generated on Mar 9, 2017 }}
-\fancyfoot[LO]{\fancyplain{}{\bfseries\scriptsize Generated on Mar 9, 2017 }}
-\fancyfoot[CO]{\fancyplain{}{}}
-\fancyfoot[RO]{\fancyplain{}{}}
+% E O = Even Odd pages: L C R = Left, Center, Right page
+\setlength\headheight{50pt}% top colontitle height
+\fancyhead[LE,RO]{\fancyplain{}{\bfseries\thepage}}
+\fancyhead[CE,CO]{\fancyplain{}{\bfseries\rightmark}}
+\fancyhead[RE,LO]{\includegraphics[scale=1.0]{../doxygen/pics/logo.png}}
+
+\fancyfoot[LE,RO]{\fancyplain{}{}}
+\fancyfoot[CE,CO]{\fancyplain{}{}}
+\fancyfoot[RE,LO]{\fancyplain{}{\bfseries\scriptsize Generated on \\\today }}
+
 \renewcommand{\footrulewidth}{0.4pt}
 \renewcommand{\chaptermark}[1]{%
   \markboth{#1}{}%
@@ -110,7 +111,6 @@
   \newpage{\pagestyle{empty}\cleardoublepage}%
 }
 
-
 %===== C O N T E N T S =====
 
 \begin{document}
@@ -125,13 +125,33 @@
 \begin{titlepage}
 \vspace*{7cm}
 \begin{center}%
-{\Large RISC-V System-on-Chip description}\\
+{\Large Synthesizable System-on-Chip}\\
+\vspace*{1\baselineskip}
+{\Large with 64-bits RISC-V processor core}\\
+\vspace*{2\baselineskip}
+{\Large Technical Reference Manual}\\
+\end{center}
+\begin{flushright}%
 \vspace*{3cm}
-{\large Autor: Khabarov Sergey 5.1.2}\\
-\vspace*{0.5cm}
-{\large MIPT}\\
-\vspace*{0.5cm}
-{\small Mar 09, 2017}\\
+{\scshape Generated:    \today}\\
+{\scshape Author: Sergey Khabarov}
+\end{flushright}
+
+\begin{center}%
+\vspace*{3cm}
+\begin{tabular}{ | m{2cm} | m{3cm} | m{3cm} | m{2cm} | m{2cm} | }
+\hline
+  & Name & Position & Signature &  Date \\
+\hline
+Prepared by & Sergey Khabarov & Technical Lead &  & \\
+\hline
+Reviewed by & Denis Nefedov &  &  & \\
+\hline
+Approved by &  &  &  & \\
+\hline
+Approved by &  &  &  & \\
+\hline
+\end{tabular}
 \end{center}
 \end{titlepage}
 \clearemptydoublepage

@@ -1,0 +1,92 @@
+/** @page pnp_page Plug'n'Play support module
+ 
+ @section pnp_regs PNP registers mapping
+ PNP module acts like a slave AMBA AXI4 device that is directly mapped
+ into physical memory. Default address location for our implementation 
+ is defined as 0xFFFFF000. Memory size is 4 KB.
+
+ @par HW ID register (0x000).
+
+ |Bits|Type| Reset |Field Name| Bits  | Description 
+ |:--:|:--:|:-----:|:---------|:-----:|:------------------------------------------------------------|
+ | 32 | RO | CFG_HW_ID  | hw_id  | 31:0   | <b>HW ID</b>. Read only SoC identificator. Now it contains manually specified date in hex-format. Can be changed via CFG_HW_ID configuration parameter.
+
+ @par FW ID register (0x004).
+
+ |Bits|Type| Reset |Field Name| Bits  | Description 
+ |:--:|:--:|:-----:|:---------|:-----:|:------------------------------------------------------------|
+ | 32 | RW | 32'h0  | fw_id  | 31:0   | <b>Firmware ID</b>. This value is modified by bootloader or user's firmware. Can be used to simplify firmware version tracking.
+
+ @par AXI Slots Configuration Register (0x008).
+
+ |Bits|Type| Reset |Field Name| Bits  | Description 
+ |:--:|:--:|:-----:|:---------|:-----:|:------------------------------------------------------------|
+ | 8  | RO | CFG_TECH  | tech  | 7:0   | <b>Technology ID</b>. Read Only value specifies the target configuration. Possible values: inferred, virtex6, kintex7. Other targets ID could be added in a future.
+ | 8  | RO | CFG_NASTI_SLAVES_TOTAL  | slaves  | 15:8   | <b>Total number of AXI slave slots</b>. This value specifies maximum number of slave devices connected to the system bus. If device wasn't connected the dummy signals must be applied to the slave interface otherwise SoC behaviour isn't defined.
+ | 8  | RO | CFG_NASTI_MASTER_TOTAL  | masters  | 23:16   | <b>Total number of AXI master slots</b>. This value specifies maximum number of master devices connected to the system bus. Slot signals cannot be unconnected either.
+ | 8  | RO | 8'h0  | adc_detect  | 31:24   | <b>ADC clock detector</b>. This value is used by GNSS firmware to detect presence of the ADC clock frequency that allows to detect presence of the RF front-end board.
+
+ @par Debug IDT register (0x010).
+
+ |Bits|Type| Reset |Field Name| Bits  | Description 
+ |:--:|:--:|:-----:|:---------|:-----:|:------------------------------------------------------------|
+ | 64 | RW | 64'h0  | idt  | 63:0   | <b>Debug IDT</b>. This is debug register used by GNSS firmware to store debug information.
+
+ @par Debug Memory Allocation Pointer register (0x018).
+
+ |Bits|Type| Reset |Field Name| Bits  | Description 
+ |:--:|:--:|:-----:|:---------|:-----:|:------------------------------------------------------------|
+ | 64 | RW | 64'h0  | malloc_addr  | 63:0   | <b>Memory Allocation Pointer</b>. This is debug register used by GNSS firmware to store 'heap' pointer and allows to debug memory management.
+
+ @par Debug Memory Allocation Size register (0x020).
+
+ |Bits|Type| Reset |Field Name| Bits  | Description 
+ |:--:|:--:|:-----:|:---------|:-----:|:------------------------------------------------------------|
+ | 64 | RW | 64'h0  | malloc_size  | 63:0   | <b>Memory Allocation size</b>. This is debug register used by GNSS firmware to store total allocated memory size.
+
+ @par Debug Firmware1 register (0x028).
+
+ |Bits|Type| Reset |Field Name| Bits  | Description 
+ |:--:|:--:|:-----:|:---------|:-----:|:------------------------------------------------------------|
+ | 64 | RW | 64'h0  | fwdbg1  | 63:0   | <b>Firmware debug1</b>. This is debug register used by GNSS firmware to store temporary information.
+ 
+ @section pnp_descriptior PNP Device descriptors
+ Our SoC implementaion provides capability to read in real-time information
+ about mapped devices. Such information is packed into special device
+ descriptors. Now we can provide 3 types of descriptors:
+    - Master device descriptor
+    - Slave device descriptor
+    - Custom device descriptor
+
+ All descriptors mapped sequentually starting from 0xFFFFF040. Each descriptor
+ implements field 'size' in Bytes that specifies offset to the next mapped
+ descriptor.
+
+ @par Master device descriptor
+ 
+ | Bits    | Description 
+ |:-------:|:------------------------------------------------------------|
+ | [7:0]   | <b>Descriptor Size.</b> Read Only value specifies size in Bytes of the current descriptor. This value should be used as offset to the next descriptor. Master descriptor size is hardwired to PNP_CFG_MASTER_DESCR_BYTES value (8'h08).
+ | [9:8]   | <b>Descriptor Type.</b> Master descriptor type is hardwired to PNP_CFG_TYPE_MASTER value (2'b01).
+ | [31:10] | <b>Reserved.</b>
+ | [47:32] | <b>Device ID.</b> Unique Master identificator.
+ | [63:48] | <b>Vendor ID.</b> Unique Vendor identificator.
+
+ @par Slave device descriptor
+ 
+ | Bits      | Description 
+ |:---------:|:------------------------------------------------------------|
+ | [7:0]     | <b>Descriptor Size.</b> Read Only value specifies size in Bytes of the current descriptor. This value should be used as offset to the next descriptor. Slave descriptor size is hardwired to PNP_CFG_SLAVE_DESCR_BYTES value (8'h10).
+ | [9:8]     | <b>Descriptor Type.</b> Slave descriptor type is hardwired to PNP_CFG_TYPE_SLAVE value (2'b10).
+ | [15:10]   | <b>Reserved.</b>
+ | [23:16]   | <b>IRQ ID.</b> Interrupt line index assigned to the device.
+ | [31:24]   | <b>Reserved.</b>
+ | [47:32]   | <b>Device ID.</b> Unique Master identificator.
+ | [63:48]   | <b>Vendor ID.</b> Unique Vendor identificator.
+ | [75:64]   | <b>zero.</b> Hardwired to X"000".
+ | [95:76]   | <b>Base Address Mask</b> specifies the memory region allocated for the device.
+ | [107:96]  | <b>zero.</b> Hardwired to X"000".
+ | [127:108] | <b>Base Address</b> value of the device.
+
+
+*/

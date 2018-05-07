@@ -1,0 +1,50 @@
+/** @page uart_page UART
+ 
+ @section uart_overview Overview
+
+ This UART implementation can be additionally configured using the following
+ generic parameters.
+
+ | Name | Default   | Description
+ |:-----|:---------:|:------------
+ |irqx  | 0         | <b>Interrupt pin index</b> This value is used only as argument in output Plug'n'Play configuration.
+ |fifosz| 16        | <b>FIFO size.</b> Size of the Tx and Rx FIFOs in bytes.
+ 
+ @section uart_regs UART registers mapping
+ UART acts like a slave AMBA AXI4 device that is directly mapped
+ into physical memory. Default address location for our implementation 
+ is defined by 0x80001000. Memory size is 4 KB.
+
+ @par Control Status register (0x000).
+
+ | Bits |Type| Reset |Field Name| Bits  | Description 
+ |:----:|:--:|:-----:|:---------|:-----:|:------------------------------------------------------------|
+ | 16   | RW | 16h'0 | Reserved      | 31:16 | Reserved.
+ | 1    | RW | 1b'0  | parity_bit    | 15 | <b>Enable parity checking</b>. Serial port setting setup by SW.
+ | 1    | RW | 1b'0  | tx_irq_ena    | 14 | <b>Enable Tx Interrupt</b>. Generate interrupt when number of symbol in output FIFO less than defined in Tx Threshold register.
+ | 1    | RW | 1b'0  | rx_irq_ena    | 13 | <b>Enable Rx Interrupt</b>. Generate interrupt when number of available for reading symbol greater or equalt Rx Threshold register.
+ | 3    | RW | 3h'0  | Reserved      | 12:10 | Reserved.
+ | 1    | RO | 1b'0  | err_stopbit   | 9 | <b>Stop Bit Error</b>. This bit is set when the Stoping Bit has the wrnog value.
+ | 1    | RO | 1b'0  | err_parity    | 8 | <b>Parity Error</b>. This bit is set when the Parity error occurs. Will be automatically cleared by next received symbol if the parity OK.
+ | 2    | RW | 2h'0  | Reserved      | 7:6 | Reserved.
+ | 1    | RO | 1b'1  | rx_fifo_empty | 5 | <b>Receive FIFO is Empty</b>.
+ | 1    | RO | 1b'0  | rx_fifo_fifo  | 4 | <b>Receive FIFO is Full</b>.
+ | 2    | RW | 2h'0  | Reserved      | 3:2 | Reserved.
+ | 1    | RO | 1b'1  | tx_fifo_empty | 1 | <b>Transmit FIFO is Empty</b>.
+ | 1    | RO | 1'b0  | tx_fifo_full  | 0 | <b>Transmit FIFO is Full</b>. 
+
+ @par Scaler register (0x004).
+
+ | Bits |Type| Reset |Field Name| Bits  | Description 
+ |:----:|:--:|:-----:|:---------|:-----:|:------------------------------------------------------------|
+ | 32   | RW | 32h'0 | scaler | 31:16 | <b>Scale threshold</b>. This register value is used to transform System Bus clock into port baudrate.
+
+ @par Data register (0x010).
+
+ | Bits |Type| Reset |Field Name| Bits  | Description 
+ |:----:|:--:|:-----:|:---------|:-----:|:------------------------------------------------------------|
+ | 24   | RW | 28h'0 | Reserved | 31:8 | Reserved.
+ | 8    | RW | 8h'0  | data     | 7:0  | <b>Data</b>. Access to Tx/Rx FIFO data. Writing into this register put data into Tx FIFO. Reading is accomplished from Rx FIFO.
+
+
+*/

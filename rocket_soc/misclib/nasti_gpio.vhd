@@ -5,38 +5,6 @@
 --! @brief     Controller of the GPIOs with the AMBA AXI4 interface.
 ------------------------------------------------------------------------------
 
---! @defgroup gpio_page GPIO Controller
---! @ingroup peripheries_group
---! 
---! @section gpio_regs GPIO registers mapping
---! GPIO Controller acts like a slave AMBA AXI4 device that is directly mapped
---! into physical memory. Default address location for our implementation 
---! is defined by 0x80000000. Memory size is 4 KB.
---!
---! @par LED register (0x000).
---!
---! |Bits|Type| Reset |Field Name| Bits  | Description 
---! |:--:|:--:|:-----:|:---------|:-----:|:------------------------------------------------------------|
---! | 24 | RW | 24h'0 | rsrv     | 24    | Reserved
---! | 8  | RW | 8h'0  | led      | 7:0   | <b>LEDs</b>. Written value directly assigned on SoC output pins and can be used as test signals.
---!
---! @par DIP register (0x004).
---!
---! |Bits|Type| Reset |Field Name| Bits  | Description 
---! |:--:|:--:|:-----:|:---------|:-----:|:------------------------------------------------------------|
---! | 28 | RO | 28h'0 | rsrv     | 28    | Reserved
---! | 4  | RO | -     | dip      | 3:0   | <b>DIPs</b>. Input configuration pins value (Read-Only). Configuration pin meaning depends of the used FW.
---!
---! @par Set of temporary registers (0x008).
---!
---! |Offset |Bits|Type| Reset | Name | Definition 
---! |:------|:--:|:--:|:-----:|:----:|---------------------------------------------|
---! |0x008  | 32 | RW | 32h'0 | reg32_2 | <b>Temporary register 2</b>. FW specific register used for debugging purposes.
---! |0x00C  | 32 | RW | 32h'0 | reg32_3 | <b>Temporary register 3</b>.
---! |0x010  | 32 | RW | 32h'0 | reg32_4 | <b>Temporary register 4</b>.
---! |0x014  | 32 | RW | 32h'0 | reg32_5 | <b>Temporary register 5</b>.
---! |0x018  | 32 | RW | 32h'0 | reg32_6 | <b>Temporary register 6</b>.
-
 library ieee;
 use ieee.std_logic_1164.all;
 library commonlib;

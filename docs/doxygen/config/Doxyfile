@@ -684,7 +684,7 @@ FILE_VERSION_FILTER    =
 # DoxygenLayout.xml, doxygen will parse it automatically even if the LAYOUT_FILE
 # tag is left empty.
 
-LAYOUT_FILE            = ./docs/DoxygenLayout.xml
+LAYOUT_FILE            = doxygen/config/DoxygenLayout.xml
 
 # The CITE_BIB_FILES tag can be used to specify one or more bib files containing
 # the reference definitions. This must be a list of .bib files. The .bib
@@ -766,20 +766,18 @@ WARN_LOGFILE           =
 # Note: If this tag is empty the current directory is searched.
 
 INPUT = \
-../rocket_soc/docs/mainpage.vhd \
-../rocket_soc/docs/maingroup.vhd \
-../rocket_soc/rocketlib/eth/grethaxi.vhd \
-../rocket_soc/riverlib/dsu/axi_dsu.vhd \
-../rocket_soc/riverlib/types_river.vhd \
-../rocket_soc/rocketlib/misc/nasti_gpio.vhd \
-../rocket_soc/rocketlib/misc/nasti_irqctrl.vhd \
-../rocket_soc/rocketlib/misc/nasti_uart.vhd \
-../rocket_soc/rocketlib/misc/nasti_gptimers.vhd \
-../rocket_soc/rocketlib/misc/nasti_pnp.vhd \
-../rocket_soc/work/tb/riscv_soc_tb.vhd \
-../debugger/src/common/api_core.h \
-../rocket_soc/work/config_common.vhd \
-../rocket_soc/ambalib/types_amba4.vhd
+doxygen/_top.doxy \
+doxygen/03_genparameters.doxy \
+doxygen/04_rtl_verif.doxy \
+doxygen/05_cpu.doxy \
+doxygen/06_periph.doxy \
+doxygen/06a_dsu.doxy \
+doxygen/06b_gpio.doxy \
+doxygen/06c_gptimers.doxy \
+doxygen/06d_irqctrl.doxy \
+doxygen/06e_uart.doxy \
+doxygen/06f_pnp.doxy \
+doxygen/07_debugger.doxy \
 
 
 # This tag can be used to specify the character encoding of the source files
@@ -1133,7 +1131,7 @@ HTML_STYLESHEET        =
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
 #HTML_EXTRA_STYLESHEET  = ./docs/gnss_styles.css
-HTML_EXTRA_STYLESHEET  = ./docs/fixed_styles.css 
+HTML_EXTRA_STYLESHEET  = doxygen/config/fixed_styles.css 
 
 # The HTML_EXTRA_FILES tag can be used to specify one or more extra images or
 # other source files which should be copied to the HTML output directory. Note
@@ -1678,7 +1676,7 @@ EXTRA_PACKAGES         =
 # to HTML_HEADER.
 # This tag requires that the tag GENERATE_LATEX is set to YES.
 
-LATEX_HEADER           = "docs/style/header.tex"
+LATEX_HEADER           = "doxygen/config/style/header.tex"
 
 # The LATEX_FOOTER tag can be used to specify a personal LaTeX footer for the
 # generated LaTeX document. The footer should contain everything after the last
@@ -1689,7 +1687,7 @@ LATEX_HEADER           = "docs/style/header.tex"
 # Note: Only use a user-defined footer if you know what you are doing!
 # This tag requires that the tag GENERATE_LATEX is set to YES.
 
-LATEX_FOOTER           = "docs/style/footer.tex"
+LATEX_FOOTER           = "doxygen/config/style/footer.tex"
 
 # The LATEX_EXTRA_STYLESHEET tag can be used to specify additional user-defined
 # LaTeX style sheets that are included after the standard style sheets created

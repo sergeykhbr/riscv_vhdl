@@ -1,0 +1,27 @@
+body {
+        background-color: #ddd;
+        color: black;
+        margin: 0;
+}
+
+div.contents {
+        margin-bottom: 10px;
+        padding: 12px;
+        margin-left: auto;
+        margin-right: auto;
+        width: 800px;
+        background-color: white;
+        border-radius: 4px;
+}
+
+#titlearea {
+        background-color: white;
+}
+
+hr.footer {
+        display: none;
+}
+
+.footer {
+        background-color: #AAA;
+}

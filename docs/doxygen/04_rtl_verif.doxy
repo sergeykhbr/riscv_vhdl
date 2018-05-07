@@ -1,0 +1,75 @@
+/** @page verification_page RTL Verification
+
+ @section sim_tb_link Top-level simulation
+
+ @par Test-bench example
+ Use file <b>work/tb/riscv_soc_tb.vhd</b> to run simulation scenario. You can
+ get the following time diagram after simulation of 2 ms interval.
+
+ <img src="../doxygen/pics/soc_sim.png" alt="Simulating top"> 
+ @latexonly {\includegraphics[scale=0.75]{../doxygen/pics/soc_sim.png}} @endlatexonly
+
+ @note Simulation behaviour depends of current firmware image. It may
+       significantly differs in a new releases either as Zephyr OS kernel
+       image is absolutely different relative GNSS FW image.
+
+ Some FW versions can detect RTL simulation target by reading <i>'Target'
+ Register</i> in PnP device that allows to speed-up simulation
+ by removing some delays and changing Devices IO parameters (UART speed
+ for example).
+
+ @par Running on FPGA
+ Supported FPGA:
+ <ul>
+    <li>ML605 with Virtex6 FPGA using ISE 14.7 (default).</li>
+    <li>KC705 with Kintex7 FPGA using Vivado 2015.4.</li>
+ </ul>
+
+ @warning In a case of using GNSS FW without connected RF front-end 
+          don't forget to <em><b>switch ON DIP[0] (i_int_clkrf) to enable
+          Test Mode</b></em>. Otherwise there 
+          wouldn't be generated interrupts and, as result, no UART 
+          output.
+
+ @section auto_compare_page VCD-files automatic comparision
+
+ @subsection gen_sysc_vcd Generating VCD-pattern form SystemC model
+
+ Edit the following attributes in SystemC target script 
+ <i>debugger/targets/sysc_river_gui.json</i> to enable vcd-file generation.
+ <ul>
+    <li>['InVcdFile','i_river','Non empty string enables generation of stimulus VCD file'].</li>
+    <li>['OutVcdFile','o_river','Non empty string enables VCD file with reference signals']</li>
+ </ul>
+ Files <em>i_river.vcd</em> and <em>o_river.vcd</em> will be generated.
+ The first one will be used as a RTL simulation stimulus to generate input
+ signals. The second one as a reference.
+
+ @subsection run_vcd_compare Compare RIVER SystemC model relative RTL
+
+ Run simulation in ModelSim with the following commands using correct pathes
+ for your host:
+ 
+      vcd2wlf E:/Projects/GitProjects/riscv_vhdl/debugger/win32build/Debug/i_river.vcd -o e:/i_river.wlf
+      vcd2wlf E:/Projects/GitProjects/riscv_vhdl/debugger/win32build/Debug/o_river.vcd -o e:/o_river.wlf
+      wlf2vcd e:/i_river.wlf -o e:/i_river.vcd
+      vsim -t 1ps -vcdstim E:/i_river.vcd riverlib.RiverTop
+      vsim -view e:/o_river.wlf
+      add wave o_river:/SystemC/o_*
+      add wave sim:/rivertop/*
+      run 500us
+      compare start o_river sim
+      compare add -wave sim:/RiverTop/o_req_mem_valid o_river:/SystemC/o_req_mem_valid
+      compare add -wave sim:/RiverTop/o_req_mem_write o_river:/SystemC/o_req_mem_write
+      compare add -wave sim:/RiverTop/o_req_mem_addr o_river:/SystemC/o_req_mem_addr
+      compare add -wave sim:/RiverTop/o_req_mem_strob o_river:/SystemC/o_req_mem_strob
+      compare add -wave sim:/RiverTop/o_req_mem_data o_river:/SystemC/o_req_mem_data
+      compare add -wave sim:/RiverTop/o_dport_ready o_river:/SystemC/o_dport_ready
+      compare add -wave sim:/RiverTop/o_dport_rdata o_river:/SystemC/o_dport_rdata
+      compare run
+ 
+ @note In this script I've used \c vcd2wlf and \c wlf2vcd utilities to form
+       compatible with ModelSim VCD-file. Otherwise there're will be errors because
+       ModelSim cannot parse std_logic_vector siganls (only std_logic).
+
+*/
