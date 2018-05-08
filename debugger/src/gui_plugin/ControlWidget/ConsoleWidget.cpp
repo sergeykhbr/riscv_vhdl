@@ -92,7 +92,7 @@ void ConsoleWidget::keyPressEvent(QKeyEvent *e) {
         vt_key += static_cast<uint32_t>('a');
     } 
     uint8_t spsmb = static_cast<uint8_t>(e->text().at(0).toLatin1());
-    if (spsmb == '_') {
+    if (spsmb == '_' || vt_key == ':' || vt_key == '\\' || vt_key == '/') {
         vt_key = spsmb;
     }
     //printf("vt_key = %08x\n", vt_key);

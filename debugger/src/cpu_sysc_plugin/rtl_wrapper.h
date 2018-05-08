@@ -9,6 +9,7 @@
 
 #include "async_tqueue.h"
 #include "coreservices/imemop.h"
+#include "coreservices/ireset.h"
 #include "coreservices/icpugen.h"
 #include "coreservices/icpuriscv.h"
 #include "coreservices/iclklistener.h"
@@ -19,6 +20,7 @@
 namespace debugger {
 
 class RtlWrapper : public sc_module,
+                   public IResetListener,
                    public ICpuGeneric,
                    public ICpuRiscV {
 public:
@@ -81,11 +83,19 @@ public:
     void setClockHz(double hz);
    
     /** ICpuGeneric interface */
-    virtual void registerStepCallback(IClockListener *cb, uint64_t t);
     virtual void raiseSignal(int idx);
     virtual void lowerSignal(int idx);
     virtual void nb_transport_debug_port(DebugPortTransactionType *trans,
                                         IDbgNbResponse *cb);
+
+    /** IClock */
+    virtual void registerStepCallback(IClockListener *cb, uint64_t t);
+
+    /** IResetListener */
+    virtual void reset(bool active) {
+        o_nrst.write(!active);
+    }
+
 
 private:
     IFace *getInterface(const char *name) { return iparent_; }

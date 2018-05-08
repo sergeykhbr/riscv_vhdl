@@ -40,7 +40,8 @@
                 ['ComPortSpeed',115200]]}]},
     {'Class':'ElfReaderServiceClass','Instances':[
           {'Name':'loader0','Attr':[
-                ['LogLevel',4]]}]},
+                ['LogLevel',4],
+                ['SourceProc','src0']]}]},
     {'Class':'ConsoleServiceClass','Instances':[
           {'Name':'console0','Attr':[
                 ['LogLevel',4],

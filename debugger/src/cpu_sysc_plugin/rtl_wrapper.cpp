@@ -37,8 +37,8 @@ RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
     SC_METHOD(clk_negedge_proc);
     sensitive << o_clk.negedge_event();
 
-    w_nrst = 0;
-    v.nrst = 0;
+    w_nrst = 1;//0;
+    v.nrst = 1;//0;
     v.interrupt = false;
     w_interrupt = 0;
     v.resp_mem_data = 0;
@@ -183,7 +183,7 @@ void RtlWrapper::clk_negedge_proc() {
         v.dport_valid = 1;
         v.dport_write = dport_.trans->write;
         v.dport_region = dport_.trans->region;
-        v.dport_addr = dport_.trans->addr;
+        v.dport_addr = dport_.trans->addr >> 3;
         v.dport_wdata = dport_.trans->wdata;
     }
     dport_.idx_missmatch = 0;

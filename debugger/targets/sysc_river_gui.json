@@ -42,7 +42,8 @@
                 ['ComPortSpeed',115200]]}]},
     {'Class':'ElfReaderServiceClass','Instances':[
           {'Name':'loader0','Attr':[
-                ['LogLevel',4]]}]},
+                ['LogLevel',4],
+                ['SourceProc','src0']]}]},
     {'Class':'ConsoleServiceClass','Instances':[
           {'Name':'console0','Attr':[
                 ['LogLevel',4],
@@ -115,6 +116,7 @@
                 ['LogLevel',1],
                 ['BaseAddress',0x80040000],
                 ['Length',0x40000],
+                ['SysBusMasterID',2,'Hardcoded in VHDL'],
                 ['IP',0x55667788],
                 ['MAC',0xfeedface00],
                 ['Bus','axi0'],
@@ -125,14 +127,14 @@
                 ['LogLevel',4],
                 ['Bus','axi0'],
                 ['GenerateRef',false,'Generate Registers/Memory access trace file to compare it with functional model'],
-                ['InVcdFile','','Non empty string enables generation of stimulus VCD file'],
-                ['OutVcdFile','','Non empty string enables VCD file with reference signals'],
+                ['InVcdFile','e:/i_river','Non empty string enables generation of stimulus VCD file'],
+                ['OutVcdFile','e:/o_river','Non empty string enables VCD file with reference signals'],
                 ['FreqHz',60000000]
                 ]}]},
     {'Class':'MemorySimClass','Instances':[
           {'Name':'bootrom0','Attr':[
                 ['LogLevel',1],
-                ['InitFile','../../../rocket_soc/fw_images/bootimage.hex'],
+                ['InitFile','../../../rtl/fw_images/bootimage.hex'],
                 ['ReadOnly',true],
                 ['BaseAddress',0x0],
                 ['Length',8192]
@@ -140,7 +142,7 @@
     {'Class':'MemorySimClass','Instances':[
           {'Name':'fwimage0','Attr':[
                 ['LogLevel',1],
-                ['InitFile','../../../rocket_soc/fw_images/fwimage.hex'],
+                ['InitFile','../../../rtl/fw_images/fwimage.hex'],
                 ['ReadOnly',true],
                 ['BaseAddress',0x00100000],
                 ['Length',0x40000]
@@ -148,7 +150,7 @@
     {'Class':'MemorySimClass','Instances':[
           {'Name':'sram0','Attr':[
                 ['LogLevel',1],
-                ['InitFile','../../../rocket_soc/fw_images/fwimage.hex'],
+                ['InitFile','../../../rtl/fw_images/fwimage.hex'],
                 ['ReadOnly',false],
                 ['BaseAddress',0x10000000],
                 ['Length',0x80000]
