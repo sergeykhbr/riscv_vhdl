@@ -84,16 +84,22 @@ This repository consists of three sub-projects each in own subfolder:
   *"Rocket-chip"* CPU itself is the modern **64-bits processor 
   with L1-cache, branch-predictor, MMU and virtualization support**.  
   This sub-project also contains:
-    * *fw*: directory with the bootloader and FW examples.
     * *fw_images*: directory with the ROM images in HEX-format.
     * *prj*: project files for different CADs (Xilinx ISE, ModelSim).
     * *tb*: VHDL testbech of the full system and utilities.
     * *bit_files*: Pre-built FPGA images for ML605 and KC705 boards.
-- **zephyr** is the ported on RISC-V 64-bits operation system.
-  Information about this Real-Time Operation System for Internet of
-  Things Devices provided by [Zephyr Project](https://www.zephyrproject.org/).
-  Early support for the Zephyr Project includes Intel Corporation,
-  NXP Semiconductors N.V., Synopsys, Inc. and UbiquiOS Technology Limited.
+- **examples** folder contains several C-examples that could help start working
+  with the RISC-V system:
+    * *boot* is the code of the Boot Loader. It is also used for the SRAM 
+      initialization with the FW image and it allows to run examples on
+      FPGA without using the debugger and external flash memory.
+    * *helloworld* the simplest example with UART output.
+    * *isrdemo* example with 1 second interrupt from timer and debug output.
+    * *zephyr* is ported on RISC-V 64-bits operation system.
+      Information about this Real-Time Operation System for Internet of
+      Things Devices provided by [Zephyr Project](https://www.zephyrproject.org/).
+      Early support for the Zephyr Project includes Intel Corporation,
+      NXP Semiconductors N.V., Synopsys, Inc. and UbiquiOS Technology Limited.
 - **debugger**. The last piece of the ready-to-use open HW/SW system is
   [Software Debugger (C++)](http://sergeykhbr.github.io/riscv_vhdl/sw_debugger_api_link.html)
   with the full system simulator available as a plug-in.
@@ -251,7 +257,7 @@ Previous obsolete GCC builds:
 If you would like to generate hex-file and use it for ROM initialization you can use
 *'elf2hex'* and *'libfesvr.so'* library from the GNU toolchain but I suggest to use my version
 of such tool *'elf2raw64'*. I've put this binary into pre-built GCC archive 'gnu_toolchain-rv64/bin'. 
-If *elf2raw64* conflicts with installed LIBC version re-build it from *fw/elf2raw64/makefiles*
+If *elf2raw64* conflicts with installed LIBC version re-build it from *examples/elf2raw64/makefiles*
 directory.
 
 ## 2. Patch and build Zephyr OS v1.6.0 binary
@@ -305,7 +311,7 @@ The second command loads debug information without target reprogramming.
 
 Build example:
 
-    $ cd /your_git_path/rtl/fw/helloworld/makefiles
+    $ cd /your_git_path/examples/helloworld/makefiles
     $ make
 
 Run Risc-V Debugger application:
@@ -339,7 +345,7 @@ so if you'd like to repeat test reload image using **loadelf** command.
 Now we can also generate HEX-file for ROM initialization to do that
 see other example with **bootrom** implementation
 
-    $ cd rtl/fw/boot/makefiles
+    $ cd examples/boot/makefiles
     $ make
     $ cd ../linuxbuild/bin
 
