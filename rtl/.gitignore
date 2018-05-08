@@ -2,7 +2,11 @@
 *.dump
 *.err
 *.lst
-gnsslib
+gnsslib/*
+!gnsslib/types_gnss
+!gnsslib/sync
+!gnsslib/rf3b
+!gnsslib/gnssengine_stub
 patches/
 work/tb/*
 !work/tb/riscv_soc_tb.vhd
