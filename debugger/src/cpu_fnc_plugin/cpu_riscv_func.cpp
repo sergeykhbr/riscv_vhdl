@@ -174,7 +174,7 @@ void CpuRiver_Functional::trackContextEnd() {
                     IREGS_NAMES[i], cur[i], instr_->name());
         }
     }
-    if (!reg_changed) {
+    if (instr_ && !reg_changed) {
         sz += RISCV_sprintf(&tstr[sz], sizeof(tstr) - sz, "-, %s\n",
                             instr_->name());
     }

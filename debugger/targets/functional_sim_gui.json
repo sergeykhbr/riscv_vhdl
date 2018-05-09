@@ -150,14 +150,14 @@
                 ['FreqHz',60000000],
                 ['VendorID',0x0001,'Hardcoded in CSR mvendorid value: UC Berkeley Rocket repo'],
                 ['VectorTable',0x100,'Hardcoded in CSR mtvec value: interrupts vector table address'],
-                ['ResetVector',0x1000,'Initial intruction pointer value (config parameter)'],
+                ['ResetVector',0x0040,'Initial intruction pointer value (config parameter)'],
                 ['GenerateRegTraceFile',true,'Generate Registers modification file to compare with SystemC'],
                 ['GenerateMemTraceFile',false,'Generate Memory access file to compare with SystemC'],
                 ]}]},
     {'Class':'MemorySimClass','Instances':[
           {'Name':'bootrom0','Attr':[
                 ['LogLevel',1],
-                ['InitFile','../../../rtl/fw_images/bootimage.hex'],
+                ['InitFile','../../../rtl/fw_images/gcc711/bootimage.hex'],
                 ['ReadOnly',true],
                 ['BaseAddress',0x0],
                 ['Length',8192]

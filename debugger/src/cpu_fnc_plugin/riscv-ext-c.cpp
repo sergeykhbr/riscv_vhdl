@@ -667,6 +667,24 @@ public:
     }
 };
 
+/** 
+ * @brief empty cycle
+ */
+class C_NOP : public RiscvInstruction16 {
+public:
+    C_NOP(CpuRiver_Functional *icpu) : RiscvInstruction16(icpu,
+        "C_NOP", "????????????????0000000000000001") {}
+
+    virtual bool parse(uint32_t *payload) {
+        return RiscvInstruction::parse(payload);
+    }
+
+    virtual int exec(Reg64Type *payload) {
+        return 2;
+    }
+};
+
+
 /**
  * @brief C_OR
  *
@@ -985,6 +1003,7 @@ void CpuRiver_Functional::addIsaExtensionC() {
     addSupportedInstruction(new C_LUI(this));
     addSupportedInstruction(new C_LW(this));
     addSupportedInstruction(new C_MV(this));
+    addSupportedInstruction(new C_NOP(this));
     addSupportedInstruction(new C_OR(this));
     addSupportedInstruction(new C_SD(this));
     addSupportedInstruction(new C_SDSP(this));

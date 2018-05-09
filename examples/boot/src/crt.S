@@ -18,7 +18,36 @@
 
   .text
   .align 4
+  .globl reset_vector
   .globl _start
+
+trap_table:
+#define BAD_TRAP_VECTOR 0
+  .word bad_trap
+  .word bad_trap # pmp_trap
+  .word bad_trap # illegal_insn_trap
+  .word bad_trap
+  .word bad_trap # misaligned_load_trap
+  .word bad_trap # pmp_trap
+  .word bad_trap # misaligned_store_trap
+  .word bad_trap # pmp_trap
+  .word bad_trap
+  .word bad_trap # mcall_trap
+  .word bad_trap
+  .word bad_trap
+  .word bad_trap
+#define TRAP_FROM_MACHINE_MODE_VECTOR 13
+  .word bad_trap # __trap_from_machine_mode
+  .word bad_trap
+  .word bad_trap
+
+  .option norvc
+reset_vector:
+  j _start
+
+bad_trap:
+  j bad_trap
+
 _start:
   li  x1, 0
   li  x2, 0

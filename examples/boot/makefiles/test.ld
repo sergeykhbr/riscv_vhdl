@@ -16,8 +16,7 @@ SECTIONS
 {
 
   /* text: test code section */
-  . = 0x10000;
-  . = . + 0x40;
+  . = 0x0000;
   .text : 
   {
     ../linuxbuild/obj/crt.o(.text)
