@@ -37,7 +37,7 @@ SC_MODULE(BranchPredictor) {
 private:
     struct RegistersType {
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> npc;
-        sc_signal<bool> branch;
+        sc_signal<bool> predicted;
     } v, r;
     sc_uint<BUS_ADDR_WIDTH> wb_npc;
     bool w_compressed;

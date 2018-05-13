@@ -66,7 +66,7 @@ void ICache::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, hit_word, "/top/cache0/i0/hit_word");
         sc_trace(o_vcd, wb_hit_hold[0], "/top/cache0/i0/wb_hit_hold(0)");
         sc_trace(o_vcd, wb_hit_hold[1], "/top/cache0/i0/wb_hit_hold(1)");
-        sc_trace(o_vcd, w_check, "/top/cache0/i0/w_check");
+        sc_trace(o_vcd, w_reuse_lastline, "/top/cache0/i0/w_reuse_lastline");
     }
 }
 
@@ -254,7 +254,7 @@ void ICache::comb() {
         }
     }
 
-    w_check = 0;
+    w_reuse_lastline = 0;
 
     if (i_resp_mem_data_valid.read()) {
         /** Condition to avoid removing the last line:
@@ -266,9 +266,9 @@ void ICache::comb() {
             || (wb_hit_hold[1][Hit_Line2] && wb_hit_hold[0] == 0)
             || (wb_hit[1][Hit_Line2] && !wb_hit[1][Hit_Line1] && wb_hit[0] == 0)
             || (wb_hit[0][Hit_Line2] && !wb_hit[0][Hit_Line1] && wb_hit[1] == 0)) {
-            w_check = 1;
+            w_reuse_lastline = 1;
         }
-        if (!w_check) {
+        if (!w_reuse_lastline) {
             v.iline_addr[1] = r.iline_addr[0];
             v.iline_data[1] = r.iline_data[0];
         }

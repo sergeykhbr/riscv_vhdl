@@ -75,7 +75,7 @@ private:
     sc_uint<32> hit_word;
     sc_bv<ILINE_TOTAL + 1> wb_hit[ILINE_TOTAL];
     sc_bv<ILINE_TOTAL> wb_hit_hold[ILINE_TOTAL];
-    bool w_check;
+    bool w_reuse_lastline;
     sc_uint<BUS_DATA_WIDTH> wb_hit_data[ILINE_TOTAL];
     sc_uint<BUS_DATA_WIDTH> wb_hold_data[ILINE_TOTAL];
 };
