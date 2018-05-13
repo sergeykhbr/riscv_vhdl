@@ -105,38 +105,6 @@ void RtlWrapper::clk_negedge_proc() {
     while ((cb = step_queue_.getNext(step_cnt)) != 0) {
         static_cast<IClockListener *>(cb)->stepCallback(step_cnt);
     }
-    if (generate_ref_ && step_cnt != step_cnt_z) {
-        char msg[16];
-        int msg_len = 0;
-        IService *uart = NULL;
-        switch (step_cnt) {
-        case 22077:
-            uart = static_cast<IService *>(RISCV_get_service("uart0"));
-            msg[0] = 'h';
-            msg_len = 1;
-            break;
-        case 22500:
-            uart = static_cast<IService *>(RISCV_get_service("uart0"));
-            msg[0] = 'e';
-            msg[1] = 'l';
-            msg_len = 2;
-            break;
-        case 24347:
-            uart = static_cast<IService *>(RISCV_get_service("uart0"));
-            msg[0] = 'p';
-            msg[1] = '\r';
-            msg[2] = '\n';
-            msg_len = 3;
-            break;
-        default:;
-        }
-        if (uart) {
-            ISerial *iserial = static_cast<ISerial *>(
-                        uart->getInterface(IFACE_SERIAL));
-            iserial->writeData(msg, msg_len);
-        }
-    }
-    step_cnt_z = i_time.read();
 
     /** */
     v.interrupt = w_interrupt;

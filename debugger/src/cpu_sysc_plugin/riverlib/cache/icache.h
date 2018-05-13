@@ -53,19 +53,31 @@ private:
         State_WaitResp,
         State_WaitAccept
     };
+    enum EHit {
+        Hit_Line1,
+        Hit_Line2,
+        Hit_Response,
+        Hit_Total
+    };
+    static const int ILINE_TOTAL = 2;
 
     struct RegistersType {
-        sc_signal<sc_uint<BUS_ADDR_WIDTH - 3>> iline_addr;
-        sc_signal<sc_uint<BUS_DATA_WIDTH>> iline_data;
+        sc_signal<sc_uint<BUS_ADDR_WIDTH - 3>> iline_addr[ILINE_TOTAL];
+        sc_signal<sc_uint<BUS_DATA_WIDTH>> iline_data[ILINE_TOTAL];
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> iline_addr_req;
-        sc_signal<sc_uint<32>> iline_data_hit;
-        sc_signal<sc_uint<BUS_ADDR_WIDTH>> iline_addr_hit;
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> addr_processing;
         sc_signal<sc_uint<2>> state;
-        sc_signal<bool> hit_line;
+        sc_signal<bool> double_req;         // request 2-lines
+        sc_signal<bool> delay_valid;
+        sc_signal<sc_uint<32>> delay_data;
     } v, r;
-    bool w_hit_req;
-    bool w_hit_line;
-    bool w_hit;
+    bool w_need_mem_req;
+    sc_uint<32> hit_word;
+    sc_bv<ILINE_TOTAL + 1> wb_hit[ILINE_TOTAL];
+    sc_bv<ILINE_TOTAL> wb_hit_hold[ILINE_TOTAL];
+    bool w_check;
+    sc_uint<BUS_DATA_WIDTH> wb_hit_data[ILINE_TOTAL];
+    sc_uint<BUS_DATA_WIDTH> wb_hold_data[ILINE_TOTAL];
 };
 
 

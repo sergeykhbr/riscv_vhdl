@@ -71,6 +71,7 @@ Processor::Processor(sc_module_name name_) : sc_module(name_) {
     dec0->o_memop_size(w.d.memop_size);
     dec0->o_unsigned_op(w.d.unsigned_op);
     dec0->o_rv32(w.d.rv32);
+    dec0->o_compressed(w.d.compressed);
     dec0->o_isa_type(w.d.isa_type);
     dec0->o_instr_vec(w.d.instr_vec);
     dec0->o_exception(w.d.exception);
@@ -89,6 +90,7 @@ Processor::Processor(sc_module_name name_) : sc_module(name_) {
     exec0->i_memop_size(w.d.memop_size);
     exec0->i_unsigned_op(w.d.unsigned_op);
     exec0->i_rv32(w.d.rv32);
+    exec0->i_compressed(w.d.compressed);
     exec0->i_isa_type(w.d.isa_type);
     exec0->i_ivec(w.d.instr_vec);
     exec0->i_ie(csr.ie);
@@ -323,10 +325,9 @@ void Processor::negedge_dbg_print() {
     int sz;
     if (w.m.valid.read()) {
         uint64_t line_cnt = dbg.executed_cnt.read() + 1;
-        sz = RISCV_sprintf(tstr, sizeof(tstr), "%8" RV_PRI64 "d [%08x] %08x: ",
+        sz = RISCV_sprintf(tstr, sizeof(tstr), "%8" RV_PRI64 "d [%08x]: ",
             line_cnt,
-            w.m.pc.read().to_int(),
-            w.m.instr.read().to_int());
+            w.m.pc.read().to_int());
         uint64_t prev_val = iregs0->r.mem[w.w.waddr.read().to_int()].to_int64();
         uint64_t cur_val = w.w.wdata.read().to_int64();
         if (w.w.waddr.read() == 0 || prev_val == cur_val) {

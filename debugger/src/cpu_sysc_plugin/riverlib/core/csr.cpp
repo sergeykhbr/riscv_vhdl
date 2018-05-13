@@ -76,7 +76,7 @@ void CsrRegs::procedure_RegAccess(uint64_t iaddr, bool iwena,
          *      3 = 128
          */
         (*ordata)(RISCV_ARCH-1, RISCV_ARCH-2) = 2;
-        /** BitCharacterDescription         * 0  A Atomic extension         * 1  B Tentatively reserved for Bit operations extension         * 2  C Compressed extension3DDouble-precision Foating-point extension         * 4  E RV32E base ISA         * 5  F Single-precision Foating-point extension         * 6  G Additional standard extensions present         * 7  H Hypervisor mode implemented         * 8  I RV32I/64I/128I base ISA         * 9  J Reserved         * 10 K Reserved         * 11 L Tentatively reserved for Decimal Floating-Point extension         * 12 M Integer Multiply/Divide extension         * 13 N User-level interrupts supported         * 14 O Reserved         * 15 P Tentatively reserved for Packed-SIMD extension         * 16 Q Quad-precision Foating-point extension
+        /** BitCharacterDescription         * 0  A Atomic extension         * 1  B Tentatively reserved for Bit operations extension         * 2  C Compressed extension         * 3  D Double-precision Foating-point extension         * 4  E RV32E base ISA (embedded)         * 5  F Single-precision Foating-point extension         * 6  G Additional standard extensions present         * 7  H Hypervisor mode implemented         * 8  I RV32I/64I/128I base ISA         * 9  J Reserved         * 10 K Reserved         * 11 L Tentatively reserved for Decimal Floating-Point extension         * 12 M Integer Multiply/Divide extension         * 13 N User-level interrupts supported         * 14 O Reserved         * 15 P Tentatively reserved for Packed-SIMD extension         * 16 Q Quad-precision Foating-point extension
          * 17 R Reserved
          * 18 S Supervisor mode implemented
          * 19 T Tentatively reserved for Transactional Memory extension
@@ -91,6 +91,7 @@ void CsrRegs::procedure_RegAccess(uint64_t iaddr, bool iwena,
         (*ordata)['I' - 'A'] = 1;
         (*ordata)['M' - 'A'] = 1;
         (*ordata)['U' - 'A'] = 1;
+        (*ordata)['C' - 'A'] = 1;
         break;
     case CSR_mvendorid:
         break;

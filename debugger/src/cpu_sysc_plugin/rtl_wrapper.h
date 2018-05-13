@@ -107,7 +107,6 @@ private:
     IFace *iparent_;    // pointer on parent module object (used for logging)
     int clockCycles_;   // default in [ps]
     ClockAsyncTQueueType step_queue_;
-    uint64_t step_cnt_z;
     bool generate_ref_;
 
     sc_uint<32> t_trans_idx_up;

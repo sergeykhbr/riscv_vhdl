@@ -41,7 +41,8 @@ trap_table:
   .word bad_trap
   .word bad_trap
 
-  .option norvc
+##! Disabling the compressed code
+#  .option norvc
 reset_vector:
   j _start
 

@@ -30,6 +30,7 @@ SC_MODULE(InstrExecute) {
     sc_in<sc_uint<2>> i_memop_size;             // Memory transaction size
     sc_in<bool> i_unsigned_op;                  // Unsigned operands
     sc_in<bool> i_rv32;                         // 32-bits instruction
+    sc_in<bool> i_compressed;                   // C-extension (2-bytes length)
     sc_in<sc_bv<ISA_Total>> i_isa_type;         // Type of the instruction's structure (ISA spec.)
     sc_in<sc_bv<Instr_Total>> i_ivec;           // One pulse per supported instruction.
     sc_in<bool> i_ie;                           // Interrupt enable bit

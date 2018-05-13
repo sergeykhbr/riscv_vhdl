@@ -26,6 +26,26 @@ const uint8_t OPCODE_BEQ    = 0x18; // 11000: BEQ, BNE, BLT, BGE, BLTU, BGEU
 const uint8_t OPCODE_JALR   = 0x19; // 11001: JALR
 const uint8_t OPCODE_JAL    = 0x1B; // 11011: JAL
 const uint8_t OPCODE_CSRR   = 0x1C; // 11100: CSRRC, CSRRCI, CSRRS, CSRRSI, CSRRW, CSRRWI, URET, SRET, HRET, MRET
+// Compressed instruction set
+const uint8_t OPCODE_C_ADDI4SPN = 0x00;
+const uint8_t OPCODE_C_NOP_ADDI = 0x01;
+const uint8_t OPCODE_C_SLLI     = 0x02;
+const uint8_t OPCODE_C_JAL_ADDIW = 0x05;
+const uint8_t OPCODE_C_LW       = 0x08;
+const uint8_t OPCODE_C_LI       = 0x09;
+const uint8_t OPCODE_C_LWSP     = 0x0A;
+const uint8_t OPCODE_C_LD       = 0x0C;
+const uint8_t OPCODE_C_ADDI16SP_LUI = 0xD;
+const uint8_t OPCODE_C_LDSP     = 0x0E;
+const uint8_t OPCODE_C_MATH     = 0x11;
+const uint8_t OPCODE_C_JR_MV_EBREAK_JALR_ADD = 0x12;
+const uint8_t OPCODE_C_J        = 0x15;
+const uint8_t OPCODE_C_SW       = 0x18;
+const uint8_t OPCODE_C_BEQZ     = 0x19;
+const uint8_t OPCODE_C_SWSP     = 0x1A;
+const uint8_t OPCODE_C_SD       = 0x1C;
+const uint8_t OPCODE_C_BNEZ     = 0x1D;
+const uint8_t OPCODE_C_SDSP     = 0x1E;
 
 SC_MODULE(InstrDecoder) {
     sc_in<bool> i_clk;
@@ -43,6 +63,7 @@ SC_MODULE(InstrDecoder) {
     sc_out<bool> o_memop_sign_ext;              // Load memory value with sign extending
     sc_out<sc_uint<2>> o_memop_size;            // Memory transaction size
     sc_out<bool> o_rv32;                        // 32-bits instruction
+    sc_out<bool> o_compressed;                  // C-type instruction
     sc_out<bool> o_unsigned_op;                 // Unsigned operands
     sc_out<sc_bv<ISA_Total>> o_isa_type;        // Instruction format accordingly with ISA
     sc_out<sc_bv<Instr_Total>> o_instr_vec;     // One bit per decoded instruction bus
@@ -70,6 +91,7 @@ private:
         sc_signal<sc_uint<2>> memop_size;
         sc_signal<bool> unsigned_op;
         sc_signal<bool> rv32;
+        sc_signal<bool> compressed;
 
         sc_signal<bool> instr_unimplemented;
     } v, r;

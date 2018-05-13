@@ -127,14 +127,14 @@
                 ['LogLevel',4],
                 ['Bus','axi0'],
                 ['GenerateRef',false,'Generate Registers/Memory access trace file to compare it with functional model'],
-                ['InVcdFile','e:/i_river','Non empty string enables generation of stimulus VCD file'],
-                ['OutVcdFile','e:/o_river','Non empty string enables VCD file with reference signals'],
+                ['InVcdFile','','Non empty string enables generation of stimulus VCD file'],
+                ['OutVcdFile','','Non empty string enables VCD file with reference signals'],
                 ['FreqHz',60000000]
                 ]}]},
     {'Class':'MemorySimClass','Instances':[
           {'Name':'bootrom0','Attr':[
                 ['LogLevel',1],
-                ['InitFile','../../../rtl/fw_images/bootimage.hex'],
+                ['InitFile','../../../rtl/fw_images/gcc711/bootimage.hex'],
                 ['ReadOnly',true],
                 ['BaseAddress',0x0],
                 ['Length',8192]
@@ -142,7 +142,7 @@
     {'Class':'MemorySimClass','Instances':[
           {'Name':'fwimage0','Attr':[
                 ['LogLevel',1],
-                ['InitFile','../../../rtl/fw_images/fwimage.hex'],
+                ['InitFile','../../../rtl/fw_images/gcc711/zephyr.hex'],
                 ['ReadOnly',true],
                 ['BaseAddress',0x00100000],
                 ['Length',0x40000]
@@ -150,7 +150,7 @@
     {'Class':'MemorySimClass','Instances':[
           {'Name':'sram0','Attr':[
                 ['LogLevel',1],
-                ['InitFile','../../../rtl/fw_images/fwimage.hex'],
+                ['InitFile','../../../rtl/fw_images/gcc711/zephyr.hex'],
                 ['ReadOnly',false],
                 ['BaseAddress',0x10000000],
                 ['Length',0x80000]
@@ -167,7 +167,11 @@
                 ['LogLevel',1],
                 ['BaseAddress',0x80001000],
                 ['Length',4096],
-                ['IrqControl',['irqctrl0','irq1']]
+                ['IrqControl',['irqctrl0','irq1']],
+                ['AutoTestEna',false,'Enable/Disable automatic test input via serial interface'],
+                ['TestCases',[[22095,'h'],
+                              [22548,'el'],
+                              [24345,'p\r\n']]]
                 ]}]},
     {'Class':'IrqControllerClass','Instances':[
           {'Name':'irqctrl0','Attr':[

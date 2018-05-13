@@ -25,6 +25,8 @@ UART::UART(const char *name)  : IService(name) {
     registerInterface(static_cast<IMemoryOperation *>(this));
     registerInterface(static_cast<ISerial *>(this));
     registerAttribute("IrqControl", &irqctrl_);
+    registerAttribute("AutoTestEna", &autoTestEna_);
+    registerAttribute("TestCases", &testCases_);
 
     listeners_.make_list(0);
     RISCV_mutex_init(&mutexListeners_);
@@ -35,10 +37,14 @@ UART::UART(const char *name)  : IService(name) {
     p_rx_wr_ = rxfifo_;
     p_rx_rd_ = rxfifo_;
     rx_total_ = 0;
+    pautotest_ = NULL;
 }
 
 UART::~UART() {
     RISCV_mutex_destroy(&mutexListeners_);
+    if (pautotest_) {
+        delete pautotest_;
+    }
 }
 
 void UART::postinitService() {
@@ -48,6 +54,9 @@ void UART::postinitService() {
                                      IFACE_WIRE));
     if (!iwire_) {
         RISCV_error("Can't find IWire interface %s", irqctrl_[0u].to_string());
+    }
+    if (autoTestEna_.to_bool()) {
+        pautotest_ = new AutoTest(static_cast<ISerial *>(this), &testCases_);
     }
 }
 
@@ -161,6 +170,56 @@ ETransStatus UART::b_transport(Axi4TransactionType *trans) {
         }
     }
     return TRANS_OK;
+}
+
+/**
+ * CPU validation purpose. Reaction on keyboard interrupt:
+ */
+
+UART::AutoTest::AutoTest(ISerial *parent, AttributeType *tests) {
+    parent_ = parent;
+    tests_ = *tests;
+    testcnt_ = 0;
+    IClock *iclk = static_cast<IClock *>(
+            RISCV_get_service_iface("core0", IFACE_CLOCK));
+    if (iclk && tests_.is_list() && tests_.size()) {
+        const AttributeType &t0 = tests_[testcnt_];
+        if (t0.size() == 2) {
+            iclk->registerStepCallback(static_cast<IClockListener *>(this),
+                                       t0[0u].to_uint64());
+        }
+    }
+}
+
+void UART::AutoTest::stepCallback(uint64_t t) {
+    const AttributeType &tn = tests_[testcnt_];
+    char msg[64];
+    int msglen = 0;
+    const char *pbuf = tn[1].to_string();
+    for (unsigned i = 0; i < tn[1].size(); i++) {
+        if (pbuf[i] == '\\' && pbuf[i+1] == 'r') {
+            ++i;
+            msg[msglen++] = '\r';
+            msg[msglen] = '\0';
+            continue;
+        } else if (pbuf[i] == '\\' && pbuf[i+1] == 'n') {
+            ++i;
+            msg[msglen++] = '\n';
+            msg[msglen] = '\0';
+            continue;
+        }
+        msg[msglen++] = pbuf[i];
+        msg[msglen] = '\0';
+    }
+    parent_->writeData(msg, msglen);
+
+    if (++testcnt_ < tests_.size()) {
+        const AttributeType &t0 = tests_[testcnt_];
+        IClock *iclk = static_cast<IClock *>(
+                RISCV_get_service_iface("core0", IFACE_CLOCK));
+        iclk->registerStepCallback(static_cast<IClockListener *>(this),
+                                   t0[0u].to_uint64());
+    }
 }
 
 }  // namespace debugger

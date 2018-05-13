@@ -160,8 +160,8 @@ void CpuRiver_Functional::trackContextEnd() {
     }
     int sz;
     char tstr[1024];
-    sz = RISCV_sprintf(tstr, sizeof(tstr),"%8I64d [%08x] %08x: ",
-        step_cnt_, pc_.getValue().buf32[0], cacheline_[0].buf32[0]);  
+    sz = RISCV_sprintf(tstr, sizeof(tstr),"%8I64d [%08x]: ",
+        step_cnt_, pc_.getValue().buf32[0]);
 
     bool reg_changed = false;
     uint64_t *prev = portSavedRegs_.getpR64();
@@ -170,15 +170,14 @@ void CpuRiver_Functional::trackContextEnd() {
         if (prev[i] != cur[i]) {
             reg_changed = true;
             sz += RISCV_sprintf(&tstr[sz], sizeof(tstr) - sz,
-                    "%3s <= %016I64x, %s\n",
-                    IREGS_NAMES[i], cur[i], instr_->name());
+                    "%3s <= %016I64x",
+                    IREGS_NAMES[i], cur[i]);//, instr_->name());
         }
     }
     if (instr_ && !reg_changed) {
-        sz += RISCV_sprintf(&tstr[sz], sizeof(tstr) - sz, "-, %s\n",
-                            instr_->name());
+        sz += RISCV_sprintf(&tstr[sz], sizeof(tstr) - sz, "-", NULL);
     }
-    (*reg_trace_file) << tstr;
+    (*reg_trace_file) << tstr << "\n";
     reg_trace_file->flush();
 }
 

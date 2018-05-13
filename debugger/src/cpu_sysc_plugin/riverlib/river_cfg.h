@@ -23,7 +23,7 @@ static const uint8_t MEMOP_4B = 2;
 static const uint8_t MEMOP_2B = 1;
 static const uint8_t MEMOP_1B = 0;
 
-static const uint64_t RESET_VECTOR      = 0x1000;
+static const uint64_t RESET_VECTOR      = 0x0040;
 static const int DBG_FETCH_TRACE_SIZE   = 4;
 
 /** Number of elements each 2*CFG_ADDR_WIDTH in stack trace buffer: */

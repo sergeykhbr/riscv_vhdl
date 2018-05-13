@@ -14,6 +14,7 @@
 #include "coreservices/iserial.h"
 #include "coreservices/iwire.h"
 #include "coreservices/irawlistener.h"
+#include "coreservices/iclock.h"
 #include <string>
 
 namespace debugger {
@@ -21,7 +22,7 @@ namespace debugger {
 class UART : public IService, 
              public IMemoryOperation,
              public ISerial {
-public:
+ public:
     UART(const char *name);
     ~UART();
 
@@ -36,9 +37,11 @@ public:
     virtual void registerRawListener(IFace *listener);
     virtual void unregisterRawListener(IFace *listener);
 
-private:
+ private:
     AttributeType irqctrl_;
     AttributeType listeners_;  // non-registering attribute
+    AttributeType autoTestEna_;
+    AttributeType testCases_;
     IWire *iwire_;
 
     std::string input_;
@@ -55,6 +58,20 @@ private:
         uint32_t rsrv[2];
         volatile uint32_t data;
     } regs_;
+
+  private:
+    class AutoTest : public IClockListener {
+     public:
+        AutoTest(ISerial *parent, AttributeType *tests);
+
+        /** IClockListener */
+        virtual void stepCallback(uint64_t t);
+     private:
+        ISerial *parent_;
+        AttributeType tests_;
+        unsigned testcnt_;
+    };
+    AutoTest *pautotest_;
 };
 
 DECLARE_CLASS(UART)

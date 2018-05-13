@@ -21,6 +21,7 @@ BranchPredictor::BranchPredictor(sc_module_name name_) : sc_module(name_) {
     sensitive << i_e_npc;
     sensitive << i_ra;
     sensitive << r.npc;
+    sensitive << r.branch;
 
     SC_METHOD(registers);
     sensitive << i_clk.pos();
@@ -38,18 +39,27 @@ void BranchPredictor::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 
         sc_trace(o_vcd, o_npc_predict, "/top/proc0/bp0/o_npc_predict");
         sc_trace(o_vcd, r.npc, "/top/proc0/bp0/r_npc");
+        sc_trace(o_vcd, r.branch, "/top/proc0/bp0/r_branch");
+        sc_trace(o_vcd, w_compressed, "/top/proc0/bp0/w_compressed");
+        sc_trace(o_vcd, wb_npc, "/top/proc0/bp0/wb_npc");
     }
 }
 
 void BranchPredictor::comb() {
     v = r;
     sc_uint<32> wb_tmp;
-    sc_uint<BUS_ADDR_WIDTH> wb_npc;
     sc_uint<BUS_ADDR_WIDTH> wb_off;
+    bool w_branch = 0;
 
     wb_tmp = i_resp_mem_data.read();
+    w_compressed = !(wb_tmp[1] & wb_tmp[0]);
+    w_branch = 0;
+
     if (i_f_predic_miss.read()) {
-        wb_npc = i_e_npc.read() + 4;
+        wb_npc = i_e_npc.read();
+        w_branch = 1;
+    } else if (w_compressed) {
+        wb_npc = r.npc.read() + 2;
     } else {
         wb_npc = r.npc.read() + 4;
     }
@@ -68,22 +78,25 @@ void BranchPredictor::comb() {
     if (i_resp_mem_valid.read()) {
         if (wb_tmp == 0x00008067) {
             // ret pseudo-instruction: Dhry score 34816 -> 35136
-            v.npc = i_ra.read()(BUS_ADDR_WIDTH-1, 0);
+            wb_npc = i_ra.read()(BUS_ADDR_WIDTH-1, 0);
+            w_branch = 1;
         } else if (wb_tmp(6, 0) == 0x6f) {
             // jal instruction: Dhry score 35136 -> 36992
-            v.npc = i_resp_mem_addr.read() + wb_off;
-        } else if (i_req_mem_fire.read()) {
-            v.npc = wb_npc;
+            wb_npc = i_resp_mem_addr.read() + wb_off;
+            w_branch = 1;
         }
-    } else if (i_req_mem_fire.read()) {
+    } 
+    if (i_req_mem_fire.read()) {
+        v.branch = w_branch;
         v.npc = wb_npc;
     }
 
     if (!i_nrst.read()) {
         v.npc = RESET_VECTOR;
+        v.branch = 0;
     }
 
-    o_npc_predict = r.npc;
+    o_npc_predict = wb_npc;
 }
 
 void BranchPredictor::registers() {

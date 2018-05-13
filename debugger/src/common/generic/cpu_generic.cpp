@@ -267,27 +267,38 @@ void CpuGeneric::dma_memop(Axi4TransactionType *tr) {
             }
         }
     }
-    //if (!mem_trace_file) {
-    if (!reg_trace_file) {
+    if (!mem_trace_file) {
+    //if (!reg_trace_file) {
         return;
     }
 
     char tstr[512];
+    Reg64Type pload = {0};
     if (tr->action == MemAction_Read) {
+        if (tr->xsize == 4) {
+            pload.buf32[0] = tr->rpayload.b32[0];
+        } else {
+            pload.val = tr->rpayload.b64[0];
+        }
         RISCV_sprintf(tstr, sizeof(tstr),
-                    "         [%08x] [%08x] => %016" RV_PRI64 "x, %d\n",
+                    "%08x: [%08x] => %016" RV_PRI64 "x\n",
                     pc_.getValue().buf32[0],
                     static_cast<int>(tr->addr),
-                    tr->rpayload.b64[0], tr->xsize);
+                    pload.val);
     } else {
+        if (tr->xsize == 4) {
+            pload.buf32[0] = tr->wpayload.b32[0];
+        } else {
+            pload.val = tr->wpayload.b64[0];
+        }
         RISCV_sprintf(tstr, sizeof(tstr),
-                    "         [%08x] [%08x] <= %016" RV_PRI64 "x, %d\n",
+                    "%08x: [%08x] <= %016" RV_PRI64 "x\n",
                     pc_.getValue().buf32[0],
                     static_cast<int>(tr->addr),
-                    tr->wpayload.b64[0], tr->xsize);
+                    pload.val);
     }
-    (*reg_trace_file) << tstr;
-    reg_trace_file->flush();
+    (*mem_trace_file) << tstr;
+    mem_trace_file->flush();
 }
 
 void CpuGeneric::go() {

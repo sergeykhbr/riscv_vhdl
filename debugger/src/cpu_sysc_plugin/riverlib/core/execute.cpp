@@ -191,6 +191,7 @@ void InstrExecute::comb() {
     sc_uint<2> wb_memop_size;
     sc_uint<BUS_ADDR_WIDTH> wb_memop_addr;
     sc_bv<Instr_Total> wv;
+    int opcode_len;
 
     bool w_pc_valid;
     bool w_d_acceptable;
@@ -346,18 +347,23 @@ void InstrExecute::comb() {
         w_pc_branch = 1;
     }
 
+    opcode_len = 4;
+    if (i_compressed.read()) {
+        opcode_len = 2;
+    }
+
     if (w_pc_branch) {
         wb_npc = i_d_pc.read() + wb_off(BUS_ADDR_WIDTH-1, 0);
     } else if (wv[Instr_JAL].to_bool()) {
-        wb_res = i_d_pc.read() + 4;
+        wb_res = i_d_pc.read() + opcode_len;
         wb_npc = wb_rdata1(BUS_ADDR_WIDTH-1, 0) + wb_off(BUS_ADDR_WIDTH-1, 0);
     } else if (wv[Instr_JALR].to_bool()) {
-        wb_res = i_d_pc.read() + 4;
+        wb_res = i_d_pc.read() + opcode_len;
         wb_npc = wb_rdata1(BUS_ADDR_WIDTH-1, 0) + wb_rdata2(BUS_ADDR_WIDTH-1, 0);
         wb_npc[0] = 0;
     } else if ((wv[Instr_MRET] | wv[Instr_URET]).to_bool()) {
-        wb_res = i_d_pc.read() + 4;
-        w_xret = i_d_valid;
+        wb_res = i_d_pc.read() + opcode_len;
+        w_xret = i_d_valid.read() && w_pc_valid;
         w_csr_wena = 0;
         if (wv[Instr_URET].to_bool()) {
             wb_csr_addr = CSR_uepc;
@@ -367,7 +373,7 @@ void InstrExecute::comb() {
         wb_npc = i_csr_rdata;
     } else {
         // Instr_HRET, Instr_SRET, Instr_FENCE, Instr_FENCE_I:
-        wb_npc = i_d_pc.read() + 4;
+        wb_npc = i_d_pc.read() + opcode_len;
     }
 
     if (i_memop_load) {
@@ -403,8 +409,9 @@ void InstrExecute::comb() {
     }
 
     w_exception = w_d_acceptable
-        & (i_unsup_exception.read() || w_exception_load || w_exception_store
-           || w_exception_xret || wv[Instr_ECALL] || wv[Instr_EBREAK]);
+        & ((i_unsup_exception.read() & w_pc_valid) || w_exception_load
+           || w_exception_store || w_exception_xret
+           || wv[Instr_ECALL] || wv[Instr_EBREAK]);
 
     /** Default number of cycles per instruction = 0 (1 clock per instr)
      *  If instruction is multicycle then modify this value.
@@ -521,7 +528,8 @@ void InstrExecute::comb() {
     wb_exception_code = 0;
     if (i_ext_irq & i_ie & !r.ext_irq_pulser) { // Maskable traps (interrupts)
         v.trap_code_waiting[4] = 1;
-        v.trap_code_waiting(3, 0) = INTERRUPT_MExternal;
+        // INTERRUPT_MExternal - INTERRUPT_USoftware
+        v.trap_code_waiting(3, 0) = 11;
     } else if (w_exception) {      // Unmaskable traps (exceptions)
         wb_exception_code[4] = 0;
         if (w_exception_load) {

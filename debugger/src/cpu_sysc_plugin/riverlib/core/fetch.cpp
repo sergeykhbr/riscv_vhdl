@@ -77,7 +77,7 @@ void InstrFetch::comb() {
 
     w_predict_miss = 1;
     if (i_e_npc == r.pc_z1 
-       || i_e_npc == i_predict_npc || i_e_npc == r.raddr_not_resp_yet) {
+       || i_e_npc == r.raddr_not_resp_yet) {
         w_predict_miss = 0;
     }
 
