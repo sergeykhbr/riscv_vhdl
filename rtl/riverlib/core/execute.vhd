@@ -31,6 +31,7 @@ entity InstrExecute is
     i_memop_size : in std_logic_vector(1 downto 0);             -- Memory transaction size
     i_unsigned_op : in std_logic;                               -- Unsigned operands
     i_rv32 : in std_logic;                                      -- 32-bits instruction
+    i_compressed : in std_logic;                                -- C-extension (2-bytes length)
     i_isa_type : in std_logic_vector(ISA_Total-1 downto 0);     -- Type of the instruction's structure (ISA spec.)
     i_ivec : in std_logic_vector(Instr_Total-1 downto 0);       -- One pulse per supported instruction.
     i_ie : in std_logic;                                        -- Interrupt enable bit
@@ -223,7 +224,7 @@ begin
 
   comb : process(i_nrst, i_pipeline_hold, i_d_valid, i_d_pc, i_d_instr,
                  i_wb_done, i_memop_load, i_memop_store, i_memop_sign_ext,
-                 i_memop_size, i_unsigned_op, i_rv32, i_isa_type, i_ivec,
+                 i_memop_size, i_unsigned_op, i_rv32, i_compressed, i_isa_type, i_ivec,
                  i_rdata1, i_rdata2, i_csr_rdata, i_ext_irq, i_dport_npc_write,
                  i_dport_npc, i_ie, i_mtvec, i_mode, i_break_mode, i_unsup_exception,
                  wb_arith_res, w_arith_valid, w_arith_busy, w_hazard_detected,
@@ -233,6 +234,7 @@ begin
     variable w_exception : std_logic;
     variable w_exception_store : std_logic;
     variable w_exception_load : std_logic;
+    variable w_exception_xret : std_logic;
     variable wb_exception_code : std_logic_vector(4 downto 0);
     variable wb_radr1 : std_logic_vector(4 downto 0);
     variable wb_rdata1 : std_logic_vector(RISCV_ARCH-1 downto 0);
@@ -274,6 +276,7 @@ begin
     variable w_less : std_logic;
     variable w_gr_equal : std_logic;
     variable wv : std_logic_vector(Instr_Total-1 downto 0);
+    variable opcode_len : integer;
 
   begin
 
@@ -410,21 +413,26 @@ begin
         w_pc_branch := '1';
     end if;
 
+    opcode_len := 4;
+    if i_compressed = '1' then
+        opcode_len := 2;
+    end if;
+
     if w_pc_branch = '1' then
         wb_npc := i_d_pc + wb_off(BUS_ADDR_WIDTH-1 downto 0);
     elsif wv(Instr_JAL) = '1' then
         wb_res(63 downto 32) := (others => '0');
-        wb_res(31 downto 0) := i_d_pc + 4;
+        wb_res(31 downto 0) := i_d_pc + opcode_len;
         wb_npc := wb_rdata1(BUS_ADDR_WIDTH-1 downto 0) + wb_off(BUS_ADDR_WIDTH-1 downto 0);
     elsif wv(Instr_JALR) = '1' then
         wb_res(63 downto 32) := (others => '0');
-        wb_res(31 downto 0) := i_d_pc + 4;
+        wb_res(31 downto 0) := i_d_pc + opcode_len;
         wb_npc := wb_rdata1(BUS_ADDR_WIDTH-1 downto 0) + wb_rdata2(BUS_ADDR_WIDTH-1 downto 0);
         wb_npc(0) := '0';
     elsif wv(Instr_MRET) = '1' or wv(Instr_URET) = '1' then
         wb_res(63 downto 32) := (others => '0');
-        wb_res(31 downto 0) := i_d_pc + 4;
-        w_xret := i_d_valid;
+        wb_res(31 downto 0) := i_d_pc + opcode_len;
+        w_xret := i_d_valid and w_pc_valid;
         w_csr_wena := '0';
         if wv(Instr_URET) = '1' then
             wb_csr_addr := CSR_uepc;
@@ -434,7 +442,7 @@ begin
         wb_npc := i_csr_rdata(BUS_ADDR_WIDTH-1 downto 0);
     else
         -- Instr_HRET, Instr_SRET, Instr_FENCE, Instr_FENCE_I:
-        wb_npc := i_d_pc + 4;
+        wb_npc := i_d_pc + opcode_len;
     end if;
 
     if i_memop_load = '1' then
@@ -452,6 +460,7 @@ begin
     v.memop_size := (others => '0');
     w_exception_store := '0';
     w_exception_load := '0';
+    w_exception_xret := '0';
 
     if ((wv(Instr_LD) = '1' and wb_memop_addr(2 downto 0) /= "000")
         or ((wv(Instr_LW) or wv(Instr_LWU)) = '1' and wb_memop_addr(1 downto 0) /= "00")
@@ -463,9 +472,15 @@ begin
         or (wv(Instr_SH) = '1' and wb_memop_addr(0) /= '0')) then
         w_exception_store := not w_hazard_detected;
     end if;
+    if (wv(Instr_MRET) = '1' and i_mode /= PRV_M) 
+        or (wv(Instr_URET) = '1' and i_mode /= PRV_U) then
+        w_exception_xret := '1';
+    end if;
+
 
     w_exception := w_d_acceptable
-        and (i_unsup_exception or w_exception_load or w_exception_store
+        and ((i_unsup_exception and w_pc_valid) or w_exception_load 
+             or w_exception_store or w_exception_xret
              or wv(Instr_ECALL) or wv(Instr_EBREAK));
 
 
@@ -590,13 +605,16 @@ begin
     wb_exception_code := (others => '0');
     if (i_ext_irq and i_ie and not r.ext_irq_pulser) = '1' then -- Maskable traps (interrupts)
         v.trap_code_waiting(4) := '1';
-        v.trap_code_waiting(3 downto 0) := INTERRUPT_MExternal;
+        -- INTERRUPT_MExternal - INTERRUPT_USoftware
+        v.trap_code_waiting(3 downto 0) := X"B";
     elsif w_exception = '1' then      -- Unmaskable traps (exceptions)
         wb_exception_code(4) := '0';
         if w_exception_load = '1' then
             wb_exception_code(3 downto 0) := EXCEPTION_LoadMisalign;
         elsif w_exception_store = '1' then
             wb_exception_code(3 downto 0) := EXCEPTION_StoreMisalign;
+        elsif w_exception_xret = '1' then
+            wb_exception_code(3 downto 0) := EXCEPTION_InstrIllegal;
         elsif wv(Instr_ECALL) = '1' then
             if i_mode = PRV_M then
                 wb_exception_code(3 downto 0) := EXCEPTION_CallFromMmode;

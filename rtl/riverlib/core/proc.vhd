@@ -79,6 +79,7 @@ architecture arch_Processor of Processor is
         memop_sign_ext : std_logic;
         memop_size : std_logic_vector(1 downto 0);
         rv32 : std_logic;                                    -- 32-bits instruction
+        compressed : std_logic;                              -- C-extension
         unsigned_op : std_logic;                             -- Unsigned operands
         isa_type : std_logic_vector(ISA_Total-1 downto 0);
         instr_vec : std_logic_vector(Instr_Total-1 downto 0);
@@ -233,6 +234,7 @@ begin
         o_memop_size => w.d.memop_size,
         o_unsigned_op => w.d.unsigned_op,
         o_rv32 => w.d.rv32,
+        o_compressed => w.d.compressed,
         o_isa_type => w.d.isa_type,
         o_instr_vec => w.d.instr_vec,
         o_exception => w.d.exception);
@@ -251,6 +253,7 @@ begin
         i_memop_size => w.d.memop_size,
         i_unsigned_op => w.d.unsigned_op,
         i_rv32 => w.d.rv32,
+        i_compressed => w.d.compressed,
         i_isa_type => w.d.isa_type,
         i_ivec => w.d.instr_vec,
         i_ie => csr.ie,

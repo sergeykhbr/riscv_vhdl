@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------------
 --! @file
---! @copyright Copyright 2016 GNSS Sensor Ltd. All right reserved.
+--! @copyright Copyright 2018 GNSS Sensor Ltd. All right reserved.
 --! @author    Sergey Khabarov - sergeykhbr@gmail.com
 --! @brief     CPU Fetch Instruction stage.
 ------------------------------------------------------------------------------
@@ -86,7 +86,7 @@ begin
     w_resp_fire := i_mem_data_valid and w_o_mem_resp_ready;
 
     w_predict_miss := '1';
-    if (i_e_npc = r.pc_z1) or (i_e_npc = i_predict_npc)  
+    if (i_e_npc = r.pc_z1)
         or (i_e_npc = r.raddr_not_resp_yet) then
       w_predict_miss := '0';
     end if;

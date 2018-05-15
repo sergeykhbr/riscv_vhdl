@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------------
 --! @file
---! @copyright Copyright 2016 GNSS Sensor Ltd. All right reserved.
+--! @copyright Copyright 2018 GNSS Sensor Ltd. All right reserved.
 --! @author    Sergey Khabarov - sergeykhbr@gmail.com
 --! @brief     CSR registers module.
 ------------------------------------------------------------------------------
@@ -81,8 +81,9 @@ architecture arch_CsrRegs of CsrRegs is
         --! BitCharacterDescription
         --! 0  A Atomic extension
         --! 1  B Tentatively reserved for Bit operations extension
-        --! 2  C Compressed extension3DDouble-precision Foating-point extension
-        --! 4  E RV32E base ISA
+        --! 2  C Compressed extension
+        --! 3  D Double-precision Foating-point extension
+        --! 4  E RV32E base ISA (embedded)
         --! 5  F Single-precision Foating-point extension
         --! 6  G Additional standard extensions present
         --! 7  H Hypervisor mode implemented
@@ -108,6 +109,7 @@ architecture arch_CsrRegs of CsrRegs is
         ordata(8) := '1';
         ordata(12) := '1';
         ordata(20) := '1';
+        ordata(2) := '1';
     when CSR_mvendorid =>
     when CSR_marchid =>
     when CSR_mimplementationid =>

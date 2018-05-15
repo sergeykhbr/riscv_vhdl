@@ -35,6 +35,7 @@ architecture arch_BranchPredictor of BranchPredictor is
 
   type RegistersType is record
       npc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+      predicted : std_logic;
   end record;
 
   signal r, rin : RegistersType;
@@ -46,45 +47,64 @@ begin
     variable v : RegistersType;
     variable wb_tmp : std_logic_vector(31 downto 0);
     variable wb_npc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    variable wb_off : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    variable wb_jal_off : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    variable w_compressed : std_logic;
+    variable w_predicted : std_logic;
 
   begin
 
     v := r;
 
     wb_tmp := i_resp_mem_data;
+    w_compressed := not (wb_tmp(1) and wb_tmp(0));
+    w_predicted := '0';
+    wb_npc := r.npc;
+
+    wb_jal_off(BUS_ADDR_WIDTH-1 downto 20) := (others => wb_tmp(31));
+    wb_jal_off(19 downto 12) := wb_tmp(19 downto 12);
+    wb_jal_off(11) := wb_tmp(20);
+    wb_jal_off(10 downto 1) := wb_tmp(30 downto 21);
+    wb_jal_off(0) := '0';
+
     if i_f_predic_miss = '1' then
-        wb_npc := i_e_npc + 4;
+        wb_npc := i_e_npc;
+    elsif w_compressed = '1' then
+        if i_resp_mem_valid = '1' then
+            if wb_tmp(15 downto 0) = X"8082" then
+                -- ret pseudo-instruction:
+                wb_npc := i_ra(BUS_ADDR_WIDTH-1 downto 0);
+                w_predicted := '1';
+            else
+                wb_npc := r.npc + 2;
+            end if;
+        end if;
     else
-        wb_npc := r.npc + 4;
+        if i_resp_mem_valid = '1' then
+            if wb_tmp = X"00008067" then
+                -- ret pseudo-instruction: Dhry score 34816 -> 35136
+                wb_npc := i_ra(BUS_ADDR_WIDTH-1 downto 0);
+                w_predicted := '1';
+            elsif wb_tmp(6 downto 0) = "1101111" then
+                -- jal instruction: Dhry score 35136 -> 36992
+                wb_npc := i_resp_mem_addr + wb_jal_off;
+                w_predicted := '1';
+            else
+                wb_npc := r.npc + 4;
+            end if;
+        end if;
     end if;
 
-
-    wb_off(BUS_ADDR_WIDTH-1 downto 20) := (others => wb_tmp(31));
-    wb_off(19 downto 12) := wb_tmp(19 downto 12);
-    wb_off(11) := wb_tmp(20);
-    wb_off(10 downto 1) := wb_tmp(30 downto 21);
-    wb_off(0) := '0';
-
-    if i_resp_mem_valid = '1' then
-        if wb_tmp = X"00008067" then
-            -- ret pseudo-instruction: Dhry score 34816 -> 35136
-            v.npc := i_ra(BUS_ADDR_WIDTH-1 downto 0);
-        elsif wb_tmp(6 downto 0) = "1101111" then
-            -- jal instruction: Dhry score 35136 -> 36992
-            v.npc := i_resp_mem_addr + wb_off;
-        elsif i_req_mem_fire = '1' then
-            v.npc := wb_npc;
-        end if;
-    elsif i_req_mem_fire = '1' then
+    if i_req_mem_fire = '1' then
+        v.predicted := w_predicted;
         v.npc := wb_npc;
     end if;
 
     if i_nrst = '0' then
         v.npc := RESET_VECTOR;
+        v.predicted := '0';
     end if;
 
-    o_npc_predict <= r.npc;
+    o_npc_predict <= wb_npc;
     
     rin <= v;
   end process;

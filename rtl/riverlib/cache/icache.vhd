@@ -47,15 +47,40 @@ architecture arch_ICache of ICache is
   constant State_WaitResp : std_logic_vector(1 downto 0) := "10";
   constant State_WaitAccept : std_logic_vector(1 downto 0) := "11";
 
-  type RegistersType is record
-      iline_addr : std_logic_vector(BUS_ADDR_WIDTH-4 downto 0);
-      iline_data : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
-      iline_addr_req : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-      iline_addr_hit : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-      iline_data_hit : std_logic_vector(31 downto 0);
-      state : std_logic_vector(1 downto 0);
-      hit_line : std_logic;
+  constant Hit_Line1 : integer := 0;
+  constant Hit_Line2 : integer := 1;
+  constant Hit_Response : integer := 2;
+  constant Hit_Total : integer := 3;
+
+  constant ILINE_TOTAL : integer := 2;
+
+  type line_type is record
+      addr : std_logic_vector(BUS_ADDR_WIDTH-4 downto 0);
+      data : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
   end record;
+
+  type iline_vector is array (0 to ILINE_TOTAL-1) of line_type;
+
+  type line_signal_type is record
+       hit : std_logic_vector(ILINE_TOTAL downto 0);     -- Hit_Total = ILINE_TOTAL + 1
+       hit_hold : std_logic_vector(ILINE_TOTAL-1 downto 0);
+       hit_data : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+       hold_data : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+  end record;
+ 
+  type line_signal_vector is array (0 to ILINE_TOTAL-1) of line_signal_type;
+
+  type RegistersType is record
+      iline : iline_vector;
+      iline_addr_req : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+      addr_processing : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+      state : std_logic_vector(1 downto 0);
+      double_req : std_logic;
+      delay_valid : std_logic;
+      delay_data : std_logic_vector(31 downto 0);
+  end record;
+
+  type adr_type is array (0 to 1) of std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
 
   signal r, rin : RegistersType;
 
@@ -65,40 +90,121 @@ begin
                 i_resp_ctrl_ready, i_req_mem_ready, 
                 i_resp_mem_data_valid, i_resp_mem_data, r)
     variable v : RegistersType;
+    variable w_need_mem_req : std_logic;
+    variable wb_hit_word : std_logic_vector(31 downto 0);
+    variable wb_l : line_signal_vector;
+    variable w_reuse_lastline : std_logic;
+
     variable w_o_req_ctrl_ready : std_logic;
     variable w_o_req_mem_valid : std_logic;
     variable wb_o_req_mem_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    variable w_req_ctrl_valid : std_logic;
     variable w_req_fire : std_logic;
     variable w_o_resp_valid : std_logic;
     variable wb_o_resp_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     variable wb_o_resp_data : std_logic_vector(31 downto 0);
-    variable w_hit_req : std_logic;
-    variable w_hit_line : std_logic;
-    variable w_hit : std_logic;
-    variable wb_req_line : std_logic_vector(BUS_ADDR_WIDTH-4 downto 0);
+    variable wb_req_addr : adr_type;
+    variable wb_hold_addr : adr_type;
   begin
 
     v := r;
-    w_hit_req := '0';
-    w_hit_line := '0';
-    wb_req_line := i_req_ctrl_addr(BUS_ADDR_WIDTH-1 downto 3);
-    if (i_resp_mem_data_valid = '1'
-      and (wb_req_line = r.iline_addr_req(BUS_ADDR_WIDTH-1 downto 3))) then
-        w_hit_req := '1';
-    end if;
-    if (wb_req_line = r.iline_addr) then
-        w_hit_line := '1';
-    end if;
-    w_hit := w_hit_req or w_hit_line;
 
-    w_o_req_mem_valid := not w_hit and i_req_ctrl_valid;
-    wb_o_req_mem_addr := i_req_ctrl_addr(BUS_ADDR_WIDTH-1 downto 3) & "000";
-    w_o_req_ctrl_ready := w_hit or i_req_mem_ready;
-    w_req_fire := i_req_ctrl_valid and w_o_req_ctrl_ready;
+    w_req_ctrl_valid := i_req_ctrl_valid or r.double_req;
+    wb_req_addr(0) := i_req_ctrl_addr;
+    wb_req_addr(1) := i_req_ctrl_addr + 2;
+
+    wb_hold_addr(0) := r.addr_processing;
+    wb_hold_addr(1) := r.addr_processing + 2;
+
+    for i in 0 to ILINE_TOTAL-1 loop
+        wb_l(i).hit := (others => '0');
+        wb_l(i).hit_data := (others => '0');
+        if wb_req_addr(i)(BUS_ADDR_WIDTH-1 downto 3) = r.iline(0).addr then
+            wb_l(i).hit(Hit_Line1) := w_req_ctrl_valid;
+            wb_l(i).hit_data := r.iline(0).data;
+        elsif wb_req_addr(i)(BUS_ADDR_WIDTH-1 downto 3) = r.iline(1).addr then
+            wb_l(i).hit(Hit_Line2) := w_req_ctrl_valid;
+            wb_l(i).hit_data := r.iline(1).data;
+        elsif wb_req_addr(i)(BUS_ADDR_WIDTH-1 downto 3) =
+            r.iline_addr_req(BUS_ADDR_WIDTH-1 downto 3) then
+            wb_l(i).hit(Hit_Response) := i_resp_mem_data_valid;
+            wb_l(i).hit_data := i_resp_mem_data;
+        end if;
+
+        wb_l(i).hit_hold := (others => '0');
+        wb_l(i).hold_data := (others => '0');
+        if wb_hold_addr(i)(BUS_ADDR_WIDTH-1 downto 3) = r.iline(0).addr then
+            wb_l(i).hit_hold(Hit_Line1) := '1';
+            wb_l(i).hold_data := r.iline(0).data;
+        elsif wb_hold_addr(i)(BUS_ADDR_WIDTH-1 downto 3) = r.iline(1).addr then
+            wb_l(i).hit_hold(Hit_Line2) := '1';
+            wb_l(i).hold_data := r.iline(1).data;
+        elsif wb_hold_addr(i)(BUS_ADDR_WIDTH-1 downto 3) =
+            r.iline_addr_req(BUS_ADDR_WIDTH-1 downto 3) then
+            wb_l(i).hold_data := i_resp_mem_data;
+        end if;
+    end loop;
+
+    wb_hit_word := (others => '0');
+    v.delay_valid := '0';
+    v.delay_data := (others => '0');
+    w_need_mem_req := '1';
+    if wb_l(0).hit /= "000" and wb_l(1).hit /= "000" then
+        w_need_mem_req := '0';
+    end if;
+    case r.addr_processing(2 downto 1) is
+    when "00" =>
+        wb_hit_word := wb_l(0).hold_data(31 downto 0);
+    when "01" =>
+        wb_hit_word := wb_l(0).hold_data(47 downto 16);
+    when "10" =>
+        wb_hit_word := wb_l(0).hold_data(63 downto 32);
+    when others =>
+        wb_hit_word := wb_l(1).hold_data(15 downto 0) &
+                       wb_l(0).hold_data(63 downto 48);
+    end case;
+
+    if w_req_ctrl_valid = '1' and w_need_mem_req = '0' then
+        v.delay_valid := '1';
+        case i_req_ctrl_addr(2 downto 1) is
+        when "00" =>
+            v.delay_data := wb_l(0).hit_data(31 downto 0);
+        when "01" =>
+            v.delay_data := wb_l(0).hit_data(47 downto 16);
+        when "10" =>
+            v.delay_data := wb_l(0).hit_data(63 downto 32);
+        when others =>
+            v.delay_data := wb_l(1).hit_data(15 downto 0) &
+                            wb_l(0).hit_data(63 downto 48);
+        end case;
+    end if;
+
+    w_o_req_mem_valid := w_need_mem_req and w_req_ctrl_valid;
+    if r.double_req = '1' then
+        if (r.addr_processing(BUS_ADDR_WIDTH-1 downto 3) =
+            r.iline_addr_req(BUS_ADDR_WIDTH-1 downto 3))
+            or (r.addr_processing(BUS_ADDR_WIDTH-1 downto 3) =
+                wb_hold_addr(0)(BUS_ADDR_WIDTH-1 downto 3)) then
+            wb_o_req_mem_addr := wb_hold_addr(1)(BUS_ADDR_WIDTH-1 downto 3) & "000";
+        else
+            wb_o_req_mem_addr := wb_hold_addr(0)(BUS_ADDR_WIDTH-1 downto 3) & "000";
+        end if;
+    elsif wb_l(0).hit = "000" then
+        wb_o_req_mem_addr := wb_req_addr(0)(BUS_ADDR_WIDTH-1 downto 3)  & "000";
+    else
+        wb_o_req_mem_addr := wb_req_addr(1)(BUS_ADDR_WIDTH-1 downto 3)  & "000";
+    end if;
+    w_o_req_ctrl_ready := not w_need_mem_req or i_req_mem_ready;
+    w_req_fire := w_req_ctrl_valid and w_o_req_ctrl_ready;
+
+    if (w_o_req_mem_valid and i_req_mem_ready) = '1' or r.double_req = '1' then
+        v.iline_addr_req := wb_o_req_mem_addr;
+    end if;
+
     case r.state is
     when State_Idle =>
         if i_req_ctrl_valid = '1' then
-            if w_hit = '1' then
+            if w_need_mem_req = '0' then
                 v.state := State_WaitAccept;
             elsif i_req_mem_ready = '1' then
                 v.state := State_WaitResp;
@@ -109,7 +215,7 @@ begin
     when State_WaitGrant =>
         if i_req_mem_ready = '1' then
             v.state := State_WaitResp;
-        elsif w_hit = '1' then
+        elsif w_need_mem_req = '0' then
             --! Fetcher can change request address while request wasn't
             --! accepteed.
             v.state := State_WaitAccept;
@@ -118,11 +224,11 @@ begin
         if i_resp_mem_data_valid = '1' then
             if i_resp_ctrl_ready = '0' then
                 v.state := State_WaitAccept;
-            elsif i_req_ctrl_valid = '0' then
+            elsif w_req_ctrl_valid = '0' then
                 v.state := State_Idle;
             else
                 -- New request
-                if w_hit = '1' then
+                if w_need_mem_req = '0' then
                     v.state := State_WaitAccept;
                 elsif i_req_mem_ready = '1' then
                     v.state := State_WaitResp;
@@ -133,10 +239,10 @@ begin
         end if;
     when State_WaitAccept =>
         if i_resp_ctrl_ready = '1' then
-            if i_req_ctrl_valid = '0' then
+            if w_req_ctrl_valid = '0' then
                 v.state := State_Idle;
             else
-                if w_hit = '1' then
+                if w_need_mem_req = '0' then
                     v.state := State_WaitAccept;
                 elsif i_req_mem_ready = '1' then
                     v.state := State_WaitResp;
@@ -150,53 +256,64 @@ begin
 
 
     if w_req_fire = '1' then
-        v.iline_addr_req := i_req_ctrl_addr;
-        v.hit_line := '0';
-        if w_hit_line = '1' then
-            v.hit_line := '1';
-            v.iline_addr_hit := i_req_ctrl_addr;
-            if i_req_ctrl_addr(2) = '0' then
-                v.iline_data_hit := r.iline_data(31 downto 0);
-            else
-                v.iline_data_hit := r.iline_data(63 downto 32);
-            end if;
+        v.double_req := '0';
+        if i_req_ctrl_addr(2 downto 1) = "11"
+            and wb_l(0).hit = "000" and wb_l(1).hit = "000"
+            and r.double_req = '0' then
+            v.double_req := '1';
         end if;
-    end if;
-    if i_resp_mem_data_valid = '1' then
-        v.iline_addr := r.iline_addr_req(BUS_ADDR_WIDTH-1 downto 3);
-        v.iline_data :=  i_resp_mem_data;
+        if r.double_req = '0' then
+            v.addr_processing := i_req_ctrl_addr;
+        end if;
     end if;
 
-    wb_o_resp_addr := r.iline_addr_req;
-    if r.state = State_WaitAccept then
-        w_o_resp_valid := '1';
-        if r.hit_line = '1' then
-            wb_o_resp_addr := r.iline_addr_hit;
-            wb_o_resp_data := r.iline_data_hit;
-        else 
-            if r.iline_addr_req(2) = '0' then
-                wb_o_resp_data := r.iline_data(31 downto 0);
-            else
-                wb_o_resp_data := r.iline_data(63 downto 32);
-            end if;
+    w_reuse_lastline := '0';
+
+    if i_resp_mem_data_valid = '1' then
+        --! Condition to avoid removing the last line:
+        --!   1. (adr_processing) stores in last line
+        --!   2. (adr_processing + 2) stores in last line
+        --!   3. (req_addr + 2)  stored in last line while requesting (req_addr)
+        --!
+        if (wb_l(0).hit_hold(Hit_Line2) = '1' and wb_l(1).hit_hold = "00")
+            or (wb_l(1).hit_hold(Hit_Line2) = '1' and wb_l(0).hit_hold = "00")
+            or (wb_l(1).hit(Hit_Line2) = '1' and wb_l(1).hit(Hit_Line1) = '0' and wb_l(0).hit = "000")
+            or (wb_l(0).hit(Hit_Line2) = '1' and wb_l(0).hit(Hit_Line1) = '0' and wb_l(1).hit = "000") then
+            w_reuse_lastline := '1';
         end if;
-    else
-        w_o_resp_valid := i_resp_mem_data_valid;
-        if r.iline_addr_req(2) = '0' then
-            wb_o_resp_data := i_resp_mem_data(31 downto 0);
-        else
-            wb_o_resp_data := i_resp_mem_data(63 downto 32);
+        if w_reuse_lastline = '0' then
+            v.iline(1).addr := r.iline(0).addr;
+            v.iline(1).data := r.iline(0).data;
         end if;
+        
+        v.iline(0).addr := r.iline_addr_req(BUS_ADDR_WIDTH-1 downto 3);
+        v.iline(0).data := i_resp_mem_data;
     end if;
+
+    if r.state = State_WaitAccept then
+        w_o_resp_valid := not r.double_req;
+    else
+        w_o_resp_valid := i_resp_mem_data_valid and not r.double_req;
+    end if;
+    if r.delay_valid = '1' then
+        wb_o_resp_data := r.delay_data;
+    else
+        wb_o_resp_data := wb_hit_word;
+    end if;
+    wb_o_resp_addr := r.addr_processing;
+
 
     if i_nrst = '0' then
+        v.iline(0).addr := (others => '1');
+        v.iline(0).data := (others => '0');
+        v.iline(1).addr := (others => '1');
+        v.iline(1).data := (others => '0');
         v.iline_addr_req := (others => '0');
-        v.iline_addr := (others => '1');
-        v.iline_data := (others => '0');
+        v.addr_processing := (others => '0');
         v.state := State_Idle;
-        v.iline_addr_hit := (others => '1');
-        v.iline_data_hit := (others => '0');
-        v.hit_line := '0';
+        v.double_req := '0';
+        v.delay_valid := '0';
+        v.delay_data := (others => '0');
     end if;
 
     o_req_ctrl_ready <= w_o_req_ctrl_ready;

@@ -134,11 +134,13 @@ begin
 
     -- Adress Read/Address Write channels
     for k in 0 to CFG_NASTI_SLAVES_TOTAL-1 loop
-      if (vmsto(ar_mst_idx).ar_bits.addr(CFG_NASTI_ADDR_BITS-1 downto 12) 
+      if i_slvcfg(k).xmask /= X"00000" and
+         (vmsto(ar_mst_idx).ar_bits.addr(CFG_NASTI_ADDR_BITS-1 downto 12) 
           and i_slvcfg(k).xmask) = i_slvcfg(k).xaddr then
           ar_slv_idx := k;
       end if;
-      if (vmsto(aw_mst_idx).aw_bits.addr(CFG_NASTI_ADDR_BITS-1 downto 12)
+      if i_slvcfg(k).xmask /= X"00000" and
+         (vmsto(aw_mst_idx).aw_bits.addr(CFG_NASTI_ADDR_BITS-1 downto 12)
           and i_slvcfg(k).xmask) = i_slvcfg(k).xaddr then
           aw_slv_idx := k;
       end if;

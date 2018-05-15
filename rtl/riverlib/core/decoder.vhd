@@ -32,6 +32,7 @@ entity InstrDecoder is
     o_memop_sign_ext : out std_logic;                        -- Load memory value with sign extending
     o_memop_size : out std_logic_vector(1 downto 0);         -- Memory transaction size
     o_rv32 : out std_logic;                                  -- 32-bits instruction
+    o_compressed : out std_logic;                            -- 16-bits opcode (C-extension)
     o_unsigned_op : out std_logic;                           -- Unsigned operands
     o_isa_type : out std_logic_vector(ISA_Total-1 downto 0); -- Instruction format accordingly with ISA
     o_instr_vec : out std_logic_vector(Instr_Total-1 downto 0); -- One bit per decoded instruction bus
@@ -67,6 +68,27 @@ architecture arch_InstrDecoder of InstrDecoder is
   constant OPCODE_JAL    : std_logic_vector(4 downto 0) := "11011";
   -- CSRRC, CSRRCI, CSRRS, CSRRSI, CSRRW, CSRRWI, URET, SRET, HRET, MRET
   constant OPCODE_CSRR   : std_logic_vector(4 downto 0) := "11100"; 
+  -- Compressed instruction set
+  constant OPCODE_C_ADDI4SPN : std_logic_vector(4 downto 0) := "00000";
+  constant OPCODE_C_NOP_ADDI : std_logic_vector(4 downto 0) := "00001";
+  constant OPCODE_C_SLLI     : std_logic_vector(4 downto 0) := "00010";
+  constant OPCODE_C_JAL_ADDIW : std_logic_vector(4 downto 0) := "00101";
+  constant OPCODE_C_LW       : std_logic_vector(4 downto 0) := "01000";
+  constant OPCODE_C_LI       : std_logic_vector(4 downto 0) := "01001";
+  constant OPCODE_C_LWSP     : std_logic_vector(4 downto 0) := "01010";
+  constant OPCODE_C_LD       : std_logic_vector(4 downto 0) := "01100";
+  constant OPCODE_C_ADDI16SP_LUI : std_logic_vector(4 downto 0) := "01101";
+  constant OPCODE_C_LDSP     : std_logic_vector(4 downto 0) := "01110";
+  constant OPCODE_C_MATH     : std_logic_vector(4 downto 0) := "10001";
+  constant OPCODE_C_JR_MV_EBREAK_JALR_ADD : std_logic_vector(4 downto 0) := "10010";
+  constant OPCODE_C_J        : std_logic_vector(4 downto 0) := "10101";
+  constant OPCODE_C_SW       : std_logic_vector(4 downto 0) := "11000";
+  constant OPCODE_C_BEQZ     : std_logic_vector(4 downto 0) := "11001";
+  constant OPCODE_C_SWSP     : std_logic_vector(4 downto 0) := "11010";
+  constant OPCODE_C_SD       : std_logic_vector(4 downto 0) := "11100";
+  constant OPCODE_C_BNEZ     : std_logic_vector(4 downto 0) := "11101";
+  constant OPCODE_C_SDSP     : std_logic_vector(4 downto 0) := "11110";
+
 
   constant INSTR_NONE : std_logic_vector(Instr_Total-1 downto 0) := (others => '0');
 
@@ -82,6 +104,7 @@ architecture arch_InstrDecoder of InstrDecoder is
       memop_size : std_logic_vector(1 downto 0);
       unsigned_op : std_logic;
       rv32 : std_logic;
+      compressed : std_logic;
       instr_unimplemented : std_logic;
   end record;
 
@@ -94,7 +117,9 @@ begin
     variable v : RegistersType;
     variable w_o_valid : std_logic;
     variable w_error : std_logic;
+    variable w_compressed : std_logic;
     variable wb_instr : std_logic_vector(31 downto 0);
+    variable wb_instr_out : std_logic_vector(31 downto 0);
     variable wb_opcode1 : std_logic_vector(4 downto 0);
     variable wb_opcode2 : std_logic_vector(2 downto 0);
     variable wb_dec : std_logic_vector(Instr_Total-1 downto 0);
@@ -103,6 +128,7 @@ begin
 
     v := r;
     w_error := '0';
+    w_compressed := '0';
     wb_instr := i_f_instr;
     wb_opcode1 := wb_instr(6 downto 2);
     wb_opcode2 := wb_instr(14 downto 12);
@@ -110,281 +136,518 @@ begin
     wb_isa_type := (others => '0');
 
     if wb_instr(1 downto 0) /= "11" then
-        w_error := '1';
-    end if;
-
-
-    case wb_opcode1 is
-    when OPCODE_ADD =>
-        wb_isa_type(ISA_R_type) := '1';
-        case wb_opcode2 is
-        when "000" =>
-            if wb_instr(31 downto 25) = "0000000" then
-                wb_dec(Instr_ADD) := '1';
-            elsif wb_instr(31 downto 25) = "0000001" then
-                wb_dec(Instr_MUL) := '1';
-            elsif wb_instr(31 downto 25) = "0100000" then
-                wb_dec(Instr_SUB) := '1';
-            else
-                w_error := '1';
-            end if;
-        when "001" =>
-            wb_dec(Instr_SLL) := '1';
-        when "010" =>
-            wb_dec(Instr_SLT) := '1';
-        when "011" =>
-            wb_dec(Instr_SLTU) := '1';
-        when "100" =>
-            if wb_instr(31 downto 25) = "0000000" then
-                wb_dec(Instr_XOR) := '1';
-            elsif wb_instr(31 downto 25) = "0000001" then
-                wb_dec(Instr_DIV) := '1';
-            else 
-                w_error := '1';
-            end if;
-        when "101" =>
-            if wb_instr(31 downto 25) = "0000000" then
-                wb_dec(Instr_SRL) := '1';
-            elsif wb_instr(31 downto 25) = "0000001" then
-                wb_dec(Instr_DIVU) := '1';
-            elsif wb_instr(31 downto 25) = "0100000" then
-                wb_dec(Instr_SRA) := '1';
-            else
-                w_error := '1';
-            end if;
-        when "110" =>
-            if wb_instr(31 downto 25) = "0000000" then
-                wb_dec(Instr_OR) := '1';
-            elsif wb_instr(31 downto 25) = "0000001" then
-                wb_dec(Instr_REM) := '1';
-            else
-                w_error := '1';
-            end if;
-        when "111" =>
-            if wb_instr(31 downto 25) = "0000000" then
-                wb_dec(Instr_AND) := '1';
-            elsif wb_instr(31 downto 25) = "0000001" then
-                wb_dec(Instr_REMU) := '1';
-            else
-                w_error := '1';
-            end if;
-        when others =>
-            w_error := '1';
-        end case;
-    when OPCODE_ADDI =>
-        wb_isa_type(ISA_I_type) := '1';
-        case wb_opcode2 is
-        when "000" =>
+        w_compressed := '1';
+        wb_opcode1 := wb_instr(15 downto 13) & wb_instr(1 downto 0);
+        wb_instr_out := X"00000003";
+        case wb_opcode1 is
+        when OPCODE_C_ADDI4SPN =>
+            wb_isa_type(ISA_I_type) := '1';
             wb_dec(Instr_ADDI) := '1';
-        when "001" =>
+            wb_instr_out(11 downto 7) := "01" & wb_instr(4 downto 2);   -- rd
+            wb_instr_out(19 downto 15) := "00010";                     -- rs1 = sp
+            wb_instr_out(29 downto 22) :=
+                wb_instr(10 downto 7) & wb_instr(12 downto 11) & wb_instr(5) & wb_instr(6);
+        when OPCODE_C_NOP_ADDI =>
+            wb_isa_type(ISA_I_type) := '1';
+            wb_dec(Instr_ADDI) := '1';
+            wb_instr_out(11 downto 7) := wb_instr(11 downto 7);   -- rd
+            wb_instr_out(19 downto 15) := wb_instr(11 downto 7);  -- rs1
+            wb_instr_out(24 downto 20) := wb_instr(6 downto 2);   -- imm
+            if wb_instr(12) = '1' then
+                wb_instr_out(31 downto 25) := (others => '1');
+            end if;
+        when OPCODE_C_SLLI =>
+            wb_isa_type(ISA_I_type) := '1';
             wb_dec(Instr_SLLI) := '1';
-        when "010" =>
-            wb_dec(Instr_SLTI) := '1';
-        when "011" =>
-            wb_dec(Instr_SLTIU) := '1';
-        when "100" =>
-            wb_dec(Instr_XORI) := '1';
-        when "101" =>
-            if wb_instr(31 downto 26) = "000000" then
-                wb_dec(Instr_SRLI) := '1';
-            elsif wb_instr(31 downto 26) = "010000" then
-                wb_dec(Instr_SRAI) := '1';
-            else
-                w_error := '1';
-            end if;
-        when "110" =>
-            wb_dec(Instr_ORI) := '1';
-        when "111" =>
-            wb_dec(Instr_ANDI) := '1';
-        when others =>
-            w_error := '1';
-        end case;
-    when OPCODE_ADDIW =>
-        wb_isa_type(ISA_I_type) := '1';
-        case wb_opcode2 is
-        when "000" =>
+            wb_instr_out(11 downto 7) := wb_instr(11 downto 7);      -- rd
+            wb_instr_out(19 downto 15) := wb_instr(11 downto 7);     -- rs1
+            wb_instr_out(25 downto 20) := wb_instr(12) & wb_instr(6 downto 2);  -- shamt
+        when OPCODE_C_JAL_ADDIW =>
+            -- JAL is the RV32C only instruction
+            wb_isa_type(ISA_I_type) := '1';
             wb_dec(Instr_ADDIW) := '1';
-        when "001" =>
-            wb_dec(Instr_SLLIW) := '1';
-        when "101" =>
-            if wb_instr(31 downto 25) = "0000000" then
-                wb_dec(Instr_SRLIW) := '1';
-            elsif wb_instr(31 downto 25) = "0100000" then
-                wb_dec(Instr_SRAIW) := '1';
-            else
-                w_error := '1';
+            wb_instr_out(11 downto 7) := wb_instr(11 downto 7);      -- rd
+            wb_instr_out(19 downto 15) := wb_instr(11 downto 7);     -- rs1
+            wb_instr_out(24 downto 20) := wb_instr(6 downto 2);      -- imm
+            if wb_instr(12) = '1' then
+                wb_instr_out(31 downto 25) := (others => '1');
             end if;
-        when others =>
-            w_error := '1';
-        end case;
-    when OPCODE_ADDW =>
-        wb_isa_type(ISA_R_type) := '1';
-        case wb_opcode2 is
-        when "000" =>
-            if wb_instr(31 downto 25) = "0000000" then
-                wb_dec(Instr_ADDW) := '1';
-            elsif wb_instr(31 downto 25) = "0000001" then
-                wb_dec(Instr_MULW) := '1';
-            elsif wb_instr(31 downto 25) = "0100000" then
-                wb_dec(Instr_SUBW) := '1';
-            else
-                w_error := '1';
-            end if;
-        when "001" =>
-            wb_dec(Instr_SLLW) := '1';
-        when "100" =>
-            if wb_instr(31 downto 25) = "0000001" then
-                wb_dec(Instr_DIVW) := '1';
-            else
-                w_error := '1';
-            end if;
-        when "101" =>
-            if wb_instr(31 downto 25) = "0000000" then
-                wb_dec(Instr_SRLW) := '1';
-            elsif wb_instr(31 downto 25) = "0000001" then
-                wb_dec(Instr_DIVUW) := '1';
-            elsif wb_instr(31 downto 25) = "0100000" then
-                wb_dec(Instr_SRAW) := '1';
-            else
-                w_error := '1';
-            end if;
-        when "110" =>
-            if wb_instr(31 downto 25) = "0000001" then
-                wb_dec(Instr_REMW) := '1';
-            else
-                w_error := '1';
-            end if;
-        when "111" =>
-            if wb_instr(31 downto 25) = "0000001" then
-                wb_dec(Instr_REMUW) := '1';
-            else
-                w_error := '1';
-            end if;
-        when others =>
-            w_error := '1';
-        end case;
-    when OPCODE_AUIPC =>
-        wb_isa_type(ISA_U_type) := '1';
-        wb_dec(Instr_AUIPC) := '1';
-    when OPCODE_BEQ =>
-        wb_isa_type(ISA_SB_type) := '1';
-        case wb_opcode2 is
-        when "000" =>
-            wb_dec(Instr_BEQ) := '1';
-        when "001" =>
-            wb_dec(Instr_BNE) := '1';
-        when "100" =>
-            wb_dec(Instr_BLT) := '1';
-        when "101" =>
-            wb_dec(Instr_BGE) := '1';
-        when "110" =>
-            wb_dec(Instr_BLTU) := '1';
-        when "111" =>
-            wb_dec(Instr_BGEU) := '1';
-        when others =>
-            w_error := '1';
-        end case;
-    when OPCODE_JAL =>
-        wb_isa_type(ISA_UJ_type) := '1';
-        wb_dec(Instr_JAL) := '1';
-    when OPCODE_JALR =>
-        wb_isa_type(ISA_I_type) := '1';
-        case wb_opcode2 is
-        when "000" =>
-            wb_dec(Instr_JALR) := '1';
-        when others =>
-            w_error := '1';
-        end case;
-    when OPCODE_LB =>
-        wb_isa_type(ISA_I_type) := '1';
-        case wb_opcode2 is
-        when "000" =>
-            wb_dec(Instr_LB) := '1';
-        when "001" =>
-            wb_dec(Instr_LH) := '1';
-        when "010" =>
+        when OPCODE_C_LW =>
+            wb_isa_type(ISA_I_type) := '1';
             wb_dec(Instr_LW) := '1';
-        when "011" =>
-            wb_dec(Instr_LD) := '1';
-        when "100" =>
-            wb_dec(Instr_LBU) := '1';
-        when "101" =>
-            wb_dec(Instr_LHU) := '1';
-        when "110" =>
-            wb_dec(Instr_LWU) := '1';
-        when others =>
-            w_error := '1';
-        end case;
-    when OPCODE_LUI =>
-        wb_isa_type(ISA_U_type) := '1';
-        wb_dec(Instr_LUI) := '1';
-    when OPCODE_SB =>
-        wb_isa_type(ISA_S_type) := '1';
-        case wb_opcode2 is
-        when "000" =>
-            wb_dec(Instr_SB) := '1';
-        when "001" =>
-            wb_dec(Instr_SH) := '1';
-        when "010" =>
-            wb_dec(Instr_SW) := '1';
-        when "011" =>
-            wb_dec(Instr_SD) := '1';
-        when others =>
-            w_error := '1';
-        end case;
-    when OPCODE_CSRR =>
-        wb_isa_type(ISA_I_type) := '1';
-        case wb_opcode2 is
-        when "000" =>
-            if wb_instr = X"00000073" then
-                wb_dec(Instr_ECALL) := '1';
-            elsif wb_instr = X"00100073" then
-                wb_dec(Instr_EBREAK) := '1';
-            elsif wb_instr = X"00200073" then
-                wb_dec(Instr_URET) := '1';
-            elsif wb_instr = X"10200073" then
-                wb_dec(Instr_SRET) := '1';
-            elsif wb_instr = X"20200073" then
-                wb_dec(Instr_HRET) := '1';
-            elsif wb_instr = X"30200073" then
-                wb_dec(Instr_MRET) := '1';
-            else
-                w_error := '1';
+            wb_instr_out(11 downto 7) := "01" & wb_instr(4 downto 2);   -- rd
+            wb_instr_out(19 downto 15) := "01" & wb_instr(9 downto 7);  -- rs1
+            wb_instr_out(26 downto 22) :=
+                wb_instr(5) & wb_instr(12 downto 10) & wb_instr(6);
+        when OPCODE_C_LI =>  -- ADDI rd = r0 + imm
+            wb_isa_type(ISA_I_type) := '1';
+            wb_dec(Instr_ADDI) := '1';
+            wb_instr_out(11 downto 7) := wb_instr(11 downto 7);      -- rd
+            wb_instr_out(24 downto 20) := wb_instr(6 downto 2);      -- imm
+            if wb_instr(12) = '1' then
+                wb_instr_out(31 downto 25) := (others => '1');
             end if;
-        when "001" =>
-            wb_dec(Instr_CSRRW) := '1';
-        when "010" =>
-            wb_dec(Instr_CSRRS) := '1';
-        when "011" =>
-            wb_dec(Instr_CSRRC) := '1';
-        when "101" =>
-            wb_dec(Instr_CSRRWI) := '1';
-        when "110" =>
-            wb_dec(Instr_CSRRSI) := '1';
-        when "111" =>
-            wb_dec(Instr_CSRRCI) := '1';
+        when OPCODE_C_LWSP =>
+            wb_isa_type(ISA_I_type) := '1';
+            wb_dec(Instr_LW) := '1';
+            wb_instr_out(11 downto 7) := wb_instr(11 downto 7);    -- rd
+            wb_instr_out(19 downto 15) := "00010";                 -- rs1 = sp
+            wb_instr_out(27 downto 22) :=
+                wb_instr(3 downto 2) & wb_instr(12) & wb_instr(6 downto 4);
+        when OPCODE_C_LD =>
+            wb_isa_type(ISA_I_type) := '1';
+            wb_dec(Instr_LD) := '1';
+            wb_instr_out(11 downto 7) := "01" & wb_instr(4 downto 2);   -- rd
+            wb_instr_out(19 downto 15) := "01" & wb_instr(9 downto 7);  -- rs1
+            wb_instr_out(27 downto 23) :=
+                wb_instr(6) & wb_instr(5) & wb_instr(12 downto 10);
+        when OPCODE_C_ADDI16SP_LUI =>
+            if wb_instr(11 downto 7) = "00010" then
+                wb_isa_type(ISA_I_type) := '1';
+                wb_dec(Instr_ADDI) := '1';
+                wb_instr_out(11 downto 7) := "00010";     -- rd = sp
+                wb_instr_out(19 downto 15) := "00010";    -- rs1 = sp
+                wb_instr_out(28 downto 24) :=
+                    wb_instr(4 downto 3) & wb_instr(5) & wb_instr(2) & wb_instr(6);
+                if wb_instr(12) = '1' then
+                    wb_instr_out(31 downto 29) := (others => '1');
+                end if;
+            else
+                wb_isa_type(ISA_U_type) := '1';
+                wb_dec(Instr_LUI) := '1';
+                wb_instr_out(11 downto 7) := wb_instr(11 downto 7);  -- rd
+                wb_instr_out(16 downto 12) := wb_instr(6 downto 2);
+                if wb_instr(12) = '1' then
+                    wb_instr_out(31 downto 17) := (others => '1');
+                end if;
+            end if;
+        when OPCODE_C_LDSP =>
+            wb_isa_type(ISA_I_type) := '1';
+            wb_dec(Instr_LD) := '1';
+            wb_instr_out(11 downto 7) := wb_instr(11 downto 7);  -- rd
+            wb_instr_out(19 downto 15) := "00010";               -- rs1 = sp
+            wb_instr_out(28 downto 23) :=
+                wb_instr(4 downto 2) & wb_instr(12) & wb_instr(6 downto 5);
+        when OPCODE_C_MATH =>
+            if wb_instr(11 downto 10) = "00" then
+                wb_isa_type(ISA_I_type) := '1';
+                wb_dec(Instr_SRLI) := '1';
+                wb_instr_out(11 downto 7) := "01" & wb_instr(9 downto 7);   -- rd
+                wb_instr_out(19 downto 15) := "01" & wb_instr(9 downto 7);  -- rs1
+                wb_instr_out(25 downto 20) := wb_instr(12) & wb_instr(6 downto 2);  -- shamt
+            elsif wb_instr(11 downto 10) = "01" then
+                wb_isa_type(ISA_I_type) := '1';
+                wb_dec(Instr_SRAI) := '1';
+                wb_instr_out(11 downto 7) := "01" & wb_instr(9 downto 7);   -- rd
+                wb_instr_out(19 downto 15) := "01" & wb_instr(9 downto 7);  -- rs1
+                wb_instr_out(25 downto 20) := wb_instr(12) & wb_instr(6 downto 2);  -- shamt
+            elsif wb_instr(11 downto 10) = "10" then
+                wb_isa_type(ISA_I_type) := '1';
+                wb_dec(Instr_ANDI) := '1';
+                wb_instr_out(11 downto 7) := "01" & wb_instr(9 downto 7);   -- rd
+                wb_instr_out(19 downto 15) := "01" & wb_instr(9 downto 7);  -- rs1
+                wb_instr_out(24 downto 20) := wb_instr(6 downto 2);        -- imm
+                if wb_instr(12) = '1' then
+                    wb_instr_out(31 downto 25) := (others => '1');
+                end if;
+            elsif wb_instr(12) = '0' then
+                wb_isa_type(ISA_R_type) := '1';
+                wb_instr_out(11 downto 7) := "01" & wb_instr(9 downto 7);   -- rd
+                wb_instr_out(19 downto 15) := "01" & wb_instr(9 downto 7);  -- rs1
+                wb_instr_out(24 downto 20) := "01" & wb_instr(4 downto 2);  -- rs2
+                case wb_instr(6 downto 5) is
+                when "00" =>
+                    wb_dec(Instr_SUB) := '1';
+                when "01" =>
+                    wb_dec(Instr_XOR) := '1';
+                when "10" =>
+                    wb_dec(Instr_OR) := '1';
+                when others =>
+                    wb_dec(Instr_AND) := '1';
+                end case;
+            else
+                wb_isa_type(ISA_R_type) := '1';
+                wb_instr_out(11 downto 7) := "01" & wb_instr(9 downto 7);   -- rd
+                wb_instr_out(19 downto 15) := "01" & wb_instr(9 downto 7);  -- rs1
+                wb_instr_out(24 downto 20) := "01" & wb_instr(4 downto 2);  -- rs2
+                case wb_instr(6 downto 5) is
+                when "00" =>
+                    wb_dec(Instr_SUBW) := '1';
+                when "01" =>
+                    wb_dec(Instr_ADDW) := '1';
+                when others =>
+                    w_error := '1';
+                end case;
+            end if;
+        when OPCODE_C_JR_MV_EBREAK_JALR_ADD =>
+            wb_isa_type(ISA_I_type) := '1';
+            if wb_instr(12) = '0' then
+                if wb_instr(6 downto 2) = "00000" then
+                    wb_dec(Instr_JALR) := '1';
+                    wb_instr_out(19 downto 15) := wb_instr(11 downto 7);  -- rs1
+                else
+                    wb_dec(Instr_ADDI) := '1';
+                    wb_instr_out(11 downto 7) := wb_instr(11 downto 7);   -- rd
+                    wb_instr_out(19 downto 15) := wb_instr(6 downto 2);   -- rs1
+                end if;
+            else
+                if wb_instr(11 downto 7) = "00000" and wb_instr(6 downto 2) = "00000" then
+                    wb_dec(Instr_EBREAK) := '1';
+                elsif wb_instr(6 downto 2) = "00000" then
+                    wb_dec(Instr_JALR) := '1';
+                    wb_instr_out(11 downto 7) := "00001";                 -- rd = ra
+                    wb_instr_out(19 downto 15) := wb_instr(11 downto 7);  -- rs1
+                else
+                    wb_dec(Instr_ADD) := '1';
+                    wb_isa_type(ISA_R_type) := '1';
+                    wb_instr_out(11 downto 7) := wb_instr(11 downto 7);   -- rd
+                    wb_instr_out(19 downto 15) := wb_instr(11 downto 7);  -- rs1
+                    wb_instr_out(24 downto 20) := wb_instr(6 downto 2);   -- rs2
+                end if;
+            end if;
+        when OPCODE_C_J =>   -- JAL with rd = 0
+            wb_isa_type(ISA_UJ_type) := '1';
+            wb_dec(Instr_JAL) := '1';
+            wb_instr_out(20) := wb_instr(12);            -- imm11
+            wb_instr_out(23 downto 21) := wb_instr(5 downto 3);      -- imm10_1(3:1)
+            wb_instr_out(24) := wb_instr(11);            -- imm10_1(4)
+            wb_instr_out(25) := wb_instr(2);             -- imm10_1(5)
+            wb_instr_out(26) := wb_instr(7);             -- imm10_1(6)
+            wb_instr_out(27) := wb_instr(6);             -- imm10_1(7)
+            wb_instr_out(29 downto 28) := wb_instr(10 downto 9);     -- imm10_1(9:8)
+            wb_instr_out(30) := wb_instr(8);             -- imm10_1(10)
+            if wb_instr(12) = '1' then
+                wb_instr_out(19 downto 12) := (others => '1'); -- imm19_12
+                wb_instr_out(31) := '1';                 -- imm20
+            end if;
+        when OPCODE_C_SW =>
+            wb_isa_type(ISA_S_type) := '1';
+            wb_dec(Instr_SW) := '1';
+            wb_instr_out(24 downto 20) := "01" & wb_instr(4 downto 2);    -- rs2
+            wb_instr_out(19 downto 15) := "01" & wb_instr(9 downto 7);    -- rs1
+            wb_instr_out(11 downto 9) := wb_instr(11 downto 10) & wb_instr(6);
+            wb_instr_out(26 downto 25) := wb_instr(5) & wb_instr(12);
+        when OPCODE_C_BEQZ =>
+            wb_isa_type(ISA_SB_type) := '1';
+            wb_dec(Instr_BEQ) := '1';
+            wb_instr_out(19 downto 15) := "01" & wb_instr(9 downto 7);    -- rs1
+            wb_instr_out(11 downto 8) := wb_instr(11 downto 10) & wb_instr(4 downto 3);
+            wb_instr_out(27 downto 25) := wb_instr(6 downto 5) & wb_instr(2);
+            if wb_instr(12) = '1' then
+                wb_instr_out(30 downto 28) := (others => '1');
+                wb_instr_out(7) := '1';
+                wb_instr_out(31) := '1';
+            end if;
+        when OPCODE_C_SWSP =>
+            wb_isa_type(ISA_S_type) := '1';
+            wb_dec(Instr_SW) := '1';
+            wb_instr_out(24 downto 20) := wb_instr(6 downto 2);  -- rs2
+            wb_instr_out(19 downto 15) := "00010";             -- rs1 = sp
+            wb_instr_out(11 downto 9) := wb_instr(11 downto 9);
+            wb_instr_out(27 downto 25) := wb_instr(8 downto 7) & wb_instr(12);
+        when OPCODE_C_SD =>
+            wb_isa_type(ISA_S_type) := '1';
+            wb_dec(Instr_SD) := '1';
+            wb_instr_out(24 downto 20) := "01" & wb_instr(4 downto 2);  -- rs2
+            wb_instr_out(19 downto 15) := "01" & wb_instr(9 downto 7);  -- rs1
+            wb_instr_out(11 downto 10) := wb_instr(11 downto 10);
+            wb_instr_out(27 downto 25) := wb_instr(6 downto 5) & wb_instr(12);
+        when OPCODE_C_BNEZ =>
+            wb_isa_type(ISA_SB_type) := '1';
+            wb_dec(Instr_BNE) := '1';
+            wb_instr_out(19 downto 15) := "01" & wb_instr(9 downto 7);    -- rs1
+            wb_instr_out(11 downto 8) := wb_instr(11 downto 10) & wb_instr(4 downto 3);
+            wb_instr_out(27 downto 25) := wb_instr(6 downto 5) & wb_instr(2);
+            if wb_instr(12) = '1' then
+                wb_instr_out(30 downto 28) := (others => '1');
+                wb_instr_out(7) := '1';
+                wb_instr_out(31) := '1';
+            end if;
+        when OPCODE_C_SDSP =>
+            wb_isa_type(ISA_S_type) := '1';
+            wb_dec(Instr_SD) := '1';
+            wb_instr_out(24 downto 20) := wb_instr(6 downto 2);  -- rs2
+            wb_instr_out(19 downto 15) := "00010";               -- rs1 = sp
+            wb_instr_out(11 downto 10) := wb_instr(11 downto 10);
+            wb_instr_out(28 downto 25) := wb_instr(9 downto 7) & wb_instr(12);
         when others =>
             w_error := '1';
         end case;
-    when OPCODE_FENCE =>
-        case wb_opcode2 is
-        when "000" =>
-            wb_dec(Instr_FENCE) := '1';
-        when "001" =>
-            wb_dec(Instr_FENCE_I) := '1';
-        when others =>
-            w_error := '1';
-        end case;
+    else -- compressed/!not compressed
+        case wb_opcode1 is
+        when OPCODE_ADD =>
+            wb_isa_type(ISA_R_type) := '1';
+            case wb_opcode2 is
+            when "000" =>
+                if wb_instr(31 downto 25) = "0000000" then
+                    wb_dec(Instr_ADD) := '1';
+                elsif wb_instr(31 downto 25) = "0000001" then
+                    wb_dec(Instr_MUL) := '1';
+                elsif wb_instr(31 downto 25) = "0100000" then
+                    wb_dec(Instr_SUB) := '1';
+                else
+                    w_error := '1';
+                end if;
+            when "001" =>
+                wb_dec(Instr_SLL) := '1';
+            when "010" =>
+                wb_dec(Instr_SLT) := '1';
+            when "011" =>
+                wb_dec(Instr_SLTU) := '1';
+            when "100" =>
+                if wb_instr(31 downto 25) = "0000000" then
+                    wb_dec(Instr_XOR) := '1';
+                elsif wb_instr(31 downto 25) = "0000001" then
+                    wb_dec(Instr_DIV) := '1';
+                else 
+                    w_error := '1';
+                end if;
+            when "101" =>
+                if wb_instr(31 downto 25) = "0000000" then
+                    wb_dec(Instr_SRL) := '1';
+                elsif wb_instr(31 downto 25) = "0000001" then
+                    wb_dec(Instr_DIVU) := '1';
+                elsif wb_instr(31 downto 25) = "0100000" then
+                    wb_dec(Instr_SRA) := '1';
+                else
+                    w_error := '1';
+                end if;
+            when "110" =>
+                if wb_instr(31 downto 25) = "0000000" then
+                    wb_dec(Instr_OR) := '1';
+                elsif wb_instr(31 downto 25) = "0000001" then
+                    wb_dec(Instr_REM) := '1';
+                else
+                    w_error := '1';
+                end if;
+            when "111" =>
+                if wb_instr(31 downto 25) = "0000000" then
+                    wb_dec(Instr_AND) := '1';
+                elsif wb_instr(31 downto 25) = "0000001" then
+                    wb_dec(Instr_REMU) := '1';
+                else
+                    w_error := '1';
+                end if;
+            when others =>
+                w_error := '1';
+            end case;
+        when OPCODE_ADDI =>
+            wb_isa_type(ISA_I_type) := '1';
+            case wb_opcode2 is
+            when "000" =>
+                wb_dec(Instr_ADDI) := '1';
+            when "001" =>
+                wb_dec(Instr_SLLI) := '1';
+            when "010" =>
+                wb_dec(Instr_SLTI) := '1';
+            when "011" =>
+                wb_dec(Instr_SLTIU) := '1';
+            when "100" =>
+                wb_dec(Instr_XORI) := '1';
+            when "101" =>
+                if wb_instr(31 downto 26) = "000000" then
+                    wb_dec(Instr_SRLI) := '1';
+                elsif wb_instr(31 downto 26) = "010000" then
+                    wb_dec(Instr_SRAI) := '1';
+                else
+                    w_error := '1';
+                end if;
+            when "110" =>
+                wb_dec(Instr_ORI) := '1';
+            when "111" =>
+                wb_dec(Instr_ANDI) := '1';
+            when others =>
+                w_error := '1';
+            end case;
+        when OPCODE_ADDIW =>
+            wb_isa_type(ISA_I_type) := '1';
+            case wb_opcode2 is
+            when "000" =>
+                wb_dec(Instr_ADDIW) := '1';
+            when "001" =>
+                wb_dec(Instr_SLLIW) := '1';
+            when "101" =>
+                if wb_instr(31 downto 25) = "0000000" then
+                    wb_dec(Instr_SRLIW) := '1';
+                elsif wb_instr(31 downto 25) = "0100000" then
+                    wb_dec(Instr_SRAIW) := '1';
+                else
+                    w_error := '1';
+                end if;
+            when others =>
+                w_error := '1';
+            end case;
+        when OPCODE_ADDW =>
+            wb_isa_type(ISA_R_type) := '1';
+            case wb_opcode2 is
+            when "000" =>
+                if wb_instr(31 downto 25) = "0000000" then
+                    wb_dec(Instr_ADDW) := '1';
+                elsif wb_instr(31 downto 25) = "0000001" then
+                    wb_dec(Instr_MULW) := '1';
+                elsif wb_instr(31 downto 25) = "0100000" then
+                    wb_dec(Instr_SUBW) := '1';
+                else
+                    w_error := '1';
+                end if;
+            when "001" =>
+                wb_dec(Instr_SLLW) := '1';
+            when "100" =>
+                if wb_instr(31 downto 25) = "0000001" then
+                    wb_dec(Instr_DIVW) := '1';
+                else
+                    w_error := '1';
+                end if;
+            when "101" =>
+                if wb_instr(31 downto 25) = "0000000" then
+                    wb_dec(Instr_SRLW) := '1';
+                elsif wb_instr(31 downto 25) = "0000001" then
+                    wb_dec(Instr_DIVUW) := '1';
+                elsif wb_instr(31 downto 25) = "0100000" then
+                    wb_dec(Instr_SRAW) := '1';
+                else
+                    w_error := '1';
+                end if;
+            when "110" =>
+                if wb_instr(31 downto 25) = "0000001" then
+                    wb_dec(Instr_REMW) := '1';
+                else
+                    w_error := '1';
+                end if;
+            when "111" =>
+                if wb_instr(31 downto 25) = "0000001" then
+                    wb_dec(Instr_REMUW) := '1';
+                else
+                    w_error := '1';
+                end if;
+            when others =>
+                w_error := '1';
+            end case;
+        when OPCODE_AUIPC =>
+            wb_isa_type(ISA_U_type) := '1';
+            wb_dec(Instr_AUIPC) := '1';
+        when OPCODE_BEQ =>
+            wb_isa_type(ISA_SB_type) := '1';
+            case wb_opcode2 is
+            when "000" =>
+                wb_dec(Instr_BEQ) := '1';
+            when "001" =>
+                wb_dec(Instr_BNE) := '1';
+            when "100" =>
+                wb_dec(Instr_BLT) := '1';
+            when "101" =>
+                wb_dec(Instr_BGE) := '1';
+            when "110" =>
+                wb_dec(Instr_BLTU) := '1';
+            when "111" =>
+                wb_dec(Instr_BGEU) := '1';
+            when others =>
+                w_error := '1';
+            end case;
+        when OPCODE_JAL =>
+            wb_isa_type(ISA_UJ_type) := '1';
+            wb_dec(Instr_JAL) := '1';
+        when OPCODE_JALR =>
+            wb_isa_type(ISA_I_type) := '1';
+            case wb_opcode2 is
+            when "000" =>
+                wb_dec(Instr_JALR) := '1';
+            when others =>
+                w_error := '1';
+            end case;
+        when OPCODE_LB =>
+            wb_isa_type(ISA_I_type) := '1';
+            case wb_opcode2 is
+            when "000" =>
+                wb_dec(Instr_LB) := '1';
+            when "001" =>
+                wb_dec(Instr_LH) := '1';
+            when "010" =>
+                wb_dec(Instr_LW) := '1';
+            when "011" =>
+                wb_dec(Instr_LD) := '1';
+            when "100" =>
+                wb_dec(Instr_LBU) := '1';
+            when "101" =>
+                wb_dec(Instr_LHU) := '1';
+            when "110" =>
+                wb_dec(Instr_LWU) := '1';
+            when others =>
+                w_error := '1';
+            end case;
+        when OPCODE_LUI =>
+            wb_isa_type(ISA_U_type) := '1';
+            wb_dec(Instr_LUI) := '1';
+        when OPCODE_SB =>
+            wb_isa_type(ISA_S_type) := '1';
+            case wb_opcode2 is
+            when "000" =>
+                wb_dec(Instr_SB) := '1';
+            when "001" =>
+                wb_dec(Instr_SH) := '1';
+            when "010" =>
+                wb_dec(Instr_SW) := '1';
+            when "011" =>
+                wb_dec(Instr_SD) := '1';
+            when others =>
+                w_error := '1';
+            end case;
+        when OPCODE_CSRR =>
+            wb_isa_type(ISA_I_type) := '1';
+            case wb_opcode2 is
+            when "000" =>
+                if wb_instr = X"00000073" then
+                    wb_dec(Instr_ECALL) := '1';
+                elsif wb_instr = X"00100073" then
+                    wb_dec(Instr_EBREAK) := '1';
+                elsif wb_instr = X"00200073" then
+                    wb_dec(Instr_URET) := '1';
+                elsif wb_instr = X"10200073" then
+                    wb_dec(Instr_SRET) := '1';
+                elsif wb_instr = X"20200073" then
+                    wb_dec(Instr_HRET) := '1';
+                elsif wb_instr = X"30200073" then
+                    wb_dec(Instr_MRET) := '1';
+                else
+                    w_error := '1';
+                end if;
+            when "001" =>
+                wb_dec(Instr_CSRRW) := '1';
+            when "010" =>
+                wb_dec(Instr_CSRRS) := '1';
+            when "011" =>
+                wb_dec(Instr_CSRRC) := '1';
+            when "101" =>
+                wb_dec(Instr_CSRRWI) := '1';
+            when "110" =>
+                wb_dec(Instr_CSRRSI) := '1';
+            when "111" =>
+                wb_dec(Instr_CSRRCI) := '1';
+            when others =>
+                w_error := '1';
+            end case;
+        when OPCODE_FENCE =>
+            case wb_opcode2 is
+            when "000" =>
+                wb_dec(Instr_FENCE) := '1';
+            when "001" =>
+                wb_dec(Instr_FENCE_I) := '1';
+            when others =>
+                w_error := '1';
+            end case;
 
-    when others =>
-        w_error := '1';
-    end case;
+        when others =>
+            w_error := '1';
+        end case;
+        wb_instr_out := wb_instr;
+    end if;
 
 
     if i_f_valid = '1' then
         v.valid := '1';
         v.pc := i_f_pc;
-        v.instr := wb_instr;
+        v.instr := wb_instr_out;
+        v.compressed := w_compressed;
 
         v.isa_type := wb_isa_type;
         v.instr_vec := wb_dec;
@@ -433,6 +696,7 @@ begin
         v.memop_size := MEMOP_1B;
         v.unsigned_op := '0';
         v.rv32 := '0';
+        v.compressed := '0';
         v.instr_unimplemented := '0';
         if wb_dec = INSTR_NONE then
             v.instr_unimplemented := '1';
@@ -448,6 +712,7 @@ begin
     o_memop_size <= r.memop_size;
     o_unsigned_op <= r.unsigned_op;
     o_rv32 <= r.rv32;
+    o_compressed <= r.compressed;
     o_isa_type <= r.isa_type;
     o_instr_vec <= r.instr_vec;
     o_exception <= r.instr_unimplemented;

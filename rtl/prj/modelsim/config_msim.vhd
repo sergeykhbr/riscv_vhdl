@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------------
 --! @file
---! @copyright  Copyright 2015 GNSS Sensor Ltd. All right reserved.
+--! @copyright  Copyright 2018 GNSS Sensor Ltd. All right reserved.
 --! @author     Sergey Khabarov - sergeykhbr@gmail.com
 --! @brief	     ModelSim specific constants definition.
 ------------------------------------------------------------------------------
@@ -13,5 +13,7 @@ package config_target is
   constant CFG_MEMTECH : integer := inferred;
   constant CFG_PADTECH : integer := inferred;
   constant CFG_JTAGTECH : integer := inferred;
+
+  constant CFG_TOPDIR : string := "../../";
 
 end;

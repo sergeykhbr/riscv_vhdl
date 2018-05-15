@@ -23,6 +23,8 @@ use IEEE.STD_LOGIC_1164.ALL;
 library techmap;
 --! Generic IDs constants import
 use techmap.gencomp.all;
+library work;
+use work.config_target.all;
 
 --! @brief   Techology independent configuration settings.
 --! @details This file defines configuration that are valid for all supported
@@ -40,19 +42,19 @@ constant CFG_COMMON_RIVER_CPU_ENABLE : boolean := true;
 --! @brief   HEX-image for the initialization of the Boot ROM.
 --! @details This file is used by \e inferred ROM implementation.
 constant CFG_SIM_BOOTROM_HEX : string := 
-              "../../fw_images/bootimage.hex";
+              CFG_TOPDIR & "fw_images/gcc711/bootimage.hex";
 
 --! @brief   HEX-image for the initialization of the FwImage ROM.
 --! @details This file is used by \e inferred ROM implementation.
 constant CFG_SIM_FWIMAGE_HEX : string := 
-                "../../fw_images/fwimage.hex";
+                CFG_TOPDIR & "fw_images/gcc711/zephyr.hex";
                 
 
 --! @brief Hardware SoC Identificator.
 --!
 --! @details Read Only unique platform identificator that could be
 --!          read by firmware from the Plug'n'Play support module.
-constant CFG_HW_ID : std_logic_vector(31 downto 0) := X"20170614";
+constant CFG_HW_ID : std_logic_vector(31 downto 0) := X"20180514";
 
 --! @brief Enabling Ethernet MAC interface.
 --! @details By default MAC module enables support of the debug feature EDCL.

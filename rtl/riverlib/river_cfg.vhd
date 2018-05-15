@@ -40,7 +40,7 @@ package river_cfg is
   constant MEMOP_1B : std_logic_vector(1 downto 0) := "00";
   --! @}
   
-  constant RESET_VECTOR : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00001000";
+  constant RESET_VECTOR : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00000040";
   constant DBG_FETCH_TRACE_SIZE : integer := 4;
 
   --! Number of elements each 2*CFG_ADDR_WIDTH in stack trace buffer, 0 = disabled
@@ -374,6 +374,7 @@ package river_cfg is
   --! @param[out] o_memop_sign_ext Load memory value with sign extending
   --! @param[out] o_memop_size Memory transaction size
   --! @param[out] o_rv32 32-bits instruction
+  --! @param[out] o_compressed 16-bits instruction (C-extension)
   --! @param[out] o_insigned_op Unsigned operands
   --! @param[out] o_isa_type Instruction format accordingly with ISA
   --! @param[out] o_instr_vec One bit per decoded instruction bus
@@ -394,6 +395,7 @@ package river_cfg is
     o_memop_sign_ext : out std_logic;
     o_memop_size : out std_logic_vector(1 downto 0);
     o_rv32 : out std_logic;
+    o_compressed : out std_logic;
     o_unsigned_op : out std_logic;
     o_isa_type : out std_logic_vector(ISA_Total-1 downto 0);
     o_instr_vec : out std_logic_vector(Instr_Total-1 downto 0);
@@ -415,6 +417,7 @@ package river_cfg is
   --! @param[in] i_memop_size Memory transaction size
   --! @param[in] i_unsigned_op Unsigned operands
   --! @param[in] i_rv32 32-bits instruction
+  --! @param[in] i_compressed 16-bits instruction (C-extension)
   --! @param[in] i_isa_type Type of the instruction's structure (ISA spec.)
   --! @param[in] i_ivec One pulse per supported instruction.
   --! @param[in] i_ie Interrupt enable bit
@@ -467,6 +470,7 @@ package river_cfg is
     i_memop_size : in std_logic_vector(1 downto 0);
     i_unsigned_op : in std_logic;
     i_rv32 : in std_logic;
+    i_compressed : in std_logic;
     i_isa_type : in std_logic_vector(ISA_Total-1 downto 0);
     i_ivec : in std_logic_vector(Instr_Total-1 downto 0);
     i_ie : in std_logic;

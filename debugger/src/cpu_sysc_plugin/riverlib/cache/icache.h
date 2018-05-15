@@ -61,9 +61,19 @@ private:
     };
     static const int ILINE_TOTAL = 2;
 
+    struct line_type {
+        sc_signal<sc_uint<BUS_ADDR_WIDTH - 3>> addr;
+        sc_signal<sc_uint<BUS_DATA_WIDTH>> data;
+    };
+    struct line_signal_type {
+        sc_bv<ILINE_TOTAL + 1> hit;     // Hit_Total = ILINE_TOTAL + 1
+        sc_bv<ILINE_TOTAL> hit_hold;
+        sc_uint<BUS_DATA_WIDTH> hit_data;
+        sc_uint<BUS_DATA_WIDTH> hold_data;
+    };
+
     struct RegistersType {
-        sc_signal<sc_uint<BUS_ADDR_WIDTH - 3>> iline_addr[ILINE_TOTAL];
-        sc_signal<sc_uint<BUS_DATA_WIDTH>> iline_data[ILINE_TOTAL];
+        line_type iline[ILINE_TOTAL];
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> iline_addr_req;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> addr_processing;
         sc_signal<sc_uint<2>> state;
@@ -72,12 +82,9 @@ private:
         sc_signal<sc_uint<32>> delay_data;
     } v, r;
     bool w_need_mem_req;
-    sc_uint<32> hit_word;
-    sc_bv<ILINE_TOTAL + 1> wb_hit[ILINE_TOTAL];
-    sc_bv<ILINE_TOTAL> wb_hit_hold[ILINE_TOTAL];
+    sc_uint<32> wb_hit_word;
+    line_signal_type wb_l[ILINE_TOTAL];
     bool w_reuse_lastline;
-    sc_uint<BUS_DATA_WIDTH> wb_hit_data[ILINE_TOTAL];
-    sc_uint<BUS_DATA_WIDTH> wb_hold_data[ILINE_TOTAL];
 };
 
 

@@ -17,17 +17,17 @@ NET "i_rst" CLOCK_DEDICATED_ROUTE = "FALSE";
 
 
 # UART1 interface
-NET "i_uart1_ctsn" LOC = AL23;#T23;
-NET "i_uart1_rd"   LOC = AM23;#J24;
-NET "o_uart1_rtsn" LOC = AN23;#T24;
-NET "o_uart1_td"   LOC = AP22;#J25;
+NET "i_uart1_ctsn" LOC = T23;
+NET "i_uart1_rd"   LOC = J24;
+NET "o_uart1_rtsn" LOC = T24;
+NET "o_uart1_td"   LOC = J25;
 
 # UART2 interface (debug port).
 # Assign to HPC:
-NET "i_uart2_ctsn" LOC = T23;#AL23; # HPC H20
-NET "i_uart2_rd"   LOC = J24;#AM23; # HPC H19
-NET "o_uart2_rtsn" LOC = T24;#AN23; # HPC G19
-NET "o_uart2_td"   LOC = J25;#AP22; # HPC G18
+NET "i_uart2_ctsn" LOC = AL23; # HPC H20
+NET "i_uart2_rd"   LOC = AM23; # HPC H19
+NET "o_uart2_rtsn" LOC = AN23; # HPC G19
+NET "o_uart2_td"   LOC = AP22; # HPC G18
 # Assign to LPC:
 #NET "i_uart2_ctsn" LOC = C33; # LPC C18
 #NET "i_uart2_rd"   LOC = B34; # LPC C19

@@ -311,7 +311,7 @@ type nasti_slave_cfg_vector is array (0 to CFG_NASTI_SLAVES_TOTAL-1)
 --!          as assignment of outputs for the disabled device.
 constant nasti_slave_config_none : nasti_slave_config_type := (
     PNP_CFG_SLAVE_DESCR_BYTES, PNP_CFG_TYPE_SLAVE, 0, 
-    (others => '0'), (others => '1'), VENDOR_GNSSSENSOR, SLV_DID_EMPTY);
+    (others => '0'), (others => '0'), VENDOR_GNSSSENSOR, SLV_DID_EMPTY);
 
 
 --! @brief   Plug-n-play descriptor structure for master device.

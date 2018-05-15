@@ -51,24 +51,11 @@ void InstrDecoder::comb() {
     sc_uint<3> wb_opcode2;
     sc_bv<Instr_Total> wb_dec = 0;
     sc_bv<ISA_Total> wb_isa_type = 0;
-#if 1
-    uint32_t t_pc = i_f_pc.read();
-    uint32_t t_instr = i_f_instr.read();
-#endif
 
     if (wb_instr(1, 0) != 0x3) {
         w_compressed = 1;
         wb_opcode1 = (wb_instr(15, 13), wb_instr(1, 0));
         wb_instr_out = 0x00000003;
-#if 1
-        uint32_t t1 = wb_instr(1, 0).to_uint();
-        uint32_t t2 = wb_instr(15, 13).to_uint();
-        uint32_t t3 = wb_instr.to_uint();
-        uint32_t t4;
-        if (t_pc == 0x100031cc) {
-            bool st = true;
-        }
-#endif
         switch (wb_opcode1) {
         case OPCODE_C_ADDI4SPN:
             wb_isa_type[ISA_I_type] = 1;
