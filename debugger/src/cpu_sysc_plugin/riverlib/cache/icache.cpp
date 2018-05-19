@@ -182,7 +182,7 @@ void ICache::comb() {
     w_o_req_ctrl_ready = !w_need_mem_req | i_req_mem_ready.read();
     w_req_fire = w_req_ctrl_valid && w_o_req_ctrl_ready;
 
-    if (w_o_req_mem_valid && i_req_mem_ready.read() || r.double_req.read()) {
+    if ((w_o_req_mem_valid && i_req_mem_ready.read()) || r.double_req.read()) {
         v.iline_addr_req = wb_o_req_mem_addr;
     }
 

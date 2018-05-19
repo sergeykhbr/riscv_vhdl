@@ -39,6 +39,7 @@ SOURCES = \
 	riscv-rv64i-priv \
 	instructions \
 	riscv-ext-a \
+	riscv-ext-c \
 	riscv-ext-m \
 	riscv-ext-f \
 	srcproc

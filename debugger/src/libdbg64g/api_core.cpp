@@ -96,7 +96,7 @@ extern "C" int RISCV_set_configuration(AttributeType *cfg) {
 
     Config_.clone(cfg);
     if (!Config_.is_dict()) {
-        RISCV_error("Wrong configuration.", NULL);
+        printf("Wrong configuration.\n");
         return -1;
     }
 
@@ -106,7 +106,7 @@ extern "C" int RISCV_set_configuration(AttributeType *cfg) {
             const char *clsname = Services[i]["Class"].to_string();
             icls = static_cast<IClass *>(RISCV_get_class(clsname));
             if (icls == NULL) {
-                RISCV_error("Class %s not found", 
+                printf("Class %s not found\n", 
                              Services[i]["Class"].to_string());
                 return -1;
             }
