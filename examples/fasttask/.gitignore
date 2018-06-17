@@ -1,0 +1,7 @@
+fwsrc
+libgnssmodel
+makefiles/obj
+makefiles/bin/gnssfw
+makefiles/bin/gnssfw.dump
+makefiles/bin/gnssfw.lst
+msvc13

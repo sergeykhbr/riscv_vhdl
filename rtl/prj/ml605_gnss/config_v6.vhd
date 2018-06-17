@@ -13,4 +13,6 @@ package config_target is
   constant CFG_MEMTECH : integer := virtex6;
   constant CFG_PADTECH : integer := virtex6;
   constant CFG_JTAGTECH : integer := virtex6;
+
+  constant CFG_TOPDIR : string := "../../../";
 end;

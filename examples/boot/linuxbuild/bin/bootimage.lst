@@ -1,0 +1,817 @@
+
+..\linuxbuild\bin/bootimage:     file format elf64-littleriscv
+
+
+Disassembly of section .text:
+
+0000000000000000 <trap_table>:
+   0:	0042                	0x42
+   2:	0000                	unimp
+   4:	0042                	0x42
+   6:	0000                	unimp
+   8:	0042                	0x42
+   a:	0000                	unimp
+   c:	0042                	0x42
+   e:	0000                	unimp
+  10:	0042                	0x42
+  12:	0000                	unimp
+  14:	0042                	0x42
+  16:	0000                	unimp
+  18:	0042                	0x42
+  1a:	0000                	unimp
+  1c:	0042                	0x42
+  1e:	0000                	unimp
+  20:	0042                	0x42
+  22:	0000                	unimp
+  24:	0042                	0x42
+  26:	0000                	unimp
+  28:	0042                	0x42
+  2a:	0000                	unimp
+  2c:	0042                	0x42
+  2e:	0000                	unimp
+  30:	0042                	0x42
+  32:	0000                	unimp
+  34:	0042                	0x42
+  36:	0000                	unimp
+  38:	0042                	0x42
+  3a:	0000                	unimp
+  3c:	0042                	0x42
+	...
+
+0000000000000040 <reset_vector>:
+  .word bad_trap
+
+##! Disabling the compressed code
+#  .option norvc
+reset_vector:
+  j _start
+  40:	a011                	j	44 <_start>
+
+0000000000000042 <bad_trap>:
+
+bad_trap:
+  j bad_trap
+  42:	a001                	j	42 <bad_trap>
+
+0000000000000044 <_start>:
+
+_start:
+  li  x1, 0
+  44:	4081                	li	ra,0
+  li  x2, 0
+  46:	4101                	li	sp,0
+  li  x3, 0
+  48:	4181                	li	gp,0
+  li  x4, 0
+  4a:	4201                	li	tp,0
+  li  x5, 0
+  4c:	4281                	li	t0,0
+  li  x6, 0
+  4e:	4301                	li	t1,0
+  li  x7, 0
+  50:	4381                	li	t2,0
+  li  x8, 0
+  52:	4401                	li	s0,0
+  li  x9, 0
+  54:	4481                	li	s1,0
+  li  x10,0
+  56:	4501                	li	a0,0
+  li  x11,0
+  58:	4581                	li	a1,0
+  li  x12,0
+  5a:	4601                	li	a2,0
+  li  x13,0
+  5c:	4681                	li	a3,0
+  li  x14,0
+  5e:	4701                	li	a4,0
+  li  x15,0
+  60:	4781                	li	a5,0
+  li  x16,0
+  62:	4801                	li	a6,0
+  li  x17,0
+  64:	4881                	li	a7,0
+  li  x18,0
+  66:	4901                	li	s2,0
+  li  x19,0
+  68:	4981                	li	s3,0
+  li  x20,0
+  6a:	4a01                	li	s4,0
+  li  x21,0
+  6c:	4a81                	li	s5,0
+  li  x22,0
+  6e:	4b01                	li	s6,0
+  li  x23,0
+  70:	4b81                	li	s7,0
+  li  x24,0
+  72:	4c01                	li	s8,0
+  li  x25,0
+  74:	4c81                	li	s9,0
+  li  x26,0
+  76:	4d01                	li	s10,0
+  li  x27,0
+  78:	4d81                	li	s11,0
+  li  x28,0
+  7a:	4e01                	li	t3,0
+  li  x29,0
+  7c:	4e81                	li	t4,0
+  li  x30,0
+  7e:	4f01                	li	t5,0
+  li  x31,0
+  80:	4f81                	li	t6,0
+  ##! csrs (pseudo asm instruction) - set bit   
+  ##! csrrs - atomic read and set bit
+  ##! csrc (pseudo asm instruction) - clear bit 
+  ##! csrrc - atomic read and clear bit
+
+  li t0, 0x00001800   # MPP[12:11] = 0x3 (Previous to machine mode)
+  82:	000022b7          	lui	t0,0x2
+  86:	8002829b          	addiw	t0,t0,-2048
+  csrc mstatus, t0    # run tests in user mode = 0, by clearing bits
+  8a:	3002b073          	csrc	mstatus,t0
+  li t0, 0x00000008   # Enable irq in machine and user modes after execution of xRET
+  8e:	42a1                	li	t0,8
+  csrs mstatus, t0    # enable interrupts in user mode
+  90:	3002a073          	csrs	mstatus,t0
+  #csrs mstatus, t0    # enable FPU
+  #li t0, MSTATUS_XS;   
+  #csrs mstatus, t0    # enable accelerator
+
+  ##! init mtvec register (see https://github.com/riscv/riscv-test-env/blob/master/p/riscv_test.h)
+  la t0, trap_entry
+  94:	00000297          	auipc	t0,0x0
+  98:	04e28293          	addi	t0,t0,78 # e2 <trap_entry>
+  csrw mtvec, t0
+  9c:	30529073          	csrw	mtvec,t0
+  li t0, 0x00000800
+  a0:	000012b7          	lui	t0,0x1
+  a4:	8002829b          	addiw	t0,t0,-2048
+  csrs mie, t0       # Enable External irq (ftom PLIC) for M mode
+  a8:	3042a073          	csrs	mie,t0
+  fmv.s.x f30,x0
+  fmv.s.x f31,x0
+#endif
+
+  ##! initialize global pointer (no need in it)
+  lui gp, 0x10000
+  ac:	100001b7          	lui	gp,0x10000
+
+  ##! get core id
+  csrr a0, mhartid            # for now, assume only 1 core
+  b0:	f1402573          	csrr	a0,mhartid
+  li a1, 1
+  b4:	4585                	li	a1,1
+1:bgeu a0, a1, 1b
+  b6:	00b57063          	bleu	a1,a0,b6 <_start+0x72>
+
+  # Task stack pointer (tp) uses the same value as sp.
+#define STACK_512KB 19
+  lui t0, 0x10000             # t0 = SRAM base address = 0x10000000 . lui = load upper immediate 20-bits
+  ba:	100002b7          	lui	t0,0x10000
+  add sp, zero, 1             # sp = 1
+  be:	00100113          	li	sp,1
+  sll sp, sp, STACK_512KB     # sp = sp << 19 = 0x80000
+  c2:	014e                	slli	sp,sp,0x13
+  add sp, t0, sp              # sp = sp + 0x10000000 = 0x10080000
+  c4:	9116                	add	sp,sp,t0
+  add tp, zero, sp            # tp = sp + 0
+  c6:	00200233          	add	tp,zero,sp
+  ## Use tp register to save/restore registers context on task switching
+  addi tp,tp,-256              # tp = tp - 256 = 0x1007ff00
+  ca:	f0020213          	addi	tp,tp,-256 # ffffffffffffff00 <_gp+0xfffffffffffff054>
+  # 1 KB for the tap stack + TLS. Add signed extended 12-bits to register
+  addi sp, sp, -1024          # sp = 0x1007fc00
+  ce:	c0010113          	addi	sp,sp,-1024
+
+  # copy image 64 KB
+  jal _init
+  d2:	2d6000ef          	jal	ra,3a8 <_init>
+
+  ##! jump to entry point in SRAM = 0x10000000
+  ##!     'meps' - Machine Exception Program Coutner
+  lui t0, 0x10000             # t0 = SRAM base address = 0x10000000 . lui = load upper immediate 20-bits
+  d6:	100002b7          	lui	t0,0x10000
+  csrw mepc, t0
+  da:	34129073          	csrw	mepc,t0
+  ##! @see riscv-priv-spec-1.7.pdf. 3.2.1
+  ##! After handling a trap, the ERET instruction is used to return to the privilege level at which the
+  ##! trap occurred. In addition to manipulating the privilege stack as described in Section 3.1.5, ERET
+  ##! sets the pc to the value stored in the Xepc register, where X is the privilege mode (S, H, or M) in
+  ##! which the ERET instruction was executed.
+  mret
+  de:	30200073          	mret
+
+00000000000000e2 <trap_entry>:
+
+trap_entry:
+  ##! module CSRFile rises io_fatc signal that is cause of the 'ptw.invalidate'.
+  fence
+  e2:	0ff0000f          	fence
+  csrw mscratch, a0;
+  e6:	34051073          	csrw	mscratch,a0
+
+  _save_context(tp)
+  ea:	00123023          	sd	ra,0(tp) # 0 <trap_table>
+  ee:	00823423          	sd	s0,8(tp) # 8 <trap_table+0x8>
+  f2:	00923823          	sd	s1,16(tp) # 10 <trap_table+0x10>
+  f6:	01223c23          	sd	s2,24(tp) # 18 <trap_table+0x18>
+  fa:	03323023          	sd	s3,32(tp) # 20 <trap_table+0x20>
+  fe:	03423423          	sd	s4,40(tp) # 28 <trap_table+0x28>
+ 102:	03523823          	sd	s5,48(tp) # 30 <trap_table+0x30>
+ 106:	03623c23          	sd	s6,56(tp) # 38 <trap_table+0x38>
+ 10a:	05723023          	sd	s7,64(tp) # 40 <reset_vector>
+ 10e:	05823423          	sd	s8,72(tp) # 48 <_start+0x4>
+ 112:	05923823          	sd	s9,80(tp) # 50 <_start+0xc>
+ 116:	05a23c23          	sd	s10,88(tp) # 58 <_start+0x14>
+ 11a:	07b23023          	sd	s11,96(tp) # 60 <_start+0x1c>
+ 11e:	06223423          	sd	sp,104(tp) # 68 <_start+0x24>
+ 122:	07023c23          	sd	a6,120(tp) # 78 <_start+0x34>
+ 126:	09123023          	sd	a7,128(tp) # 80 <_start+0x3c>
+ 12a:	08a23423          	sd	a0,136(tp) # 88 <_start+0x44>
+ 12e:	08b23823          	sd	a1,144(tp) # 90 <_start+0x4c>
+ 132:	08c23c23          	sd	a2,152(tp) # 98 <_start+0x54>
+ 136:	0ad23023          	sd	a3,160(tp) # a0 <_start+0x5c>
+ 13a:	0ae23423          	sd	a4,168(tp) # a8 <_start+0x64>
+ 13e:	0af23823          	sd	a5,176(tp) # b0 <_start+0x6c>
+ 142:	0b023c23          	sd	a6,184(tp) # b8 <_start+0x74>
+ 146:	0d123023          	sd	a7,192(tp) # c0 <_start+0x7c>
+ 14a:	0c523423          	sd	t0,200(tp) # c8 <_start+0x84>
+ 14e:	0c623823          	sd	t1,208(tp) # d0 <_start+0x8c>
+ 152:	0c723c23          	sd	t2,216(tp) # d8 <_start+0x94>
+ 156:	0fc23023          	sd	t3,224(tp) # e0 <_start+0x9c>
+ 15a:	0fd23423          	sd	t4,232(tp) # e8 <trap_entry+0x6>
+ 15e:	0e323823          	sd	gp,240(tp) # f0 <trap_entry+0xe>
+  ##       long handle_trap(long cause, long epc, long long regs[32])
+  ##             a0 = argument 1: cause
+  ##             a1 = argument 2: mepc
+  ##             a2 = argument 3: pointer on stack
+  ## @return     a0 New instruction pointer offset
+  csrr a0, mcause
+ 162:	34202573          	csrr	a0,mcause
+  csrr a1, mepc
+ 166:	341025f3          	csrr	a1,mepc
+  sd a1,COOP_REG_TP(tp)
+ 16a:	06b23823          	sd	a1,112(tp) # 70 <_start+0x2c>
+  mv a2, sp
+ 16e:	860a                	mv	a2,sp
+  # !!! Cannot reset external pending bits only via IrqController (page 28)
+  li t0, 0x00000800
+ 170:	000012b7          	lui	t0,0x1
+ 174:	8002829b          	addiw	t0,t0,-2048
+  csrc mip, t0      #csrc pseudo asm instruction clear CSR bit.
+ 178:	3442b073          	csrc	mip,t0
+                    #[11] MEIP: machine pending external interrupt
+  jal handle_trap
+ 17c:	2f4000ef          	jal	ra,470 <handle_trap>
+
+  # tp-offset in the context array is used to save mepc value. An it may be
+  # modified by isr handler during preemtive task switching.
+  ld a1,COOP_REG_TP(tp)
+ 180:	07023583          	ld	a1,112(tp) # 70 <_start+0x2c>
+  csrw mepc,a1
+ 184:	34159073          	csrw	mepc,a1
+  _restore_context(tp)
+ 188:	00023083          	ld	ra,0(tp) # 0 <trap_table>
+ 18c:	00823403          	ld	s0,8(tp) # 8 <trap_table+0x8>
+ 190:	01023483          	ld	s1,16(tp) # 10 <trap_table+0x10>
+ 194:	01823903          	ld	s2,24(tp) # 18 <trap_table+0x18>
+ 198:	02023983          	ld	s3,32(tp) # 20 <trap_table+0x20>
+ 19c:	02823a03          	ld	s4,40(tp) # 28 <trap_table+0x28>
+ 1a0:	03023a83          	ld	s5,48(tp) # 30 <trap_table+0x30>
+ 1a4:	03823b03          	ld	s6,56(tp) # 38 <trap_table+0x38>
+ 1a8:	04023b83          	ld	s7,64(tp) # 40 <reset_vector>
+ 1ac:	04823c03          	ld	s8,72(tp) # 48 <_start+0x4>
+ 1b0:	05023c83          	ld	s9,80(tp) # 50 <_start+0xc>
+ 1b4:	05823d03          	ld	s10,88(tp) # 58 <_start+0x14>
+ 1b8:	06023d83          	ld	s11,96(tp) # 60 <_start+0x1c>
+ 1bc:	06823103          	ld	sp,104(tp) # 68 <_start+0x24>
+ 1c0:	07823803          	ld	a6,120(tp) # 78 <_start+0x34>
+ 1c4:	08023883          	ld	a7,128(tp) # 80 <_start+0x3c>
+ 1c8:	08823503          	ld	a0,136(tp) # 88 <_start+0x44>
+ 1cc:	09023583          	ld	a1,144(tp) # 90 <_start+0x4c>
+ 1d0:	09823603          	ld	a2,152(tp) # 98 <_start+0x54>
+ 1d4:	0a023683          	ld	a3,160(tp) # a0 <_start+0x5c>
+ 1d8:	0a823703          	ld	a4,168(tp) # a8 <_start+0x64>
+ 1dc:	0b023783          	ld	a5,176(tp) # b0 <_start+0x6c>
+ 1e0:	0b823803          	ld	a6,184(tp) # b8 <_start+0x74>
+ 1e4:	0c023883          	ld	a7,192(tp) # c0 <_start+0x7c>
+ 1e8:	0c823283          	ld	t0,200(tp) # c8 <_start+0x84>
+ 1ec:	0d023303          	ld	t1,208(tp) # d0 <_start+0x8c>
+ 1f0:	0d823383          	ld	t2,216(tp) # d8 <_start+0x94>
+ 1f4:	0e023e03          	ld	t3,224(tp) # e0 <_start+0x9c>
+ 1f8:	0e823e83          	ld	t4,232(tp) # e8 <trap_entry+0x6>
+ 1fc:	0f023183          	ld	gp,240(tp) # f0 <trap_entry+0xe>
+  mret
+ 200:	30200073          	mret
+	...
+
+0000000000000212 <led_set>:
+#include "axi_maps.h"
+#include "encoding.h"
+
+static const int FW_IMAGE_SIZE_BYTES = 1 << 18;
+
+void led_set(int output) {
+ 212:	1101                	addi	sp,sp,-32
+ 214:	ec22                	sd	s0,24(sp)
+ 216:	1000                	addi	s0,sp,32
+ 218:	87aa                	mv	a5,a0
+ 21a:	fef42623          	sw	a5,-20(s0)
+    ((gpio_map *)ADDR_NASTI_SLAVE_GPIO)->led = output;
+ 21e:	4785                	li	a5,1
+ 220:	07fe                	slli	a5,a5,0x1f
+ 222:	fec42703          	lw	a4,-20(s0)
+ 226:	c398                	sw	a4,0(a5)
+}
+ 228:	0001                	nop
+ 22a:	6462                	ld	s0,24(sp)
+ 22c:	6105                	addi	sp,sp,32
+ 22e:	8082                	ret
+
+0000000000000230 <print_uart>:
+
+void print_uart(const char *buf, int sz) {
+ 230:	7179                	addi	sp,sp,-48
+ 232:	f422                	sd	s0,40(sp)
+ 234:	1800                	addi	s0,sp,48
+ 236:	fca43c23          	sd	a0,-40(s0)
+ 23a:	87ae                	mv	a5,a1
+ 23c:	fcf42a23          	sw	a5,-44(s0)
+    uart_map *uart = (uart_map *)ADDR_NASTI_SLAVE_UART1;
+ 240:	000807b7          	lui	a5,0x80
+ 244:	0785                	addi	a5,a5,1
+ 246:	07b2                	slli	a5,a5,0xc
+ 248:	fef43023          	sd	a5,-32(s0)
+    for (int i = 0; i < sz; i++) {
+ 24c:	fe042623          	sw	zero,-20(s0)
+ 250:	a825                	j	288 <print_uart+0x58>
+        while (uart->status & UART_STATUS_TX_FULL) {}
+ 252:	0001                	nop
+ 254:	fe043783          	ld	a5,-32(s0)
+ 258:	439c                	lw	a5,0(a5)
+ 25a:	0007871b          	sext.w	a4,a5
+ 25e:	4785                	li	a5,1
+ 260:	8ff9                	and	a5,a5,a4
+ 262:	2781                	sext.w	a5,a5
+ 264:	fbe5                	bnez	a5,254 <print_uart+0x24>
+        uart->data = buf[i];
+ 266:	fec42783          	lw	a5,-20(s0)
+ 26a:	fd843703          	ld	a4,-40(s0)
+ 26e:	97ba                	add	a5,a5,a4
+ 270:	0007c783          	lbu	a5,0(a5) # 80000 <_gp+0x7f154>
+ 274:	0007871b          	sext.w	a4,a5
+ 278:	fe043783          	ld	a5,-32(s0)
+ 27c:	cb98                	sw	a4,16(a5)
+    for (int i = 0; i < sz; i++) {
+ 27e:	fec42783          	lw	a5,-20(s0)
+ 282:	2785                	addiw	a5,a5,1
+ 284:	fef42623          	sw	a5,-20(s0)
+ 288:	fec42703          	lw	a4,-20(s0)
+ 28c:	fd442783          	lw	a5,-44(s0)
+ 290:	2701                	sext.w	a4,a4
+ 292:	2781                	sext.w	a5,a5
+ 294:	faf74fe3          	blt	a4,a5,252 <print_uart+0x22>
+    }
+}
+ 298:	0001                	nop
+ 29a:	7422                	ld	s0,40(sp)
+ 29c:	6145                	addi	sp,sp,48
+ 29e:	8082                	ret
+
+00000000000002a0 <print_uart_hex>:
+
+void print_uart_hex(long val) {
+ 2a0:	7139                	addi	sp,sp,-64
+ 2a2:	fc22                	sd	s0,56(sp)
+ 2a4:	0080                	addi	s0,sp,64
+ 2a6:	fca43423          	sd	a0,-56(s0)
+    unsigned char t, s;
+    uart_map *uart = (uart_map *)ADDR_NASTI_SLAVE_UART1;
+ 2aa:	000807b7          	lui	a5,0x80
+ 2ae:	0785                	addi	a5,a5,1
+ 2b0:	07b2                	slli	a5,a5,0xc
+ 2b2:	fef43023          	sd	a5,-32(s0)
+    for (int i = 0; i < 16; i++) {
+ 2b6:	fe042423          	sw	zero,-24(s0)
+ 2ba:	a8ad                	j	334 <print_uart_hex+0x94>
+        while (uart->status & UART_STATUS_TX_FULL) {}
+ 2bc:	0001                	nop
+ 2be:	fe043783          	ld	a5,-32(s0)
+ 2c2:	439c                	lw	a5,0(a5)
+ 2c4:	0007871b          	sext.w	a4,a5
+ 2c8:	4785                	li	a5,1
+ 2ca:	8ff9                	and	a5,a5,a4
+ 2cc:	2781                	sext.w	a5,a5
+ 2ce:	fbe5                	bnez	a5,2be <print_uart_hex+0x1e>
+        
+        t = (unsigned char)((val >> ((15 - i) * 4)) & 0xf);
+ 2d0:	473d                	li	a4,15
+ 2d2:	fe842783          	lw	a5,-24(s0)
+ 2d6:	40f707bb          	subw	a5,a4,a5
+ 2da:	2781                	sext.w	a5,a5
+ 2dc:	0027979b          	slliw	a5,a5,0x2
+ 2e0:	2781                	sext.w	a5,a5
+ 2e2:	fc843703          	ld	a4,-56(s0)
+ 2e6:	40f757b3          	sra	a5,a4,a5
+ 2ea:	0ff7f793          	andi	a5,a5,255
+ 2ee:	8bbd                	andi	a5,a5,15
+ 2f0:	fcf40fa3          	sb	a5,-33(s0)
+        if (t < 10) {
+ 2f4:	fdf44783          	lbu	a5,-33(s0)
+ 2f8:	0ff7f713          	andi	a4,a5,255
+ 2fc:	47a5                	li	a5,9
+ 2fe:	00e7e963          	bltu	a5,a4,310 <print_uart_hex+0x70>
+            s = t + '0';
+ 302:	fdf44783          	lbu	a5,-33(s0)
+ 306:	0307879b          	addiw	a5,a5,48
+ 30a:	fef407a3          	sb	a5,-17(s0)
+ 30e:	a039                	j	31c <print_uart_hex+0x7c>
+        } else {
+            s = (t - 10) + 'a';
+ 310:	fdf44783          	lbu	a5,-33(s0)
+ 314:	0577879b          	addiw	a5,a5,87
+ 318:	fef407a3          	sb	a5,-17(s0)
+        }
+        uart->data = s;
+ 31c:	fef44783          	lbu	a5,-17(s0)
+ 320:	0007871b          	sext.w	a4,a5
+ 324:	fe043783          	ld	a5,-32(s0)
+ 328:	cb98                	sw	a4,16(a5)
+    for (int i = 0; i < 16; i++) {
+ 32a:	fe842783          	lw	a5,-24(s0)
+ 32e:	2785                	addiw	a5,a5,1
+ 330:	fef42423          	sw	a5,-24(s0)
+ 334:	fe842783          	lw	a5,-24(s0)
+ 338:	0007871b          	sext.w	a4,a5
+ 33c:	47bd                	li	a5,15
+ 33e:	f6e7dfe3          	ble	a4,a5,2bc <print_uart_hex+0x1c>
+    }
+}
+ 342:	0001                	nop
+ 344:	7462                	ld	s0,56(sp)
+ 346:	6121                	addi	sp,sp,64
+ 348:	8082                	ret
+
+000000000000034a <copy_image>:
+
+void copy_image() { 
+ 34a:	7179                	addi	sp,sp,-48
+ 34c:	f406                	sd	ra,40(sp)
+ 34e:	f022                	sd	s0,32(sp)
+ 350:	1800                	addi	s0,sp,48
+    uint32_t tech;
+    uint64_t *fwrom = (uint64_t *)ADDR_NASTI_SLAVE_FWIMAGE;
+ 352:	001007b7          	lui	a5,0x100
+ 356:	fef43423          	sd	a5,-24(s0)
+    uint64_t *sram = (uint64_t *)ADDR_NASTI_SLAVE_SRAM;
+ 35a:	100007b7          	lui	a5,0x10000
+ 35e:	fef43023          	sd	a5,-32(s0)
+    pnp_map *pnp = (pnp_map *)ADDR_NASTI_SLAVE_PNP;
+ 362:	001007b7          	lui	a5,0x100
+ 366:	17fd                	addi	a5,a5,-1
+ 368:	07b2                	slli	a5,a5,0xc
+ 36a:	fcf43c23          	sd	a5,-40(s0)
+
+    /** 
+     * Speed-up RTL simulation by skipping coping stage.
+     * Or skip this stage to avoid rewritting of externally loaded image.
+     */
+    tech = pnp->tech & 0xFF;
+ 36e:	fd843783          	ld	a5,-40(s0)
+ 372:	479c                	lw	a5,8(a5)
+ 374:	0ff7f793          	andi	a5,a5,255
+ 378:	fcf42a23          	sw	a5,-44(s0)
+
+    if (tech != TECH_INFERRED && pnp->fwid == 0) {
+ 37c:	fd442783          	lw	a5,-44(s0)
+ 380:	2781                	sext.w	a5,a5
+ 382:	cf91                	beqz	a5,39e <copy_image+0x54>
+ 384:	fd843783          	ld	a5,-40(s0)
+ 388:	43dc                	lw	a5,4(a5)
+ 38a:	eb91                	bnez	a5,39e <copy_image+0x54>
+        memcpy(sram, fwrom, FW_IMAGE_SIZE_BYTES);
+ 38c:	000407b7          	lui	a5,0x40
+ 390:	863e                	mv	a2,a5
+ 392:	fe843583          	ld	a1,-24(s0)
+ 396:	fe043503          	ld	a0,-32(s0)
+ 39a:	58e000e7          	jalr	1422(zero) # 58e <memcpy>
+    uint64_t *arr_csrs = (uint64_t *)0x80080000;
+    uint64_t x1 = arr_csrs[CSR_MCPUID<<1]; 
+    pnp->fwdbg1 = x1;
+    arr_csrs[CSR_MCPUID<<1] = x1;
+#endif
+}
+ 39e:	0001                	nop
+ 3a0:	70a2                	ld	ra,40(sp)
+ 3a2:	7402                	ld	s0,32(sp)
+ 3a4:	6145                	addi	sp,sp,48
+ 3a6:	8082                	ret
+
+00000000000003a8 <_init>:
+
+void _init() {
+ 3a8:	7139                	addi	sp,sp,-64
+ 3aa:	fc06                	sd	ra,56(sp)
+ 3ac:	f822                	sd	s0,48(sp)
+ 3ae:	0080                	addi	s0,sp,64
+    uint32_t tech;
+    pnp_map *pnp = (pnp_map *)ADDR_NASTI_SLAVE_PNP;
+ 3b0:	001007b7          	lui	a5,0x100
+ 3b4:	17fd                	addi	a5,a5,-1
+ 3b6:	07b2                	slli	a5,a5,0xc
+ 3b8:	fef43423          	sd	a5,-24(s0)
+    uart_map *uart = (uart_map *)ADDR_NASTI_SLAVE_UART1;
+ 3bc:	000807b7          	lui	a5,0x80
+ 3c0:	0785                	addi	a5,a5,1
+ 3c2:	07b2                	slli	a5,a5,0xc
+ 3c4:	fef43023          	sd	a5,-32(s0)
+    gpio_map *gpio = (gpio_map *)ADDR_NASTI_SLAVE_GPIO;
+ 3c8:	4785                	li	a5,1
+ 3ca:	07fe                	slli	a5,a5,0x1f
+ 3cc:	fcf43c23          	sd	a5,-40(s0)
+    irqctrl_map *p_irq = (irqctrl_map *)ADDR_NASTI_SLAVE_IRQCTRL;
+ 3d0:	400017b7          	lui	a5,0x40001
+ 3d4:	0786                	slli	a5,a5,0x1
+ 3d6:	fcf43823          	sd	a5,-48(s0)
+
+    // mask all interrupts in interrupt controller to avoid
+    // unpredictable behaviour after elf-file reloading via debug port.
+    p_irq->irq_mask = 0xFFFFFFFF;
+ 3da:	fd043783          	ld	a5,-48(s0)
+ 3de:	577d                	li	a4,-1
+ 3e0:	c398                	sw	a4,0(a5)
+
+    // Half period of the uart = Fbus / 115200 / 2 = 70 MHz / 115200 / 2:
+    //uart->scaler = 304;  // 70 MHz
+    //uart->scaler = 260;  // 60 MHz
+    uart->scaler = 40000000 / 115200 / 2;  // 40 MHz
+ 3e2:	fe043783          	ld	a5,-32(s0)
+ 3e6:	0ad00713          	li	a4,173
+ 3ea:	c3d8                	sw	a4,4(a5)
+
+    led_set(0x01);
+ 3ec:	4505                	li	a0,1
+ 3ee:	e25ff0ef          	jal	ra,212 <led_set>
+    print_uart("Boot . . .", 10);
+ 3f2:	45a9                	li	a1,10
+ 3f4:	65000513          	li	a0,1616
+ 3f8:	230000e7          	jalr	560(zero) # 230 <print_uart>
+    led_set(0x02);
+ 3fc:	4509                	li	a0,2
+ 3fe:	e15ff0ef          	jal	ra,212 <led_set>
+
+    copy_image();
+ 402:	34a000e7          	jalr	842(zero) # 34a <copy_image>
+    led_set(0x03);
+ 406:	450d                	li	a0,3
+ 408:	e0bff0ef          	jal	ra,212 <led_set>
+    print_uart("OK\r\n", 4);
+ 40c:	4591                	li	a1,4
+ 40e:	66000513          	li	a0,1632
+ 412:	230000e7          	jalr	560(zero) # 230 <print_uart>
+
+    /** Check ADC detector that RF front-end is connected: */
+    tech = (pnp->tech >> 24) & 0xff;
+ 416:	fe843783          	ld	a5,-24(s0)
+ 41a:	479c                	lw	a5,8(a5)
+ 41c:	0187d79b          	srliw	a5,a5,0x18
+ 420:	fcf42623          	sw	a5,-52(s0)
+    if (tech != 0xFF) {
+ 424:	fcc42783          	lw	a5,-52(s0)
+ 428:	0007871b          	sext.w	a4,a5
+ 42c:	0ff00793          	li	a5,255
+ 430:	02f70463          	beq	a4,a5,458 <_init+0xb0>
+        print_uart("ADC clock not found. Enable DIP int_rf.\r\n", 41);
+ 434:	02900593          	li	a1,41
+ 438:	66800513          	li	a0,1640
+ 43c:	230000e7          	jalr	560(zero) # 230 <print_uart>
+        tech = (pnp->tech >> 24) & 0xff;
+ 440:	fe843783          	ld	a5,-24(s0)
+ 444:	479c                	lw	a5,8(a5)
+ 446:	0187d79b          	srliw	a5,a5,0x18
+ 44a:	fcf42623          	sw	a5,-52(s0)
+        led_set(tech);
+ 44e:	fcc42783          	lw	a5,-52(s0)
+ 452:	853e                	mv	a0,a5
+ 454:	dbfff0ef          	jal	ra,212 <led_set>
+    }
+    led_set(0x04);
+ 458:	4511                	li	a0,4
+ 45a:	db9ff0ef          	jal	ra,212 <led_set>
+}
+ 45e:	0001                	nop
+ 460:	70e2                	ld	ra,56(sp)
+ 462:	7442                	ld	s0,48(sp)
+ 464:	6121                	addi	sp,sp,64
+ 466:	8082                	ret
+
+0000000000000468 <main>:
+
+/** Not used actually */
+int main() {
+ 468:	1141                	addi	sp,sp,-16
+ 46a:	e422                	sd	s0,8(sp)
+ 46c:	0800                	addi	s0,sp,16
+    while (1) {}
+ 46e:	a001                	j	46e <main+0x6>
+
+0000000000000470 <handle_trap>:
+} csr_mcause_type;
+
+extern void print_uart(const char *buf, int sz);
+extern void print_uart_hex(long val);
+
+long handle_trap(long cause, long epc, long long regs[32]) {
+ 470:	715d                	addi	sp,sp,-80
+ 472:	e486                	sd	ra,72(sp)
+ 474:	e0a2                	sd	s0,64(sp)
+ 476:	0880                	addi	s0,sp,80
+ 478:	fca43423          	sd	a0,-56(s0)
+ 47c:	fcb43023          	sd	a1,-64(s0)
+ 480:	fac43c23          	sd	a2,-72(s0)
+     * If we woudn't do it the interrupt handler will be called infinitly
+     *
+     * Rise interrupt from the software maybe done sending a self-IPI:
+     *      csrwi mipi, 0
+     */
+    irqctrl_map *p_irqctrl = (irqctrl_map *)ADDR_NASTI_SLAVE_IRQCTRL;
+ 484:	400017b7          	lui	a5,0x40001
+ 488:	0786                	slli	a5,a5,0x1
+ 48a:	fef43023          	sd	a5,-32(s0)
+    IRQ_HANDLER irq_handler = (IRQ_HANDLER *)p_irqctrl->isr_table;
+ 48e:	fe043783          	ld	a5,-32(s0)
+ 492:	6b9c                	ld	a5,16(a5)
+ 494:	fcf43c23          	sd	a5,-40(s0)
+    uint32_t pending;
+    csr_mcause_type mcause;
+
+    mcause.value = cause;
+ 498:	fc843783          	ld	a5,-56(s0)
+ 49c:	fcf43823          	sd	a5,-48(s0)
+    p_irqctrl->dbg_cause = cause;
+ 4a0:	fc843703          	ld	a4,-56(s0)
+ 4a4:	fe043783          	ld	a5,-32(s0)
+ 4a8:	ef98                	sd	a4,24(a5)
+    p_irqctrl->dbg_epc = epc;
+ 4aa:	fc043703          	ld	a4,-64(s0)
+ 4ae:	fe043783          	ld	a5,-32(s0)
+ 4b2:	f398                	sd	a4,32(a5)
+
+    p_irqctrl->irq_lock = 1;
+ 4b4:	fe043783          	ld	a5,-32(s0)
+ 4b8:	4705                	li	a4,1
+ 4ba:	d798                	sw	a4,40(a5)
+    pending = p_irqctrl->irq_pending;
+ 4bc:	fe043783          	ld	a5,-32(s0)
+ 4c0:	43dc                	lw	a5,4(a5)
+ 4c2:	fef42623          	sw	a5,-20(s0)
+    p_irqctrl->irq_clear = pending;
+ 4c6:	fe043783          	ld	a5,-32(s0)
+ 4ca:	fec42703          	lw	a4,-20(s0)
+ 4ce:	c798                	sw	a4,8(a5)
+    p_irqctrl->irq_lock = 0;
+ 4d0:	fe043783          	ld	a5,-32(s0)
+ 4d4:	0207a423          	sw	zero,40(a5) # 40001028 <_gp+0x4000017c>
+
+    if (mcause.bits.irq == 0x1 && mcause.bits.code == 11) {
+ 4d8:	fd744783          	lbu	a5,-41(s0)
+ 4dc:	f807f793          	andi	a5,a5,-128
+ 4e0:	0ff7f793          	andi	a5,a5,255
+ 4e4:	c3a5                	beqz	a5,544 <handle_trap+0xd4>
+ 4e6:	fd043703          	ld	a4,-48(s0)
+ 4ea:	57fd                	li	a5,-1
+ 4ec:	8385                	srli	a5,a5,0x1
+ 4ee:	8f7d                	and	a4,a4,a5
+ 4f0:	47ad                	li	a5,11
+ 4f2:	04f71963          	bne	a4,a5,544 <handle_trap+0xd4>
+        for (int i = 0; i < CFG_IRQ_TOTAL; i++) {
+ 4f6:	fe042423          	sw	zero,-24(s0)
+ 4fa:	a82d                	j	534 <handle_trap+0xc4>
+            if (pending & 0x1) {
+ 4fc:	fec42783          	lw	a5,-20(s0)
+ 500:	8b85                	andi	a5,a5,1
+ 502:	2781                	sext.w	a5,a5
+ 504:	cf89                	beqz	a5,51e <handle_trap+0xae>
+                p_irqctrl->irq_cause_idx = i;
+ 506:	fe842703          	lw	a4,-24(s0)
+ 50a:	fe043783          	ld	a5,-32(s0)
+ 50e:	d7d8                	sw	a4,44(a5)
+                irq_handler(i, NULL);
+ 510:	fe842783          	lw	a5,-24(s0)
+ 514:	fd843703          	ld	a4,-40(s0)
+ 518:	4581                	li	a1,0
+ 51a:	853e                	mv	a0,a5
+ 51c:	9702                	jalr	a4
+            }
+            pending >>= 1;
+ 51e:	fec42783          	lw	a5,-20(s0)
+ 522:	0017d79b          	srliw	a5,a5,0x1
+ 526:	fef42623          	sw	a5,-20(s0)
+        for (int i = 0; i < CFG_IRQ_TOTAL; i++) {
+ 52a:	fe842783          	lw	a5,-24(s0)
+ 52e:	2785                	addiw	a5,a5,1
+ 530:	fef42423          	sw	a5,-24(s0)
+ 534:	fe842783          	lw	a5,-24(s0)
+ 538:	0007871b          	sext.w	a4,a5
+ 53c:	4795                	li	a5,5
+ 53e:	fae7dfe3          	ble	a4,a5,4fc <handle_trap+0x8c>
+ 542:	a835                	j	57e <handle_trap+0x10e>
+        }
+    } else {
+       print_uart("mcause:", 7);
+ 544:	459d                	li	a1,7
+ 546:	69800513          	li	a0,1688
+ 54a:	230000e7          	jalr	560(zero) # 230 <print_uart>
+       print_uart_hex(cause);
+ 54e:	fc843503          	ld	a0,-56(s0)
+ 552:	d4fff0ef          	jal	ra,2a0 <print_uart_hex>
+       print_uart(",mepc:", 6);
+ 556:	4599                	li	a1,6
+ 558:	6a000513          	li	a0,1696
+ 55c:	230000e7          	jalr	560(zero) # 230 <print_uart>
+       print_uart_hex(epc);
+ 560:	fc043503          	ld	a0,-64(s0)
+ 564:	d3dff0ef          	jal	ra,2a0 <print_uart_hex>
+       print_uart("\r\n", 2);
+ 568:	4589                	li	a1,2
+ 56a:	6a800513          	li	a0,1704
+ 56e:	230000e7          	jalr	560(zero) # 230 <print_uart>
+       /// Exception trap
+       ((gpio_map *)ADDR_NASTI_SLAVE_GPIO)->led = 0xF0;
+ 572:	4785                	li	a5,1
+ 574:	07fe                	slli	a5,a5,0x1f
+ 576:	0f000713          	li	a4,240
+ 57a:	c398                	sw	a4,0(a5)
+       while (1) {}
+ 57c:	a001                	j	57c <handle_trap+0x10c>
+    }
+
+    return epc;
+ 57e:	fc043783          	ld	a5,-64(s0)
+}
+ 582:	853e                	mv	a0,a5
+ 584:	60a6                	ld	ra,72(sp)
+ 586:	6406                	ld	s0,64(sp)
+ 588:	6161                	addi	sp,sp,80
+ 58a:	8082                	ret
+	...
+
+000000000000058e <memcpy>:
+ 58e:	00a5c7b3          	xor	a5,a1,a0
+ 592:	8b9d                	andi	a5,a5,7
+ 594:	00c50733          	add	a4,a0,a2
+ 598:	e781                	bnez	a5,5a0 <memcpy+0x12>
+ 59a:	479d                	li	a5,7
+ 59c:	00c7ef63          	bltu	a5,a2,5ba <memcpy+0x2c>
+ 5a0:	87aa                	mv	a5,a0
+ 5a2:	00e56963          	bltu	a0,a4,5b4 <memcpy+0x26>
+ 5a6:	8082                	ret
+ 5a8:	0005c683          	lbu	a3,0(a1)
+ 5ac:	0785                	addi	a5,a5,1
+ 5ae:	0585                	addi	a1,a1,1
+ 5b0:	fed78fa3          	sb	a3,-1(a5)
+ 5b4:	fee7eae3          	bltu	a5,a4,5a8 <memcpy+0x1a>
+ 5b8:	8082                	ret
+ 5ba:	00757793          	andi	a5,a0,7
+ 5be:	ebbd                	bnez	a5,634 <memcpy+0xa6>
+ 5c0:	87aa                	mv	a5,a0
+ 5c2:	ff877693          	andi	a3,a4,-8
+ 5c6:	fc068613          	addi	a2,a3,-64
+ 5ca:	06c7fc63          	bleu	a2,a5,642 <memcpy+0xb4>
+ 5ce:	0005b383          	ld	t2,0(a1)
+ 5d2:	0085b283          	ld	t0,8(a1)
+ 5d6:	0105bf83          	ld	t6,16(a1)
+ 5da:	0185bf03          	ld	t5,24(a1)
+ 5de:	0205be83          	ld	t4,32(a1)
+ 5e2:	0285be03          	ld	t3,40(a1)
+ 5e6:	0305b303          	ld	t1,48(a1)
+ 5ea:	0385b883          	ld	a7,56(a1)
+ 5ee:	04858593          	addi	a1,a1,72
+ 5f2:	04878793          	addi	a5,a5,72
+ 5f6:	ff85b803          	ld	a6,-8(a1)
+ 5fa:	fa77bc23          	sd	t2,-72(a5)
+ 5fe:	fc57b023          	sd	t0,-64(a5)
+ 602:	fdf7b423          	sd	t6,-56(a5)
+ 606:	fde7b823          	sd	t5,-48(a5)
+ 60a:	fdd7bc23          	sd	t4,-40(a5)
+ 60e:	ffc7b023          	sd	t3,-32(a5)
+ 612:	fe67b423          	sd	t1,-24(a5)
+ 616:	ff17b823          	sd	a7,-16(a5)
+ 61a:	ff07bc23          	sd	a6,-8(a5)
+ 61e:	b775                	j	5ca <memcpy+0x3c>
+ 620:	0005c683          	lbu	a3,0(a1)
+ 624:	0785                	addi	a5,a5,1
+ 626:	0585                	addi	a1,a1,1
+ 628:	fed78fa3          	sb	a3,-1(a5)
+ 62c:	0077f693          	andi	a3,a5,7
+ 630:	fae5                	bnez	a3,620 <memcpy+0x92>
+ 632:	bf41                	j	5c2 <memcpy+0x34>
+ 634:	87aa                	mv	a5,a0
+ 636:	bfdd                	j	62c <memcpy+0x9e>
+ 638:	6190                	ld	a2,0(a1)
+ 63a:	07a1                	addi	a5,a5,8
+ 63c:	05a1                	addi	a1,a1,8
+ 63e:	fec7bc23          	sd	a2,-8(a5)
+ 642:	fed7ebe3          	bltu	a5,a3,638 <memcpy+0xaa>
+ 646:	f6e7e7e3          	bltu	a5,a4,5b4 <memcpy+0x26>
+ 64a:	8082                	ret
+	...

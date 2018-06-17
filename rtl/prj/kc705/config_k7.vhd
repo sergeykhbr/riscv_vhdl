@@ -13,4 +13,6 @@ package config_target is
   constant CFG_MEMTECH : integer := kintex7;
   constant CFG_PADTECH : integer := kintex7;
   constant CFG_JTAGTECH : integer := kintex7;
+
+  constant CFG_TOPDIR : string := "../../../";
 end;

@@ -42,12 +42,12 @@ constant CFG_COMMON_RIVER_CPU_ENABLE : boolean := true;
 --! @brief   HEX-image for the initialization of the Boot ROM.
 --! @details This file is used by \e inferred ROM implementation.
 constant CFG_SIM_BOOTROM_HEX : string := 
-              CFG_TOPDIR & "fw_images/gcc711/bootimage.hex";
+              CFG_TOPDIR & "examples/boot/linuxbuild/bin/bootimage.hex";
 
 --! @brief   HEX-image for the initialization of the FwImage ROM.
 --! @details This file is used by \e inferred ROM implementation.
 constant CFG_SIM_FWIMAGE_HEX : string := 
-                CFG_TOPDIR & "fw_images/gcc711/zephyr.hex";
+                CFG_TOPDIR & "examples/zephyr/gcc711/zephyr.hex";
                 
 
 --! @brief Hardware SoC Identificator.

@@ -14,6 +14,7 @@
 #include "axi_const.h"
 #include "maps/map_pnp.h"
 #include "maps/map_gpio.h"
+#include "maps/map_gptimers.h"
 #include "maps/map_uart.h"
 #include "maps/map_irqctrl.h"
 #include "maps/map_rfctrl.h"

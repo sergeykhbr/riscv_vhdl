@@ -1,9 +1,0 @@
-app
-fasttask
-boot/linuxbuild/
-helloworld/makefiles/obj/
-helloworld/makefiles/bin/
-elf2raw64/makefiles/obj/
-elf2raw64/makefiles/elf/
-isrdemo/makefiles/obj/
-isrdemo/makefiles/bin/

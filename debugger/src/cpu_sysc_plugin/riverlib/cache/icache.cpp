@@ -124,8 +124,6 @@ void ICache::comb() {
     }
 
     wb_hit_word = 0;
-    v.delay_valid = 0;
-    v.delay_data = 0;
     w_need_mem_req = 1;
     if (wb_l[0].hit != 0 && wb_l[1].hit != 0) {
         w_need_mem_req = 0;
@@ -161,6 +159,9 @@ void ICache::comb() {
             v.delay_data = (wb_l[1].hit_data(15, 0) << 16)
                             | wb_l[0].hit_data(63, 48);
         }
+    } else if (i_resp_ctrl_ready.read()) {
+        v.delay_valid = 0;
+        v.delay_data = 0;
     }
 
     w_o_req_mem_valid = w_need_mem_req & w_req_ctrl_valid;
@@ -259,14 +260,11 @@ void ICache::comb() {
 
     if (i_resp_mem_data_valid.read()) {
         /** Condition to avoid removing the last line:
-           1. (adr_processing) stores in last line
-           2. (adr_processing + 2) stores in last line
-           3. (req_addr + 2)  stored in last line while requesting (req_addr)
-         */
-        if ((wb_l[0].hit_hold[Hit_Line2] && wb_l[1].hit_hold == 0)
-            || (wb_l[1].hit_hold[Hit_Line2] && wb_l[0].hit_hold == 0)
-            || (wb_l[1].hit[Hit_Line2] && !wb_l[1].hit[Hit_Line1] && wb_l[0].hit == 0)
-            || (wb_l[0].hit[Hit_Line2] && !wb_l[0].hit[Hit_Line1] && wb_l[1].hit == 0)) {
+            */
+        if ((wb_l[0].hit_hold[Hit_Line2] || wb_l[1].hit_hold[Hit_Line2]) == 1
+            && (wb_l[0].hit_hold[Hit_Line1] || wb_l[1].hit_hold[Hit_Line1]) == 0
+            && r.iline[1].addr.read()
+                != r.iline_addr_req.read()(BUS_ADDR_WIDTH-1, 3)) {
             w_reuse_lastline = 1;
         }
         if (!w_reuse_lastline) {

@@ -1,0 +1,148 @@
+include util.mak
+
+CC=riscv64-unknown-elf-gcc
+CPP=riscv64-unknown-elf-gcc
+OBJDUMP=riscv64-unknown-elf-objdump
+
+##! debug -g and optimization -O0 is better for debugging (default -O2)
+CFLAGS= -c -fPIC -g -O2
+CFLAGS += -march=rv64imac     # doesn't helped with 'fsd' instruction in libc (RV64IMA (no floating point))
+CFLAGS += -mabi=lp64 -mstrict-align
+LDFLAGS=-static -T app.ld -nostartfiles
+LDFLAGS += -march=rv64imac
+LDFLAGS += -mabi=lp64 -mstrict-align
+INCL_KEY=-I
+DIR_KEY=-B
+
+
+# include sub-folders list
+INCL_PATH=\
+	$(TOP_DIR)common \
+	$(TOP_DIR)fasttask/fwsrc/include \
+	$(TOP_DIR)fasttask/fwsrc \
+	$(TOP_DIR)fasttask/fwsrc/axi4/gnss \
+	$(TOP_DIR)fasttask/fwsrc/axi4/gnss/utils
+
+# source files directories list:
+SRC_PATH = \
+	$(TOP_DIR)fasttask/fwsrc \
+	$(TOP_DIR)fasttask/fwsrc/sys \
+	$(TOP_DIR)fasttask/fwsrc/kernel \
+	$(TOP_DIR)fasttask/fwsrc/axi4 \
+	$(TOP_DIR)fasttask/fwsrc/axi4/gptimers \
+	$(TOP_DIR)fasttask/fwsrc/axi4/gnss \
+	$(TOP_DIR)fasttask/fwsrc/axi4/gnss/channel \
+	$(TOP_DIR)fasttask/fwsrc/axi4/gnss/data \
+	$(TOP_DIR)fasttask/fwsrc/axi4/gnss/decoder \
+	$(TOP_DIR)fasttask/fwsrc/axi4/gnss/msg \
+	$(TOP_DIR)fasttask/fwsrc/axi4/gnss/satman \
+	$(TOP_DIR)fasttask/fwsrc/axi4/gnss/satman/fse \
+	$(TOP_DIR)fasttask/fwsrc/axi4/gnss/time \
+	$(TOP_DIR)fasttask/fwsrc/axi4/gnss/utils \
+	$(TOP_DIR)fasttask/fwsrc/axi4/gnss/pos \
+	$(TOP_DIR)fasttask/fwsrc/axi4/eth \
+	$(TOP_DIR)fasttask/fwsrc/axi4/rfctrl
+
+LIB_NAMES = \
+	gcc \
+	stdc++ \
+	c \
+	m
+
+VPATH = $(SRC_PATH)
+
+SOURCES = \
+	main \
+	load_modules \
+	memanager \
+	kernel \
+	printf-common \
+	fifo \
+	axi_uart \
+	profiler \
+	DLL \
+	FLL \
+	fwchan \
+	LockIndicator \
+	normalizer \
+	PLL2 \
+	PLL3 \
+	datagale1 \
+	datagloca \
+	datagpsca \
+	fwdata \
+	fse_2ms_ref \
+	fse_eng \
+	satman \
+	glotime \
+	gpstime \
+	fwtimer \
+	fwmath \
+	ephgps \
+	ephglo \
+	in_msg \
+	msg_chs \
+	msg_dat \
+	msg_mca \
+	msg_mcd \
+	msg_pbn \
+	msg_raw \
+	msg_rmc \
+	msg_rw \
+	msg_sng \
+	msg_snv \
+	msg_tmr \
+	lms \
+	wgs84xyz2lla \
+	poseng \
+	posgps \
+	posglo \
+	axi_gnss \
+	axi_timers \
+	axi_rfctrl \
+	axi_recorder \
+	axi_eth \
+	test
+
+OBJ_FILES = $(addsuffix .o,$(SOURCES))
+EXECUTABLE = gnssfw
+DUMPFILE = $(EXECUTABLE).dump
+HEXFILE = $(EXECUTABLE).hex
+LSTFILE = $(EXECUTABLE).lst
+
+all: fw
+
+.PHONY: $(EXECUTABLE) $(DUMPFILE)
+
+
+fw: $(EXECUTABLE) $(DUMPFILE) $(HEXFILE)
+$(HEXFILE): $(EXECUTABLE)
+	echo elf2raw64 $(addprefix $(ELF_DIR)/,$<) -h -f 262144 -o $(addprefix $(ELF_DIR)/,gnssfw.hex)
+	elf2raw64 $(addprefix $(ELF_DIR)/,$<) -h -f 262144 -l 8 -o $(addprefix $(ELF_DIR)/,gnssfw.hex)
+
+$(DUMPFILE): $(EXECUTABLE)
+	echo $(OBJDUMP) --disassemble-all --disassemble-zeroes --section=.text --section=.text.startup --section=.data $(addprefix $(ELF_DIR)/,$<) > $(addprefix $(ELF_DIR)/,$@)
+	$(OBJDUMP) --disassemble-all --disassemble-zeroes --section=.text --section=.text.startup --section=.data $(addprefix $(ELF_DIR)/,$<) > $(addprefix $(ELF_DIR)/,$@)
+	$(OBJDUMP) -S $(addprefix $(ELF_DIR)/,$<) > $(addprefix $(ELF_DIR)/,$(LSTFILE))
+
+
+$(EXECUTABLE): $(OBJ_FILES)
+	echo $(CPP) $(LDFLAGS) $(addprefix $(OBJ_DIR)/,$(OBJ_FILES)) -o $(addprefix $(ELF_DIR)/,$@) $(addprefix -l,$(LIB_NAMES))
+	$(CPP) $(LDFLAGS) $(addprefix $(OBJ_DIR)/,$(OBJ_FILES)) -o $(addprefix $(ELF_DIR)/,$@) $(addprefix -l,$(LIB_NAMES))
+	$(ECHO) "\n  Shared Library has been built successfully.\n"
+
+#.cpp.o:
+%.o: %.cpp
+	echo $(CPP) $(CFLAGS) $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $(addprefix $(OBJ_DIR)/,$@)
+	$(CPP) $(CFLAGS) $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $(addprefix $(OBJ_DIR)/,$@)
+
+#.c.o:
+%.o: %.c
+	echo $(CC) $(CFLAGS) $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $(addprefix $(OBJ_DIR)/,$@)
+	$(CC) $(CFLAGS) $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $(addprefix $(OBJ_DIR)/,$@)
+
+%.o: %.S
+	echo $(CC) $(CFLAGS) -D__ASSEMBLY__=1 $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $(addprefix $(OBJ_DIR)/,$@)
+	$(CC) $(CFLAGS) -D__ASSEMBLY__=1 $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $(addprefix $(OBJ_DIR)/,$@)
+
+

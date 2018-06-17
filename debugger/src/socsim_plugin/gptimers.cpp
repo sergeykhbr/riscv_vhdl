@@ -16,6 +16,7 @@ GPTimers::GPTimers(const char *name)  : IService(name) {
     registerAttribute("ClkSource", &clksrc_);
 
     memset(&regs_, 0, sizeof(regs_));
+    dbg_irq_cnt_ = 0;
 }
 
 GPTimers::~GPTimers() {
@@ -118,6 +119,7 @@ ETransStatus GPTimers::b_transport(Axi4TransactionType *trans) {
 
 void GPTimers::stepCallback(uint64_t t) {
     iwire_->raiseLine();
+    RISCV_info("Raise interrupt cnt=%d", dbg_irq_cnt_++);
     if (regs_.timer[0].control & TIMER_CONTROL_ENA) {
         iclk_->registerStepCallback(static_cast<IClockListener *>(this),
                                     t + regs_.timer[0].init_value);

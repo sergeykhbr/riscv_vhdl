@@ -52,6 +52,8 @@ private:
         } gptimer_type;
         gptimer_type timer[2];
     } regs_;
+
+    int dbg_irq_cnt_;
 };
 
 DECLARE_CLASS(GPTimers)

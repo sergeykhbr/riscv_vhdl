@@ -13,5 +13,9 @@ riverlib/*
 !riverlib/_info
 techmap/*
 !techmap/_info
+ethlib/*
+!ethlib/_info
+misclib/*
+!misclib/_info
 work/*
 !work/_info

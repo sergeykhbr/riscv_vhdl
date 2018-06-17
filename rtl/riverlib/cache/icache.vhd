@@ -146,8 +146,6 @@ begin
     end loop;
 
     wb_hit_word := (others => '0');
-    v.delay_valid := '0';
-    v.delay_data := (others => '0');
     w_need_mem_req := '1';
     if wb_l(0).hit /= "000" and wb_l(1).hit /= "000" then
         w_need_mem_req := '0';
@@ -177,6 +175,9 @@ begin
             v.delay_data := wb_l(1).hit_data(15 downto 0) &
                             wb_l(0).hit_data(63 downto 48);
         end case;
+    elsif i_resp_ctrl_ready = '1' then
+        v.delay_valid := '0';
+        v.delay_data := (others => '0');
     end if;
 
     w_o_req_mem_valid := w_need_mem_req and w_req_ctrl_valid;
@@ -271,14 +272,9 @@ begin
 
     if i_resp_mem_data_valid = '1' then
         --! Condition to avoid removing the last line:
-        --!   1. (adr_processing) stores in last line
-        --!   2. (adr_processing + 2) stores in last line
-        --!   3. (req_addr + 2)  stored in last line while requesting (req_addr)
-        --!
-        if (wb_l(0).hit_hold(Hit_Line2) = '1' and wb_l(1).hit_hold = "00")
-            or (wb_l(1).hit_hold(Hit_Line2) = '1' and wb_l(0).hit_hold = "00")
-            or (wb_l(1).hit(Hit_Line2) = '1' and wb_l(1).hit(Hit_Line1) = '0' and wb_l(0).hit = "000")
-            or (wb_l(0).hit(Hit_Line2) = '1' and wb_l(0).hit(Hit_Line1) = '0' and wb_l(1).hit = "000") then
+        if (wb_l(0).hit_hold(Hit_Line2) or wb_l(1).hit_hold(Hit_Line2)) = '1'
+            and (wb_l(0).hit_hold(Hit_Line1) or wb_l(1).hit_hold(Hit_Line1)) = '0'
+            and r.iline(1).addr /= r.iline_addr_req(BUS_ADDR_WIDTH-1 downto 3) then
             w_reuse_lastline := '1';
         end if;
         if w_reuse_lastline = '0' then

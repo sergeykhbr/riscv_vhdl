@@ -14,4 +14,6 @@ package config_target is
   constant CFG_PADTECH : integer := inferred;
   constant CFG_JTAGTECH : integer := inferred;
 
+  constant CFG_TOPDIR : string := "../../../";
+
 end;
