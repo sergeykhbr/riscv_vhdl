@@ -12,6 +12,8 @@
 
    @subpage uart_page
 
+   @subpage spiflash_page
+
    @subpage pnp_page
 
 */

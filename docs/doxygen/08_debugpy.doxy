@@ -1,0 +1,123 @@
+/** @page debug_python_page Python Frontend
+
+ @section python_prerequisites Prerequisites
+
+ Current Debugger version is integrated with Python 2.7 using TCP connection
+ and special Python module \c rcp distributed with this bundle. The following
+ requirements should be met before start using the python's debug console:
+
+ \li Debugger binary files built from the provided sources on Windows or Linux
+     machines. It is possible to use starting script \c _run_fpga_nogui_uartdbg
+     (sh|bat) to load minimal configuration into Debugger without GUI and 
+     SystemC support. It enables console mode only.
+
+  \li Installed Python 2.7. To check the installed version:
+     
+        >>> import sys
+        >>> sys.version
+
+  \li FPGA board with loaded image instantiated 2 UARTs modules:
+       - \c UART1 is the slave device used for the user's output.
+       - \c UART2 is the master device (with DMA) used as the Test Access 
+            Point (TAP) to the system. Cannot be used for the user's output.
+
+ @section python_uarttap UART TAP
+
+ \li Build FPGA image from the provided sources (ML605 or KC705 are supported).
+ \li Run FPGA board and load the prepared bit-file.
+
+  So now your target supports 2 debug interfaces:
+      - Debug via Ethernet
+      - Debug via UART
+
+  Actually both this interfaces can be used in the same time.There's no
+  limitation on that.
+
+  Run minimal Debugger configuration with UART TAP support (and disabled 
+  Ethernet). For this run one of the following starting files depending of
+  your OS:
+
+      # cd $(TOP)/river_demo/debugger/linuxbuild/bin
+      # ./_run_fpga_nogui_uartdbg.sh
+
+ or
+
+      # cd $(TOP)/river_demo/debugger/win32build/Debug
+      # _run_fpga_nogui_uartdbg.bat
+
+  Both os these scripts is doing the same thing actually. They start debugger
+  application and point to the JSON-configuration file 
+  <b>$(TOP)/river_demo/debugger/targets/fpga_nogui_uartdbg.json</b>
+
+  Modify this JSON-file accordingly with your Serial Port settings:
+
+ <img src="../doxygen/pics/uartdbg1.png" alt="Ethernet config"> 
+ @latexonly {\includegraphics{../doxygen/pics/uartdbg1.png}} @endlatexonly
+
+  When debugger was started you should see the following debugger console:
+
+ <img src="../doxygen/pics/uartdbg2.png" alt="Ethernet config"> 
+ @latexonly {\includegraphics{../doxygen/pics/uartdbg2.png}} @endlatexonly
+
+  Try different console commands to test debugger:
+
+       # help
+       # help read
+       # regs
+       # status
+       # cpi
+       etc
+
+ <img src="../doxygen/pics/uartdbg3.png" alt="Ethernet config"> 
+ @latexonly {\includegraphics{../doxygen/pics/uartdbg3.png}} @endlatexonly
+
+
+  @warning UART TAP configured with hardcoded Scale Rate computed to give
+          port speed 115200 when Bus Frequency is 40 MHz.
+
+  This simple Debug configuration also includes TCP server to interact with 
+  the standalone Python scripts. Don't close Debugger console and run Python
+  as in the following part of the document.
+
+  @section python_scripting Python Scripting
+
+  Just after your Debugger was started you actually is able to control the FPGA
+  board via specially implemeted JSON-based interface using TCP transport
+  and the standalone frontend. 
+
+  We provide special Python module \b rpc placed in the following folder:
+  
+      # cd $(TOP)/river_demo/debugger/scripts
+
+  You should be inside of folder \c scripts to import module \rpc otherwise
+  you will need to modify <i>sys.path</i> variable.
+  
+  Let's debug our FPGA board from python manually without running automatic
+  script. For this, run python's shell from the folder scripts:
+
+      E:\river_demo\debugger\scripts> python.exe 
+
+      >>> import sys
+      >>> sys.version
+      >>> import rpc
+      >>> t = rpc.Remote()
+      >>> t.connect()
+
+  Try to call different method to debug FPGA board:
+
+  <img src="../doxygen/pics/uartdbg4.png" alt="Ethernet config"> 
+  @latexonly {\includegraphics{../doxygen/pics/uartdbg4.png}} @endlatexonly
+
+  If you see the similar results then your debugger works properly and you can
+  try to run demonstration scripts with annotation placed in folder
+  \c scripts. Close current python shell:
+
+      >>> t.connect()
+      >>> exit()
+
+  Run automatic scripts from the OS console:
+
+      # python example.py
+
+  Congratulations! Now you are able to remotely debug your target using scripts.
+*/

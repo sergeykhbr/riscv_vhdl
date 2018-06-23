@@ -310,7 +310,8 @@
  
  <img src="../doxygen/pics/dbg_fpga_gui1.png" alt="debugger FPGA+GUI"> 
  @latexonly {\includegraphics[scale=0.8]{../doxygen/pics/dbg_fpga_gui1.png}} @endlatexonly
- 
+
+
  @section dbg_troubles_section Troubleshooting
 
  @subsection dbg_trouble_1 Image Files not found
