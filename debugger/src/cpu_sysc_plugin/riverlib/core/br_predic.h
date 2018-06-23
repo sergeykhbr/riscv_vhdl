@@ -38,6 +38,7 @@ private:
     struct RegistersType {
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> npc;
         sc_signal<bool> predicted;
+        sc_signal<bool> compressed;
     } v, r;
     sc_uint<BUS_ADDR_WIDTH> wb_npc;
     bool w_compressed;

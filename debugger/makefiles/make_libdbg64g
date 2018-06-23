@@ -55,6 +55,7 @@ SOURCES = \
 	cmd_disas \
 	cmd_halt \
 	cmd_isrunning \
+	cmd_loadbin \
 	cmd_loadelf \
 	cmd_loadsrec \
 	cmd_log \

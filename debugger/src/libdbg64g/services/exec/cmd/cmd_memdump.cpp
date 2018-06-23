@@ -41,7 +41,7 @@ void CmdMemDump::exec(AttributeType *args, AttributeType *res) {
     }
 
     const char *filename = (*args)[3].to_string();
-    FILE *fd = fopen(filename, "w");
+    FILE *fd = fopen(filename, "wb");
     if (fd == NULL) {
         char tst[256];
         RISCV_sprintf(tst, sizeof(tst), "Can't open '%s' file", filename);

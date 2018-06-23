@@ -103,6 +103,7 @@ void BranchPredictor::comb() {
     if (!i_nrst.read()) {
         v.npc = RESET_VECTOR;
         v.predicted = 0;
+        v.compressed = 0;
     }
 
     o_npc_predict = wb_npc;
