@@ -250,8 +250,6 @@
     <ClInclude Include="..\..\src\common\coreservices\iserial.h">
       <Filter>Source Files\common\coreservices</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\common\coreservices\isignal.h" />
-    <ClInclude Include="..\..\src\common\coreservices\isignallistener.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\comport\comport.h">
       <Filter>Source Files\services\comport</Filter>
     </ClInclude>
@@ -419,6 +417,12 @@
     </ClInclude>
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_loadbin.h">
       <Filter>Source Files\services\exec\cmd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\coreservices\isignal.h">
+      <Filter>Source Files\common\coreservices</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\coreservices\isignallistener.h">
+      <Filter>Source Files\common\coreservices</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

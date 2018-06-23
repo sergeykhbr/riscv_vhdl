@@ -39,6 +39,10 @@ EXPORTS
 	RISCV_event_clear
 	RISCV_event_wait
 	RISCV_event_wait_ms
+	RISCV_memshare_create
+	RISCV_memshare_map
+	RISCV_memshare_unmap
+	RISCV_memshare_delete
 	RISCV_get_core_folder
 	RISCV_set_current_dir
 	RISCV_get_services_with_iface

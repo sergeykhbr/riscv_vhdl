@@ -99,7 +99,7 @@ static void probe_serial8250_comports(list<string>& comList,
  * device (virtual console port, ptmx, etc...) and you can discard it.
  * If it exists then retain serial port foo.
  */
-void ComPortService::getSerialPortList(AttributeType *list) {
+void ComPortService::getListOfPorts(AttributeType *list) {
     int n;
     struct dirent **namelist;
     const char* sysdir = "/sys/class/tty/";
@@ -144,8 +144,8 @@ void ComPortService::getSerialPortList(AttributeType *list) {
 }
 
 
-int ComPortService::openSerialPort(const char *port, int baud, void *hdl) {
-    *((int *)hdl) = 0;
+int ComPortService::openPort(const char *port, AttributeType settings) {
+    closePort();
     int fd = open(port, O_RDWR | O_NOCTTY);// | O_NONBLOCK);// | O_NDELAY );
     //fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) & ~O_NONBLOCK);
     if (fd < 0) {
@@ -236,12 +236,15 @@ int ComPortService::openSerialPort(const char *port, int baud, void *hdl) {
 
     // Empty buffers
     tcflush(fd, TCIOFLUSH);
-    *((int *)hdl) = fd;
+    prtHandler_ = fd;
     return 0 ;
 }
 
-void ComPortService::closeSerialPort(void *hdl) {
-    close(*((int *)hdl));
+void ComPortService::closePort() {
+    if (prtHandler_) {
+        close(prtHandler_);
+    }
+    prtHandler_ = 0;
 }
 
 int ComPortService::readSerialPort(void *hdl, char *buf, int bufsz) {

@@ -1,8 +1,17 @@
-/**
- * @file
- * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
- * @author     Sergey Khabarov - sergeykhbr@gmail.com
- * @brief      COM-port class implementation.
+/*
+ *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 #include <iostream>
@@ -40,6 +49,7 @@ ComPortService::ComPortService(const char *name)
     iuartSim_ = 0;
     portOpened_ = false;
     RISCV_mutex_init(&mutexListeners_);
+    prtHandler_ = 0;
 }
 
 ComPortService::~ComPortService() {
@@ -112,8 +122,10 @@ void ComPortService::busyLoop() {
         }
 #endif
         if (!isSimulation_ && !portOpened_) {
-            int err = openSerialPort(comPortName_.to_string(), 
-                comPortSpeed_.to_int(), &hPort_);
+            AttributeType settings;
+            settings.make_list(4);
+            settings[0u].make_int64(comPortSpeed_.to_int());
+            int err = openPort(comPortName_.to_string(), settings);
             if (err < 0) {
                 RISCV_error("Openning %s at %d . . .failed",
                         comPortName_.to_string(), comPortSpeed_.to_int());
@@ -131,16 +143,17 @@ void ComPortService::busyLoop() {
         if (tbuf_cnt) {
             if (isSimulation_ && iuartSim_) {
                 iuartSim_->writeData(tbuf, tbuf_cnt);
-            } else if (!isSimulation_ && hPort_) {
-                writeSerialPort(&hPort_, tbuf, tbuf_cnt);
+            } else if (!isSimulation_ && prtHandler_) {
+                writeSerialPort(&prtHandler_, tbuf, tbuf_cnt);
             }
         }
 
         // Receiveing...
-        if (!isSimulation_ && hPort_) {
-            tbuf_cnt = readSerialPort(&hPort_, tbuf, sizeof(tbuf) - tbuf_cnt);
+        if (!isSimulation_ && prtHandler_) {
+            tbuf_cnt = readSerialPort(&prtHandler_, tbuf,
+                                        sizeof(tbuf) - tbuf_cnt);
             if (tbuf_cnt < 0) { 
-                closeSerialPort(&hPort_);
+                closePort();
                 portOpened_ = false;
                 continue;
             }

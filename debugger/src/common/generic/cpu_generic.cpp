@@ -207,8 +207,7 @@ void CpuGeneric::fetchILine() {
     trans_.addr = pc_.getValue().val;
     trans_.xsize = 4;
     trans_.wstrb = 0;
-    trans_.source_idx = sysBusMasterID_.to_int();
-    isysbus_->b_transport(&trans_);
+    dma_memop(&trans_);
     cacheline_[0].val = trans_.rpayload.b64[0];
     if (skip_sw_breakpoint_ && trans_.addr == br_fetch_addr_.getValue().val) {
         skip_sw_breakpoint_ = false;

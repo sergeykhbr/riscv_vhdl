@@ -1,8 +1,18 @@
-/**
- * @file
- * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
- * @author     Sergey Khabarov - sergeykhbr@gmail.com
- * @brief      SystemC CPU wrapper. To interact with the SoC simulator. */
+/*
+ *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 
 #ifndef __DEBUGGER_RTL_WRAPPER_H__
 #define __DEBUGGER_RTL_WRAPPER_H__
@@ -23,7 +33,7 @@ class RtlWrapper : public sc_module,
                    public IResetListener,
                    public ICpuGeneric,
                    public ICpuRiscV {
-public:
+ public:
     sc_clock o_clk;
     sc_out<bool> o_nrst;
     // Timer:
@@ -75,7 +85,7 @@ public:
     RtlWrapper(IFace *parent, sc_module_name name);
     virtual ~RtlWrapper();
 
-public:
+ public:
     void generateRef(bool v) { generate_ref_ = v; }
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
     void setBus(IMemoryOperation *v) { ibus_ = v; }
@@ -97,12 +107,12 @@ public:
     }
 
 
-private:
+ private:
     IFace *getInterface(const char *name) { return iparent_; }
     uint64_t mask2offset(uint8_t mask);
     uint32_t mask2size(uint8_t mask);       // nask with removed offset
 
-private:
+ private:
     IMemoryOperation *ibus_;
     IFace *iparent_;    // pointer on parent module object (used for logging)
     int clockCycles_;   // default in [ps]

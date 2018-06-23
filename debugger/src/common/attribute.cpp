@@ -1,8 +1,17 @@
-/**
- * @file
- * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
- * @author     Sergey Khabarov - sergeykhbr@gmail.com
- * @brief      Core attribute methods implementation.
+/*
+ *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 #include <attribute.h>
@@ -201,6 +210,33 @@ void AttributeType::make_data(unsigned size, const void *data) {
     } else {
         memcpy(u_.data_bytes, data, size);
     }
+}
+
+void AttributeType::realloc_data(unsigned size) {
+    if (!is_data()) {
+        return;
+    }
+    if (size <= 8) {    
+        if (size_ > 8) {
+            memcpy(u_.data_bytes, u_.data, size);
+            RISCV_free(u_.data);
+        }
+        size_ = size;
+        return;
+    }
+    uint8_t *pnew = static_cast<uint8_t *>(RISCV_malloc(size));
+    unsigned sz = size;
+    if (size_ < sz) {
+        sz = size_;
+    }
+    if (sz > 8) {
+        memcpy(pnew, u_.data, sz);
+        RISCV_free(u_.data);
+    } else {
+        memcpy(pnew, u_.data_bytes, sz);
+    }
+    u_.data = pnew;
+    size_ = size;
 }
 
 void AttributeType::make_list(unsigned size) {

@@ -35,6 +35,9 @@ public:
     virtual int writeData(const char *buf, int sz);
     virtual void registerRawListener(IFace *listener);
     virtual void unregisterRawListener(IFace *listener);
+    virtual void getListOfPorts(AttributeType *list);
+    virtual int openPort(const char *port, AttributeType settings);
+    virtual void closePort();
 
     /** IRawListener (simulation only) */
     virtual void updateData(const char *buf, int buflen);
@@ -44,9 +47,6 @@ protected:
     virtual void busyLoop();
 
 private:
-    void getSerialPortList(AttributeType *list);
-    int openSerialPort(const char *port, int baud, void *hdl);
-    void closeSerialPort(void *hdl);
     int readSerialPort(void *hdl, char *buf, int bufsz);
     int writeSerialPort(void *hdl, char *buf, int bufsz);
     void cleanSerialPort(void *hdl);
@@ -61,9 +61,9 @@ private:
 
     FILE *logfile_;
 #if defined(_WIN32) || defined(__CYGWIN__)
-    HANDLE hPort_;
+    HANDLE prtHandler_;
 #else
-    int hPort_;
+    int prtHandler_;
 #endif
 
     bool isSimulation_;

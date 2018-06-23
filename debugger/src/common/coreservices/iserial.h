@@ -26,6 +26,10 @@ class ISerial : public IFace {
 
     virtual void registerRawListener(IFace *listener) = 0;
     virtual void unregisterRawListener(IFace *listener) = 0;
+
+    virtual void getListOfPorts(AttributeType *list) = 0;
+    virtual int openPort(const char *port, AttributeType settings) = 0;
+    virtual void closePort() = 0;
 };
 
 }  // namespace debugger

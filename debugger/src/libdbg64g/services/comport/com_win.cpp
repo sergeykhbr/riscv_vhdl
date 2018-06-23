@@ -14,7 +14,7 @@
 
 namespace debugger {
 
-void ComPortService::getSerialPortList(AttributeType *list) {
+void ComPortService::getListOfPorts(AttributeType *list) {
     list->make_list(0);
 
     AttributeType portInfo;
@@ -91,7 +91,7 @@ void ComPortService::getSerialPortList(AttributeType *list) {
     delete [] lpPorts;
 }
 
-int ComPortService::openSerialPort(const char *port, int baud, void *hdl) {
+int ComPortService::openPort(const char *port, AttributeType settings) {
     char chCom[20];
     char chConfig[64];
     HANDLE hFile;
@@ -104,7 +104,7 @@ int ComPortService::openSerialPort(const char *port, int baud, void *hdl) {
   
     RISCV_sprintf(chCom, sizeof(chCom), "\\\\.\\%s", port);
     RISCV_sprintf(chConfig, sizeof(chConfig),
-                  "baud=%d parity=N data=8 stop=1", baud);
+                  "baud=%d parity=N data=8 stop=1", settings[0u].to_int());
  
     hFile = CreateFile(chCom,
                         GENERIC_READ|GENERIC_WRITE,
@@ -115,7 +115,7 @@ int ComPortService::openSerialPort(const char *port, int baud, void *hdl) {
                         FILE_ATTRIBUTE_NORMAL,
                         NULL);
  	
-    *static_cast<HANDLE *>(hdl) = hFile;
+    *static_cast<HANDLE *>(prtHandler_) = hFile;
     if (hFile == INVALID_HANDLE_VALUE) {
         if (GetLastError() == ERROR_ACCESS_DENIED) {
             RISCV_error("%s is locked by another device", chCom);
@@ -189,8 +189,11 @@ int ComPortService::openSerialPort(const char *port, int baud, void *hdl) {
     return 0;
 }
 
-void ComPortService::closeSerialPort(void *hdl) {
-    CloseHandle(*static_cast<HANDLE *>(hdl));
+void ComPortService::closePort() {
+    if (prtHandler_) {
+        CloseHandle(*static_cast<HANDLE *>(prtHandler_));
+    }
+    prtHandler_ = 0;
 }
 
 int ComPortService::readSerialPort(void *hdl, char *buf, int bufsz) {

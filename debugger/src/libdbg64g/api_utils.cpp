@@ -1,8 +1,17 @@
-/**
- * @file
- * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
- * @author     Sergey Khabarov - sergeykhbr@gmail.com
- * @brief      Core API utils methods implementation.
+/*
+ *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 #include <string.h>
@@ -315,6 +324,54 @@ extern "C" int RISCV_event_wait_ms(event_def *ev, int ms) {
         return 1;
     }
     return 0;
+#endif
+}
+
+extern "C" sharemem_def RISCV_memshare_create(const char *name, int sz) {
+    sharemem_def ret = 0;
+#if defined(_WIN32) || defined(__CYGWIN__)
+    ret = CreateFileMapping(
+                 INVALID_HANDLE_VALUE,  // use paging file
+                 NULL,                  // default security
+                 PAGE_READWRITE,      // read/write access
+                 0,                   // maximum object size (high-order DWORD)
+                 sz,                  // maximum object size (low-order DWORD)
+                 name);               // name of mapping object
+#else
+#endif
+    if (!ret) {
+        RISCV_error("Couldn't create map object %s", name);
+    }
+    return ret;
+}
+
+extern "C" void* RISCV_memshare_map(sharemem_def h, int sz) {
+    void *ret = 0;
+#if defined(_WIN32) || defined(__CYGWIN__)
+    ret = MapViewOfFile(h,   // handle to map object
+                        FILE_MAP_ALL_ACCESS, // read/write permission
+                        0,
+                        0,
+                        sz);
+#else
+#endif
+    if (!ret) {
+        RISCV_error("Couldn't map view of file with size %d", sz);
+    }
+    return ret;
+}
+
+extern "C" void RISCV_memshare_unmap(void *buf) {
+#if defined(_WIN32) || defined(__CYGWIN__)
+    UnmapViewOfFile(buf);
+#else
+#endif
+}
+
+extern "C" void RISCV_memshare_delete(sharemem_def h) {
+#if defined(_WIN32) || defined(__CYGWIN__)
+    CloseHandle(h);
+#else
 #endif
 }
 
