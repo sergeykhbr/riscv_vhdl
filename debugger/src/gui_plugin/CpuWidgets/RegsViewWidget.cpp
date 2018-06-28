@@ -1,8 +1,17 @@
-/**
- * @file
- * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
- * @author     Sergey Khabarov - sergeykhbr@gmail.com
- * @brief      Single CPU register form.
+/*
+ *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 #include "RegWidget.h"
@@ -12,23 +21,6 @@
 #include <memory>
 
 namespace debugger {
-
-/** Layout of register by name */
-static const char *REG_NAMES_LAYOUT[] = {
-    "ra", "s0",  "a0",
-    "sp", "s1",  "a1",
-    "gp", "s2",  "a2",
-    "tp", "s3",  "a3",
-    ""  , "s4",  "a4",
-    "t0", "s5",  "a5",
-    "t1", "s6",  "a6",
-    "t2", "s7",  "a7",
-    "t3", "s8",  "",
-    "t4", "s9",  "",
-    "t5", "s10", "pc",
-    "t6", "s11", "npc",
-    "break"
-};
 
 RegsViewWidget::RegsViewWidget(IGui *igui, QWidget *parent) 
     : QWidget(parent) {
@@ -43,15 +35,28 @@ RegsViewWidget::RegsViewWidget(IGui *igui, QWidget *parent)
     cmdRegs_.make_string("regs");
     waitingResp_ = false;
 
-    int n = 0;
-    while (strcmp(REG_NAMES_LAYOUT[n], "break")) {
-        if (REG_NAMES_LAYOUT[n][0] == '\0') {
-            n++;
-            continue;
-        }
-        addRegWidget(n, REG_NAMES_LAYOUT[n]);
-        n++;
+    const AttributeType &cfg = (*igui_->getpConfig())["RegsViewWidget"];
+    if (!cfg.is_dict()) {
+        return;
     }
+    const AttributeType &reglist = cfg["RegList"];
+    const AttributeType &regwidth = cfg["RegWidthBytes"];
+
+    if (!reglist.is_list()) {
+        return;
+    }
+
+    for (unsigned row = 0; row < reglist.size(); row++) {
+        const AttributeType &rowcfg = reglist[row];
+        for (unsigned col = 0; col < rowcfg.size(); col++) {
+            const AttributeType &regname = rowcfg[col];
+            if (regname.size() == 0) {
+                continue;
+            }
+            addRegWidget(row, col, regwidth.to_int(), regname.to_string());
+        }
+    }
+    gridLayout->setColumnStretch(2*reglist.size() + 1, 10);
 }
 
 RegsViewWidget::~RegsViewWidget() {
@@ -80,12 +85,10 @@ void RegsViewWidget::slotRegChanged(AttributeType *wrcmd) {
     igui_->registerCommand(0, wrcmd, true);
 }
 
-void RegsViewWidget::addRegWidget(int idx, const char *name) {
-    int line = idx / 3;
-    int col = idx - 3 * line;
-
-    QWidget *pnew = new RegWidget(name, this);
-    gridLayout->addWidget(pnew, line + 1, col);
+void RegsViewWidget::addRegWidget(int row, int col, int bytes,
+                                  const char *name) {
+    QWidget *pnew = new RegWidget(name, bytes, this);
+    gridLayout->addWidget(pnew, row + 1, col);
 
     connect(this, SIGNAL(signalHandleResponse(AttributeType *)),
             pnew, SLOT(slotHandleResponse(AttributeType *)));

@@ -1,8 +1,17 @@
-/**
- * @file
- * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
- * @author     Sergey Khabarov - sergeykhbr@gmail.com
- * @brief      Single CPU register form.
+/*
+ *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 #pragma once
@@ -24,24 +33,24 @@ namespace debugger {
 class RegsViewWidget : public QWidget,
                        public IGuiCmdHandler {
     Q_OBJECT
-public:
+ public:
     RegsViewWidget(IGui *igui, QWidget *parent = 0);
     virtual ~RegsViewWidget();
 
     /** IGuiCmdHandler */
     virtual void handleResponse(AttributeType *req, AttributeType *resp);
 
-signals:
+ signals:
     void signalHandleResponse(AttributeType *resp);
 
-private slots:
+ private slots:
     void slotUpdateByTimer();
     void slotRegChanged(AttributeType *wrcmd);
 
-private:
-    void addRegWidget(int idx, const char *name);
+ private:
+    void addRegWidget(int row, int col, int bytes, const char *name);
 
-private:
+ private:
     AttributeType cmdRegs_;
     AttributeType listRegs_;
     AttributeType resp_;
@@ -75,7 +84,7 @@ public:
         show();
     }
     
-protected:
+ protected:
     void closeEvent(QCloseEvent *event_) Q_DECL_OVERRIDE {
         if (action_) {
             action_->setChecked(false);
@@ -83,7 +92,7 @@ protected:
         area_->removeSubWindow(this);
         event_->accept();
     }
-private:
+ private:
     QAction *action_;
     QMdiArea *area_;
 };
