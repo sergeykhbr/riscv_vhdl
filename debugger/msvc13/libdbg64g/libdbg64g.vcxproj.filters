@@ -424,5 +424,8 @@
     <ClInclude Include="..\..\src\common\coreservices\isignallistener.h">
       <Filter>Source Files\common\coreservices</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\common\coreservices\icpuarm.h">
+      <Filter>Source Files\common\coreservices</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
