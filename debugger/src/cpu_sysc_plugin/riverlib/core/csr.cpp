@@ -1,8 +1,17 @@
-/**
- * @file
- * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
- * @author     Sergey Khabarov - sergeykhbr@gmail.com
- * @brief      CSR registers module.
+/*
+ *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 #include "csr.h"
@@ -76,7 +85,24 @@ void CsrRegs::procedure_RegAccess(uint64_t iaddr, bool iwena,
          *      3 = 128
          */
         (*ordata)(RISCV_ARCH-1, RISCV_ARCH-2) = 2;
-        /** BitCharacterDescription         * 0  A Atomic extension         * 1  B Tentatively reserved for Bit operations extension         * 2  C Compressed extension         * 3  D Double-precision Foating-point extension         * 4  E RV32E base ISA (embedded)         * 5  F Single-precision Foating-point extension         * 6  G Additional standard extensions present         * 7  H Hypervisor mode implemented         * 8  I RV32I/64I/128I base ISA         * 9  J Reserved         * 10 K Reserved         * 11 L Tentatively reserved for Decimal Floating-Point extension         * 12 M Integer Multiply/Divide extension         * 13 N User-level interrupts supported         * 14 O Reserved         * 15 P Tentatively reserved for Packed-SIMD extension         * 16 Q Quad-precision Foating-point extension
+        /** BitCharacterDescription
+         * 0  A Atomic extension
+         * 1  B Tentatively reserved for Bit operations extension
+         * 2  C Compressed extension
+         * 3  D Double-precision Foating-point extension
+         * 4  E RV32E base ISA (embedded)
+         * 5  F Single-precision Foating-point extension
+         * 6  G Additional standard extensions present
+         * 7  H Hypervisor mode implemented
+         * 8  I RV32I/64I/128I base ISA
+         * 9  J Reserved
+         * 10 K Reserved
+         * 11 L Tentatively reserved for Decimal Floating-Point extension
+         * 12 M Integer Multiply/Divide extension
+         * 13 N User-level interrupts supported
+         * 14 O Reserved
+         * 15 P Tentatively reserved for Packed-SIMD extension
+         * 16 Q Quad-precision Foating-point extension
          * 17 R Reserved
          * 18 S Supervisor mode implemented
          * 19 T Tentatively reserved for Transactional Memory extension

@@ -184,9 +184,16 @@
                 ['Length',4096],
                 ['IrqControl',['irqctrl0','irq1']],
                 ['AutoTestEna',false,'Enable/Disable automatic test input via serial interface'],
-                ['TestCases',[[22095,'h'],
-                              [22548,'el'],
-                              [24345,'p\r\n']]]
+                ['TestCases',[[22095,'s'],
+                              [22548,'et'],
+                              [24345,'_mo'],
+                              [25778,'dul'],
+                              [28997,'e s'],
+                              [31597,'oc'],
+                              [32597,'\r\n'],
+                              [48597,'dhr'],
+                              [49597,'y\r\n']]]
+
                 ]}]},
     {'Class':'IrqControllerClass','Instances':[
           {'Name':'irqctrl0','Attr':[

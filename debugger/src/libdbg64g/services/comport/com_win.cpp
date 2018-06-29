@@ -115,7 +115,7 @@ int ComPortService::openPort(const char *port, AttributeType settings) {
                         FILE_ATTRIBUTE_NORMAL,
                         NULL);
  	
-    *static_cast<HANDLE *>(prtHandler_) = hFile;
+    prtHandler_ = hFile;
     if (hFile == INVALID_HANDLE_VALUE) {
         if (GetLastError() == ERROR_ACCESS_DENIED) {
             RISCV_error("%s is locked by another device", chCom);

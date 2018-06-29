@@ -1,8 +1,17 @@
-/**
- * @file
- * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
- * @author     Sergey Khabarov - sergeykhbr@gmail.com
- * @brief      CPU Instruction Execution stage.
+/*
+ *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 #include "execute.h"
@@ -18,44 +27,65 @@ InstrExecute::InstrExecute(sc_module_name name_)  : sc_module(name_) {
     sensitive << i_d_pc;
     sensitive << i_d_instr;
     sensitive << i_wb_done;
-    sensitive << i_memop_load;
     sensitive << i_memop_store;
+    sensitive << i_memop_load;
     sensitive << i_memop_sign_ext;
     sensitive << i_memop_size;
     sensitive << i_unsigned_op;
-    sensitive << i_rv32;;
+    sensitive << i_rv32;
+    sensitive << i_compressed;
     sensitive << i_isa_type;
     sensitive << i_ivec;
-    sensitive << i_rdata1;
-    sensitive << i_rdata2;
-    sensitive << i_csr_rdata;
-    sensitive << i_ext_irq;
     sensitive << i_ie;
     sensitive << i_mtvec;
     sensitive << i_mode;
     sensitive << i_break_mode;
     sensitive << i_unsup_exception;
+    sensitive << i_ext_irq;
     sensitive << i_dport_npc_write;
     sensitive << i_dport_npc;
+    sensitive << i_rdata1;
+    sensitive << i_rdata2;
+    sensitive << i_csr_rdata;
     sensitive << r.d_valid;
+    sensitive << r.pc;
     sensitive << r.npc;
-    sensitive << r.hazard_depth;
-    sensitive << r.hazard_addr0;
-    sensitive << r.hazard_addr1;
+    sensitive << r.instr;
     sensitive << r.res_val;
     sensitive << r.memop_load;
     sensitive << r.memop_store;
-    sensitive << w_hazard_detected;
+    sensitive << r.memop_addr;
+    sensitive << r.multi_res_addr;
+    sensitive << r.multi_pc;
+    sensitive << r.multi_npc;
+    sensitive << r.multi_instr;
     sensitive << r.multi_ena[Multi_MUL];
     sensitive << r.multi_ena[Multi_DIV];
-    sensitive << r.multi_res_addr;
+    sensitive << r.multi_rv32;
+    sensitive << r.multi_unsigned;
+    sensitive << r.multi_residual_high;
     sensitive << r.multiclock_ena;
+    sensitive << r.multi_a1;
+    sensitive << r.multi_a2;
+    sensitive << r.hazard_addr0;
+    sensitive << r.hazard_addr1;
+    sensitive << r.hazard_depth;
+    sensitive << r.ext_irq_pulser;
     sensitive << r.trap_ena;
     sensitive << r.breakpoint;
+    sensitive << r.trap_code;
+    sensitive << r.trap_pc;
+    sensitive << r.call;
+    sensitive << r.ret;
+    sensitive << w_hazard_detected;
     sensitive << wb_arith_res.arr[Multi_MUL];
     sensitive << wb_arith_res.arr[Multi_DIV];
     sensitive << w_arith_valid[Multi_MUL];
     sensitive << w_arith_valid[Multi_DIV];
+    sensitive << w_arith_busy[Multi_MUL];
+    sensitive << w_arith_busy[Multi_DIV];
+    sensitive << wb_shifter_a1;
+    sensitive << wb_shifter_a2;
     sensitive << wb_sll;
     sensitive << wb_sllw;
     sensitive << wb_srl;
