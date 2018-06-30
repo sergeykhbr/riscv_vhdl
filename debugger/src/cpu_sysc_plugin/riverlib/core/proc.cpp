@@ -289,9 +289,7 @@ void Processor::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     iregs0->generateVCD(i_vcd, o_vcd);
 }
 
-
 void Processor::comb() {
-
     w_fetch_pipeline_hold = w.e.pipeline_hold | w.m.pipeline_hold | dbg.halt;
     w_any_pipeline_hold = w.f.pipeline_hold | w.e.pipeline_hold 
                         | w.m.pipeline_hold | dbg.halt;

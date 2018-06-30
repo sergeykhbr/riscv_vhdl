@@ -270,11 +270,19 @@ void ICache::comb() {
     if (i_resp_mem_data_valid.read()) {
         /** Condition to avoid removing the last line:
             */
-        if ((wb_l[0].hit_hold[Hit_Line2] || wb_l[1].hit_hold[Hit_Line2]) == 1
-            && (wb_l[0].hit_hold[Hit_Line1] || wb_l[1].hit_hold[Hit_Line1]) == 0
-            && r.iline[1].addr.read()
-                != r.iline_addr_req.read()(BUS_ADDR_WIDTH-1, 3)) {
-            w_reuse_lastline = 1;
+        if (i_resp_ctrl_ready.read()) {
+            if ((wb_l[0].hit[Hit_Line2] || wb_l[1].hit[Hit_Line2]) == 1
+                && r.iline[1].addr.read() 
+                    != i_req_ctrl_addr.read()(BUS_ADDR_WIDTH-1, 3)) {
+                w_reuse_lastline = w_need_mem_req;
+            }
+        } else {
+            if ((wb_l[0].hit_hold[Hit_Line2] || wb_l[1].hit_hold[Hit_Line2]) == 1
+                && (wb_l[0].hit_hold[Hit_Line1] || wb_l[1].hit_hold[Hit_Line1]) == 0
+                && r.iline[1].addr.read()
+                    != r.iline_addr_req.read()(BUS_ADDR_WIDTH-1, 3)) {
+                w_reuse_lastline = 1;
+            }
         }
         if (!w_reuse_lastline) {
             v.iline[1].addr = r.iline[0].addr;

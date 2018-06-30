@@ -272,11 +272,18 @@ begin
 
     if i_resp_mem_data_valid = '1' then
         --! Condition to avoid removing the last line:
-        if (wb_l(0).hit_hold(Hit_Line2) or wb_l(1).hit_hold(Hit_Line2)) = '1'
-            and (wb_l(0).hit_hold(Hit_Line1) or wb_l(1).hit_hold(Hit_Line1)) = '0'
-            and r.iline(1).addr /= r.iline_addr_req(BUS_ADDR_WIDTH-1 downto 3) then
-            w_reuse_lastline := '1';
-        end if;
+        if i_resp_ctrl_ready = '1' then
+            if (wb_l(0).hit(Hit_Line2) or wb_l(1).hit(Hit_Line2)) = '1'
+                and r.iline(1).addr /= i_req_ctrl_addr(BUS_ADDR_WIDTH-1 downto 3) then
+                w_reuse_lastline := w_need_mem_req;
+            end if;
+        else
+            if (wb_l(0).hit_hold(Hit_Line2) or wb_l(1).hit_hold(Hit_Line2)) = '1'
+                and (wb_l(0).hit_hold(Hit_Line1) or wb_l(1).hit_hold(Hit_Line1)) = '0'
+                and r.iline(1).addr /= r.iline_addr_req(BUS_ADDR_WIDTH-1 downto 3) then
+                w_reuse_lastline := '1';
+            end if;
+		  end if;
         if w_reuse_lastline = '0' then
             v.iline(1).addr := r.iline(0).addr;
             v.iline(1).data := r.iline(0).data;

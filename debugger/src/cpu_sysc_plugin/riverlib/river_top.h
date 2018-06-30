@@ -48,7 +48,6 @@ SC_MODULE(RiverTop) {
     sc_out<bool> o_dport_ready;                         // Response is ready
     sc_out<sc_uint<RISCV_ARCH>> o_dport_rdata;          // Response value
 
-
     RiverTop(sc_module_name name_);
     virtual ~RiverTop();
 
