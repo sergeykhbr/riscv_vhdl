@@ -27,13 +27,17 @@ use techmap.types_buf.all;
 library ambalib;
 --! AXI4 configuration constants.
 use ambalib.types_amba4.all;
+--! Misc modules library
+library misclib;
+use misclib.types_misc.all;
+--! Ethernet related declarations.
+library ethlib;
+use ethlib.types_eth.all;
 
 --! Rocket-chip specific library
 library rocketlib;
 --! SOC top-level component declaration.
 use rocketlib.types_rocket.all;
---! Ethernet related declarations.
-use rocketlib.grethpkg.all;
 
 --! River CPU specific library
 library riverlib;
@@ -371,7 +375,7 @@ end generate;
     memtech  => CFG_MEMTECH,
     xaddr    => 16#00100#,
     xmask    => 16#fffc0#,
-    sim_hexfile => "../../fw_images/gnssfw.hex"--CFG_SIM_FWIMAGE_HEX
+    sim_hexfile => CFG_SIM_FWIMAGE_HEX
   ) port map (
     clk  => w_clk_bus,
     nrst => w_glob_nrst,
@@ -389,7 +393,7 @@ end generate;
     xaddr    => 16#10000#,
     xmask    => 16#fff80#,            -- 512 KB mask
     abits    => (10 + log2(512)),     -- 512 KB address
-    init_file => "../../fw_images/gnssfw.hex"--CFG_SIM_FWIMAGE_HEX  -- Used only for inferred
+    init_file => CFG_SIM_FWIMAGE_HEX  -- Used only for inferred
   ) port map (
     clk  => w_clk_bus,
     nrst => w_glob_nrst,

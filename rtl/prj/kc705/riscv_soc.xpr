@@ -3,7 +3,7 @@
 <!--                                                         -->
 <!-- Copyright 1986-2017 Xilinx, Inc. All Rights Reserved.   -->
 
-<Project Version="7" Minor="35" Path="E:/Projects/GitProjects/riscv_vhdl/rocket_soc/prj/kc705/riscv_soc.xpr">
+<Project Version="7" Minor="35" Path="E:/Projects/GitProjects/riscv_vhdl/rtl/prj/kc705/riscv_soc.xpr">
   <DefaultLaunch Dir="$PRUNDIR"/>
   <Configuration>
     <Option Name="Id" Val="45c2e326c5c44579b18a3dcb57ad6c69"/>
@@ -174,14 +174,14 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../work/config_common.vhd">
+      <File Path="$PPRDIR/config_k7.vhd">
         <FileInfo>
           <Attr Name="Library" Val="work"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/config_k7.vhd">
+      <File Path="$PPRDIR/../../work/config_common.vhd">
         <FileInfo>
           <Attr Name="Library" Val="work"/>
           <Attr Name="UsedIn" Val="synthesis"/>
