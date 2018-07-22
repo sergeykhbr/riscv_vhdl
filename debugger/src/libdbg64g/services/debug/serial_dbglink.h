@@ -1,14 +1,17 @@
-/**
- * @file
- * @copyright  Copyright 2017 GNSS Sensor Ltd. All right reserved.
- * @author     Sergey Khabarov - sergeykhbr@gmail.com
- * @brief      Debuger transport level via Serial link implementation.
- * @details
- *             Write command: 
- *                 Send     [11.Length-1].Addr[63:0].Data[31:0]*(x Length)
- *             Read command: 
- *                 Send     [10.Length-1].Addr[63:0]
- *                 Receive  Data[31:0]*(x Length)
+/*
+ *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 #ifndef __DEBUGGER_SERIAL_DBGLINK_SERVICE_H__
@@ -22,11 +25,13 @@
 
 namespace debugger {
 
-static const int UART_REQ_HEADER_SZ = 9;
+#define MAGIC_ID 0x31
+static const int UART_REQ_HEADER_SZ = 10;
 static const int UART_MST_BURST_MAX = 64;
 
 #pragma pack(1)
 struct UartMstPacketType {
+    uint8_t magic;
     uint8_t cmd;
     uint64_t addr;
     uint32_t data[UART_MST_BURST_MAX];
@@ -65,6 +70,8 @@ private:
     PacketType pkt_;
     int rd_count_;
     int req_count_;
+    int wait_bytes_;
+    Reg64Type rxbuf_[UART_MST_BURST_MAX];
 };
 
 DECLARE_CLASS(SerialDbgService)

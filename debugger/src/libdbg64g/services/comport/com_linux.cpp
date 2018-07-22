@@ -248,7 +248,9 @@ void ComPortService::closePort() {
 }
 
 int ComPortService::readSerialPort(void *hdl, char *buf, int bufsz) {
-    return read(*((int *)hdl), buf, bufsz-1);
+    int sz = read(*((int *)hdl), buf, bufsz-1);
+    buf[sz] = 0;
+    return sz;
 }
 
 int ComPortService::writeSerialPort(void *hdl, char *buf, int bufsz) {

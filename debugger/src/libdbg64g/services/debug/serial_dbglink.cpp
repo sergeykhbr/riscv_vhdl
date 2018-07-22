@@ -1,8 +1,18 @@
-/**
- * @file
- * @copyright  Copyright 2017 GNSS Sensor Ltd. All right reserved.
- * @author     Sergey Khabarov - sergeykhbr@gmail.com
- * @brief      Debuger transport level via Serial link implementation.
+/*
+ *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  * @details
  *             Write command: 
  *                 Send     [11.Length-1].Addr[63:0].Data[31:0]*(x Length)
@@ -40,12 +50,14 @@ void SerialDbgService::postinitService() {
         return;
     }
     iserial_->registerRawListener(static_cast<IRawListener *>(this));
+#if 1  // hardcoded scale in tapuart, no need in clock detection
     /** Automatic baudrate definition on hardware side:
      *    [0] 0x55 - to init baud rate detector
      *    [1] 0x55 - to confirm baud rate value.
      */
-    char tbuf[3] = {0x55, 0x55};
-    iserial_->writeData(tbuf, 2);
+    char tbuf[5] = {0x55, 0x55, 0x55, 0x55};
+    iserial_->writeData(tbuf, 4);
+#endif
 }
 
 void SerialDbgService::predeleteService() {
@@ -62,8 +74,10 @@ int SerialDbgService::read(uint64_t addr, int bytes, uint8_t *obuf) {
         RISCV_error("Unaligned read %d", bytes);
         return TAP_ERROR;
     }
+    addr &= 0xFFFFFFFFull;
     int bytes_to_read = bytes;
     uint8_t *tout = obuf;
+    pkt_.fields.magic = MAGIC_ID;
     pkt_.fields.addr = addr;
     while (bytes_to_read) {
         pkt_.fields.cmd = (0x2 << 6);
@@ -75,6 +89,7 @@ int SerialDbgService::read(uint64_t addr, int bytes, uint8_t *obuf) {
             pkt_.fields.cmd |= ((bytes_to_read / 4) - 1) & 0x3F;
         }
         rd_count_ = 0;
+        wait_bytes_ = req_count_;
         RISCV_event_clear(&event_block_);
         iserial_->writeData(pkt_.buf, UART_REQ_HEADER_SZ);
 
@@ -87,7 +102,7 @@ int SerialDbgService::read(uint64_t addr, int bytes, uint8_t *obuf) {
             return TAP_ERROR;
         }
 
-        memcpy(tout, pkt_.fields.data, rd_count_);
+        memcpy(tout, rxbuf_[0].buf, rd_count_);
         tout += rd_count_;
         pkt_.fields.addr += static_cast<unsigned>(rd_count_);
         bytes_to_read -= rd_count_;
@@ -103,8 +118,10 @@ int SerialDbgService::write(uint64_t addr, int bytes, uint8_t *ibuf) {
         RISCV_error("Unaligned write %d", bytes);
         return TAP_ERROR;
     }
+    addr &= 0xFFFFFFFFull;
     int bytes_to_write = bytes;
     uint8_t *tin = ibuf;
+    pkt_.fields.magic = MAGIC_ID;
     pkt_.fields.addr = addr;
     while (bytes_to_write) {
         pkt_.fields.cmd = (0x3 << 6);
@@ -116,7 +133,17 @@ int SerialDbgService::write(uint64_t addr, int bytes, uint8_t *ibuf) {
             pkt_.fields.cmd |= ((bytes_to_write / 4) - 1) & 0x3F;
         }
         memcpy(pkt_.fields.data, tin, req_count_);
+
+        wait_bytes_ = 4;
+        rd_count_ = 0;
+        RISCV_event_clear(&event_block_);
         iserial_->writeData(pkt_.buf, UART_REQ_HEADER_SZ + req_count_);
+
+        // Waiting "ACK\n" handshake
+        if (RISCV_event_wait_ms(&event_block_, timeout_.to_int()) != 0) {
+            RISCV_error("Writing [%08" RV_PRI64 "x] failed", addr);
+            return TAP_ERROR;
+        }
 
         tin += req_count_;
         bytes_to_write -= req_count_;
@@ -126,10 +153,10 @@ int SerialDbgService::write(uint64_t addr, int bytes, uint8_t *ibuf) {
 }
 
 void SerialDbgService::updateData(const char *buf, int buflen) {
-    char *tbuf = &pkt_.buf[UART_REQ_HEADER_SZ + rd_count_];
+    uint8_t *tbuf = &rxbuf_[0].buf[rd_count_];
     memcpy(tbuf, buf, buflen);
     rd_count_ += buflen;
-    if (rd_count_ < req_count_) {
+    if (rd_count_ < wait_bytes_) {
         return;
     }
     RISCV_event_set(&event_block_);
