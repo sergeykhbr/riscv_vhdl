@@ -1,9 +1,17 @@
------------------------------------------------------------------------------
---! @file
---! @copyright Copyright 2015 GNSS Sensor Ltd. All right reserved.
---! @author    Sergey Khabarov - sergeykhbr@gmail.com
---! @brief     System Top level modules and interconnect declarations.
------------------------------------------------------------------------------
+--!
+--! Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+--!
+--! Licensed under the Apache License, Version 2.0 (the "License");
+--! you may not use this file except in compliance with the License.
+--! You may obtain a copy of the License at
+--!
+--!     http://www.apache.org/licenses/LICENSE-2.0
+--! Unless required by applicable law or agreed to in writing, software
+--! distributed under the License is distributed on an "AS IS" BASIS,
+--! WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+--! See the License for the specific language governing permissions and
+--! limitations under the License.
+--!
 
 --! Standard library.
 library ieee;
@@ -150,6 +158,24 @@ component uart_tap is
   );
 end component; 
 
+-- JTAG TAP
+component tap_jtag is
+  generic (
+    ainst  : integer range 0 to 255 := 2;
+    dinst  : integer range 0 to 255 := 3);
+  port (
+    rst  : in std_ulogic;
+    clk  : in std_ulogic;
+    i_tck   : in std_logic;   -- in: Test Clock
+    i_tms   : in std_logic;   -- in: Test Mode State
+    i_tdi   : in std_logic;   -- in: Test Data Input
+    o_tdo   : out std_logic;   -- out: Test Data Output
+    i_msti   : in nasti_master_in_type;
+    o_msto   : out nasti_master_out_type;
+    o_mstcfg : out nasti_master_config_type
+    );
+end component;
+
 
 --! @brief   Interrupt controller with the AXI4 interface declaration.
 --! @details To rise interrupt on certain CPU HostIO interface is used.
@@ -213,5 +239,7 @@ component nasti_pnp is
     o      : out nasti_slave_out_type
   );
 end component; 
+
+
 
 end; -- package declaration

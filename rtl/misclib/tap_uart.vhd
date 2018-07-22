@@ -1,9 +1,17 @@
------------------------------------------------------------------------------
---! @file
---! @copyright  Copyright 2017 GNSS Sensor Ltd. All right reserved.
---! @author     Sergey Khabarov - sergeykhbr@gmail.com
---! @brief      TAP via UART.
-------------------------------------------------------------------------------
+--!
+--! Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+--!
+--! Licensed under the Apache License, Version 2.0 (the "License");
+--! you may not use this file except in compliance with the License.
+--! You may obtain a copy of the License at
+--!
+--!     http://www.apache.org/licenses/LICENSE-2.0
+--! Unless required by applicable law or agreed to in writing, software
+--! distributed under the License is distributed on an "AS IS" BASIS,
+--! WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+--! See the License for the specific language governing permissions and
+--! limitations under the License.
+--!
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -30,6 +38,11 @@ end;
  
 architecture arch_uart_tap of uart_tap is
 
+  constant MAGIC_ID : std_logic_vector(7 downto 0) := X"31";
+  constant SCALER_DEFAULT : std_logic_vector(17 downto 0) := "111111111111111011";
+  constant BAUD_DEFAULT : std_logic_vector(17 downto 0) := (others => '1');
+  constant HANDSHAKE_ACK : std_logic_vector(31 downto 0) := X"0a4b4341";
+
   constant xmstconfig : nasti_master_config_type := (
      descrsize => PNP_CFG_MASTER_DESCR_BYTES,
      descrtype => PNP_CFG_TYPE_MASTER,
@@ -40,37 +53,23 @@ architecture arch_uart_tap of uart_tap is
   type uart_state_type is (idle, startbit, data, stopbit);
   type dma_req_state_type is (
       DMAREQ_IDLE,
+      DMAREQ_OPERATION,
       DMAREQ_ADDR,
       DMAREQ_READ,
       DMAREQ_WAIT_READ_RESP,
+      DMAREQ_UART_TX,
       DMAREQ_WDATA,
       DMAREQ_WRITE
    );
 
   type registers is record
     dma : dma_bank_type;
-    rd_z : std_logic;
-    baud_speed_detected : std_logic;
-    baud_speed_confirmed : std_logic;
-    baud_speed_cnt : std_logic_vector(32 downto 0);
-    baud_speed_cnt_z : std_logic_vector(31 downto 0);
-    scaler : std_logic_vector(31 downto 0);
-    scale_cnt : std_logic_vector(31 downto 0);
-    level : std_logic;
 
-    tx_word   : std_logic_vector(31 downto 0);
-    tx_shift  : std_logic_vector(10 downto 0); --! stopbit=1,parity=xor,data[7:0],startbit=0
-    tx_data_cnt : integer range 0 to 11;
-    tx_byte_cnt : std_logic_vector(3 downto 0); -- always 32-bits word output
-    tx_state : uart_state_type;
-
-    rx_shift  : std_logic_vector(7 downto 0);
-    rx_data_cnt : integer range 0 to 7;
-    rx_state : uart_state_type;
-    rx_byte_ready : std_logic;
-    rx_byte  : std_logic_vector(7 downto 0);
+    tx_data   : std_logic_vector(31 downto 0);
+    tx_byte_cnt : integer range 0 to 4;
 
     dma_req_state : dma_req_state_type;
+    dma_state_next : dma_req_state_type;
     dma_req_write : std_logic;
     dma_byte_cnt : integer range 0 to 7;
     dma_req_len : integer range 0 to 63;
@@ -78,26 +77,62 @@ architecture arch_uart_tap of uart_tap is
     dma_req_wdata : std_logic_vector(31 downto 0);
     rword_valid : std_logic;
     rword : std_logic_vector(31 downto 0);
+    watchdog : integer;
   end record;
 
   signal r, rin : registers;
   signal dma_response : dma_response_type;
 
+  signal w_com_dready : std_logic;   -- new byte is avaiable for read
+  signal w_com_accepted : std_logic; -- new byte can be accepted;
+  signal wb_com_data : std_logic_vector(7 downto 0);
+  signal w_com_thempty : std_logic; -- transmitter's hold register is empty
+  signal w_com_write : std_logic;
+
+  component dcom_uart is
+  port (
+    rst    : in  std_ulogic;
+    clk    : in  std_ulogic;
+    i_cfg_frame : in std_logic;
+    i_cfg_ovf   : in std_logic;
+    i_cfg_break : in std_logic;
+    i_cfg_tcnt  : in std_logic_vector(1 downto 0);
+    i_cfg_rxen  : in std_logic;
+    i_cfg_brate : in std_logic_vector(17 downto 0);
+    i_cfg_scaler : in std_logic_vector(17 downto 0);
+    o_cfg_scaler : out std_logic_vector(31 downto 0);
+    o_cfg_rxen : out std_logic;
+    o_cfg_txen : out std_logic;
+    o_cfg_flow : out std_logic;
+
+    i_com_read    	: in std_ulogic;
+    i_com_write   	: in std_ulogic;
+    i_com_data		: in std_logic_vector(7 downto 0);
+    o_com_dready 	: out std_ulogic;
+    o_com_tsempty	: out std_ulogic;
+    o_com_thempty	: out std_ulogic;
+    o_com_lock    	: out std_ulogic;
+    o_com_enable 	: out std_ulogic;
+    o_com_data		: out std_logic_vector(7 downto 0);
+    ui     : in  uart_in_type;
+    uo     : out uart_out_type
+  );
+  end component; 
 
 begin
 
-  comblogic : process(nrst, i_msti, i_uart, r, dma_response)
+  comblogic : process(nrst, i_msti, i_uart, r, dma_response, w_com_dready,
+                      wb_com_data, w_com_thempty)
     variable v : registers;
     variable wb_dma_request : dma_request_type;
     variable wb_dma_response : dma_response_type;
     variable wb_msto : nasti_master_out_type;
 
-    variable posedge_flag : std_logic;
-    variable negedge_flag : std_logic;
+    variable v_com_write : std_logic;
+    variable v_com_accepted : std_logic;
   begin
 
     v := r;
-    v.rx_byte_ready := '0';
     wb_dma_request.valid := '0';
     wb_dma_request.ready := '0';
     wb_dma_request.write := '0';
@@ -106,192 +141,105 @@ begin
     wb_dma_request.bytes := (others => '0');
     wb_dma_request.wdata := (others => '0');
 
-    --! Baud rate detector and scaler
-    posedge_flag := '0';
-    negedge_flag := '0';
-    v.rd_z := i_uart.rd;
-    if r.baud_speed_detected = '0' then
-        v.baud_speed_cnt := r.baud_speed_cnt + 1;
-        if r.rd_z /= i_uart.rd then
-            negedge_flag := '1';
-            v.baud_speed_cnt := (others => '0');
-            v.baud_speed_cnt_z := r.baud_speed_cnt(32 downto 1);
-        end if;
-
-        if r.rx_byte_ready = '1' and r.rx_byte = X"55" then
-            v.baud_speed_detected := '1';
-            v.scaler := r.baud_speed_cnt_z;
-            v.scale_cnt := (others => '0');
-            v.level := '1';
-        end if;
-    else
-        v.scale_cnt := r.scale_cnt + 1;
-        if r.rd_z /= i_uart.rd then
-            negedge_flag := '1';
-            v.level := '1';
-            v.scale_cnt := (others => '0');
-        elsif r.scale_cnt = r.scaler then
-            posedge_flag := r.level;
-            negedge_flag := not r.level;
-            v.level := not r.level;
-            v.scale_cnt := (others => '0');
-        end if;
-        -- Check baud speed detector correctness
-        if r.baud_speed_confirmed ='0' and r.rx_byte_ready = '1' then
-            if r.rx_byte = X"55"  then
-                v.baud_speed_confirmed := '1';
-            else
-                v.baud_speed_detected := '0';
-                v.scaler := (others => '0');
-                v.scale_cnt := (others => '0');
-                v.baud_speed_cnt := (others => '0');
-                v.level := '0';
-            end if;
-        end if;
-    end if;
-
-
-    if r.tx_state = idle and r.tx_byte_cnt = "0000" then
-        if r.rword_valid = '1' then
-            v.rword_valid := '0';
-            v.tx_word := r.rword;
-            v.tx_byte_cnt := "0001";
-        end if;
-    end if;
-
-    -- Tx state machine:
-    if i_uart.cts = '1' and posedge_flag = '1' then
-        case r.tx_state is
-        when idle =>
-            if r.tx_byte_cnt /= "0000" then
-                -- stopbit=1,parity=1,data[7:0],startbit=0
-                v.tx_shift := "11" & r.tx_word(7 downto 0) & '0';
-                v.tx_word := X"00" & r.tx_word(31 downto 8);
-                v.tx_state := startbit;
-                v.tx_byte_cnt := r.tx_byte_cnt(2 downto 0) & '0';
-                v.tx_data_cnt := 0;
-            end if;
-        when startbit =>
-            v.tx_state := data;
-        when data =>
-            if r.tx_data_cnt = 8 then
-                v.tx_state := stopbit;
-            end if;
-        when stopbit =>
-            v.tx_state := idle;
-        when others =>
-        end case;
-        
-        if r.tx_state /= idle then
-            v.tx_data_cnt := r.tx_data_cnt + 1;
-            v.tx_shift := '1' & r.tx_shift(10 downto 1);
-        end if;
-    end if;
-
-    --! Rx state machine:
-    if negedge_flag = '1' then
-        case r.rx_state is
-        when idle =>
-            if i_uart.rd = '0' then
-                v.rx_state := data;
-                v.rx_shift := (others => '0');
-                v.rx_data_cnt := 0;
-            end if;
-        when data =>
-            v.rx_shift := i_uart.rd & r.rx_shift(7 downto 1);
-            if r.rx_data_cnt = 7 then
-                v.rx_state := stopbit;
-            else
-                v.rx_data_cnt := r.rx_data_cnt + 1;
-            end if;
-        when stopbit =>
-            --if i_uart.rd = '0' then
-            --    v.bank0.err_stopbit := '1';
-            --else
-            --    v.bank0.err_stopbit := '0';
-            --end if;
-            v.rx_byte_ready := '1';
-            v.rx_byte := r.rx_shift(7 downto 0);
-            v.rx_state := idle;
-        when others =>
-        end case;
-    end if;
+    v_com_accepted := '0';
+    v_com_write := '0';
 
     --! DMA control
-    if r.baud_speed_confirmed = '1' then
-        case r.dma_req_state is
-        when DMAREQ_IDLE =>
-            if r.rx_byte_ready = '1' and r.rx_byte(7) = '1' then
-                v.dma_req_write := r.rx_byte(6);
-                v.dma_req_len := conv_integer(r.rx_byte(5 downto 0));
-                v.dma_req_state := DMAREQ_ADDR;
-                v.dma_byte_cnt := 0;
-            end if;
-        when DMAREQ_ADDR =>
-            if r.rx_byte_ready = '1' then
-                v.dma_req_addr := r.rx_byte & r.dma_req_addr(63 downto 8);
-                if r.dma_byte_cnt = 7 then
-                    if r.dma_req_write = '1' then
-                        v.dma_req_state := DMAREQ_WDATA;
-                        v.dma_byte_cnt := 0;
-                    else
-                        v.dma_req_state := DMAREQ_READ;
-                    end if;
-                else
-                    v.dma_byte_cnt := r.dma_byte_cnt + 1;
-                end if;
-            end if;
-        when DMAREQ_READ =>
-            if r.rword_valid = '0' and r.tx_state = idle and r.tx_byte_cnt = "0000" then
-                wb_dma_request.valid := '1';
-            end if;
-            wb_dma_request.write := '0';
-            wb_dma_request.addr := r.dma_req_addr(CFG_NASTI_ADDR_BITS-1 downto 0);
-            wb_dma_request.bytes := conv_std_logic_vector(4, 11);
-            wb_dma_request.wdata := (others => '0');
-            if dma_response.ready = '1' then
-                v.dma_req_state := DMAREQ_WAIT_READ_RESP;
-            end if;
-        when DMAREQ_WAIT_READ_RESP =>
-            wb_dma_request.ready := '1';
-            if dma_response.valid = '1' then
-                v.rword := dma_response.rdata(31 downto 0);
-                v.rword_valid := '1';
-                if r.dma_req_len = 0 then
+    case r.dma_req_state is
+    when DMAREQ_IDLE =>
+        v_com_accepted := '1';
+        if w_com_dready = '1' and wb_com_data = MAGIC_ID then
+            v.dma_req_state := DMAREQ_OPERATION;
+        end if;
+    when DMAREQ_OPERATION =>
+        v_com_accepted := '1';
+        if w_com_dready = '1' then
+            v.dma_req_write := wb_com_data(6);
+            v.dma_req_len := conv_integer(wb_com_data(5 downto 0));
+            v.dma_req_state := DMAREQ_ADDR;
+            v.dma_byte_cnt := 0;
+        end if;
+    when DMAREQ_ADDR =>
+        v_com_accepted := '1';
+        if w_com_dready = '1' then
+            v.dma_req_addr := wb_com_data & r.dma_req_addr(63 downto 8);
+            if r.dma_byte_cnt = 7 then
+                if (wb_com_data & r.dma_req_addr(63 downto 40)) /= X"00000000" then
                     v.dma_req_state := DMAREQ_IDLE;
+                elsif r.dma_req_write = '1' then
+                    v.dma_req_state := DMAREQ_WDATA;
+                    v.dma_byte_cnt := 0;
                 else
-                    v.dma_req_len := r.dma_req_len - 1;
-                    v.dma_req_addr := r.dma_req_addr + 4;
                     v.dma_req_state := DMAREQ_READ;
                 end if;
-            end if;
-        when DMAREQ_WDATA =>
-            if r.rx_byte_ready = '1' then
-                v.dma_req_wdata := r.rx_byte & r.dma_req_wdata(31 downto 8);
+            else
                 v.dma_byte_cnt := r.dma_byte_cnt + 1;
-                if r.dma_byte_cnt = 3 then
-                   v.dma_req_state := DMAREQ_WRITE;
-                end if;
             end if;
-        when DMAREQ_WRITE =>
-            wb_dma_request.valid := '1';
-            wb_dma_request.write := '1';
-            wb_dma_request.addr := r.dma_req_addr(CFG_NASTI_ADDR_BITS-1 downto 0);
-            wb_dma_request.bytes := conv_std_logic_vector(4, 11);
-            wb_dma_request.wdata := r.dma_req_wdata & r.dma_req_wdata;
-            if dma_response.ready = '1' then
-                if r.dma_req_len = 0 then
-                    v.dma_req_state := DMAREQ_IDLE;
-                else
-                    v.dma_byte_cnt := 0;
-                    v.dma_req_len := r.dma_req_len - 1;
-                    v.dma_req_addr := r.dma_req_addr + 4;
-                    v.dma_req_state := DMAREQ_WDATA;
-                end if;
+        end if;
+    when DMAREQ_READ =>
+        wb_dma_request.valid := '1';
+        wb_dma_request.write := '0';
+        wb_dma_request.addr := r.dma_req_addr(CFG_NASTI_ADDR_BITS-1 downto 0);
+        wb_dma_request.bytes := conv_std_logic_vector(4, 11);
+        wb_dma_request.wdata := (others => '0');
+        if dma_response.ready = '1' then
+            v.dma_req_state := DMAREQ_WAIT_READ_RESP;
+        end if;
+    when DMAREQ_WAIT_READ_RESP =>
+        wb_dma_request.ready := '1';
+        if dma_response.valid = '1' then
+            v.dma_req_state := DMAREQ_UART_TX;
+            v.tx_data := dma_response.rdata(31 downto 0);
+            v.tx_byte_cnt := 4;
+            if r.dma_req_len = 0 then
+                v.dma_state_next := DMAREQ_IDLE;
+            else
+                v.dma_req_len := r.dma_req_len - 1;
+                v.dma_req_addr := r.dma_req_addr + 4;
+                v.dma_state_next := DMAREQ_READ;
             end if;
-        when others =>
-        end case;
-    end if;
+        end if;
+
+    when DMAREQ_WDATA =>
+        v_com_accepted := '1';
+        if w_com_dready = '1' then
+            v.dma_req_wdata := wb_com_data & r.dma_req_wdata(31 downto 8);
+            v.dma_byte_cnt := r.dma_byte_cnt + 1;
+            if r.dma_byte_cnt = 3 then
+               v.dma_req_state := DMAREQ_WRITE;
+            end if;
+        end if;
+    when DMAREQ_WRITE =>
+        wb_dma_request.valid := '1';
+        wb_dma_request.write := '1';
+        wb_dma_request.addr := r.dma_req_addr(CFG_NASTI_ADDR_BITS-1 downto 0);
+        wb_dma_request.bytes := conv_std_logic_vector(4, 11);
+        wb_dma_request.wdata := r.dma_req_wdata & r.dma_req_wdata;
+        if dma_response.ready = '1' then
+            if r.dma_req_len = 0 then
+                v.dma_req_state := DMAREQ_UART_TX; -- Handshake ACK
+                v.tx_data := HANDSHAKE_ACK;
+                v.tx_byte_cnt := 4;
+                v.dma_state_next := DMAREQ_IDLE;
+            else
+                v.dma_byte_cnt := 0;
+                v.dma_req_len := r.dma_req_len - 1;
+                v.dma_req_addr := r.dma_req_addr + 4;
+                v.dma_req_state := DMAREQ_WDATA;
+            end if;
+        end if;
+
+    when DMAREQ_UART_TX =>
+        v_com_write := '1';
+        if r.tx_byte_cnt = 0 then
+            v.dma_req_state := r.dma_state_next;
+        elsif w_com_thempty = '1' then
+            v.tx_byte_cnt := r.tx_byte_cnt - 1;
+            v.tx_data := X"00" & r.tx_data(31 downto 8);
+        end if;
+    when others =>
+    end case;
+
 
     procedureAxi4DMA(
         i_request => wb_dma_request,
@@ -302,42 +250,22 @@ begin
         o_msto => wb_msto
     );
     dma_response <= wb_dma_response;
-
-    o_uart.rts <= '1';
-    if r.tx_state = idle then
-        o_uart.td <= '1';
-    else
-        o_uart.td <= r.tx_shift(0);
-    end if;
+    w_com_accepted <= v_com_accepted;
+    w_com_write <= v_com_write;
 
 
     if nrst = '0' then
-        v.rd_z := i_uart.rd;
-        v.baud_speed_detected := '0';
-        v.baud_speed_confirmed := '0';
-        v.baud_speed_cnt := (others => '0');
-        v.baud_speed_cnt_z := (others => '0');
-        v.scaler := (others => '0');
-        v.scale_cnt := (others => '0');
-        v.level := '0';
-
-        v.tx_state := idle;
-        v.rx_state := idle;
-        v.tx_byte_cnt := (others => '0');
-        v.tx_shift := (others => '0');
-        v.tx_word := (others => '0');
-        v.rx_shift := (others => '0');
-        v.rx_byte := (others => '0');
+        v.tx_byte_cnt := 0;
+        v.tx_data := (others => '0');
 
         v.dma := DMA_BANK_RESET;
         v.dma_req_state := DMAREQ_IDLE;
+        v.dma_state_next := DMAREQ_IDLE;
         v.dma_req_write := '0';
         v.dma_byte_cnt := 0;
         v.dma_req_len := 0;
         v.dma_req_addr := (others => '0');
         v.dma_req_wdata := (others => '0');
-        v.rword_valid := '0';
-        v.rword := (others => '0');
     end if;
 
     rin <= v;
@@ -345,6 +273,35 @@ begin
   end process;
 
   o_mstcfg <= xmstconfig;
+
+  dcom0 : dcom_uart  port map (
+    rst    => nrst,
+    clk    => clk,
+    i_cfg_frame => '0',
+    i_cfg_ovf   => '0',
+    i_cfg_break => '0',
+    i_cfg_tcnt  => "00",
+    i_cfg_rxen  => '0',
+    i_cfg_brate => BAUD_DEFAULT,
+    i_cfg_scaler => SCALER_DEFAULT,
+    o_cfg_scaler => open,
+    o_cfg_rxen => open,
+    o_cfg_txen => open,
+    o_cfg_flow => open,
+
+    i_com_read => w_com_accepted,
+    i_com_write => w_com_write,
+    i_com_data	=> r.tx_data(7 downto 0),
+    o_com_dready => w_com_dready,
+    o_com_tsempty => open,
+    o_com_thempty => w_com_thempty,
+    o_com_lock => open,
+    o_com_enable => open,
+    o_com_data => wb_com_data,
+    ui => i_uart,
+    uo => o_uart
+  );
+
 
   -- registers:
   regs : process(clk)
