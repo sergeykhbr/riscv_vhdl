@@ -556,7 +556,7 @@ public:
         } else {
             icpu_->dma_memop(&trans);
         }
-        R[8 + u.bits.rd] = trans.rpayload.b64[0];
+        R[8 + u.bits.rd] = trans.rpayload.b32[0];
         if (R[8 + u.bits.rd] & (1LL << 31)) {
             R[8 + u.bits.rd] |= EXT_SIGN_32;
         }
@@ -598,7 +598,7 @@ public:
         } else {
             icpu_->dma_memop(&trans);
         }
-        R[u.lwspbits.rd] = trans.rpayload.b64[0];
+        R[u.lwspbits.rd] = trans.rpayload.b32[0];
         if (R[u.lwspbits.rd] & (1LL << 31)) {
             R[u.lwspbits.rd] |= EXT_SIGN_32;
         }

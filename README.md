@@ -1,4 +1,4 @@
-System-On-Chip template based on Rocket-chip (RISC-V ISA). VHDL implementation.
+System-On-Chip template based on synthesisable processor compliant with the RISC-V architecture.
 =====================
 
 This repository provides open source System-on-Chip implementation based on
@@ -23,52 +23,63 @@ at the University of California, Berkeley.
 Parameterized generator of the Rocket-chip can be found here:
 [https://github.com/ucb-bar](https://github.com/ucb-bar)
 
-## System-on-Chip structure and performance
+## What is River CPU?
+
+It's my own implementation of RISC-V ISA used in a several projects including
+the multi-sytem Satellite Navigation receiver. It is great for an 
+embedded applications with active usage of 64-bits computations (like DSP).  
+**River CPU** includes the following tools and features:
+
+1. Source code
+    - */debugger/cpu_fnc_plugin*  - Functional RISC-V CPU model.
+    - */debugger/cpu_sysc_plugin* - Precise SystemC RIVER CPU model.
+    - */rtl/riverlib*      -  synthesisable VHDL model of a 64-bit processor compliant with the RISC-V architecture.
+2. Advanced debugging features
+    - Test Access Points (TAPs) via Ethernet, UART and JTAG in one system.
+    - System Bus tracer
+    - Pipeline statistic (CPI, HW stacktrace) in a real-time on HW level.
+    - Plug'n'Play information
+3. Integration with GUI from the very beginning.
+
+My goal is to develop open source fault-tolerant processor with the user-friendly
+framework.
+
+## System-on-Chip structure
 
 SoC documentation in [.pdf](docs/riscv_vhdl_trm.pdf) and 
 [.html](http://sergeykhbr.github.io/riscv_vhdl/) formats.
 
 ![SOC top](docs/doxygen/pics/soc_top_v5.png)
 
-Performance analysis is based on
+## Performance
+
+Performance analysis is based on very compact
 [**Dhrystone v2.1. benchmark**](http://fossies.org/linux/privat/old/dhrystone-2.1.tar.gz/)
-that is very compact and entirely ported into Zephyr shell example.
-You can run it yourself and verify results (see below).
+application available as the bare-metal test in *$(TOP)/example/dhrystone21*
+folder and entirely ported into Zephyr shell (see animated gif below). Benchmark was executed
+with enabled (-O0) and disabled (-O2) optimization to define HW and GCC-compiler advantages.
+All sources are available and could be run on the simulator or on the 
+different FPGA targets.
 
-**RISC-V Instruction simulator** - always one instruction per clock.  
-**FPGA SOC based on "Rocket" CPU** - single core/single issue 64-bits CPU
-with disabled L1toL2 interconnect (Verilog generated from Scala sources).  
-**FPGA SOC based on "River" CPU** - single core/single issue 64-bits CPU is my own
-implementation of RISC-V ISA (VHDL with SystemC as reference).  
+Target           | Git tag | Dhrystone<br> per sec,<br> -O0 | Dhrystone<br> per sec,<br> -O2 | Information.
+-----------------|:-------:|:------------------------------:|:------------------------------:|:------------
+RISC-V simulator | v6.0    | **65652.0** | **76719.0**   | Ubuntu GNU GCC 6.1.0 toolchain RV64IMA custom build
+"Rocket" CPU     | v6.0    | -           | **23999.0**   | GCC 6.1.0
+"River" CPU      | v6.0    | -           | **35121.0**   | GCC 6.1.0
+RISC-V simulator | latest  | **76824.0** | **176469.0**  | GCC 7.1.1 with the compressed instructions set
+"River" CPU      | latest  | **29440.0** | **69605.0**   | GCC 7.1.1 with the compressed instructions set
+"LEON3" SPARC V8 | No      | **48229.0** | **119515.0**  | sparc-elf-gcc 4.4.2 with the custom FPGA system
+ARM simulator    | latest  | soon        | soon          | arm-none-eabi-gcc 7.2.0
+ARM Cortex-R5    | No      | soon        | soon          | arm-none-eabi-gcc 7.2.0 with the custom FPGA system
 
-
-Target | usec per<br> 1 dhry | Dhrystone<br> per sec | MHz,<br> max | FPU | OS | Optim.
--------|:-------------------:|:---------------------:|:------------:|:---:|----|----
-RISC-V simulator v3.1       | 12.0 | **77257.0** | -   | No  | Zephyr 1.3 | -O2
-FPGA SoC with "Rocket" v3.1 | 28.0 | **34964.0** | 60  | No  | Zephyr 1.3 | -O2
-FPGA SoC with "Rocket" v4.0 | 40.7 | **24038.0** | 60<sup>1</sup>  | Yes | Zephyr 1.5 | -O2
-FPGA SoC with "River " v4.0 | 28.0 | **35259.0** | 60<sup>1</sup>  | No | Zephyr 1.5 | -O2
-RISC-V simulator v5.1       | 12.0 | **65652.0** | -   | No  | Zephyr 1.6 | -O0
-RISC-V simulator v5.1       | 12.0 | **76719.0** | -   | No  | Zephyr 1.6 | -O2
-FPGA SoC with "Rocket" v5.1 | 41.0 | **23999.0** | 60<sup>1</sup>  | Yes | Zephyr 1.6 | -O2
-FPGA SoC with "River" v5.1  | 28.0 | **35121.0** | 60<sup>1</sup>  | No | Zephyr 1.6 | -O2
-FPGA SoC with "LEON3" SPARC | 20.0 | **48229.0** | 60  | No | Bare metal | -O0
-FPGA SoC with "LEON3" SPARC | 8.0 | **119515.0** | 60  | No | Bare metal | -O2
-
-<sup>1</sup> - Actual SoC frequency is 40 MHz (to meet FPU constrains) but
-Dhrystone benchmark uses constant 60 MHz and high precision counter (in clock cycles)
-to compute results in msec. Timer value doesn't depend of clock frequency. 
-You can find FPGA bit-files with Rocket and River CPUs in the repository. I am
-also ready to share my framework for Leon3 SPARC V8 processor (SoC and FW) by request.
-
-Access to all memory banks and peripheries in the same clock domain is always
-one clock in this SOC (without wait-states). So, this benchmark 
+Access to all memory banks and peripheries for all targets (including ARM and Leon3) is made 
+in the same clock domain and always is
+one clock(without wait-states). So, this benchmark 
 result (**Dhrystone per seconds**) shows performance of the CPU with integer 
 instructions and degradation of the CPI relative ideal (simulation) case.
 
-   **In my opinion compiler affects on benchmark results much more than hardware
-   architecture and there's a lot of work for RISC-V compiler developers.
-   So, use as new compiler as possible.**
+   **Since the tag 'v7.0' RIVER CPU is the main processor in the system and all issues
+     related to Rocket-chip instance will be supported only by request.**
 
 ## Repository structure
 
@@ -109,18 +120,6 @@ This repository consists of three sub-projects each in own subfolder:
   [**10/100 Ethernet MAC with EDCL**](http://sergeykhbr.github.io/riscv_vhdl/eth_link.html)
   and [**Debug Support Unit (DSU)**](http://sergeykhbr.github.io/riscv_vhdl/periphery_page_1.html)
   devices on AMBA AXI4 bus.
-- **RISC-V "River" core**. It's my own implementation of RISC-V ISA that is ideal
-  for embedded application with active usage of 64-bits computations
-  (DSP for Satellite Navigation). I've specified the following principles for myself:
-    1. Unified Verification Methodology (UVM)
-        - */debugger/cpu_fnc_plugin*  - Functional RISC-V CPU model.
-        - */debugger/cpu_sysc_plugin* - Precise SystemC RIVER CPU model.
-        - */rtl/riverlib*      - RIVER VHDL sources with VCD-stimulus from SystemC.
-    2. Advanced debugging features: bus tracing, pipeline statistic (like CPI) in real-time on HW level etc.
-    3. Integration with GUI from the very beginning.
-  I hope to develop the most friendly synthesizable processor for HW and SW developers
-  and provide debugging tools of professional quality.
-
 
 # Step I: Simple FPGA test.
 
