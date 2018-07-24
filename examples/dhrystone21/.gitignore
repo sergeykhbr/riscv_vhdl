@@ -1,1 +1,4 @@
 makefiles/obj
+makefiles/bin
+makefiles/objarm
+makefiles/binarm

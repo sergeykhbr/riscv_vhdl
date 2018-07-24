@@ -1,9 +1,19 @@
-/**
- * @file
- * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
- * @author     Sergey Khabarov - sergeykhbr@gmail.com
- * @brief      RISC-V ISA specified structures and constants.
+/*
+ *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
+
 #ifndef __DEBUGGER_RISCV_ISA_H__
 #define __DEBUGGER_RISCV_ISA_H__
 
@@ -448,7 +458,8 @@ static const uint16_t CSR_hepc          = 0x241;
 static const uint16_t CSR_mepc          = 0x341;
 /** Machine trap cause */
 static const uint16_t CSR_mcause        = 0x342;
-/** Machine bad address. */static const uint16_t CSR_mbadaddr      = 0x343;
+/** Machine bad address. */
+static const uint16_t CSR_mbadaddr      = 0x343;
 /** Machine interrupt pending */
 static const uint16_t CSR_mip           = 0x344;
 /// @}

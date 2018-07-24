@@ -64,13 +64,15 @@ void CmdRegs::exec(AttributeType *args, AttributeType *res) {
         uint8_t buf[sizeof(RegsArrType)];
     } t1;
     DsuMapType *dsu = info_->getpDsu();
-    uint64_t addr = reinterpret_cast<uint64_t>(dsu->ureg.v.iregs);
+    uint64_t addr = reinterpret_cast<uint32_t>(dsu->ureg.v.iregs);
     tap_->read(addr, 8 * soclst.size(), t1.buf);
 
+    uint64_t idx;
     res->make_dict();
     for (unsigned i = 0; i < soclst.size(); i++) {
         const char *name = soclst[i].to_string();
-        (*res)[name].make_uint64(t1.regarr.reg[i].val);
+        idx = (info_->reg2addr(name) - addr) / sizeof(uint64_t);
+        (*res)[name].make_uint64(t1.regarr.reg[idx].val);
     }
 }
 

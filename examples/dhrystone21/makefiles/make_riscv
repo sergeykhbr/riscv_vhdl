@@ -5,7 +5,7 @@ CPP=riscv64-unknown-elf-gcc
 OBJDUMP=riscv64-unknown-elf-objdump
 
 CFLAGS= -c -fPIC -g -O2 -DCONFIG_RISCV64
-LDFLAGS=-static -T app.ld -nostartfiles -DCONFIG_RISCV64
+LDFLAGS=-static -T test_riscv.ld -nostartfiles -DCONFIG_RISCV64
 INCL_KEY=-I
 DIR_KEY=-B
 
@@ -40,12 +40,12 @@ DUMPFILE = $(EXECUTABLE).dump
 HEXFILE = $(EXECUTABLE).hex
 LSTFILE = $(EXECUTABLE).lst
 
-all: example
+all: riscv
 
 .PHONY: $(EXECUTABLE)
 
 
-example: $(EXECUTABLE) $(DUMPFILE) $(HEXFILE)
+riscv: $(EXECUTABLE) $(DUMPFILE) $(HEXFILE)
 
 $(HEXFILE): $(EXECUTABLE)
 	echo elf2raw64 $(addprefix $(ELF_DIR)/,$<) -h -f 262144 -l 8 -o $(addprefix $(ELF_DIR)/,$(EXECUTABLE).hex)
@@ -59,7 +59,7 @@ $(DUMPFILE): $(EXECUTABLE)
 $(EXECUTABLE): $(OBJ_FILES)
 	echo $(CPP) $(LDFLAGS) $(addprefix $(OBJ_DIR)/,$(OBJ_FILES)) -o $(addprefix $(ELF_DIR)/,$@) $(addprefix -l,$(LIB_NAMES))
 	$(CPP) $(LDFLAGS) $(addprefix $(OBJ_DIR)/,$(OBJ_FILES)) -o $(addprefix $(ELF_DIR)/,$@) $(addprefix -l,$(LIB_NAMES))
-	$(ECHO) "\n  Dhrystone v2.1 has been built successfully.\n"
+	$(ECHO) "\n  Dhrystone v2.1 RISC-V has been built successfully.\n"
 
 %.o: %.cpp
 	echo $(CPP) $(CFLAGS) $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $(addprefix $(OBJ_DIR)/,$@)

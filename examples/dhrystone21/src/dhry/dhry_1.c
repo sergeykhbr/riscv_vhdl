@@ -17,13 +17,13 @@
 
 #include "dhry.h"
 #if defined(CONFIG_RISCV64) || defined(CONFIG_LEON3)
-#include "stdtypes.h"
+#include <inttypes.h>
 #include <stdarg.h>
 #include <string.h>
 char _Next_Glob [sizeof (Rec_Type)];
 char _Glob[sizeof (Rec_Type)];
 
-extern int32 printf_uart(const char *_format, ... );
+extern int printf_uart(const char *_format, ... );
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wimplicit-function-declaration"

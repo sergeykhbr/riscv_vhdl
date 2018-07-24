@@ -1,0 +1,76 @@
+include makeutil.mak
+
+CC=arm-none-eabi-gcc
+CPP=arm-none-eabi-gcc
+OBJDUMP=arm-none-eabi-objdump
+
+CFLAGS= -c -g -fPIC -O0 -marm -mfloat-abi=soft -mcpu=cortex-r5 -DCONFIG_RISCV64
+LDFLAGS=-static -T test_arm.ld -nostartfiles -DCONFIG_RISCV64
+INCL_KEY=-I
+DIR_KEY=-B
+
+INCL_PATH=\
+	$(TOP_DIR)common \
+	$(TOP_DIR)dhrystone21/src
+
+# source files directories list:
+SRC_PATH = \
+	$(TOP_DIR)dhrystone21/src \
+	$(TOP_DIR)dhrystone21/src/dhry
+
+LIB_NAMES = \
+	gcc \
+	stdc++ \
+	c \
+	m
+
+VPATH = $(SRC_PATH)
+
+SOURCES = uart \
+	dhry_1 \
+	dhry_2 \
+	stdtool \
+	main
+
+OBJ_FILES = $(addsuffix .o,$(SOURCES))
+EXECUTABLE = dhrystone21
+ELFFILE = $(EXECUTABLE).elf
+DUMPFILE = $(EXECUTABLE).dump
+HEXFILE = $(EXECUTABLE).hex
+LSTFILE = $(EXECUTABLE).lst
+
+all: arm
+
+.PHONY: $(EXECUTABLE) $(DUMPFILE)
+
+
+arm: $(ELFFILE) $(DUMPFILE) $(HEXFILE)
+$(HEXFILE): $(ELFFILE)
+	echo elf2raw32 $(addprefix $(ELF_DIR)/,$<) -h -f 262144 -l 8 -o $(addprefix $(ELF_DIR)/,$(EXECUTABLE).hex)
+	elf2raw32 $(addprefix $(ELF_DIR)/,$<) -h -f 262144 -l 8 -o $(addprefix $(ELF_DIR)/,$(EXECUTABLE).hex)
+
+$(DUMPFILE): $(ELFFILE)
+	echo $(OBJDUMP) --disassemble-all --disassemble-zeroes --section=.text --section=.text.startup --section=.data $(addprefix $(ELF_DIR)/,$<) > $(addprefix $(ELF_DIR)/,$@)
+	$(OBJDUMP) --disassemble-all --disassemble-zeroes --section=.text --section=.text.startup --section=.data $(addprefix $(ELF_DIR)/,$<) > $(addprefix $(ELF_DIR)/,$@)
+	$(OBJDUMP) -S $(addprefix $(ELF_DIR)/,$<) > $(addprefix $(ELF_DIR)/,$(LSTFILE))
+
+
+$(ELFFILE): $(OBJ_FILES)
+	echo $(CPP) $(LDFLAGS) $(addprefix $(OBJ_DIR)/,$(OBJ_FILES)) -o $(addprefix $(ELF_DIR)/,$@) $(addprefix -l,$(LIB_NAMES))
+	$(CPP) $(LDFLAGS) $(addprefix $(OBJ_DIR)/,$(OBJ_FILES)) -o $(addprefix $(ELF_DIR)/,$@) $(addprefix -l,$(LIB_NAMES))
+	$(ECHO) "\n  Dhrystone v2.1 Coretx-R5 has been built successfully.\n"
+
+#.cpp.o:
+%.o: %.cpp
+	echo $(CPP) $(CFLAGS) $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $(addprefix $(OBJ_DIR)/,$@)
+	$(CPP) $(CFLAGS) $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $(addprefix $(OBJ_DIR)/,$@)
+
+#.c.o:
+%.o: %.c
+	echo $(CC) $(CFLAGS) $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $(addprefix $(OBJ_DIR)/,$@)
+	$(CC) $(CFLAGS) $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $(addprefix $(OBJ_DIR)/,$@)
+
+%.o: %.s
+	echo $(CC) $(CFLAGS) -D__ASSEMBLY__=1 $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $(addprefix $(OBJ_DIR)/,$@)
+	$(CC) $(CFLAGS) -D__ASSEMBLY__=1 $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $(addprefix $(OBJ_DIR)/,$@)
+

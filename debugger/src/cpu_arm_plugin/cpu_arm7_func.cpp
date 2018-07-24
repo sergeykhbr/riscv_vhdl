@@ -39,6 +39,9 @@ void CpuCortex_Functional::postinitService() {
     }
     addArm7tmdiIsa();
 
+    // Power-on
+    reset(false);
+
     CpuGeneric::postinitService();
 }
 
