@@ -87,7 +87,6 @@ uint64_t SocInfo::csr2addr(const char *name) {
 }
 
 uint64_t SocInfo::reg2addr(const char *name) {
-    DsuMapType *dsu = reinterpret_cast<DsuMapType *>(dsuBase_.to_uint64());
     for (unsigned i = 0; i < listRegs_.size(); i++) {
         if (strcmp(name, listRegs_[i][0u].to_string()) == 0) {
             return dsuBase_.to_uint64() + listRegs_[i][2].to_uint64();

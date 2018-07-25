@@ -64,7 +64,8 @@ void CmdRegs::exec(AttributeType *args, AttributeType *res) {
         uint8_t buf[sizeof(RegsArrType)];
     } t1;
     DsuMapType *dsu = info_->getpDsu();
-    uint64_t addr = reinterpret_cast<uint32_t>(dsu->ureg.v.iregs);
+    uint64_t addr = reinterpret_cast<uint64_t>(dsu->ureg.v.iregs);
+    addr &= 0xFFFFFFFFul;
     tap_->read(addr, 8 * soclst.size(), t1.buf);
 
     uint64_t idx;
