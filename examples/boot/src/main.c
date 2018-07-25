@@ -55,6 +55,8 @@ void copy_image() {
     if (tech != TECH_INFERRED && pnp->fwid == 0) {
         memcpy(sram, fwrom, FW_IMAGE_SIZE_BYTES);
     }
+    // Write Firmware ID to avoid copy image after soft-reset.
+    pnp->fwid = 0x20180725;
 
 #if 0
     /** Just to check access to DSU and read MCPUID via this slave device.

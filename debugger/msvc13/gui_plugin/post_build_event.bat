@@ -17,6 +17,9 @@ xcopy %QT_PATH%\bin\icuin*.dll %COPY_TO%\ /F /R /Y /D
 xcopy %QT_PATH%\bin\icuuc*.dll %COPY_TO%\ /F /R /Y /D
 xcopy %GUI_PLUGIN_SRC%\resources\gui.rcc %COPY_TO%\resources\ /F /R /Y /D
 
+rem xcopy %windir%\SysWOW64\msvcr120.dll %COPY_TO%\ /F /R /Y /D
+rem xcopy %windir%\SysWOW64\msvcp120.dll %COPY_TO%\ /F /R /Y /D
+
 @echo off
 @echo appdbg64g.exe -c ../../targets/functional_sim_gui.json > %COPY_TO%\_run_functional_sim.bat
 @echo appdbg64g.exe -c ../../targets/sysc_river_gui.json > %COPY_TO%\_run_systemc_sim.bat
