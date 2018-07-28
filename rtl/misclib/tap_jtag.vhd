@@ -29,12 +29,14 @@ entity tap_jtag is
     ainst  : integer range 0 to 255 := 2;
     dinst  : integer range 0 to 255 := 3);
   port (
-    nrst  : in std_ulogic;
-    clk  : in std_ulogic;
+    nrst  : in std_logic;
+    clk  : in std_logic;
     i_tck   : in std_logic;   -- in: Test Clock
+    i_ntrst   : in std_logic;
     i_tms   : in std_logic;   -- in: Test Mode State
     i_tdi   : in std_logic;   -- in: Test Data Input
     o_tdo   : out std_logic;   -- out: Test Data Output
+	 o_jtag_vref : out std_logic;
     i_msti   : in nasti_master_in_type;
     o_msto   : out nasti_master_out_type;
     o_mstcfg : out nasti_master_config_type
@@ -358,10 +360,11 @@ begin
   end process;
 
 
+  o_jtag_vref <= '1';
   o_mstcfg <= xmstconfig;
 
   jtagcom0 : dcom_jtag generic map (
-      irlen => 6,
+      irlen => 4,
       idcode => 9,
       ainst => ainst,
       dinst => dinst,
@@ -396,7 +399,7 @@ begin
     if rising_edge(tapo_tck) then
       tpr <= tprin;
     end if;
-    if tapo_rst = '0' then
+    if tapo_rst = '1' then
       tpr.addr <= (others => '0');
       tpr.datashft <= (others => '0');
       tpr.done_sync <= '0';
@@ -411,7 +414,7 @@ begin
     if falling_edge(tapo_tck) then
       tnr <= tnrin;
     end if;
-    if tapo_rst = '0' then
+    if tapo_rst = '1' then
       tnr.run <= '0';
       tnr.done_sync1 <= '0';
       tnr.qual_rdata <= '0';

@@ -47,6 +47,16 @@ architecture behavior of riscv_soc_tb is
   signal uart_bin_data : std_logic_vector(63 downto 0);
   signal uart_bin_bytes_sz : integer;
 
+  signal jtag_test_ena : std_logic;
+  signal jtag_test_addr : std_logic_vector(31 downto 0);
+  signal jtag_test_we : std_logic;
+  signal jtag_test_wdata : std_logic_vector(31 downto 0);
+  signal jtag_tdi : std_logic;
+  signal jtag_tdo : std_logic;
+  signal jtag_tms : std_logic;
+  signal jtag_tck : std_logic;
+  signal jtag_ntrst : std_logic;
+
   signal clk_cur: std_logic := '1';
   signal check_clk_bus : std_logic := '0';
   signal iClkCnt : integer := 0;
@@ -61,6 +71,13 @@ component riscv_soc is port
   i_sclk_n  : in std_logic;
   i_dip     : in std_logic_vector(3 downto 0);
   o_led     : out std_logic_vector(7 downto 0);
+  --! JTAG signals:
+  i_jtag_tck : in std_logic;
+  i_jtag_ntrst : in std_logic;
+  i_jtag_tms : in std_logic;
+  i_jtag_tdi : in std_logic;
+  o_jtag_tdo : out std_logic;
+  o_jtag_vref : out std_logic;
   -- uart1
   i_uart1_ctsn : in std_logic;
   i_uart1_rd   : in std_logic;
@@ -119,6 +136,26 @@ end component;
     clk : in std_logic;
     o_rxd  : out std_logic_vector(3 downto 0);
     o_rxdv : out std_logic
+  );
+  end component;
+
+  component jtag_sim is 
+  generic (
+    clock_rate : integer := 10;
+    irlen : integer := 4
+  ); 
+  port (
+    rst : in std_logic;
+    clk : in std_logic;
+    i_test_ena : in std_logic;
+    i_test_addr : in std_logic_vector(31 downto 0);
+    i_test_we : in std_logic;
+    i_test_wdata : in std_logic_vector(31 downto 0);
+    i_tdi  : in std_logic;
+    o_tck : out std_logic;
+    o_ntrst : out std_logic;
+    o_tms : out std_logic;
+    o_tdo : out std_logic
   );
   end component;
 begin
@@ -184,6 +221,14 @@ begin
            uart_instr(4) <= cr;
            uart_instr(5) <= lf;
         end if;
+
+        jtag_test_ena <= '0';
+        if iClkCnt = 10000 then
+           jtag_test_ena <= '1';
+           jtag_test_addr <= X"10000000";
+           jtag_test_we <= '0';
+           jtag_test_wdata <= (others => '0');
+       end if;    
     end if;
   end process;
 
@@ -211,6 +256,23 @@ begin
     o_rxdv => i_rxdv
   );
 
+  jsim0 : jtag_sim  generic map (
+    clock_rate => 4,
+    irlen => 4
+  ) port map (
+    rst => i_rst,
+    clk => i_sclk_p,
+    i_test_ena => jtag_test_ena,
+    i_test_addr => jtag_test_addr,
+    i_test_we => jtag_test_we,
+    i_test_wdata => jtag_test_wdata,
+    i_tdi => jtag_tdi,
+    o_tck => jtag_tck,
+    o_ntrst => jtag_ntrst,
+    o_tms => jtag_tms,
+    o_tdo => jtag_tdo
+  );
+
   -- signal parsment and assignment
   tt : riscv_soc port map
   (
@@ -219,6 +281,12 @@ begin
     i_sclk_n  => i_sclk_n,
     i_dip     => i_dip,
     o_led     => o_led,
+    i_jtag_tck => jtag_tck,
+    i_jtag_ntrst => jtag_ntrst,
+    i_jtag_tms => jtag_tms,
+    i_jtag_tdi => jtag_tdo,
+    o_jtag_tdo => jtag_tdi,
+    o_jtag_vref => open,
     i_uart1_ctsn => i_uart1_ctsn,
     i_uart1_rd   => i_uart1_rd,
     o_uart1_td   => o_uart1_td,

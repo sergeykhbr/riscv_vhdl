@@ -434,6 +434,16 @@
       <association xil_pn:name="Implementation" xil_pn:seqID="46"/>
       <library xil_pn:name="misclib"/>
     </file>
+    <file xil_pn:name="../../misclib/dcom_jtag.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="135"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="135"/>
+      <library xil_pn:name="misclib"/>
+    </file>
+    <file xil_pn:name="../../misclib/tap_jtag.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="136"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="136"/>
+      <library xil_pn:name="misclib"/>
+    </file>
   </files>
 
   <properties>

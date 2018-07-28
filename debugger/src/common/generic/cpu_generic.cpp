@@ -66,6 +66,7 @@ CpuGeneric::CpuGeneric(const char *name)
     interrupt_pending_ = 0;
     sw_breakpoint_ = false;
     hw_breakpoint_ = false;
+    skip_sw_breakpoint_ = false;
     hwBreakpoints_.make_list(0);
 
     dport_.valid = 0;

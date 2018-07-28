@@ -164,12 +164,14 @@ component tap_jtag is
     ainst  : integer range 0 to 255 := 2;
     dinst  : integer range 0 to 255 := 3);
   port (
-    rst  : in std_ulogic;
-    clk  : in std_ulogic;
+    nrst  : in std_logic;
+    clk  : in std_logic;
     i_tck   : in std_logic;   -- in: Test Clock
+    i_ntrst   : in std_logic;   -- in: 
     i_tms   : in std_logic;   -- in: Test Mode State
     i_tdi   : in std_logic;   -- in: Test Data Input
     o_tdo   : out std_logic;   -- out: Test Data Output
+    o_jtag_vref : out std_logic;
     i_msti   : in nasti_master_in_type;
     o_msto   : out nasti_master_out_type;
     o_mstcfg : out nasti_master_config_type

@@ -67,6 +67,13 @@ entity riscv_soc is port
   i_dip     : in std_logic_vector(3 downto 0);
   --! LEDs.
   o_led     : out std_logic_vector(7 downto 0);
+  --! JTAG signals:
+  i_jtag_tck : in std_logic;
+  i_jtag_ntrst : in std_logic;
+  i_jtag_tms : in std_logic;
+  i_jtag_tdi : in std_logic;
+  o_jtag_tdo : out std_logic;
+  o_jtag_vref : out std_logic;
   --! UART1 signals:
   i_uart1_ctsn : in std_logic;
   i_uart1_rd   : in std_logic;
@@ -283,6 +290,25 @@ dsu_dis : if not CFG_DSU_ENABLE generate
     axiso(CFG_NASTI_SLAVE_DSU) <= nasti_slave_out_none;
     dport_i <= dport_in_none;
 end generate;
+
+  ------------------------------------
+  -- JTAG TAP interface
+  jtag0 : tap_jtag  generic map (
+    ainst  => 2,
+    dinst  => 3
+  ) port map (
+    nrst   => w_glob_nrst, 
+    clk    => w_clk_bus, 
+    i_tck  => i_jtag_tck,
+    i_ntrst  => i_jtag_ntrst,
+    i_tms  => i_jtag_tms,
+    i_tdi  => i_jtag_tdi,
+    o_tdo  => o_jtag_tdo,
+ 	 o_jtag_vref => o_jtag_vref,
+    i_msti   => aximi(CFG_AXI_MASTER_JTAG),
+    o_msto   => aximo(CFG_AXI_MASTER_JTAG),
+    o_mstcfg => mst_cfg(CFG_AXI_MASTER_JTAG)
+    );
 
   ------------------------------------
   --! @brief TAP via UART (debug port) with master interface.

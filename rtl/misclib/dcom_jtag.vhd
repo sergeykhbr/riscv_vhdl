@@ -171,8 +171,7 @@ begin
 	    tapo_xsel2 <= r.sel_user2;
 	  end process;
 	 
-	  posreg : process(tck, rst)
-	  begin
+   posreg : process(tck, rst) begin
        if rising_edge(tck) then
 	       r.state <= rin.state;
 	       r.shft  <= rin.shft;
@@ -181,10 +180,9 @@ begin
 	       r.state <= test_rst; 
 	       r.shft  <= id;
 	     end if;
-	  end process;
+   end process;
 	
-	  negreg : process(tck, rst)
-	  begin
+   negreg : process(tck, rst) begin
 	     if falling_edge(tck) then
 	       r.inst <= rin.inst;
 	       r.tdo  <= rin.tdo;
@@ -196,7 +194,7 @@ begin
 	       r.sel_user1 <= '0';
    	     r.sel_user2 <= '0';
 	     end if;
-	  end process; 
+    end process; 
 	   
 	 
 	end;  

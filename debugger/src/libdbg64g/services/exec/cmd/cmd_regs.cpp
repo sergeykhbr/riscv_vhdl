@@ -72,6 +72,9 @@ void CmdRegs::exec(AttributeType *args, AttributeType *res) {
     res->make_dict();
     for (unsigned i = 0; i < soclst.size(); i++) {
         const char *name = soclst[i].to_string();
+        if (strlen(name) == 0) {
+            continue;
+        }
         idx = (info_->reg2addr(name) - addr) / sizeof(uint64_t);
         (*res)[name].make_uint64(t1.regarr.reg[idx].val);
     }
