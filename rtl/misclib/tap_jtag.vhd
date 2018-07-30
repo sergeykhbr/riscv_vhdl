@@ -59,6 +59,7 @@ architecture rtl of tap_jtag is
       DMAREQ_IDLE,
       DMAREQ_SYNC_START,
       DMAREQ_START,
+      DMAREQ_WAIT_READ_RESP,
       DMAREQ_SYNC_RESP
    );
 
@@ -145,20 +146,18 @@ architecture rtl of tap_jtag is
 
 begin
 
-  rdqgen: for x in 31 downto 0 generate
-    rdataq(x) <= not (ar.dreg(x) and qual_rdata(x));
-  end generate;
-  dqgen: for x in 31 downto 0 generate
-    dregq(x) <= not (tnr.data(x) and qual_dreg(x));
-  end generate;
+  qual_rdata <= (others => tnr.qual_rdata);
+  rdataq <= not (ar.dreg(31 downto 0) and qual_rdata(31 downto 0));
 
+  qual_dreg <= (others => ar.qual_dreg);
+  dregq <= not (tnr.data(31 downto 0) and qual_dreg(31 downto 0));
+
+  qual_areg <= (others => ar.qual_areg);
   aregqin <= tpr.addr(34 downto ADDBITS) &
              tnr.addrlo(ADDBITS-1 downto 2) &
              tpr.addr(1 downto 0);
+  aregq <= not (aregqin and qual_areg(34 downto 0));
 
-  aqgen: for x in 34 downto 0 generate
-    aregq(x) <= not (aregqin(x) and qual_areg(x));
-  end generate;
 
   comb : process (nrst, ar, dma_response,
                   tapo_tck, tapo_tdi, tapo_inst, tapo_rst, tapo_capt, tapo_shft, tapo_upd, tapo_xsel1, tapo_xsel2,
@@ -196,7 +195,6 @@ begin
     tpv.done_sync  := tnr.done_sync1;
 
     -- Data CDC
-    qual_rdata <= (others => tnr.qual_rdata);
     if tnr.qual_rdata='1' then
         tpv.datashft(32 downto 0) := '1' & (not rdataq);
     end if;
@@ -296,18 +294,22 @@ begin
         if ar.areg(34) = '1' then
             wb_dma_request.write := '1';
             wb_dma_request.wdata := ar.dreg(31 downto 0) & ar.dreg(31 downto 0);
-            if dma_response.valid = '1' then
+            if dma_response.ready = '1' then
                 av.done := '1';
                 av.dma_req_state := DMAREQ_SYNC_RESP;
             end if;
         else
             wb_dma_request.write := '0';
             wb_dma_request.wdata := (others => '0');
-            if dma_response.valid = '1' then
-                av.done := '1';
-                av.dreg := dma_response.rdata(31 downto 0);
-                av.dma_req_state := DMAREQ_SYNC_RESP;
-            end if;
+            av.dma_req_state := DMAREQ_WAIT_READ_RESP;
+        end if;
+
+    when DMAREQ_WAIT_READ_RESP =>
+        wb_dma_request.ready := '1';
+        if dma_response.valid = '1' then
+            av.done := '1';
+            av.dreg := dma_response.rdata(31 downto 0);
+            av.dma_req_state := DMAREQ_SYNC_RESP;
         end if;
 
     when DMAREQ_SYNC_RESP =>
@@ -332,11 +334,9 @@ begin
     -- Sync regs and CDC transfer
     av.run_sync := tnr.run & ar.run_sync(1);
 
-    qual_dreg <= (others => ar.qual_dreg);
     if ar.qual_dreg='1' then
         av.dreg:=not dregq;
     end if;
-    qual_areg <= (others => ar.qual_areg);
     if ar.qual_areg='1' then 
         av.areg := not aregq;
     end if;

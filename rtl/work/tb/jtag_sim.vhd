@@ -21,6 +21,7 @@ entity jtag_sim is
     rst : in std_logic;
     clk : in std_logic;
     i_test_ena : in std_logic;
+    i_test_burst : in std_logic_vector(7 downto 0);
     i_test_addr : in std_logic_vector(31 downto 0);
     i_test_we : in std_logic;
     i_test_wdata : in std_logic_vector(31 downto 0);
@@ -47,6 +48,7 @@ architecture jtag_sim_rtl of jtag_sim is
   type registers is record
       jtagstate : state_type;
       jtagstatez : state_type;
+      burst_cnt : integer;
       shift_reg1 : std_logic_vector(REG1_LEN-1 downto 0);
       shift_reg2 : std_logic_vector(REG2_LEN-1 downto 0);
       shift_reg : std_logic_vector(irlen + REG1_LEN-1 downto 0);
@@ -83,10 +85,15 @@ begin
      end if;
 
      if i_test_ena = '1' and r.jtagstate = run_idle then
+        v.burst_cnt := conv_integer(i_test_burst);
         v.shift_reg1(34) := i_test_we;
         v.shift_reg1(33 downto 32) := "10"; -- size: 0=1 byte; 1=hword; 2=word; 3=dword
         v.shift_reg1(31 downto 0) := i_test_addr;
-        v.shift_reg2(32) := '0'; -- bulk=0
+        if i_test_burst = X"00" then
+            v.shift_reg2(32) := '0'; -- bulk=0
+        else
+            v.shift_reg2(32) := '1'; -- bulk=1
+        end if;
         v.shift_reg2(31 downto 0) := i_test_wdata;
         v.is_data := '1';
      elsif w_posedge = '1' then
@@ -168,15 +175,17 @@ begin
         when update_dr =>
             -- TODO: and size == size_bulk
             if r.instr = 2 then
-                v.tms := '0'; 
-                v.jtagstate := run_idle;
-                --if r.we = '0' then
-                    --logs::printf(LOG_DEBUG, "{JTAG} rd [%08x] => %08x -- %s", 
-                    --              uint32(address), uint32(rdata), op_comment);
-                --else
-                    --logs::printf(LOG_DEBUG, "{JTAG} wr [%08x] <= %08x -- %s", 
-                    --              uint32(address), uint32(wdata), op_comment);
-                --end if;
+                if r.burst_cnt = 0 then
+                    v.tms := '0'; 
+                    v.jtagstate := run_idle;
+                else
+                    v.tms := '1'; 
+                    v.jtagstate := start_ir;
+                    v.burst_cnt := r.burst_cnt - 1;
+                    if r.burst_cnt = 1 then
+                        v.shift_reg2(32) := '0'; -- bulk=0
+                    end if;
+                end if;
             else
                 v.tms := '1'; 
                 v.instr := 2;
@@ -201,6 +210,7 @@ begin
         v.shift_reg1 := (others => '0');
         v.shift_reg2 := (others => '0');
         v.shift_reg := (others => '0');
+        v.burst_cnt := 0;
         v.edge := '0';
         v.ntrst := '0';
         v.tms := '0';

@@ -48,6 +48,7 @@ architecture behavior of riscv_soc_tb is
   signal uart_bin_bytes_sz : integer;
 
   signal jtag_test_ena : std_logic;
+  signal jtag_test_burst : std_logic_vector(7 downto 0);
   signal jtag_test_addr : std_logic_vector(31 downto 0);
   signal jtag_test_we : std_logic;
   signal jtag_test_wdata : std_logic_vector(31 downto 0);
@@ -148,6 +149,7 @@ end component;
     rst : in std_logic;
     clk : in std_logic;
     i_test_ena : in std_logic;
+    i_test_burst : in std_logic_vector(7 downto 0);
     i_test_addr : in std_logic_vector(31 downto 0);
     i_test_we : in std_logic;
     i_test_wdata : in std_logic_vector(31 downto 0);
@@ -223,11 +225,30 @@ begin
         end if;
 
         jtag_test_ena <= '0';
-        if iClkCnt = 10000 then
+        if iClkCnt = 3000 then
            jtag_test_ena <= '1';
+           jtag_test_burst <= (others => '0');
            jtag_test_addr <= X"10000000";
            jtag_test_we <= '0';
            jtag_test_wdata <= (others => '0');
+        elsif iClkCnt = 5000 then
+           jtag_test_ena <= '1';
+           jtag_test_burst <= (others => '0');
+           jtag_test_addr <= X"fffff004";
+           jtag_test_we <= '1';
+           jtag_test_wdata <= X"12345678";
+        elsif iClkCnt = 7000 then
+           jtag_test_ena <= '1';
+           jtag_test_burst <= X"01";
+           jtag_test_addr <= X"10000004";
+           jtag_test_we <= '0';
+           jtag_test_wdata <= (others => '0');
+        elsif iClkCnt = 10000 then
+           jtag_test_ena <= '1';
+           jtag_test_burst <= X"02";
+           jtag_test_addr <= X"FFFFF004";
+           jtag_test_we <= '1';
+           jtag_test_wdata <= X"DEADBEEF";
        end if;    
     end if;
   end process;
@@ -263,6 +284,7 @@ begin
     rst => i_rst,
     clk => i_sclk_p,
     i_test_ena => jtag_test_ena,
+    i_test_burst => jtag_test_burst,
     i_test_addr => jtag_test_addr,
     i_test_we => jtag_test_we,
     i_test_wdata => jtag_test_wdata,
