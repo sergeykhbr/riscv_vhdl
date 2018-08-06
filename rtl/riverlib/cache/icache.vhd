@@ -75,7 +75,6 @@ architecture arch_ICache of ICache is
       iline_addr_req : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
       addr_processing : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
       state : std_logic_vector(1 downto 0);
-      double_req : std_logic;
       delay_valid : std_logic;
       delay_data : std_logic_vector(31 downto 0);
   end record;
@@ -109,7 +108,7 @@ begin
 
     v := r;
 
-    w_req_ctrl_valid := i_req_ctrl_valid or r.double_req;
+    w_req_ctrl_valid := i_req_ctrl_valid;
     wb_req_addr(0) := i_req_ctrl_addr;
     wb_req_addr(1) := i_req_ctrl_addr + 2;
 
@@ -181,16 +180,7 @@ begin
     end if;
 
     w_o_req_mem_valid := w_need_mem_req and w_req_ctrl_valid;
-    if r.double_req = '1' then
-        if (r.addr_processing(BUS_ADDR_WIDTH-1 downto 3) =
-            r.iline_addr_req(BUS_ADDR_WIDTH-1 downto 3))
-            or (r.addr_processing(BUS_ADDR_WIDTH-1 downto 3) =
-                wb_hold_addr(0)(BUS_ADDR_WIDTH-1 downto 3)) then
-            wb_o_req_mem_addr := wb_hold_addr(1)(BUS_ADDR_WIDTH-1 downto 3) & "000";
-        else
-            wb_o_req_mem_addr := wb_hold_addr(0)(BUS_ADDR_WIDTH-1 downto 3) & "000";
-        end if;
-    elsif wb_l(0).hit = "000" then
+    if wb_l(0).hit = "000" then
         wb_o_req_mem_addr := wb_req_addr(0)(BUS_ADDR_WIDTH-1 downto 3)  & "000";
     else
         wb_o_req_mem_addr := wb_req_addr(1)(BUS_ADDR_WIDTH-1 downto 3)  & "000";
@@ -198,7 +188,7 @@ begin
     w_o_req_ctrl_ready := not w_need_mem_req or i_req_mem_ready;
     w_req_fire := w_req_ctrl_valid and w_o_req_ctrl_ready;
 
-    if (w_o_req_mem_valid and i_req_mem_ready) = '1' or r.double_req = '1' then
+    if (w_o_req_mem_valid and i_req_mem_ready) = '1' then
         v.iline_addr_req := wb_o_req_mem_addr;
     end if;
 
@@ -257,15 +247,7 @@ begin
 
 
     if w_req_fire = '1' then
-        v.double_req := '0';
-        if i_req_ctrl_addr(2 downto 1) = "11"
-            and wb_l(0).hit = "000" and wb_l(1).hit = "000"
-            and r.double_req = '0' then
-            v.double_req := '1';
-        end if;
-        if r.double_req = '0' then
-            v.addr_processing := i_req_ctrl_addr;
-        end if;
+        v.addr_processing := i_req_ctrl_addr;
     end if;
 
     w_reuse_lastline := '0';
@@ -294,9 +276,9 @@ begin
     end if;
 
     if r.state = State_WaitAccept then
-        w_o_resp_valid := not r.double_req;
+        w_o_resp_valid := '1';
     else
-        w_o_resp_valid := i_resp_mem_data_valid and not r.double_req;
+        w_o_resp_valid := i_resp_mem_data_valid;
     end if;
     if r.delay_valid = '1' then
         wb_o_resp_data := r.delay_data;
@@ -314,7 +296,6 @@ begin
         v.iline_addr_req := (others => '0');
         v.addr_processing := (others => '0');
         v.state := State_Idle;
-        v.double_req := '0';
         v.delay_valid := '0';
         v.delay_data := (others => '0');
     end if;
