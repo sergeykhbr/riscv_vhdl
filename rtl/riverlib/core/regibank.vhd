@@ -72,7 +72,9 @@ begin
 
     if i_nrst = '0' then
         v.mem(Reg_Zero) := (others => '0');
-        v.mem(1 to Reg_Total-1) := (others => X"00000000FEEDFACE");
+        for i in 1 to Reg_Total-1 loop
+            v.mem(i) := X"00000000FEEDFACE";
+        end loop;
     end if;
 
     rin <= v;
