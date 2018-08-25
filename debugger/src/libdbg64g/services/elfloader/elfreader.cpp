@@ -49,65 +49,6 @@ void ElfReaderService::postinitService() {
     }
 }
 
-void ElfReaderService::SwapBytes(Elf32_Half& v) {
-    if (header_->e_ident[EI_DATA] != ELFDATA2MSB) {
-        return;
-    }
-     v = ((v>>8)&0xff) | ((v&0xFF)<<8);
-}
-
-void ElfReaderService::SwapBytes(Elf32_Word& v) {
-    if (header_->e_ident[EI_DATA] != ELFDATA2MSB) {
-        return;
-    }
-    v = ((v >> 24) & 0xff) | ((v >> 8) & 0xff00) 
-      | ((v << 8) & 0xff0000) | ((v & 0xFF) << 24);
-}
-
-void ElfReaderService::SwapBytes(Elf32_DWord& v) {
-    if (header_->e_ident[EI_DATA] != ELFDATA2MSB) {
-        return;
-    }
-    v = ((v >> 56) & 0xffull) | ((v >> 48) & 0xff00ull) 
-      | ((v >> 40) & 0xff0000ull) | ((v >> 32) & 0xff000000ull)
-      | ((v << 8) & 0xff000000ull) | ((v << 16) & 0xff0000000000ull)
-      | ((v << 24) & 0xff0000000000ull) | ((v << 32) & 0xff00000000000000ull);
-}
-
-void ElfReaderService::swap_elfheader(ElfHeaderType *h) {
-    if (header_->e_ident[EI_DATA] != ELFDATA2MSB) {
-        return;
-    }
-    SwapBytes(h->e_shoff);
-    SwapBytes(h->e_shnum);
-}
-
-void ElfReaderService::swap_secheader(SectionHeaderType *sh) {
-    if (header_->e_ident[EI_DATA] != ELFDATA2MSB) {
-        return;
-    }
-    SwapBytes(sh->sh_name);
-    SwapBytes(sh->sh_type);
-    SwapBytes(sh->sh_flags);
-    SwapBytes(sh->sh_addr);
-    SwapBytes(sh->sh_offset);
-    SwapBytes(sh->sh_size);
-    SwapBytes(sh->sh_link);
-    SwapBytes(sh->sh_info);
-    SwapBytes(sh->sh_addralign);
-    SwapBytes(sh->sh_entsize);
-}
-
-void ElfReaderService::swap_symbheader(SymbolTableType *symb) {
-    if (header_->e_ident[EI_DATA] != ELFDATA2MSB) {
-        return;
-    }
-    SwapBytes(symb->st_name);
-    SwapBytes(symb->st_value);
-    SwapBytes(symb->st_size);
-    SwapBytes(symb->st_shndx);
-}
-
 int ElfReaderService::readFile(const char *filename) {
     FILE *fp = fopen(filename, "rb");
     if (!fp) {
@@ -134,23 +75,28 @@ int ElfReaderService::readFile(const char *filename) {
     }
 
     symbolNames_ = 0;
-    swap_elfheader(header_);
-    if (!header_->e_shoff) {
+    if (!header_->get_shoff()) {
         fclose(fp);
         return 0;
     }
 
-    SectionHeaderType *sh;
+    sh_tbl_ = new SectionHeaderType *[header_->get_shnum()];
+
     /** Search .shstrtab section */
-    sh_tbl_ =
-        reinterpret_cast<SectionHeaderType *>(&image_[header_->e_shoff]);
-    for (int i = 0; i < header_->e_shnum; i++) {
-        sh = &sh_tbl_[i];
-        swap_secheader(sh);
-        sectionNames_ = reinterpret_cast<char *>(&image_[sh->sh_offset]);
-        if (sh->sh_type == SHT_STRTAB && 
-            strcmp(sectionNames_ + sh->sh_name, ".shstrtab") != 0) {
+    uint8_t *psh = &image_[header_->get_shoff()];
+    for (int i = 0; i < header_->get_shnum(); i++) {
+        sh_tbl_[i] = new SectionHeaderType(psh, header_);
+
+        sectionNames_ = reinterpret_cast<char *>(&image_[sh_tbl_[i]->get_offset()]);
+        if (sh_tbl_[i]->get_type() == SHT_STRTAB && 
+            strcmp(sectionNames_ + sh_tbl_[i]->get_name(), ".shstrtab") != 0) {
             sectionNames_ = NULL;
+        }
+
+        if (header_->isElf32()) {
+            psh += sizeof(Elf32_Shdr);
+        } else {
+            psh += sizeof(Elf64_Shdr);
         }
     }
     if (!sectionNames_) {
@@ -158,14 +104,13 @@ int ElfReaderService::readFile(const char *filename) {
     }
 
     /** Search ".strtab" section with Debug symbols */
-    sh_tbl_ =
-        reinterpret_cast<SectionHeaderType *>(&image_[header_->e_shoff]);
-    for (int i = 0; i < header_->e_shnum; i++) {
-        sh = &sh_tbl_[i];
-        if (sectionNames_ == NULL || sh->sh_type != SHT_STRTAB) {
+    SectionHeaderType *sh;
+    for (int i = 0; i < header_->get_shnum(); i++) {
+        sh = sh_tbl_[i];
+        if (sectionNames_ == NULL || sh->get_type() != SHT_STRTAB) {
             continue;
         }
-        if (strcmp(sectionNames_ + sh->sh_name, ".strtab")) {
+        if (strcmp(sectionNames_ + sh->get_name(), ".strtab")) {
             continue;
         }
         /** 
@@ -175,7 +120,7 @@ int ElfReaderService::readFile(const char *filename) {
             * string table, the section's attributes will include the
             * SHF_ALLOC bit; otherwise, that bit will be turned off.
             */
-        symbolNames_ = reinterpret_cast<char *>(&image_[sh->sh_offset]);
+        symbolNames_ = reinterpret_cast<char *>(&image_[sh->get_offset()]);
     }
     if (!symbolNames_) {
         printf("err: section .strtab not found. No debug symbols.\n");
@@ -185,7 +130,7 @@ int ElfReaderService::readFile(const char *filename) {
     int bytes_loaded = loadSections();
     RISCV_info("Loaded: %d B", bytes_loaded);
 
-    if (header_->e_phoff) {
+    if (header_->get_phoff()) {
         //readProgramHeader();
     }
 
@@ -194,14 +139,12 @@ int ElfReaderService::readFile(const char *filename) {
 }
 
 int ElfReaderService::readElfHeader() {
-    header_ = reinterpret_cast<ElfHeaderType *>(image_);
-    for (int i = 0; i < 4; i++) {
-        if (header_->e_ident[i] != MAGIC_BYTES[i]) {
-            RISCV_error("File format is not ELF", NULL);
-            return -1;
-        }
+    header_ = new ElfHeaderType(image_);
+    if (header_->isElf()) {
+        return 0;
     }
-    return 0;
+    RISCV_error("File format is not ELF", NULL);
+    return -1;
 }
 
 int ElfReaderService::loadSections() {
@@ -209,18 +152,18 @@ int ElfReaderService::loadSections() {
     uint64_t total_bytes = 0;
     AttributeType tsymb;
 
-    for (int i = 0; i < header_->e_shnum; i++) {
-        sh = &sh_tbl_[i];
+    for (int i = 0; i < header_->get_shnum(); i++) {
+        sh = sh_tbl_[i];
 
-        if (sh->sh_size == 0) {
+        if (sh->get_size() == 0) {
             continue;
         }
 
-        if (sectionNames_ && (sh->sh_flags & SHF_ALLOC)) {
-            RISCV_info("Reading '%s' section", &sectionNames_[sh->sh_name]);
+        if (sectionNames_ && (sh->get_flags() & SHF_ALLOC)) {
+            RISCV_info("Reading '%s' section", &sectionNames_[sh->get_name()]);
         }
 
-        if (sh->sh_type == SHT_PROGBITS && (sh->sh_flags & SHF_ALLOC) != 0) {
+        if (sh->get_type() == SHT_PROGBITS && (sh->get_flags() & SHF_ALLOC) != 0) {
             /**
              * @brief   Instructions or other processor's information
              * @details This section holds information defined by the program, 
@@ -230,18 +173,18 @@ int ElfReaderService::loadSections() {
             AttributeType loadsec;
             loadsec.make_list(LoadSh_Total);
             if (sectionNames_) {
-                loadsec[LoadSh_name].make_string(&sectionNames_[sh->sh_name]);
+                loadsec[LoadSh_name].make_string(&sectionNames_[sh->get_name()]);
             } else {
                 loadsec[LoadSh_name].make_string("unknown");
             }
-            loadsec[LoadSh_addr].make_uint64(sh->sh_addr);
-            loadsec[LoadSh_size].make_uint64(sh->sh_size);
-            loadsec[LoadSh_data].make_data(static_cast<unsigned>(sh->sh_size),
-                                           &image_[sh->sh_offset]);
+            loadsec[LoadSh_addr].make_uint64(sh->get_addr());
+            loadsec[LoadSh_size].make_uint64(sh->get_size());
+            loadsec[LoadSh_data].make_data(static_cast<unsigned>(sh->get_size()),
+                                           &image_[sh->get_offset()]);
             loadSectionList_.add_to_list(&loadsec);
-            total_bytes += sh->sh_size;
-        } else if (sh->sh_type == SHT_NOBITS
-                    && (sh->sh_flags & SHF_ALLOC) != 0) {
+            total_bytes += sh->get_size();
+        } else if (sh->get_type() == SHT_NOBITS
+                    && (sh->get_flags() & SHF_ALLOC) != 0) {
             /**
              * @brief   Initialized data
              * @details A section of this type occupies no space in  the file
@@ -252,18 +195,18 @@ int ElfReaderService::loadSections() {
             AttributeType loadsec;
             loadsec.make_list(LoadSh_Total);
             if (sectionNames_) {
-                loadsec[LoadSh_name].make_string(&sectionNames_[sh->sh_name]);
+                loadsec[LoadSh_name].make_string(&sectionNames_[sh->get_name()]);
             } else {
                 loadsec[LoadSh_name].make_string("unknown");
             }
-            loadsec[LoadSh_addr].make_uint64(sh->sh_addr);
-            loadsec[LoadSh_size].make_uint64(sh->sh_size);
-            loadsec[LoadSh_data].make_data(static_cast<unsigned>(sh->sh_size));
+            loadsec[LoadSh_addr].make_uint64(sh->get_addr());
+            loadsec[LoadSh_size].make_uint64(sh->get_size());
+            loadsec[LoadSh_data].make_data(static_cast<unsigned>(sh->get_size()));
             memset(loadsec[LoadSh_data].data(), 
-                        0, static_cast<size_t>(sh->sh_size));
+                        0, static_cast<size_t>(sh->get_size()));
             loadSectionList_.add_to_list(&loadsec);
-            total_bytes += sh->sh_size;
-        } else if (sh->sh_type == SHT_SYMTAB || sh->sh_type == SHT_DYNSYM) {
+            total_bytes += sh->get_size();
+        } else if (sh->get_type() == SHT_SYMTAB || sh->get_type() == SHT_DYNSYM) {
             processDebugSymbol(sh);
         }
     }
@@ -286,27 +229,18 @@ void ElfReaderService::processDebugSymbol(SectionHeaderType *sh) {
         return;
     }
 
-    while (symbol_off < sh->sh_size) {
-        st = reinterpret_cast<SymbolTableType *>
-                    (&image_[sh->sh_offset + symbol_off]);
-        swap_symbheader(st);
-        symb_name = &symbolNames_[st->st_name];
+    while (symbol_off < sh->get_size()) {
+        st = new SymbolTableType(&image_[sh->get_offset() + symbol_off],
+                                header_);
+        
+        symb_name = &symbolNames_[st->get_name()];
 
-        if (sh->sh_entsize) {
-            // section with elements of fixed size
-            symbol_off += sh->sh_entsize; 
-        } else if (st->st_size) {
-            symbol_off += st->st_size;
-        } else {
-            symbol_off += sizeof(SymbolTableType);
-        }
-
-        st_type = st->st_info & 0xF;
-        if ((st_type == STT_OBJECT || st_type == STT_FUNC) && st->st_value) {
+        st_type = st->get_info() & 0xF;
+        if ((st_type == STT_OBJECT || st_type == STT_FUNC) && st->get_value()) {
             tsymb.make_list(Symbol_Total);
             tsymb[Symbol_Name].make_string(symb_name);
-            tsymb[Symbol_Addr].make_uint64(st->st_value);
-            tsymb[Symbol_Size].make_uint64(st->st_size);
+            tsymb[Symbol_Addr].make_uint64(st->get_value());
+            tsymb[Symbol_Size].make_uint64(st->get_size());
             if (st_type == STT_FUNC) {
                 tsymb[Symbol_Type].make_uint64(SYMBOL_TYPE_FUNCTION);
             } else {
@@ -316,6 +250,20 @@ void ElfReaderService::processDebugSymbol(SectionHeaderType *sh) {
         } else if (st_type == STT_FILE) {
             //file_name = symb_name;
         }
+
+        if (sh->get_entsize()) {
+            // section with elements of fixed size
+            symbol_off += sh->get_entsize(); 
+        } else if (st->get_size()) {
+            symbol_off += st->get_size();
+        } else {
+            if (header_->isElf32()) {
+                symbol_off += sizeof(Elf32_Sym);
+            } else {
+                symbol_off += sizeof(Elf64_Sym);
+            }
+        }
+        delete st;
     }
 }
 

@@ -53,12 +53,6 @@ private:
     int readElfHeader();
     int loadSections();
     void processDebugSymbol(SectionHeaderType *sh);
-    void swap_elfheader(ElfHeaderType *h);
-    void swap_secheader(SectionHeaderType *sh);
-    void swap_symbheader(SymbolTableType *symb);
-    void SwapBytes(Elf32_Half& v);
-    void SwapBytes(Elf32_Word& v);
-    void SwapBytes(Elf32_DWord& v);
 
 private:
     enum ELoadSectionItem {
@@ -69,6 +63,11 @@ private:
         LoadSh_Total,
     };
 
+    enum EMode {
+        Mode_32bits,
+        Mode_64bits
+    } emode_;
+
     AttributeType sourceProc_;
     AttributeType symbolList_;
     AttributeType loadSectionList_;
@@ -76,7 +75,7 @@ private:
     ISourceCode *isrc_;
     uint8_t *image_;
     ElfHeaderType *header_;
-    SectionHeaderType *sh_tbl_;
+    SectionHeaderType **sh_tbl_;
     char *sectionNames_;
     char *symbolNames_;
 };
