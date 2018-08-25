@@ -66,6 +66,7 @@ begin
                 i_req_data_addr, i_req_data_data, i_resp_mem_data_valid, 
                 i_resp_mem_data, i_req_mem_ready, i_resp_data_ready, r)
     variable v : RegistersType;
+    variable w_wait_response : std_logic;
     variable w_o_req_data_ready : std_logic;
     variable w_o_req_mem_valid : std_logic;
     variable wb_o_req_mem_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
@@ -82,8 +83,13 @@ begin
     v := r;
     wb_o_req_strob := (others => '0');
     wb_o_req_wdata := (others => '0');
-	 wb_o_resp_data := (others => '0');
+    wb_o_resp_data := (others => '0');
     wb_rtmp := (others => '0');
+
+    w_wait_response := '0';
+    if r.state = State_WaitResp and i_resp_mem_data_valid = '0' then
+        w_wait_response := '1';
+    end if;
 
     case i_req_data_sz is
     when "00" =>
@@ -137,10 +143,10 @@ begin
     end case;
 
 
-    w_o_req_mem_valid := i_req_data_valid;
+    w_o_req_mem_valid := i_req_data_valid and not w_wait_response;
     wb_o_req_mem_addr := i_req_data_addr(BUS_ADDR_WIDTH-1 downto 3) & "000";
     w_o_req_data_ready := i_req_mem_ready;
-    w_req_fire := i_req_data_valid and w_o_req_data_ready;
+    w_req_fire := w_o_req_mem_valid and w_o_req_data_ready;
     case r.state is
     when State_Idle =>
         if i_req_data_valid = '1' then

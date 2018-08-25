@@ -47,7 +47,7 @@ void DCache::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.dline_addr_req, "/top/cache0/d0/r_dline_addr_req");
         sc_trace(o_vcd, r.dline_size_req, "/top/cache0/d0/r_dline_size_req");
         sc_trace(o_vcd, r.state, "/top/cache0/d0/r_state");
-    }
+        sc_trace(o_vcd, w_wait_response, "/top/cache0/d0/w_wait_response");    }
 }
 
 void DCache::comb() {
@@ -69,6 +69,11 @@ void DCache::comb() {
     wb_o_req_wdata = 0;
     wb_o_resp_data = 0;
     wb_rtmp = 0;
+
+    w_wait_response = 0;
+    if (r.state.read() == State_WaitResp && i_resp_mem_data_valid.read() == 0) {
+        w_wait_response = 1;
+    }
 
     switch (i_req_data_sz.read()) {
     case 0:
@@ -125,10 +130,10 @@ void DCache::comb() {
     default:;
     }
 
-    w_o_req_mem_valid = i_req_data_valid.read();
+    w_o_req_mem_valid = i_req_data_valid.read() && !w_wait_response;
     wb_o_req_mem_addr = i_req_data_addr.read()(BUS_ADDR_WIDTH-1, 3) << 3;
     w_o_req_data_ready = i_req_mem_ready.read();
-    w_req_fire = i_req_data_valid.read() && w_o_req_data_ready;
+    w_req_fire = w_o_req_mem_valid && w_o_req_data_ready;
     switch (r.state.read()) {
     case State_Idle:
         if (i_req_data_valid.read()) {

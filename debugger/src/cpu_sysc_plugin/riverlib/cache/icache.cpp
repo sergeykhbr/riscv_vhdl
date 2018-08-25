@@ -76,6 +76,7 @@ void ICache::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, wb_l[0].hit_hold, "/top/cache0/i0/wb_l(0).hit_hold");
         sc_trace(o_vcd, wb_l[1].hit_hold, "/top/cache0/i0/wb_l(1).hit_hold");
         sc_trace(o_vcd, w_reuse_lastline, "/top/cache0/i0/w_reuse_lastline");
+        sc_trace(o_vcd, w_wait_response, "/top/cache0/i0/w_wait_response");
     }
 }
 
@@ -94,7 +95,12 @@ void ICache::comb() {
     
     v = r;
 
-    w_req_ctrl_valid = i_req_ctrl_valid.read() || r.double_req.read();
+    w_wait_response = 0;
+    if (r.state.read() == State_WaitResp && i_resp_mem_data_valid.read() == 0) {
+        w_wait_response = 1;
+    }
+    w_req_ctrl_valid = !w_wait_response 
+                    && (i_req_ctrl_valid.read() || r.double_req.read());
     wb_req_addr[0] = i_req_ctrl_addr.read();
     wb_req_addr[1] = i_req_ctrl_addr.read() + 2;
 
@@ -189,10 +195,13 @@ void ICache::comb() {
     } else {
         wb_o_req_mem_addr = wb_req_addr[1](BUS_ADDR_WIDTH-1, 3) << 3;
     }
-    w_o_req_ctrl_ready = !w_need_mem_req | i_req_mem_ready.read();
+
+    w_o_req_ctrl_ready = !w_need_mem_req 
+                       | (i_req_mem_ready.read() & !w_wait_response);
     w_req_fire = w_req_ctrl_valid && w_o_req_ctrl_ready;
 
-    if ((w_o_req_mem_valid && i_req_mem_ready.read()) || r.double_req.read()) {
+    if ((w_o_req_mem_valid && i_req_mem_ready.read() && !w_wait_response)
+        || r.double_req.read()) {
         v.iline_addr_req = wb_o_req_mem_addr;
     }
 

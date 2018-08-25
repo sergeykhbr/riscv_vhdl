@@ -34,8 +34,8 @@ Abort_Addr:     .word Abort_Handler
 IRQ_Addr:       .word 0x00000000
 FIQ_Addr:       .word 0x00000000
 
-# RAM-2 in HC08
-.equ STACK_BASE,        0x0E00
+# 512 KB RAM
+.equ STACK_BASE,        0x10080000
 
 #==================================================================
 # Exception Handlers

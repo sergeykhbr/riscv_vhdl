@@ -94,6 +94,7 @@ private:
     sc_uint<32> wb_hit_word;
     line_signal_type wb_l[ILINE_TOTAL];
     bool w_reuse_lastline;
+    bool w_wait_response;
 };
 
 

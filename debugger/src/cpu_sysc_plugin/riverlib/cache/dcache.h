@@ -61,9 +61,8 @@ private:
         sc_signal<sc_uint<2>> dline_size_req;
         sc_signal<sc_uint<2>> state;
     } v, r;
-
+    bool w_wait_response;
 };
-
 
 }  // namespace debugger
 

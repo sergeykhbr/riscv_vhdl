@@ -290,12 +290,12 @@ static const char *const IREGS_NAMES[] = {
     "r4",       // [4] 
     "r5",       // [5] 
     "r6",       // [6] 
-    "r7",       // [7] 
+    "r7",       // [7] fp in THUMB mode
     "r8",       // [8] 
     "r9",       // [9] 
     "r10",      // [10]
-    "r11",      // [11]
-    "fp",       // [12] frame pointer
+    "fp",       // [11] frame pointer
+    "r12",      // [12]
     "sp",       // [13] stack pointer
     "lr",       // [14] link register
     "pc",       // [15] instruction pointer

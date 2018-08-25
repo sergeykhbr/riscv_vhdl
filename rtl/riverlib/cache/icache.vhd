@@ -94,6 +94,7 @@ begin
     variable wb_hit_word : std_logic_vector(31 downto 0);
     variable wb_l : line_signal_vector;
     variable w_reuse_lastline : std_logic;
+    variable w_wait_response : std_logic;
 
     variable w_o_req_ctrl_ready : std_logic;
     variable w_o_req_mem_valid : std_logic;
@@ -109,7 +110,13 @@ begin
 
     v := r;
 
-    w_req_ctrl_valid := i_req_ctrl_valid or r.double_req;
+    w_wait_response := '0';
+    if r.state = State_WaitResp and i_resp_mem_data_valid = '0' then
+        w_wait_response := '1';
+    end if;
+
+    w_req_ctrl_valid := not w_wait_response
+                        and (i_req_ctrl_valid or r.double_req);
     wb_req_addr(0) := i_req_ctrl_addr;
     wb_req_addr(1) := i_req_ctrl_addr + 2;
 
@@ -195,10 +202,11 @@ begin
     else
         wb_o_req_mem_addr := wb_req_addr(1)(BUS_ADDR_WIDTH-1 downto 3)  & "000";
     end if;
-    w_o_req_ctrl_ready := not w_need_mem_req or i_req_mem_ready;
+    w_o_req_ctrl_ready := not w_need_mem_req or (i_req_mem_ready and not w_wait_response);
     w_req_fire := w_req_ctrl_valid and w_o_req_ctrl_ready;
 
-    if (w_o_req_mem_valid and i_req_mem_ready) = '1' or r.double_req = '1' then
+    if (w_o_req_mem_valid and i_req_mem_ready and not w_wait_response) = '1'
+       or r.double_req = '1' then
         v.iline_addr_req := wb_o_req_mem_addr;
     end if;
 
