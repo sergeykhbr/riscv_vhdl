@@ -353,6 +353,7 @@ class SymbolTableType {
             st_info_ = st->st_info;
         }
     }
+    virtual ~SymbolTableType() {}
     virtual ElfWord get_name() { return st_name_; }
     virtual uint64_t get_value() { return st_value_; }
     virtual uint64_t get_size() { return st_size_; }
