@@ -199,6 +199,17 @@ union BranchType {
     uint32_t value;
 };
 
+union BranchExchangeIndirectType {
+    struct bits_type {
+        uint32_t rm : 4;        // [3:0]
+        uint32_t opcode0 : 4;   // [4:7] = 0011b
+        uint32_t SBO:12;        // [8:19] = 111111111111b
+        uint32_t opcode2 : 8;   // [27:25] = 00010010b
+        uint32_t cond : 4;      // [31:28]
+    } bits;
+    uint32_t value;
+};
+
 union BlockDataTransferType {
     struct bits_type {
         uint32_t reglist : 16;  // [15:0] Register list
@@ -290,12 +301,12 @@ static const char *const IREGS_NAMES[] = {
     "r4",       // [4] 
     "r5",       // [5] 
     "r6",       // [6] 
-    "r7",       // [7] fp in THUMB mode
+    "r7",       // [7] 
     "r8",       // [8] 
     "r9",       // [9] 
     "r10",      // [10]
-    "fp",       // [11] frame pointer
-    "r12",      // [12]
+    "r11",      // [11]
+    "fp",       // [12] frame pointer
     "sp",       // [13] stack pointer
     "lr",       // [14] link register
     "pc",       // [15] instruction pointer

@@ -236,6 +236,8 @@ int ArmSourceService::disasm(uint64_t pc,
         return parseMultiply(pc, instr, mnemonic, comment);
     } else if (((instr >> 4) & 0x00FFFFFF) == 0x12FFF1) {
         return parseBranchExchange(pc, instr, mnemonic, comment);
+    } else if (((instr >> 4) & 0x00FFFFFF) == 0x12FFF3) {
+        return parseBranchLinkExchange(pc, instr, mnemonic, comment);
     } else if ((instr & 0x0F0000F0) == 0x06000070) {
         // ARM V6 operation: uxtab, uxtb, uxah, uxth..
         return parseBytesExtending(pc, instr, mnemonic, comment);
@@ -319,16 +321,22 @@ void ArmSourceService::disasm(uint64_t pc,
 int ArmSourceService::parseUndefinedInstruction(uint64_t pc, uint32_t instr,
                                                 AttributeType *mnemonic,
                                                 AttributeType *comment) {
-    char tstr[64];
+    char tstr[64] = "unimpl";
     if (((instr >> 20) & 0xFF) == 0x34) {
         uint32_t imm16 = instr & 0xFFF;
         imm16 |= ((instr & 0xF0000) >> 12);
         RISCV_sprintf(tstr, sizeof(tstr), "movt     %s,#%04x",
             IREGS_NAMES[(instr >> 12) & 0xf], imm16);
-    } else {
-        mnemonic->make_string("unimpl");
-        comment->make_string("");
+    } else if (((instr >> 20) & 0xFF) == 0x30) {
+        DataProcessingType u;
+        u.value = instr;
+        uint32_t imm16 = (u.mov_bits.imm4 << 12) | u.mov_bits.imm12;
+        RISCV_sprintf(tstr, sizeof(tstr), "movw     %s,#%04x",
+            IREGS_NAMES[u.mov_bits.rd], imm16);
+        
     }
+    mnemonic->make_string(tstr);
+    comment->make_string("");
     return 4;
 }
 
@@ -656,6 +664,19 @@ int ArmSourceService::parseBranchExchange(uint64_t pc, uint32_t instr,
 
     RISCV_sprintf(tstr, sizeof(tstr), "bx       %s",
             IREGS_NAMES[u.bits.offset & 0xF]);
+    mnemonic->make_string(tstr);
+    return 4;
+}
+
+int ArmSourceService::parseBranchLinkExchange(uint64_t pc, uint32_t instr,
+    AttributeType *mnemonic,
+    AttributeType *comment) {
+    char tstr[64];
+    BranchExchangeIndirectType u;
+    u.value = instr;
+
+    RISCV_sprintf(tstr, sizeof(tstr), "blx      %s",
+        IREGS_NAMES[u.bits.rm]);
     mnemonic->make_string(tstr);
     return 4;
 }

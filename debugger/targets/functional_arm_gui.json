@@ -163,7 +163,7 @@
     {'Class':'MemorySimClass','Instances':[
           {'Name':'fwimage0','Attr':[
                 ['LogLevel',1],
-                ['InitFile','../../../examples/dhrystone21/makefiles/bin/dhrystone21.hex'],
+                ['InitFile','../../../examples/dhrystone21/makefiles/binarm/dhrystone21.hex'],
                 ['ReadOnly',true],
                 ['BaseAddress',0x00100000],
                 ['Length',0x40000]
@@ -171,7 +171,7 @@
     {'Class':'MemorySimClass','Instances':[
           {'Name':'sram0','Attr':[
                 ['LogLevel',1],
-                ['InitFile','../../../examples/dhrystone21/makefiles/bin/dhrystone21.hex'],
+                ['InitFile','../../../examples/dhrystone21/makefiles/binarm/dhrystone21.hex'],
                 ['ReadOnly',false],
                 ['BaseAddress',0x10000000],
                 ['Length',0x80000]

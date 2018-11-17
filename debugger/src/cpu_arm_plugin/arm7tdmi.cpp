@@ -32,6 +32,11 @@ int ArmDataProcessingInstruction::exec_checked(Reg64Type *payload) {
     uint32_t A = static_cast<uint32_t>(R[u.reg_bits.rn]);
     uint32_t M;
     uint32_t Res;
+
+    if (u.reg_bits.rn == Reg_pc) {
+        A += 8;
+    }
+
     if (u.imm_bits.I) {
         M = imm12(u.imm_bits);
     } else {
@@ -193,6 +198,7 @@ class SingleDataTransferInstruction : public ArmInstruction {
             R[u.imm_bits.rd] = trans_.rpayload.b32[0];
             if (u.imm_bits.rd == Reg_pc) {
                 icpu_->setBranch(R[u.imm_bits.rd]);
+                icpu_->popStackTrace();
             }
         }
         return 4;
@@ -233,19 +239,29 @@ class BlockDataTransferInstruction : public ArmInstruction {
         uint64_t adrincr[2] = {static_cast<uint64_t>(-4), 4};
         u.value = payload->buf32[0];
         uint32_t R15 = (u.bits.reglist >> 15) & 0x1;
-        int ridx;
+        int rcount = 0;
         // @todo Mode switching depending R15 value!!!!
 
-        trans_.addr = R[u.bits.rn];
+        for (int i = 0; i < 16; i++) {
+            if ((u.bits.reglist & (0x1 << i)) != 0) {
+                rcount++;
+            }
+        }
+
+        if (u.bits.U) {
+            trans_.addr = R[u.bits.rn];
+        } else {
+            trans_.addr = R[u.bits.rn] - rcount * 4;
+            if (!u.bits.P) {
+                trans_.addr += 4;
+            }
+        }
+
         trans_.xsize = 4;
         trans_.wstrb = 0;
+
         for (int i = 0; i < 16; i++) {
-            if (u.bits.L) {
-                ridx = 15 - i;
-            } else {
-                ridx = i;
-            }
-            if ((u.bits.reglist & (0x1 << ridx)) == 0) {
+            if ((u.bits.reglist & (0x1 << i)) == 0) {
                 continue;
             }
             if (u.bits.L) {
@@ -254,35 +270,31 @@ class BlockDataTransferInstruction : public ArmInstruction {
             } else {
                 trans_.action = MemAction_Write;
                 trans_.wstrb = (1 << trans_.xsize) - 1;
-                trans_.wpayload.b64[0] = R[ridx];
-            }
-            if (u.bits.P) {
-                trans_.addr += adrincr[u.bits.U];
-                if (u.bits.W) {
-                    R[u.bits.rn] = trans_.addr;
-                }
+                trans_.wpayload.b64[0] = R[i];
             }
 
             icpu_->dma_memop(&trans_);
 
-            if (!u.bits.P) {
-                trans_.addr += adrincr[u.bits.U];
-                R[u.bits.rn] = trans_.addr;
+            trans_.addr += 4;
+            if (u.bits.W) {
+                R[u.bits.rn] += adrincr[u.bits.U];
             }
 
             if (u.bits.L) {
-                R[ridx] = trans_.rpayload.b32[0];
-                if (ridx == Reg_pc) {
-                    icpu_->setBranch(R[ridx]);
+                R[i] = trans_.rpayload.b32[0];
+                if (i == Reg_pc) {
+                    icpu_->setBranch(R[i]);
+                    icpu_->popStackTrace();
                 }
             }
         }
-
+/*
         if (!u.bits.P) {
             if (u.bits.W) {
                 RISCV_error("Post-index LDM,STM with W=1", 0);
             }
         }
+*/
         if (u.bits.S) {
             // TODO: force user mode
         }
@@ -302,7 +314,7 @@ class HWordSignedDataTransferInstruction : public ArmInstruction {
     virtual int exec_checked(Reg64Type *payload) {
         HWordSignedDataTransferType u;
         u.value = payload->buf32[0];
-        uint32_t opsz[2] = {1, 2};
+        uint32_t opsz[8] = {0, 2, 8, 8, 0, 2, 1, 2};
         uint64_t off = R[u.bits.rn];
         if (u.bits.rn == Reg_pc) {
             off += PREFETCH_OFFSET[icpu_->getInstrMode()];
@@ -313,15 +325,26 @@ class HWordSignedDataTransferInstruction : public ArmInstruction {
         }
 
         trans_.addr = off;
-        trans_.xsize = opsz[u.bits.h];
+        trans_.xsize = opsz[(u.bits.L << 2) | (u.bits.s << 1) | (u.bits.h)];
         trans_.wstrb = 0;
         if (u.bits.L) {
             trans_.action = MemAction_Read;
             trans_.rpayload.b64[0] = 0;
         } else {
-            trans_.action = MemAction_Write;
-            trans_.wstrb = (1 << trans_.xsize) - 1;
-            trans_.wpayload.b64[0] = R[u.bits.rd];
+            if (!u.bits.s) {
+                trans_.action = MemAction_Write;
+                trans_.wstrb = (1 << trans_.xsize) - 1;
+                trans_.wpayload.b64[0] = R[u.bits.rd];
+            } else {
+                if (u.bits.h) {
+                    trans_.action = MemAction_Write;
+                    trans_.wstrb = (1 << trans_.xsize) - 1;
+                    trans_.wpayload.b64[0] = R[u.bits.rd] | (R[u.bits.rd + 1] << 32);
+                } else {
+                    trans_.action = MemAction_Read;
+                    trans_.rpayload.b64[0] = 0;
+                }
+            }
         }
         icpu_->dma_memop(&trans_);
 
@@ -346,6 +369,11 @@ class HWordSignedDataTransferInstruction : public ArmInstruction {
             if (u.bits.rd == Reg_pc) {
                 icpu_->setBranch(R[u.bits.rd]);
             }
+        } else {
+            if (u.bits.s && !u.bits.h) {
+                R[u.bits.rd] = trans_.rpayload.b32[0];
+                R[u.bits.rd + 1] = trans_.rpayload.b32[1];
+            }
         }
         return 4;
     }
@@ -353,7 +381,7 @@ class HWordSignedDataTransferInstruction : public ArmInstruction {
  protected:
     virtual uint64_t get_increment(HWordSignedDataTransferType u) {
         uint64_t incr;
-        if (!u.bits.reg_imm) {
+        if (u.bits.reg_imm) {
             incr = (u.bits.imm_h << 4) | u.bits.rm;
         } else {
             incr = R[u.bits.rm];
@@ -841,6 +869,25 @@ public:
             R[Reg_pc] + (off << 2) + PREFETCH_OFFSET[icpu_->getInstrMode()]);
         R[Reg_pc] = off;
         icpu_->setBranch(off);
+        icpu_->pushStackTrace();
+        return 4;
+    }
+};
+
+/** Branch with Link and Exchange*/
+class BLX : public ArmInstruction {
+public:
+    BLX(CpuCortex_Functional *icpu) :
+        ArmInstruction(icpu, "BLX", "????000100101111111111110011????") {}
+
+    virtual int exec_checked(Reg64Type *payload) {
+        BranchExchangeIndirectType u;
+        u.value = payload->buf32[0];
+        R[Reg_lr] = R[Reg_pc] + 4;
+        uint64_t off = R[u.bits.rm];
+        R[Reg_pc] = off;
+        icpu_->setBranch(off);
+        icpu_->pushStackTrace();
         return 4;
     }
 };
@@ -862,6 +909,9 @@ public:
         }
         R[Reg_pc] = off;
         icpu_->setBranch(off);
+        if ((u.bits.offset & 0xf) == Reg_lr) {
+            icpu_->popStackTrace();
+        }
         return 4;
     }
 };
@@ -919,6 +969,21 @@ public:
         {}
 };
 
+/** Load Double-Word */
+static const char *LDRD_OPCODES[4] = {
+    "????0000?1?0????????????1101????", // immediate, post incr
+    "????0001?1?0????????????1101????", // immediate, pre incr
+    "????0000?0?0????????????1101????", // shift reg, post incr
+    "????0001?0?0????????????1101????", // shift reg, pre incr
+};
+
+class LDRD : public HWordSignedDataTransferInstruction {
+public:
+    LDRD(CpuCortex_Functional *icpu, int opidx) :
+        HWordSignedDataTransferInstruction(icpu, "LDRD", LDRD_OPCODES[opidx])
+    {}
+};
+
 /** Load Block data */
 static const char *LDM_OPCODES[4] = {
     "????1000???1????????????????????", // post incr
@@ -972,6 +1037,20 @@ public:
     STRH(CpuCortex_Functional *icpu, int opidx) :
         HWordSignedDataTransferInstruction(icpu, "STRH", STRH_OPCODES[opidx])
         {}
+};
+
+/** Store Double-Word */
+static const char *STRD_OPCODES[4] = {
+    "????0000?1?0????????????1111????", // immediate, post incr
+    "????0001?1?0????????????1111????", // immediate, pre incr
+    "????0000?0?0????????????1111????", // shift reg, post incr
+    "????0001?0?0????????????1111????", // shift reg, pre incr
+};
+
+class STRD : public HWordSignedDataTransferInstruction {
+public:
+    STRD(CpuCortex_Functional *icpu, int opidx) :
+        HWordSignedDataTransferInstruction(icpu, "STRD", STRD_OPCODES[opidx]) {}
 };
 
 /** Store Block data */
@@ -1210,6 +1289,7 @@ void CpuCortex_Functional::addArm7tmdiIsa() {
 
     // use the same as opcodes TEQ, TST, CMN and CMP without S-flag
     // and must be registered first.
+    addSupportedInstruction(new BLX(this));
     addSupportedInstruction(new BX(this));  // use TST,MSR opcode
     addSupportedInstruction(new NOP(this)); // use MSR opcode
     addSupportedInstruction(new MOVT(this));
@@ -1252,8 +1332,14 @@ void CpuCortex_Functional::addArm7tmdiIsa() {
     addSupportedInstruction(new ORR(this, 1));
     addSupportedInstruction(new MOV(this, 0));
     addSupportedInstruction(new MOV(this, 1));
-    addSupportedInstruction(new BIC(this, 0));
-    addSupportedInstruction(new BIC(this, 1));
+    addSupportedInstruction(new LDRD(this, 0));
+    addSupportedInstruction(new LDRD(this, 1));
+    addSupportedInstruction(new LDRD(this, 2));
+    addSupportedInstruction(new LDRD(this, 3));
+    addSupportedInstruction(new STRD(this, 0));
+    addSupportedInstruction(new STRD(this, 1));
+    addSupportedInstruction(new STRD(this, 2));
+    addSupportedInstruction(new STRD(this, 3));
     addSupportedInstruction(new MVN(this, 0));
     addSupportedInstruction(new MVN(this, 1));
     addSupportedInstruction(new B(this));
@@ -1282,6 +1368,8 @@ void CpuCortex_Functional::addArm7tmdiIsa() {
     addSupportedInstruction(new STRH(this, 1));
     addSupportedInstruction(new STM(this, 0));
     addSupportedInstruction(new STM(this, 1));
+    addSupportedInstruction(new BIC(this, 0));
+    addSupportedInstruction(new BIC(this, 1));
     addSupportedInstruction(new MCR(this));
     addSupportedInstruction(new MRC(this));
     addSupportedInstruction(new SWI(this));

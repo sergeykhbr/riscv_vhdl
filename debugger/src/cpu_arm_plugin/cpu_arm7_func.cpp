@@ -39,10 +39,22 @@ void CpuCortex_Functional::postinitService() {
     }
     addArm7tmdiIsa();
 
-    // Power-on
-    reset(false);
-
     CpuGeneric::postinitService();
+}
+
+void CpuCortex_Functional::hapTriggered(IFace *isrc, EHapType type,
+                                        const char *descr) {
+    AttributeType srvlist;
+    RISCV_get_services_with_iface(IFACE_RESET, &srvlist);
+    IService *iserv;
+    IReset *irst;
+    for (unsigned i = 0; i < srvlist.size(); i++) {
+        iserv = static_cast<IService *>(srvlist[i].to_iface());
+        irst = static_cast<IReset *>(iserv->getInterface(IFACE_RESET));
+        irst->powerOnPressed();
+    }
+
+    CpuGeneric::hapTriggered(isrc, type, descr);
 }
 
 unsigned CpuCortex_Functional::addSupportedInstruction(

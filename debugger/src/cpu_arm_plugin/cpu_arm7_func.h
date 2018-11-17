@@ -33,7 +33,10 @@ class CpuCortex_Functional : public CpuGeneric,
     /** IService interface */
     virtual void postinitService();
 
-    /** IResetListener itnterface */
+    /** IHap */
+    virtual void hapTriggered(IFace *isrc, EHapType type, const char *descr);
+
+    /** IResetListener interface */
     virtual void reset(bool active);
 
     /** ICpuGeneric interface */

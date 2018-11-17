@@ -1,5 +1,5 @@
-/*
- *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+/**
+ * @file
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -98,6 +98,9 @@ class ArmSourceService : public IService,
     int parseBranchExchange(uint64_t pc, uint32_t instr,
                     AttributeType *mnemonic,
                     AttributeType *comment);
+    int parseBranchLinkExchange(uint64_t pc, uint32_t instr,
+        AttributeType *mnemonic,
+        AttributeType *comment);
 
  private:
     AttributeType endianess_;
