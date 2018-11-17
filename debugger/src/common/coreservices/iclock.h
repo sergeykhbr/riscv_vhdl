@@ -40,6 +40,9 @@ class IClock : public IFace {
      */
     virtual void registerStepCallback(IClockListener *cb, uint64_t t) = 0;
 
+    /** Move already registered callback to another time */
+    virtual bool moveStepCallback(IClockListener *cb, uint64_t t) = 0;
+
     virtual double getFreqHz() = 0;
 };
 

@@ -1,8 +1,17 @@
-/**
- * @file
- * @copyright  Copyright 2017 GNSS Sensor Ltd. All right reserved.
- * @author     Sergey Khabarov - sergeykhbr@gmail.com
- * @brief      Read CPU stack trace buffer.
+/*
+ *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 #include "cmd_stack.h"
@@ -66,7 +75,7 @@ void CmdStack::exec(AttributeType *args, AttributeType *res) {
     tap_->read(addr, tbuf.size(), tbuf.data());
 
     RISCV_get_services_with_iface(IFACE_SOURCE_CODE, &lstServ);
-    if (lstServ.size() >= 0) {
+    if (lstServ.size() > 0) {
         IService *iserv = static_cast<IService *>(lstServ[0u].to_iface());
         isrc = static_cast<ISourceCode *>(
                 iserv->getInterface(IFACE_SOURCE_CODE));

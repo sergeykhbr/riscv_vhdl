@@ -119,6 +119,7 @@ class CpuGeneric : public IService,
     virtual void addHwBreakpoint(uint64_t addr);
     virtual void removeHwBreakpoint(uint64_t addr);
     virtual void skipBreakpoint();
+    virtual void flush() {}
  protected:
     virtual uint64_t getResetAddress() { return resetVector_.to_uint64(); }
     virtual EEndianessType endianess() = 0;
@@ -132,6 +133,7 @@ class CpuGeneric : public IService,
     /** IClock */
     virtual uint64_t getStepCounter() { return step_cnt_; }
     virtual void registerStepCallback(IClockListener *cb, uint64_t t);
+    virtual bool moveStepCallback(IClockListener *cb, uint64_t t);
     virtual double getFreqHz() {
         return static_cast<double>(freqHz_.to_int64());
     }
@@ -146,12 +148,12 @@ class CpuGeneric : public IService,
     /** IThread interface */
     virtual void busyLoop();
 
-    void updatePipeline();
-    bool updateState();
-    void fetchILine();
-    void updateDebugPort();
-    void updateQueue();
-    bool checkHwBreakpoint();
+    virtual void updatePipeline();
+    virtual bool updateState();
+    virtual void fetchILine();
+    virtual void updateDebugPort();
+    virtual void updateQueue();
+    virtual bool checkHwBreakpoint();
 
  protected:
     AttributeType isEnable_;

@@ -28,9 +28,7 @@ AutoCompleter::AutoCompleter(const char *name)
     registerInterface(static_cast<IAutoComplete *>(this));
     registerAttribute("History", &history_);
     registerAttribute("HistorySize", &history_size_);
-    registerAttribute("SocInfo", &socInfo_);
 
-    socInfo_.make_string("");
     history_.make_list(0);
     history_size_.make_int64(4);
     history_idx_ = 0;

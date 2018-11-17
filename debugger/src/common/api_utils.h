@@ -38,6 +38,7 @@ void RISCV_generate_name(AttributeType *name);
 /** Redirect output to specified console. */
 void RISCV_add_default_output(void *iout);
 void RISCV_remove_default_output(void *iout);
+void RISCV_set_default_clock(void *iclk);
 
 /** 
  * @brief Write output to logfile.

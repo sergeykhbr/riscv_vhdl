@@ -60,6 +60,15 @@ public:
         wrapper_->registerStepCallback(cb, t);
     }
 
+    bool moveStepCallback(IClockListener *cb, uint64_t t) {
+        //if (queue_.move(cb, t)) {
+        //    return true;
+        //}
+        registerStepCallback(cb, t);
+        return false;
+    }
+
+
     virtual double getFreqHz() { return 1.0; }
 
     /** IHap */

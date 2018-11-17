@@ -43,8 +43,6 @@ private:
     void addToHistory(const char *cmd);
 
 private:
-    //AttributeType console_;
-    AttributeType socInfo_;
     AttributeType history_;
     AttributeType history_size_;
 

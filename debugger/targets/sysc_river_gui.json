@@ -65,14 +65,13 @@
                 ['Enable',true],
                 ['StepQueue','core0'],
                 ['AutoComplete','autocmd0'],
-                ['CommandExecutor','cmdexec0'],
+                ['CmdExecutor','cmdexec0'],
                 ['DefaultLogFile','default.log'],
                 ['Signals','gpio0'],
                 ['InputPort','port1']]}]},
     {'Class':'AutoCompleterClass','Instances':[
           {'Name':'autocmd0','Attr':[
                 ['LogLevel',4],
-                ['SocInfo','info0']
                 ['HistorySize',64],
                 ['History',[
                      'csr MCPUID',

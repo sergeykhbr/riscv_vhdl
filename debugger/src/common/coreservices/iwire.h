@@ -1,8 +1,17 @@
-/**
- * @file
- * @copyright  Copyright 2017 GNSS Sensor Ltd. All right reserved.
- * @author     Sergey Khabarov - sergeykhbr@gmail.com
- * @brief      Single wire interface.
+/*
+ *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 #ifndef __DEBUGGER_COMMON_CORESERVICES_IWIRE_H__
@@ -12,6 +21,7 @@
 #include <iface.h>
 #include <attribute.h>
 #include <iservice.h>
+#include "coreservices/icmdexec.h"
 
 namespace debugger {
 
@@ -54,6 +64,46 @@ class GenericWireAttribute : public AttributeType,
     IService *parent_;
     AttributeType wireName_;
 };
+
+class WireCmdType : public ICommand {
+ public:
+    WireCmdType(IService *parent, const char *name) : ICommand(name, 0, 0) {
+        parent_ = parent;
+        iwire_ = static_cast<IWire *>(parent->getInterface(IFACE_WIRE));
+        briefDescr_.make_string("Generic Wire instance management command.");
+        detailedDescr_.make_string(
+            "Read/Write value:\n"
+            "    wire_objname <write_value>\n"
+            "Response:\n"
+            "    int i1:\n"
+            "        i1  - signal value\n"
+            "Usage:\n"
+            "    pin0\n"
+            "    pin1 1");
+    }
+
+    /** ICommand */
+    virtual bool isValid(AttributeType *args) {
+        if (!iwire_ || !(*args)[0u].is_equal(parent_->getObjName())) {
+            return false;
+        }
+        return true;
+    }
+
+    virtual void exec(AttributeType *args, AttributeType *res) {
+        bool vol = iwire_->getLevel();
+        if (args->size() > 1) {
+            vol = (*args)[1].to_bool();
+            iwire_->setLevel(vol);
+        }
+        res->make_boolean(vol);
+    }
+
+ private:
+    IService *parent_;
+    IWire *iwire_;
+};
+
 
 }  // namespace debugger
 

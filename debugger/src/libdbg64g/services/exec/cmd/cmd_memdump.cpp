@@ -43,6 +43,7 @@ bool CmdMemDump::isValid(AttributeType *args) {
 }
 
 void CmdMemDump::exec(AttributeType *args, AttributeType *res) {
+    res->attr_free();
     res->make_nil();
     if (!isValid(args)) {
         generateError(res, "Wrong argument list");

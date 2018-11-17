@@ -29,6 +29,7 @@
 #include "iservice.h"
 #include "iclass.h"
 #include "coreservices/irawlistener.h"
+#include "coreservices/iclock.h"
 
 namespace debugger {
 
@@ -45,7 +46,7 @@ mutex_def mutexDefaultConsoles_;
 
 /** */
 static FILE *logfile_ = 0;
-
+static IClock *iclk_ = 0;
 static AttributeType log_file(Attr_String);
 
 /** Mutex to avoid concurency for the output stream among threads. */
@@ -76,6 +77,10 @@ extern "C" void RISCV_remove_default_output(void *iout) {
         }
     }
     RISCV_mutex_unlock(&mutexDefaultConsoles_);
+}
+
+extern "C" void RISCV_set_default_clock(void *iclk) {
+    iclk_ = static_cast<IClock *>(iclk);
 }
 
 extern "C" int RISCV_enable_log(const char *filename) {
@@ -109,10 +114,15 @@ extern "C" int RISCV_printf(void *iface, int level,
     int ret = 0;
     va_list arg;
     IFace *iout = reinterpret_cast<IFace *>(iface);
+    uint64_t cur_t = 0;
+    if (iclk_) {
+        cur_t = iclk_->getStepCounter();
+    }
 
     RISCV_mutex_lock(&mutex_printf);
     if (iout == NULL) {
-        ret = RISCV_sprintf(bufLog, sizeof(bufLog), "[%s]: ", "unknown");
+        ret = RISCV_sprintf(bufLog, sizeof(bufLog),
+                    "[%" RV_PRI64 "d, \'%s\', \'", cur_t, "unknown");
     } else if (strcmp(iout->getFaceName(), IFACE_SERVICE) == 0) {
         IService *iserv = static_cast<IService *>(iout);
         AttributeType *local_level = 
@@ -121,15 +131,15 @@ extern "C" int RISCV_printf(void *iface, int level,
             RISCV_mutex_unlock(&mutex_printf);
             return 0;
         }
-        ret = RISCV_sprintf(bufLog, sizeof(bufLog), "[%s]: ", 
-                                                   iserv->getObjName());
+        ret = RISCV_sprintf(bufLog, sizeof(bufLog),
+                "[%" RV_PRI64 "d, \'%s\', \'", cur_t, iserv->getObjName());
     } else if (strcmp(iout->getFaceName(), IFACE_CLASS) == 0) {
         IClass *icls = static_cast<IClass *>(iout);
-        ret = RISCV_sprintf(bufLog, sizeof(bufLog), "[%s]: ", 
-                                                   icls->getClassName());
+        ret = RISCV_sprintf(bufLog, sizeof(bufLog),
+                "[%" RV_PRI64 "d, \'%s\', \'", cur_t, icls->getClassName());
     } else {
-        ret = RISCV_sprintf(bufLog, sizeof(bufLog), "[%s]: ", 
-                                                   iout->getFaceName());
+        ret = RISCV_sprintf(bufLog, sizeof(bufLog),
+                "[%" RV_PRI64 "d, \'%s\', \'", cur_t, iout->getFaceName());
     }
     va_start(arg, fmt);
 #if defined(_WIN32) || defined(__CYGWIN__)
@@ -139,6 +149,8 @@ extern "C" int RISCV_printf(void *iface, int level,
 #endif
     va_end(arg);
 
+    bufLog[ret++] = '\'';
+    bufLog[ret++] = ']';
     bufLog[ret++] = '\n';
     bufLog[ret] = '\0';
     IRawListener *ilstn;
@@ -233,13 +245,16 @@ extern "C" void RISCV_thread_join(thread_def th, int ms) {
 
 extern "C" void RISCV_event_create(event_def *ev, const char *name) {
 #if defined(_WIN32) || defined(__CYGWIN__)
+    int pid = RISCV_get_pid();
+    char event_name[256];
+    RISCV_sprintf(event_name, sizeof(event_name), "%s_%d", name, pid);
     ev->state = false;
-    ev->cond = CreateEvent( 
-                NULL,               // default security attributes
-                TRUE,               // manual-reset event
-                FALSE,              // initial state is nonsignaled
-                TEXT(name)          // object name
-                ); 
+    ev->cond = CreateEvent(
+        NULL,               // default security attributes
+        TRUE,               // manual-reset event
+        FALSE,              // initial state is nonsignaled
+        TEXT(event_name)    // object name
+        );
 #else
     pthread_mutex_init(&ev->mut, NULL);
     pthread_cond_init(&ev->cond, NULL);
@@ -339,7 +354,7 @@ extern "C" sharemem_def RISCV_memshare_create(const char *name, int sz) {
                  name);               // name of mapping object
 #else
 #endif
-    if (!ret) {
+    if (ret == 0) {
         RISCV_error("Couldn't create map object %s", name);
     }
     return ret;
@@ -355,7 +370,7 @@ extern "C" void* RISCV_memshare_map(sharemem_def h, int sz) {
                         sz);
 #else
 #endif
-    if (!ret) {
+    if (ret == 0) {
         RISCV_error("Couldn't map view of file with size %d", sz);
     }
     return ret;
@@ -379,7 +394,11 @@ extern "C" int RISCV_mutex_init(mutex_def *mutex) {
 #if defined(_WIN32) || defined(__CYGWIN__)
     InitializeCriticalSection(mutex);
 #else
-    pthread_mutex_init(mutex, NULL);
+    pthread_mutexattr_t attr;
+
+    pthread_mutexattr_init(&attr);
+    pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
+    pthread_mutex_init(mutex, &attr);
 #endif
     return 0;
 }

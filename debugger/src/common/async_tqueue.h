@@ -63,6 +63,9 @@ class ClockAsyncTQueueType : public AsyncTQueueType {
      */
     IFace *getNext(uint64_t step_cnt);
 
+    bool move(IFace *cb, uint64_t time) { return false; } // temporary
+
+
  private:
     enum QueueItemNames {
         Queue_Time,

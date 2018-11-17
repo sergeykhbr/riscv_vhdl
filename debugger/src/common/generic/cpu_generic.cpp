@@ -72,9 +72,11 @@ CpuGeneric::CpuGeneric(const char *name)
     dport_.valid = 0;
     reg_trace_file = 0;
     mem_trace_file = 0;
+    RISCV_set_default_clock(static_cast<IClock *>(this));
 }
 
 CpuGeneric::~CpuGeneric() {
+    RISCV_set_default_clock(0);
     RISCV_event_close(&eventConfigDone_);
     if (reg_trace_file) {
         reg_trace_file->close();
@@ -234,6 +236,14 @@ void CpuGeneric::registerStepCallback(IClockListener *cb,
     queue_.put(t, cb);
 }
 
+bool CpuGeneric::moveStepCallback(IClockListener *cb, uint64_t t) {
+    if (queue_.move(cb, t)) {
+        return true;
+    }
+    registerStepCallback(cb, t);
+    return false;
+}
+
 void CpuGeneric::setBranch(uint64_t npc) {
     branch_ = true;
     npc_.setValue(npc);
@@ -348,11 +358,11 @@ void CpuGeneric::halt(const char *descr) {
     }
     
     if (descr == NULL) {
-        RISCV_info("[%6" RV_PRI64 "d] pc:%04" RV_PRI64 "x: %s \t CPU halted",
-                       step_cnt_, pc_.getValue().val, strop);
+        RISCV_info("pc:%04" RV_PRI64 "x: %s \t CPU halted",
+                       pc_.getValue().val, strop);
     } else {
-        RISCV_info("[%6" RV_PRI64 "d] pc:%04" RV_PRI64 "x: %s\t %s",
-                       step_cnt_, pc_.getValue().val, strop, descr);
+        RISCV_info("pc:%04" RV_PRI64 "x: %s\t %s",
+                       pc_.getValue().val, strop, descr);
     }
     estate_ = CORE_Halted;
     RISCV_trigger_hap(getInterface(IFACE_SERVICE), HAP_Halt, "Descr");
@@ -415,6 +425,7 @@ void CpuGeneric::addHwBreakpoint(uint64_t addr) {
         RISCV_debug("Breakpoint[%d]: 0x%04" RV_PRI64 "x",
                     i, hwBreakpoints_[i].to_uint64());
     }
+    flush();
 }
 
 void CpuGeneric::removeHwBreakpoint(uint64_t addr) {
@@ -425,6 +436,7 @@ void CpuGeneric::removeHwBreakpoint(uint64_t addr) {
             return;
         }
     }
+    flush();
 }
 
 bool CpuGeneric::checkHwBreakpoint() {

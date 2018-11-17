@@ -1,8 +1,17 @@
-/**
- * @file
- * @copyright  Copyright 2017 GNSS Sensor Ltd. All right reserved.
- * @author     Sergey Khabarov - sergeykhbr@gmail.com
- * @brief      Remote access to debugger via TCP connection. Client thread.
+/*
+ *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 #include "tcpclient.h"
@@ -33,15 +42,14 @@ void TcpClient::postinitService() {
 }
 
 void TcpClient::updateData(const char *buf, int buflen) {
-    AttributeType console;
-    console.make_list(2);
-    console[0u].make_string("Console");
-    console[1].make_string(buf);
-    console.to_config();
-
     RISCV_mutex_lock(&mutexTx_);
-    memcpy(&txbuf_[txcnt_], console.to_string(), console.size() + 1);
-    txcnt_ += console.size() + 1;
+    int tsz = RISCV_sprintf(&txbuf_[txcnt_], sizeof(txbuf_) - txcnt_,
+                           "['%s',", "Console");
+    txcnt_ += tsz;
+    memcpy(&txbuf_[txcnt_], buf, buflen);
+    txcnt_ += buflen;
+    txbuf_[txcnt_++] = ']';
+    txbuf_[txcnt_++] = '\0';
     RISCV_mutex_unlock(&mutexTx_);
 }
 

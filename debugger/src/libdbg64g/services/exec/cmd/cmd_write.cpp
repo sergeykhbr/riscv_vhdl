@@ -1,8 +1,17 @@
-/**
- * @file
- * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
- * @author     Sergey Khabarov - sergeykhbr@gmail.com
- * @brief      Write memory.
+/*
+ *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 #include "cmd_write.h"
@@ -41,7 +50,7 @@ void CmdWrite::exec(AttributeType *args, AttributeType *res) {
     uint64_t val = (*args)[3].to_uint64();
     unsigned bytes = static_cast<unsigned>((*args)[2].to_uint64());
 
-    /** aech value 8-bytes (64 bits) add 8 for bullet proofness: */
+    /** each value 8-bytes (64 bits) add 8 for bullet proofness: */
     if (wrData_.size() < (bytes + 8)) {
         wrData_.make_data(bytes + 8);
     }

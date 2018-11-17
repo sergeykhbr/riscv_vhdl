@@ -1,8 +1,17 @@
-/**
- * @file
- * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
- * @author     Sergey Khabarov - sergeykhbr@gmail.com
- * @brief      Disassemble data block command.
+/*
+ *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 #include <string>
@@ -24,9 +33,9 @@ CmdDisas::CmdDisas(ITap *tap, ISocInfo *info)
         "    disas <addr> <byte> [str]\n"
         "    disas <addr> <data> [str]\n"
         "Example:\n"
-        "    data 0x40000000 100\n"
-        "    data 0x40000000 100 str\n"
-        "    data 0x1000 (73,00,10,00)\n"
+        "    disas 0x4000 100\n"
+        "    disas 0x4000 100 str\n"
+        "    disas 0x1000 (73,00,10,00)\n"
         "    ['data',0x1000,(73,00,10,00)]\n");
 
     AttributeType lstServ;
@@ -50,6 +59,7 @@ bool CmdDisas::isValid(AttributeType *args) {
 }
 
 void CmdDisas::exec(AttributeType *args, AttributeType *res) {
+    res->attr_free();
     res->make_nil();
     if (!isrc_ || !isValid(args)) {
         generateError(res, "Wrong argument list");
@@ -61,6 +71,7 @@ void CmdDisas::exec(AttributeType *args, AttributeType *res) {
     AttributeType *mem_data, *asm_data;
     AttributeType membuf, asmbuf;
     if ((*args)[2].is_integer()) {
+        // 4-bytes alignment
         uint32_t sz = (*args)[2].to_uint32();
         membuf.make_data(sz);
         mem_data = &membuf;

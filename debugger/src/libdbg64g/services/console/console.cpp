@@ -1,8 +1,17 @@
-/**
- * @file
- * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
- * @author     Sergey Khabarov - sergeykhbr@gmail.com
- * @brief      shell console class implementation.
+/*
+ *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 #include "console.h"
@@ -17,7 +26,7 @@ namespace debugger {
 /** Class registration in the Core */
 REGISTER_CLASS(ConsoleService)
 
-#define ENTRYSYMBOLS "riscv# "
+#define ENTRYSYMBOLS "cmd# "
 
 static const int STDIN = 0;
 
@@ -31,7 +40,7 @@ ConsoleService::ConsoleService(const char *name)
     registerAttribute("Enable", &isEnable_);
     registerAttribute("StepQueue", &stepQueue_);
     registerAttribute("AutoComplete", &autoComplete_);
-    registerAttribute("CommandExecutor", &commandExecutor_);
+    registerAttribute("CmdExecutor", &cmdexec_);
     registerAttribute("Signals", &signals_);
     registerAttribute("InputPort", &inPort_);
     registerAttribute("DefaultLogFile", &defaultLogFile_);
@@ -43,7 +52,6 @@ ConsoleService::ConsoleService(const char *name)
     isEnable_.make_boolean(true);
 	stepQueue_.make_string("");
     autoComplete_.make_string("");
-    commandExecutor_.make_string("");
 	signals_.make_string("");
     inPort_.make_string("");
     defaultLogFile_.make_string("");
@@ -116,11 +124,11 @@ void ConsoleService::postinitService() {
     }
 
     iexec_ = static_cast<ICmdExecutor *>(
-            RISCV_get_service_iface(commandExecutor_.to_string(), 
+            RISCV_get_service_iface(cmdexec_.to_string(), 
                                     IFACE_CMD_EXECUTOR));
     if (!iexec_) {
         RISCV_error("Can't get ICmdExecutor interface %s",
-                    commandExecutor_.to_string());
+                    cmdexec_.to_string());
     }
 
     AttributeType src_list;
