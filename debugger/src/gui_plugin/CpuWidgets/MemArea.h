@@ -21,11 +21,11 @@ class MemArea : public QPlainTextEdit,
                 public IGuiCmdHandler {
     Q_OBJECT
 public:
-    explicit MemArea(IGui *gui, QWidget *parent, uint64_t addr, uint64_t sz);
+    MemArea(IGui *gui, QWidget *parent, uint64_t addr, uint64_t sz);
     virtual ~MemArea();
 
     /** IGuiCmdHandler */
-    virtual void handleResponse(AttributeType *req, AttributeType *resp);
+    virtual void handleResponse(const char *cmd);
 
 signals:
     void signalUpdateData();
@@ -40,6 +40,7 @@ private:
 
 private:
     AttributeType cmdRead_;
+    AttributeType respRead_;
     QString name_;
     IGui *igui_;
 

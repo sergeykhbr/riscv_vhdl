@@ -22,7 +22,6 @@ static const uint64_t MAX_BYTES_VIEW = 1 << 12; // 4096
 AsmArea::AsmArea(IGui *gui, QWidget *parent, uint64_t fixaddr)
     : QTableWidget(parent) {
     igui_ = gui;
-    cmdRegs_.make_string("reg npc");
     cmdReadMem_.make_string("disas 0 0");
     hideLineIdx_ = 0;
     selRowIdx = -1;
@@ -121,7 +120,7 @@ void AsmArea::resizeEvent(QResizeEvent *ev) {
                     4*(visibleLinesTotal_ - line_cnt));
         cmdReadMem_.make_string(tstr);
         igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), 
-                                &cmdReadMem_, true);
+                               cmdReadMem_.to_string(), &respReadMem_, true);
     }
 
     QWidget::resizeEvent(ev);
@@ -148,7 +147,7 @@ void AsmArea::wheelEvent(QWheelEvent * ev) {
         }
         cmdReadMem_.make_string(tstr);
         igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), 
-                                &cmdReadMem_, true);
+                               cmdReadMem_.to_string(), &respReadMem_, true);
     }
     QWidget::wheelEvent(ev);
 }
@@ -159,20 +158,20 @@ void AsmArea::slotUpdateByTimer() {
     }
     waitRegNpc_ = true;
     igui_->registerCommand(static_cast<IGuiCmdHandler *>(this),
-                            &cmdRegs_, true);
+                            "reg npc", &respNpc_, true);
 }
 
-void AsmArea::handleResponse(AttributeType *req, AttributeType *resp) {
-    if (req->is_equal("reg npc")) {
+void AsmArea::handleResponse(const char *cmd) {
+    if (strcmp(cmd, "reg npc") == 0) {
         waitRegNpc_ = false;
-        if (!resp->is_nil()) {
-            npc_ = resp->to_uint64();
+        if (!respNpc_.is_nil()) {
+            npc_ = respNpc_.to_uint64();
             emit signalNpcChanged();
         }
-    } else if (strstr(req->to_string(), "br ")) {
+    } else if (strstr(cmd, "br ")) {
         emit signalBreakpointsChanged();
-    } else if (strstr(req->to_string(), "disas") && !resp->is_nil()) {
-        addMemBlock(*resp, asmLines_);
+    } else if (strstr(cmd, "disas") && !respReadMem_.is_nil()) {
+        addMemBlock(respReadMem_, asmLines_);
         emit signalAsmListChanged();
     }
 }
@@ -196,7 +195,7 @@ void AsmArea::slotNpcChanged() {
                 npc_, 4*visibleLinesTotal_);
     cmdReadMem_.make_string(tstr);
     igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), 
-                            &cmdReadMem_, true);
+                            cmdReadMem_.to_string(), &respReadMem_, true);
 }
 
 void AsmArea::slotAsmListChanged() {
@@ -248,7 +247,7 @@ void AsmArea::slotRedrawDisasm() {
                 startAddr_, sz);
     cmdReadMem_.make_string(tstr);
     igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), 
-                            &cmdReadMem_, true);
+                            cmdReadMem_.to_string(), &respReadMem_, true);
 }
 
 void AsmArea::slotCellDoubleClicked(int row, int column) {
@@ -270,7 +269,8 @@ void AsmArea::slotCellDoubleClicked(int row, int column) {
         RISCV_sprintf(tstr, sizeof(tstr), "br add 0x%" RV_PRI64 "x", addr);
     }
     AttributeType brcmd(tstr);
-    igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), &brcmd, true);
+    igui_->registerCommand(static_cast<IGuiCmdHandler *>(this),
+                           brcmd.to_string(), &respBr_, true);
 }
 
 int AsmArea::getNpcRowIdx() {

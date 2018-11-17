@@ -14,7 +14,6 @@
 #include <QtWidgets/QWidget>
 #include <QtWidgets/QLineEdit>
 
-
 namespace debugger {
 
 class MemControl : public QWidget {

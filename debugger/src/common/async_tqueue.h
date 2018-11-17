@@ -51,27 +51,47 @@ class AsyncTQueueType {
 };
 
 
-class ClockAsyncTQueueType : public AsyncTQueueType {
+class ClockAsyncTQueueType {
  public:
     ClockAsyncTQueueType();
+    ~ClockAsyncTQueueType();
+
+    /** Power ON/OFF cycle */
+    void hardReset();
 
     /** Thread safe method of the callbacks registration */
     void put(uint64_t time, IFace *cb);
+
+    /** push registered to the main queue */
+    void pushPreQueued();
+
+    /** Reset proccessed counter at the begining of each iteration */
+    void initProc() { item_cnt_ = 0; }
+
+    /** move previously regsiterd callbacks: true: moved; false: not found */
+    bool move(IFace *cb, uint64_t time);
 
     /**
      * Get next registered interface with counter less or equal to 'step_cnt'
      */
     IFace *getNext(uint64_t step_cnt);
 
-    bool move(IFace *cb, uint64_t time) { return false; } // temporary
-
-
  private:
-    enum QueueItemNames {
-        Queue_Time,
-        Queue_IFace,
-        Queue_Total
+    struct StepQueueItemType {
+        StepQueueItemType *left;
+        StepQueueItemType *right;
+        uint64_t time;
+        IFace *iface;
     };
+    StepQueueItemType *queue_;
+    int size_;
+    int item_total_;
+    int item_cnt_;
+
+    int precnt_;
+    StepQueueItemType prequeue_[1024];
+
+    mutex_def mutex_;
 };
 
 

@@ -1,8 +1,17 @@
-/**
- * @file
- * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
- * @author     Sergey Khabarov - sergeykhbr@gmail.com
- * @brief      Debugger Main Window form.
+/*
+ *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 #pragma once
@@ -28,13 +37,14 @@ public:
     virtual ~DbgMainWindow();
 
     /** IGuiCmdHandler */
-    virtual void handleResponse(AttributeType *req, AttributeType *resp);
+    virtual void handleResponse(const char *cmd);
 
 signals:
     void signalUpdateByTimer();
     void signalTargetStateChanged(bool);
     void signalRedrawDisasm();
     void signalAboutToClose();
+    void signalSimulationTime(double t);
 
 protected:
     virtual void closeEvent(QCloseEvent *ev_);
@@ -61,6 +71,7 @@ private slots:
     void slotOpenDisasm(uint64_t addr, uint64_t sz);
     void slotOpenMemory(uint64_t addr, uint64_t sz);
     void slotBreakpointsChanged();
+    void slotSimulationTime(double t);
 
 private:
     void createActions();
@@ -100,13 +111,22 @@ private:
     AttributeType config_;
     AttributeType listConsoleListeners_;
     AttributeType cmdStatus_;
+    AttributeType respStatus_;
     AttributeType cmdRun_;
+    AttributeType respRun_;
     AttributeType cmdHalt_;
+    AttributeType respHalt_;
     AttributeType cmdStep_;
+    AttributeType respStep_;
+    AttributeType cmdSteps_;
+    AttributeType respSteps_;
 
     IGui *igui_;
-    //event_def *initDone_;
-    bool statusRequested_;
+    int requestedCmd_;
+    double stepToSecHz_;
+    double simSecPrev_;
+    uint64_t realMSecPrev_;
+
     EBreakHandler *ebreak_;
 };
 

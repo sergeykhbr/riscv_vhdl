@@ -62,6 +62,8 @@ StackTraceArea::StackTraceArea(IGui *gui, QWidget *parent)
 
     connect(this, SIGNAL(cellDoubleClicked(int, int)),
             this, SLOT(slotCellDoubleClicked(int, int)));
+
+    requested_ = false;
 }
 
 StackTraceArea::~StackTraceArea() {
@@ -69,9 +71,12 @@ StackTraceArea::~StackTraceArea() {
 }
 
 void StackTraceArea::slotUpdateByTimer() {
-    AttributeType cmdStack("stack");
+    if (requested_) {
+        return;
+    }
+    requested_ = true;
     igui_->registerCommand(static_cast<IGuiCmdHandler *>(this),
-                            &cmdStack, true);
+                           "stack", &symbolList_, true);
 }
 
 void StackTraceArea::setListSize(int sz) {
@@ -105,15 +110,10 @@ void StackTraceArea::setListSize(int sz) {
     }
 }
 
-void StackTraceArea::handleResponse(AttributeType *req,
-                                    AttributeType *resp) {
-    if (strstr(req->to_string(), "stack") == 0) {
+void StackTraceArea::handleResponse(const char *cmd) {
+    if (strstr(cmd, "stack") == 0) {
         return;
     }
-    if (!symbolList_.is_nil()) {
-        return;
-    }
-    symbolList_ = *resp;
     emit signalHandleResponse();
 }
 
@@ -129,8 +129,11 @@ void StackTraceArea::slotHandleResponse() {
 
     for (int i = 0; i < list_sz; i++) {
         AttributeType &symb = symbolList_[i];
+        if (!symb.is_list() || symb.size() < 4) {
+            continue;
+        }
         AttributeType &saddr = symbolAddr_[i];
-        saddr.make_list(2);
+        saddr.make_list(COL_Total);
 
         // [from, ['symb_name',symb_offset], to, ['symb_name',symb_offset]]
         addr = symb[2].to_uint64();
@@ -143,7 +146,10 @@ void StackTraceArea::slotHandleResponse() {
         pw = item(i, COL_at_addr);
         pw->setText(makeSymbolQString(addr, symb[1]));
     }
+    symbolList_.attr_free();
     symbolList_.make_nil();
+    RISCV_memory_barrier();
+    requested_ = false;
 }
 
 QString StackTraceArea::makeSymbolQString(uint64_t addr, AttributeType &info) {

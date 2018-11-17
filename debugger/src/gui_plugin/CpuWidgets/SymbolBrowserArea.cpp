@@ -5,7 +5,7 @@
  * @brief      Symbol Browser main area.
  */
 
-#include "coreservices/ielfreader.h"
+#include "coreservices/isrccode.h"
 #include "SymbolBrowserArea.h"
 #include "moc_SymbolBrowserArea.h"
 
@@ -61,9 +61,8 @@ SymbolBrowserArea::SymbolBrowserArea(IGui *gui, QWidget *parent)
     connect(this, SIGNAL(signalHandleResponse()),
             this, SLOT(slotHandleResponse()));
 
-    AttributeType tcmd("symb");
     igui_->registerCommand(static_cast<IGuiCmdHandler *>(this),
-                           &tcmd, true);
+                           "symb", &symbolList_, true);
 }
 
 SymbolBrowserArea::~SymbolBrowserArea() {
@@ -101,12 +100,10 @@ void SymbolBrowserArea::setListSize(int sz) {
     }
 }
 
-void SymbolBrowserArea::handleResponse(AttributeType *req,
-                                       AttributeType *resp) {
-    if (strstr(req->to_string(), "symb") == 0) {
+void SymbolBrowserArea::handleResponse(const char *cmd) {
+    if (strstr(cmd, "symb") == 0) {
         return;
     }
-    symbolList_ = *resp;
     emit signalHandleResponse();
 }
 
@@ -150,7 +147,7 @@ void SymbolBrowserArea::slotFilterChanged(const QString &flt) {
     flt_buf.append("symb " + flt);
     tcmd.make_string(flt_buf.data());
     igui_->registerCommand(static_cast<IGuiCmdHandler *>(this),
-                           &tcmd, true);
+                           tcmd.to_string(), &symbolList_, true);
 }
 
 void SymbolBrowserArea::slotCellDoubleClicked(int row, int column) {

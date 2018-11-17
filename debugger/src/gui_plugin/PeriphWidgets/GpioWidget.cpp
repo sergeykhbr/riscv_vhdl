@@ -58,15 +58,15 @@ GpioWidget::GpioWidget(IGui *igui, QWidget *parent)
     char tstr[64];
     uint32_t addr_gpio = 0x80000000;
     RISCV_sprintf(tstr, sizeof(tstr), "read 0x%08x 8", addr_gpio);
-    cmdRd_.make_string(tstr);
+    reqcmd_.make_string(tstr);
 }
 
 GpioWidget::~GpioWidget() {
     igui_->removeFromQueue(static_cast<IGuiCmdHandler *>(this));
 }
 
-void GpioWidget::handleResponse(AttributeType *req, AttributeType *resp) {
-    newValue_.u.val[0] = resp->to_uint64();
+void GpioWidget::handleResponse(const char *cmd) {
+    newValue_.u.val[0] = respcmd_.to_uint64();
 }
 
 void GpioWidget::slotUpdateByTimer() {
@@ -77,7 +77,8 @@ void GpioWidget::slotUpdateByTimer() {
     emit signalLedValue(value_.u.map.led);
     emit signalDipValue(value_.u.map.dip);
 
-    igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), &cmdRd_, true);
+    igui_->registerCommand(static_cast<IGuiCmdHandler *>(this),
+            reqcmd_.to_string(), &respcmd_, true);
 }
 
 }  // namespace debugger

@@ -72,39 +72,97 @@ void AsyncTQueueType::initProc() {
 }
 
 /** Clock queue */
-ClockAsyncTQueueType::ClockAsyncTQueueType() : AsyncTQueueType() {
-    item_.make_list(Queue_Total);
+ClockAsyncTQueueType::ClockAsyncTQueueType() {
+    size_ = 1;
+    queue_ = new StepQueueItemType[size_];
+
+    RISCV_mutex_init(&mutex_);
+    hardReset();
 }
+
+ClockAsyncTQueueType::~ClockAsyncTQueueType() {
+    RISCV_mutex_destroy(&mutex_);
+    delete [] queue_;
+}
+
+void ClockAsyncTQueueType::hardReset() {
+    item_total_ = 0;
+    precnt_ = 0;
+    item_cnt_ = 0;
+}
+
 
 void ClockAsyncTQueueType::put(uint64_t time, IFace *cb) {
     RISCV_mutex_lock(&mutex_);
-    item_[Queue_Time].make_uint64(time);
-    item_[Queue_IFace].make_iface(cb);
-
-    AsyncTQueueType::put(&item_);
+    if (precnt_ >= 1024) {
+        RISCV_mutex_unlock(&mutex_);
+        RISCV_printf(0, 0, "clock pre-queue overflow: %d", precnt_);
+        return;
+    }
+    prequeue_[precnt_].left = 0;
+    prequeue_[precnt_].right = 0;
+    prequeue_[precnt_].time = time;
+    prequeue_[precnt_++].iface = cb;
     RISCV_mutex_unlock(&mutex_);
 }
 
+bool ClockAsyncTQueueType::move(IFace *cb, uint64_t time) {
+    RISCV_mutex_lock(&mutex_);
+    for (int i = 0; i < precnt_; i++) {
+        if (prequeue_[i].iface == cb) {
+            prequeue_[i].time = time;
+            RISCV_mutex_unlock(&mutex_);
+            return true;
+        }
+    }
+    for (int i = 0; i < item_total_; i++) {
+        if (queue_[i].iface == cb) {
+            queue_[i].time = time;
+            RISCV_mutex_unlock(&mutex_);
+            return true;
+        }
+    }
+    RISCV_mutex_unlock(&mutex_);
+    return false;
+}
+
+void ClockAsyncTQueueType::pushPreQueued() {
+    if (precnt_ == 0) {
+        return;
+    }
+    RISCV_mutex_lock(&mutex_);
+    while ((precnt_ + item_total_) > size_) {
+        int t1 = 2*size_;
+        StepQueueItemType *p1 = new StepQueueItemType[t1];
+        memcpy(p1, queue_, item_total_*sizeof(StepQueueItemType));
+        delete [] queue_;
+        queue_ = p1;
+        size_ = t1;
+    }
+    memcpy(&queue_[item_total_], prequeue_, precnt_*sizeof(StepQueueItemType));
+    item_total_ += precnt_;
+    precnt_ = 0;
+    RISCV_mutex_unlock(&mutex_);
+}
+
+
 IFace *ClockAsyncTQueueType::getNext(uint64_t step_cnt) {
     IFace *ret = 0;
-    if (curIdx_ >= curLen_) {
+    if (item_cnt_ >= item_total_) {
         return ret;
     }
-    for (unsigned i = curIdx_; i < curLen_; i++) {
-        uint64_t ev_time = stepQueue_[i][Queue_Time].to_uint64();
-
-        curIdx_ = i;
-        if (step_cnt < ev_time) {
+    for (; item_cnt_ < item_total_; item_cnt_++) {
+        if (step_cnt < queue_[item_cnt_].time) {
             continue;
         }
-        ret = stepQueue_[i][Queue_IFace].to_iface();
+        ret = queue_[item_cnt_].iface;
 
         // remove item from list using swap function to avoid usage
         // of allocation/deallocation calls.
-        if (i < (curLen_ - 1)) {
-            stepQueue_.swap_list_item(i, curLen_ - 1);
+        if (item_cnt_ < (item_total_ - 1)) {
+            queue_[item_cnt_] = queue_[item_total_ - 1];
         }
-        curLen_--;
+        item_total_--;
         break;
     }
     return ret;

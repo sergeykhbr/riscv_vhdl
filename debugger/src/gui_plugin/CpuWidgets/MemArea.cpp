@@ -62,7 +62,7 @@ void MemArea::slotUpdateByTimer() {
     reqAddrZ_ = reqAddr_;
     reqBytesZ_ = reqBytes_;
     igui_->registerCommand(static_cast<IGuiCmdHandler *>(this),
-                            &cmdRead_, true);
+                           cmdRead_.to_string(), &respRead_, true);
 }
 
 void MemArea::slotUpdateData() {
@@ -73,17 +73,17 @@ void MemArea::slotUpdateData() {
     update();
 }
 
-void MemArea::handleResponse(AttributeType *req, AttributeType *resp) {
+void MemArea::handleResponse(const char *cmd) {
     bool changed = false;
     waitingResponse_ = false;
-    if (resp->is_nil()) {
+    if (respRead_.is_nil()) {
         return;
     }
-    if (resp->size() != data_.size()) {
+    if (respRead_.size() != data_.size()) {
         changed = true;
     } else {
-        for (unsigned i = 0; i < resp->size(); i++) {
-            if ((*resp)(i) != data_(i)) {
+        for (unsigned i = 0; i < respRead_.size(); i++) {
+            if (respRead_(i) != data_(i)) {
                 changed = true;
                 break;
             }
@@ -93,7 +93,7 @@ void MemArea::handleResponse(AttributeType *req, AttributeType *resp) {
         return;
     }
 
-    data_ = *resp;
+    data_ = respRead_;
     to_string(reqAddrZ_, data_.size(), &dataText_);
     emit signalUpdateData();
 }

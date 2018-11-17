@@ -90,9 +90,7 @@ PlotWidget::~PlotWidget() {
     }
 }
 
-void PlotWidget::handleResponse(AttributeType *req,
-                                AttributeType *resp) {
-    response_ = *resp;
+void PlotWidget::handleResponse(const char *cmd) {
     emit signalCmdResponse();
     waitingResp_ = false;
 }
@@ -141,7 +139,7 @@ void PlotWidget::slotUpdateByTimer() {
         return;
     }
     igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), 
-                            &cmd_, true);
+                            cmd_.to_string(), &response_, true);
     waitingResp_ = true;
 }
 

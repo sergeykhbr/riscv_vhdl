@@ -38,14 +38,15 @@ class RegsViewWidget : public QWidget,
     virtual ~RegsViewWidget();
 
     /** IGuiCmdHandler */
-    virtual void handleResponse(AttributeType *req, AttributeType *resp);
+    virtual void handleResponse(const char *cmd);
 
  signals:
     void signalHandleResponse(AttributeType *resp);
 
  private slots:
     void slotUpdateByTimer();
-    void slotRegChanged(AttributeType *wrcmd);
+    void slotHandleResponse(AttributeType *resp);
+    void slotRegChanged(const char *wrcmd);
 
  private:
     void addRegWidget(int row, int col, int bytes, const char *name);
@@ -53,7 +54,8 @@ class RegsViewWidget : public QWidget,
  private:
     AttributeType cmdRegs_;
     AttributeType listRegs_;
-    AttributeType resp_;
+    AttributeType response_;
+    AttributeType responseRegChanged_;
     QGridLayout *gridLayout;
     
     IGui *igui_;

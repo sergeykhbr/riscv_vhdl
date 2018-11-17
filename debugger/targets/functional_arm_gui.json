@@ -13,6 +13,7 @@
                   'Serial':'port1',
                   'AutoComplete':'autocmd0',
                   'SocInfo':'info0',
+                  'StepToSecHz':1000000.0,
                   'PollingMs':250,
                   'EventsLoopMs':10,
                   'RegsViewWidget':{
@@ -23,7 +24,7 @@
                   }
                 }],
                 ['SocInfo','info0'],
-                ['CommandExecutor','cmdexec0']
+                ['CmdExecutor','cmdexec0']
                 ]}]},
     {'Class':'SerialDbgServiceClass','Instances':[
           {'Name':'uarttap','Attr':[
@@ -112,7 +113,8 @@
                              ['lr',4,0x08070],
                              ['cpsr',4,0x08080],
                              ['pc',4,0x08100],
-                             ['npc',4,0x08108]
+                             ['npc',4,0x08108],
+                             ['steps',8,0x10010]
                              ]]
                 ]}]},
     {'Class':'SimplePluginClass','Instances':[
@@ -145,7 +147,7 @@
                 ['SysBusWidthBytes',4,'Split dma transactions from CPU'],
                 ['StackTraceSize',64,'Number of 16-bytes entries'],
                 ['ResetVector',0x0000],
-                ['FreqHz',60000000],
+                ['FreqHz',1000000],
                 ['SysBusMasterID',0],
                 ['SourceCode','src0'],
                 ['GenerateRegTraceFile',false,'Generate Registers modification file to compare with SystemC'],

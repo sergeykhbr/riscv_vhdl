@@ -28,7 +28,7 @@ public:
     virtual ~AsmArea();
 
     /** IGuiCmdHandler */
-    virtual void handleResponse(AttributeType *req, AttributeType *resp);
+    virtual void handleResponse(const char *cmd);
 
 signals:
     void signalNpcChanged();
@@ -66,9 +66,11 @@ private:
     };
 
     AttributeType cmdReadMem_;
-    AttributeType cmdRegs_;
     AttributeType asmLines_;
     AttributeType asmLinesOut_;
+    AttributeType respNpc_;
+    AttributeType respReadMem_;
+    AttributeType respBr_;
     QString name_;
     IGui *igui_;
 

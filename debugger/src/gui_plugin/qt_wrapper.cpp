@@ -38,6 +38,7 @@ QtWrapper::QtWrapper(IGui *igui)
     : QObject() {
     igui_ = igui;
     exiting_ = false;
+    pextRequest_ = extRequest_;
     RISCV_event_create(&eventAppDestroyed_, "eventAppDestroyed_");
 }
 
@@ -60,8 +61,8 @@ void QtWrapper::eventsUpdate() {
             this, SLOT(slotMainWindowAboutToClose()));
 
     mainWindow_->show();
-    RISCV_unregister_timer(ui_events_update);
     app.exec();
+    RISCV_unregister_timer(ui_events_update);
 
     delete mainWindow_;
     app.quit();
@@ -73,6 +74,16 @@ void QtWrapper::gracefulClose() {
         mainWindow_->close();
         RISCV_event_wait_ms(&eventAppDestroyed_, 10000);
     }
+}
+
+void QtWrapper::externalCommand(AttributeType *req) {
+    size_t free_cnt = sizeof(extRequest_) - (pextRequest_ - extRequest_);
+    if (free_cnt <= req->size()) {
+        pextRequest_ = extRequest_;
+    }
+    memcpy(pextRequest_, req->to_string(), req->size() + 1);
+    emit signalExternalCommand(pextRequest_);
+    pextRequest_ += req->size() + 1;
 }
 
 void QtWrapper::slotMainWindowAboutToClose() {

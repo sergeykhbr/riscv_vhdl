@@ -34,7 +34,7 @@ public:
     virtual ~PlotWidget();
 
     /** IGuiCmdHandler */
-    virtual void handleResponse(AttributeType *req, AttributeType *resp);
+    virtual void handleResponse(const char *cmd);
 
 public slots:
     void slotUpdateByTimer();

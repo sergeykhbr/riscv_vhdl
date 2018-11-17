@@ -1,3 +1,19 @@
+/*
+ *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 #include "ConsoleWidget.h"
 #include "moc_ConsoleWidget.h"
 
@@ -8,7 +24,7 @@
 
 namespace debugger {
 
-static const char CONSOLE_ENTRY[] = "riscv# ";
+static const char CONSOLE_ENTRY[] = "cmd# ";
 
 ConsoleWidget::ConsoleWidget(IGui *igui, QWidget *parent) 
     : QPlainTextEdit(parent) {
@@ -38,9 +54,10 @@ ConsoleWidget::ConsoleWidget(IGui *igui, QWidget *parent)
 
     cursor.insertText(tr(
     "**********************************************************\n"
-    "  RISC-V debugger\n"
-    "  Author: Sergey Khabarov - sergeykhbr@gmail.com\n"
-    "  Copyright 2017 GNSS Sensor Ltd. All right reserved.\n"
+    "  System Emulator and Debugger\n"
+    "  Copyright (c) 2018 Sergey Khabarov\n"
+    "  Licensed under the Apache License, Version 2.0.\n"
+    "  e-mail: sergeykhbr@gmail.com\n"
     "**********************************************************\n"));
 
     cursor.insertText(tr(CONSOLE_ENTRY));
@@ -72,18 +89,17 @@ ConsoleWidget::~ConsoleWidget() {
     delete [] mbsConv_;
 }
 
-void ConsoleWidget::handleResponse(AttributeType *req, AttributeType *resp) {
-    if (resp->is_nil() || resp->is_invalid()) {
+void ConsoleWidget::handleResponse(const char *cmd) {
+    if (respcmd_.is_nil() || respcmd_.is_invalid()) {
         return;
     }
     RISCV_mutex_lock(&mutexOutput_);
-    strOutput_ += QString(resp->to_config().to_string()) + "\n";
+    strOutput_ += QString(respcmd_.to_config().to_string()) + "\n";
     RISCV_mutex_unlock(&mutexOutput_);
     emit signalNewData();
 }
 
 void ConsoleWidget::keyPressEvent(QKeyEvent *e) {
-    AttributeType cmd;
     QTextCursor cursor = textCursor();
     uint32_t vt_key = static_cast<uint32_t>(e->nativeVirtualKey());
     char vt_char = static_cast<char>(vt_key);
@@ -92,16 +108,18 @@ void ConsoleWidget::keyPressEvent(QKeyEvent *e) {
         vt_key += static_cast<uint32_t>('a');
     } 
     uint8_t spsmb = static_cast<uint8_t>(e->text().at(0).toLatin1());
-    if (spsmb == '_' || vt_key == ':' || vt_key == '\\' || vt_key == '/') {
+    if (spsmb == '_' || spsmb == ':' || spsmb == '\\' || spsmb == '/'
+     || spsmb == '\'' || spsmb == '[' || spsmb == ']'
+     || spsmb == '{' || spsmb == '}' || spsmb == ',') {
         vt_key = spsmb;
     }
     //printf("vt_key = %08x\n", vt_key);
-    bool cmd_ready = iauto_->processKey(vt_key, &cmd, &cursorPos_);
+    bool cmd_ready = iauto_->processKey(vt_key, &reqcmd_, &cursorPos_);
 
     moveCursor(QTextCursor::End);
     cursor = textCursor();
     cursor.setPosition(cursorMinPos_, QTextCursor::KeepAnchor);
-    cursor.insertText(cmd.to_string());
+    cursor.insertText(reqcmd_.to_string());
     if (cursorPos_[0u].to_int()) {
         cursor.movePosition(QTextCursor::Left, 
                 QTextCursor::MoveAnchor, cursorPos_[0u].to_int());
@@ -119,8 +137,8 @@ void ConsoleWidget::keyPressEvent(QKeyEvent *e) {
     cursorMinPos_ = cursor.selectionStart();
     verticalScrollBar()->setValue(verticalScrollBar()->maximum());
         
-    igui_->registerCommand(
-        static_cast<IGuiCmdHandler *>(this), &cmd, false);
+    igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), 
+        reqcmd_.to_string(), &respcmd_, false);
 }
 
 void ConsoleWidget::slotUpdateByData() {

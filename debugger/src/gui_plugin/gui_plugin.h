@@ -48,9 +48,12 @@ public:
     virtual IService *getParentService();
     virtual IFace *getSocInfo();
     virtual const AttributeType *getpConfig();
-    virtual void registerCommand(IGuiCmdHandler *src, AttributeType *cmd,
+    virtual void registerCommand(IGuiCmdHandler *iface,
+                                 const char *cmd, AttributeType *resp,
                                  bool silent);
     virtual void removeFromQueue(IFace *iface);
+    virtual void externalCommand(AttributeType *req);
+    virtual void *getQGui() { return ui_; }
 
     /** IThread interface */
     virtual void stop();
@@ -61,20 +64,28 @@ private:
     bool processCmdQueue();
 
 private:
-    static const int CMD_QUEUE_SIZE = 128;
+    static const int CMD_QUEUE_SIZE = 256;
 
     AttributeType guiConfig_;
     AttributeType socInfo_;
-    AttributeType cmdExecutor_;
+    AttributeType cmdexec_;
 
     ISocInfo *info_;
     ICmdExecutor *iexec_;
     QtWrapper *ui_;
 
-    GuiAsyncTQueueType queue_;
-
-    event_def eventCommandAvailable_;
     event_def config_done_;
+
+    char cmdbuf_[1024*1024];
+    char *pcmdwr_;
+    struct CmdType {
+        bool silent;
+        const char *req;
+        IGuiCmdHandler *iface;
+        AttributeType *resp;
+    } cmds_[CMD_QUEUE_SIZE];
+    uint8_t cmdwrcnt_;
+    uint8_t cmdrdcnt_;
 };
 
 DECLARE_CLASS(GuiPlugin)

@@ -65,27 +65,11 @@ void CmdRegs::exec(AttributeType *args, AttributeType *res) {
     AttributeType soclst;
     info_->getRegsList(&soclst);
 
-    struct RegsArrType {
-        Reg64Type reg[REGS_MAX];
-    };
-    union CpiRegionType {
-        RegsArrType regarr;
-        uint8_t buf[sizeof(RegsArrType)];
-    } t1;
-    DsuMapType *dsu = info_->getpDsu();
-    uint64_t addr = reinterpret_cast<uint64_t>(dsu->ureg.v.iregs);
-    addr &= 0xFFFFFFFFul;
-    tap_->read(addr, 8 * soclst.size(), t1.buf);
-
-    uint64_t idx;
     res->make_dict();
     for (unsigned i = 0; i < soclst.size(); i++) {
         const char *name = soclst[i].to_string();
-        if (strlen(name) == 0) {
-            continue;
-        }
-        idx = (info_->reg2addr(name) - addr) / sizeof(uint64_t);
-        (*res)[name].make_uint64(t1.regarr.reg[idx].val);
+        tap_->read(info_->reg2addr(name), 8, u.buf);
+        (*res)[name].make_uint64(u.val);
     }
 }
 

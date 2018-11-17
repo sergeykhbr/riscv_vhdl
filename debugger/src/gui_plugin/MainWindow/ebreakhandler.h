@@ -23,15 +23,19 @@ public:
     void setHwRemoveBreakpoint(uint64_t addr) { dsu_hw_br_ = addr; }
 
     /** IGuiCmdHandler */
-    virtual void handleResponse(AttributeType *req, AttributeType *resp);
+    virtual void handleResponse(const char *cmd);
 
     /** Write address and instruction into fetcher to skip EBREAK once */
     void skip();
 
 private:
-    AttributeType readBr_;
-    AttributeType readNpc_;
+    AttributeType reqReadBr_;
     AttributeType brList_;
+    AttributeType reqReadNpc_;
+    AttributeType respReadNpc_;
+    char reqWriteMem_[256];
+    AttributeType respmemWrite_;
+
     IGui *igui_;
     uint64_t dsu_sw_br_;
     uint64_t dsu_hw_br_;

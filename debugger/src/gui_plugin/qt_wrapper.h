@@ -26,7 +26,7 @@ namespace debugger {
 
 class QtWrapper : public QObject {
     Q_OBJECT
-public:
+ public:
     QtWrapper(IGui *igui);
     virtual ~QtWrapper();
 
@@ -34,13 +34,17 @@ public:
     void eventsUpdate();
     void gracefulClose();
 
-signals:
-    void signalPollingUpdate();
+    void externalCommand(AttributeType *req);
 
-private slots:
+ private slots:
     void slotMainWindowAboutToClose();
 
-private:
+ signals:
+    void signalExternalCommand(const char *name);
+
+ private:
+    char extRequest_[16*1024];
+    char *pextRequest_;
     IGui *igui_;
     DbgMainWindow *mainWindow_;
     bool exiting_;

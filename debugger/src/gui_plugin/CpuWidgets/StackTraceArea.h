@@ -27,7 +27,7 @@ public:
     virtual ~StackTraceArea();
 
     /** IGuiCmdHandler */
-    virtual void handleResponse(AttributeType *req, AttributeType *resp);
+    virtual void handleResponse(const char *cmd);
 
 public slots:
     void slotUpdateByTimer();
@@ -51,6 +51,7 @@ private:
 
     AttributeType symbolList_;
     AttributeType symbolAddr_;
+    bool requested_;
     IGui *igui_;
     int lineHeight_;
     int hideLineIdx_;

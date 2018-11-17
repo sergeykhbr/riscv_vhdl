@@ -25,7 +25,7 @@
 namespace debugger {
 
 RegWidget::RegWidget(const char *name, int bytes, QWidget *parent) 
-    : QWidget(parent) {
+    : QLineEdit(parent) {
     value_ = 0;
 
     regName_.make_string(name);
@@ -44,39 +44,21 @@ RegWidget::RegWidget(const char *name, int bytes, QWidget *parent)
     setFont(font);
     QFontMetrics fm(font);
 
-    QHBoxLayout *pLayout = new QHBoxLayout;
-    pLayout->setContentsMargins(4, 1, 4, 1);
-    setLayout(pLayout);
-
-    QLabel *label = new QLabel(this);
-    QSizePolicy labelSizePolicy(QSizePolicy::Preferred, 
-                                QSizePolicy::Preferred);
-    labelSizePolicy.setHorizontalStretch(0);
-    labelSizePolicy.setVerticalStretch(0);
-    labelSizePolicy.setHeightForWidth(label->sizePolicy().hasHeightForWidth());
-    label->setSizePolicy(labelSizePolicy);
-    label->setText(name_);
-    label->setAlignment(Qt::AlignRight | Qt::AlignTrailing | Qt::AlignVCenter);
-    pLayout->addWidget(label);
-
-    edit_ = new QLineEdit(this);
-    pLayout->addWidget(edit_);
     RISCV_sprintf(fmtValue_, sizeof(fmtValue_), "%%0%d" RV_PRI64 "x", 2*bytes);
     respValue_ = value_ = 0xfeedfaceull;
 
     char tstr[64];
     RISCV_sprintf(tstr, sizeof(tstr), fmtValue_, value_);
-
     QString text(tstr);
-    edit_->setText(text);
-    edit_->setMaxLength(19);
-    edit_->setFixedWidth(fm.width(text) + 8);
-    edit_->setFixedHeight(fm.height() + 2);
+    setText(text);
+    setMaxLength(19);
+    setFixedWidth(fm.width(text) + 8);
+    setFixedHeight(fm.height() + 2);
 
-    setMinimumWidth(edit_->width() + fm.width(name_) + 16);
-    setMinimumHeight(edit_->height());
+    setMinimumWidth(width() + 16);
+    setMinimumHeight(height());
 
-    connect(edit_, SIGNAL(editingFinished()),
+    connect(this, SIGNAL(editingFinished()),
             this, SLOT(slotEditingFinished()));
 }
 
@@ -87,20 +69,25 @@ void RegWidget::slotHandleResponse(AttributeType *resp) {
     if (!resp->has_key(regName_.to_string())) {
         return;
     }
-    respValue_ = (*resp)[regName_.to_string()].to_uint64();
-    if (value_ != respValue_) {
-        char tstr[64];
-        value_ = respValue_;
-        RISCV_sprintf(tstr, sizeof(tstr), fmtValue_, value_);
-        QString text(tr(tstr));
-        edit_->setText(text);
+    outputValue((*resp)[regName_.to_string()]);
+}
+
+void RegWidget::outputValue(AttributeType &val) {
+    respValue_ = val.to_uint64();
+    if (respValue_ == value_) {
+        return;
     }
+    char tstr[64];
+    value_ = respValue_;
+    RISCV_sprintf(tstr, sizeof(tstr), fmtValue_, value_);
+    QString text(tr(tstr));
+    setText(text);
 }
 
 void RegWidget::slotEditingFinished() {
     wchar_t wcsConv[128];
     char mbsConv[128];
-    int sz = edit_->text().toWCharArray(wcsConv);
+    int sz = text().toWCharArray(wcsConv);
     uint64_t new_val;
     wcstombs(mbsConv, wcsConv, sz);
     mbsConv[sz] = '\0';
@@ -113,7 +100,7 @@ void RegWidget::slotEditingFinished() {
                       regName_.to_string(), mbsConv);
         cmdWrite_.make_string(tstr);
 
-        emit signalChanged(&cmdWrite_);
+        emit signalChanged(cmdWrite_.to_string());
         setFocus();
     }
 }

@@ -1,3 +1,19 @@
+/*
+ *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 #include "coreservices/isocinfo.h"
 #include "PnpWidget.h"
 #include "moc_PnpWidget.h"
@@ -50,6 +66,12 @@ PnpWidget::PnpWidget(IGui *igui, QWidget *parent) : QWidget(parent) {
     connect(this, SIGNAL(signalUpdate()), this, SLOT(slotUpdate()));
     setMinimumWidth(400);
     setMinimumHeight(300);
+
+    char tstr[64];
+    uint32_t addr_pnp = 0xFFFFF000;
+    RISCV_sprintf(tstr, sizeof(tstr),
+                "read 0x%08x %d", addr_pnp, sizeof(PnpMapType));
+    reqcmd_.make_string(tstr);
 }
 
 PnpWidget::~PnpWidget() {
@@ -57,24 +79,17 @@ PnpWidget::~PnpWidget() {
 }
 
 void PnpWidget::showEvent(QShowEvent *event_) {
-    AttributeType cmd;
-    char tstr[64];
-
-    uint32_t addr_pnp = 0xFFFFF000;
-    RISCV_sprintf(tstr, sizeof(tstr),
-                "read 0x%08x %d", addr_pnp, sizeof(PnpMapType));
-
-    cmd.make_string(tstr);
-    igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), &cmd, true);
+    igui_->registerCommand(static_cast<IGuiCmdHandler *>(this),
+            reqcmd_.to_string(), &respcmd_, true);
     
     QWidget::showEvent(event_);
 }
 
-void PnpWidget::handleResponse(AttributeType *req, AttributeType *resp) {
-    if (!resp->is_data()) {
+void PnpWidget::handleResponse(const char *cmd) {
+    if (!respcmd_.is_data()) {
         return;
     }
-    memcpy(&pnp_, resp->data(), resp->size());
+    memcpy(&pnp_, respcmd_.data(), respcmd_.size());
     emit signalUpdate();
 }
 

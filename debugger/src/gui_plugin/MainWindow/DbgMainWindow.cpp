@@ -1,3 +1,19 @@
+/*
+ *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 #include "DbgMainWindow.h"
 #include "moc_DbgMainWindow.h"
 #include "ControlWidget/PnpWidget.h"
@@ -12,6 +28,7 @@
 #include "GnssWidgets/MapWidget.h"
 #include "GnssWidgets/PlotWidget.h"
 #include <QtWidgets/QtWidgets>
+#include <QtCore/QDate>
 
 #ifdef WIN32
 //#define GITHUB_SCREENSHOT_SIZE
@@ -21,10 +38,12 @@ namespace debugger {
 
 DbgMainWindow::DbgMainWindow(IGui *igui) : QMainWindow() {
     igui_ = igui;
-    statusRequested_ = false;
-    ebreak_ = 0;
+    requestedCmd_ = 0;
+    simSecPrev_ = 0;
+    realMSecPrev_ = QDateTime::currentMSecsSinceEpoch();
 
-    setWindowTitle(tr("RISC-V platform debugger"));
+    setWindowIcon(QIcon(":/images/river_96x96.png"));
+    setWindowTitle(tr("Universal platform simulator"));
 #ifdef GITHUB_SCREENSHOT_SIZE
     resize(QSize(872, 600));
 #else
@@ -37,6 +56,7 @@ DbgMainWindow::DbgMainWindow(IGui *igui) : QMainWindow() {
     cmdRun_.make_string("c");
     cmdHalt_.make_string("halt");
     cmdStep_.make_string("c 1");
+    cmdSteps_.make_string("reg steps");
  
     createActions();
     createMenus();
@@ -74,12 +94,16 @@ DbgMainWindow::DbgMainWindow(IGui *igui) : QMainWindow() {
     connect(tmrGlobal_, SIGNAL(timeout()), this, SLOT(slotUpdateByTimer()));
     tmrGlobal_->setSingleShot(false);
     const AttributeType &cfg = *igui->getpConfig();
+    stepToSecHz_ = cfg["StepToSecHz"].to_float();
     int t1 = cfg["PollingMs"].to_int();
     if (t1 < 10) {
         t1 = 10;
     }
     tmrGlobal_->setInterval(t1);
     tmrGlobal_->start();
+
+    connect(this, SIGNAL(signalSimulationTime(double)),
+                  SLOT(slotSimulationTime(double)));
 }
 
 DbgMainWindow::~DbgMainWindow() {
@@ -104,14 +128,14 @@ void DbgMainWindow::contextMenuEvent(QContextMenuEvent *ev_) {
 }
 #endif
 
-void DbgMainWindow::handleResponse(AttributeType *req, AttributeType *resp) {
-    if (req->is_equal(cmdStatus_.to_string())) {
-        statusRequested_ = false;
-        if (resp->is_nil()) {
+void DbgMainWindow::handleResponse(const char *cmd) {
+    if (strcmp(cmd, cmdStatus_.to_string()) == 0) {
+        requestedCmd_ &= ~0x1;
+        if (respStatus_.is_nil()) {
             return;
         }
         GenericCpuControlType ctrl;
-        ctrl.val = resp->to_uint64();
+        ctrl.val = respStatus_.to_uint64();
         if ((actionRun_->isChecked() && ctrl.bits.halt)
             || (!actionRun_->isChecked() && !ctrl.bits.halt)) {
             emit signalTargetStateChanged(ctrl.bits.halt == 0);
@@ -119,14 +143,10 @@ void DbgMainWindow::handleResponse(AttributeType *req, AttributeType *resp) {
         if ((ctrl.bits.sw_breakpoint || ctrl.bits.hw_breakpoint) && ebreak_) {
             ebreak_->skip();
         }
-#if 0
-        static const char *xSTATES[] = {"Idle", "WaitGrant", "WaitResp", "WaitAccept"};
-        static const char *CSTATES[] = {"Idle", "IMem", "DMem"};
-        RISCV_printf(0, 0, "istate=%s dstate=%s; cstate=%s",
-          xSTATES[ctrl.bits.istate],
-          xSTATES[ctrl.bits.dstate],
-          CSTATES[ctrl.bits.cstate]);
-#endif
+    } else if (strcmp(cmd, cmdSteps_.to_string()) == 0) {
+        double tsec =
+            static_cast<double>(respSteps_.to_uint64()) / stepToSecHz_;
+        emit signalSimulationTime(tsec);
     }
 }
 
@@ -286,7 +306,26 @@ void DbgMainWindow::createMenus() {
 
 
 void DbgMainWindow::createStatusBar() {
-    statusBar()->showMessage(tr("Ready"));
+    slotSimulationTime(0);
+}
+
+void DbgMainWindow::slotSimulationTime(double t) {
+    QString simTime;
+    uint64_t cur_sec = QDateTime::currentMSecsSinceEpoch();
+
+    double slowdown = 0;
+    double dt_sim = t - simSecPrev_;
+    if (t != simSecPrev_ && dt_sim) {
+        double dt_real = static_cast<double>(cur_sec - realMSecPrev_) / 1000.0;
+        slowdown = dt_real / dt_sim;
+    }
+    realMSecPrev_ = cur_sec;
+    simSecPrev_ = t;
+
+    simTime.sprintf("Simulation Time: %.1f seconds. Slowdown: %.1f",
+                    t, slowdown);
+    statusBar()->showMessage(simTime);
+    requestedCmd_ &= ~0x2;
 }
 
 void DbgMainWindow::createMdiWindow() {
@@ -411,10 +450,12 @@ void DbgMainWindow::slotOpenMemory(uint64_t addr, uint64_t sz) {
 }
 
 void DbgMainWindow::slotUpdateByTimer() {
-    if (!statusRequested_) {
-        statusRequested_ = true;
+    if (!requestedCmd_) {
+        requestedCmd_ = 0x3;
         igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), 
-                               &cmdStatus_, true);
+                               cmdStatus_.to_string(), &respStatus_, true);
+        igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), 
+                               cmdSteps_.to_string(), &respSteps_, true);
     }
     emit signalUpdateByTimer();
 }
@@ -443,17 +484,17 @@ void DbgMainWindow::slotActionAbout() {
 void DbgMainWindow::slotActionTargetRun() {
     actionRun_->setChecked(true);
     igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), 
-                           &cmdRun_, true);
+                           cmdRun_.to_string(), &respRun_, true);
 }
 
 void DbgMainWindow::slotActionTargetHalt() {
     igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), 
-                           &cmdHalt_, true);
+                           cmdHalt_.to_string(), &respHalt_, true);
 }
 
 void DbgMainWindow::slotActionTargetStepInto() {
     igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), 
-                           &cmdStep_, true);
+                           cmdStep_.to_string(), &respStep_, true);
 }
 
 /** Redraw all opened disassembler views */

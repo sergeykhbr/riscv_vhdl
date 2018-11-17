@@ -13,6 +13,7 @@
                   'Serial':'port1',
                   'AutoComplete':'autocmd0',
                   'SocInfo':'info0',
+                  'StepToSecHz':60000000.0,
                   'PollingMs':250,
                   'EventsLoopMs':10,
                   'RegsViewWidget':{
@@ -32,7 +33,7 @@
                   }
                 }],
                 ['SocInfo','info0'],
-                ['CommandExecutor','cmdexec0']
+                ['CmdExecutor','cmdexec0']
                 ]}]},
     {'Class':'SerialDbgServiceClass','Instances':[
           {'Name':'uarttap','Attr':[
@@ -93,7 +94,8 @@
                             ['s8',8,0x080C0],['s9',8,0x080C8],['s10',8,0x080D0],['s11',8,0x080D8],
                             ['t3',8,0x080E0],['t4',8,0x080E8],['t5',8,0x080F0],['t6',8,0x080F8],
                             ['pc',8,0x08100,'Instruction Pointer'],
-                            ['npc',8,0x08108,'Next IP']]],
+                            ['npc',8,0x08108,'Next IP'],
+                            ['steps',8,0x10010]]],
                 ['ListCSR',[
                     ['MISA',8,0xf10,'Architecture and supported set of instructions'],
                     ['MVENDORID',8,0xf11,'Vecndor ID'],

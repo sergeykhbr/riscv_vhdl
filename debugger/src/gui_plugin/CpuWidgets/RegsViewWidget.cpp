@@ -17,6 +17,7 @@
 #include "RegWidget.h"
 #include "RegsViewWidget.h"
 #include "moc_RegsViewWidget.h"
+#include <QtWidgets/QLabel>
 
 #include <memory>
 
@@ -32,7 +33,6 @@ RegsViewWidget::RegsViewWidget(IGui *igui, QWidget *parent)
     gridLayout->setVerticalSpacing(0);
     gridLayout->setContentsMargins(4, 4, 4, 4);
     setLayout(gridLayout);
-    cmdRegs_.make_string("regs");
     waitingResp_ = false;
 
     const AttributeType &cfg = (*igui_->getpConfig())["RegsViewWidget"];
@@ -57,15 +57,20 @@ RegsViewWidget::RegsViewWidget(IGui *igui, QWidget *parent)
         }
     }
     gridLayout->setColumnStretch(2*reglist.size() + 1, 10);
+    connect(this, SIGNAL(signalHandleResponse(AttributeType *)),
+                  SLOT(slotHandleResponse(AttributeType *)));
 }
 
 RegsViewWidget::~RegsViewWidget() {
     igui_->removeFromQueue(static_cast<IGuiCmdHandler *>(this));
 }
 
-void RegsViewWidget::handleResponse(AttributeType *req, AttributeType *resp) {
-    resp_ = *resp;
-    emit signalHandleResponse(&resp_);
+void RegsViewWidget::handleResponse(const char *cmd) {
+    emit signalHandleResponse(&response_);
+}
+
+void RegsViewWidget::slotHandleResponse(AttributeType *resp) {
+    // To avoid resp_ overwiting before register views udpated:
     waitingResp_ = false;
 }
 
@@ -77,24 +82,39 @@ void RegsViewWidget::slotUpdateByTimer() {
         return;
     }
     igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), 
-                            &cmdRegs_, true);
+                           "regs", &response_, true);
     waitingResp_ = true;
 }
 
-void RegsViewWidget::slotRegChanged(AttributeType *wrcmd) {
-    igui_->registerCommand(0, wrcmd, true);
+void RegsViewWidget::slotRegChanged(const char *wrcmd) {
+    igui_->registerCommand(0, wrcmd, &responseRegChanged_, true);
 }
 
 void RegsViewWidget::addRegWidget(int row, int col, int bytes,
                                   const char *name) {
-    QWidget *pnew = new RegWidget(name, bytes, this);
-    gridLayout->addWidget(pnew, row + 1, col);
+    QLabel *label = new QLabel(this);
+    QWidget *pnew;
+    pnew = new RegWidget(name, bytes, this);
+    label->setText(tr(name));
+    /*
+    QSizePolicy labelSizePolicy(QSizePolicy::Preferred, 
+                                QSizePolicy::Preferred);
+    labelSizePolicy.setHorizontalStretch(0);
+    labelSizePolicy.setVerticalStretch(0);
+    labelSizePolicy.setHeightForWidth(label->sizePolicy().hasHeightForWidth());
+    label->setSizePolicy(labelSizePolicy);
+    label->setText(name_);
+    label->setAlignment(Qt::AlignRight | Qt::AlignTrailing | Qt::AlignVCenter);
+*/
+
+    gridLayout->addWidget(label, row + 1, 2*col, Qt::AlignLeft);
+    gridLayout->addWidget(pnew, row + 1, 2*col + 1, Qt::AlignLeft);
 
     connect(this, SIGNAL(signalHandleResponse(AttributeType *)),
             pnew, SLOT(slotHandleResponse(AttributeType *)));
 
-    connect(pnew, SIGNAL(signalChanged(AttributeType *)),
-            this, SLOT(slotRegChanged(AttributeType *)));
+    connect(pnew, SIGNAL(signalChanged(const char *)),
+            this, SLOT(slotRegChanged(const char *)));
 }
 
 }  // namespace debugger

@@ -23,11 +23,11 @@ class SymbolBrowserArea : public QTableWidget,
                           public IGuiCmdHandler {
     Q_OBJECT
 public:
-    explicit SymbolBrowserArea(IGui *gui, QWidget *parent);
+    SymbolBrowserArea(IGui *gui, QWidget *parent);
     virtual ~SymbolBrowserArea();
 
     /** IGuiCmdHandler */
-    virtual void handleResponse(AttributeType *req, AttributeType *resp);
+    virtual void handleResponse(const char *cmd);
 
 public slots:
     void slotCellDoubleClicked(int row, int column);

@@ -24,26 +24,28 @@
 
 namespace debugger {
 
-class RegWidget : public QWidget {
+class RegWidget : public QLineEdit {
     Q_OBJECT
-public:
-    explicit RegWidget(const char *name, int bytes, QWidget *parent);
+ public:
+    RegWidget(const char *name, int bytes, QWidget *parent);
 
-signals:
-    void signalChanged(AttributeType *req);
-private slots:
+ signals:
+    void signalChanged(const char *cmd);
+ protected slots:
     void slotHandleResponse(AttributeType *resp);
     void slotEditingFinished();
 
-private:
+ protected:
+    virtual void outputValue(AttributeType &val);
+
+ protected:
     AttributeType regName_;
     AttributeType cmdRead_;
     AttributeType cmdWrite_;
+    char fmtValue_[64];
     QString name_;
-    QLineEdit *edit_;
     uint64_t value_;
     uint64_t respValue_;
-    char fmtValue_[64];
 };
 
 }  // namespace debugger

@@ -27,26 +27,30 @@ static const char *const IFACE_GUI_PLUGIN = "IGui";
 static const char *const IFACE_GUI_CMD_HANDLER = "IGuiCmdHandler";
 
 class IGuiCmdHandler : public IFace {
-public:
+ public:
     IGuiCmdHandler() : IFace(IFACE_GUI_CMD_HANDLER) {}
 
-    virtual void handleResponse(AttributeType *req, AttributeType *resp) =0;
+    virtual void handleResponse(const char *cmd) = 0;
 };
 
-
 class IGui : public IFace {
-public:
+ public:
     IGui() : IFace(IFACE_GUI_PLUGIN) {}
 
-    virtual IService *getParentService() =0;
+    virtual IService *getParentService() = 0;
 
-    virtual IFace *getSocInfo() =0;
+    virtual IFace *getSocInfo() = 0;
 
-    virtual const AttributeType *getpConfig() =0;
+    virtual const AttributeType *getpConfig() = 0;
 
-    virtual void registerCommand(IGuiCmdHandler *src, AttributeType *cmd,
-                                bool silent) =0;
-    virtual void removeFromQueue(IFace *iface) =0;
+    virtual void registerCommand(IGuiCmdHandler *iface,
+                                const char *cmd, AttributeType *resp,
+                                bool silent) = 0;
+    virtual void removeFromQueue(IFace *iface) = 0;
+
+    // External events:
+    virtual void externalCommand(AttributeType *req) = 0;
+    virtual void *getQGui() = 0;
 };
 
 }  // namespace debugger

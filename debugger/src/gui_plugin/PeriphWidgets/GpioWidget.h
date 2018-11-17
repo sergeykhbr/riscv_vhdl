@@ -27,7 +27,7 @@ public:
     virtual ~GpioWidget();
 
     /** IGuiCmdHandler */
-    virtual void handleResponse(AttributeType *req, AttributeType *resp);
+    virtual void handleResponse(const char *cmd);
 
 signals:
     void signalClose(QWidget *, AttributeType &);
@@ -40,7 +40,8 @@ private slots:
 private:
     IGui *igui_;
 
-    AttributeType cmdRd_;
+    AttributeType reqcmd_;
+    AttributeType respcmd_;
     GpioType value_;
     GpioType newValue_;
 };
