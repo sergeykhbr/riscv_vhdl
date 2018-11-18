@@ -1,9 +1,18 @@
-/******************************************************************************
- * @file
- * @copyright Copyright 2017 GNSS Sensor Ltd. All right reserved.
- * @author    Sergey Khabarov - sergeykhbr@gmail.com
- * @brief     General interrupt handler called from assembler.
-******************************************************************************/
+/*
+ *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 
 #include <string.h>
 #include "axi_maps.h"
@@ -21,6 +30,7 @@ typedef union csr_mcause_type {
 
 extern void print_uart(const char *buf, int sz);
 extern void print_uart_hex(long val);
+extern void led_set(int output);
 
 long handle_trap(long cause, long epc, long long regs[32]) {
     /**
@@ -32,7 +42,7 @@ long handle_trap(long cause, long epc, long long regs[32]) {
      *      csrwi mipi, 0
      */
     irqctrl_map *p_irqctrl = (irqctrl_map *)ADDR_NASTI_SLAVE_IRQCTRL;
-    IRQ_HANDLER irq_handler = (IRQ_HANDLER *)p_irqctrl->isr_table;
+    IRQ_HANDLER irq_handler = (IRQ_HANDLER)p_irqctrl->isr_table;
     uint32_t pending;
     csr_mcause_type mcause;
 
@@ -60,7 +70,7 @@ long handle_trap(long cause, long epc, long long regs[32]) {
        print_uart_hex(epc);
        print_uart("\r\n", 2);
        /// Exception trap
-       ((gpio_map *)ADDR_NASTI_SLAVE_GPIO)->led = 0xF0;
+       led_set(0xF0);
        while (1) {}
     }
 

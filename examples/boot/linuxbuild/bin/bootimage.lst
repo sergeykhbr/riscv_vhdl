@@ -177,14 +177,14 @@ _start:
   c6:	00200233          	add	tp,zero,sp
   ## Use tp register to save/restore registers context on task switching
   addi tp,tp,-256              # tp = tp - 256 = 0x1007ff00
-  ca:	f0020213          	addi	tp,tp,-256 # ffffffffffffff00 <_gp+0xfffffffffffff044>
+  ca:	f0020213          	addi	tp,tp,-256 # ffffffffffffff00 <_gp+0xfffffffffffff034>
   # 1 KB for the tap stack + TLS. Add signed extended 12-bits to register
   addi sp, sp, -1024          # sp = 0x1007fc00
   ce:	c0010113          	addi	sp,sp,-1024
 
   # copy image 64 KB
   jal _init
-  d2:	2e4000ef          	jal	ra,3b6 <_init>
+  d2:	2ee000ef          	jal	ra,3c0 <_init>
 
   ##! jump to entry point in SRAM = 0x10000000
   ##!     'meps' - Machine Exception Program Coutner
@@ -261,7 +261,7 @@ trap_entry:
  178:	3442b073          	csrc	mip,t0
                     #[11] MEIP: machine pending external interrupt
   jal handle_trap
- 17c:	302000ef          	jal	ra,47e <handle_trap>
+ 17c:	314000ef          	jal	ra,490 <handle_trap>
 
   # tp-offset in the context array is used to save mepc value. An it may be
   # modified by isr handler during preemtive task switching.
@@ -316,509 +316,516 @@ void led_set(int output) {
  216:	1000                	addi	s0,sp,32
  218:	87aa                	mv	a5,a0
  21a:	fef42623          	sw	a5,-20(s0)
-    ((gpio_map *)ADDR_NASTI_SLAVE_GPIO)->led = output;
- 21e:	4785                	li	a5,1
- 220:	07fe                	slli	a5,a5,0x1f
- 222:	fec42703          	lw	a4,-20(s0)
- 226:	c398                	sw	a4,0(a5)
+    // [3:0] DIP pins
+    ((gpio_map *)ADDR_NASTI_SLAVE_GPIO)->ouser = (output << 4);
+ 21e:	fec42783          	lw	a5,-20(s0)
+ 222:	0047979b          	slliw	a5,a5,0x4
+ 226:	0007871b          	sext.w	a4,a5
+ 22a:	4785                	li	a5,1
+ 22c:	07fe                	slli	a5,a5,0x1f
+ 22e:	2701                	sext.w	a4,a4
+ 230:	c798                	sw	a4,8(a5)
 }
- 228:	0001                	nop
- 22a:	6462                	ld	s0,24(sp)
- 22c:	6105                	addi	sp,sp,32
- 22e:	8082                	ret
+ 232:	0001                	nop
+ 234:	6462                	ld	s0,24(sp)
+ 236:	6105                	addi	sp,sp,32
+ 238:	8082                	ret
 
-0000000000000230 <print_uart>:
+000000000000023a <print_uart>:
 
 void print_uart(const char *buf, int sz) {
- 230:	7179                	addi	sp,sp,-48
- 232:	f422                	sd	s0,40(sp)
- 234:	1800                	addi	s0,sp,48
- 236:	fca43c23          	sd	a0,-40(s0)
- 23a:	87ae                	mv	a5,a1
- 23c:	fcf42a23          	sw	a5,-44(s0)
+ 23a:	7179                	addi	sp,sp,-48
+ 23c:	f422                	sd	s0,40(sp)
+ 23e:	1800                	addi	s0,sp,48
+ 240:	fca43c23          	sd	a0,-40(s0)
+ 244:	87ae                	mv	a5,a1
+ 246:	fcf42a23          	sw	a5,-44(s0)
     uart_map *uart = (uart_map *)ADDR_NASTI_SLAVE_UART1;
- 240:	000807b7          	lui	a5,0x80
- 244:	0785                	addi	a5,a5,1
- 246:	07b2                	slli	a5,a5,0xc
- 248:	fef43023          	sd	a5,-32(s0)
+ 24a:	000807b7          	lui	a5,0x80
+ 24e:	0785                	addi	a5,a5,1
+ 250:	07b2                	slli	a5,a5,0xc
+ 252:	fef43023          	sd	a5,-32(s0)
     for (int i = 0; i < sz; i++) {
- 24c:	fe042623          	sw	zero,-20(s0)
- 250:	a825                	j	288 <print_uart+0x58>
+ 256:	fe042623          	sw	zero,-20(s0)
+ 25a:	a825                	j	292 <print_uart+0x58>
         while (uart->status & UART_STATUS_TX_FULL) {}
- 252:	0001                	nop
- 254:	fe043783          	ld	a5,-32(s0)
- 258:	439c                	lw	a5,0(a5)
- 25a:	0007871b          	sext.w	a4,a5
- 25e:	4785                	li	a5,1
- 260:	8ff9                	and	a5,a5,a4
- 262:	2781                	sext.w	a5,a5
- 264:	fbe5                	bnez	a5,254 <print_uart+0x24>
+ 25c:	0001                	nop
+ 25e:	fe043783          	ld	a5,-32(s0)
+ 262:	439c                	lw	a5,0(a5)
+ 264:	0007871b          	sext.w	a4,a5
+ 268:	4785                	li	a5,1
+ 26a:	8ff9                	and	a5,a5,a4
+ 26c:	2781                	sext.w	a5,a5
+ 26e:	fbe5                	bnez	a5,25e <print_uart+0x24>
         uart->data = buf[i];
- 266:	fec42783          	lw	a5,-20(s0)
- 26a:	fd843703          	ld	a4,-40(s0)
- 26e:	97ba                	add	a5,a5,a4
- 270:	0007c783          	lbu	a5,0(a5) # 80000 <_gp+0x7f144>
- 274:	0007871b          	sext.w	a4,a5
- 278:	fe043783          	ld	a5,-32(s0)
- 27c:	cb98                	sw	a4,16(a5)
+ 270:	fec42783          	lw	a5,-20(s0)
+ 274:	fd843703          	ld	a4,-40(s0)
+ 278:	97ba                	add	a5,a5,a4
+ 27a:	0007c783          	lbu	a5,0(a5) # 80000 <_gp+0x7f134>
+ 27e:	0007871b          	sext.w	a4,a5
+ 282:	fe043783          	ld	a5,-32(s0)
+ 286:	cb98                	sw	a4,16(a5)
     for (int i = 0; i < sz; i++) {
- 27e:	fec42783          	lw	a5,-20(s0)
- 282:	2785                	addiw	a5,a5,1
- 284:	fef42623          	sw	a5,-20(s0)
- 288:	fec42703          	lw	a4,-20(s0)
- 28c:	fd442783          	lw	a5,-44(s0)
- 290:	2701                	sext.w	a4,a4
- 292:	2781                	sext.w	a5,a5
- 294:	faf74fe3          	blt	a4,a5,252 <print_uart+0x22>
+ 288:	fec42783          	lw	a5,-20(s0)
+ 28c:	2785                	addiw	a5,a5,1
+ 28e:	fef42623          	sw	a5,-20(s0)
+ 292:	fec42703          	lw	a4,-20(s0)
+ 296:	fd442783          	lw	a5,-44(s0)
+ 29a:	2701                	sext.w	a4,a4
+ 29c:	2781                	sext.w	a5,a5
+ 29e:	faf74fe3          	blt	a4,a5,25c <print_uart+0x22>
     }
 }
- 298:	0001                	nop
- 29a:	7422                	ld	s0,40(sp)
- 29c:	6145                	addi	sp,sp,48
- 29e:	8082                	ret
+ 2a2:	0001                	nop
+ 2a4:	7422                	ld	s0,40(sp)
+ 2a6:	6145                	addi	sp,sp,48
+ 2a8:	8082                	ret
 
-00000000000002a0 <print_uart_hex>:
+00000000000002aa <print_uart_hex>:
 
 void print_uart_hex(long val) {
- 2a0:	7139                	addi	sp,sp,-64
- 2a2:	fc22                	sd	s0,56(sp)
- 2a4:	0080                	addi	s0,sp,64
- 2a6:	fca43423          	sd	a0,-56(s0)
+ 2aa:	7139                	addi	sp,sp,-64
+ 2ac:	fc22                	sd	s0,56(sp)
+ 2ae:	0080                	addi	s0,sp,64
+ 2b0:	fca43423          	sd	a0,-56(s0)
     unsigned char t, s;
     uart_map *uart = (uart_map *)ADDR_NASTI_SLAVE_UART1;
- 2aa:	000807b7          	lui	a5,0x80
- 2ae:	0785                	addi	a5,a5,1
- 2b0:	07b2                	slli	a5,a5,0xc
- 2b2:	fef43023          	sd	a5,-32(s0)
+ 2b4:	000807b7          	lui	a5,0x80
+ 2b8:	0785                	addi	a5,a5,1
+ 2ba:	07b2                	slli	a5,a5,0xc
+ 2bc:	fef43023          	sd	a5,-32(s0)
     for (int i = 0; i < 16; i++) {
- 2b6:	fe042423          	sw	zero,-24(s0)
- 2ba:	a8ad                	j	334 <print_uart_hex+0x94>
+ 2c0:	fe042423          	sw	zero,-24(s0)
+ 2c4:	a8ad                	j	33e <print_uart_hex+0x94>
         while (uart->status & UART_STATUS_TX_FULL) {}
- 2bc:	0001                	nop
- 2be:	fe043783          	ld	a5,-32(s0)
- 2c2:	439c                	lw	a5,0(a5)
- 2c4:	0007871b          	sext.w	a4,a5
- 2c8:	4785                	li	a5,1
- 2ca:	8ff9                	and	a5,a5,a4
- 2cc:	2781                	sext.w	a5,a5
- 2ce:	fbe5                	bnez	a5,2be <print_uart_hex+0x1e>
+ 2c6:	0001                	nop
+ 2c8:	fe043783          	ld	a5,-32(s0)
+ 2cc:	439c                	lw	a5,0(a5)
+ 2ce:	0007871b          	sext.w	a4,a5
+ 2d2:	4785                	li	a5,1
+ 2d4:	8ff9                	and	a5,a5,a4
+ 2d6:	2781                	sext.w	a5,a5
+ 2d8:	fbe5                	bnez	a5,2c8 <print_uart_hex+0x1e>
         
         t = (unsigned char)((val >> ((15 - i) * 4)) & 0xf);
- 2d0:	473d                	li	a4,15
- 2d2:	fe842783          	lw	a5,-24(s0)
- 2d6:	40f707bb          	subw	a5,a4,a5
- 2da:	2781                	sext.w	a5,a5
- 2dc:	0027979b          	slliw	a5,a5,0x2
- 2e0:	2781                	sext.w	a5,a5
- 2e2:	fc843703          	ld	a4,-56(s0)
- 2e6:	40f757b3          	sra	a5,a4,a5
- 2ea:	0ff7f793          	andi	a5,a5,255
- 2ee:	8bbd                	andi	a5,a5,15
- 2f0:	fcf40fa3          	sb	a5,-33(s0)
+ 2da:	473d                	li	a4,15
+ 2dc:	fe842783          	lw	a5,-24(s0)
+ 2e0:	40f707bb          	subw	a5,a4,a5
+ 2e4:	2781                	sext.w	a5,a5
+ 2e6:	0027979b          	slliw	a5,a5,0x2
+ 2ea:	2781                	sext.w	a5,a5
+ 2ec:	fc843703          	ld	a4,-56(s0)
+ 2f0:	40f757b3          	sra	a5,a4,a5
+ 2f4:	0ff7f793          	andi	a5,a5,255
+ 2f8:	8bbd                	andi	a5,a5,15
+ 2fa:	fcf40fa3          	sb	a5,-33(s0)
         if (t < 10) {
- 2f4:	fdf44783          	lbu	a5,-33(s0)
- 2f8:	0ff7f713          	andi	a4,a5,255
- 2fc:	47a5                	li	a5,9
- 2fe:	00e7e963          	bltu	a5,a4,310 <print_uart_hex+0x70>
+ 2fe:	fdf44783          	lbu	a5,-33(s0)
+ 302:	0ff7f713          	andi	a4,a5,255
+ 306:	47a5                	li	a5,9
+ 308:	00e7e963          	bltu	a5,a4,31a <print_uart_hex+0x70>
             s = t + '0';
- 302:	fdf44783          	lbu	a5,-33(s0)
- 306:	0307879b          	addiw	a5,a5,48
- 30a:	fef407a3          	sb	a5,-17(s0)
- 30e:	a039                	j	31c <print_uart_hex+0x7c>
+ 30c:	fdf44783          	lbu	a5,-33(s0)
+ 310:	0307879b          	addiw	a5,a5,48
+ 314:	fef407a3          	sb	a5,-17(s0)
+ 318:	a039                	j	326 <print_uart_hex+0x7c>
         } else {
             s = (t - 10) + 'a';
- 310:	fdf44783          	lbu	a5,-33(s0)
- 314:	0577879b          	addiw	a5,a5,87
- 318:	fef407a3          	sb	a5,-17(s0)
+ 31a:	fdf44783          	lbu	a5,-33(s0)
+ 31e:	0577879b          	addiw	a5,a5,87
+ 322:	fef407a3          	sb	a5,-17(s0)
         }
         uart->data = s;
- 31c:	fef44783          	lbu	a5,-17(s0)
- 320:	0007871b          	sext.w	a4,a5
- 324:	fe043783          	ld	a5,-32(s0)
- 328:	cb98                	sw	a4,16(a5)
+ 326:	fef44783          	lbu	a5,-17(s0)
+ 32a:	0007871b          	sext.w	a4,a5
+ 32e:	fe043783          	ld	a5,-32(s0)
+ 332:	cb98                	sw	a4,16(a5)
     for (int i = 0; i < 16; i++) {
- 32a:	fe842783          	lw	a5,-24(s0)
- 32e:	2785                	addiw	a5,a5,1
- 330:	fef42423          	sw	a5,-24(s0)
  334:	fe842783          	lw	a5,-24(s0)
- 338:	0007871b          	sext.w	a4,a5
- 33c:	47bd                	li	a5,15
- 33e:	f6e7dfe3          	ble	a4,a5,2bc <print_uart_hex+0x1c>
+ 338:	2785                	addiw	a5,a5,1
+ 33a:	fef42423          	sw	a5,-24(s0)
+ 33e:	fe842783          	lw	a5,-24(s0)
+ 342:	0007871b          	sext.w	a4,a5
+ 346:	47bd                	li	a5,15
+ 348:	f6e7dfe3          	ble	a4,a5,2c6 <print_uart_hex+0x1c>
     }
 }
- 342:	0001                	nop
- 344:	7462                	ld	s0,56(sp)
- 346:	6121                	addi	sp,sp,64
- 348:	8082                	ret
+ 34c:	0001                	nop
+ 34e:	7462                	ld	s0,56(sp)
+ 350:	6121                	addi	sp,sp,64
+ 352:	8082                	ret
 
-000000000000034a <copy_image>:
+0000000000000354 <copy_image>:
 
 void copy_image() { 
- 34a:	7179                	addi	sp,sp,-48
- 34c:	f406                	sd	ra,40(sp)
- 34e:	f022                	sd	s0,32(sp)
- 350:	1800                	addi	s0,sp,48
+ 354:	7179                	addi	sp,sp,-48
+ 356:	f406                	sd	ra,40(sp)
+ 358:	f022                	sd	s0,32(sp)
+ 35a:	1800                	addi	s0,sp,48
     uint32_t tech;
     uint64_t *fwrom = (uint64_t *)ADDR_NASTI_SLAVE_FWIMAGE;
- 352:	001007b7          	lui	a5,0x100
- 356:	fef43423          	sd	a5,-24(s0)
+ 35c:	001007b7          	lui	a5,0x100
+ 360:	fef43423          	sd	a5,-24(s0)
     uint64_t *sram = (uint64_t *)ADDR_NASTI_SLAVE_SRAM;
- 35a:	100007b7          	lui	a5,0x10000
- 35e:	fef43023          	sd	a5,-32(s0)
+ 364:	100007b7          	lui	a5,0x10000
+ 368:	fef43023          	sd	a5,-32(s0)
     pnp_map *pnp = (pnp_map *)ADDR_NASTI_SLAVE_PNP;
- 362:	001007b7          	lui	a5,0x100
- 366:	17fd                	addi	a5,a5,-1
- 368:	07b2                	slli	a5,a5,0xc
- 36a:	fcf43c23          	sd	a5,-40(s0)
+ 36c:	001007b7          	lui	a5,0x100
+ 370:	17fd                	addi	a5,a5,-1
+ 372:	07b2                	slli	a5,a5,0xc
+ 374:	fcf43c23          	sd	a5,-40(s0)
 
     /** 
      * Speed-up RTL simulation by skipping coping stage.
      * Or skip this stage to avoid rewritting of externally loaded image.
      */
     tech = pnp->tech & 0xFF;
- 36e:	fd843783          	ld	a5,-40(s0)
- 372:	479c                	lw	a5,8(a5)
- 374:	0ff7f793          	andi	a5,a5,255
- 378:	fcf42a23          	sw	a5,-44(s0)
+ 378:	fd843783          	ld	a5,-40(s0)
+ 37c:	479c                	lw	a5,8(a5)
+ 37e:	0ff7f793          	andi	a5,a5,255
+ 382:	fcf42a23          	sw	a5,-44(s0)
 
     if (tech != TECH_INFERRED && pnp->fwid == 0) {
- 37c:	fd442783          	lw	a5,-44(s0)
- 380:	2781                	sext.w	a5,a5
- 382:	cf91                	beqz	a5,39e <copy_image+0x54>
- 384:	fd843783          	ld	a5,-40(s0)
- 388:	43dc                	lw	a5,4(a5)
- 38a:	eb91                	bnez	a5,39e <copy_image+0x54>
+ 386:	fd442783          	lw	a5,-44(s0)
+ 38a:	2781                	sext.w	a5,a5
+ 38c:	cf91                	beqz	a5,3a8 <copy_image+0x54>
+ 38e:	fd843783          	ld	a5,-40(s0)
+ 392:	43dc                	lw	a5,4(a5)
+ 394:	eb91                	bnez	a5,3a8 <copy_image+0x54>
         memcpy(sram, fwrom, FW_IMAGE_SIZE_BYTES);
- 38c:	000407b7          	lui	a5,0x40
- 390:	863e                	mv	a2,a5
- 392:	fe843583          	ld	a1,-24(s0)
- 396:	fe043503          	ld	a0,-32(s0)
- 39a:	59c000e7          	jalr	1436(zero) # 59c <memcpy>
+ 396:	000407b7          	lui	a5,0x40
+ 39a:	863e                	mv	a2,a5
+ 39c:	fe843583          	ld	a1,-24(s0)
+ 3a0:	fe043503          	ld	a0,-32(s0)
+ 3a4:	5ac000e7          	jalr	1452(zero) # 5ac <memcpy>
     }
     // Write Firmware ID to avoid copy image after soft-reset.
     pnp->fwid = 0x20180725;
- 39e:	fd843783          	ld	a5,-40(s0)
- 3a2:	20180737          	lui	a4,0x20180
- 3a6:	7257071b          	addiw	a4,a4,1829
- 3aa:	c3d8                	sw	a4,4(a5)
+ 3a8:	fd843783          	ld	a5,-40(s0)
+ 3ac:	20180737          	lui	a4,0x20180
+ 3b0:	7257071b          	addiw	a4,a4,1829
+ 3b4:	c3d8                	sw	a4,4(a5)
     uint64_t *arr_csrs = (uint64_t *)0x80080000;
     uint64_t x1 = arr_csrs[CSR_MCPUID<<1]; 
     pnp->fwdbg1 = x1;
     arr_csrs[CSR_MCPUID<<1] = x1;
 #endif
 }
- 3ac:	0001                	nop
- 3ae:	70a2                	ld	ra,40(sp)
- 3b0:	7402                	ld	s0,32(sp)
- 3b2:	6145                	addi	sp,sp,48
- 3b4:	8082                	ret
+ 3b6:	0001                	nop
+ 3b8:	70a2                	ld	ra,40(sp)
+ 3ba:	7402                	ld	s0,32(sp)
+ 3bc:	6145                	addi	sp,sp,48
+ 3be:	8082                	ret
 
-00000000000003b6 <_init>:
+00000000000003c0 <_init>:
 
 void _init() {
- 3b6:	7139                	addi	sp,sp,-64
- 3b8:	fc06                	sd	ra,56(sp)
- 3ba:	f822                	sd	s0,48(sp)
- 3bc:	0080                	addi	s0,sp,64
+ 3c0:	7139                	addi	sp,sp,-64
+ 3c2:	fc06                	sd	ra,56(sp)
+ 3c4:	f822                	sd	s0,48(sp)
+ 3c6:	0080                	addi	s0,sp,64
     uint32_t tech;
     pnp_map *pnp = (pnp_map *)ADDR_NASTI_SLAVE_PNP;
- 3be:	001007b7          	lui	a5,0x100
- 3c2:	17fd                	addi	a5,a5,-1
- 3c4:	07b2                	slli	a5,a5,0xc
- 3c6:	fef43423          	sd	a5,-24(s0)
+ 3c8:	001007b7          	lui	a5,0x100
+ 3cc:	17fd                	addi	a5,a5,-1
+ 3ce:	07b2                	slli	a5,a5,0xc
+ 3d0:	fef43423          	sd	a5,-24(s0)
     uart_map *uart = (uart_map *)ADDR_NASTI_SLAVE_UART1;
- 3ca:	000807b7          	lui	a5,0x80
- 3ce:	0785                	addi	a5,a5,1
- 3d0:	07b2                	slli	a5,a5,0xc
- 3d2:	fef43023          	sd	a5,-32(s0)
+ 3d4:	000807b7          	lui	a5,0x80
+ 3d8:	0785                	addi	a5,a5,1
+ 3da:	07b2                	slli	a5,a5,0xc
+ 3dc:	fef43023          	sd	a5,-32(s0)
     gpio_map *gpio = (gpio_map *)ADDR_NASTI_SLAVE_GPIO;
- 3d6:	4785                	li	a5,1
- 3d8:	07fe                	slli	a5,a5,0x1f
- 3da:	fcf43c23          	sd	a5,-40(s0)
+ 3e0:	4785                	li	a5,1
+ 3e2:	07fe                	slli	a5,a5,0x1f
+ 3e4:	fcf43c23          	sd	a5,-40(s0)
     irqctrl_map *p_irq = (irqctrl_map *)ADDR_NASTI_SLAVE_IRQCTRL;
- 3de:	400017b7          	lui	a5,0x40001
- 3e2:	0786                	slli	a5,a5,0x1
- 3e4:	fcf43823          	sd	a5,-48(s0)
+ 3e8:	400017b7          	lui	a5,0x40001
+ 3ec:	0786                	slli	a5,a5,0x1
+ 3ee:	fcf43823          	sd	a5,-48(s0)
 
     // mask all interrupts in interrupt controller to avoid
     // unpredictable behaviour after elf-file reloading via debug port.
     p_irq->irq_mask = 0xFFFFFFFF;
- 3e8:	fd043783          	ld	a5,-48(s0)
- 3ec:	577d                	li	a4,-1
- 3ee:	c398                	sw	a4,0(a5)
+ 3f2:	fd043783          	ld	a5,-48(s0)
+ 3f6:	577d                	li	a4,-1
+ 3f8:	c398                	sw	a4,0(a5)
 
     // Half period of the uart = Fbus / 115200 / 2 = 70 MHz / 115200 / 2:
     //uart->scaler = 304;  // 70 MHz
     //uart->scaler = 260;  // 60 MHz
     uart->scaler = 40000000 / 115200 / 2;  // 40 MHz
- 3f0:	fe043783          	ld	a5,-32(s0)
- 3f4:	0ad00713          	li	a4,173
- 3f8:	c3d8                	sw	a4,4(a5)
+ 3fa:	fe043783          	ld	a5,-32(s0)
+ 3fe:	0ad00713          	li	a4,173
+ 402:	c3d8                	sw	a4,4(a5)
+
+    gpio->direction = 0xF;  // [3:0] input DIP; [11:4] output LEDs
+ 404:	fd843783          	ld	a5,-40(s0)
+ 408:	473d                	li	a4,15
+ 40a:	c398                	sw	a4,0(a5)
 
     led_set(0x01);
- 3fa:	4505                	li	a0,1
- 3fc:	e17ff0ef          	jal	ra,212 <led_set>
+ 40c:	4505                	li	a0,1
+ 40e:	e05ff0ef          	jal	ra,212 <led_set>
     print_uart("Boot . . .", 10);
- 400:	45a9                	li	a1,10
- 402:	66000513          	li	a0,1632
- 406:	230000e7          	jalr	560(zero) # 230 <print_uart>
+ 412:	45a9                	li	a1,10
+ 414:	67000513          	li	a0,1648
+ 418:	23a000e7          	jalr	570(zero) # 23a <print_uart>
     led_set(0x02);
- 40a:	4509                	li	a0,2
- 40c:	e07ff0ef          	jal	ra,212 <led_set>
+ 41c:	4509                	li	a0,2
+ 41e:	df5ff0ef          	jal	ra,212 <led_set>
 
     copy_image();
- 410:	34a000e7          	jalr	842(zero) # 34a <copy_image>
+ 422:	354000e7          	jalr	852(zero) # 354 <copy_image>
     led_set(0x03);
- 414:	450d                	li	a0,3
- 416:	dfdff0ef          	jal	ra,212 <led_set>
+ 426:	450d                	li	a0,3
+ 428:	debff0ef          	jal	ra,212 <led_set>
     print_uart("OK\r\n", 4);
- 41a:	4591                	li	a1,4
- 41c:	67000513          	li	a0,1648
- 420:	230000e7          	jalr	560(zero) # 230 <print_uart>
+ 42c:	4591                	li	a1,4
+ 42e:	68000513          	li	a0,1664
+ 432:	23a000e7          	jalr	570(zero) # 23a <print_uart>
 
     /** Check ADC detector that RF front-end is connected: */
     tech = (pnp->tech >> 24) & 0xff;
- 424:	fe843783          	ld	a5,-24(s0)
- 428:	479c                	lw	a5,8(a5)
- 42a:	0187d79b          	srliw	a5,a5,0x18
- 42e:	fcf42623          	sw	a5,-52(s0)
+ 436:	fe843783          	ld	a5,-24(s0)
+ 43a:	479c                	lw	a5,8(a5)
+ 43c:	0187d79b          	srliw	a5,a5,0x18
+ 440:	fcf42623          	sw	a5,-52(s0)
     if (tech != 0xFF) {
- 432:	fcc42783          	lw	a5,-52(s0)
- 436:	0007871b          	sext.w	a4,a5
- 43a:	0ff00793          	li	a5,255
- 43e:	02f70463          	beq	a4,a5,466 <_init+0xb0>
+ 444:	fcc42783          	lw	a5,-52(s0)
+ 448:	0007871b          	sext.w	a4,a5
+ 44c:	0ff00793          	li	a5,255
+ 450:	02f70463          	beq	a4,a5,478 <_init+0xb8>
         print_uart("ADC clock not found. Enable DIP int_rf.\r\n", 41);
- 442:	02900593          	li	a1,41
- 446:	67800513          	li	a0,1656
- 44a:	230000e7          	jalr	560(zero) # 230 <print_uart>
+ 454:	02900593          	li	a1,41
+ 458:	68800513          	li	a0,1672
+ 45c:	23a000e7          	jalr	570(zero) # 23a <print_uart>
         tech = (pnp->tech >> 24) & 0xff;
- 44e:	fe843783          	ld	a5,-24(s0)
- 452:	479c                	lw	a5,8(a5)
- 454:	0187d79b          	srliw	a5,a5,0x18
- 458:	fcf42623          	sw	a5,-52(s0)
+ 460:	fe843783          	ld	a5,-24(s0)
+ 464:	479c                	lw	a5,8(a5)
+ 466:	0187d79b          	srliw	a5,a5,0x18
+ 46a:	fcf42623          	sw	a5,-52(s0)
         led_set(tech);
- 45c:	fcc42783          	lw	a5,-52(s0)
- 460:	853e                	mv	a0,a5
- 462:	db1ff0ef          	jal	ra,212 <led_set>
+ 46e:	fcc42783          	lw	a5,-52(s0)
+ 472:	853e                	mv	a0,a5
+ 474:	d9fff0ef          	jal	ra,212 <led_set>
     }
     led_set(0x04);
- 466:	4511                	li	a0,4
- 468:	dabff0ef          	jal	ra,212 <led_set>
+ 478:	4511                	li	a0,4
+ 47a:	d99ff0ef          	jal	ra,212 <led_set>
 }
- 46c:	0001                	nop
- 46e:	70e2                	ld	ra,56(sp)
- 470:	7442                	ld	s0,48(sp)
- 472:	6121                	addi	sp,sp,64
- 474:	8082                	ret
+ 47e:	0001                	nop
+ 480:	70e2                	ld	ra,56(sp)
+ 482:	7442                	ld	s0,48(sp)
+ 484:	6121                	addi	sp,sp,64
+ 486:	8082                	ret
 
-0000000000000476 <main>:
+0000000000000488 <main>:
 
 /** Not used actually */
 int main() {
- 476:	1141                	addi	sp,sp,-16
- 478:	e422                	sd	s0,8(sp)
- 47a:	0800                	addi	s0,sp,16
+ 488:	1141                	addi	sp,sp,-16
+ 48a:	e422                	sd	s0,8(sp)
+ 48c:	0800                	addi	s0,sp,16
     while (1) {}
- 47c:	a001                	j	47c <main+0x6>
+ 48e:	a001                	j	48e <main+0x6>
 
-000000000000047e <handle_trap>:
-} csr_mcause_type;
+0000000000000490 <handle_trap>:
 
 extern void print_uart(const char *buf, int sz);
 extern void print_uart_hex(long val);
+extern void led_set(int output);
 
 long handle_trap(long cause, long epc, long long regs[32]) {
- 47e:	715d                	addi	sp,sp,-80
- 480:	e486                	sd	ra,72(sp)
- 482:	e0a2                	sd	s0,64(sp)
- 484:	0880                	addi	s0,sp,80
- 486:	fca43423          	sd	a0,-56(s0)
- 48a:	fcb43023          	sd	a1,-64(s0)
- 48e:	fac43c23          	sd	a2,-72(s0)
+ 490:	715d                	addi	sp,sp,-80
+ 492:	e486                	sd	ra,72(sp)
+ 494:	e0a2                	sd	s0,64(sp)
+ 496:	0880                	addi	s0,sp,80
+ 498:	fca43423          	sd	a0,-56(s0)
+ 49c:	fcb43023          	sd	a1,-64(s0)
+ 4a0:	fac43c23          	sd	a2,-72(s0)
      * If we woudn't do it the interrupt handler will be called infinitly
      *
      * Rise interrupt from the software maybe done sending a self-IPI:
      *      csrwi mipi, 0
      */
     irqctrl_map *p_irqctrl = (irqctrl_map *)ADDR_NASTI_SLAVE_IRQCTRL;
- 492:	400017b7          	lui	a5,0x40001
- 496:	0786                	slli	a5,a5,0x1
- 498:	fef43023          	sd	a5,-32(s0)
-    IRQ_HANDLER irq_handler = (IRQ_HANDLER *)p_irqctrl->isr_table;
- 49c:	fe043783          	ld	a5,-32(s0)
- 4a0:	6b9c                	ld	a5,16(a5)
- 4a2:	fcf43c23          	sd	a5,-40(s0)
+ 4a4:	400017b7          	lui	a5,0x40001
+ 4a8:	0786                	slli	a5,a5,0x1
+ 4aa:	fef43023          	sd	a5,-32(s0)
+    IRQ_HANDLER irq_handler = (IRQ_HANDLER)p_irqctrl->isr_table;
+ 4ae:	fe043783          	ld	a5,-32(s0)
+ 4b2:	6b9c                	ld	a5,16(a5)
+ 4b4:	fcf43c23          	sd	a5,-40(s0)
     uint32_t pending;
     csr_mcause_type mcause;
 
     mcause.value = cause;
- 4a6:	fc843783          	ld	a5,-56(s0)
- 4aa:	fcf43823          	sd	a5,-48(s0)
+ 4b8:	fc843783          	ld	a5,-56(s0)
+ 4bc:	fcf43823          	sd	a5,-48(s0)
     p_irqctrl->dbg_cause = cause;
- 4ae:	fc843703          	ld	a4,-56(s0)
- 4b2:	fe043783          	ld	a5,-32(s0)
- 4b6:	ef98                	sd	a4,24(a5)
+ 4c0:	fc843703          	ld	a4,-56(s0)
+ 4c4:	fe043783          	ld	a5,-32(s0)
+ 4c8:	ef98                	sd	a4,24(a5)
     p_irqctrl->dbg_epc = epc;
- 4b8:	fc043703          	ld	a4,-64(s0)
- 4bc:	fe043783          	ld	a5,-32(s0)
- 4c0:	f398                	sd	a4,32(a5)
+ 4ca:	fc043703          	ld	a4,-64(s0)
+ 4ce:	fe043783          	ld	a5,-32(s0)
+ 4d2:	f398                	sd	a4,32(a5)
 
     p_irqctrl->irq_lock = 1;
- 4c2:	fe043783          	ld	a5,-32(s0)
- 4c6:	4705                	li	a4,1
- 4c8:	d798                	sw	a4,40(a5)
-    pending = p_irqctrl->irq_pending;
- 4ca:	fe043783          	ld	a5,-32(s0)
- 4ce:	43dc                	lw	a5,4(a5)
- 4d0:	fef42623          	sw	a5,-20(s0)
-    p_irqctrl->irq_clear = pending;
  4d4:	fe043783          	ld	a5,-32(s0)
- 4d8:	fec42703          	lw	a4,-20(s0)
- 4dc:	c798                	sw	a4,8(a5)
+ 4d8:	4705                	li	a4,1
+ 4da:	d798                	sw	a4,40(a5)
+    pending = p_irqctrl->irq_pending;
+ 4dc:	fe043783          	ld	a5,-32(s0)
+ 4e0:	43dc                	lw	a5,4(a5)
+ 4e2:	fef42623          	sw	a5,-20(s0)
+    p_irqctrl->irq_clear = pending;
+ 4e6:	fe043783          	ld	a5,-32(s0)
+ 4ea:	fec42703          	lw	a4,-20(s0)
+ 4ee:	c798                	sw	a4,8(a5)
     p_irqctrl->irq_lock = 0;
- 4de:	fe043783          	ld	a5,-32(s0)
- 4e2:	0207a423          	sw	zero,40(a5) # 40001028 <_gp+0x4000016c>
+ 4f0:	fe043783          	ld	a5,-32(s0)
+ 4f4:	0207a423          	sw	zero,40(a5) # 40001028 <_gp+0x4000015c>
 
     if (mcause.bits.irq == 0x1 && mcause.bits.code == 11) {
- 4e6:	fd744783          	lbu	a5,-41(s0)
- 4ea:	f807f793          	andi	a5,a5,-128
- 4ee:	0ff7f793          	andi	a5,a5,255
- 4f2:	c3a5                	beqz	a5,552 <handle_trap+0xd4>
- 4f4:	fd043703          	ld	a4,-48(s0)
- 4f8:	57fd                	li	a5,-1
- 4fa:	8385                	srli	a5,a5,0x1
- 4fc:	8f7d                	and	a4,a4,a5
- 4fe:	47ad                	li	a5,11
- 500:	04f71963          	bne	a4,a5,552 <handle_trap+0xd4>
+ 4f8:	fd744783          	lbu	a5,-41(s0)
+ 4fc:	f807f793          	andi	a5,a5,-128
+ 500:	0ff7f793          	andi	a5,a5,255
+ 504:	c3a5                	beqz	a5,564 <handle_trap+0xd4>
+ 506:	fd043703          	ld	a4,-48(s0)
+ 50a:	57fd                	li	a5,-1
+ 50c:	8385                	srli	a5,a5,0x1
+ 50e:	8f7d                	and	a4,a4,a5
+ 510:	47ad                	li	a5,11
+ 512:	04f71963          	bne	a4,a5,564 <handle_trap+0xd4>
         for (int i = 0; i < CFG_IRQ_TOTAL; i++) {
- 504:	fe042423          	sw	zero,-24(s0)
- 508:	a82d                	j	542 <handle_trap+0xc4>
+ 516:	fe042423          	sw	zero,-24(s0)
+ 51a:	a82d                	j	554 <handle_trap+0xc4>
             if (pending & 0x1) {
- 50a:	fec42783          	lw	a5,-20(s0)
- 50e:	8b85                	andi	a5,a5,1
- 510:	2781                	sext.w	a5,a5
- 512:	cf89                	beqz	a5,52c <handle_trap+0xae>
+ 51c:	fec42783          	lw	a5,-20(s0)
+ 520:	8b85                	andi	a5,a5,1
+ 522:	2781                	sext.w	a5,a5
+ 524:	cf89                	beqz	a5,53e <handle_trap+0xae>
                 p_irqctrl->irq_cause_idx = i;
- 514:	fe842703          	lw	a4,-24(s0)
- 518:	fe043783          	ld	a5,-32(s0)
- 51c:	d7d8                	sw	a4,44(a5)
+ 526:	fe842703          	lw	a4,-24(s0)
+ 52a:	fe043783          	ld	a5,-32(s0)
+ 52e:	d7d8                	sw	a4,44(a5)
                 irq_handler(i, NULL);
- 51e:	fe842783          	lw	a5,-24(s0)
- 522:	fd843703          	ld	a4,-40(s0)
- 526:	4581                	li	a1,0
- 528:	853e                	mv	a0,a5
- 52a:	9702                	jalr	a4
+ 530:	fe842783          	lw	a5,-24(s0)
+ 534:	fd843703          	ld	a4,-40(s0)
+ 538:	4581                	li	a1,0
+ 53a:	853e                	mv	a0,a5
+ 53c:	9702                	jalr	a4
             }
             pending >>= 1;
- 52c:	fec42783          	lw	a5,-20(s0)
- 530:	0017d79b          	srliw	a5,a5,0x1
- 534:	fef42623          	sw	a5,-20(s0)
+ 53e:	fec42783          	lw	a5,-20(s0)
+ 542:	0017d79b          	srliw	a5,a5,0x1
+ 546:	fef42623          	sw	a5,-20(s0)
         for (int i = 0; i < CFG_IRQ_TOTAL; i++) {
- 538:	fe842783          	lw	a5,-24(s0)
- 53c:	2785                	addiw	a5,a5,1
- 53e:	fef42423          	sw	a5,-24(s0)
- 542:	fe842783          	lw	a5,-24(s0)
- 546:	0007871b          	sext.w	a4,a5
- 54a:	4795                	li	a5,5
- 54c:	fae7dfe3          	ble	a4,a5,50a <handle_trap+0x8c>
- 550:	a835                	j	58c <handle_trap+0x10e>
+ 54a:	fe842783          	lw	a5,-24(s0)
+ 54e:	2785                	addiw	a5,a5,1
+ 550:	fef42423          	sw	a5,-24(s0)
+ 554:	fe842783          	lw	a5,-24(s0)
+ 558:	0007871b          	sext.w	a4,a5
+ 55c:	4795                	li	a5,5
+ 55e:	fae7dfe3          	ble	a4,a5,51c <handle_trap+0x8c>
+ 562:	a82d                	j	59c <handle_trap+0x10c>
         }
     } else {
        print_uart("mcause:", 7);
- 552:	459d                	li	a1,7
- 554:	6a800513          	li	a0,1704
- 558:	230000e7          	jalr	560(zero) # 230 <print_uart>
+ 564:	459d                	li	a1,7
+ 566:	6b800513          	li	a0,1720
+ 56a:	23a000e7          	jalr	570(zero) # 23a <print_uart>
        print_uart_hex(cause);
- 55c:	fc843503          	ld	a0,-56(s0)
- 560:	d41ff0ef          	jal	ra,2a0 <print_uart_hex>
+ 56e:	fc843503          	ld	a0,-56(s0)
+ 572:	d39ff0ef          	jal	ra,2aa <print_uart_hex>
        print_uart(",mepc:", 6);
- 564:	4599                	li	a1,6
- 566:	6b000513          	li	a0,1712
- 56a:	230000e7          	jalr	560(zero) # 230 <print_uart>
+ 576:	4599                	li	a1,6
+ 578:	6c000513          	li	a0,1728
+ 57c:	23a000e7          	jalr	570(zero) # 23a <print_uart>
        print_uart_hex(epc);
- 56e:	fc043503          	ld	a0,-64(s0)
- 572:	d2fff0ef          	jal	ra,2a0 <print_uart_hex>
+ 580:	fc043503          	ld	a0,-64(s0)
+ 584:	d27ff0ef          	jal	ra,2aa <print_uart_hex>
        print_uart("\r\n", 2);
- 576:	4589                	li	a1,2
- 578:	6b800513          	li	a0,1720
- 57c:	230000e7          	jalr	560(zero) # 230 <print_uart>
+ 588:	4589                	li	a1,2
+ 58a:	6c800513          	li	a0,1736
+ 58e:	23a000e7          	jalr	570(zero) # 23a <print_uart>
        /// Exception trap
-       ((gpio_map *)ADDR_NASTI_SLAVE_GPIO)->led = 0xF0;
- 580:	4785                	li	a5,1
- 582:	07fe                	slli	a5,a5,0x1f
- 584:	0f000713          	li	a4,240
- 588:	c398                	sw	a4,0(a5)
+       led_set(0xF0);
+ 592:	0f000513          	li	a0,240
+ 596:	c7dff0ef          	jal	ra,212 <led_set>
        while (1) {}
- 58a:	a001                	j	58a <handle_trap+0x10c>
+ 59a:	a001                	j	59a <handle_trap+0x10a>
     }
 
     return epc;
- 58c:	fc043783          	ld	a5,-64(s0)
+ 59c:	fc043783          	ld	a5,-64(s0)
 }
- 590:	853e                	mv	a0,a5
- 592:	60a6                	ld	ra,72(sp)
- 594:	6406                	ld	s0,64(sp)
- 596:	6161                	addi	sp,sp,80
- 598:	8082                	ret
+ 5a0:	853e                	mv	a0,a5
+ 5a2:	60a6                	ld	ra,72(sp)
+ 5a4:	6406                	ld	s0,64(sp)
+ 5a6:	6161                	addi	sp,sp,80
+ 5a8:	8082                	ret
 	...
 
-000000000000059c <memcpy>:
- 59c:	00a5c7b3          	xor	a5,a1,a0
- 5a0:	8b9d                	andi	a5,a5,7
- 5a2:	00c50733          	add	a4,a0,a2
- 5a6:	e781                	bnez	a5,5ae <memcpy+0x12>
- 5a8:	479d                	li	a5,7
- 5aa:	00c7ef63          	bltu	a5,a2,5c8 <memcpy+0x2c>
- 5ae:	87aa                	mv	a5,a0
- 5b0:	00e56963          	bltu	a0,a4,5c2 <memcpy+0x26>
- 5b4:	8082                	ret
- 5b6:	0005c683          	lbu	a3,0(a1)
- 5ba:	0785                	addi	a5,a5,1
- 5bc:	0585                	addi	a1,a1,1
- 5be:	fed78fa3          	sb	a3,-1(a5)
- 5c2:	fee7eae3          	bltu	a5,a4,5b6 <memcpy+0x1a>
- 5c6:	8082                	ret
- 5c8:	00757793          	andi	a5,a0,7
- 5cc:	ebbd                	bnez	a5,642 <memcpy+0xa6>
- 5ce:	87aa                	mv	a5,a0
- 5d0:	ff877693          	andi	a3,a4,-8
- 5d4:	fc068613          	addi	a2,a3,-64
- 5d8:	06c7fc63          	bleu	a2,a5,650 <memcpy+0xb4>
- 5dc:	0005b383          	ld	t2,0(a1)
- 5e0:	0085b283          	ld	t0,8(a1)
- 5e4:	0105bf83          	ld	t6,16(a1)
- 5e8:	0185bf03          	ld	t5,24(a1)
- 5ec:	0205be83          	ld	t4,32(a1)
- 5f0:	0285be03          	ld	t3,40(a1)
- 5f4:	0305b303          	ld	t1,48(a1)
- 5f8:	0385b883          	ld	a7,56(a1)
- 5fc:	04858593          	addi	a1,a1,72
- 600:	04878793          	addi	a5,a5,72
- 604:	ff85b803          	ld	a6,-8(a1)
- 608:	fa77bc23          	sd	t2,-72(a5)
- 60c:	fc57b023          	sd	t0,-64(a5)
- 610:	fdf7b423          	sd	t6,-56(a5)
- 614:	fde7b823          	sd	t5,-48(a5)
- 618:	fdd7bc23          	sd	t4,-40(a5)
- 61c:	ffc7b023          	sd	t3,-32(a5)
- 620:	fe67b423          	sd	t1,-24(a5)
- 624:	ff17b823          	sd	a7,-16(a5)
- 628:	ff07bc23          	sd	a6,-8(a5)
- 62c:	b775                	j	5d8 <memcpy+0x3c>
- 62e:	0005c683          	lbu	a3,0(a1)
- 632:	0785                	addi	a5,a5,1
- 634:	0585                	addi	a1,a1,1
- 636:	fed78fa3          	sb	a3,-1(a5)
- 63a:	0077f693          	andi	a3,a5,7
- 63e:	fae5                	bnez	a3,62e <memcpy+0x92>
- 640:	bf41                	j	5d0 <memcpy+0x34>
- 642:	87aa                	mv	a5,a0
- 644:	bfdd                	j	63a <memcpy+0x9e>
- 646:	6190                	ld	a2,0(a1)
- 648:	07a1                	addi	a5,a5,8
- 64a:	05a1                	addi	a1,a1,8
- 64c:	fec7bc23          	sd	a2,-8(a5)
- 650:	fed7ebe3          	bltu	a5,a3,646 <memcpy+0xaa>
- 654:	f6e7e7e3          	bltu	a5,a4,5c2 <memcpy+0x26>
- 658:	8082                	ret
+00000000000005ac <memcpy>:
+ 5ac:	00a5c7b3          	xor	a5,a1,a0
+ 5b0:	8b9d                	andi	a5,a5,7
+ 5b2:	00c50733          	add	a4,a0,a2
+ 5b6:	e781                	bnez	a5,5be <memcpy+0x12>
+ 5b8:	479d                	li	a5,7
+ 5ba:	00c7ef63          	bltu	a5,a2,5d8 <memcpy+0x2c>
+ 5be:	87aa                	mv	a5,a0
+ 5c0:	00e56963          	bltu	a0,a4,5d2 <memcpy+0x26>
+ 5c4:	8082                	ret
+ 5c6:	0005c683          	lbu	a3,0(a1)
+ 5ca:	0785                	addi	a5,a5,1
+ 5cc:	0585                	addi	a1,a1,1
+ 5ce:	fed78fa3          	sb	a3,-1(a5)
+ 5d2:	fee7eae3          	bltu	a5,a4,5c6 <memcpy+0x1a>
+ 5d6:	8082                	ret
+ 5d8:	00757793          	andi	a5,a0,7
+ 5dc:	ebbd                	bnez	a5,652 <memcpy+0xa6>
+ 5de:	87aa                	mv	a5,a0
+ 5e0:	ff877693          	andi	a3,a4,-8
+ 5e4:	fc068613          	addi	a2,a3,-64
+ 5e8:	06c7fc63          	bleu	a2,a5,660 <memcpy+0xb4>
+ 5ec:	0005b383          	ld	t2,0(a1)
+ 5f0:	0085b283          	ld	t0,8(a1)
+ 5f4:	0105bf83          	ld	t6,16(a1)
+ 5f8:	0185bf03          	ld	t5,24(a1)
+ 5fc:	0205be83          	ld	t4,32(a1)
+ 600:	0285be03          	ld	t3,40(a1)
+ 604:	0305b303          	ld	t1,48(a1)
+ 608:	0385b883          	ld	a7,56(a1)
+ 60c:	04858593          	addi	a1,a1,72
+ 610:	04878793          	addi	a5,a5,72
+ 614:	ff85b803          	ld	a6,-8(a1)
+ 618:	fa77bc23          	sd	t2,-72(a5)
+ 61c:	fc57b023          	sd	t0,-64(a5)
+ 620:	fdf7b423          	sd	t6,-56(a5)
+ 624:	fde7b823          	sd	t5,-48(a5)
+ 628:	fdd7bc23          	sd	t4,-40(a5)
+ 62c:	ffc7b023          	sd	t3,-32(a5)
+ 630:	fe67b423          	sd	t1,-24(a5)
+ 634:	ff17b823          	sd	a7,-16(a5)
+ 638:	ff07bc23          	sd	a6,-8(a5)
+ 63c:	b775                	j	5e8 <memcpy+0x3c>
+ 63e:	0005c683          	lbu	a3,0(a1)
+ 642:	0785                	addi	a5,a5,1
+ 644:	0585                	addi	a1,a1,1
+ 646:	fed78fa3          	sb	a3,-1(a5)
+ 64a:	0077f693          	andi	a3,a5,7
+ 64e:	fae5                	bnez	a3,63e <memcpy+0x92>
+ 650:	bf41                	j	5e0 <memcpy+0x34>
+ 652:	87aa                	mv	a5,a0
+ 654:	bfdd                	j	64a <memcpy+0x9e>
+ 656:	6190                	ld	a2,0(a1)
+ 658:	07a1                	addi	a5,a5,8
+ 65a:	05a1                	addi	a1,a1,8
+ 65c:	fec7bc23          	sd	a2,-8(a5)
+ 660:	fed7ebe3          	bltu	a5,a3,656 <memcpy+0xaa>
+ 664:	f6e7e7e3          	bltu	a5,a4,5d2 <memcpy+0x26>
+ 668:	8082                	ret
 	...

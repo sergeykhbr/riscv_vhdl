@@ -232,8 +232,6 @@
     <ClInclude Include="..\..\src\common\coreservices\ireset.h" />
     <ClInclude Include="..\..\src\common\coreservices\isensor.h" />
     <ClInclude Include="..\..\src\common\coreservices\iserial.h" />
-    <ClInclude Include="..\..\src\common\coreservices\isignal.h" />
-    <ClInclude Include="..\..\src\common\coreservices\isignallistener.h" />
     <ClInclude Include="..\..\src\common\coreservices\isocinfo.h" />
     <ClInclude Include="..\..\src\common\coreservices\isound.h" />
     <ClInclude Include="..\..\src\common\coreservices\isrccode.h" />

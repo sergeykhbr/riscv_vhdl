@@ -15,4 +15,6 @@ package config_target is
   constant CFG_JTAGTECH : integer := kintex7;
 
   constant CFG_TOPDIR : string := "../../../";
+
+  constant CFG_TARGET_ETHERNET_ENABLE : boolean := true;
 end;

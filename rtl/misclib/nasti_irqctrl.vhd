@@ -41,7 +41,7 @@ architecture nasti_irqctrl_rtl of nasti_irqctrl is
   constant xconfig : nasti_slave_config_type := (
      descrtype => PNP_CFG_TYPE_SLAVE,
      descrsize => PNP_CFG_SLAVE_DESCR_BYTES,
-     irq_idx => 0,
+     irq_idx => conv_std_logic_vector(0, 8),
      xaddr => conv_std_logic_vector(xaddr, CFG_NASTI_CFG_ADDR_BITS),
      xmask => conv_std_logic_vector(xmask, CFG_NASTI_CFG_ADDR_BITS),
      vid => VENDOR_GNSSSENSOR,

@@ -1,9 +1,18 @@
------------------------------------------------------------------------------
---! @file
---! @copyright  Copyright 2015 GNSS Sensor Ltd. All right reserved.
---! @author     Sergey Khabarov - sergeykhbr@gmail.com
---! @brief      System reset former.
------------------------------------------------------------------------------
+--!
+--! Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+--!
+--! Licensed under the Apache License, Version 2.0 (the "License");
+--! you may not use this file except in compliance with the License.
+--! You may obtain a copy of the License at
+--!
+--!     http://www.apache.org/licenses/LICENSE-2.0
+--!
+--! Unless required by applicable law or agreed to in writing, software
+--! distributed under the License is distributed on an "AS IS" BASIS,
+--! WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+--! See the License for the specific language governing permissions and
+--! limitations under the License.
+--!
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -21,7 +30,6 @@ entity reset_global is
   port (
     inSysReset  : in std_ulogic;
     inSysClk    : in std_ulogic;
-    inPllLock   : in std_ulogic;
     outReset    : out std_ulogic
     );
 end;
@@ -35,12 +43,12 @@ architecture arch_reset_global of reset_global is
   signal r : reg_type;
 begin
 
-  proc_rst : process (inSysClk, inSysReset, inPllLock, r) 
+  proc_rst : process (inSysClk, inSysReset, r) 
     variable wb_delay_cnt : std_logic_vector(7 downto 0);
     variable sys_reset : std_logic;
   begin
 
-    sys_reset := inSysReset or not inPllLock;
+    sys_reset := inSysReset;
     
     wb_delay_cnt := r.delay_cnt;
     if r.delay_cnt(7) = '0' then

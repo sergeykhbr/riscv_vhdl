@@ -1,10 +1,18 @@
-/******************************************************************************
- * @file
- * @copyright Copyright 2015 GNSS Sensor Ltd. All right reserved.
- * @author    Sergey Khabarov - sergeykhbr@gmail.com
- * @brief     Boot procedure of copying FW image into SRAM with the debug
- *            signals.
-******************************************************************************/
+/*
+ *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 
 #include <string.h>
 #include "axi_maps.h"
@@ -13,7 +21,8 @@
 static const int FW_IMAGE_SIZE_BYTES = 1 << 18;
 
 void led_set(int output) {
-    ((gpio_map *)ADDR_NASTI_SLAVE_GPIO)->led = output;
+    // [3:0] DIP pins
+    ((gpio_map *)ADDR_NASTI_SLAVE_GPIO)->ouser = (output << 4);
 }
 
 void print_uart(const char *buf, int sz) {
@@ -89,6 +98,8 @@ void _init() {
     //uart->scaler = 304;  // 70 MHz
     //uart->scaler = 260;  // 60 MHz
     uart->scaler = 40000000 / 115200 / 2;  // 40 MHz
+
+    gpio->direction = 0xF;  // [3:0] input DIP; [11:4] output LEDs
 
     led_set(0x01);
     print_uart("Boot . . .", 10);

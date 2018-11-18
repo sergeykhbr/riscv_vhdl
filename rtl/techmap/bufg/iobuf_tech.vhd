@@ -65,7 +65,7 @@ begin
     );
   end generate;
 
-  xv6 : if generic_tech = virtex6 or generic_tech = kintex7 generate 
+  xv6 : if generic_tech = virtex6 or generic_tech = kintex7 or generic_tech = zynq7000 generate 
     bufv6 : iobuf_virtex6 port map
     (
       o => o,

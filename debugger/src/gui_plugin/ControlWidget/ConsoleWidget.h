@@ -37,25 +37,25 @@ class ConsoleWidget : public QPlainTextEdit,
                       public IGuiCmdHandler,
                       public IRawListener {
     Q_OBJECT
-public:
+ public:
     ConsoleWidget(IGui *igui, QWidget *parent = 0);
     ~ConsoleWidget();
 
     /** IGuiCmdHandler */
     virtual void handleResponse(const char *cmd);
 
-    // IRawListener
+    /** IRawListener */
     virtual void updateData(const char *buf, int buflen);
 
-signals:
+ signals:
     void signalNewData();
-private slots:
+ private slots:
     void slotUpdateByData();
 
-protected:
+ protected:
     virtual void keyPressEvent(QKeyEvent *e);
 
-private:
+ private:
     IGui *igui_;
     IAutoComplete *iauto_;
 

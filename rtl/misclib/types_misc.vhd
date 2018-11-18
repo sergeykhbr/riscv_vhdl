@@ -34,13 +34,11 @@ package types_misc is
 --!          button 'Reset' was pushed or PLL isn't a 'lock' state.
 --! param[in]  inSysReset Button generated signal
 --! param[in]  inSysClk Clock from the PLL. Bus clock.
---! param[in]  inPllLock PLL status.
 --! param[out] outReset Output reset signal with active 'High' (1 = reset).
 component reset_global
 port (
   inSysReset  : in std_ulogic;
   inSysClk    : in std_ulogic;
-  inPllLock   : in std_ulogic;
   outReset    : out std_ulogic );
 end component;
 
@@ -103,7 +101,8 @@ component nasti_gpio is
   generic (
     xaddr    : integer := 0;
     xmask    : integer := 16#fffff#;
-	 xirq     : integer := 0
+	 xirq     : integer := 0;
+	 width    : integer := 12
   );
   port (
     clk  : in std_logic;
@@ -111,8 +110,9 @@ component nasti_gpio is
     cfg  : out nasti_slave_config_type;
     i    : in  nasti_slave_in_type;
     o    : out nasti_slave_out_type;
-    i_dip : in std_logic_vector(3 downto 0);
-    o_led : out std_logic_vector(7 downto 0)
+    i_gpio : in std_logic_vector(width-1 downto 0);
+	 o_gpio : out std_logic_vector(width-1 downto 0);
+    o_gpio_dir : out std_logic_vector(width-1 downto 0)
   );
 end component; 
 

@@ -418,12 +418,6 @@
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_loadbin.h">
       <Filter>Source Files\services\exec\cmd</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\common\coreservices\isignal.h">
-      <Filter>Source Files\common\coreservices</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\common\coreservices\isignallistener.h">
-      <Filter>Source Files\common\coreservices</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\common\coreservices\icpuarm.h">
       <Filter>Source Files\common\coreservices</Filter>
     </ClInclude>

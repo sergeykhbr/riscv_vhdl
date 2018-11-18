@@ -59,6 +59,16 @@ architecture rtl of SysPLL_tech is
     RESET     : in     std_logic;
     LOCKED    : out    std_logic );
   end component;
+  
+  component SysPLL_zynq is
+  port
+   (
+    CLK_IN           : in     std_logic;
+    CLK_OUT1          : out    std_logic;
+    RESET             : in     std_logic;
+    LOCKED            : out    std_logic
+   );
+  end component;
 
   component SysPLL_micron180 is
   port (
@@ -76,6 +86,10 @@ begin
 
    xv7 : if tech = kintex7 generate
      pll0 : SysPLL_k7 port map (i_clk_tcxo, o_clk_bus, i_reset, o_locked);
+   end generate;
+
+   xz7 : if tech = zynq7000 generate
+     pll0 : SysPLL_zynq port map (i_clk_tcxo, o_clk_bus, i_reset, o_locked);
    end generate;
    
    inf : if tech = inferred generate

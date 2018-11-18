@@ -1,9 +1,18 @@
------------------------------------------------------------------------------
---! @file
---! @copyright Copyright 2017 GNSS Sensor Ltd. All right reserved.
---! @author    Sergey Khabarov - sergeykhbr@gmail.com
---! @brief     Controller of the GPIOs with the AMBA AXI4 interface.
-------------------------------------------------------------------------------
+--!
+--! Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+--!
+--! Licensed under the Apache License, Version 2.0 (the "License");
+--! you may not use this file except in compliance with the License.
+--! You may obtain a copy of the License at
+--!
+--!     http://www.apache.org/licenses/LICENSE-2.0
+--!
+--! Unless required by applicable law or agreed to in writing, software
+--! distributed under the License is distributed on an "AS IS" BASIS,
+--! WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+--! See the License for the specific language governing permissions and
+--! limitations under the License.
+--!
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -19,7 +28,8 @@ entity nasti_gpio is
   generic (
     xaddr    : integer := 0;
     xmask    : integer := 16#fffff#;
-	 xirq     : integer := 0
+	 xirq     : integer := 0;
+	 width    : integer := 12
   );
   port (
     clk  : in std_logic;
@@ -27,8 +37,9 @@ entity nasti_gpio is
     cfg  : out nasti_slave_config_type;
     i    : in  nasti_slave_in_type;
     o    : out nasti_slave_out_type;
-    i_dip : in std_logic_vector(3 downto 0);
-    o_led : out std_logic_vector(7 downto 0)
+    i_gpio : in std_logic_vector(width-1 downto 0);
+	 o_gpio : out std_logic_vector(width-1 downto 0);
+    o_gpio_dir : out std_logic_vector(width-1 downto 0)
   );
 end; 
  
@@ -37,7 +48,7 @@ architecture arch_nasti_gpio of nasti_gpio is
   constant xconfig : nasti_slave_config_type := (
      descrtype => PNP_CFG_TYPE_SLAVE,
      descrsize => PNP_CFG_SLAVE_DESCR_BYTES,
-     irq_idx => xirq,
+     irq_idx => conv_std_logic_vector(xirq, 8),
      xaddr => conv_std_logic_vector(xaddr, CFG_NASTI_CFG_ADDR_BITS),
      xmask => conv_std_logic_vector(xmask, CFG_NASTI_CFG_ADDR_BITS),
      vid => VENDOR_GNSSSENSOR,
@@ -48,13 +59,10 @@ architecture arch_nasti_gpio of nasti_gpio is
        of integer;
 
   type bank_type is record
-    led : std_logic_vector(31 downto 0);
-    dip : std_logic_vector(31 downto 0);
-    reg32_2 : std_logic_vector(31 downto 0);
+    direction : std_logic_vector(31 downto 0);
+    iuser : std_logic_vector(31 downto 0);
+    ouser : std_logic_vector(31 downto 0);
     reg32_3 : std_logic_vector(31 downto 0);
-    reg32_4 : std_logic_vector(31 downto 0);
-    reg32_5 : std_logic_vector(31 downto 0);
-    reg32_6 : std_logic_vector(31 downto 0);
   end record;
   
   type registers is record
@@ -64,8 +72,7 @@ architecture arch_nasti_gpio of nasti_gpio is
 
   constant RESET_VALUE : registers := (
         NASTI_SLAVE_BANK_RESET,
-        ((others => '0'), (others => '0'), 
-         (others => '0'), (others => '0'), (others => '0'),
+        ((others => '1'), (others => '0'), 
          (others => '0'), (others => '0'))
   );
 
@@ -74,7 +81,7 @@ architecture arch_nasti_gpio of nasti_gpio is
 
 begin
 
-  comblogic : process(i, i_dip, r, nrst)
+  comblogic : process(i, i_gpio, r, nrst)
     variable v : registers;
     variable raddr_reg : local_addr_array_type;
     variable waddr_reg : local_addr_array_type;
@@ -92,13 +99,10 @@ begin
       tmp := (others => '0');
 
       case raddr_reg(n) is
-        when 0 => tmp := r.bank0.led;
-        when 1 => tmp := r.bank0.dip;
-        when 2 => tmp := r.bank0.reg32_2;
+        when 0 => tmp := r.bank0.direction;
+        when 1 => tmp := r.bank0.iuser;
+        when 2 => tmp := r.bank0.ouser;
         when 3 => tmp := r.bank0.reg32_3;
-        when 4 => tmp := r.bank0.reg32_4;
-        when 5 => tmp := r.bank0.reg32_5;
-        when 6 => tmp := r.bank0.reg32_6;
         when others =>
       end case;
       rdata(8*CFG_ALIGN_BYTES*(n+1)-1 downto 8*CFG_ALIGN_BYTES*n) := tmp;
@@ -116,13 +120,10 @@ begin
 
          if conv_integer(wstrb(CFG_ALIGN_BYTES*(n+1)-1 downto CFG_ALIGN_BYTES*n)) /= 0 then
            case waddr_reg(n) is
-             when 0 => v.bank0.led := tmp;
-             --when 1 => v.bank0.dip := tmp;
-             when 2 => v.bank0.reg32_2 := tmp;
+             when 0 => v.bank0.direction := tmp;
+             --when 1 => v.bank0.iuser := tmp;  -- [RO]
+             when 2 => v.bank0.ouser := tmp;
              when 3 => v.bank0.reg32_3 := tmp;
-             when 4 => v.bank0.reg32_4 := tmp;
-             when 5 => v.bank0.reg32_5 := tmp;
-             when 6 => v.bank0.reg32_6 := tmp;
              when others =>
            end case;
          end if;
@@ -131,7 +132,7 @@ begin
 
     o <= functionAxi4Output(r.bank_axi, rdata);
 
-    v.bank0.dip(3 downto 0) := i_dip;
+    v.bank0.iuser(width-1 downto 0) := i_gpio;
     
     if nrst = '0' then
         v := RESET_VALUE;
@@ -142,7 +143,8 @@ begin
 
   cfg  <= xconfig;
   
-  o_led <= r.bank0.led(7 downto 0);
+  o_gpio <= r.bank0.ouser(width-1 downto 0);
+  o_gpio_dir <= r.bank0.direction(width-1 downto 0);
 
   -- registers:
   regs : process(clk)

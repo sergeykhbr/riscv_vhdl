@@ -13,7 +13,7 @@
                   'Serial':'port1',
                   'AutoComplete':'autocmd0',
                   'SocInfo':'info0',
-                  'StepToSecHz':60000000.0,
+                  'StepToSecHz':40000000.0,
                   'PollingMs':250,
                   'EventsLoopMs':10,
                   'RegsViewWidget':{

@@ -16,4 +16,5 @@ package config_target is
 
   constant CFG_TOPDIR : string := "../../../";
 
+  constant CFG_TARGET_ETHERNET_ENABLE : boolean := true;
 end;

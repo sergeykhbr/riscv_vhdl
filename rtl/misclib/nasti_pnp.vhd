@@ -42,7 +42,7 @@ architecture arch_nasti_pnp of nasti_pnp is
   constant xconfig : nasti_slave_config_type := (
      descrsize => PNP_CFG_SLAVE_DESCR_BYTES,
      descrtype => PNP_CFG_TYPE_SLAVE,
-     irq_idx => 0,
+     irq_idx => conv_std_logic_vector(0, 8),
      xaddr => conv_std_logic_vector(xaddr, CFG_NASTI_CFG_ADDR_BITS),
      xmask => conv_std_logic_vector(xmask, CFG_NASTI_CFG_ADDR_BITS),
      vid => VENDOR_GNSSSENSOR,
@@ -109,7 +109,7 @@ begin
 
     for k in 0 to CFG_NASTI_SLAVES_TOTAL-1 loop
       slvmap(4*k) := X"00" & 
-                     conv_std_logic_vector(slvcfg(k).irq_idx,8) & "000000" &
+                     slvcfg(k).irq_idx & "000000" &
                      slvcfg(k).descrtype & slvcfg(k).descrsize;
       slvmap(4*k+1) := slvcfg(k).vid & slvcfg(k).did;
       slvmap(4*k+2)   := slvcfg(k).xmask & X"000";

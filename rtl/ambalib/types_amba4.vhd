@@ -293,7 +293,7 @@ type nasti_slave_config_type is record
     --! Descriptor type.
     descrtype : std_logic_vector(1 downto 0);
     --! Descriptor size in bytes.
-    irq_idx : integer;
+    irq_idx : std_logic_vector(7 downto 0);
     --! Base address value.
     xaddr  : std_logic_vector(CFG_NASTI_CFG_ADDR_BITS-1 downto 0);
     --! Maskable bits of the base address.
@@ -314,7 +314,7 @@ type nasti_slave_cfg_vector is array (0 to CFG_NASTI_SLAVES_TOTAL-1)
 --! @default This value corresponds to an empty device and often used
 --!          as assignment of outputs for the disabled device.
 constant nasti_slave_config_none : nasti_slave_config_type := (
-    PNP_CFG_SLAVE_DESCR_BYTES, PNP_CFG_TYPE_SLAVE, 0, 
+    PNP_CFG_SLAVE_DESCR_BYTES, PNP_CFG_TYPE_SLAVE, (others => '0'), 
     (others => '0'), (others => '0'), VENDOR_GNSSSENSOR, SLV_DID_EMPTY);
 
 
