@@ -14,12 +14,9 @@
  *  limitations under the License.
  */
 
-#ifndef __DEBUGGER_ELF_TYPES_H__
-#define __DEBUGGER_ELF_TYPES_H__
+#pragma once
 
 #include <inttypes.h>
-
-namespace debugger {
 
 typedef uint64_t   ElfAddr64;
 typedef uint64_t   ElfOff64;
@@ -144,10 +141,12 @@ class ElfHeaderType {
                 e_shoff_ = SwapBytes(h->e_shoff);
                 e_shnum_ = SwapBytes(h->e_shnum);
                 e_phoff_ = SwapBytes(h->e_phoff);
+                e_entry_ = SwapBytes(h->e_entry);
             } else {
                 e_shoff_ = h->e_shoff;
                 e_shnum_ = h->e_shnum;
                 e_phoff_ = h->e_phoff;
+                e_entry_ = h->e_entry;
             }
         } else {
             Elf64_Ehdr *h = reinterpret_cast<Elf64_Ehdr *>(pimg_);
@@ -155,10 +154,12 @@ class ElfHeaderType {
                 e_shoff_ = SwapBytes(h->e_shoff);
                 e_shnum_ = SwapBytes(h->e_shnum);
                 e_phoff_ = SwapBytes(h->e_phoff);
+                e_entry_ = SwapBytes(h->e_entry);
             } else {
                 e_shoff_ = h->e_shoff;
                 e_shnum_ = h->e_shnum;
                 e_phoff_ = h->e_phoff;
+                e_entry_ = h->e_entry;
             }
         }
     }
@@ -169,6 +170,7 @@ class ElfHeaderType {
     virtual uint64_t get_shoff() { return e_shoff_; }
     virtual ElfHalf get_shnum() { return e_shnum_; }
     virtual uint64_t get_phoff() { return e_phoff_; }
+    virtual uint64_t get_entry() { return e_entry_; }
  protected:
     uint8_t *pimg_;
     bool isElf_;
@@ -177,6 +179,7 @@ class ElfHeaderType {
     uint64_t e_shoff_;
     ElfHalf e_shnum_;
     uint64_t e_phoff_;
+    uint64_t e_entry_;
 };
 
    
@@ -378,30 +381,25 @@ static const ElfWord PT_PHDR     = 6;
 static const ElfWord PT_LOPROC   = 0x70000000;
 static const ElfWord PT_HIPROC   = 0x7fffffff;
 
-typedef struct ProgramHeaderType64
-{
-  uint32_t    p_type;
-  uint32_t    p_offset;
-  uint64_t    p_vaddr;
-  uint64_t    p_paddr;
+typedef struct ProgramHeaderType64 {
+    uint32_t    p_type;
+    uint32_t    p_offset;
+    uint64_t    p_vaddr;
+    uint64_t    p_paddr;
     ElfDWord	p_filesz;
     ElfDWord	p_memsz;
     ElfDWord	p_flags;
     ElfDWord	p_align;
 } ProgramHeaderType64;
 
-typedef struct ProgramHeaderType32
-{
-  uint32_t    p_type;
-  uint32_t    p_offset;
-  ElfAddr32    p_vaddr;
-  ElfAddr32    p_paddr;
-  ElfWord	p_filesz;
-  ElfWord	p_memsz;
-  ElfWord	p_flags;
-  ElfWord	p_align;
+typedef struct ProgramHeaderType32 {
+    uint32_t    p_type;
+    uint32_t    p_offset;
+    ElfAddr32    p_vaddr;
+    ElfAddr32    p_paddr;
+    ElfWord	p_filesz;
+    ElfWord	p_memsz;
+    ElfWord	p_flags;
+    ElfWord	p_align;
 } ProgramHeaderType32;
 
-}  // namespace debugger
-
-#endif  // __DEBUGGER_ELF_TYPES_H__

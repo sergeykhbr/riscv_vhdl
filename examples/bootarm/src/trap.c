@@ -20,6 +20,7 @@ typedef union csr_mcause_type {
 
 extern void print_uart(const char *buf, int sz);
 extern void print_uart_hex(long val);
+extern void led_set(int output);
 
 long handle_trap(long cause, long epc, long long regs[32]) {
     /**
@@ -59,7 +60,7 @@ long handle_trap(long cause, long epc, long long regs[32]) {
        print_uart_hex(epc);
        print_uart("\r\n", 2);
        /// Exception trap
-       ((gpio_map *)ADDR_NASTI_SLAVE_GPIO)->led = 0xF0;
+       led_set(0xF0);
        while (1) {}
     }
 

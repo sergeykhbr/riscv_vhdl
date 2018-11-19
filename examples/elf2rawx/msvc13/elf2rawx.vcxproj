@@ -11,10 +11,16 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\common\attribute.cpp" />
+    <ClCompile Include="..\src\common\autobuffer.cpp" />
     <ClCompile Include="..\src\elfreader.cpp" />
     <ClCompile Include="..\src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\src\common\attribute.h" />
+    <ClInclude Include="..\src\common\autobuffer.h" />
+    <ClInclude Include="..\src\common\iattr.h" />
+    <ClInclude Include="..\src\common\iface.h" />
     <ClInclude Include="..\src\elfreader.h" />
     <ClInclude Include="..\src\elftypes.h" />
     <ClInclude Include="..\src\stdtypes.h" />
@@ -22,7 +28,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{D7034E36-AA3C-41CA-9BB0-182AF1799A49}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>elf2raw64</RootNamespace>
+    <RootNamespace>elf2rawx</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">

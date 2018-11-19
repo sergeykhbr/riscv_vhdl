@@ -6,11 +6,18 @@ LDFLAGS=
 LIBS=-lstdc++
 
 SOURCES = \
+	attribute.cpp \
+	autobuffer.cpp \
 	elfreader.cpp \
 	main.cpp
 OBJECTS = $(SOURCES:.cpp=.o)
-EXECUTABLE = elf2raw64
-SRC_DIR = ../src
+EXECUTABLE = elf2rawx
+SRC_PATH = \
+	../src \
+	../src/common
+
+VPATH = $(SRC_PATH)
+
 OBJ_DIR = obj
 ELF_DIR = elf
 
@@ -23,6 +30,6 @@ $(EXECUTABLE): $(OBJECTS)
 	$(CC) $(LDFLAGS) $(addprefix $(OBJ_DIR)/,$(OBJECTS)) -o $(addprefix $(ELF_DIR)/,$@) -lstdc++
 
 #.cpp.o:
-%.o: $(SRC_DIR)/%.cpp
+%.o: %.cpp
 	$(MKDIR) ./$(OBJ_DIR)
 	$(CC) $(CFLAGS) $< -o $(addprefix $(OBJ_DIR)/,$@)

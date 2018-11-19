@@ -7,7 +7,7 @@
 
 void printHelp() {
     printf("This tool is a property of GNSS Sensor Limited.\n");
-    printf("Any information maybe requested at chief@gnss-sensor.com\n\n");
+    printf("Any information maybe requested at sergeykhbr@gmail.com\n\n");
     printf("Use the following arguments:\n");
     printf("    -r    generate raw image file (default)\n");
     printf("    -h    generate ROM array file in HEX format\n");
@@ -15,10 +15,9 @@ void printHelp() {
            "the size will be computed\n");
     printf("    -l    bytes per line (with -h only). Default 16 bytes/128 "
            "bits.\n");
-    printf("    -b    Base address.\n");
     printf("    -o    output file name\n");
     printf("Example\n");
-    printf("    elf2raw input_file_name -h -f 192168 -l 8 -o "
+    printf("    elf2rawx input_file_name -h -f 192168 -l 8 -o "
            "output_file_name\n");
 }
 
@@ -30,9 +29,8 @@ int main(int argc, char* argv[]) {
 
     enum EOutputFormat {Format_RAW_IMAGE, Format_ROMHEX};
     EOutputFormat outfmt = Format_RAW_IMAGE;
-    uint32_t uiFixedSizeBytes = 0;
-    uint32_t uiBytesPerLine = 16;
-    uint64_t ullBaseAddress = ~0;
+    int iFixedSizeBytes = 0;
+    int iBytesPerLine = 16;
     int infile_index = 1;
     int outfile_index = 3;
     for (int i=1; i<argc; i++) {
@@ -41,11 +39,9 @@ int main(int argc, char* argv[]) {
         } else if (strcmp(argv[i], "-h") == 0) {  // generate rom hex file
             outfmt = Format_ROMHEX;
         } else if (strcmp(argv[i], "-f") == 0) {  // fixed size in bytes
-            uiFixedSizeBytes = (uint32_t)strtol(argv[++i], NULL, 0);
+            iFixedSizeBytes = strtol(argv[++i], NULL, 0);
         } else if (strcmp(argv[i], "-l") == 0) {  // bytes per hex-line
-            uiBytesPerLine = (uint32_t)strtol(argv[++i], NULL, 0);
-        } else if (strcmp(argv[i], "-b") == 0) {  // bytes per hex-line
-            ullBaseAddress = (uint64_t)strtoll(argv[++i], NULL, 0);
+            iBytesPerLine = strtol(argv[++i], NULL, 0);
         } else if (strcmp(argv[i], "-o") == 0) {  // output file name
             outfile_index = ++i;
         } else {
@@ -59,18 +55,18 @@ int main(int argc, char* argv[]) {
     std::string out = std::string(arg3.begin(), arg3.end());
 
     ElfReader elf(in.c_str());
-    if (elf.isOpened() == 0) {
-        printf("File %s not found\n", in.c_str());
+    if (elf.loadableSectionTotal() == 0) {
+        printf("elf2rawx error: can't load file %s\n", in.c_str());
         return 0;
     }
 
     switch (outfmt) {
     case Format_RAW_IMAGE:
-        elf.writeRawImage(out.c_str(), uiFixedSizeBytes);
+        elf.writeRawImage(out.c_str(), iFixedSizeBytes);
         break;
     case Format_ROMHEX:
-        elf.writeRomHexArray(out.c_str(), ullBaseAddress,
-                             uiBytesPerLine, uiFixedSizeBytes);
+        elf.writeRomHexArray(out.c_str(),
+                             iBytesPerLine, iFixedSizeBytes);
         break;
     default:
         printHelp();

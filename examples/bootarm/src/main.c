@@ -12,7 +12,7 @@
 static const int FW_IMAGE_SIZE_BYTES = 1 << 18;
 
 void led_set(int output) {
-    ((gpio_map *)ADDR_NASTI_SLAVE_GPIO)->led = output;
+    ((gpio_map *)ADDR_NASTI_SLAVE_GPIO)->ouser = output<<4;
 }
 
 void print_uart(const char *buf, int sz) {
@@ -86,6 +86,8 @@ void _init() {
     //uart->scaler = 304;  // 70 MHz
     //uart->scaler = 260;  // 60 MHz
     uart->scaler = 40000000 / 115200 / 2;  // 40 MHz
+    
+    gpio->direction = 0xf;
 
     led_set(0x01);
     print_uart("Boot . . .", 10);

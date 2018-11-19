@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.21005.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "elf2raw64", "elf2raw64.vcxproj", "{D7034E36-AA3C-41CA-9BB0-182AF1799A49}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "elf2rawx", "elf2rawx.vcxproj", "{D7034E36-AA3C-41CA-9BB0-182AF1799A49}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
