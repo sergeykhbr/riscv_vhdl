@@ -26,8 +26,9 @@ namespace debugger {
 
 static const char *IFACE_COMMAND = "ICommand";
 
-static const bool CMD_VALID     = true;
-static const bool CMD_INVALID   = false;
+static const int CMD_VALID      = 0;
+static const int CMD_WRONG_ARGS = 1;
+static const int CMD_INVALID    = 2;
 
 class ICommand : public IFace {
  public:
@@ -43,7 +44,7 @@ class ICommand : public IFace {
     virtual const char *briefDescr() { return briefDescr_.to_string(); }
     virtual const char *detailedDescr() { return detailedDescr_.to_string(); }
 
-    virtual bool isValid(AttributeType *args) = 0;
+    virtual int isValid(AttributeType *args) = 0;
     virtual void exec(AttributeType *args, AttributeType *res) = 0;
 
     virtual void generateError(AttributeType *res, const char *descr) {

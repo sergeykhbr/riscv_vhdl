@@ -1,7 +1,18 @@
-/**
- * @file
- * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
- * @author     Sergey Khabarov - sergeykhbr@gmail.com
+/*
+ *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  * @brief      Demo plugin for the RISC-V debugger library.
  */
 
@@ -15,8 +26,8 @@
 namespace debugger {
 
 class CmdDemo : public ICommand  {
-public:
-    explicit CmdDemo(ITap *tap, ISocInfo *info) 
+ public:
+    CmdDemo(ITap *tap, ISocInfo *info) 
         : ICommand ("democmd", tap, info) {
 
         briefDescr_.make_string("Example of custom command implementation");
@@ -28,11 +39,11 @@ public:
     }
 
     /** ICommand */
-    virtual bool isValid(AttributeType *args) {
-        if ((*args)[0u].is_equal("democmd")) {
-            return CMD_VALID;
+    virtual int isValid(AttributeType *args) {
+        if (!(*args)[0u].is_equal("democmd")) {
+            return CMD_INVALID;
         }
-        return CMD_INVALID;
+        return CMD_VALID;
     }
     virtual void exec(AttributeType *args, AttributeType *res) {
         Reg64Type t1;
@@ -41,14 +52,12 @@ public:
         (*res)[0u].make_string("Reading 0xfffff000");
         (*res)[1].make_uint64(t1.buf32[0]);
     }
-
-private:
 };
 
 class SimplePlugin : public IService,
                      public ISimplePlugin {
-public:
-    SimplePlugin(const char *name) : IService(name) {
+ public:
+    explicit SimplePlugin(const char *name) : IService(name) {
         /// Interface registration
         registerInterface(static_cast<ISimplePlugin *>(this));
         /// Test attribute that will be saved/restored by core
@@ -99,7 +108,7 @@ public:
         return 0x555;
     }
 
-private:
+ private:
     AttributeType attr1_;
     ICmdExecutor *exec_;
     CmdDemo *pcmd_;

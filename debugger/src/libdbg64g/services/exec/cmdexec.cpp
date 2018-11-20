@@ -182,28 +182,34 @@ void CmdExecutor::processSimple(AttributeType *cmd, AttributeType *res) {
                         icmd->cmdName(), icmd->briefDescr());
             }
         } else {
-            const char *helpcmd = (*cmd)[1].to_string();
-            icmd = getICommand(helpcmd);
+            AttributeType helparg;
+            helparg.make_list(1);
+            helparg[0u].make_string((*cmd)[1].to_string());
+            getICommand(&helparg, &icmd);
             if (icmd) {
                 RISCV_printf0("\n%s", icmd->detailedDescr());
             } else {
-                RISCV_error("Command \\'%s\\' not found", helpcmd);
+                RISCV_error("Command '%s' not found", helparg[0u].to_string());
             }
         }
         return;
     }
 
-    AttributeType u;
-    icmd = getICommand(cmd);
+    int err = getICommand(cmd, &icmd);
     if (!icmd) {
-         RISCV_error("Command \\'%s\\' not found. "
-                    "Use \\'help\\' to list commands", (*cmd)[0u].to_string());
+        RISCV_error("Command '%s' not found. "
+                    "Use 'help' to list commands", (*cmd)[0u].to_string());
+        return;
+    } else if (err == CMD_WRONG_ARGS) {
+        RISCV_error("Command '%s' has been called with invalid arguments. "
+            "Use 'help %s' to check the required arguments",
+            (*cmd)[0u].to_string(), (*cmd)[0u].to_string());
         return;
     }
     icmd->exec(cmd, res);
 
     if (cmdIsError(res)) {
-        RISCV_error("Command \\'%s\\' error: \\'%s\\'", 
+        RISCV_error("Command '%s' error: '%s'", 
             (*res)[1].to_string(), (*res)[2].to_string());
     }
 }
@@ -218,26 +224,22 @@ bool CmdExecutor::cmdIsError(AttributeType *res) {
     return (*res)[0u].is_equal("ERROR");
 }
 
-ICommand *CmdExecutor::getICommand(AttributeType *args) {
-    ICommand *ret = 0;
+int CmdExecutor::getICommand(AttributeType *args, ICommand **pcmd) {
+    *pcmd = 0;
+    int err = CMD_INVALID;
+    ICommand *iitem;
     for (unsigned i = 0; i < cmds_.size(); i++) {
-        ret = static_cast<ICommand *>(cmds_[i].to_iface());
-        if (ret && (ret->isValid(args) == CMD_VALID)) {
-            return ret;
+        iitem = static_cast<ICommand *>(cmds_[i].to_iface());
+        if (!iitem) {
+            continue;
+        }
+        err = iitem->isValid(args);
+        if (err != CMD_INVALID) {
+            *pcmd = iitem;
+            return err;
         }
     }
-    return 0;
-}
-
-ICommand *CmdExecutor::getICommand(const char *name) {
-    ICommand *ret = 0;
-    for (unsigned i = 0; i < cmds_.size(); i++) {
-        ret = static_cast<ICommand *>(cmds_[i].to_iface());
-        if (ret && strcmp(ret->cmdName(), name) == 0) {
-            return ret;
-        }
-    }
-    return 0;
+    return CMD_INVALID;
 }
 
 void CmdExecutor::splitLine(char *str, AttributeType *listArgs) {

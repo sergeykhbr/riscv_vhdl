@@ -38,19 +38,17 @@ CmdRegs::CmdRegs(ITap *tap, ISocInfo *info)
         "    regs a0 s0 sp\n");
 }
 
-bool CmdRegs::isValid(AttributeType *args) {
-    if ((*args)[0u].is_equal(cmdName_.to_string()) && args->size() >= 1) {
+int CmdRegs::isValid(AttributeType *args) {
+    if (!cmdName_.is_equal((*args)[0u].to_string())) {
+        return CMD_INVALID;
+    } 
+    if (args->size() >= 1) {
         return CMD_VALID;
     }
-    return CMD_INVALID;
+    return CMD_WRONG_ARGS;
 }
 
 void CmdRegs::exec(AttributeType *args, AttributeType *res) {
-    if (!isValid(args)) {
-        generateError(res, "Wrong argument list");
-        return;
-    }
-
     Reg64Type u;
     if (args->size() != 1) {
         res->make_list(args->size() - 1);

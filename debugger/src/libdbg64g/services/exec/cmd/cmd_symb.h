@@ -25,14 +25,14 @@
 namespace debugger {
 
 class CmdSymb : public ICommand  {
-public:
-    explicit CmdSymb(ITap *tap, ISocInfo *info);
+ public:
+    CmdSymb(ITap *tap, ISocInfo *info);
 
     /** ICommand */
-    virtual bool isValid(AttributeType *args);
+    virtual int isValid(AttributeType *args);
     virtual void exec(AttributeType *args, AttributeType *res);
 
-private:
+ private:
     void applyFilter(const char *filt, AttributeType *in, AttributeType *out);
     bool filt_pass(const char *filt, const char *symbname);
 };

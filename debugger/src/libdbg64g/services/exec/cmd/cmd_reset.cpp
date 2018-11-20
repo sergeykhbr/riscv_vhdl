@@ -35,19 +35,19 @@ CmdReset::CmdReset(ITap *tap, ISocInfo *info)
         "    reset 0\n");
 }
 
-bool CmdReset::isValid(AttributeType *args) {
-    if ((*args)[0u].is_equal("reset") && args->size() <= 2) {
+int CmdReset::isValid(AttributeType *args) {
+    if (!cmdName_.is_equal((*args)[0u].to_string())) {
+        return CMD_INVALID;
+    }
+    if (args->size() <= 2) {
         return CMD_VALID;
     }
-    return CMD_INVALID;
+    return CMD_WRONG_ARGS;
 }
 
 void CmdReset::exec(AttributeType *args, AttributeType *res) {
+    res->attr_free();
     res->make_nil();
-    if (!isValid(args)) {
-        generateError(res, "Wrong argument list");
-        return;
-    }
 
     Reg64Type rst;
     DsuMapType *dsu = info_->getpDsu();
@@ -66,6 +66,5 @@ void CmdReset::exec(AttributeType *args, AttributeType *res) {
         tap_->write(sw_rst_addr, 8, rst.buf);
     }
 }
-
 
 }  // namespace debugger

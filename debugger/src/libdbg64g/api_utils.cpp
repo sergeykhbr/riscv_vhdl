@@ -122,7 +122,7 @@ extern "C" int RISCV_printf(void *iface, int level,
     RISCV_mutex_lock(&mutex_printf);
     if (iout == NULL) {
         ret = RISCV_sprintf(bufLog, sizeof(bufLog),
-                    "[%" RV_PRI64 "d, \'%s\', \'", cur_t, "unknown");
+                    "[%" RV_PRI64 "d, \"%s\", \"", cur_t, "unknown");
     } else if (strcmp(iout->getFaceName(), IFACE_SERVICE) == 0) {
         IService *iserv = static_cast<IService *>(iout);
         AttributeType *local_level = 
@@ -132,14 +132,14 @@ extern "C" int RISCV_printf(void *iface, int level,
             return 0;
         }
         ret = RISCV_sprintf(bufLog, sizeof(bufLog),
-                "[%" RV_PRI64 "d, \'%s\', \'", cur_t, iserv->getObjName());
+                "[%" RV_PRI64 "d, \"%s\", \"", cur_t, iserv->getObjName());
     } else if (strcmp(iout->getFaceName(), IFACE_CLASS) == 0) {
         IClass *icls = static_cast<IClass *>(iout);
         ret = RISCV_sprintf(bufLog, sizeof(bufLog),
-                "[%" RV_PRI64 "d, \'%s\', \'", cur_t, icls->getClassName());
+                "[%" RV_PRI64 "d, \"%s\", \"", cur_t, icls->getClassName());
     } else {
         ret = RISCV_sprintf(bufLog, sizeof(bufLog),
-                "[%" RV_PRI64 "d, \'%s\', \'", cur_t, iout->getFaceName());
+                "[%" RV_PRI64 "d, \"%s\", \"", cur_t, iout->getFaceName());
     }
     va_start(arg, fmt);
 #if defined(_WIN32) || defined(__CYGWIN__)
@@ -149,7 +149,7 @@ extern "C" int RISCV_printf(void *iface, int level,
 #endif
     va_end(arg);
 
-    bufLog[ret++] = '\'';
+    bufLog[ret++] = '\"';
     bufLog[ret++] = ']';
     bufLog[ret++] = '\n';
     bufLog[ret] = '\0';

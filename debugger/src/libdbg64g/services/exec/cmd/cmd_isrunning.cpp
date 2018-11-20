@@ -29,19 +29,18 @@ CmdIsRunning::CmdIsRunning(ITap *tap, ISocInfo *info)
         "    isrunning\n");
 }
 
-bool CmdIsRunning::isValid(AttributeType *args) {
-    if ((*args)[0u].is_equal(cmdName_.to_string()) && args->size() == 1) {
-        return CMD_VALID;
+int CmdIsRunning::isValid(AttributeType *args) {
+    if (!cmdName_.is_equal((*args)[0u].to_string())) {
+        return CMD_INVALID;
     }
-    return CMD_INVALID;
+    if (args->size() != 1) {
+        return CMD_WRONG_ARGS;
+    }
+    return CMD_VALID;
 }
 
 void CmdIsRunning::exec(AttributeType *args, AttributeType *res) {
     res->make_boolean(false);
-    if (!isValid(args)) {
-        generateError(res, "Wrong argument list");
-        return;
-    }
 
     Reg64Type t1;
     GenericCpuControlType ctrl;

@@ -34,21 +34,19 @@ CmdMemDump::CmdMemDump(ITap *tap, ISocInfo *info)
         "    memdump 0x10000000 128 \"c:/My Documents/dump.bin\"\n");
 }
 
-bool CmdMemDump::isValid(AttributeType *args) {
-    if ((*args)[0u].is_equal(cmdName_.to_string()) 
-     && (args->size() == 4 || args->size() == 5)) {
+int CmdMemDump::isValid(AttributeType *args) {
+    if (!cmdName_.is_equal((*args)[0u].to_string())) {
+        return CMD_INVALID;
+    }
+    if (args->size() == 4 || args->size() == 5) {
         return CMD_VALID;
     }
-    return CMD_INVALID;
+    return CMD_WRONG_ARGS;
 }
 
 void CmdMemDump::exec(AttributeType *args, AttributeType *res) {
     res->attr_free();
     res->make_nil();
-    if (!isValid(args)) {
-        generateError(res, "Wrong argument list");
-        return;
-    }
 
     const char *filename = (*args)[3].to_string();
     FILE *fd = fopen(filename, "wb");

@@ -27,17 +27,17 @@
 namespace debugger {
 
 class CmdDisas : public ICommand  {
-public:
-    explicit CmdDisas(ITap *tap, ISocInfo *info);
+ public:
+    CmdDisas(ITap *tap, ISocInfo *info);
 
     /** ICommand */
-    virtual bool isValid(AttributeType *args);
+    virtual int isValid(AttributeType *args);
     virtual void exec(AttributeType *args, AttributeType *res);
 
-private:
+ private:
     void format(AttributeType *asmbuf, AttributeType *fmtstr);
 
-private:
+ private:
     ISourceCode *isrc_;
 };
 

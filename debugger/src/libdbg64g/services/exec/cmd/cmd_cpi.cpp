@@ -41,21 +41,20 @@ CmdCpi::CmdCpi(ITap *tap, ISocInfo *info)
     clockCnt_z = 0;
 }
 
-bool CmdCpi::isValid(AttributeType *args) {
-    if ((*args)[0u].is_equal(cmdName_.to_string()) && args->size() == 1) {
-        return CMD_VALID;
+int CmdCpi::isValid(AttributeType *args) {
+    if (!cmdName_.is_equal((*args)[0u].to_string())) {
+        return CMD_INVALID;
     }
-    return CMD_INVALID;
+    if (args->size() != 1) {
+        return CMD_WRONG_ARGS;
+    }
+    return CMD_VALID;
 }
 
 void CmdCpi::exec(AttributeType *args, AttributeType *res) {
     res->make_list(5);
     (*res)[0u].make_uint64(0);
     (*res)[1].make_uint64(0);
-    if (!isValid(args)) {
-        generateError(res, "Wrong argument list");
-        return;
-    }
 
     struct CpiRegsType {
         Reg64Type clock_cnt;

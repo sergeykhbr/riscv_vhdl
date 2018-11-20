@@ -31,12 +31,14 @@ CmdLoadBin::CmdLoadBin(ITap *tap, ISocInfo *info)
         "    loadsrec /home/hc08/image.bin 0x04000\n");
 }
 
-bool CmdLoadBin::isValid(AttributeType *args) {
-    if ((*args)[0u].is_equal("loadbin") 
-        && args->size() == 3) {
+int CmdLoadBin::isValid(AttributeType *args) {
+    if (!cmdName_.is_equal((*args)[0u].to_string())) {
+        return CMD_INVALID;
+    }
+    if (args->size() == 3) {
         return CMD_VALID;
     }
-    return CMD_INVALID;
+    return CMD_WRONG_ARGS;
 }
 
 void CmdLoadBin::exec(AttributeType *args, AttributeType *res) {

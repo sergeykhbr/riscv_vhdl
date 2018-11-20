@@ -32,19 +32,19 @@ CmdWrite::CmdWrite(ITap *tap, ISocInfo *info)
         "    write 0x10040000 16 [0xaabbccdd00112233, 0xaabbccdd00112233]\n");
 }
 
-bool CmdWrite::isValid(AttributeType *args) {
-    if ((*args)[0u].is_equal(cmdName_.to_string()) && args->size() == 4) {
+int CmdWrite::isValid(AttributeType *args) {
+    if (!cmdName_.is_equal((*args)[0u].to_string())) {
+        return CMD_INVALID;
+    }
+    if (args->size() == 4) {
         return CMD_VALID;
     }
-    return CMD_INVALID;
+    return CMD_WRONG_ARGS;
 }
 
 void CmdWrite::exec(AttributeType *args, AttributeType *res) {
+    res->attr_free();
     res->make_nil();
-    if (!isValid(args)) {
-        generateError(res, "Wrong argument list");
-        return;
-    }
 
     uint64_t addr = (*args)[1].to_uint64();
     uint64_t val = (*args)[3].to_uint64();

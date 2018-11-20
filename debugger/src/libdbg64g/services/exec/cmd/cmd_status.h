@@ -25,14 +25,12 @@
 namespace debugger {
 
 class CmdStatus : public ICommand  {
-public:
-    explicit CmdStatus(ITap *tap, ISocInfo *info);
+ public:
+    CmdStatus(ITap *tap, ISocInfo *info);
 
     /** ICommand */
-    virtual bool isValid(AttributeType *args);
+    virtual int isValid(AttributeType *args);
     virtual void exec(AttributeType *args, AttributeType *res);
-
-private:
 };
 
 }  // namespace debugger

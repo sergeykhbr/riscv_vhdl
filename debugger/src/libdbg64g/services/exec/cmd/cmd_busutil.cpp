@@ -1,8 +1,17 @@
-/**
- * @file
- * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
- * @author     Sergey Khabarov - sergeykhbr@gmail.com
- * @brief      Bus utilization computation
+/*
+ *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  *
  * @details    Read CPU dport registers: clock counter and per
  *             master counters with read/write transactions to compute
@@ -39,11 +48,14 @@ CmdBusUtil::CmdBusUtil(ITap *tap, ISocInfo *info)
     memset(bus_util_z_, 0, sizeof(bus_util_z_));
 }
 
-bool CmdBusUtil::isValid(AttributeType *args) {
-    if ((*args)[0u].is_equal(cmdName_.to_string()) && args->size() == 1) {
+int CmdBusUtil::isValid(AttributeType *args) {
+    if (!(*args)[0u].is_equal(cmdName_.to_string())) {
+        return CMD_INVALID;
+    }
+    if (args->size() == 1) {
         return CMD_VALID;
     }
-    return CMD_INVALID;
+    return CMD_WRONG_ARGS;
 }
 
 void CmdBusUtil::exec(AttributeType *args, AttributeType *res) {

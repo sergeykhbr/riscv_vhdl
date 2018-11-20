@@ -33,12 +33,14 @@ CmdCsr::CmdCsr(ITap *tap, ISocInfo *info)
         "    csr 0xf10 1\n");
 }
 
-bool CmdCsr::isValid(AttributeType *args) {
-    if ((*args)[0u].is_equal(cmdName_.to_string()) 
-     && (args->size() == 2 || args->size() == 3)) {
+int CmdCsr::isValid(AttributeType *args) {
+    if (!(*args)[0u].is_equal(cmdName_.to_string())) {
+        return CMD_INVALID;
+    }
+    if (args->size() == 2 || args->size() == 3) {
         return CMD_VALID;
     }
-    return CMD_INVALID;
+    return CMD_WRONG_ARGS;
 }
 
 void CmdCsr::exec(AttributeType *args, AttributeType *res) {

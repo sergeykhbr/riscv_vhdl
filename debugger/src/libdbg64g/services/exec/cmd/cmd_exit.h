@@ -26,13 +26,11 @@ namespace debugger {
 
 class CmdExit : public ICommand  {
 public:
-    explicit CmdExit(ITap *tap, ISocInfo *info);
+    CmdExit(ITap *tap, ISocInfo *info);
 
     /** ICommand */
-    virtual bool isValid(AttributeType *args);
+    virtual int isValid(AttributeType *args);
     virtual void exec(AttributeType *args, AttributeType *res);
-
-private:
 };
 
 }  // namespace debugger

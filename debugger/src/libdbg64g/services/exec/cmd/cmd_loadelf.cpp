@@ -36,20 +36,20 @@ CmdLoadElf::CmdLoadElf(ITap *tap, ISocInfo *info)
         "    loadelf /home/riscv/image.elf nocode\n");
 }
 
-bool CmdLoadElf::isValid(AttributeType *args) {
-    if ((*args)[0u].is_equal("loadelf") 
-        && (args->size() == 2 || args->size() == 3)) {
+int CmdLoadElf::isValid(AttributeType *args) {
+    if (!cmdName_.is_equal((*args)[0u].to_string())) {
+        return CMD_INVALID;
+    }
+    if (args->size() == 2 
+        || (args->size() == 3 && (*args)[2].is_equal("nocode"))) {
         return CMD_VALID;
     }
-    return CMD_INVALID;
+    return CMD_WRONG_ARGS;
 }
 
 void CmdLoadElf::exec(AttributeType *args, AttributeType *res) {
+    res->attr_free();
     res->make_nil();
-    if (!isValid(args)) {
-        generateError(res, "Wrong argument list");
-        return;
-    }
     bool program = true;
     if (args->size() == 3 
         && (*args)[2].is_string() && (*args)[2].is_equal("nocode")) {

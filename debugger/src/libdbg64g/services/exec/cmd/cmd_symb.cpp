@@ -26,8 +26,8 @@ CmdSymb::CmdSymb(ITap *tap, ISocInfo *info)
     briefDescr_.make_string("Get symbols list");
     detailedDescr_.make_string(
         "Description:\n"
-        "    Read symbols list. Command 'loadelf' must be applied first to\n"
-        "    make available debug information.\n"
+        "    Read symbols list. Command 'loadelf' or 'loadmap' must be "
+        "    applied first to make available debug information.\n"
         "Usage:\n"
         "    symb filter\n"
         "Example:\n"
@@ -35,20 +35,19 @@ CmdSymb::CmdSymb(ITap *tap, ISocInfo *info)
         "    symb *main*\n");
 }
 
-bool CmdSymb::isValid(AttributeType *args) {
-    if ((*args)[0u].is_equal("symb") 
-        && (args->size() == 1 || args->size() == 2)) {
+int CmdSymb::isValid(AttributeType *args) {
+    if (!cmdName_.is_equal((*args)[0u].to_string())) {
+        return CMD_INVALID;
+    }
+    if (args->size() == 1 || args->size() == 2) {
         return CMD_VALID;
     }
-    return CMD_INVALID;
+    return CMD_WRONG_ARGS;
 }
 
 void CmdSymb::exec(AttributeType *args, AttributeType *res) {
+    res->attr_free();
     res->make_nil();
-    if (!isValid(args)) {
-        generateError(res, "Wrong argument list");
-        return;
-    }
 
     AttributeType lstServ;
     RISCV_get_services_with_iface(IFACE_SOURCE_CODE, &lstServ);

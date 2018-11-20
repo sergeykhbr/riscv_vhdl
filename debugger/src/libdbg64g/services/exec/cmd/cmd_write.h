@@ -23,14 +23,14 @@
 namespace debugger {
 
 class CmdWrite : public ICommand  {
-public:
-    explicit CmdWrite(ITap *tap, ISocInfo *info);
+ public:
+    CmdWrite(ITap *tap, ISocInfo *info);
 
     /** ICommand */
-    virtual bool isValid(AttributeType *args);
+    virtual int isValid(AttributeType *args);
     virtual void exec(AttributeType *args, AttributeType *res);
 
-private:
+ private:
     AttributeType wrData_;
 };
 

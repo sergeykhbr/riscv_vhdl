@@ -29,19 +29,14 @@ CmdExit::CmdExit(ITap *tap, ISocInfo *info)
         "    exit\n");
 }
 
-bool CmdExit::isValid(AttributeType *args) {
-    if ((*args)[0u].is_equal(cmdName_.to_string())) {
-        return CMD_VALID;
+int CmdExit::isValid(AttributeType *args) {
+    if (!cmdName_.is_equal((*args)[0u].to_string())) {
+        return CMD_INVALID;
     }
-    return CMD_INVALID;
+    return CMD_VALID;
 }
 
 void CmdExit::exec(AttributeType *args, AttributeType *res) {
-    res->make_nil();
-    if (!isValid(args)) {
-        generateError(res, "Wrong argument list");
-        return;
-    }
     RISCV_break_simulation();
 }
 

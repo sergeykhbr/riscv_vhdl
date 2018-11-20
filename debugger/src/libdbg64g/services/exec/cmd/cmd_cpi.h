@@ -25,14 +25,14 @@
 namespace debugger {
 
 class CmdCpi : public ICommand  {
-public:
+ public:
     explicit CmdCpi(ITap *tap, ISocInfo *info);
 
     /** ICommand */
-    virtual bool isValid(AttributeType *args);
+    virtual int isValid(AttributeType *args);
     virtual void exec(AttributeType *args, AttributeType *res);
 
-private:
+ private:
     uint64_t stepCnt_z;
     uint64_t clockCnt_z;
 };

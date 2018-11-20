@@ -32,22 +32,23 @@ CmdHalt::CmdHalt(ITap *tap, ISocInfo *info)
 }
 
 
-bool CmdHalt::isValid(AttributeType *args) {
+int CmdHalt::isValid(AttributeType *args) {
     AttributeType &name = (*args)[0u];
-    if (name.is_equal("halt") || name.is_equal("break") 
-        || name.is_equal("stop") || name.is_equal("s")) {
-        return CMD_VALID;
+    if (!cmdName_.is_equal(name.to_string())
+        && !name.is_equal("break")
+        && !name.is_equal("stop")
+        && !name.is_equal("s")) {
+        return CMD_INVALID;
     }
-    return CMD_INVALID;
+    if (args->size() != 1) {
+        return CMD_WRONG_ARGS;
+    }
+    return CMD_VALID;
 }
 
 void CmdHalt::exec(AttributeType *args, AttributeType *res) {
+    res->attr_free();
     res->make_nil();
-    if (!isValid(args)) {
-        generateError(res, "Wrong argument list");
-        return;
-    }
-
     Reg64Type t1;
     DsuMapType *dsu = info_->getpDsu();
     GenericCpuControlType ctrl;

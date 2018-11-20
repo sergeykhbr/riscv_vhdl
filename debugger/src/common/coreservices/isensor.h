@@ -59,11 +59,11 @@ class SensorCmdType : public ICommand {
     }
 
     /** ICommand */
-    virtual bool isValid(AttributeType *args) {
+    virtual int isValid(AttributeType *args) {
         if (!isen_ || !(*args)[0u].is_equal(parent_->getObjName())) {
-            return false;
+            return CMD_INVALID;
         }
-        return true;
+        return CMD_VALID;
     }
 
     virtual void exec(AttributeType *args, AttributeType *res) {

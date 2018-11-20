@@ -25,14 +25,14 @@
 namespace debugger {
 
 class CmdReset : public ICommand  {
-public:
-    explicit CmdReset(ITap *tap, ISocInfo *info);
+ public:
+    CmdReset(ITap *tap, ISocInfo *info);
 
     /** ICommand */
-    virtual bool isValid(AttributeType *args);
+    virtual int isValid(AttributeType *args);
     virtual void exec(AttributeType *args, AttributeType *res);
 
-private:
+ private:
 };
 
 }  // namespace debugger

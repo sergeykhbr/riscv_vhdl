@@ -34,18 +34,18 @@ CmdStatus::CmdStatus(ITap *tap, ISocInfo *info)
         "    status\n");
 }
 
-bool CmdStatus::isValid(AttributeType *args) {
-    if ((*args)[0u].is_equal(cmdName_.to_string()) && args->size() == 1) {
+int CmdStatus::isValid(AttributeType *args) {
+    if (!cmdName_.is_equal((*args)[0u].to_string())) {
+        return CMD_INVALID;
+    }
+    if (args->size() == 1) {
         return CMD_VALID;
     }
-    return CMD_INVALID;
+    return CMD_WRONG_ARGS;
 }
 
 void CmdStatus::exec(AttributeType *args, AttributeType *res) {
-    if (!isValid(args)) {
-        generateError(res, "Wrong argument list");
-        return;
-    }
+    res->attr_free();
     res->make_nil();
 
     Reg64Type t1;
@@ -55,21 +55,6 @@ void CmdStatus::exec(AttributeType *args, AttributeType *res) {
         return;
     }
     res->make_uint64(t1.val);
-
-#if 0
-    // Instr trace info
-    addr = reinterpret_cast<uint64_t>(pdsu->ureg.v.instr_buf);
-    AttributeType t2;
-    t2.make_data(4*8);
-    if (tap_->read(addr, 4*8, t2.data()) == TAP_ERROR) {
-        return;
-    }
-    Reg64Type *instr = reinterpret_cast<Reg64Type *>(t2.data());
-    RISCV_printf(0, 0, "    3. [%08x] %08x", instr[3].buf32[1], instr[3].buf32[0]);
-    RISCV_printf(0, 0, "    2. [%08x] %08x", instr[2].buf32[1], instr[2].buf32[0]);
-    RISCV_printf(0, 0, "    1. [%08x] %08x", instr[1].buf32[1], instr[1].buf32[0]);
-    RISCV_printf(0, 0, "    0. [%08x] %08x", instr[0].buf32[1], instr[0].buf32[0]);
-#endif
 }
 
 }  // namespace debugger

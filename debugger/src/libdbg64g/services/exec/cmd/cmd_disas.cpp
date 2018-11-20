@@ -48,21 +48,22 @@ CmdDisas::CmdDisas(ITap *tap, ISocInfo *info)
     }
 }
 
-bool CmdDisas::isValid(AttributeType *args) {
-    if ((*args)[0u].is_equal(cmdName_.to_string()) 
-        && args->size() >= 3 && (*args)[1].is_integer()
-        && ((*args)[2].is_data() || (*args)[2].is_integer())
-        ) {
+int CmdDisas::isValid(AttributeType *args) {
+    if (!cmdName_.is_equal((*args)[0u].to_string())) {
+        return CMD_INVALID;
+    }
+    if (args->size() >= 3 && (*args)[1].is_integer()
+        && ((*args)[2].is_data() || (*args)[2].is_integer())) {
         return CMD_VALID;
     }
-    return CMD_INVALID;
+    return CMD_WRONG_ARGS;
 }
 
 void CmdDisas::exec(AttributeType *args, AttributeType *res) {
     res->attr_free();
     res->make_nil();
-    if (!isrc_ || !isValid(args)) {
-        generateError(res, "Wrong argument list");
+    if (!isrc_) {
+        generateError(res, "Source interface not found");
         return;
     }
     res->make_list(0);

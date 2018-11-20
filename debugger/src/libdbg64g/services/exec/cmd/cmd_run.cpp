@@ -34,21 +34,22 @@ CmdRun::CmdRun(ITap *tap, ISocInfo *info)
 }
 
 
-bool CmdRun::isValid(AttributeType *args) {
+int CmdRun::isValid(AttributeType *args) {
     AttributeType &name = (*args)[0u];
-    if ((name.is_equal("run") || name.is_equal("c") || name.is_equal("go"))
-     && (args->size() == 1 || args->size() == 2)) {
+    if (!cmdName_.is_equal(name.to_string())
+        && !name.is_equal("c")
+        && !name.is_equal("go")) {
+        return CMD_INVALID;
+    }
+    if (args->size() == 1 || args->size() == 2) {
         return CMD_VALID;
     }
-    return CMD_INVALID;
+    return CMD_WRONG_ARGS;
 }
 
 void CmdRun::exec(AttributeType *args, AttributeType *res) {
+    res->attr_free();
     res->make_nil();
-    if (!isValid(args)) {
-        generateError(res, "Wrong argument list");
-        return;
-    }
     DsuMapType *dsu = info_->getpDsu();
     Reg64Type runctrl;
     uint64_t addr_run_ctrl = reinterpret_cast<uint64_t>(&dsu->udbg.v.control);

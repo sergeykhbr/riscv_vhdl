@@ -31,7 +31,7 @@ namespace debugger {
 
 class CmdExecutor : public IService,
                     public ICmdExecutor {
-public:
+ public:
     explicit CmdExecutor(const char *name);
     virtual ~CmdExecutor();
 
@@ -44,17 +44,16 @@ public:
     virtual void exec(const char *line, AttributeType *res, bool silent);
     virtual void commands(const char *substr, AttributeType *res);
 
-private:
+ private:
     void processSimple(AttributeType *cmd, AttributeType *res);
     void processScript(AttributeType *cmd, AttributeType *res);
     void splitLine(char *str, AttributeType *listArgs);
 
     int outf(const char *fmt, ...);
     bool cmdIsError(AttributeType *res);
-    ICommand *getICommand(AttributeType *args);
-    ICommand *getICommand(const char *name);
+    int getICommand(AttributeType *args, ICommand **pcmd);
 
-private:
+ private:
     AttributeType tap_;
     AttributeType socInfo_;
     AttributeType cmds_;

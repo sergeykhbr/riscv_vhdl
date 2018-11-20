@@ -96,20 +96,19 @@ CmdLoadSrec::CmdLoadSrec(ITap *tap, ISocInfo *info)
         "    loadsrec /home/hc08/image.s19\n");
 }
 
-bool CmdLoadSrec::isValid(AttributeType *args) {
-    if ((*args)[0u].is_equal("loadsrec") 
-        && (args->size() == 2 || args->size() == 3)) {
-        return CMD_VALID;
+int CmdLoadSrec::isValid(AttributeType *args) {
+    if (!cmdName_.is_equal((*args)[0u].to_string())) {
+        return CMD_INVALID;
     }
-    return CMD_INVALID;
+    if (args->size() != 2) {
+        return CMD_WRONG_ARGS;
+    }
+    return CMD_VALID;
 }
 
 void CmdLoadSrec::exec(AttributeType *args, AttributeType *res) {
+    res->attr_free();
     res->make_nil();
-    if (!isValid(args)) {
-        generateError(res, "Wrong argument list");
-        return;
-    }
 
     const char *filename = (*args)[1].to_string();
     FILE *fp = fopen(filename, "rb");
