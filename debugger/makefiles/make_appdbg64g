@@ -49,17 +49,16 @@ $(EXECUTABLE): $(OBJ_FILES)
 	@echo "#!/bin/bash\nexport LD_LIBRARY_PATH=\$$(pwd):\$$(pwd)/qtlib\n./appdbg64g.exe -c ../../targets/functional_sim_gui.json \"\$$@\"" > $(ELF_DIR)/_run_functional_sim.sh
 	@echo "#!/bin/bash\nexport LD_LIBRARY_PATH=\$$(pwd):\$$(pwd)/qtlib\n./appdbg64g.exe -c ../../targets/sysc_river_gui.json \"\$$@\"" > $(ELF_DIR)/_run_systemc_sim.sh
 	@echo "#!/bin/bash\nexport LD_LIBRARY_PATH=\$$(pwd):\$$(pwd)/qtlib\n./appdbg64g.exe -c ../../targets/fpga_gui.json \"\$$@\"" > $(ELF_DIR)/_run_fpga_gui.sh
+	@echo "#!/bin/bash\nexport LD_LIBRARY_PATH=\$$(pwd):\$$(pwd)/qtlib\n./appdbg64g.exe -c ../../targets/functional_arm_gui.json \"\$$@\"" > $(ELF_DIR)/_run_arm_sim.sh
 	@echo "#!/bin/bash\nexport LD_LIBRARY_PATH=\$$(pwd):\$$(pwd)/qtlib\nexport QT_DEBUG_PLUGINS=0\ngdb --args ./appdbg64g.exe -c ../../targets/functional_sim_gui.json \"\$$@\"" > $(ELF_DIR)/_run_gdb.sh
-	chmod +x $(ELF_DIR)/_run_functional_sim.sh
-	chmod +x $(ELF_DIR)/_run_systemc_sim.sh
-	chmod +x $(ELF_DIR)/_run_fpga_gui.sh
-	chmod +x $(ELF_DIR)/_run_gdb.sh
+	chmod +x $(ELF_DIR)/*.sh
 	$(ECHO) "\n  Debugger Test application has been built successfully."
 	$(ECHO) "  To start debugger use one of the prepared targets scripts:."
 	$(ECHO) "      cd ../linuxbuild/bin"
-	$(ECHO) "      ./_run_functional_sim.sh     - Start functional simulation"
-	$(ECHO) "      ./_run_systemc_sim.sh        - Start cycle-true SystemC simulation"
-	$(ECHO) "      ./_run_fpga_gui.sh           - Start with FPGA (COM3, 195.168.0.53)\n"
+	$(ECHO) "      ./_run_functional_sim.sh     - Start functional RIVER simulation"
+	$(ECHO) "      ./_run_systemc_sim.sh        - Start cycle-true RIVER SystemC simulation"
+	$(ECHO) "      ./_run_fpga_gui.sh           - Start with FPGA (COM3, 195.168.0.53)"
+	$(ECHO) "      ./_run_arm_sim.sh            - Start functional ARM simulation\n"
 
 $(addprefix $(OBJ_DIR)/,%.o): %.cpp
 	echo $(CPP) $(CFLAGS) $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $@

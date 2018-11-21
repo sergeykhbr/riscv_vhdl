@@ -1,8 +1,8 @@
 include util.mak
 
 TOP_DIR=../
-OBJ_DIR = $(TOP_DIR)linuxbuild/obj
-ELF_DIR = $(TOP_DIR)linuxbuild/bin
+OBJ_DIR = $(TOP_DIR)makefiles/obj
+ELF_DIR = $(TOP_DIR)makefiles/bin
 
 
 #-----------------------------------------------------------------------------

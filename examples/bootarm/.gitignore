@@ -1,0 +1,3 @@
+makefiles/obj
+makefiles/bin/*
+!makefiles/bin/*.hex

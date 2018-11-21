@@ -159,7 +159,7 @@
     {'Class':'MemorySimClass','Instances':[
           {'Name':'bootrom0','Attr':[
                 ['LogLevel',1],
-                ['InitFile','../../../examples/bootarm/linuxbuild/bin/bootimage.hex'],
+                ['InitFile','../../../examples/bootarm/makefiles/bin/bootimage.hex'],
                 ['ReadOnly',true],
                 ['BaseAddress',0x0],
                 ['Length',8192]

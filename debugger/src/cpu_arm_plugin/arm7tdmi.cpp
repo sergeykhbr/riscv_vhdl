@@ -238,7 +238,6 @@ class BlockDataTransferInstruction : public ArmInstruction {
         BlockDataTransferType u;
         uint64_t adrincr[2] = {static_cast<uint64_t>(-4), 4};
         u.value = payload->buf32[0];
-        uint32_t R15 = (u.bits.reglist >> 15) & 0x1;
         int rcount = 0;
         // @todo Mode switching depending R15 value!!!!
 
@@ -965,7 +964,7 @@ static const char *LDRSH_OPCODES[4] = {
 class LDRSH : public HWordSignedDataTransferInstruction {
 public:
     LDRSH(CpuCortex_Functional *icpu, int opidx) :
-        HWordSignedDataTransferInstruction(icpu, "LDRSH", LDRSB_OPCODES[opidx])
+        HWordSignedDataTransferInstruction(icpu, "LDRSH", LDRSH_OPCODES[opidx])
         {}
 };
 
@@ -1072,8 +1071,8 @@ class MRC : public ArmInstruction {
         ArmInstruction(icpu, "MRC", "????1110???1???????????????1????") {}
 
     virtual int exec_checked(Reg64Type *payload) {
-        CoprocessorTransferType u;
-        u.value = payload->buf32[0];
+        //CoprocessorTransferType u;
+        //u.value = payload->buf32[0];
         return 4;
     }
 };
@@ -1085,8 +1084,8 @@ class MCR : public ArmInstruction {
         ArmInstruction(icpu, "MRC", "????1110???0???????????????1????") {}
 
     virtual int exec_checked(Reg64Type *payload) {
-        CoprocessorTransferType u;
-        u.value = payload->buf32[0];
+        //CoprocessorTransferType u;
+        //u.value = payload->buf32[0];
         return 4;
     }
 };
@@ -1105,8 +1104,8 @@ public:
         ArmInstruction(icpu, "MSR", MSR_OPCODES[opidx]) {}
 
     virtual int exec_checked(Reg64Type *payload) {
-        PsrTransferType u;
-        u.value = payload->buf32[0];
+        //PsrTransferType u;
+        //u.value = payload->buf32[0];
         return 4;
     }
 };
@@ -1117,8 +1116,8 @@ public:
         ArmInstruction(icpu, "MRS", "????00010?001111????000000000000") {}
 
     virtual int exec_checked(Reg64Type *payload) {
-        PsrTransferType u;
-        u.value = payload->buf32[0];
+        //PsrTransferType u;
+        //u.value = payload->buf32[0];
         return 4;
     }
 };

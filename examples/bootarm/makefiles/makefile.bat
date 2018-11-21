@@ -1,16 +1,14 @@
 rem ---------------------------------------------------------------------------
 
-set ARM_GCC=C:\Projects\auriga\Tools\gcc-arm-none-eabi-7-2017-q4-major-win32\bin
-set RISCV_GCC=C:\Projects\install\riscv64-gcc-7.2.0\bin
-set GNU_TOOLS=C:\Projects\auriga\Tools\gnutools
+set GNU_TOOLS=E:\fw_tools\gnutools;C:\Projects\auriga\Tools\gnutools
+set GCC_DIR=E:\fw_tools\gcc-arm-none-eabi-7-2017-q4-major-win32\bin;C:\Projects\auriga\Tools\gcc-arm-none-eabi-7-2017-q4-major-win32\bin
 
-set PATH=%ARM_GCC%;%RISCV_GCC%;%GNU_TOOLS%;%PATH%
+set PATH=%GCC_DIR%;%GNU_TOOLS%;%PATH%
 
 set TOP_DIR=..\
-set OBJ_DIR=%TOP_DIR%linuxbuild\obj
-set ELF_DIR=%TOP_DIR%linuxbuild\bin
+set OBJ_DIR=%TOP_DIR%makefiles\obj
+set ELF_DIR=%TOP_DIR%makefiles\bin
 
-mkdir ..\linuxbuild
 mkdir %OBJ_DIR%
 mkdir %ELF_DIR%
 make -f make_boot TOP_DIR=%TOP_DIR% OBJ_DIR=%OBJ_DIR% ELF_DIR=%ELF_DIR%

@@ -49,11 +49,6 @@ IFace *ArmInstruction::getInterface(const char *name) {
 }
 
 int ArmInstruction::exec(Reg64Type *payload) {
-#if 1
-    if (icpu_->getPC() == 0xf24) {
-        bool st = true;
-    }
-#endif
     if (check_cond(payload->buf32[0] >> 28)) {
         return exec_checked(payload);
     }

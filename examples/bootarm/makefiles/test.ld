@@ -11,7 +11,7 @@ SECTIONS
   . = 0x0000;
   .text : 
   {
-    ../linuxbuild/obj/crt.o(.text)
+    obj/crt.o(.text)
   }
 
   /* data segment */

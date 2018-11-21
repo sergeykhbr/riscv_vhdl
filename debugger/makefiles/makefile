@@ -46,7 +46,7 @@ all: base cpu_sysc_plugin gui_plugin appdbg64g
 	$(RM) $(ELF_DIR)/config.json
 	$(ECHO) "    All done.\n"
 
-base: libdbg64g simple_plugin socsim_plugin cpu_fnc_plugin
+base: libdbg64g simple_plugin socsim_plugin cpu_fnc_plugin cpu_arm_plugin
 
 gui: libdbg64g gui_plugin
 
@@ -85,6 +85,11 @@ cpu_sysc_plugin:
 	$(MKDIR) ./$(PLUGINS_OBJ_DIR)/cpu_sysc
 	$(ECHO) "    Plugin " $@ " building started:"
 	make -f make_cpu_sysc_plugin TOP_DIR=$(TOP_DIR) PLUGINS_OBJ_DIR=$(PLUGINS_OBJ_DIR)/cpu_sysc PLUGINS_ELF_DIR=$(PLUGINS_ELF_DIR) SYSTEMC_SRC=$(SYSTEMC_SRC) SYSTEMC_LIB=$(SYSTEMC_LIB) $(TEA)
+
+cpu_arm_plugin:
+	$(MKDIR) ./$(PLUGINS_OBJ_DIR)/cpu_arm
+	$(ECHO) "    Plugin " $@ " building started:"
+	make -f make_cpu_arm_plugin TOP_DIR=$(TOP_DIR) PLUGINS_OBJ_DIR=$(PLUGINS_OBJ_DIR)/cpu_arm PLUGINS_ELF_DIR=$(PLUGINS_ELF_DIR) $(TEA)
 
 gui_plugin:
 	$(MKDIR) ./$(PLUGINS_OBJ_DIR)/gui

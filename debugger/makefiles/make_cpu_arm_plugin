@@ -1,0 +1,80 @@
+##
+##  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+##
+##  Licensed under the Apache License, Version 2.0 (the "License");
+##  you may not use this file except in compliance with the License.
+##  You may obtain a copy of the License at
+##
+##      http://www.apache.org/licenses/LICENSE-2.0
+##
+##  Unless required by applicable law or agreed to in writing, software
+##  distributed under the License is distributed on an "AS IS" BASIS,
+##  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+##  See the License for the specific language governing permissions and
+##  limitations under the License.
+##
+
+include util.mak
+
+CC=gcc
+CPP=gcc
+CFLAGS=-g -c -Wall -Werror -fPIC -pthread
+LDFLAGS=-shared -pthread -L$(PLUGINS_ELF_DIR)/..
+INCL_KEY=-I
+DIR_KEY=-B
+
+
+# include sub-folders list
+INCL_PATH= \
+	$(TOP_DIR)src/common
+
+# source files directories list:
+SRC_PATH =\
+	$(TOP_DIR)src/common \
+	$(TOP_DIR)src/common/generic \
+	$(TOP_DIR)src/cpu_arm_plugin \
+	$(TOP_DIR)src/cpu_arm_plugin/srcproc \
+	$(TOP_DIR)src/cpu_arm_plugin/cmds
+
+VPATH = $(SRC_PATH)
+
+SOURCES = \
+	attribute \
+	autobuffer \
+	async_tqueue \
+	cpu_generic \
+	cmd_br_generic \
+	cmd_br_arm7 \
+	iotypes \
+	mapreg \
+	srcproc \
+	arm7tdmi \
+	cpu_arm7_func \
+	instructions \
+	plugin_init
+
+LIBS = \
+	m \
+	stdc++ \
+	dbg64g
+
+SRC_FILES = $(addsuffix .cpp,$(SOURCES))
+OBJ_FILES = $(addprefix $(PLUGINS_OBJ_DIR)/,$(addsuffix .o,$(SOURCES)))
+EXECUTABLE = $(addprefix $(PLUGINS_ELF_DIR)/,cpu_arm_plugin.so)
+
+all: $(EXECUTABLE)
+
+all: $(EXECUTABLE)
+
+$(EXECUTABLE): $(OBJ_FILES)
+	echo $(CPP) $(LDFLAGS) $(OBJ_FILES) -o $@
+	$(CPP) $(LDFLAGS) $(OBJ_FILES) -o $@ $(addprefix -l,$(LIBS))
+	$(ECHO) "\n  Plugin '"$@"' has been built successfully.\n"
+
+$(addprefix $(PLUGINS_OBJ_DIR)/,%.o): %.cpp
+	echo $(CPP) $(CFLAGS) -std=c++0x $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $@
+	$(CPP) $(CFLAGS) -std=c++0x $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $@
+
+$(addprefix $(PLUGINS_OBJ_DIR)/,%.o): %.c
+	echo $(CC) $(CFLAGS) -std=c99 $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $@
+	$(CC) $(CFLAGS) -std=c99 $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $@
