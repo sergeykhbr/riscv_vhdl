@@ -34,7 +34,7 @@ CmdCsr::CmdCsr(ITap *tap, ISocInfo *info)
 }
 
 int CmdCsr::isValid(AttributeType *args) {
-    if (!(*args)[0u].is_equal(cmdName_.to_string())) {
+    if (!cmdName_.is_equal((*args)[0u].to_string())) {
         return CMD_INVALID;
     }
     if (args->size() == 2 || args->size() == 3) {
@@ -44,11 +44,8 @@ int CmdCsr::isValid(AttributeType *args) {
 }
 
 void CmdCsr::exec(AttributeType *args, AttributeType *res) {
+    res->attr_free();
     res->make_nil();
-    if (!isValid(args)) {
-        generateError(res, "Wrong argument list");
-        return;
-    }
 
     AttributeType &arg1 = (*args)[1];
     uint64_t val;

@@ -16,6 +16,12 @@
     <Filter Include="riverlib\core\arith">
       <UniqueIdentifier>{8f273e09-25d9-45e1-8d49-6a5c8c5a3658}</UniqueIdentifier>
     </Filter>
+    <Filter Include="generic">
+      <UniqueIdentifier>{e330cb6a-a2eb-4c32-99a0-1a991bea7f4e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="cmds">
+      <UniqueIdentifier>{8c05dd08-92e0-45c8-be95-41e56d3537ac}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\common\attribute.cpp">
@@ -80,6 +86,9 @@
     </ClCompile>
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\stacktrbuf.cpp">
       <Filter>riverlib\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\common\generic\cmd_br_generic.cpp">
+      <Filter>generic</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -168,6 +177,9 @@
     </ClInclude>
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\stacktrbuf.h">
       <Filter>riverlib\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\generic\cmd_br_generic.h">
+      <Filter>generic</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

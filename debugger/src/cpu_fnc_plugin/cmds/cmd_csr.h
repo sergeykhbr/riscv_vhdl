@@ -14,14 +14,28 @@
  *  limitations under the License.
  */
 
-#include "cpu_riscv_func.h"
-#include "srcproc/srcproc.h"
+#ifndef __DEBUGGER_CMD_CSR_H__
+#define __DEBUGGER_CMD_CSR_H__
+
+#include "api_core.h"
+#include "coreservices/icommand.h"
 
 namespace debugger {
 
-extern "C" void plugin_init(void) {
-    REGISTER_CLASS_IDX(CpuRiver_Functional, 1);
-    REGISTER_CLASS_IDX(RiscvSourceService, 2);
-}
+class CmdCsr : public ICommand  {
+public:
+    explicit CmdCsr(ITap *tap, ISocInfo *info);
+
+    /** ICommand */
+    virtual int isValid(AttributeType *args);
+    virtual void exec(AttributeType *args, AttributeType *res);
+
+private:
+    void to_string(AttributeType *args, AttributeType *res, AttributeType *out);
+
+private:
+};
 
 }  // namespace debugger
+
+#endif  // __DEBUGGER_CMD_CSR_H__

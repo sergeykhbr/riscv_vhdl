@@ -32,6 +32,7 @@ SRC_PATH =\
 	$(TOP_DIR)src/common \
 	$(TOP_DIR)src/common/generic \
 	$(TOP_DIR)src/cpu_sysc_plugin \
+	$(TOP_DIR)src/cpu_sysc_plugin/cmds \
 	$(TOP_DIR)src/cpu_sysc_plugin/riverlib \
 	$(TOP_DIR)src/cpu_sysc_plugin/riverlib/core \
 	$(TOP_DIR)src/cpu_sysc_plugin/riverlib/core/arith \
@@ -42,6 +43,7 @@ VPATH = $(SRC_PATH)
 SOURCES = \
 	attribute \
 	autobuffer \
+	cmd_br_generic \
 	async_tqueue \
 	plugin_init \
 	cpu_riscv_rtl \

@@ -166,7 +166,7 @@ void ArmSourceService::registerBreakpoint(uint64_t addr, uint64_t flags,
     item.make_list(BrkList_Total);
     item[BrkList_address].make_uint64(addr);
     item[BrkList_flags].make_uint64(flags);
-    //item[BrkList_instr].make_uint64(instr);
+    item[BrkList_instr].make_uint64(instr);
 
     bool not_found = true;
     for (unsigned i = 0; i < brList_.size(); i++) {
@@ -186,7 +186,7 @@ int ArmSourceService::unregisterBreakpoint(uint64_t addr, uint64_t *flags,
         AttributeType &br = brList_[i];
         if (addr == br[BrkList_address].to_uint64()) {
             *flags = br[BrkList_flags].to_uint64();
-            //*instr = br[BrkList_instr].to_uint64();
+            *instr = br[BrkList_instr].to_uint64();
             brList_.remove_from_list(i);
             return 0;
         }
@@ -229,7 +229,11 @@ int ArmSourceService::disasm(uint64_t pc,
                        AttributeType *comment) {
     uint32_t instr;
     memcpy(&instr, &data[offset], 4);
-    if ((instr & 0x0FB00000) == 0x03000000) {
+    if (instr == 0xFEDEFFE7) {
+        mnemonic->make_string("und");
+        comment->make_string("");
+        return 4;
+    } else if ((instr & 0x0FB00000) == 0x03000000) {
         return parseUndefinedInstruction(pc, instr, mnemonic, comment);
     } else if ((instr & 0x0F0000F0) == 0x9
         && (((instr >> 22) & 0x3F) == 0 || ((instr >> 23) & 0x1F) == 1)) {
@@ -291,9 +295,9 @@ void ArmSourceService::disasm(uint64_t pc,
 
         if (isBreakpoint(pc + off, &brpoint)) {
             asm_item[ASM_breakpoint].make_boolean(true);
-            //if (!(brpoint[BrkList_flags].to_uint64() & BreakFlag_HW)) {
-            //    code.val = brpoint[BrkList_instr].to_uint32();
-            //}
+            if (!(brpoint[BrkList_flags].to_uint64() & BreakFlag_HW)) {
+                code.val = brpoint[BrkList_instr].to_uint32();
+            }
         }
         codesz = disasm(pc + off,
                         code.buf,

@@ -15,6 +15,7 @@
  */
 
 #include <api_core.h>
+#include "coreservices/isocinfo.h"
 #include "cpu_arm7_func.h"
 
 namespace debugger {
@@ -40,6 +41,16 @@ void CpuCortex_Functional::postinitService() {
     addArm7tmdiIsa();
 
     CpuGeneric::postinitService();
+
+    pcmd_br_ = new CmdBrArm(itap_, iinfo_);
+    icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_br_));
+}
+
+void CpuCortex_Functional::predeleteService() {
+    CpuGeneric::predeleteService();
+
+    icmdexec_->unregisterCommand(static_cast<ICommand *>(pcmd_br_));
+    delete pcmd_br_;
 }
 
 void CpuCortex_Functional::hapTriggered(IFace *isrc, EHapType type,
@@ -67,6 +78,17 @@ unsigned CpuCortex_Functional::addSupportedInstruction(
 void CpuCortex_Functional::handleTrap() {
     if (interrupt_pending_ == 0) {
         return;
+    }
+    if (interrupt_pending_ & (1ull << Interrupt_SoftwareIdx)) {
+        DsuMapType::udbg_type::debug_region_type::breakpoint_control_reg t1;
+        t1.val = br_control_.getValue().val;
+        if (t1.bits.trap_on_break == 0) {
+            sw_breakpoint_ = true;
+            interrupt_pending_ &= ~(1ull << Interrupt_SoftwareIdx);
+            npc_.setValue(pc_.getValue());
+            halt("UND Breakpoint");
+            return;
+        }
     }
     npc_.setValue(0 + 4*0);
     interrupt_pending_ = 0;
@@ -147,6 +169,10 @@ void CpuCortex_Functional::raiseSignal(int idx) {
 void CpuCortex_Functional::lowerSignal(int idx) {
     interrupt_pending_ &= ~(1 << idx);
     RISCV_error("Lower unsupported signal %d", idx);
+}
+
+void CpuCortex_Functional::raiseSoftwareIrq() {
+    interrupt_pending_ |= 1ull << Interrupt_SoftwareIdx;
 }
 
 }  // namespace debugger

@@ -48,10 +48,8 @@ SOURCES = \
 	udp_dbglink \
 	edcl \
 	elfreader \
-	cmd_br \
 	cmd_busutil \
 	cmd_cpi \
-	cmd_csr \
 	cmd_disas \
 	cmd_halt \
 	cmd_isrunning \

@@ -165,9 +165,11 @@
     <ClCompile Include="..\..\src\common\async_tqueue.cpp" />
     <ClCompile Include="..\..\src\common\attribute.cpp" />
     <ClCompile Include="..\..\src\common\autobuffer.cpp" />
+    <ClCompile Include="..\..\src\common\generic\cmd_br_generic.cpp" />
     <ClCompile Include="..\..\src\common\generic\cpu_generic.cpp" />
     <ClCompile Include="..\..\src\common\generic\iotypes.cpp" />
     <ClCompile Include="..\..\src\common\generic\mapreg.cpp" />
+    <ClCompile Include="..\..\src\cpu_fnc_plugin\cmds\cmd_csr.cpp" />
     <ClCompile Include="..\..\src\cpu_fnc_plugin\cpu_riscv_func.cpp" />
     <ClCompile Include="..\..\src\cpu_fnc_plugin\instructions.cpp" />
     <ClCompile Include="..\..\src\cpu_fnc_plugin\plugin_init.cpp" />
@@ -185,6 +187,7 @@
     <ClInclude Include="..\..\src\common\async_tqueue.h" />
     <ClInclude Include="..\..\src\common\attribute.h" />
     <ClInclude Include="..\..\src\common\autobuffer.h" />
+    <ClInclude Include="..\..\src\common\generic\cmd_br_generic.h" />
     <ClInclude Include="..\..\src\common\generic\cpu_generic.h" />
     <ClInclude Include="..\..\src\common\generic\iotypes.h" />
     <ClInclude Include="..\..\src\common\generic\mapreg.h" />
@@ -193,6 +196,7 @@
     <ClInclude Include="..\..\src\common\iface.h" />
     <ClInclude Include="..\..\src\common\iservice.h" />
     <ClInclude Include="..\..\src\common\riscv-isa.h" />
+    <ClInclude Include="..\..\src\cpu_fnc_plugin\cmds\cmd_csr.h" />
     <ClInclude Include="..\..\src\cpu_fnc_plugin\cpu_riscv_func.h" />
     <ClInclude Include="..\..\src\cpu_fnc_plugin\instructions.h" />
     <ClInclude Include="..\..\src\cpu_fnc_plugin\srcproc\srcproc.h" />

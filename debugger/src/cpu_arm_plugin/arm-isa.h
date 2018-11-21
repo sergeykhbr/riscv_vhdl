@@ -368,6 +368,8 @@ enum ERegNames {
     Reg_Total
 };
 
+/** Internal simulation bits only */
+static const uint64_t Interrupt_SoftwareIdx = 0;
 
 }  // namespace debugger
 

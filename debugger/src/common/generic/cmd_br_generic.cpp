@@ -14,11 +14,11 @@
  *  limitations under the License.
  */
 
-#include "cmd_br.h"
+#include "cmd_br_generic.h"
 
 namespace debugger {
 
-CmdBr::CmdBr(ITap *tap, ISocInfo *info) 
+CmdBrGeneric::CmdBrGeneric(ITap *tap, ISocInfo *info) 
     : ICommand ("br", tap, info) {
 
     briefDescr_.make_string("Add or remove breakpoint.");
@@ -55,7 +55,7 @@ CmdBr::CmdBr(ITap *tap, ISocInfo *info)
     }
 }
 
-int CmdBr::isValid(AttributeType *args) {
+int CmdBrGeneric::isValid(AttributeType *args) {
     if (!cmdName_.is_equal((*args)[0u].to_string())) {
         return CMD_INVALID;
     }
@@ -65,11 +65,11 @@ int CmdBr::isValid(AttributeType *args) {
     return CMD_WRONG_ARGS;
 }
 
-void CmdBr::exec(AttributeType *args, AttributeType *res) {
+void CmdBrGeneric::exec(AttributeType *args, AttributeType *res) {
     res->attr_free();
     res->make_nil();
     if (!isrc_) {
-        generateError(res, "Source interface not found");
+        generateError(res, "ISource interface not found");
         return;
     }
     if (args->size() == 1) {
@@ -104,16 +104,12 @@ void CmdBr::exec(AttributeType *args, AttributeType *res) {
         tap_->read(braddr.val, 4, brinstr.buf);
 
         isrc_->registerBreakpoint(braddr.val, flags, brinstr.val);
-        if (flags & BreakFlag_HW) {
+        if (isHardware(flags)) {
             uint64_t dsuaddr = 
                 reinterpret_cast<uint64_t>(&pdsu->udbg.v.add_breakpoint);
             tap_->write(dsuaddr, 8, braddr.buf);
         } else {
-            if ((brinstr.val & 0x3) == 0x3) {
-                brinstr.buf32[0] = 0x00100073;  // EBREAK instruction
-            } else {
-                brinstr.buf16[0] = 0x9002;      // C.EBREAK instruction
-            }
+            getSwBreakpointInstr(&brinstr);
             tap_->write(braddr.val, 4, brinstr.buf);
         }
         return;
@@ -121,7 +117,7 @@ void CmdBr::exec(AttributeType *args, AttributeType *res) {
     
     if ((*args)[1].is_equal("rm")) {
         isrc_->unregisterBreakpoint(braddr.val, &flags, &brinstr.val);
-        if (flags & BreakFlag_HW) {
+        if (isHardware(flags)) {
             uint64_t dsuaddr = 
                 reinterpret_cast<uint64_t>(&pdsu->udbg.v.remove_breakpoint);
             tap_->write(dsuaddr, 8, braddr.buf);

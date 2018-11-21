@@ -26,10 +26,8 @@
 #include "cmd/cmd_write.h"
 #include "cmd/cmd_run.h"
 #include "cmd/cmd_halt.h"
-#include "cmd/cmd_csr.h"
 #include "cmd/cmd_exit.h"
 #include "cmd/cmd_memdump.h"
-#include "cmd/cmd_br.h"
 #include "cmd/cmd_cpi.h"
 #include "cmd/cmd_status.h"
 #include "cmd/cmd_reset.h"
@@ -78,10 +76,8 @@ void CmdExecutor::postinitService() {
                                     IFACE_SOC_INFO));
 
     // Core commands registration:
-    registerCommand(new CmdBr(itap_, info_));
     registerCommand(new CmdBusUtil(itap_, info_));
     registerCommand(new CmdCpi(itap_, info_));
-    registerCommand(new CmdCsr(itap_, info_));
     registerCommand(new CmdDisas(itap_, info_));
     registerCommand(new CmdExit(itap_, info_));
     registerCommand(new CmdHalt(itap_, info_));

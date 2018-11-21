@@ -23,7 +23,8 @@ SRC_PATH =\
 	$(TOP_DIR)src/common \
 	$(TOP_DIR)src/common/generic \
 	$(TOP_DIR)src/cpu_fnc_plugin \
-	$(TOP_DIR)src/cpu_fnc_plugin/srcproc
+	$(TOP_DIR)src/cpu_fnc_plugin/srcproc \
+	$(TOP_DIR)src/cpu_fnc_plugin/cmds
 
 VPATH = $(SRC_PATH)
 
@@ -32,6 +33,8 @@ SOURCES = \
 	autobuffer \
 	async_tqueue \
 	cpu_generic \
+	cmd_br_generic \
+	cmd_csr \
 	mapreg \
 	plugin_init \
 	cpu_riscv_func \

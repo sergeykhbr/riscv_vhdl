@@ -16,6 +16,9 @@
     <Filter Include="common\generic">
       <UniqueIdentifier>{83001fb3-54a8-4519-8a30-b3a7dfeab4b6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\cmds">
+      <UniqueIdentifier>{6d608113-0c84-4026-be02-44d352c9fe54}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\common\attribute.cpp">
@@ -50,6 +53,12 @@
     </ClCompile>
     <ClCompile Include="..\..\src\cpu_arm_plugin\srcproc\srcproc.cpp">
       <Filter>src\srcproc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\common\generic\cmd_br_generic.cpp">
+      <Filter>common\generic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cpu_arm_plugin\cmds\cmd_br_arm7.cpp">
+      <Filter>src\cmds</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -106,6 +115,12 @@
     </ClInclude>
     <ClInclude Include="..\..\src\cpu_arm_plugin\srcproc\srcproc.h">
       <Filter>src\srcproc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\generic\cmd_br_generic.h">
+      <Filter>common\generic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_arm_plugin\cmds\cmd_br_arm7.h">
+      <Filter>src\cmds</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -1,7 +1,18 @@
-/**
- * @file
- * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
- * @author     Sergey Khabarov - sergeykhbr@gmail.com
+/*
+ *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  * @brief      Base ISA implementation (extension I, privileged level).
  */
 
@@ -43,7 +54,9 @@ public:
  * @brief The CSRRCI (Atomic Read and Clear Bit in CSR immediate).
  *
  * Similar to CSRRC except it updates the CSR using a 5-bit zero-extended 
- * immediate (zimm[4:0]) encoded in the rs1 field instead of a value from  * an integer register. */
+ * immediate (zimm[4:0]) encoded in the rs1 field instead of a value from 
+ * an integer register.
+ */
 class CSRRCI : public RiscvInstruction {
 public:
     CSRRCI(CpuRiver_Functional *icpu) :
@@ -70,7 +83,10 @@ public:
  * bits, and writes it to integer register rd. The initial value in integer 
  * register rs1 specifies bit positions to be set in the CSR. Any bit that is
  * high in rs1 will cause the corresponding bit to be set in the CSR, if that
- * CSR bit is writable. Other bits in the CSR are unaffected (though CSRs  * might have side effects when written). *   The CSRR pseudo instruction (read CSR), when rs1 = 0. */
+ * CSR bit is writable. Other bits in the CSR are unaffected (though CSRs 
+ * might have side effects when written).
+ *   The CSRR pseudo instruction (read CSR), when rs1 = 0.
+ */
 class CSRRS : public RiscvInstruction {
 public:
     CSRRS(CpuRiver_Functional *icpu) :
@@ -94,7 +110,9 @@ public:
  * @brief The CSRRSI (Atomic Read and Set Bit in CSR immediate).
  *
  * Similar to CSRRS except it updates the CSR using a 5-bit zero-extended 
- * immediate (zimm[4:0]) encoded in the rs1 field instead of a value from  * an integer register. */
+ * immediate (zimm[4:0]) encoded in the rs1 field instead of a value from 
+ * an integer register.
+ */
 class CSRRSI : public RiscvInstruction {
 public:
     CSRRSI(CpuRiver_Functional *icpu) :
@@ -119,7 +137,10 @@ public:
  *
  *   Instruction atomically swaps values in the CSRs and integer registers. 
  * CSRRW reads the old value of the CSR, zero-extends the value to XLEN bits,
- * then writes it to integer register rd. The initial value in rs1 is written * to the CSR. *   The CSRW pseudo instruction (write CSR), when rs1 = 0. */
+ * then writes it to integer register rd. The initial value in rs1 is written
+ * to the CSR.
+ *   The CSRW pseudo instruction (write CSR), when rs1 = 0.
+ */
 class CSRRW : public RiscvInstruction {
 public:
     CSRRW(CpuRiver_Functional *icpu) :
@@ -142,7 +163,9 @@ public:
  * @brief The CSRRWI (Atomic Read/Write CSR immediate).
  *
  * Similar to CSRRW except it updates the CSR using a 5-bit zero-extended 
- * immediate (zimm[4:0]) encoded in the rs1 field instead of a value from  * an integer register. */
+ * immediate (zimm[4:0]) encoded in the rs1 field instead of a value from 
+ * an integer register.
+ */
 class CSRRWI : public RiscvInstruction {
 public:
     CSRRWI(CpuRiver_Functional *icpu) :

@@ -113,9 +113,6 @@
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_run.cpp">
       <Filter>Source Files\services\exec\cmd</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_csr.cpp">
-      <Filter>Source Files\services\exec\cmd</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_exit.cpp">
       <Filter>Source Files\services\exec\cmd</Filter>
     </ClCompile>
@@ -123,9 +120,6 @@
       <Filter>Source Files\services\exec\cmd</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_write.cpp">
-      <Filter>Source Files\services\exec\cmd</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_br.cpp">
       <Filter>Source Files\services\exec\cmd</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_cpi.cpp">
@@ -298,9 +292,6 @@
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_run.h">
       <Filter>Source Files\services\exec\cmd</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_csr.h">
-      <Filter>Source Files\services\exec\cmd</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_exit.h">
       <Filter>Source Files\services\exec\cmd</Filter>
     </ClInclude>
@@ -308,9 +299,6 @@
       <Filter>Source Files\services\exec\cmd</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_write.h">
-      <Filter>Source Files\services\exec\cmd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_br.h">
       <Filter>Source Files\services\exec\cmd</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\common\coreservices\isrccode.h">

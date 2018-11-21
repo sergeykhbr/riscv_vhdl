@@ -165,10 +165,12 @@
     <ClCompile Include="..\..\src\common\async_tqueue.cpp" />
     <ClCompile Include="..\..\src\common\attribute.cpp" />
     <ClCompile Include="..\..\src\common\autobuffer.cpp" />
+    <ClCompile Include="..\..\src\common\generic\cmd_br_generic.cpp" />
     <ClCompile Include="..\..\src\common\generic\cpu_generic.cpp" />
     <ClCompile Include="..\..\src\common\generic\iotypes.cpp" />
     <ClCompile Include="..\..\src\common\generic\mapreg.cpp" />
     <ClCompile Include="..\..\src\cpu_arm_plugin\arm7tdmi.cpp" />
+    <ClCompile Include="..\..\src\cpu_arm_plugin\cmds\cmd_br_arm7.cpp" />
     <ClCompile Include="..\..\src\cpu_arm_plugin\cpu_arm7_func.cpp" />
     <ClCompile Include="..\..\src\cpu_arm_plugin\instructions.cpp" />
     <ClCompile Include="..\..\src\cpu_arm_plugin\plugin_init.cpp" />
@@ -182,6 +184,7 @@
     <ClInclude Include="..\..\src\common\autobuffer.h" />
     <ClInclude Include="..\..\src\common\coreservices\iclock.h" />
     <ClInclude Include="..\..\src\common\coreservices\icpuarm.h" />
+    <ClInclude Include="..\..\src\common\generic\cmd_br_generic.h" />
     <ClInclude Include="..\..\src\common\generic\cpu_generic.h" />
     <ClInclude Include="..\..\src\common\generic\iotypes.h" />
     <ClInclude Include="..\..\src\common\generic\mapreg.h" />
@@ -190,6 +193,7 @@
     <ClInclude Include="..\..\src\common\iface.h" />
     <ClInclude Include="..\..\src\common\iservice.h" />
     <ClInclude Include="..\..\src\cpu_arm_plugin\arm-isa.h" />
+    <ClInclude Include="..\..\src\cpu_arm_plugin\cmds\cmd_br_arm7.h" />
     <ClInclude Include="..\..\src\cpu_arm_plugin\cpu_arm7_func.h" />
     <ClInclude Include="..\..\src\cpu_arm_plugin\instructions.h" />
     <ClInclude Include="..\..\src\cpu_arm_plugin\srcproc\srcproc.h" />

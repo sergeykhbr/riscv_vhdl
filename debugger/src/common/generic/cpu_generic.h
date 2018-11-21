@@ -29,6 +29,9 @@
 #include "coreservices/iclklistener.h"
 #include "coreservices/ireset.h"
 #include "coreservices/isrccode.h"
+#include "coreservices/isocinfo.h"
+#include "coreservices/icmdexec.h"
+#include "coreservices/itap.h"
 #include "generic/mapreg.h"
 #include "debug/debugmap.h"
 #include <fstream>
@@ -160,6 +163,9 @@ class CpuGeneric : public IService,
     AttributeType freqHz_;
     AttributeType sysBus_;
     AttributeType dbgBus_;
+    AttributeType cmdexec_;
+    AttributeType socInfo_;
+    AttributeType tap_;
     AttributeType sysBusWidthBytes_;
     AttributeType sourceCode_;
     AttributeType stackTraceSize_;
@@ -170,6 +176,9 @@ class CpuGeneric : public IService,
     AttributeType hwBreakpoints_;
 
     ISourceCode *isrc_;
+    ICmdExecutor *icmdexec_;
+    ITap *itap_;
+    ISocInfo *iinfo_;
     IMemoryOperation *isysbus_;
     IMemoryOperation *idbgbus_;
     GenericInstruction *instr_;

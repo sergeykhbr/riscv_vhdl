@@ -21,6 +21,7 @@
 #include "instructions.h"
 #include "generic/cpu_generic.h"
 #include "coreservices/icpuarm.h"
+#include "cmds/cmd_br_arm7.h"
 
 namespace debugger {
 
@@ -32,6 +33,7 @@ class CpuCortex_Functional : public CpuGeneric,
 
     /** IService interface */
     virtual void postinitService();
+    virtual void predeleteService();
 
     /** IHap */
     virtual void hapTriggered(IFace *isrc, EHapType type, const char *descr);
@@ -42,7 +44,7 @@ class CpuCortex_Functional : public CpuGeneric,
     /** ICpuGeneric interface */
     virtual void raiseSignal(int idx);
     virtual void lowerSignal(int idx);
-    virtual void raiseSoftwareIrq() {}
+    virtual void raiseSoftwareIrq();
     virtual uint64_t getIrqAddress(int idx) { return 0; }
 
     /** ICpuArm */
@@ -84,6 +86,8 @@ class CpuCortex_Functional : public CpuGeneric,
     GenericReg64Bank portRegs_;
     GenericReg64Bank portSavedRegs_;
     ProgramStatusRegsiterType *p_psr_;
+
+    CmdBrArm *pcmd_br_;
 };
 
 DECLARE_CLASS(CpuCortex_Functional)

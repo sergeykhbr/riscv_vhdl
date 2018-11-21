@@ -85,6 +85,7 @@ BusUtilPlot::BusUtilPlot(IGui *igui, QWidget *parent)
 
 
 PlotWidget::~PlotWidget() {
+    igui_->removeFromQueue(static_cast<IGuiCmdHandler *>(this));
     for (int i = 0; i < lineTotal; i++) {
         delete line_[i];
     }

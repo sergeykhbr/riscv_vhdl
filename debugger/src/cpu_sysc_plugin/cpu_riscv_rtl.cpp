@@ -25,6 +25,9 @@ CpuRiscV_RTL::CpuRiscV_RTL(const char *name)
     registerInterface(static_cast<IClock *>(this));
     registerInterface(static_cast<IHap *>(this));
     registerAttribute("Bus", &bus_);
+    registerAttribute("CmdExecutor", &cmdexec_);
+    registerAttribute("SocInfo", &socInfo_);
+    registerAttribute("Tap", &tap_);
     registerAttribute("FreqHz", &freqHz_);
     registerAttribute("InVcdFile", &InVcdFile_);
     registerAttribute("OutVcdFile", &OutVcdFile_);
@@ -56,6 +59,29 @@ void CpuRiscV_RTL::postinitService() {
         return;
     }
 
+    icmdexec_ = static_cast<ICmdExecutor *>(
+       RISCV_get_service_iface(cmdexec_.to_string(), IFACE_CMD_EXECUTOR));
+    if (!icmdexec_) {
+        RISCV_error("ICmdExecutor interface '%s' not found", 
+                    cmdexec_.to_string());
+        return;
+    }
+
+    iinfo_ = static_cast<ISocInfo *>(
+       RISCV_get_service_iface(socInfo_.to_string(), IFACE_SOC_INFO));
+    if (!iinfo_) {
+        RISCV_error("ISocInfo interface '%s' not found", 
+                    socInfo_.to_string());
+        return;
+    }
+
+    itap_ = static_cast<ITap *>(
+       RISCV_get_service_iface(tap_.to_string(), IFACE_TAP));
+    if (!itap_) {
+        RISCV_error("ITap interface '%s' not found", tap_.to_string());
+        return;
+    }
+
     if (InVcdFile_.size()) {
         i_vcd_ = sc_create_vcd_trace_file(InVcdFile_.to_string());
         i_vcd_->set_time_unit(1, SC_PS);
@@ -77,10 +103,18 @@ void CpuRiscV_RTL::postinitService() {
     top_->generateRef(GenerateRef_.to_bool());
     top_->generateVCD(i_vcd_, o_vcd_);
 
+    pcmd_br_ = new CmdBrRiscv(itap_, iinfo_);
+    icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_br_));
+
     if (!run()) {
         RISCV_error("Can't create thread.", NULL);
         return;
     }
+}
+
+void CpuRiscV_RTL::predeleteService() {
+    icmdexec_->unregisterCommand(static_cast<ICommand *>(pcmd_br_));
+    delete pcmd_br_;
 }
 
 void CpuRiscV_RTL::createSystemC() {

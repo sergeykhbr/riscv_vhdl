@@ -14,30 +14,15 @@
  *  limitations under the License.
  */
 
-#ifndef __DEBUGGER_CMD_BR_H__
-#define __DEBUGGER_CMD_BR_H__
-
-#include "api_core.h"
-#include "iservice.h"
-#include "coreservices/itap.h"
-#include "coreservices/isocinfo.h"
-#include "coreservices/icommand.h"
-#include "coreservices/isrccode.h"
+#include "cmd_br_arm7.h"
 
 namespace debugger {
 
-class CmdBr : public ICommand  {
- public:
-    explicit CmdBr(ITap *tap, ISocInfo *info);
+CmdBrArm::CmdBrArm(ITap *tap, ISocInfo *info) : CmdBrGeneric(tap, info) {
+}
 
-    /** ICommand */
-    virtual int isValid(AttributeType *args);
-    virtual void exec(AttributeType *args, AttributeType *res);
-
- private:
-    ISourceCode *isrc_;
-};
+void CmdBrArm::getSwBreakpointInstr(Reg64Type *instr) {
+    instr->buf32[0] = 0xFEDEFFE7;  // UND
+}
 
 }  // namespace debugger
-
-#endif  // __DEBUGGER_CMD_LOG_H__

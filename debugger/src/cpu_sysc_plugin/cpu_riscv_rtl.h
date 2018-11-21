@@ -34,6 +34,10 @@
 #include "coreservices/icpuriscv.h"
 #include "coreservices/imemop.h"
 #include "coreservices/iclock.h"
+#include "coreservices/isocinfo.h"
+#include "coreservices/icmdexec.h"
+#include "coreservices/itap.h"
+#include "generic/cmd_br_generic.h"
 #include "rtl_wrapper.h"
 #include "riverlib/river_top.h"
 #include <systemc.h>
@@ -44,12 +48,13 @@ class CpuRiscV_RTL : public IService,
                  public IThread,
                  public IClock,
                  public IHap {
-public:
+ public:
     CpuRiscV_RTL(const char *name);
     virtual ~CpuRiscV_RTL();
 
     /** IService interface */
     virtual void postinitService();
+    virtual void predeleteService();
 
     /** IClock */
     virtual uint64_t getStepCounter() {
@@ -76,21 +81,28 @@ public:
 
     virtual void stop();
 
-protected:
+ protected:
     /** IThread interface */
     virtual void busyLoop();
 
-private:
+ private:
     void createSystemC();
     void deleteSystemC();
 
-private:
+ private:
     AttributeType bus_;
+    AttributeType cmdexec_;
+    AttributeType socInfo_;
+    AttributeType tap_;
     AttributeType freqHz_;
     AttributeType InVcdFile_;
     AttributeType OutVcdFile_;
     AttributeType GenerateRef_;
     event_def config_done_;
+
+    ICmdExecutor *icmdexec_;
+    ITap *itap_;
+    ISocInfo *iinfo_;
     IMemoryOperation *ibus_;
 
     sc_signal<bool> w_clk;
@@ -122,6 +134,7 @@ private:
     sc_trace_file *o_vcd_;      // reference pattern for comparision
     RiverTop *top_;
     RtlWrapper *wrapper_;
+    CmdBrRiscv *pcmd_br_;
 };
 
 DECLARE_CLASS(CpuRiscV_RTL)

@@ -1270,9 +1270,29 @@ class SWI : public ArmInstruction {
     }
 };
 
+/**
+ * @brief UND (breakpoint instruction)
+ *
+ * ARM does not define a specific breakpoint instruction. It can be different
+ * in different OSes. On ARM Linux it's usually an UND opcode
+ * (e.g. FE DE FF E7) in ARM mode and BKPT (BE BE) in Thumb.
+ */
+class UND : public ArmInstruction {
+ public:
+    UND(CpuCortex_Functional *icpu) :
+        ArmInstruction(icpu, "UND", "11111110110111101111111111100111") {}
+
+    virtual int exec_checked(Reg64Type *payload) {
+        icpu_->raiseSoftwareIrq();
+        return 4;
+    }
+};
+
 
 
 void CpuCortex_Functional::addArm7tmdiIsa() {
+
+    addSupportedInstruction(new UND(this));
 
     // Arm V6 instructions:
     //      CPS, SRS, RFE

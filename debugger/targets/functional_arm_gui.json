@@ -144,6 +144,9 @@
                 ['SysBusMasterID',0,'Used to gather Bus statistic'],
                 ['SysBus','axi0'],
                 ['DbgBus','dbgbus0'],
+                ['SocInfo','info0'],
+                ['CmdExecutor','cmdexec0']
+                ['Tap','edcltap']
                 ['SysBusWidthBytes',4,'Split dma transactions from CPU'],
                 ['StackTraceSize',64,'Number of 16-bytes entries'],
                 ['ResetVector',0x0000],

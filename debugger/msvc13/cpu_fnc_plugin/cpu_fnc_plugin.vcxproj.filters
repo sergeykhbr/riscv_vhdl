@@ -10,6 +10,9 @@
     <Filter Include="generic">
       <UniqueIdentifier>{af9059d8-0bd5-493c-ac05-468d215077b5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="cmds">
+      <UniqueIdentifier>{227ecc2e-1c4f-4cf6-ad54-6d0645c459a8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\common\attribute.cpp">
@@ -42,6 +45,12 @@
       <Filter>generic</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\cpu_fnc_plugin\riscv-ext-c.cpp" />
+    <ClCompile Include="..\..\src\common\generic\cmd_br_generic.cpp">
+      <Filter>generic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cpu_fnc_plugin\cmds\cmd_csr.cpp">
+      <Filter>cmds</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\api_types.h">
@@ -87,6 +96,12 @@
     </ClInclude>
     <ClInclude Include="..\..\src\common\generic\iotypes.h">
       <Filter>generic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\generic\cmd_br_generic.h">
+      <Filter>generic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_fnc_plugin\cmds\cmd_csr.h">
+      <Filter>cmds</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
