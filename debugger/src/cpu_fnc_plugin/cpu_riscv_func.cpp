@@ -16,6 +16,7 @@
 
 #include <api_core.h>
 #include "cpu_riscv_func.h"
+#include "debug/dsumap.h"
 
 namespace debugger {
 
@@ -57,11 +58,17 @@ void CpuRiver_Functional::postinitService() {
 
     CpuGeneric::postinitService();
 
-    pcmd_br_ = new CmdBrRiscv(itap_, iinfo_);
+    pcmd_br_ = new CmdBrRiscv(itap_);
     icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_br_));
 
-    pcmd_csr_ = new CmdCsr(itap_, iinfo_);
+    pcmd_csr_ = new CmdCsr(itap_);
     icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_csr_));
+
+    pcmd_reg_ = new CmdRegRiscv(itap_);
+    icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_reg_));
+
+    pcmd_regs_ = new CmdRegsRiscv(itap_);
+    icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_regs_));
 }
 
 void CpuRiver_Functional::predeleteService() {
@@ -69,8 +76,12 @@ void CpuRiver_Functional::predeleteService() {
 
     icmdexec_->unregisterCommand(static_cast<ICommand *>(pcmd_br_));
     icmdexec_->unregisterCommand(static_cast<ICommand *>(pcmd_csr_));
+    icmdexec_->unregisterCommand(static_cast<ICommand *>(pcmd_reg_));
+    icmdexec_->unregisterCommand(static_cast<ICommand *>(pcmd_regs_));
     delete pcmd_br_;
     delete pcmd_csr_;
+    delete pcmd_reg_;
+    delete pcmd_regs_;
 }
 
 unsigned CpuRiver_Functional::addSupportedInstruction(

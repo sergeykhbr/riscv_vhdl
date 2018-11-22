@@ -18,6 +18,7 @@
 #define __DEBUGGER_RISCV_ISA_H__
 
 #include <inttypes.h>
+#include "debug/dsumap.h"
 
 namespace debugger {
 
@@ -295,6 +296,45 @@ const char *const FREGS_NAME[] = {
   "fs0", "fs1", "fa0",  "fa1",  "fa2", "fa3", "fa4",  "fa5",
   "fa6", "fa7", "fs2",  "fs3",  "fs4", "fs5", "fs6",  "fs7",
   "fs8", "fs9", "fs10", "fs11", "ft8", "ft9", "ft10", "ft11"
+};
+
+static const ECpuRegMapping RISCV_DEBUG_REG_MAP[] = {
+    {"zero",  4, DSU_OFSSET + DSUREG(ureg.v.iregs[0])},
+    {"ra",    4, DSU_OFSSET + DSUREG(ureg.v.iregs[1])},
+    {"sp",    4, DSU_OFSSET + DSUREG(ureg.v.iregs[2])},
+    {"gp",    4, DSU_OFSSET + DSUREG(ureg.v.iregs[3])},
+    {"tp",    4, DSU_OFSSET + DSUREG(ureg.v.iregs[4])},
+    {"t0",    4, DSU_OFSSET + DSUREG(ureg.v.iregs[5])},
+    {"t1",    4, DSU_OFSSET + DSUREG(ureg.v.iregs[6])},
+    {"t2",    4, DSU_OFSSET + DSUREG(ureg.v.iregs[7])},
+    {"s0",    4, DSU_OFSSET + DSUREG(ureg.v.iregs[8])},
+    {"s1",    4, DSU_OFSSET + DSUREG(ureg.v.iregs[9])},
+    {"a0",    4, DSU_OFSSET + DSUREG(ureg.v.iregs[10])},
+    {"a1",    4, DSU_OFSSET + DSUREG(ureg.v.iregs[11])},
+    {"a2",    4, DSU_OFSSET + DSUREG(ureg.v.iregs[12])},
+    {"a3",    4, DSU_OFSSET + DSUREG(ureg.v.iregs[13])},
+    {"a4",    4, DSU_OFSSET + DSUREG(ureg.v.iregs[14])},
+    {"a5",    4, DSU_OFSSET + DSUREG(ureg.v.iregs[15])},
+    {"a6",    4, DSU_OFSSET + DSUREG(ureg.v.iregs[16])},
+    {"a7",    4, DSU_OFSSET + DSUREG(ureg.v.iregs[17])},
+    {"s2",    4, DSU_OFSSET + DSUREG(ureg.v.iregs[18])},
+    {"s3",    4, DSU_OFSSET + DSUREG(ureg.v.iregs[19])},
+    {"s4",    4, DSU_OFSSET + DSUREG(ureg.v.iregs[20])},
+    {"s5",    4, DSU_OFSSET + DSUREG(ureg.v.iregs[21])},
+    {"s6",    4, DSU_OFSSET + DSUREG(ureg.v.iregs[22])},
+    {"s7",    4, DSU_OFSSET + DSUREG(ureg.v.iregs[23])},
+    {"s8",    4, DSU_OFSSET + DSUREG(ureg.v.iregs[24])},
+    {"s9",    4, DSU_OFSSET + DSUREG(ureg.v.iregs[25])},
+    {"s10",   4, DSU_OFSSET + DSUREG(ureg.v.iregs[26])},
+    {"s11",   4, DSU_OFSSET + DSUREG(ureg.v.iregs[27])},
+    {"t3",    4, DSU_OFSSET + DSUREG(ureg.v.iregs[28])},
+    {"t4",    4, DSU_OFSSET + DSUREG(ureg.v.iregs[29])},
+    {"t5",    4, DSU_OFSSET + DSUREG(ureg.v.iregs[30])},
+    {"t6",    4, DSU_OFSSET + DSUREG(ureg.v.iregs[31])},
+    {"pc",    4, DSU_OFSSET + DSUREG(ureg.v.pc)},
+    {"npc",   4, DSU_OFSSET + DSUREG(ureg.v.npc)},
+    {"steps", 8, DSU_OFSSET + DSUREG(udbg.v.clock_cnt)},
+    {"",      0, 0}
 };
 
 enum ERegNames {

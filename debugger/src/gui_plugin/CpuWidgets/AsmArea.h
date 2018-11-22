@@ -1,7 +1,18 @@
-/**
- * @file
- * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
- * @author     Sergey Khabarov - sergeykhbr@gmail.com
+/*
+ *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  * @brief      Disassembler viewer area.
  */
 
@@ -11,7 +22,6 @@
 #include "attribute.h"
 #include "igui.h"
 #include "iservice.h"
-#include "coreservices/isocinfo.h"
 #include "coreservices/isrccode.h"
 
 #include <QtWidgets/QWidget>
@@ -23,30 +33,30 @@ namespace debugger {
 class AsmArea : public QTableWidget,
                 public IGuiCmdHandler {
     Q_OBJECT
-public:
-    explicit AsmArea(IGui *gui, QWidget *parent, uint64_t fixaddr);
+ public:
+    AsmArea(IGui *gui, QWidget *parent, uint64_t fixaddr);
     virtual ~AsmArea();
 
     /** IGuiCmdHandler */
     virtual void handleResponse(const char *cmd);
 
-signals:
+ signals:
     void signalNpcChanged();
     void signalAsmListChanged();
     void signalBreakpointsChanged();
 
-public slots:
+ public slots:
     void slotNpcChanged();
     void slotAsmListChanged();
     void slotUpdateByTimer();
     void slotRedrawDisasm();
     void slotCellDoubleClicked(int row, int column);
 
-protected:
+ protected:
     void resizeEvent(QResizeEvent *ev) Q_DECL_OVERRIDE;
     void wheelEvent(QWheelEvent * ev) Q_DECL_OVERRIDE;
 
-private:
+ private:
     bool isNpcTrackEna();
     int getNpcRowIdx();
     void selectNpcRow(int idx);
@@ -55,7 +65,7 @@ private:
     void outAsmLine(int idx, AttributeType &data);
     void addMemBlock(AttributeType &resp, AttributeType &lines);
 
-private:
+ private:
     enum EColumnNames {
         COL_addrline,
         COL_code,

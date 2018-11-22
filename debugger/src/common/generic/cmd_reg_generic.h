@@ -14,23 +14,28 @@
  *  limitations under the License.
  */
 
-#ifndef __DEBUGGER_CMD_REGS_H__
-#define __DEBUGGER_CMD_REGS_H__
+#ifndef __DEBUGGER_SRC_COMMON_GENERIC_CMD_REG_GENERIC_H__
+#define __DEBUGGER_SRC_COMMON_GENERIC_CMD_REG_GENERIC_H__
 
 #include "api_core.h"
 #include "coreservices/icommand.h"
+#include "debug/dsumap.h"
 
 namespace debugger {
 
-class CmdRegs : public ICommand  {
+class CmdRegGeneric : public ICommand  {
  public:
-    CmdRegs(ITap *tap, ISocInfo *info);
+    explicit CmdRegGeneric(ITap *tap);
 
     /** ICommand */
     virtual int isValid(AttributeType *args);
     virtual void exec(AttributeType *args, AttributeType *res);
+
+ protected:
+    virtual const ECpuRegMapping *getpMappedReg() = 0;
+    virtual uint64_t reg2addr(const char *name);
 };
 
 }  // namespace debugger
 
-#endif  // __DEBUGGER_CMD_REGS_H__
+#endif  // __DEBUGGER_SRC_COMMON_GENERIC_CMD_REG_GENERIC_H__

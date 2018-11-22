@@ -25,49 +25,84 @@
 
 namespace debugger {
 
-class IOReg8Type : public IMemoryOperation,
-                   public IIOPort,
-                   public IResetListener {
+class IORegType : public IMemoryOperation,
+                  public IResetListener,
+                  public IIOPort {
  public:
-    IOReg8Type(IService *parent, const char *name,
-               uint16_t addr, uint16_t len, int priority = 1);
-
-    /** IMemoryOperation methods */
-    virtual ETransStatus b_transport(Axi4TransactionType *trans);
+    IORegType(IService *parent, const char *name,
+        uint32_t addr, uint32_t len, int priority = 1);
 
     /** IIOPort */
     virtual void registerPortListener(IFace *listener);
     virtual void unregisterPortListener(IFace *listener);
 
-    /** IResetListener interface */
-    virtual void reset(bool active);
-
     /** General access methods: */
-    const char *regName() { return regname_.to_string(); }
-    uint8_t getValue() { return value.byte; }
-    void setValue(uint8_t v) { value.byte = v; }
-
- protected:
-    virtual uint8_t read();
-    virtual void write(uint8_t val);
-    virtual uint8_t get_direction() {return 0u; }
+    virtual const char *regName() { return regname_.to_string(); }
 
  protected:
     // Debug output compatibility
-    IFace *getInterface(const char *name);
+    virtual IFace *getInterface(const char *name);
 
  protected:
     IService *parent_;
     AttributeType regname_;
     AttributeType portListeners_;
+};
+
+class IOReg8Type : public IORegType {
+ public:
+    IOReg8Type(IService *parent, const char *name,
+               uint32_t addr, uint32_t len, int priority = 1);
+
+    /** IMemoryOperation methods */
+    virtual ETransStatus b_transport(Axi4TransactionType *trans);
+
+    /** IResetListener interface */
+    virtual void reset(bool active);
+
+    /** General access methods: */
+    uint8_t getValue() { return value.byte; }
+    void setValue(uint8_t v) { value.byte = v; }
+
+ protected:
+    virtual uint8_t get_direction() { return 0u; }
+    virtual uint8_t read();
+    virtual void write(uint8_t val);
+
+ protected:
     Reg8Type value;
     uint8_t hard_reset_value_;
 };
 
+class IOReg32Type : public IORegType {
+public:
+    IOReg32Type(IService *parent, const char *name,
+        uint32_t addr, uint32_t len, int priority = 1);
+
+    /** IMemoryOperation methods */
+    virtual ETransStatus b_transport(Axi4TransactionType *trans);
+
+    /** IResetListener interface */
+    virtual void reset(bool active);
+
+    /** General access methods: */
+    uint32_t getValue() { return value.buf32[0]; }
+    void setValue(uint32_t v) { value.buf32[0] = v; }
+
+protected:
+    virtual uint32_t get_direction() { return 0u; }
+    virtual uint32_t read();
+    virtual void write(uint32_t val);
+
+protected:
+    Reg64Type value;
+    uint32_t hard_reset_value_;
+};
 
 class IOPinType : public IIOPortListener {
  public:
     IOPinType(IService *parent, const char *name);
+    IOPinType(IService *parent, const char *name, AttributeType &pincfg);
 
     /** IIOPortListener */
     virtual void readData(uint8_t *val, uint8_t mask);
@@ -83,7 +118,7 @@ class IOPinType : public IIOPortListener {
 
  protected:
     virtual uint8_t aboutToRead(uint8_t val) { return val; }
-    virtual void aboutToWrite(uint8_t prev, uint8_t val) {}
+    virtual void aboutToWrite(uint8_t /*prev*/, uint8_t /*val*/) {}
 
  protected:
     static const int READ_MASK = 0x1;
@@ -103,6 +138,8 @@ class IOPinTypeDebug : public IOPinType {
  public:
     IOPinTypeDebug(IService *parent, const char *name)
         : IOPinType(parent, name) {}
+    IOPinTypeDebug(IService *parent, const char *name, AttributeType &pincfg)
+        : IOPinType(parent, name, pincfg) {}
  protected:
     // Debug output compatibility
     IFace *getInterface(const char *name) {

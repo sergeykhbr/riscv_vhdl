@@ -14,27 +14,21 @@
  *  limitations under the License.
  */
 
-#ifndef __DEBUGGER_COMMON_CORESERVICES_IENCODER_H__
-#define __DEBUGGER_COMMON_CORESERVICES_IENCODER_H__
+#ifndef __DEBUGGER_SRC_CPU_FNC_PLUGIN_CMDS_CMD_BR_RISCV_H__
+#define __DEBUGGER_SRC_CPU_FNC_PLUGIN_CMDS_CMD_BR_RISCV_H__
 
-#include <inttypes.h>
-#include <iface.h>
+#include "generic/cmd_br_generic.h"
 
 namespace debugger {
 
-static const char *const IFACE_ENCODER = "IEncoder";
-
-class IEncoder : public IFace {
+class CmdBrRiscv : public CmdBrGeneric {
  public:
-    IEncoder() : IFace(IFACE_ENCODER) {}
+    explicit CmdBrRiscv(ITap *tap);
 
-    virtual void rotateOn(int steps) = 0;
-    virtual uint8_t getEncoderState() = 0;
-    virtual double getAngleDegrees() = 0;
-    virtual double getHoles() = 0;
-    virtual double getPeriods() = 0;
+ protected:
+    virtual void getSwBreakpointInstr(Reg64Type *instr);
 };
 
 }  // namespace debugger
 
-#endif  // __DEBUGGER_COMMON_CORESERVICES_IENCODER_H__
+#endif  // __DEBUGGER_SRC_CPU_FNC_PLUGIN_CMDS_CMD_BR_RISCV_H__

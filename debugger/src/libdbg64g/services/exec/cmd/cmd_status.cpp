@@ -15,11 +15,11 @@
  */
 
 #include "cmd_status.h"
+#include "debug/dsumap.h"
 
 namespace debugger {
 
-CmdStatus::CmdStatus(ITap *tap, ISocInfo *info) 
-    : ICommand ("status", tap, info) {
+CmdStatus::CmdStatus(ITap *tap) : ICommand ("status", tap) {
 
     briefDescr_.make_string("Read target's status register");
     detailedDescr_.make_string(
@@ -49,7 +49,7 @@ void CmdStatus::exec(AttributeType *args, AttributeType *res) {
     res->make_nil();
 
     Reg64Type t1;
-    DsuMapType *pdsu = info_->getpDsu();
+    DsuMapType *pdsu = DSUBASE();
     uint64_t addr = reinterpret_cast<uint64_t>(&pdsu->udbg.v.control);
     if (tap_->read(addr, 8, t1.buf) == TAP_ERROR) {
         return;

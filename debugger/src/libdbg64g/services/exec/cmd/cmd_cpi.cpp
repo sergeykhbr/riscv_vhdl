@@ -15,11 +15,12 @@
  */
 
 #include "cmd_cpi.h"
+#include "debug/dsumap.h"
 
 namespace debugger {
 
-CmdCpi::CmdCpi(ITap *tap, ISocInfo *info) 
-    : ICommand ("cpi", tap, info) {
+CmdCpi::CmdCpi(ITap *tap) 
+    : ICommand ("cpi", tap) {
 
     briefDescr_.make_string("Compute Clocks Per Instruction (CPI) rate");
     detailedDescr_.make_string(
@@ -64,7 +65,7 @@ void CmdCpi::exec(AttributeType *args, AttributeType *res) {
         CpiRegsType regs;
         uint8_t buf[sizeof(CpiRegsType)];
     } t1;
-    DsuMapType *dsu = info_->getpDsu();
+    DsuMapType *dsu = DSUBASE();
     uint64_t addr = reinterpret_cast<uint64_t>(&dsu->udbg.v.clock_cnt);
     uint64_t d1, d2;
     tap_->read(addr, 16, t1.buf);

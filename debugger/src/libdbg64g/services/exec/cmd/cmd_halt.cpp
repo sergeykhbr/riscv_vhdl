@@ -15,11 +15,11 @@
  */
 
 #include "cmd_halt.h"
+#include "debug/dsumap.h"
 
 namespace debugger {
 
-CmdHalt::CmdHalt(ITap *tap, ISocInfo *info) 
-    : ICommand ("halt", tap, info) {
+CmdHalt::CmdHalt(ITap *tap) : ICommand ("halt", tap) {
 
     briefDescr_.make_string("Stop simulation");
     detailedDescr_.make_string(
@@ -50,7 +50,7 @@ void CmdHalt::exec(AttributeType *args, AttributeType *res) {
     res->attr_free();
     res->make_nil();
     Reg64Type t1;
-    DsuMapType *dsu = info_->getpDsu();
+    DsuMapType *dsu = DSUBASE();
     GenericCpuControlType ctrl;
     uint64_t addr_run_ctrl = reinterpret_cast<uint64_t>(&dsu->udbg.v.control);
     ctrl.val = 0;

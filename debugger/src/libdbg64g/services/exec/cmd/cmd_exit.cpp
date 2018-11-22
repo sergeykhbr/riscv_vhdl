@@ -18,8 +18,7 @@
 
 namespace debugger {
 
-CmdExit::CmdExit(ITap *tap, ISocInfo *info) 
-    : ICommand ("exit", tap, info) {
+CmdExit::CmdExit(ITap *tap) : ICommand ("exit", tap) {
 
     briefDescr_.make_string("Exit and close application");
     detailedDescr_.make_string(

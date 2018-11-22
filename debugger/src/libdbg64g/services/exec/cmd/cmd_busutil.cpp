@@ -22,8 +22,7 @@
 
 namespace debugger {
 
-CmdBusUtil::CmdBusUtil(ITap *tap, ISocInfo *info) 
-    : ICommand ("busutil", tap, info) {
+CmdBusUtil::CmdBusUtil(ITap *tap) : ICommand ("busutil", tap) {
 
     briefDescr_.make_string("Read per master bus utilization in percentage "
                             "of time");
@@ -71,7 +70,7 @@ void CmdBusUtil::exec(AttributeType *args, AttributeType *res) {
         Reg64Type r_cnt;
     } mst_stat;
     Reg64Type cnt_total;
-    DsuMapType *dsu = info_->getpDsu();
+    DsuMapType *dsu = DSUBASE();
     uint64_t addr = reinterpret_cast<uint64_t>(&dsu->udbg.v.clock_cnt);
     tap_->read(addr, 8, cnt_total.buf);
     double d_cnt_total = static_cast<double>(cnt_total.val - clock_cnt_z_);

@@ -15,11 +15,11 @@
  */
 
 #include "cmd_br_generic.h"
+#include "debug/dsumap.h"
 
 namespace debugger {
 
-CmdBrGeneric::CmdBrGeneric(ITap *tap, ISocInfo *info) 
-    : ICommand ("br", tap, info) {
+CmdBrGeneric::CmdBrGeneric(ITap *tap) : ICommand ("br", tap) {
 
     briefDescr_.make_string("Add or remove breakpoint.");
     detailedDescr_.make_string(
@@ -82,7 +82,7 @@ void CmdBrGeneric::exec(AttributeType *args, AttributeType *res) {
         flags |= BreakFlag_HW;
     }
 
-    DsuMapType *pdsu = info_->getpDsu();
+    DsuMapType *pdsu = DSUBASE();
 
     Reg64Type braddr;
     Reg64Type brinstr;

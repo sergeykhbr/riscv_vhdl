@@ -34,10 +34,12 @@
 #include "coreservices/icpuriscv.h"
 #include "coreservices/imemop.h"
 #include "coreservices/iclock.h"
-#include "coreservices/isocinfo.h"
 #include "coreservices/icmdexec.h"
 #include "coreservices/itap.h"
-#include "generic/cmd_br_generic.h"
+#include "cmds/cmd_br_riscv.h"
+#include "cmds/cmd_reg_riscv.h"
+#include "cmds/cmd_regs_riscv.h"
+#include "cmds/cmd_csr.h"
 #include "rtl_wrapper.h"
 #include "riverlib/river_top.h"
 #include <systemc.h>
@@ -92,7 +94,6 @@ class CpuRiscV_RTL : public IService,
  private:
     AttributeType bus_;
     AttributeType cmdexec_;
-    AttributeType socInfo_;
     AttributeType tap_;
     AttributeType freqHz_;
     AttributeType InVcdFile_;
@@ -102,7 +103,6 @@ class CpuRiscV_RTL : public IService,
 
     ICmdExecutor *icmdexec_;
     ITap *itap_;
-    ISocInfo *iinfo_;
     IMemoryOperation *ibus_;
 
     sc_signal<bool> w_clk;
@@ -134,7 +134,11 @@ class CpuRiscV_RTL : public IService,
     sc_trace_file *o_vcd_;      // reference pattern for comparision
     RiverTop *top_;
     RtlWrapper *wrapper_;
+
     CmdBrRiscv *pcmd_br_;
+    CmdRegRiscv *pcmd_reg_;
+    CmdRegsRiscv *pcmd_regs_;
+    CmdCsr *pcmd_csr_;
 };
 
 DECLARE_CLASS(CpuRiscV_RTL)

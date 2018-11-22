@@ -1,7 +1,18 @@
-/**
- * @file
- * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
- * @author     Sergey Khabarov - sergeykhbr@gmail.com
+/*
+ *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  * @brief      Breakpoint feedback controller.
  * @details    This class allows to read/write DSU control operations allowing
  *             to correctly continue execution on breakpoints.
@@ -9,6 +20,7 @@
 
 #include "ebreakhandler.h"
 #include "coreservices/isrccode.h"
+#include "debug/dsumap.h"
 
 namespace debugger {
 
@@ -16,8 +28,12 @@ EBreakHandler::EBreakHandler(IGui *gui) {
     igui_ = gui;
     reqReadBr_.make_string("br");
     reqReadNpc_.make_string("reg npc");
-    dsu_sw_br_ = ~0;
-    dsu_hw_br_ = ~0;
+
+    DsuMapType *dsu = DSUBASE();
+    dsu_sw_br_ =
+        reinterpret_cast<uint64_t>(&dsu->udbg.v.br_address_fetch);
+    dsu_hw_br_ =
+        reinterpret_cast<uint64_t>(&dsu->udbg.v.remove_breakpoint);
 }
 
 EBreakHandler::~EBreakHandler() {

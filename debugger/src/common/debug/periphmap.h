@@ -14,16 +14,12 @@
  *  limitations under the License.
  */
 
-#ifndef __DEBUGGER_COMMON_CORESERVICES_ISOCINFO_H__
-#define __DEBUGGER_COMMON_CORESERVICES_ISOCINFO_H__
+#ifndef __DEBUGGER_SRC_COMMON_DEBUG_PERIPHMAP_H__
+#define __DEBUGGER_SRC_COMMON_DEBUG_PERIPHMAP_H__
 
-#include <iface.h>
-#include <attribute.h>
-#include "debug/debugmap.h"
+#include <inttypes.h>
 
 namespace debugger {
-
-static const char *IFACE_SOC_INFO = "ISocInfo";
 
 static const int CFG_NASTI_MASTER_CACHED    = 0;
 static const int CFG_NASTI_MASTER_UNCACHED  = 1;
@@ -136,91 +132,7 @@ struct GpioType {
     } u;
 };
 
-struct DsuMapType {
-    // Base Address + 0x00000 (Region 0)
-    uint64_t csr[1 << 12];
-    // Base Address + 0x08000 (Region 1)
-    union ureg_type {
-        uint8_t buf[1 << (12 + 3)];
-        struct regs_type {
-            uint64_t iregs[32];         // integer registers
-            uint64_t pc;
-            uint64_t npc;
-            uint64_t stack_trace_cnt;   // index 34
-            uint64_t rsrv1[128 - 35];
-            uint64_t stack_trace_buf[1];
-            uint64_t rsrv2[128 - 1];
-            uint64_t instr_buf[4];      // Bits[63:0] (addr,instr)
-            uint64_t dbg1[4];
-        } v;
-    } ureg;
-    // Base Address + 0x10000 (Region 2)
-    union udbg_type {
-        uint8_t buf[1 << (12 + 3)];
-        struct debug_region_type {
-            GenericCpuControlType control;
-            uint64_t stepping_mode_steps;
-            uint64_t clock_cnt;
-            uint64_t executed_cnt;
-            union breakpoint_control_reg {
-                uint64_t val;
-                struct {
-                    /** Trap on instruction:
-                     *      0 = Halt pipeline on ECALL instruction
-                     *      1 = Generate trap on ECALL instruction
-                     */
-                    uint64_t trap_on_break : 1;
-                    uint64_t rsv1          : 63;
-                } bits;
-            } br_ctrl;
-            uint64_t add_breakpoint;
-            uint64_t remove_breakpoint;
-            /**
-             * Don't fetch instruction from this address use specified
-             * below instead.
-             */
-            uint64_t br_address_fetch;
-            /**
-             * True instruction value instead of injected one. Use this
-             * instruction instead of memory.
-             */
-            uint64_t br_instr_fetch;
-        } v;
-    } udbg;
-    // Base Address + 0x18000 (Region 3)
-    union local_regs_type {
-        uint8_t buf[1 << (12 + 3)];
-        struct local_region_type {
-            uint64_t soft_reset;
-            uint64_t miss_access_cnt;
-            uint64_t miss_access_addr;
-            uint64_t rsrv[5];
-            // Bus utilization registers
-            struct mst_bus_util_type {
-                uint64_t w_cnt;
-                uint64_t r_cnt;
-            } bus_util[CFG_NASTI_MASTER_TOTAL];
-        } v;
-    } ulocal;
-};
-
-
-const uint64_t REG_ADDR_ERROR = 0xFFFFFFFFFFFFFFFFull;
-
-#define DSUREG(x) (reinterpret_cast<uint64_t>(& \
-        (reinterpret_cast<DsuMapType*>(0))->x))
-
-class ISocInfo : public IFace {
- public:
-    ISocInfo() : IFace(IFACE_SOC_INFO) {}
-
-    virtual unsigned getRegsTotal() = 0;
-    virtual void getRegsList(AttributeType *lst) = 0;
-    virtual uint64_t reg2addr(const char *name) = 0;
-
-    virtual DsuMapType *getpDsu() = 0;
-};
 
 }  // namespace debugger
 
-#endif  // __DEBUGGER_COMMON_CORESERVICES_ISOCINFO_H__
+#endif  // __DEBUGGER_SRC_COMMON_DEBUG_PERIPHMAP_H__

@@ -14,13 +14,12 @@
  *  limitations under the License.
  */
 
-#include "iservice.h"
 #include "cmd_reset.h"
+#include "debug/dsumap.h"
 
 namespace debugger {
 
-CmdReset::CmdReset(ITap *tap, ISocInfo *info) 
-    : ICommand ("reset", tap, info) {
+CmdReset::CmdReset(ITap *tap) : ICommand ("reset", tap) {
 
     briefDescr_.make_string("Reset, Un-reset or Reboot target");
     detailedDescr_.make_string(
@@ -50,7 +49,7 @@ void CmdReset::exec(AttributeType *args, AttributeType *res) {
     res->make_nil();
 
     Reg64Type rst;
-    DsuMapType *dsu = info_->getpDsu();
+    DsuMapType *dsu = DSUBASE();
     uint64_t sw_rst_addr =
            reinterpret_cast<uint64_t>(&dsu->ulocal.v.soft_reset);
 

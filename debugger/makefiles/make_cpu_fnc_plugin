@@ -34,6 +34,9 @@ SOURCES = \
 	async_tqueue \
 	cpu_generic \
 	cmd_br_generic \
+	cmd_br_riscv \
+	cmd_reg_generic \
+	cmd_regs_generic \
 	cmd_csr \
 	mapreg \
 	plugin_init \

@@ -15,11 +15,11 @@
  */
 
 #include "cmd_run.h"
+#include "debug/dsumap.h"
 
 namespace debugger {
 
-CmdRun::CmdRun(ITap *tap, ISocInfo *info) 
-    : ICommand ("run", tap, info) {
+CmdRun::CmdRun(ITap *tap) : ICommand ("run", tap) {
 
     briefDescr_.make_string("Run simulation for a specify number of steps\"");
     detailedDescr_.make_string(
@@ -50,7 +50,7 @@ int CmdRun::isValid(AttributeType *args) {
 void CmdRun::exec(AttributeType *args, AttributeType *res) {
     res->attr_free();
     res->make_nil();
-    DsuMapType *dsu = info_->getpDsu();
+    DsuMapType *dsu = DSUBASE();
     Reg64Type runctrl;
     uint64_t addr_run_ctrl = reinterpret_cast<uint64_t>(&dsu->udbg.v.control);
     uint64_t addr_step_cnt = 

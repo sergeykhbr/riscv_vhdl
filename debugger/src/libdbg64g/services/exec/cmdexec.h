@@ -22,7 +22,6 @@
 #include "coreservices/icmdexec.h"
 #include "coreservices/itap.h"
 #include "coreservices/iautocomplete.h"
-#include "coreservices/isocinfo.h"
 #include "coreservices/icommand.h"
 #include <string>
 #include <stdarg.h>
@@ -55,11 +54,9 @@ class CmdExecutor : public IService,
 
  private:
     AttributeType tap_;
-    AttributeType socInfo_;
     AttributeType cmds_;
 
     ITap *itap_;
-    ISocInfo *info_;
 
     mutex_def mutexExec_;
 

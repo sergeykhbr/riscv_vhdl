@@ -16,6 +16,7 @@
 
 #include "iservice.h"
 #include "cmd_loadsrec.h"
+#include "debug/dsumap.h"
 #include <iostream>
 
 namespace debugger {
@@ -85,8 +86,7 @@ void print_flash_usage() {
 }
 #endif
 
-CmdLoadSrec::CmdLoadSrec(ITap *tap, ISocInfo *info) 
-    : ICommand ("loadsrec", tap, info) {
+CmdLoadSrec::CmdLoadSrec(ITap *tap) : ICommand ("loadsrec", tap) {
 
     briefDescr_.make_string("Load SREC-file");
     detailedDescr_.make_string(
@@ -125,7 +125,7 @@ void CmdLoadSrec::exec(AttributeType *args, AttributeType *res) {
 
     int off = check_header(image);
 
-    DsuMapType *dsu = info_->getpDsu();
+    DsuMapType *dsu = DSUBASE();
     uint64_t soft_reset = 1;
     uint64_t addr = reinterpret_cast<uint64_t>(&dsu->ulocal.v.soft_reset);
     tap_->write(addr, 8, reinterpret_cast<uint8_t *>(&soft_reset));

@@ -45,6 +45,8 @@ SOURCES = \
 	cpu_generic \
 	cmd_br_generic \
 	cmd_br_arm7 \
+	cmd_reg_generic \
+	cmd_regs_generic \
 	iotypes \
 	mapreg \
 	srcproc \

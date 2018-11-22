@@ -23,17 +23,15 @@
 namespace debugger {
 
 class CmdCsr : public ICommand  {
-public:
-    explicit CmdCsr(ITap *tap, ISocInfo *info);
+ public:
+    explicit CmdCsr(ITap *tap);
 
     /** ICommand */
     virtual int isValid(AttributeType *args);
     virtual void exec(AttributeType *args, AttributeType *res);
 
-private:
+ private:
     void to_string(AttributeType *args, AttributeType *res, AttributeType *out);
-
-private:
 };
 
 }  // namespace debugger

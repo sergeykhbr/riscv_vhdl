@@ -185,7 +185,9 @@
     <ClInclude Include="..\..\src\common\attribute.h" />
     <ClInclude Include="..\..\src\common\autobuffer.h" />
     <ClInclude Include="..\..\src\common\debug\dsu.h" />
+    <ClInclude Include="..\..\src\common\debug\dsumap.h" />
     <ClInclude Include="..\..\src\common\debug\greth.h" />
+    <ClInclude Include="..\..\src\common\debug\periphmap.h" />
     <ClInclude Include="..\..\src\common\iattr.h" />
     <ClInclude Include="..\..\src\common\iclass.h" />
     <ClInclude Include="..\..\src\common\iface.h" />

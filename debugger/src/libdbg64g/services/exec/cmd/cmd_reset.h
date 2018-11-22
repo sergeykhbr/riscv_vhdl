@@ -19,20 +19,17 @@
 
 #include "api_core.h"
 #include "coreservices/itap.h"
-#include "coreservices/isocinfo.h"
 #include "coreservices/icommand.h"
 
 namespace debugger {
 
 class CmdReset : public ICommand  {
  public:
-    CmdReset(ITap *tap, ISocInfo *info);
+    explicit CmdReset(ITap *tap);
 
     /** ICommand */
     virtual int isValid(AttributeType *args);
     virtual void exec(AttributeType *args, AttributeType *res);
-
- private:
 };
 
 }  // namespace debugger

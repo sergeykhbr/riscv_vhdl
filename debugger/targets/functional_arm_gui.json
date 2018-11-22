@@ -12,7 +12,6 @@
                 ['WidgetsConfig',{
                   'Serial':'port1',
                   'AutoComplete':'autocmd0',
-                  'SocInfo':'info0',
                   'StepToSecHz':1000000.0,
                   'PollingMs':250,
                   'EventsLoopMs':10,
@@ -23,7 +22,6 @@
                      'RegWidthBytes':4,
                   }
                 }],
-                ['SocInfo','info0'],
                 ['CmdExecutor','cmdexec0']
                 ]}]},
     {'Class':'SerialDbgServiceClass','Instances':[
@@ -89,33 +87,7 @@
     {'Class':'CmdExecutorClass','Instances':[
           {'Name':'cmdexec0','Attr':[
                 ['LogLevel',4],
-                ['Tap','edcltap'],
-                ['SocInfo','info0']
-                ]}]},
-    {'Class':'SocInfoClass','Instances':[
-          {'Name':'info0','Attr':[
-                ['LogLevel',4],
-                ['DsuBaseAddress',0x80080000],
-                ['ListRegs',[['r0',4,0x08000],
-                             ['r1',4,0x08008],
-                             ['r2',4,0x08010],
-                             ['r3',4,0x08018],
-                             ['r4',4,0x08020],
-                             ['r5',4,0x08028],
-                             ['r6',4,0x08030],
-                             ['r7',4,0x08038],
-                             ['r8',4,0x08040],
-                             ['r9',4,0x08048],
-                             ['r10',4,0x08050],
-                             ['r11',4,0x08058],
-                             ['fp',4,0x08060],
-                             ['sp',4,0x08068],
-                             ['lr',4,0x08070],
-                             ['cpsr',4,0x08080],
-                             ['pc',4,0x08100],
-                             ['npc',4,0x08108],
-                             ['steps',8,0x10010]
-                             ]]
+                ['Tap','edcltap']
                 ]}]},
     {'Class':'SimplePluginClass','Instances':[
           {'Name':'example0','Attr':[
@@ -144,7 +116,6 @@
                 ['SysBusMasterID',0,'Used to gather Bus statistic'],
                 ['SysBus','axi0'],
                 ['DbgBus','dbgbus0'],
-                ['SocInfo','info0'],
                 ['CmdExecutor','cmdexec0']
                 ['Tap','edcltap']
                 ['SysBusWidthBytes',4,'Split dma transactions from CPU'],

@@ -20,8 +20,7 @@
 
 namespace debugger {
 
-CmdSymb::CmdSymb(ITap *tap, ISocInfo *info) 
-    : ICommand ("symb", tap, info) {
+CmdSymb::CmdSymb(ITap *tap) : ICommand ("symb", tap) {
 
     briefDescr_.make_string("Get symbols list");
     detailedDescr_.make_string(

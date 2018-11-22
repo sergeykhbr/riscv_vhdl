@@ -19,30 +19,66 @@
 
 #include <iface.h>
 #include <inttypes.h>
+#include <iservice.h>
+#include "icommand.h"
 
 namespace debugger {
 
-static const char *const IFACE_DISPLAY = "IDisplay";
-
-class IDisplay : public IFace {
+class GenericDisplayCmdType : public ICommand {
  public:
-    IDisplay() : IFace(IFACE_DISPLAY) {}
+    GenericDisplayCmdType(IService *parent, const char *name)
+        : ICommand(name, 0) {
+        parent_ = parent;
+        briefDescr_.make_string("Display controller management command.");
+        detailedDescr_.make_string(
+            "Description:\n"
+            "    Read display resolution using config command\n"
+            "    or frame using 'frame' sucommand.\n"
+            "Response config:\n"
+            "    List {Width:w,Height:h,BkgColor:0x00ff00}\n"
+            "Response 'frame':\n"
+            "    List [b0,b1,b1,...],\n"
+            "          Bytes of column0,column1,etcn"
+            "Usage:\n"
+            "    display0 config\n"
+            "    display0 frame");
+    }
 
-    virtual void initFrame() = 0;
-    virtual void setFramePixel(int x, int y, uint32_t rgb) = 0;
-    virtual void updateFrame() = 0;
+    /** ICommand */
+    virtual int isValid(AttributeType *args) {
+        if (!cmdName_.is_equal((*args)[0u].to_string())) {
+            return CMD_INVALID;
+        }
+        if (args->size() < 2) {
+            return CMD_WRONG_ARGS;
+        }
+        return CMD_VALID;
+    }
+    virtual void exec(AttributeType *args, AttributeType *res){
+        AttributeType &type = (*args)[1];
+        if (type.is_equal("config")) {
+            res->make_dict();
+            (*res)["Width"].make_int64(getWidth());
+            (*res)["Height"].make_int64(getHeight());
+            (*res)["BkgColor"].make_uint64(getBkgColor());
+        } else if (type.is_equal("frame")) {
+            bool diff = false;
+            if (args->size() > 2 && (*args)[2].is_equal("diff")) {
+                diff = true;
+            }
+            getFrame(res, diff);
+        }
+    }
+
+ protected:
+    virtual int getWidth() = 0;
+    virtual int getHeight() = 0;
+    virtual uint32_t getBkgColor() = 0;     // distance between pixels
+    virtual void getFrame(AttributeType *res, bool diff) = 0;
+ protected:
+    IService *parent_;
 };
 
-static const char *const IFACE_LED_CONTROLLER = "ILedController";
-
-class ILedController : public IFace {
- public:
-    ILedController() : IFace(IFACE_LED_CONTROLLER) {}
-
-    virtual void getResolution(int *width, int *height) = 0;
-    virtual void registerDisplay(IDisplay *led) = 0;
-    virtual void unregisterDisplay(IDisplay *led) = 0;
-};
 
 }  // namespace debugger
 

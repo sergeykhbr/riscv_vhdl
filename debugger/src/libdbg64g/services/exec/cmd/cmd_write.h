@@ -24,7 +24,7 @@ namespace debugger {
 
 class CmdWrite : public ICommand  {
  public:
-    CmdWrite(ITap *tap, ISocInfo *info);
+    explicit CmdWrite(ITap *tap);
 
     /** ICommand */
     virtual int isValid(AttributeType *args);

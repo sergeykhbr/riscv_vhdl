@@ -16,8 +16,6 @@
 
 #include <string.h>
 #include "cmdexec.h"
-#include "cmd/cmd_regs.h"
-#include "cmd/cmd_reg.h"
 #include "cmd/cmd_loadelf.h"
 #include "cmd/cmd_loadsrec.h"
 #include "cmd/cmd_log.h"
@@ -46,11 +44,9 @@ CmdExecutor::CmdExecutor(const char *name)
     : IService(name) {
     registerInterface(static_cast<ICmdExecutor *>(this));
     registerAttribute("Tap", &tap_);
-    registerAttribute("SocInfo", &socInfo_);
 
     //console_.make_list(0);
     tap_.make_string("");
-    socInfo_.make_string("");
     cmds_.make_list(0);
 
     RISCV_mutex_init(&mutexExec_);
@@ -71,31 +67,26 @@ CmdExecutor::~CmdExecutor() {
 void CmdExecutor::postinitService() {
     itap_ = static_cast<ITap *>
             (RISCV_get_service_iface(tap_.to_string(), IFACE_TAP));
-    info_ = static_cast<ISocInfo *>
-            (RISCV_get_service_iface(socInfo_.to_string(), 
-                                    IFACE_SOC_INFO));
 
     // Core commands registration:
-    registerCommand(new CmdBusUtil(itap_, info_));
-    registerCommand(new CmdCpi(itap_, info_));
-    registerCommand(new CmdDisas(itap_, info_));
-    registerCommand(new CmdExit(itap_, info_));
-    registerCommand(new CmdHalt(itap_, info_));
-    registerCommand(new CmdIsRunning(itap_, info_));
-    registerCommand(new CmdLoadBin(itap_, info_));
-    registerCommand(new CmdLoadElf(itap_, info_));
-    registerCommand(new CmdLoadSrec(itap_, info_));
-    registerCommand(new CmdLog(itap_, info_));
-    registerCommand(new CmdMemDump(itap_, info_));
-    registerCommand(new CmdRead(itap_, info_));
-    registerCommand(new CmdRun(itap_, info_));
-    registerCommand(new CmdReg(itap_, info_));
-    registerCommand(new CmdRegs(itap_, info_));
-    registerCommand(new CmdReset(itap_, info_));
-    registerCommand(new CmdStack(itap_, info_));
-    registerCommand(new CmdStatus(itap_, info_));
-    registerCommand(new CmdSymb(itap_, info_));
-    registerCommand(new CmdWrite(itap_, info_));
+    registerCommand(new CmdBusUtil(itap_));
+    registerCommand(new CmdCpi(itap_));
+    registerCommand(new CmdDisas(itap_));
+    registerCommand(new CmdExit(itap_));
+    registerCommand(new CmdHalt(itap_));
+    registerCommand(new CmdIsRunning(itap_));
+    registerCommand(new CmdLoadBin(itap_));
+    registerCommand(new CmdLoadElf(itap_));
+    registerCommand(new CmdLoadSrec(itap_));
+    registerCommand(new CmdLog(itap_));
+    registerCommand(new CmdMemDump(itap_));
+    registerCommand(new CmdRead(itap_));
+    registerCommand(new CmdRun(itap_));
+    registerCommand(new CmdReset(itap_));
+    registerCommand(new CmdStack(itap_));
+    registerCommand(new CmdStatus(itap_));
+    registerCommand(new CmdSymb(itap_));
+    registerCommand(new CmdWrite(itap_));
 }
 
 void CmdExecutor::registerCommand(ICommand *icmd) {
@@ -193,10 +184,14 @@ void CmdExecutor::processSimple(AttributeType *cmd, AttributeType *res) {
 
     int err = getICommand(cmd, &icmd);
     if (!icmd) {
+        res->attr_free();
+        res->make_nil();
         RISCV_error("Command '%s' not found. "
                     "Use 'help' to list commands", (*cmd)[0u].to_string());
         return;
     } else if (err == CMD_WRONG_ARGS) {
+        res->attr_free();
+        res->make_nil();
         RISCV_error("Command '%s' has been called with invalid arguments. "
             "Use 'help %s' to check the required arguments",
             (*cmd)[0u].to_string(), (*cmd)[0u].to_string());

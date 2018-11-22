@@ -18,6 +18,8 @@
 #define __DEBUGGER_COMMON_ARM_ISA_H__
 
 #include <inttypes.h>
+#include <api_types.h>
+#include "debug/dsumap.h"
 
 namespace debugger {
 
@@ -313,6 +315,30 @@ static const char *const IREGS_NAMES[] = {
     "cpsr",     // [16] Current Prog. Status Reg (all modes)
     "spsr",     // [17] Saved Prog. Status Reg
 };
+
+static const ECpuRegMapping ARM_DEBUG_REG_MAP[] = {
+    {"r0",    4, DSU_OFSSET + DSUREG(ureg.v.iregs[0])},
+    {"r1",    4, DSU_OFSSET + DSUREG(ureg.v.iregs[1])},
+    {"r2",    4, DSU_OFSSET + DSUREG(ureg.v.iregs[2])},
+    {"r3",    4, DSU_OFSSET + DSUREG(ureg.v.iregs[3])},
+    {"r4",    4, DSU_OFSSET + DSUREG(ureg.v.iregs[4])},
+    {"r5",    4, DSU_OFSSET + DSUREG(ureg.v.iregs[5])},
+    {"r6",    4, DSU_OFSSET + DSUREG(ureg.v.iregs[6])},
+    {"r7",    4, DSU_OFSSET + DSUREG(ureg.v.iregs[7])},
+    {"r8",    4, DSU_OFSSET + DSUREG(ureg.v.iregs[8])},
+    {"r9",    4, DSU_OFSSET + DSUREG(ureg.v.iregs[9])},
+    {"r10",   4, DSU_OFSSET + DSUREG(ureg.v.iregs[10])},
+    {"r11",   4, DSU_OFSSET + DSUREG(ureg.v.iregs[11])},
+    {"fp",    4, DSU_OFSSET + DSUREG(ureg.v.iregs[12])},
+    {"sp",    4, DSU_OFSSET + DSUREG(ureg.v.iregs[13])},
+    {"lr",    4, DSU_OFSSET + DSUREG(ureg.v.iregs[14])},
+    {"cpsr",  4, DSU_OFSSET + DSUREG(ureg.v.iregs[16])},
+    {"pc",    4, DSU_OFSSET + DSUREG(ureg.v.pc)},
+    {"npc",   4, DSU_OFSSET + DSUREG(ureg.v.npc)},
+    {"steps", 8, DSU_OFSSET + DSUREG(udbg.v.clock_cnt)},
+    {"",      0, 0}
+};
+
 
 enum EConditionSuffix {
     Cond_EQ,    // equal

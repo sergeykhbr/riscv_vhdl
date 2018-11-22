@@ -14,7 +14,6 @@
  *  limitations under the License.
  */
 
-#include "coreservices/isocinfo.h"
 #include "PnpWidget.h"
 #include "moc_PnpWidget.h"
 

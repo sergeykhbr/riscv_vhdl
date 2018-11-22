@@ -28,7 +28,6 @@ GuiPlugin::GuiPlugin(const char *name)
     registerInterface(static_cast<IThread *>(this));
     registerInterface(static_cast<IHap *>(this));
     registerAttribute("WidgetsConfig", &guiConfig_);
-    registerAttribute("SocInfo", &socInfo_);
     registerAttribute("CmdExecutor", &cmdexec_);
 
     guiConfig_.make_dict();
@@ -39,7 +38,6 @@ GuiPlugin::GuiPlugin(const char *name)
     QResource::registerResource(
         topDir + "resources/gui.rcc");
 
-    info_ = 0;
     ui_ = NULL;
     RISCV_event_create(&config_done_, "eventGuiGonfigGone");
     RISCV_register_hap(static_cast<IHap *>(this));
@@ -78,23 +76,12 @@ void GuiPlugin::postinitService() {
                     cmdexec_.to_string());
     }
 
-    info_ = static_cast<ISocInfo *>(
-        RISCV_get_service_iface(socInfo_.to_string(), IFACE_SOC_INFO));
-    if (!iexec_) {
-        RISCV_error("ISocInfo interface of %s not found.", 
-                    socInfo_.to_string());
-    }
-
     ui_->postInit(&guiConfig_);
     run();
 }
 
 IService *GuiPlugin::getParentService() {
     return static_cast<IService *>(this);
-}
-
-IFace *GuiPlugin::getSocInfo() {
-    return info_;
 }
 
 const AttributeType *GuiPlugin::getpConfig() {

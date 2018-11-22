@@ -16,6 +16,7 @@
 
 #include "DbgMainWindow.h"
 #include "moc_DbgMainWindow.h"
+#include "debug/dsumap.h"
 #include "ControlWidget/PnpWidget.h"
 #include "CpuWidgets/RegsViewWidget.h"
 #include "CpuWidgets/AsmViewWidget.h"
@@ -72,16 +73,7 @@ DbgMainWindow::DbgMainWindow(IGui *igui) : QMainWindow() {
     
     setUnifiedTitleAndToolBarOnMac(true);
 
-    ISocInfo *isoc = static_cast<ISocInfo *>(igui_->getSocInfo());
-    if (isoc) {
-        DsuMapType *dsu = isoc->getpDsu();
-        ebreak_ = new EBreakHandler(igui_);
-
-        ebreak_->setBrAddressFetch(
-            reinterpret_cast<uint64_t>(&dsu->udbg.v.br_address_fetch));
-        ebreak_->setHwRemoveBreakpoint(
-            reinterpret_cast<uint64_t>(&dsu->udbg.v.remove_breakpoint));
-    }
+    ebreak_ = new EBreakHandler(igui_);
 
     /** 
      * To use the following type in SIGNAL -> SLOT definitions 

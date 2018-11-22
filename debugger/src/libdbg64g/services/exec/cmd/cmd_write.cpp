@@ -18,8 +18,7 @@
 
 namespace debugger {
 
-CmdWrite::CmdWrite(ITap *tap, ISocInfo *info) 
-    : ICommand ("write", tap, info) {
+CmdWrite::CmdWrite(ITap *tap) : ICommand ("write", tap) {
 
     briefDescr_.make_string("Write memory");
     detailedDescr_.make_string(

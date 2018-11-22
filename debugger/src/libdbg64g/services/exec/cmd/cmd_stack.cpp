@@ -17,11 +17,11 @@
 #include "cmd_stack.h"
 #include "iservice.h"
 #include "coreservices/isrccode.h"
+#include "debug/dsumap.h"
 
 namespace debugger {
 
-CmdStack::CmdStack(ITap *tap, ISocInfo *info) 
-    : ICommand ("stack", tap, info) {
+CmdStack::CmdStack(ITap *tap) : ICommand ("stack", tap) {
 
     briefDescr_.make_string("Read CPU Stack Trace buffer");
     detailedDescr_.make_string(
@@ -50,7 +50,7 @@ void CmdStack::exec(AttributeType *args, AttributeType *res) {
     res->make_list(0);
 
     Reg64Type t1;
-    DsuMapType *pdsu = info_->getpDsu();
+    DsuMapType *pdsu = DSUBASE();
     uint64_t addr = reinterpret_cast<uint64_t>(&pdsu->ureg.v.stack_trace_cnt);
     t1.val = 0;
     tap_->read(addr, 8, t1.buf);

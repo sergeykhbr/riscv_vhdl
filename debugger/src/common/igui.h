@@ -39,8 +39,6 @@ class IGui : public IFace {
 
     virtual IService *getParentService() = 0;
 
-    virtual IFace *getSocInfo() = 0;
-
     virtual const AttributeType *getpConfig() = 0;
 
     virtual void registerCommand(IGuiCmdHandler *iface,

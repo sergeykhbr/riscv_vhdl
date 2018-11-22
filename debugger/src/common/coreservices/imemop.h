@@ -26,6 +26,7 @@ class IService;
 
 static const char *const IFACE_MEMORY_OPERATION = "IMemoryOperation";
 static const char *const IFACE_AXI4_NB_RESPONSE = "IAxi4NbResponse";
+static const char *const IFACE_ADDRESS_TRANSLATOR = "IAddressTranslator";
 
 static const int PAYLOAD_MAX_BYTES = 8;
 
@@ -72,6 +73,16 @@ class IAxi4NbResponse : public IFace {
 };
 
 /**
+ * Address translator
+ */
+class IAddressTranslator : public IFace {
+ public:
+    IAddressTranslator() : IFace(IFACE_ADDRESS_TRANSLATOR) {}
+
+    virtual void translate(Axi4TransactionType *trans) = 0;
+};
+
+/**
  * Slave/Targer interface
  */
 class IMemoryOperation : public IFace {
@@ -81,6 +92,7 @@ class IMemoryOperation : public IFace {
         listMap_.make_list(0);
         baseAddress_.make_uint64(0);
         length_.make_uint64(0);
+        itranslator_ = NULL;
     }
 
     /** 
@@ -123,6 +135,10 @@ class IMemoryOperation : public IFace {
     virtual int getPriority() { return priority_.to_int(); }
     virtual void setPriority(int v) { priority_.make_int64(v); }
 
+    virtual void setTranslator(IAddressTranslator *iface) {
+        itranslator_ = iface;
+    }
+
  protected:
     friend class IService;
     AttributeType listMap_;
@@ -130,6 +146,7 @@ class IMemoryOperation : public IFace {
     AttributeType baseAddress_;
     AttributeType length_;
     AttributeType priority_;
+    IAddressTranslator *itranslator_;
 };
 
 }  // namespace debugger

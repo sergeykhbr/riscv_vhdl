@@ -24,7 +24,7 @@ namespace debugger {
 
 class CmdRead : public ICommand  {
  public:
-    CmdRead(ITap *tap, ISocInfo *info);
+    explicit CmdRead(ITap *tap);
 
     /** ICommand */
     virtual int isValid(AttributeType *args);

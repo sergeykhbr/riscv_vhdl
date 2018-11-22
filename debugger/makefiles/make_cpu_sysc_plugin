@@ -44,6 +44,9 @@ SOURCES = \
 	attribute \
 	autobuffer \
 	cmd_br_generic \
+	cmd_br_riscv \
+	cmd_reg_generic \
+	cmd_regs_generic \
 	async_tqueue \
 	plugin_init \
 	cpu_riscv_rtl \

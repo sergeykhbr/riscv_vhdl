@@ -14,23 +14,26 @@
  *  limitations under the License.
  */
 
-#ifndef __DEBUGGER_CMD_REG_H__
-#define __DEBUGGER_CMD_REG_H__
+#ifndef __DEBUGGER_CMD_CSR_H__
+#define __DEBUGGER_CMD_CSR_H__
 
 #include "api_core.h"
 #include "coreservices/icommand.h"
 
 namespace debugger {
 
-class CmdReg : public ICommand  {
+class CmdCsr : public ICommand  {
  public:
-    CmdReg(ITap *tap, ISocInfo *info);
+    explicit CmdCsr(ITap *tap);
 
     /** ICommand */
     virtual int isValid(AttributeType *args);
     virtual void exec(AttributeType *args, AttributeType *res);
+
+ private:
+    void to_string(AttributeType *args, AttributeType *res, AttributeType *out);
 };
 
 }  // namespace debugger
 
-#endif  // __DEBUGGER_CMD_REG_H__
+#endif  // __DEBUGGER_CMD_CSR_H__

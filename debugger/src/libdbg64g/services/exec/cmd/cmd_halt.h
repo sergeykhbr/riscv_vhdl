@@ -24,7 +24,7 @@ namespace debugger {
 
 class CmdHalt : public ICommand  {
  public:
-    CmdHalt(ITap *tap, ISocInfo *info);
+    explicit CmdHalt(ITap *tap);
 
     /** ICommand */
     virtual int isValid(AttributeType *args);

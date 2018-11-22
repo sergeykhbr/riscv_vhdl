@@ -15,7 +15,6 @@
  */
 
 #include <api_core.h>
-#include "coreservices/isocinfo.h"
 #include "cpu_arm7_func.h"
 
 namespace debugger {
@@ -42,15 +41,25 @@ void CpuCortex_Functional::postinitService() {
 
     CpuGeneric::postinitService();
 
-    pcmd_br_ = new CmdBrArm(itap_, iinfo_);
+    pcmd_br_ = new CmdBrArm(itap_);
     icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_br_));
+
+    pcmd_reg_ = new CmdRegArm(itap_);
+    icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_reg_));
+
+    pcmd_regs_ = new CmdRegsArm(itap_);
+    icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_regs_));
 }
 
 void CpuCortex_Functional::predeleteService() {
     CpuGeneric::predeleteService();
 
     icmdexec_->unregisterCommand(static_cast<ICommand *>(pcmd_br_));
+    icmdexec_->unregisterCommand(static_cast<ICommand *>(pcmd_reg_));
+    icmdexec_->unregisterCommand(static_cast<ICommand *>(pcmd_regs_));
     delete pcmd_br_;
+    delete pcmd_reg_;
+    delete pcmd_regs_;
 }
 
 void CpuCortex_Functional::hapTriggered(IFace *isrc, EHapType type,

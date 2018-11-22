@@ -23,7 +23,6 @@
 #include "igui.h"
 #include "async_tqueue.h"
 #include "coreservices/ithread.h"
-#include "coreservices/isocinfo.h"
 #include "coreservices/icmdexec.h"
 #include "MainWindow/DbgMainWindow.h"
 #include "qt_wrapper.h"
@@ -46,7 +45,6 @@ public:
 
     /** IGui interface */
     virtual IService *getParentService();
-    virtual IFace *getSocInfo();
     virtual const AttributeType *getpConfig();
     virtual void registerCommand(IGuiCmdHandler *iface,
                                  const char *cmd, AttributeType *resp,
@@ -67,10 +65,8 @@ private:
     static const int CMD_QUEUE_SIZE = 256;
 
     AttributeType guiConfig_;
-    AttributeType socInfo_;
     AttributeType cmdexec_;
 
-    ISocInfo *info_;
     ICmdExecutor *iexec_;
     QtWrapper *ui_;
 

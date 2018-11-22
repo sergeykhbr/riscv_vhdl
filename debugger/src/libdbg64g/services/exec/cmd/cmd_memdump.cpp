@@ -19,8 +19,7 @@
 
 namespace debugger {
 
-CmdMemDump::CmdMemDump(ITap *tap, ISocInfo *info) 
-    : ICommand ("memdump", tap, info) {
+CmdMemDump::CmdMemDump(ITap *tap) : ICommand ("memdump", tap) {
 
     briefDescr_.make_string("Dump memory to file");
     detailedDescr_.make_string(

@@ -19,14 +19,13 @@
 
 #include "api_core.h"
 #include "coreservices/itap.h"
-#include "coreservices/isocinfo.h"
 #include "coreservices/icommand.h"
 
 namespace debugger {
 
 class CmdLoadBin : public ICommand  {
  public:
-    CmdLoadBin(ITap *tap, ISocInfo *info);
+    explicit CmdLoadBin(ITap *tap);
 
     /** ICommand interface */
     virtual int isValid(AttributeType *args);

@@ -10,7 +10,7 @@
 #include "api_core.h"   // MUST BE BEFORE QtWidgets.h or any other Qt header.
 #include "attribute.h"
 #include "igui.h"
-#include "coreservices/isocinfo.h"
+#include "debug/periphmap.h"
 
 #include <QtWidgets/QMdiArea>
 #include <QtWidgets/QMdiSubWindow>

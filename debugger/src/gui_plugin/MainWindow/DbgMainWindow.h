@@ -18,7 +18,6 @@
 
 #include "api_core.h"   // MUST BE BEFORE QtWidgets.h or any other Qt header.
 #include "igui.h"
-#include "coreservices/isocinfo.h"
 #include "ebreakhandler.h"
 
 #include <QtWidgets/QMainWindow>
@@ -32,27 +31,27 @@ class DbgMainWindow : public QMainWindow,
                       public IGuiCmdHandler {
     Q_OBJECT
 
-public:
+ public:
     DbgMainWindow(IGui *igui);
     virtual ~DbgMainWindow();
 
     /** IGuiCmdHandler */
     virtual void handleResponse(const char *cmd);
 
-signals:
+ signals:
     void signalUpdateByTimer();
     void signalTargetStateChanged(bool);
     void signalRedrawDisasm();
     void signalAboutToClose();
     void signalSimulationTime(double t);
 
-protected:
+ protected:
     virtual void closeEvent(QCloseEvent *ev_);
 #ifndef QT_NO_CONTEXTMENU
     void contextMenuEvent(QContextMenuEvent *ev_) override;
 #endif // QT_NO_CONTEXTMENU
 
-private slots:
+ private slots:
     void slotUpdateByTimer();
     void slotActionAbout();
     void slotActionTargetRun();
@@ -73,14 +72,14 @@ private slots:
     void slotBreakpointsChanged();
     void slotSimulationTime(double t);
 
-private:
+ private:
     void createActions();
     void createMenus();
     void createStatusBar();
     void createMdiWindow();
     void addWidgets();
 
-private:
+ private:
     QAction *actionAbout_;
     QAction *actionQuit_;
     QAction *actionRun_;

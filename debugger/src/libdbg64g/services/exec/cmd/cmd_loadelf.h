@@ -19,14 +19,13 @@
 
 #include "api_core.h"
 #include "coreservices/itap.h"
-#include "coreservices/isocinfo.h"
 #include "coreservices/icommand.h"
 
 namespace debugger {
 
 class CmdLoadElf : public ICommand  {
  public:
-    CmdLoadElf(ITap *tap, ISocInfo *info);
+    explicit CmdLoadElf(ITap *tap);
 
     /** ICommand */
     virtual int isValid(AttributeType *args);

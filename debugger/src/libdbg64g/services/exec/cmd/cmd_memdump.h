@@ -24,7 +24,7 @@ namespace debugger {
 
 class CmdMemDump : public ICommand  {
  public:
-    CmdMemDump(ITap *tap, ISocInfo *info);
+    explicit CmdMemDump(ITap *tap);
 
     /** ICommand */
     virtual int isValid(AttributeType *args);

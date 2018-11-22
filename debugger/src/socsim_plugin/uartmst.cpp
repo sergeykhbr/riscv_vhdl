@@ -23,7 +23,7 @@
 
 #include "api_core.h"
 #include "uartmst.h"
-#include "coreservices/isocinfo.h"
+#include "debug/periphmap.h"
 
 namespace debugger {
 

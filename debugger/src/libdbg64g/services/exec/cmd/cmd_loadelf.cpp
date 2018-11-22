@@ -17,11 +17,11 @@
 #include "iservice.h"
 #include "cmd_loadelf.h"
 #include "coreservices/ielfreader.h"
+#include "debug/dsumap.h"
 
 namespace debugger {
 
-CmdLoadElf::CmdLoadElf(ITap *tap, ISocInfo *info) 
-    : ICommand ("loadelf", tap, info) {
+CmdLoadElf::CmdLoadElf(ITap *tap) : ICommand ("loadelf", tap) {
 
     briefDescr_.make_string("Load ELF-file");
     detailedDescr_.make_string(
@@ -75,7 +75,7 @@ void CmdLoadElf::exec(AttributeType *args, AttributeType *res) {
         return;
     }
 
-    DsuMapType *dsu = info_->getpDsu();
+    DsuMapType *dsu = DSUBASE();
     uint64_t soft_reset = 1;
     uint64_t addr = reinterpret_cast<uint64_t>(&dsu->ulocal.v.soft_reset);
     tap_->write(addr, 8, reinterpret_cast<uint8_t *>(&soft_reset));

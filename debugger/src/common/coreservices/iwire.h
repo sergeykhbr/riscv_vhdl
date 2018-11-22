@@ -67,7 +67,7 @@ class GenericWireAttribute : public AttributeType,
 
 class WireCmdType : public ICommand {
  public:
-    WireCmdType(IService *parent, const char *name) : ICommand(name, 0, 0) {
+    WireCmdType(IService *parent, const char *name) : ICommand(name, 0) {
         parent_ = parent;
         iwire_ = static_cast<IWire *>(parent->getInterface(IFACE_WIRE));
         briefDescr_.make_string("Generic Wire instance management command.");

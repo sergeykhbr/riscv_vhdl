@@ -27,8 +27,7 @@ namespace debugger {
 
 class CmdDemo : public ICommand  {
  public:
-    CmdDemo(ITap *tap, ISocInfo *info) 
-        : ICommand ("democmd", tap, info) {
+    CmdDemo(ITap *tap) : ICommand ("democmd", tap) {
 
         briefDescr_.make_string("Example of custom command implementation");
         detailedDescr_.make_string(
@@ -70,13 +69,9 @@ class SimplePlugin : public IService,
     virtual void postinitService() {
         RISCV_printf(this, LOG_INFO, "Plugin post-init example: attr1_='%s'",
                                         attr1_.to_string());
-        AttributeType taplist, soclist, execlist;
+        AttributeType taplist, execlist;
         RISCV_get_services_with_iface(IFACE_TAP, &taplist);
         if (taplist.size() == 0) {
-            return;
-        }
-        RISCV_get_services_with_iface(IFACE_SOC_INFO, &soclist);
-        if (soclist.size() == 0) {
             return;
         }
         RISCV_get_services_with_iface(IFACE_CMD_EXECUTOR, &execlist);
@@ -87,14 +82,10 @@ class SimplePlugin : public IService,
         iserv = static_cast<IService *>(taplist[0u].to_iface());
         ITap * itap = static_cast<ITap *>(iserv->getInterface(IFACE_TAP));
 
-        iserv = static_cast<IService *>(soclist[0u].to_iface());
-        ISocInfo *info =
-            static_cast<ISocInfo *>(iserv->getInterface(IFACE_SOC_INFO));
-
         iserv = static_cast<IService *>(execlist[0u].to_iface());
         exec_ = static_cast<ICmdExecutor *>(
             iserv->getInterface(IFACE_CMD_EXECUTOR));
-        pcmd_ = new CmdDemo(itap, info);
+        pcmd_ = new CmdDemo(itap);
         exec_->registerCommand(pcmd_);
     }
     virtual void predeleteService() {

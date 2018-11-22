@@ -19,6 +19,8 @@
 
 #include <inttypes.h>
 #include <iface.h>
+#include <api_types.h>
+#include "debug/dsumap.h"
 
 namespace debugger {
 
@@ -60,6 +62,19 @@ enum ERegNames {
     Reg_Total
 };
 
+static const ECpuRegMapping HC08_DEBUG_REG_MAP[] = {
+    {"a",     1, DSU_OFSSET + DSUREG(ureg.v.iregs[0])},
+    {"hx",    2, DSU_OFSSET + DSUREG(ureg.v.iregs[1])},
+    {"sp",    2, DSU_OFSSET + DSUREG(ureg.v.iregs[2])},
+    {"ccr",   1, DSU_OFSSET + DSUREG(ureg.v.iregs[3])},
+    {"clkhz", 8, DSU_OFSSET + DSUREG(ureg.v.iregs[5])},
+    {"pc",    2, DSU_OFSSET + DSUREG(ureg.v.pc)},
+    {"npc",   2, DSU_OFSSET + DSUREG(ureg.v.npc)},
+    {"steps", 8, DSU_OFSSET + DSUREG(udbg.v.clock_cnt)},
+    {"",      0, 0}
+};
+
+
 /** Signal types */
 enum EResetType {
     RESET_Unused0,
@@ -88,6 +103,14 @@ class ICpuHC08 : public IFace {
     /** Reset sequence has ben writen */
     virtual void resetCOP() = 0;
     virtual void vectorUpdated() = 0;
+
+    /** Push/Pull tracking counter. If dbgStackPull == -2 suppose it was ret */
+    virtual int dbgStackPush() = 0;
+    virtual int dbgStackPull() = 0;
+
+    /** Push/Pop data to/form internal stack inaccessible for firmware */
+    virtual void internalStackPush(uint8_t val) = 0;
+    virtual uint8_t internalStackPop() = 0;
 };
 
 }  // namespace debugger

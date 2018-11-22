@@ -36,9 +36,6 @@
     <Filter Include="Source Files\services\comport">
       <UniqueIdentifier>{0d35729b-606a-4314-9be9-a5bc124e343f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\services\info">
-      <UniqueIdentifier>{58de4624-0c9f-4497-ac18-89f56fe01167}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\services\exec">
       <UniqueIdentifier>{8023e6e2-02b2-49d5-a18d-aacbe717eb86}</UniqueIdentifier>
     </Filter>
@@ -80,9 +77,6 @@
     <ClCompile Include="..\..\src\libdbg64g\services\comport\comport.cpp">
       <Filter>Source Files\services\comport</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\libdbg64g\services\info\soc_info.cpp">
-      <Filter>Source Files\services\info</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\libdbg64g\services\console\autocompleter.cpp">
       <Filter>Source Files\services\console</Filter>
     </ClCompile>
@@ -92,16 +86,10 @@
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_loadelf.cpp">
       <Filter>Source Files\services\exec\cmd</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_regs.cpp">
-      <Filter>Source Files\services\exec\cmd</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_log.cpp">
       <Filter>Source Files\services\exec\cmd</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_isrunning.cpp">
-      <Filter>Source Files\services\exec\cmd</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_reg.cpp">
       <Filter>Source Files\services\exec\cmd</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_read.cpp">
@@ -253,12 +241,6 @@
     <ClInclude Include="..\..\src\common\coreservices\icmdexec.h">
       <Filter>Source Files\common\coreservices</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\libdbg64g\services\info\soc_info.h">
-      <Filter>Source Files\services\info</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\common\coreservices\isocinfo.h">
-      <Filter>Source Files\common\coreservices</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\libdbg64g\services\console\autocompleter.h">
       <Filter>Source Files\services\console</Filter>
     </ClInclude>
@@ -271,16 +253,10 @@
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_loadelf.h">
       <Filter>Source Files\services\exec\cmd</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_regs.h">
-      <Filter>Source Files\services\exec\cmd</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_log.h">
       <Filter>Source Files\services\exec\cmd</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_isrunning.h">
-      <Filter>Source Files\services\exec\cmd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_reg.h">
       <Filter>Source Files\services\exec\cmd</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_read.h">
@@ -367,9 +343,6 @@
     <ClInclude Include="..\..\src\common\coreservices\idisplay.h">
       <Filter>Source Files\common\coreservices</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\common\coreservices\iencoder.h">
-      <Filter>Source Files\common\coreservices</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\common\coreservices\ii2c.h">
       <Filter>Source Files\common\coreservices</Filter>
     </ClInclude>
@@ -377,9 +350,6 @@
       <Filter>Source Files\common\coreservices</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\common\coreservices\ikeyboard.h">
-      <Filter>Source Files\common\coreservices</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\common\coreservices\immu.h">
       <Filter>Source Files\common\coreservices</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\common\coreservices\imotor.h">

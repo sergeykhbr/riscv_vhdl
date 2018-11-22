@@ -18,7 +18,7 @@
 
 namespace debugger {
 
-CmdBrArm::CmdBrArm(ITap *tap, ISocInfo *info) : CmdBrGeneric(tap, info) {
+CmdBrArm::CmdBrArm(ITap *tap) : CmdBrGeneric(tap) {
 }
 
 void CmdBrArm::getSwBreakpointInstr(Reg64Type *instr) {

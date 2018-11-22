@@ -26,7 +26,6 @@ CpuRiscV_RTL::CpuRiscV_RTL(const char *name)
     registerInterface(static_cast<IHap *>(this));
     registerAttribute("Bus", &bus_);
     registerAttribute("CmdExecutor", &cmdexec_);
-    registerAttribute("SocInfo", &socInfo_);
     registerAttribute("Tap", &tap_);
     registerAttribute("FreqHz", &freqHz_);
     registerAttribute("InVcdFile", &InVcdFile_);
@@ -67,14 +66,6 @@ void CpuRiscV_RTL::postinitService() {
         return;
     }
 
-    iinfo_ = static_cast<ISocInfo *>(
-       RISCV_get_service_iface(socInfo_.to_string(), IFACE_SOC_INFO));
-    if (!iinfo_) {
-        RISCV_error("ISocInfo interface '%s' not found", 
-                    socInfo_.to_string());
-        return;
-    }
-
     itap_ = static_cast<ITap *>(
        RISCV_get_service_iface(tap_.to_string(), IFACE_TAP));
     if (!itap_) {
@@ -103,8 +94,17 @@ void CpuRiscV_RTL::postinitService() {
     top_->generateRef(GenerateRef_.to_bool());
     top_->generateVCD(i_vcd_, o_vcd_);
 
-    pcmd_br_ = new CmdBrRiscv(itap_, iinfo_);
+    pcmd_br_ = new CmdBrRiscv(itap_);
     icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_br_));
+
+    pcmd_csr_ = new CmdCsr(itap_);
+    icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_csr_));
+
+    pcmd_reg_ = new CmdRegRiscv(itap_);
+    icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_reg_));
+
+    pcmd_regs_ = new CmdRegsRiscv(itap_);
+    icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_regs_));
 
     if (!run()) {
         RISCV_error("Can't create thread.", NULL);
@@ -114,7 +114,13 @@ void CpuRiscV_RTL::postinitService() {
 
 void CpuRiscV_RTL::predeleteService() {
     icmdexec_->unregisterCommand(static_cast<ICommand *>(pcmd_br_));
+    icmdexec_->unregisterCommand(static_cast<ICommand *>(pcmd_csr_));
+    icmdexec_->unregisterCommand(static_cast<ICommand *>(pcmd_reg_));
+    icmdexec_->unregisterCommand(static_cast<ICommand *>(pcmd_regs_));
     delete pcmd_br_;
+    delete pcmd_csr_;
+    delete pcmd_reg_;
+    delete pcmd_regs_;
 }
 
 void CpuRiscV_RTL::createSystemC() {

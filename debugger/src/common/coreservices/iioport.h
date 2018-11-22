@@ -33,6 +33,17 @@ class IIOPortListener : public IFace {
     virtual void latch() = 0;
 };
 
+static const char *IFACE_IOPORT_LISTENER32 = "IIOPortListener32";
+
+class IIOPortListener32 : public IFace {
+public:
+    IIOPortListener32() : IFace(IFACE_IOPORT_LISTENER32) {}
+
+    virtual void readData(uint32_t *val, uint32_t mask) = 0;
+    virtual void writeData(uint32_t val, uint32_t mask) = 0;
+    virtual void latch() = 0;
+};
+
 }  // namespace debugger
 
 #endif  // __DEBUGGER_COMMON_CORESERVICES_IIOPORT_H__

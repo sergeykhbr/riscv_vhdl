@@ -183,8 +183,6 @@
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_log.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_memdump.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_read.cpp" />
-    <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_reg.cpp" />
-    <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_regs.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_halt.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_reset.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_run.cpp" />
@@ -192,7 +190,6 @@
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_status.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_symb.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_write.cpp" />
-    <ClCompile Include="..\..\src\libdbg64g\services\info\soc_info.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\mem\memsim.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\remote\tcpclient.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\remote\tcpcmd.cpp" />
@@ -217,20 +214,17 @@
     <ClInclude Include="..\..\src\common\coreservices\idisplay.h" />
     <ClInclude Include="..\..\src\common\coreservices\idsugen.h" />
     <ClInclude Include="..\..\src\common\coreservices\ielfreader.h" />
-    <ClInclude Include="..\..\src\common\coreservices\iencoder.h" />
     <ClInclude Include="..\..\src\common\coreservices\ii2c.h" />
     <ClInclude Include="..\..\src\common\coreservices\iioport.h" />
     <ClInclude Include="..\..\src\common\coreservices\ikeyboard.h" />
     <ClInclude Include="..\..\src\common\coreservices\ilink.h" />
     <ClInclude Include="..\..\src\common\coreservices\imemop.h" />
-    <ClInclude Include="..\..\src\common\coreservices\immu.h" />
     <ClInclude Include="..\..\src\common\coreservices\imotor.h" />
     <ClInclude Include="..\..\src\common\coreservices\ipll.h" />
     <ClInclude Include="..\..\src\common\coreservices\irawlistener.h" />
     <ClInclude Include="..\..\src\common\coreservices\ireset.h" />
     <ClInclude Include="..\..\src\common\coreservices\isensor.h" />
     <ClInclude Include="..\..\src\common\coreservices\iserial.h" />
-    <ClInclude Include="..\..\src\common\coreservices\isocinfo.h" />
     <ClInclude Include="..\..\src\common\coreservices\isound.h" />
     <ClInclude Include="..\..\src\common\coreservices\isrccode.h" />
     <ClInclude Include="..\..\src\common\coreservices\itap.h" />
@@ -264,8 +258,6 @@
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_log.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_memdump.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_read.h" />
-    <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_reg.h" />
-    <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_regs.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_halt.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_reset.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_run.h" />
@@ -273,7 +265,6 @@
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_status.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_symb.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_write.h" />
-    <ClInclude Include="..\..\src\libdbg64g\services\info\soc_info.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\mem\memsim.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\remote\tcpclient.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\remote\tcpcmd.h" />

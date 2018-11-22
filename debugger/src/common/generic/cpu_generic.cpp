@@ -16,6 +16,7 @@
 
 #include <api_core.h>
 #include "cpu_generic.h"
+#include "debug/dsumap.h"
 
 namespace debugger {
 
@@ -46,7 +47,6 @@ CpuGeneric::CpuGeneric(const char *name)
     registerAttribute("SysBusWidthBytes", &sysBusWidthBytes_);
     registerAttribute("SourceCode", &sourceCode_);
     registerAttribute("CmdExecutor", &cmdexec_);
-    registerAttribute("SocInfo", &socInfo_);
     registerAttribute("Tap", &tap_);
 
     registerAttribute("StackTraceSize", &stackTraceSize_);
@@ -121,14 +121,6 @@ void CpuGeneric::postinitService() {
     if (!icmdexec_) {
         RISCV_error("ICmdExecutor interface '%s' not found", 
                     cmdexec_.to_string());
-        return;
-    }
-
-    iinfo_ = static_cast<ISocInfo *>(
-       RISCV_get_service_iface(socInfo_.to_string(), IFACE_SOC_INFO));
-    if (!iinfo_) {
-        RISCV_error("ISocInfo interface '%s' not found", 
-                    socInfo_.to_string());
         return;
     }
 

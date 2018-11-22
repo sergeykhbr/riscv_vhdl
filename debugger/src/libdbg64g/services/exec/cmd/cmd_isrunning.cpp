@@ -15,11 +15,11 @@
  */
 
 #include "cmd_isrunning.h"
+#include "debug/dsumap.h"
 
 namespace debugger {
 
-CmdIsRunning::CmdIsRunning(ITap *tap, ISocInfo *info) 
-    : ICommand ("isrunning", tap, info) {
+CmdIsRunning::CmdIsRunning(ITap *tap) : ICommand ("isrunning", tap) {
 
     briefDescr_.make_string("Check target's status");
     detailedDescr_.make_string(
@@ -44,7 +44,7 @@ void CmdIsRunning::exec(AttributeType *args, AttributeType *res) {
 
     Reg64Type t1;
     GenericCpuControlType ctrl;
-    DsuMapType *pdsu = info_->getpDsu();
+    DsuMapType *pdsu = DSUBASE();
     uint64_t addr = reinterpret_cast<uint64_t>(&pdsu->udbg.v.control);
     tap_->read(addr, 8, t1.buf);
     ctrl.val = t1.val;

@@ -22,6 +22,8 @@
 #include "generic/cpu_generic.h"
 #include "coreservices/icpuarm.h"
 #include "cmds/cmd_br_arm7.h"
+#include "cmds/cmd_reg_arm7.h"
+#include "cmds/cmd_regs_arm7.h"
 
 namespace debugger {
 
@@ -88,6 +90,8 @@ class CpuCortex_Functional : public CpuGeneric,
     ProgramStatusRegsiterType *p_psr_;
 
     CmdBrArm *pcmd_br_;
+    CmdRegArm *pcmd_reg_;
+    CmdRegsArm *pcmd_regs_;
 };
 
 DECLARE_CLASS(CpuCortex_Functional)

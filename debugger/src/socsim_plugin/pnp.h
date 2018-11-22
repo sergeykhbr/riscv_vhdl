@@ -11,7 +11,8 @@
 #include "iclass.h"
 #include "iservice.h"
 #include "coreservices/imemop.h"
-#include "coreservices/isocinfo.h"
+#include "debug/dsumap.h"
+#include "debug/periphmap.h"
 
 namespace debugger {
 

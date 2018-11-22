@@ -19,14 +19,13 @@
 
 #include "api_core.h"
 #include "coreservices/itap.h"
-#include "coreservices/isocinfo.h"
 #include "coreservices/icommand.h"
 
 namespace debugger {
 
 class CmdExit : public ICommand  {
-public:
-    CmdExit(ITap *tap, ISocInfo *info);
+ public:
+    explicit CmdExit(ITap *tap);
 
     /** ICommand */
     virtual int isValid(AttributeType *args);

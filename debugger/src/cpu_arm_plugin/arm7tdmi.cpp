@@ -357,12 +357,16 @@ class HWordSignedDataTransferInstruction : public ArmInstruction {
             if (u.bits.h) {
                 R[u.bits.rd] = trans_.rpayload.b16[0];
                 if (u.bits.s) {
-                    R[u.bits.rd] |= EXT_SIGN_16;
+                    if ((R[u.bits.rd] & 0x8000) !=0 ) {
+                        R[u.bits.rd] |= EXT_SIGN_16;
+                    }
                 }
             } else {
                 R[u.bits.rd] = trans_.rpayload.b8[0];
                 if (u.bits.s) {
-                    R[u.bits.rd] |= EXT_SIGN_8;
+                    if ((R[u.bits.rd] & 0x80) != 0) {
+                        R[u.bits.rd] |= EXT_SIGN_8;
+                    }
                 }
             }
             if (u.bits.rd == Reg_pc) {

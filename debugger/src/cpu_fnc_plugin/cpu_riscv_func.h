@@ -21,9 +21,11 @@
 #include "instructions.h"
 #include "generic/cpu_generic.h"
 #include "generic/cmd_br_generic.h"
+#include "cmds/cmd_br_riscv.h"
+#include "cmds/cmd_reg_riscv.h"
+#include "cmds/cmd_regs_riscv.h"
 #include "cmds/cmd_csr.h"
 #include "coreservices/icpuriscv.h"
-#include "coreservices/isocinfo.h"
 
 namespace debugger {
 
@@ -89,6 +91,8 @@ class CpuRiver_Functional : public CpuGeneric,
     GenericReg64Bank portCSR_;
 
     CmdBrRiscv *pcmd_br_;
+    CmdRegRiscv *pcmd_reg_;
+    CmdRegsRiscv *pcmd_regs_;
     CmdCsr *pcmd_csr_;
 };
 

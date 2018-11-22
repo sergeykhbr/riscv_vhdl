@@ -14,15 +14,11 @@
  *  limitations under the License.
  */
 
-#include "cmd_regs.h"
+#include "cmd_regs_generic.h"
 
 namespace debugger {
 
-// Any value greater or equal than 32 + 2 (general iregs + pc + npc)
-#define REGS_MAX 64
-
-CmdRegs::CmdRegs(ITap *tap, ISocInfo *info) 
-    : ICommand ("regs", tap, info) {
+CmdRegsGeneric::CmdRegsGeneric(ITap *tap) : ICommand ("regs", tap) {
 
     briefDescr_.make_string("List of Core's registers values");
     detailedDescr_.make_string(
@@ -38,7 +34,7 @@ CmdRegs::CmdRegs(ITap *tap, ISocInfo *info)
         "    regs a0 s0 sp\n");
 }
 
-int CmdRegs::isValid(AttributeType *args) {
+int CmdRegsGeneric::isValid(AttributeType *args) {
     if (!cmdName_.is_equal((*args)[0u].to_string())) {
         return CMD_INVALID;
     } 
@@ -48,27 +44,36 @@ int CmdRegs::isValid(AttributeType *args) {
     return CMD_WRONG_ARGS;
 }
 
-void CmdRegs::exec(AttributeType *args, AttributeType *res) {
+void CmdRegsGeneric::exec(AttributeType *args, AttributeType *res) {
     Reg64Type u;
     if (args->size() != 1) {
         res->make_list(args->size() - 1);
         for (unsigned i = 1; i < args->size(); i++) {
             const char *name = (*args)[i].to_string();
-            tap_->read(info_->reg2addr(name), 8, u.buf);
+            tap_->read(reg2addr(name), 8, u.buf);
             (*res)[i - 1].make_uint64(u.val);
         }
         return;
     }
 
-    AttributeType soclst;
-    info_->getRegsList(&soclst);
-
+    const ECpuRegMapping *preg = getpMappedReg();
     res->make_dict();
-    for (unsigned i = 0; i < soclst.size(); i++) {
-        const char *name = soclst[i].to_string();
-        tap_->read(info_->reg2addr(name), 8, u.buf);
-        (*res)[name].make_uint64(u.val);
+    while (preg->name[0]) {
+        tap_->read(preg->offset, 8, u.buf);
+        (*res)[preg->name].make_uint64(u.val);
+        preg++;
     }
+}
+
+uint64_t CmdRegsGeneric::reg2addr(const char *name) {
+    const ECpuRegMapping  *preg = getpMappedReg();
+    while (preg->name[0]) {
+        if (strcmp(name, preg->name) == 0) {
+            return preg->offset;
+        }
+        preg++;
+    }
+    return REG_ADDR_ERROR;
 }
 
 }  // namespace debugger

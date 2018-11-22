@@ -19,7 +19,6 @@
 #include "iservice.h"
 #include <riscv-isa.h>
 #include "coreservices/iserial.h"
-#include "coreservices/isocinfo.h"
 
 //#define SIMULATE_WAIT_STATES
 
@@ -132,7 +131,7 @@ void RtlWrapper::clk_negedge_proc() {
     }
     if (w_req_fire) {
         Axi4TransactionType trans;
-        trans.source_idx = CFG_NASTI_MASTER_CACHED;
+        trans.source_idx = 0;//CFG_NASTI_MASTER_CACHED;
         trans.addr = i_req_mem_addr.read();
         if (i_req_mem_write.read()) {
             uint8_t strob = i_req_mem_strob.read();

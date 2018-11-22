@@ -60,6 +60,12 @@
     <ClCompile Include="..\..\src\cpu_arm_plugin\cmds\cmd_br_arm7.cpp">
       <Filter>src\cmds</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\common\generic\cmd_reg_generic.cpp">
+      <Filter>common\generic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\common\generic\cmd_regs_generic.cpp">
+      <Filter>common\generic</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\api_types.h">
@@ -121,6 +127,18 @@
     </ClInclude>
     <ClInclude Include="..\..\src\cpu_arm_plugin\cmds\cmd_br_arm7.h">
       <Filter>src\cmds</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_arm_plugin\cmds\cmd_reg_arm7.h">
+      <Filter>src\cmds</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_arm_plugin\cmds\cmd_regs_arm7.h">
+      <Filter>src\cmds</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\generic\cmd_reg_generic.h">
+      <Filter>common\generic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\generic\cmd_regs_generic.h">
+      <Filter>common\generic</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

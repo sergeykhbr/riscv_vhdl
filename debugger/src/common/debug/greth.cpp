@@ -16,7 +16,6 @@
 
 #include <api_core.h>
 #include "greth.h"
-#include "coreservices/isocinfo.h"
 
 namespace debugger {
 

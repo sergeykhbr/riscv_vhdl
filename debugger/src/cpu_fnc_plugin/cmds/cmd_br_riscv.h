@@ -14,24 +14,21 @@
  *  limitations under the License.
  */
 
-#ifndef __DEBUGGER_COMMON_CORESERVICES_IMMU_H__
-#define __DEBUGGER_COMMON_CORESERVICES_IMMU_H__
+#ifndef __DEBUGGER_SRC_CPU_FNC_PLUGIN_CMDS_CMD_BR_RISCV_H__
+#define __DEBUGGER_SRC_CPU_FNC_PLUGIN_CMDS_CMD_BR_RISCV_H__
 
-#include <inttypes.h>
-#include <iface.h>
+#include "generic/cmd_br_generic.h"
 
 namespace debugger {
 
-static const char *const IFACE_MMU = "IMMU";
-
-class IMMU : public IFace {
+class CmdBrRiscv : public CmdBrGeneric {
  public:
-    IMMU() : IFace(IFACE_MMU) {}
+    explicit CmdBrRiscv(ITap *tap);
 
-    virtual uint32_t get_ppage() = 0;
-    virtual void set_ppage(uint8_t v) = 0;
+ protected:
+    virtual void getSwBreakpointInstr(Reg64Type *instr);
 };
 
 }  // namespace debugger
 
-#endif  // __DEBUGGER_COMMON_CORESERVICES_IMMU_H__
+#endif  // __DEBUGGER_SRC_CPU_FNC_PLUGIN_CMDS_CMD_BR_RISCV_H__

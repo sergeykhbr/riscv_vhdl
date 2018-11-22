@@ -14,12 +14,12 @@
  *  limitations under the License.
  */
 
-#include "cmd_reg.h"
+#include "cmd_reg_generic.h"
+#include "debug/dsumap.h"
 
 namespace debugger {
 
-CmdReg::CmdReg(ITap *tap, ISocInfo *info) 
-    : ICommand ("reg", tap, info) {
+CmdRegGeneric::CmdRegGeneric(ITap *tap) : ICommand ("reg", tap) {
 
     briefDescr_.make_string("Read/write register value");
     detailedDescr_.make_string(
@@ -34,7 +34,7 @@ CmdReg::CmdReg(ITap *tap, ISocInfo *info)
         "    reg sp 0x10007fc0\n");
 }
 
-int CmdReg::isValid(AttributeType *args) {
+int CmdRegGeneric::isValid(AttributeType *args) {
     if (!cmdName_.is_equal((*args)[0u].to_string())) {
         return CMD_INVALID;
     }
@@ -44,13 +44,13 @@ int CmdReg::isValid(AttributeType *args) {
     return CMD_WRONG_ARGS;
 }
 
-void CmdReg::exec(AttributeType *args, AttributeType *res) {
+void CmdRegGeneric::exec(AttributeType *args, AttributeType *res) {
     res->attr_free();
     res->make_nil();
 
     uint64_t val;
     const char *reg_name = (*args)[1].to_string();
-    uint64_t addr = info_->reg2addr(reg_name);
+    uint64_t addr = reg2addr(reg_name);
     if (addr == REG_ADDR_ERROR) {
         char tstr[128];
         RISCV_sprintf(tstr, sizeof(tstr), "%s not found", reg_name);
@@ -68,6 +68,17 @@ void CmdReg::exec(AttributeType *args, AttributeType *res) {
         val = (*args)[2].to_uint64();
         tap_->write(addr, 8, reinterpret_cast<uint8_t *>(&val));
     }
+}
+
+uint64_t CmdRegGeneric::reg2addr(const char *name) {
+    const ECpuRegMapping  *preg = getpMappedReg();
+    while (preg->name[0]) {
+        if (strcmp(name, preg->name) == 0) {
+            return preg->offset;
+        }
+        preg++;
+    }
+    return REG_ADDR_ERROR;
 }
 
 }  // namespace debugger

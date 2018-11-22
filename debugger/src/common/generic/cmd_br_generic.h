@@ -20,7 +20,6 @@
 #include "api_core.h"
 #include "iservice.h"
 #include "coreservices/itap.h"
-#include "coreservices/isocinfo.h"
 #include "coreservices/icommand.h"
 #include "coreservices/isrccode.h"
 
@@ -28,7 +27,7 @@ namespace debugger {
 
 class CmdBrGeneric : public ICommand  {
  public:
-    CmdBrGeneric(ITap *tap, ISocInfo *info);
+    explicit CmdBrGeneric(ITap *tap);
 
     /** ICommand */
     virtual int isValid(AttributeType *args);
@@ -42,20 +41,6 @@ class CmdBrGeneric : public ICommand  {
 
  protected:
     ISourceCode *isrc_;
-};
-
-class CmdBrRiscv : public CmdBrGeneric {
- public:
-    CmdBrRiscv(ITap *tap, ISocInfo *info) : CmdBrGeneric(tap, info) {}
-
- protected:
-    virtual void getSwBreakpointInstr(Reg64Type *instr) {
-        if ((instr->val & 0x3) == 0x3) {
-            instr->buf32[0] = 0x00100073;  // EBREAK instruction
-        } else {
-            instr->buf16[0] = 0x9002;      // C.EBREAK instruction
-        }
-    }
 };
 
 }  // namespace debugger

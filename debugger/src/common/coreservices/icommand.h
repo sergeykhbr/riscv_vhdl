@@ -20,7 +20,6 @@
 #include <iface.h>
 #include <attribute.h>
 #include "coreservices/itap.h"
-#include "coreservices/isocinfo.h"
 
 namespace debugger {
 
@@ -32,11 +31,10 @@ static const int CMD_INVALID    = 2;
 
 class ICommand : public IFace {
  public:
-    ICommand(const char *name, ITap *tap, ISocInfo *info)
+    ICommand(const char *name, ITap *tap)
         : IFace(IFACE_COMMAND) {
         cmdName_.make_string(name);
         tap_ = tap;
-        info_ = info;
     }
     virtual ~ICommand() {}
 
@@ -59,7 +57,6 @@ class ICommand : public IFace {
     AttributeType briefDescr_;
     AttributeType detailedDescr_;
     ITap *tap_;
-    ISocInfo *info_;
 };
 
 }  // namespace debugger

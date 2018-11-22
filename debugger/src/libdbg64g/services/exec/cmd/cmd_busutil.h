@@ -23,14 +23,14 @@
 
 #include "api_core.h"
 #include "coreservices/itap.h"
-#include "coreservices/isocinfo.h"
 #include "coreservices/icommand.h"
+#include "debug/dsumap.h"
 
 namespace debugger {
 
 class CmdBusUtil : public ICommand  {
  public:
-    CmdBusUtil(ITap *tap, ISocInfo *info);
+    explicit CmdBusUtil(ITap *tap);
 
     /** ICommand */
     virtual int isValid(AttributeType *args);
@@ -39,7 +39,7 @@ class CmdBusUtil : public ICommand  {
  private:
     uint64_t clock_cnt_z_;
     DsuMapType::local_regs_type::local_region_type::mst_bus_util_type
-        bus_util_z_[32];
+    bus_util_z_[32];
 };
 
 }  // namespace debugger
