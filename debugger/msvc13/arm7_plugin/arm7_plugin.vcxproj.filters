@@ -66,6 +66,9 @@
     <ClCompile Include="..\..\src\common\generic\cmd_regs_generic.cpp">
       <Filter>common\generic</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\cpu_arm_plugin\decoder_arm.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\api_types.h">

@@ -3,6 +3,7 @@
     'SimEnable':true,
     'GUI':true,
     'ScriptFile':'',
+    'LoadFile':'./../../../examples/dhrystone21/makefiles/binarm/dhrystone21.elf',
     'Description':'This configuration instantiates functional RISC-V model'
   },
   'Services':[

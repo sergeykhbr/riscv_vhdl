@@ -20,6 +20,7 @@
 #include "coreservices/ithread.h"
 #include "coreservices/icpugen.h"
 #include "coreservices/icpuriscv.h"
+#include "coreservices/icmdexec.h"
 /** Plugin verification */
 #include "simple_plugin/isimple_plugin.h"
 #include <stdio.h>
@@ -103,6 +104,30 @@ int main(int argc, char* argv[]) {
                           simple, "example0", NULL));
         }
     }
+
+#if 1 // Remove it and make "Open file.." Widget
+    AttributeType res;
+    char tstr[1024];
+    if (Config["GlobalSettings"].has_key("LoadFile")) {
+        const char *default_img =
+            Config["GlobalSettings"]["LoadFile"].to_string();
+        ICmdExecutor *iexec_ = static_cast<ICmdExecutor *>(
+            RISCV_get_service_iface("cmdexec0", IFACE_CMD_EXECUTOR));
+
+        if (strstr(default_img, ".elf")) {
+            RISCV_sprintf(tstr, sizeof(tstr),
+                        "loadelf %s nocode", default_img);
+            iexec_->exec(tstr, &res, false);
+        } else {
+            RISCV_sprintf(tstr, sizeof(tstr), "loadsrec %s.s19", default_img);
+            iexec_->exec(tstr, &res, false);
+
+            RISCV_sprintf(tstr, sizeof(tstr), "loadmap %s.map", default_img);
+            iexec_->exec(tstr, &res, false);
+        }
+    }
+#endif
+
 
     /**
      * Unreset all CPUs

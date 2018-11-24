@@ -95,7 +95,7 @@ void CpuCortex_Functional::handleTrap() {
             sw_breakpoint_ = true;
             interrupt_pending_ &= ~(1ull << Interrupt_SoftwareIdx);
             npc_.setValue(pc_.getValue());
-            halt("UND Breakpoint");
+            halt("SWI Breakpoint");
             return;
         }
     }
@@ -111,14 +111,13 @@ void CpuCortex_Functional::reset(bool active) {
 
 GenericInstruction *CpuCortex_Functional::decodeInstruction(Reg64Type *cache) {
     ArmInstruction *instr = NULL;
-    int hash_idx = hash32(cacheline_[0].buf32[0]);
-    for (unsigned i = 0; i < listInstr_[hash_idx].size(); i++) {
-        instr = static_cast<ArmInstruction *>(
-                        listInstr_[hash_idx][i].to_iface());
-        if (instr->parse(cacheline_[0].buf32)) {
-            break;
-        }
-        instr = NULL;
+    uint32_t ti = cacheline_[0].buf32[0];
+    EIsaArmV7 etype = decoder_arm(ti, errmsg_, sizeof(errmsg_));
+    if (etype < ARMV7_Total) {
+        instr = isaTableArmV7_[etype];
+    } else {
+        RISCV_error("ARM decoder error [%08" RV_PRI64 "x] %08x",
+                    getPC(), ti);
     }
     portRegs_.getp()[Reg_pc].val = getPC();
     return instr;

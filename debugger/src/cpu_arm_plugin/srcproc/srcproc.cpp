@@ -235,8 +235,15 @@ int ArmSourceService::disasm(uint64_t pc,
         return 4;
     } else if ((instr & 0x0FB00000) == 0x03000000) {
         return parseUndefinedInstruction(pc, instr, mnemonic, comment);
+    } else if ((instr & 0x0FD0F0F0) == 0x0710f010) {
+        // sdiv ****0111_0001****_1111****_0001****
+        // udiv ****0111_0011****_1111****_0001****
+        return parseDivide(pc, instr, mnemonic, comment);
     } else if ((instr & 0x0F0000F0) == 0x9
         && (((instr >> 22) & 0x3F) == 0 || ((instr >> 23) & 0x1F) == 1)) {
+        // mla  ****0000_001*****_********_1001****
+        // mls  ****0000_0110****_********_1001****
+        // mul  ****0000_000*****_0000****_1001****
         return parseMultiply(pc, instr, mnemonic, comment);
     } else if (((instr >> 4) & 0x00FFFFFF) == 0x12FFF1) {
         return parseBranchExchange(pc, instr, mnemonic, comment);
@@ -556,6 +563,29 @@ int ArmSourceService::parseMultiply(uint64_t pc, uint32_t instr,
             IREGS_NAMES[u.bits.rdlo],
             IREGS_NAMES[u.bits.rm],
             IREGS_NAMES[u.bits.rs]);
+    }
+    mnemonic->make_string(tstr);
+    return 4;
+}
+
+int ArmSourceService::parseDivide(uint64_t pc, uint32_t instr,
+    AttributeType *mnemonic,
+    AttributeType *comment) {
+    char tstr[64] = "unimpl";
+    instr &= 0x0FFFFFFF;
+    DivType u;
+
+    u.value = instr;
+    if (u.bits.S) {
+        RISCV_sprintf(tstr, sizeof(tstr), "udiv     %s,%s,%s",
+            IREGS_NAMES[u.bits.rd],
+            IREGS_NAMES[u.bits.rn],
+            IREGS_NAMES[u.bits.rm]);
+    } else {
+        RISCV_sprintf(tstr, sizeof(tstr), "sdiv     %s,%s,%s",
+            IREGS_NAMES[u.bits.rd],
+            IREGS_NAMES[u.bits.rn],
+            IREGS_NAMES[u.bits.rm]);
     }
     mnemonic->make_string(tstr);
     return 4;

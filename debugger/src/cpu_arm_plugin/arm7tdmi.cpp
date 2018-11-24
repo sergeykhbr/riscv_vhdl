@@ -396,6 +396,28 @@ class HWordSignedDataTransferInstruction : public ArmInstruction {
     }
 };
 
+/** Divide common */
+class DivideInstruction : public ArmInstruction {
+ public:
+    DivideInstruction(CpuCortex_Functional *icpu, const char *name,
+        const char *bits) : ArmInstruction(icpu, name, bits) {}
+
+    virtual int exec_checked(Reg64Type *payload) {
+        DivType u;
+        u.value = payload->buf32[0];
+        uint64_t res;
+
+        if (u.bits.S) {     //UDIV
+            res = R[u.bits.rn] / R[u.bits.rm];
+        } else {            //SDIV
+            res = (int32_t)R[u.bits.rn] / (int32_t)R[u.bits.rm];
+        }
+
+        R[u.bits.rd] = static_cast<uint32_t>(res);
+        return 4;
+    }
+};
+
 /** Multiply common */
 class MultiplyInstruction : public ArmInstruction {
  public:
@@ -458,15 +480,10 @@ class MultiplyLongInstruction : public ArmInstruction {
 /**
  * @brief AND.
  */
-static const char *AND_OPCODES[2] = {
-    "????0000000?????????????????????",
-    "????0010000?????????????????????"
-};
-
 class AND : public ArmDataProcessingInstruction {
  public:
-    AND(CpuCortex_Functional *icpu, int opidx) :
-        ArmDataProcessingInstruction(icpu, "AND", AND_OPCODES[opidx]) {}
+    AND(CpuCortex_Functional *icpu) : ArmDataProcessingInstruction(
+        icpu, "AND", "????00?0000?????????????????????") {}
  protected:
     virtual EOperationResult do_operation(uint32_t A, uint32_t M,
                                           uint32_t *pRes) {
@@ -478,15 +495,10 @@ class AND : public ArmDataProcessingInstruction {
 /** 
  * @brief EOR.
  */
-static const char *EOR_OPCODES[2] = {
-    "????0000001?????????????????????",
-    "????0010001?????????????????????"
-};
-
 class EOR : public ArmDataProcessingInstruction {
  public:
-    EOR(CpuCortex_Functional *icpu, int opidx) :
-        ArmDataProcessingInstruction(icpu, "EOR", EOR_OPCODES[opidx]) {}
+    EOR(CpuCortex_Functional *icpu) : ArmDataProcessingInstruction(
+        icpu, "EOR", "????00?0001?????????????????????") {}
  protected:
     virtual EOperationResult do_operation(uint32_t A, uint32_t M,
                                           uint32_t *pRes) {
@@ -498,15 +510,10 @@ class EOR : public ArmDataProcessingInstruction {
 /** 
  * @brief Subtruct.
  */
-static const char *SUB_OPCODES[2] = {
-    "????0000010?????????????????????",
-    "????0010010?????????????????????"
-};
-
 class SUB : public ArmSubInstruction {
  public:
-    SUB(CpuCortex_Functional *icpu, int opidx) :
-        ArmSubInstruction(icpu, "SUB", SUB_OPCODES[opidx]) {}
+    SUB(CpuCortex_Functional *icpu) : ArmSubInstruction(
+        icpu, "SUB", "????00?0010?????????????????????") {}
  protected:
     virtual bool is_inverted() { return false; }
     virtual bool with_carry() { return false; }
@@ -516,15 +523,10 @@ class SUB : public ArmSubInstruction {
 /** 
  * @brief Subtruct right.
  */
-static const char *RSB_OPCODES[2] = {
-    "????0000011?????????????????????",
-    "????0010011?????????????????????"
-};
-
 class RSB : public ArmSubInstruction {
  public:
-    RSB(CpuCortex_Functional *icpu, int opidx) :
-        ArmSubInstruction(icpu, "RSB", RSB_OPCODES[opidx]) {}
+    RSB(CpuCortex_Functional *icpu) : ArmSubInstruction(
+        icpu, "RSB", "????00?0011?????????????????????") {}
  protected:
     virtual bool is_inverted() { return true; }
     virtual bool with_carry() { return false; }
@@ -534,15 +536,10 @@ class RSB : public ArmSubInstruction {
 /** 
  * @brief Addition.
  */
-static const char *ADD_OPCODES[2] = {
-    "????0000100?????????????????????",
-    "????0010100?????????????????????"
-};
-
 class ADD : public ArmAddInstruction {
  public:
-    ADD(CpuCortex_Functional *icpu, int opidx) :
-        ArmAddInstruction(icpu, "ADD", ADD_OPCODES[opidx]) {}
+    ADD(CpuCortex_Functional *icpu) : ArmAddInstruction(
+        icpu, "ADD", "????00?0100?????????????????????") {}
  protected:
     virtual EOperationResult op_result() { return OP_Write; }
     virtual bool with_carry() { return false; }
@@ -551,15 +548,10 @@ class ADD : public ArmAddInstruction {
 /** 
  * @brief Addition with carry bit.
  */
-static const char *ADC_OPCODES[2] = {
-    "????0000101?????????????????????",
-    "????0010101?????????????????????"
-};
-
 class ADC : public ArmAddInstruction {
  public:
-    ADC(CpuCortex_Functional *icpu, int opidx) :
-        ArmAddInstruction(icpu, "ADC", ADC_OPCODES[opidx]) {}
+    ADC(CpuCortex_Functional *icpu) : ArmAddInstruction(
+        icpu, "ADC", "????00?0101?????????????????????") {}
  protected:
     virtual EOperationResult op_result() { return OP_Write; }
     virtual bool with_carry() { return true; }
@@ -568,15 +560,10 @@ class ADC : public ArmAddInstruction {
 /** 
  * @brief Subtruct with carry bit: Op1 - Op2 + C - 1 !!!!!!.
  */
-static const char *SBC_OPCODES[2] = {
-    "????0000110?????????????????????",
-    "????0010110?????????????????????"
-};
-
 class SBC : public ArmSubInstruction {
  public:
-    SBC(CpuCortex_Functional *icpu, int opidx) :
-        ArmSubInstruction(icpu, "SBC", SBC_OPCODES[opidx]) {}
+    SBC(CpuCortex_Functional *icpu) : ArmSubInstruction(
+        icpu, "SBC", "????00?0110?????????????????????") {}
  protected:
     virtual bool is_inverted() { return false; }
     virtual bool with_carry() { return true; }
@@ -586,15 +573,10 @@ class SBC : public ArmSubInstruction {
 /** 
  * @brief Subtruct right with carry bit: Op2 - Op1 + C - 1 !!!!.
  */
-static const char *RSC_OPCODES[2] = {
-    "????0000111?????????????????????",
-    "????0010111?????????????????????"
-};
-
 class RSC : public ArmSubInstruction {
  public:
-    RSC(CpuCortex_Functional *icpu, int opidx) :
-        ArmSubInstruction(icpu, "RSC", RSC_OPCODES[opidx]) {}
+    RSC(CpuCortex_Functional *icpu) : ArmSubInstruction(
+        icpu, "RSC", "????00?0111?????????????????????") {}
  protected:
     virtual bool is_inverted() { return true; }
     virtual bool with_carry() { return true; }
@@ -605,15 +587,10 @@ class RSC : public ArmSubInstruction {
  * @brief Set condition codes on Op1 AND Op2.
  * S-flag must be set otherwise it can be MOVW instruction
  */
- static const char *TST_OPCODES[2] = {
-    "????00010001????????????????????",
-    "????00110001????????????????????"
-};
-
 class TST : public ArmDataProcessingInstruction {
  public:
-    TST(CpuCortex_Functional *icpu, int opidx) :
-        ArmDataProcessingInstruction(icpu, "TST", TST_OPCODES[opidx]) {}
+    TST(CpuCortex_Functional *icpu) : ArmDataProcessingInstruction(
+        icpu, "TST", "????00?10001????????????????????") {}
  protected:
     virtual EOperationResult do_operation(uint32_t A, uint32_t M,
                                           uint32_t *pRes) {
@@ -625,15 +602,10 @@ class TST : public ArmDataProcessingInstruction {
 /**
  * @brief Set condition codes on Op1 EOR Op2.
  */
-static const char *TEQ_OPCODES[2] = {
-    "????0001001?????????????????????",
-    "????0011001?????????????????????"
-};
-
 class TEQ : public ArmDataProcessingInstruction {
  public:
-    TEQ(CpuCortex_Functional *icpu, int opidx) :
-        ArmDataProcessingInstruction(icpu, "TEQ", TEQ_OPCODES[opidx]) {}
+    TEQ(CpuCortex_Functional *icpu) : ArmDataProcessingInstruction(
+        icpu, "TEQ", "????00?1001?????????????????????") {}
  protected:
     virtual EOperationResult do_operation(uint32_t A, uint32_t M,
                                           uint32_t *pRes) {
@@ -645,15 +617,10 @@ class TEQ : public ArmDataProcessingInstruction {
 /**
  * @brief Set condition codes on Op1 - Op2.
  */
-static const char *CMP_OPCODES[2] = {
-    "????0001010?????????????????????",
-    "????0011010?????????????????????"
-};
-
 class CMP : public ArmSubInstruction {
  public:
-    CMP(CpuCortex_Functional *icpu, int opidx) :
-        ArmSubInstruction(icpu, "CMP", CMP_OPCODES[opidx]) {}
+    CMP(CpuCortex_Functional *icpu) : ArmSubInstruction(
+        icpu, "CMP", "????00?1010?????????????????????") {}
  protected:
     virtual bool is_inverted() { return false; }
     virtual bool with_carry() { return false; }
@@ -663,15 +630,10 @@ class CMP : public ArmSubInstruction {
 /**
  * @brief Set condition codes on Op1 + Op2.
  */
-static const char *CMN_OPCODES[2] = {
-    "????0001011?????????????????????",
-    "????0011011?????????????????????"
-};
-
 class CMN : public ArmAddInstruction {
  public:
-    CMN(CpuCortex_Functional *icpu, int opidx) :
-        ArmAddInstruction(icpu, "CMN", CMN_OPCODES[opidx]) {}
+    CMN(CpuCortex_Functional *icpu) : ArmAddInstruction(
+        icpu, "CMN", "????00?1011?????????????????????") {}
  protected:
     virtual bool with_carry() { return false; }
     virtual EOperationResult op_result() { return OP_Drop; }
@@ -680,15 +642,10 @@ class CMN : public ArmAddInstruction {
 /**
  * @brief OR
  */
-static const char *ORR_OPCODES[2] = {
-    "????0001100?????????????????????",
-    "????0011100?????????????????????"
-};
-
 class ORR : public ArmDataProcessingInstruction {
  public:
-    ORR(CpuCortex_Functional *icpu, int opidx) :
-        ArmDataProcessingInstruction(icpu, "ORR", ORR_OPCODES[opidx]) {}
+    ORR(CpuCortex_Functional *icpu) : ArmDataProcessingInstruction(
+        icpu, "ORR", "????00?1100?????????????????????") {}
  protected:
     virtual EOperationResult do_operation(uint32_t A, uint32_t M,
                                           uint32_t *pRes) {
@@ -700,15 +657,10 @@ class ORR : public ArmDataProcessingInstruction {
 /**
  * @brief Move data: Rd = Op2
  */
-static const char *MOV_OPCODES[2] = {
-    "????0001101?????????????????????",
-    "????0011101?????????????????????"
-};
-
 class MOV : public ArmDataProcessingInstruction {
  public:
-    MOV(CpuCortex_Functional *icpu, int opidx) :
-        ArmDataProcessingInstruction(icpu, "MOV", MOV_OPCODES[opidx]) {}
+    MOV(CpuCortex_Functional *icpu) : ArmDataProcessingInstruction(
+        icpu, "MOV", "????00?1101?????????????????????") {}
  protected:
     virtual EOperationResult do_operation(uint32_t A, uint32_t M,
                                           uint32_t *pRes) {
@@ -716,6 +668,7 @@ class MOV : public ArmDataProcessingInstruction {
         return OP_Write;
     }
 };
+
 
 /** Move Top writes an immediate value to the top halfword of the destination
     register. It does not affect the contents of the bottom halfword. */
@@ -749,6 +702,19 @@ class MOVW : public ArmInstruction {
         R[u.mov_bits.rd] |= imm16;
         return 4;
     }
+};
+
+/** Rd:=Rn/Rm. */
+class UDIV : public DivideInstruction {
+public:
+    UDIV(CpuCortex_Functional *icpu) : DivideInstruction(icpu,
+        "UDIV", "????01110011????1111????0001????") {}
+};
+
+class SDIV : public DivideInstruction {
+public:
+    SDIV(CpuCortex_Functional *icpu) : DivideInstruction(icpu,
+        "SDIV", "????01110001????1111????0001????") {}
 };
 
 /** Rd:=Rm*Rs. */
@@ -796,15 +762,10 @@ class SMLAL : public MultiplyLongInstruction {
 /**
  * @brief Bit clear: AND NOT
  */
-static const char *BIC_OPCODES[2] = {
-    "????0001110?????????????????????",
-    "????0011110?????????????????????"
-};
-
 class BIC : public ArmDataProcessingInstruction {
  public:
-    BIC(CpuCortex_Functional *icpu, int opidx) :
-        ArmDataProcessingInstruction(icpu, "BIC", BIC_OPCODES[opidx]) {}
+    BIC(CpuCortex_Functional *icpu) : ArmDataProcessingInstruction(
+        icpu, "BIC", "????00?1110?????????????????????") {}
  protected:
     virtual EOperationResult do_operation(uint32_t A, uint32_t M,
                                           uint32_t *pRes) {
@@ -816,15 +777,10 @@ class BIC : public ArmDataProcessingInstruction {
 /**
  * @brief Move inverted data: Rd = NOT Op2
  */
-static const char *MVN_OPCODES[2] = {
-    "????0001111?????????????????????",
-    "????0011111?????????????????????"
-};
-
 class MVN : public ArmDataProcessingInstruction {
  public:
-    MVN(CpuCortex_Functional *icpu, int opidx) :
-        ArmDataProcessingInstruction(icpu, "MVN", MVN_OPCODES[opidx]) {}
+    MVN(CpuCortex_Functional *icpu) : ArmDataProcessingInstruction(
+        icpu, "MVN", "????00?1111?????????????????????") {}
  protected:
     virtual EOperationResult do_operation(uint32_t A, uint32_t M,
                                           uint32_t *pRes) {
@@ -835,7 +791,7 @@ class MVN : public ArmDataProcessingInstruction {
 
 /** Branch */
 class B : public ArmInstruction {
-public:
+ public:
     B(CpuCortex_Functional *icpu) :
         ArmInstruction(icpu, "B", "????1010????????????????????????") {}
 
@@ -856,7 +812,7 @@ public:
 
 /** Branch with Link */
 class BL : public ArmInstruction {
-public:
+ public:
     BL(CpuCortex_Functional *icpu) :
         ArmInstruction(icpu, "BL", "????1011????????????????????????") {}
 
@@ -879,7 +835,7 @@ public:
 
 /** Branch with Link and Exchange*/
 class BLX : public ArmInstruction {
-public:
+ public:
     BLX(CpuCortex_Functional *icpu) :
         ArmInstruction(icpu, "BLX", "????000100101111111111110011????") {}
 
@@ -897,7 +853,7 @@ public:
 
 /** Branch and Exchange */
 class BX : public ArmInstruction {
-public:
+ public:
     BX(CpuCortex_Functional *icpu) :
         ArmInstruction(icpu, "BX", "????000100101111111111110001????") {}
 
@@ -920,152 +876,87 @@ public:
 };
 
 /** Load word pre-adding immediate offset to base register */
-static const char *LDR_OPCODES[4] = {
-    "????0100???1????????????????????", // immedaiate, post incr
-    "????0101???1????????????????????", // immedaiate, pre incr
-    "????0110???1????????????????????", // shift reg, post incr
-    "????0111???1????????????????????", // shift reg, pre incr
+class LDR : public SingleDataTransferInstruction {
+ public:
+    LDR(CpuCortex_Functional *icpu) : SingleDataTransferInstruction(
+        icpu, "LDR", "????01?????1????????????????????") {}
 };
 
-class LDR : public SingleDataTransferInstruction {
-public:
-    LDR(CpuCortex_Functional *icpu, int opidx) :
-        SingleDataTransferInstruction(icpu, "LDR", LDR_OPCODES[opidx]) {}
+class LDRB : public SingleDataTransferInstruction {
+ public:
+    LDRB(CpuCortex_Functional *icpu) :
+        SingleDataTransferInstruction(icpu, "LDRB",
+            "????01???1?1????????????????????") {}
 };
 
 /** Load Signed Byte */
-static const char *LDRSB_OPCODES[4] = {
-    "????0000???1????????????1101????", // post incr
-    "????0001???1????????????1101????", // pre incr
-};
-
 class LDRSB : public HWordSignedDataTransferInstruction {
-public:
-    LDRSB(CpuCortex_Functional *icpu, int opidx) :
-        HWordSignedDataTransferInstruction(icpu, "LDRSB", LDRSB_OPCODES[opidx])
-        {}
+ public:
+    LDRSB(CpuCortex_Functional *icpu) : HWordSignedDataTransferInstruction(
+        icpu, "LDRSB", "????000????1????????????1101????") {}
 };
 
 /** Load Unsigned Half-Word */
-static const char *LDRH_OPCODES[4] = {
-    "????0000???1????????????1011????", // post incr
-    "????0001???1????????????1011????", // pre incr
-};
-
 class LDRH : public HWordSignedDataTransferInstruction {
-public:
-    LDRH(CpuCortex_Functional *icpu, int opidx) :
-        HWordSignedDataTransferInstruction(icpu, "LDRH", LDRH_OPCODES[opidx])
-        {}
+ public:
+    LDRH(CpuCortex_Functional *icpu) : HWordSignedDataTransferInstruction(
+        icpu, "LDRH", "????000????1????????????1011????") {}
 };
 
 /** Load Signed Half-word */
-static const char *LDRSH_OPCODES[4] = {
-    "????0000???1????????????1111????", // post incr
-    "????0001???1????????????1111????", // pre incr
-};
-
 class LDRSH : public HWordSignedDataTransferInstruction {
-public:
-    LDRSH(CpuCortex_Functional *icpu, int opidx) :
-        HWordSignedDataTransferInstruction(icpu, "LDRSH", LDRSH_OPCODES[opidx])
-        {}
+ public:
+    LDRSH(CpuCortex_Functional *icpu) : HWordSignedDataTransferInstruction(
+        icpu, "LDRSH", "????000????1????????????1111????") {}
 };
 
 /** Load Double-Word */
-static const char *LDRD_OPCODES[4] = {
-    "????0000?1?0????????????1101????", // immediate, post incr
-    "????0001?1?0????????????1101????", // immediate, pre incr
-    "????0000?0?0????????????1101????", // shift reg, post incr
-    "????0001?0?0????????????1101????", // shift reg, pre incr
-};
-
 class LDRD : public HWordSignedDataTransferInstruction {
-public:
-    LDRD(CpuCortex_Functional *icpu, int opidx) :
-        HWordSignedDataTransferInstruction(icpu, "LDRD", LDRD_OPCODES[opidx])
-    {}
+ public:
+    LDRD(CpuCortex_Functional *icpu) : HWordSignedDataTransferInstruction(
+        icpu, "LDRD", "????000????0????????????1101????") {}
 };
 
 /** Load Block data */
-static const char *LDM_OPCODES[4] = {
-    "????1000???1????????????????????", // post incr
-    "????1001???1????????????????????", // pre incr
-};
-
 class LDM : public BlockDataTransferInstruction {
  public:
-    LDM(CpuCortex_Functional *icpu, int opidx) :
-        BlockDataTransferInstruction(icpu, "LDM", LDM_OPCODES[opidx]) {}
+    LDM(CpuCortex_Functional *icpu) : BlockDataTransferInstruction(
+        icpu, "LDM", "????100????1????????????????????") {}
 };
-
-
 
 /** Store word */
-static const char *STR_OPCODES[4] = {
-    "????0100?0?0????????????????????", // immedaiate, post incr
-    "????0101?0?0????????????????????", // immedaiate, pre incr
-    "????0110?0?0????????????????????", // shift reg, post incr
-    "????0111?0?0????????????????????", // shift reg, pre incr
-};
-
 class STR : public SingleDataTransferInstruction {
-public:
-    STR(CpuCortex_Functional *icpu, int opidx) :
-        SingleDataTransferInstruction(icpu, "STR", STR_OPCODES[opidx]) {}
+ public:
+    STR(CpuCortex_Functional *icpu) : SingleDataTransferInstruction(
+        icpu, "STR", "????01???0?0????????????????????") {}
 };
 
 /** Store Byte */
-static const char *STRB_OPCODES[4] = {
-    "????0100?1?0????????????????????", // immedaiate, post incr
-    "????0101?1?0????????????????????", // immedaiate, pre incr
-    "????0110?1?0????????????????????", // shift reg, post incr
-    "????0111?1?0????????????????????", // shift reg, pre incr
-};
-
 class STRB : public SingleDataTransferInstruction {
-public:
-    STRB(CpuCortex_Functional *icpu, int opidx) :
-        SingleDataTransferInstruction(icpu, "STRB", STRB_OPCODES[opidx]) {}
+ public:
+    STRB(CpuCortex_Functional *icpu) : SingleDataTransferInstruction(
+        icpu, "STRB", "????01???1?0????????????????????") {}
 };
 
 /** Store Half-Word */
-static const char *STRH_OPCODES[4] = {
-    "????0000???0????????????1?11????", // post incr
-    "????0001???0????????????1?11????", // pre incr
-};
-
 class STRH : public HWordSignedDataTransferInstruction {
-public:
-    STRH(CpuCortex_Functional *icpu, int opidx) :
-        HWordSignedDataTransferInstruction(icpu, "STRH", STRH_OPCODES[opidx])
-        {}
+ public:
+    STRH(CpuCortex_Functional *icpu) : HWordSignedDataTransferInstruction(
+        icpu, "STRH", "????000????0????????????1?11????") {}
 };
 
 /** Store Double-Word */
-static const char *STRD_OPCODES[4] = {
-    "????0000?1?0????????????1111????", // immediate, post incr
-    "????0001?1?0????????????1111????", // immediate, pre incr
-    "????0000?0?0????????????1111????", // shift reg, post incr
-    "????0001?0?0????????????1111????", // shift reg, pre incr
-};
-
 class STRD : public HWordSignedDataTransferInstruction {
-public:
-    STRD(CpuCortex_Functional *icpu, int opidx) :
-        HWordSignedDataTransferInstruction(icpu, "STRD", STRD_OPCODES[opidx]) {}
+ public:
+    STRD(CpuCortex_Functional *icpu) : HWordSignedDataTransferInstruction(
+        icpu, "STRD", "????000????0????????????1111????") {}
 };
 
 /** Store Block data */
-static const char *STM_OPCODES[4] = {
-    "????1000???0????????????????????", // post incr
-    "????1001???0????????????????????", // pre incr
-};
-
 class STM : public BlockDataTransferInstruction {
  public:
-    STM(CpuCortex_Functional *icpu, int opidx) :
-        BlockDataTransferInstruction(icpu, "STM", STM_OPCODES[opidx]) {}
+    STM(CpuCortex_Functional *icpu) : BlockDataTransferInstruction(
+        icpu, "STM", "????1001???0????????????????????") {}
 };
 
 /** Move from coprocessor to ARM7TDMI-S register (L=1) */
@@ -1097,15 +988,10 @@ class MCR : public ArmInstruction {
 /** 
  * @brief Transfer register to PSR flags.
  */
-static const char *MSR_OPCODES[2] = {
-    "????00010?10????1111????????????",
-    "????00110?10????1111????????????"
-};
-
 class MSR : public ArmInstruction {
-public:
-    MSR(CpuCortex_Functional *icpu, int opidx) :
-        ArmInstruction(icpu, "MSR", MSR_OPCODES[opidx]) {}
+ public:
+    MSR(CpuCortex_Functional *icpu) :
+        ArmInstruction(icpu, "MSR", "????00?10?10????1111????????????") {}
 
     virtual int exec_checked(Reg64Type *payload) {
         //PsrTransferType u;
@@ -1115,7 +1001,7 @@ public:
 };
 
 class MRS : public ArmInstruction {
-public:
+ public:
     MRS(CpuCortex_Functional *icpu) :
         ArmInstruction(icpu, "MRS", "????00010?001111????000000000000") {}
 
@@ -1127,7 +1013,7 @@ public:
 };
 
 class NOP : public ArmInstruction {
-public:
+ public:
     NOP(CpuCortex_Functional *icpu) :
         ArmInstruction(icpu, "NOP", "????0011001000001111000000000000") {}
 
@@ -1142,7 +1028,7 @@ public:
  the 8-bit value.
  */
 class UXTB : public ArmInstruction {
-public:
+ public:
     UXTB(CpuCortex_Functional *icpu) :
         ArmInstruction(icpu, "UXTB", "????011011101111????????0111????") {}
 
@@ -1159,7 +1045,7 @@ public:
 
 /** */
 class UXTAB : public ArmInstruction {
-public:
+ public:
     UXTAB(CpuCortex_Functional *icpu) :
         ArmInstruction(icpu, "UXTAB", "????01101110????????????0111????") {}
 
@@ -1179,7 +1065,7 @@ public:
   extracting the 8-bit values.
  */
 class UXTB16 : public ArmInstruction {
-public:
+ public:
     UXTB16(CpuCortex_Functional *icpu) :
         ArmInstruction(icpu, "UXTB16", "????011011001111????????0111????") {}
 
@@ -1200,7 +1086,7 @@ public:
  extracting the 8-bit values.
  */
 class UXTAB16 : public ArmInstruction {
-public:
+ public:
     UXTAB16(CpuCortex_Functional *icpu) :
         ArmInstruction(icpu, "UXTAB16", "????01101100????????????0111????") {}
 
@@ -1222,7 +1108,7 @@ public:
  extracting the 16-bit value.
  */
 class UXTH : public ArmInstruction {
-public:
+ public:
     UXTH(CpuCortex_Functional *icpu) :
         ArmInstruction(icpu, "UXTH", "????011011111111????????0111????") {}
 
@@ -1242,7 +1128,7 @@ public:
  rotation by 0, 8, 16, or 24 bits before extracting the 16-bit value.
  */
 class UXTAH : public ArmInstruction {
-public:
+ public:
     UXTAH(CpuCortex_Functional *icpu) :
         ArmInstruction(icpu, "UXTAH", "????01101111????????????0111????") {}
 
@@ -1261,6 +1147,9 @@ public:
 /**
  * @brief SWI (software breakpoint instruction)
  *
+ * ARM does not define a specific breakpoint instruction. It can be different
+ * in different OSes. On ARM Linux it's usually an UND opcode
+ * (e.g. FE DE FF E7) in ARM mode and BKPT (BE BE) in Thumb.
  */
 class SWI : public ArmInstruction {
  public:
@@ -1274,128 +1163,92 @@ class SWI : public ArmInstruction {
 };
 
 /**
- * @brief UND (breakpoint instruction)
+ * @brief SWP (Single Data Swap)
  *
- * ARM does not define a specific breakpoint instruction. It can be different
- * in different OSes. On ARM Linux it's usually an UND opcode
- * (e.g. FE DE FF E7) in ARM mode and BKPT (BE BE) in Thumb.
  */
-class UND : public ArmInstruction {
+class SWP : public ArmInstruction {
  public:
-    UND(CpuCortex_Functional *icpu) :
-        ArmInstruction(icpu, "UND", "11111110110111101111111111100111") {}
+    SWP(CpuCortex_Functional *icpu) :
+        ArmInstruction(icpu, "SWP", "????00010?00????????00001001????") {}
 
     virtual int exec_checked(Reg64Type *payload) {
-        icpu_->raiseSoftwareIrq();
+        SingleDataTransferType u;
+        u.value = payload->buf32[0];
+        uint32_t opsz[2] = {4, 1};
+
+        trans_.addr = R[u.reg_bits.rn];
+        trans_.wstrb = 0;
+        trans_.xsize = opsz[u.reg_bits.B];
+        trans_.action = MemAction_Read;
+        trans_.rpayload.b64[0] = 0;
+        
+        icpu_->dma_memop(&trans_);
+        R[u.reg_bits.rd] = trans_.rpayload.b64[0];
+
+        trans_.action = MemAction_Write;
+        trans_.wstrb = (1 << trans_.xsize) - 1;
+        trans_.wpayload.b64[0] = R[u.reg_bits.rm];
+        icpu_->dma_memop(&trans_);
         return 4;
     }
 };
 
-
-
 void CpuCortex_Functional::addArm7tmdiIsa() {
-
-    addSupportedInstruction(new UND(this));
-
-    // Arm V6 instructions:
-    //      CPS, SRS, RFE
-    //      REV, REV16, REVSH
-    //      SETEND
-    //      LDREX, STREX
-    //      SXTB, SXTH, UXTB, UXTH
-    addSupportedInstruction(new UXTB(this));    // same opcode as STRB
-    addSupportedInstruction(new UXTAB(this));
-    addSupportedInstruction(new UXTB16(this));  // rn=1111b
-    addSupportedInstruction(new UXTAB16(this));  // rn=????b
-    addSupportedInstruction(new UXTH(this));    // rn=1111b
-    addSupportedInstruction(new UXTAH(this));   // rn=????
-
-    // use the same as opcodes TEQ, TST, CMN and CMP without S-flag
-    // and must be registered first.
-    addSupportedInstruction(new BLX(this));
-    addSupportedInstruction(new BX(this));  // use TST,MSR opcode
-    addSupportedInstruction(new NOP(this)); // use MSR opcode
-    addSupportedInstruction(new MOVT(this));
-    addSupportedInstruction(new MOVW(this));
-    addSupportedInstruction(new MUL(this));
-    addSupportedInstruction(new MLA(this));
-    addSupportedInstruction(new UMULL(this));
-    addSupportedInstruction(new UMLAL(this));
-    addSupportedInstruction(new SMULL(this));
-    addSupportedInstruction(new SMLAL(this));
-    addSupportedInstruction(new MRS(this));
-    addSupportedInstruction(new MSR(this, 0));
-    addSupportedInstruction(new MSR(this, 1));
-
-    addSupportedInstruction(new AND(this, 0));
-    addSupportedInstruction(new AND(this, 1));
-    addSupportedInstruction(new EOR(this, 0));
-    addSupportedInstruction(new EOR(this, 1));
-    addSupportedInstruction(new SUB(this, 0));
-    addSupportedInstruction(new SUB(this, 1));
-    addSupportedInstruction(new RSB(this, 0));
-    addSupportedInstruction(new RSB(this, 1));
-    addSupportedInstruction(new ADD(this, 0));
-    addSupportedInstruction(new ADD(this, 1));
-    addSupportedInstruction(new ADC(this, 0));
-    addSupportedInstruction(new ADC(this, 1));
-    addSupportedInstruction(new SBC(this, 0));
-    addSupportedInstruction(new SBC(this, 1));
-    addSupportedInstruction(new RSC(this, 0));
-    addSupportedInstruction(new RSC(this, 1));
-    addSupportedInstruction(new TST(this, 0));
-    addSupportedInstruction(new TST(this, 1));
-    addSupportedInstruction(new TEQ(this, 0));
-    addSupportedInstruction(new TEQ(this, 1));
-    addSupportedInstruction(new CMP(this, 0));
-    addSupportedInstruction(new CMP(this, 1));
-    addSupportedInstruction(new CMN(this, 0));
-    addSupportedInstruction(new CMN(this, 1));
-    addSupportedInstruction(new ORR(this, 0));
-    addSupportedInstruction(new ORR(this, 1));
-    addSupportedInstruction(new MOV(this, 0));
-    addSupportedInstruction(new MOV(this, 1));
-    addSupportedInstruction(new LDRD(this, 0));
-    addSupportedInstruction(new LDRD(this, 1));
-    addSupportedInstruction(new LDRD(this, 2));
-    addSupportedInstruction(new LDRD(this, 3));
-    addSupportedInstruction(new STRD(this, 0));
-    addSupportedInstruction(new STRD(this, 1));
-    addSupportedInstruction(new STRD(this, 2));
-    addSupportedInstruction(new STRD(this, 3));
-    addSupportedInstruction(new MVN(this, 0));
-    addSupportedInstruction(new MVN(this, 1));
-    addSupportedInstruction(new B(this));
-    addSupportedInstruction(new BL(this));
-    addSupportedInstruction(new LDR(this, 0));
-    addSupportedInstruction(new LDR(this, 1));
-    addSupportedInstruction(new LDR(this, 2));
-    addSupportedInstruction(new LDR(this, 3));
-    addSupportedInstruction(new LDRSB(this, 0));
-    addSupportedInstruction(new LDRSB(this, 1));
-    addSupportedInstruction(new LDRH(this, 0));
-    addSupportedInstruction(new LDRH(this, 1));
-    addSupportedInstruction(new LDRSH(this, 0));
-    addSupportedInstruction(new LDRSH(this, 1));
-    addSupportedInstruction(new LDM(this, 0));
-    addSupportedInstruction(new LDM(this, 1));
-    addSupportedInstruction(new STR(this, 0));
-    addSupportedInstruction(new STR(this, 1));
-    addSupportedInstruction(new STR(this, 2));
-    addSupportedInstruction(new STR(this, 3));
-    addSupportedInstruction(new STRB(this, 0));
-    addSupportedInstruction(new STRB(this, 1));
-    addSupportedInstruction(new STRB(this, 2));
-    addSupportedInstruction(new STRB(this, 3));
-    addSupportedInstruction(new STRH(this, 0));
-    addSupportedInstruction(new STRH(this, 1));
-    addSupportedInstruction(new STM(this, 0));
-    addSupportedInstruction(new STM(this, 1));
-    addSupportedInstruction(new BIC(this, 0));
-    addSupportedInstruction(new BIC(this, 1));
-    addSupportedInstruction(new MCR(this));
-    addSupportedInstruction(new MRC(this));
-    addSupportedInstruction(new SWI(this));
+    isaTableArmV7_[ARMV7_BX] = new BX(this);
+    isaTableArmV7_[ARMV7_B] = new B(this);
+    isaTableArmV7_[ARMV7_BL] = new BL(this);
+    isaTableArmV7_[ARMV7_BLX] = new BLX(this);
+    isaTableArmV7_[ARMV7_AND] = new AND(this);
+    isaTableArmV7_[ARMV7_EOR] = new EOR(this);
+    isaTableArmV7_[ARMV7_SUB] = new SUB(this);
+    isaTableArmV7_[ARMV7_RSB] = new RSB(this);
+    isaTableArmV7_[ARMV7_ADD] = new ADD(this);
+    isaTableArmV7_[ARMV7_ADC] = new ADC(this);
+    isaTableArmV7_[ARMV7_SBC] = new SBC(this);
+    isaTableArmV7_[ARMV7_RSC] = new RSC(this);
+    isaTableArmV7_[ARMV7_TST] = new TST(this);
+    isaTableArmV7_[ARMV7_TEQ] = new TEQ(this);
+    isaTableArmV7_[ARMV7_CMP] = new CMP(this);
+    isaTableArmV7_[ARMV7_CMN] = new CMN(this);
+    isaTableArmV7_[ARMV7_ORR] = new ORR(this);
+    isaTableArmV7_[ARMV7_MOV] = new MOV(this);
+    isaTableArmV7_[ARMV7_BIC] = new BIC(this);
+    isaTableArmV7_[ARMV7_MVN] = new MVN(this);
+    isaTableArmV7_[ARMV7_MRS] = new MRS(this);
+    isaTableArmV7_[ARMV7_MSR] = new MSR(this);
+    isaTableArmV7_[ARMV7_MUL] = new MUL(this);
+    isaTableArmV7_[ARMV7_MLA] = new MLA(this);
+    isaTableArmV7_[ARMV7_UMULL] = new UMULL(this);
+    isaTableArmV7_[ARMV7_UMLAL] = new UMLAL(this);
+    isaTableArmV7_[ARMV7_SMULL] = new SMULL(this);
+    isaTableArmV7_[ARMV7_SMLAL] = new SMLAL(this);
+    isaTableArmV7_[ARMV7_LDR] = new LDR(this);
+    isaTableArmV7_[ARMV7_LDRB] = new LDRB(this);
+    isaTableArmV7_[ARMV7_STR] = new STR(this);
+    isaTableArmV7_[ARMV7_STRB] = new STRB(this);
+    isaTableArmV7_[ARMV7_SWP] = new SWP(this);
+    isaTableArmV7_[ARMV7_LDRH] = new LDRH(this);
+    isaTableArmV7_[ARMV7_LDRSB] = new LDRSB(this);
+    isaTableArmV7_[ARMV7_LDRSH] = new LDRSH(this);
+    isaTableArmV7_[ARMV7_STRH] = new STRH(this);
+    isaTableArmV7_[ARMV7_LDM] = new LDM(this);
+    isaTableArmV7_[ARMV7_STM] = new STM(this);
+    isaTableArmV7_[ARMV7_SWI] = new SWI(this);
+    isaTableArmV7_[ARMV7_MRC] = new MRC(this);
+    isaTableArmV7_[ARMV7_MCR] = new MCR(this);
+    isaTableArmV7_[ARMV7_LDRD] = new LDRD(this);
+    isaTableArmV7_[ARMV7_STRD] = new STRD(this);
+    isaTableArmV7_[ARMV7_UXTB] = new UXTB(this);
+    isaTableArmV7_[ARMV7_UXTAB] = new UXTAB(this);
+    isaTableArmV7_[ARMV7_UXTB16] = new UXTB16(this);
+    isaTableArmV7_[ARMV7_UXTAB16] = new UXTAB16(this);
+    isaTableArmV7_[ARMV7_UXTH] = new UXTH(this);
+    isaTableArmV7_[ARMV7_UXTAH] = new UXTAH(this);
+    isaTableArmV7_[ARMV7_NOP] = new NOP(this);
+    isaTableArmV7_[ARMV7_MOVT] = new MOVT(this);
+    isaTableArmV7_[ARMV7_MOVW] = new MOVW(this);
+    isaTableArmV7_[ARMV7_UDIV] = new UDIV(this);
+    isaTableArmV7_[ARMV7_SDIV] = new SDIV(this);
 }
 
 }  // namespace debugger

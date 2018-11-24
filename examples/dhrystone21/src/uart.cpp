@@ -51,7 +51,7 @@ extern "C" int printf_uart(const char *_format, ... ) {
     va_list arg;
     va_start(arg, _format );
   
-    ret = vsprintf(tmpUartStr, _format, arg );
+    ret = vsprintf(tmpUartStr, _format, arg);
     va_end( arg );
 
     for (int i = 0; i < ret; i++) {

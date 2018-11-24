@@ -50,6 +50,7 @@ SOURCES = \
 	iotypes \
 	mapreg \
 	srcproc \
+	decoder_arm \
 	arm7tdmi \
 	cpu_arm7_func \
 	instructions \

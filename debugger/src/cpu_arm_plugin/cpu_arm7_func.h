@@ -84,10 +84,13 @@ class CpuCortex_Functional : public CpuGeneric,
 
     static const int INSTR_HASH_TABLE_SIZE = 1 << 4;
     AttributeType listInstr_[INSTR_HASH_TABLE_SIZE];
+    ArmInstruction *isaTableArmV7_[ARMV7_Total];
 
     GenericReg64Bank portRegs_;
     GenericReg64Bank portSavedRegs_;
     ProgramStatusRegsiterType *p_psr_;
+
+    char errmsg_[256];
 
     CmdBrArm *pcmd_br_;
     CmdRegArm *pcmd_reg_;

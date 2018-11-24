@@ -22,7 +22,7 @@ CmdBrArm::CmdBrArm(ITap *tap) : CmdBrGeneric(tap) {
 }
 
 void CmdBrArm::getSwBreakpointInstr(Reg64Type *instr) {
-    instr->buf32[0] = 0xFEDEFFE7;  // UND
+    instr->buf32[0] = 0xFFDEFFE7;  // SWI
 }
 
 }  // namespace debugger

@@ -241,6 +241,21 @@ union SignExtendType {
     uint32_t value;
 };
 
+union DivType {
+    struct div_bits_type {
+        uint32_t rn : 4;        //[3:0]
+        uint32_t b7_4 : 4;      //[7:4] = 0001b
+        uint32_t rm : 4;        //[11:8]
+        uint32_t b15_12 : 4;    //[15:12] = 1111b
+        uint32_t rd : 4;        //[19:16]
+        uint32_t b20 : 1;       //[20]
+        uint32_t S : 1;         //[21] = 1b
+        uint32_t b27_22 : 6;    //[27:22] = 011100b
+        uint32_t cond : 4;      //[31:28]
+    } bits;
+    uint32_t value;
+};
+
 union MulType {
     struct mul_bits_type {
         uint32_t rm : 4;        //[3:0]
@@ -393,6 +408,67 @@ enum ERegNames {
     Reg_rsrv31,
     Reg_Total
 };
+
+enum EIsaArmV7 {
+    ARMV7_B,
+    ARMV7_BL,
+    ARMV7_BX,
+    ARMV7_BLX,
+    ARMV7_AND,
+    ARMV7_EOR,
+    ARMV7_SUB,
+    ARMV7_RSB,
+    ARMV7_ADD,
+    ARMV7_ADC,
+    ARMV7_SBC,
+    ARMV7_RSC,
+    ARMV7_TST,
+    ARMV7_TEQ,
+    ARMV7_CMP,
+    ARMV7_CMN,
+    ARMV7_ORR,
+    ARMV7_MOV,
+    ARMV7_BIC,
+    ARMV7_MVN,
+    ARMV7_MRS,
+    ARMV7_MSR,
+    ARMV7_MUL,
+    ARMV7_MLA,
+    ARMV7_UMULL,
+    ARMV7_UMLAL,
+    ARMV7_SMULL,
+    ARMV7_SMLAL,
+    ARMV7_LDR,
+    ARMV7_LDRB,
+    ARMV7_STR,
+    ARMV7_STRB,
+    ARMV7_SWP,
+    ARMV7_LDRH,
+    ARMV7_LDRSB,
+    ARMV7_LDRSH,
+    ARMV7_STRH,
+    ARMV7_LDM,
+    ARMV7_STM,
+    ARMV7_SWI,
+    ARMV7_MRC,
+    ARMV7_MCR,
+    ARMV7_LDRD,
+    ARMV7_STRD,
+    ARMV7_UXTB,
+    ARMV7_UXTAB,
+    ARMV7_UXTB16,
+    ARMV7_UXTAB16,
+    ARMV7_UXTH,
+    ARMV7_UXTAH,
+    ARMV7_NOP,
+    ARMV7_MOVT,
+    ARMV7_MOVW,
+    ARMV7_UDIV,
+    ARMV7_SDIV,
+    ARMV7_Total
+};
+
+EIsaArmV7 decoder_arm(uint32_t ti, char *errmsg, size_t errsz);
 
 /** Internal simulation bits only */
 static const uint64_t Interrupt_SoftwareIdx = 0;

@@ -86,6 +86,9 @@ class ArmSourceService : public IService,
     int parseMultiply(uint64_t pc, uint32_t instr,
                             AttributeType *mnemonic,
                             AttributeType *comment);
+    int parseDivide(uint64_t pc, uint32_t instr,
+                            AttributeType *mnemonic,
+                            AttributeType *comment);
     int parseBytesExtending(uint64_t pc, uint32_t instr,
                             AttributeType *mnemonic,
                             AttributeType *comment);
