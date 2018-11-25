@@ -94,22 +94,38 @@ uint32_t ArmInstruction::shift12(DataProcessingType::reg_bits_type instr,
                                 uint32_t reg, uint64_t Rs) {
     uint32_t ret = reg;
     uint32_t shift = instr.shift;
+    bool imm5_zero = shift == 0;
     if (instr.sh_sel) {
-        shift = static_cast<uint32_t>(Rs & 0x1f);
+        shift = static_cast<uint32_t>(Rs & 0xFF);
+        imm5_zero = false;
     }
     switch (instr.sh_type) {
     case 0:     // logical left
-        ret <<= shift;
+        if (shift > 31) {
+            ret = 0;
+        } else {
+            ret = ret << shift;
+        }
         break;
     case 1:     // logical right
+        if (imm5_zero) {
+            shift = 32;
+        }
         ret >>= shift;
         break;
     case 2:     // arith. right
+        if (imm5_zero) {
+            shift = 32;
+        }
         ret =
             static_cast<uint32_t>((static_cast<int>(ret) >> shift));
         break;
     case 3:     // rotate right
-        ret = (ret >> shift) | (ret << (32 - shift));
+        if (imm5_zero) {
+            ret = (icpu_->getC() << 31) | (ret >> 1);
+        } else {
+            ret = (ret >> shift) | (ret << (32 - shift));
+        }
         break;
     }
     return ret;

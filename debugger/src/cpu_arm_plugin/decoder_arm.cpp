@@ -81,6 +81,19 @@ EIsaArmV7 decoder_arm(uint32_t ti, char *errmsg, size_t errsz) {
                         "undefined ST_reg opcode %08x", ti);
                 }
             }
+        } else if ((ti & 0x0E0000F0) == 0x000000D0) {
+            /** DWord Data transfer
+                LDRD (imm)      ????000?_?1?0????_????????_1101????
+                LDRD (literal)  ????0001_?1001111_????????_1101????
+                LDRD (reg)      ????000?_?0?0????_????0000_1101????
+             */
+             ret = ARMV7_LDRD;
+        } else if ((ti & 0x0E0000F0) == 0x000000F0) {
+            /** DWord Store Data transfer
+                STRD (imm)      ????000?_?1?0????_????????_1111????
+                STRD (reg)      ????000?_?0?0????_????0000_1111????
+             */
+              ret = ARMV7_STRD;
         } else if ((ti & 0x0E400090) == 0x00400090) {
             /** HWord Data transfer: immediate offset
                     ????000?_?1??????_????????_1??1????
@@ -110,14 +123,6 @@ EIsaArmV7 decoder_arm(uint32_t ti, char *errmsg, size_t errsz) {
                     RISCV_sprintf(errmsg, errsz,
                         "undefined ST_imm opcode %08x", ti);
                 }
-            }
-        } else if ((ti & 0x0E0000F0) == 0x000000D0) {
-            /** DWord Data transfer */
-            uint32_t L = (ti >> 20) & 0x1;
-            if (L) {
-                ret = ARMV7_LDRD;
-            } else {
-                ret = ARMV7_STRD;
             }
         } else {
             /** Data Processing / PSR Transfer:
@@ -213,7 +218,18 @@ EIsaArmV7 decoder_arm(uint32_t ti, char *errmsg, size_t errsz) {
             /** Undefined
                     ????011?_????????_????????_???1????
              */
-            if ((ti & 0x0FC000F0) == 0x06C00070) {
+            if ((ti & 0x0FD0F0F0) == 0x0710F010) {
+                /*
+                    "UDIV",    "????0111_0011????_1111????_0001????"
+                    "SDIV",    "????0111_0001????_1111????_0001????"
+                */
+                uint32_t U = (ti >> 21) & 0x1;
+                if (U) {
+                    ret = ARMV7_UDIV;
+                } else {
+                    ret = ARMV7_SDIV;
+                }
+            } else if ((ti & 0x0FC000F0) == 0x06C00070) {
                 /*
                     "UXTB16",  "????0110_11001111_????????_0111????"
                     "UXTAB16", "????0110_1100????_????????_0111????"
@@ -254,18 +270,7 @@ EIsaArmV7 decoder_arm(uint32_t ti, char *errmsg, size_t errsz) {
             }
         } else {
             /** Single Data Transfer */
-            if ((ti & 0x0FD0F0F0) == 0x0710F010) {
-                /*
-                    "UDIV",    "????0111_0011????_1111????_0001????"
-                    "SDIV",    "????0111_0001????_1111????_0001????"
-                */
-                uint32_t U = (ti >> 21) & 0x1;
-                if (U) {
-                    ret = ARMV7_UDIV;
-                } else {
-                    ret = ARMV7_SDIV;
-                }
-            } else {
+            {
                 uint32_t L = (ti >> 20) & 0x1;
                 uint32_t B = (ti >> 22) & 0x1;
                 if (L) {
