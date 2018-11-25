@@ -291,17 +291,19 @@ void CpuGeneric::dma_memop(Axi4TransactionType *tr) {
     } else {
         // 1-byte access for HC08
         Axi4TransactionType tr1 = *tr;
-        tr1.xsize = 1;
-        tr1.wstrb = 1;
-        for (unsigned i = 0; i < tr->xsize; i++) {
-            tr1.addr = tr->addr + i;
+        unsigned minsz = sysBusWidthBytes_.to_uint32();
+        tr1.xsize = minsz;
+        tr1.wstrb = (1 << minsz) - 1;
+        tr1.addr = tr->addr;
+        for (unsigned i = 0; i < tr->xsize; i+=minsz) {
             if (tr->action == MemAction_Write) {
-                tr1.wpayload.b8[0] = tr->wpayload.b8[i];
+                memcpy(tr1.wpayload.b8, &tr->wpayload.b8[i], minsz);
             }
             isysbus_->b_transport(&tr1);
             if (tr->action == MemAction_Read) {
-                tr->rpayload.b8[i] = tr1.rpayload.b8[0];
+                memcpy(&tr->rpayload.b8[i], tr1.rpayload.b8, minsz);
             }
+            tr1.addr = tr->addr + minsz;
         }
     }
     if (!mem_trace_file) {

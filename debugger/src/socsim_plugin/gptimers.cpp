@@ -99,11 +99,13 @@ ETransStatus GPTimers::b_transport(Axi4TransactionType *trans) {
             case 0:
                 regs_.highcnt = iclk_->getStepCounter();
                 trans->rpayload.b32[i] = static_cast<uint32_t>(regs_.highcnt);
+                RISCV_info("Get highcnt[31:0] = %08x", trans->rpayload.b32[i]);
                 break;
             case 1:
                 regs_.highcnt = iclk_->getStepCounter();
                 trans->rpayload.b32[i] =
                     static_cast<uint32_t>(regs_.highcnt >> 32);
+                RISCV_info("Get highcnt[63:32] = %08x", trans->rpayload.b32[i]);
                 break;
             case 16 + 0:
                 trans->rpayload.b32[i] = regs_.timer[0].control;

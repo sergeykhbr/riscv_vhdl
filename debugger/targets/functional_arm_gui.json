@@ -210,7 +210,7 @@
                 ]}]},
     {'Class':'GPTimersClass','Instances':[
           {'Name':'gptmr0','Attr':[
-                ['LogLevel',1],
+                ['LogLevel',4],
                 ['BaseAddress',0x80005000],
                 ['Length',4096],
                 ['IrqControl',['irqctrl0','irq3']],
