@@ -147,6 +147,27 @@ union HWordSignedDataTransferType {
     uint32_t value;
 };
 
+union DWordDataTransferType {
+    struct reg_bits_type {
+        uint32_t rm : 4;        // [3:0] imm4L/offset register
+        uint32_t b1 : 1;        // [4] =1
+        uint32_t ld_st : 1;     // [5] =0=load; 1=store
+        uint32_t b11 : 2;       // [7:6] =11
+        uint32_t imm_h : 4;     // [11:8] zero/immediate high nibble
+        uint32_t rt : 4;        // [15:12]
+        uint32_t rn : 4;        // [19:16]
+        uint32_t L : 1;         // [20] = 1 load; 0 store
+        uint32_t W : 1;         // [21] = 1 wr addr into base; 0 no write-back
+        uint32_t reg_imm : 1;   // [22] = 0=reg offset; 1=imm offset
+        uint32_t U : 1;         // [23] = 1 add offset; 0 subtruct offset
+        uint32_t P : 1;         // [24] = 1 pre; 0 post
+        uint32_t zero3 : 3;     // [27:25] = 000b
+        uint32_t cond : 4;      // [31:28]
+    } bits;
+    uint32_t value;
+};
+
+
 union CoprocessorTransferType {
     struct bits_type {
         uint32_t crm : 4;       // [3:0] Coproc. operand register

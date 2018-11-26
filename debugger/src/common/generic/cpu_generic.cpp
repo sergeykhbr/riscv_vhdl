@@ -294,8 +294,8 @@ void CpuGeneric::dma_memop(Axi4TransactionType *tr) {
         unsigned minsz = sysBusWidthBytes_.to_uint32();
         tr1.xsize = minsz;
         tr1.wstrb = (1 << minsz) - 1;
-        tr1.addr = tr->addr;
         for (unsigned i = 0; i < tr->xsize; i+=minsz) {
+            tr1.addr = tr->addr + i*minsz;
             if (tr->action == MemAction_Write) {
                 memcpy(tr1.wpayload.b8, &tr->wpayload.b8[i], minsz);
             }

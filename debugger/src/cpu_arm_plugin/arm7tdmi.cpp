@@ -396,6 +396,74 @@ class HWordSignedDataTransferInstruction : public ArmInstruction {
     }
 };
 
+/** Double Word Data Transfer */
+class DWordSignedDataTransferInstruction : public ArmInstruction {
+ public:
+    DWordSignedDataTransferInstruction(CpuCortex_Functional *icpu,
+        const char *name, const char *bits) :
+        ArmInstruction (icpu, name, bits) {}
+
+    virtual int exec_checked(Reg64Type *payload) {
+        // LDRD imm      ????000?_?1?0????_????????_1101????
+        // LDRD literal  ????0001_?1001111_????????_1101????
+        // LDRD reg      ????000?_?0?0????_????0000_1101????
+        // STRD imm      ????000?_?1?0????_????????_1111????
+        // STRD reg      ????000?_?0?0????_????0000_1111????
+        DWordDataTransferType u;
+        u.value = payload->buf32[0];
+        uint64_t off = R[u.bits.rn];
+        if (u.bits.rn == Reg_pc) {
+            off += PREFETCH_OFFSET[icpu_->getInstrMode()];
+        }
+
+        if (u.bits.P) {
+            off += get_increment(u);
+        }
+
+        trans_.addr = off;
+        trans_.xsize = 8;
+        trans_.wstrb = 0;
+        if (!u.bits.ld_st) {
+            trans_.action = MemAction_Read;
+            trans_.rpayload.b64[0] = 0;
+        } else {
+            trans_.action = MemAction_Write;
+            trans_.wstrb = (1 << trans_.xsize) - 1;
+            trans_.wpayload.b64[0] = R[u.bits.rt] | (R[u.bits.rt + 1] << 32);
+        }
+        icpu_->dma_memop(&trans_);
+
+        if (u.bits.W) {
+            if (!u.bits.P) {
+                off += get_increment(u);
+            }
+            R[u.bits.rn] = off;
+        }
+        if (!u.bits.ld_st) {
+            R[u.bits.rt] = trans_.rpayload.b32[0];
+            R[u.bits.rt + 1] = trans_.rpayload.b32[1];
+            if (u.bits.rt == Reg_pc) {
+                icpu_->setBranch(R[u.bits.rt]);
+            }
+        }
+        return 4;
+    }
+ protected:
+    virtual uint64_t get_increment(DWordDataTransferType u) {
+        uint64_t incr;
+        if (u.bits.reg_imm) {
+            incr = (u.bits.imm_h << 4) | u.bits.rm;
+        } else {
+            incr = R[u.bits.rm];
+        }
+        if (!u.bits.U) {
+            incr = (~incr) + 1;
+        }
+        return incr;
+    }
+};
+
+
 /** Divide common */
 class DivideInstruction : public ArmInstruction {
  public:
@@ -911,11 +979,12 @@ class LDRSH : public HWordSignedDataTransferInstruction {
 };
 
 /** Load Double-Word */
-class LDRD : public HWordSignedDataTransferInstruction {
+class LDRD : public DWordSignedDataTransferInstruction {
  public:
-    LDRD(CpuCortex_Functional *icpu) : HWordSignedDataTransferInstruction(
+    LDRD(CpuCortex_Functional *icpu) : DWordSignedDataTransferInstruction(
         icpu, "LDRD", "????000????0????????????1101????") {}
 };
+
 
 /** Load Block data */
 class LDM : public BlockDataTransferInstruction {
@@ -946,9 +1015,9 @@ class STRH : public HWordSignedDataTransferInstruction {
 };
 
 /** Store Double-Word */
-class STRD : public HWordSignedDataTransferInstruction {
+class STRD : public DWordSignedDataTransferInstruction {
  public:
-    STRD(CpuCortex_Functional *icpu) : HWordSignedDataTransferInstruction(
+    STRD(CpuCortex_Functional *icpu) : DWordSignedDataTransferInstruction(
         icpu, "STRD", "????000????0????????????1111????") {}
 };
 
