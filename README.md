@@ -61,16 +61,18 @@ with enabled (-O0) and disabled (-O2) optimization to define HW and GCC-compiler
 All sources are available and could be run on the simulator or on the 
 different FPGA targets.
 
-Target           | Git tag | Dhrystone<br> per sec,<br> -O0 | Dhrystone<br> per sec,<br> -O2 | Information.
------------------|:-------:|:------------------------------:|:------------------------------:|:------------
-RISC-V simulator | v6.0    | **65652.0** | **76719.0**   | Ubuntu GNU GCC 6.1.0 toolchain RV64IMA custom build
-"Rocket" CPU     | v6.0    | -           | **23999.0**   | GCC 6.1.0
-"River" CPU      | v6.0    | -           | **35121.0**   | GCC 6.1.0
-RISC-V simulator | latest  | **76824.0** | **176469.0**  | GCC 7.1.1 with the compressed instructions set
-"River" CPU      | latest  | **29440.0** | **69605.0**   | GCC 7.1.1 with the compressed instructions set
-"LEON3" SPARC V8 | No      | **48229.0** | **119515.0**  | sparc-elf-gcc 4.4.2 with the custom FPGA system
-ARM simulator    | latest  | soon        | soon          | arm-none-eabi-gcc 7.2.0
-ARM Cortex-R5    | No      | soon        | soon          | arm-none-eabi-gcc 7.2.0 with the custom FPGA system
+Target             | Git tag | Dhrystone<br> per sec,<br> -O0 | Dhrystone<br> per sec,<br> -O2 | Information.
+-------------------|:-------:|:------------------------------:|:------------------------------:|:------------
+RISC-V simulator   | v6.0    | **65652.0** | **76719.0**   | Ubuntu GNU GCC 6.1.0 toolchain RV64IMA custom build
+"Rocket" CPU       | v6.0    | -           | **23999.0**   | GCC 6.1.0
+"River" CPU        | v6.0    | -           | **35121.0**   | GCC 6.1.0
+-                  | -       | -           | -             | -
+RISC-V simulator   | latest  | **76824.0** | **176469.0**  | GCC 7.1.1 with the compressed instructions set
+ARM simulator      | latest  | **78451.0** | **162600.0**  | arm-none-eabi-gcc 7.2.0, ARM ISA only
+"River" CPU        | latest  | **29440.0** | **69605.0**   | GCC 7.1.1 with the compressed instructions set
+"LEON3" SPARC V8   | No      | **48229.0** | **119515.0**  | sparc-elf-gcc 4.4.2 with the custom FPGA system
+Cortex-R5 ARM      | No      | soon        | soon          | arm-none-eabi-gcc 7.2.0 with the custom FPGA system
+Cortex-M3 Thumb2   | arm_vhdl | soon       | soon          | arm-none-eabi-gcc 7.2.0 with the custom FPGA system
 
 Access to all memory banks and peripheries for all targets (including ARM and Leon3) is made 
 in the same clock domain and always is

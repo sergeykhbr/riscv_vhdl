@@ -108,17 +108,22 @@ uint32_t ArmInstruction::shift12(DataProcessingType::reg_bits_type instr,
         }
         break;
     case 1:     // logical right
-        if (imm5_zero) {
-            shift = 32;
+        if (imm5_zero || (shift > 31)) {
+            ret = 0;
+        } else {
+            ret >>= shift;
         }
-        ret >>= shift;
         break;
     case 2:     // arith. right
-        if (imm5_zero) {
-            shift = 32;
+        if (imm5_zero || (shift > 31)) {
+            ret = 0;
+            if (ret & 0x80000000) {
+                ret = ~ret;
+            }
+        } else {
+            ret =
+                static_cast<uint32_t>((static_cast<int>(ret) >> shift));
         }
-        ret =
-            static_cast<uint32_t>((static_cast<int>(ret) >> shift));
         break;
     case 3:     // rotate right
         if (imm5_zero) {

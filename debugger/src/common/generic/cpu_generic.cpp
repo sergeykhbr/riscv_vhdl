@@ -295,7 +295,7 @@ void CpuGeneric::dma_memop(Axi4TransactionType *tr) {
         tr1.xsize = minsz;
         tr1.wstrb = (1 << minsz) - 1;
         for (unsigned i = 0; i < tr->xsize; i+=minsz) {
-            tr1.addr = tr->addr + i*minsz;
+            tr1.addr = tr->addr + i;
             if (tr->action == MemAction_Write) {
                 memcpy(tr1.wpayload.b8, &tr->wpayload.b8[i], minsz);
             }
@@ -303,7 +303,6 @@ void CpuGeneric::dma_memop(Axi4TransactionType *tr) {
             if (tr->action == MemAction_Read) {
                 memcpy(&tr->rpayload.b8[i], tr1.rpayload.b8, minsz);
             }
-            tr1.addr = tr->addr + minsz;
         }
     }
     if (!mem_trace_file) {
@@ -320,7 +319,8 @@ void CpuGeneric::dma_memop(Axi4TransactionType *tr) {
             pload.val = tr->rpayload.b64[0];
         }
         RISCV_sprintf(tstr, sizeof(tstr),
-                    "%08x: [%08x] => %016" RV_PRI64 "x\n",
+                    "%08x %08x: [%08x] => %016" RV_PRI64 "x\n",
+                    static_cast<int>(step_cnt_),
                     pc_.getValue().buf32[0],
                     static_cast<int>(tr->addr),
                     pload.val);
@@ -331,7 +331,8 @@ void CpuGeneric::dma_memop(Axi4TransactionType *tr) {
             pload.val = tr->wpayload.b64[0];
         }
         RISCV_sprintf(tstr, sizeof(tstr),
-                    "%08x: [%08x] <= %016" RV_PRI64 "x\n",
+                    "%08x %08x: [%08x] <= %016" RV_PRI64 "x\n",
+                    static_cast<int>(step_cnt_),
                     pc_.getValue().buf32[0],
                     static_cast<int>(tr->addr),
                     pload.val);

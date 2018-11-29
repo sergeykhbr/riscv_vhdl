@@ -167,6 +167,18 @@ union DWordDataTransferType {
     uint32_t value;
 };
 
+union BitsFieldType {
+    struct reg_bits_type {
+        uint32_t rn : 4;        // [3:0] source register
+        uint32_t b6_4 : 3;      // [6:4] =001
+        uint32_t lsb : 5;       // [11:7] destination bit 0 to 31
+        uint32_t rd : 4;        // [15:12] destination register
+        uint32_t msb : 5;       // [20:16]
+        uint32_t b27_21 : 7;    // [27:21] = 0111110b
+        uint32_t cond : 4;      // [31:28]
+    } bits;
+    uint32_t value;
+};
 
 union CoprocessorTransferType {
     struct bits_type {
@@ -486,6 +498,8 @@ enum EIsaArmV7 {
     ARMV7_MOVW,
     ARMV7_UDIV,
     ARMV7_SDIV,
+    ARMV7_BFC,
+    ARMV7_BFI,
     ARMV7_Total
 };
 

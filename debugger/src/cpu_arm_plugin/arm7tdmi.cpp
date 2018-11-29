@@ -45,6 +45,9 @@ int ArmDataProcessingInstruction::exec_checked(Reg64Type *payload) {
     }
     if (do_operation(A, M, &Res)) {
         R[u.reg_bits.rd] = Res;
+        if (u.reg_bits.rd == Reg_pc) {
+            icpu_->setBranch(R[u.imm_bits.rd]);
+        }
     }
     if (is_flags_changed(u)) {
         set_flags(A, M, Res);
@@ -460,6 +463,34 @@ class DWordSignedDataTransferInstruction : public ArmInstruction {
             incr = (~incr) + 1;
         }
         return incr;
+    }
+};
+
+/** Bits Field Operation */
+class BitsFieldInstruction : public ArmInstruction {
+ public:
+    BitsFieldInstruction(CpuCortex_Functional *icpu, const char *name,
+        const char *bits) : ArmInstruction (icpu, name, bits) {}
+
+    virtual int exec_checked(Reg64Type *payload) {
+        // BFC      ????0111_110?????_????????_?0011111
+        // BFI      ????0111_110?????_????????_?001????
+        BitsFieldType u;
+        u.value = payload->buf32[0];
+
+        if (u.bits.msb < u.bits.lsb) {
+            RISCV_error("%s", "BFI unpredicateble");
+        }
+
+        uint64_t mskd = (1ull << (u.bits.msb + 1)) - 1;
+        mskd = (mskd >> u.bits.lsb) << u.bits.lsb;
+
+        R[u.bits.rd] &= ~mskd;
+        if (u.bits.rn != 0xF) {
+            uint64_t mskn = (1ull << (u.bits.msb - u.bits.lsb + 1)) - 1;
+            R[u.bits.rd] |= (R[u.bits.rn] & mskn) << u.bits.lsb;
+        }
+        return 4;
     }
 };
 
@@ -1262,6 +1293,19 @@ class SWP : public ArmInstruction {
     }
 };
 
+class BFC : public BitsFieldInstruction {
+ public:
+    BFC(CpuCortex_Functional *icpu) :
+        BitsFieldInstruction(icpu, "BFC", "????0111110??????????????0011111") {}
+};
+
+class BFI : public BitsFieldInstruction {
+ public:
+    BFI(CpuCortex_Functional *icpu) :
+        BitsFieldInstruction(icpu, "BFI", "????0111110??????????????001????") {}
+};
+
+
 void CpuCortex_Functional::addArm7tmdiIsa() {
     isaTableArmV7_[ARMV7_BX] = new BX(this);
     isaTableArmV7_[ARMV7_B] = new B(this);
@@ -1318,6 +1362,8 @@ void CpuCortex_Functional::addArm7tmdiIsa() {
     isaTableArmV7_[ARMV7_MOVW] = new MOVW(this);
     isaTableArmV7_[ARMV7_UDIV] = new UDIV(this);
     isaTableArmV7_[ARMV7_SDIV] = new SDIV(this);
+    isaTableArmV7_[ARMV7_BFC] = new BFC(this);
+    isaTableArmV7_[ARMV7_BFI] = new BFI(this);
 }
 
 }  // namespace debugger

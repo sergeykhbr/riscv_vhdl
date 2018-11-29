@@ -229,6 +229,15 @@ EIsaArmV7 decoder_arm(uint32_t ti, char *errmsg, size_t errsz) {
                 } else {
                     ret = ARMV7_SDIV;
                 }
+            } else if ((ti & 0x0FE00070) == 0x7C000010) {
+                /* BFC      ????0111_110?????_????????_?0011111
+                   BFI      ????0111_110?????_????????_?001????
+                */
+                if ((ti & 0xF) == 0xF) {
+                    ret = ARMV7_BFC;
+                } else {
+                    ret = ARMV7_BFI;
+                }
             } else if ((ti & 0x0FC000F0) == 0x06C00070) {
                 /*
                     "UXTB16",  "????0110_11001111_????????_0111????"

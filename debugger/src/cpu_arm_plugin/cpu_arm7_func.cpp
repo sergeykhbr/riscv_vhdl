@@ -112,11 +112,6 @@ void CpuCortex_Functional::reset(bool active) {
 GenericInstruction *CpuCortex_Functional::decodeInstruction(Reg64Type *cache) {
     ArmInstruction *instr = NULL;
     uint32_t ti = cacheline_[0].buf32[0];
-#if 1
-    if (getPC() == 0x10000ba8) {
-        bool st = true;
-    }
-#endif
 
     EIsaArmV7 etype = decoder_arm(ti, errmsg_, sizeof(errmsg_));
     if (etype < ARMV7_Total) {

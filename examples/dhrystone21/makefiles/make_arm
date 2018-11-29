@@ -10,13 +10,13 @@ INCL_KEY=-I
 DIR_KEY=-B
 
 INCL_PATH=\
-	$(TOP_DIR)common \
-	$(TOP_DIR)dhrystone21/src
+	$(TOP_DIR)../common \
+	$(TOP_DIR)src
 
 # source files directories list:
 SRC_PATH = \
-	$(TOP_DIR)dhrystone21/src \
-	$(TOP_DIR)dhrystone21/src/dhry
+	$(TOP_DIR)src \
+	$(TOP_DIR)src/dhry
 
 LIB_NAMES = \
 	gcc \
