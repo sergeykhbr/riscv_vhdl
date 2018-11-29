@@ -66,7 +66,6 @@ Target             | Git tag | Dhrystone<br> per sec,<br> -O0 | Dhrystone<br> pe
 RISC-V simulator   | v6.0    | **65652.0** | **76719.0**   | Ubuntu GNU GCC 6.1.0 toolchain RV64IMA custom build
 "Rocket" CPU       | v6.0    | -           | **23999.0**   | GCC 6.1.0
 "River" CPU        | v6.0    | -           | **35121.0**   | GCC 6.1.0
--                  | -       | -           | -             | -
 RISC-V simulator   | latest  | **76824.0** | **176469.0**  | GCC 7.1.1 with the compressed instructions set
 ARM simulator      | latest  | **78451.0** | **162600.0**  | arm-none-eabi-gcc 7.2.0, ARM ISA only
 "River" CPU        | latest  | **29440.0** | **69605.0**   | GCC 7.1.1 with the compressed instructions set
