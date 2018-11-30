@@ -71,7 +71,7 @@ ARM simulator      | latest  | **78451.0** | **162600.0**  | arm-none-eabi-gcc 7
 "River" CPU        | latest  | **29440.0** | **69605.0**   | GCC 7.1.1 with the compressed instructions set
 "LEON3" SPARC V8   | No      | **48229.0** | **119515.0**  | sparc-elf-gcc 4.4.2 with the custom FPGA system
 Cortex-R5 ARM      | No      | soon        | soon          | arm-none-eabi-gcc 7.2.0 with the custom FPGA system
-Cortex-M3 Thumb2   | arm_vhdl | soon       | soon          | arm-none-eabi-gcc 7.2.0 with the custom FPGA system
+Cortex-M3 Thumb2   | [arm_vhdl](https://github.com/sergeykhbr/arm_vhdl) | soon       | soon          | arm-none-eabi-gcc 7.2.0 with the custom FPGA system
 
 Access to all memory banks and peripheries for all targets (including ARM and Leon3) is made 
 in the same clock domain and always is
