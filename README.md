@@ -1,4 +1,4 @@
-System-On-Chip template based on synthesisable processor compliant with the RISC-V architecture.
+System-On-Chip template based on synthesizable processor compliant with the RISC-V architecture.
 =====================
 
 This repository provides open source System-on-Chip implementation based on
@@ -66,18 +66,26 @@ Target             | Git tag | Dhrystone<br> per sec,<br> -O0 | Dhrystone<br> pe
 RISC-V simulator   | v6.0    | **65652.0** | **76719.0**   | Ubuntu GNU GCC 6.1.0 toolchain RV64IMA custom build
 "Rocket" CPU       | v6.0    | -           | **23999.0**   | GCC 6.1.0
 "River" CPU        | v6.0    | -           | **35121.0**   | GCC 6.1.0
-RISC-V simulator   | latest  | **76824.0** | **176469.0**  | GCC 7.1.1 with the compressed instructions set
-ARM simulator      | latest  | **78451.0** | **162600.0**  | arm-none-eabi-gcc 7.2.0, ARM ISA only
-"River" CPU        | latest  | **29440.0** | **69605.0**   | GCC 7.1.1 with the compressed instructions set
-"LEON3" SPARC V8   | No      | **48229.0** | **119515.0**  | sparc-elf-gcc 4.4.2 with the custom FPGA system
-Cortex-R5 ARM      | No      | soon        | soon          | arm-none-eabi-gcc 7.2.0 with the custom FPGA system
-Cortex-M3 Thumb2   | [arm_vhdl](https://github.com/sergeykhbr/arm_vhdl) | soon       | soon          | arm-none-eabi-gcc 7.2.0 with the custom FPGA system
+RISC-V simulator   | latest  | **76824.0** | **176469.0**  | *GCC 7.1.1* with the compressed instructions set
+"River" CPU        | latest  | **29440.0** | **69605.0**   | *GCC 7.1.1* with the compressed instructions set
+ARM simulator      | latest  | **78451.0** | **162600.0**  | *arm-none-eabi-gcc 7.2.0*, ARM ISA only
+Cortex-R5 ARM      | No      | **20561.0** | **42401.0**   | *arm-none-eabi-gcc 7.2.0*, custom FPGA system:<br> Single-Core, MPU enabled, **Caches disabled**
+Cortex-R5 ARM      | No      | **54052.0** | **132446.0**  | *arm-none-eabi-gcc 7.2.0*, custom FPGA system:<br> Single-Core, MPU enabled, **Caches enabled**
+Cortex-M3 Thumb2   | [arm_vhdl](https://github.com/sergeykhbr/arm_vhdl) | soon       | soon          | *arm-none-eabi-gcc 7.2.0*, custom FPGA system
+"LEON3" SPARC V8   | No      | **48229.0** | **119515.0**  | *sparc-elf-gcc 4.4.2*, custom FPGA system
 
 Access to all memory banks and peripheries for all targets (including ARM and Leon3) is made 
 in the same clock domain and always is
-one clock(without wait-states). So, this benchmark 
+one clock (without wait-states). So, this benchmark 
 result (**Dhrystone per seconds**) shows performance of the CPU with integer 
 instructions and degradation of the CPI relative ideal (simulation) case.
+
+CPU         | Clocks-Per-Instruction,<br> CPI | Description.
+------------|:-------:|:------------------------------
+Cortext-R5  | 1.22    | This is **dual-issue** processor capable to execute a pair of instructions per<br> one clock. It's a very good but quite expensive CPU.
+LEON3       | 1.5     | CPI information from [here](https://www.gaisler.com/index.php/products/simulators/tsim).
+River       | 2.5     | Free-to-use and highly customizable CPU but, I suppose,<br> there's a lot of things could be improved.
+Cortex-M3   | soon    | RTL is under development.
 
    **Since the tag 'v7.0' RIVER CPU is the main processor in the system and all issues
      related to Rocket-chip instance will be supported only by request.**

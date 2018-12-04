@@ -15,7 +15,8 @@ void printHelp() {
            "the size will be computed\n");
     printf("    -l    bytes per line (with -h only). Default 16 bytes/128 "
            "bits.\n");
-    printf("    -o    output file name\n");
+    printf("    -o    output file name1\n");
+    printf("    -o    output file name0 <optional>\n");
     printf("Example\n");
     printf("    elf2rawx input_file_name -h -f 192168 -l 8 -o "
            "output_file_name\n");
@@ -32,7 +33,7 @@ int main(int argc, char* argv[]) {
     int iFixedSizeBytes = 0;
     int iBytesPerLine = 16;
     int infile_index = 1;
-    int outfile_index = 3;
+    AttributeType outFiles(Attr_List);
     for (int i=1; i<argc; i++) {
         if (strcmp(argv[i], "-r") == 0) {         // generate raw image file
             outfmt = Format_RAW_IMAGE;
@@ -43,16 +44,16 @@ int main(int argc, char* argv[]) {
         } else if (strcmp(argv[i], "-l") == 0) {  // bytes per hex-line
             iBytesPerLine = strtol(argv[++i], NULL, 0);
         } else if (strcmp(argv[i], "-o") == 0) {  // output file name
-            outfile_index = ++i;
+            AttributeType filename;
+            filename.make_string(argv[++i]);
+            outFiles.add_to_list(&filename);
         } else {
             infile_index = i;
         }
     };
 
     std::string arg1(argv[infile_index]);
-    std::string arg3(argv[outfile_index]);
     std::string in = std::string(arg1.begin(), arg1.end());
-    std::string out = std::string(arg3.begin(), arg3.end());
 
     ElfReader elf(in.c_str());
     if (elf.loadableSectionTotal() == 0) {
@@ -62,10 +63,10 @@ int main(int argc, char* argv[]) {
 
     switch (outfmt) {
     case Format_RAW_IMAGE:
-        elf.writeRawImage(out.c_str(), iFixedSizeBytes);
+        elf.writeRawImage(&outFiles, iFixedSizeBytes);
         break;
     case Format_ROMHEX:
-        elf.writeRomHexArray(out.c_str(),
+        elf.writeRomHexArray(&outFiles,
                              iBytesPerLine, iFixedSizeBytes);
         break;
     default:

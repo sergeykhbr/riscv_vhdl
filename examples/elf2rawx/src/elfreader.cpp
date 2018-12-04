@@ -235,7 +235,7 @@ void ElfReader::processDebugSymbol(SectionHeaderType *sh) {
     }
 }
 
-void ElfReader::writeRawImage(const char *file_name, uint32_t fixed_size) {
+void ElfReader::writeRawImage(AttributeType *ofiles, uint32_t fixed_size) {
 #if 0
     SrcElement *e;
     std::ofstream osraw(file_name, std::ios::binary);
@@ -273,7 +273,7 @@ void ElfReader::writeRawImage(const char *file_name, uint32_t fixed_size) {
 #endif
 }
 
-void ElfReader::writeRomHexArray(const char *filename,
+void ElfReader::writeRomHexArray(AttributeType *ofiles,
                                  int bytes_per_line,
                                  int fixed_size) {
     bool st = true;
@@ -287,10 +287,15 @@ void ElfReader::writeRomHexArray(const char *filename,
         sz = fixed_size;
     }
 
-    FILE *fp = fopen(filename, "wb");
+    FILE *fp = fopen((*ofiles)[0u].to_string(), "wb");
+    FILE *fplsb = 0;
     if (!fp) {
-        printf("elf2rawx error: can't create '%s' file\n", filename);
+        printf("elf2rawx error: can't create '%s' file\n",
+                (*ofiles)[0u].to_string());
         return ;
+    }
+    if (ofiles->size() == 2) {
+        fplsb = fopen((*ofiles)[1].to_string(), "wb");
     }
 
     uint8_t *img = new uint8_t[static_cast<int>(sz)];
@@ -317,11 +322,26 @@ void ElfReader::writeRomHexArray(const char *filename,
         tstr_sz = 0;
         startidx = static_cast<int>((i + 1)*bytes_per_line - 1);
         stopidx = static_cast<int>(i*bytes_per_line);
-        for (int n = startidx; n >= stopidx; n--) {
-            tstr_sz += sprintf(&tstr[tstr_sz], "%02x", img[n]);
+        if (fplsb == 0) {
+            /** Single file */
+            for (int n = startidx; n >= stopidx; n--) {
+                tstr_sz += sprintf(&tstr[tstr_sz], "%02x", img[n]);
+            }
+            tstr_sz += sprintf(&tstr[tstr_sz], "%s", "\r\n");
+            fwrite(tstr, tstr_sz, 1, fp);
+        } else {
+            /** Couple of files */
+            char tstr2[128];
+            int tstr2_sz = 0;
+            for (int n = startidx; n >= (stopidx+bytes_per_line/2); n--) {
+                tstr_sz += sprintf(&tstr[tstr_sz], "%02x", img[n]);
+                tstr2_sz += sprintf(&tstr2[tstr2_sz], "%02x", img[n - bytes_per_line/2]);
+            }
+            tstr_sz += sprintf(&tstr[tstr_sz], "%s", "\r\n");
+            tstr2_sz += sprintf(&tstr2[tstr2_sz], "%s", "\r\n");
+            fwrite(tstr, tstr_sz, 1, fp);
+            fwrite(tstr2, tstr2_sz, 1, fplsb);
         }
-        tstr_sz += sprintf(&tstr[tstr_sz], "%s", "\r\n");
-        fwrite(tstr, tstr_sz, 1, fp);
         byte_cnt++;
     }
     

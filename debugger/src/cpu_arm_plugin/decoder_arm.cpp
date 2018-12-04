@@ -229,7 +229,7 @@ EIsaArmV7 decoder_arm(uint32_t ti, char *errmsg, size_t errsz) {
                 } else {
                     ret = ARMV7_SDIV;
                 }
-            } else if ((ti & 0x0FE00070) == 0x7C000010) {
+            } else if ((ti & 0x0FE00070) == 0x07C00010) {
                 /* BFC      ????0111_110?????_????????_?0011111
                    BFI      ????0111_110?????_????????_?001????
                 */

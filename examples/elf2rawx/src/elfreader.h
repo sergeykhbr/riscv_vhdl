@@ -46,8 +46,8 @@ class ElfReader {
     }
 
 
-    void writeRawImage(const char *file_name, uint32_t fixed_size = 0);
-    void writeRomHexArray(const char *file_name,
+    void writeRawImage(AttributeType *ofiles, uint32_t fixed_size = 0);
+    void writeRomHexArray(AttributeType *ofiles,
                           int bytes_per_line,
                           int fixed_size = 0);
 
