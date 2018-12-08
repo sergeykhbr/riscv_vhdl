@@ -325,7 +325,7 @@ void ElfReader::writeRomHexArray(AttributeType *ofiles,
         if (fplsb == 0) {
             /** Single file */
             for (int n = startidx; n >= stopidx; n--) {
-                tstr_sz += sprintf(&tstr[tstr_sz], "%02x", img[n]);
+                tstr_sz += sprintf(&tstr[tstr_sz], "%02X", img[n]);
             }
             tstr_sz += sprintf(&tstr[tstr_sz], "%s", "\r\n");
             fwrite(tstr, tstr_sz, 1, fp);
@@ -334,8 +334,8 @@ void ElfReader::writeRomHexArray(AttributeType *ofiles,
             char tstr2[128];
             int tstr2_sz = 0;
             for (int n = startidx; n >= (stopidx+bytes_per_line/2); n--) {
-                tstr_sz += sprintf(&tstr[tstr_sz], "%02x", img[n]);
-                tstr2_sz += sprintf(&tstr2[tstr2_sz], "%02x", img[n - bytes_per_line/2]);
+                tstr_sz += sprintf(&tstr[tstr_sz], "%02X", img[n]);
+                tstr2_sz += sprintf(&tstr2[tstr2_sz], "%02X", img[n - bytes_per_line/2]);
             }
             tstr_sz += sprintf(&tstr[tstr_sz], "%s", "\r\n");
             tstr2_sz += sprintf(&tstr2[tstr2_sz], "%s", "\r\n");

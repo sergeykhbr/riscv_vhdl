@@ -708,6 +708,7 @@ void InstrExecute::comb() {
         v.ext_irq_pulser = 0;
         v.trap_code_waiting = 0;
         v.trap_ena = 0;
+        v.breakpoint = 0;
         v.trap_code = 0;
         v.trap_pc = 0;
         v.call = 0;

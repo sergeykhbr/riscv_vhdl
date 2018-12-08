@@ -755,6 +755,7 @@ begin
         v.ext_irq_pulser := '0';
         v.trap_code_waiting := (others => '0');
         v.trap_ena := '0';
+        v.breakpoint := '0';
         v.trap_code := (others => '0');
         v.trap_pc := (others => '0');
         v.call := '0';
