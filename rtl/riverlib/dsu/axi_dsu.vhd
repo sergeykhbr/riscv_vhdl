@@ -95,6 +95,7 @@ type registers is record
   soft_rst : std_logic;
   -- Platform statistic:
   clk_cnt : std_logic_vector(63 downto 0);
+  miss_irq : std_logic;
   miss_access_cnt : std_logic_vector(63 downto 0);
   miss_access_addr : std_logic_vector(CFG_NASTI_ADDR_BITS-1 downto 0);
   util_w_cnt : mst_utilization_type;
@@ -122,7 +123,8 @@ begin
     
     -- Update statistic:
     v.clk_cnt := r.clk_cnt + 1;
-    if i_miss_irq = '1' then
+    v.miss_irq := i_miss_irq;
+    if r.miss_irq = '1' then
       v.miss_access_addr := i_miss_addr;
       v.miss_access_cnt := r.miss_access_cnt + 1;
     end if;
@@ -238,6 +240,7 @@ begin
        v.rdata := (others => '0');
        v.soft_rst := '0';
        v.clk_cnt := (others => '0');
+       v.miss_irq := '0';
        v.miss_access_cnt := (others => '0');
        v.miss_access_addr := (others => '0');
        v.util_w_cnt := (others => (others => '0'));
