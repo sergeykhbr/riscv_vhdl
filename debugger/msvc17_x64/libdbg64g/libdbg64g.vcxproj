@@ -1,0 +1,205 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{B00A8DCF-6363-49B6-BE4D-40B4F867E7FB}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>libdbg64g</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(SolutionDir)\..\win64build\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)$(ProjectName)\$(Configuration)\Tmp\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(SolutionDir)\..\win64build\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)$(ProjectName)\$(Configuration)\Tmp\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;DLL_EXPORT;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SolutionDir)../src/common;$(SolutionDir)../src/libdbg64g/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ModuleDefinitionFile>$(ProjectDir)exportmap.def</ModuleDefinitionFile>
+      <AdditionalDependencies>Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SolutionDir)../src/common;$(SolutionDir)../src/libdbg64g/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ModuleDefinitionFile>$(ProjectDir)exportmap.def</ModuleDefinitionFile>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\common\attribute.cpp" />
+    <ClCompile Include="..\..\src\common\autobuffer.cpp" />
+    <ClCompile Include="..\..\src\libdbg64g\api_core.cpp" />
+    <ClCompile Include="..\..\src\libdbg64g\api_utils.cpp" />
+    <ClCompile Include="..\..\src\libdbg64g\services\bus\bus.cpp" />
+    <ClCompile Include="..\..\src\libdbg64g\services\comport\comport.cpp" />
+    <ClCompile Include="..\..\src\libdbg64g\services\comport\com_win.cpp" />
+    <ClCompile Include="..\..\src\libdbg64g\services\console\autocompleter.cpp" />
+    <ClCompile Include="..\..\src\libdbg64g\services\console\console.cpp" />
+    <ClCompile Include="..\..\src\libdbg64g\services\debug\edcl.cpp" />
+    <ClCompile Include="..\..\src\libdbg64g\services\debug\serial_dbglink.cpp" />
+    <ClCompile Include="..\..\src\libdbg64g\services\debug\udp_dbglink.cpp" />
+    <ClCompile Include="..\..\src\libdbg64g\services\elfloader\elfreader.cpp" />
+    <ClCompile Include="..\..\src\libdbg64g\services\exec\cmdexec.cpp" />
+    <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_busutil.cpp" />
+    <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_cpi.cpp" />
+    <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_disas.cpp" />
+    <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_exit.cpp" />
+    <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_isrunning.cpp" />
+    <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_loadbin.cpp" />
+    <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_loadelf.cpp" />
+    <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_loadsrec.cpp" />
+    <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_log.cpp" />
+    <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_memdump.cpp" />
+    <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_read.cpp" />
+    <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_halt.cpp" />
+    <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_reset.cpp" />
+    <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_run.cpp" />
+    <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_stack.cpp" />
+    <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_status.cpp" />
+    <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_symb.cpp" />
+    <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_write.cpp" />
+    <ClCompile Include="..\..\src\libdbg64g\services\mem\memsim.cpp" />
+    <ClCompile Include="..\..\src\libdbg64g\services\remote\tcpclient.cpp" />
+    <ClCompile Include="..\..\src\libdbg64g\services\remote\tcpcmd.cpp" />
+    <ClCompile Include="..\..\src\libdbg64g\services\remote\tcpserver.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\common\api_core.h" />
+    <ClInclude Include="..\..\src\common\api_types.h" />
+    <ClInclude Include="..\..\src\common\api_utils.h" />
+    <ClInclude Include="..\..\src\common\attribute.h" />
+    <ClInclude Include="..\..\src\common\autobuffer.h" />
+    <ClInclude Include="..\..\src\common\coreservices\iclklistener.h" />
+    <ClInclude Include="..\..\src\common\coreservices\iclock.h" />
+    <ClInclude Include="..\..\src\common\coreservices\icmdexec.h" />
+    <ClInclude Include="..\..\src\common\coreservices\icommand.h" />
+    <ClInclude Include="..\..\src\common\coreservices\iautocomplete.h" />
+    <ClInclude Include="..\..\src\common\coreservices\icpuarm.h" />
+    <ClInclude Include="..\..\src\common\coreservices\icpufunctional.h" />
+    <ClInclude Include="..\..\src\common\coreservices\icpugen.h" />
+    <ClInclude Include="..\..\src\common\coreservices\icpuriscv.h" />
+    <ClInclude Include="..\..\src\common\coreservices\icpu_hc08.h" />
+    <ClInclude Include="..\..\src\common\coreservices\idisplay.h" />
+    <ClInclude Include="..\..\src\common\coreservices\idsugen.h" />
+    <ClInclude Include="..\..\src\common\coreservices\ielfreader.h" />
+    <ClInclude Include="..\..\src\common\coreservices\ii2c.h" />
+    <ClInclude Include="..\..\src\common\coreservices\iioport.h" />
+    <ClInclude Include="..\..\src\common\coreservices\ikeyboard.h" />
+    <ClInclude Include="..\..\src\common\coreservices\ilink.h" />
+    <ClInclude Include="..\..\src\common\coreservices\imemop.h" />
+    <ClInclude Include="..\..\src\common\coreservices\imotor.h" />
+    <ClInclude Include="..\..\src\common\coreservices\ipll.h" />
+    <ClInclude Include="..\..\src\common\coreservices\irawlistener.h" />
+    <ClInclude Include="..\..\src\common\coreservices\ireset.h" />
+    <ClInclude Include="..\..\src\common\coreservices\isensor.h" />
+    <ClInclude Include="..\..\src\common\coreservices\iserial.h" />
+    <ClInclude Include="..\..\src\common\coreservices\isound.h" />
+    <ClInclude Include="..\..\src\common\coreservices\isrccode.h" />
+    <ClInclude Include="..\..\src\common\coreservices\itap.h" />
+    <ClInclude Include="..\..\src\common\coreservices\ithread.h" />
+    <ClInclude Include="..\..\src\common\coreservices\iwire.h" />
+    <ClInclude Include="..\..\src\common\iattr.h" />
+    <ClInclude Include="..\..\src\common\iclass.h" />
+    <ClInclude Include="..\..\src\common\iface.h" />
+    <ClInclude Include="..\..\src\common\ihap.h" />
+    <ClInclude Include="..\..\src\common\iservice.h" />
+    <ClInclude Include="..\..\src\libdbg64g\include\dirent.h" />
+    <ClInclude Include="..\..\src\libdbg64g\services\bus\bus.h" />
+    <ClInclude Include="..\..\src\libdbg64g\services\comport\comport.h" />
+    <ClInclude Include="..\..\src\libdbg64g\services\console\autocompleter.h" />
+    <ClInclude Include="..\..\src\libdbg64g\services\console\console.h" />
+    <ClInclude Include="..\..\src\libdbg64g\services\debug\edcl.h" />
+    <ClInclude Include="..\..\src\libdbg64g\services\debug\edcl_types.h" />
+    <ClInclude Include="..\..\src\libdbg64g\services\debug\serial_dbglink.h" />
+    <ClInclude Include="..\..\src\libdbg64g\services\debug\udp_dbglink.h" />
+    <ClInclude Include="..\..\src\libdbg64g\services\elfloader\elfreader.h" />
+    <ClInclude Include="..\..\src\libdbg64g\services\elfloader\elf_types.h" />
+    <ClInclude Include="..\..\src\libdbg64g\services\exec\cmdexec.h" />
+    <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_busutil.h" />
+    <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_cpi.h" />
+    <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_disas.h" />
+    <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_exit.h" />
+    <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_isrunning.h" />
+    <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_loadbin.h" />
+    <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_loadelf.h" />
+    <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_loadsrec.h" />
+    <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_log.h" />
+    <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_memdump.h" />
+    <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_read.h" />
+    <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_halt.h" />
+    <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_reset.h" />
+    <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_run.h" />
+    <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_stack.h" />
+    <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_status.h" />
+    <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_symb.h" />
+    <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_write.h" />
+    <ClInclude Include="..\..\src\libdbg64g\services\mem\memsim.h" />
+    <ClInclude Include="..\..\src\libdbg64g\services\remote\tcpclient.h" />
+    <ClInclude Include="..\..\src\libdbg64g\services\remote\tcpcmd.h" />
+    <ClInclude Include="..\..\src\libdbg64g\services\remote\tcpserver.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

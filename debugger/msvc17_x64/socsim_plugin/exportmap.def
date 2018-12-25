@@ -1,0 +1,3 @@
+LIBRARY socsim_plugin
+EXPORTS
+	plugin_init

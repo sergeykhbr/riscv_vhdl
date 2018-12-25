@@ -1,0 +1,147 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="common">
+      <UniqueIdentifier>{f5a16e1a-fd0c-436b-9f2e-d8942e1ccf15}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="common\coreservices">
+      <UniqueIdentifier>{c38cf23f-4095-49ba-9e73-efe727a3c527}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{f72d2a1b-34ac-4ff6-b8b2-99c765d329d2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\srcproc">
+      <UniqueIdentifier>{59ced6ee-7796-4e40-bae3-95c7735fbe2f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="common\generic">
+      <UniqueIdentifier>{83001fb3-54a8-4519-8a30-b3a7dfeab4b6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\cmds">
+      <UniqueIdentifier>{6d608113-0c84-4026-be02-44d352c9fe54}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\common\attribute.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\common\autobuffer.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\common\async_tqueue.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\common\generic\mapreg.cpp">
+      <Filter>common\generic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\common\generic\cpu_generic.cpp">
+      <Filter>common\generic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\common\generic\iotypes.cpp">
+      <Filter>common\generic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cpu_arm_plugin\arm7tdmi.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cpu_arm_plugin\cpu_arm7_func.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cpu_arm_plugin\instructions.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cpu_arm_plugin\plugin_init.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cpu_arm_plugin\srcproc\srcproc.cpp">
+      <Filter>src\srcproc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\common\generic\cmd_br_generic.cpp">
+      <Filter>common\generic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cpu_arm_plugin\cmds\cmd_br_arm7.cpp">
+      <Filter>src\cmds</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\common\generic\cmd_reg_generic.cpp">
+      <Filter>common\generic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\common\generic\cmd_regs_generic.cpp">
+      <Filter>common\generic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cpu_arm_plugin\decoder_arm.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\common\api_types.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\api_utils.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\attribute.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\autobuffer.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\iattr.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\iclass.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\iface.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\iservice.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\async_tqueue.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\coreservices\iclock.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\generic\mapreg.h">
+      <Filter>common\generic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\generic\cpu_generic.h">
+      <Filter>common\generic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\generic\iotypes.h">
+      <Filter>common\generic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_arm_plugin\cpu_arm7_func.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_arm_plugin\instructions.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_arm_plugin\arm-isa.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\coreservices\icpuarm.h">
+      <Filter>common\coreservices</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_arm_plugin\srcproc\srcproc.h">
+      <Filter>src\srcproc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\generic\cmd_br_generic.h">
+      <Filter>common\generic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_arm_plugin\cmds\cmd_br_arm7.h">
+      <Filter>src\cmds</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_arm_plugin\cmds\cmd_reg_arm7.h">
+      <Filter>src\cmds</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_arm_plugin\cmds\cmd_regs_arm7.h">
+      <Filter>src\cmds</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\generic\cmd_reg_generic.h">
+      <Filter>common\generic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\generic\cmd_regs_generic.h">
+      <Filter>common\generic</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

@@ -49,6 +49,10 @@ UartEditor::~UartEditor() {
 }
 
 void UartEditor::keyPressEvent(QKeyEvent *e) {
+    QString str1 = e->text();
+    if (str1.size() == 0) {
+        return;
+    }
     char symb = keyevent2char(e);
     if (uart_) {
         uart_->writeData(&symb, 1);

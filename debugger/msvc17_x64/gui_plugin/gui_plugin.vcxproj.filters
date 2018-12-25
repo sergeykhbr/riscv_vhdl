@@ -1,0 +1,230 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="common">
+      <UniqueIdentifier>{f5a16e1a-fd0c-436b-9f2e-d8942e1ccf15}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MainWindow">
+      <UniqueIdentifier>{0e78e5f9-ec53-44ca-924d-c7b999faf36b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="PeriphWidgets">
+      <UniqueIdentifier>{3580c681-f78c-4191-af06-26b34163ce9e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ControlWidget">
+      <UniqueIdentifier>{eb6312ac-f6ac-499e-86c1-47d8714b3d97}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="CpuWidget">
+      <UniqueIdentifier>{a0abd6c8-969c-4b70-88c7-cf1434f63f1b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GnssWidgets">
+      <UniqueIdentifier>{e364f867-cafb-45ff-b74d-d1799078831c}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\common\attribute.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\common\autobuffer.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\gui_plugin.cpp" />
+    <ClCompile Include="..\..\src\gui_plugin\MainWindow\DbgMainWindow.cpp">
+      <Filter>MainWindow</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\MainWindow\MdiAreaWidget.cpp">
+      <Filter>MainWindow</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\PeriphWidgets\GpioWidget.cpp">
+      <Filter>PeriphWidgets</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\ControlWidget\ConsoleWidget.cpp">
+      <Filter>ControlWidget</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\PeriphWidgets\UartWidget.cpp">
+      <Filter>PeriphWidgets</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\RegsViewWidget.cpp">
+      <Filter>CpuWidget</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\RegWidget.cpp">
+      <Filter>CpuWidget</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\ControlWidget\PnpWidget.cpp">
+      <Filter>ControlWidget</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\PeriphWidgets\LedArea.cpp">
+      <Filter>PeriphWidgets</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\PeriphWidgets\UartEditor.cpp">
+      <Filter>PeriphWidgets</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\PeriphWidgets\DipArea.cpp">
+      <Filter>PeriphWidgets</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\MemArea.cpp">
+      <Filter>CpuWidget</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\MemControl.cpp">
+      <Filter>CpuWidget</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\MemViewWidget.cpp">
+      <Filter>CpuWidget</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\AsmArea.cpp">
+      <Filter>CpuWidget</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\AsmControl.cpp">
+      <Filter>CpuWidget</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\AsmViewWidget.cpp">
+      <Filter>CpuWidget</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\SymbolBrowserArea.cpp">
+      <Filter>CpuWidget</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\SymbolBrowserControl.cpp">
+      <Filter>CpuWidget</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\SymbolBrowserWidget.cpp">
+      <Filter>CpuWidget</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\StackTraceArea.cpp">
+      <Filter>CpuWidget</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\StackTraceWidget.cpp">
+      <Filter>CpuWidget</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\MainWindow\ebreakhandler.cpp">
+      <Filter>MainWindow</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\GnssWidgets\StreetMapObject.cpp">
+      <Filter>GnssWidgets</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\GnssWidgets\MapWidget.cpp">
+      <Filter>GnssWidgets</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\qt_wrapper.cpp" />
+    <ClCompile Include="..\..\src\gui_plugin\GnssWidgets\linecommon.cpp">
+      <Filter>GnssWidgets</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\GnssWidgets\PlotWidget.cpp">
+      <Filter>GnssWidgets</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\common\async_tqueue.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\common\api_types.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\api_utils.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\attribute.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\autobuffer.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\iattr.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\iclass.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\iface.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\iservice.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\igui.h" />
+    <ClInclude Include="..\..\src\gui_plugin\gui_plugin.h" />
+    <ClInclude Include="..\..\src\gui_plugin\MainWindow\DbgMainWindow.h">
+      <Filter>MainWindow</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\MainWindow\MdiAreaWidget.h">
+      <Filter>MainWindow</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\GpioWidget.h">
+      <Filter>PeriphWidgets</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\ControlWidget\ConsoleWidget.h">
+      <Filter>ControlWidget</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\UartWidget.h">
+      <Filter>PeriphWidgets</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\RegsViewWidget.h">
+      <Filter>CpuWidget</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\RegWidget.h">
+      <Filter>CpuWidget</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\ControlWidget\PnpWidget.h">
+      <Filter>ControlWidget</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\LedArea.h">
+      <Filter>PeriphWidgets</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\UartEditor.h">
+      <Filter>PeriphWidgets</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\DipArea.h">
+      <Filter>PeriphWidgets</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\MemArea.h">
+      <Filter>CpuWidget</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\MemControl.h">
+      <Filter>CpuWidget</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\MemViewWidget.h">
+      <Filter>CpuWidget</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\AsmArea.h">
+      <Filter>CpuWidget</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\AsmControl.h">
+      <Filter>CpuWidget</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\AsmViewWidget.h">
+      <Filter>CpuWidget</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\SymbolBrowserArea.h">
+      <Filter>CpuWidget</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\SymbolBrowserControl.h">
+      <Filter>CpuWidget</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\SymbolBrowserWidget.h">
+      <Filter>CpuWidget</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\StackTraceArea.h">
+      <Filter>CpuWidget</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\StackTraceWidget.h">
+      <Filter>CpuWidget</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\MainWindow\ebreakhandler.h">
+      <Filter>MainWindow</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\GnssWidgets\StreetMapObject.h">
+      <Filter>GnssWidgets</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\GnssWidgets\MapWidget.h">
+      <Filter>GnssWidgets</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\qt_wrapper.h" />
+    <ClInclude Include="..\..\src\gui_plugin\GnssWidgets\linecommon.h">
+      <Filter>GnssWidgets</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\GnssWidgets\PlotWidget.h">
+      <Filter>GnssWidgets</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\async_tqueue.h">
+      <Filter>common</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

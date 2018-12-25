@@ -12,3 +12,5 @@ linuxbuild
 win32build
 win64build
 moc_*.h
+.vs
+Tmp
