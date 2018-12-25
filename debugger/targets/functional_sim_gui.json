@@ -124,8 +124,8 @@
                 ['SysBusMasterID',0,'Used to gather Bus statistic'],
                 ['SysBus','axi0'],
                 ['DbgBus','dbgbus0'],
-                ['CmdExecutor','cmdexec0']
-                ['Tap','edcltap']
+                ['CmdExecutor','cmdexec0'],
+                ['Tap','edcltap'],
                 ['SysBusWidthBytes',8,'Split dma transactions from CPU'],
                 ['SourceCode','src0'],
                 ['ListExtISA',['I','M','A','C']],

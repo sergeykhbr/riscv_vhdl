@@ -60,6 +60,7 @@
     <ClCompile Include="..\..\src\cpu_fnc_plugin\cmds\cmd_br_riscv.cpp">
       <Filter>cmds</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\cpu_fnc_plugin\cpu_stub_fpga.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\api_types.h">
@@ -127,5 +128,6 @@
     <ClInclude Include="..\..\src\cpu_fnc_plugin\cmds\cmd_regs_riscv.h">
       <Filter>cmds</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\cpu_fnc_plugin\cpu_stub_fpga.h" />
   </ItemGroup>
 </Project>

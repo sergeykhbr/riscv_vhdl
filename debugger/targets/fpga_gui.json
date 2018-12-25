@@ -52,6 +52,11 @@
                 ['LogFile','uart0.log'],
                 ['ComPortName','COM3'],
                 ['ComPortSpeed',115200]]}]},
+    {'Class':'CpuStubRiscVFpgaClass','Instances':[
+          {'Name':'cpustub0','Attr':[
+                ['CmdExecutor','cmdexec0'],
+                ['Tap','edcltap']
+                ]}]},
     {'Class':'ElfReaderServiceClass','Instances':[
           {'Name':'loader0','Attr':[
                 ['LogLevel',4],

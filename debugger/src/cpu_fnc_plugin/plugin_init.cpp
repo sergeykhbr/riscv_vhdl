@@ -15,6 +15,7 @@
  */
 
 #include "cpu_riscv_func.h"
+#include "cpu_stub_fpga.h"
 #include "srcproc/srcproc.h"
 
 namespace debugger {
@@ -22,6 +23,7 @@ namespace debugger {
 extern "C" void plugin_init(void) {
     REGISTER_CLASS_IDX(CpuRiver_Functional, 1);
     REGISTER_CLASS_IDX(RiscvSourceService, 2);
+    REGISTER_CLASS_IDX(CpuStubRiscVFpga, 3);
 }
 
 }  // namespace debugger
