@@ -142,12 +142,11 @@ extern "C" int RISCV_set_configuration(AttributeType *cfg) {
     }
 
     RISCV_printf(getInterface(IFACE_SERVICE), 0, "%s",
-    "\n**********************************************************\n"
+    "\n****************************************************************\n"
     "  System Emulator and Debugger\n"
-    "  Copyright (c) 2017 Sergey Khabarov.\n"
-    "  All rights reserved.\n"
-    "  e-mail: sergeykhbr@gmail.com\n"
-    "**********************************************************");
+    "  Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com.\n"
+    "  Licensed under the Apache License, Version 2.0.\n"
+    "******************************************************************");
 
     IHap *ihap;
     for (unsigned i = 0; i < listHap_.size(); i++) {

@@ -156,11 +156,15 @@ void CmdExecutor::processSimple(AttributeType *cmd, AttributeType *res) {
 
     ICommand *icmd;
     if (!(*cmd)[0u].is_string()) {
+        res->attr_free();
+        res->make_nil();
         RISCV_error("Wrong command format", NULL);
         return;
     }
 
     if ((*cmd)[0u].is_equal("help")) {
+        res->attr_free();
+        res->make_nil();
         if (cmd->size() == 1) {
             RISCV_printf0("** List of supported commands: **", NULL);
             for (unsigned i = 0; i < cmds_.size(); i++) {

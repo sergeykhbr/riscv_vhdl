@@ -102,6 +102,7 @@
     <ClCompile Include="..\..\src\cpu_arm_plugin\cmds\cmd_br_arm7.cpp" />
     <ClCompile Include="..\..\src\cpu_arm_plugin\cpu_arm7_func.cpp" />
     <ClCompile Include="..\..\src\cpu_arm_plugin\decoder_arm.cpp" />
+    <ClCompile Include="..\..\src\cpu_arm_plugin\decoder_thumb.cpp" />
     <ClCompile Include="..\..\src\cpu_arm_plugin\instructions.cpp" />
     <ClCompile Include="..\..\src\cpu_arm_plugin\plugin_init.cpp" />
     <ClCompile Include="..\..\src\cpu_arm_plugin\srcproc\srcproc.cpp" />
