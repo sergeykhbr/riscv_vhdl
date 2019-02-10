@@ -206,7 +206,7 @@ begin
     w_req_fire := w_req_ctrl_valid and w_o_req_ctrl_ready;
 
     if (w_o_req_mem_valid and i_req_mem_ready and not w_wait_response) = '1'
-       or r.double_req = '1' then
+       or (r.double_req and not w_wait_response) = '1' then
         v.iline_addr_req := wb_o_req_mem_addr;
     end if;
 
