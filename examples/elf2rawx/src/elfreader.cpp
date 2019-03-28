@@ -126,7 +126,11 @@ int ElfReader::loadSections() {
         }
 #endif
 
-        if (sh->get_type() == SHT_PROGBITS && (sh->get_flags() & SHF_ALLOC) != 0) {
+        if ((sh->get_type() == SHT_PROGBITS ||
+             sh->get_type() == SHT_INIT_ARRAY ||
+             sh->get_type() == SHT_FINI_ARRAY ||
+             sh->get_type() == SHT_PREINIT_ARRAY) &&
+             (sh->get_flags() & SHF_ALLOC) != 0) {
             /**
              * @brief   Instructions or other processor's information
              * @details This section holds information defined by the program, 
