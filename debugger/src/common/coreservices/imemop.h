@@ -130,6 +130,7 @@ class IMemoryOperation : public IFace {
     }
 
     virtual uint64_t getLength() { return length_.to_uint64(); }
+    virtual void setLength(uint64_t len) { return length_.make_uint64(len); }
 
     /** Higher value, higher priority */
     virtual int getPriority() { return priority_.to_int(); }

@@ -214,9 +214,6 @@
     <ClInclude Include="..\..\src\common\coreservices\iclock.h">
       <Filter>Source Files\common\coreservices</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\common\coreservices\iclklistener.h">
-      <Filter>Source Files\common\coreservices</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\common\coreservices\iwire.h">
       <Filter>Source Files\common\coreservices</Filter>
     </ClInclude>

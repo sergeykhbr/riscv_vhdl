@@ -130,7 +130,6 @@
     <ClInclude Include="..\..\src\common\api_utils.h" />
     <ClInclude Include="..\..\src\common\attribute.h" />
     <ClInclude Include="..\..\src\common\autobuffer.h" />
-    <ClInclude Include="..\..\src\common\coreservices\iclklistener.h" />
     <ClInclude Include="..\..\src\common\coreservices\iclock.h" />
     <ClInclude Include="..\..\src\common\coreservices\icmdexec.h" />
     <ClInclude Include="..\..\src\common\coreservices\icommand.h" />

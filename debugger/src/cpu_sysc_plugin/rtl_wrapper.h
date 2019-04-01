@@ -21,8 +21,8 @@
 #include "coreservices/imemop.h"
 #include "coreservices/ireset.h"
 #include "coreservices/icpugen.h"
+#include "coreservices/iclock.h"
 #include "coreservices/icpuriscv.h"
-#include "coreservices/iclklistener.h"
 #include "riverlib/river_cfg.h"
 #include <systemc.h>
 #include "api_utils.h"

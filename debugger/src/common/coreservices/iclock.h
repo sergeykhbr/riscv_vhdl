@@ -20,9 +20,18 @@
 #include <inttypes.h>
 #include <iface.h>
 #include <attribute.h>
-#include "iclklistener.h"
 
 namespace debugger {
+
+static const char *const IFACE_CLOCK_LISTENER = "IClockListener";
+
+class IClockListener : public IFace {
+ public:
+    IClockListener() : IFace(IFACE_CLOCK_LISTENER) {}
+
+    virtual void stepCallback(uint64_t t) = 0;
+};
+
 
 static const char *const IFACE_CLOCK = "IClock";
 
