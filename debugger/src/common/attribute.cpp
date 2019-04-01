@@ -328,58 +328,86 @@ void AttributeType::swap_list_item(unsigned n, unsigned m) {
 
 
 int partition(AttributeType *A, int lo, int hi, int lst_idx) {
-    AttributeType *pivot = &(*A)[hi];
-    bool do_swap;
+    AttributeType *pivot = &(*A)[lo];
     int i = lo - 1;
-    for (int j = lo; j < hi; j++) {
-        AttributeType &item = (*A)[j];
-        do_swap = false;
-        if (item.is_string()) {
-            if (strcmp(item.to_string(), pivot->to_string()) <= 0) {
-                do_swap = true;
+    int j = hi + 1;
+
+    while (1) {
+        while (++i < hi) {
+            AttributeType &item = (*A)[i];
+            if (item.is_string()) {
+                if (strcmp(item.to_string(), pivot->to_string()) < 0) {
+                    continue;
+                }
+            } else if (item.is_int64()) {
+                if (item.to_int64() < pivot->to_int64()) {
+                    continue;
+                }
+            } else if (item.is_uint64()) {
+                if (item.to_uint64() < pivot->to_uint64()) {
+                    continue;
+                }
+            } else if (item.is_list()) {
+                AttributeType &t1 = item[lst_idx];
+                if (t1.is_string() &&
+                    strcmp(t1.to_string(), (*pivot)[lst_idx].to_string()) < 0) {
+                    continue;
+                } else if (t1.is_int64() &&
+                    t1.to_int64() < (*pivot)[lst_idx].to_int64()) {
+                    continue;
+                } else if (t1.is_uint64() &&
+                    t1.to_uint64() < (*pivot)[lst_idx].to_uint64()) {
+                    continue;
+                }
             }
-        } else if (item.is_int64()) {
-            if (item.to_int64() <= pivot->to_int64()) {
-                do_swap = true;
-            }
-        } else if (item.is_uint64()) {
-            if (item.to_uint64() <= pivot->to_uint64()) {
-                do_swap = true;
-            }
-        } else if (item.is_list()) {
-            AttributeType &t1 = item[lst_idx];
-            if (t1.is_string() &&
-                strcmp(t1.to_string(), (*pivot)[lst_idx].to_string()) <= 0) {
-                do_swap = true;
-            } else if (t1.is_int64() &&
-                t1.to_int64() <= (*pivot)[lst_idx].to_int64()) {
-                do_swap = true;
-            } else if (t1.is_uint64() &&
-                t1.to_uint64() <= (*pivot)[lst_idx].to_uint64()) {
-                do_swap = true;
-            }
-        } else {
-            RISCV_printf(NULL, LOG_ERROR, "%s",
-                        "Not supported attribute type for sorting");
-            return i + 1;
+            break;
         }
 
-        if (do_swap) {
-            i = i + 1;
+        while (--j > lo) {
+            AttributeType &item = (*A)[j];
+            if (item.is_string()) {
+                if (strcmp(item.to_string(), pivot->to_string()) > 0) {
+                    continue;
+                }
+            } else if (item.is_int64()) {
+                if (item.to_int64() > pivot->to_int64()) {
+                    continue;
+                }
+            } else if (item.is_uint64()) {
+                if (item.to_uint64() > pivot->to_uint64()) {
+                    continue;
+                }
+            } else if (item.is_list()) {
+                AttributeType &t1 = item[lst_idx];
+                if (t1.is_string() &&
+                    strcmp(t1.to_string(), (*pivot)[lst_idx].to_string()) > 0) {
+                    continue;
+                } else if (t1.is_int64() &&
+                    t1.to_int64() > (*pivot)[lst_idx].to_int64()) {
+                    continue;
+                } else if (t1.is_uint64() &&
+                    t1.to_uint64() > (*pivot)[lst_idx].to_uint64()) {
+                    continue;
+                }
+            }
+            break;
+        }
+
+        if (i < j) {
             A->swap_list_item(i, j);
+        } else {
+            return j;
         }
     }
-    A->swap_list_item(i + 1, hi);
-    return i + 1;
 }
 
 void quicksort(AttributeType *A, int lo, int hi, int lst_idx) {
     if (lo >= hi) {
         return;
     }
-    int p = partition(A, lo, hi, lst_idx);
-    quicksort(A, lo, p - 1, lst_idx);
-    quicksort(A, p + 1, hi, lst_idx);
+    int q = partition(A, lo, hi, lst_idx);
+    quicksort(A, lo, q, lst_idx);
+    quicksort(A, q + 1, hi, lst_idx);
 }
 
 void AttributeType::sort(int idx) {
