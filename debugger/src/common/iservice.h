@@ -34,7 +34,9 @@ class IService : public IFace {
         listPorts_ = AttributeType(Attr_List);
         registerInterface(static_cast<IService *>(this));
         registerAttribute("LogLevel", &logLevel_);
+        registerAttribute("ObjDescription", &obj_descr_);
         obj_name_.make_string(obj_name);
+        obj_descr_.make_string("");
         logLevel_.make_int64(LOG_ERROR);
     }
     virtual ~IService() {
@@ -171,6 +173,7 @@ class IService : public IFace {
     AttributeType listAttributes_;
     AttributeType logLevel_;
     AttributeType obj_name_;
+    AttributeType obj_descr_;       // Describe service in JSON config
 };
 
 }  // namespace debugger
