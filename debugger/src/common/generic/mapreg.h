@@ -67,8 +67,9 @@ class GenericReg64Bank : public IMemoryOperation {
  public:
     GenericReg64Bank(IService *parent, const char *name,
                     uint64_t addr, int len) {
+        parent_ = parent;
         parent->registerPortInterface(name,
-                                      static_cast<IMemoryOperation *>(this));
+                    static_cast<IMemoryOperation *>(this));
         regs_ = 0;
         bankName_.make_string(name);
         baseAddress_.make_uint64(addr);
@@ -95,6 +96,7 @@ class GenericReg64Bank : public IMemoryOperation {
     uint64_t *getpR64() { return &regs_[0].val; }
 
  protected:
+    IService *parent_;
     AttributeType bankName_;
     Reg64Type *regs_;
 };

@@ -91,6 +91,10 @@ struct DsuMapType {
              * instruction instead of memory.
              */
             uint64_t br_instr_fetch;
+            /**
+             * Flush software instruction address from instruction cache.
+             */
+            uint64_t br_flush_addr;
         } v;
     } udbg;
     // Base Address + 0x18000 (Region 3)

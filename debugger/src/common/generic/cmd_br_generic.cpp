@@ -86,6 +86,7 @@ void CmdBrGeneric::exec(AttributeType *args, AttributeType *res) {
 
     Reg64Type braddr;
     Reg64Type brinstr;
+    uint32_t brlen = 4;
     AttributeType &bpadr = (*args)[2];
     if (bpadr.is_integer()) {
         braddr.val = bpadr.to_uint64();
@@ -105,12 +106,17 @@ void CmdBrGeneric::exec(AttributeType *args, AttributeType *res) {
 
         isrc_->registerBreakpoint(braddr.val, flags, brinstr.val);
         if (isHardware(flags)) {
-            uint64_t dsuaddr = 
+            uint64_t dsuaddr =
                 reinterpret_cast<uint64_t>(&pdsu->udbg.v.add_breakpoint);
             tap_->write(dsuaddr, 8, braddr.buf);
         } else {
-            getSwBreakpointInstr(&brinstr);
-            tap_->write(braddr.val, 4, brinstr.buf);
+            getSwBreakpointInstr(&brinstr, &brlen);
+            tap_->write(braddr.val, brlen, brinstr.buf);
+
+            // flush address from ICache
+            uint64_t dsuaddr =
+                reinterpret_cast<uint64_t>(&pdsu->udbg.v.br_flush_addr);
+            tap_->write(dsuaddr, 8, braddr.buf);
         }
         return;
     } 

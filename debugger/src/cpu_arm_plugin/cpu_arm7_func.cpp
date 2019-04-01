@@ -85,22 +85,22 @@ unsigned CpuCortex_Functional::addSupportedInstruction(
 }
 
 void CpuCortex_Functional::handleTrap() {
-    if (interrupt_pending_ == 0) {
+    if ((interrupt_pending_[0] | interrupt_pending_[1]) == 0) {
         return;
     }
-    if (interrupt_pending_ & (1ull << Interrupt_SoftwareIdx)) {
+    if (interrupt_pending_[0] & (1ull << Interrupt_SoftwareIdx)) {
         DsuMapType::udbg_type::debug_region_type::breakpoint_control_reg t1;
         t1.val = br_control_.getValue().val;
         if (t1.bits.trap_on_break == 0) {
             sw_breakpoint_ = true;
-            interrupt_pending_ &= ~(1ull << Interrupt_SoftwareIdx);
+            interrupt_pending_[0] &= ~(1ull << Interrupt_SoftwareIdx);
             npc_.setValue(pc_.getValue());
             halt("SWI Breakpoint");
             return;
         }
     }
     npc_.setValue(0 + 4*0);
-    interrupt_pending_ = 0;
+    interrupt_pending_[0] = 0;
 }
 
 void CpuCortex_Functional::reset(bool active) {
@@ -176,12 +176,12 @@ void CpuCortex_Functional::raiseSignal(int idx) {
 }
 
 void CpuCortex_Functional::lowerSignal(int idx) {
-    interrupt_pending_ &= ~(1 << idx);
+    interrupt_pending_[idx >> 6] &= ~(1ull << (idx & 0x3F));
     RISCV_error("Lower unsupported signal %d", idx);
 }
 
 void CpuCortex_Functional::raiseSoftwareIrq() {
-    interrupt_pending_ |= 1ull << Interrupt_SoftwareIdx;
+    interrupt_pending_[0] |= (1ull << Interrupt_SoftwareIdx);
 }
 
 }  // namespace debugger

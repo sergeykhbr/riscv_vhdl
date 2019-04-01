@@ -21,11 +21,13 @@ namespace debugger {
 CmdBrRiscv::CmdBrRiscv(ITap *tap) : CmdBrGeneric(tap) {
 }
 
-void CmdBrRiscv::getSwBreakpointInstr(Reg64Type *instr) {
+void CmdBrRiscv::getSwBreakpointInstr(Reg64Type *instr, uint32_t *len) {
     if ((instr->val & 0x3) == 0x3) {
         instr->buf32[0] = 0x00100073;  // EBREAK instruction
+		*len = 4;
     } else {
         instr->buf16[0] = 0x9002;      // C.EBREAK instruction
+		*len = 2;
     }
 }
 

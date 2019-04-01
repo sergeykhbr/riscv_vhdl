@@ -269,6 +269,7 @@
                             ['core0','br_fetch_instr'],
                             ['core0','br_hw_add'],
                             ['core0','br_hw_remove'],
+                            ['core0','br_flush_addr'],
                            ]]
                 ]}]},
     {'Class':'HardResetClass','Instances':[

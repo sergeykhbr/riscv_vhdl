@@ -94,14 +94,14 @@ unsigned CpuRiver_Functional::addSupportedInstruction(
 void CpuRiver_Functional::handleTrap() {
     csr_mstatus_type mstatus;
     csr_mcause_type mcause;
-    if (interrupt_pending_ == 0) {
+    if ((interrupt_pending_[0] | interrupt_pending_[1]) == 0) {
         return;
     }
 
     mstatus.value = portCSR_.read(CSR_mstatus).val;
     mcause.value =  portCSR_.read(CSR_mcause).val;
     uint64_t exception_mask = (1ull << INTERRUPT_USoftware) - 1;
-    if ((interrupt_pending_ & exception_mask) == 0 && 
+    if ((interrupt_pending_[0] & exception_mask) == 0 && 
         mstatus.bits.MIE == 0 && cur_prv_level == PRV_M) {
         return;
     }
@@ -110,7 +110,7 @@ void CpuRiver_Functional::handleTrap() {
         t1.val = br_control_.getValue().val;
         if (t1.bits.trap_on_break == 0) {
             sw_breakpoint_ = true;
-            interrupt_pending_ &= ~(1ull << EXCEPTION_Breakpoint);
+            interrupt_pending_[0] &= ~(1ull << EXCEPTION_Breakpoint);
             npc_.setValue(pc_.getValue());
             halt("EBREAK Breakpoint");
             return;
@@ -127,7 +127,7 @@ void CpuRiver_Functional::handleTrap() {
     portCSR_.write(CSR_mstatus, mstatus.value);
 
     int xepc = static_cast<int>((cur_prv_level << 8) + 0x41);
-    if (interrupt_pending_ & exception_mask) {
+    if (interrupt_pending_[0] & exception_mask) {
         // Exception
         portCSR_.write(xepc, pc_.getValue().val);
     } else {
@@ -135,7 +135,7 @@ void CpuRiver_Functional::handleTrap() {
         portCSR_.write(xepc,  npc_.getValue().val);
     }
     npc_.setValue(portCSR_.read(CSR_mtvec));
-    interrupt_pending_ = 0;
+    interrupt_pending_[0] = 0;
 }
 
 void CpuRiver_Functional::reset(bool active) {
@@ -224,14 +224,14 @@ void CpuRiver_Functional::raiseSignal(int idx) {
         cause.bits.irq  = 0;
         cause.bits.code = idx;
         portCSR_.write(CSR_mcause, cause.value);
-        interrupt_pending_ |= 1LL << idx;
+        interrupt_pending_[idx >> 6] |= 1LL << (idx & 0x3F);
     } else if (idx < SIGNAL_HardReset) {
         csr_mcause_type cause;
         cause.value     = 0;
         cause.bits.irq  = 1;
         cause.bits.code = idx - INTERRUPT_USoftware;
         portCSR_.write(CSR_mcause, cause.value);
-        interrupt_pending_ |= 1LL << idx;
+        interrupt_pending_[idx >> 6] |= 1LL << (idx & 0x3F);
     } else if (idx == SIGNAL_HardReset) {
     } else {
         RISCV_error("Raise unsupported signal %d", idx);
@@ -241,7 +241,7 @@ void CpuRiver_Functional::raiseSignal(int idx) {
 void CpuRiver_Functional::lowerSignal(int idx) {
     if (idx == SIGNAL_HardReset) {
     } else if (idx < SIGNAL_HardReset) {
-        interrupt_pending_ &= ~(1 << idx);
+        interrupt_pending_[idx >> 6] &= ~(1ull << (idx & 0x3F));
     } else {
         RISCV_error("Lower unsupported signal %d", idx);
     }

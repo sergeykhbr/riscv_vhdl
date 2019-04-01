@@ -33,6 +33,7 @@ CpuGeneric::CpuGeneric(const char *name)
     br_control_(this, "br_control", DSUREG(udbg.v.br_ctrl)),
     br_fetch_addr_(this, "br_fetch_addr", DSUREG(udbg.v.br_address_fetch)),
     br_fetch_instr_(this, "br_fetch_instr", DSUREG(udbg.v.br_instr_fetch)),
+    br_flush_addr_(this, "br_flush_addr", DSUREG(udbg.v.br_flush_addr)),
     br_hw_add_(this, "br_hw_add", DSUREG(udbg.v.add_breakpoint)),
     br_hw_remove_(this, "br_hw_remove", DSUREG(udbg.v.remove_breakpoint)) {
     registerInterface(static_cast<IThread *>(this));
@@ -66,15 +67,18 @@ CpuGeneric::CpuGeneric(const char *name)
     step_cnt_ = 0;
     pc_z_.val = 0;
     hw_stepping_break_ = 0;
-    interrupt_pending_ = 0;
+    interrupt_pending_[0] = 0;
+    interrupt_pending_[1] = 0;
     sw_breakpoint_ = false;
     hw_breakpoint_ = false;
     skip_sw_breakpoint_ = false;
     hwBreakpoints_.make_list(0);
+    do_not_cache_ = false;
 
     dport_.valid = 0;
     reg_trace_file = 0;
     mem_trace_file = 0;
+    oplen_ = 0;
     RISCV_set_default_clock(static_cast<IClock *>(this));
 }
 
@@ -242,6 +246,7 @@ void CpuGeneric::fetchILine() {
     if (skip_sw_breakpoint_ && trans_.addr == br_fetch_addr_.getValue().val) {
         skip_sw_breakpoint_ = false;
         cacheline_[0].buf32[0] = br_fetch_instr_.getValue().buf32[0];
+        doNotCache(trans_.addr);
     }
 }
 
@@ -390,7 +395,8 @@ void CpuGeneric::halt(const char *descr) {
 }
 
 void CpuGeneric::reset(bool active) {
-    interrupt_pending_ = 0;
+    interrupt_pending_[0] = 0;
+    interrupt_pending_[1] = 0;
     status_.reset(active);
     stackTraceCnt_.reset(active);
     pc_.setValue(getResetAddress());
@@ -408,6 +414,7 @@ void CpuGeneric::reset(bool active) {
     }
     hw_breakpoint_ = false;
     sw_breakpoint_ = false;
+    do_not_cache_ = false;
 }
 
 void CpuGeneric::updateDebugPort() {
@@ -426,7 +433,7 @@ void CpuGeneric::updateDebugPort() {
     tr.addr = (static_cast<uint64_t>(trans->region) << 15) | trans->addr;
     idbgbus_->b_transport(&tr);
 
-    trans->rdata = tr.rpayload.b64[0];;
+    trans->rdata = tr.rpayload.b64[0];
     dport_.cb->nb_response_debug_port(trans);
 }
 
@@ -446,7 +453,7 @@ void CpuGeneric::addHwBreakpoint(uint64_t addr) {
         RISCV_debug("Breakpoint[%d]: 0x%04" RV_PRI64 "x",
                     i, hwBreakpoints_[i].to_uint64());
     }
-    flush();
+    flush(addr);
 }
 
 void CpuGeneric::removeHwBreakpoint(uint64_t addr) {
@@ -457,7 +464,7 @@ void CpuGeneric::removeHwBreakpoint(uint64_t addr) {
             return;
         }
     }
-    flush();
+    flush(addr);
 }
 
 bool CpuGeneric::checkHwBreakpoint() {
@@ -535,6 +542,12 @@ uint64_t RemoveBreakpointType::aboutToWrite(uint64_t new_val) {
 uint64_t StepCounterType::aboutToRead(uint64_t cur_val) {
     CpuGeneric *pcpu = static_cast<CpuGeneric *>(parent_);
     return pcpu->getStepCounter();
+}
+
+uint64_t FlushAddressType::aboutToWrite(uint64_t new_val) {
+    CpuGeneric *pcpu = static_cast<CpuGeneric *>(parent_);
+    pcpu->flush(new_val);
+    return new_val;
 }
 
 }  // namespace debugger

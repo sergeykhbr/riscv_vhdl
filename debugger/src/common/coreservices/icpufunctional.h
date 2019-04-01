@@ -69,7 +69,8 @@ class ICpuFunctional : public IFace {
     virtual void addHwBreakpoint(uint64_t addr) = 0;
     virtual void removeHwBreakpoint(uint64_t addr) = 0;
     virtual void skipBreakpoint() = 0;
-    virtual void flush() = 0;
+    virtual void flush(uint64_t addr) = 0;
+    virtual void doNotCache(uint64_t addr) = 0;
 
   protected:
     virtual uint64_t getResetAddress() = 0;

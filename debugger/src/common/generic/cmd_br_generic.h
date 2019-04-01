@@ -37,7 +37,7 @@ class CmdBrGeneric : public ICommand  {
     virtual bool isHardware(uint64_t flags) {
         return (flags & BreakFlag_HW) ? true: false;
     }
-    virtual void getSwBreakpointInstr(Reg64Type *instr) = 0;
+    virtual void getSwBreakpointInstr(Reg64Type *instr, uint32_t *len) = 0;
 
  protected:
     ISourceCode *isrc_;

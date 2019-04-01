@@ -26,7 +26,7 @@ class CmdBrArm : public CmdBrGeneric  {
     explicit CmdBrArm(ITap *tap);
 
  protected:
-    virtual void getSwBreakpointInstr(Reg64Type *instr);
+    virtual void getSwBreakpointInstr(Reg64Type *instr, uint32_t *len);
 };
 
 }  // namespace debugger

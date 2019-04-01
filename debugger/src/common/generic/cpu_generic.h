@@ -41,8 +41,8 @@ class GenericStatusType : public MappedReg64Type {
         MappedReg64Type(parent, name, addr) {
     }
  protected:
-    virtual uint64_t aboutToRead(uint64_t cur_val);
-    virtual uint64_t aboutToWrite(uint64_t new_val);
+    virtual uint64_t aboutToRead(uint64_t cur_val) override;
+    virtual uint64_t aboutToWrite(uint64_t new_val) override;
 };
 
 class FetchedBreakpointType : public MappedReg64Type {
@@ -51,7 +51,7 @@ class FetchedBreakpointType : public MappedReg64Type {
         : MappedReg64Type(parent, name, addr) {
     }
  protected:
-    virtual uint64_t aboutToWrite(uint64_t new_val);
+    virtual uint64_t aboutToWrite(uint64_t new_val) override;
 };
 
 class AddBreakpointType : public MappedReg64Type {
@@ -60,7 +60,7 @@ class AddBreakpointType : public MappedReg64Type {
         : MappedReg64Type(parent, name, addr) {
     }
  protected:
-    virtual uint64_t aboutToWrite(uint64_t new_val);
+    virtual uint64_t aboutToWrite(uint64_t new_val) override;
 };
 
 class RemoveBreakpointType : public MappedReg64Type {
@@ -69,7 +69,7 @@ class RemoveBreakpointType : public MappedReg64Type {
         : MappedReg64Type(parent, name, addr) {
     }
  protected:
-    virtual uint64_t aboutToWrite(uint64_t new_val);
+    virtual uint64_t aboutToWrite(uint64_t new_val) override;
 };
 
 class StepCounterType : public MappedReg64Type {
@@ -78,7 +78,16 @@ class StepCounterType : public MappedReg64Type {
         : MappedReg64Type(parent, name, addr) {
     }
  protected:
-    virtual uint64_t aboutToRead(uint64_t cur_val);
+    virtual uint64_t aboutToRead(uint64_t cur_val) override;
+};
+
+class FlushAddressType : public MappedReg64Type {
+ public:
+    FlushAddressType(IService *parent, const char *name, uint64_t addr)
+        : MappedReg64Type(parent, name, addr) {
+    }
+ protected:
+    virtual uint64_t aboutToWrite(uint64_t new_val) override;
 };
 
 class CpuGeneric : public IService,
@@ -119,7 +128,8 @@ class CpuGeneric : public IService,
     virtual void addHwBreakpoint(uint64_t addr);
     virtual void removeHwBreakpoint(uint64_t addr);
     virtual void skipBreakpoint();
-    virtual void flush() {}
+    virtual void flush(uint64_t addr) {}
+    virtual void doNotCache(uint64_t addr) { do_not_cache_ = true; }
  protected:
     virtual uint64_t getResetAddress() { return resetVector_.to_uint64(); }
     virtual EEndianessType endianess() = 0;
@@ -127,7 +137,7 @@ class CpuGeneric : public IService,
     virtual void generateIllegalOpcode() = 0;
     virtual void handleTrap() = 0;
     virtual void trackContextStart() {}
-    virtual void trackContextEnd() {}
+    virtual void trackContextEnd() { do_not_cache_ = false; }
 
  public:
     /** IClock */
@@ -135,7 +145,11 @@ class CpuGeneric : public IService,
     virtual void registerStepCallback(IClockListener *cb, uint64_t t);
     virtual bool moveStepCallback(IClockListener *cb, uint64_t t);
     virtual double getFreqHz() {
-        return static_cast<double>(freqHz_.to_int64());
+        if (freqHz_.is_floating()) {
+            return freqHz_.to_float();
+        } else {
+            return static_cast<double>(freqHz_.to_int64());
+        }
     }
 
     /** IResetListener interface */
@@ -193,15 +207,17 @@ class CpuGeneric : public IService,
     MappedReg64Type br_control_;            // Enable/disable Trap on break
     MappedReg64Type br_fetch_addr_;         // Skip breakpoint at address
     FetchedBreakpointType br_fetch_instr_;  // Use this instruction on address
+    FlushAddressType br_flush_addr_;        // Flush address from ICache
     AddBreakpointType br_hw_add_;
     RemoveBreakpointType br_hw_remove_;
 
     Reg64Type pc_z_;
-    uint64_t interrupt_pending_;
+    uint64_t interrupt_pending_[2];
     bool sw_breakpoint_;
     bool skip_sw_breakpoint_;
     bool hw_breakpoint_;
-    uint64_t hw_break_addr_;   // Last hit breakpoint to skip it on next step
+    uint64_t hw_break_addr_;    // Last hit breakpoint to skip it on next step
+    bool do_not_cache_;         // Do not put instruction into ICache
 
     event_def eventConfigDone_;
     ClockAsyncTQueueType queue_;
