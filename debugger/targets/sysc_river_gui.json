@@ -2,7 +2,8 @@
   'GlobalSettings':{
     'SimEnable':true,
     'GUI':true,
-    'ScriptFile':'',
+    'InitCommands':[
+                   ],
     'Description':'This configuration creates SystemC instance of CPU RIVER instead functional model'
   },
   'Services':[

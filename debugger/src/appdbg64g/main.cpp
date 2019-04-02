@@ -18,11 +18,7 @@
 #include "iservice.h"
 #include "coreservices/ilink.h"
 #include "coreservices/ithread.h"
-#include "coreservices/icpugen.h"
-#include "coreservices/icpuriscv.h"
 #include "coreservices/icmdexec.h"
-/** Plugin verification */
-#include "simple_plugin/isimple_plugin.h"
 #include <stdio.h>
 #include <string>
 
@@ -30,7 +26,7 @@ using namespace debugger;
 
 static AttributeType Config;
 
-const AttributeType *getConfigOfService(const AttributeType &cfg, 
+const AttributeType *getConfigOfService(const AttributeType &cfg,
                                         const char *name) {
     const AttributeType &serv = cfg["Services"];
     for (unsigned i = 0; i < serv.size(); i++) {
@@ -45,11 +41,13 @@ const AttributeType *getConfigOfService(const AttributeType &cfg,
 }
 
 int main(int argc, char* argv[]) {
-    AttributeType scriptFile("");
-    AttributeType databuf;
-
     RISCV_init();
     RISCV_set_current_dir();
+
+    uint16_t tcp_port = 0;
+    AttributeType scriptFile;
+    AttributeType databuf;
+    bool nogui = false;
 
     // Parse arguments:
     if (argc > 1) {
@@ -57,9 +55,14 @@ int main(int argc, char* argv[]) {
             if (strcmp(argv[i], "-c") == 0) {
                 i++;
                 RISCV_read_json_file(argv[i], &databuf);
+            } else if (strcmp(argv[i], "-p") == 0) {
+                i++;
+                tcp_port = atoi(argv[i]);
             } else if (strcmp(argv[i], "-script") == 0) {
                 i++;
                 scriptFile.make_string(argv[i]);
+            } else if (strcmp(argv[i], "-nogui") == 0) {
+                nogui = true;
             }
         }
     }
@@ -73,6 +76,36 @@ int main(int argc, char* argv[]) {
 
     Config.from_config(databuf.to_string());
     Config["GlobalSettings"]["ScriptFile"] = scriptFile;
+	
+	/** Disable GUI using application arguments list */
+    if (nogui) {
+        Config["GlobalSettings"]["GUI"].make_boolean(false);
+    }
+
+    /** Redefine TCP port value using application arguments list. It is useful
+	 *  in a case of several Simulator instances running at the same time and
+	 *  controlled remotely from the python scripts.
+	 */
+    if (tcp_port) {
+        AttributeType &serv = Config["Services"];
+        for (unsigned i = 0; i < serv.size(); i++) {
+            AttributeType &inst = serv[i]["Instances"];
+            for (unsigned n = 0; n < inst.size(); n++) {
+                if (strcmp(inst[n]["Name"].to_string(), "rpcserver") == 0) {
+                    AttributeType &attr = inst[n]["Attr"];
+                    for (unsigned i = 0; i < attr.size(); i++) {
+                        AttributeType &item = attr[i];
+                        if (item.size() < 2 || !item[0u].is_string()) {
+                            continue;
+                        }
+                        if (strcmp(item[0u].to_string(), "HostPort") == 0) {
+                            item[1].make_int64(tcp_port);
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     if (RISCV_set_configuration(&Config)) {
         printf("Error: can't instantiate configuration\n");
@@ -93,66 +126,24 @@ int main(int argc, char* argv[]) {
         iudp1->setConnectionSettings(&t1);
     }
 
-    IService *itst = static_cast<IService *>(RISCV_get_service("example0"));
-    if (itst == NULL) {
-        /**
-         * @brief Create instance of the example plugin class.
-         */
-        IFace *simple = RISCV_get_class("SimplePluginClass");
-        if (simple) {
-	        itst = static_cast<IService *>(RISCV_create_service(
-                          simple, "example0", NULL));
-        }
-    }
-
-#if 1 // Remove it and make "Open file.." Widget
     AttributeType res;
-    char tstr[1024];
-    if (Config["GlobalSettings"].has_key("LoadFile")) {
-        const char *default_img =
-            Config["GlobalSettings"]["LoadFile"].to_string();
+    AttributeType &initCmds = Config["GlobalSettings"]["InitCommands"];
         ICmdExecutor *iexec_ = static_cast<ICmdExecutor *>(
             RISCV_get_service_iface("cmdexec0", IFACE_CMD_EXECUTOR));
 
-        if (strstr(default_img, ".elf")) {
-            RISCV_sprintf(tstr, sizeof(tstr),
-                        "loadelf %s nocode", default_img);
-            iexec_->exec(tstr, &res, false);
-        } else {
-            RISCV_sprintf(tstr, sizeof(tstr), "loadsrec %s.s19", default_img);
-            iexec_->exec(tstr, &res, false);
-
-            RISCV_sprintf(tstr, sizeof(tstr), "loadmap %s.map", default_img);
-            iexec_->exec(tstr, &res, false);
+    if (initCmds.is_list()) {
+        for (unsigned int i = 0; i < initCmds.size(); i++) {
+            iexec_->exec(initCmds[i].to_string(), &res, false);
         }
     }
-#endif
 
-
-    /**
-     * Unreset all CPUs
-     */
-    /*AttributeType cpu_list;
-    RISCV_get_services_with_iface(IFACE_CPU_RISCV, &cpu_list);
-    for (unsigned i = 0; i < cpu_list.size(); i++) {
-        IService *iserv = static_cast<IService *>(cpu_list[i].to_iface());
-        ICpuGeneric *icpu = static_cast<ICpuGeneric *>(
-                    iserv->getInterface(IFACE_CPU_GENERIC));
-        icpu->lowerSignal(CPU_SIGNAL_RESET);  // Active HIGH. Unreset CPU model.
-    }*/
-
-    if (itst != NULL) {
-        /** Get plugin specific interface. */
-        ISimplePlugin * itst_access = static_cast<ISimplePlugin *>(
-                                itst->getInterface(IFACE_SIMPLE_PLUGIN));
-        /** Call example method */
-        itst_access->exampleAction(0xcafe);
-    }
-
+    /** Main loop */
     RISCV_dispatcher_start();
+    scriptFile.attr_free();
+    databuf.attr_free();
 
     //const char *t1 = RISCV_get_configuration();
     //RISCV_write_json_file(configFile.to_string(), t1);
     RISCV_cleanup();
-	return 0;
+    return 0;
 }

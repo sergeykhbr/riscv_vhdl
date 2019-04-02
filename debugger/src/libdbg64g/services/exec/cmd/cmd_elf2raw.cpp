@@ -15,45 +15,43 @@
  */
 
 #include "iservice.h"
-#include "cmd_loadelf.h"
+#include "cmd_elf2raw.h"
 #include "coreservices/ielfreader.h"
-#include "debug/dsumap.h"
+#include <iostream>
 
 namespace debugger {
 
-CmdLoadElf::CmdLoadElf(ITap *tap) : ICommand ("loadelf", tap) {
+CmdElf2Raw::CmdElf2Raw(ITap *tap) : ICommand ("elf2raw", tap) {
 
     briefDescr_.make_string("Load ELF-file");
     detailedDescr_.make_string(
         "Description:\n"
-        "    Load ELF-file to SOC target memory. Optional key 'nocode'\n"
-        "    allows to read debug information from the elf-file without\n"
-        "    target programming.\n"
+        "    Create Raw-image file from the Elf-file\n"
         "Usage:\n"
-        "    loadelf filename [nocode]\n"
+        "    elf2raw elf-file raw-file [Size KB]\n"
         "Example:\n"
-        "    loadelf /home/riscv/image.elf\n"
-        "    loadelf /home/riscv/image.elf nocode\n");
+        "    elf2raw /home/riscv/image.elf /home/riscv/image.raw\n"
+        "    elf2raw /home/riscv/image.elf /home/riscv/image.raw 128\n");
 }
 
-int CmdLoadElf::isValid(AttributeType *args) {
+int CmdElf2Raw::isValid(AttributeType *args) {
     if (!cmdName_.is_equal((*args)[0u].to_string())) {
         return CMD_INVALID;
     }
-    if (args->size() == 2 
-        || (args->size() == 3 && (*args)[2].is_equal("nocode"))) {
+    if (args->size() == 3 || args->size() == 4) {
         return CMD_VALID;
     }
     return CMD_WRONG_ARGS;
 }
 
-void CmdLoadElf::exec(AttributeType *args, AttributeType *res) {
+void CmdElf2Raw::exec(AttributeType *args, AttributeType *res) {
+    AttributeType imageSize;
     res->attr_free();
     res->make_nil();
-    bool program = true;
-    if (args->size() == 3 
-        && (*args)[2].is_string() && (*args)[2].is_equal("nocode")) {
-        program = false;
+
+    imageSize.make_int64(1024 * 128);
+    if (args->size() == 4) {
+        imageSize.make_int64(1024 * (*args)[3].to_int());
     }
 
     /**
@@ -71,26 +69,22 @@ void CmdLoadElf::exec(AttributeType *args, AttributeType *res) {
                         iserv->getInterface(IFACE_ELFREADER));
     elf->readFile((*args)[1].to_string());
 
-    if (!program) {
-        return;
-    }
 
-    DsuMapType *dsu = DSUBASE();
-    uint64_t soft_reset = 1;
-    uint64_t addr = reinterpret_cast<uint64_t>(&dsu->ulocal.v.soft_reset);
-    tap_->write(addr, 8, reinterpret_cast<uint8_t *>(&soft_reset));
-
-    uint64_t sec_addr;
-    int sec_sz;
+    uint8_t *image = new uint8_t[imageSize.to_int()];
+    uint64_t waddr;
+    size_t wsz;
     for (unsigned i = 0; i < elf->loadableSectionTotal(); i++) {
-        sec_addr = elf->sectionAddress(i);
-        sec_sz = static_cast<int>(elf->sectionSize(i));
-        tap_->write(sec_addr, sec_sz, elf->sectionData(i));
+        waddr = elf->sectionAddress(i);
+        wsz = static_cast<size_t>(elf->sectionSize(i));
+        if ((waddr + wsz) >= imageSize.to_uint32()) {
+            continue;
+        }
+        memcpy(&image[waddr], elf->sectionData(i), wsz);
     }
-
-    //soft_reset = 0;
-    //tap_->write(addr, 8, reinterpret_cast<uint8_t *>(&soft_reset));
+    FILE *fp = fopen((*args)[2].to_string(), "w");
+    fwrite(image, 1, imageSize.to_int(), fp);
+    fclose(fp);
+    delete [] image;
 }
-
 
 }  // namespace debugger

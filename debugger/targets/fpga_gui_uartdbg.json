@@ -2,7 +2,7 @@
   'GlobalSettings':{
     'SimEnable':false,
     'GUI':false,
-    'ScriptFile':'',
+    'InitCommands':[],
     'Description':'This configuration instantiates functional RISC-V model'
   },
   'Services':[

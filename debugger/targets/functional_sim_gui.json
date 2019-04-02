@@ -2,8 +2,9 @@
   'GlobalSettings':{
     'SimEnable':true,
     'GUI':true,
-    'ScriptFile':'',
-    'LoadFile':'./../../../examples/zephyr/gcc711/zephyr.elf',
+    'InitCommands':[
+                    'loadelf ./../../../examples/zephyr/gcc711/zephyr.elf nocode',
+                   ],
     'Description':'This configuration instantiates functional RISC-V model'
   },
   'Services':[

@@ -67,6 +67,8 @@ SOURCES = \
 	cmd_symb \
 	cmd_exit \
 	cmd_memdump \
+	cmd_elf2raw \
+	cmd_loadh86 \
 	cmdexec \
 	console \
 	com_linux \

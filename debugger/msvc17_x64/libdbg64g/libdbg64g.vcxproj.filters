@@ -164,6 +164,12 @@
     <ClCompile Include="..\..\src\common\generic\mapreg.cpp">
       <Filter>Source Files\common\generic</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_elf2raw.cpp">
+      <Filter>Source Files\services\exec\cmd</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_loadh86.cpp">
+      <Filter>Source Files\services\exec\cmd</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\attribute.h">
@@ -384,6 +390,12 @@
     </ClInclude>
     <ClInclude Include="..\..\src\common\generic\mapreg.h">
       <Filter>Source Files\common\generic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_elf2raw.h">
+      <Filter>Source Files\services\exec\cmd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_loadh86.h">
+      <Filter>Source Files\services\exec\cmd</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

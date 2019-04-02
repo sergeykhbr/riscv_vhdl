@@ -17,6 +17,7 @@
 #include <string.h>
 #include "cmdexec.h"
 #include "cmd/cmd_loadelf.h"
+#include "cmd/cmd_loadh86.h"
 #include "cmd/cmd_loadsrec.h"
 #include "cmd/cmd_log.h"
 #include "cmd/cmd_isrunning.h"
@@ -34,6 +35,7 @@
 #include "cmd/cmd_symb.h"
 #include "cmd/cmd_stack.h"
 #include "cmd/cmd_loadbin.h"
+#include "cmd/cmd_elf2raw.h"
 
 namespace debugger {
 
@@ -72,11 +74,13 @@ void CmdExecutor::postinitService() {
     registerCommand(new CmdBusUtil(itap_));
     registerCommand(new CmdCpi(itap_));
     registerCommand(new CmdDisas(itap_));
+    registerCommand(new CmdElf2Raw(itap_));
     registerCommand(new CmdExit(itap_));
     registerCommand(new CmdHalt(itap_));
     registerCommand(new CmdIsRunning(itap_));
     registerCommand(new CmdLoadBin(itap_));
     registerCommand(new CmdLoadElf(itap_));
+    registerCommand(new CmdLoadH86(itap_));
     registerCommand(new CmdLoadSrec(itap_));
     registerCommand(new CmdLog(itap_));
     registerCommand(new CmdMemDump(itap_));

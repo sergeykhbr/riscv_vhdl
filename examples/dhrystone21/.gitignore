@@ -3,3 +3,4 @@ makefiles/bin
 makefiles/objarm
 makefiles/binarm/*
 !makefiles/binarm/*.hex
+!makefiles/binarm/*.elf
