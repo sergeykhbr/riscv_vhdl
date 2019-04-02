@@ -74,6 +74,31 @@ class IOReg8Type : public IORegType {
     uint8_t hard_reset_value_;
 };
 
+class IOReg16Type : public IORegType {
+ public:
+    IOReg16Type(IService *parent, const char *name,
+               uint32_t addr, uint32_t len, int priority = 1);
+
+    /** IMemoryOperation methods */
+    virtual ETransStatus b_transport(Axi4TransactionType *trans);
+
+    /** IResetListener interface */
+    virtual void reset(bool active);
+
+    /** General access methods: */
+    uint16_t getValue() { return value.word; }
+    void setValue(uint16_t v) { value.word = v; }
+
+ protected:
+    virtual uint16_t get_direction() { return 0u; }
+    virtual uint16_t read();
+    virtual void write(uint16_t val);
+
+ protected:
+    Reg16Type value;
+    uint16_t hard_reset_value_;
+};
+
 class IOReg32Type : public IORegType {
 public:
     IOReg32Type(IService *parent, const char *name,
@@ -99,26 +124,25 @@ protected:
     uint32_t hard_reset_value_;
 };
 
-class IOPinType : public IIOPortListener {
+class IOPinType {
  public:
     IOPinType(IService *parent, const char *name);
     IOPinType(IService *parent, const char *name, AttributeType &pincfg);
 
-    /** IIOPortListener */
-    virtual void readData(uint8_t *val, uint8_t mask);
-    virtual void writeData(uint8_t val, uint8_t mask);
-    virtual void latch();
+    virtual void regiterAsListener(IIOPort *port) = 0;
 
     /** generic accessors */
     void postinit();
     void connectToBit(const AttributeType &cfg);
     void connectToWire(const AttributeType &cfg);
-    uint8_t get_bit();
-    void set_bit(uint8_t v);
+    virtual bool get_bit();
+    virtual void set_bit(bool v);
 
  protected:
-    virtual uint8_t aboutToRead(uint8_t val) { return val; }
-    virtual void aboutToWrite(uint8_t /*prev*/, uint8_t /*val*/) {}
+    virtual void memread(uint64_t *val, uint64_t mask);
+    virtual void memwrite(uint64_t val, uint64_t mask);
+    virtual bool aboutToRead(bool val) { return val; }
+    virtual bool aboutToWrite(bool prev, bool val) { return val; }
 
  protected:
     static const int READ_MASK = 0x1;
@@ -128,22 +152,77 @@ class IOPinType : public IIOPortListener {
     AttributeType IOPinTypeCfg_;
     IService *parent_;
     IWire *iwire_;
-    uint8_t value_;     // triggered
-    uint8_t prelatch_;  // not triggered value
     int bitIdx_;
     int access_;
+    volatile bool value_;     // triggered
+    volatile bool prelatch_;  // not triggered value
 };
 
-class IOPinTypeDebug : public IOPinType {
+class IOPinType8 : public IOPinType,
+                   public IIOPortListener8 {
  public:
-    IOPinTypeDebug(IService *parent, const char *name)
-        : IOPinType(parent, name) {}
-    IOPinTypeDebug(IService *parent, const char *name, AttributeType &pincfg)
-        : IOPinType(parent, name, pincfg) {}
+    IOPinType8(IService *parent, const char *name) :
+        IOPinType(parent, name) {}
+    IOPinType8(IService *parent, const char *name, AttributeType &pincfg) :
+        IOPinType(parent, name, pincfg) {}
+
+    virtual void regiterAsListener(IIOPort *port) {
+        port->registerPortListener(static_cast<IIOPortListener8 *>(this));
+    }
+
+    /** IIOPortListener8 */
+    virtual void readData(uint8_t *val, uint8_t mask) {
+        Reg64Type t;
+        t.val = *val;
+        memread(&t.val, mask);
+        *val = t.buf[0];
+    }
+
+    virtual void writeData(uint8_t val, uint8_t mask) {
+        memwrite(val, mask);
+    }
+
+    virtual void latch() { value_ = prelatch_; }
+};
+
+class IOPinType8Debug : public IOPinType8 {
+ public:
+    IOPinType8Debug(IService *parent, const char *name) :
+        IOPinType8(parent, name) {}
+
  protected:
     // Debug output compatibility
     IFace *getInterface(const char *name) {
         return parent_->getInterface(name);
+    }
+};
+
+class IOPinType16 : public IOPinType,
+                    public IIOPortListener16 {
+ public:
+    IOPinType16(IService *parent, const char *name) :
+        IOPinType(parent, name) {}
+    IOPinType16(IService *parent, const char *name, AttributeType &pincfg) :
+        IOPinType(parent, name, pincfg) {}
+
+    virtual void regiterAsListener(IIOPort *port) {
+        port->registerPortListener(static_cast<IIOPortListener16 *>(this));
+    }
+
+    /** IIOPortListener16 */
+    virtual void readData(uint16_t *val, uint16_t mask) {
+        Reg64Type t;
+        t.val = *val;
+        memread(&t.val, mask);
+        *val = t.buf16[0];
+    }
+
+    virtual void writeData(uint16_t val, uint16_t mask) {
+        memwrite(val, mask);
+    }
+
+    virtual void latch() {
+        value_ = prelatch_;
     }
 };
 

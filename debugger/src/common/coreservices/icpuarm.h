@@ -50,8 +50,8 @@ class ICpuArm : public IFace {
  public:
     ICpuArm() : IFace(IFACE_CPU_ARM) {}
 
-    virtual void setInstrMode(EInstructionModes mode) {}
-    virtual EInstructionModes getInstrMode() { return ARM_mode; }
+    virtual void setInstrMode(EInstructionModes mode) = 0;
+    virtual EInstructionModes getInstrMode() = 0;
 
     /** Zero flag */
     virtual uint32_t getZ() = 0;
@@ -73,3 +73,4 @@ class ICpuArm : public IFace {
 }  // namespace debugger
 
 #endif  // __DEBUGGER_SRC_COMMON_CORESERVICES_ICPUARM_H__
+

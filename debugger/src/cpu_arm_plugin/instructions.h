@@ -24,6 +24,8 @@ namespace debugger {
 
 class CpuCortex_Functional;
 
+bool check_cond(CpuCortex_Functional *icpu, uint32_t cond);
+
 class ArmInstruction : public GenericInstruction {
  public:
     ArmInstruction(CpuCortex_Functional *icpu, const char *name,
@@ -36,7 +38,6 @@ class ArmInstruction : public GenericInstruction {
     /** conditions return true */
     virtual int exec_checked(Reg64Type *payload) = 0;
 
-
     virtual bool parse(uint32_t *payload) {
         return ((payload[0] & mask_) == opcode_);
     }
@@ -44,8 +45,6 @@ class ArmInstruction : public GenericInstruction {
     virtual uint32_t hash() {
         return (opcode_ >> 24) & 0xF;
     }
-
-    virtual bool check_cond(uint32_t cond);
 
     virtual uint32_t shift12(DataProcessingType::reg_bits_type instr,
                              uint32_t reg, uint64_t Rs);
@@ -63,6 +62,28 @@ class ArmInstruction : public GenericInstruction {
     uint32_t opcode_;
     uint64_t *R;
 };
+
+class ThumbInstruction : public GenericInstruction {
+ public:
+    ThumbInstruction(CpuCortex_Functional *icpu, const char *name,
+                    const char *bits);
+
+    // IInstruction interface:
+    virtual const char *name() { return name_.to_string(); }
+    virtual int exec(Reg64Type *payload) = 0;
+
+ protected:
+    virtual IFace *getInterface(const char *name);
+
+ protected:
+    AttributeType name_;
+    CpuCortex_Functional *icpu_;
+    Axi4TransactionType trans_;
+    uint16_t mask_;
+    uint16_t opcode_;
+    uint64_t *R;
+};
+
 
 /** opcodes:
     0000 = AND - Rd:= Op1 AND Op2

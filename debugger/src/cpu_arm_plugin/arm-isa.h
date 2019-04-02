@@ -504,6 +504,8 @@ enum EIsaArmV7 {
 };
 
 EIsaArmV7 decoder_arm(uint32_t ti, char *errmsg, size_t errsz);
+EIsaArmV7 decoder_thumb(uint32_t ti, uint32_t *tio,
+                        char *errmsg, size_t errsz);
 
 /** Internal simulation bits only */
 static const uint64_t Interrupt_SoftwareIdx = 0;

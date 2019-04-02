@@ -25,6 +25,7 @@ CpuCortex_Functional::CpuCortex_Functional(const char *name) :
     portSavedRegs_(this, "savedregs", 0, Reg_Total) {
     registerInterface(static_cast<ICpuArm *>(this));
     registerAttribute("VectorTable", &vectorTable_);
+    registerAttribute("DefaultMode", &defaultMode_);
     p_psr_ = reinterpret_cast<ProgramStatusRegsiterType *>(
             &portRegs_.getp()[Reg_cpsr]);
 }
@@ -49,6 +50,10 @@ void CpuCortex_Functional::postinitService() {
 
     pcmd_regs_ = new CmdRegsArm(itap_);
     icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_regs_));
+
+    if (defaultMode_.is_equal("Thumb")) {
+        setInstrMode(THUMB_mode);
+    }
 }
 
 void CpuCortex_Functional::predeleteService() {
@@ -106,6 +111,9 @@ void CpuCortex_Functional::handleTrap() {
 void CpuCortex_Functional::reset(bool active) {
     CpuGeneric::reset(active);
     portRegs_.reset();
+    if (defaultMode_.is_equal("Thumb")) {
+        setInstrMode(THUMB_mode);
+    }
     estate_ = CORE_Halted;
 }
 
@@ -113,7 +121,15 @@ GenericInstruction *CpuCortex_Functional::decodeInstruction(Reg64Type *cache) {
     ArmInstruction *instr = NULL;
     uint32_t ti = cacheline_[0].buf32[0];
 
-    EIsaArmV7 etype = decoder_arm(ti, errmsg_, sizeof(errmsg_));
+    EIsaArmV7 etype;
+    if (getInstrMode() == THUMB_mode) {
+        uint32_t tio;
+        etype = decoder_thumb(ti, &tio, errmsg_, sizeof(errmsg_));
+        cacheline_[0].buf32[0] = tio;
+    } else {
+        etype = decoder_arm(ti, errmsg_, sizeof(errmsg_));
+    }
+
     if (etype < ARMV7_Total) {
         instr = isaTableArmV7_[etype];
     } else {

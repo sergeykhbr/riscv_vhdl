@@ -62,6 +62,81 @@ class MappedReg64Type : public IMemoryOperation,
     uint64_t hard_reset_value_;
 };
 
+class MappedReg16Type : public IMemoryOperation,
+                        public IResetListener {
+ public:
+    MappedReg16Type(IService *parent, const char *name,
+                    uint64_t addr, int len = 2, int priority = 1);
+
+    /** IMemoryOperation methods */
+    virtual ETransStatus b_transport(Axi4TransactionType *trans);
+
+    /** IResetListener interface */
+    virtual void reset(bool active);
+
+    /** General access methods: */
+    const char *regName() { return regname_.to_string(); }
+    Reg16Type getValue() { return value_; }
+    void setValue(Reg16Type v) { value_ = v; }
+    void setValue(uint16_t v) { value_.word = v; }
+
+ protected:
+    /** Possible side effects handlers:  */
+    virtual uint16_t aboutToRead(uint16_t cur_val) {
+        return cur_val;
+    }
+    virtual uint16_t aboutToWrite(uint16_t new_val) {
+        return new_val;
+    }
+ protected:
+    // Debug output compatibility
+    IFace *getInterface(const char *name);
+
+ protected:
+    IService *parent_;
+    AttributeType regname_;
+    AttributeType portListeners_;
+    Reg16Type value_;
+    uint16_t hard_reset_value_;
+};
+
+class MappedReg8Type : public IMemoryOperation,
+                       public IResetListener {
+ public:
+    MappedReg8Type(IService *parent, const char *name,
+                    uint64_t addr, int len = 1, int priority = 1);
+
+    /** IMemoryOperation methods */
+    virtual ETransStatus b_transport(Axi4TransactionType *trans);
+
+    /** IResetListener interface */
+    virtual void reset(bool active);
+
+    /** General access methods: */
+    const char *regName() { return regname_.to_string(); }
+    Reg8Type getValue() { return value_; }
+    void setValue(Reg8Type v) { value_ = v; }
+    void setValue(uint8_t v) { value_.byte = v; }
+
+ protected:
+    /** Possible side effects handlers:  */
+    virtual uint8_t aboutToRead(uint8_t cur_val) {
+        return cur_val;
+    }
+    virtual uint8_t aboutToWrite(uint8_t new_val) {
+        return new_val;
+    }
+ protected:
+    // Debug output compatibility
+    IFace *getInterface(const char *name);
+
+ protected:
+    IService *parent_;
+    AttributeType regname_;
+    AttributeType portListeners_;
+    Reg8Type value_;
+    uint8_t hard_reset_value_;
+};
 
 class GenericReg64Bank : public IMemoryOperation {
  public:
@@ -99,6 +174,52 @@ class GenericReg64Bank : public IMemoryOperation {
     IService *parent_;
     AttributeType bankName_;
     Reg64Type *regs_;
+};
+
+class GenericReg16Bank : public IMemoryOperation {
+ public:
+    GenericReg16Bank(IService *parent, const char *name,
+                    uint64_t addr, int len) {
+        parent_ = parent;
+        parent->registerPortInterface(name,
+                static_cast<IMemoryOperation *>(this));
+        regs_ = 0;
+        bankName_.make_string(name);
+        baseAddress_.make_uint64(addr);
+        setRegTotal(len);
+    }
+    virtual ~GenericReg16Bank() {
+        if (regs_) {
+            delete [] regs_;
+        }
+    }
+
+    /** IMemoryOperation methods */
+    virtual ETransStatus b_transport(Axi4TransactionType *trans);
+
+    /** IResetListener interface */
+    virtual void reset();
+
+    /** General access methods: */
+    void setRegTotal(int len);
+    Reg16Type read(int idx) { return regs_[idx]; }
+    void write(int idx, Reg16Type val) { regs_[idx] = val; }
+    void write(int idx, uint16_t val) { regs_[idx].word = val; }
+    Reg16Type *getp() { return regs_; }
+    uint16_t *getpR16() { return &regs_[0].word; }
+
+ protected:
+    virtual uint16_t aboutToRead(int idx, uint16_t cur_val);
+    virtual uint16_t aboutToWrite(int idx, uint16_t new_val);
+
+ protected:
+    // Debug output compatibility
+    IFace *getInterface(const char *name);
+
+ protected:
+    IService *parent_;
+    AttributeType bankName_;
+    Reg16Type *regs_;
 };
 
 }  // namespace debugger

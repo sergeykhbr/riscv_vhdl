@@ -25,6 +25,31 @@ static const uint64_t PREFETCH_OFFSET[InstrModes_Total] = {
     4
 };
 
+// PC offset computation in different modes
+static const uint64_t PC_SHIFT[InstrModes_Total] = {
+    2,
+    1
+};
+
+// Target Bit[0]: 0 = ARM mode; 1= Thumb mode
+static const uint64_t LR_LSB[InstrModes_Total] = {
+    0,
+    1
+};
+
+// PC masking bits on branch
+static const uint64_t PC_MASK[InstrModes_Total] = {
+    0xFFFFFFFC,
+    0xFFFFFFFE
+};
+
+// Default instruction length in bytes: 4 = ARM mode; 2= Thumb mode
+// Some instructions (BL) in Thumb mode could be 4 bytes length
+static const int INSTR_LEN[InstrModes_Total] = {
+    4,
+    2
+};
+
 /** Data processing default behaviour can be re-implemeted: */
 int ArmDataProcessingInstruction::exec_checked(Reg64Type *payload) {
     DataProcessingType u;
@@ -52,7 +77,7 @@ int ArmDataProcessingInstruction::exec_checked(Reg64Type *payload) {
     if (is_flags_changed(u)) {
         set_flags(A, M, Res);
     }
-    return 4;
+    return INSTR_LEN[icpu_->getInstrMode()];
 }
 
 bool ArmDataProcessingInstruction::is_flags_changed(DataProcessingType u) {
@@ -204,7 +229,7 @@ class SingleDataTransferInstruction : public ArmInstruction {
                 icpu_->popStackTrace();
             }
         }
-        return 4;
+        return INSTR_LEN[icpu_->getInstrMode()];
     }
 
  protected:
@@ -300,7 +325,7 @@ class BlockDataTransferInstruction : public ArmInstruction {
         if (u.bits.S) {
             // TODO: force user mode
         }
-        return 4;
+        return INSTR_LEN[icpu_->getInstrMode()];
     }
 };
 
@@ -381,7 +406,7 @@ class HWordSignedDataTransferInstruction : public ArmInstruction {
                 R[u.bits.rd + 1] = trans_.rpayload.b32[1];
             }
         }
-        return 4;
+        return INSTR_LEN[icpu_->getInstrMode()];
     }
 
  protected:
@@ -536,7 +561,7 @@ class MultiplyInstruction : public ArmInstruction {
             icpu_->setZ(R[u.bits.rd] == 0);
             icpu_->setN(static_cast<uint32_t>(R[u.bits.rd]) >> 31);
         }
-        return 4;
+        return INSTR_LEN[icpu_->getInstrMode()];
     }
 };
 
@@ -901,11 +926,12 @@ class B : public ArmInstruction {
         if ((u.value >> 23) & 0x1) {
             off |= 0xFF000000;
         }
+        int mode = static_cast<int>(icpu_->getInstrMode());
         off = static_cast<uint32_t>(
-            R[Reg_pc] + (off << 2) + PREFETCH_OFFSET[icpu_->getInstrMode()]);
+            R[Reg_pc] + (off << PC_SHIFT[mode]) + PREFETCH_OFFSET[mode]);
         R[Reg_pc] = off;
         icpu_->setBranch(off);
-        return 4;
+        return INSTR_LEN[mode];
     }
 };
 
@@ -917,14 +943,15 @@ class BL : public ArmInstruction {
 
     virtual int exec_checked(Reg64Type *payload) {
         BranchType u;
+        int mode = static_cast<int>(icpu_->getInstrMode());
         u.value = payload->buf32[0];
-        R[Reg_lr] = R[Reg_pc] + 4;
-        uint32_t off = u.bits.offset;
+        R[Reg_lr] = (R[Reg_pc] + 4) | LR_LSB[mode]; // Thumb BL = 4 bytes
+        uint32_t off = u.bits.offset;               // next instruction addr
         if ((u.value >> 23) & 0x1) {
             off |= 0xFF000000;
         }
         off = static_cast<uint32_t>(
-            R[Reg_pc] + (off << 2) + PREFETCH_OFFSET[icpu_->getInstrMode()]);
+            R[Reg_pc] + (off << PC_SHIFT[mode]) + PREFETCH_OFFSET[mode]);
         R[Reg_pc] = off;
         icpu_->setBranch(off);
         icpu_->pushStackTrace();
@@ -940,13 +967,24 @@ class BLX : public ArmInstruction {
 
     virtual int exec_checked(Reg64Type *payload) {
         BranchExchangeIndirectType u;
+        int mode = static_cast<int>(icpu_->getInstrMode());
+        int modenxt;
         u.value = payload->buf32[0];
-        R[Reg_lr] = R[Reg_pc] + 4;
+        // next instruction addr
+        R[Reg_lr] = (R[Reg_pc] + INSTR_LEN[mode]) | LR_LSB[mode];
+        // ARMv5T and above:
         uint64_t off = R[u.bits.rm];
-        R[Reg_pc] = off;
+        if (off & 0x1) {
+            modenxt = THUMB_mode;
+        } else {
+            modenxt = ARM_mode;
+        }
+        off &= PC_MASK[modenxt];
+        R[Reg_pc] = off;                             // ARMv5T
         icpu_->setBranch(off);
         icpu_->pushStackTrace();
-        return 4;
+        icpu_->setInstrMode(static_cast<EInstructionModes>(modenxt));
+        return INSTR_LEN[mode];
     }
 };
 
@@ -958,19 +996,23 @@ class BX : public ArmInstruction {
 
     virtual int exec_checked(Reg64Type *payload) {
         BranchType u;
+        int modenxt;
+        int mode = static_cast<int>(icpu_->getInstrMode());
         u.value = payload->buf32[0];
         uint32_t off = static_cast<uint32_t>(R[u.bits.offset & 0xf]);
         if (off & 0x1) {
-            icpu_->setInstrMode(THUMB_mode);
+            modenxt = THUMB_mode;
         } else {
-            icpu_->setInstrMode(ARM_mode);
+            modenxt = ARM_mode;
         }
+        off &= PC_MASK[modenxt];
         R[Reg_pc] = off;
         icpu_->setBranch(off);
         if ((u.bits.offset & 0xf) == Reg_lr) {
             icpu_->popStackTrace();
         }
-        return 4;
+        icpu_->setInstrMode(static_cast<EInstructionModes>(modenxt));
+        return INSTR_LEN[mode];
     }
 };
 
@@ -1139,7 +1181,7 @@ class UXTB : public ArmInstruction {
         t1 = (R[u.bits.rm] << (32 - 8*u.bits.rotate)) | t1;
         t1 &= 0xFF;
         R[u.bits.rd] = static_cast<uint32_t>(t1);
-        return 4;
+        return INSTR_LEN[icpu_->getInstrMode()];
     }
 };
 
@@ -1219,7 +1261,7 @@ class UXTH : public ArmInstruction {
         t1 = (R[u.bits.rm] << (32 - 8*u.bits.rotate)) | t1;
         t1 &= 0xFFFF;
         R[u.bits.rd] = static_cast<uint32_t>(t1);
-        return 4;
+        return INSTR_LEN[icpu_->getInstrMode()];
     }
 };
 
@@ -1258,7 +1300,7 @@ class SWI : public ArmInstruction {
 
     virtual int exec_checked(Reg64Type *payload) {
         icpu_->raiseSoftwareIrq();
-        return 4;
+        return INSTR_LEN[icpu_->getInstrMode()];
     }
 };
 

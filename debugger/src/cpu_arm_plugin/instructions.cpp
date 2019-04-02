@@ -21,6 +21,41 @@
 
 namespace debugger {
 
+bool check_cond(CpuCortex_Functional *icpu, uint32_t cond) {
+    switch (cond) {
+    case Cond_EQ:
+        return icpu->getZ() == 1;
+    case Cond_NE:
+        return icpu->getZ() == 0;
+    case Cond_CS:
+        return icpu->getC() == 1;
+    case Cond_CC:
+        return icpu->getC() == 0;
+    case Cond_MI:
+        return icpu->getN() == 1;
+    case Cond_PL:
+        return icpu->getN() == 0;
+    case Cond_VS:
+        return icpu->getV() == 1;
+    case Cond_VC:
+        return icpu->getV() == 0;
+    case Cond_HI:
+        return icpu->getC() && !icpu->getZ();
+    case Cond_LS:
+        return !icpu->getC() || icpu->getZ();
+    case Cond_GE:
+        return !(icpu->getN() ^ icpu->getV());
+    case Cond_LT:
+        return (icpu->getN() ^ icpu->getV()) == 1;
+    case Cond_GT:
+        return !icpu->getZ() && !(icpu->getN() ^ icpu->getV());
+    case Cond_LE:
+        return icpu->getZ() || (icpu->getN() ^ icpu->getV());
+    default:;
+        return true;
+    }
+}
+
 ArmInstruction::ArmInstruction(CpuCortex_Functional *icpu, const char *name,
                                     const char *bits) {
     icpu_ = icpu;
@@ -44,50 +79,42 @@ ArmInstruction::ArmInstruction(CpuCortex_Functional *icpu, const char *name,
     mask_ ^= ~0;
 }
 
+ThumbInstruction::ThumbInstruction(CpuCortex_Functional *icpu,
+                                   const char *name, const char *bits) {
+    icpu_ = icpu;
+    R = icpu->getpRegs();
+    name_.make_string(name);
+    mask_ = 0;
+    opcode_ = 0;
+    for (int i = 0; i < 16; i++) {
+        switch (bits[i]) {
+        case '0':
+            break;
+        case '1':
+            opcode_ |= (1 << (15 - i));
+            break;
+        case '?':
+            mask_ |= (1 << (15 - i));
+            break;
+        default:;
+        }
+    }
+    mask_ ^= ~0;
+}
+
 IFace *ArmInstruction::getInterface(const char *name) {
     return icpu_->getInterface(name);
 }
 
+IFace *ThumbInstruction::getInterface(const char *name) {
+    return icpu_->getInterface(name);
+}
+
 int ArmInstruction::exec(Reg64Type *payload) {
-    if (check_cond(payload->buf32[0] >> 28)) {
+    if (check_cond(icpu_, payload->buf32[0] >> 28)) {
         return exec_checked(payload);
     }
     return 4;
-}
-
-bool ArmInstruction::check_cond(uint32_t cond) {
-    switch (cond) {
-    case Cond_EQ:
-        return icpu_->getZ() == 1;
-    case Cond_NE:
-        return icpu_->getZ() == 0;
-    case Cond_CS:
-        return icpu_->getC() == 1;
-    case Cond_CC:
-        return icpu_->getC() == 0;
-    case Cond_MI:
-        return icpu_->getN() == 1;
-    case Cond_PL:
-        return icpu_->getN() == 0;
-    case Cond_VS:
-        return icpu_->getV() == 1;
-    case Cond_VC:
-        return icpu_->getV() == 0;
-    case Cond_HI:
-        return icpu_->getC() && !icpu_->getZ();
-    case Cond_LS:
-        return !icpu_->getC() || icpu_->getZ();
-    case Cond_GE:
-        return !(icpu_->getN() ^ icpu_->getV());
-    case Cond_LT:
-        return (icpu_->getN() ^ icpu_->getV()) == 1;
-    case Cond_GT:
-        return !icpu_->getZ() && !(icpu_->getN() ^ icpu_->getV());
-    case Cond_LE:
-        return icpu_->getZ() || (icpu_->getN() ^ icpu_->getV());
-    default:;
-        return true;
-    }
 }
 
 uint32_t ArmInstruction::shift12(DataProcessingType::reg_bits_type instr,

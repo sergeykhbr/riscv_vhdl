@@ -127,6 +127,7 @@
                 ['SourceCode','src0'],
                 ['GenerateRegTraceFile',false,'Generate Registers modification file to compare with SystemC'],
                 ['GenerateMemTraceFile',false,'Generate Memory access file to compare with SystemC'],
+                ['DefaultMode','Arm'],
                 ]}]},
     {'Class':'MemorySimClass','Instances':[
           {'Name':'bootrom0','Attr':[

@@ -88,24 +88,75 @@ ETransStatus IOReg8Type::b_transport(Axi4TransactionType *trans) {
 }
 
 uint8_t IOReg8Type::read() {
-    IIOPortListener *lstn;
+    IIOPortListener8 *lstn;
     uint8_t odata = value.byte;
     for (unsigned i = 0; i < portListeners_.size(); i++) {
-        lstn = static_cast<IIOPortListener *>(portListeners_[i].to_iface());
+        lstn = static_cast<IIOPortListener8 *>(portListeners_[i].to_iface());
         lstn->readData(&odata, get_direction());
     }
     return odata;
 }
 
 void IOReg8Type::write(uint8_t data) {
-    IIOPortListener *lstn;
+    IIOPortListener8 *lstn;
     value.byte = data;
     for (unsigned i = 0; i < portListeners_.size(); i++) {
-        lstn = static_cast<IIOPortListener *>(portListeners_[i].to_iface());
+        lstn = static_cast<IIOPortListener8 *>(portListeners_[i].to_iface());
         lstn->writeData(data, get_direction());
     }
     for (unsigned i = 0; i < portListeners_.size(); i++) {
-        lstn = static_cast<IIOPortListener *>(portListeners_[i].to_iface());
+        lstn = static_cast<IIOPortListener8 *>(portListeners_[i].to_iface());
+        lstn->latch();
+    }
+}
+
+IOReg16Type::IOReg16Type(IService *parent, const char *name,
+                  uint32_t addr, uint32_t len, int priority) :
+                  IORegType(parent, name, addr, len, priority) {
+    value.word = 0;
+    hard_reset_value_ = 0;
+}
+
+void IOReg16Type::reset(bool active) {
+    if (!active) {
+        return;
+    }
+    write(hard_reset_value_);
+}
+
+ETransStatus IOReg16Type::b_transport(Axi4TransactionType *trans) {
+    uint32_t addr = static_cast<uint32_t>(trans->addr);
+    if (trans->action == MemAction_Read) {
+        trans->rpayload.b16[0] = read();
+        RISCV_debug("Read %s [%04x] => %04x",
+                    regName(), addr, trans->rpayload.b16[0]);
+    } else {
+        write(trans->wpayload.b16[0]);
+        RISCV_debug("Write %s [%04x] <= %04x",
+                    regName(), addr, trans->wpayload.b16[0]);
+    }
+    return TRANS_OK;
+}
+
+uint16_t IOReg16Type::read() {
+    IIOPortListener16 *lstn;
+    uint16_t odata = value.word;
+    for (unsigned i = 0; i < portListeners_.size(); i++) {
+        lstn = static_cast<IIOPortListener16 *>(portListeners_[i].to_iface());
+        lstn->readData(&odata, get_direction());
+    }
+    return odata;
+}
+
+void IOReg16Type::write(uint16_t data) {
+    IIOPortListener16 *lstn;
+    value.word = data;
+    for (unsigned i = 0; i < portListeners_.size(); i++) {
+        lstn = static_cast<IIOPortListener16 *>(portListeners_[i].to_iface());
+        lstn->writeData(data, get_direction());
+    }
+    for (unsigned i = 0; i < portListeners_.size(); i++) {
+        lstn = static_cast<IIOPortListener16 *>(portListeners_[i].to_iface());
         lstn->latch();
     }
 }
@@ -164,9 +215,10 @@ void IOReg32Type::write(uint32_t data) {
 IOPinType::IOPinType(IService *parent, const char *name) : parent_(parent) {
     pinName_.make_string(name);
     iwire_ = 0;
-    value_ = 0;
     bitIdx_ = 0;
     access_ = 0;
+    value_ = 0;
+    prelatch_ = 0;
 
     char tstr[256];
     RISCV_sprintf(tstr, sizeof(tstr), "pin_%s", name);
@@ -177,52 +229,11 @@ IOPinType::IOPinType(IService *parent, const char *name, AttributeType &pincfg)
     : parent_(parent) {
     pinName_.make_string(name);
     iwire_ = 0;
-    value_ = 0;
     bitIdx_ = 0;
     access_ = 0;
+    value_ = 0;
+    prelatch_ = 0;
     IOPinTypeCfg_ = pincfg;
-}
-
-// Memory access use direction xDD register value (IN/OUT)
-void IOPinType::readData(uint8_t *val, uint8_t mask) {
-    uint8_t v;
-    if (iwire_ && (access_ & READ_MASK)) {
-        v = iwire_->getLevel();
-    } else {
-        v = aboutToRead(value_);
-    }
-    *val &= ~(1 << bitIdx_);
-    *val |= (v << bitIdx_);
-}
-
-void IOPinType::writeData(uint8_t val, uint8_t mask) {
-    prelatch_ = (val >> bitIdx_) & 0x1;
-    if (iwire_ && (access_ & WRITE_MASK) && (mask & (1u << bitIdx_))) {
-        iwire_->setLevel(prelatch_ == 0 ? false : true);
-    } else {
-        aboutToWrite(value_, prelatch_);
-    }
-}
-
-// Direct access to wire doesn't use Direction xDD mask register
-uint8_t IOPinType::get_bit() {
-    if (iwire_ && (access_ & READ_MASK)) {
-        return iwire_->getLevel() ? 1u : 0;
-    }
-    return value_;
-}
-
-void IOPinType::set_bit(uint8_t v) {
-    if (iwire_ && (access_ & WRITE_MASK)) {
-        iwire_->setLevel(v == 0 ? false : true);
-    }
-    prelatch_ = v;
-    value_ = prelatch_;
-}
-
-
-void IOPinType::latch() {
-    value_ = prelatch_;
 }
 
 void IOPinType::postinit() {
@@ -256,7 +267,8 @@ void IOPinType::connectToBit(const AttributeType &cfg) {
              cfg[0u].to_string());
         return;
     }
-    iport->registerPortListener(static_cast<IIOPortListener *>(this));
+
+    regiterAsListener(iport);
 }
 
 void IOPinType::connectToWire(const AttributeType &cfg) {
@@ -291,6 +303,36 @@ void IOPinType::connectToWire(const AttributeType &cfg) {
     }
     if (strstr(rw, "w")) {
         access_ |= WRITE_MASK;
+    }
+}
+
+bool IOPinType::get_bit() {
+    bool ret = aboutToRead(value_);
+    if (iwire_ && (access_ & READ_MASK)) {
+        ret = iwire_->getLevel();
+    }
+    return ret;
+}
+
+void IOPinType::set_bit(bool v) {
+    prelatch_ = aboutToWrite(value_, v);
+    if (iwire_ && (access_ & WRITE_MASK)) {
+        iwire_->setLevel(prelatch_);
+    }
+}
+
+void IOPinType::memread(uint64_t *val, uint64_t mask) {
+    uint64_t v = get_bit();
+    *val &= ~(1ull << bitIdx_);
+    *val |= (v << bitIdx_);
+}
+
+void IOPinType::memwrite(uint64_t val, uint64_t mask) {
+    bool t = (val >> bitIdx_) & 0x1 ? true: false;
+    if ((mask & (1ull << bitIdx_))) {
+        set_bit(t);
+    } else {
+        prelatch_ = t;
     }
 }
 

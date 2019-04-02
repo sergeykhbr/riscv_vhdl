@@ -50,6 +50,14 @@ class CpuCortex_Functional : public CpuGeneric,
     virtual uint64_t getIrqAddress(int idx) { return 0; }
 
     /** ICpuArm */
+    virtual void setInstrMode(EInstructionModes mode) {
+        const uint32_t MODE[InstrModes_Total] = {0u, 1u};
+        p_psr_->u.T = MODE[mode];
+    }
+    virtual EInstructionModes getInstrMode() {
+        const EInstructionModes MODE[2] = {ARM_mode, THUMB_mode};
+        return MODE[p_psr_->u.T];
+    }
     virtual uint32_t getZ() { return p_psr_->u.Z; }
     virtual void setZ(uint32_t z) { p_psr_->u.Z = z; }
     virtual uint32_t getC() { return p_psr_->u.C; }
@@ -78,7 +86,7 @@ class CpuCortex_Functional : public CpuGeneric,
     uint32_t hash32(uint32_t val) { return (val >> 24) & 0xf; }
 
  private:
-    AttributeType listExtISA_;
+    AttributeType defaultMode_;
     AttributeType vendorID_;
     AttributeType vectorTable_;
 
