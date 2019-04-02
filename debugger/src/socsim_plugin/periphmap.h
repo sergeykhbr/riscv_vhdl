@@ -132,7 +132,6 @@ struct GpioType {
     } u;
 };
 
-
 }  // namespace debugger
 
 #endif  // __DEBUGGER_SRC_COMMON_DEBUG_PERIPHMAP_H__

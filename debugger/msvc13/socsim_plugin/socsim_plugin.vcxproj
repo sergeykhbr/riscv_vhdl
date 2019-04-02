@@ -114,7 +114,6 @@
     <ClInclude Include="..\..\src\common\debug\dsu.h" />
     <ClInclude Include="..\..\src\common\debug\dsumap.h" />
     <ClInclude Include="..\..\src\common\debug\greth.h" />
-    <ClInclude Include="..\..\src\common\debug\periphmap.h" />
     <ClInclude Include="..\..\src\common\iattr.h" />
     <ClInclude Include="..\..\src\common\iclass.h" />
     <ClInclude Include="..\..\src\common\iface.h" />
@@ -127,6 +126,7 @@
     <ClInclude Include="..\..\src\socsim_plugin\gptimers.h" />
     <ClInclude Include="..\..\src\socsim_plugin\hardreset.h" />
     <ClInclude Include="..\..\src\socsim_plugin\irqctrl.h" />
+    <ClInclude Include="..\..\src\socsim_plugin\periphmap.h" />
     <ClInclude Include="..\..\src\socsim_plugin\pnp.h" />
     <ClInclude Include="..\..\src\socsim_plugin\rfctrl.h" />
     <ClInclude Include="..\..\src\socsim_plugin\ringbuf.h" />

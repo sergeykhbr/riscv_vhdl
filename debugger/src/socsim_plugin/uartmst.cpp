@@ -23,7 +23,7 @@
 
 #include "api_core.h"
 #include "uartmst.h"
-#include "debug/periphmap.h"
+#include "periphmap.h"
 
 namespace debugger {
 

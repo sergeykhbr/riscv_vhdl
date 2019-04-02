@@ -10,7 +10,6 @@
 #include "api_core.h"   // MUST BE BEFORE QtWidgets.h or any other Qt header.
 #include "attribute.h"
 #include "igui.h"
-#include "debug/periphmap.h"
 
 #include <QtWidgets/QMdiArea>
 #include <QtWidgets/QMdiSubWindow>
@@ -42,6 +41,17 @@ private:
 
     AttributeType reqcmd_;
     AttributeType respcmd_;
+
+    struct GpioType {
+        union {
+            struct MapType {
+                uint32_t led;
+                uint32_t dip;
+            } map;
+            uint64_t val[1];
+            uint8_t buf[8];
+        } u;
+    };
     GpioType value_;
     GpioType newValue_;
 };

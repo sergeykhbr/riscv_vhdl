@@ -81,8 +81,6 @@
     <ClInclude Include="..\..\src\common\debug\dsumap.h">
       <Filter>debug</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\common\debug\periphmap.h">
-      <Filter>debug</Filter>
-    </ClInclude>
+    <ClInclude Include="..\..\src\socsim_plugin\periphmap.h" />
   </ItemGroup>
 </Project>

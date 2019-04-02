@@ -19,8 +19,7 @@
 #include "api_core.h"   // MUST BE BEFORE QtWidgets.h or any other Qt header.
 #include "attribute.h"
 #include "igui.h"
-#include "debug/periphmap.h"
-
+#include "../../socsim_plugin/periphmap.h"
 #include <QtWidgets/QMdiArea>
 #include <QtWidgets/QMdiSubWindow>
 #include <QtWidgets/QGridLayout>

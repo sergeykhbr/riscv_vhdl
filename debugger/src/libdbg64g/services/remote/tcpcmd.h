@@ -1,8 +1,17 @@
-/**
- * @file
- * @copyright  Copyright 2017 GNSS Sensor Ltd. All right reserved.
- * @author     Sergey Khabarov - sergeykhbr@gmail.com
- * @brief      TCP commands parser/processor.
+/*
+ *  Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 #ifndef __DEBUGGER_TCPCMD_H__
@@ -14,13 +23,13 @@
 #include <ihap.h>
 #include "coreservices/ilink.h"
 #include "coreservices/ithread.h"
-#include "coreservices/icpugen.h"
-#include "coreservices/icpuriscv.h"
+#include "coreservices/icpufunctional.h"
 #include "coreservices/icmdexec.h"
 #include "coreservices/isrccode.h"
 #include "coreservices/iclock.h"
 #include "coreservices/iwire.h"
 #include "coreservices/irawlistener.h"
+#include "igui.h"
 
 namespace debugger {
 
@@ -65,14 +74,16 @@ class TcpCommands : public IRawListener,
     AttributeType cpu_;
     AttributeType executor_;
     AttributeType source_;
+    AttributeType gui_;
 
     AttributeType resp_;
 
     IService *parent_;
     ICmdExecutor *iexec_;
     ISourceCode *isrc_;
-    ICpuRiscV *iriscv_;
+    ICpuFunctional *icpufunc_;
     IClock *iclk_;
+    IGui *igui_;
     AttributeType *cpuLogLevel_;
 
     event_def eventHalt_;

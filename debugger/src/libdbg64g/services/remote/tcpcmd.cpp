@@ -1,8 +1,17 @@
-/**
- * @file
- * @copyright  Copyright 2017 GNSS Sensor Ltd. All right reserved.
- * @author     Sergey Khabarov - sergeykhbr@gmail.com
- * @brief      TCP commands parser/processor.
+/*
+ *  Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 #include "tcpcmd.h"
@@ -16,9 +25,13 @@ TcpCommands::TcpCommands(IService *parent) : IHap(HAP_All) {
     cpu_.make_string("core0");
     executor_.make_string("cmdexec0");
     source_.make_string("src0");
+    gui_.make_string("gui0");
 
     iexec_ = static_cast<ICmdExecutor *>(
         RISCV_get_service_iface(executor_.to_string(), IFACE_CMD_EXECUTOR));
+
+    igui_ = static_cast<IGui *>(
+        RISCV_get_service_iface(gui_.to_string(), IFACE_GUI_PLUGIN));
 
     iclk_ = static_cast<IClock *>(
         RISCV_get_service_iface(cpu_.to_string(), IFACE_CLOCK));
@@ -27,8 +40,8 @@ TcpCommands::TcpCommands(IService *parent) : IHap(HAP_All) {
     cpuLogLevel_ = static_cast<AttributeType *>(
                         iservcpu->getAttribute("LogLevel"));
 
-    iriscv_ = static_cast<ICpuRiscV *>(
-        RISCV_get_service_iface(cpu_.to_string(), IFACE_CPU_RISCV));
+    icpufunc_ = static_cast<ICpuFunctional *>(
+        RISCV_get_service_iface(cpu_.to_string(), IFACE_CPU_FUNCTIONAL));
 
     isrc_ = static_cast<ISourceCode *>(
         RISCV_get_service_iface(source_.to_string(), IFACE_SOURCE_CODE));
@@ -92,6 +105,9 @@ void TcpCommands::processCommand() {
     if (requestType.is_equal("Command")) {
         /** Redirect command to console directly */
         iexec_->exec(requestAction.to_string(), resp, false);
+        if (igui_) {
+            igui_->externalCommand(&requestAction);
+        }
     } else if (requestType.is_equal("Breakpoint")) {
         /** Breakpoints action */
         if (requestAction[0u].is_equal("Add")) {
@@ -210,11 +226,13 @@ void TcpCommands::br_rm(const AttributeType &symb, AttributeType *res) {
 }
 
 void TcpCommands::step(int cnt, AttributeType *res) {
-    char tstr[16];
+    char tstr[128];
     RISCV_sprintf(tstr, sizeof(tstr), "c %d", cnt);
 
     int log_level_old = cpuLogLevel_->to_int();
-    cpuLogLevel_->make_int64(4);
+    if (cnt < 10) {
+        cpuLogLevel_->make_int64(4);
+    }
 
     RISCV_event_clear(&eventHalt_);
     iexec_->exec(tstr, res, false);
@@ -289,20 +307,16 @@ void TcpCommands::power_off(AttributeType *res) {
 }
 
 void TcpCommands::go_msec(const AttributeType &msec, AttributeType *res) {
-    RISCV_event_clear(&eventDelayMs_);
-    RISCV_event_clear(&eventHalt_);
-
-    uint64_t step = iclk_->getStepCounter();
+    char tstr[256];
     double delta = 0.001 * iclk_->getFreqHz() * msec.to_float();
     if (delta == 0) {
         delta = 1;
     }
-    iclk_->registerStepCallback(static_cast<IClockListener *>(this),
-                                step + static_cast<uint64_t>(delta));
+    RISCV_sprintf(tstr, sizeof(tstr),
+        "c %" RV_PRI64 "d", static_cast<uint64_t>(delta));
 
-    iexec_->exec("c", res, false);
-    RISCV_event_wait(&eventDelayMs_);
-    iexec_->exec("s", res, false);
+    RISCV_event_clear(&eventHalt_);
+    iexec_->exec(tstr, res, false);
     RISCV_event_wait(&eventHalt_);
 }
 
