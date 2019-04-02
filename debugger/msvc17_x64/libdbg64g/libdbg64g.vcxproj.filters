@@ -48,6 +48,9 @@
     <Filter Include="Source Files\services\remote">
       <UniqueIdentifier>{c29d4c75-9edd-4536-9910-1c6854c36fcb}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\common\generic">
+      <UniqueIdentifier>{89950162-beba-46d5-b6d3-0c8291bf86ea}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\common\attribute.cpp">
@@ -157,6 +160,9 @@
     </ClCompile>
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_loadbin.cpp">
       <Filter>Source Files\services\exec\cmd</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\common\generic\mapreg.cpp">
+      <Filter>Source Files\common\generic</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -375,6 +381,9 @@
     </ClInclude>
     <ClInclude Include="..\..\src\common\coreservices\icpuarm.h">
       <Filter>Source Files\common\coreservices</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\generic\mapreg.h">
+      <Filter>Source Files\common\generic</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

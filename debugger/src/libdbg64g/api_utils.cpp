@@ -662,7 +662,7 @@ const char *writeAttrToFile(FILE *f, const char *s, int depth) {
 }
 
 void RISCV_write_json_file(const char *filename, const char *s) {
-    FILE *f = fopen(filename, "w");
+    FILE *f = fopen(filename, "wb");
     if (!f) {
         return;
     }
@@ -672,16 +672,21 @@ void RISCV_write_json_file(const char *filename, const char *s) {
 
 int RISCV_read_json_file(const char *filename, void *outattr) {
     AttributeType *out = reinterpret_cast<AttributeType *>(outattr);
-    FILE *f = fopen(filename, "r");
+    FILE *f = fopen(filename, "rb");
     if (!f) {
         return 0;
     }
     fseek(f, 0, SEEK_END);
     int sz = ftell(f);
-    out->make_data(sz);
+    out->make_data(sz + 1);
+    memset(out->data(), 0, out->size());
 
     fseek(f, 0, SEEK_SET);
-    fread(out->data(), sz, 1, f);
+    int t1 = 0;
+    while (t1 < sz) {
+        t1 += static_cast<int>(fread(&out->data()[t1], 1, sz - t1, f));
+    }
+    fclose(f);
     return sz;
 }
 

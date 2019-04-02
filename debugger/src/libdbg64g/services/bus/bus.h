@@ -1,8 +1,17 @@
-/**
- * @file
- * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
- * @author     Sergey Khabarov - sergeykhbr@gmail.com
- * @brief      System Bus class declaration (AMBA or whatever).
+/*
+ *  Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 #ifndef __DEBUGGER_LIBDBG64G_SERVICES_BUS_BUS_H__
@@ -10,15 +19,15 @@
 
 #include <iclass.h>
 #include <iservice.h>
-#include "coreservices/iclock.h"
+#include <ihap.h>
 #include "coreservices/imemop.h"
-#include "coreservices/idsugen.h"
-#include <string>
+#include "generic/mapreg.h"
 
 namespace debugger {
 
 class Bus : public IService,
-            public IMemoryOperation {
+            public IMemoryOperation,
+            public IHap {
  public:
     explicit Bus(const char *name);
     virtual ~Bus();
@@ -31,21 +40,25 @@ class Bus : public IService,
     virtual ETransStatus nb_transport(Axi4TransactionType *trans,
                                       IAxi4NbResponse *cb);
 
+    /** IHap */
+    virtual void hapTriggered(IFace *isrc, EHapType type, const char *descr);
+
  private:
+    /** Speed-optimized mapping */
+    virtual uint64_t adr_hash(uint64_t adr) { return adr; }
+    virtual void maphash(IMemoryOperation *imemop) {}
     void getMapedDevice(Axi4TransactionType *trans,
                         IMemoryOperation **pdev, uint32_t *sz);
 
  private:
-    AttributeType dsu_;
-
-    // Clock interface is used just to tag debug output with some step value,
-    // in a case of several clocks the first found will be used.
-    IClock *iclk0_;
-    IDsuGeneric *idsu_;
+    AttributeType useHash_;
     mutex_def mutexBAccess_;
     mutex_def mutexNBAccess_;
     Axi4TransactionType b_tr_;
     Axi4TransactionType nb_tr_;
+
+    GenericReg64Bank busUtil_;    // per master read/write access statistic
+    IMemoryOperation **imaphash_;
 };
 
 DECLARE_CLASS(Bus)

@@ -113,7 +113,9 @@ void CmdLoadSrec::exec(AttributeType *args, AttributeType *res) {
     const char *filename = (*args)[1].to_string();
     FILE *fp = fopen(filename, "rb");
     if (!fp) {
-        generateError(res, "File not found");
+        char tstr[1024];
+        RISCV_sprintf(tstr, sizeof(tstr), "can't open file %s", filename);
+        generateError(res, tstr);
         return;
     }
     fseek(fp, 0, SEEK_END);

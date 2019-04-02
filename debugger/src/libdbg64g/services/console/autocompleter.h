@@ -27,24 +27,26 @@ namespace debugger {
 
 class AutoCompleter : public IService,
                       public IAutoComplete {
-public:
+ public:
     explicit AutoCompleter(const char *name);
     virtual ~AutoCompleter();
 
     /** IService interface */
     virtual void postinitService();
+    virtual void predeleteService();
 
     /** IAutoComplete */
     virtual bool processKey(uint32_t qt_key, AttributeType *cmd,
                             AttributeType *cursor);
 
 
-private:
+ private:
     void addToHistory(const char *cmd);
 
-private:
+ private:
     AttributeType history_;
     AttributeType history_size_;
+    AttributeType historyFile_;
 
     std::string cmdLine_;
     unsigned carretPos_;

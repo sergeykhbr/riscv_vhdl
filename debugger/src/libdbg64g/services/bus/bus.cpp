@@ -17,19 +17,25 @@
 #include <api_core.h>
 #include "bus.h"
 #include "coreservices/icpugen.h"
+#include "debug/dsumap.h"
 
 namespace debugger {
 
 /** Class registration in the Core */
 REGISTER_CLASS(Bus)
 
-Bus::Bus(const char *name) 
-    : IService(name) {
+Bus::Bus(const char *name) : IService(name),
+    IHap(HAP_ConfigDone),
+    busUtil_(static_cast<IService *>(this), "bus_util",
+            DSUREG(ulocal.v.bus_util[0]),
+            sizeof(DsuMapType::local_regs_type::\
+                   local_region_type::mst_bus_util_type)) {
     registerInterface(static_cast<IMemoryOperation *>(this));
-    registerAttribute("DSU", &dsu_);
+    registerAttribute("UseHash", static_cast<IAttribute *>(&useHash_));
     RISCV_mutex_init(&mutexBAccess_);
     RISCV_mutex_init(&mutexNBAccess_);
-    idsu_ = 0;
+    RISCV_register_hap(static_cast<IHap *>(this));
+    busUtil_.setPriority(10);     // Overmap DSU registers
 }
 
 Bus::~Bus() {
@@ -38,15 +44,6 @@ Bus::~Bus() {
 }
 
 void Bus::postinitService() {
-    if (dsu_.is_string()) {
-        idsu_ = static_cast<IDsuGeneric *>(
-            RISCV_get_service_iface(dsu_.to_string(), IFACE_DSU_GENERIC));
-        if (!idsu_) {
-            RISCV_debug("Can't find IDsuGeneric interface %s",
-                        dsu_.to_string());
-        }
-    }
-
     IMemoryOperation *imem;
     for (unsigned i = 0; i < listMap_.size(); i++) {
         const AttributeType &dev = listMap_[i];
@@ -73,13 +70,21 @@ void Bus::postinitService() {
             map(imem);
         }
     }
+}
 
-    AttributeType clks;
-    RISCV_get_clock_services(&clks);
-    if (clks.size()) {
-        iclk0_ = static_cast<IClock *>(clks[0u].to_iface());
-    } else {
-        RISCV_error("CPUs not found", NULL);
+/** We need correctly mapped device list to compute hash, postinit
+    doesn't allow to guarantee order of initialization. */
+void Bus::hapTriggered(IFace *isrc,
+                                 EHapType type,
+                                 const char *descr) {
+    if (!useHash_.to_bool()) {
+        return;
+    }
+
+    IMemoryOperation *imem;
+    for (unsigned i = 0; i < imap_.size(); i++) {
+        imem = static_cast<IMemoryOperation *>(imap_[i].to_iface());
+        maphash(imem);
     }
 }
 
@@ -90,11 +95,15 @@ ETransStatus Bus::b_transport(Axi4TransactionType *trans) {
 
     RISCV_mutex_lock(&mutexBAccess_);
 
+    if (itranslator_) {
+        itranslator_->translate(trans);
+    }
+
     getMapedDevice(trans, &memdev, &sz);
 
     if (memdev == 0) {
-        RISCV_error("[%" RV_PRI64 "d] Blocking request to unmapped address "
-                    "%08" RV_PRI64 "x", iclk0_->getStepCounter(), trans->addr);
+        RISCV_error("Blocking request to unmapped address "
+                    "%08" RV_PRI64 "x", trans->addr);
         memset(trans->rpayload.b8, 0xFF, trans->xsize);
         ret = TRANS_ERROR;
     } else {
@@ -105,11 +114,11 @@ ETransStatus Bus::b_transport(Axi4TransactionType *trans) {
     }
 
     // Update Bus utilization counters:
-    if (idsu_) {
+    if (trans->source_idx >= 0 && trans->source_idx < 8) {
         if (trans->action == MemAction_Read) {
-            idsu_->incrementRdAccess(trans->source_idx);
+            busUtil_.getpR64()[2*trans->source_idx + 1]++;
         } else if (trans->action == MemAction_Write) {
-            idsu_->incrementWrAccess(trans->source_idx);
+            busUtil_.getpR64()[2*trans->source_idx]++;
         }
     }
     RISCV_mutex_unlock(&mutexBAccess_);
@@ -124,11 +133,14 @@ ETransStatus Bus::nb_transport(Axi4TransactionType *trans,
 
     RISCV_mutex_lock(&mutexNBAccess_);
 
+    if (itranslator_) {
+        itranslator_->translate(trans);
+    }
     getMapedDevice(trans, &memdev, &sz);
 
     if (memdev == 0) {
-        RISCV_error("[%" RV_PRI64 "d] Non-blocking request to unmapped address "
-                    "%08" RV_PRI64 "x", iclk0_->getStepCounter(), trans->addr);
+        RISCV_error("Non-blocking request to unmapped address "
+                    "%08" RV_PRI64 "x", trans->addr);
         memset(trans->rpayload.b8, 0xFF, trans->xsize);
         trans->response = MemResp_Error;
         cb->nb_response(trans);
@@ -140,11 +152,11 @@ ETransStatus Bus::nb_transport(Axi4TransactionType *trans,
     }
 
     // Update Bus utilization counters:
-    if (idsu_) {
+    if (trans->source_idx >= 0 && trans->source_idx < 8) {
         if (trans->action == MemAction_Read) {
-            idsu_->incrementRdAccess(trans->source_idx);
+            busUtil_.getpR64()[2*trans->source_idx + 1]++;
         } else if (trans->action == MemAction_Write) {
-            idsu_->incrementWrAccess(trans->source_idx);
+            busUtil_.getpR64()[2*trans->source_idx]++;
         }
     }
     RISCV_mutex_unlock(&mutexNBAccess_);
@@ -153,10 +165,15 @@ ETransStatus Bus::nb_transport(Axi4TransactionType *trans,
 
 void Bus::getMapedDevice(Axi4TransactionType *trans,
                          IMemoryOperation **pdev, uint32_t *sz) {
-    IMemoryOperation *imem;
-    uint64_t bar, barsz;
     *pdev = 0;
     *sz = 0;
+    if (useHash_.to_bool()) {
+        *pdev = imaphash_[adr_hash(trans->addr)];
+        return;
+    }
+
+    IMemoryOperation *imem;
+    uint64_t bar, barsz;
     for (unsigned i = 0; i < imap_.size(); i++) {
         imem = static_cast<IMemoryOperation *>(imap_[i].to_iface());
         bar = imem->getBaseAddress();

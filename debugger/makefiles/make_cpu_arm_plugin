@@ -51,6 +51,7 @@ SOURCES = \
 	mapreg \
 	srcproc \
 	decoder_arm \
+	decoder_thumb \
 	arm7tdmi \
 	cpu_arm7_func \
 	instructions \

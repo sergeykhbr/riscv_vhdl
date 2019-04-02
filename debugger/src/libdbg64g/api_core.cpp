@@ -143,7 +143,7 @@ extern "C" int RISCV_set_configuration(AttributeType *cfg) {
 
     RISCV_printf(getInterface(IFACE_SERVICE), 0, "%s",
     "\n****************************************************************\n"
-    "  System Emulator and Debugger\n"
+    "  Universal System Emulator and Debugger\n"
     "  Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com.\n"
     "  Licensed under the Apache License, Version 2.0.\n"
     "******************************************************************");

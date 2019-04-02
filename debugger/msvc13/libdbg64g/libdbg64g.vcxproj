@@ -89,6 +89,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\src\common\attribute.cpp" />
     <ClCompile Include="..\..\src\common\autobuffer.cpp" />
+    <ClCompile Include="..\..\src\common\generic\mapreg.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\api_core.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\api_utils.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\bus\bus.cpp" />
@@ -158,6 +159,7 @@
     <ClInclude Include="..\..\src\common\coreservices\itap.h" />
     <ClInclude Include="..\..\src\common\coreservices\ithread.h" />
     <ClInclude Include="..\..\src\common\coreservices\iwire.h" />
+    <ClInclude Include="..\..\src\common\generic\mapreg.h" />
     <ClInclude Include="..\..\src\common\iattr.h" />
     <ClInclude Include="..\..\src\common\iclass.h" />
     <ClInclude Include="..\..\src\common\iface.h" />

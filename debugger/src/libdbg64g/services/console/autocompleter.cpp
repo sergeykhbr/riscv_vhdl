@@ -28,9 +28,11 @@ AutoCompleter::AutoCompleter(const char *name)
     registerInterface(static_cast<IAutoComplete *>(this));
     registerAttribute("History", &history_);
     registerAttribute("HistorySize", &history_size_);
+    registerAttribute("HistoryFile", &historyFile_);
 
     history_.make_list(0);
     history_size_.make_int64(4);
+    historyFile_.make_string("");
     history_idx_ = 0;
 
     cmdLine_ = "";
@@ -41,7 +43,30 @@ AutoCompleter::~AutoCompleter() {
 }
 
 void AutoCompleter::postinitService() {
+    if (historyFile_.size()) {
+        AttributeType historyData;
+        AttributeType historyConfig;
+        RISCV_read_json_file(historyFile_.to_string(), &historyData);
+        if (historyData.is_data() && historyData.size()) {
+            historyConfig.from_config(historyData.to_string());
+            if (historyConfig.is_list()) {
+                for (unsigned i = 0; i < historyConfig.size(); i++) {
+                    addToHistory(historyConfig[i].to_string());
+                }
+            }
+        }
+    }
     history_idx_ = history_.size();
+}
+
+void AutoCompleter::predeleteService() {
+    if (!historyFile_.size()) {
+        return;
+    }
+    AttributeType t1;
+    t1.clone(&history_);
+    t1.to_config();
+    RISCV_write_json_file(historyFile_.to_string(),  t1.to_string());
 }
 
 bool AutoCompleter::processKey(uint32_t qt_key,
