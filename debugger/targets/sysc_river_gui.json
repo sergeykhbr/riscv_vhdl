@@ -216,7 +216,7 @@
                 ['Tech',0],
                 ['AdcDetector',0xff]
                 ]}]},
-    {'Class':'BusClass','Instances':[
+    {'Class':'BusGenericClass','Instances':[
           {'Name':'axi0','Attr':[
                 ['LogLevel',3],
                 ['UseHash',false],

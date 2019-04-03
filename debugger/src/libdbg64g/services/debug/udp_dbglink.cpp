@@ -10,9 +10,6 @@
 
 namespace debugger {
 
-/** Class registration in the Core */
-REGISTER_CLASS(UdpService)
-
 UdpService::UdpService(const char *name) 
     : IService(name) {
     registerInterface(static_cast<ILink *>(this));

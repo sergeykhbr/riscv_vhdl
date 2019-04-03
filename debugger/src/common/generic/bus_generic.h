@@ -14,8 +14,8 @@
  *  limitations under the License.
  */
 
-#ifndef __DEBUGGER_LIBDBG64G_SERVICES_BUS_BUS_H__
-#define __DEBUGGER_LIBDBG64G_SERVICES_BUS_BUS_H__
+#ifndef __SRC_COMMON_GENERIC_BUS_GENERIC_H__
+#define __SRC_COMMON_GENERIC_BUS_GENERIC_H__
 
 #include <iclass.h>
 #include <iservice.h>
@@ -25,12 +25,12 @@
 
 namespace debugger {
 
-class Bus : public IService,
-            public IMemoryOperation,
-            public IHap {
+class BusGeneric : public IService,
+                   public IMemoryOperation,
+                   public IHap {
  public:
-    explicit Bus(const char *name);
-    virtual ~Bus();
+    explicit BusGeneric(const char *name);
+    virtual ~BusGeneric();
 
     /** IService interface */
     virtual void postinitService();
@@ -43,14 +43,15 @@ class Bus : public IService,
     /** IHap */
     virtual void hapTriggered(IFace *isrc, EHapType type, const char *descr);
 
- private:
+ protected:
     /** Speed-optimized mapping */
     virtual uint64_t adr_hash(uint64_t adr) { return adr; }
     virtual void maphash(IMemoryOperation *imemop) {}
+    virtual IMemoryOperation *getHashedDevice(uint64_t addr) { return 0; }
     void getMapedDevice(Axi4TransactionType *trans,
                         IMemoryOperation **pdev, uint32_t *sz);
 
- private:
+ protected:
     AttributeType useHash_;
     mutex_def mutexBAccess_;
     mutex_def mutexNBAccess_;
@@ -61,8 +62,8 @@ class Bus : public IService,
     IMemoryOperation **imaphash_;
 };
 
-DECLARE_CLASS(Bus)
+DECLARE_CLASS(BusGeneric)
 
 }  // namespace debugger
 
-#endif  // __DEBUGGER_LIBDBG64G_SERVICES_BUS_BUS_H__
+#endif  // __SRC_COMMON_GENERIC_BUS_GENERIC_H__

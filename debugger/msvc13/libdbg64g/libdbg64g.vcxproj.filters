@@ -27,9 +27,6 @@
     <Filter Include="Source Files\services\console">
       <UniqueIdentifier>{05ae413a-fb17-42b1-80da-8edf4bb4cbbf}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\services\bus">
-      <UniqueIdentifier>{7dddb053-d26d-42cc-9d68-c8fcbecbfc27}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\services\mem">
       <UniqueIdentifier>{a34ba3fc-ffd8-415f-9f4a-ab396b4017c2}</UniqueIdentifier>
     </Filter>
@@ -67,9 +64,6 @@
     </ClCompile>
     <ClCompile Include="..\..\src\libdbg64g\services\console\console.cpp">
       <Filter>Source Files\services\console</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\libdbg64g\services\bus\bus.cpp">
-      <Filter>Source Files\services\bus</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\libdbg64g\services\mem\memsim.cpp">
       <Filter>Source Files\services\mem</Filter>
@@ -170,6 +164,12 @@
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_loadh86.cpp">
       <Filter>Source Files\services\exec\cmd</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\common\generic\bus_generic.cpp">
+      <Filter>Source Files\common\generic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\libdbg64g\services\mem\memlut.cpp">
+      <Filter>Source Files\services\mem</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\attribute.h">
@@ -228,9 +228,6 @@
     </ClInclude>
     <ClInclude Include="..\..\src\common\coreservices\iwire.h">
       <Filter>Source Files\common\coreservices</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\libdbg64g\services\bus\bus.h">
-      <Filter>Source Files\services\bus</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\common\ihap.h">
       <Filter>Source Files\common</Filter>
@@ -396,6 +393,12 @@
     </ClInclude>
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_loadh86.h">
       <Filter>Source Files\services\exec\cmd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\generic\bus_generic.h">
+      <Filter>Source Files\common\generic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\libdbg64g\services\mem\memlut.h">
+      <Filter>Source Files\services\mem</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

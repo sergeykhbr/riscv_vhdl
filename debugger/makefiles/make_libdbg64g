@@ -26,7 +26,6 @@ SRC_PATH =\
 	$(TOP_DIR)src/common/generic \
 	$(TOP_DIR)src/libdbg64g \
 	$(TOP_DIR)src/libdbg64g/services/mem \
-	$(TOP_DIR)src/libdbg64g/services/bus \
 	$(TOP_DIR)src/libdbg64g/services/console \
 	$(TOP_DIR)src/libdbg64g/services/debug \
 	$(TOP_DIR)src/libdbg64g/services/exec \
@@ -43,7 +42,8 @@ SOURCES = \
 	api_core \
 	api_utils \
 	mapreg \
-	bus \
+	bus_generic \
+	memlut \
 	memsim \
 	serial_dbglink \
 	udp_dbglink \

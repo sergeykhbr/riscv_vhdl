@@ -19,9 +19,6 @@
 
 namespace debugger {
 
-/** Class registration in the Core */
-REGISTER_CLASS(ElfReaderService)
-
 ElfReaderService::ElfReaderService(const char *name) : IService(name) {
     registerInterface(static_cast<IElfReader *>(this));
     registerAttribute("SourceProc", &sourceProc_);

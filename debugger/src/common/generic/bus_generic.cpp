@@ -15,16 +15,13 @@
  */
 
 #include <api_core.h>
-#include "bus.h"
+#include "bus_generic.h"
 #include "coreservices/icpugen.h"
 #include "debug/dsumap.h"
 
 namespace debugger {
 
-/** Class registration in the Core */
-REGISTER_CLASS(Bus)
-
-Bus::Bus(const char *name) : IService(name),
+BusGeneric::BusGeneric(const char *name) : IService(name),
     IHap(HAP_ConfigDone),
     busUtil_(static_cast<IService *>(this), "bus_util",
             DSUREG(ulocal.v.bus_util[0]),
@@ -36,14 +33,15 @@ Bus::Bus(const char *name) : IService(name),
     RISCV_mutex_init(&mutexNBAccess_);
     RISCV_register_hap(static_cast<IHap *>(this));
     busUtil_.setPriority(10);     // Overmap DSU registers
+    imaphash_ = 0;
 }
 
-Bus::~Bus() {
+BusGeneric::~BusGeneric() {
     RISCV_mutex_destroy(&mutexBAccess_);
     RISCV_mutex_destroy(&mutexNBAccess_);
 }
 
-void Bus::postinitService() {
+void BusGeneric::postinitService() {
     IMemoryOperation *imem;
     for (unsigned i = 0; i < listMap_.size(); i++) {
         const AttributeType &dev = listMap_[i];
@@ -74,7 +72,7 @@ void Bus::postinitService() {
 
 /** We need correctly mapped device list to compute hash, postinit
     doesn't allow to guarantee order of initialization. */
-void Bus::hapTriggered(IFace *isrc,
+void BusGeneric::hapTriggered(IFace *isrc,
                                  EHapType type,
                                  const char *descr) {
     if (!useHash_.to_bool()) {
@@ -88,7 +86,7 @@ void Bus::hapTriggered(IFace *isrc,
     }
 }
 
-ETransStatus Bus::b_transport(Axi4TransactionType *trans) {
+ETransStatus BusGeneric::b_transport(Axi4TransactionType *trans) {
     ETransStatus ret = TRANS_OK;
     uint32_t sz;
     IMemoryOperation *memdev = 0;
@@ -125,7 +123,7 @@ ETransStatus Bus::b_transport(Axi4TransactionType *trans) {
     return ret;
 }
 
-ETransStatus Bus::nb_transport(Axi4TransactionType *trans,
+ETransStatus BusGeneric::nb_transport(Axi4TransactionType *trans,
                                IAxi4NbResponse *cb) {
     ETransStatus ret = TRANS_OK;
     IMemoryOperation *memdev = 0;
@@ -163,16 +161,19 @@ ETransStatus Bus::nb_transport(Axi4TransactionType *trans,
     return ret;
 }
 
-void Bus::getMapedDevice(Axi4TransactionType *trans,
+void BusGeneric::getMapedDevice(Axi4TransactionType *trans,
                          IMemoryOperation **pdev, uint32_t *sz) {
+    IMemoryOperation *imem;
     *pdev = 0;
     *sz = 0;
     if (useHash_.to_bool()) {
-        *pdev = imaphash_[adr_hash(trans->addr)];
-        return;
+        imem = getHashedDevice(trans->addr);
+        if (imem) {
+            *pdev = imem;
+            return;
+        }
     }
 
-    IMemoryOperation *imem;
     uint64_t bar, barsz;
     for (unsigned i = 0; i < imap_.size(); i++) {
         imem = static_cast<IMemoryOperation *>(imap_[i].to_iface());

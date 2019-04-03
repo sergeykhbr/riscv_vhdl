@@ -18,9 +18,6 @@
 
 namespace debugger {
 
-/** Class registration in the Core */
-REGISTER_CLASS(TcpClient)
-
 TcpClient::TcpClient(const char *name) : IService(name),
     tcpcmd_(static_cast<IService *>(this)) {
     registerInterface(static_cast<IThread *>(this));

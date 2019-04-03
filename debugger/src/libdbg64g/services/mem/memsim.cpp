@@ -21,9 +21,6 @@
 
 namespace debugger {
 
-/** Class registration in the Core */
-REGISTER_CLASS(MemorySim)
-
 MemorySim::MemorySim(const char *name)  : IService(name) {
     registerInterface(static_cast<IMemoryOperation *>(this));
     registerAttribute("InitFile", &initFile_);

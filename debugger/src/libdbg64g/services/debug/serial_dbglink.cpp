@@ -26,9 +26,6 @@
 
 namespace debugger {
 
-/** Class registration in the Core */
-REGISTER_CLASS(SerialDbgService)
-
 SerialDbgService::SerialDbgService(const char *name) 
     : IService(name) {
     registerInterface(static_cast<ITap *>(this));

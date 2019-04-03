@@ -21,6 +21,15 @@
 #include "ihap.h"
 #include "coreservices/ithread.h"
 #include "coreservices/iclock.h"
+#include "generic/bus_generic.h"
+#include "services/debug/serial_dbglink.h"
+#include "services/debug/udp_dbglink.h"
+#include "services/elfloader/elfreader.h"
+#include "services/exec/cmdexec.h"
+#include "services/mem/memlut.h"
+#include "services/mem/memsim.h"
+#include "services/remote/tcpclient.h"
+#include "services/remote/tcpserver.h"
 
 namespace debugger {
 
@@ -72,6 +81,15 @@ extern "C" int RISCV_init() {
         RISCV_error("Can't initialize sockets library", NULL);
     }
 #endif
+    REGISTER_CLASS_IDX(BusGeneric, 0);
+    REGISTER_CLASS_IDX(SerialDbgService, 1);
+    REGISTER_CLASS_IDX(UdpService, 2);
+    REGISTER_CLASS_IDX(ElfReaderService, 3);
+    REGISTER_CLASS_IDX(CmdExecutor, 4);
+    REGISTER_CLASS_IDX(MemoryLUT, 5);
+    REGISTER_CLASS_IDX(MemorySim, 6);
+    REGISTER_CLASS_IDX(TcpClient, 7);
+    REGISTER_CLASS_IDX(TcpServer, 8);
 
     _load_plugins(&listPlugins_);
     return 0;

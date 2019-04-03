@@ -245,7 +245,7 @@
                 ['Tech',0],
                 ['AdcDetector',0xff]
                 ]}]},
-    {'Class':'BusClass','Instances':[
+    {'Class':'BusGenericClass','Instances':[
           {'Name':'axi0','Attr':[
                 ['LogLevel',3],
                 ['UseHash',false],
@@ -253,7 +253,7 @@
                         'uart0','irqctrl0','gnss0','gptmr0',
                         'pnp0','dsu0','greth0','rfctrl0','fsegps0']]
                 ]}]},
-    {'Class':'BusClass','Instances':[
+    {'Class':'BusGenericClass','Instances':[
           {'Name':'dbgbus0','Attr':[
                 ['LogLevel',3],
                 ['UseHash',false],

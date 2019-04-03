@@ -89,10 +89,10 @@
   <ItemGroup>
     <ClCompile Include="..\..\src\common\attribute.cpp" />
     <ClCompile Include="..\..\src\common\autobuffer.cpp" />
+    <ClCompile Include="..\..\src\common\generic\bus_generic.cpp" />
     <ClCompile Include="..\..\src\common\generic\mapreg.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\api_core.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\api_utils.cpp" />
-    <ClCompile Include="..\..\src\libdbg64g\services\bus\bus.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\comport\comport.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\comport\com_win.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\console\autocompleter.cpp" />
@@ -122,6 +122,7 @@
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_status.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_symb.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_write.cpp" />
+    <ClCompile Include="..\..\src\libdbg64g\services\mem\memlut.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\mem\memsim.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\remote\tcpclient.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\remote\tcpcmd.cpp" />
@@ -161,6 +162,7 @@
     <ClInclude Include="..\..\src\common\coreservices\itap.h" />
     <ClInclude Include="..\..\src\common\coreservices\ithread.h" />
     <ClInclude Include="..\..\src\common\coreservices\iwire.h" />
+    <ClInclude Include="..\..\src\common\generic\bus_generic.h" />
     <ClInclude Include="..\..\src\common\generic\mapreg.h" />
     <ClInclude Include="..\..\src\common\iattr.h" />
     <ClInclude Include="..\..\src\common\iclass.h" />
@@ -168,7 +170,6 @@
     <ClInclude Include="..\..\src\common\ihap.h" />
     <ClInclude Include="..\..\src\common\iservice.h" />
     <ClInclude Include="..\..\src\libdbg64g\include\dirent.h" />
-    <ClInclude Include="..\..\src\libdbg64g\services\bus\bus.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\comport\comport.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\console\autocompleter.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\console\console.h" />
@@ -199,6 +200,7 @@
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_status.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_symb.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_write.h" />
+    <ClInclude Include="..\..\src\libdbg64g\services\mem\memlut.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\mem\memsim.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\remote\tcpclient.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\remote\tcpcmd.h" />
