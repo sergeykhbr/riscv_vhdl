@@ -269,7 +269,7 @@ EIsaArmV7 decoder_thumb(uint32_t ti, uint32_t *tio,
             BranchExchangeIndirectType op;
             op.value = 0;
             op.bits.rm = (ti >> 3) & 0xF;
-            op.bits.SBO = ~0ul;
+            op.bits.SBO = 0xFFF;
             op.bits.opcode2 = 0x12;
             op.bits.cond = 0xE;
             if ((ti & 0x87) == 0x80) {

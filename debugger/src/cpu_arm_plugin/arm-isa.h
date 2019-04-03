@@ -238,7 +238,7 @@ union BranchExchangeIndirectType {
     struct bits_type {
         uint32_t rm : 4;        // [3:0]
         uint32_t opcode0 : 4;   // [4:7] = 0011b
-        uint32_t SBO:12;        // [8:19] = 111111111111b
+        uint32_t SBO : 12;      // [8:19] = 111111111111b
         uint32_t opcode2 : 8;   // [27:25] = 00010010b
         uint32_t cond : 4;      // [31:28]
     } bits;
