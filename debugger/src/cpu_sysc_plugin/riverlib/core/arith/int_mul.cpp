@@ -7,7 +7,7 @@
  */
 
 #include "int_mul.h"
-#include "api_utils.h"
+#include "api_core.h"
 
 namespace debugger {
 

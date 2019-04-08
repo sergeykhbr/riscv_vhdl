@@ -16,7 +16,7 @@
  * @brief      Base ISA implementation (extension I, user level).
  */
 
-#include "api_utils.h"
+#include "api_core.h"
 #include "riscv-isa.h"
 #include "cpu_riscv_func.h"
 

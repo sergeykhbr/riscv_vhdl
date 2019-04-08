@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-#include "api_utils.h"
+#include "api_core.h"
 #include "arm-isa.h"
 #include "cpu_arm7_func.h"
 

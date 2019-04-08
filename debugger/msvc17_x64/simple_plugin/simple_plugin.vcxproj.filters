@@ -18,9 +18,6 @@
     <ClInclude Include="..\..\src\common\api_types.h">
       <Filter>common</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\common\api_utils.h">
-      <Filter>common</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\common\attribute.h">
       <Filter>common</Filter>
     </ClInclude>
@@ -40,5 +37,8 @@
       <Filter>common</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\simple_plugin\isimple_plugin.h" />
+    <ClInclude Include="..\..\src\common\api_core.h">
+      <Filter>common</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

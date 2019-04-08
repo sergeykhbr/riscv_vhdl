@@ -107,9 +107,6 @@
     <ClInclude Include="..\..\src\common\api_types.h">
       <Filter>common</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\common\api_utils.h">
-      <Filter>common</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\common\attribute.h">
       <Filter>common</Filter>
     </ClInclude>
@@ -210,6 +207,9 @@
     </ClInclude>
     <ClInclude Include="..\..\src\cpu_sysc_plugin\cmds\cmd_regs_riscv.h">
       <Filter>cmds</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\api_core.h">
+      <Filter>common</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

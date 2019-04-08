@@ -77,9 +77,6 @@
     <ClInclude Include="..\..\src\common\api_types.h">
       <Filter>common</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\common\api_utils.h">
-      <Filter>common</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\common\attribute.h">
       <Filter>common</Filter>
     </ClInclude>
@@ -145,6 +142,9 @@
     </ClInclude>
     <ClInclude Include="..\..\src\common\generic\cmd_regs_generic.h">
       <Filter>common\generic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\api_core.h">
+      <Filter>common</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

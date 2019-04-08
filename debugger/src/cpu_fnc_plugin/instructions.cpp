@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-#include "api_utils.h"
+#include "api_core.h"
 #include "riscv-isa.h"
 #include "instructions.h"
 #include "cpu_riscv_func.h"

@@ -106,20 +106,6 @@ int main(int argc, char* argv[]) {
         printf("Error: can't instantiate configuration\n");
         return 0;
     }
-   
-    // Connect simulator to the EDCL debugger if enabled:
-    if (Config["GlobalSettings"]["SimEnable"].to_bool()) {
-        ILink *iudp1 = static_cast<ILink *>
-                (RISCV_get_service_iface("udpboard", IFACE_LINK));
-        ILink *iudp2 = static_cast<ILink *>
-                (RISCV_get_service_iface("udpedcl", IFACE_LINK));
-
-        AttributeType t1;
-        iudp1->getConnectionSettings(&t1);
-        iudp2->setConnectionSettings(&t1);
-        iudp2->getConnectionSettings(&t1);
-        iudp1->setConnectionSettings(&t1);
-    }
 
     AttributeType res;
     AttributeType &initCmds = Config["GlobalSettings"]["InitCommands"];

@@ -184,9 +184,6 @@
     <ClInclude Include="..\..\src\common\iservice.h">
       <Filter>Source Files\common</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\common\api_utils.h">
-      <Filter>Source Files\common</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\common\iclass.h">
       <Filter>Source Files\common</Filter>
     </ClInclude>

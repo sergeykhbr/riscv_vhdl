@@ -18,7 +18,6 @@
   <ItemGroup>
     <ClInclude Include="..\..\src\common\api_core.h" />
     <ClInclude Include="..\..\src\common\api_types.h" />
-    <ClInclude Include="..\..\src\common\api_utils.h" />
     <ClInclude Include="..\..\src\common\attribute.h" />
     <ClInclude Include="..\..\src\common\autobuffer.h" />
     <ClInclude Include="..\..\src\common\coreservices\iboardsim.h" />

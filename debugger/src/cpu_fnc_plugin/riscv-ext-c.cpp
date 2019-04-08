@@ -16,7 +16,7 @@
  * @brief      RISC-V extension-C (Comporessed Instructions).
  */
 
-#include "api_utils.h"
+#include "api_core.h"
 #include "riscv-isa.h"
 #include "cpu_riscv_func.h"
 

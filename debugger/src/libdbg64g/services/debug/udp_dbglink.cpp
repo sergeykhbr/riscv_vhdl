@@ -1,8 +1,17 @@
-/**
- * @file
- * @copyright  Copyright 2017 GNSS Sensor Ltd. All right reserved.
- * @author     Sergey Khabarov - sergeykhbr@gmail.com
- * @brief      UDP transport level implementation.
+/*
+ *  Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 #include "api_core.h"
@@ -11,12 +20,14 @@
 namespace debugger {
 
 UdpService::UdpService(const char *name) 
-    : IService(name) {
+    : IService(name), IHap(HAP_ConfigDone) {
     registerInterface(static_cast<ILink *>(this));
     registerAttribute("Timeout", &timeout_);
     registerAttribute("BlockingMode", &blockmode_);
     registerAttribute("HostIP", &hostIP_);
     registerAttribute("BoardIP", &boardIP_);
+    registerAttribute("SimTarget", &simTarget_);
+    RISCV_register_hap(static_cast<IHap *>(this));
 
     timeout_.make_int64(0);
     blockmode_.make_boolean(true);
@@ -55,6 +66,23 @@ void UdpService::postinitService() {
     /** By default socket was created with Blocking mode */
     if (!blockmode_.to_bool()) {
         setBlockingMode(false);
+    }
+}
+
+void UdpService::hapTriggered(IFace *isrc, EHapType type,
+                              const char *descr) {
+    const AttributeType *glb = RISCV_get_global_settings();
+    if ((*glb)["SimEnable"].to_bool()) {
+        ILink *itrgt = static_cast<ILink *>
+                (RISCV_get_service_iface(simTarget_.to_string(), IFACE_LINK));
+        if (itrgt) {
+            AttributeType t1;
+            itrgt->getConnectionSettings(&t1);
+            setConnectionSettings(&t1);
+        } else {
+            RISCV_error("Can't get ILink interface %s",
+                         simTarget_.to_string());
+        }
     }
 }
 

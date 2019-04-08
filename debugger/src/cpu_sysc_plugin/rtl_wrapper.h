@@ -18,6 +18,7 @@
 #define __DEBUGGER_RTL_WRAPPER_H__
 
 #include "async_tqueue.h"
+#include "api_core.h"
 #include "coreservices/imemop.h"
 #include "coreservices/ireset.h"
 #include "coreservices/icpugen.h"
@@ -25,7 +26,6 @@
 #include "coreservices/icpuriscv.h"
 #include "riverlib/river_cfg.h"
 #include <systemc.h>
-#include "api_utils.h"
 
 namespace debugger {
 
