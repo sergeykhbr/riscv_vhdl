@@ -19,9 +19,6 @@
 
 namespace debugger {
 
-/** Class registration in the Core */
-REGISTER_CLASS(EdclService)
-
 EdclService::EdclService(const char *name) : IService(name) {
     registerInterface(static_cast<ITap *>(this));
     registerAttribute("Transport", &transport_);

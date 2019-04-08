@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-#include <api_utils.h>
+#include <api_core.h>
 #include <async_tqueue.h>
 
 namespace debugger {

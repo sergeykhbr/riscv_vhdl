@@ -59,9 +59,6 @@
     <ClCompile Include="..\..\src\libdbg64g\api_core.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\libdbg64g\api_utils.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\libdbg64g\services\console\console.cpp">
       <Filter>Source Files\services\console</Filter>
     </ClCompile>
@@ -169,6 +166,9 @@
     </ClCompile>
     <ClCompile Include="..\..\src\libdbg64g\services\mem\memlut.cpp">
       <Filter>Source Files\services\mem</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\libdbg64g\core.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -399,6 +399,9 @@
     </ClInclude>
     <ClInclude Include="..\..\src\libdbg64g\services\mem\memlut.h">
       <Filter>Source Files\services\mem</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\libdbg64g\core.h">
+      <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

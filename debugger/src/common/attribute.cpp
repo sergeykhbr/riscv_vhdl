@@ -14,11 +14,9 @@
  *  limitations under the License.
  */
 
-#include <attribute.h>
 #include <api_core.h>
 #include <autobuffer.h>
 #include <iservice.h>
-#include <api_utils.h>
 #include <cstdlib>
 #include <string>
 #include <algorithm>

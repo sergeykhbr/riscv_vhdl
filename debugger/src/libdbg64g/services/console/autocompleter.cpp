@@ -20,9 +20,6 @@
 
 namespace debugger {
 
-/** Class registration in the Core */
-REGISTER_CLASS(AutoCompleter)
-
 AutoCompleter::AutoCompleter(const char *name) 
     : IService(name) {
     registerInterface(static_cast<IAutoComplete *>(this));

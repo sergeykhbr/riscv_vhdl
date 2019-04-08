@@ -25,9 +25,6 @@
 
 namespace debugger {
 
-/** Class registration in the Core */
-REGISTER_CLASS(ComPortService)
-
 ComPortService::ComPortService(const char *name) 
     : IService(name) {
     registerInterface(static_cast<IThread *>(this));

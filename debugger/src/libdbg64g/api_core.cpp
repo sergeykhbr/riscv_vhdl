@@ -14,73 +14,50 @@
  *  limitations under the License.
  */
 
-#include <string>
-#include "api_core.h"
-#include "api_types.h"
-#include "iclass.h"
-#include "ihap.h"
+#include "core.h"
 #include "coreservices/ithread.h"
-#include "coreservices/iclock.h"
 #include "generic/bus_generic.h"
 #include "services/debug/serial_dbglink.h"
 #include "services/debug/udp_dbglink.h"
+#include "services/debug/edcl.h"
 #include "services/elfloader/elfreader.h"
 #include "services/exec/cmdexec.h"
 #include "services/mem/memlut.h"
 #include "services/mem/memsim.h"
 #include "services/remote/tcpclient.h"
 #include "services/remote/tcpserver.h"
+#include "services/comport/comport.h"
+#include "services/console/autocompleter.h"
+#include "services/console/console.h"
+#include <string.h>
+#include <stdlib.h>
+#include <time.h>
+#include <dirent.h>
+#if defined(_WIN32) || defined(__CYGWIN__)
+#else
+    #include <dlfcn.h>
+#endif
 
 namespace debugger {
 
-static AttributeType Config_;
-static AttributeType listClasses_(Attr_List);
-static AttributeType listHap_(Attr_List);
-static AttributeType listPlugins_(Attr_List);
-extern mutex_def mutex_printf;
-extern mutex_def mutexDefaultConsoles_;
+static const int TIMERS_MAX = 2;
+static CoreTimerType timers_[TIMERS_MAX] = {{0}};
 
-extern void _load_plugins(AttributeType *list);
-extern void _unload_plugins(AttributeType *list);
-
-class CoreService : public IService {
-public:
-    CoreService(const char *name) : IService("CoreService") {
-        active_ = 1;
-        RISCV_mutex_init(&mutex_printf);
-        RISCV_mutex_init(&mutexDefaultConsoles_);
-        RISCV_event_create(&mutexExiting_, "mutexExiting_");
-        //logLevel_.make_int64(LOG_DEBUG);  // default = LOG_ERROR
-    }
-    virtual ~CoreService() {
-        RISCV_event_close(&mutexExiting_);
-    }
-
-    int isActive() { return active_; }
-    void shutdown() { active_ = 0; }
-    bool isExiting() { return mutexExiting_.state; }
-    void setExiting() { RISCV_event_set(&mutexExiting_); }
-private:
-    int active_;
-    event_def mutexExiting_;
-};
-static CoreService *pcore_ = NULL;
-
+CoreService *pcore_ = NULL;
 
 IFace *getInterface(const char *name) {
     return pcore_->getInterface(name);
 }
 
-
 extern "C" int RISCV_init() {
-    pcore_ = new CoreService("core");
-
 #if defined(_WIN32) || defined(__CYGWIN__)
     WSADATA wsaData;
     if (WSAStartup(MAKEWORD(2, 2), &wsaData)) {
-        RISCV_error("Can't initialize sockets library", NULL);
+        printf("error: %s\n", "Can't initialize sockets library");
     }
 #endif
+    pcore_ = new CoreService("core");
+
     REGISTER_CLASS_IDX(BusGeneric, 0);
     REGISTER_CLASS_IDX(SerialDbgService, 1);
     REGISTER_CLASS_IDX(UdpService, 2);
@@ -90,74 +67,39 @@ extern "C" int RISCV_init() {
     REGISTER_CLASS_IDX(MemorySim, 6);
     REGISTER_CLASS_IDX(TcpClient, 7);
     REGISTER_CLASS_IDX(TcpServer, 8);
+    REGISTER_CLASS_IDX(ComPortService, 9);
+    REGISTER_CLASS_IDX(AutoCompleter, 10);
+    REGISTER_CLASS_IDX(ConsoleService, 11);
+    REGISTER_CLASS_IDX(EdclService, 12);
 
-    _load_plugins(&listPlugins_);
+    pcore_->load_plugins();
     return 0;
 }
 
 extern "C" void RISCV_cleanup() {
-    IClass *icls;
-
-    // Pre-deletion
-    for (unsigned i = 0; i < listClasses_.size(); i++) {
-        icls = static_cast<IClass *>(listClasses_[i].to_iface());
-        icls->predeleteServices();
-    }
+    pcore_->predeletePlatformServices();
+    pcore_->unload_plugins();
 
 #if defined(_WIN32) || defined(__CYGWIN__)
     WSACleanup();
 #endif
-
-    _unload_plugins(&listPlugins_);
-    RISCV_mutex_lock(&mutex_printf);
-    RISCV_mutex_destroy(&mutex_printf);
-    RISCV_mutex_lock(&mutexDefaultConsoles_);
-    RISCV_mutex_destroy(&mutexDefaultConsoles_);
     delete pcore_;
-    RISCV_disable_log();
 }
 
 extern "C" int RISCV_set_configuration(AttributeType *cfg) {
-    IClass *icls;
-    IService *iserv;
-
-    Config_.clone(cfg);
-    if (!Config_.is_dict()) {
+    if (!pcore_) {
+        printf("Core library wasn't initialized.\n");
+        return -1;
+    }
+    if (pcore_->setConfig(cfg)) {
         printf("Wrong configuration.\n");
         return -1;
     }
 
-    AttributeType &Services = Config_["Services"];
-    if (Services.is_list()) {
-        for (unsigned i = 0; i < Services.size(); i++) {
-            const char *clsname = Services[i]["Class"].to_string();
-            icls = static_cast<IClass *>(RISCV_get_class(clsname));
-            if (icls == NULL) {
-                printf("Class %s not found\n", 
-                             Services[i]["Class"].to_string());
-                return -1;
-            }
-            /** Special global setting for the GUI class: */
-            if (strcmp(icls->getClassName(), "GuiPluginClass") == 0) {
-                if (!Config_["GlobalSettings"]["GUI"].to_bool()) {
-                    RISCV_info("%s", "GUI disabled");
-                    continue;
-                }
-            }
-
-            AttributeType &Instances = Services[i]["Instances"];
-            for (unsigned n = 0; n < Instances.size(); n++) {
-                iserv = icls->createService(Instances[n]["Name"].to_string());
-                iserv->initService(&Instances[n]["Attr"]);
-            }
-        }
+    if (pcore_->createPlatformServices()) {
+        return -1;
     }
-
-    // Post initialization
-    for (unsigned i = 0; i < listClasses_.size(); i++) {
-        icls = static_cast<IClass *>(listClasses_[i].to_iface());
-        icls->postinitServices();
-    }
+    pcore_->postinitPlatformServices();
 
     RISCV_printf(getInterface(IFACE_SERVICE), 0, "%s",
     "\n****************************************************************\n"
@@ -166,66 +108,35 @@ extern "C" int RISCV_set_configuration(AttributeType *cfg) {
     "  Licensed under the Apache License, Version 2.0.\n"
     "******************************************************************");
 
-    IHap *ihap;
-    for (unsigned i = 0; i < listHap_.size(); i++) {
-        ihap = static_cast<IHap *>(listHap_[i].to_iface());
-        if (ihap->getType() == HAP_ConfigDone) {
-            ihap->hapTriggered(getInterface(IFACE_SERVICE), 
-                        HAP_ConfigDone, "Initial config done");
-        }
-    }
+    pcore_->triggerHap(getInterface(IFACE_SERVICE), 
+                      HAP_ConfigDone,
+                      "Initial config done");
     return 0;
 }
 
 extern "C" void RISCV_get_configuration(AttributeType *cfg) {
-    IClass *icls;
-    cfg->make_dict();
-    (*cfg)["GlobalSettings"] = Config_["GlobalSettings"];
-    (*cfg)["Services"].make_list(0);
-    for (unsigned i = 0; i < listClasses_.size(); i++) {
-        icls = static_cast<IClass *>(listClasses_[i].to_iface());
-        AttributeType val = icls->getConfiguration();
-        (*cfg)["Services"].add_to_list(&val);
-    }
-    cfg->to_config();
+    pcore_->getConfig(cfg);
 }
 
 extern "C" const AttributeType *RISCV_get_global_settings() {
-    return &Config_["GlobalSettings"];
+    return pcore_->getGlobalSettings();
 }
 
 extern "C" void RISCV_register_class(IFace *icls) {
-    AttributeType item(icls);
-    listClasses_.add_to_list(&item);
+    pcore_->registerClass(icls);
 }
 
 extern "C" void RISCV_register_hap(IFace *ihap) {
-    AttributeType item(ihap);
-    listHap_.add_to_list(&item);
+    pcore_->registerHap(ihap);
 }
 
 extern "C" void RISCV_trigger_hap(IFace *isrc, int type, 
                                   const char *descr) {
-    IHap *ihap;
-    EHapType etype = static_cast<EHapType>(type);
-    for (unsigned i = 0; i < listHap_.size(); i++) {
-        ihap = static_cast<IHap *>(listHap_[i].to_iface());
-        if (ihap->getType() == HAP_All || ihap->getType() == etype) {
-            ihap->hapTriggered(isrc, etype, descr);
-        }
-    }
+    pcore_->triggerHap(isrc, type, descr);
 }
 
-
 extern "C" IFace *RISCV_get_class(const char *name) {
-    IClass *icls;
-    for (unsigned i = 0; i < listClasses_.size(); i++) {
-        icls = static_cast<IClass *>(listClasses_[i].to_iface());
-        if (strcmp(name, icls->getClassName()) == 0) {
-            return icls;
-        }
-    }
-    return NULL;
+    return pcore_->getClass(name);
 }
 
 extern "C" IFace *RISCV_create_service(IFace *iclass, const char *name, 
@@ -238,15 +149,7 @@ extern "C" IFace *RISCV_create_service(IFace *iclass, const char *name,
 }
 
 extern "C" IFace *RISCV_get_service(const char *name) {
-    IClass *icls;
-    IService *iserv;
-    for (unsigned i = 0; i < listClasses_.size(); i++) {
-        icls = static_cast<IClass *>(listClasses_[i].to_iface());
-        if ((iserv = icls->getInstance(name)) != NULL) {
-            return iserv;
-        }
-    }
-    return NULL;
+    return pcore_->getService(name);
 }
 
 extern "C" IFace *RISCV_get_service_iface(const char *servname,
@@ -270,26 +173,9 @@ extern "C" IFace *RISCV_get_service_port_iface(const char *servname,
     return iserv->getPortInterface(portname, facename);
 }
 
-extern "C" void RISCV_get_services_with_iface(const char *iname,  
+extern "C" void RISCV_get_services_with_iface(const char *iname,
                                              AttributeType *list) {
-    IClass *icls;
-    IService *iserv;
-    IFace *iface;
-    const AttributeType *tlist;
-    list->make_list(0);
-    
-    for (unsigned i = 0; i < listClasses_.size(); i++) {
-        icls = static_cast<IClass *>(listClasses_[i].to_iface());
-        tlist = icls->getInstanceList();
-        for (unsigned n = 0; n < tlist->size(); n++) {
-            iserv = static_cast<IService *>((*tlist)[n].to_iface());
-            iface = iserv->getInterface(iname);
-            if (iface) {
-                AttributeType t1(iserv);
-                list->add_to_list(&t1);
-            }
-        }
-    }
+    pcore_->getServicesWithIFace(iname, list);
 }
 
 extern "C" void RISCV_get_clock_services(AttributeType *list) {
@@ -315,23 +201,13 @@ static thread_return_t safe_exit_thread(void *args) {
         printf("Stopped\n");
     }
 
-    RISCV_trigger_hap(getInterface(IFACE_SERVICE),
-                      HAP_BreakSimulation, "Exiting");
+    pcore_->triggerHap(getInterface(IFACE_SERVICE),
+                       HAP_BreakSimulation,
+                       "Exiting");
     printf("All threads were stopped!\n");
     pcore_->shutdown();
     return 0;
 }
-
-struct TimerType {
-    timer_callback_type cb;
-    void *args;
-    int interval;
-    int delta;
-    int single_shot;
-};
-
-static const int TIMERS_MAX = 2;
-static TimerType timers_[TIMERS_MAX] = {{0}};
 
 extern "C" void RISCV_break_simulation() {
     if (pcore_->isExiting()) {
@@ -346,7 +222,7 @@ extern "C" void RISCV_break_simulation() {
 
 
 extern "C" void RISCV_dispatcher_start() {
-    TimerType *tmr;
+    CoreTimerType *tmr;
     int sleep_interval = 20;
     int delta;
     while (pcore_->isActive()) {
@@ -377,7 +253,7 @@ extern "C" void RISCV_dispatcher_start() {
 
 extern "C" void RISCV_register_timer(int msec, int single_shot,
                                      timer_callback_type cb, void *args) {
-    TimerType *tmr = 0;
+    CoreTimerType *tmr = 0;
     for (int i = 0; i < TIMERS_MAX; i++) {
         if (timers_[i].cb == 0) {
             tmr = &timers_[i];
@@ -405,6 +281,505 @@ extern "C" void RISCV_unregister_timer(timer_callback_type cb) {
             timers_[i].single_shot = 0;
         }
     }
+}
+
+extern "C" void RISCV_generate_name(AttributeType *name) {
+    char str[256];
+    pcore_->generateUniqueName("obj", str, sizeof(str));
+    name->make_string(str);
+}
+
+extern "C" void RISCV_add_default_output(void *iout) {
+    pcore_->registerConsole(static_cast<IRawListener *>(iout));
+}
+
+extern "C" void RISCV_remove_default_output(void *iout) {
+    pcore_->unregisterConsole(static_cast<IRawListener *>(iout));
+}
+
+extern "C" void RISCV_set_default_clock(void *iclk) {
+    pcore_->setTimestampClk(static_cast<IFace *>(iclk));
+}
+
+extern "C" int RISCV_enable_log(const char *filename) {
+    return pcore_->openLog(filename);
+}
+
+extern "C" void RISCV_disable_log() {
+    pcore_->closeLog();
+}
+
+extern "C" int RISCV_printf(void *iface, int level, 
+                            const char *fmt, ...) {
+    int ret = 0;
+    va_list arg;
+    IFace *iout = reinterpret_cast<IFace *>(iface);
+    uint64_t cur_t = pcore_->getTimestamp();
+
+    char *buf = pcore_->getpBufLog();
+    size_t buf_sz = pcore_->sizeBufLog();
+    pcore_->lockPrintf();
+    if (iout == NULL) {
+        ret = RISCV_sprintf(buf, buf_sz,
+                    "[%" RV_PRI64 "d, \"%s\", \"", cur_t, "unknown");
+    } else if (strcmp(iout->getFaceName(), IFACE_SERVICE) == 0) {
+        IService *iserv = static_cast<IService *>(iout);
+        AttributeType *local_level = 
+                static_cast<AttributeType *>(iserv->getAttribute("LogLevel"));
+        if (level > static_cast<int>(local_level->to_int64())) {
+            pcore_->unlockPrintf();
+            return 0;
+        }
+        ret = RISCV_sprintf(buf, buf_sz,
+                "[%" RV_PRI64 "d, \"%s\", \"", cur_t, iserv->getObjName());
+    } else if (strcmp(iout->getFaceName(), IFACE_CLASS) == 0) {
+        IClass *icls = static_cast<IClass *>(iout);
+        ret = RISCV_sprintf(buf, buf_sz,
+                "[%" RV_PRI64 "d, \"%s\", \"", cur_t, icls->getClassName());
+    } else {
+        ret = RISCV_sprintf(buf, buf_sz,
+                "[%" RV_PRI64 "d, \"%s\", \"", cur_t, iout->getFaceName());
+    }
+    va_start(arg, fmt);
+#if defined(_WIN32) || defined(__CYGWIN__)
+    ret += vsprintf_s(&buf[ret], buf_sz - ret, fmt, arg);
+#else
+    ret += vsprintf(&buf[ret], fmt, arg);
+#endif
+    va_end(arg);
+
+    buf[ret++] = '\"';
+    buf[ret++] = ']';
+    buf[ret++] = '\n';
+    buf[ret] = '\0';
+
+    pcore_->outputConsole(buf, ret);
+    pcore_->outputLog(buf, ret);
+    pcore_->unlockPrintf();
+    return ret;
+}
+
+extern "C" int RISCV_sprintf(char *s, size_t len, const char *fmt, ...) {
+    int ret;
+    va_list arg;
+    va_start(arg, fmt);
+#if defined(_WIN32) || defined(__CYGWIN__)
+    ret = vsprintf_s(s, len, fmt, arg);
+#else
+    ret = vsprintf(s, fmt, arg);
+#endif
+    va_end(arg);
+    return ret;
+}
+
+/* Suspend thread on certain number of milliseconds */
+extern "C" void RISCV_sleep_ms(int ms) {
+#if defined(_WIN32) || defined(__CYGWIN__)
+    Sleep(ms);
+#else
+    usleep(1000*ms);
+#endif
+}
+
+extern "C" uint64_t RISCV_get_time_ms() {
+#if defined(_WIN32) || defined(__CYGWIN__)
+    return 1000*(clock()/CLOCKS_PER_SEC);
+#else
+    struct timeval tc;
+    gettimeofday(&tc, NULL);
+    return 1000*tc.tv_sec + tc.tv_usec/1000;
+#endif
+}
+
+extern "C" int RISCV_get_pid() {
+#if defined(_WIN32) || defined(__CYGWIN__)
+    return _getpid();
+#else
+    return getpid();
+#endif
+}
+
+extern "C" void RISCV_memory_barrier() {
+#if defined(_WIN32) || defined(__CYGWIN__)
+    MemoryBarrier();
+#else
+    __sync_synchronize();
+#endif
+}
+
+extern "C" void RISCV_thread_create(void *data) {
+    LibThreadType *p = (LibThreadType *)data;
+#if defined(_WIN32) || defined(__CYGWIN__)
+    p->Handle = (thread_def)_beginthreadex(0, 0, p->func, p->args, 0, 0);
+#else
+    pthread_create(&p->Handle, 0, p->func, p->args);
+#endif
+}
+
+extern "C" uint64_t RISCV_thread_id() {
+	  uint64_t r;
+#if defined(_WIN32) || defined(__CYGWIN__)
+	  r = GetCurrentThreadId();
+#else
+	  r = pthread_self();
+#endif
+	  return r;
+}
+
+extern "C" void RISCV_thread_join(thread_def th, int ms) {
+#if defined(_WIN32) || defined(__CYGWIN__)
+    WaitForSingleObject(th, ms);
+#else
+    pthread_join(th, 0);
+#endif
+}
+
+extern "C" void RISCV_event_create(event_def *ev, const char *name) {
+#if defined(_WIN32) || defined(__CYGWIN__)
+    char event_name[256];
+    pcore_->generateUniqueName("", event_name, sizeof(event_name));
+    ev->state = false;
+    ev->cond = CreateEvent(
+        NULL,               // default security attributes
+        TRUE,               // manual-reset event
+        FALSE,              // initial state is nonsignaled
+        TEXT(event_name)    // object name
+        );
+#else
+    pthread_mutex_init(&ev->mut, NULL);
+    pthread_cond_init(&ev->cond, NULL);
+    ev->state = false;
+#endif
+}
+
+extern "C" void RISCV_event_close(event_def *ev) {
+#if defined(_WIN32) || defined(__CYGWIN__)
+    CloseHandle(ev->cond);
+#else
+    pthread_mutex_destroy(&ev->mut);
+    pthread_cond_destroy(&ev->cond);
+#endif
+}
+
+extern "C" void RISCV_event_set(event_def *ev) {
+#if defined(_WIN32) || defined(__CYGWIN__)
+    ev->state = true;
+    SetEvent(ev->cond);
+#else
+    pthread_mutex_lock(&ev->mut);
+    ev->state = true;
+    pthread_mutex_unlock(&ev->mut);
+    pthread_cond_signal(&ev->cond);
+#endif
+}
+
+extern "C" int RISCV_event_is_set(event_def *ev) {
+    return ev->state ? 1: 0;
+}
+
+extern "C" void RISCV_event_clear(event_def *ev) {
+#if defined(_WIN32) || defined(__CYGWIN__)
+    ev->state = false;
+    ResetEvent(ev->cond);
+#else
+    ev->state = false;
+#endif
+}
+
+extern "C" void RISCV_event_wait(event_def *ev) {
+#if defined(_WIN32) || defined(__CYGWIN__)
+    WaitForSingleObject(ev->cond, INFINITE);
+#else
+    int result = 0;
+    pthread_mutex_lock(&ev->mut);
+    while (result == 0 && !ev->state) {
+        result = pthread_cond_wait(&ev->cond, &ev->mut);
+    } 
+    pthread_mutex_unlock(&ev->mut);
+#endif
+}
+
+extern "C" int RISCV_event_wait_ms(event_def *ev, int ms) {
+#if defined(_WIN32) || defined(__CYGWIN__)
+    DWORD wait_ms = ms;
+    if (ms == 0) {
+        wait_ms = INFINITE;
+    }
+    if (WAIT_TIMEOUT == WaitForSingleObject(ev->cond, wait_ms)) {
+        return 1;
+    }
+    return 0;
+#else
+    struct timeval tc;
+    struct timespec ts;
+    int next_us;
+    int result = 0;
+    gettimeofday(&tc, NULL);
+    next_us = tc.tv_usec + 1000 * ms;
+    ts.tv_sec = tc.tv_sec + (next_us / 1000000);
+    next_us -= 1000000 * (next_us / 1000000);
+    ts.tv_nsec = 1000 * next_us;
+
+    pthread_mutex_lock(&ev->mut);
+    while (result == 0 && !ev->state) {
+        result = pthread_cond_timedwait(&ev->cond, &ev->mut, &ts);
+    }
+    pthread_mutex_unlock(&ev->mut);
+    if (ETIMEDOUT == result) {
+        return 1;
+    }
+    return 0;
+#endif
+}
+
+extern "C" sharemem_def RISCV_memshare_create(const char *name, int sz) {
+    sharemem_def ret = 0;
+#if defined(_WIN32) || defined(__CYGWIN__)
+    ret = CreateFileMapping(
+                 INVALID_HANDLE_VALUE,  // use paging file
+                 NULL,                  // default security
+                 PAGE_READWRITE,      // read/write access
+                 0,                   // maximum object size (high-order DWORD)
+                 sz,                  // maximum object size (low-order DWORD)
+                 name);               // name of mapping object
+#else
+#endif
+    if (ret == 0) {
+        RISCV_error("Couldn't create map object %s", name);
+    }
+    return ret;
+}
+
+extern "C" void* RISCV_memshare_map(sharemem_def h, int sz) {
+    void *ret = 0;
+#if defined(_WIN32) || defined(__CYGWIN__)
+    ret = MapViewOfFile(h,   // handle to map object
+                        FILE_MAP_ALL_ACCESS, // read/write permission
+                        0,
+                        0,
+                        sz);
+#else
+#endif
+    if (ret == 0) {
+        RISCV_error("Couldn't map view of file with size %d", sz);
+    }
+    return ret;
+}
+
+extern "C" void RISCV_memshare_unmap(void *buf) {
+#if defined(_WIN32) || defined(__CYGWIN__)
+    UnmapViewOfFile(buf);
+#else
+#endif
+}
+
+extern "C" void RISCV_memshare_delete(sharemem_def h) {
+#if defined(_WIN32) || defined(__CYGWIN__)
+    CloseHandle(h);
+#else
+#endif
+}
+
+extern "C" int RISCV_mutex_init(mutex_def *mutex) {
+#if defined(_WIN32) || defined(__CYGWIN__)
+    InitializeCriticalSection(mutex);
+#else
+    pthread_mutexattr_t attr;
+
+    pthread_mutexattr_init(&attr);
+    pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
+    pthread_mutex_init(mutex, &attr);
+#endif
+    return 0;
+}
+
+extern "C" int RISCV_mutex_lock(mutex_def *mutex) {
+#if defined(_WIN32) || defined(__CYGWIN__)
+    EnterCriticalSection(mutex);
+#else
+    pthread_mutex_lock(mutex) ;
+#endif
+    return 0;
+}
+
+extern "C" int RISCV_mutex_unlock(mutex_def * mutex) {
+#if defined(_WIN32) || defined(__CYGWIN__)
+    LeaveCriticalSection(mutex);
+#else
+    pthread_mutex_unlock(mutex);
+#endif
+    return 0;
+}
+
+extern "C" int RISCV_mutex_destroy(mutex_def *mutex) {
+#if defined(_WIN32) || defined(__CYGWIN__)
+    DeleteCriticalSection(mutex);
+#else
+    pthread_mutex_destroy(mutex);
+#endif
+    return 0;
+}
+
+extern "C" void *RISCV_malloc(uint64_t sz) {
+    return malloc((size_t)sz);
+}
+
+extern "C" void RISCV_free(void *p) {
+    if (p) {
+        free(p);
+    }
+}
+
+extern "C" int RISCV_get_core_folder(char *out, int sz) {
+#if defined(_WIN32) || defined(__CYGWIN__)
+    HMODULE hm = NULL;
+    if (!GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
+            GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+            (LPCSTR)&RISCV_get_core_folder,
+            &hm)) {
+        
+        return GetLastError();
+    }
+    GetModuleFileNameA(hm, out, sz);
+#else
+    Dl_info dl_info;
+    dladdr((void *)RISCV_get_core_folder, &dl_info);
+    RISCV_sprintf(out, sz, "%s", dl_info.dli_fname);
+#endif
+    int n = (int)strlen(out);
+    while (n > 0 && out[n] != '\\' && out[n] != '/') n--;
+
+    out[n+1] = '\0';
+    return 0;
+}
+
+extern "C" void RISCV_set_current_dir() {
+#if defined(_WIN32) || defined(__CYGWIN__)
+    HMODULE hMod = GetModuleHandle(NULL);
+    char path[MAX_PATH] = "";
+    GetModuleFileNameA(hMod, path, MAX_PATH);
+#else         // Linux
+    // Get path of executable.
+    char path[1024];
+    ssize_t n = readlink("/proc/self/exe", path,
+                         sizeof(path)/sizeof(path[0]) - 1);
+    if (n == -1) {
+        return;
+    }
+    path[n] = 0;
+#endif
+
+    size_t i;
+    for(i = strlen(path) - 1; i > 0 && path[i] != '/' && path[i] != '\\'; --i);
+    path[i] = '\0';
+
+#if defined(_WIN32) || defined(__CYGWIN__)
+    SetCurrentDirectoryA(path);
+#else         // Linux
+    chdir(path);
+#endif
+}
+
+void put_char(char s, FILE *f) {
+    fputc(s, f);
+    fflush(f);
+}
+
+// check if this attribute like list with items <= 2: [a,b]
+bool is_single_line(const char *s) {
+    bool ret = false;
+    if (*s == '[') {
+        const char *pcheck = s + 1;
+        int item_cnt = 0;
+        int symbol_cnt = 0;
+        while (*pcheck != ']') {
+            symbol_cnt++;
+            if (*pcheck == ',') {
+                item_cnt++;
+            } else if (*pcheck == '[' || *pcheck == '{') {
+                item_cnt = 100;
+                break;
+            }
+            ++pcheck;
+        }
+        if (item_cnt <= 2 && symbol_cnt < 80) {
+            ret = true;
+        }
+    }
+    return ret;
+}
+
+const char *writeAttrToFile(FILE *f, const char *s, int depth) {
+    const char *ret = s;
+    bool end_attr = false;
+    bool do_single_line = false;
+
+    if ((*s) == 0) {
+        return ret;
+    }
+
+    put_char('\n', f);
+    for (int i = 0; i < depth; i++) {
+        put_char(' ', f);
+        put_char(' ', f);
+    }
+    
+
+    while ((*ret) && !end_attr) {
+        put_char(*ret, f);
+        if ((*ret) == ',') {
+            if (!do_single_line) {
+                put_char('\n', f);
+                for (int i = 0; i < depth; i++) {
+                    put_char(' ', f);
+                    put_char(' ', f);
+                }
+            }
+        } else if ((*ret) == ']' || (*ret) == '}') {
+            if (do_single_line) {
+                do_single_line = false;
+            } else {
+                return ret;
+            }
+        } else if ((*ret) == '[' || (*ret) == '{') {
+            do_single_line = is_single_line(ret);
+            if (!do_single_line) {
+                ret = writeAttrToFile(f, ret + 1, depth + 1);
+            }
+        }
+        ++ret;
+    }
+    
+    return ret;
+}
+
+void RISCV_write_json_file(const char *filename, const char *s) {
+    FILE *f = fopen(filename, "wb");
+    if (!f) {
+        return;
+    }
+    writeAttrToFile(f, s, 0);
+    fclose(f);
+}
+
+int RISCV_read_json_file(const char *filename, void *outattr) {
+    AttributeType *out = reinterpret_cast<AttributeType *>(outattr);
+    FILE *f = fopen(filename, "rb");
+    if (!f) {
+        return 0;
+    }
+    fseek(f, 0, SEEK_END);
+    int sz = ftell(f);
+    out->make_data(sz + 1);
+    memset(out->data(), 0, out->size());
+
+    fseek(f, 0, SEEK_SET);
+    int t1 = 0;
+    while (t1 < sz) {
+        t1 += static_cast<int>(fread(&out->data()[t1], 1, sz - t1, f));
+    }
+    fclose(f);
+    return sz;
 }
 
 }  // namespace debugger

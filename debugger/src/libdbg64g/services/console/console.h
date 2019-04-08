@@ -61,7 +61,6 @@ protected:
 private:
     friend class RawPortType;
     void writeBuffer(const char *buf);
-    void processScriptFile();
     bool isData();
     uint32_t getData();
     void clearLine(int num);

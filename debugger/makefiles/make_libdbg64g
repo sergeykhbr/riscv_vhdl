@@ -40,7 +40,7 @@ SOURCES = \
 	attribute \
 	autobuffer \
 	api_core \
-	api_utils \
+	core \
 	mapreg \
 	bus_generic \
 	memlut \

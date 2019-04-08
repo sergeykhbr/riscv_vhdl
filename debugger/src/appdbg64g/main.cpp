@@ -45,7 +45,6 @@ int main(int argc, char* argv[]) {
     RISCV_set_current_dir();
 
     uint16_t tcp_port = 0;
-    AttributeType scriptFile;
     AttributeType databuf;
     bool nogui = false;
 
@@ -58,9 +57,6 @@ int main(int argc, char* argv[]) {
             } else if (strcmp(argv[i], "-p") == 0) {
                 i++;
                 tcp_port = atoi(argv[i]);
-            } else if (strcmp(argv[i], "-script") == 0) {
-                i++;
-                scriptFile.make_string(argv[i]);
             } else if (strcmp(argv[i], "-nogui") == 0) {
                 nogui = true;
             }
@@ -75,7 +71,6 @@ int main(int argc, char* argv[]) {
     }
 
     Config.from_config(databuf.to_string());
-    Config["GlobalSettings"]["ScriptFile"] = scriptFile;
 	
 	/** Disable GUI using application arguments list */
     if (nogui) {
@@ -139,7 +134,6 @@ int main(int argc, char* argv[]) {
 
     /** Main loop */
     RISCV_dispatcher_start();
-    scriptFile.attr_free();
     databuf.attr_free();
 
     //const char *t1 = RISCV_get_configuration();

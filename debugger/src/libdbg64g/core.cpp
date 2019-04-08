@@ -1,0 +1,395 @@
+/*
+ *  Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
+#include "iclass.h"
+#include "ihap.h"
+#include "core.h"
+#include "coreservices/iclock.h"
+#include "coreservices/irawlistener.h"
+#include <string>
+#include <stdlib.h>
+#include <time.h>
+#include <dirent.h>
+#if defined(_WIN32) || defined(__CYGWIN__)
+#else
+    #include <dlfcn.h>
+#endif
+
+namespace debugger {
+
+CoreService::CoreService(const char *name) : IService("CoreService") {
+    active_ = 1;
+    listPlugins_.make_list(0);
+    listClasses_.make_list(0);
+    listHap_.make_list(0);
+    listConsole_.make_list(0);
+
+    RISCV_mutex_init(&mutexPrintf_);
+    RISCV_mutex_init(&mutexDefaultConsoles_);
+    RISCV_mutex_init(&mutexLogFile_);
+    //logLevel_.make_int64(LOG_DEBUG);  // default = LOG_ERROR
+    iclk_ = 0;
+    uniqueIdx_ = 0;
+    logFile_ = 0;
+}
+
+CoreService::~CoreService() {
+    closeLog();
+    RISCV_mutex_lock(&mutexPrintf_);
+    RISCV_mutex_destroy(&mutexPrintf_);
+    RISCV_mutex_lock(&mutexDefaultConsoles_);
+    RISCV_mutex_destroy(&mutexDefaultConsoles_);
+    RISCV_mutex_destroy(&mutexLogFile_);
+
+    RISCV_event_close(&eventExiting_);
+}
+
+int CoreService::isActive() {
+    return active_;
+}
+
+void CoreService::shutdown() {
+    active_ = 0;
+}
+
+bool CoreService::isExiting() {
+    return eventExiting_.state;
+}
+
+void CoreService::setExiting() {
+    RISCV_event_set(&eventExiting_);
+}
+
+int CoreService::setConfig(AttributeType *cfg) {
+    RISCV_event_create(&eventExiting_, "eventExiting_");
+    Config_.clone(cfg);
+    if (!Config_.is_dict()) {
+        return -1;
+    }
+    return 0;
+}
+
+void CoreService::getConfig(AttributeType *cfg) {
+    IClass *icls;
+    cfg->make_dict();
+    (*cfg)["GlobalSettings"] = Config_["GlobalSettings"];
+    (*cfg)["Services"].make_list(0);
+    for (unsigned i = 0; i < listClasses_.size(); i++) {
+        icls = static_cast<IClass *>(listClasses_[i].to_iface());
+        AttributeType val = icls->getConfiguration();
+        (*cfg)["Services"].add_to_list(&val);
+    }
+    cfg->to_config();
+}
+
+int CoreService::createPlatformServices() {
+    IClass *icls;
+    IService *iserv;
+    AttributeType &Services = Config_["Services"];
+    if (Services.is_list()) {
+        for (unsigned i = 0; i < Services.size(); i++) {
+            const char *clsname = Services[i]["Class"].to_string();
+            icls = static_cast<IClass *>(RISCV_get_class(clsname));
+            if (icls == NULL) {
+                printf("Class %s not found\n", 
+                                Services[i]["Class"].to_string());
+                return -1;
+            }
+            /** Special global setting for the GUI class: */
+            if (strcmp(icls->getClassName(), "GuiPluginClass") == 0) {
+                if (!Config_["GlobalSettings"]["GUI"].to_bool()) {
+                    RISCV_info("%s", "GUI disabled");
+                    continue;
+                }
+            }
+
+            AttributeType &Instances = Services[i]["Instances"];
+            for (unsigned n = 0; n < Instances.size(); n++) {
+                iserv =
+                    icls->createService(Instances[n]["Name"].to_string());
+                iserv->initService(&Instances[n]["Attr"]);
+            }
+        }
+    }
+    return 0;
+}
+
+void CoreService::postinitPlatformServices() {
+    IClass *icls;
+    for (unsigned i = 0; i < listClasses_.size(); i++) {
+        icls = static_cast<IClass *>(listClasses_[i].to_iface());
+        icls->postinitServices();
+    }
+}
+
+void CoreService::predeletePlatformServices() {
+    IClass *icls;
+    for (unsigned i = 0; i < listClasses_.size(); i++) {
+        icls = static_cast<IClass *>(listClasses_[i].to_iface());
+        icls->predeleteServices();
+    }
+}
+
+const AttributeType *CoreService::getGlobalSettings() {
+    return &Config_["GlobalSettings"];
+}
+
+void CoreService::registerClass(IFace *icls) {
+    AttributeType item(icls);
+    listClasses_.add_to_list(&item);
+}
+
+void CoreService::registerHap(IFace *ihap) {
+    AttributeType item(ihap);
+    listHap_.add_to_list(&item);
+}
+
+void CoreService::registerConsole(IFace *iconsole) {
+    AttributeType item(iconsole);
+    RISCV_mutex_lock(&mutexDefaultConsoles_);
+    listConsole_.add_to_list(&item);
+    RISCV_mutex_unlock(&mutexDefaultConsoles_);
+}
+
+void CoreService::unregisterConsole(IFace *iconsole) {
+    RISCV_mutex_lock(&mutexDefaultConsoles_);
+    for (unsigned i = 0; i < listConsole_.size(); i++) {
+        if (listConsole_[i].to_iface() == iconsole) {
+            listConsole_.remove_from_list(i);
+            break;
+        }
+    }
+    RISCV_mutex_unlock(&mutexDefaultConsoles_);
+}
+
+/**
+ * @brief   Loading all plugins from the 'plugins' sub-folder.
+ * @details I suppose only one folders level so no itteration algorithm.
+ */
+void CoreService::load_plugins() {
+#if defined(_WIN32) || defined(__CYGWIN__)
+    HMODULE hlib;
+#else
+    void *hlib;
+#endif
+    DIR *dir;
+    struct dirent *ent;
+    plugin_init_proc plugin_init;
+    char curdir[1024];
+    std::string plugin_dir, plugin_lib;
+
+    RISCV_get_core_folder(curdir, sizeof(curdir));
+
+    plugin_dir = std::string(curdir) + "plugins/";
+    dir = opendir(plugin_dir.c_str());
+
+    if (dir == NULL) {
+          RISCV_error("Plugins directory '%s' not found", curdir);
+          return;
+    }
+
+    while ((ent = readdir(dir)) != NULL) {
+        if (ent->d_type != DT_REG) {
+            continue;
+        }
+        if ((strstr(ent->d_name, ".dll") == NULL)
+         && (strstr(ent->d_name, ".so") == NULL)) {
+            continue;
+        }
+        plugin_lib = plugin_dir + std::string(ent->d_name);
+#if defined(_WIN32) || defined(__CYGWIN__)
+        if ((hlib = LoadLibrary(plugin_lib.c_str())) == 0) {
+            continue;
+        }
+        plugin_init = (plugin_init_proc)GetProcAddress(hlib, "plugin_init");
+        if (!plugin_init) {
+            FreeLibrary(hlib);
+            continue;
+        }
+#else
+        // reset errors
+        dlerror();
+        if ((hlib = dlopen(plugin_lib.c_str(), RTLD_LAZY)) == 0) {
+            printf("Can't open library '%s': %s\n",
+                       plugin_lib.c_str(), dlerror());
+            continue;
+        }
+        plugin_init = (plugin_init_proc)dlsym(hlib, "plugin_init");
+        if (dlerror()) {
+            printf("Not found plugin_init() in file '%s'\n",
+                       plugin_lib.c_str());
+            dlclose(hlib);
+            continue;
+        }
+#endif
+
+        RISCV_info("Loading plugin file '%s'", plugin_lib.c_str());
+        plugin_init();
+
+        AttributeType item;
+        item.make_list(2);
+        item[0u] = AttributeType(plugin_lib.c_str());
+        item[1] = AttributeType(Attr_UInteger, 
+                                reinterpret_cast<uint64_t>(hlib));
+        listPlugins_.add_to_list(&item);
+    }
+    closedir(dir);
+}
+
+void CoreService::unload_plugins() {
+    const char *plugin_name;
+    for (unsigned i = 0; i < listPlugins_.size(); i++) {
+        if (!listPlugins_[i].is_list()) {
+            printf("Can't free plugin[%d] library\n", i);
+            continue;
+        }
+        plugin_name = listPlugins_[i][0u].to_string();
+#if defined(_WIN32) || defined(__CYGWIN__)
+        HMODULE hlib =
+            reinterpret_cast<HMODULE>(listPlugins_[i][1].to_uint64());
+        FreeLibrary(hlib);
+#else
+        void *hlib = reinterpret_cast<void *>(listPlugins_[i][1].to_uint64());
+        if (strstr(plugin_name, "gui_plugin") == 0) {
+            /** It's a workaround to avoid SIGSEGV on application exiting.
+             *  It's a specific of dynamically linked QT-libraries. They 
+             *  create and use global variable freeing on application
+             *  closing.
+             */
+            dlclose(hlib);
+        }
+#endif
+    }
+}
+
+void CoreService::triggerHap(IFace *isrc, int type, const char *descr) {
+    IHap *ihap;
+    EHapType etype = static_cast<EHapType>(type);
+    for (unsigned i = 0; i < listHap_.size(); i++) {
+        ihap = static_cast<IHap *>(listHap_[i].to_iface());
+        if (ihap->getType() == HAP_All || ihap->getType() == etype) {
+            ihap->hapTriggered(isrc, etype, descr);
+        }
+    }
+}
+
+IFace *CoreService::getClass(const char *name) {
+    IClass *icls;
+    for (unsigned i = 0; i < listClasses_.size(); i++) {
+        icls = static_cast<IClass *>(listClasses_[i].to_iface());
+        if (strcmp(name, icls->getClassName()) == 0) {
+            return icls;
+        }
+    }
+    return NULL;
+}
+
+IFace *CoreService::getService(const char *name) {
+    IClass *icls;
+    IService *iserv;
+    for (unsigned i = 0; i < listClasses_.size(); i++) {
+        icls = static_cast<IClass *>(listClasses_[i].to_iface());
+        if ((iserv = icls->getInstance(name)) != NULL) {
+            return iserv;
+        }
+    }
+    return NULL;
+}
+
+void CoreService::getServicesWithIFace(const char *iname,
+                                       AttributeType *list) {
+    IClass *icls;
+    IService *iserv;
+    IFace *iface;
+    const AttributeType *tlist;
+    list->make_list(0);
+    
+    for (unsigned i = 0; i < listClasses_.size(); i++) {
+        icls = static_cast<IClass *>(listClasses_[i].to_iface());
+        tlist = icls->getInstanceList();
+        for (unsigned n = 0; n < tlist->size(); n++) {
+            iserv = static_cast<IService *>((*tlist)[n].to_iface());
+            iface = iserv->getInterface(iname);
+            if (iface) {
+                AttributeType t1(iserv);
+                list->add_to_list(&t1);
+            }
+        }
+    }
+}
+
+void CoreService::lockPrintf() {
+    RISCV_mutex_lock(&mutexPrintf_);
+}
+
+void CoreService::unlockPrintf() {
+    RISCV_mutex_unlock(&mutexPrintf_);
+}
+
+int CoreService::openLog(const char *filename) {
+    if (logFile_) {
+        fclose(logFile_);
+        logFile_ = NULL;
+    }
+    logFile_ = fopen(filename, "wb");
+    if (!logFile_) {
+        return 1;
+    }
+    return 0;
+}
+
+void CoreService::closeLog() {
+    if (logFile_) {
+        fclose(logFile_);
+    }
+    logFile_ = 0;
+}
+
+void CoreService::outputLog(const char *buf, int sz) {
+    if (!logFile_) {
+        return;
+    }
+    RISCV_mutex_lock(&mutexLogFile_);
+    fwrite(buf, sz, 1, logFile_);
+    fflush(logFile_);
+    RISCV_mutex_unlock(&mutexLogFile_);
+}
+
+void CoreService::outputConsole(const char *buf, int sz) {
+    IRawListener *ilstn;
+    RISCV_mutex_lock(&mutexDefaultConsoles_);
+    for (unsigned i = 0; i < listConsole_.size(); i++) {
+        ilstn = static_cast<IRawListener *>(listConsole_[i].to_iface());
+        ilstn->updateData(buf, sz);
+    }
+    RISCV_mutex_unlock(&mutexDefaultConsoles_);
+}
+
+void CoreService::generateUniqueName(const char *prefix,
+                                     char *out, size_t outsz) {
+    RISCV_sprintf(out, outsz, "%s_%d_%08x",
+                prefix, RISCV_get_pid(), uniqueIdx_++);
+}
+
+uint64_t CoreService::getTimestamp() {
+    if (!iclk_) {
+        return 0;
+    }
+    IClock *i = static_cast<IClock *>(iclk_);
+    return i->getStepCounter();
+}
+
+}  // namespace debugger

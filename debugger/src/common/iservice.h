@@ -17,9 +17,7 @@
 #ifndef __DEBUGGER_COMMON_ISERVICE_H__
 #define __DEBUGGER_COMMON_ISERVICE_H__
 
-#include <iface.h>
-#include <attribute.h>
-#include <api_utils.h>
+#include <api_core.h>
 #include "coreservices/imemop.h"
 
 namespace debugger {

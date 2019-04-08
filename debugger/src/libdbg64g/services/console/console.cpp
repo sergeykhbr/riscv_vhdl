@@ -23,9 +23,6 @@
 
 namespace debugger {
 
-/** Class registration in the Core */
-REGISTER_CLASS(ConsoleService)
-
 #define ENTRYSYMBOLS "cmd# "
 
 static const int STDIN = 0;
@@ -217,7 +214,6 @@ void ConsoleService::busyLoop() {
     bool cmd_ready;
     AttributeType cmd, cmdres;
 
-    processScriptFile();
     while (isEnabled()) {
         if (!isData()) {
             RISCV_sleep_ms(50);
@@ -251,65 +247,6 @@ void ConsoleService::busyLoop() {
         std::cout.flush();
         cmdSizePrev_ = cmd.size();
     }
-}
-
-void ConsoleService::processScriptFile() {
-    enum EScriptState {
-        SCRIPT_normal,
-        SCRIPT_comment,
-        SCRIPT_command
-    } scr_state;
-    scr_state = SCRIPT_normal;
-
-    const AttributeType *glb = RISCV_get_global_settings();
-    if ((*glb)["ScriptFile"].size() == 0) {
-        return;
-    }
-    const char *script_name = (*glb)["ScriptFile"].to_string();
-    FILE *script = fopen(script_name, "r");
-    if (!script) {
-        RISCV_error("Script file '%s' not found", script_name);
-        return;
-    } 
-    fseek(script, 0, SEEK_END);
-    long script_sz = ftell(script);
-    if (script_sz == 0) {
-        return;
-    }
-    char *script_buf = new char [script_sz + 1];
-    fseek(script, 0, SEEK_SET);
-    fread(script_buf, 1, script_sz, script);
-    script_buf[script_sz] = '\0';
-    fclose(script);
-
-    bool crlf = false;
-    for (long i = 0; i < script_sz; i++) {
-
-        switch (scr_state) {
-        case SCRIPT_normal:
-            if (crlf && script_buf[i] == '\n') {
-                crlf = false;
-            } else if (script_buf[i] == '/'
-                    && script_buf[i + 1] == '/') {
-                scr_state = SCRIPT_comment;
-                i++;
-            } else {
-                //addToCommandLine(script_buf[i]);
-            }
-            break;
-        case SCRIPT_command:
-            //addToCommandLine(script_buf[i]);
-        case SCRIPT_comment:
-            if (script_buf[i] == '\r' || script_buf[i] == '\n') {
-                scr_state = SCRIPT_normal;
-            }
-        default:;
-        }
-
-        crlf = script_buf[i] == '\r';
-    }
-    delete [] script_buf;
-    RISCV_info("Script '%s' was finished", script_name);
 }
 
 void ConsoleService::writeBuffer(const char *buf) {

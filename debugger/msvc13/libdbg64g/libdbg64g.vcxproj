@@ -92,7 +92,7 @@
     <ClCompile Include="..\..\src\common\generic\bus_generic.cpp" />
     <ClCompile Include="..\..\src\common\generic\mapreg.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\api_core.cpp" />
-    <ClCompile Include="..\..\src\libdbg64g\api_utils.cpp" />
+    <ClCompile Include="..\..\src\libdbg64g\core.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\comport\comport.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\comport\com_win.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\console\autocompleter.cpp" />
@@ -169,6 +169,7 @@
     <ClInclude Include="..\..\src\common\iface.h" />
     <ClInclude Include="..\..\src\common\ihap.h" />
     <ClInclude Include="..\..\src\common\iservice.h" />
+    <ClInclude Include="..\..\src\libdbg64g\core.h" />
     <ClInclude Include="..\..\src\libdbg64g\include\dirent.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\comport\comport.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\console\autocompleter.h" />
