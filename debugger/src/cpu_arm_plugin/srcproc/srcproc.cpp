@@ -239,7 +239,7 @@ int ArmSourceService::disasm(uint64_t pc,
         // sdiv ****0111_0001****_1111****_0001****
         // udiv ****0111_0011****_1111****_0001****
         return parseDivide(pc, instr, mnemonic, comment);
-    } else if ((instr & 0x0F0000F0) == 0x9
+    } else if ((instr & 0x0F0000F0) == 0x90
         && (((instr >> 22) & 0x3F) == 0 || ((instr >> 23) & 0x1F) == 1)) {
         // mla  ****0000_001*****_********_1001****
         // mls  ****0000_0110****_********_1001****
