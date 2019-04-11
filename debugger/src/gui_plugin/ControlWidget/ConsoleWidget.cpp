@@ -106,7 +106,11 @@ void ConsoleWidget::keyPressEvent(QKeyEvent *e) {
     if (vt_char >= 'A' && vt_char <= 'Z' && e->modifiers() == Qt::NoModifier) {
         vt_key -= static_cast<uint32_t>('A');
         vt_key += static_cast<uint32_t>('a');
-    } 
+    }
+
+    if (e->text().size() == 0) {
+        return;
+    }
     uint8_t spsmb = static_cast<uint8_t>(e->text().at(0).toLatin1());
     if (spsmb == '_' || spsmb == ':' || spsmb == '\\' || spsmb == '/'
      || spsmb == '\'' || spsmb == '[' || spsmb == ']'

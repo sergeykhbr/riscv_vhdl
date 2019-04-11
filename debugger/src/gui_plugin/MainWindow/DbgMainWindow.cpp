@@ -453,10 +453,8 @@ void DbgMainWindow::slotUpdateByTimer() {
 }
 
 void DbgMainWindow::slotActionAbout() {
-    char date[128];
-    memcpy(date, __DATE__, sizeof(date));
     QString build;
-    build.sprintf("Version: 1.0\nBuild:     %s\n", date);
+    build.sprintf("Version: 1.0\nBuild:     %s\n", __DATE__);
     build += tr("Author: Sergey Khabarov\n");
     build += tr("git:    http://github.com/sergeykhbr/riscv_vhdl\n");
     build += tr("e-mail: sergeykhbr@gmail.com\n\n\n"
