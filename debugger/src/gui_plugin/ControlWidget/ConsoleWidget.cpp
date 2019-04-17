@@ -108,14 +108,13 @@ void ConsoleWidget::keyPressEvent(QKeyEvent *e) {
         vt_key += static_cast<uint32_t>('a');
     }
 
-    if (e->text().size() == 0) {
-        return;
-    }
-    uint8_t spsmb = static_cast<uint8_t>(e->text().at(0).toLatin1());
-    if (spsmb == '_' || spsmb == ':' || spsmb == '\\' || spsmb == '/'
-     || spsmb == '\'' || spsmb == '[' || spsmb == ']'
-     || spsmb == '{' || spsmb == '}' || spsmb == ',') {
-        vt_key = spsmb;
+    if (e->text().size()) {
+        uint8_t spsmb = static_cast<uint8_t>(e->text().at(0).toLatin1());
+        if (spsmb == '_' || spsmb == ':' || spsmb == '\\' || spsmb == '/'
+         || spsmb == '\'' || spsmb == '[' || spsmb == ']'
+         || spsmb == '{' || spsmb == '}' || spsmb == ',') {
+            vt_key = spsmb;
+        }
     }
     //printf("vt_key = %08x\n", vt_key);
     bool cmd_ready = iauto_->processKey(vt_key, &reqcmd_, &cursorPos_);
