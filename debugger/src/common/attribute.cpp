@@ -671,6 +671,9 @@ int string_to_attribute(const char *cfg, int &off,
         off = skip_special_symbols(cfg, off + 1);
         while (cfg[off] != ')' && cfg[off] != '\0') {
             byte_value = 0;
+            if (cfg[off] == '0' && cfg[off + 1] == 'x') {
+                off += 2;
+            }
             for (int n = 0; n < 2; n++) {
                 if (cfg[off] >= 'A' && cfg[off] <= 'F') {
                     byte_value = (byte_value << 4) | ((cfg[off] - 'A') + 10);

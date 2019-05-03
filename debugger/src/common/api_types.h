@@ -132,6 +132,8 @@ union Reg64Type {
     uint16_t buf16[4];
     uint32_t buf32[2];
     uint64_t val;
+    float    f32[2];
+    double   f64;
     Reg8Type r8[8];
     Reg16Type r16[4];
     struct bits_type {
