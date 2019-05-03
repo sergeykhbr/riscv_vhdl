@@ -21,32 +21,18 @@
 
 namespace debugger {
 
-MemorySim::MemorySim(const char *name)  : IService(name) {
-    registerInterface(static_cast<IMemoryOperation *>(this));
+MemorySim::MemorySim(const char *name)  : MemoryGeneric(name) {
     registerAttribute("InitFile", &initFile_);
-    registerAttribute("ReadOnly", &readOnly_);
     registerAttribute("BinaryFile", &binaryFile_);
 
     initFile_.make_string("");
-    readOnly_.make_boolean(false);
     binaryFile_.make_boolean(false);
     mem_ = NULL;
 }
 
-MemorySim::~MemorySim() {
-    if (mem_) {
-        delete mem_;
-    }
-}
-
 void MemorySim::postinitService() {
-    // Get global settings:
-    const AttributeType *glb = RISCV_get_global_settings();
-    if ((*glb)["SimEnable"].to_bool() == false) {
-        return;
-    }
+    MemoryGeneric::postinitService();
 
-    mem_ = new uint8_t[static_cast<unsigned>(length_.to_uint64())];
     if (initFile_.size() == 0) {
         return;
     }
@@ -113,34 +99,6 @@ void MemorySim::postinitService() {
         }
     }
     fclose(fp);
-}
-
-ETransStatus MemorySim::b_transport(Axi4TransactionType *trans) {
-    uint64_t off = (trans->addr - getBaseAddress()) % length_.to_int();
-    trans->response = MemResp_Valid;
-    if (trans->action == MemAction_Write) {
-        if (readOnly_.to_bool()) {
-            RISCV_error("Write to READ ONLY memory", NULL);
-            trans->response = MemResp_Error;
-        } else {
-            for (uint64_t i = 0; i < trans->xsize; i++) {
-                if (((trans->wstrb >> i) & 0x1) == 0) {
-                    continue;
-                }
-                mem_[off + i] = trans->wpayload.b8[i];
-            }
-        }
-    } else {
-        memcpy(trans->rpayload.b8, &mem_[off], trans->xsize);
-    }
-
-    const char *rw_str[2] = {"=>", "<="};
-    uint32_t *pdata[2] = {trans->rpayload.b32, trans->wpayload.b32};
-    RISCV_debug("[%08" RV_PRI64 "x] %s [%08x %08x]",
-        trans->addr,
-        rw_str[trans->action],
-        pdata[trans->action][1], pdata[trans->action][0]);
-    return TRANS_OK;
 }
 
 bool MemorySim::chishex(int s) {

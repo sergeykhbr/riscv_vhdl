@@ -44,7 +44,10 @@ SOURCES = \
 	mapreg \
 	bus_generic \
 	memlut \
+	mem_generic \
+	rmembank_gen1 \
 	memsim \
+	rmemsim \
 	serial_dbglink \
 	udp_dbglink \
 	edcl \

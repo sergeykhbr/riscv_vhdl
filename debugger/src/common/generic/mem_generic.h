@@ -1,5 +1,5 @@
 /*
- *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *  Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,32 +14,32 @@
  *  limitations under the License.
  */
 
-#ifndef __DEBUGGER_SERVICES_MEM_MEMSIM_H__
-#define __DEBUGGER_SERVICES_MEM_MEMSIM_H__
+#ifndef __DEBUGGER_COMMON_GENERIC_MEM_GENERIC_H__
+#define __DEBUGGER_COMMON_GENERIC_MEM_GENERIC_H__
 
-#include "generic/mem_generic.h"
+#include "iclass.h"
+#include "iservice.h"
+#include "coreservices/imemop.h"
 
 namespace debugger {
 
-class MemorySim : public MemoryGeneric {
+class MemoryGeneric : public IService, 
+                      public IMemoryOperation {
  public:
-    explicit MemorySim(const char *name);
+    MemoryGeneric(const char *name);
+    ~MemoryGeneric();
 
     /** IService interface */
-    virtual void postinitService() override;
+    virtual void postinitService();
 
- private:
-    static const int SYMB_IN_LINE = 16/2;
-    bool chishex(int s);
-    uint8_t chtohex(int s);
+    /** IMemoryOperation */
+    virtual ETransStatus b_transport(Axi4TransactionType *trans);
 
- private:
-    AttributeType initFile_;
-    AttributeType binaryFile_;
+ protected:
+    AttributeType readOnly_;
+    uint8_t *mem_;
 };
-
-DECLARE_CLASS(MemorySim)
 
 }  // namespace debugger
 
-#endif  // __DEBUGGER_SERVICES_MEM_MEMSIM_H__
+#endif  // __DEBUGGER_COMMON_GENERIC_MEM_GENERIC_H__

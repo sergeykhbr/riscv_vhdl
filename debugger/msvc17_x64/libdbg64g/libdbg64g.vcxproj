@@ -91,6 +91,8 @@
     <ClCompile Include="..\..\src\common\autobuffer.cpp" />
     <ClCompile Include="..\..\src\common\generic\bus_generic.cpp" />
     <ClCompile Include="..\..\src\common\generic\mapreg.cpp" />
+    <ClCompile Include="..\..\src\common\generic\mem_generic.cpp" />
+    <ClCompile Include="..\..\src\common\generic\rmembank_gen1.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\api_core.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\core.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\comport\comport.cpp" />
@@ -124,6 +126,7 @@
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_write.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\mem\memlut.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\mem\memsim.cpp" />
+    <ClCompile Include="..\..\src\libdbg64g\services\mem\rmemsim.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\remote\tcpclient.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\remote\tcpcmd.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\remote\tcpserver.cpp" />
@@ -163,6 +166,8 @@
     <ClInclude Include="..\..\src\common\coreservices\iwire.h" />
     <ClInclude Include="..\..\src\common\generic\bus_generic.h" />
     <ClInclude Include="..\..\src\common\generic\mapreg.h" />
+    <ClInclude Include="..\..\src\common\generic\mem_generic.h" />
+    <ClInclude Include="..\..\src\common\generic\rmembank_gen1.h" />
     <ClInclude Include="..\..\src\common\iattr.h" />
     <ClInclude Include="..\..\src\common\iclass.h" />
     <ClInclude Include="..\..\src\common\iface.h" />
@@ -202,6 +207,7 @@
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_write.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\mem\memlut.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\mem\memsim.h" />
+    <ClInclude Include="..\..\src\libdbg64g\services\mem\rmemsim.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\remote\tcpclient.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\remote\tcpcmd.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\remote\tcpserver.h" />

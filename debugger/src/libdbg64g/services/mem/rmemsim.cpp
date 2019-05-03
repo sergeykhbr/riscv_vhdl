@@ -1,5 +1,5 @@
 /*
- *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *  Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,32 +14,13 @@
  *  limitations under the License.
  */
 
-#ifndef __DEBUGGER_SERVICES_MEM_MEMSIM_H__
-#define __DEBUGGER_SERVICES_MEM_MEMSIM_H__
-
-#include "generic/mem_generic.h"
+#include "api_core.h"
+#include "rmemsim.h"
 
 namespace debugger {
 
-class MemorySim : public MemoryGeneric {
- public:
-    explicit MemorySim(const char *name);
-
-    /** IService interface */
-    virtual void postinitService() override;
-
- private:
-    static const int SYMB_IN_LINE = 16/2;
-    bool chishex(int s);
-    uint8_t chtohex(int s);
-
- private:
-    AttributeType initFile_;
-    AttributeType binaryFile_;
-};
-
-DECLARE_CLASS(MemorySim)
+RegMemorySim::RegMemorySim(const char *name) : RegMemBankGeneric(name) {
+}
 
 }  // namespace debugger
 
-#endif  // __DEBUGGER_SERVICES_MEM_MEMSIM_H__

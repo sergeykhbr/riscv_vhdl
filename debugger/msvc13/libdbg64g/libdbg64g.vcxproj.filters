@@ -170,6 +170,15 @@
     <ClCompile Include="..\..\src\libdbg64g\core.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\common\generic\mem_generic.cpp">
+      <Filter>Source Files\common\generic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\libdbg64g\services\mem\rmemsim.cpp">
+      <Filter>Source Files\services\mem</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\common\generic\rmembank_gen1.cpp">
+      <Filter>Source Files\common\generic</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\attribute.h">
@@ -399,6 +408,15 @@
     </ClInclude>
     <ClInclude Include="..\..\src\libdbg64g\core.h">
       <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\generic\mem_generic.h">
+      <Filter>Source Files\common\generic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\libdbg64g\services\mem\rmemsim.h">
+      <Filter>Source Files\services\mem</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\generic\rmembank_gen1.h">
+      <Filter>Source Files\common\generic</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
