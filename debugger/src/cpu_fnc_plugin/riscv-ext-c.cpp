@@ -314,6 +314,7 @@ public:
 
     virtual int exec(Reg64Type *payload) {
         icpu_->raiseSignal(EXCEPTION_Breakpoint);
+        icpu_->doNotCache(icpu_->getPC());
         return 2;
     }
 };

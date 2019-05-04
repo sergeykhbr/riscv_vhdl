@@ -156,6 +156,8 @@ void CpuCortex_Functional::trackContextStart() {
 }
 
 void CpuCortex_Functional::trackContextEnd() {
+    CpuGeneric::trackContextEnd();
+
     if (reg_trace_file == 0) {
         return;
     }

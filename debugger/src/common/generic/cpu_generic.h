@@ -99,7 +99,7 @@ class CpuGeneric : public IService,
                    public IHap {
  public:
     explicit CpuGeneric(const char *name);
-    ~CpuGeneric();
+    virtual ~CpuGeneric();
 
     /** IService interface */
     virtual void postinitService();
@@ -128,7 +128,7 @@ class CpuGeneric : public IService,
     virtual void addHwBreakpoint(uint64_t addr);
     virtual void removeHwBreakpoint(uint64_t addr);
     virtual void skipBreakpoint();
-    virtual void flush(uint64_t addr) {}
+    virtual void flush(uint64_t addr);
     virtual void doNotCache(uint64_t addr) { do_not_cache_ = true; }
  protected:
     virtual uint64_t getResetAddress() { return resetVector_.to_uint64(); }
@@ -137,7 +137,7 @@ class CpuGeneric : public IService,
     virtual void generateIllegalOpcode() = 0;
     virtual void handleTrap() = 0;
     virtual void trackContextStart() {}
-    virtual void trackContextEnd() { do_not_cache_ = false; }
+    virtual void trackContextEnd();
 
  public:
     /** IClock */
@@ -184,6 +184,8 @@ class CpuGeneric : public IService,
     AttributeType resetVector_;
     AttributeType sysBusMasterID_;
     AttributeType hwBreakpoints_;
+    AttributeType cacheBaseAddr_;
+    AttributeType cacheAddrMask_;
 
     ISourceCode *isrc_;
     ICmdExecutor *icmdexec_;
@@ -231,6 +233,15 @@ class CpuGeneric : public IService,
 
     Axi4TransactionType trans_;
     Reg64Type cacheline_[512/4];
+    // Simple memory cache to avoid access to sysbus and speed-up simulation
+    uint8_t *memcache_;             // unparsed instructions storage
+    uint8_t *memcache_flag_;        // cached instruction length in bytes
+    int memcache_sz_;               // allocated size
+    uint64_t CACHE_BASE_ADDR_;
+    uint64_t CACHE_MASK_;
+    uint64_t cache_offset_;         // instruction pointer - CACHE_BASE_ADDR
+    bool cachable_pc_;              // fetched_pc hit into cachable region
+
     struct DebugPortType {
         bool valid;
         DebugPortTransactionType *trans;

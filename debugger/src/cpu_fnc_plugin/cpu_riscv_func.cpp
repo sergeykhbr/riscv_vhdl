@@ -190,6 +190,8 @@ void CpuRiver_Functional::trackContextStart() {
 }
 
 void CpuRiver_Functional::trackContextEnd() {
+    CpuGeneric::trackContextEnd();
+
     if (reg_trace_file == 0) {
         return;
     }

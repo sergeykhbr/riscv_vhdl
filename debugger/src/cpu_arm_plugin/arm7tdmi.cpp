@@ -1300,6 +1300,7 @@ class SWI : public ArmInstruction {
 
     virtual int exec_checked(Reg64Type *payload) {
         icpu_->raiseSoftwareIrq();
+        icpu_->doNotCache(icpu_->getPC());
         return INSTR_LEN[icpu_->getInstrMode()];
     }
 };

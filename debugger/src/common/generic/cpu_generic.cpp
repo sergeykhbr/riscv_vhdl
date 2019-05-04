@@ -56,6 +56,8 @@ CpuGeneric::CpuGeneric(const char *name)
     registerAttribute("GenerateMemTraceFile", &generateMemTraceFile_);
     registerAttribute("ResetVector", &resetVector_);
     registerAttribute("SysBusMasterID", &sysBusMasterID_);
+    registerAttribute("CacheBaseAddress", &cacheBaseAddr_);
+    registerAttribute("CacheAddressMask", &cacheAddrMask_);
 
     char tstr[256];
     RISCV_sprintf(tstr, sizeof(tstr), "eventConfigDone_%s", name);
@@ -78,6 +80,13 @@ CpuGeneric::CpuGeneric(const char *name)
     dport_.valid = 0;
     reg_trace_file = 0;
     mem_trace_file = 0;
+    memcache_ = 0;
+    memcache_flag_ = 0;
+    memcache_sz_ = 0;
+    cache_offset_ = 0;
+    cachable_pc_ = false;
+    CACHE_BASE_ADDR_ = 0;
+    CACHE_MASK_ = 0;
     oplen_ = 0;
     RISCV_set_default_clock(static_cast<IClock *>(this));
 }
@@ -85,6 +94,12 @@ CpuGeneric::CpuGeneric(const char *name)
 CpuGeneric::~CpuGeneric() {
     RISCV_set_default_clock(0);
     RISCV_event_close(&eventConfigDone_);
+    if (memcache_) {
+        delete [] memcache_;
+    }
+    if (memcache_flag_) {
+        delete [] memcache_flag_;
+    }
     if (reg_trace_file) {
         reg_trace_file->close();
         delete reg_trace_file;
@@ -136,6 +151,15 @@ void CpuGeneric::postinitService() {
     }
 
     stackTraceBuf_.setRegTotal(2 * stackTraceSize_.to_int());
+
+    CACHE_BASE_ADDR_ = cacheBaseAddr_.to_uint64();
+    CACHE_MASK_ = ~cacheAddrMask_.to_uint64();
+    if (cacheAddrMask_.to_uint64()) {
+        memcache_sz_ = cacheAddrMask_.to_int() + 1;
+        memcache_ = new uint8_t[memcache_sz_];
+        memcache_flag_ = new uint8_t[memcache_sz_];
+        memset(memcache_flag_, 0, memcache_sz_);
+    }
 
     // Get global settings:
     const AttributeType *glb = RISCV_get_global_settings();
@@ -237,17 +261,58 @@ void CpuGeneric::updateQueue() {
 }
 
 void CpuGeneric::fetchILine() {
-    trans_.action = MemAction_Read;
-    trans_.addr = pc_.getValue().val;
-    trans_.xsize = 4;
-    trans_.wstrb = 0;
-    dma_memop(&trans_);
-    cacheline_[0].val = trans_.rpayload.b64[0];
-    if (skip_sw_breakpoint_ && trans_.addr == br_fetch_addr_.getValue().val) {
-        skip_sw_breakpoint_ = false;
-        cacheline_[0].buf32[0] = br_fetch_instr_.getValue().buf32[0];
-        doNotCache(trans_.addr);
+    cache_offset_ = pc_.getValue().val;
+    cachable_pc_ = memcache_flag_
+                && (cache_offset_ & CACHE_MASK_) == CACHE_BASE_ADDR_;
+    cache_offset_ -= CACHE_BASE_ADDR_;
+
+    if (cachable_pc_ && memcache_flag_[cache_offset_]) {
+        cacheline_[0].buf32[0] = *reinterpret_cast<uint32_t *>(
+                            &memcache_[cache_offset_]);
+    } else {
+        trans_.action = MemAction_Read;
+        trans_.addr = pc_.getValue().val;
+        trans_.xsize = 4;
+        trans_.wstrb = 0;
+        dma_memop(&trans_);
+        cacheline_[0].val = trans_.rpayload.b64[0];
+        if (skip_sw_breakpoint_ && trans_.addr == br_fetch_addr_.getValue().val) {
+            skip_sw_breakpoint_ = false;
+            cacheline_[0].buf32[0] = br_fetch_instr_.getValue().buf32[0];
+            doNotCache(trans_.addr);
+        }
     }
+}
+
+void CpuGeneric::flush(uint64_t addr) {
+    if (memcache_flag_ == 0) {
+        return;
+    }
+    if (addr == ~0ull) {
+        memset(memcache_flag_, 0, memcache_sz_);
+    } else if ((addr & CACHE_MASK_) == CACHE_BASE_ADDR_) {
+        /** SW breakpoint manager must call this flush operation */
+        memcache_flag_[addr - CACHE_BASE_ADDR_] = 0;
+    }
+}
+
+void CpuGeneric::trackContextEnd() {
+    if (do_not_cache_) {
+        if (cachable_pc_) {
+            memcache_flag_[cache_offset_] = 0;
+        }
+    } else {
+        //if (icovtracker_) {
+        //    icovtracker_->markAddress(pc_.getValue().val,
+        //                              static_cast<uint8_t>(oplen_));
+        //}
+        if (cachable_pc_) {
+            memcache_flag_[cache_offset_] = oplen_;
+            *reinterpret_cast<uint32_t *>(&memcache_[cache_offset_]) =
+                cacheline_[0].buf32[0];
+        }
+    }
+    do_not_cache_ = false;
 }
 
 void CpuGeneric::registerStepCallback(IClockListener *cb,
