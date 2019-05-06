@@ -22,6 +22,181 @@
 
 namespace debugger {
 
+#define CHECK_FPU_ALGORITHM
+
+#ifdef CHECK_FPU_ALGORITHM
+/** TODO: port this module from Hardware GNSS module */
+void idiv53(int64_t inDivident,
+            int64_t inDivisor,
+            int *outBits,       // 106 bits value
+            int &outShift,      // 7 bits value
+            int &outOverBit,
+            int &outZeroResid) {
+    outShift = 0;
+    outOverBit = 0;
+    outZeroResid = 0;
+}
+#endif
+
+/**
+ * @brief The FDIV.D double precision division
+ */
+class FDIV_D : public RiscvInstruction {
+ public:
+    FDIV_D(CpuRiver_Functional *icpu) : RiscvInstruction(icpu,
+        "FDIV_D", "0001101??????????????????1010011") {}
+
+    virtual int exec(Reg64Type *payload) {
+        ISA_R_type u;
+        Reg64Type dest, src1, src2;
+        u.value = payload->buf32[0];
+        src1.val = R[u.bits.rs1];
+        src2.val = R[u.bits.rs2];
+        if (R[u.bits.rs2]) {
+            dest.f64 = src1.f64 / src2.f64;
+        } else {
+            dest.val = 0;
+        }
+        R[u.bits.rd] = dest.val;
+
+#ifdef CHECK_FPU_ALGORITHM
+        Reg64Type A, B, fres;
+        A.val = R[u.bits.rs1];
+        B.val = R[u.bits.rs2];
+        uint64_t zeroA = !A.f64bits.sign && !A.f64bits.exp ? 1: 0;
+        uint64_t zeroB = !B.f64bits.sign && !B.f64bits.exp ? 1: 0;
+
+        int64_t mantA = A.f64bits.mant;
+        mantA |= A.f64bits.exp ? 0x0010000000000000ull: 0;
+
+        int64_t mantB = B.f64bits.mant;
+        mantB |= B.f64bits.exp ? 0x0010000000000000ull: 0;
+
+        // multiplexer for operation with zero expanent
+        int preShift = 0;
+        while (preShift < 52 && ((mantB >> (52 - preShift)) & 0x1) == 0) {
+            preShift++;
+        }
+        int64_t divisor = mantB << preShift;
+
+        // IDiv53 module:
+        int idivResult[106], idivLShift, idivOverBit, idivZeroResid;
+        idiv53(mantA, divisor, idivResult, idivLShift,
+               idivOverBit, idivZeroResid);
+
+        // easy in HDL
+        int mantAlign[105];
+        for (int i = 0; i < 105; i++) {
+            if ((i - idivLShift) >= 0) {
+                mantAlign[i] = idivResult[i - idivLShift];
+            } else {
+                mantAlign[i] = 0;
+            }
+        }
+
+        int64_t expAB = A.f64bits.exp - B.f64bits.exp + 1023;
+        int expShift;
+        if (B.f64bits.exp == 0 && A.f64bits.exp != 0) {
+            expShift = preShift - idivLShift - 1;
+        } else {
+            expShift = preShift - idivLShift;
+        }
+
+        int64_t expAlign = expAB + expShift;
+        int64_t postShift = 0;
+        if (expAlign <= 0) {
+            postShift = -expAlign;
+            if (B.f64bits.exp != 0 && A.f64bits.exp != 0) {
+                postShift += 1;
+            }
+        }
+
+        int mantPostScale[105];
+        for (int i = 0; i < 105; i++) {
+            if ((i + postShift) < 105) {
+                mantPostScale[i] = mantAlign[i + postShift];
+            } else {
+                mantPostScale[i] = 0;
+            }
+        }
+
+        int64_t mantShort = 0;
+        int64_t tmpMant05 = 0;
+        for (int i = 0; i < 53; i++) {
+            mantShort |= static_cast<int64_t>(mantPostScale[52 + i]) << i;
+        }
+        for (int i = 0; i < 52; i++) {
+            tmpMant05 |= static_cast<int64_t>(mantPostScale[i]) << i;
+        }
+
+        int64_t mantOnes = mantShort == 0x001fffffffffffff ? 1: 0;
+
+        // rounding bit
+        int mantEven = mantPostScale[52];
+        int mant05 = tmpMant05 == 0x0008000000000000 ? 1: 0;
+        int64_t rndBit = mantPostScale[51] & !(mant05 & !mantEven);
+
+        // Exceptions:
+        int64_t nanRes = expAlign == 0x7ff ? 1: 0;
+        int64_t overflow = !((expAlign >> 12) & 0x1) & ((expAlign >> 11) & 0x1);
+        int64_t underflow = ((expAlign >> 12) & 0x1) & ((expAlign >> 11) & 0x1);
+
+        // Check borders:
+        int nanA = A.f64bits.exp == 0x7ff ? 1: 0;
+        int nanB = B.f64bits.exp == 0x7ff ? 1: 0;
+        int mantZeroA = A.f64bits.mant ? 0: 1;
+        int mantZeroB = B.f64bits.mant ? 0: 1;
+        int divOnZero = zeroB || (mantB == 0) ? 1: 0;
+
+        // Result multiplexers:
+        if ((nanA & mantZeroA) & (nanB & mantZeroB)) {
+            fres.f64bits.sign = 1;
+        } else if (nanA & !mantZeroA) {
+            fres.f64bits.sign = A.f64bits.sign;
+        } else if (nanB & !mantZeroB) {
+            fres.f64bits.sign = B.f64bits.sign;
+        } else if (divOnZero && zeroA) {
+            fres.f64bits.sign = 1;
+        } else {
+            fres.f64bits.sign = A.f64bits.sign ^ B.f64bits.sign; 
+        }
+
+        if (nanB & !mantZeroB) {
+            fres.f64bits.exp = B.f64bits.exp;
+        } else if ((underflow | zeroA | zeroB) & !divOnZero) {
+            fres.f64bits.exp = 0x0;
+        } else if (overflow | divOnZero) {
+            fres.f64bits.exp = 0x7FF;
+        } else if (nanA) {
+            fres.f64bits.exp = A.f64bits.exp;
+        } else if ((nanB & mantZeroB) || expAlign < 0) {
+            fres.f64bits.exp = 0x0;
+        } else {
+            fres.f64bits.exp = expAlign + (mantOnes & rndBit & !overflow);
+        }
+
+        if ((zeroA & zeroB) | (nanA & mantZeroA & nanB & mantZeroB)) {
+            fres.f64bits.mant = 0x8000000000000;
+        } else if (nanA & !mantZeroA) {
+            fres.f64bits.mant = A.f64bits.mant | 0x8000000000000;
+        } else if (nanB & !mantZeroB) {
+            fres.f64bits.mant = B.f64bits.mant | 0x8000000000000;
+        } else if (overflow | nanRes | (nanA & mantZeroA) | (nanB & mantZeroB)) {
+            fres.f64bits.mant = 0x0;
+        } else {
+            fres.f64bits.mant = mantShort + rndBit;
+        }
+
+        if (fres.f64 != dest.f64) {
+            RISCV_printf(0, 1, "FDIF.D %016" RV_PRI64 "x != %016" RV_PRI64 "x",
+                        fres.val, dest.val);
+        }
+#endif
+        return 4;
+    }
+};
+
+
 void CpuRiver_Functional::addIsaExtensionF() {
     // TODO
     /*

@@ -136,6 +136,11 @@ union Reg64Type {
     double   f64;
     Reg8Type r8[8];
     Reg16Type r16[4];
+    struct f64_bits_type {
+        int64_t mant : 52;
+        int64_t exp : 11;
+        int64_t sign : 1;
+    } f64bits;
     struct bits_type {
         uint64_t b0 : 1;
         uint64_t b1 : 1;
