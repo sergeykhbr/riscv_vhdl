@@ -336,6 +336,185 @@ void FpuFunctional::idiv53(int64_t inDivident,
     outZeroResid = wbDif[13] ? 0 : 1;
 }
 
+void FpuFunctional::imul53(int64_t A,              // 53 bits
+                           int64_t B,              // 53 bits
+                           int *outResult,         // 106 bits value
+                           int &outShift,          // 7 bits value
+                           int &outOverBit) {
+    uint64_t rbMux[16];
+    uint64_t rbPart[14];
+    int rbLShift;  // 8 bits value
+
+    rbMux[0] = 0;
+    rbMux[1] = A;
+    rbMux[2] = A << 1;
+    rbMux[3] = (A << 1) + A;
+    rbMux[4] = (A << 2);
+    rbMux[5] = (A << 2) + A;
+    rbMux[6] = (A << 2) + (A << 1);
+    rbMux[7] = (A << 2) + (A << 1) + A;
+    rbMux[8] = (A << 3);
+    rbMux[9] = (A << 3) + A;
+    rbMux[10] = (A << 3) + (A << 1);
+    rbMux[11] = (A << 3) + (A << 1) + A;
+    rbMux[12] = (A << 3) + (A << 2);
+    rbMux[13] = (A << 3) + (A << 2) + A;
+    rbMux[14] = (A << 3) + (A << 2) + (A << 1);
+    rbMux[15] = (A << 4) - A;
+
+    // Multiplex 57 bits width values
+    rbPart[0] = rbMux[(B >> 0) & 0xF];
+    rbPart[1] = rbMux[(B >> 4) & 0xF];
+    rbPart[2] = rbMux[(B >> 8) & 0xF];
+    rbPart[3] = rbMux[(B >> 12) & 0xF];
+    rbPart[4] = rbMux[(B >> 16) & 0xF];
+    rbPart[5] = rbMux[(B >> 20) & 0xF];
+    rbPart[6] = rbMux[(B >> 24) & 0xF];
+    rbPart[7] = rbMux[(B >> 28) & 0xF];
+    rbPart[8] = rbMux[(B >> 32) & 0xF];
+    rbPart[9] = rbMux[(B >> 36) & 0xF];
+    rbPart[10] = rbMux[(B >> 40) & 0xF];
+    rbPart[11] = rbMux[(B >> 44) & 0xF];
+    rbPart[12] = rbMux[(B >> 48) & 0xF];
+    rbPart[13] = rbMux[(B >> 52) & 0xF];
+
+    // Pyramidal adder
+    uint64_t lSumLsb = 0;
+    uint64_t lCarryLsb = 0;
+    for (int i = 0; i < 14; i++) {
+        lSumLsb = (lSumLsb & 0x1FFFFFFFFFFFFFFF) 
+               + ((rbPart[i] << 4*i) & 0x01FFFFFFFFFFFFFF);
+        lCarryLsb = (lSumLsb >> 57) & 0xF;
+    }
+    uint64_t lSumMsb = lCarryLsb;
+    lSumLsb &= 0x01FFFFFFFFFFFFFF;
+
+    for (int i = 0; i < 14; i++) {
+        lSumMsb += (rbPart[i] >> (57 - 4*i));
+    }
+    lSumLsb = lSumLsb | (lSumMsb << (64 - 7));
+    lSumMsb >>= 7;
+
+    if ((lSumMsb >> 41) & 0x1)      rbLShift = 0x7F;
+    else if ((lSumMsb >> 40) & 0x1) rbLShift = 0;
+    else if ((lSumMsb >> 39) & 0x1) rbLShift = 1;
+    else if ((lSumMsb >> 38) & 0x1) rbLShift = 2;
+    else if ((lSumMsb >> 37) & 0x1) rbLShift = 3;
+    else if ((lSumMsb >> 36) & 0x1) rbLShift = 4;
+    else if ((lSumMsb >> 35) & 0x1) rbLShift = 5;
+    else if ((lSumMsb >> 34) & 0x1) rbLShift = 6;
+    else if ((lSumMsb >> 33) & 0x1) rbLShift = 7;
+    else if ((lSumMsb >> 32) & 0x1) rbLShift = 8;
+    else if ((lSumMsb >> 31) & 0x1) rbLShift = 9;
+    else if ((lSumMsb >> 30) & 0x1) rbLShift = 10;
+    else if ((lSumMsb >> 29) & 0x1) rbLShift = 11;
+    else if ((lSumMsb >> 28) & 0x1) rbLShift = 12;
+    else if ((lSumMsb >> 27) & 0x1) rbLShift = 13;
+    else if ((lSumMsb >> 26) & 0x1) rbLShift = 14;
+    else if ((lSumMsb >> 25) & 0x1) rbLShift = 15;
+    else if ((lSumMsb >> 24) & 0x1) rbLShift = 16;
+    else if ((lSumMsb >> 23) & 0x1) rbLShift = 17;
+    else if ((lSumMsb >> 22) & 0x1) rbLShift = 18;
+    else if ((lSumMsb >> 21) & 0x1) rbLShift = 19;
+    else if ((lSumMsb >> 20) & 0x1) rbLShift = 20;
+    else if ((lSumMsb >> 19) & 0x1) rbLShift = 21;
+    else if ((lSumMsb >> 18) & 0x1) rbLShift = 22;
+    else if ((lSumMsb >> 17) & 0x1) rbLShift = 23;
+    else if ((lSumMsb >> 16) & 0x1) rbLShift = 24;
+    else if ((lSumMsb >> 15) & 0x1) rbLShift = 25;
+    else if ((lSumMsb >> 14) & 0x1) rbLShift = 26;
+    else if ((lSumMsb >> 13) & 0x1) rbLShift = 27;
+    else if ((lSumMsb >> 12) & 0x1) rbLShift = 28;
+    else if ((lSumMsb >> 11) & 0x1) rbLShift = 29;
+    else if ((lSumMsb >> 10) & 0x1) rbLShift = 30;
+    else if ((lSumMsb >> 9) & 0x1)  rbLShift = 31;
+    else if ((lSumMsb >> 8) & 0x1)  rbLShift = 32;
+    else if ((lSumMsb >> 7) & 0x1)  rbLShift = 33;
+    else if ((lSumMsb >> 6) & 0x1)  rbLShift = 34;
+    else if ((lSumMsb >> 5) & 0x1)  rbLShift = 35;
+    else if ((lSumMsb >> 4) & 0x1)  rbLShift = 36;
+    else if ((lSumMsb >> 3) & 0x1)  rbLShift = 37;
+    else if ((lSumMsb >> 2) & 0x1)  rbLShift = 38;
+    else if ((lSumMsb >> 1) & 0x1)  rbLShift = 39;
+    else if ((lSumMsb >> 0) & 0x1)  rbLShift = 40;
+  
+    else if ((lSumLsb >> 63) & 0x1)  rbLShift = 41;
+    else if ((lSumLsb >> 62) & 0x1)  rbLShift = 42;
+    else if ((lSumLsb >> 61) & 0x1)  rbLShift = 43;
+    else if ((lSumLsb >> 60) & 0x1)  rbLShift = 44;
+    else if ((lSumLsb >> 59) & 0x1)  rbLShift = 45;
+    else if ((lSumLsb >> 58) & 0x1)  rbLShift = 46;
+    else if ((lSumLsb >> 57) & 0x1)  rbLShift = 47;
+    else if ((lSumLsb >> 56) & 0x1)  rbLShift = 48;
+    else if ((lSumLsb >> 55) & 0x1)  rbLShift = 49;
+    else if ((lSumLsb >> 54) & 0x1)  rbLShift = 50;
+    else if ((lSumLsb >> 53) & 0x1)  rbLShift = 51;
+    else if ((lSumLsb >> 52) & 0x1)  rbLShift = 52;
+    else if ((lSumLsb >> 51) & 0x1)  rbLShift = 53;
+    else if ((lSumLsb >> 50) & 0x1)  rbLShift = 54;
+    else if ((lSumLsb >> 49) & 0x1)  rbLShift = 55;
+    else if ((lSumLsb >> 48) & 0x1)  rbLShift = 56;
+    else if ((lSumLsb >> 47) & 0x1)  rbLShift = 57;
+    else if ((lSumLsb >> 46) & 0x1)  rbLShift = 58;
+    else if ((lSumLsb >> 45) & 0x1)  rbLShift = 59;
+    else if ((lSumLsb >> 44) & 0x1)  rbLShift = 60;
+    else if ((lSumLsb >> 43) & 0x1)  rbLShift = 61;
+    else if ((lSumLsb >> 42) & 0x1)  rbLShift = 62;
+    else if ((lSumLsb >> 41) & 0x1)  rbLShift = 63;
+    else if ((lSumLsb >> 40) & 0x1)  rbLShift = 64;
+    else if ((lSumLsb >> 39) & 0x1)  rbLShift = 65;
+    else if ((lSumLsb >> 38) & 0x1)  rbLShift = 66;
+    else if ((lSumLsb >> 37) & 0x1)  rbLShift = 67;
+    else if ((lSumLsb >> 36) & 0x1)  rbLShift = 68;
+    else if ((lSumLsb >> 35) & 0x1)  rbLShift = 69;
+    else if ((lSumLsb >> 34) & 0x1)  rbLShift = 70;
+    else if ((lSumLsb >> 33) & 0x1)  rbLShift = 71;
+    else if ((lSumLsb >> 32) & 0x1)  rbLShift = 72;
+    else if ((lSumLsb >> 31) & 0x1)  rbLShift = 73;
+    else if ((lSumLsb >> 30) & 0x1)  rbLShift = 74;
+    else if ((lSumLsb >> 29) & 0x1)  rbLShift = 75;
+    else if ((lSumLsb >> 28) & 0x1)  rbLShift = 76;
+    else if ((lSumLsb >> 27) & 0x1)  rbLShift = 77;
+    else if ((lSumLsb >> 26) & 0x1)  rbLShift = 78;
+    else if ((lSumLsb >> 25) & 0x1)  rbLShift = 79;
+    else if ((lSumLsb >> 24) & 0x1)  rbLShift = 80;
+    else if ((lSumLsb >> 23) & 0x1)  rbLShift = 81;
+    else if ((lSumLsb >> 22) & 0x1)  rbLShift = 82;
+    else if ((lSumLsb >> 21) & 0x1)  rbLShift = 83;
+    else if ((lSumLsb >> 20) & 0x1)  rbLShift = 84;
+    else if ((lSumLsb >> 19) & 0x1)  rbLShift = 85;
+    else if ((lSumLsb >> 18) & 0x1)  rbLShift = 86;
+    else if ((lSumLsb >> 17) & 0x1)  rbLShift = 87;
+    else if ((lSumLsb >> 16) & 0x1)  rbLShift = 88;
+    else if ((lSumLsb >> 15) & 0x1)  rbLShift = 89;
+    else if ((lSumLsb >> 14) & 0x1)  rbLShift = 90;
+    else if ((lSumLsb >> 13) & 0x1)  rbLShift = 91;
+    else if ((lSumLsb >> 12) & 0x1)  rbLShift = 92;
+    else if ((lSumLsb >> 11) & 0x1)  rbLShift = 93;
+    else if ((lSumLsb >> 10) & 0x1)  rbLShift = 94;
+    else if ((lSumLsb >> 9) & 0x1)   rbLShift = 95;
+    else if ((lSumLsb >> 8) & 0x1)   rbLShift = 96;
+    else if ((lSumLsb >> 7) & 0x1)   rbLShift = 97;
+    else if ((lSumLsb >> 6) & 0x1)   rbLShift = 98;
+    else if ((lSumLsb >> 5) & 0x1)   rbLShift = 99;
+    else if ((lSumLsb >> 4) & 0x1)   rbLShift = 100;
+    else if ((lSumLsb >> 3) & 0x1)   rbLShift = 101;
+    else if ((lSumLsb >> 2) & 0x1)   rbLShift = 102;
+    else if ((lSumLsb >> 1) & 0x1)   rbLShift = 103;
+    else                             rbLShift = 104;
+
+    // Form output:
+    for (int i = 0; i < 64; i++) {
+        outResult[i] = static_cast<int>((lSumLsb >> i) & 0x1);
+    }
+    for (int i = 0; i < 42; i++) {
+        outResult[64 + i] = static_cast<int>((lSumMsb >> i) & 0x1);
+    }
+
+    outShift = rbLShift;
+    outOverBit = static_cast<int>((lSumMsb >> 41) & 0x1);
+}
+
 int FpuFunctional::FDIV_D(Reg64Type A, Reg64Type B, Reg64Type *fres) {
     uint64_t zeroA = !A.f64bits.exp && !A.f64bits.mant ? 1: 0;
     uint64_t zeroB = !B.f64bits.exp && !B.f64bits.mant ? 1: 0;
@@ -354,7 +533,10 @@ int FpuFunctional::FDIV_D(Reg64Type A, Reg64Type B, Reg64Type *fres) {
     int64_t divisor = mantB << preShift;
 
     // IDiv53 module:
-    int idivResult[106], idivLShift, idivOverBit, idivZeroResid;
+    int idivResult[106];
+    int idivLShift;
+    int idivOverBit;
+    int idivZeroResid;
     idiv53(mantA, divisor, idivResult, idivLShift,
             idivOverBit, idivZeroResid);
 
@@ -460,6 +642,128 @@ int FpuFunctional::FDIV_D(Reg64Type A, Reg64Type B, Reg64Type *fres) {
     } else {
         fres->f64bits.mant = mantShort + rndBit;
     }
+    return 0;
+}
+
+int FpuFunctional::FMUL_D(Reg64Type A, Reg64Type B, Reg64Type *fres,
+                          int &except) {
+    uint64_t zeroA = !A.f64bits.exp && !A.f64bits.mant ? 1: 0;
+    uint64_t zeroB = !B.f64bits.exp && !B.f64bits.mant ? 1: 0;
+
+    int64_t mantA = A.f64bits.mant;
+    mantA |= A.f64bits.exp ? 0x0010000000000000ull: 0;
+
+    int64_t mantB = B.f64bits.mant;
+    mantB |= B.f64bits.exp ? 0x0010000000000000ull: 0;
+
+    // IMul53 module:
+    int imulResult[106];
+    int imulShift;
+    int imulOverBit;
+    imul53(mantA, mantB, imulResult, imulShift, imulOverBit);
+
+    // scaling sum
+    int mantAlign[105];
+    for (int i = 0; i < 105; i++) {
+        if (imulShift == 0x7F) {
+            mantAlign[i] = imulResult[i + 1];
+        } else if ((i - imulShift) >= 0) {
+            mantAlign[i] = imulResult[i - imulShift];
+        } else {
+            mantAlign[i] = 0;
+        }
+    }
+
+    int64_t expAB = A.f64bits.exp + B.f64bits.exp - 1023;
+    int64_t expAlign;
+    if (imulResult[105]) {
+        expAlign = expAB + 1;
+    } else if (A.f64bits.exp == 0 || B.f64bits.exp == 0) {
+        expAlign = expAB - imulShift + 1;
+    } else {
+        expAlign = expAB - imulShift;
+    }
+
+    // IMPORTANT exception! new ZERO value
+    int wExpAlignZero = (expAlign <= 0 && imulShift == 0) ? 1 : 0;
+    int64_t postShift = 0;
+    if (expAlign <= 0) {
+        if (wExpAlignZero || imulResult[105]
+            || A.f64bits.exp == 0 || B.f64bits.exp == 0) {
+            postShift = -expAlign + 1;
+        } else {
+            postShift = -expAlign;
+        }
+    }
+
+    int mantPostScale[105];
+    for (int i = 0; i < 105; i++) {
+        if ((i + postShift) < 105) {
+            mantPostScale[i] = mantAlign[i + postShift];
+        } else {
+            mantPostScale[i] = 0;
+        }
+    }
+
+    int64_t mantShort = 0;
+    int64_t tmpMant05 = 0;
+    for (int i = 0; i < 53; i++) {
+        mantShort |= static_cast<int64_t>(mantPostScale[52 + i]) << i;
+    }
+    for (int i = 0; i < 52; i++) {
+        tmpMant05 |= static_cast<int64_t>(mantPostScale[i]) << i;
+    }
+
+    int64_t mantOnes = mantShort == 0x001fffffffffffff ? 1: 0;
+
+    // rounding bit
+    int mantEven = mantPostScale[52];
+    int mant05 = tmpMant05 == 0x0008000000000000 ? 1: 0;
+    int64_t rndBit = mantPostScale[51] & !(mant05 & !mantEven);
+
+    // Exceptions:
+    int nanA = A.f64bits.exp == 0x7ff ? 1: 0;
+    int nanB = B.f64bits.exp == 0x7ff ? 1: 0;
+    int overflow = (!((expAlign >> 12) & 0x1)) & ((expAlign >> 11) & 0x1);
+
+    // Check borders:
+    int mantZeroA = A.f64bits.mant ? 0: 1;
+    int mantZeroB = B.f64bits.mant ? 0: 1;
+
+    // Result multiplexers:
+    if ((nanA & mantZeroA & zeroB) | (nanB & mantZeroB & zeroA)) {
+        fres->f64bits.sign = 1;
+    } else if (nanA & !mantZeroA) {
+        fres->f64bits.sign = A.f64bits.sign;
+    } else if (nanB & !mantZeroB) {
+        fres->f64bits.sign = B.f64bits.sign;
+    } else {
+        fres->f64bits.sign = A.f64bits.sign ^ B.f64bits.sign; 
+    }
+
+    if (nanA) {
+        fres->f64bits.exp = A.f64bits.exp;
+    } else if (nanB) {
+        fres->f64bits.exp = B.f64bits.exp;
+    } else if (expAlign < 0 || zeroA || zeroB) {
+        fres->f64bits.exp = 0;
+    } else if (overflow) {
+        fres->f64bits.exp = 0x7FF;
+    } else {
+        fres->f64bits.exp = expAlign + (mantOnes & rndBit & !overflow);
+    }
+
+    if ((nanA & mantZeroA & !mantZeroB) || (nanB & mantZeroB & !mantZeroA)
+        || (!nanA & !nanB & overflow)) {
+        fres->f64bits.mant = 0;
+    } else if (nanA) {
+        fres->f64bits.mant = A.f64bits.mant | 0x8000000000000;
+    } else if (nanB) {
+        fres->f64bits.mant = B.f64bits.mant | 0x8000000000000;
+    } else {
+        fres->f64bits.mant = mantShort + rndBit;
+    }
+    except = nanA | nanB | overflow;
     return 0;
 }
 

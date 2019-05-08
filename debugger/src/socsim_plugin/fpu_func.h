@@ -55,6 +55,7 @@ class FpuFunctional : public IService {
 
     /** Potential IFpu methods */
     int FDIV_D(Reg64Type A, Reg64Type B, Reg64Type *fres);
+    int FMUL_D(Reg64Type A, Reg64Type B, Reg64Type *fres, int &except);
 
     /** Common methods */
     void test_FDIV_D(AttributeType *res);
@@ -64,7 +65,7 @@ class FpuFunctional : public IService {
     const int64_t MSK61 = 0x1FFFFFFFFFFFFFFF;
 
     void div_stage(int inMuxEna,
-                   int inMuxInd[],   // 7 bits value (8 values)
+                   int inMuxInd[],      // 7 bits (8 values)
                    int64_t inDivident,
                    int64_t inDivisor,
                    int64_t &outDif,
@@ -78,6 +79,12 @@ class FpuFunctional : public IService {
                 int &outShift,          // 7 bits value
                 int &outOverBit,
                 int &outZeroResid);
+
+    void imul53(int64_t inA,            // 53 bits
+                int64_t inB,            // 53 bits
+                int *outResult,         // 106 bits value
+                int &outShift,          // 7 bits value
+                int &outOverBit);
 
  protected:
     AttributeType cmdexec_;
