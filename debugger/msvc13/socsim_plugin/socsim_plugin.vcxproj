@@ -94,6 +94,7 @@
     <ClCompile Include="..\..\src\common\debug\dsu.cpp" />
     <ClCompile Include="..\..\src\common\debug\greth.cpp" />
     <ClCompile Include="..\..\src\socsim_plugin\boardsim.cpp" />
+    <ClCompile Include="..\..\src\socsim_plugin\fpu_func.cpp" />
     <ClCompile Include="..\..\src\socsim_plugin\fsev2.cpp" />
     <ClCompile Include="..\..\src\socsim_plugin\gnss_stub.cpp" />
     <ClCompile Include="..\..\src\socsim_plugin\gpio.cpp" />
@@ -120,6 +121,7 @@
     <ClInclude Include="..\..\src\common\iservice.h" />
     <ClInclude Include="..\..\src\socsim_plugin\boardsim.h" />
     <ClInclude Include="..\..\src\socsim_plugin\fifo.h" />
+    <ClInclude Include="..\..\src\socsim_plugin\fpu_func.h" />
     <ClInclude Include="..\..\src\socsim_plugin\fsev2.h" />
     <ClInclude Include="..\..\src\socsim_plugin\gnss_stub.h" />
     <ClInclude Include="..\..\src\socsim_plugin\gpio.h" />

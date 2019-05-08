@@ -104,7 +104,6 @@ class WireCmdType : public ICommand {
     IWire *iwire_;
 };
 
-
 }  // namespace debugger
 
 #endif  // __DEBUGGER_COMMON_CORESERVICES_IWIRE_H__

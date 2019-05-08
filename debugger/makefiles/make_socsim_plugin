@@ -42,6 +42,7 @@ SOURCES = \
 	rfctrl \
 	uartmst \
 	hardreset \
+	fpu_func \
 	plugin_init
 
 LIBS = \

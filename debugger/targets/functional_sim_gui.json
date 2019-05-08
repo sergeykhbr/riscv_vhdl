@@ -249,6 +249,11 @@
                 ['Tech',0],
                 ['AdcDetector',0xff]
                 ]}]},
+    {'Class':'FpuFunctionalClass','Instances':[
+          {'Name':'fpu0','Attr':[
+                ['LogLevel',4],
+                ['CmdExecutor','cmdexec0'],
+                ]}]},
     {'Class':'BusGenericClass','Instances':[
           {'Name':'axi0','Attr':[
                 ['LogLevel',3],

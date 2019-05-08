@@ -16,6 +16,7 @@
 #include "fsev2.h"
 #include "uartmst.h"
 #include "hardreset.h"
+#include "fpu_func.h"
 #include "debug/dsu.h"
 #include "debug/greth.h"
 
@@ -35,6 +36,7 @@ extern "C" void plugin_init(void) {
     REGISTER_CLASS_IDX(UartMst, 12);
     REGISTER_CLASS_IDX(Greth, 13);
     REGISTER_CLASS_IDX(HardReset, 14);
+    REGISTER_CLASS_IDX(FpuFunctional, 15);
 }
 
 }  // namespace debugger
