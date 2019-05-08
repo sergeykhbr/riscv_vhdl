@@ -122,6 +122,7 @@
     <ClInclude Include="..\..\src\socsim_plugin\boardsim.h" />
     <ClInclude Include="..\..\src\socsim_plugin\fifo.h" />
     <ClInclude Include="..\..\src\socsim_plugin\fpu_func.h" />
+    <ClInclude Include="..\..\src\socsim_plugin\fpu_func_tests.h" />
     <ClInclude Include="..\..\src\socsim_plugin\fsev2.h" />
     <ClInclude Include="..\..\src\socsim_plugin\gnss_stub.h" />
     <ClInclude Include="..\..\src\socsim_plugin\gpio.h" />

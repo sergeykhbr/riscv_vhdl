@@ -21,7 +21,7 @@
 
 namespace debugger {
 
-const uint64_t TestCases_DDIV[][2] = {
+const uint64_t TestCases_FDIV_D[][2] = {
     {0x0000000000000000, 0xc17312d000000000},
     {0x0000000000000000, 0xc060000000000000},
     {0x0000000000000000, 0xbeb0c6f7a0b5ed8d},
@@ -281,7 +281,7 @@ const uint64_t TestCases_DDIV[][2] = {
     {0x4060000000000000, 0x58c8000000000000}
 };
 
-const size_t TSTDDIV_LENGTH = sizeof(TestCases_DDIV) / sizeof(uint64_t) / 2;
+const size_t TSTDDIV_LENGTH = sizeof(TestCases_FDIV_D) / sizeof(uint64_t) / 2;
 
 }  // namespace debugger
 

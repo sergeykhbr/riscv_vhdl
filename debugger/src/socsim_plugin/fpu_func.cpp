@@ -14,9 +14,10 @@
  *  limitations under the License.
  */
 
-#include "api_core.h"
+#include <api_core.h>
 #include "fpu_func.h"
 #include "fpu_func_tests.h"
+#include <stdlib.h>
 
 namespace debugger {
 
@@ -336,8 +337,8 @@ void FpuFunctional::idiv53(int64_t inDivident,
 }
 
 int FpuFunctional::FDIV_D(Reg64Type A, Reg64Type B, Reg64Type *fres) {
-    uint64_t zeroA = !A.f64bits.sign && !A.f64bits.exp ? 1: 0;
-    uint64_t zeroB = !B.f64bits.sign && !B.f64bits.exp ? 1: 0;
+    uint64_t zeroA = !A.f64bits.exp && !A.f64bits.mant ? 1: 0;
+    uint64_t zeroB = !B.f64bits.exp && !B.f64bits.mant ? 1: 0;
 
     int64_t mantA = A.f64bits.mant;
     mantA |= A.f64bits.exp ? 0x0010000000000000ull: 0;
@@ -371,6 +372,8 @@ int FpuFunctional::FDIV_D(Reg64Type A, Reg64Type B, Reg64Type *fres) {
     int expShift;
     if (B.f64bits.exp == 0 && A.f64bits.exp != 0) {
         expShift = preShift - idivLShift - 1;
+    } else if (B.f64bits.exp != 0 && A.f64bits.exp == 0) {
+        expShift = preShift - idivLShift + 1;
     } else {
         expShift = preShift - idivLShift;
     }
@@ -379,9 +382,7 @@ int FpuFunctional::FDIV_D(Reg64Type A, Reg64Type B, Reg64Type *fres) {
     int64_t postShift = 0;
     if (expAlign <= 0) {
         postShift = -expAlign;
-        if (B.f64bits.exp != 0 && A.f64bits.exp != 0) {
-            postShift += 1;
-        }
+        postShift += 1;
     }
 
     int mantPostScale[105];
@@ -411,7 +412,7 @@ int FpuFunctional::FDIV_D(Reg64Type A, Reg64Type B, Reg64Type *fres) {
 
     // Exceptions:
     int64_t nanRes = expAlign == 0x7ff ? 1: 0;
-    int64_t overflow = !((expAlign >> 12) & 0x1) & ((expAlign >> 11) & 0x1);
+    int64_t overflow = (!((expAlign >> 12) & 0x1)) & ((expAlign >> 11) & 0x1);
     int64_t underflow = ((expAlign >> 12) & 0x1) & ((expAlign >> 11) & 0x1);
 
     // Check borders:
@@ -463,19 +464,58 @@ int FpuFunctional::FDIV_D(Reg64Type A, Reg64Type B, Reg64Type *fres) {
 }
 
 void FpuFunctional::test_FDIV_D(AttributeType *res) {
-    Reg64Type A, B, fres, fref;;
+    Reg64Type A, B, fres, fref;
+    bool passed = true;
     A.f64 = 0.123;
     B.f64 = 10.45;
+
     fref.f64 = A.f64 / B.f64;
     FDIV_D(A, B, &fres);
 
-    if (fres.f64 != fref.f64) {
-        res->make_string("FAIL");
+    if (fres.val != fref.val) {
+        passed = false;
         RISCV_error("FDIF.D %016" RV_PRI64 "x != %016" RV_PRI64 "x",
                     fres.val, fref.val);
-    } else {
+    }
+    for (size_t i = 0; i < TSTDDIV_LENGTH; i++) {
+        A.val = TestCases_FDIV_D[i][0];
+        B.val = TestCases_FDIV_D[i][1];
+        fref.f64 = A.f64 / B.f64;
+        FDIV_D(A, B, &fres);
+
+        if (fres.val != fref.val) {
+            passed = false;
+            RISCV_error("[%d] FDIF.D %016" RV_PRI64 "x != %016" RV_PRI64 "x",
+                        static_cast<int>(i), fres.val, fref.val);
+        }
+    }
+
+    for (int i = 0; i < 1000000; i++) {
+        A.f64bits.sign = rand();
+        A.f64bits.exp = rand();
+        for (int n = 0; n < 4; n++) {
+            A.f64bits.mant = (A.f64bits.mant << 15) | (rand() & 0x7FFF);
+        }
+        B.f64bits.sign = rand();
+        B.f64bits.exp = rand();
+        for (int n = 0; n < 4; n++) {
+            B.f64bits.mant = (A.f64bits.mant << 15) | (rand() & 0x7FFF);
+        }
+
+        fref.f64 = A.f64 / B.f64;
+        FDIV_D(A, B, &fres);
+
+        if (fres.val != fref.val) {
+            passed = false;
+            RISCV_error("[%d] FDIF.D %016" RV_PRI64 "x != %016" RV_PRI64 "x",
+                        static_cast<int>(i), fres.val, fref.val);
+        }
+    }
+
+    if (passed) {
         res->make_string("PASS");
-        RISCV_debug("passed: FDIF.D res = %016" RV_PRI64 "x", fres.val);
+    } else {
+        res->make_string("FAIL");
     }
 }
 
