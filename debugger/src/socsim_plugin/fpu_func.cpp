@@ -769,6 +769,58 @@ int FpuFunctional::FMUL_D(Reg64Type A, Reg64Type B, Reg64Type *fres,
     return 0;
 }
 
+int FpuFunctional::FADD_D(int addEna, int subEna, int cmpEna, int moreEna,
+                          int absEna, Reg64Type A, Reg64Type B,
+                            Reg64Type *fres, int &except) {
+
+    int signOp = subEna | cmpEna | moreEna;
+    uint64_t signA = A.f64bits.sign;
+    uint64_t signB = B.f64bits.sign ^ signOp;
+
+    int64_t mantA = A.f64bits.mant;
+    mantA |= A.f64bits.exp ? 0x0010000000000000ull: 0;
+
+    int64_t mantB = B.f64bits.mant;
+    mantB |= B.f64bits.exp ? 0x0010000000000000ull: 0;
+
+    int expDif = static_cast<int>(A.f64bits.exp - B.f64bits.exp);
+
+    int preShift;
+    uint64_t expMore;
+    uint64_t mantMore;
+    uint64_t mantLess;
+    uint64_t signMore;
+    if (expDif > 0) {
+        preShift = expDif;
+        signMore = signA;
+        expMore = A.f64bits.exp;
+        mantMore = mantA;
+        mantLess = mantB;
+    } else if (expDif == 0) {
+        preShift = expDif;
+        if (A.f64bits.mant >= B.f64bits.mant) {
+            signMore = signA;
+            expMore = A.f64bits.exp;
+            mantMore = mantA;
+            mantLess = mantB;
+        } else {
+            signMore = signB;
+            expMore = B.f64bits.exp;
+            mantMore = mantB;
+            mantLess = mantA;
+        }
+    } else {
+        preShift = -expDif;
+        signMore = signB;
+        expMore = B.f64bits.exp;
+        mantMore = mantB;
+        mantLess = mantA;
+    }
+
+    return 0;
+}
+
+
 void FpuFunctional::test_FDIV_D(AttributeType *res) {
     Reg64Type A, B, fres, fref;
     bool passed = true;
