@@ -46,6 +46,26 @@ class FDIV_D : public RiscvInstruction {
     }
 };
 
+/**
+ * @brief The FMUL.D double precision multiplication
+ */
+class FMUL_D : public RiscvInstruction {
+ public:
+    FMUL_D(CpuRiver_Functional *icpu) : RiscvInstruction(icpu,
+        "FMUL_D", "0001001??????????????????1010011") {}
+
+    virtual int exec(Reg64Type *payload) {
+        ISA_R_type u;
+        Reg64Type dest, src1, src2;
+        u.value = payload->buf32[0];
+        src1.val = R[u.bits.rs1];
+        src2.val = R[u.bits.rs2];
+        dest.f64 = src1.f64 * src2.f64;
+        R[u.bits.rd] = dest.val;
+        return 4;
+    }
+};
+
 
 void CpuRiver_Functional::addIsaExtensionF() {
     // TODO

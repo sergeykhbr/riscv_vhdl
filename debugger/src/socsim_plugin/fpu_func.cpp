@@ -37,6 +37,8 @@ void FpuCmdType::exec(AttributeType *args, AttributeType *res) {
     if ((*args)[1].is_equal("test")) {
         if ((*args)[2].is_equal("fdiv.d")) {
             p->test_FDIV_D(res);
+        } else if ((*args)[2].is_equal("fmul.d")) {
+            p->test_FMUL_D(res);
         }
     }
 }
@@ -724,7 +726,7 @@ int FpuFunctional::FMUL_D(Reg64Type A, Reg64Type B, Reg64Type *fres,
     // Exceptions:
     int nanA = A.f64bits.exp == 0x7ff ? 1: 0;
     int nanB = B.f64bits.exp == 0x7ff ? 1: 0;
-    int overflow = (!((expAlign >> 12) & 0x1)) & ((expAlign >> 11) & 0x1);
+    int overflow = expAlign >= 0x7FF ? 1: 0;
 
     // Check borders:
     int mantZeroA = A.f64bits.mant ? 0: 1;
@@ -817,9 +819,66 @@ void FpuFunctional::test_FDIV_D(AttributeType *res) {
     }
 
     if (passed) {
-        res->make_string("PASS");
+        res->make_string("FDIV_D: PASS");
     } else {
-        res->make_string("FAIL");
+        res->make_string("FDIV_D: FAIL");
+    }
+}
+
+void FpuFunctional::test_FMUL_D(AttributeType *res) {
+    Reg64Type A, B, fres, fref;
+    int exception;
+    bool passed = true;
+    A.f64 = 0.123;
+    B.f64 = 10.45;
+
+    fref.f64 = A.f64 * B.f64;
+    FMUL_D(A, B, &fres, exception);
+
+    if (fres.val != fref.val) {
+        passed = false;
+        RISCV_error("FMUL.D %016" RV_PRI64 "x != %016" RV_PRI64 "x",
+                    fres.val, fref.val);
+    }
+
+    for (size_t i = 0; i < TSTDMUL_LENGTH; i++) {
+        A.val = TestCases_FMUL_D[i][0];
+        B.val = TestCases_FMUL_D[i][1];
+        fref.f64 = A.f64 * B.f64;
+        FMUL_D(A, B, &fres, exception);
+
+        if (fres.val != fref.val) {
+            passed = false;
+            RISCV_error("[%d] FMUL.D %016" RV_PRI64 "x != %016" RV_PRI64 "x",
+                        static_cast<int>(i), fres.val, fref.val);
+        }
+    }
+    for (int i = 0; i < 1000000; i++) {
+        A.f64bits.sign = rand();
+        A.f64bits.exp = rand();
+        for (int n = 0; n < 4; n++) {
+            A.f64bits.mant = (A.f64bits.mant << 15) | (rand() & 0x7FFF);
+        }
+        B.f64bits.sign = rand();
+        B.f64bits.exp = rand();
+        for (int n = 0; n < 4; n++) {
+            B.f64bits.mant = (A.f64bits.mant << 15) | (rand() & 0x7FFF);
+        }
+
+        fref.f64 = A.f64 * B.f64;
+        FMUL_D(A, B, &fres, exception);
+
+        if (fres.val != fref.val) {
+            passed = false;
+            RISCV_error("[%d] FMUL.D %016" RV_PRI64 "x != %016" RV_PRI64 "x",
+                        static_cast<int>(i), fres.val, fref.val);
+        }
+    }
+
+    if (passed) {
+        res->make_string("FMUL_D: PASS");
+    } else {
+        res->make_string("FMUL_D: FAIL");
     }
 }
 
