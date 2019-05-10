@@ -39,6 +39,8 @@ void FpuCmdType::exec(AttributeType *args, AttributeType *res) {
             p->test_FDIV_D(res);
         } else if ((*args)[2].is_equal("fmul.d")) {
             p->test_FMUL_D(res);
+        } else if ((*args)[2].is_equal("fadd.d")) {
+            p->test_FADD_D(res);
         }
     }
 }
@@ -783,10 +785,18 @@ int FpuFunctional::FADD_D(int addEna, int subEna, int cmpEna, int moreEna,
     int64_t mantB = B.f64bits.mant;
     mantB |= B.f64bits.exp ? 0x0010000000000000ull: 0;
 
-    int expDif = static_cast<int>(A.f64bits.exp - B.f64bits.exp);
+    int expDif;
+    if (A.f64bits.exp && !B.f64bits.exp) {
+        expDif = static_cast<int>(A.f64bits.exp - B.f64bits.exp - 1);
+    } else if (!A.f64bits.exp && B.f64bits.exp) {
+        expDif = static_cast<int>(A.f64bits.exp - B.f64bits.exp + 1);
+    } else {
+        expDif = static_cast<int>(A.f64bits.exp - B.f64bits.exp);
+    }
 
     int preShift;
     uint64_t expMore;
+    uint64_t expLess;
     uint64_t mantMore;
     uint64_t mantLess;
     uint64_t signMore;
@@ -794,6 +804,7 @@ int FpuFunctional::FADD_D(int addEna, int subEna, int cmpEna, int moreEna,
         preShift = expDif;
         signMore = signA;
         expMore = A.f64bits.exp;
+        expLess = B.f64bits.exp;
         mantMore = mantA;
         mantLess = mantB;
     } else if (expDif == 0) {
@@ -801,11 +812,13 @@ int FpuFunctional::FADD_D(int addEna, int subEna, int cmpEna, int moreEna,
         if (A.f64bits.mant >= B.f64bits.mant) {
             signMore = signA;
             expMore = A.f64bits.exp;
+            expLess = B.f64bits.exp;
             mantMore = mantA;
             mantLess = mantB;
         } else {
             signMore = signB;
             expMore = B.f64bits.exp;
+            expLess = A.f64bits.exp;
             mantMore = mantB;
             mantLess = mantA;
         }
@@ -813,6 +826,7 @@ int FpuFunctional::FADD_D(int addEna, int subEna, int cmpEna, int moreEna,
         preShift = -expDif;
         signMore = signB;
         expMore = B.f64bits.exp;
+        expLess = A.f64bits.exp;
         mantMore = mantB;
         mantLess = mantA;
     }
@@ -838,7 +852,7 @@ int FpuFunctional::FADD_D(int addEna, int subEna, int cmpEna, int moreEna,
 
     // Scale = mantLess >> preShift
     int mantLessScale[106];
-    for (int i=0; i<105; i++) {
+    for (int i = 0; i < 106; i++) {
         if (preOverShift) {
             mantLessScale[i] = 0;
         } else if ((i + preShift) < 106) {
@@ -903,15 +917,15 @@ int FpuFunctional::FADD_D(int addEna, int subEna, int cmpEna, int moreEna,
     // exponent scaling rate
     if (rbLShift == 0x7F) {
         if (expMore == 0x7FF) {
-            expPostScale = expMore;
+            expPostScale = static_cast<int>(expMore);
         } else {
-            expPostScale = expMore + 1;
+            expPostScale = static_cast<int>(expMore) + 1;
         }
     } else {
         if (expMore == 0 && rbLShift == 0) {
             expPostScale = 1;
         } else {
-            expPostScale = expMore - rbLShift;
+            expPostScale = static_cast<int>(expMore) - rbLShift;
         }
     }
 
@@ -987,9 +1001,9 @@ int FpuFunctional::FADD_D(int addEna, int subEna, int cmpEna, int moreEna,
     if (nanA & mantZeroA & nanB & mantZeroB) {
         resAdd.mant = signOp ? 0x0008000000000000: 0;
     } else if (nanA) {
-        resAdd.mant = A.f64bits.mant;
+        resAdd.mant = A.f64bits.mant | 0x0008000000000000;
     } else if (nanB) {
-        resAdd.mant = B.f64bits.mant;
+        resAdd.mant = B.f64bits.mant | 0x0008000000000000;
     } else if (overflow) {
         resAdd.mant = 0;
     } else {
@@ -1009,7 +1023,7 @@ int FpuFunctional::FADD_D(int addEna, int subEna, int cmpEna, int moreEna,
   
     // More value
     Reg64Type resMore;
-    if (!allZero & (resAdd.sign | B.f64bits.exp == 0x7FF)) {
+    if (!allZero && (resAdd.sign || B.f64bits.exp == 0x7FF)) {
         resMore.f64bits.sign = signB;
         resMore.f64bits.exp = B.f64bits.exp;
         resMore.f64bits.mant = B.f64bits.mant;
@@ -1094,6 +1108,7 @@ void FpuFunctional::test_FDIV_D(AttributeType *res) {
     }
 
     if (passed) {
+        RISCV_info("%s all tests passed", "FDIV.D");
         res->make_string("FDIV_D: PASS");
     } else {
         res->make_string("FDIV_D: FAIL");
@@ -1151,9 +1166,68 @@ void FpuFunctional::test_FMUL_D(AttributeType *res) {
     }
 
     if (passed) {
+        RISCV_info("%s all tests passed", "FMUL.D");
         res->make_string("FMUL_D: PASS");
     } else {
         res->make_string("FMUL_D: FAIL");
+    }
+}
+
+void FpuFunctional::test_FADD_D(AttributeType *res) {
+    Reg64Type A, B, fres, fref;
+    int exception;
+    bool passed = true;
+    A.f64 = 0.123;
+    B.f64 = 10.45;
+
+    fref.f64 = A.f64 + B.f64;
+    FADD_D(1, 0, 0, 0, 0, A, B, &fres, exception);
+
+    if (fres.val != fref.val) {
+        passed = false;
+        RISCV_error("FADD.D %016" RV_PRI64 "x != %016" RV_PRI64 "x",
+                    fres.val, fref.val);
+    }
+
+    for (size_t i = 0; i < TSTDADD_LENGTH; i++) {
+        A.val = TestCases_FADD_D[i][0];
+        B.val = TestCases_FADD_D[i][1];
+        fref.f64 = A.f64 + B.f64;
+        FADD_D(1, 0, 0, 0, 0, A, B, &fres, exception);
+
+        if (fres.val != fref.val) {
+            passed = false;
+            RISCV_error("[%d] FADD.D %016" RV_PRI64 "x != %016" RV_PRI64 "x",
+                        static_cast<int>(i), fres.val, fref.val);
+        }
+    }
+    for (int i = 0; i < 1000000; i++) {
+        A.f64bits.sign = rand();
+        A.f64bits.exp = rand();
+        for (int n = 0; n < 4; n++) {
+            A.f64bits.mant = (A.f64bits.mant << 15) | (rand() & 0x7FFF);
+        }
+        B.f64bits.sign = rand();
+        B.f64bits.exp = rand();
+        for (int n = 0; n < 4; n++) {
+            B.f64bits.mant = (A.f64bits.mant << 15) | (rand() & 0x7FFF);
+        }
+
+        fref.f64 = A.f64 + B.f64;
+        FADD_D(1, 0, 0, 0, 0, A, B, &fres, exception);
+
+        if (fres.val != fref.val) {
+            passed = false;
+            RISCV_error("[%d] FADD.D %016" RV_PRI64 "x != %016" RV_PRI64 "x",
+                        static_cast<int>(i), fres.val, fref.val);
+        }
+    }
+
+    if (passed) {
+        RISCV_info("%s all tests passed", "FADD.D");
+        res->make_string("FADD_D: PASS");
+    } else {
+        res->make_string("FADD_D: FAIL");
     }
 }
 
