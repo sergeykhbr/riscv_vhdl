@@ -817,6 +817,229 @@ int FpuFunctional::FADD_D(int addEna, int subEna, int cmpEna, int moreEna,
         mantLess = mantA;
     }
 
+    // Convert to 105 bits width bus
+    // A = {1'd0, mantA, 52'd0}
+    // M = {1'd0, mantM, 52'd0}
+    int wbMantMore[106];
+    int wbMantLessWidth[106];
+
+    for (int i = 0; i < 52; i++) {
+        wbMantMore[i] = 0;
+        wbMantLessWidth[i] = 0;
+    }
+    for (int i = 52; i < 105; i++) {
+        wbMantMore[i] = static_cast<int>(mantMore >> (i - 52)) & 0x1;
+        wbMantLessWidth[i] = static_cast<int>(mantLess >> (i - 52)) & 0x1;
+    }
+    wbMantMore[105] = 0;
+    wbMantLessWidth[105] = 0;
+
+    int preOverShift = preShift > 105 ? 1: 0;
+
+    // Scale = mantLess >> preShift
+    int mantLessScale[106];
+    for (int i=0; i<105; i++) {
+        if (preOverShift) {
+            mantLessScale[i] = 0;
+        } else if ((i + preShift) < 106) {
+            mantLessScale[i] = wbMantLessWidth[i + preShift];
+        } else {
+            mantLessScale[i] = 0;
+        }
+    }
+
+    // 106-bits adder/subtractor
+    int mantSum[106];
+    int mantSumCarryBit[107];
+    mantSumCarryBit[0] = 0;
+    for (int i = 0; i < 106; i++) {
+        if (signA ^ signB) {
+            // DIFFERENCE computation: D = A - B
+            //      iCar[0]   = 0
+            //      iDif[k]   = iCar[k]^iA[k]^iB[k];
+            //      iCar[k+1] = (!iA[k]&iB[k]) | (iCar[k]& !(iA[k]^iB[k]));
+            mantSum[i] = mantSumCarryBit[i] ^ wbMantMore[i] ^ mantLessScale[i];
+            mantSumCarryBit[i+1] = (!wbMantMore[i] & mantLessScale[i])
+                | (mantSumCarryBit[i] & !(wbMantMore[i] ^ mantLessScale[i]));
+        } else {
+            // SUMMATOR computation: S = A + B
+            //      iCar[0]   = 0
+            //      iSum[k]   = iCar[k]^iA[k]^iB[k];
+            //      iCar[k+1] = (iA[k]&iB[k]) | (iCar[k]&(iA[k]|iB[k]));
+            //
+            mantSum[i] = mantSumCarryBit[i] ^ wbMantMore[i] ^ mantLessScale[i];
+            mantSumCarryBit[i+1] = (wbMantMore[i] & mantLessScale[i])
+                | (mantSumCarryBit[i] & (wbMantMore[i] | mantLessScale[i]));
+        }
+    }
+
+    int rbLShift;
+    if (mantSum[105])  {
+        rbLShift = 0x7F;
+    } else {
+        rbLShift = 104;
+        for (int i = 0; i < 104; i++) {
+            if (mantSum[104 - i]) {
+                rbLShift = i;
+                break;
+            }
+        }
+    }
+
+    int mantAlign[105];
+    int expPostScale;
+    int mantPostScale[105];
+    // scaling sum
+    for (int i = 0; i < 105; i++) {
+        if (rbLShift == 0x7F) {
+            mantAlign[i] = mantSum[i + 1];
+        } else if ((i - rbLShift) >= 0) {
+            mantAlign[i] = mantSum[i - rbLShift];
+        } else {
+            mantAlign[i] = 0;
+        }
+    }
+  
+    // exponent scaling rate
+    if (rbLShift == 0x7F) {
+        if (expMore == 0x7FF) {
+            expPostScale = expMore;
+        } else {
+            expPostScale = expMore + 1;
+        }
+    } else {
+        if (expMore == 0 && rbLShift == 0) {
+            expPostScale = 1;
+        } else {
+            expPostScale = expMore - rbLShift;
+        }
+    }
+
+    // Scaled = SumScale>>(-ExpSum) if ExpSum < 0;
+    for (int i = 0; i < 105; i++) {
+        if (expPostScale >= 0) {
+            mantPostScale[i] = mantAlign[i];
+        } else if ((i - expPostScale) < 105) {
+            mantPostScale[i] = mantAlign[i - expPostScale];
+        } else {
+            mantPostScale[i] = 0;
+        }
+    }
+
+    int64_t mantShort = 0;
+    int64_t tmpMant05 = 0;
+    for (int i = 0; i < 53; i++) {
+        mantShort |= static_cast<int64_t>(mantPostScale[52 + i]) << i;
+    }
+    for (int i = 0; i < 52; i++) {
+        tmpMant05 |= static_cast<int64_t>(mantPostScale[i]) << i;
+    }
+
+    int64_t mantOnes = mantShort == 0x001fffffffffffff ? 1: 0;
+
+    // rounding bit
+    int mantEven = mantPostScale[52];
+    int mant05 = tmpMant05 == 0x0008000000000000 ? 1: 0;
+    int64_t rndBit = mantPostScale[51] & !(mant05 & !mantEven);
+
+    // Check borders:
+    int mantZeroA = A.f64bits.mant ? 0: 1;
+    int mantZeroB = B.f64bits.mant ? 0: 1;
+
+    // Exceptions:
+    int allZero = A.f64bits.exp == 0 && mantZeroA
+               && B.f64bits.exp == 0 && mantZeroB ? 1: 0;
+    int sumZero = 1;
+    for (int i = 0; i < 105; i++) {
+        if (mantPostScale[i]) {
+            sumZero = 0;
+        }
+    }
+    int nanA = A.f64bits.exp == 0x7ff ? 1: 0;
+    int nanB = B.f64bits.exp == 0x7ff ? 1: 0;
+    int nanAB = nanA & mantZeroA & nanB && mantZeroB ? 1: 0;
+    int overflow = expPostScale == 0x7FF ? 1: 0;
+
+    // Result multiplexers:
+    Reg64Type::f64_bits_type resAdd;
+    if (nanAB & signOp) {
+        resAdd.sign = A.f64bits.sign ^ B.f64bits.sign;
+    } else if (nanA) {
+        resAdd.sign = A.f64bits.sign;
+    } else if (nanB) {
+        resAdd.sign = B.f64bits.sign ^ (signOp & !mantZeroB);
+    } else if (allZero) {
+        resAdd.sign = A.f64bits.sign & B.f64bits.sign;
+    } else if (sumZero) {
+        resAdd.sign = 0;
+    } else {
+        resAdd.sign = signMore; 
+    }
+
+    if (nanA | nanB) {
+        resAdd.exp = 0x7FF;
+    } else if (expPostScale < 0 || sumZero) {
+        resAdd.exp = 0;
+    } else {
+        resAdd.exp = expPostScale + (mantOnes & rndBit & !overflow);
+    }
+
+    if (nanA & mantZeroA & nanB & mantZeroB) {
+        resAdd.mant = signOp ? 0x0008000000000000: 0;
+    } else if (nanA) {
+        resAdd.mant = A.f64bits.mant;
+    } else if (nanB) {
+        resAdd.mant = B.f64bits.mant;
+    } else if (overflow) {
+        resAdd.mant = 0;
+    } else {
+        resAdd.mant = mantShort + rndBit;
+    }
+
+    // CMP command exception
+    int qnand = (nanA & !mantZeroA) | (nanB & !mantZeroB);
+    int qnandCmpX86 = (nanA & mantZeroA) & (nanB & mantZeroB);
+
+    // CMP = {29'd0, flMore, flEqual, flLess}  
+    int flEqual = (qnandCmpX86 | 
+                  (!qnand && !resAdd.mant && !resAdd.exp)) ? 1 : 0;
+    int flLess =  (resAdd.sign | (B.f64bits.exp == 0x7ff)) & !flEqual;
+    int flMore = !resAdd.sign & !flEqual & !flLess;
+    int resCmp = (flMore << 2) | (flEqual << 1) | (flLess);
+  
+    // More value
+    Reg64Type resMore;
+    if (!allZero & (resAdd.sign | B.f64bits.exp == 0x7FF)) {
+        resMore.f64bits.sign = signB;
+        resMore.f64bits.exp = B.f64bits.exp;
+        resMore.f64bits.mant = B.f64bits.mant;
+    } else {
+        resMore.f64bits.sign = signA;
+        resMore.f64bits.exp = A.f64bits.exp;
+        resMore.f64bits.mant = A.f64bits.mant;
+    }
+
+    // Absolute value                              
+    Reg64Type resAbs;
+    resAbs.f64bits.sign = 0;
+    resAbs.f64bits.exp = A.f64bits.exp;
+    resAbs.f64bits.mant = A.f64bits.mant;
+    if (A.f64bits.exp == 0 && A.f64bits.mant == 0) {
+        resAbs.f64bits.sign = A.f64bits.sign;
+    }
+  
+    if (cmpEna) {
+        fres->val = resCmp;
+    } else if (moreEna) {
+        *fres = resMore;
+    } else if (absEna) {
+        *fres = resAbs;
+    } else {
+        fres->f64bits = resAdd;
+    }
+
+    except = nanA | nanB | overflow;
+
     return 0;
 }
 
