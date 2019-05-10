@@ -65,6 +65,7 @@ class FpuFunctional : public IService {
     void test_FDIV_D(AttributeType *res);
     void test_FMUL_D(AttributeType *res);
     void test_FADD_D(AttributeType *res);
+    void test_FSUB_D(AttributeType *res);
 
  protected:
     const int64_t BIT62 = 0x2000000000000000;
