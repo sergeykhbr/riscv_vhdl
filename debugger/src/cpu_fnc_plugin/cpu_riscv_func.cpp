@@ -24,6 +24,7 @@ CpuRiver_Functional::CpuRiver_Functional(const char *name) :
     CpuGeneric(name),
     portRegs_(this, "regs", DSUREG(ureg.v.iregs), Reg_Total),
     portSavedRegs_(this, "savedregs", 0, Reg_Total),  // not mapped !!!
+    portRegsFpu_(this, "fregs", DSUREG(ureg.v.fregs), RegFpu_Total),
     portCSR_(this, "csr", DSUREG(csr), 1<<12) {
     registerInterface(static_cast<ICpuRiscV *>(this));
     registerAttribute("ListExtISA", &listExtISA_);

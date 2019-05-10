@@ -53,9 +53,11 @@ struct DsuMapType {
             uint64_t pc;
             uint64_t npc;
             uint64_t stack_trace_cnt;   // index 34
-            uint64_t rsrv1[128 - 35];
+            uint64_t rsrv1[64 - 35];
+            uint64_t fregs[32];         // fpu registers
+            uint64_t rsrv2[64 - 32];
             uint64_t stack_trace_buf[1];
-            uint64_t rsrv2[128 - 1];
+            uint64_t rsrv3[128 - 1];
             uint64_t instr_buf[4];      // Bits[63:0] (addr,instr)
             uint64_t dbg1[4];
         } v;

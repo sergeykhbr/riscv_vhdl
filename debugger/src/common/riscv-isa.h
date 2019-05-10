@@ -373,6 +373,42 @@ enum ERegNames {
     Reg_Total
 };
 
+enum ERegFpuNames {
+    Reg_f0,
+    Reg_f1,
+    Reg_f2,
+    Reg_f3,
+    Reg_f4,
+    Reg_f5,
+    Reg_f6,
+    Reg_f7,
+    Reg_f8,
+    Reg_f9,
+    Reg_f10,
+    Reg_f11,
+    Reg_f12,
+    Reg_f13,
+    Reg_f14,
+    Reg_f15,
+    Reg_f16,
+    Reg_f17,
+    Reg_f18,
+    Reg_f19,
+    Reg_f20,
+    Reg_f21,
+    Reg_f22,
+    Reg_f23,
+    Reg_f24,
+    Reg_f25,
+    Reg_f26,
+    Reg_f27,
+    Reg_f28,
+    Reg_f29,
+    Reg_f30,
+    Reg_f31,
+    RegFpu_Total
+};
+
 
 union csr_mstatus_type {
     struct bits_type {

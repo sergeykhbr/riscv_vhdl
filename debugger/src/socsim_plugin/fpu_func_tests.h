@@ -546,6 +546,7 @@ const uint64_t TestCases_FMUL_D[][2] = {
 const size_t TSTDMUL_LENGTH = sizeof(TestCases_FMUL_D) / sizeof(uint64_t) / 2;
 
 const uint64_t TestCases_FADD_D[][2] = {
+    {0x801a849d8a54ce7a, 0x001ec52a673d103b},
     {0x0000000000000000, 0xc17312d000000000},
     {0x0000000000000000, 0xc060000000000000},
     {0x0000000000000000, 0xbeb0c6f7a0b5ed8d},
@@ -723,6 +724,10 @@ const uint64_t TestCases_FADD_D[][2] = {
 const size_t TSTDADD_LENGTH = sizeof(TestCases_FADD_D) / sizeof(size_t) / 2;
 
 const uint64_t TestCases_FSUB_D[][2] = {
+    {0x00105e0a0bd63fed, 0x000505eb1ff6d966},
+    {0x804f7a5d3ab03b45, 0x804e9d581da2d710},
+    {0x803bfbf92cbbb686, 0x803c965ddb436c66},
+    {0x804aa735a1b3462b, 0x804ad0d9a315d165},
     {0x0000000000000000, 0x3ff0000000000000},
     {0x0000000000000000, 0x0000000000000000},
     {0xc17312d000000000, 0x0000000000000000},
@@ -1083,6 +1088,23 @@ const uint64_t TestCases_FABS_D[][2] = {
 };
 
 const size_t TSTDABS_LENGTH = sizeof(TestCases_FABS_D) / sizeof(uint64_t) / 2;
+
+const uint64_t TestCases_FCVT_L_D[][2] = {
+    {0x7ffffffffffffa00, 0x0000000000000000},
+    {0x7ffffffffffffe00, 0x0000000000000000},
+    {0x7fffffffffffffff, 0x0000000000000000},
+    {0xffffffffffffffff, 0x0000000000000000},
+    {0x7ffffffffffffffe, 0x0000000000000000},
+    {0x8000000000000001, 0x0000000000000000},
+    {0x8000000000000000, 0x0000000000000000},
+    {0x0000000000000000, 0x0000000000000000},
+    {0x0000000000000002, 0x0000000000000000},
+    {0x7000000000000001, 0x0000000000000000},
+    {0x7000000000000002, 0x0000000000000000},
+    {0x7000000000000003, 0x0000000000000000},
+};
+
+const size_t TSTL2D_LENGTH = sizeof(TestCases_FCVT_L_D) / sizeof(uint64_t) / 2;
 
 }  // namespace debugger
 

@@ -23,6 +23,26 @@
 namespace debugger {
 
 /**
+ * @brief The FADD.D double precision adder
+ */
+class FADD_D : public RiscvInstruction {
+ public:
+    FADD_D(CpuRiver_Functional *icpu) : RiscvInstruction(icpu,
+        "FADD_D", "0000000??????????????????1010011") {}
+
+    virtual int exec(Reg64Type *payload) {
+        ISA_R_type u;
+        Reg64Type dest, src1, src2;
+        u.value = payload->buf32[0];
+        src1.val = RF[u.bits.rs1];
+        src2.val = RF[u.bits.rs2];
+        dest.f64 = src1.f64 + src2.f64;
+        RF[u.bits.rd] = dest.val;
+        return 4;
+    }
+};
+
+/**
  * @brief The FDIV.D double precision division
  */
 class FDIV_D : public RiscvInstruction {
@@ -34,14 +54,14 @@ class FDIV_D : public RiscvInstruction {
         ISA_R_type u;
         Reg64Type dest, src1, src2;
         u.value = payload->buf32[0];
-        src1.val = R[u.bits.rs1];
-        src2.val = R[u.bits.rs2];
-        if (R[u.bits.rs2]) {
+        src1.val = RF[u.bits.rs1];
+        src2.val = RF[u.bits.rs2];
+        if (RF[u.bits.rs2]) {
             dest.f64 = src1.f64 / src2.f64;
         } else {
             dest.val = 0;
         }
-        R[u.bits.rd] = dest.val;
+        RF[u.bits.rd] = dest.val;
         return 4;
     }
 };
@@ -58,10 +78,30 @@ class FMUL_D : public RiscvInstruction {
         ISA_R_type u;
         Reg64Type dest, src1, src2;
         u.value = payload->buf32[0];
-        src1.val = R[u.bits.rs1];
-        src2.val = R[u.bits.rs2];
+        src1.val = RF[u.bits.rs1];
+        src2.val = RF[u.bits.rs2];
         dest.f64 = src1.f64 * src2.f64;
-        R[u.bits.rd] = dest.val;
+        RF[u.bits.rd] = dest.val;
+        return 4;
+    }
+};
+
+/**
+ * @brief The FSUB.D double precision subtractor
+ */
+class FSUB_D : public RiscvInstruction {
+ public:
+    FSUB_D(CpuRiver_Functional *icpu) : RiscvInstruction(icpu,
+        "FSUB_D", "0000100??????????????????1010011") {}
+
+    virtual int exec(Reg64Type *payload) {
+        ISA_R_type u;
+        Reg64Type dest, src1, src2;
+        u.value = payload->buf32[0];
+        src1.val = RF[u.bits.rs1];
+        src2.val = RF[u.bits.rs2];
+        dest.f64 = src1.f64 - src2.f64;
+        RF[u.bits.rd] = dest.val;
         return 4;
     }
 };

@@ -51,6 +51,7 @@ protected:
     uint32_t mask_;
     uint32_t opcode_;
     uint64_t *R;
+    uint64_t *RF;
 };
 
 class RiscvInstruction16 : public RiscvInstruction {

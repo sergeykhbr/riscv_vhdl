@@ -60,12 +60,14 @@ class FpuFunctional : public IService {
                Reg64Type A, Reg64Type B,
                Reg64Type *fres,     // CMP = {29'd0, flMore, flEqual, flLess}
                int &except);
+    int L2D_D(int signEna, Reg64Type A, Reg64Type B, Reg64Type *fres);
 
     /** Common methods */
     void test_FDIV_D(AttributeType *res);
     void test_FMUL_D(AttributeType *res);
     void test_FADD_D(AttributeType *res);
     void test_FSUB_D(AttributeType *res);
+    void test_FCVT_L_D(AttributeType *res);
 
  protected:
     const int64_t BIT62 = 0x2000000000000000;
