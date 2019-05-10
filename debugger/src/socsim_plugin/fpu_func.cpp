@@ -35,37 +35,32 @@ void FpuCmdType::exec(AttributeType *args, AttributeType *res) {
     FpuFunctional *p = static_cast<FpuFunctional *>(parent_);
     res->make_nil();
     if ((*args)[1].is_equal("test")) {
-        if ((*args)[2].is_equal("fdiv.d")) {
-            p->test_FDIV_D(res);
-        } else if ((*args)[2].is_equal("fmul.d")) {
-            p->test_FMUL_D(res);
-        } else if ((*args)[2].is_equal("fadd.d")) {
-            p->test_FADD_D(res);
-        } else if ((*args)[2].is_equal("fsub.d")) {
-            p->test_FSUB_D(res);
-        } else if ((*args)[2].is_equal("fcvt.l.d")) {
-            p->test_FCVT_L_D(res);
-        } else if ((*args)[2].is_equal("all")) {
+        if ((*args)[2].is_equal("all")) {
             AttributeType item;
             res->make_list(0);
-            p->test_FDIV_D(&item);
+            p->test_instr("fdiv.d", &item);
             res->add_to_list(&item);
-            p->test_FMUL_D(&item);
+            p->test_instr("fmul.d", &item);
             res->add_to_list(&item);
-            p->test_FADD_D(&item);
+            p->test_instr("fadd.d", &item);
             res->add_to_list(&item);
-            p->test_FSUB_D(&item);
+            p->test_instr("fsub.d", &item);
             res->add_to_list(&item);
-            p->test_FCVT_L_D(&item);
+            p->test_instr("fcvt.l.d", &item);
+            res->add_to_list(&item);
+            p->test_instr("fcvt.lu.d", &item);
             res->add_to_list(&item);
         } else {
-            res->make_string("test not found");
+            p->test_instr((*args)[2].to_string(), res);
         }
+    } else if ((*args)[1].is_equal("total")) {
+        p->setTestTotal((*args)[2].to_int());
     }
 }
 
 FpuFunctional::FpuFunctional(const char *name) : IService(name) {
     registerAttribute("CmdExecutor", &cmdexec_);
+    registerAttribute("RandomTestTotal", &randomTestTotal_);
     pcmd_ = 0;
 }
 
@@ -668,53 +663,6 @@ int FpuFunctional::FDIV_D(Reg64Type A, Reg64Type B, Reg64Type *fres) {
     return 0;
 }
 
-void FpuFunctional::test_FDIV_D(AttributeType *res) {
-    Reg64Type A, B, fres, fref;
-    bool passed = true;
-    for (size_t i = 0; i < TSTDDIV_LENGTH; i++) {
-        A.val = TestCases_FDIV_D[i][0];
-        B.val = TestCases_FDIV_D[i][1];
-        fref.f64 = A.f64 / B.f64;
-        FDIV_D(A, B, &fres);
-
-        if (fres.val != fref.val) {
-            passed = false;
-            RISCV_error("[%d] FDIF.D %016" RV_PRI64 "x != %016" RV_PRI64 "x",
-                        static_cast<int>(i), fres.val, fref.val);
-        }
-    }
-
-    for (int i = 0; i < 1000000; i++) {
-        A.f64bits.sign = rand();
-        A.f64bits.exp = rand();
-        for (int n = 0; n < 4; n++) {
-            A.f64bits.mant = (A.f64bits.mant << 15) | (rand() & 0x7FFF);
-        }
-        B.f64bits.sign = rand();
-        B.f64bits.exp = rand();
-        for (int n = 0; n < 4; n++) {
-            B.f64bits.mant = (A.f64bits.mant << 15) | (rand() & 0x7FFF);
-        }
-
-        fref.f64 = A.f64 / B.f64;
-        FDIV_D(A, B, &fres);
-
-        if (fres.val != fref.val) {
-            passed = false;
-            RISCV_error("[%d] FDIF.D %016" RV_PRI64 "x != %016" RV_PRI64 "x",
-                        static_cast<int>(i), fres.val, fref.val);
-        }
-    }
-
-    if (passed) {
-        RISCV_info("%s all tests passed", "FDIV.D");
-        res->make_string("FDIV_D: PASS");
-    } else {
-        res->make_string("FDIV_D: FAIL");
-    }
-}
-
-
 int FpuFunctional::FMUL_D(Reg64Type A, Reg64Type B, Reg64Type *fres,
                           int &except) {
     uint64_t zeroA = !A.f64bits.exp && !A.f64bits.mant ? 1: 0;
@@ -804,7 +752,8 @@ int FpuFunctional::FMUL_D(Reg64Type A, Reg64Type B, Reg64Type *fres,
     if ((nanA & mantZeroA & zeroB) | (nanB & mantZeroB & zeroA)) {
         fres->f64bits.sign = 1;
     } else if (nanA & !mantZeroA) {
-        fres->f64bits.sign = A.f64bits.sign;
+        /** when both values are NaN, value B has higher priority if sign=1 */
+        fres->f64bits.sign = A.f64bits.sign | (nanB & B.f64bits.sign);
     } else if (nanB & !mantZeroB) {
         fres->f64bits.sign = B.f64bits.sign;
     } else {
@@ -826,7 +775,8 @@ int FpuFunctional::FMUL_D(Reg64Type A, Reg64Type B, Reg64Type *fres,
     if ((nanA & mantZeroA & !mantZeroB) || (nanB & mantZeroB & !mantZeroA)
         || (!nanA & !nanB & overflow)) {
         fres->f64bits.mant = 0;
-    } else if (nanA) {
+    } else if (nanA && !(nanB & B.f64bits.sign)) {
+        /** when both values are NaN, value B has higher priority if sign=1 */
         fres->f64bits.mant = A.f64bits.mant | 0x8000000000000;
     } else if (nanB) {
         fres->f64bits.mant = B.f64bits.mant | 0x8000000000000;
@@ -835,53 +785,6 @@ int FpuFunctional::FMUL_D(Reg64Type A, Reg64Type B, Reg64Type *fres,
     }
     except = nanA | nanB | overflow;
     return 0;
-}
-
-void FpuFunctional::test_FMUL_D(AttributeType *res) {
-    Reg64Type A, B, fres, fref;
-    int exception;
-    bool passed = true;
-
-    for (size_t i = 0; i < TSTDMUL_LENGTH; i++) {
-        A.val = TestCases_FMUL_D[i][0];
-        B.val = TestCases_FMUL_D[i][1];
-        fref.f64 = A.f64 * B.f64;
-        FMUL_D(A, B, &fres, exception);
-
-        if (fres.val != fref.val) {
-            passed = false;
-            RISCV_error("[%d] FMUL.D %016" RV_PRI64 "x != %016" RV_PRI64 "x",
-                        static_cast<int>(i), fres.val, fref.val);
-        }
-    }
-    for (int i = 0; i < 1000000; i++) {
-        A.f64bits.sign = rand();
-        A.f64bits.exp = rand();
-        for (int n = 0; n < 4; n++) {
-            A.f64bits.mant = (A.f64bits.mant << 15) | (rand() & 0x7FFF);
-        }
-        B.f64bits.sign = rand();
-        B.f64bits.exp = rand();
-        for (int n = 0; n < 4; n++) {
-            B.f64bits.mant = (A.f64bits.mant << 15) | (rand() & 0x7FFF);
-        }
-
-        fref.f64 = A.f64 * B.f64;
-        FMUL_D(A, B, &fres, exception);
-
-        if (fres.val != fref.val) {
-            passed = false;
-            RISCV_error("[%d] FMUL.D %016" RV_PRI64 "x != %016" RV_PRI64 "x",
-                        static_cast<int>(i), fres.val, fref.val);
-        }
-    }
-
-    if (passed) {
-        RISCV_info("%s all tests passed", "FMUL.D");
-        res->make_string("FMUL_D: PASS");
-    } else {
-        res->make_string("FMUL_D: FAIL");
-    }
 }
 
 int FpuFunctional::FADD_D(int addEna, int subEna, int cmpEna, int moreEna,
@@ -1098,7 +1001,8 @@ int FpuFunctional::FADD_D(int addEna, int subEna, int cmpEna, int moreEna,
     if (nanAB & signOp) {
         resAdd.sign = signA ^ signB;
     } else if (nanA) {
-        resAdd.sign = signA;
+        /** when both values are NaN, value B has higher priority if sign=1 */
+        resAdd.sign = signA | (nanB & signB);
     } else if (nanB) {
         resAdd.sign = signB ^ (signOp & !mantZeroB);
     } else if (allZero) {
@@ -1119,7 +1023,8 @@ int FpuFunctional::FADD_D(int addEna, int subEna, int cmpEna, int moreEna,
 
     if (nanA & mantZeroA & nanB & mantZeroB) {
         resAdd.mant = signOp ? 0x0008000000000000: 0;
-    } else if (nanA) {
+    } else if (nanA && !(nanB & signB)) {
+        /** when both values are NaN, value B has higher priority if sign=1 */
         resAdd.mant = A.f64bits.mant | 0x0008000000000000;
     } else if (nanB) {
         resAdd.mant = B.f64bits.mant | 0x0008000000000000;
@@ -1175,102 +1080,6 @@ int FpuFunctional::FADD_D(int addEna, int subEna, int cmpEna, int moreEna,
     return 0;
 }
 
-void FpuFunctional::test_FADD_D(AttributeType *res) {
-    Reg64Type A, B, fres, fref;
-    int exception;
-    bool passed = true;
-
-    for (size_t i = 0; i < TSTDADD_LENGTH; i++) {
-        A.val = TestCases_FADD_D[i][0];
-        B.val = TestCases_FADD_D[i][1];
-        fref.f64 = A.f64 + B.f64;
-        FADD_D(1, 0, 0, 0, 0, A, B, &fres, exception);
-
-        if (fres.val != fref.val) {
-            passed = false;
-            RISCV_error("[%d] FADD.D %016" RV_PRI64 "x != %016" RV_PRI64 "x",
-                        static_cast<int>(i), fres.val, fref.val);
-        }
-    }
-    for (int i = 0; i < 1000000; i++) {
-        A.f64bits.sign = rand();
-        A.f64bits.exp = rand();
-        for (int n = 0; n < 4; n++) {
-            A.f64bits.mant = (A.f64bits.mant << 15) | (rand() & 0x7FFF);
-        }
-        B.f64bits.sign = rand();
-        B.f64bits.exp = rand();
-        for (int n = 0; n < 4; n++) {
-            B.f64bits.mant = (A.f64bits.mant << 15) | (rand() & 0x7FFF);
-        }
-
-        fref.f64 = A.f64 + B.f64;
-        FADD_D(1, 0, 0, 0, 0, A, B, &fres, exception);
-
-        if (fres.val != fref.val) {
-            passed = false;
-            RISCV_error("[%d] FADD.D %016" RV_PRI64 "x + %016" RV_PRI64 "x => "
-                        "%016" RV_PRI64 "x != %016" RV_PRI64 "x",
-                        static_cast<int>(i), A.val, B.val, fres.val, fref.val);
-        }
-    }
-
-    if (passed) {
-        RISCV_info("%s all tests passed", "FADD.D");
-        res->make_string("FADD_D: PASS");
-    } else {
-        res->make_string("FADD_D: FAIL");
-    }
-}
-
-void FpuFunctional::test_FSUB_D(AttributeType *res) {
-    Reg64Type A, B, fres, fref;
-    int exception;
-    bool passed = true;
-
-    for (size_t i = 0; i < TSTDSUB_LENGTH; i++) {
-        A.val = TestCases_FSUB_D[i][0];
-        B.val = TestCases_FSUB_D[i][1];
-        fref.f64 = A.f64 - B.f64;
-        FADD_D(0, 1, 0, 0, 0, A, B, &fres, exception);
-
-        if (fres.val != fref.val) {
-            passed = false;
-            RISCV_error("[%d] FSUB.D %016" RV_PRI64 "x != %016" RV_PRI64 "x",
-                        static_cast<int>(i), fres.val, fref.val);
-        }
-    }
-    for (int i = 0; i < 1000000; i++) {
-        A.f64bits.sign = rand();
-        A.f64bits.exp = rand();
-        for (int n = 0; n < 4; n++) {
-            A.f64bits.mant = (A.f64bits.mant << 15) | (rand() & 0x7FFF);
-        }
-        B.f64bits.sign = rand();
-        B.f64bits.exp = rand();
-        for (int n = 0; n < 4; n++) {
-            B.f64bits.mant = (A.f64bits.mant << 15) | (rand() & 0x7FFF);
-        }
-
-        fref.f64 = A.f64 - B.f64;
-        FADD_D(0, 1, 0, 0, 0, A, B, &fres, exception);
-
-        if (fres.val != fref.val) {
-            passed = false;
-            RISCV_error("[%d] FSUB.D %016" RV_PRI64 "x - %016" RV_PRI64 "x => "
-                        "%016" RV_PRI64 "x != %016" RV_PRI64 "x",
-                        static_cast<int>(i), A.val, B.val, fres.val, fref.val);
-        }
-    }
-
-    if (passed) {
-        RISCV_info("%s all tests passed", "FSUB.D");
-        res->make_string("FSUB_D: PASS");
-    } else {
-        res->make_string("FSUB_D: FAIL");
-    }
-}
-
 int FpuFunctional::L2D_D(int signEna, Reg64Type A, Reg64Type B,
                         Reg64Type *fres) {
     uint64_t absA = signEna & A.f64bits.sign ? ~A.val + 1: A.val;
@@ -1306,46 +1115,125 @@ int FpuFunctional::L2D_D(int signEna, Reg64Type A, Reg64Type B,
     return 0;
 }
 
-void FpuFunctional::test_FCVT_L_D(AttributeType *res) {
+void FpuFunctional::test_instr(const char *instr, AttributeType *res) {
     Reg64Type A, B, fres, fref;
+    const uint64_t *in;
+    size_t insz;
+    int exception;
     bool passed = true;
 
-    for (size_t i = 0; i < TSTL2D_LENGTH; i++) {
-        A.val = TestCases_FCVT_L_D[i][0];
-        B.val = TestCases_FCVT_L_D[i][1];
-        fref.f64 = static_cast<double>(static_cast<int64_t>(A.val));
-        L2D_D(1, A, B, &fres);
+    if (strcmp(instr, "fdiv.d") == 0) {
+        in = &TestCases_FMUL_D[0][0];
+        insz = TSTDMUL_LENGTH;
+    } else if (strcmp(instr, "fmul.d") == 0) {
+        in = &TestCases_FMUL_D[0][0];
+        insz = TSTDMUL_LENGTH;
+    } else if (strcmp(instr, "fadd.d") == 0) {
+        in = &TestCases_FADD_D[0][0];
+        insz = TSTDADD_LENGTH;
+    } else if (strcmp(instr, "fsub.d") == 0) {
+        in = &TestCases_FSUB_D[0][0];
+        insz = TSTDSUB_LENGTH;
+    } else if (strcmp(instr, "fcvt.l.d") == 0) {
+        in = &TestCases_FCVT_L_D[0][0];
+        insz = TSTL2D_LENGTH;
+    } else if (strcmp(instr, "fcvt.lu.d") == 0) {
+        in = &TestCases_FCVT_L_D[0][0];
+        insz = TSTL2D_LENGTH;
+    } else {
+        res->make_string("test not found");
+        return;
+    }
+
+    /** Manual testcases with the corner effects: */
+    for (size_t i = 0; i < insz; i++) {
+        A.val = in[2*i];
+        B.val = in[2*i + 1];
+        if (strcmp(instr, "fdiv.d") == 0) {
+            fref.f64 = A.f64 / B.f64;
+            FDIV_D(A, B, &fres);
+        } else if (strcmp(instr, "fmul.d") == 0) {
+            fref.f64 = A.f64 * B.f64;
+            FMUL_D(A, B, &fres, exception);
+        } else if (strcmp(instr, "fadd.d") == 0) {
+            fref.f64 = A.f64 + B.f64;
+            FADD_D(1, 0, 0, 0, 0, A, B, &fres, exception);
+        } else if (strcmp(instr, "fsub.d") == 0) {
+            fref.f64 = A.f64 - B.f64;
+            FADD_D(0, 1, 0, 0, 0, A, B, &fres, exception);
+        } else if (strcmp(instr, "fcvt.l.d") == 0) {
+            fref.f64 = static_cast<double>(static_cast<int64_t>(A.val));
+            L2D_D(1, A, B, &fres);
+        } else if (strcmp(instr, "fcvt.lu.d") == 0) {
+            fref.f64 = static_cast<double>(A.val);
+            L2D_D(0, A, B, &fres);
+        } else {
+            res->make_string("test not found");
+            return;
+        }
 
         if (fres.val != fref.val) {
             passed = false;
-            RISCV_error("[%d] FCVT.L.D %016" RV_PRI64 "x != %016" RV_PRI64 "x",
-                        static_cast<int>(i), fres.val, fref.val);
+            RISCV_error("[%d*] %s %016" RV_PRI64 "x - %016" RV_PRI64 "x => "
+                        "%016" RV_PRI64 "x != %016" RV_PRI64 "x",
+                        static_cast<int>(i), instr,
+                        A.val, B.val, fres.val, fref.val);
         }
     }
 
-    for (int i = 0; i < 1000000; i++) {
+    /** Random data test: */
+    for (int i = 0; i < randomTestTotal_.to_int(); i++) {
         A.f64bits.sign = rand();
         A.f64bits.exp = rand();
         for (int n = 0; n < 4; n++) {
             A.f64bits.mant = (A.f64bits.mant << 15) | (rand() & 0x7FFF);
         }
-        B.val = 0;
+        B.f64bits.sign = rand();
+        B.f64bits.exp = rand();
+        for (int n = 0; n < 4; n++) {
+            B.f64bits.mant = (A.f64bits.mant << 15) | (rand() & 0x7FFF);
+        }
 
-        fref.f64 = static_cast<double>(static_cast<int64_t>(A.val));
-        L2D_D(1, A, B, &fres);
+        if (strcmp(instr, "fdiv.d") == 0) {
+            fref.f64 = A.f64 / B.f64;
+            FDIV_D(A, B, &fres);
+        } else if (strcmp(instr, "fmul.d") == 0) {
+            fref.f64 = A.f64 * B.f64;
+            FMUL_D(A, B, &fres, exception);
+        } else if (strcmp(instr, "fadd.d") == 0) {
+            fref.f64 = A.f64 + B.f64;
+            FADD_D(1, 0, 0, 0, 0, A, B, &fres, exception);
+        } else if (strcmp(instr, "fsub.d") == 0) {
+            fref.f64 = A.f64 - B.f64;
+            FADD_D(0, 1, 0, 0, 0, A, B, &fres, exception);
+        } else if (strcmp(instr, "fcvt.l.d") == 0) {
+            fref.f64 = static_cast<double>(static_cast<int64_t>(A.val));
+            L2D_D(1, A, B, &fres);
+        } else if (strcmp(instr, "fcvt.lu.d") == 0) {
+            fref.f64 = static_cast<double>(A.val);
+            L2D_D(0, A, B, &fres);
+        } else {
+            res->make_string("test not found");
+            return;
+        }
 
         if (fres.val != fref.val) {
             passed = false;
-            RISCV_error("[%d] FCVT.L.D %016" RV_PRI64 "x != %016" RV_PRI64 "x",
-                        static_cast<int>(i), fres.val, fref.val);
+            RISCV_error("[%d] %s %016" RV_PRI64 "x - %016" RV_PRI64 "x => "
+                        "%016" RV_PRI64 "x != %016" RV_PRI64 "x",
+                        static_cast<int>(i), instr,
+                        A.val, B.val, fres.val, fref.val);
         }
     }
 
+    char tstr[64];
     if (passed) {
-        RISCV_info("%s all tests passed", "FCVT.L.D");
-        res->make_string("FCVT.L.D: PASS");
+        RISCV_info("%s all tests passed", instr);
+        RISCV_sprintf(tstr, sizeof(tstr), "%s: PASS", instr);
+        res->make_string(tstr);
     } else {
-        res->make_string("FCVT.L.D: FAIL");
+        RISCV_sprintf(tstr, sizeof(tstr), "%s: FAIL", instr);
+        res->make_string(tstr);
     }
 }
 

@@ -253,6 +253,7 @@
           {'Name':'fpu0','Attr':[
                 ['LogLevel',4],
                 ['CmdExecutor','cmdexec0'],
+                ['RandomTestTotal',1000000,'Number of tests for each instruction using rand() method'],
                 ]}]},
     {'Class':'BusGenericClass','Instances':[
           {'Name':'axi0','Attr':[
