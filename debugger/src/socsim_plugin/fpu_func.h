@@ -61,6 +61,8 @@ class FpuFunctional : public IService {
                Reg64Type *fres,     // CMP = {29'd0, flMore, flEqual, flLess}
                int &except);
     int L2D_D(int signEna, Reg64Type A, Reg64Type B, Reg64Type *fres);
+    int D2L_D(int signEna, Reg64Type A, Reg64Type B, Reg64Type *fres,
+              int &ovr, int &und);
 
     /** Common methods */
     void setTestTotal(int v) { randomTestTotal_.make_int64(v); }

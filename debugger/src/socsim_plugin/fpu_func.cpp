@@ -50,6 +50,10 @@ void FpuCmdType::exec(AttributeType *args, AttributeType *res) {
             res->add_to_list(&item);
             p->test_instr("fcvt.lu.d", &item);
             res->add_to_list(&item);
+            p->test_instr("fcvt.d.l", &item);
+            res->add_to_list(&item);
+            p->test_instr("fcvt.d.lu", &item);
+            res->add_to_list(&item);
         } else {
             p->test_instr((*args)[2].to_string(), res);
         }
@@ -1115,11 +1119,60 @@ int FpuFunctional::L2D_D(int signEna, Reg64Type A, Reg64Type B,
     return 0;
 }
 
+int FpuFunctional::D2L_D(int signEna,
+                         Reg64Type A,
+                         Reg64Type B,
+                         Reg64Type *fres,
+                         int &ovr,
+                         int &und) {
+    uint64_t mantA = A.f64bits.mant;
+    mantA |= A.f64bits.exp ? 0x0010000000000000ull: 0;
+
+    uint64_t mantPreScale;
+    uint64_t expDif;
+    uint64_t mantShort;
+    mantPreScale = mantA << 11;
+    expDif = (1023u + 63u) - A.f64bits.exp;
+
+    if (signEna && A.f64bits.exp > (1023 + 62)) {
+        ovr = 1;
+        und = 0;
+        mantShort = 0;
+    } else if (!signEna && 
+              ((A.f64bits.sign && A.f64bits.exp > (1023 + 62)) ||
+              (!A.f64bits.sign && A.f64bits.exp > (1023 + 63)))) {
+        ovr = 1;
+        und = 0;
+        mantShort = 0;
+    } else if (A.f64bits.exp < 1023) {
+        ovr = 0;
+        und = 1;
+        mantShort = 0;
+    } else {
+        ovr = 0;
+        und = 0;
+        mantShort = mantPreScale >> expDif;
+    }
+
+    if (signEna) {
+        fres->val = A.f64bits.sign ? ~mantShort + 1: mantShort;
+        fres->f64bits.sign = (A.f64bits.sign | ovr) & !und;
+    } else {
+        fres->val = A.f64bits.sign ? ~mantShort + 1: mantShort;
+        if (ovr) {
+            fres->f64bits.sign = 1;
+        }
+    }
+    return 0;
+}
+
 void FpuFunctional::test_instr(const char *instr, AttributeType *res) {
     Reg64Type A, B, fres, fref;
     const uint64_t *in;
     size_t insz;
     int exception;
+    int overflow;
+    int underflow;
     bool passed = true;
 
     if (strcmp(instr, "fdiv.d") == 0) {
@@ -1140,6 +1193,12 @@ void FpuFunctional::test_instr(const char *instr, AttributeType *res) {
     } else if (strcmp(instr, "fcvt.lu.d") == 0) {
         in = &TestCases_FCVT_L_D[0][0];
         insz = TSTL2D_LENGTH;
+    } else if (strcmp(instr, "fcvt.d.l") == 0) {
+        in = &TestCases_FCVT_D_L[0][0];
+        insz = TSTD2L_LENGTH;
+    } else if (strcmp(instr, "fcvt.d.lu") == 0) {
+        in = &TestCases_FCVT_D_L[0][0];
+        insz = TSTD2L_LENGTH;
     } else {
         res->make_string("test not found");
         return;
@@ -1167,6 +1226,12 @@ void FpuFunctional::test_instr(const char *instr, AttributeType *res) {
         } else if (strcmp(instr, "fcvt.lu.d") == 0) {
             fref.f64 = static_cast<double>(A.val);
             L2D_D(0, A, B, &fres);
+        } else if (strcmp(instr, "fcvt.d.l") == 0) {
+            fref.ival = static_cast<int64_t>(A.f64);
+            D2L_D(1, A, B, &fres, overflow, underflow);
+        } else if (strcmp(instr, "fcvt.d.lu") == 0) {
+            fref.val = static_cast<uint64_t>(A.f64);
+            D2L_D(0, A, B, &fres, overflow, underflow);
         } else {
             res->make_string("test not found");
             return;
@@ -1212,6 +1277,12 @@ void FpuFunctional::test_instr(const char *instr, AttributeType *res) {
         } else if (strcmp(instr, "fcvt.lu.d") == 0) {
             fref.f64 = static_cast<double>(A.val);
             L2D_D(0, A, B, &fres);
+        } else if (strcmp(instr, "fcvt.d.l") == 0) {
+            fref.ival = static_cast<int64_t>(A.f64);
+            D2L_D(1, A, B, &fres, overflow, underflow);
+        } else if (strcmp(instr, "fcvt.d.lu") == 0) {
+            fref.val = static_cast<uint64_t>(A.f64);
+            D2L_D(0, A, B, &fres, overflow, underflow);
         } else {
             res->make_string("test not found");
             return;
