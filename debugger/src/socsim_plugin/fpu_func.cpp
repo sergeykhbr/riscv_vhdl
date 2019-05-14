@@ -821,11 +821,9 @@ int FpuFunctional::FADD_D(int addEna, int subEna, int cmpEna, int moreEna,
 
     int preShift;
     uint64_t expMore;
-    uint64_t expLess;
     uint64_t mantMore;
     uint64_t mantLess;
     uint64_t signOpMore;
-    uint64_t signMore;
     uint64_t flEqual;
     uint64_t flLess;
     uint64_t flMore;
@@ -836,10 +834,8 @@ int FpuFunctional::FADD_D(int addEna, int subEna, int cmpEna, int moreEna,
         flLess = signA;
 
         preShift = expDif;
-        signMore = signA;
         signOpMore = signA;
         expMore = A.f64bits.exp;
-        expLess = B.f64bits.exp;
         mantMore = mantA;
         mantLess = mantB;
     } else if (expDif == 0) {
@@ -849,10 +845,8 @@ int FpuFunctional::FADD_D(int addEna, int subEna, int cmpEna, int moreEna,
             flEqual = 0;
             flLess = signA;
 
-            signMore = signA;
             signOpMore = signA;
             expMore = A.f64bits.exp;
-            expLess = B.f64bits.exp;
             mantMore = mantA;
             mantLess = mantB;
         } else if (mantA == mantB) {
@@ -860,10 +854,8 @@ int FpuFunctional::FADD_D(int addEna, int subEna, int cmpEna, int moreEna,
             flEqual = 1;
             flLess = 0;
 
-            signMore = signA;
             signOpMore = signA;
             expMore = A.f64bits.exp;
-            expLess = B.f64bits.exp;
             mantMore = mantA;
             mantLess = mantB;
         } else {
@@ -871,10 +863,8 @@ int FpuFunctional::FADD_D(int addEna, int subEna, int cmpEna, int moreEna,
             flEqual = 0;
             flLess = !signB;
 
-            signMore = signB;
             signOpMore = signOpB;
             expMore = B.f64bits.exp;
-            expLess = A.f64bits.exp;
             mantMore = mantB;
             mantLess = mantA;
         }
@@ -884,10 +874,8 @@ int FpuFunctional::FADD_D(int addEna, int subEna, int cmpEna, int moreEna,
         flLess = !signB;
 
         preShift = -expDif;
-        signMore = signB;
         signOpMore = signOpB;
         expMore = B.f64bits.exp;
-        expLess = A.f64bits.exp;
         mantMore = mantB;
         mantLess = mantA;
     }
@@ -1078,10 +1066,6 @@ int FpuFunctional::FADD_D(int addEna, int subEna, int cmpEna, int moreEna,
     } else {
         resAdd.mant = mantShort + rndBit;
     }
-
-    // CMP command exception
-    int qnand = (nanA & !mantZeroA) | (nanB & !mantZeroB);
-    int qnandCmpX86 = (nanA & mantZeroA) & (nanB & mantZeroB);
 
     // CMP = {29'd0, flMore, flEqual, flLess}  
     uint64_t resCmp = (flMore << 2) | (flEqual << 1) | (flLess);
