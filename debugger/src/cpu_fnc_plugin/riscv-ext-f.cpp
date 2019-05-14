@@ -52,7 +52,7 @@ class FCVT_D_L: public RiscvInstruction {
 
     virtual int exec(Reg64Type *payload) {
         ISA_R_type u;
-        Reg64Type dest, src1, src2;
+        Reg64Type dest, src1;
         u.value = payload->buf32[0];
         src1.val = RF[u.bits.rs1];
         dest.ival = static_cast<int64_t>(src1.f64);
@@ -71,7 +71,7 @@ class FCVT_D_LU: public RiscvInstruction {
 
     virtual int exec(Reg64Type *payload) {
         ISA_R_type u;
-        Reg64Type dest, src1, src2;
+        Reg64Type dest, src1;
         u.value = payload->buf32[0];
         src1.val = RF[u.bits.rs1];
         dest.val = static_cast<uint64_t>(src1.f64);
@@ -90,7 +90,7 @@ class FCVT_L_D: public RiscvInstruction {
 
     virtual int exec(Reg64Type *payload) {
         ISA_R_type u;
-        Reg64Type dest, src1, src2;
+        Reg64Type dest, src1;
         u.value = payload->buf32[0];
         src1.val = RF[u.bits.rs1];
         dest.f64 = static_cast<double>(src1.ival);
@@ -109,7 +109,7 @@ class FCVT_LU_D: public RiscvInstruction {
 
     virtual int exec(Reg64Type *payload) {
         ISA_R_type u;
-        Reg64Type dest, src1, src2;
+        Reg64Type dest, src1;
         u.value = payload->buf32[0];
         src1.val = RF[u.bits.rs1];
         dest.f64 = static_cast<double>(src1.val);
@@ -137,6 +137,46 @@ class FDIV_D : public RiscvInstruction {
         } else {
             dest.val = 0;
         }
+        RF[u.bits.rd] = dest.val;
+        return 4;
+    }
+};
+
+/**
+ * @brief The FMAX.D select maximum
+ */
+class FMAX_D : public RiscvInstruction {
+ public:
+    FMAX_D(CpuRiver_Functional *icpu) : RiscvInstruction(icpu,
+        "FMAX_D", "0010101??????????001?????1010011") {}
+
+    virtual int exec(Reg64Type *payload) {
+        ISA_R_type u;
+        Reg64Type dest, src1, src2;
+        u.value = payload->buf32[0];
+        src1.val = RF[u.bits.rs1];
+        src2.val = RF[u.bits.rs2];
+        dest.f64 = src1.f64 > src2.f64 ? src1.f64: src2.f64;
+        RF[u.bits.rd] = dest.val;
+        return 4;
+    }
+};
+
+/**
+ * @brief The FMAX.D select minimum
+ */
+class FMIN_D : public RiscvInstruction {
+ public:
+    FMIN_D(CpuRiver_Functional *icpu) : RiscvInstruction(icpu,
+        "FMIN_D", "0010101??????????000?????1010011") {}
+
+    virtual int exec(Reg64Type *payload) {
+        ISA_R_type u;
+        Reg64Type dest, src1, src2;
+        u.value = payload->buf32[0];
+        src1.val = RF[u.bits.rs1];
+        src2.val = RF[u.bits.rs2];
+        dest.f64 = src1.f64 < src2.f64 ? src1.f64: src2.f64;
         RF[u.bits.rd] = dest.val;
         return 4;
     }

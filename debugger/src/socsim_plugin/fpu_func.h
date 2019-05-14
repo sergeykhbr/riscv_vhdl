@@ -56,7 +56,7 @@ class FpuFunctional : public IService {
     /** Potential IFpu methods */
     int FDIV_D(Reg64Type A, Reg64Type B, Reg64Type *fres);
     int FMUL_D(Reg64Type A, Reg64Type B, Reg64Type *fres, int &except);
-    int FADD_D(int addEna, int subEna, int cmpEna, int moreEna, int absEna,
+    int FADD_D(int addEna, int subEna, int cmpEna, int moreEna, int lessEna,
                Reg64Type A, Reg64Type B,
                Reg64Type *fres,     // CMP = {29'd0, flMore, flEqual, flLess}
                int &except);

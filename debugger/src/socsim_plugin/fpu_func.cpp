@@ -54,6 +54,10 @@ void FpuCmdType::exec(AttributeType *args, AttributeType *res) {
             res->add_to_list(&item);
             p->test_instr("fcvt.d.lu", &item);
             res->add_to_list(&item);
+            p->test_instr("fmin.d", &item);
+            res->add_to_list(&item);
+            p->test_instr("fmax.d", &item);
+            res->add_to_list(&item);
         } else {
             p->test_instr((*args)[2].to_string(), res);
         }
@@ -792,12 +796,13 @@ int FpuFunctional::FMUL_D(Reg64Type A, Reg64Type B, Reg64Type *fres,
 }
 
 int FpuFunctional::FADD_D(int addEna, int subEna, int cmpEna, int moreEna,
-                          int absEna, Reg64Type A, Reg64Type B,
+                          int lessEna, Reg64Type A, Reg64Type B,
                             Reg64Type *fres, int &except) {
 
-    int signOp = subEna | cmpEna | moreEna;
+    int signOp = subEna | cmpEna;
     uint64_t signA = A.f64bits.sign;
-    uint64_t signB = B.f64bits.sign ^ signOp;
+    uint64_t signB = B.f64bits.sign;
+    uint64_t signOpB = B.f64bits.sign ^ signOp;
 
     int64_t mantA = A.f64bits.mant;
     mantA |= A.f64bits.exp ? 0x0010000000000000ull: 0;
@@ -819,32 +824,68 @@ int FpuFunctional::FADD_D(int addEna, int subEna, int cmpEna, int moreEna,
     uint64_t expLess;
     uint64_t mantMore;
     uint64_t mantLess;
+    uint64_t signOpMore;
     uint64_t signMore;
+    uint64_t flEqual;
+    uint64_t flLess;
+    uint64_t flMore;
+
     if (expDif > 0) {
+        flMore = !signA;
+        flEqual = 0;
+        flLess = signA;
+
         preShift = expDif;
         signMore = signA;
+        signOpMore = signA;
         expMore = A.f64bits.exp;
         expLess = B.f64bits.exp;
         mantMore = mantA;
         mantLess = mantB;
     } else if (expDif == 0) {
         preShift = expDif;
-        if (mantA >= mantB) {
+        if (mantA > mantB) {
+            flMore = !signA;
+            flEqual = 0;
+            flLess = signA;
+
             signMore = signA;
+            signOpMore = signA;
+            expMore = A.f64bits.exp;
+            expLess = B.f64bits.exp;
+            mantMore = mantA;
+            mantLess = mantB;
+        } else if (mantA == mantB) {
+            flMore = 0;
+            flEqual = 1;
+            flLess = 0;
+
+            signMore = signA;
+            signOpMore = signA;
             expMore = A.f64bits.exp;
             expLess = B.f64bits.exp;
             mantMore = mantA;
             mantLess = mantB;
         } else {
+            flMore = signB;
+            flEqual = 0;
+            flLess = !signB;
+
             signMore = signB;
+            signOpMore = signOpB;
             expMore = B.f64bits.exp;
             expLess = A.f64bits.exp;
             mantMore = mantB;
             mantLess = mantA;
         }
     } else {
+        flMore = signB;
+        flEqual = 0;
+        flLess = !signB;
+
         preShift = -expDif;
         signMore = signB;
+        signOpMore = signOpB;
         expMore = B.f64bits.exp;
         expLess = A.f64bits.exp;
         mantMore = mantB;
@@ -887,7 +928,7 @@ int FpuFunctional::FADD_D(int addEna, int subEna, int cmpEna, int moreEna,
     int mantSumCarryBit[107];
     mantSumCarryBit[0] = 0;
     for (int i = 0; i < 106; i++) {
-        if (signA ^ signB) {
+        if (signA ^ signOpB) {
             // DIFFERENCE computation: D = A - B
             //      iCar[0]   = 0
             //      iDif[k]   = iCar[k]^iA[k]^iB[k];
@@ -948,7 +989,7 @@ int FpuFunctional::FADD_D(int addEna, int subEna, int cmpEna, int moreEna,
             expPostScale = static_cast<int>(expMore) - rbLShift;
         }
     }
-    if (signA ^ signB) {
+    if (signA ^ signOpB) {
         // subtractor only: result value becomes with exp=0
         if (expMore != 0 && expPostScale <= 0) {
             expPostScale -= 1;
@@ -1003,18 +1044,18 @@ int FpuFunctional::FADD_D(int addEna, int subEna, int cmpEna, int moreEna,
     // Result multiplexers:
     Reg64Type::f64_bits_type resAdd;
     if (nanAB & signOp) {
-        resAdd.sign = signA ^ signB;
+        resAdd.sign = signA ^ signOpB;
     } else if (nanA) {
         /** when both values are NaN, value B has higher priority if sign=1 */
-        resAdd.sign = signA | (nanB & signB);
+        resAdd.sign = signA | (nanB & signOpB);
     } else if (nanB) {
-        resAdd.sign = signB ^ (signOp & !mantZeroB);
+        resAdd.sign = signOpB ^ (signOp & !mantZeroB);
     } else if (allZero) {
-        resAdd.sign = signA & signB;
+        resAdd.sign = signA & signOpB;
     } else if (sumZero) {
         resAdd.sign = 0;
     } else {
-        resAdd.sign = signMore; 
+        resAdd.sign = signOpMore; 
     }
 
     if (nanA | nanB) {
@@ -1027,7 +1068,7 @@ int FpuFunctional::FADD_D(int addEna, int subEna, int cmpEna, int moreEna,
 
     if (nanA & mantZeroA & nanB & mantZeroB) {
         resAdd.mant = signOp ? 0x0008000000000000: 0;
-    } else if (nanA && !(nanB & signB)) {
+    } else if (nanA && !(nanB & signOpB)) {
         /** when both values are NaN, value B has higher priority if sign=1 */
         resAdd.mant = A.f64bits.mant | 0x0008000000000000;
     } else if (nanB) {
@@ -1043,39 +1084,34 @@ int FpuFunctional::FADD_D(int addEna, int subEna, int cmpEna, int moreEna,
     int qnandCmpX86 = (nanA & mantZeroA) & (nanB & mantZeroB);
 
     // CMP = {29'd0, flMore, flEqual, flLess}  
-    int flEqual = (qnandCmpX86 | 
-                  (!qnand && !resAdd.mant && !resAdd.exp)) ? 1 : 0;
-    int flLess =  (resAdd.sign | (B.f64bits.exp == 0x7ff)) & !flEqual;
-    int flMore = !resAdd.sign & !flEqual & !flLess;
-    int resCmp = (flMore << 2) | (flEqual << 1) | (flLess);
+    uint64_t resCmp = (flMore << 2) | (flEqual << 1) | (flLess);
   
     // More value
     Reg64Type resMore;
-    if (!allZero && (resAdd.sign || B.f64bits.exp == 0x7FF)) {
-        resMore.f64bits.sign = signB;
-        resMore.f64bits.exp = B.f64bits.exp;
-        resMore.f64bits.mant = B.f64bits.mant;
+    if (nanA | nanB) {
+        resMore.val = B.val;
+    } else if (flMore) {
+        resMore.val = A.val;
     } else {
-        resMore.f64bits.sign = signA;
-        resMore.f64bits.exp = A.f64bits.exp;
-        resMore.f64bits.mant = A.f64bits.mant;
+        resMore.val = B.val;
     }
 
-    // Absolute value                              
-    Reg64Type resAbs;
-    resAbs.f64bits.sign = 0;
-    resAbs.f64bits.exp = A.f64bits.exp;
-    resAbs.f64bits.mant = A.f64bits.mant;
-    if (A.f64bits.exp == 0 && A.f64bits.mant == 0) {
-        resAbs.f64bits.sign = A.f64bits.sign;
+    // Less value                              
+    Reg64Type resLess;
+    if (nanA | nanB) {
+        resLess.val = B.val;
+    } else if (flLess) {
+        resLess.val = A.val;
+    } else {
+        resLess.val = B.val;
     }
   
     if (cmpEna) {
         fres->val = resCmp;
     } else if (moreEna) {
         *fres = resMore;
-    } else if (absEna) {
-        *fres = resAbs;
+    } else if (lessEna) {
+        *fres = resLess;
     } else {
         fres->f64bits = resAdd;
     }
@@ -1187,6 +1223,12 @@ void FpuFunctional::test_instr(const char *instr, AttributeType *res) {
     } else if (strcmp(instr, "fsub.d") == 0) {
         in = &TestCases_FSUB_D[0][0];
         insz = TSTDSUB_LENGTH;
+    } else if (strcmp(instr, "fmin.d") == 0) {
+        in = &TestCases_FCMP_D[0][0];
+        insz = TSTDCMP_LENGTH;
+    } else if (strcmp(instr, "fmax.d") == 0) {
+        in = &TestCases_FCMP_D[0][0];
+        insz = TSTDCMP_LENGTH;
     } else if (strcmp(instr, "fcvt.l.d") == 0) {
         in = &TestCases_FCVT_L_D[0][0];
         insz = TSTL2D_LENGTH;
@@ -1220,6 +1262,12 @@ void FpuFunctional::test_instr(const char *instr, AttributeType *res) {
         } else if (strcmp(instr, "fsub.d") == 0) {
             fref.f64 = A.f64 - B.f64;
             FADD_D(0, 1, 0, 0, 0, A, B, &fres, exception);
+        } else if (strcmp(instr, "fmax.d") == 0) {
+            fref.f64 = A.f64 > B.f64 ? A.f64: B.f64;
+            FADD_D(0, 0, 0, 1, 0, A, B, &fres, exception);
+        } else if (strcmp(instr, "fmin.d") == 0) {
+            fref.f64 = A.f64 < B.f64 ? A.f64: B.f64;
+            FADD_D(0, 0, 0, 0, 1, A, B, &fres, exception);
         } else if (strcmp(instr, "fcvt.l.d") == 0) {
             fref.f64 = static_cast<double>(static_cast<int64_t>(A.val));
             L2D_D(1, A, B, &fres);
@@ -1238,11 +1286,19 @@ void FpuFunctional::test_instr(const char *instr, AttributeType *res) {
         }
 
         if (fres.val != fref.val) {
-            passed = false;
-            RISCV_error("[%d*] %s %016" RV_PRI64 "x - %016" RV_PRI64 "x => "
-                        "%016" RV_PRI64 "x != %016" RV_PRI64 "x",
-                        static_cast<int>(i), instr,
-                        A.val, B.val, fres.val, fref.val);
+            if (A.f64bits.exp == 0x7FF || B.f64bits.exp == 0x7FF) {
+                RISCV_info("[%d*] %s relative Core-I7 (gen.7) difference: "
+                           "%016" RV_PRI64 "x; %016" RV_PRI64 "x => "
+                            "%016" RV_PRI64 "x != %016" RV_PRI64 "x",
+                            static_cast<int>(i), instr,
+                            A.val, B.val, fres.val, fref.val);
+            } else {
+                passed = false;
+                RISCV_error("[%d*] %s %016" RV_PRI64 "x; %016" RV_PRI64 "x => "
+                            "%016" RV_PRI64 "x != %016" RV_PRI64 "x",
+                            static_cast<int>(i), instr,
+                            A.val, B.val, fres.val, fref.val);
+            }
         }
     }
 
@@ -1271,6 +1327,12 @@ void FpuFunctional::test_instr(const char *instr, AttributeType *res) {
         } else if (strcmp(instr, "fsub.d") == 0) {
             fref.f64 = A.f64 - B.f64;
             FADD_D(0, 1, 0, 0, 0, A, B, &fres, exception);
+        } else if (strcmp(instr, "fmax.d") == 0) {
+            fref.f64 = A.f64 > B.f64 ? A.f64: B.f64;
+            FADD_D(0, 0, 0, 1, 0, A, B, &fres, exception);
+        } else if (strcmp(instr, "fmin.d") == 0) {
+            fref.f64 = A.f64 < B.f64 ? A.f64: B.f64;
+            FADD_D(0, 0, 0, 0, 1, A, B, &fres, exception);
         } else if (strcmp(instr, "fcvt.l.d") == 0) {
             fref.f64 = static_cast<double>(static_cast<int64_t>(A.val));
             L2D_D(1, A, B, &fres);
@@ -1289,11 +1351,19 @@ void FpuFunctional::test_instr(const char *instr, AttributeType *res) {
         }
 
         if (fres.val != fref.val) {
-            passed = false;
-            RISCV_error("[%d] %s %016" RV_PRI64 "x - %016" RV_PRI64 "x => "
-                        "%016" RV_PRI64 "x != %016" RV_PRI64 "x",
-                        static_cast<int>(i), instr,
-                        A.val, B.val, fres.val, fref.val);
+            if (A.f64bits.exp == 0x7FF || B.f64bits.exp == 0x7FF) {
+                RISCV_info("[%d*] %s relative Core-I7 (gen.7) difference: "
+                           "%016" RV_PRI64 "x; %016" RV_PRI64 "x => "
+                            "%016" RV_PRI64 "x != %016" RV_PRI64 "x",
+                            static_cast<int>(i), instr,
+                            A.val, B.val, fres.val, fref.val);
+            } else {
+                passed = false;
+                RISCV_error("[%d] %s %016" RV_PRI64 "x; %016" RV_PRI64 "x => "
+                            "%016" RV_PRI64 "x != %016" RV_PRI64 "x",
+                            static_cast<int>(i), instr,
+                            A.val, B.val, fres.val, fref.val);
+            }
         }
     }
 
