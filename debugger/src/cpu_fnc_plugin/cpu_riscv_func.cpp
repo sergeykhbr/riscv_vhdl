@@ -47,6 +47,8 @@ void CpuRiver_Functional::postinitService() {
             addIsaExtensionA();
         } else if (listExtISA_[i].to_string()[0] == 'C') {
             addIsaExtensionC();
+        } else if (listExtISA_[i].to_string()[0] == 'D') {
+            addIsaExtensionD();
         } else if (listExtISA_[i].to_string()[0] == 'F') {
             addIsaExtensionF();
         } else if (listExtISA_[i].to_string()[0] == 'M') {

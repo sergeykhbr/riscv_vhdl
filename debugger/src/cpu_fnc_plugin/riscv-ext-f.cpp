@@ -135,9 +135,130 @@ class FDIV_D : public RiscvInstruction {
         if (RF[u.bits.rs2]) {
             dest.f64 = src1.f64 / src2.f64;
         } else {
+            csr_fcsr_type fcsr;
+            fcsr.value = icpu_->readCSR(CSR_fcsr);
+            fcsr.bits.DZ = 1;
+            icpu_->writeCSR(CSR_fcsr, fcsr.value);
             dest.val = 0;
         }
         RF[u.bits.rd] = dest.val;
+        return 4;
+    }
+};
+
+/**
+ * @brief The FEQ.D quiet comparision
+ */
+class FEQ_D : public RiscvInstruction {
+ public:
+    FEQ_D(CpuRiver_Functional *icpu) : RiscvInstruction(icpu,
+        "FEQ_D", "1010001??????????010?????1010011") {}
+
+    virtual int exec(Reg64Type *payload) {
+        ISA_R_type u;
+        Reg64Type dest, src1, src2;
+        uint64_t eq = 0;
+        u.value = payload->buf32[0];
+        src1.val = RF[u.bits.rs1];
+        src2.val = RF[u.bits.rs2];
+        if (src1.f64bits.exp == 0x7FF || src2.f64bits.exp == 0x7FF) {
+            /** Do not cause trap, only signal Invalid Operation */
+            csr_fcsr_type fcsr;
+            fcsr.value = icpu_->readCSR(CSR_fcsr);
+            fcsr.bits.NV = 1;
+            icpu_->writeCSR(CSR_fcsr, fcsr.value);
+        } else {
+            eq = src1.val == src2.val ? 1ull: 0;
+        }
+        R[u.bits.rd] = eq;
+        return 4;
+    }
+};
+
+/** @brief The FLD loads a double-precision floating-point value from memory
+ *         into floating-point register rd.
+ */
+class FLD : public RiscvInstruction {
+public:
+    FLD(CpuRiver_Functional *icpu) :
+        RiscvInstruction(icpu, "FLD", "?????????????????011?????0000111") {}
+
+    virtual int exec(Reg64Type *payload) {
+        Axi4TransactionType trans;
+        ISA_I_type u;
+        u.value = payload->buf32[0];
+        uint64_t off = u.bits.imm;
+        if (off & 0x800) {
+            off |= EXT_SIGN_12;
+        }
+        trans.action = MemAction_Read;
+        trans.addr = R[u.bits.rs1] + off;
+        trans.xsize = 8;
+        if (trans.addr & 0x7) {
+            trans.rpayload.b64[0] = 0;
+            icpu_->raiseSignal(EXCEPTION_LoadMisalign);
+        } else {
+            icpu_->dma_memop(&trans);
+        }
+        RF[u.bits.rd] = trans.rpayload.b64[0];
+        return 4;
+    }
+};
+
+/**
+ * @brief The FLE.D quiet comparision less or equal
+ */
+class FLE_D : public RiscvInstruction {
+ public:
+    FLE_D(CpuRiver_Functional *icpu) : RiscvInstruction(icpu,
+        "FLE_D", "1010001??????????000?????1010011") {}
+
+    virtual int exec(Reg64Type *payload) {
+        ISA_R_type u;
+        Reg64Type dest, src1, src2;
+        uint64_t le = 0;
+        u.value = payload->buf32[0];
+        src1.val = RF[u.bits.rs1];
+        src2.val = RF[u.bits.rs2];
+        if (src1.f64bits.exp == 0x7FF || src2.f64bits.exp == 0x7FF) {
+            /** Do not cause trap, only signal Invalid Operation */
+            csr_fcsr_type fcsr;
+            fcsr.value = icpu_->readCSR(CSR_fcsr);
+            fcsr.bits.NV = 1;
+            icpu_->writeCSR(CSR_fcsr, fcsr.value);
+        } else {
+            le = src1.val <= src2.val ? 1ull: 0;
+        }
+        R[u.bits.rd] = le;
+        return 4;
+    }
+};
+
+/**
+ * @brief The FLT.D quiet comparision less than
+ */
+class FLT_D : public RiscvInstruction {
+ public:
+    FLT_D(CpuRiver_Functional *icpu) : RiscvInstruction(icpu,
+        "FLT_D", "1010001??????????001?????1010011") {}
+
+    virtual int exec(Reg64Type *payload) {
+        ISA_R_type u;
+        Reg64Type dest, src1, src2;
+        uint64_t le = 0;
+        u.value = payload->buf32[0];
+        src1.val = RF[u.bits.rs1];
+        src2.val = RF[u.bits.rs2];
+        if (src1.f64bits.exp == 0x7FF || src2.f64bits.exp == 0x7FF) {
+            /** Do not cause trap, only signal Invalid Operation */
+            csr_fcsr_type fcsr;
+            fcsr.value = icpu_->readCSR(CSR_fcsr);
+            fcsr.bits.NV = 1;
+            icpu_->writeCSR(CSR_fcsr, fcsr.value);
+        } else {
+            le = src1.val < src2.val ? 1ull: 0;
+        }
+        R[u.bits.rd] = le;
         return 4;
     }
 };
@@ -183,6 +304,42 @@ class FMIN_D : public RiscvInstruction {
 };
 
 /**
+ * @brief The FMOV.D.X move fp value into integer register
+ */
+class FMOV_D_X : public RiscvInstruction {
+ public:
+    FMOV_D_X(CpuRiver_Functional *icpu) : RiscvInstruction(icpu,
+        "FMOV_D_X", "111100100000?????000?????1010011") {}
+
+    virtual int exec(Reg64Type *payload) {
+        ISA_R_type u;
+        Reg64Type dest, src1;
+        u.value = payload->buf32[0];
+        src1.val = RF[u.bits.rs1];
+        R[u.bits.rd] = src1.val;
+        return 4;
+    }
+};
+
+/**
+ * @brief The FMOV.X.D move value from integer register into fp register
+ */
+class FMOV_X_D : public RiscvInstruction {
+ public:
+    FMOV_X_D(CpuRiver_Functional *icpu) : RiscvInstruction(icpu,
+        "FMOV_X_D", "111000100000?????000?????1010011") {}
+
+    virtual int exec(Reg64Type *payload) {
+        ISA_R_type u;
+        Reg64Type dest, src1;
+        u.value = payload->buf32[0];
+        src1.val = R[u.bits.rs1];
+        RF[u.bits.rd] = src1.val;
+        return 4;
+    }
+};
+
+/**
  * @brief The FMUL.D double precision multiplication
  */
 class FMUL_D : public RiscvInstruction {
@@ -198,6 +355,36 @@ class FMUL_D : public RiscvInstruction {
         src2.val = RF[u.bits.rs2];
         dest.f64 = src1.f64 * src2.f64;
         RF[u.bits.rd] = dest.val;
+        return 4;
+    }
+};
+
+/** @brief The FSD stores a double-precision value from the floating-point registers
+           to memory.
+ */
+class FSD : public RiscvInstruction {
+public:
+    FSD(CpuRiver_Functional *icpu) :
+        RiscvInstruction(icpu, "FSD", "?????????????????011?????0100111") {}
+
+    virtual int exec(Reg64Type *payload) {
+        Axi4TransactionType trans;
+        ISA_S_type u;
+        u.value = payload->buf32[0];
+        uint64_t off = (u.bits.imm11_5 << 5) | u.bits.imm4_0;
+        if (off & 0x800) {
+            off |= EXT_SIGN_12;
+        }
+        trans.action = MemAction_Write;
+        trans.xsize = 8;
+        trans.wstrb = (1 << trans.xsize) - 1;
+        trans.addr = RF[u.bits.rs1] + off;
+        trans.wpayload.b64[0] = R[u.bits.rs2];
+        if (trans.addr & 0x7) {
+            icpu_->raiseSignal(EXCEPTION_StoreMisalign);
+        } else {
+            icpu_->dma_memop(&trans);
+        }
         return 4;
     }
 };
@@ -222,6 +409,29 @@ class FSUB_D : public RiscvInstruction {
     }
 };
 
+void CpuRiver_Functional::addIsaExtensionD() {
+    addSupportedInstruction(new FADD_D(this));
+    addSupportedInstruction(new FCVT_D_L(this));
+    addSupportedInstruction(new FCVT_D_LU(this));
+    addSupportedInstruction(new FCVT_L_D(this));
+    addSupportedInstruction(new FCVT_LU_D(this));
+    addSupportedInstruction(new FDIV_D(this));
+    addSupportedInstruction(new FEQ_D(this));
+    addSupportedInstruction(new FLD(this));
+    addSupportedInstruction(new FLE_D(this));
+    addSupportedInstruction(new FLT_D(this));
+    addSupportedInstruction(new FMAX_D(this));
+    addSupportedInstruction(new FMIN_D(this));
+    addSupportedInstruction(new FMOV_D_X(this));
+    addSupportedInstruction(new FMOV_X_D(this));
+    addSupportedInstruction(new FMUL_D(this));
+    addSupportedInstruction(new FSD(this));
+    addSupportedInstruction(new FSUB_D(this));
+
+    uint64_t isa = 0x8000000000000000LL;
+    isa |= (1LL << ('D' - 'A'));
+    portCSR_.write(CSR_misa, isa);
+}
 
 void CpuRiver_Functional::addIsaExtensionF() {
     // TODO
@@ -249,6 +459,8 @@ void CpuRiver_Functional::addIsaExtensionF() {
     addInstr("FCVT_S_WU",          "110100000001?????????????1010011", NULL, out);
     addInstr("FCVT_S_L",           "110100000010?????????????1010011", NULL, out);
     addInstr("FCVT_S_LU",          "110100000011?????????????1010011", NULL, out);
+    addInstr("FLW",                "?????????????????010?????0000111", NULL, out);
+    addInstr("FSW",                "?????????????????010?????0100111", NULL, out);
     addInstr("FMV_S_X",            "111100000000?????000?????1010011", NULL, out);
     addInstr("FMADD_S",            "?????00??????????????????1000011", NULL, out);
     addInstr("FMSUB_S",            "?????00??????????????????1000111", NULL, out);
@@ -282,14 +494,14 @@ void CpuRiver_Functional::addIsaExtensionF() {
     addInstr("FCVT_D_L",           "110100100010?????????????1010011", NULL, out);
     addInstr("FCVT_D_LU",          "110100100011?????????????1010011", NULL, out);
     addInstr("FMV_D_X",            "111100100000?????000?????1010011", NULL, out);
-    addInstr("FLW",                "?????????????????010?????0000111", NULL, out);
     addInstr("FLD",                "?????????????????011?????0000111", NULL, out);
-    addInstr("FSW",                "?????????????????010?????0100111", NULL, out);
     addInstr("FSD",                "?????????????????011?????0100111", NULL, out);
     addInstr("FMADD_D",            "?????01??????????????????1000011", NULL, out);
     addInstr("FMSUB_D",            "?????01??????????????????1000111", NULL, out);
     addInstr("FNMSUB_D",           "?????01??????????????????1001011", NULL, out);
     addInstr("FNMADD_D",           "?????01??????????????????1001111", NULL, out);
+
+    // pseudo-instruction of access to CSR
     def FRFLAGS            = BitPat("b00000000000100000010?????1110011")
     def FSFLAGS            = BitPat("b000000000001?????001?????1110011")
     def FSFLAGSI           = BitPat("b000000000001?????101?????1110011")

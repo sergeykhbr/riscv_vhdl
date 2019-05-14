@@ -481,6 +481,18 @@ union csr_mip_type {
     uint64_t value;
 };
 
+union csr_fcsr_type {
+    struct bits_type {
+        uint64_t NX : 1;        // Inexact
+        uint64_t UF : 1;        // Underflow
+        uint64_t OF : 1;        // Overflow
+        uint64_t DZ : 1;        // Divide by Zero
+        uint64_t NV : 1;        // Invalid operation
+        uint64_t FRM : 3;       // rounding mode
+        uint64_t rsrv1 : 56;
+    } bits;
+    uint64_t value;
+};
 
 /**
  * @name PRV bits possible values:
@@ -500,6 +512,12 @@ static const uint64_t PRV_M       = 3;
  * @name CSR registers.
  */
 /// @{
+/** FPU Accrued Exceptions fields from FCSR */
+static const uint16_t CSR_fflags            = 0x001;
+/** FPU dynamic Rounding Mode fields from FCSR */
+static const uint16_t CSR_frm               = 0x002;
+/** FPU Control and Status register (frm + fflags) */
+static const uint16_t CSR_fcsr              = 0x003;
 /** ISA and extensions supported. */
 static const uint16_t CSR_misa              = 0xf10;
 /** Vendor ID. */

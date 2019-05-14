@@ -69,6 +69,7 @@ class CpuRiver_Functional : public CpuGeneric,
     void addIsaPrivilegedRV64I();
     void addIsaExtensionA();
     void addIsaExtensionC();
+    void addIsaExtensionD();
     void addIsaExtensionF();
     void addIsaExtensionM();
     unsigned addSupportedInstruction(RiscvInstruction *instr);
