@@ -17,6 +17,8 @@ static const uint32_t UART_STATUS_RX_EMPTY    = 0x00000020;
 static const uint32_t UART_STATUS_ERR_PARITY  = 0x00000100;
 static const uint32_t UART_STATUS_ERR_STOPBIT = 0x00000200;
 
+static const uint32_t UART_CONTROL_TXIRQ_ENA  = 0x00004000;
+
 typedef struct uart_map {
     volatile uint32_t status;
     volatile uint32_t scaler;

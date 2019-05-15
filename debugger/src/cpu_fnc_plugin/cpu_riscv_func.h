@@ -50,7 +50,7 @@ class CpuRiver_Functional : public CpuGeneric,
 
     // Common River methods shared with instructions:
     uint64_t *getpRegs() { return portRegs_.getpR64(); }
-    uint64_t *getpFpuRegs() { return portRegs_.getpR64(); }
+    uint64_t *getpFpuRegs() { return portRegsFpu_.getpR64(); }
     uint64_t readCSR(int idx);
     void writeCSR(int idx, uint64_t val);
 

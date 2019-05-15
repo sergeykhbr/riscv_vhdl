@@ -28,7 +28,7 @@ namespace debugger {
 class FADD_D : public RiscvInstruction {
  public:
     FADD_D(CpuRiver_Functional *icpu) : RiscvInstruction(icpu,
-        "FADD_D", "0000000??????????????????1010011") {}
+        "FADD_D", "0000001??????????????????1010011") {}
 
     virtual int exec(Reg64Type *payload) {
         ISA_R_type u;
@@ -156,7 +156,7 @@ class FEQ_D : public RiscvInstruction {
 
     virtual int exec(Reg64Type *payload) {
         ISA_R_type u;
-        Reg64Type dest, src1, src2;
+        Reg64Type src1, src2;
         uint64_t eq = 0;
         u.value = payload->buf32[0];
         src1.val = RF[u.bits.rs1];
@@ -185,6 +185,7 @@ public:
 
     virtual int exec(Reg64Type *payload) {
         Axi4TransactionType trans;
+        Reg64Type dst;
         ISA_I_type u;
         u.value = payload->buf32[0];
         uint64_t off = u.bits.imm;
@@ -200,7 +201,8 @@ public:
         } else {
             icpu_->dma_memop(&trans);
         }
-        RF[u.bits.rd] = trans.rpayload.b64[0];
+        dst.val = trans.rpayload.b64[0];
+        RF[u.bits.rd] = dst.val;
         return 4;
     }
 };
@@ -215,7 +217,7 @@ class FLE_D : public RiscvInstruction {
 
     virtual int exec(Reg64Type *payload) {
         ISA_R_type u;
-        Reg64Type dest, src1, src2;
+        Reg64Type src1, src2;
         uint64_t le = 0;
         u.value = payload->buf32[0];
         src1.val = RF[u.bits.rs1];
@@ -244,7 +246,7 @@ class FLT_D : public RiscvInstruction {
 
     virtual int exec(Reg64Type *payload) {
         ISA_R_type u;
-        Reg64Type dest, src1, src2;
+        Reg64Type src1, src2;
         uint64_t le = 0;
         u.value = payload->buf32[0];
         src1.val = RF[u.bits.rs1];
@@ -304,7 +306,7 @@ class FMIN_D : public RiscvInstruction {
 };
 
 /**
- * @brief The FMOV.D.X move fp value into integer register
+ * @brief The FMOV.D.X move value from integer register into fp register
  */
 class FMOV_D_X : public RiscvInstruction {
  public:
@@ -313,16 +315,16 @@ class FMOV_D_X : public RiscvInstruction {
 
     virtual int exec(Reg64Type *payload) {
         ISA_R_type u;
-        Reg64Type dest, src1;
+        Reg64Type src1;
         u.value = payload->buf32[0];
-        src1.val = RF[u.bits.rs1];
-        R[u.bits.rd] = src1.val;
+        src1.val = R[u.bits.rs1];
+        RF[u.bits.rd] = src1.val;
         return 4;
     }
 };
 
 /**
- * @brief The FMOV.X.D move value from integer register into fp register
+ * @brief The FMOV.X.D move fp value into integer register
  */
 class FMOV_X_D : public RiscvInstruction {
  public:
@@ -331,10 +333,10 @@ class FMOV_X_D : public RiscvInstruction {
 
     virtual int exec(Reg64Type *payload) {
         ISA_R_type u;
-        Reg64Type dest, src1;
+        Reg64Type src1;
         u.value = payload->buf32[0];
-        src1.val = R[u.bits.rs1];
-        RF[u.bits.rd] = src1.val;
+        src1.val = RF[u.bits.rs1];
+        R[u.bits.rd] = src1.val;
         return 4;
     }
 };
@@ -378,8 +380,8 @@ public:
         trans.action = MemAction_Write;
         trans.xsize = 8;
         trans.wstrb = (1 << trans.xsize) - 1;
-        trans.addr = RF[u.bits.rs1] + off;
-        trans.wpayload.b64[0] = R[u.bits.rs2];
+        trans.addr = R[u.bits.rs1] + off;
+        trans.wpayload.b64[0] = RF[u.bits.rs2];
         if (trans.addr & 0x7) {
             icpu_->raiseSignal(EXCEPTION_StoreMisalign);
         } else {
@@ -395,7 +397,7 @@ public:
 class FSUB_D : public RiscvInstruction {
  public:
     FSUB_D(CpuRiver_Functional *icpu) : RiscvInstruction(icpu,
-        "FSUB_D", "0000100??????????????????1010011") {}
+        "FSUB_D", "0000101??????????????????1010011") {}
 
     virtual int exec(Reg64Type *payload) {
         ISA_R_type u;

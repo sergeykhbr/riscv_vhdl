@@ -4,14 +4,14 @@ CC=riscv64-unknown-elf-gcc
 CPP=riscv64-unknown-elf-gcc
 OBJDUMP=riscv64-unknown-elf-objdump
 
-FPU_ENABLED=0
+FPU_ENABLED=1
 
 CFLAGS= -c -g -static -std=gnu99 -O0 -fno-common -fno-builtin-printf
 ifeq ($(FPU_ENABLED), 1)
   CFLAGS += -march=rv64imafd -DFPU_ENABLED
 else
-#  CFLAGS += -march=RV64IMA
-#  CFLAGS += -msoft-float
+  CFLAGS += -march=rv64ima
+  CFLAGS += -msoft-float
 endif
 
 
@@ -36,25 +36,32 @@ LIB_NAMES =\
 
 VPATH = $(SRC_PATH)
 
-SOURCES = main \
+SOURCES = crt \
 	trap \
-	crt
+	memanager \
+	uart \
+	fw_api \
+	test_mbist_ram \
+	test_pnp \
+	test_fpu \
+	main
 
 OBJ_FILES = $(addsuffix .o,$(SOURCES))
-EXECUTABLE = bootimage
-DUMPFILE = $(EXECUTABLE).dump
-HEXFILE = $(EXECUTABLE).hex
-LSTFILE = $(EXECUTABLE).lst
+COMMONNAME = bootrom_tests
+EXECUTABLE = $(COMMONNAME).elf
+DUMPFILE = $(COMMONNAME).dump
+HEXFILE = $(COMMONNAME).hex
+LSTFILE = $(COMMONNAME).lst
 
-all: boot
+all: bootrom_tests
 
 .PHONY: $(EXECUTABLE) $(DUMPFILE)
 
 
-boot: $(EXECUTABLE) $(DUMPFILE) $(HEXFILE)
+bootrom_tests: $(EXECUTABLE) $(DUMPFILE) $(HEXFILE)
 $(HEXFILE): $(EXECUTABLE)
-	echo elf2rawx $(addprefix $(ELF_DIR)/,$<) -h -f 8192 -l 8 -o $(addprefix $(ELF_DIR)/,$(EXECUTABLE).hex)
-	elf2rawx $(addprefix $(ELF_DIR)/,$<) -h -f 8192 -l 8 -o $(addprefix $(ELF_DIR)/,$(EXECUTABLE).hex)
+	echo elf2rawx $(addprefix $(ELF_DIR)/,$<) -h -f 16384 -l 8 -o $(addprefix $(ELF_DIR)/,$(HEXFILE))
+	elf2rawx $(addprefix $(ELF_DIR)/,$<) -h -f 16384 -l 8 -o $(addprefix $(ELF_DIR)/,$(HEXFILE))
 
 $(DUMPFILE): $(EXECUTABLE)
 	echo $(OBJDUMP) --disassemble-all --disassemble-zeroes --section=.text --section=.text.startup --section=.data $(addprefix $(ELF_DIR)/,$<) > $(addprefix $(ELF_DIR)/,$@)

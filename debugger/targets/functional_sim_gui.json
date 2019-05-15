@@ -131,7 +131,7 @@
                 ['Tap','edcltap'],
                 ['SysBusWidthBytes',8,'Split dma transactions from CPU'],
                 ['SourceCode','src0'],
-                ['ListExtISA',['I','M','A','C']],
+                ['ListExtISA',['I','M','A','C','D']],
                 ['StackTraceSize',64,'Number of 16-bytes entries'],
                 ['FreqHz',12000000],
                 ['VendorID',0x0001,'Hardcoded in CSR mvendorid value: UC Berkeley Rocket repo'],
@@ -145,10 +145,10 @@
     {'Class':'MemorySimClass','Instances':[
           {'Name':'bootrom0','Attr':[
                 ['LogLevel',1],
-                ['InitFile','../../../examples/boot/linuxbuild/bin/bootimage.hex'],
+                ['InitFile','../../../examples/bootrom_tests/linuxbuild/bin/bootrom_tests.hex'],
                 ['ReadOnly',true],
                 ['BaseAddress',0x0],
-                ['Length',8192]
+                ['Length',16384]
                 ]}]},
     {'Class':'MemorySimClass','Instances':[
           {'Name':'fwimage0','Attr':[

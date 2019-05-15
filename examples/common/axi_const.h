@@ -37,6 +37,7 @@ static const int AXI4_SYSTEM_CLOCK = 40000000;  /// 40 MHz
 #define GNSSSENSOR_DSU           0x0080
 #define GNSSSENSOR_GPTIMERS      0x0081
 #define GNSSSENSOR_RECORDER      0x0082
+#define GNSSSENSOR_OTP_8KB       0x0083
 
 #define CFG_NASTI_MASTER_CACHED     0
 #define CFG_NASTI_MASTER_UNCACHED   1
@@ -52,6 +53,8 @@ static const int AXI4_SYSTEM_CLOCK = 40000000;  /// 40 MHz
 #define GAISLER_ETH_MAC_MASTER    0x0502
 #define GAISLER_ETH_EDCL_MASTER   0x0503
 #define RISCV_RIVER_CPU           0x0505
+#define GNSSSENSOR_UART_TAP       0x050a
+#define GNSSSENSOR_JTAG_TAP       0x050b
 
 #define PNP_CFG_TYPE_INVALID      0
 #define PNP_CFG_TYPE_MASTER       1
