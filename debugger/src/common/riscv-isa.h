@@ -291,7 +291,7 @@ static const char *const IREGS_NAMES[] = {
     "t6"        // [31]
 };
 
-const char *const FREGS_NAME[] = {
+const char *const FREGS_NAMES[] = {
   "ft0", "ft1", "ft2",  "ft3",  "ft4", "ft5", "ft6",  "ft7",
   "fs0", "fs1", "fa0",  "fa1",  "fa2", "fa3", "fa4",  "fa5",
   "fa6", "fa7", "fs2",  "fs3",  "fs4", "fs5", "fs6",  "fs7",
@@ -334,6 +334,39 @@ static const ECpuRegMapping RISCV_DEBUG_REG_MAP[] = {
     {"pc",    4, DSU_OFSSET + DSUREG(ureg.v.pc)},
     {"npc",   4, DSU_OFSSET + DSUREG(ureg.v.npc)},
     {"steps", 8, DSU_OFSSET + DSUREG(udbg.v.clock_cnt)},
+    {"",      0, 0},
+    {"ft0",   8, DSU_OFSSET + DSUREG(ureg.v.fregs[0])},
+    {"ft1",   8, DSU_OFSSET + DSUREG(ureg.v.fregs[1])},
+    {"ft2",   8, DSU_OFSSET + DSUREG(ureg.v.fregs[2])},
+    {"ft3",   8, DSU_OFSSET + DSUREG(ureg.v.fregs[3])},
+    {"ft4",   8, DSU_OFSSET + DSUREG(ureg.v.fregs[4])},
+    {"ft5",   8, DSU_OFSSET + DSUREG(ureg.v.fregs[5])},
+    {"ft6",   8, DSU_OFSSET + DSUREG(ureg.v.fregs[6])},
+    {"ft7",   8, DSU_OFSSET + DSUREG(ureg.v.fregs[7])},
+    {"fs0",   8, DSU_OFSSET + DSUREG(ureg.v.fregs[8])},
+    {"fs1",   8, DSU_OFSSET + DSUREG(ureg.v.fregs[9])},
+    {"fa0",   8, DSU_OFSSET + DSUREG(ureg.v.fregs[10])},
+    {"fa1",   8, DSU_OFSSET + DSUREG(ureg.v.fregs[11])},
+    {"fa2",   8, DSU_OFSSET + DSUREG(ureg.v.fregs[12])},
+    {"fa3",   8, DSU_OFSSET + DSUREG(ureg.v.fregs[13])},
+    {"fa4",   8, DSU_OFSSET + DSUREG(ureg.v.fregs[14])},
+    {"fa5",   8, DSU_OFSSET + DSUREG(ureg.v.fregs[15])},
+    {"fa6",   8, DSU_OFSSET + DSUREG(ureg.v.fregs[16])},
+    {"fa7",   8, DSU_OFSSET + DSUREG(ureg.v.fregs[17])},
+    {"fs2",   8, DSU_OFSSET + DSUREG(ureg.v.fregs[18])},
+    {"fs3",   8, DSU_OFSSET + DSUREG(ureg.v.fregs[19])},
+    {"fs4",   8, DSU_OFSSET + DSUREG(ureg.v.fregs[20])},
+    {"fs5",   8, DSU_OFSSET + DSUREG(ureg.v.fregs[21])},
+    {"fs6",   8, DSU_OFSSET + DSUREG(ureg.v.fregs[22])},
+    {"fs7",   8, DSU_OFSSET + DSUREG(ureg.v.fregs[23])},
+    {"fs8",   8, DSU_OFSSET + DSUREG(ureg.v.fregs[24])},
+    {"fs9",   8, DSU_OFSSET + DSUREG(ureg.v.fregs[25])},
+    {"fs10",  8, DSU_OFSSET + DSUREG(ureg.v.fregs[26])},
+    {"fs11",  8, DSU_OFSSET + DSUREG(ureg.v.fregs[27])},
+    {"ft8",   8, DSU_OFSSET + DSUREG(ureg.v.fregs[28])},
+    {"ft9",   8, DSU_OFSSET + DSUREG(ureg.v.fregs[29])},
+    {"ft10",  8, DSU_OFSSET + DSUREG(ureg.v.fregs[30])},
+    {"ft11",  8, DSU_OFSSET + DSUREG(ureg.v.fregs[31])},
     {"",      0, 0}
 };
 

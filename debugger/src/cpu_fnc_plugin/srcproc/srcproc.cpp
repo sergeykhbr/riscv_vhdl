@@ -28,8 +28,11 @@ enum ESymbInfo {
 };
 
 const char *const *RN = IREGS_NAMES;
+const char *const *RF = FREGS_NAMES;
 
 int opcode_0x00(ISourceCode *isrc, uint64_t pc, uint32_t code,
+                AttributeType *mnemonic, AttributeType *comment);
+int opcode_0x01(ISourceCode *isrc, uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment);
 int opcode_0x03(ISourceCode *isrc, uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment);
@@ -41,11 +44,15 @@ int opcode_0x06(ISourceCode *isrc, uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment);
 int opcode_0x08(ISourceCode *isrc, uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment);
+int opcode_0x09(ISourceCode *isrc, uint64_t pc, uint32_t code,
+                AttributeType *mnemonic, AttributeType *comment);
 int opcode_0x0C(ISourceCode *isrc, uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment);
 int opcode_0x0D(ISourceCode *isrc, uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment);
 int opcode_0x0E(ISourceCode *isrc, uint64_t pc, uint32_t code,
+                AttributeType *mnemonic, AttributeType *comment);
+int opcode_0x14(ISourceCode *isrc, uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment);
 int opcode_0x18(ISourceCode *isrc, uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment);
@@ -100,14 +107,17 @@ RiscvSourceService::RiscvSourceService(const char *name) : IService(name) {
     registerInterface(static_cast<ISourceCode *>(this));
     memset(tblOpcode1_, 0, sizeof(tblOpcode1_));
     tblOpcode1_[0x00] = &opcode_0x00;
+    tblOpcode1_[0x01] = &opcode_0x01;
     tblOpcode1_[0x03] = &opcode_0x03;
     tblOpcode1_[0x04] = &opcode_0x04;
     tblOpcode1_[0x05] = &opcode_0x05;
     tblOpcode1_[0x06] = &opcode_0x06;
     tblOpcode1_[0x08] = &opcode_0x08;
+    tblOpcode1_[0x09] = &opcode_0x09;
     tblOpcode1_[0x0C] = &opcode_0x0C;
     tblOpcode1_[0x0D] = &opcode_0x0D;
     tblOpcode1_[0x0E] = &opcode_0x0E;
+    tblOpcode1_[0x14] = &opcode_0x14;
     tblOpcode1_[0x18] = &opcode_0x18;
     tblOpcode1_[0x19] = &opcode_0x19;
     tblOpcode1_[0x1B] = &opcode_0x1B;
@@ -468,6 +478,27 @@ int opcode_0x00(ISourceCode *isrc, uint64_t pc, uint32_t code,
     return 4;
 }
 
+int opcode_0x01(ISourceCode *isrc, uint64_t pc, uint32_t code,
+                AttributeType *mnemonic, AttributeType *comment) {
+    char tstr[128] = "unimpl";
+    char tcomm[128] = "";
+    ISA_I_type i;
+    int32_t imm;
+
+    i.value = code;
+    imm = static_cast<int32_t>(code) >> 20;
+    switch (i.bits.funct3) {
+    case 3:
+        RISCV_sprintf(tstr, sizeof(tstr), "fld     %s,%d(%s)",
+            RF[i.bits.rd], imm, RN[i.bits.rs1]);
+        break;
+    default:;
+    }
+    mnemonic->make_string(tstr);
+    comment->make_string(tcomm);
+    return 4;
+}
+
 int opcode_0x03(ISourceCode *isrc, uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment) {
     char tstr[128] = "unimpl";
@@ -639,6 +670,28 @@ int opcode_0x08(ISourceCode *isrc, uint64_t pc, uint32_t code,
     return 4;
 }
 
+int opcode_0x09(ISourceCode *isrc, uint64_t pc, uint32_t code,
+                AttributeType *mnemonic, AttributeType *comment) {
+    char tstr[128] = "unimpl";
+    char tcomm[128] = "";
+    ISA_S_type s;
+    int32_t imm;
+    s.value = code;
+    imm = (s.bits.imm11_5 << 5) | s.bits.imm4_0;
+    if (imm & 0x800) {
+        imm |= EXT_SIGN_12;
+    }
+    switch (s.bits.funct3) {
+    case 3:
+        RISCV_sprintf(tstr, sizeof(tstr), "fsd     %s,%d(%s)",
+            RF[s.bits.rs2], imm, RN[s.bits.rs1]);
+        break;
+    default:;
+    }
+    mnemonic->make_string(tstr);
+    comment->make_string(tcomm);
+    return 4;
+}
 
 int opcode_0x0C(ISourceCode *isrc, uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment) {
@@ -786,6 +839,107 @@ int opcode_0x0E(ISourceCode *isrc, uint64_t pc, uint32_t code,
         break;
     default:;
     }
+    mnemonic->make_string(tstr);
+    comment->make_string(tcomm);
+    return 4;
+}
+
+int opcode_0x14(ISourceCode *isrc, uint64_t pc, uint32_t code,
+                AttributeType *mnemonic, AttributeType *comment) {
+    char tstr[128] = "unimpl";
+    char tcomm[128] = "";
+    ISA_R_type u;
+    u.value = code;
+
+    switch (u.bits.funct7) {
+    case 0x1:
+        RISCV_sprintf(tstr, sizeof(tstr), "fadd.d  %s,%s,%s",
+            RF[u.bits.rd], RF[u.bits.rs1], RF[u.bits.rs2]);
+        break;
+    case 0x5:
+        RISCV_sprintf(tstr, sizeof(tstr), "fsub.d  %s,%s,%s",
+            RF[u.bits.rd], RF[u.bits.rs1], RF[u.bits.rs2]);
+        break;
+    case 0x9:
+        RISCV_sprintf(tstr, sizeof(tstr), "fmul.d  %s,%s,%s",
+            RF[u.bits.rd], RF[u.bits.rs1], RF[u.bits.rs2]);
+        break;
+    case 0xd:
+        RISCV_sprintf(tstr, sizeof(tstr), "fdiv.d  %s,%s,%s",
+            RF[u.bits.rd], RF[u.bits.rs1], RF[u.bits.rs2]);
+        break;
+    case 0x15:
+        if (u.bits.funct3 == 0) {
+            RISCV_sprintf(tstr, sizeof(tstr), "fmin.d  %s,%s,%s",
+                RF[u.bits.rd], RF[u.bits.rs1], RF[u.bits.rs2]);
+        } else if (u.bits.funct3 == 1) {
+            RISCV_sprintf(tstr, sizeof(tstr), "fmax.d  %s,%s,%s",
+                RF[u.bits.rd], RF[u.bits.rs1], RF[u.bits.rs2]);
+        }
+        break;
+    case 0x2d:
+        if (u.bits.rs2 == 0) {
+            RISCV_sprintf(tstr, sizeof(tstr), "fsqrt.d %s,%s",
+                RF[u.bits.rd], RF[u.bits.rs1]);
+        }
+        break;
+    case 0x51:
+        if (u.bits.funct3 == 1) {
+            RISCV_sprintf(tstr, sizeof(tstr), "fle.d   %s,%s,%s",
+                RN[u.bits.rd], RF[u.bits.rs1], RF[u.bits.rs2]);
+        } else if (u.bits.funct3 == 1) {
+            RISCV_sprintf(tstr, sizeof(tstr), "flt.d   %s,%s,%s",
+                RN[u.bits.rd], RF[u.bits.rs1], RF[u.bits.rs2]);
+        } else if (u.bits.funct3 == 2) {
+            RISCV_sprintf(tstr, sizeof(tstr), "feq.d   %s,%s,%s",
+                RN[u.bits.rd], RF[u.bits.rs1], RF[u.bits.rs2]);
+        }
+        break;
+    case 0x61:
+        if (u.bits.rs2 == 0) {
+            RISCV_sprintf(tstr, sizeof(tstr), "fcvt.w.d  %s,%s",
+                RN[u.bits.rd], RF[u.bits.rs1]);
+        } else if (u.bits.rs2 == 1) {
+            RISCV_sprintf(tstr, sizeof(tstr), "fcvt.wu.d  %s,%s",
+                RN[u.bits.rd], RF[u.bits.rs1]);
+        } else if (u.bits.rs2 == 2) {
+            RISCV_sprintf(tstr, sizeof(tstr), "fcvt.l.d  %s,%s",
+                RN[u.bits.rd], RF[u.bits.rs1]);
+        } else if (u.bits.rs2 == 3) {
+            RISCV_sprintf(tstr, sizeof(tstr), "fcvt.lu.d  %s,%s",
+                RN[u.bits.rd], RF[u.bits.rs1]);
+        }
+        break;
+    case 0x69:
+        if (u.bits.rs2 == 0) {
+            RISCV_sprintf(tstr, sizeof(tstr), "fcvt.d.w  %s,%s",
+                RF[u.bits.rd], RN[u.bits.rs1]);
+        } else if (u.bits.rs2 == 1) {
+            RISCV_sprintf(tstr, sizeof(tstr), "fcvt.d.wu %s,%s",
+                RF[u.bits.rd], RN[u.bits.rs1]);
+        } else if (u.bits.rs2 == 2) {
+            RISCV_sprintf(tstr, sizeof(tstr), "fcvt.d.l  %s,%s",
+                RF[u.bits.rd], RN[u.bits.rs1]);
+        } else if (u.bits.rs2 == 3) {
+            RISCV_sprintf(tstr, sizeof(tstr), "fcvt.d.lu %s,%s",
+                RF[u.bits.rd], RN[u.bits.rs1]);
+        }
+        break;
+    case 0x71:
+        if (u.bits.rs2 == 0) {
+            RISCV_sprintf(tstr, sizeof(tstr), "fmv.x.d %s,%s",
+                RN[u.bits.rd], RF[u.bits.rs1]);
+        }
+        break;
+    case 0x79:
+        if (u.bits.rs2 == 0) {
+            RISCV_sprintf(tstr, sizeof(tstr), "fmv.d.x %s,%s",
+                RF[u.bits.rd], RN[u.bits.rs1]);
+        }
+        break;
+    default:;
+    }
+
     mnemonic->make_string(tstr);
     comment->make_string(tcomm);
     return 4;

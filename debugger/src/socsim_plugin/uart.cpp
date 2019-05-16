@@ -148,6 +148,9 @@ ETransStatus UART::b_transport(Axi4TransactionType *trans) {
                     lstn->updateData(&wrdata, 1);
                 }
                 RISCV_mutex_unlock(&mutexListeners_);
+                if (regs_.status & UART_CONTROL_TX_IRQ_ENA) {
+                    iwire_->raiseLine();
+                }
                 break;
             default:;
             }
