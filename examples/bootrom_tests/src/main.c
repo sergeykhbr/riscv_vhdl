@@ -1,5 +1,5 @@
 /*
- *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *  Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,34 +19,10 @@
 #include "encoding.h"
 #include "fw_api.h"
 
-extern int test_fpu();
-
-static const int FW_IMAGE_SIZE_BYTES = 1 << 18;
-
-void led_set(int output) {
-    // [3:0] DIP pins
-    ((gpio_map *)ADDR_NASTI_SLAVE_GPIO)->ouser = (output << 4);
-}
-
-void copy_image() { 
-    uint32_t tech;
-    uint64_t *fwrom = (uint64_t *)ADDR_NASTI_SLAVE_FWIMAGE;
-    uint64_t *sram = (uint64_t *)ADDR_NASTI_SLAVE_SRAM;
-    pnp_map *pnp = (pnp_map *)ADDR_NASTI_SLAVE_PNP;
-
-    /** 
-     * Speed-up RTL simulation by skipping coping stage.
-     * Or skip this stage to avoid rewritting of externally loaded image.
-     */
-    tech = pnp->tech & 0xFF;
-
-    if (tech != TECH_INFERRED && pnp->fwid == 0) {
-        memcpy(sram, fwrom, FW_IMAGE_SIZE_BYTES);
-    }
-    // Write Firmware ID to avoid copy image after soft-reset.
-    pnp->fwid = 0x20180725;
-}
-
+void test_fpu(void);
+void test_timer(void);
+void test_missaccess(void);
+void print_pnp(void);
 
 int main() {
     uint32_t tech;
@@ -58,16 +34,10 @@ int main() {
     // mask all interrupts in interrupt controller to avoid
     // unpredictable behaviour after elf-file reloading via debug port.
     p_irq->irq_mask = 0xFFFFFFFF;
-    pnp->fwid = 0x20181217;
-#if 1
-    // Half period of the uart = Fbus / 115200 / 2 = 70 MHz / 115200 / 2:
-    //uart->scaler = 304;  // 70 MHz
-    //uart->scaler = 260;  // 60 MHz
-    uart->scaler = 40000000 / 115200 / 2;  // 40 MHz
+    pnp->fwid = 0x20190516;
 
-    gpio->direction = 0xF;  // [3:0] input DIP; [11:4] output LEDs
+    led_set(0x01);
 
-#else  // not finished yet
     p_irq->irq_lock = 1;
     fw_malloc_init();
     uart_isr_init();   // enable printf_uart function and Tx irq=1
@@ -76,28 +46,27 @@ int main() {
     printf_uart("Tech . . .0x%08x\r\n", pnp->tech);
     printf_uart("HWID . . .0x%08x\r\n", pnp->hwid);
     printf_uart("FWID . . .0x%08x\r\n", pnp->fwid);
-#endif
 
-    led_set(0x01);
-    print_uart("Boot . . .", 10);
     led_set(0x02);
 
-    copy_image();
+#ifdef FPU_ENABLED
+    test_fpu();
+#endif
     led_set(0x03);
-    print_uart("OK\r\n", 4);
+    test_timer();      // Enabling timer[0] with 1 sec interrupts
 
     led_set(0x04);
-#ifdef FPU_ENABLED
-    print_uart("FPU. . . .", 10);
-    int err = test_fpu();
-    if (!err) {
-        print_uart("OK\r\n", 4);
-    } else {
-        print_uart("FAIL\r\n", 6);
-    }
-#endif
+    test_missaccess();
 
     led_set(0x05);
+    print_pnp();
+
+    led_set(0x06);
+
+    // TODO: implement test console
+    while (1) {}
+
+    // NEVER REACH THIS POINT
 
     // jump to entry point in SRAM = 0x10000000
     //     'meps' - Machine Exception Program Coutner

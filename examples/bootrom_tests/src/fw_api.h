@@ -37,8 +37,7 @@ void *fw_malloc(int size);
 void fw_register_ram_data(const char *name, void *data);
 void *fw_get_ram_data(const char *name);
 
-//typedef void (*IRQ_HANDLER)(void);
-typedef void (*IRQ_HANDLER)(int idx, void *args);
+typedef void (*IRQ_HANDLER)(void);
 
 void register_isr_handler(int idx, IRQ_HANDLER f);
 void enable_isr(int idx);
@@ -51,9 +50,5 @@ void uart_isr_init(void);
 int uart_tx_nempty();
 
 void led_set(int output);
-
-void test_rf(void);
-void test_timer(void);
-void print_pnp(void);
 
 #endif  // __TEST_NORF_SRC_GENERAL_H__

@@ -45,7 +45,7 @@ long handle_trap(long cause, long epc, long long regs[32]) {
      *      csrwi mipi, 0
      */
     irqctrl_map *p_irqctrl = (irqctrl_map *)ADDR_NASTI_SLAVE_IRQCTRL;
-    IRQ_HANDLER irq_handler = (IRQ_HANDLER)p_irqctrl->isr_table;
+    IRQ_HANDLER *isr_table = (IRQ_HANDLER *)p_irqctrl->isr_table;
     uint32_t pending;
     csr_mcause_type mcause;
 
@@ -62,7 +62,7 @@ long handle_trap(long cause, long epc, long long regs[32]) {
         for (int i = 0; i < CFG_IRQ_TOTAL; i++) {
             if (pending & 0x1) {
                 p_irqctrl->irq_cause_idx = i;
-                irq_handler(i, NULL);
+                isr_table[i]();
             }
             pending >>= 1;
         }

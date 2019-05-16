@@ -59,7 +59,7 @@ void buf_put(uart_data_type *p, char s) {
     }
 }
 
-void isr_uart1_tx(int idx, void *args) {
+void isr_uart1_tx() {
     uart_data_type *pdata = fw_get_ram_data(UART1_NAME);
     uart_map *uart = (uart_map *)ADDR_NASTI_SLAVE_UART1;
 
@@ -88,7 +88,8 @@ void uart_isr_init(void) {
     pdata->rdcnt = 0;
     fw_register_ram_data(UART1_NAME, pdata);
 
-    // scaler is enabled in SRAM self test
+    // scaler is enabled in SRAM self test, duplicate it here
+    uart->scaler = SYS_HZ / 115200 / 2;
     uart->status |= UART_CONTROL_TXIRQ_ENA;
 
     enable_isr(CFG_IRQ_UART1);

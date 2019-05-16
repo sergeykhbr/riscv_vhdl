@@ -172,7 +172,7 @@ _start:
   # 1 KB for the tap stack + TLS. Add signed extended 12-bits to register
   addi sp, sp, -1024          # sp = 0x1007fc00
 
-#  jal _mbist_ram
+  jal _mbist_ram
 _mbist_ram_exit:
 
   jal main

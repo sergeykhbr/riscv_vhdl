@@ -41,3 +41,8 @@ void disable_isr(int idx) {
     irqctrl_map *p_irq = (irqctrl_map *)ADDR_NASTI_SLAVE_IRQCTRL;
     p_irq->irq_mask |= (1ul << idx);
 }
+
+void led_set(int output) {
+    // [3:0] DIP pins
+    ((gpio_map *)ADDR_NASTI_SLAVE_GPIO)->ouser = (output << 4);
+}

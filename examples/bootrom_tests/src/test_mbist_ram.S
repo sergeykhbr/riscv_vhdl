@@ -8,22 +8,19 @@ _mbist_ram:
   addi	a5,a5,-1    # fffff
   slli	a5,a5,0xc   # a5 = PNP base address
   lw	a4,8(a5)
-  andi	a4,a4,255        # a4 = tech & 0xFF
-  beqz	a4,uart_80mhz    # a4 == inferred
-  li	a3,53
-  bne	a4,a3,uart_40mhz # a4 != mikron180
-uart_80mhz:
-  li	a4,347           # 80000000 / 115200 / 2;  [80 MHz]
+  andi	a4,a4,255             # a4 = tech & 0xFF
+  beqz	a4,scaler_inferred    # a4 == inferred
+  li	a4,(SYS_HZ/115200/2)
   j	uart_scaler_end
-uart_40mhz:
-  li	a4,173           # 40000000 / 115200 / 2;  [40 MHz]
+scaler_inferred:
+  li	a4,3             # fast rtl simulation
 uart_scaler_end:
 
    //      uart_map *uart = (uart_map *)ADDR_NASTI_SLAVE_UART1;
   lui	a5,0x80
   addi	a5,a5,1 # 80001
   slli	a5,a5,0xc
-  sw	a4,4(a5)    # scaler = a4 (40 or 80 mhz)
+  sw	a4,4(a5)    # scaler = a4
   // Wait while Tx FIFO becomes empty
 mbist_waitempty1:
   lw	a4,0(a5)
