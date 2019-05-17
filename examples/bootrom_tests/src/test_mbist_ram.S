@@ -28,7 +28,7 @@ mbist_waitempty1:
   and	a4,a4,a3
   beqz	a4,mbist_waitempty1
 
-  //  output "SRAM OK/FAIL\r\n";
+  //  output "SRAM . . . . . .PASS/FAIL\r\n";
   li	a4,83    # 'S'
   sw	a4,16(a5)
   li	a4,82    # 'R'
@@ -39,7 +39,27 @@ mbist_waitempty1:
   sw	a4,16(a5)
   li	a4,32    # ' '
   sw	a4,16(a5)
+  li	a4,46    # '.'
+  sw	a4,16(a5)
   li	a4,32    # ' '
+  sw	a4,16(a5)
+  li	a4,46    # '.'
+  sw	a4,16(a5)
+  li	a4,32    # ' '
+  sw	a4,16(a5)
+  li	a4,46    # '.'
+  sw	a4,16(a5)
+  li	a4,32    # ' '
+  sw	a4,16(a5)
+  li	a4,46    # '.'
+  sw	a4,16(a5)
+  li	a4,32    # ' '
+  sw	a4,16(a5)
+  li	a4,46    # '.'
+  sw	a4,16(a5)
+  li	a4,32    # ' '
+  sw	a4,16(a5)
+  li	a4,46    # '.'
   sw	a4,16(a5)
 
   // Check SRAM full range:
@@ -96,9 +116,13 @@ mbist_waitempty2:
   sw	a4,16(a5)
   j	mbist_sram_end
 mbist_ok:
-  li	a4,79    # 'O'
+  li	a4,80    # 'P'
   sw	a4,16(a5)
-  li	a4,75    # 'K'
+  li	a4,65    # 'A'
+  sw	a4,16(a5)
+  li	a4,83    # 'S'
+  sw	a4,16(a5)
+  li	a4,83    # 'S'
   sw	a4,16(a5)
 mbist_sram_end:
 

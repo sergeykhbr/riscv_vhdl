@@ -16,24 +16,33 @@
 
 #include <api_core.h>
 #include "dsu.h"
+#include "dsumap.h"
 
 namespace debugger {
 
-DSU::DSU(const char *name)  : IService(name) {
+DSU::DSU(const char *name)  : RegMemBankGeneric(name),
+    softreset_(static_cast<IService *>(this), "soft_reset",
+                DSUREG(ulocal.v.soft_reset)),
+    missaccesscnt_(static_cast<IService *>(this), "miss_access_cnt",
+                DSUREG(ulocal.v.miss_access_cnt)),
+    missaccess_(static_cast<IService *>(this), "miss_access_addr",
+                DSUREG(ulocal.v.miss_access_addr)) {
     registerInterface(static_cast<IMemoryOperation *>(this));
     registerInterface(static_cast<IDbgNbResponse *>(this));
     registerInterface(static_cast<IDsuGeneric *>(this));
     registerAttribute("CPU", &cpu_);
     registerAttribute("Bus", &bus_);
+    registerAttribute("IrqControl", &irqctrl_);
 
     memset(&info_, 0, sizeof(info_));
-    soft_reset_ = 0x0;  // Active LOW
 }
 
 DSU::~DSU() {
 }
 
 void DSU::postinitService() {
+    RegMemBankGeneric::postinitService();
+
     icpu_ = static_cast<ICpuGeneric *>(
         RISCV_get_service_iface(cpu_.to_string(), IFACE_CPU_GENERIC));
     if (!icpu_) {
@@ -50,9 +59,16 @@ void DSU::postinitService() {
     if (!ibus_) {
         RISCV_error("Can't find IBus interface %s", bus_.to_string());
     }
+    iirq_ = static_cast<IWire *>(
+        RISCV_get_service_port_iface(irqctrl_[0u].to_string(),
+                                     irqctrl_[1].to_string(),
+                                     IFACE_WIRE));
+    if (!iirq_) {
+        RISCV_error("Can't find IWire interface %s", irqctrl_[0u].to_string());
+    }
 }
 
-ETransStatus DSU::b_transport(Axi4TransactionType *trans) {
+/*ETransStatus DSU::b_transport(Axi4TransactionType *trans) {
     uint64_t mask = (length_.to_uint64() - 1);
     uint64_t off64 = (trans->addr - getBaseAddress()) & mask;
     if (!icpu_) {
@@ -76,7 +92,7 @@ ETransStatus DSU::b_transport(Axi4TransactionType *trans) {
     trans->response = MemResp_Valid;
     // @todo Memory mapped registers not related to debug port
     return TRANS_OK;
-}
+}*/
 
 ETransStatus DSU::nb_transport(Axi4TransactionType *trans,
                                IAxi4NbResponse *cb) {
@@ -116,10 +132,14 @@ void DSU::nb_response_debug_port(DebugPortTransactionType *trans) {
     nb_trans_.iaxi_cb->nb_response(nb_trans_.p_axi_trans);
 }
 
+/*
 void DSU::readLocal(uint64_t off, Axi4TransactionType *trans) {
     switch (off >> 3) {
     case 0:
         trans->rpayload.b64[0] = soft_reset_;
+        break;
+    case 2:
+        trans->rpayload.b64[0] = missaccess_.getValue().val;
         break;
     case 8:
         trans->rpayload.b64[0] = info_[0].w_cnt;
@@ -164,13 +184,44 @@ void DSU::writeLocal(uint64_t off, Axi4TransactionType *trans) {
     default:;
     }
 }
-
+*/
 void DSU::incrementRdAccess(int mst_id) {
     info_[mst_id].r_cnt++;
 }
 
 void DSU::incrementWrAccess(int mst_id) {
     info_[mst_id].w_cnt++;
+}
+
+void DSU::raiseMissaccess(uint64_t adr) {
+    if (!iirq_) {
+        return;
+    }
+    iirq_->raiseLine();
+}
+
+void DSU::softReset(bool val) {
+    if (!icpurst_) {
+        return;
+    }
+    icpurst_->reset(val);
+}
+
+uint64_t SOFT_RESET_TYPE::aboutToWrite(uint64_t new_val) {
+    new_val &= 0x1;
+    DSU *p = static_cast<DSU *>(parent_);
+    p->softReset(new_val ? true: false);
+    return new_val;
+}
+
+ETransStatus MISS_ACCESS_TYPE::b_transport(Axi4TransactionType *trans) {
+    DSU *p = static_cast<DSU *>(parent_);
+    value_.val = trans->addr;
+    if (trans->action == MemAction_Read) {
+        trans->rpayload.b64[0] = value_.val;
+    }
+    p->raiseMissaccess(trans->addr);
+    return TRANS_OK;
 }
 
 }  // namespace debugger

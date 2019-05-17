@@ -18,7 +18,7 @@
 #include "fw_api.h"
 
 void test_fpu(void) { 
-    print_uart("FPU. . . .", 10);
+    printf_uart("%s", "FPU. . . . . . .");
 
     double x1 = 10.323;
     double x2 = -5.3333;
@@ -36,5 +36,5 @@ void test_fpu(void) {
         return;
     }
 
-    print_uart("OK\r\n", 4);
+    print_uart("PASS\r\n", 6);
 }

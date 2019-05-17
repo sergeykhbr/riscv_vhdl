@@ -48,6 +48,10 @@ void test_timer(void) {
     timer_data_type *p;
     gptimers_map *ptmr = (gptimers_map *)ADDR_NASTI_SLAVE_GPTIMERS;
 
+    // Disable interrupt and timer
+    ptmr->timer[0].init_value = 0;
+    ptmr->timer[0].control = 0;
+
     register_isr_handler(CFG_IRQ_GPTIMERS, isr_timer);
 
     p = fw_malloc(sizeof(timer_data_type));    

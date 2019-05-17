@@ -28,22 +28,41 @@
 #include "coreservices/ireset.h"
 #include "coreservices/icpugen.h"
 #include "coreservices/idsugen.h"
+#include "coreservices/iwire.h"
+#include "generic/mapreg.h"
+#include "generic/rmembank_gen1.h"
 
 namespace debugger {
 
-class DSU : public IService,
-            public IMemoryOperation,
+class SOFT_RESET_TYPE : public MappedReg64Type {
+ public:
+    SOFT_RESET_TYPE(IService *parent, const char *name, uint64_t addr) :
+                MappedReg64Type(parent, name, addr) {}
+ protected:
+    virtual uint64_t aboutToWrite(uint64_t new_val) override;
+};
+
+class MISS_ACCESS_TYPE : public MappedReg64Type {
+ public:
+    MISS_ACCESS_TYPE(IService *parent, const char *name, uint64_t addr) :
+                MappedReg64Type(parent, name, addr) {}
+
+    /** IMemoryOperation methods */
+    virtual ETransStatus b_transport(Axi4TransactionType *trans) override;
+};
+
+class DSU : public RegMemBankGeneric,
             public IDbgNbResponse,
             public IDsuGeneric {
  public:
     explicit DSU(const char *name);
-    ~DSU();
+    virtual ~DSU();
 
     /** IService interface */
-    virtual void postinitService();
+    virtual void postinitService() override;
 
     /** IMemoryOperation */
-    virtual ETransStatus b_transport(Axi4TransactionType *trans);
+    //virtual ETransStatus b_transport(Axi4TransactionType *trans);
     virtual ETransStatus nb_transport(Axi4TransactionType *trans,
                                       IAxi4NbResponse *cb);
 
@@ -53,20 +72,29 @@ class DSU : public IService,
     /** IDsuGeneric */
     virtual void incrementRdAccess(int mst_id);
     virtual void incrementWrAccess(int mst_id);
+    void raiseMissaccess(uint64_t adr);
+    void softReset(bool val);
 
  private:
-    void readLocal(uint64_t off, Axi4TransactionType *trans);
+    /*void readLocal(uint64_t off, Axi4TransactionType *trans);
     void writeLocal(uint64_t off, Axi4TransactionType *trans);
-
+    */
  private:
     AttributeType cpu_;
     AttributeType bus_;
+    AttributeType irqctrl_;
+
     ICpuGeneric *icpu_;
     IResetListener *icpurst_;
     IMemoryOperation *ibus_;
+    IWire *iirq_;
+
     uint64_t shifter32_;
     uint64_t wdata64_;
-    uint64_t soft_reset_;
+
+    SOFT_RESET_TYPE softreset_;
+    MappedReg64Type missaccesscnt_;
+    MISS_ACCESS_TYPE missaccess_;
 
     struct nb_trans_type {
         Axi4TransactionType *p_axi_trans;

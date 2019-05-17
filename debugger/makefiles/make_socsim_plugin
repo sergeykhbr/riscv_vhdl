@@ -21,6 +21,7 @@ INCL_PATH= \
 # source files directories list:
 SRC_PATH =\
 	$(TOP_DIR)src/common \
+	$(TOP_DIR)src/common/generic \
 	$(TOP_DIR)src/common/debug \
 	$(TOP_DIR)src/socsim_plugin
 
@@ -29,6 +30,9 @@ VPATH = $(SRC_PATH)
 SOURCES = \
 	attribute \
 	autobuffer \
+	mapreg \
+	mem_generic \
+	rmembank_gen1 \
 	boardsim \
 	gnss_stub \
 	irqctrl \

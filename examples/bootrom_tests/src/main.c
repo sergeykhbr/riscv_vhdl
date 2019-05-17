@@ -43,9 +43,9 @@ int main() {
     uart_isr_init();   // enable printf_uart function and Tx irq=1
     p_irq->irq_lock = 0;
 
-    printf_uart("Tech . . .0x%08x\r\n", pnp->tech);
-    printf_uart("HWID . . .0x%08x\r\n", pnp->hwid);
-    printf_uart("FWID . . .0x%08x\r\n", pnp->fwid);
+    printf_uart("Tech . . . . . .0x%08x\r\n", pnp->tech);
+    printf_uart("HWID . . . . . .0x%08x\r\n", pnp->hwid);
+    printf_uart("FWID . . . . . .0x%08x\r\n", pnp->fwid);
 
     led_set(0x02);
 

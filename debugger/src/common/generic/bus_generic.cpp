@@ -28,12 +28,14 @@ BusGeneric::BusGeneric(const char *name) : IService(name),
             sizeof(DsuMapType::local_regs_type::\
                    local_region_type::mst_bus_util_type)) {
     registerInterface(static_cast<IMemoryOperation *>(this));
-    registerAttribute("UseHash", static_cast<IAttribute *>(&useHash_));
+    registerAttribute("DefaultSlave", &defaultSlave_);
+    registerAttribute("UseHash", &useHash_);
     RISCV_mutex_init(&mutexBAccess_);
     RISCV_mutex_init(&mutexNBAccess_);
     RISCV_register_hap(static_cast<IHap *>(this));
     busUtil_.setPriority(10);     // Overmap DSU registers
     imaphash_ = 0;
+    idefmem_ = 0;
 }
 
 BusGeneric::~BusGeneric() {
@@ -62,10 +64,30 @@ void BusGeneric::postinitService() {
                                              IFACE_MEMORY_OPERATION));
             if (imem == 0) {
                 RISCV_error("Can't find slave device %s:%s", 
-                    dev[0u].to_string(), dev[1].to_string());
+                    devname.to_string(), portname.to_string());
                 continue;
             }
             map(imem);
+        }
+    }
+
+    if (defaultSlave_.is_string()) {
+        idefmem_ = static_cast<IMemoryOperation *>(RISCV_get_service_iface(
+                    defaultSlave_.to_string(), IFACE_MEMORY_OPERATION));
+        if (idefmem_ == 0) {
+            RISCV_error("Can't find default slave device %s",
+                        defaultSlave_.to_string());
+        }
+    } else if (defaultSlave_.is_list() && defaultSlave_.size() == 2) {
+        const AttributeType &devname = defaultSlave_[0u];
+        const AttributeType &portname = defaultSlave_[1];
+        idefmem_ = static_cast<IMemoryOperation *>(
+            RISCV_get_service_port_iface(devname.to_string(),
+                                         portname.to_string(),
+                                         IFACE_MEMORY_OPERATION));
+        if (idefmem_ == 0) {
+            RISCV_error("Can't find default slave device %s:%s", 
+                devname.to_string(), portname.to_string());
         }
     }
 }
@@ -102,7 +124,11 @@ ETransStatus BusGeneric::b_transport(Axi4TransactionType *trans) {
     if (memdev == 0) {
         RISCV_error("Blocking request to unmapped address "
                     "%08" RV_PRI64 "x", trans->addr);
-        memset(trans->rpayload.b8, 0xFF, trans->xsize);
+        if (idefmem_) {
+            idefmem_->b_transport(trans);
+        } else {
+            memset(trans->rpayload.b8, 0xFF, trans->xsize);
+        }
         ret = TRANS_ERROR;
     } else {
         memdev->b_transport(trans);
@@ -139,9 +165,13 @@ ETransStatus BusGeneric::nb_transport(Axi4TransactionType *trans,
     if (memdev == 0) {
         RISCV_error("Non-blocking request to unmapped address "
                     "%08" RV_PRI64 "x", trans->addr);
-        memset(trans->rpayload.b8, 0xFF, trans->xsize);
-        trans->response = MemResp_Error;
-        cb->nb_response(trans);
+        if (idefmem_) {
+            idefmem_->nb_transport(trans, cb);
+        } else {
+            memset(trans->rpayload.b8, 0xFF, trans->xsize);
+            trans->response = MemResp_Error;
+            cb->nb_response(trans);
+        }
         ret = TRANS_ERROR;
     } else {
         memdev->nb_transport(trans, cb);

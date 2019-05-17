@@ -24,14 +24,12 @@ static const uint64_t UNMAPPED_ADDRESS = 0x70000040;
 void isr_miss_access(void) {
     uint64_t *ma_reg = (uint64_t *)0x80098010;
 
-    printf_uart("missaccess isr: 0x%08x\r\n", *ma_reg);
+    printf_uart("missaccess isr .0x%08x\r\n", *ma_reg);
 }
 
 void test_missaccess(void) {
     pnp_map *pnp = (pnp_map *)ADDR_NASTI_SLAVE_PNP;
     uint64_t *ma_reg = (uint64_t *)0x80098010;     // DSU register
-
-    printf_uart("MissAccess. .");
 
     register_isr_handler(CFG_IRQ_MISS_ACCESS, isr_miss_access);
     enable_isr(CFG_IRQ_MISS_ACCESS);
@@ -41,9 +39,9 @@ void test_missaccess(void) {
 
     // Accessed unmapped address should be latched by DSU
     if (*ma_reg != UNMAPPED_ADDRESS) {
-        printf_uart("FAIL: %08x != %08x\r\n",
+        printf_uart("missaccess . . .FAIL: %08x != %08x\r\n",
                     *ma_reg, UNMAPPED_ADDRESS);
     } else {
-        printf_uart("OK\r\n");
+        printf_uart("%s", "missaccess . . .PASS\r\n");
     }
 }

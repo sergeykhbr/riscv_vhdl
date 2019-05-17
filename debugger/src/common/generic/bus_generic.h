@@ -52,6 +52,7 @@ class BusGeneric : public IService,
                         IMemoryOperation **pdev, uint32_t *sz);
 
  protected:
+    AttributeType defaultSlave_;
     AttributeType useHash_;
     mutex_def mutexBAccess_;
     mutex_def mutexNBAccess_;
@@ -60,6 +61,7 @@ class BusGeneric : public IService,
 
     GenericReg64Bank busUtil_;    // per master read/write access statistic
     IMemoryOperation **imaphash_;
+    IMemoryOperation *idefmem_;
 };
 
 DECLARE_CLASS(BusGeneric)
