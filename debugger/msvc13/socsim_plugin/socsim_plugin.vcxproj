@@ -92,6 +92,7 @@
     <ClCompile Include="..\..\src\common\attribute.cpp" />
     <ClCompile Include="..\..\src\common\autobuffer.cpp" />
     <ClCompile Include="..\..\src\common\debug\dsu.cpp" />
+    <ClCompile Include="..\..\src\common\debug\dsu_regs.cpp" />
     <ClCompile Include="..\..\src\common\debug\greth.cpp" />
     <ClCompile Include="..\..\src\common\generic\mapreg.cpp" />
     <ClCompile Include="..\..\src\common\generic\mem_generic.cpp" />
@@ -117,6 +118,7 @@
     <ClInclude Include="..\..\src\common\autobuffer.h" />
     <ClInclude Include="..\..\src\common\debug\dsu.h" />
     <ClInclude Include="..\..\src\common\debug\dsumap.h" />
+    <ClInclude Include="..\..\src\common\debug\dsu_regs.h" />
     <ClInclude Include="..\..\src\common\debug\greth.h" />
     <ClInclude Include="..\..\src\common\generic\mapreg.h" />
     <ClInclude Include="..\..\src\common\generic\mem_generic.h" />

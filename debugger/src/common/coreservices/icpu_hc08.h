@@ -63,14 +63,14 @@ enum ERegNames {
 };
 
 static const ECpuRegMapping HC08_DEBUG_REG_MAP[] = {
-    {"a",     1, DSU_OFSSET + DSUREG(ureg.v.iregs[0])},
-    {"hx",    2, DSU_OFSSET + DSUREG(ureg.v.iregs[1])},
-    {"sp",    2, DSU_OFSSET + DSUREG(ureg.v.iregs[2])},
-    {"ccr",   1, DSU_OFSSET + DSUREG(ureg.v.iregs[3])},
-    {"clkhz", 8, DSU_OFSSET + DSUREG(ureg.v.iregs[5])},
-    {"pc",    2, DSU_OFSSET + DSUREG(ureg.v.pc)},
-    {"npc",   2, DSU_OFSSET + DSUREG(ureg.v.npc)},
-    {"steps", 8, DSU_OFSSET + DSUREG(udbg.v.clock_cnt)},
+    {"a",     1, DSU_OFFSET + DSUREG(ureg.v.iregs[0])},
+    {"hx",    2, DSU_OFFSET + DSUREG(ureg.v.iregs[1])},
+    {"sp",    2, DSU_OFFSET + DSUREG(ureg.v.iregs[2])},
+    {"ccr",   1, DSU_OFFSET + DSUREG(ureg.v.iregs[3])},
+    {"clkhz", 8, DSU_OFFSET + DSUREG(ureg.v.iregs[5])},
+    {"pc",    2, DSU_OFFSET + DSUREG(ureg.v.pc)},
+    {"npc",   2, DSU_OFFSET + DSUREG(ureg.v.npc)},
+    {"steps", 8, DSU_OFFSET + DSUREG(udbg.v.clock_cnt)},
     {"",      0, 0}
 };
 

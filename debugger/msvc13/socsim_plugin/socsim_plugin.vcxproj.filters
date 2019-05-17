@@ -46,6 +46,9 @@
     <ClCompile Include="..\..\src\common\generic\rmembank_gen1.cpp">
       <Filter>common\generic</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\common\debug\dsu_regs.cpp">
+      <Filter>debug</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\api_types.h">
@@ -105,6 +108,9 @@
     </ClInclude>
     <ClInclude Include="..\..\src\common\generic\rmembank_gen1.h">
       <Filter>common\generic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\debug\dsu_regs.h">
+      <Filter>debug</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

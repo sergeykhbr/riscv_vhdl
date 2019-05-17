@@ -68,6 +68,7 @@ void RegMemBankGeneric::postinitService() {
         }
     }
     stubmem = new uint8_t[length_.to_int()];
+    memset(stubmem, 0xFF, length_.to_int());
 }
 
 /** We need correctly mapped device list to compute hash, postinit
@@ -84,7 +85,6 @@ void RegMemBankGeneric::hapTriggered(IFace *isrc,
 
 ETransStatus RegMemBankGeneric::b_transport(Axi4TransactionType *trans) {
     IMemoryOperation *imem;
-
     if ((imem = getRegFace(trans->addr)) != 0) {
         return imem->b_transport(trans);
     }
@@ -102,9 +102,21 @@ ETransStatus RegMemBankGeneric::b_transport(Axi4TransactionType *trans) {
         RISCV_info("Write stub [%08" RV_PRI64 "x] <= 0x%" RV_PRI64 "x",
                     trans->addr, trans->wpayload.b64[0] & msk);
     }
-
     return TRANS_OK;
 }
+
+ETransStatus RegMemBankGeneric::nb_transport(Axi4TransactionType *trans,
+                                             IAxi4NbResponse *cb) {
+    IMemoryOperation *imem;
+    if ((imem = getRegFace(trans->addr)) != 0) {
+        return imem->nb_transport(trans, cb);
+    }
+    
+    ETransStatus ret = b_transport(trans);
+    cb->nb_response(trans);
+    return ret;
+}
+
 
 void RegMemBankGeneric::maphash(IMemoryOperation *imemop) {
     uint64_t off = imemop->getBaseAddress() - baseAddress_.to_uint64();

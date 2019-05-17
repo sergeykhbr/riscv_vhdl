@@ -22,7 +22,7 @@
 namespace debugger {
 
 const uint64_t REG_ADDR_ERROR = 0xFFFFFFFFFFFFFFFFull;
-const uint64_t DSU_OFSSET  = 0x80080000ull;
+const uint64_t DSU_OFFSET  = 0x80080000ull;
 
 union GenericCpuControlType {
     uint64_t val;
@@ -120,7 +120,7 @@ struct DsuMapType {
 #define DSUREG(x) (reinterpret_cast<uint64_t>(& \
         (reinterpret_cast<DsuMapType*>(0))->x))
 
-#define DSUBASE() reinterpret_cast<DsuMapType *>(DSU_OFSSET)
+#define DSUBASE() reinterpret_cast<DsuMapType *>(DSU_OFFSET)
 
 struct ECpuRegMapping {
     const char name[16];

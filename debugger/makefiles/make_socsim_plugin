@@ -39,6 +39,7 @@ SOURCES = \
 	gpio \
 	uart \
 	pnp \
+	dsu_regs \
 	dsu \
 	greth \
 	gptimers \

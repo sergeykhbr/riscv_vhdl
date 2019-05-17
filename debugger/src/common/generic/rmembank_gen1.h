@@ -36,6 +36,9 @@ class RegMemBankGeneric : public IService,
 
     /** IMemoryOperation */
     virtual ETransStatus b_transport(Axi4TransactionType *trans);
+    virtual ETransStatus nb_transport(Axi4TransactionType *trans,
+                              IAxi4NbResponse *cb);
+
 
     /** IHap */
     virtual void hapTriggered(IFace *isrc, EHapType type, const char *descr);
