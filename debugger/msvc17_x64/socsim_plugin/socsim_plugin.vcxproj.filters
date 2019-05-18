@@ -7,6 +7,9 @@
     <Filter Include="debug">
       <UniqueIdentifier>{f0346446-c540-4648-b4b9-2093c7e6f488}</UniqueIdentifier>
     </Filter>
+    <Filter Include="common\generic">
+      <UniqueIdentifier>{41482292-c7d0-4ce5-89d7-55033b2e0b28}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\common\attribute.cpp">
@@ -34,6 +37,18 @@
     </ClCompile>
     <ClCompile Include="..\..\src\socsim_plugin\hardreset.cpp" />
     <ClCompile Include="..\..\src\socsim_plugin\fpu_func.cpp" />
+    <ClCompile Include="..\..\src\common\debug\dsu_regs.cpp">
+      <Filter>debug</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\common\generic\mapreg.cpp">
+      <Filter>common\generic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\common\generic\mem_generic.cpp">
+      <Filter>common\generic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\common\generic\rmembank_gen1.cpp">
+      <Filter>common\generic</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\api_types.h">
@@ -85,5 +100,17 @@
     </ClInclude>
     <ClInclude Include="..\..\src\socsim_plugin\fpu_func.h" />
     <ClInclude Include="..\..\src\socsim_plugin\fpu_func_tests.h" />
+    <ClInclude Include="..\..\src\common\debug\dsu_regs.h">
+      <Filter>debug</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\generic\mapreg.h">
+      <Filter>common\generic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\generic\mem_generic.h">
+      <Filter>common\generic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\generic\rmembank_gen1.h">
+      <Filter>common\generic</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

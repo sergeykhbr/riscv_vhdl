@@ -92,7 +92,11 @@
     <ClCompile Include="..\..\src\common\attribute.cpp" />
     <ClCompile Include="..\..\src\common\autobuffer.cpp" />
     <ClCompile Include="..\..\src\common\debug\dsu.cpp" />
+    <ClCompile Include="..\..\src\common\debug\dsu_regs.cpp" />
     <ClCompile Include="..\..\src\common\debug\greth.cpp" />
+    <ClCompile Include="..\..\src\common\generic\mapreg.cpp" />
+    <ClCompile Include="..\..\src\common\generic\mem_generic.cpp" />
+    <ClCompile Include="..\..\src\common\generic\rmembank_gen1.cpp" />
     <ClCompile Include="..\..\src\socsim_plugin\boardsim.cpp" />
     <ClCompile Include="..\..\src\socsim_plugin\fpu_func.cpp" />
     <ClCompile Include="..\..\src\socsim_plugin\fsev2.cpp" />
@@ -114,7 +118,11 @@
     <ClInclude Include="..\..\src\common\autobuffer.h" />
     <ClInclude Include="..\..\src\common\debug\dsu.h" />
     <ClInclude Include="..\..\src\common\debug\dsumap.h" />
+    <ClInclude Include="..\..\src\common\debug\dsu_regs.h" />
     <ClInclude Include="..\..\src\common\debug\greth.h" />
+    <ClInclude Include="..\..\src\common\generic\mapreg.h" />
+    <ClInclude Include="..\..\src\common\generic\mem_generic.h" />
+    <ClInclude Include="..\..\src\common\generic\rmembank_gen1.h" />
     <ClInclude Include="..\..\src\common\iattr.h" />
     <ClInclude Include="..\..\src\common\iclass.h" />
     <ClInclude Include="..\..\src\common\iface.h" />
