@@ -26,19 +26,23 @@ UART::UART(const char *name) : RegMemBankGeneric(name),
     registerInterface(static_cast<ISerial *>(this));
     registerAttribute("FifoSize", &fifoSize_);
     registerAttribute("IrqControl", &irqctrl_);
+    registerAttribute("CmdExecutor", &cmdexec_);
 
     listeners_.make_list(0);
     RISCV_mutex_init(&mutexListeners_);
 
     rxfifo_ = 0;
     rx_total_ = 0;
-
+    pcmd_ = 0;
 }
 
 UART::~UART() {
     RISCV_mutex_destroy(&mutexListeners_);
     if (rxfifo_) {
         delete [] rxfifo_;
+    }
+    if (pcmd_) {
+        delete pcmd_;
     }
 }
 
@@ -59,6 +63,23 @@ void UART::postinitService() {
                                      IFACE_WIRE));
     if (!iwire_) {
         RISCV_error("Can't find IWire interface %s", irqctrl_[0u].to_string());
+    }
+
+    icmdexec_ = static_cast<ICmdExecutor *>(
+            RISCV_get_service_iface(cmdexec_.to_string(), 
+                                    IFACE_CMD_EXECUTOR));
+    if (!icmdexec_) {
+        RISCV_error("Can't get ICmdExecutor interface %s",
+                    cmdexec_.to_string());
+    } else {
+        pcmd_ = new UartCmdType(static_cast<IService *>(this), getObjName());
+        icmdexec_->registerCommand(pcmd_);
+    }
+}
+
+void UART::predeleteService() {
+    if (icmdexec_) {
+        icmdexec_->unregisterCommand(pcmd_);
     }
 }
 

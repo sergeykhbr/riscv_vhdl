@@ -152,6 +152,7 @@
           {'Name':'uart0','Attr':[
                 ['LogLevel',1],
                 ['FifoSize',16],
+                ['CmdExecutor','cmdexec0'],
                 ['BaseAddress',0x80001000],
                 ['Length',4096],
                 ['IrqControl',['irqctrl0','irq1']],

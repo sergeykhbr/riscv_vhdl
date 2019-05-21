@@ -24,10 +24,49 @@
 #include "coreservices/iwire.h"
 #include "coreservices/irawlistener.h"
 #include "coreservices/iclock.h"
+#include "coreservices/icommand.h"
+#include "coreservices/icmdexec.h"
 #include "generic/mapreg.h"
 #include "generic/rmembank_gen1.h"
 
 namespace debugger {
+
+class UartCmdType : public ICommand {
+ public:
+    UartCmdType(IService *parent, const char *name) : ICommand(name, 0) {
+        parent_ = parent;
+        iserial_ = static_cast<ISerial *>(parent->getInterface(IFACE_SERIAL));
+        briefDescr_.make_string("Access to external Serial port from console.");
+        detailedDescr_.make_string(
+            "Read/Write value:\n"
+            "    serial_objname 'string value' to transmit\n"
+            "Response:\n"
+            "    data or string\n"
+            "Usage:\n"
+            "    uart0 'help'");
+    }
+
+    /** ICommand */
+    virtual int isValid(AttributeType *args) {
+        if (!iserial_ || !(*args)[0u].is_equal(parent_->getObjName())) {
+            return CMD_INVALID;
+        }
+        return CMD_VALID;
+    }
+
+    virtual void exec(AttributeType *args, AttributeType *res) {
+        res->make_nil();
+        if (args->size() > 1 && (*args)[1].is_string()) {
+            char eol[3] = "\r\n";
+            iserial_->writeData((*args)[1].to_string(), (*args)[1].size());
+            iserial_->writeData(eol, 2);
+        }
+    }
+
+ private:
+    IService *parent_;
+    ISerial *iserial_;
+};
 
 class UART : public RegMemBankGeneric,
              public ISerial {
@@ -36,7 +75,8 @@ class UART : public RegMemBankGeneric,
     virtual ~UART();
 
     /** IService interface */
-    virtual void postinitService();
+    virtual void postinitService() override;
+    virtual void predeleteService() override;
 
     /** ISerial */
     virtual int writeData(const char *buf, int sz);
@@ -104,14 +144,17 @@ class UART : public RegMemBankGeneric,
  private:
     AttributeType fifoSize_;
     AttributeType irqctrl_;
+    AttributeType cmdexec_;
     AttributeType listeners_;  // non-registering attribute
     IWire *iwire_;
+    ICmdExecutor *icmdexec_;
 
     char *rxfifo_;
     char *p_rx_wr_;
     char *p_rx_rd_;
     int rx_total_;
     mutex_def mutexListeners_;
+    UartCmdType *pcmd_;
 
     STATUS_TYPE status_;
     SCALER_TYPE scaler_;
