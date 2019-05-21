@@ -48,7 +48,7 @@ SC_MODULE(RiverTop) {
     sc_out<bool> o_dport_ready;                         // Response is ready
     sc_out<sc_uint<RISCV_ARCH>> o_dport_rdata;          // Response value
 
-    RiverTop(sc_module_name name_);
+    RiverTop(sc_module_name name_, uint32_t hartid);
     virtual ~RiverTop();
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);

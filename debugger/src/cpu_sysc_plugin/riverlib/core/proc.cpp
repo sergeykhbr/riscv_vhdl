@@ -10,7 +10,8 @@
 
 namespace debugger {
 
-Processor::Processor(sc_module_name name_) : sc_module(name_) {
+Processor::Processor(sc_module_name name_, uint32_t hartid)
+    : sc_module(name_) {
 
     SC_METHOD(comb);
     sensitive << i_nrst;
@@ -191,7 +192,7 @@ Processor::Processor(sc_module_name name_) : sc_module(name_) {
 
     iregs0->o_ra(ireg.ra);   // Return address
 
-    csr0 = new CsrRegs("csr0");
+    csr0 = new CsrRegs("csr0", hartid);
     csr0->i_clk(i_clk);
     csr0->i_nrst(i_nrst);
     csr0->i_xret(w.e.xret);

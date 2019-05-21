@@ -24,6 +24,9 @@ use commonlib.types_common.all;
 --! @brief   Library global parameters.
 package river_cfg is
 
+  constant CFG_VENDOR_ID : std_logic_vector(31 downto 0) := X"000000F1";
+  constant CFG_IMPLEMENTATION_ID : std_logic_vector(31 downto 0) := X"20190521";
+
   --! Architecture size difinition.
   constant RISCV_ARCH : integer := 64;
 
@@ -48,7 +51,7 @@ package river_cfg is
   constant MEMOP_1B : std_logic_vector(1 downto 0) := "00";
   --! @}
   
-  constant RESET_VECTOR : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00000040";
+  constant RESET_VECTOR : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00000000";
   constant DBG_FETCH_TRACE_SIZE : integer := 4;
 
   --! Number of elements each 2*CFG_ADDR_WIDTH in stack trace buffer, 0 = disabled
@@ -344,6 +347,9 @@ package river_cfg is
   --! @param[in] i_dport_wdata  Debug port CSR writing value
   --! @param[out] o_dport_rdata Debug port CSR read value
   component CsrRegs is
+  generic (
+    hartid : integer := 0
+  );
   port (
     i_clk : in std_logic;
     i_nrst : in std_logic;
@@ -777,6 +783,9 @@ package river_cfg is
   --! @param[in] i_dstate          DCache state machine value
   --! @param[in] i_cstate          cachetop state machine value
   component Processor is
+  generic (
+    hartid : integer := 0
+  );
   port (
     i_clk : in std_logic;
     i_nrst : in std_logic;
@@ -900,6 +909,9 @@ package river_cfg is
   --! @param[out] o_dport_ready        Response is ready
   --! @param[out] o_dport_rdata        Response value
   component RiverTop is
+  generic (
+    hartid : integer := 0
+  );
   port (
     i_clk : in std_logic;
     i_nrst : in std_logic;

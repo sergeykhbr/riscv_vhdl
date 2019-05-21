@@ -51,7 +51,7 @@ SC_MODULE(CsrRegs) {
 
     SC_HAS_PROCESS(CsrRegs);
 
-    CsrRegs(sc_module_name name_);
+    CsrRegs(sc_module_name name_, uint32_t hartid);
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
@@ -70,6 +70,7 @@ private:
         sc_signal<bool> trap_irq;
         sc_signal<sc_uint<4>> trap_code;
     } v, r;
+    uint32_t hartid_;
 
     void procedure_RegAccess(uint64_t iaddr, bool iwena,
                              sc_uint<RISCV_ARCH> iwdata,

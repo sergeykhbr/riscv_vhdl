@@ -16,6 +16,9 @@ use riverlib.river_cfg.all;
 
 
 entity Processor is
+  generic (
+    hartid : integer := 0
+  );
   port (
     i_clk : in std_logic;                                             -- CPU clock
     i_nrst : in std_logic;                                            -- Reset. Active LOW.
@@ -353,7 +356,9 @@ begin
         o_dport_rdata => ireg.dport_rdata,
         o_ra => ireg.ra);   -- Return address
 
-    csr0 : CsrRegs port map (
+    csr0 : CsrRegs port generic (
+        hartid => hartid
+      ) map (
         i_clk => i_clk,
         i_nrst => i_nrst,
         i_xret => w.e.xret,

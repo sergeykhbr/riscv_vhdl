@@ -22,6 +22,9 @@
     <Filter Include="common\generic">
       <UniqueIdentifier>{e330cb6a-a2eb-4c32-99a0-1a991bea7f4e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="riverlib\core\fpu_d">
+      <UniqueIdentifier>{5ee920ac-0887-4b4f-829e-7d0dfd82aec3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\common\attribute.cpp">
@@ -101,6 +104,9 @@
     </ClCompile>
     <ClCompile Include="..\..\src\cpu_sysc_plugin\cmds\cmd_csr.cpp">
       <Filter>cmds</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\fpu_d\divstage.cpp">
+      <Filter>riverlib\core\fpu_d</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -210,6 +216,9 @@
     </ClInclude>
     <ClInclude Include="..\..\src\common\api_core.h">
       <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\fpu_d\divstage.h">
+      <Filter>riverlib\core\fpu_d</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

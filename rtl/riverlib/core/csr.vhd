@@ -14,7 +14,10 @@ library riverlib;
 --! RIVER CPU configuration constants.
 use riverlib.river_cfg.all;
 
-entity CsrRegs is
+entity CsrRegs is 
+  generic (
+    hartid : integer := 0
+  );
   port (
     i_clk : in std_logic;                                   -- CPU clock
     i_nrst : in std_logic;                                  -- Reset. Active LOW.
@@ -111,9 +114,12 @@ architecture arch_CsrRegs of CsrRegs is
         ordata(20) := '1';
         ordata(2) := '1';
     when CSR_mvendorid =>
+        ordata(31 downto 0) := CFG_VENDOR_ID;
     when CSR_marchid =>
     when CSR_mimplementationid =>
+        ordata(31 downto 0) := CFG_IMPLEMENTATION_ID;
     when CSR_mhartid =>
+        ordata(31 downto 0) := conv_std_logic_vector(hartid, 32);
     when CSR_uepc =>    -- User mode program counter
     when CSR_mstatus => -- Machine mode status register
         ordata(0) := ir.uie;

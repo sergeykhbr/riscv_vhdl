@@ -183,7 +183,9 @@ begin
 
   --! @brief RISC-V Processor core (River or Rocket).
 river_ena : if CFG_COMMON_RIVER_CPU_ENABLE generate
-  cpu0 : river_amba port map ( 
+  cpu0 : river_amba port generic (
+    hartid => 0
+  ) map ( 
     i_nrst   => w_bus_nrst,
     i_clk    => i_clk,
     i_msti   => aximi(CFG_NASTI_MASTER_CACHED),
@@ -287,13 +289,13 @@ end generate;
   o_uart2_rtsn <= not uart2o.rts;
 
   ------------------------------------
-  --! @brief BOOT ROM module isntance with the AXI4 interface.
+  --! @brief BOOT ROM module instance with the AXI4 interface.
   --! @details Map address:
-  --!          0x00000000..0x00001fff (8 KB total)
+  --!          0x00000000..0x00003fff (16 KB total)
   boot0 : nasti_bootrom generic map (
     memtech  => CFG_MEMTECH,
     xaddr    => 16#00000#,
-    xmask    => 16#ffffe#,
+    xmask    => 16#ffffc#,
     sim_hexfile => CFG_SIM_BOOTROM_HEX
   ) port map (
     clk  => i_clk,

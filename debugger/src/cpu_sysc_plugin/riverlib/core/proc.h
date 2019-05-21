@@ -69,7 +69,7 @@ SC_MODULE(Processor) {
 
     SC_HAS_PROCESS(Processor);
 
-    Processor(sc_module_name name_);
+    Processor(sc_module_name name_, uint32_t hartid);
     virtual ~Processor();
 
 private:

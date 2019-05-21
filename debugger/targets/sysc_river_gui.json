@@ -108,6 +108,7 @@
     {'Class':'CpuRiscV_RTLClass','Instances':[
           {'Name':'core0','Attr':[
                 ['LogLevel',4],
+                ['HartID',0],
                 ['Bus','axi0'],
                 ['CmdExecutor','cmdexec0']
                 ['Tap','edcltap']

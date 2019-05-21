@@ -92,6 +92,7 @@ class CpuRiscV_RTL : public IService,
     void deleteSystemC();
 
  private:
+    AttributeType hartid_;
     AttributeType bus_;
     AttributeType cmdexec_;
     AttributeType tap_;

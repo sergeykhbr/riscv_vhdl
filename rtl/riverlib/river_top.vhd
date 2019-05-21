@@ -24,6 +24,9 @@ library riverlib;
 use riverlib.river_cfg.all;
 
 entity RiverTop is
+  generic (
+    hartid : integer := 0
+  );
   port (
     i_clk : in std_logic;                                             -- CPU clock
     i_nrst : in std_logic;                                            -- Reset. Active LOW.
@@ -77,7 +80,10 @@ architecture arch_RiverTop of RiverTop is
 
 begin
 
-    proc0 : Processor port map (
+    proc0 : Processor port 
+      generic (
+        hartid => hartid
+      ) map (
         i_clk => i_clk,
         i_nrst => i_nrst,
         i_req_ctrl_ready => w_req_ctrl_ready,

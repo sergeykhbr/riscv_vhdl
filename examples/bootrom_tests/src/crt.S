@@ -25,7 +25,7 @@
   .globl _mbist_ram_exit
 
 trap_table:
-  j _start       #
+  j _start       # 
   j bad_trap # pmp_trap
   j bad_trap # illegal_insn_trap
   j bad_trap
@@ -41,9 +41,6 @@ trap_table:
   j bad_trap # __trap_from_machine_mode
   j bad_trap
   j bad_trap
-
-reset_vector:
-  j _start
 
 bad_trap:
   j bad_trap

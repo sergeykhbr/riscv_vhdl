@@ -81,8 +81,10 @@ class CpuRiver_Functional : public CpuGeneric,
     }
 
  private:
+    AttributeType vendorid_;
+    AttributeType implementationid_;
+    AttributeType hartid_;
     AttributeType listExtISA_;
-    AttributeType vendorID_;
     AttributeType vectorTable_;
 
     static const int INSTR_HASH_TABLE_SIZE = 1 << 6;

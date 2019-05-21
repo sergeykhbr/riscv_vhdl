@@ -32,7 +32,10 @@ use riverlib.river_cfg.all;
 use riverlib.types_river.all;
 
 entity river_amba is 
-port ( 
+  generic (
+    hartid : integer := 0
+  );
+  port ( 
     i_nrst   : in std_logic;
     i_clk    : in std_logic;
     i_msti   : in nasti_master_in_type;
@@ -76,7 +79,9 @@ begin
   o_mstcfg <= xconfig;
   w_resp_mem_data_valid <= i_msti.r_valid or (r.b_ready and i_msti.b_valid);
   
-  river0 : RiverTop  port map (
+  river0 : RiverTop  port generic (
+      hartid => hartid
+    ) map (
       i_clk => i_clk,
       i_nrst => i_nrst,
       i_req_mem_ready => w_req_mem_ready,

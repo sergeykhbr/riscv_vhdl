@@ -1,8 +1,7 @@
 rem ---------------------------------------------------------------------------
 
 rem Perforce paths
-set PATH=E:\fw_tools\SysGCC\risc_v\bin;%PATH%
-set PATH=E:\fw_tools\gnutools;E:\fw_tools\gnutools\cyg;%PATH%
+set PATH=%RISCV_GCC%;%PATH%
 
 set TOP_DIR=..\
 set OBJ_DIR=%TOP_DIR%linuxbuild\obj

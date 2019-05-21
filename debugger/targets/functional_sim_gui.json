@@ -124,6 +124,9 @@
           {'Name':'core0','Attr':[
                 ['Enable',true],
                 ['LogLevel',3],
+                ['HartID',0],
+                ['VendorID',0x000000F1],
+                ['ImplementationID',0x20190521],
                 ['SysBusMasterID',0,'Used to gather Bus statistic'],
                 ['SysBus','axi0'],
                 ['DbgBus','dbgbus0'],
@@ -134,9 +137,8 @@
                 ['ListExtISA',['I','M','A','C','D']],
                 ['StackTraceSize',64,'Number of 16-bytes entries'],
                 ['FreqHz',12000000],
-                ['VendorID',0x0001,'Hardcoded in CSR mvendorid value: UC Berkeley Rocket repo'],
                 ['VectorTable',0x100,'Hardcoded in CSR mtvec value: interrupts vector table address'],
-                ['ResetVector',0x0040,'Initial intruction pointer value (config parameter)'],
+                ['ResetVector',0x0000,'Initial intruction pointer value (config parameter)'],
                 ['GenerateRegTraceFile',false,'Generate Registers modification file to compare with SystemC'],
                 ['GenerateMemTraceFile',false,'Generate Memory access file to compare with SystemC'],
                 ['CacheBaseAddress',0x10000000],
@@ -145,7 +147,7 @@
     {'Class':'MemorySimClass','Instances':[
           {'Name':'bootrom0','Attr':[
                 ['LogLevel',1],
-                ['InitFile','../../../examples/bootrom_tests/linuxbuild/bin/bootrom_tests.hex'],
+                ['InitFile','../../../examples/boot/linuxbuild/bin/bootimage.hex'],
                 ['ReadOnly',true],
                 ['BaseAddress',0x0],
                 ['Length',16384]

@@ -16,35 +16,30 @@
 
 #include "encoding.h"
 
-  .text
+  .section .isr_vector, "x"
   .align 4
-  .globl reset_vector
   .globl _start
 
-trap_table:
-#define BAD_TRAP_VECTOR 0
-  .word bad_trap
-  .word bad_trap # pmp_trap
-  .word bad_trap # illegal_insn_trap
-  .word bad_trap
-  .word bad_trap # misaligned_load_trap
-  .word bad_trap # pmp_trap
-  .word bad_trap # misaligned_store_trap
-  .word bad_trap # pmp_trap
-  .word bad_trap
-  .word bad_trap # mcall_trap
-  .word bad_trap
-  .word bad_trap
-  .word bad_trap
-#define TRAP_FROM_MACHINE_MODE_VECTOR 13
-  .word bad_trap # __trap_from_machine_mode
-  .word bad_trap
-  .word bad_trap
-
 ##! Disabling the compressed code
-#  .option norvc
-reset_vector:
-  j _start
+  .option norvc
+
+trap_table:
+  j _start       #
+  j bad_trap # pmp_trap
+  j bad_trap # illegal_insn_trap
+  j bad_trap
+  j bad_trap # misaligned_load_trap
+  j bad_trap # pmp_trap
+  j bad_trap # misaligned_store_trap
+  j bad_trap # pmp_trap
+  j bad_trap
+  j bad_trap # mcall_trap
+  j bad_trap
+  j bad_trap
+  j bad_trap
+  j bad_trap # __trap_from_machine_mode
+  j bad_trap
+  j bad_trap
 
 bad_trap:
   j bad_trap
@@ -216,14 +211,3 @@ trap_entry:
   _restore_context(tp)
   mret
 
-.section ".tdata.begin"
-.globl _tdata_begin
-_tdata_begin:
-
-.section ".tdata.end"
-.globl _tdata_end
-_tdata_end:
-
-.section ".tbss.end"
-.globl _tbss_end
-_tbss_end:

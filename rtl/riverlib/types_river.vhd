@@ -94,7 +94,10 @@ end record;
 --! @param[out] o_msto    CachedTile-to-Bus request signals.
 --! @param[in] i_ext_irq  Interrupts line supported by Rocket chip.
 component river_amba is 
-port ( 
+  generic (
+    hartid : integer := 0
+  );
+  port ( 
     i_nrst   : in std_logic;
     i_clk    : in std_logic;
     i_msti   : in nasti_master_in_type;
@@ -103,7 +106,7 @@ port (
     i_dport  : in dport_in_type;
     o_dport  : out dport_out_type;
     i_ext_irq : in std_logic
-);
+  );
 end component;
 
 end; -- package body

@@ -19,7 +19,10 @@
 
 namespace debugger {
 
-CsrRegs::CsrRegs(sc_module_name name_) : sc_module(name_) {
+CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid)
+    : sc_module(name_) {
+    hartid_ = hartid;
+
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_xret;
@@ -120,12 +123,15 @@ void CsrRegs::procedure_RegAccess(uint64_t iaddr, bool iwena,
         (*ordata)['C' - 'A'] = 1;
         break;
     case CSR_mvendorid:
+        (*ordata) = CFG_VENDOR_ID;
         break;
     case CSR_marchid:
         break;
     case CSR_mimplementationid:
+        (*ordata) = CFG_IMPLEMENTATION_ID;
         break;
     case CSR_mhartid:
+        (*ordata)(63, 0) = hartid_;
         break;
     case CSR_uepc:// - User mode program counter
         break;

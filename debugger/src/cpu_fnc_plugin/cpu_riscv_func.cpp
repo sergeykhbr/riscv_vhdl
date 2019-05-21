@@ -27,8 +27,10 @@ CpuRiver_Functional::CpuRiver_Functional(const char *name) :
     portRegsFpu_(this, "fregs", DSUREG(ureg.v.fregs), RegFpu_Total),
     portCSR_(this, "csr", DSUREG(csr), 1<<12) {
     registerInterface(static_cast<ICpuRiscV *>(this));
+    registerAttribute("VendorID", &vendorid_);
+    registerAttribute("ImplementationID", &implementationid_);
+    registerAttribute("HartID", &hartid_);
     registerAttribute("ListExtISA", &listExtISA_);
-    registerAttribute("VendorID", &vendorID_);
     registerAttribute("VectorTable", &vectorTable_);
 }
 
@@ -145,7 +147,9 @@ void CpuRiver_Functional::reset(bool active) {
     CpuGeneric::reset(active);
     portRegs_.reset();
     portCSR_.reset();
-    portCSR_.write(CSR_mvendorid, vendorID_.to_uint64());
+    portCSR_.write(CSR_mvendorid, vendorid_.to_uint64());
+    portCSR_.write(CSR_mimplementationid, implementationid_.to_uint64());
+    portCSR_.write(CSR_mhartid, hartid_.to_uint64());
     portCSR_.write(CSR_mtvec, vectorTable_.to_uint64());
 
     cur_prv_level = PRV_M;           // Current privilege level

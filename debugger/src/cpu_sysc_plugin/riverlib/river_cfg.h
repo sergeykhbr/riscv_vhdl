@@ -21,6 +21,9 @@
 
 namespace debugger {
 
+static const uint64_t CFG_VENDOR_ID         = 0x000000F1;
+static const uint64_t CFG_IMPLEMENTATION_ID = 0x20190521;
+
 static const int RISCV_ARCH     = 64;
 
 static const int BUS_ADDR_WIDTH = 32;
@@ -32,7 +35,7 @@ static const uint8_t MEMOP_4B = 2;
 static const uint8_t MEMOP_2B = 1;
 static const uint8_t MEMOP_1B = 0;
 
-static const uint64_t RESET_VECTOR      = 0x0040;
+static const uint64_t RESET_VECTOR      = 0x0000;
 static const int DBG_FETCH_TRACE_SIZE   = 4;
 
 /** Number of elements each 2*CFG_ADDR_WIDTH in stack trace buffer: */
