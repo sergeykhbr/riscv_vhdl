@@ -166,19 +166,14 @@
     {'Class':'UARTClass','Instances':[
           {'Name':'uart0','Attr':[
                 ['LogLevel',1],
+                ['FifoSize',16],
                 ['BaseAddress',0x80001000],
                 ['Length',4096],
                 ['IrqControl',['irqctrl0','irq1']],
-                ['AutoTestEna',false,'Enable/Disable automatic test input via serial interface'],
-                ['TestCases',[[22097,'s'],
-                              [22500,'et'],
-                              [24399,'_mo'],
-                              [25780,'dul'],
-                              [28999,'e s'],
-                              [31599,'oc'],
-                              [32599,'\r\n'],
-                              [48599,'dhr'],
-                              [49599,'y\r\n']]]
+                ['MapList',[['uart0','status'],
+                            ['uart0','scaler'],
+                            ['uart0','data'],
+                           ]]
 
                 ]}]},
     {'Class':'IrqControllerClass','Instances':[
