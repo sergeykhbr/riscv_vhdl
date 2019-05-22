@@ -28,12 +28,12 @@ divstage::divstage(sc_module_name name_) : sc_module(name_) {
 
 void divstage::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
-        sc_trace(o_vcd, i_mux_ena, "/top/proc0/dfpu0/divstage0/i_mux_ena");
-        sc_trace(o_vcd, i_muxind, "/top/proc0/dfpu0/divstage0/i_muxind");
-        sc_trace(o_vcd, i_divident, "/top/proc0/dfpu0/divstage0/i_divident");
-        sc_trace(o_vcd, i_divisor, "/top/proc0/divstage0/i_divisor");
         sc_trace(o_vcd, o_bits, "/top/proc0/divstage0/o_bits");
     }
+    sc_trace(i_vcd, i_mux_ena, "/top/proc0/dfpu0/divstage0/i_mux_ena");
+    sc_trace(i_vcd, i_muxind, "/top/proc0/dfpu0/divstage0/i_muxind");
+    sc_trace(i_vcd, i_divident, "/top/proc0/dfpu0/divstage0/i_divident");
+    sc_trace(i_vcd, i_divisor, "/top/proc0/divstage0/i_divisor");
 }
 
 void divstage::comb() {

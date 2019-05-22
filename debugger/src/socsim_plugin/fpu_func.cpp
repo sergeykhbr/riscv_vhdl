@@ -195,7 +195,7 @@ void FpuFunctional::idiv53(int64_t inDivident,
     int wbOutIndex[14];
     int wIndexRdy[14];
 
-    //int wbIndex00[8];
+    int wbIndex00[8];
     int wbIndex01[8];
     int wbIndex02[8];
     int wbIndex03[8];
@@ -213,8 +213,8 @@ void FpuFunctional::idiv53(int64_t inDivident,
     int rbLShift[14];  // 8 bits value
 
     // 0 of 13  
+#if 0
     int64_t wbDifStart = inDivident - inDivisor;
-#if 1
     wbOutIndex[0] = 0;
     if (wbDifStart < 0) {
         wbDif[0]      = inDivident;

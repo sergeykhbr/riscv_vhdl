@@ -108,6 +108,9 @@
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\fpu_d\divstage.cpp">
       <Filter>riverlib\core\fpu_d</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\fpu_d\idiv53.cpp">
+      <Filter>riverlib\core\fpu_d</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\api_types.h">
@@ -218,6 +221,9 @@
       <Filter>common</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\fpu_d\divstage.h">
+      <Filter>riverlib\core\fpu_d</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\fpu_d\idiv53.h">
       <Filter>riverlib\core\fpu_d</Filter>
     </ClInclude>
   </ItemGroup>
