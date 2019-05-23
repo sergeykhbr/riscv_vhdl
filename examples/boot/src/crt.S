@@ -151,28 +151,34 @@ _start:
   lui gp, 0x10000
 
   ##! get core id
-  csrr a0, mhartid            # for now, assume only 1 core
-  li a1, 1
-1:bgeu a0, a1, 1b
+  csrr a0, mhartid            # a0 <= MHARTID value
 
-  # Task stack pointer (tp) uses the same value as sp.
-#define STACK_512KB 19
-  lui t0, 0x10000             # t0 = SRAM base address = 0x10000000 . lui = load upper immediate 20-bits
-  add sp, zero, 1             # sp = 1
-  sll sp, sp, STACK_512KB     # sp = sp << 19 = 0x80000
-  add sp, t0, sp              # sp = sp + 0x10000000 = 0x10080000
-  add tp, zero, sp            # tp = sp + 0
+#define SRAM_BASE_ADDR  0x10000000
+#define SRAM_SIZE_BYTES (1<<19)
+#define STACK_CORE1_BYTES 4096
+
+  li  sp, SRAM_BASE_ADDR+SRAM_SIZE_BYTES
+  li  a1, 1
+  beq a0, a1, sp_init_core1
+  li  a1, 0
+  beq a0, a1, sp_init_core0
+sp_init_core1:
+  j sp_init_coreall
+sp_init_core0:
+  li t0,-STACK_CORE1_BYTES
+  add sp, sp, t0
+sp_init_coreall:
+  add tp, zero, sp            # tp = sp + 0 (mov)
   ## Use tp register to save/restore registers context on task switching
   addi tp,tp,-256              # tp = tp - 256 = 0x1007ff00
-  # 1 KB for the tap stack + TLS. Add signed extended 12-bits to register
-  addi sp, sp, -1024          # sp = 0x1007fc00
+  addi sp, sp,-264
 
   # copy image 64 KB
   jal _init
 
   ##! jump to entry point in SRAM = 0x10000000
   ##!     'meps' - Machine Exception Program Coutner
-  lui t0, 0x10000             # t0 = SRAM base address = 0x10000000 . lui = load upper immediate 20-bits
+  li  t0, SRAM_BASE_ADDR
   csrw mepc, t0
   ##! @see riscv-priv-spec-1.7.pdf. 3.2.1
   ##! After handling a trap, the ERET instruction is used to return to the privilege level at which the

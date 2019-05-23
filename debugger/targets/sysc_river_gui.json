@@ -158,6 +158,7 @@
                 ['IrqControl',['irqctrl0','irq1']],
                 ['MapList',[['uart0','status'],
                             ['uart0','scaler'],
+                            ['uart0','fwcpuid'],
                             ['uart0','data'],
                            ]]
 

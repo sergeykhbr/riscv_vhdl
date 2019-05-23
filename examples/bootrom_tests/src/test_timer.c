@@ -52,7 +52,7 @@ void test_timer(void) {
     ptmr->timer[0].init_value = 0;
     ptmr->timer[0].control = 0;
 
-    register_isr_handler(CFG_IRQ_GPTIMERS, isr_timer);
+    fw_register_isr_handler(CFG_IRQ_GPTIMERS, isr_timer);
 
     p = fw_malloc(sizeof(timer_data_type));    
     fw_register_ram_data(TEST_TIMER_NAME, p);
@@ -63,5 +63,5 @@ void test_timer(void) {
     ptmr->timer[0].init_value = SYS_HZ; // 1 s
     ptmr->timer[0].control = TIMER_CONTROL_ENA | TIMER_CONTROL_IRQ_ENA;
 
-    enable_isr(CFG_IRQ_GPTIMERS);
+    fw_enable_isr(CFG_IRQ_GPTIMERS);
 }

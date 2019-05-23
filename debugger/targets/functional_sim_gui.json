@@ -147,7 +147,7 @@
     {'Class':'MemorySimClass','Instances':[
           {'Name':'bootrom0','Attr':[
                 ['LogLevel',1],
-                ['InitFile','../../../examples/boot/linuxbuild/bin/bootimage.hex'],
+                ['InitFile','../../../examples/bootrom_tests/linuxbuild/bin/bootrom_tests.hex'],
                 ['ReadOnly',true],
                 ['BaseAddress',0x0],
                 ['Length',16384]
@@ -185,6 +185,7 @@
                 ['IrqControl',['irqctrl0','irq1']],
                 ['MapList',[['uart0','status'],
                             ['uart0','scaler'],
+                            ['uart0','fwcpuid'],
                             ['uart0','data'],
                            ]]
 

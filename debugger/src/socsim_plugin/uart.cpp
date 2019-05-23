@@ -22,6 +22,7 @@ namespace debugger {
 UART::UART(const char *name) : RegMemBankGeneric(name),
     status_(static_cast<IService *>(this), "status", 0x00),
     scaler_(static_cast<IService *>(this), "scaler", 0x04),
+    fwcpuid_(static_cast<IService *>(this), "fwcpuid", 0x08),
     data_(static_cast<IService *>(this), "data", 0x10) {
     registerInterface(static_cast<ISerial *>(this));
     registerAttribute("FifoSize", &fifoSize_);
@@ -51,6 +52,7 @@ void UART::postinitService() {
     uint64_t baseoff = baseAddress_.to_uint64();
     status_.setBaseAddress(baseoff + status_.getBaseAddress());
     scaler_.setBaseAddress(baseoff + scaler_.getBaseAddress());
+    fwcpuid_.setBaseAddress(baseoff + fwcpuid_.getBaseAddress());
     data_.setBaseAddress(baseoff + data_.getBaseAddress());
 
     rxfifo_ = new char[fifoSize_.to_int()];

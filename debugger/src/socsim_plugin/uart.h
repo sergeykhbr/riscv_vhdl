@@ -126,9 +126,9 @@ class UART : public RegMemBankGeneric,
         virtual uint64_t aboutToRead(uint64_t cur_val) override;
     };
 
-    class SCALER_TYPE : public MappedReg64Type {
+    class DWORD_TYPE : public MappedReg64Type {
      public:
-        SCALER_TYPE(IService *parent, const char *name, uint64_t addr) :
+        DWORD_TYPE(IService *parent, const char *name, uint64_t addr) :
                     MappedReg64Type(parent, name, addr, 4) {}
     };
 
@@ -157,7 +157,8 @@ class UART : public RegMemBankGeneric,
     UartCmdType *pcmd_;
 
     STATUS_TYPE status_;
-    SCALER_TYPE scaler_;
+    DWORD_TYPE scaler_;
+    DWORD_TYPE fwcpuid_;
     DATA_TYPE data_;
 };
 

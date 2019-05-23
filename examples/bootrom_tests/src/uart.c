@@ -80,7 +80,7 @@ void uart_isr_init(void) {
     uart_map *uart = (uart_map *)ADDR_NASTI_SLAVE_UART1;
     uart_data_type *pdata;
 
-    register_isr_handler(CFG_IRQ_UART1, isr_uart1_tx);
+    fw_register_isr_handler(CFG_IRQ_UART1, isr_uart1_tx);
 
     pdata = fw_malloc(sizeof(uart_data_type));
     pdata->fifo = fw_malloc(UART_BUF_SZ);
@@ -92,7 +92,7 @@ void uart_isr_init(void) {
     uart->scaler = SYS_HZ / 115200 / 2;
     uart->status |= UART_CONTROL_TXIRQ_ENA;
 
-    enable_isr(CFG_IRQ_UART1);
+    fw_enable_isr(CFG_IRQ_UART1);
 }
 
 
@@ -334,6 +334,15 @@ int putchar(int ch) {
 void printf_uart(const char *fmt, ... ) {
     uart_data_type *pdata = fw_get_ram_data(UART1_NAME);
     uart_map *uart = (uart_map *)ADDR_NASTI_SLAVE_UART1;
+    int id = fw_get_cpuid() + 1;
+
+    // lock UART to current CPU
+    while (uart->fwcpuid != id) {
+        if (uart->fwcpuid != 0) {
+            continue;
+        }
+        uart->fwcpuid = id;
+    }
 
     va_list arg;
     va_start(arg, fmt);
@@ -345,4 +354,6 @@ void printf_uart(const char *fmt, ... ) {
             uart->data = buf_get(pdata);
         }
     }
+    // free UART lock
+    uart->fwcpuid = 0;
 }

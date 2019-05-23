@@ -19,7 +19,13 @@
 #include "encoding.h"
 #include "fw_api.h"
 
-void register_isr_handler(int idx, IRQ_HANDLER f) {
+int fw_get_cpuid() {
+    int ret;
+    asm("csrr %0, mhartid" : "=r" (ret));
+    return ret;
+}
+
+void fw_register_isr_handler(int idx, IRQ_HANDLER f) {
     irqctrl_map *p_irqctrl = (irqctrl_map *)ADDR_NASTI_SLAVE_IRQCTRL;
     IRQ_HANDLER *tbl;
     if (p_irqctrl->isr_table == 0) {
@@ -30,14 +36,14 @@ void register_isr_handler(int idx, IRQ_HANDLER f) {
     tbl[idx] = f;
 }
 
-void enable_isr(int idx) {
+void fw_enable_isr(int idx) {
     irqctrl_map *p_irq = (irqctrl_map *)ADDR_NASTI_SLAVE_IRQCTRL;
     uint32_t msk = p_irq->irq_mask;
     msk &= ~(1ul << idx);
     p_irq->irq_mask = msk;
 }
 
-void disable_isr(int idx) {
+void fw_disable_isr(int idx) {
     irqctrl_map *p_irq = (irqctrl_map *)ADDR_NASTI_SLAVE_IRQCTRL;
     p_irq->irq_mask |= (1ul << idx);
 }

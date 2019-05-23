@@ -31,6 +31,10 @@ int main() {
     gpio_map *gpio = (gpio_map *)ADDR_NASTI_SLAVE_GPIO;
     irqctrl_map *p_irq = (irqctrl_map *)ADDR_NASTI_SLAVE_IRQCTRL;
 
+    if (fw_get_cpuid() != 0) {
+        while (1) {}
+    }
+
     // mask all interrupts in interrupt controller to avoid
     // unpredictable behaviour after elf-file reloading via debug port.
     p_irq->irq_mask = 0xFFFFFFFF;
@@ -43,6 +47,7 @@ int main() {
     uart_isr_init();   // enable printf_uart function and Tx irq=1
     p_irq->irq_lock = 0;
 
+    printf_uart("HARTID . . . . .%d\r\n", fw_get_cpuid());
     printf_uart("Tech . . . . . .0x%08x\r\n", pnp->tech);
     printf_uart("HWID . . . . . .0x%08x\r\n", pnp->hwid);
     printf_uart("FWID . . . . . .0x%08x\r\n", pnp->fwid);

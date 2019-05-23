@@ -31,8 +31,8 @@ void test_missaccess(void) {
     pnp_map *pnp = (pnp_map *)ADDR_NASTI_SLAVE_PNP;
     uint64_t *ma_reg = (uint64_t *)0x80098010;     // DSU register
 
-    register_isr_handler(CFG_IRQ_MISS_ACCESS, isr_miss_access);
-    enable_isr(CFG_IRQ_MISS_ACCESS);
+    fw_register_isr_handler(CFG_IRQ_MISS_ACCESS, isr_miss_access);
+    fw_enable_isr(CFG_IRQ_MISS_ACCESS);
 
     // Read unmapped address
     pnp->fwdbg1 = *((uint64_t *)UNMAPPED_ADDRESS);

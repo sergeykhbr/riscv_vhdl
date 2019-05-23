@@ -20,6 +20,12 @@
 
 static const int FW_IMAGE_SIZE_BYTES = 1 << 18;
 
+int fw_get_cpuid() {
+    int ret;
+    asm("csrr %0, mhartid" : "=r" (ret));
+    return ret;
+}
+
 void led_set(int output) {
     // [3:0] DIP pins
     ((gpio_map *)ADDR_NASTI_SLAVE_GPIO)->ouser = (output << 4);
@@ -89,6 +95,11 @@ void _init() {
     uart_map *uart = (uart_map *)ADDR_NASTI_SLAVE_UART1;
     gpio_map *gpio = (gpio_map *)ADDR_NASTI_SLAVE_GPIO;
     irqctrl_map *p_irq = (irqctrl_map *)ADDR_NASTI_SLAVE_IRQCTRL;
+  
+    if (fw_get_cpuid() != 0) {
+        // TODO: waiting event or something
+        while(1) {}
+    }
 
     // mask all interrupts in interrupt controller to avoid
     // unpredictable behaviour after elf-file reloading via debug port.

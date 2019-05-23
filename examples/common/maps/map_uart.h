@@ -22,7 +22,8 @@ static const uint32_t UART_CONTROL_TXIRQ_ENA  = 0x00004000;
 typedef struct uart_map {
     volatile uint32_t status;
     volatile uint32_t scaler;
-    uint32_t rsrv[2];
+    volatile uint32_t fwcpuid;   // use as cpu marker who's owning by uart
+    uint32_t rsrv[1];
     volatile uint32_t data;
 } uart_map;
 

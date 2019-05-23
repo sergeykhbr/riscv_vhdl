@@ -81,6 +81,7 @@ architecture arch_nasti_uart of nasti_uart is
         parity_bit : std_logic;
         tx_irq_ena : std_logic;
         rx_irq_ena : std_logic;
+        fwcpuid : std_logic_vector(31 downto 0);
   end record;
 
   type registers is record
@@ -289,6 +290,8 @@ begin
                 tmp(15) := r.bank0.parity_bit;
           when 1 => 
                 tmp := conv_std_logic_vector(r.bank0.scaler,32);
+          when 2 => 
+                tmp := r.bank0.fwcpuid;
           when 4 => 
                 if rx_fifo_empty = '0' and r.bank_axi.rstate = rtrans then
                     tmp(7 downto 0) := r.bank0.rx_fifo(conv_integer(r.bank0.rx_rd_cnt)); 
@@ -319,6 +322,8 @@ begin
                     v.bank0.scaler     := conv_integer(tmp);
                     v.bank0.rx_scaler_cnt := 0;
                     v.bank0.tx_scaler_cnt := 0;
+             when 2 => 
+                    v.bank0.fwcpuid    := tmp;
              when 4 => 
                     if tx_fifo_full = '0' then
                         v.bank0.tx_fifo(conv_integer(r.bank0.tx_wr_cnt)) := tmp(7 downto 0);
@@ -357,6 +362,7 @@ begin
         v.bank0.parity_bit := '0';
         v.bank0.tx_irq_ena := '1';
         v.bank0.rx_irq_ena := '1';
+        v.bank0.fwcpuid := (others => '0');
     end if;
 
     o_axi <= functionAxi4Output(r.bank_axi, rdata);

@@ -39,9 +39,10 @@ void *fw_get_ram_data(const char *name);
 
 typedef void (*IRQ_HANDLER)(void);
 
-void register_isr_handler(int idx, IRQ_HANDLER f);
-void enable_isr(int idx);
-void disable_isr(int idx);
+int fw_get_cpuid();
+void fw_register_isr_handler(int idx, IRQ_HANDLER f);
+void fw_enable_isr(int idx);
+void fw_disable_isr(int idx);
 
 void print_uart(const char *buf, int sz);
 void print_uart_hex(uint64_t val);
