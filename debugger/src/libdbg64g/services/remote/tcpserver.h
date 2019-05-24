@@ -48,6 +48,7 @@ class TcpServer : public IService,
     AttributeType blockmode_;
     AttributeType hostIP_;
     AttributeType hostPort_;
+    AttributeType platformConfig_;
 
     struct sockaddr_in sockaddr_ipv4_;
     socket_def hsock_;

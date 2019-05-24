@@ -30,6 +30,7 @@
 #include "coreservices/isrccode.h"
 #include "coreservices/icmdexec.h"
 #include "coreservices/itap.h"
+#include "coreservices/icoveragetracker.h"
 #include "generic/mapreg.h"
 #include <fstream>
 
@@ -164,6 +165,7 @@ class CpuGeneric : public IService,
 
     virtual void updatePipeline();
     virtual bool updateState();
+    virtual uint64_t fetchingAddress() { return pc_.getValue().val; }
     virtual void fetchILine();
     virtual void updateDebugPort();
     virtual void updateQueue();
@@ -186,8 +188,10 @@ class CpuGeneric : public IService,
     AttributeType hwBreakpoints_;
     AttributeType cacheBaseAddr_;
     AttributeType cacheAddrMask_;
+    AttributeType coverageTracker_;
 
     ISourceCode *isrc_;
+    ICoverageTracker *icovtracker_;
     ICmdExecutor *icmdexec_;
     ITap *itap_;
     IMemoryOperation *isysbus_;
@@ -239,6 +243,7 @@ class CpuGeneric : public IService,
     int memcache_sz_;               // allocated size
     uint64_t CACHE_BASE_ADDR_;
     uint64_t CACHE_MASK_;
+    uint64_t fetch_addr_;
     uint64_t cache_offset_;         // instruction pointer - CACHE_BASE_ADDR
     bool cachable_pc_;              // fetched_pc hit into cachable region
 

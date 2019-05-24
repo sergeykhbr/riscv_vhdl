@@ -27,8 +27,8 @@ DsuRegisters::DsuRegisters(IService *parent) :
     soft_reset_(parent, "soft_reset", 0x18000),
     miss_access_cnt_(parent, "miss_access_cnt", 0x18008),
     miss_access_addr_(parent, "miss_access_addr", 0x18010),
-    cpu_context_(parent, "cpu_context", 0x18018),
     miss_access_shadow_(parent, "miss_access_shadow", 0),
+    cpu_context_(parent, "cpu_context", 0x18018),
     bus_util_(parent, "bus_util", 0x18040, 2*64) {
 }
 

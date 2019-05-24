@@ -50,6 +50,7 @@ class TcpCommands : public IRawListener,
     virtual void stepCallback(uint64_t t);
 
     /** Common acccess methods */
+    void setPlatformConfig(AttributeType *cfg);
     AttributeType *response();
 
  protected:
@@ -71,6 +72,7 @@ class TcpCommands : public IRawListener,
  private:
     char rxbuf_[4096];
     int rxcnt_;
+    AttributeType platformConfig_;
     AttributeType cpu_;
     AttributeType executor_;
     AttributeType source_;

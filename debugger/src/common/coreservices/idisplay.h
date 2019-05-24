@@ -33,7 +33,9 @@ class GenericDisplayCmdType : public ICommand {
         detailedDescr_.make_string(
             "Description:\n"
             "    Read display resolution using config command\n"
-            "    or frame using 'frame' sucommand.\n"
+            "    or frame using 'frame' subcommand.\n"
+            "    Additional option 'encoded' allows reduce frame buffer\n"
+            "    size.\n"
             "Response config:\n"
             "    List {Width:w,Height:h,BkgColor:0x00ff00}\n"
             "Response 'frame':\n"
@@ -41,7 +43,8 @@ class GenericDisplayCmdType : public ICommand {
             "          Bytes of column0,column1,etcn"
             "Usage:\n"
             "    display0 config\n"
-            "    display0 frame");
+            "    display0 frame\n"
+            "    display0 frame encoded");
     }
 
     /** ICommand */
@@ -67,6 +70,9 @@ class GenericDisplayCmdType : public ICommand {
                 diff = true;
             }
             getFrame(res, diff);
+            if (args->size() > 2 && (*args)[2].is_equal("encoded")) {
+                encode(res);
+            }
         }
     }
 
@@ -75,6 +81,20 @@ class GenericDisplayCmdType : public ICommand {
     virtual int getHeight() = 0;
     virtual uint32_t getBkgColor() = 0;     // distance between pixels
     virtual void getFrame(AttributeType *res, bool diff) = 0;
+    virtual void encode(AttributeType *frame) {
+        if (!frame->is_data()) {
+            return;
+        }
+        unsigned sz = frame->size();
+        uint32_t *frameTempProxy_ = new uint32_t[(sz + 3)/sizeof(uint32_t)];
+        memcpy(frameTempProxy_, frame->data(), sz);
+        sz /= sizeof(uint32_t);
+        frame->make_list(sz);
+        for (unsigned i = 0; i < sz; i++) {
+            (*frame)[i].make_uint64(frameTempProxy_[i]);
+        }
+        delete [] frameTempProxy_;
+    }
  protected:
     IService *parent_;
 };

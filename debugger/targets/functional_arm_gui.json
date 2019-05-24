@@ -54,7 +54,14 @@
                 ['Timeout',500],
                 ['BlockingMode',true],
                 ['HostIP',''],
-                ['HostPort',8687]]}]},
+                ['HostPort',8687],
+                ['PlatformConfig',{'Name':'ARMv7',
+                                   'Display':'',
+                                   'Keys':[],
+                                   'Vars':[],
+                                   'Indicators':[],
+                                  }]
+          ]}]},
     {'Class':'ComPortServiceClass','Instances':[
           {'Name':'port1','Attr':[
                 ['LogLevel',2],

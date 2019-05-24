@@ -424,5 +424,8 @@
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_cpucontext.h">
       <Filter>Source Files\services\exec\cmd</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\common\coreservices\icoveragetracker.h">
+      <Filter>Source Files\common\coreservices</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

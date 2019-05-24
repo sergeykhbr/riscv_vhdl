@@ -63,6 +63,10 @@ TcpCommands::~TcpCommands() {
     RISCV_event_close(&eventPowerChanged_);
 }
 
+void TcpCommands::setPlatformConfig(AttributeType *cfg) {
+    platformConfig_ = *cfg;
+}
+
 void TcpCommands::hapTriggered(IFace *isrc, EHapType type,
                                 const char *descr) {
     if (type == HAP_Halt) {
@@ -102,7 +106,9 @@ void TcpCommands::processCommand() {
     AttributeType &requestAction = cmd[2];
     AttributeType *resp = &resp_[1];
 
-    if (requestType.is_equal("Command")) {
+    if (requestType.is_equal("Configuration")) {
+        resp->clone(&platformConfig_);
+    } else if (requestType.is_equal("Command")) {
         /** Redirect command to console directly */
         iexec_->exec(requestAction.to_string(), resp, false);
         if (igui_) {
@@ -319,6 +325,5 @@ void TcpCommands::go_msec(const AttributeType &msec, AttributeType *res) {
     iexec_->exec(tstr, res, false);
     RISCV_event_wait(&eventHalt_);
 }
-
 
 }  // namespace debugger

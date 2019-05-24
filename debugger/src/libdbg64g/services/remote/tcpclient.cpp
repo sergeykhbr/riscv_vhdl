@@ -22,6 +22,7 @@ TcpClient::TcpClient(const char *name) : IService(name),
     tcpcmd_(static_cast<IService *>(this)) {
     registerInterface(static_cast<IThread *>(this));
     registerAttribute("Enable", &isEnable_);
+    registerAttribute("PlatformConfig", &platformConfig_);
     RISCV_mutex_init(&mutexTx_);
 }
 
@@ -30,6 +31,7 @@ TcpClient::~TcpClient() {
 }
 
 void TcpClient::postinitService() {
+    tcpcmd_.setPlatformConfig(&platformConfig_);
     if (isEnable_.to_bool()) {
         if (!run()) {
             RISCV_error("Can't create thread.", NULL);

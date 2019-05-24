@@ -24,6 +24,7 @@
 #include "services/exec/cmdexec.h"
 #include "services/mem/memlut.h"
 #include "services/mem/memsim.h"
+#include "services/mem/rmemsim.h"
 #include "services/remote/tcpclient.h"
 #include "services/remote/tcpserver.h"
 #include "services/comport/comport.h"
@@ -71,6 +72,7 @@ extern "C" int RISCV_init() {
     REGISTER_CLASS_IDX(AutoCompleter, 10);
     REGISTER_CLASS_IDX(ConsoleService, 11);
     REGISTER_CLASS_IDX(EdclService, 12);
+    REGISTER_CLASS_IDX(RegMemorySim, 13);
 
     pcore_->load_plugins();
     return 0;

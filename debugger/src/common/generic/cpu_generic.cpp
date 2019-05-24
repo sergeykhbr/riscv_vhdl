@@ -49,7 +49,6 @@ CpuGeneric::CpuGeneric(const char *name)
     registerAttribute("SourceCode", &sourceCode_);
     registerAttribute("CmdExecutor", &cmdexec_);
     registerAttribute("Tap", &tap_);
-
     registerAttribute("StackTraceSize", &stackTraceSize_);
     registerAttribute("FreqHz", &freqHz_);
     registerAttribute("GenerateRegTraceFile", &generateRegTraceFile_);
@@ -58,6 +57,7 @@ CpuGeneric::CpuGeneric(const char *name)
     registerAttribute("SysBusMasterID", &sysBusMasterID_);
     registerAttribute("CacheBaseAddress", &cacheBaseAddr_);
     registerAttribute("CacheAddressMask", &cacheAddrMask_);
+    registerAttribute("CoverageTracker", &coverageTracker_);
 
     char tstr[256];
     RISCV_sprintf(tstr, sizeof(tstr), "eventConfigDone_%s", name);
@@ -83,6 +83,7 @@ CpuGeneric::CpuGeneric(const char *name)
     memcache_ = 0;
     memcache_flag_ = 0;
     memcache_sz_ = 0;
+    fetch_addr_ = 0;
     cache_offset_ = 0;
     cachable_pc_ = false;
     CACHE_BASE_ADDR_ = 0;
@@ -133,6 +134,17 @@ void CpuGeneric::postinitService() {
         RISCV_error("Source code interface '%s' not found", 
                     sourceCode_.to_string());
         return;
+    }
+
+    icovtracker_ = 0;
+    if (coverageTracker_.size()) {
+        icovtracker_ = static_cast<ICoverageTracker *>(
+            RISCV_get_service_iface(coverageTracker_.to_string(),
+                                    IFACE_COVERAGE_TRACKER));
+        if (!icovtracker_) {
+            RISCV_error("ICoverageTracker interface '%s' not found", 
+                        coverageTracker_.to_string());
+        }
     }
 
     icmdexec_ = static_cast<ICmdExecutor *>(
@@ -261,10 +273,10 @@ void CpuGeneric::updateQueue() {
 }
 
 void CpuGeneric::fetchILine() {
-    cache_offset_ = pc_.getValue().val;
+    fetch_addr_ = fetchingAddress();
     cachable_pc_ = memcache_flag_
-                && (cache_offset_ & CACHE_MASK_) == CACHE_BASE_ADDR_;
-    cache_offset_ -= CACHE_BASE_ADDR_;
+                && (fetch_addr_ & CACHE_MASK_) == CACHE_BASE_ADDR_;
+    cache_offset_ = fetch_addr_ - CACHE_BASE_ADDR_;
 
     if (cachable_pc_ && memcache_flag_[cache_offset_]) {
         cacheline_[0].buf32[0] = *reinterpret_cast<uint32_t *>(
@@ -302,10 +314,10 @@ void CpuGeneric::trackContextEnd() {
             memcache_flag_[cache_offset_] = 0;
         }
     } else {
-        //if (icovtracker_) {
-        //    icovtracker_->markAddress(pc_.getValue().val,
-        //                              static_cast<uint8_t>(oplen_));
-        //}
+        if (icovtracker_) {
+            icovtracker_->markAddress(fetch_addr_,
+                                      static_cast<uint8_t>(oplen_));
+        }
         if (cachable_pc_) {
             memcache_flag_[cache_offset_] = oplen_;
             *reinterpret_cast<uint32_t *>(&memcache_[cache_offset_]) =

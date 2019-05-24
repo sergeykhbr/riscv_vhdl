@@ -25,6 +25,7 @@ TcpServer::TcpServer(const char *name) : IService(name) {
     registerAttribute("BlockingMode", &blockmode_);
     registerAttribute("HostIP", &hostIP_);
     registerAttribute("HostPort", &hostPort_);
+    registerAttribute("PlatformConfig", &platformConfig_);
 }
 
 void TcpServer::postinitService() {
@@ -81,6 +82,9 @@ void TcpServer::busyLoop() {
             lst.add_to_list(&item);
             item[0u].make_string("Enable");
             item[1].make_boolean(true);
+            lst.add_to_list(&item);
+            item[0u].make_string("PlatformConfig");
+            item[1].clone(&platformConfig_);
             lst.add_to_list(&item);
 
             isrv->initService(&lst);

@@ -53,6 +53,8 @@ class TcpClient : public IService,
  private:
     AttributeType isEnable_;
     AttributeType timeout_;
+    AttributeType platformConfig_;
+
     socket_def hsock_;
     mutex_def mutexTx_;
     char rcvbuf[4096];
