@@ -106,6 +106,7 @@
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmdexec.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_busutil.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_cpi.cpp" />
+    <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_cpucontext.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_disas.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_elf2raw.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_exit.cpp" />
@@ -187,6 +188,7 @@
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmdexec.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_busutil.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_cpi.h" />
+    <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_cpucontext.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_disas.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_elf2raw.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_exit.h" />

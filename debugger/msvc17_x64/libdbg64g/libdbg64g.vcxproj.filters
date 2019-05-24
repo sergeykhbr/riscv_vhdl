@@ -179,6 +179,9 @@
     <ClCompile Include="..\..\src\libdbg64g\services\mem\rmemsim.cpp">
       <Filter>Source Files\services\mem</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_cpucontext.cpp">
+      <Filter>Source Files\services\exec\cmd</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\attribute.h">
@@ -417,6 +420,9 @@
     </ClInclude>
     <ClInclude Include="..\..\src\libdbg64g\services\mem\rmemsim.h">
       <Filter>Source Files\services\mem</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\libdbg64g\services\exec\cmd\cmd_cpucontext.h">
+      <Filter>Source Files\services\exec\cmd</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

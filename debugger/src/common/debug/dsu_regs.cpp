@@ -27,6 +27,7 @@ DsuRegisters::DsuRegisters(IService *parent) :
     soft_reset_(parent, "soft_reset", 0x18000),
     miss_access_cnt_(parent, "miss_access_cnt", 0x18008),
     miss_access_addr_(parent, "miss_access_addr", 0x18010),
+    cpu_context_(parent, "cpu_context", 0x18018),
     miss_access_shadow_(parent, "miss_access_shadow", 0),
     bus_util_(parent, "bus_util", 0x18040, 2*64) {
 }
@@ -36,6 +37,7 @@ void DsuRegisters::remap(uint64_t baseoff) {
     reg_region_.setBaseAddress(baseoff + reg_region_.getBaseAddress());
     dbg_region_.setBaseAddress(baseoff + dbg_region_.getBaseAddress());
     soft_reset_.setBaseAddress(baseoff + soft_reset_.getBaseAddress());
+    cpu_context_.setBaseAddress(baseoff + cpu_context_.getBaseAddress());
     miss_access_cnt_.setBaseAddress(
         baseoff + miss_access_cnt_.getBaseAddress());
     miss_access_addr_.setBaseAddress(
@@ -47,6 +49,12 @@ uint64_t DsuRegisters::SOFT_RESET_TYPE::aboutToWrite(uint64_t new_val) {
     new_val &= 0x1;
     DSU *p = static_cast<DSU *>(parent_);
     p->softReset(new_val ? true: false);
+    return new_val;
+}
+
+uint64_t DsuRegisters::CPU_CONTEXT_TYPE::aboutToWrite(uint64_t new_val) {
+    DSU *p = static_cast<DSU *>(parent_);
+    p->setCpuContext(static_cast<unsigned>(new_val));
     return new_val;
 }
 

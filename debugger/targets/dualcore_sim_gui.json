@@ -3,7 +3,7 @@
     'SimEnable':true,
     'GUI':true,
     'InitCommands':[
-                    'loadelf ./../../../examples/dhrystone21/makefiles/binarm/dhrystone21.elf',
+                    'loadelf ./../../../examples/zephyr/gcc711/zephyr.elf nocode',
                    ],
     'Description':'This configuration instantiates functional RISC-V model'
   },
@@ -14,14 +14,23 @@
                 ['WidgetsConfig',{
                   'Serial':'port1',
                   'AutoComplete':'autocmd0',
-                  'StepToSecHz':1000000.0,
+                  'StepToSecHz':12000000.0,
                   'PollingMs':250,
                   'EventsLoopMs':10,
                   'RegsViewWidget':{
-                     'RegList':[['r0'],['r1'],['r2'],['r3'],[""], ['r4'],['r5'],['r6'],['r7'],
-                                 ['r8'],['r9'],['r10'],['r11'],[""], ['fp'],['sp'],['lr'],['pc'],
-                                 [''],['npc'],[''],['cpsr']],
-                     'RegWidthBytes':4,
+                     'RegList':[['ra', 's0',  'a0'],
+                                ['sp', 's1',  'a1'],
+                                ['gp', 's2',  'a2'],
+                                ['tp', 's3',  'a3'],
+                                [''  , 's4',  'a4'],
+                                ['t0', 's5',  'a5'],
+                                ['t1', 's6',  'a6'],
+                                ['t2', 's7',  'a7'],
+                                ['t3', 's8',  ''],
+                                ['t4', 's9',  ''],
+                                ['t5', 's10', 'pc'],
+                                ['t6', 's11', 'npc']],
+                     'RegWidthBytes':8,
                   }
                 }],
                 ['CmdExecutor','cmdexec0']
@@ -97,11 +106,9 @@
           {'Name':'example0','Attr':[
                 ['LogLevel',4],
                 ['attr1','This is test attr value']]}]},
-    {'Class':'ArmSourceServiceClass','Instances':[
+    {'Class':'RiscvSourceServiceClass','Instances':[
           {'Name':'src0','Attr':[
-                ['LogLevel',4],
-                ['Endianess',0, '0=LSB (x86); 1=MSB(ARM)'],
-                ]}]},
+                ['LogLevel',4]]}]},
     {'Class':'GrethClass','Instances':[
           {'Name':'greth0','Attr':[
                 ['LogLevel',1],
@@ -113,37 +120,66 @@
                 ['Bus','axi0'],
                 ['Transport','udpboard']
                 ]}]},
-    {'Class':'CpuCortex_FunctionalClass','Instances':[
+    {'Class':'CpuRiver_FunctionalClass','Instances':[
           {'Name':'core0','Attr':[
                 ['Enable',true],
                 ['LogLevel',3],
+                ['HartID',0],
+                ['VendorID',0x000000F1],
+                ['ImplementationID',0x20190521],
                 ['SysBusMasterID',0,'Used to gather Bus statistic'],
                 ['SysBus','axi0'],
                 ['DbgBus','dbgbus0'],
                 ['CmdExecutor','cmdexec0'],
                 ['Tap','edcltap'],
-                ['SysBusWidthBytes',4,'Split dma transactions from CPU'],
-                ['StackTraceSize',64,'Number of 16-bytes entries'],
-                ['ResetVector',0x0000],
-                ['FreqHz',1000000],
-                ['SysBusMasterID',0],
+                ['SysBusWidthBytes',8,'Split dma transactions from CPU'],
                 ['SourceCode','src0'],
+                ['ListExtISA',['I','M','A','C','D']],
+                ['StackTraceSize',64,'Number of 16-bytes entries'],
+                ['FreqHz',12000000],
+                ['VectorTable',0x100,'Hardcoded in CSR mtvec value: interrupts vector table address'],
+                ['ResetVector',0x0000,'Initial intruction pointer value (config parameter)'],
                 ['GenerateRegTraceFile',false,'Generate Registers modification file to compare with SystemC'],
                 ['GenerateMemTraceFile',false,'Generate Memory access file to compare with SystemC'],
-                ['DefaultMode','Arm'],
+                ['CacheBaseAddress',0x10000000],
+                ['CacheAddressMask',0x7ffff],
+                ]}]},
+    {'Class':'CpuRiver_FunctionalClass','Instances':[
+          {'Name':'core1','Attr':[
+                ['Enable',true],
+                ['LogLevel',3],
+                ['HartID',1],
+                ['VendorID',0x000000F1],
+                ['ImplementationID',0x20190521],
+                ['SysBusMasterID',0,'Used to gather Bus statistic'],
+                ['SysBus','axi0'],
+                ['DbgBus','dbgbus1'],
+                ['CmdExecutor','cmdexec0'],
+                ['Tap','edcltap'],
+                ['SysBusWidthBytes',8,'Split dma transactions from CPU'],
+                ['SourceCode','src0'],
+                ['ListExtISA',['I','M','A','C','D']],
+                ['StackTraceSize',64,'Number of 16-bytes entries'],
+                ['FreqHz',12000000],
+                ['VectorTable',0x100,'Hardcoded in CSR mtvec value: interrupts vector table address'],
+                ['ResetVector',0x0000,'Initial intruction pointer value (config parameter)'],
+                ['GenerateRegTraceFile',false,'Generate Registers modification file to compare with SystemC'],
+                ['GenerateMemTraceFile',false,'Generate Memory access file to compare with SystemC'],
+                ['CacheBaseAddress',0x10000000],
+                ['CacheAddressMask',0x7ffff],
                 ]}]},
     {'Class':'MemorySimClass','Instances':[
           {'Name':'bootrom0','Attr':[
                 ['LogLevel',1],
-                ['InitFile','../../../examples/bootarm/makefiles/bin/bootimage.hex'],
+                ['InitFile','../../../examples/bootrom_tests/linuxbuild/bin/bootrom_tests.hex'],
                 ['ReadOnly',true],
                 ['BaseAddress',0x0],
-                ['Length',8192]
+                ['Length',16384]
                 ]}]},
     {'Class':'MemorySimClass','Instances':[
           {'Name':'fwimage0','Attr':[
                 ['LogLevel',1],
-                ['InitFile','../../../examples/dhrystone21/makefiles/binarm/dhrystone21.hex'],
+                ['InitFile','../../../examples/zephyr/gcc711/zephyr.hex'],
                 ['ReadOnly',true],
                 ['BaseAddress',0x00100000],
                 ['Length',0x40000]
@@ -151,7 +187,7 @@
     {'Class':'MemorySimClass','Instances':[
           {'Name':'sram0','Attr':[
                 ['LogLevel',1],
-                ['InitFile','../../../examples/dhrystone21/makefiles/binarm/dhrystone21.hex'],
+                ['InitFile','../../../examples/zephyr/gcc711/zephyr.hex'],
                 ['ReadOnly',false],
                 ['BaseAddress',0x10000000],
                 ['Length',0x80000]
@@ -192,7 +228,7 @@
                 ['LogLevel',1],
                 ['BaseAddress',0x80080000],
                 ['Length',0x20000],
-                ['CPU',['core0']],
+                ['CPU',['core0','core1']],
                 ['IrqControl',['irqctrl0','irq4']],
                 ['MapList',[['dsu0','csr_region'],
                             ['dsu0','reg_region'],
@@ -220,7 +256,7 @@
                 ]}]},
     {'Class':'GPTimersClass','Instances':[
           {'Name':'gptmr0','Attr':[
-                ['LogLevel',4],
+                ['LogLevel',1],
                 ['BaseAddress',0x80005000],
                 ['Length',4096],
                 ['IrqControl',['irqctrl0','irq3']],
@@ -245,6 +281,12 @@
                 ['Tech',0],
                 ['AdcDetector',0xff]
                 ]}]},
+    {'Class':'FpuFunctionalClass','Instances':[
+          {'Name':'fpu0','Attr':[
+                ['LogLevel',4],
+                ['CmdExecutor','cmdexec0'],
+                ['RandomTestTotal',1000000,'Number of tests for each instruction using rand() method'],
+                ]}]},
     {'Class':'BusGenericClass','Instances':[
           {'Name':'axi0','Attr':[
                 ['LogLevel',3],
@@ -261,6 +303,7 @@
                 ['MapList',[['core0','pc'],
                             ['core0','npc'],
                             ['core0','status'],
+                            ['core0','csr'],
                             ['core0','regs'],
                             ['core0','stepping_cnt'],
                             ['core0','clock_cnt'],
@@ -271,6 +314,28 @@
                             ['core0','br_fetch_instr'],
                             ['core0','br_hw_add'],
                             ['core0','br_hw_remove'],
+                            ['core0','br_flush_addr'],
+                           ]]
+                ]}]},
+    {'Class':'BusGenericClass','Instances':[
+          {'Name':'dbgbus1','Attr':[
+                ['LogLevel',3],
+                ['UseHash',false],
+                ['MapList',[['core1','pc'],
+                            ['core1','npc'],
+                            ['core1','status'],
+                            ['core1','csr'],
+                            ['core1','regs'],
+                            ['core1','stepping_cnt'],
+                            ['core1','clock_cnt'],
+                            ['core1','executed_cnt'],
+                            ['core1','stack_trace_cnt'],
+                            ['core1','stack_trace_buf'],
+                            ['core1','br_fetch_addr'],
+                            ['core1','br_fetch_instr'],
+                            ['core1','br_hw_add'],
+                            ['core1','br_hw_remove'],
+                            ['core1','br_flush_addr'],
                            ]]
                 ]}]},
     {'Class':'HardResetClass','Instances':[

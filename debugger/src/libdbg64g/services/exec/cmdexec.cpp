@@ -36,6 +36,7 @@
 #include "cmd/cmd_stack.h"
 #include "cmd/cmd_loadbin.h"
 #include "cmd/cmd_elf2raw.h"
+#include "cmd/cmd_cpucontext.h"
 
 namespace debugger {
 
@@ -70,6 +71,7 @@ void CmdExecutor::postinitService() {
     // Core commands registration:
     registerCommand(new CmdBusUtil(itap_));
     registerCommand(new CmdCpi(itap_));
+    registerCommand(new CmdCpuContext(itap_));
     registerCommand(new CmdDisas(itap_));
     registerCommand(new CmdElf2Raw(itap_));
     registerCommand(new CmdExit(itap_));

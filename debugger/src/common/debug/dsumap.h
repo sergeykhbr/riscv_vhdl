@@ -106,7 +106,8 @@ struct DsuMapType {
             uint64_t soft_reset;
             uint64_t miss_access_cnt;
             uint64_t miss_access_addr;
-            uint64_t rsrv[5];
+            uint64_t cpu_context;
+            uint64_t rsrv[4];
             // Bus utilization registers
             struct mst_bus_util_type {
                 uint64_t w_cnt;

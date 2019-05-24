@@ -54,6 +54,7 @@ SOURCES = \
 	elfreader \
 	cmd_busutil \
 	cmd_cpi \
+	cmd_cpucontext \
 	cmd_disas \
 	cmd_halt \
 	cmd_isrunning \

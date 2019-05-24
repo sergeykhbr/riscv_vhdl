@@ -177,7 +177,7 @@
                 ['LogLevel',1],
                 ['BaseAddress',0x80080000],
                 ['Length',0x20000],
-                ['CPU','core0'],
+                ['CPU',['core0']],
                 ['IrqControl',['irqctrl0','irq4']],
                 ['MapList',[['dsu0','csr_region'],
                             ['dsu0','reg_region'],
@@ -185,6 +185,7 @@
                             ['dsu0','soft_reset'],
                             ['dsu0','miss_access_cnt'],
                             ['dsu0','miss_access_addr'],
+                            ['dsu0','cpu_context'],
                             ['dsu0','bus_util'],
                            ]]
                 ]}]},

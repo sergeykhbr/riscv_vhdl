@@ -27,6 +27,7 @@ DSU::DSU(const char *name) :
     registerInterface(static_cast<IDsuGeneric *>(this));
     registerAttribute("CPU", &cpu_);
     registerAttribute("IrqControl", &irqctrl_);
+    icpulist_.make_list(0);
 }
 
 DSU::~DSU() {
@@ -36,16 +37,18 @@ void DSU::postinitService() {
     RegMemBankGeneric::postinitService();
     remap(baseAddress_.to_uint64());
 
-    icpu_ = static_cast<ICpuGeneric *>(
-        RISCV_get_service_iface(cpu_.to_string(), IFACE_CPU_GENERIC));
-    if (!icpu_) {
-        RISCV_error("Can't find ICpuGeneric interface %s", cpu_.to_string());
-    }
-    icpurst_ = static_cast<IResetListener *>(
-        RISCV_get_service_iface(cpu_.to_string(), IFACE_RESET_LISTENER));
-    if (!icpurst_) {
-        RISCV_error("Can't find IResetListener interface %s",
-                    cpu_.to_string());
+    ICpuGeneric *icpu;
+    for (unsigned i = 0; i < cpu_.size(); i++) {
+        icpu = static_cast<ICpuGeneric *>(
+            RISCV_get_service_iface(cpu_[i].to_string(), IFACE_CPU_GENERIC));
+        if (!icpu) {
+            RISCV_error("Can't find ICpuGeneric interface %s",
+            cpu_[i].to_string());
+        } else {
+            AttributeType item;
+            item.make_iface(icpu);
+            icpulist_.add_to_list(&item);
+        }
     }
     iirq_ = static_cast<IWire *>(
         RISCV_get_service_port_iface(irqctrl_[0u].to_string(),
@@ -56,9 +59,7 @@ void DSU::postinitService() {
     }
 
     // Set default context
-    csr_region_.setCpu(icpu_);
-    reg_region_.setCpu(icpu_);
-    dbg_region_.setCpu(icpu_);
+    setCpuContext(0);
 }
 
 void DSU::incrementRdAccess(int mst_id) {
@@ -79,10 +80,30 @@ void DSU::raiseMissaccess(uint64_t adr) {
 }
 
 void DSU::softReset(bool val) {
-    if (!icpurst_) {
+    IResetListener *irst;
+    for (unsigned i = 0; i < cpu_.size(); i++) {
+        irst = static_cast<IResetListener *>(
+            RISCV_get_service_iface(cpu_[i].to_string(),
+                                    IFACE_RESET_LISTENER));
+        if (!irst) {
+            RISCV_error("Can't find IResetListener interface %s",
+                        cpu_[i].to_string());
+        } else {
+            irst->reset(val);
+        }
+    }
+}
+
+void DSU::setCpuContext(unsigned n) {
+    if (n >= icpulist_.size()) {
+        RISCV_error("Context index out of range %d", n);
         return;
     }
-    icpurst_->reset(val);
+    ICpuGeneric *pcpu = static_cast<ICpuGeneric *>(icpulist_[n].to_iface());
+    csr_region_.setCpu(pcpu);
+    reg_region_.setCpu(pcpu);
+    dbg_region_.setCpu(pcpu);
+    cpu_context_.setValue(n);
 }
 
 }  // namespace debugger
