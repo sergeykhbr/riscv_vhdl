@@ -47,10 +47,14 @@ package config_common is
 --! @warning DSU available only for \e "RIVER" processor.
 constant CFG_COMMON_RIVER_CPU_ENABLE : boolean := true;
 
+--! @brief   Dual-core configuration enabling
+--! @details This config parameter used only with CPU River
+constant CFG_COMMON_DUAL_CORE_ENABLE : boolean := true;
+
 --! @brief   HEX-image for the initialization of the Boot ROM.
 --! @details This file is used by \e inferred ROM implementation.
 constant CFG_SIM_BOOTROM_HEX : string := 
-              CFG_TOPDIR & "examples/boot/linuxbuild/bin/bootimage.hex";
+              CFG_TOPDIR & "examples/bootrom_tests/linuxbuild/bin/bootrom_tests.hex";
 
 --! @brief   HEX-image for the initialization of the FwImage ROM.
 --! @details This file is used by \e inferred ROM implementation.
@@ -62,7 +66,7 @@ constant CFG_SIM_FWIMAGE_HEX : string :=
 --!
 --! @details Read Only unique platform identificator that could be
 --!          read by firmware from the Plug'n'Play support module.
-constant CFG_HW_ID : std_logic_vector(31 downto 0) := X"20180514";
+constant CFG_HW_ID : std_logic_vector(31 downto 0) := X"20190524";
 
 --! @brief Enabling Ethernet MAC interface.
 --! @details By default MAC module enables support of the debug feature EDCL.

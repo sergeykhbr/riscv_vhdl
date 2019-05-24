@@ -53,8 +53,8 @@ entity axi_dsu is
     o_cfg  : out nasti_slave_config_type;
     i_axi  : in nasti_slave_in_type;
     o_axi  : out nasti_slave_out_type;
-    o_dporti : out dport_in_type;
-    i_dporto : in dport_out_type;
+    o_dporti : out dport_in_vector;
+    i_dporto : in dport_out_vector;
     --! reset CPU and interrupt controller
     o_soft_rst : out std_logic;
     -- Platfrom run-time statistic
@@ -95,6 +95,7 @@ type registers is record
   soft_rst : std_logic;
   -- Platform statistic:
   clk_cnt : std_logic_vector(63 downto 0);
+  cpu_context : std_logic_vector(log2x(CFG_CORES_PER_DSU_MAX)-1 downto 0);
   miss_irq : std_logic;
   miss_access_cnt : std_logic_vector(63 downto 0);
   miss_access_addr : std_logic_vector(CFG_NASTI_ADDR_BITS-1 downto 0);
@@ -109,17 +110,15 @@ begin
                       i_bus_util_w, i_bus_util_r, r)
     variable v : registers;
     variable mux_rdata : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
-    variable vdporti : dport_in_type;
+    variable vdporti : dport_in_vector;
     variable iraddr : integer;
     variable wb_bus_util_map : mst_utilization_map_type;
+    variable cpuidx : integer;
   begin
     v := r;
     v.rdata := (others => '0');
-    vdporti.valid := '0';
-    vdporti.write := '0';
-    vdporti.region := (others => '0');
-    vdporti.addr := (others => '0');
-    vdporti.wdata := (others => '0');
+    vdporti := (others => dport_in_none);
+    cpuidx := conv_integer(r.cpu_context);
     
     -- Update statistic:
     v.clk_cnt := r.clk_cnt + 1;
@@ -180,6 +179,8 @@ begin
                   v.rdata := r.miss_access_cnt;
                 when 2 =>
                   v.rdata(CFG_NASTI_ADDR_BITS-1 downto 0) := r.miss_access_addr;
+                when 3 =>
+                  v.rdata(log2x(CFG_CORES_PER_DSU_MAX)-1 downto 0) := r.cpu_context;
                 when others =>
                   if (iraddr >= 8) and (iraddr < (8 + 2*CFG_NASTI_MASTER_TOTAL)) then
                       v.rdata := wb_bus_util_map(iraddr - 8);
@@ -188,11 +189,11 @@ begin
                 v.state := ready;
               else
                 --! debug port regions: 0 to 2
-                vdporti.valid := '1';
-                vdporti.write := '0';
-                vdporti.region := r.bank_axi.raddr(0)(16 downto 15);
-                vdporti.addr := r.bank_axi.raddr(0)(14 downto 3);
-                vdporti.wdata := (others => '0');
+                vdporti(cpuidx).valid := '1';
+                vdporti(cpuidx).write := '0';
+                vdporti(cpuidx).region := r.bank_axi.raddr(0)(16 downto 15);
+                vdporti(cpuidx).addr := r.bank_axi.raddr(0)(14 downto 3);
+                vdporti(cpuidx).wdata := (others => '0');
                 v.state := dport_response;
               end if;
            end if;
@@ -203,20 +204,22 @@ begin
              case conv_integer(r.waddr(11 downto 0)) is
              when 0 =>
                v.soft_rst := r.wdata(0);
+             when 3 =>
+               v.cpu_context := r.wdata(log2x(CFG_CORES_PER_DSU_MAX)-1 downto 0);
              when others =>
              end case;
            else
              --! debug port regions: 0 to 2
-             vdporti.valid := '1';
-             vdporti.write := '1';
-             vdporti.region := r.waddr(13 downto 12);
-             vdporti.addr := r.waddr(11 downto 0);
-             vdporti.wdata := r.wdata;
+             vdporti(cpuidx).valid := '1';
+             vdporti(cpuidx).write := '1';
+             vdporti(cpuidx).region := r.waddr(13 downto 12);
+             vdporti(cpuidx).addr := r.waddr(11 downto 0);
+             vdporti(cpuidx).wdata := r.wdata;
            end if;
       when dport_response =>
              v.state := ready;
              v.bank_axi.rwaitready := '1';
-             v.rdata := i_dporto.rdata;
+             v.rdata := i_dporto.rdata(cpuidx);
       when ready =>
              v.state := reading;
       when others =>
@@ -239,6 +242,7 @@ begin
        v.wdata := (others => '0');
        v.rdata := (others => '0');
        v.soft_rst := '0';
+       v.cpu_context := (others => '0');
        v.clk_cnt := (others => '0');
        v.miss_irq := '0';
        v.miss_access_cnt := (others => '0');

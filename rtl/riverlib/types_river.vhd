@@ -32,6 +32,8 @@ use riverlib.river_cfg.all;
 --! @brief   Declaration of components visible on SoC top level.
 package types_river is
 
+constant integer CFG_CORES_PER_DSU_MAX := 2;
+
 type dport_in_type is record
     valid : std_logic;
     write : std_logic;
@@ -43,10 +45,20 @@ end record;
 constant dport_in_none : dport_in_type := (
   '0', '0', (others => '0'), (others => '0'), (others => '0'));
 
+type dport_in_vector is array (0 to CFG_CORES_PER_DSU_MAX-1) 
+       of dport_in_none;
+
+
 type dport_out_type is record
     ready : std_logic;
     rdata : std_logic_vector(RISCV_ARCH-1 downto 0);
 end record;
+
+constant dport_out_none : dport_out_type := (
+    '1', (others => '0'));
+
+type dport_out_vector is array (0 to CFG_CORES_PER_DSU_MAX-1) 
+     of dport_out_none;
 
   --! @brief   Declaration of the Debug Support Unit with the AXI interface.
   --! @details This module provides access to processors CSRs via HostIO bus.
@@ -73,8 +85,8 @@ end record;
     o_cfg  : out nasti_slave_config_type;
     i_axi  : in nasti_slave_in_type;
     o_axi  : out nasti_slave_out_type;
-    o_dporti : out dport_in_type;
-    i_dporto : in dport_out_type;
+    o_dporti : out dport_in_vector;
+    i_dporto : in dport_out_vector;
     o_soft_rst : out std_logic;
     i_miss_irq  : in std_logic;
     i_miss_addr : in std_logic_vector(CFG_NASTI_ADDR_BITS-1 downto 0);

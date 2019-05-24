@@ -1,5 +1,5 @@
 --!
---! Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+--! Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
 --!
 --! Licensed under the Apache License, Version 2.0 (the "License");
 --! you may not use this file except in compliance with the License.
@@ -131,8 +131,8 @@ architecture arch_riscv_soc of riscv_soc is
   signal slv_cfg : nasti_slave_cfg_vector;
   signal mst_cfg : nasti_master_cfg_vector;
   signal core_irqs : std_logic_vector(CFG_CORE_IRQ_TOTAL-1 downto 0);
-  signal dport_i : dport_in_type;
-  signal dport_o : dport_out_type;
+  signal dport_i : dport_in_vector;
+  signal dport_o : dport_out_vector;
   signal wb_miss_addr : std_logic_vector(CFG_NASTI_ADDR_BITS-1 downto 0);
   signal wb_bus_util_w : std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0);
   signal wb_bus_util_r : std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0);
@@ -191,12 +191,31 @@ river_ena : if CFG_COMMON_RIVER_CPU_ENABLE generate
     i_msti   => aximi(CFG_NASTI_MASTER_CACHED),
     o_msto   => aximo(CFG_NASTI_MASTER_CACHED),
     o_mstcfg => mst_cfg(CFG_NASTI_MASTER_CACHED),
-    i_dport => dport_i,
-    o_dport => dport_o,
+    i_dport => dport_i(0),
+    o_dport => dport_o(0),
     i_ext_irq => core_irqs(CFG_CORE_IRQ_MEIP)
   );
-  aximo(CFG_NASTI_MASTER_UNCACHED) <= nasti_master_out_none;
-  mst_cfg(CFG_NASTI_MASTER_UNCACHED) <= nasti_master_config_none;
+
+  dualcore_ena : if CFG_COMMON_DUAL_CORE_ENABLE generate
+      cpu1 : river_amba port generic (
+        hartid => 1
+      ) map ( 
+        i_nrst   => w_bus_nrst,
+        i_clk    => i_clk,
+        i_msti   => aximi(CFG_NASTI_MASTER_UNCACHED),
+        o_msto   => aximo(CFG_NASTI_MASTER_UNCACHED),
+        o_mstcfg => mst_cfg(CFG_NASTI_MASTER_UNCACHED),
+        i_dport => dport_i(1),
+        o_dport => dport_o(1),
+        i_ext_irq => '0'  -- todo: 
+      );
+  end generate;
+
+  dualcore_dis : if not CFG_COMMON_DUAL_CORE_ENABLE generate
+      aximo(CFG_NASTI_MASTER_UNCACHED) <= nasti_master_out_none;
+      mst_cfg(CFG_NASTI_MASTER_UNCACHED) <= nasti_master_config_none;
+  end generate;
+
 end generate;
 
 --! DSU doesn't support Rocket-chip CPU
@@ -250,7 +269,7 @@ end generate;
 dsu_dis : if not CFG_DSU_ENABLE generate
     slv_cfg(CFG_NASTI_SLAVE_DSU) <= nasti_slave_config_none;
     axiso(CFG_NASTI_SLAVE_DSU) <= nasti_slave_out_none;
-    dport_i <= dport_in_none;
+    dport_i <= (others => dport_in_none);
 end generate;
 
   ------------------------------------
@@ -266,7 +285,7 @@ end generate;
     i_tms  => i_jtag_tms,
     i_tdi  => i_jtag_tdi,
     o_tdo  => o_jtag_tdo,
- 	 o_jtag_vref => o_jtag_vref,
+    o_jtag_vref => o_jtag_vref,
     i_msti   => aximi(CFG_AXI_MASTER_JTAG),
     o_msto   => aximo(CFG_AXI_MASTER_JTAG),
     o_mstcfg => mst_cfg(CFG_AXI_MASTER_JTAG)
