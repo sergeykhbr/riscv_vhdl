@@ -183,9 +183,9 @@ begin
 
   --! @brief RISC-V Processor core (River or Rocket).
 river_ena : if CFG_COMMON_RIVER_CPU_ENABLE generate
-  cpu0 : river_amba port generic (
+  cpu0 : river_amba generic map (
     hartid => 0
-  ) map ( 
+  ) port map ( 
     i_nrst   => w_bus_nrst,
     i_clk    => i_clk,
     i_msti   => aximi(CFG_NASTI_MASTER_CACHED),
@@ -197,9 +197,9 @@ river_ena : if CFG_COMMON_RIVER_CPU_ENABLE generate
   );
 
   dualcore_ena : if CFG_COMMON_DUAL_CORE_ENABLE generate
-      cpu1 : river_amba port generic (
+      cpu1 : river_amba generic map (
         hartid => 1
-      ) map ( 
+      ) port map ( 
         i_nrst   => w_bus_nrst,
         i_clk    => i_clk,
         i_msti   => aximi(CFG_NASTI_MASTER_UNCACHED),

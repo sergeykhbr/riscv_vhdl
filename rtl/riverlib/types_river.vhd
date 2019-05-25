@@ -32,7 +32,7 @@ use riverlib.river_cfg.all;
 --! @brief   Declaration of components visible on SoC top level.
 package types_river is
 
-constant integer CFG_CORES_PER_DSU_MAX := 2;
+constant CFG_CORES_PER_DSU_MAX : integer := 2;
 
 type dport_in_type is record
     valid : std_logic;
@@ -46,7 +46,7 @@ constant dport_in_none : dport_in_type := (
   '0', '0', (others => '0'), (others => '0'), (others => '0'));
 
 type dport_in_vector is array (0 to CFG_CORES_PER_DSU_MAX-1) 
-       of dport_in_none;
+       of dport_in_type;
 
 
 type dport_out_type is record
@@ -58,7 +58,7 @@ constant dport_out_none : dport_out_type := (
     '1', (others => '0'));
 
 type dport_out_vector is array (0 to CFG_CORES_PER_DSU_MAX-1) 
-     of dport_out_none;
+     of dport_out_type;
 
   --! @brief   Declaration of the Debug Support Unit with the AXI interface.
   --! @details This module provides access to processors CSRs via HostIO bus.

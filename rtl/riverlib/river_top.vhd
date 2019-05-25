@@ -80,10 +80,9 @@ architecture arch_RiverTop of RiverTop is
 
 begin
 
-    proc0 : Processor port 
-      generic (
+    proc0 : Processor generic map(
         hartid => hartid
-      ) map (
+      ) port map (
         i_clk => i_clk,
         i_nrst => i_nrst,
         i_req_ctrl_ready => w_req_ctrl_ready,

@@ -356,9 +356,9 @@ begin
         o_dport_rdata => ireg.dport_rdata,
         o_ra => ireg.ra);   -- Return address
 
-    csr0 : CsrRegs port generic (
+    csr0 : CsrRegs generic map (
         hartid => hartid
-      ) map (
+      ) port map (
         i_clk => i_clk,
         i_nrst => i_nrst,
         i_xret => w.e.xret,

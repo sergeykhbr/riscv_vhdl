@@ -79,9 +79,9 @@ begin
   o_mstcfg <= xconfig;
   w_resp_mem_data_valid <= i_msti.r_valid or (r.b_ready and i_msti.b_valid);
   
-  river0 : RiverTop  port generic (
+  river0 : RiverTop  generic map (
       hartid => hartid
-    ) map (
+    ) port map (
       i_clk => i_clk,
       i_nrst => i_nrst,
       i_req_mem_ready => w_req_mem_ready,

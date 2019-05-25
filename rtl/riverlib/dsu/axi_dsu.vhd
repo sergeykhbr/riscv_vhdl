@@ -219,7 +219,7 @@ begin
       when dport_response =>
              v.state := ready;
              v.bank_axi.rwaitready := '1';
-             v.rdata := i_dporto.rdata(cpuidx);
+             v.rdata := i_dporto(cpuidx).rdata;
       when ready =>
              v.state := reading;
       when others =>
