@@ -214,6 +214,7 @@ river_ena : if CFG_COMMON_RIVER_CPU_ENABLE generate
   dualcore_dis : if not CFG_COMMON_DUAL_CORE_ENABLE generate
       aximo(CFG_NASTI_MASTER_UNCACHED) <= nasti_master_out_none;
       mst_cfg(CFG_NASTI_MASTER_UNCACHED) <= nasti_master_config_none;
+		dport_o(1) <= dport_out_none;
   end generate;
 
 end generate;

@@ -25,6 +25,7 @@ void fw_malloc_init() {
     pool->allocated_sz = (sizeof(malloc_type) + 7) & ~0x7ull;
     pool->end = (ADDR_NASTI_SLAVE_SRAM + pool->allocated_sz);
     pool->data_cnt = 0;
+    __sync_synchronize();   // gcc mem barrier to avoi re-ordering
 
     // RTL Simulation Debug purpose
     pnp->malloc_addr = pool->end;

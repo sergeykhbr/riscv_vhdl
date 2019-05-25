@@ -6,7 +6,7 @@ OBJDUMP=riscv64-unknown-elf-objdump
 
 FPU_ENABLED=0
 
-CFLAGS= -c -g -static -std=gnu99 -O0 -fno-common -fno-builtin-printf -DSYS_HZ=12000000
+CFLAGS= -c -g -static -std=gnu99 -O0 -fno-common -fno-builtin-printf -DSYS_HZ=40000000
 ifeq ($(FPU_ENABLED), 1)
   CFLAGS += -march=rv64imafd -DFPU_ENABLED
 else

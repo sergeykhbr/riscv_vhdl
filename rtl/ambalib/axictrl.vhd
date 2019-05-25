@@ -38,8 +38,8 @@ end;
 architecture arch_axictrl of axictrl is
 
   constant MISS_ACCESS_SLAVE : nasti_slave_out_type := (
-      '1', '1', '0', NASTI_RESP_EXOKAY,
-      (others=>'0'), '0', '1', '0', NASTI_RESP_EXOKAY, (others=>'1'), 
+      '1', '1', '1', NASTI_RESP_EXOKAY,
+      (others=>'0'), '0', '1', '1', NASTI_RESP_EXOKAY, (others=>'1'), 
       '1', (others=>'0'), '0');
 
   type nasti_master_out_vector_miss is array (0 to CFG_NASTI_MASTER_TOTAL) 
