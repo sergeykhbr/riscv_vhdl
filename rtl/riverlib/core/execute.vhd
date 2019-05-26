@@ -34,12 +34,7 @@ entity InstrExecute is
     i_compressed : in std_logic;                                -- C-extension (2-bytes length)
     i_isa_type : in std_logic_vector(ISA_Total-1 downto 0);     -- Type of the instruction's structure (ISA spec.)
     i_ivec : in std_logic_vector(Instr_Total-1 downto 0);       -- One pulse per supported instruction.
-    i_ie : in std_logic;                                        -- Interrupt enable bit
-    i_mtvec : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);   -- Interrupt descriptor table
-    i_mode : in std_logic_vector(1 downto 0);                   -- Current processor mode
-    i_break_mode : in std_logic;                                -- Behaviour on EBREAK instruction: 0 = halt; 1 = generate trap
     i_unsup_exception : in std_logic;                           -- Unsupported instruction exception
-    i_ext_irq : in std_logic;                                   -- External interrupt from PLIC (todo: timer & software interrupts)
     i_dport_npc_write : in std_logic;                           -- Write npc value from debug port
     i_dport_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- Debug port npc value to write
 
@@ -50,18 +45,14 @@ entity InstrExecute is
     o_res_addr : out std_logic_vector(4 downto 0);              -- Address to store result of the instruction (0=do not store)
     o_res_data : out std_logic_vector(RISCV_ARCH-1 downto 0);   -- Value to store
     o_pipeline_hold : out std_logic;                            -- Hold pipeline while 'writeback' not done or multi-clock instruction.
-    o_xret : out std_logic;                                     -- XRET instruction: MRET, URET or other.
     o_csr_addr : out std_logic_vector(11 downto 0);             -- CSR address. 0 if not a CSR instruction with xret signals mode switching
     o_csr_wena : out std_logic;                                 -- Write new CSR value
     i_csr_rdata : in std_logic_vector(RISCV_ARCH-1 downto 0);   -- CSR current value
     o_csr_wdata : out std_logic_vector(RISCV_ARCH-1 downto 0);  -- CSR new value
     i_trap_valid : in std_logic;
     i_trap_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-
-    o_trap_ena : out std_logic;                                 -- Trap occurs  pulse
-    o_trap_code : out std_logic_vector(4 downto 0);             -- bit[4] : 1=interrupt; 0=exception; bits[3:0]=code
-    o_trap_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- trap on pc
     -- exceptions:
+    o_ex_npc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     o_ex_illegal_instr : out std_logic;
     o_ex_unalign_store : out std_logic;
     o_ex_unalign_load : out std_logic;
@@ -81,7 +72,9 @@ entity InstrExecute is
     o_instr : out std_logic_vector(31 downto 0);                -- Valid instruction value
     o_breakpoint : out std_logic;                               -- ebreak instruction
     o_call : out std_logic;                                     -- CALL pseudo instruction detected
-    o_ret : out std_logic                                       -- RET pseudoinstruction detected
+    o_ret : out std_logic;                                      -- RET pseudoinstruction detected
+    o_mret : out std_logic;                                     -- MRET instruction
+    o_uret : out std_logic                                      -- URET instruction
   );
 end; 
  
@@ -228,25 +221,26 @@ begin
   comb : process(i_nrst, i_pipeline_hold, i_d_valid, i_d_pc, i_d_instr,
                  i_wb_done, i_memop_load, i_memop_store, i_memop_sign_ext,
                  i_memop_size, i_unsigned_op, i_rv32, i_compressed, i_isa_type, i_ivec,
-                 i_rdata1, i_rdata2, i_csr_rdata, i_trap_valid, i_trap_pc, i_ext_irq, i_dport_npc_write,
-                 i_dport_npc, i_ie, i_mtvec, i_mode, i_break_mode, i_unsup_exception,
+                 i_rdata1, i_rdata2, i_csr_rdata, i_trap_valid, i_trap_pc, i_dport_npc_write,
+                 i_dport_npc, i_unsup_exception,
                  wb_arith_res, w_arith_valid, w_arith_busy, w_hazard_detected,
                  wb_sll, wb_sllw, wb_srl, wb_srlw, wb_sra, wb_sraw, r)
     variable v : RegistersType;
     variable w_exception_store : std_logic;
     variable w_exception_load : std_logic;
-    variable w_exception_xret : std_logic;
     variable wb_radr1 : std_logic_vector(4 downto 0);
     variable wb_rdata1 : std_logic_vector(RISCV_ARCH-1 downto 0);
     variable wb_radr2 : std_logic_vector(4 downto 0);
     variable wb_rdata2 : std_logic_vector(RISCV_ARCH-1 downto 0);
-    variable w_xret : std_logic;
+    variable w_mret : std_logic;
+    variable w_uret : std_logic;
     variable w_csr_wena : std_logic;
     variable wb_res_addr : std_logic_vector(4 downto 0);
     variable wb_csr_addr  : std_logic_vector(11 downto 0);
     variable wb_csr_wdata : std_logic_vector(RISCV_ARCH-1 downto 0);
     variable wb_res : std_logic_vector(RISCV_ARCH-1 downto 0);
     variable wb_npc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    variable wb_ex_npc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     variable wb_off : std_logic_vector(RISCV_ARCH-1 downto 0);
     variable wb_mask_i31 : std_logic_vector(RISCV_ARCH-1 downto 0);    -- Bits depending instr[31] bits
     variable wb_sum64 : std_logic_vector(RISCV_ARCH-1 downto 0);
@@ -282,7 +276,8 @@ begin
 
     wb_radr1 := (others => '0');
     wb_radr2 := (others => '0');
-    w_xret := '0';
+    w_mret := '0';
+    w_uret := '0';
     w_csr_wena := '0';
     wb_res_addr := (others => '0');
     wb_csr_addr := (others => '0');
@@ -422,16 +417,19 @@ begin
         wb_res(31 downto 0) := i_d_pc + opcode_len;
         wb_npc := wb_rdata1(BUS_ADDR_WIDTH-1 downto 0) + wb_rdata2(BUS_ADDR_WIDTH-1 downto 0);
         wb_npc(0) := '0';
-    elsif wv(Instr_MRET) = '1' or wv(Instr_URET) = '1' then
+    elsif wv(Instr_MRET) = '1' then
         wb_res(63 downto 32) := (others => '0');
         wb_res(31 downto 0) := i_d_pc + opcode_len;
-        w_xret := i_d_valid and w_pc_valid;
+        w_mret := i_d_valid and w_pc_valid;
         w_csr_wena := '0';
-        if wv(Instr_URET) = '1' then
-            wb_csr_addr := CSR_uepc;
-        else
-            wb_csr_addr := CSR_mepc;
-        end if;
+        wb_csr_addr := CSR_mepc;
+        wb_npc := i_csr_rdata(BUS_ADDR_WIDTH-1 downto 0);
+    elsif wv(Instr_URET) = '1' then
+        wb_res(63 downto 32) := (others => '0');
+        wb_res(31 downto 0) := i_d_pc + opcode_len;
+        w_uret := i_d_valid and w_pc_valid;
+        w_csr_wena := '0';
+        wb_csr_addr := CSR_uepc;
         wb_npc := i_csr_rdata(BUS_ADDR_WIDTH-1 downto 0);
     else
         -- Instr_HRET, Instr_SRET, Instr_FENCE, Instr_FENCE_I:
@@ -453,7 +451,6 @@ begin
     v.memop_size := (others => '0');
     w_exception_store := '0';
     w_exception_load := '0';
-    w_exception_xret := '0';
 
     if ((wv(Instr_LD) = '1' and wb_memop_addr(2 downto 0) /= "000")
         or ((wv(Instr_LW) or wv(Instr_LWU)) = '1' and wb_memop_addr(1 downto 0) /= "00")
@@ -465,16 +462,7 @@ begin
         or (wv(Instr_SH) = '1' and wb_memop_addr(0) /= '0')) then
         w_exception_store := not w_hazard_detected;
     end if;
-    if (wv(Instr_MRET) = '1' and i_mode /= PRV_M) 
-        or (wv(Instr_URET) = '1' and i_mode /= PRV_U) then
-        w_exception_xret := '1';
-    end if;
 
-    o_ex_illegal_instr <= (i_unsup_exception and w_pc_valid) or w_exception_xret;
-    o_ex_unalign_store <= w_exception_store;
-    o_ex_unalign_load <= w_exception_load;
-    o_ex_breakpoint <= wv(Instr_EBREAK);
-    o_ex_ecall <= wv(Instr_ECALL);
 
     --! Default number of cycles per instruction = 0 (1 clock per instr)
     --! If instruction is multicycle then modify this value.
@@ -595,17 +583,27 @@ begin
         (w_d_acceptable and (not w_multi_ena)) or w_multi_valid;
     o_pre_valid <= w_d_valid;
 
+    o_ex_illegal_instr <= (i_unsup_exception and w_pc_valid) and w_d_valid;
+    o_ex_unalign_store <= w_exception_store and w_d_valid;
+    o_ex_unalign_load <= w_exception_load and w_d_valid;
+    o_ex_breakpoint <= wv(Instr_EBREAK) and w_d_valid;
+    o_ex_ecall <= wv(Instr_ECALL) and w_d_valid;
+
     v.call := '0';
     v.ret := '0';
+    wb_ex_npc := (others => '0');
     if i_dport_npc_write = '1' then
         v.npc := i_dport_npc;
     elsif w_d_valid = '1' then
-        if i_trap_valid = '1' then
-            v.npc := i_trap_pc;
-        elsif w_multi_valid = '1' then
+        if w_multi_valid = '1' then
             v.pc := r.multi_pc;
             v.instr := r.multi_instr;
-            v.npc := r.multi_npc;
+            if i_trap_valid = '1' then
+                v.npc := i_trap_pc;
+                wb_ex_npc := r.multi_npc;
+            else
+                v.npc := r.multi_npc;
+            end if;
             v.memop_load := '0';
             v.memop_sign_ext := '0';
             v.memop_store := '0';
@@ -614,7 +612,12 @@ begin
         else
             v.pc := i_d_pc;
             v.instr := i_d_instr;
-            v.npc := wb_npc;
+            if i_trap_valid = '1' then
+                v.npc := i_trap_pc;
+                wb_ex_npc := wb_npc;
+            else
+                v.npc := wb_npc;
+            end if;
             v.memop_load := w_memop_load;
             v.memop_sign_ext := w_memop_sign_ext;
             v.memop_store := w_memop_store;
@@ -708,13 +711,10 @@ begin
     o_res_data <= r.res_val;
     o_pipeline_hold <= w_o_pipeline_hold;
 
-    o_xret <= w_xret;
     o_csr_wena <= w_csr_wena and w_pc_valid and not w_hazard_detected;
     o_csr_addr <= wb_csr_addr;
     o_csr_wdata <= wb_csr_wdata;
-    o_trap_ena <= '0';--r.trap_ena;
-    o_trap_code <= (others => '0');--r.trap_code;
-    o_trap_pc <= (others => '0');--r.trap_pc;
+    o_ex_npc <= wb_ex_npc;
 
     o_memop_sign_ext <= r.memop_sign_ext;
     o_memop_load <= r.memop_load;
@@ -726,9 +726,10 @@ begin
     o_pc <= r.pc;
     o_npc <= r.npc;
     o_instr <= r.instr;
-    o_breakpoint <= '0';
     o_call <= r.call;
     o_ret <= r.ret;
+    o_mret <= w_mret;
+    o_uret <= w_uret;
     
     rin <= v;
   end process;

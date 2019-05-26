@@ -36,12 +36,7 @@ InstrExecute::InstrExecute(sc_module_name name_)  : sc_module(name_) {
     sensitive << i_compressed;
     sensitive << i_isa_type;
     sensitive << i_ivec;
-    sensitive << i_ie;
-    sensitive << i_mtvec;
-    sensitive << i_mode;
-    sensitive << i_break_mode;
     sensitive << i_unsup_exception;
-    sensitive << i_ext_irq;
     sensitive << i_dport_npc_write;
     sensitive << i_dport_npc;
     sensitive << i_rdata1;
@@ -138,7 +133,6 @@ InstrExecute::~InstrExecute() {
 
 void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
-        sc_trace(o_vcd, i_ext_irq, "/top/proc0/exec0/i_ext_irq");
         sc_trace(o_vcd, i_pipeline_hold, "/top/proc0/exec0/i_pipeline_hold");
         sc_trace(o_vcd, i_d_valid, "/top/proc0/exec0/i_d_valid");
         sc_trace(o_vcd, i_d_pc, "/top/proc0/exec0/i_d_pc");
@@ -162,7 +156,6 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_csr_rdata, "/top/proc0/exec0/i_csr_rdata");
         sc_trace(o_vcd, o_csr_wdata, "/top/proc0/exec0/o_csr_wdata");
         sc_trace(o_vcd, o_pipeline_hold, "/top/proc0/exec0/o_pipeline_hold");
-        sc_trace(o_vcd, o_breakpoint, "/top/proc0/exec0/o_breakpoint");
         sc_trace(o_vcd, o_call, "/top/proc0/exec0/o_call");
         sc_trace(o_vcd, o_ret, "/top/proc0/exec0/o_ret");
 
@@ -188,13 +181,15 @@ void InstrExecute::comb() {
     sc_uint<RISCV_ARCH> wb_rdata1;
     sc_uint<5> wb_radr2;
     sc_uint<RISCV_ARCH> wb_rdata2;
-    bool w_xret;
+    bool w_mret;
+    bool w_uret;
     bool w_csr_wena;
     sc_uint<5> wb_res_addr;
     sc_uint<12> wb_csr_addr;
     sc_uint<RISCV_ARCH> wb_csr_wdata;
     sc_uint<RISCV_ARCH> wb_res;
     sc_uint<BUS_ADDR_WIDTH> wb_npc;
+    sc_uint<BUS_ADDR_WIDTH> wb_ex_npc;
     sc_uint<RISCV_ARCH> wb_off;
     sc_uint<RISCV_ARCH> wb_mask_i31;    // Bits depending instr[31] bits
     sc_uint<RISCV_ARCH> wb_sum64;
@@ -228,7 +223,8 @@ void InstrExecute::comb() {
 
     wb_radr1 = 0;
     wb_radr2 = 0;
-    w_xret = 0;
+    w_mret = 0;
+    w_uret = 0;
     w_csr_wena = 0;
     wb_res_addr = 0;
     wb_csr_addr = 0;
@@ -373,15 +369,17 @@ void InstrExecute::comb() {
         wb_res = i_d_pc.read() + opcode_len;
         wb_npc = wb_rdata1(BUS_ADDR_WIDTH-1, 0) + wb_rdata2(BUS_ADDR_WIDTH-1, 0);
         wb_npc[0] = 0;
-    } else if ((wv[Instr_MRET] | wv[Instr_URET]).to_bool()) {
+    } else if (wv[Instr_MRET].to_bool()) {
         wb_res = i_d_pc.read() + opcode_len;
-        w_xret = i_d_valid.read() && w_pc_valid;
+        w_mret = i_d_valid.read() && w_pc_valid;
         w_csr_wena = 0;
-        if (wv[Instr_URET].to_bool()) {
-            wb_csr_addr = CSR_uepc;
-        } else {
-            wb_csr_addr = CSR_mepc;
-        }
+        wb_csr_addr = CSR_mepc;
+        wb_npc = i_csr_rdata;
+    } else if (wv[Instr_URET].to_bool()) {
+        wb_res = i_d_pc.read() + opcode_len;
+        w_uret = i_d_valid.read() && w_pc_valid;
+        w_csr_wena = 0;
+        wb_csr_addr = CSR_uepc;
         wb_npc = i_csr_rdata;
     } else {
         // Instr_HRET, Instr_SRET, Instr_FENCE, Instr_FENCE_I:
@@ -403,7 +401,6 @@ void InstrExecute::comb() {
     v.memop_size = 0;
     w_exception_store = 0;
     w_exception_load = 0;
-    w_exception_xret = 0;
 
     if ((wv[Instr_LD] && wb_memop_addr(2, 0) != 0)
         || ((wv[Instr_LW] || wv[Instr_LWU]) && wb_memop_addr(1, 0) != 0)
@@ -415,16 +412,6 @@ void InstrExecute::comb() {
         || (wv[Instr_SH] && wb_memop_addr[0] != 0)) {
         w_exception_store = !w_hazard_detected.read();
     }
-    if ((wv[Instr_MRET] && i_mode.read() != PRV_M)
-        || (wv[Instr_URET] && i_mode.read() != PRV_U)) {
-        w_exception_xret = 1;
-    }
-
-    o_ex_illegal_instr = (i_unsup_exception.read() & w_pc_valid) || w_exception_xret;
-    o_ex_unalign_store = w_exception_store;
-    o_ex_unalign_load = w_exception_load;
-    o_ex_breakpoint = wv[Instr_EBREAK].to_bool();
-    o_ex_ecall = wv[Instr_ECALL].to_bool();
 
 
     /** Default number of cycles per instruction = 0 (1 clock per instr)
@@ -542,18 +529,27 @@ void InstrExecute::comb() {
     w_d_valid = (w_d_acceptable && !w_multi_ena) || w_multi_valid;
     o_pre_valid = w_d_valid;
 
+    o_ex_illegal_instr = (i_unsup_exception.read() & w_pc_valid) && w_d_valid;
+    o_ex_unalign_store = w_exception_store && w_d_valid;
+    o_ex_unalign_load = w_exception_load && w_d_valid;
+    o_ex_breakpoint = wv[Instr_EBREAK].to_bool() && w_d_valid;
+    o_ex_ecall = wv[Instr_ECALL].to_bool() && w_d_valid;
 
     v.call = 0;
     v.ret = 0;
+    wb_ex_npc = 0;
     if (i_dport_npc_write.read()) {
         v.npc = i_dport_npc.read();
     } else if (w_d_valid) {
-        if (i_trap_valid.read()) {
-            v.npc = i_trap_pc.read();
-        } else if (w_multi_valid) {
+        if (w_multi_valid) {
             v.pc = r.multi_pc;
             v.instr = r.multi_instr;
-            v.npc = r.multi_npc;;
+            if (i_trap_valid.read()) {
+                v.npc = i_trap_pc.read();
+                wb_ex_npc = r.multi_npc;
+            } else {
+                v.npc = r.multi_npc;
+            }
             v.memop_load = 0;
             v.memop_sign_ext = 0;
             v.memop_store = 0;
@@ -562,7 +558,12 @@ void InstrExecute::comb() {
         } else {
             v.pc = i_d_pc;
             v.instr = i_d_instr;
-            v.npc = wb_npc;
+            if (i_trap_valid.read()) {
+                v.npc = i_trap_pc.read();
+                wb_ex_npc = wb_npc;
+            } else {
+                v.npc = wb_npc;
+            }
             v.memop_load = w_memop_load;
             v.memop_sign_ext = w_memop_sign_ext;
             v.memop_store = w_memop_store;
@@ -656,13 +657,10 @@ void InstrExecute::comb() {
     o_res_data = r.res_val;
     o_pipeline_hold = w_o_pipeline_hold;
 
-    o_xret = w_xret;
     o_csr_wena = w_csr_wena & w_pc_valid & !w_hazard_detected;
     o_csr_addr = wb_csr_addr;
     o_csr_wdata = wb_csr_wdata;
-    o_trap_ena = 0;
-    o_trap_code = 0;
-    o_trap_pc = 0;
+    o_ex_npc = wb_ex_npc;
 
     o_memop_sign_ext = r.memop_sign_ext;
     o_memop_load = r.memop_load;
@@ -674,9 +672,10 @@ void InstrExecute::comb() {
     o_pc = r.pc;
     o_npc = r.npc;
     o_instr = r.instr;
-    o_breakpoint = 0;
     o_call = r.call;
     o_ret = r.ret;
+    o_mret = w_mret;
+    o_uret = w_uret;
 }
 
 void InstrExecute::registers() {

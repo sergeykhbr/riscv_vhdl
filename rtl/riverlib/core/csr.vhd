@@ -21,14 +21,16 @@ entity CsrRegs is
   port (
     i_clk : in std_logic;                                   -- CPU clock
     i_nrst : in std_logic;                                  -- Reset. Active LOW.
-    i_xret : in std_logic;                                  -- XRet instruction signals mode switching
+    i_mret : in std_logic;                                  -- mret instruction signals mode switching
+    i_uret : in std_logic;                                  -- uret instruction signals mode switching
     i_addr : in std_logic_vector(11 downto 0);              -- CSR address, if xret=1 switch mode accordingly
     i_wena : in std_logic;                                  -- Write enable
     i_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0);   -- CSR writing value
     o_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0);  -- CSR read value
     i_e_pre_valid : in std_logic;                               -- execute stage valid signal
-    i_e_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    i_data_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- Data path: address must be equal to the latest request address
+    i_ex_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_ex_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_ex_data_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- Data path: address must be equal to the latest request address
     i_ex_data_load_fault : in std_logic;                    -- Data path: Bus response with SLVERR or DECERR on read
     i_ex_data_store_fault : in std_logic;                   -- Data path: Bus response with SLVERR or DECERR on write
     i_ex_illegal_instr : in std_logic;
@@ -37,19 +39,11 @@ entity CsrRegs is
     i_ex_breakpoint : in std_logic;
     i_ex_ecall : in std_logic;
     i_irq_external : in std_logic;
-
-    i_break_mode : in std_logic;                            -- Behaviour on EBREAK instruction: 0 = halt; 1 = generate trap
-    i_breakpoint : in std_logic;                            -- Breakpoint (Trap or not depends of mode)
-    i_trap_ena : in std_logic;                              -- Trap pulse
-    i_trap_code : in std_logic_vector(4 downto 0);          -- bit[4] : 1=interrupt; 0=exception; bits[3:0]=code
-    i_trap_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- trap on pc
-
     o_trap_valid : out std_logic;                              -- Trap pulse
     o_trap_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- trap on pc
 
-    o_ie : out std_logic;                                    -- Interrupt enable bit
-    o_mode : out std_logic_vector(1 downto 0);               -- CPU mode
-    o_mtvec : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- Interrupt descriptors table
+    i_break_mode : in std_logic;                            -- Behaviour on EBREAK instruction: 0 = halt; 1 = generate trap
+    o_break_event : out std_logic;                          -- 1 clock EBREAK detected
 
     i_dport_ena : in std_logic;                              -- Debug port request is enabled
     i_dport_write : in std_logic;                            -- Debug port Write enable
@@ -75,7 +69,7 @@ architecture arch_CsrRegs of CsrRegs is
       trap_irq : std_logic;
       trap_code : std_logic_vector(3 downto 0);
       trap_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-      ext_irq_latch : std_logic;
+      break_event : std_logic;
   end record;
 
   constant R_RESET : RegistersType := (
@@ -185,13 +179,12 @@ architecture arch_CsrRegs of CsrRegs is
 
 begin
 
-  comb : process(i_nrst, i_xret, i_addr, i_wena, i_wdata, i_e_pre_valid,
-                 i_e_pc, i_data_addr, i_ex_data_load_fault, i_ex_data_store_fault,
+  comb : process(i_nrst, i_mret, i_uret, i_addr, i_wena, i_wdata, i_e_pre_valid,
+                 i_ex_pc, i_ex_npc, i_ex_data_addr, i_ex_data_load_fault, i_ex_data_store_fault,
                  i_ex_illegal_instr, i_ex_unalign_load, i_ex_unalign_store,
                  i_ex_breakpoint, i_ex_ecall, i_irq_external,
-                 i_break_mode, i_breakpoint, i_trap_ena,
-                 i_dport_ena, i_dport_write, i_dport_addr, i_dport_wdata,
-                 i_trap_code, i_trap_pc, r)
+                 i_break_mode, i_dport_ena, i_dport_write, i_dport_addr, i_dport_wdata,
+                 r)
     variable v : RegistersType;
     variable wb_rdata : std_logic_vector(RISCV_ARCH-1 downto 0);
     variable wb_dport_rdata : std_logic_vector(RISCV_ARCH-1 downto 0);
@@ -199,6 +192,10 @@ begin
     variable w_dport_wena : std_logic;
     variable w_trap_valid : std_logic;
     variable wb_trap_pc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    variable w_trap_irq : std_logic;
+    variable w_exception_xret : std_logic;
+    variable wb_trap_code : std_logic_vector(3 downto 0);
+    variable wb_mbadaddr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
   begin
 
     v := r;
@@ -216,77 +213,66 @@ begin
         w_ie := '1';
     end if;
 
-    v.ext_irq_latch := i_irq_external and w_ie;
+    w_exception_xret := '0';
+    if (i_mret = '1' and r.mode /= PRV_M) or
+        (i_uret = '1' and r.mode /= PRV_U) then
+        w_exception_xret := '1';
+    end if;
 
     w_trap_valid := '0';
+    w_trap_irq := '0';
+    wb_trap_code := (others => '0');
+    v.break_event := '0';
     wb_trap_pc := r.mtvec(BUS_ADDR_WIDTH-1 downto 0);
+    wb_mbadaddr := i_ex_pc;
+
     if i_ex_illegal_instr = '1' then
         w_trap_valid := '1';
         wb_trap_pc := r.mtvec(BUS_ADDR_WIDTH-1 downto 0);
-        if i_e_pre_valid = '1' then
-            v.trap_code := EXCEPTION_InstrIllegal;
-            v.trap_irq := '0';
-        end if;
+        wb_trap_code := EXCEPTION_InstrIllegal;
     elsif i_ex_breakpoint = '1' then
+        v.break_event := '1';
         w_trap_valid := '1';
+        wb_trap_code := EXCEPTION_Breakpoint;
         if i_break_mode = '0' then
-            wb_trap_pc := i_e_pc;
+            wb_trap_pc := i_ex_pc;
         else
             wb_trap_pc := r.mtvec(BUS_ADDR_WIDTH-1 downto 0);
-        end if;
-        if i_e_pre_valid = '1' then
-            v.trap_code := EXCEPTION_Breakpoint;
-            v.trap_irq := '0';
         end if;
     elsif i_ex_unalign_load = '1' then
         w_trap_valid := '1';
         wb_trap_pc := r.mtvec(BUS_ADDR_WIDTH-1 downto 0);
-        if i_e_pre_valid = '1' then
-            v.trap_code := EXCEPTION_LoadMisalign;
-            v.trap_irq := '0';
-        end if;
+        wb_trap_code := EXCEPTION_LoadMisalign;
     elsif i_ex_data_load_fault = '1' then
         w_trap_valid := '1';
         wb_trap_pc := r.mtvec(BUS_ADDR_WIDTH-1 downto 0);
-        if i_e_pre_valid = '1' then
-            v.trap_code := EXCEPTION_LoadFault;
-            v.trap_irq := '0';
-        end if;
+        wb_mbadaddr := i_ex_data_addr;     -- miss-access address
+        wb_trap_code := EXCEPTION_LoadFault;
     elsif i_ex_unalign_store = '1' then
         w_trap_valid := '1';
         wb_trap_pc := r.mtvec(BUS_ADDR_WIDTH-1 downto 0);
-        if i_e_pre_valid = '1' then
-            v.trap_code := EXCEPTION_StoreMisalign;
-            v.trap_irq := '0';
-        end if;
+        wb_trap_code := EXCEPTION_StoreMisalign;
     elsif i_ex_data_store_fault = '1' then
         w_trap_valid := '1';
         wb_trap_pc := r.mtvec(BUS_ADDR_WIDTH-1 downto 0);
-        if i_e_pre_valid = '1' then
-            v.trap_code := EXCEPTION_StoreFault;
-            v.trap_irq := '0';
-        end if;
+        wb_mbadaddr := i_ex_data_addr;     -- miss-access address
+        wb_trap_code := EXCEPTION_StoreFault;
     elsif i_ex_ecall = '1' then
         w_trap_valid := '1';
         wb_trap_pc := r.mtvec(BUS_ADDR_WIDTH-1 downto 0);
-        if i_e_pre_valid = '1' then
-            v.trap_irq := '0';
-            if r.mode = PRV_M then
-                v.trap_code := EXCEPTION_CallFromMmode;
-            else
-                v.trap_code := EXCEPTION_CallFromUmode;
-            end if;
+        if r.mode = PRV_M then
+            wb_trap_code := EXCEPTION_CallFromMmode;
+        else
+            wb_trap_code := EXCEPTION_CallFromUmode;
         end if;
-    elsif r.ext_irq_latch = '1' and w_ie = '1' then
+    elsif i_irq_external = '1' and w_ie = '1' then
         w_trap_valid := '1';
         wb_trap_pc := r.mtvec(BUS_ADDR_WIDTH-1 downto 0);
-        if i_e_pre_valid = '1' then
-            v.trap_code := X"B";
-            v.trap_irq := '1';
-        end if;
+        wb_trap_code := X"B";
+        w_trap_irq := '1';
     end if;
 
-    if i_addr = CSR_mepc and i_xret = '1' then
+    if i_addr = CSR_mepc and (not w_exception_xret and (i_mret or i_uret)) = '1' then
         -- Switch to previous mode
         v.mie := r.mpie;
         v.mpie := '1';
@@ -294,17 +280,17 @@ begin
         v.mpp := PRV_U;
     end if;
 
-    --if (i_trap_ena and (i_break_mode or not i_breakpoint)) = '1' then
+    -- Behaviour on EBREAK instruction defined by 'i_break_mode':
+    --     0 = halt;
+    --     1 = generate trap
     if (w_trap_valid and i_e_pre_valid and (i_break_mode or not i_ex_breakpoint)) = '1' then
         v.mie := '0';
         v.mpp := r.mode;
         v.mepc(RISCV_ARCH-1 downto BUS_ADDR_WIDTH) := (others => '0');
-        --v.mepc(BUS_ADDR_WIDTH-1 downto 0) := i_trap_pc;
-        v.mepc(BUS_ADDR_WIDTH-1 downto 0) := i_e_pc;
-        --v.mbadaddr := i_trap_pc;
-        v.mbadaddr := i_e_pc;
-        --v.trap_code := i_trap_code(3 downto 0);
-        --v.trap_irq := i_trap_code(4);
+        v.mepc(BUS_ADDR_WIDTH-1 downto 0) := i_ex_npc;
+        v.mbadaddr := wb_mbadaddr;
+        v.trap_code := wb_trap_code;
+        v.trap_irq := w_trap_irq;
         v.mode := PRV_M;
         case r.mode is
         when PRV_U =>
@@ -322,12 +308,9 @@ begin
 
     o_trap_valid <= w_trap_valid;
     o_trap_pc <= wb_trap_pc;
-
     o_rdata <= wb_rdata;
-    o_ie <= w_ie;
-    o_mode <= r.mode;
-    o_mtvec <= r.mtvec(BUS_ADDR_WIDTH-1 downto 0);
     o_dport_rdata <= wb_dport_rdata;
+    o_break_event <= r.break_event;
     
     rin <= v;
   end process;

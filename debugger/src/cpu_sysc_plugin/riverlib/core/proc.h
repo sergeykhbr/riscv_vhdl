@@ -109,15 +109,14 @@ private:
         sc_signal<sc_uint<32>> instr;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> pc;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> npc;
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> ex_npc;
 
         sc_signal<sc_uint<5>> radr1;
         sc_signal<sc_uint<5>> radr2;
         sc_signal<sc_uint<5>> res_addr;
         sc_signal<sc_uint<RISCV_ARCH>> res_data;
-        sc_signal<bool> trap_ena;                    // Trap pulse
-        sc_signal<sc_uint<5>> trap_code;             // bit[4] : 1=interrupt; 0=exception; bits[3:0]=code
-        sc_signal<sc_uint<BUS_ADDR_WIDTH>> trap_pc;  // trap on pc
-        sc_signal<bool> xret;
+        sc_signal<bool> mret;
+        sc_signal<bool> uret;
         sc_signal<sc_uint<12>> csr_addr;
         sc_signal<bool> csr_wena;
         sc_signal<sc_uint<RISCV_ARCH>> csr_wdata;
@@ -133,7 +132,6 @@ private:
         sc_signal<sc_uint<2>> memop_size;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> memop_addr;
         sc_signal<bool> pipeline_hold;           // Hold pipeline from Execution stage
-        sc_signal<bool> breakpoint;
         sc_signal<bool> call;                       // pseudo-instruction CALL
         sc_signal<bool> ret;                        // pseudo-instruction RET
     };
@@ -164,10 +162,7 @@ private:
         sc_signal<sc_uint<RISCV_ARCH>> dport_rdata;
         sc_signal<bool> trap_valid;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> trap_pc;
-
-        sc_signal<bool> ie;                     // Interrupt enable bit
-        sc_signal<sc_uint<BUS_ADDR_WIDTH>> mtvec;// Interrupt descriptor table
-        sc_signal<sc_uint<2>> mode;             // Current processor mode
+        sc_signal<bool> break_event;             // ebreak detected 1 clock pulse
     } csr;
 
     struct DebugType {

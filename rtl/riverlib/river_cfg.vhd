@@ -334,17 +334,11 @@ package river_cfg is
   --! @param[in] i_wdata        CSR writing value
   --! @param[out] o_rdata       CSR read value
   --! @param[in] i_e_pre_valid      execute stage valid signal
-  --! @param[in] i_data_addr    Data path: address must be equal to the latest request address
-  --! @param[in] i_data_load_fault Data path: Bus response with SLVERR or DECERR on read
-  --! @param[in] i_data_store_fault Data path: Bus response with SLVERR or DECERR on write
+  --! @param[in] i_ex_data_addr    Data path: address must be equal to the latest request address
+  --! @param[in] i_ex_data_load_fault Data path: Bus response with SLVERR or DECERR on read
+  --! @param[in] i_ex_data_store_fault Data path: Bus response with SLVERR or DECERR on write
   --! @param[in] i_break_mode   Behaviour on EBREAK instruction: 0 = halt; 1 = generate trap
-  --! @param[in] i_breakpoint   Breakpoint (Trap or not depends of mode)
-  --! @param[in] i_trap_ena     Trap pulse
-  --! @param[in] i_trap_code    bit[4] : 1=interrupt; 0=exception; bits[3:0]=code
-  --! @param[in] i_trap_pc      trap on pc
-  --! @param[out] o_ie          Interrupt enable bit
-  --! @param[out] o_mode        CPU mode
-  --! @param[out] o_mtvec       Interrupt descriptors table
+  --! @param[out] o_break_event ebreak detected1 clock event
   --! @param[in] i_dport_ena    Debug port request is enabled
   --! @param[in] i_dport_write  Debug port Write enable
   --! @param[in] i_dport_addr   Debug port CSR address
@@ -357,14 +351,16 @@ package river_cfg is
   port (
     i_clk : in std_logic;
     i_nrst : in std_logic;
-    i_xret : in std_logic;
+    i_mret : in std_logic;
+    i_uret : in std_logic;
     i_addr : in std_logic_vector(11 downto 0);
     i_wena : in std_logic;
     i_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0);
     o_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0);
     i_e_pre_valid : in std_logic;
-    i_e_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    i_data_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_ex_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_ex_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_ex_data_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_ex_data_load_fault : in std_logic;
     i_ex_data_store_fault : in std_logic;
     i_ex_illegal_instr : in std_logic;
@@ -373,16 +369,10 @@ package river_cfg is
     i_ex_breakpoint : in std_logic;
     i_ex_ecall : in std_logic;
     i_irq_external : in std_logic;
-    i_break_mode : in std_logic;
-    i_breakpoint : in std_logic;
-    i_trap_ena : in std_logic;
-    i_trap_code : in std_logic_vector(4 downto 0);
-    i_trap_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     o_trap_valid : out std_logic;
     o_trap_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    o_ie : out std_logic;
-    o_mode : out std_logic_vector(1 downto 0);
-    o_mtvec : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_break_mode : in std_logic;
+    o_break_event : out std_logic;
     i_dport_ena : in std_logic;
     i_dport_write : in std_logic;
     i_dport_addr : in std_logic_vector(11 downto 0);
@@ -450,10 +440,6 @@ package river_cfg is
   --! @param[in] i_rv32 32-bits instruction
   --! @param[in] i_compressed 16-bits instruction (C-extension)
   --! @param[in] i_isa_type Type of the instruction's structure (ISA spec.)
-  --! @param[in] i_ivec One pulse per supported instruction.
-  --! @param[in] i_ie Interrupt enable bit
-  --! @param[in] i_mtvec Interrupt descriptor table
-  --! @param[in] i_mode Current processor mode
   --! @param[in] i_break_mode        Behaviour on EBREAK instruction: 0 = halt; 1 = generate trap
   --! @param[in] i_unsup_exception   Unsupported instruction exception
   --! @param[in] i_ext_irq           External interrupt from PLIC (todo: timer & software interrupts)
@@ -466,14 +452,11 @@ package river_cfg is
   --! @param[out] o_res_addr Address to store result of the instruction (0=do not store)
   --! @param[out] o_res_data Value to store
   --! @param[out] o_pipeline_hold Hold pipeline while 'writeback' not done or multi-clock instruction.
-  --! @param[out] o_xret XRET instruction: MRET, URET or other.
   --! @param[out] o_csr_addr CSR address. 0 if not a CSR instruction with xret signals mode switching
   --! @param[out] o_csr_wena Write new CSR value
   --! @param[in] i_csr_rdata CSR current value
   --! @param[out] o_csr_wdata CSR new value
-  --! @param[out] o_trap_ena Trap occurs  pulse
-  --! @param[out] o_trap_code bit[4] : 1=interrupt; 0=exception; bits[3:0]=code
-  --! @param[out] o_trap_pc trap on pc
+  --! @param[out] o_ex_npc    exception npc
   --! @param[out] o_ex_illegal_instr Exception: illegal instruction
   --! @param[out] o_ex_unalign_store Exception: Unaligned store
   --! @param[out] o_ex_unalign_load  Exception: Unaligned load
@@ -489,9 +472,10 @@ package river_cfg is
   --! @param[out] o_pc          Valid instruction pointer
   --! @param[out] o_npc         Next instruction pointer. Next decoded pc must match to this value or will be ignored.
   --! @param[out] o_instr       Valid instruction value
-  --! @param[out] o_breakpoint  ebreak instruction
   --! @param[out] o_call        CALL pseudo instruction detected
   --! @param[out] o_ret         RET pseudoinstruction detected
+  --! @param[out] o_mret        MRET detected
+  --! @param[out] o_uret        URET detected
   component InstrExecute is
   port (
     i_clk  : in std_logic;
@@ -510,12 +494,7 @@ package river_cfg is
     i_compressed : in std_logic;
     i_isa_type : in std_logic_vector(ISA_Total-1 downto 0);
     i_ivec : in std_logic_vector(Instr_Total-1 downto 0);
-    i_ie : in std_logic;
-    i_mtvec : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    i_mode : in std_logic_vector(1 downto 0);
-    i_break_mode : in std_logic;
     i_unsup_exception : in std_logic;
-    i_ext_irq : in std_logic;
     i_dport_npc_write : in std_logic;
     i_dport_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     o_radr1 : out std_logic_vector(4 downto 0);
@@ -525,16 +504,13 @@ package river_cfg is
     o_res_addr : out std_logic_vector(4 downto 0);
     o_res_data : out std_logic_vector(RISCV_ARCH-1 downto 0);
     o_pipeline_hold : out std_logic;
-    o_xret : out std_logic;
     o_csr_addr : out std_logic_vector(11 downto 0);
     o_csr_wena : out std_logic;
     i_csr_rdata : in std_logic_vector(RISCV_ARCH-1 downto 0);
     o_csr_wdata : out std_logic_vector(RISCV_ARCH-1 downto 0);
     i_trap_valid : in std_logic;
     i_trap_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    o_trap_ena : out std_logic;
-    o_trap_code : out std_logic_vector(4 downto 0);
-    o_trap_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_ex_npc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     o_ex_illegal_instr : out std_logic;
     o_ex_unalign_store : out std_logic;
     o_ex_unalign_load : out std_logic;
@@ -550,9 +526,10 @@ package river_cfg is
     o_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     o_npc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     o_instr : out std_logic_vector(31 downto 0);
-    o_breakpoint : out std_logic;
     o_call : out std_logic;
-    o_ret : out std_logic
+    o_ret : out std_logic;
+    o_mret : out std_logic;
+    o_uret : out std_logic
   );
   end component; 
 

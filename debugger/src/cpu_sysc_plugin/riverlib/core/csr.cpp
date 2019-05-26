@@ -25,13 +25,15 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid)
 
     SC_METHOD(comb);
     sensitive << i_nrst;
-    sensitive << i_xret;
+    sensitive << i_mret;
+    sensitive << i_uret;
     sensitive << i_addr;
     sensitive << i_wena;
     sensitive << i_wdata;
     sensitive << i_e_pre_valid;
-    sensitive << i_e_pc;
-    sensitive << i_data_addr;
+    sensitive << i_ex_pc;
+    sensitive << i_ex_npc;
+    sensitive << i_ex_data_addr;
     sensitive << i_ex_data_load_fault;
     sensitive << i_ex_data_store_fault;
     sensitive << i_ex_illegal_instr;
@@ -41,10 +43,6 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid)
     sensitive << i_ex_ecall;
     sensitive << i_irq_external;
     sensitive << i_break_mode;
-    sensitive << i_breakpoint;
-    sensitive << i_trap_ena;
-    sensitive << i_trap_code;
-    sensitive << i_trap_pc;
     sensitive << i_dport_ena;
     sensitive << i_dport_write;
     sensitive << i_dport_addr;
@@ -61,7 +59,7 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid)
     sensitive << r.trap_irq;
     sensitive << r.trap_code;
     sensitive << r.trap_addr;
-    sensitive << r.ext_irq_latch;
+    sensitive << r.break_event;
 
     SC_METHOD(registers);
     sensitive << i_clk.pos();
@@ -69,17 +67,12 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid)
 
 void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
-        sc_trace(o_vcd, i_xret, "/top/proc0/csr0/i_xret");
+        sc_trace(o_vcd, i_mret, "/top/proc0/csr0/i_mret");
+        sc_trace(o_vcd, i_uret, "/top/proc0/csr0/i_uret");
         sc_trace(o_vcd, i_addr, "/top/proc0/csr0/i_addr");
         sc_trace(o_vcd, i_wena, "/top/proc0/csr0/i_wena");
         sc_trace(o_vcd, i_wdata, "/top/proc0/csr0/i_wdata");
-        sc_trace(o_vcd, i_trap_ena, "/top/proc0/csr0/i_trap_ena");
-        sc_trace(o_vcd, i_trap_code, "/top/proc0/csr0/i_trap_code");
-        sc_trace(o_vcd, i_trap_pc, "/top/proc0/csr0/i_trap_pc");
-        sc_trace(o_vcd, o_mode, "/top/proc0/csr0/o_mode");
-        sc_trace(o_vcd, o_ie, "/top/proc0/csr0/o_ie");
         sc_trace(o_vcd, o_rdata, "/top/proc0/csr0/o_rdata");
-        sc_trace(o_vcd, o_mtvec, "/top/proc0/csr0/o_mtvec");
         sc_trace(o_vcd, i_dport_ena, "/top/proc0/csr0/i_dport_ena");
         sc_trace(o_vcd, i_dport_write, "/top/proc0/csr0/i_dport_write");
         sc_trace(o_vcd, i_dport_addr, "/top/proc0/csr0/i_dport_addr");
@@ -208,6 +201,10 @@ void CsrRegs::comb() {
     bool w_dport_wena;
     bool w_trap_valid;
     sc_uint<BUS_ADDR_WIDTH> wb_trap_pc;
+    bool w_trap_irq;
+    bool w_exception_xret;
+    sc_uint<4> wb_trap_code;
+    sc_uint<BUS_ADDR_WIDTH> wb_mbadaddr;
 
     v = r;
 
@@ -224,78 +221,69 @@ void CsrRegs::comb() {
         w_ie = 1;
     }
 
-    v.ext_irq_latch = i_irq_external.read() & w_ie;
+    w_exception_xret = 0;
+    if ((i_mret.read() && r.mode.read() != PRV_M)
+        || (i_uret.read() && r.mode.read() != PRV_U)) {
+        w_exception_xret = 1;
+    }
+
 
     w_trap_valid = 0;
+    w_trap_irq = 0;
+    wb_trap_code = 0;
+    v.break_event = 0;
     wb_trap_pc = r.mtvec.read()(BUS_ADDR_WIDTH-1, 0);
-    if (i_ex_illegal_instr.read() == 1) {
+    wb_mbadaddr = i_ex_pc.read();
+
+    if (i_ex_illegal_instr.read() == 1 || w_exception_xret == 1) {
         w_trap_valid = 1;
         wb_trap_pc = r.mtvec.read()(BUS_ADDR_WIDTH-1, 0);
-        if (i_e_pre_valid.read() == 1) {
-            v.trap_code = EXCEPTION_InstrIllegal;
-            v.trap_irq = 0;
-        }
+        wb_trap_code = EXCEPTION_InstrIllegal;
     } else if (i_ex_breakpoint.read() == 1) {
+        v.break_event = 1;
         w_trap_valid = 1;
+        wb_trap_code = EXCEPTION_Breakpoint;
         if (i_break_mode.read() == 0) {
-            wb_trap_pc = i_e_pc;
+            wb_trap_pc = i_ex_pc;
         } else {
             wb_trap_pc = r.mtvec.read()(BUS_ADDR_WIDTH-1, 0);
-        }
-        if (i_e_pre_valid.read() == 1) {
-            v.trap_code = EXCEPTION_Breakpoint;
-            v.trap_irq = 0;
         }
     } else if (i_ex_unalign_load.read() == 1) {
         w_trap_valid = 1;
         wb_trap_pc = r.mtvec.read()(BUS_ADDR_WIDTH-1, 0);
-        if (i_e_pre_valid.read() == 1) {
-            v.trap_code = EXCEPTION_LoadMisalign;
-            v.trap_irq = 0;
-        }
+        wb_trap_code = EXCEPTION_LoadMisalign;
     } else if (i_ex_data_load_fault.read() == 1) {
         w_trap_valid = 1;
         wb_trap_pc = r.mtvec.read()(BUS_ADDR_WIDTH-1, 0);
-        if (i_e_pre_valid.read() == 1) {
-            v.trap_code = EXCEPTION_LoadFault;
-            v.trap_irq = 0;
-        }
+        wb_mbadaddr = i_ex_data_addr.read();    // miss-access read
+        wb_trap_code = EXCEPTION_LoadFault;
     } else if (i_ex_unalign_store.read() == 1) {
         w_trap_valid = 1;
         wb_trap_pc = r.mtvec.read()(BUS_ADDR_WIDTH-1, 0);
-        if (i_e_pre_valid.read() == 1) {
-            v.trap_code = EXCEPTION_StoreMisalign;
-            v.trap_irq = 0;
-        }
+        wb_trap_code = EXCEPTION_StoreMisalign;
     } else if (i_ex_data_store_fault.read() == 1) {
         w_trap_valid = 1;
         wb_trap_pc = r.mtvec.read()(BUS_ADDR_WIDTH-1, 0);
-        if (i_e_pre_valid.read() == 1) {
-            v.trap_code = EXCEPTION_StoreFault;
-            v.trap_irq = 0;
-        }
+        wb_mbadaddr = i_ex_data_addr.read();    // miss-access write
+        wb_trap_code = EXCEPTION_StoreFault;
     } else if (i_ex_ecall.read() == 1) {
         w_trap_valid = 1;
         wb_trap_pc = r.mtvec.read()(BUS_ADDR_WIDTH-1, 0);
-        if (i_e_pre_valid.read() == 1) {
-            v.trap_irq = 0;
-            if (r.mode.read() == PRV_M) {
-                v.trap_code = EXCEPTION_CallFromMmode;
-            } else {
-                v.trap_code = EXCEPTION_CallFromUmode;
-            }
+        if (r.mode.read() == PRV_M) {
+            wb_trap_code = EXCEPTION_CallFromMmode;
+        } else {
+            wb_trap_code = EXCEPTION_CallFromUmode;
         }
-    } else if (r.ext_irq_latch.read() == 1 && w_ie == 1) {
+    } else if (i_irq_external.read() == 1 && w_ie == 1) {
         w_trap_valid = 1;
         wb_trap_pc = r.mtvec.read()(BUS_ADDR_WIDTH-1, 0);
-        if (i_e_pre_valid.read() == 1) {
-            v.trap_code = 0xB;
-            v.trap_irq = 1;
-        }
+        wb_trap_code = 0xB;
+        w_trap_irq = 1;
     }
 
 
-    if (i_addr.read() == CSR_mepc && i_xret.read()) {
+    if (i_addr.read() == CSR_mepc && !w_exception_xret && 
+        (i_mret.read() || i_uret.read())) {
         // Switch to previous mode
         v.mie = r.mpie;
         v.mpie = 1;
@@ -303,14 +291,17 @@ void CsrRegs::comb() {
         v.mpp = PRV_U;
     }
 
+    // Behaviour on EBREAK instruction defined by 'i_break_mode':
+    //     0 = halt;
+    //     1 = generate trap
     if (w_trap_valid && i_e_pre_valid.read() &&
         (i_break_mode.read() || !i_ex_breakpoint.read())) {
         v.mie = 0;
         v.mpp = r.mode;
-        v.mepc = i_e_pc.read();
-        v.mbadaddr = i_e_pc.read();
-        //v.trap_code = i_trap_code.read()(3, 0);
-        //v.trap_irq = i_trap_code.read()[4];
+        v.mepc = i_ex_npc.read();
+        v.mbadaddr = wb_mbadaddr;
+        v.trap_code = wb_trap_code;
+        v.trap_irq = w_trap_irq;
         v.mode = PRV_M;
         switch (r.mode.read()) {
         case PRV_U:
@@ -336,16 +327,14 @@ void CsrRegs::comb() {
         v.trap_code = 0;
         v.trap_irq = 0;
         v.trap_addr = 0;
-        v.ext_irq_latch = 0;
+        v.break_event = 0;
     }
 
     o_trap_valid = w_trap_valid;
     o_trap_pc = wb_trap_pc;
     o_rdata = wb_rdata;
-    o_ie = w_ie;
-    o_mode = r.mode;
-    o_mtvec = r.mtvec.read()(BUS_ADDR_WIDTH - 1, 0);
     o_dport_rdata = wb_dport_rdata;
+    o_break_event = r.break_event;
 }
 
 void CsrRegs::registers() {

@@ -97,15 +97,14 @@ architecture arch_Processor of Processor is
         instr : std_logic_vector(31 downto 0);
         pc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
         npc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+        ex_npc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
 
         radr1 : std_logic_vector(4 downto 0);
         radr2 : std_logic_vector(4 downto 0);
         res_addr : std_logic_vector(4 downto 0);
         res_data : std_logic_vector(RISCV_ARCH-1 downto 0);
-        trap_ena : std_logic;                                 -- Trap pulse
-        trap_code : std_logic_vector(4 downto 0);             -- bit[4] : 1=interrupt; 0=exception; bits[3:0]=code
-        trap_pc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- trap on pc
-        xret : std_logic;
+        mret : std_logic;
+        uret : std_logic;
         csr_addr : std_logic_vector(11 downto 0);
         csr_wena : std_logic;
         csr_wdata : std_logic_vector(RISCV_ARCH-1 downto 0);
@@ -121,7 +120,6 @@ architecture arch_Processor of Processor is
         memop_size : std_logic_vector(1 downto 0);
         memop_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
         pipeline_hold : std_logic;                            -- Hold pipeline from Execution stage
-        breakpoint : std_logic;
         call : std_logic;
         ret : std_logic;
     end record;
@@ -152,9 +150,7 @@ architecture arch_Processor of Processor is
         dport_rdata : std_logic_vector(RISCV_ARCH-1 downto 0);
         trap_valid : std_logic;
         trap_pc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-        ie : std_logic;                                     -- Interrupt enable bit
-        mtvec : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- Interrupt descriptor table
-        mode : std_logic_vector(1 downto 0);                -- Current processor mode
+        break_event : std_logic;
     end record;
 
     --! 5-stages CPU pipeline
@@ -269,12 +265,7 @@ begin
         i_compressed => w.d.compressed,
         i_isa_type => w.d.isa_type,
         i_ivec => w.d.instr_vec,
-        i_ie => csr.ie,
-        i_mtvec => csr.mtvec,
-        i_mode => csr.mode,
-        i_break_mode => dbg.break_mode,
         i_unsup_exception => w.d.exception,
-        i_ext_irq => i_ext_irq,
         i_dport_npc_write => dbg.npc_write,
         i_dport_npc => wb_exec_dport_npc,
         o_radr1 => w.e.radr1,
@@ -284,16 +275,13 @@ begin
         o_res_addr => w.e.res_addr,
         o_res_data => w.e.res_data,
         o_pipeline_hold => w.e.pipeline_hold,
-        o_xret => w.e.xret,
         o_csr_addr => w.e.csr_addr,
         o_csr_wena => w.e.csr_wena,
         i_csr_rdata => csr.rdata,
         o_csr_wdata => w.e.csr_wdata,
         i_trap_valid => csr.trap_valid,
         i_trap_pc => csr.trap_pc,
-        o_trap_ena => w.e.trap_ena,
-        o_trap_code => w.e.trap_code,
-        o_trap_pc => w.e.trap_pc,
+        o_ex_npc => w.e.ex_npc,
         o_ex_illegal_instr => w.e.ex_illegal_instr,
         o_ex_unalign_store => w.e.ex_unalign_store,
         o_ex_unalign_load => w.e.ex_unalign_load,
@@ -309,9 +297,10 @@ begin
         o_pc => w.e.pc,
         o_npc => w.e.npc,
         o_instr => w.e.instr,
-        o_breakpoint => w.e.breakpoint,
         o_call => w.e.call,
-        o_ret => w.e.ret);
+        o_ret => w.e.ret,
+        o_mret => w.e.mret,
+        o_uret => w.e.uret);
 
     mem0 : MemAccess port map (
         i_clk => i_clk,
@@ -379,14 +368,16 @@ begin
       ) port map (
         i_clk => i_clk,
         i_nrst => i_nrst,
-        i_xret => w.e.xret,
+        i_mret => w.e.mret,
+        i_uret => w.e.uret,
         i_addr => w.e.csr_addr,
         i_wena => w.e.csr_wena,
         i_wdata => w.e.csr_wdata,
         o_rdata => csr.rdata,
         i_e_pre_valid => w.e.pre_valid,
-        i_e_pc => w.e.npc,
-        i_data_addr => i_resp_data_addr,
+        i_ex_pc => w.e.npc,
+        i_ex_npc => w.e.ex_npc,
+        i_ex_data_addr => i_resp_data_addr,
         i_ex_data_load_fault => i_resp_data_load_fault,
         i_ex_data_store_fault => i_resp_data_store_fault,
         i_ex_illegal_instr => w.e.ex_illegal_instr,
@@ -395,16 +386,10 @@ begin
         i_ex_breakpoint => w.e.ex_breakpoint,
         i_ex_ecall => w.e.ex_ecall,
         i_irq_external => i_ext_irq,
-        i_break_mode => dbg.break_mode,
-        i_breakpoint => w.e.breakpoint,
-        i_trap_ena => w.e.trap_ena,
-        i_trap_code => w.e.trap_code,
-        i_trap_pc => w.e.trap_pc,
         o_trap_valid => csr.trap_valid,
         o_trap_pc => csr.trap_pc,
-        o_ie => csr.ie,
-        o_mode => csr.mode,
-        o_mtvec => csr.mtvec,
+        i_break_mode => dbg.break_mode,
+        o_break_event => csr.break_event,
         i_dport_ena => dbg.csr_ena,
         i_dport_write => dbg.csr_write,
         i_dport_addr => dbg.core_addr,
@@ -440,7 +425,7 @@ begin
         o_clock_cnt => dbg.clock_cnt,
         o_executed_cnt => dbg.executed_cnt,
         o_halt => dbg.halt,
-        i_ebreak => w.e.breakpoint,
+        i_ebreak => csr.break_event,
         o_break_mode => dbg.break_mode,
         o_br_fetch_valid => dbg.br_fetch_valid,
         o_br_address_fetch => dbg.br_address_fetch,

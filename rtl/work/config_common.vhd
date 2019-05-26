@@ -54,7 +54,7 @@ constant CFG_COMMON_DUAL_CORE_ENABLE : boolean := false;
 --! @brief   HEX-image for the initialization of the Boot ROM.
 --! @details This file is used by \e inferred ROM implementation.
 constant CFG_SIM_BOOTROM_HEX : string := 
-              CFG_TOPDIR & "examples/bootrom_tests/linuxbuild/bin/bootrom_tests.hex";
+              CFG_TOPDIR & "examples/boot/linuxbuild/bin/bootimage.hex";
 
 --! @brief   HEX-image for the initialization of the FwImage ROM.
 --! @details This file is used by \e inferred ROM implementation.

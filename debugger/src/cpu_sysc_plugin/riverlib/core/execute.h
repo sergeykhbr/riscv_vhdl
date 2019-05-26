@@ -42,12 +42,7 @@ SC_MODULE(InstrExecute) {
     sc_in<bool> i_compressed;                   // C-extension (2-bytes length)
     sc_in<sc_bv<ISA_Total>> i_isa_type;         // Type of the instruction's structure (ISA spec.)
     sc_in<sc_bv<Instr_Total>> i_ivec;           // One pulse per supported instruction.
-    sc_in<bool> i_ie;                           // Interrupt enable bit
-    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_mtvec;     // Interrupt descriptor table
-    sc_in<sc_uint<2>> i_mode;                   // Current processor mode
-    sc_in<bool> i_break_mode;                   // Behaviour on EBREAK instruction: 0 = halt; 1 = generate trap
     sc_in<bool> i_unsup_exception;              // Unsupported instruction exception
-    sc_in<bool> i_ext_irq;                      // External interrupt from PLIC (todo: timer & software interrupts)
     sc_in<bool> i_dport_npc_write;              // Write npc value from debug port
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_dport_npc; // Debug port npc value to write
 
@@ -58,7 +53,6 @@ SC_MODULE(InstrExecute) {
     sc_out<sc_uint<5>> o_res_addr;              // Address to store result of the instruction (0=do not store)
     sc_out<sc_uint<RISCV_ARCH>> o_res_data;     // Value to store
     sc_out<bool> o_pipeline_hold;               // Hold pipeline while 'writeback' not done or multi-clock instruction.
-    sc_out<bool> o_xret;                        // XRET instruction: MRET, URET or other.
     sc_out<sc_uint<12>> o_csr_addr;             // CSR address. 0 if not a CSR instruction with xret signals mode switching
     sc_out<bool> o_csr_wena;                    // Write new CSR value
     sc_in<sc_uint<RISCV_ARCH>> i_csr_rdata;     // CSR current value
@@ -66,10 +60,8 @@ SC_MODULE(InstrExecute) {
     sc_in<bool> i_trap_valid;                   // async trap event
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_trap_pc;   // jump to address
 
-    sc_out<bool> o_trap_ena;                    // Trap occurs  pulse
-    sc_out<sc_uint<5>> o_trap_code;             // bit[4] : 1=interrupt; 0=exception; bits[3:0]=code
-    sc_out<sc_uint<BUS_ADDR_WIDTH>> o_trap_pc;  // trap on pc
     // exceptions:
+    sc_out<sc_uint<BUS_ADDR_WIDTH>> o_ex_npc;   // npc on before trap
     sc_out<bool> o_ex_illegal_instr;
     sc_out<bool> o_ex_unalign_store;
     sc_out<bool> o_ex_unalign_load;
@@ -87,9 +79,10 @@ SC_MODULE(InstrExecute) {
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_pc;       // Valid instruction pointer
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_npc;      // Next instruction pointer. Next decoded pc must match to this value or will be ignored.
     sc_out<sc_uint<32>> o_instr;                // Valid instruction value
-    sc_out<bool> o_breakpoint;                  // ebreak instruction
     sc_out<bool> o_call;                        // CALL pseudo instruction detected
     sc_out<bool> o_ret;                         // RET pseudoinstruction detected
+    sc_out<bool> o_mret;                        // MRET.
+    sc_out<bool> o_uret;                        // MRET.
 
     void comb();
     void registers();
@@ -151,7 +144,6 @@ private:
     sc_signal<bool> w_arith_busy[Multi_Total];
     bool w_exception_store;
     bool w_exception_load;
-    bool w_exception_xret;
 
     sc_signal<sc_uint<RISCV_ARCH>> wb_shifter_a1;      // Shifters operand 1
     sc_signal<sc_uint<6>> wb_shifter_a2;               // Shifters operand 2
