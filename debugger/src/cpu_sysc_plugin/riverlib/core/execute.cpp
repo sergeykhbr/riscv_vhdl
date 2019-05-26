@@ -47,6 +47,8 @@ InstrExecute::InstrExecute(sc_module_name name_)  : sc_module(name_) {
     sensitive << i_rdata1;
     sensitive << i_rdata2;
     sensitive << i_csr_rdata;
+    sensitive << i_trap_valid;
+    sensitive << i_trap_pc;
     sensitive << r.d_valid;
     sensitive << r.pc;
     sensitive << r.npc;
@@ -70,11 +72,6 @@ InstrExecute::InstrExecute(sc_module_name name_)  : sc_module(name_) {
     sensitive << r.hazard_addr0;
     sensitive << r.hazard_addr1;
     sensitive << r.hazard_depth;
-    sensitive << r.ext_irq_pulser;
-    sensitive << r.trap_ena;
-    sensitive << r.breakpoint;
-    sensitive << r.trap_code;
-    sensitive << r.trap_pc;
     sensitive << r.call;
     sensitive << r.ret;
     sensitive << w_hazard_detected;
@@ -181,14 +178,6 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.multi_res_addr, "/top/proc0/exec0/r_multi_res_addr");
         sc_trace(o_vcd, r.multi_a1, "/top/proc0/exec0/multi_a1");
         sc_trace(o_vcd, r.multi_a2, "/top/proc0/exec0/multi_a2");
-
-        sc_trace(o_vcd, w_interrupt, "/top/proc0/exec0/w_interrupt");
-        sc_trace(o_vcd, w_exception, "/top/proc0/exec0/w_exception");
-        sc_trace(o_vcd, r.trap_ena, "/top/proc0/exec0/r_trap_ena");
-        sc_trace(o_vcd, r.trap_pc, "/top/proc0/exec0/r_trap_pc");
-        sc_trace(o_vcd, r.trap_code, "/top/proc0/exec0/r_trap_code");
-        sc_trace(o_vcd, r.trap_code_waiting, "/top/proc0/exec0/r_trap_code_waiting");
-        sc_trace(o_vcd, r.ext_irq_pulser, "/top/proc0/exec0/r_ext_irq_pulser");
     }
     mul0->generateVCD(i_vcd, o_vcd);
     div0->generateVCD(i_vcd, o_vcd);
@@ -256,7 +245,6 @@ void InstrExecute::comb() {
     wv = i_ivec.read();
 
     v = r;
-    v.breakpoint = 0;
 
     wb_mask_i31 = 0;
     if (i_d_instr.read()[31]) {
@@ -269,12 +257,6 @@ void InstrExecute::comb() {
     }
     w_d_acceptable = (!i_pipeline_hold) & i_d_valid 
                           & w_pc_valid & (!r.multiclock_ena);
-
-    v.ext_irq_pulser = i_ext_irq & i_ie;
-    w_interrupt = 0;
-    if (w_d_acceptable && (r.trap_code_waiting != 0)) {
-        w_interrupt = 1;
-    }
 
     if (i_isa_type.read()[ISA_R_type]) {
         wb_radr1 = i_d_instr.read().range(19, 15);
@@ -438,10 +420,12 @@ void InstrExecute::comb() {
         w_exception_xret = 1;
     }
 
-    w_exception = w_d_acceptable
-        & ((i_unsup_exception.read() & w_pc_valid) || w_exception_load
-           || w_exception_store || w_exception_xret
-           || wv[Instr_ECALL] || wv[Instr_EBREAK]);
+    o_ex_illegal_instr = (i_unsup_exception.read() & w_pc_valid) || w_exception_xret;
+    o_ex_unalign_store = w_exception_store;
+    o_ex_unalign_load = w_exception_load;
+    o_ex_breakpoint = wv[Instr_EBREAK].to_bool();
+    o_ex_ecall = wv[Instr_ECALL].to_bool();
+
 
     /** Default number of cycles per instruction = 0 (1 clock per instr)
      *  If instruction is multicycle then modify this value.
@@ -458,7 +442,7 @@ void InstrExecute::comb() {
                     | wv[Instr_DIVU] | wv[Instr_DIVW] | wv[Instr_DIVUW]
                     | wv[Instr_REM] | wv[Instr_REMU] | wv[Instr_REMW]
                     | wv[Instr_REMUW]).to_bool();
-    if (w_multi_ena & w_d_acceptable & !w_exception & !w_interrupt) {
+    if (w_multi_ena & w_d_acceptable & !i_trap_valid.read()) {
         v.multiclock_ena = 1;
         v.multi_res_addr = wb_res_addr;
         v.multi_pc = i_d_pc;
@@ -512,13 +496,13 @@ void InstrExecute::comb() {
     } else if (wv[Instr_LUI]) {
         wb_res = wb_rdata2;
     } else if (wv[Instr_MUL] || wv[Instr_MULW]) {
-        v.multi_ena[Multi_MUL] = w_d_acceptable & !w_exception & !w_interrupt;
+        v.multi_ena[Multi_MUL] = w_d_acceptable & !i_trap_valid.read();
     } else if (wv[Instr_DIV] || wv[Instr_DIVU]
             || wv[Instr_DIVW] || wv[Instr_DIVUW]) {
-        v.multi_ena[Multi_DIV] = w_d_acceptable & !w_exception & !w_interrupt;
+        v.multi_ena[Multi_DIV] = w_d_acceptable & !i_trap_valid.read();
     } else if (wv[Instr_REM] || wv[Instr_REMU]
             || wv[Instr_REMW] || wv[Instr_REMUW]) {
-        v.multi_ena[Multi_DIV] = w_d_acceptable & !w_exception & !w_interrupt;
+        v.multi_ena[Multi_DIV] = w_d_acceptable & !i_trap_valid.read();
         v.multi_residual_high = 1;
     } else if (wv[Instr_CSRRC]) {
         wb_res = i_csr_rdata;
@@ -555,61 +539,18 @@ void InstrExecute::comb() {
         wb_csr_wdata(4, 0) = wb_radr1;  // zero-extending 5 to 64-bits
     }
 
-    wb_exception_code = 0;
-    if (i_ext_irq & i_ie & !r.ext_irq_pulser) { // Maskable traps (interrupts)
-        v.trap_code_waiting[4] = 1;
-        // INTERRUPT_MExternal - INTERRUPT_USoftware
-        v.trap_code_waiting(3, 0) = 11;
-    } else if (w_exception) {      // Unmaskable traps (exceptions)
-        wb_exception_code[4] = 0;
-        if (w_exception_load) {
-            wb_exception_code(3, 0) = EXCEPTION_LoadMisalign;
-        } else if (w_exception_store) {
-            wb_exception_code(3, 0) = EXCEPTION_StoreMisalign;
-        } else if (w_exception_xret) {
-            wb_exception_code(3, 0) = EXCEPTION_InstrIllegal;
-        } else if (wv[Instr_ECALL]) {
-            if (i_mode.read() == PRV_M) {
-                wb_exception_code(3, 0) = EXCEPTION_CallFromMmode;
-            } else {
-                wb_exception_code(3, 0) = EXCEPTION_CallFromUmode;
-            }
-        } else if (wv[Instr_EBREAK]) {
-            v.breakpoint = 1;
-            wb_exception_code(3, 0) = EXCEPTION_Breakpoint;
-        } else {
-            wb_exception_code(3, 0) = EXCEPTION_InstrIllegal;
-        }
-    } else if (w_interrupt) {
-        v.trap_code_waiting = 0;
-    }
-
-    w_d_valid = 
-        (w_d_acceptable && !w_interrupt && !w_exception && !w_multi_ena)
-        || w_multi_valid;
+    w_d_valid = (w_d_acceptable && !w_multi_ena) || w_multi_valid;
+    o_pre_valid = w_d_valid;
 
 
-    v.trap_ena = 0;
     v.call = 0;
     v.ret = 0;
     if (i_dport_npc_write.read()) {
         v.npc = i_dport_npc.read();
-    } else if (w_interrupt) {
-        v.trap_ena = 1;
-        v.trap_pc = i_d_pc;
-        v.trap_code = r.trap_code_waiting;
-        v.npc = i_mtvec;
-    } else if (w_exception) {
-        v.trap_ena = 1;
-        v.trap_pc = i_d_pc;
-        v.trap_code = wb_exception_code;
-        if (wv[Instr_EBREAK] && i_break_mode.read() == 0) {
-            v.npc = i_d_pc;
-        } else {
-            v.npc = i_mtvec;
-        }
     } else if (w_d_valid) {
-        if (w_multi_valid) {
+        if (i_trap_valid.read()) {
+            v.npc = i_trap_pc.read();
+        } else if (w_multi_valid) {
             v.pc = r.multi_pc;
             v.instr = r.multi_instr;
             v.npc = r.multi_npc;;
@@ -705,12 +646,6 @@ void InstrExecute::comb() {
         v.multi_a1 = 0;
         v.multi_a2 = 0;
 
-        v.ext_irq_pulser = 0;
-        v.trap_code_waiting = 0;
-        v.trap_ena = 0;
-        v.breakpoint = 0;
-        v.trap_code = 0;
-        v.trap_pc = 0;
         v.call = 0;
         v.ret = 0;
     }
@@ -725,9 +660,9 @@ void InstrExecute::comb() {
     o_csr_wena = w_csr_wena & w_pc_valid & !w_hazard_detected;
     o_csr_addr = wb_csr_addr;
     o_csr_wdata = wb_csr_wdata;
-    o_trap_ena = r.trap_ena;
-    o_trap_code = r.trap_code;
-    o_trap_pc = r.trap_pc;
+    o_trap_ena = 0;
+    o_trap_code = 0;
+    o_trap_pc = 0;
 
     o_memop_sign_ext = r.memop_sign_ext;
     o_memop_load = r.memop_load;
@@ -739,7 +674,7 @@ void InstrExecute::comb() {
     o_pc = r.pc;
     o_npc = r.npc;
     o_instr = r.instr;
-    o_breakpoint = r.breakpoint;
+    o_breakpoint = 0;
     o_call = r.call;
     o_ret = r.ret;
 }

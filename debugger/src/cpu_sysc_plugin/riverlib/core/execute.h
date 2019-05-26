@@ -63,9 +63,18 @@ SC_MODULE(InstrExecute) {
     sc_out<bool> o_csr_wena;                    // Write new CSR value
     sc_in<sc_uint<RISCV_ARCH>> i_csr_rdata;     // CSR current value
     sc_out<sc_uint<RISCV_ARCH>> o_csr_wdata;    // CSR new value
+    sc_in<bool> i_trap_valid;                   // async trap event
+    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_trap_pc;   // jump to address
+
     sc_out<bool> o_trap_ena;                    // Trap occurs  pulse
     sc_out<sc_uint<5>> o_trap_code;             // bit[4] : 1=interrupt; 0=exception; bits[3:0]=code
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_trap_pc;  // trap on pc
+    // exceptions:
+    sc_out<bool> o_ex_illegal_instr;
+    sc_out<bool> o_ex_unalign_store;
+    sc_out<bool> o_ex_unalign_load;
+    sc_out<bool> o_ex_breakpoint;
+    sc_out<bool> o_ex_ecall;
 
     sc_out<bool> o_memop_sign_ext;              // Load data with sign extending
     sc_out<bool> o_memop_load;                  // Load data instruction
@@ -73,6 +82,7 @@ SC_MODULE(InstrExecute) {
     sc_out<sc_uint<2>> o_memop_size;            // 0=1bytes; 1=2bytes; 2=4bytes; 3=8bytes
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_memop_addr;// Memory access address
 
+    sc_out<bool> o_pre_valid;                   // pre-latch of valid
     sc_out<bool> o_valid;                       // Output is valid
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_pc;       // Valid instruction pointer
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_npc;      // Next instruction pointer. Next decoded pc must match to this value or will be ignored.
@@ -132,13 +142,6 @@ private:
         sc_signal<sc_uint<5>> hazard_addr1;             // Updated register address on pre-previous step
         sc_signal<sc_uint<2>> hazard_depth;             // Number of modificated registers that wasn't done yet
 
-        sc_signal<bool> ext_irq_pulser;                 // Form 1 clock pulse from strob
-        sc_signal<bool> trap_ena;                       // Trap occur, switch mode
-        sc_signal<bool> breakpoint;
-        sc_uint<5> trap_code_waiting;                   // To avoid multi-cycle instruction collision
-        sc_signal<sc_uint<5>> trap_code;                // bit[4] : 1 = interrupt; 0 = exception
-                                                        // bit[3:0] : trap code
-        sc_signal<sc_uint<BUS_ADDR_WIDTH>> trap_pc;     // pc that caused a trap 
         sc_signal<bool> call;
         sc_signal<bool> ret;
     } v, r;
@@ -146,12 +149,9 @@ private:
     multi_arith_type wb_arith_res;
     sc_signal<bool> w_arith_valid[Multi_Total];
     sc_signal<bool> w_arith_busy[Multi_Total];
-    bool w_interrupt;
-    bool w_exception;
     bool w_exception_store;
     bool w_exception_load;
     bool w_exception_xret;
-    sc_uint<5> wb_exception_code;
 
     sc_signal<sc_uint<RISCV_ARCH>> wb_shifter_a1;      // Shifters operand 1
     sc_signal<sc_uint<6>> wb_shifter_a2;               // Shifters operand 2

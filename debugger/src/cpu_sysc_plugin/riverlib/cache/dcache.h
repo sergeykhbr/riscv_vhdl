@@ -26,6 +26,8 @@ SC_MODULE(DCache) {
     sc_out<bool> o_resp_data_valid;
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_resp_data_addr;
     sc_out<sc_uint<RISCV_ARCH>> o_resp_data_data;
+    sc_out<bool> o_resp_data_load_fault;
+    sc_out<bool> o_resp_data_store_fault;
     sc_in<bool> i_resp_data_ready;
     // Memory interface:
     sc_in<bool> i_req_mem_ready;
@@ -36,6 +38,8 @@ SC_MODULE(DCache) {
     sc_out<sc_uint<BUS_DATA_WIDTH>> o_req_mem_data;
     sc_in<bool> i_resp_mem_data_valid;
     sc_in<sc_uint<BUS_DATA_WIDTH>> i_resp_mem_data;
+    sc_in<bool> i_resp_mem_load_fault;
+    sc_in<bool> i_resp_mem_store_fault;
     sc_out<sc_uint<2>> o_dstate;
 
     void comb();
@@ -59,6 +63,8 @@ private:
         sc_signal<sc_uint<BUS_DATA_WIDTH>> dline_data;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> dline_addr_req;
         sc_signal<sc_uint<2>> dline_size_req;
+        sc_signal<bool> dline_load_fault;
+        sc_signal<bool> dline_store_fault;
         sc_signal<sc_uint<2>> state;
     } v, r;
     bool w_wait_response;

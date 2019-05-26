@@ -45,6 +45,8 @@ SC_MODULE(Processor) {
     sc_in<bool> i_resp_data_valid;                      // DCache response is valid
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_resp_data_addr;    // DCache response address must be equal to the latest request address
     sc_in<sc_uint<RISCV_ARCH>> i_resp_data_data;        // Read value
+    sc_in<bool> i_resp_data_load_fault;                 // Bus response with SLVERR or DECERR on read
+    sc_in<bool> i_resp_data_store_fault;                // Bus response with SLVERR or DECERR on write
     sc_out<bool> o_resp_data_ready;                     // Core is ready to accept response from DCache
     // External interrupt pin
     sc_in<bool> i_ext_irq;                              // PLIC interrupt accordingly with spec
@@ -102,6 +104,7 @@ private:
     };
 
     struct ExecuteType {
+        sc_signal<bool> pre_valid;
         sc_signal<bool> valid;
         sc_signal<sc_uint<32>> instr;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> pc;
@@ -118,6 +121,11 @@ private:
         sc_signal<sc_uint<12>> csr_addr;
         sc_signal<bool> csr_wena;
         sc_signal<sc_uint<RISCV_ARCH>> csr_wdata;
+        sc_signal<bool> ex_illegal_instr;
+        sc_signal<bool> ex_unalign_load;
+        sc_signal<bool> ex_unalign_store;
+        sc_signal<bool> ex_breakpoint;
+        sc_signal<bool> ex_ecall;
 
         sc_signal<bool> memop_sign_ext;
         sc_signal<bool> memop_load;
@@ -154,6 +162,8 @@ private:
     struct CsrType {
         sc_signal<sc_uint<RISCV_ARCH>> rdata;
         sc_signal<sc_uint<RISCV_ARCH>> dport_rdata;
+        sc_signal<bool> trap_valid;
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> trap_pc;
 
         sc_signal<bool> ie;                     // Interrupt enable bit
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> mtvec;// Interrupt descriptor table

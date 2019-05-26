@@ -19,11 +19,15 @@ DCache::DCache(sc_module_name name_) : sc_module(name_) {
     sensitive << i_req_data_data;
     sensitive << i_resp_mem_data_valid;
     sensitive << i_resp_mem_data;
+    sensitive << i_resp_mem_load_fault;
+    sensitive << i_resp_mem_store_fault;
     sensitive << i_req_mem_ready;
     sensitive << i_resp_data_ready;
     sensitive << r.dline_data;
     sensitive << r.dline_addr_req;
     sensitive << r.dline_size_req;
+    sensitive << r.dline_load_fault;
+    sensitive << r.dline_store_fault;
     sensitive << r.state;
 
     SC_METHOD(registers);
@@ -61,6 +65,8 @@ void DCache::comb() {
     sc_uint<BUS_ADDR_WIDTH> wb_o_resp_addr;
     sc_uint<BUS_DATA_WIDTH> wb_resp_data_mux;
     sc_uint<BUS_DATA_WIDTH> wb_o_resp_data;
+    bool w_o_resp_load_fault;
+    bool w_o_resp_store_fault;
     sc_uint<BUS_DATA_WIDTH> wb_rtmp;
 
     v = r;
@@ -187,15 +193,21 @@ void DCache::comb() {
     }
     if (i_resp_mem_data_valid.read()) {
         v.dline_data =  i_resp_mem_data;
+        v.dline_load_fault = i_resp_mem_load_fault;
+        v.dline_store_fault = i_resp_mem_store_fault;
     }
 
     wb_o_resp_addr = r.dline_addr_req;
     if (r.state.read() == State_WaitAccept) {
         w_o_resp_valid = 1;
         wb_resp_data_mux = r.dline_data;
+        w_o_resp_load_fault = r.dline_load_fault;
+        w_o_resp_store_fault = r.dline_store_fault;
     } else {
         w_o_resp_valid = i_resp_mem_data_valid;
         wb_resp_data_mux = i_resp_mem_data;
+        w_o_resp_load_fault = i_resp_mem_load_fault;
+        w_o_resp_store_fault = i_resp_mem_store_fault;
     }
 
     switch (r.dline_addr_req.read()(2, 0)) {
@@ -242,6 +254,8 @@ void DCache::comb() {
         v.dline_addr_req = 0;
         v.dline_size_req = 0;
         v.dline_data = 0;
+        v.dline_load_fault = 0;
+        v.dline_store_fault = 0;
         v.state = State_Idle;
     }
 
@@ -256,6 +270,8 @@ void DCache::comb() {
     o_resp_data_valid = w_o_resp_valid;
     o_resp_data_data = wb_o_resp_data;
     o_resp_data_addr = wb_o_resp_addr;
+    o_resp_data_load_fault = w_o_resp_load_fault;
+    o_resp_data_store_fault = w_o_resp_store_fault;
     o_dstate = r.state;
 }
 

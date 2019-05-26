@@ -36,9 +36,11 @@ SC_MODULE(CacheTop) {
     sc_out<bool> o_resp_data_valid;                     // DCache response is ready
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_resp_data_addr;   // DCache response address
     sc_out<sc_uint<RISCV_ARCH>> o_resp_data_data;       // DCache response read data
+    sc_out<bool> o_resp_data_load_fault;                // Bus response ERRSLV or ERRDEC on read
+    sc_out<bool> o_resp_data_store_fault;               // Bus response ERRSLV or ERRDEC on write
     sc_in<bool> i_resp_data_ready;                      // CPU Core is ready to accept DCache repsonse
     // Memory interface:
-    sc_in<bool> i_req_mem_ready;                       // System Bus (AXI) is available
+    sc_in<bool> i_req_mem_ready;                        // System Bus (AXI) is available
     sc_out<bool> o_req_mem_valid;                       // Memory operation to system bus is valid
     sc_out<bool> o_req_mem_write;                       // Memory operation write flag
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_req_mem_addr;     // Requesting address
@@ -46,6 +48,9 @@ SC_MODULE(CacheTop) {
     sc_out<sc_uint<BUS_DATA_WIDTH>> o_req_mem_data;     // Writing value
     sc_in<bool> i_resp_mem_data_valid;                  // Memory operation from system bus is completed
     sc_in<sc_uint<BUS_DATA_WIDTH>> i_resp_mem_data;     // Read value
+    sc_in<bool> i_resp_mem_load_fault;                  // Bus response with SLVERR or DECERR on read
+    sc_in<bool> i_resp_mem_store_fault;                 // Bus response with SLVERR or DECERR on write
+
     // Debug signals:
     sc_out<sc_uint<2>> o_istate;                        // ICache state machine value
     sc_out<sc_uint<2>> o_dstate;                        // DCache state machine value
@@ -83,10 +88,13 @@ private:
     // Memory Control interface:
     sc_signal<bool> w_ctrl_resp_mem_data_valid;
     sc_signal<sc_uint<BUS_DATA_WIDTH>> wb_ctrl_resp_mem_data;
+    sc_signal<bool> w_ctrl_resp_mem_load_fault;
     sc_signal<bool> w_ctrl_req_ready;
     // Memory Data interface:
     sc_signal<bool> w_data_resp_mem_data_valid;
     sc_signal<sc_uint<BUS_DATA_WIDTH>> wb_data_resp_mem_data;
+    sc_signal<bool> w_data_resp_mem_load_fault;
+    sc_signal<bool> w_data_resp_mem_store_fault;
     sc_signal<bool> w_data_req_ready;
 
     ICache *i0;

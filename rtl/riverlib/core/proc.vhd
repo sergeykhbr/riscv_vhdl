@@ -40,6 +40,8 @@ entity Processor is
     i_resp_data_valid : in std_logic;                                 -- DCache response is valid
     i_resp_data_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- DCache response address must be equal to the latest request address
     i_resp_data_data : in std_logic_vector(RISCV_ARCH-1 downto 0);    -- Read value
+    i_resp_data_load_fault : in std_logic;                            -- Bus response with SLVERR or DECERR on read
+    i_resp_data_store_fault : in std_logic;                           -- Bus response with SLVERR or DECERR on write
     o_resp_data_ready : out std_logic;
     -- External interrupt pin
     i_ext_irq : in std_logic;                                         -- PLIC interrupt accordingly with spec
@@ -90,6 +92,7 @@ architecture arch_Processor of Processor is
     end record;
 
     type ExecuteType is record
+        pre_valid : std_logic;
         valid : std_logic;
         instr : std_logic_vector(31 downto 0);
         pc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
@@ -106,6 +109,11 @@ architecture arch_Processor of Processor is
         csr_addr : std_logic_vector(11 downto 0);
         csr_wena : std_logic;
         csr_wdata : std_logic_vector(RISCV_ARCH-1 downto 0);
+        ex_illegal_instr : std_logic;
+        ex_unalign_load : std_logic;
+        ex_unalign_store : std_logic;
+        ex_breakpoint : std_logic;
+        ex_ecall : std_logic;
 
         memop_sign_ext : std_logic;
         memop_load : std_logic;
@@ -142,6 +150,8 @@ architecture arch_Processor of Processor is
     type CsrType is record
         rdata : std_logic_vector(RISCV_ARCH-1 downto 0);
         dport_rdata : std_logic_vector(RISCV_ARCH-1 downto 0);
+        trap_valid : std_logic;
+        trap_pc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
         ie : std_logic;                                     -- Interrupt enable bit
         mtvec : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- Interrupt descriptor table
         mode : std_logic_vector(1 downto 0);                -- Current processor mode
@@ -279,14 +289,22 @@ begin
         o_csr_wena => w.e.csr_wena,
         i_csr_rdata => csr.rdata,
         o_csr_wdata => w.e.csr_wdata,
+        i_trap_valid => csr.trap_valid,
+        i_trap_pc => csr.trap_pc,
         o_trap_ena => w.e.trap_ena,
         o_trap_code => w.e.trap_code,
         o_trap_pc => w.e.trap_pc,
+        o_ex_illegal_instr => w.e.ex_illegal_instr,
+        o_ex_unalign_store => w.e.ex_unalign_store,
+        o_ex_unalign_load => w.e.ex_unalign_load,
+        o_ex_breakpoint => w.e.ex_breakpoint,
+        o_ex_ecall => w.e.ex_ecall,
         o_memop_sign_ext => w.e.memop_sign_ext,
         o_memop_load => w.e.memop_load,
         o_memop_store => w.e.memop_store,
         o_memop_size => w.e.memop_size,
         o_memop_addr => w.e.memop_addr,
+        o_pre_valid => w.e.pre_valid,
         o_valid => w.e.valid,
         o_pc => w.e.pc,
         o_npc => w.e.npc,
@@ -366,11 +384,24 @@ begin
         i_wena => w.e.csr_wena,
         i_wdata => w.e.csr_wdata,
         o_rdata => csr.rdata,
+        i_e_pre_valid => w.e.pre_valid,
+        i_e_pc => w.e.npc,
+        i_data_addr => i_resp_data_addr,
+        i_ex_data_load_fault => i_resp_data_load_fault,
+        i_ex_data_store_fault => i_resp_data_store_fault,
+        i_ex_illegal_instr => w.e.ex_illegal_instr,
+        i_ex_unalign_store => w.e.ex_unalign_store,
+        i_ex_unalign_load => w.e.ex_unalign_load,
+        i_ex_breakpoint => w.e.ex_breakpoint,
+        i_ex_ecall => w.e.ex_ecall,
+        i_irq_external => i_ext_irq,
         i_break_mode => dbg.break_mode,
         i_breakpoint => w.e.breakpoint,
         i_trap_ena => w.e.trap_ena,
         i_trap_code => w.e.trap_code,
         i_trap_pc => w.e.trap_pc,
+        o_trap_valid => csr.trap_valid,
+        o_trap_pc => csr.trap_pc,
         o_ie => csr.ie,
         o_mode => csr.mode,
         o_mtvec => csr.mtvec,

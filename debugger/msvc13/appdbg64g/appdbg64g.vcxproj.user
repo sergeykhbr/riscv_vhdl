@@ -6,7 +6,7 @@
     <LocalDebuggerEnvironment>PATH=%PATH%;$(QT_PATH)/bin</LocalDebuggerEnvironment>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <LocalDebuggerCommandArguments>-c ../../targets/dualcore_sim_gui.json </LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-c ../../targets/sysc_river_gui.json </LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerEnvironment>PATH=%PATH%;$(QT_PATH)/bin</LocalDebuggerEnvironment>
   </PropertyGroup>

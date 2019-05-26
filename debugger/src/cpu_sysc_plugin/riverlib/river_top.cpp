@@ -40,6 +40,8 @@ RiverTop::RiverTop(sc_module_name name_, uint32_t hartid)
     proc0->i_resp_data_valid(w_resp_data_valid);
     proc0->i_resp_data_addr(wb_resp_data_addr);
     proc0->i_resp_data_data(wb_resp_data_data);
+    proc0->i_resp_data_load_fault(w_resp_data_load_fault);
+    proc0->i_resp_data_store_fault(w_resp_data_store_fault);
     proc0->o_resp_data_ready(w_resp_data_ready);
     proc0->i_ext_irq(i_ext_irq);
     proc0->o_time(o_time);
@@ -73,6 +75,8 @@ RiverTop::RiverTop(sc_module_name name_, uint32_t hartid)
     cache0->o_resp_data_valid(w_resp_data_valid);
     cache0->o_resp_data_addr(wb_resp_data_addr);
     cache0->o_resp_data_data(wb_resp_data_data);
+    cache0->o_resp_data_load_fault(w_resp_data_load_fault);
+    cache0->o_resp_data_store_fault(w_resp_data_store_fault);
     cache0->i_resp_data_ready(w_resp_data_ready);
     cache0->i_req_mem_ready(i_req_mem_ready);
     cache0->o_req_mem_valid(o_req_mem_valid);
@@ -82,6 +86,8 @@ RiverTop::RiverTop(sc_module_name name_, uint32_t hartid)
     cache0->o_req_mem_data(o_req_mem_data);
     cache0->i_resp_mem_data_valid(i_resp_mem_data_valid);
     cache0->i_resp_mem_data(i_resp_mem_data);
+    cache0->i_resp_mem_load_fault(i_resp_mem_load_fault);
+    cache0->i_resp_mem_store_fault(i_resp_mem_store_fault);
     cache0->o_istate(wb_istate);
     cache0->o_dstate(wb_dstate);
     cache0->o_cstate(wb_cstate);

@@ -49,7 +49,7 @@ constant CFG_COMMON_RIVER_CPU_ENABLE : boolean := true;
 
 --! @brief   Dual-core configuration enabling
 --! @details This config parameter used only with CPU River
-constant CFG_COMMON_DUAL_CORE_ENABLE : boolean := true;
+constant CFG_COMMON_DUAL_CORE_ENABLE : boolean := false;
 
 --! @brief   HEX-image for the initialization of the Boot ROM.
 --! @details This file is used by \e inferred ROM implementation.

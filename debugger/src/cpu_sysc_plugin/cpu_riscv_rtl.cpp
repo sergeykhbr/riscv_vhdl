@@ -143,6 +143,8 @@ void CpuRiscV_RTL::createSystemC() {
     wrapper_->i_req_mem_data(wb_req_mem_data);
     wrapper_->o_resp_mem_data_valid(w_resp_mem_data_valid);
     wrapper_->o_resp_mem_data(wb_resp_mem_data);
+    wrapper_->o_resp_mem_load_fault(w_resp_mem_load_fault);
+    wrapper_->o_resp_mem_store_fault(w_resp_mem_store_fault);
     wrapper_->o_interrupt(w_interrupt);
     wrapper_->o_dport_valid(w_dport_valid);
     wrapper_->o_dport_write(w_dport_write);
@@ -163,6 +165,8 @@ void CpuRiscV_RTL::createSystemC() {
     top_->o_req_mem_data(wb_req_mem_data);
     top_->i_resp_mem_data_valid(w_resp_mem_data_valid);
     top_->i_resp_mem_data(wb_resp_mem_data);
+    top_->i_resp_mem_load_fault(w_resp_mem_load_fault);
+    top_->i_resp_mem_store_fault(w_resp_mem_store_fault);
     top_->i_ext_irq(w_interrupt);
     top_->o_time(wb_time);
     top_->i_dport_valid(w_dport_valid);

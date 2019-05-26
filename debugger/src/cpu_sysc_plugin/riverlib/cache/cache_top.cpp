@@ -25,6 +25,8 @@ CacheTop::CacheTop(sc_module_name name_) : sc_module(name_) {
     sensitive << d.req_mem_wdata;
     sensitive << i_resp_mem_data_valid;
     sensitive << i_resp_mem_data;
+    sensitive << i_resp_mem_load_fault;
+    sensitive << i_resp_mem_store_fault;
     sensitive << r.state;
 
     SC_METHOD(registers);
@@ -48,6 +50,7 @@ CacheTop::CacheTop(sc_module_name name_) : sc_module(name_) {
     i0->o_req_mem_data(i.req_mem_wdata);
     i0->i_resp_mem_data_valid(w_ctrl_resp_mem_data_valid);
     i0->i_resp_mem_data(wb_ctrl_resp_mem_data);
+    i0->i_resp_mem_load_fault(w_ctrl_resp_mem_load_fault);
     i0->o_istate(o_istate);
 
     d0 = new DCache("d0");
@@ -62,6 +65,8 @@ CacheTop::CacheTop(sc_module_name name_) : sc_module(name_) {
     d0->o_resp_data_valid(o_resp_data_valid);
     d0->o_resp_data_addr(o_resp_data_addr);
     d0->o_resp_data_data(o_resp_data_data);
+    d0->o_resp_data_load_fault(o_resp_data_load_fault);
+    d0->o_resp_data_store_fault(o_resp_data_store_fault);
     d0->i_resp_data_ready(i_resp_data_ready);
     d0->i_req_mem_ready(w_data_req_ready);
     d0->o_req_mem_valid(d.req_mem_valid);
@@ -71,6 +76,8 @@ CacheTop::CacheTop(sc_module_name name_) : sc_module(name_) {
     d0->o_req_mem_data(d.req_mem_wdata);
     d0->i_resp_mem_data_valid(w_data_resp_mem_data_valid);
     d0->i_resp_mem_data(wb_data_resp_mem_data);
+    d0->i_resp_mem_load_fault(w_data_resp_mem_load_fault);
+    d0->i_resp_mem_store_fault(w_data_resp_mem_store_fault);
     d0->o_dstate(o_dstate);
 
 #ifdef DBG_ICACHE_TB
@@ -128,9 +135,12 @@ void CacheTop::comb() {
     w_data_req_ready = 0;
     w_data_resp_mem_data_valid = 0;
     wb_data_resp_mem_data = 0;
+    w_data_resp_mem_load_fault = 0;
+    w_data_resp_mem_store_fault = 0;
     w_ctrl_req_ready = 0;
     w_ctrl_resp_mem_data_valid = 0;
     wb_ctrl_resp_mem_data = 0;
+    w_ctrl_resp_mem_load_fault = 0;
 
     switch (r.state.read()) {
     case State_Idle:
@@ -176,6 +186,8 @@ void CacheTop::comb() {
         }
         w_data_resp_mem_data_valid = i_resp_mem_data_valid;
         wb_data_resp_mem_data = i_resp_mem_data;
+        w_data_resp_mem_load_fault = i_resp_mem_load_fault;
+        w_data_resp_mem_store_fault = i_resp_mem_store_fault;
         break;
 
     case State_IMem:
@@ -199,6 +211,7 @@ void CacheTop::comb() {
         }
         w_ctrl_resp_mem_data_valid = i_resp_mem_data_valid;
         wb_ctrl_resp_mem_data = i_resp_mem_data;
+        w_ctrl_resp_mem_load_fault = i_resp_mem_load_fault;
         break;
     default:;
     }

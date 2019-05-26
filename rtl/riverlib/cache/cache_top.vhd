@@ -37,6 +37,8 @@ entity CacheTop is
     o_resp_data_valid : out std_logic;
     o_resp_data_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     o_resp_data_data : out std_logic_vector(RISCV_ARCH-1 downto 0);
+    o_resp_data_load_fault : out std_logic;
+    o_resp_data_store_fault : out std_logic;
     i_resp_data_ready : in std_logic;
     -- Memory interface:
     i_req_mem_ready : in std_logic;                                   -- AXI request was accepted
@@ -47,6 +49,8 @@ entity CacheTop is
     o_req_mem_data : out std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
     i_resp_mem_data_valid : in std_logic;
     i_resp_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+    i_resp_mem_load_fault : in std_logic;                             -- Bus response with SLVERR or DECERR on read
+    i_resp_mem_store_fault : in std_logic;                            -- Bus response with SLVERR or DECERR on write
     -- Debug signals:
     o_istate : out std_logic_vector(1 downto 0);                      -- ICache state machine value
     o_dstate : out std_logic_vector(1 downto 0);                      -- DCache state machine value
@@ -77,10 +81,13 @@ architecture arch_CacheTop of CacheTop is
   -- Memory Control interface:
   signal w_ctrl_resp_mem_data_valid : std_logic;
   signal wb_ctrl_resp_mem_data : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+  signal w_ctrl_resp_mem_load_fault : std_logic;
   signal w_ctrl_req_ready : std_logic;
   -- Memory Data interface:
   signal w_data_resp_mem_data_valid : std_logic;
   signal wb_data_resp_mem_data : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+  signal w_data_resp_mem_load_fault : std_logic;
+  signal w_data_resp_mem_store_fault : std_logic;
   signal w_data_req_ready : std_logic;
 
   component ICache is port (
@@ -101,6 +108,7 @@ architecture arch_CacheTop of CacheTop is
     o_req_mem_data : out std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
     i_resp_mem_data_valid : in std_logic;
     i_resp_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+    i_resp_mem_load_fault : in std_logic;
     o_istate : out std_logic_vector(1 downto 0)
   );
   end component; 
@@ -117,6 +125,8 @@ architecture arch_CacheTop of CacheTop is
     o_resp_data_valid : out std_logic;
     o_resp_data_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     o_resp_data_data : out std_logic_vector(RISCV_ARCH-1 downto 0);
+    o_resp_data_load_fault : out std_logic;
+    o_resp_data_store_fault : out std_logic;
     i_resp_data_ready : in std_logic;
     i_req_mem_ready : in std_logic;
     o_req_mem_valid : out std_logic;
@@ -126,6 +136,8 @@ architecture arch_CacheTop of CacheTop is
     o_req_mem_data : out std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
     i_resp_mem_data_valid : in std_logic;
     i_resp_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+    i_resp_mem_load_fault : in std_logic;
+    i_resp_mem_store_fault : in std_logic;
     o_dstate : out std_logic_vector(1 downto 0)
   );
   end component; 
@@ -150,6 +162,7 @@ begin
         o_req_mem_data => i.req_mem_wdata,
         i_resp_mem_data_valid => w_ctrl_resp_mem_data_valid,
         i_resp_mem_data => wb_ctrl_resp_mem_data,
+        i_resp_mem_load_fault => w_ctrl_resp_mem_load_fault,
         o_istate => o_istate);
 
     d0 : DCache port map (
@@ -164,6 +177,8 @@ begin
         o_resp_data_valid => o_resp_data_valid,
         o_resp_data_addr => o_resp_data_addr,
         o_resp_data_data => o_resp_data_data,
+        o_resp_data_load_fault => o_resp_data_load_fault,
+        o_resp_data_store_fault => o_resp_data_store_fault,
         i_resp_data_ready => i_resp_data_ready,
         i_req_mem_ready => w_data_req_ready,
         o_req_mem_valid => d.req_mem_valid,
@@ -173,10 +188,12 @@ begin
         o_req_mem_data => d.req_mem_wdata,
         i_resp_mem_data_valid => w_data_resp_mem_data_valid,
         i_resp_mem_data => wb_data_resp_mem_data,
+        i_resp_mem_load_fault => w_data_resp_mem_load_fault,
+        i_resp_mem_store_fault => w_data_resp_mem_store_fault,
         o_dstate => o_dstate);
 
-  comb : process(i_nrst, i_req_mem_ready, i_resp_mem_data_valid, i_resp_mem_data, 
-                 i, d, r)
+  comb : process(i_nrst, i_req_mem_ready, i_resp_mem_data_valid, i_resp_mem_data,
+                 i_resp_mem_load_fault, i_resp_mem_store_fault, i, d, r)
     variable v : RegistersType;
     variable w_mem_write : std_logic;
     variable wb_mem_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
@@ -194,9 +211,12 @@ begin
     w_data_req_ready <= '0';
     w_data_resp_mem_data_valid <= '0';
     wb_data_resp_mem_data <= (others => '0');
+    w_data_resp_mem_load_fault <= '0';
+    w_data_resp_mem_store_fault <= '0';
     w_ctrl_req_ready <= '0';
     w_ctrl_resp_mem_data_valid <= '0';
     wb_ctrl_resp_mem_data <= (others => '0');
+    w_ctrl_resp_mem_load_fault <= '0';
    
     case r.state is
     when State_Idle =>
@@ -241,6 +261,8 @@ begin
         end if;
         w_data_resp_mem_data_valid <= i_resp_mem_data_valid;
         wb_data_resp_mem_data <= i_resp_mem_data;
+        w_data_resp_mem_load_fault <= i_resp_mem_load_fault;
+        w_data_resp_mem_store_fault <= i_resp_mem_store_fault;
         
     when State_IMem =>
         w_ctrl_req_ready <= i_req_mem_ready;
@@ -263,6 +285,7 @@ begin
         end if;
         w_ctrl_resp_mem_data_valid <= i_resp_mem_data_valid;
         wb_ctrl_resp_mem_data <= i_resp_mem_data;
+        w_ctrl_resp_mem_load_fault <= i_resp_mem_load_fault;
         
     when others =>
     end case;

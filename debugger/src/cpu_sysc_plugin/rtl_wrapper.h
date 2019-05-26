@@ -47,6 +47,8 @@ class RtlWrapper : public sc_module,
     sc_in<sc_uint<BUS_DATA_WIDTH>> i_req_mem_data;
     sc_out<bool> o_resp_mem_data_valid;
     sc_out<sc_uint<BUS_DATA_WIDTH>> o_resp_mem_data;
+    sc_out<bool> o_resp_mem_load_fault;
+    sc_out<bool> o_resp_mem_store_fault;
     /** Interrupt line from external interrupts controller. */
     sc_out<bool> o_interrupt;
     // Debug interface
@@ -62,6 +64,8 @@ class RtlWrapper : public sc_module,
     struct RegistersType {
         sc_signal<sc_uint<BUS_DATA_WIDTH>> resp_mem_data;
         sc_signal<bool> resp_mem_data_valid;
+        sc_signal<bool> resp_mem_load_fault;
+        sc_signal<bool> resp_mem_store_fault;
         sc_signal<sc_uint<3>> wait_state_cnt;
         sc_signal<sc_bv<5>> nrst;
         sc_signal<bool> interrupt;

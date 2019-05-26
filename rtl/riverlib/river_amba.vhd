@@ -73,11 +73,17 @@ architecture arch_river_amba of river_amba is
   signal wb_req_mem_strob : std_logic_vector(BUS_DATA_BYTES-1 downto 0);
   signal wb_req_mem_data : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
   signal w_resp_mem_data_valid : std_logic;
+  signal w_resp_mem_load_fault : std_logic;
+  signal w_resp_mem_store_fault : std_logic;
 
 begin
 
   o_mstcfg <= xconfig;
   w_resp_mem_data_valid <= i_msti.r_valid or (r.b_ready and i_msti.b_valid);
+  -- Slave response resp = SLVERR (2'b10)
+  -- Interconnect response resp = DECERR (2'b11):
+  w_resp_mem_load_fault <= i_msti.r_valid and i_msti.r_resp(1);
+  w_resp_mem_store_fault <= r.b_ready and i_msti.b_valid and i_msti.b_resp(1);
   
   river0 : RiverTop  generic map (
       hartid => hartid
@@ -92,6 +98,8 @@ begin
       o_req_mem_data => wb_req_mem_data,
       i_resp_mem_data_valid => w_resp_mem_data_valid,
       i_resp_mem_data => i_msti.r_data,
+      i_resp_mem_load_fault => w_resp_mem_load_fault,
+      i_resp_mem_store_fault => w_resp_mem_store_fault,
       i_ext_irq => i_ext_irq,
       o_time => open,
       i_dport_valid => i_dport.valid,

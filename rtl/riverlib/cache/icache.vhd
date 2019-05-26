@@ -35,6 +35,7 @@ entity ICache is
     o_req_mem_data : out std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
     i_resp_mem_data_valid : in std_logic;
     i_resp_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+    i_resp_mem_load_fault : in std_logic;
     -- Debug Signals:
     o_istate : out std_logic_vector(1 downto 0)
   );
@@ -88,7 +89,7 @@ begin
 
   comb : process(i_nrst, i_req_ctrl_valid, i_req_ctrl_addr,
                 i_resp_ctrl_ready, i_req_mem_ready, 
-                i_resp_mem_data_valid, i_resp_mem_data, r)
+                i_resp_mem_data_valid, i_resp_mem_data, i_resp_mem_load_fault, r)
     variable v : RegistersType;
     variable w_need_mem_req : std_logic;
     variable wb_hit_word : std_logic_vector(31 downto 0);

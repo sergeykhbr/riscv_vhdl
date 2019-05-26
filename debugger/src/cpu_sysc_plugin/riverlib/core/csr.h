@@ -30,11 +30,26 @@ SC_MODULE(CsrRegs) {
     sc_in<bool> i_wena;                     // Write enable
     sc_in<sc_uint<RISCV_ARCH>> i_wdata;     // CSR writing value
     sc_out<sc_uint<RISCV_ARCH>> o_rdata;    // CSR read value
+    sc_in<bool> i_e_pre_valid;              // execute stage valid signal
+    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_e_pc;
+    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_data_addr;  // Data path: address must be equal to the latest request address
+    sc_in<bool> i_ex_data_load_fault;       // Data path: Bus response with SLVERR or DECERR on read
+    sc_in<bool> i_ex_data_store_fault;      // Data path: Bus response with SLVERR or DECERR on write
+    sc_in<bool> i_ex_illegal_instr;
+    sc_in<bool> i_ex_unalign_store;
+    sc_in<bool> i_ex_unalign_load;
+    sc_in<bool> i_ex_breakpoint;
+    sc_in<bool> i_ex_ecall;
+    sc_in<bool> i_irq_external;
+
     sc_in<bool> i_break_mode;               // Behaviour on EBREAK instruction: 0 = halt; 1 = generate trap
     sc_in<bool> i_breakpoint;               // Breakpoint (Trap or not depends of mode)
     sc_in<bool> i_trap_ena;                 // Trap pulse
     sc_in<sc_uint<5>> i_trap_code;          // bit[4] : 1=interrupt; 0=exception; bits[3:0]=code
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_trap_pc;// trap on pc
+
+    sc_out<bool> o_trap_valid;              // Trap pulse
+    sc_out<sc_uint<BUS_ADDR_WIDTH>> o_trap_pc;
 
     sc_out<bool> o_ie;                      // Interrupt enable bit
     sc_out<sc_uint<2>> o_mode;              // CPU mode
@@ -69,6 +84,8 @@ private:
 
         sc_signal<bool> trap_irq;
         sc_signal<sc_uint<4>> trap_code;
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> trap_addr;
+        sc_signal<bool> ext_irq_latch;
     } v, r;
     uint32_t hartid_;
 

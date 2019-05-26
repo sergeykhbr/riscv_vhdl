@@ -25,6 +25,7 @@ ICache::ICache(sc_module_name name_) : sc_module(name_) {
     sensitive << i_req_ctrl_addr;
     sensitive << i_resp_mem_data_valid;
     sensitive << i_resp_mem_data;
+    sensitive << i_resp_mem_load_fault;
     sensitive << i_resp_ctrl_ready;
     sensitive << i_req_mem_ready;
     sensitive << r.iline[0].addr;

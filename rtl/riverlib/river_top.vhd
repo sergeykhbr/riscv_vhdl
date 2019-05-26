@@ -39,6 +39,8 @@ entity RiverTop is
     o_req_mem_data : out std_logic_vector(BUS_DATA_WIDTH-1 downto 0); -- Writing data
     i_resp_mem_data_valid : in std_logic;                             -- AXI response is valid
     i_resp_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0); -- Read data
+    i_resp_mem_load_fault : in std_logic;                             -- Bus response with SLVERR or DECERR on read
+    i_resp_mem_store_fault : in std_logic;                            -- Bus response with SLVERR or DECERR on write
     -- Interrupt line from external interrupts controller (PLIC).
     i_ext_irq : in std_logic;
     o_time : out std_logic_vector(63 downto 0);                       -- Timer. Clock counter except halt state.
@@ -73,6 +75,8 @@ architecture arch_RiverTop of RiverTop is
   signal w_resp_data_valid : std_logic;
   signal wb_resp_data_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
   signal wb_resp_data_data : std_logic_vector(RISCV_ARCH-1 downto 0);
+  signal w_resp_data_load_fault : std_logic;
+  signal w_resp_data_store_fault : std_logic;
   signal w_resp_data_ready : std_logic;
   signal wb_istate : std_logic_vector(1 downto 0);
   signal wb_dstate : std_logic_vector(1 downto 0);
@@ -101,6 +105,8 @@ begin
         i_resp_data_valid => w_resp_data_valid,
         i_resp_data_addr => wb_resp_data_addr,
         i_resp_data_data => wb_resp_data_data,
+        i_resp_data_load_fault => w_resp_data_load_fault,
+        i_resp_data_store_fault => w_resp_data_store_fault,
         o_resp_data_ready => w_resp_data_ready,
         i_ext_irq => i_ext_irq,
         o_time => o_time,
@@ -134,6 +140,8 @@ begin
         o_resp_data_valid => w_resp_data_valid,
         o_resp_data_addr => wb_resp_data_addr,
         o_resp_data_data => wb_resp_data_data,
+        o_resp_data_load_fault => w_resp_data_load_fault,
+        o_resp_data_store_fault => w_resp_data_store_fault,
         i_resp_data_ready => w_resp_data_ready,
         i_req_mem_ready => i_req_mem_ready,
         o_req_mem_valid => o_req_mem_valid,
@@ -143,6 +151,8 @@ begin
         o_req_mem_data => o_req_mem_data,
         i_resp_mem_data_valid => i_resp_mem_data_valid,
         i_resp_mem_data => i_resp_mem_data,
+        i_resp_mem_load_fault => i_resp_mem_load_fault,
+        i_resp_mem_store_fault => i_resp_mem_store_fault,
         o_istate => wb_istate,
         o_dstate => wb_dstate,
         o_cstate => wb_cstate);

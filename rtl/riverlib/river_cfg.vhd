@@ -333,6 +333,10 @@ package river_cfg is
   --! @param[in] i_wena         Write enable
   --! @param[in] i_wdata        CSR writing value
   --! @param[out] o_rdata       CSR read value
+  --! @param[in] i_e_pre_valid      execute stage valid signal
+  --! @param[in] i_data_addr    Data path: address must be equal to the latest request address
+  --! @param[in] i_data_load_fault Data path: Bus response with SLVERR or DECERR on read
+  --! @param[in] i_data_store_fault Data path: Bus response with SLVERR or DECERR on write
   --! @param[in] i_break_mode   Behaviour on EBREAK instruction: 0 = halt; 1 = generate trap
   --! @param[in] i_breakpoint   Breakpoint (Trap or not depends of mode)
   --! @param[in] i_trap_ena     Trap pulse
@@ -358,11 +362,24 @@ package river_cfg is
     i_wena : in std_logic;
     i_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0);
     o_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0);
+    i_e_pre_valid : in std_logic;
+    i_e_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_data_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_ex_data_load_fault : in std_logic;
+    i_ex_data_store_fault : in std_logic;
+    i_ex_illegal_instr : in std_logic;
+    i_ex_unalign_store : in std_logic;
+    i_ex_unalign_load : in std_logic;
+    i_ex_breakpoint : in std_logic;
+    i_ex_ecall : in std_logic;
+    i_irq_external : in std_logic;
     i_break_mode : in std_logic;
     i_breakpoint : in std_logic;
     i_trap_ena : in std_logic;
     i_trap_code : in std_logic_vector(4 downto 0);
     i_trap_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_trap_valid : out std_logic;
+    o_trap_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     o_ie : out std_logic;
     o_mode : out std_logic_vector(1 downto 0);
     o_mtvec : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
@@ -457,11 +474,17 @@ package river_cfg is
   --! @param[out] o_trap_ena Trap occurs  pulse
   --! @param[out] o_trap_code bit[4] : 1=interrupt; 0=exception; bits[3:0]=code
   --! @param[out] o_trap_pc trap on pc
+  --! @param[out] o_ex_illegal_instr Exception: illegal instruction
+  --! @param[out] o_ex_unalign_store Exception: Unaligned store
+  --! @param[out] o_ex_unalign_load  Exception: Unaligned load
+  --! @param[out] o_ex_breakpoint    Exception: BREAK
+  --! @param[out] o_ex_ecall         Exception: ECALL
   --! @param[out] o_memop_sign_ext Load data with sign extending
   --! @param[out] o_memop_load Load data instruction
   --! @param[out] o_memop_store Store data instruction
   --! @param[out] o_memop_size 0=1bytes; 1=2bytes; 2=4bytes; 3=8bytes
   --! @param[out] o_memop_addr  Memory access address
+  --! @param[out] o_pre_valid   pre-latch of valid signal
   --! @param[out] o_valid       Output is valid
   --! @param[out] o_pc          Valid instruction pointer
   --! @param[out] o_npc         Next instruction pointer. Next decoded pc must match to this value or will be ignored.
@@ -507,14 +530,22 @@ package river_cfg is
     o_csr_wena : out std_logic;
     i_csr_rdata : in std_logic_vector(RISCV_ARCH-1 downto 0);
     o_csr_wdata : out std_logic_vector(RISCV_ARCH-1 downto 0);
+    i_trap_valid : in std_logic;
+    i_trap_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     o_trap_ena : out std_logic;
     o_trap_code : out std_logic_vector(4 downto 0);
     o_trap_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_ex_illegal_instr : out std_logic;
+    o_ex_unalign_store : out std_logic;
+    o_ex_unalign_load : out std_logic;
+    o_ex_breakpoint : out std_logic;
+    o_ex_ecall : out std_logic;
     o_memop_sign_ext : out std_logic;
     o_memop_load : out std_logic;
     o_memop_store : out std_logic;
     o_memop_size : out std_logic_vector(1 downto 0);
     o_memop_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_pre_valid : out std_logic;
     o_valid : out std_logic;
     o_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     o_npc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
@@ -769,6 +800,8 @@ package river_cfg is
   --! @param[in] i_resp_data_valid DCache response is valid
   --! @param[in] i_resp_data_addr  DCache response address must be equal to the latest request address
   --! @param[in] i_resp_data_data  Read value
+  --! @param[in] i_resp_data_load_fault Bus response SLVERR or DECERR on read
+  --! @param[in] i_resp_data_store_fault Bus response SLVERR or DECERR on write
   --! @param[out] o_resp_data_ready Response drom DCache is accepted
   --! @param[in] i_ext_irq         PLIC interrupt accordingly with spec
   --! @param[out] o_time           Timer in clock except halt state
@@ -805,6 +838,8 @@ package river_cfg is
     i_resp_data_valid : in std_logic;
     i_resp_data_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_resp_data_data : in std_logic_vector(RISCV_ARCH-1 downto 0);
+    i_resp_data_load_fault : in std_logic;
+    i_resp_data_store_fault : in std_logic;
     o_resp_data_ready : out std_logic;
     i_ext_irq : in std_logic;
     o_time : out std_logic_vector(63 downto 0);
@@ -840,6 +875,8 @@ package river_cfg is
   --! @param[out] o_resp_data_valid
   --! @param[out] o_resp_data_addr
   --! @param[out] o_resp_data_data
+  --! @param[out] o_resp_data_load_fault
+  --! @param[out] o_resp_data_store_fault
   --! @param[in] i_resp_data_ready
   --! @param[in] i_req_mem_ready      AXI request was accepted
   --! @param[out] o_req_mem_valid
@@ -849,6 +886,8 @@ package river_cfg is
   --! @param[out] o_req_mem_data
   --! @param[in] i_resp_mem_data_valid
   --! @param[in] i_resp_mem_data
+  --! @param[in] i_resp_mem_load_store
+  --! @param[in] i_resp_mem_store_store
   --! @param[out] o_istate        ICache state machine value
   --! @param[out] o_dstate        DCache state machine value
   --! @param[out] o_cstate        cachetop state machine value
@@ -872,6 +911,8 @@ package river_cfg is
     o_resp_data_valid : out std_logic;
     o_resp_data_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     o_resp_data_data : out std_logic_vector(RISCV_ARCH-1 downto 0);
+    o_resp_data_load_fault : out std_logic;
+    o_resp_data_store_fault : out std_logic;
     i_resp_data_ready : in std_logic;
     i_req_mem_ready : in std_logic;
     o_req_mem_valid : out std_logic;
@@ -881,6 +922,8 @@ package river_cfg is
     o_req_mem_data : out std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
     i_resp_mem_data_valid : in std_logic;
     i_resp_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+    i_resp_mem_load_fault : in std_logic;
+    i_resp_mem_store_fault : in std_logic;
     o_istate : out std_logic_vector(1 downto 0);
     o_dstate : out std_logic_vector(1 downto 0);
     o_cstate : out std_logic_vector(1 downto 0)
@@ -899,6 +942,8 @@ package river_cfg is
   --! @param[out] o_req_mem_data       Writing data
   --! @param[in] i_resp_mem_data_valid AXI response is valid
   --! @param[in] i_resp_mem_data       Read data
+  --! @param[in] i_resp_mem_load_fault Bus response with SLVERR or DECERR on read
+  --! @param[in] i_resp_mem_store_fault Bus response with SLVERR or DECERR on write
   --! @param[in] i_ext_irq             Interrupt line from external interrupts controller (PLIC).
   --! @param[out] o_time               Timer. Clock counter except halt state.
   --! @param[in] i_dport_valid         Debug access from DSU is valid
@@ -923,6 +968,8 @@ package river_cfg is
     o_req_mem_data : out std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
     i_resp_mem_data_valid : in std_logic;
     i_resp_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+    i_resp_mem_load_fault : in std_logic;
+    i_resp_mem_store_fault : in std_logic;
     i_ext_irq : in std_logic;
     o_time : out std_logic_vector(63 downto 0);
     i_dport_valid : in std_logic;

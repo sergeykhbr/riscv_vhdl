@@ -39,6 +39,8 @@ RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
     sensitive << r.nrst;
     sensitive << r.resp_mem_data_valid;
     sensitive << r.resp_mem_data;
+    sensitive << r.resp_mem_load_fault;
+    sensitive << r.resp_mem_store_fault;
     sensitive << r.interrupt;
     sensitive << r.wait_state_cnt;
 
@@ -51,6 +53,8 @@ RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
     w_interrupt = 0;
     v.resp_mem_data = 0;
     v.resp_mem_data_valid = false;
+    v.resp_mem_load_fault = false;
+    v.resp_mem_store_fault = false;
     RISCV_event_create(&dport_.valid, "dport_valid");
     dport_.trans_idx_up = 0;
     dport_.trans_idx_down = 0;
@@ -78,6 +82,8 @@ void RtlWrapper::comb() {
     o_nrst = r.nrst.read()[1].to_bool();
     o_resp_mem_data_valid = r.resp_mem_data_valid;
     o_resp_mem_data = r.resp_mem_data;
+    o_resp_mem_load_fault = r.resp_mem_load_fault;
+    o_resp_mem_store_fault = r.resp_mem_store_fault;
     o_interrupt = r.interrupt;
 #ifdef SIMULATE_WAIT_STATES
     if (r.wait_state_cnt.read() == 1) {
@@ -122,6 +128,8 @@ void RtlWrapper::clk_negedge_proc() {
 
     v.resp_mem_data = 0;
     v.resp_mem_data_valid = false;
+    v.resp_mem_load_fault = false;
+    v.resp_mem_store_fault = false;
     bool w_req_fire = 0;
 #ifdef SIMULATE_WAIT_STATES
     if (r.wait_state_cnt.read() == 1)
@@ -141,13 +149,19 @@ void RtlWrapper::clk_negedge_proc() {
             trans.xsize = mask2size(strob >> offset);
             trans.wstrb = (1 << trans.xsize) - 1;
             trans.wpayload.b64[0] = i_req_mem_data.read();
-            ibus_->b_transport(&trans);
+            ETransStatus r_resp = ibus_->b_transport(&trans);
             v.resp_mem_data = 0;
+            if (r_resp == TRANS_ERROR) {
+                v.resp_mem_load_fault = true;
+            }
         } else {
             trans.action = MemAction_Read;
             trans.xsize = BUS_DATA_BYTES;
-            ibus_->b_transport(&trans);
+            ETransStatus b_resp = ibus_->b_transport(&trans);
             v.resp_mem_data = trans.rpayload.b64[0];
+            if (b_resp == TRANS_ERROR) {
+                v.resp_mem_store_fault = true;
+            }
         }
         v.resp_mem_data_valid = true;
     }
