@@ -478,7 +478,7 @@ begin
                     or wv(Instr_DIVU) or wv(Instr_DIVW) or wv(Instr_DIVUW)
                     or wv(Instr_REM) or wv(Instr_REMU) or wv(Instr_REMW)
                     or wv(Instr_REMUW);
-    if (w_multi_ena and w_d_acceptable and (not i_trap_valid)) = '1' then
+    if (w_multi_ena and w_d_acceptable) = '1' then
         v.multiclock_ena := '1';
         v.multi_res_addr := wb_res_addr;
         v.multi_pc := i_d_pc;
@@ -535,13 +535,13 @@ begin
     elsif wv(Instr_LUI) = '1' then
         wb_res := wb_rdata2;
     elsif (wv(Instr_MUL) or wv(Instr_MULW)) = '1' then
-        v.multi_ena(Multi_MUL) := w_d_acceptable and (not i_trap_valid);
+        v.multi_ena(Multi_MUL) := w_d_acceptable;
     elsif (wv(Instr_DIV) or wv(Instr_DIVU)
             or wv(Instr_DIVW) or wv(Instr_DIVUW)) = '1' then
-        v.multi_ena(Multi_DIV) := w_d_acceptable and (not i_trap_valid);
+        v.multi_ena(Multi_DIV) := w_d_acceptable;
     elsif (wv(Instr_REM) or wv(Instr_REMU)
             or wv(Instr_REMW) or wv(Instr_REMUW)) = '1' then
-        v.multi_ena(Multi_DIV) := w_d_acceptable and (not i_trap_valid);
+        v.multi_ena(Multi_DIV) := w_d_acceptable;
         v.multi_residual_high := '1';
     elsif wv(Instr_CSRRC) = '1' then
         wb_res := i_csr_rdata;

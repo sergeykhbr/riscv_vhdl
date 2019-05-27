@@ -429,7 +429,7 @@ void InstrExecute::comb() {
                     | wv[Instr_DIVU] | wv[Instr_DIVW] | wv[Instr_DIVUW]
                     | wv[Instr_REM] | wv[Instr_REMU] | wv[Instr_REMW]
                     | wv[Instr_REMUW]).to_bool();
-    if (w_multi_ena & w_d_acceptable & !i_trap_valid.read()) {
+    if (w_multi_ena & w_d_acceptable) {
         v.multiclock_ena = 1;
         v.multi_res_addr = wb_res_addr;
         v.multi_pc = i_d_pc;
@@ -483,13 +483,13 @@ void InstrExecute::comb() {
     } else if (wv[Instr_LUI]) {
         wb_res = wb_rdata2;
     } else if (wv[Instr_MUL] || wv[Instr_MULW]) {
-        v.multi_ena[Multi_MUL] = w_d_acceptable & !i_trap_valid.read();
+        v.multi_ena[Multi_MUL] = w_d_acceptable;
     } else if (wv[Instr_DIV] || wv[Instr_DIVU]
             || wv[Instr_DIVW] || wv[Instr_DIVUW]) {
-        v.multi_ena[Multi_DIV] = w_d_acceptable & !i_trap_valid.read();
+        v.multi_ena[Multi_DIV] = w_d_acceptable;
     } else if (wv[Instr_REM] || wv[Instr_REMU]
             || wv[Instr_REMW] || wv[Instr_REMUW]) {
-        v.multi_ena[Multi_DIV] = w_d_acceptable & !i_trap_valid.read();
+        v.multi_ena[Multi_DIV] = w_d_acceptable;
         v.multi_residual_high = 1;
     } else if (wv[Instr_CSRRC]) {
         wb_res = i_csr_rdata;
