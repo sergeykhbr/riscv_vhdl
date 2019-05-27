@@ -29,6 +29,7 @@ entity Processor is
     i_resp_ctrl_valid : in std_logic;                                 -- ICache response is valid
     i_resp_ctrl_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- Response address must be equal to the latest request address
     i_resp_ctrl_data : in std_logic_vector(31 downto 0);              -- Read value
+    i_resp_ctrl_load_fault : in std_logic;                            -- bus response with error
     o_resp_ctrl_ready : out std_logic;
     -- Data path:
     i_req_data_ready : in std_logic;                                  -- DCache is ready to accept request
@@ -65,6 +66,7 @@ architecture arch_Processor of Processor is
 
     type FetchType is record
         req_fire : std_logic;
+        load_fault : std_logic;
         valid : std_logic;
         pc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
         instr : std_logic_vector(31 downto 0);
@@ -179,12 +181,16 @@ architecture arch_Processor of Processor is
         br_instr_fetch : std_logic_vector(31 downto 0);      -- Real instruction value that was replaced by ebreak
     end record;
 
+    type BranchPredictorType is record
+       npc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+       predict : std_logic;
+    end record;
+
     signal ireg : IntRegsType;
     signal csr : CsrType;
     signal w : PipelineType;
     signal dbg : DebugType;
-
-    signal wb_npc_predict : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    signal bp : BranchPredictorType;
 
     signal wb_ireg_dport_addr : std_logic_vector(4 downto 0);
     signal wb_exec_dport_npc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
@@ -213,11 +219,14 @@ begin
         i_mem_data_valid => i_resp_ctrl_valid,
         i_mem_data_addr => i_resp_ctrl_addr,
         i_mem_data => i_resp_ctrl_data,
+        i_mem_load_fault => i_resp_ctrl_load_fault,
         o_mem_resp_ready => o_resp_ctrl_ready,
         i_e_npc => w.e.npc,
-        i_predict_npc => wb_npc_predict,
+        i_predict_npc => bp.npc,
+        i_predict => bp.predict,
         o_predict_miss => w.f.predict_miss,
         o_mem_req_fire => w.f.req_fire,
+        o_ex_load_fault => w.f.load_fault,
         o_valid => w.f.valid,
         o_pc => w.f.pc,
         o_instr => w.f.instr,
@@ -343,7 +352,8 @@ begin
         i_f_predic_miss => w.f.predict_miss,
         i_e_npc => w.e.npc,
         i_ra => ireg.ra,
-        o_npc_predict => wb_npc_predict);
+        o_npc_predict => bp.npc,
+        o_predict => bp.predict);
 
 
     iregs0 : RegIntBank port map ( 
@@ -380,6 +390,7 @@ begin
         i_ex_data_addr => i_resp_data_addr,
         i_ex_data_load_fault => i_resp_data_load_fault,
         i_ex_data_store_fault => i_resp_data_store_fault,
+        i_ex_ctrl_load_fault => w.f.load_fault,
         i_ex_illegal_instr => w.e.ex_illegal_instr,
         i_ex_unalign_store => w.e.ex_unalign_store,
         i_ex_unalign_load => w.e.ex_unalign_load,

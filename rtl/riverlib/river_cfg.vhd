@@ -311,6 +311,7 @@ package river_cfg is
   --! @param[in] i_e_npc           Valid instruction value awaited by 'Executor'
   --! @param[in] i_ra              Return address register value
   --! @param[out] o_npc_predic     Predicted next instruction address
+  --! @param[out] o_predict        Mark requested address as predicted
   component BranchPredictor is
   port (
     i_clk : in std_logic;
@@ -322,7 +323,8 @@ package river_cfg is
     i_f_predic_miss : in std_logic;
     i_e_npc : in std_logic_vector(31 downto 0);
     i_ra : in std_logic_vector(RISCV_ARCH-1 downto 0);
-    o_npc_predict : out std_logic_vector(31 downto 0)
+    o_npc_predict : out std_logic_vector(31 downto 0);
+    o_predict : out std_logic
   );
   end component; 
 
@@ -363,6 +365,7 @@ package river_cfg is
     i_ex_data_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_ex_data_load_fault : in std_logic;
     i_ex_data_store_fault : in std_logic;
+    i_ex_ctrl_load_fault : in std_logic;
     i_ex_illegal_instr : in std_logic;
     i_ex_unalign_store : in std_logic;
     i_ex_unalign_load : in std_logic;
@@ -566,12 +569,15 @@ package river_cfg is
     i_mem_data_valid : in std_logic;
     i_mem_data_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_mem_data : in std_logic_vector(31 downto 0);
+    i_mem_load_fault : in std_logic;
     o_mem_resp_ready : out std_logic;
     i_e_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_predict_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_predict : in std_logic;
     o_predict_miss : out std_logic;
 
     o_mem_req_fire : out std_logic;
+    o_ex_load_fault : out std_logic;
     o_valid : out std_logic;
     o_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     o_instr : out std_logic_vector(31 downto 0);
@@ -805,6 +811,7 @@ package river_cfg is
     i_resp_ctrl_valid : in std_logic;
     i_resp_ctrl_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_resp_ctrl_data : in std_logic_vector(31 downto 0);
+    i_resp_ctrl_load_fault : in std_logic;
     o_resp_ctrl_ready : out std_logic;
     i_req_data_ready : in std_logic;
     o_req_data_valid : out std_logic;
@@ -878,6 +885,7 @@ package river_cfg is
     o_resp_ctrl_valid : out std_logic;
     o_resp_ctrl_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     o_resp_ctrl_data : out std_logic_vector(31 downto 0);
+    o_resp_ctrl_load_fault : out std_logic;
     i_resp_ctrl_ready : in std_logic;
     o_req_data_ready : out std_logic;
     i_req_data_valid : in std_logic;

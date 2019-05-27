@@ -64,6 +64,7 @@ architecture arch_RiverTop of RiverTop is
   signal w_resp_ctrl_valid : std_logic;
   signal wb_resp_ctrl_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
   signal wb_resp_ctrl_data : std_logic_vector(31 downto 0);
+  signal w_resp_ctrl_load_fault : std_logic;
   signal w_resp_ctrl_ready : std_logic;
   -- Data path:
   signal w_req_data_ready : std_logic;
@@ -95,6 +96,7 @@ begin
         i_resp_ctrl_valid => w_resp_ctrl_valid,
         i_resp_ctrl_addr => wb_resp_ctrl_addr,
         i_resp_ctrl_data => wb_resp_ctrl_data,
+        i_resp_ctrl_load_fault => w_resp_ctrl_load_fault,
         o_resp_ctrl_ready => w_resp_ctrl_ready,
         i_req_data_ready => w_req_data_ready,
         o_req_data_valid => w_req_data_valid,
@@ -130,6 +132,7 @@ begin
         o_resp_ctrl_valid => w_resp_ctrl_valid,
         o_resp_ctrl_addr => wb_resp_ctrl_addr,
         o_resp_ctrl_data => wb_resp_ctrl_data,
+        o_resp_ctrl_load_fault => w_resp_ctrl_load_fault,
         i_resp_ctrl_ready => w_resp_ctrl_ready,
         i_req_data_valid => w_req_data_valid,
         i_req_data_write => w_req_data_write,

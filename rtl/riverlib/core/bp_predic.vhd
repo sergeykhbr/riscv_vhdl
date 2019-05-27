@@ -27,7 +27,8 @@ entity BranchPredictor is
     i_f_predic_miss : in std_logic;                    -- Fetch modul detects deviation between predicted and valid pc.
     i_e_npc : in std_logic_vector(31 downto 0);        -- Valid instruction value awaited by 'Executor'
     i_ra : in std_logic_vector(RISCV_ARCH-1 downto 0); -- Return address register value
-    o_npc_predict : out std_logic_vector(31 downto 0)  -- Predicted next instruction address
+    o_npc_predict : out std_logic_vector(31 downto 0); -- Predicted next instruction address
+    o_predict : out std_logic                          -- mark requested address as predicted
   );
 end; 
  
@@ -49,6 +50,7 @@ begin
     variable wb_tmp : std_logic_vector(31 downto 0);
     variable wb_npc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     variable wb_jal_off : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    variable v_predict : std_logic;
   begin
 
     v := r;
@@ -67,16 +69,19 @@ begin
     wb_jal_off(10 downto 1) := wb_tmp(30 downto 21);
     wb_jal_off(0) := '0';
 
+    v_predict := '0';
     if i_f_predic_miss = '1' then
         wb_npc := i_e_npc;
     elsif wb_tmp = X"00008067" then
         -- ret pseudo-instruction: Dhry score 34816 -> 35136
         wb_npc := i_ra(BUS_ADDR_WIDTH-1 downto 0);
+        v_predict := '1';
     --!elsif wb_tmp(6 downto 0) = "1101111" then
     --!    -- jal instruction: Dhry score 35136 -> 36992
     --!    wb_npc := i_resp_mem_addr + wb_jal_off;
     else
         wb_npc := r.npc + 2;
+        v_predict := '1';
     end if;
 
 
@@ -91,6 +96,7 @@ begin
     end if;
 
     o_npc_predict <= wb_npc;
+    o_predict <= v_predict;
     
     rin <= v;
   end process;

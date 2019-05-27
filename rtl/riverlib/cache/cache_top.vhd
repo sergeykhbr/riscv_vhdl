@@ -26,6 +26,7 @@ entity CacheTop is
     o_resp_ctrl_valid : out std_logic;
     o_resp_ctrl_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     o_resp_ctrl_data : out std_logic_vector(31 downto 0);
+    o_resp_ctrl_load_fault : out std_logic;
     i_resp_ctrl_ready : in std_logic;
     -- Data path:
     i_req_data_valid : in std_logic;
@@ -99,6 +100,7 @@ architecture arch_CacheTop of CacheTop is
     o_resp_ctrl_valid : out std_logic;
     o_resp_ctrl_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     o_resp_ctrl_data : out std_logic_vector(31 downto 0);
+    o_resp_ctrl_load_fault : out std_logic;
     i_resp_ctrl_ready : in std_logic;
     i_req_mem_ready : in std_logic;
     o_req_mem_valid : out std_logic;
@@ -153,6 +155,7 @@ begin
         o_resp_ctrl_valid => o_resp_ctrl_valid,
         o_resp_ctrl_addr => o_resp_ctrl_addr,
         o_resp_ctrl_data => o_resp_ctrl_data,
+        o_resp_ctrl_load_fault => o_resp_ctrl_load_fault,
         i_resp_ctrl_ready => i_resp_ctrl_ready,
         i_req_mem_ready => w_ctrl_req_ready,
         o_req_mem_valid => i.req_mem_valid,

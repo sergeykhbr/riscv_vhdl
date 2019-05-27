@@ -26,13 +26,16 @@ entity InstrFetch is
     i_mem_data_valid : in std_logic;
     i_mem_data_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_mem_data : in std_logic_vector(31 downto 0);
+    i_mem_load_fault : in std_logic;
     o_mem_resp_ready : out std_logic;
 
     i_e_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_predict_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_predict : in std_logic;
     o_predict_miss : out std_logic;
 
     o_mem_req_fire : out std_logic;                    -- used by branch predictor to form new npc value
+    o_ex_load_fault : out std_logic;
     o_valid : out std_logic;
     o_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     o_instr : out std_logic_vector(31 downto 0);
@@ -61,8 +64,8 @@ architecture arch_InstrFetch of InstrFetch is
 begin
 
   comb : process(i_nrst, i_pipeline_hold, i_mem_req_ready, i_mem_data_valid,
-                i_mem_data_addr, i_mem_data, i_e_npc,
-                i_predict_npc, i_br_fetch_valid, i_br_address_fetch,
+                i_mem_data_addr, i_mem_data, i_mem_load_fault, i_e_npc,
+                i_predict_npc, i_predict, i_br_fetch_valid, i_br_address_fetch,
                 i_br_instr_fetch, r)
     variable v : RegistersType;
     variable wb_o_addr_req : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
@@ -150,6 +153,7 @@ begin
     o_mem_addr_valid <= w_o_req_valid;
     o_mem_addr <= wb_o_addr_req;
     o_mem_req_fire <= w_o_req_fire;
+    o_ex_load_fault <= '0';    -- TODO
     o_valid <= w_resp_fire;
     o_pc <= wb_o_pc;
     o_instr <= wb_o_instr;

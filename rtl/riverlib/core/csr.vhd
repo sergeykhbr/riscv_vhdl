@@ -33,6 +33,7 @@ entity CsrRegs is
     i_ex_data_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- Data path: address must be equal to the latest request address
     i_ex_data_load_fault : in std_logic;                    -- Data path: Bus response with SLVERR or DECERR on read
     i_ex_data_store_fault : in std_logic;                   -- Data path: Bus response with SLVERR or DECERR on write
+    i_ex_ctrl_load_fault : in std_logic;
     i_ex_illegal_instr : in std_logic;
     i_ex_unalign_store : in std_logic;
     i_ex_unalign_load : in std_logic;
@@ -181,7 +182,7 @@ begin
 
   comb : process(i_nrst, i_mret, i_uret, i_addr, i_wena, i_wdata, i_e_pre_valid,
                  i_ex_pc, i_ex_npc, i_ex_data_addr, i_ex_data_load_fault, i_ex_data_store_fault,
-                 i_ex_illegal_instr, i_ex_unalign_load, i_ex_unalign_store,
+                 i_ex_ctrl_load_fault, i_ex_illegal_instr, i_ex_unalign_load, i_ex_unalign_store,
                  i_ex_breakpoint, i_ex_ecall, i_irq_external,
                  i_break_mode, i_dport_ena, i_dport_write, i_dport_addr, i_dport_wdata,
                  r)
@@ -226,7 +227,11 @@ begin
     wb_trap_pc := r.mtvec(BUS_ADDR_WIDTH-1 downto 0);
     wb_mbadaddr := i_ex_pc;
 
-    if i_ex_illegal_instr = '1' then
+    if i_ex_ctrl_load_fault = '1' then
+        w_trap_valid := '1';
+        wb_trap_pc := r.mtvec(BUS_ADDR_WIDTH-1 downto 0);
+        wb_trap_code := EXCEPTION_InstrFault;
+    elsif i_ex_illegal_instr = '1' then
         w_trap_valid := '1';
         wb_trap_pc := r.mtvec(BUS_ADDR_WIDTH-1 downto 0);
         wb_trap_code := EXCEPTION_InstrIllegal;

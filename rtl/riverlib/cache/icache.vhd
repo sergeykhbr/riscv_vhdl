@@ -25,6 +25,7 @@ entity ICache is
     o_resp_ctrl_valid : out std_logic;
     o_resp_ctrl_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     o_resp_ctrl_data : out std_logic_vector(31 downto 0);
+    o_resp_ctrl_load_fault : out std_logic;
     i_resp_ctrl_ready : in std_logic;
     -- Memory interface:
     i_req_mem_ready : in std_logic;
@@ -58,6 +59,7 @@ architecture arch_ICache of ICache is
   type line_type is record
       addr : std_logic_vector(BUS_ADDR_WIDTH-4 downto 0);
       data : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+      load_fault : std_logic;
   end record;
 
   type iline_vector is array (0 to ILINE_TOTAL-1) of line_type;
@@ -65,6 +67,8 @@ architecture arch_ICache of ICache is
   type line_signal_type is record
        hit : std_logic_vector(ILINE_TOTAL downto 0);     -- Hit_Total = ILINE_TOTAL + 1
        hit_hold : std_logic_vector(ILINE_TOTAL-1 downto 0);
+       hit_load_fault : std_logic;
+       hold_load_fault : std_logic;
        hit_data : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
        hold_data : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
   end record;
@@ -79,6 +83,7 @@ architecture arch_ICache of ICache is
       double_req : std_logic;
       delay_valid : std_logic;
       delay_data : std_logic_vector(31 downto 0);
+      delay_load_fault : std_logic;
   end record;
 
   type adr_type is array (0 to 1) of std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
@@ -93,6 +98,7 @@ begin
     variable v : RegistersType;
     variable w_need_mem_req : std_logic;
     variable wb_hit_word : std_logic_vector(31 downto 0);
+    variable w_hit_load_fault : std_logic;
     variable wb_l : line_signal_vector;
     variable w_reuse_lastline : std_logic;
     variable w_wait_response : std_logic;
@@ -105,6 +111,7 @@ begin
     variable w_o_resp_valid : std_logic;
     variable wb_o_resp_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     variable wb_o_resp_data : std_logic_vector(31 downto 0);
+    variable w_o_resp_load_fault : std_logic;
     variable wb_req_addr : adr_type;
     variable wb_hold_addr : adr_type;
   begin
@@ -127,33 +134,42 @@ begin
     for i in 0 to ILINE_TOTAL-1 loop
         wb_l(i).hit := (others => '0');
         wb_l(i).hit_data := (others => '0');
+        wb_l(i).hit_load_fault := '0';
         if wb_req_addr(i)(BUS_ADDR_WIDTH-1 downto 3) = r.iline(0).addr then
             wb_l(i).hit(Hit_Line1) := w_req_ctrl_valid;
             wb_l(i).hit_data := r.iline(0).data;
+            wb_l(i).hit_load_fault := r.iline(0).load_fault;
         elsif wb_req_addr(i)(BUS_ADDR_WIDTH-1 downto 3) = r.iline(1).addr then
             wb_l(i).hit(Hit_Line2) := w_req_ctrl_valid;
             wb_l(i).hit_data := r.iline(1).data;
+            wb_l(i).hit_load_fault := r.iline(1).load_fault;
         elsif wb_req_addr(i)(BUS_ADDR_WIDTH-1 downto 3) =
             r.iline_addr_req(BUS_ADDR_WIDTH-1 downto 3) then
             wb_l(i).hit(Hit_Response) := i_resp_mem_data_valid;
             wb_l(i).hit_data := i_resp_mem_data;
+            wb_l(i).hit_load_fault := i_resp_mem_load_fault;
         end if;
 
         wb_l(i).hit_hold := (others => '0');
         wb_l(i).hold_data := (others => '0');
+        wb_l(i).hold_load_fault := '0';
         if wb_hold_addr(i)(BUS_ADDR_WIDTH-1 downto 3) = r.iline(0).addr then
             wb_l(i).hit_hold(Hit_Line1) := '1';
             wb_l(i).hold_data := r.iline(0).data;
+            wb_l(i).hold_load_fault := r.iline(0).load_fault;
         elsif wb_hold_addr(i)(BUS_ADDR_WIDTH-1 downto 3) = r.iline(1).addr then
             wb_l(i).hit_hold(Hit_Line2) := '1';
             wb_l(i).hold_data := r.iline(1).data;
+            wb_l(i).hold_load_fault := r.iline(1).load_fault;
         elsif wb_hold_addr(i)(BUS_ADDR_WIDTH-1 downto 3) =
             r.iline_addr_req(BUS_ADDR_WIDTH-1 downto 3) then
             wb_l(i).hold_data := i_resp_mem_data;
+            wb_l(i).hold_load_fault := i_resp_mem_load_fault;
         end if;
     end loop;
 
     wb_hit_word := (others => '0');
+    w_hit_load_fault := '0';
     w_need_mem_req := '1';
     if wb_l(0).hit /= "000" and wb_l(1).hit /= "000" then
         w_need_mem_req := '0';
@@ -161,13 +177,18 @@ begin
     case r.addr_processing(2 downto 1) is
     when "00" =>
         wb_hit_word := wb_l(0).hold_data(31 downto 0);
+        w_hit_load_fault := wb_l(0).hold_load_fault;
     when "01" =>
         wb_hit_word := wb_l(0).hold_data(47 downto 16);
+        w_hit_load_fault := wb_l(0).hold_load_fault;
     when "10" =>
         wb_hit_word := wb_l(0).hold_data(63 downto 32);
+        w_hit_load_fault := wb_l(0).hold_load_fault;
     when others =>
         wb_hit_word := wb_l(1).hold_data(15 downto 0) &
                        wb_l(0).hold_data(63 downto 48);
+        w_hit_load_fault := wb_l(0).hold_load_fault
+                         or wb_l(1).hold_load_fault;
     end case;
 
     if w_req_ctrl_valid = '1' and w_need_mem_req = '0' then
@@ -175,17 +196,23 @@ begin
         case i_req_ctrl_addr(2 downto 1) is
         when "00" =>
             v.delay_data := wb_l(0).hit_data(31 downto 0);
+            v.delay_load_fault := wb_l(0).hit_load_fault;
         when "01" =>
             v.delay_data := wb_l(0).hit_data(47 downto 16);
+            v.delay_load_fault := wb_l(0).hit_load_fault;
         when "10" =>
             v.delay_data := wb_l(0).hit_data(63 downto 32);
+            v.delay_load_fault := wb_l(0).hit_load_fault;
         when others =>
             v.delay_data := wb_l(1).hit_data(15 downto 0) &
                             wb_l(0).hit_data(63 downto 48);
+            v.delay_load_fault := wb_l(0).hit_load_fault 
+                               or wb_l(1).hit_load_fault;
         end case;
     elsif i_resp_ctrl_ready = '1' then
         v.delay_valid := '0';
         v.delay_data := (others => '0');
+        v.delay_load_fault := '0';
     end if;
 
     w_o_req_mem_valid := w_need_mem_req and w_req_ctrl_valid;
@@ -296,10 +323,12 @@ begin
         if w_reuse_lastline = '0' then
             v.iline(1).addr := r.iline(0).addr;
             v.iline(1).data := r.iline(0).data;
+            v.iline(1).load_fault := r.iline(0).load_fault;
         end if;
         
         v.iline(0).addr := r.iline_addr_req(BUS_ADDR_WIDTH-1 downto 3);
         v.iline(0).data := i_resp_mem_data;
+        v.iline(0).load_fault := i_resp_mem_load_fault;
     end if;
 
     if r.state = State_WaitAccept then
@@ -309,8 +338,10 @@ begin
     end if;
     if r.delay_valid = '1' then
         wb_o_resp_data := r.delay_data;
+        w_o_resp_load_fault := r.delay_load_fault;
     else
         wb_o_resp_data := wb_hit_word;
+        w_o_resp_load_fault := w_hit_load_fault;
     end if;
     wb_o_resp_addr := r.addr_processing;
 
@@ -318,14 +349,17 @@ begin
     if i_nrst = '0' then
         v.iline(0).addr := (others => '1');
         v.iline(0).data := (others => '0');
+        v.iline(0).load_fault := '0';
         v.iline(1).addr := (others => '1');
         v.iline(1).data := (others => '0');
+        v.iline(1).load_fault := '0';
         v.iline_addr_req := (others => '0');
         v.addr_processing := (others => '0');
         v.state := State_Idle;
         v.double_req := '0';
         v.delay_valid := '0';
         v.delay_data := (others => '0');
+        v.delay_load_fault := '0';
     end if;
 
     o_req_ctrl_ready <= w_o_req_ctrl_ready;
@@ -339,6 +373,7 @@ begin
     o_resp_ctrl_valid <= w_o_resp_valid;
     o_resp_ctrl_data <= wb_o_resp_data;
     o_resp_ctrl_addr <= wb_o_resp_addr;
+    o_resp_ctrl_load_fault <= w_o_resp_load_fault;
     o_istate <= r.state;
     
     rin <= v;
