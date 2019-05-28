@@ -34,6 +34,7 @@ SC_MODULE(Processor) {
     sc_in<bool> i_resp_ctrl_valid;                      // ICache response is valid
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_resp_ctrl_addr;    // Response address must be equal to the latest request address
     sc_in<sc_uint<32>> i_resp_ctrl_data;                // Read value
+    sc_in<bool> i_resp_ctrl_load_fault;
     sc_out<bool> o_resp_ctrl_ready;                     // Core is ready to accept response from ICache
     // Data path:
     sc_in<bool> i_req_data_ready;                       // DCache is ready to accept request
@@ -77,6 +78,7 @@ SC_MODULE(Processor) {
 private:
     struct FetchType {
         sc_signal<bool> req_fire;
+        sc_signal<bool> load_fault;
         sc_signal<bool> valid;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> pc;
         sc_signal<sc_uint<32>> instr;
@@ -182,6 +184,11 @@ private:
         sc_signal<sc_uint<32>> br_instr_fetch;               // Real instruction value that was replaced by ebreak
     } dbg;
 
+    struct BranchPredictorType {
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> npc;
+        sc_signal<bool> predict;
+    } bp;
+
     /** 5-stages CPU pipeline */
     struct PipelineType {
         FetchType f;                            // Fetch instruction stage
@@ -190,8 +197,6 @@ private:
         MemoryType m;                           // Memory load/store
         WriteBackType w;                        // Write back registers value
     } w;
-
-    sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_npc_predict;
 
     sc_signal<sc_uint<5>> wb_ireg_dport_addr;
     sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_exec_dport_npc;

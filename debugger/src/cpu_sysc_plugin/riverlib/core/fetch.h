@@ -23,13 +23,16 @@ SC_MODULE(InstrFetch) {
     sc_in<bool> i_mem_data_valid;
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_mem_data_addr;
     sc_in<sc_uint<32>> i_mem_data;
+    sc_in<bool> i_mem_load_fault;
     sc_out<bool> o_mem_resp_ready;
 
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_e_npc;
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_predict_npc;
+    sc_in<bool> i_predict;
     sc_out<bool> o_predict_miss;
 
     sc_out<bool> o_mem_req_fire;                    // used by branch predictor to form new npc value
+    sc_out<bool> o_ex_load_fault;
     sc_out<bool> o_valid;
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_pc;
     sc_out<sc_uint<32>> o_instr;

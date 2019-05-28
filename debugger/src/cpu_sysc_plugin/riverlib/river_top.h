@@ -80,6 +80,7 @@ private:
     sc_signal<sc_uint<RISCV_ARCH>> wb_resp_data_data;
     sc_signal<bool> w_resp_data_load_fault;
     sc_signal<bool> w_resp_data_store_fault;
+    sc_signal<bool> w_resp_ctrl_load_fault;
     sc_signal<bool> w_resp_data_ready;
     sc_signal<sc_uint<2>> wb_istate;
     sc_signal<sc_uint<2>> wb_dstate;

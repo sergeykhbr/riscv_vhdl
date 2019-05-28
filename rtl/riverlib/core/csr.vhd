@@ -231,7 +231,7 @@ begin
         w_trap_valid := '1';
         wb_trap_pc := r.mtvec(BUS_ADDR_WIDTH-1 downto 0);
         wb_trap_code := EXCEPTION_InstrFault;
-    elsif i_ex_illegal_instr = '1' then
+    elsif i_ex_illegal_instr = '1' or w_exception_xret = '1' then
         w_trap_valid := '1';
         wb_trap_pc := r.mtvec(BUS_ADDR_WIDTH-1 downto 0);
         wb_trap_code := EXCEPTION_InstrIllegal;

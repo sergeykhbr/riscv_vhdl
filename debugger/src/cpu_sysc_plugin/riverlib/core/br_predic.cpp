@@ -58,6 +58,7 @@ void BranchPredictor::comb() {
     v = r;
     sc_uint<BUS_ADDR_WIDTH> wb_jal_off;
     sc_uint<32> wb_tmp;
+    bool v_predict;
 
     if (i_resp_mem_valid.read()) {
         v.resp_mem_addr = i_resp_mem_addr.read();
@@ -76,16 +77,19 @@ void BranchPredictor::comb() {
     wb_jal_off(10, 1) = wb_tmp(30, 21);
     wb_jal_off[0] = 0;
 
+    v_predict = 0;
     if (i_f_predic_miss.read()) {
         wb_npc = i_e_npc.read();
     } else if (wb_tmp == 0x00008067) {
         // ret32 pseudo-instruction:
         wb_npc = i_ra.read()(BUS_ADDR_WIDTH-1, 0);
+        v_predict = 1;
     //} else if (wb_tmp(6, 0) == 0x6f) {
         // jal instruction: Dhry score 35136 -> 36992
         //wb_npc = r.resp_mem_addr.read() + wb_jal_off;
     } else {
         wb_npc = r.npc.read() + 2;
+        v_predict = 1;
     }
     
     if (i_req_mem_fire.read()) {
@@ -99,6 +103,7 @@ void BranchPredictor::comb() {
     }
 
     o_npc_predict = wb_npc;
+    o_predict = v_predict;
 }
 
 void BranchPredictor::registers() {

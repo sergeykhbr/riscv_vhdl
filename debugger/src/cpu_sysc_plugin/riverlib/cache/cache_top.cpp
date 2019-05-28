@@ -41,6 +41,7 @@ CacheTop::CacheTop(sc_module_name name_) : sc_module(name_) {
     i0->o_resp_ctrl_valid(o_resp_ctrl_valid);
     i0->o_resp_ctrl_addr(o_resp_ctrl_addr);
     i0->o_resp_ctrl_data(o_resp_ctrl_data);
+    i0->o_resp_ctrl_load_fault(o_resp_ctrl_load_fault);
     i0->i_resp_ctrl_ready(i_resp_ctrl_ready);
     i0->i_req_mem_ready(w_ctrl_req_ready);
     i0->o_req_mem_valid(i.req_mem_valid);

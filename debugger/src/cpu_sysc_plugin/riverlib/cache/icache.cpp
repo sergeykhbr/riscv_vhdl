@@ -30,13 +30,16 @@ ICache::ICache(sc_module_name name_) : sc_module(name_) {
     sensitive << i_req_mem_ready;
     sensitive << r.iline[0].addr;
     sensitive << r.iline[0].data;
+    sensitive << r.iline[0].load_fault;
     sensitive << r.iline[1].addr;
     sensitive << r.iline[1].data;
+    sensitive << r.iline[1].load_fault;
     sensitive << r.iline_addr_req;
     sensitive << r.addr_processing;
     sensitive << r.double_req;
     sensitive << r.delay_valid;
     sensitive << r.delay_data;
+    sensitive << r.delay_load_fault;
     sensitive << r.state;
 
     SC_METHOD(registers);
@@ -91,6 +94,7 @@ void ICache::comb() {
     bool w_o_resp_valid;
     sc_uint<BUS_ADDR_WIDTH> wb_o_resp_addr;
     sc_uint<32> wb_o_resp_data;
+    bool w_o_resp_load_fault;
     sc_uint<BUS_ADDR_WIDTH> wb_req_addr[2];
     sc_uint<BUS_ADDR_WIDTH> wb_hold_addr[2];
     
@@ -111,35 +115,44 @@ void ICache::comb() {
     for (int i = 0; i < ILINE_TOTAL; i++) {
         wb_l[i].hit = 0;
         wb_l[i].hit_data = 0;
+        wb_l[i].hit_load_fault = 0;
         if (wb_req_addr[i](BUS_ADDR_WIDTH-1, 3) == r.iline[0].addr.read()) {
             wb_l[i].hit[Hit_Line1] = w_req_ctrl_valid;
             wb_l[i].hit_data = r.iline[0].data.read();
+            wb_l[i].hit_load_fault = r.iline[0].load_fault.read();
         } else if (wb_req_addr[i](BUS_ADDR_WIDTH-1, 3) ==
                    r.iline[1].addr.read()) {
             wb_l[i].hit[Hit_Line2] = w_req_ctrl_valid;
             wb_l[i].hit_data = r.iline[1].data.read();
+            wb_l[i].hit_load_fault = r.iline[1].load_fault.read();
         } else if (wb_req_addr[i](BUS_ADDR_WIDTH-1, 3) ==
             r.iline_addr_req.read()(BUS_ADDR_WIDTH-1, 3)) {
             wb_l[i].hit[Hit_Response] = i_resp_mem_data_valid.read();
             wb_l[i].hit_data = i_resp_mem_data.read();
+            wb_l[i].hit_load_fault = i_resp_mem_load_fault.read();
         }
 
         wb_l[i].hit_hold = 0;
         wb_l[i].hold_data = 0;
+        wb_l[i].hold_load_fault = 0;
         if (wb_hold_addr[i](BUS_ADDR_WIDTH-1, 3) == r.iline[0].addr.read()) {
             wb_l[i].hit_hold[Hit_Line1] = 1;
             wb_l[i].hold_data = r.iline[0].data.read();
+            wb_l[i].hold_load_fault = r.iline[0].load_fault.read();
         } else if (wb_hold_addr[i](BUS_ADDR_WIDTH-1, 3) ==
                    r.iline[1].addr.read()) {
             wb_l[i].hit_hold[Hit_Line2] = 1;
             wb_l[i].hold_data = r.iline[1].data.read();
+            wb_l[i].hold_load_fault = r.iline[1].load_fault.read();
         } else if (wb_hold_addr[i](BUS_ADDR_WIDTH-1, 3) ==
             r.iline_addr_req.read()(BUS_ADDR_WIDTH-1, 3)) {
             wb_l[i].hold_data = i_resp_mem_data.read();
+            wb_l[i].hold_load_fault = i_resp_mem_load_fault.read();
         }
     }
 
     wb_hit_word = 0;
+    w_hit_load_fault = 0;
     w_need_mem_req = 1;
     if (wb_l[0].hit != 0 && wb_l[1].hit != 0) {
         w_need_mem_req = 0;
@@ -147,16 +160,21 @@ void ICache::comb() {
     switch (r.addr_processing.read()(2, 1)) {
     case 0:
         wb_hit_word = wb_l[0].hold_data(31, 0);
+        w_hit_load_fault = wb_l[0].hold_load_fault;
         break;
     case 1:
         wb_hit_word = wb_l[0].hold_data(47, 16);
+        w_hit_load_fault = wb_l[0].hold_load_fault;
         break;
     case 2:
         wb_hit_word = wb_l[0].hold_data(63, 32);
+        w_hit_load_fault = wb_l[0].hold_load_fault;
         break;
     default:
         wb_hit_word = (wb_l[1].hold_data(15, 0) << 16)
                      | wb_l[0].hold_data(63, 48);
+        w_hit_load_fault = wb_l[0].hold_load_fault
+                         | wb_l[1].hold_load_fault;
     }
 
     if (w_req_ctrl_valid && !w_need_mem_req) {
@@ -164,20 +182,26 @@ void ICache::comb() {
         switch (i_req_ctrl_addr.read()(2, 1)) {
         case 0:
             v.delay_data = wb_l[0].hit_data(31, 0);
+            v.delay_load_fault = wb_l[0].hit_load_fault;
             break;
         case 1:
             v.delay_data = wb_l[0].hit_data(47, 16);
+            v.delay_load_fault = wb_l[0].hit_load_fault;
             break;
         case 2:
             v.delay_data = wb_l[0].hit_data(63, 32);
+            v.delay_load_fault = wb_l[0].hit_load_fault;
             break;
         default:
             v.delay_data = (wb_l[1].hit_data(15, 0) << 16)
                             | wb_l[0].hit_data(63, 48);
+            v.delay_load_fault = wb_l[0].hit_load_fault
+                               | wb_l[1].hit_load_fault;
         }
     } else if (i_resp_ctrl_ready.read()) {
         v.delay_valid = 0;
         v.delay_data = 0;
+        v.delay_load_fault = 0;
     }
 
     w_o_req_mem_valid = w_need_mem_req & w_req_ctrl_valid;
@@ -297,10 +321,12 @@ void ICache::comb() {
         if (!w_reuse_lastline) {
             v.iline[1].addr = r.iline[0].addr;
             v.iline[1].data = r.iline[0].data;
+            v.iline[1].load_fault = v.iline[0].load_fault;
         }
         
         v.iline[0].addr = r.iline_addr_req.read()(BUS_ADDR_WIDTH-1, 3);
         v.iline[0].data = i_resp_mem_data;
+        v.iline[0].load_fault = i_resp_mem_load_fault;
     }
 
     if (r.state.read() == State_WaitAccept) {
@@ -310,8 +336,10 @@ void ICache::comb() {
     }
     if (r.delay_valid.read()) {
         wb_o_resp_data = r.delay_data.read();
+        w_o_resp_load_fault = r.delay_load_fault.read();
     } else {
         wb_o_resp_data = wb_hit_word;
+        w_o_resp_load_fault = w_hit_load_fault;
     }
     wb_o_resp_addr = r.addr_processing;
 
@@ -319,14 +347,17 @@ void ICache::comb() {
     if (!i_nrst.read()) {
         v.iline[0].addr = ~0;
         v.iline[0].data = 0;
+        v.iline[0].load_fault = 0;
         v.iline[1].addr = ~0;
         v.iline[1].data = 0;
+        v.iline[1].load_fault = 0;
         v.iline_addr_req = 0;
         v.addr_processing = 0;
         v.state = State_Idle;
         v.double_req = 0;
         v.delay_valid = 0;
         v.delay_data = 0;
+        v.delay_load_fault = 0;
     }
 
     o_req_ctrl_ready = w_o_req_ctrl_ready;
@@ -340,6 +371,7 @@ void ICache::comb() {
     o_resp_ctrl_valid = w_o_resp_valid;
     o_resp_ctrl_data = wb_o_resp_data;
     o_resp_ctrl_addr = wb_o_resp_addr;
+    o_resp_ctrl_load_fault = w_o_resp_load_fault;
     o_istate = r.state;
 }
 

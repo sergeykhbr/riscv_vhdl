@@ -36,6 +36,7 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid)
     sensitive << i_ex_data_addr;
     sensitive << i_ex_data_load_fault;
     sensitive << i_ex_data_store_fault;
+    sensitive << i_ex_ctrl_load_fault;
     sensitive << i_ex_illegal_instr;
     sensitive << i_ex_unalign_store;
     sensitive << i_ex_unalign_load;
@@ -235,7 +236,11 @@ void CsrRegs::comb() {
     wb_trap_pc = r.mtvec.read()(BUS_ADDR_WIDTH-1, 0);
     wb_mbadaddr = i_ex_pc.read();
 
-    if (i_ex_illegal_instr.read() == 1 || w_exception_xret == 1) {
+    if (i_ex_ctrl_load_fault.read() == 1) {
+        w_trap_valid = 1;
+        wb_trap_pc = r.mtvec.read()(BUS_ADDR_WIDTH-1, 0);
+        wb_trap_code = EXCEPTION_InstrFault;
+    } else if (i_ex_illegal_instr.read() == 1 || w_exception_xret == 1) {
         w_trap_valid = 1;
         wb_trap_pc = r.mtvec.read()(BUS_ADDR_WIDTH-1, 0);
         wb_trap_code = EXCEPTION_InstrIllegal;

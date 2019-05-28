@@ -25,6 +25,7 @@ SC_MODULE(CacheTop) {
     sc_out<bool> o_resp_ctrl_valid;                     // ICache response is valid and can be accepted
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_resp_ctrl_addr;   // ICache response address
     sc_out<sc_uint<32>> o_resp_ctrl_data;               // ICache read data
+    sc_out<bool> o_resp_ctrl_load_fault;                // Bus response ERRSLV or ERRDEC on read
     sc_in<bool> i_resp_ctrl_ready;                      // CPU Core is ready to accept ICache response
     // Data path:
     sc_in<bool> i_req_data_valid;                       // Data path request from CPU Core is valid

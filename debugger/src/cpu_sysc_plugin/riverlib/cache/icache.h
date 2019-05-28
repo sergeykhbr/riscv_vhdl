@@ -34,6 +34,7 @@ SC_MODULE(ICache) {
     sc_out<bool> o_resp_ctrl_valid;
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_resp_ctrl_addr;
     sc_out<sc_uint<32>> o_resp_ctrl_data;
+    sc_out<bool> o_resp_ctrl_load_fault;
     sc_in<bool> i_resp_ctrl_ready;
     // Memory interface:
     sc_in<bool> i_req_mem_ready;
@@ -74,10 +75,13 @@ private:
     struct line_type {
         sc_signal<sc_uint<BUS_ADDR_WIDTH - 3>> addr;
         sc_signal<sc_uint<BUS_DATA_WIDTH>> data;
+        sc_signal<bool> load_fault;
     };
     struct line_signal_type {
         sc_bv<ILINE_TOTAL + 1> hit;     // Hit_Total = ILINE_TOTAL + 1
         sc_bv<ILINE_TOTAL> hit_hold;
+        bool hit_load_fault;
+        bool hold_load_fault;
         sc_uint<BUS_DATA_WIDTH> hit_data;
         sc_uint<BUS_DATA_WIDTH> hold_data;
     };
@@ -90,9 +94,11 @@ private:
         sc_signal<bool> double_req;         // request 2-lines
         sc_signal<bool> delay_valid;
         sc_signal<sc_uint<32>> delay_data;
+        sc_signal<bool> delay_load_fault;
     } v, r;
     bool w_need_mem_req;
     sc_uint<32> wb_hit_word;
+    bool w_hit_load_fault;
     line_signal_type wb_l[ILINE_TOTAL];
     bool w_reuse_lastline;
     bool w_wait_response;
