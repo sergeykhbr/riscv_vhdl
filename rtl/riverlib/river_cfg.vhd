@@ -307,11 +307,11 @@ package river_cfg is
   --! @param[in] i_resp_mem_valid  Memory response from ICache is valid
   --! @param[in] i_resp_mem_addr   Memory response address
   --! @param[in] i_resp_mem_data   Memory response value
-  --! @param[in] i_f_predic_miss   Fetch modul detects deviation between predicted and valid pc.
   --! @param[in] i_e_npc           Valid instruction value awaited by 'Executor'
   --! @param[in] i_ra              Return address register value
   --! @param[out] o_npc_predic     Predicted next instruction address
   --! @param[out] o_predict        Mark requested address as predicted
+  --! @param[out] o_minus2         pc -= 2 flag
   component BranchPredictor is
   port (
     i_clk : in std_logic;
@@ -320,11 +320,12 @@ package river_cfg is
     i_resp_mem_valid : in std_logic;
     i_resp_mem_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_resp_mem_data : in std_logic_vector(31 downto 0);
-    i_f_predic_miss : in std_logic;
     i_e_npc : in std_logic_vector(31 downto 0);
     i_ra : in std_logic_vector(RISCV_ARCH-1 downto 0);
     o_npc_predict : out std_logic_vector(31 downto 0);
-    o_predict : out std_logic
+    o_predict : out std_logic;
+    o_minus2 : out std_logic;
+    o_minus4 : out std_logic
   );
   end component; 
 
@@ -548,7 +549,7 @@ package river_cfg is
   --! @param[out] o_mem_ready
   --! @param[in] i_e_npc
   --! @param[in] i_predict_npc
-  --! @param[out] o_predict_miss
+  --! @param[in] i_minus2
   --! @param[out] o_mem_req_fire    Used by branch predictor to form new npc value
   --! @param[out] o_valid
   --! @param[out] o_pc
@@ -574,7 +575,8 @@ package river_cfg is
     i_e_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_predict_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_predict : in std_logic;
-    o_predict_miss : out std_logic;
+    i_minus2 : in std_logic;
+    i_minus4 : in std_logic;
 
     o_mem_req_fire : out std_logic;
     o_ex_load_fault : out std_logic;

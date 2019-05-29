@@ -70,7 +70,6 @@ entity InstrExecute is
     o_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);     -- Valid instruction pointer
     o_npc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);    -- Next instruction pointer. Next decoded pc must match to this value or will be ignored.
     o_instr : out std_logic_vector(31 downto 0);                -- Valid instruction value
-    o_breakpoint : out std_logic;                               -- ebreak instruction
     o_call : out std_logic;                                     -- CALL pseudo instruction detected
     o_ret : out std_logic;                                      -- RET pseudoinstruction detected
     o_mret : out std_logic;                                     -- MRET instruction

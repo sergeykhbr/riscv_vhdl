@@ -1,6 +1,7 @@
 *.wlf
 *.mti
 *.do
+transcript
 ambalib/*
 !ambalib/_info
 commonlib/*

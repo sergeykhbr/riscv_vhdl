@@ -184,6 +184,8 @@ architecture arch_Processor of Processor is
     type BranchPredictorType is record
        npc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
        predict : std_logic;
+       minus2 : std_logic;
+       minus4 : std_logic;
     end record;
 
     signal ireg : IntRegsType;
@@ -224,7 +226,8 @@ begin
         i_e_npc => w.e.npc,
         i_predict_npc => bp.npc,
         i_predict => bp.predict,
-        o_predict_miss => w.f.predict_miss,
+        i_minus2 => bp.minus2,
+        i_minus4 => bp.minus4,
         o_mem_req_fire => w.f.req_fire,
         o_ex_load_fault => w.f.load_fault,
         o_valid => w.f.valid,
@@ -349,11 +352,12 @@ begin
         i_resp_mem_valid => i_resp_ctrl_valid,
         i_resp_mem_addr => i_resp_ctrl_addr,
         i_resp_mem_data => i_resp_ctrl_data,
-        i_f_predic_miss => w.f.predict_miss,
         i_e_npc => w.e.npc,
         i_ra => ireg.ra,
         o_npc_predict => bp.npc,
-        o_predict => bp.predict);
+        o_predict => bp.predict,
+        o_minus2 => bp.minus2,
+        o_minus4 => bp.minus4);
 
 
     iregs0 : RegIntBank port map ( 
