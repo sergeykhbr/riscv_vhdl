@@ -35,10 +35,6 @@ end;
  
 architecture arch_BranchPredictor of BranchPredictor is
 
-  constant State_Normal : std_logic_vector(1 downto 0) := "00";
-  constant State_ShiftDown : std_logic_vector(1 downto 0) := "01";
-  constant State_Repeat : std_logic_vector(1 downto 0) := "10";
-
   type HistoryType is record
       resp_pc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
       resp_npc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
@@ -55,11 +51,12 @@ architecture arch_BranchPredictor of BranchPredictor is
       h : HistoryVector;
       minus2 : std_logic;
       minus4 : std_logic;
-      state : std_logic_vector(1 downto 0);
+      c0 : std_logic;
+      c1 : std_logic;
   end record;
 
   constant R_RESET : RegistersType := (
-      (others => history_none), '0', '0', State_Normal
+      (others => history_none), '0', '0', '0', '0'
   );
 
   signal r, rin : RegistersType;
@@ -73,10 +70,8 @@ begin
     variable vb_npc2 : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     variable vb_jal_off : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     variable v_predict : std_logic;
-    variable v_requested : std_logic;
     variable v_sequence : std_logic;
     variable v_c0 : std_logic;
-    variable v_correction : std_logic;
   begin
 
     v := r;
@@ -92,15 +87,9 @@ begin
     v_predict := '0';
 
     if r.minus2 = '1' then
-        v_c0 := not (i_resp_mem_data(17) and i_resp_mem_data(16));
+        v_c0 := r.c1;
     else
         v_c0 := not (i_resp_mem_data(1) and i_resp_mem_data(0));
-    end if;
-
-    v_requested := '0';
-    if i_e_npc = r.h(2).resp_pc or i_e_npc = r.h(1).resp_pc or
-       i_e_npc = r.h(0).resp_pc then
-        v_requested := '1';
     end if;
 
     v_sequence := '1';
@@ -129,6 +118,11 @@ begin
         v_sequence := '0';
     end if;
 
+    if i_resp_mem_valid = '1' then
+        v.c0 := not (i_resp_mem_data(1) and i_resp_mem_data(0));
+        v.c1 := not (i_resp_mem_data(17) and i_resp_mem_data(16));
+    end if;
+
     if i_req_mem_fire = '1' and i_resp_mem_valid = '0' then
         v.h(0).req_addr := vb_npc2;
         v.h(0).ignore := '0';
@@ -146,14 +140,17 @@ begin
             -- Two sequental C-instruction, 
             --   ignore memory response and re-use full fetched previous value
             v.h(0).ignore := '1';
-            v.h(0).resp_pc := r.h(0).resp_pc+2;
-            v.h(0).resp_npc := r.h(0).resp_npc+2;
-            v.h(1).resp_pc := r.h(0).resp_pc;
+            v.h(0).resp_pc := i_resp_mem_addr;
+            if i_resp_mem_data(1 downto 0) /= "11" then
+                v.h(0).resp_npc := i_resp_mem_addr+2;
+            else
+                v.h(0).resp_npc := i_resp_mem_addr+4;
+            end if;
             v.h(1).resp_npc := r.h(0).resp_npc-2;
             v.minus4 := '1';
-        elsif v_sequence = '1' and v_c0 = '1' then
+        elsif v_sequence = '1' and v_c0 = '1' and r.minus4 = '0' then
             -- 1-st of two C-instructions
-            v.minus2 := '1';
+            v.minus2 := not r.minus4;
             v.h(0).resp_pc := vb_npc2 - 2;
             v.h(0).resp_npc := vb_npc2 + 2;
             v.h(1).resp_pc := r.h(0).resp_pc;
@@ -163,14 +160,15 @@ begin
             v.h(0).resp_npc := vb_npc2 + 4;
         end if;
         v.h(2) := r.h(1);
+
     elsif i_resp_mem_valid = '1' then
-        v.minus2 := '0';
-        v.minus4 := '0';
-        if v_c0 = '1' then
-            v.h(0).resp_npc := r.h(0).resp_pc + 4;
-        else
-            v.h(0).resp_npc := r.h(0).resp_pc + 2;
+        v.h(1) := r.h(0);
+        if v_sequence = '1' and v_c0 = '1' and r.minus2 = '1' then
+            v.h(1).resp_npc := r.h(0).resp_npc-2;
+        elsif v_sequence = '1' and v_c0 = '1' and r.minus4 = '0' then
+            v.h(1).resp_npc := r.h(0).resp_npc-2;
         end if;
+        v.h(2) := r.h(1);
     end if;
 
 
