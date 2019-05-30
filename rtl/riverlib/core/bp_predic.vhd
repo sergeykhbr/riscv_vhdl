@@ -124,6 +124,8 @@ begin
     end if;
 
     if i_req_mem_fire = '1' and i_resp_mem_valid = '0' then
+        v.minus2 := '0';
+        v.minus4 := '0';
         v.h(0).req_addr := vb_npc2;
         v.h(0).ignore := '0';
         v.h(0).resp_pc := vb_npc2;
@@ -133,28 +135,33 @@ begin
     elsif i_req_mem_fire = '1' and i_resp_mem_valid = '1' then
         v.h(0).req_addr := vb_npc2;
         v.h(0).ignore := '0';
-        v.minus2 := '0';
         v.minus4 := '0';
         v.h(1) := r.h(0);
-        if v_sequence = '1' and v_c0 = '1' and r.minus2 = '1' then
-            -- Two sequental C-instruction, 
-            --   ignore memory response and re-use full fetched previous value
-            v.h(0).ignore := '1';
-            v.h(0).resp_pc := i_resp_mem_addr;
-            if i_resp_mem_data(1 downto 0) /= "11" then
-                v.h(0).resp_npc := i_resp_mem_addr+2;
+        if v_sequence = '1' and r.minus2 = '1' then
+            if v_c0 = '1' then
+                -- Two C-instructions, 
+                --   ignore memory response and re-use full fetched previous value
+                if i_resp_mem_data(1 downto 0) /= "11" then
+                    v.h(0).resp_npc := i_resp_mem_addr+2;
+                else
+                    v.h(0).resp_npc := i_resp_mem_addr+4;
+                end if;
+                v.h(0).ignore := '1';
+                v.h(0).resp_pc := i_resp_mem_addr;
+                v.h(1).resp_npc := r.h(0).resp_pc+2;
+                v.minus2 := '0';
+                v.minus4 := '1';
             else
-                v.h(0).resp_npc := i_resp_mem_addr+4;
+                v.h(0).resp_pc := vb_npc2;
+                v.h(0).resp_npc := vb_npc2 + 4;
             end if;
-            v.h(1).resp_npc := r.h(0).resp_npc-2;
-            v.minus4 := '1';
         elsif v_sequence = '1' and v_c0 = '1' and r.minus4 = '0' then
             -- 1-st of two C-instructions
             v.minus2 := not r.minus4;
             v.h(0).resp_pc := vb_npc2 - 2;
             v.h(0).resp_npc := vb_npc2 + 2;
             v.h(1).resp_pc := r.h(0).resp_pc;
-            v.h(1).resp_npc := r.h(0).resp_npc-2;
+            v.h(1).resp_npc := r.h(0).resp_pc+2;
         else
             v.h(0).resp_pc := vb_npc2;
             v.h(0).resp_npc := vb_npc2 + 4;
@@ -162,13 +169,14 @@ begin
         v.h(2) := r.h(1);
 
     elsif i_resp_mem_valid = '1' then
-        v.h(1) := r.h(0);
-        if v_sequence = '1' and v_c0 = '1' and r.minus2 = '1' then
-            v.h(1).resp_npc := r.h(0).resp_npc-2;
-        elsif v_sequence = '1' and v_c0 = '1' and r.minus4 = '0' then
-            v.h(1).resp_npc := r.h(0).resp_npc-2;
+--        v.minus2 := '0';
+--        v.minus4 := '0';
+        if v_c0 = '1' then
+--        if v_sequence = '1' and v_c0 = '1' and r.minus2 = '1' then
+            v.h(0).resp_npc := r.h(0).resp_pc+2;
+--        elsif v_sequence = '1' and v_c0 = '1' and r.minus4 = '0' then
+--            v.h(0).resp_npc := r.h(0).resp_pc+2;
         end if;
-        v.h(2) := r.h(1);
     end if;
 
 
