@@ -49,6 +49,7 @@ architecture arch_BranchPredictor of BranchPredictor is
 
   type RegistersType is record
       h : HistoryVector;
+      wait_resp : std_logic;
       minus2 : std_logic;
       minus4 : std_logic;
       c0 : std_logic;
@@ -56,7 +57,7 @@ architecture arch_BranchPredictor of BranchPredictor is
   end record;
 
   constant R_RESET : RegistersType := (
-      (others => history_none), '0', '0', '0', '0'
+      (others => history_none), '0', '0', '0', '0', '0'
   );
 
   signal r, rin : RegistersType;
@@ -86,7 +87,9 @@ begin
 
     v_predict := '0';
 
-    if r.minus2 = '1' then
+    if r.minus4 = '1' then
+        v_c0 := r.c0;
+    elsif r.minus2 = '1' then
         v_c0 := r.c1;
     else
         v_c0 := not (i_resp_mem_data(1) and i_resp_mem_data(0));
@@ -123,7 +126,8 @@ begin
         v.c1 := not (i_resp_mem_data(17) and i_resp_mem_data(16));
     end if;
 
-    if i_req_mem_fire = '1' and i_resp_mem_valid = '0' then
+    if i_req_mem_fire = '1' and r.wait_resp = '0' then
+        v.wait_resp := '1';
         v.minus2 := '0';
         v.minus4 := '0';
         v.h(0).req_addr := vb_npc2;
@@ -168,7 +172,8 @@ begin
         end if;
         v.h(2) := r.h(1);
 
-    elsif i_resp_mem_valid = '1' then
+    elsif i_resp_mem_valid = '1' and r.wait_resp = '1' then
+        v.wait_resp := '0';
 --        v.minus2 := '0';
 --        v.minus4 := '0';
         if v_c0 = '1' then
