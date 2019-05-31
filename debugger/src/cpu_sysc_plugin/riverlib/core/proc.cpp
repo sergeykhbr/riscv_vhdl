@@ -47,7 +47,8 @@ Processor::Processor(sc_module_name name_, uint32_t hartid)
     fetch0->i_e_npc(w.e.npc);
     fetch0->i_predict_npc(bp.npc);
     fetch0->i_predict(bp.predict);
-    fetch0->o_predict_miss(w.f.predict_miss);
+    fetch0->i_minus2(bp.minus2);
+    fetch0->i_minus4(bp.minus4);
     fetch0->o_mem_req_fire(w.f.req_fire);
     fetch0->o_ex_load_fault(w.f.load_fault);
     fetch0->o_valid(w.f.valid);
@@ -172,11 +173,12 @@ Processor::Processor(sc_module_name name_, uint32_t hartid)
     predic0->i_resp_mem_valid(i_resp_ctrl_valid);
     predic0->i_resp_mem_addr(i_resp_ctrl_addr);
     predic0->i_resp_mem_data(i_resp_ctrl_data);
-    predic0->i_f_predic_miss(w.f.predict_miss);
     predic0->i_e_npc(w.e.npc);
     predic0->i_ra(ireg.ra);
     predic0->o_npc_predict(bp.npc);
     predic0->o_predict(bp.predict);
+    predic0->o_minus2(bp.minus2);
+    predic0->o_minus4(bp.minus4);
 
     iregs0 = new RegIntBank("iregs0");
     iregs0->i_clk(i_clk);

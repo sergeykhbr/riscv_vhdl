@@ -25,12 +25,25 @@ BranchPredictor::BranchPredictor(sc_module_name name_) : sc_module(name_) {
     sensitive << i_resp_mem_valid;
     sensitive << i_resp_mem_addr;
     sensitive << i_resp_mem_data;
-    sensitive << i_f_predic_miss;
     sensitive << i_e_npc;
     sensitive << i_ra;
-    sensitive << r.npc;
-    sensitive << r.resp_mem_data;
-    sensitive << r.resp_mem_addr;
+    sensitive << r.h[0].resp_pc;
+    sensitive << r.h[0].resp_npc;
+    sensitive << r.h[0].req_addr;
+    sensitive << r.h[0].ignore;
+    sensitive << r.h[1].resp_pc;
+    sensitive << r.h[1].resp_npc;
+    sensitive << r.h[1].req_addr;
+    sensitive << r.h[1].ignore;
+    sensitive << r.h[2].resp_pc;
+    sensitive << r.h[2].resp_npc;
+    sensitive << r.h[2].req_addr;
+    sensitive << r.h[2].ignore;
+    sensitive << r.wait_resp;
+    sensitive << r.minus2;
+    sensitive << r.minus4;
+    sensitive << r.c0;
+    sensitive << r.c1;
 
     SC_METHOD(registers);
     sensitive << i_clk.pos();
@@ -42,68 +55,155 @@ void BranchPredictor::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_resp_mem_valid, "/top/proc0/bp0/i_resp_mem_valid");
         sc_trace(o_vcd, i_resp_mem_addr, "/top/proc0/bp0/i_resp_mem_addr");
         sc_trace(o_vcd, i_resp_mem_data, "/top/proc0/bp0/i_resp_mem_data");
-        sc_trace(o_vcd, i_f_predic_miss, "/top/proc0/bp0/i_f_predic_miss");
         sc_trace(o_vcd, i_e_npc, "/top/proc0/bp0/i_e_npc");
         sc_trace(o_vcd, i_ra, "/top/proc0/bp0/i_ra");
 
         sc_trace(o_vcd, o_npc_predict, "/top/proc0/bp0/o_npc_predict");
-        sc_trace(o_vcd, r.npc, "/top/proc0/bp0/r_npc");
-        sc_trace(o_vcd, r.resp_mem_data, "/top/proc0/bp0/r_resp_mem_data");
-        sc_trace(o_vcd, r.resp_mem_addr, "/top/proc0/bp0/r_resp_mem_addr");
-        sc_trace(o_vcd, wb_npc, "/top/proc0/bp0/wb_npc");
+        sc_trace(o_vcd, vb_npc2, "/top/proc0/bp0/vb_npc");
     }
 }
 
 void BranchPredictor::comb() {
-    v = r;
-    sc_uint<BUS_ADDR_WIDTH> wb_jal_off;
-    sc_uint<32> wb_tmp;
+    sc_uint<32> vb_tmp;
+    sc_uint<BUS_ADDR_WIDTH> vb_jal_off;
     bool v_predict;
+    bool v_sequence;
+    bool v_c0;
 
-    if (i_resp_mem_valid.read()) {
-        v.resp_mem_addr = i_resp_mem_addr.read();
-        v.resp_mem_data = i_resp_mem_data.read();
-    }
-    wb_tmp = r.resp_mem_data.read();
-    wb_npc = r.npc.read();
+    v = r;
 
-    if (wb_tmp[31]) {
-        wb_jal_off(BUS_ADDR_WIDTH-1, 20) = ~0;
+    vb_tmp = i_resp_mem_data.read();
+
+    if (vb_tmp[31]) {
+        vb_jal_off(BUS_ADDR_WIDTH-1, 20) = ~0;
     } else {
-        wb_jal_off(BUS_ADDR_WIDTH-1, 20) = 0;
+        vb_jal_off(BUS_ADDR_WIDTH-1, 20) = 0;
     }
-    wb_jal_off(19, 12) = wb_tmp(19, 12);
-    wb_jal_off[11] = wb_tmp[20];
-    wb_jal_off(10, 1) = wb_tmp(30, 21);
-    wb_jal_off[0] = 0;
+    vb_jal_off(19, 12) = vb_tmp(19, 12);
+    vb_jal_off[11] = vb_tmp[20];
+    vb_jal_off(10, 1) = vb_tmp(30, 21);
+    vb_jal_off[0] = 0;
 
-    v_predict = 0;
-    if (i_f_predic_miss.read()) {
-        wb_npc = i_e_npc.read();
-    } else if (wb_tmp == 0x00008067) {
-        // ret32 pseudo-instruction:
-        wb_npc = i_ra.read()(BUS_ADDR_WIDTH-1, 0);
-        v_predict = 1;
-    //} else if (wb_tmp(6, 0) == 0x6f) {
-        // jal instruction: Dhry score 35136 -> 36992
-        //wb_npc = r.resp_mem_addr.read() + wb_jal_off;
+    if (r.minus4.read() == 1) {
+        v_c0 = r.c0.read();
+    } else if (r.minus2.read() == 1) {
+        v_c0 = r.c1.read();
     } else {
-        wb_npc = r.npc.read() + 2;
-        v_predict = 1;
+        v_c0 = !(i_resp_mem_data.read()[1] & i_resp_mem_data.read()[0]);
     }
-    
-    if (i_req_mem_fire.read()) {
-        v.npc = wb_npc;
+
+    v_sequence = 1;
+    if (i_e_npc.read() == r.h[2].resp_pc.read()) {
+        if (r.h[2].resp_npc.read() == r.h[1].resp_pc.read()) {
+            if (r.h[1].resp_npc.read() == r.h[0].resp_pc.read()) {
+                vb_npc2 = r.h[0].resp_npc.read();
+            } else {
+                vb_npc2 = r.h[1].resp_npc.read();
+            }
+        } else if (r.h[2].resp_npc.read() == r.h[0].resp_pc.read()) {
+            vb_npc2 = r.h[0].resp_npc.read();
+        } else {
+            vb_npc2 = r.h[2].resp_npc.read();
+        }
+    } else if (i_e_npc.read() == r.h[1].resp_pc.read()) {
+        if (r.h[1].resp_npc.read() == r.h[0].resp_pc.read()) {
+            vb_npc2 = r.h[0].resp_npc.read();
+        } else {
+            vb_npc2 = r.h[1].resp_npc.read();
+        }
+    } else if (i_e_npc.read() == r.h[0].resp_pc.read()) {
+        vb_npc2 = r.h[0].resp_npc.read();
+    } else {
+        vb_npc2 = i_e_npc.read();
+        v_sequence = 0;
     }
+
+    if (i_resp_mem_valid.read() == 1) {
+        v.c0 = !(i_resp_mem_data.read()[1] & i_resp_mem_data.read()[0]);
+        v.c1 = !(i_resp_mem_data.read()[17] & i_resp_mem_data.read()[16]);
+    }
+
+    if (i_req_mem_fire.read() == 1 && r.wait_resp.read() == 0) {
+        v.wait_resp = 1;
+        v.minus2 = 0;
+        v.minus4 = 0;
+        v.h[0].req_addr = vb_npc2;
+        v.h[0].ignore = 0;
+        v.h[0].resp_pc = vb_npc2;
+        v.h[0].resp_npc = vb_npc2 + 4;   // default instruction size
+        for (int i = 0; i < 2; i++) {
+            v.h[i+1].resp_pc = r.h[i].resp_pc;
+            v.h[i+1].resp_npc = r.h[i].resp_npc;
+            v.h[i+1].req_addr = r.h[i].req_addr;
+            v.h[i+1].ignore = r.h[i].ignore;
+        }
+    } else if (i_req_mem_fire.read() == 1 && i_resp_mem_valid.read() == 1) {
+        v.h[0].req_addr = vb_npc2;
+        v.h[0].ignore = 0;
+        v.minus4 = 0;
+        v.h[1].resp_pc = r.h[0].resp_pc;
+        v.h[1].resp_npc = r.h[0].resp_npc;
+        v.h[1].req_addr = r.h[0].req_addr;
+        v.h[1].ignore = r.h[0].ignore;
+        if (v_sequence == 1 && r.minus2.read() == 1) {
+            if (v_c0 == 1) {
+                // Two C-instructions, 
+                //   ignore memory response and re-use full fetched previous value
+                if (i_resp_mem_data.read().range(1, 0) != 0x3) {
+                    v.h[0].resp_npc = i_resp_mem_addr.read() + 2;
+                } else {
+                    v.h[0].resp_npc = i_resp_mem_addr.read() + 4;
+                }
+                v.h[0].ignore = 1;
+                v.h[0].resp_pc = i_resp_mem_addr;
+                v.h[1].resp_npc = r.h[0].resp_pc.read() + 2;
+                v.minus2 = 0;
+                v.minus4 = 1;
+            } else {
+                v.h[0].resp_pc = vb_npc2;
+                v.h[0].resp_npc = vb_npc2 + 4;
+            }
+        } else if (v_sequence == 1 && v_c0 == 1 && r.minus4.read() == 0) {
+            // 1-st of two C-instructions
+            v.minus2 = !r.minus4.read();
+            v.h[0].resp_pc = vb_npc2 - 2;
+            v.h[0].resp_npc = vb_npc2 + 2;
+            v.h[1].resp_pc = r.h[0].resp_pc;
+            v.h[1].resp_npc = r.h[0].resp_pc.read() + 2;
+        } else {
+            v.h[0].resp_pc = vb_npc2;
+            v.h[0].resp_npc = vb_npc2 + 4;
+        }
+        v.h[2].resp_pc = r.h[1].resp_pc;
+        v.h[2].resp_npc = r.h[1].resp_npc;
+        v.h[2].req_addr = r.h[1].req_addr;
+        v.h[2].ignore = r.h[1].ignore;
+    } else if (i_resp_mem_valid.read() == 1 && r.wait_resp.read() == 1) {
+        v.wait_resp = 0;
+        if (v_c0 == 1) {
+            v.h[0].resp_npc = r.h[0].resp_pc.read() + 2;
+        }
+    }
+
 
     if (!i_nrst.read()) {
-        v.npc = RESET_VECTOR - 2;
-        v.resp_mem_addr = RESET_VECTOR;
-        v.resp_mem_data = 0;
+        for (int i = 0; i < 3; i++) {
+            v.h[i].resp_pc = ~0ul;
+            v.h[i].resp_npc = ~0ul;
+            v.h[i].req_addr = 0;
+            v.h[i].ignore = 0;
+        }
+        v.wait_resp = 0;
+        v.minus2 = 0;
+        v.minus4 = 0;
+        v.c0 = 0;
+        v.c1 = 0;
     }
 
-    o_npc_predict = wb_npc;
+    o_npc_predict = vb_npc2;
     o_predict = v_predict;
+    o_minus2 = r.minus2.read();
+    o_minus4 = r.minus4.read();
 }
 
 void BranchPredictor::registers() {

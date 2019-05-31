@@ -72,7 +72,6 @@ architecture arch_Processor of Processor is
         instr : std_logic_vector(31 downto 0);
         imem_req_valid : std_logic;
         imem_req_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-        predict_miss : std_logic;
         pipeline_hold : std_logic;
         instr_buf : std_logic_vector(DBG_FETCH_TRACE_SIZE*64-1 downto 0);
     end record;

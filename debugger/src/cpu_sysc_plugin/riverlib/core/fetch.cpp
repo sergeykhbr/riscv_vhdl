@@ -21,6 +21,8 @@ InstrFetch::InstrFetch(sc_module_name name_) : sc_module(name_) {
     sensitive << i_e_npc;
     sensitive << i_predict_npc;
     sensitive << i_predict;
+    sensitive << i_minus2;
+    sensitive << i_minus4;
     sensitive << i_br_fetch_valid;
     sensitive << i_br_address_fetch;
     sensitive << i_br_instr_fetch;
@@ -30,6 +32,13 @@ InstrFetch::InstrFetch(sc_module_name name_) : sc_module(name_) {
     sensitive << r.pipeline_init;
     sensitive << r.br_address;
     sensitive << r.br_instr;
+    sensitive << r.resp_address;
+    sensitive << r.resp_data;
+    sensitive << r.resp_valid;
+    sensitive << r.resp_address_z;
+    sensitive << r.resp_data_z;
+    sensitive << r.minus2;
+    sensitive << r.minus4;
 
     SC_METHOD(registers);
     sensitive << i_clk.pos();
@@ -47,7 +56,6 @@ void InstrFetch::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_mem_addr_valid, "/top/proc0/fetch0/o_mem_addr_valid");
         sc_trace(o_vcd, o_mem_addr, "/top/proc0/fetch0/o_mem_addr");
         sc_trace(o_vcd, i_mem_req_ready, "/top/proc0/fetch0/i_mem_req_ready");
-        sc_trace(o_vcd, o_predict_miss, "/top/proc0/fetch0/o_predict_miss");
         sc_trace(o_vcd, o_hold, "/top/proc0/fetch0/o_hold");
         sc_trace(o_vcd, o_valid, "/top/proc0/fetch0/o_valid");
         sc_trace(o_vcd, o_pc, "/top/proc0/fetch0/o_pc");
@@ -59,12 +67,9 @@ void InstrFetch::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void InstrFetch::comb() {
-    sc_uint<BUS_ADDR_WIDTH> wb_o_addr_req;
-    bool w_predict_miss;
     bool w_o_req_valid;
     bool w_o_req_fire;
-    bool w_resp_fire;
-    bool w_o_mem_resp_ready;
+    bool w_o_hold;
     sc_uint<BUS_ADDR_WIDTH> wb_o_pc;
     sc_uint<32> wb_o_instr;
 
@@ -72,85 +77,70 @@ void InstrFetch::comb() {
 
     w_o_req_valid = i_nrst.read() & !i_pipeline_hold.read()
             & !(r.wait_resp.read() & !i_mem_data_valid.read());
-    w_o_req_fire = w_o_req_valid && i_mem_req_ready.read();
+    w_o_req_fire =  i_mem_req_ready.read() && w_o_req_valid;
 
-    w_o_mem_resp_ready = !i_pipeline_hold.read();
-    w_resp_fire = i_mem_data_valid.read() && w_o_mem_resp_ready;
-
-    w_predict_miss = 1;
-    if (i_e_npc == r.pc_z1 
-       || i_e_npc == r.raddr_not_resp_yet) {
-        w_predict_miss = 0;
-    }
-
-    if (w_predict_miss) {
-        wb_o_addr_req = i_e_npc.read();
-    } else {
-        wb_o_addr_req = i_predict_npc.read();
-    }
+    w_o_hold = !(r.wait_resp.read() && i_mem_data_valid.read());
     
 
     // Debug last fetched instructions buffer:
     sc_biguint<DBG_FETCH_TRACE_SIZE*64> wb_instr_buf = r.instr_buf;
     if (w_o_req_fire) {
-        wb_instr_buf(DBG_FETCH_TRACE_SIZE*64-1, 64) =
-            wb_instr_buf((DBG_FETCH_TRACE_SIZE-1)*64-1, 0);
-        if (w_resp_fire) {
-            wb_instr_buf(95, 64) = i_mem_data.read();
-        }
-        wb_instr_buf(63, 32) = wb_o_addr_req;
-        wb_instr_buf(31, 0) = 0;
-    } else if (w_resp_fire) {
-        wb_instr_buf(31, 0) = i_mem_data.read();
-    }
-    v.instr_buf = wb_instr_buf;
-
-
-    if (w_o_req_fire) {
         v.wait_resp = 1;
-        v.pc_z1 = r.raddr_not_resp_yet;
-        v.raddr_not_resp_yet = wb_o_addr_req;
-        v.pipeline_init = (r.pipeline_init.read() << 1) | 1;
-    } else if (i_mem_data_valid.read() && !w_o_req_fire && !i_pipeline_hold.read()) {
+    } else if (i_mem_data_valid.read() == 1 && i_pipeline_hold.read() == 0) {
         v.wait_resp = 0;
     }
-    
+
     if (i_br_fetch_valid.read()) {
         v.br_address = i_br_address_fetch;
         v.br_instr = i_br_instr_fetch;
     }
 
-    if (i_mem_data_addr.read() == r.br_address.read()) {
-        wb_o_pc = r.br_address;
-        wb_o_instr = r.br_instr;
-        if (w_resp_fire) {
-            v.br_address = ~0;
-        }
+    if (i_mem_data_valid.read() && r.wait_resp.read() && !i_pipeline_hold.read()) {
+        v.resp_valid = 1;
+        v.minus2 = i_minus2.read();
+        v.minus4 = i_minus4.read();
+//        if i_mem_data_addr = r.br_address then
+//            v.resp_address := r.br_address;
+//            v.resp_data := r.br_instr;
+//            v.br_address := (others => '1');
+//        else
+            v.resp_address = i_mem_data_addr.read();
+            v.resp_data = i_mem_data.read();
+//        end if;
+        v.resp_address_z = r.resp_address.read();
+        v.resp_data_z = r.resp_data.read();
+    }
+
+    if (i_br_fetch_valid.read() == 1) {
+         v.br_address = i_br_address_fetch.read();
+         v.br_instr = i_br_instr_fetch.read();
+    }
+
+    if (r.minus4.read() == 1) {
+        wb_o_pc = r.resp_address_z.read();
+        wb_o_instr = r.resp_data_z.read();
+    } else if (r.minus2.read() == 1) {
+        wb_o_pc = r.resp_address.read() - 2;
+        wb_o_instr = (r.resp_data.read().range(15, 0) << 16) 
+                    | r.resp_data_z.read().range(31, 16);
     } else {
-        wb_o_pc = i_mem_data_addr;
-        wb_o_instr = i_mem_data;
+        wb_o_pc = r.resp_address.read();
+        wb_o_instr = r.resp_data.read();
     }
 
     if (!i_nrst.read()) {
-        v.wait_resp = 0;
-        v.pipeline_init = 0;
-        v.pc_z1 = 0;
-        v.raddr_not_resp_yet = 0;
-        v.br_address = ~0;
-        v.br_instr = 0;
-        v.instr_buf = 0;
+        R_RESET(v);
     }
 
     o_mem_addr_valid = w_o_req_valid;
-    o_mem_addr = wb_o_addr_req;
+    o_mem_addr = i_predict_npc.read();
     o_mem_req_fire = w_o_req_fire;
     o_ex_load_fault = 0;        // todo:
-    o_valid = w_resp_fire;
+    o_valid = r.resp_valid.read() && !(i_pipeline_hold.read() || w_o_hold);
     o_pc = wb_o_pc;
     o_instr = wb_o_instr;
-    o_predict_miss = w_predict_miss;
-    o_mem_resp_ready = w_o_mem_resp_ready;
-    o_hold = !w_resp_fire;
+    o_mem_resp_ready = r.wait_resp.read() && !i_pipeline_hold.read();
+    o_hold = w_o_hold;
     o_instr_buf = r.instr_buf;
 }
 

@@ -84,7 +84,6 @@ private:
         sc_signal<sc_uint<32>> instr;
         sc_signal<bool> imem_req_valid;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> imem_req_addr;
-        sc_signal<bool> predict_miss;
         sc_signal<bool> pipeline_hold;
         sc_signal<sc_biguint<DBG_FETCH_TRACE_SIZE*64>> instr_buf;
     };
@@ -187,6 +186,8 @@ private:
     struct BranchPredictorType {
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> npc;
         sc_signal<bool> predict;
+        sc_signal<bool> minus2;
+        sc_signal<bool> minus4;
     } bp;
 
     /** 5-stages CPU pipeline */

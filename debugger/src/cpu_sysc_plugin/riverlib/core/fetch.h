@@ -29,7 +29,8 @@ SC_MODULE(InstrFetch) {
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_e_npc;
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_predict_npc;
     sc_in<bool> i_predict;
-    sc_out<bool> o_predict_miss;
+    sc_in<bool> i_minus2;
+    sc_in<bool> i_minus4;
 
     sc_out<bool> o_mem_req_fire;                    // used by branch predictor to form new npc value
     sc_out<bool> o_ex_load_fault;
@@ -51,7 +52,7 @@ SC_MODULE(InstrFetch) {
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
-private:
+ private:
     struct RegistersType {
         sc_signal<bool> wait_resp;
         sc_signal<sc_uint<5>> pipeline_init;
@@ -60,7 +61,32 @@ private:
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> br_address;
         sc_signal<sc_uint<32>> br_instr;
         sc_signal<sc_biguint<DBG_FETCH_TRACE_SIZE*64>> instr_buf;
+
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> resp_address;
+        sc_signal<sc_uint<32>> resp_data;
+        sc_signal<bool> resp_valid;
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> resp_address_z;
+        sc_signal<sc_uint<32>> resp_data_z;
+        sc_signal<bool> minus2;
+        sc_signal<bool> minus4;
     } v, r;
+
+    void R_RESET(RegistersType &iv) {
+        iv.wait_resp = 0;
+        iv.pipeline_init = 0;
+        iv.pc_z1 = 0;
+        iv.raddr_not_resp_yet = 0;
+        iv.br_address = ~0ul;
+        iv.br_instr = 0;
+        iv.instr_buf = 0;
+        iv.resp_address = 0;
+        iv.resp_data = 0;
+        iv.resp_valid = 0;
+        iv.resp_address_z = 0;
+        iv.resp_data_z = 0;
+        iv.minus2 = 0;
+        iv.minus4 = 0;
+    }
 };
 
 
