@@ -147,7 +147,7 @@ begin
     o_mem_addr <= i_predict_npc;
     o_mem_req_fire <= w_o_req_fire;
     o_ex_load_fault <= '0';    -- TODO
-    o_valid <= r.resp_valid and not i_pipeline_hold;
+    o_valid <= r.resp_valid and not (i_pipeline_hold or w_o_hold);
     o_pc <= wb_o_pc;
     o_instr <= wb_o_instr;
     o_mem_resp_ready <= r.wait_resp and not i_pipeline_hold;
