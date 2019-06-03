@@ -55,6 +55,7 @@ private:
     struct RegistersType {
         HistoryType h[3];
         sc_signal<bool> wait_resp;
+        sc_signal<bool> sequence;
         sc_signal<bool> minus2;
         sc_signal<bool> minus4;
         sc_signal<bool> c0;

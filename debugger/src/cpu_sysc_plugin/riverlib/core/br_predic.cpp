@@ -40,6 +40,7 @@ BranchPredictor::BranchPredictor(sc_module_name name_) : sc_module(name_) {
     sensitive << r.h[2].req_addr;
     sensitive << r.h[2].ignore;
     sensitive << r.wait_resp;
+    sensitive << r.sequence;
     sensitive << r.minus2;
     sensitive << r.minus4;
     sensitive << r.c0;
@@ -59,7 +60,19 @@ void BranchPredictor::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_ra, "/top/proc0/bp0/i_ra");
 
         sc_trace(o_vcd, o_npc_predict, "/top/proc0/bp0/o_npc_predict");
-        sc_trace(o_vcd, vb_npc2, "/top/proc0/bp0/vb_npc");
+        sc_trace(o_vcd, vb_npc2, "/top/proc0/bp0/vb_npc2");
+        sc_trace(o_vcd, r.h[0].resp_pc, "/top/proc0/bp0/r_h(0)_resp_pc");
+        sc_trace(o_vcd, r.h[0].resp_npc, "/top/proc0/bp0/r_h(0)_resp_npc");
+        sc_trace(o_vcd, r.h[0].req_addr, "/top/proc0/bp0/r_h(0)_req_addr");
+        sc_trace(o_vcd, r.h[1].resp_pc, "/top/proc0/bp0/r_h(1)_resp_pc");
+        sc_trace(o_vcd, r.h[1].resp_npc, "/top/proc0/bp0/r_h(1)_resp_npc");
+        sc_trace(o_vcd, r.h[1].req_addr, "/top/proc0/bp0/r_h(1)_req_addr");
+        sc_trace(o_vcd, r.wait_resp, "/top/proc0/bp0/r_wait_resp");
+        sc_trace(o_vcd, r.sequence, "/top/proc0/bp0/r_sequence");
+        sc_trace(o_vcd, r.minus2, "/top/proc0/bp0/r_minus2");
+        sc_trace(o_vcd, r.minus4, "/top/proc0/bp0/r_minus4");
+        sc_trace(o_vcd, r.c0, "/top/proc0/bp0/r_c0");
+        sc_trace(o_vcd, r.c1, "/top/proc0/bp0/r_c1");
     }
 }
 
@@ -123,6 +136,10 @@ void BranchPredictor::comb() {
         v.c1 = !(i_resp_mem_data.read()[17] & i_resp_mem_data.read()[16]);
     }
 
+    if (i_req_mem_fire.read() == 1) {
+        v.sequence = v_sequence;
+    }
+
     if (i_req_mem_fire.read() == 1 && r.wait_resp.read() == 0) {
         v.wait_resp = 1;
         v.minus2 = 0;
@@ -145,32 +162,40 @@ void BranchPredictor::comb() {
         v.h[1].resp_npc = r.h[0].resp_npc;
         v.h[1].req_addr = r.h[0].req_addr;
         v.h[1].ignore = r.h[0].ignore;
-        if (v_sequence == 1 && r.minus2.read() == 1) {
+        if (v_sequence == 1) {
             if (v_c0 == 1) {
-                // Two C-instructions, 
-                //   ignore memory response and re-use full fetched previous value
-                if (i_resp_mem_data.read().range(1, 0) != 0x3) {
-                    v.h[0].resp_npc = i_resp_mem_addr.read() + 2;
+                if (r.minus2.read() == 1) {
+                    // Two C-instructions, 
+                    //   ignore memory response and re-use full fetched previous value
+                    if (i_resp_mem_data.read().range(1, 0) != 0x3) {
+                        v.h[0].resp_npc = i_resp_mem_addr.read() + 2;
+                    } else {
+                        v.h[0].resp_npc = i_resp_mem_addr.read() + 4;
+                    }
+                    v.h[0].ignore = 1;
+                    v.h[0].resp_pc = i_resp_mem_addr;
+                    v.h[1].resp_npc = r.h[0].resp_pc.read() + 2;
+                    v.minus2 = 0;
+                    v.minus4 = 1;
+                } else if (r.minus4.read() == 0) {
+                    // 1-st of two C-instructions
+                    v.minus2 = 1;
+                    v.h[0].resp_pc = vb_npc2 - 2;
+                    v.h[0].resp_npc = vb_npc2 + 2;
+                    v.h[1].resp_pc = r.h[0].resp_pc;
+                    v.h[1].resp_npc = r.h[0].resp_pc.read() + 2;
                 } else {
-                    v.h[0].resp_npc = i_resp_mem_addr.read() + 4;
+                    v.minus2 = 0;
+                    v.h[0].resp_pc = vb_npc2;
+                    v.h[0].resp_npc = vb_npc2 + 4;
                 }
-                v.h[0].ignore = 1;
-                v.h[0].resp_pc = i_resp_mem_addr;
-                v.h[1].resp_npc = r.h[0].resp_pc.read() + 2;
-                v.minus2 = 0;
-                v.minus4 = 1;
             } else {
+                v.minus2 = 0;
                 v.h[0].resp_pc = vb_npc2;
                 v.h[0].resp_npc = vb_npc2 + 4;
             }
-        } else if (v_sequence == 1 && v_c0 == 1 && r.minus4.read() == 0) {
-            // 1-st of two C-instructions
-            v.minus2 = !r.minus4.read();
-            v.h[0].resp_pc = vb_npc2 - 2;
-            v.h[0].resp_npc = vb_npc2 + 2;
-            v.h[1].resp_pc = r.h[0].resp_pc;
-            v.h[1].resp_npc = r.h[0].resp_pc.read() + 2;
         } else {
+            v.minus2 = 0;
             v.h[0].resp_pc = vb_npc2;
             v.h[0].resp_npc = vb_npc2 + 4;
         }
@@ -180,8 +205,24 @@ void BranchPredictor::comb() {
         v.h[2].ignore = r.h[1].ignore;
     } else if (i_resp_mem_valid.read() == 1 && r.wait_resp.read() == 1) {
         v.wait_resp = 0;
-        if (v_c0 == 1) {
-            v.h[0].resp_npc = r.h[0].resp_pc.read() + 2;
+        if (r.sequence == 1) {
+            if (r.minus4.read() == 1) {
+                if (r.c0 == 1) {
+                    v.h[0].resp_npc = r.h[0].resp_pc.read() + 2;
+                }
+            } else if (r.minus2.read() == 1) {
+                if (r.c1 == 1) {
+                    v.h[0].resp_npc = r.h[0].resp_pc.read() + 2;
+                }
+            } else {
+                if ((i_resp_mem_data.read()[1] & i_resp_mem_data.read()[0]) == 0) {
+                    v.h[0].resp_npc = r.h[0].resp_pc.read() + 2;
+                }
+            }
+        } else {
+            if ((i_resp_mem_data.read()[1] & i_resp_mem_data.read()[0]) == 0) {
+                v.h[0].resp_npc = r.h[0].resp_pc.read() + 2;
+            }
         }
     }
 
@@ -194,6 +235,7 @@ void BranchPredictor::comb() {
             v.h[i].ignore = 0;
         }
         v.wait_resp = 0;
+        v.sequence = 0;
         v.minus2 = 0;
         v.minus4 = 0;
         v.c0 = 0;

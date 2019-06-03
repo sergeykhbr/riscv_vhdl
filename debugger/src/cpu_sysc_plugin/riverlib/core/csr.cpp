@@ -79,6 +79,9 @@ void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_dport_addr, "/top/proc0/csr0/i_dport_addr");
         sc_trace(o_vcd, i_dport_wdata, "/top/proc0/csr0/i_dport_wdata");
         sc_trace(o_vcd, o_dport_rdata, "/top/proc0/csr0/o_dport_rdata");
+        sc_trace(o_vcd, i_irq_external, "/top/proc0/csr0/i_irq_external");
+        sc_trace(o_vcd, r.mode, "/top/proc0/csr0/r_mode");
+        sc_trace(o_vcd, r.mie, "/top/proc0/csr0/r_mie");
     }
 }
 
