@@ -50,6 +50,7 @@ architecture arch_BranchPredictor of BranchPredictor is
   type RegistersType is record
       h : HistoryVector;
       wait_resp : std_logic;
+      sequence : std_logic;
       minus2 : std_logic;
       minus4 : std_logic;
       c0 : std_logic;
@@ -57,7 +58,7 @@ architecture arch_BranchPredictor of BranchPredictor is
   end record;
 
   constant R_RESET : RegistersType := (
-      (others => history_none), '0', '0', '0', '0', '0'
+      (others => history_none), '0', '0', '0', '0', '0', '0'
   );
 
   signal r, rin : RegistersType;
@@ -126,6 +127,10 @@ begin
         v.c1 := not (i_resp_mem_data(17) and i_resp_mem_data(16));
     end if;
 
+    if i_req_mem_fire = '1' then
+        v.sequence := v_sequence;
+    end if;
+
     if i_req_mem_fire = '1' and r.wait_resp = '0' then
         v.wait_resp := '1';
         v.minus2 := '0';
@@ -135,53 +140,80 @@ begin
         v.h(0).resp_pc := vb_npc2;
         v.h(0).resp_npc := vb_npc2 + 4;   -- default instruction size
         v.h(1) := r.h(0);
+        v.h(1).resp_npc := vb_npc2;
         v.h(2) := r.h(1);
     elsif i_req_mem_fire = '1' and i_resp_mem_valid = '1' then
         v.h(0).req_addr := vb_npc2;
         v.h(0).ignore := '0';
         v.minus4 := '0';
         v.h(1) := r.h(0);
-        if v_sequence = '1' and r.minus2 = '1' then
+        if v_sequence = '1'then
             if v_c0 = '1' then
-                -- Two C-instructions, 
-                --   ignore memory response and re-use full fetched previous value
-                if i_resp_mem_data(1 downto 0) /= "11" then
-                    v.h(0).resp_npc := i_resp_mem_addr+2;
+                if r.minus2 = '1' then
+                    -- Two C-instructions in sequence, 
+                    --   ignore memory response and re-use full fetched previous value
+                    if i_resp_mem_data(1 downto 0) /= "11" then
+                        v.h(0).resp_npc := i_resp_mem_addr+2;
+                    else
+                        v.h(0).resp_npc := i_resp_mem_addr+4;
+                    end if;
+                    v.h(0).ignore := '1';
+                    v.h(0).resp_pc := i_resp_mem_addr;
+                    v.h(1).resp_npc := r.h(0).resp_pc+2;
+                    v.minus2 := '0';
+                    v.minus4 := '1';
+                elsif r.minus4 = '0' then
+                    -- 1-st of two C-instructions
+                    v.minus2 := '1';
+                    v.h(0).resp_pc := vb_npc2 - 2;
+                    v.h(0).resp_npc := vb_npc2 + 2;
+                    v.h(1).resp_pc := r.h(0).resp_pc;
+                    v.h(1).resp_npc := r.h(0).resp_pc+2;
                 else
-                    v.h(0).resp_npc := i_resp_mem_addr+4;
+                    -- Previous computed npc was predicted correctly switch
+                    -- to normal increment (+4)
+                    v.minus2 := '0';
+                    v.h(0).resp_pc := vb_npc2;
+                    v.h(0).resp_npc := vb_npc2 + 4;
                 end if;
-                v.h(0).ignore := '1';
-                v.h(0).resp_pc := i_resp_mem_addr;
-                v.h(1).resp_npc := r.h(0).resp_pc+2;
+            else 
+                -- 4-bytes instruction received
                 v.minus2 := '0';
-                v.minus4 := '1';
-            else
                 v.h(0).resp_pc := vb_npc2;
                 v.h(0).resp_npc := vb_npc2 + 4;
             end if;
-        elsif v_sequence = '1' and v_c0 = '1' and r.minus4 = '0' then
-            -- 1-st of two C-instructions
-            v.minus2 := not r.minus4;
-            v.h(0).resp_pc := vb_npc2 - 2;
-            v.h(0).resp_npc := vb_npc2 + 2;
-            v.h(1).resp_pc := r.h(0).resp_pc;
-            v.h(1).resp_npc := r.h(0).resp_pc+2;
         else
+            -- start a new sequence
+            v.minus2 := '0';
             v.h(0).resp_pc := vb_npc2;
             v.h(0).resp_npc := vb_npc2 + 4;
+            v.h(1).resp_npc := vb_npc2;
         end if;
         v.h(2) := r.h(1);
 
     elsif i_resp_mem_valid = '1' and r.wait_resp = '1' then
         v.wait_resp := '0';
---        v.minus2 := '0';
---        v.minus4 := '0';
-        if v_c0 = '1' then
---        if v_sequence = '1' and v_c0 = '1' and r.minus2 = '1' then
-            v.h(0).resp_npc := r.h(0).resp_pc+2;
---        elsif v_sequence = '1' and v_c0 = '1' and r.minus4 = '0' then
---            v.h(0).resp_npc := r.h(0).resp_pc+2;
+        -- Correct default predicted npc:
+        if r.sequence = '1' then
+            if r.minus4 = '1' then
+                if r.c0 = '1' then
+                    v.h(0).resp_npc := r.h(0).resp_pc + 2;
+                end if;
+            elsif r.minus2 = '1' then
+                if r.c1 = '1' then
+                    v.h(0).resp_npc := r.h(0).resp_pc + 2;
+                end if;
+            else
+                if (i_resp_mem_data(1) and i_resp_mem_data(0)) = '0' then
+                    v.h(0).resp_npc := r.h(0).resp_pc + 2;
+                end if;
+            end if;
+        else
+            if (i_resp_mem_data(1) and i_resp_mem_data(0)) = '0' then
+                v.h(0).resp_npc := r.h(0).resp_pc + 2;
+            end if;
         end if;
+
     end if;
 
 

@@ -154,6 +154,7 @@ void BranchPredictor::comb() {
             v.h[i+1].req_addr = r.h[i].req_addr;
             v.h[i+1].ignore = r.h[i].ignore;
         }
+        v.h[1].resp_npc = vb_npc2;
     } else if (i_req_mem_fire.read() == 1 && i_resp_mem_valid.read() == 1) {
         v.h[0].req_addr = vb_npc2;
         v.h[0].ignore = 0;
@@ -185,19 +186,24 @@ void BranchPredictor::comb() {
                     v.h[1].resp_pc = r.h[0].resp_pc;
                     v.h[1].resp_npc = r.h[0].resp_pc.read() + 2;
                 } else {
+                    // Previous computed npc was predicted correctly switch
+                    // to normal increment (+4)
                     v.minus2 = 0;
                     v.h[0].resp_pc = vb_npc2;
                     v.h[0].resp_npc = vb_npc2 + 4;
                 }
             } else {
+                // 4-bytes instruction received
                 v.minus2 = 0;
                 v.h[0].resp_pc = vb_npc2;
                 v.h[0].resp_npc = vb_npc2 + 4;
             }
         } else {
+            // start a new sequence
             v.minus2 = 0;
             v.h[0].resp_pc = vb_npc2;
             v.h[0].resp_npc = vb_npc2 + 4;
+            v.h[1].resp_npc = vb_npc2;
         }
         v.h[2].resp_pc = r.h[1].resp_pc;
         v.h[2].resp_npc = r.h[1].resp_npc;
