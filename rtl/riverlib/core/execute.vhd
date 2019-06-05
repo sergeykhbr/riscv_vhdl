@@ -675,7 +675,7 @@ begin
     if i_nrst = '0' then
         v.d_valid := '0';
         v.pc := (others => '0');
-        v.npc := RESET_VECTOR;
+        v.npc := CFG_NMI_RESET_VECTOR;
         v.instr := (others => '0');
         v.res_addr := (others => '0');
         v.res_val := (others => '0');

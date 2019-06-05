@@ -463,7 +463,9 @@ public:
             trans.rpayload.b64[0] = 0;
             icpu_->raiseSignal(EXCEPTION_LoadMisalign);
         } else {
-            icpu_->dma_memop(&trans);
+            if (icpu_->dma_memop(&trans) == TRANS_ERROR) {
+                icpu_->exceptionLoadData(&trans);
+            }
         }
         R[8 + u.bits.rd] = trans.rpayload.b64[0];
         return 2;
@@ -503,7 +505,9 @@ public:
             trans.rpayload.b64[0] = 0;
             icpu_->raiseSignal(EXCEPTION_LoadMisalign);
         } else {
-            icpu_->dma_memop(&trans);
+            if (icpu_->dma_memop(&trans) == TRANS_ERROR) {
+                icpu_->exceptionLoadData(&trans);
+            }
         }
         R[u.ldspbits.rd] = trans.rpayload.b64[0];
         return 2;
@@ -566,7 +570,9 @@ public:
             trans.rpayload.b64[0] = 0;
             icpu_->raiseSignal(EXCEPTION_LoadMisalign);
         } else {
-            icpu_->dma_memop(&trans);
+            if (icpu_->dma_memop(&trans) == TRANS_ERROR) {
+                icpu_->exceptionLoadData(&trans);
+            }
         }
         R[8 + u.bits.rd] = trans.rpayload.b32[0];
         if (R[8 + u.bits.rd] & (1LL << 31)) {
@@ -608,7 +614,9 @@ public:
             trans.rpayload.b64[0] = 0;
             icpu_->raiseSignal(EXCEPTION_LoadMisalign);
         } else {
-            icpu_->dma_memop(&trans);
+            if (icpu_->dma_memop(&trans) == TRANS_ERROR) {
+                icpu_->exceptionLoadData(&trans);
+            }
         }
         R[u.lwspbits.rd] = trans.rpayload.b32[0];
         if (R[u.lwspbits.rd] & (1LL << 31)) {
@@ -743,7 +751,9 @@ public:
         if (trans.addr & 0x7) {
             icpu_->raiseSignal(EXCEPTION_StoreMisalign);
         } else {
-            icpu_->dma_memop(&trans);
+            if (icpu_->dma_memop(&trans) == TRANS_ERROR) {
+                icpu_->exceptionStoreData(&trans);
+            }
         }
         return 2;
     }
@@ -776,7 +786,9 @@ public:
         if (trans.addr & 0x7) {
             icpu_->raiseSignal(EXCEPTION_StoreMisalign);
         } else {
-            icpu_->dma_memop(&trans);
+            if (icpu_->dma_memop(&trans) == TRANS_ERROR) {
+                icpu_->exceptionStoreData(&trans);
+            }
         }
         return 2;
     }
@@ -932,7 +944,9 @@ public:
         if (trans.addr & 0x3) {
             icpu_->raiseSignal(EXCEPTION_StoreMisalign);
         } else {
-            icpu_->dma_memop(&trans);
+            if (icpu_->dma_memop(&trans) == TRANS_ERROR) {
+                icpu_->exceptionStoreData(&trans);
+            }
         }
         return 2;
     }
@@ -964,7 +978,9 @@ public:
         if (trans.addr & 0x3) {
             icpu_->raiseSignal(EXCEPTION_StoreMisalign);
         } else {
-            icpu_->dma_memop(&trans);
+            if (icpu_->dma_memop(&trans) == TRANS_ERROR) {
+                icpu_->exceptionStoreData(&trans);
+            }
         }
         return 2;
     }

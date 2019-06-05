@@ -132,14 +132,14 @@ void CpuRiver_Functional::handleTrap() {
     portCSR_.write(CSR_mstatus, mstatus.value);
 
     int xepc = static_cast<int>((cur_prv_level << 8) + 0x41);
+    portCSR_.write(xepc, npc_.getValue().val);
     if (interrupt_pending_[0] & exception_mask) {
         // Exception
-        portCSR_.write(xepc, pc_.getValue().val);
+        npc_.setValue(0x8 + 0x8 * mcause.value);
     } else {
         // Software interrupt handled after instruction was executed
-        portCSR_.write(xepc,  npc_.getValue().val);
+        npc_.setValue(portCSR_.read(CSR_mtvec));
     }
-    npc_.setValue(portCSR_.read(CSR_mtvec));
     interrupt_pending_[0] = 0;
 }
 
@@ -254,6 +254,21 @@ void CpuRiver_Functional::lowerSignal(int idx) {
     } else {
         RISCV_error("Lower unsupported signal %d", idx);
     }
+}
+
+void CpuRiver_Functional::exceptionLoadInstruction(Axi4TransactionType *tr) {
+    portCSR_.write(CSR_mbadaddr, tr->addr);
+    raiseSignal(EXCEPTION_InstrFault);
+}
+
+void CpuRiver_Functional::exceptionLoadData(Axi4TransactionType *tr) {
+    portCSR_.write(CSR_mbadaddr, tr->addr);
+    raiseSignal(EXCEPTION_LoadFault);
+}
+
+void CpuRiver_Functional::exceptionStoreData(Axi4TransactionType *tr) {
+    portCSR_.write(CSR_mbadaddr, tr->addr);
+    raiseSignal(EXCEPTION_StoreFault);
 }
 
 uint64_t CpuRiver_Functional::readCSR(int idx) {

@@ -51,7 +51,23 @@ package river_cfg is
   constant MEMOP_1B : std_logic_vector(1 downto 0) := "00";
   --! @}
   
-  constant RESET_VECTOR : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00000000";
+  --! Non-maskable interrupts (exceptions) table.
+  --!  It can be freely changed to optimize memory consumption/performance
+  --!
+  constant CFG_NMI_RESET_VECTOR         : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00000000";
+  constant CFG_NMI_INSTR_UNALIGNED_ADDR : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00000008";
+  constant CFG_NMI_INSTR_FAULT_ADDR     : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00000010";
+  constant CFG_NMI_INSTR_ILLEGAL_ADDR   : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00000018";
+  constant CFG_NMI_BREAKPOINT_ADDR      : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00000020";
+  constant CFG_NMI_LOAD_UNALIGNED_ADDR  : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00000028";
+  constant CFG_NMI_LOAD_FAULT_ADDR      : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00000030";
+  constant CFG_NMI_STORE_UNALIGNED_ADDR : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00000038";
+  constant CFG_NMI_STORE_FAULT_ADDR     : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00000040";
+  constant CFG_NMI_CALL_FROM_UMODE_ADDR : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00000048";
+  constant CFG_NMI_CALL_FROM_SMODE_ADDR : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00000050";
+  constant CFG_NMI_CALL_FROM_HMODE_ADDR : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00000058";
+  constant CFG_NMI_CALL_FROM_MMODE_ADDR : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00000060";
+
   constant DBG_FETCH_TRACE_SIZE : integer := 4;
 
   --! Number of elements each 2*CFG_ADDR_WIDTH in stack trace buffer, 0 = disabled

@@ -241,11 +241,11 @@ void CsrRegs::comb() {
 
     if (i_ex_ctrl_load_fault.read() == 1) {
         w_trap_valid = 1;
-        wb_trap_pc = r.mtvec.read()(BUS_ADDR_WIDTH-1, 0);
+        wb_trap_pc = CFG_NMI_INSTR_FAULT_ADDR;
         wb_trap_code = EXCEPTION_InstrFault;
     } else if (i_ex_illegal_instr.read() == 1 || w_exception_xret == 1) {
         w_trap_valid = 1;
-        wb_trap_pc = r.mtvec.read()(BUS_ADDR_WIDTH-1, 0);
+        wb_trap_pc = CFG_NMI_INSTR_ILLEGAL_ADDR;
         wb_trap_code = EXCEPTION_InstrIllegal;
     } else if (i_ex_breakpoint.read() == 1) {
         v.break_event = 1;
@@ -254,32 +254,33 @@ void CsrRegs::comb() {
         if (i_break_mode.read() == 0) {
             wb_trap_pc = i_ex_pc;
         } else {
-            wb_trap_pc = r.mtvec.read()(BUS_ADDR_WIDTH-1, 0);
+            wb_trap_pc = CFG_NMI_BREAKPOINT_ADDR;
         }
     } else if (i_ex_unalign_load.read() == 1) {
         w_trap_valid = 1;
-        wb_trap_pc = r.mtvec.read()(BUS_ADDR_WIDTH-1, 0);
+        wb_trap_pc = CFG_NMI_LOAD_UNALIGNED_ADDR;
         wb_trap_code = EXCEPTION_LoadMisalign;
     } else if (i_ex_data_load_fault.read() == 1) {
         w_trap_valid = 1;
-        wb_trap_pc = r.mtvec.read()(BUS_ADDR_WIDTH-1, 0);
+        wb_trap_pc = CFG_NMI_LOAD_FAULT_ADDR;
         wb_mbadaddr = i_ex_data_addr.read();    // miss-access read
         wb_trap_code = EXCEPTION_LoadFault;
     } else if (i_ex_unalign_store.read() == 1) {
         w_trap_valid = 1;
-        wb_trap_pc = r.mtvec.read()(BUS_ADDR_WIDTH-1, 0);
+        wb_trap_pc = CFG_NMI_STORE_UNALIGNED_ADDR;
         wb_trap_code = EXCEPTION_StoreMisalign;
     } else if (i_ex_data_store_fault.read() == 1) {
         w_trap_valid = 1;
-        wb_trap_pc = r.mtvec.read()(BUS_ADDR_WIDTH-1, 0);
+        wb_trap_pc = CFG_NMI_STORE_FAULT_ADDR;
         wb_mbadaddr = i_ex_data_addr.read();    // miss-access write
         wb_trap_code = EXCEPTION_StoreFault;
     } else if (i_ex_ecall.read() == 1) {
         w_trap_valid = 1;
-        wb_trap_pc = r.mtvec.read()(BUS_ADDR_WIDTH-1, 0);
         if (r.mode.read() == PRV_M) {
+            wb_trap_pc = CFG_NMI_CALL_FROM_MMODE_ADDR;
             wb_trap_code = EXCEPTION_CallFromMmode;
         } else {
+            wb_trap_pc = CFG_NMI_CALL_FROM_UMODE_ADDR;
             wb_trap_code = EXCEPTION_CallFromUmode;
         }
     } else if (i_irq_external.read() == 1 && w_ie == 1) {

@@ -35,7 +35,7 @@ void fatal_error() {
     while (1) {}
 }
 
-long handle_trap(long cause, long epc, long long regs[32]) {
+long interrupt_handler_c(long cause, long epc, long long regs[32]) {
     /**
      * Pending interrupt bit is cleared in the crt.S file by calling:
      *      csrc mip, MIP_MSIP

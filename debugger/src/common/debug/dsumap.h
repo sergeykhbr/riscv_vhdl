@@ -104,10 +104,8 @@ struct DsuMapType {
         uint8_t buf[1 << (12 + 3)];
         struct local_region_type {
             uint64_t soft_reset;
-            uint64_t miss_access_cnt;
-            uint64_t miss_access_addr;
             uint64_t cpu_context;
-            uint64_t rsrv[4];
+            uint64_t rsrv[6];
             // Bus utilization registers
             struct mst_bus_util_type {
                 uint64_t w_cnt;

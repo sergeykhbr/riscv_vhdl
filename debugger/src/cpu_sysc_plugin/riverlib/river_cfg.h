@@ -35,7 +35,23 @@ static const uint8_t MEMOP_4B = 2;
 static const uint8_t MEMOP_2B = 1;
 static const uint8_t MEMOP_1B = 0;
 
-static const uint64_t RESET_VECTOR      = 0x0000;
+/** Non-maskable interrupts (exceptions) table.
+    It can be freely changed to optimize memory consumption/performance
+ */
+static const uint64_t CFG_NMI_RESET_VECTOR          = 0x0000;
+static const uint64_t CFG_NMI_INSTR_UNALIGNED_ADDR  = 0x0008;
+static const uint64_t CFG_NMI_INSTR_FAULT_ADDR      = 0x0010;
+static const uint64_t CFG_NMI_INSTR_ILLEGAL_ADDR    = 0x0018;
+static const uint64_t CFG_NMI_BREAKPOINT_ADDR       = 0x0020;
+static const uint64_t CFG_NMI_LOAD_UNALIGNED_ADDR   = 0x0028;
+static const uint64_t CFG_NMI_LOAD_FAULT_ADDR       = 0x0030;
+static const uint64_t CFG_NMI_STORE_UNALIGNED_ADDR  = 0x0038;
+static const uint64_t CFG_NMI_STORE_FAULT_ADDR      = 0x0040;
+static const uint64_t CFG_NMI_CALL_FROM_UMODE_ADDR  = 0x0048;
+static const uint64_t CFG_NMI_CALL_FROM_SMODE_ADDR  = 0x0050;
+static const uint64_t CFG_NMI_CALL_FROM_HMODE_ADDR  = 0x0058;
+static const uint64_t CFG_NMI_CALL_FROM_MMODE_ADDR  = 0x0060;
+
 static const int DBG_FETCH_TRACE_SIZE   = 4;
 
 /** Number of elements each 2*CFG_ADDR_WIDTH in stack trace buffer: */

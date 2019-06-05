@@ -199,7 +199,9 @@ public:
             trans.rpayload.b64[0] = 0;
             icpu_->raiseSignal(EXCEPTION_LoadMisalign);
         } else {
-            icpu_->dma_memop(&trans);
+            if (icpu_->dma_memop(&trans) == TRANS_ERROR) {
+                icpu_->exceptionLoadData(&trans);
+            }
         }
         dst.val = trans.rpayload.b64[0];
         RF[u.bits.rd] = dst.val;
@@ -385,7 +387,9 @@ public:
         if (trans.addr & 0x7) {
             icpu_->raiseSignal(EXCEPTION_StoreMisalign);
         } else {
-            icpu_->dma_memop(&trans);
+            if (icpu_->dma_memop(&trans) == TRANS_ERROR) {
+                icpu_->exceptionStoreData(&trans);
+            }
         }
         return 4;
     }

@@ -19,6 +19,7 @@
 #include "encoding.h"
 #include "fw_api.h"
 
+void allocate_exception_table(void);
 void test_fpu(void);
 void test_timer(void);
 void test_missaccess(void);
@@ -44,6 +45,9 @@ int main() {
 
     p_irq->irq_lock = 1;
     fw_malloc_init();
+    
+    allocate_exception_table();
+
     uart_isr_init();   // enable printf_uart function and Tx irq=1
     p_irq->irq_lock = 0;
 

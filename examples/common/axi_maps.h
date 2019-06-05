@@ -39,9 +39,8 @@
 #define CFG_IRQ_UART1       1
 #define CFG_IRQ_ETHMAC      2
 #define CFG_IRQ_GPTIMERS    3
-#define CFG_IRQ_MISS_ACCESS 4
-#define CFG_IRQ_GNSSENGINE  5
-#define CFG_IRQ_TOTAL       6
+#define CFG_IRQ_GNSSENGINE  4
+#define CFG_IRQ_TOTAL       5
 
 
 #endif  // __AXI_MAPS_H__

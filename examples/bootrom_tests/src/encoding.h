@@ -3,6 +3,22 @@
 #ifndef RISCV_CSR_ENCODING_H
 #define RISCV_CSR_ENCODING_H
 
+/** Table of non-maskable exceptions */
+#define EXCEPTION_InstrMisalign 0    // Instruction misalgined load
+#define EXCEPTION_InstrFault    1    // Instruction access fault
+#define EXCEPTION_InstrIllegal  2    // Illegal instruction
+#define EXCEPTION_Breakpoint    3    // Breakpoint
+#define EXCEPTION_LoadMisalign  4    // Load address misaligned
+#define EXCEPTION_LoadFault     5    // Load access fault
+#define EXCEPTION_StoreMisalign 6    // Store/AMO address misaligned
+#define EXCEPTION_StoreFault    7    // Store/AMO access fault
+#define EXCEPTION_CallFromUmode 8    // Environment call from U-mode
+#define EXCEPTION_CallFromSmode 9    // Environment call from S-mode
+#define EXCEPTION_CallFromHmode 10   // Environment call from H-mode
+#define EXCEPTION_CallFromMmode 11   // Environment call from M-mode
+#define EXCEPTION_Total 12           // Table size
+
+
 /** Return address */
 #define COOP_REG_RA         0//(0*sizeof(uint64_t))
 /** Saved registers */

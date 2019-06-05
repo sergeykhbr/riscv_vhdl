@@ -28,8 +28,6 @@ entity axictrl is
     i_msto   : in  nasti_master_out_vector;
     o_slvi   : out nasti_slave_in_vector;
     o_msti   : out nasti_master_in_vector;
-    o_miss_irq  : out std_logic;
-    o_miss_addr : out std_logic_vector(CFG_NASTI_ADDR_BITS-1 downto 0);
     o_bus_util_w : out std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0);
     o_bus_util_r : out std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0)
   );
@@ -67,8 +65,6 @@ architecture arch_axictrl of axictrl is
      b_busy : std_logic;
      b_mst_idx : integer range 0 to CFG_NASTI_MASTER_TOTAL;
      b_slv_idx : integer range 0 to CFG_NASTI_SLAVES_TOTAL; -- +1 miss access
-
-     miss_addr : std_logic_vector(CFG_NASTI_ADDR_BITS-1 downto 0);
   end record;
 
   signal rin, r : reg_type;
@@ -76,7 +72,6 @@ begin
 
   comblogic : process(i_nrst, i_slvcfg, i_msto, i_slvo, r)
     variable v : reg_type;
-    variable missaccess : std_logic;
     variable ar_mst_idx : integer range 0 to CFG_NASTI_MASTER_TOTAL;
     variable aw_mst_idx : integer range 0 to CFG_NASTI_MASTER_TOTAL;
     variable ar_slv_idx : integer range 0 to CFG_NASTI_SLAVES_TOTAL; -- +1 miss access
@@ -101,7 +96,6 @@ begin
 
     v := r;
 
-    missaccess := '0';
     wb_bus_util_w := (others => '0');
     wb_bus_util_r := (others => '0');
     ar_mst_idx := CFG_NASTI_MASTER_TOTAL;   -- Default master is empty master
@@ -226,15 +220,6 @@ begin
     vmsti(r.r_mst_idx).r_user  := vslvo(r.r_slv_idx).r_user;
     vslvi(r.r_slv_idx).r_ready := vmsto(r.r_mst_idx).r_ready;
 
-    if aw_fire = '1' and aw_slv_idx = CFG_NASTI_SLAVES_TOTAL then
-       missaccess := '1';
-       v.miss_addr := vmsto(aw_mst_idx).aw_bits.addr;
-    end if;
-    if ar_fire = '1' and ar_slv_idx = CFG_NASTI_SLAVES_TOTAL then
-       missaccess := '1';
-       v.miss_addr := vmsto(ar_mst_idx).ar_bits.addr;
-    end if;
-
     if i_nrst = '0' then
       v.w_busy := '0';
       v.w_mst_idx := CFG_NASTI_MASTER_TOTAL;
@@ -245,7 +230,6 @@ begin
       v.b_busy := '0';
       v.b_mst_idx := CFG_NASTI_MASTER_TOTAL;
       v.b_slv_idx := CFG_NASTI_SLAVES_TOTAL;
-      v.miss_addr := (others => '0');
     end if;
  
     rin <= v;
@@ -256,8 +240,6 @@ begin
     for k in 0 to CFG_NASTI_SLAVES_TOTAL-1 loop
        o_slvi(k) <= vslvi(k);
     end loop;
-    o_miss_irq <= missaccess;
-    o_miss_addr <= r.miss_addr;
     o_bus_util_w <= wb_bus_util_w(CFG_NASTI_MASTER_TOTAL-1 downto 0);
     o_bus_util_r <= wb_bus_util_r(CFG_NASTI_MASTER_TOTAL-1 downto 0);
   end process;

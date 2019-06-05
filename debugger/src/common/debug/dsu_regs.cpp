@@ -25,10 +25,7 @@ DsuRegisters::DsuRegisters(IService *parent) :
     reg_region_(parent, "reg_region", 1, 0x08000, 4096),
     dbg_region_(parent, "dbg_region", 2, 0x10000, 4096),
     soft_reset_(parent, "soft_reset", 0x18000),
-    miss_access_cnt_(parent, "miss_access_cnt", 0x18008),
-    miss_access_addr_(parent, "miss_access_addr", 0x18010),
-    miss_access_shadow_(parent, "miss_access_shadow", 0),
-    cpu_context_(parent, "cpu_context", 0x18018),
+    cpu_context_(parent, "cpu_context", 0x18008),
     bus_util_(parent, "bus_util", 0x18040, 2*64) {
 }
 
@@ -38,10 +35,6 @@ void DsuRegisters::remap(uint64_t baseoff) {
     dbg_region_.setBaseAddress(baseoff + dbg_region_.getBaseAddress());
     soft_reset_.setBaseAddress(baseoff + soft_reset_.getBaseAddress());
     cpu_context_.setBaseAddress(baseoff + cpu_context_.getBaseAddress());
-    miss_access_cnt_.setBaseAddress(
-        baseoff + miss_access_cnt_.getBaseAddress());
-    miss_access_addr_.setBaseAddress(
-        baseoff + miss_access_addr_.getBaseAddress());
     bus_util_.setBaseAddress(baseoff + bus_util_.getBaseAddress());
 }
 
@@ -56,17 +49,6 @@ uint64_t DsuRegisters::CPU_CONTEXT_TYPE::aboutToWrite(uint64_t new_val) {
     DSU *p = static_cast<DSU *>(parent_);
     p->setCpuContext(static_cast<unsigned>(new_val));
     return new_val;
-}
-
-ETransStatus
-DsuRegisters::MISS_ACCESS_TYPE::b_transport(Axi4TransactionType *trans) {
-    DSU *p = static_cast<DSU *>(parent_);
-    value_.val = trans->addr;
-    if (trans->action == MemAction_Read) {
-        trans->rpayload.b64[0] = value_.val;
-    }
-    p->raiseMissaccess(trans->addr);
-    return TRANS_OK;
 }
 
 ETransStatus

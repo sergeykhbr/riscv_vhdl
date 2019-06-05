@@ -286,7 +286,9 @@ void CpuGeneric::fetchILine() {
         trans_.addr = pc_.getValue().val;
         trans_.xsize = 4;
         trans_.wstrb = 0;
-        dma_memop(&trans_);
+        if (dma_memop(&trans_) == TRANS_ERROR) {
+            exceptionLoadInstruction(&trans_);
+        }
         cacheline_[0].val = trans_.rpayload.b64[0];
         if (skip_sw_breakpoint_ && trans_.addr == br_fetch_addr_.getValue().val) {
             skip_sw_breakpoint_ = false;
@@ -366,10 +368,11 @@ void CpuGeneric::popStackTrace() {
     }
 }
 
-void CpuGeneric::dma_memop(Axi4TransactionType *tr) {
+ETransStatus CpuGeneric::dma_memop(Axi4TransactionType *tr) {
+    ETransStatus ret = TRANS_OK;
     tr->source_idx = sysBusMasterID_.to_int();
     if (tr->xsize <= sysBusWidthBytes_.to_uint32()) {
-        isysbus_->b_transport(tr);
+        ret = isysbus_->b_transport(tr);
     } else {
         // 1-byte access for HC08
         Axi4TransactionType tr1 = *tr;
@@ -381,7 +384,7 @@ void CpuGeneric::dma_memop(Axi4TransactionType *tr) {
             if (tr->action == MemAction_Write) {
                 memcpy(tr1.wpayload.b8, &tr->wpayload.b8[i], minsz);
             }
-            isysbus_->b_transport(&tr1);
+            ret = isysbus_->b_transport(&tr1);
             if (tr->action == MemAction_Read) {
                 memcpy(&tr->rpayload.b8[i], tr1.rpayload.b8, minsz);
             }
@@ -389,7 +392,7 @@ void CpuGeneric::dma_memop(Axi4TransactionType *tr) {
     }
     if (!mem_trace_file) {
     //if (!reg_trace_file) {
-        return;
+        return ret;
     }
 
     char tstr[512];
@@ -421,6 +424,7 @@ void CpuGeneric::dma_memop(Axi4TransactionType *tr) {
     }
     (*mem_trace_file) << tstr;
     mem_trace_file->flush();
+    return ret;
 }
 
 void CpuGeneric::go() {

@@ -69,8 +69,6 @@ type dport_out_vector is array (0 to CFG_CORES_PER_DSU_MAX-1)
   --! @param[out] o_dporti     Debug port output signals connected to River CPU.
   --! @param[in] i_dporto      River CPU debug port response signals.
   --! @param[out] o_soft_rstn  Software reset CPU and interrupt controller. Active HIGH
-  --! @param[in] i_miss_irq    Miss access counter update signal
-  --! @param[in] i_miss_addr   Miss accessed memory address
   --! @param[in] i_bus_util_w  Write bus access utilization per master statistic
   --! @param[in] i_bus_util_r  Write bus access utilization per master statistic
   component axi_dsu is
@@ -88,8 +86,6 @@ type dport_out_vector is array (0 to CFG_CORES_PER_DSU_MAX-1)
     o_dporti : out dport_in_vector;
     i_dporto : in dport_out_vector;
     o_soft_rst : out std_logic;
-    i_miss_irq  : in std_logic;
-    i_miss_addr : in std_logic_vector(CFG_NASTI_ADDR_BITS-1 downto 0);
     i_bus_util_w : in std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0);
     i_bus_util_r : in std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0)
   );

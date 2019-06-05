@@ -46,17 +46,14 @@ class DSU : public RegMemBankGeneric,
     /** IDsuGeneric */
     virtual void incrementRdAccess(int mst_id);
     virtual void incrementWrAccess(int mst_id);
-    void raiseMissaccess(uint64_t adr);
     void softReset(bool val);
     void setCpuContext(unsigned n);
 
  private:
     AttributeType cpu_;
-    AttributeType irqctrl_;
     AttributeType icpulist_;
 
     ICpuGeneric *icpu_context_;     // current cpu context
-    IWire *iirq_;
 };
 
 DECLARE_CLASS(DSU)

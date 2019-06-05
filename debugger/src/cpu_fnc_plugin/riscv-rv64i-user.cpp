@@ -444,7 +444,9 @@ public:
             trans.rpayload.b64[0] = 0;
             icpu_->raiseSignal(EXCEPTION_LoadMisalign);
         } else {
-            icpu_->dma_memop(&trans);
+            if (icpu_->dma_memop(&trans) == TRANS_ERROR) {
+                icpu_->exceptionLoadData(&trans);
+            }
         }
         R[u.bits.rd] = trans.rpayload.b64[0];
         return 4;
@@ -475,7 +477,9 @@ public:
             trans.rpayload.b64[0] = 0;
             icpu_->raiseSignal(EXCEPTION_LoadMisalign);
         } else {
-            icpu_->dma_memop(&trans);
+            if (icpu_->dma_memop(&trans) == TRANS_ERROR) {
+                icpu_->exceptionLoadData(&trans);
+            }
         }
         R[u.bits.rd] = trans.rpayload.b64[0];
         if (R[u.bits.rd] & (1LL << 31)) {
@@ -509,7 +513,9 @@ public:
             trans.rpayload.b64[0] = 0;
             icpu_->raiseSignal(EXCEPTION_LoadMisalign);
         } else {
-            icpu_->dma_memop(&trans);
+            if (icpu_->dma_memop(&trans) == TRANS_ERROR) {
+                icpu_->exceptionLoadData(&trans);
+            }
         }
         R[u.bits.rd] = trans.rpayload.b64[0];
         return 4;
@@ -540,7 +546,9 @@ public:
             trans.rpayload.b64[0] = 0;
             icpu_->raiseSignal(EXCEPTION_LoadMisalign);
         } else {
-            icpu_->dma_memop(&trans);
+            if (icpu_->dma_memop(&trans) == TRANS_ERROR) {
+                icpu_->exceptionLoadData(&trans);
+            }
         }
         R[u.bits.rd] = trans.rpayload.b16[0];
         if (R[u.bits.rd] & (1LL << 15)) {
@@ -574,7 +582,9 @@ public:
             trans.rpayload.b64[0] = 0;
             icpu_->raiseSignal(EXCEPTION_LoadMisalign);
         } else {
-            icpu_->dma_memop(&trans);
+            if (icpu_->dma_memop(&trans) == TRANS_ERROR) {
+                icpu_->exceptionLoadData(&trans);
+            }
         }
         R[u.bits.rd] = trans.rpayload.b16[0];
         return 4;
@@ -601,7 +611,9 @@ public:
         trans.action = MemAction_Read;
         trans.addr = R[u.bits.rs1] + off;
         trans.xsize = 1;
-        icpu_->dma_memop(&trans);
+        if (icpu_->dma_memop(&trans) == TRANS_ERROR) {
+            icpu_->exceptionLoadData(&trans);
+        }
         R[u.bits.rd] = trans.rpayload.b8[0];
         if (R[u.bits.rd] & (1LL << 7)) {
             R[u.bits.rd] |= EXT_SIGN_8;
@@ -630,7 +642,9 @@ public:
         trans.action = MemAction_Read;
         trans.addr = R[u.bits.rs1] + off;
         trans.xsize = 1;
-        icpu_->dma_memop(&trans);
+        if (icpu_->dma_memop(&trans) == TRANS_ERROR) {
+            icpu_->exceptionLoadData(&trans);
+        }
         R[u.bits.rd] = trans.rpayload.b8[0];
         return 4;
     }
@@ -1064,7 +1078,9 @@ public:
         if (trans.addr & 0x7) {
             icpu_->raiseSignal(EXCEPTION_StoreMisalign);
         } else {
-            icpu_->dma_memop(&trans);
+            if (icpu_->dma_memop(&trans) == TRANS_ERROR) {
+                icpu_->exceptionStoreData(&trans);
+            }
         }
         return 4;
     }
@@ -1095,7 +1111,9 @@ public:
         if (trans.addr & 0x3) {
             icpu_->raiseSignal(EXCEPTION_StoreMisalign);
         } else {
-            icpu_->dma_memop(&trans);
+            if (icpu_->dma_memop(&trans) == TRANS_ERROR) {
+                icpu_->exceptionStoreData(&trans);
+            }
         }
         return 4;
     }
@@ -1126,7 +1144,9 @@ public:
         if (trans.addr & 0x1) {
             icpu_->raiseSignal(EXCEPTION_StoreMisalign);
         } else {
-            icpu_->dma_memop(&trans);
+            if (icpu_->dma_memop(&trans) == TRANS_ERROR) {
+                icpu_->exceptionStoreData(&trans);
+            }
         }
         return 4;
     }
@@ -1154,7 +1174,9 @@ public:
         trans.wstrb = (1 << trans.xsize) - 1;
         trans.addr = R[u.bits.rs1] + off;
         trans.wpayload.b64[0] = R[u.bits.rs2] & 0xFF;
-        icpu_->dma_memop(&trans);
+        if (icpu_->dma_memop(&trans) == TRANS_ERROR) {
+            icpu_->exceptionStoreData(&trans);
+        }
         return 4;
     }
 };

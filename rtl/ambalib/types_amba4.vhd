@@ -120,17 +120,15 @@ constant CFG_NASTI_MASTER_TOTAL    : integer := CFG_AXI_MASTER_JTAG+1;
 --! Zero interrupt index must be unused.
 constant CFG_IRQ_UNUSED         : integer := 0;
 --! UART_A interrupt pin.
-constant CFG_IRQ_UART1          : integer := CFG_IRQ_UNUSED + 1;
+constant CFG_IRQ_UART1          : integer := 1;
 --! Ethernet MAC interrupt pin.
-constant CFG_IRQ_ETHMAC         : integer := CFG_IRQ_UART1 + 1;
+constant CFG_IRQ_ETHMAC         : integer := 2;
 --! GP Timers interrupt pin
-constant CFG_IRQ_GPTIMERS       : integer := CFG_IRQ_ETHMAC + 1;
---! Memory miss access.
-constant CFG_IRQ_MISS_ACCESS    : integer := CFG_IRQ_GPTIMERS + 1;
+constant CFG_IRQ_GPTIMERS       : integer := 3;
 --! GNSS Engine IRQ pin that generates 1 msec pulses.
-constant CFG_IRQ_GNSSENGINE     : integer := CFG_IRQ_MISS_ACCESS + 1;
+constant CFG_IRQ_GNSSENGINE     : integer := 4;
 --! Total number of used interrupts in a system
-constant CFG_IRQ_TOTAL          : integer := CFG_IRQ_GNSSENGINE + 1;
+constant CFG_IRQ_TOTAL          : integer := 5;
 --! @}
 
 --! @name   AXI Response values
@@ -755,8 +753,6 @@ return nasti_slave_out_type;
 --! @param [in] i_msto Vector of masters output signals.
 --! @param [out] o_slvi Vector of slave inputs.
 --! @param [out] o_msti Vector of master inputs.
---! @param [out] o_miss_irq Memory miss access signal. May be used as a interrupt or for debugging
---! @param [out] o_miss_addr Miss access last address (debug purpose)
 --! @param [out] o_bus_util_w Write access bus utilization
 --! @param [out] o_bus_util_r Read access bus utilization
 --! @todo    Round-robin priority algorithm.
@@ -772,8 +768,6 @@ component axictrl is
     i_msto   : in  nasti_master_out_vector;
     o_slvi   : out nasti_slave_in_vector;
     o_msti   : out nasti_master_in_vector;
-    o_miss_irq  : out std_logic;
-    o_miss_addr : out std_logic_vector(CFG_NASTI_ADDR_BITS-1 downto 0);
     o_bus_util_w : out std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0);
     o_bus_util_r : out std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0)
   );

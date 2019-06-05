@@ -621,7 +621,7 @@ void InstrExecute::comb() {
     if (!i_nrst.read()) {
         v.d_valid = false;
         v.pc = 0;
-        v.npc = RESET_VECTOR;
+        v.npc = CFG_NMI_RESET_VECTOR;
         v.instr = 0;
         v.res_addr = 0;
         v.res_val = 0;

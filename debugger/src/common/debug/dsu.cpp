@@ -26,7 +26,6 @@ DSU::DSU(const char *name) :
     registerInterface(static_cast<IMemoryOperation *>(this));
     registerInterface(static_cast<IDsuGeneric *>(this));
     registerAttribute("CPU", &cpu_);
-    registerAttribute("IrqControl", &irqctrl_);
     icpulist_.make_list(0);
 }
 
@@ -50,13 +49,6 @@ void DSU::postinitService() {
             icpulist_.add_to_list(&item);
         }
     }
-    iirq_ = static_cast<IWire *>(
-        RISCV_get_service_port_iface(irqctrl_[0u].to_string(),
-                                     irqctrl_[1].to_string(),
-                                     IFACE_WIRE));
-    if (!iirq_) {
-        RISCV_error("Can't find IWire interface %s", irqctrl_[0u].to_string());
-    }
 
     // Set default context
     setCpuContext(0);
@@ -68,15 +60,6 @@ void DSU::incrementRdAccess(int mst_id) {
 
 void DSU::incrementWrAccess(int mst_id) {
     bus_util_.getp()[2*mst_id].val++;
-}
-
-void DSU::raiseMissaccess(uint64_t adr) {
-    miss_access_cnt_.setValue(miss_access_cnt_.getValue().val + 1);
-    miss_access_addr_.setValue(adr);
-    if (!iirq_) {
-        return;
-    }
-    iirq_->raiseLine();
 }
 
 void DSU::softReset(bool val) {

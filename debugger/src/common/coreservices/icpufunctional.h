@@ -58,7 +58,10 @@ class ICpuFunctional : public IFace {
     virtual void popStackTrace() = 0;
     virtual uint64_t getPrvLevel() = 0;
     virtual void setPrvLevel(uint64_t lvl) = 0;
-    virtual void dma_memop(Axi4TransactionType *tr) = 0;
+    virtual ETransStatus dma_memop(Axi4TransactionType *tr) = 0;
+    virtual void exceptionLoadInstruction(Axi4TransactionType *tr) = 0;
+    virtual void exceptionLoadData(Axi4TransactionType *tr) = 0;
+    virtual void exceptionStoreData(Axi4TransactionType *tr) = 0;
     virtual bool isOn() = 0;
     virtual bool isHalt() = 0;
     virtual bool isSwBreakpoint() = 0;

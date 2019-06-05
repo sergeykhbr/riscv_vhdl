@@ -48,16 +48,6 @@ class DsuRegisters {
         virtual uint64_t aboutToWrite(uint64_t new_val) override;
     };
 
-    /** Not mapped register but used to transmit the missed address */
-    class MISS_ACCESS_TYPE : public MappedReg64Type {
-     public:
-        MISS_ACCESS_TYPE(IService *parent, const char *name, uint64_t addr) :
-                    MappedReg64Type(parent, name, addr) {}
-
-        /** IMemoryOperation methods */
-        virtual ETransStatus b_transport(Axi4TransactionType *trans) override;
-    };
-
     class DSU_REGION_BANK64 : public GenericReg64Bank,
                               public IDbgNbResponse {
      public:
@@ -102,9 +92,6 @@ class DsuRegisters {
     DSU_REGION_BANK64 dbg_region_;
 
     SOFT_RESET_TYPE soft_reset_;
-    MappedReg64Type miss_access_cnt_;
-    MappedReg64Type miss_access_addr_;
-    MISS_ACCESS_TYPE miss_access_shadow_;
     CPU_CONTEXT_TYPE cpu_context_;
     GenericReg64Bank bus_util_;
 };

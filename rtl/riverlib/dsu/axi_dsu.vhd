@@ -58,8 +58,6 @@ entity axi_dsu is
     --! reset CPU and interrupt controller
     o_soft_rst : out std_logic;
     -- Platfrom run-time statistic
-    i_miss_irq  : in std_logic;
-    i_miss_addr : in std_logic_vector(CFG_NASTI_ADDR_BITS-1 downto 0);
     i_bus_util_w : in std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0);
     i_bus_util_r : in std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0)
   );
@@ -96,9 +94,6 @@ type registers is record
   -- Platform statistic:
   clk_cnt : std_logic_vector(63 downto 0);
   cpu_context : std_logic_vector(log2x(CFG_CORES_PER_DSU_MAX)-1 downto 0);
-  miss_irq : std_logic;
-  miss_access_cnt : std_logic_vector(63 downto 0);
-  miss_access_addr : std_logic_vector(CFG_NASTI_ADDR_BITS-1 downto 0);
   util_w_cnt : mst_utilization_type;
   util_r_cnt : mst_utilization_type;
 end record;
@@ -106,7 +101,7 @@ end record;
 signal r, rin: registers;
 begin
 
-  comblogic : process(nrst, i_axi, i_dporto, i_miss_irq, i_miss_addr,
+  comblogic : process(nrst, i_axi, i_dporto,
                       i_bus_util_w, i_bus_util_r, r)
     variable v : registers;
     variable mux_rdata : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
@@ -122,11 +117,6 @@ begin
     
     -- Update statistic:
     v.clk_cnt := r.clk_cnt + 1;
-    v.miss_irq := i_miss_irq;
-    if r.miss_irq = '1' then
-      v.miss_access_addr := i_miss_addr;
-      v.miss_access_cnt := r.miss_access_cnt + 1;
-    end if;
 
     for n in 0 to CFG_NASTI_MASTER_TOTAL-1 loop
        if i_bus_util_w(n) = '1' then
@@ -176,10 +166,6 @@ begin
                 when 0 =>
                   v.rdata(0) := r.soft_rst;
                 when 1 =>
-                  v.rdata := r.miss_access_cnt;
-                when 2 =>
-                  v.rdata(CFG_NASTI_ADDR_BITS-1 downto 0) := r.miss_access_addr;
-                when 3 =>
                   v.rdata(log2x(CFG_CORES_PER_DSU_MAX)-1 downto 0) := r.cpu_context;
                 when others =>
                   if (iraddr >= 8) and (iraddr < (8 + 2*CFG_NASTI_MASTER_TOTAL)) then
@@ -204,7 +190,7 @@ begin
              case conv_integer(r.waddr(11 downto 0)) is
              when 0 =>
                v.soft_rst := r.wdata(0);
-             when 3 =>
+             when 1 =>
                v.cpu_context := r.wdata(log2x(CFG_CORES_PER_DSU_MAX)-1 downto 0);
              when others =>
              end case;
@@ -244,9 +230,6 @@ begin
        v.soft_rst := '0';
        v.cpu_context := (others => '0');
        v.clk_cnt := (others => '0');
-       v.miss_irq := '0';
-       v.miss_access_cnt := (others => '0');
-       v.miss_access_addr := (others => '0');
        v.util_w_cnt := (others => (others => '0'));
        v.util_r_cnt := (others => (others => '0'));
     end if;

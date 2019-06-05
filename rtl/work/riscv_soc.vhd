@@ -133,7 +133,6 @@ architecture arch_riscv_soc of riscv_soc is
   signal core_irqs : std_logic_vector(CFG_CORE_IRQ_TOTAL-1 downto 0);
   signal dport_i : dport_in_vector;
   signal dport_o : dport_out_vector;
-  signal wb_miss_addr : std_logic_vector(CFG_NASTI_ADDR_BITS-1 downto 0);
   signal wb_bus_util_w : std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0);
   signal wb_bus_util_r : std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0);
   
@@ -175,8 +174,6 @@ begin
     i_msto   => aximo,
     o_slvi   => axisi,
     o_msti   => aximi,
-    o_miss_irq  => irq_pins(CFG_IRQ_MISS_ACCESS),
-    o_miss_addr => wb_miss_addr,
     o_bus_util_w => wb_bus_util_w, -- Bus write access utilization per master statistic
     o_bus_util_r => wb_bus_util_r  -- Bus read access utilization per master statistic
   );
@@ -260,9 +257,7 @@ dsu_ena : if CFG_DSU_ENABLE generate
     o_dporti => dport_i,
     i_dporto => dport_o,
     o_soft_rst => w_soft_rst,
-    -- Run time platform statistic signals:
-    i_miss_irq  => irq_pins(CFG_IRQ_MISS_ACCESS),
-    i_miss_addr => wb_miss_addr,
+    -- Run time platform statistic signals (move to tracer):
     i_bus_util_w => wb_bus_util_w, -- Write access bus utilization per master statistic
     i_bus_util_r => wb_bus_util_r  -- Read access bus utilization per master statistic
   );

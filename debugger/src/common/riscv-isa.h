@@ -622,7 +622,7 @@ enum ESignals {
     INTERRUPT_USoftware,
     // Superuser software interrupt
     INTERRUPT_SSoftware,
-    // Hypervisor software itnerrupt
+    // Hypervisor software interrupt
     INTERRUPT_HSoftware,
     // Machine software interrupt
     INTERRUPT_MSoftware,

@@ -229,11 +229,11 @@ begin
 
     if i_ex_ctrl_load_fault = '1' then
         w_trap_valid := '1';
-        wb_trap_pc := r.mtvec(BUS_ADDR_WIDTH-1 downto 0);
+        wb_trap_pc := CFG_NMI_INSTR_FAULT_ADDR;
         wb_trap_code := EXCEPTION_InstrFault;
     elsif i_ex_illegal_instr = '1' or w_exception_xret = '1' then
         w_trap_valid := '1';
-        wb_trap_pc := r.mtvec(BUS_ADDR_WIDTH-1 downto 0);
+        wb_trap_pc := CFG_NMI_INSTR_ILLEGAL_ADDR;
         wb_trap_code := EXCEPTION_InstrIllegal;
     elsif i_ex_breakpoint = '1' then
         v.break_event := '1';
@@ -242,32 +242,33 @@ begin
         if i_break_mode = '0' then
             wb_trap_pc := i_ex_pc;
         else
-            wb_trap_pc := r.mtvec(BUS_ADDR_WIDTH-1 downto 0);
+            wb_trap_pc := CFG_NMI_BREAKPOINT_ADDR;
         end if;
     elsif i_ex_unalign_load = '1' then
         w_trap_valid := '1';
-        wb_trap_pc := r.mtvec(BUS_ADDR_WIDTH-1 downto 0);
+        wb_trap_pc := CFG_NMI_LOAD_UNALIGNED_ADDR;
         wb_trap_code := EXCEPTION_LoadMisalign;
     elsif i_ex_data_load_fault = '1' then
         w_trap_valid := '1';
-        wb_trap_pc := r.mtvec(BUS_ADDR_WIDTH-1 downto 0);
+        wb_trap_pc := CFG_NMI_LOAD_FAULT_ADDR;
         wb_mbadaddr := i_ex_data_addr;     -- miss-access address
         wb_trap_code := EXCEPTION_LoadFault;
     elsif i_ex_unalign_store = '1' then
         w_trap_valid := '1';
-        wb_trap_pc := r.mtvec(BUS_ADDR_WIDTH-1 downto 0);
+        wb_trap_pc := CFG_NMI_STORE_UNALIGNED_ADDR;
         wb_trap_code := EXCEPTION_StoreMisalign;
     elsif i_ex_data_store_fault = '1' then
         w_trap_valid := '1';
-        wb_trap_pc := r.mtvec(BUS_ADDR_WIDTH-1 downto 0);
+        wb_trap_pc := CFG_NMI_STORE_FAULT_ADDR;
         wb_mbadaddr := i_ex_data_addr;     -- miss-access address
         wb_trap_code := EXCEPTION_StoreFault;
     elsif i_ex_ecall = '1' then
         w_trap_valid := '1';
-        wb_trap_pc := r.mtvec(BUS_ADDR_WIDTH-1 downto 0);
         if r.mode = PRV_M then
+            wb_trap_pc := CFG_NMI_CALL_FROM_MMODE_ADDR;
             wb_trap_code := EXCEPTION_CallFromMmode;
         else
+            wb_trap_pc := CFG_NMI_CALL_FROM_UMODE_ADDR;
             wb_trap_code := EXCEPTION_CallFromUmode;
         end if;
     elsif i_irq_external = '1' and w_ie = '1' then

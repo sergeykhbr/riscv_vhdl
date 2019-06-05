@@ -39,14 +39,19 @@ class CpuRiver_Functional : public CpuGeneric,
     virtual void postinitService();
     virtual void predeleteService();
 
-    /** IResetListener itnterface */
+    /** IResetListener interface */
     virtual void reset(bool active);
 
     /** ICpuGeneric interface */
     virtual void raiseSignal(int idx);
     virtual void lowerSignal(int idx);
+
+    /** ICpuFunctional interface */
     virtual void raiseSoftwareIrq() {}
     virtual uint64_t getIrqAddress(int idx) { return readCSR(CSR_mtvec); }
+    virtual void exceptionLoadInstruction(Axi4TransactionType *tr);
+    virtual void exceptionLoadData(Axi4TransactionType *tr);
+    virtual void exceptionStoreData(Axi4TransactionType *tr);
 
     // Common River methods shared with instructions:
     uint64_t *getpRegs() { return portRegs_.getpR64(); }
