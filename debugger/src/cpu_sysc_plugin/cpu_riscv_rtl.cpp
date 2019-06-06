@@ -153,6 +153,7 @@ void CpuRiscV_RTL::createSystemC() {
     wrapper_->o_dport_wdata(wb_dport_wdata);
     wrapper_->i_dport_ready(w_dport_ready);
     wrapper_->i_dport_rdata(wb_dport_rdata);
+    wrapper_->i_halted(w_halted);
 
     top_ = new RiverTop("top", hartid_.to_uint32());
     top_->i_clk(wrapper_->o_clk);
@@ -176,6 +177,7 @@ void CpuRiscV_RTL::createSystemC() {
     top_->i_dport_wdata(wb_dport_wdata);
     top_->o_dport_ready(w_dport_ready);
     top_->o_dport_rdata(wb_dport_rdata);
+    top_->o_halted(w_halted);
 
     sc_start(0, SC_NS);
 }

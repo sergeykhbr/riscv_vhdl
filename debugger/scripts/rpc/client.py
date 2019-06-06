@@ -13,7 +13,7 @@ TCP_IP = '127.0.0.1'
 TCP_PORT = 8687
 BUFFER_SIZE = 1024
 
-TCP_DEBUG = 1
+TCP_DEBUG = 0
 
 class TcpClient(threading.Thread):
     def __init__(self, name, eventDone):

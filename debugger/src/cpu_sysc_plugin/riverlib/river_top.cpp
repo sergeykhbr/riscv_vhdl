@@ -53,6 +53,7 @@ RiverTop::RiverTop(sc_module_name name_, uint32_t hartid)
     proc0->i_dport_wdata(i_dport_wdata);
     proc0->o_dport_ready(o_dport_ready);
     proc0->o_dport_rdata(o_dport_rdata);
+    proc0->o_halted(o_halted);
     proc0->i_istate(wb_istate);
     proc0->i_dstate(wb_dstate);
     proc0->i_cstate(wb_cstate);

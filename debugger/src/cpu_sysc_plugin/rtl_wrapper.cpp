@@ -17,6 +17,7 @@
 #include "api_core.h"
 #include "rtl_wrapper.h"
 #include "iservice.h"
+#include "ihap.h"
 #include <riscv-isa.h>
 #include "coreservices/iserial.h"
 
@@ -36,6 +37,7 @@ RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
     SC_METHOD(comb);
     sensitive << i_req_mem_valid;
     sensitive << i_req_mem_addr;
+    sensitive << i_halted;
     sensitive << r.nrst;
     sensitive << r.resp_mem_data_valid;
     sensitive << r.resp_mem_data;
@@ -43,6 +45,7 @@ RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
     sensitive << r.resp_mem_store_fault;
     sensitive << r.interrupt;
     sensitive << r.wait_state_cnt;
+    sensitive << r.halted;
 
     SC_METHOD(clk_negedge_proc);
     sensitive << o_clk.negedge_event();
@@ -55,6 +58,7 @@ RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
     v.resp_mem_data_valid = false;
     v.resp_mem_load_fault = false;
     v.resp_mem_store_fault = false;
+    v.halted = false;
     RISCV_event_create(&dport_.valid, "dport_valid");
     dport_.trans_idx_up = 0;
     dport_.trans_idx_down = 0;
@@ -120,11 +124,16 @@ void RtlWrapper::clk_negedge_proc() {
         static_cast<IClockListener *>(cb)->stepCallback(step_cnt);
     }
 
+    if (i_halted.read() && !r.halted.read()) {
+        IService *iserv = static_cast<IService *>(iparent_);
+        RISCV_trigger_hap(iserv, HAP_Halt, "Descr");
+    }
+
     /** */
     v.interrupt = w_interrupt;
     v.nrst = (r.nrst.read() << 1) | w_nrst;
     v.wait_state_cnt = r.wait_state_cnt.read() + 1;
-
+    v.halted = i_halted.read();
 
     v.resp_mem_data = 0;
     v.resp_mem_data_valid = false;

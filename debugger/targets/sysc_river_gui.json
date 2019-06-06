@@ -50,6 +50,21 @@
                 ['HostIP','192.168.0.53'],
                 ['BoardIP','192.168.0.51'],
                 ['SimTarget','udpboard']]}]},
+    {'Class':'TcpServerClass','Instances':[
+          {'Name':'rpcserver','Attr':[
+                ['LogLevel',4],
+                ['Enable',true],
+                ['Timeout',500],
+                ['BlockingMode',true],
+                ['HostIP',''],
+                ['HostPort',8687],
+                ['PlatformConfig',{'Name':'RiverSC',
+                                   'Display':'',
+                                   'Keys':[],
+                                   'Vars':[],
+                                   'Indicators':[],
+                                  }]
+          ]}]},
     {'Class':'ComPortServiceClass','Instances':[
           {'Name':'port1','Attr':[
                 ['LogLevel',2],
@@ -120,7 +135,7 @@
     {'Class':'MemorySimClass','Instances':[
           {'Name':'bootrom0','Attr':[
                 ['LogLevel',1],
-                ['InitFile','../../../examples/bootrom_tests/linuxbuild/bin/bootrom_tests.hex'],
+                ['InitFile','../../../examples/boot/linuxbuild/bin/bootimage.hex'],
                 ['ReadOnly',true],
                 ['BaseAddress',0x0],
                 ['Length',16384]

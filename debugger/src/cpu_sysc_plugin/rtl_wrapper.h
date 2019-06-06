@@ -59,6 +59,7 @@ class RtlWrapper : public sc_module,
     sc_out<sc_uint<RISCV_ARCH>> o_dport_wdata;           // Write value
     sc_in<bool> i_dport_ready;                           // Response is ready
     sc_in<sc_uint<RISCV_ARCH>> i_dport_rdata;            // Response value
+    sc_in<bool> i_halted;
 
 
     struct RegistersType {
@@ -75,6 +76,7 @@ class RtlWrapper : public sc_module,
         sc_signal<sc_uint<2>> dport_region;
         sc_signal<sc_uint<12>> dport_addr;
         sc_signal<sc_uint<RISCV_ARCH>> dport_wdata;
+        sc_signal<bool> halted;
     } r, v;
     bool w_nrst;
     bool w_interrupt;

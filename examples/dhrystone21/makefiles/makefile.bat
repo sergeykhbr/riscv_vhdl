@@ -6,7 +6,7 @@ set GNU_TOOLS=E:\fw_tools\gnutools;C:\Projects\auriga\Tools\gnutools
 if "%1"=="arm" goto arm_target
 
 :riscv_target
-set GCC_DIR=C:\Projects\install\riscv64-gcc-7.2.0\bin;E:\fw_tools\gcc-riscv-7.2.0-3-20180506-1300\bin
+set PATH=%RISCV_GCC%;%PATH%
 set OBJ_DIR=%TOP_DIR%makefiles/obj
 set ELF_DIR=%TOP_DIR%makefiles/bin
 set MAKE_TARGET=make_riscv

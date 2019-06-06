@@ -4,15 +4,27 @@
  @brief      Test automation procedure (functional model for now).
 """
 
-import sys,rpc
-pump = rpc.Simulator()
-pump.connect()
+import subprocess
+import rpc
 
-pump.halt()
+#subprocess.Popen("..\\win32build\\Release\\appdbg64g.exe -c ..\\..\\targets\\sysc_river_gui.json")
+subprocess.Popen("..\\win32build\\Release\\appdbg64g.exe -c ..\\..\\targets\\functional_sim_gui.json")
 
-pump.step(3)
-pump.go_msec(50.0)
-pump.simSteps()
-pump.simTimeSec()
+p = rpc.Simulator()
+p.connect()
 
-pump.disconnect()
+p.halt()
+
+t1 = p.simSteps()
+p.step(30000 - t1)
+
+p.cmd("uart0 'set_module soc'")
+p.step(20000)
+
+p.cmd("uart0 dhry")
+p.step(20000)
+
+#p.simTimeSec()
+
+p.exit()
+p.disconnect()

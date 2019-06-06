@@ -324,6 +324,7 @@ void Processor::comb() {
     } else {
         o_time = dbg.clock_cnt;
     }
+    o_halted = dbg.halt;
 }
 
 void Processor::generateRef(bool v) {

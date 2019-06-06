@@ -68,15 +68,13 @@ class CpuRiscV_RTL : public IService,
     }
 
     bool moveStepCallback(IClockListener *cb, uint64_t t) {
-        //if (queue_.move(cb, t)) {
-        //    return true;
-        //}
         registerStepCallback(cb, t);
         return false;
     }
 
-
-    virtual double getFreqHz() { return 1.0; }
+    virtual double getFreqHz() {
+        return static_cast<double>(freqHz_.to_uint64());
+    }
 
     /** IHap */
     virtual void hapTriggered(IFace *isrc, EHapType type, const char *descr);
@@ -131,7 +129,7 @@ class CpuRiscV_RTL : public IService,
     sc_signal<sc_uint<RISCV_ARCH>> wb_dport_wdata;
     sc_signal<bool> w_dport_ready;
     sc_signal<sc_uint<RISCV_ARCH>> wb_dport_rdata;
-
+    sc_signal<bool> w_halted;
 
     sc_trace_file *i_vcd_;      // stimulus pattern
     sc_trace_file *o_vcd_;      // reference pattern for comparision

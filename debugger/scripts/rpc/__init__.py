@@ -19,6 +19,10 @@ class Simulator(object):
         self.client.start()
         self.eventDone.wait()
 
+    def cmd(self, cmd):
+        req = ["Command",str(cmd)]
+        return self.client.send(req)
+
     def disconnect(self):
         self.client.stop()
         self.client.join()
@@ -34,20 +38,6 @@ class Simulator(object):
     def loadmap(self, file):
         req = ["Command","loadmap {0}".format(file)]
         return self.client.send(req)
-
-    def pressButton(self, btn):
-        req = ["Button",["Press",btn]]
-        return self.client.send(req)
-
-    def releaseButton(self, btn):
-        req = ["Button",["Release",btn]]
-        return self.client.send(req)
-
-    def clickButton(self, btn):
-        self.pressButton(btn)
-        self.go_msec(50.0)
-        self.releaseButton(btn)
-        self.go_msec(50.0)
 
     def symb2addr(self, symb):
         req = ["Symbol",["ToAddr",symb]]
@@ -132,32 +122,6 @@ class Simulator(object):
         req = ["Status","TimeSec"]
         return self.client.send(req)
 
-    def microphone(self, ena):
-        """
-        Enable\Disable integrated microphone.
-        """
-        req = ["Control",["Microphone",bool(ena)]]
-        return self.client.send(req)
-
-    def battery(self, voltage=None):
-        """
-        Request battery level when voltage equals to None or 
-        Change battery level in Volts
-        """
-        if voltage:
-            req = ["Control",["Battery",float(voltage)]]
-        else:
-            req = ["Control",["Battery"]]
-        return self.client.send(req)
-
-    def getIndicator(self):
-        """
-        Read state of the User's indicator
-        """
-        req = ["Attribute",["userindicator","State"]]
-        resp = self.client.send(req)
-        if resp in [0,1,2,3]:
-             Colors = ["OFF", "RED", "GREEN", "YELLOW"]
-             return Colors[resp]
-        else:
-             return resp
+    def exit(self):
+        self.client.send(['Command', 'halt'])
+        self.client.send(['Command', 'exit'])

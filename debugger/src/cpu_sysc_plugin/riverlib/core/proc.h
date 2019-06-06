@@ -60,6 +60,7 @@ SC_MODULE(Processor) {
     sc_in<sc_uint<RISCV_ARCH>> i_dport_wdata;           // Write value
     sc_out<bool> o_dport_ready;                         // Response is ready
     sc_out<sc_uint<RISCV_ARCH>> o_dport_rdata;          // Response value
+    sc_out<bool> o_halted;                              // CPU halted via debug interface
     // Cache debug signals:
     sc_in<sc_uint<2>> i_istate;                         // ICache transaction state
     sc_in<sc_uint<2>> i_dstate;                         // DCache transaction state
