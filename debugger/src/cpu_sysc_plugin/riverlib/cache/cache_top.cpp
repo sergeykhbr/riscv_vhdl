@@ -221,8 +221,6 @@ void CacheTop::comb() {
         v.state = State_Idle;
     }
 
-    w_ctrl_req_ready = 1;
-
     o_req_mem_valid = i.req_mem_valid | d.req_mem_valid;
     o_req_mem_write = w_mem_write;
     o_req_mem_addr = wb_mem_addr;

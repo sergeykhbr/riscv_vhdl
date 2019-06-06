@@ -29,7 +29,9 @@ SC_MODULE(BranchPredictor) {
     sc_in<bool> i_resp_mem_valid;       // Memory response from ICache is valid
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_resp_mem_addr; // Memory response address
     sc_in<sc_uint<32>> i_resp_mem_data; // Memory response value
-    sc_in<sc_uint<32>> i_e_npc;         // Valid instruction value awaited by 'Executor'
+    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_f_pc;          // Valid instruction pointer from 'Fetch' module
+    sc_in<sc_uint<32>> i_f_instr;       // Valid instruction from 'Fetch' module
+    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_e_npc;         // Valid instruction value awaited by 'Executor'
     sc_in<sc_uint<RISCV_ARCH>> i_ra;    // Return address register value
     sc_out<sc_uint<32>> o_npc_predict;  // Predicted next instruction address
     sc_out<bool> o_predict;             // Mark requested address as predicted
@@ -60,8 +62,12 @@ private:
         sc_signal<bool> minus4;
         sc_signal<bool> c0;
         sc_signal<bool> c1;
+        sc_signal<bool> jump;
     } v, r;
     sc_uint<BUS_ADDR_WIDTH> vb_npc2;
+    bool v_jal;     // JAL instruction
+    bool v_c_j;     // compressed J instruction
+    bool v_c_ret;   // compressed RET pseudo-instruction
 };
 
 

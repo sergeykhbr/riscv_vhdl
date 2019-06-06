@@ -173,6 +173,8 @@ Processor::Processor(sc_module_name name_, uint32_t hartid)
     predic0->i_resp_mem_valid(i_resp_ctrl_valid);
     predic0->i_resp_mem_addr(i_resp_ctrl_addr);
     predic0->i_resp_mem_data(i_resp_ctrl_data);
+    predic0->i_f_pc(w.f.pc);
+    predic0->i_f_instr(w.f.instr);
     predic0->i_e_npc(w.e.npc);
     predic0->i_ra(ireg.ra);
     predic0->o_npc_predict(bp.npc);

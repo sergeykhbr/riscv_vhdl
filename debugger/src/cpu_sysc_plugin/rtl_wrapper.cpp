@@ -92,7 +92,7 @@ void RtlWrapper::comb() {
         o_req_mem_ready = 0;
     }
 #else
-    o_req_mem_ready = i_req_mem_valid;
+    o_req_mem_ready = 1;//i_req_mem_valid;
 #endif
 
     o_dport_valid = r.dport_valid;

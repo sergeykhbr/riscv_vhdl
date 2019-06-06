@@ -25,6 +25,8 @@ BranchPredictor::BranchPredictor(sc_module_name name_) : sc_module(name_) {
     sensitive << i_resp_mem_valid;
     sensitive << i_resp_mem_addr;
     sensitive << i_resp_mem_data;
+    sensitive << i_f_pc;
+    sensitive << i_f_instr;
     sensitive << i_e_npc;
     sensitive << i_ra;
     sensitive << r.h[0].resp_pc;
@@ -45,6 +47,7 @@ BranchPredictor::BranchPredictor(sc_module_name name_) : sc_module(name_) {
     sensitive << r.minus4;
     sensitive << r.c0;
     sensitive << r.c1;
+    sensitive << r.jump;
 
     SC_METHOD(registers);
     sensitive << i_clk.pos();
@@ -56,6 +59,8 @@ void BranchPredictor::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_resp_mem_valid, "/top/proc0/bp0/i_resp_mem_valid");
         sc_trace(o_vcd, i_resp_mem_addr, "/top/proc0/bp0/i_resp_mem_addr");
         sc_trace(o_vcd, i_resp_mem_data, "/top/proc0/bp0/i_resp_mem_data");
+        sc_trace(o_vcd, i_f_pc, "/top/proc0/bp0/i_f_pc");
+        sc_trace(o_vcd, i_f_instr, "/top/proc0/bp0/i_f_instr");
         sc_trace(o_vcd, i_e_npc, "/top/proc0/bp0/i_e_npc");
         sc_trace(o_vcd, i_ra, "/top/proc0/bp0/i_ra");
 
@@ -73,19 +78,27 @@ void BranchPredictor::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.minus4, "/top/proc0/bp0/r_minus4");
         sc_trace(o_vcd, r.c0, "/top/proc0/bp0/r_c0");
         sc_trace(o_vcd, r.c1, "/top/proc0/bp0/r_c1");
+        sc_trace(o_vcd, r.jump, "/top/proc0/bp0/r_jump");
+        sc_trace(o_vcd, v_c_j, "/top/proc0/bp0/v_c_j");
+        sc_trace(o_vcd, v_jal, "/top/proc0/bp0/v_jal");
+        sc_trace(o_vcd, v_c_ret, "/top/proc0/bp0/v_c_ret");
     }
 }
 
 void BranchPredictor::comb() {
     sc_uint<32> vb_tmp;
     sc_uint<BUS_ADDR_WIDTH> vb_jal_off;
+    sc_uint<BUS_ADDR_WIDTH> vb_jal_addr;
+    sc_uint<BUS_ADDR_WIDTH> vb_c_j_off;
+    sc_uint<BUS_ADDR_WIDTH> vb_c_j_addr;
     bool v_predict;
     bool v_sequence;
+    bool v_jump;
     bool v_c0;
 
     v = r;
 
-    vb_tmp = i_resp_mem_data.read();
+    vb_tmp = i_f_instr.read();
 
     if (vb_tmp[31]) {
         vb_jal_off(BUS_ADDR_WIDTH-1, 20) = ~0;
@@ -96,6 +109,43 @@ void BranchPredictor::comb() {
     vb_jal_off[11] = vb_tmp[20];
     vb_jal_off(10, 1) = vb_tmp(30, 21);
     vb_jal_off[0] = 0;
+    vb_jal_addr = i_f_pc.read() + vb_jal_off;
+
+    v_jal = 0;
+    if (vb_tmp.range(6, 0) == 0x6F) {
+        if (vb_jal_addr != r.h[1].resp_pc && vb_jal_addr != r.h[2].resp_pc) {
+            v_jal = 1;
+        }
+    }
+
+    // Check Compressed "J" unconditional jump
+    if (vb_tmp[12]) {
+        vb_c_j_off(BUS_ADDR_WIDTH-1, 11) = ~0;
+    } else {
+        vb_c_j_off(BUS_ADDR_WIDTH-1, 11) = 0;
+    }
+    vb_c_j_off[10] = vb_tmp[8];
+    vb_c_j_off(9, 8) = vb_tmp(10, 9);
+    vb_c_j_off[7] = vb_tmp[6];
+    vb_c_j_off[6] = vb_tmp[7];
+    vb_c_j_off[5] = vb_tmp[2];
+    vb_c_j_off[4] = vb_tmp[11];
+    vb_c_j_off(3, 1) = vb_tmp(5, 3);
+    vb_c_j_off[0] = 0;
+    vb_c_j_addr = i_f_pc.read() + vb_c_j_off;
+
+    v_c_j = 0;
+    if (vb_tmp.range(15, 13) == 0x5 && vb_tmp.range(1, 0) == 0x1) {
+        if (vb_c_j_addr != r.h[1].resp_pc && vb_c_j_addr != r.h[2].resp_pc) {
+            v_c_j = 1;
+        }
+    }
+
+    // Compressed RET pseudo-instruction
+    v_c_ret = 0;
+    if (vb_tmp.range(15, 0) == 0x8082) {
+        v_c_ret = 1;
+    }
 
     if (r.minus4.read() == 1) {
         v_c0 = r.c0.read();
@@ -131,14 +181,35 @@ void BranchPredictor::comb() {
         v_sequence = 0;
     }
 
+    v_jump = 0;
+    if (v_sequence == 1 && r.jump == 0) {
+        if (v_jal == 1) {
+            v_jump = 1;
+            v_sequence = 0;
+            vb_npc2 = vb_jal_addr;
+        } else if (v_c_j == 1) {
+            v_jump = 1;
+            v_sequence = 0;
+            vb_npc2 = vb_c_j_addr;
+        } else if (v_c_ret == 1) {
+            v_jump = 1;
+            v_sequence = 0;
+            vb_npc2 = i_ra.read();
+        }
+    }
+
+    if (i_req_mem_fire.read() == 1) {
+        /** To avoid double branching when two Jump instructions
+            placed sequentually we ignore the second jump instruction */
+        v.jump = v_jump;
+        v.sequence = v_sequence;
+    }
+
     if (i_resp_mem_valid.read() == 1) {
         v.c0 = !(i_resp_mem_data.read()[1] & i_resp_mem_data.read()[0]);
         v.c1 = !(i_resp_mem_data.read()[17] & i_resp_mem_data.read()[16]);
     }
 
-    if (i_req_mem_fire.read() == 1) {
-        v.sequence = v_sequence;
-    }
 
     if (i_req_mem_fire.read() == 1 && r.wait_resp.read() == 0) {
         v.wait_resp = 1;
@@ -246,6 +317,7 @@ void BranchPredictor::comb() {
         v.minus4 = 0;
         v.c0 = 0;
         v.c1 = 0;
+        v.jump = 0;
     }
 
     o_npc_predict = vb_npc2;
