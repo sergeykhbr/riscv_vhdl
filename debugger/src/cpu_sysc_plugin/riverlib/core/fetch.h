@@ -28,7 +28,6 @@ SC_MODULE(InstrFetch) {
 
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_e_npc;
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_predict_npc;
-    sc_in<bool> i_predict;
     sc_in<bool> i_minus2;
     sc_in<bool> i_minus4;
 

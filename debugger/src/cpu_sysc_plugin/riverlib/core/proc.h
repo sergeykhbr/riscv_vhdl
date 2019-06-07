@@ -186,7 +186,6 @@ private:
 
     struct BranchPredictorType {
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> npc;
-        sc_signal<bool> predict;
         sc_signal<bool> minus2;
         sc_signal<bool> minus4;
     } bp;

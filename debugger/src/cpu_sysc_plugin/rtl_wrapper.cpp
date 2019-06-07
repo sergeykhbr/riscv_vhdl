@@ -161,7 +161,7 @@ void RtlWrapper::clk_negedge_proc() {
             ETransStatus r_resp = ibus_->b_transport(&trans);
             v.resp_mem_data = 0;
             if (r_resp == TRANS_ERROR) {
-                v.resp_mem_load_fault = true;
+                v.resp_mem_store_fault = true;
             }
         } else {
             trans.action = MemAction_Read;
@@ -169,7 +169,7 @@ void RtlWrapper::clk_negedge_proc() {
             ETransStatus b_resp = ibus_->b_transport(&trans);
             v.resp_mem_data = trans.rpayload.b64[0];
             if (b_resp == TRANS_ERROR) {
-                v.resp_mem_store_fault = true;
+                v.resp_mem_load_fault = true;
             }
         }
         v.resp_mem_data_valid = true;

@@ -34,7 +34,6 @@ SC_MODULE(BranchPredictor) {
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_e_npc;         // Valid instruction value awaited by 'Executor'
     sc_in<sc_uint<RISCV_ARCH>> i_ra;    // Return address register value
     sc_out<sc_uint<32>> o_npc_predict;  // Predicted next instruction address
-    sc_out<bool> o_predict;             // Mark requested address as predicted
     sc_out<bool> o_minus2;              // Re-use half of previous data
     sc_out<bool> o_minus4;              // Re-use previous address
 
@@ -47,7 +46,7 @@ SC_MODULE(BranchPredictor) {
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
-private:
+ private:
     struct HistoryType {
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> resp_pc;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> resp_npc;
@@ -62,14 +61,29 @@ private:
         sc_signal<bool> minus4;
         sc_signal<bool> c0;
         sc_signal<bool> c1;
-        sc_signal<bool> jump;
     } v, r;
-    sc_uint<BUS_ADDR_WIDTH> vb_npc2;
+
+    void R_RESET(RegistersType &iv) {
+        for (int i = 0; i < 3; i++) {
+            iv.h[i].resp_pc = ~0ul;
+            iv.h[i].resp_npc = ~0ul;
+            iv.h[i].req_addr = 0;
+            iv.h[i].ignore = 0;
+        }
+        iv.wait_resp = 0;
+        iv.sequence = 0;
+        iv.minus2 = 0;
+        iv.minus4 = 0;
+        iv.c0 = 0;
+        iv.c1 = 0;
+    }
+
+    sc_uint<BUS_ADDR_WIDTH> vb_npc;
     bool v_jal;     // JAL instruction
+    bool v_branch;  // One of branch instructions (only negative offset)
     bool v_c_j;     // compressed J instruction
     bool v_c_ret;   // compressed RET pseudo-instruction
 };
-
 
 }  // namespace debugger
 

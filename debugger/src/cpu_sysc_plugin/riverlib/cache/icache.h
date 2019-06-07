@@ -102,6 +102,7 @@ private:
     line_signal_type wb_l[ILINE_TOTAL];
     bool w_reuse_lastline;
     bool w_wait_response;
+    bool w_req_ctrl_valid;
 };
 
 

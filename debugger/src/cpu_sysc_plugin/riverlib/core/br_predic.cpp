@@ -47,7 +47,6 @@ BranchPredictor::BranchPredictor(sc_module_name name_) : sc_module(name_) {
     sensitive << r.minus4;
     sensitive << r.c0;
     sensitive << r.c1;
-    sensitive << r.jump;
 
     SC_METHOD(registers);
     sensitive << i_clk.pos();
@@ -65,7 +64,7 @@ void BranchPredictor::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_ra, "/top/proc0/bp0/i_ra");
 
         sc_trace(o_vcd, o_npc_predict, "/top/proc0/bp0/o_npc_predict");
-        sc_trace(o_vcd, vb_npc2, "/top/proc0/bp0/vb_npc2");
+        sc_trace(o_vcd, vb_npc, "/top/proc0/bp0/vb_npc");
         sc_trace(o_vcd, r.h[0].resp_pc, "/top/proc0/bp0/r_h(0)_resp_pc");
         sc_trace(o_vcd, r.h[0].resp_npc, "/top/proc0/bp0/r_h(0)_resp_npc");
         sc_trace(o_vcd, r.h[0].req_addr, "/top/proc0/bp0/r_h(0)_req_addr");
@@ -78,9 +77,9 @@ void BranchPredictor::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.minus4, "/top/proc0/bp0/r_minus4");
         sc_trace(o_vcd, r.c0, "/top/proc0/bp0/r_c0");
         sc_trace(o_vcd, r.c1, "/top/proc0/bp0/r_c1");
-        sc_trace(o_vcd, r.jump, "/top/proc0/bp0/r_jump");
         sc_trace(o_vcd, v_c_j, "/top/proc0/bp0/v_c_j");
         sc_trace(o_vcd, v_jal, "/top/proc0/bp0/v_jal");
+        sc_trace(o_vcd, v_branch, "/top/proc0/bp0/v_branch");
         sc_trace(o_vcd, v_c_ret, "/top/proc0/bp0/v_c_ret");
     }
 }
@@ -89,17 +88,18 @@ void BranchPredictor::comb() {
     sc_uint<32> vb_tmp;
     sc_uint<BUS_ADDR_WIDTH> vb_jal_off;
     sc_uint<BUS_ADDR_WIDTH> vb_jal_addr;
+    sc_uint<BUS_ADDR_WIDTH> vb_branch_off;
+    sc_uint<BUS_ADDR_WIDTH> vb_branch_addr;
     sc_uint<BUS_ADDR_WIDTH> vb_c_j_off;
     sc_uint<BUS_ADDR_WIDTH> vb_c_j_addr;
-    bool v_predict;
     bool v_sequence;
-    bool v_jump;
     bool v_c0;
 
     v = r;
 
     vb_tmp = i_f_instr.read();
 
+    // Unconditional jump "J"
     if (vb_tmp[31]) {
         vb_jal_off(BUS_ADDR_WIDTH-1, 20) = ~0;
     } else {
@@ -118,7 +118,28 @@ void BranchPredictor::comb() {
         }
     }
 
-    // Check Compressed "J" unconditional jump
+    // Conditional branches "BEQ", "BNE", "BLT", "BGE", BLTU", "BGEU"
+    // Only negative offset leads to predicted jumps
+    if (vb_tmp[31]) {
+        vb_branch_off(BUS_ADDR_WIDTH-1, 12) = ~0;
+    } else {
+        vb_branch_off(BUS_ADDR_WIDTH-1, 12) = 0;
+    }
+    vb_branch_off[11] = vb_tmp[7];
+    vb_branch_off(10, 5) = vb_tmp(30, 25);
+    vb_branch_off(4, 1) = vb_tmp(11, 8);
+    vb_branch_off[0] = 0;
+    vb_branch_addr = i_f_pc.read() + vb_branch_off;
+
+    v_branch = 0;
+    if (vb_tmp.range(6, 0) == 0x63 && vb_tmp[31] == 1) {
+        if (vb_branch_addr != r.h[1].resp_pc 
+            && vb_branch_addr != r.h[2].resp_pc) {
+            v_branch = 1;
+        }
+    }
+
+    // Check Compressed "C_J" unconditional jump
     if (vb_tmp[12]) {
         vb_c_j_off(BUS_ADDR_WIDTH-1, 11) = ~0;
     } else {
@@ -159,49 +180,48 @@ void BranchPredictor::comb() {
     if (i_e_npc.read() == r.h[2].resp_pc.read()) {
         if (r.h[2].resp_npc.read() == r.h[1].resp_pc.read()) {
             if (r.h[1].resp_npc.read() == r.h[0].resp_pc.read()) {
-                vb_npc2 = r.h[0].resp_npc.read();
+                vb_npc = r.h[0].resp_npc.read();
             } else {
-                vb_npc2 = r.h[1].resp_npc.read();
+                vb_npc = r.h[1].resp_npc.read();
             }
         } else if (r.h[2].resp_npc.read() == r.h[0].resp_pc.read()) {
-            vb_npc2 = r.h[0].resp_npc.read();
+            vb_npc = r.h[0].resp_npc.read();
         } else {
-            vb_npc2 = r.h[2].resp_npc.read();
+            vb_npc = r.h[2].resp_npc.read();
         }
     } else if (i_e_npc.read() == r.h[1].resp_pc.read()) {
         if (r.h[1].resp_npc.read() == r.h[0].resp_pc.read()) {
-            vb_npc2 = r.h[0].resp_npc.read();
+            vb_npc = r.h[0].resp_npc.read();
         } else {
-            vb_npc2 = r.h[1].resp_npc.read();
+            vb_npc = r.h[1].resp_npc.read();
         }
     } else if (i_e_npc.read() == r.h[0].resp_pc.read()) {
-        vb_npc2 = r.h[0].resp_npc.read();
+        vb_npc = r.h[0].resp_npc.read();
     } else {
-        vb_npc2 = i_e_npc.read();
+        vb_npc = i_e_npc.read();
         v_sequence = 0;
     }
 
-    v_jump = 0;
-    if (v_sequence == 1 && r.jump == 0) {
+    // 1 fault clock on jump, ignore instruction after jumping
+    if (v_sequence == 1 && r.sequence == 1) {
         if (v_jal == 1) {
-            v_jump = 1;
             v_sequence = 0;
-            vb_npc2 = vb_jal_addr;
+            vb_npc = vb_jal_addr;
+        } else if (v_branch == 1) {
+            v_sequence = 0;
+            vb_npc = vb_branch_addr;
         } else if (v_c_j == 1) {
-            v_jump = 1;
             v_sequence = 0;
-            vb_npc2 = vb_c_j_addr;
+            vb_npc = vb_c_j_addr;
         } else if (v_c_ret == 1) {
-            v_jump = 1;
             v_sequence = 0;
-            vb_npc2 = i_ra.read();
+            vb_npc = i_ra.read();
         }
     }
 
     if (i_req_mem_fire.read() == 1) {
         /** To avoid double branching when two Jump instructions
             placed sequentually we ignore the second jump instruction */
-        v.jump = v_jump;
         v.sequence = v_sequence;
     }
 
@@ -215,19 +235,19 @@ void BranchPredictor::comb() {
         v.wait_resp = 1;
         v.minus2 = 0;
         v.minus4 = 0;
-        v.h[0].req_addr = vb_npc2;
+        v.h[0].req_addr = vb_npc;
         v.h[0].ignore = 0;
-        v.h[0].resp_pc = vb_npc2;
-        v.h[0].resp_npc = vb_npc2 + 4;   // default instruction size
+        v.h[0].resp_pc = vb_npc;
+        v.h[0].resp_npc = vb_npc + 4;   // default instruction size
         for (int i = 0; i < 2; i++) {
             v.h[i+1].resp_pc = r.h[i].resp_pc;
             v.h[i+1].resp_npc = r.h[i].resp_npc;
             v.h[i+1].req_addr = r.h[i].req_addr;
             v.h[i+1].ignore = r.h[i].ignore;
         }
-        v.h[1].resp_npc = vb_npc2;
+        v.h[1].resp_npc = vb_npc;
     } else if (i_req_mem_fire.read() == 1 && i_resp_mem_valid.read() == 1) {
-        v.h[0].req_addr = vb_npc2;
+        v.h[0].req_addr = vb_npc;
         v.h[0].ignore = 0;
         v.minus4 = 0;
         v.h[1].resp_pc = r.h[0].resp_pc;
@@ -252,29 +272,29 @@ void BranchPredictor::comb() {
                 } else if (r.minus4.read() == 0) {
                     // 1-st of two C-instructions
                     v.minus2 = 1;
-                    v.h[0].resp_pc = vb_npc2 - 2;
-                    v.h[0].resp_npc = vb_npc2 + 2;
+                    v.h[0].resp_pc = vb_npc - 2;
+                    v.h[0].resp_npc = vb_npc + 2;
                     v.h[1].resp_pc = r.h[0].resp_pc;
                     v.h[1].resp_npc = r.h[0].resp_pc.read() + 2;
                 } else {
                     // Previous computed npc was predicted correctly switch
                     // to normal increment (+4)
                     v.minus2 = 0;
-                    v.h[0].resp_pc = vb_npc2;
-                    v.h[0].resp_npc = vb_npc2 + 4;
+                    v.h[0].resp_pc = vb_npc;
+                    v.h[0].resp_npc = vb_npc + 4;
                 }
             } else {
                 // 4-bytes instruction received
                 v.minus2 = 0;
-                v.h[0].resp_pc = vb_npc2;
-                v.h[0].resp_npc = vb_npc2 + 4;
+                v.h[0].resp_pc = vb_npc;
+                v.h[0].resp_npc = vb_npc + 4;
             }
         } else {
             // start a new sequence
             v.minus2 = 0;
-            v.h[0].resp_pc = vb_npc2;
-            v.h[0].resp_npc = vb_npc2 + 4;
-            v.h[1].resp_npc = vb_npc2;
+            v.h[0].resp_pc = vb_npc;
+            v.h[0].resp_npc = vb_npc + 4;
+            v.h[1].resp_npc = vb_npc;
         }
         v.h[2].resp_pc = r.h[1].resp_pc;
         v.h[2].resp_npc = r.h[1].resp_npc;
@@ -305,23 +325,10 @@ void BranchPredictor::comb() {
 
 
     if (!i_nrst.read()) {
-        for (int i = 0; i < 3; i++) {
-            v.h[i].resp_pc = ~0ul;
-            v.h[i].resp_npc = ~0ul;
-            v.h[i].req_addr = 0;
-            v.h[i].ignore = 0;
-        }
-        v.wait_resp = 0;
-        v.sequence = 0;
-        v.minus2 = 0;
-        v.minus4 = 0;
-        v.c0 = 0;
-        v.c1 = 0;
-        v.jump = 0;
+        R_RESET(v);
     }
 
-    o_npc_predict = vb_npc2;
-    o_predict = v_predict;
+    o_npc_predict = vb_npc;
     o_minus2 = r.minus2.read();
     o_minus4 = r.minus4.read();
 }

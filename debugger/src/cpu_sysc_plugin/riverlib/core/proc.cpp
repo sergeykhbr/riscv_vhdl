@@ -46,7 +46,6 @@ Processor::Processor(sc_module_name name_, uint32_t hartid)
     fetch0->o_mem_resp_ready(o_resp_ctrl_ready);
     fetch0->i_e_npc(w.e.npc);
     fetch0->i_predict_npc(bp.npc);
-    fetch0->i_predict(bp.predict);
     fetch0->i_minus2(bp.minus2);
     fetch0->i_minus4(bp.minus4);
     fetch0->o_mem_req_fire(w.f.req_fire);
@@ -178,7 +177,6 @@ Processor::Processor(sc_module_name name_, uint32_t hartid)
     predic0->i_e_npc(w.e.npc);
     predic0->i_ra(ireg.ra);
     predic0->o_npc_predict(bp.npc);
-    predic0->o_predict(bp.predict);
     predic0->o_minus2(bp.minus2);
     predic0->o_minus4(bp.minus4);
 

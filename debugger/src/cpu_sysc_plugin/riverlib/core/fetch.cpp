@@ -20,7 +20,6 @@ InstrFetch::InstrFetch(sc_module_name name_) : sc_module(name_) {
     sensitive << i_mem_load_fault;
     sensitive << i_e_npc;
     sensitive << i_predict_npc;
-    sensitive << i_predict;
     sensitive << i_minus2;
     sensitive << i_minus4;
     sensitive << i_br_fetch_valid;
@@ -135,7 +134,7 @@ void InstrFetch::comb() {
     o_mem_addr_valid = w_o_req_valid;
     o_mem_addr = i_predict_npc.read();
     o_mem_req_fire = w_o_req_fire;
-    o_ex_load_fault = 0;        // todo:
+    o_ex_load_fault = 0;
     o_valid = r.resp_valid.read() && !(i_pipeline_hold.read() || w_o_hold);
     o_pc = wb_o_pc;
     o_instr = wb_o_instr;

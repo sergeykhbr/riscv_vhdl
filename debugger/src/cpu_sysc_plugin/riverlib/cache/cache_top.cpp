@@ -97,7 +97,8 @@ void CacheTop::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, wb_data_resp_mem_data, "/top/cache0/wb_data_resp_mem_data");
         sc_trace(o_vcd, w_ctrl_resp_mem_data_valid, "/top/cache0/w_ctrl_resp_mem_data_valid");
         sc_trace(o_vcd, wb_ctrl_resp_mem_data, "/top/cache0/wb_ctrl_resp_mem_data");
-
+        sc_trace(o_vcd, w_ctrl_req_ready, "/top/cache0/w_ctrl_req_ready");
+        
         sc_trace(o_vcd, i_req_mem_ready, "/top/cache0/i_req_mem_ready");
         sc_trace(o_vcd, o_req_mem_valid, "/top/cache0/o_req_mem_valid");
         sc_trace(o_vcd, o_req_mem_write, "/top/cache0/o_req_mem_write");
@@ -109,6 +110,7 @@ void CacheTop::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_istate, "/top/cache0/o_istate");
         sc_trace(o_vcd, o_dstate, "/top/cache0/o_dstate");
         sc_trace(o_vcd, o_cstate, "/top/cache0/o_cstate");
+        sc_trace(o_vcd, r.state, "/top/cache0/r_state");
     }
     i0->generateVCD(i_vcd, o_vcd);
     d0->generateVCD(i_vcd, o_vcd);

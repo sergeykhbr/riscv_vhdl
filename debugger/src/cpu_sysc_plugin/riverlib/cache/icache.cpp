@@ -67,7 +67,7 @@ void ICache::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.iline[1].data, "/top/cache0/i0/r_iline(1)_data");
         sc_trace(o_vcd, r.iline_addr_req, "/top/cache0/i0/r_iline_addr_req");
         sc_trace(o_vcd, r.addr_processing, "/top/cache0/i0/r_addr_processing");
-        sc_trace(o_vcd, r.double_req, "/top/cache0/i0/double_req");
+        sc_trace(o_vcd, r.double_req, "/top/cache0/i0/r_double_req");
         sc_trace(o_vcd, r.delay_valid, "/top/cache0/i0/r_delay_valid");
         sc_trace(o_vcd, r.delay_data, "/top/cache0/i0/r_delay_valid");
         sc_trace(o_vcd, r.state, "/top/cache0/i0/r_state");
@@ -81,6 +81,7 @@ void ICache::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, wb_l[1].hit_hold, "/top/cache0/i0/wb_l(1).hit_hold");
         sc_trace(o_vcd, w_reuse_lastline, "/top/cache0/i0/w_reuse_lastline");
         sc_trace(o_vcd, w_wait_response, "/top/cache0/i0/w_wait_response");
+        sc_trace(o_vcd, w_req_ctrl_valid, "/top/cache0/i0/w_req_ctrl_valid");
     }
 }
 
@@ -89,7 +90,6 @@ void ICache::comb() {
     bool w_o_req_ctrl_ready;
     bool w_o_req_mem_valid;
     sc_uint<BUS_ADDR_WIDTH> wb_o_req_mem_addr;
-    bool w_req_ctrl_valid;
     bool w_req_fire;
     bool w_o_resp_valid;
     sc_uint<BUS_ADDR_WIDTH> wb_o_resp_addr;
@@ -106,8 +106,13 @@ void ICache::comb() {
     }
     w_req_ctrl_valid = !w_wait_response 
                     && (i_req_ctrl_valid.read() || r.double_req.read());
-    wb_req_addr[0] = i_req_ctrl_addr.read();
-    wb_req_addr[1] = i_req_ctrl_addr.read() + 2;
+    if (r.double_req.read() == 1) {
+        wb_req_addr[0] = r.addr_processing.read();
+        wb_req_addr[1] = r.addr_processing.read() + 2;
+    } else {
+        wb_req_addr[0] = i_req_ctrl_addr.read();
+        wb_req_addr[1] = i_req_ctrl_addr.read() + 2;
+    }
 
     wb_hold_addr[0] = r.addr_processing.read();
     wb_hold_addr[1] = r.addr_processing.read() + 2;
@@ -307,7 +312,7 @@ void ICache::comb() {
         if (i_resp_ctrl_ready.read()) {
             if ((wb_l[0].hit[Hit_Line2] || wb_l[1].hit[Hit_Line2]) == 1
                 && r.iline[1].addr.read() 
-                    != i_req_ctrl_addr.read()(BUS_ADDR_WIDTH-1, 3)) {
+                    != wb_o_req_mem_addr(BUS_ADDR_WIDTH-1, 3)) {
                 w_reuse_lastline = w_need_mem_req;
             }
         } else {
