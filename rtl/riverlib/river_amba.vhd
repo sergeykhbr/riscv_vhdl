@@ -108,7 +108,9 @@ begin
       i_dport_addr => i_dport.addr,
       i_dport_wdata => i_dport.wdata,
       o_dport_ready => o_dport.ready,
-      o_dport_rdata => o_dport.rdata);
+      o_dport_rdata => o_dport.rdata,
+      o_halted => o_dport.halted
+);
 
   comb : process(i_nrst, w_req_mem_valid, w_req_mem_write, wb_req_mem_addr,
                  wb_req_mem_strob, wb_req_mem_data, i_msti, r)

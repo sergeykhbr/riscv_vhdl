@@ -125,8 +125,13 @@ begin
 
     w_req_ctrl_valid := not w_wait_response
                         and (i_req_ctrl_valid or r.double_req);
-    wb_req_addr(0) := i_req_ctrl_addr;
-    wb_req_addr(1) := i_req_ctrl_addr + 2;
+    if r.double_req = '1' then
+        wb_req_addr(0) := r.addr_processing;
+        wb_req_addr(1) := r.addr_processing + 2;
+    else
+        wb_req_addr(0) := i_req_ctrl_addr;
+        wb_req_addr(1) := i_req_ctrl_addr + 2;
+    end if;
 
     wb_hold_addr(0) := r.addr_processing;
     wb_hold_addr(1) := r.addr_processing + 2;
@@ -310,7 +315,7 @@ begin
         --! Condition to avoid removing the last line:
         if i_resp_ctrl_ready = '1' then
             if (wb_l(0).hit(Hit_Line2) or wb_l(1).hit(Hit_Line2)) = '1'
-                and r.iline(1).addr /= i_req_ctrl_addr(BUS_ADDR_WIDTH-1 downto 3) then
+                and r.iline(1).addr /= wb_o_req_mem_addr(BUS_ADDR_WIDTH-1 downto 3) then
                 w_reuse_lastline := w_need_mem_req;
             end if;
         else

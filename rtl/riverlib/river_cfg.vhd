@@ -336,10 +336,11 @@ package river_cfg is
     i_resp_mem_valid : in std_logic;
     i_resp_mem_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_resp_mem_data : in std_logic_vector(31 downto 0);
-    i_e_npc : in std_logic_vector(31 downto 0);
+    i_f_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_f_instr : in std_logic_vector(31 downto 0);
+    i_e_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_ra : in std_logic_vector(RISCV_ARCH-1 downto 0);
     o_npc_predict : out std_logic_vector(31 downto 0);
-    o_predict : out std_logic;
     o_minus2 : out std_logic;
     o_minus4 : out std_logic
   );
@@ -590,7 +591,6 @@ package river_cfg is
     o_mem_resp_ready : out std_logic;
     i_e_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_predict_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    i_predict : in std_logic;
     i_minus2 : in std_logic;
     i_minus4 : in std_logic;
 
@@ -852,6 +852,7 @@ package river_cfg is
     i_dport_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0);
     o_dport_ready : out std_logic;
     o_dport_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0);
+    o_halted : out std_logic;
     i_istate : in std_logic_vector(1 downto 0);
     i_dstate : in std_logic_vector(1 downto 0);
     i_cstate : in std_logic_vector(1 downto 0)
@@ -981,7 +982,8 @@ package river_cfg is
     i_dport_addr : in std_logic_vector(11 downto 0);
     i_dport_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0);
     o_dport_ready : out std_logic;
-    o_dport_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0)
+    o_dport_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0);
+    o_halted : out std_logic
   );
   end component; 
 

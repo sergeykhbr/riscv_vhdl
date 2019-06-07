@@ -50,12 +50,13 @@ type dport_in_vector is array (0 to CFG_CORES_PER_DSU_MAX-1)
 
 
 type dport_out_type is record
+    halted : std_logic;
     ready : std_logic;
     rdata : std_logic_vector(RISCV_ARCH-1 downto 0);
 end record;
 
 constant dport_out_none : dport_out_type := (
-    '1', (others => '0'));
+    '0', '1', (others => '0'));
 
 type dport_out_vector is array (0 to CFG_CORES_PER_DSU_MAX-1) 
      of dport_out_type;

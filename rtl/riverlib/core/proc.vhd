@@ -55,6 +55,7 @@ entity Processor is
     i_dport_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0);       -- Write value
     o_dport_ready : out std_logic;                                    -- Response is ready
     o_dport_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0);      -- Response value
+    o_halted : out std_logic;
     -- Debug signals:
     i_istate : in std_logic_vector(1 downto 0);                       -- ICache state machine value
     i_dstate : in std_logic_vector(1 downto 0);                       -- DCache state machine value
@@ -182,7 +183,6 @@ architecture arch_Processor of Processor is
 
     type BranchPredictorType is record
        npc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-       predict : std_logic;
        minus2 : std_logic;
        minus4 : std_logic;
     end record;
@@ -224,7 +224,6 @@ begin
         o_mem_resp_ready => o_resp_ctrl_ready,
         i_e_npc => w.e.npc,
         i_predict_npc => bp.npc,
-        i_predict => bp.predict,
         i_minus2 => bp.minus2,
         i_minus4 => bp.minus4,
         o_mem_req_fire => w.f.req_fire,
@@ -351,10 +350,11 @@ begin
         i_resp_mem_valid => i_resp_ctrl_valid,
         i_resp_mem_addr => i_resp_ctrl_addr,
         i_resp_mem_data => i_resp_ctrl_data,
+        i_f_pc => w.f.pc,
+        i_f_instr => w.f.instr,
         i_e_npc => w.e.npc,
         i_ra => ireg.ra,
         o_npc_predict => bp.npc,
-        o_predict => bp.predict,
         o_minus2 => bp.minus2,
         o_minus4 => bp.minus4);
 
@@ -452,5 +452,5 @@ begin
     o_req_ctrl_valid <= w.f.imem_req_valid;
     o_req_ctrl_addr <= w.f.imem_req_addr;
     o_time <= dbg.clock_cnt;
-
+    o_halted <= dbg.halt;
 end;

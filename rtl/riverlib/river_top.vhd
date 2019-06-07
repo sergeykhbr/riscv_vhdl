@@ -51,7 +51,8 @@ entity RiverTop is
     i_dport_addr : in std_logic_vector(11 downto 0);                  -- Register idx
     i_dport_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0);       -- Write value
     o_dport_ready : out std_logic;                                    -- Response is ready
-    o_dport_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0)       -- Response value
+    o_dport_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0);      -- Response value
+    o_halted : out std_logic
   );
 end;
  
@@ -119,6 +120,7 @@ begin
         i_dport_wdata => i_dport_wdata,
         o_dport_ready => o_dport_ready,
         o_dport_rdata => o_dport_rdata,
+        o_halted => o_halted,
         i_istate => wb_istate,
         i_dstate => wb_dstate,
         i_cstate => wb_cstate);
