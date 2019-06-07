@@ -137,6 +137,8 @@ void RiverTop::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(i_vcd, i_req_mem_ready, "i_req_mem_ready");
         sc_trace(i_vcd, i_resp_mem_data_valid, "i_resp_mem_data_valid");
         sc_trace(i_vcd, i_resp_mem_data, "i_resp_mem_data");
+        sc_trace(i_vcd, i_resp_mem_load_fault, "i_resp_mem_load_fault");
+        sc_trace(i_vcd, i_resp_mem_store_fault, "i_resp_mem_store_fault");
         sc_trace(i_vcd, i_ext_irq, "i_ext_irq");
         sc_trace(i_vcd, i_dport_valid, "i_dport_valid");
         sc_trace(i_vcd, i_dport_write, "i_dport_write");
@@ -152,6 +154,7 @@ void RiverTop::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_req_mem_strob, "o_req_mem_strob");
         sc_trace(o_vcd, o_req_mem_data, "o_req_mem_data");
         sc_trace(o_vcd, o_time, "o_time");
+        sc_trace(o_vcd, o_halted, "o_halted");
         sc_trace(o_vcd, o_dport_ready, "o_dport_ready");
         sc_trace(o_vcd, o_dport_rdata, "o_dport_rdata");
     }

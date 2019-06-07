@@ -120,12 +120,6 @@ begin
         v.resp_data_z := r.resp_data;
     end if;
 
-
-    if i_br_fetch_valid = '1' then
-        v.br_address := i_br_address_fetch;
-        v.br_instr := i_br_instr_fetch;
-    end if;
-
     if r.minus4 = '1' then
         wb_o_pc := r.resp_address_z;
         wb_o_instr := r.resp_data_z;
@@ -135,6 +129,21 @@ begin
     else
         wb_o_pc := r.resp_address;
         wb_o_instr := r.resp_data;
+    end if;
+
+
+    if i_br_fetch_valid = '1' then
+        v.br_address := i_br_address_fetch;
+        v.br_instr := i_br_instr_fetch;
+    end if;
+
+    -- Breakpoint skip logic that allows to continue execution
+    -- without actual breakpoint remove only once 
+    if wb_o_pc = r.br_address then
+        wb_o_instr := r.br_instr;
+        if i_mem_data_valid = '1' and r.wait_resp = '1' and i_pipeline_hold = '0' then
+            v.br_address := (others => '1');
+        end if;
     end if;
 
     

@@ -201,7 +201,7 @@ begin
             vb_npc := vb_c_j_addr;
         elsif v_c_ret = '1' then
             v_sequence := '0';
-            vb_npc := i_ra;
+            vb_npc := i_ra(BUS_ADDR_WIDTH-1 downto 0);
         end if;
     end if;
 

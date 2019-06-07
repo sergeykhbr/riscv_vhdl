@@ -98,21 +98,11 @@ void InstrFetch::comb() {
         v.resp_valid = 1;
         v.minus2 = i_minus2.read();
         v.minus4 = i_minus4.read();
-//        if i_mem_data_addr = r.br_address then
-//            v.resp_address := r.br_address;
-//            v.resp_data := r.br_instr;
-//            v.br_address := (others => '1');
-//        else
-            v.resp_address = i_mem_data_addr.read();
-            v.resp_data = i_mem_data.read();
-//        end if;
+
+        v.resp_address = i_mem_data_addr.read();
+        v.resp_data = i_mem_data.read();
         v.resp_address_z = r.resp_address.read();
         v.resp_data_z = r.resp_data.read();
-    }
-
-    if (i_br_fetch_valid.read() == 1) {
-         v.br_address = i_br_address_fetch.read();
-         v.br_instr = i_br_instr_fetch.read();
     }
 
     if (r.minus4.read() == 1) {
@@ -125,6 +115,22 @@ void InstrFetch::comb() {
     } else {
         wb_o_pc = r.resp_address.read();
         wb_o_instr = r.resp_data.read();
+    }
+
+
+    if (i_br_fetch_valid.read() == 1) {
+         v.br_address = i_br_address_fetch.read();
+         v.br_instr = i_br_instr_fetch.read();
+    }
+
+    // Breakpoint skip logic that allows to continue execution
+    // without actual breakpoint remove only once 
+    if (wb_o_pc == r.br_address.read()) {
+        wb_o_instr = r.br_instr.read();
+        if (i_mem_data_valid.read() && r.wait_resp.read()
+            && !i_pipeline_hold.read()) {
+            v.br_address = ~0ul;
+        }
     }
 
     if (!i_nrst.read()) {
