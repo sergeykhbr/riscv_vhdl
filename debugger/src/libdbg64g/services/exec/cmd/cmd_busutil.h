@@ -40,6 +40,7 @@ class CmdBusUtil : public ICommand  {
     uint64_t clock_cnt_z_;
     DsuMapType::local_regs_type::local_region_type::mst_bus_util_type
     bus_util_z_[32];
+    uint32_t mst_total_;
 };
 
 }  // namespace debugger

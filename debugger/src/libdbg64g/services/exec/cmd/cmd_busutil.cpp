@@ -45,6 +45,7 @@ CmdBusUtil::CmdBusUtil(ITap *tap) : ICommand ("busutil", tap) {
 
     clock_cnt_z_ = 0;
     memset(bus_util_z_, 0, sizeof(bus_util_z_));
+    mst_total_ = 0;
 }
 
 int CmdBusUtil::isValid(AttributeType *args) {
@@ -58,20 +59,28 @@ int CmdBusUtil::isValid(AttributeType *args) {
 }
 
 void CmdBusUtil::exec(AttributeType *args, AttributeType *res) {
-    unsigned mst_total = 4;//info_->getMastersTotal();
-    res->make_list(mst_total);
-    if (!isValid(args)) {
-        generateError(res, "Wrong argument list");
+    DsuMapType *dsu = DSUBASE();
+    uint64_t addr;
+    Reg64Type rd;
+    res->make_nil();
+    if (mst_total_ == 0) {
+        addr = 0xFFFFF008;     // PNP module should be present in a system
+        tap_->read(addr, 4, rd.buf);
+        mst_total_ = rd.buf[2];     // Bits [23:16] mst_total
+    }
+
+    if (mst_total_ == 0 || mst_total_ >= 64) {
+        generateError(res, "Can't detect masters total");
         return;
     }
+    res->make_list(mst_total_);
 
     struct MasterStatType {
         Reg64Type w_cnt;
         Reg64Type r_cnt;
     } mst_stat;
     Reg64Type cnt_total;
-    DsuMapType *dsu = DSUBASE();
-    uint64_t addr = reinterpret_cast<uint64_t>(&dsu->udbg.v.clock_cnt);
+    addr = reinterpret_cast<uint64_t>(&dsu->udbg.v.clock_cnt);
     tap_->read(addr, 8, cnt_total.buf);
     double d_cnt_total = static_cast<double>(cnt_total.val - clock_cnt_z_);
     if (d_cnt_total == 0) {
@@ -79,7 +88,7 @@ void CmdBusUtil::exec(AttributeType *args, AttributeType *res) {
     }
 
     addr = reinterpret_cast<uint64_t>(dsu->ulocal.v.bus_util);
-    for (unsigned i = 0; i < mst_total; i++) {
+    for (unsigned i = 0; i < mst_total_; i++) {
         AttributeType &mst = (*res)[i];
         if (!mst.is_list() || mst.size() != 2) {
             mst.make_list(2);
