@@ -35,25 +35,24 @@ NET "o_uart2_td"   LOC = AP22; # HPC G18
 #NET "o_uart2_td"   LOC = G30; # LPC C15
 
 # GPIO
-NET "i_int_clkrf"  LOC = D22 | IOSTANDARD=LVCMOS18 | PULLDOWN | SLEW=SLOW | DRIVE=2;   # DIP-0. Generate ADC clock internally = sys_clk/4
-NET "i_dip[1]"  LOC = C22 | IOSTANDARD=LVCMOS18 | PULLDOWN | SLEW=SLOW | DRIVE=2;   # DIP-1
-NET "i_dip[2]"  LOC = L21 | IOSTANDARD=LVCMOS18 | PULLDOWN | SLEW=SLOW | DRIVE=2;   # DIP-2
-NET "i_dip[3]"  LOC = L20 | IOSTANDARD=LVCMOS18 | PULLDOWN | SLEW=SLOW | DRIVE=2;   # DIP-3
+NET "io_gpio[0]"  LOC = D22 | IOSTANDARD=LVCMOS18 | PULLDOWN | SLEW=SLOW | DRIVE=2;   # DIP-0. Generate ADC clock internally = sys_clk/4
+NET "io_gpio[1]"  LOC = C22 | IOSTANDARD=LVCMOS18 | PULLDOWN | SLEW=SLOW | DRIVE=2;   # DIP-1
+NET "io_gpio[2]"  LOC = L21 | IOSTANDARD=LVCMOS18 | PULLDOWN | SLEW=SLOW | DRIVE=2;   # DIP-2
+NET "io_gpio[3]"  LOC = L20 | IOSTANDARD=LVCMOS18 | PULLDOWN | SLEW=SLOW | DRIVE=2;   # DIP-3
 #NET "i_dip[4]"  LOC = C18;   # DIP-4
 #NET "i_dip[5]"  LOC = B18;   # DIP-5
 #NET "i_dip[6]"  LOC = K22;   # DIP-6
 #NET "i_dip[7]"  LOC = K21;   # DIP-7
 
-
 # User's LEDs:
-NET "o_led[0]" LOC = AC22;
-NET "o_led[1]" LOC = AC24;
-NET "o_led[2]" LOC = AE22;
-NET "o_led[3]" LOC = AE23;
-NET "o_led[4]" LOC = AB23;
-NET "o_led[5]" LOC = AG23;
-NET "o_led[6]" LOC = AE24;
-NET "o_led[7]" LOC = AD24;
+NET "io_gpio[4]" LOC = AC22;
+NET "io_gpio[5]" LOC = AC24;
+NET "io_gpio[6]" LOC = AE22;
+NET "io_gpio[7]" LOC = AE23;
+NET "io_gpio[8]" LOC = AB23;
+NET "io_gpio[9]" LOC = AG23;
+NET "io_gpio[10]" LOC = AE24;
+NET "io_gpio[11]" LOC = AD24;
 
 # ADC samples:
 NET "i_clk_adc" LOC = "A10";

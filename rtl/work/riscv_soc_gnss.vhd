@@ -42,11 +42,6 @@ use misclib.types_misc.all;
 library ethlib;
 use ethlib.types_eth.all;
 
---! Rocket-chip specific library
-library rocketlib;
---! SOC top-level component declaration.
-use rocketlib.types_rocket.all;
-
 --! River CPU specific library
 library riverlib;
 --! River top level with AMBA interface module declaration
@@ -85,12 +80,8 @@ entity riscv_soc_gnss is port
   --! @name User's IOs:
   --! @{
 
-  --! DIP switch.
-  i_int_clkrf : in std_logic;
-  i_dip     : in std_logic_vector(3 downto 1);
-  --! LEDs.
-  o_led     : out std_logic_vector(7 downto 0);
-  --! @}
+  --! GPIO: [11:4] LEDs; [3:0] DIP switch: DIP[0]=i_int_clkrf
+  io_gpio     : inout std_logic_vector(11 downto 0);
  
   --! @name  UART1 signals:
   --! @{
@@ -169,7 +160,9 @@ architecture arch_riscv_soc_gnss of riscv_soc_gnss is
   signal ib_clk_tcxo  : std_logic;
   signal ib_sclk_n  : std_logic;
   signal ib_clk_adc : std_logic;
-  signal ib_dip     : std_logic_vector(3 downto 0);
+  signal ob_gpio_direction : std_logic_vector(11 downto 0);
+  signal ob_gpio_opins    : std_logic_vector(11 downto 0);
+  signal ib_gpio_ipins     : std_logic_vector(11 downto 0);
   signal ib_gmiiclk : std_logic;
   --! @}
 
@@ -196,10 +189,9 @@ architecture arch_riscv_soc_gnss of riscv_soc_gnss is
   signal axiso   : nasti_slaves_out_vector;
   signal slv_cfg : nasti_slave_cfg_vector;
   signal mst_cfg : nasti_master_cfg_vector;
-  signal core_irqs : std_logic_vector(CFG_CORE_IRQ_TOTAL-1 downto 0);
-  signal dport_i : dport_in_type;
-  signal dport_o : dport_out_type;
-  signal wb_miss_addr : std_logic_vector(CFG_NASTI_ADDR_BITS-1 downto 0);
+  signal w_cpu_irq : std_logic;
+  signal dport_i : dport_in_vector;
+  signal dport_o : dport_out_vector;
   signal wb_bus_util_w : std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0);
   signal wb_bus_util_r : std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0);
   
@@ -214,10 +206,11 @@ begin
   --! PAD buffers:
   irst0   : ibuf_tech generic map(CFG_PADTECH) port map (ib_rst, i_rst);
   iclk1  : ibufg_tech generic map(CFG_PADTECH) port map (O => ib_clk_adc, I => i_clk_adc);
-  idip0  : ibuf_tech generic map(CFG_PADTECH) port map (ib_dip(0), i_int_clkrf);
-  dipx : for i in 1 to 3 generate
-     idipz  : ibuf_tech generic map(CFG_PADTECH) port map (ib_dip(i), i_dip(i));
+  gpiox : for i in 0 to 11 generate
+    iob0  : iobuf_tech generic map(CFG_PADTECH) 
+            port map (ib_gpio_ipins(i), io_gpio(i), ob_gpio_opins(i), ob_gpio_direction(i));
   end generate;
+
 
   iclk0 : idsbuf_tech generic map (CFG_PADTECH) port map (
          i_sclk_p, i_sclk_n, ib_clk_tcxo);
@@ -247,7 +240,6 @@ begin
   rst0 : reset_global port map (
     inSysReset  => w_ext_reset,
     inSysClk    => w_clk_bus,
-    inPllLock   => w_pll_lock,
     outReset    => w_glob_rst
   );
   w_glob_nrst <= not w_glob_rst;
@@ -264,51 +256,48 @@ begin
     i_msto   => aximo,
     o_slvi   => axisi,
     o_msti   => aximi,
-    o_miss_irq  => irq_pins(CFG_IRQ_MISS_ACCESS),
-    o_miss_addr => wb_miss_addr,
     o_bus_util_w => wb_bus_util_w, -- Bus write access utilization per master statistic
     o_bus_util_r => wb_bus_util_r  -- Bus read access utilization per master statistic
   );
 
   --! @brief RISC-V Processor core (River or Rocket).
 river_ena : if CFG_COMMON_RIVER_CPU_ENABLE generate
-  cpu0 : river_amba port map ( 
+  cpu0 : river_amba generic map (
+    hartid => 0
+  ) port map ( 
     i_nrst   => w_bus_nrst,
     i_clk    => w_clk_bus,
     i_msti   => aximi(CFG_NASTI_MASTER_CACHED),
     o_msto   => aximo(CFG_NASTI_MASTER_CACHED),
     o_mstcfg => mst_cfg(CFG_NASTI_MASTER_CACHED),
-    i_dport => dport_i,
-    o_dport => dport_o,
-    i_ext_irq => core_irqs(CFG_CORE_IRQ_MEIP)
+    i_dport => dport_i(0),
+    o_dport => dport_o(0),
+    i_ext_irq => w_cpu_irq
   );
-  aximo(CFG_NASTI_MASTER_UNCACHED) <= nasti_master_out_none;
-  mst_cfg(CFG_NASTI_MASTER_UNCACHED) <= nasti_master_config_none;
+
+  dualcore_ena : if CFG_COMMON_DUAL_CORE_ENABLE generate
+      cpu1 : river_amba generic map (
+        hartid => 1
+      ) port map ( 
+        i_nrst   => w_bus_nrst,
+        i_clk    => w_clk_bus,
+        i_msti   => aximi(CFG_NASTI_MASTER_UNCACHED),
+        o_msto   => aximo(CFG_NASTI_MASTER_UNCACHED),
+        o_mstcfg => mst_cfg(CFG_NASTI_MASTER_UNCACHED),
+        i_dport => dport_i(1),
+        o_dport => dport_o(1),
+        i_ext_irq => '0'  -- todo: 
+      );
+  end generate;
+
+  dualcore_dis : if not CFG_COMMON_DUAL_CORE_ENABLE generate
+      aximo(CFG_NASTI_MASTER_UNCACHED) <= nasti_master_out_none;
+      mst_cfg(CFG_NASTI_MASTER_UNCACHED) <= nasti_master_config_none;
+		dport_o(1) <= dport_out_none;
+  end generate;
+
 end generate;
 
---! DSU doesn't support Rocket-chip CPU
-river_dis : if not CFG_COMMON_RIVER_CPU_ENABLE generate
-  --! Not imlpemented interrupts:
-  core_irqs(CFG_CORE_IRQ_MTIP) <= '0'; -- timer's
-  core_irqs(CFG_CORE_IRQ_MSIP) <= '0'; -- software's
-  core_irqs(CFG_CORE_IRQ_SEIP) <= '0'; -- superuser external interrupt
-  core_irqs(CFG_CORE_IRQ_DEBUG) <= '0';
-
-  cpu0 : rocket_l1only generic map (
-    hartid  => 0,
-    reset_vector => 16#1000#
-  ) port map ( 
-    nrst      => w_bus_nrst,
-    clk_sys   => w_clk_bus,
-    msti1     => aximi(CFG_NASTI_MASTER_CACHED),
-    msto1     => aximo(CFG_NASTI_MASTER_CACHED),
-    mstcfg1   => mst_cfg(CFG_NASTI_MASTER_CACHED),
-    msti2     => aximi(CFG_NASTI_MASTER_UNCACHED),
-    msto2     => aximo(CFG_NASTI_MASTER_UNCACHED),
-    mstcfg2   => mst_cfg(CFG_NASTI_MASTER_UNCACHED),
-    interrupts => core_irqs
-  );
-end generate;
 
 dsu_ena : if CFG_DSU_ENABLE generate
   ------------------------------------
@@ -328,8 +317,6 @@ dsu_ena : if CFG_DSU_ENABLE generate
     i_dporto => dport_o,
     o_soft_rst => w_soft_rst,
     -- Run time platform statistic signals:
-    i_miss_irq  => irq_pins(CFG_IRQ_MISS_ACCESS),
-    i_miss_addr => wb_miss_addr,
     i_bus_util_w => wb_bus_util_w, -- Write access bus utilization per master statistic
     i_bus_util_r => wb_bus_util_r  -- Read access bus utilization per master statistic
   );
@@ -337,7 +324,7 @@ end generate;
 dsu_dis : if not CFG_DSU_ENABLE generate
     slv_cfg(CFG_NASTI_SLAVE_DSU) <= nasti_slave_config_none;
     axiso(CFG_NASTI_SLAVE_DSU) <= nasti_slave_out_none;
-    dport_i <= dport_in_none;
+    dport_i <= (others => dport_in_none);
 end generate;
 
   ------------------------------------
@@ -360,11 +347,11 @@ end generate;
   ------------------------------------
   --! @brief BOOT ROM module isntance with the AXI4 interface.
   --! @details Map address:
-  --!          0x00000000..0x00001fff (8 KB total)
+  --!          0x00000000..0x00003fff (16 KB total)
   boot0 : nasti_bootrom generic map (
     memtech  => CFG_MEMTECH,
     xaddr    => 16#00000#,
-    xmask    => 16#ffffe#,
+    xmask    => 16#ffffC#,
     sim_hexfile => CFG_SIM_BOOTROM_HEX
   ) port map (
     clk  => w_clk_bus,
@@ -418,15 +405,17 @@ end generate;
   gpio0 : nasti_gpio generic map (
     xaddr    => 16#80000#,
     xmask    => 16#fffff#,
-    xirq     => 0
+    xirq     => 0,
+	 width    => 12
   ) port map (
     clk   => w_clk_bus,
     nrst  => w_glob_nrst,
     cfg   => slv_cfg(CFG_NASTI_SLAVE_GPIO),
     i     => axisi(CFG_NASTI_SLAVE_GPIO),
     o     => axiso(CFG_NASTI_SLAVE_GPIO),
-    i_dip => ib_dip,
-    o_led => o_led
+    o_gpio_dir => ob_gpio_direction,
+    o_gpio => ob_gpio_opins,
+    i_gpio => ib_gpio_ipins
   );
   
   
@@ -470,7 +459,7 @@ end generate;
     o_cfg  => slv_cfg(CFG_NASTI_SLAVE_IRQCTRL),
     i_axi  => axisi(CFG_NASTI_SLAVE_IRQCTRL),
     o_axi  => axiso(CFG_NASTI_SLAVE_IRQCTRL),
-    o_irq_meip => core_irqs(CFG_CORE_IRQ_MEIP)
+    o_irq_meip => w_cpu_irq
   );
 
   ------------------------------------
