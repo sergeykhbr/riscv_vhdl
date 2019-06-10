@@ -32,7 +32,31 @@ extern void print_uart(const char *buf, int sz);
 extern void print_uart_hex(long val);
 extern void led_set(int output);
 
-long handle_trap(long cause, long epc, long long regs[32]) {
+int get_mcause() {
+    int ret;
+    asm("csrr %0, mcause" : "=r" (ret));
+    return ret;
+}
+
+int get_mepc() {
+    int ret;
+    asm("csrr %0, mepc" : "=r" (ret));
+    return ret;
+}
+
+void exception_handler_c() {
+    print_uart("mcause:", 7);
+    print_uart_hex(get_mcause());
+    print_uart(",mepc:", 6);
+    print_uart_hex(get_mepc());
+    print_uart("\r\n", 2);
+
+    /// Exception trap
+    led_set(0xF0);
+    while (1) {}
+}
+
+long interrupt_handler_c(long cause, long epc, long long regs[32]) {
     /**
      * Pending interrupt bit is cleared in the crt.S file by calling:
      *      csrc mip, MIP_MSIP
@@ -55,23 +79,12 @@ long handle_trap(long cause, long epc, long long regs[32]) {
     p_irqctrl->irq_clear = pending;
     p_irqctrl->irq_lock = 0;
 
-    if (mcause.bits.irq == 0x1 && mcause.bits.code == 11) {
-        for (int i = 0; i < CFG_IRQ_TOTAL; i++) {
-            if (pending & 0x1) {
-                p_irqctrl->irq_cause_idx = i;
-                irq_handler(i, NULL);
-            }
-            pending >>= 1;
+    for (int i = 0; i < CFG_IRQ_TOTAL; i++) {
+        if (pending & 0x1) {
+            p_irqctrl->irq_cause_idx = i;
+            irq_handler(i, NULL);
         }
-    } else {
-       print_uart("mcause:", 7);
-       print_uart_hex(cause);
-       print_uart(",mepc:", 6);
-       print_uart_hex(epc);
-       print_uart("\r\n", 2);
-       /// Exception trap
-       led_set(0xF0);
-       while (1) {}
+        pending >>= 1;
     }
 
     return epc;

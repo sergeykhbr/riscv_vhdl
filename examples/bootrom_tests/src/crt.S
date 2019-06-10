@@ -125,7 +125,7 @@ _start:
   beqz t1, 1f
 #endif
 
-# intialization when FPU enabled
+# intialization when HW FPU enabled
 #ifdef FPU_ENABLED
   fssr    x0
   fmv.d.x f0, x0

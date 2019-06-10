@@ -10,12 +10,17 @@ CFLAGS= -c -g -static -std=gnu99 -O0 -fno-common -fno-builtin-printf
 ifeq ($(FPU_ENABLED), 1)
   CFLAGS += -march=rv64imafd -DFPU_ENABLED
 else
-#  CFLAGS += -march=RV64IMA
-#  CFLAGS += -msoft-float
+  CFLAGS += -march=rv64imac -mabi=lp64
 endif
 
 
 LDFLAGS=-T test.ld -nostdlib -nostartfiles
+ifeq ($(FPU_ENABLED), 1)
+else
+  LDFLAGS += -march=rv64imac -mabi=lp64
+endif
+
+
 INCL_KEY=-I
 DIR_KEY=-B
 

@@ -58,9 +58,8 @@ int main() {
 
     led_set(0x02);
 
-#ifdef FPU_ENABLED
     test_fpu();
-#endif
+
     led_set(0x03);
     test_timer();      // Enabling timer[0] with 1 sec interrupts
 

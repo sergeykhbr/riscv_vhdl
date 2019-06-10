@@ -18,7 +18,11 @@
 #include "fw_api.h"
 
 void test_fpu(void) { 
-    printf_uart("%s", "FPU. . . . . . .");
+#ifdef FPU_ENABLED
+    printf_uart("%s", "HW_FPU . . . . .");
+#else
+    printf_uart("%s", "SOFT_FPU . . . .");
+#endif
 
     double x1 = 10.323;
     double x2 = -5.3333;

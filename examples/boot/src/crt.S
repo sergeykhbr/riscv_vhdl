@@ -16,30 +16,44 @@
 
 #include "encoding.h"
 
-  .section .isr_vector, "x"
-  .align 4
-  .globl _start
-
 ##! Disabling the compressed code
   .option norvc
 
+  .section .isr_vector, "x"
+  .align 4
+  .globl _start
+  .globl exception_handler_c
+  .globl interrupt_handler_c
+
 trap_table:
-  j _start       #
-  j bad_trap # pmp_trap
-  j bad_trap # illegal_insn_trap
-  j bad_trap
-  j bad_trap # misaligned_load_trap
-  j bad_trap # pmp_trap
-  j bad_trap # misaligned_store_trap
-  j bad_trap # pmp_trap
-  j bad_trap
-  j bad_trap # mcall_trap
-  j bad_trap
-  j bad_trap
-  j bad_trap
-  j bad_trap # __trap_from_machine_mode
-  j bad_trap
-  j bad_trap
+# 8-bytes per exception entry
+trap_table:
+  j _start            # 
+  nop
+  j exception_entry   # Instruction Misaligned
+  nop
+  j exception_entry   # Instruction Load Fault
+  nop
+  j exception_entry   # Instruction Illegal
+  nop
+  j exception_entry   # Breakpoint
+  nop
+  j exception_entry   # Load Misaligned
+  nop
+  j exception_entry   # Load Fault
+  nop
+  j exception_entry   # Store Misaligned
+  nop
+  j exception_entry   # Store Fault
+  nop
+  j exception_entry   # Call from U-mode
+  nop
+  j exception_entry   # Call from S-mode
+  nop
+  j exception_entry   # Call from H-mode
+  nop
+  j exception_entry   # Call from M-mode
+  nop
 
 bad_trap:
   j bad_trap
@@ -92,7 +106,7 @@ _start:
   #csrs mstatus, t0    # enable accelerator
 
   ##! init mtvec register (see https://github.com/riscv/riscv-test-env/blob/master/p/riscv_test.h)
-  la t0, trap_entry
+  la t0, interrupt_entry
   csrw mtvec, t0
   li t0, 0x00000800
   csrs mie, t0       # Enable External irq (ftom PLIC) for M mode
@@ -110,8 +124,8 @@ _start:
   beqz t1, 1f
 #endif
 
-# intialization when FPU enabled
-#ifdef REMOVETHIS__riscv_hard_float
+# intialization when HW FPU enabled
+#ifdef FPU_ENABLED
   fssr    x0
   fmv.s.x f0, x0
   fmv.s.x f1, x0
@@ -187,7 +201,14 @@ sp_init_coreall:
   ##! which the ERET instruction was executed.
   mret
 
-trap_entry:
+exception_entry:
+  fence
+  _save_context(tp)
+  jal exception_handler_c
+  _restore_context(tp)
+  mret
+
+interrupt_entry:
   ##! module CSRFile rises io_fatc signal that is cause of the 'ptw.invalidate'.
   fence
   csrw mscratch, a0;
@@ -208,7 +229,7 @@ trap_entry:
   li t0, 0x00000800
   csrc mip, t0      #csrc pseudo asm instruction clear CSR bit.
                     #[11] MEIP: machine pending external interrupt
-  jal handle_trap
+  jal interrupt_handler_c
 
   # tp-offset in the context array is used to save mepc value. An it may be
   # modified by isr handler during preemtive task switching.
