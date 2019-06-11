@@ -19,6 +19,7 @@
 #include "csr.h"
 #include "br_predic.h"
 #include "dbg_port.h"
+#include "regfbank.h"
 #include <fstream>
 
 
@@ -99,6 +100,7 @@ private:
         sc_signal<sc_uint<2>> memop_size;
         sc_signal<bool> rv32;                       // 32-bits instruction
         sc_signal<bool> compressed;                 // C-extension
+        sc_signal<bool> f64;                        // D-extension (FPU)
         sc_signal<bool> unsigned_op;                // Unsigned operands
         sc_signal<sc_bv<ISA_Total>> isa_type;
         sc_signal<sc_bv<Instr_Total>> instr_vec;
@@ -117,6 +119,8 @@ private:
         sc_signal<sc_uint<5>> radr2;
         sc_signal<sc_uint<5>> res_addr;
         sc_signal<sc_uint<RISCV_ARCH>> res_data;
+        sc_signal<sc_uint<5>> fadr1;
+        sc_signal<sc_uint<5>> fadr2;
         sc_signal<bool> mret;
         sc_signal<bool> uret;
         sc_signal<sc_uint<12>> csr_addr;
@@ -159,6 +163,12 @@ private:
         sc_signal<sc_uint<RISCV_ARCH>> ra;      // Return address
     } ireg;
 
+    struct FloatRegsType {
+        sc_signal<sc_uint<RISCV_ARCH>> rdata1;
+        sc_signal<sc_uint<RISCV_ARCH>> rdata2;
+        sc_signal<sc_uint<RISCV_ARCH>> dport_rdata;
+    } freg;
+
     struct CsrType {
         sc_signal<sc_uint<RISCV_ARCH>> rdata;
         sc_signal<sc_uint<RISCV_ARCH>> dport_rdata;
@@ -174,6 +184,8 @@ private:
         sc_signal<bool> csr_write;                  // Region 0: CSR write enable
         sc_signal<bool> ireg_ena;                   // Region 1: Access to integer register bank is enabled
         sc_signal<bool> ireg_write;                 // Region 1: Integer registers bank write pulse
+        sc_signal<bool> freg_ena;                   // Region 1: Access to float register bank is enabled
+        sc_signal<bool> freg_write;                 // Region 1: Float registers bank write pulse
         sc_signal<bool> npc_write;                  // Region 1: npc write enable
         sc_signal<bool> halt;                       // Halt signal is equal to hold pipeline
         sc_signal<sc_uint<64>> clock_cnt;           // Number of clocks excluding halt state
@@ -200,6 +212,7 @@ private:
     } w;
 
     sc_signal<sc_uint<5>> wb_ireg_dport_addr;
+    sc_signal<sc_uint<5>> wb_freg_dport_addr;
     sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_exec_dport_npc;
 
     sc_signal<bool> w_fetch_pipeline_hold;
@@ -213,6 +226,7 @@ private:
 
     BranchPredictor *predic0;
     RegIntBank *iregs0;
+    RegFloatBank *fregs0;
     CsrRegs *csr0;
 
     DbgPort *dbg0;

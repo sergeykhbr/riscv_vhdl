@@ -34,8 +34,11 @@ SC_MODULE(DbgPort) {
     sc_in<sc_uint<RISCV_ARCH>> i_csr_rdata;             // Region 0: CSR read value
     sc_out<bool> o_ireg_ena;                            // Region 1: Access to integer register bank is enabled
     sc_out<bool> o_ireg_write;                          // Region 1: Integer registers bank write pulse
+    sc_out<bool> o_freg_ena;                            // Region 1: Access to float register bank is enabled
+    sc_out<bool> o_freg_write;                          // Region 1: Float registers bank write pulse
     sc_out<bool> o_npc_write;                           // Region 1: npc write enable
     sc_in<sc_uint<RISCV_ARCH>> i_ireg_rdata;            // Region 1: Integer register read value
+    sc_in<sc_uint<RISCV_ARCH>> i_freg_rdata;            // Region 1: Float register read value
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_pc;                // Region 1: Instruction pointer
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_npc;               // Region 1: Next Instruction pointer
     sc_in<bool> i_e_valid;                              // Stepping control signal

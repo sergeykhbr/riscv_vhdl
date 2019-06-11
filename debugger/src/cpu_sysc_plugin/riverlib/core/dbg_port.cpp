@@ -19,6 +19,7 @@ DbgPort::DbgPort(sc_module_name name_) : sc_module(name_) {
     sensitive << i_dport_addr;
     sensitive << i_dport_wdata;
     sensitive << i_ireg_rdata;
+    sensitive << i_freg_rdata;
     sensitive << i_csr_rdata;
     sensitive << i_pc;
     sensitive << i_npc;
@@ -88,8 +89,10 @@ void DbgPort::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_core_addr, "/top/proc0/dbg0/o_core_addr");
         sc_trace(o_vcd, o_core_wdata, "/top/proc0/dbg0/o_core_wdata");
         sc_trace(o_vcd, o_ireg_ena, "/top/proc0/dbg0/o_ireg_ena");
+        sc_trace(o_vcd, o_freg_ena, "/top/proc0/dbg0/o_freg_ena");
         sc_trace(o_vcd, o_npc_write, "/top/proc0/dbg0/o_npc_write");
         sc_trace(o_vcd, o_ireg_write, "/top/proc0/dbg0/o_ireg_write");
+        sc_trace(o_vcd, o_freg_write, "/top/proc0/dbg0/o_freg_write");
         sc_trace(o_vcd, r.clock_cnt, "/top/proc0/dbg0/r_clock_cnt");
         sc_trace(o_vcd, r.stepping_mode_cnt, "/top/proc0/dbg0/r_stepping_mode_cnt");
         sc_trace(o_vcd, r.stepping_mode, "/top/proc0/dbg0/r_stepping_mode");
@@ -110,6 +113,8 @@ void DbgPort::comb() {
     bool w_o_csr_write;
     bool w_o_ireg_ena;
     bool w_o_ireg_write;
+    bool w_o_freg_ena;
+    bool w_o_freg_write;
     bool w_o_npc_write;
     bool w_cur_halt;
 
@@ -124,6 +129,8 @@ void DbgPort::comb() {
     w_o_csr_write = 0;
     w_o_ireg_ena = 0;
     w_o_ireg_write = 0;
+    w_o_freg_ena = 0;
+    w_o_freg_write = 0;
     w_o_npc_write = 0;
     v.br_fetch_valid = 0;
     v.rd_trbuf_ena = 0;
@@ -204,6 +211,14 @@ void DbgPort::comb() {
                 wb_rdata = r.stack_trace_cnt;
                 if (i_dport_write.read()) {
                     v.stack_trace_cnt = i_dport_wdata.read()(4, 0);
+                }
+            } else if (wb_idx >= 64 && wb_idx < 96) {
+                w_o_freg_ena = 1;
+                wb_o_core_addr = i_dport_addr;
+                wb_rdata = i_freg_rdata;
+                if (i_dport_write.read()) {
+                    w_o_freg_write = 1;
+                    wb_o_core_wdata = i_dport_wdata;
                 }
             } else if (wb_idx >= 128 
                 && wb_idx < (128 + 2 * CFG_STACK_TRACE_BUF_SIZE)) {
@@ -321,6 +336,8 @@ void DbgPort::comb() {
     o_csr_write = w_o_csr_write;
     o_ireg_ena = w_o_ireg_ena;
     o_ireg_write = w_o_ireg_write;
+    o_freg_ena = w_o_freg_ena;
+    o_freg_write = w_o_freg_write;
     o_npc_write = w_o_npc_write;
     o_clock_cnt = r.clock_cnt;
     o_executed_cnt = r.executed_cnt;

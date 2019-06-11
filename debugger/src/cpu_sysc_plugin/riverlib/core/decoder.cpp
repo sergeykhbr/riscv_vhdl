@@ -643,9 +643,110 @@ void InstrDecoder::comb() {
                 w_error = true;
             }
             break;
-
         default:
-            w_error = true;
+            if (CFG_HW_FPU_ENABLE) {
+                switch (wb_opcode1) {
+                case OPCODE_FPU_LD:
+                    wb_isa_type[ISA_I_type] = 1;
+                    if (wb_opcode2 == 3) {
+                        wb_dec[Instr_FLD] = 1;
+                    } else {
+                        w_error = true;
+                    }
+                    break;
+                case OPCODE_FPU_SD:
+                    wb_isa_type[ISA_I_type] = 1;
+                    if (wb_opcode2 == 3) {
+                        wb_dec[Instr_FSD] = 1;
+                    } else {
+                        w_error = true;
+                    }
+                    break;
+                case OPCODE_FPU_OP:
+                    wb_isa_type[ISA_R_type] = 1;
+                    switch (wb_instr(31, 25)) {
+                    case 0x0:
+                        wb_dec[Instr_FADD_D] = 1;
+                        break;
+                    case 0x5:
+                        wb_dec[Instr_FSUB_D] = 1;
+                        break;
+                    case 0x9:
+                        wb_dec[Instr_FMUL_D] = 1;
+                        break;
+                    case 0xB:
+                        wb_dec[Instr_FDIV_D] = 1;
+                        break;
+                    case 0x15:
+                        if (wb_opcode2 == 0) {
+                            wb_dec[Instr_FMIN_D] = 1;
+                        } else if (wb_opcode2 == 1) {
+                            wb_dec[Instr_FMAX_D] = 1;
+                        } else {
+                            w_error = true;
+                        }
+                        break;
+                    case 0x51:
+                        if (wb_opcode2 == 0) {
+                            wb_dec[Instr_FLE_D] = 1;
+                        } else if (wb_opcode2 == 1) {
+                            wb_dec[Instr_FLT_D] = 1;
+                        } else if (wb_opcode2 == 2) {
+                            wb_dec[Instr_FEQ_D] = 1;
+                        } else {
+                            w_error = true;
+                        }
+                        break;
+                    case 0x61:
+                        if (wb_instr(24, 20) == 0) {
+                            wb_dec[Instr_FCVT_W_D] = 1;
+                        } else if (wb_instr(24, 20) == 1) {
+                            wb_dec[Instr_FCVT_WU_D] = 1;
+                        } else if (wb_opcode2 == 2) {
+                            wb_dec[Instr_FCVT_L_D] = 1;
+                        } else if (wb_opcode2 == 3) {
+                            wb_dec[Instr_FCVT_LU_D] = 1;
+                        } else {
+                            w_error = true;
+                        }
+                        break;
+                    case 0x69:
+                        if (wb_instr(24, 20) == 0) {
+                            wb_dec[Instr_FCVT_D_W] = 1;
+                        } else if (wb_instr(24, 20) == 1) {
+                            wb_dec[Instr_FCVT_D_WU] = 1;
+                        } else if (wb_opcode2 == 2) {
+                            wb_dec[Instr_FCVT_D_L] = 1;
+                        } else if (wb_opcode2 == 3) {
+                            wb_dec[Instr_FCVT_D_LU] = 1;
+                        } else {
+                            w_error = true;
+                        }
+                        break;
+                    case 0x71:
+                        if (wb_instr(24, 20) == 0 && wb_opcode2 == 0) {
+                            wb_dec[Instr_FMOV_X_D] = 1;
+                        } else {
+                            w_error = true;
+                        }
+                        break;
+                    case 0x79:
+                        if (wb_instr(24, 20) == 0 && wb_opcode2 == 0) {
+                            wb_dec[Instr_FMOV_D_X] = 1;
+                        } else {
+                            w_error = true;
+                        }
+                        break;
+                    default:
+                        w_error = true;
+                    }
+                    break;
+                default:
+                    w_error = true;
+                }
+            } else {
+                w_error = true;
+            }
         }
         wb_instr_out = wb_instr;
     }  // compressed/!compressed
@@ -659,14 +760,17 @@ void InstrDecoder::comb() {
         v.isa_type = wb_isa_type;
         v.instr_vec = wb_dec;
         v.memop_store = (wb_dec[Instr_SD] | wb_dec[Instr_SW] 
-                | wb_dec[Instr_SH] | wb_dec[Instr_SB]).to_bool();
+                | wb_dec[Instr_SH] | wb_dec[Instr_SB]).to_bool()
+                | wb_dec[Instr_FSD].to_bool();
         v.memop_load = (wb_dec[Instr_LD] | wb_dec[Instr_LW] 
                 | wb_dec[Instr_LH] | wb_dec[Instr_LB]
                 | wb_dec[Instr_LWU] | wb_dec[Instr_LHU] 
-                | wb_dec[Instr_LBU]).to_bool();
+                | wb_dec[Instr_LBU]).to_bool()
+                | wb_dec[Instr_FLD].to_bool();
         v.memop_sign_ext = (wb_dec[Instr_LD] | wb_dec[Instr_LW]
                 | wb_dec[Instr_LH] | wb_dec[Instr_LB]).to_bool();
-        if (wb_dec[Instr_LD] || wb_dec[Instr_SD]) {
+        if (wb_dec[Instr_LD] || wb_dec[Instr_SD] ||
+            wb_dec[Instr_FLD] || wb_dec[Instr_FSD]) {
             v.memop_size = MEMOP_8B;
         } else if (wb_dec[Instr_LW] || wb_dec[Instr_LWU] || wb_dec[Instr_SW]) {
             v.memop_size = MEMOP_4B;
@@ -676,7 +780,9 @@ void InstrDecoder::comb() {
             v.memop_size = MEMOP_1B;
         }
         v.unsigned_op = (wb_dec[Instr_DIVU] | wb_dec[Instr_REMU] |
-                wb_dec[Instr_DIVUW] | wb_dec[Instr_REMUW]).to_bool();
+                wb_dec[Instr_DIVUW] | wb_dec[Instr_REMUW]).to_bool() |
+                wb_dec[Instr_FCVT_WU_D].to_bool() |
+                wb_dec[Instr_FCVT_LU_D].to_bool();
 
         v.rv32 = (wb_dec[Instr_ADDW] | wb_dec[Instr_ADDIW] 
             | wb_dec[Instr_SLLW] | wb_dec[Instr_SLLIW] | wb_dec[Instr_SRAW]
@@ -684,6 +790,18 @@ void InstrDecoder::comb() {
             | wb_dec[Instr_SRLW] | wb_dec[Instr_SRLIW] | wb_dec[Instr_SUBW] 
             | wb_dec[Instr_DIVW] | wb_dec[Instr_DIVUW] | wb_dec[Instr_MULW]
             | wb_dec[Instr_REMW] | wb_dec[Instr_REMUW]).to_bool();
+
+        v.f64 = (wb_dec[Instr_FADD_D] | wb_dec[Instr_FSUB_D]
+            | wb_dec[Instr_FMUL_D] | wb_dec[Instr_FDIV_D]
+            | wb_dec[Instr_FMIN_D] | wb_dec[Instr_FMAX_D]
+            | wb_dec[Instr_FLE_D] | wb_dec[Instr_FLT_D]
+            | wb_dec[Instr_FEQ_D] | wb_dec[Instr_FCVT_W_D]
+            | wb_dec[Instr_FCVT_WU_D] | wb_dec[Instr_FCVT_L_D]
+            | wb_dec[Instr_FCVT_LU_D] | wb_dec[Instr_FMOV_X_D]
+            | wb_dec[Instr_FCVT_D_W] | wb_dec[Instr_FCVT_D_WU]
+            | wb_dec[Instr_FCVT_D_L] | wb_dec[Instr_FCVT_D_LU]
+            | wb_dec[Instr_FMOV_D_X] | wb_dec[Instr_FLD]
+            | wb_dec[Instr_FSD]).to_bool();
         
         v.instr_unimplemented = w_error;
     } else if (!i_any_hold.read()) {
@@ -703,6 +821,7 @@ void InstrDecoder::comb() {
         v.memop_size = MEMOP_1B;
         v.unsigned_op = 0;
         v.rv32 = 0;
+        v.f64 = 0;
         v.compressed = 0;
 
         v.instr_unimplemented = !wb_dec.or_reduce();
@@ -717,6 +836,7 @@ void InstrDecoder::comb() {
     o_memop_size = r.memop_size;
     o_unsigned_op = r.unsigned_op;
     o_rv32 = r.rv32;
+    o_f64 = r.f64;
     o_compressed = r.compressed;
     o_isa_type = r.isa_type;
     o_instr_vec = r.instr_vec;

@@ -76,6 +76,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid)
     dec0->o_unsigned_op(w.d.unsigned_op);
     dec0->o_rv32(w.d.rv32);
     dec0->o_compressed(w.d.compressed);
+    dec0->o_f64(w.d.f64);
     dec0->o_isa_type(w.d.isa_type);
     dec0->o_instr_vec(w.d.instr_vec);
     dec0->o_exception(w.d.exception);
@@ -104,6 +105,10 @@ Processor::Processor(sc_module_name name_, uint32_t hartid)
     exec0->i_rdata1(ireg.rdata1);
     exec0->o_radr2(w.e.radr2);
     exec0->i_rdata2(ireg.rdata2);
+    exec0->o_fadr1(w.e.fadr1);
+    exec0->i_rfdata1(freg.rdata1);
+    exec0->o_fadr2(w.e.fadr2);
+    exec0->i_rfdata2(freg.rdata2);
     exec0->o_res_addr(w.e.res_addr);
     exec0->o_res_data(w.e.res_data);
     exec0->o_pipeline_hold(w.e.pipeline_hold);
@@ -195,8 +200,29 @@ Processor::Processor(sc_module_name name_, uint32_t hartid)
     iregs0->i_dport_write(dbg.ireg_write);
     iregs0->i_dport_wdata(dbg.core_wdata);
     iregs0->o_dport_rdata(ireg.dport_rdata);
-
     iregs0->o_ra(ireg.ra);   // Return address
+
+    if (CFG_HW_FPU_ENABLE) {
+        fregs0 = new RegFloatBank("fregs0");
+        fregs0->i_clk(i_clk);
+        fregs0->i_nrst(i_nrst);
+        fregs0->i_radr1(w.e.fadr1);
+        fregs0->o_rdata1(freg.rdata1);
+        fregs0->i_radr2(w.e.fadr2);
+        fregs0->o_rdata2(freg.rdata2);
+        fregs0->i_waddr(w.w.waddr);
+        fregs0->i_wena(w.w.wena);
+        fregs0->i_wdata(w.w.wdata);
+        fregs0->i_dport_addr(wb_freg_dport_addr);
+        fregs0->i_dport_ena(dbg.freg_ena);
+        fregs0->i_dport_write(dbg.freg_write);
+        fregs0->i_dport_wdata(dbg.core_wdata);
+        fregs0->o_dport_rdata(freg.dport_rdata);
+    } else {
+        freg.rdata1 = 0;
+        freg.rdata2 = 0;
+        freg.dport_rdata = 0;
+    }
 
     csr0 = new CsrRegs("csr0", hartid);
     csr0->i_clk(i_clk);
@@ -247,8 +273,11 @@ Processor::Processor(sc_module_name name_, uint32_t hartid)
     dbg0->i_csr_rdata(csr.dport_rdata);
     dbg0->o_ireg_ena(dbg.ireg_ena);
     dbg0->o_ireg_write(dbg.ireg_write);
+    dbg0->o_freg_ena(dbg.freg_ena);
+    dbg0->o_freg_write(dbg.freg_write);
     dbg0->o_npc_write(dbg.npc_write);
     dbg0->i_ireg_rdata(ireg.dport_rdata);
+    dbg0->i_freg_rdata(freg.dport_rdata);
     dbg0->i_pc(w.e.pc);
     dbg0->i_npc(w.e.npc);
     dbg0->i_e_call(w.e.call);
@@ -279,6 +308,9 @@ Processor::~Processor() {
     delete mem0;
     delete predic0;
     delete iregs0;
+    if (CFG_HW_FPU_ENABLE) {
+        delete fregs0;
+    }
     delete csr0;
     delete dbg0;
     if (reg_dbg) {
@@ -304,6 +336,9 @@ void Processor::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     fetch0->generateVCD(i_vcd, o_vcd);
     mem0->generateVCD(i_vcd, o_vcd);
     iregs0->generateVCD(i_vcd, o_vcd);
+    if (CFG_HW_FPU_ENABLE) {
+        fregs0->generateVCD(i_vcd, o_vcd);
+    }
 }
 
 void Processor::comb() {
@@ -313,6 +348,7 @@ void Processor::comb() {
     w_exec_pipeline_hold = w.f.pipeline_hold | w.m.pipeline_hold | dbg.halt;
 
     wb_ireg_dport_addr = dbg.core_addr.read()(4, 0);
+    wb_freg_dport_addr = dbg.core_addr.read()(4, 0);
     wb_exec_dport_npc = dbg.core_wdata.read()(BUS_ADDR_WIDTH-1, 0);
 
     o_req_ctrl_valid = w.f.imem_req_valid;

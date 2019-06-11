@@ -50,6 +50,10 @@ SC_MODULE(InstrExecute) {
     sc_in<sc_uint<RISCV_ARCH>> i_rdata1;        // Integer register value 1
     sc_out<sc_uint<5>> o_radr2;                 // Integer register index 2
     sc_in<sc_uint<RISCV_ARCH>> i_rdata2;        // Integer register value 2
+    sc_out<sc_uint<5>> o_fadr1;                 // Float register index 1
+    sc_in<sc_uint<RISCV_ARCH>> i_rfdata1;       // Float register value 1
+    sc_out<sc_uint<5>> o_fadr2;                 // Float register index 2
+    sc_in<sc_uint<RISCV_ARCH>> i_rfdata2;       // Float register value 2
     sc_out<sc_uint<5>> o_res_addr;              // Address to store result of the instruction (0=do not store)
     sc_out<sc_uint<RISCV_ARCH>> o_res_data;     // Value to store
     sc_out<bool> o_pipeline_hold;               // Hold pipeline while 'writeback' not done or multi-clock instruction.

@@ -14,14 +14,17 @@
 namespace debugger {
 
 const uint8_t OPCODE_LB     = 0x00; // 00000: LB, LH, LW, LD, LBU, LHU, LWU
+const uint8_t OPCODE_FPU_LD = 0x01; // 00001: FLD
 const uint8_t OPCODE_FENCE  = 0x03; // 00011: FENCE, FENCE_I
 const uint8_t OPCODE_ADDI   = 0x04; // 00100: ADDI, ANDI, ORI, SLLI, SLTI, SLTIU, SRAI, SRLI, XORI
 const uint8_t OPCODE_AUIPC  = 0x05; // 00101: AUIPC
 const uint8_t OPCODE_ADDIW  = 0x06; // 00110: ADDIW, SLLIW, SRAIW, SRLIW
 const uint8_t OPCODE_SB     = 0x08; // 01000: SB, SH, SW, SD
+const uint8_t OPCODE_FPU_SD = 0x09; // 01001: FSD
 const uint8_t OPCODE_ADD    = 0x0C; // 01100: ADD, AND, OR, SLT, SLTU, SLL, SRA, SRL, SUB, XOR, DIV, DIVU, MUL, REM, REMU
 const uint8_t OPCODE_LUI    = 0x0D; // 01101: LUI
 const uint8_t OPCODE_ADDW   = 0x0E; // 01110: ADDW, SLLW, SRAW, SRLW, SUBW, DIVW, DIVUW, MULW, REMW, REMUW
+const uint8_t OPCODE_FPU_OP = 0x14; // 10100: FPU operation
 const uint8_t OPCODE_BEQ    = 0x18; // 11000: BEQ, BNE, BLT, BGE, BLTU, BGEU
 const uint8_t OPCODE_JALR   = 0x19; // 11001: JALR
 const uint8_t OPCODE_JAL    = 0x1B; // 11011: JAL
@@ -64,6 +67,7 @@ SC_MODULE(InstrDecoder) {
     sc_out<sc_uint<2>> o_memop_size;            // Memory transaction size
     sc_out<bool> o_rv32;                        // 32-bits instruction
     sc_out<bool> o_compressed;                  // C-type instruction
+    sc_out<bool> o_f64;                         // 64-bits FPU (D-extension)
     sc_out<bool> o_unsigned_op;                 // Unsigned operands
     sc_out<sc_bv<ISA_Total>> o_isa_type;        // Instruction format accordingly with ISA
     sc_out<sc_bv<Instr_Total>> o_instr_vec;     // One bit per decoded instruction bus
@@ -91,6 +95,7 @@ private:
         sc_signal<sc_uint<2>> memop_size;
         sc_signal<bool> unsigned_op;
         sc_signal<bool> rv32;
+        sc_signal<bool> f64;
         sc_signal<bool> compressed;
 
         sc_signal<bool> instr_unimplemented;

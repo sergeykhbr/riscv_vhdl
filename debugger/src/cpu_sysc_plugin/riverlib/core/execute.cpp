@@ -41,6 +41,8 @@ InstrExecute::InstrExecute(sc_module_name name_)  : sc_module(name_) {
     sensitive << i_dport_npc;
     sensitive << i_rdata1;
     sensitive << i_rdata2;
+    sensitive << i_rfdata1;
+    sensitive << i_rfdata2;
     sensitive << i_csr_rdata;
     sensitive << i_trap_valid;
     sensitive << i_trap_pc;
@@ -653,6 +655,12 @@ void InstrExecute::comb() {
 
     o_radr1 = wb_radr1;
     o_radr2 = wb_radr2;
+    if (CFG_HW_FPU_ENABLE) {
+        // TODO: 
+    } else {
+        o_fadr1 = 0;
+        o_fadr2 = 0;
+    }
     o_res_addr = r.res_addr;
     o_res_data = r.res_val;
     o_pipeline_hold = w_o_pipeline_hold;

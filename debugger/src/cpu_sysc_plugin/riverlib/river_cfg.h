@@ -23,6 +23,7 @@ namespace debugger {
 
 static const uint64_t CFG_VENDOR_ID         = 0x000000F1;
 static const uint64_t CFG_IMPLEMENTATION_ID = 0x20190521;
+static const bool CFG_HW_FPU_ENABLE         = false;
 
 static const int RISCV_ARCH     = 64;
 
@@ -141,7 +142,27 @@ enum EInstuctionsType {
     Instr_REMUW,
     Instr_ECALL,
     Instr_EBREAK,
-
+    Instr_FADD_D,
+    Instr_FCVT_D_W,
+    Instr_FCVT_D_WU,
+    Instr_FCVT_D_L,
+    Instr_FCVT_D_LU,
+    Instr_FCVT_W_D,
+    Instr_FCVT_WU_D,
+    Instr_FCVT_L_D,
+    Instr_FCVT_LU_D,
+    Instr_FDIV_D,
+    Instr_FEQ_D,
+    Instr_FLD,
+    Instr_FLE_D,
+    Instr_FLT_D,
+    Instr_FMAX_D,
+    Instr_FMIN_D,
+    Instr_FMOV_D_X,
+    Instr_FMOV_X_D,
+    Instr_FMUL_D,
+    Instr_FSD,
+    Instr_FSUB_D,
     Instr_Total
 };
 
