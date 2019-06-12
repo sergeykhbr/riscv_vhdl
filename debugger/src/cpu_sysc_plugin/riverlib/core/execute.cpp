@@ -34,6 +34,7 @@ InstrExecute::InstrExecute(sc_module_name name_)  : sc_module(name_) {
     sensitive << i_unsigned_op;
     sensitive << i_rv32;
     sensitive << i_compressed;
+    sensitive << i_f64;
     sensitive << i_isa_type;
     sensitive << i_ivec;
     sensitive << i_unsup_exception;
@@ -61,6 +62,7 @@ InstrExecute::InstrExecute(sc_module_name name_)  : sc_module(name_) {
     sensitive << r.multi_ena[Multi_MUL];
     sensitive << r.multi_ena[Multi_DIV];
     sensitive << r.multi_rv32;
+    sensitive << r.multi_f64;
     sensitive << r.multi_unsigned;
     sensitive << r.multi_residual_high;
     sensitive << r.multiclock_ena;
@@ -142,6 +144,7 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_wb_done, "/top/proc0/exec0/i_wb_done");
         sc_trace(o_vcd, i_rdata1, "/top/proc0/exec0/i_rdata1");
         sc_trace(o_vcd, i_rdata2, "/top/proc0/exec0/i_rdata2");
+        sc_trace(o_vcd, i_f64, "/top/proc0/exec0/i_f64");
         sc_trace(o_vcd, o_valid, "/top/proc0/exec0/o_valid");
         sc_trace(o_vcd, o_npc, "/top/proc0/exec0/o_npc");
         sc_trace(o_vcd, o_pc, "/top/proc0/exec0/o_pc");
@@ -179,14 +182,14 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void InstrExecute::comb() {
-    sc_uint<5> wb_radr1;
+    sc_uint<6> wb_radr1;        // [5] 0=Integer bank; 1=FPU bank
     sc_uint<RISCV_ARCH> wb_rdata1;
-    sc_uint<5> wb_radr2;
+    sc_uint<6> wb_radr2;
     sc_uint<RISCV_ARCH> wb_rdata2;
     bool w_mret;
     bool w_uret;
     bool w_csr_wena;
-    sc_uint<5> wb_res_addr;
+    sc_uint<6> wb_res_addr;
     sc_uint<12> wb_csr_addr;
     sc_uint<RISCV_ARCH> wb_csr_wdata;
     sc_uint<RISCV_ARCH> wb_res;
@@ -257,19 +260,29 @@ void InstrExecute::comb() {
                           & w_pc_valid & (!r.multiclock_ena);
 
     if (i_isa_type.read()[ISA_R_type]) {
-        wb_radr1 = i_d_instr.read().range(19, 15);
+        wb_radr1 = (0, i_d_instr.read().range(19, 15));
         wb_rdata1 = i_rdata1;
-        wb_radr2 = i_d_instr.read().range(24, 20);
+        wb_radr2 = (0, i_d_instr.read().range(24, 20));
         wb_rdata2 = i_rdata2;
+        if (CFG_HW_FPU_ENABLE && i_f64.read() == 1) {
+            if (wv[Instr_FMOV_D_X].to_bool() == 0) {
+                wb_radr1 = (1, i_d_instr.read().range(19, 15));
+                wb_rdata1 = i_rfdata1;
+            }
+            if (wv[Instr_FMOV_X_D].to_bool() == 0) {
+                wb_radr2 = (1, i_d_instr.read().range(24, 20));
+                wb_rdata2 = i_rfdata2;
+            }
+        }
     } else if (i_isa_type.read()[ISA_I_type]) {
-        wb_radr1 = i_d_instr.read().range(19, 15);
+        wb_radr1 = (0, i_d_instr.read().range(19, 15));
         wb_rdata1 = i_rdata1;
         wb_radr2 = 0;
         wb_rdata2 = (wb_mask_i31(63, 12), i_d_instr.read().range(31, 20));
     } else if (i_isa_type.read()[ISA_SB_type]) {
-        wb_radr1 = i_d_instr.read().range(19, 15);
+        wb_radr1 = (0, i_d_instr.read().range(19, 15));
         wb_rdata1 = i_rdata1;
-        wb_radr2 = i_d_instr.read().range(24, 20);
+        wb_radr2 = (0, i_d_instr.read().range(24, 20));
         wb_rdata2 = i_rdata2;
         wb_off(RISCV_ARCH-1, 12) = wb_mask_i31(RISCV_ARCH-1, 12);
         wb_off[12] = i_d_instr.read()[31];
@@ -293,13 +306,17 @@ void InstrExecute::comb() {
         wb_rdata2(31, 0) = i_d_instr.read().range(31, 12) << 12;
         wb_rdata2(RISCV_ARCH-1, 32) = wb_mask_i31(RISCV_ARCH-1, 32);
     } else if (i_isa_type.read()[ISA_S_type]) {
-        wb_radr1 = i_d_instr.read().range(19, 15);
+        wb_radr1 = (0, i_d_instr.read().range(19, 15));
         wb_rdata1 = i_rdata1;
-        wb_radr2 = i_d_instr.read().range(24, 20);
+        wb_radr2 = (0, i_d_instr.read().range(24, 20));
         wb_rdata2 = i_rdata2;
         wb_off(RISCV_ARCH-1, 12) = wb_mask_i31(RISCV_ARCH-1, 12);
         wb_off(11, 5) = i_d_instr.read()(31, 25);
         wb_off(4, 0) = i_d_instr.read()(11, 7);
+        if (CFG_HW_FPU_ENABLE && wv[Instr_FSD].to_bool()) {
+            wb_radr2 = (1, i_d_instr.read().range(24, 20));
+            wb_rdata2 = i_rfdata2;
+        }
     }
 
     // parallel ALU:
@@ -326,6 +343,7 @@ void InstrExecute::comb() {
     w_res_wena = !(wv[Instr_BEQ] | wv[Instr_BGE] | wv[Instr_BGEU]
                | wv[Instr_BLT] | wv[Instr_BLTU] | wv[Instr_BNE]
                | wv[Instr_SD] | wv[Instr_SW] | wv[Instr_SH] | wv[Instr_SB]
+               | wv[Instr_FSD]
                | wv[Instr_MRET] | wv[Instr_URET]
                | wv[Instr_ECALL] | wv[Instr_EBREAK]).to_bool();
 
@@ -333,9 +351,19 @@ void InstrExecute::comb() {
         wb_res_addr = r.multi_res_addr;
         v.multiclock_ena = 0;
     } else if (w_res_wena) {
-        wb_res_addr = i_d_instr.read().range(11, 7);
+        wb_res_addr = (0, i_d_instr.read().range(11, 7));
+        if (CFG_HW_FPU_ENABLE) {
+            if (i_f64.read() == 1 && wv[Instr_FMOV_X_D].to_bool() == 0) {
+                wb_res_addr |= 0x20;
+            }
+        }
     } else {
         wb_res_addr = 0;
+        if (CFG_HW_FPU_ENABLE) {
+            if (i_f64.read() == 1 && wv[Instr_FMOV_X_D].to_bool() == 0) {
+                wb_res_addr |= 0x20;
+            }
+        }
     }
     w_less = 0;
     w_gr_equal = 0;
@@ -422,6 +450,7 @@ void InstrExecute::comb() {
     v.multi_ena[Multi_MUL] = 0;
     v.multi_ena[Multi_DIV] = 0;
     v.multi_rv32 = i_rv32;
+    v.multi_f64 = i_f64;
     v.multi_unsigned = i_unsigned_op;
     v.multi_residual_high = 0;
     v.multi_a1 = i_rdata1;
@@ -503,7 +532,7 @@ void InstrExecute::comb() {
         w_csr_wena = 1;
         wb_csr_addr = wb_rdata2.range(11, 0);
         wb_csr_wdata(RISCV_ARCH-1, 5) = i_csr_rdata.read()(RISCV_ARCH-1, 5);
-        wb_csr_wdata(4, 0) = i_csr_rdata.read()(4, 0) & ~wb_radr1;  // zero-extending 5 to 64-bits
+        wb_csr_wdata(4, 0) = i_csr_rdata.read()(4, 0) & ~wb_radr1(4, 0);  // zero-extending 5 to 64-bits
     } else if (wv[Instr_CSRRS]) {
         wb_res = i_csr_rdata;
         w_csr_wena = 1;
@@ -514,7 +543,7 @@ void InstrExecute::comb() {
         w_csr_wena = 1;
         wb_csr_addr = wb_rdata2.range(11, 0);
         wb_csr_wdata(RISCV_ARCH-1, 5) = i_csr_rdata.read()(RISCV_ARCH-1, 5);
-        wb_csr_wdata(4, 0) = i_csr_rdata.read()(4, 0) | wb_radr1;  // zero-extending 5 to 64-bits
+        wb_csr_wdata(4, 0) = i_csr_rdata.read()(4, 0) | wb_radr1(4, 0);  // zero-extending 5 to 64-bits
     } else if (wv[Instr_CSRRW]) {
         wb_res = i_csr_rdata;
         w_csr_wena = 1;
@@ -525,7 +554,7 @@ void InstrExecute::comb() {
         w_csr_wena = 1;
         wb_csr_addr = wb_rdata2.range(11, 0);
         wb_csr_wdata(RISCV_ARCH-1, 5) = 0;
-        wb_csr_wdata(4, 0) = wb_radr1;  // zero-extending 5 to 64-bits
+        wb_csr_wdata(4, 0) = wb_radr1(4, 0);  // zero-extending 5 to 64-bits
     }
 
     w_d_valid = (w_d_acceptable && !w_multi_ena) || w_multi_valid;
@@ -644,6 +673,7 @@ void InstrExecute::comb() {
         v.multi_ena[Multi_MUL] = 0;
         v.multi_ena[Multi_DIV] = 0;
         v.multi_rv32 = 0;
+        v.multi_f64 = 0;
         v.multi_unsigned = 0;
         v.multi_residual_high = 0;
         v.multi_a1 = 0;
@@ -655,12 +685,6 @@ void InstrExecute::comb() {
 
     o_radr1 = wb_radr1;
     o_radr2 = wb_radr2;
-    if (CFG_HW_FPU_ENABLE) {
-        // TODO: 
-    } else {
-        o_fadr1 = 0;
-        o_fadr2 = 0;
-    }
     o_res_addr = r.res_addr;
     o_res_data = r.res_val;
     o_pipeline_hold = w_o_pipeline_hold;

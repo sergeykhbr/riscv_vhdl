@@ -26,13 +26,13 @@ namespace debugger {
 SC_MODULE(RegFloatBank) {
     sc_in<bool> i_clk;                      // Clock
     sc_in<bool> i_nrst;                     // Reset. Active LOW
-    sc_in<sc_uint<5>> i_radr1;              // Port 1 read address
+    sc_in<sc_uint<6>> i_radr1;              // Port 1 read address
     sc_out<sc_uint<RISCV_ARCH>> o_rdata1;   // Port 1 read value
 
-    sc_in<sc_uint<5>> i_radr2;              // Port 2 read address
+    sc_in<sc_uint<6>> i_radr2;              // Port 2 read address
     sc_out<sc_uint<RISCV_ARCH>> o_rdata2;   // Port 2 read value
 
-    sc_in<sc_uint<5>> i_waddr;              // Writing value
+    sc_in<sc_uint<6>> i_waddr;              // Writing value
     sc_in<bool> i_wena;                     // Writing is enabled
     sc_in<sc_uint<RISCV_ARCH>> i_wdata;     // Writing value
 
@@ -59,7 +59,7 @@ SC_MODULE(RegFloatBank) {
 
     void R_RESET(RegistersType &iv) {
         iv.mem[0] = 0;
-        for (int i = 1; i < RegFpu_Total; i++) {
+        for (int i = 0; i < RegFpu_Total; i++) {
             iv.mem[i] = 0xfeedface;
         }
         iv.update = 0;

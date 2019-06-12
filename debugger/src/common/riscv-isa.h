@@ -407,38 +407,38 @@ enum ERegNames {
 };
 
 enum ERegFpuNames {
-    Reg_f0,
-    Reg_f1,
-    Reg_f2,
-    Reg_f3,
-    Reg_f4,
-    Reg_f5,
-    Reg_f6,
-    Reg_f7,
-    Reg_f8,
-    Reg_f9,
-    Reg_f10,
-    Reg_f11,
-    Reg_f12,
-    Reg_f13,
-    Reg_f14,
-    Reg_f15,
-    Reg_f16,
-    Reg_f17,
-    Reg_f18,
-    Reg_f19,
-    Reg_f20,
-    Reg_f21,
-    Reg_f22,
-    Reg_f23,
-    Reg_f24,
-    Reg_f25,
-    Reg_f26,
-    Reg_f27,
-    Reg_f28,
-    Reg_f29,
-    Reg_f30,
-    Reg_f31,
+    Reg_f0,     // ft0 temporary register
+    Reg_f1,     // ft1
+    Reg_f2,     // ft2
+    Reg_f3,     // ft3
+    Reg_f4,     // ft4
+    Reg_f5,     // ft5
+    Reg_f6,     // ft6
+    Reg_f7,     // ft7
+    Reg_f8,     // fs0 saved register
+    Reg_f9,     // fs1
+    Reg_f10,    // fa0 argument/return value
+    Reg_f11,    // fa1 argument/return value
+    Reg_f12,    // fa2 argument register
+    Reg_f13,    // fa3
+    Reg_f14,    // fa4
+    Reg_f15,    // fa5
+    Reg_f16,    // fa6
+    Reg_f17,    // fa7
+    Reg_f18,    // fs2 saved register
+    Reg_f19,    // fs3
+    Reg_f20,    // fs4
+    Reg_f21,    // fs5
+    Reg_f22,    // fs6
+    Reg_f23,    // fs7
+    Reg_f24,    // fs8
+    Reg_f25,    // fs9
+    Reg_f26,    // fs10
+    Reg_f27,    // fs11
+    Reg_f28,    // ft8 temporary register
+    Reg_f29,    // ft9
+    Reg_f30,    // ft10
+    Reg_f31,    // ft11
     RegFpu_Total
 };
 

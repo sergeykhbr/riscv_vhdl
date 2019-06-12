@@ -20,7 +20,7 @@ SC_MODULE(MemAccess) {
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_e_pc;          // Execution stage instruction pointer
     sc_in<sc_uint<32>> i_e_instr;                   // Execution stage instruction value
 
-    sc_in<sc_uint<5>> i_res_addr;                   // Register address to be written (0=no writing)
+    sc_in<sc_uint<6>> i_res_addr;                   // Register address to be written (0=no writing)
     sc_in<sc_uint<RISCV_ARCH>> i_res_data;          // Register value to be written
     sc_in<bool> i_memop_sign_ext;                   // Load data with sign extending (if less than 8 Bytes)
     sc_in<bool> i_memop_load;                       // Load data from memory and write to i_res_addr
@@ -28,7 +28,7 @@ SC_MODULE(MemAccess) {
     sc_in<sc_uint<2>> i_memop_size;                 // Encoded memory transaction size in bytes: 0=1B; 1=2B; 2=4B; 3=8B
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_memop_addr;    // Memory access address
     sc_out<bool> o_wena;                            // Write enable signal
-    sc_out<sc_uint<5>> o_waddr;                     // Output register address (0 = x0 = no write)
+    sc_out<sc_uint<6>> o_waddr;                     // Output register address (0 = x0 = no write)
     sc_out<sc_uint<RISCV_ARCH>> o_wdata;            // Register value
 
     // Memory interface:
@@ -64,7 +64,7 @@ private:
         sc_signal<sc_uint<32>> instr;
 
         sc_signal<bool> wena;
-        sc_signal<sc_uint<5>> waddr;
+        sc_signal<sc_uint<6>> waddr;
         sc_signal<bool> sign_ext;
         sc_signal<sc_uint<2>> size;
         sc_signal<sc_uint<RISCV_ARCH>> wdata;

@@ -96,6 +96,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid)
     exec0->i_unsigned_op(w.d.unsigned_op);
     exec0->i_rv32(w.d.rv32);
     exec0->i_compressed(w.d.compressed);
+    exec0->i_f64(w.d.f64);
     exec0->i_isa_type(w.d.isa_type);
     exec0->i_ivec(w.d.instr_vec);
     exec0->i_unsup_exception(w.d.exception);
@@ -105,9 +106,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid)
     exec0->i_rdata1(ireg.rdata1);
     exec0->o_radr2(w.e.radr2);
     exec0->i_rdata2(ireg.rdata2);
-    exec0->o_fadr1(w.e.fadr1);
     exec0->i_rfdata1(freg.rdata1);
-    exec0->o_fadr2(w.e.fadr2);
     exec0->i_rfdata2(freg.rdata2);
     exec0->o_res_addr(w.e.res_addr);
     exec0->o_res_data(w.e.res_data);
@@ -206,9 +205,9 @@ Processor::Processor(sc_module_name name_, uint32_t hartid)
         fregs0 = new RegFloatBank("fregs0");
         fregs0->i_clk(i_clk);
         fregs0->i_nrst(i_nrst);
-        fregs0->i_radr1(w.e.fadr1);
+        fregs0->i_radr1(w.e.radr1);
         fregs0->o_rdata1(freg.rdata1);
-        fregs0->i_radr2(w.e.fadr2);
+        fregs0->i_radr2(w.e.radr2);
         fregs0->o_rdata2(freg.rdata2);
         fregs0->i_waddr(w.w.waddr);
         fregs0->i_wena(w.w.wena);

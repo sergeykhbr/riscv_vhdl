@@ -115,12 +115,10 @@ private:
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> npc;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> ex_npc;
 
-        sc_signal<sc_uint<5>> radr1;
-        sc_signal<sc_uint<5>> radr2;
-        sc_signal<sc_uint<5>> res_addr;
+        sc_signal<sc_uint<6>> radr1;
+        sc_signal<sc_uint<6>> radr2;
+        sc_signal<sc_uint<6>> res_addr;
         sc_signal<sc_uint<RISCV_ARCH>> res_data;
-        sc_signal<sc_uint<5>> fadr1;
-        sc_signal<sc_uint<5>> fadr2;
         sc_signal<bool> mret;
         sc_signal<bool> uret;
         sc_signal<sc_uint<12>> csr_addr;
@@ -152,7 +150,7 @@ private:
     struct WriteBackType {
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> pc;
         sc_signal<bool> wena;
-        sc_signal<sc_uint<5>> waddr;
+        sc_signal<sc_uint<6>> waddr;
         sc_signal<sc_uint<RISCV_ARCH>> wdata;
     };
 

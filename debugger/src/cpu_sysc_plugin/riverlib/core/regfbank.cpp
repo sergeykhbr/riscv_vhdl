@@ -38,12 +38,17 @@ RegFloatBank::RegFloatBank(sc_module_name name_) : sc_module(name_) {
 
 void RegFloatBank::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
-        sc_trace(o_vcd, i_wena, "/top/proc0/regs/i_wena");
-        sc_trace(o_vcd, i_waddr, "/top/proc0/regs/i_waddr");
-        sc_trace(o_vcd, i_wdata, "/top/proc0/regs/i_wdata");
-        sc_trace(o_vcd, o_rdata1, "/top/proc0/regs/o_rdata1");
-        sc_trace(o_vcd, o_rdata2, "/top/proc0/regs/o_rdata2");
-        sc_trace(o_vcd, o_dport_rdata, "/top/proc0/regs/o_dport_rdata");
+        sc_trace(o_vcd, i_wena, "/top/proc0/fregs/i_wena");
+        sc_trace(o_vcd, i_waddr, "/top/proc0/fregs/i_waddr");
+        sc_trace(o_vcd, i_wdata, "/top/proc0/fregs/i_wdata");
+        sc_trace(o_vcd, o_rdata1, "/top/proc0/fregs/o_rdata1");
+        sc_trace(o_vcd, o_rdata2, "/top/proc0/fregs/o_rdata2");
+        sc_trace(o_vcd, o_dport_rdata, "/top/proc0/fregs/o_dport_rdata");
+        sc_trace(o_vcd, r.mem[0], "/top/proc0/fregs/r_mem0");
+        sc_trace(o_vcd, r.mem[1], "/top/proc0/fregs/r_mem1");
+        sc_trace(o_vcd, r.mem[2], "/top/proc0/fregs/r_mem2");
+        sc_trace(o_vcd, r.mem[3], "/top/proc0/fregs/r_mem3");
+        sc_trace(o_vcd, r.mem[15], "/top/proc0/fregs/r_mem15");
     }
 }
 
@@ -55,10 +60,8 @@ void RegFloatBank::comb() {
         if (i_dport_addr.read() != 0) {
             v.mem[i_dport_addr.read()] = i_dport_wdata;
         }
-    } else if (i_wena.read()) {
-        if (i_waddr.read() != 0) {
-            v.mem[i_waddr.read()] = i_wdata;
-        }
+    } else if (i_wena.read() && i_waddr.read()[5] == 1) {
+        v.mem[i_waddr.read()(4, 0)] = i_wdata;
     }
     /** v.mem[] is not a signals, so use update register to trigger process */
     v.update = !r.update.read();
@@ -67,8 +70,8 @@ void RegFloatBank::comb() {
         R_RESET(v);
     }
 
-    o_rdata1 = r.mem[i_radr1.read()];
-    o_rdata2 = r.mem[i_radr2.read()];
+    o_rdata1 = r.mem[i_radr1.read()(4, 0)];
+    o_rdata2 = r.mem[i_radr2.read()(4, 0)];
     o_dport_rdata = r.mem[i_dport_addr.read()];
 }
 

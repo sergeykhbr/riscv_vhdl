@@ -23,7 +23,7 @@ namespace debugger {
 
 static const uint64_t CFG_VENDOR_ID         = 0x000000F1;
 static const uint64_t CFG_IMPLEMENTATION_ID = 0x20190521;
-static const bool CFG_HW_FPU_ENABLE         = false;
+static const bool CFG_HW_FPU_ENABLE         = true;
 
 static const int RISCV_ARCH     = 64;
 

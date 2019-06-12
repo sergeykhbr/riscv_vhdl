@@ -40,21 +40,20 @@ SC_MODULE(InstrExecute) {
     sc_in<bool> i_unsigned_op;                  // Unsigned operands
     sc_in<bool> i_rv32;                         // 32-bits instruction
     sc_in<bool> i_compressed;                   // C-extension (2-bytes length)
+    sc_in<bool> i_f64;                          // D-extension (FPU)
     sc_in<sc_bv<ISA_Total>> i_isa_type;         // Type of the instruction's structure (ISA spec.)
     sc_in<sc_bv<Instr_Total>> i_ivec;           // One pulse per supported instruction.
     sc_in<bool> i_unsup_exception;              // Unsupported instruction exception
     sc_in<bool> i_dport_npc_write;              // Write npc value from debug port
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_dport_npc; // Debug port npc value to write
 
-    sc_out<sc_uint<5>> o_radr1;                 // Integer register index 1
+    sc_out<sc_uint<6>> o_radr1;                 // Integer/float register index 1
     sc_in<sc_uint<RISCV_ARCH>> i_rdata1;        // Integer register value 1
-    sc_out<sc_uint<5>> o_radr2;                 // Integer register index 2
+    sc_out<sc_uint<6>> o_radr2;                 // Integer/float register index 2
     sc_in<sc_uint<RISCV_ARCH>> i_rdata2;        // Integer register value 2
-    sc_out<sc_uint<5>> o_fadr1;                 // Float register index 1
     sc_in<sc_uint<RISCV_ARCH>> i_rfdata1;       // Float register value 1
-    sc_out<sc_uint<5>> o_fadr2;                 // Float register index 2
     sc_in<sc_uint<RISCV_ARCH>> i_rfdata2;       // Float register value 2
-    sc_out<sc_uint<5>> o_res_addr;              // Address to store result of the instruction (0=do not store)
+    sc_out<sc_uint<6>> o_res_addr;              // Address to store result of the instruction (0=do not store)
     sc_out<sc_uint<RISCV_ARCH>> o_res_data;     // Value to store
     sc_out<bool> o_pipeline_hold;               // Hold pipeline while 'writeback' not done or multi-clock instruction.
     sc_out<sc_uint<12>> o_csr_addr;             // CSR address. 0 if not a CSR instruction with xret signals mode switching
@@ -114,7 +113,7 @@ private:
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> pc;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> npc;
         sc_signal<sc_uint<32>> instr;
-        sc_uint<5> res_addr;
+        sc_uint<6> res_addr;
         sc_signal<sc_uint<RISCV_ARCH>> res_val;
         sc_signal<bool> memop_load;
         sc_signal<bool> memop_store;
@@ -122,12 +121,13 @@ private:
         sc_uint<2> memop_size;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> memop_addr;
 
-        sc_signal<sc_uint<5>> multi_res_addr;           // latched output reg. address while multi-cycle instruction
+        sc_signal<sc_uint<6>> multi_res_addr;           // latched output reg. address while multi-cycle instruction
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> multi_pc;    // latched pc-value while multi-cycle instruction
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> multi_npc;   // latched npc-value while multi-cycle instruction
         sc_signal<sc_uint<32>> multi_instr;             // Multi-cycle instruction is under processing
         sc_signal<bool> multi_ena[Multi_Total];         // Enable pulse for Operation that takes more than 1 clock
         sc_signal<bool> multi_rv32;                     // Long operation with 32-bits operands
+        sc_signal<bool> multi_f64;                      // Long float operation
         sc_signal<bool> multi_unsigned;                 // Long operation with unsiged operands
         sc_signal<bool> multi_residual_high;            // Flag for Divider module: 0=divsion output; 1=residual output
                                                         // Flag for multiplier: 0=usual; 1=get high bits
@@ -135,8 +135,8 @@ private:
         sc_signal<sc_uint<RISCV_ARCH>> multi_a1;        // Multi-cycle operand 1
         sc_signal<sc_uint<RISCV_ARCH>> multi_a2;        // Multi-cycle operand 2
 
-        sc_signal<sc_uint<5>> hazard_addr0;             // Updated register address on previous step
-        sc_signal<sc_uint<5>> hazard_addr1;             // Updated register address on pre-previous step
+        sc_signal<sc_uint<6>> hazard_addr0;             // Updated register address on previous step
+        sc_signal<sc_uint<6>> hazard_addr1;             // Updated register address on pre-previous step
         sc_signal<sc_uint<2>> hazard_depth;             // Number of modificated registers that wasn't done yet
 
         sc_signal<bool> call;

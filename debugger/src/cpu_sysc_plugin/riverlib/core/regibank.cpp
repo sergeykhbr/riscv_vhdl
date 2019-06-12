@@ -47,9 +47,9 @@ void RegIntBank::comb() {
         if (i_dport_addr.read() != 0) {
             v.mem[i_dport_addr.read()] = i_dport_wdata;
         }
-    } else if (i_wena.read()) {
+    } else if (i_waddr.read()[5] == 0 && i_wena.read()) {
         if (i_waddr.read() != 0) {
-            v.mem[i_waddr.read()] = i_wdata;
+            v.mem[i_waddr.read()(4, 0)] = i_wdata;
         }
     }
     v.update = !r.update.read();
@@ -62,8 +62,8 @@ void RegIntBank::comb() {
         v.update = 0;
     }
 
-    o_rdata1 = r.mem[i_radr1.read()];
-    o_rdata2 = r.mem[i_radr2.read()];
+    o_rdata1 = r.mem[i_radr1.read()(4, 0)];
+    o_rdata2 = r.mem[i_radr2.read()(4, 0)];
     o_dport_rdata = r.mem[i_dport_addr.read()];
     o_ra = r.mem[Reg_ra];
 }
