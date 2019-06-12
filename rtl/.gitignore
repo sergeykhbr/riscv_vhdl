@@ -10,6 +10,7 @@ gnsslib/*
 patches/
 work/tb/*
 !work/tb/asic_top_tb.vhd
+!work/tb/riscv_soc_gnss_tb.vhd
 !work/tb/uart_sim.vhd
 !work/tb/ethphy_sim.vhd
 !work/tb/jtag_sim.vhd

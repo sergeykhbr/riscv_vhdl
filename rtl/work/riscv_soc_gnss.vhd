@@ -55,8 +55,6 @@ use gnsslib.types_gnss.all;
 library work;
 --! Target dependable configuration: RTL, FPGA or ASIC.
 use work.config_target.all;
---! Target independable configuration.
-use work.config_common.all;
 
 --! @brief   SOC Top-level entity declaration.
 --! @details This module implements full SOC functionality and all IO signals
@@ -343,9 +341,12 @@ end generate;
   o_uart2_td  <= uart2o.td;
   o_uart2_rtsn <= not uart2o.rts;
 
+  aximo(CFG_AXI_MASTER_JTAG) <= nasti_master_out_none;
+  mst_cfg(CFG_AXI_MASTER_JTAG) <= nasti_master_config_none;
+
 
   ------------------------------------
-  --! @brief BOOT ROM module isntance with the AXI4 interface.
+  --! @brief BOOT ROM module instance with the AXI4 interface.
   --! @details Map address:
   --!          0x00000000..0x00003fff (16 KB total)
   boot0 : nasti_bootrom generic map (

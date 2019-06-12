@@ -56,8 +56,6 @@ use riverlib.types_river.all;
 library work;
 --! Target dependable configuration: RTL, FPGA or ASIC.
 use work.config_target.all;
---! Target independable configuration.
-use work.config_common.all;
 
 --! @brief   SOC Top-level entity declaration.
 --! @details This module implements full SOC functionality and all IO signals

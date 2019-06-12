@@ -45,10 +45,6 @@
       <association xil_pn:name="Implementation" xil_pn:seqID="27"/>
       <library xil_pn:name="rocketlib"/>
     </file>
-    <file xil_pn:name="../../work/config_common.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="10"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="46"/>
-    </file>
     <file xil_pn:name="config_v6.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="11"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="41"/>
