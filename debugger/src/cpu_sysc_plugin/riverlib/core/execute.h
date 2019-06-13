@@ -22,6 +22,7 @@
 #include "arith/int_div.h"
 #include "arith/int_mul.h"
 #include "arith/shift.h"
+#include "fpu_d/fadd_d.h"
 
 namespace debugger {
 
@@ -101,6 +102,7 @@ private:
     enum EMultiCycleInstruction {
         Multi_MUL,
         Multi_DIV,
+        Multi_FADD_D,
         Multi_Total
     };
 
@@ -131,6 +133,13 @@ private:
         sc_signal<bool> multi_unsigned;                 // Long operation with unsiged operands
         sc_signal<bool> multi_residual_high;            // Flag for Divider module: 0=divsion output; 1=residual output
                                                         // Flag for multiplier: 0=usual; 1=get high bits
+        sc_signal<bool> multi_fadd_d;
+        sc_signal<bool> multi_fsub_d;
+        sc_signal<bool> multi_feq_d;
+        sc_signal<bool> multi_fle_d;
+        sc_signal<bool> multi_flt_d;
+        sc_signal<bool> multi_fmax_d;
+        sc_signal<bool> multi_fmin_d;
         sc_signal<bool> multiclock_ena;
         sc_signal<sc_uint<RISCV_ARCH>> multi_a1;        // Multi-cycle operand 1
         sc_signal<sc_uint<RISCV_ARCH>> multi_a2;        // Multi-cycle operand 2
@@ -142,10 +151,53 @@ private:
         sc_signal<bool> call;
         sc_signal<bool> ret;
     } v, r;
+
+    void R_RESET(RegistersType &iv) {
+        iv.d_valid = false;
+        iv.pc = 0;
+        iv.npc = CFG_NMI_RESET_VECTOR;
+        iv.instr = 0;
+        iv.res_addr = 0;
+        iv.res_val = 0;
+        iv.memop_load = 0;
+        iv.memop_store = 0;
+        iv.memop_sign_ext = 0;
+        iv.memop_size = 0;
+        iv.memop_addr = 0;
+
+        iv.multi_res_addr = 0;
+        iv.multi_pc = 0;
+        iv.multi_npc = 0;
+        iv.multi_instr = 0;
+        iv.multi_ena[Multi_MUL] = 0;
+        iv.multi_ena[Multi_DIV] = 0;
+        iv.multi_ena[Multi_FADD_D] = 0;
+        iv.multi_rv32 = 0;
+        iv.multi_f64 = 0;
+        iv.multi_unsigned = 0;
+        iv.multi_residual_high = 0;
+        iv.multi_fadd_d = 0;
+        iv.multi_fsub_d = 0;
+        iv.multi_feq_d = 0;
+        iv.multi_flt_d = 0;
+        iv.multi_fle_d = 0;
+        iv.multi_fmax_d = 0;
+        iv.multi_fmin_d = 0;
+        iv.multiclock_ena = 0;
+        iv.multi_a1 = 0;
+        iv.multi_a2 = 0;
+        iv.hazard_addr0 = 0;
+        iv.hazard_addr1 = 0;
+        iv.hazard_depth = 0;
+        iv.call = 0;
+        iv.ret = 0;
+    }
+
     sc_signal<bool> w_hazard_detected;
     multi_arith_type wb_arith_res;
     sc_signal<bool> w_arith_valid[Multi_Total];
     sc_signal<bool> w_arith_busy[Multi_Total];
+    sc_signal<bool> w_exception_fadd_d;
     bool w_exception_store;
     bool w_exception_load;
 
@@ -161,6 +213,7 @@ private:
     IntMul *mul0;
     IntDiv *div0;
     Shifter *sh0;
+    DoubleAdd *fadd_d0;
 };
 
 

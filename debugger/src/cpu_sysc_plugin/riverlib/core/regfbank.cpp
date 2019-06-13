@@ -48,7 +48,8 @@ void RegFloatBank::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.mem[1], "/top/proc0/fregs/r_mem1");
         sc_trace(o_vcd, r.mem[2], "/top/proc0/fregs/r_mem2");
         sc_trace(o_vcd, r.mem[3], "/top/proc0/fregs/r_mem3");
-        sc_trace(o_vcd, r.mem[15], "/top/proc0/fregs/r_mem15");
+        sc_trace(o_vcd, r.mem[14], "/top/proc0/fregs/r_fa4");
+        sc_trace(o_vcd, r.mem[15], "/top/proc0/fregs/r_fa5");
     }
 }
 

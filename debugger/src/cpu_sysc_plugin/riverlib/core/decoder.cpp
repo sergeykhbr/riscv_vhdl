@@ -655,7 +655,7 @@ void InstrDecoder::comb() {
                     }
                     break;
                 case OPCODE_FPU_SD:
-                    wb_isa_type[ISA_I_type] = 1;
+                    wb_isa_type[ISA_S_type] = 1;
                     if (wb_opcode2 == 3) {
                         wb_dec[Instr_FSD] = 1;
                     } else {
@@ -665,7 +665,7 @@ void InstrDecoder::comb() {
                 case OPCODE_FPU_OP:
                     wb_isa_type[ISA_R_type] = 1;
                     switch (wb_instr(31, 25)) {
-                    case 0x0:
+                    case 0x1:
                         wb_dec[Instr_FADD_D] = 1;
                         break;
                     case 0x5:

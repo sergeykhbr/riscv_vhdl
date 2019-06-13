@@ -61,10 +61,18 @@ InstrExecute::InstrExecute(sc_module_name name_)  : sc_module(name_) {
     sensitive << r.multi_instr;
     sensitive << r.multi_ena[Multi_MUL];
     sensitive << r.multi_ena[Multi_DIV];
+    sensitive << r.multi_ena[Multi_FADD_D];
     sensitive << r.multi_rv32;
     sensitive << r.multi_f64;
     sensitive << r.multi_unsigned;
     sensitive << r.multi_residual_high;
+    sensitive << r.multi_fadd_d;
+    sensitive << r.multi_fsub_d;
+    sensitive << r.multi_feq_d;
+    sensitive << r.multi_flt_d;
+    sensitive << r.multi_fle_d;
+    sensitive << r.multi_fmax_d;
+    sensitive << r.multi_fmin_d;
     sensitive << r.multiclock_ena;
     sensitive << r.multi_a1;
     sensitive << r.multi_a2;
@@ -76,10 +84,13 @@ InstrExecute::InstrExecute(sc_module_name name_)  : sc_module(name_) {
     sensitive << w_hazard_detected;
     sensitive << wb_arith_res.arr[Multi_MUL];
     sensitive << wb_arith_res.arr[Multi_DIV];
+    sensitive << wb_arith_res.arr[Multi_FADD_D];
     sensitive << w_arith_valid[Multi_MUL];
     sensitive << w_arith_valid[Multi_DIV];
+    sensitive << w_arith_valid[Multi_FADD_D];
     sensitive << w_arith_busy[Multi_MUL];
     sensitive << w_arith_busy[Multi_DIV];
+    sensitive << w_arith_busy[Multi_FADD_D];
     sensitive << wb_shifter_a1;
     sensitive << wb_shifter_a2;
     sensitive << wb_sll;
@@ -127,6 +138,31 @@ InstrExecute::InstrExecute(sc_module_name name_)  : sc_module(name_) {
     sh0->o_sra(wb_sra);
     sh0->o_srlw(wb_srlw);
     sh0->o_sraw(wb_sraw);
+
+    if (CFG_HW_FPU_ENABLE) {
+        fadd_d0 = new DoubleAdd("fadd_d0");
+        fadd_d0->i_clk(i_clk);
+        fadd_d0->i_nrst(i_nrst);
+        fadd_d0->i_ena(r.multi_ena[Multi_FADD_D]);
+        fadd_d0->i_add(r.multi_fadd_d);
+        fadd_d0->i_sub(r.multi_fsub_d);
+        fadd_d0->i_eq(r.multi_feq_d);
+        fadd_d0->i_lt(r.multi_flt_d);
+        fadd_d0->i_le(r.multi_fle_d);
+        fadd_d0->i_max(r.multi_fmax_d);
+        fadd_d0->i_min(r.multi_fmin_d);
+        fadd_d0->i_a(r.multi_a1);
+        fadd_d0->i_b(r.multi_a2);
+        fadd_d0->o_res(wb_arith_res.arr[Multi_FADD_D]);
+        fadd_d0->o_except(w_exception_fadd_d);
+        fadd_d0->o_valid(w_arith_valid[Multi_FADD_D]);
+        fadd_d0->o_busy(w_arith_busy[Multi_FADD_D]);
+    } else {
+        wb_arith_res.arr[Multi_FADD_D] = 0;
+        w_exception_fadd_d = 0;
+        w_arith_valid[Multi_FADD_D] = 0;
+        w_arith_busy[Multi_FADD_D] = 0;
+    }
 };
 
 InstrExecute::~InstrExecute() {
@@ -144,6 +180,8 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_wb_done, "/top/proc0/exec0/i_wb_done");
         sc_trace(o_vcd, i_rdata1, "/top/proc0/exec0/i_rdata1");
         sc_trace(o_vcd, i_rdata2, "/top/proc0/exec0/i_rdata2");
+        sc_trace(o_vcd, i_rfdata1, "/top/proc0/exec0/i_rfdata1");
+        sc_trace(o_vcd, i_rfdata2, "/top/proc0/exec0/i_rfdata2");
         sc_trace(o_vcd, i_f64, "/top/proc0/exec0/i_f64");
         sc_trace(o_vcd, o_valid, "/top/proc0/exec0/o_valid");
         sc_trace(o_vcd, o_npc, "/top/proc0/exec0/o_npc");
@@ -173,12 +211,17 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, wb_arith_res.arr[Multi_MUL], "/top/proc0/exec0/wb_arith_res(0)");
         sc_trace(o_vcd, r.multi_ena[Multi_DIV], "/top/proc0/exec0/r_multi_ena(1)");
         sc_trace(o_vcd, wb_arith_res.arr[Multi_DIV], "/top/proc0/exec0/wb_arith_res(1)");
+        sc_trace(o_vcd, r.multi_ena[Multi_FADD_D], "/top/proc0/exec0/r_multi_ena(2)");
+        sc_trace(o_vcd, wb_arith_res.arr[Multi_FADD_D], "/top/proc0/exec0/wb_arith_res(2)");
         sc_trace(o_vcd, r.multi_res_addr, "/top/proc0/exec0/r_multi_res_addr");
         sc_trace(o_vcd, r.multi_a1, "/top/proc0/exec0/multi_a1");
         sc_trace(o_vcd, r.multi_a2, "/top/proc0/exec0/multi_a2");
     }
     mul0->generateVCD(i_vcd, o_vcd);
     div0->generateVCD(i_vcd, o_vcd);
+    if (CFG_HW_FPU_ENABLE) {
+        fadd_d0->generateVCD(i_vcd, o_vcd);
+    }
 }
 
 void InstrExecute::comb() {
@@ -337,7 +380,8 @@ void InstrExecute::comb() {
     wb_shifter_a1 = wb_rdata1;
     wb_shifter_a2 = wb_rdata2(5, 0);
 
-    w_multi_valid = w_arith_valid[Multi_MUL] | w_arith_valid[Multi_DIV];
+    w_multi_valid = w_arith_valid[Multi_MUL] | w_arith_valid[Multi_DIV]
+                  | w_arith_valid[Multi_FADD_D];
 
     // Don't modify registers on conditional jumps:
     w_res_wena = !(wv[Instr_BEQ] | wv[Instr_BGE] | wv[Instr_BGEU]
@@ -449,17 +493,34 @@ void InstrExecute::comb() {
      */
     v.multi_ena[Multi_MUL] = 0;
     v.multi_ena[Multi_DIV] = 0;
+    v.multi_ena[Multi_FADD_D] = 0;
     v.multi_rv32 = i_rv32;
     v.multi_f64 = i_f64;
     v.multi_unsigned = i_unsigned_op;
     v.multi_residual_high = 0;
-    v.multi_a1 = i_rdata1;
-    v.multi_a2 = i_rdata2;
+    if (i_f64.read() == 1) {
+        v.multi_a1 = i_rfdata1;
+        v.multi_a2 = i_rfdata2;
+    } else {
+        v.multi_a1 = i_rdata1;
+        v.multi_a2 = i_rdata2;
+    }
+    v.multi_fadd_d = wv[Instr_FADD_D].to_bool();
+    v.multi_fsub_d = wv[Instr_FSUB_D].to_bool();
+    v.multi_feq_d = wv[Instr_FEQ_D].to_bool();
+    v.multi_flt_d = wv[Instr_FLT_D].to_bool();
+    v.multi_fle_d = wv[Instr_FLE_D].to_bool();
+    v.multi_fmax_d = wv[Instr_FMAX_D].to_bool();
+    v.multi_fmin_d = wv[Instr_FMIN_D].to_bool();
 
     w_multi_ena = (wv[Instr_MUL] | wv[Instr_MULW] | wv[Instr_DIV] 
                     | wv[Instr_DIVU] | wv[Instr_DIVW] | wv[Instr_DIVUW]
                     | wv[Instr_REM] | wv[Instr_REMU] | wv[Instr_REMW]
-                    | wv[Instr_REMUW]).to_bool();
+                    | wv[Instr_REMUW]
+                    | wv[Instr_FADD_D] | wv[Instr_FSUB_D]
+                    | wv[Instr_FLE_D] | wv[Instr_FLT_D] | wv[Instr_FEQ_D]
+                    | wv[Instr_FMAX_D] | wv[Instr_FMIN_D]
+                    ).to_bool();
     if (w_multi_ena & w_d_acceptable) {
         v.multiclock_ena = 1;
         v.multi_res_addr = wb_res_addr;
@@ -473,6 +534,8 @@ void InstrExecute::comb() {
         wb_res = wb_arith_res.arr[Multi_MUL];
     } else if (w_arith_valid[Multi_DIV]) {
         wb_res = wb_arith_res.arr[Multi_DIV];
+    } else if (w_arith_valid[Multi_FADD_D]) {
+        wb_res = wb_arith_res.arr[Multi_FADD_D];
     } else if (i_memop_load) {
         w_memop_load = !w_hazard_detected.read();
         w_memop_sign_ext = i_memop_sign_ext;
@@ -522,6 +585,10 @@ void InstrExecute::comb() {
             || wv[Instr_REMW] || wv[Instr_REMUW]) {
         v.multi_ena[Multi_DIV] = w_d_acceptable;
         v.multi_residual_high = 1;
+    } else if (wv[Instr_FADD_D] || wv[Instr_FSUB_D]
+            || wv[Instr_FLE_D] || wv[Instr_FLT_D] || wv[Instr_FEQ_D]
+            || wv[Instr_FMAX_D] || wv[Instr_FMIN_D]) {
+        v.multi_ena[Multi_FADD_D] = w_d_acceptable;
     } else if (wv[Instr_CSRRC]) {
         wb_res = i_csr_rdata;
         w_csr_wena = 1;
@@ -650,37 +717,7 @@ void InstrExecute::comb() {
     w_o_pipeline_hold = w_hazard_detected | r.multiclock_ena;
 
     if (!i_nrst.read()) {
-        v.d_valid = false;
-        v.pc = 0;
-        v.npc = CFG_NMI_RESET_VECTOR;
-        v.instr = 0;
-        v.res_addr = 0;
-        v.res_val = 0;
-        v.memop_load = 0;
-        v.memop_sign_ext = 0;
-        v.memop_store = 0;
-        v.memop_size = 0;
-        v.memop_addr = 0;
-        v.hazard_depth = 0;
-        v.hazard_addr0 = 0;
-        v.hazard_addr1 = 0;
-
-        v.multiclock_ena = 0;
-        v.multi_pc = 0;
-        v.multi_instr = 0;
-        v.multi_npc = 0;
-        v.multi_res_addr = 0;
-        v.multi_ena[Multi_MUL] = 0;
-        v.multi_ena[Multi_DIV] = 0;
-        v.multi_rv32 = 0;
-        v.multi_f64 = 0;
-        v.multi_unsigned = 0;
-        v.multi_residual_high = 0;
-        v.multi_a1 = 0;
-        v.multi_a2 = 0;
-
-        v.call = 0;
-        v.ret = 0;
+        R_RESET(v);
     }
 
     o_radr1 = wb_radr1;
