@@ -57,10 +57,11 @@ SC_MODULE(DoubleAdd) {
 
     struct RegistersType {
         sc_signal<bool> busy;
-        sc_signal<sc_uint<4>> ena;
+        sc_signal<sc_uint<7>> ena;
         sc_signal<sc_uint<64>> a;
         sc_signal<sc_uint<64>> b;
         sc_signal<sc_uint<64>> result;
+        sc_signal<bool> except;
         sc_signal<bool> add;
         sc_signal<bool> sub;
         sc_signal<bool> eq;
@@ -68,6 +69,21 @@ SC_MODULE(DoubleAdd) {
         sc_signal<bool> le;
         sc_signal<bool> max;
         sc_signal<bool> min;
+        sc_signal<bool> flMore;
+        sc_signal<bool> flEqual;
+        sc_signal<bool> flLess;
+        sc_signal<sc_uint<12>> preShift;
+        sc_signal<bool> signOpMore;
+        sc_signal<sc_uint<11>> expMore;
+        sc_signal<sc_uint<53>> mantMore;
+        sc_signal<sc_uint<53>> mantLess;
+        sc_signal<sc_biguint<105>> mantLessScale;
+        sc_signal<sc_biguint<106>> mantSum;
+        sc_signal<sc_uint<7>> LShift;
+        sc_signal<sc_biguint<105>> mantAlign;
+        sc_signal<sc_uint<12>> expPostScale;
+        sc_signal<sc_uint<12>> expPostScaleInv;
+        sc_signal<sc_biguint<105>> mantPostScale;
 
         sc_uint<RISCV_ARCH> a_dbg;
         sc_uint<RISCV_ARCH> b_dbg;
@@ -80,6 +96,7 @@ SC_MODULE(DoubleAdd) {
         iv.a = 0;
         iv.b = 0;
         iv.result = 0;
+        iv.except = 0;
         iv.add = 0;
         iv.sub = 0;
         iv.eq = 0;
@@ -87,6 +104,21 @@ SC_MODULE(DoubleAdd) {
         iv.le = 0;
         iv.max = 0;
         iv.min = 0;
+        iv.flMore = 0;
+        iv.flEqual = 0;
+        iv.flLess = 0;
+        iv.preShift = 0;
+        iv.signOpMore = 0;
+        iv.expMore = 0;
+        iv.mantMore = 0;
+        iv.mantLess = 0;
+        iv.mantLessScale = 0;
+        iv.mantSum = 0;
+        iv.LShift = 0;
+        iv.mantAlign = 0;
+        iv.expPostScale = 0;
+        iv.expPostScaleInv = 0;
+        iv.mantPostScale = 0;
 
         iv.a_dbg = 0;
         iv.b_dbg = 0;

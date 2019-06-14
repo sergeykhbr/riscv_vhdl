@@ -812,9 +812,9 @@ int FpuFunctional::FADD_D(int addEna, int subEna, int cmpEna, int moreEna,
 
     int expDif;
     if (A.f64bits.exp && !B.f64bits.exp) {
-        expDif = static_cast<int>(A.f64bits.exp - B.f64bits.exp - 1);
+        expDif = static_cast<int>(A.f64bits.exp - 1);
     } else if (!A.f64bits.exp && B.f64bits.exp) {
-        expDif = static_cast<int>(A.f64bits.exp - B.f64bits.exp + 1);
+        expDif = static_cast<int>(1 - B.f64bits.exp);
     } else {
         expDif = static_cast<int>(A.f64bits.exp - B.f64bits.exp);
     }
