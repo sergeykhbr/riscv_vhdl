@@ -185,7 +185,7 @@ sp_init_core0:
   add sp, sp, t0
 
   # run memory selftest only on Core[0]
-  jal _mbist_ram
+  #jal _mbist_ram
 _mbist_ram_exit:
 
 sp_init_coreall:

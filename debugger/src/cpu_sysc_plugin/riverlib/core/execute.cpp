@@ -397,14 +397,16 @@ void InstrExecute::comb() {
     } else if (w_res_wena) {
         wb_res_addr = (0, i_d_instr.read().range(11, 7));
         if (CFG_HW_FPU_ENABLE) {
-            if (i_f64.read() == 1 && wv[Instr_FMOV_X_D].to_bool() == 0) {
+            if (i_f64.read() == 1 && (wv[Instr_FMOV_X_D] | wv[Instr_FEQ_D]
+                | wv[Instr_FLT_D] | wv[Instr_FLE_D]).to_bool() == 0) {
                 wb_res_addr |= 0x20;
             }
         }
     } else {
         wb_res_addr = 0;
         if (CFG_HW_FPU_ENABLE) {
-            if (i_f64.read() == 1 && wv[Instr_FMOV_X_D].to_bool() == 0) {
+            if (i_f64.read() == 1 && (wv[Instr_FMOV_X_D] | wv[Instr_FEQ_D]
+                | wv[Instr_FLT_D] | wv[Instr_FLE_D]).to_bool() == 0) {
                 wb_res_addr |= 0x20;
             }
         }

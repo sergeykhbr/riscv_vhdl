@@ -82,6 +82,16 @@ void DoubleAdd::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_busy, "/top/proc0/exec0/fadd_d0/o_busy");
         sc_trace(o_vcd, r.ena, "/top/proc0/exec0/fadd_d0/r_ena");
         sc_trace(o_vcd, r.result, "/top/proc0/exec0/fadd_d0/r_result");
+
+        sc_trace(o_vcd, r.preShift, "/top/proc0/exec0/fadd_d0/r_preShift");
+        sc_trace(o_vcd, r.signOpMore, "/top/proc0/exec0/fadd_d0/r_signOpMore");
+        sc_trace(o_vcd, r.expMore, "/top/proc0/exec0/fadd_d0/r_expMore");
+        sc_trace(o_vcd, r.mantMore, "/top/proc0/exec0/fadd_d0/r_mantMore");
+        sc_trace(o_vcd, r.mantLess, "/top/proc0/exec0/fadd_d0/r_mantLess");
+        sc_trace(o_vcd, r.LShift, "/top/proc0/exec0/fadd_d0/r_LShift");
+        sc_trace(o_vcd, r.mantSum, "/top/proc0/exec0/fadd_d0/r_mantSum");
+        sc_trace(o_vcd, r.mantAlign, "/top/proc0/exec0/fadd_d0/r_mantAlign");
+        sc_trace(o_vcd, r.expPostScale, "/top/proc0/exec0/fadd_d0/r_expPostScale");
     }
 }
 
@@ -269,14 +279,19 @@ void DoubleAdd::comb() {
         vb_mantSum = mantMoreScale + r.mantLessScale;
     }
 
+    // multiplexer
     if (vb_mantSum[105] == 1) {
+        // shift right
         vb_LShift = 0x7F;
-    } else {
+    } else if (vb_mantSum[104] == 1) {
         vb_LShift = 0;
-    }
-    for (unsigned i = 0; i < 104; i++) {
-        if (vb_LShift == 0 && vb_mantSum[104 - i] == 1) {
-            vb_LShift = i;
+    } else {
+        // shift left
+        vb_LShift = 0;
+        for (unsigned i = 0; i < 104; i++) {
+            if (vb_LShift == 0 && vb_mantSum[104 - i] == 1) {
+                vb_LShift = i;
+            }
         }
     }
     if (r.ena.read()[2] == 1) {
@@ -418,19 +433,19 @@ void DoubleAdd::comb() {
         resAdd[51] = 1;
         resAdd(50, 0) = r.b.read()(50, 0);
     } else if (overflow) {
-        resAdd = 0;
+        resAdd(51, 0) = 0;
     } else {
-        resAdd = mantShort + rndBit;
+        resAdd(51, 0) = mantShort + rndBit;
     }
 
     resEQ(63, 1) = 0;
-    resEQ[1] = r.flEqual;
+    resEQ[0] = r.flEqual;
 
     resLT(63, 1) = 0;
-    resLT[1] = r.flLess;
+    resLT[0] = r.flLess;
 
     resLE(63, 1) = 0;
-    resLE[1] = r.flLess | r.flEqual;
+    resLE[0] = r.flLess | r.flEqual;
 
     if (nanA | nanB) {
         resMax = r.b;
