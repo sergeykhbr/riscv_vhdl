@@ -29,7 +29,7 @@ SC_MODULE(idiv53) {
     sc_in<bool> i_ena;                  // divider enable pulse (1 clock)
     sc_in<sc_uint<53>> i_divident;      // integer value
     sc_in<sc_uint<53>> i_divisor;       // integer value
-    sc_out<sc_bv<105>> o_result;        // resulting bits
+    sc_out<sc_biguint<105>> o_result;   // resulting bits
     sc_out<sc_uint<7>> o_lshift;        // first non-zero bit index
     sc_out<bool> o_rdy;                 // delayed 'enable' signal
     sc_out<bool> o_overflow;            // overflow flag
@@ -52,7 +52,7 @@ SC_MODULE(idiv53) {
         sc_signal<bool> lshift_rdy;
         sc_signal<sc_uint<53>> divisor;
         sc_signal<sc_uint<53>> divident;
-        sc_signal<sc_bv<105>> bits;
+        sc_signal<sc_biguint<105>> bits;
         sc_signal<bool> overflow;
         sc_signal<bool> zero_resid;
     } v, r;
