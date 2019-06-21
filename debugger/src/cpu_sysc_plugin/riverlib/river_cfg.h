@@ -166,6 +166,8 @@ enum EInstuctionsType {
     Instr_Total
 };
 
+static const int Instr_FPU_Total = Instr_FSUB_D - Instr_FADD_D + 1;
+
 }  // namespace debugger
 
 #endif  // __DEBUGGER_RIVER_CFG_H__

@@ -123,6 +123,7 @@
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\fpu_d\divstage.cpp" />
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\fpu_d\fadd_d.cpp" />
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\fpu_d\fdiv_d.cpp" />
+    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\fpu_d\fpu_top.cpp" />
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\fpu_d\idiv53.cpp" />
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\memaccess.cpp" />
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\proc.cpp" />
@@ -166,6 +167,7 @@
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\fpu_d\divstage.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\fpu_d\fadd_d.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\fpu_d\fdiv_d.h" />
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\fpu_d\fpu_top.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\fpu_d\idiv53.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\memaccess.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\proc.h" />

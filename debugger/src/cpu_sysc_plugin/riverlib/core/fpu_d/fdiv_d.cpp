@@ -62,14 +62,14 @@ DoubleDiv::DoubleDiv(sc_module_name name_) : sc_module(name_),
 
 void DoubleDiv::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
-        sc_trace(o_vcd, i_ena, "/top/proc0/exec0/fadd_d0/i_ena");
-        sc_trace(o_vcd, i_a, "/top/proc0/exec0/fadd_d0/i_a");
-        sc_trace(o_vcd, i_b, "/top/proc0/exec0/fadd_d0/i_b");
-        sc_trace(o_vcd, o_res, "/top/proc0/exec0/fadd_d0/o_res");
-        sc_trace(o_vcd, o_valid, "/top/proc0/exec0/fadd_d0/o_valid");
-        sc_trace(o_vcd, o_busy, "/top/proc0/exec0/fadd_d0/o_busy");
-        sc_trace(o_vcd, r.ena, "/top/proc0/exec0/fadd_d0/r_ena");
-        sc_trace(o_vcd, r.result, "/top/proc0/exec0/fadd_d0/r_result");
+        sc_trace(o_vcd, i_ena, "/top/proc0/exec0/fpu0/fdiv_d0/i_ena");
+        sc_trace(o_vcd, i_a, "/top/proc0/exec0/fpu0/fdiv_d0/i_a");
+        sc_trace(o_vcd, i_b, "/top/proc0/exec0/fpu0/fdiv_d0/i_b");
+        sc_trace(o_vcd, o_res, "/top/proc0/exec0/fpu0/fdiv_d0/o_res");
+        sc_trace(o_vcd, o_valid, "/top/proc0/exec0/fpu0/fdiv_d0/o_valid");
+        sc_trace(o_vcd, o_busy, "/top/proc0/exec0/fpu0/fdiv_d0/o_busy");
+        sc_trace(o_vcd, r.ena, "/top/proc0/exec0/fpu0/fdiv_d0/r_ena");
+        sc_trace(o_vcd, r.result, "/top/proc0/exec0/fpu0/fdiv_d0/r_result");
     }
 }
 
@@ -106,7 +106,7 @@ void DoubleDiv::comb() {
     vb_ena[0] = (i_ena.read() & !r.busy);
     vb_ena[1] = r.ena.read()[0];
     w_idiv_ena = r.ena.read()[1];
-    vb_ena(7, 2) = (r.ena.read()(6, 3), w_idiv_rdy);
+    vb_ena(5, 2) = (r.ena.read()(4, 2), w_idiv_rdy);
 
     v.ena = vb_ena;
 

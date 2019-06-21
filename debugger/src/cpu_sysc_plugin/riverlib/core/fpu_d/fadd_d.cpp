@@ -67,31 +67,31 @@ DoubleAdd::DoubleAdd(sc_module_name name_) : sc_module(name_) {
 
 void DoubleAdd::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
-        sc_trace(o_vcd, i_ena, "/top/proc0/exec0/fadd_d0/i_ena");
-        sc_trace(o_vcd, i_add, "/top/proc0/exec0/fadd_d0/i_add");
-        sc_trace(o_vcd, i_sub, "/top/proc0/exec0/fadd_d0/i_sub");
-        sc_trace(o_vcd, i_eq, "/top/proc0/exec0/fadd_d0/i_eq");
-        sc_trace(o_vcd, i_lt, "/top/proc0/exec0/fadd_d0/i_lt");
-        sc_trace(o_vcd, i_le, "/top/proc0/exec0/fadd_d0/i_le");
-        sc_trace(o_vcd, i_max, "/top/proc0/exec0/fadd_d0/i_max");
-        sc_trace(o_vcd, i_min, "/top/proc0/exec0/fadd_d0/i_min");
-        sc_trace(o_vcd, i_a, "/top/proc0/exec0/fadd_d0/i_a");
-        sc_trace(o_vcd, i_b, "/top/proc0/exec0/fadd_d0/i_b");
-        sc_trace(o_vcd, o_res, "/top/proc0/exec0/fadd_d0/o_res");
-        sc_trace(o_vcd, o_valid, "/top/proc0/exec0/fadd_d0/o_valid");
-        sc_trace(o_vcd, o_busy, "/top/proc0/exec0/fadd_d0/o_busy");
-        sc_trace(o_vcd, r.ena, "/top/proc0/exec0/fadd_d0/r_ena");
-        sc_trace(o_vcd, r.result, "/top/proc0/exec0/fadd_d0/r_result");
+        sc_trace(o_vcd, i_ena, "/top/proc0/exec0/fpu0/fadd_d0/i_ena");
+        sc_trace(o_vcd, i_add, "/top/proc0/exec0/fpu0/fadd_d0/i_add");
+        sc_trace(o_vcd, i_sub, "/top/proc0/exec0/fpu0/fadd_d0/i_sub");
+        sc_trace(o_vcd, i_eq, "/top/proc0/exec0/fpu0/fadd_d0/i_eq");
+        sc_trace(o_vcd, i_lt, "/top/proc0/exec0/fpu0/fadd_d0/i_lt");
+        sc_trace(o_vcd, i_le, "/top/proc0/exec0/fpu0/fadd_d0/i_le");
+        sc_trace(o_vcd, i_max, "/top/proc0/exec0/fpu0/fadd_d0/i_max");
+        sc_trace(o_vcd, i_min, "/top/proc0/exec0/fpu0/fadd_d0/i_min");
+        sc_trace(o_vcd, i_a, "/top/proc0/exec0/fpu0/fadd_d0/i_a");
+        sc_trace(o_vcd, i_b, "/top/proc0/exec0/fpu0/fadd_d0/i_b");
+        sc_trace(o_vcd, o_res, "/top/proc0/exec0/fpu0/fadd_d0/o_res");
+        sc_trace(o_vcd, o_valid, "/top/proc0/exec0/fpu0/fadd_d0/o_valid");
+        sc_trace(o_vcd, o_busy, "/top/proc0/exec0/fpu0/fadd_d0/o_busy");
+        sc_trace(o_vcd, r.ena, "/top/proc0/exec0/fpu0/fadd_d0/r_ena");
+        sc_trace(o_vcd, r.result, "/top/proc0/exec0/fpu0/fadd_d0/r_result");
 
-        sc_trace(o_vcd, r.preShift, "/top/proc0/exec0/fadd_d0/r_preShift");
-        sc_trace(o_vcd, r.signOpMore, "/top/proc0/exec0/fadd_d0/r_signOpMore");
-        sc_trace(o_vcd, r.expMore, "/top/proc0/exec0/fadd_d0/r_expMore");
-        sc_trace(o_vcd, r.mantMore, "/top/proc0/exec0/fadd_d0/r_mantMore");
-        sc_trace(o_vcd, r.mantLess, "/top/proc0/exec0/fadd_d0/r_mantLess");
-        sc_trace(o_vcd, r.LShift, "/top/proc0/exec0/fadd_d0/r_LShift");
-        sc_trace(o_vcd, r.mantSum, "/top/proc0/exec0/fadd_d0/r_mantSum");
-        sc_trace(o_vcd, r.mantAlign, "/top/proc0/exec0/fadd_d0/r_mantAlign");
-        sc_trace(o_vcd, r.expPostScale, "/top/proc0/exec0/fadd_d0/r_expPostScale");
+        sc_trace(o_vcd, r.preShift, "/top/proc0/exec0/fpu0/fadd_d0/r_preShift");
+        sc_trace(o_vcd, r.signOpMore, "/top/proc0/exec0/fpu0/fadd_d0/r_signOpMore");
+        sc_trace(o_vcd, r.expMore, "/top/proc0/exec0/fpu0/fadd_d0/r_expMore");
+        sc_trace(o_vcd, r.mantMore, "/top/proc0/exec0/fpu0/fadd_d0/r_mantMore");
+        sc_trace(o_vcd, r.mantLess, "/top/proc0/exec0/fpu0/fadd_d0/r_mantLess");
+        sc_trace(o_vcd, r.LShift, "/top/proc0/exec0/fpu0/fadd_d0/r_LShift");
+        sc_trace(o_vcd, r.mantSum, "/top/proc0/exec0/fpu0/fadd_d0/r_mantSum");
+        sc_trace(o_vcd, r.mantAlign, "/top/proc0/exec0/fpu0/fadd_d0/r_mantAlign");
+        sc_trace(o_vcd, r.expPostScale, "/top/proc0/exec0/fpu0/fadd_d0/r_expPostScale");
     }
 }
 

@@ -385,9 +385,16 @@ void Processor::negedge_dbg_print() {
             // not writing
             sz += RISCV_sprintf(&tstr[sz], sizeof(tstr) - sz, "%s", "-\n");
         } else {
-            sz += RISCV_sprintf(&tstr[sz], sizeof(tstr) - sz, 
-                   "%3s <= %016" RV_PRI64 "x\n", 
-                   IREGS_NAMES[w.w.waddr.read().to_int()], cur_val);
+            unsigned t1 = w.w.waddr.read().to_uint();
+            if (t1 < Reg_Total) {
+                sz += RISCV_sprintf(&tstr[sz], sizeof(tstr) - sz, 
+                       "%3s <= %016" RV_PRI64 "x\n", 
+                       IREGS_NAMES[t1 & 0x1F], cur_val);
+            } else {
+                sz += RISCV_sprintf(&tstr[sz], sizeof(tstr) - sz, 
+                       "%3s <= %016" RV_PRI64 "x\n", 
+                       FREGS_NAMES[t1 & 0x1F], cur_val);
+            }
         }
 
         (*reg_dbg) << tstr;
