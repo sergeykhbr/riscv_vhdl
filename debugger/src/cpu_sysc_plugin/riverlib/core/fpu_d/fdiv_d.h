@@ -48,7 +48,7 @@ SC_MODULE(DoubleDiv) {
 
     struct RegistersType {
         sc_signal<bool> busy;
-        sc_signal<sc_uint<6>> ena;
+        sc_signal<sc_uint<5>> ena;
         sc_signal<sc_uint<64>> a;
         sc_signal<sc_uint<64>> b;
         sc_signal<sc_uint<64>> result;

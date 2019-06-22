@@ -47,11 +47,11 @@ SC_MODULE(idiv53) {
  private:
     divstage divstage0;
     struct RegistersType {
-        sc_signal<sc_uint<16>> delay;
+        sc_signal<sc_uint<15>> delay;
         sc_signal<sc_uint<16>> lshift;
         sc_signal<bool> lshift_rdy;
         sc_signal<sc_uint<53>> divisor;
-        sc_signal<sc_uint<53>> divident;
+        sc_signal<sc_uint<61>> divident;
         sc_signal<sc_biguint<105>> bits;
         sc_signal<bool> overflow;
         sc_signal<bool> zero_resid;

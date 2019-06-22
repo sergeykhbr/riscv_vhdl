@@ -674,7 +674,7 @@ void InstrDecoder::comb() {
                     case 0x9:
                         wb_dec[Instr_FMUL_D] = 1;
                         break;
-                    case 0xB:
+                    case 0xD:
                         wb_dec[Instr_FDIV_D] = 1;
                         break;
                     case 0x15:

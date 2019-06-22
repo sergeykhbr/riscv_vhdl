@@ -38,18 +38,18 @@ void divstage::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 
 void divstage::comb() {
     sc_uint<8> wb_bits;
-    sc_uint<61> wb_t15;
-    sc_uint<61> wb_t11;
-    sc_uint<61> wb_t7;
-    sc_uint<61> wb_t3;
+    sc_uint<53+2> wb_divx3;
+    sc_uint<53+2> wb_divx2;
     sc_uint<7> wb_muxind;
     bool w_muxind_rdy;
 
+    wb_divx2 = (i_divisor.read() << 1);
+    wb_divx3 = wb_divx2 + i_divisor.read();
+
     // stage 1 of 4
-    wb_t15 = (i_divisor.read() << 7) + (i_divisor.read() << 6);
-    wb_thresh[15] = i_divident.read() - wb_t15;
-    wb_thresh[14] = i_divident.read() - (i_divisor.read() << 7);
-    wb_thresh[13] = i_divident.read() - (i_divisor.read() << 6);
+    wb_thresh[15] = (0, i_divident.read()) - (wb_divx3.to_uint64() << 6);
+    wb_thresh[14] = (0, i_divident.read()) - (wb_divx2.to_uint64() << 6);
+    wb_thresh[13] = (0, i_divident.read()) - (i_divisor.read().to_uint64() << 6);
     wb_thresh[12] = (0, i_divident.read());
 
     if (wb_thresh[15][61] == 0) {
@@ -67,10 +67,9 @@ void divstage::comb() {
     }
 
     // stage 2 of 4
-    wb_t11 = (wb_dif[0] << 5) + (i_divisor.read() << 4);
-    wb_thresh[11] = wb_dif[0] - wb_t11;
-    wb_thresh[10] = wb_dif[0] - (i_divisor.read() << 5);
-    wb_thresh[9] = wb_dif[0] - (i_divisor.read() << 4);
+    wb_thresh[11] = (0, wb_dif[0]) - (wb_divx3.to_uint64() << 4);
+    wb_thresh[10] = (0, wb_dif[0]) - (wb_divx2.to_uint64() << 4);
+    wb_thresh[9] = (0, wb_dif[0]) - (i_divisor.read().to_uint64() << 4);
     wb_thresh[8] = (0, wb_dif[0]);
 
     if (wb_thresh[11][61] == 0) {
@@ -88,10 +87,9 @@ void divstage::comb() {
     }
 
     // stage 3 of 4
-    wb_t7 = (wb_dif[1] << 3) + (i_divisor.read() << 2);
-    wb_thresh[7] = wb_dif[1] - wb_t7;
-    wb_thresh[6] = wb_dif[1] - (i_divisor.read() << 3);
-    wb_thresh[5] = wb_dif[1] - (i_divisor.read() << 2);
+    wb_thresh[7] = (0, wb_dif[1]) - (wb_divx3.to_uint64() << 2);
+    wb_thresh[6] = (0, wb_dif[1]) - (wb_divx2.to_uint64() << 2);
+    wb_thresh[5] = (0, wb_dif[1]) - (i_divisor.read().to_uint64() << 2);
     wb_thresh[4] = (0, wb_dif[1]);
 
     if (wb_thresh[7][61] == 0) {
@@ -109,10 +107,9 @@ void divstage::comb() {
     }
 
     // stage 4 of 4
-    wb_t3 = (wb_dif[2] << 1) + i_divisor.read();
-    wb_thresh[3] = wb_dif[2] - wb_t3;
-    wb_thresh[2] = wb_dif[2] - (i_divisor.read() << 1);
-    wb_thresh[1] = wb_dif[2] - i_divisor.read();
+    wb_thresh[3] = (0, wb_dif[2]) - wb_divx3.to_uint64();
+    wb_thresh[2] = (0, wb_dif[2]) - wb_divx2.to_uint64();
+    wb_thresh[1] = (0, wb_dif[2]) - i_divisor.read().to_uint64();
     wb_thresh[0] = (0, wb_dif[2]);
 
     if (wb_thresh[3][61] == 0) {

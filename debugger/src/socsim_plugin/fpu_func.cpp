@@ -1196,8 +1196,8 @@ void FpuFunctional::test_instr(const char *instr, AttributeType *res) {
     bool passed = true;
 
     if (strcmp(instr, "fdiv.d") == 0) {
-        in = &TestCases_FMUL_D[0][0];
-        insz = TSTDMUL_LENGTH;
+        in = &TestCases_FDIV_D[0][0];
+        insz = TSTDDIV_LENGTH;
     } else if (strcmp(instr, "fmul.d") == 0) {
         in = &TestCases_FMUL_D[0][0];
         insz = TSTDMUL_LENGTH;

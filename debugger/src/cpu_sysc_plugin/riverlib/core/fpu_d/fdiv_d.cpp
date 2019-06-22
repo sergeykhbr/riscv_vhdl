@@ -44,6 +44,11 @@ DoubleDiv::DoubleDiv(sc_module_name name_) : sc_module(name_),
     sensitive << r.overflow;
     sensitive << r.underflow;
     sensitive << r.except;
+    sensitive << wb_idiv_result;
+    sensitive << wb_idiv_lshift;
+    sensitive << w_idiv_rdy;
+    sensitive << w_idiv_overflow;
+    sensitive << w_idiv_zeroresid;
 
     SC_METHOD(registers);
     sensitive << i_clk.pos();
@@ -62,19 +67,28 @@ DoubleDiv::DoubleDiv(sc_module_name name_) : sc_module(name_),
 
 void DoubleDiv::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
-        sc_trace(o_vcd, i_ena, "/top/proc0/exec0/fpu0/fdiv_d0/i_ena");
-        sc_trace(o_vcd, i_a, "/top/proc0/exec0/fpu0/fdiv_d0/i_a");
-        sc_trace(o_vcd, i_b, "/top/proc0/exec0/fpu0/fdiv_d0/i_b");
-        sc_trace(o_vcd, o_res, "/top/proc0/exec0/fpu0/fdiv_d0/o_res");
-        sc_trace(o_vcd, o_valid, "/top/proc0/exec0/fpu0/fdiv_d0/o_valid");
-        sc_trace(o_vcd, o_busy, "/top/proc0/exec0/fpu0/fdiv_d0/o_busy");
-        sc_trace(o_vcd, r.ena, "/top/proc0/exec0/fpu0/fdiv_d0/r_ena");
-        sc_trace(o_vcd, r.result, "/top/proc0/exec0/fpu0/fdiv_d0/r_result");
+        sc_trace(o_vcd, i_ena, "/top/proc0/exec0/fpu0/fdiv0/i_ena");
+        sc_trace(o_vcd, i_a, "/top/proc0/exec0/fpu0/fdiv0/i_a");
+        sc_trace(o_vcd, i_b, "/top/proc0/exec0/fpu0/fdiv0/i_b");
+        sc_trace(o_vcd, o_res, "/top/proc0/exec0/fpu0/fdiv0/o_res");
+        sc_trace(o_vcd, o_valid, "/top/proc0/exec0/fpu0/fdiv0/o_valid");
+        sc_trace(o_vcd, o_busy, "/top/proc0/exec0/fpu0/fdiv0/o_busy");
+        sc_trace(o_vcd, r.ena, "/top/proc0/exec0/fpu0/fdiv0/r_ena");
+        sc_trace(o_vcd, r.result, "/top/proc0/exec0/fpu0/fdiv0/r_result");
+        sc_trace(o_vcd, r.ena, "/top/proc0/exec0/fpu0/fdiv0/r_ena");
+        sc_trace(o_vcd, w_idiv_rdy, "/top/proc0/exec0/fpu0/fdiv0/w_idiv_rdy");
+        sc_trace(o_vcd, r.expAlign, "/top/proc0/exec0/fpu0/fdiv0/r_expAlign");
+        sc_trace(o_vcd, r.mantAlign, "/top/proc0/exec0/fpu0/fdiv0/r_mantAlign");
+        sc_trace(o_vcd, r.preShift, "/top/proc0/exec0/fpu0/fdiv0/r_preShift");
+        sc_trace(o_vcd, r.postShift, "/top/proc0/exec0/fpu0/fdiv0/r_postShift");
+        sc_trace(o_vcd, r.expAB, "/top/proc0/exec0/fpu0/fdiv0/r_expAB");
+        sc_trace(o_vcd, r.mantPostScale, "/top/proc0/exec0/fpu0/fdiv0/r_mantPostScale");
     }
+    u_idiv53.generateVCD(i_vcd, o_vcd);
 }
 
 void DoubleDiv::comb() {
-    sc_uint<7> vb_ena;
+    sc_uint<5> vb_ena;
     sc_uint<1> signA;
     sc_uint<1> signB;
     sc_uint<53> mantA;
@@ -106,7 +120,7 @@ void DoubleDiv::comb() {
     vb_ena[0] = (i_ena.read() & !r.busy);
     vb_ena[1] = r.ena.read()[0];
     w_idiv_ena = r.ena.read()[1];
-    vb_ena(5, 2) = (r.ena.read()(4, 2), w_idiv_rdy);
+    vb_ena(4, 2) = (r.ena.read()(3, 2), w_idiv_rdy);
 
     v.ena = vb_ena;
 
@@ -189,15 +203,13 @@ void DoubleDiv::comb() {
     }
 
     expAlign = (r.expAB.read()[11], r.expAB.read()) + (expShift[11], expShift);
-    if (expAlign == 0) {
-        postShift = 1;
-    } else if (expAlign[12] == 1) {
-        postShift = ~expAlign(11, 0) + 1;
+    if (expAlign[12] == 1) {
+        postShift = ~expAlign(11, 0) + 2;
     } else {
-        postShift = expAlign(11, 0);
+        postShift = 0;
     }
 
-    if (r.ena.read()[2] == 1) {
+    if (w_idiv_rdy == 1) {
         v.expAlign = expAlign(11, 0);
         v.mantAlign = mantAlign;
         v.postShift = postShift;
@@ -221,7 +233,7 @@ void DoubleDiv::comb() {
             }
         }
     }
-    if (r.ena.read()[3] == 1) {
+    if (r.ena.read()[2] == 1) {
         v.mantPostScale = mantPostScale;
     }
 
@@ -302,7 +314,7 @@ void DoubleDiv::comb() {
         res(51, 0) = mantShort + rndBit;
     }
 
-    if (r.ena.read()[4] == 1) {
+    if (r.ena.read()[3] == 1) {
         v.result = res;
         v.except = nanA | nanB | r.overflow.read() | r.underflow.read();
         v.busy = 0;
@@ -314,7 +326,7 @@ void DoubleDiv::comb() {
 
     o_res = r.result;
     o_except = r.except;
-    o_valid = r.ena.read()[5];
+    o_valid = r.ena.read()[4];
     o_busy = r.busy;
 }
 

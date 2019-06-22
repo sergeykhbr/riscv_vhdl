@@ -22,6 +22,7 @@
 namespace debugger {
 
 const uint64_t TestCases_FDIV_D[][2] = {
+    {0x4024a5604189374c, 0xc015554c985f06f7},
     {0x0000000000000000, 0xc17312d000000000},
     {0x0000000000000000, 0xc060000000000000},
     {0x0000000000000000, 0xbeb0c6f7a0b5ed8d},
@@ -284,6 +285,7 @@ const uint64_t TestCases_FDIV_D[][2] = {
 const size_t TSTDDIV_LENGTH = sizeof(TestCases_FDIV_D) / sizeof(uint64_t) / 2;
 
 const uint64_t TestCases_FMUL_D[][2] = {
+    {0x4024a5604189374c, 0xc015554c985f06f7},
     {0x7ffdd92a4fa86188, 0xfff527d430c40dfb},
     {0xfff83dbe1a26a815, 0xffff0d13540abcd1},
     {0x3fffffffffffffff, 0x3fffffffffffffff},
@@ -548,6 +550,7 @@ const uint64_t TestCases_FMUL_D[][2] = {
 const size_t TSTDMUL_LENGTH = sizeof(TestCases_FMUL_D) / sizeof(uint64_t) / 2;
 
 const uint64_t TestCases_FADD_D[][2] = {
+    {0x4024a5604189374c, 0xc015554c985f06f7},
     {0xfffcfae57723852f, 0xfff2bb91c297ea7c},
     {0x7ffdd92a4fa86188, 0xfff527d430c40dfb},
     {0xfff83dbe1a26a815, 0xffff0d13540abcd1},
