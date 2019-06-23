@@ -284,14 +284,7 @@ void idiv53::comb() {
     v.bits = vb_bits;
 
     if (!i_nrst.read()) {
-        v.delay = 0;
-        v.lshift = 0;
-        v.lshift_rdy = 0;
-        v.divisor = 0;
-        v.divident = 0;
-        v.bits = 0;
-        v.overflow = 0;
-        v.zero_resid = 0;
+        R_RESET(v);
     }
 
     o_result = r.bits.read();

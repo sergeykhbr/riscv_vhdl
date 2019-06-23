@@ -123,6 +123,12 @@
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\fpu_d\fpu_top.cpp">
       <Filter>riverlib\core\fpu_d</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\fpu_d\imul53.cpp">
+      <Filter>riverlib\core\fpu_d</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\fpu_d\fmul_d.cpp">
+      <Filter>riverlib\core\fpu_d</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\api_types.h">
@@ -248,6 +254,12 @@
       <Filter>riverlib\core\fpu_d</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\fpu_d\fpu_top.h">
+      <Filter>riverlib\core\fpu_d</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\fpu_d\imul53.h">
+      <Filter>riverlib\core\fpu_d</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\fpu_d\fmul_d.h">
       <Filter>riverlib\core\fpu_d</Filter>
     </ClInclude>
   </ItemGroup>

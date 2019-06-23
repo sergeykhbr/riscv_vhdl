@@ -15,12 +15,12 @@
  */
 
 #include "api_core.h"
-#include "fdiv_d.h"
+#include "fmul_d.h"
 
 namespace debugger {
 
-DoubleDiv::DoubleDiv(sc_module_name name_) : sc_module(name_),
-    u_idiv53("idiv53") {
+DoubleMul::DoubleMul(sc_module_name name_) : sc_module(name_),
+    u_imul53("imul53") {
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_ena;
@@ -33,61 +33,58 @@ DoubleDiv::DoubleDiv(sc_module_name name_) : sc_module(name_),
     sensitive << r.result;
     sensitive << r.zeroA;
     sensitive << r.zeroB;
-    sensitive << r.divisor;
-    sensitive << r.preShift;
+    sensitive << r.mantA;
+    sensitive << r.mantB;
     sensitive << r.expAB;
     sensitive << r.expAlign;
     sensitive << r.mantAlign;
     sensitive << r.postShift;
     sensitive << r.mantPostScale;
-    sensitive << r.nanRes;
+    sensitive << r.nanA;
+    sensitive << r.nanB;
     sensitive << r.overflow;
-    sensitive << r.underflow;
     sensitive << r.except;
-    sensitive << wb_idiv_result;
-    sensitive << wb_idiv_lshift;
-    sensitive << w_idiv_rdy;
-    sensitive << w_idiv_overflow;
-    sensitive << w_idiv_zeroresid;
+    sensitive << wb_imul_result;
+    sensitive << wb_imul_shift;
+    sensitive << w_imul_rdy;
+    sensitive << w_imul_overflow;
 
     SC_METHOD(registers);
     sensitive << i_clk.pos();
 
-    u_idiv53.i_nrst(i_nrst);
-    u_idiv53.i_clk(i_clk);
-    u_idiv53.i_ena(w_idiv_ena);
-    u_idiv53.i_divident(wb_divident);
-    u_idiv53.i_divisor(wb_divisor);
-    u_idiv53.o_result(wb_idiv_result);
-    u_idiv53.o_lshift(wb_idiv_lshift);
-    u_idiv53.o_rdy(w_idiv_rdy);
-    u_idiv53.o_overflow(w_idiv_overflow);
-    u_idiv53.o_zero_resid(w_idiv_zeroresid);
+    u_imul53.i_nrst(i_nrst);
+    u_imul53.i_clk(i_clk);
+    u_imul53.i_ena(w_imul_ena);
+    u_imul53.i_a(r.mantA);
+    u_imul53.i_b(r.mantB);
+    u_imul53.o_result(wb_imul_result);
+    u_imul53.o_shift(wb_imul_shift);
+    u_imul53.o_rdy(w_imul_rdy);
+    u_imul53.o_overflow(w_imul_overflow);
 };
 
-void DoubleDiv::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
+void DoubleMul::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
-        sc_trace(o_vcd, i_ena, "/top/proc0/exec0/fpu0/fdiv0/i_ena");
-        sc_trace(o_vcd, i_a, "/top/proc0/exec0/fpu0/fdiv0/i_a");
-        sc_trace(o_vcd, i_b, "/top/proc0/exec0/fpu0/fdiv0/i_b");
-        sc_trace(o_vcd, o_res, "/top/proc0/exec0/fpu0/fdiv0/o_res");
-        sc_trace(o_vcd, o_valid, "/top/proc0/exec0/fpu0/fdiv0/o_valid");
-        sc_trace(o_vcd, o_busy, "/top/proc0/exec0/fpu0/fdiv0/o_busy");
-        sc_trace(o_vcd, r.ena, "/top/proc0/exec0/fpu0/fdiv0/r_ena");
-        sc_trace(o_vcd, r.result, "/top/proc0/exec0/fpu0/fdiv0/r_result");
-        sc_trace(o_vcd, r.ena, "/top/proc0/exec0/fpu0/fdiv0/r_ena");
-        sc_trace(o_vcd, w_idiv_rdy, "/top/proc0/exec0/fpu0/fdiv0/w_idiv_rdy");
-        sc_trace(o_vcd, r.expAlign, "/top/proc0/exec0/fpu0/fdiv0/r_expAlign");
-        sc_trace(o_vcd, r.mantAlign, "/top/proc0/exec0/fpu0/fdiv0/r_mantAlign");
-        sc_trace(o_vcd, r.preShift, "/top/proc0/exec0/fpu0/fdiv0/r_preShift");
-        sc_trace(o_vcd, r.postShift, "/top/proc0/exec0/fpu0/fdiv0/r_postShift");
-        sc_trace(o_vcd, r.expAB, "/top/proc0/exec0/fpu0/fdiv0/r_expAB");
-        sc_trace(o_vcd, r.mantPostScale, "/top/proc0/exec0/fpu0/fdiv0/r_mantPostScale");
+        sc_trace(o_vcd, i_ena, "/top/proc0/exec0/fpu0/fmul0/i_ena");
+        sc_trace(o_vcd, i_a, "/top/proc0/exec0/fpu0/fmul0/i_a");
+        sc_trace(o_vcd, i_b, "/top/proc0/exec0/fpu0/fmul0/i_b");
+        sc_trace(o_vcd, o_res, "/top/proc0/exec0/fpu0/fmul0/o_res");
+        sc_trace(o_vcd, o_valid, "/top/proc0/exec0/fpu0/fmul0/o_valid");
+        sc_trace(o_vcd, o_busy, "/top/proc0/exec0/fpu0/fmul0/o_busy");
+        sc_trace(o_vcd, r.ena, "/top/proc0/exec0/fpu0/fmul0/r_ena");
+        sc_trace(o_vcd, r.result, "/top/proc0/exec0/fpu0/fmul0/r_result");
+        sc_trace(o_vcd, r.ena, "/top/proc0/exec0/fpu0/fmul0/r_ena");
+        sc_trace(o_vcd, w_imul_rdy, "/top/proc0/exec0/fpu0/fmul0/w_idiv_rdy");
+        sc_trace(o_vcd, r.expAlign, "/top/proc0/exec0/fpu0/fmul0/r_expAlign");
+        sc_trace(o_vcd, r.mantAlign, "/top/proc0/exec0/fpu0/fmul0/r_mantAlign");
+        sc_trace(o_vcd, r.postShift, "/top/proc0/exec0/fpu0/fmul0/r_postShift");
+        sc_trace(o_vcd, r.expAB, "/top/proc0/exec0/fpu0/fmul0/r_expAB");
+        sc_trace(o_vcd, r.mantPostScale, "/top/proc0/exec0/fpu0/fmul0/r_mantPostScale");
     }
-    u_idiv53.generateVCD(i_vcd, o_vcd);
+    u_imul53.generateVCD(i_vcd, o_vcd);
 }
 
-void DoubleDiv::comb() {
+void DoubleMul::comb() {
     sc_uint<5> vb_ena;
     sc_uint<1> signA;
     sc_uint<1> signB;
@@ -95,12 +92,10 @@ void DoubleDiv::comb() {
     sc_uint<53> mantB;
     bool zeroA;
     bool zeroB;
-    sc_uint<53> divisor;
-    sc_uint<6> preShift;
     sc_uint<12> expAB_t;
     sc_uint<12> expAB;
     sc_biguint<105> mantAlign;
-    sc_uint<12> expShift;
+    sc_uint<13> expAlign_t;
     sc_uint<13> expAlign;
     sc_uint<12> postShift;
     sc_biguint<105> mantPostScale;
@@ -120,8 +115,8 @@ void DoubleDiv::comb() {
 
     vb_ena[0] = (i_ena.read() & !r.busy);
     vb_ena[1] = r.ena.read()[0];
-    w_idiv_ena = r.ena.read()[1];
-    vb_ena(4, 2) = (r.ena.read()(3, 2), w_idiv_rdy);
+    w_imul_ena = r.ena.read()[1];
+    vb_ena(4, 2) = (r.ena.read()(3, 2), w_imul_rdy);
 
     v.ena = vb_ena;
 
@@ -160,69 +155,73 @@ void DoubleDiv::comb() {
     mantB[52] = 0;
     if (r.b.read()(62, 52) != 0) {
         mantB[52] = 1;
-        divisor = mantB;
-        preShift = 0;
+    }
+
+    // expA - expB + 1023
+    expAB_t = (0, r.a.read()(62, 52)) + (0, r.b.read()(62, 52));
+    expAB = expAB_t  - 1023;
+
+    if (r.ena.read()[0] == 1) {
+        v.expAB = expAB;
+        v.zeroA = zeroA;
+        v.zeroB = zeroB;
+        v.mantA = mantA;
+        v.mantB = mantB;
+    }
+
+    w_imul_ena = r.ena.read()[1];
+
+    // imul53 module:
+    mantAlign = 0;
+    if (wb_imul_result.read()[105] == 1) {
+        mantAlign = (0, wb_imul_result.read()(105, 1));
     } else {
-        // multiplexer for operation with zero expanent
-        divisor = 0;
-        for (unsigned i = 0; i < 52; i++) {
-            if (divisor == 0 && mantB[51 - i] == 1) {
-                divisor = mantB << i;
-                preShift = i;
+        for (unsigned i = 0; i < 105; i++) {
+            if (i == wb_imul_shift.read()) {
+                mantAlign = wb_imul_result << i;
             }
         }
     }
 
-    // expA - expB + 1023
-    expAB_t = (0, r.a.read()(62, 52)) + 1023;
-    expAB = expAB_t - (0, r.b.read()(62, 52));
-
-    if (r.ena.read()[0] == 1) {
-        v.divisor = divisor;
-        v.preShift = preShift;
-        v.expAB = expAB;
-        v.zeroA = zeroA;
-        v.zeroB = zeroB;
+    expAlign_t = (r.expAB.read()[11], r.expAB.read()) + 1;
+    if (wb_imul_result.read()[105] == 1) {
+        expAlign = expAlign_t;
+    } else if (r.a.read()(62, 52) == 0 || r.b.read()(62, 52) == 0) {
+        expAlign = expAlign_t - (0, wb_imul_shift.read());
+    } else {
+        expAlign = (r.expAB.read()[11], r.expAB.read()) - (0, wb_imul_shift.read());
     }
 
-    w_idiv_ena = r.ena.read()[1];
-    wb_divident = mantA;
-    wb_divisor = r.divisor.read();
-
-    // IDiv53 module:
-    mantAlign = 0;
-    for (unsigned i = 0; i < 105; i++) {
-        if (i == wb_idiv_lshift.read()) {
-            mantAlign = wb_idiv_result << i;
+    // IMPORTANT exception! new ZERO value
+    if (expAlign[12] == 1 || expAlign == 0) {
+        if (wb_imul_shift.read() == 0 || wb_imul_result.read()[105] == 1
+            || r.a.read()(62, 52) == 0 || r.b.read()(62, 52) == 0) {
+            postShift = ~expAlign(11, 0) + 2;
+        } else {
+            postShift = ~expAlign(11, 0) + 1;
         }
-    }
-
-    expShift = (0, r.preShift.read()) - (0, wb_idiv_lshift.read());
-    if (r.b.read()(62, 52) == 0 && r.a.read()(62, 52) != 0) {
-        expShift = expShift - 1;
-    } else if (r.b.read()(62, 52) != 0 && r.a.read()(62, 52) == 0) {
-        expShift = expShift + 1;
-    }
-
-    expAlign = (r.expAB.read()[11], r.expAB.read()) + (expShift[11], expShift);
-    if (expAlign[12] == 1) {
-        postShift = ~expAlign(11, 0) + 2;
     } else {
         postShift = 0;
     }
 
-    if (w_idiv_rdy == 1) {
+    if (w_imul_rdy == 1) {
         v.expAlign = expAlign(11, 0);
         v.mantAlign = mantAlign;
         v.postShift = postShift;
 
         // Exceptions:
-        v.nanRes = 0;
-        if (expAlign == 0x7FF) {
-            v.nanRes = 1;
+        v.nanA = 0;
+        if (r.a.read()(62, 52) == 0x7FF) {
+            v.nanA = 1;
         }
-        v.overflow = !expAlign[12] && expAlign[11];
-        v.underflow = expAlign[12] && expAlign[11];
+        v.nanB = 0;
+        if (r.b.read()(62, 52) == 0x7FF) {
+            v.nanB = 1;
+        }
+        v.overflow = 0;
+        if (expAlign >= 0x7FF) {
+            v.overflow = 1;
+        }
     }
 
     // Prepare to mantissa post-scale
@@ -272,53 +271,48 @@ void DoubleDiv::comb() {
     }
 
     // Result multiplexers:
-    if (nanA && mantZeroA && nanB && mantZeroB) {
+    if ((nanA && mantZeroA && r.zeroB.read()) || (nanB && mantZeroB && r.zeroA.read())) {
         res[63] = 1;
     } else if (nanA && !mantZeroA) {
-        res[63] = signA;
+        /** when both values are NaN, value B has higher priority if sign=1 */
+        res[63] = signA || (nanA && signB);
     } else if (nanB && !mantZeroB) {
         res[63] = signB;
-    } else if (r.zeroA.read() && r.zeroB.read()) {
-        res[63] = 1;
     } else {
         res[63] = r.a.read()[63] ^ r.b.read()[63];
     }
 
-    if (nanB && !mantZeroB) {
-        res(62, 52) = r.b.read()(62, 52);
-    } else if ((r.underflow.read() || r.zeroA.read()) && !r.zeroB.read()) {
-        res(62, 52) = 0;
-    } else if (r.overflow.read() || r.zeroB.read()) {
-        res(62, 52) = 0x7FF;
-    } else if (nanA) {
+    if (nanA) {
         res(62, 52) = r.a.read()(62, 52);
-    } else if ((nanB && mantZeroB) || r.expAlign.read()[11]) {
+    } else if (nanB) {
+        res(62, 52) = r.b.read()(62, 52);
+    } else if (r.expAlign.read()[11] || r.zeroA.read() || r.zeroB.read()) {
         res(62, 52) = 0;
+    } else if (r.overflow.read()) {
+        res(62, 52) = 0x7FF;
     } else {
         res(62, 52) = r.expAlign.read()
                        + (mantOnes && rndBit && !r.overflow.read());
     }
 
-    if ((r.zeroA.read() && r.zeroB.read())
-        || (nanA & mantZeroA & nanB & mantZeroB)) {
-        res[51] = 1;
-        res(50, 0) = 0;
-    } else if (nanA && !mantZeroA) {
+    if ((nanA & mantZeroA & !mantZeroB)
+        || (nanB & mantZeroB & !mantZeroA)
+        || (!nanA & !nanB & r.overflow.read())) {
+        res(51, 0) = 0;
+    } else if (nanA && !(nanB && signB)) {
+        /** when both values are NaN, value B has higher priority if sign=1 */
         res[51] = 1;
         res(50, 0) = r.a.read()(50, 0);
-    } else if (nanB&& !mantZeroB) {
+    } else if (nanB) {
         res[51] = 1;
         res(50, 0) = r.b.read()(50, 0);
-    } else if (r.overflow.read() | r.nanRes.read() | (nanA && mantZeroA)
-        || (nanB && mantZeroB)) {
-        res(51, 0) = 0;
     } else {
         res(51, 0) = mantShort + rndBit;
     }
 
     if (r.ena.read()[3] == 1) {
         v.result = res;
-        v.except = nanA | nanB | r.overflow.read() | r.underflow.read();
+        v.except = nanA | nanB | r.overflow.read();
         v.busy = 0;
     }
 
@@ -332,15 +326,15 @@ void DoubleDiv::comb() {
     o_busy = r.busy;
 }
 
-void DoubleDiv::registers() {
+void DoubleMul::registers() {
     r = v;
 }
 
-uint64_t DoubleDiv::compute_reference(uint64_t a, uint64_t b) {
+uint64_t DoubleMul::compute_reference(uint64_t a, uint64_t b) {
     Reg64Type ra, rb, ret;
     ra.val = a;
     rb.val = b;
-    ret.f64 = ra.f64 / rb.f64;
+    ret.f64 = ra.f64 * rb.f64;
     return ret.val;
 }
 

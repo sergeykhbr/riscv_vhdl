@@ -14,16 +14,16 @@
  *  limitations under the License.
  */
 
-#ifndef __DEBUGGER_RIVERLIB_CORE_FPU_D_FDIV_D_H__
-#define __DEBUGGER_RIVERLIB_CORE_FPU_D_FDIV_D_H__
+#ifndef __DEBUGGER_RIVERLIB_CORE_FPU_D_FMUL_D_H__
+#define __DEBUGGER_RIVERLIB_CORE_FPU_D_FMUL_D_H__
 
 #include <systemc.h>
 #include "../../river_cfg.h"
-#include "idiv53.h"
+#include "imul53.h"
 
 namespace debugger {
 
-SC_MODULE(DoubleDiv) {
+SC_MODULE(DoubleMul) {
     sc_in<bool> i_clk;
     sc_in<bool> i_nrst;
     sc_in<bool> i_ena;
@@ -37,9 +37,9 @@ SC_MODULE(DoubleDiv) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(DoubleDiv);
+    SC_HAS_PROCESS(DoubleMul);
 
-    DoubleDiv(sc_module_name name_);
+    DoubleMul(sc_module_name name_);
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
@@ -54,16 +54,16 @@ SC_MODULE(DoubleDiv) {
         sc_signal<sc_uint<64>> result;
         sc_signal<bool> zeroA;
         sc_signal<bool> zeroB;
-        sc_signal<sc_uint<53>> divisor;
-        sc_signal<sc_uint<6>> preShift;
+        sc_signal<sc_uint<53>> mantA;
+        sc_signal<sc_uint<53>> mantB;
         sc_signal<sc_uint<12>> expAB;
         sc_signal<sc_uint<12>> expAlign;
         sc_signal<sc_biguint<105>> mantAlign;
         sc_signal<sc_uint<12>> postShift;
         sc_signal<sc_biguint<105>> mantPostScale;
-        sc_signal<bool> nanRes;
+        sc_signal<bool> nanA;
+        sc_signal<bool> nanB;
         sc_signal<bool> overflow;
-        sc_signal<bool> underflow;
         sc_signal<bool> except;
 
         sc_uint<RISCV_ARCH> a_dbg;
@@ -79,16 +79,16 @@ SC_MODULE(DoubleDiv) {
         iv.result = 0;
         iv.zeroA = 0;
         iv.zeroB = 0;
-        iv.divisor = 0;
-        iv.preShift = 0;
+        iv.mantA = 0;
+        iv.mantB = 0;
         iv.expAB = 0;
         iv.expAlign = 0;
         iv.mantAlign = 0;
         iv.postShift = 0;
         iv.mantPostScale = 0;
-        iv.nanRes = 0;
+        iv.nanA = 0;
+        iv.nanB = 0;
         iv.overflow = 0;
-        iv.underflow = 0;
         iv.except = 0;
 
         iv.a_dbg = 0;
@@ -96,17 +96,14 @@ SC_MODULE(DoubleDiv) {
         iv.reference_res = 0;
     }
 
-    idiv53 u_idiv53;
-    sc_signal<bool> w_idiv_ena;
-    sc_signal<sc_uint<53>> wb_divident;
-    sc_signal<sc_uint<53>> wb_divisor;
-    sc_signal<sc_biguint<105>> wb_idiv_result;
-    sc_signal<sc_uint<7>> wb_idiv_lshift;
-    sc_signal<bool>  w_idiv_rdy;
-    sc_signal<bool>  w_idiv_overflow;
-    sc_signal<bool>  w_idiv_zeroresid;
+    imul53 u_imul53;
+    sc_signal<bool> w_imul_ena;
+    sc_signal<sc_biguint<106>> wb_imul_result;
+    sc_signal<sc_uint<7>> wb_imul_shift;
+    sc_signal<bool>  w_imul_rdy;
+    sc_signal<bool>  w_imul_overflow;
 };
 
 }  // namespace debugger
 
-#endif  // __DEBUGGER_RIVERLIB_CORE_FPU_D_FDIV_D_H__
+#endif  // __DEBUGGER_RIVERLIB_CORE_FPU_D_FMUL_D_H__

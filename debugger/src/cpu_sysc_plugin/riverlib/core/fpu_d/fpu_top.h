@@ -21,6 +21,7 @@
 #include "../../river_cfg.h"
 #include "fadd_d.h"
 #include "fdiv_d.h"
+#include "fmul_d.h"
 
 namespace debugger {
 
@@ -57,6 +58,7 @@ SC_MODULE(FpuTop) {
         sc_signal<bool> except;
         sc_signal<bool> ena_fadd;
         sc_signal<bool> ena_fdiv;
+        sc_signal<bool> ena_fmul;
     } v, r;
 
     void R_RESET(RegistersType &iv) {
@@ -70,6 +72,7 @@ SC_MODULE(FpuTop) {
         iv.except = 0;
         iv.ena_fadd = 0;
         iv.ena_fdiv = 0;
+        iv.ena_fmul = 0;
     }
 
     sc_signal<bool> w_fadd_d;
@@ -90,6 +93,12 @@ SC_MODULE(FpuTop) {
     sc_signal<bool> w_exception_fdiv;
     sc_signal<bool> w_busy_fdiv;
     DoubleDiv fdiv_d0;
+
+    sc_signal<sc_uint<64>> wb_res_fmul;
+    sc_signal<bool> w_valid_fmul;
+    sc_signal<bool> w_exception_fmul;
+    sc_signal<bool> w_busy_fmul;
+    DoubleMul fmul_d0;
 };
 
 }  // namespace debugger

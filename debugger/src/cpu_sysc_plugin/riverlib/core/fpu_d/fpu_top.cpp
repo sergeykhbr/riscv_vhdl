@@ -21,7 +21,8 @@ namespace debugger {
 
 FpuTop::FpuTop(sc_module_name name_) : sc_module(name_),
     fadd_d0("fadd_d0"),
-    fdiv_d0("fdiv_d0") {
+    fdiv_d0("fdiv_d0"),
+    fmul_d0("fmul_d0") {
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_ena;
@@ -38,6 +39,7 @@ FpuTop::FpuTop(sc_module_name name_) : sc_module(name_),
     sensitive << r.except;
     sensitive << r.ena_fadd;
     sensitive << r.ena_fdiv;
+    sensitive << r.ena_fmul;
     sensitive << wb_res_fadd;
     sensitive << w_valid_fadd;
     sensitive << w_exception_fadd;
@@ -46,6 +48,10 @@ FpuTop::FpuTop(sc_module_name name_) : sc_module(name_),
     sensitive << w_valid_fdiv;
     sensitive << w_exception_fdiv;
     sensitive << w_busy_fdiv;
+    sensitive << wb_res_fmul;
+    sensitive << w_valid_fmul;
+    sensitive << w_exception_fmul;
+    sensitive << w_busy_fmul;
 
     SC_METHOD(registers);
     sensitive << i_clk.pos();
@@ -76,6 +82,16 @@ FpuTop::FpuTop(sc_module_name name_) : sc_module(name_),
     fdiv_d0.o_except(w_exception_fdiv);
     fdiv_d0.o_valid(w_valid_fdiv);
     fdiv_d0.o_busy(w_busy_fdiv);
+
+    fmul_d0.i_clk(i_clk);
+    fmul_d0.i_nrst(i_nrst);
+    fmul_d0.i_ena(r.ena_fmul);
+    fmul_d0.i_a(r.a);
+    fmul_d0.i_b(r.b);
+    fmul_d0.o_res(wb_res_fmul);
+    fmul_d0.o_except(w_exception_fmul);
+    fmul_d0.o_valid(w_valid_fmul);
+    fmul_d0.o_busy(w_busy_fmul);
 };
 
 void FpuTop::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
@@ -91,10 +107,12 @@ void FpuTop::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.result, "/top/proc0/exec0/fpu0/r_result");
         sc_trace(o_vcd, r.ena_fadd, "/top/proc0/exec0/fpu0/r_ena_fadd");
         sc_trace(o_vcd, r.ena_fdiv, "/top/proc0/exec0/fpu0/r_ena_fdiv");
+        sc_trace(o_vcd, r.ena_fmul, "/top/proc0/exec0/fpu0/r_ena_fmul");
         sc_trace(o_vcd, r.ivec, "/top/proc0/exec0/fpu0/r_ivec");
     }
     fadd_d0.generateVCD(i_vcd, o_vcd);
     fdiv_d0.generateVCD(i_vcd, o_vcd);
+    fmul_d0.generateVCD(i_vcd, o_vcd);
 }
 
 void FpuTop::comb() {
@@ -104,6 +122,7 @@ void FpuTop::comb() {
     iv = i_ivec.read();
     v.ena_fadd = 0;
     v.ena_fdiv = 0;
+    v.ena_fmul = 0;
     v.ready = 0;
     if (i_ena.read() == 1 && r.busy.read() == 0) {
         v.busy = 1;
@@ -120,6 +139,7 @@ void FpuTop::comb() {
                     | iv[Instr_FMAX_D - Instr_FADD_D]
                     | iv[Instr_FMIN_D - Instr_FADD_D]).to_bool();
         v.ena_fdiv = iv[Instr_FDIV_D - Instr_FADD_D].to_bool();
+        v.ena_fmul = iv[Instr_FMUL_D - Instr_FADD_D].to_bool();
     }
 
     if (r.busy.read() == 1 && (r.ivec.read()[Instr_FMOV_X_D - Instr_FADD_D]
@@ -138,6 +158,11 @@ void FpuTop::comb() {
         v.ready = 1;
         v.result = wb_res_fdiv;
         v.except = w_exception_fdiv;
+    } else if (w_valid_fmul == 1) {
+        v.busy = 0;
+        v.ready = 1;
+        v.result = wb_res_fmul;
+        v.except = w_exception_fmul;
     }
 
     w_fadd_d = iv[Instr_FADD_D - Instr_FADD_D].to_bool();

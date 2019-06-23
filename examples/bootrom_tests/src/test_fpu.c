@@ -28,6 +28,12 @@ void test_fpu(void) {
     double x2 = -5.3333;
     double x3;
 
+    x3 = x1 * x2;
+    if (x3 != (10.323 * -5.3333)) {
+        print_uart("FAIL (DMUL)\r\n", 12);
+        return;
+    }
+
     x3 = x1 / x2;
     if (x3 != (10.323 / -5.3333)) {
         print_uart("FAIL (DDIV)\r\n", 12);

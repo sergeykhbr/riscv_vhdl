@@ -57,6 +57,16 @@ SC_MODULE(idiv53) {
         sc_signal<bool> zero_resid;
     } v, r;
 
+    void R_RESET(RegistersType &iv) {
+        iv.delay = 0;
+        iv.lshift = 0;
+        iv.lshift_rdy = 0;
+        iv.divisor = 0;
+        iv.divident = 0;
+        iv.bits = 0;
+        iv.overflow = 0;
+        iv.zero_resid = 0;
+    }
     sc_signal<bool> w_mux_ena_i;
     sc_signal<sc_uint<56>> wb_muxind_i;
     sc_signal<sc_uint<61>> wb_divident_i;
