@@ -30,9 +30,23 @@ void test_fpu(void) {
     int64_t ix3;
     uint64_t ux3;
 
+    ix3 = -55;
+    x3 = (double)ix3;
+    if (x3 != -55.0) {
+        print_uart("FAIL (DCVT_D_L)\r\n", 16);
+        return;
+    }
+
+    ux3 = 75;
+    x3 = (double)ux3;
+    if (x3 != 75.0) {
+        print_uart("FAIL (DCVT_D_LU)\r\n", 16);
+        return;
+    }
+
     ix3 = (int64_t)x2;
     if (ix3 != (int64_t)(-5.3333)) {
-        print_uart("FAIL (DCVT_D_L)\r\n", 16);
+        print_uart("FAIL (DCVT_L_D)\r\n", 16);
         return;
     }
 
@@ -42,7 +56,7 @@ void test_fpu(void) {
     */
     ux3 = (uint64_t)((int64_t)x2);
     if (ux3 != (uint64_t)((int64_t)(-5.3333))) {
-        print_uart("FAIL (DCVT_D_LU)\r\n", 17);
+        print_uart("FAIL (DCVT_LU_D)\r\n", 17);
         return;
     }
 

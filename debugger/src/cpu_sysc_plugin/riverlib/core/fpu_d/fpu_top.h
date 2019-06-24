@@ -23,6 +23,7 @@
 #include "fdiv_d.h"
 #include "fmul_d.h"
 #include "d2l_d.h"
+#include "l2d_d.h"
 
 namespace debugger {
 
@@ -61,6 +62,7 @@ SC_MODULE(FpuTop) {
         sc_signal<bool> ena_fdiv;
         sc_signal<bool> ena_fmul;
         sc_signal<bool> ena_d2l;
+        sc_signal<bool> ena_l2d;
     } v, r;
 
     void R_RESET(RegistersType &iv) {
@@ -76,6 +78,7 @@ SC_MODULE(FpuTop) {
         iv.ena_fdiv = 0;
         iv.ena_fmul = 0;
         iv.ena_d2l = 0;
+        iv.ena_l2d = 0;
     }
 
     sc_signal<bool> w_fadd_d;
@@ -109,6 +112,11 @@ SC_MODULE(FpuTop) {
     sc_signal<bool> w_exception_d2l;
     sc_signal<bool> w_busy_d2l;
     Double2Long d2l_d0;
+
+    sc_signal<sc_uint<64>> wb_res_l2d;
+    sc_signal<bool> w_valid_l2d;
+    sc_signal<bool> w_busy_l2d;
+    Long2Double l2d_d0;
 };
 
 }  // namespace debugger

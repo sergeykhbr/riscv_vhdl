@@ -715,9 +715,9 @@ void InstrDecoder::comb() {
                             wb_dec[Instr_FCVT_D_W] = 1;
                         } else if (wb_instr(24, 20) == 1) {
                             wb_dec[Instr_FCVT_D_WU] = 1;
-                        } else if (wb_opcode2 == 2) {
+                        } else if (wb_instr(24, 20) == 2) {
                             wb_dec[Instr_FCVT_D_L] = 1;
-                        } else if (wb_opcode2 == 3) {
+                        } else if (wb_instr(24, 20) == 3) {
                             wb_dec[Instr_FCVT_D_LU] = 1;
                         } else {
                             w_error = true;

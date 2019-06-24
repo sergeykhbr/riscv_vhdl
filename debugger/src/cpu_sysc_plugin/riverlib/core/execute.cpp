@@ -302,7 +302,8 @@ void InstrExecute::comb() {
         wb_radr2 = (0, i_d_instr.read().range(24, 20));
         wb_rdata2 = i_rdata2;
         if (CFG_HW_FPU_ENABLE && i_f64.read() == 1) {
-            if (wv[Instr_FMOV_D_X].to_bool() == 0) {
+            if ((wv[Instr_FMOV_D_X] |
+                wv[Instr_FCVT_D_L] | wv[Instr_FCVT_D_LU]).to_bool() == 0) {
                 wb_radr1 = (1, i_d_instr.read().range(19, 15));
                 wb_rdata1 = i_rfdata1;
             }
