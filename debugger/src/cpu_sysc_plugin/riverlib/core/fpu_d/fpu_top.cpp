@@ -22,7 +22,8 @@ namespace debugger {
 FpuTop::FpuTop(sc_module_name name_) : sc_module(name_),
     fadd_d0("fadd_d0"),
     fdiv_d0("fdiv_d0"),
-    fmul_d0("fmul_d0") {
+    fmul_d0("fmul_d0"),
+    d2l_d0("d2l_d0") {
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_ena;
@@ -52,6 +53,10 @@ FpuTop::FpuTop(sc_module_name name_) : sc_module(name_),
     sensitive << w_valid_fmul;
     sensitive << w_exception_fmul;
     sensitive << w_busy_fmul;
+    sensitive << wb_res_d2l;
+    sensitive << w_valid_d2l;
+    sensitive << w_exception_d2l;
+    sensitive << w_busy_d2l;
 
     SC_METHOD(registers);
     sensitive << i_clk.pos();
@@ -92,6 +97,16 @@ FpuTop::FpuTop(sc_module_name name_) : sc_module(name_),
     fmul_d0.o_except(w_exception_fmul);
     fmul_d0.o_valid(w_valid_fmul);
     fmul_d0.o_busy(w_busy_fmul);
+
+    d2l_d0.i_clk(i_clk);
+    d2l_d0.i_nrst(i_nrst);
+    d2l_d0.i_ena(r.ena_d2l);
+    d2l_d0.i_signed(w_fcvt_signed);
+    d2l_d0.i_a(r.a);
+    d2l_d0.o_res(wb_res_d2l);
+    d2l_d0.o_except(w_exception_d2l);
+    d2l_d0.o_valid(w_valid_d2l);
+    d2l_d0.o_busy(w_busy_d2l);
 };
 
 void FpuTop::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
@@ -108,11 +123,13 @@ void FpuTop::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.ena_fadd, "/top/proc0/exec0/fpu0/r_ena_fadd");
         sc_trace(o_vcd, r.ena_fdiv, "/top/proc0/exec0/fpu0/r_ena_fdiv");
         sc_trace(o_vcd, r.ena_fmul, "/top/proc0/exec0/fpu0/r_ena_fmul");
+        sc_trace(o_vcd, r.ena_d2l, "/top/proc0/exec0/fpu0/r_ena_d2l");
         sc_trace(o_vcd, r.ivec, "/top/proc0/exec0/fpu0/r_ivec");
     }
     fadd_d0.generateVCD(i_vcd, o_vcd);
     fdiv_d0.generateVCD(i_vcd, o_vcd);
     fmul_d0.generateVCD(i_vcd, o_vcd);
+    d2l_d0.generateVCD(i_vcd, o_vcd);
 }
 
 void FpuTop::comb() {
@@ -123,6 +140,7 @@ void FpuTop::comb() {
     v.ena_fadd = 0;
     v.ena_fdiv = 0;
     v.ena_fmul = 0;
+    v.ena_d2l = 0;
     v.ready = 0;
     if (i_ena.read() == 1 && r.busy.read() == 0) {
         v.busy = 1;
@@ -140,6 +158,8 @@ void FpuTop::comb() {
                     | iv[Instr_FMIN_D - Instr_FADD_D]).to_bool();
         v.ena_fdiv = iv[Instr_FDIV_D - Instr_FADD_D].to_bool();
         v.ena_fmul = iv[Instr_FMUL_D - Instr_FADD_D].to_bool();
+        v.ena_d2l = (iv[Instr_FCVT_LU_D - Instr_FADD_D]
+                    | iv[Instr_FCVT_L_D - Instr_FADD_D]).to_bool();
     }
 
     if (r.busy.read() == 1 && (r.ivec.read()[Instr_FMOV_X_D - Instr_FADD_D]
@@ -163,15 +183,22 @@ void FpuTop::comb() {
         v.ready = 1;
         v.result = wb_res_fmul;
         v.except = w_exception_fmul;
+    } else if (w_valid_d2l == 1) {
+        v.busy = 0;
+        v.ready = 1;
+        v.result = wb_res_d2l;
+        v.except = w_exception_d2l;
     }
 
-    w_fadd_d = iv[Instr_FADD_D - Instr_FADD_D].to_bool();
-    w_fsub_d = iv[Instr_FSUB_D - Instr_FADD_D].to_bool();
-    w_feq_d = iv[Instr_FEQ_D - Instr_FADD_D].to_bool();
-    w_flt_d = iv[Instr_FLT_D - Instr_FADD_D].to_bool();
-    w_fle_d = iv[Instr_FLE_D - Instr_FADD_D].to_bool();
-    w_fmax_d = iv[Instr_FMAX_D - Instr_FADD_D].to_bool();
-    w_fmin_d = iv[Instr_FMIN_D - Instr_FADD_D].to_bool();
+    w_fadd_d = r.ivec.read()[Instr_FADD_D - Instr_FADD_D].to_bool();
+    w_fsub_d = r.ivec.read()[Instr_FSUB_D - Instr_FADD_D].to_bool();
+    w_feq_d = r.ivec.read()[Instr_FEQ_D - Instr_FADD_D].to_bool();
+    w_flt_d = r.ivec.read()[Instr_FLT_D - Instr_FADD_D].to_bool();
+    w_fle_d = r.ivec.read()[Instr_FLE_D - Instr_FADD_D].to_bool();
+    w_fmax_d = r.ivec.read()[Instr_FMAX_D - Instr_FADD_D].to_bool();
+    w_fmin_d = r.ivec.read()[Instr_FMIN_D - Instr_FADD_D].to_bool();
+    w_fcvt_signed = (r.ivec.read()[Instr_FCVT_L_D - Instr_FADD_D] |
+                     r.ivec.read()[Instr_FCVT_D_L - Instr_FADD_D]).to_bool();
 
     o_res = r.result;
     o_except = r.except;

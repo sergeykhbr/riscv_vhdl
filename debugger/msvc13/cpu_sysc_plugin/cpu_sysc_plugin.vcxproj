@@ -120,6 +120,7 @@
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\decoder.cpp" />
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\execute.cpp" />
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\fetch.cpp" />
+    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\fpu_d\d2l_d.cpp" />
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\fpu_d\divstage.cpp" />
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\fpu_d\fadd_d.cpp" />
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\fpu_d\fdiv_d.cpp" />
@@ -166,6 +167,7 @@
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\decoder.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\execute.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\fetch.h" />
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\fpu_d\d2l_d.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\fpu_d\divstage.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\fpu_d\fadd_d.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\fpu_d\fdiv_d.h" />

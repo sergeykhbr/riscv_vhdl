@@ -27,6 +27,24 @@ void test_fpu(void) {
     double x1 = 10.323;
     double x2 = -5.3333;
     double x3;
+    int64_t ix3;
+    uint64_t ux3;
+
+    ix3 = (int64_t)x2;
+    if (ix3 != (int64_t)(-5.3333)) {
+        print_uart("FAIL (DCVT_D_L)\r\n", 16);
+        return;
+    }
+
+    /** Warning: conversion of negative double to unsigned integer
+                 is undefined (C99/C11 6.3.1.4) and result is target dependable.
+                 Hardware FPU is oriented on x86 implementation
+    */
+    ux3 = (uint64_t)((int64_t)x2);
+    if (ux3 != (uint64_t)((int64_t)(-5.3333))) {
+        print_uart("FAIL (DCVT_D_LU)\r\n", 17);
+        return;
+    }
 
     x3 = x1 * x2;
     if (x3 != (10.323 * -5.3333)) {

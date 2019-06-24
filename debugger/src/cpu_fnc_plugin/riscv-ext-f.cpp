@@ -43,7 +43,7 @@ class FADD_D : public RiscvInstruction {
 };
 
 /**
- * @brief The FCVT.D.L covert double to int64_t
+ * @brief The FCVT.D.L covert int64_t to double
  */
 class FCVT_D_L: public RiscvInstruction {
  public:
@@ -54,15 +54,15 @@ class FCVT_D_L: public RiscvInstruction {
         ISA_R_type u;
         Reg64Type dest, src1;
         u.value = payload->buf32[0];
-        src1.val = RF[u.bits.rs1];
-        dest.ival = static_cast<int64_t>(src1.f64);
+        src1.val = R[u.bits.rs1];
+        dest.f64 = static_cast<double>(src1.ival);
         RF[u.bits.rd] = dest.val;
         return 4;
     }
 };
 
 /**
- * @brief The FCVT.D.LU covert double to uint64_t
+ * @brief The FCVT.D.LU covert uint64_t to double
  */
 class FCVT_D_LU: public RiscvInstruction {
  public:
@@ -73,15 +73,15 @@ class FCVT_D_LU: public RiscvInstruction {
         ISA_R_type u;
         Reg64Type dest, src1;
         u.value = payload->buf32[0];
-        src1.val = RF[u.bits.rs1];
-        dest.val = static_cast<uint64_t>(src1.f64);
+        src1.val = R[u.bits.rs1];
+        dest.f64 = static_cast<double>(src1.val);
         RF[u.bits.rd] = dest.val;
         return 4;
     }
 };
 
 /**
- * @brief The FCVT.L.D covert int64_t to double
+ * @brief The FCVT.L.D covert double to int64_t
  */
 class FCVT_L_D: public RiscvInstruction {
  public:
@@ -93,14 +93,14 @@ class FCVT_L_D: public RiscvInstruction {
         Reg64Type dest, src1;
         u.value = payload->buf32[0];
         src1.val = RF[u.bits.rs1];
-        dest.f64 = static_cast<double>(src1.ival);
-        RF[u.bits.rd] = dest.val;
+        dest.ival = static_cast<int64_t>(src1.f64);
+        R[u.bits.rd] = dest.val;
         return 4;
     }
 };
 
 /**
- * @brief The FCVT.LU.D covert uint64_t to double
+ * @brief The FCVT.LU.D covert double to uint64_t
  */
 class FCVT_LU_D: public RiscvInstruction {
  public:
@@ -112,8 +112,8 @@ class FCVT_LU_D: public RiscvInstruction {
         Reg64Type dest, src1;
         u.value = payload->buf32[0];
         src1.val = RF[u.bits.rs1];
-        dest.f64 = static_cast<double>(src1.val);
-        RF[u.bits.rd] = dest.val;
+        dest.val = static_cast<uint64_t>(src1.f64);
+        R[u.bits.rd] = dest.val;
         return 4;
     }
 };

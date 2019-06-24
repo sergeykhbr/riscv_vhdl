@@ -702,9 +702,9 @@ void InstrDecoder::comb() {
                             wb_dec[Instr_FCVT_W_D] = 1;
                         } else if (wb_instr(24, 20) == 1) {
                             wb_dec[Instr_FCVT_WU_D] = 1;
-                        } else if (wb_opcode2 == 2) {
+                        } else if (wb_instr(24, 20) == 2) {
                             wb_dec[Instr_FCVT_L_D] = 1;
-                        } else if (wb_opcode2 == 3) {
+                        } else if (wb_instr(24, 20) == 3) {
                             wb_dec[Instr_FCVT_LU_D] = 1;
                         } else {
                             w_error = true;

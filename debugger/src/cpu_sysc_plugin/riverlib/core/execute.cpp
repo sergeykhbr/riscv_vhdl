@@ -512,7 +512,8 @@ void InstrExecute::comb() {
         if (CFG_HW_FPU_ENABLE) {
             v.multi_ivec_fpu = wv.range(Instr_FSUB_D, Instr_FADD_D);
             if (w_fpu_ena == 1 && (wv[Instr_FMOV_X_D] | wv[Instr_FEQ_D]
-                | wv[Instr_FLT_D] | wv[Instr_FLE_D]).to_bool() == 0) {
+                | wv[Instr_FLT_D] | wv[Instr_FLE_D]
+                | wv[Instr_FCVT_LU_D] | wv[Instr_FCVT_L_D]).to_bool() == 0) {
                 v.multi_res_addr = 0x20 | wb_res_addr;
             }
         }
