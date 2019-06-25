@@ -18,6 +18,7 @@
 #include "fpu_func.h"
 #include "fpu_func_tests.h"
 #include <stdlib.h>
+#include <iostream>
 
 namespace debugger {
 

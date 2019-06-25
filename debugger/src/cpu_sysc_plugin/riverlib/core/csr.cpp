@@ -42,6 +42,12 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid)
     sensitive << i_ex_unalign_load;
     sensitive << i_ex_breakpoint;
     sensitive << i_ex_ecall;
+    sensitive << i_ex_fpu_invalidop;
+    sensitive << i_ex_fpu_divbyzero;
+    sensitive << i_ex_fpu_overflow;
+    sensitive << i_ex_fpu_underflow;
+    sensitive << i_ex_fpu_inexact;
+    sensitive << i_fpu_valid;
     sensitive << i_irq_external;
     sensitive << i_break_mode;
     sensitive << i_dport_ena;

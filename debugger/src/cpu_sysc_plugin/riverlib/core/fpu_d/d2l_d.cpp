@@ -51,7 +51,6 @@ void Double2Long::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_busy, "/top/proc0/exec0/fpu0/d2l/o_busy");
         sc_trace(o_vcd, r.ena, "/top/proc0/exec0/fpu0/d2l/r_ena");
         sc_trace(o_vcd, r.result, "/top/proc0/exec0/fpu0/d2l/r_result");
-        sc_trace(o_vcd, r.ena, "/top/proc0/exec0/fpu0/d2l/r_ena");
         sc_trace(o_vcd, r.op_signed, "/top/proc0/exec0/fpu0/d2l/r_op_signed");
         sc_trace(o_vcd, r.mantPostScale, "/top/proc0/exec0/fpu0/d2l/r_mantPostScale");
         sc_trace(o_vcd, expDif, "/top/proc0/exec0/fpu0/d2l/expDif");

@@ -157,7 +157,7 @@
                 ['InitFile','../../../examples/bootrom_tests/linuxbuild/bin/bootrom_tests.hex'],
                 ['ReadOnly',true],
                 ['BaseAddress',0x0],
-                ['Length',16384]
+                ['Length',32768]
                 ]}]},
     {'Class':'MemorySimClass','Instances':[
           {'Name':'fwimage0','Attr':[

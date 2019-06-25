@@ -75,7 +75,6 @@ void DoubleDiv::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_busy, "/top/proc0/exec0/fpu0/fdiv0/o_busy");
         sc_trace(o_vcd, r.ena, "/top/proc0/exec0/fpu0/fdiv0/r_ena");
         sc_trace(o_vcd, r.result, "/top/proc0/exec0/fpu0/fdiv0/r_result");
-        sc_trace(o_vcd, r.ena, "/top/proc0/exec0/fpu0/fdiv0/r_ena");
         sc_trace(o_vcd, w_idiv_rdy, "/top/proc0/exec0/fpu0/fdiv0/w_idiv_rdy");
         sc_trace(o_vcd, r.expAlign, "/top/proc0/exec0/fpu0/fdiv0/r_expAlign");
         sc_trace(o_vcd, r.mantAlign, "/top/proc0/exec0/fpu0/fdiv0/r_mantAlign");
@@ -98,7 +97,7 @@ void DoubleDiv::comb() {
     sc_uint<53> divisor;
     sc_uint<6> preShift;
     sc_uint<12> expAB_t;
-    sc_uint<12> expAB;
+    sc_uint<13> expAB;
     sc_biguint<105> mantAlign;
     sc_uint<12> expShift;
     sc_uint<13> expAlign;
@@ -165,8 +164,8 @@ void DoubleDiv::comb() {
     } else {
         // multiplexer for operation with zero expanent
         divisor = 0;
-        for (unsigned i = 0; i < 52; i++) {
-            if (divisor == 0 && mantB[51 - i] == 1) {
+        for (unsigned i = 0; i < 53; i++) {
+            if (divisor == 0 && mantB[52 - i] == 1) {
                 divisor = mantB << i;
                 preShift = i;
             }
@@ -175,7 +174,7 @@ void DoubleDiv::comb() {
 
     // expA - expB + 1023
     expAB_t = (0, r.a.read()(62, 52)) + 1023;
-    expAB = expAB_t - (0, r.b.read()(62, 52));
+    expAB = (0, expAB_t) - (0, r.b.read()(62, 52));  // signed value
 
     if (r.ena.read()[0] == 1) {
         v.divisor = divisor;
@@ -204,7 +203,7 @@ void DoubleDiv::comb() {
         expShift = expShift + 1;
     }
 
-    expAlign = (r.expAB.read()[11], r.expAB.read()) + (expShift[11], expShift);
+    expAlign = r.expAB.read() + (expShift[11], expShift);
     if (expAlign[12] == 1) {
         postShift = ~expAlign(11, 0) + 2;
     } else {

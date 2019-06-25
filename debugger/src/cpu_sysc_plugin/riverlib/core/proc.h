@@ -129,6 +129,12 @@ private:
         sc_signal<bool> ex_unalign_store;
         sc_signal<bool> ex_breakpoint;
         sc_signal<bool> ex_ecall;
+        sc_signal<bool> ex_fpu_invalidop;            // FPU Exception: invalid operation
+        sc_signal<bool> ex_fpu_divbyzero;            // FPU Exception: divide by zero
+        sc_signal<bool> ex_fpu_overflow;             // FPU Exception: overflow
+        sc_signal<bool> ex_fpu_underflow;            // FPU Exception: underflow
+        sc_signal<bool> ex_fpu_inexact;              // FPU Exception: inexact
+        sc_signal<bool> fpu_valid;
 
         sc_signal<bool> memop_sign_ext;
         sc_signal<bool> memop_load;

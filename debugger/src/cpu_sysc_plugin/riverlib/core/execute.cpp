@@ -142,15 +142,23 @@ InstrExecute::InstrExecute(sc_module_name name_)  : sc_module(name_) {
         fpu0->i_a(r.multi_a1);
         fpu0->i_b(r.multi_a2);
         fpu0->o_res(wb_arith_res.arr[Multi_FPU]);
-        fpu0->o_except(w_exception_fpu);
+        fpu0->o_ex_invalidop(o_ex_fpu_invalidop);
+        fpu0->o_ex_divbyzero(o_ex_fpu_divbyzero);
+        fpu0->o_ex_overflow(o_ex_fpu_overflow);
+        fpu0->o_ex_underflow(o_ex_fpu_underflow);
+        fpu0->o_ex_inexact(o_ex_fpu_inexact);
         fpu0->o_valid(w_arith_valid[Multi_FPU]);
         fpu0->o_busy(w_arith_busy[Multi_FPU]);
-
     } else {
         wb_arith_res.arr[Multi_FPU] = 0;
-        w_exception_fpu = 0;
         w_arith_valid[Multi_FPU] = 0;
         w_arith_busy[Multi_FPU] = 0;
+        o_fpu_valid = 0;
+        o_ex_fpu_invalidop = 0;
+        o_ex_fpu_divbyzero = 0;
+        o_ex_fpu_overflow = 0;
+        o_ex_fpu_underflow = 0;
+        o_ex_fpu_inexact = 0;
     }
 };
 
@@ -737,6 +745,7 @@ void InstrExecute::comb() {
     o_ret = r.ret;
     o_mret = w_mret;
     o_uret = w_uret;
+    o_fpu_valid = w_arith_valid[Multi_FPU];
 }
 
 void InstrExecute::registers() {

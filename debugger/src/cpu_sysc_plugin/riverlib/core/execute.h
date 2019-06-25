@@ -71,6 +71,12 @@ SC_MODULE(InstrExecute) {
     sc_out<bool> o_ex_unalign_load;
     sc_out<bool> o_ex_breakpoint;
     sc_out<bool> o_ex_ecall;
+    sc_out<bool> o_ex_fpu_invalidop;            // FPU Exception: invalid operation
+    sc_out<bool> o_ex_fpu_divbyzero;            // FPU Exception: divide by zero
+    sc_out<bool> o_ex_fpu_overflow;             // FPU Exception: overflow
+    sc_out<bool> o_ex_fpu_underflow;            // FPU Exception: underflow
+    sc_out<bool> o_ex_fpu_inexact;              // FPU Exception: inexact
+    sc_out<bool> o_fpu_valid;                   // FPU output is valid
 
     sc_out<bool> o_memop_sign_ext;              // Load data with sign extending
     sc_out<bool> o_memop_load;                  // Load data instruction
@@ -185,7 +191,6 @@ private:
     multi_arith_type wb_arith_res;
     sc_signal<bool> w_arith_valid[Multi_Total];
     sc_signal<bool> w_arith_busy[Multi_Total];
-    sc_signal<bool> w_exception_fpu;
     bool w_exception_store;
     bool w_exception_load;
 

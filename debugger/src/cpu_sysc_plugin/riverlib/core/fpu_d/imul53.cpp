@@ -58,6 +58,7 @@ void imul53::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 void imul53::comb() {
     sc_uint<57> vb_mux[17];
     sc_uint<57> vb_sel;
+    sc_uint<7> vb_shift;
     v = r;
 
     vb_mux[0] = 0;
@@ -113,19 +114,26 @@ void imul53::comb() {
         v.b = r.b.read() << 4;
     }
 
-    if (r.delay.read()[14]) {
-        if (r.sum.read()[105] == 1) {
-            v.shift = 0x7F;
-            v.overflow = 1;
-        } else if (r.sum.read()[104] == 1) {
-            v.shift = 0;
-        } else {
-            v.shift = 0;
-            for (int i = 103; i >= 0; i--) {
-                if (v.shift.read() == 0 && r.sum.read()[i] == 1) {
-                    v.shift = static_cast<uint32_t>(i);
-                }
+
+    if (r.sum.read()[105] == 1) {
+        vb_shift = 0x7F;
+        v.overflow = 1;
+    } else if (r.sum.read()[104] == 1) {
+        vb_shift = 0;
+    } else {
+        vb_shift = 0;
+        for (unsigned i = 0; i < 104; i++) {
+            if (vb_shift == 0 && r.sum.read()[103 - i] == 1) {
+                vb_shift = i + 1;
             }
+        }
+    }
+
+    if (r.delay.read()[14]) {
+        v.shift = vb_shift;
+        v.overflow = 0;
+        if (vb_shift == 0x7f) {
+            v.overflow = 1;
         }
     }
 

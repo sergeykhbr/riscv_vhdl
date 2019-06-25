@@ -35,7 +35,11 @@ SC_MODULE(FpuTop) {
     sc_in<sc_uint<64>> i_a;        // Operand 1
     sc_in<sc_uint<64>> i_b;        // Operand 2
     sc_out<sc_uint<64>> o_res;     // Result
-    sc_out<bool> o_except;         //
+    sc_out<bool> o_ex_invalidop;   // Exception: invalid operation
+    sc_out<bool> o_ex_divbyzero;   // Exception: divide by zero
+    sc_out<bool> o_ex_overflow;    // Exception: overflow
+    sc_out<bool> o_ex_underflow;   // Exception: underflow
+    sc_out<bool> o_ex_inexact;     // Exception: inexact
     sc_out<bool> o_valid;          // Result is valid
     sc_out<bool> o_busy;           // Multiclock instruction under processing
 
@@ -57,7 +61,11 @@ SC_MODULE(FpuTop) {
         sc_signal<sc_uint<64>> a;
         sc_signal<sc_uint<64>> b;
         sc_signal<sc_uint<64>> result;
-        sc_signal<bool> except;
+        sc_signal<bool> ex_invalidop;   // Exception: invalid operation
+        sc_signal<bool> ex_divbyzero;   // Exception: divide by zero
+        sc_signal<bool> ex_overflow;    // Exception: overflow
+        sc_signal<bool> ex_underflow;   // Exception: underflow
+        sc_signal<bool> ex_inexact;     // Exception: inexact
         sc_signal<bool> ena_fadd;
         sc_signal<bool> ena_fdiv;
         sc_signal<bool> ena_fmul;
@@ -73,7 +81,11 @@ SC_MODULE(FpuTop) {
         iv.a = 0;
         iv.b = 0;
         iv.result = 0;
-        iv.except = 0;
+        iv.ex_invalidop = 0;
+        iv.ex_divbyzero = 0;
+        iv.ex_overflow = 0;
+        iv.ex_underflow = 0;
+        iv.ex_inexact = 0;
         iv.ena_fadd = 0;
         iv.ena_fdiv = 0;
         iv.ena_fmul = 0;

@@ -123,6 +123,12 @@ Processor::Processor(sc_module_name name_, uint32_t hartid)
     exec0->o_ex_unalign_load(w.e.ex_unalign_load);
     exec0->o_ex_breakpoint(w.e.ex_breakpoint);
     exec0->o_ex_ecall(w.e.ex_ecall);
+    exec0->o_ex_fpu_invalidop(w.e.ex_fpu_invalidop);
+    exec0->o_ex_fpu_divbyzero(w.e.ex_fpu_divbyzero);
+    exec0->o_ex_fpu_overflow(w.e.ex_fpu_overflow);
+    exec0->o_ex_fpu_underflow(w.e.ex_fpu_underflow);
+    exec0->o_ex_fpu_inexact(w.e.ex_fpu_inexact);
+    exec0->o_fpu_valid(w.e.fpu_valid);
     exec0->o_memop_sign_ext(w.e.memop_sign_ext);
     exec0->o_memop_load(w.e.memop_load);
     exec0->o_memop_store(w.e.memop_store);
@@ -244,6 +250,12 @@ Processor::Processor(sc_module_name name_, uint32_t hartid)
     csr0->i_ex_unalign_load(w.e.ex_unalign_load);
     csr0->i_ex_breakpoint(w.e.ex_breakpoint);
     csr0->i_ex_ecall(w.e.ex_ecall);
+    csr0->i_ex_fpu_invalidop(w.e.ex_fpu_invalidop);
+    csr0->i_ex_fpu_divbyzero(w.e.ex_fpu_divbyzero);
+    csr0->i_ex_fpu_overflow(w.e.ex_fpu_overflow);
+    csr0->i_ex_fpu_underflow(w.e.ex_fpu_underflow);
+    csr0->i_ex_fpu_inexact(w.e.ex_fpu_inexact);
+    csr0->i_fpu_valid(w.e.fpu_valid);
     csr0->i_irq_external(i_ext_irq);
     csr0->o_trap_valid(csr.trap_valid);
     csr0->o_trap_pc(csr.trap_pc);

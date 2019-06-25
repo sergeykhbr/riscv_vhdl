@@ -56,7 +56,7 @@ SC_MODULE(DoubleDiv) {
         sc_signal<bool> zeroB;
         sc_signal<sc_uint<53>> divisor;
         sc_signal<sc_uint<6>> preShift;
-        sc_signal<sc_uint<12>> expAB;
+        sc_signal<sc_uint<13>> expAB;
         sc_signal<sc_uint<12>> expAlign;
         sc_signal<sc_biguint<105>> mantAlign;
         sc_signal<sc_uint<12>> postShift;

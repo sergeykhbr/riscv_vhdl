@@ -43,6 +43,12 @@ SC_MODULE(CsrRegs) {
     sc_in<bool> i_ex_unalign_load;
     sc_in<bool> i_ex_breakpoint;
     sc_in<bool> i_ex_ecall;
+    sc_in<bool> i_ex_fpu_invalidop;         // FPU Exception: invalid operation
+    sc_in<bool> i_ex_fpu_divbyzero;         // FPU Exception: divide by zero
+    sc_in<bool> i_ex_fpu_overflow;          // FPU Exception: overflow
+    sc_in<bool> i_ex_fpu_underflow;         // FPU Exception: underflow
+    sc_in<bool> i_ex_fpu_inexact;           // FPU Exception: inexact
+    sc_in<bool> i_fpu_valid;                // FPU output is valid
     sc_in<bool> i_irq_external;
     sc_out<bool> o_trap_valid;              // Trap pulse
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_trap_pc;

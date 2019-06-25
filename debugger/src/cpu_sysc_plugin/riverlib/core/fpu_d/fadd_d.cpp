@@ -91,7 +91,9 @@ void DoubleAdd::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.LShift, "/top/proc0/exec0/fpu0/fadd_d0/r_LShift");
         sc_trace(o_vcd, r.mantSum, "/top/proc0/exec0/fpu0/fadd_d0/r_mantSum");
         sc_trace(o_vcd, r.mantAlign, "/top/proc0/exec0/fpu0/fadd_d0/r_mantAlign");
+        sc_trace(o_vcd, r.mantPostScale, "/top/proc0/exec0/fpu0/fadd_d0/r_mantPostScale");
         sc_trace(o_vcd, r.expPostScale, "/top/proc0/exec0/fpu0/fadd_d0/r_expPostScale");
+        sc_trace(o_vcd, r.expPostScaleInv, "/top/proc0/exec0/fpu0/fadd_d0/r_expPostScaleInv");
     }
 }
 
@@ -337,7 +339,7 @@ void DoubleAdd::comb() {
 
     // Mantissa post-scale:
     //    Scaled = SumScale>>(-ExpSum) only if ExpSum < 0;
-    if (r.expPostScale.read() >= 0) {
+    if (r.expPostScale.read()[11] == 0) {
         vb_mantPostScale = r.mantAlign;
     } else {
         for (unsigned i = 0; i < 105; i++) {

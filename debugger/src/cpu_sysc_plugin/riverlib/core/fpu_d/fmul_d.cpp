@@ -73,13 +73,13 @@ void DoubleMul::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_busy, "/top/proc0/exec0/fpu0/fmul0/o_busy");
         sc_trace(o_vcd, r.ena, "/top/proc0/exec0/fpu0/fmul0/r_ena");
         sc_trace(o_vcd, r.result, "/top/proc0/exec0/fpu0/fmul0/r_result");
-        sc_trace(o_vcd, r.ena, "/top/proc0/exec0/fpu0/fmul0/r_ena");
-        sc_trace(o_vcd, w_imul_rdy, "/top/proc0/exec0/fpu0/fmul0/w_idiv_rdy");
+        sc_trace(o_vcd, w_imul_rdy, "/top/proc0/exec0/fpu0/fmul0/w_imul_rdy");
         sc_trace(o_vcd, r.expAlign, "/top/proc0/exec0/fpu0/fmul0/r_expAlign");
         sc_trace(o_vcd, r.mantAlign, "/top/proc0/exec0/fpu0/fmul0/r_mantAlign");
         sc_trace(o_vcd, r.postShift, "/top/proc0/exec0/fpu0/fmul0/r_postShift");
         sc_trace(o_vcd, r.expAB, "/top/proc0/exec0/fpu0/fmul0/r_expAB");
         sc_trace(o_vcd, r.mantPostScale, "/top/proc0/exec0/fpu0/fmul0/r_mantPostScale");
+        sc_trace(o_vcd, r.overflow, "/top/proc0/exec0/fpu0/fmul0/r_overflow");
     }
     u_imul53.generateVCD(i_vcd, o_vcd);
 }
@@ -93,7 +93,7 @@ void DoubleMul::comb() {
     bool zeroA;
     bool zeroB;
     sc_uint<12> expAB_t;
-    sc_uint<12> expAB;
+    sc_uint<13> expAB;
     sc_biguint<105> mantAlign;
     sc_uint<13> expAlign_t;
     sc_uint<13> expAlign;
@@ -159,7 +159,7 @@ void DoubleMul::comb() {
 
     // expA - expB + 1023
     expAB_t = (0, r.a.read()(62, 52)) + (0, r.b.read()(62, 52));
-    expAB = expAB_t  - 1023;
+    expAB = (0, expAB_t)  - 1023;
 
     if (r.ena.read()[0] == 1) {
         v.expAB = expAB;
@@ -183,13 +183,13 @@ void DoubleMul::comb() {
         }
     }
 
-    expAlign_t = (r.expAB.read()[11], r.expAB.read()) + 1;
+    expAlign_t = r.expAB.read() + 1;
     if (wb_imul_result.read()[105] == 1) {
         expAlign = expAlign_t;
     } else if (r.a.read()(62, 52) == 0 || r.b.read()(62, 52) == 0) {
         expAlign = expAlign_t - (0, wb_imul_shift.read());
     } else {
-        expAlign = (r.expAB.read()[11], r.expAB.read()) - (0, wb_imul_shift.read());
+        expAlign = r.expAB.read() - (0, wb_imul_shift.read());
     }
 
     // IMPORTANT exception! new ZERO value
@@ -219,7 +219,7 @@ void DoubleMul::comb() {
             v.nanB = 1;
         }
         v.overflow = 0;
-        if (expAlign >= 0x7FF) {
+        if (expAlign[12] == 0 && expAlign >= 0x7FF) {
             v.overflow = 1;
         }
     }
@@ -262,11 +262,11 @@ void DoubleMul::comb() {
         nanB = 1;
     }
     mantZeroA = 0;
-    if (r.a.read()(62, 52) == 0) {
+    if (r.a.read()(51, 0) == 0) {
         mantZeroA = 1;
     }
     mantZeroB = 0;
-    if (r.b.read()(62, 52) == 0) {
+    if (r.b.read()(51, 0) == 0) {
         mantZeroB = 1;
     }
 

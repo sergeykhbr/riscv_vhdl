@@ -48,7 +48,6 @@ void Long2Double::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_busy, "/top/proc0/exec0/fpu0/l2d/o_busy");
         sc_trace(o_vcd, r.ena, "/top/proc0/exec0/fpu0/l2d/r_ena");
         sc_trace(o_vcd, r.result, "/top/proc0/exec0/fpu0/l2d/r_result");
-        sc_trace(o_vcd, r.ena, "/top/proc0/exec0/fpu0/l2d/r_ena");
         sc_trace(o_vcd, r.op_signed, "/top/proc0/exec0/fpu0/l2d/r_op_signed");
         sc_trace(o_vcd, r.mantAlign, "/top/proc0/exec0/fpu0/l2d/r_mantAlign");
         sc_trace(o_vcd, r.lshift, "/top/proc0/exec0/fpu0/l2d/lshift");

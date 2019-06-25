@@ -38,7 +38,11 @@ FpuTop::FpuTop(sc_module_name name_) : sc_module(name_),
     sensitive << r.a;
     sensitive << r.b;
     sensitive << r.result;
-    sensitive << r.except;
+    sensitive << r.ex_invalidop;
+    sensitive << r.ex_divbyzero;
+    sensitive << r.ex_overflow;
+    sensitive << r.ex_underflow;
+    sensitive << r.ex_inexact;
     sensitive << r.ena_fadd;
     sensitive << r.ena_fdiv;
     sensitive << r.ena_fmul;
@@ -165,7 +169,11 @@ void FpuTop::comb() {
         v.a = i_a.read();
         v.b = i_b.read();
         v.ivec = i_ivec.read();
-        v.except = 0;
+        v.ex_invalidop = 0;
+        v.ex_divbyzero = 0;
+        v.ex_overflow = 0;
+        v.ex_underflow = 0;
+        v.ex_inexact = 0;
 
         v.ena_fadd = (iv[Instr_FADD_D - Instr_FADD_D]
                     | iv[Instr_FSUB_D - Instr_FADD_D]
@@ -187,32 +195,30 @@ void FpuTop::comb() {
         v.busy = 0;
         v.ready = 1;
         v.result = r.a;
-        v.except = 0;
     } else if (w_valid_fadd == 1) {
         v.busy = 0;
         v.ready = 1;
         v.result = wb_res_fadd;
-        v.except = w_exception_fadd;
+        v.ex_invalidop = w_exception_fadd;
     } else if (w_valid_fdiv == 1) {
         v.busy = 0;
         v.ready = 1;
         v.result = wb_res_fdiv;
-        v.except = w_exception_fdiv;
+        v.ex_invalidop = w_exception_fdiv;
     } else if (w_valid_fmul == 1) {
         v.busy = 0;
         v.ready = 1;
         v.result = wb_res_fmul;
-        v.except = w_exception_fmul;
+        v.ex_invalidop = w_exception_fmul;
     } else if (w_valid_d2l == 1) {
         v.busy = 0;
         v.ready = 1;
         v.result = wb_res_d2l;
-        v.except = w_exception_d2l;
+        v.ex_invalidop = w_exception_d2l;
     } else if (w_valid_l2d == 1) {
         v.busy = 0;
         v.ready = 1;
         v.result = wb_res_l2d;
-        v.except = 0;
     }
 
     w_fadd_d = r.ivec.read()[Instr_FADD_D - Instr_FADD_D].to_bool();
@@ -226,7 +232,11 @@ void FpuTop::comb() {
                      r.ivec.read()[Instr_FCVT_D_L - Instr_FADD_D]).to_bool();
 
     o_res = r.result;
-    o_except = r.except;
+    o_ex_invalidop = r.ex_invalidop;
+    o_ex_divbyzero = r.ex_divbyzero;
+    o_ex_overflow = r.ex_overflow;
+    o_ex_underflow = r.ex_underflow;
+    o_ex_inexact = r.ex_inexact;
     o_valid = r.ready;
     o_busy = r.busy;
 }

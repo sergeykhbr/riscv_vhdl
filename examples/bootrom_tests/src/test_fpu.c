@@ -1,5 +1,5 @@
 /*
- *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *  Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 #include <string.h>
 #include "fw_api.h"
+#include "test_fpu.h"
 
 void test_fpu(void) { 
 #ifdef FPU_ENABLED
@@ -86,4 +87,65 @@ void test_fpu(void) {
     }
 
     print_uart("PASS\r\n", 6);
+
+#ifdef ENABLE_FADD_TESTS
+    Reg64Type a, b, res;
+    for (size_t i = 0; i < FADD_LENGTH; i++) {
+        a.val = FADD_TESTS[i].a;
+        b.val = FADD_TESTS[i].b;
+        res.f64 = a.f64 + b.f64;
+        if (res.val != FADD_TESTS[i].res) {
+            printf_uart("FADD[%d] fail\r\n", i);
+        }
+    }
+#endif
+
+#ifdef ENABLE_FSUB_TESTS
+    Reg64Type a, b, res;
+    for (size_t i = 0; i < FSUB_LENGTH; i++) {
+        a.val = FSUB_TESTS[i].a;
+        b.val = FSUB_TESTS[i].b;
+        res.f64 = a.f64 - b.f64;
+        if (res.val != FSUB_TESTS[i].res) {
+            printf_uart("FSUB[%d] fail\r\n", i);
+        }
+    }
+#endif
+
+#ifdef ENABLE_FDIV_TESTS
+    Reg64Type a, b, res;
+    for (size_t i = 0; i < FDIV_LENGTH; i++) {
+        a.val = FDIV_TESTS[i].a;
+        b.val = FDIV_TESTS[i].b;
+        res.f64 = a.f64 / b.f64;
+        if (res.val != FDIV_TESTS[i].res) {
+            printf_uart("FDIV[%d] fail\r\n", i);
+        }
+    }
+#endif
+
+#ifdef ENABLE_FMUL_TESTS
+    Reg64Type a, b, res;
+    for (size_t i = 0; i < FMUL_LENGTH; i++) {
+        a.val = FMUL_TESTS[i].a;
+        b.val = FMUL_TESTS[i].b;
+        res.f64 = a.f64 * b.f64;
+        if (res.val != FMUL_TESTS[i].res) {
+            printf_uart("FMUL[%d] fail\r\n", i);
+        }
+    }
+#endif
+
+#ifdef ENABLE_FMAX_TESTS
+    // Not relevant because compiler uses flt+branch instruction instead
+    Reg64Type a, b, res;
+    for (size_t i = 0; i < FMAX_LENGTH; i++) {
+        a.val = FMAX_TESTS[i].a;
+        b.val = FMAX_TESTS[i].b;
+        res.f64 = a.f64 > b.f64 ? a.f64: b.f64;
+        if (res.val != FMAX_TESTS[i].res) {
+            printf_uart("FMAX[%d] fail\r\n", i);
+        }
+    }
+#endif
 }
