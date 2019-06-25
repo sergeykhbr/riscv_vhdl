@@ -18,6 +18,7 @@
 #define __DEBUGGER_RIVERLIB_CSR_H__
 
 #include <systemc.h>
+#include "riscv-isa.h"
 #include "../river_cfg.h"
 
 namespace debugger {
@@ -83,11 +84,38 @@ private:
         sc_signal<sc_uint<2>> mpp;              // Previous mode
         sc_signal<sc_uint<RISCV_ARCH>> mepc;
 
+        sc_signal<bool> ex_fpu_invalidop;         // FPU Exception: invalid operation
+        sc_signal<bool> ex_fpu_divbyzero;         // FPU Exception: divide by zero
+        sc_signal<bool> ex_fpu_overflow;          // FPU Exception: overflow
+        sc_signal<bool> ex_fpu_underflow;         // FPU Exception: underflow
+        sc_signal<bool> ex_fpu_inexact;           // FPU Exception: inexact
         sc_signal<bool> trap_irq;
         sc_signal<sc_uint<4>> trap_code;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> trap_addr;
         sc_signal<bool> break_event;            // 1 clock pulse
     } v, r;
+
+    void R_RESET(RegistersType &iv) {
+        iv.mtvec = 0;
+        iv.mscratch = 0;
+        iv.mbadaddr = 0;
+        iv.mode = PRV_M;
+        iv.uie = 0;
+        iv.mie = 0;
+        iv.mpie = 0;
+        iv.mpp = 0;
+        iv.mepc = 0;
+        iv.ex_fpu_invalidop = 0;
+        iv.ex_fpu_divbyzero = 0;
+        iv.ex_fpu_overflow = 0;
+        iv.ex_fpu_underflow = 0;
+        iv.ex_fpu_inexact = 0;
+        iv.trap_irq = 0;
+        iv.trap_code = 0;
+        iv.trap_addr = 0;
+        iv.break_event = 0;
+    }
+
     uint32_t hartid_;
 
     void procedure_RegAccess(uint64_t iaddr, bool iwena,

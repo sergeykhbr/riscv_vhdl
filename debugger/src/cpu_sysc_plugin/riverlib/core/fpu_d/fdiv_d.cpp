@@ -43,7 +43,7 @@ DoubleDiv::DoubleDiv(sc_module_name name_) : sc_module(name_),
     sensitive << r.nanRes;
     sensitive << r.overflow;
     sensitive << r.underflow;
-    sensitive << r.except;
+    sensitive << r.illegal_op;
     sensitive << wb_idiv_result;
     sensitive << wb_idiv_lshift;
     sensitive << w_idiv_rdy;
@@ -317,7 +317,7 @@ void DoubleDiv::comb() {
 
     if (r.ena.read()[3] == 1) {
         v.result = res;
-        v.except = nanA | nanB | r.overflow.read() | r.underflow.read();
+        v.illegal_op = nanA | nanB;
         v.busy = 0;
     }
 
@@ -326,7 +326,10 @@ void DoubleDiv::comb() {
     }
 
     o_res = r.result;
-    o_except = r.except;
+    o_illegal_op = r.illegal_op;
+    o_divbyzero = r.zeroB;
+    o_overflow = r.overflow;
+    o_underflow = r.underflow;
     o_valid = r.ena.read()[4];
     o_busy = r.busy;
 }

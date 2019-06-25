@@ -43,7 +43,7 @@ DoubleMul::DoubleMul(sc_module_name name_) : sc_module(name_),
     sensitive << r.nanA;
     sensitive << r.nanB;
     sensitive << r.overflow;
-    sensitive << r.except;
+    sensitive << r.illegal_op;
     sensitive << wb_imul_result;
     sensitive << wb_imul_shift;
     sensitive << w_imul_rdy;
@@ -312,7 +312,7 @@ void DoubleMul::comb() {
 
     if (r.ena.read()[3] == 1) {
         v.result = res;
-        v.except = nanA | nanB | r.overflow.read();
+        v.illegal_op = nanA | nanB;
         v.busy = 0;
     }
 
@@ -321,7 +321,8 @@ void DoubleMul::comb() {
     }
 
     o_res = r.result;
-    o_except = r.except;
+    o_illegal_op = r.illegal_op;
+    o_overflow = r.overflow;
     o_valid = r.ena.read()[4];
     o_busy = r.busy;
 }

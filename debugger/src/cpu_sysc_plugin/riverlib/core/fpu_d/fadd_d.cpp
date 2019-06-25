@@ -37,7 +37,8 @@ DoubleAdd::DoubleAdd(sc_module_name name_) : sc_module(name_) {
     sensitive << r.a;
     sensitive << r.b;
     sensitive << r.result;
-    sensitive << r.except;
+    sensitive << r.illegal_op;
+    sensitive << r.overflow;
     sensitive << r.add;
     sensitive << r.sub;
     sensitive << r.eq;
@@ -199,9 +200,9 @@ void DoubleAdd::comb() {
     if (expDif == 0) {
         vb_preShift = expDif;
         if (mantA == mantB) {
-            v_flMore = 0;
-            v_flEqual = 1;
-            v_flLess = 0;
+            v_flMore = !signA & (signA ^ signB);
+            v_flEqual = !(signA ^ signB);
+            v_flLess = signA & (signA ^ signB);
 
             v_signOpMore = signA;
             vb_expMore = r.a.read()(62, 52);
@@ -480,7 +481,8 @@ void DoubleAdd::comb() {
             v.result = resAdd;
         }
 
-        v.except = nanA | nanB | overflow;
+        v.illegal_op = nanA | nanB;
+        v.overflow = overflow;
 
         v.busy = 0;
         v.add = 0;
@@ -497,7 +499,8 @@ void DoubleAdd::comb() {
     }
 
     o_res = r.result;
-    o_except = r.except;
+    o_illegal_op = r.illegal_op;
+    o_overflow = r.overflow;
     o_valid = r.ena.read()[6];
     o_busy = r.busy;
 }

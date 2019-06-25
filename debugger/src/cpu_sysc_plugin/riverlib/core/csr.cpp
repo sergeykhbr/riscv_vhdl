@@ -15,7 +15,6 @@
  */
 
 #include "csr.h"
-#include "riscv-isa.h"
 
 namespace debugger {
 
@@ -63,6 +62,11 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid)
     sensitive << r.mpie;
     sensitive << r.mpp;
     sensitive << r.mepc;
+    sensitive << r.ex_fpu_invalidop;
+    sensitive << r.ex_fpu_divbyzero;
+    sensitive << r.ex_fpu_overflow;
+    sensitive << r.ex_fpu_underflow;
+    sensitive << r.ex_fpu_inexact;
     sensitive << r.trap_irq;
     sensitive << r.trap_code;
     sensitive << r.trap_addr;
@@ -97,6 +101,44 @@ void CsrRegs::procedure_RegAccess(uint64_t iaddr, bool iwena,
                                  sc_uint<RISCV_ARCH> *ordata) {
     *ordata = 0;
     switch (iaddr) {
+    case CSR_fflags:
+        (*ordata)[0] = ir.ex_fpu_inexact;
+        (*ordata)[1] = ir.ex_fpu_underflow;
+        (*ordata)[2] = ir.ex_fpu_overflow;
+        (*ordata)[3] = ir.ex_fpu_divbyzero;
+        (*ordata)[4] = ir.ex_fpu_invalidop;
+        if (CFG_HW_FPU_ENABLE) {
+            if (iwena) {
+                ov->ex_fpu_inexact = iwdata[0];
+                ov->ex_fpu_underflow = iwdata[1];
+                ov->ex_fpu_overflow = iwdata[2];
+                ov->ex_fpu_divbyzero = iwdata[3];
+                ov->ex_fpu_invalidop = iwdata[4];
+            }
+        }
+        break;
+    case CSR_frm:
+        if (CFG_HW_FPU_ENABLE) {
+            (*ordata)(2, 0) = 0x4;  // Round mode: round to Nearest (RMM)
+        }
+        break;
+    case CSR_fcsr:
+        (*ordata)[0] = ir.ex_fpu_inexact;
+        (*ordata)[1] = ir.ex_fpu_underflow;
+        (*ordata)[2] = ir.ex_fpu_overflow;
+        (*ordata)[3] = ir.ex_fpu_divbyzero;
+        (*ordata)[4] = ir.ex_fpu_invalidop;
+        if (CFG_HW_FPU_ENABLE) {
+            (*ordata)(7, 5) = 0x4;  // Round mode: round to Nearest (RMM)
+            if (iwena) {
+                ov->ex_fpu_inexact = iwdata[0];
+                ov->ex_fpu_underflow = iwdata[1];
+                ov->ex_fpu_overflow = iwdata[2];
+                ov->ex_fpu_divbyzero = iwdata[3];
+                ov->ex_fpu_invalidop = iwdata[4];
+            }
+        }
+        break; 
     case CSR_misa:
         /** Base[XLEN-1:XLEN-2]
          *      1 = 32
@@ -137,6 +179,9 @@ void CsrRegs::procedure_RegAccess(uint64_t iaddr, bool iwena,
         (*ordata)['M' - 'A'] = 1;
         (*ordata)['U' - 'A'] = 1;
         (*ordata)['C' - 'A'] = 1;
+        if (CFG_HW_FPU_ENABLE) {
+            (*ordata)['D' - 'A'] = 1;
+        }
         break;
     case CSR_mvendorid:
         (*ordata) = CFG_VENDOR_ID;
@@ -156,6 +201,9 @@ void CsrRegs::procedure_RegAccess(uint64_t iaddr, bool iwena,
         (*ordata)[3] = ir.mie;
         (*ordata)[7] = ir.mpie;
         (*ordata)(12, 11) = ir.mpp;
+        if (CFG_HW_FPU_ENABLE) {
+            (*ordata)(14, 13) = 0x1;   // FS field: Initial state
+        }
         if (iwena) {
             ov->uie = iwdata[0];
             ov->mie = iwdata[3];
@@ -237,6 +285,13 @@ void CsrRegs::comb() {
         w_exception_xret = 1;
     }
 
+    if (i_fpu_valid.read()) {
+        v.ex_fpu_invalidop = i_ex_fpu_invalidop.read();
+        v.ex_fpu_divbyzero = i_ex_fpu_divbyzero.read();
+        v.ex_fpu_overflow = i_ex_fpu_overflow.read();
+        v.ex_fpu_underflow = i_ex_fpu_underflow.read();
+        v.ex_fpu_inexact = i_ex_fpu_inexact.read();
+    }
 
     w_trap_valid = 0;
     w_trap_irq = 0;
@@ -330,19 +385,7 @@ void CsrRegs::comb() {
     }
 
     if (!i_nrst.read()) {
-        v.mtvec = 0;
-        v.mscratch = 0;
-        v.mbadaddr = 0;
-        v.mode = PRV_M;
-        v.uie = 0;
-        v.mie = 0;
-        v.mpie = 0;
-        v.mpp = 0;
-        v.mepc = 0;
-        v.trap_code = 0;
-        v.trap_irq = 0;
-        v.trap_addr = 0;
-        v.break_event = 0;
+        R_RESET(v);
     }
 
     o_trap_valid = w_trap_valid;

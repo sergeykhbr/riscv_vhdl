@@ -50,19 +50,25 @@ FpuTop::FpuTop(sc_module_name name_) : sc_module(name_),
     sensitive << r.ena_l2d;
     sensitive << wb_res_fadd;
     sensitive << w_valid_fadd;
-    sensitive << w_exception_fadd;
+    sensitive << w_illegalop_fadd;
+    sensitive << w_overflow_fadd;
     sensitive << w_busy_fadd;
     sensitive << wb_res_fdiv;
     sensitive << w_valid_fdiv;
-    sensitive << w_exception_fdiv;
+    sensitive << w_illegalop_fdiv;
+    sensitive << w_divbyzero_fdiv;
+    sensitive << w_overflow_fdiv;
+    sensitive << w_underflow_fdiv;
     sensitive << w_busy_fdiv;
     sensitive << wb_res_fmul;
     sensitive << w_valid_fmul;
-    sensitive << w_exception_fmul;
+    sensitive << w_illegalop_fmul;
+    sensitive << w_overflow_fmul;
     sensitive << w_busy_fmul;
     sensitive << wb_res_d2l;
     sensitive << w_valid_d2l;
-    sensitive << w_exception_d2l;
+    sensitive << w_overflow_d2l;
+    sensitive << w_underflow_d2l;
     sensitive << w_busy_d2l;
     sensitive << wb_res_l2d;
     sensitive << w_valid_l2d;
@@ -84,7 +90,8 @@ FpuTop::FpuTop(sc_module_name name_) : sc_module(name_),
     fadd_d0.i_a(r.a);
     fadd_d0.i_b(r.b);
     fadd_d0.o_res(wb_res_fadd);
-    fadd_d0.o_except(w_exception_fadd);
+    fadd_d0.o_illegal_op(w_illegalop_fadd);
+    fadd_d0.o_overflow(w_overflow_fadd);
     fadd_d0.o_valid(w_valid_fadd);
     fadd_d0.o_busy(w_busy_fadd);
 
@@ -94,7 +101,10 @@ FpuTop::FpuTop(sc_module_name name_) : sc_module(name_),
     fdiv_d0.i_a(r.a);
     fdiv_d0.i_b(r.b);
     fdiv_d0.o_res(wb_res_fdiv);
-    fdiv_d0.o_except(w_exception_fdiv);
+    fdiv_d0.o_illegal_op(w_illegalop_fdiv);
+    fdiv_d0.o_divbyzero(w_divbyzero_fdiv);
+    fdiv_d0.o_overflow(w_overflow_fdiv);
+    fdiv_d0.o_underflow(w_underflow_fdiv);
     fdiv_d0.o_valid(w_valid_fdiv);
     fdiv_d0.o_busy(w_busy_fdiv);
 
@@ -104,7 +114,8 @@ FpuTop::FpuTop(sc_module_name name_) : sc_module(name_),
     fmul_d0.i_a(r.a);
     fmul_d0.i_b(r.b);
     fmul_d0.o_res(wb_res_fmul);
-    fmul_d0.o_except(w_exception_fmul);
+    fmul_d0.o_illegal_op(w_illegalop_fmul);
+    fmul_d0.o_overflow(w_overflow_fmul);
     fmul_d0.o_valid(w_valid_fmul);
     fmul_d0.o_busy(w_busy_fmul);
 
@@ -114,7 +125,8 @@ FpuTop::FpuTop(sc_module_name name_) : sc_module(name_),
     d2l_d0.i_signed(w_fcvt_signed);
     d2l_d0.i_a(r.a);
     d2l_d0.o_res(wb_res_d2l);
-    d2l_d0.o_except(w_exception_d2l);
+    d2l_d0.o_overflow(w_overflow_d2l);
+    d2l_d0.o_underflow(w_underflow_d2l);
     d2l_d0.o_valid(w_valid_d2l);
     d2l_d0.o_busy(w_busy_d2l);
 
@@ -199,22 +211,28 @@ void FpuTop::comb() {
         v.busy = 0;
         v.ready = 1;
         v.result = wb_res_fadd;
-        v.ex_invalidop = w_exception_fadd;
+        v.ex_invalidop = w_illegalop_fadd;
+        v.ex_overflow = w_overflow_fadd;
     } else if (w_valid_fdiv == 1) {
         v.busy = 0;
         v.ready = 1;
         v.result = wb_res_fdiv;
-        v.ex_invalidop = w_exception_fdiv;
+        v.ex_invalidop = w_illegalop_fdiv;
+        v.ex_divbyzero = w_divbyzero_fdiv;
+        v.ex_overflow = w_overflow_fdiv;
+        v.ex_underflow = w_underflow_fdiv;
     } else if (w_valid_fmul == 1) {
         v.busy = 0;
         v.ready = 1;
         v.result = wb_res_fmul;
-        v.ex_invalidop = w_exception_fmul;
+        v.ex_invalidop = w_illegalop_fmul;
+        v.ex_overflow = w_overflow_fmul;
     } else if (w_valid_d2l == 1) {
         v.busy = 0;
         v.ready = 1;
         v.result = wb_res_d2l;
-        v.ex_invalidop = w_exception_d2l;
+        v.ex_overflow = w_overflow_d2l;
+        v.ex_underflow = w_underflow_d2l;
     } else if (w_valid_l2d == 1) {
         v.busy = 0;
         v.ready = 1;

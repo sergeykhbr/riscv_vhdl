@@ -30,7 +30,10 @@ SC_MODULE(DoubleDiv) {
     sc_in<sc_uint<64>> i_a;        // Operand 1
     sc_in<sc_uint<64>> i_b;        // Operand 2
     sc_out<sc_uint<64>> o_res;     // Result
-    sc_out<bool> o_except;         //
+    sc_out<bool> o_illegal_op;     //
+    sc_out<bool> o_divbyzero;      //
+    sc_out<bool> o_overflow;       //
+    sc_out<bool> o_underflow;      //
     sc_out<bool> o_valid;          // Result is valid
     sc_out<bool> o_busy;           // Multiclock instruction under processing
 
@@ -64,7 +67,7 @@ SC_MODULE(DoubleDiv) {
         sc_signal<bool> nanRes;
         sc_signal<bool> overflow;
         sc_signal<bool> underflow;
-        sc_signal<bool> except;
+        sc_signal<bool> illegal_op;
 
         sc_uint<RISCV_ARCH> a_dbg;
         sc_uint<RISCV_ARCH> b_dbg;
@@ -89,7 +92,7 @@ SC_MODULE(DoubleDiv) {
         iv.nanRes = 0;
         iv.overflow = 0;
         iv.underflow = 0;
-        iv.except = 0;
+        iv.illegal_op = 0;
 
         iv.a_dbg = 0;
         iv.b_dbg = 0;

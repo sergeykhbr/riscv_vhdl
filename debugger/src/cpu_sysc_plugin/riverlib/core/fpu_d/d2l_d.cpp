@@ -35,7 +35,6 @@ Double2Long::Double2Long(sc_module_name name_) : sc_module(name_) {
     sensitive << r.mantPostScale;
     sensitive << r.overflow;
     sensitive << r.underflow;
-    sensitive << r.except;
 
     SC_METHOD(registers);
     sensitive << i_clk.pos();
@@ -151,7 +150,6 @@ void Double2Long::comb() {
 
     if (r.ena.read()[1] == 1) {
         v.result = res;
-        v.except = r.overflow.read() | r.underflow.read();
         v.busy = 0;
     }
 
@@ -160,7 +158,8 @@ void Double2Long::comb() {
     }
 
     o_res = r.result;
-    o_except = r.except;
+    o_overflow = r.overflow;
+    o_underflow = r.underflow;
     o_valid = r.ena.read()[2];
     o_busy = r.busy;
 }

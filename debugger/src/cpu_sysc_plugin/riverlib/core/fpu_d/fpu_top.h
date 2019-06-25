@@ -103,25 +103,31 @@ SC_MODULE(FpuTop) {
     sc_signal<bool> w_fcvt_signed;
     sc_signal<sc_uint<64>> wb_res_fadd;
     sc_signal<bool> w_valid_fadd;
-    sc_signal<bool> w_exception_fadd;
+    sc_signal<bool> w_illegalop_fadd;
+    sc_signal<bool> w_overflow_fadd;
     sc_signal<bool> w_busy_fadd;
     DoubleAdd fadd_d0;
 
     sc_signal<sc_uint<64>> wb_res_fdiv;
     sc_signal<bool> w_valid_fdiv;
-    sc_signal<bool> w_exception_fdiv;
+    sc_signal<bool> w_illegalop_fdiv;
+    sc_signal<bool> w_divbyzero_fdiv;
+    sc_signal<bool> w_overflow_fdiv;
+    sc_signal<bool> w_underflow_fdiv;
     sc_signal<bool> w_busy_fdiv;
     DoubleDiv fdiv_d0;
 
     sc_signal<sc_uint<64>> wb_res_fmul;
     sc_signal<bool> w_valid_fmul;
-    sc_signal<bool> w_exception_fmul;
+    sc_signal<bool> w_illegalop_fmul;
+    sc_signal<bool> w_overflow_fmul;
     sc_signal<bool> w_busy_fmul;
     DoubleMul fmul_d0;
 
     sc_signal<sc_uint<64>> wb_res_d2l;
     sc_signal<bool> w_valid_d2l;
-    sc_signal<bool> w_exception_d2l;
+    sc_signal<bool> w_overflow_d2l;
+    sc_signal<bool> w_underflow_d2l;
     sc_signal<bool> w_busy_d2l;
     Double2Long d2l_d0;
 

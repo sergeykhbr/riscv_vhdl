@@ -86,6 +86,41 @@ void test_fpu(void) {
         return;
     }
 
+    x1 = -17.1;
+    x2 = -17.05;
+    if (x1 >= x2) {
+        printf_uart("FAIL (FCMP %d)\r\n", 1);
+        return;
+    }
+
+    x1 = 17.1;
+    x2 = 17.05;
+    if (x1 < x2) {
+        printf_uart("FAIL (FCMP %d)\r\n", 2);
+        return;
+    }
+
+    x1 = -17.1;
+    x2 = 17.1;
+    if (x2 <= x1) {
+        printf_uart("FAIL (FCMP %d)\r\n", 3);
+        return;
+    }
+
+    x1 = -17.1;
+    x2 = -17.1;
+    if (x2 != x1) {
+        printf_uart("FAIL (FCMP %d)\r\n", 4);
+        return;
+    }
+
+    x1 = 17.1;
+    x2 = 17.1;
+    if (x2 != x1) {
+        printf_uart("FAIL (FCMP %d)\r\n", 5);
+        return;
+    }
+
     print_uart("PASS\r\n", 6);
 
 #ifdef ENABLE_FADD_TESTS

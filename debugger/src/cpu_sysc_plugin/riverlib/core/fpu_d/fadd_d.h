@@ -36,7 +36,8 @@ SC_MODULE(DoubleAdd) {
     sc_in<sc_uint<64>> i_a;        // Operand 1
     sc_in<sc_uint<64>> i_b;        // Operand 2
     sc_out<sc_uint<64>> o_res;     // Result
-    sc_out<bool> o_except;         // Overflow | nanA | nanB
+    sc_out<bool> o_illegal_op;     // nanA | nanB
+    sc_out<bool> o_overflow;       //
     sc_out<bool> o_valid;          // Result is valid
     sc_out<bool> o_busy;           // Multiclock instruction under processing
 
@@ -61,7 +62,8 @@ SC_MODULE(DoubleAdd) {
         sc_signal<sc_uint<64>> a;
         sc_signal<sc_uint<64>> b;
         sc_signal<sc_uint<64>> result;
-        sc_signal<bool> except;
+        sc_signal<bool> illegal_op;
+        sc_signal<bool> overflow;
         sc_signal<bool> add;
         sc_signal<bool> sub;
         sc_signal<bool> eq;
@@ -96,7 +98,8 @@ SC_MODULE(DoubleAdd) {
         iv.a = 0;
         iv.b = 0;
         iv.result = 0;
-        iv.except = 0;
+        iv.illegal_op = 0;
+        iv.overflow = 0;
         iv.add = 0;
         iv.sub = 0;
         iv.eq = 0;
