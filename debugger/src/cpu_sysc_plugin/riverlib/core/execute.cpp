@@ -134,7 +134,7 @@ InstrExecute::InstrExecute(sc_module_name name_)  : sc_module(name_) {
     sh0->o_sraw(wb_sraw);
 
     if (CFG_HW_FPU_ENABLE) {
-        fpu0 = new FpuTop("fpu0");
+        fpu0 = new FpuTop("fpu0", false);
         fpu0->i_clk(i_clk);
         fpu0->i_nrst(i_nrst);
         fpu0->i_ena(r.multi_ena[Multi_FPU]);

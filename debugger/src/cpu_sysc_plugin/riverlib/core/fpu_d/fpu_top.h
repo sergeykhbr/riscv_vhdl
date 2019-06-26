@@ -48,7 +48,7 @@ SC_MODULE(FpuTop) {
 
     SC_HAS_PROCESS(FpuTop);
 
-    FpuTop(sc_module_name name_);
+    FpuTop(sc_module_name name_, bool async_reset);
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
@@ -135,6 +135,8 @@ SC_MODULE(FpuTop) {
     sc_signal<bool> w_valid_l2d;
     sc_signal<bool> w_busy_l2d;
     Long2Double l2d_d0;
+
+    bool async_reset_;
 };
 
 }  // namespace debugger

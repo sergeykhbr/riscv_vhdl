@@ -40,7 +40,7 @@ SC_MODULE(DoubleMul) {
 
     SC_HAS_PROCESS(DoubleMul);
 
-    DoubleMul(sc_module_name name_);
+    DoubleMul(sc_module_name name_, bool async_reset);
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
@@ -103,6 +103,8 @@ SC_MODULE(DoubleMul) {
     sc_signal<sc_uint<7>> wb_imul_shift;
     sc_signal<bool>  w_imul_rdy;
     sc_signal<bool>  w_imul_overflow;
+
+    bool async_reset_;
 };
 
 }  // namespace debugger

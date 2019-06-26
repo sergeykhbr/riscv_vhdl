@@ -38,7 +38,7 @@ SC_MODULE(imul53) {
 
     SC_HAS_PROCESS(imul53);
 
-    imul53(sc_module_name name_);
+    imul53(sc_module_name name_, bool async_reset);
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
@@ -60,6 +60,7 @@ SC_MODULE(imul53) {
         iv.sum = 0;
         iv.overflow = 0;
     }
+    bool async_reset_;
 };
 
 }  // namespace debugger

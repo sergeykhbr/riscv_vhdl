@@ -19,8 +19,10 @@
 
 namespace debugger {
 
-DoubleMul::DoubleMul(sc_module_name name_) : sc_module(name_),
-    u_imul53("imul53") {
+DoubleMul::DoubleMul(sc_module_name name_, bool async_reset)
+    : sc_module(name_), u_imul53("imul53", async_reset) {
+    async_reset_ = async_reset;
+
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_ena;
@@ -50,6 +52,7 @@ DoubleMul::DoubleMul(sc_module_name name_) : sc_module(name_),
     sensitive << w_imul_overflow;
 
     SC_METHOD(registers);
+    sensitive << i_nrst;
     sensitive << i_clk.pos();
 
     u_imul53.i_nrst(i_nrst);
@@ -115,13 +118,13 @@ void DoubleMul::comb() {
 
     vb_ena[0] = (i_ena.read() & !r.busy);
     vb_ena[1] = r.ena.read()[0];
-    w_imul_ena = r.ena.read()[1];
     vb_ena(4, 2) = (r.ena.read()(3, 2), w_imul_rdy);
 
     v.ena = vb_ena;
 
     if (i_ena.read()) {
         v.busy = 1;
+        v.overflow = 0;
         v.a = i_a;
         v.b = i_b;
 
@@ -174,9 +177,11 @@ void DoubleMul::comb() {
     // imul53 module:
     mantAlign = 0;
     if (wb_imul_result.read()[105] == 1) {
-        mantAlign = (0, wb_imul_result.read()(105, 1));
+        mantAlign = wb_imul_result.read()(105, 1);
+    } else if (wb_imul_result.read()[104] == 1) {
+        mantAlign = wb_imul_result.read()(104, 0);
     } else {
-        for (unsigned i = 0; i < 105; i++) {
+        for (unsigned i = 1; i < 105; i++) {
             if (i == wb_imul_shift.read()) {
                 mantAlign = wb_imul_result << i;
             }
@@ -227,8 +232,10 @@ void DoubleMul::comb() {
     // Prepare to mantissa post-scale
     if (r.postShift.read() >= 105) {
         mantPostScale = 0;
+    } else if (r.postShift.read() == 0) {
+        mantPostScale = r.mantAlign.read();
     } else {
-        for (unsigned i = 0; i < 105; i++) {
+        for (unsigned i = 1; i < 105; i++) {
             if (i == r.postShift.read()) {
                 mantPostScale = r.mantAlign.read() >> i;
             }
@@ -316,7 +323,7 @@ void DoubleMul::comb() {
         v.busy = 0;
     }
 
-    if (i_nrst.read() == 0) {
+    if (!async_reset_ && i_nrst.read() == 0) {
         R_RESET(v);
     }
 
@@ -328,7 +335,11 @@ void DoubleMul::comb() {
 }
 
 void DoubleMul::registers() {
-    r = v;
+    if (async_reset_ && i_nrst.read() == 0) {
+        R_RESET(r);
+    } else {
+        r = v;
+    }
 }
 
 uint64_t DoubleMul::compute_reference(uint64_t a, uint64_t b) {

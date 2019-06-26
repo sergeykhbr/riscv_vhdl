@@ -18,7 +18,9 @@
 
 namespace debugger {
 
-imul53::imul53(sc_module_name name_) : sc_module(name_) {
+imul53::imul53(sc_module_name name_, bool async_reset) : sc_module(name_) {
+    async_reset_ = async_reset;
+
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_clk;
@@ -33,6 +35,7 @@ imul53::imul53(sc_module_name name_) : sc_module(name_) {
     sensitive << r.overflow;
  
     SC_METHOD(registers);
+    sensitive << i_nrst;
     sensitive << i_clk.pos();
 };
 
@@ -122,9 +125,9 @@ void imul53::comb() {
         vb_shift = 0;
     } else {
         vb_shift = 0;
-        for (unsigned i = 0; i < 104; i++) {
-            if (vb_shift == 0 && r.sum.read()[103 - i] == 1) {
-                vb_shift = i + 1;
+        for (unsigned i = 1; i < 105; i++) {
+            if (vb_shift == 0 && r.sum.read()[104 - i] == 1) {
+                vb_shift = i;
             }
         }
     }
@@ -137,7 +140,7 @@ void imul53::comb() {
         }
     }
 
-    if (!i_nrst.read()) {
+    if (!async_reset_ && !i_nrst.read()) {
         R_RESET(v);
     }
 
@@ -148,7 +151,11 @@ void imul53::comb() {
 }
 
 void imul53::registers() {
-    r = v;
+    if (async_reset_ && i_nrst.read() == 0) {
+        R_RESET(r);
+    } else {
+        r = v;
+    }
 }
 
 }  // namespace debugger

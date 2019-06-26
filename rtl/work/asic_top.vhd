@@ -35,8 +35,6 @@ use techmap.types_buf.all;
 library work;
 --! Target dependable configuration: RTL, FPGA or ASIC.
 use work.config_target.all;
---! Target independable configuration.
-use work.config_common.all;
 
 entity asic_top is port 
 ( 

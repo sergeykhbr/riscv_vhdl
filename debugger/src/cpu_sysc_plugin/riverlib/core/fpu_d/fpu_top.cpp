@@ -19,12 +19,14 @@
 
 namespace debugger {
 
-FpuTop::FpuTop(sc_module_name name_) : sc_module(name_),
+FpuTop::FpuTop(sc_module_name name_, bool async_reset) : sc_module(name_),
     fadd_d0("fadd_d0"),
     fdiv_d0("fdiv_d0"),
-    fmul_d0("fmul_d0"),
+    fmul_d0("fmul_d0", async_reset),
     d2l_d0("d2l_d0"),
     l2d_d0("l2d_d0") {
+    async_reset_ = async_reset;
+
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_ena;
@@ -239,6 +241,10 @@ void FpuTop::comb() {
         v.result = wb_res_l2d;
     }
 
+    if (!async_reset_ && i_nrst.read() == 0) {
+        R_RESET(v);
+    }
+
     w_fadd_d = r.ivec.read()[Instr_FADD_D - Instr_FADD_D].to_bool();
     w_fsub_d = r.ivec.read()[Instr_FSUB_D - Instr_FADD_D].to_bool();
     w_feq_d = r.ivec.read()[Instr_FEQ_D - Instr_FADD_D].to_bool();
@@ -260,7 +266,11 @@ void FpuTop::comb() {
 }
 
 void FpuTop::registers() {
-    r = v;
+    if (async_reset_ && i_nrst.read() == 0) {
+        R_RESET(r);
+    } else {
+        r = v;
+    }
 }
 
 }  // namespace debugger
