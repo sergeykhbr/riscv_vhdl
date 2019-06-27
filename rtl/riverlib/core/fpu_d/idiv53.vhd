@@ -29,7 +29,7 @@ entity idiv53 is
     i_ena        : in std_logic;
     i_divident   : in std_logic_vector(52 downto 0);
     i_divisor    : in std_logic_vector(52 downto 0);
-    o_result     : out std_logic_vector(105 downto 0);
+    o_result     : out std_logic_vector(104 downto 0);
     o_lshift     : out std_logic_vector(6 downto 0);
     o_rdy        : out std_logic;
     o_overflow   : out std_logic;
@@ -56,7 +56,7 @@ architecture arch_idiv53 of idiv53 is
 
   type RegistersType is record
     delay : std_logic_vector(14 downto 0);
-    lshift : std_logic_vector(15 downto 0);
+    lshift : std_logic_vector(6 downto 0);
     lshift_rdy : std_logic;
     divisor : std_logic_vector(52 downto 0);
     divident : std_logic_vector(60 downto 0);
@@ -183,7 +183,7 @@ begin
         vb_muxind(20 downto 14) := conv_std_logic_vector(38, 7);
         vb_muxind(13 downto 7)  := conv_std_logic_vector(39, 7);
         vb_muxind(6 downto 0)   := conv_std_logic_vector(40, 7);
-        vb_bits(71, 64) := wb_bits_o;
+        vb_bits(71 downto 64) := wb_bits_o;
     elsif r.delay(6) = '1' then
         v_mux_ena_i := not r.lshift_rdy;
         v.divident := wb_dif_o & X"00";
@@ -293,7 +293,7 @@ begin
         if w_muxind_rdy_o = '1' then
             v.lshift_rdy := '1';
             v.lshift := wb_muxind_o;
-        elsif (r.delay(13) = '1' then
+        elsif r.delay(13) = '1' then
             v.lshift_rdy := '1';
             v.lshift := conv_std_logic_vector(104, 7);
         end if;
@@ -303,7 +303,7 @@ begin
     wb_divident_i <= r.divident;
     wb_divisor_i <= r.divisor;
     wb_muxind_i <= vb_muxind;
-    v.bits <= vb_bits;
+    v.bits := vb_bits;
 
     if not async_reset and i_nrst = '0' then
         v := R_RESET;

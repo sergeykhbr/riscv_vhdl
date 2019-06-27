@@ -268,11 +268,11 @@ void DoubleDiv::comb() {
         nanB = 1;
     }
     mantZeroA = 0;
-    if (r.a.read()(62, 52) == 0) {
+    if (r.a.read()(51, 0) == 0) {
         mantZeroA = 1;
     }
     mantZeroB = 0;
-    if (r.b.read()(62, 52) == 0) {
+    if (r.b.read()(51, 0) == 0) {
         mantZeroB = 1;
     }
 
@@ -311,7 +311,7 @@ void DoubleDiv::comb() {
     } else if (nanA && !mantZeroA) {
         res[51] = 1;
         res(50, 0) = r.a.read()(50, 0);
-    } else if (nanB&& !mantZeroB) {
+    } else if (nanB && !mantZeroB) {
         res[51] = 1;
         res(50, 0) = r.b.read()(50, 0);
     } else if (r.overflow.read() | r.nanRes.read() | (nanA && mantZeroA)

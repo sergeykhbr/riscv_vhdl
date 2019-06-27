@@ -50,7 +50,7 @@ architecture arch_DoubleDiv of DoubleDiv is
     i_ena        : in std_logic;
     i_divident   : in std_logic_vector(52 downto 0);
     i_divisor    : in std_logic_vector(52 downto 0);
-    o_result     : out std_logic_vector(105 downto 0);
+    o_result     : out std_logic_vector(104 downto 0);
     o_lshift     : out std_logic_vector(6 downto 0);
     o_rdy        : out std_logic;
     o_overflow   : out std_logic;
@@ -109,10 +109,10 @@ begin
     i_nrst => i_nrst,
     i_clk => i_clk,
     i_ena => w_idiv_ena,
-    i_a => wb_divident,
-    i_b => wb_divisor,
+    i_divident => wb_divident,
+    i_divisor => wb_divisor,
     o_result => wb_idiv_result,
-    o_shift => wb_idiv_lshift,
+    o_lshift => wb_idiv_lshift,
     o_rdy => w_idiv_rdy,
     o_overflow => w_idiv_overflow,
     o_zero_resid => w_idiv_zeroresid
@@ -130,12 +130,11 @@ begin
     variable zeroA : std_logic;
     variable zeroB : std_logic;
     variable divisor : std_logic_vector(52 downto 0);
-    variable preShift : integer in range 0 to 52;
+    variable preShift : integer range 0 to 52;
     variable expAB_t : std_logic_vector(11 downto 0);
     variable expAB : std_logic_vector(12 downto 0);
     variable mantAlign : std_logic_vector(104 downto 0);
     variable expShift : std_logic_vector(11 downto 0);
-    --variable expAlign_t : std_logic_vector(12 downto 0);
     variable expAlign : std_logic_vector(12 downto 0);
     variable postShift : std_logic_vector(11 downto 0);
     variable mantPostScale : std_logic_vector(104 downto 0);
@@ -156,7 +155,7 @@ begin
 
     v.ena(0) := i_ena and not r.busy;
     v.ena(1) := r.ena(0);
-    v.ena(4 downto 2) := r.ena(3 downto 2) & w_imul_rdy;
+    v.ena(4 downto 2) := r.ena(3 downto 2) & w_idiv_rdy;
 
     if i_ena = '1' then
         v.busy := '1';
@@ -171,24 +170,24 @@ begin
     signB := r.b(63);
 
     zeroA := '0';
-    if r.a(62 downto 0) = zero63 then
+    if r.a(62 downto 0) = zero105(62 downto 0) then
         zeroA := '1';
     end if;
 
     zeroB := '0';
-    if r.b(62 downto 0) = zero63 then
+    if r.b(62 downto 0) = zero105(62 downto 0) then
         zeroB := '1';
     end if;
 
     mantA(51 downto 0) := r.a(51 downto 0);
     mantA(52) := '0';
-    if r.a(62 downto 52) /= zero11 then
+    if r.a(62 downto 52) /= zero105(10 downto 0) then
         mantA(52) := '1';
     end if;
 
     mantB(51 downto 0) := r.b(51 downto 0);
     mantB(52) := '0';
-    if r.b(62 downto 52) /= zero11 then
+    if r.b(62 downto 52) /= zero105(10 downto 0) then
         mantB(52) := '1';
         divisor := mantB;
         preShift := 0;
@@ -197,7 +196,7 @@ begin
         preShift := 0;
         for i in 1 to 52 loop
             if preShift = 0 and mantB(52 - i) = '1' then
-                devisor := mantB(52-i downto 0) & zero105(i downto 0);
+                divisor := mantB(52-i downto 0) & zero105(i downto 0);
                 preShift := i;
             end if;
         end loop;
@@ -209,7 +208,7 @@ begin
 
     if r.ena(0) = '1' then
         v.divisor := divisor;
-        v.preShift := preShift;
+        v.preShift := conv_std_logic_vector(preShift, 6);
         v.expAB := expAB;
         v.zeroA := zeroA;
         v.zeroB := zeroB;
@@ -221,57 +220,42 @@ begin
 
     -- idiv53 module:
     mantAlign := (others => '0');
-    if wb_imul_result(105) = '1' then
-        mantAlign := wb_imul_result(105 downto 1);
-    elsif wb_imul_result(104) = '1' then
-        mantAlign := wb_imul_result(104 downto 0);
+    if wb_idiv_lshift = zero105(6 downto 0) then
+        mantAlign := wb_idiv_result;
     else
         for i in 1 to 104 loop
-            if i = conv_integer(wb_imul_shift) then
-                mantAlign := wb_imul_result(104-i downto 0) & zero105(i-1 downto 0);
+            if i = conv_integer(wb_idiv_lshift) then
+                mantAlign := wb_idiv_result(104-i downto 0) & zero105(i-1 downto 0);
             end if;
         end loop;
     end if;
 
-    expAlign_t := r.expAB + 1;
-    if wb_imul_result(105) = '1' then
-        expAlign := expAlign_t;
-    elsif r.a(62 downto 52) = zero11 or r.b(62 downto 52) = zero11 then
-        expAlign := expAlign_t - ("000000" & wb_imul_shift);
-    else
-        expAlign := r.expAB - ("000000" & wb_imul_shift);
+    expShift := ("000000" & r.preShift) - ("00000" & wb_idiv_lshift);
+    if r.b(62 downto 52) = "00000000000" and r.a(62 downto 52) /= "00000000000" then
+        expShift := expShift - 1;
+    elsif r.b(62 downto 52) /= "00000000000" and r.a(62 downto 52) = "00000000000" then
+        expShift := expShift + 1;
     end if;
 
-    -- IMPORTANT exception! new ZERO value
-    if expAlign(12) = '1' or expAlign = zero63(12 downto 0) then
-        if wb_imul_shift = "0000000" or wb_imul_result(105) = '1'
-            or r.a(62 downto 52) = zero11 or r.b(62 downto 52) = zero11 then
-            postShift := not expAlign(11 downto 0) + 2;
-        else
-            postShift := not expAlign(11 downto 0) + 1;
-        end if;
+    expAlign := r.expAB + (expShift(11) & expShift);
+    if expAlign(12) = '1' then
+        postShift := not expAlign(11 downto 0) + 2;
     else
         postShift := (others => '0');
     end if;
 
-    if w_imul_rdy = '1' then
+    if w_idiv_rdy = '1' then
         v.expAlign := expAlign(11 downto 0);
         v.mantAlign := mantAlign;
         v.postShift := postShift;
 
         -- Exceptions:
-        v.nanA := '0';
-        if r.a(62 downto 52) = "11111111111" then
-            v.nanA := '1';
+        v.nanRes := '0';
+        if expAlign = "0011111111111" then
+            v.nanRes := '1';
         end if;
-        v.nanB := '0';
-        if r.b(62 downto 52) = "11111111111" then
-            v.nanB := '1';
-        end if;
-        v.overflow := '0';
-        if expAlign(12) = '0' and expAlign >= "0011111111111" then
-            v.overflow := '1';
-        end if;
+        v.overflow := not expAlign(12) and expAlign(11);
+        v.underflow := expAlign(12) and expAlign(11);
     end if;
 
     -- Prepare to mantissa post-scale
@@ -314,50 +298,55 @@ begin
         nanB := '1';
     end if;
     mantZeroA := '0';
-    if r.a(51 downto 0) = zero63(51 downto 0) then
+    if r.a(51 downto 0) = zero105(51 downto 0) then
         mantZeroA := '1';
     end if;
     mantZeroB := '0';
-    if r.b(51 downto 0) = zero63(51 downto 0) then
+    if r.b(51 downto 0) = zero105(51 downto 0) then
         mantZeroB := '1';
     end if;
 
     -- Result multiplexers:
-    if (nanA and mantZeroA and r.zeroB) = '1' or (nanB and mantZeroB and r.zeroA) = '1' then
+    if (nanA and mantZeroA and nanB and mantZeroB) = '1' then
         res(63) := '1';
     elsif (nanA and not mantZeroA) = '1' then
-        -- when both values are NaN, value B has higher priority if sign=1
-        res(63) := signA or (nanA and signB);
+        res(63) := signA;
     elsif (nanB and not mantZeroB) = '1' then
         res(63) := signB;
+    elsif (r.zeroA and r.zeroB) = '1' then
+        res(63) := '1';
     else
         res(63) := r.a(63) xor r.b(63);
     end if;
 
-    if nanA = '1' then
-        res(62 downto 52) := r.a(62 downto 52);
-    elsif nanB = '1' then
+    if nanB = '1' and mantZeroB = '0' then
         res(62 downto 52) := r.b(62 downto 52);
-    elsif (r.expAlign(11) or r.zeroA or r.zeroB) = '1' then
+    elsif (r.underflow or r.zeroA) = '1' and r.zeroB = '0' then
         res(62 downto 52) := (others => '0');
-    elsif r.overflow = '1' then
+    elsif (r.overflow or r.zeroB) = '1' then
         res(62 downto 52) := (others => '1');
+    elsif nanA = '1' then
+        res(62 downto 52) := r.a(62 downto 52);
+    elsif ((nanB and mantZeroB) or r.expAlign(11)) = '1' then
+        res(62 downto 52) := (others => '0');
     else
         res(62 downto 52) := r.expAlign
                        + (mantOnes and rndBit and not r.overflow);
     end if;
 
-    if (nanA and mantZeroA and not mantZeroB) = '1'
-        or (nanB and mantZeroB and not mantZeroA) = '1'
-        or (not nanA and not nanB and r.overflow) = '1' then
-        res(51 downto 0) := (others => '0');
-    elsif (nanA and not (nanB and signB)) = '1' then
-        -- when both values are NaN, value B has higher priority if sign=1
+    if (r.zeroA and r.zeroB) = '1'
+        or (nanA and mantZeroA and nanB and mantZeroB) = '1' then
+        res(51) := '1';
+        res(50 downto 0) := (others => '0');
+    elsif nanA = '1' and mantZeroA = '0' then
         res(51) := '1';
         res(50 downto 0) := r.a(50 downto 0);
-    elsif nanB = '1' then
+    elsif nanB = '1' and mantZeroB = '0'then
         res(51) := '1';
         res(50 downto 0) := r.b(50 downto 0);
+    elsif r.overflow = '1' or r.nanRes = '1' or (nanA and mantZeroA) = '1'
+          or (nanB and mantZeroB) = '1' then
+        res(51 downto 0) := (others => '0');
     else
         res(51 downto 0) := mantShort + rndBit;
     end if;
@@ -376,9 +365,11 @@ begin
     rin <= v;
   end process;
 
-  o_result <= r.result;
+  o_res <= r.result;
   o_illegal_op <= r.illegal_op;
+  o_divbyzero <= r.zeroB;
   o_overflow <= r.overflow;
+  o_underflow <= r.underflow;
   o_valid <= r.ena(4);
   o_busy <= r.busy;
   
