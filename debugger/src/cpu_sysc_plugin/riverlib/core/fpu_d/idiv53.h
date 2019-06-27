@@ -40,7 +40,7 @@ SC_MODULE(idiv53) {
 
     SC_HAS_PROCESS(idiv53);
 
-    idiv53(sc_module_name name_);
+    idiv53(sc_module_name name_, bool async_reset);
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
@@ -48,7 +48,7 @@ SC_MODULE(idiv53) {
     divstage divstage0;
     struct RegistersType {
         sc_signal<sc_uint<15>> delay;
-        sc_signal<sc_uint<16>> lshift;
+        sc_signal<sc_uint<7>> lshift;
         sc_signal<bool> lshift_rdy;
         sc_signal<sc_uint<53>> divisor;
         sc_signal<sc_uint<61>> divident;
@@ -75,6 +75,8 @@ SC_MODULE(idiv53) {
     sc_signal<sc_uint<8>> wb_bits_o;
     sc_signal<sc_uint<7>> wb_muxind_o;
     sc_signal<bool> w_muxind_rdy_o;
+
+    bool async_reset_;
 };
 
 }  // namespace debugger

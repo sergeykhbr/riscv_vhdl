@@ -42,7 +42,7 @@ SC_MODULE(DoubleDiv) {
 
     SC_HAS_PROCESS(DoubleDiv);
 
-    DoubleDiv(sc_module_name name_);
+    DoubleDiv(sc_module_name name_, bool async_reset);
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
@@ -108,6 +108,8 @@ SC_MODULE(DoubleDiv) {
     sc_signal<bool>  w_idiv_rdy;
     sc_signal<bool>  w_idiv_overflow;
     sc_signal<bool>  w_idiv_zeroresid;
+
+    bool async_reset_;
 };
 
 }  // namespace debugger

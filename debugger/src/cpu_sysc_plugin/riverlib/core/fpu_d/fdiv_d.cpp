@@ -19,8 +19,11 @@
 
 namespace debugger {
 
-DoubleDiv::DoubleDiv(sc_module_name name_) : sc_module(name_),
-    u_idiv53("idiv53") {
+DoubleDiv::DoubleDiv(sc_module_name name_, bool async_reset) :
+    sc_module(name_),
+    u_idiv53("idiv53", async_reset) {
+    async_reset_ = async_reset;
+
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_ena;
@@ -119,13 +122,15 @@ void DoubleDiv::comb() {
 
     vb_ena[0] = (i_ena.read() & !r.busy);
     vb_ena[1] = r.ena.read()[0];
-    w_idiv_ena = r.ena.read()[1];
     vb_ena(4, 2) = (r.ena.read()(3, 2), w_idiv_rdy);
 
     v.ena = vb_ena;
 
     if (i_ena.read()) {
         v.busy = 1;
+        v.overflow = 0;
+        v.underflow = 0;
+        v.illegal_op = 0;
         v.a = i_a;
         v.b = i_b;
 
@@ -163,9 +168,10 @@ void DoubleDiv::comb() {
         preShift = 0;
     } else {
         // multiplexer for operation with zero expanent
-        divisor = 0;
-        for (unsigned i = 0; i < 53; i++) {
-            if (divisor == 0 && mantB[52 - i] == 1) {
+        divisor = mantB;
+        preShift = 0;
+        for (unsigned i = 1; i < 53; i++) {
+            if (preShift == 0 && mantB[52 - i] == 1) {
                 divisor = mantB << i;
                 preShift = i;
             }
@@ -188,7 +194,7 @@ void DoubleDiv::comb() {
     wb_divident = mantA;
     wb_divisor = r.divisor.read();
 
-    // IDiv53 module:
+    // idiv53 module:
     mantAlign = 0;
     for (unsigned i = 0; i < 105; i++) {
         if (i == wb_idiv_lshift.read()) {
@@ -321,7 +327,7 @@ void DoubleDiv::comb() {
         v.busy = 0;
     }
 
-    if (i_nrst.read() == 0) {
+    if (!async_reset_ && i_nrst.read() == 0) {
         R_RESET(v);
     }
 
@@ -335,7 +341,11 @@ void DoubleDiv::comb() {
 }
 
 void DoubleDiv::registers() {
-    r = v;
+    if (async_reset_ && i_nrst.read() == 0) {
+        R_RESET(r);
+    } else {
+        r = v;
+    }
 }
 
 uint64_t DoubleDiv::compute_reference(uint64_t a, uint64_t b) {
