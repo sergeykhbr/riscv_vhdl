@@ -42,6 +42,7 @@ idiv53::idiv53(sc_module_name name_, bool async_reset) : sc_module(name_),
     sensitive << w_muxind_rdy_o;
 
     SC_METHOD(registers);
+    sensitive << i_nrst;
     sensitive << i_clk.pos();
 
     divstage0.i_mux_ena(w_mux_ena_i);

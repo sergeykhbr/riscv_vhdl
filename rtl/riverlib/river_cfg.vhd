@@ -197,7 +197,30 @@ package river_cfg is
   constant Instr_REMUW : integer := 70;
   constant Instr_ECALL : integer := 71;
   constant Instr_EBREAK : integer := 72;
-  constant Instr_Total : integer := 73;
+  constant Instr_FADD_D : integer := 73;
+  constant Instr_FCVT_D_W : integer := 74;
+  constant Instr_FCVT_D_WU : integer := 75;
+  constant Instr_FCVT_D_L : integer := 76;
+  constant Instr_FCVT_D_LU : integer := 77;
+  constant Instr_FCVT_W_D : integer := 78;
+  constant Instr_FCVT_WU_D : integer := 79;
+  constant Instr_FCVT_L_D : integer := 80;
+  constant Instr_FCVT_LU_D : integer := 81;
+  constant Instr_FDIV_D : integer := 82;
+  constant Instr_FEQ_D : integer := 83;
+  constant Instr_FLD : integer := 84;
+  constant Instr_FLE_D : integer := 85;
+  constant Instr_FLT_D : integer := 86;
+  constant Instr_FMAX_D : integer := 87;
+  constant Instr_FMIN_D : integer := 88;
+  constant Instr_FMOV_D_X : integer := 89;
+  constant Instr_FMOV_X_D : integer := 90;
+  constant Instr_FMUL_D : integer := 91;
+  constant Instr_FSD : integer := 92;
+  constant Instr_FSUB_D : integer := 93;
+  constant Instr_Total : integer := 94;
+
+  constant Instr_FPU_Total : integer := Instr_FSUB_D - Instr_FADD_D + 1;
   --! @}
 
   --! @name PRV bits possible values:

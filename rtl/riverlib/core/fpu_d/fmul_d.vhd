@@ -29,7 +29,7 @@ entity DoubleMul is
     i_ena        : in std_logic;
     i_a          : in std_logic_vector(63 downto 0);
     i_b          : in std_logic_vector(63 downto 0);
-    o_result     : out std_logic_vector(63 downto 0);
+    o_res        : out std_logic_vector(63 downto 0);
     o_illegal_op : out std_logic;
     o_overflow   : out std_logic;
     o_valid      : out std_logic;
@@ -352,7 +352,7 @@ begin
     rin <= v;
   end process;
 
-  o_result <= r.result;
+  o_res <= r.result;
   o_illegal_op <= r.illegal_op;
   o_overflow <= r.overflow;
   o_valid <= r.ena(4);

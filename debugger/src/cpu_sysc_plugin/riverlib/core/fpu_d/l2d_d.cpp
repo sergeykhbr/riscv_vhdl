@@ -19,7 +19,10 @@
 
 namespace debugger {
 
-Long2Double::Long2Double(sc_module_name name_) : sc_module(name_) {
+Long2Double::Long2Double(sc_module_name name_, bool async_reset) :
+    sc_module(name_) {
+    async_reset_ = async_reset;
+
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_ena;
@@ -35,6 +38,7 @@ Long2Double::Long2Double(sc_module_name name_) : sc_module(name_) {
     sensitive << r.lshift;
 
     SC_METHOD(registers);
+    sensitive << i_nrst;
     sensitive << i_clk.pos();
 };
 
@@ -58,6 +62,10 @@ void Long2Double::comb() {
     sc_uint<64> mantAlign;
     sc_uint<6> lshift;
     sc_uint<11> expAlign;
+    bool mantEven;
+    bool mant05;
+    bool mantOnes;
+    bool rndBit;
     sc_uint<64> res;
 
     v = r;
@@ -83,10 +91,10 @@ void Long2Double::comb() {
     // multiplexer, probably if/elsif in rtl:
     mantAlign = 0;
     lshift = 63;
-    for (int i = 63; i >= 0; i--) {
-        if (lshift == 63 && r.absA.read()[i] == 1) {
-            mantAlign = r.absA.read() << (63 - i);
-            lshift = 63 - i;
+    for (int i = 0; i < 64; i++) {
+        if (lshift == 63 && r.absA.read()[63 - i] == 1) {
+            mantAlign = r.absA.read() << i;
+            lshift = i;
         }
     }
 
@@ -97,10 +105,6 @@ void Long2Double::comb() {
 
     expAlign = 1086 - r.lshift.read();
 
-    bool mantEven;
-    bool mant05;
-    bool mantOnes;
-    bool rndBit;
     mantEven = r.mantAlign.read()[11];
     mant05 = 0;
     if (r.mantAlign.read()(10, 0) == 0x7ff) {
@@ -122,7 +126,7 @@ void Long2Double::comb() {
         v.busy = 0;
     }
 
-    if (i_nrst.read() == 0) {
+    if (!async_reset_ && i_nrst.read() == 0) {
         R_RESET(v);
     }
 
@@ -132,7 +136,11 @@ void Long2Double::comb() {
 }
 
 void Long2Double::registers() {
-    r = v;
+    if (async_reset_ && i_nrst.read() == 0) {
+        R_RESET(r);
+    } else {
+        r = v;
+    }
 }
 
 uint64_t Long2Double::compute_reference(bool op_signed, uint64_t a) {

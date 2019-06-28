@@ -54,6 +54,7 @@ DoubleDiv::DoubleDiv(sc_module_name name_, bool async_reset) :
     sensitive << w_idiv_zeroresid;
 
     SC_METHOD(registers);
+    sensitive << i_nrst;
     sensitive << i_clk.pos();
 
     u_idiv53.i_nrst(i_nrst);

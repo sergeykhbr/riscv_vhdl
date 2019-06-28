@@ -46,7 +46,7 @@ SC_MODULE(DoubleAdd) {
 
     SC_HAS_PROCESS(DoubleAdd);
 
-    DoubleAdd(sc_module_name name_);
+    DoubleAdd(sc_module_name name_, bool async_reset);
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
@@ -81,7 +81,7 @@ SC_MODULE(DoubleAdd) {
         sc_signal<sc_uint<53>> mantLess;
         sc_signal<sc_biguint<105>> mantLessScale;
         sc_signal<sc_biguint<106>> mantSum;
-        sc_signal<sc_uint<7>> LShift;
+        sc_signal<sc_uint<7>> lshift;
         sc_signal<sc_biguint<105>> mantAlign;
         sc_signal<sc_uint<12>> expPostScale;
         sc_signal<sc_uint<12>> expPostScaleInv;
@@ -117,7 +117,7 @@ SC_MODULE(DoubleAdd) {
         iv.mantLess = 0;
         iv.mantLessScale = 0;
         iv.mantSum = 0;
-        iv.LShift = 0;
+        iv.lshift = 0;
         iv.mantAlign = 0;
         iv.expPostScale = 0;
         iv.expPostScaleInv = 0;
@@ -127,6 +127,8 @@ SC_MODULE(DoubleAdd) {
         iv.b_dbg = 0;
         iv.reference_res = 0;
     }
+
+    bool async_reset_;
 };
 
 }  // namespace debugger

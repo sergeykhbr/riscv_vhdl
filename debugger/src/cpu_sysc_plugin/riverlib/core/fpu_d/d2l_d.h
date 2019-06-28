@@ -39,7 +39,7 @@ SC_MODULE(Double2Long) {
 
     SC_HAS_PROCESS(Double2Long);
 
-    Double2Long(sc_module_name name_);
+    Double2Long(sc_module_name name_, bool async_reset);
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
@@ -81,6 +81,7 @@ SC_MODULE(Double2Long) {
     sc_uint<12> expDif;
     sc_uint<64> mantPreScale;
     sc_uint<64> mantPostScale;
+    bool async_reset_;
 };
 
 }  // namespace debugger

@@ -19,7 +19,10 @@
 
 namespace debugger {
 
-DoubleAdd::DoubleAdd(sc_module_name name_) : sc_module(name_) {
+DoubleAdd::DoubleAdd(sc_module_name name_, bool async_reset) :
+    sc_module(name_) {
+    async_reset_ = async_reset;
+
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_ena;
@@ -56,13 +59,14 @@ DoubleAdd::DoubleAdd(sc_module_name name_) : sc_module(name_) {
     sensitive << r.mantLess;
     sensitive << r.mantLessScale;
     sensitive << r.mantSum;
-    sensitive << r.LShift;
+    sensitive << r.lshift;
     sensitive << r.mantAlign;
     sensitive << r.expPostScale;
     sensitive << r.expPostScaleInv;
     sensitive << r.mantPostScale;
 
     SC_METHOD(registers);
+    sensitive << i_nrst;
     sensitive << i_clk.pos();
 };
 
@@ -89,7 +93,7 @@ void DoubleAdd::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.expMore, "/top/proc0/exec0/fpu0/fadd_d0/r_expMore");
         sc_trace(o_vcd, r.mantMore, "/top/proc0/exec0/fpu0/fadd_d0/r_mantMore");
         sc_trace(o_vcd, r.mantLess, "/top/proc0/exec0/fpu0/fadd_d0/r_mantLess");
-        sc_trace(o_vcd, r.LShift, "/top/proc0/exec0/fpu0/fadd_d0/r_LShift");
+        sc_trace(o_vcd, r.lshift, "/top/proc0/exec0/fpu0/fadd_d0/r_lshift");
         sc_trace(o_vcd, r.mantSum, "/top/proc0/exec0/fpu0/fadd_d0/r_mantSum");
         sc_trace(o_vcd, r.mantAlign, "/top/proc0/exec0/fpu0/fadd_d0/r_mantAlign");
         sc_trace(o_vcd, r.mantPostScale, "/top/proc0/exec0/fpu0/fadd_d0/r_mantPostScale");
@@ -105,6 +109,7 @@ void DoubleAdd::comb() {
     sc_uint<1> signOpB;
     sc_uint<53> mantA;
     sc_uint<53> mantB;
+    sc_uint<54> mantDif;
     sc_uint<12> expDif;
     bool v_flMore;
     bool v_flEqual;
@@ -114,10 +119,10 @@ void DoubleAdd::comb() {
     sc_uint<11> vb_expMore;
     sc_uint<53> vb_mantMore;
     sc_uint<53> vb_mantLess;
-    sc_biguint<106> mantMoreScale;
-    sc_biguint<106> mantLessScale;
+    sc_biguint<105> mantMoreScale;
+    sc_biguint<105> mantLessScale;
     sc_biguint<106> vb_mantSum;
-    sc_uint<7> vb_LShift;
+    sc_uint<7> vb_lshift;
     sc_biguint<105> vb_mantAlign;
     sc_uint<12> vb_expPostScale;
     sc_biguint<105> vb_mantPostScale;
@@ -157,6 +162,8 @@ void DoubleAdd::comb() {
         v.min = i_min;
         v.a = i_a;
         v.b = i_b;
+        v.illegal_op = 0;
+        v.overflow = 0;
 
         // Just for run-rime control (not for VHDL)
         v.a_dbg = i_a;
@@ -197,9 +204,10 @@ void DoubleAdd::comb() {
         expDif = r.a.read()(62, 52) - r.b.read()(62, 52);
     }
 
+    mantDif = (0, mantA) - (0, mantB);
     if (expDif == 0) {
         vb_preShift = expDif;
-        if (mantA == mantB) {
+        if (mantDif == 0) {
             v_flMore = !signA & (signA ^ signB);
             v_flEqual = !(signA ^ signB);
             v_flLess = signA & (signA ^ signB);
@@ -208,7 +216,7 @@ void DoubleAdd::comb() {
             vb_expMore = r.a.read()(62, 52);
             vb_mantMore = mantA;
             vb_mantLess = mantB;
-        } else if (mantA > mantB) {
+        } else if (mantDif[53] == 0) {  // A > B
             v_flMore = !signA;
             v_flEqual = 0;
             v_flLess = signA;
@@ -259,8 +267,8 @@ void DoubleAdd::comb() {
         v.mantLess = vb_mantLess;
     }
 
-    // Pre-scale 106-bits mantissa if preShift < 105:
-    // M = {1'b0, mantM, 52'd0}
+    // Pre-scale 105-bits mantissa if preShift < 105:
+    // M = {mantM, 52'd0}
     mantLessScale = r.mantLess.read().to_uint64();
     mantLessScale <<= 52;
     if (r.ena.read()[1] == 1) {
@@ -285,44 +293,44 @@ void DoubleAdd::comb() {
     // multiplexer
     if (vb_mantSum[105] == 1) {
         // shift right
-        vb_LShift = 0x7F;
+        vb_lshift = 0x7F;
     } else if (vb_mantSum[104] == 1) {
-        vb_LShift = 0;
+        vb_lshift = 0;
     } else {
         // shift left
-        vb_LShift = 0;
-        for (unsigned i = 0; i < 104; i++) {
-            if (vb_LShift == 0 && vb_mantSum[104 - i] == 1) {
-                vb_LShift = i;
+        vb_lshift = 0;
+        for (unsigned i = 1; i < 105; i++) {
+            if (vb_lshift == 0 && vb_mantSum[104 - i] == 1) {
+                vb_lshift = i;
             }
         }
     }
     if (r.ena.read()[2] == 1) {
-        v.LShift = vb_LShift;
+        v.lshift = vb_lshift;
         v.mantSum = vb_mantSum;
     }
 
     // Prepare to mantissa post-scale
-    if (r.LShift.read() == 0x7F) {
+    if (r.lshift.read() == 0x7F) {
         vb_mantAlign = r.mantSum.read() >> 1;
     } else {
         for (unsigned i = 0; i < 105; i++) {
-            if (i == r.LShift.read()) {
+            if (i == r.lshift.read()) {
                 vb_mantAlign = r.mantSum.read() << i;
             }
         }
     }
-    if (r.LShift.read() == 0x7F) {
+    if (r.lshift.read() == 0x7F) {
         if (r.expMore.read() == 0x7FF) {
             vb_expPostScale = (0, r.expMore);
         } else {
             vb_expPostScale = (0, r.expMore.read()) + 1;
         }
     } else {
-        if (r.expMore.read() == 0 && r.LShift.read() == 0) {
+        if (r.expMore.read() == 0 && r.lshift.read() == 0) {
             vb_expPostScale = 1;
         } else {
-            vb_expPostScale = (0, r.expMore.read()) - (0, r.LShift.read());
+            vb_expPostScale = (0, r.expMore.read()) - (0, r.lshift.read());
         }
     }
     if (signA ^ signOpB) {
@@ -340,10 +348,9 @@ void DoubleAdd::comb() {
 
     // Mantissa post-scale:
     //    Scaled = SumScale>>(-ExpSum) only if ExpSum < 0;
-    if (r.expPostScale.read()[11] == 0) {
-        vb_mantPostScale = r.mantAlign;
-    } else {
-        for (unsigned i = 0; i < 105; i++) {
+    vb_mantPostScale = r.mantAlign;
+    if (r.expPostScale.read()[11] == 1) {
+        for (unsigned i = 1; i < 105; i++) {
             if (i == r.expPostScaleInv.read()) {
                 vb_mantPostScale = r.mantAlign.read() >> i;
             }
@@ -369,11 +376,11 @@ void DoubleAdd::comb() {
 
     // Check borders
     mantZeroA = 0;
-    if (r.a.read()(62, 52) == 0) {
+    if (r.a.read()(51, 0) == 0) {
         mantZeroA = 1;
     }
     mantZeroB = 0;
-    if (r.b.read()(62, 52) == 0) {
+    if (r.b.read()(51, 0) == 0) {
         mantZeroB = 1;
     }
 
@@ -494,7 +501,7 @@ void DoubleAdd::comb() {
         v.min = 0;
     }
 
-    if (i_nrst.read() == 0) {
+    if (!async_reset_ && i_nrst.read() == 0) {
         R_RESET(v);
     }
 
@@ -506,7 +513,11 @@ void DoubleAdd::comb() {
 }
 
 void DoubleAdd::registers() {
-    r = v;
+    if (async_reset_ && i_nrst.read() == 0) {
+        R_RESET(r);
+    } else {
+        r = v;
+    }
 }
 
 uint64_t DoubleAdd::compute_reference(bool addEna, bool subEna,

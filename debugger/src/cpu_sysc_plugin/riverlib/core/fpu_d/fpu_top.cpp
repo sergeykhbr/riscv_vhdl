@@ -20,11 +20,11 @@
 namespace debugger {
 
 FpuTop::FpuTop(sc_module_name name_, bool async_reset) : sc_module(name_),
-    fadd_d0("fadd_d0"),
+    fadd_d0("fadd_d0", async_reset),
     fdiv_d0("fdiv_d0", async_reset),
     fmul_d0("fmul_d0", async_reset),
-    d2l_d0("d2l_d0"),
-    l2d_d0("l2d_d0") {
+    d2l_d0("d2l_d0", async_reset),
+    l2d_d0("l2d_d0", async_reset) {
     async_reset_ = async_reset;
 
     SC_METHOD(comb);
@@ -77,6 +77,7 @@ FpuTop::FpuTop(sc_module_name name_, bool async_reset) : sc_module(name_),
     sensitive << w_busy_l2d;
 
     SC_METHOD(registers);
+    sensitive << i_nrst;
     sensitive << i_clk.pos();
 
     fadd_d0.i_clk(i_clk);

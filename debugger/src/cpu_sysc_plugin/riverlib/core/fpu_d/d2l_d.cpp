@@ -19,7 +19,9 @@
 
 namespace debugger {
 
-Double2Long::Double2Long(sc_module_name name_) : sc_module(name_) {
+Double2Long::Double2Long(sc_module_name name_, bool async_reset) :
+    sc_module(name_) {
+    async_reset_ = async_reset;
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_ena;
@@ -37,6 +39,7 @@ Double2Long::Double2Long(sc_module_name name_) : sc_module(name_) {
     sensitive << r.underflow;
 
     SC_METHOD(registers);
+    sensitive << i_nrst;
     sensitive << i_clk.pos();
 };
 
@@ -83,6 +86,8 @@ void Double2Long::comb() {
         v.expA = i_a.read()(62, 52);
         v.mantA = mantA;
         v.op_signed = i_signed.read();
+        v.overflow = 0;
+        v.underflow = 0;
 
         // Just for run-rime control (not for VHDL)
         v.a_dbg = i_a;
@@ -153,7 +158,7 @@ void Double2Long::comb() {
         v.busy = 0;
     }
 
-    if (i_nrst.read() == 0) {
+    if (!async_reset_ && i_nrst.read() == 0) {
         R_RESET(v);
     }
 
@@ -165,7 +170,11 @@ void Double2Long::comb() {
 }
 
 void Double2Long::registers() {
-    r = v;
+    if (async_reset_ && i_nrst.read() == 0) {
+        R_RESET(r);
+    } else {
+        r = v;
+    }
 }
 
 uint64_t Double2Long::compute_reference(bool op_signed, uint64_t a) {
