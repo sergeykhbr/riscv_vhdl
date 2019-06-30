@@ -54,7 +54,6 @@ SC_MODULE(FpuTop) {
 
  private:
     struct RegistersType {
-        sc_signal<bool> ena;
         sc_signal<sc_bv<Instr_FPU_Total>> ivec;
         sc_signal<bool> busy;
         sc_signal<bool> ready;
@@ -74,7 +73,6 @@ SC_MODULE(FpuTop) {
     } v, r;
 
     void R_RESET(RegistersType &iv) {
-        iv.ena = 0;
         iv.ivec = 0;
         iv.busy = 0;
         iv.ready = 0;

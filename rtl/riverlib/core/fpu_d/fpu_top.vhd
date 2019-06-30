@@ -138,7 +138,6 @@ architecture arch_FpuTop of FpuTop is
   end component;
 
   type RegistersType is record
-    ena : std_logic;
     ivec : std_logic_vector(Instr_FPU_Total-1 downto 0);
     busy : std_logic;
     ready : std_logic;
@@ -158,7 +157,7 @@ architecture arch_FpuTop of FpuTop is
   end record;
 
   constant R_RESET : RegistersType := (
-    '0', (others => '0'),                           -- ena, ivec
+    (others => '0'),                                -- ivec
     '0', '0', (others => '0'), (others => '0'),     -- busy, ready, a, b
     (others => '0'),                                -- result
     '0', '0', '0',                                  -- ex_invalidop, ex_divbyzero, ex_overflow

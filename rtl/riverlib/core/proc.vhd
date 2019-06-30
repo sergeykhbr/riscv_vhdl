@@ -1,9 +1,18 @@
------------------------------------------------------------------------------
---! @file
---! @copyright Copyright 2016 GNSS Sensor Ltd. All right reserved.
---! @author    Sergey Khabarov - sergeykhbr@gmail.com
---! @brief     CPU pipeline implementation.
-------------------------------------------------------------------------------
+--!
+--! Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
+--!
+--! Licensed under the Apache License, Version 2.0 (the "License");
+--! you may not use this file except in compliance with the License.
+--! You may obtain a copy of the License at
+--!
+--!     http://www.apache.org/licenses/LICENSE-2.0
+--!
+--! Unless required by applicable law or agreed to in writing, software
+--! distributed under the License is distributed on an "AS IS" BASIS,
+--! WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+--! See the License for the specific language governing permissions and
+--! limitations under the License.
+--!
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -87,6 +96,7 @@ architecture arch_Processor of Processor is
         memop_size : std_logic_vector(1 downto 0);
         rv32 : std_logic;                                    -- 32-bits instruction
         compressed : std_logic;                              -- C-extension
+        f64 : std_logic;                                     -- D-extension (FPU)
         unsigned_op : std_logic;                             -- Unsigned operands
         isa_type : std_logic_vector(ISA_Total-1 downto 0);
         instr_vec : std_logic_vector(Instr_Total-1 downto 0);
@@ -101,9 +111,9 @@ architecture arch_Processor of Processor is
         npc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
         ex_npc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
 
-        radr1 : std_logic_vector(4 downto 0);
-        radr2 : std_logic_vector(4 downto 0);
-        res_addr : std_logic_vector(4 downto 0);
+        radr1 : std_logic_vector(5 downto 0);
+        radr2 : std_logic_vector(5 downto 0);
+        res_addr : std_logic_vector(5 downto 0);
         res_data : std_logic_vector(RISCV_ARCH-1 downto 0);
         mret : std_logic;
         uret : std_logic;
@@ -115,6 +125,12 @@ architecture arch_Processor of Processor is
         ex_unalign_store : std_logic;
         ex_breakpoint : std_logic;
         ex_ecall : std_logic;
+        ex_fpu_invalidop : std_logic;            -- FPU Exception: invalid operation
+        ex_fpu_divbyzero : std_logic;            -- FPU Exception: divide by zero
+        ex_fpu_overflow : std_logic;             -- FPU Exception: overflow
+        ex_fpu_underflow : std_logic;            -- FPU Exception: underflow
+        ex_fpu_inexact : std_logic;              -- FPU Exception: inexact
+        fpu_valid : std_logic;
 
         memop_sign_ext : std_logic;
         memop_load : std_logic;
@@ -136,7 +152,7 @@ architecture arch_Processor of Processor is
     type WriteBackType is record
         pc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
         wena : std_logic;
-        waddr : std_logic_vector(4 downto 0);
+        waddr : std_logic_vector(5 downto 0);
         wdata : std_logic_vector(RISCV_ARCH-1 downto 0);
     end record;
 
@@ -145,6 +161,12 @@ architecture arch_Processor of Processor is
         rdata2 : std_logic_vector(RISCV_ARCH-1 downto 0);
         dport_rdata : std_logic_vector(RISCV_ARCH-1 downto 0);
         ra : std_logic_vector(RISCV_ARCH-1 downto 0);       -- Return address
+    end record;
+
+    type FloatRegsType is record
+        rdata1 : std_logic_vector(RISCV_ARCH-1 downto 0);
+        rdata2 : std_logic_vector(RISCV_ARCH-1 downto 0);
+        dport_rdata : std_logic_vector(RISCV_ARCH-1 downto 0);
     end record;
 
     type CsrType is record
@@ -171,6 +193,8 @@ architecture arch_Processor of Processor is
         csr_write : std_logic;                               -- Region 0: CSR write enable
         ireg_ena : std_logic;                                -- Region 1: Access to integer register bank is enabled
         ireg_write : std_logic;                              -- Region 1: Integer registers bank write pulse
+        freg_ena : std_logic;                                -- Region 1: Access to float register bank is enabled
+        freg_write : std_logic;                              -- Region 1: Float registers bank write pulse
         npc_write : std_logic;                               -- Region 1: npc write enable
         halt : std_logic;                                    -- Halt signal is equal to hold pipeline
         clock_cnt : std_logic_vector(63 downto 0);           -- Number of clocks excluding halt state
@@ -188,12 +212,14 @@ architecture arch_Processor of Processor is
     end record;
 
     signal ireg : IntRegsType;
+    signal freg : FloatRegsType;
     signal csr : CsrType;
     signal w : PipelineType;
     signal dbg : DebugType;
     signal bp : BranchPredictorType;
 
     signal wb_ireg_dport_addr : std_logic_vector(4 downto 0);
+    signal wb_freg_dport_addr : std_logic_vector(4 downto 0);
     signal wb_exec_dport_npc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     
     signal w_fetch_pipeline_hold : std_logic;
@@ -208,6 +234,7 @@ begin
     w_exec_pipeline_hold <= w.f.pipeline_hold or w.m.pipeline_hold or dbg.halt;
 
     wb_ireg_dport_addr <= dbg.core_addr(4 downto 0);
+    wb_freg_dport_addr <= dbg.core_addr(4 downto 0);
     wb_exec_dport_npc <= dbg.core_wdata(BUS_ADDR_WIDTH-1 downto 0);
     
     fetch0 : InstrFetch port map (
@@ -254,6 +281,7 @@ begin
         o_unsigned_op => w.d.unsigned_op,
         o_rv32 => w.d.rv32,
         o_compressed => w.d.compressed,
+        o_f64 => w.d.f64,
         o_isa_type => w.d.isa_type,
         o_instr_vec => w.d.instr_vec,
         o_exception => w.d.exception);
@@ -273,6 +301,7 @@ begin
         i_unsigned_op => w.d.unsigned_op,
         i_rv32 => w.d.rv32,
         i_compressed => w.d.compressed,
+        i_f64 => w.d.f64,
         i_isa_type => w.d.isa_type,
         i_ivec => w.d.instr_vec,
         i_unsup_exception => w.d.exception,
@@ -282,6 +311,8 @@ begin
         i_rdata1 => ireg.rdata1,
         o_radr2 => w.e.radr2,
         i_rdata2 => ireg.rdata2,
+        i_rfdata1 => freg.rdata1,
+        i_rfdata2 => freg.rdata2,
         o_res_addr => w.e.res_addr,
         o_res_data => w.e.res_data,
         o_pipeline_hold => w.e.pipeline_hold,
@@ -297,6 +328,12 @@ begin
         o_ex_unalign_load => w.e.ex_unalign_load,
         o_ex_breakpoint => w.e.ex_breakpoint,
         o_ex_ecall => w.e.ex_ecall,
+        o_ex_fpu_invalidop => w.e.ex_fpu_invalidop,
+        o_ex_fpu_divbyzero => w.e.ex_fpu_divbyzero,
+        o_ex_fpu_overflow => w.e.ex_fpu_overflow,
+        o_ex_fpu_underflow => w.e.ex_fpu_underflow,
+        o_ex_fpu_inexact => w.e.ex_fpu_inexact,
+        o_fpu_valid => w.e.fpu_valid,
         o_memop_sign_ext => w.e.memop_sign_ext,
         o_memop_load => w.e.memop_load,
         o_memop_store => w.e.memop_store,
@@ -376,6 +413,32 @@ begin
         o_dport_rdata => ireg.dport_rdata,
         o_ra => ireg.ra);   -- Return address
 
+    fpuena : if CFG_HW_FPU_ENABLE generate
+      fregs0 : RegFloatBank generic map (
+        async_reset => false
+      ) port map (
+        i_clk => i_clk,
+        i_nrst => i_nrst,
+        i_radr1 => w.e.radr1,
+        o_rdata1 => freg.rdata1,
+        i_radr2 => w.e.radr2,
+        o_rdata2 => freg.rdata2,
+        i_waddr => w.w.waddr,
+        i_wena => w.w.wena,
+        i_wdata => w.w.wdata,
+        i_dport_addr => wb_freg_dport_addr,
+        i_dport_ena => dbg.freg_ena,
+        i_dport_write => dbg.freg_write,
+        i_dport_wdata => dbg.core_wdata,
+        o_dport_rdata => freg.dport_rdata);
+    end generate;
+
+    fpudis : if not CFG_HW_FPU_ENABLE generate
+        freg.rdata1 <= (others => '0');
+        freg.rdata2 <= (others => '0');
+        freg.dport_rdata <= (others => '0');
+    end generate;
+
     csr0 : CsrRegs generic map (
         hartid => hartid
       ) port map (
@@ -399,6 +462,12 @@ begin
         i_ex_unalign_load => w.e.ex_unalign_load,
         i_ex_breakpoint => w.e.ex_breakpoint,
         i_ex_ecall => w.e.ex_ecall,
+        i_ex_fpu_invalidop => w.e.ex_fpu_invalidop,
+        i_ex_fpu_divbyzero => w.e.ex_fpu_divbyzero,
+        i_ex_fpu_overflow => w.e.ex_fpu_overflow,
+        i_ex_fpu_underflow => w.e.ex_fpu_underflow,
+        i_ex_fpu_inexact => w.e.ex_fpu_inexact,
+        i_fpu_valid => w.e.fpu_valid,
         i_irq_external => i_ext_irq,
         o_trap_valid => csr.trap_valid,
         o_trap_pc => csr.trap_pc,
@@ -428,8 +497,11 @@ begin
         i_csr_rdata => csr.dport_rdata,
         o_ireg_ena => dbg.ireg_ena,
         o_ireg_write => dbg.ireg_write,
+        o_freg_ena => dbg.freg_ena,
+        o_freg_write => dbg.freg_write,
         o_npc_write => dbg.npc_write,
         i_ireg_rdata => ireg.dport_rdata,
+        i_freg_rdata => freg.dport_rdata,
         i_pc => w.e.pc,
         i_npc => w.e.npc,
         i_e_valid => w.e.valid,

@@ -1,9 +1,18 @@
------------------------------------------------------------------------------
---! @file
---! @copyright Copyright 2016 GNSS Sensor Ltd. All right reserved.
---! @author    Sergey Khabarov - sergeykhbr@gmail.com
---! @brief     Debug port must be connected to DSU.
-------------------------------------------------------------------------------
+--!
+--! Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
+--!
+--! Licensed under the Apache License, Version 2.0 (the "License");
+--! you may not use this file except in compliance with the License.
+--! You may obtain a copy of the License at
+--!
+--!     http://www.apache.org/licenses/LICENSE-2.0
+--!
+--! Unless required by applicable law or agreed to in writing, software
+--! distributed under the License is distributed on an "AS IS" BASIS,
+--! WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+--! See the License for the specific language governing permissions and
+--! limitations under the License.
+--!
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -35,8 +44,11 @@ entity DbgPort is
     i_csr_rdata : in std_logic_vector(RISCV_ARCH-1 downto 0); -- Region 0: CSR read value
     o_ireg_ena : out std_logic;                               -- Region 1: Access to integer register bank is enabled
     o_ireg_write : out std_logic;                             -- Region 1: Integer registers bank write pulse
+    o_freg_ena : out std_logic;                               -- Region 1: Access to float register bank is enabled
+    o_freg_write : out std_logic;                             -- Region 1: Float registers bank write pulse
     o_npc_write : out std_logic;                              -- Region 1: npc write enable
     i_ireg_rdata : in std_logic_vector(RISCV_ARCH-1 downto 0);-- Region 1: Integer register read value
+    i_freg_rdata : in std_logic_vector(RISCV_ARCH-1 downto 0);-- Region 1: Float register read value
     i_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);    -- Region 1: Instruction pointer
     i_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);   -- Region 1: Next Instruction pointer
     i_e_valid : in std_logic;                                 -- Stepping control signal
@@ -125,8 +137,8 @@ begin
   end generate;
 
   comb : process(i_nrst, i_dport_valid, i_dport_write, i_dport_region, 
-                 i_dport_addr, i_dport_wdata, i_ireg_rdata, i_csr_rdata,
-                 i_pc, i_npc, i_e_valid, i_m_valid, i_ebreak, r,
+                 i_dport_addr, i_dport_wdata, i_ireg_rdata, i_freg_rdata,
+                 i_csr_rdata, i_pc, i_npc, i_e_valid, i_m_valid, i_ebreak, r,
                  wb_stack_rdata, i_e_call, i_e_ret, i_istate, i_dstate,
                  i_cstate, i_instr_buf)
     variable v : RegistersType;
@@ -139,6 +151,8 @@ begin
     variable w_o_csr_write : std_logic;
     variable w_o_ireg_ena : std_logic;
     variable w_o_ireg_write : std_logic;
+    variable w_o_freg_ena : std_logic;
+    variable w_o_freg_write : std_logic;
     variable w_o_npc_write : std_logic;
     variable w_cur_halt : std_logic;
   begin
@@ -154,6 +168,8 @@ begin
     w_o_csr_write := '0';
     w_o_ireg_ena := '0';
     w_o_ireg_write := '0';
+    w_o_freg_ena := '0';
+    w_o_freg_write := '0';
     w_o_npc_write := '0';
     v.br_fetch_valid := '0';
     v.rd_trbuf_ena := '0';
@@ -233,6 +249,14 @@ begin
 							conv_std_logic_vector(r.stack_trace_cnt, STACKTR_ADRSZ);
                 if i_dport_write = '1' then
                     v.stack_trace_cnt := conv_integer(i_dport_wdata);
+                end if;
+            elsif (wb_idx >= 64) and (wb_idx < 96) then
+                w_o_freg_ena := '1';
+                wb_o_core_addr := i_dport_addr;
+                wb_rdata := i_freg_rdata;
+                if i_dport_write = '1' then
+                    w_o_freg_write := '1';
+                    wb_o_core_wdata := i_dport_wdata;
                 end if;
             elsif (wb_idx >= 128) and (wb_idx < (128 + 2 * CFG_STACK_TRACE_BUF_SIZE)) then
                     v.rd_trbuf_ena := '1';
@@ -341,6 +365,8 @@ begin
     o_csr_write <= w_o_csr_write;
     o_ireg_ena <= w_o_ireg_ena;
     o_ireg_write <= w_o_ireg_write;
+    o_freg_ena <= w_o_freg_ena;
+    o_freg_write <= w_o_freg_write;
     o_npc_write <= w_o_npc_write;
     o_clock_cnt <= r.clock_cnt;
     o_executed_cnt <= r.executed_cnt;

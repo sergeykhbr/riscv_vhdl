@@ -24,7 +24,9 @@ library riverlib;
 use riverlib.river_cfg.all;
 
 
-entity RegIntBank is
+entity RegFloatBank is generic (
+    async_reset : boolean := false
+  );
   port (
     i_clk : in std_logic;                                   -- CPU clock
     i_nrst : in std_logic;                                  -- Reset. Active LOW.
@@ -43,20 +45,24 @@ entity RegIntBank is
     i_dport_ena : in std_logic;                             -- Debug port is enabled
     i_dport_write : in std_logic;                           -- Debug port write is enabled
     i_dport_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0); -- Debug port write value
-    o_dport_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0);-- Debug port read value
-
-    o_ra : out std_logic_vector(RISCV_ARCH-1 downto 0)      -- Return address for branch predictor
+    o_dport_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0)-- Debug port read value
   );
 end; 
  
-architecture arch_RegIntBank of RegIntBank is
+architecture arch_RegFloatBank of RegFloatBank is
 
-  type MemoryType is array (0 to Reg_Total-1) 
+  type MemoryType is array (0 to RegFpu_Total-1) 
          of std_logic_vector(RISCV_ARCH-1 downto 0);
+
+  constant MEMORY_RESET : MemoryType := (
+      others => X"00000000FEEDFACE"
+  );
 
   type RegistersType is record
       mem : MemoryType;
   end record;
+
+  constant R_RESET : RegistersType := (mem => MEMORY_RESET);
 
   signal r, rin : RegistersType;
 
@@ -73,17 +79,12 @@ begin
         if i_dport_addr /= "00000" then
             v.mem(conv_integer(i_dport_addr)) := i_dport_wdata;
         end if;
-    elsif i_waddr(5) = '0' and i_wena = '1'  then
-        if i_waddr(4 downto 0) /= "00000" then
-            v.mem(conv_integer(i_waddr(4 downto 0))) := i_wdata;
-        end if;
+    elsif i_wena = '1' and i_waddr(5) = '1' then
+        v.mem(conv_integer(i_waddr(4 downto 0))) := i_wdata;
     end if;
 
-    if i_nrst = '0' then
-        v.mem(Reg_Zero) := (others => '0');
-        for i in 1 to Reg_Total-1 loop
-            v.mem(i) := X"00000000FEEDFACE";
-        end loop;
+    if not async_reset and i_nrst = '0' then
+        v := R_RESET;
     end if;
 
     rin <= v;
@@ -92,12 +93,13 @@ begin
   o_rdata1 <= r.mem(conv_integer(i_radr1(4 downto 0)));
   o_rdata2 <= r.mem(conv_integer(i_radr2(4 downto 0)));
   o_dport_rdata <= r.mem(conv_integer(i_dport_addr));
-  o_ra <= r.mem(Reg_ra);
 
   -- registers:
-  regs : process(i_clk)
+  regs : process(i_nrst, i_clk)
   begin 
-     if rising_edge(i_clk) then 
+     if async_reset and i_nrst = '0' then
+        r <= R_RESET;
+     elsif rising_edge(i_clk) then 
         r <= rin;
      end if; 
   end process;

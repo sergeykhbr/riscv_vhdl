@@ -1,9 +1,18 @@
------------------------------------------------------------------------------
---! @file
---! @copyright Copyright 2016 GNSS Sensor Ltd. All right reserved.
---! @author    Sergey Khabarov - sergeykhbr@gmail.com
---! @brief     CPU Instruction Decoder stage.
-------------------------------------------------------------------------------
+--!
+--! Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
+--!
+--! Licensed under the Apache License, Version 2.0 (the "License");
+--! you may not use this file except in compliance with the License.
+--! You may obtain a copy of the License at
+--!
+--!     http://www.apache.org/licenses/LICENSE-2.0
+--!
+--! Unless required by applicable law or agreed to in writing, software
+--! distributed under the License is distributed on an "AS IS" BASIS,
+--! WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+--! See the License for the specific language governing permissions and
+--! limitations under the License.
+--!
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -33,6 +42,7 @@ entity InstrDecoder is
     o_memop_size : out std_logic_vector(1 downto 0);         -- Memory transaction size
     o_rv32 : out std_logic;                                  -- 32-bits instruction
     o_compressed : out std_logic;                            -- 16-bits opcode (C-extension)
+    o_f64 : out std_logic;                                   -- 64-bits FPU (D-extension)
     o_unsigned_op : out std_logic;                           -- Unsigned operands
     o_isa_type : out std_logic_vector(ISA_Total-1 downto 0); -- Instruction format accordingly with ISA
     o_instr_vec : out std_logic_vector(Instr_Total-1 downto 0); -- One bit per decoded instruction bus
@@ -44,6 +54,8 @@ architecture arch_InstrDecoder of InstrDecoder is
 
   -- LB, LH, LW, LD, LBU, LHU, LWU
   constant OPCODE_LB     : std_logic_vector(4 downto 0) := "00000";
+  -- FLD
+  constant OPCODE_FPU_LD : std_logic_vector(4 downto 0) := "00001";
   -- FENCE, FENCE_I
   constant OPCODE_FENCE  : std_logic_vector(4 downto 0) := "00011";
   --  ADDI, ANDI, ORI, SLLI, SLTI, SLTIU, SRAI, SRLI, XORI
@@ -54,12 +66,16 @@ architecture arch_InstrDecoder of InstrDecoder is
   constant OPCODE_ADDIW  : std_logic_vector(4 downto 0) := "00110";
   -- SB, SH, SW, SD
   constant OPCODE_SB     : std_logic_vector(4 downto 0) := "01000";
+  -- FSD
+  constant OPCODE_FPU_SD : std_logic_vector(4 downto 0) := "01001";
   -- ADD, AND, OR, SLT, SLTU, SLL, SRA, SRL, SUB, XOR, DIV, DIVU, MUL, REM, REMU
   constant OPCODE_ADD    : std_logic_vector(4 downto 0) := "01100";
   -- LUI
   constant OPCODE_LUI    : std_logic_vector(4 downto 0) := "01101";
   -- ADDW, SLLW, SRAW, SRLW, SUBW, DIVW, DIVUW, MULW, REMW, REMUW
   constant OPCODE_ADDW   : std_logic_vector(4 downto 0) := "01110";
+  -- FPU operations
+  constant OPCODE_FPU_OP : std_logic_vector(4 downto 0) := "10100";
   -- BEQ, BNE, BLT, BGE, BLTU, BGEU
   constant OPCODE_BEQ    : std_logic_vector(4 downto 0) := "11000";
   -- JALR
@@ -104,6 +120,7 @@ architecture arch_InstrDecoder of InstrDecoder is
       memop_size : std_logic_vector(1 downto 0);
       unsigned_op : std_logic;
       rv32 : std_logic;
+      f64 : std_logic;
       compressed : std_logic;
       instr_unimplemented : std_logic;
   end record;
@@ -637,7 +654,96 @@ begin
             end case;
 
         when others =>
-            w_error := '1';
+            if CFG_HW_FPU_ENABLE then
+                case wb_opcode1 is
+                when OPCODE_FPU_LD =>
+                    wb_isa_type(ISA_I_type) := '1';
+                    if wb_opcode2 = "011" then
+                        wb_dec(Instr_FLD) := '1';
+                    else
+                        w_error := '1';
+                    end if;
+                when OPCODE_FPU_SD =>
+                    wb_isa_type(ISA_S_type) := '1';
+                    if wb_opcode2 = "011" then
+                        wb_dec(Instr_FSD) := '1';
+                    else
+                        w_error := '1';
+                    end if;
+                when OPCODE_FPU_OP =>
+                    wb_isa_type(ISA_R_type) := '1';
+                    case wb_instr(31 downto 25) is
+                    when "0000001" =>
+                        wb_dec(Instr_FADD_D) := '1';
+                    when "0000101" =>
+                        wb_dec(Instr_FSUB_D) := '1';
+                    when "0001001" =>
+                        wb_dec(Instr_FMUL_D) := '1';
+                    when "0001101" =>
+                        wb_dec(Instr_FDIV_D) := '1';
+                    when "0010101" =>
+                        if wb_opcode2 = "000" then
+                            wb_dec(Instr_FMIN_D) := '1';
+                        elsif wb_opcode2 = "001" then
+                            wb_dec(Instr_FMAX_D) := '1';
+                        else
+                            w_error := '1';
+                        end if;
+                    when "1010001" =>
+                        if wb_opcode2 = "000" then
+                            wb_dec(Instr_FLE_D) := '1';
+                        elsif wb_opcode2 = "001" then
+                            wb_dec(Instr_FLT_D) := '1';
+                        elsif wb_opcode2 = "010" then
+                            wb_dec(Instr_FEQ_D) := '1';
+                        else
+                            w_error := '1';
+                        end if;
+                    when "1100001" =>
+                        if wb_instr(24 downto 20) = "00000" then
+                            wb_dec(Instr_FCVT_W_D) := '1';
+                        elsif wb_instr(24 downto 20) = "00001" then
+                            wb_dec(Instr_FCVT_WU_D) := '1';
+                        elsif wb_instr(24 downto 20) = "00010" then
+                            wb_dec(Instr_FCVT_L_D) := '1';
+                        elsif wb_instr(24 downto 20) = "00011" then
+                            wb_dec(Instr_FCVT_LU_D) := '1';
+                        else
+                            w_error := '1';
+                        end if;
+                    when "1101001" =>
+                        if wb_instr(24 downto 20) = "00000" then
+                            wb_dec(Instr_FCVT_D_W) := '1';
+                        elsif wb_instr(24 downto 20) = "00001" then
+                            wb_dec(Instr_FCVT_D_WU) := '1';
+                        elsif wb_instr(24 downto 20) = "00010" then
+                            wb_dec(Instr_FCVT_D_L) := '1';
+                        elsif wb_instr(24 downto 20) = "00011" then
+                            wb_dec(Instr_FCVT_D_LU) := '1';
+                        else
+                            w_error := '1';
+                        end if;
+                    when "1110001" =>
+                        if wb_instr(24 downto 20) = "00000" and wb_opcode2 = "000" then
+                            wb_dec(Instr_FMOV_X_D) := '1';
+                        else
+                            w_error := '1';
+                        end if;
+                    when "1111001" =>
+                        if wb_instr(24 downto 20) = "00000" and wb_opcode2 = "000" then
+                            wb_dec(Instr_FMOV_D_X) := '1';
+                        else
+                            w_error := '1';
+                        end if;
+                    when others =>
+                        w_error := '1';
+                    end case;
+                when others =>
+                    w_error := '1';
+                end case;
+            else
+                w_error := '1';
+            end if;
         end case;
         wb_instr_out := wb_instr;
     end if;
@@ -652,14 +758,16 @@ begin
         v.isa_type := wb_isa_type;
         v.instr_vec := wb_dec;
         v.memop_store := wb_dec(Instr_SD) or wb_dec(Instr_SW) 
-                      or wb_dec(Instr_SH) or wb_dec(Instr_SB);
+                      or wb_dec(Instr_SH) or wb_dec(Instr_SB)
+                      or wb_dec(Instr_FSD);
         v.memop_load := wb_dec(Instr_LD) or wb_dec(Instr_LW)
                 or wb_dec(Instr_LH) or wb_dec(Instr_LB)
                 or wb_dec(Instr_LWU) or wb_dec(Instr_LHU) 
-                or wb_dec(Instr_LBU);
+                or wb_dec(Instr_LBU) or wb_dec(Instr_FLD);
         v.memop_sign_ext := wb_dec(Instr_LD) or wb_dec(Instr_LW)
                 or wb_dec(Instr_LH) or wb_dec(Instr_LB);
-        if (wb_dec(Instr_LD) or wb_dec(Instr_SD)) = '1' then
+        if (wb_dec(Instr_LD) or wb_dec(Instr_SD) or
+            wb_dec(Instr_FLD) or wb_dec(Instr_FSD)) = '1' then
             v.memop_size := MEMOP_8B;
         elsif (wb_dec(Instr_LW) or wb_dec(Instr_LWU) or wb_dec(Instr_SW)) = '1' then
             v.memop_size := MEMOP_4B;
@@ -669,7 +777,9 @@ begin
             v.memop_size := MEMOP_1B;
         end if;
         v.unsigned_op := wb_dec(Instr_DIVU) or wb_dec(Instr_REMU) or
-                         wb_dec(Instr_DIVUW) or wb_dec(Instr_REMUW);
+                         wb_dec(Instr_DIVUW) or wb_dec(Instr_REMUW) or
+                         wb_dec(Instr_FCVT_WU_D) or
+                         wb_dec(Instr_FCVT_LU_D);
 
         v.rv32 := wb_dec(Instr_ADDW) or wb_dec(Instr_ADDIW) 
             or wb_dec(Instr_SLLW) or wb_dec(Instr_SLLIW) or wb_dec(Instr_SRAW)
@@ -677,6 +787,18 @@ begin
             or wb_dec(Instr_SRLW) or wb_dec(Instr_SRLIW) or wb_dec(Instr_SUBW) 
             or wb_dec(Instr_DIVW) or wb_dec(Instr_DIVUW) or wb_dec(Instr_MULW)
             or wb_dec(Instr_REMW) or wb_dec(Instr_REMUW);
+
+        v.f64 := wb_dec(Instr_FADD_D) or wb_dec(Instr_FSUB_D)
+            or wb_dec(Instr_FMUL_D) or wb_dec(Instr_FDIV_D)
+            or wb_dec(Instr_FMIN_D) or wb_dec(Instr_FMAX_D)
+            or wb_dec(Instr_FLE_D) or wb_dec(Instr_FLT_D)
+            or wb_dec(Instr_FEQ_D) or wb_dec(Instr_FCVT_W_D)
+            or wb_dec(Instr_FCVT_WU_D) or wb_dec(Instr_FCVT_L_D)
+            or wb_dec(Instr_FCVT_LU_D) or wb_dec(Instr_FMOV_X_D)
+            or wb_dec(Instr_FCVT_D_W) or wb_dec(Instr_FCVT_D_WU)
+            or wb_dec(Instr_FCVT_D_L) or wb_dec(Instr_FCVT_D_LU)
+            or wb_dec(Instr_FMOV_D_X) or wb_dec(Instr_FLD)
+            or wb_dec(Instr_FSD);
         
         v.instr_unimplemented := w_error;
     elsif i_any_hold = '0' then
@@ -696,6 +818,7 @@ begin
         v.memop_size := MEMOP_1B;
         v.unsigned_op := '0';
         v.rv32 := '0';
+        v.f64 := '0';
         v.compressed := '0';
         v.instr_unimplemented := '0';
         if wb_dec = INSTR_NONE then
@@ -712,6 +835,7 @@ begin
     o_memop_size <= r.memop_size;
     o_unsigned_op <= r.unsigned_op;
     o_rv32 <= r.rv32;
+    o_f64 <= r.f64;
     o_compressed <= r.compressed;
     o_isa_type <= r.isa_type;
     o_instr_vec <= r.instr_vec;

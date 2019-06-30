@@ -298,7 +298,7 @@ void DoubleMul::comb() {
     } else if (r.overflow.read()) {
         res(62, 52) = 0x7FF;
     } else {
-        res(62, 52) = r.expAlign.read()
+        res(62, 52) = r.expAlign.read()(10, 0)
                        + (mantOnes && rndBit && !r.overflow.read());
     }
 
@@ -314,7 +314,7 @@ void DoubleMul::comb() {
         res[51] = 1;
         res(50, 0) = r.b.read()(50, 0);
     } else {
-        res(51, 0) = mantShort + rndBit;
+        res(51, 0) = mantShort(51, 0) + rndBit;
     }
 
     if (r.ena.read()[3] == 1) {

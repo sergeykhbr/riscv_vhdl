@@ -1,9 +1,18 @@
------------------------------------------------------------------------------
---! @file
---! @copyright Copyright 2018 GNSS Sensor Ltd. All right reserved.
---! @author    Sergey Khabarov - sergeykhbr@gmail.com
---! @brief     CSR registers module.
-------------------------------------------------------------------------------
+--!
+--! Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
+--!
+--! Licensed under the Apache License, Version 2.0 (the "License");
+--! you may not use this file except in compliance with the License.
+--! You may obtain a copy of the License at
+--!
+--!     http://www.apache.org/licenses/LICENSE-2.0
+--!
+--! Unless required by applicable law or agreed to in writing, software
+--! distributed under the License is distributed on an "AS IS" BASIS,
+--! WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+--! See the License for the specific language governing permissions and
+--! limitations under the License.
+--!
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -39,6 +48,12 @@ entity CsrRegs is
     i_ex_unalign_load : in std_logic;
     i_ex_breakpoint : in std_logic;
     i_ex_ecall : in std_logic;
+    i_ex_fpu_invalidop : in std_logic;         -- FPU Exception: invalid operation
+    i_ex_fpu_divbyzero : in std_logic;         -- FPU Exception: divide by zero
+    i_ex_fpu_overflow : in std_logic;          -- FPU Exception: overflow
+    i_ex_fpu_underflow : in std_logic;         -- FPU Exception: underflow
+    i_ex_fpu_inexact : in std_logic;           -- FPU Exception: inexact
+    i_fpu_valid : in std_logic;                -- FPU output is valid
     i_irq_external : in std_logic;
     o_trap_valid : out std_logic;                              -- Trap pulse
     o_trap_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- trap on pc
@@ -67,6 +82,11 @@ architecture arch_CsrRegs of CsrRegs is
       mpp : std_logic_vector(1 downto 0);    -- Previous mode
       mepc : std_logic_vector(RISCV_ARCH-1 downto 0);
 
+      ex_fpu_invalidop : std_logic;          -- FPU Exception: invalid operation
+      ex_fpu_divbyzero : std_logic;          -- FPU Exception: divide by zero
+      ex_fpu_overflow : std_logic;           -- FPU Exception: overflow
+      ex_fpu_underflow : std_logic;          -- FPU Exception: underflow
+      ex_fpu_inexact : std_logic;            -- FPU Exception: inexact
       trap_irq : std_logic;
       trap_code : std_logic_vector(3 downto 0);
       trap_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
@@ -76,6 +96,7 @@ architecture arch_CsrRegs of CsrRegs is
   constant R_RESET : RegistersType := (
         (others => '0'), (others => '0'), (others => '0'), PRV_M,
         '0', '0', '0', (others => '0'), (others => '0'),
+        '0', '0', '0', '0', '0', 
         '0', (others => '0'), (others => '0'), '0');
 
   signal r, rin : RegistersType;
@@ -91,6 +112,41 @@ architecture arch_CsrRegs of CsrRegs is
     ov := ir;
     ordata := (others => '0');
     case iaddr is
+    when CSR_fflags =>
+        ordata(0) := ir.ex_fpu_inexact;
+        ordata(1) := ir.ex_fpu_underflow;
+        ordata(2) := ir.ex_fpu_overflow;
+        ordata(3) := ir.ex_fpu_divbyzero;
+        ordata(4) := ir.ex_fpu_invalidop;
+        if CFG_HW_FPU_ENABLE then
+            if iwena = '1' then
+                ov.ex_fpu_inexact := iwdata(0);
+                ov.ex_fpu_underflow := iwdata(1);
+                ov.ex_fpu_overflow := iwdata(2);
+                ov.ex_fpu_divbyzero := iwdata(3);
+                ov.ex_fpu_invalidop := iwdata(4);
+            end if;
+        end if;
+    when CSR_frm =>
+        if CFG_HW_FPU_ENABLE then
+            ordata(2 downto 0) := "100";  -- Round mode: round to Nearest (RMM)
+        end if;
+    when CSR_fcsr =>
+        ordata(0) := ir.ex_fpu_inexact;
+        ordata(1) := ir.ex_fpu_underflow;
+        ordata(2) := ir.ex_fpu_overflow;
+        ordata(3) := ir.ex_fpu_divbyzero;
+        ordata(4) := ir.ex_fpu_invalidop;
+        if CFG_HW_FPU_ENABLE then
+            ordata(7 downto 5) := "100";  -- Round mode: round to Nearest (RMM)
+            if iwena = '1' then
+                ov.ex_fpu_inexact := iwdata(0);
+                ov.ex_fpu_underflow := iwdata(1);
+                ov.ex_fpu_overflow := iwdata(2);
+                ov.ex_fpu_divbyzero := iwdata(3);
+                ov.ex_fpu_invalidop := iwdata(4);
+            end if;
+        end if;
     when CSR_misa =>
         --! Base[XLEN-1:XLEN-2]
         --!     1 = 32
@@ -130,6 +186,9 @@ architecture arch_CsrRegs of CsrRegs is
         ordata(12) := '1';
         ordata(20) := '1';
         ordata(2) := '1';
+        if CFG_HW_FPU_ENABLE then
+            ordata(3) := '1';
+        end if;
     when CSR_mvendorid =>
         ordata(31 downto 0) := CFG_VENDOR_ID;
     when CSR_marchid =>
@@ -143,6 +202,9 @@ architecture arch_CsrRegs of CsrRegs is
         ordata(3) := ir.mie;
         ordata(7) := ir.mpie;
         ordata(12 downto 11) := ir.mpp;
+        if CFG_HW_FPU_ENABLE then
+            ordata(14 downto 13) := "01";  -- FS field: Initial state
+        end if;
         if iwena = '1' then
             ov.uie := iwdata(0);
             ov.mie := iwdata(3);
@@ -183,7 +245,9 @@ begin
   comb : process(i_nrst, i_mret, i_uret, i_addr, i_wena, i_wdata, i_e_pre_valid,
                  i_ex_pc, i_ex_npc, i_ex_data_addr, i_ex_data_load_fault, i_ex_data_store_fault,
                  i_ex_ctrl_load_fault, i_ex_illegal_instr, i_ex_unalign_load, i_ex_unalign_store,
-                 i_ex_breakpoint, i_ex_ecall, i_irq_external,
+                 i_ex_breakpoint, i_ex_ecall, 
+                 i_ex_fpu_invalidop, i_ex_fpu_divbyzero, i_ex_fpu_overflow,
+                 i_ex_fpu_underflow, i_ex_fpu_inexact, i_fpu_valid, i_irq_external,
                  i_break_mode, i_dport_ena, i_dport_write, i_dport_addr, i_dport_wdata,
                  r)
     variable v : RegistersType;
@@ -218,6 +282,14 @@ begin
     if (i_mret = '1' and r.mode /= PRV_M) or
         (i_uret = '1' and r.mode /= PRV_U) then
         w_exception_xret := '1';
+    end if;
+
+    if i_fpu_valid = '1' then
+        v.ex_fpu_invalidop := i_ex_fpu_invalidop;
+        v.ex_fpu_divbyzero := i_ex_fpu_divbyzero;
+        v.ex_fpu_overflow := i_ex_fpu_overflow;
+        v.ex_fpu_underflow := i_ex_fpu_underflow;
+        v.ex_fpu_inexact := i_ex_fpu_inexact;
     end if;
 
     w_trap_valid := '0';

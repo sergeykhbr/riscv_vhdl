@@ -319,7 +319,7 @@ begin
     elsif r.overflow = '1' then
         res(62 downto 52) := (others => '1');
     else
-        res(62 downto 52) := r.expAlign
+        res(62 downto 52) := r.expAlign(10 downto 0)
                        + (mantOnes and rndBit and not r.overflow);
     end if;
 
@@ -335,7 +335,7 @@ begin
         res(51) := '1';
         res(50 downto 0) := r.b(50 downto 0);
     else
-        res(51 downto 0) := mantShort + rndBit;
+        res(51 downto 0) := mantShort(51 downto 0) + rndBit;
     end if;
 
     if r.ena(3) = '1' then

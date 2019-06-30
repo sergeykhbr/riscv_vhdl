@@ -26,6 +26,7 @@ package river_cfg is
 
   constant CFG_VENDOR_ID : std_logic_vector(31 downto 0) := X"000000F1";
   constant CFG_IMPLEMENTATION_ID : std_logic_vector(31 downto 0) := X"20190521";
+  constant CFG_HW_FPU_ENABLE : boolean := true;
 
   --! Architecture size difinition.
   constant RISCV_ARCH : integer := 64;
@@ -108,6 +109,43 @@ package river_cfg is
     constant Reg_t5 : integer := 30;      -- [30] 
     constant Reg_t6 : integer := 31;      -- [31] 
     constant Reg_Total : integer := 32;
+  --! @}
+
+  --! @name   Floating Point Unit Registers specified by ISA
+  --! @{
+    constant Reg_f0 : integer := 0;      -- ft0 temporary register
+    constant Reg_f1 : integer := 1;      -- ft1
+    constant Reg_f2 : integer := 2;      -- ft2
+    constant Reg_f3 : integer := 3;      -- ft3
+    constant Reg_f4 : integer := 4;      -- ft4
+    constant Reg_f5 : integer := 5;      -- ft5
+    constant Reg_f6 : integer := 6;      -- ft6
+    constant Reg_f7 : integer := 7;      -- ft7
+    constant Reg_f8 : integer := 8;      -- fs0 saved register
+    constant Reg_f9 : integer := 9;      -- fs1
+    constant Reg_f10 : integer := 10;    -- fa0 argument/return value
+    constant Reg_f11 : integer := 11;    -- fa1 argument/return value
+    constant Reg_f12 : integer := 12;    -- fa2 argument register
+    constant Reg_f13 : integer := 13;    -- fa3
+    constant Reg_f14 : integer := 14;    -- fa4
+    constant Reg_f15 : integer := 15;    -- fa5
+    constant Reg_f16 : integer := 16;    -- fa6
+    constant Reg_f17 : integer := 17;    -- fa7
+    constant Reg_f18 : integer := 18;    -- fs2 saved register
+    constant Reg_f19 : integer := 19;    -- fs3
+    constant Reg_f20 : integer := 20;    -- fs4
+    constant Reg_f21 : integer := 21;    -- fs5
+    constant Reg_f22 : integer := 22;    -- fs6
+    constant Reg_f23 : integer := 23;    -- fs7
+    constant Reg_f24 : integer := 24;    -- fs8
+    constant Reg_f25 : integer := 25;    -- fs9
+    constant Reg_f26 : integer := 26;    -- fs10
+    constant Reg_f27 : integer := 27;    -- fs11
+    constant Reg_f28 : integer := 28;    -- ft8 temporary register
+    constant Reg_f29 : integer := 29;    -- ft9
+    constant Reg_f30 : integer := 30;    -- ft10
+    constant Reg_f31 : integer := 31;    -- ft11
+    constant RegFpu_Total  : integer := 32;
   --! @}
 
   --! @name   Instruction formats specified by ISA specification
@@ -241,6 +279,12 @@ package river_cfg is
   --!
   --! @{
   
+  -- FPU Accrued Exceptions fields from FCSR
+  constant CSR_fflags            : std_logic_vector(11 downto 0) := X"001";
+  -- FPU dynamic Rounding Mode fields from FCSR
+  constant CSR_frm               : std_logic_vector(11 downto 0) := X"002";
+  -- FPU Control and Status register (frm + fflags)
+  constant CSR_fcsr              : std_logic_vector(11 downto 0) := X"003";
   -- ISA and extensions supported.
   constant CSR_misa              : std_logic_vector(11 downto 0) := X"f10";
   -- Vendor ID.
@@ -412,6 +456,12 @@ package river_cfg is
     i_ex_unalign_load : in std_logic;
     i_ex_breakpoint : in std_logic;
     i_ex_ecall : in std_logic;
+    i_ex_fpu_invalidop : in std_logic;
+    i_ex_fpu_divbyzero : in std_logic;
+    i_ex_fpu_overflow : in std_logic;
+    i_ex_fpu_underflow : in std_logic;
+    i_ex_fpu_inexact : in std_logic;
+    i_fpu_valid : in std_logic;
     i_irq_external : in std_logic;
     o_trap_valid : out std_logic;
     o_trap_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
@@ -439,6 +489,7 @@ package river_cfg is
   --! @param[out] o_memop_sign_ext Load memory value with sign extending
   --! @param[out] o_memop_size Memory transaction size
   --! @param[out] o_rv32 32-bits instruction
+  --! @param[out] o_f64  64-bits FPU (D-extension)
   --! @param[out] o_compressed 16-bits instruction (C-extension)
   --! @param[out] o_insigned_op Unsigned operands
   --! @param[out] o_isa_type Instruction format accordingly with ISA
@@ -460,6 +511,7 @@ package river_cfg is
     o_memop_sign_ext : out std_logic;
     o_memop_size : out std_logic_vector(1 downto 0);
     o_rv32 : out std_logic;
+    o_f64 : out std_logic;
     o_compressed : out std_logic;
     o_unsigned_op : out std_logic;
     o_isa_type : out std_logic_vector(ISA_Total-1 downto 0);
@@ -483,16 +535,19 @@ package river_cfg is
   --! @param[in] i_unsigned_op Unsigned operands
   --! @param[in] i_rv32 32-bits instruction
   --! @param[in] i_compressed 16-bits instruction (C-extension)
-  --! @param[in] i_isa_type Type of the instruction's structure (ISA spec.)
+  --! @param[in] i_f64        D-extension (FPU)
+  --! @param[in] i_isa_type   Type of the instruction's structure (ISA spec.)
   --! @param[in] i_break_mode        Behaviour on EBREAK instruction: 0 = halt; 1 = generate trap
   --! @param[in] i_unsup_exception   Unsupported instruction exception
   --! @param[in] i_ext_irq           External interrupt from PLIC (todo: timer & software interrupts)
   --! @param[in] i_dport_npc_write   Write npc value from debug port
   --! @param[in] i_dport_npc         Debug port npc value to write
-  --! @param[out] o_radr1 Integer register index 1
+  --! @param[out] o_radr1 Integer/float register index 1
   --! @param[in] i_rdata1 Integer register value 1
-  --! @param[out] o_radr2 Integer register index 2
+  --! @param[out] o_radr2 Integer/float register index 2
   --! @param[in] i_rdata2 Integer register value 2
+  --! @param[in] i_rfdata1   Float register value 1
+  --! @param[in] i_rfdata2   Float register value 2
   --! @param[out] o_res_addr Address to store result of the instruction (0=do not store)
   --! @param[out] o_res_data Value to store
   --! @param[out] o_pipeline_hold Hold pipeline while 'writeback' not done or multi-clock instruction.
@@ -506,6 +561,12 @@ package river_cfg is
   --! @param[out] o_ex_unalign_load  Exception: Unaligned load
   --! @param[out] o_ex_breakpoint    Exception: BREAK
   --! @param[out] o_ex_ecall         Exception: ECALL
+  --! @param[out] o_ex_fpu_invalidop FPU Exception: invalid operation
+  --! @param[out] o_ex_fpu_divbyzero FPU Exception: divide by zero
+  --! @param[out] o_ex_fpu_overflow  FPU Exception: overflow
+  --! @param[out] o_ex_fpu_underflow FPU Exception: underflow
+  --! @param[out] o_ex_fpu_inexact   FPU Exception: inexact
+  --! @param[out] o_fpu_valid        FPU output is valid
   --! @param[out] o_memop_sign_ext Load data with sign extending
   --! @param[out] o_memop_load Load data instruction
   --! @param[out] o_memop_store Store data instruction
@@ -536,16 +597,19 @@ package river_cfg is
     i_unsigned_op : in std_logic;
     i_rv32 : in std_logic;
     i_compressed : in std_logic;
+    i_f64 : in std_logic;
     i_isa_type : in std_logic_vector(ISA_Total-1 downto 0);
     i_ivec : in std_logic_vector(Instr_Total-1 downto 0);
     i_unsup_exception : in std_logic;
     i_dport_npc_write : in std_logic;
     i_dport_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    o_radr1 : out std_logic_vector(4 downto 0);
+    o_radr1 : out std_logic_vector(5 downto 0);
     i_rdata1 : in std_logic_vector(RISCV_ARCH-1 downto 0);
-    o_radr2 : out std_logic_vector(4 downto 0);
+    o_radr2 : out std_logic_vector(5 downto 0);
     i_rdata2 : in std_logic_vector(RISCV_ARCH-1 downto 0);
-    o_res_addr : out std_logic_vector(4 downto 0);
+    i_rfdata1 : in std_logic_vector(RISCV_ARCH-1 downto 0);
+    i_rfdata2 : in std_logic_vector(RISCV_ARCH-1 downto 0);
+    o_res_addr : out std_logic_vector(5 downto 0);
     o_res_data : out std_logic_vector(RISCV_ARCH-1 downto 0);
     o_pipeline_hold : out std_logic;
     o_csr_addr : out std_logic_vector(11 downto 0);
@@ -560,6 +624,12 @@ package river_cfg is
     o_ex_unalign_load : out std_logic;
     o_ex_breakpoint : out std_logic;
     o_ex_ecall : out std_logic;
+    o_ex_fpu_invalidop : out std_logic;
+    o_ex_fpu_divbyzero : out std_logic;
+    o_ex_fpu_overflow : out std_logic;
+    o_ex_fpu_underflow : out std_logic;
+    o_ex_fpu_inexact : out std_logic;
+    o_fpu_valid : out std_logic;
     o_memop_sign_ext : out std_logic;
     o_memop_load : out std_logic;
     o_memop_store : out std_logic;
@@ -667,7 +737,7 @@ package river_cfg is
     i_e_valid : in std_logic;
     i_e_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_e_instr : in std_logic_vector(31 downto 0);
-    i_res_addr : in std_logic_vector(4 downto 0);
+    i_res_addr : in std_logic_vector(5 downto 0);
     i_res_data : in std_logic_vector(RISCV_ARCH-1 downto 0);
     i_memop_sign_ext : in std_logic;
     i_memop_load : in std_logic;
@@ -675,7 +745,7 @@ package river_cfg is
     i_memop_size : in std_logic_vector(1 downto 0);
     i_memop_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     o_wena : out std_logic;
-    o_waddr : out std_logic_vector(4 downto 0);
+    o_waddr : out std_logic_vector(5 downto 0);
     o_wdata : out std_logic_vector(RISCV_ARCH-1 downto 0);
     i_mem_req_ready : in std_logic;
     o_mem_valid : out std_logic;
@@ -713,11 +783,11 @@ package river_cfg is
   port (
     i_clk : in std_logic;
     i_nrst : in std_logic;
-    i_radr1 : in std_logic_vector(4 downto 0);
+    i_radr1 : in std_logic_vector(5 downto 0);
     o_rdata1 : out std_logic_vector(RISCV_ARCH-1 downto 0);
-    i_radr2 : in std_logic_vector(4 downto 0);
+    i_radr2 : in std_logic_vector(5 downto 0);
     o_rdata2 : out std_logic_vector(RISCV_ARCH-1 downto 0);
-    i_waddr : in std_logic_vector(4 downto 0);
+    i_waddr : in std_logic_vector(5 downto 0);
     i_wena : in std_logic;
     i_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0);
     i_dport_addr : in std_logic_vector(4 downto 0);
@@ -726,6 +796,31 @@ package river_cfg is
     i_dport_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0);
     o_dport_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0);
     o_ra : out std_logic_vector(RISCV_ARCH-1 downto 0)
+  );
+  end component; 
+
+  component RegFloatBank is generic (
+    async_reset : boolean := false
+  );
+  port (
+    i_clk : in std_logic;                                   -- CPU clock
+    i_nrst : in std_logic;                                  -- Reset. Active LOW.
+
+    i_radr1 : in std_logic_vector(5 downto 0);              -- Port 1 read address
+    o_rdata1 : out std_logic_vector(RISCV_ARCH-1 downto 0); -- Port 1 read value
+
+    i_radr2 : in std_logic_vector(5 downto 0);              -- Port 2 read address
+    o_rdata2 : out std_logic_vector(RISCV_ARCH-1 downto 0); -- Port 2 read value
+
+    i_waddr : in std_logic_vector(5 downto 0);              -- Writing value
+    i_wena : in std_logic;                                  -- Writing is enabled
+    i_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0);   -- Writing value
+
+    i_dport_addr : in std_logic_vector(4 downto 0);         -- Debug port address
+    i_dport_ena : in std_logic;                             -- Debug port is enabled
+    i_dport_write : in std_logic;                           -- Debug port write is enabled
+    i_dport_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0); -- Debug port write value
+    o_dport_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0)-- Debug port read value
   );
   end component; 
 
@@ -745,8 +840,11 @@ package river_cfg is
   --! @param[in] i_csr_rdata      Region 0: CSR read value
   --! @param[out] o_ireg_ena      Region 1: Access to integer register bank is enabled
   --! @param[out] o_ireg_write    Region 1: Integer registers bank write pulse
+  --! @param[out] o_freg_ena      Region 1: Access to float register bank is enabled
+  --! @param[out] o_freg_write    Region 1: Float registers bank write pulse
   --! @param[out] o_npc_write     Region 1: npc write enable
   --! @param[in] i_ireg_rdata     Region 1: Integer register read value
+  --! @param[in] i_freg_rdata  Region 1: Float register read value
   --! @param[in] i_pc             Region 1: Instruction pointer
   --! @param[in] i_npc            Region 1: Next Instruction pointer
   --! @param[in] i_e_valid        Stepping control signal
@@ -782,8 +880,11 @@ package river_cfg is
     i_csr_rdata : in std_logic_vector(RISCV_ARCH-1 downto 0);
     o_ireg_ena : out std_logic;
     o_ireg_write : out std_logic;
+    o_freg_ena : out std_logic;
+    o_freg_write : out std_logic;
     o_npc_write : out std_logic;
     i_ireg_rdata : in std_logic_vector(RISCV_ARCH-1 downto 0);
+    i_freg_rdata : in std_logic_vector(RISCV_ARCH-1 downto 0);
     i_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_e_valid : in std_logic;
@@ -803,7 +904,8 @@ package river_cfg is
     i_cstate : in std_logic_vector(1 downto 0);
     i_instr_buf : in std_logic_vector(DBG_FETCH_TRACE_SIZE*64-1 downto 0)
   );
-  end component; 
+  end component;
+
 
   --! @brief CPU 5-stages pipeline top-level
   --! @param[in] i_clk             CPU clock

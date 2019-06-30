@@ -33,7 +33,6 @@ FpuTop::FpuTop(sc_module_name name_, bool async_reset) : sc_module(name_),
     sensitive << i_ivec;
     sensitive << i_a;
     sensitive << i_b;
-    sensitive << r.ena;
     sensitive << r.ivec;
     sensitive << r.busy;
     sensitive << r.ready;
@@ -152,7 +151,6 @@ void FpuTop::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_res, "/top/proc0/exec0/fpu0/o_res");
         sc_trace(o_vcd, o_valid, "/top/proc0/exec0/fpu0/o_valid");
         sc_trace(o_vcd, o_busy, "/top/proc0/exec0/fpu0/o_busy");
-        sc_trace(o_vcd, r.ena, "/top/proc0/exec0/fpu0/r_ena");
         sc_trace(o_vcd, r.result, "/top/proc0/exec0/fpu0/r_result");
         sc_trace(o_vcd, r.ena_fadd, "/top/proc0/exec0/fpu0/r_ena_fadd");
         sc_trace(o_vcd, r.ena_fdiv, "/top/proc0/exec0/fpu0/r_ena_fdiv");

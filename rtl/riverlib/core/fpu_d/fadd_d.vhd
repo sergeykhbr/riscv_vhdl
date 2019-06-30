@@ -435,7 +435,7 @@ begin
     elsif r.overflow = '1'  then
         resAdd(51 downto 0) := (others => '0');
     else
-        resAdd(51 downto 0) := mantShort + rndBit;
+        resAdd(51 downto 0) := mantShort(51 downto 0) + rndBit;
     end if;
 
     resEQ(63 downto 1) := (others => '0');

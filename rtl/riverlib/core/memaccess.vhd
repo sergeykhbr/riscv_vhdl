@@ -1,9 +1,18 @@
------------------------------------------------------------------------------
---! @file
---! @copyright Copyright 2016 GNSS Sensor Ltd. All right reserved.
---! @author    Sergey Khabarov - sergeykhbr@gmail.com
---! @brief     CPU Memory Access stage.
-------------------------------------------------------------------------------
+--!
+--! Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
+--!
+--! Licensed under the Apache License, Version 2.0 (the "License");
+--! you may not use this file except in compliance with the License.
+--! You may obtain a copy of the License at
+--!
+--!     http://www.apache.org/licenses/LICENSE-2.0
+--!
+--! Unless required by applicable law or agreed to in writing, software
+--! distributed under the License is distributed on an "AS IS" BASIS,
+--! WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+--! See the License for the specific language governing permissions and
+--! limitations under the License.
+--!
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -23,7 +32,7 @@ entity MemAccess is
     i_e_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);          -- Execution stage instruction pointer
     i_e_instr : in std_logic_vector(31 downto 0);                     -- Execution stage instruction value
 
-    i_res_addr : in std_logic_vector(4 downto 0);                     -- Register address to be written (0=no writing)
+    i_res_addr : in std_logic_vector(5 downto 0);                     -- Register address to be written (0=no writing)
     i_res_data : in std_logic_vector(RISCV_ARCH-1 downto 0);          -- Register value to be written
     i_memop_sign_ext : in std_logic;                                  -- Load data with sign extending (if less than 8 Bytes)
     i_memop_load : in std_logic;                                      -- Load data from memory and write to i_res_addr
@@ -31,7 +40,7 @@ entity MemAccess is
     i_memop_size : in std_logic_vector(1 downto 0);                   -- Encoded memory transaction size in bytes: 0=1B; 1=2B; 2=4B; 3=8B
     i_memop_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);    -- Memory access address
     o_wena : out std_logic;                                           -- Write enable signal
-    o_waddr : out std_logic_vector(4 downto 0);                       -- Output register address (0 = x0 = no write)
+    o_waddr : out std_logic_vector(5 downto 0);                       -- Output register address (0 = x0 = no write)
     o_wdata : out std_logic_vector(RISCV_ARCH-1 downto 0);            -- Register value
 
     -- Memory interface:
@@ -61,7 +70,7 @@ architecture arch_MemAccess of MemAccess is
       instr : std_logic_vector(31 downto 0);
 
       wena : std_logic;
-      waddr : std_logic_vector(4 downto 0);
+      waddr : std_logic_vector(5 downto 0);
       sign_ext : std_logic;
       size : std_logic_vector(1 downto 0);
       wdata : std_logic_vector(RISCV_ARCH-1 downto 0);
@@ -124,7 +133,7 @@ begin
       v.instr := i_e_instr;
       v.waddr := i_res_addr;
       v.wdata := i_res_data;
-      if i_res_addr = "00000" then
+      if i_res_addr = "000000" then
           v.wena := '0';
       else
           v.wena := '1';

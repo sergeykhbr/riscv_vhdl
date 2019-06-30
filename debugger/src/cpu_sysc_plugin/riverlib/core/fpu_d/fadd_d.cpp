@@ -445,7 +445,7 @@ void DoubleAdd::comb() {
     } else if (overflow) {
         resAdd(51, 0) = 0;
     } else {
-        resAdd(51, 0) = mantShort + rndBit;
+        resAdd(51, 0) = mantShort(51, 0) + rndBit;
     }
 
     resEQ(63, 1) = 0;

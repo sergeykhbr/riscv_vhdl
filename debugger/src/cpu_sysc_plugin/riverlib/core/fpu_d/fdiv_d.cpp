@@ -301,7 +301,7 @@ void DoubleDiv::comb() {
     } else if ((nanB && mantZeroB) || r.expAlign.read()[11]) {
         res(62, 52) = 0;
     } else {
-        res(62, 52) = r.expAlign.read()
+        res(62, 52) = r.expAlign.read()(10, 0)
                        + (mantOnes && rndBit && !r.overflow.read());
     }
 
@@ -319,7 +319,7 @@ void DoubleDiv::comb() {
         || (nanB && mantZeroB)) {
         res(51, 0) = 0;
     } else {
-        res(51, 0) = mantShort + rndBit;
+        res(51, 0) = mantShort(51, 0) + rndBit;
     }
 
     if (r.ena.read()[3] == 1) {

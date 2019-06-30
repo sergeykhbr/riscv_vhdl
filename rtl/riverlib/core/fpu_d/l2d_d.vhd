@@ -124,7 +124,7 @@ begin
     -- Result multiplexers:
     res(63) := r.signA and r.op_signed;
     res(62 downto 52) := expAlign + ("0000000000" & (mantOnes and rndBit));
-    res(51 downto 0) := r.mantAlign(63 downto 11) + rndBit;
+    res(51 downto 0) := r.mantAlign(62 downto 11) + rndBit;
 
     if r.ena(1) = '1' then
         v.result := res;
