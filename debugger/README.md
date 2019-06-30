@@ -15,9 +15,7 @@ and capabilities of any platform:
 
 ## Demonstration video of 64-bits RISC-V processor
 
-# 1. FPGA board ML605 with River core inside
-
-# 2. Simulation
+### Dual-Core River CPU system-on-chip debugging on FPGA ML605 board video
 
 Information:
 

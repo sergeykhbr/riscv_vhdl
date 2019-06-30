@@ -50,6 +50,7 @@ $(EXECUTABLE): $(OBJ_FILES)
 	@echo "#!/bin/bash\nexport LD_LIBRARY_PATH=\$$(pwd):\$$(pwd)/qtlib\n./appdbg64g.exe -c ../../targets/sysc_river_gui.json \"\$$@\"" > $(ELF_DIR)/_run_systemc_sim.sh
 	@echo "#!/bin/bash\nexport LD_LIBRARY_PATH=\$$(pwd):\$$(pwd)/qtlib\n./appdbg64g.exe -c ../../targets/fpga_gui.json \"\$$@\"" > $(ELF_DIR)/_run_fpga_gui.sh
 	@echo "#!/bin/bash\nexport LD_LIBRARY_PATH=\$$(pwd):\$$(pwd)/qtlib\n./appdbg64g.exe -c ../../targets/functional_arm_gui.json \"\$$@\"" > $(ELF_DIR)/_run_arm_sim.sh
+	@echo "#!/bin/bash\nexport LD_LIBRARY_PATH=\$$(pwd):\$$(pwd)/qtlib\n./appdbg64g.exe -c ../../targets/dualcore_sim_gui.json \"\$$@\"" > $(ELF_DIR)/_run_dualocore_sim.sh
 	@echo "#!/bin/bash\nexport LD_LIBRARY_PATH=\$$(pwd):\$$(pwd)/qtlib\nexport QT_DEBUG_PLUGINS=0\ngdb --args ./appdbg64g.exe -c ../../targets/functional_sim_gui.json \"\$$@\"" > $(ELF_DIR)/_run_gdb.sh
 	chmod +x $(ELF_DIR)/*.sh
 	$(ECHO) "\n  Debugger Test application has been built successfully."

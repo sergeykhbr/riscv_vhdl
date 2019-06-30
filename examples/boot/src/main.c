@@ -71,7 +71,7 @@ void copy_image() {
         memcpy(sram, fwrom, FW_IMAGE_SIZE_BYTES);
     }
     // Write Firmware ID to avoid copy image after soft-reset.
-    pnp->fwid = 0x20180725;
+    pnp->fwid = 0x20190630;
 
 #if 0
     /** Just to check access to DSU and read MCPUID via this slave device.
@@ -87,6 +87,23 @@ void copy_image() {
     pnp->fwdbg1 = x1;
     arr_csrs[CSR_MCPUID<<1] = x1;
 #endif
+}
+
+/** This function will be used during video recording to show
+ how tochange npc register value on core[1] while core[0] is running
+ Zephyr OS
+*/
+void timestamp_output() {
+    gptimers_map *tmr = (gptimers_map *)ADDR_NASTI_SLAVE_GPTIMERS;
+    uint64_t start = tmr->highcnt;
+    while (1) {
+        if (tmr->highcnt < start || (start + SYS_HZ) < tmr->highcnt) {
+            start = tmr->highcnt;
+            print_uart("HIGHCNT: ", 9);
+            print_uart_hex(start);
+            print_uart("\r\n", 2);
+        }
+    }
 }
 
 void _init() {
@@ -106,9 +123,7 @@ void _init() {
     p_irq->irq_mask = 0xFFFFFFFF;
 
     // Half period of the uart = Fbus / 115200 / 2 = 70 MHz / 115200 / 2:
-    //uart->scaler = 304;  // 70 MHz
-    //uart->scaler = 260;  // 60 MHz
-    uart->scaler = 40000000 / 115200 / 2;  // 40 MHz
+    uart->scaler = SYS_HZ / 115200 / 2;  // 40 MHz
 
     gpio->direction = 0xF;  // [3:0] input DIP; [11:4] output LEDs
 

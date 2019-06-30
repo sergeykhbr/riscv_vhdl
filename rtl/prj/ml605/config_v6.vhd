@@ -28,7 +28,7 @@ package config_target is
 
   --! @brief   Dual-core configuration enabling
   --! @details This config parameter used only with CPU River
-  constant CFG_COMMON_DUAL_CORE_ENABLE : boolean := false;
+  constant CFG_COMMON_DUAL_CORE_ENABLE : boolean := true;
 
   --! @brief   HEX-image for the initialization of the Boot ROM.
   --! @details This file is used by \e inferred ROM implementation.
