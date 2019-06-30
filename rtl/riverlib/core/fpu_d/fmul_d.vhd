@@ -251,11 +251,10 @@ begin
     end if;
 
     -- Prepare to mantissa post-scale
-    if r.postShift >= conv_std_logic_vector(105, 12) then
-        mantPostScale := (others => '0');
-    elsif r.postShift = X"000" then
+    mantPostScale := (others => '0');
+    if r.postShift = X"000" then
         mantPostScale := r.mantAlign;
-    else
+    elsif r.postShift < conv_std_logic_vector(105, 12) then
         for i in 1 to 104 loop
             if conv_std_logic_vector(i, 7) = r.postShift(6 downto 0) then
                 mantPostScale := zero105(i-1 downto 0) & r.mantAlign(104 downto i);

@@ -106,6 +106,7 @@ begin
 
     v_mux_ena_i := '0';
     v.delay := r.delay(13 downto 0) & i_ena;
+    vb_muxind := (others => '0');
     if i_ena = '1' then
         v.divident := X"00" & i_divident;
         v.divisor := i_divisor;
@@ -115,14 +116,6 @@ begin
     elsif r.delay(0) = '1' then
         v_mux_ena_i := not r.lshift_rdy;
         v.divident := wb_dif_o & X"00";
-        vb_muxind(55 downto 49) := (others => '0');
-        vb_muxind(48 downto 42) := (others => '0');
-        vb_muxind(41 downto 35) := (others => '0');
-        vb_muxind(34 downto 28) := (others => '0');
-        vb_muxind(27 downto 21) := (others => '0');
-        vb_muxind(20 downto 14) := (others => '0');
-        vb_muxind(13 downto 7) := (others => '0');
-        vb_muxind(6 downto 0) := (others => '0');
         vb_bits(104) := not wb_dif_o(52);
     elsif r.delay(1) = '1' then
         v_mux_ena_i := not r.lshift_rdy;

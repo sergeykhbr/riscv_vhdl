@@ -297,6 +297,7 @@ begin
     end if;
 
     -- Prepare to mantissa post-scale
+    vb_mantAlign := (others => '0');
     if r.lshift = 127 then
         vb_mantAlign := r.mantSum(105 downto 1);
     elsif r.lshift = 0 then

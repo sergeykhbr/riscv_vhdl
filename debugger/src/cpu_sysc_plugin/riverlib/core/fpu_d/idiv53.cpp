@@ -89,6 +89,7 @@ void idiv53::comb() {
 
     v_mux_ena_i = 0;
     v.delay = (r.delay.read()(13, 0), i_ena.read());
+    vb_muxind = 0;
     if (i_ena.read()) {
         v.divident = (0, i_divident.read());
         v.divisor = i_divisor.read();
@@ -98,14 +99,6 @@ void idiv53::comb() {
     } else if (r.delay.read()[0]) {
         v_mux_ena_i = !r.lshift_rdy.read();
         v.divident = wb_dif_o.read() << 8;
-        vb_muxind(55, 49) = 0;
-        vb_muxind(48, 42) = 0;
-        vb_muxind(41, 35) = 0;
-        vb_muxind(34, 28) = 0;
-        vb_muxind(27, 21) = 0;
-        vb_muxind(20, 14) = 0;
-        vb_muxind(13, 7) = 0;
-        vb_muxind(6, 0) = 0;
         vb_bits[104] = !wb_dif_o.read()[52];
     } else if (r.delay.read()[1]) {
         v_mux_ena_i = !r.lshift_rdy.read();

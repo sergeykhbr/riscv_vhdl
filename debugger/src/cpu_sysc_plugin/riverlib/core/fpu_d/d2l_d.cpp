@@ -107,19 +107,17 @@ void Double2Long::comb() {
 
     mantPreScale = r.mantA.read().to_uint64() << 11;
 
+    mantPostScale = 0;
     if (r.op_signed.read() == 1 && expDif_ge) {
         overflow = 1;
         underflow = 0;
-        mantPostScale = 0;
     } else if (r.op_signed.read() == 0 &&
                 (r.signA.read() && expDif_ge || !r.signA.read() && expDif_gr)) {
         overflow = 1;
         underflow = 0;
-        mantPostScale = 0;
     } else if (expDif_lt) {
         overflow = 0;
         underflow = 1;
-        mantPostScale = 0;
     } else {
         overflow = 0;
         underflow = 0;

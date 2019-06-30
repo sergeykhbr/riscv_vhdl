@@ -232,9 +232,10 @@ void DoubleDiv::comb() {
     }
 
     // Prepare to mantissa post-scale
-    if (r.postShift.read() >= 105) {
-        mantPostScale = 0;
-    } else {
+    mantPostScale = 0;
+    if (r.postShift.read() == 0) {
+        mantPostScale = r.mantAlign.read();
+    } else if (r.postShift.read() < 105) {
         for (unsigned i = 0; i < 105; i++) {
             if (i == r.postShift.read()) {
                 mantPostScale = r.mantAlign.read() >> i;

@@ -311,10 +311,13 @@ void DoubleAdd::comb() {
     }
 
     // Prepare to mantissa post-scale
+    vb_mantAlign = 0;
     if (r.lshift.read() == 0x7F) {
         vb_mantAlign = r.mantSum.read() >> 1;
+    } else if (r.lshift.read() == 0) {
+        vb_mantAlign = r.mantSum.read();
     } else {
-        for (unsigned i = 0; i < 105; i++) {
+        for (unsigned i = 1; i < 105; i++) {
             if (i == r.lshift.read()) {
                 vb_mantAlign = r.mantSum.read() << i;
             }

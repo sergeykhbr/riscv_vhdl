@@ -113,19 +113,17 @@ begin
 
     mantPreScale := r.mantA & "00000000000";
 
+    mantPostScale := (others => '0');
     if r.op_signed = '1' and expDif_ge = '1' then
         overflow := '1';
         underflow := '0';
-        mantPostScale := (others => '0');
     elsif r.op_signed = '0' and
           ((r.signA and expDif_ge) or ((not r.signA) and expDif_gr)) = '1' then
         overflow := '1';
         underflow := '0';
-        mantPostScale := (others => '0');
     elsif expDif_lt = '1' then
         overflow := '0';
         underflow := '1';
-        mantPostScale := (others => '0');
     else
         overflow := '0';
         underflow := '0';
