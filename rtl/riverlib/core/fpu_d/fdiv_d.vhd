@@ -196,7 +196,7 @@ begin
         preShift := 0;
         for i in 1 to 52 loop
             if preShift = 0 and mantB(52 - i) = '1' then
-                divisor := mantB(52-i downto 0) & zero105(i downto 0);
+                divisor := mantB(52-i downto 0) & zero105(i-1 downto 0);
                 preShift := i;
             end if;
         end loop;

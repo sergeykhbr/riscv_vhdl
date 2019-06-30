@@ -54,15 +54,9 @@ architecture arch_RegFloatBank of RegFloatBank is
   type MemoryType is array (0 to RegFpu_Total-1) 
          of std_logic_vector(RISCV_ARCH-1 downto 0);
 
-  constant MEMORY_RESET : MemoryType := (
-      others => X"00000000FEEDFACE"
-  );
-
   type RegistersType is record
       mem : MemoryType;
   end record;
-
-  constant R_RESET : RegistersType := (mem => MEMORY_RESET);
 
   signal r, rin : RegistersType;
 
@@ -84,7 +78,7 @@ begin
     end if;
 
     if not async_reset and i_nrst = '0' then
-        v := R_RESET;
+        v.mem := (others => X"00000000FEEDFACE");
     end if;
 
     rin <= v;
@@ -98,7 +92,7 @@ begin
   regs : process(i_nrst, i_clk)
   begin 
      if async_reset and i_nrst = '0' then
-        r <= R_RESET;
+        r.mem <= (others => X"00000000FEEDFACE");
      elsif rising_edge(i_clk) then 
         r <= rin;
      end if; 
