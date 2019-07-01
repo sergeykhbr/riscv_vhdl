@@ -14,7 +14,8 @@
  *  limitations under the License.
  */
 
-#include "RegWidget.h"
+#include "RegSetView.h"
+#include "RegsControl.h"
 #include "RegsViewWidget.h"
 #include "moc_RegsViewWidget.h"
 #include <QtWidgets/QLabel>
@@ -23,98 +24,28 @@
 
 namespace debugger {
 
-RegsViewWidget::RegsViewWidget(IGui *igui, QWidget *parent) 
-    : QWidget(parent) {
-    igui_ = igui;
-
-    gridLayout = new QGridLayout(this);
-    gridLayout->setSpacing(4);
-    gridLayout->setHorizontalSpacing(10);
-    gridLayout->setVerticalSpacing(0);
-    gridLayout->setContentsMargins(4, 4, 4, 4);
+RegsAreaWidget::RegsAreaWidget(IGui *igui, QWidget *parent) : QWidget(parent) {
+    QGridLayout *gridLayout = new QGridLayout(this);
     setLayout(gridLayout);
-    waitingResp_ = false;
 
-    const AttributeType &cfg = (*igui_->getpConfig())["RegsViewWidget"];
-    if (!cfg.is_dict()) {
-        return;
-    }
-    const AttributeType &reglist = cfg["RegList"];
-    const AttributeType &regwidth = cfg["RegWidthBytes"];
+    gridLayout->setHorizontalSpacing(0);
+    gridLayout->setVerticalSpacing(0);
+    gridLayout->setContentsMargins(0, 0, 0, 0);
 
-    if (!reglist.is_list()) {
-        return;
-    }
+    QWidget *pctrl = new RegsControl(igui, this);
+    gridLayout->addWidget(pctrl, 0, 0);
 
-    for (unsigned row = 0; row < reglist.size(); row++) {
-        const AttributeType &rowcfg = reglist[row];
-        for (unsigned col = 0; col < rowcfg.size(); col++) {
-            const AttributeType &regname = rowcfg[col];
-            if (regname.size() == 0) {
-                continue;
-            }
-            addRegWidget(row, col, regwidth.to_int(), regname.to_string());
-        }
-    }
-    gridLayout->setColumnStretch(2*reglist.size() + 1, 10);
-    connect(this, SIGNAL(signalHandleResponse(AttributeType *)),
-                  SLOT(slotHandleResponse(AttributeType *)));
+    QWidget *pregs = new RegSetView(igui, this, 0);
+    gridLayout->addWidget(pregs, 1, 0);
+
+    connect(this, SIGNAL(signalUpdateByTimer()),
+            pregs, SLOT(slotUpdateByTimer()));
+
+    connect(pctrl, SIGNAL(signalContextSwitched(int)),
+            pregs, SLOT(slotContextSwitchRequest(int)));
 }
 
-RegsViewWidget::~RegsViewWidget() {
-    igui_->removeFromQueue(static_cast<IGuiCmdHandler *>(this));
-}
-
-void RegsViewWidget::handleResponse(const char *cmd) {
-    emit signalHandleResponse(&response_);
-}
-
-void RegsViewWidget::slotHandleResponse(AttributeType *resp) {
-    // To avoid resp_ overwiting before register views udpated:
-    waitingResp_ = false;
-}
-
-void RegsViewWidget::slotUpdateByTimer() {
-    if (!isVisible()) {
-        return;
-    }
-    if (waitingResp_) {
-        return;
-    }
-    igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), 
-                           "regs", &response_, true);
-    waitingResp_ = true;
-}
-
-void RegsViewWidget::slotRegChanged(const char *wrcmd) {
-    igui_->registerCommand(0, wrcmd, &responseRegChanged_, true);
-}
-
-void RegsViewWidget::addRegWidget(int row, int col, int bytes,
-                                  const char *name) {
-    QLabel *label = new QLabel(this);
-    QWidget *pnew;
-    pnew = new RegWidget(name, bytes, this);
-    label->setText(tr(name));
-    /*
-    QSizePolicy labelSizePolicy(QSizePolicy::Preferred, 
-                                QSizePolicy::Preferred);
-    labelSizePolicy.setHorizontalStretch(0);
-    labelSizePolicy.setVerticalStretch(0);
-    labelSizePolicy.setHeightForWidth(label->sizePolicy().hasHeightForWidth());
-    label->setSizePolicy(labelSizePolicy);
-    label->setText(name_);
-    label->setAlignment(Qt::AlignRight | Qt::AlignTrailing | Qt::AlignVCenter);
-*/
-
-    gridLayout->addWidget(label, row + 1, 2*col, Qt::AlignLeft);
-    gridLayout->addWidget(pnew, row + 1, 2*col + 1, Qt::AlignLeft);
-
-    connect(this, SIGNAL(signalHandleResponse(AttributeType *)),
-            pnew, SLOT(slotHandleResponse(AttributeType *)));
-
-    connect(pnew, SIGNAL(signalChanged(const char *)),
-            this, SLOT(slotRegChanged(const char *)));
+RegsAreaWidget::~RegsAreaWidget() {
 }
 
 }  // namespace debugger

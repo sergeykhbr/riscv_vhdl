@@ -18,6 +18,8 @@ set GUI_PLUGIN_SRC=..\..\src\gui_plugin\
 %QT_PATH%\bin\moc.exe -i %GUI_PLUGIN_SRC%\PeriphWidgets\DipArea.h -o %GUI_PLUGIN_SRC%\PeriphWidgets\moc_DipArea.h
 %QT_PATH%\bin\moc.exe -i %GUI_PLUGIN_SRC%\PeriphWidgets\GpioWidget.h -o %GUI_PLUGIN_SRC%\PeriphWidgets\moc_GpioWidget.h
 %QT_PATH%\bin\moc.exe -i %GUI_PLUGIN_SRC%\CpuWidgets\RegWidget.h -o %GUI_PLUGIN_SRC%\CpuWidgets\moc_RegWidget.h
+%QT_PATH%\bin\moc.exe -i %GUI_PLUGIN_SRC%\CpuWidgets\RegSetView.h -o %GUI_PLUGIN_SRC%\CpuWidgets\moc_RegSetView.h
+%QT_PATH%\bin\moc.exe -i %GUI_PLUGIN_SRC%\CpuWidgets\RegsControl.h -o %GUI_PLUGIN_SRC%\CpuWidgets\moc_RegsControl.h
 %QT_PATH%\bin\moc.exe -i %GUI_PLUGIN_SRC%\CpuWidgets\RegsViewWidget.h -o %GUI_PLUGIN_SRC%\CpuWidgets\moc_RegsViewWidget.h
 %QT_PATH%\bin\moc.exe -i %GUI_PLUGIN_SRC%\CpuWidgets\AsmArea.h -o %GUI_PLUGIN_SRC%\CpuWidgets\moc_AsmArea.h
 %QT_PATH%\bin\moc.exe -i %GUI_PLUGIN_SRC%\CpuWidgets\AsmControl.h -o %GUI_PLUGIN_SRC%\CpuWidgets\moc_AsmControl.h

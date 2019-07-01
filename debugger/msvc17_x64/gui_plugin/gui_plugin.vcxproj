@@ -116,6 +116,8 @@
     <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\MemArea.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\MemControl.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\MemViewWidget.cpp" />
+    <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\RegsControl.cpp" />
+    <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\RegSetView.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\RegsViewWidget.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\RegWidget.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\StackTraceArea.cpp" />
@@ -156,6 +158,8 @@
     <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\MemArea.h" />
     <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\MemControl.h" />
     <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\MemViewWidget.h" />
+    <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\RegsControl.h" />
+    <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\RegSetView.h" />
     <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\RegsViewWidget.h" />
     <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\RegWidget.h" />
     <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\StackTraceArea.h" />

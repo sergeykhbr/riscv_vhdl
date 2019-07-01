@@ -18,10 +18,18 @@
                   'PollingMs':250,
                   'EventsLoopMs':10,
                   'RegsViewWidget':{
-                     'RegList':[['r0'],['r1'],['r2'],['r3'],[""], ['r4'],['r5'],['r6'],['r7'],
-                                 ['r8'],['r9'],['r10'],['r11'],[""], ['fp'],['sp'],['lr'],['pc'],
-                                 [''],['npc'],[''],['cpsr']],
-                     'RegWidthBytes':4,
+                     'RegisterSet':[
+                         {'RegList':[['r0', 'r6',  'cpsr'],
+                                     ['r1', 'r7',  'fp'],
+                                     ['r2', 'r8',  'sp'],
+                                     ['r3', 'r9',  'lr'],
+                                     ['r4', 'r10', 'pc'],
+                                     ['r7', 'r11', 'npc']],
+                           'RegWidthBytes':4}],
+                     'CpuContext':[
+                         {'CpuIndex':0,
+                          'RegisterSetIndex':0,
+                          'Description':'ARM v7 32-bits integer bank'}]
                   }
                 }],
                 ['CmdExecutor','cmdexec0']

@@ -113,6 +113,12 @@
     <ClCompile Include="..\..\src\common\async_tqueue.cpp">
       <Filter>common</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\RegsControl.cpp">
+      <Filter>CpuWidget</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\RegSetView.cpp">
+      <Filter>CpuWidget</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\api_types.h">
@@ -225,6 +231,12 @@
     </ClInclude>
     <ClInclude Include="..\..\src\common\api_core.h">
       <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\RegsControl.h">
+      <Filter>CpuWidget</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\RegSetView.h">
+      <Filter>CpuWidget</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

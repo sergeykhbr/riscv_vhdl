@@ -30,36 +30,19 @@
 
 namespace debugger {
 
-class RegsViewWidget : public QWidget,
-                       public IGuiCmdHandler {
+class RegsAreaWidget : public QWidget {
     Q_OBJECT
  public:
-    RegsViewWidget(IGui *igui, QWidget *parent = 0);
-    virtual ~RegsViewWidget();
-
-    /** IGuiCmdHandler */
-    virtual void handleResponse(const char *cmd);
+    RegsAreaWidget(IGui *igui, QWidget *parent = 0);
+    virtual ~RegsAreaWidget();
 
  signals:
-    void signalHandleResponse(AttributeType *resp);
+    void signalUpdateByTimer();
 
  private slots:
-    void slotUpdateByTimer();
-    void slotHandleResponse(AttributeType *resp);
-    void slotRegChanged(const char *wrcmd);
-
- private:
-    void addRegWidget(int row, int col, int bytes, const char *name);
-
- private:
-    AttributeType cmdRegs_;
-    AttributeType listRegs_;
-    AttributeType response_;
-    AttributeType responseRegChanged_;
-    QGridLayout *gridLayout;
-    
-    IGui *igui_;
-    bool waitingResp_;
+    void slotUpdateByTimer() {
+        emit signalUpdateByTimer();
+    }
 };
 
 class RegsQMdiSubWindow : public QMdiSubWindow {
@@ -74,7 +57,7 @@ public:
 
         setWindowTitle(tr("Registers"));
         setWindowIcon(QIcon(tr(":/images/cpu_96x96.png")));
-        QWidget *pnew = new RegsViewWidget(igui, this);
+        QWidget *pnew = new RegsAreaWidget(igui, this);
         if (act) {
             act->setChecked(true);
         }
