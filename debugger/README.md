@@ -13,9 +13,7 @@ and capabilities of any platform:
 - Remote access and Python support
 - Enable/disable GUI implemented as the independent plugin based on Qt-libraries
 
-## Demonstration video of 64-bits RISC-V processor
-
-### Debugging Dual-Core River CPU SoC on FPGA ML605 board
+## Debugging Dual-Core River CPU SoC on FPGA ML605 board
 
 Brief video description:
 
@@ -25,7 +23,7 @@ Brief video description:
   - Change *npc* register on Core[1] to start function *timestamp_output*
   - Run two cores in parallel and check HW statistic graphs.
 
-[![Dual-Core River on FPGA](https://img.youtube.com/vi/h-MVY0eSb9kaA/hqdefault.jpg)](https://youtu.be/MVY0eSb9kaA)
+[![Dual-Core River on FPGA](https://img.youtube.com/vi/MVY0eSb9kaA/hqdefault.jpg)](https://youtu.be/MVY0eSb9kaA)
 
 Information:
 
