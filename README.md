@@ -34,12 +34,18 @@ embedded applications with active usage of 64-bits computations (like DSP).
     - */debugger/cpu_fnc_plugin*  - Functional RISC-V CPU model.
     - */debugger/cpu_sysc_plugin* - Precise SystemC RIVER CPU model.
     - */rtl/riverlib*      -  synthesisable VHDL model of a 64-bit processor compliant with the RISC-V architecture.
-2. Advanced debugging features
+2. Floating Point Unit (FPU)
+3. Dual-Core configuration
+4. Advanced debugging features
     - Test Access Points (TAPs) via Ethernet, UART and JTAG in one system.
     - System Bus tracer
     - Pipeline statistic (CPI, HW stacktrace) in a real-time on HW level.
     - Plug'n'Play information
-3. Integration with GUI from the very beginning.
+5. Integration with GUI from the very beginning.
+
+You can find several demonstration videos
+[here](https://github.com/sergeykhbr/riscv_vhdl/tree/master/debugger) of working with the 
+Dual-Core SoC on FPGA and with the emulated platforms.
 
 My goal is to develop open source fault-tolerant processor with the user-friendly
 framework.
