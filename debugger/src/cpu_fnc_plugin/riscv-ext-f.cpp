@@ -132,14 +132,12 @@ class FDIV_D : public RiscvInstruction {
         u.value = payload->buf32[0];
         src1.val = RF[u.bits.rs1];
         src2.val = RF[u.bits.rs2];
-        if (RF[u.bits.rs2]) {
-            dest.f64 = src1.f64 / src2.f64;
-        } else {
+        dest.f64 = src1.f64 / src2.f64;
+        if (RF[u.bits.rs2] == 0) {
             csr_fcsr_type fcsr;
             fcsr.value = icpu_->readCSR(CSR_fcsr);
             fcsr.bits.DZ = 1;
             icpu_->writeCSR(CSR_fcsr, fcsr.value);
-            dest.val = 0;
         }
         RF[u.bits.rd] = dest.val;
         return 4;
@@ -231,7 +229,7 @@ class FLE_D : public RiscvInstruction {
             fcsr.bits.NV = 1;
             icpu_->writeCSR(CSR_fcsr, fcsr.value);
         } else {
-            le = src1.val <= src2.val ? 1ull: 0;
+            le = src1.f64 <= src2.f64 ? 1ull: 0;
         }
         R[u.bits.rd] = le;
         return 4;
@@ -260,7 +258,7 @@ class FLT_D : public RiscvInstruction {
             fcsr.bits.NV = 1;
             icpu_->writeCSR(CSR_fcsr, fcsr.value);
         } else {
-            le = src1.val < src2.val ? 1ull: 0;
+            le = src1.f64 < src2.f64 ? 1ull: 0;
         }
         R[u.bits.rd] = le;
         return 4;

@@ -43,7 +43,7 @@ embedded applications with active usage of 64-bits computations (like DSP).
     - Plug'n'Play information
 5. Integration with GUI from the very beginning.
 
-You can find several demonstration videos
+You can find several **demonstration videos**
 [here](https://github.com/sergeykhbr/riscv_vhdl/tree/master/debugger) of working with the 
 Dual-Core SoC on FPGA and with the emulated platforms.
 
@@ -90,7 +90,7 @@ CPU         | Clocks-Per-Instruction,<br> CPI | Description.
 ------------|:-------:|:------------------------------
 Cortext-R5  | 1.22    | This is **dual-issue** processor capable to execute a pair of instructions per<br> one clock. It's a very good but quite expensive CPU.
 LEON3       | 1.5     | CPI information from [here](https://www.gaisler.com/index.php/products/simulators/tsim).
-River       | 2.5     | Free-to-use and highly customizable CPU but, I suppose,<br> there's a lot of things could be improved.
+River       | 2.5     | Free-to-use and highly customizable CPU. This result achieved without I/D-caches implementation. By this reason the control/data paths everytime compete for the access to system bus that generates big number of wait states in CPU pipeline.
 Cortex-M3   | soon    | RTL is under development.
 
    **Since the tag 'v7.0' RIVER CPU is the main processor in the system and all issues

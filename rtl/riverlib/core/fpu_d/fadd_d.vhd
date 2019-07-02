@@ -64,7 +64,7 @@ architecture arch_DoubleAdd of DoubleAdd is
     flMore : std_logic;
     flEqual : std_logic;
     flLess : std_logic;
-    preShift : integer range 0 to 104;
+    preShift : integer range 0 to 4095;
     signOpMore : std_logic;
     expMore : std_logic_vector(10 downto 0);
     mantMore : std_logic_vector(52 downto 0);
@@ -259,6 +259,7 @@ begin
         if r.preShift = 0 then
             v.mantLessScale := mantLessScale;
         else
+            v.mantLessScale := (others => '0');
             for i in 1 to 104 loop
                 if i = r.preShift then
                     v.mantLessScale := zero105(i-1 downto 0) & mantLessScale(104 downto i);
