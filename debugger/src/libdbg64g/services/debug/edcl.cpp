@@ -200,7 +200,7 @@ int EdclService::write(uint64_t addr, int bytes, uint8_t *ibuf) {
         ibuf_len = req.control.request.len;
         // Alignment at the and of buffer
         if (ibuf_off + req.control.request.len - align_offset0 > ubytes) {
-            read(req.address, 4, &tx_buf_[off]);
+            read(req.address, 8, &tx_buf_[off]);
             ibuf_len = ubytes - ibuf_off;
         }
         // Alignment at the begin of buffer
