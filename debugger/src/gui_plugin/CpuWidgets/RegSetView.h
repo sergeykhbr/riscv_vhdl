@@ -64,6 +64,7 @@ class RegSetView : public QWidget,
     
     IGui *igui_;
     bool waitingResp_;
+    bool contextSwitchInProgress_;
     int curContextIdx_;
 };
 

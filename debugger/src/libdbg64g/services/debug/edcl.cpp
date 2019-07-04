@@ -47,23 +47,33 @@ int EdclService::read(uint64_t addr, int bytes, uint8_t *obuf) {
     int txoff, rxoff;
     UdpEdclCommonType req = {0};
     UdpEdclCommonType rsp;
+    uint32_t align_addr;
+    uint32_t align_offset;
+    int align_length;
+    uint32_t obuf_len;
+    uint32_t obuf_off = 0;
+
+    align_offset = addr & 0x3ul;
+    align_addr = addr & ~0x3ul;
+    align_length = static_cast<int>((bytes + align_offset + 3) & ~0x3ul);
 
     if (!itransport_) {
-        RISCV_error("UDP transport not defined, addr=%x", addr);
+        RISCV_error("UDP transport not defined, addr=%x", align_addr);
         return TAP_ERROR;
     }
 
     int rd_bytes = 0;
-    while (rd_bytes < bytes && rd_bytes != TAP_ERROR) {
+    while (rd_bytes < align_length && rd_bytes != TAP_ERROR) {
         req.control.request.seqidx = 
                     static_cast<uint32_t>(seq_cnt_.to_uint64());
         req.control.request.write = 0;
-        req.address = static_cast<uint32_t>(addr + rd_bytes);
-        if ((bytes - rd_bytes) > EDCL_PAYLOAD_MAX_BYTES) {
+        req.address = static_cast<uint32_t>(align_addr + rd_bytes);
+        if ((align_length - rd_bytes) > EDCL_PAYLOAD_MAX_BYTES) {
             req.control.request.len = 
                     static_cast<uint32_t>(EDCL_PAYLOAD_MAX_BYTES);
         } else {
-            req.control.request.len = static_cast<uint32_t>(bytes - rd_bytes);
+            req.control.request.len =
+                static_cast<uint32_t>(align_length - rd_bytes);
         }
 
         txoff = write16(tx_buf_, 0, req.offset);
@@ -124,41 +134,88 @@ int EdclService::read(uint64_t addr, int bytes, uint8_t *obuf) {
             }
         }
 
-        memcpy(&obuf[rd_bytes], &rx_buf_[10], rsp.control.response.len);
+        obuf_len = rsp.control.response.len;
+        if ((obuf_off + obuf_len) > static_cast<uint32_t>(bytes)) {
+            // exclude alignment bytes from buffer end
+            obuf_len = static_cast<uint32_t>(bytes) - obuf_off;
+        }
+        if (align_offset) {
+            if (rd_bytes == 0) {
+                memcpy(&obuf[obuf_off], &rx_buf_[10 + align_offset], obuf_len);
+                obuf_off += (rsp.control.response.len - align_offset);
+            } else {
+                memcpy(&obuf[obuf_off], &rx_buf_[10], obuf_len);
+                obuf_off += obuf_len;
+            }
+        } else {
+            memcpy(&obuf[obuf_off], &rx_buf_[10], obuf_len);
+            obuf_off += obuf_len;
+        }
         rd_bytes += rsp.control.response.len;
         seq_cnt_.make_uint64((seq_cnt_.to_uint64() + 1) & 0x3FFF);
     }
-    return rd_bytes;
+    return bytes;
 }
 
 int EdclService::write(uint64_t addr, int bytes, uint8_t *ibuf) {
     int off;
     UdpEdclCommonType req = {0};
     UdpEdclCommonType rsp;
+    uint32_t align_addr;
+    uint32_t align_offset;
+    uint32_t align_offset0;
+    int align_length;
+    uint32_t ibuf_len;
+    uint32_t ibuf_off = 0;
+    uint32_t ubytes = static_cast<uint32_t>(bytes);
 
     if (!itransport_) {
         RISCV_error("UDP transport not defined, addr=%x", addr);
         return TAP_ERROR;
     }
 
+    align_offset = addr & 0x3ul;
+    align_addr = addr & ~0x3ul;
+    align_length = static_cast<int>((bytes + align_offset + 3) & ~0x3ul);
+    align_offset0 = align_offset;
+
     int wr_bytes = 0;
-    while (wr_bytes < bytes && wr_bytes != -1) {
-        req.control.request.seqidx = 
+    while (wr_bytes < align_length && wr_bytes != -1) {
+        req.control.request.seqidx =
                     static_cast<uint32_t>(seq_cnt_.to_uint64());
         req.control.request.write = 1;
-        req.address = static_cast<uint32_t>(addr + wr_bytes);
-        if ((bytes - wr_bytes) > EDCL_PAYLOAD_MAX_BYTES) {
-            req.control.request.len = 
+        req.address = static_cast<uint32_t>(align_addr + wr_bytes);
+        if ((align_length - wr_bytes) > EDCL_PAYLOAD_MAX_BYTES) {
+            req.control.request.len =
                     static_cast<uint32_t>(EDCL_PAYLOAD_MAX_BYTES);
         } else {
-            req.control.request.len = static_cast<uint32_t>(bytes - wr_bytes);
+            req.control.request.len =
+                    static_cast<uint32_t>(align_length - wr_bytes);
         }
 
         off = write16(tx_buf_, 0, req.offset);
         off = write32(tx_buf_, off, req.control.word);
         off = write32(tx_buf_, off, req.address);
-        memcpy(&tx_buf_[off], &ibuf[wr_bytes], req.control.request.len);
 
+        ibuf_len = req.control.request.len;
+        // Alignment at the and of buffer
+        if (ibuf_off + req.control.request.len - align_offset0 > ubytes) {
+            read(req.address, 4, &tx_buf_[off]);
+            ibuf_len = ubytes - ibuf_off;
+        }
+        // Alignment at the begin of buffer
+        if (align_offset0 != 0) {
+            off += read(align_addr, align_offset, &tx_buf_[off]);
+            ibuf_len -= align_offset;
+        }
+        // seqidx can be modified by alingment reading
+        req.control.request.seqidx =
+                    static_cast<uint32_t>(seq_cnt_.to_uint64());
+        write32(tx_buf_, 2, req.control.word);
+
+        memcpy(&tx_buf_[off], &ibuf[ibuf_off], ibuf_len);
+        ibuf_off += ibuf_len;
+        align_offset0 = 0;      // only for zero step
 
         off = itransport_->sendData(tx_buf_, off + req.control.request.len);
         if (off == -1) {
@@ -200,7 +257,7 @@ int EdclService::write(uint64_t addr, int bytes, uint8_t *ibuf) {
         wr_bytes += req.control.request.len;
         seq_cnt_.make_uint64(seq_cnt_.to_uint64() + 1);
     }
-    return wr_bytes;
+    return bytes;
 }
 
 int EdclService::write16(uint8_t *buf, int off, uint16_t v) {
