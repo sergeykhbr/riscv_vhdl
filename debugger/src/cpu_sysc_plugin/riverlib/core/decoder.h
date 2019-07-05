@@ -78,7 +78,7 @@ SC_MODULE(InstrDecoder) {
 
     SC_HAS_PROCESS(InstrDecoder);
 
-    InstrDecoder(sc_module_name name_);
+    InstrDecoder(sc_module_name name_, bool async_reset);
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
@@ -100,8 +100,26 @@ private:
 
         sc_signal<bool> instr_unimplemented;
     } v, r;
-};
 
+    void R_RESET(RegistersType &iv) {
+        iv.valid = false;
+        iv.pc = 0;
+        iv.instr = 0;
+        iv.isa_type = 0;
+        iv.instr_vec = 0;
+        iv.memop_store = 0;
+        iv.memop_load = 0;
+        iv.memop_sign_ext = 0;
+        iv.memop_size = MEMOP_1B;
+        iv.unsigned_op = 0;
+        iv.rv32 = 0;
+        iv.f64 = 0;
+        iv.compressed = 0;
+        iv.instr_unimplemented = 0;
+    }
+
+    bool async_reset_;
+};
 
 }  // namespace debugger
 

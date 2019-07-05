@@ -23,6 +23,8 @@ typedef union Reg64Type {
     double f64;
     int64_t ival;
     uint64_t val;
+    int32_t ibuf32[2];
+    uint32_t buf32[2];
 } Reg64Type;
 
 typedef struct FpuTestType {
@@ -36,6 +38,8 @@ typedef struct FpuTestType {
 #define ENABLE_FDIV_TESTS
 #define ENABLE_FMUL_TESTS
 //#define ENABLE_FMAX_TESTS
+#define ENABLE_FCVT_D_W_TESTS
+#define ENABLE_FCVT_D_WU_TESTS
 
 #ifdef ENABLE_FADD_TESTS
 static const FpuTestType FADD_TESTS[] = {
@@ -935,6 +939,24 @@ static const FpuTestType FMAX_TESTS[] = {
 };
 const size_t FMAX_LENGTH = sizeof(FMAX_TESTS) / sizeof(FpuTestType);
 #endif  // ENABLE_FMAX_TESTS
+
+#ifdef ENABLE_FCVT_D_W_TESTS
+static const FpuTestType FCVT_D_W_TESTS[] = {
+    {0x00000000ffffffff, 0x0000000000000000, 0xbff0000000000000},
+    {0x000000007fffffff, 0x0000000000000000, 0x41dfffffffc00000},
+    {0x0000000080000000, 0x0000000000000000, 0xc1e0000000000000}
+};
+const size_t FCVT_D_W_LENGTH = sizeof(FCVT_D_W_TESTS) / sizeof(FpuTestType);
+#endif  // ENABLE_FCVT_D_W_TESTS
+
+#ifdef ENABLE_FCVT_D_WU_TESTS
+static const FpuTestType FCVT_D_WU_TESTS[] = {
+    {0x00000000ffffffff, 0x0000000000000000, 0x41efffffffe00000},
+    {0x000000007fffffff, 0x0000000000000000, 0x41dfffffffc00000},
+    {0x0000000080000000, 0x0000000000000000, 0x41e0000000000000}
+};
+const size_t FCVT_D_WU_LENGTH = sizeof(FCVT_D_WU_TESTS) / sizeof(FpuTestType);
+#endif  // ENABLE_FCVT_D_WU_TESTS
 
 #endif  // __BOOTROM_TESTS_SRC_TEST_FPU_H__
 

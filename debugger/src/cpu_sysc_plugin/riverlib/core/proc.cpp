@@ -10,7 +10,7 @@
 
 namespace debugger {
 
-Processor::Processor(sc_module_name name_, uint32_t hartid)
+Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset)
     : sc_module(name_) {
 
     SC_METHOD(comb);
@@ -59,7 +59,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid)
     fetch0->i_br_instr_fetch(dbg.br_instr_fetch);
     fetch0->o_instr_buf(w.f.instr_buf);
 
-    dec0 = new InstrDecoder("dec0");
+    dec0 = new InstrDecoder("dec0", async_reset);
     dec0->i_clk(i_clk);
     dec0->i_nrst(i_nrst);
     dec0->i_any_hold(w_any_pipeline_hold);
@@ -81,7 +81,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid)
     dec0->o_instr_vec(w.d.instr_vec);
     dec0->o_exception(w.d.exception);
 
-    exec0 = new InstrExecute("exec0");
+    exec0 = new InstrExecute("exec0", async_reset);
     exec0->i_clk(i_clk);
     exec0->i_nrst(i_nrst);
     exec0->i_pipeline_hold(w_exec_pipeline_hold);

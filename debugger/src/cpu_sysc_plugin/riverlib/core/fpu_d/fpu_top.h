@@ -70,6 +70,7 @@ SC_MODULE(FpuTop) {
         sc_signal<bool> ena_fmul;
         sc_signal<bool> ena_d2l;
         sc_signal<bool> ena_l2d;
+        sc_signal<bool> ena_w32;
     } v, r;
 
     void R_RESET(RegistersType &iv) {
@@ -89,6 +90,7 @@ SC_MODULE(FpuTop) {
         iv.ena_fmul = 0;
         iv.ena_d2l = 0;
         iv.ena_l2d = 0;
+        iv.ena_w32 = 0;
     }
 
     sc_signal<bool> w_fadd_d;

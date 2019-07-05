@@ -95,6 +95,32 @@ void test_fpu(void) {
     }
 #endif
 
+#ifdef ENABLE_FCVT_D_W_TESTS
+    printf_uart("Testing %s\r\n", "DCVT_D_W");
+    for (size_t i = 0; i < FCVT_D_W_LENGTH; i++) {
+        a.val = FCVT_D_W_TESTS[i].a;
+        b.val = FCVT_D_W_TESTS[i].b;
+        res.f64 = (double)a.ibuf32[0];
+        if (res.val != FCVT_D_W_TESTS[i].res) {
+            err_cnt++;
+            printf_uart("DCVT_D_W[%d] fail\r\n", i);
+        }
+    }
+#endif
+
+#ifdef ENABLE_FCVT_D_WU_TESTS
+    printf_uart("Testing %s\r\n", "DCVT_D_WU");
+    for (size_t i = 0; i < FCVT_D_WU_LENGTH; i++) {
+        a.val = FCVT_D_WU_TESTS[i].a;
+        b.val = FCVT_D_WU_TESTS[i].b;
+        res.f64 = (double)a.buf32[0];
+        if (res.val != FCVT_D_WU_TESTS[i].res) {
+            err_cnt++;
+            printf_uart("DCVT_D_WU[%d] fail\r\n", i);
+        }
+    }
+#endif
+
     a.f64 = 10.323;
     b.f64 = -5.3333;
 

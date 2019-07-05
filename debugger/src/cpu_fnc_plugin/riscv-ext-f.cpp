@@ -81,6 +81,44 @@ class FCVT_D_LU: public RiscvInstruction {
 };
 
 /**
+ * @brief The FCVT.D.W covert int32_t to double
+ */
+class FCVT_D_W: public RiscvInstruction {
+ public:
+    FCVT_D_W(CpuRiver_Functional *icpu) : RiscvInstruction(icpu,
+        "FCVT_D_W", "110100100000?????????????1010011") {}
+
+    virtual int exec(Reg64Type *payload) {
+        ISA_R_type u;
+        Reg64Type dest, src1;
+        u.value = payload->buf32[0];
+        src1.val = R[u.bits.rs1];
+        dest.f64 = static_cast<double>(static_cast<int>(src1.buf32[0]));
+        RF[u.bits.rd] = dest.val;
+        return 4;
+    }
+};
+
+/**
+ * @brief The FCVT.D.WU covert uint32_t to double
+ */
+class FCVT_D_WU: public RiscvInstruction {
+ public:
+    FCVT_D_WU(CpuRiver_Functional *icpu) : RiscvInstruction(icpu,
+        "FCVT_D_WU", "110100100001?????????????1010011") {}
+
+    virtual int exec(Reg64Type *payload) {
+        ISA_R_type u;
+        Reg64Type dest, src1;
+        u.value = payload->buf32[0];
+        src1.val = R[u.bits.rs1];
+        dest.f64 = static_cast<double>(src1.buf32[0]);
+        RF[u.bits.rd] = dest.val;
+        return 4;
+    }
+};
+
+/**
  * @brief The FCVT.L.D covert double to int64_t
  */
 class FCVT_L_D: public RiscvInstruction {
@@ -102,7 +140,7 @@ class FCVT_L_D: public RiscvInstruction {
 /**
  * @brief The FCVT.LU.D covert double to uint64_t
  */
-class FCVT_LU_D: public RiscvInstruction {
+class FCVT_LU_D : public RiscvInstruction {
  public:
     FCVT_LU_D(CpuRiver_Functional *icpu) : RiscvInstruction(icpu,
         "FCVT_LU_D", "110000100011?????????????1010011") {}
@@ -113,6 +151,44 @@ class FCVT_LU_D: public RiscvInstruction {
         u.value = payload->buf32[0];
         src1.val = RF[u.bits.rs1];
         dest.val = static_cast<uint64_t>(src1.f64);
+        R[u.bits.rd] = dest.val;
+        return 4;
+    }
+};
+
+/**
+ * @brief The FCVT.W.D covert double to int32_t
+ */
+class FCVT_W_D : public RiscvInstruction {
+ public:
+    FCVT_W_D(CpuRiver_Functional *icpu) : RiscvInstruction(icpu,
+        "FCVT_W_D", "110000100000?????????????1010011") {}
+
+    virtual int exec(Reg64Type *payload) {
+        ISA_R_type u;
+        Reg64Type dest, src1;
+        u.value = payload->buf32[0];
+        src1.val = RF[u.bits.rs1];
+        dest.ival = static_cast<int32_t>(src1.f64);
+        R[u.bits.rd] = dest.val;
+        return 4;
+    }
+};
+
+/**
+ * @brief The FCVT.WU.D covert double to uint32_t
+ */
+class FCVT_WU_D : public RiscvInstruction {
+ public:
+    FCVT_WU_D(CpuRiver_Functional *icpu) : RiscvInstruction(icpu,
+        "FCVT_WU_D", "110000100001?????????????1010011") {}
+
+    virtual int exec(Reg64Type *payload) {
+        ISA_R_type u;
+        Reg64Type dest, src1;
+        u.value = payload->buf32[0];
+        src1.val = RF[u.bits.rs1];
+        dest.val = static_cast<uint32_t>(src1.f64);
         R[u.bits.rd] = dest.val;
         return 4;
     }
@@ -417,8 +493,12 @@ void CpuRiver_Functional::addIsaExtensionD() {
     addSupportedInstruction(new FADD_D(this));
     addSupportedInstruction(new FCVT_D_L(this));
     addSupportedInstruction(new FCVT_D_LU(this));
+    addSupportedInstruction(new FCVT_D_W(this));
+    addSupportedInstruction(new FCVT_D_WU(this));
     addSupportedInstruction(new FCVT_L_D(this));
     addSupportedInstruction(new FCVT_LU_D(this));
+    addSupportedInstruction(new FCVT_W_D(this));
+    addSupportedInstruction(new FCVT_WU_D(this));
     addSupportedInstruction(new FDIV_D(this));
     addSupportedInstruction(new FEQ_D(this));
     addSupportedInstruction(new FLD(this));

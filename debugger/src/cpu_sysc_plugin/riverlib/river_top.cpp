@@ -18,10 +18,10 @@
 
 namespace debugger {
 
-RiverTop::RiverTop(sc_module_name name_, uint32_t hartid)
+RiverTop::RiverTop(sc_module_name name_, uint32_t hartid, bool async_reset)
     : sc_module(name_) {
 
-    proc0 = new Processor("proc0", hartid);
+    proc0 = new Processor("proc0", hartid, async_reset);
     proc0->i_clk(i_clk);
     proc0->i_nrst(i_nrst);
     proc0->i_req_ctrl_ready(w_req_ctrl_ready);

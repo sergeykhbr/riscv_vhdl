@@ -49,6 +49,7 @@ FpuTop::FpuTop(sc_module_name name_, bool async_reset) : sc_module(name_),
     sensitive << r.ena_fmul;
     sensitive << r.ena_d2l;
     sensitive << r.ena_l2d;
+    sensitive << r.ena_w32;
     sensitive << wb_res_fadd;
     sensitive << w_valid_fadd;
     sensitive << w_illegalop_fadd;
@@ -125,6 +126,7 @@ FpuTop::FpuTop(sc_module_name name_, bool async_reset) : sc_module(name_),
     d2l_d0.i_nrst(i_nrst);
     d2l_d0.i_ena(r.ena_d2l);
     d2l_d0.i_signed(w_fcvt_signed);
+    d2l_d0.i_w32(r.ena_w32);
     d2l_d0.i_a(r.a);
     d2l_d0.o_res(wb_res_d2l);
     d2l_d0.o_overflow(w_overflow_d2l);
@@ -136,6 +138,7 @@ FpuTop::FpuTop(sc_module_name name_, bool async_reset) : sc_module(name_),
     l2d_d0.i_nrst(i_nrst);
     l2d_d0.i_ena(r.ena_l2d);
     l2d_d0.i_signed(w_fcvt_signed);
+    l2d_d0.i_w32(r.ena_w32);
     l2d_d0.i_a(r.a);
     l2d_d0.o_res(wb_res_l2d);
     l2d_d0.o_valid(w_valid_l2d);
@@ -198,9 +201,18 @@ void FpuTop::comb() {
         v.ena_fdiv = iv[Instr_FDIV_D - Instr_FADD_D].to_bool();
         v.ena_fmul = iv[Instr_FMUL_D - Instr_FADD_D].to_bool();
         v.ena_d2l = (iv[Instr_FCVT_LU_D - Instr_FADD_D]
-                    | iv[Instr_FCVT_L_D - Instr_FADD_D]).to_bool();
+                    | iv[Instr_FCVT_L_D - Instr_FADD_D]
+                    | iv[Instr_FCVT_WU_D - Instr_FADD_D]
+                    | iv[Instr_FCVT_W_D - Instr_FADD_D]).to_bool();
         v.ena_l2d = (iv[Instr_FCVT_D_LU - Instr_FADD_D]
-                    | iv[Instr_FCVT_D_L - Instr_FADD_D]).to_bool();
+                    | iv[Instr_FCVT_D_L - Instr_FADD_D]
+                    | iv[Instr_FCVT_D_WU - Instr_FADD_D]
+                    | iv[Instr_FCVT_D_W - Instr_FADD_D]).to_bool();
+
+        v.ena_w32 = (iv[Instr_FCVT_WU_D - Instr_FADD_D]
+                    | iv[Instr_FCVT_W_D - Instr_FADD_D]
+                    | iv[Instr_FCVT_D_WU - Instr_FADD_D]
+                    | iv[Instr_FCVT_D_W - Instr_FADD_D]).to_bool();
     }
 
     if (r.busy.read() == 1 && (r.ivec.read()[Instr_FMOV_X_D - Instr_FADD_D]
@@ -252,7 +264,9 @@ void FpuTop::comb() {
     w_fmax_d = r.ivec.read()[Instr_FMAX_D - Instr_FADD_D].to_bool();
     w_fmin_d = r.ivec.read()[Instr_FMIN_D - Instr_FADD_D].to_bool();
     w_fcvt_signed = (r.ivec.read()[Instr_FCVT_L_D - Instr_FADD_D] |
-                     r.ivec.read()[Instr_FCVT_D_L - Instr_FADD_D]).to_bool();
+                     r.ivec.read()[Instr_FCVT_D_L - Instr_FADD_D] |
+                     r.ivec.read()[Instr_FCVT_W_D - Instr_FADD_D] |
+                     r.ivec.read()[Instr_FCVT_D_W - Instr_FADD_D]).to_bool();
 
     o_res = r.result;
     o_ex_invalidop = r.ex_invalidop;

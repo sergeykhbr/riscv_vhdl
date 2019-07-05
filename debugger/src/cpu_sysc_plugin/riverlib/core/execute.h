@@ -99,7 +99,7 @@ SC_MODULE(InstrExecute) {
 
     SC_HAS_PROCESS(InstrExecute);
 
-    InstrExecute(sc_module_name name_);
+    InstrExecute(sc_module_name name_, bool async_reset);
     virtual ~InstrExecute();
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
@@ -135,7 +135,7 @@ private:
         sc_signal<sc_uint<32>> multi_instr;             // Multi-cycle instruction is under processing
         sc_signal<bool> multi_ena[Multi_Total];         // Enable pulse for Operation that takes more than 1 clock
         sc_signal<bool> multi_rv32;                     // Long operation with 32-bits operands
-        sc_signal<bool> multi_f64;                      // Long float operation
+        sc_signal<bool> multi_f64;                      // Long double operation
         sc_signal<bool> multi_unsigned;                 // Long operation with unsiged operands
         sc_signal<bool> multi_residual_high;            // Flag for Divider module: 0=divsion output; 1=residual output
                                                         // Flag for multiplier: 0=usual; 1=get high bits
@@ -207,6 +207,8 @@ private:
     IntDiv *div0;
     Shifter *sh0;
     FpuTop *fpu0;
+
+    bool async_reset_;
 };
 
 

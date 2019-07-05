@@ -27,6 +27,7 @@ SC_MODULE(Long2Double) {
     sc_in<bool> i_nrst;
     sc_in<bool> i_ena;
     sc_in<bool> i_signed;
+    sc_in<bool> i_w32;
     sc_in<sc_uint<64>> i_a;        // Operand 1
     sc_out<sc_uint<64>> o_res;     // Result
     sc_out<bool> o_valid;          // Result is valid

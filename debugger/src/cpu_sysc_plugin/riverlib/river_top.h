@@ -51,7 +51,7 @@ SC_MODULE(RiverTop) {
     sc_out<sc_uint<RISCV_ARCH>> o_dport_rdata;          // Response value
     sc_out<bool> o_halted;                              // CPU halted via debug interface
 
-    RiverTop(sc_module_name name_, uint32_t hartid);
+    RiverTop(sc_module_name name_, uint32_t hartid, bool async_reset);
     virtual ~RiverTop();
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);

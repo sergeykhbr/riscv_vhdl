@@ -9,7 +9,10 @@
 
 namespace debugger {
 
-InstrDecoder::InstrDecoder(sc_module_name name_) : sc_module(name_) {
+InstrDecoder::InstrDecoder(sc_module_name name_, bool async_reset)
+    : sc_module(name_) {
+    async_reset_ = async_reset;
+
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_any_hold;
@@ -21,6 +24,13 @@ InstrDecoder::InstrDecoder(sc_module_name name_) : sc_module(name_) {
     sensitive << r.instr;
     sensitive << r.memop_load;
     sensitive << r.memop_store;
+    sensitive << r.memop_sign_ext;
+    sensitive << r.memop_size;
+    sensitive << r.unsigned_op;
+    sensitive << r.rv32;
+    sensitive << r.f64;
+    sensitive << r.compressed;
+    sensitive << r.instr_unimplemented;
 
     SC_METHOD(registers);
     sensitive << i_clk.pos();
@@ -809,22 +819,8 @@ void InstrDecoder::comb() {
     }
     w_o_valid = r.valid.read() && !i_any_hold.read();
 
-    if (!i_nrst.read()) {
-        v.valid = false;
-        v.pc = 0;
-        v.instr = 0;
-        v.isa_type = 0;
-        v.instr_vec = 0;
-        v.memop_store = 0;
-        v.memop_load = 0;
-        v.memop_sign_ext = 0;
-        v.memop_size = MEMOP_1B;
-        v.unsigned_op = 0;
-        v.rv32 = 0;
-        v.f64 = 0;
-        v.compressed = 0;
-
-        v.instr_unimplemented = !wb_dec.or_reduce();
+    if (!async_reset_ && !i_nrst.read()) {
+        R_RESET(v);
     }
 
     o_valid = w_o_valid;
@@ -844,7 +840,11 @@ void InstrDecoder::comb() {
 }
 
 void InstrDecoder::registers() {
-    r = v;
+    if (async_reset_ && i_nrst.read() == 0) {
+        R_RESET(r);
+    } else {
+        r = v;
+    }
 }
 
 }  // namespace debugger

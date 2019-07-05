@@ -27,6 +27,7 @@ Long2Double::Long2Double(sc_module_name name_, bool async_reset) :
     sensitive << i_nrst;
     sensitive << i_ena;
     sensitive << i_signed;
+    sensitive << i_w32;
     sensitive << i_a;
     sensitive << r.busy;
     sensitive << r.ena;
@@ -46,6 +47,7 @@ void Long2Double::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
         sc_trace(o_vcd, i_ena, "/top/proc0/exec0/fpu0/l2d/i_ena");
         sc_trace(o_vcd, i_signed, "/top/proc0/exec0/fpu0/l2d/i_signed");
+        sc_trace(o_vcd, i_w32, "/top/proc0/exec0/fpu0/l2d/i_w32");
         sc_trace(o_vcd, i_a, "/top/proc0/exec0/fpu0/l2d/i_a");
         sc_trace(o_vcd, o_res, "/top/proc0/exec0/fpu0/l2d/o_res");
         sc_trace(o_vcd, o_valid, "/top/proc0/exec0/fpu0/l2d/o_valid");

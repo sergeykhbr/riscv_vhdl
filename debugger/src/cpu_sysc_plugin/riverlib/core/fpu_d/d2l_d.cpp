@@ -26,6 +26,7 @@ Double2Long::Double2Long(sc_module_name name_, bool async_reset) :
     sensitive << i_nrst;
     sensitive << i_ena;
     sensitive << i_signed;
+    sensitive << i_w32;
     sensitive << i_a;
     sensitive << r.busy;
     sensitive << r.ena;

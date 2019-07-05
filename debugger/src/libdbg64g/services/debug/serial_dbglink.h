@@ -27,14 +27,15 @@ namespace debugger {
 
 #define MAGIC_ID 0x31
 static const int UART_REQ_HEADER_SZ = 10;
-static const int UART_MST_BURST_MAX = 64;
+static const int UART_MST_BURST_WORD_MAX = 64;
+static const int UART_MST_BURST_BYTES_MAX = 4*UART_MST_BURST_WORD_MAX;
 
 #pragma pack(1)
 struct UartMstPacketType {
     uint8_t magic;
     uint8_t cmd;
     uint64_t addr;
-    uint32_t data[UART_MST_BURST_MAX];
+    uint8_t data8[UART_MST_BURST_BYTES_MAX];
 };
 #pragma pack()
 
@@ -71,7 +72,7 @@ private:
     int rd_count_;
     int req_count_;
     int wait_bytes_;
-    Reg64Type rxbuf_[UART_MST_BURST_MAX];
+    uint8_t rx_buf_[UART_MST_BURST_BYTES_MAX + 16];
 };
 
 DECLARE_CLASS(SerialDbgService)

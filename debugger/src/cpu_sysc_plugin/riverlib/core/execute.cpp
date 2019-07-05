@@ -19,7 +19,10 @@
 
 namespace debugger {
 
-InstrExecute::InstrExecute(sc_module_name name_)  : sc_module(name_) {
+InstrExecute::InstrExecute(sc_module_name name_, bool async_reset)
+    : sc_module(name_) {
+    async_reset_ = async_reset;
+
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_pipeline_hold;
@@ -134,7 +137,7 @@ InstrExecute::InstrExecute(sc_module_name name_)  : sc_module(name_) {
     sh0->o_sraw(wb_sraw);
 
     if (CFG_HW_FPU_ENABLE) {
-        fpu0 = new FpuTop("fpu0", false);
+        fpu0 = new FpuTop("fpu0", async_reset);
         fpu0->i_clk(i_clk);
         fpu0->i_nrst(i_nrst);
         fpu0->i_ena(r.multi_ena[Multi_FPU]);
@@ -716,7 +719,7 @@ void InstrExecute::comb() {
     w_o_valid = r.d_valid.read();
     w_o_pipeline_hold = w_hazard_detected | r.multiclock_ena;
 
-    if (!i_nrst.read()) {
+    if (!async_reset_ && !i_nrst.read()) {
         R_RESET(v);
     }
 
@@ -749,7 +752,11 @@ void InstrExecute::comb() {
 }
 
 void InstrExecute::registers() {
-    r = v;
+    if (async_reset_ && i_nrst.read() == 0) {
+        R_RESET(r);
+    } else {
+        r = v;
+    }
 }
 
 }  // namespace debugger

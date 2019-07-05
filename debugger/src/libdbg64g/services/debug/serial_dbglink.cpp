@@ -47,14 +47,13 @@ void SerialDbgService::postinitService() {
         return;
     }
     iserial_->registerRawListener(static_cast<IRawListener *>(this));
-#if 1  // hardcoded scale in tapuart, no need in clock detection
+    // hardcoded scale in tapuart, no need in clock detection
     /** Automatic baudrate definition on hardware side:
      *    [0] 0x55 - to init baud rate detector
      *    [1] 0x55 - to confirm baud rate value.
      */
     char tbuf[5] = {0x55, 0x55, 0x55, 0x55};
     iserial_->writeData(tbuf, 4);
-#endif
 }
 
 void SerialDbgService::predeleteService() {
@@ -64,22 +63,26 @@ void SerialDbgService::predeleteService() {
 }
 
 int SerialDbgService::read(uint64_t addr, int bytes, uint8_t *obuf) {
+    uint32_t align_addr;
+    uint32_t align_offset;
+    int align_length;
+    uint32_t obuf_len;
+    uint32_t obuf_off = 0;
+
+    align_offset = addr & 0x3ul;
+    align_addr = addr & ~0x3ul;
+    align_length = static_cast<int>((bytes + align_offset + 3) & ~0x3ul);
+
     if (!iserial_) {
         return TAP_ERROR;
     }
-    if (bytes <= 0 || (bytes & 0x3) != 0) {
-        RISCV_error("Unaligned read %d", bytes);
-        return TAP_ERROR;
-    }
-    addr &= 0xFFFFFFFFull;
-    int bytes_to_read = bytes;
-    uint8_t *tout = obuf;
+    int bytes_to_read = align_length;
     pkt_.fields.magic = MAGIC_ID;
-    pkt_.fields.addr = addr;
+    pkt_.fields.addr = align_addr;
     while (bytes_to_read) {
         pkt_.fields.cmd = (0x2 << 6);
-        if (bytes_to_read > 4 * UART_MST_BURST_MAX) {
-            req_count_ = 4 * UART_MST_BURST_MAX;
+        if (bytes_to_read > UART_MST_BURST_BYTES_MAX) {
+            req_count_ = UART_MST_BURST_BYTES_MAX;
             pkt_.fields.cmd |= 0x3F;
         } else {
             req_count_ = bytes_to_read;
@@ -99,8 +102,23 @@ int SerialDbgService::read(uint64_t addr, int bytes, uint8_t *obuf) {
             return TAP_ERROR;
         }
 
-        memcpy(tout, rxbuf_[0].buf, rd_count_);
-        tout += rd_count_;
+        obuf_len = rd_count_;
+        if ((obuf_off + obuf_len) > static_cast<uint32_t>(bytes)) {
+            // exclude alignment bytes from buffer end
+            obuf_len = static_cast<uint32_t>(bytes) - obuf_off;
+        }
+        if (align_offset) {
+            if (bytes_to_read == align_length) {
+                memcpy(&obuf[obuf_off], &rx_buf_[align_offset], obuf_len);
+                obuf_off += (bytes_to_read - align_offset);
+            } else {
+                memcpy(&obuf[obuf_off], rx_buf_, obuf_len);
+                obuf_off += obuf_len;
+            }
+        } else {
+            memcpy(&obuf[obuf_off], rx_buf_, obuf_len);
+            obuf_off += obuf_len;
+        }
         pkt_.fields.addr += static_cast<unsigned>(rd_count_);
         bytes_to_read -= rd_count_;
     }
@@ -108,28 +126,51 @@ int SerialDbgService::read(uint64_t addr, int bytes, uint8_t *obuf) {
 }
 
 int SerialDbgService::write(uint64_t addr, int bytes, uint8_t *ibuf) {
+    uint32_t align_addr;
+    uint32_t align_offset;
+    uint32_t align_offset0;
+    int align_length;
+    uint32_t ibuf_len;
+    uint32_t ibuf_off = 0;
+    uint32_t ubytes = static_cast<uint32_t>(bytes);
+
     if (!iserial_) {
         return TAP_ERROR;
     }
-    if (bytes <= 0 || (bytes & 0x3) != 0) {
-        RISCV_error("Unaligned write %d", bytes);
-        return TAP_ERROR;
-    }
-    addr &= 0xFFFFFFFFull;
-    int bytes_to_write = bytes;
-    uint8_t *tin = ibuf;
+
+    align_offset = addr & 0x3ul;
+    align_addr = addr & ~0x3ul;
+    align_length = static_cast<int>((bytes + align_offset + 3) & ~0x3ul);
+    align_offset0 = align_offset;
+
+    int bytes_to_write = align_length;
     pkt_.fields.magic = MAGIC_ID;
-    pkt_.fields.addr = addr;
+    pkt_.fields.addr = align_addr;
     while (bytes_to_write) {
         pkt_.fields.cmd = (0x3 << 6);
-        if (bytes_to_write > 4 * UART_MST_BURST_MAX) {
-            req_count_ = 4 * UART_MST_BURST_MAX;
+        if (bytes_to_write > UART_MST_BURST_BYTES_MAX) {
+            req_count_ = UART_MST_BURST_BYTES_MAX;
             pkt_.fields.cmd |= 0x3F;
         } else {
             req_count_ = bytes_to_write;
             pkt_.fields.cmd |= ((bytes_to_write / 4) - 1) & 0x3F;
         }
-        memcpy(pkt_.fields.data, tin, req_count_);
+
+        ibuf_len = req_count_;
+        // Alignment at the and of buffer
+        if (ibuf_off + req_count_ - align_offset0 > ubytes) {
+            read(pkt_.fields.addr, 8, pkt_.fields.data8);
+            ibuf_len = ubytes - ibuf_off;
+        }
+        // Alignment at the begin of buffer
+        if (align_offset0 != 0) {
+            read(align_addr, align_offset, pkt_.fields.data8);
+            ibuf_len -= align_offset;
+        }
+
+        memcpy(&pkt_.fields.data8[align_offset0], &ibuf[ibuf_off], ibuf_len);
+        ibuf_off += ibuf_len;
+        align_offset0 = 0;      // only for zero step
 
         wait_bytes_ = 4;
         rd_count_ = 0;
@@ -142,7 +183,6 @@ int SerialDbgService::write(uint64_t addr, int bytes, uint8_t *ibuf) {
             return TAP_ERROR;
         }
 
-        tin += req_count_;
         bytes_to_write -= req_count_;
         pkt_.fields.addr += static_cast<unsigned>(req_count_);
     }
@@ -150,8 +190,7 @@ int SerialDbgService::write(uint64_t addr, int bytes, uint8_t *ibuf) {
 }
 
 void SerialDbgService::updateData(const char *buf, int buflen) {
-    uint8_t *tbuf = &rxbuf_[0].buf[rd_count_];
-    memcpy(tbuf, buf, buflen);
+    memcpy(&rx_buf_[rd_count_], buf, buflen);
     rd_count_ += buflen;
     if (rd_count_ < wait_bytes_) {
         return;
