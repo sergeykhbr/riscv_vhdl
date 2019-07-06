@@ -51,9 +51,17 @@ void FpuCmdType::exec(AttributeType *args, AttributeType *res) {
             res->add_to_list(&item);
             p->test_instr("fcvt.lu.d", &item);
             res->add_to_list(&item);
+            p->test_instr("fcvt.w.d", &item);
+            res->add_to_list(&item);
+            p->test_instr("fcvt.wu.d", &item);
+            res->add_to_list(&item);
             p->test_instr("fcvt.d.l", &item);
             res->add_to_list(&item);
             p->test_instr("fcvt.d.lu", &item);
+            res->add_to_list(&item);
+            p->test_instr("fcvt.d.w", &item);
+            res->add_to_list(&item);
+            p->test_instr("fcvt.d.wu", &item);
             res->add_to_list(&item);
             p->test_instr("fmin.d", &item);
             res->add_to_list(&item);
@@ -1105,9 +1113,20 @@ int FpuFunctional::FADD_D(int addEna, int subEna, int cmpEna, int moreEna,
     return 0;
 }
 
-int FpuFunctional::L2D_D(int signEna, Reg64Type A, Reg64Type B,
+int FpuFunctional::L2D_D(int signEna, int w32, Reg64Type A, Reg64Type B,
                         Reg64Type *fres) {
-    uint64_t absA = signEna & A.f64bits.sign ? ~A.val + 1: A.val;
+    Reg64Type tmpA;
+    if (w32) {
+        tmpA.buf32[0] = A.buf32[0];
+        if (signEna && A.bits.b31) {
+            tmpA.buf32[1] = ~0ul;
+        } else {
+            tmpA.buf32[1] = 0;
+        }
+    } else {
+        tmpA = A;
+    }
+    uint64_t absA = signEna & tmpA.f64bits.sign ? ~tmpA.val + 1: tmpA.val;
     // multiplexer
     int rbLShift = 63;
     for (int i = 0; i < 64; i++) {
@@ -1134,13 +1153,15 @@ int FpuFunctional::L2D_D(int signEna, Reg64Type A, Reg64Type B,
 
     uint64_t mantOnes = mantShort == 0x001fffffffffffff ? 1: 0;
 
-    fres->f64bits.sign = signEna & A.f64bits.sign;
+    fres->f64bits.sign = signEna & tmpA.f64bits.sign;
     fres->f64bits.exp = expAlign + (mantOnes & rndBit);
     fres->f64bits.mant = mantShort + rndBit;
     return 0;
 }
 
+#define FCVT_WU_D_X86_COMPATIBLE
 int FpuFunctional::D2L_D(int signEna,
+                         int w32,
                          Reg64Type A,
                          Reg64Type B,
                          Reg64Type *fres,
@@ -1151,17 +1172,31 @@ int FpuFunctional::D2L_D(int signEna,
 
     uint64_t mantPreScale;
     uint64_t expDif;
+    uint64_t expMax;
     uint64_t mantShort;
+    uint64_t resSign;
+
     mantPreScale = mantA << 11;
     expDif = (1023u + 63u) - A.f64bits.exp;
+    if (w32) {
+        if (signEna) {
+            expMax = 1023 + 30;
+        } else {
+#ifdef FCVT_WU_D_X86_COMPATIBLE
+            expMax = 1023 + 62;
+#else
+            expMax = 1023 + 31;
+#endif
+        }
+    } else {
+        if (signEna || A.f64bits.sign) {
+            expMax = 1023 + 62;
+        } else {
+            expMax = 1023 + 63;
+        }
+    }
 
-    if (signEna && A.f64bits.exp > (1023 + 62)) {
-        ovr = 1;
-        und = 0;
-        mantShort = 0;
-    } else if (!signEna && 
-              ((A.f64bits.sign && A.f64bits.exp > (1023 + 62)) ||
-              (!A.f64bits.sign && A.f64bits.exp > (1023 + 63)))) {
+    if (A.f64bits.exp > expMax) {
         ovr = 1;
         und = 0;
         mantShort = 0;
@@ -1175,12 +1210,26 @@ int FpuFunctional::D2L_D(int signEna,
         mantShort = mantPreScale >> expDif;
     }
 
+    resSign = (A.f64bits.sign | ovr) & !und;
     if (signEna) {
         fres->val = A.f64bits.sign ? ~mantShort + 1: mantShort;
-        fres->f64bits.sign = (A.f64bits.sign | ovr) & !und;
+        if (resSign) {
+            if (w32) {
+                fres->val |= 0xFFFFFFFF80000000ull;
+            } else {
+                fres->f64bits.sign = 1;
+            }
+        }
     } else {
         fres->val = A.f64bits.sign ? ~mantShort + 1: mantShort;
-        if (ovr) {
+        if (w32) {
+            fres->buf32[1] = 0;
+#if!defined FCVT_WU_D_X86_COMPATIBLE
+            if (ovr) {
+                fres->bits.b31 = 1;
+            }
+#endif
+        } else if (ovr) {
             fres->f64bits.sign = 1;
         }
     }
@@ -1214,18 +1263,30 @@ void FpuFunctional::test_instr(const char *instr, AttributeType *res) {
     } else if (strcmp(instr, "fmax.d") == 0) {
         in = &TestCases_FCMP_D[0][0];
         insz = TSTDCMP_LENGTH;
-    } else if (strcmp(instr, "fcvt.l.d") == 0) {
-        in = &TestCases_FCVT_L_D[0][0];
-        insz = TSTL2D_LENGTH;
-    } else if (strcmp(instr, "fcvt.lu.d") == 0) {
-        in = &TestCases_FCVT_L_D[0][0];
-        insz = TSTL2D_LENGTH;
     } else if (strcmp(instr, "fcvt.d.l") == 0) {
         in = &TestCases_FCVT_D_L[0][0];
-        insz = TSTD2L_LENGTH;
+        insz = TSTL2D_LENGTH;
     } else if (strcmp(instr, "fcvt.d.lu") == 0) {
         in = &TestCases_FCVT_D_L[0][0];
+        insz = TSTL2D_LENGTH;
+    } else if (strcmp(instr, "fcvt.d.w") == 0) {
+        in = &TestCases_FCVT_D_W[0][0];
+        insz = TSTW2D_LENGTH;
+    } else if (strcmp(instr, "fcvt.d.wu") == 0) {
+        in = &TestCases_FCVT_D_W[0][0];
+        insz = TSTW2D_LENGTH;
+    } else if (strcmp(instr, "fcvt.l.d") == 0) {
+        in = &TestCases_FCVT_L_D[0][0];
         insz = TSTD2L_LENGTH;
+    } else if (strcmp(instr, "fcvt.lu.d") == 0) {
+        in = &TestCases_FCVT_L_D[0][0];
+        insz = TSTD2L_LENGTH;
+    } else if (strcmp(instr, "fcvt.w.d") == 0) {
+        in = &TestCases_FCVT_W_D[0][0];
+        insz = TSTD2W_LENGTH;
+    } else if (strcmp(instr, "fcvt.wu.d") == 0) {
+        in = &TestCases_FCVT_W_D[0][0];
+        insz = TSTD2W_LENGTH;
     } else {
         res->make_string("test not found");
         return;
@@ -1253,18 +1314,30 @@ void FpuFunctional::test_instr(const char *instr, AttributeType *res) {
         } else if (strcmp(instr, "fmin.d") == 0) {
             fref.f64 = A.f64 < B.f64 ? A.f64: B.f64;
             FADD_D(0, 0, 0, 0, 1, A, B, &fres, exception);
-        } else if (strcmp(instr, "fcvt.l.d") == 0) {
-            fref.f64 = static_cast<double>(static_cast<int64_t>(A.val));
-            L2D_D(1, A, B, &fres);
-        } else if (strcmp(instr, "fcvt.lu.d") == 0) {
-            fref.f64 = static_cast<double>(A.val);
-            L2D_D(0, A, B, &fres);
         } else if (strcmp(instr, "fcvt.d.l") == 0) {
-            fref.ival = static_cast<int64_t>(A.f64);
-            D2L_D(1, A, B, &fres, overflow, underflow);
+            fref.f64 = static_cast<double>(static_cast<int64_t>(A.val));
+            L2D_D(1, 0, A, B, &fres);
         } else if (strcmp(instr, "fcvt.d.lu") == 0) {
+            fref.f64 = static_cast<double>(A.val);
+            L2D_D(0, 0, A, B, &fres);
+        } else if (strcmp(instr, "fcvt.d.w") == 0) {
+            fref.f64 = static_cast<double>(static_cast<int32_t>(A.buf32[0]));
+            L2D_D(1, 1, A, B, &fres);
+        } else if (strcmp(instr, "fcvt.d.wu") == 0) {
+            fref.f64 = static_cast<double>(A.buf32[0]);
+            L2D_D(0, 1, A, B, &fres);
+        } else if (strcmp(instr, "fcvt.l.d") == 0) {
+            fref.ival = static_cast<int64_t>(A.f64);
+            D2L_D(1, 0, A, B, &fres, overflow, underflow);
+        } else if (strcmp(instr, "fcvt.lu.d") == 0) {
             fref.val = static_cast<uint64_t>(A.f64);
-            D2L_D(0, A, B, &fres, overflow, underflow);
+            D2L_D(0, 0, A, B, &fres, overflow, underflow);
+        } else if (strcmp(instr, "fcvt.w.d") == 0) {
+            fref.ival = static_cast<int32_t>(A.f64);
+            D2L_D(1, 1, A, B, &fres, overflow, underflow);
+        } else if (strcmp(instr, "fcvt.wu.d") == 0) {
+            fref.val = static_cast<uint32_t>(A.f64);
+            D2L_D(0, 1, A, B, &fres, overflow, underflow);
         } else {
             res->make_string("test not found");
             return;
@@ -1287,6 +1360,7 @@ void FpuFunctional::test_instr(const char *instr, AttributeType *res) {
         }
     }
 
+#if 1
     /** Random data test: */
     for (int i = 0; i < randomTestTotal_.to_int(); i++) {
         A.f64bits.sign = rand();
@@ -1318,18 +1392,30 @@ void FpuFunctional::test_instr(const char *instr, AttributeType *res) {
         } else if (strcmp(instr, "fmin.d") == 0) {
             fref.f64 = A.f64 < B.f64 ? A.f64: B.f64;
             FADD_D(0, 0, 0, 0, 1, A, B, &fres, exception);
-        } else if (strcmp(instr, "fcvt.l.d") == 0) {
-            fref.f64 = static_cast<double>(static_cast<int64_t>(A.val));
-            L2D_D(1, A, B, &fres);
-        } else if (strcmp(instr, "fcvt.lu.d") == 0) {
-            fref.f64 = static_cast<double>(A.val);
-            L2D_D(0, A, B, &fres);
         } else if (strcmp(instr, "fcvt.d.l") == 0) {
-            fref.ival = static_cast<int64_t>(A.f64);
-            D2L_D(1, A, B, &fres, overflow, underflow);
+            fref.f64 = static_cast<double>(static_cast<int64_t>(A.val));
+            L2D_D(1, 0, A, B, &fres);
         } else if (strcmp(instr, "fcvt.d.lu") == 0) {
+            fref.f64 = static_cast<double>(A.val);
+            L2D_D(0, 0, A, B, &fres);
+        } else if (strcmp(instr, "fcvt.d.w") == 0) {
+            fref.f64 = static_cast<double>(static_cast<int32_t>(A.buf32[0]));
+            L2D_D(1, 1, A, B, &fres);
+        } else if (strcmp(instr, "fcvt.d.wu") == 0) {
+            fref.f64 = static_cast<double>(A.buf32[0]);
+            L2D_D(0, 1, A, B, &fres);
+        } else if (strcmp(instr, "fcvt.l.d") == 0) {
+            fref.ival = static_cast<int64_t>(A.f64);
+            D2L_D(1, 0, A, B, &fres, overflow, underflow);
+        } else if (strcmp(instr, "fcvt.lu.d") == 0) {
             fref.val = static_cast<uint64_t>(A.f64);
-            D2L_D(0, A, B, &fres, overflow, underflow);
+            D2L_D(0, 0, A, B, &fres, overflow, underflow);
+        } else if (strcmp(instr, "fcvt.w.d") == 0) {
+            fref.ival = static_cast<int32_t>(A.f64);
+            D2L_D(1, 1, A, B, &fres, overflow, underflow);
+        } else if (strcmp(instr, "fcvt.wu.d") == 0) {
+            fref.val = static_cast<uint32_t>(A.f64);
+            D2L_D(0, 1, A, B, &fres, overflow, underflow);
         } else {
             res->make_string("test not found");
             return;
@@ -1351,6 +1437,7 @@ void FpuFunctional::test_instr(const char *instr, AttributeType *res) {
             }
         }
     }
+#endif
 
     char tstr[64];
     if (passed) {

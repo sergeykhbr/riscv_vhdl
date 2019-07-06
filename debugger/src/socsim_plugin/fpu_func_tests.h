@@ -1097,7 +1097,7 @@ const uint64_t TestCases_FABS_D[][2] = {
 
 const size_t TSTDABS_LENGTH = sizeof(TestCases_FABS_D) / sizeof(uint64_t) / 2;
 
-const uint64_t TestCases_FCVT_L_D[][2] = {
+const uint64_t TestCases_FCVT_D_L[][2] = {
     {0x7ffffffffffffa00, 0x0000000000000000},
     {0x7ffffffffffffe00, 0x0000000000000000},
     {0x7fffffffffffffff, 0x0000000000000000},
@@ -1112,9 +1112,21 @@ const uint64_t TestCases_FCVT_L_D[][2] = {
     {0x7000000000000003, 0x0000000000000000},
 };
 
-const size_t TSTL2D_LENGTH = sizeof(TestCases_FCVT_L_D) / sizeof(uint64_t) / 2;
+const size_t TSTL2D_LENGTH = sizeof(TestCases_FCVT_D_L) / sizeof(uint64_t) / 2;
 
-const uint64_t TestCases_FCVT_D_L[][2] = {
+const uint64_t TestCases_FCVT_D_W[][2] = {
+    {0x00000000ffffffff, 0x0000000000000000},
+    {0x000000007fffffff, 0x0000000000000000},
+    {0x0000000080000000, 0x0000000000000000},
+    {0x0000000000000000, 0x0000000000000000},
+    {0x0000000080000001, 0x0000000000000000},
+    {0x0000000000000001, 0x0000000000000000},
+    {0x4a11dedd93d069ae, 0x0000000000000000}
+};
+
+const size_t TSTW2D_LENGTH = sizeof(TestCases_FCVT_D_W) / sizeof(uint64_t) / 2;
+
+const uint64_t TestCases_FCVT_L_D[][2] = {
     {0x3fffffffffffffff, 0x3fffffffffffffff},
     {0x38ffffffffffffff, 0xc17312d000000000},
     {0x4fffffffffffffff, 0xbeb0c6f7a0b5ed8d},
@@ -1296,7 +1308,22 @@ const uint64_t TestCases_FCVT_D_L[][2] = {
     {0x4060000000000000, 0x58c8000000000000}
 };
 
-const size_t TSTD2L_LENGTH = sizeof(TestCases_FCVT_L_D) / sizeof(uint64_t) / 2;
+const size_t TSTD2L_LENGTH = sizeof(TestCases_FCVT_D_L) / sizeof(uint64_t) / 2;
+
+const uint64_t TestCases_FCVT_W_D[][2] = {
+    {0x43e93bf4be560070, 0x0000000000000000},
+    {0x3fffffffffffffff, 0x0000000000000000},
+    {0x38ffffffffffffff, 0x0000000000000000},
+    {0x41dfffffffffffff, 0x0000000000000000},
+    {0x41e0000000000000, 0x0000000000000000},
+    {0x41f0000000000000, 0x0000000000000000},
+    {0xc1dfffffffffffff, 0x0000000000000000},
+    {0xc1e0000000000000, 0x0000000000000000},
+    {0x0000000000000000, 0x0000000000000000},
+    {0x8000000000000000, 0x0000000000000000},
+};
+
+const size_t TSTD2W_LENGTH = sizeof(TestCases_FCVT_W_D) / sizeof(uint64_t) / 2;
 
 }  // namespace debugger
 

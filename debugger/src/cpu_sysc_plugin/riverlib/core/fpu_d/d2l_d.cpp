@@ -35,6 +35,7 @@ Double2Long::Double2Long(sc_module_name name_, bool async_reset) :
     sensitive << r.mantA;
     sensitive << r.result;
     sensitive << r.op_signed;
+    sensitive << r.w32;
     sensitive << r.mantPostScale;
     sensitive << r.overflow;
     sensitive << r.underflow;
@@ -48,6 +49,7 @@ void Double2Long::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
         sc_trace(o_vcd, i_ena, "/top/proc0/exec0/fpu0/d2l/i_ena");
         sc_trace(o_vcd, i_signed, "/top/proc0/exec0/fpu0/d2l/i_signed");
+        sc_trace(o_vcd, i_w32, "/top/proc0/exec0/fpu0/d2l/i_w32");
         sc_trace(o_vcd, i_a, "/top/proc0/exec0/fpu0/d2l/i_a");
         sc_trace(o_vcd, o_res, "/top/proc0/exec0/fpu0/d2l/o_res");
         sc_trace(o_vcd, o_valid, "/top/proc0/exec0/fpu0/d2l/o_valid");
@@ -65,10 +67,13 @@ void Double2Long::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 void Double2Long::comb() {
     sc_uint<53> mantA;
     bool expDif_gr;     // greater than 1023 + 63
-    bool expDif_ge;     // greater or equal than 1023 + 63
     bool expDif_lt;     // less than 1023
     bool overflow;
     bool underflow;
+    sc_uint<11> expMax;
+    sc_uint<6> expShift;
+    bool resSign;
+    sc_uint<64> resMant;
     sc_uint<64> res;
 
     v = r;
@@ -87,6 +92,7 @@ void Double2Long::comb() {
         v.expA = i_a.read()(62, 52);
         v.mantA = mantA;
         v.op_signed = i_signed.read();
+        v.w32 = i_w32.read();
         v.overflow = 0;
         v.underflow = 0;
 
@@ -95,12 +101,24 @@ void Double2Long::comb() {
         v.reference_res = compute_reference(i_signed.read(), i_a.read());
     }
 
-    expDif = 1086 - (0, r.expA.read());
-    expDif_gr = expDif[11];
-    expDif_ge = 0;
-    if (expDif == 0 || expDif[11] == 1) {
-        expDif_ge = 1;
+    // (1086 - expA)[5:0]
+    expShift = 0x3e - r.expA.read()(5, 0);
+    if (r.w32.read() == 1) {
+        if (r.op_signed.read()) {
+            expMax = 1053;
+        } else {
+            expMax = 1085;
+        }
+    } else {
+        if (r.op_signed.read() || r.signA.read()) {
+            expMax = 1085;
+        } else {
+            expMax = 1086;
+        }
     }
+    expDif = (0, expMax) - (0, r.expA.read());
+
+    expDif_gr = expDif[11];
     expDif_lt = 0;
     if (r.expA.read() != 0x3FF && r.expA.read()[10] == 0) {
         expDif_lt = 1;
@@ -109,11 +127,7 @@ void Double2Long::comb() {
     mantPreScale = r.mantA.read().to_uint64() << 11;
 
     mantPostScale = 0;
-    if (r.op_signed.read() == 1 && expDif_ge) {
-        overflow = 1;
-        underflow = 0;
-    } else if (r.op_signed.read() == 0 &&
-                (r.signA.read() && expDif_ge || !r.signA.read() && expDif_gr)) {
+    if (expDif_gr) {
         overflow = 1;
         underflow = 0;
     } else if (expDif_lt) {
@@ -124,7 +138,7 @@ void Double2Long::comb() {
         underflow = 0;
         // Multiplexer, probably switch case in rtl
         for (int i = 0; i < 64; i++) {
-            if (expDif == i) {
+            if (expShift == i) {
                 mantPostScale = mantPreScale >> i;
             }
         }
@@ -137,19 +151,28 @@ void Double2Long::comb() {
     }
 
     // Result multiplexers:
-    if (r.op_signed.read() == 1) {
-        res[63] = (r.signA.read() || r.overflow.read()) && !r.underflow.read();
-    } else {
-        if (r.overflow.read()) {
-            res[63] = 1;
-        } else {
-            res[63] = r.mantPostScale.read()[63];
-        }
-    }
+    resSign = (r.signA.read() || r.overflow.read()) && !r.underflow.read();
     if (r.signA.read() == 1) {
-        res(62, 0) = ~r.mantPostScale.read()(62, 0) + 1;
+        resMant = ~r.mantPostScale.read() + 1;
     } else {
-        res(62, 0) = r.mantPostScale.read()(62, 0);
+        resMant = r.mantPostScale.read();
+    }
+
+    res = resMant;
+    if (r.op_signed.read() == 1) {
+        if (resSign == 1) {
+            if (r.w32.read() == 1) {
+                res(63, 31) = ~0ull;
+            } else {
+                res[63] = 1;
+            }
+        }
+    } else {
+        if (r.w32.read() == 1) {
+            res(63, 32) = 0;
+        } else if (r.overflow.read()) {
+            res[63] = 1;
+        }
     }
 
     if (r.ena.read()[1] == 1) {

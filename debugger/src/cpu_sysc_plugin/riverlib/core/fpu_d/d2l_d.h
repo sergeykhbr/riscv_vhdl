@@ -55,6 +55,7 @@ SC_MODULE(Double2Long) {
         sc_signal<sc_uint<53>> mantA;
         sc_signal<sc_uint<64>> result;
         sc_signal<bool> op_signed;
+        sc_signal<bool> w32;
         sc_signal<sc_uint<64>> mantPostScale;
         sc_signal<bool> overflow;
         sc_signal<bool> underflow;
@@ -71,6 +72,7 @@ SC_MODULE(Double2Long) {
         iv.mantA = 0;
         iv.result = 0;
         iv.op_signed = 0;
+        iv.w32 = 0;
         iv.mantPostScale = 0;
         iv.overflow = 0;
         iv.underflow = 0;

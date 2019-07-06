@@ -68,20 +68,34 @@ void Long2Double::comb() {
     bool mant05;
     bool mantOnes;
     bool rndBit;
+    bool v_signA;
+    sc_uint<64> vb_A;
     sc_uint<64> res;
 
     v = r;
 
     v.ena = (r.ena.read()(1, 0), (i_ena.read() & !r.busy));
+    if (i_w32.read() == 0) {
+        v_signA = i_a.read()[63];
+        vb_A = i_a.read();
+    } else if (i_signed.read() && i_a.read()[31]) {
+        v_signA = 1;
+        vb_A(63, 32) = ~0ul;
+        vb_A(31, 0) = i_a.read()(31, 0);
+    } else {
+        v_signA = 0;
+        vb_A(31, 0) = i_a.read()(31, 0);
+        vb_A(63, 32) = 0ul;
+    }
 
     if (i_ena.read()) {
         v.busy = 1;
-        if (i_signed.read() && i_a.read()[63]) {
+        if (i_signed.read() && v_signA) {
             v.signA = 1;
-            v.absA = ~i_a.read() + 1;
+            v.absA = ~vb_A + 1;
         } else {
             v.signA = 0;
-            v.absA = i_a.read();
+            v.absA = vb_A;
         }
         v.op_signed = i_signed.read();
 
@@ -105,7 +119,11 @@ void Long2Double::comb() {
         v.lshift = lshift;
     }
 
-    expAlign = 1086 - r.lshift.read();
+    if (r.absA.read() == 0) {
+        expAlign = 0;
+    } else {
+        expAlign = 1086 - r.lshift.read();
+    }
 
     mantEven = r.mantAlign.read()[11];
     mant05 = 0;

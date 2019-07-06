@@ -314,7 +314,8 @@ void InstrExecute::comb() {
         wb_rdata2 = i_rdata2;
         if (CFG_HW_FPU_ENABLE && i_f64.read() == 1) {
             if ((wv[Instr_FMOV_D_X] |
-                wv[Instr_FCVT_D_L] | wv[Instr_FCVT_D_LU]).to_bool() == 0) {
+                wv[Instr_FCVT_D_L] | wv[Instr_FCVT_D_LU] |
+                wv[Instr_FCVT_D_W] | wv[Instr_FCVT_D_WU]).to_bool() == 0) {
                 wb_radr1 = (1, i_d_instr.read().range(19, 15));
                 wb_rdata1 = i_rfdata1;
             }
@@ -525,7 +526,8 @@ void InstrExecute::comb() {
             v.multi_ivec_fpu = wv.range(Instr_FSUB_D, Instr_FADD_D);
             if (w_fpu_ena == 1 && (wv[Instr_FMOV_X_D] | wv[Instr_FEQ_D]
                 | wv[Instr_FLT_D] | wv[Instr_FLE_D]
-                | wv[Instr_FCVT_LU_D] | wv[Instr_FCVT_L_D]).to_bool() == 0) {
+                | wv[Instr_FCVT_LU_D] | wv[Instr_FCVT_L_D]
+                | wv[Instr_FCVT_WU_D] | wv[Instr_FCVT_W_D]).to_bool() == 0) {
                 v.multi_res_addr = 0x20 | wb_res_addr;
             }
         }
