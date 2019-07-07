@@ -21,7 +21,7 @@ use commonlib.types_common.all;
 
 entity DoubleDiv is 
   generic (
-    async_reset : boolean := false
+    async_reset : boolean
   );
   port (
     i_nrst       : in std_logic;
@@ -42,7 +42,7 @@ end;
 architecture arch_DoubleDiv of DoubleDiv is
 
   component idiv53 is generic (
-    async_reset : boolean := false
+    async_reset : boolean
   );
   port (
     i_nrst       : in std_logic;

@@ -36,6 +36,7 @@ SRC_PATH =\
 	$(TOP_DIR)src/cpu_sysc_plugin/riverlib \
 	$(TOP_DIR)src/cpu_sysc_plugin/riverlib/core \
 	$(TOP_DIR)src/cpu_sysc_plugin/riverlib/core/arith \
+	$(TOP_DIR)src/cpu_sysc_plugin/riverlib/core/fpu_d \
 	$(TOP_DIR)src/cpu_sysc_plugin/riverlib/cache
 
 VPATH = $(SRC_PATH)
@@ -47,6 +48,7 @@ SOURCES = \
 	cmd_br_riscv \
 	cmd_reg_generic \
 	cmd_regs_generic \
+	cmd_csr \
 	async_tqueue \
 	plugin_init \
 	cpu_riscv_rtl \
@@ -66,6 +68,16 @@ SOURCES = \
 	memaccess \
 	proc \
 	regibank \
+	regfbank \
+	d2l_d \
+	l2d_d \
+	fadd_d \
+	divstage \
+	idiv53 \
+	fdiv_d \
+	imul53 \
+	fmul_d \
+	fpu_top \
 	stacktrbuf \
 	dbg_port
 

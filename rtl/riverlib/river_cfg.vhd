@@ -395,7 +395,9 @@ package river_cfg is
   --! @param[out] o_npc_predic     Predicted next instruction address
   --! @param[out] o_predict        Mark requested address as predicted
   --! @param[out] o_minus2         pc -= 2 flag
-  component BranchPredictor is
+  component BranchPredictor is generic (
+    async_reset : boolean
+  );
   port (
     i_clk : in std_logic;
     i_nrst : in std_logic;
@@ -433,7 +435,8 @@ package river_cfg is
   --! @param[out] o_dport_rdata Debug port CSR read value
   component CsrRegs is
   generic (
-    hartid : integer := 0
+    hartid : integer;
+    async_reset : boolean
   );
   port (
     i_clk : in std_logic;
@@ -495,7 +498,9 @@ package river_cfg is
   --! @param[out] o_isa_type Instruction format accordingly with ISA
   --! @param[out] o_instr_vec One bit per decoded instruction bus
   --! @param[out] o_exception Unimplemented instruction
-  component InstrDecoder is
+  component InstrDecoder is generic (
+    async_reset : boolean
+  );
   port (
     i_clk  : in std_logic;
     i_nrst : in std_logic;
@@ -581,7 +586,9 @@ package river_cfg is
   --! @param[out] o_ret         RET pseudoinstruction detected
   --! @param[out] o_mret        MRET detected
   --! @param[out] o_uret        URET detected
-  component InstrExecute is
+  component InstrExecute is generic (
+    async_reset : boolean
+  );
   port (
     i_clk  : in std_logic;
     i_nrst : in std_logic;
@@ -669,7 +676,9 @@ package river_cfg is
   --! @param[in] i_br_address_fetch Fetch injection address to skip ebreak instruciton only once
   --! @param[in] i_br_instr_fetch   Real instruction value that was replaced by ebreak
   --! @param[out] o_instr_buf
-  component InstrFetch is
+  component InstrFetch is generic (
+    async_reset : boolean
+  );
   port (
     i_clk  : in std_logic;
     i_nrst : in std_logic;
@@ -730,7 +739,9 @@ package river_cfg is
   --! @param[out] o_valid Output is valid
   --! @param[out] o_pc Valid instruction pointer
   --! @param[out] o_instr Valid instruction value
-  component MemAccess is
+  component MemAccess is generic (
+    async_reset : boolean
+  );
   port (
     i_clk  : in std_logic;
     i_nrst : in std_logic;
@@ -779,7 +790,9 @@ package river_cfg is
   --! @param[in] i_dport_wdata   Debug port write value
   --! @param[out] o_dport_rdata  Debug port read value
   --! @param[out] o_ra           Return address for branch predictor
-  component RegIntBank is
+  component RegIntBank is generic (
+    async_reset : boolean
+  );
   port (
     i_clk : in std_logic;
     i_nrst : in std_logic;
@@ -800,7 +813,7 @@ package river_cfg is
   end component; 
 
   component RegFloatBank is generic (
-    async_reset : boolean := false
+    async_reset : boolean
   );
   port (
     i_clk : in std_logic;                                   -- CPU clock
@@ -862,8 +875,10 @@ package river_cfg is
   --! @param[in] i_istate         ICache state machine value
   --! @param[in] i_dstate         DCache state machine value
   --! @param[in] i_instr_buf
-  component DbgPort
-  is port (
+  component DbgPort is generic (
+    async_reset : boolean
+  );
+  port (
     i_clk : in std_logic;
     i_nrst : in std_logic;
     i_dport_valid : in std_logic;
@@ -943,7 +958,8 @@ package river_cfg is
   --! @param[in] i_cstate          cachetop state machine value
   component Processor is
   generic (
-    hartid : integer := 0
+    hartid : integer;
+    async_reset : boolean
   );
   port (
     i_clk : in std_logic;
@@ -1019,7 +1035,9 @@ package river_cfg is
   --! @param[out] o_istate        ICache state machine value
   --! @param[out] o_dstate        DCache state machine value
   --! @param[out] o_cstate        cachetop state machine value
-  component CacheTop is
+  component CacheTop is generic (
+    async_reset : boolean
+  );
   port (
     i_clk : in std_logic;
     i_nrst : in std_logic;
@@ -1084,7 +1102,8 @@ package river_cfg is
   --! @param[out] o_dport_rdata        Response value
   component RiverTop is
   generic (
-    hartid : integer := 0
+    hartid : integer;
+    async_reset : boolean
   );
   port (
     i_clk : in std_logic;

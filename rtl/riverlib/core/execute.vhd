@@ -25,7 +25,9 @@ library riverlib;
 use riverlib.river_cfg.all;
 
 
-entity InstrExecute is
+entity InstrExecute is generic (
+    async_reset : boolean
+  );
   port (
     i_clk  : in std_logic;
     i_nrst : in std_logic;                                      -- Reset active LOW
@@ -171,7 +173,10 @@ architecture arch_InstrExecute of InstrExecute is
   signal wb_sra : std_logic_vector(RISCV_ARCH-1 downto 0);
   signal wb_sraw : std_logic_vector(RISCV_ARCH-1 downto 0);
 
-  component IntMul is port (
+  component IntMul is generic (
+    async_reset : boolean
+  );
+  port (
     i_clk  : in std_logic;
     i_nrst : in std_logic;
     i_ena : in std_logic;
@@ -186,7 +191,10 @@ architecture arch_InstrExecute of InstrExecute is
   );
   end component; 
 
-  component IntDiv is port (
+  component IntDiv is generic (
+    async_reset : boolean
+  );
+  port (
     i_clk  : in std_logic;
     i_nrst : in std_logic;
     i_ena : in std_logic;
@@ -215,7 +223,7 @@ architecture arch_InstrExecute of InstrExecute is
 
   component FpuTop is 
   generic (
-    async_reset : boolean := false
+    async_reset : boolean
   );
   port (
     i_nrst         : in std_logic;
@@ -237,7 +245,9 @@ architecture arch_InstrExecute of InstrExecute is
 
 begin
 
-   mul0 : IntMul port map (
+   mul0 : IntMul generic map (
+      async_reset => async_reset
+   ) port map (
       i_clk  => i_clk,
       i_nrst => i_nrst,
       i_ena => r.multi_ena(Multi_MUL),
@@ -250,7 +260,9 @@ begin
       o_valid => w_arith_valid(Multi_MUL),
       o_busy => w_arith_busy(Multi_MUL));
 
-   div0 : IntDiv port map (
+   div0 : IntDiv generic map (
+      async_reset => async_reset
+   ) port map (
       i_clk  => i_clk,
       i_nrst => i_nrst,
       i_ena => r.multi_ena(Multi_DIV),
@@ -275,7 +287,7 @@ begin
 
   fpuena : if CFG_HW_FPU_ENABLE generate
      fpu0 : FpuTop generic map (
-        async_reset => false
+        async_reset => async_reset
      ) port map (
         i_clk => i_clk,
         i_nrst => i_nrst,
@@ -401,7 +413,8 @@ begin
         wb_rdata2 := i_rdata2;
         if CFG_HW_FPU_ENABLE and i_f64 = '1' then
             if (wv(Instr_FMOV_D_X) or
-                wv(Instr_FCVT_D_L) or wv(Instr_FCVT_D_LU)) = '0' then
+                wv(Instr_FCVT_D_L) or wv(Instr_FCVT_D_LU) or
+                wv(Instr_FCVT_D_W) or wv(Instr_FCVT_D_WU)) = '0' then
                 wb_radr1 := ('1' & i_d_instr(19 downto 15));
                 wb_rdata1 := i_rfdata1;
             end if;
@@ -610,7 +623,8 @@ begin
             v.multi_ivec_fpu := wv(Instr_FSUB_D downto Instr_FADD_D);
             if w_fpu_ena = '1' and (wv(Instr_FMOV_X_D) or wv(Instr_FEQ_D)
                 or wv(Instr_FLT_D) or wv(Instr_FLE_D)
-                or wv(Instr_FCVT_LU_D) or wv(Instr_FCVT_L_D)) = '0' then
+                or wv(Instr_FCVT_LU_D) or wv(Instr_FCVT_L_D)
+                or wv(Instr_FCVT_WU_D) or wv(Instr_FCVT_W_D)) = '0' then
                 v.multi_res_addr := '1' & wb_res_addr(4 downto 0);
             end if;
         end if;
@@ -810,7 +824,7 @@ begin
     w_o_pipeline_hold := w_hazard_detected or r.multiclock_ena;
 
 
-    if i_nrst = '0' then
+    if not async_reset and i_nrst = '0' then
         v := R_RESET;
     end if;
 
@@ -845,9 +859,11 @@ begin
   end process;
 
   -- registers:
-  regs : process(i_clk)
+  regs : process(i_clk, i_nrst)
   begin 
-     if rising_edge(i_clk) then 
+     if async_reset and i_nrst = '0' then
+        r <= R_RESET;
+     elsif rising_edge(i_clk) then 
         r <= rin;
      end if; 
   end process;

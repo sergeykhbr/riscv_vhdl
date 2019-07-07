@@ -1119,7 +1119,7 @@ int FpuFunctional::L2D_D(int signEna, int w32, Reg64Type A, Reg64Type B,
     if (w32) {
         tmpA.buf32[0] = A.buf32[0];
         if (signEna && A.bits.b31) {
-            tmpA.buf32[1] = ~0ul;
+            tmpA.buf32[1] = ~0u;
         } else {
             tmpA.buf32[1] = 0;
         }

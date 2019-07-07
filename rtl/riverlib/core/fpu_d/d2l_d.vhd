@@ -21,13 +21,14 @@ use commonlib.types_common.all;
 
 entity Double2Long is 
   generic (
-    async_reset : boolean := false
+    async_reset : boolean
   );
   port (
     i_nrst       : in std_logic;
     i_clk        : in std_logic;
     i_ena        : in std_logic;
     i_signed     : in std_logic;
+    i_w32        : in std_logic;
     i_a          : in std_logic_vector(63 downto 0);
     o_res        : out std_logic_vector(63 downto 0);
     o_overflow   : out std_logic;
@@ -47,6 +48,7 @@ architecture arch_Double2Long of Double2Long is
     mantA : std_logic_vector(52 downto 0);
     result : std_logic_vector(63 downto 0);
     op_signed : std_logic;
+    w32 : std_logic;
     mantPostScale : std_logic_vector(63 downto 0);
     overflow : std_logic;
     underflow : std_logic;
@@ -55,8 +57,8 @@ architecture arch_Double2Long of Double2Long is
   constant R_RESET : RegistersType := (
     '0', (others => '0'),                      -- busy, ena
     '0', (others => '0'), (others => '0'),     -- signA, expA, mantA
-    (others => '0'), '0', (others => '0'),     -- result, op_signed, mantPostScale
-    '0', '0'                                   -- overflow, underflow
+    (others => '0'), '0', '0',                 -- result, op_signed, w32
+    (others => '0'), '0', '0'                  -- mantPostScale, overflow, underflow
   );
 
   constant zero64 : std_logic_vector(63 downto 0) := (others => '0');
@@ -66,17 +68,20 @@ architecture arch_Double2Long of Double2Long is
 begin
 
   -- registers:
-  comb : process(i_nrst, i_ena, i_signed, i_a, r)
+  comb : process(i_nrst, i_ena, i_signed, i_w32, i_a, r)
     variable v : RegistersType;
     variable expDif : std_logic_vector(11 downto 0);
     variable mantPreScale : std_logic_vector(63 downto 0);
     variable mantPostScale : std_logic_vector(63 downto 0);
     variable mantA : std_logic_vector(52 downto 0);
     variable expDif_gr : std_logic;  -- greater than 1023 + 63
-    variable expDif_ge : std_logic;  -- greater or equal than 1023 + 63
     variable expDif_lt : std_logic;  -- less than 1023
     variable overflow : std_logic;
     variable underflow : std_logic;
+    variable expMax : std_logic_vector(10 downto 0);
+    variable expShift : std_logic_vector(5 downto 0);
+    variable resSign : std_logic;
+    variable resMant : std_logic_vector(63 downto 0);
     variable res : std_logic_vector(63 downto 0);
   begin
 
@@ -96,16 +101,29 @@ begin
         v.expA := i_a(62 downto 52);
         v.mantA := mantA;
         v.op_signed := i_signed;
+        v.w32 := i_w32;
         v.overflow := '0';
         v.underflow := '0';
     end if;
 
-    expDif := conv_std_logic_vector(1086, 12) - ('0' & r.expA);
+    -- expShift = (1086 - expA)[5:0]
+    expShift := "111110" - r.expA(5 downto 0);
+    if r.w32 = '1' then
+        if r.op_signed = '1' then
+            expMax := conv_std_logic_vector(1053, 11);
+        else
+            expMax := conv_std_logic_vector(1085, 11);
+        end if;
+    else
+        if r.op_signed = '1' or r.signA = '1' then
+            expMax := conv_std_logic_vector(1085, 11);
+        else
+            expMax := conv_std_logic_vector(1086, 11);
+        end if;
+     end if;
+
+    expDif := ('0' & expMax) - ('0' & r.expA);
     expDif_gr := expDif(11);
-    expDif_ge := '0';
-    if expDif = X"000" or expDif(11) = '1' then
-        expDif_ge := '1';
-    end if;
     expDif_lt := '0';
     if r.expA /= "01111111111" and r.expA(10) = '0' then
         expDif_lt := '1';
@@ -114,11 +132,7 @@ begin
     mantPreScale := r.mantA & "00000000000";
 
     mantPostScale := (others => '0');
-    if r.op_signed = '1' and expDif_ge = '1' then
-        overflow := '1';
-        underflow := '0';
-    elsif r.op_signed = '0' and
-          ((r.signA and expDif_ge) or ((not r.signA) and expDif_gr)) = '1' then
+    if expDif_gr = '1' then
         overflow := '1';
         underflow := '0';
     elsif expDif_lt = '1' then
@@ -128,11 +142,11 @@ begin
         overflow := '0';
         underflow := '0';
         -- Multiplexer, probably switch case in rtl
-        if expDif = X"000" then
+        if expShift = "000000" then
             mantPostScale := mantPreScale;
         else
             for i in 1 to 63 loop
-                if conv_integer(expDif) = i then
+                if conv_integer(expShift) = i then
                     mantPostScale := zero64(i-1 downto 0) & mantPreScale(63 downto i);
                 end if;
             end loop;
@@ -146,19 +160,28 @@ begin
     end if;
 
     -- Result multiplexers:
-    if r.op_signed = '1' then
-        res(63) := (r.signA or r.overflow) and not r.underflow;
-    else
-        if r.overflow = '1' then
-            res(63) := '1';
-        else
-            res(63) := r.mantPostScale(63);
-        end if;
-    end if;
+    resSign := (r.signA or r.overflow) and not r.underflow;
     if r.signA = '1' then
-        res(62 downto 0) := not r.mantPostScale(62 downto 0) + 1;
+        resMant := not r.mantPostScale + 1;
     else
-        res(62 downto 0) := r.mantPostScale(62 downto 0);
+        resMant := r.mantPostScale;
+    end if;
+
+    res := resMant;
+    if r.op_signed = '1' then
+        if resSign = '1' then
+            if r.w32 = '1' then
+                res(63 downto 31) := (others => '1');
+            else
+                res(63) := '1';
+            end if;
+        end if;
+    else
+        if r.w32 = '1' then
+            res(63 downto 32) := (others => '0');
+        elsif r.overflow = '1' then
+            res(63) := '1';
+        end if;
     end if;
 
     if r.ena(1) = '1' then

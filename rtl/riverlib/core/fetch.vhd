@@ -15,7 +15,9 @@ library riverlib;
 use riverlib.river_cfg.all;
 
 
-entity InstrFetch is
+entity InstrFetch is generic (
+    async_reset : boolean
+  );
   port (
     i_clk  : in std_logic;
     i_nrst : in std_logic;
@@ -147,7 +149,7 @@ begin
     end if;
 
     
-    if i_nrst = '0' then
+    if not async_reset and i_nrst = '0' then
         v := R_RESET;
     end if;
 
@@ -166,9 +168,11 @@ begin
   end process;
 
   -- registers:
-  regs : process(i_clk)
+  regs : process(i_clk, i_nrst)
   begin 
-     if rising_edge(i_clk) then 
+     if async_reset and i_nrst = '0' then
+        r <= R_RESET;
+     elsif rising_edge(i_clk) then 
         r <= rin;
      end if; 
   end process;

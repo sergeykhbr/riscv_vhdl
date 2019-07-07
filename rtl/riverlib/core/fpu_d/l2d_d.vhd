@@ -21,13 +21,14 @@ use commonlib.types_common.all;
 
 entity Long2Double is 
   generic (
-    async_reset : boolean := false
+    async_reset : boolean
   );
   port (
     i_nrst       : in std_logic;
     i_clk        : in std_logic;
     i_ena        : in std_logic;
     i_signed     : in std_logic;
+    i_w32        : in std_logic;
     i_a          : in std_logic_vector(63 downto 0);
     o_res        : out std_logic_vector(63 downto 0);
     o_valid      : out std_logic;
@@ -36,6 +37,8 @@ entity Long2Double is
 end; 
  
 architecture arch_Long2Double of Long2Double is
+ 
+  constant zero64 : std_logic_vector(63 downto 0) := (others => '0');
 
   type RegistersType is record
     busy : std_logic;
@@ -54,14 +57,12 @@ architecture arch_Long2Double of Long2Double is
     '0', (others => '0'), 0                    -- op_signed, mantAlign, lshift
   );
 
-  constant zero64 : std_logic_vector(63 downto 0) := (others => '0');
-
   signal r, rin : RegistersType;
 
 begin
 
   -- registers:
-  comb : process(i_nrst, i_ena, i_signed, i_a, r)
+  comb : process(i_nrst, i_ena, i_signed, i_w32, i_a, r)
     variable v : RegistersType;
     variable mantAlign : std_logic_vector(63 downto 0);
     variable lshift : integer range 0 to 63;
@@ -70,21 +71,35 @@ begin
     variable mant05 : std_logic;
     variable mantOnes : std_logic;
     variable rndBit : std_logic;
+    variable v_signA : std_logic;
+    variable vb_A : std_logic_vector(63 downto 0);
     variable res : std_logic_vector(63 downto 0);
   begin
 
     v := r;
 
     v.ena := r.ena(1 downto 0) & (i_ena and not r.busy);
+    if i_w32 = '0' then
+        v_signA := i_a(63);
+        vb_A := i_a;
+    elsif i_signed = '1' and i_a(31) = '1' then
+        v_signA := '1';
+        vb_A(63 downto 32) := (others => '1');
+        vb_A(31 downto 0) := i_a(31 downto 0);
+    else
+        v_signA := '0';
+        vb_A(31 downto 0) := i_a(31 downto 0);
+        vb_A(63 downto 32) := (others => '0');
+    end if;
 
     if i_ena = '1' then
         v.busy := '1';
-        if i_signed = '1' and i_a(63) = '1' then
+        if i_signed = '1' and v_signA = '1' then
             v.signA := '1';
-            v.absA := not i_a + 1;
+            v.absA := not vb_A + 1;
         else
             v.signA := '0';
-            v.absA := i_a;
+            v.absA := vb_A;
         end if;
         v.op_signed := i_signed;
     end if;
@@ -108,7 +123,11 @@ begin
         v.lshift := lshift;
     end if;
 
-    expAlign := conv_std_logic_vector(1086 - r.lshift, 11);
+    if r.absA = zero64 then
+        expAlign := (others => '0');
+    else
+        expAlign := conv_std_logic_vector(1086 - r.lshift, 11);
+    end if;
 
     mantEven := r.mantAlign(11);
     mant05 := '0';

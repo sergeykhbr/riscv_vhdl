@@ -24,7 +24,9 @@ library riverlib;
 use riverlib.river_cfg.all;
 
 
-entity DbgPort is
+entity DbgPort is generic (
+    async_reset : boolean
+  );
   port (
     i_clk : in std_logic;                                     -- CPU clock
     i_nrst : in std_logic;                                    -- Reset. Active LOW.
@@ -96,6 +98,15 @@ architecture arch_DbgPort of DbgPort is
       rd_trbuf_ena : std_logic;
       rd_trbuf_addr0 : std_logic;
   end record;
+
+  constant R_RESET : RegistersType := (
+    '0', '0', '0',                          -- ready, halt, breakpoint
+    '0', (others => '0'), '0',              -- stepping_mode. stepping_mode_cnt, trap_on_break
+    (others => '0'), (others => '0'), '0',  -- br_address_fetch, br_instr_fetch, br_fetch_valid
+    (others => '0'), (others => '0'),       -- rdata, stepping_mode_steps
+    (others => '0'), (others => '0'),       -- clock_cnt, executed_cnt
+    0, '0', '0'                             -- stack_trace_cnt, rd_trbuf_ena, rd_trbuf_addr0
+  );
 
   signal r, rin : RegistersType;
   signal wb_stack_raddr : std_logic_vector(STACKTR_ADRSZ-1 downto 0);
@@ -338,23 +349,8 @@ begin
     end if;
 
 
-    if i_nrst = '0' then
-        v.ready := '0';
-        v.halt := '0';
-        v.breakpoint := '0';
-        v.stepping_mode := '0';
-        v.rdata := (others => '0');
-        v.stepping_mode_cnt := (others => '0');
-        v.stepping_mode_steps := (others => '0');
-        v.clock_cnt := (others => '0');
-        v.executed_cnt := (others => '0');
-        v.trap_on_break := '0';
-        v.br_address_fetch := (others => '0');
-        v.br_instr_fetch := (others => '0');
-        v.br_fetch_valid := '0';
-        v.stack_trace_cnt := 0;
-        v.rd_trbuf_ena := '0';
-        v.rd_trbuf_addr0 := '0';
+    if not async_reset and i_nrst = '0' then
+        v := R_RESET;
     end if;
 
     rin <= v;
@@ -382,9 +378,11 @@ begin
 
 
   -- registers:
-  regs : process(i_clk)
+  regs : process(i_clk, i_nrst)
   begin 
-     if rising_edge(i_clk) then 
+     if async_reset and i_nrst = '0' then
+        r <= R_RESET;
+     elsif rising_edge(i_clk) then 
         r <= rin;
      end if; 
   end process;

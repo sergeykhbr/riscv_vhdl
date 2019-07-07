@@ -138,7 +138,7 @@ void Long2Double::comb() {
 
     // Result multiplexers:
     res[63] = r.signA.read() && r.op_signed.read();
-    res(62, 52) = expAlign + (0, mantOnes && rndBit);
+    res(62, 52) = expAlign + (mantOnes && rndBit);
     res(51, 0) = r.mantAlign.read()(62, 11) + rndBit;
 
     if (r.ena.read()[1] == 1) {

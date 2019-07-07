@@ -15,7 +15,9 @@ library riverlib;
 use riverlib.river_cfg.all;
 
 
-entity CacheTop is
+entity CacheTop is generic (
+    async_reset : boolean
+  );
   port (
     i_clk : in std_logic;                              -- CPU clock
     i_nrst : in std_logic;                             -- Reset. Active LOW.
@@ -91,7 +93,10 @@ architecture arch_CacheTop of CacheTop is
   signal w_data_resp_mem_store_fault : std_logic;
   signal w_data_req_ready : std_logic;
 
-  component ICache is port (
+  component ICache is generic (
+    async_reset : boolean
+  );
+  port (
     i_clk : in std_logic;
     i_nrst : in std_logic;
     i_req_ctrl_valid : in std_logic;
@@ -115,7 +120,10 @@ architecture arch_CacheTop of CacheTop is
   );
   end component; 
 
-  component DCache is port (
+  component DCache is generic (
+    async_reset : boolean
+  );
+  port (
     i_clk : in std_logic;
     i_nrst : in std_logic;
     i_req_data_valid : in std_logic;
@@ -146,7 +154,9 @@ architecture arch_CacheTop of CacheTop is
 
 begin
 
-    i0 : ICache port map (
+    i0 : ICache generic map (
+        async_reset => async_reset
+      ) port map (
         i_clk => i_clk,
         i_nrst => i_nrst,
         i_req_ctrl_valid => i_req_ctrl_valid,
@@ -168,7 +178,9 @@ begin
         i_resp_mem_load_fault => w_ctrl_resp_mem_load_fault,
         o_istate => o_istate);
 
-    d0 : DCache port map (
+    d0 : DCache generic map (
+        async_reset => async_reset
+      ) port map (
         i_clk => i_clk,
         i_nrst => i_nrst,
         i_req_data_valid => i_req_data_valid,
@@ -293,7 +305,7 @@ begin
     when others =>
     end case;
 
-    if i_nrst = '0' then
+    if not async_reset and i_nrst = '0' then
         v.state := State_Idle;
     end if;
 
@@ -308,9 +320,11 @@ begin
   end process;
 
   -- registers:
-  regs : process(i_clk)
+  regs : process(i_clk, i_nrst)
   begin 
-     if rising_edge(i_clk) then 
+     if async_reset and i_nrst = '0' then
+        r.state <= State_Idle;
+     elsif rising_edge(i_clk) then 
         r <= rin;
      end if; 
   end process;

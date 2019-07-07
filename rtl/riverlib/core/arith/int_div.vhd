@@ -16,7 +16,9 @@ library riverlib;
 use riverlib.river_cfg.all;
 
 
-entity IntDiv is
+entity IntDiv is generic (
+    async_reset : boolean
+  );
   port (
     i_clk  : in std_logic;
     i_nrst : in std_logic;                               -- Reset Active LOW
@@ -44,6 +46,12 @@ architecture arch_IntDiv of IntDiv is
       divider : std_logic_vector(64 downto 0);
       result : std_logic_vector(RISCV_ARCH-1 downto 0);
   end record;
+
+  constant R_RESET : RegistersType := (
+      '0', '0', '0', '0',                -- rv32, resid, invert, busy
+      (others => '0'), (others => '0'),  -- ena, qr
+      (others => '0'), (others => '0')   -- divider, result
+  );
 
   signal r, rin : RegistersType;
 
@@ -153,7 +161,7 @@ begin
         v.qr := wb_qr2;
     end if;
 
-    if i_nrst = '0' then
+    if not async_reset and i_nrst = '0' then
         v.result := (others => '0');
         v.ena := (others => '0');
         v.busy := '0';
@@ -171,9 +179,11 @@ begin
   end process;
 
   -- registers:
-  regs : process(i_clk)
+  regs : process(i_clk, i_nrst)
   begin 
-     if rising_edge(i_clk) then 
+     if async_reset and i_nrst = '0' then
+        r <= R_RESET;
+     elsif rising_edge(i_clk) then 
         r <= rin;
      end if; 
   end process;

@@ -33,7 +33,8 @@ use riverlib.types_river.all;
 
 entity river_amba is 
   generic (
-    hartid : integer := 0
+    hartid : integer;
+    async_reset : boolean
   );
   port ( 
     i_nrst   : in std_logic;
@@ -86,7 +87,8 @@ begin
   w_resp_mem_store_fault <= r.b_ready and i_msti.b_valid and i_msti.b_resp(1);
   
   river0 : RiverTop  generic map (
-      hartid => hartid
+      hartid => hartid,
+      async_reset => async_reset
     ) port map (
       i_clk => i_clk,
       i_nrst => i_nrst,

@@ -24,7 +24,9 @@ library riverlib;
 use riverlib.river_cfg.all;
 
 
-entity RegIntBank is
+entity RegIntBank is generic (
+    async_reset : boolean
+  );
   port (
     i_clk : in std_logic;                                   -- CPU clock
     i_nrst : in std_logic;                                  -- Reset. Active LOW.
@@ -79,7 +81,7 @@ begin
         end if;
     end if;
 
-    if i_nrst = '0' then
+    if not async_reset and i_nrst = '0' then
         v.mem(Reg_Zero) := (others => '0');
         for i in 1 to Reg_Total-1 loop
             v.mem(i) := X"00000000FEEDFACE";
@@ -95,9 +97,14 @@ begin
   o_ra <= r.mem(Reg_ra);
 
   -- registers:
-  regs : process(i_clk)
+  regs : process(i_nrst, i_clk)
   begin 
-     if rising_edge(i_clk) then 
+     if async_reset and i_nrst = '0' then
+        r.mem(Reg_Zero) <= (others => '0');
+        for i in 1 to Reg_Total-1 loop
+            r.mem(i) <= X"00000000FEEDFACE";
+        end loop;
+     elsif rising_edge(i_clk) then 
         r <= rin;
      end if; 
   end process;

@@ -137,7 +137,7 @@ void Double2Long::comb() {
         overflow = 0;
         underflow = 0;
         // Multiplexer, probably switch case in rtl
-        for (int i = 0; i < 64; i++) {
+        for (unsigned i = 0; i < 64; i++) {
             if (expShift == i) {
                 mantPostScale = mantPreScale >> i;
             }

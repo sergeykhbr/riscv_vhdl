@@ -23,7 +23,7 @@ use riverlib.river_cfg.all;
 
 entity FpuTop is 
   generic (
-    async_reset : boolean := false
+    async_reset : boolean
   );
   port (
     i_nrst         : in std_logic;
@@ -46,7 +46,7 @@ end;
 architecture arch_FpuTop of FpuTop is
 
   component DoubleAdd is generic (
-    async_reset : boolean := false
+    async_reset : boolean
   );
   port (
     i_nrst       : in std_logic;
@@ -70,7 +70,7 @@ architecture arch_FpuTop of FpuTop is
   end component;
 
   component DoubleDiv is generic (
-    async_reset : boolean := false
+    async_reset : boolean
   );
   port (
     i_nrst       : in std_logic;
@@ -89,7 +89,7 @@ architecture arch_FpuTop of FpuTop is
   end component;
 
   component DoubleMul is generic (
-    async_reset : boolean := false
+    async_reset : boolean
   );
   port (
     i_nrst       : in std_logic;
@@ -106,13 +106,14 @@ architecture arch_FpuTop of FpuTop is
   end component;
 
   component Double2Long is generic (
-    async_reset : boolean := false
+    async_reset : boolean
   );
   port (
     i_nrst       : in std_logic;
     i_clk        : in std_logic;
     i_ena        : in std_logic;
     i_signed     : in std_logic;
+    i_w32        : in std_logic;
     i_a          : in std_logic_vector(63 downto 0);
     o_res        : out std_logic_vector(63 downto 0);
     o_overflow   : out std_logic;
@@ -123,13 +124,14 @@ architecture arch_FpuTop of FpuTop is
   end component;
 
   component Long2Double is generic (
-    async_reset : boolean := false
+    async_reset : boolean
   );
   port (
     i_nrst       : in std_logic;
     i_clk        : in std_logic;
     i_ena        : in std_logic;
     i_signed     : in std_logic;
+    i_w32        : in std_logic;
     i_a          : in std_logic_vector(63 downto 0);
     o_res        : out std_logic_vector(63 downto 0);
     o_valid      : out std_logic;
@@ -154,6 +156,7 @@ architecture arch_FpuTop of FpuTop is
     ena_fmul : std_logic;
     ena_d2l : std_logic;
     ena_l2d : std_logic;
+    ena_w32 : std_logic;
   end record;
 
   constant R_RESET : RegistersType := (
@@ -162,7 +165,8 @@ architecture arch_FpuTop of FpuTop is
     (others => '0'),                                -- result
     '0', '0', '0',                                  -- ex_invalidop, ex_divbyzero, ex_overflow
     '0', '0', '0',                                  -- ex_underflow, ex_inexact, ena_fadd
-    '0', '0', '0', '0'                              -- ena_fdiv, ena_fmul, ena_d2l, ena_l2d
+    '0', '0', '0', '0',                             -- ena_fdiv, ena_fmul, ena_d2l, ena_l2d
+    '0'                                             -- ena_w32
   );
 
   signal r, rin : RegistersType;
@@ -267,6 +271,7 @@ begin
       i_nrst => i_nrst,
       i_ena => r.ena_d2l,
       i_signed => w_fcvt_signed,
+      i_w32 => r.ena_w32,
       i_a => r.a,
       o_res => wb_res_d2l,
       o_overflow => w_overflow_d2l,
@@ -282,6 +287,7 @@ begin
       i_nrst => i_nrst,
       i_ena => r.ena_l2d,
       i_signed => w_fcvt_signed,
+      i_w32 => r.ena_w32,
       i_a => r.a,
       o_res => wb_res_l2d,
       o_valid => w_valid_l2d,
@@ -331,9 +337,18 @@ begin
         v.ena_fdiv := iv(Instr_FDIV_D - Instr_FADD_D);
         v.ena_fmul := iv(Instr_FMUL_D - Instr_FADD_D);
         v.ena_d2l := iv(Instr_FCVT_LU_D - Instr_FADD_D)
-                    or iv(Instr_FCVT_L_D - Instr_FADD_D);
+                    or iv(Instr_FCVT_L_D - Instr_FADD_D)
+                    or iv(Instr_FCVT_WU_D - Instr_FADD_D)
+                    or iv(Instr_FCVT_W_D - Instr_FADD_D);
         v.ena_l2d := iv(Instr_FCVT_D_LU - Instr_FADD_D)
-                    or iv(Instr_FCVT_D_L - Instr_FADD_D);
+                    or iv(Instr_FCVT_D_L - Instr_FADD_D)
+                    or iv(Instr_FCVT_D_WU - Instr_FADD_D)
+                    or iv(Instr_FCVT_D_W - Instr_FADD_D);
+
+        v.ena_w32 := iv(Instr_FCVT_WU_D - Instr_FADD_D)
+                    or iv(Instr_FCVT_W_D - Instr_FADD_D)
+                    or iv(Instr_FCVT_D_WU - Instr_FADD_D)
+                    or iv(Instr_FCVT_D_W - Instr_FADD_D);
     end if;
 
     if r.busy = '1' and (r.ivec(Instr_FMOV_X_D - Instr_FADD_D)
@@ -389,7 +404,9 @@ begin
     w_fmax_d <= r.ivec(Instr_FMAX_D - Instr_FADD_D);
     w_fmin_d <= r.ivec(Instr_FMIN_D - Instr_FADD_D);
     w_fcvt_signed <= r.ivec(Instr_FCVT_L_D - Instr_FADD_D) or
-                     r.ivec(Instr_FCVT_D_L - Instr_FADD_D);
+                     r.ivec(Instr_FCVT_D_L - Instr_FADD_D) or
+                     r.ivec(Instr_FCVT_W_D - Instr_FADD_D) or
+                     r.ivec(Instr_FCVT_D_W - Instr_FADD_D);
 
     o_res <= r.result;
     o_ex_invalidop <= r.ex_invalidop;

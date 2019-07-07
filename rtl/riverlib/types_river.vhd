@@ -104,7 +104,8 @@ type dport_out_vector is array (0 to CFG_CORES_PER_DSU_MAX-1)
 --! @param[in] i_ext_irq  Interrupts line supported by Rocket chip.
 component river_amba is 
   generic (
-    hartid : integer := 0
+    hartid : integer;
+    async_reset : boolean
   );
   port ( 
     i_nrst   : in std_logic;

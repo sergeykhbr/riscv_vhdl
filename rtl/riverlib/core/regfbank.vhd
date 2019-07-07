@@ -25,7 +25,7 @@ use riverlib.river_cfg.all;
 
 
 entity RegFloatBank is generic (
-    async_reset : boolean := false
+    async_reset : boolean
   );
   port (
     i_clk : in std_logic;                                   -- CPU clock
@@ -78,7 +78,9 @@ begin
     end if;
 
     if not async_reset and i_nrst = '0' then
-        v.mem := (others => X"00000000FEEDFACE");
+        for i in 0 to RegFpu_Total-1 loop
+            v.mem(i) := X"00000000FEEDFACE";
+        end loop;
     end if;
 
     rin <= v;
@@ -92,7 +94,9 @@ begin
   regs : process(i_nrst, i_clk)
   begin 
      if async_reset and i_nrst = '0' then
-        r.mem <= (others => X"00000000FEEDFACE");
+        for i in 0 to RegFpu_Total-1 loop
+            r.mem(i) <= X"00000000FEEDFACE";
+        end loop;
      elsif rising_edge(i_clk) then 
         r <= rin;
      end if; 

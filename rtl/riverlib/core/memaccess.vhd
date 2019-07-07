@@ -24,7 +24,9 @@ library riverlib;
 use riverlib.river_cfg.all;
 
 
-entity MemAccess is
+entity MemAccess is generic (
+    async_reset : boolean
+  );
   port (
     i_clk  : in std_logic;
     i_nrst : in std_logic;
@@ -81,6 +83,14 @@ architecture arch_MemAccess of MemAccess is
       wait_req_wdata : std_logic_vector(RISCV_ARCH-1 downto 0);
       wait_resp : std_logic;
   end record;
+ 
+  constant R_RESET : RegistersType := (
+    '0', (others => '0'), (others => '0'),   -- valid, pc, instr
+    '0', (others => '0'), '0',               -- wena, waddr, sign_ext
+    "00", (others => '0'), '0',              -- size, wdata, wait_req
+    '0', "00", (others => '0'),              -- wait_req_write, wait_req_sz, wait_req_addr
+    (others => '0'), '0'                     -- wait_req_wdata, wait_resp
+  );
 
   signal r, rin : RegistersType;
 
@@ -200,21 +210,8 @@ begin
     w_o_valid := r.valid or w_mem_fire;
     w_o_wena := r.wena and w_o_valid;
 
-    if i_nrst = '0' then
-        v.valid := '0';
-        v.pc := (others => '0');
-        v.instr := (others => '0');
-        v.waddr := (others => '0');
-        v.wdata := (others => '0');
-        v.wena := '0';
-        v.size := (others => '0');
-        v.sign_ext := '0';
-        v.wait_req := '0';
-        v.wait_req_write := '0';
-        v.wait_req_sz := (others => '0');
-        v.wait_req_addr := (others => '0');
-        v.wait_req_wdata := (others => '0');
-        v.wait_resp := '0';
+    if not async_reset and i_nrst = '0' then
+        v := R_RESET;
     end if;
 
     o_mem_resp_ready <= '1';
@@ -237,9 +234,11 @@ begin
   end process;
 
   -- registers:
-  regs : process(i_clk)
+  regs : process(i_clk, i_nrst)
   begin 
-     if rising_edge(i_clk) then 
+     if async_reset and i_nrst = '0' then
+        r <= R_RESET;
+     elsif rising_edge(i_clk) then 
         r <= rin;
      end if; 
   end process;

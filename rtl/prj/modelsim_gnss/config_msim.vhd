@@ -17,16 +17,9 @@ package config_target is
   constant CFG_PADTECH : integer := inferred;
   constant CFG_JTAGTECH : integer := inferred;
 
+  constant CFG_ASYNC_RESET : boolean := false;
+
   constant CFG_TOPDIR : string := "../../../";
-
-
---! @brief   Disable/Enable River CPU instance.
---! @details When enabled platform will instantiate processor named as
---!          "RIVER" entirely written on VHDL. 
---!          Otherwise "Rocket" will be used (developed by Berkley
---!          team).
---! @warning DSU available only for \e "RIVER" processor.
-constant CFG_COMMON_RIVER_CPU_ENABLE : boolean := true;
 
 --! @brief   Dual-core configuration enabling
 --! @details This config parameter used only with CPU River

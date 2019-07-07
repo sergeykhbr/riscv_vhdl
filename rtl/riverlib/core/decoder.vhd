@@ -24,7 +24,9 @@ library riverlib;
 use riverlib.river_cfg.all;
 
 
-entity InstrDecoder is
+entity InstrDecoder is generic (
+    async_reset : boolean
+  );
   port (
     i_clk  : in std_logic;
     i_nrst : in std_logic;
@@ -124,6 +126,14 @@ architecture arch_InstrDecoder of InstrDecoder is
       compressed : std_logic;
       instr_unimplemented : std_logic;
   end record;
+
+  constant R_RESET : RegistersType := (
+    '0', (others => '0'), (others => '0'),   -- valid, pc, isa_type
+    (others => '0'), (others => '0'), '0',   -- instr_vec, instr, memop_store
+    '0', '0', "00",                          -- memop_load, memop_sign_ext, memop_size
+    '0', '0', '0',                           -- unsigned_op, rv32, f64
+    '0', '0'                                 -- compressed, instr_unimpl
+  );
 
   signal r, rin : RegistersType;
 
@@ -806,24 +816,8 @@ begin
     end if;
     w_o_valid := r.valid and not i_any_hold;
 
-    if i_nrst = '0' then
-        v.valid := '0';
-        v.pc := (others => '0');
-        v.instr := (others => '0');
-        v.isa_type := (others => '0');
-        v.instr_vec := (others => '0');
-        v.memop_store := '0';
-        v.memop_load := '0';
-        v.memop_sign_ext := '0';
-        v.memop_size := MEMOP_1B;
-        v.unsigned_op := '0';
-        v.rv32 := '0';
-        v.f64 := '0';
-        v.compressed := '0';
-        v.instr_unimplemented := '0';
-        if wb_dec = INSTR_NONE then
-            v.instr_unimplemented := '1';
-        end if;
+    if not async_reset and i_nrst = '0' then
+        v := R_RESET;
     end if;
 
     o_valid <= w_o_valid;
@@ -845,9 +839,11 @@ begin
   end process;
 
   -- registers:
-  regs : process(i_clk)
+  regs : process(i_clk, i_nrst)
   begin 
-     if rising_edge(i_clk) then 
+     if async_reset and i_nrst = '0' then
+        r <= R_RESET;
+     elsif rising_edge(i_clk) then 
         r <= rin;
      end if; 
   end process;

@@ -14,7 +14,9 @@ library riverlib;
 --! RIVER CPU configuration constants.
 use riverlib.river_cfg.all;
 
-entity ICache is
+entity ICache is generic (
+    async_reset : boolean
+  );
   port (
     i_clk : in std_logic;                              -- CPU clock
     i_nrst : in std_logic;                             -- Reset. Active LOW.
@@ -62,6 +64,10 @@ architecture arch_ICache of ICache is
       load_fault : std_logic;
   end record;
 
+  constant LINE_RESET : line_type := (
+    (others => '1'), (others => '0'), '0'
+  );
+
   type iline_vector is array (0 to ILINE_TOTAL-1) of line_type;
 
   type line_signal_type is record
@@ -76,7 +82,6 @@ architecture arch_ICache of ICache is
   type line_signal_vector is array (0 to ILINE_TOTAL-1) of line_signal_type;
 
   type RegistersType is record
-      iline : iline_vector;
       iline_addr_req : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
       addr_processing : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
       state : std_logic_vector(1 downto 0);
@@ -86,16 +91,23 @@ architecture arch_ICache of ICache is
       delay_load_fault : std_logic;
   end record;
 
+  constant R_RESET : RegistersType := (
+    (others => '0'), (others => '0'), State_Idle,
+    '0', '0', (others => '0'), '0'
+  );
+
   type adr_type is array (0 to 1) of std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
 
   signal r, rin : RegistersType;
+  signal r_iline, rin_iline : iline_vector;
 
 begin
 
   comb : process(i_nrst, i_req_ctrl_valid, i_req_ctrl_addr,
                 i_resp_ctrl_ready, i_req_mem_ready, 
-                i_resp_mem_data_valid, i_resp_mem_data, i_resp_mem_load_fault, r)
+                i_resp_mem_data_valid, i_resp_mem_data, i_resp_mem_load_fault, r, r_iline)
     variable v : RegistersType;
+    variable v_iline : iline_vector;
     variable w_need_mem_req : std_logic;
     variable wb_hit_word : std_logic_vector(31 downto 0);
     variable w_hit_load_fault : std_logic;
@@ -117,6 +129,7 @@ begin
   begin
 
     v := r;
+    v_iline := r_iline;
 
     w_wait_response := '0';
     if r.state = State_WaitResp and i_resp_mem_data_valid = '0' then
@@ -140,14 +153,14 @@ begin
         wb_l(i).hit := (others => '0');
         wb_l(i).hit_data := (others => '0');
         wb_l(i).hit_load_fault := '0';
-        if wb_req_addr(i)(BUS_ADDR_WIDTH-1 downto 3) = r.iline(0).addr then
+        if wb_req_addr(i)(BUS_ADDR_WIDTH-1 downto 3) = r_iline(0).addr then
             wb_l(i).hit(Hit_Line1) := w_req_ctrl_valid;
-            wb_l(i).hit_data := r.iline(0).data;
-            wb_l(i).hit_load_fault := r.iline(0).load_fault;
-        elsif wb_req_addr(i)(BUS_ADDR_WIDTH-1 downto 3) = r.iline(1).addr then
+            wb_l(i).hit_data := r_iline(0).data;
+            wb_l(i).hit_load_fault := r_iline(0).load_fault;
+        elsif wb_req_addr(i)(BUS_ADDR_WIDTH-1 downto 3) = r_iline(1).addr then
             wb_l(i).hit(Hit_Line2) := w_req_ctrl_valid;
-            wb_l(i).hit_data := r.iline(1).data;
-            wb_l(i).hit_load_fault := r.iline(1).load_fault;
+            wb_l(i).hit_data := r_iline(1).data;
+            wb_l(i).hit_load_fault := r_iline(1).load_fault;
         elsif wb_req_addr(i)(BUS_ADDR_WIDTH-1 downto 3) =
             r.iline_addr_req(BUS_ADDR_WIDTH-1 downto 3) then
             wb_l(i).hit(Hit_Response) := i_resp_mem_data_valid;
@@ -158,14 +171,14 @@ begin
         wb_l(i).hit_hold := (others => '0');
         wb_l(i).hold_data := (others => '0');
         wb_l(i).hold_load_fault := '0';
-        if wb_hold_addr(i)(BUS_ADDR_WIDTH-1 downto 3) = r.iline(0).addr then
+        if wb_hold_addr(i)(BUS_ADDR_WIDTH-1 downto 3) = r_iline(0).addr then
             wb_l(i).hit_hold(Hit_Line1) := '1';
-            wb_l(i).hold_data := r.iline(0).data;
-            wb_l(i).hold_load_fault := r.iline(0).load_fault;
-        elsif wb_hold_addr(i)(BUS_ADDR_WIDTH-1 downto 3) = r.iline(1).addr then
+            wb_l(i).hold_data := r_iline(0).data;
+            wb_l(i).hold_load_fault := r_iline(0).load_fault;
+        elsif wb_hold_addr(i)(BUS_ADDR_WIDTH-1 downto 3) = r_iline(1).addr then
             wb_l(i).hit_hold(Hit_Line2) := '1';
-            wb_l(i).hold_data := r.iline(1).data;
-            wb_l(i).hold_load_fault := r.iline(1).load_fault;
+            wb_l(i).hold_data := r_iline(1).data;
+            wb_l(i).hold_load_fault := r_iline(1).load_fault;
         elsif wb_hold_addr(i)(BUS_ADDR_WIDTH-1 downto 3) =
             r.iline_addr_req(BUS_ADDR_WIDTH-1 downto 3) then
             wb_l(i).hold_data := i_resp_mem_data;
@@ -315,25 +328,25 @@ begin
         --! Condition to avoid removing the last line:
         if i_resp_ctrl_ready = '1' then
             if (wb_l(0).hit(Hit_Line2) or wb_l(1).hit(Hit_Line2)) = '1'
-                and r.iline(1).addr /= wb_o_req_mem_addr(BUS_ADDR_WIDTH-1 downto 3) then
+                and r_iline(1).addr /= wb_o_req_mem_addr(BUS_ADDR_WIDTH-1 downto 3) then
                 w_reuse_lastline := w_need_mem_req;
             end if;
         else
             if (wb_l(0).hit_hold(Hit_Line2) or wb_l(1).hit_hold(Hit_Line2)) = '1'
                 and (wb_l(0).hit_hold(Hit_Line1) or wb_l(1).hit_hold(Hit_Line1)) = '0'
-                and r.iline(1).addr /= r.iline_addr_req(BUS_ADDR_WIDTH-1 downto 3) then
+                and r_iline(1).addr /= r.iline_addr_req(BUS_ADDR_WIDTH-1 downto 3) then
                 w_reuse_lastline := '1';
             end if;
 		  end if;
         if w_reuse_lastline = '0' then
-            v.iline(1).addr := r.iline(0).addr;
-            v.iline(1).data := r.iline(0).data;
-            v.iline(1).load_fault := r.iline(0).load_fault;
+            v_iline(1).addr := r_iline(0).addr;
+            v_iline(1).data := r_iline(0).data;
+            v_iline(1).load_fault := r_iline(0).load_fault;
         end if;
         
-        v.iline(0).addr := r.iline_addr_req(BUS_ADDR_WIDTH-1 downto 3);
-        v.iline(0).data := i_resp_mem_data;
-        v.iline(0).load_fault := i_resp_mem_load_fault;
+        v_iline(0).addr := r.iline_addr_req(BUS_ADDR_WIDTH-1 downto 3);
+        v_iline(0).data := i_resp_mem_data;
+        v_iline(0).load_fault := i_resp_mem_load_fault;
     end if;
 
     if r.state = State_WaitAccept then
@@ -351,20 +364,11 @@ begin
     wb_o_resp_addr := r.addr_processing;
 
 
-    if i_nrst = '0' then
-        v.iline(0).addr := (others => '1');
-        v.iline(0).data := (others => '0');
-        v.iline(0).load_fault := '0';
-        v.iline(1).addr := (others => '1');
-        v.iline(1).data := (others => '0');
-        v.iline(1).load_fault := '0';
-        v.iline_addr_req := (others => '0');
-        v.addr_processing := (others => '0');
-        v.state := State_Idle;
-        v.double_req := '0';
-        v.delay_valid := '0';
-        v.delay_data := (others => '0');
-        v.delay_load_fault := '0';
+    if not async_reset and i_nrst = '0' then
+        v := R_RESET;
+        for i in 0 to ILINE_TOTAL-1 loop
+            v_iline(i) := LINE_RESET;
+        end loop;
     end if;
 
     o_req_ctrl_ready <= w_o_req_ctrl_ready;
@@ -382,13 +386,20 @@ begin
     o_istate <= r.state;
     
     rin <= v;
+    rin_iline <= v_iline;
   end process;
 
   -- registers:
-  regs : process(i_clk)
+  regs : process(i_clk, i_nrst)
   begin 
-     if rising_edge(i_clk) then 
+     if async_reset and i_nrst = '0' then
+        r <= R_RESET;
+        for i in 0 to ILINE_TOTAL-1 loop
+            r_iline(i) <= LINE_RESET;
+        end loop;
+     elsif rising_edge(i_clk) then 
         r <= rin;
+        r_iline <= rin_iline;
      end if; 
   end process;
 

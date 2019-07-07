@@ -26,7 +26,8 @@ use riverlib.river_cfg.all;
 
 entity Processor is
   generic (
-    hartid : integer := 0
+    hartid : integer;
+    async_reset : boolean
   );
   port (
     i_clk : in std_logic;                                             -- CPU clock
@@ -237,7 +238,9 @@ begin
     wb_freg_dport_addr <= dbg.core_addr(4 downto 0);
     wb_exec_dport_npc <= dbg.core_wdata(BUS_ADDR_WIDTH-1 downto 0);
     
-    fetch0 : InstrFetch port map (
+    fetch0 : InstrFetch generic map (
+        async_reset => async_reset
+      ) port map (
         i_clk => i_clk,
         i_nrst => i_nrst,
         i_pipeline_hold => w_fetch_pipeline_hold,
@@ -264,7 +267,9 @@ begin
         i_br_instr_fetch => dbg.br_instr_fetch,
         o_instr_buf => w.f.instr_buf);
         
-    dec0 : InstrDecoder port map (
+    dec0 : InstrDecoder generic map (
+        async_reset => async_reset
+      ) port map (
         i_clk => i_clk,
         i_nrst => i_nrst,
         i_any_hold => w_any_pipeline_hold,
@@ -286,7 +291,9 @@ begin
         o_instr_vec => w.d.instr_vec,
         o_exception => w.d.exception);
 
-    exec0 : InstrExecute port map (
+    exec0 : InstrExecute generic map (
+        async_reset => async_reset
+      ) port map (
         i_clk => i_clk,
         i_nrst => i_nrst,
         i_pipeline_hold => w_exec_pipeline_hold,
@@ -349,7 +356,9 @@ begin
         o_mret => w.e.mret,
         o_uret => w.e.uret);
 
-    mem0 : MemAccess port map (
+    mem0 : MemAccess generic map (
+        async_reset => async_reset
+      ) port map (
         i_clk => i_clk,
         i_nrst => i_nrst,
         i_e_valid => w.e.valid,
@@ -380,7 +389,9 @@ begin
         o_pc => w.m.pc,
         o_instr => w.m.instr);
 
-    predic0 : BranchPredictor port map (
+    predic0 : BranchPredictor generic map (
+        async_reset => async_reset
+      ) port map (
         i_clk => i_clk,
         i_nrst => i_nrst,
         i_req_mem_fire => w.f.req_fire,
@@ -396,7 +407,9 @@ begin
         o_minus4 => bp.minus4);
 
 
-    iregs0 : RegIntBank port map ( 
+    iregs0 : RegIntBank generic map (
+        async_reset => async_reset
+      ) port map ( 
         i_clk => i_clk,
         i_nrst => i_nrst,
         i_radr1 => w.e.radr1,
@@ -415,7 +428,7 @@ begin
 
     fpuena : if CFG_HW_FPU_ENABLE generate
       fregs0 : RegFloatBank generic map (
-        async_reset => false
+        async_reset => async_reset
       ) port map (
         i_clk => i_clk,
         i_nrst => i_nrst,
@@ -440,7 +453,8 @@ begin
     end generate;
 
     csr0 : CsrRegs generic map (
-        hartid => hartid
+        hartid => hartid,
+        async_reset => async_reset
       ) port map (
         i_clk => i_clk,
         i_nrst => i_nrst,
@@ -480,7 +494,9 @@ begin
         o_dport_rdata => csr.dport_rdata);
 
 
-    dbg0 : DbgPort port map (
+    dbg0 : DbgPort generic map (
+        async_reset => async_reset
+    ) port map (
         i_clk => i_clk,
         i_nrst => i_nrst,
         i_dport_valid => i_dport_valid,

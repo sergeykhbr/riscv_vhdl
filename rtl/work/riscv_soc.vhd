@@ -177,9 +177,9 @@ begin
   );
 
   --! @brief RISC-V Processor core (River or Rocket).
-river_ena : if CFG_COMMON_RIVER_CPU_ENABLE generate
   cpu0 : river_amba generic map (
-    hartid => 0
+    hartid => 0,
+    async_reset => CFG_ASYNC_RESET
   ) port map ( 
     i_nrst   => w_bus_nrst,
     i_clk    => i_clk,
@@ -193,7 +193,8 @@ river_ena : if CFG_COMMON_RIVER_CPU_ENABLE generate
 
   dualcore_ena : if CFG_COMMON_DUAL_CORE_ENABLE generate
       cpu1 : river_amba generic map (
-        hartid => 1
+        hartid => 1,
+        async_reset => CFG_ASYNC_RESET
       ) port map ( 
         i_nrst   => w_bus_nrst,
         i_clk    => i_clk,
@@ -212,31 +213,6 @@ river_ena : if CFG_COMMON_RIVER_CPU_ENABLE generate
 		dport_o(1) <= dport_out_none;
   end generate;
 
-end generate;
-
---! DSU doesn't support Rocket-chip CPU
-river_dis : if not CFG_COMMON_RIVER_CPU_ENABLE generate
-  --! Not imlpemented interrupts:
-  core_irqs(CFG_CORE_IRQ_MTIP) <= '0'; -- timer's
-  core_irqs(CFG_CORE_IRQ_MSIP) <= '0'; -- software's
-  core_irqs(CFG_CORE_IRQ_SEIP) <= '0'; -- superuser external interrupt
-  core_irqs(CFG_CORE_IRQ_DEBUG) <= '0';
-
-  cpu0 : rocket_l1only generic map (
-    hartid  => 0,
-    reset_vector => 16#1000#
-  ) port map ( 
-    nrst      => w_bus_nrst,
-    clk_sys   => i_clk,
-    msti1     => aximi(CFG_NASTI_MASTER_CACHED),
-    msto1     => aximo(CFG_NASTI_MASTER_CACHED),
-    mstcfg1   => mst_cfg(CFG_NASTI_MASTER_CACHED),
-    msti2     => aximi(CFG_NASTI_MASTER_UNCACHED),
-    msto2     => aximo(CFG_NASTI_MASTER_UNCACHED),
-    mstcfg2   => mst_cfg(CFG_NASTI_MASTER_UNCACHED),
-    interrupts => core_irqs
-  );
-end generate;
 
 dsu_ena : if CFG_DSU_ENABLE generate
   ------------------------------------

@@ -21,7 +21,7 @@ use commonlib.types_common.all;
 
 entity DoubleAdd is 
   generic (
-    async_reset : boolean := false
+    async_reset : boolean
   );
   port (
     i_nrst       : in std_logic;

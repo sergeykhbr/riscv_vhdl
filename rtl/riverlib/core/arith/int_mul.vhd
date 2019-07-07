@@ -16,7 +16,9 @@ library riverlib;
 use riverlib.river_cfg.all;
 
 
-entity IntMul is
+entity IntMul is generic (
+    async_reset : boolean
+  );
   port (
     i_clk  : in std_logic;
     i_nrst : in std_logic;
@@ -48,18 +50,29 @@ architecture arch_IntMul of IntMul is
       unsign : std_logic;
       high : std_logic;
       rv32 : std_logic;
-      lvl1 : Level1Type;
-      lvl3 : Level3Type;
       result : std_logic_vector(127 downto 0);
   end record;
+
+  constant R_RESET : RegistersType := (
+    '0', (others => '0'),                     -- busy, ena
+     (others => '0'), (others => '0'), '0',   -- a1, a2, unsign
+    '0', '0', (others => '0')                 -- high, rv32, result  
+  );
+
+  -- Some synthezators crush when try to initialize two-dimensional array
+  -- so exclude from register type and avoid using (others => (others =>))
+  signal r_lvl1, rin_lvl1 : Level1Type;
+  signal r_lvl3, rin_lvl3 : Level3Type;
 
   signal r, rin : RegistersType;
 
 begin
 
 
-  comb : process(i_nrst, i_ena, i_unsigned, i_high, i_rv32, i_a1, i_a2, r)
+  comb : process(i_nrst, i_ena, i_unsigned, i_high, i_rv32, i_a1, i_a2, r, r_lvl1, r_lvl3)
     variable v : RegistersType;
+    variable v_lvl1 : Level1Type;
+    variable v_lvl3 : Level3Type;
     variable wb_mux_lvl0 : std_logic_vector(1 downto 0);
     variable wb_lvl0 : Level0Type;
     variable wb_lvl2 : Level2Type;
@@ -70,6 +83,8 @@ begin
   begin
 
     v := r;
+    v_lvl1 := r_lvl1;
+    v_lvl3 := r_lvl3;
 
     v.ena := r.ena(2 downto 0) & (i_ena and not r.busy);
 
@@ -108,19 +123,19 @@ begin
         end loop;
 
         for i in 0 to 15 loop
-            v.lvl1(i) := ("0" & wb_lvl0(2*i + 1) & "00")
+            v_lvl1(i) := ("0" & wb_lvl0(2*i + 1) & "00")
                        + ("000" & wb_lvl0(2*i));
         end loop;
     end if;
 
     if r.ena(1) = '1' then
         for i in 0 to 7 loop
-            wb_lvl2(i) := ("0" & r.lvl1(2*i + 1) & "0000")
-                        + ("00000" & r.lvl1(2*i));
+            wb_lvl2(i) := ("0" & r_lvl1(2*i + 1) & "0000")
+                        + ("00000" & r_lvl1(2*i));
         end loop;
 
         for i in 0 to 3 loop
-            v.lvl3(i) := ("0" & wb_lvl2(2*i + 1) & "00000000")
+            v_lvl3(i) := ("0" & wb_lvl2(2*i + 1) & "00000000")
                        + ("000000000" & wb_lvl2(2*i));
         end loop;
     end if;
@@ -128,8 +143,8 @@ begin
     if r.ena(2) = '1' then
         v.busy := '0';
         for i in 0 to 1 loop
-            wb_lvl4(i) := ("0" & r.lvl3(2*i + 1) & "0000000000000000")
-                        + ("00000000000000000" & r.lvl3(2*i));
+            wb_lvl4(i) := ("0" & r_lvl3(2*i + 1) & "0000000000000000")
+                        + ("00000000000000000" & r_lvl3(2*i));
         end loop;
 
         wb_lvl5 := (wb_lvl4(1)(95 downto 0) & X"00000000")
@@ -152,15 +167,14 @@ begin
         wb_res := r.result(127 downto 64);  --! not tested yet
     end if;
 
-    if i_nrst = '0' then
-        v.busy := '0';
-        v.result := (others => '0');
-        v.ena := (others => '0');
-        v.a1 := (others => '0');
-        v.a2 := (others => '0');
-        v.rv32 := '0';
-        v.unsign := '0';
-        v.high := '0';
+    if not async_reset and i_nrst = '0' then
+        v := R_RESET;
+        for i in 0 to 15 loop
+            v_lvl1(i) := (others => '0');
+        end loop;
+        for i in 0 to 3 loop
+            v_lvl3(i) := (others => '0');
+        end loop;
     end if;
 
     o_res <= wb_res;
@@ -168,13 +182,25 @@ begin
     o_busy <= r.busy;
     
     rin <= v;
+    rin_lvl1 <= v_lvl1;
+    rin_lvl3 <= v_lvl3;
   end process;
 
   -- registers:
-  regs : process(i_clk)
+  regs : process(i_clk, i_nrst)
   begin 
-     if rising_edge(i_clk) then 
+     if async_reset and i_nrst = '0' then
+        r <= R_RESET;
+        for i in 0 to 15 loop
+            r_lvl1(i) <= (others => '0');
+        end loop;
+        for i in 0 to 3 loop
+            r_lvl3(i) <= (others => '0');
+        end loop;
+     elsif rising_edge(i_clk) then 
         r <= rin;
+        r_lvl1 <= rin_lvl1;
+        r_lvl3 <= rin_lvl3;
      end if; 
   end process;
 
