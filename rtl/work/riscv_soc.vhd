@@ -26,10 +26,6 @@ use commonlib.types_common.all;
 library techmap;
 --! Technology constants definition.
 use techmap.gencomp.all;
---! "Virtual" PLL declaration.
-use techmap.types_pll.all;
---! "Virtual" buffers declaration.
-use techmap.types_buf.all;
 
 --! AMBA system bus specific library
 library ambalib;
@@ -41,11 +37,6 @@ use misclib.types_misc.all;
 --! Ethernet related declarations.
 library ethlib;
 use ethlib.types_eth.all;
-
---! Rocket-chip specific library
-library rocketlib;
---! SOC top-level component declaration.
-use rocketlib.types_rocket.all;
 
 --! River CPU specific library
 library riverlib;
@@ -86,8 +77,6 @@ entity riscv_soc is port
   o_uart2_td   : out std_logic;
   o_uart2_rtsn : out std_logic;
   --! Ethernet MAC PHY interface signals
-  i_gmiiclk   : in    std_ulogic;
-  o_egtx_clk  : out   std_ulogic;
   i_etx_clk   : in    std_ulogic;
   i_erx_clk   : in    std_ulogic;
   i_erxd      : in    std_logic_vector(3 downto 0);
@@ -100,7 +89,11 @@ entity riscv_soc is port
   o_etx_en    : out   std_ulogic;
   o_etx_er    : out   std_ulogic;
   o_emdc      : out   std_ulogic;
-  io_emdio    : inout std_logic;
+  i_eth_mdio    : in std_logic;
+  o_eth_mdio    : out std_logic;
+  o_eth_mdio_oe : out std_logic;
+  i_eth_gtx_clk    : in std_logic;
+  i_eth_gtx_clk_90 : in std_logic;
   o_erstn     : out   std_ulogic
 );
   --! @}
@@ -128,7 +121,7 @@ architecture arch_riscv_soc of riscv_soc is
   signal axiso   : nasti_slaves_out_vector;
   signal slv_cfg : nasti_slave_cfg_vector;
   signal mst_cfg : nasti_master_cfg_vector;
-  signal core_irqs : std_logic_vector(CFG_CORE_IRQ_TOTAL-1 downto 0);
+  signal w_ext_irq : std_logic;
   signal dport_i : dport_in_vector;
   signal dport_o : dport_out_vector;
   signal wb_bus_util_w : std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0);
@@ -188,7 +181,7 @@ begin
     o_mstcfg => mst_cfg(CFG_NASTI_MASTER_CACHED),
     i_dport => dport_i(0),
     o_dport => dport_o(0),
-    i_ext_irq => core_irqs(CFG_CORE_IRQ_MEIP)
+    i_ext_irq => w_ext_irq
   );
 
   dualcore_ena : if CFG_COMMON_DUAL_CORE_ENABLE generate
@@ -392,7 +385,7 @@ end generate;
     o_cfg  => slv_cfg(CFG_NASTI_SLAVE_IRQCTRL),
     i_axi  => axisi(CFG_NASTI_SLAVE_IRQCTRL),
     o_axi  => axiso(CFG_NASTI_SLAVE_IRQCTRL),
-    o_irq_meip => core_irqs(CFG_CORE_IRQ_MEIP)
+    o_irq_meip => w_ext_irq
   );
 
   --! @brief Timers with the AXI4 interface.
@@ -418,20 +411,6 @@ end generate;
   --!          0x80040000..0x8007ffff (256 KB total)
   --!          EDCL IP: 192.168.1.51 = C0.A8.01.33
   eth0_ena : if CFG_ETHERNET_ENABLE generate 
-
-    --! Gigabit clock phase rotator with buffers
-    clkrot90 : clkp90_tech  generic map (
-      tech    => CFG_FABTECH,
-      freq    => 125000   -- KHz = 125 MHz
-    ) port map (
-      i_rst    => w_glob_rst,
-      i_clk    => i_gmiiclk,
-      o_clk    => eth_i.gtx_clk,
-      o_clkp90 => eth_i.tx_clk_90,
-      o_clk2x  => open, -- used in gbe 'io_ref'
-      o_lock   => open
-    );
-  
   
     eth_i.tx_clk <= i_etx_clk;
     eth_i.rx_clk <= i_erx_clk;
@@ -441,6 +420,8 @@ end generate;
     eth_i.rx_col <= i_erx_col;
     eth_i.rx_crs <= i_erx_crs;
     eth_i.mdint <= i_emdint;
+	 eth_i.mdio_i <= i_eth_mdio;
+	 eth_i.gtx_clk <= i_eth_gtx_clk;
     
     mac0 : grethaxi generic map (
       xaddr => 16#80040#,
@@ -475,16 +456,9 @@ end generate;
       etho => eth_o,
       irq => irq_pins(CFG_IRQ_ETHMAC)
     );
-  
-    emdio_pad : iobuf_tech generic map(
-        CFG_PADTECH
-    ) port map (
-        o  => eth_i.mdio_i,
-        io => io_emdio,
-        i  => eth_o.mdio_o,
-        t  => eth_o.mdio_oe
-    );
+	 
   end generate;
+  
   --! Ethernet disabled
   eth0_dis : if not CFG_ETHERNET_ENABLE generate 
       slv_cfg(CFG_NASTI_SLAVE_ETHMAC) <= nasti_slave_config_none;
@@ -496,11 +470,12 @@ end generate;
       eth_o   <= eth_out_none;
   end generate;
 
-  o_egtx_clk <= eth_i.gtx_clk;--eth_i.tx_clk_90;
   o_etxd <= eth_o.txd;
   o_etx_en <= eth_o.tx_en;
   o_etx_er <= eth_o.tx_er;
   o_emdc <= eth_o.mdc;
+  o_eth_mdio <= eth_o.mdio_o;
+  o_eth_mdio_oe <= eth_o.mdio_oe;
   o_erstn <= w_glob_nrst;
 
 

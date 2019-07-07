@@ -42,6 +42,28 @@ set_property IOSTANDARD LVCMOS25 [get_ports {io_gpio[10]}]
 set_property PACKAGE_PIN F16 [get_ports {io_gpio[11]}]
 set_property IOSTANDARD LVCMOS25 [get_ports {io_gpio[11]}]
 
+# JTAG
+set_property PACKAGE_PIN AD21 [get_ports i_jtag_tck]
+set_property IOSTANDARD LVCMOS25 [get_ports i_jtag_tck]
+set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets i_jtag_tck]
+create_clock -period 1000.000 -name i_swjtag_clktck -waveform {0.000 500.000} [get_ports i_jtag_tck]
+
+set_property PACKAGE_PIN AK20 [get_ports i_jtag_ntrst]
+set_property IOSTANDARD LVCMOS25 [get_ports i_jtag_ntrst]
+
+set_property PACKAGE_PIN AE21 [get_ports i_jtag_tms]
+set_property IOSTANDARD LVCMOS25 [get_ports i_jtag_tms]
+
+set_property PACKAGE_PIN AJ24 [get_ports i_jtag_tdi]
+set_property IOSTANDARD LVCMOS25 [get_ports i_jtag_tdi]
+
+set_property PACKAGE_PIN AK25 [get_ports o_jtag_tdo]
+set_property IOSTANDARD LVCMOS25 [get_ports o_jtag_tdo]
+
+set_property IOSTANDARD LVCMOS25 [get_ports o_jtag_vref]
+set_property PACKAGE_PIN AK21 [get_ports o_jtag_vref]
+
+
 #UART interface
 set_property PACKAGE_PIN M19 [get_ports i_uart1_rd]
 set_property IOSTANDARD LVCMOS25 [get_ports i_uart1_rd]

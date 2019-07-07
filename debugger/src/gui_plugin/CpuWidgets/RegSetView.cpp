@@ -35,7 +35,6 @@ RegSetView::RegSetView(IGui *igui, QWidget *parent, int cpucontext)
     gridLayout->setContentsMargins(4, 4, 4, 4);
     setLayout(gridLayout);
     waitingResp_ = false;
-    contextSwitchInProgress_ = false;
 
     const AttributeType &cfg = (*igui_->getpConfig())["RegsViewWidget"];
     if (!cfg.is_dict()) {
@@ -100,9 +99,6 @@ void RegSetView::slotUpdateByTimer() {
     if (waitingResp_) {
         return;
     }
-    if (contextSwitchInProgress_) {
-        return;
-    }
     igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), 
                            "regs", &response_, true);
     waitingResp_ = true;
@@ -115,13 +111,11 @@ void RegSetView::slotRegChanged(const char *wrcmd) {
 void RegSetView::slotContextSwitchRequest(int idx) {
     char tstr[64];
     RISCV_sprintf(tstr, sizeof(tstr), "cpucontext %d", idx);
-    contextSwitchInProgress_ = true;
     igui_->registerCommand(0, tstr, &responseRegChanged_, true);
     curContextIdx_ = idx;
 }
 
 void RegSetView::slotContextSwitchConfirmed() {
-    contextSwitchInProgress_ = false;
 }
 
 void RegSetView::addRegWidget(int row, int col, int bytes,

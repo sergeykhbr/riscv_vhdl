@@ -201,7 +201,7 @@ int EdclService::write(uint64_t addr, int bytes, uint8_t *ibuf) {
         // Alignment at the and of buffer
         if (ibuf_off + req.control.request.len - align_offset0 > ubytes) {
             read(req.address, 8, &tx_buf_[off]);
-            ibuf_len = ubytes - ibuf_off;
+            ibuf_len = align_offset0 + ubytes - ibuf_off;
         }
         // Alignment at the begin of buffer
         if (align_offset0 != 0) {
@@ -217,7 +217,7 @@ int EdclService::write(uint64_t addr, int bytes, uint8_t *ibuf) {
         ibuf_off += ibuf_len;
         align_offset0 = 0;      // only for zero step
 
-        off = itransport_->sendData(tx_buf_, off + req.control.request.len);
+        off = itransport_->sendData(tx_buf_, 10 + req.control.request.len);
         if (off == -1) {
             RISCV_error("Data sending error", NULL);
             wr_bytes = -1;

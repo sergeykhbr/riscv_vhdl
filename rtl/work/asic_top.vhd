@@ -107,8 +107,6 @@ component riscv_soc is port
   o_uart2_td   : out std_logic;
   o_uart2_rtsn : out std_logic;
   --! Ethernet MAC PHY interface signals
-  i_gmiiclk   : in    std_ulogic;
-  o_egtx_clk  : out   std_ulogic;
   i_etx_clk   : in    std_ulogic;
   i_erx_clk   : in    std_ulogic;
   i_erxd      : in    std_logic_vector(3 downto 0);
@@ -121,7 +119,11 @@ component riscv_soc is port
   o_etx_en    : out   std_ulogic;
   o_etx_er    : out   std_ulogic;
   o_emdc      : out   std_ulogic;
-  io_emdio    : inout std_logic;
+  i_eth_mdio    : in std_logic;
+  o_eth_mdio    : out std_logic;
+  o_eth_mdio_oe : out std_logic;
+  i_eth_gtx_clk    : in std_logic;
+  i_eth_gtx_clk_90 : in std_logic;
   o_erstn     : out   std_ulogic
 );
 end component;
@@ -146,6 +148,11 @@ end component;
   signal ob_jtag_vref   : std_logic;
 
   signal ib_gmiiclk : std_logic;
+  signal ib_eth_mdio : std_logic;
+  signal ob_eth_mdio : std_logic;
+  signal ob_eth_mdio_oe : std_logic;
+  signal w_eth_gtx_clk : std_logic;
+  signal w_eth_gtx_clk_90 : std_logic;
 
   signal w_ext_reset : std_ulogic; -- External system reset or PLL unlcoked. MUST NOT USED BY DEVICES.
   signal w_glob_rst  : std_ulogic; -- Global reset active HIGH
@@ -184,7 +191,24 @@ begin
 
   igbebuf0 : igdsbuf_tech generic map (CFG_PADTECH) port map (
             i_gmiiclk_p, i_gmiiclk_n, ib_gmiiclk);
+				
+  iomdio : iobuf_tech generic map(CFG_PADTECH)
+	        port map (ib_eth_mdio, io_emdio, ob_eth_mdio, ob_eth_mdio_oe);
 
+  --! Gigabit clock phase rotator with buffers
+  clkrot90 : clkp90_tech  generic map (
+      tech    => CFG_FABTECH,
+      freq    => 125000   -- KHz = 125 MHz
+    ) port map (
+      i_rst    => ib_rst,
+      i_clk    => ib_gmiiclk,
+      o_clk    => w_eth_gtx_clk,
+      o_clkp90 => w_eth_gtx_clk_90,
+      o_clk2x  => open, -- used in gbe 'io_ref'
+      o_lock   => open
+    );
+
+  o_egtx_clk <= w_eth_gtx_clk;
 
   ------------------------------------
   -- @brief Internal PLL device instance.
@@ -225,8 +249,6 @@ begin
     o_uart2_td   => ob_uart2_td,
     o_uart2_rtsn => open,
     --! Ethernet MAC PHY interface signals
-    i_gmiiclk   => ib_gmiiclk,
-    o_egtx_clk  => o_egtx_clk,
     i_etx_clk   => i_etx_clk,
     i_erx_clk   => i_erx_clk,
     i_erxd      => i_erxd,
@@ -239,8 +261,12 @@ begin
     o_etx_en    => o_etx_en,
     o_etx_er    => o_etx_er,
     o_emdc      => o_emdc,
-    io_emdio    => io_emdio,
+    i_eth_mdio => ib_eth_mdio,
+    o_eth_mdio => ob_eth_mdio,
+    o_eth_mdio_oe => ob_eth_mdio_oe,
+    i_eth_gtx_clk => w_eth_gtx_clk,
+    i_eth_gtx_clk_90 => w_eth_gtx_clk_90,
     o_erstn     => o_erstn
   );
-
+  
 end arch_asic_top;

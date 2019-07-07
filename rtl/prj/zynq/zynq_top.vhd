@@ -38,8 +38,6 @@ use techmap.types_buf.all;
 library work;
 --! Target dependable configuration: RTL, FPGA or ASIC.
 use work.config_target.all;
---! Target independable configuration.
-use work.config_common.all;
 
 --! Warning: this project wasn't verified on real FPGA (2018 Nov 18). No board is available.
 entity zynq_top is port 
@@ -88,8 +86,6 @@ architecture arch_zynq_top of zynq_top is
     o_uart2_td   : out std_logic;
     o_uart2_rtsn : out std_logic;
     --! Ethernet MAC PHY interface signals
-    i_gmiiclk   : in    std_ulogic;
-    o_egtx_clk  : out   std_ulogic;
     i_etx_clk   : in    std_ulogic;
     i_erx_clk   : in    std_ulogic;
     i_erxd      : in    std_logic_vector(3 downto 0);
@@ -102,7 +98,11 @@ architecture arch_zynq_top of zynq_top is
     o_etx_en    : out   std_ulogic;
     o_etx_er    : out   std_ulogic;
     o_emdc      : out   std_ulogic;
-    io_emdio    : inout std_logic;
+    i_eth_mdio    : in std_logic;
+    o_eth_mdio    : out std_logic;
+    o_eth_mdio_oe : out std_logic;
+    i_eth_gtx_clk    : in std_logic;
+    i_eth_gtx_clk_90 : in std_logic;
     o_erstn     : out   std_ulogic
   );
   end component;
@@ -304,8 +304,6 @@ begin
     o_uart2_td   => o_uart2_td,
     o_uart2_rtsn => open,
     --! Ethernet MAC PHY interface signals
-    i_gmiiclk   => '0',
-    o_egtx_clk  => open,
     i_etx_clk   => '0',
     i_erx_clk   => '0',
     i_erxd      => X"0",
@@ -318,7 +316,11 @@ begin
     o_etx_en    => open,
     o_etx_er    => open,
     o_emdc      => open,
-    io_emdio    => open,
+    i_eth_mdio    => '0',
+    o_eth_mdio    => open,
+    o_eth_mdio_oe => open,
+    i_eth_gtx_clk    => '0',
+    i_eth_gtx_clk_90 => '0',
     o_erstn     => open
   );
 
