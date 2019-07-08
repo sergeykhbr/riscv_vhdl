@@ -1,5 +1,5 @@
 /*
- *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *  Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -98,9 +98,10 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset)
     sensitive << wb_sraw;
 
     SC_METHOD(registers);
+    sensitive << i_nrst;
     sensitive << i_clk.pos();
 
-    mul0 = new IntMul("mul0");
+    mul0 = new IntMul("mul0", async_reset);
     mul0->i_clk(i_clk);
     mul0->i_nrst(i_nrst);
     mul0->i_ena(r.multi_ena[Multi_MUL]);
@@ -113,7 +114,7 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset)
     mul0->o_valid(w_arith_valid[Multi_MUL]);
     mul0->o_busy(w_arith_busy[Multi_MUL]);
 
-    div0 = new IntDiv("div0");
+    div0 = new IntDiv("div0", async_reset);
     div0->i_clk(i_clk);
     div0->i_nrst(i_nrst);
     div0->i_ena(r.multi_ena[Multi_DIV]);

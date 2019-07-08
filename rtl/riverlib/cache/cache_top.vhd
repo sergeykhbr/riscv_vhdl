@@ -55,6 +55,8 @@ entity CacheTop is generic (
     i_resp_mem_load_fault : in std_logic;                             -- Bus response with SLVERR or DECERR on read
     i_resp_mem_store_fault : in std_logic;                            -- Bus response with SLVERR or DECERR on write
     -- Debug signals:
+    i_flush_address : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);  -- clear ICache address from debug interface
+    i_flush_valid : in std_logic;                                      -- address to clear icache is valid
     o_istate : out std_logic_vector(1 downto 0);                      -- ICache state machine value
     o_dstate : out std_logic_vector(1 downto 0);                      -- DCache state machine value
     o_cstate : out std_logic_vector(1 downto 0)                       -- cachetop state machine value
@@ -116,6 +118,8 @@ architecture arch_CacheTop of CacheTop is
     i_resp_mem_data_valid : in std_logic;
     i_resp_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
     i_resp_mem_load_fault : in std_logic;
+    i_flush_address : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_flush_valid : in std_logic;
     o_istate : out std_logic_vector(1 downto 0)
   );
   end component; 
@@ -176,6 +180,8 @@ begin
         i_resp_mem_data_valid => w_ctrl_resp_mem_data_valid,
         i_resp_mem_data => wb_ctrl_resp_mem_data,
         i_resp_mem_load_fault => w_ctrl_resp_mem_load_fault,
+        i_flush_address => i_flush_address,
+        i_flush_valid => i_flush_valid,
         o_istate => o_istate);
 
     d0 : DCache generic map (

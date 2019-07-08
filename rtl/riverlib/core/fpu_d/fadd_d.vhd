@@ -48,7 +48,7 @@ architecture arch_DoubleAdd of DoubleAdd is
 
   type RegistersType is record
     busy : std_logic;
-    ena : std_logic_vector(6 downto 0);
+    ena : std_logic_vector(7 downto 0);
     a : std_logic_vector(63 downto 0);
     b : std_logic_vector(63 downto 0);
     result : std_logic_vector(63 downto 0);
@@ -147,7 +147,7 @@ begin
 
     v := r;
 
-    v.ena := r.ena(5 downto 0) & (i_ena and not r.busy);
+    v.ena := r.ena(6 downto 0) & (i_ena and not r.busy);
 
     if i_ena = '1' then
         v.busy := '1';
@@ -277,24 +277,27 @@ begin
         vb_mantSum := ('0' & mantMoreScale) + ('0' & r.mantLessScale);
     end if;
 
+    if r.ena(2) = '1' then
+        v.mantSum := vb_mantSum;
+    end if;
+
     -- multiplexer
-    if vb_mantSum(105) = '1' then
+    if r.mantSum(105) = '1' then
         -- shift right
         vb_lshift := 127;
-    elsif vb_mantSum(104) = '1' then
+    elsif r.mantSum(104) = '1' then
         vb_lshift := 0;
     else
         -- shift left
         vb_lshift := 0;
         for i in 1 to 104 loop
-            if vb_lshift = 0 and vb_mantSum(104 - i) = '1' then
+            if vb_lshift = 0 and r.mantSum(104 - i) = '1' then
                 vb_lshift := i;
             end if;
         end loop;
     end if;
-    if r.ena(2) = '1' then
+    if r.ena(3) = '1' then
         v.lshift := vb_lshift;
-        v.mantSum := vb_mantSum;
     end if;
 
     -- Prepare to mantissa post-scale
@@ -331,7 +334,7 @@ begin
             vb_expPostScale := vb_expPostScale - 1;
         end if;
     end if;
-    if r.ena(3) = '1' then
+    if r.ena(4) = '1' then
         v.mantAlign := vb_mantAlign;
         v.expPostScale := vb_expPostScale;
         v.expPostScaleInv := conv_integer((not vb_expPostScale) + 1);
@@ -347,7 +350,7 @@ begin
             end if;
         end loop;
     end if;
-    if r.ena(4) = '1' then
+    if r.ena(5) = '1' then
         v.mantPostScale := vb_mantPostScale;
     end if;
 
@@ -466,7 +469,7 @@ begin
     end if;
 
 
-    if r.ena(5) = '1' then
+    if r.ena(6) = '1' then
         if r.eq = '1' then
             v.result := resEQ;
         elsif r.lt = '1' then
@@ -505,7 +508,7 @@ begin
   o_res <= r.result;
   o_illegal_op <= r.illegal_op;
   o_overflow <= r.overflow;
-  o_valid <= r.ena(6);
+  o_valid <= r.ena(7);
   o_busy <= r.busy;
   
   -- registers:

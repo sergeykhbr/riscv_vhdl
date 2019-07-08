@@ -40,6 +40,8 @@ entity ICache is generic (
     i_resp_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
     i_resp_mem_load_fault : in std_logic;
     -- Debug Signals:
+    i_flush_address : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);  -- clear ICache address from debug interface
+    i_flush_valid : in std_logic;                                      -- address to clear icache is valid
     o_istate : out std_logic_vector(1 downto 0)
   );
 end; 
@@ -105,7 +107,8 @@ begin
 
   comb : process(i_nrst, i_req_ctrl_valid, i_req_ctrl_addr,
                 i_resp_ctrl_ready, i_req_mem_ready, 
-                i_resp_mem_data_valid, i_resp_mem_data, i_resp_mem_load_fault, r, r_iline)
+                i_resp_mem_data_valid, i_resp_mem_data, i_resp_mem_load_fault, 
+                i_flush_address, i_flush_valid, r, r_iline)
     variable v : RegistersType;
     variable v_iline : iline_vector;
     variable w_need_mem_req : std_logic;
@@ -347,6 +350,10 @@ begin
         v_iline(0).addr := r.iline_addr_req(BUS_ADDR_WIDTH-1 downto 3);
         v_iline(0).data := i_resp_mem_data;
         v_iline(0).load_fault := i_resp_mem_load_fault;
+    end if;
+    if i_flush_valid = '1' then
+        v_iline(0).addr := (others => '1');
+        v_iline(1).addr := (others => '1');
     end if;
 
     if r.state = State_WaitAccept then

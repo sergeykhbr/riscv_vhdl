@@ -1,8 +1,17 @@
-/**
- * @file
- * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
- * @author     Sergey Khabarov - sergeykhbr@gmail.com
- * @brief      Integer divider.
+/*
+ *  Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 #include "int_div.h"
@@ -10,8 +19,10 @@
 
 namespace debugger {
 
-IntDiv::IntDiv(sc_module_name name_)
+IntDiv::IntDiv(sc_module_name name_, bool async_reset)
     : sc_module(name_) {
+    async_reset_ = async_reset;
+
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_ena;
@@ -25,6 +36,7 @@ IntDiv::IntDiv(sc_module_name name_)
     sensitive << r.busy;
 
     SC_METHOD(registers);
+    sensitive << i_nrst;
     sensitive << i_clk.pos();
 };
 
@@ -161,14 +173,8 @@ void IntDiv::comb() {
         v.qr = wb_qr2;
     }
 
-    if (i_nrst.read() == 0) {
-        v.result = 0;
-        v.ena = 0;
-        v.busy = 0;
-        v.rv32 = 0;
-        v.invert = 0;
-        v.qr = 0;
-        v.resid = 0;
+    if (!async_reset_ && i_nrst.read() == 0) {
+        R_RESET(v);
     }
 
     o_res = r.result;
@@ -194,7 +200,11 @@ void IntDiv::registers() {
         }
     }
 
-    r = v;
+    if (async_reset_ && i_nrst.read() == 0) {
+        R_RESET(r);
+    } else {
+        r = v;
+    }
 }
 
 uint64_t IntDiv::compute_reference(bool unsign, bool rv32, bool resid,

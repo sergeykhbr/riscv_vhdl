@@ -18,9 +18,10 @@
 
 namespace debugger {
 
-CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid)
+CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset)
     : sc_module(name_) {
     hartid_ = hartid;
+    async_reset_ = async_reset;
 
     SC_METHOD(comb);
     sensitive << i_nrst;
@@ -73,6 +74,7 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid)
     sensitive << r.break_event;
 
     SC_METHOD(registers);
+    sensitive << i_nrst;
     sensitive << i_clk.pos();
 };
 
@@ -384,7 +386,7 @@ void CsrRegs::comb() {
         }
     }
 
-    if (!i_nrst.read()) {
+    if (!async_reset_ && !i_nrst.read()) {
         R_RESET(v);
     }
 
@@ -396,7 +398,11 @@ void CsrRegs::comb() {
 }
 
 void CsrRegs::registers() {
-    r = v;
+    if (async_reset_ && i_nrst.read() == 0) {
+        R_RESET(r);
+    } else {
+        r = v;
+    }
 }
 
 }  // namespace debugger

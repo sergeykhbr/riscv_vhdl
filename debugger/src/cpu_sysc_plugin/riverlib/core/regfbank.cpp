@@ -18,7 +18,10 @@
 
 namespace debugger {
 
-RegFloatBank::RegFloatBank(sc_module_name name_) : sc_module(name_) {
+RegFloatBank::RegFloatBank(sc_module_name name_, bool async_reset) :
+    sc_module(name_) {
+    async_reset_ = async_reset;
+
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_radr1;
@@ -33,6 +36,7 @@ RegFloatBank::RegFloatBank(sc_module_name name_) : sc_module(name_) {
     sensitive << r.update;
 
     SC_METHOD(registers);
+    sensitive << i_nrst;
     sensitive << i_clk.pos();
 };
 
@@ -67,8 +71,11 @@ void RegFloatBank::comb() {
     /** v.mem[] is not a signals, so use update register to trigger process */
     v.update = !r.update.read();
 
-    if (!i_nrst.read()) {   
-        R_RESET(v);
+    if (!async_reset_ && !i_nrst.read()) {   
+        for (int i = 0; i < RegFpu_Total; i++) {
+            v.mem[i] = 0xfeedface;
+        }
+        v.update = 0;
     }
 
     o_rdata1 = r.mem[i_radr1.read()(4, 0)];
@@ -77,7 +84,14 @@ void RegFloatBank::comb() {
 }
 
 void RegFloatBank::registers() {
-    r = v;
+    if (async_reset_ && i_nrst.read() == 0) {
+        for (int i = 0; i < RegFpu_Total; i++) {
+            r.mem[i] = 0xfeedface;
+        }
+        r.update = 0;
+    } else {
+        r = v;
+    }
 }
 
 }  // namespace debugger

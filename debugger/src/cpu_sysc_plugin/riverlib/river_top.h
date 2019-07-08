@@ -83,6 +83,8 @@ private:
     sc_signal<bool> w_resp_data_store_fault;
     sc_signal<bool> w_resp_ctrl_load_fault;
     sc_signal<bool> w_resp_data_ready;
+    sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_flush_address;
+    sc_signal<bool> w_flush_valid;
     sc_signal<sc_uint<2>> wb_istate;
     sc_signal<sc_uint<2>> wb_dstate;
     sc_signal<sc_uint<2>> wb_cstate;

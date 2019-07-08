@@ -47,7 +47,7 @@ SC_MODULE(DCache) {
 
     SC_HAS_PROCESS(DCache);
 
-    DCache(sc_module_name name_);
+    DCache(sc_module_name name_, bool async_reset);
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
@@ -67,7 +67,18 @@ private:
         sc_signal<bool> dline_store_fault;
         sc_signal<sc_uint<2>> state;
     } v, r;
+
+    void R_RESET(RegistersType &iv) {
+        iv.dline_data = 0;
+        iv.dline_addr_req = 0;
+        iv.dline_size_req = 0;
+        iv.dline_load_fault = 0;
+        iv.dline_store_fault = 0;
+        iv.state = State_Idle;
+    }
+
     bool w_wait_response;
+    bool async_reset_;
 };
 
 }  // namespace debugger

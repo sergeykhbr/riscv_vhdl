@@ -1,9 +1,19 @@
-/**
- * @file
- * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
- * @author     Sergey Khabarov - sergeykhbr@gmail.com
- * @brief      Integer multiplier.
- * @details    Implemented algorithm provides 4 clocks per instruction
+/*
+ *  Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ * Implemented algorithm provides 4 clocks per instruction
  */
 
 #ifndef __DEBUGGER_RIVERLIB_INT_MUL_H__
@@ -32,7 +42,7 @@ SC_MODULE(IntMul) {
 
     SC_HAS_PROCESS(IntMul);
 
-    IntMul(sc_module_name name_);
+    IntMul(sc_module_name name_, bool async_reset);
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
@@ -67,8 +77,6 @@ private:
         sc_signal<bool> unsign;
         sc_signal<bool> high;
         sc_signal<bool> rv32;
-        Level1Type lvl1;
-        Level3Type lvl3;
         sc_signal<sc_biguint<128>> result;
 
         sc_uint<RISCV_ARCH> a1_dbg;
@@ -76,6 +84,23 @@ private:
         sc_uint<RISCV_ARCH> reference_mul;          // Used for run-time comparision
     } v, r;
 
+    Level1Type v_lvl1, r_lvl1;
+    Level3Type v_lvl3, r_lvl3;
+
+    void R_RESET(RegistersType &iv) {
+        iv.busy = 0;
+        iv.ena = 0;
+        iv.a1 = 0;
+        iv.a2 = 0;
+        iv.result = 0;
+        iv.unsign = 0;
+        iv.high = 0;
+        iv.rv32 = 0;
+        iv.result = 0;
+        iv.reference_mul = 0;
+    }
+
+    bool async_reset_;
 };
 
 

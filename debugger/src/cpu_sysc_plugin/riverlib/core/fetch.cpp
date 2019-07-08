@@ -1,15 +1,27 @@
-/**
- * @file
- * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
- * @author     Sergey Khabarov - sergeykhbr@gmail.com
- * @brief      CPU Fetch Instruction stage.
+/*
+ *  Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 #include "fetch.h"
 
 namespace debugger {
 
-InstrFetch::InstrFetch(sc_module_name name_) : sc_module(name_) {
+InstrFetch::InstrFetch(sc_module_name name_, bool async_reset) :
+    sc_module(name_) {
+    async_reset_ = async_reset;
+
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_pipeline_hold;
@@ -40,6 +52,7 @@ InstrFetch::InstrFetch(sc_module_name name_) : sc_module(name_) {
     sensitive << r.minus4;
 
     SC_METHOD(registers);
+    sensitive << i_nrst;
     sensitive << i_clk.pos();
 };
 
@@ -133,7 +146,7 @@ void InstrFetch::comb() {
         }
     }
 
-    if (!i_nrst.read()) {
+    if (!async_reset_ && !i_nrst.read()) {
         R_RESET(v);
     }
 
@@ -150,7 +163,11 @@ void InstrFetch::comb() {
 }
 
 void InstrFetch::registers() {
-    r = v;
+    if (async_reset_ && i_nrst.read() == 0) {
+        R_RESET(r);
+    } else {
+        r = v;
+    }
 }
 
 }  // namespace debugger

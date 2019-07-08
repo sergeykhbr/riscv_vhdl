@@ -46,6 +46,9 @@ SC_MODULE(ICache) {
     sc_in<bool> i_resp_mem_data_valid;
     sc_in<sc_uint<BUS_DATA_WIDTH>> i_resp_mem_data;
     sc_in<bool> i_resp_mem_load_fault;
+    // Debug interface
+    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_flush_address;
+    sc_in<bool> i_flush_valid;
     sc_out<sc_uint<2>> o_istate;
 
     void comb();
@@ -53,7 +56,7 @@ SC_MODULE(ICache) {
 
     SC_HAS_PROCESS(ICache);
 
-    ICache(sc_module_name name_);
+    ICache(sc_module_name name_, bool async_reset);
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
@@ -77,6 +80,17 @@ private:
         sc_signal<sc_uint<BUS_DATA_WIDTH>> data;
         sc_signal<bool> load_fault;
     };
+
+    void LINE_RESET(line_type &iv) {
+        iv.addr = ~0;
+        iv.data = 0;
+        iv.load_fault = 0;
+    }
+
+    struct iline_vector {
+        line_type arr[ILINE_TOTAL];
+    };
+
     struct line_signal_type {
         sc_bv<ILINE_TOTAL + 1> hit;     // Hit_Total = ILINE_TOTAL + 1
         sc_bv<ILINE_TOTAL> hit_hold;
@@ -87,7 +101,6 @@ private:
     };
 
     struct RegistersType {
-        line_type iline[ILINE_TOTAL];
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> iline_addr_req;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> addr_processing;
         sc_signal<sc_uint<2>> state;
@@ -96,6 +109,19 @@ private:
         sc_signal<sc_uint<32>> delay_data;
         sc_signal<bool> delay_load_fault;
     } v, r;
+
+    void R_RESET(RegistersType &iv) {
+        iv.iline_addr_req = 0;
+        iv.addr_processing = 0;
+        iv.state = State_Idle;
+        iv.double_req = 0;
+        iv.delay_valid = 0;
+        iv.delay_data = 0;
+        iv.delay_load_fault = 0;
+    }
+
+    iline_vector v_iline;
+    iline_vector r_iline;
     bool w_need_mem_req;
     sc_uint<32> wb_hit_word;
     bool w_hit_load_fault;
@@ -103,6 +129,7 @@ private:
     bool w_reuse_lastline;
     bool w_wait_response;
     bool w_req_ctrl_valid;
+    bool async_reset_;
 };
 
 

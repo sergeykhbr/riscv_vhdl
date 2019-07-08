@@ -34,9 +34,9 @@ typedef struct FpuTestType {
 } FpuTestType;
 
 //#define ENABLE_FADD_TESTS
-//#define ENABLE_FSUB_TESTS
+#define ENABLE_FSUB_TESTS
 #define ENABLE_FDIV_TESTS
-#define ENABLE_FMUL_TESTS
+//#define ENABLE_FMUL_TESTS
 //#define ENABLE_FMAX_TESTS
 #define ENABLE_FCVT_D_W_TESTS
 #define ENABLE_FCVT_D_WU_TESTS

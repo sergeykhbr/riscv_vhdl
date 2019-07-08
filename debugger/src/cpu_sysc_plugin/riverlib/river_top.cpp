@@ -54,11 +54,13 @@ RiverTop::RiverTop(sc_module_name name_, uint32_t hartid, bool async_reset)
     proc0->o_dport_ready(o_dport_ready);
     proc0->o_dport_rdata(o_dport_rdata);
     proc0->o_halted(o_halted);
+    proc0->o_flush_address(wb_flush_address);
+    proc0->o_flush_valid(w_flush_valid);
     proc0->i_istate(wb_istate);
     proc0->i_dstate(wb_dstate);
     proc0->i_cstate(wb_cstate);
 
-    cache0 = new CacheTop("cache0");
+    cache0 = new CacheTop("cache0", async_reset);
     cache0->i_clk(i_clk);
     cache0->i_nrst(i_nrst);
     cache0->i_req_ctrl_valid(w_req_ctrl_valid);
@@ -91,6 +93,8 @@ RiverTop::RiverTop(sc_module_name name_, uint32_t hartid, bool async_reset)
     cache0->i_resp_mem_data(i_resp_mem_data);
     cache0->i_resp_mem_load_fault(i_resp_mem_load_fault);
     cache0->i_resp_mem_store_fault(i_resp_mem_store_fault);
+    cache0->i_flush_address(wb_flush_address);
+    cache0->i_flush_valid(w_flush_valid);
     cache0->o_istate(wb_istate);
     cache0->o_dstate(wb_dstate);
     cache0->o_cstate(wb_cstate);

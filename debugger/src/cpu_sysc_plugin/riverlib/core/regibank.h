@@ -1,8 +1,17 @@
-/**
- * @file
- * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
- * @author     Sergey Khabarov - sergeykhbr@gmail.com
- * @brief      Multi-port CPU Integer Registers memory.
+/*
+ *  Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 #ifndef __DEBUGGER_RIVERLIB_REGIBANK_H__
@@ -40,7 +49,7 @@ SC_MODULE(RegIntBank) {
 
     SC_HAS_PROCESS(RegIntBank);
 
-    RegIntBank(sc_module_name name_);
+    RegIntBank(sc_module_name name_, bool async_reset);
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
@@ -51,6 +60,8 @@ private:
         sc_signal<bool> update;             // To generate SystemC delta event only.
         sc_uint<RISCV_ARCH> mem[Reg_Total]; // Multi-ports memory
     } v, r;
+
+    bool async_reset_;
 };
 
 }  // namespace debugger

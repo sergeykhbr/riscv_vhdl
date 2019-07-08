@@ -58,7 +58,7 @@ SC_MODULE(DoubleAdd) {
 
     struct RegistersType {
         sc_signal<bool> busy;
-        sc_signal<sc_uint<7>> ena;
+        sc_signal<sc_uint<8>> ena;
         sc_signal<sc_uint<64>> a;
         sc_signal<sc_uint<64>> b;
         sc_signal<sc_uint<64>> result;

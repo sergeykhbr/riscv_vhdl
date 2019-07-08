@@ -290,24 +290,27 @@ void DoubleAdd::comb() {
         vb_mantSum = mantMoreScale + r.mantLessScale;
     }
 
+    if (r.ena.read()[2] == 1) {
+        v.mantSum = vb_mantSum;
+    }
+
     // multiplexer
-    if (vb_mantSum[105] == 1) {
+    if (r.mantSum.read()[105] == 1) {
         // shift right
         vb_lshift = 0x7F;
-    } else if (vb_mantSum[104] == 1) {
+    } else if (r.mantSum.read()[104] == 1) {
         vb_lshift = 0;
     } else {
         // shift left
         vb_lshift = 0;
         for (unsigned i = 1; i < 105; i++) {
-            if (vb_lshift == 0 && vb_mantSum[104 - i] == 1) {
+            if (vb_lshift == 0 && r.mantSum.read()[104 - i] == 1) {
                 vb_lshift = i;
             }
         }
     }
-    if (r.ena.read()[2] == 1) {
+    if (r.ena.read()[3] == 1) {
         v.lshift = vb_lshift;
-        v.mantSum = vb_mantSum;
     }
 
     // Prepare to mantissa post-scale
@@ -343,7 +346,7 @@ void DoubleAdd::comb() {
             vb_expPostScale -= 1;
         }
     }
-    if (r.ena.read()[3] == 1) {
+    if (r.ena.read()[4] == 1) {
         v.mantAlign = vb_mantAlign;
         v.expPostScale = vb_expPostScale;
         v.expPostScaleInv = ~vb_expPostScale + 1;
@@ -359,7 +362,7 @@ void DoubleAdd::comb() {
             }
         }
     }
-    if (r.ena.read()[4] == 1) {
+    if (r.ena.read()[5] == 1) {
         v.mantPostScale = vb_mantPostScale;
     }
 
@@ -476,7 +479,7 @@ void DoubleAdd::comb() {
         resMin = r.b;
     }
 
-    if (r.ena.read()[5] == 1) {
+    if (r.ena.read()[6] == 1) {
         if (r.eq.read() == 1) {
             v.result = resEQ;
         } else if (r.lt.read() == 1) {
@@ -511,7 +514,7 @@ void DoubleAdd::comb() {
     o_res = r.result;
     o_illegal_op = r.illegal_op;
     o_overflow = r.overflow;
-    o_valid = r.ena.read()[6];
+    o_valid = r.ena.read()[7];
     o_busy = r.busy;
 }
 

@@ -1,8 +1,17 @@
-/**
- * @file
- * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
- * @author     Sergey Khabarov - sergeykhbr@gmail.com
- * @brief      CPU pipeline implementation.
+/*
+ *  Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 #ifndef __DEBUGGER_RIVERLIB_PROC_H__
@@ -63,6 +72,8 @@ SC_MODULE(Processor) {
     sc_out<sc_uint<RISCV_ARCH>> o_dport_rdata;          // Response value
     sc_out<bool> o_halted;                              // CPU halted via debug interface
     // Cache debug signals:
+    sc_out<sc_uint<BUS_ADDR_WIDTH>> o_flush_address;    // Address of instruction to remove from ICache
+    sc_out<bool> o_flush_valid;                         // Remove address from ICache is valid
     sc_in<sc_uint<2>> i_istate;                         // ICache transaction state
     sc_in<sc_uint<2>> i_dstate;                         // DCache transaction state
     sc_in<sc_uint<2>> i_cstate;                         // CacheTop state machine value
@@ -198,6 +209,8 @@ private:
         sc_signal<bool> br_fetch_valid;                      // Fetch injection address/instr are valid
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> br_address_fetch; // Fetch injection address to skip ebreak instruciton only once
         sc_signal<sc_uint<32>> br_instr_fetch;               // Real instruction value that was replaced by ebreak
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> flush_address;    // Address of instruction to remove from ICache
+        sc_signal<bool> flush_valid;                         // Remove address from ICache is valid
     } dbg;
 
     struct BranchPredictorType {

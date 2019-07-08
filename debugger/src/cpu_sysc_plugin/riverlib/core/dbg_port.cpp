@@ -1,16 +1,27 @@
-/**
- * @file
- * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
- * @author     Sergey Khabarov - sergeykhbr@gmail.com
- * @brief      Debug port.
- * @details    Must be connected to DSU.
+/*
+ *  Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 #include "dbg_port.h"
 
 namespace debugger {
 
-DbgPort::DbgPort(sc_module_name name_) : sc_module(name_) {
+DbgPort::DbgPort(sc_module_name name_, bool async_reset) :
+    sc_module(name_) {
+    async_reset_ = async_reset;
+
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_dport_valid;
@@ -41,9 +52,12 @@ DbgPort::DbgPort(sc_module_name name_) : sc_module(name_) {
     sensitive << r.executed_cnt;
     sensitive << r.stepping_mode_cnt;
     sensitive << r.trap_on_break;
+    sensitive << r.flush_address;
+    sensitive << r.flush_valid;
     sensitive << wb_stack_rdata;
 
     SC_METHOD(registers);
+    sensitive << i_nrst;
     sensitive << i_clk.pos();
 
     if (CFG_STACK_TRACE_BUF_SIZE != 0) {
@@ -133,6 +147,7 @@ void DbgPort::comb() {
     w_o_freg_write = 0;
     w_o_npc_write = 0;
     v.br_fetch_valid = 0;
+    v.flush_valid = 0;
     v.rd_trbuf_ena = 0;
     wb_stack_raddr = 0;
     w_stack_we = 0;
@@ -293,6 +308,14 @@ void DbgPort::comb() {
                     v.br_instr_fetch = i_dport_wdata.read()(31, 0);
                 }
                 break;
+            case 9:
+                wb_rdata(BUS_ADDR_WIDTH-1, 0) = r.flush_address;
+                if (i_dport_write.read()) {
+                    v.flush_valid = 1;
+                    v.flush_address =
+                        i_dport_wdata.read()(BUS_ADDR_WIDTH-1, 0);
+                }
+                break;
             default:;
             }
             break;
@@ -311,23 +334,8 @@ void DbgPort::comb() {
         wb_o_rdata = r.rdata;
     }
 
-    if (!i_nrst.read()) {
-        v.ready = 0;
-        v.halt = 0;
-        v.breakpoint = 0;
-        v.stepping_mode = 0;
-        v.rdata = 0;
-        v.stepping_mode_cnt = 0;
-        v.stepping_mode_steps = 0;
-        v.clock_cnt = 0;
-        v.executed_cnt = 0;
-        v.trap_on_break = 0;
-        v.br_address_fetch = 0;
-        v.br_instr_fetch = 0;
-        v.br_fetch_valid = 0;
-        v.stack_trace_cnt = 0;
-        v.rd_trbuf_ena = 0;
-        v.rd_trbuf_addr0 = 0;
+    if (!async_reset_ && !i_nrst.read()) {
+        R_RESET(v);
     }
 
     o_core_addr = wb_o_core_addr;
@@ -346,13 +354,19 @@ void DbgPort::comb() {
     o_br_fetch_valid = r.br_fetch_valid;
     o_br_address_fetch = r.br_address_fetch;
     o_br_instr_fetch = r.br_instr_fetch;
+    o_flush_address = r.flush_address;
+    o_flush_valid = r.flush_valid;
 
     o_dport_ready = r.ready;
     o_dport_rdata = wb_o_rdata;
 }
 
 void DbgPort::registers() {
-    r = v;
+    if (async_reset_ && i_nrst.read() == 0) {
+        R_RESET(r);
+    } else {
+        r = v;
+    }
 }
 
 }  // namespace debugger

@@ -18,7 +18,9 @@
 
 namespace debugger {
 
-ICache::ICache(sc_module_name name_) : sc_module(name_) {
+ICache::ICache(sc_module_name name_, bool async_reset) : sc_module(name_) {
+    async_reset_ = async_reset;
+
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_req_ctrl_valid;
@@ -27,13 +29,15 @@ ICache::ICache(sc_module_name name_) : sc_module(name_) {
     sensitive << i_resp_mem_data;
     sensitive << i_resp_mem_load_fault;
     sensitive << i_resp_ctrl_ready;
+    sensitive << i_flush_address;
+    sensitive << i_flush_valid;
     sensitive << i_req_mem_ready;
-    sensitive << r.iline[0].addr;
-    sensitive << r.iline[0].data;
-    sensitive << r.iline[0].load_fault;
-    sensitive << r.iline[1].addr;
-    sensitive << r.iline[1].data;
-    sensitive << r.iline[1].load_fault;
+    sensitive << r_iline.arr[0].addr;
+    sensitive << r_iline.arr[0].data;
+    sensitive << r_iline.arr[0].load_fault;
+    sensitive << r_iline.arr[1].addr;
+    sensitive << r_iline.arr[1].data;
+    sensitive << r_iline.arr[1].load_fault;
     sensitive << r.iline_addr_req;
     sensitive << r.addr_processing;
     sensitive << r.double_req;
@@ -43,6 +47,7 @@ ICache::ICache(sc_module_name name_) : sc_module(name_) {
     sensitive << r.state;
 
     SC_METHOD(registers);
+    sensitive << i_nrst;
     sensitive << i_clk.pos();
 };
 
@@ -57,14 +62,16 @@ void ICache::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_req_mem_ready, "/top/cache0/i0/i_req_mem_ready");
         sc_trace(o_vcd, i_resp_mem_data_valid, "/top/cache0/i0/i_resp_mem_data_valid");
         sc_trace(o_vcd, i_resp_mem_data, "/top/cache0/i0/i_resp_mem_data");
+        sc_trace(o_vcd, i_flush_address, "/top/cache0/i0/i_flush_address");
+        sc_trace(o_vcd, i_flush_valid, "/top/cache0/i0/i_flush_valid");
         sc_trace(o_vcd, o_resp_ctrl_valid, "/top/cache0/i0/o_resp_ctrl_valid");
         sc_trace(o_vcd, i_resp_ctrl_ready, "/top/cache0/i0/i_resp_ctrl_ready");
         sc_trace(o_vcd, o_resp_ctrl_addr, "/top/cache0/i0/o_resp_ctrl_addr");
         sc_trace(o_vcd, o_resp_ctrl_data, "/top/cache0/i0/o_resp_ctrl_data");
-        sc_trace(o_vcd, r.iline[0].addr, "/top/cache0/i0/r_iline(0)_addr");
-        sc_trace(o_vcd, r.iline[0].data, "/top/cache0/i0/r_iline(0)_data");
-        sc_trace(o_vcd, r.iline[1].addr, "/top/cache0/i0/r_iline(1)_addr");
-        sc_trace(o_vcd, r.iline[1].data, "/top/cache0/i0/r_iline(1)_data");
+        sc_trace(o_vcd, r_iline.arr[0].addr, "/top/cache0/i0/r_iline(0)_addr");
+        sc_trace(o_vcd, r_iline.arr[0].data, "/top/cache0/i0/r_iline(0)_data");
+        sc_trace(o_vcd, r_iline.arr[1].addr, "/top/cache0/i0/r_iline(1)_addr");
+        sc_trace(o_vcd, r_iline.arr[1].data, "/top/cache0/i0/r_iline(1)_data");
         sc_trace(o_vcd, r.iline_addr_req, "/top/cache0/i0/r_iline_addr_req");
         sc_trace(o_vcd, r.addr_processing, "/top/cache0/i0/r_addr_processing");
         sc_trace(o_vcd, r.double_req, "/top/cache0/i0/r_double_req");
@@ -99,6 +106,7 @@ void ICache::comb() {
     sc_uint<BUS_ADDR_WIDTH> wb_hold_addr[2];
     
     v = r;
+    v_iline = r_iline;
 
     w_wait_response = 0;
     if (r.state.read() == State_WaitResp && i_resp_mem_data_valid.read() == 0) {
@@ -121,15 +129,15 @@ void ICache::comb() {
         wb_l[i].hit = 0;
         wb_l[i].hit_data = 0;
         wb_l[i].hit_load_fault = 0;
-        if (wb_req_addr[i](BUS_ADDR_WIDTH-1, 3) == r.iline[0].addr.read()) {
+        if (wb_req_addr[i](BUS_ADDR_WIDTH-1, 3) == r_iline.arr[0].addr.read()) {
             wb_l[i].hit[Hit_Line1] = w_req_ctrl_valid;
-            wb_l[i].hit_data = r.iline[0].data.read();
-            wb_l[i].hit_load_fault = r.iline[0].load_fault.read();
+            wb_l[i].hit_data = r_iline.arr[0].data.read();
+            wb_l[i].hit_load_fault = r_iline.arr[0].load_fault.read();
         } else if (wb_req_addr[i](BUS_ADDR_WIDTH-1, 3) ==
-                   r.iline[1].addr.read()) {
+                   r_iline.arr[1].addr.read()) {
             wb_l[i].hit[Hit_Line2] = w_req_ctrl_valid;
-            wb_l[i].hit_data = r.iline[1].data.read();
-            wb_l[i].hit_load_fault = r.iline[1].load_fault.read();
+            wb_l[i].hit_data = r_iline.arr[1].data.read();
+            wb_l[i].hit_load_fault = r_iline.arr[1].load_fault.read();
         } else if (wb_req_addr[i](BUS_ADDR_WIDTH-1, 3) ==
             r.iline_addr_req.read()(BUS_ADDR_WIDTH-1, 3)) {
             wb_l[i].hit[Hit_Response] = i_resp_mem_data_valid.read();
@@ -140,15 +148,15 @@ void ICache::comb() {
         wb_l[i].hit_hold = 0;
         wb_l[i].hold_data = 0;
         wb_l[i].hold_load_fault = 0;
-        if (wb_hold_addr[i](BUS_ADDR_WIDTH-1, 3) == r.iline[0].addr.read()) {
+        if (wb_hold_addr[i](BUS_ADDR_WIDTH-1, 3) == r_iline.arr[0].addr.read()) {
             wb_l[i].hit_hold[Hit_Line1] = 1;
-            wb_l[i].hold_data = r.iline[0].data.read();
-            wb_l[i].hold_load_fault = r.iline[0].load_fault.read();
+            wb_l[i].hold_data = r_iline.arr[0].data.read();
+            wb_l[i].hold_load_fault = r_iline.arr[0].load_fault.read();
         } else if (wb_hold_addr[i](BUS_ADDR_WIDTH-1, 3) ==
-                   r.iline[1].addr.read()) {
+                   r_iline.arr[1].addr.read()) {
             wb_l[i].hit_hold[Hit_Line2] = 1;
-            wb_l[i].hold_data = r.iline[1].data.read();
-            wb_l[i].hold_load_fault = r.iline[1].load_fault.read();
+            wb_l[i].hold_data = r_iline.arr[1].data.read();
+            wb_l[i].hold_load_fault = r_iline.arr[1].load_fault.read();
         } else if (wb_hold_addr[i](BUS_ADDR_WIDTH-1, 3) ==
             r.iline_addr_req.read()(BUS_ADDR_WIDTH-1, 3)) {
             wb_l[i].hold_data = i_resp_mem_data.read();
@@ -311,27 +319,31 @@ void ICache::comb() {
             */
         if (i_resp_ctrl_ready.read()) {
             if ((wb_l[0].hit[Hit_Line2] || wb_l[1].hit[Hit_Line2]) == 1
-                && r.iline[1].addr.read() 
+                && r_iline.arr[1].addr.read() 
                     != wb_o_req_mem_addr(BUS_ADDR_WIDTH-1, 3)) {
                 w_reuse_lastline = w_need_mem_req;
             }
         } else {
             if ((wb_l[0].hit_hold[Hit_Line2] || wb_l[1].hit_hold[Hit_Line2]) == 1
                 && (wb_l[0].hit_hold[Hit_Line1] || wb_l[1].hit_hold[Hit_Line1]) == 0
-                && r.iline[1].addr.read()
+                && r_iline.arr[1].addr.read()
                     != r.iline_addr_req.read()(BUS_ADDR_WIDTH-1, 3)) {
                 w_reuse_lastline = 1;
             }
         }
         if (!w_reuse_lastline) {
-            v.iline[1].addr = r.iline[0].addr;
-            v.iline[1].data = r.iline[0].data;
-            v.iline[1].load_fault = v.iline[0].load_fault;
+            v_iline.arr[1].addr = r_iline.arr[0].addr;
+            v_iline.arr[1].data = r_iline.arr[0].data;
+            v_iline.arr[1].load_fault = v_iline.arr[0].load_fault;
         }
         
-        v.iline[0].addr = r.iline_addr_req.read()(BUS_ADDR_WIDTH-1, 3);
-        v.iline[0].data = i_resp_mem_data;
-        v.iline[0].load_fault = i_resp_mem_load_fault;
+        v_iline.arr[0].addr = r.iline_addr_req.read()(BUS_ADDR_WIDTH-1, 3);
+        v_iline.arr[0].data = i_resp_mem_data;
+        v_iline.arr[0].load_fault = i_resp_mem_load_fault;
+    }
+    if (i_flush_valid.read() == 1) {
+        v_iline.arr[0].addr = ~0u;
+        v_iline.arr[1].addr = ~0u;
     }
 
     if (r.state.read() == State_WaitAccept) {
@@ -349,20 +361,11 @@ void ICache::comb() {
     wb_o_resp_addr = r.addr_processing;
 
 
-    if (!i_nrst.read()) {
-        v.iline[0].addr = ~0;
-        v.iline[0].data = 0;
-        v.iline[0].load_fault = 0;
-        v.iline[1].addr = ~0;
-        v.iline[1].data = 0;
-        v.iline[1].load_fault = 0;
-        v.iline_addr_req = 0;
-        v.addr_processing = 0;
-        v.state = State_Idle;
-        v.double_req = 0;
-        v.delay_valid = 0;
-        v.delay_data = 0;
-        v.delay_load_fault = 0;
+    if (!async_reset_ && !i_nrst.read()) {
+        R_RESET(v);
+        for (int i = 0; i < ILINE_TOTAL; i++) {
+            LINE_RESET(v_iline.arr[i]);
+        }
     }
 
     o_req_ctrl_ready = w_o_req_ctrl_ready;
@@ -381,7 +384,15 @@ void ICache::comb() {
 }
 
 void ICache::registers() {
-    r = v;
+    if (async_reset_ && i_nrst.read() == 0) {
+        R_RESET(r);
+        for (int i = 0; i < ILINE_TOTAL; i++) {
+            LINE_RESET(r_iline.arr[i]);
+        }
+    } else {
+        r = v;
+        r_iline = v_iline;
+    }
 }
 
 #ifdef DBG_ICACHE_TB

@@ -1,8 +1,17 @@
-/**
- * @file
- * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
- * @author     Sergey Khabarov - sergeykhbr@gmail.com
- * @brief      CPU pipeline implementation.
+/*
+ *  Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 #include "proc.h"
@@ -17,6 +26,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset)
     sensitive << i_nrst;
     sensitive << i_resp_ctrl_valid;
     sensitive << w.f.pipeline_hold;
+    sensitive << w.e.npc;
     sensitive << w.e.valid;
     sensitive << w.e.pipeline_hold;
     sensitive << w.m.pipeline_hold;
@@ -28,11 +38,14 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset)
     sensitive << dbg.core_addr;
     sensitive << dbg.halt;
     sensitive << dbg.core_wdata;
+    sensitive << csr.break_event;
+    sensitive << dbg.flush_valid;
+    sensitive << dbg.flush_address;
 
     SC_METHOD(negedge_dbg_print);
     sensitive << i_clk.neg();
 
-    fetch0 = new InstrFetch("fetch0");
+    fetch0 = new InstrFetch("fetch0", async_reset);
     fetch0->i_clk(i_clk);
     fetch0->i_nrst(i_nrst);
     fetch0->i_pipeline_hold(w_fetch_pipeline_hold);
@@ -144,7 +157,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset)
     exec0->o_mret(w.e.mret);
     exec0->o_uret(w.e.uret);
 
-    mem0 = new MemAccess("mem0");
+    mem0 = new MemAccess("mem0", async_reset);
     mem0->i_clk(i_clk);
     mem0->i_nrst(i_nrst);
     mem0->i_e_valid(w.e.valid);
@@ -175,7 +188,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset)
     mem0->o_pc(w.m.pc);
     mem0->o_instr(w.m.instr);
 
-    predic0 = new BranchPredictor("predic0");
+    predic0 = new BranchPredictor("predic0", async_reset);
     predic0->i_clk(i_clk);
     predic0->i_nrst(i_nrst);
     predic0->i_req_mem_fire(w.f.req_fire);
@@ -190,7 +203,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset)
     predic0->o_minus2(bp.minus2);
     predic0->o_minus4(bp.minus4);
 
-    iregs0 = new RegIntBank("iregs0");
+    iregs0 = new RegIntBank("iregs0", async_reset);
     iregs0->i_clk(i_clk);
     iregs0->i_nrst(i_nrst);
     iregs0->i_radr1(w.e.radr1);
@@ -208,7 +221,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset)
     iregs0->o_ra(ireg.ra);   // Return address
 
     if (CFG_HW_FPU_ENABLE) {
-        fregs0 = new RegFloatBank("fregs0");
+        fregs0 = new RegFloatBank("fregs0", async_reset);
         fregs0->i_clk(i_clk);
         fregs0->i_nrst(i_nrst);
         fregs0->i_radr1(w.e.radr1);
@@ -229,7 +242,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset)
         freg.dport_rdata = 0;
     }
 
-    csr0 = new CsrRegs("csr0", hartid);
+    csr0 = new CsrRegs("csr0", hartid, async_reset);
     csr0->i_clk(i_clk);
     csr0->i_nrst(i_nrst);
     csr0->i_mret(w.e.mret);
@@ -267,7 +280,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset)
     csr0->i_dport_wdata(dbg.core_wdata);
     csr0->o_dport_rdata(csr.dport_rdata);
 
-    dbg0 = new DbgPort("dbg0");
+    dbg0 = new DbgPort("dbg0", async_reset);
     dbg0->i_clk(i_clk);
     dbg0->i_nrst(i_nrst);
     dbg0->i_dport_valid(i_dport_valid);
@@ -306,6 +319,8 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset)
     dbg0->i_istate(i_istate);
     dbg0->i_dstate(i_dstate);
     dbg0->i_cstate(i_cstate);
+    dbg0->o_flush_address(dbg.flush_address);
+    dbg0->o_flush_valid(dbg.flush_valid);
     dbg0->i_instr_buf(w.f.instr_buf);
 
     reg_dbg = 0;
@@ -369,6 +384,14 @@ void Processor::comb() {
     } else {
         o_time = dbg.clock_cnt;
     }
+
+    o_flush_valid = dbg.flush_valid.read() || csr.break_event.read();
+    if (csr.break_event.read()) {
+        o_flush_address = w.e.npc;
+    } else {
+        o_flush_address = dbg.flush_address;
+    }
+
     o_halted = dbg.halt;
 }
 

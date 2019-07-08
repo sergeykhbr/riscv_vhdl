@@ -1,16 +1,27 @@
-/**
- * @file
- * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
- * @author     Sergey Khabarov - sergeykhbr@gmail.com
- * @brief      CPU Memory Access stage.
+/*
+ *  Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 #include "memaccess.h"
 
 namespace debugger {
 
-MemAccess::MemAccess(sc_module_name name_) 
+MemAccess::MemAccess(sc_module_name name_, bool async_reset)
     : sc_module(name_) {
+    async_reset_ = async_reset;
+
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_mem_req_ready;
@@ -33,6 +44,7 @@ MemAccess::MemAccess(sc_module_name name_)
     sensitive << r.wait_resp;
 
     SC_METHOD(registers);
+    sensitive << i_nrst;
     sensitive << i_clk.pos();
 };
 
@@ -179,21 +191,8 @@ void MemAccess::comb() {
     w_o_valid = r.valid.read() || w_mem_fire;
     w_o_wena = r.wena & w_o_valid;
 
-    if (!i_nrst.read()) {
-        v.valid = false;
-        v.pc = 0;
-        v.instr = 0;
-        v.waddr = 0;
-        v.wdata = 0;
-        v.wena = 0;
-        v.size = 0;
-        v.sign_ext = 0;
-        v.wait_req = 0;
-        v.wait_req_write = 0;
-        v.wait_req_sz = 0;
-        v.wait_req_addr = 0;
-        v.wait_req_wdata = 0;
-        v.wait_resp = 0;
+    if (!async_reset_ && !i_nrst.read()) {
+        R_RESET(v);
     }
 
     o_mem_resp_ready = 1;
@@ -214,7 +213,11 @@ void MemAccess::comb() {
 }
 
 void MemAccess::registers() {
-    r = v;
+    if (async_reset_ && i_nrst.read() == 0) {
+        R_RESET(r);
+    } else {
+        r = v;
+    }
 }
 
 }  // namespace debugger

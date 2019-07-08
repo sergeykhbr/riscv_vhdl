@@ -68,7 +68,7 @@ SC_MODULE(CsrRegs) {
 
     SC_HAS_PROCESS(CsrRegs);
 
-    CsrRegs(sc_module_name name_, uint32_t hartid);
+    CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset);
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
@@ -117,6 +117,7 @@ private:
     }
 
     uint32_t hartid_;
+    bool async_reset_;
 
     void procedure_RegAccess(uint64_t iaddr, bool iwena,
                              sc_uint<RISCV_ARCH> iwdata,

@@ -65,6 +65,8 @@ entity DbgPort is generic (
     o_br_fetch_valid : out std_logic;                         -- Fetch injection address/instr are valid
     o_br_address_fetch : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0); -- Fetch injection address to skip ebreak instruciton only once
     o_br_instr_fetch : out std_logic_vector(31 downto 0);     -- Real instruction value that was replaced by ebreak
+    o_flush_address : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);  -- Address of instruction to remove from ICache
+    o_flush_valid : out std_logic;                            -- Remove address from ICache is valid
     -- Debug signals:
     i_istate : in std_logic_vector(1 downto 0);               -- ICache state machine value
     i_dstate : in std_logic_vector(1 downto 0);               -- DCache state machine value
@@ -89,6 +91,8 @@ architecture arch_DbgPort of DbgPort is
       br_address_fetch : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
       br_instr_fetch : std_logic_vector(31 downto 0);
       br_fetch_valid : std_logic;
+      flush_address : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+      flush_valid : std_logic;
 
       rdata : std_logic_vector(RISCV_ARCH-1 downto 0);
       stepping_mode_steps : std_logic_vector(RISCV_ARCH-1 downto 0); -- Number of steps before halt in stepping mode
@@ -103,6 +107,7 @@ architecture arch_DbgPort of DbgPort is
     '0', '0', '0',                          -- ready, halt, breakpoint
     '0', (others => '0'), '0',              -- stepping_mode. stepping_mode_cnt, trap_on_break
     (others => '0'), (others => '0'), '0',  -- br_address_fetch, br_instr_fetch, br_fetch_valid
+    (others => '0'), '0',                   -- flush_address, flush_valid
     (others => '0'), (others => '0'),       -- rdata, stepping_mode_steps
     (others => '0'), (others => '0'),       -- clock_cnt, executed_cnt
     0, '0', '0'                             -- stack_trace_cnt, rd_trbuf_ena, rd_trbuf_addr0
@@ -183,6 +188,7 @@ begin
     w_o_freg_write := '0';
     w_o_npc_write := '0';
     v.br_fetch_valid := '0';
+    v.flush_valid := '0';
     v.rd_trbuf_ena := '0';
     wb_stack_raddr <= (others => '0');
     w_stack_we <= '0';
@@ -330,6 +336,12 @@ begin
                     v.breakpoint := '0';
                     v.br_instr_fetch := i_dport_wdata(31 downto 0);
                 end if;
+            when 9 =>
+                wb_rdata(BUS_ADDR_WIDTH-1 downto 0) := r.flush_address;
+                if i_dport_write = '1' then
+                    v.flush_valid := '1';
+                    v.flush_address := i_dport_wdata(BUS_ADDR_WIDTH-1 downto 0);
+                end if;
             when others =>
             end case;
         when others =>
@@ -371,6 +383,8 @@ begin
     o_br_fetch_valid <= r.br_fetch_valid;
     o_br_address_fetch <= r.br_address_fetch;
     o_br_instr_fetch <= r.br_instr_fetch;
+    o_flush_address <= r.flush_address;
+    o_flush_valid <= r.flush_valid;
 
     o_dport_ready <= r.ready;
     o_dport_rdata <= wb_o_rdata;

@@ -18,7 +18,10 @@
 
 namespace debugger {
 
-BranchPredictor::BranchPredictor(sc_module_name name_) : sc_module(name_) {
+BranchPredictor::BranchPredictor(sc_module_name name_, bool async_reset) :
+    sc_module(name_) {
+    async_reset_ = async_reset;
+
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_req_mem_fire;
@@ -49,6 +52,7 @@ BranchPredictor::BranchPredictor(sc_module_name name_) : sc_module(name_) {
     sensitive << r.c1;
 
     SC_METHOD(registers);
+    sensitive << i_nrst;
     sensitive << i_clk.pos();
 };
 
@@ -324,7 +328,7 @@ void BranchPredictor::comb() {
     }
 
 
-    if (!i_nrst.read()) {
+    if (!async_reset_ && !i_nrst.read()) {
         R_RESET(v);
     }
 
@@ -334,7 +338,11 @@ void BranchPredictor::comb() {
 }
 
 void BranchPredictor::registers() {
-    r = v;
+    if (async_reset_ && i_nrst.read() == 0) {
+        R_RESET(r);
+    } else {
+        r = v;
+    }
 }
 
 }  // namespace debugger

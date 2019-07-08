@@ -53,6 +53,8 @@ SC_MODULE(CacheTop) {
     sc_in<bool> i_resp_mem_store_fault;                 // Bus response with SLVERR or DECERR on write
 
     // Debug signals:
+    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_flush_address;     // clear ICache address from debug interface
+    sc_in<bool> i_flush_valid;                          // address to clear icache is valid
     sc_out<sc_uint<2>> o_istate;                        // ICache state machine value
     sc_out<sc_uint<2>> o_dstate;                        // DCache state machine value
     sc_out<sc_uint<2>> o_cstate;                        // cachetop state machine value
@@ -62,7 +64,7 @@ SC_MODULE(CacheTop) {
 
     SC_HAS_PROCESS(CacheTop);
 
-    CacheTop(sc_module_name name_);
+    CacheTop(sc_module_name name_, bool async_reset);
     virtual ~CacheTop();
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
@@ -103,6 +105,7 @@ private:
 #ifdef DBG_ICACHE_TB
     ICache_tb *i0_tb;
 #endif
+    bool async_reset_;
 };
 
 

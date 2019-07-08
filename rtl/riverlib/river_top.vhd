@@ -81,6 +81,8 @@ architecture arch_RiverTop of RiverTop is
   signal w_resp_data_load_fault : std_logic;
   signal w_resp_data_store_fault : std_logic;
   signal w_resp_data_ready : std_logic;
+  signal wb_flush_address : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+  signal w_flush_valid : std_logic;
   signal wb_istate : std_logic_vector(1 downto 0);
   signal wb_dstate : std_logic_vector(1 downto 0);
   signal wb_cstate : std_logic_vector(1 downto 0);
@@ -123,6 +125,8 @@ begin
         o_dport_ready => o_dport_ready,
         o_dport_rdata => o_dport_rdata,
         o_halted => o_halted,
+        o_flush_address => wb_flush_address,
+        o_flush_valid => w_flush_valid,
         i_istate => wb_istate,
         i_dstate => wb_dstate,
         i_cstate => wb_cstate);
@@ -162,6 +166,8 @@ begin
         i_resp_mem_data => i_resp_mem_data,
         i_resp_mem_load_fault => i_resp_mem_load_fault,
         i_resp_mem_store_fault => i_resp_mem_store_fault,
+        i_flush_address => wb_flush_address,
+        i_flush_valid => w_flush_valid,
         o_istate => wb_istate,
         o_dstate => wb_dstate,
         o_cstate => wb_cstate);

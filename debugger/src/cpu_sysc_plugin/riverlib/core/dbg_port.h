@@ -1,9 +1,17 @@
-/**
- * @file
- * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
- * @author     Sergey Khabarov - sergeykhbr@gmail.com
- * @brief      Debug port.
- * @details    Must be connected to DSU.
+/*
+ *  Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 #ifndef __DEBUGGER_RIVERLIB_DBG_PORT_H__
@@ -53,6 +61,8 @@ SC_MODULE(DbgPort) {
     sc_out<bool> o_br_fetch_valid;                      // Fetch injection address/instr are valid
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_br_address_fetch; // Fetch injection address to skip ebreak instruciton only once
     sc_out<sc_uint<32>> o_br_instr_fetch;               // Real instruction value that was replaced by ebreak
+    sc_out<sc_uint<BUS_ADDR_WIDTH>> o_flush_address;    // Address of instruction to remove from ICache
+    sc_out<bool> o_flush_valid;                         // Remove address from ICache is valid
     // Cache debug signals:
     sc_in<sc_uint<2>> i_istate;                         // ICache transaction state
     sc_in<sc_uint<2>> i_dstate;                         // DCache transaction state
@@ -64,7 +74,7 @@ SC_MODULE(DbgPort) {
 
     SC_HAS_PROCESS(DbgPort);
 
-    DbgPort(sc_module_name name_);
+    DbgPort(sc_module_name name_, bool async_reset);
     virtual ~DbgPort();
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
@@ -80,6 +90,8 @@ private:
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> br_address_fetch;
         sc_signal<sc_uint<32>> br_instr_fetch;
         sc_signal<bool> br_fetch_valid;
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> flush_address;
+        sc_signal<bool> flush_valid;
 
         sc_signal<sc_uint<RISCV_ARCH>> rdata;
         sc_signal<sc_uint<RISCV_ARCH>> stepping_mode_steps; // Number of steps before halt in stepping mode
@@ -90,6 +102,27 @@ private:
         sc_signal<bool> rd_trbuf_addr0;
     } v, r;
 
+    void R_RESET(RegistersType &iv) {
+        iv.ready = 0;
+        iv.halt = 0;
+        iv.breakpoint = 0;
+        iv.stepping_mode = 0;
+        iv.stepping_mode_cnt = 0;
+        iv.trap_on_break = 0;
+        iv.br_address_fetch = 0;
+        iv.br_instr_fetch = 0;
+        iv.br_fetch_valid = 0;
+        iv.flush_address = 0;
+        iv.flush_valid = 0;
+        iv.rdata = 0;
+        iv.stepping_mode_steps = 0;
+        iv.clock_cnt = 0;
+        iv.executed_cnt = 0;
+        iv.stack_trace_cnt = 0;
+        iv.rd_trbuf_ena = 0;
+        iv.rd_trbuf_addr0 = 0;
+    }
+
     sc_signal<sc_uint<5>> wb_stack_raddr;
     sc_signal<sc_biguint<2*BUS_ADDR_WIDTH>> wb_stack_rdata;
     sc_signal<bool> w_stack_we;
@@ -97,6 +130,7 @@ private:
     sc_signal<sc_biguint<2*BUS_ADDR_WIDTH>> wb_stack_wdata;
 
     StackTraceBuffer *trbuf0;
+    bool async_reset_;
 };
 
 

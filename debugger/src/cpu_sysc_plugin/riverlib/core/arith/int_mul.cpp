@@ -1,9 +1,19 @@
-/**
- * @file
- * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
- * @author     Sergey Khabarov - sergeykhbr@gmail.com
- * @brief      Integer multiplier.
- * @details    Implemented algorithm provides 4 clocks per instruction
+/*
+ *  Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ * Implemented algorithm provides 4 clocks per instruction
  */
 
 #include "int_mul.h"
@@ -11,7 +21,9 @@
 
 namespace debugger {
 
-IntMul::IntMul(sc_module_name name_) : sc_module(name_) {
+IntMul::IntMul(sc_module_name name_, bool async_reset) : sc_module(name_) {
+    async_reset_ = async_reset;
+
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_ena;
@@ -25,6 +37,7 @@ IntMul::IntMul(sc_module_name name_) : sc_module(name_) {
     sensitive << r.busy;
 
     SC_METHOD(registers);
+    sensitive << i_nrst;
     sensitive << i_clk.pos();
 };
 
@@ -110,19 +123,19 @@ void IntMul::comb() {
         }
 
         for (int i = 0; i < 16; i++) {
-            v.lvl1.arr[i] = (sc_biguint<69>(wb_lvl0.arr[2*i + 1]) << 2)
+            v_lvl1.arr[i] = (sc_biguint<69>(wb_lvl0.arr[2*i + 1]) << 2)
                           + sc_biguint<69>(wb_lvl0.arr[2*i]);
         }
     }
 
     if (r.ena.read()[1]) {
         for (int i = 0; i < 8; i++) {
-            wb_lvl2.arr[i] = (sc_biguint<74>(r.lvl1.arr[2*i + 1]) << 4)
-                       + sc_biguint<74>(r.lvl1.arr[2*i]);
+            wb_lvl2.arr[i] = (sc_biguint<74>(r_lvl1.arr[2*i + 1]) << 4)
+                       + sc_biguint<74>(r_lvl1.arr[2*i]);
         }
 
         for (int i = 0; i < 4; i++) {
-            v.lvl3.arr[i] = (sc_biguint<83>(wb_lvl2.arr[2*i + 1]) << 8)
+            v_lvl3.arr[i] = (sc_biguint<83>(wb_lvl2.arr[2*i + 1]) << 8)
                           + sc_biguint<83>(wb_lvl2.arr[2*i]);
         }
     }
@@ -130,8 +143,8 @@ void IntMul::comb() {
     if (r.ena.read()[2]) {
         v.busy = 0;
         for (int i = 0; i < 2; i++) {
-            wb_lvl4.arr[i] = (sc_biguint<100>(r.lvl3.arr[2*i + 1]) << 16)
-                           + sc_biguint<100>(r.lvl3.arr[2*i]);
+            wb_lvl4.arr[i] = (sc_biguint<100>(r_lvl3.arr[2*i + 1]) << 16)
+                           + sc_biguint<100>(r_lvl3.arr[2*i]);
         }
 
         wb_lvl5 = (sc_biguint<128>(wb_lvl4.arr[1]) << 32) 
@@ -154,16 +167,14 @@ void IntMul::comb() {
         wb_res = r.result.read()(127, 64);  // not tested yet
     }
 
-    if (i_nrst.read() == 0) {
-        v.busy = 0;
-        v.result = 0;
-        v.ena = 0;
-        v.a1 = 0;
-        v.a2 = 0;
-        v.rv32 = 0;
-        v.unsign = 0;
-        v.high = 0;
-        v.reference_mul = 0;
+    if (!async_reset_ && i_nrst.read() == 0) {
+        R_RESET(v);
+        for (int i = 0; i < 16; i++) {
+            v_lvl1.arr[i] = 0;
+        }
+        for (int i = 0; i < 4; i++) {
+            v_lvl3.arr[i] = 0;
+        }
     }
 
     o_res = wb_res;
@@ -188,7 +199,19 @@ void IntMul::registers() {
             cout.flush();
         }
     }
-    r = v;
+    if (async_reset_ && i_nrst.read() == 0) {
+        R_RESET(r);
+        for (int i = 0; i < 16; i++) {
+            r_lvl1.arr[i] = 0;
+        }
+        for (int i = 0; i < 4; i++) {
+            r_lvl3.arr[i] = 0;
+        }
+    } else {
+        r = v;
+        r_lvl1 = v_lvl1;
+        r_lvl3 = v_lvl3;
+    }
 }
 
 uint64_t IntMul::compute_reference(bool unsign, bool rv32, uint64_t a1, uint64_t a2) {

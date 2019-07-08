@@ -47,7 +47,7 @@ SC_MODULE(RegFloatBank) {
 
     SC_HAS_PROCESS(RegFloatBank);
 
-    RegFloatBank(sc_module_name name_);
+    RegFloatBank(sc_module_name name_, bool async_reset);
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
@@ -57,13 +57,7 @@ SC_MODULE(RegFloatBank) {
         sc_uint<RISCV_ARCH> mem[RegFpu_Total]; // Multi-ports memory
     } v, r;
 
-    void R_RESET(RegistersType &iv) {
-        iv.mem[0] = 0;
-        for (int i = 0; i < RegFpu_Total; i++) {
-            iv.mem[i] = 0xfeedface;
-        }
-        iv.update = 0;
-    }
+    bool async_reset_;
 };
 
 }  // namespace debugger

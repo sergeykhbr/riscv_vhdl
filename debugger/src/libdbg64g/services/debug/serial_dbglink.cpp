@@ -160,7 +160,7 @@ int SerialDbgService::write(uint64_t addr, int bytes, uint8_t *ibuf) {
         // Alignment at the and of buffer
         if (ibuf_off + req_count_ - align_offset0 > ubytes) {
             read(pkt_.fields.addr, 8, pkt_.fields.data8);
-            ibuf_len = ubytes - ibuf_off;
+            ibuf_len = align_offset0 + ubytes - ibuf_off;
         }
         // Alignment at the begin of buffer
         if (align_offset0 != 0) {

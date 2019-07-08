@@ -9,7 +9,9 @@
 
 namespace debugger {
 
-DCache::DCache(sc_module_name name_) : sc_module(name_) {
+DCache::DCache(sc_module_name name_, bool async_reset) : sc_module(name_) {
+    async_reset_ = async_reset;
+
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_req_data_valid;
@@ -31,6 +33,7 @@ DCache::DCache(sc_module_name name_) : sc_module(name_) {
     sensitive << r.state;
 
     SC_METHOD(registers);
+    sensitive << i_nrst;
     sensitive << i_clk.pos();
 };
 
@@ -250,13 +253,8 @@ void DCache::comb() {
         wb_o_resp_data = wb_rtmp;
     }
     
-    if (!i_nrst.read()) {
-        v.dline_addr_req = 0;
-        v.dline_size_req = 0;
-        v.dline_data = 0;
-        v.dline_load_fault = 0;
-        v.dline_store_fault = 0;
-        v.state = State_Idle;
+    if (!async_reset_ && !i_nrst.read()) {
+        R_RESET(v);
     }
 
     o_req_data_ready = w_o_req_data_ready;
@@ -276,7 +274,11 @@ void DCache::comb() {
 }
 
 void DCache::registers() {
-    r = v;
+    if (async_reset_ && i_nrst.read() == 0) {
+        R_RESET(r);
+    } else {
+        r = v;
+    }
 }
 
 }  // namespace debugger

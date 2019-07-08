@@ -67,6 +67,8 @@ entity Processor is
     o_dport_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0);      -- Response value
     o_halted : out std_logic;
     -- Debug signals:
+    o_flush_address : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- Address of instruction to remove from ICache
+    o_flush_valid : out std_logic;                                    -- Remove address from ICache is valid
     i_istate : in std_logic_vector(1 downto 0);                       -- ICache state machine value
     i_dstate : in std_logic_vector(1 downto 0);                       -- DCache state machine value
     i_cstate : in std_logic_vector(1 downto 0)                        -- CacheTop state machine value
@@ -204,6 +206,8 @@ architecture arch_Processor of Processor is
         br_fetch_valid : std_logic;                          -- Fetch injection address/instr are valid
         br_address_fetch : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0); -- Fetch injection address to skip ebreak instruciton only once
         br_instr_fetch : std_logic_vector(31 downto 0);      -- Real instruction value that was replaced by ebreak
+        flush_address : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- Address of instruction to remove from ICache
+        flush_valid : std_logic;                                    -- Remove address from ICache is valid
     end record;
 
     type BranchPredictorType is record
@@ -532,11 +536,15 @@ begin
         o_br_fetch_valid => dbg.br_fetch_valid,
         o_br_address_fetch => dbg.br_address_fetch,
         o_br_instr_fetch => dbg.br_instr_fetch,
+        o_flush_address => dbg.flush_address,
+        o_flush_valid => dbg.flush_valid,
         i_istate => i_istate,
         i_dstate => i_dstate,
         i_cstate => i_cstate,
         i_instr_buf => w.f.instr_buf);
 
+    o_flush_valid <= dbg.flush_valid or csr.break_event;
+    o_flush_address <= w.e.npc when csr.break_event = '1' else dbg.flush_address;
     o_req_ctrl_valid <= w.f.imem_req_valid;
     o_req_ctrl_addr <= w.f.imem_req_addr;
     o_time <= dbg.clock_cnt;

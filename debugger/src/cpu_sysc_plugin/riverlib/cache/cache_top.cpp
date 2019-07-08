@@ -9,7 +9,10 @@
 
 namespace debugger {
 
-CacheTop::CacheTop(sc_module_name name_) : sc_module(name_) {
+CacheTop::CacheTop(sc_module_name name_, bool async_reset) :
+    sc_module(name_) {
+    async_reset_ = async_reset;
+
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_req_mem_ready;
@@ -30,9 +33,10 @@ CacheTop::CacheTop(sc_module_name name_) : sc_module(name_) {
     sensitive << r.state;
 
     SC_METHOD(registers);
+    sensitive << i_nrst;
     sensitive << i_clk.pos();
 
-    i0 = new ICache("i0");
+    i0 = new ICache("i0", async_reset);
     i0->i_clk(i_clk);
     i0->i_nrst(i_nrst);
     i0->i_req_ctrl_valid(i_req_ctrl_valid);
@@ -52,9 +56,11 @@ CacheTop::CacheTop(sc_module_name name_) : sc_module(name_) {
     i0->i_resp_mem_data_valid(w_ctrl_resp_mem_data_valid);
     i0->i_resp_mem_data(wb_ctrl_resp_mem_data);
     i0->i_resp_mem_load_fault(w_ctrl_resp_mem_load_fault);
+    i0->i_flush_address(i_flush_address);
+    i0->i_flush_valid(i_flush_valid);
     i0->o_istate(o_istate);
 
-    d0 = new DCache("d0");
+    d0 = new DCache("d0", async_reset);
     d0->i_clk(i_clk);
     d0->i_nrst(i_nrst);
     d0->i_req_data_valid(i_req_data_valid);
@@ -219,7 +225,7 @@ void CacheTop::comb() {
     default:;
     }
 
-    if (!i_nrst.read()) {
+    if (!async_reset_ && !i_nrst.read()) {
         v.state = State_Idle;
     }
 
@@ -232,7 +238,11 @@ void CacheTop::comb() {
 }
 
 void CacheTop::registers() {
-    r = v;
+    if (async_reset_ && i_nrst.read() == 0) {
+        r.state = State_Idle;
+    } else {
+        r = v;
+    }
 }
 
 }  // namespace debugger

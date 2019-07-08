@@ -42,7 +42,7 @@ SC_MODULE(BranchPredictor) {
 
     SC_HAS_PROCESS(BranchPredictor);
 
-    BranchPredictor(sc_module_name name_);
+    BranchPredictor(sc_module_name name_, bool async_reset);
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
@@ -83,6 +83,7 @@ SC_MODULE(BranchPredictor) {
     bool v_branch;  // One of branch instructions (only negative offset)
     bool v_c_j;     // compressed J instruction
     bool v_c_ret;   // compressed RET pseudo-instruction
+    bool async_reset_;
 };
 
 }  // namespace debugger

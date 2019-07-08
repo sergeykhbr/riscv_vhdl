@@ -128,7 +128,10 @@ void CmdBrGeneric::exec(AttributeType *args, AttributeType *res) {
                 reinterpret_cast<uint64_t>(&pdsu->udbg.v.remove_breakpoint);
             tap_->write(dsuaddr, 8, braddr.buf);
         } else {
-            tap_->write(braddr.val, 4, brinstr.buf);
+            // get restoring instruction length
+            Reg64Type t1 = brinstr;
+            getSwBreakpointInstr(&t1, &brlen);
+            tap_->write(braddr.val, brlen, brinstr.buf);
         }
     }
 }
