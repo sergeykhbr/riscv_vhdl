@@ -63,6 +63,7 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset)
     sensitive << r.mpie;
     sensitive << r.mpp;
     sensitive << r.mepc;
+    sensitive << r.ext_irq;
     sensitive << r.ex_fpu_invalidop;
     sensitive << r.ex_fpu_divbyzero;
     sensitive << r.ex_fpu_overflow;
@@ -258,6 +259,7 @@ void CsrRegs::comb() {
     sc_uint<RISCV_ARCH> wb_rdata = 0;
     sc_uint<RISCV_ARCH> wb_dport_rdata = 0;
     bool w_ie;
+    bool w_ext_irq;
     bool w_dport_wena;
     bool w_trap_valid;
     sc_uint<BUS_ADDR_WIDTH> wb_trap_pc;
@@ -279,6 +281,10 @@ void CsrRegs::comb() {
     w_ie = 0;
     if ((r.mode.read() != PRV_M) || r.mie.read()) {
         w_ie = 1;
+    }
+    w_ext_irq = i_irq_external.read() && w_ie;
+    if (i_e_pre_valid.read()) {
+        v.ext_irq = w_ext_irq;
     }
 
     w_exception_xret = 0;
@@ -346,7 +352,7 @@ void CsrRegs::comb() {
             wb_trap_pc = CFG_NMI_CALL_FROM_UMODE_ADDR;
             wb_trap_code = EXCEPTION_CallFromUmode;
         }
-    } else if (i_irq_external.read() == 1 && w_ie == 1) {
+    } else if (w_ext_irq == 1 && r.ext_irq.read() == 0) {
         w_trap_valid = 1;
         wb_trap_pc = r.mtvec.read()(BUS_ADDR_WIDTH-1, 0);
         wb_trap_code = 0xB;

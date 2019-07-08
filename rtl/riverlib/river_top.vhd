@@ -25,8 +25,8 @@ use riverlib.river_cfg.all;
 
 entity RiverTop is
   generic (
-    hartid : integer;
-    async_reset : boolean
+    hartid : integer := 0;
+    async_reset : boolean := false
   );
   port (
     i_clk : in std_logic;                                             -- CPU clock

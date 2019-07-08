@@ -83,6 +83,7 @@ private:
         sc_signal<bool> mpie;                   // Previous MIE value
         sc_signal<sc_uint<2>> mpp;              // Previous mode
         sc_signal<sc_uint<RISCV_ARCH>> mepc;
+        sc_signal<bool> ext_irq;
 
         sc_signal<bool> ex_fpu_invalidop;         // FPU Exception: invalid operation
         sc_signal<bool> ex_fpu_divbyzero;         // FPU Exception: divide by zero
@@ -105,6 +106,7 @@ private:
         iv.mpie = 0;
         iv.mpp = 0;
         iv.mepc = 0;
+        iv.ext_irq = 0;
         iv.ex_fpu_invalidop = 0;
         iv.ex_fpu_divbyzero = 0;
         iv.ex_fpu_overflow = 0;

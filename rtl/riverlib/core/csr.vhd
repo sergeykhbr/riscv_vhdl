@@ -82,6 +82,7 @@ architecture arch_CsrRegs of CsrRegs is
       mpie : std_logic;                      -- Previous MIE value
       mpp : std_logic_vector(1 downto 0);    -- Previous mode
       mepc : std_logic_vector(RISCV_ARCH-1 downto 0);
+      ext_irq : std_logic;
 
       ex_fpu_invalidop : std_logic;          -- FPU Exception: invalid operation
       ex_fpu_divbyzero : std_logic;          -- FPU Exception: divide by zero
@@ -96,7 +97,7 @@ architecture arch_CsrRegs of CsrRegs is
 
   constant R_RESET : RegistersType := (
         (others => '0'), (others => '0'), (others => '0'), PRV_M,
-        '0', '0', '0', (others => '0'), (others => '0'),
+        '0', '0', '0', (others => '0'), (others => '0'), '0',
         '0', '0', '0', '0', '0', 
         '0', (others => '0'), (others => '0'), '0');
 
@@ -255,6 +256,7 @@ begin
     variable wb_rdata : std_logic_vector(RISCV_ARCH-1 downto 0);
     variable wb_dport_rdata : std_logic_vector(RISCV_ARCH-1 downto 0);
     variable w_ie : std_logic;
+    variable w_ext_irq : std_logic;
     variable w_dport_wena : std_logic;
     variable w_trap_valid : std_logic;
     variable wb_trap_pc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
@@ -277,6 +279,10 @@ begin
     w_ie := '0';
     if (r.mode /= PRV_M) or r.mie = '1' then
         w_ie := '1';
+    end if;
+    w_ext_irq := i_irq_external and w_ie;
+    if i_e_pre_valid = '1' then
+        v.ext_irq := w_ext_irq;
     end if;
 
     w_exception_xret := '0';
@@ -344,7 +350,7 @@ begin
             wb_trap_pc := CFG_NMI_CALL_FROM_UMODE_ADDR;
             wb_trap_code := EXCEPTION_CallFromUmode;
         end if;
-    elsif i_irq_external = '1' and w_ie = '1' then
+    elsif w_ext_irq = '1' and r.ext_irq = '0' then
         w_trap_valid := '1';
         wb_trap_pc := r.mtvec(BUS_ADDR_WIDTH-1 downto 0);
         wb_trap_code := X"B";
