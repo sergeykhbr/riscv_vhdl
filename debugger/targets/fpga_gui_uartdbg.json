@@ -56,7 +56,7 @@
     {'Class':'CpuStubRiscVFpgaClass','Instances':[
           {'Name':'cpustub0','Attr':[
                 ['CmdExecutor','cmdexec0'],
-                ['Tap','edcltap']
+                ['Tap','uarttap']
                 ]}]},
     {'Class':'ElfReaderServiceClass','Instances':[
           {'Name':'loader0','Attr':[
