@@ -158,6 +158,14 @@
                 ['CacheBaseAddress',0x10000000],
                 ['CacheAddressMask',0x7ffff],
                 ]}]},
+    {'Class':'ICacheFunctionalClass','Instances':[
+          {'Name':'icache0','Attr':[
+                ['LogLevel',4],
+                ['SysBus','axi0'],
+                ['CmdExecutor','cmdexec0'],
+                ['BaseAddress',0x0],
+                ['Length',65536]
+                ]}]},
     {'Class':'MemorySimClass','Instances':[
           {'Name':'bootrom0','Attr':[
                 ['LogLevel',1],

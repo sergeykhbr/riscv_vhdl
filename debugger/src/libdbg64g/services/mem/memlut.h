@@ -23,7 +23,7 @@
 
 namespace debugger {
 
-class MemoryLUT : public IService, 
+class MemoryLUT : public IService,
                   public IMemoryOperation {
  public:
     explicit MemoryLUT(const char *name);
@@ -33,7 +33,6 @@ class MemoryLUT : public IService,
 
     /** IMemoryOperation */
     virtual ETransStatus b_transport(Axi4TransactionType *trans);
-
 
  private:
     AttributeType memTarget_;

@@ -41,6 +41,7 @@ SOURCES = \
 	mapreg \
 	plugin_init \
 	cpu_riscv_func \
+	icache_func \
 	cpu_stub_fpga \
 	riscv-rv64i-user \
 	riscv-rv64i-priv \

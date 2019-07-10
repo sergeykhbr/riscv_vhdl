@@ -61,6 +61,7 @@
       <Filter>cmds</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\cpu_fnc_plugin\cpu_stub_fpga.cpp" />
+    <ClCompile Include="..\..\src\cpu_fnc_plugin\icache_func.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\api_types.h">
@@ -129,5 +130,6 @@
     <ClInclude Include="..\..\src\common\api_core.h">
       <Filter>common</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\cpu_fnc_plugin\icache_func.h" />
   </ItemGroup>
 </Project>
