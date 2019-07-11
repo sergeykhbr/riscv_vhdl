@@ -43,6 +43,9 @@ class ICacheFunctional : public IService,
     virtual void exec(AttributeType *args, AttributeType *res);
 
  private:
+    uint64_t getAdrTag(uint64_t adr);
+    uint32_t getAdrIndex(uint64_t adr);
+    uint32_t getAdrOffset(uint64_t adr);
     void runTest();
 
  private:
@@ -54,6 +57,18 @@ class ICacheFunctional : public IService,
 
     IMemoryOperation *isysbus_;
     ICmdExecutor *icmdexec_;
+
+    struct LineAddressId {
+        uint64_t tag;
+        uint32_t index;
+        uint32_t offset;
+        bool hit;
+    };
+
+    struct InstructionRequestType {
+        LineAddressId adr[2];   // Two uint16_t words
+    };
+    InstructionRequestType req_;
 
     /** By default suppose using:
             16 memory banks with 16 bits width to provide C-instruction
