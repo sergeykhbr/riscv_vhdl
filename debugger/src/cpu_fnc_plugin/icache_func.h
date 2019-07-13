@@ -30,7 +30,7 @@ static const int ODDEVEN_WIDTH  = 1;    // [5]     0=even; 1=odd
 static const int INDEX_WIDTH    = 8;    // [13:6]  index: 8 KB per odd/even ways
 static const int TAG_WIDTH      = 18;   // [31:14] tag
 
-static const int ICACHE_TOTAL_BYTES = 65536;
+static const int ICACHE_TOTAL_BYTES = 64*1024;
 static const int ICACHE_LINE_BYTES  = 32;
 static const int ICACHE_WAYS        = 4;    // 4 odds, 4 even
 static const int BYTES_PER_WAY      = ICACHE_TOTAL_BYTES / (2 * ICACHE_WAYS);
@@ -39,6 +39,17 @@ static const int LINES_PER_WAY      = BYTES_PER_WAY / ICACHE_LINE_BYTES;
 static const int HIT_WORD0  = 0x1;
 static const int HIT_WORD1  = 0x2;
 static const int HIT_BOTH   = HIT_WORD0 | HIT_WORD1;
+
+struct TagMemInType {
+    uint64_t tag;
+    uint64_t index;
+    uint64_t offset;
+};
+
+struct TagMemOutType {
+    uint64_t tag;
+    uint16_t buf16[2];
+};
 
 struct CacheLineData {
     uint64_t tag;
@@ -59,20 +70,18 @@ class WayMemType {
         }
     }
     void readTagValue(uint64_t index, uint64_t off,
-                      uint64_t &tag, uint32_t &val) {
-        Reg64Type ret;
-        tag = lines_[index].tag;
+                      TagMemOutType &out) {
+        out.tag = lines_[index].tag;
 
         // Two-bytes alignment with wrapping
         int wcnt = (off >> 3) & 0x3;
         int bcnt = (off >> 1) & 0x3;
-        ret.buf16[0] = lines_[index].mem64[wcnt].buf16[bcnt];
+        out.buf16[0] = lines_[index].mem64[wcnt].buf16[bcnt];
 
         off += 2;
         wcnt = (off >> 3) & 0x3;
         bcnt = (off >> 1) & 0x3;
-        ret.buf16[1] = lines_[index].mem64[wcnt].buf16[bcnt];
-        val = ret.buf32[0];
+        out.buf16[1] = lines_[index].mem64[wcnt].buf16[bcnt];
     }
 
  private:
@@ -104,7 +113,7 @@ class ICacheFunctional : public IService,
     uint32_t getAdrIndex(uint64_t adr);
     uint32_t getAdrOffset(uint64_t adr);
 
-    int getCachedValue(uint64_t adr, uint32_t &rdata);
+    void getCachedValue(uint64_t adr, Reg64Type &rdata, uint8_t *hit);
     void readLine(uint64_t adr, WayMemType *way);
     void runTest();
 
@@ -118,17 +127,19 @@ class ICacheFunctional : public IService,
     IMemoryOperation *isysbus_;
     ICmdExecutor *icmdexec_;
 
-    struct LineAddressId {
-        uint64_t tag;
-        uint32_t index;
-        uint32_t offset;
-        bool hit;
+    struct LruEntryType {
+        uint8_t n0 : 2;
+        uint8_t n1 : 2;
+        uint8_t n2 : 2;
+        uint8_t n3 : 2;
     };
 
-    struct InstructionRequestType {
-        LineAddressId adr[2];   // Two uint16_t words
+    union LruTableType {
+        LruEntryType row[LINES_PER_WAY];
+        uint8_t buf[LINES_PER_WAY];
     };
-    InstructionRequestType req_;
+    LruTableType tblLruEven_;
+    LruTableType tblLruOdd_;
 
     enum EWays {
         WAY_EVEN,

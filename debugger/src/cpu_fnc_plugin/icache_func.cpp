@@ -27,6 +27,9 @@ ICacheFunctional::ICacheFunctional(const char *name) : IService(name),
     registerAttribute("TotalKBytes", &totalKBytes_);
     registerAttribute("LineBytes", &lineBytes_);
     registerAttribute("Ways", &ways_);
+
+    memset(tblLruEven_.row, 0xe4, sizeof(tblLruEven_.row)); // 0x3, 0x2, 0x1, 0x0
+    memset(tblLruOdd_.row, 0xe4, sizeof(tblLruOdd_.row)); // 0x3, 0x2, 0x1, 0x0
 }
 
 ICacheFunctional::~ICacheFunctional() {
@@ -58,112 +61,163 @@ void ICacheFunctional::predeleteService() {
 }
 
 ETransStatus ICacheFunctional::b_transport(Axi4TransactionType *trans) {
-    uint32_t rcache;
+    Reg64Type rcache;
+    uint8_t hitidx[2];
+    Axi4TransactionType ref;
 
-    int hit = getCachedValue(trans->addr, rcache);
-    if (hit == HIT_BOTH) {
-        trans->rpayload.b64[0] = rcache;
-        return TRANS_OK;
-    }
+    ref = *trans;
+    isysbus_->b_transport(&ref);
+
+    uint64_t addr5 = getAdrOddEven(trans->addr);
+
+    getCachedValue(trans->addr, rcache, hitidx);
 
     int lru = 0;
-    WayMemType *waysel;
-    if ((hit & HIT_WORD0) == 0) {
-        if (getAdrOddEven(trans->addr) == WAY_EVEN) {
-            waysel = &wayEven_[lru];
+    uint32_t index;
+    if (hitidx[0] == ICACHE_WAYS) {  // cache miss
+        index = getAdrIndex(trans->addr);
+        if (addr5 == 0) {
+            lru = tblLruEven_.row[index].n0;
+            tblLruEven_.buf[index] >>= 2;
+            tblLruEven_.row[index].n3 = lru;
+            readLine(trans->addr, &wayEven_[lru]);
         } else {
-            waysel = &wayOdd_[lru];
+            lru = tblLruOdd_.row[index].n0;
+            tblLruOdd_.buf[index] >>= 2;
+            tblLruOdd_.row[index].n3 = lru;
+            readLine(trans->addr, &wayOdd_[lru]);
         }
-        readLine(trans->addr, waysel);
     }
 
     uint64_t overlay_addr = trans->addr + 2;
-    if (getAdrLine(trans->addr) != getAdrLine(overlay_addr)
-        && (hit & HIT_WORD1) == 0) {
-        if (getAdrOddEven(trans->addr) == WAY_EVEN) {
-            waysel = &wayOdd_[lru];
+    if (hitidx[1] == ICACHE_WAYS
+        && getAdrLine(trans->addr) != getAdrLine(overlay_addr)) {
+        index = getAdrIndex(overlay_addr);
+        if (addr5 == 1) {
+            lru = tblLruEven_.row[index].n0;
+            tblLruEven_.buf[index] >>= 2;
+            tblLruEven_.row[index].n3 = lru;
+            readLine(overlay_addr, &wayEven_[lru]);
         } else {
-            waysel = &wayEven_[lru];
+            lru = tblLruOdd_.row[index].n0;
+            tblLruOdd_.buf[index] >>= 2;
+            tblLruOdd_.row[index].n3 = lru;
+            readLine(overlay_addr, &wayOdd_[lru]);
         }
-        readLine(overlay_addr, waysel);
     }
 
-    hit = getCachedValue(trans->addr, rcache);
-    trans->rpayload.b64[0] = rcache;
-    if (hit != HIT_BOTH) {
-        RISCV_error("Something wrong");
+    getCachedValue(trans->addr, rcache, hitidx);
+    trans->rpayload.b16[0] = rcache.buf16[0];
+    trans->rpayload.b16[1] = rcache.buf16[1];
+    if (hitidx[0] == ICACHE_WAYS || hitidx[1] == ICACHE_WAYS) {
+        RISCV_error("Something wrong: not cached");
+    }
+    if (ref.rpayload.b32[0] != trans->rpayload.b32[0]) {
+        RISCV_error("Wrong caching data");
     }
     return TRANS_OK;
 }
 
-int ICacheFunctional::getCachedValue(uint64_t addr, uint32_t &rdata) {
+void ICacheFunctional::getCachedValue(uint64_t addr,
+                                      Reg64Type &rdata,
+                                      uint8_t *hit) {
+    TagMemInType swapin[WAY_SubNum];
+    TagMemOutType memEven[ICACHE_WAYS];
+    TagMemOutType memOdd[ICACHE_WAYS];
+
     uint64_t line_adr = getAdrLine(addr);
+    uint64_t line_adr_overlay = getAdrLine(addr + (1 << OFFSET_WIDTH));
     uint64_t tag = getAdrTag(addr);
 
-    EWays useWay = static_cast<EWays>(getAdrOddEven(addr));
+    uint64_t addr5 = getAdrOddEven(addr);
     bool useOverlay = false;
     if ((addr & 0x1E) == 0x1E) {
         useOverlay = true;
     }
 
-    uint64_t swapped_index[WAY_SubNum];
-    uint64_t swapped_offset[WAY_SubNum];
-    if (useWay == WAY_EVEN) {
-        swapped_index[WAY_EVEN]  = getAdrIndex(addr);
-        swapped_offset[WAY_EVEN] = getAdrOffset(addr);
-        swapped_index[WAY_ODD]   = (getAdrIndex(addr) + 1) % LINES_PER_WAY;
-        swapped_offset[WAY_ODD]  = 0;
+    if (addr5 == 0) {
+        swapin[WAY_EVEN].tag    = getAdrTag(line_adr);
+        swapin[WAY_EVEN].index  = getAdrIndex(line_adr);
+        swapin[WAY_EVEN].offset = getAdrOffset(addr);
+        swapin[WAY_ODD].tag     = getAdrTag(line_adr_overlay);
+        swapin[WAY_ODD].index   = getAdrIndex(line_adr_overlay);
+        swapin[WAY_ODD].offset  = 0;
     } else {
-        swapped_index[WAY_EVEN]  = (getAdrIndex(addr) + 1) % LINES_PER_WAY;
-        swapped_offset[WAY_EVEN] = 0;
-        swapped_index[WAY_ODD]   = getAdrIndex(addr);
-        swapped_offset[WAY_ODD]  = getAdrOffset(addr);
+        swapin[WAY_EVEN].tag    = getAdrTag(line_adr_overlay);
+        swapin[WAY_EVEN].index  = getAdrIndex(line_adr_overlay);
+        swapin[WAY_EVEN].offset = 0;
+        swapin[WAY_ODD].tag     = getAdrTag(line_adr);
+        swapin[WAY_ODD].index   = getAdrIndex(line_adr);
+        swapin[WAY_ODD].offset  = getAdrOffset(addr);
     }
 
-    uint64_t cachetag[WAY_SubNum];
-    uint32_t cacheval[WAY_SubNum];
-    unsigned hit = 0;
-    rdata = 0;
+    hit[WAY_EVEN] = ICACHE_WAYS;
+    hit[WAY_ODD] = ICACHE_WAYS;
+    rdata.val = 0;
 
-    for (unsigned n = 0; n < ICACHE_WAYS; n++) {
-        wayEven_[n].readTagValue(swapped_index[WAY_EVEN],
-                                 swapped_offset[WAY_EVEN],
-                                 cachetag[WAY_EVEN],
-                                 cacheval[WAY_EVEN]);
+    // Memory banks
+    for (int n = 0; n < ICACHE_WAYS; n++) {
+        wayEven_[n].readTagValue(swapin[WAY_EVEN].index,
+                                 swapin[WAY_EVEN].offset,
+                                 memEven[n]);
 
-        wayOdd_[n].readTagValue(swapped_index[WAY_ODD],
-                                swapped_offset[WAY_ODD],
-                                cachetag[WAY_ODD],
-                                cacheval[WAY_ODD]);
+        wayOdd_[n].readTagValue(swapin[WAY_ODD].index,
+                                swapin[WAY_ODD].offset,
+                                memOdd[n]);
+    }
 
+    struct WayMuxType {
+        uint8_t hit;
+        uint16_t rdata[2];
+    } waysel[WAY_SubNum];
 
-        if (useWay == WAY_EVEN) {
-            if (tag == cachetag[WAY_EVEN]) {
-                hit |= HIT_WORD0;
-                rdata = cacheval[WAY_EVEN];
-                if (!useOverlay) {
-                    hit |= HIT_WORD1;
-                } else if (tag == cachetag[WAY_ODD]) {
-                    hit |= HIT_WORD1;
-                    rdata &= ~0xFFFF0000;
-                    rdata |= (cacheval[WAY_ODD] << 16);
-                }
-            }
-        } else {
-            if (tag == cachetag[WAY_ODD]) {
-                hit |= HIT_WORD0;
-                rdata = cacheval[WAY_ODD];
-                if (!useOverlay) {
-                    hit |= HIT_WORD1;
-                } else if (tag == cachetag[WAY_EVEN]) {
-                    hit |= HIT_WORD1;
-                    rdata &= ~0xFFFF0000;
-                    rdata |= (cacheval[WAY_EVEN] << 16);
-                }
-            }
+    // Check read tag and select way
+    waysel[WAY_EVEN].hit = ICACHE_WAYS;
+    waysel[WAY_EVEN].rdata[0] = 0;
+    waysel[WAY_EVEN].rdata[1] = 0;
+    waysel[WAY_ODD].hit = ICACHE_WAYS;
+    waysel[WAY_ODD].rdata[0] = 0;
+    waysel[WAY_ODD].rdata[1] = 0;
+    for (uint8_t n = 0; n < static_cast<uint8_t>(ICACHE_WAYS); n++) {
+        if (memEven[n].tag == swapin[WAY_EVEN].tag) {
+            waysel[WAY_EVEN].hit = n;
+            waysel[WAY_EVEN].rdata[0] = memEven[n].buf16[0];
+            waysel[WAY_EVEN].rdata[1] = memEven[n].buf16[1];
+        }
+
+        if (memOdd[n].tag == swapin[WAY_ODD].tag) {
+            waysel[WAY_ODD].hit = n;
+            waysel[WAY_ODD].rdata[0] = memOdd[n].buf16[0];
+            waysel[WAY_ODD].rdata[1] = memOdd[n].buf16[1];
         }
     }
-    return hit;
+
+    // Swap back rdata
+    if (addr5 == 0) {
+        if (useOverlay == 0) {
+            hit[0] = waysel[WAY_EVEN].hit;
+            hit[1] = waysel[WAY_EVEN].hit;
+            rdata.buf16[0] = waysel[WAY_EVEN].rdata[0];
+            rdata.buf16[1] = waysel[WAY_EVEN].rdata[1];
+        } else {
+            hit[0] = waysel[WAY_EVEN].hit;
+            hit[1] = waysel[WAY_ODD].hit;
+            rdata.buf16[0] = waysel[WAY_EVEN].rdata[0];
+            rdata.buf16[1] = waysel[WAY_ODD].rdata[0];
+        }
+    } else {
+        if (useOverlay == 0) {
+            hit[0] = waysel[WAY_ODD].hit;
+            hit[1] = waysel[WAY_ODD].hit;
+            rdata.buf16[0] = waysel[WAY_ODD].rdata[0];
+            rdata.buf16[1] = waysel[WAY_ODD].rdata[1];
+        } else {
+            hit[0] = waysel[WAY_ODD].hit;
+            hit[1] = waysel[WAY_EVEN].hit;
+            rdata.buf16[0] = waysel[WAY_ODD].rdata[0];
+            rdata.buf16[1] = waysel[WAY_EVEN].rdata[0];
+        }
+    }
 }
 
 void ICacheFunctional::readLine(uint64_t adr, WayMemType *way) {
@@ -185,6 +239,7 @@ void ICacheFunctional::readLine(uint64_t adr, WayMemType *way) {
     }
 }
 
+// addr[31:5]
 uint64_t ICacheFunctional::getAdrLine(uint64_t adr) {
     uint64_t mask = (1ull << (BUS_ADDR_WIDTH)) - 1;
     uint64_t t = (adr & mask) >> OFFSET_WIDTH;
