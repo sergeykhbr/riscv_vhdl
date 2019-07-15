@@ -102,6 +102,7 @@
     <ClCompile Include="..\..\src\cpu_fnc_plugin\cmds\cmd_csr.cpp" />
     <ClCompile Include="..\..\src\cpu_fnc_plugin\cpu_riscv_func.cpp" />
     <ClCompile Include="..\..\src\cpu_fnc_plugin\cpu_stub_fpga.cpp" />
+    <ClCompile Include="..\..\src\cpu_fnc_plugin\icache_func.cpp" />
     <ClCompile Include="..\..\src\cpu_fnc_plugin\instructions.cpp" />
     <ClCompile Include="..\..\src\cpu_fnc_plugin\plugin_init.cpp" />
     <ClCompile Include="..\..\src\cpu_fnc_plugin\riscv-ext-a.cpp" />
@@ -135,6 +136,7 @@
     <ClInclude Include="..\..\src\cpu_fnc_plugin\cmds\cmd_reg_riscv.h" />
     <ClInclude Include="..\..\src\cpu_fnc_plugin\cpu_riscv_func.h" />
     <ClInclude Include="..\..\src\cpu_fnc_plugin\cpu_stub_fpga.h" />
+    <ClInclude Include="..\..\src\cpu_fnc_plugin\icache_func.h" />
     <ClInclude Include="..\..\src\cpu_fnc_plugin\instructions.h" />
     <ClInclude Include="..\..\src\cpu_fnc_plugin\srcproc\srcproc.h" />
   </ItemGroup>

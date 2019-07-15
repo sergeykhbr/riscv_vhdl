@@ -54,7 +54,8 @@ SOURCES = \
 	cpu_riscv_rtl \
 	rtl_wrapper \
 	river_top \
-	icache \
+	icache_stub \
+	icache_lru \
 	dcache \
 	cache_top \
 	int_mul \

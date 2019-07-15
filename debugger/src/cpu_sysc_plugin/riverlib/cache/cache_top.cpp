@@ -9,9 +9,10 @@
 
 namespace debugger {
 
-CacheTop::CacheTop(sc_module_name name_, bool async_reset) :
+CacheTop::CacheTop(sc_module_name name_, bool async_reset, int icfg) :
     sc_module(name_) {
     async_reset_ = async_reset;
+    icache_cfg_ = icfg;
 
     SC_METHOD(comb);
     sensitive << i_nrst;
@@ -36,29 +37,31 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset) :
     sensitive << i_nrst;
     sensitive << i_clk.pos();
 
-    i0 = new ICache("i0", async_reset);
-    i0->i_clk(i_clk);
-    i0->i_nrst(i_nrst);
-    i0->i_req_ctrl_valid(i_req_ctrl_valid);
-    i0->i_req_ctrl_addr(i_req_ctrl_addr);
-    i0->o_req_ctrl_ready(o_req_ctrl_ready);
-    i0->o_resp_ctrl_valid(o_resp_ctrl_valid);
-    i0->o_resp_ctrl_addr(o_resp_ctrl_addr);
-    i0->o_resp_ctrl_data(o_resp_ctrl_data);
-    i0->o_resp_ctrl_load_fault(o_resp_ctrl_load_fault);
-    i0->i_resp_ctrl_ready(i_resp_ctrl_ready);
-    i0->i_req_mem_ready(w_ctrl_req_ready);
-    i0->o_req_mem_valid(i.req_mem_valid);
-    i0->o_req_mem_write(i.req_mem_write);
-    i0->o_req_mem_addr(i.req_mem_addr);
-    i0->o_req_mem_strob(i.req_mem_strob);
-    i0->o_req_mem_data(i.req_mem_wdata);
-    i0->i_resp_mem_data_valid(w_ctrl_resp_mem_data_valid);
-    i0->i_resp_mem_data(wb_ctrl_resp_mem_data);
-    i0->i_resp_mem_load_fault(w_ctrl_resp_mem_load_fault);
-    i0->i_flush_address(i_flush_address);
-    i0->i_flush_valid(i_flush_valid);
-    i0->o_istate(o_istate);
+    if (icache_cfg_ == 0) {
+        i0 = new ICacheStub("i0", async_reset);
+        i0->i_clk(i_clk);
+        i0->i_nrst(i_nrst);
+        i0->i_req_ctrl_valid(i_req_ctrl_valid);
+        i0->i_req_ctrl_addr(i_req_ctrl_addr);
+        i0->o_req_ctrl_ready(o_req_ctrl_ready);
+        i0->o_resp_ctrl_valid(o_resp_ctrl_valid);
+        i0->o_resp_ctrl_addr(o_resp_ctrl_addr);
+        i0->o_resp_ctrl_data(o_resp_ctrl_data);
+        i0->o_resp_ctrl_load_fault(o_resp_ctrl_load_fault);
+        i0->i_resp_ctrl_ready(i_resp_ctrl_ready);
+        i0->i_req_mem_ready(w_ctrl_req_ready);
+        i0->o_req_mem_valid(i.req_mem_valid);
+        i0->o_req_mem_write(i.req_mem_write);
+        i0->o_req_mem_addr(i.req_mem_addr);
+        i0->o_req_mem_strob(i.req_mem_strob);
+        i0->o_req_mem_data(i.req_mem_wdata);
+        i0->i_resp_mem_data_valid(w_ctrl_resp_mem_data_valid);
+        i0->i_resp_mem_data(wb_ctrl_resp_mem_data);
+        i0->i_resp_mem_load_fault(w_ctrl_resp_mem_load_fault);
+        i0->i_flush_address(i_flush_address);
+        i0->i_flush_valid(i_flush_valid);
+        i0->o_istate(o_istate);
+    }
 
     d0 = new DCache("d0", async_reset);
     d0->i_clk(i_clk);
@@ -118,12 +121,16 @@ void CacheTop::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_cstate, "/top/cache0/o_cstate");
         sc_trace(o_vcd, r.state, "/top/cache0/r_state");
     }
-    i0->generateVCD(i_vcd, o_vcd);
+    if (icache_cfg_ == 0) {
+        i0->generateVCD(i_vcd, o_vcd);
+    }
     d0->generateVCD(i_vcd, o_vcd);
 }
 
 CacheTop::~CacheTop() {
-    delete i0;
+    if (icache_cfg_ == 0) {
+        delete i0;
+    }
     delete d0;
 }
 

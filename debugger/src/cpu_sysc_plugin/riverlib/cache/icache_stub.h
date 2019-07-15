@@ -14,8 +14,8 @@
  *  limitations under the License.
  */
 
-#ifndef __DEBUGGER_RIVERLIB_ICACHE_H__
-#define __DEBUGGER_RIVERLIB_ICACHE_H__
+#ifndef __DEBUGGER_RIVERLIB_ICACHE_STUB_H__
+#define __DEBUGGER_RIVERLIB_ICACHE_STUB_H__
 
 #include <systemc.h>
 #include "../river_cfg.h"
@@ -24,7 +24,7 @@ namespace debugger {
 
 //#define DBG_ICACHE_TB
 
-SC_MODULE(ICache) {
+SC_MODULE(ICacheStub) {
     sc_in<bool> i_clk;
     sc_in<bool> i_nrst;
     // Control path:
@@ -54,9 +54,9 @@ SC_MODULE(ICache) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(ICache);
+    SC_HAS_PROCESS(ICacheStub);
 
-    ICache(sc_module_name name_, bool async_reset);
+    ICacheStub(sc_module_name name_, bool async_reset);
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
@@ -134,15 +134,15 @@ private:
 
 
 #ifdef DBG_ICACHE_TB
-SC_MODULE(ICache_tb) {
+SC_MODULE(ICacheStub_tb) {
     void comb0();
     void registers() {
         r = v;
     }
 
-    SC_HAS_PROCESS(ICache_tb);
+    SC_HAS_PROCESS(ICacheStub_tb);
 
-    ICache_tb(sc_module_name name_) : sc_module(name_),
+    ICacheStub_tb(sc_module_name name_) : sc_module(name_),
         w_clk("clk0", 10, SC_NS) {
         SC_METHOD(comb0);
         sensitive << w_nrst;
@@ -173,7 +173,7 @@ SC_MODULE(ICache_tb) {
         SC_METHOD(registers);
         sensitive << w_clk.posedge_event();
 
-        tt = new ICache("tt");
+        tt = new ICacheStub("tt");
         tt->i_clk(w_clk);
         tt->i_nrst(w_nrst);
         tt->i_req_ctrl_valid(w_req_ctrl_valid);
@@ -223,7 +223,7 @@ SC_MODULE(ICache_tb) {
     }
 
 private:
-    ICache *tt;
+    ICacheStub *tt;
 
     sc_clock w_clk;
     sc_signal<bool> w_nrst;
@@ -262,4 +262,4 @@ private:
 
 }  // namespace debugger
 
-#endif  // __DEBUGGER_RIVERLIB_ICACHE_H__
+#endif  // __DEBUGGER_RIVERLIB_ICACHE_STUB_H__

@@ -110,10 +110,12 @@ ETransStatus ICacheFunctional::b_transport(Axi4TransactionType *trans) {
     trans->rpayload.b16[0] = rcache.buf16[0];
     trans->rpayload.b16[1] = rcache.buf16[1];
     if (hitidx[0] == ICACHE_WAYS || hitidx[1] == ICACHE_WAYS) {
-        RISCV_error("Something wrong: not cached");
+        RISCV_error("Something wrong: [%08" RV_PRI64 "x] not cached",
+                     trans->addr);
     }
     if (ref.rpayload.b32[0] != trans->rpayload.b32[0]) {
-        RISCV_error("Wrong caching data");
+        RISCV_error("Wrong caching data at [%08" RV_PRI64 "x]",
+                    trans->addr);
     }
     return TRANS_OK;
 }
@@ -127,7 +129,6 @@ void ICacheFunctional::getCachedValue(uint64_t addr,
 
     uint64_t line_adr = getAdrLine(addr);
     uint64_t line_adr_overlay = getAdrLine(addr + (1 << OFFSET_WIDTH));
-    uint64_t tag = getAdrTag(addr);
 
     uint64_t addr5 = getAdrOddEven(addr);
     bool useOverlay = false;
@@ -297,6 +298,19 @@ void ICacheFunctional::runTest() {
     tr.xsize = 4;
     for (unsigned i = 0; i < 100; i++) {
         tr.addr = 0x1A + (i << 1);     // 2-bytes alignment (uint16_t)
+        b_transport(&tr);
+
+        tr.addr = 0x2000 + 0x1A + (i << 1);     // 2-bytes alignment (uint16_t)
+        b_transport(&tr);
+
+        // fwimage rom
+        tr.addr = 0x00100000 + 0x1A + (i << 1);     // 2-bytes alignment (uint16_t)
+        b_transport(&tr);
+
+        tr.addr = 0x00102000 + 0x1A + (i << 1);     // 2-bytes alignment (uint16_t)
+        b_transport(&tr);
+
+        tr.addr = 0x00104000 + 0x1A + (i << 1);     // 2-bytes alignment (uint16_t)
         b_transport(&tr);
     }
 }

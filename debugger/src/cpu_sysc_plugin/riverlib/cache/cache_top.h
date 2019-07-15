@@ -10,7 +10,7 @@
 
 #include <systemc.h>
 #include "../river_cfg.h"
-#include "icache.h"
+#include "icache_stub.h"
 #include "dcache.h"
 
 namespace debugger {
@@ -64,7 +64,7 @@ SC_MODULE(CacheTop) {
 
     SC_HAS_PROCESS(CacheTop);
 
-    CacheTop(sc_module_name name_, bool async_reset);
+    CacheTop(sc_module_name name_, bool async_reset, int icfg);
     virtual ~CacheTop();
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
@@ -100,12 +100,13 @@ private:
     sc_signal<bool> w_data_resp_mem_store_fault;
     sc_signal<bool> w_data_req_ready;
 
-    ICache *i0;
+    ICacheStub *i0;
     DCache *d0;
 #ifdef DBG_ICACHE_TB
     ICache_tb *i0_tb;
 #endif
     bool async_reset_;
+    int icache_cfg_;
 };
 
 

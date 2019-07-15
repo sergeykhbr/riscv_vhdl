@@ -1,5 +1,5 @@
 /*
- *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *  Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,12 +14,14 @@
  *  limitations under the License.
  */
 
-#include "icache.h"
+#include "icache_lru.h"
 
 namespace debugger {
 
-ICache::ICache(sc_module_name name_, bool async_reset) : sc_module(name_) {
+ICacheLru::ICacheLru(sc_module_name name_, bool async_reset, int isize) :
+    sc_module(name_) {
     async_reset_ = async_reset;
+    isize_ = isize;
 
     SC_METHOD(comb);
     sensitive << i_nrst;
@@ -51,7 +53,7 @@ ICache::ICache(sc_module_name name_, bool async_reset) : sc_module(name_) {
     sensitive << i_clk.pos();
 };
 
-void ICache::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
+void ICacheLru::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
         sc_trace(o_vcd, i_nrst, "/top/cache0/i0/i_nrst");
         sc_trace(o_vcd, i_req_ctrl_valid, "/top/cache0/i0/i_req_ctrl_valid");
@@ -92,7 +94,7 @@ void ICache::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     }
 }
 
-void ICache::comb() {
+void ICacheLru::comb() {
     // Instruction cache:
     bool w_o_req_ctrl_ready;
     bool w_o_req_mem_valid;
@@ -383,7 +385,7 @@ void ICache::comb() {
     o_istate = r.state;
 }
 
-void ICache::registers() {
+void ICacheLru::registers() {
     if (async_reset_ && i_nrst.read() == 0) {
         R_RESET(r);
         for (int i = 0; i < ILINE_TOTAL; i++) {
@@ -396,7 +398,7 @@ void ICache::registers() {
 }
 
 #ifdef DBG_ICACHE_TB
-void ICache_tb::comb0() {
+void ICacheLru_tb::comb0() {
     v = r;
     v.clk_cnt = r.clk_cnt.read() + 1;
 

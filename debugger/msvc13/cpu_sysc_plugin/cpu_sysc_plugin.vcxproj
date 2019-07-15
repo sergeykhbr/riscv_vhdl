@@ -110,7 +110,8 @@
     <ClCompile Include="..\..\src\cpu_sysc_plugin\plugin_init.cpp" />
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\cache_top.cpp" />
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\dcache.cpp" />
-    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\icache.cpp" />
+    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\icache_lru.cpp" />
+    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\icache_stub.cpp" />
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\arith\int_div.cpp" />
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\arith\int_mul.cpp" />
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\arith\shift.cpp" />
@@ -158,7 +159,8 @@
     <ClInclude Include="..\..\src\cpu_sysc_plugin\cpu_riscv_rtl.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\cache_top.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\dcache.h" />
-    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\icache.h" />
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\icache_lru.h" />
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\icache_stub.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\arith\int_div.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\arith\int_mul.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\arith\shift.h" />

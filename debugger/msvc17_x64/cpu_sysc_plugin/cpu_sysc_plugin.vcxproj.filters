@@ -57,9 +57,6 @@
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\execute.cpp">
       <Filter>riverlib\core</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\icache.cpp">
-      <Filter>riverlib\cache</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\regibank.cpp">
       <Filter>riverlib\core</Filter>
     </ClCompile>
@@ -135,6 +132,12 @@
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\fpu_d\l2d_d.cpp">
       <Filter>riverlib\core\fpu_d</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\icache_lru.cpp">
+      <Filter>riverlib\cache</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\icache_stub.cpp">
+      <Filter>riverlib\cache</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\api_types.h">
@@ -183,9 +186,6 @@
     </ClInclude>
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\execute.h">
       <Filter>riverlib\core</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\icache.h">
-      <Filter>riverlib\cache</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\regibank.h">
       <Filter>riverlib\core</Filter>
@@ -273,6 +273,12 @@
     </ClInclude>
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\fpu_d\l2d_d.h">
       <Filter>riverlib\core\fpu_d</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\icache_lru.h">
+      <Filter>riverlib\cache</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\icache_stub.h">
+      <Filter>riverlib\cache</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

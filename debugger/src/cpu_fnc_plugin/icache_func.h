@@ -27,10 +27,17 @@ namespace debugger {
 static const int BUS_ADDR_WIDTH = 32;
 static const int OFFSET_WIDTH   = 5;    // [4:0]  offset: 32 bytes per line
 static const int ODDEVEN_WIDTH  = 1;    // [5]     0=even; 1=odd
-static const int INDEX_WIDTH    = 8;    // [13:6]  index: 8 KB per odd/even ways
-static const int TAG_WIDTH      = 18;   // [31:14] tag
+// [13:6]  index: 8 KB per odd/even ways when 64 KB
+// [12:6]  index: 4 KB per odd/even ways when 32 KB
+// [11:6]  index: 2 KB per odd/even ways when 16 KB
+static const int INDEX_WIDTH    = 8-2;
+// [31:14] tag when 64 KB
+// [31:13] tag when 32 KB
+// [31:12] tag when 16 KB
+static const int TAG_WIDTH      =
+    BUS_ADDR_WIDTH - (OFFSET_WIDTH + ODDEVEN_WIDTH + INDEX_WIDTH);
 
-static const int ICACHE_TOTAL_BYTES = 64*1024;
+static const int ICACHE_TOTAL_BYTES = 16*1024;
 static const int ICACHE_LINE_BYTES  = 32;
 static const int ICACHE_WAYS        = 4;    // 4 odds, 4 even
 static const int BYTES_PER_WAY      = ICACHE_TOTAL_BYTES / (2 * ICACHE_WAYS);

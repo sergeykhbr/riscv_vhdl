@@ -26,6 +26,8 @@ CpuRiscV_RTL::CpuRiscV_RTL(const char *name)
     registerInterface(static_cast<IHap *>(this));
     registerAttribute("HartID", &hartid_);
     registerAttribute("AsyncReset", &asyncReset_);
+    registerAttribute("FpuEnable", &fpuEnable_);
+    registerAttribute("ConfigICache", &configICache_);
     registerAttribute("Bus", &bus_);
     registerAttribute("CmdExecutor", &cmdexec_);
     registerAttribute("Tap", &tap_);
@@ -156,7 +158,10 @@ void CpuRiscV_RTL::createSystemC() {
     wrapper_->i_dport_rdata(wb_dport_rdata);
     wrapper_->i_halted(w_halted);
 
-    top_ = new RiverTop("top", hartid_.to_uint32(), asyncReset_.to_bool());
+    top_ = new RiverTop("top", hartid_.to_uint32(),
+                               asyncReset_.to_bool(),
+                               fpuEnable_.to_bool(),
+                               configICache_.to_int());
     top_->i_clk(wrapper_->o_clk);
     top_->i_nrst(w_nrst);
     top_->i_req_mem_ready(w_req_mem_ready);
