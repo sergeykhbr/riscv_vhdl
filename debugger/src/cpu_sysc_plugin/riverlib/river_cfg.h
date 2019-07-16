@@ -31,6 +31,25 @@ static const int BUS_ADDR_WIDTH = 32;
 static const int BUS_DATA_WIDTH = 64;
 static const int BUS_DATA_BYTES = BUS_DATA_WIDTH / 8;
 
+/** ICacheLru config */
+static const int CFG_IOFFSET_WIDTH   = 5;    // [4:0]  log2(ICACHE_LINE_BYTES)
+static const int CFG_IODDEVEN_WIDTH  = 1;    // [5]    0=even; 1=odd
+// [13:6]  8: index: 8 KB per odd/even ways (64 KB icache)
+// [12:6]  7: index: 4 KB per odd/even ways (32 KB icache)
+// [11:6]  6: index: 2 KB per odd/even ways (16 KB icache)
+static const int CFG_IINDEX_WIDTH    = 6;    // log2(LINES_PER_WAY) odd or even
+// [31:14] tag when 64 KB
+// [31:13] tag when 32 KB
+// [31:12] tag when 16 KB
+static const int CFG_ITAG_WIDTH      = BUS_ADDR_WIDTH
+    - (CFG_IOFFSET_WIDTH + CFG_IODDEVEN_WIDTH + CFG_IINDEX_WIDTH);
+
+/** Store tag data as:
+       [3:0]            qword is valid flag
+       [ITAG_WIDTH+4:4] tag value
+ */
+static const int ITAG_WIDTH_TOTAL = CFG_ITAG_WIDTH + 4;
+
 static const uint8_t MEMOP_8B = 3;
 static const uint8_t MEMOP_4B = 2;
 static const uint8_t MEMOP_2B = 1;

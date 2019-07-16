@@ -25,23 +25,27 @@
 namespace debugger {
 
 static const int BUS_ADDR_WIDTH = 32;
-static const int OFFSET_WIDTH   = 5;    // [4:0]  offset: 32 bytes per line
-static const int ODDEVEN_WIDTH  = 1;    // [5]     0=even; 1=odd
-// [13:6]  index: 8 KB per odd/even ways when 64 KB
-// [12:6]  index: 4 KB per odd/even ways when 32 KB
-// [11:6]  index: 2 KB per odd/even ways when 16 KB
-static const int INDEX_WIDTH    = 8-2;
+static const int OFFSET_WIDTH   = 5;    // [4:0]  log2(ICACHE_LINE_BYTES)
+static const int ODDEVEN_WIDTH  = 1;    // [5]    0=even; 1=odd
+// [13:6]  8: index: 8 KB per odd/even ways (64 KB icache)
+// [12:6]  7: index: 4 KB per odd/even ways (32 KB icache)
+// [11:6]  6: index: 2 KB per odd/even ways (16 KB icache)
+static const int INDEX_WIDTH    = 6;    // log2(LINES_PER_WAY)
 // [31:14] tag when 64 KB
 // [31:13] tag when 32 KB
 // [31:12] tag when 16 KB
 static const int TAG_WIDTH      =
     BUS_ADDR_WIDTH - (OFFSET_WIDTH + ODDEVEN_WIDTH + INDEX_WIDTH);
 
-static const int ICACHE_TOTAL_BYTES = 16*1024;
-static const int ICACHE_LINE_BYTES  = 32;
+
+static const int ICACHE_LINE_BYTES  = 1 << OFFSET_WIDTH;
 static const int ICACHE_WAYS        = 4;    // 4 odds, 4 even
-static const int BYTES_PER_WAY      = ICACHE_TOTAL_BYTES / (2 * ICACHE_WAYS);
-static const int LINES_PER_WAY      = BYTES_PER_WAY / ICACHE_LINE_BYTES;
+// 64  => 16 KB, 4-way cache
+// 128 => 32 KB, 4-way cache
+// 256 => 64 KB, 4-way cache
+static const int LINES_PER_WAY      = 1 << INDEX_WIDTH;
+static const int BYTES_PER_WAY      = LINES_PER_WAY * ICACHE_LINE_BYTES;
+static const int ICACHE_TOTAL_BYTES = (2 * ICACHE_WAYS) * BYTES_PER_WAY;
 
 static const int HIT_WORD0  = 0x1;
 static const int HIT_WORD1  = 0x2;
