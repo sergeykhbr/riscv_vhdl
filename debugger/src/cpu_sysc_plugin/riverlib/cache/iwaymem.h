@@ -19,31 +19,58 @@
 
 #include <systemc.h>
 #include "riscv-isa.h"
-#include "../../river_cfg.h"
+#include "../river_cfg.h"
+#include "mem/dpram64i.h"
+#include "mem/dpramtagi.h"
 
 namespace debugger {
 
+static const int RAM64_BLOCK_TOTAL =
+    (1 << CFG_IOFFSET_WIDTH) / sizeof(uint64_t);
+
+static const int IINDEX_START = CFG_IOFFSET_WIDTH + CFG_IODDEVEN_WIDTH;
+static const int IINDEX_END = IINDEX_START + CFG_IINDEX_WIDTH - 1;
+
+static const int ITAG_START = IINDEX_START + CFG_IINDEX_WIDTH;
+static const int ITAG_END = BUS_ADDR_WIDTH-1;
+
 SC_MODULE(IWayMem) {
     sc_in<bool> i_clk;
-    sc_in<sc_uint<CFG_IINDEX_WIDTH>> i_radr;
-    sc_out<sc_uint<CFG_ITAG_WIDTH_TOTAL>> o_rdata;
-    sc_in<sc_uint<CFG_IINDEX_WIDTH>> i_wadr;
+    sc_in<bool> i_nrst;
+    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_radr;
+    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_wadr;
     sc_in<bool> i_wena;
-    sc_in<sc_uint<CFG_ITAG_WIDTH_TOTAL>> i_wdata;
+    sc_in<sc_uint<4>> i_wstrb;
+    sc_in<sc_uint<4>> i_wvalid;
+    sc_in<sc_uint<64>> i_wdata;
+    sc_out<sc_uint<CFG_ITAG_WIDTH>> o_rtag;
+    sc_out<sc_uint<32>> o_rdata;
+    sc_out<bool> o_valid;
 
     void comb();
-    void registers();
 
     SC_HAS_PROCESS(IWayMem);
 
-    IWayMem(sc_module_name name_);
+    IWayMem(sc_module_name name_, int wayidx);
+    virtual ~IWayMem();
+
+    void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
  private:
-    struct RegistersType {
-        sc_signal<bool> update;  // To generate SystemC delta event only.
-        sc_signal<sc_uint<CFG_IINDEX_WIDTH>> radr;
-        sc_uint<CFG_ITAG_WIDTH_TOTAL> mem[1 << CFG_IINDEX_WIDTH];
-    } v, r;
+    DpRamTagi *tag0;
+    DpRam64i *datan[RAM64_BLOCK_TOTAL];
+
+    sc_signal<sc_uint<CFG_IINDEX_WIDTH>> wb_radr;
+    sc_signal<sc_uint<CFG_IINDEX_WIDTH>> wb_wadr;
+
+    sc_signal<sc_uint<CFG_ITAG_WIDTH_TOTAL>> wb_tag_rdata;
+    sc_signal<bool> w_tag_wena;
+    sc_signal<sc_uint<CFG_ITAG_WIDTH_TOTAL>> wb_tag_wdata;
+
+    sc_signal<sc_uint<64>> wb_data_rdata[RAM64_BLOCK_TOTAL];
+    sc_signal<bool> w_data_wena[RAM64_BLOCK_TOTAL];
+
+    int wayidx_;
 };
 
 }  // namespace debugger
