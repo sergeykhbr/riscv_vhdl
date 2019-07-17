@@ -18,7 +18,9 @@
 
 namespace debugger {
 
-IWayMem::IWayMem(sc_module_name name_, int wayidx) : sc_module(name_) {
+IWayMem::IWayMem(sc_module_name name_, bool async_reset, int wayidx) :
+    sc_module(name_) {
+    async_reset_ = async_reset;
     wayidx_ = wayidx;
 
     tag0 = new DpRamTagi("itag0");
@@ -32,7 +34,7 @@ IWayMem::IWayMem(sc_module_name name_, int wayidx) : sc_module(name_) {
 
     char tstr[32] = "data0";
     for (int i = 0; i < RAM64_BLOCK_TOTAL; i++) {
-        tstr[5] = '0' + static_cast<char>(i);
+        tstr[4] = '0' + static_cast<char>(i);
         datan[i] = new DpRam64i(tstr);
 
         datan[i]->i_clk(i_clk);
@@ -53,6 +55,10 @@ IWayMem::IWayMem(sc_module_name name_, int wayidx) : sc_module(name_) {
     for (int i = 0; i < RAM64_BLOCK_TOTAL; i++) {
         sensitive << wb_data_rdata[i];
     }
+
+    SC_METHOD(registers);
+    sensitive << i_nrst;
+    sensitive << i_clk.pos();
 };
 
 IWayMem::~IWayMem() {
@@ -72,6 +78,8 @@ void IWayMem::comb() {
     sc_uint<32> vb_rdata;
     bool v_valid;
 
+    v = r;
+
     wb_radr = i_radr.read()(IINDEX_END, IINDEX_START);
     wb_wadr = i_wadr.read()(IINDEX_END, IINDEX_START);
 
@@ -83,7 +91,8 @@ void IWayMem::comb() {
     }
 
     v_valid = 0;
-    switch (i_radr.read()(CFG_IOFFSET_WIDTH-1, 1)) {
+    v.roffset = i_radr.read()(CFG_IOFFSET_WIDTH-1, 1);
+    switch (r.roffset.read()) {
     case 0x0:
         vb_rdata = wb_data_rdata[0].read()(31, 0);
         v_valid = wb_tag_rdata.read()[0];
@@ -149,15 +158,29 @@ void IWayMem::comb() {
         break;
     case 0xF:
         vb_rdata(15, 0) = wb_data_rdata[3].read()(63, 48);
-        vb_rdata(31, 16) = wb_data_rdata[0].read()(15, 0);
-        v_valid = wb_tag_rdata.read()[3] & wb_tag_rdata.read()[0];
+        vb_rdata(31, 16) = 0;
+        v_valid = wb_tag_rdata.read()[3];
         break;
+    default:;
+    }
+
+    if (!async_reset_ && !i_nrst.read()) {
+        R_RESET(v);
     }
 
     o_rdata = vb_rdata;
     o_rtag = wb_tag_rdata.read()(CFG_ITAG_WIDTH_TOTAL-1, 4);
     o_valid = v_valid;
 }
+
+void IWayMem::registers() {
+    if (async_reset_ && i_nrst.read() == 0) {
+        R_RESET(r);
+    } else {
+        r = v;
+    }
+}
+
 
 }  // namespace debugger
 

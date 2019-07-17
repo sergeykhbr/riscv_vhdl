@@ -44,6 +44,7 @@ static const int CFG_IINDEX_WIDTH    = 6;    // log2(LINES_PER_WAY) odd or even
 static const int CFG_ITAG_WIDTH      = BUS_ADDR_WIDTH
     - (CFG_IOFFSET_WIDTH + CFG_IODDEVEN_WIDTH + CFG_IINDEX_WIDTH);
 
+static const int CFG_ICACHE_WAYS        = 4;  // 4 odds, 4 even
 /** Store tag data as:
        [3:0]            qword is valid flag
        [ITAG_WIDTH+4:4] tag value

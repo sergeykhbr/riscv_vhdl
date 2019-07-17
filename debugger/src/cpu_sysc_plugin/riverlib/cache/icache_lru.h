@@ -19,6 +19,7 @@
 
 #include <systemc.h>
 #include "../river_cfg.h"
+#include "iwaymem.h"
 
 namespace debugger {
 
@@ -57,51 +58,42 @@ SC_MODULE(ICacheLru) {
     SC_HAS_PROCESS(ICacheLru);
 
     ICacheLru(sc_module_name name_, bool async_reset, int isize);
+    virtual ~ICacheLru();
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
-private:
-    enum EState {
-        State_Idle,
-        State_WaitGrant,
-        State_WaitResp,
-        State_WaitAccept
-    };
-    enum EHit {
-        Hit_Line1,
-        Hit_Line2,
-        Hit_Response,
-        Hit_Total
-    };
-    static const int ILINE_TOTAL = 2;
-
-    struct line_type {
-        sc_signal<sc_uint<BUS_ADDR_WIDTH - 3>> addr;
-        sc_signal<sc_uint<BUS_DATA_WIDTH>> data;
-        sc_signal<bool> load_fault;
+ private:
+    static const uint8_t MISS = static_cast<uint8_t>(CFG_ICACHE_WAYS);
+    enum EWays {
+        WAY_EVEN,
+        WAY_ODD,
+        WAY_SubNum
     };
 
-    void LINE_RESET(line_type &iv) {
-        iv.addr = ~0;
-        iv.data = 0;
-        iv.load_fault = 0;
-    }
-
-    struct iline_vector {
-        line_type arr[ILINE_TOTAL];
+    struct TagMemInType {
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> radr;
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> wadr;
+        sc_signal<bool> wena;
+        sc_signal<sc_uint<4>> wstrb;
+        sc_signal<sc_uint<4>> wvalid;
+        sc_signal<sc_uint<64>> wdata;
     };
 
-    struct line_signal_type {
-        sc_bv<ILINE_TOTAL + 1> hit;     // Hit_Total = ILINE_TOTAL + 1
-        sc_bv<ILINE_TOTAL> hit_hold;
-        bool hit_load_fault;
-        bool hold_load_fault;
-        sc_uint<BUS_DATA_WIDTH> hit_data;
-        sc_uint<BUS_DATA_WIDTH> hold_data;
+    struct TagMemOutType {
+        sc_signal<sc_uint<CFG_ITAG_WIDTH>> rtag;
+        sc_signal<sc_uint<32>> rdata;
+        sc_signal<bool> valid;
+    };
+
+    struct WayMuxType {
+        sc_uint<3> hit;
+        sc_uint<32> rdata;
+        bool valid;
     };
 
     struct RegistersType {
-        sc_signal<sc_uint<BUS_ADDR_WIDTH>> iline_addr_req;
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_addr;
+        sc_signal<bool> use_overlay;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> addr_processing;
         sc_signal<sc_uint<2>> state;
         sc_signal<bool> double_req;         // request 2-lines
@@ -111,24 +103,22 @@ private:
     } v, r;
 
     void R_RESET(RegistersType &iv) {
-        iv.iline_addr_req = 0;
+        iv.req_addr = 0;
+        iv.use_overlay = 0;
         iv.addr_processing = 0;
-        iv.state = State_Idle;
         iv.double_req = 0;
         iv.delay_valid = 0;
         iv.delay_data = 0;
         iv.delay_load_fault = 0;
     }
 
-    iline_vector v_iline;
-    iline_vector r_iline;
-    bool w_need_mem_req;
-    sc_uint<32> wb_hit_word;
-    bool w_hit_load_fault;
-    line_signal_type wb_l[ILINE_TOTAL];
-    bool w_reuse_lastline;
-    bool w_wait_response;
-    bool w_req_ctrl_valid;
+    IWayMem *wayevenx[CFG_ICACHE_WAYS];
+    IWayMem *wayoddx[CFG_ICACHE_WAYS];
+
+    TagMemInType swapin[WAY_SubNum];
+    TagMemOutType memeven[WAY_SubNum];
+    TagMemOutType memodd[WAY_SubNum];
+    WayMuxType waysel[WAY_SubNum];
 
     bool async_reset_;
     int isize_;

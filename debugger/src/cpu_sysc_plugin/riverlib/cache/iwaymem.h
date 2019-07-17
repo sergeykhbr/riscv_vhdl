@@ -48,15 +48,25 @@ SC_MODULE(IWayMem) {
     sc_out<bool> o_valid;
 
     void comb();
+    void registers();
 
     SC_HAS_PROCESS(IWayMem);
 
-    IWayMem(sc_module_name name_, int wayidx);
+    IWayMem(sc_module_name name_, bool async_reset, int wayidx);
     virtual ~IWayMem();
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
  private:
+
+    struct RegistersType {
+        sc_signal<sc_uint<CFG_IOFFSET_WIDTH-1>> roffset;   // 2-bytes alignment
+    } v, r;
+
+    void R_RESET(RegistersType &iv) {
+        iv.roffset = 0;
+    }
+
     DpRamTagi *tag0;
     DpRam64i *datan[RAM64_BLOCK_TOTAL];
 
@@ -70,6 +80,7 @@ SC_MODULE(IWayMem) {
     sc_signal<sc_uint<64>> wb_data_rdata[RAM64_BLOCK_TOTAL];
     sc_signal<bool> w_data_wena[RAM64_BLOCK_TOTAL];
 
+    bool async_reset_;
     int wayidx_;
 };
 
