@@ -20,6 +20,7 @@
 #include <systemc.h>
 #include "../river_cfg.h"
 #include "iwaymem.h"
+#include "ilru.h"
 
 namespace debugger {
 
@@ -70,55 +71,80 @@ SC_MODULE(ICacheLru) {
         WAY_SubNum
     };
 
+    enum EState {
+        State_Idle,
+        State_CheckHit,
+        State_WaitGrant,
+        State_WaitResp,
+    };
+
     struct TagMemInType {
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> radr;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> wadr;
-        sc_signal<bool> wena;
         sc_signal<sc_uint<4>> wstrb;
         sc_signal<sc_uint<4>> wvalid;
         sc_signal<sc_uint<64>> wdata;
+        sc_signal<bool> load_fault;
     };
 
     struct TagMemOutType {
         sc_signal<sc_uint<CFG_ITAG_WIDTH>> rtag;
         sc_signal<sc_uint<32>> rdata;
         sc_signal<bool> valid;
+        sc_signal<bool> load_fault;
     };
 
     struct WayMuxType {
         sc_uint<3> hit;
         sc_uint<32> rdata;
         bool valid;
+        bool load_fault;
+    };
+
+    struct LruInType {
+        sc_signal<sc_uint<CFG_IINDEX_WIDTH>> adr;
+        sc_signal<bool> we;
+        sc_signal<sc_uint<2>> lru;
     };
 
     struct RegistersType {
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_addr;
         sc_signal<bool> use_overlay;
-        sc_signal<sc_uint<BUS_ADDR_WIDTH>> addr_processing;
+        sc_signal<bool> x_removed;
         sc_signal<sc_uint<2>> state;
-        sc_signal<bool> double_req;         // request 2-lines
-        sc_signal<bool> delay_valid;
-        sc_signal<sc_uint<32>> delay_data;
-        sc_signal<bool> delay_load_fault;
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> mem_addr;
+        sc_signal<sc_uint<2>> burst_cnt;
+        sc_signal<sc_uint<4>> burst_wstrb;
+        sc_signal<sc_uint<4>> burst_valid;
     } v, r;
 
     void R_RESET(RegistersType &iv) {
         iv.req_addr = 0;
         iv.use_overlay = 0;
-        iv.addr_processing = 0;
-        iv.double_req = 0;
-        iv.delay_valid = 0;
-        iv.delay_data = 0;
-        iv.delay_load_fault = 0;
+        iv.x_removed = 0;
+        iv.state = State_Idle;
+        iv.mem_addr = 0;
+        iv.burst_cnt = 0;
+        iv.burst_wstrb = 0;
+        iv.burst_valid = 0;
     }
 
     IWayMem *wayevenx[CFG_ICACHE_WAYS];
     IWayMem *wayoddx[CFG_ICACHE_WAYS];
 
+    ILru *lrueven;
+    ILru *lruodd;
+
     TagMemInType swapin[WAY_SubNum];
     TagMemOutType memeven[WAY_SubNum];
     TagMemOutType memodd[WAY_SubNum];
     WayMuxType waysel[WAY_SubNum];
+    sc_signal<bool> wb_ena_even[CFG_ICACHE_WAYS];
+    sc_signal<bool> wb_ena_odd[CFG_ICACHE_WAYS];
+
+    LruInType lrui[WAY_SubNum];
+    sc_signal<sc_uint<2>> wb_lru_even;
+    sc_signal<sc_uint<2>> wb_lru_odd;
 
     bool async_reset_;
     int isize_;

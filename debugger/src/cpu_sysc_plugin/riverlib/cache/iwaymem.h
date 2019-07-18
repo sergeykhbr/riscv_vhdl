@@ -43,9 +43,11 @@ SC_MODULE(IWayMem) {
     sc_in<sc_uint<4>> i_wstrb;
     sc_in<sc_uint<4>> i_wvalid;
     sc_in<sc_uint<64>> i_wdata;
+    sc_in<bool> i_load_fault;
     sc_out<sc_uint<CFG_ITAG_WIDTH>> o_rtag;
     sc_out<sc_uint<32>> o_rdata;
     sc_out<bool> o_valid;
+    sc_out<bool> o_load_fault;
 
     void comb();
     void registers();

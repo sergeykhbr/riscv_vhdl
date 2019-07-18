@@ -51,6 +51,7 @@ IWayMem::IWayMem(sc_module_name name_, bool async_reset, int wayidx) :
     sensitive << i_wena;
     sensitive << i_wstrb;
     sensitive << i_wdata;
+    sensitive << i_load_fault;
     sensitive << wb_tag_rdata;
     for (int i = 0; i < RAM64_BLOCK_TOTAL; i++) {
         sensitive << wb_data_rdata[i];
@@ -84,7 +85,9 @@ void IWayMem::comb() {
     wb_wadr = i_wadr.read()(IINDEX_END, IINDEX_START);
 
     w_tag_wena = i_wena.read();
-    wb_tag_wdata = (i_wadr.read()(ITAG_END, ITAG_START), i_wvalid.read());
+    wb_tag_wdata = (i_wadr.read()(ITAG_END, ITAG_START),
+                   i_load_fault.read(),     // [4]
+                   i_wvalid.read());        // [3:0]
 
     for (int i = 0; i < RAM64_BLOCK_TOTAL; i++) {
         w_data_wena[i] = i_wena.read() && i_wstrb.read()[i];
@@ -169,8 +172,9 @@ void IWayMem::comb() {
     }
 
     o_rdata = vb_rdata;
-    o_rtag = wb_tag_rdata.read()(CFG_ITAG_WIDTH_TOTAL-1, 4);
+    o_rtag = wb_tag_rdata.read()(CFG_ITAG_WIDTH_TOTAL-1, 5);
     o_valid = v_valid;
+    o_load_fault = wb_tag_rdata.read()[4];
 }
 
 void IWayMem::registers() {

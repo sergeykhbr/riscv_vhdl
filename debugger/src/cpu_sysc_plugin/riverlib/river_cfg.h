@@ -47,9 +47,10 @@ static const int CFG_ITAG_WIDTH      = BUS_ADDR_WIDTH
 static const int CFG_ICACHE_WAYS        = 4;  // 4 odds, 4 even
 /** Store tag data as:
        [3:0]            qword is valid flag
-       [ITAG_WIDTH+4:4] tag value
+       [4]              load_fault
+       [ITAG_WIDTH+5:5] tag value
  */
-static const int CFG_ITAG_WIDTH_TOTAL = CFG_ITAG_WIDTH + 4;
+static const int CFG_ITAG_WIDTH_TOTAL = CFG_ITAG_WIDTH + 5;
 
 static const uint8_t MEMOP_8B = 3;
 static const uint8_t MEMOP_4B = 2;
