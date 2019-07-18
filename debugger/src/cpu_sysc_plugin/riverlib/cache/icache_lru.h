@@ -109,6 +109,7 @@ SC_MODULE(ICacheLru) {
 
     struct RegistersType {
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_addr;
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_addr_overlay;
         sc_signal<bool> use_overlay;
         sc_signal<bool> x_removed;
         sc_signal<sc_uint<2>> state;
@@ -116,10 +117,13 @@ SC_MODULE(ICacheLru) {
         sc_signal<sc_uint<2>> burst_cnt;
         sc_signal<sc_uint<4>> burst_wstrb;
         sc_signal<sc_uint<4>> burst_valid;
+        sc_signal<sc_uint<2>> lru_even_wr;
+        sc_signal<sc_uint<2>> lru_odd_wr;
     } v, r;
 
     void R_RESET(RegistersType &iv) {
         iv.req_addr = 0;
+        iv.req_addr_overlay = 0;
         iv.use_overlay = 0;
         iv.x_removed = 0;
         iv.state = State_Idle;
@@ -127,6 +131,8 @@ SC_MODULE(ICacheLru) {
         iv.burst_cnt = 0;
         iv.burst_wstrb = 0;
         iv.burst_valid = 0;
+        iv.lru_even_wr = 0;
+        iv.lru_odd_wr = 0;
     }
 
     IWayMem *wayevenx[CFG_ICACHE_WAYS];
