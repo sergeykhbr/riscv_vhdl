@@ -11,6 +11,7 @@
 #include <systemc.h>
 #include "../river_cfg.h"
 #include "icache_stub.h"
+#include "icache_lru.h"
 #include "dcache.h"
 
 namespace debugger {

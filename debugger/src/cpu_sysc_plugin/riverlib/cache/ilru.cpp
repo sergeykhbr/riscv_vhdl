@@ -34,7 +34,7 @@ ILru::ILru(sc_module_name name_, bool async_reset) : sc_module(name_) {
 };
 
 void ILru::comb() {
-    sc_uint<2> wb_lru;
+    sc_uint<8> wb_lru;
     v = r;
 
     wb_lru = r.tbl[r.adr.read()];

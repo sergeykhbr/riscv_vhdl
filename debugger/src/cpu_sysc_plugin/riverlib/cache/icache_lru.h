@@ -24,7 +24,7 @@
 
 namespace debugger {
 
-//#define DBG_ICACHE_TB
+#define DBG_ICACHE_LRU_TB
 
 SC_MODULE(ICacheLru) {
     sc_in<bool> i_clk;
@@ -58,7 +58,7 @@ SC_MODULE(ICacheLru) {
 
     SC_HAS_PROCESS(ICacheLru);
 
-    ICacheLru(sc_module_name name_, bool async_reset, int isize);
+    ICacheLru(sc_module_name name_, bool async_reset, int ilines_per_way);
     virtual ~ICacheLru();
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
@@ -108,6 +108,7 @@ SC_MODULE(ICacheLru) {
     };
 
     struct RegistersType {
+        sc_signal<bool> requested;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_addr;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_addr_overlay;
         sc_signal<bool> use_overlay;
@@ -122,6 +123,7 @@ SC_MODULE(ICacheLru) {
     } v, r;
 
     void R_RESET(RegistersType &iv) {
+        iv.requested = 0;
         iv.req_addr = 0;
         iv.req_addr_overlay = 0;
         iv.use_overlay = 0;
@@ -142,8 +144,8 @@ SC_MODULE(ICacheLru) {
     ILru *lruodd;
 
     TagMemInType swapin[WAY_SubNum];
-    TagMemOutType memeven[WAY_SubNum];
-    TagMemOutType memodd[WAY_SubNum];
+    TagMemOutType memeven[CFG_ICACHE_WAYS];
+    TagMemOutType memodd[CFG_ICACHE_WAYS];
     WayMuxType waysel[WAY_SubNum];
     sc_signal<bool> wb_ena_even[CFG_ICACHE_WAYS];
     sc_signal<bool> wb_ena_odd[CFG_ICACHE_WAYS];
@@ -153,98 +155,23 @@ SC_MODULE(ICacheLru) {
     sc_signal<sc_uint<2>> wb_lru_odd;
 
     bool async_reset_;
-    int isize_;
+    int ilines_per_way_;
 };
 
 
-#ifdef DBG_ICACHE_TB
+#ifdef DBG_ICACHE_LRU_TB
 SC_MODULE(ICacheLru_tb) {
     void comb0();
+    void comb_fetch();
+    void comb_bus();
     void registers() {
         r = v;
+        rbus = vbus;
     }
 
     SC_HAS_PROCESS(ICacheLru_tb);
 
-    ICacheLru_tb(sc_module_name name_) : sc_module(name_),
-        w_clk("clk0", 10, SC_NS) {
-        SC_METHOD(comb0);
-        sensitive << w_nrst;
-        sensitive << w_req_ctrl_valid;
-        sensitive << wb_req_ctrl_addr;
-        sensitive << w_req_ctrl_ready;
-        sensitive << w_resp_ctrl_valid;
-        sensitive << wb_resp_ctrl_addr;
-        sensitive << wb_resp_ctrl_data;
-        sensitive << w_resp_ctrl_ready;
-        sensitive << w_req_mem_ready;
-        sensitive << w_req_mem_valid;
-        sensitive << w_req_mem_write;
-        sensitive << wb_req_mem_addr;
-        sensitive << wb_req_mem_strob;
-        sensitive << wb_req_mem_data;
-        sensitive << w_resp_mem_data_valid;
-        sensitive << wb_resp_mem_data;
-        sensitive << wb_istate;
-        sensitive << r.clk_cnt;
-        sensitive << r.mem_raddr;
-        sensitive << r.mem_state;
-        sensitive << r.mem_cnt;
-        sensitive << r.mem_wait_cnt;
-        sensitive << r.fetch_state;
-        sensitive << r.fetch_cnt;
-
-        SC_METHOD(registers);
-        sensitive << w_clk.posedge_event();
-
-        tt = new ICacheLru("tt");
-        tt->i_clk(w_clk);
-        tt->i_nrst(w_nrst);
-        tt->i_req_ctrl_valid(w_req_ctrl_valid);
-        tt->i_req_ctrl_addr(wb_req_ctrl_addr);
-        tt->o_req_ctrl_ready(w_req_ctrl_ready);
-        tt->o_resp_ctrl_valid(w_resp_ctrl_valid);
-        tt->o_resp_ctrl_addr(wb_resp_ctrl_addr);
-        tt->o_resp_ctrl_data(wb_resp_ctrl_data);
-        tt->i_resp_ctrl_ready(w_resp_ctrl_ready);
-        tt->i_req_mem_ready(w_req_mem_ready);
-        tt->o_req_mem_valid(w_req_mem_valid);
-        tt->o_req_mem_write(w_req_mem_write);
-        tt->o_req_mem_addr(wb_req_mem_addr);
-        tt->o_req_mem_strob(wb_req_mem_strob);
-        tt->o_req_mem_data(wb_req_mem_data);
-        tt->i_resp_mem_data_valid(w_resp_mem_data_valid);
-        tt->i_resp_mem_data(wb_resp_mem_data);
-        tt->o_istate(wb_istate);
-
-        tb_vcd = sc_create_vcd_trace_file("ICacheLru_tb");
-        tb_vcd->set_time_unit(1, SC_PS);
-        sc_trace(tb_vcd, w_nrst, "w_nrst");
-        sc_trace(tb_vcd, w_clk, "w_clk");
-        sc_trace(tb_vcd, r.clk_cnt, "clk_cnt");
-        sc_trace(tb_vcd, w_req_ctrl_valid, "w_req_ctrl_valid");
-        sc_trace(tb_vcd, wb_req_ctrl_addr, "wb_req_ctrl_addr");
-        sc_trace(tb_vcd, w_req_ctrl_ready, "w_req_ctrl_ready");
-        sc_trace(tb_vcd, w_resp_ctrl_valid, "w_resp_ctrl_valid");
-        sc_trace(tb_vcd, wb_resp_ctrl_addr, "wb_resp_ctrl_addr");
-        sc_trace(tb_vcd, wb_resp_ctrl_data, "wb_resp_ctrl_data");
-        sc_trace(tb_vcd, w_resp_ctrl_ready, "w_resp_ctrl_ready");
-        sc_trace(tb_vcd, w_req_mem_ready, "w_req_mem_ready");
-        sc_trace(tb_vcd, w_req_mem_valid, "w_req_mem_valid");
-        sc_trace(tb_vcd, w_req_mem_write, "w_req_mem_write");
-        sc_trace(tb_vcd, wb_req_mem_addr, "wb_req_mem_addr");
-        sc_trace(tb_vcd, wb_req_mem_strob, "wb_req_mem_strob");
-        sc_trace(tb_vcd, wb_req_mem_data, "wb_req_mem_data");
-        sc_trace(tb_vcd, w_resp_mem_data_valid, "w_resp_mem_data_valid");
-        sc_trace(tb_vcd, wb_resp_mem_data, "wb_resp_mem_data");
-        sc_trace(tb_vcd, wb_istate, "wb_istate");
-        sc_trace(tb_vcd, wb_istate_z, "wb_istate_z");
-        sc_trace(tb_vcd, w_ierr_state, "w_ierr_state");
-        sc_trace(tb_vcd, r.mem_state, "r_mem_state");
-        sc_trace(tb_vcd, r.mem_raddr, "r_mem_raddr");
-
-        tt->generateVCD(tb_vcd, tb_vcd);
-    }
+    ICacheLru_tb(sc_module_name name_);
 
 private:
     ICacheLru *tt;
@@ -258,6 +185,7 @@ private:
     sc_signal<bool> w_resp_ctrl_valid;
     sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_resp_ctrl_addr;
     sc_signal<sc_uint<32>> wb_resp_ctrl_data;
+    sc_signal<bool> w_resp_ctrl_load_fault;
     sc_signal<bool> w_resp_ctrl_ready;
     // Memory interface:
     sc_signal<bool> w_req_mem_ready;
@@ -268,21 +196,30 @@ private:
     sc_signal<sc_uint<BUS_DATA_WIDTH>> wb_req_mem_data;
     sc_signal<bool> w_resp_mem_data_valid;
     sc_signal<sc_uint<BUS_DATA_WIDTH>> wb_resp_mem_data;
+    sc_signal<bool> w_resp_mem_load_fault;
+    sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_flush_address;
+    sc_signal<bool> w_flush_valid;
     sc_signal<sc_uint<2>> wb_istate;
 
     struct RegistersType {
         sc_signal<sc_uint<32>> clk_cnt;
-        sc_signal<sc_uint<2>> fetch_state;
-        sc_signal<sc_uint<8>> fetch_cnt;
-        sc_signal<sc_uint<8>> fetch_wait_cnt;
-        sc_signal<sc_uint<2>> mem_state;
-        sc_signal<sc_uint<32>> mem_raddr;
-        sc_signal<sc_uint<8>> mem_cnt;
-        sc_signal<sc_uint<8>> mem_wait_cnt;
     } v, r;
+
+    enum EBusState {
+        BUS_Idle,
+        BUS_Read,
+        BUS_ReadLast
+    };
+
+    struct BusRegistersType {
+        sc_signal<sc_uint<2>> state;
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> burst_addr;
+        sc_signal<sc_uint<2>> burst_cnt;
+    } vbus, rbus;
+
     sc_trace_file *tb_vcd;
 };
-#endif  // DBG_ICACHE_TB
+#endif  // DBG_ICACHE_LRU_TB
 
 }  // namespace debugger
 
