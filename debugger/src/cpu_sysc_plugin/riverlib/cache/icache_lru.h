@@ -76,6 +76,8 @@ SC_MODULE(ICacheLru) {
         State_CheckHit,
         State_WaitGrant,
         State_WaitResp,
+        State_CheckResp,
+        State_Flush
     };
 
     struct TagMemInType {
@@ -108,26 +110,27 @@ SC_MODULE(ICacheLru) {
     };
 
     struct RegistersType {
+        sc_signal<bool> init_done;
         sc_signal<bool> requested;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_addr;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_addr_overlay;
         sc_signal<bool> use_overlay;
-        sc_signal<bool> x_removed;
-        sc_signal<sc_uint<2>> state;
+        sc_signal<sc_uint<3>> state;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> mem_addr;
         sc_signal<sc_uint<2>> burst_cnt;
         sc_signal<sc_uint<4>> burst_wstrb;
         sc_signal<sc_uint<4>> burst_valid;
         sc_signal<sc_uint<2>> lru_even_wr;
         sc_signal<sc_uint<2>> lru_odd_wr;
+        sc_signal<sc_uint<CFG_IINDEX_WIDTH>> flush_cnt;
     } v, r;
 
     void R_RESET(RegistersType &iv) {
+        iv.init_done = 0;
         iv.requested = 0;
         iv.req_addr = 0;
         iv.req_addr_overlay = 0;
         iv.use_overlay = 0;
-        iv.x_removed = 0;
         iv.state = State_Idle;
         iv.mem_addr = 0;
         iv.burst_cnt = 0;
@@ -135,6 +138,7 @@ SC_MODULE(ICacheLru) {
         iv.burst_valid = 0;
         iv.lru_even_wr = 0;
         iv.lru_odd_wr = 0;
+        iv.flush_cnt = 0;
     }
 
     IWayMem *wayevenx[CFG_ICACHE_WAYS];

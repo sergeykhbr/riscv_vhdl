@@ -70,9 +70,19 @@ IWayMem::~IWayMem() {
 }
 
 void IWayMem::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
-    //if (o_vcd) {
-    //    sc_trace(o_vcd, i_nrst, "/top/cache0/i0/i_nrst");
-    //}
+    if (o_vcd) {
+        if (wayidx_ == 0) {
+            sc_trace(o_vcd, i_radr, "/top/cache0/i0/wayeven0/i_radr");
+            sc_trace(o_vcd, i_wadr, "/top/cache0/i0/wayeven0/i_wadr");
+            sc_trace(o_vcd, i_wena, "/top/cache0/i0/wayeven0/i_wena");
+            sc_trace(o_vcd, i_wstrb, "/top/cache0/i0/wayeven0/i_wstrb");
+            sc_trace(o_vcd, i_wdata, "/top/cache0/i0/wayeven0/i_wdata");
+            sc_trace(o_vcd, wb_tag_rdata, "/top/cache0/i0/wayeven0/wb_tag_rdata");
+            sc_trace(o_vcd, wb_tag_wdata, "/top/cache0/i0/wayeven0/wb_tag_wdata");
+            sc_trace(o_vcd, o_valid, "/top/cache0/i0/wayeven0/o_valid");
+            sc_trace(o_vcd, o_rdata, "/top/cache0/i0/wayeven0/o_rdata");
+        }
+    }
 }
 
 void IWayMem::comb() {
