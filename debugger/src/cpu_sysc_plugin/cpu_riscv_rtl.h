@@ -118,6 +118,8 @@ class CpuRiscV_RTL : public IService,
     sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_req_mem_addr;
     sc_signal<sc_uint<BUS_DATA_BYTES>> wb_req_mem_strob;
     sc_signal<sc_uint<BUS_DATA_WIDTH>> wb_req_mem_data;
+    sc_signal<sc_uint<8>> wb_req_mem_len;
+    sc_signal<sc_uint<2>> wb_req_mem_burst;
     sc_signal<bool> w_resp_mem_data_valid;
     sc_signal<sc_uint<BUS_DATA_WIDTH>> wb_resp_mem_data;
     sc_signal<bool> w_resp_mem_load_fault;

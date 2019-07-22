@@ -34,6 +34,8 @@ SC_MODULE(RiverTop) {
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_req_mem_addr;     // AXI memory request address
     sc_out<sc_uint<BUS_DATA_BYTES>> o_req_mem_strob;    // Writing strob. 1 bit per Byte
     sc_out<sc_uint<BUS_DATA_WIDTH>> o_req_mem_data;     // Writing data
+    sc_out<sc_uint<8>> o_req_mem_len;                   // burst transaction length
+    sc_out<sc_uint<2>> o_req_mem_burst;                 // burst type: "00" FIX; "01" INCR; "10" WRAP
     sc_in<bool> i_resp_mem_data_valid;                  // AXI response is valid
     sc_in<sc_uint<BUS_DATA_WIDTH>> i_resp_mem_data;     // Read data
     sc_in<bool> i_resp_mem_load_fault;

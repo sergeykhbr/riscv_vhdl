@@ -19,9 +19,9 @@
 namespace debugger {
 
 ICacheLru::ICacheLru(sc_module_name name_, bool async_reset,
-    int ilines_per_way) : sc_module(name_) {
+    int index_width) : sc_module(name_) {
     async_reset_ = async_reset;
-    ilines_per_way_ = ilines_per_way;
+    index_width_ = index_width;
 
     char tstr1[32] = "wayeven0";
     char tstr2[32] = "wayodd0";
@@ -98,7 +98,6 @@ ICacheLru::ICacheLru(sc_module_name name_, bool async_reset,
     }
     sensitive << wb_lru_even;
     sensitive << wb_lru_odd;
-    sensitive << r.init_done;
     sensitive << r.requested;
     sensitive << r.req_addr;
     sensitive << r.req_addr_overlay;
@@ -110,6 +109,9 @@ ICacheLru::ICacheLru(sc_module_name name_, bool async_reset,
     sensitive << r.burst_valid;
     sensitive << r.lru_even_wr;
     sensitive << r.lru_odd_wr;
+    sensitive << r.req_flush;
+    sensitive << r.req_flush_addr;
+    sensitive << r.req_flush_cnt;
     sensitive << r.flush_cnt;
 
     SC_METHOD(registers);
@@ -197,6 +199,7 @@ void ICacheLru::comb() {
     sc_uint<32> wb_o_resp_data;
     bool w_ena;
     bool w_dis;
+    bool w_last;
     bool w_o_resp_valid;
     bool w_o_resp_load_fault;
     bool w_o_req_ctrl_ready;
@@ -217,6 +220,17 @@ void ICacheLru::comb() {
     wb_radr_overlay = i_req_ctrl_addr.read() + (1 << CFG_IOFFSET_WIDTH);
     wb_radr_overlay >>= CFG_IOFFSET_WIDTH;
     wb_radr_overlay <<= CFG_IOFFSET_WIDTH;
+
+    // flush request via debug interface
+    if (i_flush_valid.read() == 1) {
+        v.req_flush = 1;
+        v.req_flush_addr = i_flush_address.read();
+        if (i_flush_address.read()(CFG_IOFFSET_WIDTH-1, 1) == 0xF) {
+            v.req_flush_cnt = 1;
+        } else {
+            v.req_flush_cnt = 0;
+        }
+    }
 
     // Check read tag and select hit way
     wb_rtag = r.req_addr.read()(ITAG_END, ITAG_START);
@@ -291,7 +305,7 @@ void ICacheLru::comb() {
     lrui[WAY_ODD].we = 0;
     lrui[WAY_ODD].lru = 0;
     w_o_resp_valid = 0;
-    if (r.init_done.read() == 1 && (w_hit0_valid || w_hit1_valid) == 1
+    if (r.state.read() != State_Flush && (w_hit0_valid || w_hit1_valid) == 1
         && wb_hit0 != MISS && wb_hit1 != MISS && r.requested.read() == 1) {
         w_o_resp_valid = 1;
 
@@ -339,7 +353,8 @@ void ICacheLru::comb() {
         }
     }
 
-    w_o_req_ctrl_ready = !r.requested.read() || w_o_resp_valid;
+    w_o_req_ctrl_ready = !r.req_flush.read()
+                       && (!r.requested.read() || w_o_resp_valid);
     if (i_req_ctrl_valid.read() && w_o_req_ctrl_ready) {
         v.req_addr = i_req_ctrl_addr.read();
         v.req_addr_overlay = wb_radr_overlay;
@@ -350,6 +365,7 @@ void ICacheLru::comb() {
     }
 
     // System Bus access state machine
+    w_last = 0;
     w_o_req_mem_valid = 0;
     wb_o_req_mem_addr = 0;
     w_ena = 0;
@@ -357,18 +373,19 @@ void ICacheLru::comb() {
     wb_wstrb_next = (r.burst_wstrb.read() << 1) | r.burst_wstrb.read()[3];
     switch (r.state.read()) {
     case State_Idle:
-        if (r.init_done.read() == 0) {
+        if (r.req_flush.read() == 1) {
             v.state = State_Flush;
-            v.flush_cnt = ~0u;      // All lines
-            v.burst_wstrb = ~0u;    // All ways
-        } else if (i_req_ctrl_valid.read() == 1) {
+            v.mem_addr = r.req_flush_addr.read();
+            v.flush_cnt = r.req_flush_cnt.read();
+            v.burst_wstrb = ~0u;    // All qwords in line
+        } else if (i_req_ctrl_valid.read() == 1 && w_o_req_ctrl_ready == 1) {
             v.state = State_CheckHit;
         }
         break;
     case State_CheckHit:
         if (w_o_resp_valid == 1) {
             // Hit
-            if (i_req_ctrl_valid.read() == 1) {
+            if (i_req_ctrl_valid.read() == 1 && w_o_req_ctrl_ready == 1) {
                 v.state = State_CheckHit;
             } else {
                 v.state = State_Idle;
@@ -419,6 +436,9 @@ void ICacheLru::comb() {
         }
         break;
     case State_WaitResp:
+        if (r.burst_cnt.read() == 0) {
+            w_last = 1;
+        }
         if (i_resp_mem_data_valid.read()) {
             w_ena = 1;
             if (r.burst_cnt.read() == 0) {
@@ -432,7 +452,7 @@ void ICacheLru::comb() {
         }
         break;
     case State_CheckResp:
-        if ((w_o_resp_valid == 1 && i_req_ctrl_valid.read() == 1)
+        if ((w_o_req_ctrl_ready == 1 && i_req_ctrl_valid.read() == 1)
             || (r.requested.read() == 1 && w_o_resp_valid == 0)) {
             v.state = State_CheckHit;
         } else {
@@ -443,12 +463,8 @@ void ICacheLru::comb() {
         w_ena = 1;
         w_dis = 1;
         if (r.flush_cnt.read() == 0) {
-            v.init_done = 1;
-            if (r.requested.read() == 1) {
-                v.state = State_CheckHit;
-            } else {
-                v.state = State_Idle;
-            }
+            v.req_flush = 0;
+            v.state = State_Idle;
         } else {
             v.flush_cnt = r.flush_cnt.read() - 1;
             v.mem_addr = r.mem_addr.read() + (1 << CFG_IOFFSET_WIDTH);
@@ -499,6 +515,9 @@ void ICacheLru::comb() {
     o_req_mem_write = false;
     o_req_mem_strob = 0;
     o_req_mem_data = 0;
+    o_req_mem_len = 3;
+    o_req_mem_burst = 2;
+    o_req_mem_burst_last = w_last;
 
     o_resp_ctrl_valid = w_o_resp_valid;
     o_resp_ctrl_data = wb_o_resp_data;
@@ -617,7 +636,7 @@ void ICacheLru_tb::comb_fetch() {
     wb_req_ctrl_addr = 0;
 
     switch (r.clk_cnt.read()) {
-    case 10:
+    case 10 + 1 + (1 << (2*(CFG_IINDEX_WIDTH+1))):
         w_req_ctrl_valid = 1;
         wb_req_ctrl_addr = 0x00000000;
         break;
@@ -636,6 +655,48 @@ void ICacheLru_tb::comb_fetch() {
     case 1026:
         w_req_ctrl_valid = 1;
         wb_req_ctrl_addr = 0x100008fe;
+        break;
+
+    case 1050:
+        w_req_ctrl_valid = 1;
+        wb_req_ctrl_addr = 0x0000001e;
+        break;
+    case 1060:
+        w_req_ctrl_valid = 1;
+        wb_req_ctrl_addr = 0x0000201e;
+        break;
+    case 1070:
+        w_req_ctrl_valid = 1;
+        wb_req_ctrl_addr = 0x0010001e;
+        break;
+    case 1081:
+        w_req_ctrl_valid = 1;
+        wb_req_ctrl_addr = 0x0010201e;
+        break;
+
+    case 1100:
+        w_req_ctrl_valid = 1;
+        wb_req_ctrl_addr = 0x00000004;
+        break;
+    case 1101:
+        w_req_ctrl_valid = 1;
+        wb_req_ctrl_addr = 0x00000008;
+        break;
+    case 1102:
+        w_req_ctrl_valid = 1;
+        wb_req_ctrl_addr = 0x00002008;
+        break;
+    case 1103:
+        w_req_ctrl_valid = 1;
+        wb_req_ctrl_addr = 0x0000200C;
+        break;
+    case 1104:
+        w_req_ctrl_valid = 1;
+        wb_req_ctrl_addr = 0x00102010;
+        break;
+    case 1105:
+        w_req_ctrl_valid = 1;
+        wb_req_ctrl_addr = 0x00102014;
         break;
     default:;
     }

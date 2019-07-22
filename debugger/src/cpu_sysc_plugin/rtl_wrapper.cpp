@@ -37,6 +37,8 @@ RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
     SC_METHOD(comb);
     sensitive << i_req_mem_valid;
     sensitive << i_req_mem_addr;
+    sensitive << i_req_mem_len;
+    sensitive << i_req_mem_burst;
     sensitive << i_halted;
     sensitive << r.nrst;
     sensitive << r.resp_mem_data_valid;
@@ -59,6 +61,8 @@ RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
     v.resp_mem_load_fault = false;
     v.resp_mem_store_fault = false;
     v.halted = false;
+    v.state = State_Idle;
+    v.burst_addr = 0;
     RISCV_event_create(&dport_.valid, "dport_valid");
     dport_.trans_idx_up = 0;
     dport_.trans_idx_down = 0;
@@ -130,6 +134,9 @@ void RtlWrapper::clk_negedge_proc() {
     }
 
     /** */
+    Axi4TransactionType trans;
+    ETransStatus resp;
+    trans.source_idx = 0;//CFG_NASTI_MASTER_CACHED;
     v.interrupt = w_interrupt;
     v.nrst = (r.nrst.read() << 1) | w_nrst;
     v.wait_state_cnt = r.wait_state_cnt.read() + 1;
@@ -146,33 +153,65 @@ void RtlWrapper::clk_negedge_proc() {
     {
         w_req_fire = i_req_mem_valid.read();
     }
-    if (w_req_fire) {
-        Axi4TransactionType trans;
-        trans.source_idx = 0;//CFG_NASTI_MASTER_CACHED;
-        trans.addr = i_req_mem_addr.read();
-        if (i_req_mem_write.read()) {
-            uint8_t strob = i_req_mem_strob.read();
-            uint64_t offset = mask2offset(strob);
-            trans.addr += offset;
-            trans.action = MemAction_Write;
-            trans.xsize = mask2size(strob >> offset);
-            trans.wstrb = (1 << trans.xsize) - 1;
-            trans.wpayload.b64[0] = i_req_mem_data.read();
-            ETransStatus r_resp = ibus_->b_transport(&trans);
-            v.resp_mem_data = 0;
-            if (r_resp == TRANS_ERROR) {
-                v.resp_mem_store_fault = true;
+    switch (r.state) {
+    case State_Idle:
+        if (w_req_fire) {
+            trans.addr = i_req_mem_addr.read();
+            if (i_req_mem_write.read()) {
+                uint8_t strob = i_req_mem_strob.read();
+                uint64_t offset = mask2offset(strob);
+                trans.addr += offset;
+                trans.action = MemAction_Write;
+                trans.xsize = mask2size(strob >> offset);
+                trans.wstrb = (1 << trans.xsize) - 1;
+                trans.wpayload.b64[0] = i_req_mem_data.read();
+                resp = ibus_->b_transport(&trans);
+                v.resp_mem_data = 0;
+                if (resp == TRANS_ERROR) {
+                    v.resp_mem_store_fault = true;
+                }
+            } else {
+                trans.action = MemAction_Read;
+                trans.xsize = BUS_DATA_BYTES;
+                resp = ibus_->b_transport(&trans);
+                v.resp_mem_data = trans.rpayload.b64[0];
+                if (resp == TRANS_ERROR) {
+                    v.resp_mem_load_fault = true;
+                }
             }
-        } else {
-            trans.action = MemAction_Read;
-            trans.xsize = BUS_DATA_BYTES;
-            ETransStatus b_resp = ibus_->b_transport(&trans);
-            v.resp_mem_data = trans.rpayload.b64[0];
-            if (b_resp == TRANS_ERROR) {
-                v.resp_mem_load_fault = true;
+            if (i_req_mem_len.read() != 0) {
+                v.state = State_Burst;
+                v.burst_addr = i_req_mem_addr.read();
+                v.burst_len = i_req_mem_len.read();
+                v.burst_type = i_req_mem_burst.read();
             }
+            v.resp_mem_data_valid = true;
+        }
+        break;
+    case State_Burst:
+        if (r.burst_type.read() == 0) {
+            trans.addr = r.burst_addr.read();
+        } else if (r.burst_type.read() == 1) {
+            trans.addr = r.burst_addr.read() + 8;
+        } else if (r.burst_type.read() == 2) {
+            trans.addr = (r.burst_addr.read()(5, 0) + 8) & 0x3F;
+            trans.addr |= (r.burst_addr.read()(31, 6) << 6);
         }
         v.resp_mem_data_valid = true;
+        v.burst_addr = trans.addr;
+        if (r.burst_len.read() == 0) {
+            v.state = State_Idle;
+        } else {
+            v.burst_len = r.burst_len.read() - 1;
+        }
+        trans.action = MemAction_Read;
+        trans.xsize = BUS_DATA_BYTES;
+        resp = ibus_->b_transport(&trans);
+        v.resp_mem_data = trans.rpayload.b64[0];
+        if (resp == TRANS_ERROR) {
+            v.resp_mem_load_fault = true;
+        }
+        break;
     }
 
     // Debug port handling:

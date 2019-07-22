@@ -45,6 +45,8 @@ class RtlWrapper : public sc_module,
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_req_mem_addr;
     sc_in<sc_uint<BUS_DATA_BYTES>> i_req_mem_strob;
     sc_in<sc_uint<BUS_DATA_WIDTH>> i_req_mem_data;
+    sc_in<sc_uint<8>> i_req_mem_len;
+    sc_in<sc_uint<2>> i_req_mem_burst;
     sc_out<bool> o_resp_mem_data_valid;
     sc_out<sc_uint<BUS_DATA_WIDTH>> o_resp_mem_data;
     sc_out<bool> o_resp_mem_load_fault;
@@ -61,6 +63,10 @@ class RtlWrapper : public sc_module,
     sc_in<sc_uint<RISCV_ARCH>> i_dport_rdata;            // Response value
     sc_in<bool> i_halted;
 
+    enum EState {
+        State_Idle,
+        State_Burst,
+    };
 
     struct RegistersType {
         sc_signal<sc_uint<BUS_DATA_WIDTH>> resp_mem_data;
@@ -70,6 +76,10 @@ class RtlWrapper : public sc_module,
         sc_signal<sc_uint<3>> wait_state_cnt;
         sc_signal<sc_bv<5>> nrst;
         sc_signal<bool> interrupt;
+        sc_signal<bool> state;
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> burst_addr;
+        sc_signal<sc_uint<8>> burst_len;
+        sc_signal<sc_uint<2>> burst_type;
         // Debug port latches:
         sc_signal<bool> dport_valid;
         sc_signal<bool> dport_write;

@@ -144,6 +144,8 @@ void CpuRiscV_RTL::createSystemC() {
     wrapper_->i_req_mem_addr(wb_req_mem_addr);
     wrapper_->i_req_mem_strob(wb_req_mem_strob);
     wrapper_->i_req_mem_data(wb_req_mem_data);
+    wrapper_->i_req_mem_len(wb_req_mem_len);
+    wrapper_->i_req_mem_burst(wb_req_mem_burst);
     wrapper_->o_resp_mem_data_valid(w_resp_mem_data_valid);
     wrapper_->o_resp_mem_data(wb_resp_mem_data);
     wrapper_->o_resp_mem_load_fault(w_resp_mem_load_fault);
@@ -170,6 +172,8 @@ void CpuRiscV_RTL::createSystemC() {
     top_->o_req_mem_addr(wb_req_mem_addr);
     top_->o_req_mem_strob(wb_req_mem_strob);
     top_->o_req_mem_data(wb_req_mem_data);
+    top_->o_req_mem_len(wb_req_mem_len);
+    top_->o_req_mem_burst(wb_req_mem_burst);
     top_->i_resp_mem_data_valid(w_resp_mem_data_valid);
     top_->i_resp_mem_data(wb_resp_mem_data);
     top_->i_resp_mem_load_fault(w_resp_mem_load_fault);
@@ -185,7 +189,7 @@ void CpuRiscV_RTL::createSystemC() {
     top_->o_dport_rdata(wb_dport_rdata);
     top_->o_halted(w_halted);
 
-#if 1
+#if 0
     ICacheLru_tb *tb = new ICacheLru_tb("tb");
 #endif;
 

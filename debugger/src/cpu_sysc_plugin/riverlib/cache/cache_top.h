@@ -48,6 +48,8 @@ SC_MODULE(CacheTop) {
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_req_mem_addr;     // Requesting address
     sc_out<sc_uint<BUS_DATA_BYTES>> o_req_mem_strob;    // Writing strob 1 bit per 1 byte (AXI compliance)
     sc_out<sc_uint<BUS_DATA_WIDTH>> o_req_mem_data;     // Writing value
+    sc_out<sc_uint<8>> o_req_mem_len;                   // burst transaction length
+    sc_out<sc_uint<2>> o_req_mem_burst;                 // burst type: "00" FIX; "01" INCR; "10" WRAP
     sc_in<bool> i_resp_mem_data_valid;                  // Memory operation from system bus is completed
     sc_in<sc_uint<BUS_DATA_WIDTH>> i_resp_mem_data;     // Read value
     sc_in<bool> i_resp_mem_load_fault;                  // Bus response with SLVERR or DECERR on read
@@ -81,6 +83,9 @@ private:
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_mem_addr;
         sc_signal<sc_uint<BUS_DATA_BYTES>> req_mem_strob;
         sc_signal<sc_uint<BUS_DATA_WIDTH>> req_mem_wdata;
+        sc_signal<sc_uint<8>> req_mem_len;
+        sc_signal<sc_uint<2>> req_mem_burst;
+        sc_signal<bool> req_mem_burst_last;
     };
 
     struct RegistersType {
@@ -102,6 +107,7 @@ private:
     sc_signal<bool> w_data_req_ready;
 
     ICacheStub *i0;
+    ICacheLru *i1;
     DCache *d0;
 #ifdef DBG_ICACHE_TB
     ICache_tb *i0_tb;

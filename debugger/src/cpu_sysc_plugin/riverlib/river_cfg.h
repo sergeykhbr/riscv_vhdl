@@ -38,6 +38,7 @@ static const int CFG_IODDEVEN_WIDTH  = 1;    // [5]    0=even; 1=odd
 // [12:6]  7: index: 4 KB per odd/even ways (32 KB icache)
 // [11:6]  6: index: 2 KB per odd/even ways (16 KB icache)
 static const int CFG_IINDEX_WIDTH    = 6;    // log2(LINES_PER_WAY) odd or even
+static const int CFG_ILINES_PER_WAY  = 1 << CFG_IINDEX_WIDTH;
 // [31:14] tag when 64 KB
 // [31:13] tag when 32 KB
 // [31:12] tag when 16 KB

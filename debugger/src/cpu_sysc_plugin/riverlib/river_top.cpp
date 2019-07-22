@@ -89,6 +89,8 @@ RiverTop::RiverTop(sc_module_name name_, uint32_t hartid, bool async_reset,
     cache0->o_req_mem_addr(o_req_mem_addr);
     cache0->o_req_mem_strob(o_req_mem_strob);
     cache0->o_req_mem_data(o_req_mem_data);
+    cache0->o_req_mem_len(o_req_mem_len);
+    cache0->o_req_mem_burst(o_req_mem_burst);
     cache0->i_resp_mem_data_valid(i_resp_mem_data_valid);
     cache0->i_resp_mem_data(i_resp_mem_data);
     cache0->i_resp_mem_load_fault(i_resp_mem_load_fault);

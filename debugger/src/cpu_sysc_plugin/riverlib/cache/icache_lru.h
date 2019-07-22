@@ -45,6 +45,9 @@ SC_MODULE(ICacheLru) {
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_req_mem_addr;
     sc_out<sc_uint<BUS_DATA_BYTES>> o_req_mem_strob;
     sc_out<sc_uint<BUS_DATA_WIDTH>> o_req_mem_data;
+    sc_out<sc_uint<8>> o_req_mem_len;       // burst transactions num
+    sc_out<sc_uint<2>> o_req_mem_burst;     // "10" burst WRAP
+    sc_out<bool> o_req_mem_burst_last;      // last in sequence flag
     sc_in<bool> i_resp_mem_data_valid;
     sc_in<sc_uint<BUS_DATA_WIDTH>> i_resp_mem_data;
     sc_in<bool> i_resp_mem_load_fault;
@@ -58,7 +61,7 @@ SC_MODULE(ICacheLru) {
 
     SC_HAS_PROCESS(ICacheLru);
 
-    ICacheLru(sc_module_name name_, bool async_reset, int ilines_per_way);
+    ICacheLru(sc_module_name name_, bool async_reset, int index_width);
     virtual ~ICacheLru();
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
@@ -110,7 +113,6 @@ SC_MODULE(ICacheLru) {
     };
 
     struct RegistersType {
-        sc_signal<bool> init_done;
         sc_signal<bool> requested;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_addr;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_addr_overlay;
@@ -122,11 +124,13 @@ SC_MODULE(ICacheLru) {
         sc_signal<sc_uint<4>> burst_valid;
         sc_signal<sc_uint<2>> lru_even_wr;
         sc_signal<sc_uint<2>> lru_odd_wr;
-        sc_signal<sc_uint<CFG_IINDEX_WIDTH>> flush_cnt;
+        sc_signal<bool> req_flush;
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_flush_addr;
+        sc_signal<sc_uint<CFG_IINDEX_WIDTH+1>> req_flush_cnt;
+        sc_signal<sc_uint<CFG_IINDEX_WIDTH+1>> flush_cnt;
     } v, r;
 
     void R_RESET(RegistersType &iv) {
-        iv.init_done = 0;
         iv.requested = 0;
         iv.req_addr = 0;
         iv.req_addr_overlay = 0;
@@ -138,6 +142,9 @@ SC_MODULE(ICacheLru) {
         iv.burst_valid = 0;
         iv.lru_even_wr = 0;
         iv.lru_odd_wr = 0;
+        iv.req_flush = 1;           // init flush request
+        iv.req_flush_addr = 0;
+        iv.req_flush_cnt = ~0u;     // all lines
         iv.flush_cnt = 0;
     }
 
@@ -159,7 +166,7 @@ SC_MODULE(ICacheLru) {
     sc_signal<sc_uint<2>> wb_lru_odd;
 
     bool async_reset_;
-    int ilines_per_way_;
+    int index_width_;
 };
 
 

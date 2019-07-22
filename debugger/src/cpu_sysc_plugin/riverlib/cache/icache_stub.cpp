@@ -376,6 +376,9 @@ void ICacheStub::comb() {
     o_req_mem_write = false;
     o_req_mem_strob = 0;
     o_req_mem_data = 0;
+    o_req_mem_len = 0;
+    o_req_mem_burst = 0;
+    o_req_mem_burst_last = 1;
 
     o_resp_ctrl_valid = w_o_resp_valid;
     o_resp_ctrl_data = wb_o_resp_data;
