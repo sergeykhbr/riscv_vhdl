@@ -38,6 +38,8 @@ CpuRiscV_RTL::CpuRiscV_RTL(const char *name)
 
     bus_.make_string("");
     freqHz_.make_uint64(1);
+    fpuEnable_.make_boolean(true);
+    configICache_.make_int64(1);
     InVcdFile_.make_string("");
     OutVcdFile_.make_string("");
     GenerateRef_.make_boolean(false);

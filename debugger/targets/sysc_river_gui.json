@@ -133,19 +133,19 @@
                 ['HartID',0],
                 ['AsyncReset',false],
                 ['FpuEnable',true, 'Enable Hardware FPU module'],
-                ['ConfigICache',0, '0=ICacheStub, 1=ICacheLru 64KB, 2=ICacheLru 32KB, 3=ICacheLru 16KB'],
+                ['ConfigICache',1, '0=ICacheStub, 1=ICacheLru 64KB, 2=ICacheLru 32KB, 3=ICacheLru 16KB'],
                 ['Bus','axi0'],
                 ['CmdExecutor','cmdexec0']
                 ['Tap','edcltap']
                 ['GenerateRef',false,'Generate Registers/Memory access trace file to compare it with functional model'],
                 ['InVcdFile','','Non empty string enables generation of stimulus VCD file'],
-                ['OutVcdFile','','Non empty string enables VCD file with reference signals'],
+                ['OutVcdFile','d:/Projects/o_river','Non empty string enables VCD file with reference signals'],
                 ['FreqHz',1000000]
                 ]}]},
     {'Class':'MemorySimClass','Instances':[
           {'Name':'bootrom0','Attr':[
                 ['LogLevel',1],
-                ['InitFile','../../../examples/bootrom_tests/linuxbuild/bin/bootrom_tests.hex'],
+                ['InitFile','../../../examples/boot/linuxbuild/bin/bootimage.hex'],
                 ['ReadOnly',true],
                 ['BaseAddress',0x0],
                 ['Length',32768]
@@ -161,7 +161,7 @@
     {'Class':'MemorySimClass','Instances':[
           {'Name':'sram0','Attr':[
                 ['LogLevel',1],
-                ['InitFile','../../../examples/zephyr/gcc711/zephyr.hex'],
+                ['InitFile','../../../examples/dhrystone21/makefiles/bin/dhrystone21.hex'],
                 ['ReadOnly',false],
                 ['BaseAddress',0x10000000],
                 ['Length',0x80000]

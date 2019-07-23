@@ -143,8 +143,8 @@ SC_MODULE(ICacheLru) {
         iv.lru_even_wr = 0;
         iv.lru_odd_wr = 0;
         iv.req_flush = 1;           // init flush request
-        iv.req_flush_addr = 0;
-        iv.req_flush_cnt = ~0u;     // all lines
+        iv.req_flush_addr = 0x1;    // [0]=1 flush all
+        iv.req_flush_cnt = 0;
         iv.flush_cnt = 0;
     }
 

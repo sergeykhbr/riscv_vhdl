@@ -156,6 +156,8 @@ void CacheTop::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     }
     if (icache_cfg_ == 0) {
         i0->generateVCD(i_vcd, o_vcd);
+    } else {
+        i1->generateVCD(i_vcd, o_vcd);
     }
     d0->generateVCD(i_vcd, o_vcd);
 }
@@ -163,6 +165,8 @@ void CacheTop::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 CacheTop::~CacheTop() {
     if (icache_cfg_ == 0) {
         delete i0;
+    } else {
+        delete i1;
     }
     delete d0;
 }

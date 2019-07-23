@@ -149,6 +149,8 @@ void ICacheLru::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.state, "/top/cache0/i0/r_state");
         sc_trace(o_vcd, r.lru_even_wr, "/top/cache0/i0/r_lru_even_wr");
         sc_trace(o_vcd, r.lru_odd_wr, "/top/cache0/i0/r_lru_odd_wr");
+        sc_trace(o_vcd, r.req_addr, "/top/cache0/i0/r_req_addr");
+        sc_trace(o_vcd, r.req_addr_overlay, "/top/cache0/i0/r_req_addr_overlay");
 
         sc_trace(o_vcd, wb_ena_even[0], "/top/cache0/i0/wb_ena_even0");
         sc_trace(o_vcd, wb_ena_even[1], "/top/cache0/i0/wb_ena_even1");
@@ -178,6 +180,8 @@ void ICacheLru::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, memeven[0].valid, "/top/cache0/i0/memeven0_valid");
         sc_trace(o_vcd, memeven[0].rtag, "/top/cache0/i0/memeven0_rtag");
         sc_trace(o_vcd, memeven[0].rdata, "/top/cache0/i0/memeven0_rdata");
+        sc_trace(o_vcd, lrui[0].we, "/top/cache0/i0/lruieven/we");
+        sc_trace(o_vcd, lrui[1].we, "/top/cache0/i0/lruiodd/we");
     }
     for (int i = 0; i < CFG_ICACHE_WAYS; i++) {
         wayevenx[i]->generateVCD(i_vcd, o_vcd);
@@ -189,6 +193,7 @@ void ICacheLru::comb() {
     bool w_raddr5;
     bool w_raddr5_r;
     bool w_use_overlay;
+    sc_uint<BUS_ADDR_WIDTH> wb_req_adr;
     sc_uint<BUS_ADDR_WIDTH> wb_radr_overlay;
     sc_uint<CFG_ITAG_WIDTH> wb_rtag;
     sc_uint<3> wb_hit0;
@@ -209,26 +214,36 @@ void ICacheLru::comb() {
    
     v = r;
 
-    w_raddr5 = i_req_ctrl_addr.read()[CFG_IOFFSET_WIDTH];
+    if (i_req_ctrl_valid.read() == 1) {
+        wb_req_adr = i_req_ctrl_addr.read();
+    } else {
+        wb_req_adr = r.req_addr.read();
+    }
+
+    w_raddr5 = wb_req_adr[CFG_IOFFSET_WIDTH];
     w_raddr5_r = r.req_addr.read()[CFG_IOFFSET_WIDTH];
 
     w_use_overlay = 0;
-    if (i_req_ctrl_addr.read()(CFG_IOFFSET_WIDTH-1, 1) == 0xF) {
+    if (wb_req_adr(CFG_IOFFSET_WIDTH-1, 1) == 0xF) {
         w_use_overlay = 1;
     }
 
-    wb_radr_overlay = i_req_ctrl_addr.read() + (1 << CFG_IOFFSET_WIDTH);
+    wb_radr_overlay = wb_req_adr + (1 << CFG_IOFFSET_WIDTH);
     wb_radr_overlay >>= CFG_IOFFSET_WIDTH;
     wb_radr_overlay <<= CFG_IOFFSET_WIDTH;
 
     // flush request via debug interface
     if (i_flush_valid.read() == 1) {
         v.req_flush = 1;
-        v.req_flush_addr = i_flush_address.read();
-        if (i_flush_address.read()(CFG_IOFFSET_WIDTH-1, 1) == 0xF) {
+        if (i_flush_address.read()[0] == 1) {
+            v.req_flush_cnt = ~0u;
+            v.req_flush_addr = 0xFFFF0000;
+        } else if (i_flush_address.read()(CFG_IOFFSET_WIDTH-1, 1) == 0xF) {
             v.req_flush_cnt = 1;
+            v.req_flush_addr = i_flush_address.read();
         } else {
             v.req_flush_cnt = 0;
+            v.req_flush_addr = i_flush_address.read();
         }
     }
 
@@ -305,12 +320,12 @@ void ICacheLru::comb() {
     lrui[WAY_ODD].we = 0;
     lrui[WAY_ODD].lru = 0;
     w_o_resp_valid = 0;
-    if (r.state.read() != State_Flush && (w_hit0_valid || w_hit1_valid) == 1
+    if (r.state.read() != State_Flush && w_hit0_valid && w_hit1_valid
         && wb_hit0 != MISS && wb_hit1 != MISS && r.requested.read() == 1) {
         w_o_resp_valid = 1;
 
         // Update LRU table
-        if (r.req_addr.read()[CFG_IOFFSET_WIDTH] == 0) {
+        if (w_raddr5_r == 0) {
             lrui[WAY_EVEN].we = 1;
             lrui[WAY_EVEN].lru = wb_hit0(1, 0);
             lrui[WAY_EVEN].adr =
@@ -337,11 +352,11 @@ void ICacheLru::comb() {
 
     if (r.state.read() == State_Idle || w_o_resp_valid == 1) {
         if (w_raddr5 == 0) {
-            swapin[WAY_EVEN].radr = i_req_ctrl_addr.read();
+            swapin[WAY_EVEN].radr = wb_req_adr;
             swapin[WAY_ODD].radr = wb_radr_overlay;
         } else {
             swapin[WAY_EVEN].radr = wb_radr_overlay;
-            swapin[WAY_ODD].radr = i_req_ctrl_addr.read();
+            swapin[WAY_ODD].radr = wb_req_adr;
         }
     } else {
         if (w_raddr5_r == 0) {
@@ -360,7 +375,7 @@ void ICacheLru::comb() {
         v.req_addr_overlay = wb_radr_overlay;
         v.use_overlay = w_use_overlay;
         v.requested = 1;
-    } else if (w_o_resp_valid) {
+    } else if (w_o_resp_valid && i_resp_ctrl_ready.read()) {
         v.requested = 0;
     }
 
@@ -375,8 +390,13 @@ void ICacheLru::comb() {
     case State_Idle:
         if (r.req_flush.read() == 1) {
             v.state = State_Flush;
-            v.mem_addr = r.req_flush_addr.read();
-            v.flush_cnt = r.req_flush_cnt.read();
+            if (r.req_flush_addr.read()[0] == 1) {
+                v.mem_addr = 0xFFFF0000;
+                v.flush_cnt = ~0u;
+            } else {
+                v.mem_addr = r.req_flush_addr.read();
+                v.flush_cnt = r.req_flush_cnt.read();
+            }
             v.burst_wstrb = ~0u;    // All qwords in line
         } else if (i_req_ctrl_valid.read() == 1 && w_o_req_ctrl_ready == 1) {
             v.state = State_CheckHit;
