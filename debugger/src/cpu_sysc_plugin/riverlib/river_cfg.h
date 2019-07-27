@@ -34,10 +34,10 @@ static const int BUS_DATA_BYTES = BUS_DATA_WIDTH / 8;
 /** ICacheLru config */
 static const int CFG_IOFFSET_WIDTH   = 5;    // [4:0]  log2(ICACHE_LINE_BYTES)
 static const int CFG_IODDEVEN_WIDTH  = 1;    // [5]    0=even; 1=odd
-// [13:6]  8: index: 8 KB per odd/even ways (64 KB icache)
-// [12:6]  7: index: 4 KB per odd/even ways (32 KB icache)
-// [11:6]  6: index: 2 KB per odd/even ways (16 KB icache)
-static const int CFG_IINDEX_WIDTH    = 8;//6;    // log2(LINES_PER_WAY) odd or even
+// [13:6]  8: index: 8 KB per odd/even ways (64 KB icache) 75565 drhy
+// [12:6]  7: index: 4 KB per odd/even ways (32 KB icache) 75565
+// [11:6]  6: index: 2 KB per odd/even ways (16 KB icache) 75565
+static const int CFG_IINDEX_WIDTH    = 6;    // log2(LINES_PER_WAY) odd or even
 static const int CFG_ILINES_PER_WAY  = 1 << CFG_IINDEX_WIDTH;
 // [31:14] tag when 64 KB
 // [31:13] tag when 32 KB

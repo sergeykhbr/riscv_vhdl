@@ -81,6 +81,7 @@ class RtlWrapper : public sc_module,
         sc_signal<bool> halted;
     } r, v;
 
+    sc_event bus_event_;
     sc_signal<bool> w_resp_valid;
     sc_signal<sc_uint<RISCV_ARCH>> wb_resp_data;
     sc_signal<bool> w_resp_store_fault;
