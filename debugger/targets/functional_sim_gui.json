@@ -169,7 +169,7 @@
     {'Class':'MemorySimClass','Instances':[
           {'Name':'bootrom0','Attr':[
                 ['LogLevel',1],
-                ['InitFile','../../../examples/bootrom_tests/linuxbuild/bin/bootrom_tests.hex'],
+                ['InitFile','../../../examples/boot/linuxbuild/bin/bootimage.hex'],
                 ['ReadOnly',true],
                 ['BaseAddress',0x0],
                 ['Length',32768]
@@ -185,7 +185,7 @@
     {'Class':'MemorySimClass','Instances':[
           {'Name':'sram0','Attr':[
                 ['LogLevel',1],
-                ['InitFile','../../../examples/zephyr/gcc711/zephyr.hex'],
+                ['InitFile','../../../examples/dhrystone21/makefiles/bin/dhrystone21.hex'],
                 ['ReadOnly',false],
                 ['BaseAddress',0x10000000],
                 ['Length',0x80000]

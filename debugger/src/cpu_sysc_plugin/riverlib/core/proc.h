@@ -79,7 +79,8 @@ SC_MODULE(Processor) {
     sc_in<sc_uint<2>> i_cstate;                         // CacheTop state machine value
 
     void comb();
-    void negedge_dbg_print();
+    void negedge_proc();
+    void dbg_print();
     void generateRef(bool v);
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
@@ -251,6 +252,7 @@ private:
     /** Used only for reference trace generation to compare with
         functional model */
     bool generate_ref_;
+    sc_event print_event_;
     char tstr[1024];
     ofstream *reg_dbg;
     ofstream *mem_dbg;

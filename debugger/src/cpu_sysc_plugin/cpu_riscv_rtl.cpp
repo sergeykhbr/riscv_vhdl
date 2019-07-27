@@ -46,7 +46,7 @@ CpuRiscV_RTL::CpuRiscV_RTL(const char *name)
     RISCV_event_create(&config_done_, "riscv_sysc_config_done");
     RISCV_register_hap(static_cast<IHap *>(this));
 
-    createSystemC();
+    //createSystemC();
 }
 
 CpuRiscV_RTL::~CpuRiscV_RTL() {
@@ -78,6 +78,8 @@ void CpuRiscV_RTL::postinitService() {
         RISCV_error("ITap interface '%s' not found", tap_.to_string());
         return;
     }
+
+    createSystemC();
 
     if (InVcdFile_.size()) {
         i_vcd_ = sc_create_vcd_trace_file(InVcdFile_.to_string());
@@ -195,7 +197,7 @@ void CpuRiscV_RTL::createSystemC() {
     ICacheLru_tb *tb = new ICacheLru_tb("tb");
 #endif;
 
-    sc_start(0, SC_NS);
+    //sc_start(0, SC_NS);
 }
 
 void CpuRiscV_RTL::deleteSystemC() {

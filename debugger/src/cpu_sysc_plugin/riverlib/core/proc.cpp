@@ -21,6 +21,7 @@ namespace debugger {
 
 Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset)
     : sc_module(name_) {
+    generate_ref_ = 0;
 
     SC_METHOD(comb);
     sensitive << i_nrst;
@@ -42,8 +43,11 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset)
     sensitive << dbg.flush_valid;
     sensitive << dbg.flush_address;
 
-    SC_METHOD(negedge_dbg_print);
+    SC_METHOD(negedge_proc);
     sensitive << i_clk.neg();
+
+    SC_METHOD(dbg_print);
+    sensitive << print_event_;
 
     fetch0 = new InstrFetch("fetch0", async_reset);
     fetch0->i_clk(i_clk);
@@ -404,15 +408,19 @@ void Processor::generateRef(bool v) {
     }
 }
 
-void Processor::negedge_dbg_print() {
+void Processor::negedge_proc() {
+    print_event_.notify(1, SC_NS);
+}
+
+void Processor::dbg_print() {
     if (!generate_ref_) {
         return;
     }
     int sz;
     if (w.m.valid.read()) {
-        uint64_t line_cnt = dbg.executed_cnt.read() + 1;
+        uint64_t exec_cnt = dbg.executed_cnt.read();
         sz = RISCV_sprintf(tstr, sizeof(tstr), "%8" RV_PRI64 "d [%08x]: ",
-            line_cnt,
+            exec_cnt + 1,
             w.m.pc.read().to_int());
         uint64_t prev_val = iregs0->r.mem[w.w.waddr.read().to_int()].to_int64();
         uint64_t cur_val = w.w.wdata.read().to_int64();

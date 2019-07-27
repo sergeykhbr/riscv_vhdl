@@ -176,6 +176,7 @@ void ICacheLru::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, waysel[1].rdata, "/top/cache0/i0/waysel(1).rdata");
         sc_trace(o_vcd, waysel[1].valid, "/top/cache0/i0/waysel(1).valid");
         sc_trace(o_vcd, waysel[1].load_fault, "/top/cache0/i0/waysel(1).load_fault");
+        sc_trace(o_vcd, r.use_overlay, "/top/cache0/i0/r_use_overlay");
 
         sc_trace(o_vcd, memeven[0].valid, "/top/cache0/i0/memeven0_valid");
         sc_trace(o_vcd, memeven[0].rtag, "/top/cache0/i0/memeven0_rtag");

@@ -25,6 +25,8 @@ DCache::DCache(sc_module_name name_, bool async_reset) : sc_module(name_) {
     sensitive << i_resp_mem_store_fault;
     sensitive << i_req_mem_ready;
     sensitive << i_resp_data_ready;
+    sensitive << r.req_strob;
+    sensitive << r.req_wdata;
     sensitive << r.dline_data;
     sensitive << r.dline_addr_req;
     sensitive << r.dline_size_req;
@@ -45,11 +47,15 @@ void DCache::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_req_data_addr, "/top/cache0/d0/i_req_data_addr");
         sc_trace(o_vcd, i_req_data_data, "/top/cache0/d0/i_req_data_data");
         sc_trace(o_vcd, o_req_mem_addr, "/top/cache0/d0/o_req_mem_addr");
+        sc_trace(o_vcd, o_req_mem_valid, "/top/cache0/d0/o_req_mem_valid");
+        sc_trace(o_vcd, o_req_mem_write, "/top/cache0/d0/o_req_mem_write");
         sc_trace(o_vcd, o_req_mem_strob, "/top/cache0/d0/o_req_mem_strob");
         sc_trace(o_vcd, o_req_mem_data, "/top/cache0/d0/o_req_mem_data");
         sc_trace(o_vcd, o_resp_data_valid, "/top/cache0/d0/o_resp_data_valid");
         sc_trace(o_vcd, o_resp_data_addr, "/top/cache0/d0/o_resp_data_addr");
         sc_trace(o_vcd, o_resp_data_data, "/top/cache0/d0/o_resp_data_data");
+        sc_trace(o_vcd, r.req_strob, "/top/cache0/d0/r_req_strob");
+        sc_trace(o_vcd, r.req_wdata, "/top/cache0/d0/r_req_wdata");
         sc_trace(o_vcd, r.dline_data, "/top/cache0/d0/r_dline_data");
         sc_trace(o_vcd, r.dline_addr_req, "/top/cache0/d0/r_dline_addr_req");
         sc_trace(o_vcd, r.dline_size_req, "/top/cache0/d0/r_dline_size_req");
@@ -193,6 +199,8 @@ void DCache::comb() {
     if (w_req_fire) {
         v.dline_addr_req = i_req_data_addr;
         v.dline_size_req = i_req_data_sz;
+        v.req_strob = wb_o_req_strob;
+        v.req_wdata = wb_o_req_wdata;
     }
     if (i_resp_mem_data_valid.read()) {
         v.dline_data =  i_resp_mem_data;
@@ -262,8 +270,8 @@ void DCache::comb() {
     o_req_mem_valid = w_o_req_mem_valid;
     o_req_mem_addr = wb_o_req_mem_addr;
     o_req_mem_write = i_req_data_write;
-    o_req_mem_strob = wb_o_req_strob;
-    o_req_mem_data = wb_o_req_wdata;
+    o_req_mem_strob = r.req_strob;
+    o_req_mem_data = r.req_wdata;
 
     o_resp_data_valid = w_o_resp_valid;
     o_resp_data_data = wb_o_resp_data;

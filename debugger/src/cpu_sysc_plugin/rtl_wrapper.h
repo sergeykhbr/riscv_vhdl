@@ -65,36 +65,47 @@ class RtlWrapper : public sc_module,
 
     enum EState {
         State_Idle,
-        State_Burst,
+        State_Busy,
     };
 
     struct RegistersType {
-        sc_signal<sc_uint<BUS_DATA_WIDTH>> resp_mem_data;
-        sc_signal<bool> resp_mem_data_valid;
-        sc_signal<bool> resp_mem_load_fault;
-        sc_signal<bool> resp_mem_store_fault;
-        sc_signal<sc_uint<3>> wait_state_cnt;
+        // AXI4 Request 
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_addr;
+        sc_signal<sc_uint<8>> req_len;
+        sc_signal<sc_uint<2>> req_burst;
+        sc_signal<bool> req_write;
+        //
         sc_signal<sc_bv<5>> nrst;
         sc_signal<bool> interrupt;
         sc_signal<bool> state;
-        sc_signal<sc_uint<BUS_ADDR_WIDTH>> burst_addr;
-        sc_signal<sc_uint<8>> burst_len;
-        sc_signal<sc_uint<2>> burst_type;
-        // Debug port latches:
-        sc_signal<bool> dport_valid;
-        sc_signal<bool> dport_write;
-        sc_signal<sc_uint<2>> dport_region;
-        sc_signal<sc_uint<12>> dport_addr;
-        sc_signal<sc_uint<RISCV_ARCH>> dport_wdata;
         sc_signal<bool> halted;
     } r, v;
-    bool w_nrst;
-    bool w_interrupt;
+
+    sc_signal<bool> w_resp_valid;
+    sc_signal<sc_uint<RISCV_ARCH>> wb_resp_data;
+    sc_signal<bool> w_resp_store_fault;
+    sc_signal<bool> w_resp_load_fault;
+
+    sc_signal<bool> w_dport_valid;
+    sc_signal<bool> w_dport_write;
+    sc_signal<sc_uint<2>> wb_dport_region;
+    sc_signal<sc_uint<12>> wb_dport_addr;
+    sc_signal<sc_uint<RISCV_ARCH>> wb_dport_wdata;
+
+    sc_signal<bool> w_nrst;
+    sc_signal<bool> w_interrupt;
+
+    Axi4TransactionType trans;
+    ETransStatus resp;
+
+    bool async_nrst;
+    bool async_interrupt;
 
     void clk_gen();
     void comb();
     void registers();
-    void clk_negedge_proc();
+    void sys_bus_proc();
+    void dbg_bus_proc();
 
     SC_HAS_PROCESS(RtlWrapper);
 

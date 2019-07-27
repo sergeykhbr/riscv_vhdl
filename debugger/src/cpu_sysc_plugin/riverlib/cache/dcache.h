@@ -60,6 +60,8 @@ private:
     };
 
     struct RegistersType {
+        sc_signal<sc_uint<BUS_DATA_BYTES>> req_strob;
+        sc_signal<sc_uint<BUS_DATA_WIDTH>> req_wdata;
         sc_signal<sc_uint<BUS_DATA_WIDTH>> dline_data;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> dline_addr_req;
         sc_signal<sc_uint<2>> dline_size_req;
@@ -69,6 +71,8 @@ private:
     } v, r;
 
     void R_RESET(RegistersType &iv) {
+        iv.req_strob = 0;
+        iv.req_wdata = 0;
         iv.dline_data = 0;
         iv.dline_addr_req = 0;
         iv.dline_size_req = 0;

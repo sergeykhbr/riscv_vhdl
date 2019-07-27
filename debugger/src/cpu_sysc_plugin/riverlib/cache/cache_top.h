@@ -76,6 +76,9 @@ private:
     static const uint8_t State_Idle = 0;
     static const uint8_t State_IMem = 1;
     static const uint8_t State_DMem = 2;
+    static const uint8_t State_IR   = 3;
+    static const uint8_t State_DR   = 4;
+    static const uint8_t State_DW   = 4;
 
     struct CacheOutputType {
         sc_signal<bool> req_mem_valid;

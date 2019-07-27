@@ -21,8 +21,6 @@
 #include <riscv-isa.h>
 #include "coreservices/iserial.h"
 
-//#define SIMULATE_WAIT_STATES
-
 namespace debugger {
 
 RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
@@ -31,41 +29,59 @@ RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
     generate_ref_ = false;
     clockCycles_ = 1000000; // 1 MHz when default resolution = 1 ps
 
-    SC_METHOD(registers);
-    sensitive << o_clk.posedge_event();
-
-    SC_METHOD(comb);
-    sensitive << i_req_mem_valid;
-    sensitive << i_req_mem_addr;
-    sensitive << i_req_mem_len;
-    sensitive << i_req_mem_burst;
-    sensitive << i_halted;
-    sensitive << r.nrst;
-    sensitive << r.resp_mem_data_valid;
-    sensitive << r.resp_mem_data;
-    sensitive << r.resp_mem_load_fault;
-    sensitive << r.resp_mem_store_fault;
-    sensitive << r.interrupt;
-    sensitive << r.wait_state_cnt;
-    sensitive << r.halted;
-
-    SC_METHOD(clk_negedge_proc);
-    sensitive << o_clk.negedge_event();
-
-    w_nrst = 1;//0;
+    async_nrst = 1;//0;
+    w_nrst = 1;
     v.nrst = 1;//0;
+    v.req_addr = 0;
+    v.req_len = 0;
+    v.req_burst = 0;
+    v.req_write = 0;
     v.interrupt = false;
+    async_interrupt = 0;
     w_interrupt = 0;
-    v.resp_mem_data = 0;
-    v.resp_mem_data_valid = false;
-    v.resp_mem_load_fault = false;
-    v.resp_mem_store_fault = false;
     v.halted = false;
     v.state = State_Idle;
-    v.burst_addr = 0;
+    r.state = State_Idle;
     RISCV_event_create(&dport_.valid, "dport_valid");
     dport_.trans_idx_up = 0;
     dport_.trans_idx_down = 0;
+    trans.source_idx = 0;//CFG_NASTI_MASTER_CACHED;
+
+    SC_METHOD(comb);
+    sensitive << w_nrst;
+    sensitive << w_interrupt;
+    sensitive << i_halted;
+    sensitive << i_req_mem_valid;
+    sensitive << i_req_mem_write;
+    sensitive << i_req_mem_addr;
+    sensitive << i_req_mem_strob;
+    sensitive << i_req_mem_data;
+    sensitive << i_req_mem_len;
+    sensitive << i_req_mem_burst;
+    sensitive << i_halted;
+    sensitive << r.req_addr;
+    sensitive << r.req_len;
+    sensitive << r.req_burst;
+    sensitive << r.req_write;
+    sensitive << r.nrst;
+    sensitive << r.interrupt;
+    sensitive << r.state;
+    sensitive << r.halted;
+    sensitive << w_resp_valid;
+    sensitive << wb_resp_data;
+    sensitive << w_resp_store_fault;
+    sensitive << w_resp_load_fault;
+    sensitive << w_dport_valid;
+    sensitive << w_dport_write;
+    sensitive << wb_dport_region;
+    sensitive << wb_dport_addr;
+    sensitive << wb_dport_wdata;
+
+    SC_METHOD(registers);
+    sensitive << o_clk.posedge_event();
+
+    SC_METHOD(sys_bus_proc);
+    sensitive << o_clk.negedge_event();
 }
 
 RtlWrapper::~RtlWrapper() {
@@ -78,6 +94,15 @@ void RtlWrapper::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
         sc_trace(o_vcd, w_nrst, "wrapper0/w_nrst");
         sc_trace(o_vcd, r.nrst, "wrapper0/r_nrst");
+        sc_trace(o_vcd, r.state, "wrapper0/r_state");
+        sc_trace(o_vcd, r.req_addr, "wrapper0/r_req_addr");
+        sc_trace(o_vcd, r.req_write, "wrapper0/r_req_write");
+        sc_trace(o_vcd, r.req_len, "wrapper0/r_req_len");
+        sc_trace(o_vcd, r.req_burst, "wrapper0/r_req_burst");
+        sc_trace(o_vcd, i_req_mem_strob, "wrapper0/i_req_mem_strob");
+        sc_trace(o_vcd, i_req_mem_data, "wrapper0/i_req_mem_data");
+        sc_trace(o_vcd, o_resp_mem_data_valid, "wrapper0/o_resp_mem_data_valid");
+        sc_trace(o_vcd, o_resp_mem_data, "wrapper0/o_resp_mem_data");
     }
 }
 
@@ -86,28 +111,68 @@ void RtlWrapper::clk_gen() {
 }
 
 void RtlWrapper::comb() {
+    bool w_req_mem_ready;
+    sc_uint<BUS_ADDR_WIDTH> vb_req_addr;
 
-    o_nrst = r.nrst.read()[1].to_bool();
-    o_resp_mem_data_valid = r.resp_mem_data_valid;
-    o_resp_mem_data = r.resp_mem_data;
-    o_resp_mem_load_fault = r.resp_mem_load_fault;
-    o_resp_mem_store_fault = r.resp_mem_store_fault;
-    o_interrupt = r.interrupt;
-#ifdef SIMULATE_WAIT_STATES
-    if (r.wait_state_cnt.read() == 1) {
-        o_req_mem_ready = 1;
-    } else {
-        o_req_mem_ready = 0;
+    w_req_mem_ready = 0;
+
+    v.interrupt = w_interrupt;
+    v.halted = i_halted.read();
+
+    switch (r.state.read()) {
+    case State_Idle:
+        w_req_mem_ready = 1;
+        if (i_req_mem_valid.read()) {
+            v.req_addr = i_req_mem_addr.read();
+            v.req_write = i_req_mem_write.read();
+            v.req_burst = i_req_mem_burst.read();
+            v.req_len = i_req_mem_len.read();
+            v.state = State_Busy;
+        }
+        break;
+    case State_Busy:
+        if (r.req_len.read() == 0) {
+            w_req_mem_ready = 1;
+            if (i_req_mem_valid.read()) {
+                v.req_addr = i_req_mem_addr.read();
+                v.req_write = i_req_mem_write.read();
+                v.req_burst = i_req_mem_burst.read();
+                v.req_len = i_req_mem_len.read();
+                v.state = State_Busy;
+            } else {
+                v.state = State_Idle;
+            }
+        } else {
+            v.req_len = r.req_len.read() - 1;
+            if (r.req_burst.read() == 0) {
+                vb_req_addr = r.req_addr.read();
+            } else if (r.req_burst.read() == 1) {
+                vb_req_addr = r.req_addr.read() + 8;
+            } else if (r.req_burst.read() == 2) {
+                vb_req_addr(4, 0) = r.req_addr.read()(4, 0) + 8;
+                vb_req_addr(31, 5) = r.req_addr.read()(31, 5);
+            }
+            v.req_addr = vb_req_addr;
+        }
+        break;
     }
-#else
-    o_req_mem_ready = 1;//i_req_mem_valid;
-#endif
 
-    o_dport_valid = r.dport_valid;
-    o_dport_write = r.dport_write;
-    o_dport_region = r.dport_region;
-    o_dport_addr = r.dport_addr;
-    o_dport_wdata = r.dport_wdata;
+    v.nrst = (r.nrst.read() << 1) | w_nrst;
+    o_nrst = r.nrst.read()[1].to_bool();
+
+    w_req_mem_ready = w_req_mem_ready;
+    o_req_mem_ready = w_req_mem_ready;
+    o_resp_mem_data_valid = w_resp_valid;
+    o_resp_mem_data = wb_resp_data;
+    o_resp_mem_load_fault = w_resp_load_fault;
+    o_resp_mem_store_fault = w_resp_store_fault;
+    o_interrupt = r.interrupt;
+
+    o_dport_valid = w_dport_valid;
+    o_dport_write = w_dport_write;
+    o_dport_region = wb_dport_region;
+    o_dport_addr = wb_dport_addr;
+    o_dport_wdata = wb_dport_wdata;
 
     if (!r.nrst.read()[1]) {
     }
@@ -117,7 +182,7 @@ void RtlWrapper::registers() {
     r = v;
 }
 
-void RtlWrapper::clk_negedge_proc() {
+void RtlWrapper::sys_bus_proc() {
     /** Simulation events queue */
     IFace *cb;
 
@@ -133,96 +198,53 @@ void RtlWrapper::clk_negedge_proc() {
         RISCV_trigger_hap(iserv, HAP_Halt, "Descr");
     }
 
-    /** */
-    Axi4TransactionType trans;
-    ETransStatus resp;
-    trans.source_idx = 0;//CFG_NASTI_MASTER_CACHED;
-    v.interrupt = w_interrupt;
-    v.nrst = (r.nrst.read() << 1) | w_nrst;
-    v.wait_state_cnt = r.wait_state_cnt.read() + 1;
-    v.halted = i_halted.read();
+    w_nrst = async_nrst;
+    w_interrupt = async_interrupt;
 
-    v.resp_mem_data = 0;
-    v.resp_mem_data_valid = false;
-    v.resp_mem_load_fault = false;
-    v.resp_mem_store_fault = false;
-    bool w_req_fire = 0;
-#ifdef SIMULATE_WAIT_STATES
-    if (r.wait_state_cnt.read() == 1)
-#endif
-    {
-        w_req_fire = i_req_mem_valid.read();
-    }
-    switch (r.state) {
-    case State_Idle:
-        if (w_req_fire) {
-            trans.addr = i_req_mem_addr.read();
-            if (i_req_mem_write.read()) {
-                uint8_t strob = i_req_mem_strob.read();
-                uint64_t offset = mask2offset(strob);
-                trans.addr += offset;
-                trans.action = MemAction_Write;
-                trans.xsize = mask2size(strob >> offset);
-                trans.wstrb = (1 << trans.xsize) - 1;
-                trans.wpayload.b64[0] = i_req_mem_data.read();
-                resp = ibus_->b_transport(&trans);
-                v.resp_mem_data = 0;
-                if (resp == TRANS_ERROR) {
-                    v.resp_mem_store_fault = true;
-                }
-            } else {
-                trans.action = MemAction_Read;
-                trans.xsize = BUS_DATA_BYTES;
-                resp = ibus_->b_transport(&trans);
-                v.resp_mem_data = trans.rpayload.b64[0];
-                if (resp == TRANS_ERROR) {
-                    v.resp_mem_load_fault = true;
-                }
-            }
-            if (i_req_mem_len.read() != 0) {
-                v.state = State_Burst;
-                v.burst_addr = i_req_mem_addr.read();
-                v.burst_len = i_req_mem_len.read();
-                v.burst_type = i_req_mem_burst.read();
-            }
-            v.resp_mem_data_valid = true;
-        }
-        break;
-    case State_Burst:
-        if (r.burst_type.read() == 0) {
-            trans.addr = r.burst_addr.read();
-        } else if (r.burst_type.read() == 1) {
-            trans.addr = r.burst_addr.read() + 8;
-        } else if (r.burst_type.read() == 2) {
-            trans.addr = (r.burst_addr.read()(5, 0) + 8) & 0x3F;
-            trans.addr |= (r.burst_addr.read()(31, 6) << 6);
-        }
-        v.resp_mem_data_valid = true;
-        v.burst_addr = trans.addr;
-        if (r.burst_len.read() == 0) {
-            v.state = State_Idle;
+    w_resp_valid = 0;
+    wb_resp_data = 0;
+    w_resp_store_fault = 0;
+    w_resp_load_fault = 0;
+    if (r.state.read() == State_Busy) {
+        trans.addr = r.req_addr.read();
+        if (r.req_write.read() == 1) {
+            trans.action = MemAction_Write;
+            uint8_t strob = i_req_mem_strob.read();
+            uint64_t offset = mask2offset(strob);
+            trans.addr += offset;
+            trans.xsize = mask2size(strob >> offset);
+            trans.wstrb = (1 << trans.xsize) - 1;
+            trans.wpayload.b64[0] = i_req_mem_data.read();
+            trans.rpayload.b64[0] = 0;
         } else {
-            v.burst_len = r.burst_len.read() - 1;
+            trans.action = MemAction_Read;
+            trans.xsize = 8;
+            trans.wstrb = 0;
+            trans.wpayload.b64[0] = 0;
+            trans.rpayload.b64[0] = 0;
         }
-        trans.action = MemAction_Read;
-        trans.xsize = BUS_DATA_BYTES;
         resp = ibus_->b_transport(&trans);
-        v.resp_mem_data = trans.rpayload.b64[0];
+
+        w_resp_valid = 1;
+        wb_resp_data = trans.rpayload.b64[0];
         if (resp == TRANS_ERROR) {
-            v.resp_mem_load_fault = true;
+            if (r.req_write.read() == 1) {
+                w_resp_store_fault = 1;
+            } else {
+                w_resp_load_fault = 1;
+            }
         }
-        break;
     }
 
     // Debug port handling:
-    v.dport_valid = 0;
+    w_dport_valid = 0;
     if (RISCV_event_is_set(&dport_.valid)) {
         RISCV_event_clear(&dport_.valid);
-        v.dport_valid = 1;
-        v.dport_write = dport_.trans->write;
-        v.dport_region = dport_.trans->region;
-        v.dport_addr = dport_.trans->addr >> 3;
-        v.dport_wdata = dport_.trans->wdata;
+        w_dport_valid = 1;
+        w_dport_write = dport_.trans->write;
+        wb_dport_region = dport_.trans->region;
+        wb_dport_addr = dport_.trans->addr >> 3;
+        wb_dport_wdata = dport_.trans->wdata;
     }
     dport_.idx_missmatch = 0;
     if (i_dport_ready.read()) {
@@ -236,6 +258,7 @@ void RtlWrapper::clk_negedge_proc() {
         }
         dport_.cb->nb_response_debug_port(dport_.trans);
     }
+
 }
 
 uint64_t RtlWrapper::mask2offset(uint8_t mask) {
@@ -266,7 +289,7 @@ void RtlWrapper::setClockHz(double hz) {
 }
     
 void RtlWrapper::registerStepCallback(IClockListener *cb, uint64_t t) {
-    if (!w_nrst) {
+    if (!async_nrst) {
         if (i_time.read() == t) {
             cb->stepCallback(t);
         }
@@ -278,10 +301,10 @@ void RtlWrapper::registerStepCallback(IClockListener *cb, uint64_t t) {
 void RtlWrapper::raiseSignal(int idx) {
     switch (idx) {
     case SIGNAL_HardReset:
-        w_nrst = 0;
+        async_nrst = 0;
         break;
     case INTERRUPT_MExternal:
-        w_interrupt = true;
+        async_interrupt = true;
         break;
     default:;
     }
@@ -290,10 +313,10 @@ void RtlWrapper::raiseSignal(int idx) {
 void RtlWrapper::lowerSignal(int idx) {
     switch (idx) {
     case SIGNAL_HardReset:
-        w_nrst = 1;
+        async_nrst = 1;
         break;
     case INTERRUPT_MExternal:
-        w_interrupt = false;
+        async_interrupt = false;
         break;
     default:;
     }
