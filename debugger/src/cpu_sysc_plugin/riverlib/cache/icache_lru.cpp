@@ -182,7 +182,9 @@ void ICacheLru::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, memeven[0].rtag, "/top/cache0/i0/memeven0_rtag");
         sc_trace(o_vcd, memeven[0].rdata, "/top/cache0/i0/memeven0_rdata");
         sc_trace(o_vcd, lrui[0].we, "/top/cache0/i0/lruieven/we");
+        sc_trace(o_vcd, lrui[0].lru, "/top/cache0/i0/lruieven/lru");
         sc_trace(o_vcd, lrui[1].we, "/top/cache0/i0/lruiodd/we");
+        sc_trace(o_vcd, lrui[1].lru, "/top/cache0/i0/lruiodd/lru");
     }
     for (int i = 0; i < CFG_ICACHE_WAYS; i++) {
         wayevenx[i]->generateVCD(i_vcd, o_vcd);
@@ -197,6 +199,9 @@ void ICacheLru::comb() {
     sc_uint<BUS_ADDR_WIDTH> wb_req_adr;
     sc_uint<BUS_ADDR_WIDTH> wb_radr_overlay;
     sc_uint<CFG_ITAG_WIDTH> wb_rtag;
+    sc_uint<CFG_ITAG_WIDTH> wb_rtag_overlay;
+    sc_uint<CFG_ITAG_WIDTH> wb_rtag_even;
+    sc_uint<CFG_ITAG_WIDTH> wb_rtag_odd;
     sc_uint<3> wb_hit0;
     sc_uint<3> wb_hit1;
     bool w_hit0_valid;
@@ -250,6 +255,7 @@ void ICacheLru::comb() {
 
     // Check read tag and select hit way
     wb_rtag = r.req_addr.read()(ITAG_END, ITAG_START);
+    wb_rtag_overlay = r.req_addr_overlay.read()(ITAG_END, ITAG_START);
     waysel[WAY_EVEN].hit = MISS;
     waysel[WAY_EVEN].rdata = 0;
     waysel[WAY_EVEN].valid = 0;
@@ -258,15 +264,25 @@ void ICacheLru::comb() {
     waysel[WAY_ODD].rdata = 0;
     waysel[WAY_ODD].valid = 0;
     waysel[WAY_ODD].load_fault = 0;
+    if (r.use_overlay.read() == 0) {
+        wb_rtag_even = wb_rtag;
+        wb_rtag_odd = wb_rtag;
+    } else if (w_raddr5_r == 0) {
+        wb_rtag_even = wb_rtag;
+        wb_rtag_odd = wb_rtag_overlay;
+    } else {
+        wb_rtag_even = wb_rtag_overlay;
+        wb_rtag_odd = wb_rtag;
+    }
     for (uint8_t n = 0; n < static_cast<uint8_t>(CFG_ICACHE_WAYS); n++) {
-        if (waysel[WAY_EVEN].hit == MISS && memeven[n].rtag == wb_rtag) {
+        if (waysel[WAY_EVEN].hit == MISS && memeven[n].rtag == wb_rtag_even) {
             waysel[WAY_EVEN].hit = n;
             waysel[WAY_EVEN].rdata = memeven[n].rdata;
             waysel[WAY_EVEN].valid = memeven[n].valid;
             waysel[WAY_EVEN].load_fault = memeven[n].load_fault;
         }
 
-        if (waysel[WAY_ODD].hit == MISS && memodd[n].rtag == wb_rtag) {
+        if (waysel[WAY_ODD].hit == MISS && memodd[n].rtag == wb_rtag_odd) {
             waysel[WAY_ODD].hit = n;
             waysel[WAY_ODD].rdata = memodd[n].rdata;
             waysel[WAY_ODD].valid = memodd[n].valid;
