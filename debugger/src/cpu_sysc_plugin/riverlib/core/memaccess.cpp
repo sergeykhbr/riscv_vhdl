@@ -38,10 +38,25 @@ MemAccess::MemAccess(sc_module_name name_, bool async_reset)
     sensitive << i_mem_data_valid;
     sensitive << i_mem_data_addr;
     sensitive << i_mem_data;
+#ifdef MEM_V2
+    sensitive << r.requested;
+    sensitive << r.req_valid;
+    sensitive << r.req_pc;
+    sensitive << r.req_instr;
+    sensitive << r.req_res_addr;
+    sensitive << r.req_res_data;
+    sensitive << r.req_memop_sign_ext;
+    sensitive << r.req_memop;
+    sensitive << r.req_memop_store;
+    sensitive << r.req_memop_addr;
+    sensitive << r.req_memop_size;
+    sensitive << r.req_wena;
+#else
     sensitive << r.valid;
     sensitive << r.wdata;
     sensitive << r.wait_req;
     sensitive << r.wait_resp;
+#endif
 
     SC_METHOD(registers);
     sensitive << i_nrst;
@@ -71,11 +86,121 @@ void MemAccess::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_waddr, "/top/proc0/mem0/o_waddr");
         sc_trace(o_vcd, o_wdata, "/top/proc0/mem0/o_wdata");
         sc_trace(o_vcd, o_hold, "/top/proc0/mem0/o_hold");
-        sc_trace(o_vcd, r.wait_resp, "/top/proc0/mem0/r.wait_resp");
+#ifdef MEM_V2
+        sc_trace(o_vcd, r.requested, "/top/proc0/mem0/r_requested");
+        sc_trace(o_vcd, r.req_valid, "/top/proc0/mem0/r_req_valid");
+#else
+        sc_trace(o_vcd, r.wait_resp, "/top/proc0/mem0/r_wait_resp");
+#endif
     }
 }
 
 void MemAccess::comb() {
+#ifdef MEM_V2
+    bool w_hold;
+    bool w_memop;
+    sc_uint<RISCV_ARCH> wb_res_wdata;
+
+    w_hold = 0;
+    w_memop = i_memop_load.read() || i_memop_store.read();
+
+    if (i_e_valid.read() && w_memop && !i_mem_req_ready.read() ||
+        !r.requested.read() && r.req_valid.read() && !i_mem_req_ready.read() ||
+        r.requested.read() && r.req_valid.read() && r.req_memop.read() && !i_mem_data_valid.read()) {
+        w_hold = 1;
+    }
+
+    /** warning: exec stage forms valid signal only 1 clock from trigger and ignores
+                 hold signal on the same clock. NEED TO FIX IT IN Executor!!! */
+    if (i_e_valid.read()) {
+        v.requested = !w_hold;
+        v.req_valid = 1;
+        v.req_pc = i_e_pc.read();
+        v.req_instr = i_e_instr.read();
+        v.req_res_addr = i_res_addr.read();
+        v.req_res_data = i_res_data.read();
+        v.req_memop_sign_ext = i_memop_sign_ext.read();
+        v.req_memop = w_memop;
+        v.req_memop_store = i_memop_store.read();
+        v.req_memop_addr = i_memop_addr.read();
+        v.req_memop_size = i_memop_size.read();
+        if (i_res_addr.read() == 0) {
+            v.req_wena = 0;
+        } else {
+            v.req_wena = 1;
+        }
+    } else if (r.req_valid.read() == 1 && !w_hold) {
+        if (r.requested.read() == 0) {
+            /** address was requested while bus not ready */
+            v.requested = 1;
+        } else {
+            v.requested = 0;
+            v.req_valid = 0;
+            v.req_wena = 0;
+        }
+    }
+
+    if (r.req_memop.read() == 1) {
+        if (r.req_memop_sign_ext.read()) {
+            switch (r.req_memop_size.read()) {
+            case MEMOP_1B:
+                wb_res_wdata = i_mem_data;
+                if (i_mem_data.read()[7]) {
+                    wb_res_wdata(63, 8) = ~0;
+                }
+                break;
+            case MEMOP_2B:
+                wb_res_wdata = i_mem_data;
+                if (i_mem_data.read()[15]) {
+                    wb_res_wdata(63, 16) = ~0;
+                }
+                break;
+            case MEMOP_4B:
+                wb_res_wdata = i_mem_data;
+                if (i_mem_data.read()[31]) {
+                    wb_res_wdata(63, 32) = ~0;
+                }
+                break;
+            default:
+                wb_res_wdata = i_mem_data;
+            }
+        } else {
+            wb_res_wdata = i_mem_data;
+        }
+    } else {
+        wb_res_wdata = r.req_res_data.read();
+    }
+
+    if (!async_reset_ && !i_nrst.read()) {
+        R_RESET(v);
+    }
+
+    o_mem_resp_ready = 1;
+
+    if (r.requested.read() == 0 && r.req_valid.read() == 1) {
+        // This branch should be deleted after proper HOLD implementation in Executor!!!
+        o_mem_valid = 1;
+        o_mem_write = r.req_memop_store.read();
+        o_mem_sz = r.req_memop_size.read();
+        o_mem_addr = r.req_memop_addr.read();
+        o_mem_data = r.req_res_data.read();
+    } else {
+        o_mem_valid = i_e_valid.read() && w_memop;
+        o_mem_write = i_memop_store.read();
+        o_mem_sz = i_memop_size.read();
+        o_mem_addr = i_memop_addr.read();
+        o_mem_data = i_res_data.read();
+    }
+
+    o_wena = r.req_wena;
+    o_waddr = r.req_res_addr;
+    o_wdata = wb_res_wdata;
+    o_valid = r.requested.read() && r.req_valid.read() && !w_hold;
+    o_pc = r.req_pc;
+    o_instr = r.req_instr;
+    o_hold = w_hold;
+
+#else
     bool w_o_mem_valid;
     bool w_o_mem_write;
     sc_uint<2> wb_o_mem_sz;
@@ -210,6 +335,7 @@ void MemAccess::comb() {
     o_pc = r.pc;
     o_instr = r.instr;
     o_hold = w_o_hold;
+#endif
 }
 
 void MemAccess::registers() {
