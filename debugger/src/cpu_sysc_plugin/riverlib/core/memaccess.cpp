@@ -104,9 +104,9 @@ void MemAccess::comb() {
     w_hold = 0;
     w_memop = i_memop_load.read() || i_memop_store.read();
 
-    if (i_e_valid.read() && w_memop && !i_mem_req_ready.read() ||
-        !r.requested.read() && r.req_valid.read() && !i_mem_req_ready.read() ||
-        r.requested.read() && r.req_valid.read() && r.req_memop.read() && !i_mem_data_valid.read()) {
+    if ((i_e_valid.read() && w_memop && !i_mem_req_ready.read()) ||
+        (!r.requested.read() && r.req_valid.read() && !i_mem_req_ready.read()) ||
+        (r.requested.read() && r.req_valid.read() && r.req_memop.read() && !i_mem_data_valid.read())) {
         w_hold = 1;
     }
 
