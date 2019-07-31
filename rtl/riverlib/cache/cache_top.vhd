@@ -1,9 +1,18 @@
------------------------------------------------------------------------------
---! @file
---! @copyright Copyright 2016 GNSS Sensor Ltd. All right reserved.
---! @author    Sergey Khabarov - sergeykhbr@gmail.com
---! @brief     Memory Cache Top level.
-------------------------------------------------------------------------------
+--!
+--! Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
+--!
+--! Licensed under the Apache License, Version 2.0 (the "License");
+--! you may not use this file except in compliance with the License.
+--! You may obtain a copy of the License at
+--!
+--!     http://www.apache.org/licenses/LICENSE-2.0
+--!
+--! Unless required by applicable law or agreed to in writing, software
+--! distributed under the License is distributed on an "AS IS" BASIS,
+--! WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+--! See the License for the specific language governing permissions and
+--! limitations under the License.
+--!
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -16,6 +25,7 @@ use riverlib.river_cfg.all;
 
 
 entity CacheTop is generic (
+    memtech : integer;
     async_reset : boolean
   );
   port (
@@ -44,12 +54,14 @@ entity CacheTop is generic (
     o_resp_data_store_fault : out std_logic;
     i_resp_data_ready : in std_logic;
     -- Memory interface:
-    i_req_mem_ready : in std_logic;                                   -- AXI request was accepted
+    i_req_mem_ready : in std_logic;                                    -- AXI request was accepted
     o_req_mem_valid : out std_logic;
     o_req_mem_write : out std_logic;
     o_req_mem_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     o_req_mem_strob : out std_logic_vector(BUS_DATA_BYTES-1 downto 0);
-    o_req_mem_data : out std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+    o_req_mem_data : out std_logic_vector(BUS_DATA_WIDTH-1 downto 0);  -- burst transaction length
+    o_req_mem_len : out std_logic_vector(7 downto 0);                  -- burst length
+    o_req_mem_burst : out std_logic_vector(1 downto 0);                -- burst type: "00" FIX; "01" INCR; "10" WRAP
     i_resp_mem_data_valid : in std_logic;
     i_resp_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
     i_resp_mem_load_fault : in std_logic;                             -- Bus response with SLVERR or DECERR on read
@@ -74,6 +86,9 @@ architecture arch_CacheTop of CacheTop is
       req_mem_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
       req_mem_strob : std_logic_vector(BUS_DATA_BYTES-1 downto 0);
       req_mem_wdata : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+      req_mem_len : std_logic_vector(7 downto 0);
+      req_mem_burst : std_logic_vector(1 downto 0);
+      req_mem_last : std_logic;
   end record;
 
   type RegistersType is record
@@ -95,8 +110,10 @@ architecture arch_CacheTop of CacheTop is
   signal w_data_resp_mem_store_fault : std_logic;
   signal w_data_req_ready : std_logic;
 
-  component ICache is generic (
-    async_reset : boolean
+  component ICacheLru is generic (
+    memtech : integer;
+    async_reset : boolean;
+    index_width : integer
   );
   port (
     i_clk : in std_logic;
@@ -115,6 +132,9 @@ architecture arch_CacheTop of CacheTop is
     o_req_mem_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     o_req_mem_strob : out std_logic_vector(BUS_DATA_BYTES-1 downto 0);
     o_req_mem_data : out std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+    o_req_mem_len : out std_logic_vector(7 downto 0);
+    o_req_mem_burst : out std_logic_vector(1 downto 0);
+    o_req_mem_last : out std_logic;
     i_resp_mem_data_valid : in std_logic;
     i_resp_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
     i_resp_mem_load_fault : in std_logic;
@@ -148,6 +168,9 @@ architecture arch_CacheTop of CacheTop is
     o_req_mem_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     o_req_mem_strob : out std_logic_vector(BUS_DATA_BYTES-1 downto 0);
     o_req_mem_data : out std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+    o_req_mem_len : out std_logic_vector(7 downto 0);
+    o_req_mem_burst : out std_logic_vector(1 downto 0);
+    o_req_mem_last : out std_logic;
     i_resp_mem_data_valid : in std_logic;
     i_resp_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
     i_resp_mem_load_fault : in std_logic;
@@ -158,8 +181,10 @@ architecture arch_CacheTop of CacheTop is
 
 begin
 
-    i0 : ICache generic map (
-        async_reset => async_reset
+    i0 : ICacheLru generic map (
+        memtech => memtech,
+        async_reset => async_reset,
+        index_width => CFG_IINDEX_WIDTH
       ) port map (
         i_clk => i_clk,
         i_nrst => i_nrst,
@@ -177,6 +202,9 @@ begin
         o_req_mem_addr => i.req_mem_addr,
         o_req_mem_strob => i.req_mem_strob,
         o_req_mem_data => i.req_mem_wdata,
+        o_req_mem_len => i.req_mem_len,
+        o_req_mem_burst => i.req_mem_burst,
+        o_req_mem_last => i.req_mem_last,
         i_resp_mem_data_valid => w_ctrl_resp_mem_data_valid,
         i_resp_mem_data => wb_ctrl_resp_mem_data,
         i_resp_mem_load_fault => w_ctrl_resp_mem_load_fault,
@@ -207,6 +235,9 @@ begin
         o_req_mem_addr => d.req_mem_addr,
         o_req_mem_strob => d.req_mem_strob,
         o_req_mem_data => d.req_mem_wdata,
+        o_req_mem_len => d.req_mem_len,
+        o_req_mem_burst => d.req_mem_burst,
+        o_req_mem_last => d.req_mem_last,
         i_resp_mem_data_valid => w_data_resp_mem_data_valid,
         i_resp_mem_data => wb_data_resp_mem_data,
         i_resp_mem_load_fault => w_data_resp_mem_load_fault,
@@ -216,18 +247,16 @@ begin
   comb : process(i_nrst, i_req_mem_ready, i_resp_mem_data_valid, i_resp_mem_data,
                  i_resp_mem_load_fault, i_resp_mem_store_fault, i, d, r)
     variable v : RegistersType;
-    variable w_mem_write : std_logic;
     variable wb_mem_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    variable wb_mem_strob : std_logic_vector(BUS_DATA_BYTES-1 downto 0);
-    variable wb_mem_wdata : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+    variable wb_mem_len : std_logic_vector(7 downto 0);
+    variable wb_mem_burst : std_logic_vector(1 downto 0);
   begin
 
     v := r;
 
-    w_mem_write := '0';
     wb_mem_addr := (others => '0');
-    wb_mem_strob := (others => '0');
-    wb_mem_wdata := (others => '0');
+    wb_mem_len := (others => '0');
+    wb_mem_burst := (others => '0');
 
     w_data_req_ready <= '0';
     w_data_resp_mem_data_valid <= '0';
@@ -241,44 +270,39 @@ begin
    
     case r.state is
     when State_Idle =>
-        if d.req_mem_valid = '1' then
-          w_data_req_ready <= i_req_mem_ready;
-          w_mem_write := d.req_mem_write;
-          wb_mem_addr := d.req_mem_addr;
-          wb_mem_strob := d.req_mem_strob;
-          wb_mem_wdata := d.req_mem_wdata;
-          if i_req_mem_ready = '1' then
-            v.state := State_DMem;
-          end if;
-        elsif i.req_mem_valid = '1' then
-          w_ctrl_req_ready <= i_req_mem_ready;
-          w_mem_write := i.req_mem_write;
-          wb_mem_addr := i.req_mem_addr;
-          wb_mem_strob := i.req_mem_strob;
-          wb_mem_wdata := i.req_mem_wdata;
-          if i_req_mem_ready = '1' then
-            v.state := State_IMem;
-          end if;
+        if i_req_mem_ready = '1' then
+            if d.req_mem_valid = '1' then
+                w_data_req_ready <= '1';
+                wb_mem_addr := d.req_mem_addr;
+                v.state := State_DMem;
+            elsif i.req_mem_valid = '1' then
+                w_ctrl_req_ready <= '1';
+                wb_mem_addr := i.req_mem_addr;
+                wb_mem_len := i.req_mem_len;
+                wb_mem_burst := i.req_mem_burst;
+                v.state := State_IMem;
+            end if;
         end if;
 
     when State_DMem =>
-        w_data_req_ready <= i_req_mem_ready;
-        w_mem_write := d.req_mem_write;
-        wb_mem_addr := d.req_mem_addr;
-        wb_mem_strob := d.req_mem_strob;
-        wb_mem_wdata := d.req_mem_wdata;
         if i_resp_mem_data_valid = '1' then
-          if (not d.req_mem_valid and i.req_mem_valid) = '1' then
-            v.state := State_IMem;
-            w_data_req_ready <= '0';
-            w_ctrl_req_ready <= i_req_mem_ready;
-            w_mem_write := i.req_mem_write;
-            wb_mem_addr := i.req_mem_addr;
-            wb_mem_strob := i.req_mem_strob;
-            wb_mem_wdata := i.req_mem_wdata;
-          elsif (d.req_mem_valid or i.req_mem_valid) = '0' then
+            if i_req_mem_ready = '1' then
+                if d.req_mem_valid = '1' then
+                    w_data_req_ready <= '1';
+                    wb_mem_addr := d.req_mem_addr;
+                    v.state := State_DMem;
+                elsif i.req_mem_valid = '1' then
+                    w_ctrl_req_ready <= '1';
+                    wb_mem_addr := i.req_mem_addr;
+                    wb_mem_len := i.req_mem_len;
+                    wb_mem_burst := i.req_mem_burst;
+                    v.state := State_IMem;
+                end if;
+            else
+                v.state := State_Idle;
+            end if;
+        else
             v.state := State_Idle;
-          end if;
         end if;
         w_data_resp_mem_data_valid <= i_resp_mem_data_valid;
         wb_data_resp_mem_data <= i_resp_mem_data;
@@ -286,23 +310,24 @@ begin
         w_data_resp_mem_store_fault <= i_resp_mem_store_fault;
         
     when State_IMem =>
-        w_ctrl_req_ready <= i_req_mem_ready;
-        w_mem_write := i.req_mem_write;
-        wb_mem_addr := i.req_mem_addr;
-        wb_mem_strob := i.req_mem_strob;
-        wb_mem_wdata := i.req_mem_wdata;
-        if i_resp_mem_data_valid = '1' then
-          if d.req_mem_valid = '1' then
-            v.state := State_DMem;
-            w_data_req_ready <= i_req_mem_ready;
-            w_ctrl_req_ready <= '0';
-            w_mem_write := d.req_mem_write;
-            wb_mem_addr := d.req_mem_addr;
-            wb_mem_strob := d.req_mem_strob;
-            wb_mem_wdata := d.req_mem_wdata;
-          elsif (d.req_mem_valid or i.req_mem_valid) = '0' then
-            v.state := State_Idle;
-          end if;
+        if i_resp_mem_data_valid = '1'  and i.req_mem_last = '1' then
+            if i_req_mem_ready = '1' then
+                if d.req_mem_valid = '1' then
+                    w_data_req_ready <= '1';
+                    wb_mem_addr := d.req_mem_addr;
+                    v.state := State_DMem;
+                elsif i.req_mem_valid = '1' then
+                    w_ctrl_req_ready <= '1';
+                    wb_mem_addr := i.req_mem_addr;
+                    wb_mem_len := i.req_mem_len;
+                    wb_mem_burst := i.req_mem_burst;
+                    v.state := State_IMem;
+                else
+                    v.state := State_Idle;
+                end if;
+            else
+                v.state := State_Idle;
+            end if;
         end if;
         w_ctrl_resp_mem_data_valid <= i_resp_mem_data_valid;
         wb_ctrl_resp_mem_data <= i_resp_mem_data;
@@ -316,10 +341,12 @@ begin
     end if;
 
     o_req_mem_valid <= i.req_mem_valid or d.req_mem_valid;
-    o_req_mem_write <= w_mem_write;
     o_req_mem_addr <= wb_mem_addr;
-    o_req_mem_strob <= wb_mem_strob;
-    o_req_mem_data <= wb_mem_wdata;
+    o_req_mem_write <= d.req_mem_write;
+    o_req_mem_strob <= d.req_mem_strob;
+    o_req_mem_data <= d.req_mem_wdata;
+    o_req_mem_len <= wb_mem_len;
+    o_req_mem_burst <= wb_mem_burst;
     o_cstate <= r.state;
     
     rin <= v;

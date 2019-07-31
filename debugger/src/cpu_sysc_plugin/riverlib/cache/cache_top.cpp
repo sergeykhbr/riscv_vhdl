@@ -9,10 +9,9 @@
 
 namespace debugger {
 
-CacheTop::CacheTop(sc_module_name name_, bool async_reset, int icfg) :
+CacheTop::CacheTop(sc_module_name name_, bool async_reset) :
     sc_module(name_) {
     async_reset_ = async_reset;
-    icache_cfg_ = icfg;
 
     SC_METHOD(comb);
     sensitive << i_nrst;
@@ -24,7 +23,7 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset, int icfg) :
     sensitive << i.req_mem_wdata;
     sensitive << i.req_mem_len;
     sensitive << i.req_mem_burst;
-    sensitive << i.req_mem_burst_last;
+    sensitive << i.req_mem_last;
     sensitive << d.req_mem_valid;
     sensitive << d.req_mem_write;
     sensitive << d.req_mem_addr;
@@ -40,61 +39,32 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset, int icfg) :
     sensitive << i_nrst;
     sensitive << i_clk.pos();
 
-    if (icache_cfg_ == 0) {
-        i0 = new ICacheStub("i0", async_reset);
-        i0->i_clk(i_clk);
-        i0->i_nrst(i_nrst);
-        i0->i_req_ctrl_valid(i_req_ctrl_valid);
-        i0->i_req_ctrl_addr(i_req_ctrl_addr);
-        i0->o_req_ctrl_ready(o_req_ctrl_ready);
-        i0->o_resp_ctrl_valid(o_resp_ctrl_valid);
-        i0->o_resp_ctrl_addr(o_resp_ctrl_addr);
-        i0->o_resp_ctrl_data(o_resp_ctrl_data);
-        i0->o_resp_ctrl_load_fault(o_resp_ctrl_load_fault);
-        i0->i_resp_ctrl_ready(i_resp_ctrl_ready);
-        i0->i_req_mem_ready(w_ctrl_req_ready);
-        i0->o_req_mem_valid(i.req_mem_valid);
-        i0->o_req_mem_write(i.req_mem_write);
-        i0->o_req_mem_addr(i.req_mem_addr);
-        i0->o_req_mem_strob(i.req_mem_strob);
-        i0->o_req_mem_data(i.req_mem_wdata);
-        i0->o_req_mem_len(i.req_mem_len);
-        i0->o_req_mem_burst(i.req_mem_burst);
-        i0->o_req_mem_burst_last(i.req_mem_burst_last);
-        i0->i_resp_mem_data_valid(w_ctrl_resp_mem_data_valid);
-        i0->i_resp_mem_data(wb_ctrl_resp_mem_data);
-        i0->i_resp_mem_load_fault(w_ctrl_resp_mem_load_fault);
-        i0->i_flush_address(i_flush_address);
-        i0->i_flush_valid(i_flush_valid);
-        i0->o_istate(o_istate);
-    } else {
-        i1 = new ICacheLru("i1", async_reset, CFG_IINDEX_WIDTH);
-        i1->i_clk(i_clk);
-        i1->i_nrst(i_nrst);
-        i1->i_req_ctrl_valid(i_req_ctrl_valid);
-        i1->i_req_ctrl_addr(i_req_ctrl_addr);
-        i1->o_req_ctrl_ready(o_req_ctrl_ready);
-        i1->o_resp_ctrl_valid(o_resp_ctrl_valid);
-        i1->o_resp_ctrl_addr(o_resp_ctrl_addr);
-        i1->o_resp_ctrl_data(o_resp_ctrl_data);
-        i1->o_resp_ctrl_load_fault(o_resp_ctrl_load_fault);
-        i1->i_resp_ctrl_ready(i_resp_ctrl_ready);
-        i1->i_req_mem_ready(w_ctrl_req_ready);
-        i1->o_req_mem_valid(i.req_mem_valid);
-        i1->o_req_mem_write(i.req_mem_write);
-        i1->o_req_mem_addr(i.req_mem_addr);
-        i1->o_req_mem_strob(i.req_mem_strob);
-        i1->o_req_mem_data(i.req_mem_wdata);
-        i1->o_req_mem_len(i.req_mem_len);
-        i1->o_req_mem_burst(i.req_mem_burst);
-        i1->o_req_mem_burst_last(i.req_mem_burst_last);
-        i1->i_resp_mem_data_valid(w_ctrl_resp_mem_data_valid);
-        i1->i_resp_mem_data(wb_ctrl_resp_mem_data);
-        i1->i_resp_mem_load_fault(w_ctrl_resp_mem_load_fault);
-        i1->i_flush_address(i_flush_address);
-        i1->i_flush_valid(i_flush_valid);
-        i1->o_istate(o_istate);
-    }
+    i1 = new ICacheLru("i1", async_reset, CFG_IINDEX_WIDTH);
+    i1->i_clk(i_clk);
+    i1->i_nrst(i_nrst);
+    i1->i_req_ctrl_valid(i_req_ctrl_valid);
+    i1->i_req_ctrl_addr(i_req_ctrl_addr);
+    i1->o_req_ctrl_ready(o_req_ctrl_ready);
+    i1->o_resp_ctrl_valid(o_resp_ctrl_valid);
+    i1->o_resp_ctrl_addr(o_resp_ctrl_addr);
+    i1->o_resp_ctrl_data(o_resp_ctrl_data);
+    i1->o_resp_ctrl_load_fault(o_resp_ctrl_load_fault);
+    i1->i_resp_ctrl_ready(i_resp_ctrl_ready);
+    i1->i_req_mem_ready(w_ctrl_req_ready);
+    i1->o_req_mem_valid(i.req_mem_valid);
+    i1->o_req_mem_write(i.req_mem_write);
+    i1->o_req_mem_addr(i.req_mem_addr);
+    i1->o_req_mem_strob(i.req_mem_strob);
+    i1->o_req_mem_data(i.req_mem_wdata);
+    i1->o_req_mem_len(i.req_mem_len);
+    i1->o_req_mem_burst(i.req_mem_burst);
+    i1->o_req_mem_burst_last(i.req_mem_last);
+    i1->i_resp_mem_data_valid(w_ctrl_resp_mem_data_valid);
+    i1->i_resp_mem_data(wb_ctrl_resp_mem_data);
+    i1->i_resp_mem_load_fault(w_ctrl_resp_mem_load_fault);
+    i1->i_flush_address(i_flush_address);
+    i1->i_flush_valid(i_flush_valid);
+    i1->o_istate(o_istate);
 
     d0 = new DCache("d0", async_reset);
     d0->i_clk(i_clk);
@@ -154,20 +124,12 @@ void CacheTop::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_cstate, "/top/cache0/o_cstate");
         sc_trace(o_vcd, r.state, "/top/cache0/r_state");
     }
-    if (icache_cfg_ == 0) {
-        i0->generateVCD(i_vcd, o_vcd);
-    } else {
-        i1->generateVCD(i_vcd, o_vcd);
-    }
+    i1->generateVCD(i_vcd, o_vcd);
     d0->generateVCD(i_vcd, o_vcd);
 }
 
 CacheTop::~CacheTop() {
-    if (icache_cfg_ == 0) {
-        delete i0;
-    } else {
-        delete i1;
-    }
+    delete i1;
     delete d0;
 }
 
@@ -237,7 +199,7 @@ void CacheTop::comb() {
         break;
 
     case State_IMem:
-        if (i_resp_mem_data_valid.read() && i.req_mem_burst_last.read()) {
+        if (i_resp_mem_data_valid.read() && i.req_mem_last.read()) {
             if (i_req_mem_ready.read() == 1) {
                 if (d.req_mem_valid.read()) {
                     w_data_req_ready = 1;

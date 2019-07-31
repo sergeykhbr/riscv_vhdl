@@ -41,6 +41,9 @@ entity DCache is generic (
     o_req_mem_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     o_req_mem_strob : out std_logic_vector(BUS_DATA_BYTES-1 downto 0);
     o_req_mem_data : out std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+    o_req_mem_len : out std_logic_vector(7 downto 0);
+    o_req_mem_burst : out std_logic_vector(1 downto 0);
+    o_req_mem_last : out std_logic;
     i_resp_mem_data_valid : in std_logic;
     i_resp_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
     i_resp_mem_load_fault : in std_logic;
@@ -58,6 +61,8 @@ architecture arch_DCache of DCache is
   constant State_WaitAccept : std_logic_vector(1 downto 0) := "11";
 
   type RegistersType is record
+      req_strob : std_logic_vector(BUS_DATA_BYTES-1 downto 0);
+      req_wdata : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
       dline_data : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
       dline_addr_req : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
       dline_size_req : std_logic_vector(1 downto 0);
@@ -67,6 +72,7 @@ architecture arch_DCache of DCache is
   end record;
 
   constant R_RESET : RegistersType := (
+      (others => '0'), (others => '0'),
       (others => '0'), (others => '0'), (others => '0'),
       '0', '0', State_Idle);
 
@@ -208,6 +214,8 @@ begin
     if w_req_fire = '1' then
         v.dline_addr_req := i_req_data_addr;
         v.dline_size_req := i_req_data_sz;
+        v.req_strob := wb_o_req_strob;
+        v.req_wdata := wb_o_req_wdata;
     end if;
     if i_resp_mem_data_valid = '1' then
         v.dline_data := i_resp_mem_data;
@@ -267,8 +275,11 @@ begin
     o_req_mem_valid <= w_o_req_mem_valid;
     o_req_mem_addr <= wb_o_req_mem_addr;
     o_req_mem_write <= i_req_data_write;
-    o_req_mem_strob <= wb_o_req_strob;
-    o_req_mem_data <= wb_o_req_wdata;
+    o_req_mem_strob <= r.req_strob;
+    o_req_mem_data <= r.req_wdata;
+    o_req_mem_len <= X"00";
+    o_req_mem_burst <= "00";
+    o_req_mem_last <= '1';
 
     o_resp_data_valid <= w_o_resp_valid;
     o_resp_data_data <= wb_o_resp_data;

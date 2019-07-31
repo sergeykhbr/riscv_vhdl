@@ -133,7 +133,6 @@
                 ['HartID',0],
                 ['AsyncReset',false],
                 ['FpuEnable',true, 'Enable Hardware FPU module'],
-                ['ConfigICache',1, '0=ICacheStub, 1=ICacheLru 64KB, 2=ICacheLru 32KB, 3=ICacheLru 16KB'],
                 ['Bus','axi0'],
                 ['CmdExecutor','cmdexec0']
                 ['Tap','edcltap']

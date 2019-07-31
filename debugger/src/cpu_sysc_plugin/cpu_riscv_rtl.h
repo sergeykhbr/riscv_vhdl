@@ -93,7 +93,6 @@ class CpuRiscV_RTL : public IService,
     AttributeType hartid_;
     AttributeType asyncReset_;
     AttributeType fpuEnable_;
-    AttributeType configICache_;
     AttributeType bus_;
     AttributeType cmdexec_;
     AttributeType tap_;

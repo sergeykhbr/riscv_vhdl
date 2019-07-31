@@ -25,6 +25,7 @@ use riverlib.river_cfg.all;
 
 entity RiverTop is
   generic (
+    memtech : integer := 0;
     hartid : integer := 0;
     async_reset : boolean := false
   );
@@ -38,6 +39,8 @@ entity RiverTop is
     o_req_mem_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0); -- AXI memory request address
     o_req_mem_strob : out std_logic_vector(BUS_DATA_BYTES-1 downto 0);-- Writing strob. 1 bit per Byte
     o_req_mem_data : out std_logic_vector(BUS_DATA_WIDTH-1 downto 0); -- Writing data
+    o_req_mem_len : out std_logic_vector(7 downto 0);                 -- burst length
+    o_req_mem_burst : out std_logic_vector(1 downto 0);               -- burst type: "00" FIX; "01" INCR; "10" WRAP
     i_resp_mem_data_valid : in std_logic;                             -- AXI response is valid
     i_resp_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0); -- Read data
     i_resp_mem_load_fault : in std_logic;                             -- Bus response with SLVERR or DECERR on read
@@ -132,6 +135,7 @@ begin
         i_cstate => wb_cstate);
 
     cache0 :  CacheTop generic map (
+        memtech => memtech,
         async_reset => async_reset
      ) port map (
         i_clk => i_clk,
@@ -162,6 +166,8 @@ begin
         o_req_mem_addr => o_req_mem_addr,
         o_req_mem_strob => o_req_mem_strob,
         o_req_mem_data => o_req_mem_data,
+        o_req_mem_len => o_req_mem_len,
+        o_req_mem_burst => o_req_mem_burst,
         i_resp_mem_data_valid => i_resp_mem_data_valid,
         i_resp_mem_data => i_resp_mem_data,
         i_resp_mem_load_fault => i_resp_mem_load_fault,

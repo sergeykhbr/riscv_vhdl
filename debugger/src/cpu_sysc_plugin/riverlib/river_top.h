@@ -56,8 +56,7 @@ SC_MODULE(RiverTop) {
     RiverTop(sc_module_name name_,
              uint32_t hartid,
              bool async_reset,
-             bool fpu_ena,
-             int icfg);
+             bool fpu_ena);
     virtual ~RiverTop();
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);

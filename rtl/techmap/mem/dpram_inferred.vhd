@@ -31,7 +31,7 @@ entity dpram_inferred is
     i_clk   : in std_logic;
     i_raddr : in std_logic_vector(abits-1 downto 0);
     o_rdata : out std_logic_vector(dbits-1 downto 0);
-    i_waddr : in in std_logic_vector(abits-1 downto 0);
+    i_waddr : in std_logic_vector(abits-1 downto 0);
     i_wena  : in std_logic;
     i_wdata : in std_logic_vector(dbits-1 downto 0)
   );
@@ -47,8 +47,8 @@ signal radr : std_logic_vector(abits-1 downto 0);
 
 begin
 
-  reg : process (clk, i_raddr, i_waddr, i_wena, wdata) begin
-    if rising_edge(clk) then 
+  reg : process (i_clk, i_raddr, i_waddr, i_wena, i_wdata) begin
+    if rising_edge(i_clk) then 
       radr <= i_raddr;
       if i_wena = '1' then
         ram(conv_integer(i_waddr)) <= i_wdata;

@@ -67,7 +67,7 @@ SC_MODULE(CacheTop) {
 
     SC_HAS_PROCESS(CacheTop);
 
-    CacheTop(sc_module_name name_, bool async_reset, int icfg);
+    CacheTop(sc_module_name name_, bool async_reset);
     virtual ~CacheTop();
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
@@ -76,9 +76,6 @@ private:
     static const uint8_t State_Idle = 0;
     static const uint8_t State_IMem = 1;
     static const uint8_t State_DMem = 2;
-    static const uint8_t State_IR   = 3;
-    static const uint8_t State_DR   = 4;
-    static const uint8_t State_DW   = 4;
 
     struct CacheOutputType {
         sc_signal<bool> req_mem_valid;
@@ -88,7 +85,7 @@ private:
         sc_signal<sc_uint<BUS_DATA_WIDTH>> req_mem_wdata;
         sc_signal<sc_uint<8>> req_mem_len;
         sc_signal<sc_uint<2>> req_mem_burst;
-        sc_signal<bool> req_mem_burst_last;
+        sc_signal<bool> req_mem_last;
     };
 
     struct RegistersType {
@@ -109,14 +106,12 @@ private:
     sc_signal<bool> w_data_resp_mem_store_fault;
     sc_signal<bool> w_data_req_ready;
 
-    ICacheStub *i0;
     ICacheLru *i1;
     DCache *d0;
 #ifdef DBG_ICACHE_TB
     ICache_tb *i0_tb;
 #endif
     bool async_reset_;
-    int icache_cfg_;
 };
 
 

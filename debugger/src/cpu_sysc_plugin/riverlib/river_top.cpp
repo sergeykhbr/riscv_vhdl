@@ -19,7 +19,7 @@
 namespace debugger {
 
 RiverTop::RiverTop(sc_module_name name_, uint32_t hartid, bool async_reset,
-    bool fpu_ena, int icfg) : sc_module(name_) {
+    bool fpu_ena) : sc_module(name_) {
 
     proc0 = new Processor("proc0", hartid, async_reset);
     proc0->i_clk(i_clk);
@@ -60,7 +60,7 @@ RiverTop::RiverTop(sc_module_name name_, uint32_t hartid, bool async_reset,
     proc0->i_dstate(wb_dstate);
     proc0->i_cstate(wb_cstate);
 
-    cache0 = new CacheTop("cache0", async_reset, icfg);
+    cache0 = new CacheTop("cache0", async_reset);
     cache0->i_clk(i_clk);
     cache0->i_nrst(i_nrst);
     cache0->i_req_ctrl_valid(w_req_ctrl_valid);

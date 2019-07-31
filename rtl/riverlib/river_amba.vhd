@@ -33,6 +33,7 @@ use riverlib.types_river.all;
 
 entity river_amba is 
   generic (
+    memtech : integer;
     hartid : integer;
     async_reset : boolean
   );
@@ -60,10 +61,12 @@ architecture arch_river_amba of river_amba is
   type RegistersType is record
       w_valid : std_logic;
       w_last : std_logic;
-      w_strb : std_logic_vector(CFG_NASTI_DATA_BYTES-1 downto 0);
-      w_data : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
       b_ready : std_logic;
   end record;
+
+  constant R_RESET : RegistersType := (
+      '0', '0', '0'
+  );
 
   signal r, rin : RegistersType;
 
@@ -73,6 +76,8 @@ architecture arch_river_amba of river_amba is
   signal wb_req_mem_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
   signal wb_req_mem_strob : std_logic_vector(BUS_DATA_BYTES-1 downto 0);
   signal wb_req_mem_data : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+  signal wb_req_mem_len : std_logic_vector(7 downto 0);
+  signal wb_req_mem_burst : std_logic_vector(1 downto 0);
   signal w_resp_mem_data_valid : std_logic;
   signal w_resp_mem_load_fault : std_logic;
   signal w_resp_mem_store_fault : std_logic;
@@ -87,6 +92,7 @@ begin
   w_resp_mem_store_fault <= r.b_ready and i_msti.b_valid and i_msti.b_resp(1);
   
   river0 : RiverTop  generic map (
+      memtech => memtech,
       hartid => hartid,
       async_reset => async_reset
     ) port map (
@@ -98,6 +104,8 @@ begin
       o_req_mem_addr => wb_req_mem_addr,
       o_req_mem_strob => wb_req_mem_strob,
       o_req_mem_data => wb_req_mem_data,
+      o_req_mem_len => wb_req_mem_len,
+      o_req_mem_burst => wb_req_mem_burst,
       i_resp_mem_data_valid => w_resp_mem_data_valid,
       i_resp_mem_data => i_msti.r_data,
       i_resp_mem_load_fault => w_resp_mem_load_fault,
@@ -115,7 +123,8 @@ begin
 );
 
   comb : process(i_nrst, w_req_mem_valid, w_req_mem_write, wb_req_mem_addr,
-                 wb_req_mem_strob, wb_req_mem_data, i_msti, r)
+                 wb_req_mem_strob, wb_req_mem_data, wb_req_mem_len,
+                 wb_req_mem_burst, i_msti, r)
     variable v : RegistersType;
     variable vmsto   : nasti_master_out_type;
   begin
@@ -125,24 +134,24 @@ begin
     vmsto := nasti_master_out_none;
     vmsto.ar_valid      := w_req_mem_valid and not w_req_mem_write;
     vmsto.ar_bits.addr  := wb_req_mem_addr;
-    vmsto.ar_bits.len   := X"00";  -- Cache not support burst transaction (for now)
+    vmsto.ar_bits.len   := wb_req_mem_len;
     vmsto.ar_user       := '0';
     vmsto.ar_id         := conv_std_logic_vector(0, CFG_ROCKET_ID_BITS);
     vmsto.ar_bits.size  := "011"; -- 8 bytes
-    vmsto.ar_bits.burst := NASTI_BURST_INCR;
+    vmsto.ar_bits.burst := wb_req_mem_burst;
 
     vmsto.aw_valid      := w_req_mem_valid and w_req_mem_write;
     vmsto.aw_bits.addr  := wb_req_mem_addr;
-    vmsto.aw_bits.len   := X"00";
+    vmsto.aw_bits.len   := wb_req_mem_len;
     vmsto.aw_user       := '0';
     vmsto.aw_id         := conv_std_logic_vector(0, CFG_ROCKET_ID_BITS);
     vmsto.aw_bits.size  := "011"; -- 8 bytes
-    vmsto.aw_bits.burst := NASTI_BURST_INCR;
+    vmsto.aw_bits.burst := wb_req_mem_burst;
 
     vmsto.w_valid := r.w_valid;
     vmsto.w_last := r.w_last;
-    vmsto.w_strb := r.w_strb;
-    vmsto.w_data := r.w_data;
+    vmsto.w_strb := wb_req_mem_strob;
+    vmsto.w_data := wb_req_mem_data;
 
     vmsto.b_ready := r.b_ready;
     vmsto.r_ready := '1';
@@ -151,8 +160,6 @@ begin
     if (w_req_mem_valid and w_req_mem_write and i_msti.aw_ready) = '1' then
         v.w_valid := '1';
         v.w_last := '1';
-        v.w_strb := wb_req_mem_strob;
-        v.w_data := wb_req_mem_data;
     elsif i_msti.w_ready = '1' then
         v.w_valid := '0';
         v.w_last := '0';
@@ -164,12 +171,8 @@ begin
         v.b_ready := '0';
     end if;
 
-    if i_nrst = '0' then
-        v.w_valid := '0';
-        v.w_last := '0';
-        v.w_strb := (others => '0');
-        v.w_data := (others => '0');
-        v.b_ready := '0';
+    if not async_reset and i_nrst = '0' then
+        v := R_RESET;
     end if;
 
     rin <= v;
@@ -178,9 +181,11 @@ begin
   end process;
 
   -- registers:
-  regs : process(i_clk)
+  regs : process(i_clk, i_nrst)
   begin 
-     if rising_edge(i_clk) then 
+     if async_reset and i_nrst = '0' then
+        r <= R_RESET;
+     elsif rising_edge(i_clk) then 
         r <= rin;
      end if; 
   end process;

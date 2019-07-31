@@ -94,7 +94,7 @@ begin
       o_rdata => wb_data_rdata(64*(n+1)-1 downto 64*n),
       i_waddr => wb_wadr,
       i_wena => w_data_wena(n),
-      i_wdata => wb_tag_wdata(64*(n+1)-1 downto 64*n)
+      i_wdata => i_wdata
     );
   end generate;
 

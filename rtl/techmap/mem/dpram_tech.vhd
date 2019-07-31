@@ -34,7 +34,7 @@ port (
     i_clk   : in std_logic;
     i_raddr : in std_logic_vector(abits-1 downto 0);
     o_rdata : out std_logic_vector(dbits-1 downto 0);
-    i_waddr : in in std_logic_vector(abits-1 downto 0);
+    i_waddr : in std_logic_vector(abits-1 downto 0);
     i_wena  : in std_logic;
     i_wdata : in std_logic_vector(dbits-1 downto 0)
 );
@@ -51,7 +51,7 @@ architecture rtl of dpram_tech is
     i_clk   : in std_logic;
     i_raddr : in std_logic_vector(abits-1 downto 0);
     o_rdata : out std_logic_vector(dbits-1 downto 0);
-    i_waddr : in in std_logic_vector(abits-1 downto 0);
+    i_waddr : in  std_logic_vector(abits-1 downto 0);
     i_wena  : in std_logic;
     i_wdata : in std_logic_vector(dbits-1 downto 0)
   );

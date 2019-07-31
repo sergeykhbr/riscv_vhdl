@@ -965,10 +965,16 @@ package body types_amba4 is
         o_bank.rwait_while_write := i.aw_valid or i.w_valid;
         if i.r_ready = '1' and i_bank.rwaitready = '1' and i_bank.rwait_while_write = '0' then
             o_bank.rlen := i_bank.rlen - 1;
-            if i_bank.rburst = NASTI_BURST_INCR then
-              for n in 0 to CFG_WORDS_ON_BUS-1 loop
+            for n in 0 to CFG_WORDS_ON_BUS-1 loop
                 o_bank.raddr(n) := i_bank.raddr(n) + i_bank.rsize;
-              end loop;
+            end loop;
+            if i_bank.rburst = NASTI_BURST_WRAP then
+                for n in 0 to CFG_WORDS_ON_BUS-1 loop
+                    -- i_bank.rsize = 8 and i_bank.rlen = 3
+                    -- 8 x 4 = 32 bytes 
+                    o_bank.raddr(n)(CFG_NASTI_ADDR_BITS-1 downto 5) 
+                         := i_bank.raddr(n)(CFG_NASTI_ADDR_BITS-1 downto 5);
+                end loop;
             end if;
             -- End of transaction (or process another one):
             if i_bank.rlen = 0 then

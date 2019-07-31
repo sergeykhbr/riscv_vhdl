@@ -171,6 +171,7 @@ begin
 
   --! @brief RISC-V Processor core (River or Rocket).
   cpu0 : river_amba generic map (
+    memtech  => CFG_MEMTECH,
     hartid => 0,
     async_reset => CFG_ASYNC_RESET
   ) port map ( 
@@ -186,6 +187,7 @@ begin
 
   dualcore_ena : if CFG_COMMON_DUAL_CORE_ENABLE generate
       cpu1 : river_amba generic map (
+        memtech  => CFG_MEMTECH,
         hartid => 1,
         async_reset => CFG_ASYNC_RESET
       ) port map ( 

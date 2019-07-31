@@ -27,7 +27,6 @@ CpuRiscV_RTL::CpuRiscV_RTL(const char *name)
     registerAttribute("HartID", &hartid_);
     registerAttribute("AsyncReset", &asyncReset_);
     registerAttribute("FpuEnable", &fpuEnable_);
-    registerAttribute("ConfigICache", &configICache_);
     registerAttribute("Bus", &bus_);
     registerAttribute("CmdExecutor", &cmdexec_);
     registerAttribute("Tap", &tap_);
@@ -39,7 +38,6 @@ CpuRiscV_RTL::CpuRiscV_RTL(const char *name)
     bus_.make_string("");
     freqHz_.make_uint64(1);
     fpuEnable_.make_boolean(true);
-    configICache_.make_int64(1);
     InVcdFile_.make_string("");
     OutVcdFile_.make_string("");
     GenerateRef_.make_boolean(false);
@@ -166,8 +164,7 @@ void CpuRiscV_RTL::createSystemC() {
 
     top_ = new RiverTop("top", hartid_.to_uint32(),
                                asyncReset_.to_bool(),
-                               fpuEnable_.to_bool(),
-                               configICache_.to_int());
+                               fpuEnable_.to_bool());
     top_->i_clk(wrapper_->o_clk);
     top_->i_nrst(w_nrst);
     top_->i_req_mem_ready(w_req_mem_ready);

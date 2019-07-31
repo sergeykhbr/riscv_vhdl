@@ -36,6 +36,9 @@ entity ICache is generic (
     o_req_mem_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     o_req_mem_strob : out std_logic_vector(BUS_DATA_BYTES-1 downto 0);
     o_req_mem_data : out std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+    o_req_mem_len : out std_logic_vector(7 downto 0);
+    o_req_mem_burst : out std_logic_vector(1 downto 0);
+    o_req_mem_last : out std_logic;
     i_resp_mem_data_valid : in std_logic;
     i_resp_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
     i_resp_mem_load_fault : in std_logic;
@@ -385,6 +388,9 @@ begin
     o_req_mem_write <= '0';
     o_req_mem_strob <= (others => '0');
     o_req_mem_data <= (others => '0');
+    o_req_mem_len <= X"00";
+    o_req_mem_burst <= "00";
+    o_req_mem_last <= '1';
 
     o_resp_ctrl_valid <= w_o_resp_valid;
     o_resp_ctrl_data <= wb_o_resp_data;

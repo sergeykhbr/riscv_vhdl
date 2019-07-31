@@ -1041,6 +1041,8 @@ package river_cfg is
   --! @param[out] o_req_mem_addr
   --! @param[out] o_req_mem_strob
   --! @param[out] o_req_mem_data
+  --! @param[out] o_req_mem_len        burst length
+  --! @param[out] o_req_mem_burst      burst type: "00" FIX; "01" INCR; "10" WRAP
   --! @param[in] i_resp_mem_data_valid
   --! @param[in] i_resp_mem_data
   --! @param[in] i_resp_mem_load_store
@@ -1051,6 +1053,7 @@ package river_cfg is
   --! @param[out] o_dstate        DCache state machine value
   --! @param[out] o_cstate        cachetop state machine value
   component CacheTop is generic (
+    memtech : integer;
     async_reset : boolean
   );
   port (
@@ -1082,6 +1085,8 @@ package river_cfg is
     o_req_mem_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     o_req_mem_strob : out std_logic_vector(BUS_DATA_BYTES-1 downto 0);
     o_req_mem_data : out std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+    o_req_mem_len : out std_logic_vector(7 downto 0);
+    o_req_mem_burst : out std_logic_vector(1 downto 0);
     i_resp_mem_data_valid : in std_logic;
     i_resp_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
     i_resp_mem_load_fault : in std_logic;
@@ -1104,6 +1109,8 @@ package river_cfg is
   --! @param[out] o_req_mem_addr       AXI memory request address
   --! @param[out] o_req_mem_strob      Writing strob. 1 bit per Byte
   --! @param[out] o_req_mem_data       Writing data
+  --! @param[out] o_req_mem_len        burst length
+  --! @param[out] o_req_mem_burst      burst type: "00" FIX; "01" INCR; "10" WRAP
   --! @param[in] i_resp_mem_data_valid AXI response is valid
   --! @param[in] i_resp_mem_data       Read data
   --! @param[in] i_resp_mem_load_fault Bus response with SLVERR or DECERR on read
@@ -1119,6 +1126,7 @@ package river_cfg is
   --! @param[out] o_dport_rdata        Response value
   component RiverTop is
   generic (
+    memtech : integer := 0;
     hartid : integer := 0;
     async_reset : boolean := false
   );
@@ -1131,6 +1139,8 @@ package river_cfg is
     o_req_mem_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     o_req_mem_strob : out std_logic_vector(BUS_DATA_BYTES-1 downto 0);
     o_req_mem_data : out std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+    o_req_mem_len : out std_logic_vector(7 downto 0);
+    o_req_mem_burst : out std_logic_vector(1 downto 0);
     i_resp_mem_data_valid : in std_logic;
     i_resp_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
     i_resp_mem_load_fault : in std_logic;

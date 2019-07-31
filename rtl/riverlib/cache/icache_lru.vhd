@@ -23,7 +23,7 @@ use riverlib.river_cfg.all;
 use riverlib.types_cache.all;
 
 entity ICacheLru is generic (
-    memtech : integer := 0;
+    memtech : integer;
     async_reset : boolean;
     index_width : integer
   );
