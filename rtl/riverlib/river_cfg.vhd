@@ -28,6 +28,11 @@ package river_cfg is
   constant CFG_IMPLEMENTATION_ID : std_logic_vector(31 downto 0) := X"20190521";
   constant CFG_HW_FPU_ENABLE : boolean := true;
 
+  -- [13:6]  8: index: 8 KB per odd/even ways (64 KB total: ways=4)
+  -- [12:6]  7: index: 4 KB per odd/even ways (32 KB total: ways=4)
+  -- [11:6]  6: index: 2 KB per odd/even ways (16 KB total: ways=4)
+  constant CFG_IINDEX_WIDTH : integer := 6;    -- log2(LINES_PER_WAY)
+
   --! Architecture size difinition.
   constant RISCV_ARCH : integer := 64;
 

@@ -1,9 +1,19 @@
-----------------------------------------------------------------------------
---! @file
---! @copyright  Copyright 2015 GNSS Sensor Ltd. All right reserved.
---! @author     Sergey Khabarov
---! @brief      Declaration types_mem package components.
-------------------------------------------------------------------------------
+--!
+--! Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
+--!
+--! Licensed under the Apache License, Version 2.0 (the "License");
+--! you may not use this file except in compliance with the License.
+--! You may obtain a copy of the License at
+--!
+--!     http://www.apache.org/licenses/LICENSE-2.0
+--!
+--! Unless required by applicable law or agreed to in writing, software
+--! distributed under the License is distributed on an "AS IS" BASIS,
+--! WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+--! See the License for the specific language governing permissions and
+--! limitations under the License.
+--!
+
 --! Standard library
 library ieee;
 use ieee.std_logic_1164.all;
@@ -189,6 +199,22 @@ package types_mem is
     write    : in std_ulogic;
     waddress : in std_logic_vector((abits -1) downto 0);
     datain   : in std_logic_vector((dbits -1) downto 0)
+  );
+  end component;
+
+  component dpram_tech is
+  generic (
+    memtech : integer := 0;
+    abits   : integer := 12;
+    dbits   : integer := 64
+  );
+  port (
+    i_clk   : in std_logic;
+    i_raddr : in std_logic_vector(abits-1 downto 0);
+    o_rdata : out std_logic_vector(dbits-1 downto 0);
+    i_waddr : in std_logic_vector(abits-1 downto 0);
+    i_wena  : in std_logic;
+    i_wdata : in std_logic_vector(dbits-1 downto 0)
   );
   end component;
 

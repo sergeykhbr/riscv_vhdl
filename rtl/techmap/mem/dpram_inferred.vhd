@@ -1,0 +1,60 @@
+--!
+--! Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
+--!
+--! Licensed under the Apache License, Version 2.0 (the "License");
+--! you may not use this file except in compliance with the License.
+--! You may obtain a copy of the License at
+--!
+--!     http://www.apache.org/licenses/LICENSE-2.0
+--!
+--! Unless required by applicable law or agreed to in writing, software
+--! distributed under the License is distributed on an "AS IS" BASIS,
+--! WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+--! See the License for the specific language governing permissions and
+--! limitations under the License.
+--!
+
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.ALL;
+use IEEE.STD_LOGIC_TEXTIO.ALL;
+use std.textio.all;
+library commonlib;
+use commonlib.types_common.all;
+
+entity dpram_inferred is
+  generic (
+    abits : integer := 12;
+    dbits : integer := 64
+  );
+  port (
+    i_clk   : in std_logic;
+    i_raddr : in std_logic_vector(abits-1 downto 0);
+    o_rdata : out std_logic_vector(dbits-1 downto 0);
+    i_waddr : in in std_logic_vector(abits-1 downto 0);
+    i_wena  : in std_logic;
+    i_wdata : in std_logic_vector(dbits-1 downto 0)
+  );
+end;
+
+architecture arch_dpram_inferred of dpram_inferred is
+
+constant SRAM_LENGTH : integer := 2**abits;
+type ram_type is array (0 to SRAM_LENGTH-1) of std_logic_vector(dbits-1 downto 0);
+
+signal ram : ram_type;
+signal radr : std_logic_vector(abits-1 downto 0);
+
+begin
+
+  reg : process (clk, i_raddr, i_waddr, i_wena, wdata) begin
+    if rising_edge(clk) then 
+      radr <= i_raddr;
+      if i_wena = '1' then
+        ram(conv_integer(i_waddr)) <= i_wdata;
+      end if;
+    end if;
+  end process;
+
+  o_rdata <= ram(conv_integer(radr));
+end;
