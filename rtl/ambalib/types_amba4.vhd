@@ -618,7 +618,6 @@ type nasti_slave_bank_type is record
     rid    : std_logic_vector(CFG_ROCKET_ID_BITS-1 downto 0);
     rresp  : std_logic_vector(1 downto 0);  --! OK=0
     ruser  : std_logic;
-    rwait_while_write : std_logic;          --! Writing request has higher priority than read and can interrupt reading
     rwaitready : std_logic;                 --! Reading wait state flag: 0=waiting. User's waitstates
     
     wburst : std_logic_vector(1 downto 0);  -- 0=INCREMENT
@@ -634,7 +633,7 @@ end record;
 --! Reset value of the template bank of registers of a slave device.
 constant NASTI_SLAVE_BANK_RESET : nasti_slave_bank_type := (
     rwait, wwait,
-    NASTI_BURST_FIXED, 0, (others=>(others=>'0')), 0, (others=>'0'), NASTI_RESP_OKAY, '0', '0', '1',
+    NASTI_BURST_FIXED, 0, (others=>(others=>'0')), 0, (others=>'0'), NASTI_RESP_OKAY, '0', '1',
     NASTI_BURST_FIXED, 0, (others=>(others=>'0')), 0, (others=>'0'), NASTI_RESP_OKAY, '0', '0'
 );
 
@@ -936,11 +935,10 @@ package body types_amba4 is
     traddr := (i.ar_bits.addr(CFG_NASTI_ADDR_BITS-1 downto 12) and (not cfg.xmask))
              & i.ar_bits.addr(11 downto 0);
 
-    o_bank.rwait_while_write := '0';
     -- Reading state machine:
     case i_bank.rstate is
     when rwait =>
-        if i.ar_valid = '1' and i_bank.wstate /= wtrans then
+        if i.ar_valid = '1' and i.aw_valid = '0' and i_bank.wlen = 0 then
             o_bank.rstate := rtrans;
 
             for n in 0 to CFG_WORDS_ON_BUS-1 loop
@@ -959,12 +957,9 @@ package body types_amba4 is
             --! reading wait states.
             --! Example: see axi2fse.vhd bridge implementation
             o_bank.rwaitready := '1';
-            o_bank.rwait_while_write := i.aw_valid;
         end if;
     when rtrans =>
-        o_bank.rwait_while_write := i.aw_valid or i.w_valid;
-        if i.r_ready = '1' and i_bank.rwaitready = '1' and i_bank.rwait_while_write = '0' then
-            o_bank.rlen := i_bank.rlen - 1;
+        if i.r_ready = '1' and i_bank.rwaitready = '1' then
             for n in 0 to CFG_WORDS_ON_BUS-1 loop
                 o_bank.raddr(n) := i_bank.raddr(n) + i_bank.rsize;
             end loop;
@@ -978,9 +973,7 @@ package body types_amba4 is
             end if;
             -- End of transaction (or process another one):
             if i_bank.rlen = 0 then
-                if i.ar_valid = '0' then
-                    o_bank.rstate := rwait;
-                else
+                if i.ar_valid = '1' and i.aw_valid = '0' then
                     for n in 0 to CFG_WORDS_ON_BUS-1 loop
                       o_bank.raddr(n) := traddr + n*CFG_ALIGN_BYTES;
                     end loop;
@@ -991,7 +984,11 @@ package body types_amba4 is
                     o_bank.rresp := NASTI_RESP_OKAY;
                     o_bank.ruser := i.ar_user;
                     o_bank.rwaitready := '1';
+                else
+                    o_bank.rstate := rwait;
                 end if;
+            else
+                o_bank.rlen := i_bank.rlen - 1;
             end if;
         end if;
     end case;
@@ -999,7 +996,7 @@ package body types_amba4 is
     -- Writting state machine:
     case i_bank.wstate is
     when wwait =>
-        if i.aw_valid = '1' then
+        if i.aw_valid = '1' and i_bank.rlen = 0 then
             o_bank.wstate := wtrans;
             twaddr := (i.aw_bits.addr(CFG_NASTI_ADDR_BITS-1 downto 12) and (not cfg.xmask))
                    & i.aw_bits.addr(11 downto 0);
@@ -1015,7 +1012,6 @@ package body types_amba4 is
         end if;
     when wtrans =>
         if i.w_valid = '1' then
-            o_bank.wlen := i_bank.wlen - 1;
             if i_bank.wburst = NASTI_BURST_INCR then
               for n in 0 to CFG_WORDS_ON_BUS-1 loop
                 o_bank.waddr(n) := i_bank.waddr(n) + i_bank.wsize;
@@ -1023,8 +1019,24 @@ package body types_amba4 is
             end if;
             -- End of transaction:
             if i_bank.wlen = 0 then
-                o_bank.wstate := wwait;
                 o_bank.b_valid := '1';
+                if i.aw_valid = '0' then
+                    o_bank.wstate := wwait;
+                else
+                    twaddr := (i.aw_bits.addr(CFG_NASTI_ADDR_BITS-1 downto 12) and (not cfg.xmask))
+                           & i.aw_bits.addr(11 downto 0);
+                    for n in 0 to CFG_WORDS_ON_BUS-1 loop
+                       o_bank.waddr(n) := twaddr + n*CFG_ALIGN_BYTES;
+                    end loop;
+                    o_bank.wsize := XSizeToBytes(conv_integer(i.aw_bits.size));
+                    o_bank.wburst := i.aw_bits.burst;
+                    o_bank.wlen := conv_integer(i.aw_bits.len);
+                    o_bank.wid := i.aw_id;
+                    o_bank.wresp := NASTI_RESP_OKAY;
+                    o_bank.wuser := i.aw_user;
+                end if;
+            else
+                o_bank.wlen := i_bank.wlen - 1;
             end if;
         end if;
     end case;
@@ -1193,14 +1205,18 @@ begin
     ret.ar_ready    := '1';
 
     ret.r_id      := r.rid;
-    if r.rstate = rtrans and r.rlen = 0 then
-      ret.r_last    := '1';
-    else
-      ret.r_last    := '0';
+    ret.r_last    := '0';
+    if r.rstate = rtrans then
+      if r.rlen = 0 then
+          ret.r_last    := '1';
+      else
+          ret.aw_ready    := '0';
+          ret.ar_ready    := '0';
+      end if;
     end if;
     ret.r_resp    := r.rresp;
     ret.r_user    := r.ruser;
-    if r.rwaitready = '1' and r.rstate = rtrans and r.rwait_while_write = '0' then
+    if r.rwaitready = '1' and r.rstate = rtrans then
       ret.r_valid   := '1';
     else
       ret.r_valid   := '0';
@@ -1211,8 +1227,10 @@ begin
     -- Write transfer:
     if r.wstate = wtrans then
       ret.w_ready := '1';
-      ret.aw_ready    := '0';
-      ret.ar_ready    := '0';
+      if r.wlen /= 0 then
+        ret.aw_ready    := '0';
+        ret.ar_ready    := '0';
+      end if;
     else
       ret.w_ready := '0';
     end if;

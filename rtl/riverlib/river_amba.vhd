@@ -85,7 +85,6 @@ architecture arch_river_amba of river_amba is
 begin
 
   o_mstcfg <= xconfig;
---  w_resp_mem_data_valid <= i_msti.r_valid or (r.b_ready and i_msti.b_valid);
   w_resp_mem_data_valid <= i_msti.r_valid or (r.w_valid and i_msti.w_ready);
   -- Slave response resp = SLVERR (2'b10)
   -- Interconnect response resp = DECERR (2'b11):
@@ -178,7 +177,8 @@ begin
 
     rin <= v;
     o_msto <= vmsto;
-    w_req_mem_ready <= i_msti.aw_ready or i_msti.ar_ready;
+    w_req_mem_ready <= (w_req_mem_write and i_msti.aw_ready)
+                    or (not w_req_mem_write and i_msti.ar_ready);
   end process;
 
   -- registers:

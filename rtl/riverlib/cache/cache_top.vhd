@@ -254,26 +254,26 @@ begin
 
     v := r;
 
-    wb_mem_addr := (others => '0');
-    wb_mem_len := (others => '0');
-    wb_mem_burst := (others => '0');
-
+    -- default is data path
+    wb_mem_addr := d.req_mem_addr;
+    wb_mem_len := d.req_mem_len;
+    wb_mem_burst := d.req_mem_burst;
     w_data_req_ready <= '0';
     w_data_resp_mem_data_valid <= '0';
-    wb_data_resp_mem_data <= (others => '0');
-    w_data_resp_mem_load_fault <= '0';
-    w_data_resp_mem_store_fault <= '0';
+    wb_data_resp_mem_data <= i_resp_mem_data;
+    w_data_resp_mem_load_fault <= i_resp_mem_load_fault;
+    w_data_resp_mem_store_fault <= i_resp_mem_store_fault;
+
     w_ctrl_req_ready <= '0';
     w_ctrl_resp_mem_data_valid <= '0';
-    wb_ctrl_resp_mem_data <= (others => '0');
-    w_ctrl_resp_mem_load_fault <= '0';
+    wb_ctrl_resp_mem_data <= i_resp_mem_data;
+    w_ctrl_resp_mem_load_fault <= i_resp_mem_load_fault;
    
     case r.state is
     when State_Idle =>
         if i_req_mem_ready = '1' then
             if d.req_mem_valid = '1' then
                 w_data_req_ready <= '1';
-                wb_mem_addr := d.req_mem_addr;
                 v.state := State_DMem;
             elsif i.req_mem_valid = '1' then
                 w_ctrl_req_ready <= '1';
@@ -289,7 +289,6 @@ begin
             if i_req_mem_ready = '1' then
                 if d.req_mem_valid = '1' then
                     w_data_req_ready <= '1';
-                    wb_mem_addr := d.req_mem_addr;
                     v.state := State_DMem;
                 elsif i.req_mem_valid = '1' then
                     w_ctrl_req_ready <= '1';
@@ -305,16 +304,12 @@ begin
             end if;
         end if;
         w_data_resp_mem_data_valid <= i_resp_mem_data_valid;
-        wb_data_resp_mem_data <= i_resp_mem_data;
-        w_data_resp_mem_load_fault <= i_resp_mem_load_fault;
-        w_data_resp_mem_store_fault <= i_resp_mem_store_fault;
         
     when State_IMem =>
         if i_resp_mem_data_valid = '1'  and i.req_mem_last = '1' then
             if i_req_mem_ready = '1' then
                 if d.req_mem_valid = '1' then
                     w_data_req_ready <= '1';
-                    wb_mem_addr := d.req_mem_addr;
                     v.state := State_DMem;
                 elsif i.req_mem_valid = '1' then
                     w_ctrl_req_ready <= '1';
@@ -330,8 +325,6 @@ begin
             end if;
         end if;
         w_ctrl_resp_mem_data_valid <= i_resp_mem_data_valid;
-        wb_ctrl_resp_mem_data <= i_resp_mem_data;
-        w_ctrl_resp_mem_load_fault <= i_resp_mem_load_fault;
         
     when others =>
     end case;
@@ -342,11 +335,11 @@ begin
 
     o_req_mem_valid <= i.req_mem_valid or d.req_mem_valid;
     o_req_mem_addr <= wb_mem_addr;
+    o_req_mem_len <= wb_mem_len;
+    o_req_mem_burst <= wb_mem_burst;
     o_req_mem_write <= d.req_mem_write;
     o_req_mem_strob <= d.req_mem_strob;
     o_req_mem_data <= d.req_mem_wdata;
-    o_req_mem_len <= wb_mem_len;
-    o_req_mem_burst <= wb_mem_burst;
     o_cstate <= r.state;
     
     rin <= v;
