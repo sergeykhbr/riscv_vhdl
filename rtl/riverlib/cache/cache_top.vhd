@@ -297,12 +297,12 @@ begin
                     wb_mem_len := i.req_mem_len;
                     wb_mem_burst := i.req_mem_burst;
                     v.state := State_IMem;
+                else
+                    v.state := State_Idle;
                 end if;
             else
                 v.state := State_Idle;
             end if;
-        else
-            v.state := State_Idle;
         end if;
         w_data_resp_mem_data_valid <= i_resp_mem_data_valid;
         wb_data_resp_mem_data <= i_resp_mem_data;

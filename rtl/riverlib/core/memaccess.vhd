@@ -67,29 +67,26 @@ end;
 architecture arch_MemAccess of MemAccess is
 
   type RegistersType is record
-      valid : std_logic;
-      pc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-      instr : std_logic_vector(31 downto 0);
-
-      wena : std_logic;
-      waddr : std_logic_vector(5 downto 0);
-      sign_ext : std_logic;
-      size : std_logic_vector(1 downto 0);
-      wdata : std_logic_vector(RISCV_ARCH-1 downto 0);
-      wait_req : std_logic;
-      wait_req_write : std_logic;
-      wait_req_sz : std_logic_vector(1 downto 0);
-      wait_req_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-      wait_req_wdata : std_logic_vector(RISCV_ARCH-1 downto 0);
-      wait_resp : std_logic;
+      requested : std_logic;
+      req_valid : std_logic;
+      req_pc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+      req_instr : std_logic_vector(31 downto 0);
+      req_res_addr : std_logic_vector(5 downto 0);
+      req_res_data : std_logic_vector(RISCV_ARCH-1 downto 0);
+      req_memop_sign_ext : std_logic;
+      req_memop : std_logic;
+      req_memop_store : std_logic;
+      req_memop_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+      req_memop_size : std_logic_vector(1 downto 0);
+      req_wena : std_logic;
   end record;
  
   constant R_RESET : RegistersType := (
-    '0', (others => '0'), (others => '0'),   -- valid, pc, instr
-    '0', (others => '0'), '0',               -- wena, waddr, sign_ext
-    "00", (others => '0'), '0',              -- size, wdata, wait_req
-    '0', "00", (others => '0'),              -- wait_req_write, wait_req_sz, wait_req_addr
-    (others => '0'), '0'                     -- wait_req_wdata, wait_resp
+    '0', '0', (others => '0'),               -- requested, req_valid, req_pc,
+    (others => '0'), (others => '0'),        -- req_instr, req_res_addr
+    (others => '0'), '0', '0',               -- req_res_data, req_memop_sign_ext, req_memop
+    '0', (others => '0'),                    -- req_memop_store, req_memop_addr
+    (others => '0'), '0'                     -- req_memop_size, req_wena
   );
 
   signal r, rin : RegistersType;
@@ -101,102 +98,78 @@ begin
                 i_memop_sign_ext, i_memop_load, i_memop_store, i_memop_size,
                 i_memop_addr, i_mem_data_valid, i_mem_data_addr, i_mem_data, r)
     variable v : RegistersType;
-    variable w_req_fire : std_logic;
+    variable w_hold_req : std_logic;
+    variable w_hold_resp : std_logic;
+    variable w_hold : std_logic;
+    variable w_memop : std_logic;
+    variable w_valid : std_logic;
+    variable wb_res_wdata : std_logic_vector(RISCV_ARCH-1 downto 0);
     variable w_o_mem_valid : std_logic;
     variable w_o_mem_write : std_logic;
     variable wb_o_mem_sz : std_logic_vector(1 downto 0);
     variable wb_o_mem_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    variable wb_o_mem_wdata : std_logic_vector(RISCV_ARCH-1 downto 0);
-    variable wb_res_wdata : std_logic_vector(RISCV_ARCH-1 downto 0);
-    variable w_memop : std_logic;
-    variable w_o_valid : std_logic;
-    variable w_o_wena : std_logic;
-    variable w_o_hold : std_logic;
-    variable w_mem_fire : std_logic;
+    variable wb_o_mem_data : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
   begin
 
     v := r;
 
-    w_o_mem_valid := '0';
-    w_o_mem_write := '0';
-    wb_o_mem_sz := (others => '0');
-    wb_o_mem_addr := (others => '0');
-    wb_o_mem_wdata := (others => '0');
-    v.valid := '0';
-    w_o_hold := '0';
-    
     w_memop := i_memop_load or i_memop_store;
 
-    if r.wait_req = '1' then
-        if i_mem_req_ready = '1' then
-            v.wait_req := '0';
-            v.wait_resp := '1';
+    w_hold_req := not i_mem_req_ready and 
+            ((i_e_valid and w_memop) or (not r.requested and r.req_valid));
+    w_hold_resp := r.requested and r.req_valid
+                and r.req_memop and not i_mem_data_valid;
+
+    w_hold := w_hold_req or w_hold_resp;
+
+    -- warning: exec stage forms valid signal only 1 clock from trigger and ignores
+    --             hold signal on the same clock. NEED TO FIX IT IN Executor!!!
+    if i_e_valid = '1' then
+        v.requested := not w_hold;
+        v.req_valid := '1';
+        v.req_pc := i_e_pc;
+        v.req_instr := i_e_instr;
+        v.req_res_addr := i_res_addr;
+        v.req_res_data := i_res_data;
+        v.req_memop_sign_ext := i_memop_sign_ext;
+        v.req_memop := w_memop;
+        v.req_memop_store := i_memop_store;
+        v.req_memop_addr := i_memop_addr;
+        v.req_memop_size := i_memop_size;
+        if i_res_addr = "000000" then
+            v.req_wena := '0';
+        else
+            v.req_wena := '1';
         end if;
-        w_o_mem_valid := '1';
-        w_o_mem_write := r.wait_req_write;
-        wb_o_mem_sz := r.wait_req_sz;
-        wb_o_mem_addr := r.wait_req_addr;
-        wb_o_mem_wdata := r.wait_req_wdata;
-    elsif i_e_valid = '1' then
-      v.valid := not w_memop;
-      v.pc := i_e_pc;
-      v.instr := i_e_instr;
-      v.waddr := i_res_addr;
-      v.wdata := i_res_data;
-      if i_res_addr = "000000" then
-          v.wena := '0';
-      else
-          v.wena := '1';
-      end if;
-
-      if w_memop = '1' then
-        w_o_mem_valid := '1';
-        w_o_mem_write := i_memop_store;
-        wb_o_mem_sz := i_memop_size;
-        wb_o_mem_addr := i_memop_addr;
-        wb_o_mem_wdata := i_res_data;
-        v.sign_ext := i_memop_sign_ext;
-        v.size := i_memop_size;
-
-        v.wait_resp := i_mem_req_ready;
-        v.wait_req := not i_mem_req_ready;
-        v.wait_req_write := i_memop_store;
-        v.wait_req_sz := i_memop_size;
-        v.wait_req_addr := i_memop_addr;
-        v.wait_req_wdata := i_res_data;
-      else
-        w_o_mem_valid := '0';
-        w_o_mem_write := '0';
-        wb_o_mem_sz := (others => '0');
-        wb_o_mem_addr := (others => '0');
-        wb_o_mem_wdata := (others => '0');
-        v.sign_ext := '0';
-        v.size := (others => '0');
-        v.wait_req_addr := (others => '0');
-        v.wait_req := '0';
-        v.wait_resp := '0';
-      end if;
-    elsif i_mem_data_valid = '1' then
-      v.wait_resp := '0';
+    elsif r.req_valid = '1' and w_hold = '0' then
+        if r.requested = '0' then
+            -- address was requested while bus not ready
+            v.requested := '1';
+        else
+            v.requested := '0';
+            v.req_valid := '0';
+            v.req_wena := '0';
+        end if;
     end if;
-
-    w_o_hold := (i_e_valid and w_memop) or r.wait_req 
-            or (r.wait_resp and not i_mem_data_valid);
-
-    w_mem_fire := i_mem_data_valid;
     
-    if w_mem_fire = '1' then
-        if r.sign_ext = '1' then
-            case r.size is
+    if r.req_memop = '1' then
+        if r.req_memop_sign_ext = '1' then
+            case r.req_memop_size is
             when MEMOP_1B =>
                 wb_res_wdata := i_mem_data;
-                wb_res_wdata(63 downto 8) := (others => i_mem_data(7));
+                if i_mem_data(7) = '1' then
+                    wb_res_wdata(63 downto 8) := (others => '1');
+                end if;
             when MEMOP_2B =>
                 wb_res_wdata := i_mem_data;
-                wb_res_wdata(63 downto 16) := (others => i_mem_data(15));
+                if i_mem_data(15) = '1' then
+                    wb_res_wdata(63 downto 16) := (others => '1');
+                end if;
             when MEMOP_4B =>
                 wb_res_wdata := i_mem_data;
-                wb_res_wdata(63 downto 32) := (others => i_mem_data(31));
+                if i_mem_data(31) = '1' then
+                    wb_res_wdata(63 downto 32) := (others => '1');
+                end if;
             when others =>
                 wb_res_wdata := i_mem_data;
             end case;
@@ -204,11 +177,24 @@ begin
             wb_res_wdata := i_mem_data;
         end if;
     else
-        wb_res_wdata := r.wdata;
+        wb_res_wdata := r.req_res_data;
     end if;
 
-    w_o_valid := r.valid or w_mem_fire;
-    w_o_wena := r.wena and w_o_valid;
+    if r.requested = '0' and r.req_valid = '1' then
+        -- This branch should be deleted after proper HOLD implementation in Executor!!!
+        w_o_mem_valid := '1';
+        w_o_mem_write := r.req_memop_store;
+        wb_o_mem_sz := r.req_memop_size;
+        wb_o_mem_addr := r.req_memop_addr;
+        wb_o_mem_data := r.req_res_data;
+    else
+        w_o_mem_valid := i_e_valid and w_memop;
+        w_o_mem_write := i_memop_store;
+        wb_o_mem_sz := i_memop_size;
+        wb_o_mem_addr := i_memop_addr;
+        wb_o_mem_data := i_res_data;
+    end if;
+    w_valid := r.requested and r.req_valid and not w_hold_resp;
 
     if not async_reset and i_nrst = '0' then
         v := R_RESET;
@@ -220,15 +206,15 @@ begin
     o_mem_write <= w_o_mem_write;
     o_mem_sz <= wb_o_mem_sz;
     o_mem_addr <= wb_o_mem_addr;
-    o_mem_data <= wb_o_mem_wdata;
+    o_mem_data <= wb_o_mem_data;
 
-    o_wena <= w_o_wena;
-    o_waddr <= r.waddr;
+    o_wena <= r.req_wena;
+    o_waddr <= r.req_res_addr;
     o_wdata <= wb_res_wdata;
-    o_valid <= w_o_valid;
-    o_pc <= r.pc;
-    o_instr <= r.instr;
-    o_hold <= w_o_hold;
+    o_valid <= w_valid;
+    o_pc <= r.req_pc;
+    o_instr <= r.req_instr;
+    o_hold <= w_hold;
     
     rin <= v;
   end process;
