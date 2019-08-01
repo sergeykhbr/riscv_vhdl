@@ -97,18 +97,22 @@ void MemAccess::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 
 void MemAccess::comb() {
 #ifdef MEM_V2
+    bool w_hold_req;
+    bool w_hold_resp;
     bool w_hold;
     bool w_memop;
+    bool w_valid;
     sc_uint<RISCV_ARCH> wb_res_wdata;
 
-    w_hold = 0;
     w_memop = i_memop_load.read() || i_memop_store.read();
 
-    if ((i_e_valid.read() && w_memop && !i_mem_req_ready.read()) ||
-        (!r.requested.read() && r.req_valid.read() && !i_mem_req_ready.read()) ||
-        (r.requested.read() && r.req_valid.read() && r.req_memop.read() && !i_mem_data_valid.read())) {
-        w_hold = 1;
-    }
+    w_hold_req = !i_mem_req_ready.read() && 
+            ((i_e_valid.read() && w_memop) ||
+             (!r.requested.read() && r.req_valid.read()));
+    w_hold_resp = r.requested.read() && r.req_valid.read()
+                && r.req_memop.read() && !i_mem_data_valid.read();
+
+    w_hold = w_hold_req || w_hold_resp;
 
     /** warning: exec stage forms valid signal only 1 clock from trigger and ignores
                  hold signal on the same clock. NEED TO FIX IT IN Executor!!! */
@@ -191,11 +195,12 @@ void MemAccess::comb() {
         o_mem_addr = i_memop_addr.read();
         o_mem_data = i_res_data.read();
     }
+    w_valid = r.requested.read() && r.req_valid.read() && !w_hold_resp;
 
     o_wena = r.req_wena;
     o_waddr = r.req_res_addr;
     o_wdata = wb_res_wdata;
-    o_valid = r.requested.read() && r.req_valid.read() && !w_hold;
+    o_valid = w_valid;
     o_pc = r.req_pc;
     o_instr = r.req_instr;
     o_hold = w_hold;
