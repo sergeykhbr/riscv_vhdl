@@ -98,7 +98,7 @@ begin
     );
   end generate;
 
-  comb : process(i_nrst, i_radr, i_wadr, i_wena, i_wstrb, 
+  comb : process(i_nrst, i_radr, i_wadr, i_wena, i_wstrb, i_wvalid,
                  i_wdata, i_load_fault, wb_tag_rdata, wb_data_rdata, r)
     variable v : RegistersType;
     variable vb_rdata : std_logic_vector(31 downto 0);
