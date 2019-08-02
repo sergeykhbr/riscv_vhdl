@@ -1,8 +1,62 @@
 /**
  
- @mainpage RISC-V System-on-Chip VHDL IP libraries
+@mainpage Introduction
 
- @section license_subsection License
+@subsection introduction_subsection Introduction
+
+  The rapidly growing area of embedded control applications is representing one of the
+most time-critical operating environments for today’s microcontrollers.
+Specially developed System-on-Chip design is one of the most effective 
+way to provide maximum performance of the algorithms combining advantages of 
+the hardware and software. Especially it is beneficial for small, highly 
+specialized tasks.
+
+  Key elements of such system are Central Processor Unit (CPU) and system bus 
+controller that are defining performance and capabilities of the full 
+system and peripheries.
+
+  This document describes implementation of such system based on open-source
+synthesizable 64-bits RISC-V processor River. One or several processors
+connected to open-source System Bus Controller implementing AXI4 cross-bar.
+Processor, bus controller and others elements of a SoC distributed with
+license Apache 2.0 that shown below.
+
+  The tool environment for the River 64-bit processor includes the following
+tools:
+
+  /li Compilers (Asm/C/C++)
+  /li Macro-assemblers, linkers, locators, format-converters
+  /li Full system functional and Cycle-true Simulators
+  /li Debuggers
+  /li Real-time operating system and bare-metal examples
+  /li VHDL chip models
+  /li Project files for different FPGA and EDA tools
+  /li Netlists (by contract) for a specific technology process.
+
+ <b>User Manual information</b>
+
+  This document was generated using the following program tools:
+
+\li \b doxygen (https://www.stack.nl/~dimitri/doxygen/download.html).
+\li \b MikTex (https://miktex.org/download)
+
+  Documentation build system uses text files in Unicode format and 
+automatically insert build date and other elements of the formatting. 
+Documentation could be shared in <b>*.pdf</b>, <b>*.html</b> or 
+<b>*.rtf</b> formats.
+
+  To build documentation in pdf-format use the following sequence of
+commands:
+
+       # cd <git_repository>/ergo/docs
+       # doxygen.exe doxygen/config/Doxyfile
+       # cd latex
+       # make.bat
+
+  Default output file name is <em>refman.pdf</em>
+
+
+@section license_subsection License
 
                                  Apache License
                            Version 2.0, January 2004
@@ -180,70 +234,32 @@
       of your accepting any such warranty or additional liability.
 
 
- @section overiew_section Overview
+ @section main_trunk_section Open source
 
- The IP Library is an integrated set of reusable IP cores, designed for 
- system-on-chip (SOC) development. The IP cores are centered around a 
- common on-chip AMBA AXI system bus, and use a coherent method for 
- simulation and synthesis. This library is vendor independent, with support
- for different CAD tools and target technologies. Inherited from gaisler 
- GRLIB library plug&play method was further developed and used to configure 
- and connect the IP cores without the need to modify any global resources.
-
- @section lib_organization_section Library organization
-
- Open source repository with VHLD libraries, Debugger and SW examples
- is available at:
+  Open source repository with VHLD libraries, Debugger and SW examples
+is available at:
 
         https://github.com/sergeykhbr/riscv_vhdl
 
+Examples folder includes:
+
+  \li Interrupts initialization and usage
+  \li Interaction with the peripheries (UART, Timer etc)
+  \li Benchmark for the integer performance evaluation Dhrystone 2.1.
+
  This repository is organized around VHDL libraries, where each major IP 
- is assigned a unique library name. Using separate libraries avoids name 
- clashes between IP cores and hides unnecessary implementation details 
- from the end user. 
+is assigned a unique library name. Using separate libraries avoids name 
+clashes between IP cores and hides unnecessary implementation details 
+from the end user. 
 
- @par Satellite Navigation support
- Hardware part of the satellite navigation functionality is fully 
- implemented inside of the <i>gnsslib</i> library. This library is the 
- commercial product of GNSS Sensor limited and in this shared repository 
- you can find only: modules declaration, configuration parameters and 
- stub modules that provide enough functionality to use SOC as
- general purpose processor system based on RISC-V architecture.
- Netlists of the real GNSS IPs either as RF front-end for the FPGA
- development boards could be acquires via special request.
+  Implemented Plug&Play system represents the customized system implemented
+in the open source library <c>GRLIB</c> (CPU Leon3). Customization was 
+done to provide better integration into AXI4 RISC-V SoC. Device memory 
+mapping and adding/removing new AXI4 modules into the system is
+implemented on project top-level in a similar to <c>GRLIB</c> way.
 
- @section toplevel_section Top-Level structure
-
- <img src="../doxygen/pics/soc_top_v5.png" alt="Top Level"> 
- @latexonly {\includegraphics{../doxygen/pics/soc_top_v5.png}} @endlatexonly
- 
- @par Features
-
-   <ul>
-     <li>Pre-generated single-core \e "Rocket-chip" core (RISC-V).
-         This is 64-bits processor with I/D caches, MMU, branch predictor,
-         128-bits width data bus, FPU (if enabled) and etc.</li>
-     <li>Custom 64-bits single-core CPU \e "River"(RISC-V).</li>
-     <li>Set of common peripheries: UART, GPIO (LEDs), Interrupt controller,
-         General Purpose timers and etc.</li>
-     <li>@link sw_debugger_api_link Debugging @endlink via @link eth_link Ethernet 
-         @endlink using EDCL capability of the MAC. This
-         capability allows to redirect UDP requests directly on system bus
-         and allows to use external debugger from the Reset Vector.</li>
-     <li>Debug Support Unit (DSU) for the RIVER CPU with full debugging
-        functionality support: run/halt, breakpoints, stepping,
-        registers/CSRs and memory access. Also it provides general SoC
-        run-time information: Clock Per Instruction (CPI), Bus Utilisization
-        for each master device and etc.</li>
-     <li>Templates for the AXI slaves and master devices with DMA access</li>
-     <li>Configuration parameters to enable/disable additional functionality,
-         like: <em><b>GNSS Engine</b>, <b>Viterbi decoder</b>, etc.</em></li>
-   </ul>
- 
-
-
- Information about GNSS (<em>Satellite Navigation Engine</em>) you can find at
- @link www.gnss-sensor.com. @endlink
+  Information about GNSS (<em>Satellite Navigation Engine</em>) you can find at
+@link www.gnss-sensor.com. @endlink
 
 
 */

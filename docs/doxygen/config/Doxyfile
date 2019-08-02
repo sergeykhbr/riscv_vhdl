@@ -767,19 +767,7 @@ WARN_LOGFILE           =
 
 INPUT = \
 doxygen/_top.doxy \
-doxygen/03_genparameters.doxy \
-doxygen/04_rtl_verif.doxy \
 doxygen/05_cpu.doxy \
-doxygen/06_periph.doxy \
-doxygen/06a_dsu.doxy \
-doxygen/06b_gpio.doxy \
-doxygen/06c_gptimers.doxy \
-doxygen/06d_irqctrl.doxy \
-doxygen/06e_uart.doxy \
-doxygen/06g_spiflash.doxy \
-doxygen/06f_pnp.doxy \
-doxygen/07_debugger.doxy \
-doxygen/08_debugpy.doxy  \
 
 
 # This tag can be used to specify the character encoding of the source files
