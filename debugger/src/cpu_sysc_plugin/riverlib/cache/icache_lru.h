@@ -67,7 +67,10 @@ SC_MODULE(ICacheLru) {
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
  private:
+    static const uint32_t FLUSH_ALL_ADDR = 0xFFFF0000;
+
     static const uint8_t MISS = static_cast<uint8_t>(CFG_ICACHE_WAYS);
+
     enum EWays {
         WAY_EVEN,
         WAY_ODD,
@@ -118,6 +121,7 @@ SC_MODULE(ICacheLru) {
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_addr_overlay;
         sc_signal<bool> use_overlay;
         sc_signal<sc_uint<3>> state;
+        sc_signal<bool> req_mem_valid;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> mem_addr;
         sc_signal<sc_uint<2>> burst_cnt;
         sc_signal<sc_uint<4>> burst_wstrb;
@@ -136,6 +140,7 @@ SC_MODULE(ICacheLru) {
         iv.req_addr_overlay = 0;
         iv.use_overlay = 0;
         iv.state = State_Idle;
+        iv.req_mem_valid = 0;
         iv.mem_addr = 0;
         iv.burst_cnt = 0;
         iv.burst_wstrb = 0;
@@ -143,7 +148,7 @@ SC_MODULE(ICacheLru) {
         iv.lru_even_wr = 0;
         iv.lru_odd_wr = 0;
         iv.req_flush = 1;           // init flush request
-        iv.req_flush_addr = 0x1;    // [0]=1 flush all
+        iv.req_flush_addr = ~0ul;   // [0]=1 flush all
         iv.req_flush_cnt = 0;
         iv.flush_cnt = 0;
     }

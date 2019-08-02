@@ -103,6 +103,7 @@ ICacheLru::ICacheLru(sc_module_name name_, bool async_reset,
     sensitive << r.req_addr_overlay;
     sensitive << r.use_overlay;
     sensitive << r.state;
+    sensitive << r.req_mem_valid;
     sensitive << r.mem_addr;
     sensitive << r.burst_cnt;
     sensitive << r.burst_wstrb;
@@ -214,8 +215,6 @@ void ICacheLru::comb() {
     bool w_o_resp_valid;
     bool w_o_resp_load_fault;
     bool w_o_req_ctrl_ready;
-    bool w_o_req_mem_valid;
-    sc_uint<BUS_ADDR_WIDTH> wb_o_req_mem_addr;
     sc_uint<4> wb_wstrb_next;
    
     v = r;
@@ -243,7 +242,7 @@ void ICacheLru::comb() {
         v.req_flush = 1;
         if (i_flush_address.read()[0] == 1) {
             v.req_flush_cnt = ~0u;
-            v.req_flush_addr = 0xFFFF0000;
+            v.req_flush_addr = FLUSH_ALL_ADDR;
         } else if (i_flush_address.read()(CFG_IOFFSET_WIDTH-1, 1) == 0xF) {
             v.req_flush_cnt = 1;
             v.req_flush_addr = i_flush_address.read();
@@ -398,8 +397,6 @@ void ICacheLru::comb() {
 
     // System Bus access state machine
     w_last = 0;
-    w_o_req_mem_valid = 0;
-    wb_o_req_mem_addr = 0;
     w_ena = 0;
     w_dis = 0;
     wb_wstrb_next = (r.burst_wstrb.read() << 1) | r.burst_wstrb.read()[3];
@@ -408,7 +405,7 @@ void ICacheLru::comb() {
         if (r.req_flush.read() == 1) {
             v.state = State_Flush;
             if (r.req_flush_addr.read()[0] == 1) {
-                v.mem_addr = 0xFFFF0000;
+                v.mem_addr = FLUSH_ALL_ADDR;
                 v.flush_cnt = ~0u;
             } else {
                 v.mem_addr = r.req_flush_addr.read();
@@ -430,7 +427,7 @@ void ICacheLru::comb() {
 
         } else {
             // Miss
-            w_o_req_mem_valid = 1;
+            v.req_mem_valid = 1;
             if (!w_hit0_valid || wb_hit0 == MISS) {
                 wb_mem_addr = r.req_addr;
             } else {
@@ -442,8 +439,7 @@ void ICacheLru::comb() {
                 v.state = State_WaitGrant;
             }
 
-            wb_o_req_mem_addr = wb_mem_addr(BUS_ADDR_WIDTH-1, 3) << 3;
-            v.mem_addr = wb_o_req_mem_addr;
+            v.mem_addr = wb_mem_addr(BUS_ADDR_WIDTH-1, 3) << 3;
             v.burst_cnt = 3;
             switch (wb_mem_addr(CFG_IOFFSET_WIDTH-1, 3)) {
             case 0:
@@ -466,10 +462,9 @@ void ICacheLru::comb() {
         }
         break;
     case State_WaitGrant:
-        w_o_req_mem_valid = 1;
-        wb_o_req_mem_addr = r.mem_addr;
         if (i_req_mem_ready.read()) {
             v.state = State_WaitResp;
+            v.req_mem_valid = 0;
         }
         break;
     case State_WaitResp:
@@ -547,8 +542,8 @@ void ICacheLru::comb() {
 
     o_req_ctrl_ready = w_o_req_ctrl_ready;
 
-    o_req_mem_valid = w_o_req_mem_valid;
-    o_req_mem_addr = wb_o_req_mem_addr;
+    o_req_mem_valid = r.req_mem_valid.read();
+    o_req_mem_addr = r.mem_addr.read();
     o_req_mem_write = false;
     o_req_mem_strob = 0;
     o_req_mem_data = 0;

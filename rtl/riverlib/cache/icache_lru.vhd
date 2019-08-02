@@ -124,6 +124,7 @@ architecture arch_ICacheLru of ICacheLru is
       req_addr_overlay : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
       use_overlay : std_logic;
       state : std_logic_vector(2 downto 0);
+      req_mem_valid : std_logic;
       mem_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
       burst_cnt : integer range 0 to 3;
       burst_wstrb : std_logic_vector(3 downto 0);
@@ -138,10 +139,11 @@ architecture arch_ICacheLru of ICacheLru is
 
   constant R_RESET : RegistersType := (
     '0', (others => '0'), (others => '0'),  -- requested, req_addr, req_addr_overlay
-    '0', State_Idle, (others => '0'),       -- use_overlay, state, mem_addr
+    '0', State_Idle,                        -- use_overlay, state
+    '0', (others => '0'),                   -- req_mem_valid, mem_addr,
     0, "0000", "0000",                      -- burst_cnt, burst_wstrb, burst_valid
-    "00", "00", '0',                        -- lru_even_wr, lru_odd_wr, req_flush
-    (others => '0'), (others => '0'),       -- req_flush_addr, req_flush_cnt
+    "00", "00", '1',                        -- lru_even_wr, lru_odd_wr, req_flush
+    (others => '1'), (others => '0'),       -- req_flush_addr, req_flush_cnt
     (others => '0')                         -- flush_cnt
   );
 
@@ -249,8 +251,6 @@ begin
     variable w_o_resp_valid : std_logic;
     variable w_o_resp_load_fault : std_logic;
     variable w_o_req_ctrl_ready : std_logic;
-    variable w_o_req_mem_valid : std_logic;
-    variable wb_o_req_mem_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     variable wb_wstrb_next : std_logic_vector(3 downto 0);
   begin
 
@@ -435,8 +435,6 @@ begin
 
     -- System Bus access state machine
     w_last := '0';
-    w_o_req_mem_valid := '0';
-    wb_o_req_mem_addr := (others => '0');
     w_ena := '0';
     w_dis := '0';
     wb_wstrb_next := r.burst_wstrb(2 downto 0) & r.burst_wstrb(3);
@@ -446,7 +444,7 @@ begin
             v.state := State_Flush;
             if r.req_flush_addr(0) = '1' then
                 v.mem_addr := FLUSH_ALL_ADDR;
-                v.flush_cnt := (others => '0');
+                v.flush_cnt := (others => '1');
             else
                 v.mem_addr := r.req_flush_addr;
                 v.flush_cnt := r.req_flush_cnt;
@@ -466,7 +464,7 @@ begin
 
         else
             -- Miss
-            w_o_req_mem_valid := '1';
+            v.req_mem_valid := '1';
             if w_hit0_valid = '0' or wb_hit0 = MISS then
                 wb_mem_addr := r.req_addr;
             else
@@ -478,8 +476,7 @@ begin
                 v.state := State_WaitGrant;
             end if;
 
-            wb_o_req_mem_addr := wb_mem_addr(BUS_ADDR_WIDTH-1 downto 3) & "000";
-            v.mem_addr := wb_o_req_mem_addr;
+            v.mem_addr := wb_mem_addr(BUS_ADDR_WIDTH-1 downto 3) & "000";
             v.burst_cnt := 3;
             case wb_mem_addr(CFG_IOFFSET_WIDTH-1 downto 3) is
             when "00" =>
@@ -498,9 +495,8 @@ begin
             v.lru_odd_wr := wb_lru_odd;
         end if;
     when State_WaitGrant =>
-        w_o_req_mem_valid := '1';
-        wb_o_req_mem_addr := r.mem_addr;
         if i_req_mem_ready = '1' then
+            v.req_mem_valid := '0';
             v.state := State_WaitResp;
         end if;
     when State_WaitResp =>
@@ -577,8 +573,8 @@ begin
 
     o_req_ctrl_ready <= w_o_req_ctrl_ready;
 
-    o_req_mem_valid <= w_o_req_mem_valid;
-    o_req_mem_addr <= wb_o_req_mem_addr;
+    o_req_mem_valid <= r.req_mem_valid;
+    o_req_mem_addr <= r.mem_addr;
     o_req_mem_write <= '0';
     o_req_mem_strob <= (others => '0');
     o_req_mem_data <= (others => '0');
