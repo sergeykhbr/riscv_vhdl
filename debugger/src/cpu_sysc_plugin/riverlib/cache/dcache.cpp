@@ -272,6 +272,9 @@ void DCache::comb() {
     o_req_mem_write = i_req_data_write;
     o_req_mem_strob = r.req_strob;
     o_req_mem_data = r.req_wdata;
+    o_req_mem_len = 0;
+    o_req_mem_burst = 0;
+    o_req_mem_last = 1;
 
     o_resp_data_valid = w_o_resp_valid;
     o_resp_data_data = wb_o_resp_data;

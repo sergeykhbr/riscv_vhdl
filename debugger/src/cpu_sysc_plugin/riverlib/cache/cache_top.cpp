@@ -29,6 +29,9 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset) :
     sensitive << d.req_mem_addr;
     sensitive << d.req_mem_strob;
     sensitive << d.req_mem_wdata;
+    sensitive << d.req_mem_len;
+    sensitive << d.req_mem_burst;
+    sensitive << d.req_mem_last;
     sensitive << i_resp_mem_data_valid;
     sensitive << i_resp_mem_data;
     sensitive << i_resp_mem_load_fault;
@@ -58,7 +61,7 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset) :
     i1->o_req_mem_data(i.req_mem_wdata);
     i1->o_req_mem_len(i.req_mem_len);
     i1->o_req_mem_burst(i.req_mem_burst);
-    i1->o_req_mem_burst_last(i.req_mem_last);
+    i1->o_req_mem_last(i.req_mem_last);
     i1->i_resp_mem_data_valid(w_ctrl_resp_mem_data_valid);
     i1->i_resp_mem_data(wb_ctrl_resp_mem_data);
     i1->i_resp_mem_load_fault(w_ctrl_resp_mem_load_fault);
@@ -87,6 +90,9 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset) :
     d0->o_req_mem_addr(d.req_mem_addr);
     d0->o_req_mem_strob(d.req_mem_strob);
     d0->o_req_mem_data(d.req_mem_wdata);
+    d0->o_req_mem_len(d.req_mem_len);
+    d0->o_req_mem_burst(d.req_mem_burst);
+    d0->o_req_mem_last(d.req_mem_last);
     d0->i_resp_mem_data_valid(w_data_resp_mem_data_valid);
     d0->i_resp_mem_data(wb_data_resp_mem_data);
     d0->i_resp_mem_load_fault(w_data_resp_mem_load_fault);
@@ -105,6 +111,7 @@ void CacheTop::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_req_data_addr, "/top/cache0/i_req_data_addr");
         sc_trace(o_vcd, i_req_data_data, "/top/cache0/i_req_data_data");
 
+        sc_trace(o_vcd, w_data_req_ready, "/top/cache0/w_data_req_ready");
         sc_trace(o_vcd, w_data_resp_mem_data_valid, "/top/cache0/w_data_resp_mem_data_valid");
         sc_trace(o_vcd, wb_data_resp_mem_data, "/top/cache0/wb_data_resp_mem_data");
         sc_trace(o_vcd, w_ctrl_resp_mem_data_valid, "/top/cache0/w_ctrl_resp_mem_data_valid");
@@ -135,6 +142,7 @@ CacheTop::~CacheTop() {
 
 
 void CacheTop::comb() {
+    bool w_req_mem_valid;
     sc_uint<BUS_ADDR_WIDTH> wb_mem_addr;
     sc_uint<8> wb_mem_len;
     sc_uint<2> wb_mem_burst;
@@ -142,6 +150,7 @@ void CacheTop::comb() {
     v = r;
 
     // default is data path
+    w_req_mem_valid = 0;
     wb_mem_addr = d.req_mem_addr;
     wb_mem_len = d.req_mem_len;
     wb_mem_burst = d.req_mem_burst;
@@ -158,6 +167,7 @@ void CacheTop::comb() {
 
     switch (r.state.read()) {
     case State_Idle:
+        w_req_mem_valid = i.req_mem_valid | d.req_mem_valid;
         if (i_req_mem_ready.read() == 1) {
             if (d.req_mem_valid.read()) {
                 w_data_req_ready = 1;
@@ -173,7 +183,8 @@ void CacheTop::comb() {
         break;
 
     case State_DMem:
-        if (i_resp_mem_data_valid.read()) {
+        w_req_mem_valid = d.req_mem_last & (i.req_mem_valid | d.req_mem_valid);
+        if (i_resp_mem_data_valid.read() && d.req_mem_last.read()) {
             if (i_req_mem_ready.read() == 1) {
                 if (d.req_mem_valid.read()) {
                     w_data_req_ready = 1;
@@ -195,6 +206,7 @@ void CacheTop::comb() {
         break;
 
     case State_IMem:
+        w_req_mem_valid = i.req_mem_last & (i.req_mem_valid | d.req_mem_valid);
         if (i_resp_mem_data_valid.read() && i.req_mem_last.read()) {
             if (i_req_mem_ready.read() == 1) {
                 if (d.req_mem_valid.read()) {
@@ -222,7 +234,7 @@ void CacheTop::comb() {
         v.state = State_Idle;
     }
 
-    o_req_mem_valid = i.req_mem_valid | d.req_mem_valid;
+    o_req_mem_valid = w_req_mem_valid;
     o_req_mem_addr = wb_mem_addr;
     o_req_mem_len = wb_mem_len;
     o_req_mem_burst = wb_mem_burst;

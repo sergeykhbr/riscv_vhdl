@@ -47,7 +47,7 @@ SC_MODULE(ICacheLru) {
     sc_out<sc_uint<BUS_DATA_WIDTH>> o_req_mem_data;
     sc_out<sc_uint<8>> o_req_mem_len;       // burst transactions num
     sc_out<sc_uint<2>> o_req_mem_burst;     // "10" burst WRAP
-    sc_out<bool> o_req_mem_burst_last;      // last in sequence flag
+    sc_out<bool> o_req_mem_last;            // last in sequence flag
     sc_in<bool> i_resp_mem_data_valid;
     sc_in<sc_uint<BUS_DATA_WIDTH>> i_resp_mem_data;
     sc_in<bool> i_resp_mem_load_fault;

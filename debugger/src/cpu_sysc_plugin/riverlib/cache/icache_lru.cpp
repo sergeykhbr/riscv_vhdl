@@ -554,7 +554,7 @@ void ICacheLru::comb() {
     o_req_mem_data = 0;
     o_req_mem_len = 3;
     o_req_mem_burst = 2;
-    o_req_mem_burst_last = w_last;
+    o_req_mem_last = w_last;
 
     o_resp_ctrl_valid = w_o_resp_valid;
     o_resp_ctrl_data = wb_o_resp_data;

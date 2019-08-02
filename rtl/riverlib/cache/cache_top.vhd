@@ -247,6 +247,7 @@ begin
   comb : process(i_nrst, i_req_mem_ready, i_resp_mem_data_valid, i_resp_mem_data,
                  i_resp_mem_load_fault, i_resp_mem_store_fault, i, d, r)
     variable v : RegistersType;
+    variable w_req_mem_valid : std_logic;
     variable wb_mem_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     variable wb_mem_len : std_logic_vector(7 downto 0);
     variable wb_mem_burst : std_logic_vector(1 downto 0);
@@ -255,6 +256,7 @@ begin
     v := r;
 
     -- default is data path
+    w_req_mem_valid := '0';
     wb_mem_addr := d.req_mem_addr;
     wb_mem_len := d.req_mem_len;
     wb_mem_burst := d.req_mem_burst;
@@ -271,6 +273,7 @@ begin
    
     case r.state is
     when State_Idle =>
+        w_req_mem_valid := i.req_mem_valid or d.req_mem_valid;
         if i_req_mem_ready = '1' then
             if d.req_mem_valid = '1' then
                 w_data_req_ready <= '1';
@@ -285,7 +288,8 @@ begin
         end if;
 
     when State_DMem =>
-        if i_resp_mem_data_valid = '1' then
+        w_req_mem_valid := d.req_mem_last and (i.req_mem_valid or d.req_mem_valid);
+        if i_resp_mem_data_valid = '1' and d.req_mem_last = '1' then
             if i_req_mem_ready = '1' then
                 if d.req_mem_valid = '1' then
                     w_data_req_ready <= '1';
@@ -306,7 +310,8 @@ begin
         w_data_resp_mem_data_valid <= i_resp_mem_data_valid;
         
     when State_IMem =>
-        if i_resp_mem_data_valid = '1'  and i.req_mem_last = '1' then
+        w_req_mem_valid := i.req_mem_last and (i.req_mem_valid or d.req_mem_valid);
+        if i_resp_mem_data_valid = '1' and i.req_mem_last = '1' then
             if i_req_mem_ready = '1' then
                 if d.req_mem_valid = '1' then
                     w_data_req_ready <= '1';
@@ -333,7 +338,7 @@ begin
         v.state := State_Idle;
     end if;
 
-    o_req_mem_valid <= i.req_mem_valid or d.req_mem_valid;
+    o_req_mem_valid <= w_req_mem_valid;
     o_req_mem_addr <= wb_mem_addr;
     o_req_mem_len <= wb_mem_len;
     o_req_mem_burst <= wb_mem_burst;
