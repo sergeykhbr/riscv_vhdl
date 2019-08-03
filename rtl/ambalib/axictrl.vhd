@@ -56,15 +56,9 @@ architecture arch_axictrl of axictrl is
       of integer range 0 to CFG_NASTI_SLAVES_TOTAL;
 
   type reg_type is record
-     w_busy : std_logic;
-     w_mst_idx : integer range 0 to CFG_NASTI_MASTER_TOTAL;
-     w_slv_idx : integer range 0 to CFG_NASTI_SLAVES_TOTAL; -- +1 miss access
-     r_busy : std_logic;
-     r_mst_idx : integer range 0 to CFG_NASTI_MASTER_TOTAL;
-     r_slv_idx : integer range 0 to CFG_NASTI_SLAVES_TOTAL; -- +1 miss access
-     b_busy : std_logic;
-     b_mst_idx : integer range 0 to CFG_NASTI_MASTER_TOTAL;
-     b_slv_idx : integer range 0 to CFG_NASTI_SLAVES_TOTAL; -- +1 miss access
+     w_sidx : slave_selector_type;
+     r_sidx : slave_selector_type;
+     b_sidx : slave_selector_type;
   end record;
 
   signal rin, r : reg_type;
@@ -72,33 +66,26 @@ begin
 
   comblogic : process(i_nrst, i_slvcfg, i_msto, i_slvo, r)
     variable v : reg_type;
-    variable ar_mst_idx : integer range 0 to CFG_NASTI_MASTER_TOTAL;
-    variable aw_mst_idx : integer range 0 to CFG_NASTI_MASTER_TOTAL;
-    variable ar_slv_idx : integer range 0 to CFG_NASTI_SLAVES_TOTAL; -- +1 miss access
-    variable aw_slv_idx : integer range 0 to CFG_NASTI_SLAVES_TOTAL; -- +1 miss access
+    variable ar_sidx : slave_selector_type;
+    variable aw_sidx : slave_selector_type;
     variable vmsto : nasti_master_out_vector_miss;
     variable vmsti : nasti_master_in_vector_miss;
     variable vslvi : nasti_slave_in_vector_miss;
     variable vslvo : nasti_slave_out_vector_miss;
-    variable aw_fire : std_logic;
-    variable ar_fire : std_logic;
-    variable w_fire : std_logic;
-    variable r_fire : std_logic;
-    variable b_fire : std_logic;    
+    variable ar_acquired : std_logic_vector(CFG_NASTI_SLAVES_TOTAL-1 downto 0);
+    variable aw_acquired : std_logic_vector(CFG_NASTI_SLAVES_TOTAL-1 downto 0);
+    variable aw_fire : std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0);
+    variable ar_fire : std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0);
+    variable w_fire : std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0);
+    variable r_fire : std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0);
+    variable b_fire : std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0);    
     -- Bus statistic signals
-    variable wb_bus_util_w : std_logic_vector(CFG_NASTI_MASTER_TOTAL downto 0);
-    variable wb_bus_util_r : std_logic_vector(CFG_NASTI_MASTER_TOTAL downto 0);
+    variable wb_bus_util_w : std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0);
+    variable wb_bus_util_r : std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0);
 
   begin
 
     v := r;
-
-    wb_bus_util_w := (others => '0');
-    wb_bus_util_r := (others => '0');
-    ar_mst_idx := CFG_NASTI_MASTER_TOTAL;   -- Default master is empty master
-    aw_mst_idx := CFG_NASTI_MASTER_TOTAL;   -- Default master is empty master
-    ar_slv_idx := CFG_NASTI_SLAVES_TOTAL;   -- miss access index
-    aw_slv_idx := CFG_NASTI_SLAVES_TOTAL;   -- miss access index
 
     for n in 0 to CFG_NASTI_MASTER_TOTAL-1 loop
        vmsto(n) := i_msto(n);
@@ -113,117 +100,109 @@ begin
     vslvo(CFG_NASTI_SLAVES_TOTAL) := MISS_ACCESS_SLAVE;
     vslvi(CFG_NASTI_SLAVES_TOTAL) := nasti_slave_in_none;
 
-    -- Select master bus:
-    for n in 0 to CFG_NASTI_MASTER_TOTAL-1 loop
-       if i_msto(n).ar_valid = '1' then 
-          ar_mst_idx := n;
-       end if;
-       if i_msto(n).aw_valid = '1' then
-          aw_mst_idx := n;
-       end if;
+
+    ar_acquired := (others => '0');
+    aw_acquired := (others => '0');
+    for m in 0 to CFG_NASTI_MASTER_TOTAL-1 loop
+        ar_sidx(m) := CFG_NASTI_SLAVES_TOTAL;
+        aw_sidx(m) := CFG_NASTI_SLAVES_TOTAL;
+
+        for s in 0 to CFG_NASTI_SLAVES_TOTAL-1 loop
+            if ar_acquired(s) = '0'
+                and i_slvcfg(s).xmask /= X"00000"
+                and (vmsto(m).ar_bits.addr(CFG_NASTI_ADDR_BITS-1 downto 12) 
+                and i_slvcfg(s).xmask) = i_slvcfg(s).xaddr then
+                ar_sidx(m) := s;
+                ar_acquired(s) := '1';
+            end if;
+            if aw_acquired(s) = '0'
+                and i_slvcfg(s).xmask /= X"00000"
+                and (vmsto(m).aw_bits.addr(CFG_NASTI_ADDR_BITS-1 downto 12)
+                and i_slvcfg(s).xmask) = i_slvcfg(s).xaddr then
+                aw_sidx(m) := s;
+                aw_acquired(s) := '1';
+            end if;
+        end loop;
+
+        -- Read Channel:
+        ar_fire(m) := vmsto(m).ar_valid and vslvo(ar_sidx(m)).ar_ready;
+        r_fire(m) := vmsto(m).r_ready and vslvo(r.r_sidx(m)).r_valid and vslvo(r.r_sidx(m)).r_last;
+        -- Write channel:
+        aw_fire(m) := vmsto(m).aw_valid and vslvo(aw_sidx(m)).aw_ready;
+        w_fire(m) := vmsto(m).w_valid and vmsto(m).w_last and vslvo(r.w_sidx(m)).w_ready;
+        -- Write confirm channel
+        b_fire(m) := vmsto(m).b_ready and vslvo(r.b_sidx(m)).b_valid;
+
+        vmsti(m).ar_ready := vslvo(ar_sidx(m)).ar_ready;
+        vslvi(ar_sidx(m)).ar_valid := vmsto(m).ar_valid;
+        vslvi(ar_sidx(m)).ar_bits  := vmsto(m).ar_bits;
+        vslvi(ar_sidx(m)).ar_id    := vmsto(m).ar_id;
+        vslvi(ar_sidx(m)).ar_user  := vmsto(m).ar_user;
+
+        vmsti(m).r_valid := vslvo(r.r_sidx(m)).r_valid;
+        vmsti(m).r_resp  := vslvo(r.r_sidx(m)).r_resp;
+        vmsti(m).r_data  := vslvo(r.r_sidx(m)).r_data;
+        vmsti(m).r_last  := vslvo(r.r_sidx(m)).r_last;
+        vmsti(m).r_id    := vslvo(r.r_sidx(m)).r_id;
+        vmsti(m).r_user  := vslvo(r.r_sidx(m)).r_user;
+        vslvi(r.r_sidx(m)).r_ready := vmsto(m).r_ready;
+
+        vmsti(m).aw_ready := vslvo(aw_sidx(m)).aw_ready;
+        vslvi(aw_sidx(m)).aw_valid := vmsto(m).aw_valid;
+        vslvi(aw_sidx(m)).aw_bits  := vmsto(m).aw_bits;
+        vslvi(aw_sidx(m)).aw_id    := vmsto(m).aw_id;
+        vslvi(aw_sidx(m)).aw_user  := vmsto(m).aw_user;
+
+        vmsti(m).w_ready := vslvo(r.w_sidx(m)).w_ready;
+        vslvi(r.w_sidx(m)).w_valid := vmsto(m).w_valid;
+        vslvi(r.w_sidx(m)).w_data := vmsto(m).w_data;
+        vslvi(r.w_sidx(m)).w_last := vmsto(m).w_last;
+        vslvi(r.w_sidx(m)).w_strb := vmsto(m).w_strb;
+        vslvi(r.w_sidx(m)).w_user := vmsto(m).w_user;
+
+        vmsti(m).b_valid := vslvo(r.b_sidx(m)).b_valid;
+        vmsti(m).b_resp := vslvo(r.b_sidx(m)).b_resp;
+        vmsti(m).b_id := vslvo(r.b_sidx(m)).b_id;
+        vmsti(m).b_user := vslvo(r.b_sidx(m)).b_user;
+        vslvi(r.b_sidx(m)).b_ready := vmsto(m).b_ready;
+
+
+        if ar_fire(m) = '1' then
+            v.r_sidx(m) := ar_sidx(m);
+        elsif r_fire(m) = '1' then
+            v.r_sidx(m) := CFG_NASTI_SLAVES_TOTAL;
+        end if;
+
+        if aw_fire(m) = '1' then
+            v.w_sidx(m) := aw_sidx(m);
+        elsif w_fire(m) = '1' then
+            v.w_sidx(m) := CFG_NASTI_SLAVES_TOTAL;
+        end if;
+
+        if w_fire(m) = '1' then
+            v.b_sidx(m) := r.w_sidx(m);
+        elsif b_fire(m) = '1' then
+            v.b_sidx(m) := CFG_NASTI_SLAVES_TOTAL;
+        end if;
+
+      -- Statistic
+      wb_bus_util_w(m) := '0';
+      if r.w_sidx(m) /= CFG_NASTI_SLAVES_TOTAL then
+          wb_bus_util_w(m) :=  '1';
+      end if;
+      wb_bus_util_r(m) := '0';
+      if r.r_sidx(m) /= CFG_NASTI_SLAVES_TOTAL then
+          wb_bus_util_r(m) := '1';
+      end if;
     end loop;
 
-    -- Adress Read/Address Write channels
-    for k in 0 to CFG_NASTI_SLAVES_TOTAL-1 loop
-      if i_slvcfg(k).xmask /= X"00000" and
-         (vmsto(ar_mst_idx).ar_bits.addr(CFG_NASTI_ADDR_BITS-1 downto 12) 
-          and i_slvcfg(k).xmask) = i_slvcfg(k).xaddr then
-          ar_slv_idx := k;
-      end if;
-      if i_slvcfg(k).xmask /= X"00000" and
-         (vmsto(aw_mst_idx).aw_bits.addr(CFG_NASTI_ADDR_BITS-1 downto 12)
-          and i_slvcfg(k).xmask) = i_slvcfg(k).xaddr then
-          aw_slv_idx := k;
-      end if;
-    end loop;
-    
-    -- Statistic
-    wb_bus_util_w(r.w_mst_idx) := r.w_busy;
-    wb_bus_util_r(r.r_mst_idx) := r.r_busy;
-
-    -- Pipeline
-    --! @todo It is possible to implement inpendent channels of same type for each
-    --!       master slot and process transactions to separate slaves simultaneously.
-    --!       I think it will be usefull feature but doesn't increase CPI of 
-    --!       single core.
-
-    -- Read Channel:
-    r_fire := vmsto(r.r_mst_idx).r_ready and vslvo(r.r_slv_idx).r_valid and vslvo(r.r_slv_idx).r_last;
-    ar_fire := vmsto(ar_mst_idx).ar_valid and vslvo(ar_slv_idx).ar_ready;
-    -- Write channel:
-    w_fire := vmsto(r.w_mst_idx).w_valid and vslvo(r.w_slv_idx).w_ready and vmsto(r.w_mst_idx).w_last;
-    aw_fire := vmsto(aw_mst_idx).aw_valid and vslvo(aw_slv_idx).aw_ready;
-
-    vmsti(ar_mst_idx).ar_ready := vslvo(ar_slv_idx).ar_ready;
-    vslvi(ar_slv_idx).ar_valid := vmsto(ar_mst_idx).ar_valid;
-    vslvi(ar_slv_idx).ar_bits  := vmsto(ar_mst_idx).ar_bits;
-    vslvi(ar_slv_idx).ar_id    := vmsto(ar_mst_idx).ar_id;
-    vslvi(ar_slv_idx).ar_user  := vmsto(ar_mst_idx).ar_user;
-
-    vmsti(aw_mst_idx).aw_ready := vslvo(aw_slv_idx).aw_ready;
-    vslvi(aw_slv_idx).aw_valid := vmsto(aw_mst_idx).aw_valid;
-    vslvi(aw_slv_idx).aw_bits  := vmsto(aw_mst_idx).aw_bits;
-    vslvi(aw_slv_idx).aw_id    := vmsto(aw_mst_idx).aw_id;
-    vslvi(aw_slv_idx).aw_user  := vmsto(aw_mst_idx).aw_user;
-
-    if aw_fire = '1' then
-        v.w_busy := '1';
-        v.w_slv_idx := aw_slv_idx;
-        v.w_mst_idx := aw_mst_idx;
-    end if;
-
-    vmsti(r.w_mst_idx).w_ready := vslvo(r.w_slv_idx).w_ready;
-    vslvi(r.w_slv_idx).w_valid := vmsto(r.w_mst_idx).w_valid;
-    vslvi(r.w_slv_idx).w_data := vmsto(r.w_mst_idx).w_data;
-    vslvi(r.w_slv_idx).w_last := vmsto(r.w_mst_idx).w_last;
-    vslvi(r.w_slv_idx).w_strb := vmsto(r.w_mst_idx).w_strb;
-    vslvi(r.w_slv_idx).w_user := vmsto(r.w_mst_idx).w_user;
-
-    -- Write Handshake channel:
-    b_fire := vmsto(r.b_mst_idx).b_ready and vslvo(r.b_slv_idx).b_valid;
-    if w_fire = '1' then
-        v.w_busy := '0';
-        v.b_busy := '1';
-        v.b_slv_idx := r.w_slv_idx;
-        v.b_mst_idx := r.w_mst_idx;
-    end if;    
-    if b_fire = '1' then
-        v.b_busy := w_fire;
-    end if;
-
-    vmsti(r.b_mst_idx).b_valid := vslvo(r.b_slv_idx).b_valid;
-    vmsti(r.b_mst_idx).b_resp := vslvo(r.b_slv_idx).b_resp;
-    vmsti(r.b_mst_idx).b_id := vslvo(r.b_slv_idx).b_id;
-    vmsti(r.b_mst_idx).b_user := vslvo(r.b_slv_idx).b_user;
-    vslvi(r.b_slv_idx).b_ready := vmsto(r.b_mst_idx).b_ready;
-
-    if ar_fire = '1' then
-        v.r_busy := '1';
-        v.r_slv_idx := ar_slv_idx;
-        v.r_mst_idx := ar_mst_idx;
-    end if;
-    if r_fire = '1' then
-        v.r_busy := ar_fire;
-    end if;
-
-    vmsti(r.r_mst_idx).r_valid := vslvo(r.r_slv_idx).r_valid;
-    vmsti(r.r_mst_idx).r_resp  := vslvo(r.r_slv_idx).r_resp;
-    vmsti(r.r_mst_idx).r_data  := vslvo(r.r_slv_idx).r_data;
-    vmsti(r.r_mst_idx).r_last  := vslvo(r.r_slv_idx).r_last;
-    vmsti(r.r_mst_idx).r_id    := vslvo(r.r_slv_idx).r_id;
-    vmsti(r.r_mst_idx).r_user  := vslvo(r.r_slv_idx).r_user;
-    vslvi(r.r_slv_idx).r_ready := vmsto(r.r_mst_idx).r_ready;
 
     if i_nrst = '0' then
-      v.w_busy := '0';
-      v.w_mst_idx := CFG_NASTI_MASTER_TOTAL;
-      v.w_slv_idx := CFG_NASTI_SLAVES_TOTAL;
-      v.r_busy := '0';
-      v.r_mst_idx := CFG_NASTI_MASTER_TOTAL;
-      v.r_slv_idx := CFG_NASTI_SLAVES_TOTAL;
-      v.b_busy := '0';
-      v.b_mst_idx := CFG_NASTI_MASTER_TOTAL;
-      v.b_slv_idx := CFG_NASTI_SLAVES_TOTAL;
+      for m in 0 to CFG_NASTI_MASTER_TOTAL-1 loop
+         v.w_sidx(m) := CFG_NASTI_SLAVES_TOTAL;
+         v.r_sidx(m) := CFG_NASTI_SLAVES_TOTAL;
+         v.b_sidx(m) := CFG_NASTI_SLAVES_TOTAL;
+      end loop;
     end if;
  
     rin <= v;
@@ -234,8 +213,8 @@ begin
     for k in 0 to CFG_NASTI_SLAVES_TOTAL-1 loop
        o_slvi(k) <= vslvi(k);
     end loop;
-    o_bus_util_w <= wb_bus_util_w(CFG_NASTI_MASTER_TOTAL-1 downto 0);
-    o_bus_util_r <= wb_bus_util_r(CFG_NASTI_MASTER_TOTAL-1 downto 0);
+    o_bus_util_w <= wb_bus_util_w;
+    o_bus_util_r <= wb_bus_util_r;
   end process;
 
   reg0 : process(i_clk) begin

@@ -59,13 +59,14 @@ architecture arch_river_amba of river_amba is
   );
 
   type RegistersType is record
+      reading : std_logic;
       w_valid : std_logic;
       w_last : std_logic;
       b_ready : std_logic;
   end record;
 
   constant R_RESET : RegistersType := (
-      '0', '0', '0'
+      '0', '0', '0', '0'
   );
 
   signal r, rin : RegistersType;
@@ -88,7 +89,7 @@ begin
   w_resp_mem_data_valid <= i_msti.r_valid or (r.w_valid and i_msti.w_ready);
   -- Slave response resp = SLVERR (2'b10)
   -- Interconnect response resp = DECERR (2'b11):
-  w_resp_mem_load_fault <= i_msti.r_valid and i_msti.r_resp(1);
+  w_resp_mem_load_fault <= r.reading and i_msti.r_valid and i_msti.r_resp(1);
   w_resp_mem_store_fault <= r.b_ready and i_msti.b_valid and i_msti.b_resp(1);
   
   river0 : RiverTop  generic map (
@@ -156,6 +157,12 @@ begin
     vmsto.b_ready := r.b_ready;
     vmsto.r_ready := '1';
 
+
+    if (w_req_mem_valid and not w_req_mem_write and i_msti.ar_ready) = '1' then
+        v.reading := '1';
+    elsif i_msti.r_valid = '1' and i_msti.r_last = '1' then
+        v.reading := '0';
+    end if;
 
     if (w_req_mem_valid and w_req_mem_write and i_msti.aw_ready) = '1' then
         v.w_valid := '1';
