@@ -557,7 +557,6 @@ begin
     end if;
 
 
-
     if not async_reset and i_nrst = '0' then
         v := R_RESET;
     end if;
