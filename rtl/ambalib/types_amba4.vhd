@@ -757,7 +757,7 @@ return nasti_slave_out_type;
 --! @todo    Round-robin priority algorithm.
 component axictrl is
   generic (
-    watchdog_memop : integer := 0
+    async_reset : boolean
   );
   port (
     i_clk    : in std_logic;

@@ -52,6 +52,7 @@ entity CacheTop is generic (
     o_resp_data_data : out std_logic_vector(RISCV_ARCH-1 downto 0);
     o_resp_data_load_fault : out std_logic;
     o_resp_data_store_fault : out std_logic;
+    o_resp_data_store_fault_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_resp_data_ready : in std_logic;
     -- Memory interface:
     i_req_mem_ready : in std_logic;                                    -- AXI request was accepted
@@ -66,6 +67,7 @@ entity CacheTop is generic (
     i_resp_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
     i_resp_mem_load_fault : in std_logic;                             -- Bus response with SLVERR or DECERR on read
     i_resp_mem_store_fault : in std_logic;                            -- Bus response with SLVERR or DECERR on write
+    i_resp_mem_store_fault_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     -- Debug signals:
     i_flush_address : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);  -- clear ICache address from debug interface
     i_flush_valid : in std_logic;                                      -- address to clear icache is valid
@@ -107,7 +109,6 @@ architecture arch_CacheTop of CacheTop is
   signal w_data_resp_mem_data_valid : std_logic;
   signal wb_data_resp_mem_data : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
   signal w_data_resp_mem_load_fault : std_logic;
-  signal w_data_resp_mem_store_fault : std_logic;
   signal w_data_req_ready : std_logic;
 
   component ICacheLru is generic (
@@ -161,6 +162,7 @@ architecture arch_CacheTop of CacheTop is
     o_resp_data_data : out std_logic_vector(RISCV_ARCH-1 downto 0);
     o_resp_data_load_fault : out std_logic;
     o_resp_data_store_fault : out std_logic;
+    o_resp_data_store_fault_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_resp_data_ready : in std_logic;
     i_req_mem_ready : in std_logic;
     o_req_mem_valid : out std_logic;
@@ -175,6 +177,7 @@ architecture arch_CacheTop of CacheTop is
     i_resp_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
     i_resp_mem_load_fault : in std_logic;
     i_resp_mem_store_fault : in std_logic;
+    i_resp_mem_store_fault_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     o_dstate : out std_logic_vector(1 downto 0)
   );
   end component; 
@@ -228,6 +231,7 @@ begin
         o_resp_data_data => o_resp_data_data,
         o_resp_data_load_fault => o_resp_data_load_fault,
         o_resp_data_store_fault => o_resp_data_store_fault,
+        o_resp_data_store_fault_addr => o_resp_data_store_fault_addr,
         i_resp_data_ready => i_resp_data_ready,
         i_req_mem_ready => w_data_req_ready,
         o_req_mem_valid => d.req_mem_valid,
@@ -241,11 +245,12 @@ begin
         i_resp_mem_data_valid => w_data_resp_mem_data_valid,
         i_resp_mem_data => wb_data_resp_mem_data,
         i_resp_mem_load_fault => w_data_resp_mem_load_fault,
-        i_resp_mem_store_fault => w_data_resp_mem_store_fault,
+        i_resp_mem_store_fault => i_resp_mem_store_fault,
+        i_resp_mem_store_fault_addr => i_resp_mem_store_fault_addr,
         o_dstate => o_dstate);
 
   comb : process(i_nrst, i_req_mem_ready, i_resp_mem_data_valid, i_resp_mem_data,
-                 i_resp_mem_load_fault, i_resp_mem_store_fault, i, d, r)
+                 i_resp_mem_load_fault, i, d, r)
     variable v : RegistersType;
     variable w_req_mem_valid : std_logic;
     variable wb_mem_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
@@ -264,7 +269,6 @@ begin
     w_data_resp_mem_data_valid <= '0';
     wb_data_resp_mem_data <= i_resp_mem_data;
     w_data_resp_mem_load_fault <= i_resp_mem_load_fault;
-    w_data_resp_mem_store_fault <= i_resp_mem_store_fault;
 
     w_ctrl_req_ready <= '0';
     w_ctrl_resp_mem_data_valid <= '0';

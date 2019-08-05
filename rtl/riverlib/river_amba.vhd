@@ -60,13 +60,15 @@ architecture arch_river_amba of river_amba is
 
   type RegistersType is record
       reading : std_logic;
+      w_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
       w_valid : std_logic;
       w_last : std_logic;
+      b_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
       b_ready : std_logic;
   end record;
 
   constant R_RESET : RegistersType := (
-      '0', '0', '0', '0'
+      '0', (others => '0'), '0', '0', (others => '0'), '0'
   );
 
   signal r, rin : RegistersType;
@@ -111,6 +113,7 @@ begin
       i_resp_mem_data => i_msti.r_data,
       i_resp_mem_load_fault => w_resp_mem_load_fault,
       i_resp_mem_store_fault => w_resp_mem_store_fault,
+      i_resp_mem_store_fault_addr => r.b_addr,
       i_ext_irq => i_ext_irq,
       o_time => open,
       i_dport_valid => i_dport.valid,
@@ -157,7 +160,6 @@ begin
     vmsto.b_ready := r.b_ready;
     vmsto.r_ready := '1';
 
-
     if (w_req_mem_valid and not w_req_mem_write and i_msti.ar_ready) = '1' then
         v.reading := '1';
     elsif i_msti.r_valid = '1' and i_msti.r_last = '1' then
@@ -165,6 +167,7 @@ begin
     end if;
 
     if (w_req_mem_valid and w_req_mem_write and i_msti.aw_ready) = '1' then
+        v.w_addr := wb_req_mem_addr;
         v.w_valid := '1';
         v.w_last := '1';
     elsif i_msti.w_ready = '1' then
@@ -173,6 +176,7 @@ begin
     end if;
     
     if (r.w_valid and i_msti.w_ready) = '1' then
+        v.b_addr := r.w_addr;
         v.b_ready := '1';
     elsif i_msti.b_valid = '1' then
         v.b_ready := '0';

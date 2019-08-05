@@ -156,7 +156,7 @@ begin
 
   --! @brief AXI4 controller.
   ctrl0 : axictrl generic map (
-    watchdog_memop => 0
+    async_reset => CFG_ASYNC_RESET
   ) port map (
     i_clk    => i_clk,
     i_nrst   => w_glob_nrst,

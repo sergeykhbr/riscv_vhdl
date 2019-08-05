@@ -33,6 +33,7 @@ entity DCache is generic (
     o_resp_data_data : out std_logic_vector(RISCV_ARCH-1 downto 0);
     o_resp_data_load_fault : out std_logic;
     o_resp_data_store_fault : out std_logic;
+    o_resp_data_store_fault_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_resp_data_ready : in std_logic;
     -- Memory interface:
     i_req_mem_ready : in std_logic;
@@ -48,6 +49,7 @@ entity DCache is generic (
     i_resp_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
     i_resp_mem_load_fault : in std_logic;
     i_resp_mem_store_fault : in std_logic;
+    i_resp_mem_store_fault_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     -- Debug Signals:
     o_dstate : out std_logic_vector(1 downto 0)
   );
@@ -67,14 +69,13 @@ architecture arch_DCache of DCache is
       dline_addr_req : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
       dline_size_req : std_logic_vector(1 downto 0);
       dline_load_fault : std_logic;
-      dline_store_fault : std_logic;
       state : std_logic_vector(1 downto 0);
   end record;
 
   constant R_RESET : RegistersType := (
       (others => '0'), (others => '0'),
       (others => '0'), (others => '0'), (others => '0'),
-      '0', '0', State_Idle);
+      '0', State_Idle);
 
   signal r, rin : RegistersType;
 
@@ -83,7 +84,7 @@ begin
   comb : process(i_nrst, i_req_data_valid, i_req_data_write, i_req_data_sz, 
                 i_req_data_addr, i_req_data_data, i_resp_mem_data_valid, 
                 i_resp_mem_data, i_resp_mem_load_fault, i_resp_mem_store_fault,
-                i_req_mem_ready, i_resp_data_ready, r)
+                i_resp_mem_store_fault_addr, i_req_mem_ready, i_resp_data_ready, r)
     variable v : RegistersType;
     variable w_wait_response : std_logic;
     variable w_o_req_data_ready : std_logic;
@@ -97,7 +98,6 @@ begin
     variable wb_resp_data_mux : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
     variable wb_o_resp_data : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
     variable w_o_resp_load_fault : std_logic;
-    variable w_o_resp_store_fault : std_logic;
     variable wb_rtmp : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
   begin
 
@@ -220,7 +220,6 @@ begin
     if i_resp_mem_data_valid = '1' then
         v.dline_data := i_resp_mem_data;
         v.dline_load_fault := i_resp_mem_load_fault;
-        v.dline_store_fault := i_resp_mem_store_fault;
     end if;
 
     wb_o_resp_addr := r.dline_addr_req;
@@ -228,12 +227,10 @@ begin
         w_o_resp_valid := '1';
         wb_resp_data_mux := r.dline_data;
         w_o_resp_load_fault := r.dline_load_fault;
-        w_o_resp_store_fault := r.dline_store_fault;
     else
         w_o_resp_valid := i_resp_mem_data_valid;
         wb_resp_data_mux := i_resp_mem_data;
         w_o_resp_load_fault := i_resp_mem_load_fault;
-        w_o_resp_store_fault := i_resp_mem_store_fault;
     end if;
 
     case r.dline_addr_req(2 downto 0) is
@@ -285,7 +282,9 @@ begin
     o_resp_data_data <= wb_o_resp_data;
     o_resp_data_addr <= wb_o_resp_addr;
     o_resp_data_load_fault <= w_o_resp_load_fault;
-    o_resp_data_store_fault <= w_o_resp_store_fault;
+    -- AXI b channel
+    o_resp_data_store_fault <= i_resp_mem_store_fault;
+    o_resp_data_store_fault_addr <= i_resp_mem_store_fault_addr;
     o_dstate <= r.state;
     
     rin <= v;

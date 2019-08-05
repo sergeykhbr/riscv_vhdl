@@ -36,6 +36,8 @@ RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
     v.req_len = 0;
     v.req_burst = 0;
     v.req_write = 0;
+    v.store_fault = 0;
+    v.store_addr = 0;
     v.interrupt = false;
     async_interrupt = 0;
     w_interrupt = 0;
@@ -63,6 +65,8 @@ RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
     sensitive << r.req_len;
     sensitive << r.req_burst;
     sensitive << r.req_write;
+    sensitive << r.store_fault;
+    sensitive << r.store_addr;
     sensitive << r.nrst;
     sensitive << r.interrupt;
     sensitive << r.state;
@@ -118,6 +122,8 @@ void RtlWrapper::comb() {
 
     v.interrupt = w_interrupt;
     v.halted = i_halted.read();
+    v.store_fault = w_resp_store_fault;
+    v.store_addr = wb_resp_store_fault_addr;
 
     switch (r.state.read()) {
     case State_Idle:
@@ -165,7 +171,8 @@ void RtlWrapper::comb() {
     o_resp_mem_data_valid = w_resp_valid;
     o_resp_mem_data = wb_resp_data;
     o_resp_mem_load_fault = w_resp_load_fault;
-    o_resp_mem_store_fault = w_resp_store_fault;
+    o_resp_mem_store_fault = r.store_fault.read();
+    o_resp_mem_store_fault_addr = r.store_addr.read();
     o_interrupt = r.interrupt;
 
     o_dport_valid = w_dport_valid;
@@ -231,6 +238,8 @@ void RtlWrapper::sys_bus_proc() {
         if (resp == TRANS_ERROR) {
             if (r.req_write.read() == 1) {
                 w_resp_store_fault = 1;
+                wb_resp_store_fault_addr =
+                    static_cast<uint32_t>(trans.addr);
             } else {
                 w_resp_load_fault = 1;
             }

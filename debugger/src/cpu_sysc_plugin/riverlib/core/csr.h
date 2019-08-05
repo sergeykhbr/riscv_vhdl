@@ -38,6 +38,7 @@ SC_MODULE(CsrRegs) {
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_ex_data_addr;  // Data path: address must be equal to the latest request address
     sc_in<bool> i_ex_data_load_fault;       // Data path: Bus response with SLVERR or DECERR on read
     sc_in<bool> i_ex_data_store_fault;      // Data path: Bus response with SLVERR or DECERR on write
+    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_ex_data_store_fault_addr;  // Write data miss access
     sc_in<bool> i_ex_ctrl_load_fault;
     sc_in<bool> i_ex_illegal_instr;
     sc_in<bool> i_ex_unalign_store;
@@ -94,6 +95,7 @@ private:
         sc_signal<sc_uint<4>> trap_code;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> trap_addr;
         sc_signal<bool> break_event;            // 1 clock pulse
+        sc_signal<bool> hold_data_store_fault;
     } v, r;
 
     void R_RESET(RegistersType &iv) {
@@ -116,6 +118,7 @@ private:
         iv.trap_code = 0;
         iv.trap_addr = 0;
         iv.break_event = 0;
+        iv.hold_data_store_fault = 0;
     }
 
     uint32_t hartid_;

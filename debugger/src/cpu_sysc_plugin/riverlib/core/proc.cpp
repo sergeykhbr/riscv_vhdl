@@ -261,6 +261,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset)
     csr0->i_ex_data_addr(i_resp_data_addr);
     csr0->i_ex_data_load_fault(i_resp_data_load_fault);
     csr0->i_ex_data_store_fault(i_resp_data_store_fault);
+    csr0->i_ex_data_store_fault_addr(i_resp_data_store_fault_addr);
     csr0->i_ex_ctrl_load_fault(w.f.load_fault);
     csr0->i_ex_illegal_instr(w.e.ex_illegal_instr);
     csr0->i_ex_unalign_store(w.e.ex_unalign_store);

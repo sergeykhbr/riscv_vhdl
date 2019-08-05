@@ -43,6 +43,7 @@ entity CsrRegs is
     i_ex_data_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- Data path: address must be equal to the latest request address
     i_ex_data_load_fault : in std_logic;                    -- Data path: Bus response with SLVERR or DECERR on read
     i_ex_data_store_fault : in std_logic;                   -- Data path: Bus response with SLVERR or DECERR on write
+    i_ex_data_store_fault_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_ex_ctrl_load_fault : in std_logic;
     i_ex_illegal_instr : in std_logic;
     i_ex_unalign_store : in std_logic;
@@ -93,13 +94,14 @@ architecture arch_CsrRegs of CsrRegs is
       trap_code : std_logic_vector(3 downto 0);
       trap_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
       break_event : std_logic;
+      hold_data_store_fault : std_logic;
   end record;
 
   constant R_RESET : RegistersType := (
         (others => '0'), (others => '0'), (others => '0'), PRV_M,
         '0', '0', '0', (others => '0'), (others => '0'), '0',
         '0', '0', '0', '0', '0', 
-        '0', (others => '0'), (others => '0'), '0');
+        '0', (others => '0'), (others => '0'), '0', '0');
 
   signal r, rin : RegistersType;
   
@@ -246,6 +248,7 @@ begin
 
   comb : process(i_nrst, i_mret, i_uret, i_addr, i_wena, i_wdata, i_e_pre_valid,
                  i_ex_pc, i_ex_npc, i_ex_data_addr, i_ex_data_load_fault, i_ex_data_store_fault,
+                 i_ex_data_store_fault_addr,
                  i_ex_ctrl_load_fault, i_ex_illegal_instr, i_ex_unalign_load, i_ex_unalign_store,
                  i_ex_breakpoint, i_ex_ecall, 
                  i_ex_fpu_invalidop, i_ex_fpu_divbyzero, i_ex_fpu_overflow,
@@ -330,16 +333,20 @@ begin
     elsif i_ex_data_load_fault = '1' then
         w_trap_valid := '1';
         wb_trap_pc := CFG_NMI_LOAD_FAULT_ADDR;
-        wb_mbadaddr := i_ex_data_addr;     -- miss-access address
+        wb_mbadaddr := i_ex_data_addr;     -- miss-access read data address
         wb_trap_code := EXCEPTION_LoadFault;
     elsif i_ex_unalign_store = '1' then
         w_trap_valid := '1';
         wb_trap_pc := CFG_NMI_STORE_UNALIGNED_ADDR;
         wb_trap_code := EXCEPTION_StoreMisalign;
-    elsif i_ex_data_store_fault = '1' then
+    elsif i_ex_data_store_fault = '1' or r.hold_data_store_fault = '1' then
         w_trap_valid := '1';
+        v.hold_data_store_fault := '0';
+        if i_e_pre_valid = '0' then
+            v.hold_data_store_fault := '1';
+        end if;
         wb_trap_pc := CFG_NMI_STORE_FAULT_ADDR;
-        wb_mbadaddr := i_ex_data_addr;     -- miss-access address
+        wb_mbadaddr := i_ex_data_store_fault_addr;     -- miss-access write data address
         wb_trap_code := EXCEPTION_StoreFault;
     elsif i_ex_ecall = '1' then
         w_trap_valid := '1';

@@ -40,6 +40,7 @@ SC_MODULE(RiverTop) {
     sc_in<sc_uint<BUS_DATA_WIDTH>> i_resp_mem_data;     // Read data
     sc_in<bool> i_resp_mem_load_fault;
     sc_in<bool> i_resp_mem_store_fault;
+    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_resp_mem_store_fault_addr;
     /** Interrupt line from external interrupts controller (PLIC). */
     sc_in<bool> i_ext_irq;
     sc_out<sc_uint<64>> o_time;                         // Clock/Step counter depending attribute "GenerateRef"
@@ -86,6 +87,7 @@ private:
     sc_signal<sc_uint<RISCV_ARCH>> wb_resp_data_data;
     sc_signal<bool> w_resp_data_load_fault;
     sc_signal<bool> w_resp_data_store_fault;
+    sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_resp_data_store_fault_addr;
     sc_signal<bool> w_resp_ctrl_load_fault;
     sc_signal<bool> w_resp_data_ready;
     sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_flush_address;

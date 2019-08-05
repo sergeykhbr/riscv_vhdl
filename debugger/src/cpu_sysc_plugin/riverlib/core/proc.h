@@ -58,6 +58,7 @@ SC_MODULE(Processor) {
     sc_in<sc_uint<RISCV_ARCH>> i_resp_data_data;        // Read value
     sc_in<bool> i_resp_data_load_fault;                 // Bus response with SLVERR or DECERR on read
     sc_in<bool> i_resp_data_store_fault;                // Bus response with SLVERR or DECERR on write
+    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_resp_data_store_fault_addr;  // write-error address (B-channel)
     sc_out<bool> o_resp_data_ready;                     // Core is ready to accept response from DCache
     // External interrupt pin
     sc_in<bool> i_ext_irq;                              // PLIC interrupt accordingly with spec

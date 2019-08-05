@@ -458,6 +458,7 @@ package river_cfg is
     i_ex_data_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_ex_data_load_fault : in std_logic;
     i_ex_data_store_fault : in std_logic;
+    i_ex_data_store_fault_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_ex_ctrl_load_fault : in std_logic;
     i_ex_illegal_instr : in std_logic;
     i_ex_unalign_store : in std_logic;
@@ -994,6 +995,7 @@ package river_cfg is
     i_resp_data_data : in std_logic_vector(RISCV_ARCH-1 downto 0);
     i_resp_data_load_fault : in std_logic;
     i_resp_data_store_fault : in std_logic;
+    i_resp_data_store_fault_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     o_resp_data_ready : out std_logic;
     i_ext_irq : in std_logic;
     o_time : out std_logic_vector(63 downto 0);
@@ -1078,6 +1080,7 @@ package river_cfg is
     o_resp_data_data : out std_logic_vector(RISCV_ARCH-1 downto 0);
     o_resp_data_load_fault : out std_logic;
     o_resp_data_store_fault : out std_logic;
+    o_resp_data_store_fault_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_resp_data_ready : in std_logic;
     i_req_mem_ready : in std_logic;
     o_req_mem_valid : out std_logic;
@@ -1091,6 +1094,7 @@ package river_cfg is
     i_resp_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
     i_resp_mem_load_fault : in std_logic;
     i_resp_mem_store_fault : in std_logic;
+    i_resp_mem_store_fault_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_flush_address : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_flush_valid : in std_logic;
     o_istate : out std_logic_vector(1 downto 0);
@@ -1145,6 +1149,7 @@ package river_cfg is
     i_resp_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
     i_resp_mem_load_fault : in std_logic;
     i_resp_mem_store_fault : in std_logic;
+    i_resp_mem_store_fault_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_ext_irq : in std_logic;
     o_time : out std_logic_vector(63 downto 0);
     i_dport_valid : in std_logic;

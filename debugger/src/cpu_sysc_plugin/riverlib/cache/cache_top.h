@@ -40,6 +40,7 @@ SC_MODULE(CacheTop) {
     sc_out<sc_uint<RISCV_ARCH>> o_resp_data_data;       // DCache response read data
     sc_out<bool> o_resp_data_load_fault;                // Bus response ERRSLV or ERRDEC on read
     sc_out<bool> o_resp_data_store_fault;               // Bus response ERRSLV or ERRDEC on write
+    sc_out<sc_uint<BUS_ADDR_WIDTH>> o_resp_data_store_fault_addr;   // AXI B-channel error
     sc_in<bool> i_resp_data_ready;                      // CPU Core is ready to accept DCache repsonse
     // Memory interface:
     sc_in<bool> i_req_mem_ready;                        // System Bus (AXI) is available
@@ -54,6 +55,7 @@ SC_MODULE(CacheTop) {
     sc_in<sc_uint<BUS_DATA_WIDTH>> i_resp_mem_data;     // Read value
     sc_in<bool> i_resp_mem_load_fault;                  // Bus response with SLVERR or DECERR on read
     sc_in<bool> i_resp_mem_store_fault;                 // Bus response with SLVERR or DECERR on write
+    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_resp_mem_store_fault_addr;
 
     // Debug signals:
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_flush_address;     // clear ICache address from debug interface
@@ -103,7 +105,6 @@ private:
     sc_signal<bool> w_data_resp_mem_data_valid;
     sc_signal<sc_uint<BUS_DATA_WIDTH>> wb_data_resp_mem_data;
     sc_signal<bool> w_data_resp_mem_load_fault;
-    sc_signal<bool> w_data_resp_mem_store_fault;
     sc_signal<bool> w_data_req_ready;
 
     ICacheLru *i1;

@@ -45,6 +45,7 @@ entity RiverTop is
     i_resp_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0); -- Read data
     i_resp_mem_load_fault : in std_logic;                             -- Bus response with SLVERR or DECERR on read
     i_resp_mem_store_fault : in std_logic;                            -- Bus response with SLVERR or DECERR on write
+    i_resp_mem_store_fault_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     -- Interrupt line from external interrupts controller (PLIC).
     i_ext_irq : in std_logic;
     o_time : out std_logic_vector(63 downto 0);                       -- Timer. Clock counter except halt state.
@@ -83,6 +84,7 @@ architecture arch_RiverTop of RiverTop is
   signal wb_resp_data_data : std_logic_vector(RISCV_ARCH-1 downto 0);
   signal w_resp_data_load_fault : std_logic;
   signal w_resp_data_store_fault : std_logic;
+  signal wb_resp_data_store_fault_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
   signal w_resp_data_ready : std_logic;
   signal wb_flush_address : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
   signal w_flush_valid : std_logic;
@@ -117,6 +119,7 @@ begin
         i_resp_data_data => wb_resp_data_data,
         i_resp_data_load_fault => w_resp_data_load_fault,
         i_resp_data_store_fault => w_resp_data_store_fault,
+        i_resp_data_store_fault_addr => wb_resp_data_store_fault_addr,
         o_resp_data_ready => w_resp_data_ready,
         i_ext_irq => i_ext_irq,
         o_time => o_time,
@@ -159,6 +162,7 @@ begin
         o_resp_data_data => wb_resp_data_data,
         o_resp_data_load_fault => w_resp_data_load_fault,
         o_resp_data_store_fault => w_resp_data_store_fault,
+        o_resp_data_store_fault_addr => wb_resp_data_store_fault_addr,
         i_resp_data_ready => w_resp_data_ready,
         i_req_mem_ready => i_req_mem_ready,
         o_req_mem_valid => o_req_mem_valid,
@@ -172,6 +176,7 @@ begin
         i_resp_mem_data => i_resp_mem_data,
         i_resp_mem_load_fault => i_resp_mem_load_fault,
         i_resp_mem_store_fault => i_resp_mem_store_fault,
+        i_resp_mem_store_fault_addr => i_resp_mem_store_fault_addr,
         i_flush_address => wb_flush_address,
         i_flush_valid => w_flush_valid,
         o_istate => wb_istate,

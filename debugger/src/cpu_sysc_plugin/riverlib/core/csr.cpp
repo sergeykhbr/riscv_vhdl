@@ -36,6 +36,7 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset)
     sensitive << i_ex_data_addr;
     sensitive << i_ex_data_load_fault;
     sensitive << i_ex_data_store_fault;
+    sensitive << i_ex_data_store_fault_addr;
     sensitive << i_ex_ctrl_load_fault;
     sensitive << i_ex_illegal_instr;
     sensitive << i_ex_unalign_store;
@@ -338,10 +339,15 @@ void CsrRegs::comb() {
         w_trap_valid = 1;
         wb_trap_pc = CFG_NMI_STORE_UNALIGNED_ADDR;
         wb_trap_code = EXCEPTION_StoreMisalign;
-    } else if (i_ex_data_store_fault.read() == 1) {
+    } else if (i_ex_data_store_fault.read() == 1
+             || r.hold_data_store_fault.read() == 1) {
         w_trap_valid = 1;
+        v.hold_data_store_fault = 0;
+        if (i_e_pre_valid.read() == 0) {
+            v.hold_data_store_fault = 1;
+        }
         wb_trap_pc = CFG_NMI_STORE_FAULT_ADDR;
-        wb_mbadaddr = i_ex_data_addr.read();    // miss-access write
+        wb_mbadaddr = i_ex_data_store_fault_addr.read();  // miss-access write
         wb_trap_code = EXCEPTION_StoreFault;
     } else if (i_ex_ecall.read() == 1) {
         w_trap_valid = 1;

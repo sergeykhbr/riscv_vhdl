@@ -123,6 +123,7 @@ class CpuRiscV_RTL : public IService,
     sc_signal<sc_uint<BUS_DATA_WIDTH>> wb_resp_mem_data;
     sc_signal<bool> w_resp_mem_load_fault;
     sc_signal<bool> w_resp_mem_store_fault;
+    sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_resp_mem_store_fault_addr;
     /** Interrupt line from external interrupts controller. */
     sc_signal<bool> w_interrupt;
     // Debug interface

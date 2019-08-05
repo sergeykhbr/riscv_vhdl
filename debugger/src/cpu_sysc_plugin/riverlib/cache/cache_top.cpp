@@ -35,7 +35,6 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset) :
     sensitive << i_resp_mem_data_valid;
     sensitive << i_resp_mem_data;
     sensitive << i_resp_mem_load_fault;
-    sensitive << i_resp_mem_store_fault;
     sensitive << r.state;
 
     SC_METHOD(registers);
@@ -83,6 +82,7 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset) :
     d0->o_resp_data_data(o_resp_data_data);
     d0->o_resp_data_load_fault(o_resp_data_load_fault);
     d0->o_resp_data_store_fault(o_resp_data_store_fault);
+    d0->o_resp_data_store_fault_addr(o_resp_data_store_fault_addr);
     d0->i_resp_data_ready(i_resp_data_ready);
     d0->i_req_mem_ready(w_data_req_ready);
     d0->o_req_mem_valid(d.req_mem_valid);
@@ -96,7 +96,8 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset) :
     d0->i_resp_mem_data_valid(w_data_resp_mem_data_valid);
     d0->i_resp_mem_data(wb_data_resp_mem_data);
     d0->i_resp_mem_load_fault(w_data_resp_mem_load_fault);
-    d0->i_resp_mem_store_fault(w_data_resp_mem_store_fault);
+    d0->i_resp_mem_store_fault(i_resp_mem_store_fault);
+    d0->i_resp_mem_store_fault_addr(i_resp_mem_store_fault_addr);
     d0->o_dstate(o_dstate);
 
 #ifdef DBG_ICACHE_TB
@@ -158,7 +159,6 @@ void CacheTop::comb() {
     w_data_resp_mem_data_valid = 0;
     wb_data_resp_mem_data = i_resp_mem_data.read();
     w_data_resp_mem_load_fault = i_resp_mem_load_fault.read();
-    w_data_resp_mem_store_fault = i_resp_mem_store_fault.read();
 
     w_ctrl_req_ready = 0;
     w_ctrl_resp_mem_data_valid = 0;

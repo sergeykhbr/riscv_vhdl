@@ -53,6 +53,7 @@ entity Processor is
     i_resp_data_data : in std_logic_vector(RISCV_ARCH-1 downto 0);    -- Read value
     i_resp_data_load_fault : in std_logic;                            -- Bus response with SLVERR or DECERR on read
     i_resp_data_store_fault : in std_logic;                           -- Bus response with SLVERR or DECERR on write
+    i_resp_data_store_fault_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     o_resp_data_ready : out std_logic;
     -- External interrupt pin
     i_ext_irq : in std_logic;                                         -- PLIC interrupt accordingly with spec
@@ -474,6 +475,7 @@ begin
         i_ex_data_addr => i_resp_data_addr,
         i_ex_data_load_fault => i_resp_data_load_fault,
         i_ex_data_store_fault => i_resp_data_store_fault,
+        i_ex_data_store_fault_addr => i_resp_data_store_fault_addr,
         i_ex_ctrl_load_fault => w.f.load_fault,
         i_ex_illegal_instr => w.e.ex_illegal_instr,
         i_ex_unalign_store => w.e.ex_unalign_store,

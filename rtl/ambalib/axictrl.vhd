@@ -1,9 +1,18 @@
------------------------------------------------------------------------------
---! @file
---! @copyright Copyright 2016 GNSS Sensor Ltd. All right reserved.
---! @author    Sergey Khabarov - sergeykhbr@gmail.com
---! @details   Implementation of the axictrl device. 
-------------------------------------------------------------------------------
+--!
+--! Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
+--!
+--! Licensed under the Apache License, Version 2.0 (the "License");
+--! you may not use this file except in compliance with the License.
+--! You may obtain a copy of the License at
+--!
+--!     http://www.apache.org/licenses/LICENSE-2.0
+--!
+--! Unless required by applicable law or agreed to in writing, software
+--! distributed under the License is distributed on an "AS IS" BASIS,
+--! WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+--! See the License for the specific language governing permissions and
+--! limitations under the License.
+--!
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -12,13 +21,9 @@ use commonlib.types_common.all;
 library ambalib;
 use ambalib.types_amba4.all;
 
---! @brief   AXI (NASTI) bus controller. 
---! @details Simplified version with the hardcoded priorities to bus access.
---!          Lower master index has a higher priority.
---! @todo    Round-robin algorithm for the master selection.
 entity axictrl is
   generic (
-    watchdog_memop : integer := 0
+    async_reset : boolean
   );
   port (
     i_clk    : in std_logic;
@@ -62,18 +67,19 @@ architecture arch_axictrl of axictrl is
   end record;
 
   signal rin, r : reg_type;
+
 begin
 
   comblogic : process(i_nrst, i_slvcfg, i_msto, i_slvo, r)
     variable v : reg_type;
     variable ar_sidx : slave_selector_type;
     variable aw_sidx : slave_selector_type;
+    variable ar_collision : std_logic_vector(0 to CFG_NASTI_SLAVES_TOTAL-1);
+    variable aw_collision : std_logic_vector(0 to CFG_NASTI_SLAVES_TOTAL-1);
     variable vmsto : nasti_master_out_vector_miss;
     variable vmsti : nasti_master_in_vector_miss;
     variable vslvi : nasti_slave_in_vector_miss;
     variable vslvo : nasti_slave_out_vector_miss;
-    variable ar_acquired : std_logic_vector(CFG_NASTI_SLAVES_TOTAL-1 downto 0);
-    variable aw_acquired : std_logic_vector(CFG_NASTI_SLAVES_TOTAL-1 downto 0);
     variable aw_fire : std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0);
     variable ar_fire : std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0);
     variable w_fire : std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0);
@@ -88,11 +94,14 @@ begin
     v := r;
 
     for n in 0 to CFG_NASTI_MASTER_TOTAL-1 loop
+       ar_sidx(n) := CFG_NASTI_SLAVES_TOTAL;
+       aw_sidx(n) := CFG_NASTI_SLAVES_TOTAL;
        vmsto(n) := i_msto(n);
        vmsti(n) := nasti_master_in_none;
     end loop;
     vmsto(CFG_NASTI_MASTER_TOTAL) := nasti_master_out_none;
     vmsti(CFG_NASTI_MASTER_TOTAL) := nasti_master_in_none;
+
     for k in 0 to CFG_NASTI_SLAVES_TOTAL-1 loop
        vslvo(k) := i_slvo(k);
        vslvi(k) := nasti_slave_in_none;
@@ -100,27 +109,24 @@ begin
     vslvo(CFG_NASTI_SLAVES_TOTAL) := MISS_ACCESS_SLAVE;
     vslvi(CFG_NASTI_SLAVES_TOTAL) := nasti_slave_in_none;
 
+    ar_collision := (others => '0');
+    aw_collision := (others => '0');
 
-    ar_acquired := (others => '0');
-    aw_acquired := (others => '0');
     for m in 0 to CFG_NASTI_MASTER_TOTAL-1 loop
-        ar_sidx(m) := CFG_NASTI_SLAVES_TOTAL;
-        aw_sidx(m) := CFG_NASTI_SLAVES_TOTAL;
-
         for s in 0 to CFG_NASTI_SLAVES_TOTAL-1 loop
-            if ar_acquired(s) = '0'
+            if ar_collision(s) = '0'
                 and i_slvcfg(s).xmask /= X"00000"
                 and (vmsto(m).ar_bits.addr(CFG_NASTI_ADDR_BITS-1 downto 12) 
-                and i_slvcfg(s).xmask) = i_slvcfg(s).xaddr then
+                     and i_slvcfg(s).xmask) = i_slvcfg(s).xaddr then
                 ar_sidx(m) := s;
-                ar_acquired(s) := '1';
+                ar_collision(s) := '1';
             end if;
-            if aw_acquired(s) = '0'
+            if aw_collision(s) = '0'
                 and i_slvcfg(s).xmask /= X"00000"
                 and (vmsto(m).aw_bits.addr(CFG_NASTI_ADDR_BITS-1 downto 12)
-                and i_slvcfg(s).xmask) = i_slvcfg(s).xaddr then
+                     and i_slvcfg(s).xmask) = i_slvcfg(s).xaddr then
                 aw_sidx(m) := s;
-                aw_acquired(s) := '1';
+                aw_collision(s) := '1';
             end if;
         end loop;
 
@@ -132,6 +138,25 @@ begin
         w_fire(m) := vmsto(m).w_valid and vmsto(m).w_last and vslvo(r.w_sidx(m)).w_ready;
         -- Write confirm channel
         b_fire(m) := vmsto(m).b_ready and vslvo(r.b_sidx(m)).b_valid;
+
+        if ar_fire(m) = '1' then
+            v.r_sidx(m) := ar_sidx(m);
+        elsif r_fire(m) = '1' then
+            v.r_sidx(m) := CFG_NASTI_SLAVES_TOTAL;
+        end if;
+
+        if aw_fire(m) = '1' then
+            v.w_sidx(m) := aw_sidx(m);
+        elsif w_fire(m) = '1' then
+            v.w_sidx(m) := CFG_NASTI_SLAVES_TOTAL;
+        end if;
+
+        if w_fire(m) = '1' then
+            v.b_sidx(m) := r.w_sidx(m);
+        elsif b_fire(m) = '1' then
+            v.b_sidx(m) := CFG_NASTI_SLAVES_TOTAL;
+        end if;
+
 
         vmsti(m).ar_ready := vslvo(ar_sidx(m)).ar_ready;
         vslvi(ar_sidx(m)).ar_valid := vmsto(m).ar_valid;
@@ -166,38 +191,19 @@ begin
         vmsti(m).b_user := vslvo(r.b_sidx(m)).b_user;
         vslvi(r.b_sidx(m)).b_ready := vmsto(m).b_ready;
 
-
-        if ar_fire(m) = '1' then
-            v.r_sidx(m) := ar_sidx(m);
-        elsif r_fire(m) = '1' then
-            v.r_sidx(m) := CFG_NASTI_SLAVES_TOTAL;
+        -- Statistic
+        wb_bus_util_w(m) := '0';
+        if r.w_sidx(m) /= CFG_NASTI_SLAVES_TOTAL then
+            wb_bus_util_w(m) :=  '1';
         end if;
-
-        if aw_fire(m) = '1' then
-            v.w_sidx(m) := aw_sidx(m);
-        elsif w_fire(m) = '1' then
-            v.w_sidx(m) := CFG_NASTI_SLAVES_TOTAL;
+        wb_bus_util_r(m) := '0';
+        if r.r_sidx(m) /= CFG_NASTI_SLAVES_TOTAL then
+            wb_bus_util_r(m) := '1';
         end if;
-
-        if w_fire(m) = '1' then
-            v.b_sidx(m) := r.w_sidx(m);
-        elsif b_fire(m) = '1' then
-            v.b_sidx(m) := CFG_NASTI_SLAVES_TOTAL;
-        end if;
-
-      -- Statistic
-      wb_bus_util_w(m) := '0';
-      if r.w_sidx(m) /= CFG_NASTI_SLAVES_TOTAL then
-          wb_bus_util_w(m) :=  '1';
-      end if;
-      wb_bus_util_r(m) := '0';
-      if r.r_sidx(m) /= CFG_NASTI_SLAVES_TOTAL then
-          wb_bus_util_r(m) := '1';
-      end if;
     end loop;
 
 
-    if i_nrst = '0' then
+    if not async_reset and i_nrst = '0' then
       for m in 0 to CFG_NASTI_MASTER_TOTAL-1 loop
          v.w_sidx(m) := CFG_NASTI_SLAVES_TOTAL;
          v.r_sidx(m) := CFG_NASTI_SLAVES_TOTAL;
@@ -217,9 +223,16 @@ begin
     o_bus_util_r <= wb_bus_util_r;
   end process;
 
-  reg0 : process(i_clk) begin
-     if rising_edge(i_clk) then 
-        r <= rin;
+  regs : process(i_clk, i_nrst)
+  begin 
+     if async_reset and i_nrst = '0' then
+         for m in 0 to CFG_NASTI_MASTER_TOTAL-1 loop
+             r.w_sidx(m) <= CFG_NASTI_SLAVES_TOTAL;
+             r.r_sidx(m) <= CFG_NASTI_SLAVES_TOTAL;
+             r.b_sidx(m) <= CFG_NASTI_SLAVES_TOTAL;
+         end loop;
+     elsif rising_edge(i_clk) then 
+         r <= rin;
      end if; 
   end process;
 end;

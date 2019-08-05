@@ -51,6 +51,7 @@ class RtlWrapper : public sc_module,
     sc_out<sc_uint<BUS_DATA_WIDTH>> o_resp_mem_data;
     sc_out<bool> o_resp_mem_load_fault;
     sc_out<bool> o_resp_mem_store_fault;
+    sc_out<sc_uint<BUS_ADDR_WIDTH>> o_resp_mem_store_fault_addr;
     /** Interrupt line from external interrupts controller. */
     sc_out<bool> o_interrupt;
     // Debug interface
@@ -74,6 +75,9 @@ class RtlWrapper : public sc_module,
         sc_signal<sc_uint<8>> req_len;
         sc_signal<sc_uint<2>> req_burst;
         sc_signal<bool> req_write;
+        // AXI4 B-Channel
+        sc_signal<bool> store_fault;
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> store_addr;
         //
         sc_signal<sc_bv<5>> nrst;
         sc_signal<bool> interrupt;
@@ -85,6 +89,7 @@ class RtlWrapper : public sc_module,
     sc_signal<bool> w_resp_valid;
     sc_signal<sc_uint<RISCV_ARCH>> wb_resp_data;
     sc_signal<bool> w_resp_store_fault;
+    sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_resp_store_fault_addr;
     sc_signal<bool> w_resp_load_fault;
 
     sc_signal<bool> w_dport_valid;
