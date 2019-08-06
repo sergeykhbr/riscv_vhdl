@@ -1,0 +1,150 @@
+/** @page arch_overview_page Architectural Overview
+
+  The diagram below shows the functional blocks and their basic connectivity within an
+AMBA AXI4 System Bus.
+
+  The system components are built around a \b River CPU which is an open source
+version of RISC-V compatible processors. Current generation of the 64-bits CPU
+is compatible to the RISC-V Unprivileged ISA version 2.2 and RISC-V Privileged
+ISA version 1.11 instruction sets. Default compilers toolchain used with the shared
+examples <c>GCC 7.2.0</c> may be provided as a part of Ubuntu image.
+
+@note Check the github repository to get the information about the latest supported
+      ISA extensions and instructions.
+
+  Functional abstracts of the components contained in a River generic System-on-Chip
+with enabled commercial IP blocks are provided in the following subchapters.
+
+<center>
+ <img src="../doxygen/pics/soc_top.png" alt="Top Level"> 
+ @latexonly {\includegraphics{../doxygen/pics/soc_top.png}} @endlatexonly
+
+<b>Figure 2.1. SoC Functional Block Diagram</b>
+</center>
+
+@section summary_of_features Summary of Features
+
+  Generic System-on-Chip top-level (<c>asic_top.vhd</c>) is built using only
+blocks available as open source IPs. This project can be used as
+reference for the further system customization or for porting on any
+modern FPGA board.
+
+  Open source repository also contains customized top-level files
+(<c>asic_soc_gnss.vhd</c>) that contains IP blocks specially developed
+for a specific technology process, like OTP memory, or provided as a
+commercial products (GNSS).
+
+  Single-Core and Dual-Core configurations either are available in the
+open-source repository.
+
+
+<b>Integrated On-Chip Memory</b>
+
+<ul>
+  <li>32 KB on-chip Boot ROM with pre-built <c>examples/boot.hex</c> image</li>
+  <li>512 KB on-chip high-speed SRAM for code and data</li>
+  <li>64 KB Instruction Cache with DP-SRAM blocks</li>
+  <li>64 KB Data Cache with DP-SRAM blocks</li>
+  <li>8 KB on-chip One-Time Programmable Memory (OTP) special type of non-volatile memory</li>
+  <li>256 KB on-chip ROM with pre-built application image (or SPI Flash Controller)</li>
+</ul>
+
+@note Sizes of the on-chip memory banks are represent the default configuration and
+may be freely changed during tuning and customization process.
+
+<b>Intelligent On-Chip Peripheral Subsystems</b>
+
+<ul>
+  <li>General peripheries set</li>
+     <ul>
+       <li>Interrupt Controller</li>
+       <li>Serial UART port</li>
+       <li>12 bi-directional IOs</li>
+       <li>2 General Purpose Timers with RTC</li>
+     </ul>
+  <li>Debug Support Unit (DSU) for the <c>River</c> CPU</li>
+     <ul>
+       <li>CPU context switching</li>
+       <li>Run Controller: run/halt or instruction stepping</li>
+       <li>Hardware Breakpoints</li>
+       <li>Access to CPU Integer/FPU Registers banks</li>
+       <li>Access to CPU CSR Registers</li>
+       <li>Access to CPU I/D Caches</li>
+       <li>Access to CPU Stack Trace Buffer</li>
+       <li>Access to CPU Instructions Trace Buffer</li>
+     </ul>
+  <li>System Watchdog Timer with programmable time intervals</li>
+  <li>OTP IP Blocks</li>
+  <li>Satellite Navigation (GNSS) IP Blocks</li>
+</ul>
+
+@note These peripheries parameters represents default system configuration and
+may be freely changed during tuning and customization process.
+
+<b>High Performance 64-bit CPU with Five-Stage Pipeline</b>
+
+<ul>
+  <li>Single clock cycle instruction execution for most instructions</li>
+  <li>4 clock cycles integer multiplication (64-bit x 64-bit)</li>
+  <li>34 clock cycles integer division (64-bit / 64-bit)</li>
+  <li>Floating Point Unit (FPU):</li>
+    <ul>
+      <li>19 clock cycles double precision multiplication</li>
+      <li>19 clock cycles double precision division</li>
+      <li>2 clock cycles long or int to double conversion</li>
+      <li>3 clock cycles double to long or int conversion</li>
+    </ul>
+  <li>Automatic rounding included</li>
+  <li>System stack cache support with automatic stack overflow/underflow detection</li>
+  <li>High performance branch, call, and loop processing</li>
+  <li>Zero-cycle jump execution</li>
+</ul>
+
+<b>On-Chip Debug Support</b>
+
+<ul>
+  <li>Communication through Ethernet (UDP) or JTAG (5-wire)
+      or UART (2-wire) debug interfaces</li>
+  <li>Dual-Core configuration native support</li>
+  <li>Hardware and software breakpoints</li>
+  <li>Access to any internal register or memory location via debug interfaces</li>
+</ul>
+
+@section clock_generation_section System Clock
+
+  Default configuration implements internal PLL module wrapped into "virtual"
+component and connected to the <c>riscv_soc.vhd</c> level of system. Such
+architecture allows to re-define PLL instance depending of the target
+(RTL simulation, certain FPGA or ASIC).
+
+  Default clock frequency is equal to 40 MHz. This frequency value
+is used by Boot ROM firmware and defines UART scale rate to form 115200
+Baud output.
+
+@warning Changing PLL frequency will affect UART output and should
+         be properly handled in boot firmware.
+
+  It is possible to use external clock instead of PLL as a system clock
+directly but it requires the implementation of additional control IO pin.
+That's a part of system customization process.
+
+@section system_reset_section System Reset
+
+  Internal System-on-Chip reset signal connected to external reset pin
+<c>i_rst</c> and <c>PLL Lock</c> status via special module 
+<c>reset_global.vhd</c>. This module provides delayed on 8 cycles
+output.
+
+  Input pin <c>i_rst</c> has active level HIGH and usually connected
+to the reset button. Internal reset signal has active LOW level and
+becomes HIGH (no reset) only after button unpressed and PLL shows
+status LOCK.
+
+  It is possible to reset system via DSU register (software reset)
+see DSU registers description.
+
+@note Optionally General Purpose timer may implement additional
+reset input <c>i_rst_ts</c> used to clear RTC timer and synchronize
+multi-chips hardware platform.
+
+*/

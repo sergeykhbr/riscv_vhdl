@@ -767,6 +767,7 @@ WARN_LOGFILE           =
 
 INPUT = \
 doxygen/_top.doxy \
+doxygen/02_arch_overview.doxy \
 doxygen/05_cpu.doxy \
 
 
