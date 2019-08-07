@@ -1,0 +1,102 @@
+/** @page memory_organization_page Memory Organization
+
+  The memory space of the System-on-Chip is configured in a "Von Neumann"
+architecture. This means that code and data are accessed within the same
+linear address space. All of the physically separated memory areas,
+including internal ROM and Flash, internal RAM,
+the processors Control and Status Registers (CSRs), the internal IO area,
+and external memory are mapped into one common address space.
+
+<center>
+ <img src="../doxygen/pics/addr_space_overview.png" alt="Address Space"> 
+ @latexonly {\includegraphics{../doxygen/pics/addr_space_overview.png}} @endlatexonly
+
+<b>Figure 3-1. Address Space Overview.</b>
+</center>
+
+  The following VHDL configuration parameters defines address and
+data space sizes.
+
+<center>
+| Parameter Name      | Value    | Description           |
+|:-------------------:|:--------:|:----------------------|
+| CFG_NASTI_ADDR_BITS | 32       | Address Bus bit width |
+| CFG_NASTI_DATA_BITS | 64       | Data Bus bit width    |
+
+<b>Table 3-1. General System Bus parameters.</b>
+</center>
+
+
+  Totally available 4 GB of memory space in the default implementation.
+
+<center>
+ <img src="../doxygen/pics/mem_byte_order.png" alt="Byte Order"> 
+ @latexonly {\includegraphics{../doxygen/pics/mem_byte_order.png}} @endlatexonly
+
+<b>Figure 3-2. Storage of Words, Bytes and Bits in a Byte Organized Memory.</b>
+</center>
+
+  RISC-V architecture supposes memory is addressed as 8-bit bytes, with words
+being in <c>little-endian</c> order. That's similar to x86 computers. Words,
+up to the register size, can be accessed with the load and store instructions.
+
+  Accessed memory addresses need to be aligned to their word-width, otherwise 
+<c>"unaligned store"</c> or <c>"unaligned load"</c> exception will be raised. 
+
+@note Bus controller with the full unaligned memory access support was implemented
+      in the earlier versions of River. It can be reused in future version
+      by complicating procedures implementing AXI4 accesses.
+
+  Despite the default 64-bit data bus width (8-bytes) there's support of
+4-byte aligned address transactions (including the burst operations).
+This was made to support the potential compatibility with the 32-bits data bus.
+
+<b>Example:</b>
+@verbatim
+        DMA read burst transaction request
+               address = 0x00000004
+               size = 0x2 (4 Bytes)
+               len = 1 (2 transactions)
+
+        This operation will returns 64-bit data:
+               read cycle 0: [data32[0x08], data32[0x04]]
+               read cycle 1: [data32[0x0C], data32[0x08]]
+@endverbatim
+
+  CPU <c>River</c> always uses 8-byte aligned memory access with the appropriate
+strobes on a write operations.
+
+@section adress_mapping Address Mapping
+
+  All the various memory areas and peripheral registers are mapped into
+one contiguous address space. All sections can be accessed in the same way. The
+memory map of the SoC contains some reserved areas, so future derivatives can be
+enhanced in an upward-compatible fashion.
+
+@note: Table 3-2 shows the available memory areas in the default
+       configuration. The actual available memory areas depend on the certain
+       implementation.
+
+<center>
+| Address Area       | Start Loc.| End Loc.  | Area Size   | Notes                                               |
+|:-------------------|:---------:|:---------:|:------------|:----------------------------------------------------|
+| Boot ROM           | 00000000h | 00007FFFh | 32 Kbytes   | Universal Bootloader image                          |
+| OTP                | 00010000h | 00011FFFh | 8 Kbytes    | One-Time Programmable secure code                   |
+| ROM Image or Flash | 00100000h | 0013FFFFh | 256 Kbytes  | Internal ROM application or external Flash          |
+| SRAM               | 10000000h | 1007FFFFh | 512 Kbytes  | Internal code or data SRAM                          |
+| GPIO Controller    | 80000000h | 80000FFFh | 4 Kbytes    | User specific IOs                                   |
+| UART1              | 80001000h | 80001FFFh | 4 Kbytes    | Default serial port                                 |
+| IRQ Controller     | 80002000h | 80002FFFh | 4 Kbytes    | Interrupt Controller                                |
+| GNSS Engine        | 80003000h | 80003FFFh | 4 Kbytes    | Satellite Navigation engine                         |
+| RF Controller      | 80004000h | 80004FFFh | 4 Kbytes    | RF front-end controller                             |
+| GP Timers          | 80005000h | 80005FFFh | 4 Kbytes    | Two general purpose timers with RTC                 |
+| FSE GPS-L1         | 8000A000h | 8000AFFFh | 4 Kbytes    | Fast Search Engine for GPS-CA signals               |
+| Ethernet MAC       | 80040000h | 8007FFFFh | 256 Kbytes  | 100 Mb Ethernet MAC with the Debug support          |
+| DSU                | 80080000h | 8009FFFFh | 128 Kbytes  | Debug Support Unit with the multiprocessors support |
+| PNP                | FFFFF000h | FFFFFFFFh | 4 Kbytes    | System status and configuration registers           |
+
+<b>Table 3-2. River Memory Map.</b>
+</center>
+
+
+*/
