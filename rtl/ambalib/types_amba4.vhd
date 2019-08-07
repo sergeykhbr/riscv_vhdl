@@ -1042,7 +1042,11 @@ package body types_amba4 is
     end case;
 
     if i.b_ready = '1' and i_bank.b_valid = '1' then
-        o_bank.b_valid := '0';
+        if i_bank.wstate = wtrans and i.w_valid = '1' and i_bank.wlen = 0 then
+            o_bank.b_valid := '1';
+        else
+            o_bank.b_valid := '0';
+        end if;
     end if;
   end; -- procedure
 

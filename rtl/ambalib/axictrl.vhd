@@ -57,14 +57,19 @@ architecture arch_axictrl of axictrl is
   type nasti_slave_in_vector_miss is array (0 to CFG_NASTI_SLAVES_TOTAL) 
        of nasti_slave_in_type;
        
-  type slave_selector_type is array (0 to CFG_NASTI_MASTER_TOTAL-1)
-      of integer range 0 to CFG_NASTI_SLAVES_TOTAL;
-
   type reg_type is record
-     w_sidx : slave_selector_type;
-     r_sidx : slave_selector_type;
-     b_sidx : slave_selector_type;
+     r_midx : integer range 0 to CFG_NASTI_MASTER_TOTAL;
+     r_sidx : integer range 0 to CFG_NASTI_SLAVES_TOTAL;
+     w_midx : integer range 0 to CFG_NASTI_MASTER_TOTAL;
+     w_sidx : integer range 0 to CFG_NASTI_SLAVES_TOTAL;
+     b_midx : integer range 0 to CFG_NASTI_MASTER_TOTAL;
+     b_sidx : integer range 0 to CFG_NASTI_SLAVES_TOTAL;
   end record;
+
+  constant R_RESET : reg_type := (
+      CFG_NASTI_MASTER_TOTAL, CFG_NASTI_SLAVES_TOTAL,
+      CFG_NASTI_MASTER_TOTAL, CFG_NASTI_SLAVES_TOTAL,
+      CFG_NASTI_MASTER_TOTAL, CFG_NASTI_SLAVES_TOTAL);
 
   signal rin, r : reg_type;
 
@@ -72,165 +77,183 @@ begin
 
   comblogic : process(i_nrst, i_slvcfg, i_msto, i_slvo, r)
     variable v : reg_type;
-    variable ar_sidx : slave_selector_type;
-    variable aw_sidx : slave_selector_type;
-    variable ar_collision : std_logic_vector(0 to CFG_NASTI_SLAVES_TOTAL-1);
-    variable aw_collision : std_logic_vector(0 to CFG_NASTI_SLAVES_TOTAL-1);
+    variable ar_midx : integer range 0 to CFG_NASTI_MASTER_TOTAL;
+    variable aw_midx : integer range 0 to CFG_NASTI_MASTER_TOTAL;
+    variable ar_sidx : integer range 0 to CFG_NASTI_SLAVES_TOTAL; -- +1 miss access
+    variable aw_sidx : integer range 0 to CFG_NASTI_SLAVES_TOTAL; -- +1 miss access
     variable vmsto : nasti_master_out_vector_miss;
     variable vmsti : nasti_master_in_vector_miss;
     variable vslvi : nasti_slave_in_vector_miss;
     variable vslvo : nasti_slave_out_vector_miss;
-    variable aw_fire : std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0);
-    variable ar_fire : std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0);
-    variable w_fire : std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0);
-    variable r_fire : std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0);
-    variable b_fire : std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0);    
+    variable aw_fire : std_logic;
+    variable ar_fire : std_logic;
+    variable w_fire : std_logic;
+    variable w_busy : std_logic;
+    variable r_fire : std_logic;
+    variable r_busy : std_logic;
+    variable b_fire : std_logic;
+    variable b_busy : std_logic;
     -- Bus statistic signals
-    variable wb_bus_util_w : std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0);
-    variable wb_bus_util_r : std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0);
+    variable wb_bus_util_w : std_logic_vector(CFG_NASTI_MASTER_TOTAL downto 0);
+    variable wb_bus_util_r : std_logic_vector(CFG_NASTI_MASTER_TOTAL downto 0);
 
   begin
 
     v := r;
 
-    for n in 0 to CFG_NASTI_MASTER_TOTAL-1 loop
-       ar_sidx(n) := CFG_NASTI_SLAVES_TOTAL;
-       aw_sidx(n) := CFG_NASTI_SLAVES_TOTAL;
-       vmsto(n) := i_msto(n);
-       vmsti(n) := nasti_master_in_none;
+    for m in 0 to CFG_NASTI_MASTER_TOTAL-1 loop
+       vmsto(m) := i_msto(m);
+       vmsti(m) := nasti_master_in_none;
     end loop;
     vmsto(CFG_NASTI_MASTER_TOTAL) := nasti_master_out_none;
     vmsti(CFG_NASTI_MASTER_TOTAL) := nasti_master_in_none;
 
-    for k in 0 to CFG_NASTI_SLAVES_TOTAL-1 loop
-       vslvo(k) := i_slvo(k);
-       vslvi(k) := nasti_slave_in_none;
+    for s in 0 to CFG_NASTI_SLAVES_TOTAL-1 loop
+       vslvo(s) := i_slvo(s);
+       vslvi(s) := nasti_slave_in_none;
     end loop;
     vslvo(CFG_NASTI_SLAVES_TOTAL) := MISS_ACCESS_SLAVE;
     vslvi(CFG_NASTI_SLAVES_TOTAL) := nasti_slave_in_none;
 
-    ar_collision := (others => '0');
-    aw_collision := (others => '0');
+    ar_midx := CFG_NASTI_MASTER_TOTAL;
+    aw_midx := CFG_NASTI_MASTER_TOTAL;
+    ar_sidx := CFG_NASTI_SLAVES_TOTAL;
+    aw_sidx := CFG_NASTI_SLAVES_TOTAL;
 
+    -- select master bus:
     for m in 0 to CFG_NASTI_MASTER_TOTAL-1 loop
-        for s in 0 to CFG_NASTI_SLAVES_TOTAL-1 loop
-            if ar_collision(s) = '0'
-                and i_slvcfg(s).xmask /= X"00000"
-                and (vmsto(m).ar_bits.addr(CFG_NASTI_ADDR_BITS-1 downto 12) 
-                     and i_slvcfg(s).xmask) = i_slvcfg(s).xaddr then
-                ar_sidx(m) := s;
-                ar_collision(s) := '1';
-            end if;
-            if aw_collision(s) = '0'
-                and i_slvcfg(s).xmask /= X"00000"
-                and (vmsto(m).aw_bits.addr(CFG_NASTI_ADDR_BITS-1 downto 12)
-                     and i_slvcfg(s).xmask) = i_slvcfg(s).xaddr then
-                aw_sidx(m) := s;
-                aw_collision(s) := '1';
-            end if;
-        end loop;
-
-        -- Read Channel:
-        ar_fire(m) := vmsto(m).ar_valid and vslvo(ar_sidx(m)).ar_ready;
-        r_fire(m) := vmsto(m).r_ready and vslvo(r.r_sidx(m)).r_valid and vslvo(r.r_sidx(m)).r_last;
-        -- Write channel:
-        aw_fire(m) := vmsto(m).aw_valid and vslvo(aw_sidx(m)).aw_ready;
-        w_fire(m) := vmsto(m).w_valid and vmsto(m).w_last and vslvo(r.w_sidx(m)).w_ready;
-        -- Write confirm channel
-        b_fire(m) := vmsto(m).b_ready and vslvo(r.b_sidx(m)).b_valid;
-
-        if ar_fire(m) = '1' then
-            v.r_sidx(m) := ar_sidx(m);
-        elsif r_fire(m) = '1' then
-            v.r_sidx(m) := CFG_NASTI_SLAVES_TOTAL;
+        if i_msto(m).ar_valid = '1' then
+            ar_midx := m;
         end if;
-
-        if aw_fire(m) = '1' then
-            v.w_sidx(m) := aw_sidx(m);
-        elsif w_fire(m) = '1' then
-            v.w_sidx(m) := CFG_NASTI_SLAVES_TOTAL;
-        end if;
-
-        if w_fire(m) = '1' then
-            v.b_sidx(m) := r.w_sidx(m);
-        elsif b_fire(m) = '1' then
-            v.b_sidx(m) := CFG_NASTI_SLAVES_TOTAL;
-        end if;
-
-
-        vmsti(m).ar_ready := vslvo(ar_sidx(m)).ar_ready;
-        vslvi(ar_sidx(m)).ar_valid := vmsto(m).ar_valid;
-        vslvi(ar_sidx(m)).ar_bits  := vmsto(m).ar_bits;
-        vslvi(ar_sidx(m)).ar_id    := vmsto(m).ar_id;
-        vslvi(ar_sidx(m)).ar_user  := vmsto(m).ar_user;
-
-        vmsti(m).r_valid := vslvo(r.r_sidx(m)).r_valid;
-        vmsti(m).r_resp  := vslvo(r.r_sidx(m)).r_resp;
-        vmsti(m).r_data  := vslvo(r.r_sidx(m)).r_data;
-        vmsti(m).r_last  := vslvo(r.r_sidx(m)).r_last;
-        vmsti(m).r_id    := vslvo(r.r_sidx(m)).r_id;
-        vmsti(m).r_user  := vslvo(r.r_sidx(m)).r_user;
-        vslvi(r.r_sidx(m)).r_ready := vmsto(m).r_ready;
-
-        vmsti(m).aw_ready := vslvo(aw_sidx(m)).aw_ready;
-        vslvi(aw_sidx(m)).aw_valid := vmsto(m).aw_valid;
-        vslvi(aw_sidx(m)).aw_bits  := vmsto(m).aw_bits;
-        vslvi(aw_sidx(m)).aw_id    := vmsto(m).aw_id;
-        vslvi(aw_sidx(m)).aw_user  := vmsto(m).aw_user;
-
-        vmsti(m).w_ready := vslvo(r.w_sidx(m)).w_ready;
-        vslvi(r.w_sidx(m)).w_valid := vmsto(m).w_valid;
-        vslvi(r.w_sidx(m)).w_data := vmsto(m).w_data;
-        vslvi(r.w_sidx(m)).w_last := vmsto(m).w_last;
-        vslvi(r.w_sidx(m)).w_strb := vmsto(m).w_strb;
-        vslvi(r.w_sidx(m)).w_user := vmsto(m).w_user;
-
-        vmsti(m).b_valid := vslvo(r.b_sidx(m)).b_valid;
-        vmsti(m).b_resp := vslvo(r.b_sidx(m)).b_resp;
-        vmsti(m).b_id := vslvo(r.b_sidx(m)).b_id;
-        vmsti(m).b_user := vslvo(r.b_sidx(m)).b_user;
-        vslvi(r.b_sidx(m)).b_ready := vmsto(m).b_ready;
-
-        -- Statistic
-        wb_bus_util_w(m) := '0';
-        if r.w_sidx(m) /= CFG_NASTI_SLAVES_TOTAL then
-            wb_bus_util_w(m) :=  '1';
-        end if;
-        wb_bus_util_r(m) := '0';
-        if r.r_sidx(m) /= CFG_NASTI_SLAVES_TOTAL then
-            wb_bus_util_r(m) := '1';
+        if i_msto(m).aw_valid = '1' then
+            aw_midx := m;
         end if;
     end loop;
 
+    -- select slave interface
+    for s in 0 to CFG_NASTI_SLAVES_TOTAL-1 loop
+        if i_slvcfg(s).xmask /= X"00000" and
+           (vmsto(ar_midx).ar_bits.addr(CFG_NASTI_ADDR_BITS-1 downto 12) 
+            and i_slvcfg(s).xmask) = i_slvcfg(s).xaddr then
+            ar_sidx := s;
+        end if;
+        if i_slvcfg(s).xmask /= X"00000" and
+           (vmsto(aw_midx).aw_bits.addr(CFG_NASTI_ADDR_BITS-1 downto 12)
+            and i_slvcfg(s).xmask) = i_slvcfg(s).xaddr then
+            aw_sidx := s;
+        end if;
+    end loop;
+
+    -- Read Channel:
+    ar_fire := vmsto(ar_midx).ar_valid and vslvo(ar_sidx).ar_ready;
+    r_fire := vmsto(r.r_midx).r_ready and vslvo(r.r_sidx).r_valid and vslvo(r.r_sidx).r_last;
+    -- Write channel:
+    aw_fire := vmsto(aw_midx).aw_valid and vslvo(aw_sidx).aw_ready;
+    w_fire := vmsto(r.w_midx).w_valid and vmsto(r.w_midx).w_last and vslvo(r.w_sidx).w_ready;
+    -- Write confirm channel
+    b_fire := vmsto(r.b_midx).b_ready and vslvo(r.b_sidx).b_valid;
+
+    r_busy := '0';
+    if r.r_sidx /= CFG_NASTI_SLAVES_TOTAL and r_fire = '0' then
+        r_busy := '1';
+    end if;
+
+    w_busy := '0';
+    if (r.w_sidx /= CFG_NASTI_SLAVES_TOTAL and w_fire = '0') 
+       or (r.b_sidx /= CFG_NASTI_SLAVES_TOTAL and b_fire = '0') then
+        w_busy := '1';
+    end if;
+
+    b_busy := '0';
+    if (r.b_sidx /= CFG_NASTI_SLAVES_TOTAL and b_fire = '0')  then
+        b_busy := '1';
+    end if;
+
+    if ar_fire = '1' and r_busy = '0' then
+        v.r_sidx := ar_sidx;
+        v.r_midx := ar_midx;
+    elsif r_fire = '1' then
+        v.r_sidx := CFG_NASTI_SLAVES_TOTAL;
+        v.r_midx := CFG_NASTI_MASTER_TOTAL;
+    end if;
+
+    if aw_fire = '1' and w_busy = '0' then
+        v.w_sidx := aw_sidx;
+        v.w_midx := aw_midx;
+    elsif w_fire = '1' and b_busy = '0' then
+        v.w_sidx := CFG_NASTI_SLAVES_TOTAL;
+        v.w_midx := CFG_NASTI_MASTER_TOTAL;
+    end if;
+
+    if w_fire = '1' and b_busy = '0' then
+        v.b_sidx := r.w_sidx;
+        v.b_midx := r.w_midx;
+    elsif b_fire = '1' then
+        v.b_sidx := CFG_NASTI_SLAVES_TOTAL;
+        v.b_midx := CFG_NASTI_MASTER_TOTAL;
+    end if;
+
+
+    vmsti(ar_midx).ar_ready := vslvo(ar_sidx).ar_ready and not r_busy;
+    vslvi(ar_sidx).ar_valid := vmsto(ar_midx).ar_valid and not r_busy;
+    vslvi(ar_sidx).ar_bits  := vmsto(ar_midx).ar_bits;
+    vslvi(ar_sidx).ar_id    := vmsto(ar_midx).ar_id;
+    vslvi(ar_sidx).ar_user  := vmsto(ar_midx).ar_user;
+
+    vmsti(r.r_midx).r_valid := vslvo(r.r_sidx).r_valid;
+    vmsti(r.r_midx).r_resp  := vslvo(r.r_sidx).r_resp;
+    vmsti(r.r_midx).r_data  := vslvo(r.r_sidx).r_data;
+    vmsti(r.r_midx).r_last  := vslvo(r.r_sidx).r_last;
+    vmsti(r.r_midx).r_id    := vslvo(r.r_sidx).r_id;
+    vmsti(r.r_midx).r_user  := vslvo(r.r_sidx).r_user;
+    vslvi(r.r_sidx).r_ready := vmsto(r.r_midx).r_ready;
+
+    vmsti(aw_midx).aw_ready := vslvo(aw_sidx).aw_ready and not w_busy;
+    vslvi(aw_sidx).aw_valid := vmsto(aw_midx).aw_valid and not w_busy;
+    vslvi(aw_sidx).aw_bits  := vmsto(aw_midx).aw_bits;
+    vslvi(aw_sidx).aw_id    := vmsto(aw_midx).aw_id;
+    vslvi(aw_sidx).aw_user  := vmsto(aw_midx).aw_user;
+
+    vmsti(r.w_midx).w_ready := vslvo(r.w_sidx).w_ready and not b_busy;
+    vslvi(r.w_sidx).w_valid := vmsto(r.w_midx).w_valid and not b_busy;
+    vslvi(r.w_sidx).w_data := vmsto(r.w_midx).w_data;
+    vslvi(r.w_sidx).w_last := vmsto(r.w_midx).w_last;
+    vslvi(r.w_sidx).w_strb := vmsto(r.w_midx).w_strb;
+    vslvi(r.w_sidx).w_user := vmsto(r.w_midx).w_user;
+
+    vmsti(r.b_midx).b_valid := vslvo(r.b_sidx).b_valid;
+    vmsti(r.b_midx).b_resp := vslvo(r.b_sidx).b_resp;
+    vmsti(r.b_midx).b_id := vslvo(r.b_sidx).b_id;
+    vmsti(r.b_midx).b_user := vslvo(r.b_sidx).b_user;
+    vslvi(r.b_sidx).b_ready := vmsto(r.b_midx).b_ready;
+
+    -- Statistic
+    wb_bus_util_w := (others => '0');
+    wb_bus_util_w(r.w_midx) :=  '1';
+    wb_bus_util_r := (others => '0');
+    wb_bus_util_r(r.r_midx) := '1';
+
 
     if not async_reset and i_nrst = '0' then
-      for m in 0 to CFG_NASTI_MASTER_TOTAL-1 loop
-         v.w_sidx(m) := CFG_NASTI_SLAVES_TOTAL;
-         v.r_sidx(m) := CFG_NASTI_SLAVES_TOTAL;
-         v.b_sidx(m) := CFG_NASTI_SLAVES_TOTAL;
-      end loop;
+        v := R_RESET;
     end if;
  
     rin <= v;
 
-    for k in 0 to CFG_NASTI_MASTER_TOTAL-1 loop
-       o_msti(k) <= vmsti(k);
+    for m in 0 to CFG_NASTI_MASTER_TOTAL-1 loop
+       o_msti(m) <= vmsti(m);
     end loop;
-    for k in 0 to CFG_NASTI_SLAVES_TOTAL-1 loop
-       o_slvi(k) <= vslvi(k);
+    for s in 0 to CFG_NASTI_SLAVES_TOTAL-1 loop
+       o_slvi(s) <= vslvi(s);
     end loop;
-    o_bus_util_w <= wb_bus_util_w;
-    o_bus_util_r <= wb_bus_util_r;
+    o_bus_util_w <= wb_bus_util_w(CFG_NASTI_MASTER_TOTAL-1 downto 0);
+    o_bus_util_r <= wb_bus_util_r(CFG_NASTI_MASTER_TOTAL-1 downto 0);
   end process;
 
   regs : process(i_clk, i_nrst)
   begin 
      if async_reset and i_nrst = '0' then
-         for m in 0 to CFG_NASTI_MASTER_TOTAL-1 loop
-             r.w_sidx(m) <= CFG_NASTI_SLAVES_TOTAL;
-             r.r_sidx(m) <= CFG_NASTI_SLAVES_TOTAL;
-             r.b_sidx(m) <= CFG_NASTI_SLAVES_TOTAL;
-         end loop;
+         r <= R_RESET;
      elsif rising_edge(i_clk) then 
          r <= rin;
      end if; 
