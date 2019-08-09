@@ -157,6 +157,7 @@ architecture arch_ICacheLru of ICacheLru is
   signal lrui : LruInVector;
   signal wb_lru_even : std_logic_vector(1 downto 0);
   signal wb_lru_odd : std_logic_vector(1 downto 0);
+  signal w_init : std_logic;
 
 begin
 
@@ -201,22 +202,18 @@ begin
       );
   end generate;
 
-  lrueven0 : ILru generic map (
-      async_reset => async_reset
-  ) port map (
-      i_nrst => i_nrst,
+  lrueven0 : ILru port map (
       i_clk => i_clk,
+      i_init => w_init,
       i_adr => lrui(WAY_EVEN).adr,
       i_we => lrui(WAY_EVEN).we,
       i_lru => lrui(WAY_EVEN).lru,
       o_lru => wb_lru_even
   );
 
-  lruodd0 : ILru generic map (
-      async_reset => async_reset
-  ) port map (
-      i_nrst => i_nrst,
+  lruodd0 : ILru port map (
       i_clk => i_clk,
+      i_init => w_init,
       i_adr => lrui(WAY_ODD).adr,
       i_we => lrui(WAY_ODD).we,
       i_lru => lrui(WAY_ODD).lru,
@@ -245,8 +242,8 @@ begin
     variable w_hit1_valid : std_logic;
     variable wb_mem_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     variable wb_o_resp_data : std_logic_vector(31 downto 0);
+    variable v_init : std_logic;
     variable w_ena : std_logic;
-    variable w_dis : std_logic;
     variable w_last : std_logic;
     variable w_o_resp_valid : std_logic;
     variable w_o_resp_load_fault : std_logic;
@@ -373,7 +370,10 @@ begin
     lrui(WAY_ODD).we <= '0';
     lrui(WAY_ODD).lru <= (others => '0');
     w_o_resp_valid := '0';
-    if r.state /= State_Flush and w_hit0_valid = '1' and w_hit1_valid = '1'
+    if r.state = State_Flush then
+        lrui(WAY_EVEN).adr <= r.mem_addr(IINDEX_END downto IINDEX_START);
+        lrui(WAY_ODD).adr <= r.mem_addr(IINDEX_END downto IINDEX_START);
+    elsif w_hit0_valid = '1' and w_hit1_valid = '1'
         and wb_hit0 /= MISS and wb_hit1 /= MISS and r.requested = '1' then
         w_o_resp_valid := '1';
 
@@ -436,7 +436,7 @@ begin
     -- System Bus access state machine
     w_last := '0';
     w_ena := '0';
-    w_dis := '0';
+    v_init := '0';
     wb_wstrb_next := r.burst_wstrb(2 downto 0) & r.burst_wstrb(3);
     case r.state is
     when State_Idle =>
@@ -522,8 +522,7 @@ begin
             v.state := State_Idle;
         end if;
     when State_Flush =>
-        w_ena := '1';
-        w_dis := '1';
+        v_init := '1';
         if r.flush_cnt = flush_cnt_zero then
             v.req_flush := '0';
             v.state := State_Idle;
@@ -537,32 +536,24 @@ begin
 
     -- Write signals:
     for n in 0 to CFG_ICACHE_WAYS-1 loop
-        wb_ena_even(n) <= w_dis;
-        wb_ena_odd(n) <= w_dis;
+        wb_ena_even(n) <= v_init;
+        wb_ena_odd(n) <= v_init;
     end loop;
 
+    swapin(WAY_EVEN).wadr <= r.mem_addr;
+    swapin(WAY_EVEN).wstrb <= r.burst_wstrb;
+    swapin(WAY_EVEN).wvalid <= r.burst_valid;
+    swapin(WAY_EVEN).wdata <= i_resp_mem_data;
+    swapin(WAY_EVEN).load_fault <= i_resp_mem_load_fault;
+    swapin(WAY_ODD).wadr <= r.mem_addr;
+    swapin(WAY_ODD).wstrb <= r.burst_wstrb;
+    swapin(WAY_ODD).wvalid <= r.burst_valid;
+    swapin(WAY_ODD).wdata <= i_resp_mem_data;
+    swapin(WAY_ODD).load_fault <= i_resp_mem_load_fault;
     if r.mem_addr(CFG_IOFFSET_WIDTH) = '0' then
-        wb_ena_even(conv_integer(r.lru_even_wr)) <= w_ena;
-        swapin(WAY_EVEN).wadr <= r.mem_addr;
-        swapin(WAY_EVEN).wstrb <= r.burst_wstrb;
-        swapin(WAY_EVEN).wvalid <= r.burst_valid;
-        swapin(WAY_EVEN).wdata <= i_resp_mem_data;
-        swapin(WAY_EVEN).load_fault <= i_resp_mem_load_fault;
-        swapin(WAY_ODD).wadr <= (others => '0');
-        swapin(WAY_ODD).wstrb <= (others => '0');
-        swapin(WAY_ODD).wvalid <= (others => '0');
-        swapin(WAY_ODD).load_fault <= '0';
+        wb_ena_even(conv_integer(r.lru_even_wr)) <= w_ena or v_init;
     else
-        swapin(WAY_EVEN).wadr <= (others => '0');
-        swapin(WAY_EVEN).wstrb <= (others => '0');
-        swapin(WAY_EVEN).wvalid <= (others => '0');
-        swapin(WAY_EVEN).load_fault <= '0';
-        wb_ena_odd(conv_integer(r.lru_odd_wr)) <= w_ena;
-        swapin(WAY_ODD).wadr <= r.mem_addr;
-        swapin(WAY_ODD).wstrb <= r.burst_wstrb;
-        swapin(WAY_ODD).wvalid <= r.burst_valid;
-        swapin(WAY_ODD).wdata <= i_resp_mem_data;
-        swapin(WAY_ODD).load_fault <= i_resp_mem_load_fault;
+        wb_ena_odd(conv_integer(r.lru_odd_wr)) <= w_ena or v_init;
     end if;
 
 
@@ -571,6 +562,7 @@ begin
         v := R_RESET;
     end if;
 
+    w_init <= v_init;
     o_req_ctrl_ready <= w_o_req_ctrl_ready;
 
     o_req_mem_valid <= r.req_mem_valid;

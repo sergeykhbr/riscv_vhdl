@@ -18,10 +18,9 @@
 
 namespace debugger {
 
-ILru::ILru(sc_module_name name_, bool async_reset) : sc_module(name_) {
-    async_reset_ = async_reset;
-
+ILru::ILru(sc_module_name name_) : sc_module(name_) {
     SC_METHOD(comb);
+    sensitive << i_init;
     sensitive << i_adr;
     sensitive << i_we;
     sensitive << i_lru;
@@ -29,43 +28,31 @@ ILru::ILru(sc_module_name name_, bool async_reset) : sc_module(name_) {
     sensitive << r.update;
 
     SC_METHOD(registers);
-    sensitive << i_nrst;
     sensitive << i_clk.pos();
 };
 
 void ILru::comb() {
     sc_uint<8> wb_lru;
+
     v = r;
+    v.adr = i_adr.read();
 
     wb_lru = r.tbl[r.adr.read()];
 
-    v.adr = i_adr.read();
 
-    if (i_we.read() && wb_lru(7, 6) != i_lru.read()) {
+    if (i_init.read() == 1) {
+        v.tbl[i_adr.read()] = 0xe4;        // 0x3, 0x2, 0x1, 0x0
+    } else if (i_we.read() && wb_lru(7, 6) != i_lru.read()) {
         v.tbl[i_adr.read()] = (i_lru.read(), wb_lru(7, 2));
     }
     /** v.mem[] is not a signals, so use update register to trigger process */
     v.update = !r.update.read();
 
-    if (!async_reset_ && !i_nrst.read()) {
-        v.adr = 0;
-        for (int i = 0; i < LINES_TOTAL; i++) {
-            v.tbl[i] = 0xe4;        // 0x3, 0x2, 0x1, 0x0
-        }
-    }
-
     o_lru = wb_lru(1, 0);
 }
 
 void ILru::registers() {
-    if (async_reset_ && i_nrst.read() == 0) {
-        r.adr = 0;
-        for (int i = 0; i < LINES_TOTAL; i++) {
-            r.tbl[i] = 0xe4;        // 0x3, 0x2, 0x1, 0x0
-        }
-    } else {
-        r = v;
-    }
+    r = v;
 }
 
 }  // namespace debugger

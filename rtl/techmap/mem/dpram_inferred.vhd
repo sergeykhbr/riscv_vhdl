@@ -47,7 +47,7 @@ signal radr : std_logic_vector(abits-1 downto 0);
 
 begin
 
-  reg : process (i_clk, i_raddr, i_waddr, i_wena, i_wdata) begin
+  reg : process (i_clk) begin
     if rising_edge(i_clk) then 
       radr <= i_raddr;
       if i_wena = '1' then

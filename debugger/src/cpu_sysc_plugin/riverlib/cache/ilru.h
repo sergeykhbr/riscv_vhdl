@@ -24,8 +24,8 @@
 namespace debugger {
 
 SC_MODULE(ILru) {
-    sc_in<bool> i_nrst;
     sc_in<bool> i_clk;
+    sc_in<bool> i_init;
     sc_in<sc_uint<CFG_IINDEX_WIDTH>> i_adr;
     sc_in<bool> i_we;
     sc_in<sc_uint<2>> i_lru;
@@ -36,7 +36,7 @@ SC_MODULE(ILru) {
 
     SC_HAS_PROCESS(ILru);
 
-    ILru(sc_module_name name_, bool async_reset);
+    ILru(sc_module_name name_);
 
  private:
     static const int LINES_TOTAL = 1 << CFG_IINDEX_WIDTH;
@@ -46,8 +46,6 @@ SC_MODULE(ILru) {
         sc_signal<sc_uint<CFG_IINDEX_WIDTH>> adr;
         sc_uint<8> tbl[LINES_TOTAL];
     } v, r;
-
-    bool async_reset_;
 };
 
 }  // namespace debugger

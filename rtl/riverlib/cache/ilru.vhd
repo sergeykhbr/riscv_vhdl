@@ -22,12 +22,9 @@ library riverlib;
 use riverlib.river_cfg.all;
 use riverlib.types_cache.all;
 
-entity ILru is generic (
-    async_reset : boolean
-  );
-  port (
-    i_nrst : in std_logic;
+entity ILru is port (
     i_clk : in std_logic;
+    i_init : in std_logic;
     i_adr : in std_logic_vector(CFG_IINDEX_WIDTH-1 downto 0);
     i_we : in std_logic;
     i_lru : in std_logic_vector(1 downto 0);
@@ -40,56 +37,35 @@ architecture arch_ILru of ILru is
   constant LINES_TOTAL : integer := 2**CFG_IINDEX_WIDTH;
   type array_type is array (0 to LINES_TOTAL-1) of std_logic_vector(7 downto 0);
 
+  signal radr : std_logic_vector(CFG_IINDEX_WIDTH-1 downto 0);
   signal tbl : array_type;
-  signal adr : std_logic_vector(CFG_IINDEX_WIDTH-1 downto 0);
-
-  type RegistersType is record
-      adr : std_logic_vector(CFG_IINDEX_WIDTH-1 downto 0);
-      tbl : array_type;
-  end record;
-
-  signal r, rin : RegistersType;
+  signal wb_tbl_rdata : std_logic_vector(7 downto 0);
+  signal wb_tbl_wdata : std_logic_vector(7 downto 0);
 
 begin
 
-  comb : process(i_nrst, i_adr, i_we, i_lru, r)
-    variable v : RegistersType;
-    variable wb_lru : std_logic_vector(7 downto 0);
+  comb : process(i_init, i_adr, i_we, i_lru, wb_tbl_rdata)
   begin
 
-    v := r;
-
-    wb_lru := r.tbl(conv_integer(r.adr));
-    
-    v.adr := i_adr;
-
-    if i_we = '1' and wb_lru(7 downto 6) /= i_lru then
-        v.tbl(conv_integer(i_adr)) := i_lru & wb_lru(7 downto 2);
+    if i_init = '1' then
+        wb_tbl_wdata <= X"E4";  -- 0x3, 0x2, 0x1, 00
+    elsif i_we = '1' and wb_tbl_rdata(7 downto 6) /= i_lru then
+        wb_tbl_wdata <= i_lru & wb_tbl_rdata(7 downto 2);
+    else
+        wb_tbl_wdata <= wb_tbl_rdata;
     end if;
-
-    if not async_reset and i_nrst = '0' then
-        v.adr := (others => '0');
-        for i in 0 to LINES_TOTAL-1 loop
-            v.tbl(i) := X"E4";  -- 0x3, 0x2, 0x1, 00
-        end loop;
-    end if;
-
-    o_lru <= wb_lru(1 downto 0);
-   
-    rin <= v;
   end process;
 
-  -- registers:
-  regs : process(i_clk, i_nrst)
-  begin 
-     if async_reset and i_nrst = '0' then
-        r.adr <= (others => '0');
-        for i in 0 to LINES_TOTAL-1 loop
-            r.tbl(i) <= X"E4";  -- 0x3, 0x2, 0x1, 00
-        end loop;
-     elsif rising_edge(i_clk) then 
-        r <= rin;
-     end if; 
+  reg : process (i_clk) begin
+    if rising_edge(i_clk) then 
+      radr <= i_adr;
+      if i_we = '1' then
+        tbl(conv_integer(i_adr)) <= wb_tbl_wdata;
+      end if;
+    end if;
   end process;
 
+  wb_tbl_rdata <= tbl(conv_integer(radr));
+  o_lru <= wb_tbl_rdata(1 downto 0);
+ 
 end;

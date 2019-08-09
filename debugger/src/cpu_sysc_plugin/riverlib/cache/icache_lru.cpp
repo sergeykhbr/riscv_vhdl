@@ -59,17 +59,17 @@ ICacheLru::ICacheLru(sc_module_name name_, bool async_reset,
         wayoddx[i]->o_load_fault(memodd[i].load_fault);
     }
 
-    lrueven = new ILru("lrueven0", async_reset);
-    lrueven->i_nrst(i_nrst);
+    lrueven = new ILru("lrueven0");
     lrueven->i_clk(i_clk);
+    lrueven->i_init(w_init);
     lrueven->i_adr(lrui[WAY_EVEN].adr);
     lrueven->i_we(lrui[WAY_EVEN].we);
     lrueven->i_lru(lrui[WAY_EVEN].lru);
     lrueven->o_lru(wb_lru_even);
 
-    lruodd = new ILru("lruodd0", async_reset);
-    lruodd->i_nrst(i_nrst);
+    lruodd = new ILru("lruodd0");
     lruodd->i_clk(i_clk);
+    lruodd->i_init(w_init);
     lruodd->i_adr(lrui[WAY_ODD].adr);
     lruodd->i_we(lrui[WAY_ODD].we);
     lruodd->i_lru(lrui[WAY_ODD].lru);
@@ -209,8 +209,8 @@ void ICacheLru::comb() {
     bool w_hit1_valid;
     sc_uint<BUS_ADDR_WIDTH> wb_mem_addr;
     sc_uint<32> wb_o_resp_data;
+    bool v_init;
     bool w_ena;
-    bool w_dis;
     bool w_last;
     bool w_o_resp_valid;
     bool w_o_resp_load_fault;
@@ -336,7 +336,10 @@ void ICacheLru::comb() {
     lrui[WAY_ODD].we = 0;
     lrui[WAY_ODD].lru = 0;
     w_o_resp_valid = 0;
-    if (r.state.read() != State_Flush && w_hit0_valid && w_hit1_valid
+    if (r.state.read() == State_Flush) {
+        lrui[WAY_EVEN].adr = r.mem_addr.read()(IINDEX_END, IINDEX_START);
+        lrui[WAY_ODD].adr = r.mem_addr.read()(IINDEX_END, IINDEX_START);
+    } else if (w_hit0_valid && w_hit1_valid
         && wb_hit0 != MISS && wb_hit1 != MISS && r.requested.read() == 1) {
         w_o_resp_valid = 1;
 
@@ -398,7 +401,7 @@ void ICacheLru::comb() {
     // System Bus access state machine
     w_last = 0;
     w_ena = 0;
-    w_dis = 0;
+    v_init = 0;
     wb_wstrb_next = (r.burst_wstrb.read() << 1) | r.burst_wstrb.read()[3];
     switch (r.state.read()) {
     case State_Idle:
@@ -492,8 +495,7 @@ void ICacheLru::comb() {
         }
         break;
     case State_Flush:
-        w_ena = 1;
-        w_dis = 1;
+        v_init = 1;
         if (r.flush_cnt.read() == 0) {
             v.req_flush = 0;
             v.state = State_Idle;
@@ -507,32 +509,24 @@ void ICacheLru::comb() {
 
     // Write signals:
     for (int i = 0; i < CFG_ICACHE_WAYS; i++) {
-        wb_ena_even[i] = w_dis;
-        wb_ena_odd[i] = w_dis;
+        wb_ena_even[i] = v_init;
+        wb_ena_odd[i] = v_init;
     }
 
+    swapin[WAY_EVEN].wadr = r.mem_addr.read();
+    swapin[WAY_EVEN].wstrb = r.burst_wstrb.read();
+    swapin[WAY_EVEN].wvalid = r.burst_valid.read();
+    swapin[WAY_EVEN].wdata = i_resp_mem_data.read();
+    swapin[WAY_EVEN].load_fault = i_resp_mem_load_fault.read();
+    swapin[WAY_ODD].wadr = r.mem_addr.read();
+    swapin[WAY_ODD].wstrb = r.burst_wstrb.read();
+    swapin[WAY_ODD].wvalid = r.burst_valid.read();
+    swapin[WAY_ODD].wdata = i_resp_mem_data.read();
+    swapin[WAY_ODD].load_fault = i_resp_mem_load_fault.read();
     if (r.mem_addr.read()[CFG_IOFFSET_WIDTH] == 0) {
-        wb_ena_even[r.lru_even_wr.read()] = w_ena;
-        swapin[WAY_EVEN].wadr = r.mem_addr.read();
-        swapin[WAY_EVEN].wstrb = r.burst_wstrb.read();
-        swapin[WAY_EVEN].wvalid = r.burst_valid.read();
-        swapin[WAY_EVEN].wdata = i_resp_mem_data.read();
-        swapin[WAY_EVEN].load_fault = i_resp_mem_load_fault.read();
-        swapin[WAY_ODD].wadr = 0;
-        swapin[WAY_ODD].wstrb = 0;
-        swapin[WAY_ODD].wvalid = 0;
-        swapin[WAY_ODD].load_fault = 0;
+        wb_ena_even[r.lru_even_wr.read()] = w_ena | v_init;
     } else {
-        swapin[WAY_EVEN].wadr = 0;
-        swapin[WAY_EVEN].wstrb = 0;
-        swapin[WAY_EVEN].wvalid = 0;
-        swapin[WAY_EVEN].load_fault = 0;
-        wb_ena_odd[r.lru_odd_wr.read()] = w_ena;
-        swapin[WAY_ODD].wadr = r.mem_addr.read();
-        swapin[WAY_ODD].wstrb = r.burst_wstrb.read();
-        swapin[WAY_ODD].wvalid = r.burst_valid.read();
-        swapin[WAY_ODD].wdata = i_resp_mem_data.read();
-        swapin[WAY_ODD].load_fault = i_resp_mem_load_fault.read();
+        wb_ena_odd[r.lru_odd_wr.read()] = w_ena | v_init;
     }
 
 
@@ -540,6 +534,7 @@ void ICacheLru::comb() {
         R_RESET(v);
     }
 
+    w_init = v_init;
     o_req_ctrl_ready = w_o_req_ctrl_ready;
 
     o_req_mem_valid = r.req_mem_valid.read();

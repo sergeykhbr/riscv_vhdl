@@ -71,12 +71,9 @@ package types_cache is
   );
   end component;
 
-  component ILru is generic (
-    async_reset : boolean
-  );
-  port (
-    i_nrst : in std_logic;
+  component ILru is port (
     i_clk : in std_logic;
+    i_init : in std_logic;
     i_adr : in std_logic_vector(CFG_IINDEX_WIDTH-1 downto 0);
     i_we : in std_logic;
     i_lru : in std_logic_vector(1 downto 0);

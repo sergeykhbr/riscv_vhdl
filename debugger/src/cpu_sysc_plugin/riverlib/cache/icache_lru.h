@@ -169,6 +169,7 @@ SC_MODULE(ICacheLru) {
     LruInType lrui[WAY_SubNum];
     sc_signal<sc_uint<2>> wb_lru_even;
     sc_signal<sc_uint<2>> wb_lru_odd;
+    sc_signal<bool> w_init;
 
     bool async_reset_;
     int index_width_;

@@ -22,7 +22,7 @@ package config_target is
 
   --! @brief   Dual-core configuration enabling
   --! @details This config parameter used only with CPU River
-  constant CFG_COMMON_DUAL_CORE_ENABLE : boolean := true;
+  constant CFG_COMMON_DUAL_CORE_ENABLE : boolean := false;
 
   --! @brief   HEX-image for the initialization of the Boot ROM.
   --! @details This file is used by \e inferred ROM implementation.
@@ -32,8 +32,9 @@ package config_target is
   --! @brief   HEX-image for the initialization of the FwImage ROM.
   --! @details This file is used by \e inferred ROM implementation.
   constant CFG_SIM_FWIMAGE_HEX : string := 
-                CFG_TOPDIR & "examples/zephyr/gcc711/zephyr.hex";
-                
+--                CFG_TOPDIR & "examples/zephyr/gcc711/zephyr.hex";
+                CFG_TOPDIR & "examples/dhrystone21/makefiles/bin/dhrystone21.hex";
+               
 
   --! @brief Hardware SoC Identificator.
   --!
