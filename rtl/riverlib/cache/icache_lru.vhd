@@ -111,6 +111,7 @@ architecture arch_ICacheLru of ICacheLru is
 
 
   type LruInType is record
+      init : std_logic;
       adr : std_logic_vector(CFG_IINDEX_WIDTH-1 downto 0);
       we : std_logic;
       lru : std_logic_vector(1 downto 0);
@@ -204,7 +205,7 @@ begin
 
   lrueven0 : ILru port map (
       i_clk => i_clk,
-      i_init => w_init,
+      i_init => lrui(WAY_EVEN).init,
       i_adr => lrui(WAY_EVEN).adr,
       i_we => lrui(WAY_EVEN).we,
       i_lru => lrui(WAY_EVEN).lru,
@@ -213,7 +214,7 @@ begin
 
   lruodd0 : ILru port map (
       i_clk => i_clk,
-      i_init => w_init,
+      i_init => lrui(WAY_ODD).init,
       i_adr => lrui(WAY_ODD).adr,
       i_we => lrui(WAY_ODD).we,
       i_lru => lrui(WAY_ODD).lru,
@@ -249,6 +250,10 @@ begin
     variable w_o_resp_load_fault : std_logic;
     variable w_o_req_ctrl_ready : std_logic;
     variable wb_wstrb_next : std_logic_vector(3 downto 0);
+    variable v_swapin : TagMemInVector;
+    variable v_lrui : LruInVector;
+    variable vb_ena_even : std_logic_vector(CFG_ICACHE_WAYS-1 downto 0);
+    variable vb_ena_odd : std_logic_vector(CFG_ICACHE_WAYS-1 downto 0);
   begin
 
     v := r;
@@ -363,64 +368,49 @@ begin
         end if;
     end if;
 
-    lrui(WAY_EVEN).adr <= (others => '0');
-    lrui(WAY_EVEN).we <= '0';
-    lrui(WAY_EVEN).lru <= (others => '0');
-    lrui(WAY_ODD).adr <= (others => '0');
-    lrui(WAY_ODD).we <= '0';
-    lrui(WAY_ODD).lru <= (others => '0');
+    v_lrui(WAY_EVEN).init := '0';
+    v_lrui(WAY_EVEN).adr := (others => '0');
+    v_lrui(WAY_EVEN).we := '0';
+    v_lrui(WAY_EVEN).lru := (others => '0');
+    v_lrui(WAY_ODD).init := '0';
+    v_lrui(WAY_ODD).adr := (others => '0');
+    v_lrui(WAY_ODD).we := '0';
+    v_lrui(WAY_ODD).lru := (others => '0');
     w_o_resp_valid := '0';
     if r.state = State_Flush then
-        lrui(WAY_EVEN).adr <= r.mem_addr(IINDEX_END downto IINDEX_START);
-        lrui(WAY_ODD).adr <= r.mem_addr(IINDEX_END downto IINDEX_START);
+        v_lrui(WAY_EVEN).init := not r.mem_addr(CFG_IOFFSET_WIDTH);
+        v_lrui(WAY_EVEN).adr := r.mem_addr(IINDEX_END downto IINDEX_START);
+        v_lrui(WAY_ODD).init := r.mem_addr(CFG_IOFFSET_WIDTH);
+        v_lrui(WAY_ODD).adr := r.mem_addr(IINDEX_END downto IINDEX_START);
     elsif w_hit0_valid = '1' and w_hit1_valid = '1'
         and wb_hit0 /= MISS and wb_hit1 /= MISS and r.requested = '1' then
         w_o_resp_valid := '1';
 
         -- Update LRU table
         if w_raddr5_r = '0' then
-            lrui(WAY_EVEN).we <= '1';
-            lrui(WAY_EVEN).lru <= conv_std_logic_vector(wb_hit0, 2)(1 downto 0);
-            lrui(WAY_EVEN).adr <=
+            v_lrui(WAY_EVEN).we := '1';
+            v_lrui(WAY_EVEN).lru := conv_std_logic_vector(wb_hit0, 2)(1 downto 0);
+            v_lrui(WAY_EVEN).adr :=
                 r.req_addr(IINDEX_END downto IINDEX_START);
             if r.use_overlay = '1' then
-                lrui(WAY_ODD).we <= '1';
-                lrui(WAY_ODD).lru <= conv_std_logic_vector(wb_hit1, 2)(1 downto 0);
-                lrui(WAY_ODD).adr <=
+                v_lrui(WAY_ODD).we := '1';
+                v_lrui(WAY_ODD).lru := conv_std_logic_vector(wb_hit1, 2)(1 downto 0);
+                v_lrui(WAY_ODD).adr :=
                     r.req_addr_overlay(IINDEX_END downto IINDEX_START);
             end if;
         else
-            lrui(WAY_ODD).we <= '1';
-            lrui(WAY_ODD).lru <= conv_std_logic_vector(wb_hit0, 2)(1 downto 0);
-            lrui(WAY_ODD).adr <=
+            v_lrui(WAY_ODD).we := '1';
+            v_lrui(WAY_ODD).lru := conv_std_logic_vector(wb_hit0, 2)(1 downto 0);
+            v_lrui(WAY_ODD).adr :=
                 r.req_addr(IINDEX_END downto IINDEX_START);
             if r.use_overlay = '1' then
-                lrui(WAY_EVEN).we <= '1';
-                lrui(WAY_EVEN).lru <= conv_std_logic_vector(wb_hit1, 2)(1 downto 0);
-                lrui(WAY_EVEN).adr <=
+                v_lrui(WAY_EVEN).we := '1';
+                v_lrui(WAY_EVEN).lru := conv_std_logic_vector(wb_hit1, 2)(1 downto 0);
+                v_lrui(WAY_EVEN).adr :=
                     r.req_addr_overlay(IINDEX_END downto IINDEX_START);
             end if;
         end if;
     end if;
-
-    if r.state = State_Idle or w_o_resp_valid = '1' then
-        if w_raddr5 = '0' then
-            swapin(WAY_EVEN).radr <= wb_req_adr;
-            swapin(WAY_ODD).radr <= wb_radr_overlay;
-        else
-            swapin(WAY_EVEN).radr <= wb_radr_overlay;
-            swapin(WAY_ODD).radr <= wb_req_adr;
-        end if;
-    else
-        if w_raddr5_r = '0' then
-            swapin(WAY_EVEN).radr <= r.req_addr;
-            swapin(WAY_ODD).radr <= r.req_addr_overlay;
-        else
-            swapin(WAY_EVEN).radr <= r.req_addr_overlay;
-            swapin(WAY_ODD).radr <= r.req_addr;
-        end if;
-    end if;
-
 
     w_o_req_ctrl_ready := not r.req_flush
                        and (not r.requested or w_o_resp_valid);
@@ -535,31 +525,56 @@ begin
     end case;
 
     -- Write signals:
-    for n in 0 to CFG_ICACHE_WAYS-1 loop
-        wb_ena_even(n) <= v_init;
-        wb_ena_odd(n) <= v_init;
-    end loop;
-
-    swapin(WAY_EVEN).wadr <= r.mem_addr;
-    swapin(WAY_EVEN).wstrb <= r.burst_wstrb;
-    swapin(WAY_EVEN).wvalid <= r.burst_valid;
-    swapin(WAY_EVEN).wdata <= i_resp_mem_data;
-    swapin(WAY_EVEN).load_fault <= i_resp_mem_load_fault;
-    swapin(WAY_ODD).wadr <= r.mem_addr;
-    swapin(WAY_ODD).wstrb <= r.burst_wstrb;
-    swapin(WAY_ODD).wvalid <= r.burst_valid;
-    swapin(WAY_ODD).wdata <= i_resp_mem_data;
-    swapin(WAY_ODD).load_fault <= i_resp_mem_load_fault;
+    vb_ena_even := (others => v_init);
+    vb_ena_odd := (others => v_init);
     if r.mem_addr(CFG_IOFFSET_WIDTH) = '0' then
-        wb_ena_even(conv_integer(r.lru_even_wr)) <= w_ena or v_init;
+        vb_ena_even(conv_integer(r.lru_even_wr)) := w_ena or v_init;
     else
-        wb_ena_odd(conv_integer(r.lru_odd_wr)) <= w_ena or v_init;
+        vb_ena_odd(conv_integer(r.lru_odd_wr)) := w_ena or v_init;
+    end if;
+
+    v_swapin(WAY_EVEN).wadr := r.mem_addr;
+    v_swapin(WAY_EVEN).wstrb := r.burst_wstrb;
+    v_swapin(WAY_EVEN).wvalid := r.burst_valid;
+    v_swapin(WAY_EVEN).wdata := i_resp_mem_data;
+    v_swapin(WAY_EVEN).load_fault := i_resp_mem_load_fault;
+    v_swapin(WAY_ODD).wadr := r.mem_addr;
+    v_swapin(WAY_ODD).wstrb := r.burst_wstrb;
+    v_swapin(WAY_ODD).wvalid := r.burst_valid;
+    v_swapin(WAY_ODD).wdata := i_resp_mem_data;
+    v_swapin(WAY_ODD).load_fault := i_resp_mem_load_fault;
+
+    if r.state = State_Idle or w_o_resp_valid = '1' then
+        if w_raddr5 = '0' then
+            v_swapin(WAY_EVEN).radr := wb_req_adr;
+            v_swapin(WAY_ODD).radr := wb_radr_overlay;
+        else
+            v_swapin(WAY_EVEN).radr := wb_radr_overlay;
+            v_swapin(WAY_ODD).radr := wb_req_adr;
+        end if;
+    else
+        if w_raddr5_r = '0' then
+            v_swapin(WAY_EVEN).radr := r.req_addr;
+            v_swapin(WAY_ODD).radr := r.req_addr_overlay;
+        else
+            v_swapin(WAY_EVEN).radr := r.req_addr_overlay;
+            v_swapin(WAY_ODD).radr := r.req_addr;
+        end if;
     end if;
 
 
     if not async_reset and i_nrst = '0' then
         v := R_RESET;
     end if;
+
+    lrui(WAY_EVEN) <= v_lrui(WAY_EVEN);
+    lrui(WAY_ODD) <= v_lrui(WAY_ODD);
+
+    swapin(WAY_EVEN) <= v_swapin(WAY_EVEN);
+    swapin(WAY_ODD) <= v_swapin(WAY_ODD);
+
+    wb_ena_even <= vb_ena_even;
+    wb_ena_odd <= vb_ena_odd;
 
     w_init <= v_init;
     o_req_ctrl_ready <= w_o_req_ctrl_ready;

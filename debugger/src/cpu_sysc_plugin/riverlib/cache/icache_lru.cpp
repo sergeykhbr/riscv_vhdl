@@ -61,7 +61,7 @@ ICacheLru::ICacheLru(sc_module_name name_, bool async_reset,
 
     lrueven = new ILru("lrueven0");
     lrueven->i_clk(i_clk);
-    lrueven->i_init(w_init);
+    lrueven->i_init(lrui[WAY_EVEN].init);
     lrueven->i_adr(lrui[WAY_EVEN].adr);
     lrueven->i_we(lrui[WAY_EVEN].we);
     lrueven->i_lru(lrui[WAY_EVEN].lru);
@@ -69,7 +69,7 @@ ICacheLru::ICacheLru(sc_module_name name_, bool async_reset,
 
     lruodd = new ILru("lruodd0");
     lruodd->i_clk(i_clk);
-    lruodd->i_init(w_init);
+    lruodd->i_init(lrui[WAY_ODD].init);
     lruodd->i_adr(lrui[WAY_ODD].adr);
     lruodd->i_we(lrui[WAY_ODD].we);
     lruodd->i_lru(lrui[WAY_ODD].lru);
@@ -216,6 +216,10 @@ void ICacheLru::comb() {
     bool w_o_resp_load_fault;
     bool w_o_req_ctrl_ready;
     sc_uint<4> wb_wstrb_next;
+    LruInType v_lrui[WAY_SubNum];
+    TagMemInType v_swapin[WAY_SubNum];
+    bool vb_ena_even[CFG_ICACHE_WAYS];
+    bool vb_ena_odd[CFG_ICACHE_WAYS];
    
     v = r;
 
@@ -329,61 +333,47 @@ void ICacheLru::comb() {
         }
     }
 
-    lrui[WAY_EVEN].adr = 0;
-    lrui[WAY_EVEN].we = 0;
-    lrui[WAY_EVEN].lru = 0;
-    lrui[WAY_ODD].adr = 0;
-    lrui[WAY_ODD].we = 0;
-    lrui[WAY_ODD].lru = 0;
+    v_lrui[WAY_EVEN].init = 0;
+    v_lrui[WAY_EVEN].adr = 0;
+    v_lrui[WAY_EVEN].we = 0;
+    v_lrui[WAY_EVEN].lru = 0;
+    v_lrui[WAY_ODD].init = 0;
+    v_lrui[WAY_ODD].adr = 0;
+    v_lrui[WAY_ODD].we = 0;
+    v_lrui[WAY_ODD].lru = 0;
     w_o_resp_valid = 0;
     if (r.state.read() == State_Flush) {
-        lrui[WAY_EVEN].adr = r.mem_addr.read()(IINDEX_END, IINDEX_START);
-        lrui[WAY_ODD].adr = r.mem_addr.read()(IINDEX_END, IINDEX_START);
+        v_lrui[WAY_EVEN].init = !r.mem_addr.read()[CFG_IOFFSET_WIDTH];
+        v_lrui[WAY_EVEN].adr = r.mem_addr.read()(IINDEX_END, IINDEX_START);
+        v_lrui[WAY_ODD].init = r.mem_addr.read()[CFG_IOFFSET_WIDTH];
+        v_lrui[WAY_ODD].adr = r.mem_addr.read()(IINDEX_END, IINDEX_START);
     } else if (w_hit0_valid && w_hit1_valid
         && wb_hit0 != MISS && wb_hit1 != MISS && r.requested.read() == 1) {
         w_o_resp_valid = 1;
 
         // Update LRU table
         if (w_raddr5_r == 0) {
-            lrui[WAY_EVEN].we = 1;
-            lrui[WAY_EVEN].lru = wb_hit0(1, 0);
-            lrui[WAY_EVEN].adr =
+            v_lrui[WAY_EVEN].we = 1;
+            v_lrui[WAY_EVEN].lru = wb_hit0(1, 0);
+            v_lrui[WAY_EVEN].adr =
                 r.req_addr.read()(IINDEX_END, IINDEX_START);
             if (r.use_overlay.read() == 1) {
-                lrui[WAY_ODD].we = 1;
-                lrui[WAY_ODD].lru = wb_hit1(1, 0);
-                lrui[WAY_ODD].adr =
+                v_lrui[WAY_ODD].we = 1;
+                v_lrui[WAY_ODD].lru = wb_hit1(1, 0);
+                v_lrui[WAY_ODD].adr =
                     r.req_addr_overlay.read()(IINDEX_END, IINDEX_START);
             }
         } else {
-            lrui[WAY_ODD].we = 1;
-            lrui[WAY_ODD].lru = wb_hit0(1, 0);
-            lrui[WAY_ODD].adr =
+            v_lrui[WAY_ODD].we = 1;
+            v_lrui[WAY_ODD].lru = wb_hit0(1, 0);
+            v_lrui[WAY_ODD].adr =
                 r.req_addr.read()(IINDEX_END, IINDEX_START);
             if (r.use_overlay.read() == 1) {
-                lrui[WAY_EVEN].we = 1;
-                lrui[WAY_EVEN].lru = wb_hit1(1, 0);
-                lrui[WAY_EVEN].adr =
+                v_lrui[WAY_EVEN].we = 1;
+                v_lrui[WAY_EVEN].lru = wb_hit1(1, 0);
+                v_lrui[WAY_EVEN].adr =
                     r.req_addr_overlay.read()(IINDEX_END, IINDEX_START);
             }
-        }
-    }
-
-    if (r.state.read() == State_Idle || w_o_resp_valid == 1) {
-        if (w_raddr5 == 0) {
-            swapin[WAY_EVEN].radr = wb_req_adr;
-            swapin[WAY_ODD].radr = wb_radr_overlay;
-        } else {
-            swapin[WAY_EVEN].radr = wb_radr_overlay;
-            swapin[WAY_ODD].radr = wb_req_adr;
-        }
-    } else {
-        if (w_raddr5_r == 0) {
-            swapin[WAY_EVEN].radr = r.req_addr.read();
-            swapin[WAY_ODD].radr = r.req_addr_overlay.read();
-        } else {
-            swapin[WAY_EVEN].radr = r.req_addr_overlay.read();
-            swapin[WAY_ODD].radr = r.req_addr.read();
         }
     }
 
@@ -509,29 +499,66 @@ void ICacheLru::comb() {
 
     // Write signals:
     for (int i = 0; i < CFG_ICACHE_WAYS; i++) {
-        wb_ena_even[i] = v_init;
-        wb_ena_odd[i] = v_init;
+        vb_ena_even[i] = v_init;
+        vb_ena_odd[i] = v_init;
+    }
+    if (r.mem_addr.read()[CFG_IOFFSET_WIDTH] == 0) {
+        vb_ena_even[r.lru_even_wr.read()] = w_ena | v_init;
+    } else {
+        vb_ena_odd[r.lru_odd_wr.read()] = w_ena | v_init;
     }
 
-    swapin[WAY_EVEN].wadr = r.mem_addr.read();
-    swapin[WAY_EVEN].wstrb = r.burst_wstrb.read();
-    swapin[WAY_EVEN].wvalid = r.burst_valid.read();
-    swapin[WAY_EVEN].wdata = i_resp_mem_data.read();
-    swapin[WAY_EVEN].load_fault = i_resp_mem_load_fault.read();
-    swapin[WAY_ODD].wadr = r.mem_addr.read();
-    swapin[WAY_ODD].wstrb = r.burst_wstrb.read();
-    swapin[WAY_ODD].wvalid = r.burst_valid.read();
-    swapin[WAY_ODD].wdata = i_resp_mem_data.read();
-    swapin[WAY_ODD].load_fault = i_resp_mem_load_fault.read();
-    if (r.mem_addr.read()[CFG_IOFFSET_WIDTH] == 0) {
-        wb_ena_even[r.lru_even_wr.read()] = w_ena | v_init;
+    v_swapin[WAY_EVEN].wadr = r.mem_addr.read();
+    v_swapin[WAY_EVEN].wstrb = r.burst_wstrb.read();
+    v_swapin[WAY_EVEN].wvalid = r.burst_valid.read();
+    v_swapin[WAY_EVEN].wdata = i_resp_mem_data.read();
+    v_swapin[WAY_EVEN].load_fault = i_resp_mem_load_fault.read();
+    v_swapin[WAY_ODD].wadr = r.mem_addr.read();
+    v_swapin[WAY_ODD].wstrb = r.burst_wstrb.read();
+    v_swapin[WAY_ODD].wvalid = r.burst_valid.read();
+    v_swapin[WAY_ODD].wdata = i_resp_mem_data.read();
+    v_swapin[WAY_ODD].load_fault = i_resp_mem_load_fault.read();
+
+    if (r.state.read() == State_Idle || w_o_resp_valid == 1) {
+        if (w_raddr5 == 0) {
+            v_swapin[WAY_EVEN].radr = wb_req_adr;
+            v_swapin[WAY_ODD].radr = wb_radr_overlay;
+        } else {
+            v_swapin[WAY_EVEN].radr = wb_radr_overlay;
+            v_swapin[WAY_ODD].radr = wb_req_adr;
+        }
     } else {
-        wb_ena_odd[r.lru_odd_wr.read()] = w_ena | v_init;
+        if (w_raddr5_r == 0) {
+            v_swapin[WAY_EVEN].radr = r.req_addr.read();
+            v_swapin[WAY_ODD].radr = r.req_addr_overlay.read();
+        } else {
+            v_swapin[WAY_EVEN].radr = r.req_addr_overlay.read();
+            v_swapin[WAY_ODD].radr = r.req_addr.read();
+        }
     }
 
 
     if (!async_reset_ && !i_nrst.read()) {
         R_RESET(v);
+    }
+
+    for (int i = 0; i < WAY_SubNum; i++) {
+        lrui[i].init = v_lrui[i].init;
+        lrui[i].adr = v_lrui[i].adr;
+        lrui[i].we = v_lrui[i].we;
+        lrui[i].lru = v_lrui[i].lru;
+
+        swapin[i].radr = v_swapin[i].radr;
+        swapin[i].wadr = v_swapin[i].wadr;
+        swapin[i].wstrb = v_swapin[i].wstrb;
+        swapin[i].wvalid = v_swapin[i].wvalid;
+        swapin[i].wdata = v_swapin[i].wdata;
+        swapin[i].load_fault = v_swapin[i].load_fault;
+    }
+
+    for (int i = 0; i < CFG_ICACHE_WAYS; i++) {
+        wb_ena_even[i] = vb_ena_even[i];
+        wb_ena_odd[i] = vb_ena_odd[i];
     }
 
     w_init = v_init;

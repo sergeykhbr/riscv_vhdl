@@ -41,25 +41,33 @@ architecture arch_ILru of ILru is
   signal tbl : array_type;
   signal wb_tbl_rdata : std_logic_vector(7 downto 0);
   signal wb_tbl_wdata : std_logic_vector(7 downto 0);
+  signal w_we : std_logic;
 
 begin
 
   comb : process(i_init, i_adr, i_we, i_lru, wb_tbl_rdata)
+    variable vb_tbl_wdata : std_logic_vector(7 downto 0);
+    variable v_we : std_logic;
   begin
 
+    v_we := i_we;
     if i_init = '1' then
-        wb_tbl_wdata <= X"E4";  -- 0x3, 0x2, 0x1, 00
+        v_we := '1';
+        vb_tbl_wdata := X"E4";  -- 0x3, 0x2, 0x1, 00
     elsif i_we = '1' and wb_tbl_rdata(7 downto 6) /= i_lru then
-        wb_tbl_wdata <= i_lru & wb_tbl_rdata(7 downto 2);
+        vb_tbl_wdata := i_lru & wb_tbl_rdata(7 downto 2);
     else
-        wb_tbl_wdata <= wb_tbl_rdata;
+        vb_tbl_wdata := wb_tbl_rdata;
     end if;
+
+    w_we <= v_we;
+    wb_tbl_wdata <= vb_tbl_wdata;
   end process;
 
   reg : process (i_clk) begin
     if rising_edge(i_clk) then 
       radr <= i_adr;
-      if i_we = '1' then
+      if w_we = '1' then
         tbl(conv_integer(i_adr)) <= wb_tbl_wdata;
       end if;
     end if;

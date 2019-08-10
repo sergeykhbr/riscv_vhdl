@@ -41,11 +41,12 @@ SC_MODULE(ILru) {
  private:
     static const int LINES_TOTAL = 1 << CFG_IINDEX_WIDTH;
 
-    struct RegistersType {
-        sc_signal<bool> update;  // To generate SystemC delta event only.
-        sc_signal<sc_uint<CFG_IINDEX_WIDTH>> adr;
-        sc_uint<8> tbl[LINES_TOTAL];
-    } v, r;
+    sc_signal<sc_uint<CFG_IINDEX_WIDTH>> radr;
+    sc_uint<8> tbl[LINES_TOTAL];
+
+    sc_signal<sc_uint<8>> wb_tbl_rdata;
+    sc_signal<sc_uint<8>> wb_tbl_wdata;
+    sc_signal<bool> w_we;
 };
 
 }  // namespace debugger

@@ -24,35 +24,39 @@ ILru::ILru(sc_module_name name_) : sc_module(name_) {
     sensitive << i_adr;
     sensitive << i_we;
     sensitive << i_lru;
-    sensitive << r.adr;
-    sensitive << r.update;
+    sensitive << radr;
+    sensitive << wb_tbl_rdata;
 
     SC_METHOD(registers);
     sensitive << i_clk.pos();
 };
 
 void ILru::comb() {
-    sc_uint<8> wb_lru;
+    sc_uint<8> vb_tbl_wdata;
+    bool v_we;
 
-    v = r;
-    v.adr = i_adr.read();
+    wb_tbl_rdata = tbl[radr.read()];
 
-    wb_lru = r.tbl[r.adr.read()];
-
-
+    v_we - i_we.read();
     if (i_init.read() == 1) {
-        v.tbl[i_adr.read()] = 0xe4;        // 0x3, 0x2, 0x1, 0x0
-    } else if (i_we.read() && wb_lru(7, 6) != i_lru.read()) {
-        v.tbl[i_adr.read()] = (i_lru.read(), wb_lru(7, 2));
+        vb_tbl_wdata = 0xe4;        // 0x3, 0x2, 0x1, 0x0
+    } else if (i_we.read() && wb_tbl_rdata.read()(7, 6) != i_lru.read()) {
+        vb_tbl_wdata = (i_lru.read(), wb_tbl_rdata.read()(7, 2));
+    } else {
+        vb_tbl_wdata = wb_tbl_rdata.read();
     }
-    /** v.mem[] is not a signals, so use update register to trigger process */
-    v.update = !r.update.read();
 
-    o_lru = wb_lru(1, 0);
+    w_we = v_we;
+    wb_tbl_wdata = vb_tbl_wdata;
+    o_lru = wb_tbl_rdata.read()(1, 0);
 }
 
 void ILru::registers() {
-    r = v;
+    radr = i_adr.read();
+    //wb_tbl_rdata = tbl[i_adr.read()];
+    if (w_we.read() == 1) {
+        tbl[i_adr.read()] = wb_tbl_wdata;
+    }
 }
 
 }  // namespace debugger

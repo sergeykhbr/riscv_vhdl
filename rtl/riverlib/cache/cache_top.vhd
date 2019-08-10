@@ -256,6 +256,10 @@ begin
     variable wb_mem_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     variable wb_mem_len : std_logic_vector(7 downto 0);
     variable wb_mem_burst : std_logic_vector(1 downto 0);
+    variable v_data_req_ready : std_logic;
+    variable v_data_resp_mem_data_valid : std_logic;
+    variable v_ctrl_req_ready : std_logic;
+    variable v_ctrl_resp_mem_data_valid : std_logic;
   begin
 
     v := r;
@@ -265,25 +269,20 @@ begin
     wb_mem_addr := d.req_mem_addr;
     wb_mem_len := d.req_mem_len;
     wb_mem_burst := d.req_mem_burst;
-    w_data_req_ready <= '0';
-    w_data_resp_mem_data_valid <= '0';
-    wb_data_resp_mem_data <= i_resp_mem_data;
-    w_data_resp_mem_load_fault <= i_resp_mem_load_fault;
-
-    w_ctrl_req_ready <= '0';
-    w_ctrl_resp_mem_data_valid <= '0';
-    wb_ctrl_resp_mem_data <= i_resp_mem_data;
-    w_ctrl_resp_mem_load_fault <= i_resp_mem_load_fault;
+    v_data_req_ready := '0';
+    v_data_resp_mem_data_valid := '0';
+    v_ctrl_req_ready := '0';
+    v_ctrl_resp_mem_data_valid := '0';
    
     case r.state is
     when State_Idle =>
         w_req_mem_valid := i.req_mem_valid or d.req_mem_valid;
         if i_req_mem_ready = '1' then
             if d.req_mem_valid = '1' then
-                w_data_req_ready <= '1';
+                v_data_req_ready := '1';
                 v.state := State_DMem;
             elsif i.req_mem_valid = '1' then
-                w_ctrl_req_ready <= '1';
+                v_ctrl_req_ready := '1';
                 wb_mem_addr := i.req_mem_addr;
                 wb_mem_len := i.req_mem_len;
                 wb_mem_burst := i.req_mem_burst;
@@ -296,10 +295,10 @@ begin
         if i_resp_mem_data_valid = '1' and d.req_mem_last = '1' then
             if i_req_mem_ready = '1' then
                 if d.req_mem_valid = '1' then
-                    w_data_req_ready <= '1';
+                    v_data_req_ready := '1';
                     v.state := State_DMem;
                 elsif i.req_mem_valid = '1' then
-                    w_ctrl_req_ready <= '1';
+                    v_ctrl_req_ready := '1';
                     wb_mem_addr := i.req_mem_addr;
                     wb_mem_len := i.req_mem_len;
                     wb_mem_burst := i.req_mem_burst;
@@ -311,17 +310,17 @@ begin
                 v.state := State_Idle;
             end if;
         end if;
-        w_data_resp_mem_data_valid <= i_resp_mem_data_valid;
+        v_data_resp_mem_data_valid := i_resp_mem_data_valid;
         
     when State_IMem =>
         w_req_mem_valid := i.req_mem_last and (i.req_mem_valid or d.req_mem_valid);
         if i_resp_mem_data_valid = '1' and i.req_mem_last = '1' then
             if i_req_mem_ready = '1' then
                 if d.req_mem_valid = '1' then
-                    w_data_req_ready <= '1';
+                    v_data_req_ready := '1';
                     v.state := State_DMem;
                 elsif i.req_mem_valid = '1' then
-                    w_ctrl_req_ready <= '1';
+                    v_ctrl_req_ready := '1';
                     wb_mem_addr := i.req_mem_addr;
                     wb_mem_len := i.req_mem_len;
                     wb_mem_burst := i.req_mem_burst;
@@ -333,7 +332,7 @@ begin
                 v.state := State_Idle;
             end if;
         end if;
-        w_ctrl_resp_mem_data_valid <= i_resp_mem_data_valid;
+        v_ctrl_resp_mem_data_valid := i_resp_mem_data_valid;
         
     when others =>
     end case;
@@ -341,6 +340,16 @@ begin
     if not async_reset and i_nrst = '0' then
         v.state := State_Idle;
     end if;
+
+    w_data_req_ready <= v_data_req_ready;
+    w_data_resp_mem_data_valid <= v_data_resp_mem_data_valid;
+    wb_data_resp_mem_data <= i_resp_mem_data;
+    w_data_resp_mem_load_fault <= i_resp_mem_load_fault;
+
+    w_ctrl_req_ready <= v_ctrl_req_ready;
+    w_ctrl_resp_mem_data_valid <= v_ctrl_resp_mem_data_valid;
+    wb_ctrl_resp_mem_data <= i_resp_mem_data;
+    w_ctrl_resp_mem_load_fault <= i_resp_mem_load_fault;
 
     o_req_mem_valid <= w_req_mem_valid;
     o_req_mem_addr <= wb_mem_addr;

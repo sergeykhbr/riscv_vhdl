@@ -110,6 +110,7 @@ SC_MODULE(ICacheLru) {
     };
 
     struct LruInType {
+        sc_signal<bool> init;
         sc_signal<sc_uint<CFG_IINDEX_WIDTH>> adr;
         sc_signal<bool> we;
         sc_signal<sc_uint<2>> lru;

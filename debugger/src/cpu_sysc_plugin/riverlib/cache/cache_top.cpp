@@ -147,6 +147,10 @@ void CacheTop::comb() {
     sc_uint<BUS_ADDR_WIDTH> wb_mem_addr;
     sc_uint<8> wb_mem_len;
     sc_uint<2> wb_mem_burst;
+    bool v_data_req_ready;
+    bool v_data_resp_mem_data_valid;
+    bool v_ctrl_req_ready;
+    bool v_ctrl_resp_mem_data_valid;
 
     v = r;
 
@@ -155,25 +159,20 @@ void CacheTop::comb() {
     wb_mem_addr = d.req_mem_addr;
     wb_mem_len = d.req_mem_len;
     wb_mem_burst = d.req_mem_burst;
-    w_data_req_ready = 0;
-    w_data_resp_mem_data_valid = 0;
-    wb_data_resp_mem_data = i_resp_mem_data.read();
-    w_data_resp_mem_load_fault = i_resp_mem_load_fault.read();
-
-    w_ctrl_req_ready = 0;
-    w_ctrl_resp_mem_data_valid = 0;
-    wb_ctrl_resp_mem_data = i_resp_mem_data.read();
-    w_ctrl_resp_mem_load_fault = i_resp_mem_load_fault.read();
+    v_data_req_ready = 0;
+    v_data_resp_mem_data_valid = 0;
+    v_ctrl_req_ready = 0;
+    v_ctrl_resp_mem_data_valid = 0;
 
     switch (r.state.read()) {
     case State_Idle:
         w_req_mem_valid = i.req_mem_valid | d.req_mem_valid;
         if (i_req_mem_ready.read() == 1) {
             if (d.req_mem_valid.read()) {
-                w_data_req_ready = 1;
+                v_data_req_ready = 1;
                 v.state = State_DMem;
             } else if (i.req_mem_valid.read()) {
-                w_ctrl_req_ready = 1;
+                v_ctrl_req_ready = 1;
                 wb_mem_addr = i.req_mem_addr;
                 wb_mem_len = i.req_mem_len;
                 wb_mem_burst = i.req_mem_burst;
@@ -187,10 +186,10 @@ void CacheTop::comb() {
         if (i_resp_mem_data_valid.read() && d.req_mem_last.read()) {
             if (i_req_mem_ready.read() == 1) {
                 if (d.req_mem_valid.read()) {
-                    w_data_req_ready = 1;
+                    v_data_req_ready = 1;
                     v.state = State_DMem;
                 } else if (i.req_mem_valid.read() == 1) {
-                    w_ctrl_req_ready = 1;
+                    v_ctrl_req_ready = 1;
                     wb_mem_addr = i.req_mem_addr;
                     wb_mem_len = i.req_mem_len;
                     wb_mem_burst = i.req_mem_burst;
@@ -202,7 +201,7 @@ void CacheTop::comb() {
                 v.state = State_Idle;
             }
         }
-        w_data_resp_mem_data_valid = i_resp_mem_data_valid;
+        v_data_resp_mem_data_valid = i_resp_mem_data_valid;
         break;
 
     case State_IMem:
@@ -210,10 +209,10 @@ void CacheTop::comb() {
         if (i_resp_mem_data_valid.read() && i.req_mem_last.read()) {
             if (i_req_mem_ready.read() == 1) {
                 if (d.req_mem_valid.read()) {
-                    w_data_req_ready = 1;
+                    v_data_req_ready = 1;
                     v.state = State_DMem;
                 } else if (i.req_mem_valid.read() == 1) {
-                    w_ctrl_req_ready = 1;
+                    v_ctrl_req_ready = 1;
                     wb_mem_addr = i.req_mem_addr;
                     wb_mem_len = i.req_mem_len;
                     wb_mem_burst = i.req_mem_burst;
@@ -225,7 +224,7 @@ void CacheTop::comb() {
                 v.state = State_Idle;
             }
         }
-        w_ctrl_resp_mem_data_valid = i_resp_mem_data_valid;
+        v_ctrl_resp_mem_data_valid = i_resp_mem_data_valid;
         break;
     default:;
     }
@@ -233,6 +232,16 @@ void CacheTop::comb() {
     if (!async_reset_ && !i_nrst.read()) {
         v.state = State_Idle;
     }
+
+    w_data_req_ready = v_data_req_ready;
+    w_data_resp_mem_data_valid = v_data_resp_mem_data_valid;
+    wb_data_resp_mem_data = i_resp_mem_data.read();
+    w_data_resp_mem_load_fault = i_resp_mem_load_fault.read();
+
+    w_ctrl_req_ready = v_ctrl_req_ready;
+    w_ctrl_resp_mem_data_valid = v_ctrl_resp_mem_data_valid;
+    wb_ctrl_resp_mem_data = i_resp_mem_data.read();
+    w_ctrl_resp_mem_load_fault = i_resp_mem_load_fault.read();
 
     o_req_mem_valid = w_req_mem_valid;
     o_req_mem_addr = wb_mem_addr;
