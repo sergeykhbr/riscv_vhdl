@@ -144,14 +144,20 @@
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mem\dpram64i.cpp">
       <Filter>riverlib\cache\mem</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mem\dpramtagi.cpp">
-      <Filter>riverlib\cache\mem</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\iwaymem.cpp">
       <Filter>riverlib\cache</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\ilru.cpp">
       <Filter>riverlib\cache</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mem\ramtagi.cpp">
+      <Filter>riverlib\cache\mem</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mem\dpramtagi.cpp">
+      <Filter>riverlib\cache\mem</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mem\ram64i.cpp">
+      <Filter>riverlib\cache\mem</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -298,14 +304,20 @@
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mem\dpram64i.h">
       <Filter>riverlib\cache\mem</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mem\dpramtagi.h">
-      <Filter>riverlib\cache\mem</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\iwaymem.h">
       <Filter>riverlib\cache</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\ilru.h">
       <Filter>riverlib\cache</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mem\ramtagi.h">
+      <Filter>riverlib\cache\mem</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mem\dpramtagi.h">
+      <Filter>riverlib\cache\mem</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mem\ram64i.h">
+      <Filter>riverlib\cache\mem</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

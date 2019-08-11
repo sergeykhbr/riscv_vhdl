@@ -14,44 +14,37 @@
  *  limitations under the License.
  */
 
-#ifndef __DEBUGGER_RIVERLIB_CACHE_MEM_ILRU_H__
-#define __DEBUGGER_RIVERLIB_CACHE_MEM_ILRU_H__
+#ifndef __DEBUGGER_RIVERLIB_CACHE_MEM_RAMTAGI_H__
+#define __DEBUGGER_RIVERLIB_CACHE_MEM_RAMTAGI_H__
 
 #include <systemc.h>
 #include "riscv-isa.h"
-#include "../river_cfg.h"
+#include "../../river_cfg.h"
 
 namespace debugger {
 
-SC_MODULE(ILru) {
+SC_MODULE(RamTagi) {
     sc_in<bool> i_clk;
-    sc_in<bool> i_init;
-    sc_in<sc_uint<CFG_IINDEX_WIDTH>> i_radr;
-    sc_in<sc_uint<CFG_IINDEX_WIDTH>> i_wadr;
-    sc_in<bool> i_we;
-    sc_in<sc_uint<2>> i_lru;
-    sc_out<sc_uint<2>> o_lru;
+    sc_in<sc_uint<CFG_IINDEX_WIDTH>> i_adr;
+    sc_out<sc_uint<CFG_ITAG_WIDTH_TOTAL>> o_rdata;
+    sc_in<bool> i_wena;
+    sc_in<sc_uint<CFG_ITAG_WIDTH_TOTAL>> i_wdata;
 
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(ILru);
+    SC_HAS_PROCESS(RamTagi);
 
-    ILru(sc_module_name name_);
-
-    void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
+    RamTagi(sc_module_name name_);
 
  private:
-    static const int LINES_TOTAL = 1 << CFG_IINDEX_WIDTH;
-
-    sc_signal<sc_uint<CFG_IINDEX_WIDTH>> radr;
-    sc_uint<8> tbl[LINES_TOTAL];
-
-    sc_signal<sc_uint<8>> wb_tbl_rdata;
-    sc_signal<sc_uint<8>> wb_tbl_wdata;
-    sc_signal<bool> w_we;
+    struct RegistersType {
+        sc_signal<bool> update;  // To generate SystemC delta event only.
+        sc_signal<sc_uint<CFG_IINDEX_WIDTH>> adr;
+        sc_uint<CFG_ITAG_WIDTH_TOTAL> mem[1 << CFG_IINDEX_WIDTH];
+    } v, r;
 };
 
 }  // namespace debugger
 
-#endif  // __DEBUGGER_RIVERLIB_CACHE_MEM_ILRU_H__
+#endif  // __DEBUGGER_RIVERLIB_CACHE_MEM_RAMTAGI_H__

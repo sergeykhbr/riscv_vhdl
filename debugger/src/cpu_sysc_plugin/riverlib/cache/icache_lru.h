@@ -83,6 +83,7 @@ SC_MODULE(ICacheLru) {
         State_WaitGrant,
         State_WaitResp,
         State_CheckResp,
+        State_SetupReadAdr,
         State_Flush
     };
 
@@ -93,6 +94,16 @@ SC_MODULE(ICacheLru) {
         sc_signal<sc_uint<4>> wvalid;
         sc_signal<sc_uint<64>> wdata;
         sc_signal<bool> load_fault;
+    };
+
+    // to comply with vhdl (signals cannot be ceated in process)
+    struct TagMemInTypeVariable {
+        sc_uint<BUS_ADDR_WIDTH> radr;
+        sc_uint<BUS_ADDR_WIDTH> wadr;
+        sc_uint<4> wstrb;
+        sc_uint<4> wvalid;
+        sc_uint<64> wdata;
+        bool load_fault;
     };
 
     struct TagMemOutType {
@@ -111,9 +122,19 @@ SC_MODULE(ICacheLru) {
 
     struct LruInType {
         sc_signal<bool> init;
-        sc_signal<sc_uint<CFG_IINDEX_WIDTH>> adr;
+        sc_signal<sc_uint<CFG_IINDEX_WIDTH>> radr;
+        sc_signal<sc_uint<CFG_IINDEX_WIDTH>> wadr;
         sc_signal<bool> we;
         sc_signal<sc_uint<2>> lru;
+    };
+
+    // to comply with vhdl (signals cannot be ceated in process)
+    struct LruInTypeVariable {
+        bool init;
+        sc_uint<CFG_IINDEX_WIDTH> radr;
+        sc_uint<CFG_IINDEX_WIDTH> wadr;
+        bool we;
+        sc_uint<2> lru;
     };
 
     struct RegistersType {

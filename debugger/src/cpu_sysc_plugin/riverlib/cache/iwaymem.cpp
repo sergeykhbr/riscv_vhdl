@@ -18,31 +18,53 @@
 
 namespace debugger {
 
-IWayMem::IWayMem(sc_module_name name_, bool async_reset, int wayidx) :
-    sc_module(name_) {
+IWayMem::IWayMem(sc_module_name name_, bool async_reset, int wayidx)
+    : sc_module(name_) {
     async_reset_ = async_reset;
     wayidx_ = wayidx;
 
-    tag0 = new DpRamTagi("itag0");
+    if (CFG_SINGLEPORT_CACHE) {
+        tag1 = new RamTagi("itag0");
 
-    tag0->i_clk(i_clk);
-    tag0->i_radr(wb_radr);
-    tag0->o_rdata(wb_tag_rdata);
-    tag0->i_wadr(wb_wadr);
-    tag0->i_wena(w_tag_wena);
-    tag0->i_wdata(wb_tag_wdata);
+        tag1->i_clk(i_clk);
+        tag1->i_adr(wb_radr);
+        tag1->o_rdata(wb_tag_rdata);
+        tag1->i_wena(w_tag_wena);
+        tag1->i_wdata(wb_tag_wdata);
 
-    char tstr[32] = "data0";
-    for (int i = 0; i < RAM64_BLOCK_TOTAL; i++) {
-        tstr[4] = '0' + static_cast<char>(i);
-        datan[i] = new DpRam64i(tstr);
+        char tstr[32] = "data0";
+        for (int i = 0; i < RAM64_BLOCK_TOTAL; i++) {
+            tstr[4] = '0' + static_cast<char>(i);
+            datas[i] = new Ram64i(tstr);
 
-        datan[i]->i_clk(i_clk);
-        datan[i]->i_radr(wb_radr);
-        datan[i]->o_rdata(wb_data_rdata[i]);
-        datan[i]->i_wadr(wb_wadr);
-        datan[i]->i_wena(w_data_wena[i]);
-        datan[i]->i_wdata(i_wdata);
+            datas[i]->i_clk(i_clk);
+            datas[i]->i_adr(wb_radr);
+            datas[i]->o_rdata(wb_data_rdata[i]);
+            datas[i]->i_wena(w_data_wena[i]);
+            datas[i]->i_wdata(i_wdata);
+        }
+    } else {
+        tag0 = new DpRamTagi("itag0");
+
+        tag0->i_clk(i_clk);
+        tag0->i_radr(wb_radr);
+        tag0->o_rdata(wb_tag_rdata);
+        tag0->i_wadr(wb_wadr);
+        tag0->i_wena(w_tag_wena);
+        tag0->i_wdata(wb_tag_wdata);
+
+        char tstr[32] = "data0";
+        for (int i = 0; i < RAM64_BLOCK_TOTAL; i++) {
+            tstr[4] = '0' + static_cast<char>(i);
+            datan[i] = new DpRam64i(tstr);
+
+            datan[i]->i_clk(i_clk);
+            datan[i]->i_radr(wb_radr);
+            datan[i]->o_rdata(wb_data_rdata[i]);
+            datan[i]->i_wadr(wb_wadr);
+            datan[i]->i_wena(w_data_wena[i]);
+            datan[i]->i_wdata(i_wdata);
+        }
     }
 
     SC_METHOD(comb);
@@ -63,9 +85,16 @@ IWayMem::IWayMem(sc_module_name name_, bool async_reset, int wayidx) :
 };
 
 IWayMem::~IWayMem() {
-    delete tag0;
-    for (int i = 0; i < RAM64_BLOCK_TOTAL; i++) {
-        delete datan[i];
+    if (CFG_SINGLEPORT_CACHE) {
+        delete tag1;
+        for (int i = 0; i < RAM64_BLOCK_TOTAL; i++) {
+            delete datas[i];
+        }
+    } else {
+        delete tag0;
+        for (int i = 0; i < RAM64_BLOCK_TOTAL; i++) {
+            delete datan[i];
+        }
     }
 }
 

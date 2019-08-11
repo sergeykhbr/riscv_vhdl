@@ -25,7 +25,8 @@ use riverlib.types_cache.all;
 entity ILru is port (
     i_clk : in std_logic;
     i_init : in std_logic;
-    i_adr : in std_logic_vector(CFG_IINDEX_WIDTH-1 downto 0);
+    i_radr : in std_logic_vector(CFG_IINDEX_WIDTH-1 downto 0);
+    i_wadr : in std_logic_vector(CFG_IINDEX_WIDTH-1 downto 0);
     i_we : in std_logic;
     i_lru : in std_logic_vector(1 downto 0);
     o_lru : out std_logic_vector(1 downto 0)
@@ -45,7 +46,7 @@ architecture arch_ILru of ILru is
 
 begin
 
-  comb : process(i_init, i_adr, i_we, i_lru, wb_tbl_rdata)
+  comb : process(i_init, i_radr, i_wadr, i_we, i_lru, wb_tbl_rdata)
     variable vb_tbl_wdata : std_logic_vector(7 downto 0);
     variable v_we : std_logic;
   begin
@@ -54,8 +55,18 @@ begin
     if i_init = '1' then
         v_we := '1';
         vb_tbl_wdata := X"E4";  -- 0x3, 0x2, 0x1, 00
-    elsif i_we = '1' and wb_tbl_rdata(7 downto 6) /= i_lru then
-        vb_tbl_wdata := i_lru & wb_tbl_rdata(7 downto 2);
+    elsif i_we = '1' then
+        if wb_tbl_rdata(7 downto 6) = i_lru then
+            vb_tbl_wdata := wb_tbl_rdata;
+        elsif wb_tbl_rdata(5 downto 4) = i_lru then
+            vb_tbl_wdata := i_lru & wb_tbl_rdata(7 downto 6)
+                                  & wb_tbl_rdata(3 downto 0);
+        elsif wb_tbl_rdata(3 downto 2) = i_lru then
+            vb_tbl_wdata := i_lru & wb_tbl_rdata(7 downto 4)
+                                  & wb_tbl_rdata(1 downto 0);
+        else
+            vb_tbl_wdata := i_lru & wb_tbl_rdata(7 downto 2);
+        end if;
     else
         vb_tbl_wdata := wb_tbl_rdata;
     end if;
@@ -66,9 +77,9 @@ begin
 
   reg : process (i_clk) begin
     if rising_edge(i_clk) then 
-      radr <= i_adr;
+      radr <= i_radr;
       if w_we = '1' then
-        tbl(conv_integer(i_adr)) <= wb_tbl_wdata;
+        tbl(conv_integer(i_wadr)) <= wb_tbl_wdata;
       end if;
     end if;
   end process;

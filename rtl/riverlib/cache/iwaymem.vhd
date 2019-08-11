@@ -70,32 +70,62 @@ architecture arch_IWayMem of IWayMem is
 
 begin
 
-  tag0 : dpram_tech generic map (
-    memtech => memtech,
-    abits => CFG_IINDEX_WIDTH,
-    dbits => CFG_ITAG_WIDTH_TOTAL
-  ) port map (
-    i_clk => i_clk,
-    i_raddr => wb_radr,
-    o_rdata => wb_tag_rdata,
-    i_waddr => wb_wadr,
-    i_wena => w_tag_wena,
-    i_wdata => wb_tag_wdata
-  );
-
-  dx : for n in 0 to RAM64_BLOCK_TOTAL-1 generate
-    data0 : dpram_tech generic map (
+  sp : if CFG_SINGLEPORT_CACHE generate
+    tag0 : ram_tech generic map (
       memtech => memtech,
       abits => CFG_IINDEX_WIDTH,
-      dbits => 64
+      dbits => CFG_ITAG_WIDTH_TOTAL
+    ) port map (
+      i_clk => i_clk,
+      i_addr => wb_radr,
+      o_rdata => wb_tag_rdata,
+      i_wena => w_tag_wena,
+      i_wdata => wb_tag_wdata
+    );
+
+    dx : for n in 0 to RAM64_BLOCK_TOTAL-1 generate
+      data0 : ram_tech generic map (
+        memtech => memtech,
+        abits => CFG_IINDEX_WIDTH,
+        dbits => 64
+      ) port map (
+        i_clk => i_clk,
+        i_addr => wb_radr,
+        o_rdata => wb_data_rdata(64*(n+1)-1 downto 64*n),
+        i_wena => w_data_wena(n),
+        i_wdata => i_wdata
+      );
+    end generate;
+  end generate;
+
+  dp : if not CFG_SINGLEPORT_CACHE generate
+    tag0 : dpram_tech generic map (
+      memtech => memtech,
+      abits => CFG_IINDEX_WIDTH,
+      dbits => CFG_ITAG_WIDTH_TOTAL
     ) port map (
       i_clk => i_clk,
       i_raddr => wb_radr,
-      o_rdata => wb_data_rdata(64*(n+1)-1 downto 64*n),
+      o_rdata => wb_tag_rdata,
       i_waddr => wb_wadr,
-      i_wena => w_data_wena(n),
-      i_wdata => i_wdata
+      i_wena => w_tag_wena,
+      i_wdata => wb_tag_wdata
     );
+
+    dx : for n in 0 to RAM64_BLOCK_TOTAL-1 generate
+      data0 : dpram_tech generic map (
+        memtech => memtech,
+        abits => CFG_IINDEX_WIDTH,
+        dbits => 64
+      ) port map (
+        i_clk => i_clk,
+        i_raddr => wb_radr,
+        o_rdata => wb_data_rdata(64*(n+1)-1 downto 64*n),
+        i_waddr => wb_wadr,
+        i_wena => w_data_wena(n),
+        i_wdata => i_wdata
+      );
+    end generate;
   end generate;
 
   comb : process(i_nrst, i_radr, i_wadr, i_wena, i_wstrb, i_wvalid,

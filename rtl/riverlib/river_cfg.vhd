@@ -28,6 +28,9 @@ package river_cfg is
   constant CFG_IMPLEMENTATION_ID : std_logic_vector(31 downto 0) := X"20190521";
   constant CFG_HW_FPU_ENABLE : boolean := true;
 
+  -- When false use Dual-port memory banks
+  constant CFG_SINGLEPORT_CACHE : boolean := true;
+
   -- [13:6]  8: index: 8 KB per odd/even ways (64 KB total: ways=4)
   -- [12:6]  7: index: 4 KB per odd/even ways (32 KB total: ways=4)
   -- [11:6]  6: index: 2 KB per odd/even ways (16 KB total: ways=4)

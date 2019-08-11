@@ -74,7 +74,8 @@ package types_cache is
   component ILru is port (
     i_clk : in std_logic;
     i_init : in std_logic;
-    i_adr : in std_logic_vector(CFG_IINDEX_WIDTH-1 downto 0);
+    i_radr : in std_logic_vector(CFG_IINDEX_WIDTH-1 downto 0);
+    i_wadr : in std_logic_vector(CFG_IINDEX_WIDTH-1 downto 0);
     i_we : in std_logic;
     i_lru : in std_logic_vector(1 downto 0);
     o_lru : out std_logic_vector(1 downto 0)

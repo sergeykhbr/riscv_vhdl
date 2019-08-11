@@ -218,4 +218,18 @@ package types_mem is
   );
   end component;
 
+  component ram_tech is generic (
+    memtech : integer := 0;
+    abits   : integer := 12;
+    dbits   : integer := 64
+  );
+  port (
+    i_clk   : in std_logic;
+    i_addr  : in std_logic_vector(abits-1 downto 0);
+    o_rdata : out std_logic_vector(dbits-1 downto 0);
+    i_wena  : in std_logic;
+    i_wdata : in std_logic_vector(dbits-1 downto 0)
+  );
+  end component;
+
 end;

@@ -22,6 +22,8 @@
 #include "../river_cfg.h"
 #include "mem/dpram64i.h"
 #include "mem/dpramtagi.h"
+#include "mem/ram64i.h"
+#include "mem/ramtagi.h"
 
 namespace debugger {
 
@@ -71,6 +73,9 @@ SC_MODULE(IWayMem) {
 
     DpRamTagi *tag0;
     DpRam64i *datan[RAM64_BLOCK_TOTAL];
+
+    RamTagi *tag1;
+    Ram64i *datas[RAM64_BLOCK_TOTAL];
 
     sc_signal<sc_uint<CFG_IINDEX_WIDTH>> wb_radr;
     sc_signal<sc_uint<CFG_IINDEX_WIDTH>> wb_wadr;

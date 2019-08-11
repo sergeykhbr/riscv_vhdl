@@ -14,37 +14,36 @@
  *  limitations under the License.
  */
 
-#include "dpramtagi.h"
+#include "ramtagi.h"
 
 namespace debugger {
 
-DpRamTagi::DpRamTagi(sc_module_name name_) : sc_module(name_) {
+RamTagi::RamTagi(sc_module_name name_) : sc_module(name_) {
     SC_METHOD(comb);
-    sensitive << i_radr;
+    sensitive << i_adr;
     sensitive << i_wena;
     sensitive << i_wdata;
-    sensitive << i_wadr;
-    sensitive << r.radr;
+    sensitive << r.adr;
     sensitive << r.update;
 
     SC_METHOD(registers);
     sensitive << i_clk.pos();
 };
 
-void DpRamTagi::comb() {
+void RamTagi::comb() {
     v = r;
-    v.radr = i_radr.read();
+    v.adr = i_adr.read();
 
     if (i_wena.read()) {
-        v.mem[i_wadr.read().to_int()] = i_wdata;
+        v.mem[i_adr.read().to_int()] = i_wdata;
     }
     /** v.mem[] is not a signals, so use update register to trigger process */
     v.update = !r.update.read();
 
-    o_rdata = r.mem[r.radr.read().to_int()];
+    o_rdata = r.mem[r.adr.read().to_int()];
 }
 
-void DpRamTagi::registers() {
+void RamTagi::registers() {
     r = v;
 }
 

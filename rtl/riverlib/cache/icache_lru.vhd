@@ -74,7 +74,8 @@ architecture arch_ICacheLru of ICacheLru is
   constant State_WaitGrant : std_logic_vector(2 downto 0) := "010";
   constant State_WaitResp : std_logic_vector(2 downto 0) := "011";
   constant State_CheckResp : std_logic_vector(2 downto 0) := "100";
-  constant State_Flush : std_logic_vector(2 downto 0) := "101";
+  constant State_SetupReadAdr : std_logic_vector(2 downto 0) := "101";
+  constant State_Flush : std_logic_vector(2 downto 0) := "110";
 
   constant offset_ones : std_logic_vector(CFG_IOFFSET_WIDTH-1 downto 1) := (others => '1');
 
@@ -112,7 +113,8 @@ architecture arch_ICacheLru of ICacheLru is
 
   type LruInType is record
       init : std_logic;
-      adr : std_logic_vector(CFG_IINDEX_WIDTH-1 downto 0);
+      radr : std_logic_vector(CFG_IINDEX_WIDTH-1 downto 0);
+      wadr : std_logic_vector(CFG_IINDEX_WIDTH-1 downto 0);
       we : std_logic;
       lru : std_logic_vector(1 downto 0);
   end record;
@@ -206,7 +208,8 @@ begin
   lrueven0 : ILru port map (
       i_clk => i_clk,
       i_init => lrui(WAY_EVEN).init,
-      i_adr => lrui(WAY_EVEN).adr,
+      i_radr => lrui(WAY_EVEN).radr,
+      i_wadr => lrui(WAY_EVEN).wadr,
       i_we => lrui(WAY_EVEN).we,
       i_lru => lrui(WAY_EVEN).lru,
       o_lru => wb_lru_even
@@ -215,7 +218,8 @@ begin
   lruodd0 : ILru port map (
       i_clk => i_clk,
       i_init => lrui(WAY_ODD).init,
-      i_adr => lrui(WAY_ODD).adr,
+      i_radr => lrui(WAY_ODD).radr,
+      i_wadr => lrui(WAY_ODD).wadr,
       i_we => lrui(WAY_ODD).we,
       i_lru => lrui(WAY_ODD).lru,
       o_lru => wb_lru_odd
@@ -369,19 +373,25 @@ begin
     end if;
 
     v_lrui(WAY_EVEN).init := '0';
-    v_lrui(WAY_EVEN).adr := (others => '0');
+    v_lrui(WAY_EVEN).radr := (others => '0');
+    v_lrui(WAY_EVEN).wadr := (others => '0');
     v_lrui(WAY_EVEN).we := '0';
     v_lrui(WAY_EVEN).lru := (others => '0');
     v_lrui(WAY_ODD).init := '0';
-    v_lrui(WAY_ODD).adr := (others => '0');
+    v_lrui(WAY_ODD).radr := (others => '0');
+    v_lrui(WAY_ODD).wadr := (others => '0');
     v_lrui(WAY_ODD).we := '0';
     v_lrui(WAY_ODD).lru := (others => '0');
     w_o_resp_valid := '0';
     if r.state = State_Flush then
         v_lrui(WAY_EVEN).init := not r.mem_addr(CFG_IOFFSET_WIDTH);
-        v_lrui(WAY_EVEN).adr := r.mem_addr(IINDEX_END downto IINDEX_START);
+        v_lrui(WAY_EVEN).wadr := r.mem_addr(IINDEX_END downto IINDEX_START);
         v_lrui(WAY_ODD).init := r.mem_addr(CFG_IOFFSET_WIDTH);
-        v_lrui(WAY_ODD).adr := r.mem_addr(IINDEX_END downto IINDEX_START);
+        v_lrui(WAY_ODD).wadr := r.mem_addr(IINDEX_END downto IINDEX_START);
+    elsif CFG_SINGLEPORT_CACHE and (r.state = State_WaitGrant
+            or r.state = State_WaitResp or r.state = State_CheckResp
+            or r.state = State_SetupReadAdr) then
+            -- Do nothing while memory writing
     elsif w_hit0_valid = '1' and w_hit1_valid = '1'
         and wb_hit0 /= MISS and wb_hit1 /= MISS and r.requested = '1' then
         w_o_resp_valid := '1';
@@ -390,23 +400,23 @@ begin
         if w_raddr5_r = '0' then
             v_lrui(WAY_EVEN).we := '1';
             v_lrui(WAY_EVEN).lru := conv_std_logic_vector(wb_hit0, 2)(1 downto 0);
-            v_lrui(WAY_EVEN).adr :=
+            v_lrui(WAY_EVEN).wadr :=
                 r.req_addr(IINDEX_END downto IINDEX_START);
             if r.use_overlay = '1' then
                 v_lrui(WAY_ODD).we := '1';
                 v_lrui(WAY_ODD).lru := conv_std_logic_vector(wb_hit1, 2)(1 downto 0);
-                v_lrui(WAY_ODD).adr :=
+                v_lrui(WAY_ODD).wadr :=
                     r.req_addr_overlay(IINDEX_END downto IINDEX_START);
             end if;
         else
             v_lrui(WAY_ODD).we := '1';
             v_lrui(WAY_ODD).lru := conv_std_logic_vector(wb_hit0, 2)(1 downto 0);
-            v_lrui(WAY_ODD).adr :=
+            v_lrui(WAY_ODD).wadr :=
                 r.req_addr(IINDEX_END downto IINDEX_START);
             if r.use_overlay = '1' then
                 v_lrui(WAY_EVEN).we := '1';
                 v_lrui(WAY_EVEN).lru := conv_std_logic_vector(wb_hit1, 2)(1 downto 0);
-                v_lrui(WAY_EVEN).adr :=
+                v_lrui(WAY_EVEN).wadr :=
                     r.req_addr_overlay(IINDEX_END downto IINDEX_START);
             end if;
         end if;
@@ -505,12 +515,16 @@ begin
             v.burst_valid := r.burst_valid or wb_wstrb_next;
         end if;
     when State_CheckResp =>
-        if (w_o_req_ctrl_ready = '1' and i_req_ctrl_valid = '1')
+        if CFG_SINGLEPORT_CACHE then
+            v.state := State_SetupReadAdr;
+        elsif (w_o_req_ctrl_ready = '1' and i_req_ctrl_valid = '1')
             or (r.requested = '1' and w_o_resp_valid = '0') then
             v.state := State_CheckHit;
         else
             v.state := State_Idle;
         end if;
+    when State_SetupReadAdr =>
+        v.state := State_CheckHit;
     when State_Flush =>
         v_init := '1';
         if r.flush_cnt = flush_cnt_zero then
@@ -544,21 +558,38 @@ begin
     v_swapin(WAY_ODD).wdata := i_resp_mem_data;
     v_swapin(WAY_ODD).load_fault := i_resp_mem_load_fault;
 
-    if r.state = State_Idle or w_o_resp_valid = '1' then
+    if CFG_SINGLEPORT_CACHE and (r.state = State_WaitResp
+        or r.state = State_CheckResp
+        or r.state = State_Flush) then
+        v_swapin(WAY_EVEN).radr := r.mem_addr;
+        v_swapin(WAY_ODD).radr := r.mem_addr;
+    elsif r.state = State_Idle or w_o_resp_valid = '1' then
         if w_raddr5 = '0' then
             v_swapin(WAY_EVEN).radr := wb_req_adr;
             v_swapin(WAY_ODD).radr := wb_radr_overlay;
+            v_lrui(WAY_EVEN).radr := wb_req_adr(IINDEX_END downto IINDEX_START);
+            v_lrui(WAY_ODD).radr := wb_radr_overlay(IINDEX_END downto IINDEX_START);
         else
             v_swapin(WAY_EVEN).radr := wb_radr_overlay;
             v_swapin(WAY_ODD).radr := wb_req_adr;
+            v_lrui(WAY_EVEN).radr := wb_radr_overlay(IINDEX_END downto IINDEX_START);
+            v_lrui(WAY_ODD).radr := wb_req_adr(IINDEX_END downto IINDEX_START);
         end if;
     else
         if w_raddr5_r = '0' then
             v_swapin(WAY_EVEN).radr := r.req_addr;
             v_swapin(WAY_ODD).radr := r.req_addr_overlay;
+            v_lrui(WAY_EVEN).radr :=
+                r.req_addr(IINDEX_END downto IINDEX_START);
+            v_lrui(WAY_ODD).radr :=
+                r.req_addr_overlay(IINDEX_END downto IINDEX_START);
         else
             v_swapin(WAY_EVEN).radr := r.req_addr_overlay;
             v_swapin(WAY_ODD).radr := r.req_addr;
+            v_lrui(WAY_EVEN).radr :=
+                r.req_addr_overlay(IINDEX_END downto IINDEX_START);
+            v_lrui(WAY_ODD).radr :=
+                r.req_addr(IINDEX_END downto IINDEX_START);
         end if;
     end if;
 
