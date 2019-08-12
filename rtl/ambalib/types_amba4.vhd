@@ -938,7 +938,7 @@ package body types_amba4 is
     -- Reading state machine:
     case i_bank.rstate is
     when rwait =>
-        if i.ar_valid = '1' and i.aw_valid = '0' and i_bank.wlen = 0 then
+        if i.ar_valid = '1' and i.aw_valid = '0' and i_bank.wstate = wwait then
             o_bank.rstate := rtrans;
 
             for n in 0 to CFG_WORDS_ON_BUS-1 loop
@@ -993,7 +993,7 @@ package body types_amba4 is
         end if;
     end case;
 
-    -- Writting state machine:
+    -- Writing state machine:
     case i_bank.wstate is
     when wwait =>
         if i.aw_valid = '1' and i_bank.rlen = 0 then
@@ -1230,10 +1230,10 @@ begin
 
     -- Write transfer:
     if r.wstate = wtrans then
+      ret.ar_ready := '0';  -- can't request read address while writing, but write addr possible on last cycle
       ret.w_ready := '1';
       if r.wlen /= 0 then
         ret.aw_ready    := '0';
-        ret.ar_ready    := '0';
       end if;
     else
       ret.w_ready := '0';
