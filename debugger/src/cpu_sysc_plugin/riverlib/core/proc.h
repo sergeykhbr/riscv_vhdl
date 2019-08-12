@@ -163,7 +163,7 @@ private:
         sc_signal<bool> valid;
         sc_signal<sc_uint<32>> instr;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> pc;
-        sc_signal<bool> pipeline_hold;
+        sc_signal<sc_uint<6>> wb_addr;
     };
 
     struct WriteBackType {

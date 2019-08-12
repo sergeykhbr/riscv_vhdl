@@ -27,7 +27,8 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset)
     i_d_valid("i_d_valid"),
     i_d_pc("i_d_pc"),
     i_d_instr("i_d_instr"),
-    i_wb_done("i_wb_done"),
+    i_wb_valid("i_wb_valid"),
+    i_wb_addr("i_wb_addr"),
     i_memop_store("i_memop_store"),
     i_memop_load("i_memop_load"),
     i_memop_sign_ext("i_memop_sign_ext"),
@@ -90,7 +91,8 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset)
     sensitive << i_d_valid;
     sensitive << i_d_pc;
     sensitive << i_d_instr;
-    sensitive << i_wb_done;
+    sensitive << i_wb_valid;
+    sensitive << i_wb_addr;
     sensitive << i_memop_store;
     sensitive << i_memop_load;
     sensitive << i_memop_sign_ext;
@@ -115,6 +117,7 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset)
     sensitive << r.pc;
     sensitive << r.npc;
     sensitive << r.instr;
+    sensitive << r.res_addr;
     sensitive << r.res_val;
     sensitive << r.memop_load;
     sensitive << r.memop_store;
@@ -134,9 +137,9 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset)
     sensitive << r.multi_ivec_fpu;
     sensitive << r.multi_a1;
     sensitive << r.multi_a2;
+#ifndef EXEC2_ENA
     sensitive << r.hazard_addr0;
     sensitive << r.hazard_addr1;
-#ifndef EXEC2_ENA
     sensitive << r.hazard_depth;
 #endif
     sensitive << r.call;
@@ -246,7 +249,8 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_d_valid, i_d_valid.name());
         sc_trace(o_vcd, i_d_pc, i_d_pc.name());
         sc_trace(o_vcd, i_d_instr, i_d_instr.name());
-        sc_trace(o_vcd, i_wb_done, i_wb_done.name());
+        sc_trace(o_vcd, i_wb_valid, i_wb_valid.name());
+        sc_trace(o_vcd, i_wb_addr, i_wb_addr.name());
         sc_trace(o_vcd, i_rdata1, i_rdata1.name());
         sc_trace(o_vcd, i_rdata2, i_rdata2.name());
         sc_trace(o_vcd, i_rfdata1, i_rfdata1.name());
@@ -273,11 +277,11 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 
         std::string pn(name());
 #ifndef EXEC2_ENA
-        sc_trace(o_vcd, w_hazard_detected, "/top/proc0/exec0/w_hazard_detected");
-        sc_trace(o_vcd, r.hazard_depth, "/top/proc0/exec0/r_hazard_depth");
-#endif
+        sc_trace(o_vcd, w_hazard_detected, pn + ".w_hazard_detected");
+        sc_trace(o_vcd, r.hazard_depth, pn + ".r_hazard_depth");
         sc_trace(o_vcd, r.hazard_addr0, pn + ".r_hazard_addr0");
         sc_trace(o_vcd, r.hazard_addr1, pn + ".r_hazard_addr1");
+#endif
         sc_trace(o_vcd, r.multiclock_ena, pn + ".r_multiclock_ena");
         sc_trace(o_vcd, r.multi_ena[Multi_MUL], pn + ".r_multi_ena(0)");
         sc_trace(o_vcd, wb_arith_res.arr[Multi_MUL], pn + ".wb_arith_res(0)");
@@ -289,6 +293,9 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.multi_a1, pn + ".multi_a1");
         sc_trace(o_vcd, r.multi_a2, pn + ".multi_a2");
         sc_trace(o_vcd, r.multi_ivec_fpu, pn + ".r_multi_ivec_fpu");
+        sc_trace(o_vcd, wb_res_addr, pn + ".wb_res_addr");
+        sc_trace(o_vcd, w_hazard_lvl1, pn + ".w_hazard_lvl1");
+        sc_trace(o_vcd, w_hazard_lvl2, pn + ".w_hazard_lvl2");
     }
     mul0->generateVCD(i_vcd, o_vcd);
     div0->generateVCD(i_vcd, o_vcd);
@@ -305,7 +312,6 @@ void InstrExecute::comb() {
     bool w_mret;
     bool w_uret;
     bool w_csr_wena;
-    sc_uint<6> wb_res_addr;
     sc_uint<12> wb_csr_addr;
     sc_uint<RISCV_ARCH> wb_csr_wdata;
     sc_uint<RISCV_ARCH> wb_res;
@@ -335,15 +341,12 @@ void InstrExecute::comb() {
     bool w_fpu_ena;
     bool w_res_wena;
     bool w_pc_branch;
-    bool w_hazard_lvl1;
-    bool w_hazard_lvl2;
 #ifndef EXEC2_ENA
     bool w_d_valid;
 #endif
     bool w_o_valid;
     bool w_o_pipeline_hold;
 #ifdef EXEC2_ENA
-    bool w_hazard_detected;
     bool w_multiclock_hold;
 #endif
     bool w_less;
@@ -467,18 +470,36 @@ void InstrExecute::comb() {
 
     w_multiclock_hold = w_multi_ena | (r.multiclock_ena & !w_multi_valid);
 
-    w_hazard_lvl1 = 0;
-    if ((wb_radr1 != 0 && (wb_radr1 == r.hazard_addr0)) ||
-        (wb_radr2 != 0 && (wb_radr2 == r.hazard_addr0))) {
-        w_hazard_lvl1 = 1;
-    }
-    w_hazard_lvl2 = 0;
-    if ((wb_radr1 != 0 && (wb_radr1 == r.hazard_addr1)) ||
-        (wb_radr2 != 0 && (wb_radr2 == r.hazard_addr1))) {
-        w_hazard_lvl2 = 1;
-    }
-    w_hazard_detected = w_hazard_lvl1 | w_hazard_lvl2;
+    // Don't modify registers on conditional jumps:
+    w_res_wena = !(wv[Instr_BEQ] | wv[Instr_BGE] | wv[Instr_BGEU]
+               | wv[Instr_BLT] | wv[Instr_BLTU] | wv[Instr_BNE]
+               | wv[Instr_SD] | wv[Instr_SW] | wv[Instr_SH] | wv[Instr_SB]
+               | wv[Instr_FSD]
+               | wv[Instr_MRET] | wv[Instr_URET]
+               | wv[Instr_ECALL] | wv[Instr_EBREAK]).to_bool();
 
+    if (w_multi_valid) {
+        wb_res_addr = r.multi_res_addr;
+        v.multiclock_ena = 0;
+    } else if (w_res_wena) {
+        wb_res_addr = (0, i_d_instr.read().range(11, 7));
+        if (CFG_HW_FPU_ENABLE) {
+            if (i_f64.read() == 1 && wv[Instr_FLD] == 1) {
+                wb_res_addr |= 0x20;
+            }
+        }
+    } else {
+        wb_res_addr = 0;
+    }
+
+    w_hazard_detected = 0;
+    if (r.res_addr.read() != 0 &&
+        (r.res_addr.read() == wb_radr1 || r.res_addr.read() == wb_radr2)) {
+        w_hazard_detected = 1;
+        if (i_wb_valid.read() == 1 && i_wb_addr.read() == r.res_addr.read()) {
+            w_hazard_detected = 0;
+        }
+    }
 
     w_d_acceptable = (!i_pipeline_hold) & i_d_valid & w_pc_valid
                   & (!w_multiclock_hold) & (!w_hazard_detected);
@@ -507,7 +528,6 @@ void InstrExecute::comb() {
 #ifndef EXEC2_ENA
     w_multi_valid = w_arith_valid[Multi_MUL] | w_arith_valid[Multi_DIV]
                   | w_arith_valid[Multi_FPU];
-#endif
 
     // Don't modify registers on conditional jumps:
     w_res_wena = !(wv[Instr_BEQ] | wv[Instr_BGE] | wv[Instr_BGEU]
@@ -529,13 +549,6 @@ void InstrExecute::comb() {
         }
     } else {
         wb_res_addr = 0;
-    }
-
-#ifdef EXEC2_ENA
-    if (w_d_acceptable == 1) {
-        v.hazard_addr0 = wb_res_addr;
-    } else if (i_wb_done.read() == 1) {
-        v.hazard_addr0 = 0;
     }
 #endif
 
@@ -867,7 +880,7 @@ void InstrExecute::comb() {
     v.d_valid = w_d_acceptable;
 
     w_o_pipeline_hold = w_hazard_detected | w_multiclock_hold;
-    w_o_valid = r.d_valid.read() & !w_o_pipeline_hold;
+    w_o_valid = r.d_valid.read() & !w_multiclock_hold;
 #else
     v.d_valid = w_d_valid;
 

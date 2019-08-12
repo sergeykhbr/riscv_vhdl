@@ -54,7 +54,7 @@ SC_MODULE(MemAccess) {
     sc_in<sc_uint<BUS_DATA_WIDTH>> i_mem_data;      // Data path memory response value
     sc_out<bool> o_mem_resp_ready;                  // Pipeline is ready to accept memory operation response
 
-    sc_out<bool> o_hold;                            // Hold pipeline by data cache wait state reason
+    sc_out<sc_uint<6>> o_wb_addr;                   // hazard register
     sc_out<bool> o_valid;                           // Output is valid
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_pc;           // Valid instruction pointer
     sc_out<sc_uint<32>> o_instr;                    // Valid instruction value
@@ -76,6 +76,7 @@ private:
         sc_signal<bool> memop_rw;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> pc;
         sc_signal<sc_uint<32>> instr;
+        sc_signal<sc_uint<6>> wb_addr;
         sc_signal<sc_uint<6>> res_addr;
         sc_signal<sc_uint<RISCV_ARCH>> res_data;
         sc_signal<bool> memop_sign_ext;
@@ -107,6 +108,7 @@ private:
         iv.memop_rw = 0;
         iv.pc = 0;
         iv.instr = 0;
+        iv.wb_addr = 0;
         iv.res_addr = 0;
         iv.res_data = 0;
         iv.memop_sign_ext = 0;

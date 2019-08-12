@@ -35,7 +35,8 @@ SC_MODULE(InstrExecute) {
     sc_in<bool> i_d_valid;                      // Decoded instruction is valid
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_d_pc;      // Instruction pointer on decoded instruction
     sc_in<sc_uint<32>> i_d_instr;               // Decoded instruction value
-    sc_in<bool> i_wb_done;                      // write back done (Used to clear hazardness)
+    sc_in<bool> i_wb_valid;                     // end of write back operation
+    sc_in<sc_uint<6>> i_wb_addr;                // active write back register address
     sc_in<bool> i_memop_store;                  // Store to memory operation
     sc_in<bool> i_memop_load;                   // Load from memoru operation
     sc_in<bool> i_memop_sign_ext;               // Load memory value with sign extending
@@ -123,7 +124,7 @@ private:
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> pc;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> npc;
         sc_signal<sc_uint<32>> instr;
-        sc_uint<6> res_addr;
+        sc_signal<sc_uint<6>> res_addr;
         sc_signal<sc_uint<RISCV_ARCH>> res_val;
         sc_signal<bool> memop_load;
         sc_signal<bool> memop_store;
@@ -146,9 +147,9 @@ private:
         sc_signal<sc_uint<RISCV_ARCH>> multi_a1;        // Multi-cycle operand 1
         sc_signal<sc_uint<RISCV_ARCH>> multi_a2;        // Multi-cycle operand 2
 
+#ifndef EXEC2_ENA
         sc_signal<sc_uint<6>> hazard_addr0;             // Updated register address on previous step
         sc_signal<sc_uint<6>> hazard_addr1;             // Updated register address on pre-previous step
-#ifndef EXEC2_ENA
         sc_signal<sc_uint<2>> hazard_depth;             // Number of modificated registers that wasn't done yet
 #endif
 
@@ -184,9 +185,9 @@ private:
         iv.multi_ivec_fpu = 0;
         iv.multi_a1 = 0;
         iv.multi_a2 = 0;
+#ifndef EXEC2_ENA
         iv.hazard_addr0 = 0;
         iv.hazard_addr1 = 0;
-#ifndef EXEC2_ENA
         iv.hazard_depth = 0;
 #endif
         iv.call = 0;
@@ -196,11 +197,15 @@ private:
 #ifndef EXEC2_ENA
     sc_signal<bool> w_hazard_detected;
 #endif
+    sc_uint<6> wb_res_addr;
     multi_arith_type wb_arith_res;
     sc_signal<bool> w_arith_valid[Multi_Total];
     sc_signal<bool> w_arith_busy[Multi_Total];
     bool w_exception_store;
     bool w_exception_load;
+    bool w_hazard_lvl1;
+    bool w_hazard_lvl2;
+    bool w_hazard_detected;
 
     sc_signal<sc_uint<RISCV_ARCH>> wb_shifter_a1;      // Shifters operand 1
     sc_signal<sc_uint<6>> wb_shifter_a2;               // Shifters operand 2

@@ -45,7 +45,7 @@ MemAccess::MemAccess(sc_module_name name_, bool async_reset)
     i_mem_data_addr("i_mem_data_addr"),
     i_mem_data("i_mem_data"),
     o_mem_resp_ready("o_mem_resp_ready"),
-    o_hold("o_hold"),
+    o_wb_addr("o_wb_addr"),
     o_valid("o_valid"),
     o_pc("o_pc"),
     o_instr("o_instr") {
@@ -73,6 +73,7 @@ MemAccess::MemAccess(sc_module_name name_, bool async_reset)
     sensitive << r.memop_rw;
     sensitive << r.pc;
     sensitive << r.instr;
+    sensitive << r.wb_addr;
     sensitive << r.res_addr;
     sensitive << r.res_data;
     sensitive << r.memop_sign_ext;
@@ -114,7 +115,7 @@ void MemAccess::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_wena, o_wena.name());
         sc_trace(o_vcd, o_waddr, o_waddr.name());
         sc_trace(o_vcd, o_wdata, o_wdata.name());
-        sc_trace(o_vcd, o_hold, o_hold.name());
+        sc_trace(o_vcd, o_wb_addr, o_wb_addr.name());
 #ifdef MEM_V2
 #else
         sc_trace(o_vcd, r.wait_resp, "/top/proc0/mem0/r_wait_resp");
@@ -169,6 +170,7 @@ void MemAccess::comb() {
         } else {
             v.wena = 1;
         }
+        v.wb_addr = i_res_addr.read();  // TODO: write to register without wait cycle
     } else if ((r.memop_rw.read() == 1 && i_mem_data_valid.read() == 1)
             || (r.memop_rw.read() == 0 && r.valid.read() == 1)) {
         v.valid = 0;
@@ -176,6 +178,7 @@ void MemAccess::comb() {
         v.memop_rw = 0;
         v.pc = 0;
         v.instr = 0;
+        v.wb_addr = 0;
         v.res_addr = 0;
         v.res_data = 0;
         v.memop_sign_ext = 0;
@@ -229,6 +232,7 @@ void MemAccess::comb() {
     o_mem_sz = i_memop_size.read();
     o_mem_addr = i_memop_addr.read();
     o_mem_data = i_res_data.read();
+    o_wb_addr = r.wb_addr;
 
     o_wena = r.wena;
     o_waddr = r.res_addr;
@@ -236,8 +240,6 @@ void MemAccess::comb() {
     o_valid = r.valid.read() && !w_hold;
     o_pc = r.pc;
     o_instr = r.instr;
-    o_hold = w_hold;
-
 #else
     bool w_o_mem_valid;
     bool w_o_mem_write;

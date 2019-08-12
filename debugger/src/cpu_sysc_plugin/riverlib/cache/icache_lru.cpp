@@ -590,7 +590,6 @@ void ICacheLru::comb() {
         wb_ena_odd[i] = vb_ena_odd[i];
     }
 
-    w_init = v_init;
     o_req_ctrl_ready = w_o_req_ctrl_ready;
 
     o_req_mem_valid = r.req_mem_valid.read();
