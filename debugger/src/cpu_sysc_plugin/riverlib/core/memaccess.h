@@ -43,7 +43,7 @@ SC_MODULE(MemAccess) {
     sc_out<sc_uint<RISCV_ARCH>> o_wdata;            // Register value
 
     // Memory interface:
-    sc_in<bool> i_mem_req_ready;                    // Data cache is ready to accept request
+    sc_in<bool> i_mem_req_ready;                    // Data cache is ready to accept read/write request
     sc_out<bool> o_mem_valid;                       // Memory request is valid
     sc_out<bool> o_mem_write;                       // Memory write request
     sc_out<sc_uint<2>> o_mem_sz;                    // Encoded data size in bytes: 0=1B; 1=2B; 2=4B; 3=8B
@@ -71,18 +71,16 @@ SC_MODULE(MemAccess) {
 private:
     struct RegistersType {
 #ifdef MEM_V2
-        sc_signal<bool> requested;
-        sc_signal<bool> req_valid;
-        sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_pc;
-        sc_signal<sc_uint<32>> req_instr;
-        sc_signal<sc_uint<6>> req_res_addr;
-        sc_signal<sc_uint<RISCV_ARCH>> req_res_data;
-        sc_signal<bool> req_memop_sign_ext;
-        sc_signal<bool> req_memop;
-        sc_signal<bool> req_memop_store;
-        sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_memop_addr;
-        sc_signal<sc_uint<2>> req_memop_size;
-        sc_signal<bool> req_wena;
+        sc_signal<bool> valid;
+        sc_signal<bool> memop_r;
+        sc_signal<bool> memop_rw;
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> pc;
+        sc_signal<sc_uint<32>> instr;
+        sc_signal<sc_uint<6>> res_addr;
+        sc_signal<sc_uint<RISCV_ARCH>> res_data;
+        sc_signal<bool> memop_sign_ext;
+        sc_signal<sc_uint<2>> memop_size;
+        sc_signal<bool> wena;
 #else
         sc_signal<bool> valid;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> pc;
@@ -104,18 +102,16 @@ private:
 
     void R_RESET(RegistersType &iv) {
 #ifdef MEM_V2
-        iv.requested = 0;
-        iv.req_valid = 0;
-        iv.req_pc = 0;
-        iv.req_instr = 0;
-        iv.req_res_addr = 0;
-        iv.req_res_data = 0;
-        iv.req_memop_sign_ext = 0;
-        iv.req_memop = 0;
-        iv.req_memop_store = 0;
-        iv.req_memop_addr = 0;
-        iv.req_memop_size = 0;
-        iv.req_wena = 0;
+        iv.valid = 0;
+        iv.memop_r = 0;
+        iv.memop_rw = 0;
+        iv.pc = 0;
+        iv.instr = 0;
+        iv.res_addr = 0;
+        iv.res_data = 0;
+        iv.memop_sign_ext = 0;
+        iv.memop_size = 0;
+        iv.wena = 0;
 #else
         iv.valid = 0;
         iv.pc = 0;

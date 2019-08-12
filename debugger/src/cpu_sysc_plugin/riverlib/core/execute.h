@@ -24,6 +24,8 @@
 #include "arith/shift.h"
 #include "fpu_d/fpu_top.h"
 
+#define EXEC2_ENA
+
 namespace debugger {
 
 SC_MODULE(InstrExecute) {
@@ -146,7 +148,9 @@ private:
 
         sc_signal<sc_uint<6>> hazard_addr0;             // Updated register address on previous step
         sc_signal<sc_uint<6>> hazard_addr1;             // Updated register address on pre-previous step
+#ifndef EXEC2_ENA
         sc_signal<sc_uint<2>> hazard_depth;             // Number of modificated registers that wasn't done yet
+#endif
 
         sc_signal<bool> call;
         sc_signal<bool> ret;
@@ -182,12 +186,16 @@ private:
         iv.multi_a2 = 0;
         iv.hazard_addr0 = 0;
         iv.hazard_addr1 = 0;
+#ifndef EXEC2_ENA
         iv.hazard_depth = 0;
+#endif
         iv.call = 0;
         iv.ret = 0;
     }
 
+#ifndef EXEC2_ENA
     sc_signal<bool> w_hazard_detected;
+#endif
     multi_arith_type wb_arith_res;
     sc_signal<bool> w_arith_valid[Multi_Total];
     sc_signal<bool> w_arith_busy[Multi_Total];

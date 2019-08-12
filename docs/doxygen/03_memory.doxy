@@ -93,6 +93,7 @@ enhanced in an upward-compatible fashion.
 | FSE GPS-L1         | 8000A000h | 8000AFFFh | 4 Kbytes    | Fast Search Engine for GPS-CA signals               |
 | Ethernet MAC       | 80040000h | 8007FFFFh | 256 Kbytes  | 100 Mb Ethernet MAC with the Debug support          |
 | DSU                | 80080000h | 8009FFFFh | 128 Kbytes  | Debug Support Unit with the multiprocessors support |
+| I/D Caches         | 800A0000h | 800BFFFFh | 128 Kbytes  | Reserved                                            |
 | PNP                | FFFFF000h | FFFFFFFFh | 4 Kbytes    | System status and configuration registers           |
 
 <b>Table 3-2. River Memory Map.</b>
