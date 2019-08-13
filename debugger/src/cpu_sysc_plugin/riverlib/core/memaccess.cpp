@@ -85,7 +85,6 @@ MemAccess::MemAccess(sc_module_name name_, bool async_reset)
     sensitive << r.memop_sign_ext;
     sensitive << r.memop_size;
     sensitive << r.wena;
-    sensitive << r.hazard;
 
     SC_METHOD(registers);
     sensitive << i_nrst;
@@ -125,7 +124,6 @@ void MemAccess::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         std::string pn(name());
         sc_trace(o_vcd, r.state, pn + ".state");
         sc_trace(o_vcd, w_next, pn + ".w_next");
-        sc_trace(o_vcd, r.hazard, pn + ".r_hazard");
     }
 }
 
@@ -141,12 +139,6 @@ void MemAccess::comb() {
     if (i_e_valid.read() == 1) {
         if (i_pipeline_hold.read() == 0) {
             w_next = 1;
-            if (r.hazard.read() == 1) {
-                v.hazard = 0;
-            }
-        } else if (i_hazard.read() == 1) {
-            w_next = 1;
-            v.hazard = 1;
         }
     }
 

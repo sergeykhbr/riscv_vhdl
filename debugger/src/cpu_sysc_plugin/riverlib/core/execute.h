@@ -154,9 +154,9 @@ private:
         sc_signal<sc_uint<RISCV_ARCH>> multi_a1;        // Multi-cycle operand 1
         sc_signal<sc_uint<RISCV_ARCH>> multi_a2;        // Multi-cycle operand 2
 
-#ifndef EXEC2_ENA
         sc_signal<sc_uint<6>> hazard_addr0;             // Updated register address on previous step
         sc_signal<sc_uint<6>> hazard_addr1;             // Updated register address on pre-previous step
+#ifndef EXEC2_ENA
         sc_signal<sc_uint<2>> hazard_depth;             // Number of modificated registers that wasn't done yet
 #endif
 
@@ -193,9 +193,9 @@ private:
         iv.multi_ivec_fpu = 0;
         iv.multi_a1 = 0;
         iv.multi_a2 = 0;
-#ifndef EXEC2_ENA
         iv.hazard_addr0 = 0;
         iv.hazard_addr1 = 0;
+#ifndef EXEC2_ENA
         iv.hazard_depth = 0;
 #endif
         iv.call = 0;

@@ -30,6 +30,8 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset)
     sensitive << w.e.npc;
     sensitive << w.e.valid;
     sensitive << w.e.pipeline_hold;
+    sensitive << w.e.hazard;
+    sensitive << w.m.pipeline_hold;
     sensitive << w.m.wb_addr;
     sensitive << w.f.imem_req_valid;
     sensitive << w.f.imem_req_addr;
@@ -379,10 +381,11 @@ void Processor::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void Processor::comb() {
-    w_fetch_pipeline_hold = w.e.pipeline_hold | w.m.pipeline_hold | dbg.halt;
-    w_any_pipeline_hold = w.f.pipeline_hold | w.e.pipeline_hold
+    w_fetch_pipeline_hold = w.e.pipeline_hold | w.e.hazard | w.m.pipeline_hold | dbg.halt;
+    w_any_pipeline_hold = w.f.pipeline_hold | w.e.pipeline_hold | w.e.hazard
         | w.m.pipeline_hold | dbg.halt;
     w_exec_pipeline_hold = w.f.pipeline_hold | w.m.pipeline_hold | dbg.halt;
+    // all except hazard hold
     w_mem_pipeline_hold = w.f.pipeline_hold | w.e.pipeline_hold | dbg.halt;
 
     wb_ireg_dport_addr = dbg.core_addr.read()(4, 0);

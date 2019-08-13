@@ -138,9 +138,10 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset)
     sensitive << r.multi_ivec_fpu;
     sensitive << r.multi_a1;
     sensitive << r.multi_a2;
-#ifndef EXEC2_ENA
+    sensitive << r.state;
     sensitive << r.hazard_addr0;
     sensitive << r.hazard_addr1;
+#ifndef EXEC2_ENA
     sensitive << r.hazard_depth;
 #endif
     sensitive << r.call;
@@ -281,9 +282,9 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 #ifndef EXEC2_ENA
         sc_trace(o_vcd, w_hazard_detected, pn + ".w_hazard_detected");
         sc_trace(o_vcd, r.hazard_depth, pn + ".r_hazard_depth");
+#endif
         sc_trace(o_vcd, r.hazard_addr0, pn + ".r_hazard_addr0");
         sc_trace(o_vcd, r.hazard_addr1, pn + ".r_hazard_addr1");
-#endif
         sc_trace(o_vcd, r.multiclock_ena, pn + ".r_multiclock_ena");
         sc_trace(o_vcd, r.multi_ena[Multi_MUL], pn + ".r_multi_ena(0)");
         sc_trace(o_vcd, wb_arith_res.arr[Multi_MUL], pn + ".wb_arith_res(0)");
@@ -296,8 +297,7 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.multi_a2, pn + ".multi_a2");
         sc_trace(o_vcd, r.multi_ivec_fpu, pn + ".r_multi_ivec_fpu");
         sc_trace(o_vcd, wb_res_addr, pn + ".wb_res_addr");
-        sc_trace(o_vcd, w_hazard_lvl1, pn + ".w_hazard_lvl1");
-        sc_trace(o_vcd, w_hazard_lvl2, pn + ".w_hazard_lvl2");
+        sc_trace(o_vcd, r.res_addr, pn + ".r_res_addr");
         sc_trace(o_vcd, r.state, pn + ".state");
     }
     mul0->generateVCD(i_vcd, o_vcd);
@@ -500,11 +500,13 @@ void InstrExecute::comb() {
 
     bool w_next = 0;
     bool w_hold = 0;
+    bool w_hold_hazard = 0;
 
     if (i_pipeline_hold.read() == 0
         && i_d_valid.read() == 1 && w_pc_valid == 1) {
         w_next = 1;
     }
+
 
     w_hazard_detected = 0;
     if (r.res_addr.read() != 0 &&
@@ -529,7 +531,7 @@ void InstrExecute::comb() {
         if (w_next == 1) {
             if (w_hazard_detected == 1) {
                 w_next = 0;
-                w_hold = 1;
+                w_hold_hazard = 1;
                 v.state = State_WriteBack;
             } else if (w_multi_ena == 1) {
                 w_hold = 1;
@@ -547,7 +549,7 @@ void InstrExecute::comb() {
             if (w_next == 1) {
                 if (w_hazard_detected == 1) {
                     w_next = 0;
-                    w_hold = 1;
+                    w_hold_hazard = 1;
                     v.state = State_WriteBack;
                 } else if (w_multi_ena == 1) {
                     w_hold = 1;
@@ -563,15 +565,15 @@ void InstrExecute::comb() {
         }
         break;
     case State_WriteBack:
-        w_hold = 1;
+        w_hold_hazard = 1;
         w_next = 0;
-        if (i_wb_ready.read() == 1
-            && i_wb_addr.read() == r.res_addr.read()) {
+        if (i_wb_ready.read() == 1 && i_wb_addr.read() == r.res_addr.read()) {
             v.state = State_WaitInstr;
         }
         break;
     default:;
     }
+
 #endif
 
 
@@ -687,11 +689,13 @@ void InstrExecute::comb() {
             wb_rdata1(BUS_ADDR_WIDTH-1, 0) + wb_off(BUS_ADDR_WIDTH-1, 0);
     }
 
+#ifndef EXEC2_ENA
     v.memop_addr = 0;
     v.memop_load = 0;
     v.memop_store = 0;
     v.memop_sign_ext = 0;
     v.memop_size = 0;
+#endif
     w_exception_store = 0;
     w_exception_load = 0;
 
@@ -1026,7 +1030,7 @@ void InstrExecute::comb() {
 
 #ifdef EXEC2_ENA
     o_valid = w_valid;
-    o_hazard = w_hazard_detected;
+    o_hazard = w_hold_hazard;
 #else
     o_valid = w_o_valid;
 #endif

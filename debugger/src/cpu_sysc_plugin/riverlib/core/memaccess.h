@@ -89,7 +89,6 @@ private:
         sc_signal<bool> memop_sign_ext;
         sc_signal<sc_uint<2>> memop_size;
         sc_signal<bool> wena;
-        sc_signal<bool> hazard;
     } v, r;
 
     bool w_next;
@@ -107,7 +106,6 @@ private:
         iv.memop_sign_ext = 0;
         iv.memop_size = 0;
         iv.wena = 0;
-        iv.hazard = 0;
     }
 
     bool async_reset_;
