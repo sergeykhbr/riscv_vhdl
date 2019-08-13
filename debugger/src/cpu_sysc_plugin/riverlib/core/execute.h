@@ -35,7 +35,8 @@ SC_MODULE(InstrExecute) {
     sc_in<bool> i_d_valid;                      // Decoded instruction is valid
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_d_pc;      // Instruction pointer on decoded instruction
     sc_in<sc_uint<32>> i_d_instr;               // Decoded instruction value
-    sc_in<bool> i_wb_valid;                     // end of write back operation
+    sc_out<bool> o_hazard;                      // registers hazard
+    sc_in<bool> i_wb_ready;                     // end of write back operation
     sc_in<sc_uint<6>> i_wb_addr;                // active write back register address
     sc_in<bool> i_memop_store;                  // Store to memory operation
     sc_in<bool> i_memop_load;                   // Load from memoru operation
@@ -119,7 +120,13 @@ private:
         sc_signal<sc_uint<RISCV_ARCH>> arr[Multi_Total];
     };
 
+    static const unsigned State_WaitInstr  = 0;
+    static const unsigned State_SingleCycle = 1;
+    static const unsigned State_MultiCycle = 2;
+    static const unsigned State_WriteBack  = 3;
+
     struct RegistersType {
+        sc_signal<sc_uint<2>> state;
         sc_signal<bool> d_valid;                        // Valid decoded instruction latch
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> pc;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> npc;
@@ -158,7 +165,8 @@ private:
     } v, r;
 
     void R_RESET(RegistersType &iv) {
-        iv.d_valid = false;
+        iv.state = State_WaitInstr;
+        iv.d_valid = 0;
         iv.pc = 0;
         iv.npc = CFG_NMI_RESET_VECTOR;
         iv.instr = 0;

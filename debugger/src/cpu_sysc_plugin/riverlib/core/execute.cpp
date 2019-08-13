@@ -27,7 +27,8 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset)
     i_d_valid("i_d_valid"),
     i_d_pc("i_d_pc"),
     i_d_instr("i_d_instr"),
-    i_wb_valid("i_wb_valid"),
+    o_hazard("o_hazard"),
+    i_wb_ready("i_wb_ready"),
     i_wb_addr("i_wb_addr"),
     i_memop_store("i_memop_store"),
     i_memop_load("i_memop_load"),
@@ -91,7 +92,7 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset)
     sensitive << i_d_valid;
     sensitive << i_d_pc;
     sensitive << i_d_instr;
-    sensitive << i_wb_valid;
+    sensitive << i_wb_ready;
     sensitive << i_wb_addr;
     sensitive << i_memop_store;
     sensitive << i_memop_load;
@@ -249,7 +250,8 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_d_valid, i_d_valid.name());
         sc_trace(o_vcd, i_d_pc, i_d_pc.name());
         sc_trace(o_vcd, i_d_instr, i_d_instr.name());
-        sc_trace(o_vcd, i_wb_valid, i_wb_valid.name());
+        sc_trace(o_vcd, o_hazard, o_hazard.name());
+        sc_trace(o_vcd, i_wb_ready, i_wb_ready.name());
         sc_trace(o_vcd, i_wb_addr, i_wb_addr.name());
         sc_trace(o_vcd, i_rdata1, i_rdata1.name());
         sc_trace(o_vcd, i_rdata2, i_rdata2.name());
@@ -296,6 +298,7 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, wb_res_addr, pn + ".wb_res_addr");
         sc_trace(o_vcd, w_hazard_lvl1, pn + ".w_hazard_lvl1");
         sc_trace(o_vcd, w_hazard_lvl2, pn + ".w_hazard_lvl2");
+        sc_trace(o_vcd, r.state, pn + ".state");
     }
     mul0->generateVCD(i_vcd, o_vcd);
     div0->generateVCD(i_vcd, o_vcd);
@@ -334,8 +337,11 @@ void InstrExecute::comb() {
     sc_bv<Instr_Total> wv;
     int opcode_len;
 
+    bool w_valid;
     bool w_pc_valid;
+#ifndef EXEC2_ENA
     bool w_d_acceptable;
+#endif
     bool w_multi_valid;
     bool w_multi_ena;
     bool w_fpu_ena;
@@ -343,9 +349,9 @@ void InstrExecute::comb() {
     bool w_pc_branch;
 #ifndef EXEC2_ENA
     bool w_d_valid;
-#endif
     bool w_o_valid;
     bool w_o_pipeline_hold;
+#endif
 #ifdef EXEC2_ENA
     bool w_multiclock_hold;
 #endif
@@ -492,18 +498,80 @@ void InstrExecute::comb() {
         wb_res_addr = 0;
     }
 
+    bool w_next = 0;
+    bool w_hold = 0;
+
+    if (i_pipeline_hold.read() == 0
+        && i_d_valid.read() == 1 && w_pc_valid == 1) {
+        w_next = 1;
+    }
+
     w_hazard_detected = 0;
     if (r.res_addr.read() != 0 &&
         (r.res_addr.read() == wb_radr1 || r.res_addr.read() == wb_radr2)) {
         w_hazard_detected = 1;
-        if (i_wb_valid.read() == 1 && i_wb_addr.read() == r.res_addr.read()) {
-            w_hazard_detected = 0;
-        }
     }
 
-    w_d_acceptable = (!i_pipeline_hold) & i_d_valid & w_pc_valid
-                  & (!w_multiclock_hold) & (!w_hazard_detected);
-
+    w_valid = 0;
+    switch (r.state.read()) {
+    case State_WaitInstr:
+        if (w_next == 1) {
+            if (w_multi_ena == 1) {
+                w_hold = 1;
+                v.state = State_MultiCycle;
+            } else {
+                v.state = State_SingleCycle;
+            }
+        }
+        break;
+    case State_SingleCycle:
+        w_valid = 1;
+        if (w_next == 1) {
+            if (w_hazard_detected == 1) {
+                w_next = 0;
+                w_hold = 1;
+                v.state = State_WriteBack;
+            } else if (w_multi_ena == 1) {
+                w_hold = 1;
+                v.state = State_MultiCycle;
+            } else {
+                v.state = State_SingleCycle;
+            }
+        } else if (i_pipeline_hold.read() == 0) {
+            v.state = State_WaitInstr;
+        }
+        break;
+    case State_MultiCycle:
+        if (w_multi_valid == 1) {
+            w_valid = 1;
+            if (w_next == 1) {
+                if (w_hazard_detected == 1) {
+                    w_next = 0;
+                    w_hold = 1;
+                    v.state = State_WriteBack;
+                } else if (w_multi_ena == 1) {
+                    w_hold = 1;
+                    v.state = State_MultiCycle;
+                } else {
+                    v.state = State_SingleCycle;
+                }
+            } else if (i_pipeline_hold.read() == 0) {
+                v.state = State_WaitInstr;
+            }
+        } else {
+            w_next = 0;
+        }
+        break;
+    case State_WriteBack:
+        w_hold = 1;
+        w_next = 0;
+        if (i_wb_ready.read() == 1
+            && i_wb_addr.read() == r.res_addr.read()) {
+            v.state = State_WaitInstr;
+        }
+        break;
+    default:;
+    }
 #endif
 
 
@@ -674,13 +742,15 @@ void InstrExecute::comb() {
         v.multi_a2 = i_rdata2;
     }
 
-#ifndef EXEC2_ENA
+#ifdef EXEC2_ENA
+    if (w_multi_ena & w_next) {
+#else
     w_multi_ena = (wv[Instr_MUL] | wv[Instr_MULW] | wv[Instr_DIV] 
                     | wv[Instr_DIVU] | wv[Instr_DIVW] | wv[Instr_DIVUW]
                     | wv[Instr_REM] | wv[Instr_REMU] | wv[Instr_REMW]
                     | wv[Instr_REMUW]).to_bool() || w_fpu_ena;
-#endif
     if (w_multi_ena & w_d_acceptable) {
+#endif
         v.multiclock_ena = 1;
         v.multi_res_addr = wb_res_addr;
         if (CFG_HW_FPU_ENABLE) {
@@ -753,16 +823,32 @@ void InstrExecute::comb() {
     } else if (wv[Instr_LUI]) {
         wb_res = wb_rdata2;
     } else if (wv[Instr_MUL] || wv[Instr_MULW]) {
+#ifdef EXEC2_ENA
+        v.multi_ena[Multi_MUL] = w_next;
+#else
         v.multi_ena[Multi_MUL] = w_d_acceptable;
+#endif
     } else if (wv[Instr_DIV] || wv[Instr_DIVU]
             || wv[Instr_DIVW] || wv[Instr_DIVUW]) {
+#ifdef EXEC2_ENA
+        v.multi_ena[Multi_DIV] = w_next;
+#else
         v.multi_ena[Multi_DIV] = w_d_acceptable;
+#endif
     } else if (wv[Instr_REM] || wv[Instr_REMU]
             || wv[Instr_REMW] || wv[Instr_REMUW]) {
+#ifdef EXEC2_ENA
+        v.multi_ena[Multi_DIV] = w_next;
+#else
         v.multi_ena[Multi_DIV] = w_d_acceptable;
+#endif
         v.multi_residual_high = 1;
     } else if (w_fpu_ena == 1) {
+#ifdef EXEC2_ENA
+        v.multi_ena[Multi_FPU] = w_next;
+#else
         v.multi_ena[Multi_FPU] = w_d_acceptable;
+#endif
     } else if (wv[Instr_CSRRC]) {
         wb_res = i_csr_rdata;
         w_csr_wena = 1;
@@ -799,7 +885,7 @@ void InstrExecute::comb() {
     }
 
 #ifdef EXEC2_ENA
-    o_pre_valid = w_d_acceptable;
+    o_pre_valid = w_next;
 
     o_ex_illegal_instr = i_unsup_exception.read();
     o_ex_unalign_store = w_exception_store;
@@ -823,7 +909,7 @@ void InstrExecute::comb() {
     if (i_dport_npc_write.read()) {
         v.npc = i_dport_npc.read();
 #ifdef EXEC2_ENA
-    } else if (w_d_acceptable) {
+    } else if (w_next) {
 #else
     } else if (w_d_valid) {
 #endif
@@ -877,10 +963,6 @@ void InstrExecute::comb() {
     }
 
 #ifdef EXEC2_ENA
-    v.d_valid = w_d_acceptable;
-
-    w_o_pipeline_hold = w_hazard_detected | w_multiclock_hold;
-    w_o_valid = r.d_valid.read() & !w_multiclock_hold;
 #else
     v.d_valid = w_d_valid;
 
@@ -921,10 +1003,14 @@ void InstrExecute::comb() {
     o_radr2 = wb_radr2;
     o_res_addr = r.res_addr;
     o_res_data = r.res_val;
+#ifdef EXEC2_ENA
+    o_pipeline_hold = w_hold;
+#else
     o_pipeline_hold = w_o_pipeline_hold;
+#endif
 
 #ifdef EXEC2_ENA
-    o_csr_wena = w_csr_wena;
+    o_csr_wena = w_csr_wena && w_next;
 #else
     o_csr_wena = w_csr_wena & w_pc_valid & !w_hazard_detected;
 #endif
@@ -938,7 +1024,12 @@ void InstrExecute::comb() {
     o_memop_size = r.memop_size;
     o_memop_addr = r.memop_addr;
 
+#ifdef EXEC2_ENA
+    o_valid = w_valid;
+    o_hazard = w_hazard_detected;
+#else
     o_valid = w_o_valid;
+#endif
     o_pc = r.pc;
     o_npc = r.npc;
     o_instr = r.instr;

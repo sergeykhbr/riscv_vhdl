@@ -22,11 +22,10 @@
 
 namespace debugger {
 
-#define MEM_V2
-
 SC_MODULE(MemAccess) {
     sc_in<bool> i_clk;
     sc_in<bool> i_nrst;
+    sc_in<bool> i_pipeline_hold;                    // Hold execution by any reason
     sc_in<bool> i_e_valid;                          // Execution stage outputs are valid
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_e_pc;          // Execution stage instruction pointer
     sc_in<sc_uint<32>> i_e_instr;                   // Execution stage instruction value
@@ -54,7 +53,10 @@ SC_MODULE(MemAccess) {
     sc_in<sc_uint<BUS_DATA_WIDTH>> i_mem_data;      // Data path memory response value
     sc_out<bool> o_mem_resp_ready;                  // Pipeline is ready to accept memory operation response
 
+    sc_in<bool> i_hazard;                           // write back valid
     sc_out<sc_uint<6>> o_wb_addr;                   // hazard register
+    sc_out<bool> o_wb_ready;                        // write back ready
+    sc_out<bool> o_hold;                            // memory access hold-on
     sc_out<bool> o_valid;                           // Output is valid
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_pc;           // Valid instruction pointer
     sc_out<sc_uint<32>> o_instr;                    // Valid instruction value
@@ -69,72 +71,47 @@ SC_MODULE(MemAccess) {
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
 private:
+    static const unsigned State_Idle = 0;
+    static const unsigned State_WaitReqAccept = 1;
+    static const unsigned State_WaitResponse = 2;
+    static const unsigned State_RegForward = 3;
+
     struct RegistersType {
-#ifdef MEM_V2
-        sc_signal<bool> valid;
+        sc_signal<sc_uint<2>> state;
         sc_signal<bool> memop_r;
         sc_signal<bool> memop_rw;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> pc;
         sc_signal<sc_uint<32>> instr;
+        sc_signal<bool> wb_ready;
         sc_signal<sc_uint<6>> wb_addr;
         sc_signal<sc_uint<6>> res_addr;
         sc_signal<sc_uint<RISCV_ARCH>> res_data;
         sc_signal<bool> memop_sign_ext;
         sc_signal<sc_uint<2>> memop_size;
         sc_signal<bool> wena;
-#else
-        sc_signal<bool> valid;
-        sc_signal<sc_uint<BUS_ADDR_WIDTH>> pc;
-        sc_signal<sc_uint<32>> instr;
-
-        sc_signal<bool> wena;
-        sc_signal<sc_uint<6>> waddr;
-        sc_signal<bool> sign_ext;
-        sc_signal<sc_uint<2>> size;
-        sc_signal<sc_uint<RISCV_ARCH>> wdata;
-        sc_signal<bool> wait_req;
-        sc_signal<bool> wait_req_write;
-        sc_signal<sc_uint<2>> wait_req_sz;
-        sc_signal<sc_uint<BUS_ADDR_WIDTH>> wait_req_addr;
-        sc_signal<sc_uint<RISCV_ARCH>> wait_req_wdata;
-        sc_signal<bool> wait_resp;
-#endif
+        sc_signal<bool> hazard;
     } v, r;
 
+    bool w_next;
+
     void R_RESET(RegistersType &iv) {
-#ifdef MEM_V2
-        iv.valid = 0;
+        iv.state = State_Idle;
         iv.memop_r = 0;
         iv.memop_rw = 0;
         iv.pc = 0;
         iv.instr = 0;
+        iv.wb_ready = 0;
         iv.wb_addr = 0;
         iv.res_addr = 0;
         iv.res_data = 0;
         iv.memop_sign_ext = 0;
         iv.memop_size = 0;
         iv.wena = 0;
-#else
-        iv.valid = 0;
-        iv.pc = 0;
-        iv.instr = 0;
-        iv.wena = 0;
-        iv.waddr = 0;
-        iv.sign_ext = 0;
-        iv.size = 0;
-        iv.wdata = 0;
-        iv.wait_req = 0;
-        iv.wait_req_write = 0;
-        iv.wait_req_sz = 0;
-        iv.wait_req_addr = 0;
-        iv.wait_req_wdata = 0;
-        iv.wait_resp = 0;
-#endif
+        iv.hazard = 0;
     }
 
     bool async_reset_;
 };
-
 
 }  // namespace debugger
 
