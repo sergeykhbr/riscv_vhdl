@@ -27,9 +27,7 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset)
     i_d_valid("i_d_valid"),
     i_d_pc("i_d_pc"),
     i_d_instr("i_d_instr"),
-    o_hazard("o_hazard"),
     i_wb_ready("i_wb_ready"),
-    i_wb_addr("i_wb_addr"),
     i_memop_store("i_memop_store"),
     i_memop_load("i_memop_load"),
     i_memop_sign_ext("i_memop_sign_ext"),
@@ -93,7 +91,6 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset)
     sensitive << i_d_pc;
     sensitive << i_d_instr;
     sensitive << i_wb_ready;
-    sensitive << i_wb_addr;
     sensitive << i_memop_store;
     sensitive << i_memop_load;
     sensitive << i_memop_sign_ext;
@@ -140,10 +137,12 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset)
     sensitive << r.multi_a2;
     sensitive << r.state;
     sensitive << r.hazard_addr0;
-    sensitive << r.hazard_addr1;
 #ifndef EXEC2_ENA
-    sensitive << r.hazard_depth;
+    sensitive << r.hazard_addr1;
 #endif
+    sensitive << r.hazard_depth;
+    sensitive << r.hold_valid;
+    sensitive << r.hold_multi_ena;
     sensitive << r.call;
     sensitive << r.ret;
 #ifndef EXEC2_ENA
@@ -251,9 +250,7 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_d_valid, i_d_valid.name());
         sc_trace(o_vcd, i_d_pc, i_d_pc.name());
         sc_trace(o_vcd, i_d_instr, i_d_instr.name());
-        sc_trace(o_vcd, o_hazard, o_hazard.name());
         sc_trace(o_vcd, i_wb_ready, i_wb_ready.name());
-        sc_trace(o_vcd, i_wb_addr, i_wb_addr.name());
         sc_trace(o_vcd, i_rdata1, i_rdata1.name());
         sc_trace(o_vcd, i_rdata2, i_rdata2.name());
         sc_trace(o_vcd, i_rfdata1, i_rfdata1.name());
@@ -284,7 +281,7 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.hazard_depth, pn + ".r_hazard_depth");
 #endif
         sc_trace(o_vcd, r.hazard_addr0, pn + ".r_hazard_addr0");
-        sc_trace(o_vcd, r.hazard_addr1, pn + ".r_hazard_addr1");
+        sc_trace(o_vcd, r.hazard_depth, pn + ".hazard_depth");
         sc_trace(o_vcd, r.multiclock_ena, pn + ".r_multiclock_ena");
         sc_trace(o_vcd, r.multi_ena[Multi_MUL], pn + ".r_multi_ena(0)");
         sc_trace(o_vcd, wb_arith_res.arr[Multi_MUL], pn + ".wb_arith_res(0)");
@@ -299,6 +296,9 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, wb_res_addr, pn + ".wb_res_addr");
         sc_trace(o_vcd, r.res_addr, pn + ".r_res_addr");
         sc_trace(o_vcd, r.state, pn + ".state");
+        sc_trace(o_vcd, w_hazard_lvl1, pn + ".w_hazard_lvl1");
+        sc_trace(o_vcd, w_hazard_lvl2, pn + ".w_hazard_lvl2");
+        sc_trace(o_vcd, w_next_ready, pn + ".w_next_ready");
     }
     mul0->generateVCD(i_vcd, o_vcd);
     div0->generateVCD(i_vcd, o_vcd);
@@ -351,9 +351,6 @@ void InstrExecute::comb() {
     bool w_d_valid;
     bool w_o_valid;
     bool w_o_pipeline_hold;
-#endif
-#ifdef EXEC2_ENA
-    bool w_multiclock_hold;
 #endif
     bool w_less;
     bool w_gr_equal;
@@ -474,8 +471,6 @@ void InstrExecute::comb() {
     w_multi_valid = w_arith_valid[Multi_MUL] | w_arith_valid[Multi_DIV]
                   | w_arith_valid[Multi_FPU];
 
-    w_multiclock_hold = w_multi_ena | (r.multiclock_ena & !w_multi_valid);
-
     // Don't modify registers on conditional jumps:
     w_res_wena = !(wv[Instr_BEQ] | wv[Instr_BGE] | wv[Instr_BGEU]
                | wv[Instr_BLT] | wv[Instr_BLTU] | wv[Instr_BNE]
@@ -498,26 +493,40 @@ void InstrExecute::comb() {
         wb_res_addr = 0;
     }
 
-    bool w_next = 0;
-    bool w_hold = 0;
-    bool w_hold_hazard = 0;
+    w_next_ready = 0;
+    w_hold = 0;
 
-    if (i_pipeline_hold.read() == 0
-        && i_d_valid.read() == 1 && w_pc_valid == 1) {
-        w_next = 1;
+    if (i_d_valid.read() == 1 && w_pc_valid == 1) {
+        w_next_ready = 1;
     }
 
-
-    w_hazard_detected = 0;
+    /** Valid values on the inputs radr1,radr2 will be 2 cycles after
+        signal o_valid = 1
+     */
+    w_hazard_lvl1 = 0;
     if (r.res_addr.read() != 0 &&
-        (r.res_addr.read() == wb_radr1 || r.res_addr.read() == wb_radr2)) {
-        w_hazard_detected = 1;
+        (wb_radr1 == r.res_addr || wb_radr2 == r.res_addr)) {
+        w_hazard_lvl1 = 1;
+    }
+
+    w_hazard_lvl2 = 0;
+    if (r.hazard_addr0.read() != 0 &&
+        (wb_radr1 == r.hazard_addr0 || wb_radr2 == r.hazard_addr0)) {
+        w_hazard_lvl2 = 1;
     }
 
     w_valid = 0;
     switch (r.state.read()) {
     case State_WaitInstr:
-        if (w_next == 1) {
+        if (r.hazard_depth.read() != 0 && w_hazard_lvl2) {
+            // Hazard after missed predicted instruction 1 cycle
+            w_hold = 1;
+            w_next_ready = 0;
+        } else if (i_pipeline_hold.read() == 1) {
+            v.state = State_Hold;
+            v.hold_valid = w_next_ready;
+            v.hold_multi_ena = w_multi_ena;
+        } else if (w_next_ready == 1) {
             if (w_multi_ena == 1) {
                 w_hold = 1;
                 v.state = State_MultiCycle;
@@ -528,50 +537,70 @@ void InstrExecute::comb() {
         break;
     case State_SingleCycle:
         w_valid = 1;
-        if (w_next == 1) {
-            if (w_hazard_detected == 1) {
-                w_next = 0;
-                w_hold_hazard = 1;
-                v.state = State_WriteBack;
-            } else if (w_multi_ena == 1) {
+        if (w_hazard_lvl1 == 1) {
+            // 2-cycles wait state
+            w_hold = 1;
+            w_next_ready = 0;
+            v.state = State_Hazard;
+        } else if (w_hazard_lvl2 == 1) {
+            // 1-cycle wait state
+            w_hold = 1;
+            w_next_ready = 0;
+            v.state = State_WaitInstr;
+        } else if (i_pipeline_hold.read() == 1) {
+            v.state = State_Hold;
+            v.hold_valid = w_next_ready;
+            v.hold_multi_ena = w_multi_ena;
+        } else if (w_next_ready == 1) {
+            if (w_multi_ena == 1) {
                 w_hold = 1;
                 v.state = State_MultiCycle;
             } else {
                 v.state = State_SingleCycle;
             }
-        } else if (i_pipeline_hold.read() == 0) {
+        } else {
             v.state = State_WaitInstr;
         }
         break;
     case State_MultiCycle:
+        w_hold = 1;
+        w_next_ready = 0;
         if (w_multi_valid == 1) {
-            w_valid = 1;
-            if (w_next == 1) {
-                if (w_hazard_detected == 1) {
-                    w_next = 0;
-                    w_hold_hazard = 1;
-                    v.state = State_WriteBack;
-                } else if (w_multi_ena == 1) {
-                    w_hold = 1;
+            v.state = State_SingleCycle;
+        }
+        break;
+    case State_Hold:
+        w_next_ready = 0;
+        if (i_pipeline_hold.read() == 0) {
+            if (r.hold_valid.read() == 1) {
+                if (r.hold_multi_ena.read() == 1) {
                     v.state = State_MultiCycle;
                 } else {
                     v.state = State_SingleCycle;
                 }
-            } else if (i_pipeline_hold.read() == 0) {
+            } else {
                 v.state = State_WaitInstr;
             }
-        } else {
-            w_next = 0;
         }
         break;
-    case State_WriteBack:
-        w_hold_hazard = 1;
-        w_next = 0;
-        if (i_wb_ready.read() == 1 && i_wb_addr.read() == r.res_addr.read()) {
+    case State_Hazard:
+        w_next_ready = 0;
+        w_hold = 1;
+        if (i_wb_ready.read() == 1) {
             v.state = State_WaitInstr;
         }
         break;
     default:;
+    }
+
+    if (w_valid == 1) {
+        v.hazard_addr0 = r.res_addr;
+    }
+
+    if (w_valid && !i_wb_ready.read()) {
+        v.hazard_depth = r.hazard_depth.read() + 1;
+    } else if (!w_valid && i_wb_ready.read()) {
+        v.hazard_depth = r.hazard_depth.read() - 1;
     }
 
 #endif
@@ -747,7 +776,7 @@ void InstrExecute::comb() {
     }
 
 #ifdef EXEC2_ENA
-    if (w_multi_ena & w_next) {
+    if (w_multi_ena & w_next_ready) {
 #else
     w_multi_ena = (wv[Instr_MUL] | wv[Instr_MULW] | wv[Instr_DIV] 
                     | wv[Instr_DIVU] | wv[Instr_DIVW] | wv[Instr_DIVUW]
@@ -828,28 +857,28 @@ void InstrExecute::comb() {
         wb_res = wb_rdata2;
     } else if (wv[Instr_MUL] || wv[Instr_MULW]) {
 #ifdef EXEC2_ENA
-        v.multi_ena[Multi_MUL] = w_next;
+        v.multi_ena[Multi_MUL] = w_next_ready;
 #else
         v.multi_ena[Multi_MUL] = w_d_acceptable;
 #endif
     } else if (wv[Instr_DIV] || wv[Instr_DIVU]
             || wv[Instr_DIVW] || wv[Instr_DIVUW]) {
 #ifdef EXEC2_ENA
-        v.multi_ena[Multi_DIV] = w_next;
+        v.multi_ena[Multi_DIV] = w_next_ready;
 #else
         v.multi_ena[Multi_DIV] = w_d_acceptable;
 #endif
     } else if (wv[Instr_REM] || wv[Instr_REMU]
             || wv[Instr_REMW] || wv[Instr_REMUW]) {
 #ifdef EXEC2_ENA
-        v.multi_ena[Multi_DIV] = w_next;
+        v.multi_ena[Multi_DIV] = w_next_ready;
 #else
         v.multi_ena[Multi_DIV] = w_d_acceptable;
 #endif
         v.multi_residual_high = 1;
     } else if (w_fpu_ena == 1) {
 #ifdef EXEC2_ENA
-        v.multi_ena[Multi_FPU] = w_next;
+        v.multi_ena[Multi_FPU] = w_next_ready;
 #else
         v.multi_ena[Multi_FPU] = w_d_acceptable;
 #endif
@@ -889,7 +918,7 @@ void InstrExecute::comb() {
     }
 
 #ifdef EXEC2_ENA
-    o_pre_valid = w_next;
+    o_pre_valid = w_next_ready;
 
     o_ex_illegal_instr = i_unsup_exception.read();
     o_ex_unalign_store = w_exception_store;
@@ -913,43 +942,46 @@ void InstrExecute::comb() {
     if (i_dport_npc_write.read()) {
         v.npc = i_dport_npc.read();
 #ifdef EXEC2_ENA
-    } else if (w_next) {
+    } else if (w_multi_valid) {
+        v.pc = r.multi_pc;
+        v.instr = r.multi_instr;
+        if (i_trap_valid.read()) {
+            v.npc = i_trap_pc.read();
+            wb_ex_npc = r.multi_npc;
+        } else {
+            v.npc = r.multi_npc;
+        }
+        v.memop_load = 0;
+        v.memop_sign_ext = 0;
+        v.memop_store = 0;
+        v.memop_size = 0;
+        v.memop_addr = 0;
+
+        v.res_addr = wb_res_addr;
+        v.res_val = wb_res;
+    } else if (w_next_ready) {
 #else
     } else if (w_d_valid) {
 #endif
-        if (w_multi_valid) {
-            v.pc = r.multi_pc;
-            v.instr = r.multi_instr;
-            if (i_trap_valid.read()) {
-                v.npc = i_trap_pc.read();
-                wb_ex_npc = r.multi_npc;
-            } else {
-                v.npc = r.multi_npc;
-            }
-            v.memop_load = 0;
-            v.memop_sign_ext = 0;
-            v.memop_store = 0;
-            v.memop_size = 0;
-            v.memop_addr = 0;
+        v.pc = i_d_pc;
+        v.instr = i_d_instr;
+        if (i_trap_valid.read()) {
+            v.npc = i_trap_pc.read();
+            wb_ex_npc = wb_npc;
         } else {
-            v.pc = i_d_pc;
-            v.instr = i_d_instr;
-            if (i_trap_valid.read()) {
-                v.npc = i_trap_pc.read();
-                wb_ex_npc = wb_npc;
-            } else {
-                v.npc = wb_npc;
-            }
-            v.memop_load = w_memop_load;
-            v.memop_sign_ext = w_memop_sign_ext;
-            v.memop_store = w_memop_store;
-            v.memop_size = wb_memop_size;
-            v.memop_addr = wb_memop_addr;
+            v.npc = wb_npc;
         }
+        v.memop_load = w_memop_load;
+        v.memop_sign_ext = w_memop_sign_ext;
+        v.memop_store = w_memop_store;
+        v.memop_size = wb_memop_size;
+        v.memop_addr = wb_memop_addr;
+
         v.res_addr = wb_res_addr;
         v.res_val = wb_res;
 
-#ifndef EXEC2_ENA
+#ifdef EXEC2_ENA
+#else
         v.hazard_addr1 = r.hazard_addr0;
         v.hazard_addr0 = wb_res_addr;
 #endif
@@ -1014,7 +1046,7 @@ void InstrExecute::comb() {
 #endif
 
 #ifdef EXEC2_ENA
-    o_csr_wena = w_csr_wena && w_next;
+    o_csr_wena = w_csr_wena && w_next_ready;
 #else
     o_csr_wena = w_csr_wena & w_pc_valid & !w_hazard_detected;
 #endif
@@ -1030,7 +1062,6 @@ void InstrExecute::comb() {
 
 #ifdef EXEC2_ENA
     o_valid = w_valid;
-    o_hazard = w_hold_hazard;
 #else
     o_valid = w_o_valid;
 #endif

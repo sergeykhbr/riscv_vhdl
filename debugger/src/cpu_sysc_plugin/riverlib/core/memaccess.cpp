@@ -22,7 +22,6 @@ MemAccess::MemAccess(sc_module_name name_, bool async_reset)
     : sc_module(name_),
     i_clk("i_clk"),
     i_nrst("i_nrst"),
-    i_pipeline_hold("i_pipeline_hold"),
     i_e_valid("i_e_valid"),
     i_e_pc("i_e_pc"),
     i_e_instr("i_e_instr"),
@@ -46,9 +45,6 @@ MemAccess::MemAccess(sc_module_name name_, bool async_reset)
     i_mem_data_addr("i_mem_data_addr"),
     i_mem_data("i_mem_data"),
     o_mem_resp_ready("o_mem_resp_ready"),
-    i_hazard("i_hazard"),
-    o_wb_ready("o_wb_ready"),
-    o_wb_addr("o_wb_addr"),
     o_hold("o_hold"),
     o_valid("o_valid"),
     o_pc("o_pc"),
@@ -57,8 +53,6 @@ MemAccess::MemAccess(sc_module_name name_, bool async_reset)
 
     SC_METHOD(comb);
     sensitive << i_nrst;
-    sensitive << i_pipeline_hold;
-    sensitive << i_hazard;
     sensitive << i_mem_req_ready;
     sensitive << i_e_valid;
     sensitive << i_e_pc;
@@ -93,7 +87,6 @@ MemAccess::MemAccess(sc_module_name name_, bool async_reset)
 
 void MemAccess::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
-        sc_trace(o_vcd, i_pipeline_hold, i_pipeline_hold.name());
         sc_trace(o_vcd, i_e_valid, i_e_valid.name());
         sc_trace(o_vcd, i_e_pc, i_e_pc.name());
         sc_trace(o_vcd, i_e_instr, i_e_instr.name());
@@ -117,17 +110,14 @@ void MemAccess::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_wena, o_wena.name());
         sc_trace(o_vcd, o_waddr, o_waddr.name());
         sc_trace(o_vcd, o_wdata, o_wdata.name());
-        sc_trace(o_vcd, i_hazard, i_hazard.name());
-        sc_trace(o_vcd, o_wb_ready, o_wb_ready.name());
-        sc_trace(o_vcd, o_wb_addr, o_wb_addr.name());
 
         std::string pn(name());
         sc_trace(o_vcd, r.state, pn + ".state");
-        sc_trace(o_vcd, w_next, pn + ".w_next");
     }
 }
 
 void MemAccess::comb() {
+    bool w_mem_valid;
     bool w_hold;
     bool w_valid;
     sc_uint<RISCV_ARCH> wb_mem_data_signext;
@@ -135,20 +125,15 @@ void MemAccess::comb() {
 
     v = r;
 
-    w_next = 0;
-    if (i_e_valid.read() == 1) {
-        if (i_pipeline_hold.read() == 0) {
-            w_next = 1;
-        }
-    }
-
+    w_mem_valid = 0;
     w_hold = 0;
     w_valid = 0;
 
     switch (r.state.read()) {
     case State_Idle:
-        if (w_next == 1) {
+        if (i_e_valid.read() == 1) {
             if (i_memop_load.read() == 1 || i_memop_store.read() == 1) {
+                w_mem_valid = 1;
                 if (i_mem_req_ready.read() == 1) {
                     v.state = State_WaitResponse;
                 } else {
@@ -171,8 +156,9 @@ void MemAccess::comb() {
         if (i_mem_data_valid.read() == 0) {
             w_valid = 0;
             w_hold = 1;
-        } else if (w_next == 1) {
+        } else if (i_e_valid.read() == 1) {
             if (i_memop_load.read() == 1 || i_memop_store.read() == 1) {
+                w_mem_valid = 1;
                 if (i_mem_req_ready.read() == 1) {
                     v.state = State_WaitResponse;
                 } else {
@@ -188,8 +174,9 @@ void MemAccess::comb() {
         break;
     case State_RegForward:
         w_valid = 1;
-        if (w_next == 1) {
+        if (i_e_valid.read() == 1) {
             if (i_memop_load.read() == 1 || i_memop_store.read() == 1) {
+                w_mem_valid = 1;
                 if (i_mem_req_ready.read() == 1) {
                     v.state = State_WaitResponse;
                 } else {
@@ -206,10 +193,7 @@ void MemAccess::comb() {
     default:;
     }
 
-    //v.wb_ready = w_valid;
-
-
-    if (w_next == 1) {
+    if (i_e_valid.read() == 1) {
         v.memop_r = i_memop_load.read();
         v.memop_rw = i_memop_load.read() || i_memop_store.read();
         v.pc = i_e_pc.read();
@@ -223,7 +207,7 @@ void MemAccess::comb() {
         } else {
             v.wena = 1;
         }
-        v.wb_addr = i_res_addr.read();  // TODO: write to register without wait cycle
+        v.wb_addr = i_res_addr.read();
     }
 
     switch (r.memop_size.read()) {
@@ -266,15 +250,13 @@ void MemAccess::comb() {
 
     o_mem_resp_ready = 1;
 
-    o_mem_valid = i_memop_load.read() || i_memop_store.read();
+    o_mem_valid = w_mem_valid;
     o_mem_write = i_memop_store.read();
     o_mem_sz = i_memop_size.read();
     o_mem_addr = i_memop_addr.read();
     o_mem_data = i_res_data.read();
-    o_wb_ready = w_valid;//r.wb_ready;
-    o_wb_addr = r.wb_addr;
 
-    o_wena = r.wena;
+    o_wena = r.wena.read() && w_valid;
     o_waddr = r.res_addr;
     o_wdata = wb_res_data;
     o_hold = w_hold;

@@ -35,9 +35,7 @@ SC_MODULE(InstrExecute) {
     sc_in<bool> i_d_valid;                      // Decoded instruction is valid
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_d_pc;      // Instruction pointer on decoded instruction
     sc_in<sc_uint<32>> i_d_instr;               // Decoded instruction value
-    sc_out<bool> o_hazard;                      // registers hazard
     sc_in<bool> i_wb_ready;                     // end of write back operation
-    sc_in<sc_uint<6>> i_wb_addr;                // active write back register address
     sc_in<bool> i_memop_store;                  // Store to memory operation
     sc_in<bool> i_memop_load;                   // Load from memoru operation
     sc_in<bool> i_memop_sign_ext;               // Load memory value with sign extending
@@ -120,13 +118,14 @@ private:
         sc_signal<sc_uint<RISCV_ARCH>> arr[Multi_Total];
     };
 
-    static const unsigned State_WaitInstr  = 0;
+    static const unsigned State_WaitInstr = 0;
     static const unsigned State_SingleCycle = 1;
     static const unsigned State_MultiCycle = 2;
-    static const unsigned State_WriteBack  = 3;
+    static const unsigned State_Hold = 3;
+    static const unsigned State_Hazard = 4;
 
     struct RegistersType {
-        sc_signal<sc_uint<2>> state;
+        sc_signal<sc_uint<3>> state;
         sc_signal<bool> d_valid;                        // Valid decoded instruction latch
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> pc;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> npc;
@@ -155,10 +154,12 @@ private:
         sc_signal<sc_uint<RISCV_ARCH>> multi_a2;        // Multi-cycle operand 2
 
         sc_signal<sc_uint<6>> hazard_addr0;             // Updated register address on previous step
-        sc_signal<sc_uint<6>> hazard_addr1;             // Updated register address on pre-previous step
 #ifndef EXEC2_ENA
-        sc_signal<sc_uint<2>> hazard_depth;             // Number of modificated registers that wasn't done yet
+        sc_signal<sc_uint<6>> hazard_addr1;             // Updated register address on pre-previous step
 #endif
+        sc_signal<sc_uint<2>> hazard_depth;             // Number of modificated registers that wasn't done yet
+        sc_signal<bool> hold_valid;
+        sc_signal<bool> hold_multi_ena;
 
         sc_signal<bool> call;
         sc_signal<bool> ret;
@@ -194,10 +195,12 @@ private:
         iv.multi_a1 = 0;
         iv.multi_a2 = 0;
         iv.hazard_addr0 = 0;
-        iv.hazard_addr1 = 0;
 #ifndef EXEC2_ENA
-        iv.hazard_depth = 0;
+        iv.hazard_addr1 = 0;
 #endif
+        iv.hazard_depth = 0;
+        iv.hold_valid = 0;
+        iv.hold_multi_ena = 0;
         iv.call = 0;
         iv.ret = 0;
     }
@@ -213,7 +216,8 @@ private:
     bool w_exception_load;
     bool w_hazard_lvl1;
     bool w_hazard_lvl2;
-    bool w_hazard_detected;
+    bool w_next_ready;
+    bool w_hold;
 
     sc_signal<sc_uint<RISCV_ARCH>> wb_shifter_a1;      // Shifters operand 1
     sc_signal<sc_uint<6>> wb_shifter_a2;               // Shifters operand 2

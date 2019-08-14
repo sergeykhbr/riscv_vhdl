@@ -25,7 +25,6 @@ namespace debugger {
 SC_MODULE(MemAccess) {
     sc_in<bool> i_clk;
     sc_in<bool> i_nrst;
-    sc_in<bool> i_pipeline_hold;                    // Hold execution by any reason
     sc_in<bool> i_e_valid;                          // Execution stage outputs are valid
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_e_pc;          // Execution stage instruction pointer
     sc_in<sc_uint<32>> i_e_instr;                   // Execution stage instruction value
@@ -53,9 +52,6 @@ SC_MODULE(MemAccess) {
     sc_in<sc_uint<BUS_DATA_WIDTH>> i_mem_data;      // Data path memory response value
     sc_out<bool> o_mem_resp_ready;                  // Pipeline is ready to accept memory operation response
 
-    sc_in<bool> i_hazard;                           // write back valid
-    sc_out<sc_uint<6>> o_wb_addr;                   // hazard register
-    sc_out<bool> o_wb_ready;                        // write back ready
     sc_out<bool> o_hold;                            // memory access hold-on
     sc_out<bool> o_valid;                           // Output is valid
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_pc;           // Valid instruction pointer
@@ -90,8 +86,6 @@ private:
         sc_signal<sc_uint<2>> memop_size;
         sc_signal<bool> wena;
     } v, r;
-
-    bool w_next;
 
     void R_RESET(RegistersType &iv) {
         iv.state = State_Idle;

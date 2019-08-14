@@ -30,9 +30,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset)
     sensitive << w.e.npc;
     sensitive << w.e.valid;
     sensitive << w.e.pipeline_hold;
-    sensitive << w.e.hazard;
     sensitive << w.m.pipeline_hold;
-    sensitive << w.m.wb_addr;
     sensitive << w.f.imem_req_valid;
     sensitive << w.f.imem_req_addr;
     sensitive << w.f.valid;
@@ -107,9 +105,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset)
     exec0->i_d_valid(w.d.instr_valid);
     exec0->i_d_pc(w.d.pc);
     exec0->i_d_instr(w.d.instr);
-    exec0->o_hazard(w.e.hazard);
-    exec0->i_wb_ready(w.m.wb_ready);
-    exec0->i_wb_addr(w.m.wb_addr);
+    exec0->i_wb_ready(w.m.valid);
     exec0->i_memop_store(w.d.memop_store);
     exec0->i_memop_load(w.d.memop_load);
     exec0->i_memop_sign_ext(w.d.memop_sign_ext);
@@ -168,7 +164,6 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset)
     mem0 = new MemAccess("mem0", async_reset);
     mem0->i_clk(i_clk);
     mem0->i_nrst(i_nrst);
-    mem0->i_pipeline_hold(w_mem_pipeline_hold);
     mem0->i_e_valid(w.e.valid);
     mem0->i_e_pc(w.e.pc);
     mem0->i_e_instr(w.e.instr);
@@ -192,9 +187,6 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset)
     mem0->i_mem_data_addr(i_resp_data_addr);
     mem0->i_mem_data(i_resp_data_data);
     mem0->o_mem_resp_ready(o_resp_data_ready);
-    mem0->i_hazard(w.e.hazard);
-    mem0->o_wb_addr(w.m.wb_addr);
-    mem0->o_wb_ready(w.m.wb_ready);
     mem0->o_hold(w.m.pipeline_hold);
     mem0->o_valid(w.m.valid);
     mem0->o_pc(w.m.pc);
@@ -381,12 +373,10 @@ void Processor::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void Processor::comb() {
-    w_fetch_pipeline_hold = w.e.pipeline_hold | w.e.hazard | w.m.pipeline_hold | dbg.halt;
-    w_any_pipeline_hold = w.f.pipeline_hold | w.e.pipeline_hold | w.e.hazard
+    w_fetch_pipeline_hold = w.e.pipeline_hold | w.m.pipeline_hold | dbg.halt;
+    w_any_pipeline_hold = w.f.pipeline_hold | w.e.pipeline_hold
         | w.m.pipeline_hold | dbg.halt;
     w_exec_pipeline_hold = w.f.pipeline_hold | w.m.pipeline_hold | dbg.halt;
-    // all except hazard hold
-    w_mem_pipeline_hold = w.f.pipeline_hold | w.e.pipeline_hold | dbg.halt;
 
     wb_ireg_dport_addr = dbg.core_addr.read()(4, 0);
     wb_freg_dport_addr = dbg.core_addr.read()(4, 0);

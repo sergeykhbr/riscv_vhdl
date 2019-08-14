@@ -147,6 +147,7 @@ void CacheTop::comb() {
     sc_uint<BUS_ADDR_WIDTH> wb_mem_addr;
     sc_uint<8> wb_mem_len;
     sc_uint<2> wb_mem_burst;
+    bool w_mem_write;
     bool v_data_req_ready;
     bool v_data_resp_mem_data_valid;
     bool v_ctrl_req_ready;
@@ -157,6 +158,7 @@ void CacheTop::comb() {
     // default is data path
     w_req_mem_valid = 0;
     wb_mem_addr = d.req_mem_addr;
+    w_mem_write = d.req_mem_write;
     wb_mem_len = d.req_mem_len;
     wb_mem_burst = d.req_mem_burst;
     v_data_req_ready = 0;
@@ -176,6 +178,7 @@ void CacheTop::comb() {
                 wb_mem_addr = i.req_mem_addr;
                 wb_mem_len = i.req_mem_len;
                 wb_mem_burst = i.req_mem_burst;
+                w_mem_write = i.req_mem_write;
                 v.state = State_IMem;
             }
         }
@@ -193,6 +196,7 @@ void CacheTop::comb() {
                     wb_mem_addr = i.req_mem_addr;
                     wb_mem_len = i.req_mem_len;
                     wb_mem_burst = i.req_mem_burst;
+                    w_mem_write = i.req_mem_write;
                     v.state = State_IMem;
                 } else {
                     v.state = State_Idle;
@@ -216,6 +220,7 @@ void CacheTop::comb() {
                     wb_mem_addr = i.req_mem_addr;
                     wb_mem_len = i.req_mem_len;
                     wb_mem_burst = i.req_mem_burst;
+                    w_mem_write = i.req_mem_write;
                     v.state = State_IMem;
                 } else {
                     v.state = State_Idle;
@@ -247,7 +252,7 @@ void CacheTop::comb() {
     o_req_mem_addr = wb_mem_addr;
     o_req_mem_len = wb_mem_len;
     o_req_mem_burst = wb_mem_burst;
-    o_req_mem_write = d.req_mem_write;
+    o_req_mem_write = w_mem_write;
     o_req_mem_strob = d.req_mem_strob;
     o_req_mem_data = d.req_mem_wdata;
     o_cstate = r.state;

@@ -128,7 +128,6 @@ private:
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> npc;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> ex_npc;
 
-        sc_signal<bool> hazard;
         sc_signal<sc_uint<6>> radr1;
         sc_signal<sc_uint<6>> radr2;
         sc_signal<sc_uint<6>> res_addr;
@@ -164,8 +163,6 @@ private:
         sc_signal<bool> valid;
         sc_signal<sc_uint<32>> instr;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> pc;
-        sc_signal<bool> wb_ready;
-        sc_signal<sc_uint<6>> wb_addr;
         sc_signal<bool> pipeline_hold;
     };
 
@@ -240,7 +237,6 @@ private:
     sc_signal<bool> w_fetch_pipeline_hold;
     sc_signal<bool> w_any_pipeline_hold;
     sc_signal<bool> w_exec_pipeline_hold;
-    sc_signal<bool> w_mem_pipeline_hold;
 
     InstrFetch *fetch0;
     InstrDecoder *dec0;
