@@ -19,7 +19,44 @@
 namespace debugger {
 
 CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset)
-    : sc_module(name_) {
+    : sc_module(name_),
+    i_clk("i_clk"),
+    i_nrst("i_nrst"),
+    i_mret("i_mret"),
+    i_uret("i_uret"),
+    i_addr("i_addr"),
+    i_wena("i_wena"),
+    i_wdata("i_wdata"),
+    o_rdata("o_rdata"),
+    i_e_pre_valid("i_e_pre_valid"),
+    i_ex_pc("i_ex_pc"),
+    i_ex_npc("i_ex_npc"),
+    i_ex_data_addr("i_ex_data_addr"),
+    i_ex_data_load_fault("i_ex_data_load_fault"),
+    i_ex_data_store_fault("i_ex_data_store_fault"),
+    i_ex_data_store_fault_addr("i_ex_data_store_fault_addr"),
+    i_ex_ctrl_load_fault("i_ex_ctrl_load_fault"),
+    i_ex_illegal_instr("i_ex_illegal_instr"),
+    i_ex_unalign_store("i_ex_unalign_store"),
+    i_ex_unalign_load("i_ex_unalign_load"),
+    i_ex_breakpoint("i_ex_breakpoint"),
+    i_ex_ecall("i_ex_ecall"),
+    i_ex_fpu_invalidop("i_ex_fpu_invalidop"),
+    i_ex_fpu_divbyzero("i_ex_fpu_divbyzero"),
+    i_ex_fpu_overflow("i_ex_fpu_overflow"),
+    i_ex_fpu_underflow("i_ex_fpu_underflow"),
+    i_ex_fpu_inexact("i_ex_fpu_inexact"),
+    i_fpu_valid("i_fpu_valid"),
+    i_irq_external("i_irq_external"),
+    o_trap_valid("o_trap_valid"),
+    o_trap_pc("o_trap_pc"),
+    i_break_mode("i_break_mode"),
+    o_break_event("o_break_event"),
+    i_dport_ena("i_dport_ena"),
+    i_dport_write("i_dport_write"),
+    i_dport_addr("i_dport_addr"),
+    i_dport_wdata("i_dport_wdata"),
+    o_dport_rdata("o_dport_rdata") {
     hartid_ = hartid;
     async_reset_ = async_reset;
 
@@ -74,6 +111,9 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset)
     sensitive << r.trap_code;
     sensitive << r.trap_addr;
     sensitive << r.break_event;
+    sensitive << r.hold_data_store_fault;
+    sensitive << r.hold_data_load_fault;
+    sensitive << r.hold_mbadaddr;
 
     SC_METHOD(registers);
     sensitive << i_nrst;
@@ -82,20 +122,45 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset)
 
 void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
-        sc_trace(o_vcd, i_mret, "/top/proc0/csr0/i_mret");
-        sc_trace(o_vcd, i_uret, "/top/proc0/csr0/i_uret");
-        sc_trace(o_vcd, i_addr, "/top/proc0/csr0/i_addr");
-        sc_trace(o_vcd, i_wena, "/top/proc0/csr0/i_wena");
-        sc_trace(o_vcd, i_wdata, "/top/proc0/csr0/i_wdata");
-        sc_trace(o_vcd, o_rdata, "/top/proc0/csr0/o_rdata");
-        sc_trace(o_vcd, i_dport_ena, "/top/proc0/csr0/i_dport_ena");
-        sc_trace(o_vcd, i_dport_write, "/top/proc0/csr0/i_dport_write");
-        sc_trace(o_vcd, i_dport_addr, "/top/proc0/csr0/i_dport_addr");
-        sc_trace(o_vcd, i_dport_wdata, "/top/proc0/csr0/i_dport_wdata");
-        sc_trace(o_vcd, o_dport_rdata, "/top/proc0/csr0/o_dport_rdata");
-        sc_trace(o_vcd, i_irq_external, "/top/proc0/csr0/i_irq_external");
-        sc_trace(o_vcd, r.mode, "/top/proc0/csr0/r_mode");
-        sc_trace(o_vcd, r.mie, "/top/proc0/csr0/r_mie");
+        sc_trace(o_vcd, i_mret, i_mret.name());
+        sc_trace(o_vcd, i_uret, i_uret.name());
+        sc_trace(o_vcd, i_addr, i_addr.name());
+        sc_trace(o_vcd, i_wena, i_wena.name());
+        sc_trace(o_vcd, i_wdata, i_wdata.name());
+        sc_trace(o_vcd, o_rdata, o_rdata.name());
+        sc_trace(o_vcd, i_e_pre_valid, i_e_pre_valid.name()),
+        sc_trace(o_vcd, i_ex_pc, i_ex_pc.name());
+        sc_trace(o_vcd, i_ex_npc, i_ex_npc.name());
+        sc_trace(o_vcd, i_ex_data_addr, i_ex_data_addr.name());
+        sc_trace(o_vcd, i_ex_data_load_fault, i_ex_data_load_fault.name());
+        sc_trace(o_vcd, i_ex_data_store_fault, i_ex_data_store_fault.name());
+        sc_trace(o_vcd, i_ex_data_store_fault_addr, i_ex_data_store_fault_addr.name());
+        sc_trace(o_vcd, i_ex_ctrl_load_fault, i_ex_ctrl_load_fault.name());
+        sc_trace(o_vcd, i_ex_illegal_instr, i_ex_illegal_instr.name());
+        sc_trace(o_vcd, i_ex_unalign_store, i_ex_unalign_store.name());
+        sc_trace(o_vcd, i_ex_unalign_load, i_ex_unalign_load.name());
+        sc_trace(o_vcd, i_ex_breakpoint, i_ex_breakpoint.name());
+        sc_trace(o_vcd, i_ex_ecall, i_ex_ecall.name());
+        sc_trace(o_vcd, i_ex_fpu_invalidop, i_ex_fpu_invalidop.name());
+        sc_trace(o_vcd, i_ex_fpu_divbyzero, i_ex_fpu_divbyzero.name());
+        sc_trace(o_vcd, i_ex_fpu_overflow, i_ex_fpu_overflow.name());
+        sc_trace(o_vcd, i_ex_fpu_underflow, i_ex_fpu_underflow.name());
+        sc_trace(o_vcd, i_ex_fpu_inexact, i_ex_fpu_inexact.name());
+        sc_trace(o_vcd, i_fpu_valid, i_fpu_valid.name());
+        sc_trace(o_vcd, i_irq_external, i_irq_external.name());
+        sc_trace(o_vcd, o_trap_valid, o_trap_valid.name());
+        sc_trace(o_vcd, o_trap_pc, o_trap_pc.name());
+        sc_trace(o_vcd, i_break_mode, i_break_mode.name());
+        sc_trace(o_vcd, o_break_event, o_break_event.name());
+        sc_trace(o_vcd, i_dport_ena, i_dport_ena.name());
+        sc_trace(o_vcd, i_dport_write, i_dport_write.name());
+        sc_trace(o_vcd, i_dport_addr, i_dport_addr.name());
+        sc_trace(o_vcd, i_dport_wdata, i_dport_wdata.name());
+        sc_trace(o_vcd, o_dport_rdata, o_dport_rdata.name());
+
+        std::string pn(name());
+        sc_trace(o_vcd, r.mode, pn + ".r_mode");
+        sc_trace(o_vcd, r.mie, pn + ".r_mie");
     }
 }
 
@@ -330,10 +395,20 @@ void CsrRegs::comb() {
         w_trap_valid = 1;
         wb_trap_pc = CFG_NMI_LOAD_UNALIGNED_ADDR;
         wb_trap_code = EXCEPTION_LoadMisalign;
-    } else if (i_ex_data_load_fault.read() == 1) {
+    } else if (i_ex_data_load_fault.read() == 1 ||
+                r.hold_data_load_fault.read() == 1) {
         w_trap_valid = 1;
+        v.hold_data_load_fault = 0;
+        if (i_e_pre_valid.read() == 0) {
+            v.hold_data_load_fault = 1;
+        }
         wb_trap_pc = CFG_NMI_LOAD_FAULT_ADDR;
-        wb_mbadaddr = i_ex_data_addr.read();    // miss-access read
+        if (i_ex_data_load_fault.read() == 1) {
+            wb_mbadaddr = i_ex_data_addr.read();    // miss-access read
+            v.hold_mbadaddr = i_ex_data_addr.read();
+        } else {
+            wb_mbadaddr = r.hold_mbadaddr;
+        }
         wb_trap_code = EXCEPTION_LoadFault;
     } else if (i_ex_unalign_store.read() == 1) {
         w_trap_valid = 1;
@@ -347,7 +422,12 @@ void CsrRegs::comb() {
             v.hold_data_store_fault = 1;
         }
         wb_trap_pc = CFG_NMI_STORE_FAULT_ADDR;
-        wb_mbadaddr = i_ex_data_store_fault_addr.read();  // miss-access write
+        if (i_ex_data_store_fault.read() == 1) {
+            wb_mbadaddr = i_ex_data_store_fault_addr.read();  // miss-access write
+            v.hold_mbadaddr = i_ex_data_store_fault_addr.read();
+        } else {
+            wb_mbadaddr = r.hold_mbadaddr;
+        }
         wb_trap_code = EXCEPTION_StoreFault;
     } else if (i_ex_ecall.read() == 1) {
         w_trap_valid = 1;

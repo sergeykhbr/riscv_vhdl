@@ -40,10 +40,13 @@ void test_missaccess(void) {
     pnp->fwdbg1 = 0;
     *((uint64_t *)(UNMAPPED_ADDRESS + 8)) = 0x33445566;
 
+    // Pipeline can execute up to 2 instructions before store_fault
+    // exception will be generated, so insert before reading fwdbg1 some logic.
+    printf_uart("%s", "wr_missaccess. .");
     if (pnp->fwdbg1 != (UNMAPPED_ADDRESS+8)) {
-        printf_uart("wr_missaccess. .FAIL: %08x != %08x\r\n",
+        printf_uart("FAIL: %08x != %08x\r\n",
                     pnp->fwdbg1, (UNMAPPED_ADDRESS+8));
     } else {
-        printf_uart("%s", "wr_missaccess. .PASS\r\n");
+        printf_uart("%s", "PASS\r\n");
     }
 }

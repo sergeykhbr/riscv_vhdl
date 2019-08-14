@@ -218,6 +218,8 @@ private:
     bool w_hazard_lvl2;
     bool w_next_ready;
     bool w_hold;
+    bool w_multi_valid;
+    bool w_multi_ena;
 
     sc_signal<sc_uint<RISCV_ARCH>> wb_shifter_a1;      // Shifters operand 1
     sc_signal<sc_uint<6>> wb_shifter_a2;               // Shifters operand 2

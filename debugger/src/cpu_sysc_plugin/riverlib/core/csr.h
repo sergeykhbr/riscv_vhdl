@@ -96,6 +96,8 @@ private:
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> trap_addr;
         sc_signal<bool> break_event;            // 1 clock pulse
         sc_signal<bool> hold_data_store_fault;
+        sc_signal<bool> hold_data_load_fault;
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> hold_mbadaddr;
     } v, r;
 
     void R_RESET(RegistersType &iv) {
@@ -119,6 +121,8 @@ private:
         iv.trap_addr = 0;
         iv.break_event = 0;
         iv.hold_data_store_fault = 0;
+        iv.hold_data_load_fault = 0;
+        iv.hold_mbadaddr = 0;
     }
 
     uint32_t hartid_;

@@ -299,6 +299,8 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, w_hazard_lvl1, pn + ".w_hazard_lvl1");
         sc_trace(o_vcd, w_hazard_lvl2, pn + ".w_hazard_lvl2");
         sc_trace(o_vcd, w_next_ready, pn + ".w_next_ready");
+        sc_trace(o_vcd, w_multi_ena, pn + ".w_multi_ena");
+        sc_trace(o_vcd, w_multi_valid, pn + ".w_multi_valid");
     }
     mul0->generateVCD(i_vcd, o_vcd);
     div0->generateVCD(i_vcd, o_vcd);
@@ -342,8 +344,6 @@ void InstrExecute::comb() {
 #ifndef EXEC2_ENA
     bool w_d_acceptable;
 #endif
-    bool w_multi_valid;
-    bool w_multi_ena;
     bool w_fpu_ena;
     bool w_res_wena;
     bool w_pc_branch;
@@ -570,16 +570,24 @@ void InstrExecute::comb() {
         }
         break;
     case State_Hold:
+        /** No need to raise w_hold because it is already hold, but we have
+        to use previously latched values of instruction type because outputs
+        pc and npc switched for next instruction */
         w_next_ready = 0;
         if (i_pipeline_hold.read() == 0) {
             if (r.hold_valid.read() == 1) {
-                if (r.hold_multi_ena.read() == 1) {
+                if (r.hold_multi_ena.read() == 1 && w_multi_valid == 0) {
                     v.state = State_MultiCycle;
                 } else {
                     v.state = State_SingleCycle;
                 }
             } else {
                 v.state = State_WaitInstr;
+            }
+        } else if (r.hold_multi_ena.read() == 1) {
+            /** Track the end of multi-instruction while in Hold state */
+            if (w_multi_valid == 1) {
+                v.hold_multi_ena = 0;
             }
         }
         break;
@@ -920,11 +928,11 @@ void InstrExecute::comb() {
 #ifdef EXEC2_ENA
     o_pre_valid = w_next_ready;
 
-    o_ex_illegal_instr = i_unsup_exception.read();
-    o_ex_unalign_store = w_exception_store;
-    o_ex_unalign_load = w_exception_load;
-    o_ex_breakpoint = wv[Instr_EBREAK].to_bool();
-    o_ex_ecall = wv[Instr_ECALL].to_bool();
+    o_ex_illegal_instr = i_unsup_exception.read() & w_next_ready;
+    o_ex_unalign_store = w_exception_store & w_next_ready;
+    o_ex_unalign_load = w_exception_load & w_next_ready;
+    o_ex_breakpoint = wv[Instr_EBREAK].to_bool() & w_next_ready;
+    o_ex_ecall = wv[Instr_ECALL].to_bool() & w_next_ready;
 #else
     w_d_valid = (w_d_acceptable && !w_multi_ena) || w_multi_valid;
     o_pre_valid = w_d_valid;
