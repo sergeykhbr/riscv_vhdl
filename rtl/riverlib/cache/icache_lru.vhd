@@ -160,7 +160,6 @@ architecture arch_ICacheLru of ICacheLru is
   signal lrui : LruInVector;
   signal wb_lru_even : std_logic_vector(1 downto 0);
   signal wb_lru_odd : std_logic_vector(1 downto 0);
-  signal w_init : std_logic;
 
 begin
 
@@ -607,7 +606,6 @@ begin
     wb_ena_even <= vb_ena_even;
     wb_ena_odd <= vb_ena_odd;
 
-    w_init <= v_init;
     o_req_ctrl_ready <= w_o_req_ctrl_ready;
 
     o_req_mem_valid <= r.req_mem_valid;
