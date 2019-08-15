@@ -951,6 +951,8 @@ void InstrExecute::comb() {
         v.npc = i_dport_npc.read();
 #ifdef EXEC2_ENA
     } else if (w_multi_valid) {
+        // multi-cycle instruction ending by single-cycle state
+        // so no need to check jump opcodes
         v.pc = r.multi_pc;
         v.instr = r.multi_instr;
         if (i_trap_valid.read()) {

@@ -305,7 +305,7 @@ begin
         i_d_valid => w.d.instr_valid,
         i_d_pc => w.d.pc,
         i_d_instr => w.d.instr,
-        i_wb_done => w.m.valid,
+        i_wb_ready => w.m.valid,
         i_memop_store => w.d.memop_store,
         i_memop_load => w.d.memop_load,
         i_memop_sign_ext => w.d.memop_sign_ext,

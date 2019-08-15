@@ -605,7 +605,7 @@ package river_cfg is
     i_d_valid : in std_logic;
     i_d_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_d_instr : in std_logic_vector(31 downto 0);
-    i_wb_done : in std_logic;
+    i_wb_ready : in std_logic;
     i_memop_store : in std_logic;
     i_memop_load : in std_logic;
     i_memop_sign_ext : in std_logic;

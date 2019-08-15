@@ -95,13 +95,16 @@ architecture arch_CsrRegs of CsrRegs is
       trap_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
       break_event : std_logic;
       hold_data_store_fault : std_logic;
+      hold_data_load_fault : std_logic;
+      hold_mbadaddr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
   end record;
 
   constant R_RESET : RegistersType := (
         (others => '0'), (others => '0'), (others => '0'), PRV_M,
         '0', '0', '0', (others => '0'), (others => '0'), '0',
         '0', '0', '0', '0', '0', 
-        '0', (others => '0'), (others => '0'), '0', '0');
+        '0', (others => '0'), (others => '0'), '0',
+        '0', '0', (others => '0'));
 
   signal r, rin : RegistersType;
   
@@ -330,10 +333,19 @@ begin
         w_trap_valid := '1';
         wb_trap_pc := CFG_NMI_LOAD_UNALIGNED_ADDR;
         wb_trap_code := EXCEPTION_LoadMisalign;
-    elsif i_ex_data_load_fault = '1' then
+    elsif i_ex_data_load_fault = '1' or r.hold_data_load_fault = '1' then
         w_trap_valid := '1';
+        v.hold_data_load_fault := '0';
+        if i_e_pre_valid = '0' then
+            v.hold_data_load_fault := '1';
+        end if;
         wb_trap_pc := CFG_NMI_LOAD_FAULT_ADDR;
-        wb_mbadaddr := i_ex_data_addr;     -- miss-access read data address
+        if i_ex_data_load_fault = '1'  then
+            wb_mbadaddr := i_ex_data_addr;     -- miss-access read data address
+            v.hold_mbadaddr := i_ex_data_addr;
+        else
+            wb_mbadaddr := r.hold_mbadaddr;
+        end if;
         wb_trap_code := EXCEPTION_LoadFault;
     elsif i_ex_unalign_store = '1' then
         w_trap_valid := '1';
@@ -346,7 +358,12 @@ begin
             v.hold_data_store_fault := '1';
         end if;
         wb_trap_pc := CFG_NMI_STORE_FAULT_ADDR;
-        wb_mbadaddr := i_ex_data_store_fault_addr;     -- miss-access write data address
+        if i_ex_data_store_fault = '1' then
+            wb_mbadaddr := i_ex_data_store_fault_addr;     -- miss-access write data address
+            v.hold_mbadaddr := i_ex_data_store_fault_addr;
+        else
+            wb_mbadaddr := r.hold_mbadaddr;
+        end if;
         wb_trap_code := EXCEPTION_StoreFault;
     elsif i_ex_ecall = '1' then
         w_trap_valid := '1';

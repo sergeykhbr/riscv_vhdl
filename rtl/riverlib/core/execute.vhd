@@ -35,7 +35,7 @@ entity InstrExecute is generic (
     i_d_valid : in std_logic;                                   -- Decoded instruction is valid
     i_d_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);    -- Instruction pointer on decoded instruction
     i_d_instr : in std_logic_vector(31 downto 0);               -- Decoded instruction value
-    i_wb_done : in std_logic;                                   -- write back done (Used to clear hazardness)
+    i_wb_ready : in std_logic;                                  -- End of write back operation
     i_memop_store : in std_logic;                               -- Store to memory operation
     i_memop_load : in std_logic;                                -- Load from memoru operation
     i_memop_sign_ext : in std_logic;                            -- Load memory value with sign extending
@@ -103,12 +103,20 @@ architecture arch_InstrExecute of InstrExecute is
   constant Multi_DIV : integer := 1;
   constant Multi_FPU : integer := 2;
   constant Multi_Total : integer := 3;
+
+  constant State_WaitInstr : std_logic_vector(2 downto 0) := "000";
+  constant State_SingleCycle : std_logic_vector(2 downto 0) := "001";
+  constant State_MultiCycle : std_logic_vector(2 downto 0) := "010";
+  constant State_Hold : std_logic_vector(2 downto 0) := "011";
+  constant State_Hazard : std_logic_vector(2 downto 0) := "100";
+
   constant zero64 : std_logic_vector(63 downto 0) := (others => '0');
 
   type multi_arith_type is array (0 to Multi_Total-1) 
       of std_logic_vector(RISCV_ARCH-1 downto 0);
 
   type RegistersType is record
+        state : std_logic_vector(2 downto 0);
         d_valid : std_logic;                                   -- Valid decoded instruction latch
         pc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
         npc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
@@ -137,14 +145,16 @@ architecture arch_InstrExecute of InstrExecute is
         multi_a2 : std_logic_vector(RISCV_ARCH-1 downto 0);    -- Multi-cycle operand 2
 
         hazard_addr0 : std_logic_vector(5 downto 0);           -- Updated register address on previous step
-        hazard_addr1 : std_logic_vector(5 downto 0);           -- Updated register address on pre-previous step
         hazard_depth : std_logic_vector(1 downto 0);           -- Number of modificated registers that wasn't done yet
+        hold_valid : std_logic;
+        hold_multi_ena : std_logic;
 
         call : std_logic;
         ret : std_logic;
   end record;
 
   constant R_RESET : RegistersType := (
+    State_WaitInstr,                                   -- state
     '0', (others => '0'), CFG_NMI_RESET_VECTOR,        -- d_valid, pc, npc
     (others => '0'), (others => '0'), (others => '0'), -- instr, res_addr, res_val
     '0', '0', '0', "00", (others => '0'),              -- memop_load, memop_store, memop_sign_ext, memop_size, memop_addr
@@ -153,7 +163,8 @@ architecture arch_InstrExecute of InstrExecute is
     '0', '0',  '0',                                    -- multi_f64, multi_unsigned, multi_residual_high
     '0', (others => '0'),                              -- multiclock_ena, multi_ivec_fpu
     (others => '0'), (others => '0'),                  -- multi_a1, multi_a2
-    (others => '0'), (others => '0'), (others => '0'), -- hazard_add0, hazard_addr1, hazard_depth
+    (others => '0'), (others => '0'),                  -- hazard_add0, hazard_depth
+    '0', '0',                                          -- hold_valid, hold_multi_ena
     '0', '0'                                           -- call, ret
   );
 
@@ -162,7 +173,6 @@ architecture arch_InstrExecute of InstrExecute is
   signal wb_arith_res : multi_arith_type;
   signal w_arith_valid : std_logic_vector(Multi_Total-1 downto 0);
   signal w_arith_busy : std_logic_vector(Multi_Total-1 downto 0);
-  signal w_hazard_detected : std_logic;
 
   signal wb_shifter_a1 : std_logic_vector(RISCV_ARCH-1 downto 0);  -- Shifters operand 1
   signal wb_shifter_a2 : std_logic_vector(5 downto 0);             -- Shifters operand 2
@@ -319,12 +329,12 @@ begin
   end generate;
 
   comb : process(i_nrst, i_pipeline_hold, i_d_valid, i_d_pc, i_d_instr,
-                 i_wb_done, i_memop_load, i_memop_store, i_memop_sign_ext,
+                 i_wb_ready, i_memop_load, i_memop_store, i_memop_sign_ext,
                  i_memop_size, i_unsigned_op, i_rv32, i_compressed, i_f64, i_isa_type, i_ivec,
                  i_rdata1, i_rdata2, i_rfdata1, i_rfdata2, i_csr_rdata, 
                  i_trap_valid, i_trap_pc, i_dport_npc_write,
                  i_dport_npc, i_unsup_exception,
-                 wb_arith_res, w_arith_valid, w_arith_busy, w_hazard_detected,
+                 wb_arith_res, w_arith_valid, w_arith_busy,
                  wb_sll, wb_sllw, wb_srl, wb_srlw, wb_sra, wb_sraw, r)
     variable v : RegistersType;
     variable w_exception_store : std_logic;
@@ -357,8 +367,10 @@ begin
     variable wb_memop_size : std_logic_vector(1 downto 0);
     variable wb_memop_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
 
+    variable w_valid : std_logic;
     variable w_pc_valid : std_logic;
-    variable w_d_acceptable : std_logic;
+    variable w_next_ready : std_logic;
+    variable w_hold : std_logic;
     variable w_multi_valid : std_logic;
     variable w_multi_ena : std_logic;
     variable w_fpu_ena : std_logic;
@@ -366,9 +378,6 @@ begin
     variable w_pc_branch : std_logic;
     variable w_hazard_lvl1 : std_logic;
     variable w_hazard_lvl2 : std_logic;
-    variable w_d_valid : std_logic;
-    variable w_o_valid : std_logic;
-    variable w_o_pipeline_hold : std_logic;
     variable w_less : std_logic;
     variable w_gr_equal : std_logic;
     variable wv : std_logic_vector(Instr_Total-1 downto 0);
@@ -403,8 +412,6 @@ begin
     if i_d_pc = r.npc then
         w_pc_valid := '1';
     end if;
-    w_d_acceptable := not i_pipeline_hold and i_d_valid 
-                          and w_pc_valid and not r.multiclock_ena;
 
     if i_isa_type(ISA_R_type) = '1' then
         wb_radr1 := ('0' & i_d_instr(19 downto 15));
@@ -468,19 +475,20 @@ begin
         end if;
     end if;
 
-    -- parallel ALU:
-    wb_sum64 := wb_rdata1 + wb_rdata2;
-    wb_sum32(31 downto 0) := wb_rdata1(31 downto 0) + wb_rdata2(31 downto 0);
-    wb_sum32(63 downto 32) := (others => wb_sum32(31));
-    wb_sub64 := wb_rdata1 - wb_rdata2;
-    wb_sub32(31 downto 0) := wb_rdata1(31 downto 0) - wb_rdata2(31 downto 0);
-    wb_sub32(63 downto 32) := (others => wb_sub32(31));
-    wb_and64 := wb_rdata1 and wb_rdata2;
-    wb_or64 := wb_rdata1 or wb_rdata2;
-    wb_xor64 := wb_rdata1 xor wb_rdata2;
-    
-    wb_shifter_a1 <= wb_rdata1;
-    wb_shifter_a2 <= wb_rdata2(5 downto 0);
+    --! Default number of cycles per instruction = 0 (1 clock per instr)
+    --! If instruction is multicycle then modify this value.
+    --!
+    w_fpu_ena := '0';
+    if CFG_HW_FPU_ENABLE then
+        if i_f64 = '1' and (wv(Instr_FSD) or wv(Instr_FLD)) = '0' then
+            w_fpu_ena := '1';
+        end if;
+    end if;
+
+    w_multi_ena := wv(Instr_MUL) or wv(Instr_MULW) or wv(Instr_DIV)
+                    or wv(Instr_DIVU) or wv(Instr_DIVW) or wv(Instr_DIVUW)
+                    or wv(Instr_REM) or wv(Instr_REMU) or wv(Instr_REMW)
+                    or wv(Instr_REMUW) or w_fpu_ena;
 
     w_multi_valid := w_arith_valid(Multi_MUL) or w_arith_valid(Multi_DIV)
                    or w_arith_valid(Multi_FPU);
@@ -506,6 +514,136 @@ begin
     else
         wb_res_addr := (others => '0');
     end if;
+
+
+    w_next_ready := '0';
+    w_hold := '0';
+
+    if i_d_valid = '1' and w_pc_valid = '1' then
+        w_next_ready := '1';
+    end if;
+
+    --! Valid values on the inputs radr1,radr2 will be 2 cycles after
+    --! signal o_valid = 1
+    --!
+    w_hazard_lvl1 := '0';
+    if r.res_addr /= "000000" and
+        (wb_radr1 = r.res_addr or wb_radr2 = r.res_addr) then
+        w_hazard_lvl1 := '1';
+    end if;
+
+    w_hazard_lvl2 := '0';
+    if r.hazard_addr0 /= "000000" and
+        (wb_radr1 = r.hazard_addr0 or wb_radr2 = r.hazard_addr0) then
+        w_hazard_lvl2 := '1';
+    end if;
+
+    w_valid := '0';
+    case r.state is
+    when State_WaitInstr =>
+        if r.hazard_depth /= "00" and w_hazard_lvl2 = '1' then
+            -- Hazard after missed predicted instruction 1 cycle
+            w_hold := '1';
+            w_next_ready := '0';
+        elsif i_pipeline_hold = '1' then
+            v.state := State_Hold;
+            v.hold_valid := w_next_ready;
+            v.hold_multi_ena := w_multi_ena;
+        elsif w_next_ready = '1' then
+            if w_multi_ena = '1' then
+                w_hold := '1';
+                v.state := State_MultiCycle;
+            else
+                v.state := State_SingleCycle;
+            end if;
+        end if;
+    when State_SingleCycle =>
+        w_valid := '1';
+        if w_hazard_lvl1 = '1' then
+            -- 2-cycles wait state
+            w_hold := '1';
+            w_next_ready := '0';
+            v.state := State_Hazard;
+        elsif w_hazard_lvl2 = '1' then
+            -- 1-cycle wait state
+            w_hold := '1';
+            w_next_ready := '0';
+            v.state := State_WaitInstr;
+        elsif i_pipeline_hold = '1' then
+            v.state := State_Hold;
+            v.hold_valid := w_next_ready;
+            v.hold_multi_ena := w_multi_ena;
+        elsif w_next_ready = '1' then
+            if w_multi_ena = '1' then
+                w_hold := '1';
+                v.state := State_MultiCycle;
+            else
+                v.state := State_SingleCycle;
+            end if;
+        else
+            v.state := State_WaitInstr;
+        end if;
+    when State_MultiCycle =>
+        w_hold := '1';
+        w_next_ready := '0';
+        if w_multi_valid = '1' then
+            v.state := State_SingleCycle;
+        end if;
+    when State_Hold =>
+        --! No need to raise w_hold because it is already hold, but we have
+        --! to use previously latched values of instruction type because outputs
+        --! pc and npc switched for next instruction
+        w_next_ready := '0';
+        if i_pipeline_hold = '0' then
+            if r.hold_valid = '1' then
+                if r.hold_multi_ena = '1' and w_multi_valid = '0' then
+                    v.state := State_MultiCycle;
+                else
+                    v.state := State_SingleCycle;
+                end if;
+            else
+                v.state := State_WaitInstr;
+            end if;
+        elsif r.hold_multi_ena = '1' then
+            --! Track the end of multi-instruction while in Hold state
+            if w_multi_valid = '1' then
+                v.hold_multi_ena := '0';
+            end if;
+        end if;
+    when State_Hazard =>
+        w_next_ready := '0';
+        w_hold := '1';
+        if i_wb_ready = '1' then
+            v.state := State_WaitInstr;
+        end if;
+    when others =>
+    end case;
+
+    if w_valid = '1' then
+        v.hazard_addr0 := r.res_addr;
+    end if;
+
+    if w_valid = '1' and i_wb_ready = '0' then
+        v.hazard_depth := r.hazard_depth + 1;
+    elsif w_valid = '0' and i_wb_ready = '1' then
+        v.hazard_depth := r.hazard_depth - 1;
+    end if;
+
+
+    -- parallel ALU:
+    wb_sum64 := wb_rdata1 + wb_rdata2;
+    wb_sum32(31 downto 0) := wb_rdata1(31 downto 0) + wb_rdata2(31 downto 0);
+    wb_sum32(63 downto 32) := (others => wb_sum32(31));
+    wb_sub64 := wb_rdata1 - wb_rdata2;
+    wb_sub32(31 downto 0) := wb_rdata1(31 downto 0) - wb_rdata2(31 downto 0);
+    wb_sub32(63 downto 32) := (others => wb_sub32(31));
+    wb_and64 := wb_rdata1 and wb_rdata2;
+    wb_or64 := wb_rdata1 or wb_rdata2;
+    wb_xor64 := wb_rdata1 xor wb_rdata2;
+    
+    wb_shifter_a1 <= wb_rdata1;
+    wb_shifter_a2 <= wb_rdata2(5 downto 0);
+
     w_less := '0';
     w_gr_equal := '0';
     if UNSIGNED(wb_rdata1) < UNSIGNED(wb_rdata2) then
@@ -545,14 +683,14 @@ begin
     elsif wv(Instr_MRET) = '1' then
         wb_res(63 downto 32) := (others => '0');
         wb_res(31 downto 0) := i_d_pc + opcode_len;
-        w_mret := i_d_valid and w_pc_valid;
+        w_mret := '1';
         w_csr_wena := '0';
         wb_csr_addr := CSR_mepc;
         wb_npc := i_csr_rdata(BUS_ADDR_WIDTH-1 downto 0);
     elsif wv(Instr_URET) = '1' then
         wb_res(63 downto 32) := (others => '0');
         wb_res(31 downto 0) := i_d_pc + opcode_len;
-        w_uret := i_d_valid and w_pc_valid;
+        w_uret := '1';
         w_csr_wena := '0';
         wb_csr_addr := CSR_uepc;
         wb_npc := i_csr_rdata(BUS_ADDR_WIDTH-1 downto 0);
@@ -569,34 +707,18 @@ begin
                        + wb_off(BUS_ADDR_WIDTH-1 downto 0);
     end if;
 
-    v.memop_addr := (others => '0');
-    v.memop_load := '0';
-    v.memop_store := '0';
-    v.memop_sign_ext := '0';
-    v.memop_size := (others => '0');
     w_exception_store := '0';
     w_exception_load := '0';
 
     if ((wv(Instr_LD) = '1' and wb_memop_addr(2 downto 0) /= "000")
         or ((wv(Instr_LW) or wv(Instr_LWU)) = '1' and wb_memop_addr(1 downto 0) /= "00")
         or ((wv(Instr_LH) or wv(Instr_LHU)) = '1' and wb_memop_addr(0) /= '0'))  then
-        w_exception_load := not w_hazard_detected;
+        w_exception_load := '1';
     end if;
     if ((wv(Instr_SD) = '1' and wb_memop_addr(2 downto 0) /= "000")
         or (wv(Instr_SW) = '1' and wb_memop_addr(1 downto 0) /= "00")
         or (wv(Instr_SH) = '1' and wb_memop_addr(0) /= '0')) then
-        w_exception_store := not w_hazard_detected;
-    end if;
-
-
-    --! Default number of cycles per instruction = 0 (1 clock per instr)
-    --! If instruction is multicycle then modify this value.
-    --!
-    w_fpu_ena := '0';
-    if CFG_HW_FPU_ENABLE then
-        if i_f64 = '1' and (wv(Instr_FSD) or wv(Instr_FLD)) = '0' then
-            w_fpu_ena := '1';
-        end if;
+        w_exception_store := '1';
     end if;
 
     v.multi_ena := (others => '0');
@@ -612,11 +734,7 @@ begin
         v.multi_a2 := i_rdata2;
     end if;
 
-    w_multi_ena := wv(Instr_MUL) or wv(Instr_MULW) or wv(Instr_DIV)
-                    or wv(Instr_DIVU) or wv(Instr_DIVW) or wv(Instr_DIVUW)
-                    or wv(Instr_REM) or wv(Instr_REMU) or wv(Instr_REMW)
-                    or wv(Instr_REMUW) or w_fpu_ena;
-    if (w_multi_ena and w_d_acceptable) = '1' then
+    if (w_multi_ena and w_next_ready) = '1' then
         v.multiclock_ena := '1';
         v.multi_res_addr := wb_res_addr;
         if CFG_HW_FPU_ENABLE then
@@ -642,11 +760,11 @@ begin
     elsif w_arith_valid(Multi_FPU) = '1' then
         wb_res := wb_arith_res(Multi_FPU);
     elsif i_memop_load = '1' then
-        w_memop_load := not w_hazard_detected;
+        w_memop_load := '1';
         w_memop_sign_ext := i_memop_sign_ext;
         wb_memop_size := i_memop_size;
     elsif i_memop_store = '1' then
-        w_memop_store := not w_hazard_detected;
+        w_memop_store := '1';
         wb_memop_size := i_memop_size;
         wb_res := wb_rdata2;
     elsif (wv(Instr_ADD) or wv(Instr_ADDI) or wv(Instr_AUIPC)) = '1' then
@@ -684,16 +802,16 @@ begin
     elsif wv(Instr_LUI) = '1' then
         wb_res := wb_rdata2;
     elsif (wv(Instr_MUL) or wv(Instr_MULW)) = '1' then
-        v.multi_ena(Multi_MUL) := w_d_acceptable;
+        v.multi_ena(Multi_MUL) := w_next_ready;
     elsif (wv(Instr_DIV) or wv(Instr_DIVU)
             or wv(Instr_DIVW) or wv(Instr_DIVUW)) = '1' then
-        v.multi_ena(Multi_DIV) := w_d_acceptable;
+        v.multi_ena(Multi_DIV) := w_next_ready;
     elsif (wv(Instr_REM) or wv(Instr_REMU)
             or wv(Instr_REMW) or wv(Instr_REMUW)) = '1' then
-        v.multi_ena(Multi_DIV) := w_d_acceptable;
+        v.multi_ena(Multi_DIV) := w_next_ready;
         v.multi_residual_high := '1';
     elsif w_fpu_ena = '1' then
-        v.multi_ena(Multi_FPU) := w_d_acceptable;
+        v.multi_ena(Multi_FPU) := w_next_ready;
     elsif wv(Instr_CSRRC) = '1' then
         wb_res := i_csr_rdata;
         w_csr_wena := '1';
@@ -730,56 +848,55 @@ begin
     end if;
 
 
-    w_d_valid := 
-        (w_d_acceptable and (not w_multi_ena)) or w_multi_valid;
-    o_pre_valid <= w_d_valid;
+    o_pre_valid <= w_next_ready;
 
-    o_ex_illegal_instr <= (i_unsup_exception and w_pc_valid) and w_d_valid;
-    o_ex_unalign_store <= w_exception_store and w_d_valid;
-    o_ex_unalign_load <= w_exception_load and w_d_valid;
-    o_ex_breakpoint <= wv(Instr_EBREAK) and w_d_valid;
-    o_ex_ecall <= wv(Instr_ECALL) and w_d_valid;
+    o_ex_illegal_instr <= i_unsup_exception and w_next_ready;
+    o_ex_unalign_store <= w_exception_store and w_next_ready;
+    o_ex_unalign_load <= w_exception_load and w_next_ready;
+    o_ex_breakpoint <= wv(Instr_EBREAK) and w_next_ready;
+    o_ex_ecall <= wv(Instr_ECALL) and w_next_ready;
 
     v.call := '0';
     v.ret := '0';
     wb_ex_npc := (others => '0');
     if i_dport_npc_write = '1' then
         v.npc := i_dport_npc;
-    elsif w_d_valid = '1' then
-        if w_multi_valid = '1' then
-            v.pc := r.multi_pc;
-            v.instr := r.multi_instr;
-            if i_trap_valid = '1' then
-                v.npc := i_trap_pc;
-                wb_ex_npc := r.multi_npc;
-            else
-                v.npc := r.multi_npc;
-            end if;
-            v.memop_load := '0';
-            v.memop_sign_ext := '0';
-            v.memop_store := '0';
-            v.memop_size := (others => '0');
-            v.memop_addr := (others => '0');
+    elsif w_multi_valid = '1' then
+        -- multi-cycle instruction ending by single-cycle state
+        -- so no need to check jump opcodes
+        v.pc := r.multi_pc;
+        v.instr := r.multi_instr;
+        if i_trap_valid = '1' then
+            v.npc := i_trap_pc;
+            wb_ex_npc := r.multi_npc;
         else
-            v.pc := i_d_pc;
-            v.instr := i_d_instr;
-            if i_trap_valid = '1' then
-                v.npc := i_trap_pc;
-                wb_ex_npc := wb_npc;
-            else
-                v.npc := wb_npc;
-            end if;
-            v.memop_load := w_memop_load;
-            v.memop_sign_ext := w_memop_sign_ext;
-            v.memop_store := w_memop_store;
-            v.memop_size := wb_memop_size;
-            v.memop_addr := wb_memop_addr;
+            v.npc := r.multi_npc;
         end if;
+        v.memop_load := '0';
+        v.memop_sign_ext := '0';
+        v.memop_store := '0';
+        v.memop_size := (others => '0');
+        v.memop_addr := (others => '0');
+
         v.res_addr := wb_res_addr;
         v.res_val := wb_res;
+    elsif w_next_ready = '1' then
+        v.pc := i_d_pc;
+        v.instr := i_d_instr;
+        if i_trap_valid = '1' then
+            v.npc := i_trap_pc;
+            wb_ex_npc := wb_npc;
+        else
+            v.npc := wb_npc;
+        end if;
+        v.memop_load := w_memop_load;
+        v.memop_sign_ext := w_memop_sign_ext;
+        v.memop_store := w_memop_store;
+        v.memop_size := wb_memop_size;
+        v.memop_addr := wb_memop_addr;
 
-        v.hazard_addr1 := r.hazard_addr0;
-        v.hazard_addr0 := wb_res_addr;
+        v.res_addr := wb_res_addr;
+        v.res_val := wb_res;
 
         if wv(Instr_JAL) = '1' and conv_integer(wb_res_addr) = Reg_ra then
             v.call := '1';
@@ -793,37 +910,6 @@ begin
         end if;
     end if;
 
-    v.d_valid := w_d_valid;
-
-    if w_d_valid = '1' and i_wb_done = '0' then
-        v.hazard_depth := r.hazard_depth + 1;
-        v.hazard_addr0 := wb_res_addr;
-    elsif w_d_valid = '0' and i_wb_done = '1' then
-        v.hazard_depth := r.hazard_depth - 1;
-    end if;
-    w_hazard_lvl1 := '0';
-    if (wb_radr1 /= "000000" and wb_radr1 = r.hazard_addr0) or
-       (wb_radr2 /= "000000" and wb_radr2 = r.hazard_addr0) then
-        w_hazard_lvl1 := '1';
-    end if;
-    w_hazard_lvl2 := '0';
-    if (wb_radr1 /= "000000" and wb_radr1 = r.hazard_addr1) or
-       (wb_radr2 /= "000000" and wb_radr2 = r.hazard_addr1) then
-        w_hazard_lvl2 := '1';
-    end if;
-
-    if r.hazard_depth = "01" then
-        w_hazard_detected <= w_hazard_lvl1;
-    elsif r.hazard_depth = "10" then
-        w_hazard_detected <= w_hazard_lvl1 or w_hazard_lvl2;
-    else
-        w_hazard_detected <= '0';
-    end if;
-
-    w_o_valid := r.d_valid;
-    w_o_pipeline_hold := w_hazard_detected or r.multiclock_ena;
-
-
     if not async_reset and i_nrst = '0' then
         v := R_RESET;
     end if;
@@ -832,9 +918,9 @@ begin
     o_radr2 <= wb_radr2;
     o_res_addr <= r.res_addr;
     o_res_data <= r.res_val;
-    o_pipeline_hold <= w_o_pipeline_hold;
+    o_pipeline_hold <= w_hold;
 
-    o_csr_wena <= w_csr_wena and w_pc_valid and not w_hazard_detected;
+    o_csr_wena <= w_csr_wena and w_next_ready;
     o_csr_addr <= wb_csr_addr;
     o_csr_wdata <= wb_csr_wdata;
     o_ex_npc <= wb_ex_npc;
@@ -845,7 +931,7 @@ begin
     o_memop_size <= r.memop_size;
     o_memop_addr <= r.memop_addr;
 
-    o_valid <= w_o_valid;
+    o_valid <= w_valid;
     o_pc <= r.pc;
     o_npc <= r.npc;
     o_instr <= r.instr;

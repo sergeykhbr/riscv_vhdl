@@ -814,7 +814,7 @@ begin
     elsif i_any_hold = '0' then
         v.valid := '0';
     end if;
-    w_o_valid := r.valid and not i_any_hold;
+    w_o_valid := r.valid;
 
     if not async_reset and i_nrst = '0' then
         v := R_RESET;

@@ -827,7 +827,7 @@ void InstrDecoder::comb() {
     } else if (!i_any_hold.read()) {
         v.valid = 0;
     }
-    w_o_valid = r.valid.read();// && !i_any_hold.read();
+    w_o_valid = r.valid.read();
 
     if (!async_reset_ && !i_nrst.read()) {
         R_RESET(v);

@@ -76,10 +76,9 @@ private:
         sc_signal<sc_uint<2>> state;
         sc_signal<bool> memop_r;
         sc_signal<bool> memop_rw;
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> memop_addr;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> pc;
         sc_signal<sc_uint<32>> instr;
-        sc_signal<bool> wb_ready;
-        sc_signal<sc_uint<6>> wb_addr;
         sc_signal<sc_uint<6>> res_addr;
         sc_signal<sc_uint<RISCV_ARCH>> res_data;
         sc_signal<bool> memop_sign_ext;
@@ -91,10 +90,9 @@ private:
         iv.state = State_Idle;
         iv.memop_r = 0;
         iv.memop_rw = 0;
+        iv.memop_addr = 0;
         iv.pc = 0;
         iv.instr = 0;
-        iv.wb_ready = 0;
-        iv.wb_addr = 0;
         iv.res_addr = 0;
         iv.res_data = 0;
         iv.memop_sign_ext = 0;

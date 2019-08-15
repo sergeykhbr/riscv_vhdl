@@ -72,8 +72,6 @@ MemAccess::MemAccess(sc_module_name name_, bool async_reset)
     sensitive << r.memop_rw;
     sensitive << r.pc;
     sensitive << r.instr;
-    sensitive << r.wb_ready;
-    sensitive << r.wb_addr;
     sensitive << r.res_addr;
     sensitive << r.res_data;
     sensitive << r.memop_sign_ext;
@@ -118,6 +116,10 @@ void MemAccess::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 
 void MemAccess::comb() {
     bool w_mem_valid;
+    bool w_mem_write;
+    sc_uint<2> wb_mem_sz;
+    sc_uint<BUS_ADDR_WIDTH> wb_mem_addr;
+    sc_uint<BUS_DATA_WIDTH> wb_mem_data;
     bool w_hold;
     bool w_valid;
     sc_uint<RISCV_ARCH> wb_mem_data_signext;
@@ -128,6 +130,11 @@ void MemAccess::comb() {
     w_mem_valid = 0;
     w_hold = 0;
     w_valid = 0;
+
+    w_mem_write = i_memop_store.read();
+    wb_mem_sz = i_memop_size.read();
+    wb_mem_addr = i_memop_addr.read();
+    wb_mem_data = i_res_data.read();
 
     switch (r.state.read()) {
     case State_Idle:
@@ -146,6 +153,11 @@ void MemAccess::comb() {
         }
         break;
     case State_WaitReqAccept:
+        w_mem_valid = 1;
+        w_mem_write = !r.memop_r.read();
+        wb_mem_sz = r.memop_size.read();
+        wb_mem_addr = r.memop_addr.read();
+        wb_mem_data = r.res_data.read();
         w_hold = 1;
         if (i_mem_req_ready.read() == 1) {
             v.state = State_WaitResponse;
@@ -196,18 +208,18 @@ void MemAccess::comb() {
     if (i_e_valid.read() == 1) {
         v.memop_r = i_memop_load.read();
         v.memop_rw = i_memop_load.read() || i_memop_store.read();
+        v.memop_addr = i_memop_addr.read();
+        v.memop_sign_ext = i_memop_sign_ext.read();
+        v.memop_size = i_memop_size.read();
         v.pc = i_e_pc.read();
         v.instr = i_e_instr.read();
         v.res_addr = i_res_addr.read();
         v.res_data = i_res_data.read();
-        v.memop_sign_ext = i_memop_sign_ext.read();
-        v.memop_size = i_memop_size.read();
         if (i_res_addr.read() == 0) {
             v.wena = 0;
         } else {
             v.wena = 1;
         }
-        v.wb_addr = i_res_addr.read();
     }
 
     switch (r.memop_size.read()) {
@@ -251,10 +263,10 @@ void MemAccess::comb() {
     o_mem_resp_ready = 1;
 
     o_mem_valid = w_mem_valid;
-    o_mem_write = i_memop_store.read();
-    o_mem_sz = i_memop_size.read();
-    o_mem_addr = i_memop_addr.read();
-    o_mem_data = i_res_data.read();
+    o_mem_write = w_mem_write;
+    o_mem_sz = wb_mem_sz;
+    o_mem_addr = wb_mem_addr;
+    o_mem_data = wb_mem_data;
 
     o_wena = r.wena.read() && w_valid;
     o_waddr = r.res_addr;
