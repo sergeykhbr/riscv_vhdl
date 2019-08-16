@@ -78,9 +78,10 @@ end component;
   end component; 
 
 --! Internal RAM with AXI4 interface declaration.
-component nasti_sram is
+component axi4_sram is
   generic (
     memtech  : integer := inferred;
+    async_reset : boolean := false;
     xaddr    : integer := 0;
     xmask    : integer := 16#fffff#;
     abits    : integer := 17;
@@ -94,6 +95,25 @@ component nasti_sram is
     o    : out nasti_slave_out_type
   );
 end component; 
+
+component nasti_sram is
+  generic (
+    memtech  : integer := inferred;
+    async_reset : boolean := false;
+    xaddr    : integer := 0;
+    xmask    : integer := 16#fffff#;
+    abits    : integer := 17;
+    init_file : string := "" -- only for inferred
+  );
+  port (
+    clk  : in std_logic;
+    nrst : in std_logic;
+    cfg  : out nasti_slave_config_type;
+    i    : in  nasti_slave_in_type;
+    o    : out nasti_slave_out_type
+  );
+end component; 
+
 
 
 --! @brief NASTI (AXI4) GPIO controller

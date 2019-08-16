@@ -1,9 +1,18 @@
------------------------------------------------------------------------------
---! @file
---! @copyright Copyright 2015 GNSS Sensor Ltd. All right reserved.
---! @author    Sergey Khabarov - sergeykhbr@gmail.com
---! @brief     Internal SRAM module with the byte access
-------------------------------------------------------------------------------
+--!
+--! Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
+--!
+--! Licensed under the Apache License, Version 2.0 (the "License");
+--! you may not use this file except in compliance with the License.
+--! You may obtain a copy of the License at
+--!
+--!     http://www.apache.org/licenses/LICENSE-2.0
+--!
+--! Unless required by applicable law or agreed to in writing, software
+--! distributed under the License is distributed on an "AS IS" BASIS,
+--! WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+--! See the License for the specific language governing permissions and
+--! limitations under the License.
+--!
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -21,7 +30,7 @@ library ambalib;
 use ambalib.types_amba4.all;
 
 
-entity nasti_sram is
+entity axi4_sram is
   generic (
     memtech  : integer := inferred;
     async_reset : boolean := false;
@@ -39,17 +48,19 @@ entity nasti_sram is
   );
 end; 
  
-architecture arch_nasti_sram of nasti_sram is
+architecture arch_axi4_sram of axi4_sram is
 
   constant xconfig : nasti_slave_config_type := (
      descrtype => PNP_CFG_TYPE_SLAVE,
      descrsize => PNP_CFG_SLAVE_DESCR_BYTES,
      irq_idx => conv_std_logic_vector(0, 8),
-     xaddr => conv_std_logic_vector(xaddr, CFG_NASTI_CFG_ADDR_BITS),
-     xmask => conv_std_logic_vector(xmask, CFG_NASTI_CFG_ADDR_BITS),
+     xaddr => conv_std_logic_vector(xaddr, CFG_SYSBUS_CFG_ADDR_BITS),
+     xmask => conv_std_logic_vector(xmask, CFG_SYSBUS_CFG_ADDR_BITS),
      vid => VENDOR_GNSSSENSOR,
      did => GNSSSENSOR_SRAM
   );
+
+  constant wstrb_zero : std_logic_vector(CFG_SYSBUS_DATA_BYTES-1 downto 0) := (others => '0');
 
   type registers is record
     bank_axi : nasti_slave_bank_type;
@@ -59,13 +70,13 @@ architecture arch_nasti_sram of nasti_sram is
     raddr : global_addr_array_type;
     waddr : global_addr_array_type;
     we    : std_logic;
-    wstrb : std_logic_vector(CFG_NASTI_DATA_BYTES-1 downto 0);
-    wdata : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
+    wstrb : std_logic_vector(CFG_SYSBUS_DATA_BYTES-1 downto 0);
+    wdata : std_logic_vector(CFG_SYSBUS_DATA_BITS-1 downto 0);
   end record;
 
 signal r, rin : registers;
 
-signal rdata_mux : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
+signal rdata_mux : std_logic_vector(CFG_SYSBUS_DATA_BITS-1 downto 0);
 signal rami : ram_in_type;
 
 begin
@@ -73,42 +84,41 @@ begin
   comblogic : process(nrst, i, r, rdata_mux)
     variable v : registers;
     variable vrami : ram_in_type;
-    variable rdata : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
+    variable vslvo : nasti_slave_out_type;
   begin
 
     v := r;
 
-    procedureAxi4(i, xconfig, r.bank_axi, v.bank_axi);
-    
-    vrami.raddr := functionAddressReorder(v.bank_axi.raddr(0)(3 downto 2),
-                                          v.bank_axi.raddr);
+    procedureAxi4toMem(
+      i      => i,
+      cfg    => xconfig,
+      i_bank => r.bank_axi,
+      o_bank => v.bank_axi,
+      o_radr => vrami.raddr,
+      o_wadr => vrami.waddr,
+      o_wstrb => vrami.wstrb,
+      o_wdata => vrami.wdata
+    );
 
     vrami.we := '0';
-    if (i.w_valid = '1' and r.bank_axi.wstate = wtrans 
-        and r.bank_axi.wresp = NASTI_RESP_OKAY) then
-      vrami.we := '1';
+    if vrami.wstrb /= wstrb_zero then
+        vrami.we := '1';
     end if;
 
-    procedureWriteReorder(vrami.we,
-                          r.bank_axi.waddr(0)(3 downto 2),
-                          r.bank_axi.waddr,
-                          i.w_strb,
-                          i.w_data,
-                          vrami.waddr,
-                          vrami.wstrb,
-                          vrami.wdata);
+    procedureMemToAxi4(
+       i_rready => '1',
+       i_rdata => rdata_mux,
+       i_bank => r.bank_axi,
+       o_slvo => vslvo
+    );
 
-    rdata := functionDataRestoreOrder(r.bank_axi.raddr(0)(3 downto 2),
-                                      rdata_mux);
-
-    o <= functionAxi4Output(r.bank_axi, rdata);
-
-    if nrst = '0' then
+    if not async_reset and nrst = '0' then
        v.bank_axi := NASTI_SLAVE_BANK_RESET;
     end if;
     
     rami <= vrami;
     rin <= v;
+    o <= vslvo;
   end process;
 
   cfg  <= xconfig;
@@ -128,9 +138,11 @@ begin
   );
 
   -- registers:
-  regs : process(clk)
+  regs : process(clk, nrst)
   begin 
-     if rising_edge(clk) then 
+     if async_reset and nrst = '0' then
+       r.bank_axi <= NASTI_SLAVE_BANK_RESET;
+     elsif rising_edge(clk) then 
         r <= rin;
      end if; 
   end process;

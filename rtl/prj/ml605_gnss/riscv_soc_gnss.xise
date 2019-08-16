@@ -676,7 +676,7 @@
       <association xil_pn:name="Implementation" xil_pn:seqID="122"/>
       <library xil_pn:name="misclib"/>
     </file>
-    <file xil_pn:name="../../misclib/nasti_sram.vhd" xil_pn:type="FILE_VHDL">
+    <file xil_pn:name="../../misclib/axi4_sram.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="152"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="121"/>
       <library xil_pn:name="misclib"/>

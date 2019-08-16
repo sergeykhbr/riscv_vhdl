@@ -1,15 +1,18 @@
------------------------------------------------------------------------------
---! @file
---! @copyright Copyright 2015 GNSS Sensor Ltd. All right reserved.
---! @author    Sergey Khabarov - sergeykhbr@gmail.com
---! @brief     Declaration and common methods implementation of the types_nasti
---!            package.
---! @details   This file defines bus interface constants that have to be
---!            used by any periphery device implementation in order 
---!            to provide compatibility in a wide range of possible settings.
---!            For better implementation use the AXI4 register bank and 
---!            implemented tasks from this file.
-------------------------------------------------------------------------------
+--!
+--! Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
+--!
+--! Licensed under the Apache License, Version 2.0 (the "License");
+--! you may not use this file except in compliance with the License.
+--! You may obtain a copy of the License at
+--!
+--!     http://www.apache.org/licenses/LICENSE-2.0
+--!
+--! Unless required by applicable law or agreed to in writing, software
+--! distributed under the License is distributed on an "AS IS" BASIS,
+--! WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+--! See the License for the specific language governing permissions and
+--! limitations under the License.
+--!
 
 --! Standard library
 library ieee;
@@ -36,21 +39,27 @@ package types_amba4 is
 --! User defined address ID bitwidth (aw_id / ar_id fields).
 constant CFG_ROCKET_ID_BITS      : integer := 5;
 --! Data bus bits width.
-constant CFG_NASTI_DATA_BITS     : integer := 64;--128;
+constant CFG_SYSBUS_DATA_BITS    : integer := 64;
+constant CFG_NASTI_DATA_BITS     : integer := CFG_SYSBUS_DATA_BITS;      -- Legacy value to remove
 --! Data bus bytes width
-constant CFG_NASTI_DATA_BYTES    : integer := CFG_NASTI_DATA_BITS / 8;
+constant CFG_SYSBUS_DATA_BYTES   : integer := CFG_SYSBUS_DATA_BITS / 8;
+constant CFG_NASTI_DATA_BYTES    : integer := CFG_SYSBUS_DATA_BYTES;     -- Legacy value to remove
+
 --! Address bus bits width.
-constant CFG_NASTI_ADDR_BITS     : integer := 32;
+constant CFG_SYSBUS_ADDR_BITS    : integer := 32;
+constant CFG_NASTI_ADDR_BITS     : integer := CFG_SYSBUS_ADDR_BITS;      -- Legacy value to remove
 --! Definition of number of bits in address bus per one data transaction.
-constant CFG_NASTI_ADDR_OFFSET   : integer := log2(CFG_NASTI_DATA_BYTES);
+constant CFG_SYSBUS_ADDR_OFFSET  : integer := log2(CFG_NASTI_DATA_BYTES);
+constant CFG_NASTI_ADDR_OFFSET   : integer := CFG_SYSBUS_ADDR_OFFSET;    -- Legacy value to remove
 --! @brief Number of address bits used for device addressing. 
 --! @details Default is 12 bits = 4 KB of address space minimum per each 
 --!          mapped device.
-constant CFG_NASTI_CFG_ADDR_BITS : integer := CFG_NASTI_ADDR_BITS-12;
+constant CFG_SYSBUS_CFG_ADDR_BITS : integer := CFG_SYSBUS_ADDR_BITS-12;
+constant CFG_NASTI_CFG_ADDR_BITS : integer := CFG_SYSBUS_CFG_ADDR_BITS;  -- Legacy value to remove
 --! @brief Global alignment is set 32 bits.
 constant CFG_ALIGN_BYTES         : integer := 4;
 --! @brief  Number of parallel access to the atomic data.
-constant CFG_WORDS_ON_BUS        : integer := CFG_NASTI_DATA_BYTES/CFG_ALIGN_BYTES;
+constant CFG_WORDS_ON_BUS        : integer := CFG_SYSBUS_DATA_BYTES/CFG_ALIGN_BYTES;
 --! @}
 
 --! @defgroup slave_id_group AMBA AXI slaves generic IDs.
@@ -618,6 +627,7 @@ type nasti_slave_bank_type is record
     rid    : std_logic_vector(CFG_ROCKET_ID_BITS-1 downto 0);
     rresp  : std_logic_vector(1 downto 0);  --! OK=0
     ruser  : std_logic;
+    rreorder : std_logic;
     rwaitready : std_logic;                 --! Reading wait state flag: 0=waiting. User's waitstates
     
     wburst : std_logic_vector(1 downto 0);  -- 0=INCREMENT
@@ -627,14 +637,15 @@ type nasti_slave_bank_type is record
     wid    : std_logic_vector(CFG_ROCKET_ID_BITS-1 downto 0);
     wresp  : std_logic_vector(1 downto 0);  --! OK=0
     wuser  : std_logic;
+    wreorder : std_logic;
     b_valid : std_logic;
 end record;
 
 --! Reset value of the template bank of registers of a slave device.
 constant NASTI_SLAVE_BANK_RESET : nasti_slave_bank_type := (
     rwait, wwait,
-    NASTI_BURST_FIXED, 0, (others=>(others=>'0')), 0, (others=>'0'), NASTI_RESP_OKAY, '0', '1',
-    NASTI_BURST_FIXED, 0, (others=>(others=>'0')), 0, (others=>'0'), NASTI_RESP_OKAY, '0', '0'
+    NASTI_BURST_FIXED, 0, (others=>(others=>'0')), 0, (others=>'0'), NASTI_RESP_OKAY, '0', '0', '1',
+    NASTI_BURST_FIXED, 0, (others=>(others=>'0')), 0, (others=>'0'), NASTI_RESP_OKAY, '0', '0', '0'
 );
 
 
@@ -702,6 +713,38 @@ procedure procedureAxi4(
      cfg    : in nasti_slave_config_type;
      i_bank : in nasti_slave_bank_type;
      o_bank : out nasti_slave_bank_type
+);
+
+--! AXI4 to Memory interface converter.
+--! @param [in] i Slave input signal passed from system bus.
+--! @param [in] cfg Slave confguration descriptor defining memory base address.
+--! @param [in] i_bank Bank of registers implemented by each slave device.
+--! @param [out] o_bank Updated value for the slave bank of registers.
+--! @param [out] o_radr Memory interface read address array.
+--! @param [out] o_wadr Memory interface write address array.
+--! @param [out] o_wstrb Memory interface per byte write enable strobs.
+--! @param [out] o_wdata Memory interface write data value.
+procedure procedureAxi4toMem (
+   i      : in nasti_slave_in_type;
+   cfg    : in nasti_slave_config_type;
+   i_bank : in nasti_slave_bank_type;
+   o_bank : out nasti_slave_bank_type;
+   o_radr : out global_addr_array_type;
+   o_wadr : out global_addr_array_type;
+   o_wstrb : out std_logic_vector(CFG_SYSBUS_DATA_BYTES-1 downto 0);
+   o_wdata : out std_logic_vector(CFG_SYSBUS_DATA_BITS-1 downto 0)
+);
+
+--! Memory interface to AXI4 converter.
+--! @param [in] i_rready Slave device read data is ready.
+--! @param [in] i_rdata Read data value
+--! @param [in] i_bank Bank of registers implemented by each slave device.
+--! @param [out] o_slvo AXI4 slave output interface.
+procedure procedureMemToAxi4 (
+   i_rready : in std_logic;
+   i_rdata : in std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
+   i_bank : in nasti_slave_bank_type;
+   o_slvo : out nasti_slave_out_type
 );
 
 --! @brief Reordering elements of the address to provide 4-bytes memory access.
@@ -1048,6 +1091,281 @@ package body types_amba4 is
             o_bank.b_valid := '0';
         end if;
     end if;
+  end; -- procedure
+
+
+
+  --! AXI4 to Memory interface converter.
+  --! @param [in] i Slave input signal passed from system bus.
+  --! @param [in] cfg Slave confguration descriptor defining memory base address.
+  --! @param [in] i_bank Bank of registers implemented by each slave device.
+  --! @param [out] o_bank Updated value for the slave bank of registers.
+  --! @param [out] o_radr Memory interface read address array.
+  --! @param [out] o_wadr Memory interface write address array.
+  --! @param [out] o_wstrb Memory interface per byte write enable strobs.
+  --! @param [out] o_wdata Memory interface write data value.
+  procedure procedureAxi4toMem(
+     i      : in nasti_slave_in_type;
+     cfg    : in nasti_slave_config_type;
+     i_bank : in nasti_slave_bank_type;
+     o_bank : out nasti_slave_bank_type;
+     o_radr : out global_addr_array_type;
+     o_wadr : out global_addr_array_type;
+     o_wstrb : out std_logic_vector(CFG_SYSBUS_DATA_BYTES-1 downto 0);
+     o_wdata : out std_logic_vector(CFG_SYSBUS_DATA_BITS-1 downto 0)
+  ) is
+  variable traddr : std_logic_vector(CFG_SYSBUS_ADDR_BITS-1 downto 0);
+  variable twaddr : std_logic_vector(CFG_SYSBUS_ADDR_BITS-1 downto 0);
+  variable v_radr_mux : global_addr_array_type;
+  variable v_wadr_mux : global_addr_array_type;
+  variable v_radr : global_addr_array_type;
+  variable v_wadr : global_addr_array_type;
+  variable v_wena : std_logic_vector(CFG_SYSBUS_DATA_BYTES-1 downto 0);
+  variable v_wstrb : std_logic_vector(CFG_SYSBUS_DATA_BYTES-1 downto 0);
+  variable v_wdata : std_logic_vector(CFG_SYSBUS_DATA_BITS-1 downto 0);
+  begin
+    o_bank := i_bank;
+
+    traddr := (i.ar_bits.addr(CFG_NASTI_ADDR_BITS-1 downto 12) and (not cfg.xmask))
+             & i.ar_bits.addr(11 downto 0);
+
+    twaddr := (i.aw_bits.addr(CFG_NASTI_ADDR_BITS-1 downto 12) and (not cfg.xmask))
+             & i.aw_bits.addr(11 downto 0);
+
+    for n in 0 to CFG_WORDS_ON_BUS-1 loop
+        v_radr_mux(n) := traddr + n*CFG_ALIGN_BYTES;
+        v_wadr_mux(n) := twaddr + n*CFG_ALIGN_BYTES;
+    end loop;
+
+    v_radr := i_bank.raddr;
+    v_wadr := i_bank.waddr;
+    v_wena := (others => '0');
+
+    -- Reading state machine:
+    case i_bank.rstate is
+    when rwait =>
+        if i.ar_valid = '1' and i.aw_valid = '0' and i_bank.wstate = wwait then
+            o_bank.rstate := rtrans;
+
+            if i.ar_bits.addr(2) = '0' then
+                v_radr := v_radr_mux;
+            else
+                v_radr(0) := v_radr_mux(1);
+                v_radr(1) := v_radr_mux(0);
+            end if;
+            for n in 0 to CFG_WORDS_ON_BUS-1 loop
+              o_bank.raddr(n) := v_radr(n) + i_bank.rsize;
+            end loop;
+            o_bank.rreorder := i.ar_bits.addr(2);
+            o_bank.rsize := XSizeToBytes(conv_integer(i.ar_bits.size));
+            o_bank.rburst := i.ar_bits.burst;
+            o_bank.rlen := conv_integer(i.ar_bits.len);
+            o_bank.rid := i.ar_id;
+            o_bank.rresp := NASTI_RESP_OKAY;
+            o_bank.ruser := i.ar_user;
+            
+            --! No Wait States by default for reading operation.
+            --!
+            --! User can re-assign this value directly in module to implement
+            --! reading wait states.
+            --! Example: see axi2fse.vhd bridge implementation
+            o_bank.rwaitready := '1';
+        end if;
+    when rtrans =>
+        if i.r_ready = '1' and i_bank.rwaitready = '1' then
+            for n in 0 to CFG_WORDS_ON_BUS-1 loop
+                o_bank.raddr(n) := i_bank.raddr(n) + i_bank.rsize;
+            end loop;
+            if i_bank.rburst = NASTI_BURST_WRAP then
+                for n in 0 to CFG_WORDS_ON_BUS-1 loop
+                    -- i_bank.rsize = 8 and i_bank.rlen = 3
+                    -- 8 x 4 = 32 bytes 
+                    o_bank.raddr(n)(CFG_NASTI_ADDR_BITS-1 downto 5) 
+                         := i_bank.raddr(n)(CFG_NASTI_ADDR_BITS-1 downto 5);
+                end loop;
+            end if;
+            -- End of transaction (or process another one):
+            if i_bank.rlen = 0 then
+                if i.ar_valid = '1' and i.aw_valid = '0' then
+                    if i.ar_bits.addr(2) = '0' then
+                        v_radr := v_radr_mux;
+                    else
+                        v_radr(0) := v_radr_mux(1);
+                        v_radr(1) := v_radr_mux(0);
+                    end if;
+                    for n in 0 to CFG_WORDS_ON_BUS-1 loop
+                        o_bank.raddr(n) := v_radr(n) + i_bank.rsize;
+                    end loop;
+                    o_bank.rreorder := i.ar_bits.addr(2);
+                    o_bank.rsize := XSizeToBytes(conv_integer(i.ar_bits.size));
+                    o_bank.rburst := i.ar_bits.burst;
+                    o_bank.rlen := conv_integer(i.ar_bits.len);
+                    o_bank.rid := i.ar_id;
+                    o_bank.rresp := NASTI_RESP_OKAY;
+                    o_bank.ruser := i.ar_user;
+                    o_bank.rwaitready := '1';
+                else
+                    o_bank.rstate := rwait;
+                end if;
+            else
+                o_bank.rlen := i_bank.rlen - 1;
+            end if;
+        end if;
+    end case;
+
+    -- Writing state machine:
+    case i_bank.wstate is
+    when wwait =>
+        if i.aw_valid = '1' and i_bank.rlen = 0 then
+            v_wena := (others => i.w_valid);
+            if i.w_valid = '0' then
+                -- Full AXI bus protocol
+                o_bank.wstate := wtrans;
+                o_bank.wreorder := i.aw_bits.addr(2);
+            else
+                -- AXI lite (no burst support)
+                if i.aw_bits.addr(2) = '0' then
+                    v_wdata := i.w_data;
+                    v_wstrb := i.w_strb and v_wena;
+                else
+                    v_wdata(31 downto 0) := i.w_data(63 downto 32);
+                    v_wdata(63 downto 32) := i.w_data(31 downto 0);
+                    v_wstrb := (i.w_strb(3 downto 0) & i.w_strb(7 downto 4))
+                           and (v_wena(3 downto 0) & v_wena(7 downto 4));
+                end if;
+            end if;
+
+            if i.aw_bits.addr(2) = '0' then
+                v_wadr := v_wadr_mux;
+            else
+                v_wadr(0) := v_wadr_mux(1);
+                v_wadr(1) := v_wadr_mux(0);
+            end if;
+            for n in 0 to CFG_WORDS_ON_BUS-1 loop
+               o_bank.waddr(n) := v_wadr(n);
+            end loop;
+            o_bank.wsize := XSizeToBytes(conv_integer(i.aw_bits.size));
+            o_bank.wburst := i.aw_bits.burst;
+            o_bank.wlen := conv_integer(i.aw_bits.len);
+            o_bank.wid := i.aw_id;
+            o_bank.wresp := NASTI_RESP_OKAY;
+            o_bank.wuser := i.aw_user;
+        end if;
+    when wtrans =>
+        v_wena := (others => '1');
+        if i.w_valid = '1' then
+            if i_bank.wburst = NASTI_BURST_INCR then
+              for n in 0 to CFG_WORDS_ON_BUS-1 loop
+                o_bank.waddr(n) := i_bank.waddr(n) + i_bank.wsize;
+              end loop;
+            end if;
+            -- End of transaction:
+            if i_bank.wlen = 0 then
+                o_bank.b_valid := '1';
+                if i.aw_valid = '0' then
+                    o_bank.wstate := wwait;
+                else
+                    -- Only Full AXI Bus protocol support here
+                    if i.aw_bits.addr(2) = '0' then
+                        o_bank.waddr := v_wadr_mux;
+                    else
+                        o_bank.waddr(0) := v_wadr_mux(1);
+                        o_bank.waddr(1) := v_wadr_mux(0);
+                    end if;
+                    o_bank.wreorder := i.aw_bits.addr(2);
+                    o_bank.wsize := XSizeToBytes(conv_integer(i.aw_bits.size));
+                    o_bank.wburst := i.aw_bits.burst;
+                    o_bank.wlen := conv_integer(i.aw_bits.len);
+                    o_bank.wid := i.aw_id;
+                    o_bank.wresp := NASTI_RESP_OKAY;
+                    o_bank.wuser := i.aw_user;
+                end if;
+            else
+                o_bank.wlen := i_bank.wlen - 1;
+            end if;
+        end if;
+    end case;
+
+    if i.b_ready = '1' and i_bank.b_valid = '1' then
+        if i_bank.wstate = wtrans and i.w_valid = '1' and i_bank.wlen = 0 then
+            o_bank.b_valid := '1';
+        else
+            o_bank.b_valid := '0';
+        end if;
+    end if;
+
+    if i_bank.wreorder = '0' then
+        v_wdata := i.w_data;
+        v_wstrb := i.w_strb and v_wena;
+    else
+        v_wdata(31 downto 0) := i.w_data(63 downto 32);
+        v_wdata(63 downto 32) := i.w_data(31 downto 0);
+        v_wstrb := (i.w_strb(3 downto 0) & i.w_strb(7 downto 4))
+               and (v_wena(3 downto 0) & v_wena(7 downto 4));
+    end if;
+
+    o_radr := v_radr;
+    o_wadr := v_wadr;
+    o_wdata := v_wdata;
+    o_wstrb := v_wstrb;
+  end; -- procedure
+
+
+  --! Memory interface to AXI4 converter.
+  --! @param [in] i_rready Slave device read data is ready.
+  --! @param [in] i_rdata Read data value
+  --! @param [in] i_bank Bank of registers implemented by each slave device.
+  --! @param [out] o_slvo AXI4 slave output interface.
+  procedure procedureMemToAxi4(
+     i_rready : in std_logic;
+     i_rdata : in std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
+     i_bank : in nasti_slave_bank_type;
+     o_slvo : out nasti_slave_out_type
+  ) is
+  begin
+    -- Read transfer:
+    o_slvo.aw_ready := '1';
+    o_slvo.w_ready := '1';
+    o_slvo.ar_ready := '1';
+
+    o_slvo.r_id := i_bank.rid;
+    o_slvo.r_last := '0';
+    if i_bank.rstate = rtrans then
+        if i_bank.rlen = 0 then
+            o_slvo.r_last := '1';
+        else
+            o_slvo.aw_ready := '0';
+            o_slvo.w_ready := '0';
+            o_slvo.ar_ready := '0';
+        end if;
+    end if;
+    o_slvo.r_resp := i_bank.rresp;
+    o_slvo.r_user := i_bank.ruser;
+    if i_rready = '1' and i_bank.rstate = rtrans then
+        o_slvo.r_valid   := '1';
+    else
+        o_slvo.r_valid   := '0';
+    end if;
+
+    if i_bank.rreorder = '0' then
+        o_slvo.r_data := i_rdata;
+    else
+        o_slvo.r_data := i_rdata(31 downto 0) & i_rdata(63 downto 32);
+    end if;
+
+    -- Write transfer:
+    if i_bank.wstate = wtrans then
+        o_slvo.ar_ready := '0';
+        if i_bank.wlen /= 0 then
+            o_slvo.aw_ready    := '0';
+        end if;
+    end if;
+
+    -- Write Handshaking:
+    o_slvo.b_id := i_bank.wid;
+    o_slvo.b_resp := i_bank.wresp;
+    o_slvo.b_user := i_bank.wuser;
+    o_slvo.b_valid := i_bank.b_valid;
   end; -- procedure
 
 

@@ -385,8 +385,9 @@ end generate;
   --! Internal SRAM module instance with the AXI4 interface.
   --! @details Map address:
   --!          0x10000000..0x1007ffff (512 KB total)
-  sram0 : nasti_sram generic map (
+  sram0 : axi4_sram generic map (
     memtech  => CFG_MEMTECH,
+    async_reset => CFG_ASYNC_RESET,
     xaddr    => 16#10000#,
     xmask    => 16#fff80#,            -- 512 KB mask
     abits    => (10 + log2(512)),     -- 512 KB address
