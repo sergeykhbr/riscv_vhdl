@@ -41,15 +41,16 @@ package types_mem is
   --! @param[in] clk     System bus clock.
   --! @param[in] address Input address.
   --! @param[out] data   Output data value.
-  component BootRom_tech is
+  component Rom_tech is
   generic (
     memtech : integer := 0;
+    abits : integer;
     sim_hexfile : string
   );
   port (
     clk       : in std_logic;
     address   : in global_addr_array_type;
-    data      : out std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0)
+    data      : out std_logic_vector(CFG_SYSBUS_DATA_BITS-1 downto 0)
   );
   end component;
 

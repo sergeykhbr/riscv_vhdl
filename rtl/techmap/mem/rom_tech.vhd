@@ -1,9 +1,18 @@
------------------------------------------------------------------------------
--- Package:     fse_v2
--- File:        romprn_tech.vhd
--- Author:      Sergey Khabarov - sergeykhbr@gmail.com
--- Description:	Technology specific Bootable ROM
-------------------------------------------------------------------------------
+--!
+--! Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
+--!
+--! Licensed under the Apache License, Version 2.0 (the "License");
+--! you may not use this file except in compliance with the License.
+--! You may obtain a copy of the License at
+--!
+--!     http://www.apache.org/licenses/LICENSE-2.0
+--!
+--! Unless required by applicable law or agreed to in writing, software
+--! distributed under the License is distributed on an "AS IS" BASIS,
+--! WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+--! See the License for the specific language governing permissions and
+--! limitations under the License.
+--!
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -17,9 +26,10 @@ library ambalib;
 --! AXI4 configuration constants.
 use ambalib.types_amba4.all;
 
-entity BootRom_tech is
+entity Rom_tech is
 generic (
     memtech : integer := 0;
+    abits : integer;
     sim_hexfile : string
 );
 port (
@@ -29,10 +39,11 @@ port (
 );
 end;
 
-architecture rtl of BootRom_tech is
+architecture rtl of Rom_tech is
 
-  component BootRom_inferred is
+  component Rom_inferred is
   generic (
+    abits : integer;
     hex_filename : string
   );
   port (
@@ -45,7 +56,7 @@ architecture rtl of BootRom_tech is
 begin
 
   genrom0 : if memtech = inferred or is_fpga(memtech) /= 0 generate
-      infer0 : BootRom_inferred  generic map (sim_hexfile)
+      infer0 : Rom_inferred  generic map (abits, sim_hexfile)
                port map (clk, address, data);
   end generate;
 

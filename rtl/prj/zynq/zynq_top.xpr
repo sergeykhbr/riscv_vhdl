@@ -120,7 +120,7 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../techmap/mem/bootrom_inferred.vhd">
+      <File Path="$PPRDIR/../../techmap/mem/rom_inferred.vhd">
         <FileInfo>
           <Attr Name="Library" Val="techmap"/>
           <Attr Name="UsedIn" Val="synthesis"/>
@@ -134,7 +134,7 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../techmap/mem/bootrom_tech.vhd">
+      <File Path="$PPRDIR/../../techmap/mem/rom_tech.vhd">
         <FileInfo>
           <Attr Name="Library" Val="techmap"/>
           <Attr Name="UsedIn" Val="synthesis"/>
@@ -337,7 +337,7 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../misclib/nasti_bootrom.vhd">
+      <File Path="$PPRDIR/../../misclib/axi4_rom.vhd">
         <FileInfo>
           <Attr Name="Library" Val="misclib"/>
           <Attr Name="UsedIn" Val="synthesis"/>

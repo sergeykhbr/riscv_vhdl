@@ -60,6 +60,23 @@ component nasti_bootrom is
   );
 end component;
 
+  component axi4_rom is
+  generic (
+    memtech  : integer := inferred;
+    async_reset : boolean := false;
+    xaddr    : integer := 0;
+    xmask    : integer := 16#fffff#;
+    sim_hexfile : string
+  );
+  port (
+    clk  : in std_logic;
+    nrst : in std_logic;
+    cfg  : out nasti_slave_config_type;
+    i    : in  nasti_slave_in_type;
+    o    : out nasti_slave_out_type
+  );
+  end component; 
+
 --! AXI4 ROM with the default FW version declaration.
   component nasti_romimage is
   generic (

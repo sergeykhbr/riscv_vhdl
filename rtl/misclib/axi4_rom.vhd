@@ -24,20 +24,18 @@ use techmap.types_mem.all;
 library commonlib;
 use commonlib.types_common.all;
 
---! AMBA system bus specific library.
+--! AMBA system bus specific library
 library ambalib;
 --! AXI4 configuration constants.
 use ambalib.types_amba4.all;
 
-
-entity axi4_sram is
+entity axi4_rom is
   generic (
     memtech  : integer := inferred;
     async_reset : boolean := false;
     xaddr    : integer := 0;
     xmask    : integer := 16#fffff#;
-    abits    : integer := 17;
-    init_file : string := "" -- only for inferred
+    sim_hexfile : string
   );
   port (
     clk  : in std_logic;
@@ -48,7 +46,9 @@ entity axi4_sram is
   );
 end; 
  
-architecture arch_axi4_sram of axi4_sram is
+architecture arch_axi4_rom of axi4_rom is
+
+  constant abits : integer := 12 + log2((xmask + 1)/4096);
 
   constant xconfig : nasti_slave_config_type := (
      descrtype => PNP_CFG_TYPE_SLAVE,
@@ -57,33 +57,23 @@ architecture arch_axi4_sram of axi4_sram is
      xaddr => conv_std_logic_vector(xaddr, CFG_SYSBUS_CFG_ADDR_BITS),
      xmask => conv_std_logic_vector(xmask, CFG_SYSBUS_CFG_ADDR_BITS),
      vid => VENDOR_GNSSSENSOR,
-     did => GNSSSENSOR_SRAM
+     did => GNSSSENSOR_BOOTROM
   );
-
-  constant wstrb_zero : std_logic_vector(CFG_SYSBUS_DATA_BYTES-1 downto 0) := (others => '0');
 
   type registers is record
     bank_axi : nasti_slave_bank_type;
   end record;
-  
-  type ram_in_type is record
-    raddr : global_addr_array_type;
-    waddr : global_addr_array_type;
-    we    : std_logic;
-    wstrb : std_logic_vector(CFG_SYSBUS_DATA_BYTES-1 downto 0);
-    wdata : std_logic_vector(CFG_SYSBUS_DATA_BITS-1 downto 0);
-  end record;
 
-signal r, rin : registers;
+  signal r, rin : registers;
 
-signal rdata_mux : std_logic_vector(CFG_SYSBUS_DATA_BITS-1 downto 0);
-signal rami : ram_in_type;
+  signal raddr_mux : global_addr_array_type;
+  signal rdata_mux : std_logic_vector(CFG_SYSBUS_DATA_BITS-1 downto 0);
 
 begin
 
-  comblogic : process(nrst, i, r, rdata_mux)
+  comblogic : process(i, nrst, r, rdata_mux)
     variable v : registers;
-    variable vrami : ram_in_type;
+    variable vraddr : global_addr_array_type;
     variable vslvo : nasti_slave_out_type;
   begin
 
@@ -95,16 +85,11 @@ begin
       cfg    => xconfig,
       i_bank => r.bank_axi,
       o_bank => v.bank_axi,
-      o_radr => vrami.raddr,
-      o_wadr => vrami.waddr,
-      o_wstrb => vrami.wstrb,
-      o_wdata => vrami.wdata
+      o_radr => vraddr,
+      o_wadr => open,
+      o_wstrb => open,
+      o_wdata => open
     );
-
-    vrami.we := '0';
-    if vrami.wstrb /= wstrb_zero then
-        vrami.we := '1';
-    end if;
 
     procedureMemToAxi4(
        i_dualport => '0',
@@ -118,26 +103,22 @@ begin
     if not async_reset and nrst = '0' then
        v.bank_axi := NASTI_SLAVE_BANK_RESET;
     end if;
-    
-    rami <= vrami;
+
     rin <= v;
+    raddr_mux <= vraddr;
     o <= vslvo;
   end process;
 
   cfg  <= xconfig;
   
-  tech0 : srambytes_tech generic map (
-    memtech   => memtech,
-    abits     => abits,
-    init_file => init_file -- only for 'inferred'
+  tech0 : Rom_tech generic map (
+    memtech => memtech,
+    abits => abits,
+    sim_hexfile => sim_hexfile
   ) port map (
-    clk     => clk,
-    raddr   => rami.raddr,
-    rdata   => rdata_mux,
-    waddr   => rami.waddr,
-    we      => rami.we,
-    wstrb   => rami.wstrb,
-    wdata   => rami.wdata
+    clk => clk,
+    address => raddr_mux,
+    data => rdata_mux
   );
 
   -- registers:

@@ -716,6 +716,7 @@ procedure procedureAxi4(
 );
 
 --! AXI4 to Memory interface converter.
+--! @param [in] i_dualport Independent channels for read and write transactions.
 --! @param [in] i Slave input signal passed from system bus.
 --! @param [in] cfg Slave confguration descriptor defining memory base address.
 --! @param [in] i_bank Bank of registers implemented by each slave device.
@@ -725,6 +726,7 @@ procedure procedureAxi4(
 --! @param [out] o_wstrb Memory interface per byte write enable strobs.
 --! @param [out] o_wdata Memory interface write data value.
 procedure procedureAxi4toMem (
+   i_dualport : in std_logic;
    i      : in nasti_slave_in_type;
    cfg    : in nasti_slave_config_type;
    i_bank : in nasti_slave_bank_type;
@@ -1100,6 +1102,7 @@ package body types_amba4 is
 
 
   --! AXI4 to Memory interface converter.
+  --! @param [in] i_dualport Independent channels for read and write transactions.
   --! @param [in] i Slave input signal passed from system bus.
   --! @param [in] cfg Slave confguration descriptor defining memory base address.
   --! @param [in] i_bank Bank of registers implemented by each slave device.
@@ -1109,6 +1112,7 @@ package body types_amba4 is
   --! @param [out] o_wstrb Memory interface per byte write enable strobs.
   --! @param [out] o_wdata Memory interface write data value.
   procedure procedureAxi4toMem(
+     i_dualport : in std_logic;
      i      : in nasti_slave_in_type;
      cfg    : in nasti_slave_config_type;
      i_bank : in nasti_slave_bank_type;
@@ -1150,7 +1154,8 @@ package body types_amba4 is
     -- Reading state machine:
     case i_bank.rstate is
     when rwait =>
-        if i.ar_valid = '1' and i.aw_valid = '0' and i_bank.wstate = wwait then
+        if i.ar_valid = '1'
+           and i_dualport = '0' and i.aw_valid = '0' and i_bank.wstate = wwait then
             o_bank.rstate := rtrans;
 
             if i.ar_bits.addr(2) = '0' then
@@ -1198,7 +1203,7 @@ package body types_amba4 is
             end if;
             -- End of transaction (or process another one):
             if i_bank.rlen = 0 then
-                if i.ar_valid = '1' and i.aw_valid = '0' then
+                if i.ar_valid = '1' and i_dualport ='0' and i.aw_valid = '0' then
                     if i.ar_bits.addr(2) = '0' then
                         v_radr := v_radr_mux;
                     else
@@ -1232,7 +1237,7 @@ package body types_amba4 is
     -- Writing state machine:
     case i_bank.wstate is
     when wwait =>
-        if i.aw_valid = '1' and i_bank.rlen = 0 then
+        if i.aw_valid = '1' and i_dualport = '0' and i_bank.rlen = 0 then
             if i.w_valid = '0' then
                 -- Full AXI bus protocol
                 o_bank.wstate := wtrans;

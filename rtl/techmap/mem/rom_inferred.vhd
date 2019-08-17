@@ -1,11 +1,19 @@
-----------------------------------------------------------------------------
---  INFORMATION:  http://www.GNSS-sensor.com
---  PROPERTY:     GNSS Sensor Ltd
---  E-MAIL:       sergey.khabarov@gnss-sensor.com
---  DESCRIPTION:  This file contains copy of the firmware image
-------------------------------------------------------------------------------
---  WARNING:      
-------------------------------------------------------------------------------
+--!
+--! Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
+--!
+--! Licensed under the Apache License, Version 2.0 (the "License");
+--! you may not use this file except in compliance with the License.
+--! You may obtain a copy of the License at
+--!
+--!     http://www.apache.org/licenses/LICENSE-2.0
+--!
+--! Unless required by applicable law or agreed to in writing, software
+--! distributed under the License is distributed on an "AS IS" BASIS,
+--! WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+--! See the License for the specific language governing permissions and
+--! limitations under the License.
+--!
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.ALL;
@@ -18,8 +26,9 @@ library ambalib;
 --! AXI4 configuration constants.
 use ambalib.types_amba4.all;
 
-entity BootRom_inferred is
+entity Rom_inferred is
   generic (
+    abits : integer;
     hex_filename : string
   );
   port (
@@ -29,7 +38,7 @@ entity BootRom_inferred is
   );
 end;
 
-architecture rtl of BootRom_inferred is
+architecture rtl of Rom_inferred is
 
 constant ROM_ADDR_WIDTH : integer := 15;
 constant ROM_LENGTH : integer := 2**(ROM_ADDR_WIDTH - log2(CFG_NASTI_DATA_BYTES));

@@ -276,8 +276,9 @@ end generate;
   --! @brief BOOT ROM module instance with the AXI4 interface.
   --! @details Map address:
   --!          0x00000000..0x00007fff (32 KB total)
-  boot0 : nasti_bootrom generic map (
+  boot0 : axi4_rom generic map (
     memtech  => CFG_MEMTECH,
+    async_reset => CFG_ASYNC_RESET,
     xaddr    => 16#00000#,
     xmask    => 16#ffff8#,
     sim_hexfile => CFG_SIM_BOOTROM_HEX
@@ -335,7 +336,7 @@ end generate;
     xaddr    => 16#80000#,
     xmask    => 16#fffff#,
     xirq     => 0,
-	 width    => 12
+    width    => 12
   ) port map (
     clk   => i_clk,
     nrst  => w_glob_nrst,

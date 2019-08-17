@@ -44,12 +44,12 @@
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="11"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="67"/>
     </file>
-    <file xil_pn:name="../../techmap/mem/bootrom_inferred.vhd" xil_pn:type="FILE_VHDL">
+    <file xil_pn:name="../../techmap/mem/rom_inferred.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="16"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="43"/>
       <library xil_pn:name="techmap"/>
     </file>
-    <file xil_pn:name="../../techmap/mem/bootrom_tech.vhd" xil_pn:type="FILE_VHDL">
+    <file xil_pn:name="../../techmap/mem/rom_tech.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="17"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="51"/>
       <library xil_pn:name="techmap"/>
@@ -311,7 +311,7 @@
       <association xil_pn:name="Implementation" xil_pn:seqID="38"/>
       <library xil_pn:name="ethlib"/>
     </file>
-    <file xil_pn:name="../../misclib/nasti_bootrom.vhd" xil_pn:type="FILE_VHDL">
+    <file xil_pn:name="../../misclib/axi4_rom.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="93"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="78"/>
       <library xil_pn:name="misclib"/>
