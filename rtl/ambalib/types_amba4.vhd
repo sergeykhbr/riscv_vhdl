@@ -1123,6 +1123,7 @@ package body types_amba4 is
   variable v_wena : std_logic_vector(CFG_SYSBUS_DATA_BYTES-1 downto 0);
   variable v_wstrb : std_logic_vector(CFG_SYSBUS_DATA_BYTES-1 downto 0);
   variable v_wdata : std_logic_vector(CFG_SYSBUS_DATA_BITS-1 downto 0);
+  variable v_wreorder : std_logic;
   begin
     o_bank := i_bank;
 
@@ -1140,6 +1141,7 @@ package body types_amba4 is
     v_radr := i_bank.raddr;
     v_wadr := i_bank.waddr;
     v_wena := (others => '0');
+    v_wreorder := i_bank.wreorder;
 
     -- Reading state machine:
     case i_bank.rstate is
@@ -1154,7 +1156,13 @@ package body types_amba4 is
                 v_radr(1) := v_radr_mux(0);
             end if;
             for n in 0 to CFG_WORDS_ON_BUS-1 loop
-              o_bank.raddr(n) := v_radr(n) + i_bank.rsize;
+                o_bank.raddr(n) := v_radr(n) + i_bank.rsize;
+                if i.ar_bits.burst = NASTI_BURST_WRAP then
+                    -- i_bank.rsize = 8 and i_bank.rlen = 3
+                    -- 8 x 4 = 32 bytes 
+                    o_bank.raddr(n)(CFG_NASTI_ADDR_BITS-1 downto 5) 
+                         := v_radr(n)(CFG_NASTI_ADDR_BITS-1 downto 5);
+                end if;
             end loop;
             o_bank.rreorder := i.ar_bits.addr(2);
             o_bank.rsize := XSizeToBytes(conv_integer(i.ar_bits.size));
@@ -1195,6 +1203,10 @@ package body types_amba4 is
                     end if;
                     for n in 0 to CFG_WORDS_ON_BUS-1 loop
                         o_bank.raddr(n) := v_radr(n) + i_bank.rsize;
+                        if i.ar_bits.burst = NASTI_BURST_WRAP then
+                            o_bank.raddr(n)(CFG_NASTI_ADDR_BITS-1 downto 5) 
+                                := v_radr(n)(CFG_NASTI_ADDR_BITS-1 downto 5);
+                        end if;
                     end loop;
                     o_bank.rreorder := i.ar_bits.addr(2);
                     o_bank.rsize := XSizeToBytes(conv_integer(i.ar_bits.size));
@@ -1217,7 +1229,6 @@ package body types_amba4 is
     case i_bank.wstate is
     when wwait =>
         if i.aw_valid = '1' and i_bank.rlen = 0 then
-            v_wena := (others => i.w_valid);
             if i.w_valid = '0' then
                 -- Full AXI bus protocol
                 o_bank.wstate := wtrans;
@@ -1233,6 +1244,8 @@ package body types_amba4 is
                     v_wstrb := (i.w_strb(3 downto 0) & i.w_strb(7 downto 4))
                            and (v_wena(3 downto 0) & v_wena(7 downto 4));
                 end if;
+                v_wena := (others => '1');
+                v_wreorder := i.aw_bits.addr(2);
             end if;
 
             if i.aw_bits.addr(2) = '0' then
@@ -1294,7 +1307,7 @@ package body types_amba4 is
         end if;
     end if;
 
-    if i_bank.wreorder = '0' then
+    if v_wreorder = '0' then
         v_wdata := i.w_data;
         v_wstrb := i.w_strb and v_wena;
     else
