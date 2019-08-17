@@ -48,7 +48,9 @@ end;
  
 architecture arch_axi4_rom of axi4_rom is
 
-  constant abits : integer := 12 + log2((xmask + 1)/4096);
+  -- To avoid warning 'literal negative value' use -1048576 instead of 16#fff00000#
+  constant size_4kbytes : integer := -(xmask - 1048576); 
+  constant abits : integer := 12 + log2(size_4kbytes);
 
   constant xconfig : nasti_slave_config_type := (
      descrtype => PNP_CFG_TYPE_SLAVE,
@@ -74,6 +76,9 @@ begin
   comblogic : process(i, nrst, r, rdata_mux)
     variable v : registers;
     variable vraddr : global_addr_array_type;
+    variable vwaddr_unused : global_addr_array_type;
+    variable vwstrb_unused : std_logic_vector(CFG_SYSBUS_DATA_BYTES-1 downto 0);
+    variable vwdata_unused : std_logic_vector(CFG_SYSBUS_DATA_BITS-1 downto 0);
     variable vslvo : nasti_slave_out_type;
   begin
 
@@ -86,9 +91,9 @@ begin
       i_bank => r.bank_axi,
       o_bank => v.bank_axi,
       o_radr => vraddr,
-      o_wadr => open,
-      o_wstrb => open,
-      o_wdata => open
+      o_wadr => vwaddr_unused,
+      o_wstrb => vwstrb_unused,
+      o_wdata => vwdata_unused
     );
 
     procedureMemToAxi4(
