@@ -19,7 +19,32 @@
 namespace debugger {
 
 ICacheLru::ICacheLru(sc_module_name name_, bool async_reset,
-    int index_width) : sc_module(name_) {
+    int index_width) : sc_module(name_),
+    i_clk("i_clk"),
+    i_nrst("i_nrst"),
+    i_req_ctrl_valid("i_req_ctrl_valid"),
+    i_req_ctrl_addr("i_req_ctrl_addr"),
+    o_req_ctrl_ready("o_req_ctrl_ready"),
+    o_resp_ctrl_valid("o_resp_ctrl_valid"),
+    o_resp_ctrl_addr("o_resp_ctrl_addr"),
+    o_resp_ctrl_data("o_resp_ctrl_data"),
+    o_resp_ctrl_load_fault("o_resp_ctrl_load_fault"),
+    i_resp_ctrl_ready("i_resp_ctrl_ready"),
+    i_req_mem_ready("i_req_mem_ready"),
+    o_req_mem_valid("o_req_mem_valid"),
+    o_req_mem_write("o_req_mem_write"),
+    o_req_mem_addr("o_req_mem_addr"),
+    o_req_mem_strob("o_req_mem_strob"),
+    o_req_mem_data("o_req_mem_data"),
+    o_req_mem_len("o_req_mem_len"),
+    o_req_mem_burst("o_req_mem_burst"),
+    o_req_mem_last("o_req_mem_last"),
+    i_resp_mem_data_valid("i_resp_mem_data_valid"),
+    i_resp_mem_data("i_resp_mem_data"),
+    i_resp_mem_load_fault("i_resp_mem_load_fault"),
+    i_flush_address("i_flush_address"),
+    i_flush_valid("i_flush_valid"),
+    o_istate("o_istate") {
     async_reset_ = async_reset;
     index_width_ = index_width;
 
@@ -133,57 +158,69 @@ ICacheLru::~ICacheLru() {
 
 void ICacheLru::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
-        sc_trace(o_vcd, i_nrst, "/top/cache0/i0/i_nrst");
-        sc_trace(o_vcd, i_req_ctrl_valid, "/top/cache0/i0/i_req_ctrl_valid");
-        sc_trace(o_vcd, i_req_ctrl_addr, "/top/cache0/i0/i_req_ctrl_addr");
-        sc_trace(o_vcd, o_req_ctrl_ready, "/top/cache0/i0/o_req_ctrl_ready");
-        sc_trace(o_vcd, o_req_mem_valid, "/top/cache0/i0/o_req_mem_valid");
-        sc_trace(o_vcd, o_req_mem_addr, "/top/cache0/i0/o_req_mem_addr");
-        sc_trace(o_vcd, i_req_mem_ready, "/top/cache0/i0/i_req_mem_ready");
-        sc_trace(o_vcd, i_resp_mem_data_valid, "/top/cache0/i0/i_resp_mem_data_valid");
-        sc_trace(o_vcd, i_resp_mem_data, "/top/cache0/i0/i_resp_mem_data");
-        sc_trace(o_vcd, i_flush_address, "/top/cache0/i0/i_flush_address");
-        sc_trace(o_vcd, i_flush_valid, "/top/cache0/i0/i_flush_valid");
-        sc_trace(o_vcd, o_resp_ctrl_valid, "/top/cache0/i0/o_resp_ctrl_valid");
-        sc_trace(o_vcd, i_resp_ctrl_ready, "/top/cache0/i0/i_resp_ctrl_ready");
-        sc_trace(o_vcd, o_resp_ctrl_addr, "/top/cache0/i0/o_resp_ctrl_addr");
-        sc_trace(o_vcd, o_resp_ctrl_data, "/top/cache0/i0/o_resp_ctrl_data");
-        sc_trace(o_vcd, r.requested, "/top/cache0/i0/r_requested");
-        sc_trace(o_vcd, r.state, "/top/cache0/i0/r_state");
-        sc_trace(o_vcd, r.lru_even_wr, "/top/cache0/i0/r_lru_even_wr");
-        sc_trace(o_vcd, r.lru_odd_wr, "/top/cache0/i0/r_lru_odd_wr");
-        sc_trace(o_vcd, r.req_addr, "/top/cache0/i0/r_req_addr");
-        sc_trace(o_vcd, r.req_addr_overlay, "/top/cache0/i0/r_req_addr_overlay");
+        sc_trace(o_vcd, i_nrst, i_nrst.name());
+        sc_trace(o_vcd, i_req_ctrl_valid, i_req_ctrl_valid.name());
+        sc_trace(o_vcd, i_req_ctrl_addr, i_req_ctrl_addr.name());
+        sc_trace(o_vcd, o_req_ctrl_ready, o_req_ctrl_ready.name());
+        sc_trace(o_vcd, o_resp_ctrl_valid, o_resp_ctrl_valid.name());
+        sc_trace(o_vcd, o_resp_ctrl_addr, o_resp_ctrl_addr.name());
+        sc_trace(o_vcd, o_resp_ctrl_data, o_resp_ctrl_data.name());
+        sc_trace(o_vcd, o_resp_ctrl_load_fault, o_resp_ctrl_load_fault.name());
+        sc_trace(o_vcd, i_resp_ctrl_ready, i_resp_ctrl_ready.name());
 
-        sc_trace(o_vcd, wb_ena_even[0], "/top/cache0/i0/wb_ena_even0");
-        sc_trace(o_vcd, wb_ena_even[1], "/top/cache0/i0/wb_ena_even1");
-        sc_trace(o_vcd, wb_ena_even[2], "/top/cache0/i0/wb_ena_even2");
-        sc_trace(o_vcd, wb_ena_even[3], "/top/cache0/i0/wb_ena_even3");
-        sc_trace(o_vcd, swapin[0].radr, "/top/cache0/i0/swapin(0).radr");
-        sc_trace(o_vcd, swapin[0].wadr, "/top/cache0/i0/swapin(0).wadr");
-        sc_trace(o_vcd, swapin[0].wstrb, "/top/cache0/i0/swapin(0).wstrb");
-        sc_trace(o_vcd, swapin[0].wvalid, "/top/cache0/i0/swapin(0).wvalid");
-        sc_trace(o_vcd, swapin[0].wdata, "/top/cache0/i0/swapin(0).wdata");
-        sc_trace(o_vcd, swapin[0].load_fault, "/top/cache0/i0/swapin(0).load_fault");
-        sc_trace(o_vcd, swapin[1].radr, "/top/cache0/i0/swapin(1).radr");
-        sc_trace(o_vcd, swapin[1].wadr, "/top/cache0/i0/swapin(1).wadr");
-        sc_trace(o_vcd, swapin[1].wstrb, "/top/cache0/i0/swapin(1).wstrb");
-        sc_trace(o_vcd, swapin[1].wvalid, "/top/cache0/i0/swapin(1).wvalid");
-        sc_trace(o_vcd, swapin[1].wdata, "/top/cache0/i0/swapin(1).wdata");
-        sc_trace(o_vcd, swapin[1].load_fault, "/top/cache0/i0/swapin(1).load_fault");
-        sc_trace(o_vcd, waysel[0].hit, "/top/cache0/i0/waysel(0).hit");
-        sc_trace(o_vcd, waysel[0].rdata, "/top/cache0/i0/waysel(0).rdata");
-        sc_trace(o_vcd, waysel[0].valid, "/top/cache0/i0/waysel(0).valid");
-        sc_trace(o_vcd, waysel[0].load_fault, "/top/cache0/i0/waysel(0).load_fault");
-        sc_trace(o_vcd, waysel[1].hit, "/top/cache0/i0/waysel(1).hit");
-        sc_trace(o_vcd, waysel[1].rdata, "/top/cache0/i0/waysel(1).rdata");
-        sc_trace(o_vcd, waysel[1].valid, "/top/cache0/i0/waysel(1).valid");
-        sc_trace(o_vcd, waysel[1].load_fault, "/top/cache0/i0/waysel(1).load_fault");
-        sc_trace(o_vcd, r.use_overlay, "/top/cache0/i0/r_use_overlay");
+        sc_trace(o_vcd, i_req_mem_ready, i_req_mem_ready.name());
+        sc_trace(o_vcd, o_req_mem_valid, o_req_mem_valid.name());
+        sc_trace(o_vcd, o_req_mem_write, o_req_mem_write.name());
+        sc_trace(o_vcd, o_req_mem_addr, o_req_mem_addr.name());
+        sc_trace(o_vcd, o_req_mem_strob, o_req_mem_strob.name());
+        sc_trace(o_vcd, o_req_mem_data, o_req_mem_data.name());
+        sc_trace(o_vcd, o_req_mem_len, o_req_mem_len.name());
+        sc_trace(o_vcd, o_req_mem_burst, o_req_mem_burst.name());
+        sc_trace(o_vcd, o_req_mem_last, o_req_mem_last.name());
+        sc_trace(o_vcd, i_resp_mem_data_valid, i_resp_mem_data_valid.name());
+        sc_trace(o_vcd, i_resp_mem_data, i_resp_mem_data.name());
+        sc_trace(o_vcd, i_resp_mem_load_fault, i_resp_mem_load_fault.name());
 
-        sc_trace(o_vcd, memeven[0].valid, "/top/cache0/i0/memeven0_valid");
-        sc_trace(o_vcd, memeven[0].rtag, "/top/cache0/i0/memeven0_rtag");
-        sc_trace(o_vcd, memeven[0].rdata, "/top/cache0/i0/memeven0_rdata");
+        sc_trace(o_vcd, i_flush_address, i_flush_address.name());
+        sc_trace(o_vcd, i_flush_valid, i_flush_valid.name());
+        sc_trace(o_vcd, o_istate, o_istate.name());
+
+        std::string pn(name());
+        sc_trace(o_vcd, r.requested, pn + ".r_requested");
+        sc_trace(o_vcd, r.state, pn + ".r_state");
+        sc_trace(o_vcd, r.lru_even_wr, pn + ".r_lru_even_wr");
+        sc_trace(o_vcd, r.lru_odd_wr, pn + ".r_lru_odd_wr");
+        sc_trace(o_vcd, r.req_addr, pn + ".r_req_addr");
+        sc_trace(o_vcd, r.req_addr_overlay, pn + ".r_req_addr_overlay");
+        sc_trace(o_vcd, wb_ena_even[0], pn + ".wb_ena_even0");
+        sc_trace(o_vcd, wb_ena_even[1], pn + ".wb_ena_even1");
+        sc_trace(o_vcd, wb_ena_even[2], pn + ".wb_ena_even2");
+        sc_trace(o_vcd, wb_ena_even[3], pn + ".wb_ena_even3");
+        sc_trace(o_vcd, wb_ena_odd[0], pn + ".wb_ena_odd0");
+        sc_trace(o_vcd, wb_ena_odd[1], pn + ".wb_ena_odd1");
+        sc_trace(o_vcd, wb_ena_odd[2], pn + ".wb_ena_odd2");
+        sc_trace(o_vcd, wb_ena_odd[3], pn + ".wb_ena_odd3");
+        sc_trace(o_vcd, swapin[0].radr, pn + ".swapin(0).radr");
+        sc_trace(o_vcd, swapin[0].wadr, pn + ".swapin(0).wadr");
+        sc_trace(o_vcd, swapin[0].wstrb, pn + ".swapin(0).wstrb");
+        sc_trace(o_vcd, swapin[0].wvalid, pn + ".swapin(0).wvalid");
+        sc_trace(o_vcd, swapin[0].wdata, pn + ".swapin(0).wdata");
+        sc_trace(o_vcd, swapin[0].load_fault, pn + ".swapin(0).load_fault");
+        sc_trace(o_vcd, swapin[1].radr, pn + ".swapin(1).radr");
+        sc_trace(o_vcd, swapin[1].wadr, pn + ".swapin(1).wadr");
+        sc_trace(o_vcd, swapin[1].wstrb, pn + ".swapin(1).wstrb");
+        sc_trace(o_vcd, swapin[1].wvalid, pn + ".swapin(1).wvalid");
+        sc_trace(o_vcd, swapin[1].wdata, pn + ".swapin(1).wdata");
+        sc_trace(o_vcd, swapin[1].load_fault, pn + ".swapin(1).load_fault");
+        sc_trace(o_vcd, waysel[0].hit, pn + ".waysel(0).hit");
+        sc_trace(o_vcd, waysel[0].rdata, pn + ".waysel(0).rdata");
+        sc_trace(o_vcd, waysel[0].valid, pn + ".waysel(0).valid");
+        sc_trace(o_vcd, waysel[0].load_fault, pn + ".waysel(0).load_fault");
+        sc_trace(o_vcd, waysel[1].hit, pn + ".waysel(1).hit");
+        sc_trace(o_vcd, waysel[1].rdata, pn + ".waysel(1).rdata");
+        sc_trace(o_vcd, waysel[1].valid, pn + ".waysel(1).valid");
+        sc_trace(o_vcd, waysel[1].load_fault, pn + ".waysel(1).load_fault");
+        sc_trace(o_vcd, r.use_overlay, pn + ".r_use_overlay");
     }
     for (int i = 0; i < CFG_ICACHE_WAYS; i++) {
         wayevenx[i]->generateVCD(i_vcd, o_vcd);
@@ -411,7 +448,12 @@ void ICacheLru::comb() {
                 v.flush_cnt = r.req_flush_cnt.read();
             }
             v.burst_wstrb = ~0u;    // All qwords in line
-        } else if (i_req_ctrl_valid.read() == 1 && w_o_req_ctrl_ready == 1) {
+            v.burst_valid = 0u;     // All qwords in line
+        } else if ((i_req_ctrl_valid.read() == 1 && w_o_req_ctrl_ready == 1)
+                 || r.requested.read() == 1) {
+            /** Check hit even there's no new request only the previous one.
+                This must be done in a case of CPU is halted and cache was flushed
+            */
             v.state = State_CheckHit;
         }
         break;
@@ -510,12 +552,22 @@ void ICacheLru::comb() {
 
     // Write signals:
     for (int i = 0; i < CFG_ICACHE_WAYS; i++) {
-        vb_ena_even[i] = v_init;
-        vb_ena_odd[i] = v_init;
+        vb_ena_even[i] = 0;
+        vb_ena_odd[i] = 0;
     }
     if (r.mem_addr.read()[CFG_IOFFSET_WIDTH] == 0) {
+        if (v_init == 1) {
+            for (int i = 0; i < CFG_ICACHE_WAYS; i++) {
+                vb_ena_even[i] = 1;
+            }
+        }
         vb_ena_even[r.lru_even_wr.read().to_int()] = w_ena | v_init;
     } else {
+        if (v_init == 1) {
+            for (int i = 0; i < CFG_ICACHE_WAYS; i++) {
+                vb_ena_odd[i] = 1;
+            }
+        }
         vb_ena_odd[r.lru_odd_wr.read().to_int()] = w_ena | v_init;
     }
 

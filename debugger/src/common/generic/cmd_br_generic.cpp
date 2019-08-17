@@ -132,6 +132,11 @@ void CmdBrGeneric::exec(AttributeType *args, AttributeType *res) {
             Reg64Type t1 = brinstr;
             getSwBreakpointInstr(&t1, &brlen);
             tap_->write(braddr.val, brlen, brinstr.buf);
+
+            // flush address from ICache
+            uint64_t dsuaddr =
+                reinterpret_cast<uint64_t>(&pdsu->udbg.v.br_flush_addr);
+            tap_->write(dsuaddr, 8, braddr.buf);
         }
     }
 }

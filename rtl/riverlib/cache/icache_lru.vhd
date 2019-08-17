@@ -449,7 +449,12 @@ begin
                 v.flush_cnt := r.req_flush_cnt;
             end if;
             v.burst_wstrb := (others => '1');    -- All qwords in line
-        elsif i_req_ctrl_valid = '1' and w_o_req_ctrl_ready = '1' then
+            v.burst_valid := (others => '0');    -- All qwords in line
+        elsif (i_req_ctrl_valid = '1' and w_o_req_ctrl_ready = '1')
+              or r.requested = '1' then
+            --! Check hit even there's no new request only the previous one.
+            --! This must be done in a case of CPU is halted and cache was flushed
+            --!
             v.state := State_CheckHit;
         end if;
     when State_CheckHit =>
@@ -538,11 +543,13 @@ begin
     end case;
 
     -- Write signals:
-    vb_ena_even := (others => v_init);
-    vb_ena_odd := (others => v_init);
+    vb_ena_even := (others => '0');
+    vb_ena_odd := (others => '0');
     if r.mem_addr(CFG_IOFFSET_WIDTH) = '0' then
+        vb_ena_even := (others => v_init);
         vb_ena_even(conv_integer(r.lru_even_wr)) := w_ena or v_init;
     else
+        vb_ena_odd := (others => v_init);
         vb_ena_odd(conv_integer(r.lru_odd_wr)) := w_ena or v_init;
     end if;
 

@@ -19,7 +19,48 @@
 namespace debugger {
 
 DbgPort::DbgPort(sc_module_name name_, bool async_reset) :
-    sc_module(name_) {
+    sc_module(name_),
+    i_clk("i_clk"),
+    i_nrst("i_nrst"),
+    i_dport_valid("i_dport_valid"),
+    i_dport_write("i_dport_write"),
+    i_dport_region("i_dport_region"),
+    i_dport_addr("i_dport_addr"),
+    i_dport_wdata("i_dport_wdata"),
+    o_dport_ready("o_dport_ready"),
+    o_dport_rdata("o_dport_rdata"),
+    o_core_addr("o_core_addr"),
+    o_core_wdata("o_core_wdata"),
+    o_csr_ena("o_csr_ena"),
+    o_csr_write("o_csr_write"),
+    i_csr_rdata("i_csr_rdata"),
+    o_ireg_ena("o_ireg_ena"),
+    o_ireg_write("o_ireg_write"),
+    o_freg_ena("o_freg_ena"),
+    o_freg_write("o_freg_write"),
+    o_npc_write("o_npc_write"),
+    i_ireg_rdata("i_ireg_rdata"),
+    i_freg_rdata("i_freg_rdata"),
+    i_pc("i_pc"),
+    i_npc("i_npc"),
+    i_e_valid("i_e_valid"),
+    i_e_call("i_e_call"),
+    i_e_ret("i_e_ret"),
+    i_m_valid("i_m_valid"),
+    o_clock_cnt("o_clock_cnt"),
+    o_executed_cnt("o_executed_cnt"),
+    o_halt("o_halt"),
+    i_ebreak("i_ebreak"),
+    o_break_mode("o_break_mode"),
+    o_br_fetch_valid("o_br_fetch_valid"),
+    o_br_address_fetch("o_br_address_fetch"),
+    o_br_instr_fetch("o_br_instr_fetch"),
+    o_flush_address("o_flush_address"),
+    o_flush_valid("o_flush_valid"),
+    i_istate("i_istate"),
+    i_dstate("i_dstate"),
+    i_cstate("i_cstate"),
+    i_instr_buf("i_instr_buf") {
     async_reset_ = async_reset;
 
     SC_METHOD(comb);
@@ -79,38 +120,51 @@ DbgPort::~DbgPort() {
 
 void DbgPort::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
-        sc_trace(o_vcd, i_dport_valid, "/top/proc0/dbg0/i_dport_valid");
-        sc_trace(o_vcd, i_dport_write, "/top/proc0/dbg0/i_dport_write");
-        sc_trace(o_vcd, i_dport_region, "/top/proc0/dbg0/i_dport_region");
-        sc_trace(o_vcd, i_dport_addr, "/top/proc0/dbg0/i_dport_addr");
-        sc_trace(o_vcd, i_dport_wdata, "/top/proc0/dbg0/i_dport_wdata");
-        sc_trace(o_vcd, o_dport_ready, "/top/proc0/dbg0/o_dport_ready");
-        sc_trace(o_vcd, o_dport_rdata, "/top/proc0/dbg0/o_dport_rdata");
-        sc_trace(o_vcd, i_e_valid, "/top/proc0/dbg0/i_e_valid");
-        sc_trace(o_vcd, i_m_valid, "/top/proc0/dbg0/i_m_valid");
-        sc_trace(o_vcd, i_e_call, "/top/proc0/dbg0/i_e_call");
-        sc_trace(o_vcd, i_e_ret, "/top/proc0/dbg0/i_e_ret");
-        sc_trace(o_vcd, i_ebreak, "/top/proc0/dbg0/i_ebreak");
-        sc_trace(o_vcd, i_istate, "/top/proc0/dbg0/i_istate");
-        sc_trace(o_vcd, i_dstate, "/top/proc0/dbg0/i_dstate");
-        sc_trace(o_vcd, i_cstate, "/top/proc0/dbg0/i_cstate");
-        sc_trace(o_vcd, o_break_mode, "/top/proc0/dbg0/o_break_mode");
-        sc_trace(o_vcd, o_br_fetch_valid, "/top/proc0/dbg0/o_br_fetch_valid");
-        sc_trace(o_vcd, o_br_address_fetch, "/top/proc0/dbg0/o_br_address_fetch");
-        sc_trace(o_vcd, o_br_instr_fetch, "/top/proc0/dbg0/o_br_instr_fetch");
+        sc_trace(o_vcd, i_dport_valid, i_dport_valid.name());
+        sc_trace(o_vcd, i_dport_write, i_dport_write.name());
+        sc_trace(o_vcd, i_dport_region, i_dport_region.name());
+        sc_trace(o_vcd, i_dport_addr, i_dport_addr.name());
+        sc_trace(o_vcd, i_dport_wdata, i_dport_wdata.name());
+        sc_trace(o_vcd, o_dport_ready, o_dport_ready.name());
+        sc_trace(o_vcd, o_dport_rdata, o_dport_rdata.name());
+        sc_trace(o_vcd, o_core_addr, o_core_addr.name());
+        sc_trace(o_vcd, o_core_wdata, o_core_wdata.name());
+        sc_trace(o_vcd, o_csr_ena, o_csr_ena.name());
+        sc_trace(o_vcd, o_csr_write, o_csr_write.name());
+        sc_trace(o_vcd, i_csr_rdata, i_csr_rdata.name());
+        sc_trace(o_vcd, o_ireg_ena, o_ireg_ena.name());
+        sc_trace(o_vcd, o_ireg_write, o_ireg_write.name());
+        sc_trace(o_vcd, o_freg_ena, o_freg_ena.name());
+        sc_trace(o_vcd, o_freg_write, o_freg_write.name());
+        sc_trace(o_vcd, o_npc_write, o_npc_write.name());
+        sc_trace(o_vcd, i_ireg_rdata, i_ireg_rdata.name());
+        sc_trace(o_vcd, i_freg_rdata, i_freg_rdata.name());
+        sc_trace(o_vcd, i_pc, i_pc.name());
+        sc_trace(o_vcd, i_npc, i_npc.name());
+        sc_trace(o_vcd, i_e_valid, i_e_valid.name());
+        sc_trace(o_vcd, i_e_call, i_e_call.name());
+        sc_trace(o_vcd, i_e_ret, i_e_ret.name());
+        sc_trace(o_vcd, i_m_valid, i_m_valid.name());
+        sc_trace(o_vcd, o_clock_cnt, o_clock_cnt.name());
+        sc_trace(o_vcd, o_executed_cnt, o_executed_cnt.name());
+        sc_trace(o_vcd, o_halt, o_halt.name());
+        sc_trace(o_vcd, i_ebreak, i_ebreak.name());
+        sc_trace(o_vcd, o_break_mode, o_break_mode.name());
+        sc_trace(o_vcd, o_br_fetch_valid, o_br_fetch_valid.name());
+        sc_trace(o_vcd, o_br_address_fetch, o_br_address_fetch.name());
+        sc_trace(o_vcd, o_br_instr_fetch, o_br_instr_fetch.name());
+        sc_trace(o_vcd, o_flush_address, o_flush_address.name());
+        sc_trace(o_vcd, o_flush_valid, o_flush_valid.name());
+        sc_trace(o_vcd, i_istate, i_istate.name());
+        sc_trace(o_vcd, i_dstate, i_dstate.name());
+        sc_trace(o_vcd, i_cstate, i_cstate.name());
+        sc_trace(o_vcd, i_instr_buf, i_instr_buf.name());
 
-        sc_trace(o_vcd, o_halt, "/top/proc0/dbg0/o_halt");
-        sc_trace(o_vcd, o_core_addr, "/top/proc0/dbg0/o_core_addr");
-        sc_trace(o_vcd, o_core_wdata, "/top/proc0/dbg0/o_core_wdata");
-        sc_trace(o_vcd, o_ireg_ena, "/top/proc0/dbg0/o_ireg_ena");
-        sc_trace(o_vcd, o_freg_ena, "/top/proc0/dbg0/o_freg_ena");
-        sc_trace(o_vcd, o_npc_write, "/top/proc0/dbg0/o_npc_write");
-        sc_trace(o_vcd, o_ireg_write, "/top/proc0/dbg0/o_ireg_write");
-        sc_trace(o_vcd, o_freg_write, "/top/proc0/dbg0/o_freg_write");
-        sc_trace(o_vcd, r.clock_cnt, "/top/proc0/dbg0/r_clock_cnt");
-        sc_trace(o_vcd, r.stepping_mode_cnt, "/top/proc0/dbg0/r_stepping_mode_cnt");
-        sc_trace(o_vcd, r.stepping_mode, "/top/proc0/dbg0/r_stepping_mode");
-        sc_trace(o_vcd, r.breakpoint, "/top/proc0/dbg0/r_breakpoint");
+        std::string pn(name());
+        sc_trace(o_vcd, r.clock_cnt, pn + ".r_clock_cnt");
+        sc_trace(o_vcd, r.stepping_mode_cnt, pn + ".r_stepping_mode_cnt");
+        sc_trace(o_vcd, r.stepping_mode, pn + ".r_stepping_mode");
+        sc_trace(o_vcd, r.breakpoint, pn + ".r_breakpoint");
     }
     if (CFG_STACK_TRACE_BUF_SIZE != 0) {
         trbuf0->generateVCD(i_vcd, o_vcd);
