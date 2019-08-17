@@ -736,14 +736,18 @@ procedure procedureAxi4toMem (
 );
 
 --! Memory interface to AXI4 converter.
+--! @param [in] i_dualport Independent channels for read and write transactions.
 --! @param [in] i_rready Slave device read data is ready.
 --! @param [in] i_rdata Read data value
 --! @param [in] i_bank Bank of registers implemented by each slave device.
+--! @param [in] i_slvi AXI4 slave input interface.
 --! @param [out] o_slvo AXI4 slave output interface.
 procedure procedureMemToAxi4 (
+   i_dualport : in std_logic;
    i_rready : in std_logic;
    i_rdata : in std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
    i_bank : in nasti_slave_bank_type;
+   i_slvi : in nasti_slave_in_type;
    o_slvo : out nasti_slave_out_type
 );
 
@@ -1325,14 +1329,18 @@ package body types_amba4 is
 
 
   --! Memory interface to AXI4 converter.
+  --! @param [in] i_dualport Independent channels for read and write transactions.
   --! @param [in] i_rready Slave device read data is ready.
   --! @param [in] i_rdata Read data value
   --! @param [in] i_bank Bank of registers implemented by each slave device.
+  --! @param [in] i_slvi AXI4 slave input interface.
   --! @param [out] o_slvo AXI4 slave output interface.
   procedure procedureMemToAxi4(
+     i_dualport : in std_logic;
      i_rready : in std_logic;
      i_rdata : in std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
      i_bank : in nasti_slave_bank_type;
+     i_slvi : in nasti_slave_in_type;
      o_slvo : out nasti_slave_out_type
   ) is
   begin
@@ -1340,6 +1348,10 @@ package body types_amba4 is
     o_slvo.aw_ready := '1';
     o_slvo.w_ready := '1';
     o_slvo.ar_ready := '1';
+
+    if i_dualport = '0' and i_slvi.aw_valid = '1' then
+        o_slvo.ar_ready := '0';
+    end if;
 
     o_slvo.r_id := i_bank.rid;
     o_slvo.r_last := '0';

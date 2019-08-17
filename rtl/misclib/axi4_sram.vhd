@@ -106,9 +106,11 @@ begin
     end if;
 
     procedureMemToAxi4(
+       i_dualport => '0',
        i_rready => '1',
        i_rdata => rdata_mux,
        i_bank => r.bank_axi,
+       i_slvi => i,
        o_slvo => vslvo
     );
 

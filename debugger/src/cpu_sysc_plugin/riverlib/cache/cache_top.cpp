@@ -169,16 +169,18 @@ void CacheTop::comb() {
     switch (r.state.read()) {
     case State_Idle:
         w_req_mem_valid = i.req_mem_valid | d.req_mem_valid;
-        if (i_req_mem_ready.read() == 1) {
-            if (d.req_mem_valid.read()) {
-                v_data_req_ready = 1;
+        if (d.req_mem_valid.read()) {
+            v_data_req_ready = i_req_mem_ready.read();
+            if (i_req_mem_ready.read() == 1) {
                 v.state = State_DMem;
-            } else if (i.req_mem_valid.read()) {
-                v_ctrl_req_ready = 1;
-                wb_mem_addr = i.req_mem_addr;
-                wb_mem_len = i.req_mem_len;
-                wb_mem_burst = i.req_mem_burst;
-                w_mem_write = i.req_mem_write;
+            }
+        } else if (i.req_mem_valid.read()) {
+            v_ctrl_req_ready = i_req_mem_ready.read();
+            wb_mem_addr = i.req_mem_addr;
+            wb_mem_len = i.req_mem_len;
+            wb_mem_burst = i.req_mem_burst;
+            w_mem_write = i.req_mem_write;
+            if (i_req_mem_ready.read() == 1) {
                 v.state = State_IMem;
             }
         }
@@ -187,16 +189,20 @@ void CacheTop::comb() {
     case State_DMem:
         w_req_mem_valid = d.req_mem_last & (i.req_mem_valid | d.req_mem_valid);
         if (i_resp_mem_data_valid.read() && d.req_mem_last.read()) {
-            if (i_req_mem_ready.read() == 1) {
-                if (d.req_mem_valid.read()) {
-                    v_data_req_ready = 1;
+            if (d.req_mem_valid.read()) {
+                v_data_req_ready = i_req_mem_ready.read();
+                if (i_req_mem_ready.read() == 1) {
                     v.state = State_DMem;
-                } else if (i.req_mem_valid.read() == 1) {
-                    v_ctrl_req_ready = 1;
-                    wb_mem_addr = i.req_mem_addr;
-                    wb_mem_len = i.req_mem_len;
-                    wb_mem_burst = i.req_mem_burst;
-                    w_mem_write = i.req_mem_write;
+                } else {
+                    v.state = State_Idle;
+                }
+            } else if (i.req_mem_valid.read() == 1) {
+                v_ctrl_req_ready = i_req_mem_ready.read();
+                wb_mem_addr = i.req_mem_addr;
+                wb_mem_len = i.req_mem_len;
+                wb_mem_burst = i.req_mem_burst;
+                w_mem_write = i.req_mem_write;
+                if (i_req_mem_ready.read() == 1) {
                     v.state = State_IMem;
                 } else {
                     v.state = State_Idle;
@@ -211,16 +217,20 @@ void CacheTop::comb() {
     case State_IMem:
         w_req_mem_valid = i.req_mem_last & (i.req_mem_valid | d.req_mem_valid);
         if (i_resp_mem_data_valid.read() && i.req_mem_last.read()) {
-            if (i_req_mem_ready.read() == 1) {
-                if (d.req_mem_valid.read()) {
-                    v_data_req_ready = 1;
+            if (d.req_mem_valid.read()) {
+                v_data_req_ready = i_req_mem_ready.read();
+                if (i_req_mem_ready.read() == 1) {
                     v.state = State_DMem;
-                } else if (i.req_mem_valid.read() == 1) {
-                    v_ctrl_req_ready = 1;
-                    wb_mem_addr = i.req_mem_addr;
-                    wb_mem_len = i.req_mem_len;
-                    wb_mem_burst = i.req_mem_burst;
-                    w_mem_write = i.req_mem_write;
+                } else {
+                    v.state = State_Idle;
+                }
+            } else if (i.req_mem_valid.read() == 1) {
+                v_ctrl_req_ready = i_req_mem_ready.read();
+                wb_mem_addr = i.req_mem_addr;
+                wb_mem_len = i.req_mem_len;
+                wb_mem_burst = i.req_mem_burst;
+                w_mem_write = i.req_mem_write;
+                if (i_req_mem_ready.read() == 1) {
                     v.state = State_IMem;
                 } else {
                     v.state = State_Idle;
