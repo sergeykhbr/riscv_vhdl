@@ -251,32 +251,37 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_d_pc, i_d_pc.name());
         sc_trace(o_vcd, i_d_instr, i_d_instr.name());
         sc_trace(o_vcd, i_wb_ready, i_wb_ready.name());
+        sc_trace(o_vcd, i_f64, i_f64.name());
+        sc_trace(o_vcd, i_unsup_exception, i_unsup_exception.name());
+        sc_trace(o_vcd, o_radr1, o_radr1.name());
         sc_trace(o_vcd, i_rdata1, i_rdata1.name());
+        sc_trace(o_vcd, o_radr2, o_radr2.name());
         sc_trace(o_vcd, i_rdata2, i_rdata2.name());
         sc_trace(o_vcd, i_rfdata1, i_rfdata1.name());
         sc_trace(o_vcd, i_rfdata2, i_rfdata2.name());
-        sc_trace(o_vcd, i_f64, i_f64.name());
-        sc_trace(o_vcd, o_trap_ready, o_trap_ready.name());
-        sc_trace(o_vcd, o_valid, o_valid.name());
-        sc_trace(o_vcd, o_npc, o_npc.name());
-        sc_trace(o_vcd, o_pc, o_pc.name());
-        sc_trace(o_vcd, o_radr1, o_radr1.name());
-        sc_trace(o_vcd, o_radr2, o_radr2.name());
         sc_trace(o_vcd, o_res_addr, o_res_addr.name());
         sc_trace(o_vcd, o_res_data, o_res_data.name());
-        sc_trace(o_vcd, o_memop_addr, o_memop_addr.name());
-        sc_trace(o_vcd, o_memop_load, o_memop_load.name());
-        sc_trace(o_vcd, o_memop_store, o_memop_store.name());
-        sc_trace(o_vcd, o_memop_size, o_memop_size.name());
+        sc_trace(o_vcd, o_pipeline_hold, o_pipeline_hold.name());
         sc_trace(o_vcd, o_csr_addr, o_csr_addr.name());
         sc_trace(o_vcd, o_csr_wena, o_csr_wena.name());
         sc_trace(o_vcd, i_csr_rdata, i_csr_rdata.name());
         sc_trace(o_vcd, o_csr_wdata, o_csr_wdata.name());
-        sc_trace(o_vcd, o_pipeline_hold, o_pipeline_hold.name());
+        sc_trace(o_vcd, i_trap_valid, i_trap_valid.name());
+        sc_trace(o_vcd, i_trap_pc, i_trap_pc.name());
+        sc_trace(o_vcd, o_ex_npc, o_ex_npc.name());
+        sc_trace(o_vcd, o_memop_load, o_memop_load.name());
+        sc_trace(o_vcd, o_memop_store, o_memop_store.name());
+        sc_trace(o_vcd, o_memop_size, o_memop_size.name());
+        sc_trace(o_vcd, o_memop_addr, o_memop_addr.name());
+        sc_trace(o_vcd, o_trap_ready, o_trap_ready.name());
+        sc_trace(o_vcd, o_valid, o_valid.name());
+        sc_trace(o_vcd, o_pc, o_pc.name());
+        sc_trace(o_vcd, o_npc, o_npc.name());
+        sc_trace(o_vcd, o_instr, o_instr.name());
         sc_trace(o_vcd, o_call, o_call.name());
         sc_trace(o_vcd, o_ret, o_ret.name());
-        sc_trace(o_vcd, o_uret, o_uret.name());
         sc_trace(o_vcd, o_mret, o_mret.name());
+        sc_trace(o_vcd, o_uret, o_uret.name());
 
         std::string pn(name());
 #ifndef EXEC2_ENA
@@ -808,7 +813,11 @@ void InstrExecute::comb() {
         }
         v.multi_pc = i_d_pc;
         v.multi_instr = i_d_instr;
-        v.multi_npc = wb_npc;
+        if (i_trap_valid.read() == 1) {
+            v.multi_npc = i_trap_pc.read();
+        } else {
+            v.multi_npc = wb_npc;
+        }
     }
 
     // ALU block selector:

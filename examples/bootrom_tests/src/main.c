@@ -22,6 +22,7 @@
 void allocate_exception_table(void);
 void test_fpu(void);
 void test_timer(void);
+void test_timer_multicycle_instructions(void);
 void test_missaccess(void);
 void print_pnp(void);
 
@@ -51,6 +52,7 @@ int main() {
     uart_isr_init();   // enable printf_uart function and Tx irq=1
     p_irq->irq_lock = 0;
 
+#if 0
     printf_uart("HARTID . . . . .%d\r\n", fw_get_cpuid());
     printf_uart("Tech . . . . . .0x%08x\r\n", pnp->tech);
     printf_uart("HWID . . . . . .0x%08x\r\n", pnp->hwid);
@@ -62,6 +64,9 @@ int main() {
 
     led_set(0x03);
     test_timer();      // Enabling timer[0] with 1 sec interrupts
+#else
+    test_timer_multicycle_instructions();
+#endif
 
     led_set(0x04);
     test_missaccess();

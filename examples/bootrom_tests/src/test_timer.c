@@ -27,6 +27,9 @@ typedef struct timer_data_type {
     int hour;
 } timer_data_type;
 
+void isr_timer_empty(void) {
+}
+
 void isr_timer(void) {
     timer_data_type *p = fw_get_ram_data(TEST_TIMER_NAME);
     gptimers_map *ptmr = (gptimers_map *)ADDR_NASTI_SLAVE_GPTIMERS;
@@ -65,3 +68,26 @@ void test_timer(void) {
 
     fw_enable_isr(CFG_IRQ_GPTIMERS);
 }
+
+void test_timer_multicycle_instructions(void) {
+    timer_data_type *p;
+    gptimers_map *ptmr = (gptimers_map *)ADDR_NASTI_SLAVE_GPTIMERS;
+    uint64_t endtime = ptmr->highcnt + SYS_HZ;
+    double a = 1.1;
+
+    // Disable interrupt and timer
+    ptmr->timer[0].init_value = 0;
+    ptmr->timer[0].control = 0;
+
+    fw_register_isr_handler(CFG_IRQ_GPTIMERS, isr_timer_empty);
+
+    ptmr->timer[0].init_value = 1000; 
+    ptmr->timer[0].control = TIMER_CONTROL_ENA | TIMER_CONTROL_IRQ_ENA;
+
+    fw_enable_isr(CFG_IRQ_GPTIMERS);
+//    while (ptmr->highcnt < endtime) {
+    while (1) {
+        a = a * 1.1;
+    }
+}
+

@@ -748,7 +748,11 @@ begin
         end if;
         v.multi_pc := i_d_pc;
         v.multi_instr := i_d_instr;
-        v.multi_npc := wb_npc;
+        if i_trap_valid = '1' then
+            v.multi_npc := i_trap_pc;
+        else
+            v.multi_npc := wb_npc;
+        end if;
     end if;
 
 
