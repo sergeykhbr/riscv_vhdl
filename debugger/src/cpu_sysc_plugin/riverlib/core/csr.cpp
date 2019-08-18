@@ -161,6 +161,8 @@ void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         std::string pn(name());
         sc_trace(o_vcd, r.mode, pn + ".r_mode");
         sc_trace(o_vcd, r.mie, pn + ".r_mie");
+        sc_trace(o_vcd, r.mepc, pn + ".r_mepc");
+        sc_trace(o_vcd, r.mbadaddr, pn + ".r_mbadaddr");
     }
 }
 

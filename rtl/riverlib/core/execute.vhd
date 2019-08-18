@@ -480,18 +480,15 @@ begin
     --!
     w_fpu_ena := '0';
     if CFG_HW_FPU_ENABLE then
-        if i_trap_valid = '0' and i_f64 = '1'
-           and (wv(Instr_FSD) or wv(Instr_FLD)) = '0' then
+        if i_f64 = '1' and (wv(Instr_FSD) or wv(Instr_FLD)) = '0' then
             w_fpu_ena := '1';
         end if;
     end if;
 
-    --! Do not start multicycle instruction on trap jump because npc
-    --! will be overwriten by trap vector
-    w_multi_ena := (wv(Instr_MUL) or wv(Instr_MULW) or wv(Instr_DIV)
+    w_multi_ena := wv(Instr_MUL) or wv(Instr_MULW) or wv(Instr_DIV)
                     or wv(Instr_DIVU) or wv(Instr_DIVW) or wv(Instr_DIVUW)
                     or wv(Instr_REM) or wv(Instr_REMU) or wv(Instr_REMW)
-                    or wv(Instr_REMUW) or w_fpu_ena) and (not i_trap_valid);
+                    or wv(Instr_REMUW) or w_fpu_ena;
 
     w_multi_valid := w_arith_valid(Multi_MUL) or w_arith_valid(Multi_DIV)
                    or w_arith_valid(Multi_FPU);

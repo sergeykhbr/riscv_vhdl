@@ -461,20 +461,15 @@ void InstrExecute::comb() {
      */
     w_fpu_ena = 0;
     if (CFG_HW_FPU_ENABLE) {
-        if (i_trap_valid.read() == 0 && i_f64.read()
-            && !(wv[Instr_FSD] | wv[Instr_FLD]).to_bool()) {
+        if (i_f64.read() && !(wv[Instr_FSD] | wv[Instr_FLD]).to_bool()) {
             w_fpu_ena = 1;
         }
     }
 
-    /** Do not start multicycle instruction on trap jump because npc
-        will be overwritten by trap vector
-    */
     w_multi_ena = (wv[Instr_MUL] | wv[Instr_MULW] | wv[Instr_DIV] 
                     | wv[Instr_DIVU] | wv[Instr_DIVW] | wv[Instr_DIVUW]
                     | wv[Instr_REM] | wv[Instr_REMU] | wv[Instr_REMW]
                     | wv[Instr_REMUW]).to_bool() || w_fpu_ena;
-    w_multi_ena = w_multi_ena && !i_trap_valid.read();
 
     w_multi_valid = w_arith_valid[Multi_MUL] | w_arith_valid[Multi_DIV]
                   | w_arith_valid[Multi_FPU];
