@@ -46,12 +46,12 @@
     </file>
     <file xil_pn:name="../../techmap/mem/rom_inferred.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="16"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="43"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="42"/>
       <library xil_pn:name="techmap"/>
     </file>
     <file xil_pn:name="../../techmap/mem/rom_tech.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="17"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="51"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="50"/>
       <library xil_pn:name="techmap"/>
     </file>
     <file xil_pn:name="../../techmap/mem/sram8_inferred.vhd" xil_pn:type="FILE_VHDL">
@@ -66,12 +66,12 @@
     </file>
     <file xil_pn:name="../../techmap/mem/romimage_inferred.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="23"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="42"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="43"/>
       <library xil_pn:name="techmap"/>
     </file>
     <file xil_pn:name="../../techmap/mem/romimage_tech.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="24"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="50"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="51"/>
       <library xil_pn:name="techmap"/>
     </file>
     <file xil_pn:name="../../techmap/pll/types_pll.vhd" xil_pn:type="FILE_VHDL">
@@ -318,32 +318,32 @@
     </file>
     <file xil_pn:name="../../misclib/nasti_gpio.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="94"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="77"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="76"/>
       <library xil_pn:name="misclib"/>
     </file>
     <file xil_pn:name="../../misclib/nasti_gptimers.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="95"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="76"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="75"/>
       <library xil_pn:name="misclib"/>
     </file>
     <file xil_pn:name="../../misclib/nasti_irqctrl.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="96"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="75"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="74"/>
       <library xil_pn:name="misclib"/>
     </file>
     <file xil_pn:name="../../misclib/nasti_pnp.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="97"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="74"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="73"/>
       <library xil_pn:name="misclib"/>
     </file>
     <file xil_pn:name="../../misclib/nasti_romimage.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="98"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="73"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="72"/>
       <library xil_pn:name="misclib"/>
     </file>
     <file xil_pn:name="../../misclib/axi4_sram.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="99"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="77"/>
       <library xil_pn:name="misclib"/>
     </file>
     <file xil_pn:name="../../misclib/nasti_uart.vhd" xil_pn:type="FILE_VHDL">
@@ -474,11 +474,6 @@
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="145"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="11"/>
       <library xil_pn:name="techmap"/>
-    </file>
-    <file xil_pn:name="../../misclib/nasti_sram.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="146"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="72"/>
-      <library xil_pn:name="misclib"/>
     </file>
   </files>
 
