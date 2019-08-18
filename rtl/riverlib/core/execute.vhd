@@ -85,7 +85,7 @@ entity InstrExecute is generic (
     o_memop_size : out std_logic_vector(1 downto 0);            -- 0=1bytes; 1=2bytes; 2=4bytes; 3=8bytes
     o_memop_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- Memory access address
 
-    o_pre_valid : out std_logic;                                -- pre-latch of valid
+    o_trap_ready : out std_logic;                               -- Trap branch request was accepted
     o_valid : out std_logic;                                    -- Output is valid
     o_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);     -- Valid instruction pointer
     o_npc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);    -- Next instruction pointer. Next decoded pc must match to this value or will be ignored.
@@ -480,15 +480,18 @@ begin
     --!
     w_fpu_ena := '0';
     if CFG_HW_FPU_ENABLE then
-        if i_f64 = '1' and (wv(Instr_FSD) or wv(Instr_FLD)) = '0' then
+        if i_trap_valid = '0' and i_f64 = '1'
+           and (wv(Instr_FSD) or wv(Instr_FLD)) = '0' then
             w_fpu_ena := '1';
         end if;
     end if;
 
-    w_multi_ena := wv(Instr_MUL) or wv(Instr_MULW) or wv(Instr_DIV)
+    --! Do not start multicycle instruction on trap jump because npc
+    --! will be overwriten by trap vector
+    w_multi_ena := (wv(Instr_MUL) or wv(Instr_MULW) or wv(Instr_DIV)
                     or wv(Instr_DIVU) or wv(Instr_DIVW) or wv(Instr_DIVUW)
                     or wv(Instr_REM) or wv(Instr_REMU) or wv(Instr_REMW)
-                    or wv(Instr_REMUW) or w_fpu_ena;
+                    or wv(Instr_REMUW) or w_fpu_ena) and (not i_trap_valid);
 
     w_multi_valid := w_arith_valid(Multi_MUL) or w_arith_valid(Multi_DIV)
                    or w_arith_valid(Multi_FPU);
@@ -848,7 +851,7 @@ begin
     end if;
 
 
-    o_pre_valid <= w_next_ready;
+    o_trap_ready <= w_next_ready;
 
     o_ex_illegal_instr <= i_unsup_exception and w_next_ready;
     o_ex_unalign_store <= w_exception_store and w_next_ready;
@@ -866,12 +869,7 @@ begin
         -- so no need to check jump opcodes
         v.pc := r.multi_pc;
         v.instr := r.multi_instr;
-        if i_trap_valid = '1' then
-            v.npc := i_trap_pc;
-            wb_ex_npc := r.multi_npc;
-        else
-            v.npc := r.multi_npc;
-        end if;
+        v.npc := r.multi_npc;
         v.memop_load := '0';
         v.memop_sign_ext := '0';
         v.memop_store := '0';

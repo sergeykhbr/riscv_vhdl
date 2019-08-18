@@ -108,7 +108,7 @@ architecture arch_Processor of Processor is
     end record;
 
     type ExecuteType is record
-        pre_valid : std_logic;
+        trap_ready : std_logic;
         valid : std_logic;
         instr : std_logic_vector(31 downto 0);
         pc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
@@ -351,7 +351,7 @@ begin
         o_memop_store => w.e.memop_store,
         o_memop_size => w.e.memop_size,
         o_memop_addr => w.e.memop_addr,
-        o_pre_valid => w.e.pre_valid,
+        o_trap_ready => w.e.trap_ready,
         o_valid => w.e.valid,
         o_pc => w.e.pc,
         o_npc => w.e.npc,
@@ -469,7 +469,7 @@ begin
         i_wena => w.e.csr_wena,
         i_wdata => w.e.csr_wdata,
         o_rdata => csr.rdata,
-        i_e_pre_valid => w.e.pre_valid,
+        i_trap_ready => w.e.trap_ready,
         i_ex_pc => w.e.npc,
         i_ex_npc => w.e.ex_npc,
         i_ex_data_addr => i_resp_data_addr,

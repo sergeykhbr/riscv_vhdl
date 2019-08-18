@@ -151,7 +151,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset)
     exec0->o_memop_store(w.e.memop_store);
     exec0->o_memop_size(w.e.memop_size);
     exec0->o_memop_addr(w.e.memop_addr);
-    exec0->o_pre_valid(w.e.pre_valid);
+    exec0->o_trap_ready(w.e.trap_ready);
     exec0->o_valid(w.e.valid);
     exec0->o_pc(w.e.pc);
     exec0->o_npc(w.e.npc);
@@ -255,7 +255,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset)
     csr0->i_wena(w.e.csr_wena);
     csr0->i_wdata(w.e.csr_wdata);
     csr0->o_rdata(csr.rdata);
-    csr0->i_e_pre_valid(w.e.pre_valid);
+    csr0->i_trap_ready(w.e.trap_ready);
     csr0->i_ex_pc(w.e.npc);
     csr0->i_ex_npc(w.e.ex_npc);
     csr0->i_ex_data_addr(i_resp_data_addr);

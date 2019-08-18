@@ -430,7 +430,7 @@ package river_cfg is
   --! @param[in] i_wena         Write enable
   --! @param[in] i_wdata        CSR writing value
   --! @param[out] o_rdata       CSR read value
-  --! @param[in] i_e_pre_valid      execute stage valid signal
+  --! @param[in] i_trap_ready   Trap branch request was accepted
   --! @param[in] i_ex_data_addr    Data path: address must be equal to the latest request address
   --! @param[in] i_ex_data_load_fault Data path: Bus response with SLVERR or DECERR on read
   --! @param[in] i_ex_data_store_fault Data path: Bus response with SLVERR or DECERR on write
@@ -455,7 +455,7 @@ package river_cfg is
     i_wena : in std_logic;
     i_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0);
     o_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0);
-    i_e_pre_valid : in std_logic;
+    i_trap_ready : in std_logic;
     i_ex_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_ex_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_ex_data_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
@@ -586,7 +586,7 @@ package river_cfg is
   --! @param[out] o_memop_store Store data instruction
   --! @param[out] o_memop_size 0=1bytes; 1=2bytes; 2=4bytes; 3=8bytes
   --! @param[out] o_memop_addr  Memory access address
-  --! @param[out] o_pre_valid   pre-latch of valid signal
+  --! @param[out] o_trap_ready  Trap branch request was accepted
   --! @param[out] o_valid       Output is valid
   --! @param[out] o_pc          Valid instruction pointer
   --! @param[out] o_npc         Next instruction pointer. Next decoded pc must match to this value or will be ignored.
@@ -651,7 +651,7 @@ package river_cfg is
     o_memop_store : out std_logic;
     o_memop_size : out std_logic_vector(1 downto 0);
     o_memop_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    o_pre_valid : out std_logic;
+    o_trap_ready : out std_logic;
     o_valid : out std_logic;
     o_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     o_npc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);

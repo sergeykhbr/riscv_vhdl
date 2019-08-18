@@ -73,7 +73,7 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset)
     o_memop_store("o_memop_store"),
     o_memop_size("o_memop_size"),
     o_memop_addr("o_memop_addr"),
-    o_pre_valid("o_pre_valid"),
+    o_trap_ready("o_trap_ready"),
     o_valid("o_valid"),
     o_pc("o_pc"),
     o_npc("o_npc"),
@@ -256,6 +256,7 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_rfdata1, i_rfdata1.name());
         sc_trace(o_vcd, i_rfdata2, i_rfdata2.name());
         sc_trace(o_vcd, i_f64, i_f64.name());
+        sc_trace(o_vcd, o_trap_ready, o_trap_ready.name());
         sc_trace(o_vcd, o_valid, o_valid.name());
         sc_trace(o_vcd, o_npc, o_npc.name());
         sc_trace(o_vcd, o_pc, o_pc.name());
@@ -274,6 +275,8 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_pipeline_hold, o_pipeline_hold.name());
         sc_trace(o_vcd, o_call, o_call.name());
         sc_trace(o_vcd, o_ret, o_ret.name());
+        sc_trace(o_vcd, o_uret, o_uret.name());
+        sc_trace(o_vcd, o_mret, o_mret.name());
 
         std::string pn(name());
 #ifndef EXEC2_ENA
@@ -458,15 +461,20 @@ void InstrExecute::comb() {
      */
     w_fpu_ena = 0;
     if (CFG_HW_FPU_ENABLE) {
-        if (i_f64.read() && !(wv[Instr_FSD] | wv[Instr_FLD]).to_bool()) {
+        if (i_trap_valid.read() == 0 && i_f64.read()
+            && !(wv[Instr_FSD] | wv[Instr_FLD]).to_bool()) {
             w_fpu_ena = 1;
         }
     }
 
+    /** Do not start multicycle instruction on trap jump because npc
+        will be overwritten by trap vector
+    */
     w_multi_ena = (wv[Instr_MUL] | wv[Instr_MULW] | wv[Instr_DIV] 
                     | wv[Instr_DIVU] | wv[Instr_DIVW] | wv[Instr_DIVUW]
                     | wv[Instr_REM] | wv[Instr_REMU] | wv[Instr_REMW]
                     | wv[Instr_REMUW]).to_bool() || w_fpu_ena;
+    w_multi_ena = w_multi_ena && !i_trap_valid.read();
 
     w_multi_valid = w_arith_valid[Multi_MUL] | w_arith_valid[Multi_DIV]
                   | w_arith_valid[Multi_FPU];
@@ -926,7 +934,7 @@ void InstrExecute::comb() {
     }
 
 #ifdef EXEC2_ENA
-    o_pre_valid = w_next_ready;
+    o_trap_ready = w_next_ready;
 
     o_ex_illegal_instr = i_unsup_exception.read() & w_next_ready;
     o_ex_unalign_store = w_exception_store & w_next_ready;
@@ -955,12 +963,7 @@ void InstrExecute::comb() {
         // so no need to check jump opcodes
         v.pc = r.multi_pc;
         v.instr = r.multi_instr;
-        if (i_trap_valid.read()) {
-            v.npc = i_trap_pc.read();
-            wb_ex_npc = r.multi_npc;
-        } else {
-            v.npc = r.multi_npc;
-        }
+        v.npc = r.multi_npc;
         v.memop_load = 0;
         v.memop_sign_ext = 0;
         v.memop_store = 0;

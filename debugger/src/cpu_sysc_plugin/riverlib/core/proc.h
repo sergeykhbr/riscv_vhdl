@@ -121,7 +121,7 @@ private:
     };
 
     struct ExecuteType {
-        sc_signal<bool> pre_valid;
+        sc_signal<bool> trap_ready;
         sc_signal<bool> valid;
         sc_signal<sc_uint<32>> instr;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> pc;

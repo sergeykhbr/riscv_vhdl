@@ -86,7 +86,7 @@ SC_MODULE(InstrExecute) {
     sc_out<sc_uint<2>> o_memop_size;            // 0=1bytes; 1=2bytes; 2=4bytes; 3=8bytes
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_memop_addr;// Memory access address
 
-    sc_out<bool> o_pre_valid;                   // pre-latch of valid
+    sc_out<bool> o_trap_ready;                  // trap branch request accepted
     sc_out<bool> o_valid;                       // Output is valid
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_pc;       // Valid instruction pointer
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_npc;      // Next instruction pointer. Next decoded pc must match to this value or will be ignored.

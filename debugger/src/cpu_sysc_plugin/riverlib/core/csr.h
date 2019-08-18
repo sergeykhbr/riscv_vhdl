@@ -32,7 +32,7 @@ SC_MODULE(CsrRegs) {
     sc_in<bool> i_wena;                     // Write enable
     sc_in<sc_uint<RISCV_ARCH>> i_wdata;     // CSR writing value
     sc_out<sc_uint<RISCV_ARCH>> o_rdata;    // CSR read value
-    sc_in<bool> i_e_pre_valid;              // execute stage valid signal
+    sc_in<bool> i_trap_ready;               // trap branch request was accepted
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_ex_pc;
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_ex_npc;
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_ex_data_addr;  // Data path: address must be equal to the latest request address

@@ -28,7 +28,7 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset)
     i_wena("i_wena"),
     i_wdata("i_wdata"),
     o_rdata("o_rdata"),
-    i_e_pre_valid("i_e_pre_valid"),
+    i_trap_ready("i_trap_ready"),
     i_ex_pc("i_ex_pc"),
     i_ex_npc("i_ex_npc"),
     i_ex_data_addr("i_ex_data_addr"),
@@ -67,7 +67,7 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset)
     sensitive << i_addr;
     sensitive << i_wena;
     sensitive << i_wdata;
-    sensitive << i_e_pre_valid;
+    sensitive << i_trap_ready;
     sensitive << i_ex_pc;
     sensitive << i_ex_npc;
     sensitive << i_ex_data_addr;
@@ -128,7 +128,7 @@ void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_wena, i_wena.name());
         sc_trace(o_vcd, i_wdata, i_wdata.name());
         sc_trace(o_vcd, o_rdata, o_rdata.name());
-        sc_trace(o_vcd, i_e_pre_valid, i_e_pre_valid.name()),
+        sc_trace(o_vcd, i_trap_ready, i_trap_ready.name()),
         sc_trace(o_vcd, i_ex_pc, i_ex_pc.name());
         sc_trace(o_vcd, i_ex_npc, i_ex_npc.name());
         sc_trace(o_vcd, i_ex_data_addr, i_ex_data_addr.name());
@@ -349,7 +349,7 @@ void CsrRegs::comb() {
         w_ie = 1;
     }
     w_ext_irq = i_irq_external.read() && w_ie;
-    if (i_e_pre_valid.read()) {
+    if (i_trap_ready.read()) {
         v.ext_irq = w_ext_irq;
     }
 
@@ -399,7 +399,7 @@ void CsrRegs::comb() {
                 r.hold_data_load_fault.read() == 1) {
         w_trap_valid = 1;
         v.hold_data_load_fault = 0;
-        if (i_e_pre_valid.read() == 0) {
+        if (i_trap_ready.read() == 0) {
             v.hold_data_load_fault = 1;
         }
         wb_trap_pc = CFG_NMI_LOAD_FAULT_ADDR;
@@ -418,7 +418,7 @@ void CsrRegs::comb() {
              || r.hold_data_store_fault.read() == 1) {
         w_trap_valid = 1;
         v.hold_data_store_fault = 0;
-        if (i_e_pre_valid.read() == 0) {
+        if (i_trap_ready.read() == 0) {
             v.hold_data_store_fault = 1;
         }
         wb_trap_pc = CFG_NMI_STORE_FAULT_ADDR;
@@ -458,7 +458,7 @@ void CsrRegs::comb() {
     // Behaviour on EBREAK instruction defined by 'i_break_mode':
     //     0 = halt;
     //     1 = generate trap
-    if (w_trap_valid && i_e_pre_valid.read() &&
+    if (w_trap_valid && i_trap_ready.read() &&
         (i_break_mode.read() || !i_ex_breakpoint.read())) {
         v.mie = 0;
         v.mpp = r.mode;

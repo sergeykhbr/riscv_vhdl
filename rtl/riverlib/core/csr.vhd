@@ -37,7 +37,7 @@ entity CsrRegs is
     i_wena : in std_logic;                                  -- Write enable
     i_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0);   -- CSR writing value
     o_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0);  -- CSR read value
-    i_e_pre_valid : in std_logic;                               -- execute stage valid signal
+    i_trap_ready : in std_logic;                            -- Trap branch request was accepted
     i_ex_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_ex_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_ex_data_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- Data path: address must be equal to the latest request address
@@ -249,7 +249,7 @@ architecture arch_CsrRegs of CsrRegs is
 
 begin
 
-  comb : process(i_nrst, i_mret, i_uret, i_addr, i_wena, i_wdata, i_e_pre_valid,
+  comb : process(i_nrst, i_mret, i_uret, i_addr, i_wena, i_wdata, i_trap_ready,
                  i_ex_pc, i_ex_npc, i_ex_data_addr, i_ex_data_load_fault, i_ex_data_store_fault,
                  i_ex_data_store_fault_addr,
                  i_ex_ctrl_load_fault, i_ex_illegal_instr, i_ex_unalign_load, i_ex_unalign_store,
@@ -287,7 +287,7 @@ begin
         w_ie := '1';
     end if;
     w_ext_irq := i_irq_external and w_ie;
-    if i_e_pre_valid = '1' then
+    if i_trap_ready = '1' then
         v.ext_irq := w_ext_irq;
     end if;
 
@@ -336,7 +336,7 @@ begin
     elsif i_ex_data_load_fault = '1' or r.hold_data_load_fault = '1' then
         w_trap_valid := '1';
         v.hold_data_load_fault := '0';
-        if i_e_pre_valid = '0' then
+        if i_trap_ready = '0' then
             v.hold_data_load_fault := '1';
         end if;
         wb_trap_pc := CFG_NMI_LOAD_FAULT_ADDR;
@@ -354,7 +354,7 @@ begin
     elsif i_ex_data_store_fault = '1' or r.hold_data_store_fault = '1' then
         w_trap_valid := '1';
         v.hold_data_store_fault := '0';
-        if i_e_pre_valid = '0' then
+        if i_trap_ready = '0' then
             v.hold_data_store_fault := '1';
         end if;
         wb_trap_pc := CFG_NMI_STORE_FAULT_ADDR;
@@ -392,7 +392,7 @@ begin
     -- Behaviour on EBREAK instruction defined by 'i_break_mode':
     --     0 = halt;
     --     1 = generate trap
-    if (w_trap_valid and i_e_pre_valid and (i_break_mode or not i_ex_breakpoint)) = '1' then
+    if (w_trap_valid and i_trap_ready and (i_break_mode or not i_ex_breakpoint)) = '1' then
         v.mie := '0';
         v.mpp := r.mode;
         v.mepc(RISCV_ARCH-1 downto BUS_ADDR_WIDTH) := (others => '0');
