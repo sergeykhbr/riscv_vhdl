@@ -90,25 +90,20 @@ begin
     v := r;
 
     procedureAxi4toMem(
-      i_dualport => '0',
+      i_ready => '1',
       i      => i,
       cfg    => xconfig,
       i_bank => r.bank_axi,
       o_bank => v.bank_axi,
       o_radr => vrami.raddr,
       o_wadr => vrami.waddr,
+      o_wena => vrami.we,
       o_wstrb => vrami.wstrb,
       o_wdata => vrami.wdata
     );
 
-    vrami.we := '0';
-    if vrami.wstrb /= wstrb_zero then
-        vrami.we := '1';
-    end if;
-
     procedureMemToAxi4(
-       i_dualport => '0',
-       i_rready => '1',
+       i_ready => '1',
        i_rdata => rdata_mux,
        i_bank => r.bank_axi,
        i_slvi => i,

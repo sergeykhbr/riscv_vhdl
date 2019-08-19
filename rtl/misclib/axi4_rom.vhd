@@ -77,6 +77,7 @@ begin
     variable v : registers;
     variable vraddr : global_addr_array_type;
     variable vwaddr_unused : global_addr_array_type;
+    variable vwena_unused : std_logic;
     variable vwstrb_unused : std_logic_vector(CFG_SYSBUS_DATA_BYTES-1 downto 0);
     variable vwdata_unused : std_logic_vector(CFG_SYSBUS_DATA_BITS-1 downto 0);
     variable vslvo : nasti_slave_out_type;
@@ -85,20 +86,20 @@ begin
     v := r;
 
     procedureAxi4toMem(
-      i_dualport => '0',
+      i_ready => '1',
       i      => i,
       cfg    => xconfig,
       i_bank => r.bank_axi,
       o_bank => v.bank_axi,
       o_radr => vraddr,
+      o_wena => vwena_unused,
       o_wadr => vwaddr_unused,
       o_wstrb => vwstrb_unused,
       o_wdata => vwdata_unused
     );
 
     procedureMemToAxi4(
-       i_dualport => '0',
-       i_rready => '1',
+       i_ready => '1',
        i_rdata => rdata_mux,
        i_bank => r.bank_axi,
        i_slvi => i,

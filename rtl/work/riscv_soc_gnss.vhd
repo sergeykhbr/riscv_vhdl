@@ -431,10 +431,11 @@ end generate;
   --! @brief UART Controller with the AXI4 interface.
   --! @details Map address:
   --!          0x80001000..0x80001fff (4 KB total)
-  uart1 : nasti_uart generic map (
+  uart1 : axi4_uart generic map (
+    async_reset => CFG_ASYNC_RESET,
     xaddr    => 16#80001#,
     xmask    => 16#FFFFF#,
-	 xirq     => CFG_IRQ_UART1,
+    xirq     => CFG_IRQ_UART1,
     fifosz   => 16
   ) port map (
     nrst   => w_glob_nrst, 

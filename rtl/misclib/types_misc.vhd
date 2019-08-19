@@ -44,39 +44,22 @@ end component;
 
 
 --! Boot ROM with AXI4 interface declaration.
-  component axi4_rom is
-  generic (
+component axi4_rom is
+generic (
     memtech  : integer := inferred;
     async_reset : boolean := false;
     xaddr    : integer := 0;
     xmask    : integer := 16#fffff#;
     sim_hexfile : string
   );
-  port (
+port (
     clk  : in std_logic;
     nrst : in std_logic;
     cfg  : out nasti_slave_config_type;
     i    : in  nasti_slave_in_type;
     o    : out nasti_slave_out_type
   );
-  end component; 
-
---! AXI4 ROM with the default FW version declaration.
-  component nasti_romimage is
-  generic (
-    memtech  : integer := inferred;
-    xaddr    : integer := 0;
-    xmask    : integer := 16#fffff#;
-    sim_hexfile : string
-  );
-  port (
-    clk  : in std_logic;
-    nrst : in std_logic;
-    cfg  : out nasti_slave_config_type;
-    i    : in  nasti_slave_in_type;
-    o    : out nasti_slave_out_type
-  );
-  end component; 
+end component; 
 
 --! Internal RAM with AXI4 interface declaration.
 component axi4_sram is
@@ -157,8 +140,9 @@ type uart_out_type is record
 end record;
 
 --! UART with the AXI4 interface declaration.
-component nasti_uart is
+component axi4_uart is
   generic (
+    async_reset : boolean := false;
     xaddr   : integer := 0;
     xmask   : integer := 16#fffff#;
     xirq    : integer := 0;

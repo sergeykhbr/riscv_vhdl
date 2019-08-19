@@ -716,7 +716,7 @@ procedure procedureAxi4(
 );
 
 --! AXI4 to Memory interface converter.
---! @param [in] i_dualport Independent channels for read and write transactions.
+--! @param [in] i_ready Memory device is ready to accept request.
 --! @param [in] i Slave input signal passed from system bus.
 --! @param [in] cfg Slave confguration descriptor defining memory base address.
 --! @param [in] i_bank Bank of registers implemented by each slave device.
@@ -726,27 +726,26 @@ procedure procedureAxi4(
 --! @param [out] o_wstrb Memory interface per byte write enable strobs.
 --! @param [out] o_wdata Memory interface write data value.
 procedure procedureAxi4toMem (
-   i_dualport : in std_logic;
+   i_ready : in std_logic;
    i      : in nasti_slave_in_type;
    cfg    : in nasti_slave_config_type;
    i_bank : in nasti_slave_bank_type;
    o_bank : out nasti_slave_bank_type;
    o_radr : out global_addr_array_type;
    o_wadr : out global_addr_array_type;
+   o_wena : out std_logic;
    o_wstrb : out std_logic_vector(CFG_SYSBUS_DATA_BYTES-1 downto 0);
    o_wdata : out std_logic_vector(CFG_SYSBUS_DATA_BITS-1 downto 0)
 );
 
 --! Memory interface to AXI4 converter.
---! @param [in] i_dualport Independent channels for read and write transactions.
---! @param [in] i_rready Slave device read data is ready.
+--! @param [in] i_ready Slave device read data is ready.
 --! @param [in] i_rdata Read data value
 --! @param [in] i_bank Bank of registers implemented by each slave device.
 --! @param [in] i_slvi AXI4 slave input interface.
 --! @param [out] o_slvo AXI4 slave output interface.
 procedure procedureMemToAxi4 (
-   i_dualport : in std_logic;
-   i_rready : in std_logic;
+   i_ready : in std_logic;
    i_rdata : in std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
    i_bank : in nasti_slave_bank_type;
    i_slvi : in nasti_slave_in_type;
@@ -1102,23 +1101,25 @@ package body types_amba4 is
 
 
   --! AXI4 to Memory interface converter.
-  --! @param [in] i_dualport Independent channels for read and write transactions.
+  --! @param [in] i_ready Memory device is ready to accept request.
   --! @param [in] i Slave input signal passed from system bus.
   --! @param [in] cfg Slave confguration descriptor defining memory base address.
   --! @param [in] i_bank Bank of registers implemented by each slave device.
   --! @param [out] o_bank Updated value for the slave bank of registers.
   --! @param [out] o_radr Memory interface read address array.
+  --! @param [out] o_wena Memory interface write enable.
   --! @param [out] o_wadr Memory interface write address array.
   --! @param [out] o_wstrb Memory interface per byte write enable strobs.
   --! @param [out] o_wdata Memory interface write data value.
   procedure procedureAxi4toMem(
-     i_dualport : in std_logic;
+     i_ready : in std_logic;
      i      : in nasti_slave_in_type;
      cfg    : in nasti_slave_config_type;
      i_bank : in nasti_slave_bank_type;
      o_bank : out nasti_slave_bank_type;
      o_radr : out global_addr_array_type;
      o_wadr : out global_addr_array_type;
+     o_wena : out std_logic;
      o_wstrb : out std_logic_vector(CFG_SYSBUS_DATA_BYTES-1 downto 0);
      o_wdata : out std_logic_vector(CFG_SYSBUS_DATA_BITS-1 downto 0)
   ) is
@@ -1154,8 +1155,8 @@ package body types_amba4 is
     -- Reading state machine:
     case i_bank.rstate is
     when rwait =>
-        if i.ar_valid = '1'
-           and i_dualport = '0' and i.aw_valid = '0' and i_bank.wstate = wwait then
+        if i.ar_valid = '1' and i_ready = '1'
+           and i.aw_valid = '0' and i_bank.wstate = wwait then
             o_bank.rstate := rtrans;
 
             if i.ar_bits.addr(2) = '0' then
@@ -1165,7 +1166,7 @@ package body types_amba4 is
                 v_radr(1) := v_radr_mux(0);
             end if;
             for n in 0 to CFG_WORDS_ON_BUS-1 loop
-                o_bank.raddr(n) := v_radr(n) + i_bank.rsize;
+                o_bank.raddr(n) := v_radr(n) + XSizeToBytes(conv_integer(i.ar_bits.size));
                 if i.ar_bits.burst = NASTI_BURST_WRAP then
                     -- i_bank.rsize = 8 and i_bank.rlen = 3
                     -- 8 x 4 = 32 bytes 
@@ -1180,16 +1181,9 @@ package body types_amba4 is
             o_bank.rid := i.ar_id;
             o_bank.rresp := NASTI_RESP_OKAY;
             o_bank.ruser := i.ar_user;
-            
-            --! No Wait States by default for reading operation.
-            --!
-            --! User can re-assign this value directly in module to implement
-            --! reading wait states.
-            --! Example: see axi2fse.vhd bridge implementation
-            o_bank.rwaitready := '1';
         end if;
     when rtrans =>
-        if i.r_ready = '1' and i_bank.rwaitready = '1' then
+        if i.r_ready = '1' and i_ready = '1' then
             for n in 0 to CFG_WORDS_ON_BUS-1 loop
                 o_bank.raddr(n) := i_bank.raddr(n) + i_bank.rsize;
             end loop;
@@ -1203,7 +1197,7 @@ package body types_amba4 is
             end if;
             -- End of transaction (or process another one):
             if i_bank.rlen = 0 then
-                if i.ar_valid = '1' and i_dualport ='0' and i.aw_valid = '0' then
+                if i.ar_valid = '1' and i.aw_valid = '0' then
                     if i.ar_bits.addr(2) = '0' then
                         v_radr := v_radr_mux;
                     else
@@ -1211,7 +1205,7 @@ package body types_amba4 is
                         v_radr(1) := v_radr_mux(0);
                     end if;
                     for n in 0 to CFG_WORDS_ON_BUS-1 loop
-                        o_bank.raddr(n) := v_radr(n) + i_bank.rsize;
+                        o_bank.raddr(n) := v_radr(n) + XSizeToBytes(conv_integer(i.ar_bits.size));
                         if i.ar_bits.burst = NASTI_BURST_WRAP then
                             o_bank.raddr(n)(CFG_NASTI_ADDR_BITS-1 downto 5) 
                                 := v_radr(n)(CFG_NASTI_ADDR_BITS-1 downto 5);
@@ -1237,7 +1231,7 @@ package body types_amba4 is
     -- Writing state machine:
     case i_bank.wstate is
     when wwait =>
-        if i.aw_valid = '1' and i_dualport = '0' and i_bank.rlen = 0 then
+        if i.aw_valid = '1' and i_ready = '1' and i_bank.rlen = 0 then
             if i.w_valid = '0' then
                 -- Full AXI bus protocol
                 o_bank.wstate := wtrans;
@@ -1266,7 +1260,7 @@ package body types_amba4 is
         end if;
     when wtrans =>
         v_wena := (others => '1');
-        if i.w_valid = '1' then
+        if i.w_valid = '1' and i_ready = '1' then
             if i_bank.wburst = NASTI_BURST_INCR then
               for n in 0 to CFG_WORDS_ON_BUS-1 loop
                 o_bank.waddr(n) := i_bank.waddr(n) + i_bank.wsize;
@@ -1319,21 +1313,20 @@ package body types_amba4 is
 
     o_radr := v_radr;
     o_wadr := v_wadr;
+    o_wena := v_wena(0);
     o_wdata := v_wdata;
     o_wstrb := v_wstrb;
   end; -- procedure
 
 
   --! Memory interface to AXI4 converter.
-  --! @param [in] i_dualport Independent channels for read and write transactions.
-  --! @param [in] i_rready Slave device read data is ready.
+  --! @param [in] i_ready Slave device read data is ready.
   --! @param [in] i_rdata Read data value
   --! @param [in] i_bank Bank of registers implemented by each slave device.
   --! @param [in] i_slvi AXI4 slave input interface.
   --! @param [out] o_slvo AXI4 slave output interface.
   procedure procedureMemToAxi4(
-     i_dualport : in std_logic;
-     i_rready : in std_logic;
+     i_ready : in std_logic;
      i_rdata : in std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
      i_bank : in nasti_slave_bank_type;
      i_slvi : in nasti_slave_in_type;
@@ -1341,11 +1334,11 @@ package body types_amba4 is
   ) is
   begin
     -- Read transfer:
-    o_slvo.aw_ready := '1';
+    o_slvo.aw_ready := i_ready;
     o_slvo.w_ready := '1';
-    o_slvo.ar_ready := '1';
+    o_slvo.ar_ready := i_ready;
 
-    if i_dualport = '0' and i_slvi.aw_valid = '1' then
+    if i_slvi.aw_valid = '1' then
         o_slvo.ar_ready := '0';
     end if;
 
@@ -1362,7 +1355,7 @@ package body types_amba4 is
     end if;
     o_slvo.r_resp := i_bank.rresp;
     o_slvo.r_user := i_bank.ruser;
-    if i_rready = '1' and i_bank.rstate = rtrans then
+    if i_ready = '1' and i_bank.rstate = rtrans then
         o_slvo.r_valid   := '1';
     else
         o_slvo.r_valid   := '0';
