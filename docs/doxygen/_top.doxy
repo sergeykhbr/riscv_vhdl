@@ -5,7 +5,7 @@
 @subsection introduction_subsection Introduction
 
   The rapidly growing area of embedded control applications is representing one of the
-most time-critical operating environments for today’s microcontrollers.
+most time-critical operating environments for today's microcontrollers.
 Specially developed System-on-Chip design is one of the most effective 
 way to provide maximum performance of the algorithms combining advantages of 
 the hardware and software. Especially it is beneficial for small, highly 

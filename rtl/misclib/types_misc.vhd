@@ -44,22 +44,6 @@ end component;
 
 
 --! Boot ROM with AXI4 interface declaration.
-component nasti_bootrom is
-  generic (
-    memtech  : integer := inferred;
-    xaddr    : integer := 0;
-    xmask    : integer := 16#fffff#;
-    sim_hexfile : string
-  );
-  port (
-    clk  : in std_logic;
-    nrst : in std_logic;
-    cfg  : out nasti_slave_config_type;
-    i    : in  nasti_slave_in_type;
-    o    : out nasti_slave_out_type
-  );
-end component;
-
   component axi4_rom is
   generic (
     memtech  : integer := inferred;
@@ -113,25 +97,34 @@ component axi4_sram is
   );
 end component; 
 
-component nasti_sram is
+--! AXI4 to SPI brdige for external Flash IC Micron M25AA1024
+type spi_in_type is record
+    SDI : std_logic;
+end record;
+
+type spi_out_type is record
+    SDO : std_logic;
+    SCK : std_logic;
+    nCS : std_logic;
+    nWP : std_logic;
+    nHOLD : std_logic;
+    RESET : std_logic;
+end record;
+
+component axi4_flashspi is
   generic (
-    memtech  : integer := inferred;
-    async_reset : boolean := false;
-    xaddr    : integer := 0;
-    xmask    : integer := 16#fffff#;
-    abits    : integer := 17;
-    init_file : string := "" -- only for inferred
+    xaddr   : integer := 0;
+    xmask   : integer := 16#fffff#
   );
   port (
-    clk  : in std_logic;
-    nrst : in std_logic;
-    cfg  : out nasti_slave_config_type;
-    i    : in  nasti_slave_in_type;
-    o    : out nasti_slave_out_type
-  );
+    clk    : in  std_logic;
+    nrst   : in  std_logic;
+    cfg    : out  nasti_slave_config_type;
+    i_spi  : in  spi_in_type;
+    o_spi  : out spi_out_type;
+    i_axi  : in  nasti_slave_in_type;
+    o_axi  : out nasti_slave_out_type  );
 end component; 
-
-
 
 --! @brief NASTI (AXI4) GPIO controller
 component nasti_gpio is

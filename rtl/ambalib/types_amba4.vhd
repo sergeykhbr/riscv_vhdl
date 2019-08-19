@@ -1244,15 +1244,6 @@ package body types_amba4 is
                 o_bank.wreorder := i.aw_bits.addr(2);
             else
                 -- AXI lite (no burst support)
-                if i.aw_bits.addr(2) = '0' then
-                    v_wdata := i.w_data;
-                    v_wstrb := i.w_strb and v_wena;
-                else
-                    v_wdata(31 downto 0) := i.w_data(63 downto 32);
-                    v_wdata(63 downto 32) := i.w_data(31 downto 0);
-                    v_wstrb := (i.w_strb(3 downto 0) & i.w_strb(7 downto 4))
-                           and (v_wena(3 downto 0) & v_wena(7 downto 4));
-                end if;
                 v_wena := (others => '1');
                 v_wreorder := i.aw_bits.addr(2);
             end if;

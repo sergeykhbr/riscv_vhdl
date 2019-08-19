@@ -22,7 +22,6 @@ data space sizes.
 |:-------------------:|:--------:|:----------------------|
 | CFG_NASTI_ADDR_BITS | 32       | Address Bus bit width |
 | CFG_NASTI_DATA_BITS | 64       | Data Bus bit width    |
-
 <b>Table 3-1. General System Bus parameters.</b>
 </center>
 
@@ -73,31 +72,348 @@ one contiguous address space. All sections can be accessed in the same way. The
 memory map of the SoC contains some reserved areas, so future derivatives can be
 enhanced in an upward-compatible fashion.
 
-@note: Table 3-2 shows the available memory areas in the default
-       configuration. The actual available memory areas depend on the certain
-       implementation.
+@note Table 3-2 shows the available memory areas in the default
+      configuration. The actual available memory areas depend on the certain
+      implementation.
 
 <center>
-| Address Area       | Start Loc.| End Loc.  | Area Size   | Notes                                               |
-|:-------------------|:---------:|:---------:|:------------|:----------------------------------------------------|
-| Boot ROM           | 00000000h | 00007FFFh | 32 Kbytes   | Universal Bootloader image                          |
-| OTP                | 00010000h | 00011FFFh | 8 Kbytes    | One-Time Programmable secure code                   |
-| ROM Image or Flash | 00100000h | 0013FFFFh | 256 Kbytes  | Internal ROM application or external Flash          |
-| SRAM               | 10000000h | 1007FFFFh | 512 Kbytes  | Internal code or data SRAM                          |
-| GPIO Controller    | 80000000h | 80000FFFh | 4 Kbytes    | User specific IOs                                   |
-| UART1              | 80001000h | 80001FFFh | 4 Kbytes    | Default serial port                                 |
-| IRQ Controller     | 80002000h | 80002FFFh | 4 Kbytes    | Interrupt Controller                                |
-| GNSS Engine        | 80003000h | 80003FFFh | 4 Kbytes    | Satellite Navigation engine                         |
-| RF Controller      | 80004000h | 80004FFFh | 4 Kbytes    | RF front-end controller                             |
-| GP Timers          | 80005000h | 80005FFFh | 4 Kbytes    | Two general purpose timers with RTC                 |
-| FSE GPS-L1         | 8000A000h | 8000AFFFh | 4 Kbytes    | Fast Search Engine for GPS-CA signals               |
-| Ethernet MAC       | 80040000h | 8007FFFFh | 256 Kbytes  | 100 Mb Ethernet MAC with the Debug support          |
-| DSU                | 80080000h | 8009FFFFh | 128 Kbytes  | Debug Support Unit with the multiprocessors support |
-| I/D Caches         | 800A0000h | 800BFFFFh | 128 Kbytes  | Reserved                                            |
-| PNP                | FFFFF000h | FFFFFFFFh | 4 Kbytes    | System status and configuration registers           |
 
+| Address Area       | Start Loc.| End Loc.  | Area Size   | Notes                                               
+|:-------------------|:---------:|:---------:|:------------|:----------------------------------------------------
+| Boot ROM           | 00000000h | 00007FFFh | 32 Kbytes   | Universal Bootloader image                          
+| OTP                | 00010000h | 00011FFFh | 8 Kbytes    | One-Time Programmable secure code                   
+| ROM Image or Flash | 00100000h | 0013FFFFh | 256 Kbytes  | Internal ROM application or external Flash          
+| SRAM               | 10000000h | 1007FFFFh | 512 Kbytes  | Internal code or data SRAM                          
+| GPIO Controller    | 80000000h | 80000FFFh | 4 Kbytes    | User specific IOs                                   
+| UART1              | 80001000h | 80001FFFh | 4 Kbytes    | Default serial port                                 
+| IRQ Controller     | 80002000h | 80002FFFh | 4 Kbytes    | Interrupt Controller                                
+| GNSS Engine        | 80003000h | 80003FFFh | 4 Kbytes    | Satellite Navigation engine                         
+| RF Controller      | 80004000h | 80004FFFh | 4 Kbytes    | RF front-end controller                             
+| GP Timers          | 80005000h | 80005FFFh | 4 Kbytes    | Two general purpose timers with RTC                 
+| FSE GPS-L1         | 8000A000h | 8000AFFFh | 4 Kbytes    | Fast Search Engine for GPS-CA signals               
+| Ethernet MAC       | 80040000h | 8007FFFFh | 256 Kbytes  | 100 Mb Ethernet MAC with the Debug support          
+| DSU                | 80080000h | 8009FFFFh | 128 Kbytes  | Debug Support Unit with the multiprocessors support 
+| I/D Caches         | 800A0000h | 800BFFFFh | 128 Kbytes  | Reserved                                            
+| PNP                | FFFFF000h | FFFFFFFFh | 4 Kbytes    | System status and configuration registers           
 <b>Table 3-2. River Memory Map.</b>
 </center>
 
+@section external_flash_section External Flash Memory
+
+  External flash memory is connecting to the system-on-chip via SPI interface.
+SPI Controller with th AXI4 interface was specially developed to support IC
+<c>Micron M25AA1024</c> and other compatible ICs. Flash memory is directly mapped
+into memory map i.e. it visible to CPU and other master devices as a simple memory
+region of 256 KB. Read and Write accesses to this region automatically transformed
+into SPI flash commands by SPI controller. Access latency to flash depends of
+SPI command length and configured clock scaler (by default it forms 10 MHz
+SPI clock frequency). 
+
+<center>
+ <img src="../doxygen/pics/flash_to_axi.png" alt="Flash to AXI"> 
+ @latexonly {\includegraphics{../doxygen/pics/flash_to_axi.png}} @endlatexonly
+
+<b>Figure 3-3. SPI Flash and SoC connection.</b>
+</center>
+
+  External Flash memory is fully accessible for reading as a simple memory
+bank without any limitations. System Bus controller is always wait response
+from Flash region while in a read transaction and stop other activities.
+But write transactions must be done via page buffer (256 Bytes) with the
+<c>Busy</c> bit polling in the <c>STATUS register</c>.
+
+@subsection spiflash_bridge_subsection AXI4 SPI Bridge
+
+  This VHDL module was specially developed to interact with the following ICs:
+
+\li Microchip \c 25AA1024 and \c 25LC1024
+\li Milandr \c 1636PP52Y
+
+  The full list of the serial commands supported by AXI4 bridge and the external
+flash IC is shown below.
+
+<center>
+| Name  | Instruction Format | Description
+|:-----:|:------------------:|:------------------------------------------------------------------
+| READ  | 0000 0011          | Read data from memory array beginning at selected address
+| WRITE | 0000 0010          | Write data to memory array (256 Bytes) beginning at selected address
+| WRENA | 0000 0110          | Set the write enable latch (enable write operations)
+| WRDI  | 0000 0100          | Reset the write enable latch (disable write operations)
+| RDSR  | 0000 0101          | Read STATUS register
+| WRSR  | 0000 0001          | Write STATUS register
+| PE    | 0100 0010          | Page Erase - erase one page in memory array
+| SE    | 1101 1000          | Sector Erase - erase one sector in memory array
+| CE    | 1100 0111          | Chip Erase - erase all sectors in memory array
+| RDID  | 1010 1011          | Release from Deep Power-down mode and Read Electronic Signature
+| DPD   | 1011 1001          | Deep Power-Down mode
+<b>Table 3-3. Instruction Set.</b>
+</center>
+
+  AXI4 read request into SPI controller address space automatically generates the
+signal sequence on SoC outputs (nCS, SDO, SCK) that directly connected to the
+external IC.
+
+  AXI4 transaction is in the wait state while no response from external IC so
+that CPU (or DMA, TAP) can't execute next request to the System Bus.
+
+@subsection spiflash_regs_subsection AXI4 SPI Registers
+
+  AXI4 SPI Bridge connected to the system bus as a slave device and available for reading and writing for any master device in a system.
+
+  Device Base Address define as 0x00200000. Full allocated memory range is
+256 KB splitted on two equals parts. The first half is the direct representation
+of the external flash memory array. The second half (starting from address 0x00220000)
+contains the managing registers of the AXI4 bridge
+
+  <b>VHDL IP generic parameters</b>
+
+  AXI4 SPI Bridge configured with the following generic parameters by default:
+
+<center>
+<table>
+  <tr>
+    <th>Name</th>    <th>Value</th>   <th>Description</th>
+  </tr>
+  <tr>
+    <td>async_reset</td>
+    <td>FALSE</td>
+    <td><b>Reset Type</b>. Internal registers reset type:
+       <ul>
+         <li>FALSE syncrhonous reset (FPGA)</li>
+         <li>TRUE asynchronous reset (ASIC)</li>
+       </ul></td>
+  </tr>
+  <tr>
+    <td>xaddr</td>
+    <td>16#00200#</td>
+    <td><b>Base address</b>. Base Address value defines bits [31:12] of the allocated memory space</td>
+  </tr>
+  <tr>
+    <td>xaddr</td>
+    <td>16#00200#</td>
+    <td><b>Address Mask</b>. Address Mask is used by system controller to defines allocated memory size</td>
+  </tr>
+</table>
+<b>Table 3-4. SPI Bridge generic parameters.</b>
+</center>
+
+  The full list of Registers relative Device Base Address offset is shown in the
+following table.
+
+  <b>Device Registers list</b>
+
+<center>
+| Offset   | Name               | Reset Val. | Description
+|:--------:|:-------------------|:----------:|--------------------------------------------------------------------------------------
+| 0x00000  | FLASH_DATA         | ****:****h | 128 KB of external flash IC directly accessible via this address range
+| 0x20000  | FLASH_SCALER       | 0000:0000h | System Bus clock divider threshold forming half period of the SPI frequency
+| 0x20010  | FLASH_STATUS       | 0000:0000h | Direct reading STATUS register from external IC
+| 0x20018  | FLASH_ID           | 0000:0029h | Direct reading of Flash ID
+| 0x20020  | FLASH_WRITE_ENA    | 0000:0000h | Write enable
+| 0x20028  | FLASH_WRITE_PAGE   | 0000:0000h | Write internal page buffer (256 B) into external memory array
+| 0x20030  | FLASH_WRITE_DIS    | 0000:0000h | Write disable
+| 0x20038  | FLASH_ERASE_PAGE   | 0000:0000h | Clear memory page
+| 0x20040  | FLASH_ERASE_SECTOR | 0000:0000h | Clear memory sector
+| 0x20048  | FLASH_ERASE_CHIP   | 0000:0000h | Clear all memory sectors
+| 0x20050  | FLASH_POWER_DOWN   | 0000:0000h | Enable Deep Power-down mode
+<b>Table 3-5. AXI4 SPI Bridge Registers.</b>
+</center>
+
+
+
+ <b>FLASH_DATA 128 KB (0x00000..0x1FFFF)</b>
+
+  AXI4 read-transactions from this region is directly converting into signal sequence
+of the following format:
+
+<center>
+ <img src="../doxygen/pics/spi_rd_data.png" alt="SPI read data"> 
+ @latexonly {\includegraphics{../doxygen/pics/spi_rd_data.png}} @endlatexonly
+
+ <b>Figure 3-4. READ sequence format.</b>
+</center>
+
+  The bridge supports 4 and 8-bytes read operations.
+
+  Write access to this region <b>doesn't activate</b> any activities on SPI 
+bus. All data is writing into the internal page buffer (256 Byte) using only
+address bits [7:2], address bits [31:8] are ignored. It is possible to write
+into page buffer using 4- and 8-bytes transactions. Page address is defined
+by register \c FLASH_WRITE_PAGE.
+
+
+
+ <b>FLASH_SCALER Register (0x20000)</b>
+
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>scaler</td>   <td>[31:0]</td>   <td>RW</td>   <td><b>Scaler Threshold</b>.
+        This registers specifies the overflow threshold that
+        is used to form \c posedge and \c negedge events forming SPI clock \c SCLK.
+  </tr>
+</table>
+
+
+
+ <b>FLASH_STATUS Register (0x20010)</b>
+
+  The \c STATUS register may be read at any time, even during a write
+cycle.
+
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>rsrv</td>  <td>[31:4]</td>   <td>RZ</td>   <td>reserved</td>
+  </tr>
+  <tr>
+    <td>BP</td>    <td>[3:2]</td>    <td>RW</td>   <td><b>Block Protection</b>.
+        These bits control Write Protection for a specific segments
+       (see IC description)</td>
+  </tr>
+  <tr>
+    <td>WEL</td>   <td>[1]</td>   <td>RO</td>  <td><b>Write Enable Latch</b>:
+       <ul>
+         <li>'1' Enable write to flash</li>
+         <li>'0' Disable write to flash</li>
+       </ul></td>
+  </tr>
+  <tr>
+    <td>WIP</td>    <td>[0]</td>    <td>RO</td>   <td><b>Write In Progress</b>.
+       External Flash IC is in writing state.
+       <ul>
+         <li>'1' Writing in progress</li>
+         <li>'0' Ready to accept the next command</li>
+       </ul></td>
+  </tr>
+</table>
+
+  Read request to this register forms the following signals sequence on SPI Bus:
+
+<center>
+ <img src="../doxygen/pics/spi_rd_status.png" alt="SPI read status"> 
+ @latexonly {\includegraphics{../doxygen/pics/spi_rd_status.png}} @endlatexonly
+
+<b>Figure 3-5. Read STATUS register SPI sequence.</b>
+</center>
+
+  Write request into this register forms the following signals sequence on SPI Bus:
+
+<center>
+ <img src="../doxygen/pics/spi_wr_status.png" alt="SPI write status"> 
+ @latexonly {\includegraphics{../doxygen/pics/spi_wr_status.png}} @endlatexonly
+
+<b>Figure 3-6. Write STATUS register SPI sequence.</b>
+</center>
+
+
+
+ <b>FLASH_ID Register (0x20018)</b>
+
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>rsrv</td>  <td>[31:8]</td>  <td>RZ</td>  <td>reserved</td>
+  </tr>
+  <tr>
+    <td>ID</td>    <td>[7:0]</td>   <td>RO</td>
+        <td><b>Manufacturer ID</b>. MicronChip ID 0x29</td>
+  </tr>
+</table>
+
+  Read request to this register forms the following signals sequence on SPI Bus:
+
+<center>
+ <img src="../doxygen/pics/spi_rd_id.png" alt="SPI read ID"> 
+ @latexonly {\includegraphics{../doxygen/pics/spi_rd_id.png}} @endlatexonly
+
+<b>Figure 3-7. Read ID register SPI sequence.</b>
+</center>
+
+  Read request from this register will release the external flash device from
+Deep Power-down mode and outputs the electronic signature, and then returns
+the device to Standby mode.
+
+
+ <b>FLASH_WRITE_ENA Register (0x20020)</b>
+
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>WE</td>    <td>[31:0]</td>   <td>WO</td>    <td><b>Write Enable</b>.
+       Any value written to this register generates SPI sequence enabling
+       write access in External Flash</td>
+  </tr>
+</table>
+
+  Write request into this register forms the following signals sequence on SPI Bus:
+
+<center>
+ <img src="../doxygen/pics/spi_wr_enable.png" alt="SPI Write Enable"> 
+ @latexonly {\includegraphics{../doxygen/pics/spi_wr_enable.png}} @endlatexonly
+
+<b>Figure 3-8. Write Enable SPI sequence.</b>
+</center>
+
+
+
+@subsection flash_access_example_subsection C-code example
+
+  The following C-example demonstrates procedure of preparing and writing
+the internal page buffer (256 Bytes) into the external Flash memory array.
+
+@code
+    // Constant address definitions:
+    #define FLASH_DATA         0x200000
+    #define FLASH_SCALER       0x220000
+    #define FLASH_STATUS       0x220010
+    #define FLASH_WRITE_ENA    0x220020
+    #define FLASH_WRITE_PAGE   0x220028
+    #define FLASH_WRITE_DIS    0x220030
+    #define FLASH_ERASE_CHIP   0x220048
+
+    // Check status and wait
+    void flash_wait_ready() {
+        volatile uint32_t *status = (volatile uint32_t *)FLASH_STATUS;
+        while (status[0] & 0x1) {}
+    }
+
+    // Test example
+    void flash_write_test() {
+        // Enable SCK clock 10 MHz on SPI interface
+        *((uint32_t *)FLASH_SCALER) = 4;
+ 
+        // Erase flash and check it readiness
+        *((uint32_t *)FLASH_ERASE_CHIP) = 4;
+        flash_wait_ready();
+
+        // Enable Writing
+        *((uint32_t *)FLASH_WRITE_ENA) = 1;
+
+        // Prepare page with data (256 bytes)
+        for (int i = 0; i < 64; i++) {
+            ((uint32_t *)FLASH_DATA)[i] = 0x03020100 + i;
+        }
+
+        // Write Page 0
+        *((uint32_t *)FLASH_WRITE_PAGE) = (0 << 8);
+        flash_wait_ready();
+
+        // Write Page 1
+        *((uint32_t *)FLASH_WRITE_PAGE) = (1 << 8);
+        flash_wait_ready();
+
+        // Disable Writing
+        *((uint32_t *)FLASH_WRITE_DIS) = 1;
+    }
+@endcode
 
 */

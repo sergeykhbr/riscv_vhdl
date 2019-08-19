@@ -369,8 +369,9 @@ end generate;
   --! @details Map address:
   --!          0x00100000..0x0013ffff (256 KB total)
   --! @warning Don't forget to change ROM_ADDR_WIDTH in rom implementation
-  img0 : nasti_romimage generic map (
+  img0 : axi4_rom generic map (
     memtech  => CFG_MEMTECH,
+    async_reset => CFG_ASYNC_RESET,
     xaddr    => 16#00100#,
     xmask    => 16#fffc0#,
     sim_hexfile => CFG_SIM_FWIMAGE_HEX
