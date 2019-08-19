@@ -433,7 +433,7 @@ begin
   cfg <= xconfig;
 
   -- fifo pseudo memory:
-  tfifo0 : process(clk, tfifoi)
+  tfifo0 : process(clk, tfifoi, tx_fifo)
   begin 
      if rising_edge(clk) then 
         if tfifoi.we = '1' then
@@ -443,7 +443,7 @@ begin
      tx_fifo_rdata <= tx_fifo(tfifoi.raddr);
   end process;
 
-  rfifo0 : process(clk, rfifoi)
+  rfifo0 : process(clk, rfifoi, rx_fifo)
   begin 
      if rising_edge(clk) then 
         if rfifoi.we = '1' then

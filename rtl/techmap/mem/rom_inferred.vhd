@@ -40,8 +40,7 @@ end;
 
 architecture rtl of Rom_inferred is
 
-constant ROM_ADDR_WIDTH : integer := 15;
-constant ROM_LENGTH : integer := 2**(ROM_ADDR_WIDTH - log2(CFG_NASTI_DATA_BYTES));
+constant ROM_LENGTH : integer := 2**(abits - log2(CFG_NASTI_DATA_BYTES));
 
 type rom_block is array (0 to ROM_LENGTH-1) of std_logic_vector(31 downto 0);
 type rom_type is array (0 to CFG_WORDS_ON_BUS-1) of rom_block;
@@ -73,7 +72,7 @@ begin
   begin
     if rising_edge(clk) then 
         for n in 0 to CFG_WORDS_ON_BUS-1 loop
-            t_adr(n) := conv_integer(address(n)(ROM_ADDR_WIDTH-1 downto log2(CFG_NASTI_DATA_BYTES)));
+            t_adr(n) := conv_integer(address(n)(abits-1 downto log2(CFG_NASTI_DATA_BYTES)));
             data(32*(n+1)-1 downto 32*n) <= rom(n)(t_adr(n));
         end loop;
     end if;
