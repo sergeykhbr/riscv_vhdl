@@ -60,67 +60,40 @@ architecture arch_axi4_sram of axi4_sram is
      did => GNSSSENSOR_SRAM
   );
 
-  constant wstrb_zero : std_logic_vector(CFG_SYSBUS_DATA_BYTES-1 downto 0) := (others => '0');
-
-  type registers is record
-    bank_axi : nasti_slave_bank_type;
-  end record;
-  
   type ram_in_type is record
     raddr : global_addr_array_type;
+    re    : std_logic;
     waddr : global_addr_array_type;
     we    : std_logic;
     wstrb : std_logic_vector(CFG_SYSBUS_DATA_BYTES-1 downto 0);
     wdata : std_logic_vector(CFG_SYSBUS_DATA_BITS-1 downto 0);
   end record;
 
-signal r, rin : registers;
-
 signal rdata_mux : std_logic_vector(CFG_SYSBUS_DATA_BITS-1 downto 0);
 signal rami : ram_in_type;
 
 begin
 
-  comblogic : process(nrst, i, r, rdata_mux)
-    variable v : registers;
-    variable vrami : ram_in_type;
-    variable vslvo : nasti_slave_out_type;
-  begin
-
-    v := r;
-
-    procedureAxi4toMem(
-      i_ready => '1',
-      i      => i,
-      cfg    => xconfig,
-      i_bank => r.bank_axi,
-      o_bank => v.bank_axi,
-      o_radr => vrami.raddr,
-      o_wadr => vrami.waddr,
-      o_wena => vrami.we,
-      o_wstrb => vrami.wstrb,
-      o_wdata => vrami.wdata
-    );
-
-    procedureMemToAxi4(
-       i_ready => '1',
-       i_rdata => rdata_mux,
-       i_bank => r.bank_axi,
-       i_slvi => i,
-       o_slvo => vslvo
-    );
-
-    if not async_reset and nrst = '0' then
-       v.bank_axi := NASTI_SLAVE_BANK_RESET;
-    end if;
-    
-    rami <= vrami;
-    rin <= v;
-    o <= vslvo;
-  end process;
-
   cfg  <= xconfig;
-  
+
+  axi0 :  axi4_slave generic map (
+    async_reset => async_reset
+  ) port map (
+    i_clk => clk,
+    i_nrst => nrst,
+    i_xcfg => xconfig, 
+    i_xslvi => i,
+    o_xslvo => o,
+    i_ready => '1',
+    i_rdata => rdata_mux,
+    o_re => rami.re,
+    o_radr => rami.raddr,
+    o_wadr => rami.waddr,
+    o_we => rami.we,
+    o_wstrb => rami.wstrb,
+    o_wdata => rami.wdata
+  );
+
   tech0 : srambytes_tech generic map (
     memtech   => memtech,
     abits     => abits,
@@ -134,15 +107,5 @@ begin
     wstrb   => rami.wstrb,
     wdata   => rami.wdata
   );
-
-  -- registers:
-  regs : process(clk, nrst)
-  begin 
-     if async_reset and nrst = '0' then
-       r.bank_axi <= NASTI_SLAVE_BANK_RESET;
-     elsif rising_edge(clk) then 
-        r <= rin;
-     end if; 
-  end process;
 
 end;

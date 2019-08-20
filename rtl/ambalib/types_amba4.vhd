@@ -72,31 +72,31 @@ constant CFG_WORDS_ON_BUS        : integer := CFG_SYSBUS_DATA_BYTES/CFG_ALIGN_BY
 --! @brief Configuration index of the Boot ROM module visible by the firmware.
 constant CFG_NASTI_SLAVE_BOOTROM  : integer := 0; 
 --! Configuration index of the Firmware ROM Image module.
-constant CFG_NASTI_SLAVE_ROMIMAGE  : integer := CFG_NASTI_SLAVE_BOOTROM+1;
+constant CFG_NASTI_SLAVE_ROMIMAGE : integer := 1;
 --! Configuration index of the SRAM module visible by the firmware.
-constant CFG_NASTI_SLAVE_SRAM     : integer := CFG_NASTI_SLAVE_ROMIMAGE+1;
+constant CFG_NASTI_SLAVE_SRAM     : integer := 2;
 --! Configuration index of the UART module.
-constant CFG_NASTI_SLAVE_UART1    : integer := CFG_NASTI_SLAVE_SRAM+1;
+constant CFG_NASTI_SLAVE_UART1    : integer := 3;
 --! Configuration index of the GPIO (General Purpose In/Out) module.
-constant CFG_NASTI_SLAVE_GPIO     : integer := CFG_NASTI_SLAVE_UART1+1;
+constant CFG_NASTI_SLAVE_GPIO     : integer := 4;
 --! Configuration index of the Interrupt Controller module.
-constant CFG_NASTI_SLAVE_IRQCTRL  : integer := CFG_NASTI_SLAVE_GPIO+1;
+constant CFG_NASTI_SLAVE_IRQCTRL  : integer := 5;
 --! Configuration index of the Satellite Navigation Engine.
-constant CFG_NASTI_SLAVE_ENGINE   : integer := CFG_NASTI_SLAVE_IRQCTRL+1;
+constant CFG_NASTI_SLAVE_ENGINE   : integer := 6;
 --! Configuration index of the RF front-end controller.
-constant CFG_NASTI_SLAVE_RFCTRL   : integer := CFG_NASTI_SLAVE_ENGINE+1;
+constant CFG_NASTI_SLAVE_RFCTRL   : integer := 7;
 --! Configuration index of the GPS-CA Fast Search Engine module.
-constant CFG_NASTI_SLAVE_FSE_GPS  : integer := CFG_NASTI_SLAVE_RFCTRL+1;
+constant CFG_NASTI_SLAVE_FSE_GPS  : integer := 8;
 --! Configuration index of the Ethernet MAC module.
-constant CFG_NASTI_SLAVE_ETHMAC   : integer := CFG_NASTI_SLAVE_FSE_GPS+1;
+constant CFG_NASTI_SLAVE_ETHMAC   : integer := 9;
 --! Configuration index of the Debug Support Unit module.
-constant CFG_NASTI_SLAVE_DSU      : integer := CFG_NASTI_SLAVE_ETHMAC+1;
+constant CFG_NASTI_SLAVE_DSU      : integer := 10;
 --! Configuration index of the Debug Support Unit module.
-constant CFG_NASTI_SLAVE_GPTIMERS : integer := CFG_NASTI_SLAVE_DSU+1;
+constant CFG_NASTI_SLAVE_GPTIMERS : integer := 11;
 --! Configuration index of the Plug-n-Play module.
-constant CFG_NASTI_SLAVE_PNP      : integer := CFG_NASTI_SLAVE_GPTIMERS+1;
+constant CFG_NASTI_SLAVE_PNP      : integer := 12;
 --! Total number of the slaves devices.
-constant CFG_NASTI_SLAVES_TOTAL  : integer := CFG_NASTI_SLAVE_PNP+1;  
+constant CFG_NASTI_SLAVES_TOTAL   : integer := 13;  
 --! @}
 
 --! @defgroup master_id_group AXI4 masters generic IDs.
@@ -108,15 +108,15 @@ constant CFG_NASTI_SLAVES_TOTAL  : integer := CFG_NASTI_SLAVE_PNP+1;
 --! Cached TileLinkIO bus.
 constant CFG_NASTI_MASTER_CACHED   : integer := 0;
 --! Uncached TileLinkIO bus.
-constant CFG_NASTI_MASTER_UNCACHED : integer := CFG_NASTI_MASTER_CACHED+1;
+constant CFG_NASTI_MASTER_UNCACHED : integer := 1;
 --! Ethernet MAC master interface generic index.
-constant CFG_NASTI_MASTER_ETHMAC   : integer := CFG_NASTI_MASTER_UNCACHED+1;
+constant CFG_NASTI_MASTER_ETHMAC   : integer := 2;
 --! Tap via UART (debug port) generic index.
-constant CFG_NASTI_MASTER_MSTUART    : integer := CFG_NASTI_MASTER_ETHMAC+1;
+constant CFG_NASTI_MASTER_MSTUART  : integer := 3;
 --! Tap via JTAG generic index.
-constant CFG_AXI_MASTER_JTAG : integer := CFG_NASTI_MASTER_MSTUART+1;
+constant CFG_AXI_MASTER_JTAG       : integer := 4;
 --! Total Number of master devices on system bus.
-constant CFG_NASTI_MASTER_TOTAL    : integer := CFG_AXI_MASTER_JTAG+1;
+constant CFG_NASTI_MASTER_TOTAL    : integer := 5;
 --! @}
 
 
@@ -221,9 +221,7 @@ constant GNSSSENSOR_ENGINE_STUB   : std_logic_vector(15 downto 0) := X"0068";
 --! Fast Search Engines Device ID provided by gnsslib
 constant GNSSSENSOR_FSE_V2_GPS    : std_logic_vector(15 downto 0) := X"0069";
 --! Boot ROM Device ID
-constant GNSSSENSOR_BOOTROM       : std_logic_vector(15 downto 0) := X"0071";
---! FW ROM image Device ID
-constant GNSSSENSOR_FWIMAGE       : std_logic_vector(15 downto 0) := X"0072";
+constant GNSSSENSOR_ROM           : std_logic_vector(15 downto 0) := X"0071";
 --! Internal SRAM block Device ID
 constant GNSSSENSOR_SRAM          : std_logic_vector(15 downto 0) := X"0073";
 --! Configuration Registers Module Device ID provided by gnsslib
@@ -819,6 +817,40 @@ component axictrl is
     o_bus_util_r : out std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0)
   );
 end component;
+
+--! AXI4 slave interface.
+--! @param [in]  i_xcfg  AXI Slave confguration descriptor defining memory base address.
+--! @param [in]  i_xslvi AXI4 slave input interface.
+--! @param [out] o_xslvo AXI4 slave output interface.
+--! @param [in]  i_ready Memory device is ready to accept request.
+--! @param [in]  i_rdata Read data value
+--! @param [in]  o_re Read enable
+--! @param [out] o_radr Memory interface read address array.
+--! @param [out] o_wadr Memory interface write address array.
+--! @param [in]  o_we Write enable
+--! @param [out] o_wstrb Memory interface per byte write enable strobs.
+--! @param [out] o_wdata Memory interface write data value.
+component axi4_slave is
+  generic (
+    async_reset : boolean
+  );
+  port (
+    i_clk : in std_logic;
+    i_nrst : in std_logic;
+    i_xcfg : in nasti_slave_config_type;
+    i_xslvi : in nasti_slave_in_type;
+    o_xslvo : out nasti_slave_out_type;
+    i_ready : in std_logic;
+    i_rdata : in std_logic_vector(CFG_SYSBUS_DATA_BITS-1 downto 0);
+    o_re : out std_logic;
+    o_radr : out global_addr_array_type;
+    o_wadr : out global_addr_array_type;
+    o_we : out std_logic;
+    o_wstrb : out std_logic_vector(CFG_SYSBUS_DATA_BYTES-1 downto 0);
+    o_wdata : out std_logic_vector(CFG_SYSBUS_DATA_BITS-1 downto 0)
+  );
+end component; 
+
 
 end; -- package declaration
 

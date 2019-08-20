@@ -142,16 +142,38 @@ architecture arch_axi4_uart of axi4_uart is
 
 signal r, rin : registers;
 
+signal wb_bus_raddr : global_addr_array_type;
+signal w_bus_re    : std_logic;
+signal wb_bus_waddr : global_addr_array_type;
+signal w_bus_we    : std_logic;
+signal wb_bus_wstrb : std_logic_vector(CFG_SYSBUS_DATA_BYTES-1 downto 0);
+signal wb_bus_wdata : std_logic_vector(CFG_SYSBUS_DATA_BITS-1 downto 0);
+
+
 begin
 
-  comblogic : process(nrst, i_uart, i_axi, r, tx_fifo_rdata, rx_fifo_rdata)
+  axi0 :  axi4_slave generic map (
+    async_reset => async_reset
+  ) port map (
+    i_clk => clk,
+    i_nrst => nrst,
+    i_xcfg => xconfig, 
+    i_xslvi => i_axi,
+    o_xslvo => o_axi,
+    i_ready => '1',
+    i_rdata => r.rdata,
+    o_re => w_bus_re,
+    o_radr => wb_bus_raddr,
+    o_wadr => wb_bus_waddr,
+    o_we => w_bus_we,
+    o_wstrb => wb_bus_wstrb,
+    o_wdata => wb_bus_wdata
+  );
+
+  comblogic : process(nrst, i_uart, r, tx_fifo_rdata, rx_fifo_rdata,
+                      w_bus_re, wb_bus_raddr, wb_bus_waddr, w_bus_we,
+                      wb_bus_wstrb, wb_bus_wdata)
     variable v : registers;
-    variable wb_bus_raddr : global_addr_array_type;
-    variable wb_bus_waddr : global_addr_array_type;
-    variable w_bus_we    : std_logic;
-    variable wb_bus_wstrb : std_logic_vector(CFG_SYSBUS_DATA_BYTES-1 downto 0);
-    variable wb_bus_wdata : std_logic_vector(CFG_SYSBUS_DATA_BITS-1 downto 0);
-    variable vslvo : nasti_slave_out_type;
     variable tmp : std_logic_vector(31 downto 0);
 
     variable v_rfifoi : fifo_in_type;
@@ -177,19 +199,6 @@ begin
     v_tfifoi := fifo_in_none;
     v_tfifoi.raddr := conv_integer(r.tx_rd_cnt);
     v_tfifoi.waddr := conv_integer(r.tx_wr_cnt);
-
-    procedureAxi4toMem(
-      i_ready => '1',
-      i      => i_axi,
-      cfg    => xconfig,
-      i_bank => r.bank_axi,
-      o_bank => v.bank_axi,
-      o_radr => wb_bus_raddr,
-      o_wadr => wb_bus_waddr,
-      o_wena => w_bus_we,
-      o_wstrb => wb_bus_wstrb,
-      o_wdata => wb_bus_wdata
-    );
 
     -- Check FIFOs counters with thresholds:
     v.tx_more_thresh := r.tx_more_thresh(0) & '0';
@@ -370,8 +379,8 @@ begin
           when 2 => 
                 tmp := r.fwcpuid;
           when 4 => 
-                if rx_fifo_empty = '0' and r.bank_axi.rstate = rtrans then
-                    tmp(7 downto 0) := rx_fifo_rdata;--r.rx_fifo(conv_integer(r.rx_rd_cnt)); 
+                if rx_fifo_empty = '0' and w_bus_re = '1' then
+                    tmp(7 downto 0) := rx_fifo_rdata; 
                     v.rx_rd_cnt := r.rx_rd_cnt + 1;
                     v.rx_byte_cnt := r.rx_byte_cnt - 1;
                 end if;
@@ -413,20 +422,11 @@ begin
         v := R_RESET;
     end if;
 
-    procedureMemToAxi4(
-       i_ready => '1',
-       i_rdata => r.rdata,
-       i_bank => r.bank_axi,
-       i_slvi => i_axi,
-       o_slvo => vslvo
-    );
-
     rin <= v;
 
     rfifoi <= v_rfifoi;
     tfifoi <= v_tfifoi;
 
-    o_axi <= vslvo;
     o_irq <= irq_ena;
   end process;
 

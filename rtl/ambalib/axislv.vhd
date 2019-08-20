@@ -33,9 +33,10 @@ entity axi4_slave is
     o_xslvo : out nasti_slave_out_type;
     i_ready : in std_logic;
     i_rdata : in std_logic_vector(CFG_SYSBUS_DATA_BITS-1 downto 0);
+    o_re : out std_logic;
     o_radr : out global_addr_array_type;
     o_wadr : out global_addr_array_type;
-    o_wena : out std_logic;
+    o_we : out std_logic;
     o_wstrb : out std_logic_vector(CFG_SYSBUS_DATA_BYTES-1 downto 0);
     o_wdata : out std_logic_vector(CFG_SYSBUS_DATA_BITS-1 downto 0)
   );
@@ -53,9 +54,10 @@ begin
     variable twaddr : std_logic_vector(CFG_SYSBUS_ADDR_BITS-1 downto 0);
     variable v_radr_mux : global_addr_array_type;
     variable v_wadr_mux : global_addr_array_type;
+    variable v_re : std_logic;
     variable v_radr : global_addr_array_type;
     variable v_wadr : global_addr_array_type;
-    variable v_wena : std_logic_vector(CFG_SYSBUS_DATA_BYTES-1 downto 0);
+    variable v_we : std_logic_vector(CFG_SYSBUS_DATA_BYTES-1 downto 0);
     variable v_wstrb : std_logic_vector(CFG_SYSBUS_DATA_BYTES-1 downto 0);
     variable v_wdata : std_logic_vector(CFG_SYSBUS_DATA_BITS-1 downto 0);
     variable v_wreorder : std_logic;
@@ -81,9 +83,10 @@ begin
         v_wadr_mux(n) := twaddr + n*CFG_ALIGN_BYTES;
     end loop;
 
+    v_re := '0';
     v_radr := r.raddr;
     v_wadr := r.waddr;
-    v_wena := (others => '0');
+    v_we := (others => '0');
     v_wreorder := r.wreorder;
 
     -- Reading state machine:
@@ -92,6 +95,7 @@ begin
         if i_xslvi.ar_valid = '1' and i_ready = '1'
            and i_xslvi.aw_valid = '0' and r.wstate = wwait then
             v.rstate := rtrans;
+            v_re := '1';
 
             if i_xslvi.ar_bits.addr(2) = '0' then
                 v_radr := v_radr_mux;
@@ -117,6 +121,7 @@ begin
             v.ruser := i_xslvi.ar_user;
         end if;
     when rtrans =>
+        v_re := '1';
         if i_xslvi.r_ready = '1' and i_ready = '1' then
             for n in 0 to CFG_WORDS_ON_BUS-1 loop
                 v.raddr(n) := r.raddr(n) + r.rsize;
@@ -154,6 +159,7 @@ begin
                     v.ruser := i_xslvi.ar_user;
                 else
                     v.rstate := rwait;
+                    v_re := '0';
                 end if;
             else
                 v.rlen := r.rlen - 1;
@@ -171,7 +177,7 @@ begin
                 v.wreorder := i_xslvi.aw_bits.addr(2);
             else
                 -- AXI lite (no burst support)
-                v_wena := (others => '1');
+                v_we := (others => '1');
                 v_wreorder := i_xslvi.aw_bits.addr(2);
             end if;
 
@@ -192,7 +198,7 @@ begin
             v.wuser := i_xslvi.aw_user;
         end if;
     when wtrans =>
-        v_wena := (others => '1');
+        v_we := (others => '1');
         if i_xslvi.w_valid = '1' and i_ready = '1' then
             if r.wburst = NASTI_BURST_INCR then
               for n in 0 to CFG_WORDS_ON_BUS-1 loop
@@ -236,17 +242,18 @@ begin
 
     if v_wreorder = '0' then
         v_wdata := i_xslvi.w_data;
-        v_wstrb := i_xslvi.w_strb and v_wena;
+        v_wstrb := i_xslvi.w_strb and v_we;
     else
         v_wdata(31 downto 0) := i_xslvi.w_data(63 downto 32);
         v_wdata(63 downto 32) := i_xslvi.w_data(31 downto 0);
         v_wstrb := (i_xslvi.w_strb(3 downto 0) & i_xslvi.w_strb(7 downto 4))
-               and (v_wena(3 downto 0) & v_wena(7 downto 4));
+               and (v_we(3 downto 0) & v_we(7 downto 4));
     end if;
 
+    o_re <= v_re;
     o_radr <= v_radr;
     o_wadr <= v_wadr;
-    o_wena <= v_wena(0);
+    o_we <= v_we(0);
     o_wdata <= v_wdata;
     o_wstrb <= v_wstrb;
 
