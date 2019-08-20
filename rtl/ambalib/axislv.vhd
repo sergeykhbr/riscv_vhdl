@@ -52,15 +52,14 @@ begin
     variable v : nasti_slave_bank_type;
     variable traddr : std_logic_vector(CFG_SYSBUS_ADDR_BITS-1 downto 0);
     variable twaddr : std_logic_vector(CFG_SYSBUS_ADDR_BITS-1 downto 0);
-    variable v_radr_mux : global_addr_array_type;
-    variable v_wadr_mux : global_addr_array_type;
+    variable v_radr_inc : global_addr_array_type;
+    variable v_wadr_inc : global_addr_array_type;
     variable v_re : std_logic;
     variable v_radr : global_addr_array_type;
     variable v_wadr : global_addr_array_type;
     variable v_we : std_logic_vector(CFG_SYSBUS_DATA_BYTES-1 downto 0);
     variable v_wstrb : std_logic_vector(CFG_SYSBUS_DATA_BYTES-1 downto 0);
     variable v_wdata : std_logic_vector(CFG_SYSBUS_DATA_BITS-1 downto 0);
-    variable v_wreorder : std_logic;
     variable v_aw_ready : std_logic;
     variable v_w_ready : std_logic;
     variable v_ar_ready : std_logic;
@@ -79,15 +78,21 @@ begin
              & i_xslvi.aw_bits.addr(11 downto 0);
 
     for n in 0 to CFG_WORDS_ON_BUS-1 loop
-        v_radr_mux(n) := traddr + n*CFG_ALIGN_BYTES;
-        v_wadr_mux(n) := twaddr + n*CFG_ALIGN_BYTES;
+        v_radr_inc(n) := traddr + n*CFG_ALIGN_BYTES;
+        v_wadr_inc(n) := twaddr + n*CFG_ALIGN_BYTES;
     end loop;
 
     v_re := '0';
-    v_radr := r.raddr;
-    v_wadr := r.waddr;
+    v_radr(0) := (others => '0');
+    v_radr(1) := (others => '0');
+
+    if r.waddr(0)(2) = '0' then
+       v_wadr := r.waddr;
+    else
+       v_wadr(0) := r.waddr(1);
+       v_wadr(1) := r.waddr(0);
+    end if;
     v_we := (others => '0');
-    v_wreorder := r.wreorder;
 
     -- Reading state machine:
     case r.rstate is
@@ -98,10 +103,10 @@ begin
             v_re := '1';
 
             if i_xslvi.ar_bits.addr(2) = '0' then
-                v_radr := v_radr_mux;
+                v_radr := v_radr_inc;
             else
-                v_radr(0) := v_radr_mux(1);
-                v_radr(1) := v_radr_mux(0);
+                v_radr(0) := v_radr_inc(1);
+                v_radr(1) := v_radr_inc(0);
             end if;
             for n in 0 to CFG_WORDS_ON_BUS-1 loop
                 v.raddr(n) := v_radr(n) + XSizeToBytes(conv_integer(i_xslvi.ar_bits.size));
@@ -112,7 +117,7 @@ begin
                          := v_radr(n)(CFG_NASTI_ADDR_BITS-1 downto 5);
                 end if;
             end loop;
-            v.rreorder := i_xslvi.ar_bits.addr(2);
+            v.rswap := i_xslvi.ar_bits.addr(2);
             v.rsize := XSizeToBytes(conv_integer(i_xslvi.ar_bits.size));
             v.rburst := i_xslvi.ar_bits.burst;
             v.rlen := conv_integer(i_xslvi.ar_bits.len);
@@ -122,7 +127,16 @@ begin
         end if;
     when rtrans =>
         v_re := '1';
+        if r.raddr(0)(2) = '0' then
+            v_radr := r.raddr;
+        else
+            v_radr(0) := r.raddr(1);
+            v_radr(1) := r.raddr(0);
+        end if;
         if i_xslvi.r_ready = '1' and i_ready = '1' then
+            if r.rsize = 4 then
+                v.rswap := not r.rswap;
+            end if;
             for n in 0 to CFG_WORDS_ON_BUS-1 loop
                 v.raddr(n) := r.raddr(n) + r.rsize;
             end loop;
@@ -137,11 +151,12 @@ begin
             -- End of transaction (or process another one):
             if r.rlen = 0 then
                 if i_xslvi.ar_valid = '1' and i_xslvi.aw_valid = '0' then
+                    v.rswap := i_xslvi.ar_bits.addr(2);
                     if i_xslvi.ar_bits.addr(2) = '0' then
-                        v_radr := v_radr_mux;
+                        v_radr := v_radr_inc;
                     else
-                        v_radr(0) := v_radr_mux(1);
-                        v_radr(1) := v_radr_mux(0);
+                        v_radr(0) := v_radr_inc(1);
+                        v_radr(1) := v_radr_inc(0);
                     end if;
                     for n in 0 to CFG_WORDS_ON_BUS-1 loop
                         v.raddr(n) := v_radr(n) + XSizeToBytes(conv_integer(i_xslvi.ar_bits.size));
@@ -150,7 +165,6 @@ begin
                                 := v_radr(n)(CFG_NASTI_ADDR_BITS-1 downto 5);
                         end if;
                     end loop;
-                    v.rreorder := i_xslvi.ar_bits.addr(2);
                     v.rsize := XSizeToBytes(conv_integer(i_xslvi.ar_bits.size));
                     v.rburst := i_xslvi.ar_bits.burst;
                     v.rlen := conv_integer(i_xslvi.ar_bits.len);
@@ -174,22 +188,21 @@ begin
             if i_xslvi.w_valid = '0' then
                 -- Full AXI bus protocol
                 v.wstate := wtrans;
-                v.wreorder := i_xslvi.aw_bits.addr(2);
             else
                 -- AXI lite (no burst support)
                 v_we := (others => '1');
-                v_wreorder := i_xslvi.aw_bits.addr(2);
+                if i_xslvi.aw_bits.addr(2) = '0' then
+                    v_wadr := v_wadr_inc;
+                else
+                    v_wadr(0) := v_wadr_inc(1);
+                    v_wadr(1) := v_wadr_inc(0);
+                end if;
             end if;
 
-            if i_xslvi.aw_bits.addr(2) = '0' then
-                v_wadr := v_wadr_mux;
-            else
-                v_wadr(0) := v_wadr_mux(1);
-                v_wadr(1) := v_wadr_mux(0);
-            end if;
             for n in 0 to CFG_WORDS_ON_BUS-1 loop
-               v.waddr(n) := v_wadr(n);
+               v.waddr(n) := v_wadr_inc(n);
             end loop;
+            v.wswap := i_xslvi.aw_bits.addr(2);
             v.wsize := XSizeToBytes(conv_integer(i_xslvi.aw_bits.size));
             v.wburst := i_xslvi.aw_bits.burst;
             v.wlen := conv_integer(i_xslvi.aw_bits.len);
@@ -200,6 +213,9 @@ begin
     when wtrans =>
         v_we := (others => '1');
         if i_xslvi.w_valid = '1' and i_ready = '1' then
+            if r.wsize = 4 then
+                v.wswap := not r.wswap;
+            end if;
             if r.wburst = NASTI_BURST_INCR then
               for n in 0 to CFG_WORDS_ON_BUS-1 loop
                 v.waddr(n) := r.waddr(n) + r.wsize;
@@ -212,13 +228,10 @@ begin
                     v.wstate := wwait;
                 else
                     -- Only Full AXI Bus protocol support here
-                    if i_xslvi.aw_bits.addr(2) = '0' then
-                        v.waddr := v_wadr_mux;
-                    else
-                        v.waddr(0) := v_wadr_mux(1);
-                        v.waddr(1) := v_wadr_mux(0);
-                    end if;
-                    v.wreorder := i_xslvi.aw_bits.addr(2);
+                    for n in 0 to CFG_WORDS_ON_BUS-1 loop
+                        v.waddr(n) := v_wadr_inc(n);
+                    end loop;
+                    v.wswap := i_xslvi.aw_bits.addr(2);
                     v.wsize := XSizeToBytes(conv_integer(i_xslvi.aw_bits.size));
                     v.wburst := i_xslvi.aw_bits.burst;
                     v.wlen := conv_integer(i_xslvi.aw_bits.len);
@@ -240,7 +253,8 @@ begin
         end if;
     end if;
 
-    if v_wreorder = '0' then
+    -- AXI Lite must be 8-byte aligned in this implementation
+    if r.wswap = '0' then
         v_wdata := i_xslvi.w_data;
         v_wstrb := i_xslvi.w_strb and v_we;
     else
@@ -284,7 +298,7 @@ begin
         v_r_valid   := '0';
     end if;
 
-    if r.rreorder = '0' then
+    if r.rswap = '0' then
         vb_r_data := i_rdata;
     else
         vb_r_data := i_rdata(31 downto 0) & i_rdata(63 downto 32);
