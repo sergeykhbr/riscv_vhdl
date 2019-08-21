@@ -364,6 +364,157 @@ the device to Standby mode.
 </center>
 
 
+ <b>FLASH_WRITE_PAGE Register (0x20028)</b>
+
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>rsrv</td>  <td>[31:17]</td>  <td>WO</td>  <td>reserved</td>
+  </tr>
+  <tr>
+    <td>PA</td>    <td>[16:8]</td>   <td>WO</td>    <td><b>Page Address</b>.
+       This value automatically inserted into SPI sequence for the page writing
+       into External Flash</td>
+  </tr>
+  <tr>
+    <td>rsrv</td>  <td>[7:0]</td>  <td>WO</td>  <td>reserved</td>
+  </tr>
+</table>
+
+  Write request into this register forms the following signals sequence on SPI Bus:
+
+<center>
+ <img src="../doxygen/pics/spi_wr_page.png" alt="SPI Write Page"> 
+ @latexonly {\includegraphics{../doxygen/pics/spi_wr_page.png}} @endlatexonly
+
+<b>Figure 3-9. PAGE write sequence.</b>
+</center>
+
+  It is necessary polling bit WIP in the STATUS register and wait
+while it become Low. It is not allowed to call other SPI transactions
+while write process isn't finished otherwise data corruption may happen.
+
+
+ <b>FLASH_WRITE_DIS Register (0x20030)</b>
+
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>WD</td>    <td>[16:8]</td>   <td>WO</td>    <td><b>Write Disable</b>.
+       Any value written to this register will generate SPI sequence
+       disabling write access</td>
+  </tr>
+</table>
+
+  Write request into this register forms the following signals sequence on SPI Bus:
+
+<center>
+ <img src="../doxygen/pics/spi_wr_disable.png" alt="SPI Write Disable"> 
+ @latexonly {\includegraphics{../doxygen/pics/spi_wr_disable.png}} @endlatexonly
+
+<b>Figure 3-10. Write Disable sequence.</b>
+</center>
+
+
+ <b>FLASH_ERASE_PAGE Register (0x20038)</b>
+
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>rsrv</td>  <td>[31:24]</td>  <td>WO</td>  <td>reserved</td>
+  </tr>
+  <tr>
+    <td>EPA</td>    <td>[23:0]</td>   <td>WO</td>    <td><b>Erase Page Address</b>.
+       This value automatically inserted into SPI sequence for the page erasing
+       in External Flash</td>
+  </tr>
+</table>
+
+  Write request into this register forms the following signals sequence on SPI Bus:
+
+<center>
+ <img src="../doxygen/pics/spi_erase_page.png" alt="SPI Erase Page"> 
+ @latexonly {\includegraphics{../doxygen/pics/spi_erase_page.png}} @endlatexonly
+
+<b>Figure 3-11. Page Erase sequence.</b>
+</center>
+
+
+ <b>FLASH_ERASE_SECTOR Register (0x20040)</b>
+
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>rsrv</td>  <td>[31:24]</td>  <td>WO</td>  <td>reserved</td>
+  </tr>
+  <tr>
+    <td>ESA</td>    <td>[23:0]</td>   <td>WO</td>    <td><b>Erase Sector Address</b>.
+       This value automatically inserted into SPI sequence for the sector erasing
+       in External Flash</td>
+  </tr>
+</table>
+
+  Write request into this register forms the following signals sequence on SPI Bus:
+
+<center>
+ <img src="../doxygen/pics/spi_erase_sector.png" alt="SPI Erase Sector"> 
+ @latexonly {\includegraphics{../doxygen/pics/spi_erase_sector.png}} @endlatexonly
+
+<b>Figure 3-12. Sector Erase sequence.</b>
+</center>
+
+
+ <b>FLASH_ERASE_CHIP Register (0x20048)</b>
+
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>CE</td>    <td>[31:0]</td>   <td>WO</td>    <td><b>Chip Erase</b>.
+       Any written value generates SPI sequence</td>
+  </tr>
+</table>
+
+  Write request into this register forms the following signals sequence on SPI Bus:
+
+<center>
+ <img src="../doxygen/pics/spi_erase_chip.png" alt="SPI Erase Chip"> 
+ @latexonly {\includegraphics{../doxygen/pics/spi_erase_chip.png}} @endlatexonly
+
+<b>Figure 3-13. Chip Erase sequence.</b>
+</center>
+
+
+ <b>FLASH_POWER_DOWN Register (0x20050)</b>
+
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>DPD</td>    <td>[31:0]</td>   <td>WO</td>    <td><b>Deep Power-down mode</b>.
+       Any written value generates SPI sequence</td>
+  </tr>
+</table>
+
+  Write request into this register forms the following signals sequence on SPI Bus:
+
+<center>
+ <img src="../doxygen/pics/spi_pwrdwn_enable.png" alt="SPI PowerDown ena"> 
+ @latexonly {\includegraphics{../doxygen/pics/spi_pwrdwn_enable.png}} @endlatexonly
+
+<b>Figure 3-14. Enable Deep Power-down mode sequence.</b>
+</center>
+
 
 @subsection flash_access_example_subsection C-code example
 
@@ -371,6 +522,7 @@ the device to Standby mode.
 the internal page buffer (256 Bytes) into the external Flash memory array.
 
 @code
+
     // Constant address definitions:
     #define FLASH_DATA         0x200000
     #define FLASH_SCALER       0x220000
@@ -379,6 +531,7 @@ the internal page buffer (256 Bytes) into the external Flash memory array.
     #define FLASH_WRITE_PAGE   0x220028
     #define FLASH_WRITE_DIS    0x220030
     #define FLASH_ERASE_CHIP   0x220048
+
 
     // Check status and wait
     void flash_wait_ready() {

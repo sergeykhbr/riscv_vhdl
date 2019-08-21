@@ -333,7 +333,8 @@ end generate;
   --! @brief Controller of the LEDs, DIPs and GPIO with the AXI4 interface.
   --! @details Map address:
   --!          0x80000000..0x80000fff (4 KB total)
-  gpio0 : nasti_gpio generic map (
+  gpio0 : axi4_gpio generic map (
+    async_reset => CFG_ASYNC_RESET,
     xaddr    => 16#80000#,
     xmask    => 16#fffff#,
     xirq     => 0,

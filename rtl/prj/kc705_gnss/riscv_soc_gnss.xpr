@@ -671,7 +671,7 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../misclib/nasti_gpio.vhd">
+      <File Path="$PPRDIR/../../misclib/axi4_gpio.vhd">
         <FileInfo>
           <Attr Name="Library" Val="misclib"/>
           <Attr Name="UsedIn" Val="synthesis"/>

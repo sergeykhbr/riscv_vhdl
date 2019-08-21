@@ -109,13 +109,14 @@ component axi4_flashspi is
     o_axi  : out nasti_slave_out_type  );
 end component; 
 
---! @brief NASTI (AXI4) GPIO controller
-component nasti_gpio is
+--! @brief AXI4 GPIO controller
+component axi4_gpio is
   generic (
+    async_reset : boolean := false;
     xaddr    : integer := 0;
     xmask    : integer := 16#fffff#;
-	 xirq     : integer := 0;
-	 width    : integer := 12
+    xirq     : integer := 0;
+    width    : integer := 12
   );
   port (
     clk  : in std_logic;
@@ -124,7 +125,7 @@ component nasti_gpio is
     i    : in  nasti_slave_in_type;
     o    : out nasti_slave_out_type;
     i_gpio : in std_logic_vector(width-1 downto 0);
-	 o_gpio : out std_logic_vector(width-1 downto 0);
+    o_gpio : out std_logic_vector(width-1 downto 0);
     o_gpio_dir : out std_logic_vector(width-1 downto 0)
   );
 end component; 
