@@ -398,10 +398,11 @@ end generate;
   --! @brief Timers with the AXI4 interface.
   --! @details Map address:
   --!          0x80005000..0x80005fff (4 KB total)
-  gptmr0 : nasti_gptimers  generic map (
+  gptmr0 : axi4_gptimers  generic map (
+    async_reset => CFG_ASYNC_RESET,
     xaddr     => 16#80005#,
     xmask     => 16#fffff#,
-	 xirq      => CFG_IRQ_GPTIMERS,
+    xirq      => CFG_IRQ_GPTIMERS,
     tmr_total => 2
   ) port map (
     clk    => i_clk,

@@ -216,8 +216,9 @@ component nasti_irqctrl is
   --! @brief   General Purpose Timers with the AXI interface.
   --! @details This module provides high precision counter and
   --!          generic number of GP timers.
-  component nasti_gptimers is
+  component axi4_gptimers is
   generic (
+    async_reset : boolean := false;
     xaddr   : integer := 0;
     xmask   : integer := 16#fffff#;
     xirq    : integer := 0;

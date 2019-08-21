@@ -311,7 +311,7 @@
       <association xil_pn:name="Implementation" xil_pn:seqID="73"/>
       <library xil_pn:name="misclib"/>
     </file>
-    <file xil_pn:name="../../misclib/nasti_gptimers.vhd" xil_pn:type="FILE_VHDL">
+    <file xil_pn:name="../../misclib/axi4_gptimers.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="95"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="72"/>
       <library xil_pn:name="misclib"/>
