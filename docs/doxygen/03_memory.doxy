@@ -18,10 +18,10 @@ and external memory are mapped into one common address space.
 data space sizes.
 
 <center>
-| Parameter Name      | Value    | Description           |
-|:-------------------:|:--------:|:----------------------|
-| CFG_NASTI_ADDR_BITS | 32       | Address Bus bit width |
-| CFG_NASTI_DATA_BITS | 64       | Data Bus bit width    |
+| Parameter Name       | Value    | Description           |
+|:--------------------:|:--------:|:----------------------|
+| CFG_SYSBUS_ADDR_BITS | 32       | Address Bus bit width |
+| CFG_SYSBUS_DATA_BITS | 64       | Data Bus bit width    |
 <b>Table 3-1. General System Bus parameters.</b>
 </center>
 
@@ -189,13 +189,16 @@ contains the managing registers of the AXI4 bridge
     <td><b>Base address</b>. Base Address value defines bits [31:12] of the allocated memory space</td>
   </tr>
   <tr>
-    <td>xaddr</td>
-    <td>16#00200#</td>
+    <td>xmask</td>
+    <td>16#FFFC0#</td>
     <td><b>Address Mask</b>. Address Mask is used by system controller to defines allocated memory size</td>
   </tr>
 </table>
 <b>Table 3-4. SPI Bridge generic parameters.</b>
 </center>
+
+  These generic parameters directly define the UART device memory location
+in the system memory map 0x00200000. Allocated memory size is 256 KB.
 
   The full list of Registers relative Device Base Address offset is shown in the
 following table.

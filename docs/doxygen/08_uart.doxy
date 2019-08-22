@@ -1,0 +1,266 @@
+/** @page uart_page UART Interface
+
+  In general UART interface uses two couples of unidirectional signal lines.
+One line for data transmission and one line to signal readiness for each direction.
+The input block \c DX0 processes input signal \c Rx. Optional wires CTS and RTS
+are supported by UART IP block but they are unused and pull-down to GND line 
+on the top level of the default SoC implementation (see <c>asic_top.vhd</c>)
+
+<center>
+ <img src="../doxygen/pics/uart_top.png" alt="UART top"> 
+ @latexonly {\includegraphics{../doxygen/pics/uart_top.png}} @endlatexonly
+
+<b>Figure 8-1. Bi-directional serial connection.</b>
+</center>
+
+
+<b> UART Frame format</b> 
+ 
+  The standard UART frame is shown below and it consists of the following
+parts:
+
+\li Idle state with signal level '1'
+\li One start bit of frame (SOF) with the signal level '0'
+\li Data sequence of 8 bits. Number of bits hardcoded on hardware level.
+\li Parity bit (P) that controlled via bit \c parity_bit in the
+    register \c UART_CTRL_STATUS. This bit is computed as: </br>
+    D(7)^D(6)^D(5)^D(4)^D(3)^D(2)^D(1)^D(0).
+\li On stop bit
+
+<center>
+ <img src="../doxygen/pics/uart_frame.png" alt="UART frame"> 
+ @latexonly {\includegraphics{../doxygen/pics/uart_frame.png}} @endlatexonly
+
+<b>Figure 8-2. Standard UART frame.</b>
+</center>
+
+  Special protocol bits (SOF, P, STOP) automatically formed and handled
+in the finite state machine of the IP block and do not transmitted via FIFO
+buffers of the receiver and transmitter.
+
+<b>Baudrate Control</b>
+
+  The final baudrate of the UART directly depends of the clock frequency
+of the IP block. In the default system implementation clock frequency of
+the IP block is equal to system bus frequency.
+Special counter \c scaler is used to form \c posedge  and \c negedge events
+of the UART clock period. If the scaler value is equal to zero then UART
+is disabled and cannot receiving or transmitting information.
+
+<center>
+      \f[scaler = \frac{SYS_HZ}{2*baudrate};\f]
+</center>
+
+where \c SYS_HZ = 40 MHz (default FPGA system frequency); 
+\c baudrate - 115200 (default UART baudrate).
+
+ @section uart_registers_section UART Registers
+
+  UART module is connected as a slave device to the AXI4 Bus Controller
+and available for reading and writing as a single port memory for any
+master device in the system.
+
+AXI4 UART configured with the following generic parameters by default:
+
+<center>
+<table>
+  <tr>
+    <th>Name</th>    <th>Value</th>   <th>Description</th>
+  </tr>
+  <tr>
+    <td>async_reset</td>
+    <td>FALSE</td>
+    <td><b>Reset Type</b>. Internal registers reset type:
+       <ul>
+         <li>FALSE syncrhonous reset (FPGA)</li>
+         <li>TRUE asynchronous reset (ASIC)</li>
+       </ul></td>
+  </tr>
+  <tr>
+    <td>xaddr</td>
+    <td>16#80001#</td>
+    <td><b>Base address</b>. Base Address value defines bits [31:12] of the
+        allocated memory space</td>
+  </tr>
+  <tr>
+    <td>xmask</td>
+    <td>16#FFFFF#</td>
+    <td><b>Address Mask</b>. Address Mask is used by system controller to defines
+        allocated memory size</td>
+  </tr>
+  <tr>
+    <td>irqx</td>
+    <td>1</td>
+    <td><b>IRQ Index</b>. This value is used only as the information data in the
+         Plug'n'Play structure and doesn't actualy define line index.</td>
+  </tr>
+  <tr>
+    <td>fifosz</td>
+    <td>16</td>
+    <td><b>FIFO Size</b>. Size of the Tx and Rx FIFOs in bytes.</td>
+  </tr>
+</table>
+<b>Table 8-1. UART generic parameters.</b>
+</center>
+
+  These generic parameters directly define the UART device memory location
+in the system memory map. Base Address is 0x80001000. Allocated memory size
+is 4 KB.
+
+  The full list of Registers relative Device Base Address offset is shown in the
+following table.
+
+  <b>Device Registers list</b>
+
+<center>
+| Offset   | Name               | Reset Val. | Description
+|:--------:|:-------------------|:----------:|----------------------------
+| 0x000    | UART_CTRL_STATUS   | 0000:6022h | Control and Status Register
+| 0x004    | UART_SCALER        | 0000:0000h | Baudrate Control Register
+| 0x008    | UART_FWCPUID       | 0000:0000h | Multiprocessor Marker Register
+| 0x010    | UART_DATA          | 0000:0000h | Data Buffer Register
+<b>Table 8-2. AXI4 UART Registers.</b>
+</center>
+ 
+
+ <b>UART_CTRL_STATUS Register (0x000)</b>
+
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>rsrv</td>  <td>[31:16]</td>   <td>RZ</td>   <td>reserved.</td>
+  </tr>
+  <tr>
+    <td>parity</td>  <td>[15]</td>   <td>RW</td>   <td><b>Enable Parity check</b>.
+        This bit is controlled by Software and allows to enable/disable parity checking:
+        \li 0 - parity disabled
+        \li 1 - parity enabled</td>
+  </tr>
+  <tr>
+    <td>tx_irq</td>  <td>[14]</td>   <td>RW</td>   <td><b>Enable Tx Interrupt</b>.
+        Generate interrupt when number of symbols in the output FIFO is less or equal
+        than defined in Tx Threshold register (default threshold is equal zero).
+        \li 0 - interrupt disabled
+        \li 1 - interrupt enabled</td>
+  </tr>
+  <tr>
+    <td>rx_irq</td>  <td>[13]</td>   <td>RW</td>   <td><b>Enable Rx Interrupt</b>.
+        Generate interrupt when number of available symbols in the input FIFO is
+        greater than defined in Rx Threshold register (default threshold is equal zero).
+        \li 0 - interrupt disabled
+        \li 1 - interrupt enabled</td>
+  </tr>
+  <tr>
+    <td>rsrv</td>  <td>[12:10]</td>   <td>RZ</td>   <td>reserved.</td>
+  </tr>
+  <tr>
+    <td>err_stopbit</td>  <td>[9]</td>   <td>RO</td>   <td><b>Stop Bit Error</b>.
+        This bit is set HIGH when the Stop Bit has the wrong polarity.</td>
+  </tr>
+  <tr>
+    <td>err_parity</td>  <td>[8]</td>   <td>RO</td>   <td><b>Parity Error</b>.
+        This bit is set HIGH when the Parity error occurs. Will be automatically
+        cleared by the next received symbol if the parity OK.</td>
+  </tr>
+  <tr>
+    <td>rsrv</td>  <td>[7:6]</td>   <td>RZ</td>   <td>reserved.</td>
+  </tr>
+  <tr>
+    <td>rx_fifo_empty</td>  <td>[5]</td>   <td>RO</td>   <td><b>Receive FIFO Empty</b>.
+        \li 0 - Received data is available
+        \li 1 - No data in Rx FIFO</td>
+  </tr>
+  <tr>
+    <td>rx_fifo_full</td>  <td>[4]</td>   <td>RO</td>   <td><b>Receive FIFO Full</b>.
+        \li 0 - Receiver can accept data
+        \li 1 - Next received symbol will be ignored</td>
+  </tr>
+  <tr>
+    <td>rsrv</td>  <td>[3:2]</td>   <td>RZ</td>   <td>reserved.</td>
+  </tr>
+  <tr>
+    <td>tx_fifo_empty</td>  <td>[1]</td>   <td>RO</td>   <td><b>Transmit FIFO Empty</b>.
+        \li 0 - Transmitting in progress
+        \li 1 - All symbols were sent</td>
+  </tr>
+  <tr>
+    <td>tx_fifo_full</td>  <td>[0]</td>   <td>RO</td>   <td><b>Transmit FIFO Full</b>.
+        \li 0 - Transmitter can accept data from Software
+        \li 1 - Writen symbol will be ignored</td>
+  </tr>
+</table>
+
+ <b>UART_SCALER Register (0x004)</b>
+
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>scaler</td>   <td>[31:0]</td>   <td>RW</td>   <td><b>Scaler Threshold</b>.
+        This registers specifies the overflow threshold that
+        is used to form \c posedge and \c negedge events and form UART Baudrate.
+  </tr>
+</table>
+
+ <b>UART_FWCPUID Register (0x008)</b>
+
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>fwcpuid</td>   <td>[31:0]</td>   <td>RW</td>   <td><b>CPU ID</b>.
+        This registers is controlled by software and is used to provide
+        'lock' mechanism in a multiprocessor configuration.
+  </tr>
+</table>
+
+
+ <b>UART_DATA Register (0x010)</b>
+
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>rsrv</td>  <td>[31:8]</td>   <td>RZ</td>   <td>reserved.</td>
+  </tr>
+  <tr>
+    <td>data</td>   <td>[7:0]</td>   <td>RW</td>   <td><b>Data</b>.
+        This registers provides access to the Rx FIFO on read operation and to
+        the Tx FIFO on write operation. FIFOs status should be controlled via
+        UART_CTRL_STATUS register.
+  </tr>
+</table>
+
+@subsection uart_example_subsection C-code example
+
+  The following C-example demonstrates procedures of interaction
+with the UART module that allow to send and receive data buffers.
+
+@code
+
+    // Control and Status Register bits:
+    #define UART_STATUS_TX_FULL     0x00000001
+    #define UART_STATUS_TX_EMPTY    0x00000002
+    #define UART_STATUS_RX_FULL     0x00000010
+    #define UART_STATUS_RX_EMPTY    0x00000020
+    #define UART_STATUS_ERR_PARITY  0x00000100
+    #define UART_STATUS_ERR_STOPBIT 0x00000200
+
+    #define UART_CONTROL_TXIRQ_ENA  0x00004000
+
+    typedef struct uart_map {
+        volatile uint32_t status;
+        volatile uint32_t scaler;
+        volatile uint32_t fwcpuid;
+        uint32_t rsrv[1];
+        volatile uint32_t data;
+    } uart_map;
+
+@endcode
+
+*/

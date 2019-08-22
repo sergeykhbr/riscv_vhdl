@@ -770,6 +770,7 @@ doxygen/_top.doxy \
 doxygen/02_arch_overview.doxy \
 doxygen/03_memory.doxy \
 doxygen/05_cpu.doxy \
+doxygen/08_uart.doxy \
 
 
 # This tag can be used to specify the character encoding of the source files
