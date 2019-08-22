@@ -74,6 +74,7 @@ type dport_out_vector is array (0 to CFG_CORES_PER_DSU_MAX-1)
   --! @param[in] i_bus_util_r  Write bus access utilization per master statistic
   component axi_dsu is
   generic (
+    async_reset : boolean := false;
     xaddr    : integer := 0;
     xmask    : integer := 16#fffff#
   );

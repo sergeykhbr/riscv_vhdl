@@ -43,6 +43,7 @@ use riverlib.types_river.all;
 
 entity axi_dsu is
   generic (
+    async_reset : boolean := false;
     xaddr    : integer := 0;
     xmask    : integer := 16#fffff#
   );
@@ -69,49 +70,89 @@ architecture arch_axi_dsu of axi_dsu is
      descrtype => PNP_CFG_TYPE_SLAVE,
      descrsize => PNP_CFG_SLAVE_DESCR_BYTES,
      irq_idx => conv_std_logic_vector(0, 8),
-     xaddr => conv_std_logic_vector(xaddr, CFG_NASTI_CFG_ADDR_BITS),
-     xmask => conv_std_logic_vector(xmask, CFG_NASTI_CFG_ADDR_BITS),
+     xaddr => conv_std_logic_vector(xaddr, CFG_SYSBUS_CFG_ADDR_BITS),
+     xmask => conv_std_logic_vector(xmask, CFG_SYSBUS_CFG_ADDR_BITS),
      vid => VENDOR_GNSSSENSOR,
      did => GNSSSENSOR_DSU
   );
-
-type state_type is (reading, writting, dport_response, ready);
   
-type mst_utilization_type is array (0 to CFG_NASTI_MASTER_TOTAL-1) 
-       of std_logic_vector(63 downto 0);
+  constant zero64 : std_logic_vector(63 downto 0) := (others => '0');
 
-type mst_utilization_map_type is array (0 to 2*CFG_NASTI_MASTER_TOTAL-1) 
-       of std_logic_vector(63 downto 0);
+  type state_type is (idle, read_internal, read_dport, dport_response, read_msw32);
+  
+  type mst_utilization_type is array (0 to CFG_NASTI_MASTER_TOTAL-1) 
+         of std_logic_vector(63 downto 0);
 
-type registers is record
-  bank_axi : nasti_slave_bank_type;
-  --! Message multiplexer to form 32->64 request message
-  state         : state_type;
-  waddr : std_logic_vector(13 downto 0);
-  wdata : std_logic_vector(63 downto 0);
-  rdata : std_logic_vector(63 downto 0);
-  soft_rst : std_logic;
-  -- Platform statistic:
-  clk_cnt : std_logic_vector(63 downto 0);
-  cpu_context : std_logic_vector(log2x(CFG_CORES_PER_DSU_MAX)-1 downto 0);
-  util_w_cnt : mst_utilization_type;
-  util_r_cnt : mst_utilization_type;
-end record;
+  type mst_utilization_map_type is array (0 to 2*CFG_NASTI_MASTER_TOTAL-1) 
+         of std_logic_vector(63 downto 0);
 
-signal r, rin: registers;
+  type registers is record
+    state : state_type;
+    r32 : std_logic;
+    raddr : std_logic_vector(13 downto 0);
+    waddr : std_logic_vector(13 downto 0);
+    wdata : std_logic_vector(63 downto 0);
+    write_valid : std_logic;
+    soft_rst : std_logic;
+    dev_rdata : std_logic_vector(63 downto 0);
+    dev_ready : std_logic;
+    -- Platform statistic:
+    clk_cnt : std_logic_vector(63 downto 0);
+    cpu_context : std_logic_vector(log2x(CFG_CORES_PER_DSU_MAX)-1 downto 0);
+    util_w_cnt : mst_utilization_type;
+    util_r_cnt : mst_utilization_type;
+  end record;
+
+  constant R_RESET : registers := (
+     idle, '0',                              -- state, r32
+     (others => '0'), (others => '0'),       -- raddr, waddr
+     (others => '0'), '0', '0',              -- wdata, write_valid, soft_rst
+     (others => '0'), '0',                   -- dev_rdata, dev_Ready
+     (others => '0'), (others => '0'),       -- clk_cnt, cpu_context
+     (others => zero64), (others => zero64)
+  );
+
+  signal r, rin: registers;
+  signal wb_bus_raddr : global_addr_array_type;
+  signal w_bus_re : std_logic;
+  signal w_bus_r32 : std_logic;
+  signal wb_bus_waddr : global_addr_array_type;
+  signal w_bus_we : std_logic;
+  signal wb_bus_wstrb : std_logic_vector(CFG_SYSBUS_DATA_BYTES-1 downto 0);
+  signal wb_bus_wdata : std_logic_vector(CFG_SYSBUS_DATA_BITS-1 downto 0);
+
 begin
 
-  comblogic : process(nrst, i_axi, i_dporto,
-                      i_bus_util_w, i_bus_util_r, r)
+  axi0 :  axi4_slave generic map (
+    async_reset => async_reset
+  ) port map (
+    i_clk => clk,
+    i_nrst => nrst,
+    i_xcfg => xconfig, 
+    i_xslvi => i_axi,
+    o_xslvo => o_axi,
+    i_ready => r.dev_ready,
+    i_rdata => r.dev_rdata,
+    o_re => w_bus_re,
+    o_r32 => w_bus_r32,
+    o_radr => wb_bus_raddr,
+    o_wadr => wb_bus_waddr,
+    o_we => w_bus_we,
+    o_wstrb => wb_bus_wstrb,
+    o_wdata => wb_bus_wdata
+  );
+
+  comblogic : process(nrst, i_dporto, i_bus_util_w, i_bus_util_r, r, 
+                      w_bus_re, w_bus_r32, wb_bus_raddr, wb_bus_waddr,
+                      w_bus_we, wb_bus_wstrb, wb_bus_wdata)
     variable v : registers;
-    variable mux_rdata : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
+    variable vrdata_internal : std_logic_vector(CFG_SYSBUS_DATA_BITS-1 downto 0);
     variable vdporti : dport_in_vector;
     variable iraddr : integer;
     variable wb_bus_util_map : mst_utilization_map_type;
     variable cpuidx : integer;
   begin
     v := r;
-    v.rdata := (others => '0');
     vdporti := (others => dport_in_none);
     cpuidx := conv_integer(r.cpu_context);
     
@@ -119,119 +160,116 @@ begin
     v.clk_cnt := r.clk_cnt + 1;
 
     for n in 0 to CFG_NASTI_MASTER_TOTAL-1 loop
-       if i_bus_util_w(n) = '1' then
-         v.util_w_cnt(n) := r.util_w_cnt(n) + 1;
-       end if;
-       if i_bus_util_r(n) = '1' then
-         v.util_r_cnt(n) := r.util_r_cnt(n) + 1;
-       end if;
+        if i_bus_util_w(n) = '1' then
+            v.util_w_cnt(n) := r.util_w_cnt(n) + 1;
+        end if;
+        if i_bus_util_r(n) = '1' then
+            v.util_r_cnt(n) := r.util_r_cnt(n) + 1;
+        end if;
     end loop;
 
     for n in 0 to CFG_NASTI_MASTER_TOTAL-1 loop
-      wb_bus_util_map(2*n) := r.util_w_cnt(n);
-      wb_bus_util_map(2*n+1) := r.util_r_cnt(n);
+        wb_bus_util_map(2*n) := r.util_w_cnt(n);
+        wb_bus_util_map(2*n+1) := r.util_r_cnt(n);
     end loop;
 
-    procedureAxi4(i_axi, xconfig, r.bank_axi, v.bank_axi);
-    --! redefine value 'always ready' inserting waiting states.
-    v.bank_axi.rwaitready := '0';
 
-    if r.bank_axi.wstate = wtrans then
-      -- 32-bits burst transaction
-      v.waddr := r.bank_axi.waddr(0)(16 downto 3);
-      if r.bank_axi.wburst = NASTI_BURST_INCR and r.bank_axi.wsize = 4 then
-         if r.bank_axi.waddr(0)(2) = '1' then
-             v.state := writting;
-             v.wdata(63 downto 32) := i_axi.w_data(31 downto 0);
-         else
-             v.wdata(31 downto 0) := i_axi.w_data(31 downto 0);
-         end if;
-      else
-         -- Write data on next clock.
-         if i_axi.w_strb /= X"00" then
-            v.wdata := i_axi.w_data;
-         end if;
-         v.state := writting;
-      end if;
+    iraddr := conv_integer(r.raddr(11 downto 0));
+    vrdata_internal := (others => '0');
+    case iraddr is
+    when 0 =>
+        vrdata_internal(0) := r.soft_rst;
+    when 1 =>
+        vrdata_internal(log2x(CFG_CORES_PER_DSU_MAX)-1 downto 0) := r.cpu_context;
+    when others =>
+        if (iraddr >= 8) and (iraddr < (8 + 2*CFG_NASTI_MASTER_TOTAL)) then
+             vrdata_internal := wb_bus_util_map(iraddr - 8);
+        end if;
+    end case;
+
+    v.write_valid := '0'; 
+    if r.write_valid = '1' then
+        if r.waddr(13 downto 12) = "11" then
+            --! local region
+            case conv_integer(r.waddr(11 downto 0)) is
+            when 0 =>
+                v.soft_rst := r.wdata(0);
+            when 1 =>
+                v.cpu_context := r.wdata(log2x(CFG_CORES_PER_DSU_MAX)-1 downto 0);
+            when others =>
+            end case;
+        else
+            --! debug port regions: 0 to 2
+            vdporti(cpuidx).valid := '1';
+            vdporti(cpuidx).write := '1';
+            vdporti(cpuidx).region := r.waddr(13 downto 12);
+            vdporti(cpuidx).addr := r.waddr(11 downto 0);
+            vdporti(cpuidx).wdata := r.wdata;
+        end if;
     end if;
 
     case r.state is
-      when reading =>
-           if r.bank_axi.rstate = rtrans then
-              if r.bank_axi.raddr(0)(16 downto 15) = "11" then
-                --! local region
-                v.bank_axi.rwaitready := '1';
-                iraddr := conv_integer(r.bank_axi.raddr(0)(14 downto 3));
-                case iraddr is
-                when 0 =>
-                  v.rdata(0) := r.soft_rst;
-                when 1 =>
-                  v.rdata(log2x(CFG_CORES_PER_DSU_MAX)-1 downto 0) := r.cpu_context;
-                when others =>
-                  if (iraddr >= 8) and (iraddr < (8 + 2*CFG_NASTI_MASTER_TOTAL)) then
-                      v.rdata := wb_bus_util_map(iraddr - 8);
-                  end if;
-                end case;
-                v.state := ready;
+      when idle =>
+          v.dev_ready := '1';
+          if w_bus_we = '1' then
+              if wb_bus_waddr(0)(2) = '0' and wb_bus_wstrb = X"FF" then
+                  -- 64-bits access
+                  v.write_valid := '1'; 
+                  v.waddr := wb_bus_waddr(0)(16 downto 3);
+                  v.wdata := wb_bus_wdata;
+              elsif wb_bus_wstrb(3 downto 0) = X"F" then
+                  -- 32-bits burst 1-st half, wait the second part
+                  v.waddr := wb_bus_waddr(0)(16 downto 3);
+                  v.wdata(31 downto 0) := wb_bus_wdata(31 downto 0);
               else
-                --! debug port regions: 0 to 2
-                vdporti(cpuidx).valid := '1';
-                vdporti(cpuidx).write := '0';
-                vdporti(cpuidx).region := r.bank_axi.raddr(0)(16 downto 15);
-                vdporti(cpuidx).addr := r.bank_axi.raddr(0)(14 downto 3);
-                vdporti(cpuidx).wdata := (others => '0');
-                v.state := dport_response;
+                  -- 32-bits burst 2-nd half
+                  v.write_valid := '1'; 
+                  v.wdata(63 downto 32) := wb_bus_wdata(31 downto 0);
               end if;
-           end if;
-      when writting =>
-           v.state := reading;
-           if r.waddr(13 downto 12) = "11" then
-             --! local region
-             case conv_integer(r.waddr(11 downto 0)) is
-             when 0 =>
-               v.soft_rst := r.wdata(0);
-             when 1 =>
-               v.cpu_context := r.wdata(log2x(CFG_CORES_PER_DSU_MAX)-1 downto 0);
-             when others =>
-             end case;
-           else
-             --! debug port regions: 0 to 2
-             vdporti(cpuidx).valid := '1';
-             vdporti(cpuidx).write := '1';
-             vdporti(cpuidx).region := r.waddr(13 downto 12);
-             vdporti(cpuidx).addr := r.waddr(11 downto 0);
-             vdporti(cpuidx).wdata := r.wdata;
-           end if;
+          elsif w_bus_re = '1' then
+              v.dev_ready := '0';
+              v.raddr := wb_bus_raddr(0)(16 downto 3);
+              v.r32 := w_bus_r32;
+              if wb_bus_raddr(0)(16 downto 15) = "11" then
+                  v.state := read_internal;
+              else
+                  v.state := read_dport;
+              end if;
+          end if;
+
+      when read_internal =>
+          v.dev_ready := '1';
+          v.dev_rdata := vrdata_internal;
+          if r.r32 = '1' then
+              v.state := read_msw32;
+          else
+              v.state := idle;
+          end if;
+      when read_dport =>
+          --! debug port regions: 0 to 2
+          vdporti(cpuidx).valid := '1';
+          vdporti(cpuidx).write := '0';
+          vdporti(cpuidx).region := r.raddr(13 downto 12);
+          vdporti(cpuidx).addr := r.raddr(11 downto 0);
+          vdporti(cpuidx).wdata := (others => '0');
+          v.state := dport_response;
       when dport_response =>
-             v.state := ready;
-             v.bank_axi.rwaitready := '1';
-             v.rdata := i_dporto(cpuidx).rdata;
-      when ready =>
-             v.state := reading;
+          if r.r32 = '1' then
+              v.state := read_msw32;
+          else
+              v.state := idle;
+          end if;
+          v.dev_ready := '1';
+          v.dev_rdata := i_dporto(cpuidx).rdata;
+      when read_msw32 =>
+          v.r32 := '0';
+          v.state := idle;
+          v.dev_ready := '1';
       when others =>
     end case;
 
-    if r.bank_axi.raddr(0)(2) = '0' then
-       mux_rdata(31 downto 0) := r.rdata(31 downto 0);
-    else
-       -- 32-bits aligned access (can be generated by MAC)
-       mux_rdata(31 downto 0) := r.rdata(63 downto 32);
-    end if;
-    mux_rdata(63 downto 32) := r.rdata(63 downto 32);
-
-    o_axi <= functionAxi4Output(r.bank_axi, mux_rdata);
-
-    if nrst = '0' then 
-       v.bank_axi := NASTI_SLAVE_BANK_RESET;
-       v.state := reading;
-       v.waddr := (others => '0');
-       v.wdata := (others => '0');
-       v.rdata := (others => '0');
-       v.soft_rst := '0';
-       v.cpu_context := (others => '0');
-       v.clk_cnt := (others => '0');
-       v.util_w_cnt := (others => (others => '0'));
-       v.util_r_cnt := (others => (others => '0'));
+    if not async_reset and nrst = '0' then 
+        v := R_RESET;
     end if;
 
     rin <= v;
@@ -244,10 +282,13 @@ begin
 
 
   -- registers:
-  regs : process(clk)
+  regs : process(clk, nrst)
   begin 
-    if rising_edge(clk) then 
-       r <= rin; 
-    end if; 
+      if async_reset and nrst = '0' then
+          r <= R_RESET;
+      elsif rising_edge(clk) then 
+          r <= rin;
+      end if; 
   end process;
+
 end;

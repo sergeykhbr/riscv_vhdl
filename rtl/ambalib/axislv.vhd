@@ -34,6 +34,7 @@ entity axi4_slave is
     i_ready : in std_logic;
     i_rdata : in std_logic_vector(CFG_SYSBUS_DATA_BITS-1 downto 0);
     o_re : out std_logic;
+    o_r32 : out std_logic;
     o_radr : out global_addr_array_type;
     o_wadr : out global_addr_array_type;
     o_we : out std_logic;
@@ -55,6 +56,7 @@ begin
     variable v_radr_inc : global_addr_array_type;
     variable v_wadr_inc : global_addr_array_type;
     variable v_re : std_logic;
+    variable v_r32 : std_logic;
     variable v_radr : global_addr_array_type;
     variable v_wadr : global_addr_array_type;
     variable v_we : std_logic_vector(CFG_SYSBUS_DATA_BYTES-1 downto 0);
@@ -83,6 +85,7 @@ begin
     end loop;
 
     v_re := '0';
+    v_r32 := '0';
     v_radr(0) := (others => '0');
     v_radr(1) := (others => '0');
 
@@ -117,6 +120,9 @@ begin
                          := v_radr(n)(CFG_NASTI_ADDR_BITS-1 downto 5);
                 end if;
             end loop;
+            if i_xslvi.ar_bits.size = "010" then
+                v_r32 := '1';
+            end if;
             v.rswap := i_xslvi.ar_bits.addr(2);
             v.rsize := XSizeToBytes(conv_integer(i_xslvi.ar_bits.size));
             v.rburst := i_xslvi.ar_bits.burst;
@@ -127,6 +133,9 @@ begin
         end if;
     when rtrans =>
         v_re := '1';
+        if v.rsize = 4 then
+            v_r32 := '1';
+        end if;
         if r.raddr(0)(2) = '0' then
             v_radr := r.raddr;
         else
@@ -152,6 +161,9 @@ begin
             if r.rlen = 0 then
                 if i_xslvi.ar_valid = '1' and i_xslvi.aw_valid = '0' then
                     v.rswap := i_xslvi.ar_bits.addr(2);
+                    if i_xslvi.ar_bits.size = "010" then
+                        v_r32 := '1';
+                    end if;
                     if i_xslvi.ar_bits.addr(2) = '0' then
                         v_radr := v_radr_inc;
                     else
@@ -266,6 +278,7 @@ begin
 
     o_re <= v_re;
     o_radr <= v_radr;
+    o_r32 <= v_r32;
     o_wadr <= v_wadr;
     o_we <= v_we(0);
     o_wdata <= v_wdata;

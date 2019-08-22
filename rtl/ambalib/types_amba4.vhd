@@ -787,7 +787,8 @@ end component;
 --! @param [out] o_xslvo AXI4 slave output interface.
 --! @param [in]  i_ready Memory device is ready to accept request.
 --! @param [in]  i_rdata Read data value
---! @param [in]  o_re Read enable
+--! @param [out] o_re Read enable
+--! @param [out] o_rswap Read high word32 from 64-bits bus
 --! @param [out] o_radr Memory interface read address array.
 --! @param [out] o_wadr Memory interface write address array.
 --! @param [in]  o_we Write enable
@@ -806,6 +807,7 @@ component axi4_slave is
     i_ready : in std_logic;
     i_rdata : in std_logic_vector(CFG_SYSBUS_DATA_BITS-1 downto 0);
     o_re : out std_logic;
+    o_r32 : out std_logic;
     o_radr : out global_addr_array_type;
     o_wadr : out global_addr_array_type;
     o_we : out std_logic;
