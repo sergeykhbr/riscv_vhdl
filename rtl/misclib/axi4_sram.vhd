@@ -87,6 +87,7 @@ begin
     i_ready => '1',
     i_rdata => rdata_mux,
     o_re => rami.re,
+    o_r32 => open,
     o_radr => rami.raddr,
     o_wadr => rami.waddr,
     o_we => rami.we,

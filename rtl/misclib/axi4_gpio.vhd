@@ -92,6 +92,7 @@ begin
     i_ready => '1',
     i_rdata => wb_dev_rdata,
     o_re => w_bus_re,
+    o_r32 => open,
     o_radr => wb_bus_raddr,
     o_wadr => wb_bus_waddr,
     o_we => w_bus_we,

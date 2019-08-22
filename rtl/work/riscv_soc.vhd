@@ -215,6 +215,7 @@ dsu_ena : if CFG_DSU_ENABLE generate
   --! @details Map address:
   --!          0x80080000..0x8009ffff (128 KB total)
   dsu0 : axi_dsu generic map (
+    async_reset => CFG_ASYNC_RESET,
     xaddr    => 16#80080#,
     xmask    => 16#fffe0#
   ) port map (

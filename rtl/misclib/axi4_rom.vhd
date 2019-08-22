@@ -79,6 +79,7 @@ begin
     i_ready => '1',
     i_rdata => rdata,
     o_re => open,
+    o_r32 => open,
     o_radr => raddr,
     o_wadr => open,
     o_we => open,
