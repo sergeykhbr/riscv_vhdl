@@ -692,14 +692,14 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../misclib/nasti_irqctrl.vhd">
+      <File Path="$PPRDIR/../../misclib/axi4_irqctrl.vhd">
         <FileInfo>
           <Attr Name="Library" Val="misclib"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../misclib/nasti_pnp.vhd">
+      <File Path="$PPRDIR/../../misclib/axi4_pnp.vhd">
         <FileInfo>
           <Attr Name="Library" Val="misclib"/>
           <Attr Name="UsedIn" Val="synthesis"/>

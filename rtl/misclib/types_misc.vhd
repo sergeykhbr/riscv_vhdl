@@ -196,8 +196,9 @@ end component;
 
 --! @brief   Interrupt controller with the AXI4 interface declaration.
 --! @details To rise interrupt on certain CPU HostIO interface is used.
-component nasti_irqctrl is
+component axi4_irqctrl is
   generic (
+    async_reset : boolean := false;
     xaddr    : integer := 0;
     xmask    : integer := 16#fffff#
   );
@@ -239,8 +240,9 @@ component nasti_irqctrl is
 --!          structure 'nasti_slave_config_type' that allows FW to
 --!          detect Hardware configuration in a run-time.
 --! @todo Implements PnP signals for all Masters devices.
-component nasti_pnp is
+component axi4_pnp is
   generic (
+    async_reset : boolean := false;
     xaddr   : integer := 0;
     xmask   : integer := 16#fffff#;
     tech    : integer := 0;

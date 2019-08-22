@@ -383,7 +383,8 @@ end generate;
   --! @brief Interrupt controller with the AXI4 interface.
   --! @details Map address:
   --!          0x80002000..0x80002fff (4 KB total)
-  irq0 : nasti_irqctrl generic map (
+  irq0 : axi4_irqctrl generic map (
+    async_reset => CFG_ASYNC_RESET,
     xaddr      => 16#80002#,
     xmask      => 16#FFFFF#
   ) port map (
@@ -492,7 +493,8 @@ end generate;
   --!        AXI4 interface.
   --! @details Map address:
   --!          0xfffff000..0xffffffff (4 KB total)
-  pnp0 : nasti_pnp generic map (
+  pnp0 : axi4_pnp generic map (
+    async_reset => CFG_ASYNC_RESET,
     xaddr   => 16#fffff#,
     xmask   => 16#fffff#,
     tech    => CFG_MEMTECH,

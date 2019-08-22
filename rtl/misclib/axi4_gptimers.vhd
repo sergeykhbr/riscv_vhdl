@@ -104,6 +104,7 @@ begin
     i_ready => '1',
     i_rdata => wb_dev_rdata,
     o_re => w_bus_re,
+    o_r32 => open,
     o_radr => wb_bus_raddr,
     o_wadr => wb_bus_waddr,
     o_we => w_bus_we,
@@ -111,7 +112,7 @@ begin
     o_wdata => wb_bus_wdata
   );
 
-  comblogic : process(nrst, i_axi, r, w_bus_re, wb_bus_raddr, wb_bus_waddr,
+  comblogic : process(nrst, r, w_bus_re, wb_bus_raddr, wb_bus_waddr,
                       w_bus_we, wb_bus_wstrb, wb_bus_wdata)
     variable v : registers;
     variable raddr : integer;

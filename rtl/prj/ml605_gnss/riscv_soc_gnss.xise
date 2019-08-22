@@ -661,19 +661,14 @@
       <association xil_pn:name="Implementation" xil_pn:seqID="125"/>
       <library xil_pn:name="misclib"/>
     </file>
-    <file xil_pn:name="../../misclib/nasti_irqctrl.vhd" xil_pn:type="FILE_VHDL">
+    <file xil_pn:name="../../misclib/axi4_irqctrl.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="149"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="124"/>
       <library xil_pn:name="misclib"/>
     </file>
-    <file xil_pn:name="../../misclib/nasti_pnp.vhd" xil_pn:type="FILE_VHDL">
+    <file xil_pn:name="../../misclib/axi4_pnp.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="150"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="123"/>
-      <library xil_pn:name="misclib"/>
-    </file>
-    <file xil_pn:name="../../misclib/nasti_romimage.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="151"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="122"/>
       <library xil_pn:name="misclib"/>
     </file>
     <file xil_pn:name="../../misclib/axi4_sram.vhd" xil_pn:type="FILE_VHDL">
