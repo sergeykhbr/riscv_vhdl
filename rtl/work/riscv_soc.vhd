@@ -31,6 +31,7 @@ use techmap.gencomp.all;
 library ambalib;
 --! AXI4 configuration constants.
 use ambalib.types_amba4.all;
+use ambalib.types_bus0.all;
 --! Misc modules library
 library misclib;
 use misclib.types_misc.all;
@@ -115,17 +116,17 @@ architecture arch_riscv_soc of riscv_soc is
 
   --! Arbiter is switching only slaves output signal, data from noc
   --! is connected to all slaves and to the arbiter itself.
-  signal aximi   : nasti_master_in_vector;
-  signal aximo   : nasti_master_out_vector;
-  signal axisi   : nasti_slave_in_vector;
-  signal axiso   : nasti_slaves_out_vector;
-  signal slv_cfg : nasti_slave_cfg_vector;
-  signal mst_cfg : nasti_master_cfg_vector;
+  signal aximi   : bus0_xmst_in_vector;
+  signal aximo   : bus0_xmst_out_vector;
+  signal axisi   : bus0_xslv_in_vector;
+  signal axiso   : bus0_xslv_out_vector;
+  signal slv_cfg : bus0_xslv_cfg_vector;
+  signal mst_cfg : bus0_xmst_cfg_vector;
   signal w_ext_irq : std_logic;
   signal dport_i : dport_in_vector;
   signal dport_o : dport_out_vector;
-  signal wb_bus_util_w : std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0);
-  signal wb_bus_util_r : std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0);
+  signal wb_bus_util_w : std_logic_vector(CFG_BUS0_XMST_TOTAL-1 downto 0);
+  signal wb_bus_util_r : std_logic_vector(CFG_BUS0_XMST_TOTAL-1 downto 0);
   
   signal eth_i : eth_in_type;
   signal eth_o : eth_out_type;
@@ -135,13 +136,13 @@ begin
 
 
   -- Nullify emty AXI-slots:  
-  axiso(CFG_NASTI_SLAVE_ENGINE) <= nasti_slave_out_none;
-  slv_cfg(CFG_NASTI_SLAVE_ENGINE)  <= nasti_slave_config_none;
+  axiso(CFG_BUS0_XSLV_ENGINE) <= axi4_slave_out_none;
+  slv_cfg(CFG_BUS0_XSLV_ENGINE)  <= axi4_slave_config_none;
   irq_pins(CFG_IRQ_GNSSENGINE)      <= '0';
-  slv_cfg(CFG_NASTI_SLAVE_RFCTRL) <= nasti_slave_config_none;
-  axiso(CFG_NASTI_SLAVE_RFCTRL) <= nasti_slave_out_none;
-  slv_cfg(CFG_NASTI_SLAVE_FSE_GPS) <= nasti_slave_config_none;
-  axiso(CFG_NASTI_SLAVE_FSE_GPS) <= nasti_slave_out_none;
+  slv_cfg(CFG_BUS0_XSLV_RFCTRL) <= axi4_slave_config_none;
+  axiso(CFG_BUS0_XSLV_RFCTRL) <= axi4_slave_out_none;
+  slv_cfg(CFG_BUS0_XSLV_FSE_GPS) <= axi4_slave_config_none;
+  axiso(CFG_BUS0_XSLV_FSE_GPS) <= axi4_slave_out_none;
 
 
   ------------------------------------
@@ -155,7 +156,7 @@ begin
   w_bus_nrst <= not (w_glob_rst or w_soft_rst);
 
   --! @brief AXI4 controller.
-  ctrl0 : axictrl generic map (
+  ctrl0 : axictrl_bus0 generic map (
     async_reset => CFG_ASYNC_RESET
   ) port map (
     i_clk    => i_clk,
@@ -177,9 +178,9 @@ begin
   ) port map ( 
     i_nrst   => w_bus_nrst,
     i_clk    => i_clk,
-    i_msti   => aximi(CFG_NASTI_MASTER_CACHED),
-    o_msto   => aximo(CFG_NASTI_MASTER_CACHED),
-    o_mstcfg => mst_cfg(CFG_NASTI_MASTER_CACHED),
+    i_msti   => aximi(CFG_BUS0_XMST_CPU0),
+    o_msto   => aximo(CFG_BUS0_XMST_CPU0),
+    o_mstcfg => mst_cfg(CFG_BUS0_XMST_CPU0),
     i_dport => dport_i(0),
     o_dport => dport_o(0),
     i_ext_irq => w_ext_irq
@@ -193,9 +194,9 @@ begin
       ) port map ( 
         i_nrst   => w_bus_nrst,
         i_clk    => i_clk,
-        i_msti   => aximi(CFG_NASTI_MASTER_UNCACHED),
-        o_msto   => aximo(CFG_NASTI_MASTER_UNCACHED),
-        o_mstcfg => mst_cfg(CFG_NASTI_MASTER_UNCACHED),
+        i_msti   => aximi(CFG_BUS0_XMST_CPU1),
+        o_msto   => aximo(CFG_BUS0_XMST_CPU1),
+        o_mstcfg => mst_cfg(CFG_BUS0_XMST_CPU1),
         i_dport => dport_i(1),
         o_dport => dport_o(1),
         i_ext_irq => '0'  -- todo: 
@@ -203,8 +204,8 @@ begin
   end generate;
 
   dualcore_dis : if not CFG_COMMON_DUAL_CORE_ENABLE generate
-      aximo(CFG_NASTI_MASTER_UNCACHED) <= nasti_master_out_none;
-      mst_cfg(CFG_NASTI_MASTER_UNCACHED) <= nasti_master_config_none;
+      aximo(CFG_BUS0_XMST_CPU1) <= axi4_master_out_none;
+      mst_cfg(CFG_BUS0_XMST_CPU1) <= axi4_master_config_none;
 		dport_o(1) <= dport_out_none;
   end generate;
 
@@ -221,9 +222,9 @@ dsu_ena : if CFG_DSU_ENABLE generate
   ) port map (
     clk    => i_clk,
     nrst   => w_glob_nrst,
-    o_cfg  => slv_cfg(CFG_NASTI_SLAVE_DSU),
-    i_axi  => axisi(CFG_NASTI_SLAVE_DSU),
-    o_axi  => axiso(CFG_NASTI_SLAVE_DSU),
+    o_cfg  => slv_cfg(CFG_BUS0_XSLV_DSU),
+    i_axi  => axisi(CFG_BUS0_XSLV_DSU),
+    o_axi  => axiso(CFG_BUS0_XSLV_DSU),
     o_dporti => dport_i,
     i_dporto => dport_o,
     o_soft_rst => w_soft_rst,
@@ -233,8 +234,8 @@ dsu_ena : if CFG_DSU_ENABLE generate
   );
 end generate;
 dsu_dis : if not CFG_DSU_ENABLE generate
-    slv_cfg(CFG_NASTI_SLAVE_DSU) <= nasti_slave_config_none;
-    axiso(CFG_NASTI_SLAVE_DSU) <= nasti_slave_out_none;
+    slv_cfg(CFG_BUS0_XSLV_DSU) <= axi4_slave_config_none;
+    axiso(CFG_BUS0_XSLV_DSU) <= axi4_slave_out_none;
     dport_i <= (others => dport_in_none);
 end generate;
 
@@ -252,9 +253,9 @@ end generate;
     i_tdi  => i_jtag_tdi,
     o_tdo  => o_jtag_tdo,
     o_jtag_vref => o_jtag_vref,
-    i_msti   => aximi(CFG_AXI_MASTER_JTAG),
-    o_msto   => aximo(CFG_AXI_MASTER_JTAG),
-    o_mstcfg => mst_cfg(CFG_AXI_MASTER_JTAG)
+    i_msti   => aximi(CFG_BUS0_XMST_JTAG),
+    o_msto   => aximo(CFG_BUS0_XMST_JTAG),
+    o_mstcfg => mst_cfg(CFG_BUS0_XMST_JTAG)
     );
 
   ------------------------------------
@@ -266,9 +267,9 @@ end generate;
     clk    => i_clk, 
     i_uart   => uart2i,
     o_uart   => uart2o,
-    i_msti   => aximi(CFG_NASTI_MASTER_MSTUART),
-    o_msto   => aximo(CFG_NASTI_MASTER_MSTUART),
-    o_mstcfg => mst_cfg(CFG_NASTI_MASTER_MSTUART)
+    i_msti   => aximi(CFG_BUS0_XMST_MSTUART),
+    o_msto   => aximo(CFG_BUS0_XMST_MSTUART),
+    o_mstcfg => mst_cfg(CFG_BUS0_XMST_MSTUART)
   );
   o_uart2_td  <= uart2o.td;
   o_uart2_rtsn <= not uart2o.rts;
@@ -286,9 +287,9 @@ end generate;
   ) port map (
     clk  => i_clk,
     nrst => w_glob_nrst,
-    cfg  => slv_cfg(CFG_NASTI_SLAVE_BOOTROM),
-    i    => axisi(CFG_NASTI_SLAVE_BOOTROM),
-    o    => axiso(CFG_NASTI_SLAVE_BOOTROM)
+    cfg  => slv_cfg(CFG_BUS0_XSLV_BOOTROM),
+    i    => axisi(CFG_BUS0_XSLV_BOOTROM),
+    o    => axiso(CFG_BUS0_XSLV_BOOTROM)
   );
 
   ------------------------------------
@@ -305,9 +306,9 @@ end generate;
   ) port map (
     clk  => i_clk,
     nrst => w_glob_nrst,
-    cfg  => slv_cfg(CFG_NASTI_SLAVE_ROMIMAGE),
-    i    => axisi(CFG_NASTI_SLAVE_ROMIMAGE),
-    o    => axiso(CFG_NASTI_SLAVE_ROMIMAGE)
+    cfg  => slv_cfg(CFG_BUS0_XSLV_ROMIMAGE),
+    i    => axisi(CFG_BUS0_XSLV_ROMIMAGE),
+    o    => axiso(CFG_BUS0_XSLV_ROMIMAGE)
   );
 
   ------------------------------------
@@ -324,9 +325,9 @@ end generate;
   ) port map (
     clk  => i_clk,
     nrst => w_glob_nrst,
-    cfg  => slv_cfg(CFG_NASTI_SLAVE_SRAM),
-    i    => axisi(CFG_NASTI_SLAVE_SRAM),
-    o    => axiso(CFG_NASTI_SLAVE_SRAM)
+    cfg  => slv_cfg(CFG_BUS0_XSLV_SRAM),
+    i    => axisi(CFG_BUS0_XSLV_SRAM),
+    o    => axiso(CFG_BUS0_XSLV_SRAM)
   );
 
 
@@ -343,9 +344,9 @@ end generate;
   ) port map (
     clk   => i_clk,
     nrst  => w_glob_nrst,
-    cfg   => slv_cfg(CFG_NASTI_SLAVE_GPIO),
-    i     => axisi(CFG_NASTI_SLAVE_GPIO),
-    o     => axiso(CFG_NASTI_SLAVE_GPIO),
+    cfg   => slv_cfg(CFG_BUS0_XSLV_GPIO),
+    i     => axisi(CFG_BUS0_XSLV_GPIO),
+    o     => axiso(CFG_BUS0_XSLV_GPIO),
     i_gpio => i_gpio,
     o_gpio => o_gpio,
     o_gpio_dir => o_gpio_dir
@@ -368,11 +369,11 @@ end generate;
   ) port map (
     nrst   => w_glob_nrst, 
     clk    => i_clk, 
-    cfg    => slv_cfg(CFG_NASTI_SLAVE_UART1),
+    cfg    => slv_cfg(CFG_BUS0_XSLV_UART1),
     i_uart => uart1i, 
     o_uart => uart1o,
-    i_axi  => axisi(CFG_NASTI_SLAVE_UART1),
-    o_axi  => axiso(CFG_NASTI_SLAVE_UART1),
+    i_axi  => axisi(CFG_BUS0_XSLV_UART1),
+    o_axi  => axiso(CFG_BUS0_XSLV_UART1),
     o_irq  => irq_pins(CFG_IRQ_UART1)
   );
   o_uart1_td  <= uart1o.td;
@@ -391,9 +392,9 @@ end generate;
     clk    => i_clk,
     nrst   => w_bus_nrst,
     i_irqs => irq_pins,
-    o_cfg  => slv_cfg(CFG_NASTI_SLAVE_IRQCTRL),
-    i_axi  => axisi(CFG_NASTI_SLAVE_IRQCTRL),
-    o_axi  => axiso(CFG_NASTI_SLAVE_IRQCTRL),
+    o_cfg  => slv_cfg(CFG_BUS0_XSLV_IRQCTRL),
+    i_axi  => axisi(CFG_BUS0_XSLV_IRQCTRL),
+    o_axi  => axiso(CFG_BUS0_XSLV_IRQCTRL),
     o_irq_meip => w_ext_irq
   );
 
@@ -409,9 +410,9 @@ end generate;
   ) port map (
     clk    => i_clk,
     nrst   => w_glob_nrst,
-    cfg    => slv_cfg(CFG_NASTI_SLAVE_GPTIMERS),
-    i_axi  => axisi(CFG_NASTI_SLAVE_GPTIMERS),
-    o_axi  => axiso(CFG_NASTI_SLAVE_GPTIMERS),
+    cfg    => slv_cfg(CFG_BUS0_XSLV_GPTIMERS),
+    i_axi  => axisi(CFG_BUS0_XSLV_GPTIMERS),
+    o_axi  => axiso(CFG_BUS0_XSLV_GPTIMERS),
     o_irq  => irq_pins(CFG_IRQ_GPTIMERS)
   );
 
@@ -454,14 +455,14 @@ end generate;
    ) port map (
       rst => w_glob_nrst,
       clk => i_clk,
-      msti => aximi(CFG_NASTI_MASTER_ETHMAC),
-      msto => aximo(CFG_NASTI_MASTER_ETHMAC),
-      mstcfg => mst_cfg(CFG_NASTI_MASTER_ETHMAC),
+      msti => aximi(CFG_BUS0_XMST_ETHMAC),
+      msto => aximo(CFG_BUS0_XMST_ETHMAC),
+      mstcfg => mst_cfg(CFG_BUS0_XMST_ETHMAC),
       msto2 => open,    -- EDCL separate access is disabled
       mstcfg2 => open,  -- EDCL separate access is disabled
-      slvi => axisi(CFG_NASTI_SLAVE_ETHMAC),
-      slvo => axiso(CFG_NASTI_SLAVE_ETHMAC),
-      slvcfg => slv_cfg(CFG_NASTI_SLAVE_ETHMAC),
+      slvi => axisi(CFG_BUS0_XSLV_ETHMAC),
+      slvo => axiso(CFG_BUS0_XSLV_ETHMAC),
+      slvcfg => slv_cfg(CFG_BUS0_XSLV_ETHMAC),
       ethi => eth_i,
       etho => eth_o,
       irq => irq_pins(CFG_IRQ_ETHMAC)
@@ -471,10 +472,10 @@ end generate;
   
   --! Ethernet disabled
   eth0_dis : if not CFG_ETHERNET_ENABLE generate 
-      slv_cfg(CFG_NASTI_SLAVE_ETHMAC) <= nasti_slave_config_none;
-      axiso(CFG_NASTI_SLAVE_ETHMAC) <= nasti_slave_out_none;
-      mst_cfg(CFG_NASTI_MASTER_ETHMAC) <= nasti_master_config_none;
-      aximo(CFG_NASTI_MASTER_ETHMAC) <= nasti_master_out_none;
+      slv_cfg(CFG_BUS0_XSLV_ETHMAC) <= axi4_slave_config_none;
+      axiso(CFG_BUS0_XSLV_ETHMAC) <= axi4_slave_out_none;
+      mst_cfg(CFG_BUS0_XMST_ETHMAC) <= axi4_master_config_none;
+      aximo(CFG_BUS0_XMST_ETHMAC) <= axi4_master_out_none;
       irq_pins(CFG_IRQ_ETHMAC) <= '0';
 		eth_i.gtx_clk <= '0';
       eth_o   <= eth_out_none;
@@ -505,9 +506,9 @@ end generate;
     nrst   => w_glob_nrst,
     mstcfg => mst_cfg,
     slvcfg => slv_cfg,
-    cfg    => slv_cfg(CFG_NASTI_SLAVE_PNP),
-    i      => axisi(CFG_NASTI_SLAVE_PNP),
-    o      => axiso(CFG_NASTI_SLAVE_PNP)
+    cfg    => slv_cfg(CFG_BUS0_XSLV_PNP),
+    i      => axisi(CFG_BUS0_XSLV_PNP),
+    o      => axiso(CFG_BUS0_XSLV_PNP)
   );
 
 

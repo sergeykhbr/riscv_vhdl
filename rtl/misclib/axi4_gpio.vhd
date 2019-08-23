@@ -34,9 +34,9 @@ entity axi4_gpio is
   port (
     clk  : in std_logic;
     nrst : in std_logic;
-    cfg  : out nasti_slave_config_type;
-    i    : in  nasti_slave_in_type;
-    o    : out nasti_slave_out_type;
+    cfg  : out axi4_slave_config_type;
+    i    : in  axi4_slave_in_type;
+    o    : out axi4_slave_out_type;
     i_gpio : in std_logic_vector(width-1 downto 0);
     o_gpio : out std_logic_vector(width-1 downto 0);
     o_gpio_dir : out std_logic_vector(width-1 downto 0)
@@ -45,7 +45,7 @@ end;
  
 architecture arch_axi4_gpio of axi4_gpio is
 
-  constant xconfig : nasti_slave_config_type := (
+  constant xconfig : axi4_slave_config_type := (
      descrtype => PNP_CFG_TYPE_SLAVE,
      descrsize => PNP_CFG_SLAVE_DESCR_BYTES,
      irq_idx => conv_std_logic_vector(xirq, 8),

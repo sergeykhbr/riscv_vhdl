@@ -36,16 +36,16 @@ entity axi4_gptimers is
   port (
     clk    : in  std_logic;
     nrst   : in  std_logic;
-    cfg    : out nasti_slave_config_type;
-    i_axi  : in  nasti_slave_in_type;
-    o_axi  : out nasti_slave_out_type;
+    cfg    : out axi4_slave_config_type;
+    i_axi  : in  axi4_slave_in_type;
+    o_axi  : out axi4_slave_out_type;
     o_irq  : out std_logic
   );
 end; 
  
 architecture arch_axi4_gptimers of axi4_gptimers is
 
-  constant xconfig : nasti_slave_config_type := (
+  constant xconfig : axi4_slave_config_type := (
      descrtype => PNP_CFG_TYPE_SLAVE,
      descrsize => PNP_CFG_SLAVE_DESCR_BYTES,
      irq_idx => conv_std_logic_vector(xirq, 8),

@@ -132,7 +132,7 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../ambalib/axictrl.vhd">
+      <File Path="$PPRDIR/../../ambalib/axictrl_bus0.vhd">
         <FileInfo>
           <Attr Name="Library" Val="ambalib"/>
           <Attr Name="UsedIn" Val="synthesis"/>

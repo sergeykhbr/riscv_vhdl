@@ -22,8 +22,8 @@ entity eth_axi_mst is
   port(
     rst     : in  std_ulogic;
     clk     : in  std_ulogic;
-    aximi   : in  nasti_master_in_type;
-    aximo   : out nasti_master_out_type;
+    aximi   : in  axi4_master_in_type;
+    aximo   : out axi4_master_out_type;
     tmsti   : in  eth_tx_ahb_in_type;
     tmsto   : out eth_tx_ahb_out_type;
     rmsti   : in  eth_rx_ahb_in_type;
@@ -72,22 +72,22 @@ begin
   variable v       : reg_type;
   variable xmsti : eth_in_type;
   variable xmsto : eth_out_vector;
-  variable vaximo   : nasti_master_out_type;
+  variable vaximo   : axi4_master_out_type;
   variable rdata_lsb : std_logic_vector(31 downto 0);
   variable wdata_lsb : std_logic_vector(31 downto 0);
   begin
     v := r;
 
     
-    vaximo := nasti_master_out_none;
+    vaximo := axi4_master_out_none;
     vaximo.ar_user       := '0';
     vaximo.ar_id         := conv_std_logic_vector(0, CFG_ROCKET_ID_BITS);
     vaximo.ar_bits.size  := "010"; -- 4 bytes
-    vaximo.ar_bits.burst := NASTI_BURST_INCR;
+    vaximo.ar_bits.burst := AXI_BURST_INCR;
     vaximo.aw_user       := '0';
     vaximo.aw_id         := conv_std_logic_vector(0, CFG_ROCKET_ID_BITS);
     vaximo.aw_bits.size  := "010"; -- 4 bytes
-    vaximo.aw_bits.burst := NASTI_BURST_INCR;
+    vaximo.aw_bits.burst := AXI_BURST_INCR;
     
     xmsto := (others => ('0', rdata_lsb, '0', '0', '0'));
 

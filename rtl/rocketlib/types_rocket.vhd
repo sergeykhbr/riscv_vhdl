@@ -136,7 +136,7 @@ constant MEM_ADDR_BITS : integer := 26;
     MT_BU => "100",
     MT_HU => "101",
     MT_WU => "110",
-    MT_Q => conv_std_logic_vector(log2(CFG_NASTI_DATA_BYTES),3)
+    MT_Q => conv_std_logic_vector(log2(CFG_SYSBUS_DATA_BYTES),3)
   );
 
 
@@ -198,7 +198,7 @@ end record;
     built_in  : in std_logic;
     u         : in std_logic_vector(10 downto 0);--was 16
     write     : out std_logic;
-    wmask     : out std_logic_vector(CFG_NASTI_DATA_BYTES-1 downto 0);
+    wmask     : out std_logic_vector(CFG_SYSBUS_DATA_BYTES-1 downto 0);
     axi_sz    : out std_logic_vector(2 downto 0);
     byte_addr : out std_logic_vector(2 downto 0);
     beat_cnt  : out integer
@@ -228,12 +228,12 @@ generic (
 port ( 
     nrst     : in std_logic;
     clk_sys  : in std_logic;
-    msti1    : in nasti_master_in_type;
-    msto1    : out nasti_master_out_type;
-    mstcfg1  : out nasti_master_config_type;
-    msti2    : in nasti_master_in_type;
-    msto2    : out nasti_master_out_type;
-    mstcfg2  : out nasti_master_config_type;
+    msti1    : in axi4_master_in_type;
+    msto1    : out axi4_master_out_type;
+    mstcfg1  : out axi4_master_config_type;
+    msti2    : in axi4_master_in_type;
+    msto2    : out axi4_master_out_type;
+    mstcfg2  : out axi4_master_config_type;
     interrupts : in std_logic_vector(CFG_CORE_IRQ_TOTAL-1 downto 0)
 );
 end component;
@@ -275,7 +275,7 @@ package body types_rocket is
     built_in  : in std_logic;
     u         : in std_logic_vector(10 downto 0);--was 16
     write     : out std_logic;
-    wmask     : out std_logic_vector(CFG_NASTI_DATA_BYTES-1 downto 0);
+    wmask     : out std_logic_vector(CFG_SYSBUS_DATA_BYTES-1 downto 0);
     axi_sz    : out std_logic_vector(2 downto 0);
     byte_addr : out std_logic_vector(2 downto 0);
     beat_cnt  : out integer
@@ -301,23 +301,23 @@ package body types_rocket is
           write := '0';
           wmask := (others => '0');
           byte_addr := (others => '0');
-          axi_sz := conv_std_logic_vector(CFG_NASTI_ADDR_OFFSET,3);
+          axi_sz := conv_std_logic_vector(CFG_SYSBUS_ADDR_OFFSET,3);
           beat_cnt := 7;--3;--tlDataBeats-1; 
       when ACQUIRE_PUT_SINGLE_DATA_BEAT =>
           -- Single beat data.
           write := '1';
           --! union used as: 
           --!   wmask[log2(64)-1:0] & alloc[0]
-          wmask := u(CFG_NASTI_DATA_BYTES downto 1);
+          wmask := u(CFG_SYSBUS_DATA_BYTES downto 1);
           byte_addr := (others => '0');
-          axi_sz := conv_std_logic_vector(CFG_NASTI_ADDR_OFFSET,3);
+          axi_sz := conv_std_logic_vector(CFG_SYSBUS_ADDR_OFFSET,3);
           beat_cnt := 0;
       when ACQUIRE_PUT_BLOCK_DATA =>
           -- Multibeat data.
           write := '1';
           wmask := (others => '1');
           byte_addr := (others => '0');
-          axi_sz := conv_std_logic_vector(CFG_NASTI_ADDR_OFFSET,3);
+          axi_sz := conv_std_logic_vector(CFG_SYSBUS_ADDR_OFFSET,3);
           beat_cnt := 7;--3;--tlDataBeats-1; 
       when ACQUIRE_PUT_ATOMIC_DATA =>
           -- Single beat data. 64 bits width
@@ -363,7 +363,7 @@ package body types_rocket is
           --wmask := u(CFG_NASTI_DATA_BYTES downto 1);
           wmask := (others => '1');
           byte_addr := (others => '0');
-          axi_sz := conv_std_logic_vector(CFG_NASTI_ADDR_OFFSET,3);
+          axi_sz := conv_std_logic_vector(CFG_SYSBUS_ADDR_OFFSET,3);
           beat_cnt := 0;
       when others =>
           write := '0';

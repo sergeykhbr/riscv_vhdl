@@ -25,9 +25,30 @@ use techmap.gencomp.all;
 --! CPU, System Bus and common peripheries library.
 library ambalib;
 use ambalib.types_amba4.all;
+use ambalib.types_bus0.all;
 
 --! @brief   Declaration of components visible on SoC top level.
 package types_misc is
+
+--! @defgroup irq_id_group AXI4 interrupt generic IDs.
+--! @ingroup axi4_config_generic_group
+--! @details Unique indentificator of the interrupt pin also used
+--!          as an index in the interrupts bus.
+--! @{
+
+--! Zero interrupt index must be unused.
+constant CFG_IRQ_UNUSED         : integer := 0;
+--! UART_A interrupt pin.
+constant CFG_IRQ_UART1          : integer := 1;
+--! Ethernet MAC interrupt pin.
+constant CFG_IRQ_ETHMAC         : integer := 2;
+--! GP Timers interrupt pin
+constant CFG_IRQ_GPTIMERS       : integer := 3;
+--! GNSS Engine IRQ pin that generates 1 msec pulses.
+constant CFG_IRQ_GNSSENGINE     : integer := 4;
+--! Total number of used interrupts in a system
+constant CFG_IRQ_TOTAL          : integer := 5;
+--! @}
 
 --! @brief SOC global reset former.
 --! @details This module produces output reset signal in a case if
@@ -55,9 +76,9 @@ generic (
 port (
     clk  : in std_logic;
     nrst : in std_logic;
-    cfg  : out nasti_slave_config_type;
-    i    : in  nasti_slave_in_type;
-    o    : out nasti_slave_out_type
+    cfg  : out axi4_slave_config_type;
+    i    : in  axi4_slave_in_type;
+    o    : out axi4_slave_out_type
   );
 end component; 
 
@@ -74,9 +95,9 @@ component axi4_sram is
   port (
     clk  : in std_logic;
     nrst : in std_logic;
-    cfg  : out nasti_slave_config_type;
-    i    : in  nasti_slave_in_type;
-    o    : out nasti_slave_out_type
+    cfg  : out axi4_slave_config_type;
+    i    : in  axi4_slave_in_type;
+    o    : out axi4_slave_out_type
   );
 end component; 
 
@@ -102,11 +123,11 @@ component axi4_flashspi is
   port (
     clk    : in  std_logic;
     nrst   : in  std_logic;
-    cfg    : out  nasti_slave_config_type;
+    cfg    : out axi4_slave_config_type;
     i_spi  : in  spi_in_type;
     o_spi  : out spi_out_type;
-    i_axi  : in  nasti_slave_in_type;
-    o_axi  : out nasti_slave_out_type  );
+    i_axi  : in  axi4_slave_in_type;
+    o_axi  : out axi4_slave_out_type  );
 end component; 
 
 --! @brief AXI4 GPIO controller
@@ -121,9 +142,9 @@ component axi4_gpio is
   port (
     clk  : in std_logic;
     nrst : in std_logic;
-    cfg  : out nasti_slave_config_type;
-    i    : in  nasti_slave_in_type;
-    o    : out nasti_slave_out_type;
+    cfg  : out axi4_slave_config_type;
+    i    : in  axi4_slave_in_type;
+    o    : out axi4_slave_out_type;
     i_gpio : in std_logic_vector(width-1 downto 0);
     o_gpio : out std_logic_vector(width-1 downto 0);
     o_gpio_dir : out std_logic_vector(width-1 downto 0)
@@ -152,11 +173,11 @@ component axi4_uart is
   port (
     clk    : in  std_logic;
     nrst   : in  std_logic;
-    cfg    : out  nasti_slave_config_type;
+    cfg    : out axi4_slave_config_type;
     i_uart : in  uart_in_type;
     o_uart : out uart_out_type;
-    i_axi  : in  nasti_slave_in_type;
-    o_axi  : out nasti_slave_out_type;
+    i_axi  : in  axi4_slave_in_type;
+    o_axi  : out axi4_slave_out_type;
     o_irq  : out std_logic);
 end component;
 
@@ -167,9 +188,9 @@ component uart_tap is
     clk      : in std_logic;
     i_uart   : in  uart_in_type;
     o_uart   : out uart_out_type;
-    i_msti   : in nasti_master_in_type;
-    o_msto   : out nasti_master_out_type;
-    o_mstcfg : out nasti_master_config_type
+    i_msti   : in axi4_master_in_type;
+    o_msto   : out axi4_master_out_type;
+    o_mstcfg : out axi4_master_config_type
   );
 end component; 
 
@@ -187,9 +208,9 @@ component tap_jtag is
     i_tdi   : in std_logic;   -- in: Test Data Input
     o_tdo   : out std_logic;   -- out: Test Data Output
     o_jtag_vref : out std_logic;
-    i_msti   : in nasti_master_in_type;
-    o_msto   : out nasti_master_out_type;
-    o_mstcfg : out nasti_master_config_type
+    i_msti   : in axi4_master_in_type;
+    o_msto   : out axi4_master_out_type;
+    o_mstcfg : out axi4_master_config_type
     );
 end component;
 
@@ -207,9 +228,9 @@ component axi4_irqctrl is
     clk    : in std_logic;
     nrst   : in std_logic;
     i_irqs : in std_logic_vector(CFG_IRQ_TOTAL-1 downto 1);
-    o_cfg  : out nasti_slave_config_type;
-    i_axi  : in nasti_slave_in_type;
-    o_axi  : out nasti_slave_out_type;
+    o_cfg  : out axi4_slave_config_type;
+    i_axi  : in axi4_slave_in_type;
+    o_axi  : out axi4_slave_out_type;
     o_irq_meip : out std_logic
   );
   end component;
@@ -228,9 +249,9 @@ component axi4_irqctrl is
   port (
     clk    : in  std_logic;
     nrst   : in  std_logic;
-    cfg    : out nasti_slave_config_type;
-    i_axi  : in  nasti_slave_in_type;
-    o_axi  : out nasti_slave_out_type;
+    cfg    : out axi4_slave_config_type;
+    i_axi  : in  axi4_slave_in_type;
+    o_axi  : out axi4_slave_out_type;
     o_irq  : out std_logic
   );
   end component; 
@@ -252,14 +273,12 @@ component axi4_pnp is
     sys_clk : in  std_logic;
     adc_clk : in  std_logic;
     nrst   : in  std_logic;
-    mstcfg : in  nasti_master_cfg_vector;
-    slvcfg : in  nasti_slave_cfg_vector;
-    cfg    : out  nasti_slave_config_type;
-    i      : in  nasti_slave_in_type;
-    o      : out nasti_slave_out_type
+    mstcfg : in  bus0_xmst_cfg_vector;
+    slvcfg : in  bus0_xslv_cfg_vector;
+    cfg    : out  axi4_slave_config_type;
+    i      : in  axi4_slave_in_type;
+    o      : out axi4_slave_out_type
   );
 end component; 
-
-
 
 end; -- package declaration

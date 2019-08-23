@@ -24,6 +24,7 @@ use commonlib.types_common.all;
 library ambalib;
 --! AXI4 configuration constants.
 use ambalib.types_amba4.all;
+use ambalib.types_bus0.all;
 
 --! @brief Hardware Configuration storage with the AMBA AXI4 interface.
 entity axi4_pnp is
@@ -38,17 +39,17 @@ entity axi4_pnp is
     sys_clk : in  std_logic;
     adc_clk : in  std_logic;
     nrst   : in  std_logic;
-    mstcfg : in  nasti_master_cfg_vector;
-    slvcfg : in  nasti_slave_cfg_vector;
-    cfg    : out  nasti_slave_config_type;
-    i      : in  nasti_slave_in_type;
-    o      : out nasti_slave_out_type
+    mstcfg : in  bus0_xmst_cfg_vector;
+    slvcfg : in  bus0_xslv_cfg_vector;
+    cfg    : out axi4_slave_config_type;
+    i      : in  axi4_slave_in_type;
+    o      : out axi4_slave_out_type
   );
 end; 
  
 architecture axi4_nasti_pnp of axi4_pnp is
 
-  constant xconfig : nasti_slave_config_type := (
+  constant xconfig : axi4_slave_config_type := (
      descrsize => PNP_CFG_SLAVE_DESCR_BYTES,
      descrtype => PNP_CFG_TYPE_SLAVE,
      irq_idx => conv_std_logic_vector(0, 8),
@@ -58,10 +59,10 @@ architecture axi4_nasti_pnp of axi4_pnp is
      did => GNSSSENSOR_PNP
   );
 
-  type master_config_map is array (0 to 2*CFG_NASTI_MASTER_TOTAL-1)
+  type master_config_map is array (0 to 2*CFG_BUS0_XMST_TOTAL-1)
        of std_logic_vector(31 downto 0);
        
-  type slave_config_map is array (0 to 4*CFG_NASTI_SLAVES_TOTAL-1)
+  type slave_config_map is array (0 to 4*CFG_BUS0_XSLV_TOTAL-1)
        of std_logic_vector(31 downto 0);
 
   type registers is record
@@ -133,12 +134,12 @@ begin
     v.raddr := wb_bus_raddr;
     v.adc_detect := r_adc_detect;
 
-    for k in 0 to CFG_NASTI_MASTER_TOTAL-1 loop
+    for k in 0 to CFG_BUS0_XMST_TOTAL-1 loop
       mstmap(2*k) := "00" & X"00000" & mstcfg(k).descrtype & mstcfg(k).descrsize;
       mstmap(2*k+1) := mstcfg(k).vid & mstcfg(k).did;
     end loop;
 
-    for k in 0 to CFG_NASTI_SLAVES_TOTAL-1 loop
+    for k in 0 to CFG_BUS0_XSLV_TOTAL-1 loop
       slvmap(4*k) := X"00" & 
                      slvcfg(k).irq_idx & "000000" &
                      slvcfg(k).descrtype & slvcfg(k).descrsize;
@@ -159,8 +160,8 @@ begin
           rtmp := r.fw_id;
        elsif raddr = 2 then 
           rtmp := r.adc_detect 
-              & conv_std_logic_vector(CFG_NASTI_MASTER_TOTAL,8)
-              & conv_std_logic_vector(CFG_NASTI_SLAVES_TOTAL,8)
+              & conv_std_logic_vector(CFG_BUS0_XMST_TOTAL,8)
+              & conv_std_logic_vector(CFG_BUS0_XSLV_TOTAL,8)
               & conv_std_logic_vector(tech,8);
        elsif raddr = 3 then 
           -- reserved
@@ -180,11 +181,11 @@ begin
           rtmp := r.fwdbg1(31 downto 0);
        elsif raddr = 11 then 
           rtmp := r.fwdbg1(63 downto 32);
-       elsif raddr >= 16 and raddr < 16+2*CFG_NASTI_MASTER_TOTAL then
+       elsif raddr >= 16 and raddr < 16+2*CFG_BUS0_XMST_TOTAL then
           rtmp := mstmap(raddr - 16);
-       elsif raddr >= 16+2*CFG_NASTI_MASTER_TOTAL 
-             and raddr < 16+2*CFG_NASTI_MASTER_TOTAL+4*CFG_NASTI_SLAVES_TOTAL then
-          rtmp := slvmap(raddr - 16 - 2*CFG_NASTI_MASTER_TOTAL);
+       elsif raddr >= 16+2*CFG_BUS0_XMST_TOTAL 
+             and raddr < 16+2*CFG_BUS0_XMST_TOTAL+4*CFG_BUS0_XSLV_TOTAL then
+          rtmp := slvmap(raddr - 16 - 2*CFG_BUS0_XMST_TOTAL);
        end if;
        
        vrdata(32*(n+1)-1 downto 32*n) := rtmp;

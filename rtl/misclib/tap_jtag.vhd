@@ -36,10 +36,10 @@ entity tap_jtag is
     i_tms   : in std_logic;   -- in: Test Mode State
     i_tdi   : in std_logic;   -- in: Test Data Input
     o_tdo   : out std_logic;   -- out: Test Data Output
-	 o_jtag_vref : out std_logic;
-    i_msti   : in nasti_master_in_type;
-    o_msto   : out nasti_master_out_type;
-    o_mstcfg : out nasti_master_config_type
+    o_jtag_vref : out std_logic;
+    i_msti   : in axi4_master_in_type;
+    o_msto   : out axi4_master_out_type;
+    o_mstcfg : out axi4_master_config_type
     );
 end;
 
@@ -48,7 +48,7 @@ architecture rtl of tap_jtag is
 
   constant ADDBITS : integer := 10;
 
-  constant xmstconfig : nasti_master_config_type := (
+  constant xmstconfig : axi4_master_config_type := (
      descrsize => PNP_CFG_MASTER_DESCR_BYTES,
      descrtype => PNP_CFG_TYPE_MASTER,
      vid => VENDOR_GNSSSENSOR,
@@ -170,7 +170,7 @@ begin
     variable write, seq : std_ulogic;
     variable wb_dma_request : dma_request_type;
     variable wb_dma_response : dma_response_type;
-    variable wb_msto : nasti_master_out_type;
+    variable wb_msto : axi4_master_out_type;
 
   begin
 

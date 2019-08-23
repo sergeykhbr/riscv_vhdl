@@ -24,6 +24,8 @@ use commonlib.types_common.all;
 library ambalib;
 --! AXI4 configuration constants.
 use ambalib.types_amba4.all;
+use ambalib.types_bus0.all; -- TODO: REMOVE ME when update dsu
+
 --! RIVER CPU specific library.
 library riverlib;
 --! RIVER CPU configuration constants.
@@ -82,14 +84,14 @@ type dport_out_vector is array (0 to CFG_CORES_PER_DSU_MAX-1)
   (
     clk    : in std_logic;
     nrst   : in std_logic;
-    o_cfg  : out nasti_slave_config_type;
-    i_axi  : in nasti_slave_in_type;
-    o_axi  : out nasti_slave_out_type;
+    o_cfg  : out axi4_slave_config_type;
+    i_axi  : in axi4_slave_in_type;
+    o_axi  : out axi4_slave_out_type;
     o_dporti : out dport_in_vector;
     i_dporto : in dport_out_vector;
     o_soft_rst : out std_logic;
-    i_bus_util_w : in std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0);
-    i_bus_util_r : in std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0)
+    i_bus_util_w : in std_logic_vector(CFG_BUS0_XMST_TOTAL-1 downto 0);
+    i_bus_util_r : in std_logic_vector(CFG_BUS0_XMST_TOTAL-1 downto 0)
   );
   end component;
 
@@ -112,9 +114,9 @@ component river_amba is
   port ( 
     i_nrst   : in std_logic;
     i_clk    : in std_logic;
-    i_msti   : in nasti_master_in_type;
-    o_msto   : out nasti_master_out_type;
-    o_mstcfg : out nasti_master_config_type;
+    i_msti   : in axi4_master_in_type;
+    o_msto   : out axi4_master_out_type;
+    o_mstcfg : out axi4_master_config_type;
     i_dport  : in dport_in_type;
     o_dport  : out dport_out_type;
     i_ext_irq : in std_logic

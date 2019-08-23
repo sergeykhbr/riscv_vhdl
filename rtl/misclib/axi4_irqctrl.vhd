@@ -37,16 +37,16 @@ entity axi4_irqctrl is
     clk    : in std_logic;
     nrst   : in std_logic;
     i_irqs : in std_logic_vector(CFG_IRQ_TOTAL-1 downto 1);
-    o_cfg  : out nasti_slave_config_type;
-    i_axi  : in nasti_slave_in_type;
-    o_axi  : out nasti_slave_out_type;
+    o_cfg  : out axi4_slave_config_type;
+    i_axi  : in axi4_slave_in_type;
+    o_axi  : out axi4_slave_out_type;
     o_irq_meip : out std_logic
   );
 end;
 
 architecture axi4_irqctrl_rtl of axi4_irqctrl is
 
-  constant xconfig : nasti_slave_config_type := (
+  constant xconfig : axi4_slave_config_type := (
      descrtype => PNP_CFG_TYPE_SLAVE,
      descrsize => PNP_CFG_SLAVE_DESCR_BYTES,
      irq_idx => conv_std_logic_vector(0, 8),

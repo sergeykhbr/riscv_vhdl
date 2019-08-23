@@ -34,13 +34,13 @@ entity Rom_inferred is
   port (
     clk     : in  std_ulogic;
     address : in global_addr_array_type;
-    data    : out std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0)
+    data    : out std_logic_vector(CFG_SYSBUS_DATA_BITS-1 downto 0)
   );
 end;
 
 architecture rtl of Rom_inferred is
 
-constant ROM_LENGTH : integer := 2**(abits - log2(CFG_NASTI_DATA_BYTES));
+constant ROM_LENGTH : integer := 2**(abits - log2(CFG_SYSBUS_DATA_BYTES));
 
 type rom_block is array (0 to ROM_LENGTH-1) of std_logic_vector(31 downto 0);
 type rom_type is array (0 to CFG_WORDS_ON_BUS-1) of rom_block;
@@ -50,7 +50,7 @@ type local_addr_arr is array (0 to CFG_WORDS_ON_BUS-1) of integer;
 impure function init_rom(file_name : in string) return rom_type is
     file rom_file : text open read_mode is file_name;
     variable rom_line : line;
-    variable temp_bv : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
+    variable temp_bv : std_logic_vector(CFG_SYSBUS_DATA_BITS-1 downto 0);
     variable temp_mem : rom_type;
 begin
     for i in 0 to (ROM_LENGTH-1) loop
@@ -72,7 +72,7 @@ begin
   begin
     if rising_edge(clk) then 
         for n in 0 to CFG_WORDS_ON_BUS-1 loop
-            t_adr(n) := conv_integer(address(n)(abits-1 downto log2(CFG_NASTI_DATA_BYTES)));
+            t_adr(n) := conv_integer(address(n)(abits-1 downto log2(CFG_SYSBUS_DATA_BYTES)));
             data(32*(n+1)-1 downto 32*n) <= rom(n)(t_adr(n));
         end loop;
     end if;

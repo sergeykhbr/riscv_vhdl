@@ -34,6 +34,7 @@ use commonlib.types_common.all;
 library ambalib;
 --! AXI4 configuration constants.
 use ambalib.types_amba4.all;
+use ambalib.types_bus0.all; -- TODO: REMOVE ME when update dsu
 --! RIVER CPU specific library.
 library riverlib;
 --! RIVER CPU configuration constants.
@@ -51,22 +52,22 @@ entity axi_dsu is
   (
     clk    : in std_logic;
     nrst   : in std_logic;
-    o_cfg  : out nasti_slave_config_type;
-    i_axi  : in nasti_slave_in_type;
-    o_axi  : out nasti_slave_out_type;
+    o_cfg  : out axi4_slave_config_type;
+    i_axi  : in axi4_slave_in_type;
+    o_axi  : out axi4_slave_out_type;
     o_dporti : out dport_in_vector;
     i_dporto : in dport_out_vector;
     --! reset CPU and interrupt controller
     o_soft_rst : out std_logic;
     -- Platfrom run-time statistic
-    i_bus_util_w : in std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0);
-    i_bus_util_r : in std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0)
+    i_bus_util_w : in std_logic_vector(CFG_BUS0_XMST_TOTAL-1 downto 0);
+    i_bus_util_r : in std_logic_vector(CFG_BUS0_XMST_TOTAL-1 downto 0)
   );
 end;
 
 architecture arch_axi_dsu of axi_dsu is
 
-  constant xconfig : nasti_slave_config_type := (
+  constant xconfig : axi4_slave_config_type := (
      descrtype => PNP_CFG_TYPE_SLAVE,
      descrsize => PNP_CFG_SLAVE_DESCR_BYTES,
      irq_idx => conv_std_logic_vector(0, 8),
@@ -80,10 +81,10 @@ architecture arch_axi_dsu of axi_dsu is
 
   type state_type is (idle, read_internal, read_dport, dport_response, read_msw32);
   
-  type mst_utilization_type is array (0 to CFG_NASTI_MASTER_TOTAL-1) 
+  type mst_utilization_type is array (0 to CFG_BUS0_XMST_TOTAL-1) 
          of std_logic_vector(63 downto 0);
 
-  type mst_utilization_map_type is array (0 to 2*CFG_NASTI_MASTER_TOTAL-1) 
+  type mst_utilization_map_type is array (0 to 2*CFG_BUS0_XMST_TOTAL-1) 
          of std_logic_vector(63 downto 0);
 
   type registers is record
@@ -159,7 +160,8 @@ begin
     -- Update statistic:
     v.clk_cnt := r.clk_cnt + 1;
 
-    for n in 0 to CFG_NASTI_MASTER_TOTAL-1 loop
+    -- TODO: move out these stuffs to bus-tracer
+    for n in 0 to CFG_BUS0_XMST_TOTAL-1 loop
         if i_bus_util_w(n) = '1' then
             v.util_w_cnt(n) := r.util_w_cnt(n) + 1;
         end if;
@@ -168,7 +170,7 @@ begin
         end if;
     end loop;
 
-    for n in 0 to CFG_NASTI_MASTER_TOTAL-1 loop
+    for n in 0 to CFG_BUS0_XMST_TOTAL-1 loop
         wb_bus_util_map(2*n) := r.util_w_cnt(n);
         wb_bus_util_map(2*n+1) := r.util_r_cnt(n);
     end loop;
@@ -182,7 +184,7 @@ begin
     when 1 =>
         vrdata_internal(log2x(CFG_CORES_PER_DSU_MAX)-1 downto 0) := r.cpu_context;
     when others =>
-        if (iraddr >= 8) and (iraddr < (8 + 2*CFG_NASTI_MASTER_TOTAL)) then
+        if (iraddr >= 8) and (iraddr < (8 + 2*CFG_BUS0_XMST_TOTAL)) then
              vrdata_internal := wb_bus_util_map(iraddr - 8);
         end if;
     end case;

@@ -20,56 +20,57 @@ library commonlib;
 use commonlib.types_common.all;
 library ambalib;
 use ambalib.types_amba4.all;
+use ambalib.types_bus0.all;
 
-entity axictrl is
+entity axictrl_bus0 is
   generic (
     async_reset : boolean
   );
   port (
     i_clk    : in std_logic;
     i_nrst   : in std_logic;
-    i_slvcfg : in  nasti_slave_cfg_vector;
-    i_slvo   : in  nasti_slaves_out_vector;
-    i_msto   : in  nasti_master_out_vector;
-    o_slvi   : out nasti_slave_in_vector;
-    o_msti   : out nasti_master_in_vector;
-    o_bus_util_w : out std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0);
-    o_bus_util_r : out std_logic_vector(CFG_NASTI_MASTER_TOTAL-1 downto 0)
+    i_slvcfg : in  bus0_xslv_cfg_vector;
+    i_slvo   : in  bus0_xslv_out_vector;
+    i_msto   : in  bus0_xmst_out_vector;
+    o_slvi   : out bus0_xslv_in_vector;
+    o_msti   : out bus0_xmst_in_vector;
+    o_bus_util_w : out std_logic_vector(CFG_BUS0_XMST_TOTAL-1 downto 0);
+    o_bus_util_r : out std_logic_vector(CFG_BUS0_XMST_TOTAL-1 downto 0)
   );
 end; 
  
-architecture arch_axictrl of axictrl is
+architecture arch_axictrl_bus0 of axictrl_bus0 is
 
-  constant MISS_ACCESS_SLAVE : nasti_slave_out_type := (
-      '1', '1', '1', NASTI_RESP_DECERR,
-      (others=>'0'), '0', '1', '1', NASTI_RESP_DECERR, (others=>'1'), 
+  constant MISS_ACCESS_SLAVE : axi4_slave_out_type := (
+      '1', '1', '1', AXI_RESP_DECERR,
+      (others=>'0'), '0', '1', '1', AXI_RESP_DECERR, (others=>'1'), 
       '1', (others=>'0'), '0');
 
-  type nasti_master_out_vector_miss is array (0 to CFG_NASTI_MASTER_TOTAL) 
-       of nasti_master_out_type;
+  type nasti_master_out_vector_miss is array (0 to CFG_BUS0_XMST_TOTAL) 
+       of axi4_master_out_type;
 
-  type nasti_master_in_vector_miss is array (0 to CFG_NASTI_MASTER_TOTAL) 
-       of nasti_master_in_type;
+  type nasti_master_in_vector_miss is array (0 to CFG_BUS0_XMST_TOTAL) 
+       of axi4_master_in_type;
 
-  type nasti_slave_out_vector_miss is array (0 to CFG_NASTI_SLAVES_TOTAL) 
-       of nasti_slave_out_type;
+  type nasti_slave_out_vector_miss is array (0 to CFG_BUS0_XSLV_TOTAL) 
+       of axi4_slave_out_type;
 
-  type nasti_slave_in_vector_miss is array (0 to CFG_NASTI_SLAVES_TOTAL) 
-       of nasti_slave_in_type;
+  type nasti_slave_in_vector_miss is array (0 to CFG_BUS0_XSLV_TOTAL) 
+       of axi4_slave_in_type;
        
   type reg_type is record
-     r_midx : integer range 0 to CFG_NASTI_MASTER_TOTAL;
-     r_sidx : integer range 0 to CFG_NASTI_SLAVES_TOTAL;
-     w_midx : integer range 0 to CFG_NASTI_MASTER_TOTAL;
-     w_sidx : integer range 0 to CFG_NASTI_SLAVES_TOTAL;
-     b_midx : integer range 0 to CFG_NASTI_MASTER_TOTAL;
-     b_sidx : integer range 0 to CFG_NASTI_SLAVES_TOTAL;
+     r_midx : integer range 0 to CFG_BUS0_XMST_TOTAL;
+     r_sidx : integer range 0 to CFG_BUS0_XSLV_TOTAL;
+     w_midx : integer range 0 to CFG_BUS0_XMST_TOTAL;
+     w_sidx : integer range 0 to CFG_BUS0_XSLV_TOTAL;
+     b_midx : integer range 0 to CFG_BUS0_XMST_TOTAL;
+     b_sidx : integer range 0 to CFG_BUS0_XSLV_TOTAL;
   end record;
 
   constant R_RESET : reg_type := (
-      CFG_NASTI_MASTER_TOTAL, CFG_NASTI_SLAVES_TOTAL,
-      CFG_NASTI_MASTER_TOTAL, CFG_NASTI_SLAVES_TOTAL,
-      CFG_NASTI_MASTER_TOTAL, CFG_NASTI_SLAVES_TOTAL);
+      CFG_BUS0_XMST_TOTAL, CFG_BUS0_XSLV_TOTAL,
+      CFG_BUS0_XMST_TOTAL, CFG_BUS0_XSLV_TOTAL,
+      CFG_BUS0_XMST_TOTAL, CFG_BUS0_XSLV_TOTAL);
 
   signal rin, r : reg_type;
 
@@ -77,10 +78,10 @@ begin
 
   comblogic : process(i_nrst, i_slvcfg, i_msto, i_slvo, r)
     variable v : reg_type;
-    variable ar_midx : integer range 0 to CFG_NASTI_MASTER_TOTAL;
-    variable aw_midx : integer range 0 to CFG_NASTI_MASTER_TOTAL;
-    variable ar_sidx : integer range 0 to CFG_NASTI_SLAVES_TOTAL; -- +1 miss access
-    variable aw_sidx : integer range 0 to CFG_NASTI_SLAVES_TOTAL; -- +1 miss access
+    variable ar_midx : integer range 0 to CFG_BUS0_XMST_TOTAL;
+    variable aw_midx : integer range 0 to CFG_BUS0_XMST_TOTAL;
+    variable ar_sidx : integer range 0 to CFG_BUS0_XSLV_TOTAL; -- +1 miss access
+    variable aw_sidx : integer range 0 to CFG_BUS0_XSLV_TOTAL; -- +1 miss access
     variable vmsto : nasti_master_out_vector_miss;
     variable vmsti : nasti_master_in_vector_miss;
     variable vslvi : nasti_slave_in_vector_miss;
@@ -94,34 +95,34 @@ begin
     variable b_fire : std_logic;
     variable b_busy : std_logic;
     -- Bus statistic signals
-    variable wb_bus_util_w : std_logic_vector(CFG_NASTI_MASTER_TOTAL downto 0);
-    variable wb_bus_util_r : std_logic_vector(CFG_NASTI_MASTER_TOTAL downto 0);
+    variable wb_bus_util_w : std_logic_vector(CFG_BUS0_XMST_TOTAL downto 0);
+    variable wb_bus_util_r : std_logic_vector(CFG_BUS0_XMST_TOTAL downto 0);
 
   begin
 
     v := r;
 
-    for m in 0 to CFG_NASTI_MASTER_TOTAL-1 loop
+    for m in 0 to CFG_BUS0_XMST_TOTAL-1 loop
        vmsto(m) := i_msto(m);
-       vmsti(m) := nasti_master_in_none;
+       vmsti(m) := axi4_master_in_none;
     end loop;
-    vmsto(CFG_NASTI_MASTER_TOTAL) := nasti_master_out_none;
-    vmsti(CFG_NASTI_MASTER_TOTAL) := nasti_master_in_none;
+    vmsto(CFG_BUS0_XMST_TOTAL) := axi4_master_out_none;
+    vmsti(CFG_BUS0_XMST_TOTAL) := axi4_master_in_none;
 
-    for s in 0 to CFG_NASTI_SLAVES_TOTAL-1 loop
+    for s in 0 to CFG_BUS0_XSLV_TOTAL-1 loop
        vslvo(s) := i_slvo(s);
-       vslvi(s) := nasti_slave_in_none;
+       vslvi(s) := axi4_slave_in_none;
     end loop;
-    vslvo(CFG_NASTI_SLAVES_TOTAL) := MISS_ACCESS_SLAVE;
-    vslvi(CFG_NASTI_SLAVES_TOTAL) := nasti_slave_in_none;
+    vslvo(CFG_BUS0_XSLV_TOTAL) := MISS_ACCESS_SLAVE;
+    vslvi(CFG_BUS0_XSLV_TOTAL) := axi4_slave_in_none;
 
-    ar_midx := CFG_NASTI_MASTER_TOTAL;
-    aw_midx := CFG_NASTI_MASTER_TOTAL;
-    ar_sidx := CFG_NASTI_SLAVES_TOTAL;
-    aw_sidx := CFG_NASTI_SLAVES_TOTAL;
+    ar_midx := CFG_BUS0_XMST_TOTAL;
+    aw_midx := CFG_BUS0_XMST_TOTAL;
+    ar_sidx := CFG_BUS0_XSLV_TOTAL;
+    aw_sidx := CFG_BUS0_XSLV_TOTAL;
 
     -- select master bus:
-    for m in 0 to CFG_NASTI_MASTER_TOTAL-1 loop
+    for m in 0 to CFG_BUS0_XMST_TOTAL-1 loop
         if i_msto(m).ar_valid = '1' then
             ar_midx := m;
         end if;
@@ -131,14 +132,14 @@ begin
     end loop;
 
     -- select slave interface
-    for s in 0 to CFG_NASTI_SLAVES_TOTAL-1 loop
+    for s in 0 to CFG_BUS0_XSLV_TOTAL-1 loop
         if i_slvcfg(s).xmask /= X"00000" and
-           (vmsto(ar_midx).ar_bits.addr(CFG_NASTI_ADDR_BITS-1 downto 12) 
+           (vmsto(ar_midx).ar_bits.addr(CFG_SYSBUS_ADDR_BITS-1 downto 12) 
             and i_slvcfg(s).xmask) = i_slvcfg(s).xaddr then
             ar_sidx := s;
         end if;
         if i_slvcfg(s).xmask /= X"00000" and
-           (vmsto(aw_midx).aw_bits.addr(CFG_NASTI_ADDR_BITS-1 downto 12)
+           (vmsto(aw_midx).aw_bits.addr(CFG_SYSBUS_ADDR_BITS-1 downto 12)
             and i_slvcfg(s).xmask) = i_slvcfg(s).xaddr then
             aw_sidx := s;
         end if;
@@ -154,18 +155,18 @@ begin
     b_fire := vmsto(r.b_midx).b_ready and vslvo(r.b_sidx).b_valid;
 
     r_busy := '0';
-    if r.r_sidx /= CFG_NASTI_SLAVES_TOTAL and r_fire = '0' then
+    if r.r_sidx /= CFG_BUS0_XSLV_TOTAL and r_fire = '0' then
         r_busy := '1';
     end if;
 
     w_busy := '0';
-    if (r.w_sidx /= CFG_NASTI_SLAVES_TOTAL and w_fire = '0') 
-       or (r.b_sidx /= CFG_NASTI_SLAVES_TOTAL and b_fire = '0') then
+    if (r.w_sidx /= CFG_BUS0_XSLV_TOTAL and w_fire = '0') 
+       or (r.b_sidx /= CFG_BUS0_XSLV_TOTAL and b_fire = '0') then
         w_busy := '1';
     end if;
 
     b_busy := '0';
-    if (r.b_sidx /= CFG_NASTI_SLAVES_TOTAL and b_fire = '0')  then
+    if (r.b_sidx /= CFG_BUS0_XSLV_TOTAL and b_fire = '0')  then
         b_busy := '1';
     end if;
 
@@ -173,24 +174,24 @@ begin
         v.r_sidx := ar_sidx;
         v.r_midx := ar_midx;
     elsif r_fire = '1' then
-        v.r_sidx := CFG_NASTI_SLAVES_TOTAL;
-        v.r_midx := CFG_NASTI_MASTER_TOTAL;
+        v.r_sidx := CFG_BUS0_XSLV_TOTAL;
+        v.r_midx := CFG_BUS0_XMST_TOTAL;
     end if;
 
     if aw_fire = '1' and w_busy = '0' then
         v.w_sidx := aw_sidx;
         v.w_midx := aw_midx;
     elsif w_fire = '1' and b_busy = '0' then
-        v.w_sidx := CFG_NASTI_SLAVES_TOTAL;
-        v.w_midx := CFG_NASTI_MASTER_TOTAL;
+        v.w_sidx := CFG_BUS0_XSLV_TOTAL;
+        v.w_midx := CFG_BUS0_XMST_TOTAL;
     end if;
 
     if w_fire = '1' and b_busy = '0' then
         v.b_sidx := r.w_sidx;
         v.b_midx := r.w_midx;
     elsif b_fire = '1' then
-        v.b_sidx := CFG_NASTI_SLAVES_TOTAL;
-        v.b_midx := CFG_NASTI_MASTER_TOTAL;
+        v.b_sidx := CFG_BUS0_XSLV_TOTAL;
+        v.b_midx := CFG_BUS0_XMST_TOTAL;
     end if;
 
 
@@ -240,14 +241,14 @@ begin
  
     rin <= v;
 
-    for m in 0 to CFG_NASTI_MASTER_TOTAL-1 loop
+    for m in 0 to CFG_BUS0_XMST_TOTAL-1 loop
        o_msti(m) <= vmsti(m);
     end loop;
-    for s in 0 to CFG_NASTI_SLAVES_TOTAL-1 loop
+    for s in 0 to CFG_BUS0_XSLV_TOTAL-1 loop
        o_slvi(s) <= vslvi(s);
     end loop;
-    o_bus_util_w <= wb_bus_util_w(CFG_NASTI_MASTER_TOTAL-1 downto 0);
-    o_bus_util_r <= wb_bus_util_r(CFG_NASTI_MASTER_TOTAL-1 downto 0);
+    o_bus_util_w <= wb_bus_util_w(CFG_BUS0_XMST_TOTAL-1 downto 0);
+    o_bus_util_r <= wb_bus_util_r(CFG_BUS0_XMST_TOTAL-1 downto 0);
   end process;
 
   regs : process(i_clk, i_nrst)

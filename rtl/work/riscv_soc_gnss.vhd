@@ -35,6 +35,7 @@ use techmap.types_buf.all;
 library ambalib;
 --! AXI4 configuration constants.
 use ambalib.types_amba4.all;
+use ambalib.types_bus0.all;
 --! Misc modules library
 library misclib;
 use misclib.types_misc.all;
@@ -244,7 +245,7 @@ begin
   w_bus_nrst <= not (w_glob_rst or w_soft_rst);
 
   --! @brief AXI4 controller.
-  ctrl0 : axictrl generic map (
+  ctrl0 : axictrl_bus0 generic map (
     watchdog_memop => 0
   ) port map (
     i_clk    => w_clk_bus,

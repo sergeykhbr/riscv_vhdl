@@ -28,9 +28,9 @@ entity axi4_slave is
   port (
     i_clk : in std_logic;
     i_nrst : in std_logic;
-    i_xcfg : in nasti_slave_config_type;
-    i_xslvi : in nasti_slave_in_type;
-    o_xslvo : out nasti_slave_out_type;
+    i_xcfg : in axi4_slave_config_type;
+    i_xslvi : in axi4_slave_in_type;
+    o_xslvo : out axi4_slave_out_type;
     i_ready : in std_logic;
     i_rdata : in std_logic_vector(CFG_SYSBUS_DATA_BITS-1 downto 0);
     o_re : out std_logic;
@@ -45,12 +45,50 @@ end;
  
 architecture arch_axi4_slave of axi4_slave is
 
-  signal rin, r : nasti_slave_bank_type;
+  --! Slave device states during reading value operation.
+  type axi_slave_rstatetype is (rwait, rtrans);
+  --! Slave device states during writting data operation.
+  type axi_slave_wstatetype is (wwait, wtrans);
+
+  --! @brief Template bank of registers for any slave device.
+  type axi_slave_bank_type is record
+    rstate : axi_slave_rstatetype;
+    wstate : axi_slave_wstatetype;
+
+    rburst : std_logic_vector(1 downto 0);
+    rsize  : integer;
+    raddr  : global_addr_array_type;
+    rlen   : integer;                       --! AXI4 supports 256 burst operation
+    rid    : std_logic_vector(CFG_ROCKET_ID_BITS-1 downto 0);
+    rresp  : std_logic_vector(1 downto 0);  --! OK=0
+    ruser  : std_logic;
+    rswap : std_logic;
+    rwaitready : std_logic;                 --! Reading wait state flag: 0=waiting. User's waitstates
+    
+    wburst : std_logic_vector(1 downto 0);  -- 0=INCREMENT
+    wsize  : integer;                       -- code in range 0=1 Bytes upto 7=128 Bytes. 
+    waddr  : global_addr_array_type;        --! 4 KB bank
+    wlen   : integer;                       --! AXI4 supports 256 burst operation
+    wid    : std_logic_vector(CFG_ROCKET_ID_BITS-1 downto 0);
+    wresp  : std_logic_vector(1 downto 0);  --! OK=0
+    wuser  : std_logic;
+    wswap : std_logic;
+    b_valid : std_logic;
+  end record;
+
+  --! Reset value of the template bank of registers of a slave device.
+  constant AXI_SLAVE_BANK_RESET : axi_slave_bank_type := (
+    rwait, wwait,
+    AXI_BURST_FIXED, 0, (others=>(others=>'0')), 0, (others=>'0'), AXI_RESP_OKAY, '0', '0', '1',
+    AXI_BURST_FIXED, 0, (others=>(others=>'0')), 0, (others=>'0'), AXI_RESP_OKAY, '0', '0', '0'
+  );
+
+  signal rin, r : axi_slave_bank_type;
 
 begin
 
   comblogic : process(i_nrst, i_xcfg, i_xslvi, i_ready, i_rdata, r)
-    variable v : nasti_slave_bank_type;
+    variable v : axi_slave_bank_type;
     variable traddr : std_logic_vector(CFG_SYSBUS_ADDR_BITS-1 downto 0);
     variable twaddr : std_logic_vector(CFG_SYSBUS_ADDR_BITS-1 downto 0);
     variable v_radr_inc : global_addr_array_type;
@@ -113,11 +151,11 @@ begin
             end if;
             for n in 0 to CFG_WORDS_ON_BUS-1 loop
                 v.raddr(n) := v_radr(n) + XSizeToBytes(conv_integer(i_xslvi.ar_bits.size));
-                if i_xslvi.ar_bits.burst = NASTI_BURST_WRAP then
+                if i_xslvi.ar_bits.burst = AXI_BURST_WRAP then
                     -- i_bank.rsize = 8 and i_bank.rlen = 3
                     -- 8 x 4 = 32 bytes 
-                    v.raddr(n)(CFG_NASTI_ADDR_BITS-1 downto 5) 
-                         := v_radr(n)(CFG_NASTI_ADDR_BITS-1 downto 5);
+                    v.raddr(n)(CFG_SYSBUS_ADDR_BITS-1 downto 5) 
+                         := v_radr(n)(CFG_SYSBUS_ADDR_BITS-1 downto 5);
                 end if;
             end loop;
             if i_xslvi.ar_bits.size = "010" then
@@ -128,7 +166,7 @@ begin
             v.rburst := i_xslvi.ar_bits.burst;
             v.rlen := conv_integer(i_xslvi.ar_bits.len);
             v.rid := i_xslvi.ar_id;
-            v.rresp := NASTI_RESP_OKAY;
+            v.rresp := AXI_RESP_OKAY;
             v.ruser := i_xslvi.ar_user;
         end if;
     when rtrans =>
@@ -149,12 +187,12 @@ begin
             for n in 0 to CFG_WORDS_ON_BUS-1 loop
                 v.raddr(n) := r.raddr(n) + r.rsize;
             end loop;
-            if r.rburst = NASTI_BURST_WRAP then
+            if r.rburst = AXI_BURST_WRAP then
                 for n in 0 to CFG_WORDS_ON_BUS-1 loop
                     -- i_bank.rsize = 8 and i_bank.rlen = 3
                     -- 8 x 4 = 32 bytes 
-                    v.raddr(n)(CFG_NASTI_ADDR_BITS-1 downto 5) 
-                         := r.raddr(n)(CFG_NASTI_ADDR_BITS-1 downto 5);
+                    v.raddr(n)(CFG_SYSBUS_ADDR_BITS-1 downto 5) 
+                         := r.raddr(n)(CFG_SYSBUS_ADDR_BITS-1 downto 5);
                 end loop;
             end if;
             -- End of transaction (or process another one):
@@ -172,16 +210,16 @@ begin
                     end if;
                     for n in 0 to CFG_WORDS_ON_BUS-1 loop
                         v.raddr(n) := v_radr(n) + XSizeToBytes(conv_integer(i_xslvi.ar_bits.size));
-                        if i_xslvi.ar_bits.burst = NASTI_BURST_WRAP then
-                            v.raddr(n)(CFG_NASTI_ADDR_BITS-1 downto 5) 
-                                := v_radr(n)(CFG_NASTI_ADDR_BITS-1 downto 5);
+                        if i_xslvi.ar_bits.burst = AXI_BURST_WRAP then
+                            v.raddr(n)(CFG_SYSBUS_ADDR_BITS-1 downto 5) 
+                                := v_radr(n)(CFG_SYSBUS_ADDR_BITS-1 downto 5);
                         end if;
                     end loop;
                     v.rsize := XSizeToBytes(conv_integer(i_xslvi.ar_bits.size));
                     v.rburst := i_xslvi.ar_bits.burst;
                     v.rlen := conv_integer(i_xslvi.ar_bits.len);
                     v.rid := i_xslvi.ar_id;
-                    v.rresp := NASTI_RESP_OKAY;
+                    v.rresp := AXI_RESP_OKAY;
                     v.ruser := i_xslvi.ar_user;
                 else
                     v.rstate := rwait;
@@ -219,7 +257,7 @@ begin
             v.wburst := i_xslvi.aw_bits.burst;
             v.wlen := conv_integer(i_xslvi.aw_bits.len);
             v.wid := i_xslvi.aw_id;
-            v.wresp := NASTI_RESP_OKAY;
+            v.wresp := AXI_RESP_OKAY;
             v.wuser := i_xslvi.aw_user;
         end if;
     when wtrans =>
@@ -228,7 +266,7 @@ begin
             if r.wsize = 4 then
                 v.wswap := not r.wswap;
             end if;
-            if r.wburst = NASTI_BURST_INCR then
+            if r.wburst = AXI_BURST_INCR then
               for n in 0 to CFG_WORDS_ON_BUS-1 loop
                 v.waddr(n) := r.waddr(n) + r.wsize;
               end loop;
@@ -248,7 +286,7 @@ begin
                     v.wburst := i_xslvi.aw_bits.burst;
                     v.wlen := conv_integer(i_xslvi.aw_bits.len);
                     v.wid := i_xslvi.aw_id;
-                    v.wresp := NASTI_RESP_OKAY;
+                    v.wresp := AXI_RESP_OKAY;
                     v.wuser := i_xslvi.aw_user;
                 end if;
             else
@@ -327,7 +365,7 @@ begin
 
 
     if not async_reset and i_nrst = '0' then
-        v := NASTI_SLAVE_BANK_RESET;
+        v := AXI_SLAVE_BANK_RESET;
     end if;
  
     rin <= v;
@@ -354,7 +392,7 @@ begin
   regs : process(i_clk, i_nrst)
   begin 
      if async_reset and i_nrst = '0' then
-         r <= NASTI_SLAVE_BANK_RESET;
+         r <= AXI_SLAVE_BANK_RESET;
      elsif rising_edge(i_clk) then 
          r <= rin;
      end if; 

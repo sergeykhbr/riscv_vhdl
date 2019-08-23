@@ -1,11 +1,18 @@
------------------------------------------------------------------------------
---! @file
---! @copyright  Copyright 2015 GNSS Sensor Ltd. All right reserved.
---! @author     Sergey Khabarov - sergeykhbr@gmail.com
---! @brief      Implementation of the grethaxi device.
---! @details    This is Ethernet MAC device with the AMBA AXI inteface
---!             and EDCL debugging functionality.
-------------------------------------------------------------------------------
+--!
+--! Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
+--!
+--! Licensed under the Apache License, Version 2.0 (the "License");
+--! you may not use this file except in compliance with the License.
+--! You may obtain a copy of the License at
+--!
+--!     http://www.apache.org/licenses/LICENSE-2.0
+--!
+--! Unless required by applicable law or agreed to in writing, software
+--! distributed under the License is distributed on an "AS IS" BASIS,
+--! WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+--! See the License for the specific language governing permissions and
+--! limitations under the License.
+--!
 
 --! Standard library
 library ieee;
@@ -23,6 +30,7 @@ use ethlib.types_eth.all;
 
 entity grethaxi is
   generic(
+    async_reset    : boolean := false;
     xaddr          : integer := 0;
     xmask          : integer := 16#FFFFF#;
     xirq           : integer := 0;
@@ -59,14 +67,14 @@ entity grethaxi is
   port(
     rst            : in  std_ulogic;
     clk            : in  std_ulogic;
-    msti           : in nasti_master_in_type;
-    msto           : out nasti_master_out_type;
-    mstcfg         : out nasti_master_config_type;
-    msto2          : out nasti_master_out_type;
-    mstcfg2        : out nasti_master_config_type;
-    slvi           : in nasti_slave_in_type;
-    slvo           : out nasti_slave_out_type;
-    slvcfg         : out nasti_slave_config_type;
+    msti           : in axi4_master_in_type;
+    msto           : out axi4_master_out_type;
+    mstcfg         : out axi4_master_config_type;
+    msto2          : out axi4_master_out_type;
+    mstcfg2        : out axi4_master_config_type;
+    slvi           : in axi4_slave_in_type;
+    slvo           : out axi4_slave_out_type;
+    slvcfg         : out axi4_slave_config_type;
     ethi           : in eth_in_type;
     etho           : out eth_out_type;
     irq            : out  std_logic
@@ -78,36 +86,36 @@ architecture arch_grethaxi of grethaxi is
   constant bufsize : std_logic_vector(2 downto 0) :=
                        conv_std_logic_vector(log2(edclbufsz), 3);
                        
-  constant xslvconfig : nasti_slave_config_type := (
+  constant xslvconfig : axi4_slave_config_type := (
      descrtype => PNP_CFG_TYPE_SLAVE,
      descrsize => PNP_CFG_SLAVE_DESCR_BYTES,
      irq_idx => conv_std_logic_vector(xirq, 8),
-     xaddr => conv_std_logic_vector(xaddr, CFG_NASTI_CFG_ADDR_BITS),
-     xmask => conv_std_logic_vector(xmask, CFG_NASTI_CFG_ADDR_BITS),
+     xaddr => conv_std_logic_vector(xaddr, CFG_SYSBUS_CFG_ADDR_BITS),
+     xmask => conv_std_logic_vector(xmask, CFG_SYSBUS_CFG_ADDR_BITS),
      vid => VENDOR_GNSSSENSOR,
      did => GNSSSENSOR_ETHMAC
   );
 
-  constant xmstconfig : nasti_master_config_type := (
+  constant xmstconfig : axi4_master_config_type := (
      descrsize => PNP_CFG_MASTER_DESCR_BYTES,
      descrtype => PNP_CFG_TYPE_MASTER,
      vid => VENDOR_GNSSSENSOR,
      did => GAISLER_ETH_MAC_MASTER
   );
 
-  constant xmstconfig2 : nasti_master_config_type := (
+  constant xmstconfig2 : axi4_master_config_type := (
      descrsize => PNP_CFG_MASTER_DESCR_BYTES,
      descrtype => PNP_CFG_TYPE_MASTER,
      vid => VENDOR_GNSSSENSOR,
      did => GAISLER_ETH_EDCL_MASTER
   );
 
-  type local_addr_array_type is array (0 to CFG_WORDS_ON_BUS-1) 
+  type local_addr_array_type is array (0 to CFG_WORDS_ON_BUS-1)
        of std_logic_vector(15 downto 0);
 
   type registers is record
-      bank_slv : nasti_slave_bank_type;
-      ctrl     : eth_control_type;
+      ctrl : eth_control_type;
+      raddr : local_addr_array_type;
   end record;
 
   signal r, rin         : registers;
@@ -123,33 +131,55 @@ architecture arch_grethaxi of grethaxi is
 
   signal omac_rmsto          : eth_rx_ahb_in_type;
   signal imac_rmsti          : eth_rx_ahb_out_type;
-  
+
+  signal wb_dev_rdata : std_logic_vector(CFG_SYSBUS_DATA_BITS-1 downto 0);
+  signal wb_bus_raddr : global_addr_array_type;
+  signal w_bus_re    : std_logic;
+  signal wb_bus_waddr : global_addr_array_type;
+  signal w_bus_we    : std_logic;
+  signal wb_bus_wstrb : std_logic_vector(CFG_SYSBUS_DATA_BYTES-1 downto 0);
+  signal wb_bus_wdata : std_logic_vector(CFG_SYSBUS_DATA_BITS-1 downto 0);
 
 begin
+
+  slv0 :  axi4_slave generic map (
+    async_reset => async_reset
+  ) port map (
+    i_clk => clk,
+    i_nrst => rst,
+    i_xcfg => xslvconfig, 
+    i_xslvi => slvi,
+    o_xslvo => slvo,
+    i_ready => '1',
+    i_rdata => wb_dev_rdata,
+    o_re => w_bus_re,
+    o_r32 => open,
+    o_radr => wb_bus_raddr,
+    o_wadr => wb_bus_waddr,
+    o_we => w_bus_we,
+    o_wstrb => wb_bus_wstrb,
+    o_wdata => wb_bus_wdata
+  );
   
-  comb : process(r, ethi, slvi, omac_rdbgdata, omac_status, rst) is
+  comb : process(r, ethi, omac_rdbgdata, omac_status, rst, w_bus_re,
+                 wb_bus_raddr, wb_bus_waddr, w_bus_we, wb_bus_wstrb, wb_bus_wdata) is
       variable v        : registers;
       variable vcmd     : eth_command_type;
-      variable raddr_reg : local_addr_array_type;
-      variable waddr_reg : local_addr_array_type;
-      variable rdata : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
-      variable wdata : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
+      variable waddr : std_logic_vector(15 downto 0);
+      variable vrdata : std_logic_vector(CFG_SYSBUS_DATA_BITS-1 downto 0);
       variable wdata32 : std_logic_vector(31 downto 0);
-      variable wstrb : std_logic_vector(CFG_NASTI_DATA_BYTES-1 downto 0);
       variable val : std_logic_vector(8*CFG_ALIGN_BYTES-1 downto 0);
   begin
 
     v := r;
     vcmd := eth_command_none;
-    
-    procedureAxi4(slvi, xslvconfig, r.bank_slv, v.bank_slv);
-
+   
     for n in 0 to CFG_WORDS_ON_BUS-1 loop
-       raddr_reg(n) := r.bank_slv.raddr(n)(17 downto log2(CFG_ALIGN_BYTES));
+       v.raddr(n) := wb_bus_raddr(n)(17 downto log2(CFG_ALIGN_BYTES));
        val := (others => '0');
        
-       if (ramdebug = 0) or (raddr_reg(n)(15 downto 14) = "00") then 
-         case raddr_reg(n)(3 downto 0) is
+       if (ramdebug = 0) or (r.raddr(n)(15 downto 14) = "00") then 
+         case r.raddr(n)(3 downto 0) is
          when "0000" => --ctrl reg
            if ramdebug /= 0 then
              val(13) := r.ctrl.ramdebugen;
@@ -231,46 +261,41 @@ begin
            end if;
          when others => null; 
          end case;
-       elsif raddr_reg(n)(15 downto 14) = "01" then
+       elsif r.raddr(n)(15 downto 14) = "01" then
            if ramdebug /= 0 then
              vcmd.dbg_access_id := DBG_ACCESS_TX_BUFFER;
              vcmd.dbg_rd_ena    := r.ctrl.ramdebugen;
-             vcmd.dbg_addr      := raddr_reg(n)(13 downto 0);
+             vcmd.dbg_addr      := r.raddr(n)(13 downto 0);
              val                := omac_rdbgdata;
            end if;
-       elsif raddr_reg(n)(15 downto 14) = "10" then
+       elsif r.raddr(n)(15 downto 14) = "10" then
            if ramdebug /= 0 then
              vcmd.dbg_access_id := DBG_ACCESS_RX_BUFFER;
              vcmd.dbg_rd_ena    := r.ctrl.ramdebugen;
-             vcmd.dbg_addr      := raddr_reg(n)(13 downto 0);
+             vcmd.dbg_addr      := r.raddr(n)(13 downto 0);
              val                := omac_rdbgdata;
            end if;
-       elsif raddr_reg(n)(15 downto 14) = "11" then 
+       elsif r.raddr(n)(15 downto 14) = "11" then 
            if (ramdebug = 2) and (edcl /= 0) then
              vcmd.dbg_access_id := DBG_ACCESS_EDCL_BUFFER;
              vcmd.dbg_rd_ena    := r.ctrl.ramdebugen;
-             vcmd.dbg_addr      := raddr_reg(n)(13 downto 0);
+             vcmd.dbg_addr      := r.raddr(n)(13 downto 0);
              val                := omac_rdbgdata;
            end if;
        end if;
 
-       rdata(8*CFG_ALIGN_BYTES*(n+1)-1 downto 8*CFG_ALIGN_BYTES*n) := val;
+       vrdata(8*CFG_ALIGN_BYTES*(n+1)-1 downto 8*CFG_ALIGN_BYTES*n) := val;
     end loop;
 
 
-    if slvi.w_valid = '1' and 
-       r.bank_slv.wstate = wtrans and 
-       r.bank_slv.wresp = NASTI_RESP_OKAY then
-
-      wdata := slvi.w_data;
-      wstrb := slvi.w_strb;
+    if w_bus_we = '1' then
       for n in 0 to CFG_WORDS_ON_BUS-1 loop
-         waddr_reg(n) := r.bank_slv.waddr(n)(17 downto 2);
-         wdata32 := wdata(8*CFG_ALIGN_BYTES*(n+1)-1 downto 8*CFG_ALIGN_BYTES*n);
+         waddr := wb_bus_waddr(n)(17 downto 2);
+         wdata32 := wb_bus_wdata(8*CFG_ALIGN_BYTES*(n+1)-1 downto 8*CFG_ALIGN_BYTES*n);
 
-          if wstrb(CFG_ALIGN_BYTES*(n+1)-1 downto CFG_ALIGN_BYTES*n) /= "0000" then
-            if (ramdebug = 0) or (waddr_reg(n)(15 downto 14) = "00") then 
-             case waddr_reg(n)(3 downto 0) is
+          if wb_bus_wstrb(CFG_ALIGN_BYTES*(n+1)-1 downto CFG_ALIGN_BYTES*n) /= "0000" then
+            if (ramdebug = 0) or (waddr(15 downto 14) = "00") then 
+             case waddr(3 downto 0) is
              when "0000" => --ctrl reg
                if ramdebug /= 0 then
                  v.ctrl.ramdebugen := wdata32(13);
@@ -291,7 +316,7 @@ begin
                end if;
                vcmd.set_reset       := wdata32(6);
                vcmd.clr_reset       := not wdata32(6);
-               v.ctrl.prom               := wdata32(5); 
+               v.ctrl.prom          := wdata32(5); 
                vcmd.set_full_duplex := wdata32(4);
                vcmd.clr_full_duplex := not wdata32(4);
                v.ctrl.rx_irqen           := wdata32(3);
@@ -357,25 +382,25 @@ begin
                end if;
              when others => null; 
              end case;
-           elsif waddr_reg(n)(15 downto 14) = "01" then
+           elsif waddr(15 downto 14) = "01" then
              if ramdebug /= 0 then
                vcmd.dbg_access_id := DBG_ACCESS_TX_BUFFER;
                vcmd.dbg_wr_ena    := r.ctrl.ramdebugen;
-               vcmd.dbg_addr      := waddr_reg(n)(13 downto 0);
+               vcmd.dbg_addr      := waddr(13 downto 0);
                vcmd.dbg_wdata     := wdata32;
              end if;
-           elsif waddr_reg(n)(15 downto 14) = "10" then  
+           elsif waddr(15 downto 14) = "10" then  
              if ramdebug /= 0 then
                vcmd.dbg_access_id := DBG_ACCESS_RX_BUFFER;
                vcmd.dbg_wr_ena    := r.ctrl.ramdebugen;
-               vcmd.dbg_addr      := waddr_reg(n)(13 downto 0);
+               vcmd.dbg_addr      := waddr(13 downto 0);
                vcmd.dbg_wdata     := wdata32;
              end if;
-           elsif waddr_reg(n)(15 downto 14) = "11" then 
+           elsif waddr(15 downto 14) = "11" then 
              if (ramdebug = 2) and (edcl /= 0) then
                vcmd.dbg_access_id := DBG_ACCESS_EDCL_BUFFER;
                vcmd.dbg_wr_ena    := r.ctrl.ramdebugen;
-               vcmd.dbg_addr      := waddr_reg(n)(13 downto 0);
+               vcmd.dbg_addr      := waddr(13 downto 0);
                vcmd.dbg_wdata     := wdata32;
              end if;
            end if;
@@ -383,14 +408,11 @@ begin
       end loop;
     end if;
    
-    slvo <= functionAxi4Output(r.bank_slv, rdata);
-
    
 ------------------------------------------------------------------------------
 -- RESET ----------------------------------------------------------------------
 -------------------------------------------------------------------------------
     if rst = '0' then
-      v.bank_slv := NASTI_SLAVE_BANK_RESET;
       v.ctrl.tx_irqen := '0';
       v.ctrl.rx_irqen := '0';
       v.ctrl.prom := '0';
@@ -422,11 +444,14 @@ begin
         v.ctrl.edclip(3 downto 0) := ethi.edcladdr;
         v.ctrl.emacaddr(3 downto 0) := ethi.edcladdr;
       end if;
+      v.raddr(0) := (others => '0');
+      v.raddr(1) := (others => '0');
     end if;
 
    
    rin <= v;
    imac_cmd <= vcmd;
+   wb_dev_rdata <= vrdata;
 end process;
 
  slvcfg <= xslvconfig;
@@ -534,7 +559,7 @@ end process;
       );
   end generate;
   edclmst_off : if edclsepahbg = 0 generate
-      msto2	<= nasti_master_out_none;
+      msto2	<= axi4_master_out_none;
       imac_tmsti2.grant <= '0';
       imac_tmsti2.data <= (others => '0');
       imac_tmsti2.ready <= '0';

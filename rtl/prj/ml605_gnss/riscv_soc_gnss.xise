@@ -164,7 +164,7 @@
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
       <library xil_pn:name="techmap"/>
     </file>
-    <file xil_pn:name="../../ambalib/axictrl.vhd" xil_pn:type="FILE_VHDL">
+    <file xil_pn:name="../../ambalib/axictrl_bus0.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="0"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="132"/>
       <library xil_pn:name="ambalib"/>

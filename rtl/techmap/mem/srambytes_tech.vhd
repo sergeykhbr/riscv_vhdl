@@ -29,24 +29,24 @@ generic (
 port (
     clk       : in std_logic;
     raddr     : in global_addr_array_type;
-    rdata     : out std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
+    rdata     : out std_logic_vector(CFG_SYSBUS_DATA_BITS-1 downto 0);
     waddr     : in global_addr_array_type;
     we        : in std_logic;
-    wstrb     : in std_logic_vector(CFG_NASTI_DATA_BYTES-1 downto 0);
-    wdata     : in std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0)
+    wstrb     : in std_logic_vector(CFG_SYSBUS_DATA_BYTES-1 downto 0);
+    wdata     : in std_logic_vector(CFG_SYSBUS_DATA_BITS-1 downto 0)
 );
 end;
 
 architecture rtl of srambytes_tech is
 
 --! reduced name of configuration constant:
-constant dw : integer := CFG_NASTI_ADDR_OFFSET;
+constant dw : integer := CFG_SYSBUS_ADDR_OFFSET;
 
-type local_addr_type is array (0 to CFG_NASTI_DATA_BYTES-1) of
+type local_addr_type is array (0 to CFG_SYSBUS_DATA_BYTES-1) of
    std_logic_vector(abits-dw-1 downto 0);
 
 signal address : local_addr_type;
-signal wr_ena : std_logic_vector(CFG_NASTI_DATA_BYTES-1 downto 0);
+signal wr_ena : std_logic_vector(CFG_SYSBUS_DATA_BYTES-1 downto 0);
 
   --! @brief   Declaration of the one-byte SRAM element.
   --! @details This component is used for the FPGA implementation.
@@ -86,7 +86,7 @@ begin
      
   --! Instantiate component for RTL simulation
   rtlsim0 : if memtech = inferred generate
-    rx : for n in 0 to CFG_NASTI_DATA_BYTES-1 generate
+    rx : for n in 0 to CFG_SYSBUS_DATA_BYTES-1 generate
 
       wr_ena(n) <= we and wstrb(n);
       address(n) <= waddr(n / CFG_ALIGN_BYTES)(abits-1 downto dw) when we = '1'
@@ -110,7 +110,7 @@ begin
 
   --! Instantiate component for FPGA (checked with Xilinx)
   fpgasim0 : if memtech /= inferred and is_fpga(memtech) /= 0 generate
-    rx : for n in 0 to CFG_NASTI_DATA_BYTES-1 generate
+    rx : for n in 0 to CFG_SYSBUS_DATA_BYTES-1 generate
 
       wr_ena(n) <= we and wstrb(n);
       address(n) <= waddr(n / CFG_ALIGN_BYTES)(abits-1 downto dw) when we = '1'

@@ -411,8 +411,8 @@ package types_eth is
   port(
     rst     : in  std_ulogic;
     clk     : in  std_ulogic;
-    aximi   : in  nasti_master_in_type;
-    aximo   : out nasti_master_out_type;
+    aximi   : in  axi4_master_in_type;
+    aximo   : out axi4_master_out_type;
     tmsti   : in  eth_tx_ahb_in_type;
     tmsto   : out eth_tx_ahb_out_type;
     rmsti   : in  eth_rx_ahb_in_type;
@@ -698,6 +698,7 @@ package types_eth is
 
   component grethaxi is
   generic(
+    async_reset    : boolean := false;
     xaddr          : integer := 0;
     xmask          : integer := 16#FFFFF#;
     xirq           : integer := 0;
@@ -734,14 +735,14 @@ package types_eth is
   port(
     rst            : in  std_ulogic;
     clk            : in  std_ulogic;
-    msti           : in nasti_master_in_type;
-    msto           : out nasti_master_out_type;
-    mstcfg         : out nasti_master_config_type;
-    msto2          : out nasti_master_out_type;
-    mstcfg2        : out nasti_master_config_type;
-    slvi           : in nasti_slave_in_type;
-    slvo           : out nasti_slave_out_type;
-    slvcfg         : out nasti_slave_config_type;
+    msti           : in axi4_master_in_type;
+    msto           : out axi4_master_out_type;
+    mstcfg         : out axi4_master_config_type;
+    msto2          : out axi4_master_out_type;
+    mstcfg2        : out axi4_master_config_type;
+    slvi           : in axi4_slave_in_type;
+    slvo           : out axi4_slave_out_type;
+    slvcfg         : out axi4_slave_config_type;
     ethi           : in eth_in_type;
     etho           : out eth_out_type;
     irq            : out  std_logic

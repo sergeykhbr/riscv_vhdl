@@ -55,30 +55,6 @@ package types_mem is
   end component;
 
 
-  --! @brief   Declaration of the "virtual" RomImage component.
-  --! @details This module stores pre-built firmware image that is coping
-  --!          into internal SRAM during Boot stage without any modificaiton.
-  --!          RomImage size is limited by global configuration parameter and
-  --!          it cannot be more than internal SRAM size.  Component implements
-  --!          one-clock access to the ROM without wait-staits. 
-  --!          Datawidth depends of the AXI4 bus configuration.
-  --! @param[in] tech    Generic technology selector.
-  --! @param[in] sim_hexfile     Generic argument defining hex-file location.
-  --! @param[in] clk     System bus clock.
-  --! @param[in] address Input address.
-  --! @param[out] data   Output data value.
-  component RomImage_tech is
-  generic (
-    memtech : integer := 0;
-    sim_hexfile : string
-  );
-  port (
-    clk       : in std_logic;
-    address   : in global_addr_array_type;
-    data      : out std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0)
-  );
-  end component;
-
   ------------------------------------------------------------------------------
   --! @brief   Galileo PRN codes ROM storage:
   --! @details This ROM is used in FSE Engine to form reference E1 reference
@@ -119,11 +95,11 @@ package types_mem is
   port (
     clk       : in std_logic;
     raddr     : in global_addr_array_type;
-    rdata     : out std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
+    rdata     : out std_logic_vector(CFG_SYSBUS_DATA_BITS-1 downto 0);
     waddr     : in global_addr_array_type;
     we        : in std_logic;
-    wstrb     : in std_logic_vector(CFG_NASTI_DATA_BYTES-1 downto 0);
-    wdata     : in std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0)
+    wstrb     : in std_logic_vector(CFG_SYSBUS_DATA_BYTES-1 downto 0);
+    wdata     : in std_logic_vector(CFG_SYSBUS_DATA_BITS-1 downto 0)
   );
   end component;
 

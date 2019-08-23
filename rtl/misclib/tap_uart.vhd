@@ -30,9 +30,9 @@ entity uart_tap is
     clk      : in std_logic;
     i_uart   : in  uart_in_type;
     o_uart   : out uart_out_type;
-    i_msti   : in nasti_master_in_type;
-    o_msto   : out nasti_master_out_type;
-    o_mstcfg : out nasti_master_config_type
+    i_msti   : in axi4_master_in_type;
+    o_msto   : out axi4_master_out_type;
+    o_mstcfg : out axi4_master_config_type
   );
 end; 
  
@@ -43,7 +43,7 @@ architecture arch_uart_tap of uart_tap is
   constant BAUD_DEFAULT : std_logic_vector(17 downto 0) := (others => '1');
   constant HANDSHAKE_ACK : std_logic_vector(31 downto 0) := X"0a4b4341";
 
-  constant xmstconfig : nasti_master_config_type := (
+  constant xmstconfig : axi4_master_config_type := (
      descrsize => PNP_CFG_MASTER_DESCR_BYTES,
      descrtype => PNP_CFG_TYPE_MASTER,
      vid => VENDOR_GNSSSENSOR,
@@ -126,7 +126,7 @@ begin
     variable v : registers;
     variable wb_dma_request : dma_request_type;
     variable wb_dma_response : dma_response_type;
-    variable wb_msto : nasti_master_out_type;
+    variable wb_msto : axi4_master_out_type;
 
     variable v_com_write : std_logic;
     variable v_com_accepted : std_logic;
@@ -179,7 +179,7 @@ begin
     when DMAREQ_READ =>
         wb_dma_request.valid := '1';
         wb_dma_request.write := '0';
-        wb_dma_request.addr := r.dma_req_addr(CFG_NASTI_ADDR_BITS-1 downto 0);
+        wb_dma_request.addr := r.dma_req_addr(CFG_SYSBUS_ADDR_BITS-1 downto 0);
         wb_dma_request.bytes := conv_std_logic_vector(4, 11);
         wb_dma_request.wdata := (others => '0');
         if dma_response.ready = '1' then
@@ -212,7 +212,7 @@ begin
     when DMAREQ_WRITE =>
         wb_dma_request.valid := '1';
         wb_dma_request.write := '1';
-        wb_dma_request.addr := r.dma_req_addr(CFG_NASTI_ADDR_BITS-1 downto 0);
+        wb_dma_request.addr := r.dma_req_addr(CFG_SYSBUS_ADDR_BITS-1 downto 0);
         wb_dma_request.bytes := conv_std_logic_vector(4, 11);
         wb_dma_request.wdata := r.dma_req_wdata & r.dma_req_wdata;
         if dma_response.ready = '1' then

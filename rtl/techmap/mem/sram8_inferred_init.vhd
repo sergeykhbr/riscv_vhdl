@@ -47,7 +47,7 @@ type ram_type is array (0 to SRAM_LENGTH-1) of std_logic_vector(7 downto 0);
 impure function init_ram(file_name : in string) return ram_type is
     file ram_file : text open read_mode is file_name;
     variable ram_line : line;
-    variable temp_bv : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
+    variable temp_bv : std_logic_vector(CFG_SYSBUS_DATA_BITS-1 downto 0);
     variable temp_mem : ram_type;
 begin
     for i in 0 to (FILE_IMAGE_LINES_TOTAL-1) loop

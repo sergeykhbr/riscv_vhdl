@@ -40,9 +40,9 @@ entity river_amba is
   port ( 
     i_nrst   : in std_logic;
     i_clk    : in std_logic;
-    i_msti   : in nasti_master_in_type;
-    o_msto   : out nasti_master_out_type;
-    o_mstcfg : out nasti_master_config_type;
+    i_msti   : in axi4_master_in_type;
+    o_msto   : out axi4_master_out_type;
+    o_mstcfg : out axi4_master_config_type;
     i_dport  : in dport_in_type;
     o_dport  : out dport_out_type;
     i_ext_irq : in std_logic
@@ -51,7 +51,7 @@ end;
  
 architecture arch_river_amba of river_amba is
 
-  constant xconfig : nasti_master_config_type := (
+  constant xconfig : axi4_master_config_type := (
      descrsize => PNP_CFG_MASTER_DESCR_BYTES,
      descrtype => PNP_CFG_TYPE_MASTER,
      vid => VENDOR_GNSSSENSOR,
@@ -130,12 +130,12 @@ begin
                  wb_req_mem_strob, wb_req_mem_data, wb_req_mem_len,
                  wb_req_mem_burst, i_msti, r)
     variable v : RegistersType;
-    variable vmsto   : nasti_master_out_type;
+    variable vmsto : axi4_master_out_type;
   begin
 
     v := r;
 
-    vmsto := nasti_master_out_none;
+    vmsto := axi4_master_out_none;
     vmsto.ar_valid      := w_req_mem_valid and not w_req_mem_write;
     vmsto.ar_bits.addr  := wb_req_mem_addr;
     vmsto.ar_bits.len   := wb_req_mem_len;

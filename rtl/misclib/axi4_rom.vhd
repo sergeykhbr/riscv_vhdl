@@ -40,9 +40,9 @@ entity axi4_rom is
   port (
     clk  : in std_logic;
     nrst : in std_logic;
-    cfg  : out nasti_slave_config_type;
-    i    : in  nasti_slave_in_type;
-    o    : out nasti_slave_out_type
+    cfg  : out axi4_slave_config_type;
+    i    : in  axi4_slave_in_type;
+    o    : out axi4_slave_out_type
   );
 end; 
  
@@ -52,7 +52,7 @@ architecture arch_axi4_rom of axi4_rom is
   constant size_4kbytes : integer := -(xmask - 1048576); 
   constant abits : integer := 12 + log2(size_4kbytes);
 
-  constant xconfig : nasti_slave_config_type := (
+  constant xconfig : axi4_slave_config_type := (
      descrtype => PNP_CFG_TYPE_SLAVE,
      descrsize => PNP_CFG_SLAVE_DESCR_BYTES,
      irq_idx => conv_std_logic_vector(0, 8),

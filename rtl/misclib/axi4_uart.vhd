@@ -36,18 +36,18 @@ entity axi4_uart is
   port (
     clk    : in  std_logic;
     nrst   : in  std_logic;
-    cfg    : out  nasti_slave_config_type;
+    cfg    : out axi4_slave_config_type;
     i_uart : in  uart_in_type;
     o_uart : out uart_out_type;
-    i_axi  : in  nasti_slave_in_type;
-    o_axi  : out nasti_slave_out_type;
+    i_axi  : in  axi4_slave_in_type;
+    o_axi  : out axi4_slave_out_type;
     o_irq  : out std_logic
   );
 end; 
  
 architecture arch_axi4_uart of axi4_uart is
 
-  constant xconfig : nasti_slave_config_type := (
+  constant xconfig : axi4_slave_config_type := (
      descrtype => PNP_CFG_TYPE_SLAVE,
      descrsize => PNP_CFG_SLAVE_DESCR_BYTES,
      irq_idx => conv_std_logic_vector(xirq, 8),
@@ -78,7 +78,6 @@ architecture arch_axi4_uart of axi4_uart is
   signal tx_fifo   : fifo_mem;
 
   type registers is record
-      bank_axi : nasti_slave_bank_type;
       tx_state  : state_type;
       tx_wr_cnt : std_logic_vector(log2(fifosz)-1 downto 0);
       tx_rd_cnt : std_logic_vector(log2(fifosz)-1 downto 0);
@@ -101,7 +100,7 @@ architecture arch_axi4_uart of axi4_uart is
       rx_irq_thresh : std_logic_vector(log2(fifosz)-1 downto 0);
       rx_more_thresh : std_logic_vector(1 downto 0);
 
-      rdata : std_logic_vector(CFG_NASTI_DATA_BITS-1 downto 0);
+      rdata : std_logic_vector(CFG_SYSBUS_DATA_BITS-1 downto 0);
       scaler : integer;
       err_parity : std_logic;
       err_stopbit : std_logic;
@@ -112,7 +111,6 @@ architecture arch_axi4_uart of axi4_uart is
   end record;
 
   constant R_RESET : registers := (
-        NASTI_SLAVE_BANK_RESET,
         idle,  -- tx_state
         (others => '0'), (others => '0'),  -- tx_wr_cnt, tx_rd_cnt
         (others => '0'),  -- tx_byte_cnt
