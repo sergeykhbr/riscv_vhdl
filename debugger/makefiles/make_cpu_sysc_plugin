@@ -78,7 +78,7 @@ SOURCES = \
 	d2l_d \
 	l2d_d \
 	fadd_d \
-	divstage \
+	divstage53 \
 	idiv53 \
 	fdiv_d \
 	imul53 \

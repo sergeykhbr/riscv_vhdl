@@ -20,7 +20,24 @@
 namespace debugger {
 
 DoubleAdd::DoubleAdd(sc_module_name name_, bool async_reset) :
-    sc_module(name_) {
+    sc_module(name_),
+    i_clk("i_clk"),
+    i_nrst("i_nrst"),
+    i_ena("i_ena"),
+    i_add("i_add"),
+    i_sub("i_sub"),
+    i_eq("i_eq"),
+    i_lt("i_lt"),
+    i_le("i_le"),
+    i_max("i_max"),
+    i_min("i_min"),
+    i_a("i_a"),
+    i_b("i_b"),
+    o_res("o_res"),
+    o_illegal_op("o_illegal_op"),
+    o_overflow("o_overflow"),
+    o_valid("o_valid"),
+    o_busy("o_busy") {
     async_reset_ = async_reset;
 
     SC_METHOD(comb);
@@ -72,33 +89,34 @@ DoubleAdd::DoubleAdd(sc_module_name name_, bool async_reset) :
 
 void DoubleAdd::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
-        sc_trace(o_vcd, i_ena, "/top/proc0/exec0/fpu0/fadd_d0/i_ena");
-        sc_trace(o_vcd, i_add, "/top/proc0/exec0/fpu0/fadd_d0/i_add");
-        sc_trace(o_vcd, i_sub, "/top/proc0/exec0/fpu0/fadd_d0/i_sub");
-        sc_trace(o_vcd, i_eq, "/top/proc0/exec0/fpu0/fadd_d0/i_eq");
-        sc_trace(o_vcd, i_lt, "/top/proc0/exec0/fpu0/fadd_d0/i_lt");
-        sc_trace(o_vcd, i_le, "/top/proc0/exec0/fpu0/fadd_d0/i_le");
-        sc_trace(o_vcd, i_max, "/top/proc0/exec0/fpu0/fadd_d0/i_max");
-        sc_trace(o_vcd, i_min, "/top/proc0/exec0/fpu0/fadd_d0/i_min");
-        sc_trace(o_vcd, i_a, "/top/proc0/exec0/fpu0/fadd_d0/i_a");
-        sc_trace(o_vcd, i_b, "/top/proc0/exec0/fpu0/fadd_d0/i_b");
-        sc_trace(o_vcd, o_res, "/top/proc0/exec0/fpu0/fadd_d0/o_res");
-        sc_trace(o_vcd, o_valid, "/top/proc0/exec0/fpu0/fadd_d0/o_valid");
-        sc_trace(o_vcd, o_busy, "/top/proc0/exec0/fpu0/fadd_d0/o_busy");
-        sc_trace(o_vcd, r.ena, "/top/proc0/exec0/fpu0/fadd_d0/r_ena");
-        sc_trace(o_vcd, r.result, "/top/proc0/exec0/fpu0/fadd_d0/r_result");
+        sc_trace(o_vcd, i_ena, i_ena.name());
+        sc_trace(o_vcd, i_add, i_add.name());
+        sc_trace(o_vcd, i_sub, i_sub.name());
+        sc_trace(o_vcd, i_eq, i_eq.name());
+        sc_trace(o_vcd, i_lt, i_lt.name());
+        sc_trace(o_vcd, i_le, i_le.name());
+        sc_trace(o_vcd, i_max, i_max.name());
+        sc_trace(o_vcd, i_min, i_min.name());
+        sc_trace(o_vcd, i_a, i_a.name());
+        sc_trace(o_vcd, i_b, i_b.name());
+        sc_trace(o_vcd, o_res, o_res.name());
+        sc_trace(o_vcd, o_valid, o_valid.name());
+        sc_trace(o_vcd, o_busy, o_busy.name());
 
-        sc_trace(o_vcd, r.preShift, "/top/proc0/exec0/fpu0/fadd_d0/r_preShift");
-        sc_trace(o_vcd, r.signOpMore, "/top/proc0/exec0/fpu0/fadd_d0/r_signOpMore");
-        sc_trace(o_vcd, r.expMore, "/top/proc0/exec0/fpu0/fadd_d0/r_expMore");
-        sc_trace(o_vcd, r.mantMore, "/top/proc0/exec0/fpu0/fadd_d0/r_mantMore");
-        sc_trace(o_vcd, r.mantLess, "/top/proc0/exec0/fpu0/fadd_d0/r_mantLess");
-        sc_trace(o_vcd, r.lshift, "/top/proc0/exec0/fpu0/fadd_d0/r_lshift");
-        sc_trace(o_vcd, r.mantSum, "/top/proc0/exec0/fpu0/fadd_d0/r_mantSum");
-        sc_trace(o_vcd, r.mantAlign, "/top/proc0/exec0/fpu0/fadd_d0/r_mantAlign");
-        sc_trace(o_vcd, r.mantPostScale, "/top/proc0/exec0/fpu0/fadd_d0/r_mantPostScale");
-        sc_trace(o_vcd, r.expPostScale, "/top/proc0/exec0/fpu0/fadd_d0/r_expPostScale");
-        sc_trace(o_vcd, r.expPostScaleInv, "/top/proc0/exec0/fpu0/fadd_d0/r_expPostScaleInv");
+        std::string pn(name());
+        sc_trace(o_vcd, r.ena, pn + ".r_ena");
+        sc_trace(o_vcd, r.result, pn + ".r_result");
+        sc_trace(o_vcd, r.preShift, pn + ".r_preShift");
+        sc_trace(o_vcd, r.signOpMore, pn + ".r_signOpMore");
+        sc_trace(o_vcd, r.expMore, pn + ".r_expMore");
+        sc_trace(o_vcd, r.mantMore, pn + ".r_mantMore");
+        sc_trace(o_vcd, r.mantLess, pn + ".r_mantLess");
+        sc_trace(o_vcd, r.lshift, pn + ".r_lshift");
+        sc_trace(o_vcd, r.mantSum, pn + ".r_mantSum");
+        sc_trace(o_vcd, r.mantAlign, pn + ".r_mantAlign");
+        sc_trace(o_vcd, r.mantPostScale, pn + ".r_mantPostScale");
+        sc_trace(o_vcd, r.expPostScale, pn + ".r_expPostScale");
+        sc_trace(o_vcd, r.expPostScaleInv, pn + ".r_expPostScaleInv");
     }
 }
 

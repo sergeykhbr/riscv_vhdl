@@ -41,7 +41,7 @@ architecture arch_idiv53 of idiv53 is
 
   constant zero53 : std_logic_vector(52 downto 0) := (others => '0');
 
-  component divstage is 
+  component divstage53 is 
   port (
     i_mux_ena    : in std_logic;  -- find first non-zero bit
     i_muxind     : in std_logic_vector(55 downto 0);  -- bits indexes 8x7 bits bus

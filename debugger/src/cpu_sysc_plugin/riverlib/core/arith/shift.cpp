@@ -20,7 +20,16 @@
 namespace debugger {
 
 Shifter::Shifter(sc_module_name name_)
-    : sc_module(name_) {
+    : sc_module(name_),
+    i_a1("i_a1"),
+    i_a2("i_a2"),
+    o_sll("o_sll"),
+    o_sllw("o_sllw"),
+    o_srl("o_srl"),
+    o_sra("o_sra"),
+    o_srlw("o_srlw"),
+    o_sraw("o_sraw") {
+
     SC_METHOD(comb);
     sensitive << i_a1;
     sensitive << i_a2;

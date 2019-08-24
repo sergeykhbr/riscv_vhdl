@@ -20,8 +20,20 @@
 namespace debugger {
 
 Double2Long::Double2Long(sc_module_name name_, bool async_reset) :
-    sc_module(name_) {
+    sc_module(name_),
+    i_clk("i_clk"),
+    i_nrst("i_nrst"),
+    i_ena("i_ena"),
+    i_signed("i_signed"),
+    i_w32("i_w32"),
+    i_a("i_a"),
+    o_res("o_res"),
+    o_overflow("o_overflow"),
+    o_underflow("o_underflow"),
+    o_valid("o_valid"),
+    o_busy("o_busy") {
     async_reset_ = async_reset;
+
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_ena;
@@ -47,20 +59,22 @@ Double2Long::Double2Long(sc_module_name name_, bool async_reset) :
 
 void Double2Long::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
-        sc_trace(o_vcd, i_ena, "/top/proc0/exec0/fpu0/d2l/i_ena");
-        sc_trace(o_vcd, i_signed, "/top/proc0/exec0/fpu0/d2l/i_signed");
-        sc_trace(o_vcd, i_w32, "/top/proc0/exec0/fpu0/d2l/i_w32");
-        sc_trace(o_vcd, i_a, "/top/proc0/exec0/fpu0/d2l/i_a");
-        sc_trace(o_vcd, o_res, "/top/proc0/exec0/fpu0/d2l/o_res");
-        sc_trace(o_vcd, o_valid, "/top/proc0/exec0/fpu0/d2l/o_valid");
-        sc_trace(o_vcd, o_busy, "/top/proc0/exec0/fpu0/d2l/o_busy");
-        sc_trace(o_vcd, r.ena, "/top/proc0/exec0/fpu0/d2l/r_ena");
-        sc_trace(o_vcd, r.result, "/top/proc0/exec0/fpu0/d2l/r_result");
-        sc_trace(o_vcd, r.op_signed, "/top/proc0/exec0/fpu0/d2l/r_op_signed");
-        sc_trace(o_vcd, r.mantPostScale, "/top/proc0/exec0/fpu0/d2l/r_mantPostScale");
-        sc_trace(o_vcd, expDif, "/top/proc0/exec0/fpu0/d2l/expDif");
-        sc_trace(o_vcd, mantPreScale, "/top/proc0/exec0/fpu0/d2l/mantPreScale");
-        sc_trace(o_vcd, mantPostScale, "/top/proc0/exec0/fpu0/d2l/mantPostScale");
+        sc_trace(o_vcd, i_ena, i_ena.name());
+        sc_trace(o_vcd, i_signed, i_signed.name());
+        sc_trace(o_vcd, i_w32, i_w32.name());
+        sc_trace(o_vcd, i_a, i_a.name());
+        sc_trace(o_vcd, o_res, o_res.name());
+        sc_trace(o_vcd, o_valid, o_valid.name());
+        sc_trace(o_vcd, o_busy, o_busy.name());
+
+        std::string pn(name());
+        sc_trace(o_vcd, r.ena, pn + ".r_ena");
+        sc_trace(o_vcd, r.result, pn + ".r_result");
+        sc_trace(o_vcd, r.op_signed, pn + ".r_op_signed");
+        sc_trace(o_vcd, r.mantPostScale, pn + ".r_mantPostScale");
+        sc_trace(o_vcd, expDif, pn + ".expDif");
+        sc_trace(o_vcd, mantPreScale, pn + ".mantPreScale");
+        sc_trace(o_vcd, mantPostScale, pn + ".mantPostScale");
     }
 }
 

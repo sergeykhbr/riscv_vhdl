@@ -19,7 +19,7 @@ use ieee.std_logic_1164.all;
 library commonlib;
 use commonlib.types_common.all;
 
-entity divstage is 
+entity divstage53 is 
   port (
     i_mux_ena    : in std_logic;  -- find first non-zero bit
     i_muxind     : in std_logic_vector(55 downto 0);  -- bits indexes 8x7 bits bus
@@ -32,7 +32,7 @@ entity divstage is
   );
 end; 
  
-architecture arch_divstage of divstage is
+architecture arch_divstage53 of divstage53 is
 
   type thresh_type is array (15 downto 0) of std_logic_vector(61 downto 0);
   type dif_type is array (3 downto 0) of std_logic_vector(60 downto 0);

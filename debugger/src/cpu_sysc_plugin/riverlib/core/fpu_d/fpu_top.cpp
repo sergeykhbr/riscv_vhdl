@@ -20,6 +20,20 @@
 namespace debugger {
 
 FpuTop::FpuTop(sc_module_name name_, bool async_reset) : sc_module(name_),
+    i_clk("i_clk"),
+    i_nrst("i_nrst"),
+    i_ena("i_ena"),
+    i_ivec("i_ivec"),
+    i_a("i_a"),
+    i_b("i_b"),
+    o_res("o_res"),
+    o_ex_invalidop("o_ex_invalidop"),
+    o_ex_divbyzero("o_ex_divbyzero"),
+    o_ex_overflow("o_ex_overflow"),
+    o_ex_underflow("o_ex_underflow"),
+    o_ex_inexact("o_ex_inexact"),
+    o_valid("o_valid"),
+    o_busy("o_busy"),
     fadd_d0("fadd_d0", async_reset),
     fdiv_d0("fdiv_d0", async_reset),
     fmul_d0("fmul_d0", async_reset),
@@ -147,20 +161,22 @@ FpuTop::FpuTop(sc_module_name name_, bool async_reset) : sc_module(name_),
 
 void FpuTop::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
-        sc_trace(o_vcd, i_ena, "/top/proc0/exec0/fpu0/i_ena");
-        sc_trace(o_vcd, i_a, "/top/proc0/exec0/fpu0/i_a");
-        sc_trace(o_vcd, i_b, "/top/proc0/exec0/fpu0/i_b");
-        sc_trace(o_vcd, i_ivec, "/top/proc0/exec0/fpu0/i_ivec");
-        sc_trace(o_vcd, o_res, "/top/proc0/exec0/fpu0/o_res");
-        sc_trace(o_vcd, o_valid, "/top/proc0/exec0/fpu0/o_valid");
-        sc_trace(o_vcd, o_busy, "/top/proc0/exec0/fpu0/o_busy");
-        sc_trace(o_vcd, r.result, "/top/proc0/exec0/fpu0/r_result");
-        sc_trace(o_vcd, r.ena_fadd, "/top/proc0/exec0/fpu0/r_ena_fadd");
-        sc_trace(o_vcd, r.ena_fdiv, "/top/proc0/exec0/fpu0/r_ena_fdiv");
-        sc_trace(o_vcd, r.ena_fmul, "/top/proc0/exec0/fpu0/r_ena_fmul");
-        sc_trace(o_vcd, r.ena_d2l, "/top/proc0/exec0/fpu0/r_ena_d2l");
-        sc_trace(o_vcd, r.ena_l2d, "/top/proc0/exec0/fpu0/r_ena_l2d");
-        sc_trace(o_vcd, r.ivec, "/top/proc0/exec0/fpu0/r_ivec");
+        sc_trace(o_vcd, i_ena, i_ena.name());
+        sc_trace(o_vcd, i_a, i_a.name());
+        sc_trace(o_vcd, i_b, i_b.name());
+        sc_trace(o_vcd, i_ivec, i_ivec.name());
+        sc_trace(o_vcd, o_res, o_res.name());
+        sc_trace(o_vcd, o_valid, o_valid.name());
+        sc_trace(o_vcd, o_busy, o_busy.name());
+
+        std::string pn(name());
+        sc_trace(o_vcd, r.result, pn + ".r_result");
+        sc_trace(o_vcd, r.ena_fadd, pn + ".r_ena_fadd");
+        sc_trace(o_vcd, r.ena_fdiv, pn + ".r_ena_fdiv");
+        sc_trace(o_vcd, r.ena_fmul, pn + ".r_ena_fmul");
+        sc_trace(o_vcd, r.ena_d2l, pn + ".r_ena_d2l");
+        sc_trace(o_vcd, r.ena_l2d, pn + ".r_ena_l2d");
+        sc_trace(o_vcd, r.ivec, pn + ".r_ivec");
     }
     fadd_d0.generateVCD(i_vcd, o_vcd);
     fdiv_d0.generateVCD(i_vcd, o_vcd);

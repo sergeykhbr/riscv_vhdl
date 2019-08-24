@@ -19,7 +19,22 @@
 namespace debugger {
 
 RegIntBank::RegIntBank(sc_module_name name_, bool async_reset) :
-    sc_module(name_) {
+    sc_module(name_),
+    i_clk("i_clk"),
+    i_nrst("i_nrst"),
+    i_radr1("i_radr1"),
+    o_rdata1("o_rdata1"),
+    i_radr2("i_radr2"),
+    o_rdata2("o_rdata2"),
+    i_waddr("i_waddr"),
+    i_wena("i_wena"),
+    i_wdata("i_wdata"),
+    i_dport_addr("i_dport_addr"),
+    i_dport_ena("i_dport_ena"),
+    i_dport_write("i_dport_write"),
+    i_dport_wdata("i_dport_wdata"),
+    o_dport_rdata("o_dport_rdata"),
+    o_ra("o_ra") {
     async_reset_ = async_reset;
 
     SC_METHOD(comb);
@@ -42,13 +57,15 @@ RegIntBank::RegIntBank(sc_module_name name_, bool async_reset) :
 
 void RegIntBank::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
-        sc_trace(o_vcd, i_wena, "/top/proc0/regs/i_wena");
-        sc_trace(o_vcd, i_waddr, "/top/proc0/regs/i_waddr");
-        sc_trace(o_vcd, i_wdata, "/top/proc0/regs/i_wdata");
-        sc_trace(o_vcd, r.mem[5], "/top/proc0/regs/r4");
-        sc_trace(o_vcd, o_rdata1, "/top/proc0/regs/o_rdata1");
-        sc_trace(o_vcd, o_rdata2, "/top/proc0/regs/o_rdata2");
-        sc_trace(o_vcd, o_dport_rdata, "/top/proc0/regs/o_dport_rdata");
+        sc_trace(o_vcd, i_wena, i_wena.name());
+        sc_trace(o_vcd, i_waddr, i_waddr.name());
+        sc_trace(o_vcd, i_wdata, i_wdata.name());
+        sc_trace(o_vcd, o_rdata1, o_rdata1.name());
+        sc_trace(o_vcd, o_rdata2, o_rdata2.name());
+        sc_trace(o_vcd, o_dport_rdata, o_dport_rdata.name());
+
+        std::string pn(name());
+        sc_trace(o_vcd, r.mem[5], pn + ".r4");
     }
 }
 

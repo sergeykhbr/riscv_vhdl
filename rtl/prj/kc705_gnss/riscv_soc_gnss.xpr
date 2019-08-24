@@ -356,7 +356,7 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../riverlib/core/fpu_d/divstage.vhd">
+      <File Path="$PPRDIR/../../riverlib/core/fpu_d/divstage53.vhd">
         <FileInfo>
           <Attr Name="Library" Val="riverlib"/>
           <Attr Name="UsedIn" Val="synthesis"/>

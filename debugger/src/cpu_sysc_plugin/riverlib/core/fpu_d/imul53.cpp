@@ -18,7 +18,16 @@
 
 namespace debugger {
 
-imul53::imul53(sc_module_name name_, bool async_reset) : sc_module(name_) {
+imul53::imul53(sc_module_name name_, bool async_reset) : sc_module(name_),
+    i_nrst("i_nrst"),
+    i_clk("i_clk"),
+    i_ena("i_ena"),
+    i_a("i_a"),
+    i_b("i_b"),
+    o_result("o_result"),
+    o_shift("o_shift"),
+    o_rdy("o_rdy"),
+    o_overflow("o_overflow") {
     async_reset_ = async_reset;
 
     SC_METHOD(comb);
@@ -41,20 +50,19 @@ imul53::imul53(sc_module_name name_, bool async_reset) : sc_module(name_) {
 
 void imul53::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
-        sc_trace(o_vcd, i_clk, "/top/proc0/exec0/fpu0/fmul/imul53/i_clk");
-        sc_trace(o_vcd, i_nrst, "/top/proc0/exec0/fpu0/fmul/imul53/i_nrst");
-        sc_trace(o_vcd, i_ena, "/top/proc0/exec0/fpu0/fmul/imul53/i_ena");
-        sc_trace(o_vcd, i_a, "/top/proc0/exec0/fpu0/fmul/imul53/i_a");
-        sc_trace(o_vcd, i_b, "/top/proc0/exec0/fpu0/fmul/imul53/i_b");
+        sc_trace(o_vcd, i_ena, i_ena.name());
+        sc_trace(o_vcd, i_a, i_a.name());
+        sc_trace(o_vcd, i_b, i_b.name());
+        sc_trace(o_vcd, o_result, o_result.name());
+        sc_trace(o_vcd, o_rdy, o_rdy.name());
 
-        sc_trace(o_vcd, o_result, "/top/proc0/exec0/fpu0/fmul/imul53/o_result");
-        sc_trace(o_vcd, o_rdy, "/top/proc0/exec0/fpu0/fmul/imul53/o_rdy");
-        sc_trace(o_vcd, r.delay, "/top/proc0/exec0/fpu0/fmul/imul53/r_delay");
-        sc_trace(o_vcd, r.shift, "/top/proc0/exec0/fpu0/fmul/imul53/r_shift");
-        sc_trace(o_vcd, r.accum_ena, "/top/proc0/exec0/fpu0/fmul/imul53/r_accum_ena");
-        sc_trace(o_vcd, r.b, "/top/proc0/exec0/fpu0/fmul/imul53/r_b");
-        sc_trace(o_vcd, r.sum, "/top/proc0/exec0/fpu0/fmul/imul53/r_sum");
-        sc_trace(o_vcd, r.overflow, "/top/proc0/exec0/fpu0/fmul/imul53/r_overflow");
+        std::string pn(name());
+        sc_trace(o_vcd, r.delay, pn + ".r_delay");
+        sc_trace(o_vcd, r.shift, pn + ".r_shift");
+        sc_trace(o_vcd, r.accum_ena, pn + ".r_accum_ena");
+        sc_trace(o_vcd, r.b, pn + ".r_b");
+        sc_trace(o_vcd, r.sum, pn + ".r_sum");
+        sc_trace(o_vcd, r.overflow, pn + ".r_overflow");
     }
 }
 

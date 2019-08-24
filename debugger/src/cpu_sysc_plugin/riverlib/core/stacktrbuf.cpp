@@ -20,7 +20,14 @@
 
 namespace debugger {
 
-StackTraceBuffer::StackTraceBuffer(sc_module_name name_) : sc_module(name_) {
+StackTraceBuffer::StackTraceBuffer(sc_module_name name_) : sc_module(name_),
+    i_clk("i_clk"),
+    i_raddr("i_raddr"),
+    o_rdata("o_rdata"),
+    i_we("i_we"),
+    i_waddr("i_waddr"),
+    i_wdata("i_wdata") {
+
     SC_METHOD(comb);
     sensitive << i_raddr;
     sensitive << i_we;

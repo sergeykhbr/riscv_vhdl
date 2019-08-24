@@ -19,7 +19,17 @@
 namespace debugger {
 
 idiv53::idiv53(sc_module_name name_, bool async_reset) : sc_module(name_),
-    divstage0("divstage") {
+    divstage0("divstage"),
+    i_nrst("i_nrst"),
+    i_clk("i_clk"),
+    i_ena("i_ena"),
+    i_divident("i_divident"),
+    i_divisor("i_divisor"),
+    o_result("o_result"),
+    o_lshift("o_lshift"),
+    o_rdy("o_rdy"),
+    o_overflow("o_overflow"),
+    o_zero_resid("o_zero_resid") {
     async_reset_ = async_reset;
 
     SC_METHOD(comb);
@@ -57,27 +67,25 @@ idiv53::idiv53(sc_module_name name_, bool async_reset) : sc_module(name_),
 
 void idiv53::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
-        sc_trace(o_vcd, i_clk, "/top/proc0/exec0/fpu0/fdiv/idiv53/i_clk");
-        sc_trace(o_vcd, i_nrst, "/top/proc0/exec0/fpu0/fdiv/idiv53/i_nrst");
-        sc_trace(o_vcd, i_ena, "/top/proc0/exec0/fpu0/fdiv/idiv53/i_ena");
-        sc_trace(o_vcd, i_divisor, "/top/proc0/exec0/fpu0/fdiv/idiv53/i_divisor");
-        sc_trace(o_vcd, i_divident, "/top/proc0/exec0/fpu0/fdiv/idiv53/i_divident");
+        sc_trace(o_vcd, i_ena, i_ena.name());
+        sc_trace(o_vcd, i_divisor, i_divisor.name());
+        sc_trace(o_vcd, i_divident, i_divident.name());
+        sc_trace(o_vcd, o_result, o_result.name());
+        sc_trace(o_vcd, o_rdy, o_rdy.name());
 
-        sc_trace(o_vcd, o_result, "/top/proc0/exec0/fpu0/fdiv/idiv53/o_result");
-        sc_trace(o_vcd, o_rdy, "/top/proc0/exec0/fpu0/fdiv/idiv53/o_rdy");
-        sc_trace(o_vcd, r.delay, "/top/proc0/exec0/fpu0/fdiv/idiv53/r_delay");
-        sc_trace(o_vcd, r.divident, "/top/proc0/exec0/fpu0/fdiv/idiv53/r_divident");
-        sc_trace(o_vcd, r.divisor, "/top/proc0/exec0/fpu0/fdiv/idiv53/r_divisor");
-        sc_trace(o_vcd, r.lshift, "/top/proc0/exec0/fpu0/fdiv/idiv53/r_lshift");
-        sc_trace(o_vcd, r.zero_resid, "/top/proc0/exec0/fpu0/fdiv/idiv53/r_zero_resid");
-        sc_trace(o_vcd, wb_dif_o, "/top/proc0/exec0/fpu0/fdiv/idiv53/wb_dif_o");
-        sc_trace(o_vcd, wb_bits_o, "/top/proc0/exec0/fpu0/fdiv/idiv53/wb_bits_o");
-        sc_trace(o_vcd, w_mux_ena_i, "/top/proc0/exec0/fpu0/fdiv/idiv53/w_mux_ena_i");
-        sc_trace(o_vcd, wb_muxind_i, "/top/proc0/exec0/fpu0/fdiv/idiv53/wb_muxind_i");
-        sc_trace(o_vcd, wb_muxind_o, "/top/proc0/exec0/fpu0/fdiv/idiv53/wb_muxind_o");
+        std::string pn(name());
+        sc_trace(o_vcd, r.delay, pn + ".r_delay");
+        sc_trace(o_vcd, r.divident, pn + ".r_divident");
+        sc_trace(o_vcd, r.divisor, pn + ".r_divisor");
+        sc_trace(o_vcd, r.lshift, pn + ".r_lshift");
+        sc_trace(o_vcd, r.zero_resid, pn + ".r_zero_resid");
+        sc_trace(o_vcd, wb_dif_o, pn + ".wb_dif_o");
+        sc_trace(o_vcd, wb_bits_o, pn + ".wb_bits_o");
+        sc_trace(o_vcd, w_mux_ena_i, pn + ".w_mux_ena_i");
+        sc_trace(o_vcd, wb_muxind_i, pn + ".wb_muxind_i");
+        sc_trace(o_vcd, wb_muxind_o, pn + ".wb_muxind_o");
     }
     divstage0.generateVCD(i_vcd, o_vcd);
-
 }
 
 void idiv53::comb() {

@@ -375,7 +375,7 @@
       <association xil_pn:name="Implementation" xil_pn:seqID="17"/>
       <library xil_pn:name="riverlib"/>
     </file>
-    <file xil_pn:name="../../riverlib/core/fpu_d/divstage.vhd" xil_pn:type="FILE_VHDL">
+    <file xil_pn:name="../../riverlib/core/fpu_d/divstage53.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="163"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="2"/>
       <library xil_pn:name="riverlib"/>

@@ -20,7 +20,18 @@
 namespace debugger {
 
 DoubleMul::DoubleMul(sc_module_name name_, bool async_reset)
-    : sc_module(name_), u_imul53("imul53", async_reset) {
+    : sc_module(name_),
+    i_clk("i_clk"),
+    i_nrst("i_nrst"),
+    i_ena("i_ena"),
+    i_a("i_a"),
+    i_b("i_b"),
+    o_res("o_res"),
+    o_illegal_op("o_illegal_op"),
+    o_overflow("o_overflow"),
+    o_valid("o_valid"),
+    o_busy("o_busy"),
+    u_imul53("imul53", async_reset) {
     async_reset_ = async_reset;
 
     SC_METHOD(comb);
@@ -68,21 +79,23 @@ DoubleMul::DoubleMul(sc_module_name name_, bool async_reset)
 
 void DoubleMul::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
-        sc_trace(o_vcd, i_ena, "/top/proc0/exec0/fpu0/fmul0/i_ena");
-        sc_trace(o_vcd, i_a, "/top/proc0/exec0/fpu0/fmul0/i_a");
-        sc_trace(o_vcd, i_b, "/top/proc0/exec0/fpu0/fmul0/i_b");
-        sc_trace(o_vcd, o_res, "/top/proc0/exec0/fpu0/fmul0/o_res");
-        sc_trace(o_vcd, o_valid, "/top/proc0/exec0/fpu0/fmul0/o_valid");
-        sc_trace(o_vcd, o_busy, "/top/proc0/exec0/fpu0/fmul0/o_busy");
-        sc_trace(o_vcd, r.ena, "/top/proc0/exec0/fpu0/fmul0/r_ena");
-        sc_trace(o_vcd, r.result, "/top/proc0/exec0/fpu0/fmul0/r_result");
-        sc_trace(o_vcd, w_imul_rdy, "/top/proc0/exec0/fpu0/fmul0/w_imul_rdy");
-        sc_trace(o_vcd, r.expAlign, "/top/proc0/exec0/fpu0/fmul0/r_expAlign");
-        sc_trace(o_vcd, r.mantAlign, "/top/proc0/exec0/fpu0/fmul0/r_mantAlign");
-        sc_trace(o_vcd, r.postShift, "/top/proc0/exec0/fpu0/fmul0/r_postShift");
-        sc_trace(o_vcd, r.expAB, "/top/proc0/exec0/fpu0/fmul0/r_expAB");
-        sc_trace(o_vcd, r.mantPostScale, "/top/proc0/exec0/fpu0/fmul0/r_mantPostScale");
-        sc_trace(o_vcd, r.overflow, "/top/proc0/exec0/fpu0/fmul0/r_overflow");
+        sc_trace(o_vcd, i_ena, i_ena.name());
+        sc_trace(o_vcd, i_a, i_a.name());
+        sc_trace(o_vcd, i_b, i_b.name());
+        sc_trace(o_vcd, o_res, o_res.name());
+        sc_trace(o_vcd, o_valid, o_valid.name());
+        sc_trace(o_vcd, o_busy, o_busy.name());
+
+        std::string pn(name());
+        sc_trace(o_vcd, r.ena, pn + ".r_ena");
+        sc_trace(o_vcd, r.result, pn + ".r_result");
+        sc_trace(o_vcd, w_imul_rdy, pn + ".w_imul_rdy");
+        sc_trace(o_vcd, r.expAlign, pn + ".r_expAlign");
+        sc_trace(o_vcd, r.mantAlign, pn + ".r_mantAlign");
+        sc_trace(o_vcd, r.postShift, pn + ".r_postShift");
+        sc_trace(o_vcd, r.expAB, pn + ".r_expAB");
+        sc_trace(o_vcd, r.mantPostScale, pn + ".r_mantPostScale");
+        sc_trace(o_vcd, r.overflow, pn + ".r_overflow");
     }
     u_imul53.generateVCD(i_vcd, o_vcd);
 }

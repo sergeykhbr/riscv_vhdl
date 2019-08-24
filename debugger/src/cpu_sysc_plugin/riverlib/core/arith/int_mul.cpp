@@ -21,7 +21,18 @@
 
 namespace debugger {
 
-IntMul::IntMul(sc_module_name name_, bool async_reset) : sc_module(name_) {
+IntMul::IntMul(sc_module_name name_, bool async_reset) : sc_module(name_),
+    i_clk("i_clk"),
+    i_nrst("i_nrst"),
+    i_ena("i_ena"),
+    i_unsigned("i_unsigned"),
+    i_high("i_high"),
+    i_rv32("i_rv32"),
+    i_a1("i_a1"),
+    i_a2("i_a2"),
+    o_res("o_res"),
+    o_valid("o_valid"),
+    o_busy("o_busy") {
     async_reset_ = async_reset;
 
     SC_METHOD(comb);
@@ -56,13 +67,15 @@ void IntMul::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     sc_trace(vcd, i_a2, "i_a2");
 #endif
     if (o_vcd) {
-        sc_trace(o_vcd, i_a1, "/top/proc0/exec0/mul0/i_a1");
-        sc_trace(o_vcd, i_a2, "/top/proc0/exec0/mul0/i_a2");
-        sc_trace(o_vcd, i_ena, "/top/proc0/exec0/mul0/i_ena");
-        sc_trace(o_vcd, o_res, "/top/proc0/exec0/mul0/o_res");
-        sc_trace(o_vcd, o_valid, "/top/proc0/exec0/mul0/o_valid");
-        sc_trace(o_vcd, o_busy, "/top/proc0/exec0/mul0/o_busy");
-        sc_trace(o_vcd, r.ena, "/top/proc0/exec0/mul0/r_ena");
+        sc_trace(o_vcd, i_a1, i_a1.name());
+        sc_trace(o_vcd, i_a2, i_a2.name());
+        sc_trace(o_vcd, i_ena, i_ena.name());
+        sc_trace(o_vcd, o_res, o_res.name());
+        sc_trace(o_vcd, o_valid, o_valid.name());
+        sc_trace(o_vcd, o_busy, o_busy.name());
+
+        std::string pn(name());
+        sc_trace(o_vcd, r.ena, pn + ".r_ena");
     }
 }
 

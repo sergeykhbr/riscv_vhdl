@@ -20,7 +20,18 @@
 namespace debugger {
 
 IntDiv::IntDiv(sc_module_name name_, bool async_reset)
-    : sc_module(name_) {
+    : sc_module(name_),
+    i_clk("i_clk"),
+    i_nrst("i_nrst"),
+    i_ena("i_ena"),
+    i_unsigned("i_unsigned"),
+    i_rv32("i_rv32"),
+    i_residual("i"),
+    i_a1("i_a1"),
+    i_a2("i_a2"),
+    o_res("o_res"),
+    o_valid("o_valid"),
+    o_busy("o_busy")  {
     async_reset_ = async_reset;
 
     SC_METHOD(comb);
@@ -54,18 +65,20 @@ void IntDiv::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     sc_trace(t_vcd, i_a2, "i_a2");
 #endif
     if (o_vcd) {
-        sc_trace(o_vcd, i_ena, "/top/proc0/exec0/div0/i_ena");
-        sc_trace(o_vcd, o_res, "/top/proc0/exec0/div0/o_res");
-        sc_trace(o_vcd, o_valid, "/top/proc0/exec0/div0/o_valid");
-        sc_trace(o_vcd, r.ena, "/top/proc0/exec0/div0/r_ena");
-        sc_trace(o_vcd, r.busy, "/top/proc0/exec0/div0/r_busy");
-        sc_trace(o_vcd, r.qr, "/top/proc0/exec0/div0/r_qr");
-        sc_trace(o_vcd, r.invert, "/top/proc0/exec0/div0/r_invert");
-        sc_trace(o_vcd, r.rv32, "/top/proc0/exec0/div0/r_rv32");
-        sc_trace(o_vcd, r.resid, "/top/proc0/exec0/div0/r_resid");
-        sc_trace(o_vcd, r.reference_div, "/top/proc0/exec0/div0/r_reference_div");
-        sc_trace(o_vcd, wb_qr1, "/top/proc0/exec0/div0/wb_qr1");
-        sc_trace(o_vcd, wb_qr2, "/top/proc0/exec0/div0/wb_qr2");
+        sc_trace(o_vcd, i_ena, i_ena.name());
+        sc_trace(o_vcd, o_res, o_res.name());
+        sc_trace(o_vcd, o_valid, o_valid.name());
+
+        std::string pn(name());
+        sc_trace(o_vcd, r.ena, pn + ".r_ena");
+        sc_trace(o_vcd, r.busy, pn + ".r_busy");
+        sc_trace(o_vcd, r.qr, pn + ".r_qr");
+        sc_trace(o_vcd, r.invert, pn + ".r_invert");
+        sc_trace(o_vcd, r.rv32, pn + ".r_rv32");
+        sc_trace(o_vcd, r.resid, pn + ".r_resid");
+        sc_trace(o_vcd, r.reference_div, pn + ".r_reference_div");
+        sc_trace(o_vcd, wb_qr1, pn + ".wb_qr1");
+        sc_trace(o_vcd, wb_qr2, pn + ".wb_qr2");
     }
 }
 

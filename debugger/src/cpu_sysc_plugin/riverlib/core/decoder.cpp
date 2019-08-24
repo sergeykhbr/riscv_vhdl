@@ -19,7 +19,27 @@
 namespace debugger {
 
 InstrDecoder::InstrDecoder(sc_module_name name_, bool async_reset)
-    : sc_module(name_) {
+    : sc_module(name_),
+    i_clk("i_clk"),
+    i_nrst("i_nrst"),
+    i_any_hold("i_any_hold"),
+    i_f_valid("i_f_valid"),
+    i_f_pc("i_f_pc"),
+    i_f_instr("i_f_instr"),
+    o_valid("o_valid"),
+    o_pc("o_pc"),
+    o_instr("o_instr"),
+    o_memop_store("o_memop_store"),
+    o_memop_load("o_memop_load"),
+    o_memop_sign_ext("o_memop_sign_ext"),
+    o_memop_size("o_memop_size"),
+    o_rv32("o_rv32"),
+    o_compressed("o_compressed"),
+    o_f64("o_f64"),
+    o_unsigned_op("o_unsigned_op"),
+    o_isa_type("o_isa_type"),
+    o_instr_vec("o_instr_vec"),
+    o_exception("o_exception") {
     async_reset_ = async_reset;
 
     SC_METHOD(comb);
@@ -48,14 +68,14 @@ InstrDecoder::InstrDecoder(sc_module_name name_, bool async_reset)
 
 void InstrDecoder::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
-        sc_trace(o_vcd, i_any_hold, "/top/proc0/dec0/i_any_hold");
-        sc_trace(o_vcd, o_valid, "/top/proc0/dec0/o_valid");
-        sc_trace(o_vcd, o_pc, "/top/proc0/dec0/o_pc");
-        sc_trace(o_vcd, o_instr, "/top/proc0/dec0/o_instr");
-        sc_trace(o_vcd, o_isa_type, "/top/proc0/dec0/o_isa_type");
-        sc_trace(o_vcd, o_instr_vec, "/top/proc0/dec0/o_instr_vec");
-        sc_trace(o_vcd, o_exception, "/top/proc0/dec0/o_exception");
-        sc_trace(o_vcd, o_compressed, "/top/proc0/dec0/o_compressed");
+        sc_trace(o_vcd, i_any_hold, i_any_hold.name());
+        sc_trace(o_vcd, o_valid, o_valid.name());
+        sc_trace(o_vcd, o_pc, o_pc.name());
+        sc_trace(o_vcd, o_instr, o_instr.name());
+        sc_trace(o_vcd, o_isa_type, o_isa_type.name());
+        sc_trace(o_vcd, o_instr_vec, o_instr_vec.name());
+        sc_trace(o_vcd, o_exception, o_exception.name());
+        sc_trace(o_vcd, o_compressed, o_compressed.name());
     }
 }
 

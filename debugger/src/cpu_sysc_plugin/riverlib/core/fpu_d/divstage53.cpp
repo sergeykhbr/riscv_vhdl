@@ -14,11 +14,19 @@
  *  limitations under the License.
  */
 
-#include "divstage.h"
+#include "divstage53.h"
 
 namespace debugger {
 
-divstage::divstage(sc_module_name name_) : sc_module(name_) {
+divstage53::divstage53(sc_module_name name_) : sc_module(name_),
+    i_mux_ena("i_mux_ena"),
+    i_muxind("i_muxind"),
+    i_divident("i_divident"),
+    i_divisor("i_divisor"),
+    o_dif("o_dif"),
+    o_bits("o_bits"),
+    o_muxind("o_muxind"),
+    o_muxind_rdy("o_muxind_rdy") {
     SC_METHOD(comb);
     sensitive << i_mux_ena;
     sensitive << i_muxind;
@@ -26,17 +34,17 @@ divstage::divstage(sc_module_name name_) : sc_module(name_) {
     sensitive << i_divisor;
 };
 
-void divstage::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
+void divstage53::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
-        sc_trace(o_vcd, o_bits, "/top/proc0/fpu0/divstage0/o_bits");
-        sc_trace(o_vcd, i_mux_ena, "/top/proc0/fpu0/divstage0/i_mux_ena");
-        sc_trace(o_vcd, i_muxind, "/top/proc0/fpu0/divstage0/i_muxind");
-        sc_trace(o_vcd, i_divident, "/top/proc0/fpu0/divstage0/i_divident");
-        sc_trace(o_vcd, i_divisor, "/top/proc0/fpu0/divstage0/i_divisor");
+        sc_trace(o_vcd, o_bits, o_bits.name());
+        sc_trace(o_vcd, i_mux_ena, i_mux_ena.name());
+        sc_trace(o_vcd, i_muxind, i_muxind.name());
+        sc_trace(o_vcd, i_divident, i_divident.name());
+        sc_trace(o_vcd, i_divisor, i_divisor.name());
     }
 }
 
-void divstage::comb() {
+void divstage53::comb() {
     sc_uint<8> wb_bits;
     sc_uint<53+2> wb_divx3;
     sc_uint<53+2> wb_divx2;

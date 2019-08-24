@@ -137,17 +137,11 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset)
     sensitive << r.multi_a2;
     sensitive << r.state;
     sensitive << r.hazard_addr0;
-#ifndef EXEC2_ENA
-    sensitive << r.hazard_addr1;
-#endif
     sensitive << r.hazard_depth;
     sensitive << r.hold_valid;
     sensitive << r.hold_multi_ena;
     sensitive << r.call;
     sensitive << r.ret;
-#ifndef EXEC2_ENA
-    sensitive << w_hazard_detected;
-#endif
     sensitive << wb_arith_res.arr[Multi_MUL];
     sensitive << wb_arith_res.arr[Multi_DIV];
     sensitive << wb_arith_res.arr[Multi_FPU];
@@ -284,10 +278,6 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_uret, o_uret.name());
 
         std::string pn(name());
-#ifndef EXEC2_ENA
-        sc_trace(o_vcd, w_hazard_detected, pn + ".w_hazard_detected");
-        sc_trace(o_vcd, r.hazard_depth, pn + ".r_hazard_depth");
-#endif
         sc_trace(o_vcd, r.hazard_addr0, pn + ".r_hazard_addr0");
         sc_trace(o_vcd, r.hazard_depth, pn + ".hazard_depth");
         sc_trace(o_vcd, r.multiclock_ena, pn + ".r_multiclock_ena");
@@ -349,17 +339,9 @@ void InstrExecute::comb() {
 
     bool w_valid;
     bool w_pc_valid;
-#ifndef EXEC2_ENA
-    bool w_d_acceptable;
-#endif
     bool w_fpu_ena;
     bool w_res_wena;
     bool w_pc_branch;
-#ifndef EXEC2_ENA
-    bool w_d_valid;
-    bool w_o_valid;
-    bool w_o_pipeline_hold;
-#endif
     bool w_less;
     bool w_gr_equal;
 
@@ -393,10 +375,6 @@ void InstrExecute::comb() {
     if (i_d_pc.read() == r.npc.read()) {
         w_pc_valid = 1;
     }
-#ifndef EXEC2_ENA
-    w_d_acceptable = (!i_pipeline_hold) & i_d_valid 
-                          & w_pc_valid & (!r.multiclock_ena);
-#endif
 
     if (i_isa_type.read()[ISA_R_type]) {
         wb_radr1 = (0, i_d_instr.read().range(19, 15));
@@ -460,7 +438,6 @@ void InstrExecute::comb() {
         }
     }
 
-#ifdef EXEC2_ENA
     /** Default number of cycles per instruction = 0 (1 clock per instr)
      *  If instruction is multicycle then modify this value.
      */
@@ -619,8 +596,6 @@ void InstrExecute::comb() {
         v.hazard_depth = r.hazard_depth.read() - 1;
     }
 
-#endif
-
 
     // parallel ALU:
     wb_sum64 = wb_rdata1 + wb_rdata2;
@@ -639,33 +614,6 @@ void InstrExecute::comb() {
 
     wb_shifter_a1 = wb_rdata1;
     wb_shifter_a2 = wb_rdata2(5, 0);
-
-#ifndef EXEC2_ENA
-    w_multi_valid = w_arith_valid[Multi_MUL] | w_arith_valid[Multi_DIV]
-                  | w_arith_valid[Multi_FPU];
-
-    // Don't modify registers on conditional jumps:
-    w_res_wena = !(wv[Instr_BEQ] | wv[Instr_BGE] | wv[Instr_BGEU]
-               | wv[Instr_BLT] | wv[Instr_BLTU] | wv[Instr_BNE]
-               | wv[Instr_SD] | wv[Instr_SW] | wv[Instr_SH] | wv[Instr_SB]
-               | wv[Instr_FSD]
-               | wv[Instr_MRET] | wv[Instr_URET]
-               | wv[Instr_ECALL] | wv[Instr_EBREAK]).to_bool();
-
-    if (w_multi_valid) {
-        wb_res_addr = r.multi_res_addr;
-        v.multiclock_ena = 0;
-    } else if (w_res_wena) {
-        wb_res_addr = (0, i_d_instr.read().range(11, 7));
-        if (CFG_HW_FPU_ENABLE) {
-            if (i_f64.read() == 1 && wv[Instr_FLD] == 1) {
-                wb_res_addr |= 0x20;
-            }
-        }
-    } else {
-        wb_res_addr = 0;
-    }
-#endif
 
     w_less = 0;
     w_gr_equal = 0;
@@ -703,21 +651,13 @@ void InstrExecute::comb() {
         wb_npc[0] = 0;
     } else if (wv[Instr_MRET].to_bool()) {
         wb_res = i_d_pc.read() + opcode_len;
-#ifdef EXEC2_ENA
         w_mret = 1;
-#else
-        w_mret = i_d_valid.read() && w_pc_valid;
-#endif
         w_csr_wena = 0;
         wb_csr_addr = CSR_mepc;
         wb_npc = i_csr_rdata;
     } else if (wv[Instr_URET].to_bool()) {
         wb_res = i_d_pc.read() + opcode_len;
-#ifdef EXEC2_ENA
         w_uret = 1;
-#else
-        w_uret = i_d_valid.read() && w_pc_valid;
-#endif
         w_csr_wena = 0;
         wb_csr_addr = CSR_uepc;
         wb_npc = i_csr_rdata;
@@ -734,47 +674,19 @@ void InstrExecute::comb() {
             wb_rdata1(BUS_ADDR_WIDTH-1, 0) + wb_off(BUS_ADDR_WIDTH-1, 0);
     }
 
-#ifndef EXEC2_ENA
-    v.memop_addr = 0;
-    v.memop_load = 0;
-    v.memop_store = 0;
-    v.memop_sign_ext = 0;
-    v.memop_size = 0;
-#endif
     w_exception_store = 0;
     w_exception_load = 0;
 
     if ((wv[Instr_LD] && wb_memop_addr(2, 0) != 0)
         || ((wv[Instr_LW] || wv[Instr_LWU]) && wb_memop_addr(1, 0) != 0)
         || ((wv[Instr_LH] || wv[Instr_LHU]) && wb_memop_addr[0] != 0)) {
-#ifdef EXEC2_ENA
         w_exception_load = 1;
-#else
-        w_exception_load = !w_hazard_detected.read();
-#endif
     }
     if ((wv[Instr_SD] && wb_memop_addr(2, 0) != 0)
         || (wv[Instr_SW] && wb_memop_addr(1, 0) != 0)
         || (wv[Instr_SH] && wb_memop_addr[0] != 0)) {
-#ifdef EXEC2_ENA
         w_exception_store = 1;
-#else
-        w_exception_store = !w_hazard_detected.read();
-#endif
     }
-
-
-#ifndef EXEC2_ENA
-    /** Default number of cycles per instruction = 0 (1 clock per instr)
-     *  If instruction is multicycle then modify this value.
-     */
-    w_fpu_ena = 0;
-    if (CFG_HW_FPU_ENABLE) {
-        if (i_f64.read() && !(wv[Instr_FSD] | wv[Instr_FLD]).to_bool()) {
-            w_fpu_ena = 1;
-        }
-    }
-#endif
 
     v.multi_ena[Multi_MUL] = 0;
     v.multi_ena[Multi_DIV] = 0;
@@ -791,15 +703,7 @@ void InstrExecute::comb() {
         v.multi_a2 = i_rdata2;
     }
 
-#ifdef EXEC2_ENA
     if (w_multi_ena & w_next_ready) {
-#else
-    w_multi_ena = (wv[Instr_MUL] | wv[Instr_MULW] | wv[Instr_DIV] 
-                    | wv[Instr_DIVU] | wv[Instr_DIVW] | wv[Instr_DIVUW]
-                    | wv[Instr_REM] | wv[Instr_REMU] | wv[Instr_REMW]
-                    | wv[Instr_REMUW]).to_bool() || w_fpu_ena;
-    if (w_multi_ena & w_d_acceptable) {
-#endif
         v.multiclock_ena = 1;
         v.multi_res_addr = wb_res_addr;
         if (CFG_HW_FPU_ENABLE) {
@@ -828,19 +732,11 @@ void InstrExecute::comb() {
     } else if (w_arith_valid[Multi_FPU]) {
         wb_res = wb_arith_res.arr[Multi_FPU];
     } else if (i_memop_load) {
-#ifdef EXEC2_ENA
         w_memop_load = 1;
-#else
-        w_memop_load = !w_hazard_detected.read();
-#endif
         w_memop_sign_ext = i_memop_sign_ext;
         wb_memop_size = i_memop_size;
     } else if (i_memop_store) {
-#ifdef EXEC2_ENA
         w_memop_store = 1;
-#else
-        w_memop_store = !w_hazard_detected.read();
-#endif
         wb_memop_size = i_memop_size;
         wb_res = wb_rdata2;
     } else if (wv[Instr_ADD] || wv[Instr_ADDI] || wv[Instr_AUIPC]) {
@@ -876,32 +772,16 @@ void InstrExecute::comb() {
     } else if (wv[Instr_LUI]) {
         wb_res = wb_rdata2;
     } else if (wv[Instr_MUL] || wv[Instr_MULW]) {
-#ifdef EXEC2_ENA
         v.multi_ena[Multi_MUL] = w_next_ready;
-#else
-        v.multi_ena[Multi_MUL] = w_d_acceptable;
-#endif
     } else if (wv[Instr_DIV] || wv[Instr_DIVU]
             || wv[Instr_DIVW] || wv[Instr_DIVUW]) {
-#ifdef EXEC2_ENA
         v.multi_ena[Multi_DIV] = w_next_ready;
-#else
-        v.multi_ena[Multi_DIV] = w_d_acceptable;
-#endif
     } else if (wv[Instr_REM] || wv[Instr_REMU]
             || wv[Instr_REMW] || wv[Instr_REMUW]) {
-#ifdef EXEC2_ENA
         v.multi_ena[Multi_DIV] = w_next_ready;
-#else
-        v.multi_ena[Multi_DIV] = w_d_acceptable;
-#endif
         v.multi_residual_high = 1;
     } else if (w_fpu_ena == 1) {
-#ifdef EXEC2_ENA
         v.multi_ena[Multi_FPU] = w_next_ready;
-#else
-        v.multi_ena[Multi_FPU] = w_d_acceptable;
-#endif
     } else if (wv[Instr_CSRRC]) {
         wb_res = i_csr_rdata;
         w_csr_wena = 1;
@@ -937,7 +817,6 @@ void InstrExecute::comb() {
         wb_csr_wdata(4, 0) = wb_radr1(4, 0);  // zero-extending 5 to 64-bits
     }
 
-#ifdef EXEC2_ENA
     o_trap_ready = w_next_ready;
 
     o_ex_illegal_instr = i_unsup_exception.read() & w_next_ready;
@@ -945,23 +824,12 @@ void InstrExecute::comb() {
     o_ex_unalign_load = w_exception_load & w_next_ready;
     o_ex_breakpoint = wv[Instr_EBREAK].to_bool() & w_next_ready;
     o_ex_ecall = wv[Instr_ECALL].to_bool() & w_next_ready;
-#else
-    w_d_valid = (w_d_acceptable && !w_multi_ena) || w_multi_valid;
-    o_pre_valid = w_d_valid;
-
-    o_ex_illegal_instr = (i_unsup_exception.read() & w_pc_valid) && w_d_valid;
-    o_ex_unalign_store = w_exception_store && w_d_valid;
-    o_ex_unalign_load = w_exception_load && w_d_valid;
-    o_ex_breakpoint = wv[Instr_EBREAK].to_bool() && w_d_valid;
-    o_ex_ecall = wv[Instr_ECALL].to_bool() && w_d_valid;
-#endif
 
     v.call = 0;
     v.ret = 0;
     wb_ex_npc = 0;
     if (i_dport_npc_write.read()) {
         v.npc = i_dport_npc.read();
-#ifdef EXEC2_ENA
     } else if (w_multi_valid) {
         // multi-cycle instruction ending by single-cycle state
         // so no need to check jump opcodes
@@ -977,9 +845,6 @@ void InstrExecute::comb() {
         v.res_addr = wb_res_addr;
         v.res_val = wb_res;
     } else if (w_next_ready) {
-#else
-    } else if (w_d_valid) {
-#endif
         v.pc = i_d_pc;
         v.instr = i_d_instr;
         if (i_trap_valid.read()) {
@@ -997,12 +862,6 @@ void InstrExecute::comb() {
         v.res_addr = wb_res_addr;
         v.res_val = wb_res;
 
-#ifdef EXEC2_ENA
-#else
-        v.hazard_addr1 = r.hazard_addr0;
-        v.hazard_addr0 = wb_res_addr;
-#endif
-
         if (wv[Instr_JAL] && wb_res_addr == Reg_ra) {
             v.call = 1;
         }
@@ -1015,39 +874,6 @@ void InstrExecute::comb() {
         }
     }
 
-#ifdef EXEC2_ENA
-#else
-    v.d_valid = w_d_valid;
-
-    if (w_d_valid && !i_wb_done.read()) {
-        v.hazard_depth = r.hazard_depth.read() + 1;
-        v.hazard_addr0 = wb_res_addr;
-    } else if (!w_d_valid && i_wb_done.read()) {
-        v.hazard_depth = r.hazard_depth.read() - 1;
-    }
-    w_hazard_lvl1 = 0;
-    if ((wb_radr1 != 0 && (wb_radr1 == r.hazard_addr0)) ||
-        (wb_radr2 != 0 && (wb_radr2 == r.hazard_addr0))) {
-        w_hazard_lvl1 = 1;
-    }
-    w_hazard_lvl2 = 0;
-    if ((wb_radr1 != 0 && (wb_radr1 == r.hazard_addr1)) ||
-        (wb_radr2 != 0 && (wb_radr2 == r.hazard_addr1))) {
-        w_hazard_lvl2 = 1;
-    }
-
-    if (r.hazard_depth.read() == 1) {
-        w_hazard_detected = w_hazard_lvl1;
-    } else if (r.hazard_depth.read() == 2) {
-        w_hazard_detected = w_hazard_lvl1 | w_hazard_lvl2;
-    } else {
-        w_hazard_detected = 0;
-    }
-
-    w_o_pipeline_hold = w_hazard_detected | r.multiclock_ena;
-    w_o_valid = r.d_valid.read() & !w_o_pipeline_hold;
-#endif
-
     if (!async_reset_ && !i_nrst.read()) {
         R_RESET(v);
     }
@@ -1056,17 +882,9 @@ void InstrExecute::comb() {
     o_radr2 = wb_radr2;
     o_res_addr = r.res_addr;
     o_res_data = r.res_val;
-#ifdef EXEC2_ENA
     o_pipeline_hold = w_hold;
-#else
-    o_pipeline_hold = w_o_pipeline_hold;
-#endif
 
-#ifdef EXEC2_ENA
     o_csr_wena = w_csr_wena && w_next_ready;
-#else
-    o_csr_wena = w_csr_wena & w_pc_valid & !w_hazard_detected;
-#endif
     o_csr_addr = wb_csr_addr;
     o_csr_wdata = wb_csr_wdata;
     o_ex_npc = wb_ex_npc;
@@ -1077,11 +895,7 @@ void InstrExecute::comb() {
     o_memop_size = r.memop_size;
     o_memop_addr = r.memop_addr;
 
-#ifdef EXEC2_ENA
     o_valid = w_valid;
-#else
-    o_valid = w_o_valid;
-#endif
     o_pc = r.pc;
     o_npc = r.npc;
     o_instr = r.instr;

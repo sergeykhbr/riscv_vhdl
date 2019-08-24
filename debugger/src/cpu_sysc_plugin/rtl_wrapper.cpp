@@ -24,7 +24,31 @@
 namespace debugger {
 
 RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
-    o_clk("clk", 10, SC_NS) {
+    o_clk("clk", 10, SC_NS),
+    o_nrst("o_nrst"),
+    i_time("i_time"),
+    o_req_mem_ready("o_req_mem_ready"),
+    i_req_mem_valid("i_req_mem_valid"),
+    i_req_mem_write("i_req_mem_write"),
+    i_req_mem_addr("i_req_mem_addr"),
+    i_req_mem_strob("i_req_mem_strob"),
+    i_req_mem_data("i_req_mem_data"),
+    i_req_mem_len("i_req_mem_len"),
+    i_req_mem_burst("i_req_mem_burst"),
+    o_resp_mem_data_valid("o_resp_mem_data_valid"),
+    o_resp_mem_data("o_resp_mem_data"),
+    o_resp_mem_load_fault("o_resp_mem_load_fault"),
+    o_resp_mem_store_fault("o_resp_mem_store_fault"),
+    o_resp_mem_store_fault_addr("o_resp_mem_store_fault_addr"),
+    o_interrupt("o_interrupt"),
+    o_dport_valid("o_dport_valid"),
+    o_dport_write("o_dport_write"),
+    o_dport_region("o_dport_region"),
+    o_dport_addr("o_dport_addr"),
+    o_dport_wdata("o_dport_wdata"),
+    i_dport_ready("i_dport_ready"),
+    i_dport_rdata("i_dport_rdata"),
+    i_halted("i_halted") {
     iparent_ = parent;
     generate_ref_ = false;
     clockCycles_ = 1000000; // 1 MHz when default resolution = 1 ps
@@ -96,17 +120,19 @@ void RtlWrapper::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (i_vcd) {
     }
     if (o_vcd) {
-        sc_trace(o_vcd, w_nrst, "wrapper0/w_nrst");
-        sc_trace(o_vcd, r.nrst, "wrapper0/r_nrst");
-        sc_trace(o_vcd, r.state, "wrapper0/r_state");
-        sc_trace(o_vcd, r.req_addr, "wrapper0/r_req_addr");
-        sc_trace(o_vcd, r.req_write, "wrapper0/r_req_write");
-        sc_trace(o_vcd, r.req_len, "wrapper0/r_req_len");
-        sc_trace(o_vcd, r.req_burst, "wrapper0/r_req_burst");
-        sc_trace(o_vcd, i_req_mem_strob, "wrapper0/i_req_mem_strob");
-        sc_trace(o_vcd, i_req_mem_data, "wrapper0/i_req_mem_data");
-        sc_trace(o_vcd, o_resp_mem_data_valid, "wrapper0/o_resp_mem_data_valid");
-        sc_trace(o_vcd, o_resp_mem_data, "wrapper0/o_resp_mem_data");
+        sc_trace(o_vcd, i_req_mem_strob, i_req_mem_strob.name());
+        sc_trace(o_vcd, i_req_mem_data, i_req_mem_data.name());
+        sc_trace(o_vcd, o_resp_mem_data_valid, o_resp_mem_data_valid.name());
+        sc_trace(o_vcd, o_resp_mem_data, o_resp_mem_data.name());
+
+        std::string pn(name());
+        sc_trace(o_vcd, w_nrst, pn + ".w_nrst");
+        sc_trace(o_vcd, r.nrst, pn + ".r_nrst");
+        sc_trace(o_vcd, r.state, pn + ".r_state");
+        sc_trace(o_vcd, r.req_addr, pn + ".r_req_addr");
+        sc_trace(o_vcd, r.req_write, pn + ".r_req_write");
+        sc_trace(o_vcd, r.req_len, pn + ".r_req_len");
+        sc_trace(o_vcd, r.req_burst, pn + ".r_req_burst");
     }
 }
 

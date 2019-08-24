@@ -14,15 +14,15 @@
  *  limitations under the License.
  */
 
-#ifndef __DEBUGGER_RIVERLIB_CORE_FPU_D_DIVSTAGE_H__
-#define __DEBUGGER_RIVERLIB_CORE_FPU_D_DIVSTAGE_H__
+#ifndef __DEBUGGER_RIVERLIB_CORE_FPU_D_DIVSTAGE53_H__
+#define __DEBUGGER_RIVERLIB_CORE_FPU_D_DIVSTAGE53_H__
 
 #include <systemc.h>
 #include "../../river_cfg.h"
 
 namespace debugger {
 
-SC_MODULE(divstage) {
+SC_MODULE(divstage53) {
     sc_in<bool> i_mux_ena;              // find first non-zero bit
     sc_in<sc_uint<56>> i_muxind;        // bits indexes 8x7 bits bus
     sc_in<sc_uint<61>> i_divident;      // integer value
@@ -34,9 +34,9 @@ SC_MODULE(divstage) {
 
     void comb();
 
-    SC_HAS_PROCESS(divstage);
+    SC_HAS_PROCESS(divstage53);
 
-    divstage(sc_module_name name_);
+    divstage53(sc_module_name name_);
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
@@ -47,4 +47,4 @@ SC_MODULE(divstage) {
 
 }  // namespace debugger
 
-#endif  // __DEBUGGER_RIVERLIB_CORE_FPU_D_DIVSTAGE_H__
+#endif  // __DEBUGGER_RIVERLIB_CORE_FPU_D_DIVSTAGE53_H__

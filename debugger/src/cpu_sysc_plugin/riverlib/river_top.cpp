@@ -19,7 +19,32 @@
 namespace debugger {
 
 RiverTop::RiverTop(sc_module_name name_, uint32_t hartid, bool async_reset,
-    bool fpu_ena) : sc_module(name_) {
+    bool fpu_ena) : sc_module(name_),
+    i_clk("i_clk"),
+    i_nrst("i_nrst"),
+    i_req_mem_ready("i_req_mem_ready"),
+    o_req_mem_valid("o_req_mem_valid"),
+    o_req_mem_write("o_req_mem_write"),
+    o_req_mem_addr("o_req_mem_addr"),
+    o_req_mem_strob("o_req_mem_strob"),
+    o_req_mem_data("o_req_mem_data"),
+    o_req_mem_len("o_req_mem_len"),
+    o_req_mem_burst("o_req_mem_burst"),
+    i_resp_mem_data_valid("i_resp_mem_data_valid"),
+    i_resp_mem_data("i_resp_mem_data"),
+    i_resp_mem_load_fault("i_resp_mem_load_fault"),
+    i_resp_mem_store_fault("i_resp_mem_store_fault"),
+    i_resp_mem_store_fault_addr("i_resp_mem_store_fault_addr"),
+    i_ext_irq("i_ext_irq"),
+    o_time("o_time"),
+    i_dport_valid("i_dport_valid"),
+    i_dport_write("i_dport_write"),
+    i_dport_region("i_dport_region"),
+    i_dport_addr("i_dport_addr"),
+    i_dport_wdata("i_dport_wdata"),
+    o_dport_ready("o_dport_ready"),
+    o_dport_rdata("o_dport_rdata"),
+    o_halted("o_halted") {
 
     proc0 = new Processor("proc0", hartid, async_reset);
     proc0->i_clk(i_clk);

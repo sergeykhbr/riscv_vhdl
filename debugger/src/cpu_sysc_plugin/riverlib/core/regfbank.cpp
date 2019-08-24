@@ -19,7 +19,21 @@
 namespace debugger {
 
 RegFloatBank::RegFloatBank(sc_module_name name_, bool async_reset) :
-    sc_module(name_) {
+    sc_module(name_),
+    i_clk("i_clk"),
+    i_nrst("i_nrst"),
+    i_radr1("i_radr1"),
+    o_rdata1("o_rdata1"),
+    i_radr2("i_radr2"),
+    o_rdata2("o_rdata2"),
+    i_waddr("i_waddr"),
+    i_wena("i_wena"),
+    i_wdata("i_wdata"),
+    i_dport_addr("i_dport_addr"),
+    i_dport_ena("i_dport_ena"),
+    i_dport_write("i_dport_write"),
+    i_dport_wdata("i_dport_wdata"),
+    o_dport_rdata("o_dport_rdata") {
     async_reset_ = async_reset;
 
     SC_METHOD(comb);
@@ -42,18 +56,20 @@ RegFloatBank::RegFloatBank(sc_module_name name_, bool async_reset) :
 
 void RegFloatBank::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
-        sc_trace(o_vcd, i_wena, "/top/proc0/fregs/i_wena");
-        sc_trace(o_vcd, i_waddr, "/top/proc0/fregs/i_waddr");
-        sc_trace(o_vcd, i_wdata, "/top/proc0/fregs/i_wdata");
-        sc_trace(o_vcd, o_rdata1, "/top/proc0/fregs/o_rdata1");
-        sc_trace(o_vcd, o_rdata2, "/top/proc0/fregs/o_rdata2");
-        sc_trace(o_vcd, o_dport_rdata, "/top/proc0/fregs/o_dport_rdata");
-        sc_trace(o_vcd, r.mem[0], "/top/proc0/fregs/r_mem0");
-        sc_trace(o_vcd, r.mem[1], "/top/proc0/fregs/r_mem1");
-        sc_trace(o_vcd, r.mem[2], "/top/proc0/fregs/r_mem2");
-        sc_trace(o_vcd, r.mem[3], "/top/proc0/fregs/r_mem3");
-        sc_trace(o_vcd, r.mem[14], "/top/proc0/fregs/r_fa4");
-        sc_trace(o_vcd, r.mem[15], "/top/proc0/fregs/r_fa5");
+        sc_trace(o_vcd, i_wena, i_wena.name());
+        sc_trace(o_vcd, i_waddr, i_waddr.name());
+        sc_trace(o_vcd, i_wdata, i_wdata.name());
+        sc_trace(o_vcd, o_rdata1, o_rdata1.name());
+        sc_trace(o_vcd, o_rdata2, o_rdata2.name());
+        sc_trace(o_vcd, o_dport_rdata, o_dport_rdata.name());
+
+        std::string pn(name());
+        sc_trace(o_vcd, r.mem[0], pn + ".r_mem0");
+        sc_trace(o_vcd, r.mem[1], pn + ".r_mem1");
+        sc_trace(o_vcd, r.mem[2], pn + ".r_mem2");
+        sc_trace(o_vcd, r.mem[3], pn + ".r_mem3");
+        sc_trace(o_vcd, r.mem[14], pn + ".r_fa4");
+        sc_trace(o_vcd, r.mem[15], pn + ".r_fa5");
     }
 }
 

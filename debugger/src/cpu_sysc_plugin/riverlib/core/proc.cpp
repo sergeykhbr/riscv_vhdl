@@ -20,7 +20,45 @@
 namespace debugger {
 
 Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset)
-    : sc_module(name_) {
+    : sc_module(name_),
+    i_clk("i_clk"),
+    i_nrst("i_nrst"),
+    i_req_ctrl_ready("i_req_ctrl_ready"),
+    o_req_ctrl_valid("o_req_ctrl_valid"),
+    o_req_ctrl_addr("o_req_ctrl_addr"),
+    i_resp_ctrl_valid("i_resp_ctrl_valid"),
+    i_resp_ctrl_addr("i_resp_ctrl_addr"),
+    i_resp_ctrl_data("i_resp_ctrl_data"),
+    i_resp_ctrl_load_fault("i_resp_ctrl_load_fault"),
+    o_resp_ctrl_ready("o_resp_ctrl_ready"),
+    i_req_data_ready("i_req_data_ready"),
+    o_req_data_valid("o_req_data_valid"),
+    o_req_data_write("o_req_data_write"),
+    o_req_data_size("o_req_data_size"),
+    o_req_data_addr("o_req_data_addr"),
+    o_req_data_data("o_req_data_data"),
+    i_resp_data_valid("i_resp_data_valid"),
+    i_resp_data_addr("i_resp_data_addr"),
+    i_resp_data_data("i_resp_data_data"),
+    i_resp_data_load_fault("i_resp_data_load_fault"),
+    i_resp_data_store_fault("i_resp_data_store_fault"),
+    i_resp_data_store_fault_addr("i_resp_data_store_fault_addr"),
+    o_resp_data_ready("o_resp_data_ready"),
+    i_ext_irq("i_ext_irq"),
+    o_time("o_time"),
+    i_dport_valid("i_dport_valid"),
+    i_dport_write("i_dport_write"),
+    i_dport_region("i_dport_region"),
+    i_dport_addr("i_dport_addr"),
+    i_dport_wdata("i_dport_wdata"),
+    o_dport_ready("o_dport_ready"),
+    o_dport_rdata("o_dport_rdata"),
+    o_halted("o_halted"),
+    o_flush_address("o_flush_address"),
+    o_flush_valid("o_flush_valid"),
+    i_istate("i_istate"),
+    i_dstate("i_dstate"),
+    i_cstate("i_cstate") {
     generate_ref_ = 0;
 
     SC_METHOD(comb);
@@ -348,10 +386,6 @@ Processor::~Processor() {
 }
 
 void Processor::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
-    if (o_vcd) {
-        sc_trace(o_vcd, dbg.clock_cnt, "top/dbg_clock_cnt");
-        sc_trace(o_vcd, dbg.executed_cnt, "top/dbg_executed_cnt");
-    }
     predic0->generateVCD(i_vcd, o_vcd);
     csr0->generateVCD(i_vcd, o_vcd);
     dbg0->generateVCD(i_vcd, o_vcd);

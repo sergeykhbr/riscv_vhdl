@@ -1,15 +1,54 @@
-/**
- * @file
- * @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
- * @author     Sergey Khabarov - sergeykhbr@gmail.com
- * @brief      Data Cache.
+/*
+ *  Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 #include "dcache.h"
 
 namespace debugger {
 
-DCache::DCache(sc_module_name name_, bool async_reset) : sc_module(name_) {
+DCache::DCache(sc_module_name name_, bool async_reset) : sc_module(name_),
+    i_clk("i_clk"),
+    i_nrst("i_nrst"),
+    i_req_data_valid("i_req_data_valid"),
+    i_req_data_write("i_req_data_write"),
+    i_req_data_sz("i_req_data_sz"),
+    i_req_data_addr("i_req_data_addr"),
+    i_req_data_data("i_req_data_data"),
+    o_req_data_ready("o_req_data_ready"),
+    o_resp_data_valid("o_resp_data_valid"),
+    o_resp_data_addr("o_resp_data_addr"),
+    o_resp_data_data("o_resp_data_data"),
+    o_resp_data_load_fault("o_resp_data_load_fault"),
+    o_resp_data_store_fault("o_resp_data_store_fault"),
+    o_resp_data_store_fault_addr("o_resp_data_store_fault_addr"),
+    i_resp_data_ready("i_resp_data_ready"),
+    i_req_mem_ready("i_req_mem_ready"),
+    o_req_mem_valid("o_req_mem_valid"),
+    o_req_mem_write("o_req_mem_write"),
+    o_req_mem_addr("o_req_mem_addr"),
+    o_req_mem_strob("o_req_mem_strob"),
+    o_req_mem_data("o_req_mem_data"),
+    o_req_mem_len("o_req_mem_len"),
+    o_req_mem_burst("o_req_mem_burst"),
+    o_req_mem_last("o_req_mem_last"),
+    i_resp_mem_data_valid("i_resp_mem_data_valid"),
+    i_resp_mem_data("i_resp_mem_data"),
+    i_resp_mem_load_fault("i_resp_mem_load_fault"),
+    i_resp_mem_store_fault("i_resp_mem_store_fault"),
+    i_resp_mem_store_fault_addr("i_resp_mem_store_fault_addr"),
+    o_dstate("o_dstate") {
     async_reset_ = async_reset;
 
     SC_METHOD(comb);
@@ -41,26 +80,29 @@ DCache::DCache(sc_module_name name_, bool async_reset) : sc_module(name_) {
 
 void DCache::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
-        sc_trace(o_vcd, i_req_data_valid, "/top/cache0/d0/i_req_data_valid");
-        sc_trace(o_vcd, i_req_data_write, "/top/cache0/d0/i_req_data_write");
-        sc_trace(o_vcd, i_req_data_sz, "/top/cache0/d0/i_req_data_sz");
-        sc_trace(o_vcd, i_req_data_addr, "/top/cache0/d0/i_req_data_addr");
-        sc_trace(o_vcd, i_req_data_data, "/top/cache0/d0/i_req_data_data");
-        sc_trace(o_vcd, o_req_mem_addr, "/top/cache0/d0/o_req_mem_addr");
-        sc_trace(o_vcd, o_req_mem_valid, "/top/cache0/d0/o_req_mem_valid");
-        sc_trace(o_vcd, o_req_mem_write, "/top/cache0/d0/o_req_mem_write");
-        sc_trace(o_vcd, o_req_mem_strob, "/top/cache0/d0/o_req_mem_strob");
-        sc_trace(o_vcd, o_req_mem_data, "/top/cache0/d0/o_req_mem_data");
-        sc_trace(o_vcd, o_resp_data_valid, "/top/cache0/d0/o_resp_data_valid");
-        sc_trace(o_vcd, o_resp_data_addr, "/top/cache0/d0/o_resp_data_addr");
-        sc_trace(o_vcd, o_resp_data_data, "/top/cache0/d0/o_resp_data_data");
-        sc_trace(o_vcd, r.req_strob, "/top/cache0/d0/r_req_strob");
-        sc_trace(o_vcd, r.req_wdata, "/top/cache0/d0/r_req_wdata");
-        sc_trace(o_vcd, r.dline_data, "/top/cache0/d0/r_dline_data");
-        sc_trace(o_vcd, r.dline_addr_req, "/top/cache0/d0/r_dline_addr_req");
-        sc_trace(o_vcd, r.dline_size_req, "/top/cache0/d0/r_dline_size_req");
-        sc_trace(o_vcd, r.state, "/top/cache0/d0/r_state");
-        sc_trace(o_vcd, w_wait_response, "/top/cache0/d0/w_wait_response");    }
+        sc_trace(o_vcd, i_req_data_valid, i_req_data_valid.name());
+        sc_trace(o_vcd, i_req_data_write, i_req_data_write.name());
+        sc_trace(o_vcd, i_req_data_sz, i_req_data_sz.name());
+        sc_trace(o_vcd, i_req_data_addr, i_req_data_addr.name());
+        sc_trace(o_vcd, i_req_data_data, i_req_data_data.name());
+        sc_trace(o_vcd, o_req_mem_addr, o_req_mem_addr.name());
+        sc_trace(o_vcd, o_req_mem_valid, o_req_mem_valid.name());
+        sc_trace(o_vcd, o_req_mem_write, o_req_mem_write.name());
+        sc_trace(o_vcd, o_req_mem_strob, o_req_mem_strob.name());
+        sc_trace(o_vcd, o_req_mem_data, o_req_mem_data.name());
+        sc_trace(o_vcd, o_resp_data_valid, o_resp_data_valid.name());
+        sc_trace(o_vcd, o_resp_data_addr, o_resp_data_addr.name());
+        sc_trace(o_vcd, o_resp_data_data, o_resp_data_data.name());
+
+        std::string pn(name());
+        sc_trace(o_vcd, r.req_strob, pn + ".r_req_strob");
+        sc_trace(o_vcd, r.req_wdata, pn + ".r_req_wdata");
+        sc_trace(o_vcd, r.dline_data, pn + ".r_dline_data");
+        sc_trace(o_vcd, r.dline_addr_req, pn + ".r_dline_addr_req");
+        sc_trace(o_vcd, r.dline_size_req, pn + ".r_dline_size_req");
+        sc_trace(o_vcd, r.state, pn + ".r_state");
+        sc_trace(o_vcd, w_wait_response, pn + ".w_wait_response");
+    }
 }
 
 void DCache::comb() {

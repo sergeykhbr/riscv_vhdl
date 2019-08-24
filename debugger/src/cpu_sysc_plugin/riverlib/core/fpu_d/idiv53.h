@@ -19,7 +19,7 @@
 
 #include <systemc.h>
 #include "../../river_cfg.h"
-#include "divstage.h"
+#include "divstage53.h"
 
 namespace debugger {
 
@@ -45,7 +45,7 @@ SC_MODULE(idiv53) {
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
  private:
-    divstage divstage0;
+    divstage53 divstage0;
     struct RegistersType {
         sc_signal<sc_uint<15>> delay;
         sc_signal<sc_uint<7>> lshift;

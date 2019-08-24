@@ -52,7 +52,7 @@ int main() {
     uart_isr_init();   // enable printf_uart function and Tx irq=1
     p_irq->irq_lock = 0;
 
-#if 0
+#if 1
     printf_uart("HARTID . . . . .%d\r\n", fw_get_cpuid());
     printf_uart("Tech . . . . . .0x%08x\r\n", pnp->tech);
     printf_uart("HWID . . . . . .0x%08x\r\n", pnp->hwid);
