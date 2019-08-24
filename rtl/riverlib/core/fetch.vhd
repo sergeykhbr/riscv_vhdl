@@ -1,9 +1,18 @@
------------------------------------------------------------------------------
---! @file
---! @copyright Copyright 2018 GNSS Sensor Ltd. All right reserved.
---! @author    Sergey Khabarov - sergeykhbr@gmail.com
---! @brief     CPU Fetch Instruction stage.
-------------------------------------------------------------------------------
+--!
+--! Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
+--!
+--! Licensed under the Apache License, Version 2.0 (the "License");
+--! you may not use this file except in compliance with the License.
+--! You may obtain a copy of the License at
+--!
+--!     http://www.apache.org/licenses/LICENSE-2.0
+--!
+--! Unless required by applicable law or agreed to in writing, software
+--! distributed under the License is distributed on an "AS IS" BASIS,
+--! WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+--! See the License for the specific language governing permissions and
+--! limitations under the License.
+--!
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -31,10 +40,7 @@ entity InstrFetch is generic (
     i_mem_load_fault : in std_logic;
     o_mem_resp_ready : out std_logic;
 
-    i_e_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_predict_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    i_minus2 : in std_logic;
-    i_minus4 : in std_logic;
 
     o_mem_req_fire : out std_logic;                    -- used by branch predictor to form new npc value
     o_ex_load_fault : out std_logic;
@@ -54,8 +60,6 @@ architecture arch_InstrFetch of InstrFetch is
   type RegistersType is record
       wait_resp : std_logic;
       pipeline_init : std_logic_vector(4 downto 0);
-      pc_z1 : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-      raddr_not_resp_yet : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
       br_address : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
       br_instr : std_logic_vector(31 downto 0);
       instr_buf : std_logic_vector(DBG_FETCH_TRACE_SIZE*64-1 downto 0);
@@ -63,17 +67,13 @@ architecture arch_InstrFetch of InstrFetch is
       resp_address : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
       resp_data : std_logic_vector(31 downto 0);
       resp_valid : std_logic;
-      resp_address_z : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-      resp_data_z : std_logic_vector(31 downto 0);
-      minus2 : std_logic;
-      minus4 : std_logic;
   end record;
 
   constant R_RESET : RegistersType := (
-    '0', (others => '0'), (others => '0'), (others => '0'),
+    '0', (others => '0'),
     (others => '1'),  -- br_address
     (others =>'0'), (others =>'0'),
-    (others =>'0'), (others =>'0'), '0', (others =>'0'), (others =>'0'), '0', '0'
+    (others =>'0'), (others =>'0'), '0'
   );
 
   signal r, rin : RegistersType;
@@ -81,8 +81,7 @@ architecture arch_InstrFetch of InstrFetch is
 begin
 
   comb : process(i_nrst, i_pipeline_hold, i_mem_req_ready, i_mem_data_valid,
-                i_mem_data_addr, i_mem_data, i_mem_load_fault, i_e_npc,
-                i_predict_npc, i_minus2, i_minus4,
+                i_mem_data_addr, i_mem_data, i_mem_load_fault, i_predict_npc, 
                 i_br_fetch_valid, i_br_address_fetch, i_br_instr_fetch, r)
     variable v : RegistersType;
     variable w_o_req_valid : std_logic;
@@ -108,30 +107,12 @@ begin
 
     if i_mem_data_valid = '1' and r.wait_resp = '1' and i_pipeline_hold = '0' then
         v.resp_valid := '1';
-        v.minus2 := i_minus2;
-        v.minus4 := i_minus4;
---        if i_mem_data_addr = r.br_address then
---            v.resp_address := r.br_address;
---            v.resp_data := r.br_instr;
---            v.br_address := (others => '1');
---        else
-            v.resp_address := i_mem_data_addr;
-            v.resp_data := i_mem_data;
---        end if;
-        v.resp_address_z := r.resp_address;
-        v.resp_data_z := r.resp_data;
+        v.resp_address := i_mem_data_addr;
+        v.resp_data := i_mem_data;
     end if;
 
-    if r.minus4 = '1' then
-        wb_o_pc := r.resp_address_z;
-        wb_o_instr := r.resp_data_z;
-    elsif r.minus2 = '1' then
-        wb_o_pc := r.resp_address - 2;
-        wb_o_instr := r.resp_data(15 downto 0) & r.resp_data_z(31 downto 16);
-    else
-        wb_o_pc := r.resp_address;
-        wb_o_instr := r.resp_data;
-    end if;
+    wb_o_pc := r.resp_address;
+    wb_o_instr := r.resp_data;
 
 
     if i_br_fetch_valid = '1' then

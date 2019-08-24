@@ -19,7 +19,20 @@
 namespace debugger {
 
 IWayMem::IWayMem(sc_module_name name_, bool async_reset, int wayidx)
-    : sc_module(name_) {
+    : sc_module(name_),
+    i_clk("i_clk"),
+    i_nrst("i_nrst"),
+    i_radr("i_radr"),
+    i_wadr("i_wadr"),
+    i_wena("i_wena"),
+    i_wstrb("i_wstrb"),
+    i_wvalid("i_wvalid"),
+    i_wdata("i_wdata"),
+    i_load_fault("i_load_fault"),
+    o_rtag("o_rtag"),
+    o_rdata("o_rdata"),
+    o_valid("o_valid"),
+    o_load_fault("o_load_fault") {
     async_reset_ = async_reset;
     wayidx_ = wayidx;
 
@@ -78,6 +91,7 @@ IWayMem::IWayMem(sc_module_name name_, bool async_reset, int wayidx)
     for (int i = 0; i < RAM64_BLOCK_TOTAL; i++) {
         sensitive << wb_data_rdata[i];
     }
+    sensitive << r.roffset;
 
     SC_METHOD(registers);
     sensitive << i_nrst;
@@ -100,22 +114,22 @@ IWayMem::~IWayMem() {
 
 void IWayMem::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
-        if (wayidx_ == 2*2) {
-            sc_trace(o_vcd, i_radr, "/top/cache0/i0/wayeven0/i_radr");
-            sc_trace(o_vcd, i_wadr, "/top/cache0/i0/wayeven0/i_wadr");
-            sc_trace(o_vcd, i_wena, "/top/cache0/i0/wayeven0/i_wena");
-            sc_trace(o_vcd, i_wstrb, "/top/cache0/i0/wayeven0/i_wstrb");
-            sc_trace(o_vcd, i_wvalid, "/top/cache0/i0/wayeven0/i_wvalid");
-            sc_trace(o_vcd, i_wdata, "/top/cache0/i0/wayeven0/i_wdata");
-            sc_trace(o_vcd, wb_tag_rdata, "/top/cache0/i0/wayeven0/wb_tag_rdata");
-            sc_trace(o_vcd, wb_tag_wdata, "/top/cache0/i0/wayeven0/wb_tag_wdata");
-            sc_trace(o_vcd, wb_data_rdata[0], "/top/cache0/i0/wayeven0/wb_data_rdata0");
-            sc_trace(o_vcd, wb_data_rdata[1], "/top/cache0/i0/wayeven0/wb_data_rdata1");
-            sc_trace(o_vcd, wb_data_rdata[2], "/top/cache0/i0/wayeven0/wb_data_rdata2");
-            sc_trace(o_vcd, wb_data_rdata[3], "/top/cache0/i0/wayeven0/wb_data_rdata3");
-            sc_trace(o_vcd, o_valid, "/top/cache0/i0/wayeven0/o_valid");
-            sc_trace(o_vcd, o_rdata, "/top/cache0/i0/wayeven0/o_rdata");
-        }
+        sc_trace(o_vcd, i_radr, i_radr.name());
+        sc_trace(o_vcd, i_wadr, i_wadr.name());
+        sc_trace(o_vcd, i_wena, i_wena.name());
+        sc_trace(o_vcd, i_wstrb, i_wstrb.name());
+        sc_trace(o_vcd, i_wvalid, i_wvalid.name());
+        sc_trace(o_vcd, i_wdata, i_wdata.name());
+        sc_trace(o_vcd, o_valid, o_valid.name());
+        sc_trace(o_vcd, o_rdata, o_rdata.name());
+
+        std::string pn(name());
+        sc_trace(o_vcd, wb_tag_rdata, pn + ".wb_tag_rdata");
+        sc_trace(o_vcd, wb_tag_wdata, pn + ".wb_tag_wdata");
+        sc_trace(o_vcd, wb_data_rdata[0], pn + ".wb_data_rdata0");
+        sc_trace(o_vcd, wb_data_rdata[1], pn + ".wb_data_rdata1");
+        sc_trace(o_vcd, wb_data_rdata[2], pn + ".wb_data_rdata2");
+        sc_trace(o_vcd, wb_data_rdata[3], pn + ".wb_data_rdata3");
     }
 }
 

@@ -216,8 +216,9 @@ void AttributeType::realloc_data(unsigned size) {
     }
     if (size <= 8) {    
         if (size_ > 8) {
+            uint8_t *pold = u_.data;
             memcpy(u_.data_bytes, u_.data, size);
-            RISCV_free(u_.data);
+            RISCV_free(pold);
         }
         size_ = size;
         return;

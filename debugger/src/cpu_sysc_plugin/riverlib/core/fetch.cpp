@@ -19,7 +19,29 @@
 namespace debugger {
 
 InstrFetch::InstrFetch(sc_module_name name_, bool async_reset) :
-    sc_module(name_) {
+    sc_module(name_),
+    i_clk("i_clk"),
+    i_nrst("i_nrst"),
+    i_pipeline_hold("i_pipeline_hold"),
+    i_mem_req_ready("i_mem_req_ready"),
+    o_mem_addr_valid("o_mem_addr_valid"),
+    o_mem_addr("o_mem_addr"),
+    i_mem_data_valid("i_mem_data_valid"),
+    i_mem_data_addr("i_mem_data_addr"),
+    i_mem_data("i_mem_data"),
+    i_mem_load_fault("i_mem_load_fault"),
+    o_mem_resp_ready("o_mem_resp_ready"),
+    i_predict_npc("i_predict_npc"),
+    o_mem_req_fire("o_mem_req_fire"),
+    o_ex_load_fault("o_ex_load_fault"),
+    o_valid("o_valid"),
+    o_pc("o_pc"),
+    o_instr("o_instr"),
+    o_hold("o_hold"),
+    i_br_fetch_valid("i_br_fetch_valid"),
+    i_br_address_fetch("i_br_address_fetch"),
+    i_br_instr_fetch("i_br_instr_fetch"),
+    o_instr_buf("o_instr_buf") {
     async_reset_ = async_reset;
 
     SC_METHOD(comb);
@@ -30,15 +52,10 @@ InstrFetch::InstrFetch(sc_module_name name_, bool async_reset) :
     sensitive << i_mem_data_valid;
     sensitive << i_mem_data;
     sensitive << i_mem_load_fault;
-    sensitive << i_e_npc;
     sensitive << i_predict_npc;
-    sensitive << i_minus2;
-    sensitive << i_minus4;
     sensitive << i_br_fetch_valid;
     sensitive << i_br_address_fetch;
     sensitive << i_br_instr_fetch;
-    sensitive << r.pc_z1;
-    sensitive << r.raddr_not_resp_yet;
     sensitive << r.wait_resp;
     sensitive << r.pipeline_init;
     sensitive << r.br_address;
@@ -46,10 +63,6 @@ InstrFetch::InstrFetch(sc_module_name name_, bool async_reset) :
     sensitive << r.resp_address;
     sensitive << r.resp_data;
     sensitive << r.resp_valid;
-    sensitive << r.resp_address_z;
-    sensitive << r.resp_data_z;
-    sensitive << r.minus2;
-    sensitive << r.minus4;
 
     SC_METHOD(registers);
     sensitive << i_nrst;
@@ -58,23 +71,22 @@ InstrFetch::InstrFetch(sc_module_name name_, bool async_reset) :
 
 void InstrFetch::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
-        sc_trace(o_vcd, i_mem_data_valid, "/top/proc0/fetch0/i_mem_data_valid");
-        sc_trace(o_vcd, i_mem_data_addr, "/top/proc0/fetch0/i_mem_data_addr");
-        sc_trace(o_vcd, i_mem_data, "/top/proc0/fetch0/i_mem_data");
-        sc_trace(o_vcd, o_mem_resp_ready, "/top/proc0/fetch0/o_mem_resp_ready");
-        sc_trace(o_vcd, i_e_npc, "/top/proc0/fetch0/i_e_npc");
-        sc_trace(o_vcd, i_predict_npc, "/top/proc0/fetch0/i_predict_npc");
-        sc_trace(o_vcd, i_pipeline_hold, "/top/proc0/fetch0/i_pipeline_hold");
-        sc_trace(o_vcd, o_mem_addr_valid, "/top/proc0/fetch0/o_mem_addr_valid");
-        sc_trace(o_vcd, o_mem_addr, "/top/proc0/fetch0/o_mem_addr");
-        sc_trace(o_vcd, i_mem_req_ready, "/top/proc0/fetch0/i_mem_req_ready");
-        sc_trace(o_vcd, o_hold, "/top/proc0/fetch0/o_hold");
-        sc_trace(o_vcd, o_valid, "/top/proc0/fetch0/o_valid");
-        sc_trace(o_vcd, o_pc, "/top/proc0/fetch0/o_pc");
-        sc_trace(o_vcd, o_instr, "/top/proc0/fetch0/o_instr");
-        sc_trace(o_vcd, r.pc_z1, "/top/proc0/fetch0/r.pc_z1");
-        sc_trace(o_vcd, r.wait_resp, "/top/proc0/fetch0/r.wait_resp");
-        sc_trace(o_vcd, r.raddr_not_resp_yet, "/top/proc0/fetch0/r_raddr_not_resp_yet");
+        sc_trace(o_vcd, i_mem_data_valid, i_mem_data_valid.name());
+        sc_trace(o_vcd, i_mem_data_addr, i_mem_data_addr.name());
+        sc_trace(o_vcd, i_mem_data, i_mem_data.name());
+        sc_trace(o_vcd, o_mem_resp_ready, o_mem_resp_ready.name());
+        sc_trace(o_vcd, i_predict_npc, i_predict_npc.name());
+        sc_trace(o_vcd, i_pipeline_hold, i_pipeline_hold.name());
+        sc_trace(o_vcd, o_mem_addr_valid, o_mem_addr_valid.name());
+        sc_trace(o_vcd, o_mem_addr, o_mem_addr.name());
+        sc_trace(o_vcd, i_mem_req_ready, i_mem_req_ready.name());
+        sc_trace(o_vcd, o_hold, o_hold.name());
+        sc_trace(o_vcd, o_valid, o_valid.name());
+        sc_trace(o_vcd, o_pc, o_pc.name());
+        sc_trace(o_vcd, o_instr, o_instr.name());
+
+        std::string pn(name());
+        sc_trace(o_vcd, r.wait_resp, pn + ".r_wait_resp");
     }
 }
 
@@ -109,26 +121,12 @@ void InstrFetch::comb() {
 
     if (i_mem_data_valid.read() && r.wait_resp.read() && !i_pipeline_hold.read()) {
         v.resp_valid = 1;
-        v.minus2 = i_minus2.read();
-        v.minus4 = i_minus4.read();
-
         v.resp_address = i_mem_data_addr.read();
         v.resp_data = i_mem_data.read();
-        v.resp_address_z = r.resp_address.read();
-        v.resp_data_z = r.resp_data.read();
     }
 
-    if (r.minus4.read() == 1) {
-        wb_o_pc = r.resp_address_z.read();
-        wb_o_instr = r.resp_data_z.read();
-    } else if (r.minus2.read() == 1) {
-        wb_o_pc = r.resp_address.read() - 2;
-        wb_o_instr = (r.resp_data.read().range(15, 0) << 16) 
-                    | r.resp_data_z.read().range(31, 16);
-    } else {
-        wb_o_pc = r.resp_address.read();
-        wb_o_instr = r.resp_data.read();
-    }
+    wb_o_pc = r.resp_address.read();
+    wb_o_instr = r.resp_data.read();
 
 
     if (i_br_fetch_valid.read() == 1) {
