@@ -91,7 +91,7 @@ begin
   );
 
   stage1 : divstage64 port map (
-    i_divident => r.divident_i,
+    i_divident => wb_resid0_o,
     i_divisor => wb_divisor1_i,
     o_bits => wb_bits1_o,
     o_resid => wb_resid1_o
