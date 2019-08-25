@@ -21,6 +21,10 @@ namespace debugger {
 
 IntDiv::IntDiv(sc_module_name name_, bool async_reset)
     : sc_module(name_),
+#ifdef IDIV_V2
+    stage0("stage0"),
+    stage1("stage1"),
+#endif
     i_clk("i_clk"),
     i_nrst("i_nrst"),
     i_ena("i_ena"),
@@ -34,6 +38,18 @@ IntDiv::IntDiv(sc_module_name name_, bool async_reset)
     o_busy("o_busy")  {
     async_reset_ = async_reset;
 
+#ifdef IDIV_V2
+    stage0.i_divident(r.divident_i);
+    stage0.i_divisor(wb_divisor0_i);
+    stage0.o_bits(wb_bits0_o);
+    stage0.o_resid(wb_resid0_o);
+
+    stage1.i_divident(wb_resid0_o);
+    stage1.i_divisor(wb_divisor1_i);
+    stage1.o_bits(wb_bits1_o);
+    stage1.o_resid(wb_resid1_o);
+#endif
+
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_ena;
@@ -45,6 +61,15 @@ IntDiv::IntDiv(sc_module_name name_, bool async_reset)
     sensitive << r.result;
     sensitive << r.ena;
     sensitive << r.busy;
+#ifdef IDIV_V2
+    sensitive << wb_bits0_o;
+    sensitive << wb_resid0_o;
+    sensitive << wb_bits1_o;
+    sensitive << wb_resid1_o;
+    sensitive << r.divisor_i;
+    sensitive << r.divident_i;
+#else
+#endif
 
     SC_METHOD(registers);
     sensitive << i_nrst;
@@ -72,17 +97,122 @@ void IntDiv::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         std::string pn(name());
         sc_trace(o_vcd, r.ena, pn + ".r_ena");
         sc_trace(o_vcd, r.busy, pn + ".r_busy");
-        sc_trace(o_vcd, r.qr, pn + ".r_qr");
         sc_trace(o_vcd, r.invert, pn + ".r_invert");
         sc_trace(o_vcd, r.rv32, pn + ".r_rv32");
         sc_trace(o_vcd, r.resid, pn + ".r_resid");
         sc_trace(o_vcd, r.reference_div, pn + ".r_reference_div");
+#ifdef IDIV_V2
+        sc_trace(o_vcd, r.divident_i, pn + ".r_divident_i");
+        sc_trace(o_vcd, r.divisor_i, pn + ".r_divisor_i");
+        sc_trace(o_vcd, r.bits, pn + ".r_bits");
+        sc_trace(o_vcd, r.residual, pn + ".r_residual");
+#else
+        sc_trace(o_vcd, r.qr, pn + ".r_qr");
         sc_trace(o_vcd, wb_qr1, pn + ".wb_qr1");
         sc_trace(o_vcd, wb_qr2, pn + ".wb_qr2");
+#endif
     }
+#ifdef IDIV_V2
+    stage0.generateVCD(i_vcd, o_vcd);
+    stage1.generateVCD(i_vcd, o_vcd);
+#endif
 }
 
 void IntDiv::comb() {
+#ifdef IDIV_V2
+    bool w_invert64;
+    bool w_invert32;
+    sc_uint<64> wb_a1;
+    sc_uint<64> wb_a2;
+
+    v = r;
+
+    w_invert64 = 0;
+    w_invert32 = 0;
+
+    if (i_rv32.read()) {
+        wb_a1(63, 32) = 0;
+        wb_a2(63, 32) = 0;
+        if (i_unsigned.read() || i_a1.read()[31] == 0) {
+            wb_a1(31, 0) = i_a1.read()(31, 0);
+        } else {
+            wb_a1(31, 0) = (~i_a1.read()(31, 0)) + 1;
+        }
+        if (i_unsigned.read() || i_a2.read()[31] == 0) {
+            wb_a2(31, 0) = i_a2.read()(31, 0);
+        } else {
+            wb_a2(31, 0) = (~i_a2.read()(31, 0)) + 1;
+        }
+    } else {
+        if (i_unsigned.read() || i_a1.read()[63] == 0) {
+            wb_a1(63, 0) = i_a1.read();
+        } else {
+            wb_a1(63, 0) = (~i_a1.read()) + 1;
+        }
+        if (i_unsigned.read() || i_a2.read()[63] == 0) {
+            wb_a2(63, 0) = i_a2.read();
+        } else {
+            wb_a2(63, 0) = (~i_a2.read()) + 1;
+        }
+    }
+
+    v.ena = (r.ena.read() << 1) | (i_ena & !r.busy);
+
+    if (i_ena.read() == 1) {
+        v.busy = 1;
+        v.rv32 = i_rv32;
+        v.resid = i_residual;
+
+        v.divident_i = wb_a1;
+        sc_biguint<128> t_divisor = wb_a2.to_uint64();
+        v.divisor_i = t_divisor << 56;
+
+        v.bits = 0;
+        v.residual = 0;
+
+        w_invert32 = !i_unsigned.read() && 
+                ((!i_residual.read() && (i_a1.read()[31] ^ i_a2.read()[31]))
+                || (i_residual.read() && i_a1.read()[31]));
+        w_invert64 = !i_unsigned.read() &&
+                ((!i_residual.read() && (i_a1.read()[63] ^ i_a2.read()[63]))
+                || (i_residual.read() && i_a1.read()[63]));
+        v.invert = (!i_rv32.read() && w_invert64) 
+                || (i_rv32.read() && w_invert32);
+
+        v.a1_dbg = i_a1;
+        v.a2_dbg = i_a2;
+        v.reference_div = compute_reference(i_unsigned.read(), i_rv32.read(),
+                                     i_residual.read(),
+                                     i_a1.read(), i_a2.read());
+    } else if (r.ena.read()[8]) {
+        v.busy = 0;
+        if (r.resid.read()) {
+            if (r.invert.read()) {
+                v.result = ~r.divident_i.read().to_uint64() + 1;
+            } else {
+                v.result = r.divident_i.read();
+            }
+        } else {
+            if (r.invert.read()) {
+                v.result = ~r.bits.read().to_uint64() + 1;
+            } else {
+                v.result = r.bits.read();
+            }
+        }
+    } else if (r.busy.read() == 1) {
+        v.divident_i = wb_resid1_o;
+        v.divisor_i = r.divisor_i.read() >> 8;
+        v.bits = (r.bits.read() << 8) | (wb_bits0_o.read() << 4) | wb_bits1_o.read();
+    }
+
+    wb_divisor0_i = r.divisor_i.read() << 4;
+    wb_divisor1_i = r.divisor_i.read();
+
+    o_res = r.result;
+    o_valid = r.ena.read()[9];
+    o_busy = r.busy;
+
+#else
     sc_uint<64> wb_a1;
     sc_uint<64> wb_a2;
     sc_biguint<65> wb_divident = 0;
@@ -193,11 +323,16 @@ void IntDiv::comb() {
     o_res = r.result;
     o_valid = r.ena.read()[33];
     o_busy = r.busy;
+#endif
 }
 
 void IntDiv::registers() {
     // Debug purpose only"
+#ifdef IDIV_V2
+    if (v.ena.read()[9]) {
+#else
     if (v.ena.read()[33]) {
+#endif
         uint64_t t1 = v.result.read()(63,0).to_uint64();
         uint64_t t2 = r.reference_div.to_uint64();
         if (t1 != t2) {
@@ -256,6 +391,74 @@ uint64_t IntDiv::compute_reference(bool unsign, bool rv32, bool resid,
     }
     return ret;
 }
+
+#ifdef DBG_IDIV_TB
+IntDiv_tb::IntDiv_tb(sc_module_name name_) : sc_module(name_),
+    w_clk_i("clk0", 10, SC_NS) {
+
+    SC_METHOD(comb);
+    sensitive << w_nrst_i;
+    sensitive << r.clk_cnt;
+
+    SC_METHOD(registers);
+    sensitive << w_clk_i.posedge_event();
+
+    tt = new IntDiv("tt", 0);
+    tt->i_clk(w_clk_i);
+    tt->i_nrst(w_nrst_i);
+    tt->i_ena(w_ena_i);
+    tt->i_unsigned(w_unsigned_i);
+    tt->i_rv32(w_rv32_i);
+    tt->i_residual(w_residual_i);
+    tt->i_a1(wb_a1_i);
+    tt->i_a2(wb_a2_i);
+    tt->o_res(wb_res_o);
+    tt->o_valid(w_valid_o);
+    tt->o_busy(w_busy_o);
+
+    tb_vcd = sc_create_vcd_trace_file("IntDiv_tb");
+    tb_vcd->set_time_unit(1, SC_PS);
+    sc_trace(tb_vcd, w_nrst_i, "w_nrst_i");
+    sc_trace(tb_vcd, w_clk_i, "w_clk_i");
+    sc_trace(tb_vcd, r.clk_cnt, "clk_cnt");
+    sc_trace(tb_vcd, w_ena_i, "w_ena_i");
+    sc_trace(tb_vcd, w_unsigned_i, "w_unsigned_i");
+    sc_trace(tb_vcd, w_rv32_i, "w_rv32_i");
+    sc_trace(tb_vcd, w_residual_i, "w_residual_i");
+    sc_trace(tb_vcd, wb_a1_i, "wb_a1_i");
+    sc_trace(tb_vcd, wb_a2_i, "wb_a2_i");
+    sc_trace(tb_vcd, wb_res_o, "wb_res_o");
+    sc_trace(tb_vcd, w_valid_o, "w_valid_o");
+    sc_trace(tb_vcd, w_busy_o, "w_busy_o");
+
+    tt->generateVCD(tb_vcd, tb_vcd);
+}
+
+
+void IntDiv_tb::comb() {
+    v = r;
+    v.clk_cnt = r.clk_cnt.read() + 1;
+
+    if (r.clk_cnt.read() < 10) {
+        w_nrst_i = 0;
+    } else {
+        w_nrst_i = 1;
+
+        w_unsigned_i = 0;
+        w_rv32_i = 0;
+        w_residual_i = 0;
+        w_ena_i = 0;
+        if ((r.clk_cnt.read().to_uint64() % 40) == 39) {
+            w_ena_i = 1;
+            w_unsigned_i = rand() & 1;
+            w_rv32_i = rand() & 1;
+            w_residual_i = rand() & 1;
+            wb_a1_i = rand() | (static_cast<uint64_t>(rand()) << 60);
+            wb_a2_i = rand() | (static_cast<uint64_t>(rand()) << 60);
+        }
+    }
+}
+#endif
 
 }  // namespace debugger
 

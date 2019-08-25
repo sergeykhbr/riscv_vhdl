@@ -220,6 +220,10 @@ void FpuFunctional::idiv53(int64_t inDivident,
     int wbIndex13[8];
     int rLShiftRdy[14];
     int rbLShift[14];  // 8 bits value
+#if 1
+    inDivident = 0x2800;
+    inDivisor = 2;
+#endif
 
     // 0 of 13  
 #if 0

@@ -118,6 +118,7 @@
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mem\dpramtagi.cpp" />
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mem\ram64i.cpp" />
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mem\ramtagi.cpp" />
+    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\arith\divstage64.cpp" />
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\arith\int_div.cpp" />
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\arith\int_mul.cpp" />
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\arith\shift.cpp" />
@@ -173,6 +174,7 @@
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mem\dpramtagi.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mem\ram64i.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mem\ramtagi.h" />
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\arith\divstage64.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\arith\int_div.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\arith\int_mul.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\arith\shift.h" />

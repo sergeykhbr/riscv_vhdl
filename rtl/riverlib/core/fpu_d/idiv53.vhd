@@ -82,7 +82,7 @@ architecture arch_idiv53 of idiv53 is
 
 begin
 
-  divstage0 : divstage port map (
+  divstage0 : divstage53 port map (
     i_mux_ena => w_mux_ena_i,
     i_muxind => wb_muxind_i,
     i_divident => wb_divident_i,
