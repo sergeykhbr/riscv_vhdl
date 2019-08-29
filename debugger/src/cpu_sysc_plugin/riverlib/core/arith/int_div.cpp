@@ -105,7 +105,6 @@ void IntDiv::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.divident_i, pn + ".r_divident_i");
         sc_trace(o_vcd, r.divisor_i, pn + ".r_divisor_i");
         sc_trace(o_vcd, r.bits, pn + ".r_bits");
-        sc_trace(o_vcd, r.residual, pn + ".r_residual");
 #else
         sc_trace(o_vcd, r.qr, pn + ".r_qr");
         sc_trace(o_vcd, wb_qr1, pn + ".wb_qr1");
@@ -168,7 +167,6 @@ void IntDiv::comb() {
         v.divisor_i = t_divisor << 56;
 
         v.bits = 0;
-        v.residual = 0;
 
         w_invert32 = !i_unsigned.read() && 
                 ((!i_residual.read() && (i_a1.read()[31] ^ i_a2.read()[31]))
@@ -448,13 +446,103 @@ void IntDiv_tb::comb() {
         w_rv32_i = 0;
         w_residual_i = 0;
         w_ena_i = 0;
-        if ((r.clk_cnt.read().to_uint64() % 40) == 39) {
+        //if ((r.clk_cnt.read().to_uint64() % 40) == 39) {
+        if (r.clk_cnt.read().to_uint64() == 39) {
             w_ena_i = 1;
-            w_unsigned_i = rand() & 1;
-            w_rv32_i = rand() & 1;
-            w_residual_i = rand() & 1;
+            //w_unsigned_i = rand() & 1;
+            //w_rv32_i = rand() & 1;
+            //w_residual_i = rand() & 1;
             wb_a1_i = rand() | (static_cast<uint64_t>(rand()) << 60);
             wb_a2_i = rand() | (static_cast<uint64_t>(rand()) << 60);
+            wb_a1_i = 0xe000000000003456ull;
+            wb_a2_i = 0x0400000000003456ull;
+            w_unsigned_i = 0;
+            w_rv32_i = 0;
+            w_residual_i = 0;
+        } else if (r.clk_cnt.read().to_uint64() == 100) {
+            w_ena_i = 1;
+            //w_unsigned_i = rand() & 1;
+            //w_rv32_i = rand() & 1;
+            //w_residual_i = rand() & 1;
+            wb_a1_i = rand() | (static_cast<uint64_t>(rand()) << 60);
+            wb_a2_i = rand() | (static_cast<uint64_t>(rand()) << 60);
+            wb_a1_i = 0xe000000000003456ull;
+            wb_a2_i = 0x0400000000003456ull;
+            w_unsigned_i = 1;
+            w_rv32_i = 0;
+            w_residual_i = 0;
+        } else if (r.clk_cnt.read().to_uint64() == 200) {
+            w_ena_i = 1;
+            //w_unsigned_i = rand() & 1;
+            //w_rv32_i = rand() & 1;
+            //w_residual_i = rand() & 1;
+            wb_a1_i = rand() | (static_cast<uint64_t>(rand()) << 60);
+            wb_a2_i = rand() | (static_cast<uint64_t>(rand()) << 60);
+            wb_a1_i = 0xe000000000003456ull;
+            wb_a2_i = 0x0400000000003456ull;
+            w_unsigned_i = 0;
+            w_rv32_i = 1;
+            w_residual_i = 0;
+        } else if (r.clk_cnt.read().to_uint64() == 300) {
+            w_ena_i = 1;
+            //w_unsigned_i = rand() & 1;
+            //w_rv32_i = rand() & 1;
+            //w_residual_i = rand() & 1;
+            wb_a1_i = rand() | (static_cast<uint64_t>(rand()) << 60);
+            wb_a2_i = rand() | (static_cast<uint64_t>(rand()) << 60);
+            wb_a1_i = 0xe000000000003456ull;
+            wb_a2_i = 0x0400000000003456ull;
+            w_unsigned_i = 1;
+            w_rv32_i = 1;
+            w_residual_i = 0;
+        } else if (r.clk_cnt.read().to_uint64() == 400) {
+            w_ena_i = 1;
+            //w_unsigned_i = rand() & 1;
+            //w_rv32_i = rand() & 1;
+            //w_residual_i = rand() & 1;
+            wb_a1_i = rand() | (static_cast<uint64_t>(rand()) << 60);
+            wb_a2_i = rand() | (static_cast<uint64_t>(rand()) << 60);
+            wb_a1_i = 0xe000000000003456ull;
+            wb_a2_i = 0x0400000000003456ull;
+            w_unsigned_i = 0;
+            w_rv32_i = 0;
+            w_residual_i = 1;
+        } else if (r.clk_cnt.read().to_uint64() == 500) {
+            w_ena_i = 1;
+            //w_unsigned_i = rand() & 1;
+            //w_rv32_i = rand() & 1;
+            //w_residual_i = rand() & 1;
+            wb_a1_i = rand() | (static_cast<uint64_t>(rand()) << 60);
+            wb_a2_i = rand() | (static_cast<uint64_t>(rand()) << 60);
+            wb_a1_i = 0xe000000000003456ull;
+            wb_a2_i = 0x0400000000003456ull;
+            w_unsigned_i = 1;
+            w_rv32_i = 0;
+            w_residual_i = 1;
+        } else if (r.clk_cnt.read().to_uint64() == 600) {
+            w_ena_i = 1;
+            //w_unsigned_i = rand() & 1;
+            //w_rv32_i = rand() & 1;
+            //w_residual_i = rand() & 1;
+            wb_a1_i = rand() | (static_cast<uint64_t>(rand()) << 60);
+            wb_a2_i = rand() | (static_cast<uint64_t>(rand()) << 60);
+            wb_a1_i = 0xe000000000003456ull;
+            wb_a2_i = 0x0400000000003456ull;
+            w_unsigned_i = 0;
+            w_rv32_i = 1;
+            w_residual_i = 1;
+        } else if (r.clk_cnt.read().to_uint64() == 700) {
+            w_ena_i = 1;
+            //w_unsigned_i = rand() & 1;
+            //w_rv32_i = rand() & 1;
+            //w_residual_i = rand() & 1;
+            wb_a1_i = rand() | (static_cast<uint64_t>(rand()) << 60);
+            wb_a2_i = rand() | (static_cast<uint64_t>(rand()) << 60);
+            wb_a1_i = 0xe000000000003456ull;
+            wb_a2_i = 0x0400000000003456ull;
+            w_unsigned_i = 1;
+            w_rv32_i = 1;
+            w_residual_i = 1;
         }
     }
 }

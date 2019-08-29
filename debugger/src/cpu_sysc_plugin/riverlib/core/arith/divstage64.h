@@ -38,7 +38,7 @@ SC_MODULE(divstage64) {
 
  private:
     sc_biguint<129> wb_thresh[16];
-    sc_biguint<128> wb_dif[4];
+    sc_biguint<128> wb_dif;
     sc_biguint<129> wb_divx3;
     sc_biguint<129> wb_divx2;
     sc_biguint<129> wb_divident;
