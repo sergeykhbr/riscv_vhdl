@@ -192,6 +192,7 @@ class CpuGeneric : public IService,
     AttributeType cacheBaseAddr_;
     AttributeType cacheAddrMask_;
     AttributeType coverageTracker_;
+    AttributeType resetState_;
 
     ISourceCode *isrc_;
     ICoverageTracker *icovtracker_;

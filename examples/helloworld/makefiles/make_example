@@ -45,8 +45,8 @@ all: example
 example: $(EXECUTABLE) $(DUMPFILE) $(HEXFILE)
 
 $(HEXFILE): $(EXECUTABLE)
-	echo elf2raw64 $(addprefix $(ELF_DIR)/,$<) -h -f 262144 -l 8 -o $(addprefix $(ELF_DIR)/,$(EXECUTABLE).hex)
-	elf2raw64 $(addprefix $(ELF_DIR)/,$<) -h -f 262144 -l 8 -o $(addprefix $(ELF_DIR)/,$(EXECUTABLE).hex)
+	echo elf2rawx $(addprefix $(ELF_DIR)/,$<) -h -f 262144 -l 8 -o $(addprefix $(ELF_DIR)/,$(EXECUTABLE).hex)
+	elf2rawx $(addprefix $(ELF_DIR)/,$<) -h -f 262144 -l 8 -o $(addprefix $(ELF_DIR)/,$(EXECUTABLE).hex)
 
 $(DUMPFILE): $(EXECUTABLE)
 	echo $(OBJDUMP) --disassemble-all --disassemble-zeroes --section=.text --section=.text.startup --section=.data $(addprefix $(ELF_DIR)/,$<) > $(addprefix $(ELF_DIR)/,$@)

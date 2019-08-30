@@ -58,6 +58,7 @@ CpuGeneric::CpuGeneric(const char *name)
     registerAttribute("CacheBaseAddress", &cacheBaseAddr_);
     registerAttribute("CacheAddressMask", &cacheAddrMask_);
     registerAttribute("CoverageTracker", &coverageTracker_);
+    registerAttribute("ResetState", &resetState_);
 
     char tstr[256];
     RISCV_sprintf(tstr, sizeof(tstr), "eventConfigDone_%s", name);
@@ -112,6 +113,12 @@ CpuGeneric::~CpuGeneric() {
 }
 
 void CpuGeneric::postinitService() {
+    if (resetState_.is_equal("Halted")) {
+        estate_ = CORE_Halted;
+    } else {
+        estate_ = CORE_OFF;
+    }
+
     isysbus_ = static_cast<IMemoryOperation *>(
         RISCV_get_service_iface(sysBus_.to_string(), IFACE_MEMORY_OPERATION));
     if (!isysbus_) {
@@ -488,8 +495,12 @@ void CpuGeneric::reset(bool active) {
         RISCV_trigger_hap(static_cast<IService *>(this),
                             HAP_CpuTurnON, "CPU Turned ON");
     } else if (active) {
-        // Turn OFF:
-        estate_ = CORE_OFF;
+        flush(~0ull);
+        if (resetState_.is_equal("Halted")) {
+            estate_ = CORE_Halted;
+        } else {
+            estate_ = CORE_OFF;
+        }
         RISCV_trigger_hap(static_cast<IService *>(this),
                             HAP_CpuTurnOFF, "CPU Turned OFF");
     }
