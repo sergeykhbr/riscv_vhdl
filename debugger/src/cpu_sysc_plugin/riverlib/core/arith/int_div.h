@@ -23,8 +23,7 @@
 
 namespace debugger {
 
-#define IDIV_V2
-#define DBG_IDIV_TB
+//#define DBG_IDIV_TB
 
 SC_MODULE(IntDiv) {
     sc_in<bool> i_clk;
@@ -52,36 +51,23 @@ private:
     uint64_t compute_reference(bool unsign, bool rv32, bool resid,
                                uint64_t a1, uint64_t a2);
 
-#ifdef IDIV_V2
     divstage64 stage0;
     divstage64 stage1;
-    sc_signal<sc_biguint<128>> wb_divisor0_i;
-    sc_signal<sc_biguint<128>> wb_divisor1_i;
-    sc_signal<sc_uint<64>> wb_resid0_o;
-    sc_signal<sc_uint<64>> wb_resid1_o;
-    sc_signal<sc_uint<4>> wb_bits0_o;
-    sc_signal<sc_uint<4>> wb_bits1_o;
-#endif
 
     struct RegistersType {
         sc_signal<bool> rv32;
         sc_signal<bool> resid;
         sc_signal<bool> invert;
         sc_signal<bool> busy;
-        sc_signal<sc_uint<34>> ena;
+        sc_signal<sc_uint<10>> ena;
+        sc_signal<sc_uint<64>> divident_i;
+        sc_signal<sc_biguint<120>> divisor_i;
+        sc_signal<sc_uint<64>> bits_i;
         sc_signal<sc_uint<RISCV_ARCH>> result;
 
         sc_uint<RISCV_ARCH> reference_div;
         sc_uint<64> a1_dbg;     // Store this value for output in a case of error
         sc_uint<64> a2_dbg;
-#ifdef IDIV_V2
-        sc_signal<sc_uint<64>> divident_i;
-        sc_signal<sc_biguint<128>> divisor_i;
-        sc_signal<sc_uint<64>> bits;
-#else
-        sc_biguint<128> qr;
-        sc_biguint<65> divider;
-#endif
     } v, r;
 
     void R_RESET(RegistersType &iv) {
@@ -90,22 +76,18 @@ private:
         iv.invert = 0;
         iv.busy = 0;
         iv.ena = 0;
-        iv.result = 0;
-#ifdef IDIV_V2
         iv.divident_i = 0;
         iv.divisor_i = 0;
-        iv.bits = 0;
-#else
-        iv.qr = 0;
-        iv.divider = 0;
-#endif
+        iv.bits_i = 0;
+        iv.result = 0;
     }
 
-    // 2 stages per one clock to improve divider performance
-    sc_biguint<65> wb_diff1;
-    sc_biguint<65> wb_diff2;
-    sc_biguint<128> wb_qr1;
-    sc_biguint<128> wb_qr2;
+    sc_signal<sc_biguint<124>> wb_divisor0_i;
+    sc_signal<sc_biguint<124>> wb_divisor1_i;
+    sc_signal<sc_uint<64>> wb_resid0_o;
+    sc_signal<sc_uint<64>> wb_resid1_o;
+    sc_signal<sc_uint<4>> wb_bits0_o;
+    sc_signal<sc_uint<4>> wb_bits1_o;
     bool async_reset_;
 };
 
@@ -123,23 +105,24 @@ SC_MODULE(IntDiv_tb) {
 private:
     IntDiv *tt;
 
-    sc_clock w_clk_i;
-    sc_signal<bool> w_nrst_i;
-    sc_signal<bool> w_ena_i;
-    sc_signal<bool> w_unsigned_i;
-    sc_signal<bool> w_rv32_i;
-    sc_signal<bool> w_residual_i;
-    sc_signal<sc_uint<RISCV_ARCH>> wb_a1_i;
-    sc_signal<sc_uint<RISCV_ARCH>> wb_a2_i;
-    sc_signal<sc_uint<RISCV_ARCH>> wb_res_o;
-    sc_signal<bool> w_valid_o;
-    sc_signal<bool> w_busy_o;
+    sc_clock i_clk;
+    sc_signal<bool> i_nrst;
+    sc_signal<bool> i_ena;
+    sc_signal<bool> i_unsigned;
+    sc_signal<bool> i_rv32;
+    sc_signal<bool> i_residual;
+    sc_signal<sc_uint<RISCV_ARCH>> i_a1;
+    sc_signal<sc_uint<RISCV_ARCH>> i_a2;
+    sc_signal<sc_uint<RISCV_ARCH>> o_res;
+    sc_signal<bool> o_valid;
+    sc_signal<bool> o_busy;
 
     struct RegistersType {
         sc_signal<sc_uint<32>> clk_cnt;
     } v, r;
 
-    sc_trace_file *tb_vcd;
+    sc_trace_file *tb_vcd_i;
+    sc_trace_file *tb_vcd_o;
 };
 #endif  // DBG_IDIV_TB
 

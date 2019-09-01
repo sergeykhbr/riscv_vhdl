@@ -24,7 +24,7 @@
 
 namespace debugger {
 
-#define DBG_ICACHE_LRU_TB
+//#define DBG_ICACHE_LRU_TB
 
 SC_MODULE(ICacheLru) {
     sc_in<bool> i_clk;

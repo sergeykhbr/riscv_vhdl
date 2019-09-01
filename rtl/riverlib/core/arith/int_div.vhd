@@ -25,7 +25,7 @@ use riverlib.river_cfg.all;
 
 
 entity IntDiv is generic (
-    async_reset : boolean
+    async_reset : boolean := false
   );
   port (
     i_clk  : in std_logic;

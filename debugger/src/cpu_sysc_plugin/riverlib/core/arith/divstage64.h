@@ -24,7 +24,7 @@ namespace debugger {
 
 SC_MODULE(divstage64) {
     sc_in<sc_uint<64>> i_divident;      // integer value
-    sc_in<sc_biguint<128>> i_divisor;   // integer value
+    sc_in<sc_biguint<124>> i_divisor;   // integer value
     sc_out<sc_uint<64>> o_resid;        // residual
     sc_out<sc_uint<4>> o_bits;          // resulting bits
 
@@ -37,12 +37,26 @@ SC_MODULE(divstage64) {
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
  private:
-    sc_biguint<129> wb_thresh[16];
-    sc_biguint<128> wb_dif;
-    sc_biguint<129> wb_divx3;
-    sc_biguint<129> wb_divx2;
-    sc_biguint<129> wb_divident;
-    sc_biguint<129> wb_divisor;
+    sc_biguint<66> wb_thresh[16];
+    sc_uint<64> wb_dif;
+    sc_biguint<65> wb_divx1;
+    sc_biguint<65> wb_divx2;
+    sc_biguint<65> wb_divx3;
+    sc_biguint<65> wb_divx4;
+    sc_biguint<65> wb_divx5;
+    sc_biguint<65> wb_divx6;
+    sc_biguint<65> wb_divx7;
+    sc_biguint<65> wb_divx8;
+    sc_biguint<65> wb_divx9;
+    sc_biguint<65> wb_divx10;
+    sc_biguint<65> wb_divx11;
+    sc_biguint<65> wb_divx12;
+    sc_biguint<65> wb_divx13;
+    sc_biguint<65> wb_divx14;
+    sc_biguint<65> wb_divx15;
+    sc_biguint<65> wb_divx16;
+    sc_biguint<65> wb_divident;
+    sc_biguint<124> wb_divisor;
 };
 
 }  // namespace debugger

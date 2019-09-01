@@ -192,8 +192,12 @@ void CpuRiscV_RTL::createSystemC() {
     top_->o_dport_rdata(wb_dport_rdata);
     top_->o_halted(w_halted);
 
-//    ICacheLru_tb *tb = new ICacheLru_tb("tb");
+#ifdef DBG_ICACHE_LRU_TB
+    ICacheLru_tb *tb = new ICacheLru_tb("tb");
+#endif
+#ifdef DBG_IDIV_TB
     IntDiv_tb *tb = new IntDiv_tb("tb");
+#endif
 
     //sc_start(0, SC_NS);
 }

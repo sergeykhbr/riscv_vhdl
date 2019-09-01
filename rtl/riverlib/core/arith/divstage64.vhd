@@ -56,6 +56,7 @@ begin
     variable wb_divx13 : std_logic_vector(64 downto 0);
     variable wb_divx14 : std_logic_vector(64 downto 0);
     variable wb_divx15 : std_logic_vector(64 downto 0);
+    variable wb_divx16 : std_logic_vector(64 downto 0);
 
   begin
     wb_divident := '0' & i_divident;
@@ -78,33 +79,35 @@ begin
     wb_divx6(63 downto 0) := wb_divx3(62 downto 0) & '0';
     wb_divx6(64) := wb_divx3(64) or wb_divx3(63);
 
-    -- 7 = 8 - 1
-    wb_divx7(64 downto 0) := (or_reduce(i_divisor(123 downto 61)) & wb_divx1(60 downto 0) & "000") 
-                          - ('0' & wb_divx1(63 downto 0));
-    wb_divx7(64) := wb_divx7(64) or or_reduce(i_divisor(123 downto 62));
-
     wb_divx8(63 downto 0) := wb_divx1(60 downto 0) & "000";
     wb_divx8(64) := or_reduce(i_divisor(123 downto 61));
 
+    -- 7 = 8 - 1
+    wb_divx7(64 downto 0) := wb_divx8(64 downto 0) - ('0' & wb_divx1(63 downto 0));
+    wb_divx7(64) := wb_divx7(64) or or_reduce(i_divisor(123 downto 62));
+
     -- 9 = 8 + 1
-    wb_divx9(64 downto 0) := (wb_divx1(61 downto 0) & "000") + ('0' & wb_divx1(63 downto 0));
-    wb_divx9(64) := wb_divx9(64) or or_reduce(i_divisor(123 downto 62));
+    wb_divx9(64 downto 0) := ('0' & wb_divx8(63 downto 0)) + ('0' & wb_divx1(63 downto 0));
+    wb_divx9(64) := wb_divx9(64) or or_reduce(i_divisor(123 downto 61));
 
     -- 10 = 8 + 2
-    wb_divx10(64 downto 0) := (wb_divx1(61 downto 0) & "000") + ('0' & wb_divx2(63 downto 0));
-    wb_divx10(64) := wb_divx10(64) or or_reduce(i_divisor(123 downto 62));
+    wb_divx10(64 downto 0) := ('0' & wb_divx8(63 downto 0)) + ('0' & wb_divx2(63 downto 0));
+    wb_divx10(64) := wb_divx10(64) or or_reduce(i_divisor(123 downto 61));
 
     -- 11 = 8 + 3
-    wb_divx11(64 downto 0) := (wb_divx1(61 downto 0) & "000") + ('0' & wb_divx3(63 downto 0));
-    wb_divx11(64) := wb_divx11(64) or or_reduce(i_divisor(123 downto 62));
+    wb_divx11(64 downto 0) := ('0' & wb_divx8(63 downto 0)) + ('0' & wb_divx3(63 downto 0));
+    wb_divx11(64) := wb_divx11(64) or or_reduce(i_divisor(123 downto 61));
 
     -- 12 = 3 << 2
     wb_divx12(63 downto 0) := wb_divx3(61 downto 0) & "00";
     wb_divx12(64) := wb_divx3(64) or wb_divx3(63) or wb_divx3(62);
 
+    -- 16 = divisor << 4
+    wb_divx16(63 downto 0) := wb_divx1(59 downto 0) & "0000";
+    wb_divx16(64) := or_reduce(i_divisor(123 downto 60));
+
     -- 13 = 16 - 3
-    wb_divx13(64 downto 0) := (or_reduce(i_divisor(123 downto 60)) & wb_divx1(59 downto 0) & "0000")
-                           - ('0' & wb_divx3(63 downto 0));
+    wb_divx13(64 downto 0) := wb_divx16(64 downto 0) - ('0' & wb_divx3(63 downto 0));
     wb_divx13(64) := wb_divx13(64) or or_reduce(i_divisor(123 downto 61));
 
     -- 14 = 7 << 1
@@ -112,8 +115,7 @@ begin
     wb_divx14(64) := wb_divx7(64) or wb_divx7(63);
 
     -- 15 = 16 - 1
-    wb_divx15(64 downto 0) := (or_reduce(i_divisor(123 downto 60)) & wb_divx1(59 downto 0) & "0000")
-                           - ('0' & wb_divx1(63 downto 0));
+    wb_divx15(64 downto 0) := wb_divx16(64 downto 0) - ('0' & wb_divx1(63 downto 0));
     wb_divx15(64) := wb_divx15(64) or or_reduce(i_divisor(123 downto 61));
 
     wb_thresh(15) := ('0' & wb_divident) - ('0' & wb_divx15);
