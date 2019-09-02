@@ -119,7 +119,10 @@ begin
     variable mantMoreScale : std_logic_vector(104 downto 0);
     variable mantLessScale : std_logic_vector(104 downto 0);
     variable vb_mantSum : std_logic_vector(105 downto 0);
+    variable vb_mantSumInv : std_logic_vector(104 downto 0);
     variable vb_lshift : integer range 0 to 127;
+    variable vb_lshift_p1 : integer range 0 to 127;
+    variable vb_lshift_p2 : integer range 0 to 127;
     variable vb_mantAlign : std_logic_vector(104 downto 0);
     variable vb_expPostScale : std_logic_vector(11 downto 0);
     variable vb_mantPostScale : std_logic_vector(104 downto 0);
@@ -281,20 +284,37 @@ begin
         v.mantSum := vb_mantSum;
     end if;
 
+    -- To avoid timing constrains violation occured in Vivado Studio
+    -- try to implement parallel demuxultiplexer splitted on 2 parts
+    vb_mantSumInv(0) := '0';
+    for i in 0 to 103 loop
+        vb_mantSumInv(i + 1) := r.mantSum(103 - i);
+    end loop;
+    
+    vb_lshift_p1 := 0;
+    for i in 0 to 63 loop
+        if vb_lshift_p1 = 0 and vb_mantSumInv(i) = '1' then
+            vb_lshift_p1 := i;
+        end if;
+    end loop;
+    
+    vb_lshift_p2 := 0;
+    for i in 0 to 40 loop
+        if vb_lshift_p2 = 0 and vb_mantSumInv(64 + i) = '1' then
+            vb_lshift_p2 := 64 + i;
+        end if;
+    end loop;
+
     -- multiplexer
     if r.mantSum(105) = '1' then
         -- shift right
         vb_lshift := 127;
     elsif r.mantSum(104) = '1' then
         vb_lshift := 0;
+    elsif vb_lshift_p1 /= 0 then
+        vb_lshift := vb_lshift_p1;
     else
-        -- shift left
-        vb_lshift := 0;
-        for i in 1 to 104 loop
-            if vb_lshift = 0 and r.mantSum(104 - i) = '1' then
-                vb_lshift := i;
-            end if;
-        end loop;
+        vb_lshift := vb_lshift_p2;
     end if;
     if r.ena(3) = '1' then
         v.lshift := vb_lshift;
