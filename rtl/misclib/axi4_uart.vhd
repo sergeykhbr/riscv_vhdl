@@ -403,7 +403,9 @@ begin
                     v.rx_scaler_cnt := 0;
                     v.tx_scaler_cnt := 0;
              when 2 => 
-                    v.fwcpuid    := tmp;
+                    if r.fwcpuid = X"00000000" or tmp = X"00000000" then
+                        v.fwcpuid := tmp;
+                    end if;
              when 4 => 
                     if tx_fifo_full = '0' then
                         v_tfifoi.we := '1';

@@ -215,6 +215,9 @@ following table.
     <td>fwcpuid</td>   <td>[31:0]</td>   <td>RW</td>   <td><b>CPU ID</b>.
         This registers is controlled by software and is used to provide
         'lock' mechanism in a multiprocessor configuration.
+          \li Zero value - Can be writen at any time
+          \li Non-Zero value - Can be writen only if previous value was zero</td>
+ 
   </tr>
 </table>
 
@@ -242,6 +245,8 @@ following table.
 with the UART module that allow to send and receive data buffers.
 
 @code
+    // Memory Base address of the device
+    #define UART0_BASE_ADDR         0x80000000
 
     // Control and Status Register bits:
     #define UART_STATUS_TX_FULL     0x00000001
@@ -261,6 +266,78 @@ with the UART module that allow to send and receive data buffers.
         volatile uint32_t data;
     } uart_map;
 
+    // Setup baudrate depending bus clock frequency.
+    // Default baudrate = 115200
+    void uart_set_baudrate(int bus_hz) {
+        uart_map *uart = (uart_map *)UART0_BASE_ADDR;
+        uart->scaler = bus_hz / 115200 / 2;
+    }
+
+    // Read data from Rx FIFO
+    int uart_read_data(char *buf) {
+        uart_map *uart = (uart_map *)UART0_BASE_ADDR;
+        int ret = 0;
+        while ((uart->status & UART_STATUS_RX_EMPTY) == 0) {
+            buf[ret++] = (char)uart->data;
+        }
+        return ret;
+    }
+
+    // Write data to Tx FIFO. Return number of bytes were writen.
+    int uart_write_data(char *buf, int sz) {
+        uart_map *uart = (uart_map *)UART0_BASE_ADDR;
+        int ret = 0;
+        while (sz != 0) {
+            uart->data = buf[ret++];
+            if ((uart->status & UART_STATUS_TX_FULL) != 0) {
+                break;
+            }
+        }
+        return ret;
+    }
+
+    // Lock UART device for a specific CPU Core in multi-processors
+    // configuration.
+    uint32_t uart_lock(uint32_t cpuid) {
+        uart_map *uart = (uart_map *)UART0_BASE_ADDR;
+        while (uart->fwcpuid != cpuid) {
+            uart->fwcpuid = cpuid;
+        }
+        return uart->fwcpuid;
+    }
+
+    // Release UART after CPU Core has finished interaction
+    void uart_unlock() {
+        uart_map *uart = (uart_map *)UART0_BASE_ADDR;
+        uart->fwcpuid = 0;
+    }
+
+@endcode
+
+  The following C-example demonstrates how to use all these methods
+in a simple "Hello world" application:
+
+@code
+    #define SYS_HZ 40000000    // System Clock frequency (default 40 MHz)
+    const char *message[] = "Hello World\n";
+
+    int main(int argc, char *argv[]) {
+        uart_set_baudrate(SYS_HZ);
+        int msgsz = strlen(message);
+        int txcnt = 0;
+
+        // Lock UART device to the current CPU Core #1        
+        uart_lock(1);
+
+        // Send message buffer
+        while (txcnt < msgsz) {
+            txcnt += uart_write_data(&message[txcnt], msgsz - txcnt);
+        }
+
+        // Release UART
+        uart_unlock();
+        return 0;
+    }
 @endcode
 
 */

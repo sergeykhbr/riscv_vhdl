@@ -73,7 +73,7 @@ RISC-V simulator   | v6.0    | **65652.0** | **76719.0**   | Ubuntu GNU GCC 6.1.
 "Rocket" CPU       | v6.0    | -           | **23999.0**   | GCC 6.1.0
 "River" CPU        | v6.0    | -           | **35121.0**   | GCC 6.1.0
 RISC-V simulator   | latest  | **76824.0** | **176469.0**  | *GCC 7.1.1* with the compressed instructions set
-"River" CPU        | latest  | **29440.0** | **69605.0**   | *GCC 7.1.1* with the compressed instructions set
+"River" CPU        | latest  | **29440.0** | **89420.0**   | *GCC 7.1.1* with the compressed instructions set
 ARM simulator      | latest  | **78451.0** | **162600.0**  | *arm-none-eabi-gcc 7.2.0*, ARM ISA only
 Cortex-R5 ARM      | No      | **20561.0** | **42401.0**   | *arm-none-eabi-gcc 7.2.0*, custom FPGA system:<br> Single-Core, MPU enabled, **Caches disabled**
 Cortex-R5 ARM      | No      | **54052.0** | **132446.0**  | *arm-none-eabi-gcc 7.2.0*, custom FPGA system:<br> Single-Core, MPU enabled, **Caches enabled**
@@ -90,7 +90,7 @@ CPU         | Clocks-Per-Instruction,<br> CPI | Description.
 ------------|:-------:|:------------------------------
 Cortext-R5  | 1.22    | This is **dual-issue** processor capable to execute a pair of instructions per<br> one clock. It's a very good but quite expensive CPU.
 LEON3       | 1.5     | CPI information from [here](https://www.gaisler.com/index.php/products/simulators/tsim).
-River       | 2.5     | Free-to-use and highly customizable CPU. This result achieved without I/D-caches implementation. By this reason the control/data paths everytime compete for the access to system bus that generates big number of wait states in CPU pipeline.
+River       | 1.9     | Free-to-use and highly customizable CPU. This result achieved with enabled 16 KB I-cache.
 Cortex-M3   | soon    | RTL is under development.
 
    **Since the tag 'v7.0' RIVER CPU is the main processor in the system and all issues
