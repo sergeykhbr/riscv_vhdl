@@ -63,7 +63,9 @@ begin
     variable vb_mux : mux_type;
     variable vb_sel : std_logic_vector(56 downto 0);
     variable vb_shift : std_logic_vector(6 downto 0);
-    variable vi_shift : integer range 0 to 104;
+    variable vb_sumInv : std_logic_vector(104 downto 0);
+    variable vb_lshift_p1 : integer range 0 to 104;
+    variable vb_lshift_p2 : integer range 0 to 104;
   begin
 
     v := r;
@@ -121,19 +123,36 @@ begin
         v.b := r.b(51 downto 0) & "0000";
     end if;
 
+    -- To avoid timing constrains violation occured in Vivado Studio
+    -- try to implement parallel demuxultiplexer splitted on 2 parts
+    vb_sumInv(0) := '0';
+    for i in 0 to 103 loop
+        vb_sumInv(i + 1) := r.sum(103 - i);
+    end loop;
+    
+    vb_lshift_p1 := 0;
+    for i in 0 to 63 loop
+        if vb_lshift_p1 = 0 and vb_sumInv(i) = '1' then
+            vb_lshift_p1 := i;
+        end if;
+    end loop;
+    
+    vb_lshift_p2 := 0;
+    for i in 0 to 40 loop
+        if vb_lshift_p2 = 0 and vb_sumInv(64 + i) = '1' then
+            vb_lshift_p2 := 64 + i;
+        end if;
+    end loop;
+
     if r.sum(105) = '1' then
         vb_shift := "1111111";
         v.overflow := '1';
     elsif r.sum(104) = '1' then
         vb_shift := (others => '0');
+    elsif vb_lshift_p1 /= 0 then
+        vb_shift := conv_std_logic_vector(vb_lshift_p1, 7);
     else
-        vi_shift := 0;
-        for i in 1 to 104 loop
-            if vi_shift = 0 and r.sum(104 - i) = '1' then
-                vi_shift := i;
-            end if;
-        end loop;
-        vb_shift := conv_std_logic_vector(vi_shift, 7);
+        vb_shift := conv_std_logic_vector(vb_lshift_p2, 7);
     end if;
 
     if r.delay(14) = '1' then

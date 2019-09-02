@@ -125,19 +125,40 @@ void imul53::comb() {
         v.b = r.b.read() << 4;
     }
 
+    // To avoid timing constrains violation try to implement parallel demux
+    // for Xilinx Vivado
+    sc_biguint<105> vb_sumInv;
+    sc_uint<7> vb_lshift_p1;
+    sc_uint<7> vb_lshift_p2;
+    vb_sumInv[0] = 0;
+    for (unsigned i = 0; i < 104; i++) {
+        vb_sumInv[i + 1] = r.sum.read()[103 - i];
+    }
+
+    vb_lshift_p1 = 0;
+    for (unsigned i = 0; i < 64; i++) {
+        if (vb_lshift_p1 == 0 && vb_sumInv[i] == 1) {
+            vb_lshift_p1 = i;
+        }
+    }
+
+    vb_lshift_p2 = 0;
+    for (unsigned i = 0; i < 41; i++) {
+        if (vb_lshift_p2 == 0 && vb_sumInv[64 + i] == 1) {
+            vb_lshift_p2 = 0x40 | i;
+        }
+    }
+
 
     if (r.sum.read()[105] == 1) {
         vb_shift = 0x7F;
         v.overflow = 1;
     } else if (r.sum.read()[104] == 1) {
         vb_shift = 0;
+    } else if (vb_lshift_p1 != 0) {
+        vb_shift = vb_lshift_p1;
     } else {
-        vb_shift = 0;
-        for (unsigned i = 1; i < 105; i++) {
-            if (vb_shift == 0 && r.sum.read()[104 - i] == 1) {
-                vb_shift = i;
-            }
-        }
+        vb_shift = vb_lshift_p2;
     }
 
     if (r.delay.read()[14]) {
