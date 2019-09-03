@@ -346,15 +346,6 @@ void DoubleAdd::comb() {
         vb_lshift = vb_lshift_p1;
     } else {
         vb_lshift = vb_lshift_p2;
-#if 0
-        // shift left
-        vb_lshift = 0;
-        for (unsigned i = 1; i < 105; i++) {
-            if (vb_lshift == 0 && r.mantSum.read()[104 - i] == 1) {
-                vb_lshift = i;
-            }
-        }
-#endif
     }
     if (r.ena.read()[3] == 1) {
         v.lshift = vb_lshift;

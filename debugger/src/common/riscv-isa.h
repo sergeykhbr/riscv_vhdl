@@ -551,6 +551,8 @@ static const uint16_t CSR_fflags            = 0x001;
 static const uint16_t CSR_frm               = 0x002;
 /** FPU Control and Status register (frm + fflags) */
 static const uint16_t CSR_fcsr              = 0x003;
+/** Reset Status flags (non-standard CSR). */
+static const uint16_t CSR_reset             = 0x080;
 /** ISA and extensions supported. */
 static const uint16_t CSR_misa              = 0xf10;
 /** Vendor ID. */
@@ -578,6 +580,10 @@ static const uint16_t CSR_mtvec         = 0x305;
 static const uint16_t CSR_mtimecmp      = 0x321;
 /** Scratch register for machine trap handlers. */
 static const uint16_t CSR_mscratch      = 0x340;
+/** Stack overflow (non-standard CSR). */
+static const uint16_t CSR_mstackovr      = 0x350;
+/** Stack underflow (non-standard CSR). */
+static const uint16_t CSR_mstackund      = 0x351;
 /** Exception program counters. */
 static const uint16_t CSR_uepc          = 0x041;
 static const uint16_t CSR_sepc          = 0x141;
