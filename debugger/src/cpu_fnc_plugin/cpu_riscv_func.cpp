@@ -99,6 +99,19 @@ unsigned CpuRiver_Functional::addSupportedInstruction(
 void CpuRiver_Functional::handleTrap() {
     csr_mstatus_type mstatus;
     csr_mcause_type mcause;
+
+    /** Check stack protection exceptions: */
+    uint64_t mstackovr = portCSR_.read(CSR_mstackovr).val;
+    uint64_t mstackund = portCSR_.read(CSR_mstackund).val;
+    uint64_t sp = portRegs_.read(Reg_sp).val;
+    if (mstackovr != 0 && sp < mstackovr) {
+        raiseSignal(EXCEPTION_StackOverflow);
+        portCSR_.write(CSR_mstackovr, 0);
+    } else if (mstackund != 0 && sp > mstackund) {
+        raiseSignal(EXCEPTION_StackUnderflow);
+        portCSR_.write(CSR_mstackund, 0);
+    }
+
     if ((interrupt_pending_[0] | interrupt_pending_[1]) == 0) {
         return;
     }

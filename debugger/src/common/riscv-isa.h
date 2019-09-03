@@ -623,6 +623,10 @@ enum ESignals {
     EXCEPTION_CallFromHmode,
     // Environment call from M-mode
     EXCEPTION_CallFromMmode,
+    // Stack overflow
+    EXCEPTION_StackOverflow,
+    // Stack underflow
+    EXCEPTION_StackUnderflow,
 
     // User software interrupt
     INTERRUPT_USoftware,

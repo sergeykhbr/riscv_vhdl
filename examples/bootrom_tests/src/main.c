@@ -24,6 +24,7 @@ void test_fpu(void);
 void test_timer(void);
 void test_timer_multicycle_instructions(void);
 void test_missaccess(void);
+void test_stackprotect(void);
 void print_pnp(void);
 
 int main() {
@@ -72,9 +73,12 @@ int main() {
     test_missaccess();
 
     led_set(0x05);
-    print_pnp();
+    test_stackprotect();
 
     led_set(0x06);
+    print_pnp();
+
+    led_set(0x07);
 
     // TODO: implement test console
     while (1) {}

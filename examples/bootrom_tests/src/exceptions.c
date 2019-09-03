@@ -49,6 +49,22 @@ void exception_store_fault_c() {
     pnp->fwdbg1 = get_mbadaddr();
 }
 
+void exception_stack_overflow_c() {
+    // CSR_mstackovr = 0x350 - non-standard CSR
+    pnp_map *pnp = (pnp_map *)ADDR_NASTI_SLAVE_PNP;
+    uint64_t sp;
+    asm("csrr %0, 0x350" : "=r" (sp));
+    pnp->fwdbg1 = sp;
+}
+
+void exception_stack_underflow_c() {
+    // CSR_mstackund = 0x351 - non-standard CSR
+    pnp_map *pnp = (pnp_map *)ADDR_NASTI_SLAVE_PNP;
+    uint64_t sp;
+    asm("csrr %0, 0x351" : "=r" (sp));
+    pnp->fwdbg1 = sp;
+}
+
 void exception_handler_c() {
     IRQ_HANDLER *tbl = fw_get_ram_data(EXCEPTION_TABLE_NAME);
     int idx = get_mcause();
@@ -73,4 +89,6 @@ void allocate_exception_table() {
 
     extbl[EXCEPTION_LoadFault] = exception_load_fault_c;
     extbl[EXCEPTION_StoreFault] = exception_store_fault_c;
+    extbl[EXCEPTION_StackOverflow] = exception_stack_overflow_c;
+    extbl[EXCEPTION_StackUnderflow] = exception_stack_underflow_c;
 }

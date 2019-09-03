@@ -54,6 +54,10 @@ trap_table:
   nop
   j exception_entry   # Call from M-mode
   nop
+  j exception_entry   # Stack Overflow
+  nop
+  j exception_entry   # Stack Underflow
+  nop
 
 bad_trap:
   j bad_trap
@@ -198,7 +202,6 @@ sp_init_coreall:
   ## Never reach here
 
 exception_entry:
-  fence
   _save_context(tp)
   jal exception_handler_c
   _restore_context(tp)
@@ -206,7 +209,6 @@ exception_entry:
 
 interrupt_entry:
   ##! module CSRFile rises io_fatc signal that is cause of the 'ptw.invalidate'.
-  fence
   csrw mscratch, a0;
 
   _save_context(tp)

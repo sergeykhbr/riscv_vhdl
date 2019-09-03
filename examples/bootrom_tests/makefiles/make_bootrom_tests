@@ -50,6 +50,7 @@ SOURCES = crt \
 	test_fpu \
 	test_timer \
 	test_missaccess \
+	test_stackprotect \
 	main
 
 OBJ_FILES = $(addsuffix .o,$(SOURCES))

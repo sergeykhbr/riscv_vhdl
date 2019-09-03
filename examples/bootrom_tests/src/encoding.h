@@ -16,7 +16,9 @@
 #define EXCEPTION_CallFromSmode 9    // Environment call from S-mode
 #define EXCEPTION_CallFromHmode 10   // Environment call from H-mode
 #define EXCEPTION_CallFromMmode 11   // Environment call from M-mode
-#define EXCEPTION_Total 12           // Table size
+#define EXCEPTION_StackOverflow 12   // Stack overflow
+#define EXCEPTION_StackUnderflow 13  // Stack overflow
+#define EXCEPTION_Total 14           // Table size
 
 
 /** Return address */
