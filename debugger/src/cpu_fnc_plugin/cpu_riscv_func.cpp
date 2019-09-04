@@ -149,7 +149,8 @@ void CpuRiver_Functional::handleTrap() {
     portCSR_.write(xepc, npc_.getValue().val);
     if (interrupt_pending_[0] & exception_mask) {
         // Exception: ['cfg_nmi_name', address, ....]
-        uint64_t trap = exceptionTable_[2*mcause.value + 1].to_uint64();
+        int entry_idx = 2*static_cast<int>(mcause.value) + 1;
+        uint64_t trap = exceptionTable_[entry_idx].to_uint64();
         npc_.setValue(trap);
     } else {
         // Software interrupt handled after instruction was executed

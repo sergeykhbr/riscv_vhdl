@@ -97,7 +97,7 @@ private:
         sc_signal<bool> ex_fpu_underflow;         // FPU Exception: underflow
         sc_signal<bool> ex_fpu_inexact;           // FPU Exception: inexact
         sc_signal<bool> trap_irq;
-        sc_signal<sc_uint<4>> trap_code;
+        sc_signal<sc_uint<5>> trap_code;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> trap_addr;
         sc_signal<bool> break_event;            // 1 clock pulse
         sc_signal<bool> hold_data_store_fault;

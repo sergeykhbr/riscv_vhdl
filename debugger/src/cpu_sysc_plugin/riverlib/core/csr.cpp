@@ -96,6 +96,8 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset)
     sensitive << i_dport_wdata;
     sensitive << r.mtvec;
     sensitive << r.mscratch;
+    sensitive << r.mstackovr;
+    sensitive << r.mstackund;
     sensitive << r.mbadaddr;
     sensitive << r.mode;
     sensitive << r.uie;
@@ -317,7 +319,7 @@ void CsrRegs::procedure_RegAccess(uint64_t iaddr, bool iwena,
     case CSR_mcause:// - Machine trap cause
         (*ordata) = 0;
         (*ordata)[63] = ir.trap_irq;
-        (*ordata)(3, 0) = ir.trap_code;
+        (*ordata)(4, 0) = ir.trap_code;
         break;
     case CSR_mbadaddr:// - Machine bad address
         (*ordata) = ir.mbadaddr;
@@ -353,7 +355,7 @@ void CsrRegs::comb() {
     sc_uint<BUS_ADDR_WIDTH> wb_trap_pc;
     bool w_trap_irq;
     bool w_exception_xret;
-    sc_uint<4> wb_trap_code;
+    sc_uint<5> wb_trap_code;
     sc_uint<BUS_ADDR_WIDTH> wb_mbadaddr;
     bool w_mstackovr;
     bool w_mstackund;
