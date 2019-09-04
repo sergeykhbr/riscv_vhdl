@@ -24,6 +24,7 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset)
     i_nrst("i_nrst"),
     i_mret("i_mret"),
     i_uret("i_uret"),
+    i_sp("i_sp"),
     i_addr("i_addr"),
     i_wena("i_wena"),
     i_wdata("i_wdata"),
@@ -64,6 +65,7 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset)
     sensitive << i_nrst;
     sensitive << i_mret;
     sensitive << i_uret;
+    sensitive << i_sp;
     sensitive << i_addr;
     sensitive << i_wena;
     sensitive << i_wdata;
@@ -99,6 +101,8 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset)
     sensitive << r.uie;
     sensitive << r.mie;
     sensitive << r.mpie;
+    sensitive << r.mstackovr_ena;
+    sensitive << r.mstackund_ena;
     sensitive << r.mpp;
     sensitive << r.mepc;
     sensitive << r.ext_irq;
@@ -124,6 +128,7 @@ void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
         sc_trace(o_vcd, i_mret, i_mret.name());
         sc_trace(o_vcd, i_uret, i_uret.name());
+        sc_trace(o_vcd, i_sp, i_sp.name());
         sc_trace(o_vcd, i_addr, i_addr.name());
         sc_trace(o_vcd, i_wena, i_wena.name());
         sc_trace(o_vcd, i_wdata, i_wdata.name());
@@ -303,6 +308,20 @@ void CsrRegs::procedure_RegAccess(uint64_t iaddr, bool iwena,
             ov->mscratch = iwdata;
         }
         break;
+    case CSR_mstackovr:// - Machine Stack Overflow
+        (*ordata) = ir.mstackovr;
+        if (iwena) {
+            ov->mstackovr = iwdata(BUS_ADDR_WIDTH-1, 0);
+            ov->mstackovr_ena = iwdata(BUS_ADDR_WIDTH-1, 0).or_reduce();
+        }
+        break;
+    case CSR_mstackund:// - Machine Stack Underflow
+        (*ordata) = ir.mstackund;
+        if (iwena) {
+            ov->mstackund = iwdata(BUS_ADDR_WIDTH-1, 0);
+            ov->mstackund_ena = iwdata(BUS_ADDR_WIDTH-1, 0).or_reduce();
+        }
+        break;
     case CSR_mepc:// - Machine program counter
         (*ordata) = ir.mepc;
         if (iwena) {
@@ -336,6 +355,8 @@ void CsrRegs::comb() {
     bool w_exception_xret;
     sc_uint<4> wb_trap_code;
     sc_uint<BUS_ADDR_WIDTH> wb_mbadaddr;
+    bool w_mstackovr;
+    bool w_mstackund;
 
     v = r;
 
@@ -360,6 +381,16 @@ void CsrRegs::comb() {
     if ((i_mret.read() && r.mode.read() != PRV_M)
         || (i_uret.read() && r.mode.read() != PRV_U)) {
         w_exception_xret = 1;
+    }
+
+    w_mstackovr = 0;
+    if (i_sp.read()(BUS_ADDR_WIDTH, 0) < r.mstackovr.read()) {
+        w_mstackovr = 1;
+    }
+
+    w_mstackund = 0;
+    if (i_sp.read()(BUS_ADDR_WIDTH, 0) > r.mstackund.read()) {
+        w_mstackund = 1;
     }
 
     if (i_fpu_valid.read()) {
@@ -440,6 +471,22 @@ void CsrRegs::comb() {
         } else {
             wb_trap_pc = CFG_NMI_CALL_FROM_UMODE_ADDR;
             wb_trap_code = EXCEPTION_CallFromUmode;
+        }
+    } else if (r.mstackovr_ena.read() == 1 && w_mstackovr == 1) {
+        w_trap_valid = 1;
+        wb_trap_pc = CFG_NMI_STACK_OVERFLOW_ADDR;
+        wb_trap_code = EXCEPTION_StackOverflow;
+        if (i_trap_ready.read() == 1) {
+            v.mstackovr = 0;
+            v.mstackovr_ena = 0;
+        }
+    } else if (r.mstackund_ena.read() == 1 && w_mstackund == 1) {
+        w_trap_valid = 1;
+        wb_trap_pc = CFG_NMI_STACK_UNDERFLOW_ADDR;
+        wb_trap_code = EXCEPTION_StackUnderflow;
+        if (i_trap_ready.read() == 1) {
+            v.mstackund = 0;
+            v.mstackund_ena = 0;
         }
     } else if (w_ext_irq == 1 && r.ext_irq.read() == 0) {
         w_trap_valid = 1;

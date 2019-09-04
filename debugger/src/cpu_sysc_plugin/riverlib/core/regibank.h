@@ -43,6 +43,7 @@ SC_MODULE(RegIntBank) {
     sc_out<sc_uint<RISCV_ARCH>> o_dport_rdata;  // Debug port read value
 
     sc_out<sc_uint<RISCV_ARCH>> o_ra;       // Return address for branch predictor
+    sc_out<sc_uint<RISCV_ARCH>> o_sp;       // Stack Pointer for border control
 
     void comb();
     void registers();

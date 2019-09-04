@@ -34,7 +34,8 @@ RegIntBank::RegIntBank(sc_module_name name_, bool async_reset) :
     i_dport_write("i_dport_write"),
     i_dport_wdata("i_dport_wdata"),
     o_dport_rdata("o_dport_rdata"),
-    o_ra("o_ra") {
+    o_ra("o_ra"),
+    o_sp("o_sp") {
     async_reset_ = async_reset;
 
     SC_METHOD(comb);
@@ -75,11 +76,11 @@ void RegIntBank::comb() {
     /** Debug port has higher priority. Collision must be controlled by SW */
     if (i_dport_ena.read() && i_dport_write.read()) {
         if (i_dport_addr.read() != 0) {
-            v.mem[i_dport_addr.read()] = i_dport_wdata;
+            v.mem[i_dport_addr.read().to_int()] = i_dport_wdata;
         }
     } else if (i_waddr.read()[5] == 0 && i_wena.read()) {
         if (i_waddr.read() != 0) {
-            v.mem[i_waddr.read()(4, 0)] = i_wdata;
+            v.mem[i_waddr.read()(4, 0).to_int()] = i_wdata;
         }
     }
     v.update = !r.update.read();
@@ -92,10 +93,11 @@ void RegIntBank::comb() {
         v.update = 0;
     }
 
-    o_rdata1 = r.mem[i_radr1.read()(4, 0)];
-    o_rdata2 = r.mem[i_radr2.read()(4, 0)];
-    o_dport_rdata = r.mem[i_dport_addr.read()];
+    o_rdata1 = r.mem[i_radr1.read()(4, 0).to_int()];
+    o_rdata2 = r.mem[i_radr2.read()(4, 0).to_int()];
+    o_dport_rdata = r.mem[i_dport_addr.read().to_int()];
     o_ra = r.mem[Reg_ra];
+    o_sp = r.mem[Reg_sp];
 }
 
 void RegIntBank::registers() {

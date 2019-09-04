@@ -53,16 +53,18 @@ void exception_stack_overflow_c() {
     // CSR_mstackovr = 0x350 - non-standard CSR
     pnp_map *pnp = (pnp_map *)ADDR_NASTI_SLAVE_PNP;
     uint64_t sp;
-    asm("csrr %0, 0x350" : "=r" (sp));
-    pnp->fwdbg1 = sp;
+    // Save current stack pointer into debug regsiter
+    asm("mv %0, sp" : "=r" (sp));
+    pnp->fwdbg2 = sp;
 }
 
 void exception_stack_underflow_c() {
     // CSR_mstackund = 0x351 - non-standard CSR
     pnp_map *pnp = (pnp_map *)ADDR_NASTI_SLAVE_PNP;
     uint64_t sp;
-    asm("csrr %0, 0x351" : "=r" (sp));
-    pnp->fwdbg1 = sp;
+    // Save current stack pointer into debug regsiter
+    asm("mv %0, sp" : "=r" (sp));
+    pnp->fwdbg2 = sp;
 }
 
 void exception_handler_c() {

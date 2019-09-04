@@ -38,13 +38,10 @@ private:
     AttributeType dip_;
 
     struct gpio_map {
-        volatile uint32_t led;
-        volatile uint32_t dip;
-        volatile uint32_t reg2;
-        volatile uint32_t reg3;
-        volatile uint32_t led_period;
-        volatile uint32_t reg5;
-        volatile uint32_t reg6;
+        volatile uint32_t direction;
+        volatile uint32_t iuser;
+        volatile uint32_t ouser;
+        volatile uint32_t reg32_3;
     } regs_;
 };
 

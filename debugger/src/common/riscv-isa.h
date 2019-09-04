@@ -551,8 +551,6 @@ static const uint16_t CSR_fflags            = 0x001;
 static const uint16_t CSR_frm               = 0x002;
 /** FPU Control and Status register (frm + fflags) */
 static const uint16_t CSR_fcsr              = 0x003;
-/** Reset Status flags (non-standard CSR). */
-static const uint16_t CSR_reset             = 0x080;
 /** ISA and extensions supported. */
 static const uint16_t CSR_misa              = 0xf10;
 /** Vendor ID. */

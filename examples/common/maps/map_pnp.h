@@ -72,8 +72,9 @@ typedef struct pnp_map {
     uint64_t idt;               /// 0xfffff010: 
     uint64_t malloc_addr;       /// 0xfffff018: RW: debuggind memalloc pointer 0x18
     uint64_t malloc_size;       /// 0xfffff020: RW: debugging memalloc size 0x20
-    uint64_t fwdbg1;            /// 0xfffff028: RW: FW debug register
-    uint64_t rsrv[2];           /// 0xfffff030, 0xfffff038
+    uint64_t fwdbg1;            /// 0xfffff028: RW: FW debug register 1
+    uint64_t fwdbg2;            /// 0xfffff030: RW: FW debug register 2
+    uint64_t rsrv[1];           /// 0xfffff038
     uint8_t cfg_table[(1 << 12) - 0x40];/// 0xfffff040: RO: PNP configuration
 } pnp_map;
 

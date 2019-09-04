@@ -253,7 +253,8 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset)
     iregs0->i_dport_write(dbg.ireg_write);
     iregs0->i_dport_wdata(dbg.core_wdata);
     iregs0->o_dport_rdata(ireg.dport_rdata);
-    iregs0->o_ra(ireg.ra);   // Return address
+    iregs0->o_ra(ireg.ra);
+    iregs0->o_sp(ireg.sp);
 
     if (CFG_HW_FPU_ENABLE) {
         fregs0 = new RegFloatBank("fregs0", async_reset);
@@ -282,6 +283,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset)
     csr0->i_nrst(i_nrst);
     csr0->i_mret(w.e.mret);
     csr0->i_uret(w.e.uret);
+    csr0->i_sp(ireg.sp);
     csr0->i_addr(w.e.csr_addr);
     csr0->i_wena(w.e.csr_wena);
     csr0->i_wdata(w.e.csr_wdata);

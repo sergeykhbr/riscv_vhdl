@@ -75,6 +75,8 @@ static const uint64_t CFG_NMI_CALL_FROM_UMODE_ADDR  = 0x0048;
 static const uint64_t CFG_NMI_CALL_FROM_SMODE_ADDR  = 0x0050;
 static const uint64_t CFG_NMI_CALL_FROM_HMODE_ADDR  = 0x0058;
 static const uint64_t CFG_NMI_CALL_FROM_MMODE_ADDR  = 0x0060;
+static const uint64_t CFG_NMI_STACK_OVERFLOW_ADDR   = 0x0068;
+static const uint64_t CFG_NMI_STACK_UNDERFLOW_ADDR  = 0x0070;
 
 static const int DBG_FETCH_TRACE_SIZE   = 4;
 

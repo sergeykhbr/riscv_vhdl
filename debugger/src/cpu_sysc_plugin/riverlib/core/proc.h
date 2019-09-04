@@ -178,6 +178,7 @@ private:
         sc_signal<sc_uint<RISCV_ARCH>> rdata2;
         sc_signal<sc_uint<RISCV_ARCH>> dport_rdata;
         sc_signal<sc_uint<RISCV_ARCH>> ra;      // Return address
+        sc_signal<sc_uint<RISCV_ARCH>> sp;      // Stack pointer
     } ireg;
 
     struct FloatRegsType {

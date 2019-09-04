@@ -22,7 +22,8 @@ GPIO::~GPIO() {
 }
 
 void GPIO::postinitService() {
-    regs_.dip = static_cast<uint32_t>(dip_.to_uint64());
+    regs_.direction = ~0u;
+    regs_.iuser = static_cast<uint32_t>(dip_.to_uint64());
 }
 
 ETransStatus GPIO::b_transport(Axi4TransactionType *trans) {
@@ -36,7 +37,7 @@ ETransStatus GPIO::b_transport(Axi4TransactionType *trans) {
                 mem_[off + i] = trans->wpayload.b32[i];
             }
 
-            if (off + i == (reinterpret_cast<uint64_t>(&regs_.led) 
+            if (off + i == (reinterpret_cast<uint64_t>(&regs_.ouser) 
                           - reinterpret_cast<uint64_t>(&regs_))) {
                 /*ISignalListener *ilistener;
                 for (unsigned n = 0; n < listOfListerners_.size(); n++) {

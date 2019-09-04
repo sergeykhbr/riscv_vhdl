@@ -43,12 +43,12 @@ void StackTraceBuffer::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void StackTraceBuffer::comb() {
-    o_rdata = stackbuf[raddr.read()];
+    o_rdata = stackbuf[raddr.read().to_int()];
 }
 
 void StackTraceBuffer::registers() {
     if (i_we.read()) {
-        stackbuf[i_waddr.read()] = i_wdata;
+        stackbuf[i_waddr.read().to_int()] = i_wdata;
     }
     raddr = i_raddr.read();
 }

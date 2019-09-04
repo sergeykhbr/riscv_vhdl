@@ -299,7 +299,6 @@ void CpuRiver_Functional::writeCSR(int idx, uint64_t val) {
     case CSR_marchid:
     case CSR_mimplementationid:
     case CSR_mhartid:
-    case CSR_reset:
         break;
     case CSR_mtime:
         break;

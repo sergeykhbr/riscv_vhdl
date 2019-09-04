@@ -79,10 +79,10 @@ void RegFloatBank::comb() {
     /** Debug port has higher priority. Collision must be controlled by SW */
     if (i_dport_ena.read() && i_dport_write.read()) {
         if (i_dport_addr.read() != 0) {
-            v.mem[i_dport_addr.read()] = i_dport_wdata;
+            v.mem[i_dport_addr.read().to_int()] = i_dport_wdata;
         }
     } else if (i_wena.read() && i_waddr.read()[5] == 1) {
-        v.mem[i_waddr.read()(4, 0)] = i_wdata;
+        v.mem[i_waddr.read()(4, 0).to_int()] = i_wdata;
     }
     /** v.mem[] is not a signals, so use update register to trigger process */
     v.update = !r.update.read();
@@ -94,9 +94,9 @@ void RegFloatBank::comb() {
         v.update = 0;
     }
 
-    o_rdata1 = r.mem[i_radr1.read()(4, 0)];
-    o_rdata2 = r.mem[i_radr2.read()(4, 0)];
-    o_dport_rdata = r.mem[i_dport_addr.read()];
+    o_rdata1 = r.mem[i_radr1.read()(4, 0).to_int()];
+    o_rdata2 = r.mem[i_radr2.read()(4, 0).to_int()];
+    o_dport_rdata = r.mem[i_dport_addr.read().to_int()];
 }
 
 void RegFloatBank::registers() {

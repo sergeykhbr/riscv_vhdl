@@ -28,6 +28,7 @@ SC_MODULE(CsrRegs) {
     sc_in<bool> i_nrst;                     // Reset (active low)
     sc_in<bool> i_mret;                     // mret instruction signals mode switching
     sc_in<bool> i_uret;                     // uret instruction signals mode switching
+    sc_in<sc_uint<RISCV_ARCH>> i_sp;        // Stack Pointer for border control
     sc_in<sc_uint<12>> i_addr;              // CSR address, if xret=1 switch mode accordingly
     sc_in<bool> i_wena;                     // Write enable
     sc_in<sc_uint<RISCV_ARCH>> i_wdata;     // CSR writing value
@@ -77,11 +78,15 @@ private:
     struct RegistersType {
         sc_signal<sc_uint<RISCV_ARCH>> mtvec;
         sc_signal<sc_uint<RISCV_ARCH>> mscratch;
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> mstackovr;
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> mstackund;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> mbadaddr;
         sc_signal<sc_uint<2>> mode;
         sc_signal<bool> uie;                    // User level interrupts ena for current priv. mode
         sc_signal<bool> mie;                    // Machine level interrupts ena for current priv. mode
         sc_signal<bool> mpie;                   // Previous MIE value
+        sc_signal<bool> mstackovr_ena;          // Stack Overflow control Enabled
+        sc_signal<bool> mstackund_ena;          // Stack Underflow control Enabled
         sc_signal<sc_uint<2>> mpp;              // Previous mode
         sc_signal<sc_uint<RISCV_ARCH>> mepc;
         sc_signal<bool> ext_irq;
@@ -103,11 +108,15 @@ private:
     void R_RESET(RegistersType &iv) {
         iv.mtvec = 0;
         iv.mscratch = 0;
+        iv.mstackovr = 0;
+        iv.mstackund = 0;
         iv.mbadaddr = 0;
         iv.mode = PRV_M;
         iv.uie = 0;
         iv.mie = 0;
         iv.mpie = 0;
+        iv.mstackovr_ena = 0;
+        iv.mstackund_ena = 0;
         iv.mpp = 0;
         iv.mepc = 0;
         iv.ext_irq = 0;

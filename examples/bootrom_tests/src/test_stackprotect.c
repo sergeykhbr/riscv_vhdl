@@ -19,11 +19,28 @@
 #include <axi_maps.h>
 #include "fw_api.h"
 
+/** Function to check Stack Overflow exception */
 void recursive_call() {
     pnp_map *pnp = (pnp_map *)ADDR_NASTI_SLAVE_PNP;
-    if (pnp->fwdbg1 < 10) {
+    if (pnp->fwdbg1 < 10 && pnp->fwdbg2 == 0) {
         pnp->fwdbg1++;
         recursive_call();
+    }
+}
+
+/** Function to check Stack Underflow exception */
+void recursive_ret() {
+    pnp_map *pnp = (pnp_map *)ADDR_NASTI_SLAVE_PNP;
+    uint64_t sp;
+    if (pnp->fwdbg1 != 0) {
+        pnp->fwdbg1--;
+        recursive_ret();
+    } else {
+        // Read current value of the Stack Ponter
+        asm("mv %0, sp" : "=r" (sp));
+        // Write CSR_mstackund register as underflow border
+        sp += 16*sizeof(uint64_t);         // stack underflow limit
+        asm("csrw 0x351, %0": : "r"(sp));
     }
 }
 
@@ -32,13 +49,38 @@ void test_stackprotect(void) {
     pnp_map *pnp = (pnp_map *)ADDR_NASTI_SLAVE_PNP;
     // clear register. it should be modified from exception handler
     pnp->fwdbg1 = 0;
+    pnp->fwdbg2 = 0;
 
+    // Read current value of the Stack Ponter
     asm("mv %0, sp" : "=r" (sp));
 
-    sp -= 4;
+    // Write CSR_mstackovr register as overflow border
+    sp -= 16*sizeof(uint64_t);         // stack overflow limit
     asm("csrw 0x350, %0": : "r"(sp));
 
     recursive_call();
 
-    printf_uart("%s %08x\r\n", "stack ovr. . . .", pnp->fwdbg1);
+    /** Check result:
+          If the StackOverflow exception was called then fwdbg2 must be
+        non-zero. This should happen before fwdbg1 counter reaches 10.
+    */
+    printf_uart("%s", "stack_ovr. . . .");
+    if (pnp->fwdbg1 > 1 && pnp->fwdbg1 < 10 && pnp->fwdbg2) {
+        printf_uart("%s", "PASS\r\n");
+    } else {
+        printf_uart("FAIL: %08x, %08x\r\n", pnp->fwdbg1, pnp->fwdbg2);
+    }
+
+
+    // Test Stack Underflow exception
+    pnp->fwdbg2 = 0;
+    recursive_ret();
+
+    printf_uart("%s", "stack_und. . . .");
+    if (pnp->fwdbg2) {
+        printf_uart("%s", "PASS\r\n");
+    } else {
+        printf_uart("FAIL: %08x\r\n", pnp->fwdbg2);
+    }
+
 }
