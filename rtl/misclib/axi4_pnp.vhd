@@ -71,6 +71,7 @@ architecture axi4_nasti_pnp of axi4_pnp is
     malloc_addr : std_logic_vector(63 downto 0); --! dynamic allocation addr
     malloc_size : std_logic_vector(63 downto 0); --! dynamic allocation size
     fwdbg1 : std_logic_vector(63 downto 0); --! FW marker for the debug porposes
+    fwdbg2 : std_logic_vector(63 downto 0);
     adc_detect : std_logic_vector(7 downto 0);
     raddr : global_addr_array_type;
   end record;
@@ -78,6 +79,7 @@ architecture axi4_nasti_pnp of axi4_pnp is
   constant R_RESET : registers := (
     (others => '0'), (others => '0'), (others => '0'),
     (others => '0'), (others => '0'), (others => '0'),
+    (others => '0'),
     ((others => '0'), (others => '0'))
   );
 
@@ -181,6 +183,10 @@ begin
           rtmp := r.fwdbg1(31 downto 0);
        elsif raddr = 11 then 
           rtmp := r.fwdbg1(63 downto 32);
+       elsif raddr = 12 then 
+          rtmp := r.fwdbg2(31 downto 0);
+       elsif raddr = 13 then 
+          rtmp := r.fwdbg2(63 downto 32);
        elsif raddr >= 16 and raddr < 16+2*CFG_BUS0_XMST_TOTAL then
           rtmp := mstmap(raddr - 16);
        elsif raddr >= 16+2*CFG_BUS0_XMST_TOTAL 
@@ -208,6 +214,8 @@ begin
              when 9 => v.malloc_size(63 downto 32) := wtmp;
              when 10 => v.fwdbg1(31 downto 0) := wtmp;
              when 11 => v.fwdbg1(63 downto 32) := wtmp;
+             when 12 => v.fwdbg2(31 downto 0) := wtmp;
+             when 13 => v.fwdbg2(63 downto 32) := wtmp;
              when others =>
            end case;
          end if;

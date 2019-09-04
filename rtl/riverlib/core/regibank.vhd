@@ -47,7 +47,8 @@ entity RegIntBank is generic (
     i_dport_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0); -- Debug port write value
     o_dport_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0);-- Debug port read value
 
-    o_ra : out std_logic_vector(RISCV_ARCH-1 downto 0)      -- Return address for branch predictor
+    o_ra : out std_logic_vector(RISCV_ARCH-1 downto 0);     -- Return address for branch predictor
+    o_sp : out std_logic_vector(RISCV_ARCH-1 downto 0)      -- Stack Pointer for the borders control
   );
 end; 
  
@@ -95,6 +96,7 @@ begin
   o_rdata2 <= r.mem(conv_integer(i_radr2(4 downto 0)));
   o_dport_rdata <= r.mem(conv_integer(i_dport_addr));
   o_ra <= r.mem(Reg_ra);
+  o_sp <= r.mem(Reg_sp);
 
   -- registers:
   regs : process(i_nrst, i_clk)

@@ -76,6 +76,8 @@ package river_cfg is
   constant CFG_NMI_CALL_FROM_SMODE_ADDR : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00000050";
   constant CFG_NMI_CALL_FROM_HMODE_ADDR : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00000058";
   constant CFG_NMI_CALL_FROM_MMODE_ADDR : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00000060";
+  constant CFG_NMI_STACK_OVERFLOW_ADDR  : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00000068";
+  constant CFG_NMI_STACK_UNDERFLOW_ADDR : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00000070";
 
   constant DBG_FETCH_TRACE_SIZE : integer := 4;
 
@@ -333,62 +335,78 @@ package river_cfg is
   constant CSR_mbadaddr      : std_logic_vector(11 downto 0) := X"343";
   -- Machine interrupt pending
   constant CSR_mip           : std_logic_vector(11 downto 0) := X"344";
+  -- Machine stack overflow
+  constant CSR_mstackovr     : std_logic_vector(11 downto 0) := X"350";
+  -- Machine stack underflow
+  constant CSR_mstackund     : std_logic_vector(11 downto 0) := X"351";
   --! @}
 
   --! @name   Exceptions
   --! @{
   -- Instruction address misaligned
-  constant EXCEPTION_InstrMisalign   : std_logic_vector(3 downto 0) := X"0";
+  constant EXCEPTION_InstrMisalign   : std_logic_vector(4 downto 0) := "00000";
   -- Instruction access fault
-  constant EXCEPTION_InstrFault      : std_logic_vector(3 downto 0) := X"1";
+  constant EXCEPTION_InstrFault      : std_logic_vector(4 downto 0) := "00001";
   -- Illegal instruction
-  constant EXCEPTION_InstrIllegal    : std_logic_vector(3 downto 0) := X"2";
+  constant EXCEPTION_InstrIllegal    : std_logic_vector(4 downto 0) := "00010";
   -- Breakpoint
-  constant EXCEPTION_Breakpoint      : std_logic_vector(3 downto 0) := X"3";
+  constant EXCEPTION_Breakpoint      : std_logic_vector(4 downto 0) := "00011";
   -- Load address misaligned
-  constant EXCEPTION_LoadMisalign    : std_logic_vector(3 downto 0) := X"4";
+  constant EXCEPTION_LoadMisalign    : std_logic_vector(4 downto 0) := "00100";
   -- Load access fault
-  constant EXCEPTION_LoadFault       : std_logic_vector(3 downto 0) := X"5";
+  constant EXCEPTION_LoadFault       : std_logic_vector(4 downto 0) := "00101";
   -- Store/AMO address misaligned
-  constant EXCEPTION_StoreMisalign   : std_logic_vector(3 downto 0) := X"6";
+  constant EXCEPTION_StoreMisalign   : std_logic_vector(4 downto 0) := "00110";
   -- Store/AMO access fault
-  constant EXCEPTION_StoreFault      : std_logic_vector(3 downto 0) := X"7";
+  constant EXCEPTION_StoreFault      : std_logic_vector(4 downto 0) := "00111";
   -- Environment call from U-mode
-  constant EXCEPTION_CallFromUmode   : std_logic_vector(3 downto 0) := X"8";
+  constant EXCEPTION_CallFromUmode   : std_logic_vector(4 downto 0) := "01000";
   -- Environment call from S-mode
-  constant EXCEPTION_CallFromSmode   : std_logic_vector(3 downto 0) := X"9";
+  constant EXCEPTION_CallFromSmode   : std_logic_vector(4 downto 0) := "01001";
   -- Environment call from H-mode
-  constant EXCEPTION_CallFromHmode   : std_logic_vector(3 downto 0) := X"A";
+  constant EXCEPTION_CallFromHmode   : std_logic_vector(4 downto 0) := "01010";
   -- Environment call from M-mode
-  constant EXCEPTION_CallFromMmode   : std_logic_vector(3 downto 0) := X"B";
+  constant EXCEPTION_CallFromMmode   : std_logic_vector(4 downto 0) := "01011";
+  -- Instruction page fault
+  constant EXCEPTION_InstrPageFault  : std_logic_vector(4 downto 0) := "01100";
+  -- Load page fault
+  constant EXCEPTION_LoadPageFault   : std_logic_vector(4 downto 0) := "01101";
+  -- reserved
+  constant EXCEPTION_rsrv14          : std_logic_vector(4 downto 0) := "01110";
+  -- Store/AMO page fault
+  constant EXCEPTION_StorePageFault  : std_logic_vector(4 downto 0) := "01111";
+  -- Stack overflow
+  constant EXCEPTION_StackOverflow   : std_logic_vector(4 downto 0) := "10000";
+  -- Stack underflow
+  constant EXCEPTION_StackUnderflow  : std_logic_vector(4 downto 0) := "10001";
   --! @}
 
   --! @name   Interrupts
   --! @{
   -- User software interrupt
-  constant INTERRUPT_USoftware       : std_logic_vector(3 downto 0) := X"0";
+  constant INTERRUPT_USoftware       : std_logic_vector(4 downto 0) := "00000";
   -- Superuser software interrupt
-  constant INTERRUPT_SSoftware       : std_logic_vector(3 downto 0) := X"1";
+  constant INTERRUPT_SSoftware       : std_logic_vector(4 downto 0) := "00001";
   -- Hypervisor software itnerrupt
-  constant INTERRUPT_HSoftware       : std_logic_vector(3 downto 0) := X"2";
+  constant INTERRUPT_HSoftware       : std_logic_vector(4 downto 0) := "00010";
   -- Machine software interrupt
-  constant INTERRUPT_MSoftware       : std_logic_vector(3 downto 0) := X"3";
+  constant INTERRUPT_MSoftware       : std_logic_vector(4 downto 0) := "00011";
   -- User timer interrupt
-  constant INTERRUPT_UTimer          : std_logic_vector(3 downto 0) := X"4";
+  constant INTERRUPT_UTimer          : std_logic_vector(4 downto 0) := "00100";
   -- Superuser timer interrupt
-  constant INTERRUPT_STimer          : std_logic_vector(3 downto 0) := X"5";
+  constant INTERRUPT_STimer          : std_logic_vector(4 downto 0) := "00101";
   -- Hypervisor timer interrupt
-  constant INTERRUPT_HTimer          : std_logic_vector(3 downto 0) := X"6";
+  constant INTERRUPT_HTimer          : std_logic_vector(4 downto 0) := "00110";
   -- Machine timer interrupt
-  constant INTERRUPT_MTimer          : std_logic_vector(3 downto 0) := X"7";
+  constant INTERRUPT_MTimer          : std_logic_vector(4 downto 0) := "00111";
   -- User external interrupt
-  constant INTERRUPT_UExternal       : std_logic_vector(3 downto 0) := X"8";
+  constant INTERRUPT_UExternal       : std_logic_vector(4 downto 0) := "01000";
   -- Superuser external interrupt
-  constant INTERRUPT_SExternal       : std_logic_vector(3 downto 0) := X"9";
+  constant INTERRUPT_SExternal       : std_logic_vector(4 downto 0) := "01001";
   -- Hypervisor external interrupt
-  constant INTERRUPT_HExternal       : std_logic_vector(3 downto 0) := X"A";
+  constant INTERRUPT_HExternal       : std_logic_vector(4 downto 0) := "01010";
   -- Machine external interrupt (from PLIC)
-  constant INTERRUPT_MExternal       : std_logic_vector(3 downto 0) := X"B";
+  constant INTERRUPT_MExternal       : std_logic_vector(4 downto 0) := "01011";
   --! @}
 
 
@@ -446,6 +464,7 @@ package river_cfg is
     i_nrst : in std_logic;
     i_mret : in std_logic;
     i_uret : in std_logic;
+    i_sp : in std_logic_vector(RISCV_ARCH-1 downto 0);
     i_addr : in std_logic_vector(11 downto 0);
     i_wena : in std_logic;
     i_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0);
@@ -789,6 +808,7 @@ package river_cfg is
   --! @param[in] i_dport_wdata   Debug port write value
   --! @param[out] o_dport_rdata  Debug port read value
   --! @param[out] o_ra           Return address for branch predictor
+  --! @param[out] o_sp           Stack Pointer for the borders control
   component RegIntBank is generic (
     async_reset : boolean
   );
@@ -807,7 +827,8 @@ package river_cfg is
     i_dport_write : in std_logic;
     i_dport_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0);
     o_dport_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0);
-    o_ra : out std_logic_vector(RISCV_ARCH-1 downto 0)
+    o_ra : out std_logic_vector(RISCV_ARCH-1 downto 0);
+    o_sp : out std_logic_vector(RISCV_ARCH-1 downto 0)
   );
   end component; 
 

@@ -16,6 +16,7 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.std_logic_misc.all;  -- or_reduce()
 library commonlib;
 use commonlib.types_common.all;
 --! RIVER CPU specific library.
@@ -33,6 +34,7 @@ entity CsrRegs is
     i_nrst : in std_logic;                                  -- Reset. Active LOW.
     i_mret : in std_logic;                                  -- mret instruction signals mode switching
     i_uret : in std_logic;                                  -- uret instruction signals mode switching
+    i_sp : in std_logic_vector(RISCV_ARCH-1 downto 0);      -- Stack Pointer for the borders control
     i_addr : in std_logic_vector(11 downto 0);              -- CSR address, if xret=1 switch mode accordingly
     i_wena : in std_logic;                                  -- Write enable
     i_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0);   -- CSR writing value
@@ -76,11 +78,15 @@ architecture arch_CsrRegs of CsrRegs is
   type RegistersType is record
       mtvec : std_logic_vector(RISCV_ARCH-1 downto 0);
       mscratch : std_logic_vector(RISCV_ARCH-1 downto 0);
+      mstackovr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+      mstackund : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
       mbadaddr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
       mode : std_logic_vector(1 downto 0);
       uie : std_logic;                       -- User level interrupts ena for current priv. mode
       mie : std_logic;                       -- Machine level interrupts ena for current priv. mode
       mpie : std_logic;                      -- Previous MIE value
+      mstackovr_ena : std_logic;             -- Stack Overflow control enabled
+      mstackund_ena : std_logic;             -- Stack Underflow control enabled
       mpp : std_logic_vector(1 downto 0);    -- Previous mode
       mepc : std_logic_vector(RISCV_ARCH-1 downto 0);
       ext_irq : std_logic;
@@ -91,7 +97,7 @@ architecture arch_CsrRegs of CsrRegs is
       ex_fpu_underflow : std_logic;          -- FPU Exception: underflow
       ex_fpu_inexact : std_logic;            -- FPU Exception: inexact
       trap_irq : std_logic;
-      trap_code : std_logic_vector(3 downto 0);
+      trap_code : std_logic_vector(4 downto 0);
       trap_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
       break_event : std_logic;
       hold_data_store_fault : std_logic;
@@ -100,8 +106,16 @@ architecture arch_CsrRegs of CsrRegs is
   end record;
 
   constant R_RESET : RegistersType := (
-        (others => '0'), (others => '0'), (others => '0'), PRV_M,
-        '0', '0', '0', (others => '0'), (others => '0'), '0',
+        (others => '0'), -- mtvec
+        (others => '0'), -- mscratch
+        (others => '0'), -- mstackovr
+        (others => '0'), -- mstackund
+        (others => '0'), -- mbadaddr
+        PRV_M,           -- mode
+        '0', '0', '0',
+        '0',             -- mstackovr_ena
+        '0',             -- mstackund_ena
+        (others => '0'), (others => '0'), '0',
         '0', '0', '0', '0', '0', 
         '0', (others => '0'), (others => '0'), '0',
         '0', '0', (others => '0'));
@@ -239,17 +253,29 @@ architecture arch_CsrRegs of CsrRegs is
         end if;
     when CSR_mcause => -- Machine trap cause
         ordata(63) := ir.trap_irq;
-        ordata(3 downto 0) := ir.trap_code;
-    when CSR_mbadaddr => -- Machine bad address
+        ordata(4 downto 0) := ir.trap_code;
+    when CSR_mbadaddr =>   -- Machine bad address
         ordata(BUS_ADDR_WIDTH-1 downto 0) := ir.mbadaddr;
-    when CSR_mip =>      -- Machine interrupt pending
+    when CSR_mip =>        -- Machine interrupt pending
+    when CSR_mstackovr =>  -- Machine stack overflow
+        ordata(BUS_ADDR_WIDTH-1 downto 0) := ir.mstackovr;
+        if iwena = '1' then
+            ov.mstackovr := iwdata(BUS_ADDR_WIDTH-1 downto 0);
+            ov.mstackovr_ena := or_reduce(iwdata(BUS_ADDR_WIDTH-1 downto 0));
+        end if;
+    when CSR_mstackund =>  -- Machine stack underflow
+        ordata(BUS_ADDR_WIDTH-1 downto 0) := ir.mstackund;
+        if iwena = '1' then
+            ov.mstackund := iwdata(BUS_ADDR_WIDTH-1 downto 0);
+            ov.mstackund_ena := or_reduce(iwdata(BUS_ADDR_WIDTH-1 downto 0));
+        end if;
     when others =>
     end case;
   end;
 
 begin
 
-  comb : process(i_nrst, i_mret, i_uret, i_addr, i_wena, i_wdata, i_trap_ready,
+  comb : process(i_nrst, i_mret, i_uret, i_sp, i_addr, i_wena, i_wdata, i_trap_ready,
                  i_ex_pc, i_ex_npc, i_ex_data_addr, i_ex_data_load_fault, i_ex_data_store_fault,
                  i_ex_data_store_fault_addr,
                  i_ex_ctrl_load_fault, i_ex_illegal_instr, i_ex_unalign_load, i_ex_unalign_store,
@@ -268,8 +294,10 @@ begin
     variable wb_trap_pc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     variable w_trap_irq : std_logic;
     variable w_exception_xret : std_logic;
-    variable wb_trap_code : std_logic_vector(3 downto 0);
+    variable wb_trap_code : std_logic_vector(4 downto 0);
     variable wb_mbadaddr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    variable w_mstackovr : std_logic;
+    variable w_mstackund : std_logic;
   begin
 
     v := r;
@@ -295,6 +323,16 @@ begin
     if (i_mret = '1' and r.mode /= PRV_M) or
         (i_uret = '1' and r.mode /= PRV_U) then
         w_exception_xret := '1';
+    end if;
+
+    w_mstackovr := '0';
+    if i_sp(BUS_ADDR_WIDTH-1 downto 0) < r.mstackovr then
+        w_mstackovr := '1';
+    end if;
+
+    w_mstackund := '0';
+    if i_sp(BUS_ADDR_WIDTH-1 downto 0) > r.mstackund then
+        w_mstackund := '1';
     end if;
 
     if i_fpu_valid = '1' then
@@ -374,10 +412,26 @@ begin
             wb_trap_pc := CFG_NMI_CALL_FROM_UMODE_ADDR;
             wb_trap_code := EXCEPTION_CallFromUmode;
         end if;
+    elsif r.mstackovr_ena = '1' and w_mstackovr = '1' then
+        w_trap_valid := '1';
+        wb_trap_pc := CFG_NMI_STACK_OVERFLOW_ADDR;
+        wb_trap_code := EXCEPTION_StackOverflow;
+        if i_trap_ready = '1' then
+            v.mstackovr := (others => '0');
+            v.mstackovr_ena := '0';
+        end if;
+    elsif r.mstackund_ena = '1' and w_mstackund = '1' then
+        w_trap_valid := '1';
+        wb_trap_pc := CFG_NMI_STACK_UNDERFLOW_ADDR;
+        wb_trap_code := EXCEPTION_StackUnderflow;
+        if i_trap_ready = '1' then
+            v.mstackund := (others => '0');
+            v.mstackund_ena := '0';
+        end if;
     elsif w_ext_irq = '1' and r.ext_irq = '0' then
         w_trap_valid := '1';
         wb_trap_pc := r.mtvec(BUS_ADDR_WIDTH-1 downto 0);
-        wb_trap_code := X"B";
+        wb_trap_code := INTERRUPT_MExternal;
         w_trap_irq := '1';
     end if;
 

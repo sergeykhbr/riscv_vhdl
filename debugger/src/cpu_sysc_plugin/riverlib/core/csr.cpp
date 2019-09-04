@@ -386,12 +386,12 @@ void CsrRegs::comb() {
     }
 
     w_mstackovr = 0;
-    if (i_sp.read()(BUS_ADDR_WIDTH, 0) < r.mstackovr.read()) {
+    if (i_sp.read()(BUS_ADDR_WIDTH-1, 0) < r.mstackovr.read()) {
         w_mstackovr = 1;
     }
 
     w_mstackund = 0;
-    if (i_sp.read()(BUS_ADDR_WIDTH, 0) > r.mstackund.read()) {
+    if (i_sp.read()(BUS_ADDR_WIDTH-1, 0) > r.mstackund.read()) {
         w_mstackund = 1;
     }
 

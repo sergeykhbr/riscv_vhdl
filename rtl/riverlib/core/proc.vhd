@@ -165,6 +165,7 @@ architecture arch_Processor of Processor is
         rdata2 : std_logic_vector(RISCV_ARCH-1 downto 0);
         dport_rdata : std_logic_vector(RISCV_ARCH-1 downto 0);
         ra : std_logic_vector(RISCV_ARCH-1 downto 0);       -- Return address
+        sp : std_logic_vector(RISCV_ARCH-1 downto 0);       -- Stack pointer
     end record;
 
     type FloatRegsType is record
@@ -420,7 +421,8 @@ begin
         i_dport_write => dbg.ireg_write,
         i_dport_wdata => dbg.core_wdata,
         o_dport_rdata => ireg.dport_rdata,
-        o_ra => ireg.ra);   -- Return address
+        o_ra => ireg.ra,   -- Return address
+        o_sp => ireg.sp);
 
     fpuena : if CFG_HW_FPU_ENABLE generate
       fregs0 : RegFloatBank generic map (
@@ -456,6 +458,7 @@ begin
         i_nrst => i_nrst,
         i_mret => w.e.mret,
         i_uret => w.e.uret,
+        i_sp => ireg.sp,
         i_addr => w.e.csr_addr,
         i_wena => w.e.csr_wena,
         i_wdata => w.e.csr_wdata,
