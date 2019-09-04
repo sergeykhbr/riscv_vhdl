@@ -578,10 +578,6 @@ static const uint16_t CSR_mtvec         = 0x305;
 static const uint16_t CSR_mtimecmp      = 0x321;
 /** Scratch register for machine trap handlers. */
 static const uint16_t CSR_mscratch      = 0x340;
-/** Stack overflow (non-standard CSR). */
-static const uint16_t CSR_mstackovr      = 0x350;
-/** Stack underflow (non-standard CSR). */
-static const uint16_t CSR_mstackund      = 0x351;
 /** Exception program counters. */
 static const uint16_t CSR_uepc          = 0x041;
 static const uint16_t CSR_sepc          = 0x141;
@@ -593,6 +589,10 @@ static const uint16_t CSR_mcause        = 0x342;
 static const uint16_t CSR_mbadaddr      = 0x343;
 /** Machine interrupt pending */
 static const uint16_t CSR_mip           = 0x344;
+/** Stack overflow (non-standard CSR). */
+static const uint16_t CSR_mstackovr      = 0x350;
+/** Stack underflow (non-standard CSR). */
+static const uint16_t CSR_mstackund      = 0x351;
 /// @}
 
 /** Exceptions */
@@ -621,6 +621,14 @@ enum ESignals {
     EXCEPTION_CallFromHmode,
     // Environment call from M-mode
     EXCEPTION_CallFromMmode,
+    // Instruction page fault
+    EXCEPTION_InstrPageFault,
+    // Load page fault
+    EXCEPTION_LoadPageFault,
+    // reserved
+    EXCEPTION_rsrv14,
+    // Store/AMO page fault
+    EXCEPTION_StorePageFault,
     // Stack overflow
     EXCEPTION_StackOverflow,
     // Stack underflow

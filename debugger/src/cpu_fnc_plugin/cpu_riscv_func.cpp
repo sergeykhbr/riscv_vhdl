@@ -32,6 +32,7 @@ CpuRiver_Functional::CpuRiver_Functional(const char *name) :
     registerAttribute("HartID", &hartid_);
     registerAttribute("ListExtISA", &listExtISA_);
     registerAttribute("VectorTable", &vectorTable_);
+    registerAttribute("ExceptionTable", &exceptionTable_);
 }
 
 CpuRiver_Functional::~CpuRiver_Functional() {
@@ -147,8 +148,9 @@ void CpuRiver_Functional::handleTrap() {
     int xepc = static_cast<int>((cur_prv_level << 8) + 0x41);
     portCSR_.write(xepc, npc_.getValue().val);
     if (interrupt_pending_[0] & exception_mask) {
-        // Exception
-        npc_.setValue(0x8 + 0x8 * mcause.value);
+        // Exception: ['cfg_nmi_name', address, ....]
+        uint64_t trap = exceptionTable_[2*mcause.value + 1].to_uint64();
+        npc_.setValue(trap);
     } else {
         // Software interrupt handled after instruction was executed
         npc_.setValue(portCSR_.read(CSR_mtvec));

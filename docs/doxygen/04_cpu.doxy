@@ -189,7 +189,7 @@ instruction words (1-standard or 2-compressed instructions) on each clock cycle.
   If Instruction Cache module cannot return data on the next clock
 cycle Fetch module generates <c>hold pipeline</c> signal.
 <c>Hold pipeline</c> signal released when \c ICache module returns valid data.
-In a case of enabled \cCFG_SINGLEPORT_CACHE parameter it will take 6 clock
+In a case of enabled \c CFG_SINGLEPORT_CACHE parameter it will take 6 clock
 cycles to request and save 4-clock burst transaction.
 
   Preprocessing of branch instructions enables the instruction flow to be predicted.
@@ -254,6 +254,7 @@ access speed required for the CPU's performance. At any time there's
 available 2 registers for reading and 1 for writing. Additional
 Debug Port provides debuging registers access via \c DSU.
 
+<center>
 | Register | ABI Name   | Description
 |:--------:|:----------:|:-----------------------------------------
 | x0       | r0         | Hard-wired zero
@@ -288,6 +289,8 @@ Debug Port provides debuging registers access via \c DSU.
 | x29      | t4         | Temporary register 4
 | x30      | t5         | Temporary register 5
 | x31      | t6         | Temporary register 6
+<b>Table 4-4. Integer Registers bank.</b>
+</center>
 
   Register \c x0 (zero), \c x1  (return address) usage cannot be changed
 by software and hardcoded on hardware level. But usage of all others
@@ -306,5 +309,454 @@ current processor mode. If processor tries to execute privileged access to CSR
 while in lower than neccessary privileged level, then special trap is generated
 with the increased rights.
 
+  This functionality is used for the hypervisor and others virtual platforms
+development and either to provide operational system security when running user's
+applications.
+
+  Processor River of the latest revision supports and correctly handles states
+in two modes: <c>Machine mode</c> (maximal privileged level) and <c>User mode</c>.
+But <c>User mode</c> have the same set of CSR registers and the same access
+rights as the <c>Machine mode</c>. This is actually RISC-V specification violation
+that would be fixed in the future release, but for the current moment it raises
+only security issues of working with operational system but it doesn't affect
+the possibility to run multitasks environment.
+
+<center>
+| Addr. | Name              | Reset Value        | Description
+|:-----:|:------------------|:-------------------|-------------------------------------
+| 0x001 | FFLAGS            | 0x0                | FPU accrued Exceptions fields from FCSR
+| 0x002 | FRM               | 0x8                | FPU dynamic Rounding Mode fields from FCSR
+| 0x003 | FCSR              | 0x8                | FPU Control and Status register (FRM + FFLAGS)
+| 0xf10 | MISA              | 80000000:00101108h | List of supported instruction sets
+| 0xf11 | MVENDORID         | 00000000:000000F1h | Vendor ID: \c CFG_VENDOR_ID parameter
+| 0xf12 | MARCHID           | 0x0                | Architecture ID
+| 0xf13 | MIMPLEMENTATIONID | 00000000:20190521h | Implementation ID: \c CFG_IMPLEMENTATION_ID parameter
+| 0xf14 | MHARTID           | 0x0                | Core ID in multi-processors system
+| 0x041 | UEPC              | 0x0                | User program counter
+| 0x300 | MSTATUS           | 00000000:00001800h | Machine mode status register
+| 0x302 | MEDELEG           | 0x0                | Machine exception delegation
+| 0x303 | MIDELEG           | 0x0                | Machine interrupt delegation
+| 0x304 | MIE               | 0x0                | Machine interrupt enable bit
+| 0x305 | MTVEC             | 0x0                | Machine Interrupts Table pointer
+| 0x340 | MSCRATCH          | 0x0                | Machine scratch register
+| 0x341 | MEPC              | 0x0                | Machine program counter
+| 0x342 | MCAUSE            | 0x0                | Machine trap cause
+| 0x343 | MBADADDR          | 0x0                | Machine bad address
+| 0x344 | MIP               | 0x0                | Machine Interrupt pending
+| 0x350 | MSTACKOVR<sup>1</sup> | 0x0            | Machine Stack Overflow limit
+| 0x351 | MSTACKUND<sup>1</sup> | 0x0            | Machine Stack Underflow limit
+<b>Table 4-5. List of implemented CSR registers.</b>
+</center>
+<sup>1</sup> - Non-standard CSR register (River CPU only).
+
+<b>FFLAGS Register (0x001)</b>
+
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>reserved</td>   <td>[63:5]</td>   <td>RO</td>   <td><b></b>.</td>
+  </tr>
+  <tr>
+    <td>NV</td>   <td>[4]</td>   <td>RO</td>   <td><b>Invalid Operation</b>.
+     Last FPU operation status flag</td>
+  </tr>
+  <tr>
+    <td>DZ</td>   <td>[3]</td>   <td>RO</td>   <td><b>Divide by Zero</b>.
+     Last FPU operation status flag</td>
+  </tr>
+  <tr>
+    <td>OF</td>   <td>[2]</td>   <td>RO</td>   <td><b>Overflow</b>.
+     Last FPU operation status flag</td>
+  </tr>
+  <tr>
+    <td>UF</td>   <td>[1]</td>   <td>RO</td>   <td><b>Underflow</b>.
+     Last FPU operation status flag</td>
+  </tr>
+  <tr>
+    <td>NX</td>   <td>[0]</td>   <td>RO</td>   <td><b>Inexact</b>.
+     Last FPU operation status flag</td>
+  </tr>
+</table>
+
+<b>FRM Register (0x002)</b>
+
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>reserved</td>   <td>[63:8]</td>   <td>RO</td>   <td><b></b>.</td>
+  </tr>
+  <tr>
+    <td>FRM</td>   <td>[7:5]</td>   <td>RO</td>   <td><b>Rounding Mode</b>:
+       \li 000: RNE - Round to Nearest, ties to Even
+       \li 001: RTZ - Round towards Zero
+       \li 010: RDN - Round Down
+       \li 011: RUP - Round Up
+       \li 100: RMM - Round to Nearest, ties to Max Magnitude
+       \li 101: Invalid. Reserved for future use.
+       \li 110: Invalid. Reserved for future use.
+       \li 111: Dynamic rounding mode
+    </td>
+  </tr>
+  <tr>
+    <td>reserved</td>   <td>[4:0]</td>   <td>RO</td>   <td><b></b>.</td>
+  </tr>
+</table>
+
+<b>FCSR Register (0x003)</b>
+
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>reserved</td>   <td>[63:8]</td>   <td>RO</td>   <td><b></b>.</td>
+  </tr>
+  <tr>
+    <td>FRM</td>   <td>[7:5]</td>   <td>RO</td>   <td><b>Rounding Mode</b>:
+       \li 000: RNE - Round to Nearest, ties to Even
+       \li 001: RTZ - Round towards Zero
+       \li 010: RDN - Round Down
+       \li 011: RUP - Round Up
+       \li 100: RMM - Round to Nearest, ties to Max Magnitude
+       \li 101: Invalid. Reserved for future use.
+       \li 110: Invalid. Reserved for future use.
+       \li 111: Dynamic rounding mode
+    </td>
+  </tr>
+  <tr>
+    <td>NV</td>   <td>[4]</td>   <td>RO</td>   <td><b>Invalid Operation</b>.
+     Last FPU operation status flag</td>
+  </tr>
+  <tr>
+    <td>DZ</td>   <td>[3]</td>   <td>RO</td>   <td><b>Divide by Zero</b>.
+     Last FPU operation status flag</td>
+  </tr>
+  <tr>
+    <td>OF</td>   <td>[2]</td>   <td>RO</td>   <td><b>Overflow</b>.
+     Last FPU operation status flag</td>
+  </tr>
+  <tr>
+    <td>UF</td>   <td>[1]</td>   <td>RO</td>   <td><b>Underflow</b>.
+     Last FPU operation status flag</td>
+  </tr>
+  <tr>
+    <td>NX</td>   <td>[0]</td>   <td>RO</td>   <td><b>Inexact</b>.
+     Last FPU operation status flag</td>
+  </tr>
+</table>
+
+<b>MISA Register (0xf10)</b>
+
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>reserved</td>   <td>[63:0]</td>   <td>RW</td>   <td><b></b>.</td>
+  </tr>
+</table>
+
+<b>MVENDORID Register (0xf11)</b>
+
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>reserved</td>   <td>[63:0]</td>   <td>RW</td>   <td><b></b>.</td>
+  </tr>
+</table>
+
+<b>MARCHID Register (0xf12)</b>
+
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>reserved</td>   <td>[63:0]</td>   <td>RW</td>   <td><b></b>.</td>
+  </tr>
+</table>
+
+<b>MIMPLEMENTATIONID Register (0xf13)</b>
+
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>reserved</td>   <td>[63:0]</td>   <td>RW</td>   <td><b></b>.</td>
+  </tr>
+</table>
+
+<b>MHARTID Register (0xf14)</b>
+
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>reserved</td>   <td>[63:0]</td>   <td>RW</td>   <td><b></b>.</td>
+  </tr>
+</table>
+
+<b>UEPC Register (0x041)</b>
+
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>reserved</td>   <td>[63:0]</td>   <td>RW</td>   <td><b></b>.</td>
+  </tr>
+</table>
+
+<b>MSTATUS Register (0x300)</b>
+
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>reserved</td>   <td>[63:0]</td>   <td>RW</td>   <td><b></b>.</td>
+  </tr>
+</table>
+
+<b>MEDELEG Register (0x302)</b>
+
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>reserved</td>   <td>[63:0]</td>   <td>RW</td>   <td><b></b>.</td>
+  </tr>
+</table>
+
+<b>MIDELEG Register (0x303)</b>
+
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>reserved</td>   <td>[63:0]</td>   <td>RW</td>   <td><b></b>.</td>
+  </tr>
+</table>
+
+<b>MIE Register (0x304)</b>
+
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>reserved</td>   <td>[63:0]</td>   <td>RW</td>   <td><b></b>.</td>
+  </tr>
+</table>
+
+<b>MTVEC Register (0x305)</b>
+
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>reserved</td>   <td>[63:0]</td>   <td>RW</td>   <td><b></b>.</td>
+  </tr>
+</table>
+
+<b>MSCRATCH Register (0x340)</b>
+
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>reserved</td>   <td>[63:0]</td>   <td>RW</td>   <td><b></b>.</td>
+  </tr>
+</table>
+
+<b>MEPC Register (0x341)</b>
+
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>reserved</td>   <td>[63:0]</td>   <td>RW</td>   <td><b></b>.</td>
+  </tr>
+</table>
+
+<b>MCAUSE Register (0x342)</b>
+
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>IRQ</td>   <td>[62:0]</td>   <td>R0</td>   <td><b>Interrupt flag</b>.
+       \li '0' - Exception trap
+       \li '1' - Interrupt trap
+       </td>
+  </tr>
+  <tr>
+    <td>WLRL</td>   <td>[62:0]</td>   <td>R0</td>   <td><b>Exception Code</b>.
+      See tables 4-6 and 4-7 with the information about trap codes</td>
+  </tr>
+</table>
+
+<b>Exception Codes (WLRL)</b>
+
+<center>
+| Val| Name          | Description
+|:--:|:-------------:|:-------------------------------
+| 0  | InstrMisalign | Instruction address misaligned
+| 1  | InstrFault    | Instruction access fault
+| 2  | InstrIllegal  | Illegal instruction
+| 3  | Breakpoint    | Software berakpoint (instruction EBREAK)
+| 4  | LoadMisalign  | Load address misaligned
+| 5  | LoadFault     | Load access fault
+| 6  | StoreMisalign | Store address misaligned
+| 7  | StoreFault    | Store address fault
+| 8  | CallFromUMode | Environment call from U-mode (instruction ECALL)
+| 9  | CallFromSMode | Not used
+| 10 | CallFromHMode | Not used
+| 11 | CallFromMMode | Environment call from M-mode (instruction ECALL)
+| 12 | InstrPageFault | Not used
+| 13 | LoadPageFault  | Not used
+| 14 | reserved       | Not used
+| 15 | StorePageFault | Not used
+| 16 | StackOverflow  | Stack pointer (sp) is below than overflow limit
+| 17 | StackUnderflow | Stack pointer (sp) is higher than underflow limit
+<b>Table 4-6. WLRL value in a case of exception.</b>
+</center>
+
+<b>Interrupt Codes (WLRL)</b>
+
+<center>
+| Val| Name          | Description
+|:--:|:-------------:|:-------------------------
+| 0  | USoftware     | Not used
+| 1  | SSoftware     | Not used
+| 2  | HSoftware     | Not used
+| 3  | MSoftware     | Not used
+| 4  | UTimer        | Not used
+| 5  | STimer        | Not used
+| 6  | HTimer        | Not used
+| 7  | MTimer        | Not used
+| 8  | UExternal     | Not used
+| 9  | SExternal     | Not used
+| 10 | HExternal     | Not used
+| 11 | MExternal     | Interrupt request from an external IRQ controller
+<b>Table 4-7. WLRL value in a case of interrupt.</b>
+</center>
+
+
+<b>MBADADDR Register (0x343)</b>
+
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>reserved</td>   <td>[63:0]</td>   <td>RW</td>   <td><b></b>.</td>
+  </tr>
+</table>
+
+<b>MIP Register (0x344)</b>
+
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>reserved</td>   <td>[63:0]</td>   <td>RW</td>   <td><b></b>.</td>
+  </tr>
+</table>
+
+<b>MSTACKOVR Register (0x350)</b>
+
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>reserved</td>   <td>[63:0]</td>   <td>RW</td>   <td><b></b>.</td>
+  </tr>
+</table>
+
+<b>MSTACKUND Register (0x351)</b>
+
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>reserved</td>   <td>[63:0]</td>   <td>RW</td>   <td><b></b>.</td>
+  </tr>
+</table>
+
+
+ @section trap_handle_section Exceptions and Interrupts
+
+  CPU River supports two types of traps:
+
+\li Unmaskable Exceptions (Bit \c MCAUSE[64] = '0')
+\li External Interrupts (Bit \c MCAUSE[64] = '1')
+
+  In a case of occured valid trap CPU executes the following steps:
+
+\li Store Trap type and Trap index into \c MCAUSE register
+\li Store next program counter value (npc) into the register \c MEPC or \c UEPC
+    depending of the current processor mode.
+\li Fetch and execute instruction stored in the address specified by register \c MTVEC
+    if the occured trap is an Interrupt. If the current trap is an Exception
+    then CPU jumps to address accordingly with the configuration <b>table 4-6</b>.
+\li CPU switches into Machine Mode and properly shows its status in the register
+    \c MSTATUS.
+\li All interrupts are masked (\c MIE).
+
+<center>
+| Parameter                    | Address    | Description
+|:----------------------------:|:-----------|:--------------------------------------
+| CFG_NMI_RESET_VECTOR         | 0x00000000 | CPU Reset vector
+| CFG_NMI_INSTR_UNALIGNED_ADDR | 0x00000008 | Instruction address misaligned handler
+| CFG_NMI_INSTR_FAULT_ADDR     | 0x00000010 | Instruction address fault handler
+| CFG_NMI_INSTR_ILLEGAL_ADDR   | 0x00000018 | Illegal or unsupported instruction handler
+| CFG_NMI_BREAKPOINT_ADDR      | 0x00000020 | Software breakpoint (EBREAK) handler
+| CFG_NMI_LOAD_UNALIGNED_ADDR  | 0x00000028 | Load address misaligned handler
+| CFG_NMI_LOAD_FAULT_ADDR      | 0x00000030 | Load access fault handler
+| CFG_NMI_STORE_UNALIGNED_ADDR | 0x00000038 | Store address misaligned handler
+| CFG_NMI_STORE_FAULT_ADDR     | 0x00000040 | Store access fault handler
+| CFG_NMI_CALL_FROM_UMODE_ADDR | 0x00000048 | Environment call from U-mode handler
+| CFG_NMI_CALL_FROM_SMODE_ADDR | 0x00000050 | Environment call from S-mode handler
+| CFG_NMI_CALL_FROM_HMODE_ADDR | 0x00000058 | Environment call from H-mode handler
+| CFG_NMI_CALL_FROM_MMODE_ADDR | 0x00000060 | Environment call from M-mode handler
+| CFG_NMI_STACK_OVERFLOW_ADDR  | 0x00000068 | Stack Overflow handler
+| CFG_NMI_STACK_UNDERFLOW_ADDR | 0x00000070 | Stack Underflow handler
+<b>Table 4-6. CPU River Exceptions Table RTL configuration.</b>
+</center>
+
+@note To reduce memory usage by Exception Table it is possible to assign all
+      exceptions into one address and manage the occured trap type using
+      the value stored in the \c MCAUSE register.
+
+@section cpu_example_section C-code example
+
+  The following C-example demonstrates how to read current Core ID using
+inline assembler:
+
+@code
+    int fw_get_cpuid() {
+        int ret;
+        asm("csrr %0, mhartid" : "=r" (ret));
+        return ret;
+    }
+@endcode
 
 */

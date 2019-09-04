@@ -290,7 +290,7 @@ void CsrRegs::procedure_RegAccess(uint64_t iaddr, bool iwena,
         break;
     case CSR_medeleg:// - Machine exception delegation
         break;
-    case CSR_mideleg:// - Machine itnerrupt delegation
+    case CSR_mideleg:// - Machine interrupt delegation
         break;
     case CSR_mie:// - Machine interrupt enable bit
         break;
@@ -308,20 +308,6 @@ void CsrRegs::procedure_RegAccess(uint64_t iaddr, bool iwena,
             ov->mscratch = iwdata;
         }
         break;
-    case CSR_mstackovr:// - Machine Stack Overflow
-        (*ordata) = ir.mstackovr;
-        if (iwena) {
-            ov->mstackovr = iwdata(BUS_ADDR_WIDTH-1, 0);
-            ov->mstackovr_ena = iwdata(BUS_ADDR_WIDTH-1, 0).or_reduce();
-        }
-        break;
-    case CSR_mstackund:// - Machine Stack Underflow
-        (*ordata) = ir.mstackund;
-        if (iwena) {
-            ov->mstackund = iwdata(BUS_ADDR_WIDTH-1, 0);
-            ov->mstackund_ena = iwdata(BUS_ADDR_WIDTH-1, 0).or_reduce();
-        }
-        break;
     case CSR_mepc:// - Machine program counter
         (*ordata) = ir.mepc;
         if (iwena) {
@@ -337,6 +323,20 @@ void CsrRegs::procedure_RegAccess(uint64_t iaddr, bool iwena,
         (*ordata) = ir.mbadaddr;
         break;
     case CSR_mip:// - Machine interrupt pending
+        break;
+    case CSR_mstackovr:// - Machine Stack Overflow
+        (*ordata) = ir.mstackovr;
+        if (iwena) {
+            ov->mstackovr = iwdata(BUS_ADDR_WIDTH-1, 0);
+            ov->mstackovr_ena = iwdata(BUS_ADDR_WIDTH-1, 0).or_reduce();
+        }
+        break;
+    case CSR_mstackund:// - Machine Stack Underflow
+        (*ordata) = ir.mstackund;
+        if (iwena) {
+            ov->mstackund = iwdata(BUS_ADDR_WIDTH-1, 0);
+            ov->mstackund_ena = iwdata(BUS_ADDR_WIDTH-1, 0).or_reduce();
+        }
         break;
     default:;
     }

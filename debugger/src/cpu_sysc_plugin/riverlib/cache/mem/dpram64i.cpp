@@ -36,12 +36,12 @@ void DpRam64i::comb() {
     v.radr = i_radr.read();
 
     if (i_wena.read()) {
-        v.mem[i_wadr.read()] = i_wdata;
+        v.mem[i_wadr.read().to_int()] = i_wdata;
     }
     /** v.mem[] is not a signals, so use update register to trigger process */
     v.update = !r.update.read();
 
-    o_rdata = r.mem[r.radr.read()];
+    o_rdata = r.mem[r.radr.read().to_int()];
 }
 
 void DpRam64i::registers() {

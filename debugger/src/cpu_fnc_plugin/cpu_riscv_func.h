@@ -91,6 +91,7 @@ class CpuRiver_Functional : public CpuGeneric,
     AttributeType hartid_;
     AttributeType listExtISA_;
     AttributeType vectorTable_;
+    AttributeType exceptionTable_;
 
     static const int INSTR_HASH_TABLE_SIZE = 1 << 6;
     AttributeType listInstr_[INSTR_HASH_TABLE_SIZE];
