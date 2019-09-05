@@ -33,10 +33,12 @@ about already implemented features and features that are now in the development.
     <th>Function</th> <th>River, the latest ver.</th> <th>Description</th>
   </tr>
   <tr>
-    <td>RISC-V User Level spec</td>  <td>2.2</td>   <td>See @link riscv.org. @endlink</td>
+    <td>RISC-V User Level spec</td>  <td>2.2</td>   <td>See
+         <a href=https://riscv.org/specifications/>riscv.org.</a></td>
   </tr>
   <tr>
-    <td>RISC-V Priviledged Level spec</td>  <td>1.10</td>   <td>See @link riscv.org. @endlink</td>
+    <td>RISC-V Priviledged Level spec</td>  <td>1.10</td>   <td>See
+         <a href=https://riscv.org/specifications/>riscv.org.</a></td>
   </tr>
   <tr>
     <td>GCC version</td>  <td>7.2.2 or newer</td>   <td>Used as a default
@@ -299,6 +301,55 @@ Binary Compatibility (ABI).
 
   Writing into register \c x0 doesn't lead to any modification and
 can be interpreted as an empty operation.
+
+ @section fpu_register_section FPU Registers
+
+  River CPU implements additional registers bank with the 32 64-bit registers.
+Configuration parameter \c CFG_HW_FPU_ENABLE allows to disable instantiation
+of the bank if the FPU was disabled. 
+
+<center>
+| Register | ABI Name   | Description
+|:--------:|:----------:|:-----------------------------------------
+| f0       | ft0        | FP temporary register 0
+| f1       | ft1        | FP temporary register 1
+| f2       | ft2        | FP temporary register 2
+| f3       | ft3        | FP temporary register 3
+| f4       | ft4        | FP temporary register 4
+| f5       | ft5        | FP temporary register 5
+| f6       | ft6        | FP temporary register 6
+| f7       | ft7        | FP temporary register 27
+| f8       | fs0        | FP saved register 0
+| f9       | fs1        | FP saved register 1
+| f10      | fa0        | FP argument 0 / return value 0
+| f11      | fa1        | FP argument 1 / return value 1
+| f12      | fa2        | FP argument 2
+| f13      | fa3        | FP argument 3
+| f14      | fa4        | FP argument 4
+| f15      | fa5        | FP argument 5
+| f16      | fa6        | FP argument 6
+| f17      | fa7        | FP argument 7
+| f18      | fs2        | FP saved register 2
+| f19      | fs3        | FP saved register 3
+| f20      | fs4        | FP saved register 4
+| f21      | fs5        | FP saved register 5
+| f22      | fs6        | FP saved register 6
+| f23      | fs7        | FP saved register 7
+| f24      | fs8        | FP saved register 8
+| f25      | fs9        | FP saved register 9
+| f26      | fs10       | FP saved register 10
+| f27      | fs11       | FP saved register 11
+| f28      | ft3        | FP temporary register 3
+| f29      | ft4        | FP temporary register 4
+| f30      | ft5        | FP temporary register 5
+| f31      | ft6        | FP temporary register 6
+<b>Table 4-5. Floating-Point Unit Registers bank.</b>
+</center>
+
+@note The future version of River is planned with the additional \c generic
+      parameter enabling and disabing FPU that will allow to setup configuration
+      for each core separetely.
+
 
  @section csr_register_section Control and Status Registers
 
@@ -991,6 +1042,13 @@ core. River CPU doesn't have a registered JEDEC identification.
         Interrupt Pending</b>. Not implemented</td>
   </tr>
 </table>
+
+ @section cpu_stack_protection_section Stack Protection
+
+  River CPU implements two special non-standard CSR registers \c MSTACKOVR
+and \c MSTACKUND. These dedicated registers allows to setup the boundaries
+at which the exception event is generated if the 'sp' comes out of these limits.
+
 
 <b>MSTACKOVR Register (0x350)</b>
 

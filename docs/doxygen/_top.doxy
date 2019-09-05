@@ -259,7 +259,7 @@ mapping and adding/removing new AXI4 modules into the system is
 implemented on project top-level in a similar to <c>GRLIB</c> way.
 
   Information about GNSS (<em>Satellite Navigation Engine</em>) you can find at
-@link www.gnss-sensor.com. @endlink
+<a href=www.gnss-sensor.com>www.gnss-sensor.com</a>
 
 
 */

@@ -23,7 +23,7 @@ parts:
 \li One start bit of frame (SOF) with the signal level '0'
 \li Data sequence of 8 bits. Number of bits hardcoded on hardware level.
 \li Parity bit (P) that controlled via bit \c parity_bit in the
-    register \c UART_CTRL_STATUS. This bit is computed as: </br>
+    register \c UART_CTRL_STATUS. This bit is computed as:
     D(7)^D(6)^D(5)^D(4)^D(3)^D(2)^D(1)^D(0).
 \li On stop bit
 
