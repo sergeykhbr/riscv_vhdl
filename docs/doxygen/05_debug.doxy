@@ -1,4 +1,37 @@
-/** @page dsu_page Debug Support Unit (DSU)
+/** @page dsu_page System Debug
+
+  River CPU doesn't implement any special Debug Modes. Processor's
+architecture allows to halt pipeline at any time without performance
+degradation that allows to support non-invasive debugging. This feature
+used by the debugger to read CPU registers, Stack Trace buffer, CPI and etc
+continuously without the execution interrupting.
+
+  Test Access Points (TAP) provides access to a processors registers,
+preipheries and a mapped memories. The latest repository version provides
+the following TAPs:
+
+\li UART TAP - debug via serial port UART Master with the default speed 115200
+\li JTAG - debug via JTAG interface with the usual frequency 12 MHz
+\li Ethernet with EDCL support - debug via 100 Mb Ethernet using UDP protocol
+    and hardcoded MAC and IP.
+
+  It is possible to use all these TAP devices at the same time that was 
+confirmed on FPGA board with simultaneous access via UART and Ethernet.
+Special debugger is a part of \c riscv_vhdl repository that is shared with
+the Apache 2.0. license too.
+
+  Additional hardware feature of the developed debugger:
+
+\li Hardware calculation of the Clock Per Instruction (CPI) index
+    for the each core independenetly.
+\li System Bus loading distribution on each master for the read and
+    write transactions separately.
+\li Stack tracer on hardware level.
+\li Hardware Breakpoints that a perfectly suited for the application 
+    debug entirely placed in a ROM.
+\li I/D Cache state statuses.
+
+@section debug_dsu_section Debug Support Unit (DSU)
  
  Debug Support Unit (DSU) was developed to interact with "RIVER" CPU
  via its debug port interace. This bus provides access to all internal CPU
@@ -32,94 +65,41 @@
      
  @subsection dsu_csr CSR Region (32 KB)
 
- @par User Exception Program Counter (0x00208). ISA offset 0x041.
+  Processor Control and Status Registers directly mapped into this region
+of the DSU. Each CSR register is 64-bit width and mapped into address space
+accordingly with its index:
 
- |Bits|Type| Reset |  Name         | Definition 
- |:--:|:--:|:-----:|:-------------:|---------------------------------------------|
- | 64 | RO | 64h'0 | uepc | <b>User mode exception program counter</b>. Instruction URET is used to return from traps in User Mode into specified instruction pointer. URET is only provided if user-mode traps are supported.
+<center>
+      \f[CSR_OFFSET = 8*CSR_index;\f]
+</center>
 
- @par Machine Status Register (0x01800). ISA offset 0x300.
-
- |Bits|Type| Reset |Field Name| Bits  | Description 
- |:--:|:--:|:-----:|:---------|:-----:|:------------------------------------------------------------|
- | 1  | RW | 1b'0  | SD       | 63    | Bit summarizes whether either the FS field or XS field signals the presence of some dirty state that will require saving extended user context to memory
- | 22 | RW | 22h'0 | WPRI     | 62:20 | Reserved
- | 5  | RW | 5h'0  | VM (WARL)| 28:24 | Virtual addressing enable
- | 4  | RW | 4h'0  | WPRI     | 23:20 | Reserved
- | 1  | RW | 1b'0  | MXR      | 19    | <b>Make eXecutable Readable</b>
- | 1  | RW | 1b'0  | PUM      | 18    | <b>Protect User Memory</b> bit modifies the privilege with which loads access virtual memory
- | 1  | RW | 1b'0  | MPRV     | 17    | Privilege level at which loads and stores execute
- | 2  | RW | 2h'0  | XS       | 16:15 | Context switch reducing flags: 0=All Off; 1=None dirty or clean, some on; 2=None dirty, some clean; 3=Some dirty
- | 2  | RW | 2h'0  | FS       | 14:13 | Context switch reducing flags: 0=Off; 1=Initial; 2=Clean; 3=Dirty
- | 2  | RW | 2h'0  | MPP      | 12:11 | Priviledge mode on MRET
- | 2  | RW | 2h'0  | HPP      | 10:9  | Priviledge mode on HRET
- | 1  | RW | 1b'0  | SPP      | 8     | Priviledge mode on SRET
- | 1  | RW | 1b'0  | MPIE     | 7     | MIE prior to the trap
- | 1  | RW | 1b'0  | HPIE     | 6     | HIE prior to the trap
- | 1  | RW | 1b'0  | SPIE     | 5     | SIE prior to the trap
- | 1  | RW | 1b'0  | UPIE     | 4     | UIE prior to the trap
- | 1  | RW | 1b'0  | MIE      | 3     | Machine interrupt enable bit
- | 1  | RW | 1b'0  | HIE      | 2     | Hypervisor interrupt enable bit
- | 1  | RW | 1b'0  | SIE      | 1     | Super-user interrupt enable bit
- | 1  | RW | 1b'0  | UIE      | 0     | User interrupt enable bit
-
- @par Machine Trap-Vector Base-Address Register (0x01828). <br>ISA offset 0x305.
-
- |Bits|Type| Reset | Field Name        | Definition 
- |:--:|:--:|:-----:|:-----------------:|:---------------------------------------------|
- | 64 | RW | 64h'0 | mtvec | <b>Trap-vector Base Address</b>. The mtvec register is an XLEN-bit read/write register that holds the base address of the M-mode trap vector.
-
- @par Machine Exception Program Counter (0x01A08). <br>ISA offset 0x341.
-
- |Bits|Type| Reset | Field Name        | Definition 
- |:--:|:--:|:-----:|:-----------------:|:---------------------------------------------|
- | 64 | RW | 64h'0 | mepc | <b>Machine mode exception program counter</b>. Instruction MRET is used to return from traps in User Mode into specified instruction pointer. On implementations that do not support instruction-set extensions with 16-bit instruction alignment, the two low bits (mepc[1:0]) are always zero.
-
- @par Machine Cause Register (0x01A10). <br>ISA offset 0x342.
-
- |Bits|Type| Reset | Field Name   |Bits| Definition 
- |:--:|:--:|:-----:|:-------------|:--:|:---------------------------------------------|
- | 1  | RW | 1b'0  | Interrupt    | 63 | The Interrupt bit is set if the trap was caused by an interrupt.
- | 63 | RW | 63h'0 | Exception Code | 62:0 | <b>Exception code</b>. The Exception Code field contains a code identifying the last exception. Table 3.6 lists the possible machine-level exception codes.
-
- @par Machine Cause Register (0x01A18). <br>ISA offset 0x343.
-
- |Bits|Type| Reset | Field Name   |Bits| Definition 
- |:--:|:--:|:-----:|:-------------|:--:|:---------------------------------------------|
- | 64 | RW | 64h'0 | mbadaddr     | 63:0 | <b>Exception address</b>. When a hardware breakpoint is triggered, or an instruction-fetch, load, or store address-misaligned or access exception occurs, mbadaddr is written with the faulting address. mbadaddr is not modified for other exceptions.
-
- @par Machine ISA Register (0x07880). ISA offset 0xf10.
-
- |Bits|Type| Reset |Field Name| Bits  | Description 
- |:--:|:--:|:-----:|:---------|:-----:|:------------------------------------------------------------|
- | 2  | RO | 2h'2  | Base (WARL)| 63:62 | <b>Integer ISA width</b>: 1=32 bits; 2=64 bits; 3=128 bits.
- | 34 | RO | 64h'0 | WIRI       | 61:28 | Reserved.
- | 28 | RO | 28h'141181 | Extension (WARL) | 27:0 | <b>Supported ISA extensions</b>. See priviledge-isa datasheet.
-
- @par Machine Vendor ID (0x07888). ISA offset 0xf11.
-
- |Bits|Type| Reset |Field Name| Bits  | Description 
- |:--:|:--:|:-----:|:---------|:-----:|:------------------------------------------------------------|
- | 64 | RO | 64h'0 | Vendor | 63:0 | <b>Vendor ID</b>. read-only register encoding the manufacturer of the part. This register must be readable in any implementation, but a value of 0 can be returned to indicate the field is not implemented or that this is a non-commercial implementation.
-
- @par Machine Architecture ID  Register (0x07890). ISA offset 0xf12.
-
- |Bits|Type| Reset |Field Name| Bits  | Description 
- |:--:|:--:|:-----:|:---------|:-----:|:------------------------------------------------------------|
- | 64 | RO | 64h'0 | marchid | 63:0 |<b>Architecture ID</b>. Read-only register encoding the base microarchitecture of the hart. This register must be readable in any implementation, but a value of 0 can be returned to indicate the field is not implemented. The combination of mvendorid and marchid should uniquely identify the type of hart microarchitecture that is implemented.
-
- @par Machine implementation ID Register (0x07898). ISA offset 0xf13.
-
- |Bits|Type| Reset |Field Name| Bits  | Description 
- |:--:|:--:|:-----:|:---------|:-----:|:------------------------------------------------------------|
- | 64 | RO | 64h'0 | mimplid | 63:0 | <b>Implementation ID</b>. CSR provides a unique encoding of the version of the processor implementation. This register must be readable in any implementation, but a value of 0 can be returned to indicate that the field is not implemented.
-
- @par Hart ID Register (0x078A0). ISA offset 0xf14.
-
- |Bits|Type| Reset |Field Name| Bits  | Description 
- |:--:|:--:|:-----:|:---------|:-----:|:------------------------------------------------------------|
- | 64 | RO | 64h'0 | mhartid | 63:0 | <b>Integer ID of hardware thread</b>.  Hart IDs mightnot necessarily be numbered contiguously in a multiprocessor system, but at least one hart musthave a hart ID of zero.
-
+<center>
+| Index.| Offset  | Name              
+|:-----:|:--------|-------------------
+| 0x001 | 0x00008 | FFLAGS            
+| 0x002 | 0x00010 | FRM               
+| 0x003 | 0x00018 | FCSR              
+| 0xf10 | 0x07880 | MISA              
+| 0xf11 | 0x07888 | MVENDORID         
+| 0xf12 | 0x07890 | MARCHID           
+| 0xf13 | 0x07898 | MIMPLEMENTATIONID 
+| 0xf14 | 0x078A0 | MHARTID           
+| 0x041 | 0x00208 | UEPC      
+| 0x300 | 0x01800 | MSTATUS   
+| 0x302 | 0x01810 | MEDELEG   
+| 0x303 | 0x01818 | MIDELEG   
+| 0x304 | 0x01820 | MIE       
+| 0x305 | 0x01828 | MTVEC     
+| 0x340 | 0x01A00 | MSCRATCH  
+| 0x341 | 0x01A08 | MEPC    
+| 0x342 | 0x01A10 | MCAUSE  
+| 0x343 | 0x01A18 | MBADADDR
+| 0x344 | 0x01A20 | MIP
+| 0x350 | 0x01A80 | MSTACKOVR
+| 0x351 | 0x01A88 | MSTACKUND
+<b>Table 5-1. List of mapped CSR registers.</b>
+</center>
+   
 
  @subsection dsu_iregs General CPU Registers Region (32 KB)
 

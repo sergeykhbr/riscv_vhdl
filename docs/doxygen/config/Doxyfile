@@ -770,6 +770,7 @@ doxygen/_top.doxy \
 doxygen/02_arch_overview.doxy \
 doxygen/03_memory.doxy \
 doxygen/04_cpu.doxy \
+doxygen/05_debug.doxy \
 doxygen/08_uart.doxy \
 
 

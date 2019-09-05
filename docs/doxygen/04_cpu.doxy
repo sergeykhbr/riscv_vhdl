@@ -456,18 +456,115 @@ the possibility to run multitasks environment.
     <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
   </tr>
   <tr>
-    <td>reserved</td>   <td>[63:0]</td>   <td>RW</td>   <td><b></b>.</td>
+    <td>MXL</td>   <td>[63:62]</td>   <td>RO</td>   <td><b>Machine XLEN</b>:
+         \li 1 - 32-bits
+         \li 2 - 64-bits (River CPU)
+         \li 3 - 128-bits
+         </td>
+  </tr>
+  <tr>
+    <td>reserved</td>   <td>[61:26]</td>   <td>RZ</td>   <td><b></b>.</td>
+  </tr>
+  <tr>
+    <td>Z</td>   <td>[25]</td>   <td>RZ</td>   <td>Reserved</td>
+  </tr>
+  <tr>
+    <td>Y</td>   <td>[24]</td>   <td>RZ</td>   <td>Reserved</td>
+  </tr>
+  <tr>
+    <td>X</td>   <td>[23]</td>   <td>RO</td>   <td>Non-standard extension present</td>
+  </tr>
+  <tr>
+    <td>W</td>   <td>[22]</td>   <td>RZ</td>   <td>Reserved</td>
+  </tr>
+  <tr>
+    <td>V</td>   <td>[21]</td>   <td>RO</td>   <td>Tentatively reserved for Vector extension</td>
+  </tr>
+  <tr>
+    <td>U</td>   <td>[20]</td>   <td>RO</td>   <td>User mode implemented</td>
+  </tr>
+  <tr>
+    <td>T</td>   <td>[19]</td>   <td>RO</td>   <td>Tentatively reserved for Transactional
+          memory extension</td>
+  </tr>
+  <tr>
+    <td>S</td>   <td>[18]</td>   <td>RO</td>   <td>Supervisor mode implemented</td>
+  </tr>
+  <tr>
+    <td>R</td>   <td>[17]</td>   <td>RZ</td>   <td>Reserved</td>
+  </tr>
+  <tr>
+    <td>Q</td>   <td>[16]</td>   <td>RO</td>   <td>Quad-precision floating-point extension</td>
+  </tr>
+  <tr>
+    <td>P</td>   <td>[15]</td>   <td>RO</td>   <td>Tentatively reserved for Packed-SIMD extension</td>
+  </tr>
+  <tr>
+    <td>O</td>   <td>[14]</td>   <td>RZ</td>   <td>Reserved</td>
+  </tr>
+  <tr>
+    <td>N</td>   <td>[13]</td>   <td>RO</td>   <td>User-level interrupts supported</td>
+  </tr>
+  <tr>
+    <td>M</td>   <td>[12]</td>   <td>RO</td>   <td>Integer Multiply/Divide extension</td>
+  </tr>
+  <tr>
+    <td>L</td>   <td>[11]</td>   <td>RO</td>   <td>Tentatively reserved for Decimal
+          Floating-Point extension</td>
+  </tr>
+  <tr>
+    <td>K</td>   <td>[10]</td>   <td>RZ</td>   <td>Reserved</td>
+  </tr>
+  <tr>
+    <td>J</td>   <td>[9]</td>   <td>RO</td>   <td>Tentatively reserved for Dynamically
+          Translated Languages extension</td>
+  </tr>
+  <tr>
+    <td>I</td>   <td>[8]</td>   <td>RO</td>   <td>RV32I/64I/128I base ISA</td>
+  </tr>
+  <tr>
+    <td>H</td>   <td>[7]</td>   <td>RZ</td>   <td>Reserved</td>
+  </tr>
+  <tr>
+    <td>G</td>   <td>[6]</td>   <td>RO</td>   <td>Additional standard extensions present</td>
+  </tr>
+  <tr>
+    <td>F</td>   <td>[5]</td>   <td>RO</td>   <td>Single-precision floating-point extension</td>
+  </tr>
+  <tr>
+    <td>E</td>   <td>[4]</td>   <td>RO</td>   <td>RV32E base ISA</td>
+  </tr>
+  <tr>
+    <td>D</td>   <td>[3]</td>   <td>RO</td>   <td>Double-precision floating-point extension</td>
+  </tr>
+  <tr>
+    <td>C</td>   <td>[2]</td>   <td>RO</td>   <td>Compressed extension</td>
+  </tr>
+  <tr>
+    <td>B</td>   <td>[1]</td>   <td>RO</td>   <td>Tentatively reserved for
+          Bit operations extension</td>
+  </tr>
+  <tr>
+    <td>A</td>   <td>[0]</td>   <td>RO</td>   <td>Atomic extension</td>
   </tr>
 </table>
 
 <b>MVENDORID Register (0xf11)</b>
+
+  This register should provide the JEDEC manufacturer ID of the provider of the
+core. River CPU doesn't have a registered JEDEC identification.
 
 <table>
   <tr>
     <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
   </tr>
   <tr>
-    <td>reserved</td>   <td>[63:0]</td>   <td>RW</td>   <td><b></b>.</td>
+    <td>BANK</td>   <td>[63:7]</td>   <td>RO</td>   <td>
+     The number of one-byte continuation JEDEC codes: \c CFG_VENDOR_ID[63:7]</td>
+  </tr>
+  <tr>
+    <td>OFFSET</td>   <td>[6:0]</td>   <td>RO</td>   <td>
+      JEDEC final byte: \c CFG_VENDOR_ID[6:0]</td>
   </tr>
 </table>
 
@@ -478,7 +575,7 @@ the possibility to run multitasks environment.
     <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
   </tr>
   <tr>
-    <td>reserved</td>   <td>[63:0]</td>   <td>RW</td>   <td><b></b>.</td>
+    <td>AID</td>   <td>[63:0]</td>   <td>RZ</td>   <td>Hard-wired to zero.</td>
   </tr>
 </table>
 
@@ -489,7 +586,11 @@ the possibility to run multitasks environment.
     <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
   </tr>
   <tr>
-    <td>reserved</td>   <td>[63:0]</td>   <td>RW</td>   <td><b></b>.</td>
+    <td>reserved</td>   <td>[63:32]</td>   <td>RZ</td>   <td><b></b>.</td>
+  </tr>
+  <tr>
+    <td>IMPL</td>   <td>[31:0]</td>   <td>RO</td>   <td><b>Implementation</b>.
+       This value can be changed via configuration parameter \c CFG_IMPLEMENTATION_ID</td>
   </tr>
 </table>
 
@@ -500,7 +601,9 @@ the possibility to run multitasks environment.
     <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
   </tr>
   <tr>
-    <td>reserved</td>   <td>[63:0]</td>   <td>RW</td>   <td><b></b>.</td>
+    <td>HART</td>   <td>[63:0]</td>   <td>RO</td>   <td><b>Hart ID</b>.
+       This value is defined on SoC top-level via River CPU generic 
+       parameter \c hartid. This value should be unique for each Core.</td>
   </tr>
 </table>
 
@@ -511,7 +614,8 @@ the possibility to run multitasks environment.
     <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
   </tr>
   <tr>
-    <td>reserved</td>   <td>[63:0]</td>   <td>RW</td>   <td><b></b>.</td>
+    <td>UEPC</td>   <td>[63:0]</td>   <td>RZ</td>   <td><b>User Exception
+        program counter</b>. Always read zero.</td>
   </tr>
 </table>
 
@@ -522,7 +626,104 @@ the possibility to run multitasks environment.
     <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
   </tr>
   <tr>
-    <td>reserved</td>   <td>[63:0]</td>   <td>RW</td>   <td><b></b>.</td>
+    <td>SD</td>   <td>[63]</td>   <td>RO</td>   <td><b>Extensions Context Dirty</b>.
+       Not implemented. Read zero.</td>
+  </tr>
+  <tr>
+    <td>reserved</td>   <td>[62:36]</td>   <td>RZ</td>   <td><b></b>.</td>
+  </tr>
+  <tr>
+    <td>SXL</td>   <td>[35:34]</td>   <td>RO</td>   <td><b>Supervisor mode
+      support</b>:
+          \li 0 - not supported (River CPU default)
+          \li 1 - 32-bits
+          \li 2 - 64-bits
+          \li 3 - 128-bits</td>
+  </tr>
+  <tr>
+    <td>UXL</td>   <td>[33:32]</td>   <td>RO</td>   <td><b>User mode
+       support</b>:
+          \li 0 - not supported
+          \li 1 - 32-bits
+          \li 2 - 64-bits (River CPU default)
+          \li 3 - 128-bits</td>
+  </tr>
+  <tr>
+    <td>reserved</td>   <td>[31:23]</td>   <td>RZ</td>   <td><b></b>.</td>
+  </tr>
+  <tr>
+    <td>TSR</td>   <td>[22]</td>   <td>RO</td>   <td><b>Trap SRET</b>.
+         Not implemented</td>
+  </tr>
+  <tr>
+    <td>TW</td>   <td>[21]</td>   <td>RO</td>   <td><b>Timeout Wait</b>.
+         Not implemented</td>
+  </tr>
+  <tr>
+    <td>TVM</td>   <td>[20]</td>   <td>RO</td>   <td><b>Trap Virtual Memory</b>.
+         Not implemented</td>
+  </tr>
+  <tr>
+    <td>MXR</td>   <td>[19]</td>   <td>RO</td>   <td><b>Make executable readable</b>.
+         Not implemented</td>
+  </tr>
+  <tr>
+    <td>SUM</td>   <td>[18]</td>   <td>RO</td>   <td><b>Permit Supervisor User
+         Memory</b>. Not implemented</td>
+  </tr>
+  <tr>
+    <td>MPRV</td>   <td>[17]</td>   <td>RO</td>   <td><b>Modify Privilege</b>.
+         Not implemented</td>
+  </tr>
+  <tr>
+    <td>XS</td>   <td>[16:15]</td>   <td>RO</td>   <td>Not implemented</td>
+  </tr>
+  <tr>
+    <td>FS</td>   <td>[14:13]</td>   <td>RO</td>   <td>Extension context status:
+       \li always 0 - when FPU disabled (\c CFG_HW_FPU_ENABLE = false)
+       \li always 1 - when FPU enabled (\c CFG_HW_FPU_ENABLE = true)
+      </td>
+  </tr>
+  <tr>
+    <td>MPP</td>   <td>[12:11]</td>   <td>RW</td>   <td>Privilege level
+        prior the trap</td>
+  </tr>
+  <tr>
+    <td>reserved</td>   <td>[10:9]</td>   <td>RZ</td>   <td><b></b>.</td>
+  </tr>
+  <tr>
+    <td>SPP</td>   <td>[8]</td>   <td>RO</td>   <td>Not implemented</td>
+  </tr>
+  <tr>
+    <td>MPIE</td>   <td>[7]</td>   <td>RW</td>   <td>Interrupt Enable bit
+       prior the trap</td>
+  </tr>
+  <tr>
+    <td>reserved</td>   <td>[6]</td>   <td>RZ</td>   <td><b></b>.</td>
+  </tr>
+  <tr>
+    <td>SPIE</td>   <td>[5]</td>   <td>RO</td>   <td>Not implemented</td>
+  </tr>
+  <tr>
+    <td>UPIE</td>   <td>[4]</td>   <td>RO</td>   <td>Not implemented</td>
+  </tr>
+  <tr>
+    <td>MIE</td>   <td>[3]</td>   <td>RW</td>   <td>Interrupt Enable for
+         Machine mode:
+         \li 0 - Interrupts disabled
+         \li 1 - Interrupts enabled</td>
+  </tr>
+  <tr>
+    <td>reserved</td>   <td>[2]</td>   <td>RZ</td>   <td><b></b>.</td>
+  </tr>
+  <tr>
+    <td>SIE</td>   <td>[1]</td>   <td>RO</td>   <td>Not implemented</td>
+  </tr>
+  <tr>
+    <td>UIE</td>   <td>[0]</td>   <td>RW</td>   <td>Interrupt Enable for
+        User mode:
+         \li 0 - Interrupts disabled
+         \li 1 - Interrupts enabled</td>
   </tr>
 </table>
 
@@ -533,7 +734,8 @@ the possibility to run multitasks environment.
     <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
   </tr>
   <tr>
-    <td>reserved</td>   <td>[63:0]</td>   <td>RW</td>   <td><b></b>.</td>
+    <td>SE</td>   <td>[63:0]</td>   <td>RZ</td>   <td><b>Synchronous
+        Exceptions</b>. Not implemented.</td>
   </tr>
 </table>
 
@@ -544,7 +746,8 @@ the possibility to run multitasks environment.
     <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
   </tr>
   <tr>
-    <td>reserved</td>   <td>[63:0]</td>   <td>RW</td>   <td><b></b>.</td>
+    <td>IRQS</td>   <td>[63:0]</td>   <td>RZ</td>   <td><b>Interrupts</b>.
+         Not implemented</td>
   </tr>
 </table>
 
@@ -555,7 +758,56 @@ the possibility to run multitasks environment.
     <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
   </tr>
   <tr>
-    <td>reserved</td>   <td>[63:0]</td>   <td>RW</td>   <td><b></b>.</td>
+    <td>reserved</td>   <td>[63:12]</td>   <td>RZ</td>   <td><b></b>.</td>
+  </tr>
+  <tr>
+    <td>MEIE</td>   <td>[11]</td>   <td>RW</td>   <td><b>Machine External 
+        Interrupt Enable</b>. This bit is directly controlled via \c MSTATUS
+        register.</td>
+  </tr>
+  <tr>
+    <td>reserved</td>   <td>[10]</td>   <td>RZ</td>   <td><b></b>.</td>
+  </tr>
+  <tr>
+    <td>SEIE</td>   <td>[9]</td>   <td>RW</td>   <td><b>Supervisor External
+        Interrupt Enable</b>. This bit is directly controlled via \c MSTATUS
+        register.</td>
+  </tr>
+  <tr>
+    <td>UEIE</td>   <td>[8]</td>   <td>RW</td>   <td><b>User External
+        Interrupt Enable</b>. This bit is directly controlled via \c MSTATUS
+        register.</td>
+  </tr>
+  <tr>
+    <td>MTIE</td>   <td>[7]</td>   <td>RW</td>   <td><b>Machine Timer IE</b>.
+        River CPU doesn't implement wallclock timer only external General Purposes
+        Timers</td>
+  </tr>
+  <tr>
+    <td>reserved</td>   <td>[6]</td>   <td>RZ</td>   <td><b></b>.</td>
+  </tr>
+  <tr>
+    <td>STIE</td>   <td>[5]</td>   <td>RW</td>   <td><b>Supervisor Timer IE</b>.
+        Wallclock timer not implemented</td>
+  </tr>
+  <tr>
+    <td>UTIE</td>   <td>[4]</td>   <td>RW</td>   <td><b>User Timer IE</b>.
+        Wallclock timer not implemented</td>
+  </tr>
+  <tr>
+    <td>MSIE</td>   <td>[3]</td>   <td>RW</td>   <td><b>Machine Software
+        Interrupt Enable</b>. Not implemented</td>
+  </tr>
+  <tr>
+    <td>reserved</td>   <td>[2]</td>   <td>RZ</td>   <td><b></b>.</td>
+  </tr>
+  <tr>
+    <td>SSIE</td>   <td>[1]</td>   <td>RW</td>   <td><b>Supervisor Software
+        Interrupt Enable</b>. Not implemented</td>
+  </tr>
+  <tr>
+    <td>USIE</td>   <td>[0]</td>   <td>RW</td>   <td><b>Machine Software
+        Interrupt Enable</b>. Not implemented</td>
   </tr>
 </table>
 
@@ -566,7 +818,15 @@ the possibility to run multitasks environment.
     <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
   </tr>
   <tr>
-    <td>reserved</td>   <td>[63:0]</td>   <td>RW</td>   <td><b></b>.</td>
+    <td>BASE</td>   <td>[63:1]</td>   <td>RW</td>   <td><b>Trap-Vector
+       Base Address</b>. All Interrupts cause the \c pc to be set to
+       the address in this field</td>
+  </tr>
+  <tr>
+    <td>MODE</td>   <td>[0]</td>   <td>RW</td>   <td><b>Trap Mode</b>:
+        \li 0 = Direct mode. All traps cause the \c pc to be set to
+                the address in BASE field.
+        \li 1 = Vectored. Not implemented.</td>
   </tr>
 </table>
 
@@ -577,7 +837,10 @@ the possibility to run multitasks environment.
     <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
   </tr>
   <tr>
-    <td>reserved</td>   <td>[63:0]</td>   <td>RW</td>   <td><b></b>.</td>
+    <td>MSCRATCH</td>   <td>[63:0]</td>   <td>RW</td>   <td><b>Machine Scratch</b>.
+        Typically, it is used to hold a pointer to a machine-mode hart-local
+        context space and swapped with a user register upon entry to an
+        M-mode trap handler.</td>
   </tr>
 </table>
 
@@ -588,7 +851,9 @@ the possibility to run multitasks environment.
     <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
   </tr>
   <tr>
-    <td>reserved</td>   <td>[63:0]</td>   <td>RW</td>   <td><b></b>.</td>
+    <td>MEPC</td>   <td>[63:0]</td>   <td>RW</td>   <td><b>Machine
+        Exception Program Counter</b>. Register specifies the jump address
+        after execution of \c mret instruction.</td>
   </tr>
 </table>
 
@@ -605,12 +870,12 @@ the possibility to run multitasks environment.
        </td>
   </tr>
   <tr>
-    <td>WLRL</td>   <td>[62:0]</td>   <td>R0</td>   <td><b>Exception Code</b>.
+    <td>CODE</td>   <td>[62:0]</td>   <td>R0</td>   <td><b>Exception Code</b>.
       See tables 4-6 and 4-7 with the information about trap codes</td>
   </tr>
 </table>
 
-<b>Exception Codes (WLRL)</b>
+<b>Exception Codes</b>
 
 <center>
 | Val| Name          | Description
@@ -633,10 +898,10 @@ the possibility to run multitasks environment.
 | 15 | StorePageFault | Not used
 | 16 | StackOverflow  | Stack pointer (sp) is below than overflow limit
 | 17 | StackUnderflow | Stack pointer (sp) is higher than underflow limit
-<b>Table 4-6. WLRL value in a case of exception.</b>
+<b>Table 4-6. CODE value in a case of exception.</b>
 </center>
 
-<b>Interrupt Codes (WLRL)</b>
+<b>Interrupt Codes</b>
 
 <center>
 | Val| Name          | Description
@@ -653,7 +918,7 @@ the possibility to run multitasks environment.
 | 9  | SExternal     | Not used
 | 10 | HExternal     | Not used
 | 11 | MExternal     | Interrupt request from an external IRQ controller
-<b>Table 4-7. WLRL value in a case of interrupt.</b>
+<b>Table 4-7. CODE value in a case of interrupt.</b>
 </center>
 
 
@@ -664,7 +929,9 @@ the possibility to run multitasks environment.
     <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
   </tr>
   <tr>
-    <td>reserved</td>   <td>[63:0]</td>   <td>RW</td>   <td><b></b>.</td>
+    <td>MBADADDR</td>   <td>[63:0]</td>   <td>RO</td>   <td><b>Bad Address</b>.
+         Registers captures bad program counter on an instruction fault or 
+         memory access address on an invalid data load/store operations.</td>
   </tr>
 </table>
 
@@ -675,7 +942,53 @@ the possibility to run multitasks environment.
     <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
   </tr>
   <tr>
-    <td>reserved</td>   <td>[63:0]</td>   <td>RW</td>   <td><b></b>.</td>
+    <td>reserved</td>   <td>[63:12]</td>   <td>RZ</td>   <td><b></b>.</td>
+  </tr>
+  <tr>
+    <td>MEIP</td>   <td>[11]</td>   <td>RW</td>   <td><b>Machine External 
+        Interrupt Pending</b>. Not implemented.</td>
+  </tr>
+  <tr>
+    <td>reserved</td>   <td>[10]</td>   <td>RZ</td>   <td><b></b>.</td>
+  </tr>
+  <tr>
+    <td>SEIP</td>   <td>[9]</td>   <td>RW</td>   <td><b>Supervisor External
+        Interrupt Pending</b>. Not implemented.</td>
+  </tr>
+  <tr>
+    <td>UEIP</td>   <td>[8]</td>   <td>RW</td>   <td><b>User External
+        Interrupt Pending</b>. Not implemented.</td>
+  </tr>
+  <tr>
+    <td>MTIP</td>   <td>[7]</td>   <td>RW</td>   <td><b>Machine Timer IP</b>.
+        River CPU doesn't implement wallclock timer only external General Purposes
+        Timers</td>
+  </tr>
+  <tr>
+    <td>reserved</td>   <td>[6]</td>   <td>RZ</td>   <td><b></b>.</td>
+  </tr>
+  <tr>
+    <td>STIP</td>   <td>[5]</td>   <td>RW</td>   <td><b>Supervisor Timer IP</b>.
+        Wallclock timer not implemented</td>
+  </tr>
+  <tr>
+    <td>UTIP</td>   <td>[4]</td>   <td>RW</td>   <td><b>User Timer IP</b>.
+        Wallclock timer not implemented</td>
+  </tr>
+  <tr>
+    <td>MSIP</td>   <td>[3]</td>   <td>RW</td>   <td><b>Machine Software
+        Interrupt Pending</b>. Not implemented</td>
+  </tr>
+  <tr>
+    <td>reserved</td>   <td>[2]</td>   <td>RZ</td>   <td><b></b>.</td>
+  </tr>
+  <tr>
+    <td>SSIP</td>   <td>[1]</td>   <td>RW</td>   <td><b>Supervisor Software
+        Interrupt Pending</b>. Not implemented</td>
+  </tr>
+  <tr>
+    <td>USIP</td>   <td>[0]</td>   <td>RW</td>   <td><b>Machine Software
+        Interrupt Pending</b>. Not implemented</td>
   </tr>
 </table>
 
@@ -686,7 +999,11 @@ the possibility to run multitasks environment.
     <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
   </tr>
   <tr>
-    <td>reserved</td>   <td>[63:0]</td>   <td>RW</td>   <td><b></b>.</td>
+    <td>SOVR</td>   <td>[63:0]</td>   <td>RW</td>   <td><b>Stack Overflow
+         border</b>. Value automatically cleared just after exception generated:
+         \li zero - Stack Overflow exception disabled
+         \li non-zero - Raise Stack Overflow exception if register value \c sp
+                        is less than this value.</td>
   </tr>
 </table>
 
@@ -697,7 +1014,11 @@ the possibility to run multitasks environment.
     <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
   </tr>
   <tr>
-    <td>reserved</td>   <td>[63:0]</td>   <td>RW</td>   <td><b></b>.</td>
+    <td>SUND</td>   <td>[63:0]</td>   <td>RW</td>   <td><b>Stack Underflow
+         border</b>. Value automatically cleared just after exception generated:
+         \li zero - Stack Overflow exception disabled
+         \li non-zero - Raise Stack Underflow exception if register value \c sp
+                        is greater than this value.</td>
   </tr>
 </table>
 

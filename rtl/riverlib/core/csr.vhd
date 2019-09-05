@@ -226,6 +226,7 @@ architecture arch_CsrRegs of CsrRegs is
         if CFG_HW_FPU_ENABLE then
             ordata(14 downto 13) := "01";  -- FS field: Initial state
         end if;
+        ordata(33 downto 32) := "10";  -- UXL: User mode supported 64-bits
         if iwena = '1' then
             ov.uie := iwdata(0);
             ov.mie := iwdata(3);

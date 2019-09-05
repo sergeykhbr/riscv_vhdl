@@ -283,6 +283,7 @@ void CsrRegs::procedure_RegAccess(uint64_t iaddr, bool iwena,
         if (CFG_HW_FPU_ENABLE) {
             (*ordata)(14, 13) = 0x1;   // FS field: Initial state
         }
+        (*ordata)(33, 32) = 0x2;       // UXL: User mode supported 64-bits
         if (iwena) {
             ov->uie = iwdata[0];
             ov->mie = iwdata[3];
