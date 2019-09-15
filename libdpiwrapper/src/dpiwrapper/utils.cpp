@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
+#include <stdarg.h>
 
 const char LOG_FILE[] = "dpilib.log";
 FILE *fp = 0;
@@ -83,6 +84,7 @@ extern "C" int LIB_printf(const char *fmt, ...) {
 
 extern "C" void *LIB_get_proc_addr(const char *f) {
     void *ret = 0;
+#if defined(_WIN32) || defined(__CYGWIN__)
     DWORD processID = GetCurrentProcessId();
     DWORD cbNeeded;
     HMODULE hMods[1024];
@@ -112,6 +114,14 @@ extern "C" void *LIB_get_proc_addr(const char *f) {
         LIB_printf("Function %s not found\n", f);
     }
     CloseHandle(hProcess);
+#else
+    void *hproc = dlopen(0, RTLD_LAZY);
+    ret = dlsym(hproc, f);
+    if (ret == 0) {
+        LIB_printf("Symbol %s not found\n", f);
+    }
+    dlclose(hproc);
+#endif
     return ret;
 }
 

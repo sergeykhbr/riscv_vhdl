@@ -18,8 +18,8 @@ include util.mak
 
 CC=gcc
 CPP=gcc
-CFLAGS=-g -c -Wall -Werror -fPIC -pthread
-LDFLAGS= -shared -pthread
+CFLAGS=-g -c -Wall -Werror -std=c++0x
+LDFLAGS=-L$(ELF_DIR)
 INCL_KEY=-I
 DIR_KEY=-B
 
@@ -27,20 +27,18 @@ DIR_KEY=-B
 # include sub-folders list
 INCL_PATH=\
 	$(TOP_DIR)src \
-	$(TOP_DIR)src/dpiwrapper
+	$(TOP_DIR)src/test
 
 # source files directories list:
 SRC_PATH =\
 	$(TOP_DIR)src \
-	$(TOP_DIR)src/dpiwrapper \
+	$(TOP_DIR)src/test \
 
 
 VPATH = $(SRC_PATH)
 
 SOURCES = \
-	utils \
-	c_dpi \
-	server
+	main
 
 LIBS = \
 	m \
@@ -49,14 +47,14 @@ LIBS = \
 
 SRC_FILES = $(addsuffix .cpp,$(SOURCES))
 OBJ_FILES = $(addprefix $(OBJ_DIR)/,$(addsuffix .o,$(SOURCES)))
-EXECUTABLE = $(addprefix $(ELF_DIR)/,libdpiwrapper.so)
+EXECUTABLE = $(addprefix $(ELF_DIR)/,test)
 
 all: $(EXECUTABLE)
 
 $(EXECUTABLE): $(OBJ_FILES)
 	echo $(CPP) $(LDFLAGS) $(OBJ_FILES) -o $@
 	$(CPP) $(LDFLAGS) $(OBJ_FILES) -o $@ $(addprefix -l,$(LIBS))
-	$(ECHO) "\n  Debugger Core Library has been built successfully.\n"
+	$(ECHO) "\n  sv_stub has been built successfully.\n"
 
 $(addprefix $(OBJ_DIR)/,%.o): %.cpp
 	echo $(CPP) $(CFLAGS) -std=c++0x $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $@

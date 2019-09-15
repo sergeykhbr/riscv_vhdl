@@ -15,16 +15,15 @@
  */
 
 #include <stdio.h>
+#include <string>
+#include <cstring>
 #include "types.h"
 #include "dpiwrapper/c_dpi.h"
 
 int main(int argc, char *argv[]) {
+    c_task_server_start_proc c_task_server_start;
 #if defined(_WIN32) || defined(__CYGWIN__)
-    HMODULE hlib1;
-    HMODULE hlib2;
-#else
-    void *hlib;
-#endif
+    HMODULE hlib1, hlib2;
 
     if ((hlib1 = LoadLibrary("libsv_stub.dll")) == 0) {
         printf("Can't open libsv_stub.dll\n");
@@ -36,9 +35,41 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    c_task_server_start_proc c_task_server_start = 
-        (c_task_server_start_proc)GetProcAddress(hlib2,
-        "c_task_server_start");
+    c_task_server_start = (c_task_server_start_proc)GetProcAddress(hlib2,
+                            "c_task_server_start");
+#else
+    void *hlib1, *hlib2;
+    char fld[4096];
+
+    Dl_info dl_info;
+    dladdr((void *)main, &dl_info);
+    sprintf(fld, "%s", dl_info.dli_fname);
+    int n = (int)strlen(fld);
+    while (n > 0 && fld[n] != '\\' && fld[n] != '/') n--;
+    fld[n+1] = '\0';
+
+    printf("Current folder %s\n", fld);
+
+    dlerror();
+    std::string f1 = std::string(fld) + std::string("libsv_stub.so");
+    hlib1 = dlopen(f1.c_str(), RTLD_NOW);
+    if (hlib1 == 0) {
+        printf("Can't open libsv_stub.so, err=%s\n", dlerror());
+        return -1;
+    }
+
+    dlerror();
+    std::string f2 = std::string(fld) + std::string("libdpiwrapper.so");
+    hlib2 = dlopen(f2.c_str(), RTLD_NOW);
+    if (hlib2 == 0) {
+        printf("Can't open libdpiwrapper.so, err=%s\n", dlerror());
+        return -1;
+    }
+
+    c_task_server_start = (c_task_server_start_proc)dlsym(hlib2,
+                            "c_task_server_start");
+#endif
+
     if (!c_task_server_start) {
         printf("Can't find function dpi_c_task_server_start\n");
     } else {
@@ -46,8 +77,12 @@ int main(int argc, char *argv[]) {
         c_task_server_start();
     }
 
+#if defined(_WIN32) || defined(__CYGWIN__)
     FreeLibrary(hlib1);
     FreeLibrary(hlib2);
-
+#else
+    dlclose(hlib1);
+    dlclose(hlib2);
+#endif
     return 0;
 }

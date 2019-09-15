@@ -43,7 +43,6 @@ int dpi_load_interface(dpi_sv_interface *iface) {
 }
 
 extern "C" void c_task_server_start() {
-	bool dpi_ok = true;
     LIB_printf("%", "Entering c_task_server_start\n");
     th1.func = reinterpret_cast<lib_thread_func>(server_thread);
 	srvdata_.enable = 1;
@@ -73,7 +72,7 @@ extern "C" void c_task_server_start() {
     }
 
 	srvdata_.enable = 0;
-    LIB_thread_join(th1.Handle, INFINITE);
+    LIB_thread_join(th1.Handle, -1);
     LIB_printf("%s", "Thread joint\n");
 }
 

@@ -57,6 +57,7 @@ typedef thread_return_t (__stdcall* lib_thread_func)(void *args);
 #include <fcntl.h>
 #include <termios.h>  // work with console
 #include <errno.h>
+#include <dlfcn.h>
 
 typedef int socket_def;
 typedef unsigned int addr_size_t;
