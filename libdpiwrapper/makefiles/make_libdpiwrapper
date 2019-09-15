@@ -1,0 +1,57 @@
+###
+## @file
+## @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
+## @author     Sergey Khabarov - sergeykhbr@gmail.com
+##
+
+include util.mak
+
+CC=gcc
+CPP=g++
+CFLAGS=-g -DQUESTA -W -shared -Bsymbolic -pthread
+LDFLAGS= -shared -pthread
+INCL_KEY=-I
+DIR_KEY=-B
+
+
+# include sub-folders list
+INCL_PATH=\
+	$(TOP_DIR)src \
+	$(TOP_DIR)src/dpiwrapper
+
+# source files directories list:
+SRC_PATH =\
+	$(TOP_DIR)src \
+	$(TOP_DIR)src/dpiwrapper \
+
+
+VPATH = $(SRC_PATH)
+
+SOURCES = \
+	utils \
+	c_dpi \
+	server
+
+LIBS = \
+	m \
+	stdc++ \
+	dl
+
+SRC_FILES = $(addsuffix .cpp,$(SOURCES))
+OBJ_FILES = $(addprefix $(OBJ_DIR)/,$(addsuffix .o,$(SOURCES)))
+EXECUTABLE = $(addprefix $(ELF_DIR)/,libdpiwrapper.dll)
+
+all: $(EXECUTABLE)
+
+$(EXECUTABLE): $(OBJ_FILES)
+	echo $(CPP) $(LDFLAGS) $(OBJ_FILES) -o $@
+	$(CPP) $(LDFLAGS) $(OBJ_FILES) -o $@ $(addprefix -l,$(LIBS))
+	$(ECHO) "\n  Debugger Core Library has been built successfully.\n"
+
+$(addprefix $(OBJ_DIR)/,%.o): %.cpp
+	echo $(CPP) $(CFLAGS) -std=c++0x $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $@
+	$(CPP) $(CFLAGS) -std=c++0x $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $@
+
+$(addprefix $(OBJ_DIR)/,%.o): %.c
+	echo $(CC) $(CFLAGS) -std=c99 $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $@
+	$(CC) $(CFLAGS) -std=c99 $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $@

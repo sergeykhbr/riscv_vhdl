@@ -1,0 +1,4 @@
+LIBRARY libdpiwrapper
+EXPORTS
+	c_task_server_start
+

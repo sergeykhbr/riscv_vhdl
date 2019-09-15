@@ -1,0 +1,4 @@
+LIBRARY libsv_stub
+EXPORTS
+	sv_task_process_request
+	sv_func_get_data

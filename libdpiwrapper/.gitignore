@@ -1,0 +1,14 @@
+*.sdf
+*.opensdf
+*.suo
+*.err
+Debug
+Release
+*.log
+*.rcc
+*.pyc
+linuxbuild
+win32build
+win64build
+.vs
+Tmp
