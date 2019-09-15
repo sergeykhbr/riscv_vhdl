@@ -52,7 +52,7 @@ int main(int argc, char *argv[]) {
 
     dlerror();
     std::string f1 = std::string(fld) + std::string("libsv_stub.so");
-    hlib1 = dlopen(f1.c_str(), RTLD_NOW);
+    hlib1 = dlopen(f1.c_str(), RTLD_NOW | RTLD_GLOBAL);
     if (hlib1 == 0) {
         printf("Can't open libsv_stub.so, err=%s\n", dlerror());
         return -1;
@@ -60,7 +60,7 @@ int main(int argc, char *argv[]) {
 
     dlerror();
     std::string f2 = std::string(fld) + std::string("libdpiwrapper.so");
-    hlib2 = dlopen(f2.c_str(), RTLD_NOW);
+    hlib2 = dlopen(f2.c_str(), RTLD_NOW | RTLD_GLOBAL);
     if (hlib2 == 0) {
         printf("Can't open libdpiwrapper.so, err=%s\n", dlerror());
         return -1;
