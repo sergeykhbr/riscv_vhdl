@@ -81,7 +81,7 @@ class RtlWrapper : public sc_module,
         //
         sc_signal<sc_bv<5>> nrst;
         sc_signal<bool> interrupt;
-        sc_signal<bool> state;
+        sc_signal<sc_uint<1>> state;
         sc_signal<bool> halted;
     } r, v;
 

@@ -41,6 +41,7 @@ int main() {
     // mask all interrupts in interrupt controller to avoid
     // unpredictable behaviour after elf-file reloading via debug port.
     p_irq->irq_mask = 0xFFFFFFFF;
+    p_irq->isr_table = 0;
     pnp->fwid = 0x20190516;
 
     led_set(0x01);
