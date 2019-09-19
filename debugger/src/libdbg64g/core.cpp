@@ -180,38 +180,37 @@ void CoreService::unregisterConsole(IFace *iconsole) {
  * @details I suppose only one folders level so no itteration algorithm.
  */
 void CoreService::load_plugins() {
+    std::string plugin_lib;
+    plugin_init_proc plugin_init;
+
 #if defined(_WIN32) || defined(__CYGWIN__)
     HMODULE hlib;
-#else
-    void *hlib;
-#endif
-    DIR *dir;
-    struct dirent *ent;
-    plugin_init_proc plugin_init;
-    char curdir[1024];
-    std::string plugin_dir, plugin_lib;
+    WDIR* dir;
+    struct wdirent* ent;
+    wchar_t curdir[4096];
+    char strtmp[4096];
+    std::wstring plugin_dirw;
+    std::wstring plugin_libw;
 
-    RISCV_get_core_folder(curdir, sizeof(curdir));
+    RISCV_get_core_folderw(curdir, sizeof(curdir));
+    plugin_dirw = std::wstring(curdir) + L"plugins\\";
 
-    plugin_dir = std::string(curdir) + "plugins/";
-    dir = opendir(plugin_dir.c_str());
-
+    dir = wopendir(plugin_dirw.c_str());
     if (dir == NULL) {
-          RISCV_error("Plugins directory '%s' not found", curdir);
-          return;
+        wcstombs(strtmp, curdir, sizeof(curdir));
+        RISCV_error("Plugins directory '%s' not found", strtmp);
+        return;
     }
 
-    while ((ent = readdir(dir)) != NULL) {
+    while ((ent = wreaddir(dir)) != NULL) {
         if (ent->d_type != DT_REG) {
             continue;
         }
-        if ((strstr(ent->d_name, ".dll") == NULL)
-         && (strstr(ent->d_name, ".so") == NULL)) {
+        if (wcsstr(ent->d_name, L".dll") == NULL) {
             continue;
         }
-        plugin_lib = plugin_dir + std::string(ent->d_name);
-#if defined(_WIN32) || defined(__CYGWIN__)
-        if ((hlib = LoadLibrary(plugin_lib.c_str())) == 0) {
+        plugin_libw = plugin_dirw + std::wstring(ent->d_name);
+        if ((hlib = LoadLibraryW(plugin_libw.c_str())) == 0) {
             continue;
         }
         plugin_init = (plugin_init_proc)GetProcAddress(hlib, "plugin_init");
@@ -219,34 +218,75 @@ void CoreService::load_plugins() {
             FreeLibrary(hlib);
             continue;
         }
+
+        wcstombs(strtmp, plugin_libw.c_str(), sizeof(strtmp));
+        plugin_lib = std::string(strtmp);
+        RISCV_info("Loading plugin file '%s'", plugin_lib.c_str());
+        plugin_init();
+
+        /** Save loaded plugin into local list attribute */
+        AttributeType item;
+        item.make_list(2);
+        item[0u] = AttributeType(plugin_lib.c_str());
+        item[1] = AttributeType(Attr_UInteger,
+            reinterpret_cast<uint64_t>(hlib));
+        listPlugins_.add_to_list(&item);
+    }
+    wclosedir(dir);
 #else
+    void *hlib;
+    DIR* dir;
+    struct dirent* ent;
+    char curdir[4096];
+    std::string plugin_dir;
+
+    RISCV_get_core_folder(curdir, sizeof(curdir));
+
+    plugin_dir = std::string(curdir) + "plugins/";
+
+    dir = opendir(plugin_dir.c_str());
+    if (dir == NULL) {
+        RISCV_error("Plugins directory '%s' not found", curdir);
+        return;
+    }
+
+    while ((ent = readdir(dir)) != NULL) {
+        if (ent->d_type != DT_REG) {
+            continue;
+        }
+        if (strstr(ent->d_name, ".so") == NULL) {
+            continue;
+        }
+
+        plugin_lib = plugin_dir + std::string(ent->d_name);
+
         // reset errors
         dlerror();
         if ((hlib = dlopen(plugin_lib.c_str(), RTLD_LAZY)) == 0) {
             printf("Can't open library '%s': %s\n",
-                       plugin_lib.c_str(), dlerror());
+                plugin_lib.c_str(), dlerror());
             continue;
         }
         plugin_init = (plugin_init_proc)dlsym(hlib, "plugin_init");
         if (dlerror()) {
             printf("Not found plugin_init() in file '%s'\n",
-                       plugin_lib.c_str());
+                plugin_lib.c_str());
             dlclose(hlib);
             continue;
         }
-#endif
-
         RISCV_info("Loading plugin file '%s'", plugin_lib.c_str());
         plugin_init();
 
+        /** Save loaded plugin into local list attribute */
         AttributeType item;
         item.make_list(2);
         item[0u] = AttributeType(plugin_lib.c_str());
-        item[1] = AttributeType(Attr_UInteger, 
-                                reinterpret_cast<uint64_t>(hlib));
+        item[1] = AttributeType(Attr_UInteger,
+            reinterpret_cast<uint64_t>(hlib));
         listPlugins_.add_to_list(&item);
     }
     closedir(dir);
+#endif
 }
 
 void CoreService::unload_plugins() {

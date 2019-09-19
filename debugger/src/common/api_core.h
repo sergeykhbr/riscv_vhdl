@@ -280,6 +280,7 @@ void RISCV_free(void *p);
 
 /** Get absolute directory where core library is placed. */
 int RISCV_get_core_folder(char *out, int sz);
+int RISCV_get_core_folderw(wchar_t* out, int sz);
 
 /** Set $(pwd) directory equals to executable location */
 void RISCV_set_current_dir();

@@ -655,6 +655,23 @@ extern "C" int RISCV_get_core_folder(char *out, int sz) {
     return 0;
 }
 
+extern "C" int RISCV_get_core_folderw(wchar_t* out, int sz) {
+#if defined(_WIN32) || defined(__CYGWIN__)
+    GetModuleFileNameW(NULL, out, sz);
+#else
+    Dl_info dl_info;
+    dladdr((void*)RISCV_get_core_folder, &dl_info);
+    mbstowcs(out, dl_info.dli_fname, 4096);
+#endif
+    int n = (int)wcslen(out);
+    while (n > 0 && out[n] != L'\\' && out[n] != L'/') {
+        n--;
+    }
+
+    out[n + 1] = 0;
+    return 0;
+}
+
 extern "C" void RISCV_set_current_dir() {
 #if defined(_WIN32) || defined(__CYGWIN__)
     HMODULE hMod = GetModuleHandle(NULL);

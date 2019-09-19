@@ -32,11 +32,19 @@ GuiPlugin::GuiPlugin(const char *name)
 
     guiConfig_.make_dict();
 
+#if defined(_WIN32) || defined(__CYGWIN__)
+    wchar_t coredir[4096];
+    RISCV_get_core_folderw(coredir, sizeof(coredir));
+    QString topDir = QString::fromWCharArray(coredir);
+    QResource::registerResource(
+        topDir + QString::fromWCharArray(L"resources/gui.rcc"));
+#else
     char coredir[4096];
     RISCV_get_core_folder(coredir, sizeof(coredir));
     QString topDir(coredir);
     QResource::registerResource(
         topDir + "resources/gui.rcc");
+#endif
 
     ui_ = NULL;
     RISCV_event_create(&config_done_, "eventGuiGonfigGone");

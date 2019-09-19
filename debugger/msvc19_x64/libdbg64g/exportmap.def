@@ -44,6 +44,7 @@ EXPORTS
 	RISCV_memshare_unmap
 	RISCV_memshare_delete
 	RISCV_get_core_folder
+	RISCV_get_core_folderw
 	RISCV_set_current_dir
 	RISCV_get_services_with_iface
 	RISCV_get_clock_services
