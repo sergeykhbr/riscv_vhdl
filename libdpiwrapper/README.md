@@ -1,5 +1,5 @@
 1. Build libdpiwrapper library using standalone tools (dll/so)
-     Use msvc2017 Release x64 target by default on windows
+     Use msvc2019 Release x64 target by default on windows
      Use makefile on linux
 2. Edit file "questasim64_10.4c/modelsim.ini" variable:
      DpiCppPath = $MODEL_TECH/../gcc-4.5.0-mingw64/bin/gcc

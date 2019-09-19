@@ -21,11 +21,6 @@
 #include <stdlib.h>
 #include <iostream>
 
-extern thread_return_t server_thread(void *args);
-
-LibThreadType th1;
-ServerDataType srvdata_;
-
 int dpi_load_interface(dpi_sv_interface *iface) {
     int ret = 0;
     iface->sv_task_process_request = 
@@ -43,36 +38,48 @@ int dpi_load_interface(dpi_sv_interface *iface) {
 }
 
 extern "C" void c_task_server_start() {
-    LIB_printf("%", "Entering c_task_server_start\n");
-    th1.func = reinterpret_cast<lib_thread_func>(server_thread);
-	srvdata_.enable = 1;
-    th1.args = &srvdata_;
-    LIB_thread_create(&th1);
     dpi_sv_interface dpi;
+    AttributeType srv_request;
+    AttributeType srv_response;
+    DpiServer server;
+    dpi_data_t sv_out;
+    request_t sv_in;
+    int err;
+
+    LIB_printf("%", "Entering c_task_server_start\n");
+    server.run();
 
 	const double SIMULATION_TIME_NS = 20000.0;
 	if (dpi_load_interface(&dpi) == 0) {
-		while (srvdata_.dpi_data.tm < SIMULATION_TIME_NS) {
-			if (srvdata_.txcnt == 0) {
-				LIB_sleep_ms(1);
-                continue;
-            }
-            srvdata_.request.req_type = REQ_TYPE_MOVE_CLOCK;
-            srvdata_.request.param1 = 200;
-			dpi.sv_task_process_request(&srvdata_.request);
-			srvdata_.txcnt = 0;
+        /** Get initial sv data */
+        dpi.sv_func_get_data(&sv_out);
 
-            dpi.sv_func_get_data(&srvdata_.dpi_data);
+		while (sv_out.tm < SIMULATION_TIME_NS) {
+            /** Wait server's request */
+            err = server.getRequest(srv_request);
+            if (srv_request.is_equal("hartbeat")) {
+                sv_in.req_type = REQ_TYPE_MOVE_CLOCK;
+                sv_in.param1 = 200;
+			    dpi.sv_task_process_request(&sv_in);
+            }
+
+            /** Read all signals from SystemVerilog */
+            dpi.sv_func_get_data(&sv_out);
+
+            /** Send response to external simulator */
+            srv_response.make_dict();
+            srv_response["Time"].make_floating(sv_out.tm);
+            srv_response["clkcnt"].make_uint64(sv_out.clkcnt);
+            server.sendResponse(srv_response);
 		}
 	}
 
-    srvdata_.request.req_type = REQ_TYPE_STOP_SIM;
+    sv_in.req_type = REQ_TYPE_STOP_SIM;
     if (dpi.sv_task_process_request) {
-	    dpi.sv_task_process_request(&srvdata_.request);
+	    dpi.sv_task_process_request(&sv_in);
     }
 
-	srvdata_.enable = 0;
-    LIB_thread_join(th1.Handle, -1);
+    server.stop();
     LIB_printf("%s", "Thread joint\n");
 }
 

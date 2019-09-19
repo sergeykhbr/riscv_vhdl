@@ -17,6 +17,8 @@
 #pragma once
 
 #include "c_dpi.h"
+#include <iface.h>
+#include <attribute.h>
 
 typedef struct ServerDataType {
     volatile int enable;
@@ -25,3 +27,44 @@ typedef struct ServerDataType {
     char txbuf[1 << 16];
     volatile int txcnt;
 } ServerDataType;
+
+static const char *DPI_SERVER_IFACE = "DpiServer";
+
+class DpiServer : public IFace {
+ public:
+    DpiServer();
+
+    /** create and start seperate thread */
+    virtual bool run();
+
+    /** @brief Stop and join thread */
+    virtual void stop();
+
+    /** check thread status */
+    virtual bool isEnabled() { return loopEnable_.state; }
+
+    /** Pass data from the parent thread */
+    virtual void setExtArgument(void *args) {}
+
+    int getRequest(AttributeType &req);
+    void sendResponse(AttributeType &resp);
+
+ protected:
+    /** working cycle function */
+    virtual void busyLoop();
+
+    static void runThread(void *arg) {
+        reinterpret_cast<DpiServer *>(arg)->busyLoop();
+#if defined(_WIN32) || defined(__CYGWIN__)
+        _endthreadex(0);
+#else
+        pthread_exit(0);
+#endif
+    }
+
+ protected:
+    event_def loopEnable_;
+    LibThreadType threadInit_;
+    request_t request_;
+};
+

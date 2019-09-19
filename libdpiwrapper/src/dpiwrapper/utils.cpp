@@ -58,6 +58,103 @@ extern "C" void LIB_sleep_ms(int ms) {
 #endif
 }
 
+extern "C" void LIB_event_create(event_def *ev, const char *name) {
+#if defined(_WIN32) || defined(__CYGWIN__)
+    ev->state = false;
+    ev->cond = CreateEvent(
+        NULL,               // default security attributes
+        TRUE,               // manual-reset event
+        FALSE,              // initial state is nonsignaled
+        TEXT(name)    // object name
+        );
+#else
+    pthread_mutex_init(&ev->mut, NULL);
+    pthread_cond_init(&ev->cond, NULL);
+    ev->state = false;
+#endif
+}
+
+extern "C" void LIB_event_close(event_def *ev) {
+#if defined(_WIN32) || defined(__CYGWIN__)
+    CloseHandle(ev->cond);
+#else
+    pthread_mutex_destroy(&ev->mut);
+    pthread_cond_destroy(&ev->cond);
+#endif
+}
+
+extern "C" void LIB_event_set(event_def *ev) {
+#if defined(_WIN32) || defined(__CYGWIN__)
+    ev->state = true;
+    SetEvent(ev->cond);
+#else
+    pthread_mutex_lock(&ev->mut);
+    ev->state = true;
+    pthread_mutex_unlock(&ev->mut);
+    pthread_cond_signal(&ev->cond);
+#endif
+}
+
+extern "C" int LIB_event_is_set(event_def *ev) {
+    return ev->state ? 1: 0;
+}
+
+extern "C" void LIB_event_clear(event_def *ev) {
+#if defined(_WIN32) || defined(__CYGWIN__)
+    ev->state = false;
+    ResetEvent(ev->cond);
+#else
+    ev->state = false;
+#endif
+}
+
+extern "C" void LIB_event_wait(event_def *ev) {
+#if defined(_WIN32) || defined(__CYGWIN__)
+    WaitForSingleObject(ev->cond, INFINITE);
+#else
+    int result = 0;
+    pthread_mutex_lock(&ev->mut);
+    while (result == 0 && !ev->state) {
+        result = pthread_cond_wait(&ev->cond, &ev->mut);
+    } 
+    pthread_mutex_unlock(&ev->mut);
+#endif
+}
+
+extern "C" int LIB_event_wait_ms(event_def *ev, int ms) {
+#if defined(_WIN32) || defined(__CYGWIN__)
+    DWORD wait_ms = ms;
+    if (ms == 0) {
+        wait_ms = INFINITE;
+    }
+    if (WAIT_TIMEOUT == WaitForSingleObject(ev->cond, wait_ms)) {
+        return 1;
+    }
+    return 0;
+#else
+    struct timeval tc;
+    struct timespec ts;
+    int next_us;
+    int result = 0;
+    gettimeofday(&tc, NULL);
+    next_us = tc.tv_usec + 1000 * ms;
+    ts.tv_sec = tc.tv_sec + (next_us / 1000000);
+    next_us -= 1000000 * (next_us / 1000000);
+    ts.tv_nsec = 1000 * next_us;
+
+    pthread_mutex_lock(&ev->mut);
+    while (result == 0 && !ev->state) {
+        result = pthread_cond_timedwait(&ev->cond, &ev->mut, &ts);
+    }
+    pthread_mutex_unlock(&ev->mut);
+    if (ETIMEDOUT == result) {
+        return 1;
+    }
+    return 0;
+#endif
+}
+
+
 extern "C" int LIB_printf(const char *fmt, ...) {
     va_list arg;
     char tstr[4096];
@@ -81,6 +178,20 @@ extern "C" int LIB_printf(const char *fmt, ...) {
     fflush(fp);
     return ret;
 }
+
+extern "C" int LIB_sprintf(char *s, size_t len, const char *fmt, ...) {
+    int ret;
+    va_list arg;
+    va_start(arg, fmt);
+#if defined(_WIN32) || defined(__CYGWIN__)
+    ret = vsprintf_s(s, len, fmt, arg);
+#else
+    ret = vsprintf(s, fmt, arg);
+#endif
+    va_end(arg);
+    return ret;
+}
+
 
 extern "C" void *LIB_get_proc_addr(const char *f) {
     void *ret = 0;
@@ -124,4 +235,5 @@ extern "C" void *LIB_get_proc_addr(const char *f) {
 #endif
     return ret;
 }
+
 

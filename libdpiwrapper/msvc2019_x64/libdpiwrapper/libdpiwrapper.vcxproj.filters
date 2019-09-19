@@ -8,6 +8,9 @@
     <Filter Include="src\dpiwrapper">
       <UniqueIdentifier>{54546c57-2205-4889-9d45-749accebcb86}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\dpiwrapper\utils">
+      <UniqueIdentifier>{df13254e-6003-408a-9a77-1bcdd480659b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\dpiwrapper\c_dpi.cpp">
@@ -18,6 +21,12 @@
     </ClCompile>
     <ClCompile Include="..\..\src\dpiwrapper\utils.cpp">
       <Filter>src\dpiwrapper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\dpiwrapper\utils\attribute.cpp">
+      <Filter>src\dpiwrapper\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\dpiwrapper\utils\autobuffer.cpp">
+      <Filter>src\dpiwrapper\utils</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -32,6 +41,18 @@
     </ClInclude>
     <ClInclude Include="..\..\src\dpiwrapper\server.h">
       <Filter>src\dpiwrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dpiwrapper\utils\attribute.h">
+      <Filter>src\dpiwrapper\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dpiwrapper\utils\autobuffer.h">
+      <Filter>src\dpiwrapper\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dpiwrapper\utils\iattr.h">
+      <Filter>src\dpiwrapper\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dpiwrapper\utils\iface.h">
+      <Filter>src\dpiwrapper\utils</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

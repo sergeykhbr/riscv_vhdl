@@ -44,3 +44,49 @@ thread_return_t server_thread(void *args) {
     return 0;
 }
 
+DpiServer::DpiServer() : IFace(DPI_SERVER_IFACE) {
+    LIB_event_create(&loopEnable_, DPI_SERVER_IFACE);
+    threadInit_.Handle = 0;
+}
+
+bool DpiServer::run() {
+    threadInit_.func = reinterpret_cast<lib_thread_func>(runThread);
+    threadInit_.args = this;
+    LIB_thread_create(&threadInit_);
+
+    if (threadInit_.Handle) {
+        LIB_event_set(&loopEnable_);
+    }
+    return loopEnable_.state;
+}
+
+void DpiServer::stop() {
+    LIB_event_clear(&loopEnable_);
+    if (threadInit_.Handle) {
+        LIB_thread_join(threadInit_.Handle, 50000);
+    }
+    threadInit_.Handle = 0;
+}
+
+void DpiServer::busyLoop() {
+    while (isEnabled()) {
+        LIB_sleep_ms(1);
+    }
+}
+
+int DpiServer::getRequest(AttributeType &req) {
+    LIB_sleep_ms(1);
+    req.make_string("hartbeat");
+    return 0;
+}
+
+void DpiServer::sendResponse(AttributeType &resp) {
+    AttributeType t1 = resp;
+    t1.to_config();
+    LIB_printf("sv response: %s\n", t1.to_string());
+
+    //if (data->txcnt > 1) {
+    //    LIB_printf("No response from simulator. "
+    //        "Increase simulation length reqcnt=%d\n", data->txcnt);
+    //}
+}

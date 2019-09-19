@@ -19,15 +19,29 @@
 #include "types.h"
 #include <inttypes.h>
 
-extern "C" void LIB_thread_create(void *data);
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-extern "C" uint64_t LIB_thread_id();
+void LIB_thread_create(void *data);
+uint64_t LIB_thread_id();
+void LIB_thread_join(thread_def th, int ms);
+void LIB_sleep_ms(int ms);
 
-extern "C" void LIB_thread_join(thread_def th, int ms);
+void LIB_event_create(event_def *ev, const char *name);
+void LIB_event_close(event_def *ev);
+void LIB_event_set(event_def *ev);
+int LIB_event_is_set(event_def *ev);
+void LIB_event_clear(event_def *ev);
+void LIB_event_wait(event_def *ev);
+int LIB_event_wait_ms(event_def *ev, int ms);
 
-extern "C" void LIB_sleep_ms(int ms);
+int LIB_printf(const char *fmt, ...);
+int LIB_sprintf(char *s, size_t len, const char *fmt, ...);
 
-extern "C" int LIB_printf(const char *fmt, ...);
+void *LIB_get_proc_addr(const char *f);
 
-extern "C" void *LIB_get_proc_addr(const char *f);
+#ifdef __cplusplus
+}
+#endif
 

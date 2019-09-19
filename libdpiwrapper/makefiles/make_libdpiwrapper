@@ -33,11 +33,14 @@ INCL_PATH=\
 SRC_PATH =\
 	$(TOP_DIR)src \
 	$(TOP_DIR)src/dpiwrapper \
+	$(TOP_DIR)src/dpiwrapper/utils \
 
 
 VPATH = $(SRC_PATH)
 
 SOURCES = \
+	attribute \
+	autobuffer \
 	utils \
 	c_dpi \
 	server
