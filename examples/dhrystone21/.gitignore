@@ -1,5 +1,7 @@
 makefiles/obj
-makefiles/bin
+makefiles/bin/*
+!makefiles/bin/*.hex
+!makefiles/bin/*.elf
 makefiles/objarm
 makefiles/binarm/*
 !makefiles/binarm/*.hex
