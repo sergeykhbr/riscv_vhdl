@@ -32,7 +32,7 @@ static const char *DPI_SERVER_IFACE = "DpiServer";
 
 class DpiServer : public IFace {
  public:
-    DpiServer();
+    explicit DpiServer(const AttributeType &config);
 
     /** create and start seperate thread */
     virtual bool run();
@@ -53,18 +53,21 @@ class DpiServer : public IFace {
     /** working cycle function */
     virtual void busyLoop();
 
-    static void runThread(void *arg) {
-        reinterpret_cast<DpiServer *>(arg)->busyLoop();
-#if defined(_WIN32) || defined(__CYGWIN__)
-        _endthreadex(0);
-#else
-        pthread_exit(0);
-#endif
-    }
+    static void runThread(void *arg);
+    int createServerSocket();
+    void closeServerSocket();
+    void setRcvTimeout(socket_def skt, int timeout_ms);
+    bool setBlockingMode(bool mode);
 
  protected:
+    AttributeType config_;
+
     event_def loopEnable_;
     LibThreadType threadInit_;
     request_t request_;
+
+    struct sockaddr_in sockaddr_ipv4_;
+    socket_def hsock_;
+    char rcvbuf[4096];
 };
 

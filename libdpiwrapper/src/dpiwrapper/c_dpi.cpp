@@ -41,7 +41,21 @@ extern "C" void c_task_server_start() {
     dpi_sv_interface dpi;
     AttributeType srv_request;
     AttributeType srv_response;
-    DpiServer server;
+    AttributeType srv_config(Attr_Dict);
+
+#if defined(_WIN32) || defined(__CYGWIN__)
+    WSADATA wsaData;
+    if (WSAStartup(MAKEWORD(2, 2), &wsaData)) {
+        printf("error: %s\n", "Can't initialize sockets library");
+    }
+#endif
+
+    srv_config["Timeout"].make_int64(500);
+    srv_config["BlockingMode"].make_boolean(true);
+    srv_config["HostIP"].make_string("");
+    srv_config["HostPort"].make_uint64(8687);
+
+    DpiServer server(srv_config);
     dpi_data_t sv_out;
     request_t sv_in;
     int err;
@@ -81,5 +95,8 @@ extern "C" void c_task_server_start() {
 
     server.stop();
     LIB_printf("%s", "Thread joint\n");
+#if defined(_WIN32) || defined(__CYGWIN__)
+    WSACleanup();
+#endif
 }
 
