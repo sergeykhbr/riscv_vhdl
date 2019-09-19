@@ -1,6 +1,9 @@
 Universal Platform Simulator and Debugger.
 =====================
 
+Warning: Use MSVC2013 to run SystemC model. There's some problem with
+running systemc from plugin library in msvc2017 and 2019.
+
 This repository folder contains source code of the Unversal Platform Simulator
 with capability to debug real hardware (fpga/asic) using absolutely the
 same set of features.

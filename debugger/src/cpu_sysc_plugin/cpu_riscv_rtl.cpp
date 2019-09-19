@@ -200,6 +200,7 @@ void CpuRiscV_RTL::createSystemC() {
 #endif
 
     //sc_start(0, SC_NS);
+    sc_initialize();
 }
 
 void CpuRiscV_RTL::deleteSystemC() {

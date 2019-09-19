@@ -153,6 +153,15 @@
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\iwaymem.cpp">
       <Filter>riverlib\cache</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mem\ram64i.cpp">
+      <Filter>riverlib\cache\mem</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mem\ramtagi.cpp">
+      <Filter>riverlib\cache\mem</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\arith\divstage64.cpp">
+      <Filter>riverlib\core\arith</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\api_types.h">
@@ -306,6 +315,15 @@
     </ClInclude>
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\iwaymem.h">
       <Filter>riverlib\cache</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mem\ram64i.h">
+      <Filter>riverlib\cache\mem</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mem\ramtagi.h">
+      <Filter>riverlib\cache\mem</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\arith\divstage64.h">
+      <Filter>riverlib\core\arith</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
