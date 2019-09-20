@@ -1,0 +1,138 @@
+/*
+ *  Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
+#include <types.h>
+#include <utils.h>
+#include "client.h"
+#include "c_dpi.h"
+
+DpiClient::DpiClient(socket_def skt, const AttributeType &config)
+    : IThread("Client", config) {
+    LIB_event_create(&event_cmd_,"dpi_server_event");
+    cmdcnt_ = 0;
+    hsock_ = skt;
+}
+
+DpiClient::~DpiClient() {
+    LIB_event_close(&event_cmd_);
+}
+
+void DpiClient::busyLoop() {
+    int rxbytes;
+    int sockerr;
+    addr_size_t sockerr_len = sizeof(sockerr);
+
+    struct timeval tv;
+#if defined(_WIN32) || defined(__CYGWIN__)
+    /** On windows timeout of the setsockopt() function is the DWORD
+        * size variable in msec, so we use only the first field in timeval
+        * struct and directly assgign argument.
+        */
+    tv.tv_sec = config_["Timeout"].to_int();
+    tv.tv_usec = 0;
+#else
+    tv.tv_usec = (config_["Timeout"].to_int() % 1000) * 1000;
+    tv.tv_sec = config_["Timeout"].to_int() / 1000;
+#endif
+    setsockopt(hsock_, SOL_SOCKET, SO_RCVTIMEO,
+        reinterpret_cast<char*>(&tv), sizeof(struct timeval));
+
+    int reuse = 1;
+    if (setsockopt(hsock_, SOL_SOCKET, SO_REUSEADDR,
+        reinterpret_cast<char*>(&reuse), sizeof(int)) < 0) {
+        LIB_printf("DpiClien%d: setsockopt(SO_REUSEADDR) failed\n",
+                    config_["Index"].to_int());
+    }
+
+    cmdcnt_ = 0;
+    while (isEnabled()) {
+        rxbytes = recv(hsock_, rcvbuf, sizeof(rcvbuf), 0);
+        getsockopt(hsock_, SOL_SOCKET, SO_ERROR,
+                    reinterpret_cast<char *>(&sockerr), &sockerr_len);
+
+        if (rxbytes == 0) {
+            LIB_printf("Socket error: rxbytes=%d, sockerr=%d",
+                        rxbytes, sockerr);
+            loopEnable_.state = false;
+            break;
+        }
+        if (rxbytes < 0) {
+            // Timeout:
+            continue;
+        }
+
+        for (int i = 0; i < rxbytes; i++) {
+            cmdbuf_[cmdcnt_++] = rcvbuf[i];
+            if (rcvbuf[i] != '\0') {
+                continue;
+            }
+            processRequest();
+            cmdcnt_ = 0;
+        }
+    }
+    closeSocket();
+}
+
+void DpiClient::processRequest() {
+    request_.from_config(cmdbuf_);
+    if (!request_.is_dict()) {
+        LIB_printf("Wrong message: %s\n", cmdbuf_);
+        return;
+    }
+
+    LIB_event_clear(&event_cmd_);
+    dpi_put_fifo_request(static_cast<ICommand *>(this));
+    int err = LIB_event_wait_ms(&event_cmd_, 10000);
+    if (err) {
+        LIB_printf("DPI didn't respond on: %s\n", cmdbuf_);
+        response_.make_string("No DPI response");
+    }
+
+    int total = response_.size() + 1;
+    const char *ptx = response_.to_string();
+    int txbytes;
+    while (total > 0) {
+        txbytes = send(hsock_, ptx, total, 0);
+        if (txbytes == 0) {
+            LIB_printf("Send error: txcnt=%d", txbytes);
+            loopEnable_.state = false;
+            return;
+        }
+        total -= txbytes;
+        ptx += txbytes;
+    }
+}
+
+void DpiClient::setResponse(const AttributeType &resp) {
+    response_.attr_free();
+    response_ = resp;
+    response_.to_config();
+    LIB_event_set(&event_cmd_);
+}
+
+void DpiClient::closeSocket() {
+    if (hsock_ < 0) {
+        return;
+    }
+
+#if defined(_WIN32) || defined(__CYGWIN__)
+    closesocket(hsock_);
+#else
+    shutdown(hsock_, SHUT_RDWR);
+    close(hsock_);
+#endif
+    hsock_ = -1;
+}

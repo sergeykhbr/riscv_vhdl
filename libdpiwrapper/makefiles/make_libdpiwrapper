@@ -27,7 +27,8 @@ DIR_KEY=-B
 # include sub-folders list
 INCL_PATH=\
 	$(TOP_DIR)src \
-	$(TOP_DIR)src/dpiwrapper
+	$(TOP_DIR)src/dpiwrapper \
+	$(TOP_DIR)src/dpiwrapper/utils
 
 # source files directories list:
 SRC_PATH =\
@@ -41,9 +42,11 @@ VPATH = $(SRC_PATH)
 SOURCES = \
 	attribute \
 	autobuffer \
+	ithread \
 	utils \
 	c_dpi \
-	server
+	server \
+	client
 
 LIBS = \
 	m \

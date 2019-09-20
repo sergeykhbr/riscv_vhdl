@@ -23,6 +23,22 @@
 const char LOG_FILE[] = "dpilib.log";
 FILE *fp = 0;
 
+extern "C" int LIB_init() {
+#if defined(_WIN32) || defined(__CYGWIN__)
+    WSADATA wsaData;
+    if (WSAStartup(MAKEWORD(2, 2), &wsaData)) {
+        printf("error: %s\n", "Can't initialize sockets library");
+    }
+#endif
+    return 0;
+}
+
+extern "C" void LIB_cleanup() {
+#if defined(_WIN32) || defined(__CYGWIN__)
+    WSACleanup();
+#endif
+}
+
 extern "C" void LIB_thread_create(void *data) {
     LibThreadType *p = (LibThreadType *)data;
 #if defined(_WIN32) || defined(__CYGWIN__)
@@ -56,6 +72,46 @@ extern "C" void LIB_sleep_ms(int ms) {
 #else
     usleep(1000*ms);
 #endif
+}
+
+extern "C" int LIB_mutex_init(mutex_def *mutex) {
+#if defined(_WIN32) || defined(__CYGWIN__)
+    InitializeCriticalSection(mutex);
+#else
+    pthread_mutexattr_t attr;
+
+    pthread_mutexattr_init(&attr);
+    pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
+    pthread_mutex_init(mutex, &attr);
+#endif
+    return 0;
+}
+
+extern "C" int LIB_mutex_lock(mutex_def *mutex) {
+#if defined(_WIN32) || defined(__CYGWIN__)
+    EnterCriticalSection(mutex);
+#else
+    pthread_mutex_lock(mutex) ;
+#endif
+    return 0;
+}
+
+extern "C" int LIB_mutex_unlock(mutex_def * mutex) {
+#if defined(_WIN32) || defined(__CYGWIN__)
+    LeaveCriticalSection(mutex);
+#else
+    pthread_mutex_unlock(mutex);
+#endif
+    return 0;
+}
+
+extern "C" int LIB_mutex_destroy(mutex_def *mutex) {
+#if defined(_WIN32) || defined(__CYGWIN__)
+    DeleteCriticalSection(mutex);
+#else
+    pthread_mutex_destroy(mutex);
+#endif
+    return 0;
 }
 
 extern "C" void LIB_event_create(event_def *ev, const char *name) {
@@ -235,5 +291,3 @@ extern "C" void *LIB_get_proc_addr(const char *f) {
 #endif
     return ret;
 }
-
-

@@ -18,28 +18,64 @@
 
 #include <inttypes.h>
 
-typedef struct dpi_data_t {
+static const int AXI4_BURST_LEN_MAX     = 4;
+
+typedef struct axi4_slave_in_t {
+    uint64_t addr;
+    uint64_t wdata[AXI4_BURST_LEN_MAX];
+    char we;        // 0 = read; 1 = write
+    char wstrb;
+    char burst;
+    char len;
+} axi4_slave_in_t;
+
+typedef struct axi4_slave_out_t {
+    uint64_t rdata[AXI4_BURST_LEN_MAX];
+} axi4_slave_out_t;
+
+typedef struct sv_out_t {
 	double tm;
 	uint32_t clkcnt;
-} dpi_data_t;
+    axi4_slave_out_t slvo;
+} sv_out_t;
 
-typedef void (*sv_func_get_data_proc)(dpi_data_t *d);
+typedef void (*sv_func_get_data_proc)(sv_out_t *d);
 
-static const int REQ_TYPE_MOVE_CLOCK = 1;
-static const int REQ_TYPE_MOVE_TIME  = 2;
-static const int REQ_TYPE_STOP_SIM   = -1;
+static const int REQ_TYPE_SERVER_ERR    = -2;
+static const int REQ_TYPE_STOP_SIM      = -1;
+static const int REQ_TYPE_INFO          = 1;
+static const int REQ_TYPE_MOVE_CLOCK    = 2;
+static const int REQ_TYPE_MOVE_TIME     = 3;
+static const int REQ_TYPE_AXI4          = 4;
 
-typedef struct request_t {
+typedef struct sv_in_t {
     int req_type;
     int param1;
-} request_t;
+    axi4_slave_in_t slvi;
+    char descr[256];
+} sv_in_t;
 
-typedef void (*sv_task_process_request_proc)(const request_t *req);
+typedef void (*sv_task_process_request_proc)(const sv_in_t *req);
 
 typedef struct dpi_sv_interface {
     sv_func_get_data_proc sv_func_get_data;
     sv_task_process_request_proc sv_task_process_request;
 } dpi_sv_interface;
 
-
 typedef void (*c_task_server_start_proc)();
+
+/** Interface between clients and DPI context task */
+enum EJsonRequestList {
+    Req_SourceName,
+    Req_CmdType,
+    Req_Data,
+    Req_ListSize
+};
+
+enum EJsonResponseList {
+    Resp_CmdType,
+    Resp_Data,
+    Resp_ListSize
+};
+
+void dpi_put_fifo_request(void *iface);

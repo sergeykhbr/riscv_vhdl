@@ -11,19 +11,26 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\src\dpiwrapper\client.cpp" />
     <ClCompile Include="..\..\src\dpiwrapper\c_dpi.cpp" />
     <ClCompile Include="..\..\src\dpiwrapper\server.cpp" />
     <ClCompile Include="..\..\src\dpiwrapper\utils.cpp" />
     <ClCompile Include="..\..\src\dpiwrapper\utils\attribute.cpp" />
     <ClCompile Include="..\..\src\dpiwrapper\utils\autobuffer.cpp" />
+    <ClCompile Include="..\..\src\dpiwrapper\utils\ithread.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\src\dpiwrapper\client.h" />
     <ClInclude Include="..\..\src\dpiwrapper\c_dpi.h" />
     <ClInclude Include="..\..\src\dpiwrapper\server.h" />
     <ClInclude Include="..\..\src\dpiwrapper\utils\attribute.h" />
     <ClInclude Include="..\..\src\dpiwrapper\utils\autobuffer.h" />
     <ClInclude Include="..\..\src\dpiwrapper\utils\iattr.h" />
+    <ClInclude Include="..\..\src\dpiwrapper\utils\icommand.h" />
     <ClInclude Include="..\..\src\dpiwrapper\utils\iface.h" />
+    <ClInclude Include="..\..\src\dpiwrapper\utils\irawlistener.h" />
+    <ClInclude Include="..\..\src\dpiwrapper\utils\ithread.h" />
+    <ClInclude Include="..\..\src\dpiwrapper\utils\tfifo.h" />
     <ClInclude Include="..\..\src\types.h" />
     <ClInclude Include="..\..\src\utils.h" />
   </ItemGroup>
@@ -81,6 +88,7 @@
     </ClCompile>
     <Link>
       <ModuleDefinitionFile>$(ProjectDir)exportmap.def</ModuleDefinitionFile>
+      <AdditionalDependencies>Ws2_32.lib;</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

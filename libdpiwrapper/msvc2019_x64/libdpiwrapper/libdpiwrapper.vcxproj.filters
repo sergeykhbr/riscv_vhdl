@@ -28,6 +28,12 @@
     <ClCompile Include="..\..\src\dpiwrapper\utils\autobuffer.cpp">
       <Filter>src\dpiwrapper\utils</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\dpiwrapper\utils\ithread.cpp">
+      <Filter>src\dpiwrapper\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\dpiwrapper\client.cpp">
+      <Filter>src\dpiwrapper</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\types.h">
@@ -52,6 +58,21 @@
       <Filter>src\dpiwrapper\utils</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\dpiwrapper\utils\iface.h">
+      <Filter>src\dpiwrapper\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dpiwrapper\utils\ithread.h">
+      <Filter>src\dpiwrapper\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dpiwrapper\utils\irawlistener.h">
+      <Filter>src\dpiwrapper\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dpiwrapper\client.h">
+      <Filter>src\dpiwrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dpiwrapper\utils\tfifo.h">
+      <Filter>src\dpiwrapper\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dpiwrapper\utils\icommand.h">
       <Filter>src\dpiwrapper\utils</Filter>
     </ClInclude>
   </ItemGroup>

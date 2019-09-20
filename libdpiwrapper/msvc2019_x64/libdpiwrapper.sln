@@ -1,12 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28010.2036
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29306.81
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libdpiwrapper", "libdpiwrapper\libdpiwrapper.vcxproj", "{3F5DBB41-4931-4746-9281-1847D617E8BE}"
-	ProjectSection(ProjectDependencies) = postProject
-		{AA1197AE-7675-4FC5-8452-6457A749AA8A} = {AA1197AE-7675-4FC5-8452-6457A749AA8A}
-	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "testapp", "testapp\testapp.vcxproj", "{4E100E0E-3B32-45ED-A9B3-E22E6DB984CA}"
 	ProjectSection(ProjectDependencies) = postProject

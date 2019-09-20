@@ -22,14 +22,37 @@
 
 int clkcnt = 0;
 double timescale = 0.0;
+uint64_t rdata = 0xcafef00ddeadbeedull;
 
-extern "C" void sv_task_process_request(const request_t *r) {
-    timescale += r->param1 * 5.0;
-    clkcnt += 10;
+extern "C" void sv_task_process_request(const sv_in_t *r) {
+    switch (r->req_type) {
+    case REQ_TYPE_SERVER_ERR:
+        printf("Server error\n");
+        break;
+    case REQ_TYPE_STOP_SIM:
+        printf("Stop simulation\n");
+        break;
+    case REQ_TYPE_INFO:
+        printf("DPI: %s\n", r->descr);
+        break;
+    case REQ_TYPE_MOVE_CLOCK:
+        timescale += r->param1 * 5.0;
+        clkcnt += 10;
+        break;
+    case REQ_TYPE_MOVE_TIME:
+        timescale += r->param1 * 5.0;
+        clkcnt += 10;
+        break;
+    case REQ_TYPE_AXI4:
+        break;
+    default:
+        printf("Unkown request %d\n", r->req_type);
+    }
 }
 
-extern "C" void sv_func_get_data(dpi_data_t *d) {
+extern "C" void sv_func_get_data(sv_out_t *d) {
     d->tm = timescale;
     d->clkcnt = clkcnt;
+    d->slvo.rdata[0] = rdata;
 }
 

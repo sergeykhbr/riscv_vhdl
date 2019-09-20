@@ -16,40 +16,37 @@
 
 #pragma once
 
-#include <ithread.h>
 #include <attribute.h>
+#include <ithread.h>
 #include <icommand.h>
 #include "c_dpi.h"
 
-class DpiServer : public IThread,
+class DpiClient : public IThread,
                   public ICommand {
  public:
-    explicit DpiServer(const AttributeType &config);
-    virtual ~DpiServer();
+    explicit DpiClient(socket_def skt, const AttributeType &config);
+    virtual ~DpiClient();
 
     /** ICommand */
     virtual const AttributeType &getRequest() { return request_; }
     virtual void setResponse(const AttributeType &resp);
 
  protected:
-    /** working cycle function */
     virtual void busyLoop();
 
-    int createServerSocket();
-    void closeServerSocket();
-    bool setBlockingMode(bool mode);
-
-    void message_hartbeat();
-    void message_client_connected();
-
  protected:
-    AttributeType listClient_;
+    void processRequest();
+    void closeSocket();
+
+ private:
+    AttributeType config_;
     AttributeType request_;
+    AttributeType response_;
 
-    event_def event_cmd_;
-
-    struct sockaddr_in sockaddr_ipv4_;
     socket_def hsock_;
+    event_def event_cmd_;
     char rcvbuf[4096];
+    char cmdbuf_[4096];
+    int cmdcnt_;
 };
 

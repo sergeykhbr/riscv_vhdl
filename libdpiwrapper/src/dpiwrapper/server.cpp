@@ -16,61 +16,68 @@
 
 #include "utils.h"
 #include "server.h"
+#include "client.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
 
-DpiServer::DpiServer(const AttributeType& config) : IFace(DPI_SERVER_IFACE) {
-    config_ = config;
-    LIB_event_create(&loopEnable_, DPI_SERVER_IFACE);
-    threadInit_.Handle = 0;
+DpiServer::DpiServer(const AttributeType& config) : IThread("Server", config) {
+    hsock_ = 0;
+    listClient_.make_list(0);
+    request_.make_list(Req_ListSize);
+    request_[Req_SourceName].make_string("DpiServer");
+    LIB_event_create(&event_cmd_, "DpiServerEventCmd");
 }
 
-void DpiServer::runThread(void* arg) {
-    reinterpret_cast<DpiServer*>(arg)->busyLoop();
-#if defined(_WIN32) || defined(__CYGWIN__)
-    _endthreadex(0);
-#else
-    pthread_exit(0);
-#endif
-}
-
-bool DpiServer::run() {
-    threadInit_.func = reinterpret_cast<lib_thread_func>(runThread);
-    threadInit_.args = this;
-    LIB_thread_create(&threadInit_);
-
-    if (threadInit_.Handle) {
-        LIB_event_set(&loopEnable_);
-    }
-    return loopEnable_.state;
-}
-
-void DpiServer::stop() {
-    LIB_event_clear(&loopEnable_);
-    if (threadInit_.Handle) {
-        LIB_thread_join(threadInit_.Handle, 50000);
-    }
-    threadInit_.Handle = 0;
+DpiServer::~DpiServer() {
+    LIB_event_close(&event_cmd_);
 }
 
 void DpiServer::busyLoop() {
+    socket_def client_sock;
+    int err;
+    fd_set readSet;
+    timeval timeout;
+    timeout.tv_sec = 2;
+    timeout.tv_usec = 0;
+
     if (createServerSocket()) {
         return;
     }
 
     if (listen(hsock_, 1) < 0) {
-        LIB_printf("error: %s", "listen() failed\n");
+        LIB_printf("DpiServer: %s\n", "listen() failed");
         return;
     }
 
     /** By default socket was created with Blocking mode */
-    if (!config_["BlockingMode"].to_bool()) {
-        setBlockingMode(false);
-    }
+    setBlockingMode(config_["BlockingMode"].to_bool());
 
     while (isEnabled()) {
-        LIB_sleep_ms(1);
+        /** linux modifies flags and time after each call of select() */
+        FD_ZERO(&readSet);
+        FD_SET(hsock_, &readSet);
+        timeout.tv_sec = 2;
+        timeout.tv_usec = 0;
+        err = select(hsock_ + 1, &readSet, NULL, NULL, &timeout);
+        if (err < 0) {
+            LIB_printf("DpiServer: %s\n", " accept() failed");
+            loopEnable_.state = false;
+            break;
+        }
+        if (err == 0) {
+            // Timeout
+            message_hartbeat();
+            continue;
+        }
+
+        client_sock = accept(hsock_, 0, 0);
+
+        config_["ClientConfig"]["Index"].make_uint64(listClient_.size());
+        IThread *pclient = new DpiClient(client_sock, config_["ClientConfig"]);
+        AttributeType t1(pclient);
+        listClient_.add_to_list(&t1);
+        pclient->run();
     }
     closeServerSocket();
 }
@@ -119,13 +126,13 @@ int DpiServer::createServerSocket() {
         }
     }
     sockaddr_ipv4_.sin_port = htons(static_cast<uint16_t>(hostPort.to_int()));
-    LIB_printf("Selected Host IPv4 %s:%d",
+    LIB_printf("Selected Host IPv4 %s:%d\n",
         inet_ntoa(sockaddr_ipv4_.sin_addr),
         hostPort.to_uint32());
 
     hsock_ = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (hsock_ < 0) {
-        LIB_printf("%s", "Error: socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)");
+        LIB_printf("Error: %s\n", "socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)");
         return -1;
     }
 
@@ -133,7 +140,7 @@ int DpiServer::createServerSocket() {
         reinterpret_cast<struct sockaddr*>(&sockaddr_ipv4_),
         sizeof(sockaddr_ipv4_));
     if (res != 0) {
-        LIB_printf("Error: bind(hsock_, \"%s\", ...)", hostIP.to_string());
+        LIB_printf("Error: bind(hsock_, \"%s\", ...)\n", hostIP.to_string());
         return -1;
     }
 
@@ -142,31 +149,11 @@ int DpiServer::createServerSocket() {
         reinterpret_cast<struct sockaddr*>(&sockaddr_ipv4_),
         &addr_sz);
 
-    LIB_printf("IPv4 address %s:%d . . . opened",
+    LIB_printf("IPv4 address %s:%d . . . opened\n",
         inet_ntoa(sockaddr_ipv4_.sin_addr),
         ntohs(sockaddr_ipv4_.sin_port));
 
     return 0;
-}
-
-void DpiServer::setRcvTimeout(socket_def skt, int timeout_ms) {
-    if (!timeout_ms) {
-        return;
-    }
-    struct timeval tv;
-#if defined(_WIN32) || defined(__CYGWIN__)
-    /** On windows timeout of the setsockopt() function is the DWORD
-        * size variable in msec, so we use only the first field in timeval
-        * struct and directly assgign argument.
-        */
-    tv.tv_sec = timeout_ms;
-    tv.tv_usec = 0;
-#else
-    tv.tv_usec = (timeout_ms % 1000) * 1000;
-    tv.tv_sec = timeout_ms / 1000;
-#endif
-    setsockopt(skt, SOL_SOCKET, SO_RCVTIMEO,
-        reinterpret_cast<char*>(&tv), sizeof(struct timeval));
 }
 
 
@@ -183,6 +170,7 @@ bool DpiServer::setBlockingMode(bool mode) {
 #else
     int flags = fcntl(hsock_, F_GETFL, 0);
     if (flags < 0) {
+        LIB_printf("error: %s\n", "fcntl() failed");
         return false;
     }
     flags = mode ? (flags & ~O_NONBLOCK) : (flags | O_NONBLOCK);
@@ -192,6 +180,8 @@ bool DpiServer::setBlockingMode(bool mode) {
         // success
         config_["BlockingMode"].make_boolean(mode);
         return true;
+    } else {
+        LIB_printf("error: fcntl() failed to set mode %d", mode);
     }
     return false;
 }
@@ -210,20 +200,31 @@ void DpiServer::closeServerSocket() {
     hsock_ = -1;
 }
 
-
-int DpiServer::getRequest(AttributeType &req) {
-    LIB_sleep_ms(1);
-    req.make_string("hartbeat");
-    return 0;
-}
-
-void DpiServer::sendResponse(AttributeType &resp) {
+void DpiServer::setResponse(const AttributeType &resp) {
     AttributeType t1 = resp;
     t1.to_config();
-    LIB_printf("sv response: %s\n", t1.to_string());
+    LIB_printf("DpiServer: %s\n", t1.to_string());
+    LIB_event_set(&event_cmd_);
+}
 
-    //if (data->txcnt > 1) {
-    //    LIB_printf("No response from simulator. "
-    //        "Increase simulation length reqcnt=%d\n", data->txcnt);
-    //}
+void DpiServer::message_hartbeat() {
+    LIB_event_clear(&event_cmd_);
+    request_[Req_CmdType].make_string("HartBeat");
+    request_[Req_Data].make_uint64(listClient_.size());
+    dpi_put_fifo_request(static_cast<ICommand *>(this));
+    int err = LIB_event_wait_ms(&event_cmd_, 10000);
+    if (err) {
+        LIB_printf("DpiServer: %s\n", "DPI didn't respond");
+    }
+}
+
+void DpiServer::message_client_connected() {
+    LIB_event_clear(&event_cmd_);
+    request_[Req_CmdType].make_string("ClientAdd");
+    request_[Req_Data].make_int64(listClient_.size());
+    dpi_put_fifo_request(static_cast<ICommand *>(this));
+    int err = LIB_event_wait_ms(&event_cmd_, 10000);
+    if (err) {
+        LIB_printf("DpiServer: %s\n", "DPI didn't respond");
+    }
 }

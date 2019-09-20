@@ -18,15 +18,25 @@
 
 #include "types.h"
 #include <inttypes.h>
+#include <stdarg.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+int LIB_init();
+void LIB_cleanup();
+
 void LIB_thread_create(void *data);
 uint64_t LIB_thread_id();
 void LIB_thread_join(thread_def th, int ms);
 void LIB_sleep_ms(int ms);
+
+int LIB_mutex_init(mutex_def *mutex);
+int LIB_mutex_lock(mutex_def *mutex);
+int LIB_mutex_unlock(mutex_def *mutex);
+int LIB_mutex_destroy(mutex_def *mutex);
+void LIB_thread_join(thread_def th, int ms);
 
 void LIB_event_create(event_def *ev, const char *name);
 void LIB_event_close(event_def *ev);
