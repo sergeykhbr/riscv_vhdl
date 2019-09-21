@@ -21,21 +21,45 @@ module virt_dbg #(
     input [31:0] clkcnt
 );
 
+parameter int AXI4_BURST_LEN_MAX = 8;
+
+typedef struct {
+    longint rdata[AXI4_BURST_LEN_MAX];
+} axi4_slave_out_t;
+
 typedef struct {
     realtime tm;
     int clkcnt;
-} dpi_data_t;
+    axi4_slave_out_t slvo;
+} sv_out_t;
+
+const int REQ_TYPE_SERVER_ERR = -2;
+const int REQ_TYPE_STOP_SIM   = -1;
+const int REQ_TYPE_INFO       = 1;
+const int REQ_TYPE_MOVE_CLOCK = 2;
+const int REQ_TYPE_MOVE_TIME  = 3;
+const int REQ_TYPE_AXI4       = 4;
 
 typedef struct {
+    longint addr;
+    longint wdata[AXI4_BURST_LEN_MAX];
+    byte we;    // 0=read; 1=write
+    byte wstrb;
+    byte burst;
+    byte len;
+} axi4_slave_in_t;
+
+typedef struct {
+    string info;
     int req_type;
     int param1;
-} request_t;
+    axi4_slave_in_t slvi;
+} sv_in_t;
 
-const int REQ_TYPE_MOVE_CLOCK = 1;
-const int REQ_TYPE_MOVE_TIME  = 2;
-const int REQ_TYPE_STOP_SIM   = -1;
+sv_out_t sv_out;
 
 import "DPI-C" context task c_task_server_start();
+import "DPI-C" context task c_task_clk_posedge(input sv_out_t d);
 export "DPI-C" task     sv_task_process_request;
 export "DPI-C" function sv_func_get_data;
 
@@ -43,30 +67,63 @@ initial begin
     c_task_server_start();
 end
 
-
-function void sv_func_get_data(output dpi_data_t d);
+/*
+function string bytearr2string(input arr);
+ string str1;
+  str1 = {
+       $sformatf("%h",arr),
+         }
+  return(str1);
+endfunction
+*/
+function void sv_func_get_data(output sv_out_t d);
 begin
     d.tm = $time;
     d.clkcnt = clkcnt;
 end
 endfunction: sv_func_get_data
 
-task sv_task_process_request(input request_t r);
+task sv_task_process_request(input sv_in_t r);
    int i;
+string str1;
 begin
-    if (r.req_type == REQ_TYPE_MOVE_CLOCK) begin
-        $display("SV: time before wait: %0d", $time);
+    case (r.req_type)
+    REQ_TYPE_SERVER_ERR: begin
+        $display("SV: server error");
+        $stop(0);
+    end
+    REQ_TYPE_STOP_SIM: begin
+        $display("SV: simulation end");
+        $stop(0);
+    end
+    REQ_TYPE_INFO: begin
+        $display("SV: %s", r.info);
+    end
+    REQ_TYPE_MOVE_CLOCK: begin
         i = 0;
         do begin
              #CLK_PERIOD
              i = i + 1;
         end while (i < r.param1);
-        $display("SV: time after wait: %0d", $time);
-    end else if (r.req_type == REQ_TYPE_STOP_SIM) begin
-        $stop(0);
     end
+//    REQ_TYPE_MOVE_TIME: begin
+//        do begin
+//             #CLK_PERIOD
+//        end while (r.param1 < $time);
+//    end
+    default:
+        $display("SV: unsupported request: %0d", r.req_type);
+    endcase
+
 end
 endtask: sv_task_process_request
+
+always @(posedge clk) begin
+    //sv_func_get_data(sv_out);
+    sv_out.tm = $time;
+    sv_out.clkcnt = clkcnt;
+    c_task_clk_posedge(sv_out);
+end
 
 
 endmodule: virt_dbg

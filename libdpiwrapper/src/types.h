@@ -16,8 +16,9 @@
 
 #pragma once
 
-#if defined(_WIN32) || defined(__CYGWIN__)
+#include <inttypes.h>
 
+#if defined(_WIN32) || defined(__CYGWIN__)
 // Exclude rarely-used stuff from Windows headers
 #define WIN32_LEAN_AND_MEAN
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
@@ -79,6 +80,10 @@ typedef int sharemem_def;
 # endif
 
 #endif
+
+typedef struct object_t {
+    void *obj;
+} object_t;
 
 typedef struct LibThreadType {
     lib_thread_func func;

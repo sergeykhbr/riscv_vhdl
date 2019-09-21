@@ -24,8 +24,10 @@
 class DpiClient : public IThread,
                   public ICommand {
  public:
-    explicit DpiClient(socket_def skt, const AttributeType &config);
+    explicit DpiClient(socket_def skt);
     virtual ~DpiClient();
+
+    void postinit(const AttributeType &config);
 
     /** ICommand */
     virtual const AttributeType &getRequest() { return request_; }

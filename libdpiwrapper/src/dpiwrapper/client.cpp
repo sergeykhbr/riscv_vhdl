@@ -19,8 +19,7 @@
 #include "client.h"
 #include "c_dpi.h"
 
-DpiClient::DpiClient(socket_def skt, const AttributeType &config)
-    : IThread("Client", config) {
+DpiClient::DpiClient(socket_def skt) : IThread("Client") {
     LIB_event_create(&event_cmd_,"dpi_server_event");
     cmdcnt_ = 0;
     hsock_ = skt;
@@ -28,6 +27,10 @@ DpiClient::DpiClient(socket_def skt, const AttributeType &config)
 
 DpiClient::~DpiClient() {
     LIB_event_close(&event_cmd_);
+}
+
+void DpiClient::postinit(const AttributeType &config) {
+    config_.clone(&config);
 }
 
 void DpiClient::busyLoop() {

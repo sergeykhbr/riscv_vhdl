@@ -16,10 +16,29 @@
 
 include util.mak
 
+## 1 = for build on windows + mingw
+## 0 = for build on linux
+ifeq ($(OS),Windows_NT)
+  MINGW=1
+else
+  MINGW=0
+endif
+
 CC=gcc
 CPP=gcc
-CFLAGS=-g -c -Wall -Werror -fPIC -pthread
-LDFLAGS= -shared -pthread
+
+CFLAGS=-g -c -Wall -Werror
+ifeq ($(MINGW), 1)
+else
+  CFLAGS += -fPIC
+endif
+
+LDFLAGS= -shared
+ifeq ($(MINGW), 1)
+else
+  LDFLAGS += -pthread
+endif
+
 INCL_KEY=-I
 DIR_KEY=-B
 
@@ -48,14 +67,24 @@ SOURCES = \
 	server \
 	client
 
+ifeq ($(MINGW), 1)
 LIBS = \
-	m \
 	stdc++ \
+	ws2_32 \
+	psapi
+else
+LIBS = \
+	stdc++ \
+	m \
 	dl
-
+endif
 SRC_FILES = $(addsuffix .cpp,$(SOURCES))
 OBJ_FILES = $(addprefix $(OBJ_DIR)/,$(addsuffix .o,$(SOURCES)))
+ifeq ($(MINGW), 1)
+EXECUTABLE = $(addprefix $(ELF_DIR)/,libdpiwrapper.dll)
+else
 EXECUTABLE = $(addprefix $(ELF_DIR)/,libdpiwrapper.so)
+endif
 
 all: $(EXECUTABLE)
 

@@ -63,7 +63,6 @@ template<class T> class TFifo {
         return LIB_event_wait_ms(&event_, ms);
     }
 
- protected:
     bool is_full() {
         return wcnt_ == rcnt_;
     }

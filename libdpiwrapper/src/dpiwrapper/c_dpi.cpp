@@ -23,7 +23,10 @@
 #include "server.h"
 #include "c_dpi.h"
 
+static dpi_sv_interface dpi_ = {0};
 static TFifo<ICommand *> fifo_(10);
+static DpiServer server_;
+static char descr_[256];
 
 void dpi_put_fifo_request(void *iface) {
     ICommand *t1 = reinterpret_cast<ICommand *>(iface);
@@ -35,19 +38,20 @@ int dpi_load_interface(dpi_sv_interface *iface) {
     iface->sv_task_process_request = 
         (sv_task_process_request_proc)LIB_get_proc_addr("sv_task_process_request");
     if (!iface->sv_task_process_request) {
+        LIB_printf("Can't find %s\n", "sv_task_process_request");
         ret = -1;
     }
 
     iface->sv_func_get_data = 
         (sv_func_get_data_proc)LIB_get_proc_addr("sv_func_get_data");
     if (!iface->sv_func_get_data) {
+        LIB_printf("Can't find %s\n", "sv_func_get_data");
         ret = -1;
     }
     return ret;
 }
 
-extern "C" void c_task_server_start() {
-    dpi_sv_interface dpi;
+extern "C" int c_task_server_start() {
     AttributeType tcp_resp;
     AttributeType srv_config(Attr_Dict);
     LIB_init();
@@ -59,104 +63,108 @@ extern "C" void c_task_server_start() {
     srv_config["ClientConfig"].make_dict();
     srv_config["ClientConfig"]["Timeout"].make_int64(500);
 
-    DpiServer server(srv_config);
-    sv_out_t sv_out;
+    if (dpi_load_interface(&dpi_)) {
+        return -1;
+    }
     sv_in_t sv_in;
-    int err;
+    sv_in.info = descr_;
 
-    LIB_printf("%", "Entering c_task_server_start\n");
-    server.run();
+    server_.postinit(srv_config);
 
-	const double SIMULATION_TIME_NS = 20000.0;
-	if (dpi_load_interface(&dpi) == 0) {
-        /** Get initial sv data */
-        dpi.sv_func_get_data(&sv_out);
-
-        while (sv_out.tm < SIMULATION_TIME_NS) {
-            /** Wait any request */
-            err = fifo_.wait(10000);
-            if (err) {
-                /** Timeout. Server should send hartbeat every 500 ms even
-                    if there's no client connected. Something is wrong.
-                */
-                sv_in.req_type = REQ_TYPE_SERVER_ERR;
-                LIB_sprintf(sv_in.descr, sizeof(sv_in.descr), "error: %s\n",
-                            "server hartbeat timeout");
-			    dpi.sv_task_process_request(&sv_in);
-                break;
-            } 
-
-            ICommand *isrc;
-            fifo_.get(&isrc);
-
-            /** Parse external request */
-            AttributeType req = isrc->getRequest();
-            tcp_resp.make_list(Resp_ListSize);
-            if(!req.is_list() || req.size() < Req_ListSize)  {
-                tcp_resp[Resp_CmdType].make_string("Error");
-                tcp_resp[Resp_Data].make_string("unsupported message format");
-            } else if (req[Req_SourceName].is_equal("DpiServer")) {
-                /** Managing requests: add/remove client, errors, status */
-                if (req[Req_CmdType].is_equal("HartBeat")) {
-                    if (req[Req_Data].to_uint32() == 0) {
-                        sv_in.req_type = REQ_TYPE_INFO;
-                        LIB_sprintf(sv_in.descr, sizeof(sv_in.descr), "%s",
-                                    "Waiting simulator connection...");
-                        dpi.sv_task_process_request(&sv_in);
-                        dpi.sv_func_get_data(&sv_out);
-                        tcp_resp[Resp_CmdType].make_string("Hartbeat");
-                        tcp_resp[Resp_Data].make_floating(sv_out.tm);
-                    }
-                } else if (req[Req_CmdType].is_equal("ClientAdd")
-                        || req[Req_CmdType].is_equal("ClientRemove")) {
-                    sv_in.req_type = REQ_TYPE_INFO;
-                    LIB_sprintf(sv_in.descr, sizeof(sv_in.descr), "%s",
-                                req[Req_Data].to_string());
-			        dpi.sv_task_process_request(&sv_in);
-                }
-            } else {
-                if (req[Req_CmdType].is_equal("TimeSync")) {
-                    sv_in.req_type = REQ_TYPE_MOVE_CLOCK;
-                    sv_in.param1 = req[Req_Data].to_int();
-                    dpi.sv_task_process_request(&sv_in);
-
-                    // Output:
-                    dpi.sv_func_get_data(&sv_out);
-                    tcp_resp[Resp_CmdType].make_string("Time");
-                    tcp_resp[Resp_Data].make_dict();
-                    AttributeType &od = tcp_resp[Resp_Data];
-                    od["Time"].make_floating(sv_out.tm);
-                    od["clkcnt"].make_uint64(sv_out.clkcnt);
-
-                    /** TODO: Check Master requests: interrupts, DMA */
-                } else if (req[Req_CmdType].is_equal("AXI4")) {
-                    const AttributeType &id = req[Req_Data];
-                    sv_in.req_type = REQ_TYPE_AXI4;
-                    sv_in.slvi.addr = id["addr"].to_uint64();
-                    sv_in.slvi.we = id["we"].to_bool();
-                    dpi.sv_task_process_request(&sv_in);
-
-                    // Output:
-                    dpi.sv_func_get_data(&sv_out);
-                    tcp_resp[Resp_CmdType].make_string("Axi4Slave");
-                    AttributeType &od = tcp_resp[Resp_Data];
-                    od["rdata"].make_list(1);
-                    od["rdata"][0u].make_uint64(sv_out.slvo.rdata[0]);
-                } else {
-                    dpi.sv_func_get_data(&sv_out);
-                }
-            }
-            isrc->setResponse(tcp_resp);
-		}
-	}
-
-    sv_in.req_type = REQ_TYPE_STOP_SIM;
-    if (dpi.sv_task_process_request) {
-	    dpi.sv_task_process_request(&sv_in);
+    LIB_printf("%s", "Entering c_task_server_start\n");
+    sv_in.req_type = REQ_TYPE_INFO;
+    if (server_.run()) {
+        LIB_sprintf(descr_, sizeof(descr_), "c_task_server_start: %s",
+            "TCP server run successfully. See dpilib.log file for more "
+            "details");
+    } else {
+        LIB_sprintf(descr_, sizeof(descr_), "%s",
+                    "c_task_server_start: TCP server start failed");
+    }
+    if (dpi_.sv_task_process_request) {
+	    dpi_.sv_task_process_request(&sv_in);
     }
 
-    server.stop();
-    LIB_printf("%s", "Thread joint\n");
-    LIB_cleanup();
+    //server.stop();
+    LIB_printf("c_task_server_start: %s\n", "end");
+    //LIB_cleanup();
+    return 0;
+}
+
+extern "C" int c_task_clk_posedge(const sv_out_t *d) {
+    AttributeType tcp_resp;
+    ICommand* isrc;
+    sv_in_t sv_in;
+    sv_in.info = descr_;
+    if (!dpi_.sv_task_process_request) {
+        return -1;
+    }
+    if (fifo_.is_empty()) {
+#if 1  // delme
+        sv_in.req_type = REQ_TYPE_INFO;
+        LIB_sprintf(descr_, sizeof(descr_), "dpi posedge: %d", d->clkcnt);
+        if (d->clkcnt % 1000 == 999) {
+            dpi_.sv_task_process_request(&sv_in);
+        }
+#endif
+        return 0;
+    }
+
+    fifo_.get(&isrc);
+
+    /** Parse external request */
+    AttributeType req = isrc->getRequest();
+    tcp_resp.make_list(Resp_ListSize);
+    if (!req.is_list() || req.size() < Req_ListSize) {
+        tcp_resp[Resp_CmdType].make_string("Error");
+        tcp_resp[Resp_Data].make_string("unsupported message format");
+    } else if (req[Req_SourceName].is_equal("DpiServer")) {
+        /** Managing requests: add/remove client, errors, status */
+        if (req[Req_CmdType].is_equal("HartBeat")) {
+            if (req[Req_Data].to_uint32() == 0) {
+                sv_in.req_type = REQ_TYPE_INFO;
+                LIB_sprintf(descr_, sizeof(descr_), "%s",
+                    "Waiting simulator connection...");
+                dpi_.sv_task_process_request(&sv_in);
+                tcp_resp[Resp_CmdType].make_string("Hartbeat");
+                tcp_resp[Resp_Data].make_floating(d->tm);
+            }
+        } else if (req[Req_CmdType].is_equal("ClientAdd")
+            || req[Req_CmdType].is_equal("ClientRemove")) {
+            sv_in.req_type = REQ_TYPE_INFO;
+            LIB_sprintf(descr_, sizeof(descr_), "%s",
+                req[Req_Data].to_string());
+            dpi_.sv_task_process_request(&sv_in);
+        }
+    } else {
+        if (req[Req_CmdType].is_equal("TimeSync")) {
+            sv_in.req_type = REQ_TYPE_MOVE_CLOCK;
+            sv_in.param1 = req[Req_Data].to_int();
+            dpi_.sv_task_process_request(&sv_in);
+
+            // Output:
+            tcp_resp[Resp_CmdType].make_string("Time");
+            tcp_resp[Resp_Data].make_dict();
+            AttributeType& od = tcp_resp[Resp_Data];
+            od["Time"].make_floating(d->tm);
+            od["clkcnt"].make_uint64(d->clkcnt);
+
+            /** TODO: Check Master requests: interrupts, DMA */
+        } else if (req[Req_CmdType].is_equal("AXI4")) {
+            const AttributeType& id = req[Req_Data];
+            sv_in.req_type = REQ_TYPE_AXI4;
+            sv_in.slvi.addr = id["addr"].to_uint64();
+            sv_in.slvi.we = id["we"].to_bool();
+            dpi_.sv_task_process_request(&sv_in);
+
+            // Output:
+            tcp_resp[Resp_CmdType].make_string("Axi4Slave");
+            AttributeType& od = tcp_resp[Resp_Data];
+            od["rdata"].make_list(1);
+            od["rdata"][0u].make_uint64(d->slvo.rdata[0]);
+        }
+    }
+    isrc->setResponse(tcp_resp);
+    return 0;
 }
 

@@ -101,7 +101,6 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(SolutionDir)/../src/;$(SolutionDir)/../src/dpiwrapper/utils/</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_WINDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalOptions>/vmg %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>

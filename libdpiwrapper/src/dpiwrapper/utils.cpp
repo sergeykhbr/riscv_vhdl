@@ -240,7 +240,8 @@ extern "C" int LIB_sprintf(char *s, size_t len, const char *fmt, ...) {
     va_list arg;
     va_start(arg, fmt);
 #if defined(_WIN32) || defined(__CYGWIN__)
-    ret = vsprintf_s(s, len, fmt, arg);
+    //ret = vsprintf_s(s, len, fmt, arg);
+    ret = vsprintf(s, fmt, arg);
 #else
     ret = vsprintf(s, fmt, arg);
 #endif

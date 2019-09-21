@@ -24,7 +24,7 @@ static const char *const IFACE_THREAD = "IThread";
 
 class IThread : public IFace {
  public:
-    IThread(const char *name, const AttributeType& config);
+    IThread(const char *name);
 
     /** create and start seperate thread */
     virtual bool run();
@@ -42,7 +42,6 @@ class IThread : public IFace {
     virtual void busyLoop() = 0;
 
  protected:
-    AttributeType config_;
     event_def loopEnable_;
     LibThreadType threadInit_;
 };

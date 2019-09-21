@@ -22,6 +22,7 @@
 
 int main(int argc, char *argv[]) {
     c_task_server_start_proc c_task_server_start;
+    c_task_clk_posedge_proc c_task_clk_posedge;
 #if defined(_WIN32) || defined(__CYGWIN__)
     HMODULE hlib1, hlib2;
 
@@ -37,6 +38,8 @@ int main(int argc, char *argv[]) {
 
     c_task_server_start = (c_task_server_start_proc)GetProcAddress(hlib2,
                             "c_task_server_start");
+    c_task_clk_posedge = (c_task_clk_posedge_proc)GetProcAddress(hlib2,
+                            "c_task_clk_posedge");
 #else
     void *hlib1, *hlib2;
     char fld[4096];
@@ -68,6 +71,8 @@ int main(int argc, char *argv[]) {
 
     c_task_server_start = (c_task_server_start_proc)dlsym(hlib2,
                             "c_task_server_start");
+    c_task_clk_posedge = (c_task_clk_posedge_proc)dlsym(hlib2,
+                            "c_task_clk_posedge");
 #endif
 
     if (!c_task_server_start) {
@@ -75,6 +80,11 @@ int main(int argc, char *argv[]) {
     } else {
         printf("Library libdpiwrapper.dll opened successfully\n");
         c_task_server_start();
+    }
+
+    sv_out_t sv_out = {0};
+    for (int i = 0; i < 10; i++) {
+        c_task_clk_posedge(&sv_out);
     }
 
 #if defined(_WIN32) || defined(__CYGWIN__)

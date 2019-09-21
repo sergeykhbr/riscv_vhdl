@@ -24,8 +24,10 @@
 class DpiServer : public IThread,
                   public ICommand {
  public:
-    explicit DpiServer(const AttributeType &config);
+    explicit DpiServer();
     virtual ~DpiServer();
+
+    void postinit(const AttributeType &config);
 
     /** ICommand */
     virtual const AttributeType &getRequest() { return request_; }
@@ -43,6 +45,7 @@ class DpiServer : public IThread,
     void message_client_connected();
 
  protected:
+    AttributeType config_;
     AttributeType listClient_;
     AttributeType request_;
 

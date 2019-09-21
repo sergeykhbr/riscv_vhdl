@@ -21,16 +21,21 @@
 #include <stdlib.h>
 #include <iostream>
 
-DpiServer::DpiServer(const AttributeType& config) : IThread("Server", config) {
+DpiServer::DpiServer() : IThread("Server") {
     hsock_ = 0;
     listClient_.make_list(0);
     request_.make_list(Req_ListSize);
     request_[Req_SourceName].make_string("DpiServer");
     LIB_event_create(&event_cmd_, "DpiServerEventCmd");
+    LIB_printf("%s", "DpiServer constructor\n");
 }
 
 DpiServer::~DpiServer() {
     LIB_event_close(&event_cmd_);
+}
+
+void DpiServer::postinit(const AttributeType &config) {
+    config_.clone(&config);
 }
 
 void DpiServer::busyLoop() {
@@ -49,6 +54,7 @@ void DpiServer::busyLoop() {
         LIB_printf("DpiServer: %s\n", "listen() failed");
         return;
     }
+    LIB_printf("DpiServer: listen(): %s\n", "ok");
 
     /** By default socket was created with Blocking mode */
     setBlockingMode(config_["BlockingMode"].to_bool());
@@ -67,6 +73,7 @@ void DpiServer::busyLoop() {
         }
         if (err == 0) {
             // Timeout
+            LIB_printf("DpiServer: %s\n", "hartbeat message");
             message_hartbeat();
             continue;
         }
@@ -74,8 +81,9 @@ void DpiServer::busyLoop() {
         client_sock = accept(hsock_, 0, 0);
 
         config_["ClientConfig"]["Index"].make_uint64(listClient_.size());
-        IThread *pclient = new DpiClient(client_sock, config_["ClientConfig"]);
-        AttributeType t1(pclient);
+        DpiClient *pclient = new DpiClient(client_sock);
+        pclient ->postinit(config_["ClientConfig"]);
+        AttributeType t1(static_cast<IThread *>(pclient));
         listClient_.add_to_list(&t1);
         pclient->run();
     }
@@ -83,8 +91,9 @@ void DpiServer::busyLoop() {
 }
 
 int DpiServer::createServerSocket() {
-    char hostName[256];
+    char hostName[1024];
     if (gethostname(hostName, sizeof(hostName)) < 0) {
+        LIB_printf("%s", "gethostname() failed\n");
         return -1;
     }
 
@@ -93,6 +102,8 @@ int DpiServer::createServerSocket() {
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_protocol = IPPROTO_TCP;
+
+    LIB_printf("gethostname() = %s\n", hostName);
 
     /**
      * Check availability of IPv4 address assigned via attribute 'hostIP'.
@@ -212,10 +223,10 @@ void DpiServer::message_hartbeat() {
     request_[Req_CmdType].make_string("HartBeat");
     request_[Req_Data].make_uint64(listClient_.size());
     dpi_put_fifo_request(static_cast<ICommand *>(this));
-    int err = LIB_event_wait_ms(&event_cmd_, 10000);
-    if (err) {
-        LIB_printf("DpiServer: %s\n", "DPI didn't respond");
-    }
+    //int err = LIB_event_wait_ms(&event_cmd_, 10000);
+    //if (err) {
+    //    LIB_printf("DpiServer: %s\n", "DPI didn't respond");
+    //}
 }
 
 void DpiServer::message_client_connected() {
@@ -223,8 +234,8 @@ void DpiServer::message_client_connected() {
     request_[Req_CmdType].make_string("ClientAdd");
     request_[Req_Data].make_int64(listClient_.size());
     dpi_put_fifo_request(static_cast<ICommand *>(this));
-    int err = LIB_event_wait_ms(&event_cmd_, 10000);
-    if (err) {
-        LIB_printf("DpiServer: %s\n", "DPI didn't respond");
-    }
+    //int err = LIB_event_wait_ms(&event_cmd_, 10000);
+    //if (err) {
+    //    LIB_printf("DpiServer: %s\n", "DPI didn't respond");
+    //}
 }

@@ -33,7 +33,7 @@ extern "C" void sv_task_process_request(const sv_in_t *r) {
         printf("Stop simulation\n");
         break;
     case REQ_TYPE_INFO:
-        printf("DPI: %s\n", r->descr);
+        printf("DPI: %s\n", r->info);
         break;
     case REQ_TYPE_MOVE_CLOCK:
         timescale += r->param1 * 5.0;

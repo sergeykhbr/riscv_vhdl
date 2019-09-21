@@ -18,9 +18,7 @@
 #include <utils.h>
 #include "ithread.h"
 
-IThread::IThread(const char *name, const AttributeType &config)
-    : IFace(IFACE_THREAD) {
-    config_ = config;
+IThread::IThread(const char *name) : IFace(IFACE_THREAD) {
     LIB_event_create(&loopEnable_, name);
     threadInit_.Handle = 0;
 }

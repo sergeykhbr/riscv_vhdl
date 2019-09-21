@@ -20,15 +20,6 @@
 
 static const int AXI4_BURST_LEN_MAX     = 4;
 
-typedef struct axi4_slave_in_t {
-    uint64_t addr;
-    uint64_t wdata[AXI4_BURST_LEN_MAX];
-    char we;        // 0 = read; 1 = write
-    char wstrb;
-    char burst;
-    char len;
-} axi4_slave_in_t;
-
 typedef struct axi4_slave_out_t {
     uint64_t rdata[AXI4_BURST_LEN_MAX];
 } axi4_slave_out_t;
@@ -48,11 +39,20 @@ static const int REQ_TYPE_MOVE_CLOCK    = 2;
 static const int REQ_TYPE_MOVE_TIME     = 3;
 static const int REQ_TYPE_AXI4          = 4;
 
+typedef struct axi4_slave_in_t {
+    uint64_t addr;
+    uint64_t wdata[AXI4_BURST_LEN_MAX];
+    char we;        // 0 = read; 1 = write
+    char wstrb;
+    char burst;
+    char len;
+} axi4_slave_in_t;
+
 typedef struct sv_in_t {
+    char *info;
     int req_type;
     int param1;
     axi4_slave_in_t slvi;
-    char descr[256];
 } sv_in_t;
 
 typedef void (*sv_task_process_request_proc)(const sv_in_t *req);
@@ -62,7 +62,8 @@ typedef struct dpi_sv_interface {
     sv_task_process_request_proc sv_task_process_request;
 } dpi_sv_interface;
 
-typedef void (*c_task_server_start_proc)();
+typedef int (*c_task_server_start_proc)();
+typedef int (*c_task_clk_posedge_proc)(const sv_out_t *d);
 
 /** Interface between clients and DPI context task */
 enum EJsonRequestList {
