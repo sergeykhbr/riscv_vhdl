@@ -33,7 +33,6 @@ ConsoleService::ConsoleService(const char *name)
     registerInterface(static_cast<IThread *>(this));
     registerInterface(static_cast<IHap *>(this));
     registerInterface(static_cast<IRawListener *>(this));
-    registerInterface(static_cast<IClockListener *>(this));
     registerAttribute("Enable", &isEnable_);
     registerAttribute("StepQueue", &stepQueue_);
     registerAttribute("AutoComplete", &autoComplete_);
@@ -53,18 +52,12 @@ ConsoleService::ConsoleService(const char *name)
     inPort_.make_string("");
     defaultLogFile_.make_string("");
 
-    iclk_ = NULL;
     isrc_ = NULL;
     cmdSizePrev_ = 0;
 
     cursor_.make_list(2);
     cursor_[0u].make_int64(0);
     cursor_[1].make_int64(0);
-
-
-#ifdef DBG_ZEPHYR
-    tst_cnt_ = 0;
-#endif
 
 #if defined(_WIN32) || defined(__CYGWIN__)
 #else
@@ -109,9 +102,6 @@ void ConsoleService::postinitService() {
         }
     }
 
-    iclk_ = static_cast<IClock *>
-	    (RISCV_get_service_iface(stepQueue_.to_string(), IFACE_CLOCK));
-
     iautocmd_ = static_cast<IAutoComplete *>(
             RISCV_get_service_iface(autoComplete_.to_string(), 
                                     IFACE_AUTO_COMPLETE));
@@ -135,15 +125,6 @@ void ConsoleService::postinitService() {
         isrc_ = static_cast<ISourceCode *>(
                     iserv->getInterface(IFACE_SOURCE_CODE));
     }
-
-#ifdef DBG_ZEPHYR
-    if (iclk_) {
-	    iclk_->registerStepCallback(static_cast<IClockListener *>(this), 550000);
-	    iclk_->registerStepCallback(static_cast<IClockListener *>(this), 12000000);
-	    iclk_->registerStepCallback(static_cast<IClockListener *>(this), 20000000);//6000000);
-	    iclk_->registerStepCallback(static_cast<IClockListener *>(this), 35000000);
-	}
-#endif
 }
 
 void ConsoleService::predeleteService() {
@@ -159,36 +140,6 @@ void ConsoleService::predeleteService() {
         }
     }
     RISCV_remove_default_output(static_cast<IRawListener *>(this));
-}
-
-void ConsoleService::stepCallback(uint64_t t) {
-#ifdef DBG_ZEPHYR
-    if (iclk_ == NULL) {
-        return;
-    }
-    IService *uart = static_cast<IService *>(RISCV_get_service("uart0"));
-    if (uart) {
-        ISerial *iserial = static_cast<ISerial *>(
-                    uart->getInterface(IFACE_SERIAL));
-        switch (tst_cnt_) {
-        case 0:
-            //iserial->writeData("ping", 4);
-            iserial->writeData("dhry", 4);
-            break;
-        case 1:
-            iserial->writeData("ticks", 5);
-            break;
-        case 2:
-            iserial->writeData("help", 4);
-            break;
-        case 3:
-            iserial->writeData("pnp", 4);
-            break;
-        default:;
-        }
-        tst_cnt_++;
-    }
-#endif
 }
 
 void ConsoleService::hapTriggered(IFace *isrc, EHapType type, 

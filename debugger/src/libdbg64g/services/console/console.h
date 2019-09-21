@@ -22,21 +22,18 @@
 #include "ihap.h"
 #include "coreservices/ithread.h"
 #include "coreservices/iserial.h"
-#include "coreservices/iclock.h"
 #include "coreservices/iautocomplete.h"
 #include "coreservices/icmdexec.h"
 #include "coreservices/isrccode.h"
 #include "coreservices/irawlistener.h"
 #include <string>
-//#define DBG_ZEPHYR
 
 namespace debugger {
 
 class ConsoleService : public IService,
                        public IThread,
                        public IHap,
-                       public IRawListener,
-                       public IClockListener {
+                       public IRawListener {
 public:
     explicit ConsoleService(const char *name);
     virtual ~ConsoleService();
@@ -50,9 +47,6 @@ public:
 
     /** IRawListener (default stream) */
     virtual void updateData(const char *buf, int buflen);
-
-    /** IClockListener */
-    virtual void stepCallback(uint64_t t);
 
 protected:
     /** IThread interface */
@@ -125,7 +119,6 @@ private:
 
     event_def config_done_;
     mutex_def mutexConsoleOutput_;
-    IClock *iclk_;
     IAutoComplete *iautocmd_;
     ICmdExecutor *iexec_;
     ISourceCode *isrc_;
@@ -137,9 +130,6 @@ private:
     unsigned cmdSizePrev_;  // used to clear symbols if string shorter 
                             // than previous
 
-#ifdef DBG_ZEPHYR
-    int tst_cnt_;
-#endif
 #if defined(_WIN32) || defined(__CYGWIN__)
 #else
     struct termios original_settings_;
