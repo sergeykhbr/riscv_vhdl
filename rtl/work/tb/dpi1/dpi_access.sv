@@ -14,94 +14,143 @@
  *  limitations under the License.
  */
 
+import pkg_amba4::*;
+import pkg_dpi::*;
+
 module virt_dbg #(
     parameter realtime CLK_PERIOD = 5.0ns
 )(
+    input nrst,
     input clk,
-    input [31:0] clkcnt
+    input [31:0] clkcnt,
+    output axi4_slave_in_type o_slvi,
+    input axi4_slave_out_type i_slvo
 );
 
-parameter int AXI4_BURST_LEN_MAX = 8;
-
-typedef struct {
-    longint rdata[AXI4_BURST_LEN_MAX];
-} axi4_slave_out_t;
-
-typedef struct {
-    realtime tm;
-    int clkcnt;
-    int req_ready;
-    int resp_valid;
-    axi4_slave_out_t slvo;
-    int irq_request;
-} sv_out_t;
-
-const int REQ_TYPE_SERVER_ERR = -2;
-const int REQ_TYPE_STOP_SIM   = -1;
-const int REQ_TYPE_INFO       = 1;
-const int REQ_TYPE_MOVE_CLOCK = 2;
-const int REQ_TYPE_MOVE_TIME  = 3;
-const int REQ_TYPE_AXI4       = 4;
-
-typedef struct {
-    longint addr;
-    longint wdata[AXI4_BURST_LEN_MAX];
-    byte we;    // 0=read; 1=write
-    byte wstrb;
-    byte burst;
-    byte len;
-} axi4_slave_in_t;
-
-typedef struct {
-    int req_valid;
-    int req_type;
-    int param1;
-    axi4_slave_in_t slvi;
-} sv_in_t;
-
-enum {
+typedef enum {
     Bus_Idle,
-    Bus_WaitResponse
-} estate;
+    Bus_ar,
+    Bus_r,
+    Bus_aw,
+    Bus_w,
+    Bus_b
+} bus_state_t;
+
+typedef struct packed {
+    bus_state_t estate;
+    bit [63:0] w_data;
+    bit [7:0] w_strb;
+} registers_t;
+
+registers_t v, r;
+
 sv_in_t sv_in;
 sv_out_t sv_out;
-
-import "DPI-C" context task c_task_server_start();
-import "DPI-C" context task c_task_clk_posedge(input sv_out_t sv2c, output sv_in_t c2sv);
-export "DPI-C" function sv_func_info;
+axi4_slave_in_type vslvi;
 
 initial begin
     c_task_server_start();
 end
 
-function void sv_func_info(input string info);
-begin
-    $display("SV: %s", info);
-end
-endfunction: sv_func_info
+always_comb begin
+    v = r;
 
-always @(posedge clk) begin
-    sv_out.tm = $time;
-    sv_out.clkcnt = clkcnt;
     sv_out.slvo.rdata[0] = 0;
     sv_out.req_ready = 0;
     sv_out.resp_valid = 0;
 
-    case (estate)
+    vslvi.aw_valid = 1'b0;
+    vslvi.aw_bits = META_NONE;
+    vslvi.w_valid = 1'b0;
+    vslvi.w_data = 0;
+    vslvi.w_last = 1'b0;
+    vslvi.w_strb = 0;
+    vslvi.ar_valid = 1'b0;
+
+
+    case (r.estate)
     Bus_Idle: begin
-        sv_out.req_ready = 1;
         if (sv_in.req_type == REQ_TYPE_AXI4 && sv_in.req_valid == 1) begin
-            estate = Bus_WaitResponse;
+            if (sv_in.slvi.we == 1) begin
+                vslvi.aw_valid = 1'b1;
+                vslvi.aw_bits.addr = sv_in.slvi.addr;
+                if (i_slvo.aw_ready == 1) begin
+                    v.w_data = sv_in.slvi.wdata[0];
+                    v.w_strb = sv_in.slvi.wstrb;
+                    v.estate = Bus_w;
+                    sv_out.req_ready = 1;
+                end else begin
+                    v.estate = Bus_aw;
+                end
+            end else begin
+                vslvi.ar_valid = 1'b1;
+                vslvi.ar_bits.addr = sv_in.slvi.addr;
+                if (i_slvo.ar_ready == 1) begin
+                    v.estate = Bus_r;
+                    sv_out.req_ready = 1;
+                end else begin
+                    v.estate = Bus_ar;
+                end
+            end
         end
     end
-    Bus_WaitResponse: begin
-        sv_out.resp_valid = 1;
-        sv_out.slvo.rdata[0] = 'hfeedfacecafef00d;
-        estate = Bus_Idle;
+    Bus_ar: begin
+        vslvi.ar_valid = 1'b1;
+        vslvi.ar_bits.addr = sv_in.slvi.addr;
+        if (i_slvo.ar_ready == 1) begin
+            v.estate = Bus_r;
+            sv_out.req_ready = 1;
+        end
+    end
+    Bus_r: begin
+        if (i_slvo.r_valid == 1) begin
+            sv_out.resp_valid = 1;
+            sv_out.slvo.rdata[0] = i_slvo.r_data;
+            v.estate = Bus_Idle;
+        end
+    end
+    Bus_aw: begin
+        vslvi.aw_valid = 1'b1;
+        vslvi.aw_bits.addr = sv_in.slvi.addr;
+        v.w_data = sv_in.slvi.wdata[0];
+        v.w_strb = sv_in.slvi.wstrb;
+        if (i_slvo.aw_ready == 1) begin
+            v.estate = Bus_w;
+            sv_out.req_ready = 1;
+        end
+    end
+    Bus_w: begin
+        vslvi.w_valid = 1'b1;
+        vslvi.w_data = r.w_data;
+        vslvi.w_strb = r.w_strb;
+        if (i_slvo.w_ready == 1) begin
+            v.estate = Bus_b;
+        end
+    end
+    Bus_b: begin
+        if (i_slvo.b_valid == 1) begin
+            sv_out.resp_valid = 1;
+            v.estate = Bus_Idle;
+        end
     end
     default:
-        $display("SV: undefined state: %0d", estate);
+        $display("SV: undefined state: %0d", r.estate);
     endcase
+
+    if (nrst == 0) begin
+        v.estate = Bus_Idle;
+        v.w_data = 0;
+        v.w_strb = 0;
+    end
+
+    o_slvi <= vslvi;
+end
+
+always_ff @(posedge clk) begin
+    r <= v;
+    sv_out.tm <= $time;
+    sv_out.clkcnt <= clkcnt;
+
     c_task_clk_posedge(sv_out, sv_in);
 end
 

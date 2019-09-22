@@ -7,16 +7,19 @@
       > cd libdpiwrapped/makefiles
       > makefile.bat (on windows + mingw)
       > make (on linux)
+
+3. Define LD_LIBRARY_PATH to run test application.
+      > export LD_LIBRARY_PATH=/home/user/riscv_vhdl/libdpiwrapper/linuxbuild/bin
+      > cd ../linuxbuild/bin
+      > ./test
  
-3. Edit file "questasim64_10.4c/modelsim.ini" variable:
+4. Edit file "questasim64_10.4c/modelsim.ini" variable:
      DpiCppPath = $MODEL_TECH/../gcc-4.5.0-mingw64/bin/gcc
 
-4. Run simulation with linked library (Questa command)
+5. Run simulation with linked library (Questa command)
      vsim -novopt -c -sv_lib ../../../libdpiwrapper/linuxbuild/bin/libdpiwrapper system_top
 
-5. Increase simulation length (default 20 us)
-
-6. Start Simulation
+6. Start -all Simulation
 
 7. See 'dpilib.log' in the project directory for the additional debug information
-     rtl/prj/questadpi1/dpilib.log (default on windows)
+     rtl/prj/questadpi1/dpilib.log (default on windows and linux)
