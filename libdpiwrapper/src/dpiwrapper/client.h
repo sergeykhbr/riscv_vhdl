@@ -39,11 +39,14 @@ class DpiClient : public IThread,
  protected:
     void processRequest();
     void closeSocket();
+    void sendBuffer(const char *buf, unsigned size);
 
  private:
     AttributeType config_;
     AttributeType request_;
     AttributeType response_;
+    AttributeType keepAlive_;
+    AttributeType wrongFormat_;
 
     socket_def hsock_;
     event_def event_cmd_;

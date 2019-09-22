@@ -49,8 +49,9 @@ void IThread::runThread(void* arg) {
     th->exitEvent();
 }
 
-void IThread::registerThreadListener(const IThreadListener *l) {
-    AttributeType t1(l);
+void IThread::registerThreadListener(IThreadListener *l) {
+    AttributeType t1;
+    t1.make_iface(l);
     threadListeners_.add_to_list(&t1);
 }
 

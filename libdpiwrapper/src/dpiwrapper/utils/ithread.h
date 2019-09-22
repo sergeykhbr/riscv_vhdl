@@ -44,7 +44,7 @@ class IThread : public IFace {
     /** check thread status */
     virtual bool isEnabled() { return loopEnable_.state; }
 
-    virtual void registerThreadListener(const  IThreadListener *l);
+    virtual void registerThreadListener(IThreadListener *l);
 
  protected:
     static void runThread(void *arg);

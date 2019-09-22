@@ -62,9 +62,9 @@ extern "C" int c_task_server_start() {
     // TODO: external JSON configuration
     srv_config["BlockingMode"].make_boolean(true);
     srv_config["HostIP"].make_string("");
-    srv_config["HostPort"].make_uint64(8687);
+    srv_config["HostPort"].make_uint64(8689);
     srv_config["ClientConfig"].make_dict();
-    srv_config["ClientConfig"]["Timeout"].make_int64(500);
+    srv_config["ClientConfig"]["Timeout"].make_int64(1000);
 
     if (dpi_load_interface(&dpi_)) {
         return -1;
@@ -121,9 +121,8 @@ extern "C" int c_task_clk_posedge(const sv_out_t *sv2c, sv_in_t *c2sv) {
                 // Do nothing
             }
         } else {
-            LIB_sprintf(descr_, sizeof(descr_), "DpiServer: %s %s",
-                tcpreq_[Req_CmdType].is_equal("ClientAdd"),
-                tcpreq_[Req_Data].to_string());
+            LIB_sprintf(descr_, sizeof(descr_), "DpiServer: %s\n",
+                tcpreq_[Req_CmdType].to_string());
             dpi_.sv_func_info(descr_);
         }
         tcpresp_[Resp_CmdType].make_string(tcpreq_[Req_CmdType].to_string());

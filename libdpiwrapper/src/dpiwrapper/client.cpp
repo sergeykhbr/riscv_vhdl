@@ -23,6 +23,8 @@ DpiClient::DpiClient(socket_def skt) : IThread("Client") {
     LIB_event_create(&event_cmd_,"dpi_server_event");
     cmdcnt_ = 0;
     hsock_ = skt;
+    keepAlive_.make_string("['DpiClient','KeepAlive']");
+    wrongFormat_.make_string("['DpiClient','WrongFormat']");
 }
 
 DpiClient::~DpiClient() {
@@ -36,6 +38,7 @@ void DpiClient::postinit(const AttributeType &config) {
 void DpiClient::busyLoop() {
     int rxbytes;
     int sockerr;
+    int reuse = 1;
     addr_size_t sockerr_len = sizeof(sockerr);
 
     struct timeval tv;
@@ -53,7 +56,6 @@ void DpiClient::busyLoop() {
     setsockopt(hsock_, SOL_SOCKET, SO_RCVTIMEO,
         reinterpret_cast<char*>(&tv), sizeof(struct timeval));
 
-    int reuse = 1;
     if (setsockopt(hsock_, SOL_SOCKET, SO_REUSEADDR,
         reinterpret_cast<char*>(&reuse), sizeof(int)) < 0) {
         LIB_printf("DpiClien%d: setsockopt(SO_REUSEADDR) failed\n",
@@ -74,7 +76,7 @@ void DpiClient::busyLoop() {
         }
         if (rxbytes < 0) {
             // Timeout:
-            continue;
+            sendBuffer(keepAlive_.to_string(), keepAlive_.size() + 1);
         }
 
         for (int i = 0; i < rxbytes; i++) {
@@ -91,28 +93,29 @@ void DpiClient::busyLoop() {
 
 void DpiClient::processRequest() {
     request_.from_config(cmdbuf_);
-    if (!request_.is_dict()) {
+    if (!request_.is_list()) {
         LIB_printf("Wrong message: %s\n", cmdbuf_);
+        sendBuffer(wrongFormat_.to_string(), wrongFormat_.size() + 1);
         return;
     }
 
     LIB_event_clear(&event_cmd_);
     dpi_put_fifo_request(static_cast<ICommand *>(this));
-    int err = LIB_event_wait_ms(&event_cmd_, 10000);
-    if (err) {
-        LIB_printf("DPI didn't respond on: %s\n", cmdbuf_);
-        response_.make_string("No DPI response");
-    }
+    LIB_event_wait(&event_cmd_);
 
-    int total = response_.size() + 1;
-    const char *ptx = response_.to_string();
+    sendBuffer(response_.to_string(), response_.size() + 1);
+}
+
+void DpiClient::sendBuffer(const char *buf, unsigned size) {
+    const char *ptx= buf;
+    int total = static_cast<int>(size);
     int txbytes;
     while (total > 0) {
         txbytes = send(hsock_, ptx, total, 0);
-        if (txbytes == 0) {
-            LIB_printf("Send error: txcnt=%d", txbytes);
+        if (txbytes <= 0) {
+            LIB_printf("KeepAlive error: txcnt=%d", txbytes);
             loopEnable_.state = false;
-            return;
+            break;
         }
         total -= txbytes;
         ptx += txbytes;
