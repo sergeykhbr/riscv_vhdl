@@ -67,6 +67,8 @@
     </ClCompile>
     <Link>
       <ModuleDefinitionFile>$(ProjectDir)exportmap.def</ModuleDefinitionFile>
+      <AdditionalLibraryDirectories>$(SolutionDir)\..\win64build\$(Configuration)\</AdditionalLibraryDirectories>
+      <AdditionalDependencies>libdpiwrapper.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -84,10 +86,8 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <ModuleDefinitionFile>$(ProjectDir)exportmap.def</ModuleDefinitionFile>
-      <AdditionalDependencies>
-      </AdditionalDependencies>
-      <AdditionalLibraryDirectories>
-      </AdditionalLibraryDirectories>
+      <AdditionalDependencies>libdpiwrapper.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)\..\win64build\$(Configuration)\</AdditionalLibraryDirectories>
     </Link>
     <ProjectReference>
       <LinkLibraryDependencies>true</LinkLibraryDependencies>

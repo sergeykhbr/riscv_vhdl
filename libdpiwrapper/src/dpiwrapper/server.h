@@ -20,14 +20,19 @@
 #include <attribute.h>
 #include <icommand.h>
 #include "c_dpi.h"
+#include "client.h"
 
 class DpiServer : public IThread,
+                  public IThreadListener,
                   public ICommand {
  public:
     explicit DpiServer();
     virtual ~DpiServer();
 
     void postinit(const AttributeType &config);
+
+    /** IThreadListener */
+    virtual void threadExit(IFace *iface);
 
     /** ICommand */
     virtual const AttributeType &getRequest() { return request_; }
@@ -41,14 +46,18 @@ class DpiServer : public IThread,
     void closeServerSocket();
     bool setBlockingMode(bool mode);
 
+    DpiClient *addClient(socket_def skt);
+
     void message_hartbeat();
     void message_client_connected();
+    void message_client_disconnected();
 
  protected:
     AttributeType config_;
     AttributeType listClient_;
     AttributeType request_;
 
+    mutex_def mutex_clients_;
     event_def event_cmd_;
 
     struct sockaddr_in sockaddr_ipv4_;

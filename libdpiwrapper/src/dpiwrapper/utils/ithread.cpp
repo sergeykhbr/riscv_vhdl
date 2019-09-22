@@ -21,6 +21,7 @@
 IThread::IThread(const char *name) : IFace(IFACE_THREAD) {
     LIB_event_create(&loopEnable_, name);
     threadInit_.Handle = 0;
+    threadListeners_.make_list(0);
 }
 
 bool IThread::run() {
@@ -43,11 +44,25 @@ void IThread::stop() {
 }
 
 void IThread::runThread(void* arg) {
-    reinterpret_cast<IThread *>(arg)->busyLoop();
+    IThread *th = reinterpret_cast<IThread *>(arg);
+    th->busyLoop();
+    th->exitEvent();
+}
+
+void IThread::registerThreadListener(const IThreadListener *l) {
+    AttributeType t1(l);
+    threadListeners_.add_to_list(&t1);
+}
+
+void IThread::exitEvent() {
+    IThreadListener *l;
+    for (unsigned i = 0; i < threadListeners_.size(); i++) {
+        l = static_cast<IThreadListener *>(threadListeners_[i].to_iface());
+        l->threadExit(static_cast<IThread *>(this));
+    }
 #if defined(_WIN32) || defined(__CYGWIN__)
     _endthreadex(0);
 #else
     pthread_exit(0);
 #endif
 }
-

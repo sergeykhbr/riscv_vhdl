@@ -16,7 +16,6 @@
 
 #include "utils.h"
 #include "server.h"
-#include "client.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
@@ -26,12 +25,14 @@ DpiServer::DpiServer() : IThread("Server") {
     listClient_.make_list(0);
     request_.make_list(Req_ListSize);
     request_[Req_SourceName].make_string("DpiServer");
+    LIB_mutex_init(&mutex_clients_);
     LIB_event_create(&event_cmd_, "DpiServerEventCmd");
     LIB_printf("%s", "DpiServer constructor\n");
 }
 
 DpiServer::~DpiServer() {
     LIB_event_close(&event_cmd_);
+    LIB_mutex_destroy(&mutex_clients_);
 }
 
 void DpiServer::postinit(const AttributeType &config) {
@@ -73,21 +74,42 @@ void DpiServer::busyLoop() {
         }
         if (err == 0) {
             // Timeout
-            LIB_printf("DpiServer: %s\n", "hartbeat message");
+            LIB_printf("DpiServer: %s\n", "generate hartbeat message");
             message_hartbeat();
             continue;
         }
 
         client_sock = accept(hsock_, 0, 0);
-
-        config_["ClientConfig"]["Index"].make_uint64(listClient_.size());
-        DpiClient *pclient = new DpiClient(client_sock);
-        pclient ->postinit(config_["ClientConfig"]);
-        AttributeType t1(static_cast<IThread *>(pclient));
-        listClient_.add_to_list(&t1);
-        pclient->run();
+        addClient(client_sock)->run();
     }
     closeServerSocket();
+}
+
+DpiClient *DpiServer::addClient(socket_def skt) {
+    DpiClient *pclient = new DpiClient(skt);
+    pclient ->postinit(config_["ClientConfig"]);
+    pclient->registerThreadListener(static_cast<IThreadListener *>(this));
+
+    LIB_mutex_lock(&mutex_clients_);
+    AttributeType t1(static_cast<IThread *>(pclient));
+    listClient_.add_to_list(&t1);
+    LIB_mutex_unlock(&mutex_clients_);
+
+    message_client_connected();
+    return pclient;
+}
+
+void DpiServer::threadExit(IFace *iface) {
+    LIB_mutex_lock(&mutex_clients_);
+    for (unsigned i = 0; i < listClient_.size(); i++) {
+        if (iface == listClient_[i].to_iface()) {
+            listClient_.remove_from_list(i);
+            break;
+        }
+    }
+    LIB_mutex_unlock(&mutex_clients_);
+
+    message_client_disconnected();
 }
 
 int DpiServer::createServerSocket() {
@@ -223,19 +245,25 @@ void DpiServer::message_hartbeat() {
     request_[Req_CmdType].make_string("HartBeat");
     request_[Req_Data].make_uint64(listClient_.size());
     dpi_put_fifo_request(static_cast<ICommand *>(this));
-    //int err = LIB_event_wait_ms(&event_cmd_, 10000);
-    //if (err) {
-    //    LIB_printf("DpiServer: %s\n", "DPI didn't respond");
-    //}
+    LIB_event_wait(&event_cmd_);
 }
 
 void DpiServer::message_client_connected() {
+    LIB_printf("DpiServer: %s\n", "add_client message");
+
     LIB_event_clear(&event_cmd_);
     request_[Req_CmdType].make_string("ClientAdd");
     request_[Req_Data].make_int64(listClient_.size());
     dpi_put_fifo_request(static_cast<ICommand *>(this));
-    //int err = LIB_event_wait_ms(&event_cmd_, 10000);
-    //if (err) {
-    //    LIB_printf("DpiServer: %s\n", "DPI didn't respond");
-    //}
+    LIB_event_wait(&event_cmd_);
+}
+
+void DpiServer::message_client_disconnected() {
+    LIB_printf("DpiServer: %s\n", "remove_client message");
+
+    LIB_event_clear(&event_cmd_);
+    request_[Req_CmdType].make_string("ClientRemove");
+    request_[Req_Data].make_int64(listClient_.size());
+    dpi_put_fifo_request(static_cast<ICommand *>(this));
+    LIB_event_wait(&event_cmd_);
 }

@@ -23,6 +23,7 @@
 template<class T> class TFifo {
  public:
     explicit TFifo(int size) {
+        LIB_mutex_init(&mutex_);
         LIB_event_create(&event_, "tfifo");
         buf_ = new T[size];
         size_ = size;
@@ -32,6 +33,7 @@ template<class T> class TFifo {
     ~TFifo() {
         delete [] buf_;
         LIB_event_close(&event_);
+        LIB_mutex_destroy(&mutex_);
     }
 
     /** Thread safe method of the callbacks registration */
@@ -40,10 +42,12 @@ template<class T> class TFifo {
             LIB_event_set(&event_);
             return;
         }
+        LIB_mutex_lock(&mutex_);
         buf_[wcnt_] = *item;
         if (++wcnt_ >= size_) {
             wcnt_ = 0;
         }
+        LIB_mutex_unlock(&mutex_);
         LIB_event_set(&event_);
     }
 
@@ -75,6 +79,7 @@ template<class T> class TFifo {
     }
 
  protected:
+    mutex_def mutex_;
     event_def event_;
     T *buf_;
     int wcnt_;

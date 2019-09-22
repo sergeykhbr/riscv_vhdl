@@ -19,7 +19,7 @@ include util.mak
 CC=gcc
 CPP=gcc
 CFLAGS=-g -c -Wall -Werror -fPIC -pthread
-LDFLAGS= -shared -pthread
+LDFLAGS= -shared -pthread -L$(ELF_DIR)
 INCL_KEY=-I
 DIR_KEY=-B
 
@@ -41,6 +41,7 @@ SOURCES = \
 	virt_dbg_sv
 
 LIBS = \
+	dpiwrapper \
 	m \
 	stdc++ \
 	dl

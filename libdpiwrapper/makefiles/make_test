@@ -41,6 +41,8 @@ SOURCES = \
 	main
 
 LIBS = \
+	dpiwrapper \
+	sv_stub \
 	m \
 	stdc++ \
 	dl

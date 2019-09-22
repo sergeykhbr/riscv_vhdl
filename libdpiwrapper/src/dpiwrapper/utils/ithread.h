@@ -20,6 +20,15 @@
 #include "iface.h"
 #include "attribute.h"
 
+static const char *const IFACE_THREAD_LISTENER = "IThreadListener";
+
+class IThreadListener : public IFace {
+ public:
+    IThreadListener() : IFace(IFACE_THREAD_LISTENER) {}
+
+    virtual void threadExit(IFace *iface) = 0;
+};
+
 static const char *const IFACE_THREAD = "IThread";
 
 class IThread : public IFace {
@@ -35,13 +44,17 @@ class IThread : public IFace {
     /** check thread status */
     virtual bool isEnabled() { return loopEnable_.state; }
 
+    virtual void registerThreadListener(const  IThreadListener *l);
+
  protected:
     static void runThread(void *arg);
 
     /** working cycle function */
     virtual void busyLoop() = 0;
+    virtual void exitEvent();
 
  protected:
+    AttributeType threadListeners_;
     event_def loopEnable_;
     LibThreadType threadInit_;
 };

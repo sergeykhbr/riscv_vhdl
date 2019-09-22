@@ -30,7 +30,10 @@ typedef struct {
 typedef struct {
     realtime tm;
     int clkcnt;
+    int req_ready;
+    int resp_valid;
     axi4_slave_out_t slvo;
+    int irq_request;
 } sv_out_t;
 
 const int REQ_TYPE_SERVER_ERR = -2;
@@ -50,79 +53,56 @@ typedef struct {
 } axi4_slave_in_t;
 
 typedef struct {
-    string info;
+    int req_valid;
     int req_type;
     int param1;
     axi4_slave_in_t slvi;
 } sv_in_t;
 
+enum {
+    Bus_Idle,
+    Bus_WaitResponse
+} estate;
+sv_in_t sv_in;
 sv_out_t sv_out;
 
 import "DPI-C" context task c_task_server_start();
-import "DPI-C" context task c_task_clk_posedge(input sv_out_t d);
-export "DPI-C" task     sv_task_process_request;
-export "DPI-C" function sv_func_get_data;
+import "DPI-C" context task c_task_clk_posedge(input sv_out_t sv2c, output sv_in_t c2sv);
+export "DPI-C" function sv_func_info;
 
 initial begin
     c_task_server_start();
 end
 
-/*
-function string bytearr2string(input arr);
- string str1;
-  str1 = {
-       $sformatf("%h",arr),
-         }
-  return(str1);
-endfunction
-*/
-function void sv_func_get_data(output sv_out_t d);
+function void sv_func_info(input string info);
 begin
-    d.tm = $time;
-    d.clkcnt = clkcnt;
+    $display("SV: %s", info);
 end
-endfunction: sv_func_get_data
-
-task sv_task_process_request(input sv_in_t r);
-   int i;
-string str1;
-begin
-    case (r.req_type)
-    REQ_TYPE_SERVER_ERR: begin
-        $display("SV: server error");
-        $stop(0);
-    end
-    REQ_TYPE_STOP_SIM: begin
-        $display("SV: simulation end");
-        $stop(0);
-    end
-    REQ_TYPE_INFO: begin
-        $display("SV: %s", r.info);
-    end
-    REQ_TYPE_MOVE_CLOCK: begin
-        i = 0;
-        do begin
-             #CLK_PERIOD
-             i = i + 1;
-        end while (i < r.param1);
-    end
-//    REQ_TYPE_MOVE_TIME: begin
-//        do begin
-//             #CLK_PERIOD
-//        end while (r.param1 < $time);
-//    end
-    default:
-        $display("SV: unsupported request: %0d", r.req_type);
-    endcase
-
-end
-endtask: sv_task_process_request
+endfunction: sv_func_info
 
 always @(posedge clk) begin
-    //sv_func_get_data(sv_out);
     sv_out.tm = $time;
     sv_out.clkcnt = clkcnt;
-    c_task_clk_posedge(sv_out);
+    sv_out.slvo.rdata[0] = 0;
+    sv_out.req_ready = 0;
+    sv_out.resp_valid = 0;
+
+    case (estate)
+    Bus_Idle: begin
+        sv_out.req_ready = 1;
+        if (sv_in.req_type == REQ_TYPE_AXI4 && sv_in.req_valid == 1) begin
+            estate = Bus_WaitResponse;
+        end
+    end
+    Bus_WaitResponse: begin
+        sv_out.resp_valid = 1;
+        sv_out.slvo.rdata[0] = 'hfeedfacecafef00d;
+        estate = Bus_Idle;
+    end
+    default:
+        $display("SV: undefined state: %0d", estate);
+    endcase
+    c_task_clk_posedge(sv_out, sv_in);
 end
 
 
