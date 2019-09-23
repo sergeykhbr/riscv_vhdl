@@ -100,7 +100,7 @@ extern "C" int c_task_clk_posedge(const sv_out_t *sv2c, sv_in_t *c2sv) {
         tcpreq_ = isrc_->getRequest();
         tcpresp_.make_list(Resp_ListSize);
 
-        if (!tcpreq_.is_list() || tcpreq_.size() < Req_ListSize) {
+        if (!tcpreq_.is_list() || tcpreq_.size() < Req_Data) {
             tcpresp_[Resp_CmdType].make_string("Error");
             tcpresp_[Resp_Data].make_string("unsupported message format");
             isrc_->setResponse(tcpresp_);
@@ -138,7 +138,7 @@ extern "C" int c_task_clk_posedge(const sv_out_t *sv2c, sv_in_t *c2sv) {
     if (!tcpreq_[Req_CmdType].is_equal("AXI4")
         && !tcpreq_[Req_CmdType].is_equal("HartBeat")) {
         tcpresp_[Resp_CmdType].make_string("Error");
-        tcpresp_[Resp_Data].make_string("unsupported command type");
+        tcpresp_[Resp_Data].make_string("wrong command type");
         isrc_->setResponse(tcpresp_);
         return 0;
     }

@@ -46,25 +46,12 @@ end
 
 always_comb begin
     v = r;
-
     v = r.clkcnt + 1;
-    v.r_valid = slvi.ar_valid;
-    v.r_data = 0;
-    if (slvi.ar_valid == 1) begin
-        v.r_data = 'hfeedfacecafef00d;
-    end
 
     if (nrst == 0) begin
-        v.r_valid = 1'b0;
-        v.r_data = 0;
         v.clkcnt = 0;
     end
 end
-
-assign slvo.ar_ready = 1'b1;
-assign slvo.aw_ready = 1'b1;
-assign slvo.r_valid = r.r_valid;
-assign slvo.r_data = r.r_data;
 
 virt_dbg virt_dbg_m(
     .nrst(nrst),
@@ -72,6 +59,18 @@ virt_dbg virt_dbg_m(
     .clkcnt(r.clkcnt),
     .o_slvi(slvi),
     .i_slvo(slvo)
+);
+
+axi4_rom #(
+    .abits(15),
+    .init_file("../../../examples/bootrom_tests/linuxbuild/bin/bootrom_tests.hex")
+)
+axi_rom_m (
+    .nrst(nrst),
+    .clk(clk),
+    //.cfg(cfg),
+    .i(slvi),
+    .o(slvo)
 );
 
 always_ff @ (posedge clk) begin

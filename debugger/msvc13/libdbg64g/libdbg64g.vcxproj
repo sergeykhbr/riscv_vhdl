@@ -129,6 +129,7 @@
     <ClCompile Include="..\..\src\libdbg64g\services\mem\memlut.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\mem\memsim.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\mem\rmemsim.cpp" />
+    <ClCompile Include="..\..\src\libdbg64g\services\remote\dpiclient.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\remote\tcpclient.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\remote\tcpcmd.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\remote\tcpserver.cpp" />
@@ -149,6 +150,7 @@
     <ClInclude Include="..\..\src\common\coreservices\icpuriscv.h" />
     <ClInclude Include="..\..\src\common\coreservices\icpu_hc08.h" />
     <ClInclude Include="..\..\src\common\coreservices\idisplay.h" />
+    <ClInclude Include="..\..\src\common\coreservices\idpi.h" />
     <ClInclude Include="..\..\src\common\coreservices\idsugen.h" />
     <ClInclude Include="..\..\src\common\coreservices\ielfreader.h" />
     <ClInclude Include="..\..\src\common\coreservices\ii2c.h" />
@@ -212,6 +214,7 @@
     <ClInclude Include="..\..\src\libdbg64g\services\mem\memlut.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\mem\memsim.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\mem\rmemsim.h" />
+    <ClInclude Include="..\..\src\libdbg64g\services\remote\dpiclient.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\remote\tcpclient.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\remote\tcpcmd.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\remote\tcpserver.h" />

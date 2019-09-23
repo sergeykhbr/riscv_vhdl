@@ -182,6 +182,9 @@
     <ClCompile Include="..\..\src\libdbg64g\services\exec\cmd\cmd_cpucontext.cpp">
       <Filter>Source Files\services\exec\cmd</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\libdbg64g\services\remote\dpiclient.cpp">
+      <Filter>Source Files\services\remote</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\attribute.h">
@@ -425,6 +428,12 @@
       <Filter>Source Files\services\exec\cmd</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\common\coreservices\icoveragetracker.h">
+      <Filter>Source Files\common\coreservices</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\libdbg64g\services\remote\dpiclient.h">
+      <Filter>Source Files\services\remote</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\coreservices\idpi.h">
       <Filter>Source Files\common\coreservices</Filter>
     </ClInclude>
   </ItemGroup>

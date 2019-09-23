@@ -22,7 +22,7 @@ p.connect()
 
 i = 0
 while True:
-    resp = p.req_axi4({"addr":0x400 + 8*i, "we":0})
+    resp = p.req_axi4({"addr":0x0 + 2*i, "we":0})
     print "resp={0}".format(resp)
     i = i + 1
     #sleep(0.5)

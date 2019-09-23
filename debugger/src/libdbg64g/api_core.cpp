@@ -27,6 +27,7 @@
 #include "services/mem/rmemsim.h"
 #include "services/remote/tcpclient.h"
 #include "services/remote/tcpserver.h"
+#include "services/remote/dpiclient.h"
 #include "services/comport/comport.h"
 #include "services/console/autocompleter.h"
 #include "services/console/console.h"
@@ -73,6 +74,7 @@ extern "C" int RISCV_init() {
     REGISTER_CLASS_IDX(ConsoleService, 11);
     REGISTER_CLASS_IDX(EdclService, 12);
     REGISTER_CLASS_IDX(RegMemorySim, 13);
+    REGISTER_CLASS_IDX(DpiClient, 14);
 
     pcore_->load_plugins();
     return 0;
