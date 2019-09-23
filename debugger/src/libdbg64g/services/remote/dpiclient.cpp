@@ -15,13 +15,63 @@
  */
 
 #include "dpiclient.h"
+#include <string.h>
 
 namespace debugger {
 
-DpiClient::DpiClient(const char *name) : IService(name) {
+enum EDpiResponseList {
+    DpiResp_CmdType,
+    DpiResp_Data,
+    DpiResp_ListSize
+};
+
+
+CmdDpi::CmdDpi(IService *parent) : ICommand ("dpi", 0) {
+    parent_ = parent;
+    briefDescr_.make_string(
+    "Access to RTL simulation via TCP and DPI interface");
+    detailedDescr_.make_string(
+        "Description:\n"
+        "    This command is used to get time information from external\n"
+        "    RTL simulator or manulally forms AXI4 transactions for a debug\n"
+        "    purposes.\n"
+        "Example:\n"
+        "    dpi time\n"
+        "    dpi axi4 read 8 0x1000\n"
+        "    dpi axi4 write 8 0x1000 0xcafef00d\n"
+        );
+}
+
+int CmdDpi::isValid(AttributeType *args) {
+    if (!(*args)[0u].is_equal(cmdName_.to_string())) {
+        return CMD_INVALID;
+    }
+    if (!args->is_list() || args->size() < 2) {
+        return CMD_WRONG_ARGS;
+    }
+    return CMD_VALID;
+}
+
+void CmdDpi::exec(AttributeType *args, AttributeType *res) {
+    DpiClient *p = static_cast<DpiClient *>(parent_);
+    if ((*args)[1].is_equal("axi4")) {
+        if ((args->size() >= 5) && (*args)[2].is_equal("read")) {
+            uint64_t rdata = 0;
+            p->axi4_read((*args)[4].to_uint64(), &rdata);
+            res->make_uint64(rdata);
+        } else if ((args->size() >= 6) && (*args)[2].is_equal("write")) {
+        }
+    } else if ((*args)[1].is_equal("time")) {
+    }
+}
+
+
+DpiClient::DpiClient(const char *name) : IService(name),
+    cmd_(static_cast<IService *>(this)) {
     registerInterface(static_cast<IThread *>(this));
     registerInterface(static_cast<IDpi *>(this));
     registerAttribute("Enable", &isEnable_);
+    registerAttribute("CmdExecutor", &cmdexec_);
     registerAttribute("Timeout", &timeout_);
     registerAttribute("HostIP", &hostIP_);
     registerAttribute("HostPort", &hostPort_);
@@ -34,6 +84,7 @@ DpiClient::DpiClient(const char *name) : IService(name) {
     hartBeat_.make_string(tstr);
     cmdcnt_ = 0;
     txcnt_ = 0;
+    hsock_ = -1;
 }
 
 DpiClient::~DpiClient() {
@@ -42,7 +93,15 @@ DpiClient::~DpiClient() {
 }
 
 void DpiClient::postinitService() {
-    createServerSocket();
+    iexec_ = static_cast<ICmdExecutor *>(
+            RISCV_get_service_iface(cmdexec_.to_string(), 
+                                    IFACE_CMD_EXECUTOR));
+    if (!iexec_) {
+        RISCV_error("Can't get ICmdExecutor interface %s",
+                    cmdexec_.to_string());
+    } else {
+        iexec_->registerCommand(&cmd_);
+    }
 
     if (isEnable_.to_bool()) {
         if (!run()) {
@@ -52,12 +111,24 @@ void DpiClient::postinitService() {
     }
 }
 
+void DpiClient::predeleteService() {
+    if (iexec_) {
+        iexec_->unregisterCommand(&cmd_);
+    }
+}
+
 void DpiClient::busyLoop() {
     int err;
     int rxbytes;
     AttributeType hartBeatResp;
     connected_ = false;
     while (isEnabled()) {
+        if (hsock_ == -1) {
+            connected_ = false;
+            createServerSocket();
+            continue;
+        }
+
         if (!connected_) {
             RISCV_important("connecting to host %s:%d",
                 hostIP_.to_string(), hostPort_.to_int());
@@ -76,7 +147,7 @@ void DpiClient::busyLoop() {
 
         if (rxbytes == 0) {
             RISCV_error("Socket error: rxbytes=%d", rxbytes);
-            connected_ = false;
+            closeServerSocket();
             continue;
         } 
         if (rxbytes < 0) {
@@ -100,28 +171,21 @@ void DpiClient::busyLoop() {
 
 void DpiClient::processRx() {
     RISCV_debug("i<=%s", cmdbuf_);
+    if (strstr(cmdbuf_, "KeepAlive")) {
+        /** Async. message from server thread */
+        return;
+    }
+    if (strstr(cmdbuf_, "HartBeat")) {
+        /** Sync. response on HartBeat request from client thread */
+        return;
+    }
     response_.from_config(cmdbuf_);
-    if (!response_.is_list() || response_.size() < 2) {
+    if (!response_.is_list() || response_.size() < DpiResp_ListSize) {
         RISCV_error("%s", "Wrong response format");
         return;
     }
     
-    if (!response_[1].is_equal("HartBeat")) {
-        RISCV_event_set(&event_cmd_);
-    }
-    /*
-    request_.from_config(cmdbuf_);
-    if (!request_.is_list()) {
-        RISCV_error("Wrong message: %s\n", cmdbuf_);
-        sendBuffer(wrongFormat_.to_string(), wrongFormat_.size() + 1);
-        return;
-    }
-
-    RISCV_event_clear(&event_cmd_);
-    dpi_put_fifo_request(static_cast<ICommand *>(this));
-    RISCV_event_wait(&event_cmd_);
-
-    sendBuffer(response_.to_string(), response_.size() + 1);*/
+    RISCV_event_set(&event_cmd_);
 }
 
 void DpiClient::processTx() {
@@ -132,7 +196,7 @@ void DpiClient::processTx() {
         txbytes = send(hsock_, ptx, total, 0);
         if (txbytes <= 0) {
             RISCV_error("processTx error: txcnt=%d", txbytes);
-            connected_ = false;
+            closeServerSocket();
             break;
         }
         total -= txbytes;
@@ -198,6 +262,7 @@ int DpiClient::createServerSocket() {
 }
 
 void DpiClient::closeServerSocket() {
+    connected_ = false;
     if (hsock_ < 0) {
         return;
     }
@@ -224,7 +289,7 @@ void DpiClient::axi4_write(uint64_t addr, uint64_t data) {
                "'wdata':[0x%" RV_PRI64 "x]"
             "}"
         "]",
-        addr, data);
+        getObjName(), addr, data);
     syncRequest(tstr, sz + 1, resp);
 }
 
@@ -232,8 +297,21 @@ void DpiClient::axi4_read(uint64_t addr, uint64_t *data) {
     char tstr[1024];
     AttributeType resp;
     int sz = RISCV_sprintf(tstr, sizeof(tstr),
-        "['%s','AXI4',{'we':0,'addr':0x%" RV_PRI64 "x}]", addr);
+        "["
+           "'%s',"
+           "'AXI4',"
+           "{"
+               "'we':0,"
+               "'addr':0x%" RV_PRI64 "x"
+           "}"
+        "]",
+        getObjName(), addr);
     syncRequest(tstr, sz + 1, resp);
+    if (resp.is_list() && resp.size() >= DpiResp_ListSize) {
+        AttributeType &t1 = resp[DpiResp_Data];
+        AttributeType &t2 = t1["rdata"];
+        *data = resp[DpiResp_Data]["rdata"][0u].to_uint64();
+    }
 }
 
 bool DpiClient::is_irq() {

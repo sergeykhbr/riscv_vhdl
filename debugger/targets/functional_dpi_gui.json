@@ -67,6 +67,7 @@
           {'Name':'dpiclient0','Attr':[
                 ['LogLevel',4],
                 ['Enable',true],
+                ['CmdExecutor','cmdexec0'],
                 ['Timeout',500],
                 ['HostIP','127.0.0.1'],
                 ['HostPort',8689]

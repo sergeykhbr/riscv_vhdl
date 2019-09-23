@@ -21,8 +21,21 @@
 #include <iservice.h>
 #include "coreservices/ithread.h"
 #include "coreservices/idpi.h"
+#include "coreservices/icmdexec.h"
 
 namespace debugger {
+
+class CmdDpi : public ICommand  {
+ public:
+    CmdDpi(IService *parent);
+
+    /** ICommand */
+    virtual int isValid(AttributeType *args);
+    virtual void exec(AttributeType *args, AttributeType *res);
+
+ private:
+    IService *parent_;
+};
 
 class DpiClient : public IService,
                   public IThread,
@@ -33,12 +46,15 @@ class DpiClient : public IService,
 
     /** IService interface */
     virtual void postinitService();
+    virtual void predeleteService() override;
 
     /** IDpi */
     virtual void axi4_write(uint64_t addr, uint64_t data);
     virtual void axi4_read(uint64_t addr, uint64_t *data);
     virtual bool is_irq();
     virtual int get_irq();
+
+    /** Common methods */
 
  protected:
     /** IThread interface */
@@ -54,11 +70,15 @@ class DpiClient : public IService,
 
  private:
     AttributeType isEnable_;
+    AttributeType cmdexec_;
     AttributeType timeout_;
     AttributeType hostIP_;
     AttributeType hostPort_;
     AttributeType hartBeat_;
     AttributeType response_;
+
+    ICmdExecutor *iexec_;
+    CmdDpi cmd_;
 
     struct sockaddr_in sockaddr_ipv4_;
     socket_def hsock_;
