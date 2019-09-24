@@ -150,7 +150,7 @@
                 ['GenerateRegTraceFile',false,'Generate Registers modification file to compare with SystemC'],
                 ['GenerateMemTraceFile',false,'Generate Memory access file to compare with SystemC'],
                 ['CacheBaseAddress',0x10000000],
-                ['CacheAddressMask',0x7ffff],
+                ['CacheAddressMask',0, '0x7ffff to enable caching'],
                 ['ResetState','Halted', 'CPU state after reset signal is raised: Halted or OFF'],
                 ['ExceptionTable',['CFG_NMI_INSTR_UNALIGNED_ADDR',  0x0008,
                                    'CFG_NMI_INSTR_FAULT_ADDR',      0x0010,
@@ -183,10 +183,12 @@
     {'Class':'MemorySimClass','Instances':[
           {'Name':'bootrom0','Attr':[
                 ['LogLevel',1],
-                ['InitFile','../../../examples/boot/linuxbuild/bin/bootimage.hex'],
+                ['InitFile','../../../examples/bootrom_tests/linuxbuild/bin/bootrom_tests.hex'],
                 ['ReadOnly',true],
                 ['BaseAddress',0x0],
-                ['Length',32768]
+                ['Length',32768],
+                ['DpiClient','dpiclient0'],
+                ['DpiRoutes',[true, false, false], '[cpu0, unused, dsu0]'],
                 ]}]},
     {'Class':'MemorySimClass','Instances':[
           {'Name':'fwimage0','Attr':[

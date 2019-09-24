@@ -50,7 +50,7 @@ extern "C" void simulation_start() {
     double timescale = 0.0;
     sv_in_t sv_in;
     sv_out_t sv_out;
-    uint64_t rdata = 0xcafef00ddeadbeedull;
+    uint64_t rdata = 0x13;//0xcafef00ddeadbeedull;
     EBusState estate = Bus_Idle;
 
     c_task_server_start();

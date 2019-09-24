@@ -22,9 +22,12 @@ namespace debugger {
 MemoryGeneric::MemoryGeneric(const char *name)  : IService(name) {
     registerInterface(static_cast<IMemoryOperation *>(this));
     registerAttribute("ReadOnly", &readOnly_);
+    registerAttribute("DpiClient", &dpiClient_);
+    registerAttribute("DpiRoutes", &dpiRoutes_);
 
     readOnly_.make_boolean(false);
     mem_ = NULL;
+    idpi_ = 0;
 }
 
 MemoryGeneric::~MemoryGeneric() {
@@ -35,6 +38,14 @@ MemoryGeneric::~MemoryGeneric() {
 
 void MemoryGeneric::postinitService() {
     mem_ = new uint8_t[static_cast<unsigned>(length_.to_uint64())];
+
+    if (dpiClient_.is_string() && dpiClient_.size()) {
+        idpi_ = static_cast<IDpi *>(
+            RISCV_get_service_iface(dpiClient_.to_string(), IFACE_DPI));
+        if (!idpi_) {
+            RISCV_error("Can't get IDPi interface %s", dpiClient_.to_string());
+        }
+    }
 }
 
 ETransStatus MemoryGeneric::b_transport(Axi4TransactionType *trans) {
@@ -55,7 +66,11 @@ ETransStatus MemoryGeneric::b_transport(Axi4TransactionType *trans) {
             }
         }
     } else {
-        memcpy(trans->rpayload.b8, &mem_[off], trans->xsize);
+        if (idpi_ && dpiRoutes_[trans->source_idx].to_bool()) {
+            idpi_->axi4_read(off, &trans->rpayload.b64[0]);
+        } else {
+            memcpy(trans->rpayload.b8, &mem_[off], trans->xsize);
+        }
     }
 
     const char *rw_str[2] = {"=>", "<="};

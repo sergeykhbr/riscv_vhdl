@@ -144,12 +144,8 @@ extern "C" int c_task_clk_posedge(const sv_out_t *sv2c, sv_in_t *c2sv) {
     }
 
     if (tcpreq_[Req_CmdType].is_equal("HartBeat")) {
-        if (sv2c->irq_request) {
-            // TODO: irq request support
-            tcpresp_[Resp_CmdType].make_string("AXI4");
-        } else {
-            tcpresp_[Resp_CmdType].make_string("HartBeat");
-        }
+        // TODO: irq request support
+        tcpresp_[Resp_CmdType].make_string("HartBeat");
         AttributeType &od = tcpresp_[Resp_Data];
         od.make_dict();
         od["tm"].make_floating(sv2c->tm);

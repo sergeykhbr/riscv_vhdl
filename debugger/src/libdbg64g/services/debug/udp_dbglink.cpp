@@ -62,6 +62,9 @@ void UdpService::postinitService() {
         setsockopt(hsock_, SOL_SOCKET, SO_RCVTIMEO, 
                             (char *)&tv, sizeof(struct timeval));
     }
+    int nodelay = 1;
+    setsockopt(hsock_, SOL_SOCKET, TCP_NODELAY,
+        reinterpret_cast<char *>(&nodelay), sizeof(nodelay));
 
     /** By default socket was created with Blocking mode */
     if (!blockmode_.to_bool()) {

@@ -80,7 +80,8 @@ SOURCES = \
 	autocompleter \
 	tcpserver \
 	tcpclient \
-	tcpcmd
+	tcpcmd \
+	dpiclient 
 
 LIBS = \
 	m \

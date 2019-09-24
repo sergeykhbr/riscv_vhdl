@@ -37,6 +37,7 @@ CmdDpi::CmdDpi(IService *parent) : ICommand ("dpi", 0) {
         "    purposes.\n"
         "Example:\n"
         "    dpi time\n"
+        "    dpi time sec\n"
         "    dpi axi4 read 8 0x1000\n"
         "    dpi axi4 write 8 0x1000 0xcafef00d\n"
         );
@@ -62,6 +63,14 @@ void CmdDpi::exec(AttributeType *args, AttributeType *res) {
         } else if ((args->size() >= 6) && (*args)[2].is_equal("write")) {
         }
     } else if ((*args)[1].is_equal("time")) {
+        double tm = p->getHartBeatTime();
+        if (args->size() > 2 && (*args)[2].is_equal("sec")) {
+            tm /= 1000000000.0;     // ns to sec
+        }
+        res->make_floating(tm);
+    }
+    else if ((*args)[1].is_equal("clkcnt")) {
+        res->make_uint64(p->getHartBeatClkcnt());
     }
 }
 
@@ -81,10 +90,12 @@ DpiClient::DpiClient(const char *name) : IService(name),
 
     char tstr[256];
     RISCV_sprintf(tstr, sizeof(tstr), "['%s','HartBeat']", name);
-    hartBeat_.make_string(tstr);
+    reqHartBeat_.make_string(tstr);
     cmdcnt_ = 0;
     txcnt_ = 0;
-    hsock_ = -1;
+    hsock_ = 0;
+    hartbeatTime_ = 0;
+    hartbeatClkcnt_ = 0;
 }
 
 DpiClient::~DpiClient() {
@@ -120,12 +131,13 @@ void DpiClient::predeleteService() {
 void DpiClient::busyLoop() {
     int err;
     int rxbytes;
-    AttributeType hartBeatResp;
     connected_ = false;
     while (isEnabled()) {
-        if (hsock_ == -1) {
+        if (hsock_ == 0) {
             connected_ = false;
-            createServerSocket();
+            if (createServerSocket() < 0) {
+                RISCV_sleep_ms(1000);
+            }
             continue;
         }
 
@@ -141,19 +153,16 @@ void DpiClient::busyLoop() {
                 continue;
             }
             connected_ = true;
+            cmdcnt_ = 0;
+            txcnt_ = 0;
         }
 
         rxbytes = recv(hsock_, rcvbuf, sizeof(rcvbuf), 0);
 
-        if (rxbytes == 0) {
-            RISCV_error("Socket error: rxbytes=%d", rxbytes);
-            closeServerSocket();
-            continue;
-        } 
-        if (rxbytes < 0) {
+        if (rxbytes <= 0) {
             // Timeout:
-            writeTx(hartBeat_.to_string(), hartBeat_.size() + 1);
-            continue;
+            writeTx(reqHartBeat_.to_string(), reqHartBeat_.size() + 1);
+            rxbytes = 0;
         }
 
         for (int i = 0; i < rxbytes; i++) {
@@ -170,21 +179,25 @@ void DpiClient::busyLoop() {
 }
 
 void DpiClient::processRx() {
-    RISCV_debug("i<=%s", cmdbuf_);
     if (strstr(cmdbuf_, "KeepAlive")) {
-        /** Async. message from server thread */
+        /** Async. message from server thread. Do nothing */
         return;
     }
     if (strstr(cmdbuf_, "HartBeat")) {
         /** Sync. response on HartBeat request from client thread */
+        respHartBeat_.from_config(cmdbuf_);
+        if (!respHartBeat_.is_list() ||
+            respHartBeat_.size() < DpiResp_ListSize) {
+            RISCV_error("Wrong hartbeat response %s", cmdbuf_);
+            return;
+        }
+        AttributeType &data = respHartBeat_[DpiResp_Data];
+        hartbeatTime_ = data["tm"].to_float();
+        hartbeatClkcnt_ = data["clkcnt"].to_uint64();
         return;
     }
-    response_.from_config(cmdbuf_);
-    if (!response_.is_list() || response_.size() < DpiResp_ListSize) {
-        RISCV_error("%s", "Wrong response format");
-        return;
-    }
-    
+    //RISCV_debug("i<=%s", cmdbuf_);
+    syncResponse_.from_config(cmdbuf_);
     RISCV_event_set(&event_cmd_);
 }
 
@@ -197,32 +210,44 @@ void DpiClient::processTx() {
         if (txbytes <= 0) {
             RISCV_error("processTx error: txcnt=%d", txbytes);
             closeServerSocket();
+            total = 0;
             break;
         }
         total -= txbytes;
         ptx += txbytes;
+
     }
     txcnt_ = 0;
 }
 
 void DpiClient::writeTx(const char *buf, unsigned size) {
     RISCV_mutex_lock(&mutex_tx_);
+    if ((txcnt_ + size) >= sizeof(txbuf_)) {
+        RISCV_error("Tx overflow %d: %s", size, buf);
+        size = sizeof(txbuf_) - txcnt_;
+    }
     memcpy(&txbuf_[txcnt_], buf, size);
     txcnt_ += size;
     RISCV_mutex_unlock(&mutex_tx_);
 }
 
-void DpiClient::syncRequest(const char *buf, unsigned size,
-                            AttributeType &resp) {
+bool DpiClient::syncRequest(const char *buf, unsigned size) {
     RISCV_event_clear(&event_cmd_);
     writeTx(buf, size);
+    processTx();
     RISCV_event_wait(&event_cmd_);
-    resp.clone(&response_);
+    if (!syncResponse_.is_list() ||
+        syncResponse_.size() < DpiResp_ListSize) {
+        RISCV_error("%s", "Wrong response format");
+        return false;
+    }
+    return true;
 }
 
 int DpiClient::createServerSocket() {
     struct timeval tv;
     addr_size_t addr_sz;
+    int nodelay = 1;
 
     memset(&sockaddr_ipv4_, 0, sizeof(struct sockaddr_in));
     sockaddr_ipv4_.sin_family = AF_INET;
@@ -231,6 +256,7 @@ int DpiClient::createServerSocket() {
 
     hsock_ = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (hsock_ < 0) {
+        hsock_ = 0;
         RISCV_error("%s", "Error: socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)");
         return -1;
     }
@@ -248,6 +274,8 @@ int DpiClient::createServerSocket() {
 #endif
     setsockopt(hsock_, SOL_SOCKET, SO_RCVTIMEO,
                     reinterpret_cast<char *>(&tv), sizeof(struct timeval));
+    setsockopt(hsock_, SOL_SOCKET, TCP_NODELAY,
+                    reinterpret_cast<char *>(&nodelay), sizeof(nodelay));
 
     addr_sz = sizeof(sockaddr_ipv4_);
     getsockname(hsock_,
@@ -263,7 +291,7 @@ int DpiClient::createServerSocket() {
 
 void DpiClient::closeServerSocket() {
     connected_ = false;
-    if (hsock_ < 0) {
+    if (hsock_ == 0) {
         return;
     }
 
@@ -273,7 +301,7 @@ void DpiClient::closeServerSocket() {
     shutdown(hsock_, SHUT_RDWR);
     close(hsock_);
 #endif
-    hsock_ = -1;
+    hsock_ = 0;
 }
 
 void DpiClient::axi4_write(uint64_t addr, uint64_t data) {
@@ -290,12 +318,11 @@ void DpiClient::axi4_write(uint64_t addr, uint64_t data) {
             "}"
         "]",
         getObjName(), addr, data);
-    syncRequest(tstr, sz + 1, resp);
+    syncRequest(tstr, sz + 1);
 }
 
 void DpiClient::axi4_read(uint64_t addr, uint64_t *data) {
     char tstr[1024];
-    AttributeType resp;
     int sz = RISCV_sprintf(tstr, sizeof(tstr),
         "["
            "'%s',"
@@ -306,12 +333,13 @@ void DpiClient::axi4_read(uint64_t addr, uint64_t *data) {
            "}"
         "]",
         getObjName(), addr);
-    syncRequest(tstr, sz + 1, resp);
-    if (resp.is_list() && resp.size() >= DpiResp_ListSize) {
-        AttributeType &t1 = resp[DpiResp_Data];
-        AttributeType &t2 = t1["rdata"];
-        *data = resp[DpiResp_Data]["rdata"][0u].to_uint64();
+
+    if (!syncRequest(tstr, sz + 1)) {
+        return;
     }
+    AttributeType &d = syncResponse_[DpiResp_Data];
+    AttributeType &rdata = d["rdata"];
+    *data = rdata[0u].to_uint64();
 }
 
 bool DpiClient::is_irq() {

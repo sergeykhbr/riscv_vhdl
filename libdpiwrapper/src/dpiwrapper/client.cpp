@@ -37,9 +37,8 @@ void DpiClient::postinit(const AttributeType &config) {
 
 void DpiClient::busyLoop() {
     int rxbytes;
-    int sockerr;
     int reuse = 1;
-    addr_size_t sockerr_len = sizeof(sockerr);
+    int nodelay = 1;
 
     struct timeval tv;
 #if defined(_WIN32) || defined(__CYGWIN__)
@@ -56,6 +55,9 @@ void DpiClient::busyLoop() {
     setsockopt(hsock_, SOL_SOCKET, SO_RCVTIMEO,
         reinterpret_cast<char*>(&tv), sizeof(struct timeval));
 
+    setsockopt(hsock_, SOL_SOCKET, TCP_NODELAY,
+                    reinterpret_cast<char *>(&nodelay), sizeof(nodelay));
+
     if (setsockopt(hsock_, SOL_SOCKET, SO_REUSEADDR,
         reinterpret_cast<char*>(&reuse), sizeof(int)) < 0) {
         LIB_printf("DpiClien%d: setsockopt(SO_REUSEADDR) failed\n",
@@ -65,16 +67,8 @@ void DpiClient::busyLoop() {
     cmdcnt_ = 0;
     while (isEnabled()) {
         rxbytes = recv(hsock_, rcvbuf, sizeof(rcvbuf), 0);
-        getsockopt(hsock_, SOL_SOCKET, SO_ERROR,
-                    reinterpret_cast<char *>(&sockerr), &sockerr_len);
 
-        if (rxbytes == 0) {
-            LIB_printf("Socket error: rxbytes=%d, sockerr=%d",
-                        rxbytes, sockerr);
-            loopEnable_.state = false;
-            break;
-        }
-        if (rxbytes < 0) {
+        if (rxbytes <= 0) {
             // Timeout:
             sendBuffer(keepAlive_.to_string(), keepAlive_.size() + 1);
         }

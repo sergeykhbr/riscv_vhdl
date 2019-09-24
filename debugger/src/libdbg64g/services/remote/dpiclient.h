@@ -55,6 +55,8 @@ class DpiClient : public IService,
     virtual int get_irq();
 
     /** Common methods */
+    double getHartBeatTime() { return hartbeatTime_; }
+    uint64_t getHartBeatClkcnt() { return hartbeatClkcnt_; }
 
  protected:
     /** IThread interface */
@@ -66,7 +68,7 @@ class DpiClient : public IService,
     void processRx();
     void processTx();
     void writeTx(const char *buf, unsigned size);
-    void syncRequest(const char *buf, unsigned size, AttributeType &resp);
+    bool syncRequest(const char *buf, unsigned size);
 
  private:
     AttributeType isEnable_;
@@ -74,8 +76,9 @@ class DpiClient : public IService,
     AttributeType timeout_;
     AttributeType hostIP_;
     AttributeType hostPort_;
-    AttributeType hartBeat_;
-    AttributeType response_;
+    AttributeType syncResponse_;
+    AttributeType reqHartBeat_;
+    AttributeType respHartBeat_;
 
     ICmdExecutor *iexec_;
     CmdDpi cmd_;
@@ -91,6 +94,8 @@ class DpiClient : public IService,
     char txbuf_[4096];
     int txcnt_;
     bool connected_;
+    double hartbeatTime_;
+    uint64_t hartbeatClkcnt_;
 };
 
 DECLARE_CLASS(DpiClient)

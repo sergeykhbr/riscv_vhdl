@@ -20,6 +20,7 @@
 #include "iclass.h"
 #include "iservice.h"
 #include "coreservices/imemop.h"
+#include <coreservices/idpi.h>
 
 namespace debugger {
 
@@ -37,6 +38,11 @@ class MemoryGeneric : public IService,
 
  protected:
     AttributeType readOnly_;
+    AttributeType dpiClient_;
+    AttributeType dpiRoutes_;
+
+    IDpi *idpi_;
+
     uint8_t *mem_;
 };
 

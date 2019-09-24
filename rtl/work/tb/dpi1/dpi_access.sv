@@ -85,7 +85,7 @@ begin
         return {32'd0, buffer[63:32]};
     end
     2'b11: begin
-        return {buffer[111:0], buffer[63:48]};
+        return {buffer[47:0], buffer[127:112]};
     end
     default: begin
     end
