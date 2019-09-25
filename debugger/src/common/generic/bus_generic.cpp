@@ -137,8 +137,8 @@ ETransStatus BusGeneric::nb_transport(Axi4TransactionType *trans,
     getMapedDevice(trans, &memdev, &sz);
 
     if (memdev == 0) {
-        RISCV_error("Non-blocking request to unmapped address "
-                    "%08" RV_PRI64 "x", trans->addr);
+        RISCV_error("Non-blocking request from %d to unmapped address "
+                    "%08" RV_PRI64 "x", trans->source_idx, trans->addr);
         memset(trans->rpayload.b8, 0xFF, trans->xsize);
         trans->response = MemResp_Error;
         cb->nb_response(trans);

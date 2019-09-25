@@ -185,6 +185,9 @@ extern "C" int c_task_clk_posedge(const sv_out_t *sv2c, sv_in_t *c2sv) {
             od["clkcnt"].make_uint64(sv2c->clkcnt);
             od["rdata"].make_list(1);
             od["rdata"][0u].make_uint64(sv2c->slvo.rdata[0]);
+            LIB_printf("tm=%.1f; clkcnt=%d: [%08x] => %016" RV_PRI64 "x\n",
+                sv2c->tm, sv2c->clkcnt,
+                static_cast<uint32_t>(c2sv->slvi.addr), sv2c->slvo.rdata[0]);
             isrc_->setResponse(tcpresp_);
             estate_ = State_Idle;
         }
