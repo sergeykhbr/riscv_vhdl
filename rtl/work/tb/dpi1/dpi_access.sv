@@ -71,21 +71,33 @@ begin
 end
 endfunction: get_burst
 
-function longint get_rdata(input bit [2:1] addr,
+function longint get_rdata(input bit [2:0] addr,
                            input bit [127:0] buffer);
 begin
     case (addr)
-    2'b00: begin
+    3'b000: begin
         return buffer[63:0];
     end
-    2'b01: begin
+    3'b001: begin
+        return {8'd0, buffer[63:8]};
+    end
+    3'b010: begin
         return {16'd0, buffer[63:16]};
     end
-    2'b10: begin
+    3'b011: begin
+        return {24'd0, buffer[63:24]};
+    end
+    3'b100: begin
         return {32'd0, buffer[63:32]};
     end
-    2'b11: begin
+    3'b101: begin
+        return {40'd0, buffer[63:40]};
+    end
+    3'b110: begin
         return {buffer[47:0], buffer[127:112]};
+    end
+    3'b111: begin
+        return {buffer[55:0], buffer[127:120]};
     end
     default: begin
     end
@@ -168,7 +180,7 @@ always_comb begin
             v.burst_buf = {r.burst_buf[63:0], i_slvo.r_data};
             if (r.burst_cnt == r.burst_len) begin
                 sv_out.resp_valid = 1;
-                sv_out.slvo.rdata[0] = get_rdata(r.addr[2:1],
+                sv_out.slvo.rdata[0] = get_rdata(r.addr[2:0],
                                                  v.burst_buf);
                 v.estate = Bus_Idle;
             end else begin

@@ -37,6 +37,7 @@ static AttributeType tcpreq_;
 static AttributeType tcpresp_;
 static ICommand* isrc_ = 0;
 static char descr_[256];
+static uint64_t reqaddr_ = 0;
 
 void dpi_put_fifo_request(void *iface) {
     ICommand *t1 = reinterpret_cast<ICommand *>(iface);
@@ -161,6 +162,7 @@ extern "C" int c_task_clk_posedge(const sv_out_t *sv2c, sv_in_t *c2sv) {
         c2sv->req_type = REQ_TYPE_AXI4;
         c2sv->slvi.addr = slvi["addr"].to_uint64();
         c2sv->slvi.we = slvi["we"].to_bool();
+        reqaddr_ = c2sv->slvi.addr;
         if (sv2c->req_ready) {
             estate_ = State_WaitResp;
         } else {
@@ -172,6 +174,7 @@ extern "C" int c_task_clk_posedge(const sv_out_t *sv2c, sv_in_t *c2sv) {
         c2sv->req_type = REQ_TYPE_AXI4;
         c2sv->slvi.addr = slvi["addr"].to_uint64();
         c2sv->slvi.we = slvi["we"].to_bool();
+        reqaddr_ = c2sv->slvi.addr;
         if (sv2c->req_ready) {
             estate_ = State_WaitResp;
         }
@@ -187,7 +190,7 @@ extern "C" int c_task_clk_posedge(const sv_out_t *sv2c, sv_in_t *c2sv) {
             od["rdata"][0u].make_uint64(sv2c->slvo.rdata[0]);
             LIB_printf("tm=%.1f; clkcnt=%d: [%08x] => %016" RV_PRI64 "x\n",
                 sv2c->tm, sv2c->clkcnt,
-                static_cast<uint32_t>(c2sv->slvi.addr), sv2c->slvo.rdata[0]);
+                static_cast<uint32_t>(reqaddr_), sv2c->slvo.rdata[0]);
             isrc_->setResponse(tcpresp_);
             estate_ = State_Idle;
         }
