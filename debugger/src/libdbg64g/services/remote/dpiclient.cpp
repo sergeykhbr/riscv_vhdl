@@ -203,6 +203,8 @@ void DpiClient::processRx() {
 
 void DpiClient::processTx() {
     const char *ptx = txbuf_;
+
+    RISCV_mutex_lock(&mutex_tx_);
     int total = static_cast<int>(txcnt_);
     int txbytes;
     while (total > 0) {
@@ -217,7 +219,8 @@ void DpiClient::processTx() {
         ptx += txbytes;
 
     }
-    txcnt_ = 0;
+    txcnt_ -= txcnt_;
+    RISCV_mutex_unlock(&mutex_tx_);
 }
 
 void DpiClient::writeTx(const char *buf, unsigned size) {
