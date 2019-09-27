@@ -1,11 +1,18 @@
-% Latex header for doxygen 1.8.10
-\documentclass[oneside]{book}
+% Latex header for doxygen 1.8.16
+\let\mypdfximage\pdfximage\def\pdfximage{\immediate\mypdfximage}\documentclass[twoside]{book}
 
+%% moved from doxygen.sty due to workaround for LaTex 2019 version and unmaintained tabu package
+\usepackage{ifthen}
+\ifx\requestedLaTeXdate\undefined
+\usepackage{array}
+\else
+\usepackage{array}[=2016-10-06]
+\fi
+%%
 % Packages required by doxygen
 \usepackage{fixltx2e}
 \usepackage{calc}
 \usepackage{doxygen}
-\usepackage{adjustbox} % also loads graphicx
 \usepackage{graphicx}
 \usepackage[utf8]{inputenc}
 \usepackage{makeidx}
@@ -15,7 +22,7 @@
 \usepackage{textcomp}
 \usepackage[nointegrals]{wasysym}
 \usepackage[table]{xcolor}
-\usepackage{array}
+\usepackage{ifpdf,ifxetex}
 
 % Font selection
 \usepackage[T1]{fontenc}
@@ -34,6 +41,13 @@
 }
 \newcommand{\+}{\discretionary{\mbox{\scriptsize$\hookleftarrow$}}{}{}}
 
+% Arguments of doxygenemoji:
+% 1) ':<text>:' form of the emoji, already "LaTeX"-escaped
+% 2) file with the name of the emoji without the .png extension
+% in case image exist use this otherwise use the ':<text>:' form
+\newcommand{\doxygenemoji}[2]{%
+  \IfFileExists{./#2.png}{\raisebox{-0.1em}{\includegraphics[height=0.9em]{./#2.png}}}{#1}%
+}
 % Page & text layout
 \usepackage{geometry}
 \geometry{%
@@ -46,10 +60,11 @@
 \tolerance=750
 \hfuzz=15pt
 \hbadness=750
-\textheight=662pt% default 674 see https://www.sharelatex.com/learn/Page_size_and_margins
 \setlength{\emergencystretch}{15pt}
 \setlength{\parindent}{0cm}
-\setlength{\parskip}{0.2cm}
+\newcommand{\doxynormalparskip}{\setlength{\parskip}{3ex plus 2ex minus 2ex}}
+\newcommand{\doxytocparskip}{\setlength{\parskip}{1ex plus 0ex minus 0ex}}
+\doxynormalparskip
 \makeatletter
 \renewcommand{\paragraph}{%
   \@startsection{paragraph}{4}{0ex}{-1.0ex}{1.0ex}{%
@@ -63,15 +78,14 @@
 }
 \makeatother
 
-
 % Headers & footers
 \usepackage{fancyhdr}
 \pagestyle{fancyplain}
 % E O = Even Odd pages: L C R = Left, Center, Right page
 \setlength\headheight{50pt}% top colontitle height
-\fancyhead[LE,RO]{\fancyplain{}{\bfseries\thepage}}
+\fancyhead[RE,RO]{\fancyplain{}{\bfseries\thepage}}
 \fancyhead[CE,CO]{\fancyplain{}{\bfseries\rightmark}}
-\fancyhead[RE,LO]{\includegraphics[scale=1.0]{../doxygen/pics/logo.png}}
+\fancyhead[LE,LO]{\includegraphics[scale=1.0]{../doxygen/pics/logo.png}}
 
 \fancyfoot[LE,RO]{\fancyplain{}{}}
 \fancyfoot[CE,CO]{\fancyplain{}{}}
@@ -92,13 +106,22 @@
 \setcounter{secnumdepth}{5}
 \makeindex
 
+\usepackage{newunicodechar}
+  \newunicodechar{⁻}{${}^{-}$}% Superscript minus
+  \newunicodechar{²}{${}^{2}$}% Superscript two
+  \newunicodechar{³}{${}^{3}$}% Superscript three
+
 % Hyperlinks (required, but should be loaded last)
-\usepackage{ifpdf}
 \ifpdf
   \usepackage[pdftex,pagebackref=true]{hyperref}
 \else
-  \usepackage[ps2pdf,pagebackref=true]{hyperref}
+  \ifxetex
+    \usepackage[pagebackref=true]{hyperref}
+  \else
+    \usepackage[ps2pdf,pagebackref=true]{hyperref}
+  \fi
 \fi
+
 \hypersetup{%
   colorlinks=true,%
   linkcolor=blue,%
@@ -111,17 +134,22 @@
   \newpage{\pagestyle{empty}\cleardoublepage}%
 }
 
+\usepackage{caption}
+\captionsetup{labelsep=space,justification=centering,font={bf},singlelinecheck=off,skip=4pt,position=top}
+
+\usepackage{etoc}
+\etocsettocstyle{\doxytocparskip}{\doxynormalparskip}
+\renewcommand{\numberline}[1]{#1~}
 %===== C O N T E N T S =====
 
 \begin{document}
 
 % Titlepage & ToC
 \hypersetup{pageanchor=false,
-             bookmarks=true,
              bookmarksnumbered=true,
              pdfencoding=unicode
             }
-\pagenumbering{roman}
+\pagenumbering{alph}
 \begin{titlepage}
 \vspace*{7cm}
 \begin{center}%
@@ -155,6 +183,7 @@ Approved by &  &  &  & \\
 \end{center}
 \end{titlepage}
 \clearemptydoublepage
+\pagenumbering{roman}
 \tableofcontents
 \clearemptydoublepage
 \pagenumbering{arabic}
