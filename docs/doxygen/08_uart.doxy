@@ -201,7 +201,7 @@ following table.
   <tr>
     <td>scaler</td>   <td>[31:0]</td>   <td>RW</td>   <td><b>Scaler Threshold</b>.
         This registers specifies the overflow threshold that
-        is used to form \c posedge and \c negedge events and form UART Baudrate.
+        is used to form \c posedge and \c negedge events and form UART Baudrate.</td>
   </tr>
 </table>
 
@@ -235,7 +235,7 @@ following table.
     <td>data</td>   <td>[7:0]</td>   <td>RW</td>   <td><b>Data</b>.
         This registers provides access to the Rx FIFO on read operation and to
         the Tx FIFO on write operation. FIFOs status should be controlled via
-        UART_CTRL_STATUS register.
+        UART_CTRL_STATUS register.</td>
   </tr>
 </table>
 

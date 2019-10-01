@@ -122,7 +122,12 @@ INPUT                  = \
         doxygen/03_memory.doxy \
         doxygen/04_cpu.doxy \
         doxygen/05_debug.doxy \
+        doxygen/06_interrupts.doxy \
+        doxygen/07_gpio.doxy \
         doxygen/08_uart.doxy \
+        doxygen/09_gptimers.doxy \
+        doxygen/10_pnp.doxy
+
 INPUT_ENCODING         = UTF-8
 FILE_PATTERNS          = *.c \
                          *.cc \
