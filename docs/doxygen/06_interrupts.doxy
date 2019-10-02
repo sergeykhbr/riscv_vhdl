@@ -4,15 +4,26 @@
 interrupt controller \c irqctrl, available on AXI4 bus as the slave device.
 
 <center>
-<b>Figure 6-1. Conenction of the Interrupt Controller to system bus</b>
+ <img src="../doxygen/pics/irq_to_cpu.png" alt="irqctrl connection"> 
+ @latexonly {\includegraphics{../doxygen/pics/irq_to_cpu.png}} @endlatexonly
+
+<b>Figure 6-1. Connection of the Interrupt Controller to the System Bus</b>
 </center>
 
-  Any interrupt request from any device is raising \c MExternal processor
-signal that should be handled by interrupt handler of top-level. This top-level
-handler has to check all pending bits in \c IRQS_PENDING register and call
-appropriate handler of lower level.
+  Any interrupt request from any device is directly latching into the pending register
+with the 1 clock cycle delay in a case if the bit \c lock in register IRQS_LOCK 
+equals to 0. Otherwise IRQ request will be latched into \c irq_wait_unlock register
+and postponed  until \c lock bit becomes 0. This logic allows to postpone interrupts even
+if its duration equals to 1 clock cycle.
 
-  Currrent River CPU revision doesn't implement <c>Wallclock Timer</c> that is
+  The signal \c MExternal connected to a processor and asserted to the level HIGH
+until register \c IRQS_PENDING not equal to zero. 
+Processor should handle \c MExternal interrupt by calling the top-level handler.
+Address of this handler function is specified by value of CSR \c MTVEC.
+The handler has to check and clear all pending bits in \c IRQS_PENDING register
+and call appropriate handler of lower level corresponding to the each raised bit.
+
+  Currrent River CPU revision doesn't implement <c>Wallclock Timer</c> which is
 described in RISC-V specification. This functionality is fully implemented in
 a separate AXI devices:
 
@@ -22,8 +33,8 @@ a separate AXI devices:
 @section irlist_section Interrupts List
 
  IRQ pins configuration is the part of generic constants defined in file
- <i>ambalib/types_amba4.vhd</i>. Number of interrupts and its indexes can
- changed in future releases.
+ <i>ambalib/types_amba4.vhd</i>. Number of the interrupts and its indexes can
+ be changed in a future releases.
 
  | Pin  | Name           | Description 
  |:----:|:---------------|:----------------------------------------
@@ -104,67 +115,130 @@ following table.
 
 <b>IRQS_MASK Register (0x000)</b>
 
- | Bits |Type| Reset |Field Name| Bits  | Description 
- |:----:|:--:|:-----:|:---------|:-----:|:------------------------------------------------------------|
- | 32-N | RW | h'0   | reserved | 31:N  | Reserved
- | N    | RW | all 1 | mask     | N-1:0 | <b>IRQ mask</b>. 1 equals interrupt disabled; 0 is enabled.
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>rsrv</td>  <td>[31:N]</td>   <td>RZ</td>   <td>reserved.</td>
+  </tr>
+  <tr>
+    <td>mask</td>   <td>[N-1:0]</td>   <td>RW</td>   <td><b>IRQ Mask</b>.
+        Enable or disable the interrupt request for the specific device defined by
+        bit position:
+            \li '0' - Enabled
+            \li '1' - Disabled (reset value)</td>
+  </tr>
+</table>
+
 
 <b>IRQS_PENDING Register (0x004)</b>
 
- | Bits |Type| Reset |Field Name| Bits  | Description 
- |:----:|:--:|:-----:|:---------|:-----:|:------------------------------------------------------------|
- | 32-N | RO | h'0   | reserved | 31:N  | Reserved
- | N    | RO | 0     | pending  | N-1:0 | <b>Pending Bits</b>. 1 signals rised interrupt. This bit is cleared by writing 1 into the register 'Clear IRQ' or writing 1 into 'Lock Register'.
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>rsrv</td>  <td>[31:N]</td>   <td>RZ</td>   <td>reserved.</td>
+  </tr>
+  <tr>
+    <td>pending</td>   <td>[N-1:0]</td>   <td>RO</td>   <td><b>Pending Bits</b>.
+        This register holds the requested interrupts from all unmasked devices:
+            \li '0' - No IRQ request
+            \li '1' - Was IRQ request
+
+        If any of these bits not equal to zero Interrupt Controller set the signal
+        \MExternal to HIGH. Register \c IRQS_CLEAR has to be used to clear specified
+        bit position.
+    </td>
+  </tr>
+</table>
+
 
 <b>IRQS_CLEAR Register (0x008)</b>
 
- | Bits |Type| Reset |Field Name| Bits  | Description 
- |:----:|:--:|:-----:|:---------|:-----:|:------------------------------------------------------------|
- | 32-N | WO | h'0   | reserved | 31:N  | Reserved
- | N    | WO | 0     | clear_bit| N-1:0 | <b>Clear IRQ line</b>. Clear Pending interrupt register bits that are marked with 1s.
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>rsrv</td>  <td>[31:N]</td>   <td>RZ</td>   <td>reserved.</td>
+  </tr>
+  <tr>
+    <td>clear_irq</td>   <td>[N-1:0]</td>   <td>WO</td>   <td><b>Clear Pending Bits</b>.
+        Clear bits in IRQS_PENDING register marked as 1:
+            \li '0' - No action
+            \li '1' - Clear pending bit</td>
+  </tr>
+</table>
+
 
 <b>IRQS_RAISE Register (0x00C)</b>
 
- | Bits |Type| Reset |Field Name| Bits  | Description 
- |:----:|:--:|:-----:|:---------|:-----:|:------------------------------------------------------------|
- | 32-N | WO | h'0   | reserved | 31:N  | Reserved
- | N    | WO | 0     | raise_irq| N-1:0 | <b>Rise specified IRQ line manually</b>. This register can be used for test and debugging either as for 'system calls'.
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>rsrv</td>  <td>[31:N]</td>   <td>RZ</td>   <td>reserved.</td>
+  </tr>
+  <tr>
+    <td>raise_irq</td>   <td>[N-1:0]</td>   <td>WO</td>   <td><b>Request IRQ</b>.
+        This register allows to request IRQ for a specific device manually to call
+        the interrupt handler and verify Software functionality:
+            \li '0' - No action
+            \li '1' - Request IRQ</td>
+  </tr>
+</table>
 
-<b>ISR_TBL_LOW Register (0x010)</b>
 
- | Bits |Type| Reset |Field Name| Bits  | Description 
- |:----:|:--:|:-----:|:---------|:-----:|:------------------------------------------------------------|
- | 32   | WR | 0     | isr_table| 31:0 | <b>Interrupts table address LSB</b>. This register stores address where located ISR table. This value must be intialized be Software.
+<b>ISR_TBL Register (0x010)</b>
 
-<b>ISR_TBL_HIGH Register (0x014)</b>
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>isr_table</td>  <td>[63:0]</td>   <td>RW</td>   <td><b>SW Interrupt Table address</b>.
+       Software may use this dedicated register to store Software defined IRQs handlers table.
 
- | Bits |Type| Reset |Field Name| Bits  | Description 
- |:----:|:--:|:-----:|:---------|:-----:|:------------------------------------------------------------|
- | 32   | WR | 0     | isr_table| 31:0 | <b>Interrupts table address MSB</b>. This register stores address where located ISR table. This value must be intialized be Software.
+       Upper and lower parts of this register can be accessed separately.
+       For more details see folder with <c>riscv_vhdl/examples/*</c>.</td>
+  </tr>
+</table>
 
-<b>DBG_CAUSE_LOW Register (0x018)</b>
 
- | Bits |Type| Reset |Field Name| Bits  | Description 
- |:----:|:--:|:-----:|:---------|:-----:|:------------------------------------------------------------|
- | 32   | WR | 0     | dbg_cause| 31:0 | <b>Cause of te Interrupt LSB</b>. This register stores the latest cause of the interrupt. This value is optional and updates by ROM ISR handler in current implementation.
+<b>DBG_CAUSE Register (0x018)</b>
 
-<b>DBG_CAUSE_HIGH Register (0x01C)</b>
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>dbg_cause</td>  <td>[63:0]</td>   <td>RW</td>   <td><b>Cause of the Interrupt</b>.
+       This register stores the latest \c MCAUSE CSR value. This value is an optional and updates
+       by ROM ISR handler in the current implementation to simplify RTL simulation analysis.
 
- | Bits |Type| Reset |Field Name| Bits  | Description 
- |:----:|:--:|:-----:|:---------|:-----:|:------------------------------------------------------------|
- | 32   | WR | 0     | dbg_cause| 31:0 | <b>Cause of the Interrupt MSB</b>. This register stores the latest cause of the interrupt. This value is optional and updates by ROM ISR handler in current implementation.
+       Upper and lower parts of this register can be accessed separately.</td>
+  </tr>
+</table>
 
-<b>DBG_EPC_LOW Register (0x020)</b>
 
- | Bits |Type| Reset |Field Name| Bits  | Description 
- |:----:|:--:|:-----:|:---------|:-----:|:------------------------------------------------------------|
- | 32   | WR | 0     | dbg_epc  | 31:0 | <b>npc[31:0] register value before trap </b>. This register stores copy of xEPC value. This value is optional and updates by ROM ISR handler in current implementation.
+<b>DBG_EPC Register (0x020)</b>
 
-<b>DBG_EPC_HIGH Register (0x024)</b>
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>dbg_epc</td>  <td>[63:0]</td>   <td>RW</td>   <td><b>Instruction Pointer before trap</b>.
+       This register stores copy of xEPC value. This value is an optional and updates by 
+       ROM ISR handler in the current implementation to simplify RTL simulation analysis.
 
- | Bits |Type| Reset |Field Name| Bits  | Description 
- |:----:|:--:|:-----:|:---------|:-----:|:------------------------------------------------------------|
- | 32   | WR | 0     | dbg_epc  | 31:0 | <b>npc[63:32] register value before trap</b>. This register stores copy of xEPC value. This value is optional and updates by ROM ISR handler in current implementation.
+       Upper and lower parts of this register can be accessed separately.</td>
+  </tr>
+</table>
+
 
 <b>IRQ_LOCK Register (0x028)</b>
 
@@ -177,8 +251,8 @@ following table.
   </tr>
   <tr>
     <td>lock</td>   <td>[0]</td>   <td>RW</td>   <td><b>Lock Interrupts</b>.
-        Disabled all interrupts when this bit is 1. All new interrupt request 
-        marked as postponed and will be raised when 'lock' signal will be
+        Disabled all interrupts when this bit is 1. All new interrupt requests 
+        marked as postponed and will be raised when 'lock' signal becomes
         cleared:
             \li '0' - interrupts enabled
             \li '1' - interrupts disabled (postponed)</td>
@@ -194,11 +268,81 @@ following table.
   </tr>
   <tr>
     <td>irq_idx</td>  <td>[31:0]</td>   <td>RW</td>   <td><b>Interrupt Index</b>.
-       This register stores current interrupt index while in ISR handler. This
-       value is optional and updates by ROM ISR handler in current implementation.</td>
+       This register stores current interrupt index while in processor executes
+       ISR handler. This value is optional and updates by ROM ISR handler
+       in current implementation to simplify RTL simulation analysis.</td>
   </tr>
 </table>
 
 
+@section irq_usage_example_section C-examples
+
+  The CPU bundle is shared with the software examples describing how to properly
+setup and use the interrupts in your application. For more details see folder
+<c>riscv_vhdl/examples/</c>.
+
+  The following C-strucutre can be used to describe IRQ Controller memory map:
+
+@code
+    // Interrupt handler prototype
+    typedef void (*IRQ_TABLE_HANDLER)(int idx, void *arg);
+
+    typedef struct irqctrl_map {
+        volatile uint32_t irq_mask;     // 0x00: [RW] 1=disable; 0=enable
+        volatile uint32_t irq_pending;  // 0x04: [RW]
+        volatile uint32_t irq_clear;    // 0x08: [WO]
+        volatile uint32_t irq_rise;     // 0x0C: [WO]
+        volatile uint64_t isr_table;    // 0x10: [RW]
+        volatile uint64_t dbg_cause;    // 0x18:
+        volatile uint64_t dbg_epc;      // 0x20:
+        volatile uint32_t irq_lock;     // 0x28: lock/unlock all interrupts
+        volatile uint32_t irq_cause_idx;// 0x2c:
+    } irqctrl_map;
+@endcode
+
+  Pseudo-code of the assembler function that is used as top-level interrupt
+handler including 'prologue' and 'epilogue' of the function.
+
+@code
+    // Close C-analog of the assembler function running in Machine mode:
+    void trap_entry() {
+        save_cpu_context();        // Save CPU registers into memory
+        MSTATUS &= ~MEIP;          // Clear MEIP bit in mstatus register
+
+        handle_trap(MCAUSE,
+                    MEPC,
+                    StackPointer); // Call C-handler
+
+        retore_cpu_context();      // Restore CPU registers into memory
+        __asm__("mret");           // Return from interrupt restoring previous CPU mode
+    }    
+@endcode
+
+  Example of top-level handler polling pending bits and calling the
+interrupt handlers of low level:
+
+@code
+    void handle_trap(cause, pc, sp) {
+        irqctrl_map *p_irqctrl = (irqctrl_map *)0x80002000;
+
+        // Software table with the ISR handlers:
+        IRQ_HANDLER irq_handler = (IRQ_HANDLER *)p_irqctrl->isr_table;
+ 
+        // Read into local variable and clear pending bits:
+        p_irqctrl->irq_lock = 1;
+        pending = p_irqctrl->irq_pending;
+        p_irqctrl->irq_clear = pending;
+        p_irqctrl->irq_lock = 0;
+
+        // Sequentially call device isr handlers:
+        for (int i = 0; i < CFG_IRQ_TOTAL; i++) {
+            if (pending & 0x1) {
+                p_irqctrl->irq_cause_idx = i;
+                irq_handler(i, NULL);
+            }
+            pending >>= 1;
+        }
+    }
+@endcode
 
 */
