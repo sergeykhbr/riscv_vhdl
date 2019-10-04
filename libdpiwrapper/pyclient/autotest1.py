@@ -22,7 +22,8 @@ p.connect()
 
 i = 0
 while True:
-    resp = p.req_axi4({"addr":0x0 + 2*i, "we":0})
+    # bytes possible values: 1, 2, 3, 4, 5, 6, 7, 8, 16, 24, 32
+    resp = p.req_axi4({"addr":0x0 + 2*i, "we":1, "bytes":2, "wdata":[0x2211]})
     print "resp={0}".format(resp)
     i = i + 1
     #sleep(0.5)

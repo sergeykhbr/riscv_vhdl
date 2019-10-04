@@ -49,8 +49,8 @@ class DpiClient : public IService,
     virtual void predeleteService() override;
 
     /** IDpi */
-    virtual void axi4_write(uint64_t addr, uint64_t data);
-    virtual void axi4_read(uint64_t addr, uint64_t *data);
+    virtual void axi4_write(uint64_t addr, int bytes, uint64_t data);
+    virtual void axi4_read(uint64_t addr, int bytes, uint64_t *data);
     virtual bool is_irq();
     virtual int get_irq();
 

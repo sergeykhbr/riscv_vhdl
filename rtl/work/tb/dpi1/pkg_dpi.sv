@@ -16,19 +16,20 @@
 
 package pkg_dpi;
 
-parameter int AXI4_BURST_LEN_MAX = 8;
+parameter int AXI4_BURST_LEN_MAX = 4;
+parameter int AXI4_BURST_BITS_TOTAL = 64*AXI4_BURST_LEN_MAX;
 
 typedef struct {
+    bit ready;
+    bit valid;
     longint rdata[AXI4_BURST_LEN_MAX];
 } axi4_slave_out_t;
 
 typedef struct {
     realtime tm;
     int clkcnt;
-    int req_ready;
-    int resp_valid;
-    axi4_slave_out_t slvo;
     int irq_request;
+    axi4_slave_out_t slvo;
 } sv_out_t;
 
 const int REQ_TYPE_SERVER_ERR = -2;
@@ -41,10 +42,9 @@ const int REQ_TYPE_AXI4       = 4;
 typedef struct {
     longint addr;
     longint wdata[AXI4_BURST_LEN_MAX];
-    byte we;    // 0=read; 1=write
-    byte wstrb;
-    byte burst;
-    byte len;
+    byte we;     // 0=read; 1=write
+    byte wstrb;  // any non-zero=for non-burst; 8'hFF=for burst request
+    byte len;    // 0=not a burst; !0=num of 8-bytes burst transactions
 } axi4_slave_in_t;
 
 typedef struct {
@@ -55,7 +55,8 @@ typedef struct {
 } sv_in_t;
 
 import "DPI-C" context task c_task_server_start();
-import "DPI-C" context task c_task_clk_posedge(input sv_out_t sv2c, output sv_in_t c2sv);
+import "DPI-C" context task c_task_slv_clk_posedge(input sv_out_t sv2c,
+                                                   output sv_in_t c2sv);
 export "DPI-C" function sv_func_info;
 
 function void sv_func_info(input string info);

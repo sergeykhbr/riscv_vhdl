@@ -27,8 +27,8 @@ class IDpi : public IFace {
  public:
     IDpi() : IFace(IFACE_DPI) {}
 
-    virtual void axi4_write(uint64_t addr, uint64_t data) = 0;
-    virtual void axi4_read(uint64_t addr, uint64_t *data) = 0;
+    virtual void axi4_write(uint64_t addr, int bytes, uint64_t data) = 0;
+    virtual void axi4_read(uint64_t addr, int bytes, uint64_t *data) = 0;
     virtual bool is_irq() = 0;
     virtual int get_irq() = 0;
 };

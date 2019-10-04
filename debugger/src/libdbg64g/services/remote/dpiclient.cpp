@@ -58,9 +58,14 @@ void CmdDpi::exec(AttributeType *args, AttributeType *res) {
     if ((*args)[1].is_equal("axi4")) {
         if ((args->size() >= 5) && (*args)[2].is_equal("read")) {
             uint64_t rdata = 0;
-            p->axi4_read((*args)[4].to_uint64(), &rdata);
+            p->axi4_read((*args)[4].to_uint64(),
+                         (*args)[3].to_uint32(),
+                         &rdata);
             res->make_uint64(rdata);
         } else if ((args->size() >= 6) && (*args)[2].is_equal("write")) {
+            p->axi4_write((*args)[4].to_uint64(),
+                (*args)[3].to_uint32(),
+                (*args)[5].to_uint64());
         }
     } else if ((*args)[1].is_equal("time")) {
         double tm = p->getHartBeatTime();
@@ -307,7 +312,7 @@ void DpiClient::closeServerSocket() {
     hsock_ = 0;
 }
 
-void DpiClient::axi4_write(uint64_t addr, uint64_t data) {
+void DpiClient::axi4_write(uint64_t addr, int bytes, uint64_t data) {
     char tstr[1024];
     AttributeType resp;
     int sz = RISCV_sprintf(tstr, sizeof(tstr),
@@ -317,14 +322,15 @@ void DpiClient::axi4_write(uint64_t addr, uint64_t data) {
            "{"
                "'we':1,"
                "'addr':0x%" RV_PRI64 "x,"
+               "'bytes':%d,"
                "'wdata':[0x%" RV_PRI64 "x]"
             "}"
         "]",
-        getObjName(), addr, data);
+        getObjName(), addr, bytes, data);
     syncRequest(tstr, sz + 1);
 }
 
-void DpiClient::axi4_read(uint64_t addr, uint64_t *data) {
+void DpiClient::axi4_read(uint64_t addr, int bytes, uint64_t *data) {
     char tstr[1024];
     int sz = RISCV_sprintf(tstr, sizeof(tstr),
         "["
@@ -332,10 +338,11 @@ void DpiClient::axi4_read(uint64_t addr, uint64_t *data) {
            "'AXI4',"
            "{"
                "'we':0,"
-               "'addr':0x%" RV_PRI64 "x"
+               "'addr':0x%" RV_PRI64 "x,"
+               "'bytes':%d"
            "}"
         "]",
-        getObjName(), addr);
+        getObjName(), addr, bytes);
 
     if (!syncRequest(tstr, sz + 1)) {
         return;

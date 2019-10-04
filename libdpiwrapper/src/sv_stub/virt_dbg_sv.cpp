@@ -21,7 +21,7 @@
 #include "dpiwrapper/c_dpi.h"
 
 extern "C" int c_task_server_start();
-extern "C" int c_task_clk_posedge(const sv_out_t *sv2c, sv_in_t *c2sv);
+extern "C" int c_task_slv_clk_posedge(const sv_out_t *sv2c, sv_in_t *c2sv);
 
 extern "C" void sv_task_process_request(const sv_in_t *r) {
     switch (r->req_type) {
@@ -50,7 +50,6 @@ extern "C" void simulation_start() {
     double timescale = 0.0;
     sv_in_t sv_in;
     sv_out_t sv_out;
-    uint64_t rdata = 0x13;//0xcafef00ddeadbeedull;
     EBusState estate = Bus_Idle;
 
     c_task_server_start();
@@ -61,25 +60,26 @@ extern "C" void simulation_start() {
         sv_out.tm = timescale;
         sv_out.clkcnt = clkcnt;
         sv_out.slvo.rdata[0] = 0;
-        sv_out.req_ready = 0;
-        sv_out.resp_valid = 0;
+        sv_out.slvo.ready = 0;
+        sv_out.slvo.valid = 0;
 
         switch (estate) {
         case Bus_Idle:
-            sv_out.req_ready = 1;
+            sv_out.slvo.ready = 1;
             if (sv_in.req_type == REQ_TYPE_AXI4 && sv_in.req_valid) {
                 estate = Bus_WaitResponse;
             }
             break;
         case Bus_WaitResponse:
-            sv_out.resp_valid = 1;
-            sv_out.slvo.rdata[0] = rdata;
+            sv_out.slvo.valid = 1;
+            sv_out.slvo.rdata[0] = 0x8877665544332211ull;
+            sv_out.slvo.rdata[1] = 0x00ffeeddccbbaa99ull;
             estate = Bus_Idle;
             break;
         default:;
         }
 
-        c_task_clk_posedge(&sv_out, &sv_in);
+        c_task_slv_clk_posedge(&sv_out, &sv_in);
     }
 }
 

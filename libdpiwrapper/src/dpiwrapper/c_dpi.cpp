@@ -37,7 +37,80 @@ static AttributeType tcpreq_;
 static AttributeType tcpresp_;
 static ICommand* isrc_ = 0;
 static char descr_[256];
-static uint64_t reqaddr_ = 0;
+
+void binaxi2json(const AttributeType &slvi, const sv_out_t *sv2c,
+                 AttributeType &slvo) {
+    slvo.make_dict();
+    slvo["tm"].make_floating(sv2c->tm);
+    slvo["clkcnt"].make_uint64(sv2c->clkcnt);
+
+    uint64_t taddr = slvi["addr"].to_uint64();
+    if (!slvi["we"].to_bool()) {
+        int tsize = slvi["bytes"].to_int();
+        int toffset = static_cast<int>(taddr & 0x7ull);
+        uint64_t tmask = ~0ull;
+        if (tsize < 8) {
+            tmask = (1ull << (8*tsize)) - 1;
+        }
+
+        uint64_t rdata = 0;
+        slvo["rdata"].make_list(1);
+
+        if ((toffset + tsize) > 8) {
+            rdata = sv2c->slvo.rdata[1] << (64 - 8*toffset);
+            rdata |= sv2c->slvo.rdata[0] >> (8*toffset);
+        } else {
+            rdata = sv2c->slvo.rdata[0] >> (8*toffset);
+        }
+        rdata &= tmask;
+        slvo["rdata"][0u].make_uint64(rdata);
+
+        LIB_printf("tm=%.1f; clkcnt=%d: [%08x] => %016" RV_PRI64 "x\n",
+            sv2c->tm, sv2c->clkcnt,
+            static_cast<uint32_t>(taddr), rdata);
+    } else {
+        uint64_t wdata0 = slvi["wdata"][0u].to_uint64();
+        LIB_printf("tm=%.1f; clkcnt=%d: [%08x] <= %016" RV_PRI64 "x\n",
+            sv2c->tm, sv2c->clkcnt,
+            static_cast<uint32_t>(taddr), wdata0);
+    }
+}
+
+int json2binaxi(const AttributeType &slvi, sv_in_t *c2sv) {
+    int ret = 1;
+    uint64_t taddr = slvi["addr"].to_uint64();
+    uint64_t tsize = slvi["bytes"].to_uint64();
+    uint64_t toffset = taddr & 0x7;
+    c2sv->slvi.we = slvi["we"].to_bool();
+    c2sv->slvi.addr = taddr & ~0x7ull;
+    if (tsize > 8) {
+        /** Burst request must be 8-bytes aligned */
+        c2sv->slvi.len = static_cast<char>(tsize / 8);
+    } else if (((taddr & 0x7ull) + tsize) > 8) {
+        c2sv->slvi.len = 1;
+        if (c2sv->slvi.we) {
+            LIB_printf("unaligned write request %016" RV_PRI64 "x", taddr);
+            ret = 0;
+        }
+    } else {
+        c2sv->slvi.len = 0;
+    }
+
+    if (c2sv->slvi.we) {
+        unsigned tmask = (1ul << tsize) - 1;
+        const AttributeType &twdata = slvi["wdata"];
+        tmask <<= toffset;
+        tmask &= 0xFF;
+        c2sv->slvi.wstrb = static_cast<char>(tmask);
+        for (unsigned i = 0; i < twdata.size(); i++) {
+            c2sv->slvi.wdata[i] = twdata[i].to_uint64() << 8*toffset;
+        }
+    } else {
+        c2sv->slvi.wstrb = 0;
+        memset(c2sv->slvi.wdata, 0, sizeof(c2sv->slvi.wdata));
+    }
+    return ret;
+}
 
 void dpi_put_fifo_request(void *iface) {
     ICommand *t1 = reinterpret_cast<ICommand *>(iface);
@@ -90,7 +163,7 @@ extern "C" int c_task_server_start() {
     return 0;
 }
 
-extern "C" int c_task_clk_posedge(const sv_out_t *sv2c, sv_in_t *c2sv) {
+extern "C" int c_task_slv_clk_posedge(const sv_out_t *sv2c, sv_in_t *c2sv) {
     c2sv->req_valid = 0;
     if (fifo_.is_empty() && estate_ == State_Idle) {
         return 0;
@@ -160,10 +233,8 @@ extern "C" int c_task_clk_posedge(const sv_out_t *sv2c, sv_in_t *c2sv) {
     case State_Idle:
         c2sv->req_valid = 1;
         c2sv->req_type = REQ_TYPE_AXI4;
-        c2sv->slvi.addr = slvi["addr"].to_uint64();
-        c2sv->slvi.we = slvi["we"].to_bool();
-        reqaddr_ = c2sv->slvi.addr;
-        if (sv2c->req_ready) {
+        json2binaxi(slvi, c2sv);
+        if (sv2c->slvo.ready) {
             estate_ = State_WaitResp;
         } else {
             estate_ = State_WaitAccept;
@@ -171,26 +242,16 @@ extern "C" int c_task_clk_posedge(const sv_out_t *sv2c, sv_in_t *c2sv) {
         break;
     case State_WaitAccept:
         c2sv->req_valid = 1;
-        c2sv->req_type = REQ_TYPE_AXI4;
-        c2sv->slvi.addr = slvi["addr"].to_uint64();
-        c2sv->slvi.we = slvi["we"].to_bool();
-        reqaddr_ = c2sv->slvi.addr;
-        if (sv2c->req_ready) {
+        if (sv2c->slvo.ready) {
             estate_ = State_WaitResp;
         }
         break;
     case State_WaitResp:
-        if (sv2c->resp_valid) {
+        c2sv->req_valid = 0;
+        if (sv2c->slvo.valid) {
             tcpresp_[Resp_CmdType].make_string("AXI4");
-            AttributeType &od = tcpresp_[Resp_Data];
-            od.make_dict();
-            od["tm"].make_floating(sv2c->tm);
-            od["clkcnt"].make_uint64(sv2c->clkcnt);
-            od["rdata"].make_list(1);
-            od["rdata"][0u].make_uint64(sv2c->slvo.rdata[0]);
-            LIB_printf("tm=%.1f; clkcnt=%d: [%08x] => %016" RV_PRI64 "x\n",
-                sv2c->tm, sv2c->clkcnt,
-                static_cast<uint32_t>(reqaddr_), sv2c->slvo.rdata[0]);
+            binaxi2json(slvi, sv2c, tcpresp_[Resp_Data]);
+
             isrc_->setResponse(tcpresp_);
             estate_ = State_Idle;
         }

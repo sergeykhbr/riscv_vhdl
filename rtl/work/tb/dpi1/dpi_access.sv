@@ -38,12 +38,10 @@ typedef enum {
 
 typedef struct packed {
     bus_state_t estate;
-    bit [CFG_SYSBUS_ADDR_BITS-1:0] addr;
     bit [7:0] burst_cnt;
     bit [7:0] burst_len;
-    bit [127:0] burst_buf;
-    bit [63:0] w_data;
-    bit [7:0] w_strb;
+    bit [7:0] wstrb;
+    bit [AXI4_BURST_BITS_TOTAL-1:0] wdata;
 } registers_t;
 
 registers_t v, r;
@@ -56,61 +54,12 @@ initial begin
     c_task_server_start();
 end
 
-function void get_burst(input bit [2:1] addr,
-                       output bit [7:0] len,
-                       output bit [2:0] size,
-                       output bit [1:0] burst);
-begin
-    len = 8'd0;
-    size = 3'd3;   // 8-bytes
-    burst = AXI_BURST_FIXED;
-    if (addr == 2'b11) begin
-        len = 8'd1;
-        burst = AXI_BURST_INCR;
-    end
-end
-endfunction: get_burst
-
-function longint get_rdata(input bit [2:0] addr,
-                           input bit [127:0] buffer);
-begin
-    case (addr)
-    3'b000: begin
-        return buffer[63:0];
-    end
-    3'b001: begin
-        return {8'd0, buffer[63:8]};
-    end
-    3'b010: begin
-        return {16'd0, buffer[63:16]};
-    end
-    3'b011: begin
-        return {24'd0, buffer[63:24]};
-    end
-    3'b100: begin
-        return {32'd0, buffer[63:32]};
-    end
-    3'b101: begin
-        return {40'd0, buffer[63:40]};
-    end
-    3'b110: begin
-        return {buffer[47:0], buffer[127:112]};
-    end
-    3'b111: begin
-        return {buffer[55:0], buffer[127:120]};
-    end
-    default: begin
-    end
-    endcase
-end
-endfunction: get_rdata
 
 always_comb begin
     v = r;
 
-    sv_out.slvo.rdata[0] = 0;
-    sv_out.req_ready = 0;
-    sv_out.resp_valid = 0;
+    sv_out.slvo.ready = 0;
+    sv_out.slvo.valid = 0;
 
     vslvi.aw_valid = 1'b0;
     vslvi.aw_bits = META_NONE;
@@ -124,37 +73,40 @@ always_comb begin
     case (r.estate)
     Bus_Idle: begin
         v.burst_cnt = 0;
-        v.burst_buf = 0;
+        v.burst_len = sv_in.slvi.len;
+        sv_out.slvo.ready = 1;
         if (sv_in.req_type == REQ_TYPE_AXI4 && sv_in.req_valid == 1) begin
             if (sv_in.slvi.we == 1) begin
                 vslvi.aw_valid = 1'b1;
                 vslvi.aw_bits.addr = sv_in.slvi.addr;
+                vslvi.aw_bits.size = 3'd3;   // 8-bytes only (sys bus width)
+                vslvi.aw_bits.len = sv_in.slvi.len;
+                vslvi.aw_bits.burst = AXI_BURST_FIXED;
+                if (sv_in.slvi.len != 0) begin
+                    vslvi.aw_bits.burst = AXI_BURST_INCR;
+                end
+
+                v.wstrb = sv_in.slvi.wstrb;
+                for (int i = 0; i < AXI4_BURST_LEN_MAX; i++) begin
+                    v.wdata[64*(i+1)-1 +: 64] = sv_in.slvi.wdata[i];
+                end
                 if (i_slvo.aw_ready == 1) begin
-                    v.addr = sv_in.slvi.addr[CFG_SYSBUS_ADDR_BITS-1:0];
-                    get_burst(sv_in.slvi.addr[2:1],
-                              vslvi.aw_bits.len,
-                              vslvi.aw_bits.size,
-                              vslvi.aw_bits.burst);
-                    v.burst_len = vslvi.aw_bits.len;
-                    v.w_data = sv_in.slvi.wdata[0];
-                    v.w_strb = sv_in.slvi.wstrb;
                     v.estate = Bus_w;
-                    sv_out.req_ready = 1;
                 end else begin
                     v.estate = Bus_aw;
                 end
             end else begin
                 vslvi.ar_valid = 1'b1;
                 vslvi.ar_bits.addr = sv_in.slvi.addr;
+                vslvi.ar_bits.size = 3'd3;   // 8-bytes only (sys bus width)
+                vslvi.ar_bits.len = sv_in.slvi.len;
+                vslvi.ar_bits.burst = AXI_BURST_FIXED;
+                if (sv_in.slvi.len != 0) begin
+                    vslvi.ar_bits.burst = AXI_BURST_INCR;
+                end
+
                 if (i_slvo.ar_ready == 1) begin
-                    v.addr = sv_in.slvi.addr[CFG_SYSBUS_ADDR_BITS-1:0];
-                    get_burst(sv_in.slvi.addr[2:1],
-                              vslvi.ar_bits.len,
-                              vslvi.ar_bits.size,
-                              vslvi.ar_bits.burst);
-                    v.burst_len = vslvi.ar_bits.len;
                     v.estate = Bus_r;
-                    sv_out.req_ready = 1;
                 end else begin
                     v.estate = Bus_ar;
                 end
@@ -163,25 +115,15 @@ always_comb begin
     end
     Bus_ar: begin
         vslvi.ar_valid = 1'b1;
-        vslvi.ar_bits.addr = sv_in.slvi.addr;
         if (i_slvo.ar_ready == 1) begin
-            v.addr = sv_in.slvi.addr[CFG_SYSBUS_ADDR_BITS-1:0];
-            get_burst(sv_in.slvi.addr[2:1],
-                      vslvi.ar_bits.len,
-                      vslvi.ar_bits.size,
-                      vslvi.ar_bits.burst);
-             v.burst_len = vslvi.ar_bits.len;
              v.estate = Bus_r;
-             sv_out.req_ready = 1;
         end
     end
     Bus_r: begin
         if (i_slvo.r_valid == 1) begin
-            v.burst_buf = {r.burst_buf[63:0], i_slvo.r_data};
+            sv_out.slvo.rdata[r.burst_cnt] = i_slvo.r_data;
             if (r.burst_cnt == r.burst_len) begin
-                sv_out.resp_valid = 1;
-                sv_out.slvo.rdata[0] = get_rdata(r.addr[2:0],
-                                                 v.burst_buf);
+                sv_out.slvo.valid = 1;
                 v.estate = Bus_Idle;
             end else begin
                 v.burst_cnt = r.burst_cnt + 1;
@@ -190,31 +132,29 @@ always_comb begin
     end
     Bus_aw: begin
         vslvi.aw_valid = 1'b1;
-        vslvi.aw_bits.addr = sv_in.slvi.addr;
-        v.addr = sv_in.slvi.addr[CFG_SYSBUS_ADDR_BITS-1:0];
-        get_burst(sv_in.slvi.addr[2:1],
-                  vslvi.aw_bits.len,
-                  vslvi.aw_bits.size,
-                  vslvi.aw_bits.burst);
-         v.burst_len = vslvi.aw_bits.len;
-         v.w_data = sv_in.slvi.wdata[0];
-         v.w_strb = sv_in.slvi.wstrb;
          if (i_slvo.aw_ready == 1) begin
              v.estate = Bus_w;
-             sv_out.req_ready = 1;
          end
     end
     Bus_w: begin
         vslvi.w_valid = 1'b1;
-        vslvi.w_data = r.w_data;
-        vslvi.w_strb = r.w_strb;
+        vslvi.w_data = r.wdata[63:0];
+        vslvi.w_strb = r.wstrb;
+        if (r.burst_cnt == sv_in.slvi.len) begin
+            vslvi.w_last = 1'b1;
+        end
         if (i_slvo.w_ready == 1) begin
-            v.estate = Bus_b;
+            v.wdata = {64'd0, r.wdata[AXI4_BURST_BITS_TOTAL-1:64]};
+            if (r.burst_cnt == r.burst_len) begin
+                v.estate = Bus_b;
+            end else begin
+                v.burst_cnt = r.burst_cnt + 1;
+            end
         end
     end
     Bus_b: begin
         if (i_slvo.b_valid == 1) begin
-            sv_out.resp_valid = 1;
+            sv_out.slvo.valid = 1;
             v.estate = Bus_Idle;
         end
     end
@@ -224,12 +164,10 @@ always_comb begin
 
     if (nrst == 0) begin
         v.estate = Bus_Idle;
-        v.addr = 0;
         v.burst_cnt = 0;
         v.burst_len = 0;
-        v.burst_buf = 0;
-        v.w_data = 0;
-        v.w_strb = 0;
+        v.wstrb = 0;
+        v.wdata = 0;
     end
 
     o_slvi <= vslvi;
@@ -240,7 +178,7 @@ always_ff @(posedge clk) begin
     sv_out.tm <= $time;
     sv_out.clkcnt <= clkcnt;
 
-    c_task_clk_posedge(sv_out, sv_in);
+    c_task_slv_clk_posedge(sv_out, sv_in);
 end
 
 

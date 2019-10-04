@@ -65,21 +65,25 @@ ETransStatus MemoryGeneric::b_transport(Axi4TransactionType *trans) {
                 mem_[off + i] = trans->wpayload.b8[i];
             }
         }
+
+        /** Access to SystemVerilog */
+        if (idpi_ && dpiRoutes_[trans->source_idx].to_bool()) {
+            idpi_->axi4_write(off, static_cast<int>(trans->xsize),
+                              trans->wpayload.b64[0]);
+        }
     } else {
         trans->rpayload.b64[0] = 0;
         memcpy(trans->rpayload.b8, &mem_[off], trans->xsize);
 
         /** Access to SystemVerilog and auto-comparision */
         if (idpi_ && dpiRoutes_[trans->source_idx].to_bool()) {
-            Reg64Type t1, t2;
-            idpi_->axi4_read(off, &t1.val);
+            Reg64Type t1;
+            idpi_->axi4_read(off, static_cast<int>(trans->xsize), &t1.val);
 
-            t2.val = 0;
-            memcpy(t2.buf, t1.buf, trans->xsize);
-            if (t2.val != trans->rpayload.b64[0]) {
+            if (t1.val != trans->rpayload.b64[0]) {
                 RISCV_error("DPI diff [%08x]: %016" RV_PRI64 "x != %016" RV_PRI64 "x",
                     static_cast<unsigned>(off),
-                    t2.val,
+                    t1.val,
                     trans->rpayload.b64[0]
                     );
             }

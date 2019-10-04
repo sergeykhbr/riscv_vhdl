@@ -1,4 +1,38 @@
 /**  @page gpio_page GPIO Controller
+
+  System-on-Chip based on River CPU provides additional periphery module GPIO 
+Controller (\c axi4_gpio). This modules instantiates \c width number of bi-directional pins,
+where \c width is the generic parameter which is equal to 12 for all used fpga boards
+(4 LEDs + 8 User defined DIPs). ALL GPIOs connected via bi-directional buffer
+with the Z-state and can be programmed as inputs or outputs.
+
+  Default ASIC configuraton supposes that all GPIO will be configures as input pins
+after hard reset but for the FPGA targets GPIOs are splitted on input connected 
+to User's DIP switch and output connected to LEDs so the hard reset state
+state may differs from default configuration.
+
+ @section gpio_boot_config_section Boot Loader Configuration
+
+  GPIOs pins is used to pass some configuration and select desired behaviour
+of program loaded into Boot ROM. There're plenty number of possible
+images that can be used as boot image as available in folder \c examples
+ether as not available:
+
+  \li <c>examples/boot/*</c>. Demonstration ROM image starting user application.
+  \li <c>examples/bootrom_tests/*</c>. Self test application running directly from ROM
+  \li <c>examples/sysboot/*</c>. Full functional ASIC boot loader.
+  \li Other custom application.
+
+ Depending of the used ROM program there're may be the following GPIO
+pins assignment:
+
+| GPIO[2] | GPIO[1] | GPIO[0] | 
+|:-------:|:-------:|:-------:|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 0       | 0       | 0       | 
+| 0       | 0       | 1       | 
+| 0       | 1       | 0       | 
+| 0       | 1       | 1       | 
+| 1       | *       | *       | 
  
  @section gpio_regs GPIO registers mapping
 

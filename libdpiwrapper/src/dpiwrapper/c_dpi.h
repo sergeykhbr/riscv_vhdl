@@ -21,16 +21,16 @@
 static const int AXI4_BURST_LEN_MAX     = 4;
 
 typedef struct axi4_slave_out_t {
+    char ready;
+    char valid;
     uint64_t rdata[AXI4_BURST_LEN_MAX];
 } axi4_slave_out_t;
 
 typedef struct sv_out_t {
 	double tm;
 	uint32_t clkcnt;
-    int req_ready;
-    int resp_valid;
-    axi4_slave_out_t slvo;
     int irq_request;
+    axi4_slave_out_t slvo;
 } sv_out_t;
 
 
@@ -45,9 +45,8 @@ typedef struct axi4_slave_in_t {
     uint64_t addr;
     uint64_t wdata[AXI4_BURST_LEN_MAX];
     char we;        // 0 = read; 1 = write
-    char wstrb;
-    char burst;
-    char len;
+    char wstrb;     // 0xff for burst operations
+    char len;       // 0=not a burst; not 0 = burst 8 bytes
 } axi4_slave_in_t;
 
 typedef struct sv_in_t {
@@ -64,7 +63,8 @@ typedef struct dpi_sv_interface {
 } dpi_sv_interface;
 
 typedef int (*c_task_server_start_proc)();
-typedef int (*c_task_clk_posedge_proc)(const sv_out_t *sv2c, sv_in_t *c2sv);
+typedef int (*c_task_slv_clk_posedge_proc)(const sv_out_t *sv2c,
+                                           sv_in_t *c2sv);
 
 /** Interface between clients and DPI context task */
 enum EJsonRequestList {
