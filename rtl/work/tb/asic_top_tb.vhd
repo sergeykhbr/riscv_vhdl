@@ -20,8 +20,6 @@ library std;
 use std.textio.all;
 library commonlib;
 use commonlib.types_util.all;
-library rocketlib;
---use rocketlib.types_rocket.all;
 
 entity asic_top_tb is
 end asic_top_tb;
