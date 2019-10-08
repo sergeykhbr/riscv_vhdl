@@ -1,9 +1,0 @@
-*.wlf
-*.mti
-*.do
-*.vstf
-wlf*
-transcript
-work/*
-!work/_info
-dpilib.log
