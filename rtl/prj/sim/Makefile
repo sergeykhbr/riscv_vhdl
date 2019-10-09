@@ -2,9 +2,12 @@ include src.mk
 
 TIMESCALE=1ns/10ps
 BENCH=asic_top_tb
+CYCLES=30000
 
 VHDL_PARAMS=-64 -v93 -smartorder
-ELAB_PARAMS=-64 -v93 -namemap_mixgen -timescale ${TIMESCALE}
+ELAB_PARAMS=-64 -v93 -namemap_mixgen -timescale ${TIMESCALE} \
+            -access +rwc
+SIM_OPTS = -64 -input ./ncsim_settings work.${BENCH} +cycles=${CYCLES}
 
 prep:
 	@mkdir -p work
@@ -33,3 +36,6 @@ comp: prep clr_logs
 
 build: comp
 	@ncelab ${ELAB_PARAMS} ${BENCH}
+
+gui:clr_logs
+	@ncsim ${SIM_OPTS} -gui
