@@ -115,7 +115,7 @@ typedef struct packed {
 } axi4_metadata_type;
 
 const axi4_metadata_type META_NONE = {
-   0, 8'd0, 3'd0, 2'd0, 1'b0, 
+   32'd0, 8'd0, 3'd0, 2'd0, 1'b0, 
    4'd0, 3'd0, 4'd0, 4'd0
 };
 
@@ -197,7 +197,7 @@ typedef struct packed {
 
 function int xmask2abits(input int xmask);
 begin
-  const int size_4kbytes = -(xmask - 1048576); 
+  static const int size_4kbytes = -(xmask - 1048576); 
   return 12 + log2[size_4kbytes];
 end
 endfunction: xmask2abits

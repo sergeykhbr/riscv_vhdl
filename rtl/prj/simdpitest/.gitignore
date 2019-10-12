@@ -1,0 +1,7 @@
+.simvision
+INCA_libs
+work
+*.shm
+ncsim.key
+*.log
+*.diag
