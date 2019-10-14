@@ -21,8 +21,6 @@ namespace debugger {
 
 IntDiv::IntDiv(sc_module_name name_, bool async_reset)
     : sc_module(name_),
-    stage0("stage0"),
-    stage1("stage1"),
     i_clk("i_clk"),
     i_nrst("i_nrst"),
     i_ena("i_ena"),
@@ -33,7 +31,9 @@ IntDiv::IntDiv(sc_module_name name_, bool async_reset)
     i_a2("i_a2"),
     o_res("o_res"),
     o_valid("o_valid"),
-    o_busy("o_busy")  {
+    o_busy("o_busy"),
+    stage0("stage0"),
+    stage1("stage1") {
     async_reset_ = async_reset;
 
     stage0.i_divident(r.divident_i);

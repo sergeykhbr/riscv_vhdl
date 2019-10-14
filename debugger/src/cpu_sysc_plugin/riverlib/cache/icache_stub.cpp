@@ -235,7 +235,7 @@ void ICacheStub::comb() {
         wb_o_req_mem_addr = wb_req_addr[1](BUS_ADDR_WIDTH-1, 3) << 3;
     }
 
-    w_o_req_ctrl_ready = !w_need_mem_req 
+    w_o_req_ctrl_ready = (!w_need_mem_req) 
                        | (i_req_mem_ready.read() & !w_wait_response);
     w_req_fire = w_req_ctrl_valid && w_o_req_ctrl_ready;
 

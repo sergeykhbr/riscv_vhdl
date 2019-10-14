@@ -3,6 +3,11 @@
 ## @copyright  Copyright 2016 GNSS Sensor Ltd. All right reserved.
 ## @author     Sergey Khabarov - sergeykhbr@gmail.com
 ##
+## Apply patch on CentOS 6 to build Qt plugin
+##
+##   patchelf --set-interpreter /opt/glibc-2.14/lib/ld-linux-x86-64.so.2 --set-rpath /opt/glibc-2.14/lib/ rcc
+##   patchelf --set-interpreter /opt/glibc-2.14/lib/ld-linux-x86-64.so.2 --set-rpath /opt/glibc-2.14/lib/ moc
+##   export LD_LIBRARY_PATH=/opt/glibc-2.14/lib:/lib64:/usr/lib64
 
 include util.mak
 
@@ -14,6 +19,8 @@ CC=gcc
 CPP=gcc
 CFLAGS=-g -c -Wall -Werror -fPIC -pthread
 LDFLAGS=-shared -pthread -L$(PLUGINS_ELF_DIR)/.. -L$(QT_PATH)/lib
+#LDFLAGS+=-Wl,--rpath=/home/user9/soft/glibc-2.17/lib64
+#LDFLAGS+=-Wl,--dynamic-linker=/home/user9/soft/glibc-2.17/lib64/ld-linux-x86-64.so.2
 INCL_KEY=-I
 DIR_KEY=-B
 

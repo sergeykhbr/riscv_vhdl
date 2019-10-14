@@ -19,7 +19,6 @@
 namespace debugger {
 
 idiv53::idiv53(sc_module_name name_, bool async_reset) : sc_module(name_),
-    divstage0("divstage"),
     i_nrst("i_nrst"),
     i_clk("i_clk"),
     i_ena("i_ena"),
@@ -29,7 +28,8 @@ idiv53::idiv53(sc_module_name name_, bool async_reset) : sc_module(name_),
     o_lshift("o_lshift"),
     o_rdy("o_rdy"),
     o_overflow("o_overflow"),
-    o_zero_resid("o_zero_resid") {
+    o_zero_resid("o_zero_resid"),
+    divstage0("divstage") {
     async_reset_ = async_reset;
 
     SC_METHOD(comb);

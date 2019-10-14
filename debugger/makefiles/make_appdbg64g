@@ -8,8 +8,10 @@ include util.mak
 
 CC=gcc
 CPP=gcc
-CFLAGS=-g -c -Wall -Werror -std=c++0x
-LDFLAGS=-L$(ELF_DIR)
+CFLAGS=-g -c -Wall -Werror -std=c++0x -pthread
+LDFLAGS=-L$(ELF_DIR) -pthread
+#LDFLAGS+=-Wl,--rpath=/home/user9/soft/glibc-2.17/lib64
+#LDFLAGS+=-Wl,--dynamic-linker=/home/user9/soft/glibc-2.17/lib64/ld-linux-x86-64.so.2
 INCL_KEY=-I
 DIR_KEY=-B
 
@@ -46,12 +48,13 @@ $(EXECUTABLE): $(OBJ_FILES)
 	echo $(CPP) $(LDFLAGS) $(OBJ_FILES) -o $@
 	$(CPP) $(LDFLAGS) $(OBJ_FILES) -o $@ $(addprefix -l,$(LIBS))
 	# Generate starting scripts:
-	@echo "#!/bin/bash\nexport LD_LIBRARY_PATH=\$$(pwd):\$$(pwd)/qtlib\n./appdbg64g.exe -c ../../targets/functional_sim_gui.json \"\$$@\"" > $(ELF_DIR)/_run_functional_sim.sh
-	@echo "#!/bin/bash\nexport LD_LIBRARY_PATH=\$$(pwd):\$$(pwd)/qtlib\n./appdbg64g.exe -c ../../targets/sysc_river_gui.json \"\$$@\"" > $(ELF_DIR)/_run_systemc_sim.sh
-	@echo "#!/bin/bash\nexport LD_LIBRARY_PATH=\$$(pwd):\$$(pwd)/qtlib\n./appdbg64g.exe -c ../../targets/fpga_gui.json \"\$$@\"" > $(ELF_DIR)/_run_fpga_gui.sh
-	@echo "#!/bin/bash\nexport LD_LIBRARY_PATH=\$$(pwd):\$$(pwd)/qtlib\n./appdbg64g.exe -c ../../targets/functional_arm_gui.json \"\$$@\"" > $(ELF_DIR)/_run_arm_sim.sh
-	@echo "#!/bin/bash\nexport LD_LIBRARY_PATH=\$$(pwd):\$$(pwd)/qtlib\n./appdbg64g.exe -c ../../targets/dualcore_sim_gui.json \"\$$@\"" > $(ELF_DIR)/_run_dualocore_sim.sh
-	@echo "#!/bin/bash\nexport LD_LIBRARY_PATH=\$$(pwd):\$$(pwd)/qtlib\nexport QT_DEBUG_PLUGINS=0\ngdb --args ./appdbg64g.exe -c ../../targets/functional_sim_gui.json \"\$$@\"" > $(ELF_DIR)/_run_gdb.sh
+	@echo -e "#!/bin/bash\nexport LD_LIBRARY_PATH=\$$(pwd):\$$(pwd)/qtlib\n./appdbg64g.exe -c ../../targets/functional_sim_gui.json \"\$$@\"" > $(ELF_DIR)/_run_functional_sim.sh
+	@echo -e "#!/bin/bash\nexport LD_LIBRARY_PATH=\$$(pwd):\$$(pwd)/qtlib\n./appdbg64g.exe -c ../../targets/sysc_river_gui.json \"\$$@\"" > $(ELF_DIR)/_run_systemc_sim.sh
+	@echo -e "#!/bin/bash\nexport LD_LIBRARY_PATH=\$$(pwd):\$$(pwd)/qtlib\n./appdbg64g.exe -c ../../targets/fpga_gui.json \"\$$@\"" > $(ELF_DIR)/_run_fpga_gui.sh
+	@echo -e "#!/bin/bash\nexport LD_LIBRARY_PATH=\$$(pwd):\$$(pwd)/qtlib\n./appdbg64g.exe -c ../../targets/functional_arm_gui.json \"\$$@\"" > $(ELF_DIR)/_run_arm_sim.sh
+	@echo -e "#!/bin/bash\nexport LD_LIBRARY_PATH=\$$(pwd):\$$(pwd)/qtlib\n./appdbg64g.exe -c ../../targets/dualcore_sim_gui.json \"\$$@\"" > $(ELF_DIR)/_run_dualocore_sim.sh
+	@echo -e "#!/bin/bash\nexport LD_LIBRARY_PATH=\$$(pwd):\$$(pwd)/qtlib\nexport QT_DEBUG_PLUGINS=0\ngdb --args ./appdbg64g.exe -c ../../targets/functional_sim_gui.json \"\$$@\"" > $(ELF_DIR)/_run_gdb.sh
+	@echo -e "#!/bin/bash\nexport LD_LIBRARY_PATH=\$$(pwd):\$$(pwd)/qtlib\n./appdbg64g.exe -c ../../targets/functional_dpi_gui.json \"\$$@\"" > $(ELF_DIR)/_run_dpi_sim.sh
 	chmod +x $(ELF_DIR)/*.sh
 	$(ECHO) "\n  Debugger Test application has been built successfully."
 	$(ECHO) "  To start debugger use one of the prepared targets scripts:."

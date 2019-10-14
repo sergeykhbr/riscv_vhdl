@@ -226,7 +226,7 @@ void DoubleAdd::comb() {
     if (expDif == 0) {
         vb_preShift = expDif;
         if (mantDif == 0) {
-            v_flMore = !signA & (signA ^ signB);
+            v_flMore = (!signA) & (signA ^ signB);
             v_flEqual = !(signA ^ signB);
             v_flLess = signA & (signA ^ signB);
 
