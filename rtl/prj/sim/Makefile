@@ -1,3 +1,7 @@
+# MIPT University
+# sergeykhbr@gmail.com
+#
+
 include src.mk
 
 TIMESCALE=1ns/10ps
