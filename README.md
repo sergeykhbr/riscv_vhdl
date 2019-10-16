@@ -7,8 +7,7 @@ either include general set of peripheries, FPGA CADs projects files, own
 implementation of the Windows/Linux debugger and several examples that help
 to run your firmware on almost any FPGA boards.
 Satellite Navigation (GPS/GLONASS/Galileo) modules were stubbed in this
-repository and can be requested on
-[gnss-sensor.com](http://www.gnss-sensor.com).
+repository and can be requested separately.
 
 
 ## What is Rocket-chip and [RISC-V ISA](http://www.riscv.org)?
