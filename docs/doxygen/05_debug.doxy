@@ -65,7 +65,7 @@ the Apache 2.0. license too.
      
  @subsection dsu_csr CSR Region (32 KB)
 
-  Processor Control and Status Registers directly mapped into this region
+  Processor Control and Status Registers (MSR) directly mapped into this region
 of the DSU. Each CSR register is 64-bit width and mapped into address space
 accordingly with its index:
 
@@ -74,169 +74,424 @@ accordingly with its index:
 </center>
 
 <center>
-| Index.| Offset  | Name              
-|:-----:|:--------|-------------------
-| 0x001 | 0x00008 | FFLAGS            
-| 0x002 | 0x00010 | FRM               
-| 0x003 | 0x00018 | FCSR              
-| 0xf10 | 0x07880 | MISA              
-| 0xf11 | 0x07888 | MVENDORID         
-| 0xf12 | 0x07890 | MARCHID           
-| 0xf13 | 0x07898 | MIMPLEMENTATIONID 
-| 0xf14 | 0x078A0 | MHARTID           
-| 0x041 | 0x00208 | UEPC      
-| 0x300 | 0x01800 | MSTATUS   
-| 0x302 | 0x01810 | MEDELEG   
-| 0x303 | 0x01818 | MIDELEG   
-| 0x304 | 0x01820 | MIE       
-| 0x305 | 0x01828 | MTVEC     
-| 0x340 | 0x01A00 | MSCRATCH  
-| 0x341 | 0x01A08 | MEPC    
-| 0x342 | 0x01A10 | MCAUSE  
-| 0x343 | 0x01A18 | MBADADDR
-| 0x344 | 0x01A20 | MIP
-| 0x350 | 0x01A80 | MSTACKOVR
-| 0x351 | 0x01A88 | MSTACKUND
-<b>Table 5-1. List of mapped CSR registers.</b>
+| Offset  | Name              | Reset              | Description
+|:--------|:------------------|:------------------:|:---------
+| 0x00008 | CPU_CSR_FFLAGS    | 00000000:00000000h | 0x001: FPU accrued Exceptions fields from FCSR
+| 0x00010 | CPU_CSR_FRM       | 00000000:00000008h | 0x002: FPU dynamic Rounding Mode fields from FCSR
+| 0x00018 | CPU_CSR_FCSR      | 00000000:00000008h | 0x003: FPU Control and Status register (FRM + FFLAGS)
+| 0x07880 | CPU_CSR_MISA      | 80000000:00101108h | 0xf10: List of supported instruction sets
+| 0x07888 | CPU_CSR_MVENDORID | 00000000:000000F1h | 0xf11: Vendor ID: \c CFG_VENDOR_ID parameter
+| 0x07890 | CPU_CSR_MARCHID   | 00000000:00000000h | 0xf12: Architecture ID
+| 0x07898 | CPU_CSR_MIMPLEMENTATIONID | 00000000:20190521h | 0xf13: Implementation ID: \c CFG_IMPLEMENTATION_ID parameter
+| 0x078A0 | CPU_CSR_MHARTID   | 00000000:00000000h | 0xf14: Core ID in multi-processors system
+| 0x00208 | CPU_CSR_UEPC      | 00000000:00000000h | 0x041: User program counter
+| 0x01800 | CPU_CSR_MSTATUS   | 00000000:00001800h | 0x300: Machine mode status register
+| 0x01810 | CPU_CSR_MEDELEG   | 00000000:00000000h | 0x302: Machine exception delegation
+| 0x01818 | CPU_CSR_MIDELEG   | 00000000:00000000h | 0x303: Machine interrupt delegation
+| 0x01820 | CPU_CSR_MIE       | 00000000:00000000h | 0x304: Machine interrupt enable bit
+| 0x01828 | CPU_CSR_MTVEC     | 00000000:00000000h | 0x305: Machine Interrupts Table pointer
+| 0x01A00 | CPU_CSR_MSCRATCH  | 00000000:00000000h | 0x340: Machine scratch register
+| 0x01A08 | CPU_CSR_MEPC      | 00000000:00000000h | 0x341: Machine program counter
+| 0x01A10 | CPU_CSR_MCAUSE    | 00000000:00000000h | 0x342: Machine trap cause
+| 0x01A18 | CPU_CSR_MBADADDR  | 00000000:00000000h | 0x343: Machine bad address
+| 0x01A20 | CPU_CSR_MIP       | 00000000:00000000h | 0x344: Machine Interrupt pending
+| 0x01A80 | CPU_CSR_MSTACKOVR | 00000000:00000000h | 0x350: Machine Stack Overflow limit
+| 0x01A88 | CPU_CSR_MSTACKUND | 00000000:00000000h | 0x351: Machine Stack Underflow limit
+<b>Table 5-1. List of mapped CPU CSR registers.</b>
 </center>
    
 
- @subsection dsu_iregs General CPU Registers Region (32 KB)
+ @subsection dsu_iregs CPU General Registers Region (32 KB)
 
- @par CPU integer registers (0x08000).
+  AXI4 memory requests to this DSU region (0x08000) directly routed to the debug
+interface connected to all CPUs in a system. DSU_CPU_CONTEXT Register selects the
+exact CPU target in a multi-processor configuration.
 
- |Offset |Bits|Type| Reset | Name | Definition 
- |:------|:--:|:--:|:-----:|:----:|---------------------------------------------|
- |0x08000| 64 | RW | 64h'0 | zero | <b>x0</b>. CPU General Integer Register hardware connected to zero.
- |0x08008| 64 | RW | 64h'0 | ra   | <b>x1</b>. Return address.
- |0x08010| 64 | RW | 64h'0 | sp   | <b>x2</b>. Stack pointer.
- |0x08018| 64 | RW | 64h'0 | gp   | <b>x3</b>. Global pointer.
- |0x08020| 64 | RW | 64h'0 | tp   | <b>x4</b>. Thread pointer.
- |0x08028| 64 | RW | 64h'0 | t0   | <b>x5</b>. Temporaries 0.
- |0x08030| 64 | RW | 64h'0 | t1   | <b>x6</b>. Temporaries 1.
- |0x08038| 64 | RW | 64h'0 | t2   | <b>x7</b>. Temporaries 2.
- |0x08040| 64 | RW | 64h'0 | s0/fp| <b>x8</b>. CPU General Integer Register 'Saved register 0/ Frame pointer'.
- |0x08048| 64 | RW | 64h'0 | s1   | <b>x9</b>. Saved register 1.
- |0x08050| 64 | RW | 64h'0 | a0   | <b>x10</b>. Function argument 0. It is also used to save return value.
- |0x08058| 64 | RW | 64h'0 | a1   | <b>x11</b>. Function argument 1.
- |0x08060| 64 | RW | 64h'0 | a2   | <b>x12</b>. Function argument 2.
- |0x08068| 64 | RW | 64h'0 | a3   | <b>x13</b>. Function argument 3.
- |0x08070| 64 | RW | 64h'0 | a4   | <b>x14</b>. Function argument 4.
- |0x08078| 64 | RW | 64h'0 | a5   | <b>x15</b>. Function argument 5.
- |0x08080| 64 | RW | 64h'0 | a6   | <b>x16</b>. Function argument 6.
- |0x08088| 64 | RW | 64h'0 | a7   | <b>x17</b>. Function argument 7.
- |0x08090| 64 | RW | 64h'0 | s2   | <b>x18</b>. Saved register 2.
- |0x08098| 64 | RW | 64h'0 | s3   | <b>x19</b>. Saved register 3.
- |0x080a0| 64 | RW | 64h'0 | s4   | <b>x20</b>. Saved register 4.
- |0x080a8| 64 | RW | 64h'0 | s5   | <b>x21</b>. Saved register 5.
- |0x080b0| 64 | RW | 64h'0 | s6   | <b>x22</b>. Saved register 6.
- |0x080b8| 64 | RW | 64h'0 | s7   | <b>x23</b>. Saved register 7.
- |0x080c0| 64 | RW | 64h'0 | s8   | <b>x24</b>. Saved register 8.
- |0x080c8| 64 | RW | 64h'0 | s9   | <b>x25</b>. Saved register 9.
- |0x080d0| 64 | RW | 64h'0 | s10  | <b>x26</b>. Saved register 10.
- |0x080d8| 64 | RW | 64h'0 | s11  | <b>x27</b>. Saved register 11.
- |0x080e0| 64 | RW | 64h'0 | t3   | <b>x28</b>. Temporaries 3.
- |0x080e8| 64 | RW | 64h'0 | t4   | <b>x29</b>. Temporaries 4.
- |0x080f0| 64 | RW | 64h'0 | t5   | <b>x30</b>. Temporaries 5.
- |0x080f8| 64 | RW | 64h'0 | t6   | <b>x31</b>. Temporaries 6.
- |0x08100| 64 | RO | 64h'0 | pc   | <b>Instruction pointer</b>. Cannot be modified because shows the latest executed instruction address
- |0x08108| 64 | RW | 64h'0 | npc  | <b>Next Instruction Pointer</b>
+<center>
+| Offset  | Name      | Reset | Description 
+|:--------|:----------|:-----:|:--------------
+| 0x08000 | CPU_ZERO  | 64h'0 | <b>x0</b>. Hardware zero.
+| 0x08008 | CPU_RA    | 64h'0 | <b>x1</b>. Return address.
+| 0x08010 | CPU_SP    | 64h'0 | <b>x2</b>. Stack pointer.
+| 0x08018 | CPU_GP    | 64h'0 | <b>x3</b>. Global pointer.
+| 0x08020 | CPU_TP    | 64h'0 | <b>x4</b>. Thread pointer.
+| 0x08028 | CPU_T0    | 64h'0 | <b>x5</b>. Temporaries 0.
+| 0x08030 | CPU_T1    | 64h'0 | <b>x6</b>. Temporaries 1.
+| 0x08038 | CPU_T2    | 64h'0 | <b>x7</b>. Temporaries 2.
+| 0x08040 | CPU_S0    | 64h'0 | <b>x8</b>. Saved register 0/ Frame pointer.
+| 0x08048 | CPU_S1    | 64h'0 | <b>x9</b>. Saved register 1.
+| 0x08050 | CPU_A0    | 64h'0 | <b>x10</b>. Function argument 0. Return value.
+| 0x08058 | CPU_A1    | 64h'0 | <b>x11</b>. Function argument 1.
+| 0x08060 | CPU_A2    | 64h'0 | <b>x12</b>. Function argument 2.
+| 0x08068 | CPU_A3    | 64h'0 | <b>x13</b>. Function argument 3.
+| 0x08070 | CPU_A4    | 64h'0 | <b>x14</b>. Function argument 4.
+| 0x08078 | CPU_A5    | 64h'0 | <b>x15</b>. Function argument 5.
+| 0x08080 | CPU_A6    | 64h'0 | <b>x16</b>. Function argument 6.
+| 0x08088 | CPU_A7    | 64h'0 | <b>x17</b>. Function argument 7.
+| 0x08090 | CPU_S2    | 64h'0 | <b>x18</b>. Saved register 2.
+| 0x08098 | CPU_S3    | 64h'0 | <b>x19</b>. Saved register 3.
+| 0x080a0 | CPU_S4    | 64h'0 | <b>x20</b>. Saved register 4.
+| 0x080a8 | CPU_S5    | 64h'0 | <b>x21</b>. Saved register 5.
+| 0x080b0 | CPU_S6    | 64h'0 | <b>x22</b>. Saved register 6.
+| 0x080b8 | CPU_S7    | 64h'0 | <b>x23</b>. Saved register 7.
+| 0x080c0 | CPU_S8    | 64h'0 | <b>x24</b>. Saved register 8.
+| 0x080c8 | CPU_S9    | 64h'0 | <b>x25</b>. Saved register 9.
+| 0x080d0 | CPU_S10   | 64h'0 | <b>x26</b>. Saved register 10.
+| 0x080d8 | CPU_S11   | 64h'0 | <b>x27</b>. Saved register 11.
+| 0x080e0 | CPU_T3    | 64h'0 | <b>x28</b>. Temporaries 3.
+| 0x080e8 | CPU_T4    | 64h'0 | <b>x29</b>. Temporaries 4.
+| 0x080f0 | CPU_T5    | 64h'0 | <b>x30</b>. Temporaries 5.
+| 0x080f8 | CPU_T6    | 64h'0 | <b>x31</b>. Temporaries 6.
+| 0x08100 | CPU_PC    | 64h'0 | The latest executed instruction address
+| 0x08108 | CPU_NPC   | 64h'0 | Next Instruction Pointer
+| 0x08110 | CPU_STACKTRACE_CNT | 64h'0 | Hardware stack trace counter
+| 0x08200 | CPU_FT0   | 64h'0 | FPU register 0
+| 0x08208 | CPU_FT1   | 64h'0 | FPU register 1
+| 0x08210 | CPU_FT2   | 64h'0 | FPU register 2
+| 0x08218 | CPU_FT3   | 64h'0 | FPU register 3
+| 0x08220 | CPU_FT4   | 64h'0 | FPU register 4
+| 0x08228 | CPU_FT5   | 64h'0 | FPU register 5
+| 0x08230 | CPU_FT6   | 64h'0 | FPU register 6
+| 0x08238 | CPU_FT7   | 64h'0 | FPU register 7
+| 0x08240 | CPU_FS0   | 64h'0 | FPU register 8
+| 0x08248 | CPU_FS1   | 64h'0 | FPU register 9
+| 0x08250 | CPU_FA0   | 64h'0 | FPU register 10
+| 0x08258 | CPU_FA1   | 64h'0 | FPU register 11
+| 0x08260 | CPU_FA2   | 64h'0 | FPU register 12
+| 0x08268 | CPU_FA3   | 64h'0 | FPU register 13
+| 0x08270 | CPU_FA4   | 64h'0 | FPU register 14
+| 0x08278 | CPU_FA5   | 64h'0 | FPU register 15
+| 0x08280 | CPU_FA6   | 64h'0 | FPU register 16
+| 0x08288 | CPU_FA7   | 64h'0 | FPU register 17
+| 0x08290 | CPU_FS2   | 64h'0 | FPU register 18
+| 0x08298 | CPU_FS3   | 64h'0 | FPU register 19
+| 0x082A0 | CPU_FS4   | 64h'0 | FPU register 20
+| 0x082A8 | CPU_FS5   | 64h'0 | FPU register 21
+| 0x082B0 | CPU_FS6   | 64h'0 | FPU register 22
+| 0x082B8 | CPU_FS7   | 64h'0 | FPU register 23
+| 0x082C0 | CPU_FS8   | 64h'0 | FPU register 24
+| 0x082C8 | CPU_FS9   | 64h'0 | FPU register 25
+| 0x082D0 | CPU_FS10  | 64h'0 | FPU register 26
+| 0x082D8 | CPU_FS11  | 64h'0 | FPU register 27
+| 0x082E0 | CPU_FT8   | 64h'0 | FPU register 28
+| 0x082E8 | CPU_FT9   | 64h'0 | FPU register 29
+| 0x082F0 | CPU_FT10  | 64h'0 | FPU register 30
+| 0x082F8 | CPU_FT11  | 64h'0 | FPU register 31
+| 0x08400 | CPU_STACKTRACE_BUF  | 64h'0 | Hardware Stack Trace Buffer
+| 0x08800 | CPU_INSTR_BUF0  | 64h'0 | Address/Instruction buffer
+| 0x08808 | CPU_INSTR_BUF1  | 64h'0 | Address/Instruction buffer
+| 0x08810 | CPU_INSTR_BUF2  | 64h'0 | Address/Instruction buffer
+| 0x08818 | CPU_INSTR_BUF3  | 64h'0 | Address/Instruction buffer
+| 0x08820 | CPU_DBG1_0      | 64h'0 | RTL Debug support register
+| 0x08828 | CPU_DBG1_1      | 64h'0 | RTL Debug support register
+| 0x08830 | CPU_DBG1_2      | 64h'0 | RTL Debug support register
+| 0x08838 | CPU_DBG1_3      | 64h'0 | RTL Debug support register
+<b>Table 5-2. List of mapped CPU General Purpose Registers.</b>
+</center>
 
 
- @subsection dsu_control Run Control and Debug support Region (32 KB)
+ @subsection dsu_control Run Control Region (32 KB)
 
- @par Run control/status registers (0x10000).
+  AXI4 memory requests to this DSU region (0x10000) directly routed to the debug
+interface connected to all CPUs in a system. DSU_CPU_CONTEXT Register selects the
+exact CPU target in a multi-processor configuration.
 
- |Bits|Type| Reset | Field Name | Bits  | Description 
- |:--:|:--:|:-----:|:----------:|:-----:|:------------------------------------------------------------|
- | 44 | RW | 61h'0 | Reserved   | 63:6  | Reserved.
- | 16 | RO | 16h'0 | core_id    | 15:4  | <b>Core ID</b>.
- | 1  | RW | 1b'0  | Reserved   | 3     | Reserved.
- | 1  | RO | 1b'0  | breakpoint | 2     | <b>Breakpoint</b>. Status bit is set when CPU was halted due the EBREAK instruction.
- | 1  | WO | 1b'0  | stepping_mode | 1  | <b>Stepping mode</b>. This bit enables stepping mode if the Register 'steps' is non zero.
- | 1  | RW | 1b'0  | halt       | 0     | <b>Halt mode</b>. When this bit is set CPU pipeline is in the halted state. CPU can be halted at any time without impact on processing data.
+<center>
+| Offset  | Name             | Reset Val.         | Description
+|:-------:|:-----------------|:------------------:|----------------------------
+| 0x10000 | CPU_CONTROL      | 00000000:00000000h | Run Control and Status
+| 0x10008 | CPU_STEPS        | 00000000:00000000h | Steps value while in the Stepping Mode
+| 0x10010 | CPU_CLOCK_CNT    | 00000000:00000000h | Clock cycles counter since hardware reset
+| 0x10018 | CPU_EXECUTED_CNT | 00000000:00000000h | Total number of the executed instructions
+| 0x10020 | CPU_BR_CONTROL   | 00000000:00000000h | Breakpoint mode control
+| 0x10028 | CPU_BR_ADD       | 00000000:00000000h | Add Hardware breakpoint address
+| 0x10030 | CPU_BR_REMOVE    | 00000000:00000000h | Remove Hardware breakpoint address
+| 0x10038 | CPU_BR_ADDR_FETCH  | 00000000:00000000h | Redefine instruction from this address
+| 0x10040 | CPU_BR_INSTR_FETCH | 00000000:00000000h | Redefined instruction value for the fecthed address
+| 0x10048 | CPU_IFLUSH       | 00000000:00000000h | Flush Instruction Cache
+<b>Table 5-3. Run Control registers list.</b>
+</center>
 
- @par Stepping mode Steps registers (0x10008).
 
- |Bits|Type| Reset | Field Name | Bits  | Description 
- |:--:|:--:|:-----:|:----------:|:-----:|:------------------------------------------------------------|
- | 64 | RW | 64h'0 | steps   | 63:0  | <b>Step counter</b>. Total number of instructions that should execute CPU before halt. CPU is set into stepping using 'stepping mode' bit in Run Control register.
+<b>CPU_CONTROL Register (0x10000)</b>
 
- @par Clock counter registers (0x10010).
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>rsrv</td>  <td>[63:16]</td>   <td>RZ</td>   <td>reserved.</td>
+  </tr>
+  <tr>
+    <td>core_id</td>  <td>[19:4]</td>   <td>RO</td>   <td><b>Core Index</b>.
+      Unique Core index in a multiprocessor system.
+    </td>
+  </tr>
+  <tr>
+    <td>hw_br</td>  <td>[3]</td>   <td>RO</td>   <td><b>Hardware Breakpoint</b>.
+      CPU was halted on a hardware breakpoint satus.
+    </td>
+  </tr>
+  <tr>
+    <td>sw_br</td>  <td>[2]</td>   <td>RO</td>   <td><b>Software Breakpoint</b>.
+      CPU was halted on the EBREAK instruction.
+    </td>
+  </tr>
+  <tr>
+    <td>stepping</td>  <td>[1]</td>   <td>RW</td>   <td><b>Stepping Mode</b>.
+      Enable/disable CPU stepping mode.
+          \li '0' - Normal mode
+          \li '1' - Stepping mode
 
- |Bits|Type| Reset | Field Name | Bits  | Description 
- |:--:|:--:|:-----:|:----------:|:-----:|:------------------------------------------------------------|
- | 64 | RW | 64h'0 | clock_cnt  | 63:0  | <b>Clock counter</b>. Clock counter is used for hardware computation of CPI rate. Clock counter isn't incrementing in Halt state.
+      In Stepping Mode use register \c CPU_STEPS to execute a certain number
+      of the instructions.
+    </td>
+  </tr>
+  <tr>
+    <td>halt</td>  <td>[0]</td>   <td>RW</td>   <td><b>Halt</b>.
+      Start/stop CPU execution.
+          \li '0' - CPU is running
+          \li '1' - CPU is halted
 
- @par Step counter registers (0x10018).
+      Start or Stop processor execution doesn't affect the CPU pipeline or
+      caches. And can be implemented at any time without instructions penalties.
+    </td>
+  </tr>
+</table>
 
- |Bits|Type| Reset | Field Name | Bits  | Description 
- |:--:|:--:|:-----:|:----------:|:-----:|:------------------------------------------------------------|
- | 64 | RW | 64h'0 | executed_cnt | 63:0  | <b>Step counter</b>. Total number of executed instructions. Step counter is used for hardware computation of CPI rate.
 
- @par Breakpoint Control registers (0x10020).
+<b>CPU_STEPS Register (0x10008)</b>
 
- |Bits|Type| Reset | Field Name | Bits  | Description 
- |:--:|:--:|:-----:|:----------:|:-----:|:------------------------------------------------------------|
- | 63 | RW | 63h'0 | Reserved   | 63:1  | Reserved
- | 1  | RW | 1b'0  | trap_on_break | 0     | <b>Trap On Break</b>. Generate exception 'Breakpoint' on EBRAK instruction if this bit is set or just Halt the pipeline otherwise.
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>steps</td>   <td>[63:0]</td>   <td>RW</td>   <td><b>Step Counter</b>.
+        Total number of instructions that CPU should execute before switching into 
+        the halt state.
+        Bit <c>'step_mode'</c> in the Register \c CPU_CONTROL must be set
+        to HIGH to switch CPU into the Stepping Mode.
+    </td>
+  </tr>
+</table>
 
- @par Add hardware breakpoint registers (0x10028).
 
- |Bits|Type| Reset | Field Name | Bits  | Description 
- |:--:|:--:|:-----:|:----------:|:-----:|:------------------------------------------------------------|
- | 64 | RW | 64h'0 | add_break   | 63:0  | <b>Add HW breakpoint address</b>. Add specified address into Hardware breakpoint stack. In case of matching Instruction Pointer (pc) and any HW breakpoint there's injected EBREAK instruction on hardware level.
+<b> CPU_CLOCK_CNT Register (0x10010)</b>
 
- @par Remove hardware breakpoint registers (0x10030).
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>clk_cnt</td>   <td>[63:0]</td>   <td>RO</td>   <td><b>Clock Counter</b>.
+        Clock counter is used in the hardware computation of the CPI rate. Clock counter
+        isn't incrementing if the CPU is in Halt state.
+    </td>
+  </tr>
+</table>
 
- |Bits|Type| Reset | Field Name | Bits  | Description 
- |:--:|:--:|:-----:|:----------:|:-----:|:------------------------------------------------------------|
- | 64 | RW | 64h'0 | rem_break   | 63:0  | <b>Remove HW breakpoint address</b>. Remove specified address from Hardware breakpoints stack.
 
- @par Breakpoint Address Fetch registers (0x10038).
+<b> CPU_EXECUTED_CNT Register (0x10018)</b>
 
- |Bits|Type| Reset | Field Name | Bits  | Description 
- |:--:|:--:|:-----:|:----------:|:-----:|:------------------------------------------------------------|
- | 64 | RW | 64h'0 | br_address_fetch | 63:0  | <b>Breakpoint fetch address</b>. Specify address that will be ignored by Fetch stage and used Breakpoint Fetch Instruction value instead. This logic is used to avoid re-writing EBREAK into memory.
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>exec_cnt</td>   <td>[63:0]</td>   <td>RO</td>   <td><b>Step Counter</b>.
+        Total number of the executed instructions. Step counter is used in the hardware
+        computation of the CPI rate.
+    </td>
+  </tr>
+</table>
 
- @par Breakpoint Instruction Fetch registers (0x10040).
 
- |Bits|Type| Reset | Field Name | Bits  | Description 
- |:--:|:--:|:-----:|:----------:|:-----:|:------------------------------------------------------------|
- | 64 | RW | 64h'0 | br_instr_fetch | 63:0  | <b>Breakpoint fetch instruction</b>. Specify instruction that should executed instead of fetched from memory in a case of matching Breapoint Address Fetch register and Instruction pointer (pc).
+<b> CPU_BR_CONTROL Register (0x10020)</b>
+
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>rsrv</td>  <td>[63:1]</td>   <td>RZ</td>   <td>reserved.</td>
+  </tr>
+  <tr>
+    <td>trap_on_break</td>   <td>[0]</td>   <td>RW</td>   <td><b>Trap On Breakpoint</b>.
+        Enable/disable exception <c>'Breakpoint'</c> generation on EBREAK instruction.
+        If Trap-On-Breakpoint disabled CPU halts the pipeline without exception.
+           \li '0' - Trap-On-Breakpoint disabled (default)
+           \li '1' - Trap-On-Breakpoint enabled
+    </td>
+  </tr>
+</table>
+
+
+<b> CPU_BR_ADD Register (0x10028)</b>
+
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>add_break</td>   <td>[63:0]</td>   <td>WO</td>   <td><b>Breakpoint Address</b>.
+         Add specified address into Hardware breakpoint array. In case of matching
+         Instruction Pointer (\c pc) and any value from this array \c Fetch module
+         in the CPU pipeline injects EBREAK instruction on the hardware level.
+         Type of the breakpoint is shown in the status bits of \c CPU_CONTROL register.
+    </td>
+  </tr>
+</table>
+
+
+<b> CPU_BR_REMOVE Register (0x10030)</b>
+
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>rm_break</td>   <td>[63:0]</td>   <td>WO</td>   <td><b>Breakpoint Address</b>.
+         Remove specified address from the Hardware breakpoints array.
+    </td>
+  </tr>
+</table>
+
+
+<b> CPU_BR_ADDR_FETCH Register (0x10038)</b>
+
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>br_addr_fetch</td>   <td>[63:0]</td>   <td>RW</td>   <td><b>Breakpoint Address</b>.
+         Specify address that will be ignored by CPU Fetch module and will be redefined
+         instruction data stored in the register \c CPU_BR_INSTR_FETCH.
+         This logic is used to avoid re-writing EBREAK into memory on each Software
+         breakpoint.
+
+         See examples chapter for more details.
+    </td>
+  </tr>
+</table>
+
+
+<b> CPU_BR_INSTR_FECTH Register (0x10040)</b>
+
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>br_instr_fetch</td>   <td>[63:0]</td>   <td>RW</td>   <td><b>Breakpoint Instruction Data</b>.
+         Specify the instruction data  that will be executed instead of fetched from memory
+         in a case of matching \c CPU_BR_ADDR_FECTH  register and CPU Instruction Pointer (\c pc).
+
+         See examples chapter for more details.
+    </td>
+  </tr>
+</table>
 
 
  @subsection dsu_local Local DSU Region (32 KB)
 
- @par Soft Reset registers (0x18000).
+  Access to the DSU registers in this region from the system bus doesn't
+generate transactions on the debug interface connected to CPUs debug port.
 
- |Bits|Type| Reset | Field Name | Bits  | Description 
- |:--:|:--:|:-----:|:----------:|:-----:|:------------------------------------------------------------|
- | 63 | RW | 63h'0 | Reserved   | 63:1  | Reserved.
- | 1  | RW | 1b'0  | soft_reset | 0     | <b>Soft Reset</b>. Status bit is set when CPU was halted due the EBREAK instruction.
+<center>
+| Offset  | Name             | Reset Val.         | Description
+|:-------:|:-----------------|:------------------:|----------------------------
+| 0x18000 | DSU_SOFT_RESET   | 00000000:00000000h | CPU Software Reset
+| 0x18008 | DSU_CPU_CONTEXT  | 00000000:00000000h | CPU selector
+| 0x18040 | DSU_MST0_W_CNT   | 00000000:00000000h | Bus write statistic for Master[0]
+| 0x18048 | DSU_MST0_R_CNT   | 00000000:00000000h | Bus read statistic for Master[0]
+| 0x18050 | DSU_MST1_W_CNT   | 00000000:00000000h | Bus write statistic for Master[1]
+| 0x18058 | DSU_MST1_R_CNT   | 00000000:00000000h | Bus read statistic for Master[1]
+| 0x18060 | DSU_MST2_W_CNT   | 00000000:00000000h | Bus write statistic for Master[2]
+| 0x18068 | DSU_MST2_R_CNT   | 00000000:00000000h | Bus read statistic for Master[2]
+| 0x18070 | DSU_MST3_W_CNT   | 00000000:00000000h | Bus write statistic for Master[3]
+| 0x18078 | DSU_MST3_R_CNT   | 00000000:00000000h | Bus read statistic for Master[3]
+<b>Table 5-4. DSU Local registers list.</b>
+</center>
 
- @par Miss Access counter registers (0x18008).
+<b> DSU_SOFT_RESET Register (0x18000)</b>
 
- |Bits|Type| Reset | Field Name | Bits  | Description 
- |:--:|:--:|:-----:|:----------:|:-----:|:------------------------------------------------------------|
- | 64 | RO | 64h'0  | miss_access_cnt | 63:0 | <b>Miss Access counter</b>. This value as an additional debugging informantion provided by AXI Controller. It is possible to enable interrupt generation in Interrupt Controller on miss-access.
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>rsrv</td>  <td>[63:1]</td>   <td>RZ</td>   <td>reserved.</td>
+  </tr>
+  <tr>
+    <td>soft_rst</td>   <td>[0]</td>   <td>RW</td>   <td><b>Software Reset</b>.
+         Reset the connected processor cores. This reset signal doesn't affect
+         Interrupt Controller, GPIO Controller and other modules so the software
+         has to properly handle software resets.
+    </td>
+  </tr>
+</table>
 
- @par Miss Access Address registers (0x18010).
 
- |Bits|Type| Reset | Field Name | Bits  | Description 
- |:--:|:--:|:-----:|:----------:|:-----:|:------------------------------------------------------------|
- | 64 | RO | 64h'0  | miss_access_addr | 63:0 | <b>Miss Access address</b>. Address of the latest miss-accessed transaction. This information comes from AXI Controller.
+<b> DSU_CPU_CONTEXT Register (0x18008)</b>
 
- @par Bus Utilization registers (0x18040 + n*2*sizeof(uint64_t)).
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>rsrv</td>  <td>[63:16]</td>   <td>RZ</td>   <td>reserved.</td>
+  </tr>
+  <tr>
+    <td>context</td>   <td>[15:0]</td>   <td>RW</td>   <td><b>CPU Context</b>.
+         This value swithes DSU debug interface to a specific CPU debug
+         port. For the single core configuration this value always equals to
+         zero. In a multi-core configuration it can be changed in a range
+         from 0 to \c (CPU_TOTAL-1).
+    </td>
+  </tr>
+</table>
 
- |Offset |Bits|Type| Reset | Name  | Definition 
- |:------|:--:|:--:|:-----:|:-----:|---------------------------------------------|
- |0x18040| 64 | RO | 64h'0 | w_cnt | <b>Write transactions counter for master 0</b>. Master 0 is the RIVER CPU by default.
- |0x18048| 64 | RO | 64h'0 | r_cnt | <b>Read transactions counter for master 0</b>.
- |0x18050| 64 | RO | 64h'0 | w_cnt | <b>Write transactions counter for master 1</b>. Master 1 is unused in a case of configuration with RIVER CPU.
- |0x18058| 64 | RO | 64h'0 | r_cnt | <b>Read transactions counter for master 1</b>.
- |0x18060| 64 | RO | 64h'0 | w_cnt | <b>Write transactions counter for master 2</b>. Master 2 is the GRETH by default (Ethernet Controller with master interface). 
- |0x18068| 64 | RO | 64h'0 | r_cnt | <b>Read transactions counter for master 2</b>.
+
+<b> DSU_MSTx_W_CNT Regsiter (0x18040 + 0x10*x)</b>
+
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>w_cnt</td>   <td>[63:0]</td>   <td>RO</td>   <td><b>Write transactions counter</b>.
+         These registers represents the simplify bus tracer and contain information
+         about total number of write requests for a specific master device on a
+         AXI4 system bus.
+    </td>
+  </tr>
+</table>
+
+
+<b> DSU_MSTx_R_CNT Regsiter (0x18048 + 0x10*x)</b>
+
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>r_cnt</td>   <td>[63:0]</td>   <td>RO</td>   <td><b>Read transactions counter</b>.
+         These registers represents the simplify bus tracer and contain information
+         about total number of read requests for a specific master device on a
+         AXI4 system bus.
+    </td>
+  </tr>
+</table>
+
+
+@section dsu_usage_example_section C-examples
+
+  The CPU bundle is shared with enabled DSU module and Debugger application
+that can be connected through the Ethernet, JTAG or UART interfaces. This section
+contains some information of how the Debugger application interacts with 
+the Hardware platform.
 
 
 */
