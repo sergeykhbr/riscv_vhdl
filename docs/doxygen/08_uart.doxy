@@ -239,7 +239,7 @@ following table.
   </tr>
 </table>
 
-@subsection uart_example_subsection C-code example
+@section uart_example_section C-code example
 
   The following C-example demonstrates procedures of interaction
 with the UART module that allow to send and receive data buffers.

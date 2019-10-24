@@ -2,15 +2,15 @@
 
   River CPU doesn't implement any special Debug Modes. Processor's
 architecture allows to halt pipeline at any time without performance
-degradation that allows to support non-invasive debugging. This feature
-used by the debugger to read CPU registers, Stack Trace buffer, CPI and etc
-continuously without the execution interrupting.
+degradation that allows to support non-invasive debugging. This feature is
+used by the debugger to continuously read CPU registers, Stack Trace buffer,
+CPI and etc without the execution interrupting.
 
   Test Access Points (TAP) provides access to a processors registers,
-preipheries and a mapped memories. The latest repository version provides
+peripheries and a mapped memory banks. The latest repository version provides
 the following TAPs:
 
-\li UART TAP - debug via serial port UART Master with the default speed 115200
+\li UART TAP - debug via UART Master serial port with the default speed 115200 Baud
 \li JTAG - debug via JTAG interface with the usual frequency 12 MHz
 \li Ethernet with EDCL support - debug via 100 Mb Ethernet using UDP protocol
     and hardcoded MAC and IP.
@@ -24,9 +24,9 @@ the Apache 2.0. license too.
 
 \li Hardware calculation of the Clock Per Instruction (CPI) index
     for the each core independenetly.
-\li System Bus loading distribution on each master for the read and
+\li Per each master device the bus loading statistic for the read and
     write transactions separately.
-\li Stack tracer on hardware level.
+\li Stack tracer on the hardware level.
 \li Hardware Breakpoints that a perfectly suited for the application 
     debug entirely placed in a ROM.
 \li I/D Cache state statuses.
@@ -48,10 +48,13 @@ the Apache 2.0. license too.
  platform specific CSRs that usually not entirely documented.
  
  @section dsu_regs DSU registers mapping
- DSU acts like a slave AMBA AXI4 device that is directly mapped into 
- physical memory. Default address location for our implementation 
- is 0x80020000. DSU directly transforms device offset address
- into one of regions of the debug port:
+
+DSU acts like a slave AMBA AXI4 device that is directly mapped into 
+physical memory. Default address location for our implementation 
+is 0x80020000. Allocated for the DSU memory space is splited on several
+regions. The first 3 regions provides access to CPU's data via
+the debug port:
+
  <ul>
     <li><b>0x00000..0x08000 (Region 1):</b> CSR registers.</li>
     <li><b>0x08000..0x10000 (Region 2):</b> General set of registers.</li>
@@ -493,5 +496,186 @@ that can be connected through the Ethernet, JTAG or UART interfaces. This sectio
 contains some information of how the Debugger application interacts with 
 the Hardware platform.
 
+@subsection dsu_usage_breakpoints_subsection Breakpoints
+
+  Example of the functions adding/removing the Software Breakpoint:
+
+@code
+    // DSU registers:
+    #define CPU_IFLASH 80030048
+
+    union Reg64Type {
+        uint8_t v8[8];
+        uint16_t v16[4];
+        uint32_t v32[2];
+        uint64_t val;
+    };
+
+    // Prototypes of the access methods to SoC via the debug interface:
+    void tap_read_mem64(uint64_t addr, uint64_t *val);
+    void tap_write_mem64(uint64_t addr, uint64_t val);
+
+    void add_sw_breakpoint(uint64_t addr) {
+        Reg64Type old;
+        Reg64Type br;
+        // Read and save somewhere original memory value
+        tap_read_mem64(addr, &old.val);
+
+        // Inject EBREAK instruction into memory:
+        br = old;
+        if ((old.v32[0] & 0x3) == 0x3) {
+            // 32-bits instruction:
+            br.v32[0] = 0x00100073;     // EBREAK instruction;
+        } else {
+            // Compressed 16-bits instruction
+            br.v16[0] = 0x9002;         // C.EBREAK instruction;
+        }
+        tap_write_mem64(addr, br.val);
+
+        // Access to DSU to flush ICache lines containing breakpoint address
+        tap_write_mem64(CPU_IFLASH, addr);
+    }
+
+
+    void remove_sw_breakpoint(uint64_t addr) {
+        Reg64Type old;
+        get_original_value(addr, &old);    // must be implemented somewhere
+
+        // Restore original memory value and flush ICache lines:
+        tap_write_mem64(addr, br.val);
+        tap_write_mem64(CPU_IFLASH, addr);
+    }
+@endcode
+
+
+  Example of the functions adding/removing the Hardware Breakpoint:
+
+@code
+    // DSU registers:
+    #define CPU_BR_ADD    80030028
+    #define CPU_BR_REMOVE 80030030
+
+    // No need to flush ICache
+    void add_hw_breakpoint(uint64_t addr) {
+        tap_write_mem64(CPU_BR_ADD, addr);
+    }
+
+    void remove_hw_breakpoint(uint64_t addr) {
+        tap_write_mem64(CPU_BR_REMOVE, addr);
+    }
+@endcode
+
+@subsection dsu_usage_runcontrol_subsection Run Control
+
+  Example of run and halt the processor execution:
+
+@code
+    // DSU registers:
+    #define CPU_CONTROL    80030000
+    #define CPU_STEPS      80030008
+
+    // CPU Control register bit fields:
+    union cpu_control_type {
+        uint64_t val;
+        struct bits_type {
+            uint64_t halt     : 1;
+            uint64_t stepping : 1;
+            uint64_t sw_breakpoint : 1;
+            uint64_t hw_breakpoint : 1;
+            uint64_t core_id  : 16;
+            uint64_t rsrv     : 44;
+        } bits;
+    };
+
+    // Run processor
+    void run_cpu() {
+        cpu_control_type ctrl;
+        ctrl.val = 0;
+        tap_write_mem64(CPU_CONTROL, ctrl.val);
+    }
+
+    // Halt processor
+    void halt_cpu() {
+        cpu_control_type ctrl;
+        ctrl.val = 0;
+        ctrl.bits.halt = 1;
+        tap_write_mem64(CPU_CONTROL, ctrl.val);
+    }
+
+    // Run specified number of instructions
+    void step_cpu(int cnt) {
+        cpu_control_type ctrl;
+
+        tap_write_mem64(CPU_STEPS, (uint64_t)cnt);
+
+        ctrl.val = 0;
+        ctrl.bits.stepping = 1;
+        tap_write_mem64(CPU_CONTROL, ctrl.val);
+    }
+@endcode
+
+
+  Example of the function polling processor status bits and waiting any breakpoint
+that will halt the execution:
+
+@code
+    // DSU registers
+    #define CPU_CONTROL         80030000
+    #define CPU_BR_ADDR_FETCH   80030038
+    #define CPU_BR_INSTR_FETCH  80030040
+
+    void foo1() {
+        Reg64Type t1;
+        cpu_control_type ctrl;
+
+        // Add breakpoint at address 0x100:
+        tap_read_mem64(0x100, &t1.val);     // save original value
+        add_sw_breakpoint(0x100);
+
+        // Run processor:
+        run_cpu();
+
+        // Wait breakpoint
+        tap_read_mem64(CPU_CONTROL, &ctrl.val);
+        while (ctrl.bits.halt == 0) {
+            tap_read_mem64(CPU_CONTROL, &ctrl.val);
+        }
+
+        // To avoid CPU stuck on the breakpoint we should skip current breakpoint
+        // but would like to avoid removing it:
+        if (ctrl.bits.sw_breakpoint == 1) {
+            tap_write_mem64(CPU_BR_ADDR_FETCH, 0x100);
+            tap_write_mem64(CPU_BR_INSTR_FETCH, t1.val);
+        }
+
+        // Continue
+        run_cpu();
+    }
+@endcode
+
+
+@subsection dsu_usage_multicore_subsection Multi-Cores contexts
+
+  Example of function reading all integer registers for each of two available
+CPU cores:
+
+@code
+    // DSU registers
+    #define CPU_ZERO            80028000
+    #define DSU_CPU_CONTEXT     80038008
+
+    void read_iregs() {
+        Reg64Type ireg0[34];   // x0..x31, pc, npc
+        Reg64Type ireg1[34];   // x0..x31, pc, npc
+
+        // Select CPU[0]
+        tap_write_mem64(CPDSU_CPU_CONTEXT, 0);
+        tap_read_mem(CPU_ZERO, ireg0[0].v8, sizeof(ireg0));
+
+        // Select CPU[1]
+        tap_write_mem64(CPDSU_CPU_CONTEXT, 1);
+        tap_read_mem(CPU_ZERO, ireg1[0].v8, sizeof(ireg0));
+    }
+@endcode
 
 */

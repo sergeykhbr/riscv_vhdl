@@ -9,7 +9,7 @@ with the Z-state and can be programmed as inputs or outputs.
   Default ASIC configuraton supposes that all GPIO will be configures as input pins
 after hard reset but for the FPGA targets GPIOs are splitted on input connected 
 to User's DIP switch and output connected to LEDs so the hard reset state
-state may differs from default configuration.
+may differ from default configuration.
 
  @section gpio_boot_config_section Boot Loader Configuration
 
@@ -26,28 +26,89 @@ ether as not available:
  Depending of the used ROM program there're may be the following GPIO
 pins assignment:
 
-| GPIO[2] | GPIO[1] | GPIO[0] | 
-|:-------:|:-------:|:-------:|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 0       | 0       | 0       | 
-| 0       | 0       | 1       | 
-| 0       | 1       | 0       | 
-| 0       | 1       | 1       | 
-| 1       | *       | *       | 
+| GPIO[1] | GPIO[0] | Boot Description
+|:-------:|:-------:|:------------
+| 0       | 0       | Boot from the internal Boot ROM module (default)
+| 0       | 1       | Boot from the external flash IC
+| 1       | 0       | Secured Boot from the internal OTP memory
+| 1       | 1       | Infinite SRAM test from the Boot ROM
  
- @section gpio_regs GPIO registers mapping
+ @section gpio_regs GPIO Controller Registers
 
- GPIO Controller acts like a slave AMBA AXI4 device that is directly mapped
- into physical memory. Default address location for our implementation 
- is defined by 0x80000000. Memory size is 4 KB.
+  GPIO Controller module is connected as a slave device to the AXI4 Bus
+Controller and available for reading and writing as a single port memory
+for any master device in the system.
 
- @par LED register (0x000).
+AXI4 GPIO Controller configured with the following generic parameters by default:
+
+<center>
+<table>
+  <tr>
+    <th>Name</th>    <th>Value</th>   <th>Description</th>
+  </tr>
+  <tr>
+    <td>async_reset</td>
+    <td>FALSE</td>
+    <td><b>Reset Type</b>. Internal registers reset type:
+       <ul>
+         <li>FALSE syncrhonous reset (FPGA)</li>
+         <li>TRUE asynchronous reset (ASIC)</li>
+       </ul></td>
+  </tr>
+  <tr>
+    <td>xaddr</td>
+    <td>16#80002#</td>
+    <td><b>Base address</b>. Base Address value defines bits [31:12] of the
+        allocated memory space</td>
+  </tr>
+  <tr>
+    <td>xmask</td>
+    <td>16#FFFFF#</td>
+    <td><b>Address Mask</b>. Address Mask is used by system controller to defines
+        allocated memory size</td>
+  </tr>
+  <tr>
+    <td>xirq</td>
+    <td>0</td>
+    <td><b>IRQ index</b>. Unused in the current configuration.</td>
+  </tr>
+  <tr>
+    <td>width</td>
+    <td>12</td>
+    <td><b>GPIO Width</b>. Total number of bi-directional pins.</td>
+  </tr>
+</table>
+<b>Table 7-1. GPIO generic parameters.</b>
+</center>
+
+  These generic parameters directly define the GPIO Controller device memory location
+in the system memory map. Base Address is 0x80000000. Allocated memory size
+is 4 KB.
+
+  The full list of Registers relative Device Base Address offset is shown in the
+following table.
+
+  <b>Device Registers list</b>
+
+<center>
+| Offset   | Name           | Reset Val. | Description
+|:--------:|:---------------|:----------:|----------------------------
+| 0x000    | GPIO_DIRECTION | 0000:03FFh | IOs direction
+| 0x004    | GPIO_IUSER     | 0000:0000h | Input IOs values
+| 0x008    | GPIO_OUSER     | 0000:0000h | Output IOs values
+| 0x00C    | GPIO_REG32     | 0000:0000h | Debug register
+<b>Table 7-2. AXI4 GPIO Controller Registers.</b>
+</center>
+
+
+<b> GPIO_DIRECTION Register (0x000)</b>
 
  |Bits|Type| Reset |Field Name| Bits  | Description 
  |:--:|:--:|:-----:|:---------|:-----:|:------------------------------------------------------------|
  | 24 | RW | 24h'0 | rsrv     | 24    | Reserved
  | 8  | RW | 8h'0  | led      | 7:0   | <b>LEDs</b>. Written value directly assigned on SoC output pins and can be used as test signals.
 
- @par DIP register (0x004).
+<b> GPIO_IUSER Register (0x004)</b>
 
  |Bits|Type| Reset |Field Name| Bits  | Description 
  |:--:|:--:|:-----:|:---------|:-----:|:------------------------------------------------------------|
