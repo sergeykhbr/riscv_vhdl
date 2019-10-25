@@ -65,7 +65,7 @@ long interrupt_handler_c(long cause, long epc, long long regs[32]) {
      * Rise interrupt from the software maybe done sending a self-IPI:
      *      csrwi mipi, 0
      */
-    irqctrl_map *p_irqctrl = (irqctrl_map *)ADDR_NASTI_SLAVE_IRQCTRL;
+    irqctrl_map *p_irqctrl = (irqctrl_map *)ADDR_BUS0_XSLV_IRQCTRL;
     IRQ_HANDLER irq_handler = (IRQ_HANDLER)p_irqctrl->isr_table;
     uint32_t pending;
     csr_mcause_type mcause;

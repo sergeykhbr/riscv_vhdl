@@ -28,11 +28,17 @@ int fw_get_cpuid() {
 
 void led_set(int output) {
     // [3:0] DIP pins
-    ((gpio_map *)ADDR_NASTI_SLAVE_GPIO)->ouser = (output << 4);
+    ((gpio_map *)ADDR_BUS0_XSLV_GPIO)->ouser = (output << 4);
+}
+
+int get_dip(int idx) {
+    // [3:0] DIP pins
+    int dip = ((gpio_map *)ADDR_BUS0_XSLV_GPIO)->iuser >> idx;
+    return dip & 1;
 }
 
 void print_uart(const char *buf, int sz) {
-    uart_map *uart = (uart_map *)ADDR_NASTI_SLAVE_UART1;
+    uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART1;
     for (int i = 0; i < sz; i++) {
         while (uart->status & UART_STATUS_TX_FULL) {}
         uart->data = buf[i];
@@ -41,7 +47,7 @@ void print_uart(const char *buf, int sz) {
 
 void print_uart_hex(long val) {
     unsigned char t, s;
-    uart_map *uart = (uart_map *)ADDR_NASTI_SLAVE_UART1;
+    uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART1;
     for (int i = 0; i < 16; i++) {
         while (uart->status & UART_STATUS_TX_FULL) {}
         
@@ -57,9 +63,10 @@ void print_uart_hex(long val) {
 
 void copy_image() { 
     uint32_t tech;
-    uint64_t *fwrom = (uint64_t *)ADDR_NASTI_SLAVE_FWIMAGE;
-    uint64_t *sram = (uint64_t *)ADDR_NASTI_SLAVE_SRAM;
-    pnp_map *pnp = (pnp_map *)ADDR_NASTI_SLAVE_PNP;
+    uint64_t *fwrom = (uint64_t *)ADDR_BUS0_XSLV_FWIMAGE;
+    uint64_t *flash = (uint64_t *)ADDR_BUS0_XSLV_EXTFLASH;
+    uint64_t *sram = (uint64_t *)ADDR_BUS0_XSLV_SRAM;
+    pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
 
     /** 
      * Speed-up RTL simulation by skipping coping stage.
@@ -68,10 +75,16 @@ void copy_image() {
     tech = pnp->tech & 0xFF;
 
     if (tech != TECH_INFERRED && pnp->fwid == 0) {
-        memcpy(sram, fwrom, FW_IMAGE_SIZE_BYTES);
+        if (get_dip(0) == 1) {
+            print_uart("Coping FLASH\r\n", 14);
+            memcpy(sram, flash, FW_IMAGE_SIZE_BYTES);
+        } else {
+            print_uart("Coping FWIMAGE\r\n", 16);
+            memcpy(sram, fwrom, FW_IMAGE_SIZE_BYTES);
+        }
     }
     // Write Firmware ID to avoid copy image after soft-reset.
-    pnp->fwid = 0x20190630;
+    pnp->fwid = 0x20191025;
 
 #if 0
     /** Just to check access to DSU and read MCPUID via this slave device.
@@ -94,7 +107,7 @@ void copy_image() {
  Zephyr OS
 */
 void timestamp_output() {
-    gptimers_map *tmr = (gptimers_map *)ADDR_NASTI_SLAVE_GPTIMERS;
+    gptimers_map *tmr = (gptimers_map *)ADDR_BUS0_XSLV_GPTIMERS;
     uint64_t start = tmr->highcnt;
     while (1) {
         if (tmr->highcnt < start || (start + SYS_HZ) < tmr->highcnt) {
@@ -108,10 +121,10 @@ void timestamp_output() {
 
 void _init() {
     uint32_t tech;
-    pnp_map *pnp = (pnp_map *)ADDR_NASTI_SLAVE_PNP;
-    uart_map *uart = (uart_map *)ADDR_NASTI_SLAVE_UART1;
-    gpio_map *gpio = (gpio_map *)ADDR_NASTI_SLAVE_GPIO;
-    irqctrl_map *p_irq = (irqctrl_map *)ADDR_NASTI_SLAVE_IRQCTRL;
+    pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
+    uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART1;
+    gpio_map *gpio = (gpio_map *)ADDR_BUS0_XSLV_GPIO;
+    irqctrl_map *p_irq = (irqctrl_map *)ADDR_BUS0_XSLV_IRQCTRL;
   
     if (fw_get_cpuid() != 0) {
         // TODO: waiting event or something

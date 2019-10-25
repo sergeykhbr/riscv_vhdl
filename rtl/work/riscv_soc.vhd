@@ -338,6 +338,7 @@ end generate;
       o_otp_a <= X"000";
       o_otp_we <= '0';
       o_otp_re <= '0';
+      w_otp_busy <= '0';
   end generate;
 
   ------------------------------------
@@ -499,6 +500,21 @@ end generate;
     o_irq  => irq_pins(CFG_IRQ_GPTIMERS)
   );
 
+  --! @brief GNSS Sub-System with the AXI4 interface.
+  --! @details Map address:
+  --!          0x80008000..0x8000ffff (32 KB total)
+  --!
+  --!          0x80008000..0x80008fff (4 KB total) RF Controller
+  --!          0x80009000..0x80009fff (4 KB total) Engine
+  --!          0x8000a000..0x8000afff (4 KB total) GPS FSE
+  gnss_ena : if CFG_GNSS_SS_ENA generate
+  end generate;
+  gnss_dis : if not CFG_GNSS_SS_ENA generate
+      axiso(CFG_BUS0_XSLV_GNSS_SS) <= axi4_slave_out_none;
+      slv_cfg(CFG_BUS0_XSLV_GNSS_SS) <= axi4_slave_config_none;
+      irq_pins(CFG_IRQ_GNSSENGINE) <= '0';
+  end generate;
+
 
   --! @brief Ethernet MAC with the AXI4 interface.
   --! @details Map address:
@@ -571,12 +587,6 @@ end generate;
   o_eth_mdio <= eth_o.mdio_o;
   o_eth_mdio_oe <= eth_o.mdio_oe;
   o_erstn <= w_glob_nrst;
-
-  gnss_dis : if not CFG_GNSS_SS_ENA generate
-      axiso(CFG_BUS0_XSLV_GNSS_SS) <= axi4_slave_out_none;
-      slv_cfg(CFG_BUS0_XSLV_GNSS_SS) <= axi4_slave_config_none;
-      irq_pins(CFG_IRQ_GNSSENGINE) <= '0';
-  end generate;
 
 
   --! @brief Plug'n'Play controller of the current configuration with the

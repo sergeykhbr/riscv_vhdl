@@ -34,7 +34,7 @@ char *sbrk(int incr) {
 }
 
 void print_uart(const char *buf, int sz) {
-    uart_map *uart = (uart_map *)ADDR_NASTI_SLAVE_UART1;
+    uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART1;
     for (int i = 0; i < sz; i++) {
         while (uart->status & UART_STATUS_TX_FULL) {}
         uart->data = buf[i];
@@ -43,7 +43,7 @@ void print_uart(const char *buf, int sz) {
 
 void print_uart_hex(long val) {
     unsigned char t, s;
-    uart_map *uart = (uart_map *)ADDR_NASTI_SLAVE_UART1;
+    uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART1;
     for (int i = 0; i < 16; i++) {
         while (uart->status & UART_STATUS_TX_FULL) {}
         
@@ -59,8 +59,8 @@ void print_uart_hex(long val) {
 
 
 void isr_example_c(long cause, long epc, long long regs[32]) {
-    irqctrl_map *p_irqctrl = (irqctrl_map *)ADDR_NASTI_SLAVE_IRQCTRL;
-    gptimers_map *p_timer = (gptimers_map *)ADDR_NASTI_SLAVE_GPTIMERS;
+    irqctrl_map *p_irqctrl = (irqctrl_map *)ADDR_BUS0_XSLV_IRQCTRL;
+    gptimers_map *p_timer = (gptimers_map *)ADDR_BUS0_XSLV_GPTIMERS;
     uint32_t pending;
 
     csr_mcause_type mcause;
@@ -87,12 +87,12 @@ void helloWorld() {
     int ss_len;
     int i = 0;
     uint32_t tech;
-    pnp_map *pnp = (pnp_map *)ADDR_NASTI_SLAVE_PNP;
+    pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
     tech = pnp->tech & 0xff;
 
     init_mtvec();
 
-    gptimers_map *p_timer = (gptimers_map *)ADDR_NASTI_SLAVE_GPTIMERS;
+    gptimers_map *p_timer = (gptimers_map *)ADDR_BUS0_XSLV_GPTIMERS;
     if (tech == 0) {
         p_timer->timer[0].init_value = 20000ull;
     } else {
@@ -101,7 +101,7 @@ void helloWorld() {
     p_timer->timer[0].control = 0x3;  // count_ena | irq_ena
 
     // enable GpTimer interrupts
-    irqctrl_map *p_irqctrl = (irqctrl_map *)ADDR_NASTI_SLAVE_IRQCTRL;
+    irqctrl_map *p_irqctrl = (irqctrl_map *)ADDR_BUS0_XSLV_IRQCTRL;
     uint32_t bit = p_irqctrl->irq_mask;
     bit &= ~(1u << CFG_IRQ_GPTIMERS);
     p_irqctrl->irq_mask = bit;

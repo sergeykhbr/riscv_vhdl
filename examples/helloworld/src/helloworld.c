@@ -22,7 +22,7 @@ char *sbrk(int incr) {
 
 
 void print_uart(const char *buf, int sz) {
-    uart_map *uart = (uart_map *)ADDR_NASTI_SLAVE_UART1;
+    uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART1;
     for (int i = 0; i < sz; i++) {
         while (uart->status & UART_STATUS_TX_FULL) {}
         uart->data = buf[i];
