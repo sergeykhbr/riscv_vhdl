@@ -43,7 +43,13 @@ entity axi4_pnp is
     slvcfg : in  bus0_xslv_cfg_vector;
     cfg    : out axi4_slave_config_type;
     i      : in  axi4_slave_in_type;
-    o      : out axi4_slave_out_type
+    o      : out axi4_slave_out_type;
+    -- OTP Timing control
+    i_otp_busy : in std_logic;
+    o_otp_cfg_rsetup : out std_logic_vector(3 downto 0);
+    o_otp_cfg_wadrsetup : out std_logic_vector(3 downto 0);
+    o_otp_cfg_wactive : out std_logic_vector(31 downto 0);
+    o_otp_cfg_whold : out std_logic_vector(3 downto 0)
   );
 end; 
  
@@ -74,13 +80,23 @@ architecture axi4_nasti_pnp of axi4_pnp is
     fwdbg2 : std_logic_vector(63 downto 0);
     adc_detect : std_logic_vector(7 downto 0);
     raddr : global_addr_array_type;
+
+    otp_cfg_rsetup : std_logic_vector(3 downto 0);
+    otp_cfg_wadrsetup : std_logic_vector(3 downto 0);
+    otp_cfg_wactive : std_logic_vector(31 downto 0);
+    otp_cfg_whold : std_logic_vector(3 downto 0);
   end record;
 
   constant R_RESET : registers := (
     (others => '0'), (others => '0'), (others => '0'),
     (others => '0'), (others => '0'), (others => '0'),
     (others => '0'),
-    ((others => '0'), (others => '0'))
+    ((others => '0'), (others => '0')),
+    conv_std_logic_vector(2,4),  -- otp_cfg_rsetup: read address setup > 30 ns
+    conv_std_logic_vector(2,4),  -- otp_cfg_wadrsetup: write address setup before 'we' pulse > 20 ns
+    conv_std_logic_vector(4000000,32),  -- otp_cfg_wactive: 'we' pulse duration:
+                                        -- more 50 ms  and less 100 ms (fclk = 80 MHz)
+    conv_std_logic_vector(0,4)   -- otp_cfg_whold: change addres after we=0 > 10 ns (1 clock = 0)
   );
 
   signal r, rin : registers;
@@ -187,6 +203,13 @@ begin
           rtmp := r.fwdbg2(31 downto 0);
        elsif raddr = 13 then 
           rtmp := r.fwdbg2(63 downto 32);
+       elsif raddr = 14 then 
+          rtmp(0) := i_otp_busy;
+          rtmp(11 downto 8) := r.otp_cfg_rsetup;
+          rtmp(15 downto 12) := r.otp_cfg_wadrsetup;
+          rtmp(19 downto 16) := r.otp_cfg_whold;
+       elsif raddr = 15 then 
+          rtmp := r.otp_cfg_wactive;
        elsif raddr >= 16 and raddr < 16+2*CFG_BUS0_XMST_TOTAL then
           rtmp := mstmap(raddr - 16);
        elsif raddr >= 16+2*CFG_BUS0_XMST_TOTAL 
@@ -216,6 +239,11 @@ begin
              when 11 => v.fwdbg1(63 downto 32) := wtmp;
              when 12 => v.fwdbg2(31 downto 0) := wtmp;
              when 13 => v.fwdbg2(63 downto 32) := wtmp;
+             when 14 =>
+                 v.otp_cfg_rsetup := wtmp(11 downto 8);
+                 v.otp_cfg_wadrsetup := wtmp(15 downto 12);
+                 v.otp_cfg_whold := wtmp(19 downto 16);
+             when 15 => v.otp_cfg_wactive := wtmp;
              when others =>
            end case;
          end if;
@@ -231,6 +259,11 @@ begin
   end process;
 
   cfg <= xconfig;
+
+  o_otp_cfg_rsetup <= r.otp_cfg_rsetup;
+  o_otp_cfg_wadrsetup <= r.otp_cfg_wadrsetup;
+  o_otp_cfg_wactive <= r.otp_cfg_wactive;
+  o_otp_cfg_whold <= r.otp_cfg_whold;
 
   -- registers:
   regs : process(sys_clk, nrst)

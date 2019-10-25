@@ -85,6 +85,12 @@ architecture arch_zynq_top of zynq_top is
     i_uart2_rd   : in std_logic;
     o_uart2_td   : out std_logic;
     o_uart2_rtsn : out std_logic;
+    --! OTP Memory
+    i_otp_d : in std_logic_vector(15 downto 0);
+    o_otp_d : out std_logic_vector(15 downto 0);
+    o_otp_a : out std_logic_vector(11 downto 0);
+    o_otp_we : out std_logic;
+    o_otp_re : out std_logic;
     --! Ethernet MAC PHY interface signals
     i_etx_clk   : in    std_ulogic;
     i_erx_clk   : in    std_ulogic;
@@ -303,6 +309,20 @@ begin
     i_uart2_rd   => i_uart2_rd,
     o_uart2_td   => o_uart2_td,
     o_uart2_rtsn => open,
+    --! SPI Flash
+    i_flash_si => '0',
+    o_flash_so => open,
+    o_flash_sck => open,
+    o_flash_csn => open,
+    o_flash_wpn => open,
+    o_flash_holdn => open,
+    o_flash_reset => open,
+    --! OTP Memory
+    i_otp_d => X"0000",
+    o_otp_d => open,
+    o_otp_a => open,
+    o_otp_we => open,
+    o_otp_re => open,
     --! Ethernet MAC PHY interface signals
     i_etx_clk   => '0',
     i_erx_clk   => '0',

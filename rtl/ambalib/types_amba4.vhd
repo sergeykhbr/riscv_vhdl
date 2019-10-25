@@ -167,6 +167,8 @@ constant GNSSSENSOR_DSU           : std_logic_vector(15 downto 0) := X"0080";
 constant GNSSSENSOR_GPTIMERS      : std_logic_vector(15 downto 0) := X"0081";
 --! ADC samples recorder
 constant GNSSSENSOR_ADC_RECORDER  : std_logic_vector(15 downto 0) := X"0082";
+-- OTP Memory 8KB bank
+constant GNSSSENSOR_OTP_8KB       : std_logic_vector(15 downto 0) := X"0083";
 --! @}
 
 --! @name Decoder of the transaction size.

@@ -282,7 +282,38 @@ component axi4_pnp is
     slvcfg : in  bus0_xslv_cfg_vector;
     cfg    : out  axi4_slave_config_type;
     i      : in  axi4_slave_in_type;
-    o      : out axi4_slave_out_type
+    o      : out axi4_slave_out_type;
+    -- OTP Timing control
+    i_otp_busy : in std_logic;
+    o_otp_cfg_rsetup : out std_logic_vector(3 downto 0);
+    o_otp_cfg_wadrsetup : out std_logic_vector(3 downto 0);
+    o_otp_cfg_wactive : out std_logic_vector(31 downto 0);
+    o_otp_cfg_whold : out std_logic_vector(3 downto 0)
+  );
+end component; 
+
+component axi4_otp is
+  generic (
+    async_reset : boolean := false;
+    xaddr   : integer := 0;
+    xmask   : integer := 16#ffffe#
+  );
+  port (
+    clk    : in  std_logic;
+    nrst   : in  std_logic;
+    cfg    : out axi4_slave_config_type;
+    i_axi  : in  axi4_slave_in_type;
+    o_axi  : out axi4_slave_out_type;
+    o_otp_we     : out  std_ulogic;
+    o_otp_re     : out  std_ulogic;
+    o_otp_addr   : out std_logic_vector(11 downto 0);
+    o_otp_wdata  : out std_logic_vector(15 downto 0);
+    i_otp_rdata  : in std_logic_vector(15 downto 0);
+    i_cfg_rsetup : in std_logic_vector(3 downto 0);
+    i_cfg_wadrsetup : in std_logic_vector(3 downto 0);
+    i_cfg_wactive : in std_logic_vector(31 downto 0);
+    i_cfg_whold : in std_logic_vector(3 downto 0);
+    o_busy : out std_logic
   );
 end component; 
 

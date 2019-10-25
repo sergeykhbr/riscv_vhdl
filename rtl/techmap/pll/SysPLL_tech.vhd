@@ -96,7 +96,7 @@ begin
      pll0 : SysPLL_inferred port map (i_clk_tcxo, o_clk_bus, i_reset, o_locked);
    end generate;
    
-   m180 : if tech = micron180 generate
+   m180 : if tech = mikron180 generate
      pll0 : SysPLL_micron180 port map (i_clk_tcxo, o_clk_bus, i_reset, o_locked);
    end generate;
 

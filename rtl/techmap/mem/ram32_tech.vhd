@@ -73,7 +73,7 @@ begin
       );
   end generate;
 
-  genmem1 : if generic_tech = micron180 generate
+  genmem1 : if generic_tech = mikron180 generate
       x0 : micron180_syncram 
            generic map (generic_abits, 32) 
            port map (i_clk, i_address, i_data, o_data, '1', i_wr_ena);

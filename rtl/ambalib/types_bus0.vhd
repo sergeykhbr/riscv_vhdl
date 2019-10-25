@@ -56,10 +56,12 @@ constant CFG_BUS0_XSLV_ETHMAC   : integer := 8;
 constant CFG_BUS0_XSLV_DSU      : integer := 9;
 --! Configuration index of the Debug Support Unit module.
 constant CFG_BUS0_XSLV_GPTIMERS : integer := 10;
+--! Configuration index of the Mikron OTP 8 KB bank.
+constant CFG_BUS0_XSLV_OTP      : integer := 11;
 --! Configuration index of the Plug-n-Play module.
-constant CFG_BUS0_XSLV_PNP      : integer := 11;
+constant CFG_BUS0_XSLV_PNP      : integer := 12;
 --! Total number of the slaves devices.
-constant CFG_BUS0_XSLV_TOTAL    : integer := 12;
+constant CFG_BUS0_XSLV_TOTAL    : integer := 13;
 --! @}
 
 --! @defgroup master_id_group AXI4 masters generic IDs.

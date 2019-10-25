@@ -39,7 +39,7 @@ end component;
 
 begin
 
-  m180 : if generic_tech = micron180 generate 
+  m180 : if generic_tech = mikron180 generate 
     bufm : ibuf_micron180 port map
     (
       o => o,
@@ -47,7 +47,7 @@ begin
     );
   end generate;
 
-  inf0 : if generic_tech /= micron180 generate 
+  inf0 : if generic_tech /= mikron180 generate 
     bufinf : ibuf_inferred port map
     (
       o => o,

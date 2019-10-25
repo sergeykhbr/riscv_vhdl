@@ -64,4 +64,8 @@ package config_target is
 
   --! GNSS sub-system
   constant CFG_GNSS_SS_ENA : boolean := false;
+
+  --! OTP 8 KB memory bank
+  constant CFG_OTP8KB_ENA : boolean := true;
+
 end;

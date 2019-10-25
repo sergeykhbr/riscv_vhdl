@@ -82,7 +82,8 @@ enhanced in an upward-compatible fashion.
 |:-------------------|:---------:|:---------:|:------------|:----------------------------------------------------
 | Boot ROM           | 00000000h | 00007FFFh | 32 Kbytes   | Universal Bootloader image                          
 | OTP                | 00010000h | 00011FFFh | 8 Kbytes    | One-Time Programmable secure code                   
-| ROM Image or Flash | 00100000h | 0013FFFFh | 256 Kbytes  | Internal ROM application or external Flash          
+| User's ROM Image   | 00100000h | 0013FFFFh | 256 Kbytes  | Internal ROM application
+| External Flash IC  | 00200000h | 0023FFFFh | 256 Kbytes  | Micron Flash IC (25xx1024)
 | SRAM               | 10000000h | 1007FFFFh | 512 Kbytes  | Internal code or data SRAM                          
 | GPIO Controller    | 80000000h | 80000FFFh | 4 Kbytes    | User specific IOs                                   
 | UART1              | 80001000h | 80001FFFh | 4 Kbytes    | Default serial port                                 

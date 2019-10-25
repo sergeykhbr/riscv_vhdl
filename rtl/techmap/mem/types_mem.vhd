@@ -209,4 +209,21 @@ package types_mem is
   );
   end component;
 
+  component otp_tech is generic (
+    memtech : integer := 0
+  );
+  port (
+    clk      : in std_logic;  -- only for FPGA
+    i_we     : in  std_ulogic;
+    i_re     : in  std_ulogic;
+    i_addr   : in std_logic_vector(11 downto 0);
+    i_wdata  : in std_logic_vector(15 downto 0);
+    o_rdata  : out std_logic_vector(15 downto 0);
+    io_gnd   : inout std_logic;
+    io_vdd   : inout std_logic;
+    io_vdd18 : inout std_logic;
+    io_upp   : inout std_logic
+  );
+  end component;
+
 end;

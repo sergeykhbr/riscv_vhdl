@@ -85,6 +85,12 @@ entity riscv_soc is port
   o_flash_wpn : out std_logic;
   o_flash_holdn : out std_logic;
   o_flash_reset : out std_logic;
+  --! OTP Memory
+  i_otp_d : in std_logic_vector(15 downto 0);
+  o_otp_d : out std_logic_vector(15 downto 0);
+  o_otp_a : out std_logic_vector(11 downto 0);
+  o_otp_we : out std_logic;
+  o_otp_re : out std_logic;
   --! Ethernet MAC PHY interface signals
   i_etx_clk   : in    std_ulogic;
   i_erx_clk   : in    std_ulogic;
@@ -142,6 +148,12 @@ architecture arch_riscv_soc of riscv_soc is
   signal eth_o : eth_out_type;
  
   signal irq_pins : std_logic_vector(CFG_IRQ_TOTAL-1 downto 1);
+
+  signal w_otp_busy : std_logic;
+  signal wb_otp_cfg_rsetup : std_logic_vector(3 downto 0);
+  signal wb_otp_cfg_wadrsetup : std_logic_vector(3 downto 0);
+  signal wb_otp_cfg_wactive : std_logic_vector(31 downto 0);
+  signal wb_otp_cfg_whold : std_logic_vector(3 downto 0);
 begin
 
 
@@ -293,6 +305,42 @@ end generate;
   );
 
   ------------------------------------
+  --! @brief OTP module instance with the AXI4 interface.
+  --! @details Map address:
+  --!          0x00010000..0x00011fff (8 KB total)
+  otp_ena : if CFG_OTP8KB_ENA generate
+    otp0 : axi4_otp generic map (
+      async_reset => CFG_ASYNC_RESET,
+      xaddr => 16#00010#,
+      xmask => 16#ffffe#
+    ) port map (
+      clk    => i_clk,
+      nrst   => w_glob_nrst,
+      cfg    => slv_cfg(CFG_BUS0_XSLV_OTP),
+      i_axi => axisi(CFG_BUS0_XSLV_OTP),
+      o_axi => axiso(CFG_BUS0_XSLV_OTP),
+      o_otp_we     => o_otp_we,
+      o_otp_re     => o_otp_re,
+      o_otp_addr   => o_otp_a,
+      o_otp_wdata  => o_otp_d,
+      i_otp_rdata  => i_otp_d,
+      i_cfg_rsetup => wb_otp_cfg_rsetup,
+      i_cfg_wadrsetup => wb_otp_cfg_wadrsetup,
+      i_cfg_wactive => wb_otp_cfg_wactive,
+      i_cfg_whold => wb_otp_cfg_whold,
+      o_busy => w_otp_busy
+    );
+  end generate;
+  otp_dis : if not CFG_OTP8KB_ENA generate
+      slv_cfg(CFG_BUS0_XSLV_OTP) <= axi4_slave_config_none;
+      axiso(CFG_BUS0_XSLV_OTP) <= axi4_slave_out_none;
+      o_otp_d <= X"0000";
+      o_otp_a <= X"000";
+      o_otp_we <= '0';
+      o_otp_re <= '0';
+  end generate;
+
+  ------------------------------------
   --! @brief Firmware Image ROM with the AXI4 interface.
   --! @details Map address:
   --!          0x00100000..0x0013ffff (256 KB total)
@@ -344,6 +392,7 @@ end generate;
   o_flash_wpn <= spiflasho.nWP;
   o_flash_holdn <= spiflasho.nHOLD;
   o_flash_reset <= spiflasho.RESET;
+
 
   ------------------------------------
   --! Internal SRAM module instance with the AXI4 interface.
@@ -548,7 +597,13 @@ end generate;
     slvcfg => slv_cfg,
     cfg    => slv_cfg(CFG_BUS0_XSLV_PNP),
     i      => axisi(CFG_BUS0_XSLV_PNP),
-    o      => axiso(CFG_BUS0_XSLV_PNP)
+    o      => axiso(CFG_BUS0_XSLV_PNP),
+    -- OTP Timing control
+    i_otp_busy => w_otp_busy,
+    o_otp_cfg_rsetup => wb_otp_cfg_rsetup,
+    o_otp_cfg_wadrsetup => wb_otp_cfg_wadrsetup,
+    o_otp_cfg_wactive => wb_otp_cfg_wactive,
+    o_otp_cfg_whold => wb_otp_cfg_whold
   );
 
 

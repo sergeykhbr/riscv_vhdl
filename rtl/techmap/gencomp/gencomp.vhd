@@ -82,7 +82,7 @@ constant kintex7     : integer := 49; --! Supported. Use files with the '_k7' su
 constant artix7      : integer := 50; --! Not implemented.
 constant zynq7000    : integer := 51; --! Not implemented.
 constant rhlib13t    : integer := 52; --! Not implemented.
-constant micron180   : integer := 53; --! Mikron 180nm. Use files with the '_micron180' suffix.
+constant mikron180   : integer := 53; --! Mikron 180nm. Use files with the '_micron180' suffix.
 
 --! @}
 

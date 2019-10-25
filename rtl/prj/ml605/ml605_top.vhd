@@ -114,6 +114,12 @@ component riscv_soc is port
   o_flash_wpn : out std_logic;
   o_flash_holdn : out std_logic;
   o_flash_reset : out std_logic;
+  --! OTP Memory
+  i_otp_d : in std_logic_vector(15 downto 0);
+  o_otp_d : out std_logic_vector(15 downto 0);
+  o_otp_a : out std_logic_vector(11 downto 0);
+  o_otp_we : out std_logic;
+  o_otp_re : out std_logic;
   --! Ethernet MAC PHY interface signals
   i_etx_clk   : in    std_ulogic;
   i_erx_clk   : in    std_ulogic;
@@ -264,6 +270,12 @@ begin
     o_flash_wpn => open,
     o_flash_holdn => open,
     o_flash_reset => open,
+    --! OTP Memory
+    i_otp_d => X"0000",
+    o_otp_d => open,
+    o_otp_a => open,
+    o_otp_we => open,
+    o_otp_re => open,
     --! Ethernet MAC PHY interface signals
     i_etx_clk   => i_etx_clk,
     i_erx_clk   => i_erx_clk,

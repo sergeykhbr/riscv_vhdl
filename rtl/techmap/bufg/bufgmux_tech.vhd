@@ -68,7 +68,7 @@ begin
       );
    end generate;
 
-   mic0 : if tech = micron180 generate
+   mic0 : if tech = mikron180 generate
       mux_buf : bufgmux_micron180
       port map (
         O   => O,

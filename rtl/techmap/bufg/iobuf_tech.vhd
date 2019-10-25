@@ -75,7 +75,7 @@ begin
     );
   end generate;
 
-  m180 : if generic_tech = micron180 generate 
+  m180 : if generic_tech = mikron180 generate 
     bufm : iobuf_micron180 port map
     (
       o => o,

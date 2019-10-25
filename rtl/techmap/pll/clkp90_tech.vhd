@@ -85,7 +85,7 @@ begin
       o_lock  <= '0';
    end generate;
    
-   m180 : if tech = micron180 generate
+   m180 : if tech = mikron180 generate
    end generate;
 
 end;

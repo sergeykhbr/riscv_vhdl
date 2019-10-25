@@ -28,6 +28,8 @@ library techmap;
 use techmap.gencomp.all;
 --! "Virtual" PLL declaration.
 use techmap.types_pll.all;
+-- "Virtual" memory banks
+use techmap.types_mem.all;
 --! "Virtual" buffers declaration.
 use techmap.types_buf.all;
 
@@ -63,6 +65,11 @@ entity asic_top is port
   o_flash_so : out std_logic;
   o_flash_sck : out std_logic;
   o_flash_csn : out std_logic;
+  -- OTP power
+  io_otp_gnd : inout std_logic;
+  io_otp_vdd  : inout std_logic;
+  io_otp_vdd18 : inout std_logic;
+  io_otp_upp : inout std_logic;
   --! Ethernet MAC PHY interface signals
   i_gmiiclk_p : in    std_ulogic;
   i_gmiiclk_n : in    std_ulogic;
@@ -119,6 +126,12 @@ component riscv_soc is port
   o_flash_wpn : out std_logic;
   o_flash_holdn : out std_logic;
   o_flash_reset : out std_logic;
+  --! OTP Memory
+  i_otp_d : in std_logic_vector(15 downto 0);
+  o_otp_d : out std_logic_vector(15 downto 0);
+  o_otp_a : out std_logic_vector(11 downto 0);
+  o_otp_we : out std_logic;
+  o_otp_re : out std_logic;
   --! Ethernet MAC PHY interface signals
   i_etx_clk   : in    std_ulogic;
   i_erx_clk   : in    std_ulogic;
@@ -178,6 +191,12 @@ end component;
   signal w_bus_nrst : std_ulogic; -- Global reset and Soft Reset active LOW
   signal w_clk_bus  : std_ulogic; -- bus clock from the internal PLL (100MHz virtex6/40MHz Spartan6)
   signal w_pll_lock : std_ulogic; -- PLL status signal. 0=Unlocked; 1=locked.
+
+  signal wb_otp_wdata : std_logic_vector(15 downto 0);
+  signal wb_otp_addr : std_logic_vector(11 downto 0);
+  signal w_otp_we : std_logic;
+  signal w_otp_re : std_logic;
+  signal wb_otp_rdata : std_logic_vector(15 downto 0);
   
 begin
 
@@ -245,6 +264,22 @@ begin
   w_ext_reset <= ib_rst or not w_pll_lock;
 
 
+  otp0 : otp_tech generic map (
+    memtech => CFG_MEMTECH
+  ) port map (
+    clk      => w_clk_bus,  -- only for FPGA
+    i_we     => w_otp_we,
+    i_re     => w_otp_re,
+    i_addr   => wb_otp_addr,
+    i_wdata  => wb_otp_wdata,
+    o_rdata  => wb_otp_rdata,
+    io_gnd   => io_otp_gnd,
+    io_vdd   => io_otp_vdd,
+    io_vdd18 => io_otp_vdd18,
+    io_upp   => io_otp_upp
+  );
+
+
   soc0 : riscv_soc port map
   ( 
     i_rst  => w_ext_reset,
@@ -278,6 +313,12 @@ begin
     o_flash_wpn => open,
     o_flash_holdn => open,
     o_flash_reset => open,
+    --! OTP Memory
+    i_otp_d => wb_otp_rdata,
+    o_otp_d => wb_otp_wdata,
+    o_otp_a => wb_otp_addr,
+    o_otp_we => w_otp_we,
+    o_otp_re => w_otp_re,
     --! Ethernet MAC PHY interface signals
     i_etx_clk   => i_etx_clk,
     i_erx_clk   => i_erx_clk,

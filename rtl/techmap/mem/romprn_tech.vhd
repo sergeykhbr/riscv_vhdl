@@ -53,7 +53,7 @@ begin
         o_data
       );
   end generate;
-  genrom1 : if generic_tech = micron180 generate
+  genrom1 : if generic_tech = mikron180 generate
       romprn_micr : RomPrn_micron180 port map
       (
         i_clk,

@@ -10,6 +10,8 @@ ${RTL_HOME}/techmap/bufg/iobuf_tech.vhd
 ${RTL_HOME}/techmap/bufg/types_buf.vhd
 ${RTL_HOME}/techmap/mem/dpram_inferred.vhd
 ${RTL_HOME}/techmap/mem/dpram_tech.vhd
+${RTL_HOME}/techmap/mem/otp_clocked.vhd
+${RTL_HOME}/techmap/mem/otp_tech.vhd
 ${RTL_HOME}/techmap/mem/ram_inferred.vhd
 ${RTL_HOME}/techmap/mem/ram_tech.vhd
 ${RTL_HOME}/techmap/mem/rom_inferred.vhd

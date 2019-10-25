@@ -85,6 +85,10 @@ architecture behavior of asic_top_tb is
     o_flash_so : out std_logic;
     o_flash_sck : out std_logic;
     o_flash_csn : out std_logic;
+    io_otp_gnd : inout std_logic;
+    io_otp_vdd : inout std_logic;
+    io_otp_vdd18 : inout std_logic;
+    io_otp_upp : inout std_logic;
     i_gmiiclk_p : in    std_ulogic;
     i_gmiiclk_n : in    std_ulogic;
     o_egtx_clk  : out   std_ulogic;
@@ -304,6 +308,10 @@ begin
     o_flash_so => o_flash_so,
     o_flash_sck => o_flash_sck,
     o_flash_csn => o_flash_csn,
+    io_otp_gnd => open,
+    io_otp_vdd => open,
+    io_otp_vdd18 => open,
+    io_otp_upp => open,
     i_gmiiclk_p => '0',
     i_gmiiclk_n => '1',
     o_egtx_clk  => open,
