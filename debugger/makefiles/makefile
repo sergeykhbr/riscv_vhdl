@@ -5,6 +5,9 @@
 ##
 include util.mak
 
+## Enable CentOS 6 pathes to build Qt plugin
+CENTOS6=1
+
 TOP_DIR=../
 OBJ_DIR = $(TOP_DIR)linuxbuild/obj
 ELF_DIR = $(TOP_DIR)linuxbuild/bin
@@ -94,8 +97,8 @@ cpu_arm_plugin:
 gui_plugin:
 	$(MKDIR) ./$(PLUGINS_OBJ_DIR)/gui
 	$(ECHO) "    Plugin " $@ " building started:"
-	make -f make_gui_plugin TOP_DIR=$(TOP_DIR) PLUGINS_OBJ_DIR=$(PLUGINS_OBJ_DIR)/gui PLUGINS_ELF_DIR=$(PLUGINS_ELF_DIR) ELF_DIR=$(ELF_DIR) $(TEA)
+	make -f make_gui_plugin TOP_DIR=$(TOP_DIR) PLUGINS_OBJ_DIR=$(PLUGINS_OBJ_DIR)/gui PLUGINS_ELF_DIR=$(PLUGINS_ELF_DIR) ELF_DIR=$(ELF_DIR) CENTOS6=$(CENTOS6) $(TEA)
 
 appdbg64g:
 	$(ECHO) "    Debugger application building started:"
-	make -f make_appdbg64g TOP_DIR=$(TOP_DIR) OBJ_DIR=$(OBJ_DIR)/app ELF_DIR=$(ELF_DIR) $(TEA)
+	make -f make_appdbg64g TOP_DIR=$(TOP_DIR) OBJ_DIR=$(OBJ_DIR)/app ELF_DIR=$(ELF_DIR) CENTOS6=$(CENTOS6) $(TEA)
