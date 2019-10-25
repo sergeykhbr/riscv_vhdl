@@ -115,8 +115,13 @@ type spi_out_type is record
     RESET : std_logic;
 end record;
 
+constant spi_out_none : spi_out_type := (
+  '0', '0', '1', '1', '1', '0'
+);
+
 component axi4_flashspi is
   generic (
+    async_reset : boolean := false;
     xaddr   : integer := 0;
     xmask   : integer := 16#fffff#
   );

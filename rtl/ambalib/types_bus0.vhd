@@ -46,22 +46,20 @@ constant CFG_BUS0_XSLV_UART1    : integer := 3;
 constant CFG_BUS0_XSLV_GPIO     : integer := 4;
 --! Configuration index of the Interrupt Controller module.
 constant CFG_BUS0_XSLV_IRQCTRL  : integer := 5;
---! Configuration index of the Satellite Navigation Engine.
-constant CFG_BUS0_XSLV_ENGINE   : integer := 6;
---! Configuration index of the RF front-end controller.
-constant CFG_BUS0_XSLV_RFCTRL   : integer := 7;
---! Configuration index of the GPS-CA Fast Search Engine module.
-constant CFG_BUS0_XSLV_FSE_GPS  : integer := 8;
+--! Configuration index of the GNSS Sub-System.
+constant CFG_BUS0_XSLV_GNSS_SS  : integer := 6;
+--! External Flash IC connected via SPI interface.
+constant CFG_BUS0_XSLV_EXTFLASH : integer := 7;
 --! Configuration index of the Ethernet MAC module.
-constant CFG_BUS0_XSLV_ETHMAC   : integer := 9;
+constant CFG_BUS0_XSLV_ETHMAC   : integer := 8;
 --! Configuration index of the Debug Support Unit module.
-constant CFG_BUS0_XSLV_DSU      : integer := 10;
+constant CFG_BUS0_XSLV_DSU      : integer := 9;
 --! Configuration index of the Debug Support Unit module.
-constant CFG_BUS0_XSLV_GPTIMERS : integer := 11;
+constant CFG_BUS0_XSLV_GPTIMERS : integer := 10;
 --! Configuration index of the Plug-n-Play module.
-constant CFG_BUS0_XSLV_PNP      : integer := 12;
+constant CFG_BUS0_XSLV_PNP      : integer := 11;
 --! Total number of the slaves devices.
-constant CFG_BUS0_XSLV_TOTAL   : integer := 13;  
+constant CFG_BUS0_XSLV_TOTAL    : integer := 12;
 --! @}
 
 --! @defgroup master_id_group AXI4 masters generic IDs.

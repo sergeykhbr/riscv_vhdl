@@ -36,7 +36,7 @@ library work;
 --! Target dependable configuration: RTL, FPGA or ASIC.
 use work.config_target.all;
 
-entity asic_top is port 
+entity ml605_top is port 
 ( 
   --! Input reset. Active HIGH.
   i_rst     : in std_logic;
@@ -77,9 +77,9 @@ entity asic_top is port
   io_emdio    : inout std_logic;
   o_erstn     : out   std_ulogic
 );
-end asic_top;
+end ml605_top;
 
-architecture arch_asic_top of asic_top is
+architecture arch_ml605_top of ml605_top is
 
 component riscv_soc is port 
 ( 
@@ -106,6 +106,14 @@ component riscv_soc is port
   i_uart2_rd   : in std_logic;
   o_uart2_td   : out std_logic;
   o_uart2_rtsn : out std_logic;
+  --! SPI Flash
+  i_flash_si : in std_logic;
+  o_flash_so : out std_logic;
+  o_flash_sck : out std_logic;
+  o_flash_csn : out std_logic;
+  o_flash_wpn : out std_logic;
+  o_flash_holdn : out std_logic;
+  o_flash_reset : out std_logic;
   --! Ethernet MAC PHY interface signals
   i_etx_clk   : in    std_ulogic;
   i_erx_clk   : in    std_ulogic;
@@ -248,6 +256,14 @@ begin
     i_uart2_rd   => ib_uart2_rd,
     o_uart2_td   => ob_uart2_td,
     o_uart2_rtsn => open,
+    --! SPI Flash
+    i_flash_si => '0',
+    o_flash_so => open,
+    o_flash_sck => open,
+    o_flash_csn => open,
+    o_flash_wpn => open,
+    o_flash_holdn => open,
+    o_flash_reset => open,
     --! Ethernet MAC PHY interface signals
     i_etx_clk   => i_etx_clk,
     i_erx_clk   => i_erx_clk,
@@ -269,4 +285,4 @@ begin
     o_erstn     => o_erstn
   );
   
-end arch_asic_top;
+end arch_ml605_top;

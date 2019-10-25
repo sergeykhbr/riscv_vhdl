@@ -77,6 +77,14 @@ entity riscv_soc is port
   i_uart2_rd   : in std_logic;
   o_uart2_td   : out std_logic;
   o_uart2_rtsn : out std_logic;
+  --! SPI Flash
+  i_flash_si : in std_logic;
+  o_flash_so : out std_logic;
+  o_flash_sck : out std_logic;
+  o_flash_csn : out std_logic;
+  o_flash_wpn : out std_logic;
+  o_flash_holdn : out std_logic;
+  o_flash_reset : out std_logic;
   --! Ethernet MAC PHY interface signals
   i_etx_clk   : in    std_ulogic;
   i_erx_clk   : in    std_ulogic;
@@ -113,6 +121,8 @@ architecture arch_riscv_soc of riscv_soc is
   signal uart1o : uart_out_type;
   signal uart2i : uart_in_type;
   signal uart2o : uart_out_type;
+  signal spiflashi : spi_in_type;
+  signal spiflasho : spi_out_type;
 
   --! Arbiter is switching only slaves output signal, data from noc
   --! is connected to all slaves and to the arbiter itself.
@@ -135,17 +145,7 @@ architecture arch_riscv_soc of riscv_soc is
 begin
 
 
-  -- Nullify emty AXI-slots:  
-  axiso(CFG_BUS0_XSLV_ENGINE) <= axi4_slave_out_none;
-  slv_cfg(CFG_BUS0_XSLV_ENGINE)  <= axi4_slave_config_none;
-  irq_pins(CFG_IRQ_GNSSENGINE)      <= '0';
-  slv_cfg(CFG_BUS0_XSLV_RFCTRL) <= axi4_slave_config_none;
-  axiso(CFG_BUS0_XSLV_RFCTRL) <= axi4_slave_out_none;
-  slv_cfg(CFG_BUS0_XSLV_FSE_GPS) <= axi4_slave_config_none;
-  axiso(CFG_BUS0_XSLV_FSE_GPS) <= axi4_slave_out_none;
-
-
-  ------------------------------------
+ ------------------------------------
   --! @brief System Reset device instance.
   rst0 : reset_global port map (
     inSysReset  => i_rst,
@@ -312,6 +312,40 @@ end generate;
   );
 
   ------------------------------------
+  --! @brief SPI FLASH module isntance with the AXI4 interface.
+  --! @details Map address:
+  --!          0x00200000..0x0023ffff (256 KB total)
+  spiflashi.SDI <= i_flash_si;
+
+  flash_ena : if CFG_EXT_FLASH_ENA generate
+    flash0 : axi4_flashspi generic map (
+      async_reset => CFG_ASYNC_RESET,
+      xaddr    => 16#00200#,
+      xmask    => 16#fffc0#
+    ) port map (
+      clk => i_clk,
+      nrst => w_glob_nrst,
+      cfg => slv_cfg(CFG_BUS0_XSLV_EXTFLASH),
+      i_spi => spiflashi,
+      o_spi => spiflasho,
+      i_axi => axisi(CFG_BUS0_XSLV_EXTFLASH),
+      o_axi => axiso(CFG_BUS0_XSLV_EXTFLASH)
+    );
+  end generate;
+  flash_dis : if not CFG_EXT_FLASH_ENA generate
+      slv_cfg(CFG_BUS0_XSLV_EXTFLASH) <= axi4_slave_config_none;
+      axiso(CFG_BUS0_XSLV_EXTFLASH) <= axi4_slave_out_none;
+      spiflasho <= spi_out_none;
+  end generate;
+
+  o_flash_so <= spiflasho.SDO;
+  o_flash_sck <= spiflasho.SCK;
+  o_flash_csn <= spiflasho.nCS;
+  o_flash_wpn <= spiflasho.nWP;
+  o_flash_holdn <= spiflasho.nHOLD;
+  o_flash_reset <= spiflasho.RESET;
+
+  ------------------------------------
   --! Internal SRAM module instance with the AXI4 interface.
   --! @details Map address:
   --!          0x10000000..0x1007ffff (512 KB total)
@@ -431,8 +465,8 @@ end generate;
     eth_i.rx_col <= i_erx_col;
     eth_i.rx_crs <= i_erx_crs;
     eth_i.mdint <= i_emdint;
-	 eth_i.mdio_i <= i_eth_mdio;
-	 eth_i.gtx_clk <= i_eth_gtx_clk;
+    eth_i.mdio_i <= i_eth_mdio;
+    eth_i.gtx_clk <= i_eth_gtx_clk;
     
     mac0 : grethaxi generic map (
       xaddr => 16#80040#,
@@ -488,6 +522,12 @@ end generate;
   o_eth_mdio <= eth_o.mdio_o;
   o_eth_mdio_oe <= eth_o.mdio_oe;
   o_erstn <= w_glob_nrst;
+
+  gnss_dis : if not CFG_GNSS_SS_ENA generate
+      axiso(CFG_BUS0_XSLV_GNSS_SS) <= axi4_slave_out_none;
+      slv_cfg(CFG_BUS0_XSLV_GNSS_SS) <= axi4_slave_config_none;
+      irq_pins(CFG_IRQ_GNSSENGINE) <= '0';
+  end generate;
 
 
   --! @brief Plug'n'Play controller of the current configuration with the

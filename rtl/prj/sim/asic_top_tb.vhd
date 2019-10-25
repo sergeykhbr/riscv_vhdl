@@ -34,6 +34,10 @@ architecture behavior of asic_top_tb is
   signal o_uart1_td : std_logic;
   signal i_uart2_rd : std_logic := '1';
   signal o_uart2_td : std_logic;
+  signal i_flash_si : std_logic;
+  signal o_flash_so : std_logic;
+  signal o_flash_sck : std_logic;
+  signal o_flash_csn : std_logic;
   
   signal o_emdc    : std_logic;
   signal io_emdio  : std_logic;
@@ -77,6 +81,10 @@ architecture behavior of asic_top_tb is
     o_uart1_td   : out std_logic;
     i_uart2_rd   : in std_logic;
     o_uart2_td   : out std_logic;
+    i_flash_si : in std_logic;
+    o_flash_so : out std_logic;
+    o_flash_sck : out std_logic;
+    o_flash_csn : out std_logic;
     i_gmiiclk_p : in    std_ulogic;
     i_gmiiclk_n : in    std_ulogic;
     o_egtx_clk  : out   std_ulogic;
@@ -147,6 +155,18 @@ architecture behavior of asic_top_tb is
     o_tdo : out std_logic
   );
   end component;
+
+  component M25AA1024 is port (
+     SI : in std_logic;
+     SO : out std_logic;
+     SCK : in std_logic;
+     CS_N : in std_logic;
+     WP_N : in std_logic;
+     HOLD_N : in std_logic;
+     RESET : in std_logic
+  );
+  end component;
+
 begin
 
   i_sclk_p <= not i_sclk_p after 12.5 ns;
@@ -253,6 +273,16 @@ begin
     o_tdo => jtag_tdo
   );
 
+  flash0 : M25AA1024 port map (
+     SI => o_flash_so,
+     SO => i_flash_si,
+     SCK => o_flash_sck,
+     CS_N => o_flash_csn,
+     WP_N => '1',
+     HOLD_N => '1',
+     RESET => '0'
+  );
+
   -- signal parsment and assignment
   tt : asic_top port map
   (
@@ -270,6 +300,10 @@ begin
     o_uart1_td   => o_uart1_td,
     i_uart2_rd   => i_uart2_rd,
     o_uart2_td   => o_uart2_td,
+    i_flash_si => i_flash_si,
+    o_flash_so => o_flash_so,
+    o_flash_sck => o_flash_sck,
+    o_flash_csn => o_flash_csn,
     i_gmiiclk_p => '0',
     i_gmiiclk_n => '1',
     o_egtx_clk  => open,

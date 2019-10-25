@@ -8,6 +8,7 @@ ${RTL_HOME}/misclib/axi4_pnp.vhd
 ${RTL_HOME}/misclib/axi4_rom.vhd
 ${RTL_HOME}/misclib/axi4_sram.vhd
 ${RTL_HOME}/misclib/axi4_uart.vhd
+${RTL_HOME}/misclib/axi4_flashspi.vhd
 ${RTL_HOME}/misclib/reset_glb.vhd
 ${RTL_HOME}/misclib/tap_jtag.vhd
 ${RTL_HOME}/misclib/tap_uart.vhd

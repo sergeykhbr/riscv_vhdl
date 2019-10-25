@@ -59,4 +59,9 @@ package config_target is
   --! @brief Enable/Disable Debug Unit 
   constant CFG_DSU_ENABLE : boolean := true;
 
+  --! External Flash IC connected via SPI
+  constant CFG_EXT_FLASH_ENA : boolean := true;
+
+  --! GNSS sub-system
+  constant CFG_GNSS_SS_ENA : boolean := false;
 end;
