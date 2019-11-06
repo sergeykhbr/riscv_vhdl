@@ -5,3 +5,4 @@ DEFINE work work
 DEFINE misclib misclib
 DEFINE riverlib riverlib
 DEFINE ethlib ethlib
+DEFINE gnsslib gnsslib

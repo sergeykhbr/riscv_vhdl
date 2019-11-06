@@ -38,6 +38,9 @@ use misclib.types_misc.all;
 --! Ethernet related declarations.
 library ethlib;
 use ethlib.types_eth.all;
+--! gnss sub-system library
+library gnsslib;
+use gnsslib.types_gnss.all;
 
 --! River CPU specific library
 library riverlib;
@@ -54,7 +57,7 @@ use work.config_target.all;
 --!          are available on FPGA/ASIC IO pins.
 entity riscv_soc is port 
 ( 
-  i_rst     : in std_logic;
+  i_rst : in std_logic;
   i_clk  : in std_logic;
   --! GPIO.
   i_gpio     : in std_logic_vector(11 downto 0);
@@ -109,7 +112,23 @@ entity riscv_soc is port
   o_eth_mdio_oe : out std_logic;
   i_eth_gtx_clk    : in std_logic;
   i_eth_gtx_clk_90 : in std_logic;
-  o_erstn     : out   std_ulogic
+  o_erstn     : out   std_ulogic;
+  -- GNSS Sub-system signals:
+  i_clk_adc : in std_logic;                   -- GNSS ADC clock (4..40 MHz)
+  i_gps_I : in std_logic_vector(1 downto 0);  -- Channel 0 sampled I value
+  i_gps_Q : in std_logic_vector(1 downto 0);  -- Channel 0 sampled Q value
+  i_glo_I : in std_logic_vector(1 downto 0);  -- Channel 1 sampled I value
+  i_glo_Q : in std_logic_vector(1 downto 0);  -- Channel 1 sampled I value
+  o_pps : out std_logic;                      -- Pulse Per Second signal
+  i_gps_ld    : in std_logic;                 -- Channel 0 RF front-end Lock detect
+  i_glo_ld    : in std_logic;                 -- Channel 1 RF front-end Lock detect
+  o_max_sclk  : out std_logic;                -- RF synthesizer SPI clock
+  o_max_sdata : out std_logic;                -- RF synthesizer SPI data
+  o_max_ncs   : out std_logic_vector(1 downto 0); -- RF synthesizer channel 0/1 selector
+  i_antext_stat   : in std_logic;             -- Antenna powered status
+  i_antext_detect : in std_logic;             -- Antenna connected status
+  o_antext_ena    : out std_logic;            -- Enabling/disabling antenna
+  o_antint_contr  : out std_logic             -- Antenna Internal/External selector
 );
   --! @}
 
@@ -508,6 +527,35 @@ end generate;
   --!          0x80009000..0x80009fff (4 KB total) Engine
   --!          0x8000a000..0x8000afff (4 KB total) GPS FSE
   gnss_ena : if CFG_GNSS_SS_ENA generate
+    gnss0 : gnss_ss generic map (
+      async_reset => CFG_ASYNC_RESET,
+      tech        => CFG_MEMTECH,
+      xaddr       => 16#80005#,
+      xmask       => 16#FFFF8#,
+      xirq        => CFG_IRQ_GNSSENGINE
+    ) port map ( 
+      i_nrst => w_glob_nrst,
+      i_clk_bus => i_clk,
+      i_clk_adc => i_clk_adc,
+      i_gps_I => i_gps_I,
+      i_gps_Q => i_gps_Q,
+      i_glo_I => i_glo_I,
+      i_glo_Q => i_glo_Q,
+      o_pps => o_pps,
+      i_gps_ld => i_gps_ld,
+      i_glo_ld => i_glo_ld,
+      o_max_sclk => o_max_sclk,
+      o_max_sdata => o_max_sdata,
+      o_max_ncs => o_max_ncs,
+      i_antext_stat => i_antext_stat,
+      i_antext_detect => i_antext_detect,
+      o_antext_ena => o_antext_ena,
+      o_antint_contr => o_antint_contr,
+      o_cfg => slv_cfg(CFG_BUS0_XSLV_GNSS_SS),
+      i_axi => axisi(CFG_BUS0_XSLV_GNSS_SS),
+      o_axi => axiso(CFG_BUS0_XSLV_GNSS_SS),
+      o_irq => irq_pins(CFG_IRQ_GNSSENGINE)
+    );
   end generate;
   gnss_dis : if not CFG_GNSS_SS_ENA generate
       axiso(CFG_BUS0_XSLV_GNSS_SS) <= axi4_slave_out_none;

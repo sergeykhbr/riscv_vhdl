@@ -109,7 +109,23 @@ architecture arch_zynq_top of zynq_top is
     o_eth_mdio_oe : out std_logic;
     i_eth_gtx_clk    : in std_logic;
     i_eth_gtx_clk_90 : in std_logic;
-    o_erstn     : out   std_ulogic
+    o_erstn     : out   std_ulogic;
+    -- GNSS Sub-system signals:
+    i_clk_adc : in std_logic;
+    i_gps_I : in std_logic_vector(1 downto 0);
+    i_gps_Q : in std_logic_vector(1 downto 0);
+    i_glo_I : in std_logic_vector(1 downto 0);
+    i_glo_Q : in std_logic_vector(1 downto 0);
+    o_pps : out std_logic;
+    i_gps_ld    : in std_logic;
+    i_glo_ld    : in std_logic;
+    o_max_sclk  : out std_logic;
+    o_max_sdata : out std_logic;
+    o_max_ncs   : out std_logic_vector(1 downto 0);
+    i_antext_stat   : in std_logic;
+    i_antext_detect : in std_logic;
+    o_antext_ena    : out std_logic;
+    o_antint_contr  : out std_logic
   );
   end component;
 
@@ -341,7 +357,23 @@ begin
     o_eth_mdio_oe => open,
     i_eth_gtx_clk    => '0',
     i_eth_gtx_clk_90 => '0',
-    o_erstn     => open
+    o_erstn     => open,
+    -- GNSS Sub-system signals:
+    i_clk_adc => '0',
+    i_gps_I => "00",
+    i_gps_Q => "00",
+    i_glo_I => "00",
+    i_glo_Q => "00",
+    o_pps => open,
+    i_gps_ld => '0',
+    i_glo_ld => '0',
+    o_max_sclk => open,
+    o_max_sdata => open,
+    o_max_ncs => open,
+    i_antext_stat => '0',
+    i_antext_detect => '0',
+    o_antext_ena => open,
+    o_antint_contr => open
   );
 
 

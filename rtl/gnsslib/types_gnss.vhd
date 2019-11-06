@@ -25,6 +25,7 @@ package types_gnss is
 
   component gnss_ss is
     generic (
+      async_reset : boolean := false;
       tech   : integer := 0;
       xaddr  : integer := 0;
       xmask  : integer := 16#FFFFF#;
@@ -33,23 +34,23 @@ package types_gnss is
     port ( 
       i_nrst : in std_logic;
       i_clk_bus : in std_logic;
-      i_clk_adc : in std_logic;
+      i_clk_adc : in std_logic;                   -- GNSS ADC clock (4..40 MHz)
       -- ADC samples (2 complex channels)
-      i_gps_I : in std_logic_vector(1 downto 0);
-      i_gps_Q : in std_logic_vector(1 downto 0);
-      i_glo_I : in std_logic_vector(1 downto 0);
-      i_glo_Q : in std_logic_vector(1 downto 0);
-      o_pps : out std_logic;
+      i_gps_I : in std_logic_vector(1 downto 0);  -- Channel 0 sampled I value
+      i_gps_Q : in std_logic_vector(1 downto 0);  -- Channel 0 sampled Q value
+      i_glo_I : in std_logic_vector(1 downto 0);  -- Channel 1 sampled I value
+      i_glo_Q : in std_logic_vector(1 downto 0);  -- Channel 1 sampled I value
+      o_pps : out std_logic;                      -- Pulse Per Second signal
       -- MAX2769 SPIs and antenna controls signals:
-      i_gps_ld    : in std_logic;
-      i_glo_ld    : in std_logic;
-      o_max_sclk  : out std_logic;
-      o_max_sdata : out std_logic;
-      o_max_ncs   : out std_logic_vector(1 downto 0);
-      i_antext_stat   : in std_logic;
-      i_antext_detect : in std_logic;
-      o_antext_ena    : out std_logic;
-      o_antint_contr  : out std_logic;
+      i_gps_ld    : in std_logic;                 -- Channel 0 RF front-end Lock detect
+      i_glo_ld    : in std_logic;                 -- Channel 1 RF front-end Lock detect
+      o_max_sclk  : out std_logic;                -- RF synthesizer SPI clock
+      o_max_sdata : out std_logic;                -- RF synthesizer SPI data
+      o_max_ncs   : out std_logic_vector(1 downto 0); -- RF synthesizer channel 0/1 selector
+      i_antext_stat   : in std_logic;             -- Antenna powered status
+      i_antext_detect : in std_logic;             -- Antenna connected status
+      o_antext_ena    : out std_logic;            -- Enabling/disabling antenna
+      o_antint_contr  : out std_logic;            -- Antenna Internal/External selector
       -- AXI4 interface
       o_cfg : out axi4_slave_config_type;
       i_axi : in  axi4_slave_in_type;

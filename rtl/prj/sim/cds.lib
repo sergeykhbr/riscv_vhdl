@@ -7,3 +7,4 @@ define work ./work
 define misclib ./misclib
 define riverlib ./riverlib
 define ethlib ./ethlib
+define gnsslib ./gnsslib

@@ -23,6 +23,7 @@ prep:
 	@mkdir -p misclib 
 	@mkdir -p riverlib 
 	@mkdir -p commonlib
+	@mkdir -p gnsslib 
 
 clr_logs:
 	@rm -f *.log
@@ -39,6 +40,7 @@ comp: prep clr_logs
 	@ncvhdl ${VHDL_PARAMS} -work ethlib 	-f 	lists/ethlib
 	@ncvhdl ${VHDL_PARAMS} -work misclib  	-f 	lists/misclib
 	@ncvhdl ${VHDL_PARAMS} -work riverlib  	-f	lists/riverlib
+	@ncvhdl ${VHDL_PARAMS} -work gnsslib  	-f	lists/gnsslib
 	@ncvhdl ${VHDL_PARAMS} -work work      	-f 	vhdl.f
 
 build: comp
