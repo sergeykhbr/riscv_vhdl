@@ -1,0 +1,6 @@
+[submodule "rtl/gnsslib/gnss_ss"]
+	path = rtl/gnsslib/gnss_ss
+	url = https://github.com/sergeykhbr/gnss_ss
+[submodule "examples/gnss_fw"]
+	path = examples/gnss_fw
+	url = https://github.com/sergeykhbr/gnss_fw

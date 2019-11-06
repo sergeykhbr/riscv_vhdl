@@ -2,11 +2,6 @@
 *.dump
 *.err
 *.lst
-gnsslib/*
-!gnsslib/types_gnss
-!gnsslib/sync
-!gnsslib/rf3b
-!gnsslib/gnssengine_stub
 patches/
 work/tb/*
 !work/tb/asic_top_tb.vhd
