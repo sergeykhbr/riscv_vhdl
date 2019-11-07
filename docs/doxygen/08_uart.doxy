@@ -242,7 +242,7 @@ following table.
 @section uart_example_section C-code example
 
   The following C-example demonstrates procedures of interaction
-with the UART module that allow to send and receive data buffers.
+with the UART module that allows to send and receive data buffers.
 
 @code
     // Memory Base address of the device

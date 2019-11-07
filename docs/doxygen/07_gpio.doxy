@@ -31,7 +31,7 @@ pins assignment:
 | 0       | 0       | Boot from the internal Boot ROM module (default)
 | 0       | 1       | Boot from the external flash IC
 | 1       | 0       | Secured Boot from the internal OTP memory
-| 1       | 1       | Infinite SRAM test from the Boot ROM
+| 1       | 1       | Run infinite SRAM test from the Boot ROM
  
  @section gpio_regs GPIO Controller Registers
 
@@ -103,26 +103,127 @@ following table.
 
 <b> GPIO_DIRECTION Register (0x000)</b>
 
- |Bits|Type| Reset |Field Name| Bits  | Description 
- |:--:|:--:|:-----:|:---------|:-----:|:------------------------------------------------------------|
- | 24 | RW | 24h'0 | rsrv     | 24    | Reserved
- | 8  | RW | 8h'0  | led      | 7:0   | <b>LEDs</b>. Written value directly assigned on SoC output pins and can be used as test signals.
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>rsrv</td>  <td>[31:width]</td>   <td>RZ</td>   <td>reserved.</td>
+  </tr>
+  <tr>
+    <td>direction</td>   <td>[width-1:0]</td>   <td>RW</td>   <td><b>IO Direction</b>.
+        Data direction register determines which pins should work as an inputs
+        and which one as an outputs:
+            \li '0' - Output
+            \li '1' - Input (reset value)</td>
+  </tr>
+</table>
+
 
 <b> GPIO_IUSER Register (0x004)</b>
 
- |Bits|Type| Reset |Field Name| Bits  | Description 
- |:--:|:--:|:-----:|:---------|:-----:|:------------------------------------------------------------|
- | 28 | RO | 28h'0 | rsrv     | 28    | Reserved
- | 4  | RO | -     | dip      | 3:0   | <b>DIPs</b>. Input configuration pins value (Read-Only). Configuration pin meaning depends of the used FW.
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>rsrv</td>  <td>[31:width]</td>   <td>RZ</td>   <td>reserved.</td>
+  </tr>
+  <tr>
+    <td>iuser</td>   <td>[width-1:0]</td>   <td>RO</td>   <td><b>Input Data</b>.
+        This register provides direct read access to the IOs pins. If some pins
+        were configured as an output then corresponding bits in the read value
+        will have unpredictable values and should be ignored.</td>
+  </tr>
+</table>
 
- @par Set of temporary registers (0x008).
 
- |Offset |Bits|Type| Reset | Name | Definition 
- |:------|:--:|:--:|:-----:|:----:|---------------------------------------------|
- |0x008  | 32 | RW | 32h'0 | reg32_2 | <b>Temporary register 2</b>. FW specific register used for debugging purposes.
- |0x00C  | 32 | RW | 32h'0 | reg32_3 | <b>Temporary register 3</b>.
- |0x010  | 32 | RW | 32h'0 | reg32_4 | <b>Temporary register 4</b>.
- |0x014  | 32 | RW | 32h'0 | reg32_5 | <b>Temporary register 5</b>.
- |0x018  | 32 | RW | 32h'0 | reg32_6 | <b>Temporary register 6</b>.
+<b> GPIO_OUSER Register (0x008)</b>
+
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>rsrv</td>  <td>[31:width]</td>   <td>RZ</td>   <td>reserved.</td>
+  </tr>
+  <tr>
+    <td>ouser</td>   <td>[width-1:0]</td>   <td>RW</td>   <td><b>Output Data</b>.
+        Output Data register contains a data latch for each pins configured
+        as an output. If pin configured as an input corresponding bit
+        value is ignoring.</td>
+  </tr>
+</table>
+
+
+<b> GPIO_REG32 Register (0x00C)</b>
+
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>reg32_3</td>   <td>[31:0]</td>   <td>RW</td>   <td><b>Temporary Data</b>.
+        Read/Write temporary register used by FW with the debug purposes.</td>
+  </tr>
+</table>
+
+@section uart_example_section C-code example
+
+  The following C-example demonstrates procedures of interaction
+with the GPIO module that allows to read User's DIP configuration
+and switch User's LEDs connected to SoC outputs. Let's suppose
+the following configuration:
+
+  \li GPIO[3:0] controlled by user DIPs (inputs)
+  \li GPIO[11:4] connected to LEDs (outputs)
+
+@code
+    // Memory Base address of the device
+    #define ADDR_BUS0_XSLV_GPIO   0x80002000
+    
+    typedef struct gpio_map {
+        volatile uint32_t direction;
+        volatile uint32_t iuser;
+        volatile uint32_t ouser;
+        volatile uint32_t reg32_3;
+    } gpio_map;
+    
+    // Set index specific LED turn on/off
+    void set_led(int onoff, int idx) {
+        gpio_map *gpio = (gpio_map *)ADDR_BUS0_XSLV_GPIO;
+        // [11:4] LED, [3:0] DIP pins
+        uint32_t ouser = gpio->ouser >> 4;
+        ouser &= ~(1 << idx);
+        ouser |= (onoff & 0x1) << idx;
+        gpio->ouser = (ouser << 4);
+    }
+    
+    // Read index specific DIP value
+    int get_dip(int idx) {
+        // [3:0] DIP pins
+        int dip = ((gpio_map *)ADDR_BUS0_XSLV_GPIO)->iuser >> idx;
+        return dip & 1;
+    }
+  
+    // Some initialization function
+    void soc_init() {
+        gpio_map *gpio = (gpio_map *)GPIO_BASE_ADDR;
+        gpio->direction = 0x00F;   // [11:4] LED, [3:0] DIP
+  
+        // Turn on LED[7]
+        set_led(7, 0);
+  
+        // see examples/boot/main.c
+        if (get_dip(0) == 1) {
+            print_uart("Coping FLASH\r\n", 14);
+            memcpy(sram, flash, FW_IMAGE_SIZE_BYTES);
+        } else {
+            print_uart("Coping FWIMAGE\r\n", 16);
+            memcpy(sram, fwrom, FW_IMAGE_SIZE_BYTES);
+        }
+    }
+
+@endcode
 
 */
