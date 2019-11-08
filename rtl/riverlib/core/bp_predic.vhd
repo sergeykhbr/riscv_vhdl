@@ -36,7 +36,7 @@ entity BranchPredictor is generic (
     i_resp_mem_data : in std_logic_vector(31 downto 0);-- Memory response value
     i_e_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);  -- Valid instruction value awaited by 'Executor'
     i_ra : in std_logic_vector(RISCV_ARCH-1 downto 0); -- Return address register value
-    o_npc_predict : out std_logic_vector(31 downto 0)  -- Predicted next instruction address
+    o_npc_predict : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0)  -- Predicted next instruction address
   );
 end; 
  

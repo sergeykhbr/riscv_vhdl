@@ -67,7 +67,6 @@ SC_MODULE(DbgPort) {
     sc_in<sc_uint<2>> i_istate;                         // ICache transaction state
     sc_in<sc_uint<2>> i_dstate;                         // DCache transaction state
     sc_in<sc_uint<2>> i_cstate;                         // CacheTop state machine value
-    sc_in<sc_biguint<DBG_FETCH_TRACE_SIZE*64>> i_instr_buf;               // todo: remove it
 
     void comb();
     void registers();

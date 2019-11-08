@@ -25,7 +25,7 @@ use commonlib.types_common.all;
 package river_cfg is
 
   constant CFG_VENDOR_ID : std_logic_vector(31 downto 0) := X"000000F1";
-  constant CFG_IMPLEMENTATION_ID : std_logic_vector(31 downto 0) := X"20190521";
+  constant CFG_IMPLEMENTATION_ID : std_logic_vector(31 downto 0) := X"20191108";
   constant CFG_HW_FPU_ENABLE : boolean := true;
 
   -- When false use Dual-port memory banks
@@ -78,8 +78,6 @@ package river_cfg is
   constant CFG_NMI_CALL_FROM_MMODE_ADDR : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00000060";
   constant CFG_NMI_STACK_OVERFLOW_ADDR  : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00000068";
   constant CFG_NMI_STACK_UNDERFLOW_ADDR : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00000070";
-
-  constant DBG_FETCH_TRACE_SIZE : integer := 4;
 
   --! Number of elements each 2*CFG_ADDR_WIDTH in stack trace buffer, 0 = disabled
   constant CFG_STACK_TRACE_BUF_SIZE : integer := 32;

@@ -59,8 +59,7 @@ DbgPort::DbgPort(sc_module_name name_, bool async_reset) :
     o_flush_valid("o_flush_valid"),
     i_istate("i_istate"),
     i_dstate("i_dstate"),
-    i_cstate("i_cstate"),
-    i_instr_buf("i_instr_buf") {
+    i_cstate("i_cstate") {
     async_reset_ = async_reset;
 
     SC_METHOD(comb);
@@ -83,7 +82,6 @@ DbgPort::DbgPort(sc_module_name name_, bool async_reset) :
     sensitive << i_istate;
     sensitive << i_dstate;
     sensitive << i_cstate;
-    sensitive << i_instr_buf;
     sensitive << r.ready;
     sensitive << r.rdata;
     sensitive << r.halt;
@@ -158,7 +156,6 @@ void DbgPort::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_istate, i_istate.name());
         sc_trace(o_vcd, i_dstate, i_dstate.name());
         sc_trace(o_vcd, i_cstate, i_cstate.name());
-        sc_trace(o_vcd, i_instr_buf, i_instr_buf.name());
 
         std::string pn(name());
         sc_trace(o_vcd, r.clock_cnt, pn + ".r_clock_cnt");
@@ -294,14 +291,6 @@ void DbgPort::comb() {
                     v.rd_trbuf_ena = 1;
                     v.rd_trbuf_addr0 = wb_idx & 0x1;
                     wb_stack_raddr = (wb_idx - 128) / 2;
-            } else if (wb_idx == 256) {
-                wb_rdata = i_instr_buf.read()(63, 0);
-            } else if (wb_idx == 257) {
-                wb_rdata = i_instr_buf.read()(127, 64);
-            } else if (wb_idx == 258) {
-                wb_rdata = i_instr_buf.read()(191, 128);
-            } else if (wb_idx == 259) {
-                wb_rdata = i_instr_buf.read()(255, 192);
             }
             break;
         case 2:

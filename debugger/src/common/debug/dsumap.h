@@ -58,8 +58,7 @@ struct DsuMapType {
             uint64_t rsrv2[64 - 32];
             uint64_t stack_trace_buf[1];
             uint64_t rsrv3[128 - 1];
-            uint64_t instr_buf[4];      // Bits[63:0] (addr,instr)
-            uint64_t dbg1[4];
+            uint64_t dbg1[8];
         } v;
     } ureg;
     // Base Address + 0x10000 (Region 2)

@@ -87,7 +87,6 @@ architecture arch_Processor of Processor is
         imem_req_valid : std_logic;
         imem_req_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
         pipeline_hold : std_logic;
-        instr_buf : std_logic_vector(DBG_FETCH_TRACE_SIZE*64-1 downto 0);
     end record;
 
     type InstructionDecodeType is record
@@ -265,8 +264,7 @@ begin
         o_hold => w.f.pipeline_hold,
         i_br_fetch_valid => dbg.br_fetch_valid,
         i_br_address_fetch => dbg.br_address_fetch,
-        i_br_instr_fetch => dbg.br_instr_fetch,
-        o_instr_buf => w.f.instr_buf);
+        i_br_instr_fetch => dbg.br_instr_fetch);
         
     dec0 : InstrDecoder generic map (
         async_reset => async_reset
@@ -536,8 +534,7 @@ begin
         o_flush_valid => dbg.flush_valid,
         i_istate => i_istate,
         i_dstate => i_dstate,
-        i_cstate => i_cstate,
-        i_instr_buf => w.f.instr_buf);
+        i_cstate => i_cstate);
 
     o_flush_valid <= dbg.flush_valid or csr.break_event;
     o_flush_address <= w.e.npc when csr.break_event = '1' else dbg.flush_address;

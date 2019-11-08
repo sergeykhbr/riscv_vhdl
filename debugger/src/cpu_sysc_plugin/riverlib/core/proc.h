@@ -100,7 +100,6 @@ private:
         sc_signal<bool> imem_req_valid;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> imem_req_addr;
         sc_signal<bool> pipeline_hold;
-        sc_signal<sc_biguint<DBG_FETCH_TRACE_SIZE*64>> instr_buf;
     };
 
     struct InstructionDecodeType {

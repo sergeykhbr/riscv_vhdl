@@ -70,8 +70,7 @@ entity DbgPort is generic (
     -- Debug signals:
     i_istate : in std_logic_vector(1 downto 0);               -- ICache state machine value
     i_dstate : in std_logic_vector(1 downto 0);               -- DCache state machine value
-    i_cstate : in std_logic_vector(1 downto 0);               -- CacheTop state machine value
-    i_instr_buf : in std_logic_vector(DBG_FETCH_TRACE_SIZE*64-1 downto 0) -- trace last fetched instructions
+    i_cstate : in std_logic_vector(1 downto 0)                -- CacheTop state machine value
   );
 end; 
  
@@ -156,7 +155,7 @@ begin
                  i_dport_addr, i_dport_wdata, i_ireg_rdata, i_freg_rdata,
                  i_csr_rdata, i_pc, i_npc, i_e_valid, i_m_valid, i_ebreak, r,
                  wb_stack_rdata, i_e_call, i_e_ret, i_istate, i_dstate,
-                 i_cstate, i_instr_buf)
+                 i_cstate)
     variable v : RegistersType;
     variable wb_o_core_addr : std_logic_vector(11 downto 0);
     variable wb_o_core_wdata : std_logic_vector(RISCV_ARCH-1 downto 0);
@@ -279,14 +278,6 @@ begin
                     v.rd_trbuf_ena := '1';
                     v.rd_trbuf_addr0 := conv_std_logic_vector(wb_idx, 1)(0);
                     wb_stack_raddr <= conv_std_logic_vector((wb_idx - 128) / 2, STACKTR_ADRSZ);
-            elsif wb_idx = 256 then
-                wb_rdata := i_instr_buf(63 downto 0);
-            elsif wb_idx = 257 then
-                wb_rdata := i_instr_buf(127 downto 64);
-            elsif wb_idx = 258 then
-                wb_rdata := i_instr_buf(191 downto 128);
-            elsif wb_idx = 259 then
-                wb_rdata := i_instr_buf(255 downto 192);
             end if;
         when "10" =>
             case wb_idx is

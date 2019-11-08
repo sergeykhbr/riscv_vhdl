@@ -46,7 +46,6 @@ SC_MODULE(InstrFetch) {
     sc_in<bool> i_br_fetch_valid;                       // Fetch injection address/instr are valid
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_br_address_fetch;  // Fetch injection address to skip ebreak instruciton only once
     sc_in<sc_uint<32>> i_br_instr_fetch;                // Real instruction value that was replaced by ebreak
-    sc_out<sc_biguint<DBG_FETCH_TRACE_SIZE*64>> o_instr_buf;               // todo: remove it
 
     void comb();
     void registers();
@@ -63,7 +62,6 @@ SC_MODULE(InstrFetch) {
         sc_signal<sc_uint<5>> pipeline_init;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> br_address;
         sc_signal<sc_uint<32>> br_instr;
-        sc_signal<sc_biguint<DBG_FETCH_TRACE_SIZE*64>> instr_buf;
 
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> resp_address;
         sc_signal<sc_uint<32>> resp_data;
@@ -75,7 +73,6 @@ SC_MODULE(InstrFetch) {
         iv.pipeline_init = 0;
         iv.br_address = ~0ul;
         iv.br_instr = 0;
-        iv.instr_buf = 0;
         iv.resp_address = 0;
         iv.resp_data = 0;
         iv.resp_valid = 0;

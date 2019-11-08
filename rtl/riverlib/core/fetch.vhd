@@ -50,8 +50,7 @@ entity InstrFetch is generic (
     o_hold : out std_logic;                                -- Hold due no response from icache yet
     i_br_fetch_valid : in std_logic;                       -- Fetch injection address/instr are valid
     i_br_address_fetch : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0); -- Fetch injection address to skip ebreak instruciton only once
-    i_br_instr_fetch : in std_logic_vector(31 downto 0);   -- Real instruction value that was replaced by ebreak
-    o_instr_buf : out std_logic_vector(DBG_FETCH_TRACE_SIZE*64-1 downto 0)    -- trace last fetched instructions
+    i_br_instr_fetch : in std_logic_vector(31 downto 0)   -- Real instruction value that was replaced by ebreak
   );
 end; 
  
@@ -62,7 +61,6 @@ architecture arch_InstrFetch of InstrFetch is
       pipeline_init : std_logic_vector(4 downto 0);
       br_address : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
       br_instr : std_logic_vector(31 downto 0);
-      instr_buf : std_logic_vector(DBG_FETCH_TRACE_SIZE*64-1 downto 0);
 
       resp_address : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
       resp_data : std_logic_vector(31 downto 0);
@@ -72,7 +70,7 @@ architecture arch_InstrFetch of InstrFetch is
   constant R_RESET : RegistersType := (
     '0', (others => '0'),
     (others => '1'),  -- br_address
-    (others =>'0'), (others =>'0'),
+    (others =>'0'),   -- br_instr
     (others =>'0'), (others =>'0'), '0'
   );
 
@@ -143,7 +141,6 @@ begin
     o_instr <= wb_o_instr;
     o_mem_resp_ready <= r.wait_resp and not i_pipeline_hold;
     o_hold <= w_o_hold;
-    o_instr_buf <= r.instr_buf;
     
     rin <= v;
   end process;

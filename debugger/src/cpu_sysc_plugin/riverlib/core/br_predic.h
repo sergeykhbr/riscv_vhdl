@@ -31,7 +31,7 @@ SC_MODULE(BranchPredictor) {
     sc_in<sc_uint<32>> i_resp_mem_data; // Memory response value
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_e_npc;         // Valid instruction value awaited by 'Executor'
     sc_in<sc_uint<RISCV_ARCH>> i_ra;    // Return address register value
-    sc_out<sc_uint<32>> o_npc_predict;  // Predicted next instruction address
+    sc_out<sc_uint<BUS_ADDR_WIDTH>> o_npc_predict;  // Predicted next instruction address
 
     void comb();
     void registers();

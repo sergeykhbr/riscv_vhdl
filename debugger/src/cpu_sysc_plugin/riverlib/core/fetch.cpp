@@ -40,8 +40,7 @@ InstrFetch::InstrFetch(sc_module_name name_, bool async_reset) :
     o_hold("o_hold"),
     i_br_fetch_valid("i_br_fetch_valid"),
     i_br_address_fetch("i_br_address_fetch"),
-    i_br_instr_fetch("i_br_instr_fetch"),
-    o_instr_buf("o_instr_buf") {
+    i_br_instr_fetch("i_br_instr_fetch") {
     async_reset_ = async_reset;
 
     SC_METHOD(comb);
@@ -107,7 +106,6 @@ void InstrFetch::comb() {
     
 
     // Debug last fetched instructions buffer:
-    sc_biguint<DBG_FETCH_TRACE_SIZE*64> wb_instr_buf = r.instr_buf;
     if (w_o_req_fire) {
         v.wait_resp = 1;
     } else if (i_mem_data_valid.read() == 1 && i_pipeline_hold.read() == 0) {
@@ -157,7 +155,6 @@ void InstrFetch::comb() {
     o_instr = wb_o_instr;
     o_mem_resp_ready = r.wait_resp.read() && !i_pipeline_hold.read();
     o_hold = w_o_hold;
-    o_instr_buf = r.instr_buf;
 }
 
 void InstrFetch::registers() {

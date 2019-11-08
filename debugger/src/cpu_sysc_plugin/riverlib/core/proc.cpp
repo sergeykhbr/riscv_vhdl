@@ -109,7 +109,6 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset)
     fetch0->i_br_fetch_valid(dbg.br_fetch_valid);
     fetch0->i_br_address_fetch(dbg.br_address_fetch);
     fetch0->i_br_instr_fetch(dbg.br_instr_fetch);
-    fetch0->o_instr_buf(w.f.instr_buf);
 
     dec0 = new InstrDecoder("dec0", async_reset);
     dec0->i_clk(i_clk);
@@ -359,7 +358,6 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset)
     dbg0->i_cstate(i_cstate);
     dbg0->o_flush_address(dbg.flush_address);
     dbg0->o_flush_valid(dbg.flush_valid);
-    dbg0->i_instr_buf(w.f.instr_buf);
 
     reg_dbg = 0;
     mem_dbg = 0;

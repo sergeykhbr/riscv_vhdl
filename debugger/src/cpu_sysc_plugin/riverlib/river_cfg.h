@@ -27,7 +27,7 @@ static const bool CFG_HW_FPU_ENABLE         = true;
 
 static const int RISCV_ARCH     = 64;
 
-static const int BUS_ADDR_WIDTH = 32;
+static const int BUS_ADDR_WIDTH = 64;
 static const int BUS_DATA_WIDTH = 64;
 static const int BUS_DATA_BYTES = BUS_DATA_WIDTH / 8;
 
@@ -77,8 +77,6 @@ static const uint64_t CFG_NMI_CALL_FROM_HMODE_ADDR  = 0x0058;
 static const uint64_t CFG_NMI_CALL_FROM_MMODE_ADDR  = 0x0060;
 static const uint64_t CFG_NMI_STACK_OVERFLOW_ADDR   = 0x0068;
 static const uint64_t CFG_NMI_STACK_UNDERFLOW_ADDR  = 0x0070;
-
-static const int DBG_FETCH_TRACE_SIZE   = 4;
 
 /** Number of elements each 2*CFG_ADDR_WIDTH in stack trace buffer: */
 static const int CFG_STACK_TRACE_BUF_SIZE = 32;
