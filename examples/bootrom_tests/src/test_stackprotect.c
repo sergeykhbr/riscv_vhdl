@@ -21,7 +21,7 @@
 
 /** Function to check Stack Overflow exception */
 void recursive_call() {
-    pnp_map *pnp = (pnp_map *)ADDR_NASTI_SLAVE_PNP;
+    pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
     if (pnp->fwdbg1 < 10 && pnp->fwdbg2 == 0) {
         pnp->fwdbg1++;
         recursive_call();
@@ -30,7 +30,7 @@ void recursive_call() {
 
 /** Function to check Stack Underflow exception */
 void recursive_ret() {
-    pnp_map *pnp = (pnp_map *)ADDR_NASTI_SLAVE_PNP;
+    pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
     uint64_t sp;
     if (pnp->fwdbg1 != 0) {
         pnp->fwdbg1--;
@@ -46,7 +46,7 @@ void recursive_ret() {
 
 void test_stackprotect(void) {
     uint64_t sp;
-    pnp_map *pnp = (pnp_map *)ADDR_NASTI_SLAVE_PNP;
+    pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
     // clear register. it should be modified from exception handler
     pnp->fwdbg1 = 0;
     pnp->fwdbg2 = 0;

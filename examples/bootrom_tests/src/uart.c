@@ -61,7 +61,7 @@ void buf_put(uart_data_type *p, char s) {
 
 void isr_uart1_tx() {
     uart_data_type *pdata = fw_get_ram_data(UART1_NAME);
-    uart_map *uart = (uart_map *)ADDR_NASTI_SLAVE_UART1;
+    uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART1;
 
     while (buf_total(pdata)) {
         if (uart->status & UART_STATUS_TX_FULL) {
@@ -77,7 +77,7 @@ int uart_tx_nempty() {
 }
 
 void uart_isr_init(void) {
-    uart_map *uart = (uart_map *)ADDR_NASTI_SLAVE_UART1;
+    uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART1;
     uart_data_type *pdata;
 
     fw_register_isr_handler(CFG_IRQ_UART1, isr_uart1_tx);
@@ -301,7 +301,7 @@ signed_number:
 }
 
 void print_uart(const char *buf, int sz) {
-    uart_map *uart = (uart_map *)ADDR_NASTI_SLAVE_UART1;
+    uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART1;
     for (int i = 0; i < sz; i++) {
         while (uart->status & UART_STATUS_TX_FULL) {}
         uart->data = buf[i];
@@ -310,7 +310,7 @@ void print_uart(const char *buf, int sz) {
 
 void print_uart_hex(uint64_t val) {
     unsigned char t, s;
-    uart_map *uart = (uart_map *)ADDR_NASTI_SLAVE_UART1;
+    uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART1;
     for (int i = 0; i < 16; i++) {
         while (uart->status & UART_STATUS_TX_FULL) {}
         
@@ -333,7 +333,7 @@ int putchar(int ch) {
 
 void printf_uart(const char *fmt, ... ) {
     uart_data_type *pdata = fw_get_ram_data(UART1_NAME);
-    uart_map *uart = (uart_map *)ADDR_NASTI_SLAVE_UART1;
+    uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART1;
     int id = fw_get_cpuid() + 1;
 
     // lock UART to current CPU

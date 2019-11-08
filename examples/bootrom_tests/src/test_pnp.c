@@ -145,11 +145,37 @@ static const char *get_device_name(uint16_t vid, uint16_t did)
     return UNKOWN_ID_NAME;
 }
 
+uint64_t get_dev_bar(uint16_t vid, uint16_t did) {
+    master_cfg_type mcfg;
+    slave_cfg_type scfg;
+    pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
+    int slv_total = (pnp->tech >> 8) & 0xFF;
+    int mst_total = (pnp->tech >> 16) & 0xFF;
+    int off = 0;
+
+    // skip all masters
+    for (int i = 0; i < mst_total; i++) {
+        mcfg.v[0] = *(uint64_t *)&pnp->cfg_table[off];
+        off += pnp->cfg_table[off];
+    }
+
+    for (int i = 0; i < slv_total; i++) {
+        scfg.v[0] = *(uint64_t *)&pnp->cfg_table[off];
+        scfg.v[1] = *(uint64_t *)&pnp->cfg_table[off + 8];
+
+        if (scfg.u.vid == vid && scfg.u.did == did) {
+            return scfg.u.xaddr;
+        }
+        off += pnp->cfg_table[off];
+    }
+
+    return DEV_NONE;
+}
 
 void print_pnp() {
     master_cfg_type mcfg;
     slave_cfg_type scfg;
-    pnp_map *pnp = (pnp_map *)ADDR_NASTI_SLAVE_PNP;
+    pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
     int slv_total = (pnp->tech >> 8) & 0xFF;
     int mst_total = (pnp->tech >> 16) & 0xFF;
     int off = 0;

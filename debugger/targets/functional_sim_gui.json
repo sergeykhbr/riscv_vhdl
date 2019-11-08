@@ -203,6 +203,14 @@
                 ['Length',0x40000]
                 ]}]},
     {'Class':'MemorySimClass','Instances':[
+          {'Name':'spiflash0','Attr':[
+                ['LogLevel',1],
+                ['InitFile',''],
+                ['ReadOnly',false],
+                ['BaseAddress',0x00200000],
+                ['Length',0x40000]
+                ]}]},
+    {'Class':'MemorySimClass','Instances':[
           {'Name':'sram0','Attr':[
                 ['LogLevel',1],
                 ['InitFile','../../../examples/dhrystone21/makefiles/bin/dhrystone21.hex'],
@@ -307,7 +315,7 @@
                 ['LogLevel',3],
                 ['UseHash',false],
                 ['MapList',['bootrom0','fwimage0','sram0','gpio0',
-                        'uart0','irqctrl0','gnss0','gptmr0',
+                        'uart0','irqctrl0','gnss0','gptmr0','spiflash0',
                         'pnp0','dsu0','greth0','rfctrl0','fsegps0']]
                 ]}]},
     {'Class':'BusGenericClass','Instances':[

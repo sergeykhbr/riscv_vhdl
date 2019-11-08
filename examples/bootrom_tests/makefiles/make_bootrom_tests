@@ -51,6 +51,7 @@ SOURCES = crt \
 	test_timer \
 	test_missaccess \
 	test_stackprotect \
+	test_spiflash \
 	main
 
 OBJ_FILES = $(addsuffix .o,$(SOURCES))

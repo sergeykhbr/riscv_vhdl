@@ -22,7 +22,7 @@
 static const uint64_t UNMAPPED_ADDRESS = 0x70000040;
 
 void test_missaccess(void) {
-    pnp_map *pnp = (pnp_map *)ADDR_NASTI_SLAVE_PNP;
+    pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
     // clear register. it should be modified from exception handler
     pnp->fwdbg1 = 0;
 

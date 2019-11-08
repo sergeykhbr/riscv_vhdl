@@ -19,11 +19,11 @@
 #include "fw_api.h"
 
 void fw_malloc_init() {
-    malloc_type *pool = (malloc_type *)ADDR_NASTI_SLAVE_SRAM;
-    pnp_map *pnp = (pnp_map *)ADDR_NASTI_SLAVE_PNP;
+    malloc_type *pool = (malloc_type *)ADDR_BUS0_XSLV_SRAM;
+    pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
    // 8-bytes alignment
     pool->allocated_sz = (sizeof(malloc_type) + 7) & ~0x7ull;
-    pool->end = (ADDR_NASTI_SLAVE_SRAM + pool->allocated_sz);
+    pool->end = (ADDR_BUS0_XSLV_SRAM + pool->allocated_sz);
     pool->data_cnt = 0;
     __sync_synchronize();   // gcc mem barrier to avoi re-ordering
 
@@ -33,11 +33,11 @@ void fw_malloc_init() {
 }
 
 void *fw_malloc(int size) {
-    malloc_type *pool = (malloc_type *)ADDR_NASTI_SLAVE_SRAM;
-    pnp_map *pnp = (pnp_map *)ADDR_NASTI_SLAVE_PNP;
+    malloc_type *pool = (malloc_type *)ADDR_BUS0_XSLV_SRAM;
+    pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
     void *ret = (void *)pool->end;
     pool->allocated_sz += (size + 7) & ~0x7ull;
-    pool->end = (ADDR_NASTI_SLAVE_SRAM + pool->allocated_sz);
+    pool->end = (ADDR_BUS0_XSLV_SRAM + pool->allocated_sz);
 
     // RTL Simulation Debug purpose
     pnp->malloc_addr = pool->end;
@@ -46,14 +46,14 @@ void *fw_malloc(int size) {
 }
 
 void fw_register_ram_data(const char *name, void *data) {
-    malloc_type *pool = (malloc_type *)ADDR_NASTI_SLAVE_SRAM;
+    malloc_type *pool = (malloc_type *)ADDR_BUS0_XSLV_SRAM;
     ram_data_type *p = &pool->data[pool->data_cnt++];
     memcpy(p->name, name, 8);
     p->pattern = data;
 }
 
 void *fw_get_ram_data(const char *name) {
-    malloc_type *pool = (malloc_type *)ADDR_NASTI_SLAVE_SRAM;
+    malloc_type *pool = (malloc_type *)ADDR_BUS0_XSLV_SRAM;
     ram_data_type *p;
     for (int i = 0; i < pool->data_cnt; i++) {
         p = &pool->data[i];

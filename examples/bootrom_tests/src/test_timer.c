@@ -32,7 +32,7 @@ void isr_timer_empty(void) {
 
 void isr_timer(void) {
     timer_data_type *p = fw_get_ram_data(TEST_TIMER_NAME);
-    gptimers_map *ptmr = (gptimers_map *)ADDR_NASTI_SLAVE_GPTIMERS;
+    gptimers_map *ptmr = (gptimers_map *)ADDR_BUS0_XSLV_GPTIMERS;
     if (++p->sec > 59) {
         p->sec = 0;
         if (++p->min > 59) {
@@ -49,7 +49,7 @@ void isr_timer(void) {
 
 void test_timer(void) {
     timer_data_type *p;
-    gptimers_map *ptmr = (gptimers_map *)ADDR_NASTI_SLAVE_GPTIMERS;
+    gptimers_map *ptmr = (gptimers_map *)ADDR_BUS0_XSLV_GPTIMERS;
 
     // Disable interrupt and timer
     ptmr->timer[0].init_value = 0;
@@ -71,7 +71,7 @@ void test_timer(void) {
 
 void test_timer_multicycle_instructions(void) {
     timer_data_type *p;
-    gptimers_map *ptmr = (gptimers_map *)ADDR_NASTI_SLAVE_GPTIMERS;
+    gptimers_map *ptmr = (gptimers_map *)ADDR_BUS0_XSLV_GPTIMERS;
     uint64_t endtime = ptmr->highcnt + SYS_HZ;
     double a = 1.1;
 

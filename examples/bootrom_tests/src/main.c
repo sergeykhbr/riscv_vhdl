@@ -25,14 +25,16 @@ void test_timer(void);
 void test_timer_multicycle_instructions(void);
 void test_missaccess(void);
 void test_stackprotect(void);
+void test_spiflash(uint64_t bar);
 void print_pnp(void);
 
 int main() {
     uint32_t tech;
-    pnp_map *pnp = (pnp_map *)ADDR_NASTI_SLAVE_PNP;
-    uart_map *uart = (uart_map *)ADDR_NASTI_SLAVE_UART1;
-    gpio_map *gpio = (gpio_map *)ADDR_NASTI_SLAVE_GPIO;
-    irqctrl_map *p_irq = (irqctrl_map *)ADDR_NASTI_SLAVE_IRQCTRL;
+    pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
+    uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART1;
+    gpio_map *gpio = (gpio_map *)ADDR_BUS0_XSLV_GPIO;
+    irqctrl_map *p_irq = (irqctrl_map *)ADDR_BUS0_XSLV_IRQCTRL;
+    uint64_t bar;
 
     if (fw_get_cpuid() != 0) {
         while (1) {}
@@ -53,6 +55,12 @@ int main() {
 
     uart_isr_init();   // enable printf_uart function and Tx irq=1
     p_irq->irq_lock = 0;
+ 
+    bar = get_dev_bar(VENDOR_GNSSSENSOR, GNSSSENSOR_SPI_FLASH);
+    if (bar != DEV_NONE) {
+        printf_uart("SPI Flash BAR. .0x%08x\r\n", bar);
+        test_spiflash(bar);
+    }
 
 #if 1
     printf_uart("HARTID . . . . .%d\r\n", fw_get_cpuid());

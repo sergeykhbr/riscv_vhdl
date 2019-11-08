@@ -26,7 +26,7 @@ int fw_get_cpuid() {
 }
 
 void fw_register_isr_handler(int idx, IRQ_HANDLER f) {
-    irqctrl_map *p_irqctrl = (irqctrl_map *)ADDR_NASTI_SLAVE_IRQCTRL;
+    irqctrl_map *p_irqctrl = (irqctrl_map *)ADDR_BUS0_XSLV_IRQCTRL;
     IRQ_HANDLER *tbl;
     if (p_irqctrl->isr_table == 0) {
         p_irqctrl->isr_table = 
@@ -37,18 +37,18 @@ void fw_register_isr_handler(int idx, IRQ_HANDLER f) {
 }
 
 void fw_enable_isr(int idx) {
-    irqctrl_map *p_irq = (irqctrl_map *)ADDR_NASTI_SLAVE_IRQCTRL;
+    irqctrl_map *p_irq = (irqctrl_map *)ADDR_BUS0_XSLV_IRQCTRL;
     uint32_t msk = p_irq->irq_mask;
     msk &= ~(1ul << idx);
     p_irq->irq_mask = msk;
 }
 
 void fw_disable_isr(int idx) {
-    irqctrl_map *p_irq = (irqctrl_map *)ADDR_NASTI_SLAVE_IRQCTRL;
+    irqctrl_map *p_irq = (irqctrl_map *)ADDR_BUS0_XSLV_IRQCTRL;
     p_irq->irq_mask |= (1ul << idx);
 }
 
 void led_set(int output) {
     // [3:0] DIP pins
-    ((gpio_map *)ADDR_NASTI_SLAVE_GPIO)->ouser = (output << 4);
+    ((gpio_map *)ADDR_BUS0_XSLV_GPIO)->ouser = (output << 4);
 }

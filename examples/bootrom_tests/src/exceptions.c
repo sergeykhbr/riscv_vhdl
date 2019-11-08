@@ -40,18 +40,18 @@ int get_mbadaddr() {
 }
 
 void exception_load_fault_c() {
-    pnp_map *pnp = (pnp_map *)ADDR_NASTI_SLAVE_PNP;
+    pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
     pnp->fwdbg1 = get_mbadaddr();
 }
 
 void exception_store_fault_c() {
-    pnp_map *pnp = (pnp_map *)ADDR_NASTI_SLAVE_PNP;
+    pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
     pnp->fwdbg1 = get_mbadaddr();
 }
 
 void exception_stack_overflow_c() {
     // CSR_mstackovr = 0x350 - non-standard CSR
-    pnp_map *pnp = (pnp_map *)ADDR_NASTI_SLAVE_PNP;
+    pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
     uint64_t sp;
     // Save current stack pointer into debug regsiter
     asm("mv %0, sp" : "=r" (sp));
@@ -60,7 +60,7 @@ void exception_stack_overflow_c() {
 
 void exception_stack_underflow_c() {
     // CSR_mstackund = 0x351 - non-standard CSR
-    pnp_map *pnp = (pnp_map *)ADDR_NASTI_SLAVE_PNP;
+    pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
     uint64_t sp;
     // Save current stack pointer into debug regsiter
     asm("mv %0, sp" : "=r" (sp));
