@@ -694,7 +694,6 @@ package river_cfg is
   --! @param[in] i_br_fetch_valid   Fetch injection address/instr are valid
   --! @param[in] i_br_address_fetch Fetch injection address to skip ebreak instruciton only once
   --! @param[in] i_br_instr_fetch   Real instruction value that was replaced by ebreak
-  --! @param[out] o_instr_buf
   component InstrFetch is generic (
     async_reset : boolean
   );
@@ -720,8 +719,7 @@ package river_cfg is
     o_hold : out std_logic;
     i_br_fetch_valid : in std_logic;
     i_br_address_fetch : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    i_br_instr_fetch : in std_logic_vector(31 downto 0);
-    o_instr_buf : out std_logic_vector(DBG_FETCH_TRACE_SIZE*64-1 downto 0)
+    i_br_instr_fetch : in std_logic_vector(31 downto 0)
   );
   end component; 
 
@@ -894,7 +892,6 @@ package river_cfg is
   --! @param[out] o_flush_valid      Remove address from ICache is valid
   --! @param[in] i_istate            ICache state machine value
   --! @param[in] i_dstate            DCache state machine value
-  --! @param[in] i_instr_buf
   component DbgPort is generic (
     async_reset : boolean
   );
@@ -938,8 +935,7 @@ package river_cfg is
     o_flush_valid : out std_logic;
     i_istate : in std_logic_vector(1 downto 0);
     i_dstate : in std_logic_vector(1 downto 0);
-    i_cstate : in std_logic_vector(1 downto 0);
-    i_instr_buf : in std_logic_vector(DBG_FETCH_TRACE_SIZE*64-1 downto 0)
+    i_cstate : in std_logic_vector(1 downto 0)
   );
   end component;
 
