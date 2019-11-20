@@ -46,8 +46,6 @@ int main() {
     p_irq->isr_table = 0;
     pnp->fwid = 0x20190516;
 
-    led_set(0x01);
-
     p_irq->irq_lock = 1;
     fw_malloc_init();
     
@@ -56,6 +54,8 @@ int main() {
     uart_isr_init();   // enable printf_uart function and Tx irq=1
     p_irq->irq_lock = 0;
  
+    led_set(0x01);
+
     bar = get_dev_bar(VENDOR_GNSSSENSOR, GNSSSENSOR_SPI_FLASH);
     if (bar != DEV_NONE) {
         printf_uart("SPI Flash BAR. .0x%08x\r\n", bar);

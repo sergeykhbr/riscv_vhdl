@@ -220,7 +220,7 @@ void CpuRiver_Functional::trackContextEnd() {
     }
     int sz;
     char tstr[1024];
-    sz = RISCV_sprintf(tstr, sizeof(tstr),"%8I64d [%08x]: ",
+    sz = RISCV_sprintf(tstr, sizeof(tstr),"%8" RV_PRI64 "d [%08x]: ",
         step_cnt_, pc_.getValue().buf32[0]);
 
     bool reg_changed = false;
@@ -230,7 +230,7 @@ void CpuRiver_Functional::trackContextEnd() {
         if (prev[i] != cur[i]) {
             reg_changed = true;
             sz += RISCV_sprintf(&tstr[sz], sizeof(tstr) - sz,
-                    "%3s <= %016I64x",
+                    "%3s <= %016" RV_PRI64 "x",
                     IREGS_NAMES[i], cur[i]);//, instr_->name());
         }
     }

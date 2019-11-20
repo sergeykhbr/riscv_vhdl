@@ -51,6 +51,7 @@ void uart_isr_init(void);
 int uart_tx_nempty();
 
 void led_set(int output);
+int is_simulation();
 
 #define DEV_NONE (~0ull)
 uint64_t get_dev_bar(uint16_t vid, uint16_t did);

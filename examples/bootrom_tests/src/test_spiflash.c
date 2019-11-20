@@ -19,8 +19,30 @@
 #include <axi_maps.h>
 #include "fw_api.h"
 
+void flash_wait_ready(spiflash_map *spi) {
+    while (spi->flash_status.val & 0x1) {}
+}
+
 void test_spiflash(uint64_t bar) {
     spiflash_map *spi = (spiflash_map *)bar;
     spi->scaler.b32[0] = 4;  // 10 MHz spi interface
     printf_uart("FlashID. . . . .%02x\r\n", spi->flash_id.b32[0]);
+
+    if (is_simulation() == 0) {
+        return;
+    }
+
+    spi->data[0].val = 0x8877665544332211ull;
+
+    spi->page_erase.val = 0x10;
+    flash_wait_ready(spi);
+
+    spi->write_ena.val = 1;
+    flash_wait_ready(spi);
+
+    spi->write_page.val = 0x10;
+    flash_wait_ready(spi);
+
+    spi->write_dis.val = 1;
+    flash_wait_ready(spi);
 }

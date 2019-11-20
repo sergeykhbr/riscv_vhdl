@@ -411,8 +411,8 @@ ETransStatus CpuGeneric::dma_memop(Axi4TransactionType *tr) {
             pload.val = tr->rpayload.b64[0];
         }
         RISCV_sprintf(tstr, sizeof(tstr),
-                    "%08x %08x: [%08x] => %016" RV_PRI64 "x\n",
-                    static_cast<int>(step_cnt_),
+                    "%8" RV_PRI64 "d %08x: [%08x] => %016" RV_PRI64 "x\n",
+                    step_cnt_,
                     pc_.getValue().buf32[0],
                     static_cast<int>(tr->addr),
                     pload.val);
@@ -423,8 +423,8 @@ ETransStatus CpuGeneric::dma_memop(Axi4TransactionType *tr) {
             pload.val = tr->wpayload.b64[0];
         }
         RISCV_sprintf(tstr, sizeof(tstr),
-                    "%08x %08x: [%08x] <= %016" RV_PRI64 "x\n",
-                    static_cast<int>(step_cnt_),
+                    "%8" RV_PRI64 "d %08x: [%08x] <= %016" RV_PRI64 "x\n",
+                    step_cnt_,
                     pc_.getValue().buf32[0],
                     static_cast<int>(tr->addr),
                     pload.val);

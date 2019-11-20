@@ -52,3 +52,12 @@ void led_set(int output) {
     // [3:0] DIP pins
     ((gpio_map *)ADDR_BUS0_XSLV_GPIO)->ouser = (output << 4);
 }
+
+int is_simulation() {
+    pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
+    if (pnp->tech & 0xFF) {
+        // not inferred
+        return 0;
+    }
+    return 1;
+}
