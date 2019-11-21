@@ -10,5 +10,6 @@ work
 ncsim.key
 *.log
 *.shm
+*.diag
 
 

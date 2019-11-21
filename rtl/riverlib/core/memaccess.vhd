@@ -23,7 +23,6 @@ library riverlib;
 --! RIVER CPU configuration constants.
 use riverlib.river_cfg.all;
 
-
 entity MemAccess is generic (
     async_reset : boolean
   );
@@ -74,7 +73,6 @@ architecture arch_MemAccess of MemAccess is
   type RegistersType is record
       state : std_logic_vector(1 downto 0);
       memop_r : std_logic;
-      memop_rw : std_logic;
       memop_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
       pc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
       instr : std_logic_vector(31 downto 0);
@@ -88,7 +86,7 @@ architecture arch_MemAccess of MemAccess is
  
   constant R_RESET : RegistersType := (
     State_Idle,                              -- state
-    '0', '0', (others => '0'),               -- memop_r, memop_rw, memop_addr
+    '0', (others => '0'),                    -- memop_r, memop_addr
     (others => '0'), (others => '0'),        -- pc, instr
     (others => '0'),                         -- res_addr
     (others => '0'), '0',                    -- res_data, memop_sign_ext
@@ -97,22 +95,110 @@ architecture arch_MemAccess of MemAccess is
 
   signal r, rin : RegistersType;
 
+  -- TODO: move into separate module
+  -- queue signals before move into separate module
+  constant QUEUE_WIDTH : integer := RISCV_ARCH + 6 + 32 + BUS_ADDR_WIDTH
+                                    + 2 + 1 + 1 + 1 + BUS_ADDR_WIDTH;
+  constant QUEUE_DEPTH : integer := 1;
+
+  type queue_data_type is array (0 to QUEUE_DEPTH-1) of std_logic_vector(QUEUE_WIDTH-1 downto 0);
+
+  type QueueRegisterType is record
+    wcnt : integer range 0 to QUEUE_DEPTH;
+    mem : queue_data_type;
+  end record;
+
+  signal queue_we : std_logic;
+  signal queue_re : std_logic;
+  signal queue_data_i : std_logic_vector(QUEUE_WIDTH-1 downto 0);
+  signal queue_data_o : std_logic_vector(QUEUE_WIDTH-1 downto 0);
+  signal qr, qrin : QueueRegisterType;
+  signal queue_nempty : std_logic;
+
 begin
 
+  queue_data_i <= 
+    i_res_data &
+    i_res_addr &
+    i_e_instr &
+    i_e_pc &
+    i_memop_size & 
+    i_memop_sign_ext &
+    i_memop_store &
+    (i_memop_load or i_memop_store) &
+    i_memop_addr;
 
-  comb : process(i_nrst, i_mem_req_ready, i_e_valid, i_e_pc, i_e_instr, i_res_addr, i_res_data,
-                i_memop_sign_ext, i_memop_load, i_memop_store, i_memop_size,
-                i_memop_addr, i_mem_data_valid, i_mem_data_addr, i_mem_data, r)
+  queue_we <= i_e_valid;
+
+  qproc : process (i_nrst, queue_we, queue_re, queue_data_i, qr)
+    variable nempty : std_logic;
+    variable vb_data_o : std_logic_vector(QUEUE_WIDTH-1 downto 0);
+    variable qv : QueueRegisterType;
+    variable full : std_logic;
+  begin
+    qv := qr;
+
+    full := '0';
+    if qr.wcnt = QUEUE_DEPTH then
+        full := '1';
+    end if;
+
+    vb_data_o := qr.mem(0);
+    if queue_re = '1' and queue_we = '1' then
+        if qr.wcnt = 0 then
+            vb_data_o := queue_data_i;
+        else
+            qv.mem(0) := queue_data_i;
+        end if;
+    elsif queue_re = '0' and queue_we = '1' then
+        if full = '0' then
+            qv.wcnt := qr.wcnt + 1;
+            qv.mem(0) := queue_data_i;
+        end if;
+    elsif queue_re = '1' and queue_we = '0' then
+        if qr.wcnt /= 0 then
+            qv.wcnt := qr.wcnt - 1;
+        end if;
+    end if;
+
+    nempty := '0';
+    if queue_we = '1' or qr.wcnt /= 0 then
+        nempty := '1';
+    end if;
+ 
+    if not async_reset and i_nrst = '0' then
+        qv.wcnt := 0;
+        for k in 0 to QUEUE_DEPTH-1 loop
+            qv.mem(k) := (others => '0');
+        end loop;
+    end if;
+
+    qrin <= qv;
+    queue_nempty <= nempty;
+    queue_data_o <= vb_data_o;
+  end process;
+
+
+
+  comb : process(i_nrst, i_mem_req_ready, i_e_valid,
+                i_mem_data_valid, i_mem_data_addr, i_mem_data,
+                queue_data_o, queue_nempty, r)
     variable v : RegistersType;
+    variable w_mem_access : std_logic;
     variable w_mem_valid : std_logic;
     variable w_mem_write : std_logic;
+    variable w_mem_sign_ext : std_logic;
     variable wb_mem_sz : std_logic_vector(1 downto 0);
     variable wb_mem_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    variable wb_mem_data : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+    variable wb_mem_data : std_logic_vector(RISCV_ARCH-1 downto 0);
     variable w_hold : std_logic;
     variable w_valid : std_logic;
+    variable w_queue_re : std_logic;
     variable wb_mem_data_signext : std_logic_vector(RISCV_ARCH-1 downto 0);
     variable wb_res_data : std_logic_vector(RISCV_ARCH-1 downto 0);
+    variable wb_res_addr : std_logic_vector(5 downto 0);
+    variable wb_e_pc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    variable wb_e_instr : std_logic_vector(31 downto 0);
   begin
 
     v := r;
@@ -120,16 +206,23 @@ begin
     w_mem_valid := '0';
     w_hold := '0';
     w_valid := '0';
+    w_queue_re := '0';
 
-    w_mem_write := i_memop_store;
-    wb_mem_sz := i_memop_size;
-    wb_mem_addr := i_memop_addr;
-    wb_mem_data := i_res_data;
+    wb_mem_data := queue_data_o(2*BUS_ADDR_WIDTH+RISCV_ARCH+43-1 downto 2*BUS_ADDR_WIDTH+43);
+    wb_res_addr := queue_data_o(2*BUS_ADDR_WIDTH+43-1 downto 2*BUS_ADDR_WIDTH+37);
+    wb_e_instr := queue_data_o(2*BUS_ADDR_WIDTH+37-1 downto 2*BUS_ADDR_WIDTH+5);
+    wb_e_pc := queue_data_o(2*BUS_ADDR_WIDTH+5-1 downto BUS_ADDR_WIDTH+5);
+    wb_mem_sz := queue_data_o(BUS_ADDR_WIDTH+4 downto BUS_ADDR_WIDTH+3);
+    w_mem_sign_ext := queue_data_o(BUS_ADDR_WIDTH+2);
+    w_mem_write := queue_data_o(BUS_ADDR_WIDTH+1);
+    w_mem_access := queue_data_o(BUS_ADDR_WIDTH);
+    wb_mem_addr := queue_data_o(BUS_ADDR_WIDTH-1 downto 0);
 
     case r.state is
     when State_Idle =>
-        if i_e_valid = '1' then
-            if i_memop_load = '1' or i_memop_store = '1' then
+        w_queue_re := '1';
+        if queue_nempty = '1' then
+            if w_mem_access = '1' then
                 w_mem_valid := '1';
                 if i_mem_req_ready = '1' then
                     v.state := State_WaitResponse;
@@ -153,11 +246,13 @@ begin
         end if;
     when State_WaitResponse =>
         w_valid := '1';
+        w_queue_re := '1';
         if i_mem_data_valid = '0' then
+            w_queue_re := '0';
             w_valid := '0';
             w_hold := '1';
-        elsif i_e_valid = '1' then
-            if i_memop_load = '1' or i_memop_store = '1' then
+        elsif queue_nempty = '1' then
+            if w_mem_access = '1' then
                 w_mem_valid := '1';
                 if i_mem_req_ready = '1' then
                     v.state := State_WaitResponse;
@@ -173,8 +268,9 @@ begin
         end if;
     when State_RegForward =>
         w_valid := '1';
-        if i_e_valid = '1' then
-            if i_memop_load = '1' or i_memop_store = '1' then
+        w_queue_re := '1';
+        if queue_nempty = '1' then
+            if w_mem_access = '1' then
                 w_mem_valid := '1';
                 if i_mem_req_ready = '1' then
                     v.state := State_WaitResponse;
@@ -191,23 +287,22 @@ begin
     when others =>
     end case;
 
-    if i_e_valid = '1' then
-        v.memop_r := i_memop_load;
-        v.memop_rw := i_memop_load or i_memop_store;
-        v.memop_addr := i_memop_addr;
-        v.memop_sign_ext := i_memop_sign_ext;
-        v.memop_size := i_memop_size;
-        v.pc := i_e_pc;
-        v.instr := i_e_instr;
-        v.res_addr := i_res_addr;
-        v.res_data := i_res_data;
+    if w_queue_re = '1' then
+        v.pc := wb_e_pc;
+        v.instr := wb_e_instr;
+        v.res_addr := wb_res_addr;
+        v.res_data := wb_mem_data;
         if i_res_addr = "000000" then
             v.wena := '0';
         else
             v.wena := '1';
         end if;
+        v.memop_addr := wb_mem_addr;
+        v.memop_r := w_mem_access and not w_mem_write;
+        v.memop_sign_ext := w_mem_sign_ext;
+        v.memop_size := wb_mem_sz;
     end if;
-    
+
     case r.memop_size is
     when MEMOP_1B =>
         wb_mem_data_signext := i_mem_data;
@@ -242,6 +337,8 @@ begin
         v := R_RESET;
     end if;
 
+    queue_re <= w_queue_re;
+
     o_mem_resp_ready <= '1';
 
     o_mem_valid <= w_mem_valid;
@@ -266,8 +363,13 @@ begin
   begin 
      if async_reset and i_nrst = '0' then
         r <= R_RESET;
+        qr.wcnt <= 0;
+        for k in 0 to QUEUE_DEPTH-1 loop
+            qr.mem(k) <= (others => '0');
+        end loop;
      elsif rising_edge(i_clk) then 
         r <= rin;
+        qr <= qrin;
      end if; 
   end process;
 

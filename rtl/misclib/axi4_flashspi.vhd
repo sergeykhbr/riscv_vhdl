@@ -29,7 +29,8 @@ entity axi4_flashspi is
   generic (
     async_reset : boolean := false;
     xaddr   : integer := 0;
-    xmask   : integer := 16#fffff#
+    xmask   : integer := 16#fffff#;
+    wait_while_write : boolean := true  -- hold AXI bus response until end of write cycle
   );
   port (
     clk    : in  std_logic;
@@ -390,7 +391,9 @@ begin
        end if;
 
     when wr_complete =>
-       v.wready := '1';   -- End of access wait-states
+       if wait_while_write then
+           v.wready := '1';   -- End of access wait-states
+       end if;
        v.state := wr_accept;
        v.csn := '1';
     when wr_accept =>
@@ -437,6 +440,9 @@ begin
                 vb_page_wdata1 := wb_bus_wdata(31 downto 0);
             end if;
         elsif r.state = idle then
+            if not wait_while_write then
+                v.wready := '1';
+            end if;
             v.state := wsetup;
             -- Only 4-bytes access to control registers:
             if wb_bus_waddr(0)(2) = '0' and wstrb = X"F0" then

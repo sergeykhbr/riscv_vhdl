@@ -285,7 +285,7 @@ begin
                  i_ex_fpu_underflow, i_ex_fpu_inexact, i_fpu_valid, i_irq_external,
                  i_break_mode, i_dport_ena, i_dport_write, i_dport_addr, i_dport_wdata,
                  r)
-    variable v : RegistersType;
+    variable tv1, tv2, v : RegistersType;
     variable wb_rdata : std_logic_vector(RISCV_ARCH-1 downto 0);
     variable wb_dport_rdata : std_logic_vector(RISCV_ARCH-1 downto 0);
     variable w_ie : std_logic;
@@ -301,15 +301,15 @@ begin
     variable w_mstackund : std_logic;
   begin
 
-    v := r;
+    tv1 := r;
 
     w_dport_wena := i_dport_ena and i_dport_write;
 
     procedure_RegAccess(i_addr, i_wena, i_wdata,
-                        v, v, wb_rdata);
+                        tv1, tv2, wb_rdata);
 
     procedure_RegAccess(i_dport_addr, w_dport_wena,
-                        i_dport_wdata, v, v, wb_dport_rdata);
+                        i_dport_wdata, tv2, v, wb_dport_rdata);
 
     w_ie := '0';
     if (r.mode /= PRV_M) or r.mie = '1' then

@@ -278,12 +278,10 @@ begin
   -- ADC clock detector:
   regsadc : process(adc_clk, nrst)
   begin 
-     if rising_edge(adc_clk) then 
-        if nrst = '0' then
-            r_adc_detect <= (others => '0');
-        else
-            r_adc_detect <= r_adc_detect(6 downto 0) & nrst;
-        end if;
+     if nrst = '0' then
+        r_adc_detect <= (others => '0');
+     elsif rising_edge(adc_clk) then 
+        r_adc_detect <= r_adc_detect(6 downto 0) & nrst;
      end if; 
   end process;
 

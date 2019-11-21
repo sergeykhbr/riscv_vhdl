@@ -135,11 +135,20 @@ begin
     end if;
     v_we := (others => '0');
 
+    v_ar_ready := '0';
+    v_r_valid := '0';
+    v_r_last := '0';
+    v_aw_ready := '0';
+    v_w_ready := '0';
+
     -- Reading state machine:
     case r.rstate is
     when rwait =>
-        if i_xslvi.ar_valid = '1' and i_ready = '1'
-           and i_xslvi.aw_valid = '0' and r.wstate = wwait then
+        if i_xslvi.aw_valid = '0' and r.wstate = wwait then
+            v_ar_ready := '1';
+        end if;
+
+        if i_xslvi.ar_valid = '1' and v_ar_ready = '1' then
             v.rstate := rtrans;
             v_re := '1';
 
@@ -170,7 +179,10 @@ begin
             v.ruser := i_xslvi.ar_user;
         end if;
     when rtrans =>
-        v_re := '1';
+        v_r_valid := i_ready;
+        if r.rlen /= 0 then
+            v_re := '1';   -- request next burst read address even if no ready data
+        end if;
         if v.rsize = 4 then
             v_r32 := '1';
         end if;
@@ -197,8 +209,11 @@ begin
             end if;
             -- End of transaction (or process another one):
             if r.rlen = 0 then
+                v_r_last := '1';
+                v_ar_ready := not i_xslvi.aw_valid;
                 if i_xslvi.ar_valid = '1' and i_xslvi.aw_valid = '0' then
                     v.rswap := i_xslvi.ar_bits.addr(2);
+                    v_re := '1';
                     if i_xslvi.ar_bits.size = "010" then
                         v_r32 := '1';
                     end if;
@@ -234,13 +249,17 @@ begin
     -- Writing state machine:
     case r.wstate is
     when wwait =>
-        if i_xslvi.aw_valid = '1' and i_ready = '1' and r.rlen = 0 then
+        if r.rlen = 0 then
+            v_aw_ready := '1';
+        end if;
+        if i_xslvi.aw_valid = '1' and r.rlen = 0 then
             if i_xslvi.w_valid = '0' then
                 -- Full AXI bus protocol
                 v.wstate := wtrans;
-            else
+            elsif i_ready = '1' then
                 -- AXI lite (no burst support)
                 v_we := (others => '1');
+                v_w_ready := '1';
                 if i_xslvi.aw_bits.addr(2) = '0' then
                     v_wadr := v_wadr_inc;
                 else
@@ -262,6 +281,7 @@ begin
         end if;
     when wtrans =>
         v_we := (others => '1');
+        v_w_ready := i_ready;
         if i_xslvi.w_valid = '1' and i_ready = '1' then
             if r.wsize = 4 then
                 v.wswap := not r.wswap;
@@ -274,6 +294,7 @@ begin
             -- End of transaction:
             if r.wlen = 0 then
                 v.b_valid := '1';
+                v_aw_ready := '1';
                 if i_xslvi.aw_valid = '0' then
                     v.wstate := wwait;
                 else
@@ -322,45 +343,10 @@ begin
     o_wdata <= v_wdata;
     o_wstrb <= v_wstrb;
 
-    --! Device to AXI4 signals:
-
-    v_aw_ready := i_ready;
-    v_w_ready := '1';
-    v_ar_ready := i_ready;
-
-    if i_xslvi.aw_valid = '1' then
-        v_ar_ready := '0';
-    end if;
-
-    v_r_last := '0';
-    if r.rstate = rtrans then
-        if r.rlen = 0 then
-            v_r_last := '1';
-        else
-            v_aw_ready := '0';
-            v_w_ready := '0';
-            v_ar_ready := '0';
-        end if;
-    end if;
-
-    if i_ready = '1' and r.rstate = rtrans then
-        v_r_valid   := '1';
-    else
-        v_r_valid   := '0';
-    end if;
-
     if r.rswap = '0' then
         vb_r_data := i_rdata;
     else
         vb_r_data := i_rdata(31 downto 0) & i_rdata(63 downto 32);
-    end if;
-
-    -- Write transfer:
-    if r.wstate = wtrans then
-        v_ar_ready := '0';
-        if r.wlen /= 0 then
-            v_aw_ready := '0';
-        end if;
     end if;
 
 

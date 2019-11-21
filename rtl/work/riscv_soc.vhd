@@ -389,7 +389,8 @@ end generate;
     flash0 : axi4_flashspi generic map (
       async_reset => CFG_ASYNC_RESET,
       xaddr    => 16#00200#,
-      xmask    => 16#fffc0#
+      xmask    => 16#fffc0#,
+      wait_while_write => true
     ) port map (
       clk => i_clk,
       nrst => w_glob_nrst,

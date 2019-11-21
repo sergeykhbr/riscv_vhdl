@@ -123,7 +123,8 @@ component axi4_flashspi is
   generic (
     async_reset : boolean := false;
     xaddr   : integer := 0;
-    xmask   : integer := 16#fffff#
+    xmask   : integer := 16#fffff#;
+    wait_while_write : boolean := true  -- hold AXI bus response until end of write cycle
   );
   port (
     clk    : in  std_logic;
