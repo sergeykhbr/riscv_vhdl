@@ -33,6 +33,7 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset)
     i_memop_sign_ext("i_memop_sign_ext"),
     i_memop_size("i_memop_size"),
     i_unsigned_op("i_unsigned_op"),
+    i_instr_load_fault("i_instr_load_fault"),
     i_rv32("i_rv32"),
     i_compressed("i_compressed"),
     i_f64("i_f64"),
@@ -57,6 +58,7 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset)
     i_trap_valid("i_trap_valid"),
     i_trap_pc("i_trap_pc"),
     o_ex_npc("o_ex_npc"),
+    o_ex_instr_load_fault("o_ex_instr_load_fault"),
     o_ex_illegal_instr("o_ex_illegal_instr"),
     o_ex_unalign_store("o_ex_unalign_store"),
     o_ex_unalign_load("o_ex_unalign_load"),
@@ -102,6 +104,7 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset)
     sensitive << i_isa_type;
     sensitive << i_ivec;
     sensitive << i_unsup_exception;
+    sensitive << i_instr_load_fault;
     sensitive << i_dport_npc_write;
     sensitive << i_dport_npc;
     sensitive << i_rdata1;
@@ -247,6 +250,7 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_wb_ready, i_wb_ready.name());
         sc_trace(o_vcd, i_f64, i_f64.name());
         sc_trace(o_vcd, i_unsup_exception, i_unsup_exception.name());
+        sc_trace(o_vcd, i_instr_load_fault, i_instr_load_fault.name());
         sc_trace(o_vcd, o_radr1, o_radr1.name());
         sc_trace(o_vcd, i_rdata1, i_rdata1.name());
         sc_trace(o_vcd, o_radr2, o_radr2.name());
@@ -819,6 +823,7 @@ void InstrExecute::comb() {
 
     o_trap_ready = w_next_ready;
 
+    o_ex_instr_load_fault = i_instr_load_fault.read() & w_next_ready;
     o_ex_illegal_instr = i_unsup_exception.read() & w_next_ready;
     o_ex_unalign_store = w_exception_store & w_next_ready;
     o_ex_unalign_load = w_exception_load & w_next_ready;

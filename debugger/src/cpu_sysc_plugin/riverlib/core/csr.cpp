@@ -36,7 +36,7 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset)
     i_ex_data_load_fault("i_ex_data_load_fault"),
     i_ex_data_store_fault("i_ex_data_store_fault"),
     i_ex_data_store_fault_addr("i_ex_data_store_fault_addr"),
-    i_ex_ctrl_load_fault("i_ex_ctrl_load_fault"),
+    i_ex_instr_load_fault("i_ex_instr_load_fault"),
     i_ex_illegal_instr("i_ex_illegal_instr"),
     i_ex_unalign_store("i_ex_unalign_store"),
     i_ex_unalign_load("i_ex_unalign_load"),
@@ -76,7 +76,7 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset)
     sensitive << i_ex_data_load_fault;
     sensitive << i_ex_data_store_fault;
     sensitive << i_ex_data_store_fault_addr;
-    sensitive << i_ex_ctrl_load_fault;
+    sensitive << i_ex_instr_load_fault;
     sensitive << i_ex_illegal_instr;
     sensitive << i_ex_unalign_store;
     sensitive << i_ex_unalign_load;
@@ -142,7 +142,7 @@ void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_ex_data_load_fault, i_ex_data_load_fault.name());
         sc_trace(o_vcd, i_ex_data_store_fault, i_ex_data_store_fault.name());
         sc_trace(o_vcd, i_ex_data_store_fault_addr, i_ex_data_store_fault_addr.name());
-        sc_trace(o_vcd, i_ex_ctrl_load_fault, i_ex_ctrl_load_fault.name());
+        sc_trace(o_vcd, i_ex_instr_load_fault, i_ex_instr_load_fault.name());
         sc_trace(o_vcd, i_ex_illegal_instr, i_ex_illegal_instr.name());
         sc_trace(o_vcd, i_ex_unalign_store, i_ex_unalign_store.name());
         sc_trace(o_vcd, i_ex_unalign_load, i_ex_unalign_load.name());
@@ -171,6 +171,8 @@ void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.mepc, pn + ".r_mepc");
         sc_trace(o_vcd, r.mbadaddr, pn + ".r_mbadaddr");
         sc_trace(o_vcd, r.ext_irq, pn + ".r_ext_irq");
+        sc_trace(o_vcd, r.trap_code, pn + ".r_trap_code");
+        sc_trace(o_vcd, r.hold_data_load_fault, pn + ".r_hold_data_load_fault");
     }
 }
 
@@ -411,14 +413,20 @@ void CsrRegs::comb() {
     wb_trap_pc = r.mtvec.read()(BUS_ADDR_WIDTH-1, 0);
     wb_mbadaddr = i_ex_pc.read();
 
-    if (i_ex_ctrl_load_fault.read() == 1) {
+    if (i_ex_instr_load_fault.read() == 1) {
         w_trap_valid = 1;
         wb_trap_pc = CFG_NMI_INSTR_FAULT_ADDR;
         wb_trap_code = EXCEPTION_InstrFault;
+        // illegal address instruction can generate any other exceptions
+        v.hold_data_load_fault = 0;
+        v.hold_data_store_fault = 0;
     } else if (i_ex_illegal_instr.read() == 1 || w_exception_xret == 1) {
         w_trap_valid = 1;
         wb_trap_pc = CFG_NMI_INSTR_ILLEGAL_ADDR;
         wb_trap_code = EXCEPTION_InstrIllegal;
+        // illegal instruction can generate any other exceptions
+        v.hold_data_load_fault = 0;
+        v.hold_data_store_fault = 0;
     } else if (i_ex_breakpoint.read() == 1) {
         v.break_event = 1;
         w_trap_valid = 1;

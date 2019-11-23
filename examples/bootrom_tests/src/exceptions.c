@@ -39,6 +39,13 @@ int get_mbadaddr() {
     return ret;
 }
 
+void exception_instr_load_fault_c() {
+    pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
+    uint64_t t1 = pnp->fwdbg1;
+    asm("csrw mepc, %0" : :"r"(t1));
+    pnp->fwdbg1 = get_mbadaddr();
+}
+
 void exception_load_fault_c() {
     pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
     pnp->fwdbg1 = get_mbadaddr();
@@ -89,6 +96,7 @@ void allocate_exception_table() {
         fw_malloc(EXCEPTION_Total * sizeof(IRQ_HANDLER));    
     fw_register_ram_data(EXCEPTION_TABLE_NAME, extbl);
 
+    extbl[EXCEPTION_InstrFault] = exception_instr_load_fault_c;
     extbl[EXCEPTION_LoadFault] = exception_load_fault_c;
     extbl[EXCEPTION_StoreFault] = exception_store_fault_c;
     extbl[EXCEPTION_StackOverflow] = exception_stack_overflow_c;

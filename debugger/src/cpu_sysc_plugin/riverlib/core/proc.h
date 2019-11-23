@@ -93,7 +93,7 @@ SC_MODULE(Processor) {
 private:
     struct FetchType {
         sc_signal<bool> req_fire;
-        sc_signal<bool> load_fault;
+        sc_signal<bool> instr_load_fault;
         sc_signal<bool> valid;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> pc;
         sc_signal<sc_uint<32>> instr;
@@ -117,6 +117,7 @@ private:
         sc_signal<sc_bv<ISA_Total>> isa_type;
         sc_signal<sc_bv<Instr_Total>> instr_vec;
         sc_signal<bool> exception;
+        sc_signal<bool> instr_load_fault;
     };
 
     struct ExecuteType {
@@ -136,6 +137,7 @@ private:
         sc_signal<sc_uint<12>> csr_addr;
         sc_signal<bool> csr_wena;
         sc_signal<sc_uint<RISCV_ARCH>> csr_wdata;
+        sc_signal<bool> ex_instr_load_fault;
         sc_signal<bool> ex_illegal_instr;
         sc_signal<bool> ex_unalign_load;
         sc_signal<bool> ex_unalign_store;

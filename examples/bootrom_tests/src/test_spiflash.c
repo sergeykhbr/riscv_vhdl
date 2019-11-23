@@ -19,6 +19,8 @@
 #include <axi_maps.h>
 #include "fw_api.h"
 
+//#define TEST_FLASH_WRITE
+
 void flash_wait_ready(spiflash_map *spi) {
     while (spi->flash_status.val & 0x1) {}
 }
@@ -34,6 +36,7 @@ void test_spiflash(uint64_t bar) {
 
     spi->data[0].val = 0x8877665544332211ull;
 
+#ifdef TEST_FLASH_WRITE
     spi->page_erase.val = 0x10;
     flash_wait_ready(spi);
 
@@ -45,4 +48,5 @@ void test_spiflash(uint64_t bar) {
 
     spi->write_dis.val = 1;
     flash_wait_ready(spi);
+#endif
 }

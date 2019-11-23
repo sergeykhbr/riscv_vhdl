@@ -57,7 +57,9 @@ SC_MODULE(MemAccess) {
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_pc;           // Valid instruction pointer
     sc_out<sc_uint<32>> o_instr;                    // Valid instruction value
 
+    void main();
     void comb();
+    void qproc();
     void registers();
 
     SC_HAS_PROCESS(MemAccess);
@@ -75,7 +77,6 @@ private:
     struct RegistersType {
         sc_signal<sc_uint<2>> state;
         sc_signal<bool> memop_r;
-        sc_signal<bool> memop_rw;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> memop_addr;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> pc;
         sc_signal<sc_uint<32>> instr;
@@ -89,7 +90,6 @@ private:
     void R_RESET(RegistersType &iv) {
         iv.state = State_Idle;
         iv.memop_r = 0;
-        iv.memop_rw = 0;
         iv.memop_addr = 0;
         iv.pc = 0;
         iv.instr = 0;
@@ -99,6 +99,21 @@ private:
         iv.memop_size = 0;
         iv.wena = 0;
     }
+
+    static const int QUEUE_WIDTH = RISCV_ARCH + 6 + 32 + BUS_ADDR_WIDTH
+                                 + 2 + 1 + 1 + 1 + BUS_DATA_WIDTH;
+    static const int QUEUE_DEPTH = 1;
+
+    struct QueueRegisterType {
+        sc_signal<sc_uint<2>> wcnt;
+        sc_signal<sc_biguint<QUEUE_WIDTH>> mem[QUEUE_DEPTH];
+    } qv, qr;
+
+    sc_signal<bool> queue_we;
+    sc_signal<bool> queue_re;
+    sc_signal<sc_biguint<QUEUE_WIDTH>> queue_data_i;
+    sc_signal<sc_biguint<QUEUE_WIDTH>> queue_data_o;
+    sc_signal<bool> queue_nempty;
 
     bool async_reset_;
 };

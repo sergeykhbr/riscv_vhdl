@@ -33,7 +33,7 @@ InstrFetch::InstrFetch(sc_module_name name_, bool async_reset) :
     o_mem_resp_ready("o_mem_resp_ready"),
     i_predict_npc("i_predict_npc"),
     o_mem_req_fire("o_mem_req_fire"),
-    o_ex_load_fault("o_ex_load_fault"),
+    o_instr_load_fault("o_instr_load_fault"),
     o_valid("o_valid"),
     o_pc("o_pc"),
     o_instr("o_instr"),
@@ -62,6 +62,7 @@ InstrFetch::InstrFetch(sc_module_name name_, bool async_reset) :
     sensitive << r.resp_address;
     sensitive << r.resp_data;
     sensitive << r.resp_valid;
+    sensitive << r.instr_load_fault;
 
     SC_METHOD(registers);
     sensitive << i_nrst;
@@ -73,6 +74,7 @@ void InstrFetch::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_mem_data_valid, i_mem_data_valid.name());
         sc_trace(o_vcd, i_mem_data_addr, i_mem_data_addr.name());
         sc_trace(o_vcd, i_mem_data, i_mem_data.name());
+        sc_trace(o_vcd, i_mem_load_fault, i_mem_load_fault.name());
         sc_trace(o_vcd, o_mem_resp_ready, o_mem_resp_ready.name());
         sc_trace(o_vcd, i_predict_npc, i_predict_npc.name());
         sc_trace(o_vcd, i_pipeline_hold, i_pipeline_hold.name());
@@ -83,6 +85,7 @@ void InstrFetch::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_valid, o_valid.name());
         sc_trace(o_vcd, o_pc, o_pc.name());
         sc_trace(o_vcd, o_instr, o_instr.name());
+        sc_trace(o_vcd, o_instr_load_fault, o_instr_load_fault.name());
 
         std::string pn(name());
         sc_trace(o_vcd, r.wait_resp, pn + ".r_wait_resp");
@@ -121,6 +124,7 @@ void InstrFetch::comb() {
         v.resp_valid = 1;
         v.resp_address = i_mem_data_addr.read();
         v.resp_data = i_mem_data.read();
+        v.instr_load_fault = i_mem_load_fault.read();
     }
 
     wb_o_pc = r.resp_address.read();
@@ -149,7 +153,7 @@ void InstrFetch::comb() {
     o_mem_addr_valid = w_o_req_valid;
     o_mem_addr = i_predict_npc.read();
     o_mem_req_fire = w_o_req_fire;
-    o_ex_load_fault = 0;
+    o_instr_load_fault = r.instr_load_fault;
     o_valid = r.resp_valid.read() && !(i_pipeline_hold.read() || w_o_hold);
     o_pc = wb_o_pc;
     o_instr = wb_o_instr;

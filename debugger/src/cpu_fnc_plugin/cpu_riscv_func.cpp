@@ -248,8 +248,11 @@ void CpuRiver_Functional::raiseSignal(int idx) {
         cause.value     = 0;
         cause.bits.irq  = 0;
         cause.bits.code = idx;
-        portCSR_.write(CSR_mcause, cause.value);
-        interrupt_pending_[idx >> 6] |= 1LL << (idx & 0x3F);
+        if ((interrupt_pending_[0] & (1ull << EXCEPTION_InstrFault)) == 0) {
+            // Wrong instruction address can generate others exceptions, ignore them
+            portCSR_.write(CSR_mcause, cause.value);
+            interrupt_pending_[idx >> 6] |= 1LL << (idx & 0x3F);
+        }
     } else if (idx < SIGNAL_HardReset) {
         csr_mcause_type cause;
         cause.value     = 0;

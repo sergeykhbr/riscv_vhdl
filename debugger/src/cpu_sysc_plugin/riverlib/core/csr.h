@@ -40,7 +40,7 @@ SC_MODULE(CsrRegs) {
     sc_in<bool> i_ex_data_load_fault;       // Data path: Bus response with SLVERR or DECERR on read
     sc_in<bool> i_ex_data_store_fault;      // Data path: Bus response with SLVERR or DECERR on write
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_ex_data_store_fault_addr;  // Write data miss access
-    sc_in<bool> i_ex_ctrl_load_fault;
+    sc_in<bool> i_ex_instr_load_fault;
     sc_in<bool> i_ex_illegal_instr;
     sc_in<bool> i_ex_unalign_store;
     sc_in<bool> i_ex_unalign_load;

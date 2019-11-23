@@ -45,6 +45,7 @@ SC_MODULE(InstrExecute) {
     sc_in<sc_bv<ISA_Total>> i_isa_type;         // Type of the instruction's structure (ISA spec.)
     sc_in<sc_bv<Instr_Total>> i_ivec;           // One pulse per supported instruction.
     sc_in<bool> i_unsup_exception;              // Unsupported instruction exception
+    sc_in<bool> i_instr_load_fault;             // fault instruction's address
     sc_in<bool> i_dport_npc_write;              // Write npc value from debug port
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_dport_npc; // Debug port npc value to write
 
@@ -66,6 +67,7 @@ SC_MODULE(InstrExecute) {
 
     // exceptions:
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_ex_npc;   // npc on before trap
+    sc_out<bool> o_ex_instr_load_fault;         // fault instruction's address
     sc_out<bool> o_ex_illegal_instr;
     sc_out<bool> o_ex_unalign_store;
     sc_out<bool> o_ex_unalign_load;

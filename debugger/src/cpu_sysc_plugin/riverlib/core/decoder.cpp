@@ -26,6 +26,7 @@ InstrDecoder::InstrDecoder(sc_module_name name_, bool async_reset)
     i_f_valid("i_f_valid"),
     i_f_pc("i_f_pc"),
     i_f_instr("i_f_instr"),
+    i_instr_load_fault("i_ex_load_fault"),
     o_valid("o_valid"),
     o_pc("o_pc"),
     o_instr("o_instr"),
@@ -39,7 +40,8 @@ InstrDecoder::InstrDecoder(sc_module_name name_, bool async_reset)
     o_unsigned_op("o_unsigned_op"),
     o_isa_type("o_isa_type"),
     o_instr_vec("o_instr_vec"),
-    o_exception("o_exception") {
+    o_exception("o_exception"),
+    o_instr_load_fault("o_ex_load_fault") {
     async_reset_ = async_reset;
 
     SC_METHOD(comb);
@@ -48,6 +50,7 @@ InstrDecoder::InstrDecoder(sc_module_name name_, bool async_reset)
     sensitive << i_f_valid;
     sensitive << i_f_pc;
     sensitive << i_f_instr;
+    sensitive << i_instr_load_fault;
     sensitive << r.valid;
     sensitive << r.pc;
     sensitive << r.instr;
@@ -59,6 +62,7 @@ InstrDecoder::InstrDecoder(sc_module_name name_, bool async_reset)
     sensitive << r.rv32;
     sensitive << r.f64;
     sensitive << r.compressed;
+    sensitive << r.instr_load_fault;
     sensitive << r.instr_unimplemented;
 
     SC_METHOD(registers);
@@ -76,6 +80,7 @@ void InstrDecoder::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_instr_vec, o_instr_vec.name());
         sc_trace(o_vcd, o_exception, o_exception.name());
         sc_trace(o_vcd, o_compressed, o_compressed.name());
+        sc_trace(o_vcd, o_instr_load_fault, o_instr_load_fault.name());
     }
 }
 
@@ -796,6 +801,7 @@ void InstrDecoder::comb() {
         v.pc = i_f_pc;
         v.instr = wb_instr_out;
         v.compressed = w_compressed;
+        v.instr_load_fault = i_instr_load_fault;
 
         v.isa_type = wb_isa_type;
         v.instr_vec = wb_dec;
@@ -867,6 +873,7 @@ void InstrDecoder::comb() {
     o_isa_type = r.isa_type;
     o_instr_vec = r.instr_vec;
     o_exception = r.instr_unimplemented;
+    o_instr_load_fault = r.instr_load_fault;
 }
 
 void InstrDecoder::registers() {

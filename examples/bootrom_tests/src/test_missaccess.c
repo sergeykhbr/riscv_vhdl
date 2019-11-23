@@ -23,6 +23,22 @@ static const uint64_t UNMAPPED_ADDRESS = 0x70000040;
 
 void test_missaccess(void) {
     pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
+
+    // jump to unmappedregion and execute instruction
+    pnp->fwdbg1 = (uint64_t)&&ret_from_exception;  // gcc extension
+
+    asm("li t0,0x70000000");
+    asm("jalr x0,0(t0)");
+ret_from_exception:
+    printf_uart("%s", "instr_load_err .");
+    if (pnp->fwdbg1 != 0x70000000ull) {
+        printf_uart("FAIL: %08x != %08x\r\n",
+                    pnp->fwdbg1, 0x70000000ull);
+    } else {
+        printf_uart("%s", "PASS\r\n");
+    }
+
+
     // clear register. it should be modified from exception handler
     pnp->fwdbg1 = 0;
 
@@ -50,3 +66,4 @@ void test_missaccess(void) {
         printf_uart("%s", "PASS\r\n");
     }
 }
+
