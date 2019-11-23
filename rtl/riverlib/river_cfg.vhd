@@ -474,7 +474,7 @@ package river_cfg is
     i_ex_data_load_fault : in std_logic;
     i_ex_data_store_fault : in std_logic;
     i_ex_data_store_fault_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    i_ex_ctrl_load_fault : in std_logic;
+    i_ex_instr_load_fault : in std_logic;
     i_ex_illegal_instr : in std_logic;
     i_ex_unalign_store : in std_logic;
     i_ex_unalign_load : in std_logic;
@@ -505,6 +505,7 @@ package river_cfg is
   --! @param[in] i_f_valid Fetch input valid
   --! @param[in] i_f_pc Fetched pc
   --! @param[in] i_f_instr Fetched instruction value
+  --! @param[in] i_instr_load_fault Instruction fetched from fault address
   --! @param[out] o_valid Current output values are valid
   --! @param[out] o_pc Current instruction pointer value
   --! @param[out] o_instr Current instruction value
@@ -519,6 +520,7 @@ package river_cfg is
   --! @param[out] o_isa_type Instruction format accordingly with ISA
   --! @param[out] o_instr_vec One bit per decoded instruction bus
   --! @param[out] o_exception Unimplemented instruction
+  --! @param[out] o_instr_load_fault Instruction fetched from fault address
   component InstrDecoder is generic (
     async_reset : boolean
   );
@@ -529,6 +531,7 @@ package river_cfg is
     i_f_valid : in std_logic;
     i_f_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_f_instr : in std_logic_vector(31 downto 0);
+    i_instr_load_fault : in std_logic;
     o_valid : out std_logic;
     o_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     o_instr : out std_logic_vector(31 downto 0);
@@ -542,7 +545,8 @@ package river_cfg is
     o_unsigned_op : out std_logic;
     o_isa_type : out std_logic_vector(ISA_Total-1 downto 0);
     o_instr_vec : out std_logic_vector(Instr_Total-1 downto 0);
-    o_exception : out std_logic
+    o_exception : out std_logic;
+    o_instr_load_fault : out std_logic
   );
   end component; 
 
@@ -565,6 +569,7 @@ package river_cfg is
   --! @param[in] i_isa_type   Type of the instruction's structure (ISA spec.)
   --! @param[in] i_break_mode        Behaviour on EBREAK instruction: 0 = halt; 1 = generate trap
   --! @param[in] i_unsup_exception   Unsupported instruction exception
+  --! @param[in] i_instr_load_fault  Instruction fetched from fault address
   --! @param[in] i_ext_irq           External interrupt from PLIC (todo: timer & software interrupts)
   --! @param[in] i_dport_npc_write   Write npc value from debug port
   --! @param[in] i_dport_npc         Debug port npc value to write
@@ -582,6 +587,7 @@ package river_cfg is
   --! @param[in] i_csr_rdata CSR current value
   --! @param[out] o_csr_wdata CSR new value
   --! @param[out] o_ex_npc    exception npc
+  --! @param[out] o_ex_instr_load_fault Instruction fetched from fault address
   --! @param[out] o_ex_illegal_instr Exception: illegal instruction
   --! @param[out] o_ex_unalign_store Exception: Unaligned store
   --! @param[out] o_ex_unalign_load  Exception: Unaligned load
@@ -629,6 +635,7 @@ package river_cfg is
     i_isa_type : in std_logic_vector(ISA_Total-1 downto 0);
     i_ivec : in std_logic_vector(Instr_Total-1 downto 0);
     i_unsup_exception : in std_logic;
+    i_instr_load_fault : in std_logic;
     i_dport_npc_write : in std_logic;
     i_dport_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     o_radr1 : out std_logic_vector(5 downto 0);
@@ -647,6 +654,7 @@ package river_cfg is
     i_trap_valid : in std_logic;
     i_trap_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     o_ex_npc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_ex_instr_load_fault : out std_logic;
     o_ex_illegal_instr : out std_logic;
     o_ex_unalign_store : out std_logic;
     o_ex_unalign_load : out std_logic;
@@ -712,7 +720,7 @@ package river_cfg is
     i_predict_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
 
     o_mem_req_fire : out std_logic;
-    o_ex_load_fault : out std_logic;
+    o_instr_load_fault : out std_logic;
     o_valid : out std_logic;
     o_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     o_instr : out std_logic_vector(31 downto 0);

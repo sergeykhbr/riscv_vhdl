@@ -43,7 +43,7 @@ entity InstrFetch is generic (
     i_predict_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
 
     o_mem_req_fire : out std_logic;                    -- used by branch predictor to form new npc value
-    o_ex_load_fault : out std_logic;
+    o_instr_load_fault : out std_logic;                -- fault instruction's address
     o_valid : out std_logic;
     o_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     o_instr : out std_logic_vector(31 downto 0);
@@ -65,13 +65,15 @@ architecture arch_InstrFetch of InstrFetch is
       resp_address : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
       resp_data : std_logic_vector(31 downto 0);
       resp_valid : std_logic;
+      instr_load_fault : std_logic;
   end record;
 
   constant R_RESET : RegistersType := (
     '0', (others => '0'),
     (others => '1'),  -- br_address
     (others =>'0'),   -- br_instr
-    (others =>'0'), (others =>'0'), '0'
+    (others =>'0'), (others =>'0'), '0',
+    '0'               -- instr_load_fault
   );
 
   signal r, rin : RegistersType;
@@ -107,6 +109,7 @@ begin
         v.resp_valid := '1';
         v.resp_address := i_mem_data_addr;
         v.resp_data := i_mem_data;
+        v.instr_load_fault := i_mem_load_fault;
     end if;
 
     wb_o_pc := r.resp_address;
@@ -135,7 +138,7 @@ begin
     o_mem_addr_valid <= w_o_req_valid;
     o_mem_addr <= i_predict_npc;
     o_mem_req_fire <= w_o_req_fire;
-    o_ex_load_fault <= '0';    -- TODO
+    o_instr_load_fault <= r.instr_load_fault;
     o_valid <= r.resp_valid and not (i_pipeline_hold or w_o_hold);
     o_pc <= wb_o_pc;
     o_instr <= wb_o_instr;

@@ -80,7 +80,7 @@ architecture arch_Processor of Processor is
 
     type FetchType is record
         req_fire : std_logic;
-        load_fault : std_logic;
+        instr_load_fault : std_logic;
         valid : std_logic;
         pc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
         instr : std_logic_vector(31 downto 0);
@@ -104,6 +104,7 @@ architecture arch_Processor of Processor is
         isa_type : std_logic_vector(ISA_Total-1 downto 0);
         instr_vec : std_logic_vector(Instr_Total-1 downto 0);
         exception : std_logic;
+        instr_load_fault : std_logic;
     end record;
 
     type ExecuteType is record
@@ -123,6 +124,7 @@ architecture arch_Processor of Processor is
         csr_addr : std_logic_vector(11 downto 0);
         csr_wena : std_logic;
         csr_wdata : std_logic_vector(RISCV_ARCH-1 downto 0);
+        ex_instr_load_fault : std_logic;
         ex_illegal_instr : std_logic;
         ex_unalign_load : std_logic;
         ex_unalign_store : std_logic;
@@ -257,7 +259,7 @@ begin
         o_mem_resp_ready => o_resp_ctrl_ready,
         i_predict_npc => bp.npc,
         o_mem_req_fire => w.f.req_fire,
-        o_ex_load_fault => w.f.load_fault,
+        o_instr_load_fault => w.f.instr_load_fault,
         o_valid => w.f.valid,
         o_pc => w.f.pc,
         o_instr => w.f.instr,
@@ -275,6 +277,7 @@ begin
         i_f_valid => w.f.valid,
         i_f_pc => w.f.pc,
         i_f_instr => w.f.instr,
+        i_instr_load_fault => w.f.instr_load_fault,
         o_valid => w.d.instr_valid,
         o_pc => w.d.pc,
         o_instr => w.d.instr,
@@ -288,7 +291,8 @@ begin
         o_f64 => w.d.f64,
         o_isa_type => w.d.isa_type,
         o_instr_vec => w.d.instr_vec,
-        o_exception => w.d.exception);
+        o_exception => w.d.exception,
+        o_instr_load_fault => w.d.instr_load_fault);
 
     exec0 : InstrExecute generic map (
         async_reset => async_reset
@@ -311,6 +315,7 @@ begin
         i_isa_type => w.d.isa_type,
         i_ivec => w.d.instr_vec,
         i_unsup_exception => w.d.exception,
+        i_instr_load_fault => w.d.instr_load_fault,
         i_dport_npc_write => dbg.npc_write,
         i_dport_npc => wb_exec_dport_npc,
         o_radr1 => w.e.radr1,
@@ -329,6 +334,7 @@ begin
         i_trap_valid => csr.trap_valid,
         i_trap_pc => csr.trap_pc,
         o_ex_npc => w.e.ex_npc,
+        o_ex_instr_load_fault => w.e.ex_instr_load_fault,
         o_ex_illegal_instr => w.e.ex_illegal_instr,
         o_ex_unalign_store => w.e.ex_unalign_store,
         o_ex_unalign_load => w.e.ex_unalign_load,
@@ -468,7 +474,7 @@ begin
         i_ex_data_load_fault => i_resp_data_load_fault,
         i_ex_data_store_fault => i_resp_data_store_fault,
         i_ex_data_store_fault_addr => i_resp_data_store_fault_addr,
-        i_ex_ctrl_load_fault => w.f.load_fault,
+        i_ex_instr_load_fault => w.e.ex_instr_load_fault,
         i_ex_illegal_instr => w.e.ex_illegal_instr,
         i_ex_unalign_store => w.e.ex_unalign_store,
         i_ex_unalign_load => w.e.ex_unalign_load,

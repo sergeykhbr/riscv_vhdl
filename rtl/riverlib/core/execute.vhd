@@ -47,6 +47,7 @@ entity InstrExecute is generic (
     i_isa_type : in std_logic_vector(ISA_Total-1 downto 0);     -- Type of the instruction's structure (ISA spec.)
     i_ivec : in std_logic_vector(Instr_Total-1 downto 0);       -- One pulse per supported instruction.
     i_unsup_exception : in std_logic;                           -- Unsupported instruction exception
+    i_instr_load_fault : in std_logic;                          -- Instruction fetched from fault address
     i_dport_npc_write : in std_logic;                           -- Write npc value from debug port
     i_dport_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- Debug port npc value to write
 
@@ -67,6 +68,7 @@ entity InstrExecute is generic (
     i_trap_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     -- exceptions:
     o_ex_npc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_ex_instr_load_fault : out std_logic;                      -- Instruction fetched from fault address
     o_ex_illegal_instr : out std_logic;
     o_ex_unalign_store : out std_logic;
     o_ex_unalign_load : out std_logic;
@@ -333,7 +335,7 @@ begin
                  i_memop_size, i_unsigned_op, i_rv32, i_compressed, i_f64, i_isa_type, i_ivec,
                  i_rdata1, i_rdata2, i_rfdata1, i_rfdata2, i_csr_rdata, 
                  i_trap_valid, i_trap_pc, i_dport_npc_write,
-                 i_dport_npc, i_unsup_exception,
+                 i_dport_npc, i_unsup_exception, i_instr_load_fault,
                  wb_arith_res, w_arith_valid, w_arith_busy,
                  wb_sll, wb_sllw, wb_srl, wb_srlw, wb_sra, wb_sraw, r)
     variable v : RegistersType;
@@ -854,6 +856,7 @@ begin
 
     o_trap_ready <= w_next_ready;
 
+    o_ex_instr_load_fault <= i_instr_load_fault and w_next_ready;
     o_ex_illegal_instr <= i_unsup_exception and w_next_ready;
     o_ex_unalign_store <= w_exception_store and w_next_ready;
     o_ex_unalign_load <= w_exception_load and w_next_ready;

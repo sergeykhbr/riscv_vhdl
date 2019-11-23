@@ -41,11 +41,6 @@ end;
  
 architecture arch_axictrl_bus0 of axictrl_bus0 is
 
-  constant MISS_ACCESS_SLAVE : axi4_slave_out_type := (
-      '1', '1', '1', AXI_RESP_DECERR,
-      (others=>'0'), '0', '1', '1', AXI_RESP_DECERR, (others=>'1'), 
-      '1', (others=>'0'), '0');
-
   type nasti_master_out_vector_miss is array (0 to CFG_BUS0_XMST_TOTAL) 
        of axi4_master_out_type;
 
@@ -74,9 +69,21 @@ architecture arch_axictrl_bus0 of axictrl_bus0 is
 
   signal rin, r : reg_type;
 
+  signal defslv_i : axi4_slave_in_type;
+  signal defslv_o : axi4_slave_out_type;
+
 begin
 
-  comblogic : process(i_nrst, i_slvcfg, i_msto, i_slvo, r)
+  xdef0 : axi4_defslv generic map (
+    async_reset => async_reset
+  ) port map (
+    i_clk => i_clk,
+    i_nrst => i_nrst,
+    i_xslvi => defslv_i,
+    o_xslvo => defslv_o
+  );
+
+  comblogic : process(i_nrst, i_slvcfg, i_msto, i_slvo, defslv_o, r)
     variable v : reg_type;
     variable ar_midx : integer range 0 to CFG_BUS0_XMST_TOTAL;
     variable aw_midx : integer range 0 to CFG_BUS0_XMST_TOTAL;
@@ -113,7 +120,7 @@ begin
        vslvo(s) := i_slvo(s);
        vslvi(s) := axi4_slave_in_none;
     end loop;
-    vslvo(CFG_BUS0_XSLV_TOTAL) := MISS_ACCESS_SLAVE;
+    vslvo(CFG_BUS0_XSLV_TOTAL) := defslv_o;
     vslvi(CFG_BUS0_XSLV_TOTAL) := axi4_slave_in_none;
 
     ar_midx := CFG_BUS0_XMST_TOTAL;
@@ -247,6 +254,7 @@ begin
     for s in 0 to CFG_BUS0_XSLV_TOTAL-1 loop
        o_slvi(s) <= vslvi(s);
     end loop;
+    defslv_i <= vslvi(CFG_BUS0_XSLV_TOTAL);
     o_bus_util_w <= wb_bus_util_w(CFG_BUS0_XMST_TOTAL-1 downto 0);
     o_bus_util_r <= wb_bus_util_r(CFG_BUS0_XMST_TOTAL-1 downto 0);
   end process;

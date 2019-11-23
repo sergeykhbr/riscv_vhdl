@@ -591,6 +591,18 @@ component axi4_slave is
   );
 end component; 
 
+component axi4_defslv is
+  generic (
+    async_reset : boolean
+  );
+  port (
+    i_clk : in std_logic;
+    i_nrst : in std_logic;
+    i_xslvi : in axi4_slave_in_type;
+    o_xslvo : out axi4_slave_out_type
+  );
+end component; 
+
 
 end; -- package declaration
 

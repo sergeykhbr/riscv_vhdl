@@ -46,7 +46,7 @@ entity CsrRegs is
     i_ex_data_load_fault : in std_logic;                    -- Data path: Bus response with SLVERR or DECERR on read
     i_ex_data_store_fault : in std_logic;                   -- Data path: Bus response with SLVERR or DECERR on write
     i_ex_data_store_fault_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    i_ex_ctrl_load_fault : in std_logic;
+    i_ex_instr_load_fault : in std_logic;
     i_ex_illegal_instr : in std_logic;
     i_ex_unalign_store : in std_logic;
     i_ex_unalign_load : in std_logic;
@@ -279,7 +279,7 @@ begin
   comb : process(i_nrst, i_mret, i_uret, i_sp, i_addr, i_wena, i_wdata, i_trap_ready,
                  i_ex_pc, i_ex_npc, i_ex_data_addr, i_ex_data_load_fault, i_ex_data_store_fault,
                  i_ex_data_store_fault_addr,
-                 i_ex_ctrl_load_fault, i_ex_illegal_instr, i_ex_unalign_load, i_ex_unalign_store,
+                 i_ex_instr_load_fault, i_ex_illegal_instr, i_ex_unalign_load, i_ex_unalign_store,
                  i_ex_breakpoint, i_ex_ecall, 
                  i_ex_fpu_invalidop, i_ex_fpu_divbyzero, i_ex_fpu_overflow,
                  i_ex_fpu_underflow, i_ex_fpu_inexact, i_fpu_valid, i_irq_external,
@@ -351,14 +351,20 @@ begin
     wb_trap_pc := r.mtvec(BUS_ADDR_WIDTH-1 downto 0);
     wb_mbadaddr := i_ex_pc;
 
-    if i_ex_ctrl_load_fault = '1' then
+    if i_ex_instr_load_fault = '1' then
         w_trap_valid := '1';
         wb_trap_pc := CFG_NMI_INSTR_FAULT_ADDR;
         wb_trap_code := EXCEPTION_InstrFault;
+        -- illegal address instruction can generate any other exceptions
+        v.hold_data_load_fault := '0';
+        v.hold_data_store_fault := '0';
     elsif i_ex_illegal_instr = '1' or w_exception_xret = '1' then
         w_trap_valid := '1';
         wb_trap_pc := CFG_NMI_INSTR_ILLEGAL_ADDR;
         wb_trap_code := EXCEPTION_InstrIllegal;
+        -- illegal instruction can generate any other exceptions
+        v.hold_data_load_fault := '0';
+        v.hold_data_store_fault := '0';
     elsif i_ex_breakpoint = '1' then
         v.break_event := '1';
         w_trap_valid := '1';

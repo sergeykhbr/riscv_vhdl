@@ -34,6 +34,7 @@ entity InstrDecoder is generic (
     i_f_valid : in std_logic;                                -- Fetch input valid
     i_f_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0); -- Fetched pc
     i_f_instr : in std_logic_vector(31 downto 0);            -- Fetched instruction value
+    i_instr_load_fault : in std_logic;                       -- Instruction fetched from fault address
 
     o_valid : out std_logic;                                 -- Current output values are valid
     o_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);  -- Current instruction pointer value
@@ -48,7 +49,8 @@ entity InstrDecoder is generic (
     o_unsigned_op : out std_logic;                           -- Unsigned operands
     o_isa_type : out std_logic_vector(ISA_Total-1 downto 0); -- Instruction format accordingly with ISA
     o_instr_vec : out std_logic_vector(Instr_Total-1 downto 0); -- One bit per decoded instruction bus
-    o_exception : out std_logic                              -- Unimplemented instruction
+    o_exception : out std_logic;                             -- Unimplemented instruction
+    o_instr_load_fault : out std_logic                       -- Instruction fetched from fault address
   );
 end; 
  
@@ -124,6 +126,7 @@ architecture arch_InstrDecoder of InstrDecoder is
       rv32 : std_logic;
       f64 : std_logic;
       compressed : std_logic;
+      instr_load_fault : std_logic;
       instr_unimplemented : std_logic;
   end record;
 
@@ -132,7 +135,7 @@ architecture arch_InstrDecoder of InstrDecoder is
     (others => '0'), (others => '0'), '0',   -- instr_vec, instr, memop_store
     '0', '0', "00",                          -- memop_load, memop_sign_ext, memop_size
     '0', '0', '0',                           -- unsigned_op, rv32, f64
-    '0', '0'                                 -- compressed, instr_unimpl
+    '0', '0', '0'                            -- compressed, instr_load_fault, instr_unimpl
   );
 
   signal r, rin : RegistersType;
@@ -140,7 +143,7 @@ architecture arch_InstrDecoder of InstrDecoder is
 begin
 
 
-  comb : process(i_nrst, i_any_hold, i_f_valid, i_f_pc, i_f_instr, r)
+  comb : process(i_nrst, i_any_hold, i_f_valid, i_f_pc, i_f_instr, i_instr_load_fault, r)
     variable v : RegistersType;
     variable w_o_valid : std_logic;
     variable w_error : std_logic;
@@ -764,6 +767,7 @@ begin
         v.pc := i_f_pc;
         v.instr := wb_instr_out;
         v.compressed := w_compressed;
+        v.instr_load_fault := i_instr_load_fault;
 
         v.isa_type := wb_isa_type;
         v.instr_vec := wb_dec;
@@ -834,6 +838,7 @@ begin
     o_isa_type <= r.isa_type;
     o_instr_vec <= r.instr_vec;
     o_exception <= r.instr_unimplemented;
+    o_instr_load_fault <= r.instr_load_fault;
     
     rin <= v;
   end process;
