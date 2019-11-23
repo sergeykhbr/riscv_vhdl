@@ -26,7 +26,7 @@ InstrDecoder::InstrDecoder(sc_module_name name_, bool async_reset)
     i_f_valid("i_f_valid"),
     i_f_pc("i_f_pc"),
     i_f_instr("i_f_instr"),
-    i_instr_load_fault("i_ex_load_fault"),
+    i_instr_load_fault("i_instr_load_fault"),
     o_valid("o_valid"),
     o_pc("o_pc"),
     o_instr("o_instr"),
@@ -41,7 +41,7 @@ InstrDecoder::InstrDecoder(sc_module_name name_, bool async_reset)
     o_isa_type("o_isa_type"),
     o_instr_vec("o_instr_vec"),
     o_exception("o_exception"),
-    o_instr_load_fault("o_ex_load_fault") {
+    o_instr_load_fault("o_instr_load_fault") {
     async_reset_ = async_reset;
 
     SC_METHOD(comb);
