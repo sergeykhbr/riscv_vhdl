@@ -134,6 +134,8 @@ constant GNSSSENSOR_JTAG_TAP      : std_logic_vector(15 downto 0) := X"050B";
 --! Empty slave slot device
 constant SLV_DID_EMPTY           : std_logic_vector(15 downto 0) := X"5577";
 --! GNSS Engine Stub device
+constant GNSS_SUB_SYSTEM         : std_logic_vector(15 downto 0) := X"0067";
+--! GNSS Engine Stub device
 constant GNSSSENSOR_ENGINE_STUB   : std_logic_vector(15 downto 0) := X"0068";
 --! Fast Search Engines Device ID provided by gnsslib
 constant GNSSSENSOR_FSE_V2_GPS    : std_logic_vector(15 downto 0) := X"0069";
