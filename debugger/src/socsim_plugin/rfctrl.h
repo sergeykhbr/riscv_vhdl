@@ -1,8 +1,17 @@
-/**
- * @file
- * @copyright  Copyright 2017 GNSS Sensor Ltd. All right reserved.
- * @author     Sergey Khabarov - sergeykhbr@gmail.com
- * @brief      RF front-end black-box model.
+/*
+ *  Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 #ifndef __DEBUGGER_SOCSIM_PLUGIN_RFCTRL_H__
@@ -16,9 +25,9 @@ namespace debugger {
 
 class RfController : public IService, 
                      public IMemoryOperation {
-public:
-    RfController(const char *name);
-    ~RfController();
+ public:
+    explicit RfController(const char *name);
+    virtual ~RfController();
 
     /** IService interface */
     virtual void postinitService();
@@ -26,7 +35,9 @@ public:
     /** IMemoryOperation */
     virtual ETransStatus b_transport(Axi4TransactionType *trans);
     
-private:
+ private:
+    AttributeType subsystemConfig_;
+
     struct rfctrl_map {
         volatile uint32_t conf1;		// 0x00
         volatile uint32_t conf2;		// 0x04
@@ -42,6 +53,7 @@ private:
         volatile uint32_t run;		    // 0x2C
         volatile uint32_t reserved1[3];	// 0x30,0x34,0x38
         volatile uint32_t rw_ant_status;// 0x3C
+        volatile uint32_t subsystem_config;// 0x40
     } regs_;
 };
 

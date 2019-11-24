@@ -72,6 +72,7 @@ static const char *const GNSS_SENSOR_MST_DEVICE_NAMES[] = {
 };
 
 static const char *const GNSS_SENSOR_SLV_DEVICE_NAMES[] = {
+    "GNSS Sub-System",          // 0x67
     "GNSS Engine stub",         // 0x68
     "Reserved",                 // 0x69
     "Reserved",                 // 0x6a
@@ -136,8 +137,8 @@ static const char *get_device_name(uint16_t vid, uint16_t did)
     if (did == SLV_DID_EMPTY) {
         return SLV_DID_EMPTY_NAME;
     }
-    if (did >= GNSSSENSOR_ENGINE_STUB && did <= GNSSSENSOR_OTP_8KB) {
-        return GNSS_SENSOR_SLV_DEVICE_NAMES[did - GNSSSENSOR_ENGINE_STUB];
+    if (did >= GNSS_SUB_SYSTEM && did <= GNSSSENSOR_OTP_8KB) {
+        return GNSS_SENSOR_SLV_DEVICE_NAMES[did - GNSS_SUB_SYSTEM];
     }
     if (did >= RISCV_CACHED_TILELINK && did <= GNSSSENSOR_JTAG_TAP) {
         return GNSS_SENSOR_MST_DEVICE_NAMES[did - RISCV_CACHED_TILELINK];

@@ -40,6 +40,7 @@ static const uint16_t RISCV_RIVER_CPU          = 0x0505;
 static const uint16_t GNSSSENSOR_UART_TAP      = 0x050A;
 
 // Slaves IDs
+static const uint16_t GNSS_SUB_SYSTEM          = 0x0067;
 static const uint16_t GNSSSENSOR_ENGINE_STUB   = 0x0068;
 static const uint16_t GNSSSENSOR_FSE_V2_GPS    = 0x0069;
 static const uint16_t GNSSSENSOR_FSE_V2_GLO    = 0x006a;

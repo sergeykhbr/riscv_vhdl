@@ -19,13 +19,13 @@
 
  | Bits |Type| Reset |Field Name| Bits  | Description 
  |:----:|:--:|:-----:|:---------|:-----:|:------------------------------------------------------------|
- | 64   | RW | 64h'0 | highcnt  | 63:0  | <b>High precision counter</b>. This counter isn't used as a source of interrupt and cannot be stopped from SW.
+ | 64   | RO | 64h'0 | highcnt  | 63:0  | <b>High precision counter</b>. This counter isn't used as a source of interrupt and cannot be stopped from SW.
 
  @par High Precision Timer register (Most Word) (0x004).
 
  | Bits |Type| Reset |Field Name| Bits  | Description 
  |:----:|:--:|:-----:|:---------|:-----:|:------------------------------------------------------------|
- | 64   | RW | 64h'0 | highcnt  | 63:0  | <b>High precision counter</b>. This counter isn't used as a source of interrupt and cannot be stopped from SW.
+ | 64   | RO | 64h'0 | highcnt  | 63:0  | <b>High precision counter</b>. This counter isn't used as a source of interrupt and cannot be stopped from SW.
 
  @par Pending Timer IRQ register (0x008).
 

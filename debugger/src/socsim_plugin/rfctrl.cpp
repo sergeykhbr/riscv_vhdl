@@ -12,6 +12,7 @@ namespace debugger {
 
 RfController::RfController(const char *name)  : IService(name) {
     registerInterface(static_cast<IMemoryOperation *>(this));
+    registerAttribute("SubSystemConfig", &subsystemConfig_);
 
     memset(&regs_, 0, sizeof(regs_));
 }
@@ -52,6 +53,9 @@ ETransStatus RfController::b_transport(Axi4TransactionType *trans) {
                 break;
             case (0x3c >> 2): //rw_ant_status
                 trans->rpayload.b32[i] = regs_.rw_ant_status;
+                break;
+            case (0x40 >> 2): //rw_ant_status
+                trans->rpayload.b32[i] = subsystemConfig_.to_uint32();
                 break;
             default:
                 trans->rpayload.b32[i] = ~0;

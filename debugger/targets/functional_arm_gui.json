@@ -219,7 +219,7 @@
     {'Class':'GNSSStubClass','Instances':[
           {'Name':'gnss0','Attr':[
                 ['LogLevel',1],
-                ['BaseAddress',0x80003000],
+                ['BaseAddress',0x80009000],
                 ['Length',4096],
                 ['IrqControl',['irqctrl0','irq5']],
                 ['ClkSource','core0']
@@ -227,8 +227,9 @@
     {'Class':'RfControllerClass','Instances':[
           {'Name':'rfctrl0','Attr':[
                 ['LogLevel',1],
-                ['BaseAddress',0x80004000],
-                ['Length',4096]
+                ['BaseAddress',0x80008000],
+                ['Length',4096],
+                ['SubSystemConfig',0x7, '[0]=RfController enable; [1]=Engine; [2]=Fse GPS; [3]=Fse Glonass; [4]Fse Galileo']
                 ]}]},
     {'Class':'GPTimersClass','Instances':[
           {'Name':'gptmr0','Attr':[
@@ -246,7 +247,7 @@
     {'Class':'FseV2Class','Instances':[
           {'Name':'fsegps0','Attr':[
                 ['LogLevel',1],
-                ['BaseAddress',0x80008000],
+                ['BaseAddress',0x8000A000],
                 ['Length',4096]
                 ]}]},
     {'Class':'PNPClass','Instances':[

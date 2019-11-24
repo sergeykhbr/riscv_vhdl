@@ -17,6 +17,7 @@ static const int AXI4_SYSTEM_CLOCK = 40000000;  /// 40 MHz
 #define VENDOR_GNSSSENSOR        0x00F1
 
 #define GNSSSENSOR_EMPTY         0x5577     /// Dummy device
+#define GNSS_SUB_SYSTEM          0x0067     /// GNSS system
 #define GNSSSENSOR_ENGINE_STUB   0x0068     /// GNSS Engine stub
 #define GNSSSENSOR_FSE_V2_GPS    0x0069     /// Fast Search Engines Device ID provided by gnsslib
 #define GNSSSENSOR_FSE_V2_GLO    0x006A     ///
