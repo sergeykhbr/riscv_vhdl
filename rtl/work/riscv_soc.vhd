@@ -531,7 +531,7 @@ end generate;
     gnss0 : gnss_ss generic map (
       async_reset => CFG_ASYNC_RESET,
       tech        => CFG_MEMTECH,
-      xaddr       => 16#80005#,
+      xaddr       => 16#80008#,
       xmask       => 16#FFFF8#,
       xirq        => CFG_IRQ_GNSSENGINE
     ) port map ( 
