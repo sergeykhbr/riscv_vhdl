@@ -72,7 +72,7 @@ void DSU::softReset(bool val) {
             RISCV_error("Can't find IResetListener interface %s",
                         cpu_[i].to_string());
         } else {
-            irst->reset(val);
+            irst->reset(static_cast<IService *>(this));
         }
     }
 }

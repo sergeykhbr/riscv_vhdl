@@ -66,13 +66,6 @@ IOReg8Type::IOReg8Type(IService *parent, const char *name,
     hard_reset_value_ = 0;
 }
 
-void IOReg8Type::reset(bool active) {
-    if (!active) {
-        return;
-    }
-    write(hard_reset_value_);
-}
-
 ETransStatus IOReg8Type::b_transport(Axi4TransactionType *trans) {
     uint16_t addr = static_cast<uint16_t>(trans->addr);
     if (trans->action == MemAction_Read) {
@@ -117,13 +110,6 @@ IOReg16Type::IOReg16Type(IService *parent, const char *name,
     hard_reset_value_ = 0;
 }
 
-void IOReg16Type::reset(bool active) {
-    if (!active) {
-        return;
-    }
-    write(hard_reset_value_);
-}
-
 ETransStatus IOReg16Type::b_transport(Axi4TransactionType *trans) {
     uint32_t addr = static_cast<uint32_t>(trans->addr);
     if (trans->action == MemAction_Read) {
@@ -166,13 +152,6 @@ IOReg32Type::IOReg32Type(IService *parent, const char *name,
     IORegType(parent, name, addr, len, priority) {
     value.buf32[0] = 0;
     hard_reset_value_ = 0;
-}
-
-void IOReg32Type::reset(bool active) {
-    if (!active) {
-        return;
-    }
-    write(hard_reset_value_);
 }
 
 ETransStatus IOReg32Type::b_transport(Axi4TransactionType *trans) {

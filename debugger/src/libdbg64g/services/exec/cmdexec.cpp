@@ -263,6 +263,8 @@ void CmdExecutor::splitLine(char *str, AttributeType *listArgs) {
         if (*end == '\0') {
             AttributeType item;
             if ((str[0] >= '0' && str[0] <= '9')
+             || ((str[0] == '-' || str[0] == '+') &&
+                  str[1] >= '0' && str[1] <= '9')
              || (str[0] == '[') || (str[0] == '"') || (str[0] == '\'')
              || (str[0] == '{') || (str[0] == '(')) {
                 item.from_config(str);

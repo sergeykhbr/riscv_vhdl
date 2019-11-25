@@ -40,7 +40,7 @@ class CpuRiver_Functional : public CpuGeneric,
     virtual void predeleteService();
 
     /** IResetListener interface */
-    virtual void reset(bool active);
+    virtual void reset(IFace *isource);
 
     /** ICpuGeneric interface */
     virtual void raiseSignal(int idx);

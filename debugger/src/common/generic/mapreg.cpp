@@ -45,13 +45,6 @@ IFace *MappedReg64Type::getInterface(const char *name) {
     return parent_->getInterface(name);
 }
 
-void MappedReg64Type::reset(bool active) {
-    if (!active) {
-        return;
-    }
-    value_.val = hard_reset_value_;
-}
-
 ETransStatus MappedReg64Type::b_transport(Axi4TransactionType *trans) {
     uint64_t off = trans->addr - getBaseAddress();
     if (trans->action == MemAction_Read) {
@@ -95,13 +88,6 @@ IFace *MappedReg16Type::getInterface(const char *name) {
         return static_cast<IMemoryOperation *>(this);
     }
     return parent_->getInterface(name);
-}
-
-void MappedReg16Type::reset(bool active) {
-    if (!active) {
-        return;
-    }
-    value_.word = hard_reset_value_;
 }
 
 ETransStatus MappedReg16Type::b_transport(Axi4TransactionType *trans) {
@@ -157,13 +143,6 @@ IFace *MappedReg8Type::getInterface(const char *name) {
         return static_cast<IMemoryOperation *>(this);
     }
     return parent_->getInterface(name);
-}
-
-void MappedReg8Type::reset(bool active) {
-    if (!active) {
-        return;
-    }
-    value_.byte = hard_reset_value_;
 }
 
 ETransStatus MappedReg8Type::b_transport(Axi4TransactionType *trans) {

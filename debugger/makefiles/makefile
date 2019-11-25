@@ -6,7 +6,7 @@
 include util.mak
 
 ## Enable CentOS 6 pathes to build Qt plugin
-CENTOS6=1
+CENTOS6=0
 
 TOP_DIR=../
 OBJ_DIR = $(TOP_DIR)linuxbuild/obj

@@ -38,6 +38,9 @@
 #if defined(_WIN32) || defined(__CYGWIN__)
 #else
     #include <dlfcn.h>
+    #include <sys/mman.h>
+    #include <sys/stat.h>
+    #include <fcntl.h>
 #endif
 
 namespace debugger {
@@ -180,6 +183,11 @@ extern "C" IFace *RISCV_get_service_port_iface(const char *servname,
 extern "C" void RISCV_get_services_with_iface(const char *iname,
                                              AttributeType *list) {
     pcore_->getServicesWithIFace(iname, list);
+}
+
+extern "C" void RISCV_get_iface_list(const char *iname,
+                                     AttributeType *list) {
+    pcore_->getIFaceList(iname, list);
 }
 
 extern "C" void RISCV_get_clock_services(AttributeType *list) {
@@ -376,6 +384,19 @@ extern "C" int RISCV_sprintf(char *s, size_t len, const char *fmt, ...) {
     return ret;
 }
 
+extern "C" int RISCV_sscanf(const char *s, const char *fmt, ...) {
+    int ret;
+    va_list arg;
+    va_start(arg, fmt);
+#if defined(_WIN32) || defined(__CYGWIN__)
+    ret = vsscanf(s, fmt, arg);
+#else
+    ret = vsscanf(fmt, s, arg);
+#endif
+    va_end(arg);
+    return ret;
+}
+
 /* Suspend thread on certain number of milliseconds */
 extern "C" void RISCV_sleep_ms(int ms) {
 #if defined(_WIN32) || defined(__CYGWIN__)
@@ -547,6 +568,15 @@ extern "C" sharemem_def RISCV_memshare_create(const char *name, int sz) {
                  sz,                  // maximum object size (low-order DWORD)
                  name);               // name of mapping object
 #else
+    ret = shm_open(name, O_CREAT | O_RDWR, 0777);
+    if (ret > 0) {
+        if ( ftruncate(ret, sz + 1) == -1 ) {
+            RISCV_error("Couldn't set mem size %s", name);
+            ret = 0;
+        }
+    } else {
+        ret = 0;
+    }
 #endif
     if (ret == 0) {
         RISCV_error("Couldn't create map object %s", name);
@@ -563,6 +593,10 @@ extern "C" void* RISCV_memshare_map(sharemem_def h, int sz) {
                         0,
                         sz);
 #else
+    ret = mmap(NULL, sz + 1, PROT_READ|PROT_WRITE, MAP_SHARED, h, 0);
+    if (ret < 0) {
+        ret = 0;
+    }
 #endif
     if (ret == 0) {
         RISCV_error("Couldn't map view of file with size %d", sz);
@@ -570,10 +604,11 @@ extern "C" void* RISCV_memshare_map(sharemem_def h, int sz) {
     return ret;
 }
 
-extern "C" void RISCV_memshare_unmap(void *buf) {
+extern "C" void RISCV_memshare_unmap(void *buf, int sz) {
 #if defined(_WIN32) || defined(__CYGWIN__)
     UnmapViewOfFile(buf);
 #else
+    munmap(buf, sz + 1);
 #endif
 }
 
@@ -581,6 +616,7 @@ extern "C" void RISCV_memshare_delete(sharemem_def h) {
 #if defined(_WIN32) || defined(__CYGWIN__)
     CloseHandle(h);
 #else
+    close(h);
 #endif
 }
 

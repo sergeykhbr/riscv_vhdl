@@ -67,16 +67,15 @@ void CpuCortex_Functional::predeleteService() {
     delete pcmd_regs_;
 }
 
+/** HAP_ConfigDone */
 void CpuCortex_Functional::hapTriggered(IFace *isrc, EHapType type,
                                         const char *descr) {
-    AttributeType srvlist;
-    RISCV_get_services_with_iface(IFACE_RESET, &srvlist);
-    IService *iserv;
-    IReset *irst;
-    for (unsigned i = 0; i < srvlist.size(); i++) {
-        iserv = static_cast<IService *>(srvlist[i].to_iface());
-        irst = static_cast<IReset *>(iserv->getInterface(IFACE_RESET));
-        irst->powerOnPressed();
+    AttributeType pwrlist;
+    IPower *ipwr;
+    RISCV_get_iface_list(IFACE_POWER, &pwrlist);
+    for (unsigned i = 0; i < pwrlist.size(); i++) {
+        ipwr = static_cast<IPower *>(pwrlist[i].to_iface());
+        ipwr->power(POWER_ON);
     }
 
     CpuGeneric::hapTriggered(isrc, type, descr);
@@ -108,8 +107,8 @@ void CpuCortex_Functional::handleTrap() {
     interrupt_pending_[0] = 0;
 }
 
-void CpuCortex_Functional::reset(bool active) {
-    CpuGeneric::reset(active);
+void CpuCortex_Functional::reset(IFace *isource) {
+    CpuGeneric::reset(isource);
     portRegs_.reset();
     if (defaultMode_.is_equal("Thumb")) {
         setInstrMode(THUMB_mode);

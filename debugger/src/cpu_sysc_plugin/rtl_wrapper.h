@@ -67,6 +67,7 @@ class RtlWrapper : public sc_module,
     enum EState {
         State_Idle,
         State_Busy,
+        State_Reset,
     };
 
     struct RegistersType {
@@ -81,7 +82,7 @@ class RtlWrapper : public sc_module,
         //
         sc_signal<sc_bv<5>> nrst;
         sc_signal<bool> interrupt;
-        sc_signal<sc_uint<1>> state;
+        sc_signal<sc_uint<2>> state;
         sc_signal<bool> halted;
     } r, v;
 
@@ -98,13 +99,12 @@ class RtlWrapper : public sc_module,
     sc_signal<sc_uint<12>> wb_dport_addr;
     sc_signal<sc_uint<RISCV_ARCH>> wb_dport_wdata;
 
-    sc_signal<bool> w_nrst;
     sc_signal<bool> w_interrupt;
 
     Axi4TransactionType trans;
     ETransStatus resp;
 
-    bool async_nrst;
+    bool request_reset;
     bool async_interrupt;
 
     void clk_gen();
@@ -135,8 +135,8 @@ class RtlWrapper : public sc_module,
     virtual void registerStepCallback(IClockListener *cb, uint64_t t);
 
     /** IResetListener */
-    virtual void reset(bool active) {
-        o_nrst.write(!active);
+    virtual void reset(IFace *isource) {
+        request_reset = true;
     }
 
 

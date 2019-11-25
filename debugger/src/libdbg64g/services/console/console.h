@@ -46,7 +46,7 @@ public:
     virtual void hapTriggered(IFace *isrc, EHapType type, const char *descr);
 
     /** IRawListener (default stream) */
-    virtual void updateData(const char *buf, int buflen);
+    virtual int updateData(const char *buf, int buflen);
 
 protected:
     /** IThread interface */
@@ -82,11 +82,11 @@ private:
             }
         }
         // IRawListener
-        virtual void updateData(const char *buf, int buflen) {
+        virtual int updateData(const char *buf, int buflen) {
             if (!waitLine_) {
                 outdata_ = name_ + std::string(buf);
                 parent_->writeBuffer(outdata_.c_str());
-                return;
+                return buflen;
             }
             for (int i = 0; i < buflen; i++) {
                 if (buf[i] == '\r' || buf[i] == '\n') {
@@ -99,6 +99,7 @@ private:
                     outdata_ += buf[i];
                 }
             }
+            return buflen;
         }
 
     private:

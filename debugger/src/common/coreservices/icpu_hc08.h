@@ -99,6 +99,8 @@ class ICpuHC08 : public IFace {
 
     /** Update COP watchdog settings */
     virtual void updateCOP() = 0;
+    virtual void setCOPEnabled(bool enabled) = 0;
+    virtual bool getCOPEnabled() = 0;
 
     /** Reset sequence has ben writen */
     virtual void resetCOP() = 0;
@@ -111,6 +113,9 @@ class ICpuHC08 : public IFace {
     /** Push/Pop data to/form internal stack inaccessible for firmware */
     virtual void internalStackPush(uint8_t val) = 0;
     virtual uint8_t internalStackPop() = 0;
+
+    virtual void setInterruptsBlocked(bool blocked) = 0;
+    virtual bool getInterruptsBlocked() = 0;
 };
 
 }  // namespace debugger

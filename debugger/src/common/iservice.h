@@ -129,6 +129,8 @@ class IService : public IFace {
         return NULL;
     }
 
+    virtual const AttributeType *getPortList() { return &listPorts_; }
+
     virtual void registerAttribute(const char *name, IAttribute *iface) {
         AttributeType item(iface);
         iface->allocAttrName(name);

@@ -58,7 +58,7 @@ class IOReg8Type : public IORegType {
     virtual ETransStatus b_transport(Axi4TransactionType *trans);
 
     /** IResetListener interface */
-    virtual void reset(bool active);
+    virtual void reset(IFace *isource) { write(hard_reset_value_); }
 
     /** General access methods: */
     uint8_t getValue() { return value.byte; }
@@ -83,7 +83,7 @@ class IOReg16Type : public IORegType {
     virtual ETransStatus b_transport(Axi4TransactionType *trans);
 
     /** IResetListener interface */
-    virtual void reset(bool active);
+    virtual void reset(IFace *isource) { write(hard_reset_value_); }
 
     /** General access methods: */
     uint16_t getValue() { return value.word; }
@@ -108,7 +108,7 @@ public:
     virtual ETransStatus b_transport(Axi4TransactionType *trans);
 
     /** IResetListener interface */
-    virtual void reset(bool active);
+    virtual void reset(IFace *isource) { write(hard_reset_value_); }
 
     /** General access methods: */
     uint32_t getValue() { return value.buf32[0]; }

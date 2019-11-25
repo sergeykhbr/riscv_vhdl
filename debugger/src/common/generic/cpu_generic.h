@@ -96,6 +96,7 @@ class CpuGeneric : public IService,
                    public ICpuGeneric,
                    public ICpuFunctional,
                    public IClock,
+                   public IPower,
                    public IResetListener,
                    public IHap {
  public:
@@ -156,8 +157,11 @@ class CpuGeneric : public IService,
         }
     }
 
+    /** IPower */
+    virtual void power(EPowerAction onoff);
+
     /** IResetListener interface */
-    virtual void reset(bool active);
+    virtual void reset(IFace *isource);
 
     /** IHap */
     virtual void hapTriggered(IFace *isrc, EHapType type, const char *descr);

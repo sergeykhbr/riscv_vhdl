@@ -21,6 +21,7 @@ class IKeyboard : public IFace {
 
     virtual void keyPress(const char *keyname) = 0;
     virtual void keyRelease(const char *keyname) = 0;
+    virtual int getRow() { return 0; }
 };
 
 }  // namespace debugger

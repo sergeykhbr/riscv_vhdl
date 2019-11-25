@@ -130,8 +130,10 @@
     <ClCompile Include="..\..\src\libdbg64g\services\mem\memsim.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\mem\rmemsim.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\remote\dpiclient.cpp" />
+    <ClCompile Include="..\..\src\libdbg64g\services\remote\gdbcmd.cpp" />
+    <ClCompile Include="..\..\src\libdbg64g\services\remote\jsoncmd.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\remote\tcpclient.cpp" />
-    <ClCompile Include="..\..\src\libdbg64g\services\remote\tcpcmd.cpp" />
+    <ClCompile Include="..\..\src\libdbg64g\services\remote\tcpcmd_gen.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\remote\tcpserver.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -215,8 +217,10 @@
     <ClInclude Include="..\..\src\libdbg64g\services\mem\memsim.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\mem\rmemsim.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\remote\dpiclient.h" />
+    <ClInclude Include="..\..\src\libdbg64g\services\remote\gdbcmd.h" />
+    <ClInclude Include="..\..\src\libdbg64g\services\remote\jsoncmd.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\remote\tcpclient.h" />
-    <ClInclude Include="..\..\src\libdbg64g\services\remote\tcpcmd.h" />
+    <ClInclude Include="..\..\src\libdbg64g\services\remote\tcpcmd_gen.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\remote\tcpserver.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

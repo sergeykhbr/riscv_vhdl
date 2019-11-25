@@ -256,6 +256,8 @@ class AttributeType : public IAttribute {
 
     void realloc_data(unsigned size);
 
+    void string_to_data();
+
     void make_list(unsigned size);
 
     void add_to_list(const AttributeType *item) {

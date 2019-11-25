@@ -34,13 +34,17 @@ class MappedReg64Type : public IMemoryOperation,
     virtual ETransStatus b_transport(Axi4TransactionType *trans);
 
     /** IResetListener interface */
-    virtual void reset(bool active);
+    virtual void reset(IFace *isource) { value_.val = hard_reset_value_; }
 
     /** General access methods: */
     const char *regName() { return regname_.to_string(); }
     Reg64Type getValue() { return value_; }
     void setValue(Reg64Type v) { value_ = v; }
     void setValue(uint64_t v) { value_.val = v; }
+    void setHardResetValue(uint64_t v) {
+        hard_reset_value_ = v;
+        reset(0);
+    } 
 
  protected:
     /** Possible side effects handlers:  */
@@ -72,13 +76,17 @@ class MappedReg16Type : public IMemoryOperation,
     virtual ETransStatus b_transport(Axi4TransactionType *trans);
 
     /** IResetListener interface */
-    virtual void reset(bool active);
+    virtual void reset(IFace *isource) { value_.word = hard_reset_value_; }
 
     /** General access methods: */
     const char *regName() { return regname_.to_string(); }
     Reg16Type getValue() { return value_; }
     void setValue(Reg16Type v) { value_ = v; }
     void setValue(uint16_t v) { value_.word = v; }
+    void setHardResetValue(uint16_t v) {
+        hard_reset_value_ = v;
+        reset(0);
+    } 
 
  protected:
     /** Possible side effects handlers:  */
@@ -110,13 +118,17 @@ class MappedReg8Type : public IMemoryOperation,
     virtual ETransStatus b_transport(Axi4TransactionType *trans);
 
     /** IResetListener interface */
-    virtual void reset(bool active);
+    virtual void reset(IFace *isource) { value_.byte = hard_reset_value_; }
 
     /** General access methods: */
     const char *regName() { return regname_.to_string(); }
     Reg8Type getValue() { return value_; }
     void setValue(Reg8Type v) { value_ = v; }
     void setValue(uint8_t v) { value_.byte = v; }
+    void setHardResetValue(uint8_t v) {
+        hard_reset_value_ = v;
+        reset(0);
+    } 
 
  protected:
     /** Possible side effects handlers:  */

@@ -159,8 +159,8 @@ void CpuRiver_Functional::handleTrap() {
     interrupt_pending_[0] = 0;
 }
 
-void CpuRiver_Functional::reset(bool active) {
-    CpuGeneric::reset(active);
+void CpuRiver_Functional::reset(IFace *isource) {
+    CpuGeneric::reset(isource);
     portRegs_.reset();
     portCSR_.reset();
     portCSR_.write(CSR_mvendorid, vendorid_.to_uint64());

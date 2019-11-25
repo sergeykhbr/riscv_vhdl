@@ -189,13 +189,14 @@ int SerialDbgService::write(uint64_t addr, int bytes, uint8_t *ibuf) {
     return bytes;
 }
 
-void SerialDbgService::updateData(const char *buf, int buflen) {
+int SerialDbgService::updateData(const char *buf, int buflen) {
     memcpy(&rx_buf_[rd_count_], buf, buflen);
     rd_count_ += buflen;
     if (rd_count_ < wait_bytes_) {
-        return;
+        return buflen;
     }
     RISCV_event_set(&event_block_);
+    return buflen;
 }
 
 }  // namespace debugger

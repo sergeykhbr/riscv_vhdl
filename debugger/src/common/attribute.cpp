@@ -238,6 +238,11 @@ void AttributeType::realloc_data(unsigned size) {
     size_ = size;
 }
 
+void AttributeType::string_to_data() {
+    size_++;    // null symbol
+    kind_ = Attr_Data;
+}
+
 void AttributeType::make_list(unsigned size) {
     attr_free();
     kind_ = Attr_List;
@@ -254,8 +259,8 @@ void AttributeType::realloc_list(unsigned size) {
     if (req_sz > cur_sz) {
         AttributeType * t1 = static_cast<AttributeType *>(
                 RISCV_malloc(MIN_ALLOC_BYTES * req_sz));
-        memcpy(t1, u_.list, size_ * sizeof(AttributeType));
-        memset(&t1[size_], 0,
+        memcpy(static_cast<void*>(t1), u_.list, size_ * sizeof(AttributeType));
+        memset(static_cast<void*>(&t1[size_]), 0,
                 (MIN_ALLOC_BYTES * req_sz) - size_ * sizeof(AttributeType));
         if (size_) {
             RISCV_free(u_.list);
@@ -274,13 +279,15 @@ void AttributeType::insert_to_list(unsigned idx, const AttributeType *item) {
                   / MIN_ALLOC_BYTES;
     AttributeType * t1 = static_cast<AttributeType *>(
                 RISCV_malloc(MIN_ALLOC_BYTES * new_sz));
-    memset(t1 + idx, 0, sizeof(AttributeType));  // Fix bug request #4
+    memset(static_cast<void*>(t1 + idx), 0,
+           sizeof(AttributeType));  // Fix bug request #4
 
-    memcpy(t1, u_.list, idx * sizeof(AttributeType));
+    memcpy(static_cast<void*>(t1), u_.list, idx * sizeof(AttributeType));
     t1[idx].clone(item);
-    memcpy(&t1[idx + 1], &u_.list[idx], (size_ - idx) * sizeof(AttributeType));
-    memset(&t1[size_ + 1], 0,
-          (MIN_ALLOC_BYTES * new_sz) - (size_ + 1) * sizeof(AttributeType));
+    memcpy(static_cast<void*>(&t1[idx + 1]), &u_.list[idx],
+           (size_ - idx) * sizeof(AttributeType));
+    memset(static_cast<void*>(&t1[size_ + 1]), 0,
+           (MIN_ALLOC_BYTES * new_sz) - (size_ + 1) * sizeof(AttributeType));
     if (size_) {
         RISCV_free(u_.list);
     }
@@ -456,8 +463,9 @@ void AttributeType::realloc_dict(unsigned size) {
     if (req_sz > cur_sz) {
         AttributePairType * t1 = static_cast<AttributePairType *>(
                 RISCV_malloc(MIN_ALLOC_BYTES * req_sz));
-        memcpy(t1, u_.dict, size_ * sizeof(AttributePairType));
-        memset(&t1[size_], 0,
+        memcpy(static_cast<void*>(t1), u_.dict,
+               size_ * sizeof(AttributePairType));
+        memset(static_cast<void*>(&t1[size_]), 0,
                 (MIN_ALLOC_BYTES * req_sz) - size_ * sizeof(AttributePairType));
         if (size_) {
             RISCV_free(u_.dict);

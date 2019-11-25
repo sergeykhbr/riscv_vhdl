@@ -62,7 +62,9 @@
                 ['Timeout',500],
                 ['BlockingMode',true],
                 ['HostIP',''],
+                ['Type','json'],
                 ['HostPort',8687],
+                ['ListenDefaultOutput',true, 'Re-direct console output into TCP'],
                 ['PlatformConfig',{'Name':'ARMv7',
                                    'Display':'',
                                    'Keys':[],
@@ -287,10 +289,8 @@
                 ]}]},
     {'Class':'HardResetClass','Instances':[
           {'Name':'reset0','Attr':[
+                ['ObjDescription','This device provides command (todo) to reset/power on-off system']
                 ['LogLevel',4],
-                ['ResetDevices',[
-                                  'core0'
-                                ]]
                 ]}]},
     {'Class':'BoardSimClass','Instances':[
           {'Name':'boardsim','Attr':[

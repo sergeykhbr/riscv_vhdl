@@ -1,5 +1,5 @@
 /*
- *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *  Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,22 +14,25 @@
  *  limitations under the License.
  */
 
-#ifndef __DEBUGGER_COMMON_CORESERVICES_IRAWLISTENER_H__
-#define __DEBUGGER_COMMON_CORESERVICES_IRAWLISTENER_H__
+#ifndef __DEBUGGER_SERVICES_REMOTE_JSONCMD_H__
+#define __DEBUGGER_SERVICES_REMOTE_JSONCMD_H__
 
-#include <iface.h>
+#include "tcpcmd_gen.h"
 
 namespace debugger {
 
-static const char *IFACE_RAW_LISTENER = "IRawListener";
-
-class IRawListener : public IFace {
+class JsonCommands : public TcpCommandsGen {
  public:
-    IRawListener() : IFace(IFACE_RAW_LISTENER) {}
+    explicit JsonCommands(IService *parent);
 
-    virtual int updateData(const char *buf, int buflen) = 0;
+ protected:
+    virtual int processCommand(const char *cmdbuf, int bufsz);
+    virtual bool isStartMarker(char s) { return true; }
+    virtual bool isEndMarker(const char *s, int sz) {
+        return s[sz - 1] == '\0';
+    }
 };
 
 }  // namespace debugger
 
-#endif  // __DEBUGGER_COMMON_CORESERVICES_IRAWLISTENER_H__
+#endif  // __DEBUGGER_SERVICES_REMOTE_JSONCMD_H__

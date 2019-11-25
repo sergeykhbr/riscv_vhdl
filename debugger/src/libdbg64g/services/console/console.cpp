@@ -155,8 +155,9 @@ void ConsoleService::hapTriggered(IFace *isrc, EHapType type,
     }
 }
 
-void ConsoleService::updateData(const char *buf, int buflen) {
+int ConsoleService::updateData(const char *buf, int buflen) {
     writeBuffer(buf);
+    return buflen;
 }
 
 void ConsoleService::busyLoop() {
