@@ -28,6 +28,7 @@
 #include "maps/map_gnssengine.h"
 #include "maps/map_ethmac.h"
 #include "maps/map_spiflash.h"
+#include "maps/map_fsev2.h"
 
 #define ADDR_BUS0_XSLV_OTP          0x00010000
 #define ADDR_BUS0_XSLV_FWIMAGE      0x00100000
