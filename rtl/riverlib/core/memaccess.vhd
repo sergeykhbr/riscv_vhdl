@@ -180,7 +180,7 @@ begin
 
 
 
-  comb : process(i_nrst, i_mem_req_ready, i_e_valid,
+  comb : process(i_nrst, i_mem_req_ready, i_e_valid, i_res_addr,
                 i_mem_data_valid, i_mem_data_addr, i_mem_data,
                 queue_data_o, queue_nempty, r)
     variable v : RegistersType;

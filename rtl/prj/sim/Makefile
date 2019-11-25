@@ -51,7 +51,7 @@ gui:clr_logs
 
 clean:
 	@rm -f *.log *.key *.diag *.err
-	@rm -rf commonlib ambalib techmap ethlib misclib riverlib work
+	@rm -rf gnsslib commonlib ambalib techmap ethlib misclib riverlib work
 	@rm -rf waves* INCA_* .simvision
 	@rm -f ./*.tmp
 	@rm -f ./*.dis ./*.ecs*
