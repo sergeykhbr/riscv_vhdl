@@ -65,6 +65,7 @@ class CoreService : public IService {
     IFace *getClass(const char *name);
     IFace *getService(const char *name);
     void getServicesWithIFace(const char *iname, AttributeType *list);
+    void getIFaceList(const char *iname, AttributeType *list);
 
     void lockPrintf();
     void unlockPrintf();

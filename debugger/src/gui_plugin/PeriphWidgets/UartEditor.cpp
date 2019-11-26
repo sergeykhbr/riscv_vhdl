@@ -65,7 +65,7 @@ void UartEditor::closeEvent(QCloseEvent *event_) {
     event_->accept();
 }
 
-void UartEditor::updateData(const char *buf, int buflen) {
+int UartEditor::updateData(const char *buf, int buflen) {
     RISCV_mutex_lock(&mutexStr_);
     while (buflen--) {
         // Zephyr kernel scan symbol '\n' and after it adds the extra
@@ -81,6 +81,7 @@ void UartEditor::updateData(const char *buf, int buflen) {
     RISCV_mutex_unlock(&mutexStr_);
 
     emit signalNewData();
+    return buflen;
 }
 
 void UartEditor::slotUpdateByData() {

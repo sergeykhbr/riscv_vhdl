@@ -26,6 +26,7 @@ void test_timer_multicycle_instructions(void);
 void test_missaccess(void);
 void test_stackprotect(void);
 void test_spiflash(uint64_t bar);
+void test_gnss_ss(uint64_t bar);
 void print_pnp(void);
 
 int main() {
@@ -56,12 +57,6 @@ int main() {
  
     led_set(0x01);
 
-    bar = get_dev_bar(VENDOR_GNSSSENSOR, GNSSSENSOR_SPI_FLASH);
-    if (bar != DEV_NONE) {
-        printf_uart("SPI Flash BAR. .0x%08x\r\n", bar);
-        test_spiflash(bar);
-    }
-
 #if 1
     printf_uart("HARTID . . . . .%d\r\n", fw_get_cpuid());
     printf_uart("Tech . . . . . .0x%08x\r\n", pnp->tech);
@@ -84,10 +79,28 @@ int main() {
     led_set(0x05);
     test_stackprotect();
 
+    bar = get_dev_bar(VENDOR_GNSSSENSOR, GNSS_SUB_SYSTEM);
     led_set(0x06);
+    if (bar != DEV_NONE) {
+        led_set(0x07);
+        test_gnss_ss(bar);
+        printf_uart("GNSS_SS BAR. . .0x%08x\r\n", bar);
+    }
+    led_set(0x08);
+
+    bar = get_dev_bar(VENDOR_GNSSSENSOR, GNSSSENSOR_SPI_FLASH);
+    led_set(0x09);
+    if (bar != DEV_NONE) {
+        led_set(0x0A);
+        printf_uart("SPI Flash BAR. .0x%08x\r\n", bar);
+        test_spiflash(bar);
+    }
+    led_set(0x0B);
+
+    led_set(0x55);
     print_pnp();
 
-    led_set(0x07);
+    led_set(0x1F);
 
     // TODO: implement test console
     while (1) {}

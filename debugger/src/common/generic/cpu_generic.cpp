@@ -40,6 +40,7 @@ CpuGeneric::CpuGeneric(const char *name)
     registerInterface(static_cast<IClock *>(this));
     registerInterface(static_cast<ICpuGeneric *>(this));
     registerInterface(static_cast<ICpuFunctional *>(this));
+    registerInterface(static_cast<IPower *>(this));
     registerInterface(static_cast<IResetListener *>(this));
     registerInterface(static_cast<IHap *>(this));
     registerAttribute("Enable", &isEnable_);
@@ -482,20 +483,9 @@ void CpuGeneric::halt(const char *descr) {
     RISCV_trigger_hap(getInterface(IFACE_SERVICE), HAP_Halt, "Descr");
 }
 
-void CpuGeneric::reset(bool active) {
-    interrupt_pending_[0] = 0;
-    interrupt_pending_[1] = 0;
-    status_.reset(active);
-    stackTraceCnt_.reset(active);
-    pc_.setValue(getResetAddress());
-    npc_.setValue(getResetAddress());
-    if (!active && estate_ == CORE_OFF) {
-        // Turn ON:
-        estate_ = CORE_Halted;//CORE_Normal;
-        RISCV_trigger_hap(static_cast<IService *>(this),
-                            HAP_CpuTurnON, "CPU Turned ON");
-    } else if (active) {
-        flush(~0ull);
+void CpuGeneric::power(EPowerAction onoff) {
+    if (onoff == POWER_OFF && estate_ != CORE_OFF) {
+        // Turn OFF:
         if (resetState_.is_equal("Halted")) {
             estate_ = CORE_Halted;
         } else {
@@ -503,7 +493,25 @@ void CpuGeneric::reset(bool active) {
         }
         RISCV_trigger_hap(static_cast<IService *>(this),
                             HAP_CpuTurnOFF, "CPU Turned OFF");
+    } else if (onoff == POWER_ON && estate_ == CORE_OFF) {
+        // Turn ON:
+        estate_ = CORE_Normal;
+        RISCV_trigger_hap(static_cast<IService *>(this),
+                            HAP_CpuTurnON, "CPU Turned ON");
     }
+}
+
+void CpuGeneric::reset(IFace *isource) {
+    flush(~0ull);
+    /** Reset address can be changed in runtime */
+    pc_.setHardResetValue(getResetAddress());
+    npc_.setHardResetValue(getResetAddress());
+    status_.reset(isource);
+    stackTraceCnt_.reset(isource);
+    pc_.reset(isource);
+    npc_.reset(isource);
+    interrupt_pending_[0] = 0;
+    interrupt_pending_[1] = 0;
     hw_breakpoint_ = false;
     sw_breakpoint_ = false;
     do_not_cache_ = false;

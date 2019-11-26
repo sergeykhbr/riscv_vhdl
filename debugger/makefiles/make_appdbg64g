@@ -39,7 +39,8 @@ SOURCES = \
 LIBS = \
 	m \
 	stdc++ \
-	dbg64g
+	dbg64g \
+	rt
 
 SRC_FILES = $(addsuffix .cpp,$(SOURCES))
 OBJ_FILES = $(addprefix $(OBJ_DIR)/,$(addsuffix .o,$(SOURCES)))

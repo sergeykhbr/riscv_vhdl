@@ -17,16 +17,12 @@ NET "i_rst" CLOCK_DEDICATED_ROUTE = "FALSE";
 
 
 # UART1 interface
-NET "i_uart1_ctsn" LOC = T23;
 NET "i_uart1_rd"   LOC = J24;
-NET "o_uart1_rtsn" LOC = T24;
 NET "o_uart1_td"   LOC = J25;
 
 # UART2 interface (debug port).
 # Assign to HPC:
-NET "i_uart2_ctsn" LOC = AL23; # HPC H20
 NET "i_uart2_rd"   LOC = AM23; # HPC H19
-NET "o_uart2_rtsn" LOC = AN23; # HPC G19
 NET "o_uart2_td"   LOC = AP22; # HPC G18
 # Assign to LPC:
 #NET "i_uart2_ctsn" LOC = C33; # LPC C18
@@ -54,6 +50,16 @@ NET "io_gpio[9]" LOC = AG23;
 NET "io_gpio[10]" LOC = AE24;
 NET "io_gpio[11]" LOC = AD24;
 
+#JTAG unused
+NET "i_jtag_tck" CLOCK_DEDICATED_ROUTE = "FALSE";
+
+NET "o_jtag_vref" LOC = C34;
+NET "i_jtag_ntrst" LOC = D34;
+NET "i_jtag_tdi" LOC = L26;
+NET "i_jtag_tms" LOC = L25;
+NET "i_jtag_tck" LOC = H34;
+NET "o_jtag_tdo" LOC = K33;
+
 # ADC samples:
 NET "i_clk_adc" LOC = "A10";
 NET "i_clk_adc" TNM_NET = TNM_AdcClk;
@@ -68,7 +74,7 @@ NET "i_glo_I[0]" LOC = "C33";#"N25";
 NET "i_glo_Q[1]" LOC = "G30";#"K32";
 NET "i_glo_Q[0]" LOC = "F30";#"K31";
 NET "i_glo_ld" LOC = "M33";
-
+NET "o_pps" LOC = "AN22";	  #HPC H17
 
 # RF control:
 NET "o_max_sclk" LOC = "L31";

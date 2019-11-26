@@ -112,7 +112,8 @@ void ConsoleWidget::keyPressEvent(QKeyEvent *e) {
         uint8_t spsmb = static_cast<uint8_t>(e->text().at(0).toLatin1());
         if (spsmb == '_' || spsmb == ':' || spsmb == '\\' || spsmb == '/'
          || spsmb == '\'' || spsmb == '[' || spsmb == ']'
-         || spsmb == '{' || spsmb == '}' || spsmb == ',') {
+         || spsmb == '{' || spsmb == '}' || spsmb == ',' || spsmb == '.'
+         || spsmb == '-' || spsmb == '+') {
             vt_key = spsmb;
         }
     }
@@ -172,11 +173,12 @@ void ConsoleWidget::slotUpdateByData() {
     verticalScrollBar()->setValue(verticalScrollBar()->maximum());
 }
 
-void ConsoleWidget::updateData(const char *buf, int bufsz) {
+int ConsoleWidget::updateData(const char *buf, int bufsz) {
     RISCV_mutex_lock(&mutexOutput_);
     strOutput_ += QString(buf);
     RISCV_mutex_unlock(&mutexOutput_);
     emit signalNewData();
+    return bufsz;
 }
 
 }  // namespace debugger

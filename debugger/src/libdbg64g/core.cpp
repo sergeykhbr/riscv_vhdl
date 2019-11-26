@@ -371,6 +371,39 @@ void CoreService::getServicesWithIFace(const char *iname,
     }
 }
 
+void CoreService::getIFaceList(const char *iname,
+                               AttributeType *list) {
+    IClass *icls;
+    IService *iserv;
+    IFace *iface;
+    const AttributeType *tlist;
+    const AttributeType *tports;
+    list->make_list(0);
+    
+    for (unsigned i = 0; i < listClasses_.size(); i++) {
+        icls = static_cast<IClass *>(listClasses_[i].to_iface());
+        tlist = icls->getInstanceList();
+        for (unsigned n = 0; n < tlist->size(); n++) {
+            iserv = static_cast<IService *>((*tlist)[n].to_iface());
+            iface = iserv->getInterface(iname);
+            if (iface) {
+                AttributeType t1(iface);
+                list->add_to_list(&t1);
+            }
+            tports = iserv->getPortList();
+            for (unsigned k = 0; k < tports->size(); k++) {
+                const AttributeType &prt = (*tports)[k];
+                // [0] port name; [1] port interface
+                iface = prt[1].to_iface();
+                if (strcmp(iname, iface->getFaceName()) == 0) {
+                    AttributeType t1(iface);
+                    list->add_to_list(&t1);
+                }
+            }
+        }
+    }
+}
+
 void CoreService::lockPrintf() {
     RISCV_mutex_lock(&mutexPrintf_);
 }

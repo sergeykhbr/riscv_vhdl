@@ -160,6 +160,10 @@ IFace *RISCV_get_service_port_iface(const char *servname,
  */
 void RISCV_get_services_with_iface(const char *iname, AttributeType *list);
 
+/**
+ * @brief Get list of interfaces implemented by services or service's ports.
+ */
+void RISCV_get_iface_list(const char *iname, AttributeType *list);
 
 /**
  * @brief Get list of all clock generators.
@@ -219,6 +223,9 @@ int RISCV_sprintf(char *s, size_t len, const char *fmt, ...);
 /** Format output to the default stream. */
 int RISCV_printf(void *iface, int level, const char *fmt, ...);
 
+/** Format input data */
+int RISCV_sscanf(const char *s, const char *fmt, ...);
+
 /** Output always */
 #define RISCV_printf0(fmt, ...) \
     RISCV_printf(getInterface(IFACE_SERVICE), 0, fmt, __VA_ARGS__)
@@ -271,7 +278,7 @@ int RISCV_event_wait_ms(event_def *ev, int ms);
 
 sharemem_def RISCV_memshare_create(const char *name, int sz);
 void* RISCV_memshare_map(sharemem_def h, int sz);
-void RISCV_memshare_unmap(void *buf);
+void RISCV_memshare_unmap(void *buf, int sz);
 void RISCV_memshare_delete(sharemem_def h);
 
 /** Memory allocator/de-allocator */

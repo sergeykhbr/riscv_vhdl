@@ -208,11 +208,12 @@ void ComPortService::unregisterRawListener(IFace *iface) {
     RISCV_mutex_unlock(&mutexListeners_);
 }
 
-void ComPortService::updateData(const char *buf, int buflen) {
+int ComPortService::updateData(const char *buf, int buflen) {
     // Data from UART simulation:
     for (int i = 0; i < buflen; i++) {
         rxFifo_.put(buf[i]);
     }
+    return buflen;
 }
 
 }  // namespace debugger

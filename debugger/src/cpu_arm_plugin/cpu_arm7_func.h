@@ -41,7 +41,7 @@ class CpuCortex_Functional : public CpuGeneric,
     virtual void hapTriggered(IFace *isrc, EHapType type, const char *descr);
 
     /** IResetListener interface */
-    virtual void reset(bool active);
+    virtual void reset(IFace *isource);
 
     /** ICpuGeneric interface */
     virtual void raiseSignal(int idx);

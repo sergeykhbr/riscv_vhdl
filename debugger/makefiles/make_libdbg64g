@@ -25,13 +25,13 @@ SRC_PATH =\
 	$(TOP_DIR)src/common \
 	$(TOP_DIR)src/common/generic \
 	$(TOP_DIR)src/libdbg64g \
-	$(TOP_DIR)src/libdbg64g/services/mem \
+	$(TOP_DIR)src/libdbg64g/services/comport \
 	$(TOP_DIR)src/libdbg64g/services/console \
 	$(TOP_DIR)src/libdbg64g/services/debug \
+	$(TOP_DIR)src/libdbg64g/services/elfloader \
 	$(TOP_DIR)src/libdbg64g/services/exec \
 	$(TOP_DIR)src/libdbg64g/services/exec/cmd \
-	$(TOP_DIR)src/libdbg64g/services/comport \
-	$(TOP_DIR)src/libdbg64g/services/elfloader \
+	$(TOP_DIR)src/libdbg64g/services/mem \
 	$(TOP_DIR)src/libdbg64g/services/remote
 
 VPATH = $(SRC_PATH)
@@ -43,9 +43,9 @@ SOURCES = \
 	core \
 	mapreg \
 	bus_generic \
-	memlut \
 	mem_generic \
 	rmembank_gen1 \
+	memlut \
 	memsim \
 	rmemsim \
 	serial_dbglink \
@@ -56,32 +56,34 @@ SOURCES = \
 	cmd_cpi \
 	cmd_cpucontext \
 	cmd_disas \
+	cmd_elf2raw \
+	cmd_exit \
 	cmd_halt \
 	cmd_isrunning \
 	cmd_loadbin \
 	cmd_loadelf \
 	cmd_loadsrec \
+	cmd_loadh86 \
 	cmd_log \
+	cmd_memdump \
 	cmd_read \
-	cmd_write \
 	cmd_reset \
 	cmd_run \
 	cmd_stack \
 	cmd_status \
 	cmd_symb \
-	cmd_exit \
-	cmd_memdump \
-	cmd_elf2raw \
-	cmd_loadh86 \
+	cmd_write \
 	cmdexec \
 	console \
 	com_linux \
 	comport \
 	autocompleter \
-	tcpserver \
+	dpiclient \
 	tcpclient \
-	tcpcmd \
-	dpiclient 
+	tcpcmd_gen \
+	jsoncmd \
+	gdbcmd \
+	tcpserver
 
 LIBS = \
 	m \

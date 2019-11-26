@@ -330,10 +330,8 @@
                 ]}]},
     {'Class':'HardResetClass','Instances':[
           {'Name':'reset0','Attr':[
+                ['ObjDescription','This device provides command (todo) to reset/power on-off system']
                 ['LogLevel',4],
-                ['ResetDevices',[
-                                  'core0'
-                                ]]
                 ]}]},
     {'Class':'BoardSimClass','Instances':[
           {'Name':'boardsim','Attr':[

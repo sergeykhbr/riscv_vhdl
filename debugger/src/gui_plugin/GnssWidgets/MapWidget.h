@@ -75,7 +75,7 @@ public:
     virtual ~MapWidget();
 
     /** IRawListener */
-    virtual void updateData(const char *buf, int buflen);
+    virtual int updateData(const char *buf, int buflen);
 
 signals:
     void signalRequestNetworkData();

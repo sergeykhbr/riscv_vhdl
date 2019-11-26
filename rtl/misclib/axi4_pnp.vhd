@@ -135,7 +135,7 @@ begin
     o_wdata => wb_bus_wdata
   );
 
-  comblogic : process(nrst, slvcfg, mstcfg, r, r_adc_detect, 
+  comblogic : process(nrst, slvcfg, mstcfg, r, r_adc_detect, i_otp_busy,
                       w_bus_re, wb_bus_raddr, wb_bus_waddr,
                       w_bus_we, wb_bus_wstrb, wb_bus_wdata)
     variable v : registers;

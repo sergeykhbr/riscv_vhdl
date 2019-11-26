@@ -21,6 +21,7 @@ EXPORTS
 	RISCV_set_default_clock
 	RISCV_sprintf
 	RISCV_printf
+	RISCV_sscanf
 	RISCV_sleep_ms
 	RISCV_get_time_ms
 	RISCV_get_pid
@@ -47,6 +48,7 @@ EXPORTS
 	RISCV_get_core_folderw
 	RISCV_set_current_dir
 	RISCV_get_services_with_iface
+	RISCV_get_iface_list
 	RISCV_get_clock_services
 	RISCV_break_simulation
 	RISCV_malloc

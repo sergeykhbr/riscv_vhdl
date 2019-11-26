@@ -14,8 +14,8 @@
  *  limitations under the License.
  */
 
-#ifndef __DEBUGGER_TCPCMD_H__
-#define __DEBUGGER_TCPCMD_H__
+#ifndef __DEBUGGER_TCPCMD_GEN_H__
+#define __DEBUGGER_TCPCMD_GEN_H__
 
 #include <api_core.h>
 #include <iclass.h>
@@ -26,22 +26,27 @@
 #include "coreservices/icpufunctional.h"
 #include "coreservices/icmdexec.h"
 #include "coreservices/isrccode.h"
+#include "coreservices/ikeyboard.h"
 #include "coreservices/iclock.h"
+#include "coreservices/imotor.h"
+#include "coreservices/isensor.h"
 #include "coreservices/iwire.h"
 #include "coreservices/irawlistener.h"
+#include "coreservices/iserial.h"
+#include "coreservices/idisplay.h"
 #include "igui.h"
 
 namespace debugger {
 
-class TcpCommands : public IRawListener,
-                    public IHap,
-                    public IClockListener {
+class TcpCommandsGen : public IRawListener,
+                       public IHap,
+                       public IClockListener {
  public:
-    explicit TcpCommands(IService *parent);
-    ~TcpCommands();
+    explicit TcpCommandsGen(IService *parent);
+    virtual ~TcpCommandsGen();
 
     /** IRawListener interface */
-    virtual void updateData(const char *buf, int buflen);
+    virtual int updateData(const char *buf, int buflen);
 
     /** IHap */
     virtual void hapTriggered(IFace *isrc, EHapType type, const char *descr);
@@ -51,25 +56,29 @@ class TcpCommands : public IRawListener,
 
     /** Common acccess methods */
     void setPlatformConfig(AttributeType *cfg);
-    AttributeType *response();
+    uint8_t *response_buf() { return reinterpret_cast<uint8_t *>(respbuf_); }
+    int response_size() { return respcnt_; }
+    void done() { respcnt_ = 0; }
 
  protected:
+    virtual int processCommand(const char *cmdbuf, int bufsz) = 0;
+    virtual bool isStartMarker(char s) = 0;
+    virtual bool isEndMarker(const char *s, int sz) = 0;
+
     IFace *getInterface(const char *name) {
         return parent_->getInterface(name);
     }
 
- private:
-    void processCommand();
     void br_add(const AttributeType &symb, AttributeType *res);
     void br_rm(const AttributeType &symb, AttributeType *res);
     void go_msec(const AttributeType &symb, AttributeType *res);
     void go_until(const AttributeType &symb, AttributeType *res);
     void step(int cnt, AttributeType *res);
     void symb2addr(const char *symbol, AttributeType *res);
-    void power_on(AttributeType *res);
-    void power_off(AttributeType *res);
+    void power_on(const char *btn_name, AttributeType *res);
+    void power_off(const char *btn_name, AttributeType *res);
 
- private:
+ protected:
     char rxbuf_[4096];
     int rxcnt_;
     AttributeType platformConfig_;
@@ -78,7 +87,9 @@ class TcpCommands : public IRawListener,
     AttributeType source_;
     AttributeType gui_;
 
-    AttributeType resp_;
+    char *respbuf_;
+    int resptotal_;
+    int respcnt_;
 
     IService *parent_;
     ICmdExecutor *iexec_;
@@ -91,8 +102,14 @@ class TcpCommands : public IRawListener,
     event_def eventHalt_;
     event_def eventDelayMs_;
     event_def eventPowerChanged_;
+
+    enum EState {
+        State_Idle,
+        State_Started,
+        State_Ready
+    } estate_;
 };
 
 }  // namespace debugger
 
-#endif  // __DEBUGGER_TCPCMD_H__
+#endif  // __DEBUGGER_TCPCMD_GEN_H__

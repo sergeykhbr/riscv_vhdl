@@ -15,23 +15,39 @@
  */
 
 #include "tcpclient.h"
+#include "jsoncmd.h"
+#include "gdbcmd.h"
 
 namespace debugger {
 
-TcpClient::TcpClient(const char *name) : IService(name),
-    tcpcmd_(static_cast<IService *>(this)) {
+TcpClient::TcpClient(const char *name) : IService(name) {
     registerInterface(static_cast<IThread *>(this));
     registerAttribute("Enable", &isEnable_);
     registerAttribute("PlatformConfig", &platformConfig_);
+    registerAttribute("Type", &type_);
+    registerAttribute("ListenDefaultOutput", &listenDefaultOutput_);
     RISCV_mutex_init(&mutexTx_);
+    tcpcmd_ = 0;
 }
 
 TcpClient::~TcpClient() {
     RISCV_mutex_destroy(&mutexTx_);
+    if (tcpcmd_) {
+        delete tcpcmd_;
+    }
 }
 
 void TcpClient::postinitService() {
-    tcpcmd_.setPlatformConfig(&platformConfig_);
+    if (type_.is_equal("json")) {
+        tcpcmd_ = new JsonCommands(static_cast<IService *>(this));
+    } else if (type_.is_equal("gdb")) {
+        tcpcmd_ = new GdbCommands(static_cast<IService *>(this));
+    } else {
+        RISCV_error("Unsupported command type %s.", type_.to_string());
+        return;
+    }
+
+    tcpcmd_->setPlatformConfig(&platformConfig_);
     if (isEnable_.to_bool()) {
         if (!run()) {
             RISCV_error("Can't create thread.", NULL);
@@ -40,71 +56,67 @@ void TcpClient::postinitService() {
     }
 }
 
-void TcpClient::updateData(const char *buf, int buflen) {
-    RISCV_mutex_lock(&mutexTx_);
-    int tsz = RISCV_sprintf(&txbuf_[txcnt_], sizeof(txbuf_) - txcnt_,
-                           "['%s',", "Console");
-    txcnt_ += tsz;
-    memcpy(&txbuf_[txcnt_], buf, buflen);
-    txcnt_ += buflen;
-    txbuf_[txcnt_++] = ']';
-    txbuf_[txcnt_++] = '\0';
-    RISCV_mutex_unlock(&mutexTx_);
+int TcpClient::updateData(const char *buf, int buflen) {
+    int tsz = RISCV_sprintf(&asyncbuf_[0].ibyte, sizeof(asyncbuf_),
+                    "['%s',", "Console");
+
+    memcpy(&asyncbuf_[tsz], buf, buflen);
+    tsz += buflen;
+    asyncbuf_[tsz++].ubyte = ']';
+    asyncbuf_[tsz++].ubyte = '\0';
+
+    sendData(&asyncbuf_[0].ubyte, tsz);
+    return buflen;
 }
 
 void TcpClient::busyLoop() {
     int rxbytes;
-    int sockerr;
-    addr_size_t sockerr_len = sizeof(sockerr);
-    RISCV_add_default_output(static_cast<IRawListener *>(this));
+    if (listenDefaultOutput_.to_bool()) {
+        RISCV_add_default_output(static_cast<IRawListener *>(this));
+    }
 
-    cmdcnt_ = 0;
     txcnt_ = 0;
     while (isEnabled()) {
         rxbytes = recv(hsock_, rcvbuf, sizeof(rcvbuf), 0);
-        getsockopt(hsock_, SOL_SOCKET, SO_ERROR,
-                    reinterpret_cast<char *>(&sockerr), &sockerr_len);
-
-        if (rxbytes == 0) {
-            RISCV_error("Socket error: rxbytes=%d, sockerr=%d",
-                        rxbytes, sockerr);
-            loopEnable_.state = false;
-        } else if (rxbytes < 0) {
+        if (rxbytes <= 0) {
             // Timeout:
-        } else if (rxbytes > 0) {
-            for (int i = 0; i < rxbytes; i++) {
-                cmdbuf_[cmdcnt_++] = rcvbuf[i];
-                if (rcvbuf[i] == '\0') {
-                    processRxString();
-                    cmdcnt_ = 0;
-                }
-            }
+            continue;
+        } 
+
+        rcvbuf[rxbytes] = '\0';
+        RISCV_debug("i=>[%d]: %s", rxbytes, rcvbuf);
+        tcpcmd_->updateData(rcvbuf, rxbytes);
+        int tsz = tcpcmd_->response_size();
+        if (tsz != 0) {
+            sendData(tcpcmd_->response_buf(), tsz);
         }
-        if (sendTxBuf() < 0) {
-            RISCV_error("Send error: txcnt=%d", txcnt_);
-            loopEnable_.state = false;
-        }
+        tcpcmd_->done();
+    }
+
+    if (listenDefaultOutput_.to_bool()) {
+        RISCV_remove_default_output(static_cast<IRawListener *>(this));
     }
     closeSocket();
-    RISCV_remove_default_output(static_cast<IRawListener *>(this));
 }
 
-void TcpClient::processRxString() {
-    tcpcmd_.updateData(cmdbuf_, cmdcnt_);
-    AttributeType *resp = tcpcmd_.response();
+int TcpClient::sendData(uint8_t *buf, int sz) {
     RISCV_mutex_lock(&mutexTx_);
-    memcpy(&txbuf_[txcnt_], resp->to_string(), resp->size() + 1);
-    txcnt_ += resp->size() + 1;
+    memcpy(txbuf_, buf, sz);
+    txbuf_[sz] = '\0';
+    txcnt_ = sz;
     RISCV_mutex_unlock(&mutexTx_);
-}
 
-int TcpClient::sendTxBuf() {
+    RISCV_debug("o<=[%d]: %s", txcnt_, txbuf_);
+
     int total = txcnt_;
     char *ptx = txbuf_;
     int txbytes;
+
     while (total > 0) {
         txbytes = send(hsock_, ptx, total, 0);
-        if (txbytes == 0) {
+        if (txbytes <= 0) {
+            RISCV_error("Send error: txcnt=%d", txcnt_);
+            loopEnable_.state = false;
             return -1;
         }
         total -= txbytes;

@@ -60,7 +60,7 @@ public:
     virtual int write(uint64_t addr, int bytes, uint8_t *ibuf);
 
     /** IRawListener interface */
-    virtual void updateData(const char *buf, int buflen);
+    virtual int updateData(const char *buf, int buflen);
 
 private:
     AttributeType timeout_;

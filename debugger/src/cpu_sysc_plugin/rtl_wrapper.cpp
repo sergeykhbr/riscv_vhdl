@@ -53,8 +53,6 @@ RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
     generate_ref_ = false;
     clockCycles_ = 1000000; // 1 MHz when default resolution = 1 ps
 
-    async_nrst = 1;//0;
-    w_nrst = 1;
     v.nrst = 1;//0;
     v.req_addr = 0;
     v.req_len = 0;
@@ -64,6 +62,7 @@ RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
     v.store_addr = 0;
     v.interrupt = false;
     async_interrupt = 0;
+    request_reset = false;
     w_interrupt = 0;
     v.halted = false;
     v.state = State_Idle;
@@ -74,7 +73,6 @@ RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
     trans.source_idx = 0;//CFG_NASTI_MASTER_CACHED;
 
     SC_METHOD(comb);
-    sensitive << w_nrst;
     sensitive << w_interrupt;
     sensitive << i_halted;
     sensitive << i_req_mem_valid;
@@ -126,7 +124,6 @@ void RtlWrapper::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_resp_mem_data, o_resp_mem_data.name());
 
         std::string pn(name());
-        sc_trace(o_vcd, w_nrst, pn + ".w_nrst");
         sc_trace(o_vcd, r.nrst, pn + ".r_nrst");
         sc_trace(o_vcd, r.state, pn + ".r_state");
         sc_trace(o_vcd, r.req_addr, pn + ".r_req_addr");
@@ -151,15 +148,20 @@ void RtlWrapper::comb() {
     v.store_fault = w_resp_store_fault;
     v.store_addr = wb_resp_store_fault_addr;
 
+    v.nrst = (r.nrst.read() << 1) | 1;
     switch (r.state.read()) {
     case State_Idle:
-        w_req_mem_ready = 1;
-        if (i_req_mem_valid.read()) {
-            v.req_addr = i_req_mem_addr.read();
-            v.req_write = i_req_mem_write.read();
-            v.req_burst = i_req_mem_burst.read();
-            v.req_len = i_req_mem_len.read();
-            v.state = State_Busy;
+        if (request_reset) {
+            v.state = State_Reset;
+        } else {
+            w_req_mem_ready = 1;
+            if (i_req_mem_valid.read()) {
+                v.req_addr = i_req_mem_addr.read();
+                v.req_write = i_req_mem_write.read();
+                v.req_burst = i_req_mem_burst.read();
+                v.req_len = i_req_mem_len.read();
+                v.state = State_Busy;
+            }
         }
         break;
     case State_Busy:
@@ -187,9 +189,14 @@ void RtlWrapper::comb() {
             v.req_addr = vb_req_addr;
         }
         break;
+    case State_Reset:
+        request_reset = false;
+        v.nrst = (r.nrst.read() << 1);
+        v.state = State_Idle;
+        break;
+    default:;
     }
 
-    v.nrst = (r.nrst.read() << 1) | w_nrst;
     o_nrst = r.nrst.read()[1].to_bool();
 
     w_req_mem_ready = w_req_mem_ready;
@@ -232,7 +239,6 @@ void RtlWrapper::sys_bus_proc() {
         RISCV_trigger_hap(iserv, HAP_Halt, "Descr");
     }
 
-    w_nrst = async_nrst;
     w_interrupt = async_interrupt;
 
     w_resp_valid = 0;
@@ -325,7 +331,7 @@ void RtlWrapper::setClockHz(double hz) {
 }
     
 void RtlWrapper::registerStepCallback(IClockListener *cb, uint64_t t) {
-    if (!async_nrst) {
+    if (request_reset) {
         if (i_time.read() == t) {
             cb->stepCallback(t);
         }
@@ -337,7 +343,7 @@ void RtlWrapper::registerStepCallback(IClockListener *cb, uint64_t t) {
 void RtlWrapper::raiseSignal(int idx) {
     switch (idx) {
     case SIGNAL_HardReset:
-        async_nrst = 0;
+        request_reset = true;
         break;
     case INTERRUPT_MExternal:
         async_interrupt = true;
@@ -348,9 +354,6 @@ void RtlWrapper::raiseSignal(int idx) {
 
 void RtlWrapper::lowerSignal(int idx) {
     switch (idx) {
-    case SIGNAL_HardReset:
-        async_nrst = 1;
-        break;
     case INTERRUPT_MExternal:
         async_interrupt = false;
         break;

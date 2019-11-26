@@ -40,7 +40,7 @@ public:
     virtual void closePort();
 
     /** IRawListener (simulation only) */
-    virtual void updateData(const char *buf, int buflen);
+    virtual int updateData(const char *buf, int buflen);
 
 protected:
     /** IThread interface */

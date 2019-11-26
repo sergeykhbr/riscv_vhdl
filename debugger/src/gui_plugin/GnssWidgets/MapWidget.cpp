@@ -91,7 +91,7 @@ MapWidget::~MapWidget() {
     }
 }
 
-void MapWidget::updateData(const char *buf, int buflen) {
+int MapWidget::updateData(const char *buf, int buflen) {
     for (int i = 0; i < buflen; i++) {
         gnssMagicNumber_.buf[7] = buf[i];
         gnssMagicNumber_.val >>= 8;
@@ -119,6 +119,7 @@ void MapWidget::updateData(const char *buf, int buflen) {
             emit signalUpdateGnssRaw();
         }
     }
+    return buflen;
 }
 
 void MapWidget::slotUpdateGnssRaw() {

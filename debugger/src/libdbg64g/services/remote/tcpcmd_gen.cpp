@@ -14,13 +14,18 @@
  *  limitations under the License.
  */
 
-#include "tcpcmd.h"
+#include "tcpcmd_gen.h"
 
 namespace debugger {
 
-TcpCommands::TcpCommands(IService *parent) : IHap(HAP_All) {
+TcpCommandsGen::TcpCommandsGen(IService *parent) : IHap(HAP_All) {
     parent_ = parent;
     rxcnt_ = 0;
+    estate_ = State_Idle;
+
+    resptotal_ = 1 << 18;   // should re-allocated if need in childs
+    respcnt_ = 0;
+    respbuf_ = new char[resptotal_];
 
     cpu_.make_string("core0");
     executor_.make_string("cmdexec0");
@@ -57,17 +62,20 @@ TcpCommands::TcpCommands(IService *parent) : IHap(HAP_All) {
     RISCV_register_hap(static_cast<IHap *>(this));
 }
 
-TcpCommands::~TcpCommands() {
+TcpCommandsGen::~TcpCommandsGen() {
     RISCV_event_close(&eventHalt_);
     RISCV_event_close(&eventDelayMs_);
     RISCV_event_close(&eventPowerChanged_);
+    respcnt_ = 0;
+    resptotal_ = 0;
+    delete [] respbuf_;
 }
 
-void TcpCommands::setPlatformConfig(AttributeType *cfg) {
+void TcpCommandsGen::setPlatformConfig(AttributeType *cfg) {
     platformConfig_ = *cfg;
 }
 
-void TcpCommands::hapTriggered(IFace *isrc, EHapType type,
+void TcpCommandsGen::hapTriggered(IFace *isrc, EHapType type,
                                 const char *descr) {
     if (type == HAP_Halt) {
         RISCV_event_set(&eventHalt_);
@@ -76,120 +84,45 @@ void TcpCommands::hapTriggered(IFace *isrc, EHapType type,
     }
 }
 
-void TcpCommands::stepCallback(uint64_t t) {
+void TcpCommandsGen::stepCallback(uint64_t t) {
     RISCV_event_set(&eventDelayMs_);
 }
 
-void TcpCommands::updateData(const char *buf, int buflen) {
+int TcpCommandsGen::updateData(const char *buf, int buflen) {
+    int ret = 0;
     for (int i = 0; i < buflen; i++) {
-        rxbuf_[rxcnt_++] = buf[i];
-        if (buf[i] == 0) {
-            processCommand();
-            rxcnt_ = 0;
-        }
-    }
-}
-
-void TcpCommands::processCommand() {
-    AttributeType cmd;
-    cmd.from_config(rxbuf_);
-    if (!cmd.is_list() || cmd.size() < 3) {
-        return;
-    }
-
-    uint64_t idx = cmd[0u].to_uint64();
-    resp_.make_list(2);
-    resp_[0u].make_uint64(idx);
-    resp_[1].make_string("OK");
-
-    AttributeType &requestType = cmd[1];
-    AttributeType &requestAction = cmd[2];
-    AttributeType *resp = &resp_[1];
-
-    if (requestType.is_equal("Configuration")) {
-        resp->clone(&platformConfig_);
-    } else if (requestType.is_equal("Command")) {
-        /** Redirect command to console directly */
-        iexec_->exec(requestAction.to_string(), resp, false);
-        if (igui_) {
-            igui_->externalCommand(&requestAction);
-        }
-    } else if (requestType.is_equal("Breakpoint")) {
-        /** Breakpoints action */
-        if (requestAction[0u].is_equal("Add")) {
-            br_add(requestAction[1], resp);
-        } else if (requestAction[0u].is_equal("Remove")) {
-            br_rm(requestAction[1], resp);
-        } else {
-            resp->make_string("Wrong breakpoint command");
-        }
-    } else if (requestType.is_equal("Control")) {
-        /** Run Control action */
-        if (requestAction[0u].is_equal("GoUntil")) {
-            go_until(requestAction[1], resp);
-        } else if (requestAction[0u].is_equal("GoMsec")) {
-            go_msec(requestAction[1], resp);
-        } else if (requestAction[0u].is_equal("Step")) {
-            step(requestAction[1].to_int(), resp);
-        } else if (requestAction[0u].is_equal("PowerOn")) {
-            power_on(resp);
-            RISCV_debug("[%" RV_PRI64 "d] Command Power-On", idx);
-        } else if (requestAction[0u].is_equal("PowerOff")) {
-            power_off(resp);
-            RISCV_debug("[%" RV_PRI64 "d] Command Power-Off", idx);
-        } else {
-            resp->make_string("Wrong control command");
-        }
-    } else if (requestType.is_equal("Status")) {
-        /** Pump status */
-        if (requestAction.is_equal("IsON")) {
-            resp->make_boolean(true);
-        } else if (requestAction.is_equal("IsHalt")) {
-            //resp->make_boolean(iriscv_->isHalt());
-        } else if (requestAction.is_equal("Steps")) {
-            resp->make_uint64(iclk_->getStepCounter());
-        } else if (requestAction.is_equal("TimeSec")) {
-            double t1 = iclk_->getStepCounter() / iclk_->getFreqHz();
-            resp->make_floating(t1);
-        } else {
-            resp->make_string("Wrong status command");
-        }
-    } else if (requestType.is_equal("Symbol")) {
-        /** Symbols table conversion */
-        if (requestAction[0u].is_equal("ToAddr")) {
-            symb2addr(requestAction[1].to_string(), resp);
-        } else if (requestAction[0u].is_equal("FromAddr")) {
-            // todo:
-        } else {
-            resp->make_string("Wrong symbol command");
-        }
-    } else if (requestType.is_equal("Attribute")) {
-        IService *isrv = static_cast<IService *>(
-                        RISCV_get_service(requestAction[0u].to_string()));
-        if (isrv) {
-            AttributeType *iatr = static_cast<AttributeType *>(
-                        isrv->getAttribute(requestAction[1].to_string()));
-            if (iatr) {
-                resp->clone(iatr);
-            } else {
-                resp->make_string("Attribute not found");
+        switch (estate_) {
+        case State_Idle:
+            if (isStartMarker(buf[i])) {
+                rxbuf_[rxcnt_++] = buf[i];
+                estate_ = State_Started;
             }
-        } else {
-            resp->make_string("Service not found");
+            break;
+        case State_Started:
+            if (rxcnt_ < static_cast<int>(sizeof(rxbuf_))) {
+                rxbuf_[rxcnt_++] = buf[i];
+                rxbuf_[rxcnt_] = '\0';
+            } else {
+                RISCV_error("rxbuf_ overflow %d", rxcnt_);
+            }
+            if (isEndMarker(rxbuf_, rxcnt_)) {
+                estate_ = State_Ready;
+            }
+            break;
+        default:;
         }
-    } else {
-        resp->make_list(2);
-        (*resp)[0u].make_string("ERROR");
-        (*resp)[1].make_string("Wrong command format");
+
+        if (estate_ == State_Ready) {
+            processCommand(rxbuf_, rxcnt_);
+            rxcnt_ = 0;
+            estate_ = State_Idle;
+            ret = i + 1;  // take into account the last symbol
+        }
     }
-    resp_.to_config();
+    return ret;
 }
 
-AttributeType *TcpCommands::response() {
-    return &resp_;
-}
-
-void TcpCommands::br_add(const AttributeType &symb, AttributeType *res) {
+void TcpCommandsGen::br_add(const AttributeType &symb, AttributeType *res) {
     uint64_t addr;
     if (symb.is_string()) {
         AttributeType t1;
@@ -210,7 +143,7 @@ void TcpCommands::br_add(const AttributeType &symb, AttributeType *res) {
     iexec_->exec(tstr, res, false);
 }
 
-void TcpCommands::br_rm(const AttributeType &symb, AttributeType *res) {
+void TcpCommandsGen::br_rm(const AttributeType &symb, AttributeType *res) {
     uint64_t addr;
     if (symb.is_string()) {
         AttributeType t1;
@@ -231,7 +164,7 @@ void TcpCommands::br_rm(const AttributeType &symb, AttributeType *res) {
     iexec_->exec(tstr, res, false);
 }
 
-void TcpCommands::step(int cnt, AttributeType *res) {
+void TcpCommandsGen::step(int cnt, AttributeType *res) {
     char tstr[128];
     RISCV_sprintf(tstr, sizeof(tstr), "c %d", cnt);
 
@@ -246,7 +179,7 @@ void TcpCommands::step(int cnt, AttributeType *res) {
     cpuLogLevel_->make_int64(log_level_old);
 }
 
-void TcpCommands::go_until(const AttributeType &symb, AttributeType *res) {
+void TcpCommandsGen::go_until(const AttributeType &symb, AttributeType *res) {
     uint64_t addr;
     if (symb.is_string()) {
         AttributeType t1;
@@ -283,7 +216,7 @@ void TcpCommands::go_until(const AttributeType &symb, AttributeType *res) {
     iexec_->exec(tstr, res, false);
 }
 
-void TcpCommands::symb2addr(const char *symbol, AttributeType *res) {
+void TcpCommandsGen::symb2addr(const char *symbol, AttributeType *res) {
     res->make_nil();
     if (!isrc_) {
         return;
@@ -306,13 +239,40 @@ void TcpCommands::symb2addr(const char *symbol, AttributeType *res) {
     }
 }
 
-void TcpCommands::power_on(AttributeType *res) {
+void TcpCommandsGen::power_on(const char *btn_name, AttributeType *res) {
+    if (icpufunc_->isOn()) {
+        res->make_string("Already ON");
+        return;
+    }
+    char tstr[256];
+    AttributeType t1;
+    RISCV_event_clear(&eventPowerChanged_);
+    RISCV_sprintf(tstr, sizeof(tstr), "%s press", btn_name);
+    iexec_->exec(tstr, &t1, false);
+    RISCV_event_wait(&eventPowerChanged_);
+    RISCV_sprintf(tstr, sizeof(tstr), "%s release", btn_name);
+    iexec_->exec(tstr, &t1, false);
+    res->make_string("OK");
 }
 
-void TcpCommands::power_off(AttributeType *res) {
+void TcpCommandsGen::power_off(const char *btn_name, AttributeType *res) {
+    if (!icpufunc_->isOn()) {
+        res->make_string("Already OFF");
+        return;
+    }
+    char tstr[256];
+    AttributeType t1;
+    RISCV_event_clear(&eventPowerChanged_);
+    RISCV_sprintf(tstr, sizeof(tstr), "%s press", btn_name);
+    iexec_->exec(tstr, &t1, false);
+    iexec_->exec("c", &t1, false);
+    RISCV_event_wait(&eventPowerChanged_);
+    RISCV_sprintf(tstr, sizeof(tstr), "%s release", btn_name);
+    iexec_->exec(tstr, &t1, false);
+    res->make_string("OK");
 }
 
-void TcpCommands::go_msec(const AttributeType &msec, AttributeType *res) {
+void TcpCommandsGen::go_msec(const AttributeType &msec, AttributeType *res) {
     char tstr[256];
     double delta = 0.001 * iclk_->getFreqHz() * msec.to_float();
     if (delta == 0) {

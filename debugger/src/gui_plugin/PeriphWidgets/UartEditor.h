@@ -31,7 +31,7 @@ public:
     ~UartEditor();
 
     // IRawListener
-    virtual void updateData(const char *buf, int buflen);
+    virtual int updateData(const char *buf, int buflen);
 
 signals:
     void signalClose(QWidget *, AttributeType &);

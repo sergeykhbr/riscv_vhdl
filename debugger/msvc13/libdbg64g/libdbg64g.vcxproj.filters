@@ -140,9 +140,6 @@
     <ClCompile Include="..\..\src\libdbg64g\services\remote\tcpclient.cpp">
       <Filter>Source Files\services\remote</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\libdbg64g\services\remote\tcpcmd.cpp">
-      <Filter>Source Files\services\remote</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\libdbg64g\services\remote\tcpserver.cpp">
       <Filter>Source Files\services\remote</Filter>
     </ClCompile>
@@ -183,6 +180,15 @@
       <Filter>Source Files\services\exec\cmd</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\libdbg64g\services\remote\dpiclient.cpp">
+      <Filter>Source Files\services\remote</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\libdbg64g\services\remote\gdbcmd.cpp">
+      <Filter>Source Files\services\remote</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\libdbg64g\services\remote\jsoncmd.cpp">
+      <Filter>Source Files\services\remote</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\libdbg64g\services\remote\tcpcmd_gen.cpp">
       <Filter>Source Files\services\remote</Filter>
     </ClCompile>
   </ItemGroup>
@@ -346,9 +352,6 @@
     <ClInclude Include="..\..\src\libdbg64g\services\remote\tcpclient.h">
       <Filter>Source Files\services\remote</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\libdbg64g\services\remote\tcpcmd.h">
-      <Filter>Source Files\services\remote</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\libdbg64g\services\remote\tcpserver.h">
       <Filter>Source Files\services\remote</Filter>
     </ClInclude>
@@ -435,6 +438,15 @@
     </ClInclude>
     <ClInclude Include="..\..\src\common\coreservices\idpi.h">
       <Filter>Source Files\common\coreservices</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\libdbg64g\services\remote\gdbcmd.h">
+      <Filter>Source Files\services\remote</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\libdbg64g\services\remote\jsoncmd.h">
+      <Filter>Source Files\services\remote</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\libdbg64g\services\remote\tcpcmd_gen.h">
+      <Filter>Source Files\services\remote</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

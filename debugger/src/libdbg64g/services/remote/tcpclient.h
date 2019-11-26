@@ -19,7 +19,7 @@
 
 #include <iclass.h>
 #include <iservice.h>
-#include "tcpcmd.h"
+#include "tcpcmd_gen.h"
 #include "coreservices/ithread.h"
 #include "coreservices/irawlistener.h"
 
@@ -39,31 +39,34 @@ class TcpClient : public IService,
     }
 
     /** IRawListener interface */
-    virtual void updateData(const char *buf, int buflen);
+    virtual int updateData(const char *buf, int buflen);
 
  protected:
     /** IThread interface */
     virtual void busyLoop();
 
  protected:
-    void processRxString();
-    int sendTxBuf();
+    int sendData(uint8_t *buf, int sz);
     void closeSocket();
 
  private:
     AttributeType isEnable_;
     AttributeType timeout_;
     AttributeType platformConfig_;
+    AttributeType type_;
+    AttributeType listenDefaultOutput_;
 
     socket_def hsock_;
     mutex_def mutexTx_;
     char rcvbuf[4096];
-    char cmdbuf_[4096];
-    int cmdcnt_;
     char txbuf_[1<<20];
     int txcnt_;
+    union reg8_type {
+        char ibyte;
+        uint8_t ubyte;
+    } asyncbuf_[1 << 20];
 
-    TcpCommands tcpcmd_;
+    TcpCommandsGen *tcpcmd_;
 };
 
 DECLARE_CLASS(TcpClient)

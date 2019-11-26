@@ -45,7 +45,7 @@ class ConsoleWidget : public QPlainTextEdit,
     virtual void handleResponse(const char *cmd);
 
     /** IRawListener */
-    virtual void updateData(const char *buf, int buflen);
+    virtual int updateData(const char *buf, int buflen);
 
  signals:
     void signalNewData();
