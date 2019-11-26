@@ -36,7 +36,7 @@ library work;
 --! Target dependable configuration: RTL, FPGA or ASIC.
 use work.config_target.all;
 
-entity kc705_top is port 
+entity top_ml605 is port 
 ( 
   --! Input reset. Active HIGH.
   i_rst     : in std_logic;
@@ -77,9 +77,9 @@ entity kc705_top is port
   io_emdio    : inout std_logic;
   o_erstn     : out   std_ulogic
 );
-end kc705_top;
+end top_ml605;
 
-architecture arch_kc705_top of kc705_top is
+architecture arch_top_ml605 of top_ml605 is
 
 component riscv_soc is port 
 ( 
@@ -329,4 +329,4 @@ begin
     o_antint_contr => open
   );
   
-end arch_kc705_top;
+end arch_top_ml605;

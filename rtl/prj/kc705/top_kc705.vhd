@@ -1,5 +1,5 @@
 --!
---! Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+--! Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
 --!
 --! Licensed under the Apache License, Version 2.0 (the "License");
 --! you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ library work;
 --! Target dependable configuration: RTL, FPGA or ASIC.
 use work.config_target.all;
 
-entity ml605_top is port 
+entity top_kc705 is port 
 ( 
   --! Input reset. Active HIGH.
   i_rst     : in std_logic;
@@ -77,9 +77,9 @@ entity ml605_top is port
   io_emdio    : inout std_logic;
   o_erstn     : out   std_ulogic
 );
-end ml605_top;
+end top_kc705;
 
-architecture arch_ml605_top of ml605_top is
+architecture arch_top_kc705 of top_kc705 is
 
 component riscv_soc is port 
 ( 
@@ -329,4 +329,4 @@ begin
     o_antint_contr => open
   );
   
-end arch_ml605_top;
+end arch_top_kc705;
