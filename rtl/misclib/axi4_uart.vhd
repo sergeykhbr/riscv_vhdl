@@ -57,6 +57,8 @@ architecture arch_axi4_uart of axi4_uart is
      did => GNSSSENSOR_UART
   );
 
+  constant zero32 : std_logic_vector(31 downto 0) := (others => '0');
+
   type fifo_mem is array (0 to fifosz-1) of std_logic_vector(7 downto 0);
   type state_type is (idle, startbit, data, parity, stopbit);
 
@@ -84,7 +86,7 @@ architecture arch_axi4_uart of axi4_uart is
       tx_byte_cnt : std_logic_vector(log2(fifosz)-1 downto 0);
       tx_shift  : std_logic_vector(10 downto 0); --! stopbit=1,parity=xor,data[7:0],startbit=0
       tx_data_cnt : integer range 0 to 11;
-      tx_scaler_cnt : integer;
+      tx_scaler_cnt : std_logic_vector(31 downto 0);
       tx_level : std_logic;
       tx_irq_thresh : std_logic_vector(log2(fifosz)-1 downto 0);
       tx_more_thresh : std_logic_vector(1 downto 0);
@@ -95,13 +97,13 @@ architecture arch_axi4_uart of axi4_uart is
       rx_byte_cnt : std_logic_vector(log2(fifosz)-1 downto 0);
       rx_shift  : std_logic_vector(7 downto 0);
       rx_data_cnt : integer range 0 to 7;
-      rx_scaler_cnt : integer;
+      rx_scaler_cnt : std_logic_vector(31 downto 0);
       rx_level : std_logic;
       rx_irq_thresh : std_logic_vector(log2(fifosz)-1 downto 0);
       rx_more_thresh : std_logic_vector(1 downto 0);
 
       rdata : std_logic_vector(CFG_SYSBUS_DATA_BITS-1 downto 0);
-      scaler : integer;
+      scaler : std_logic_vector(31 downto 0);
       err_parity : std_logic;
       err_stopbit : std_logic;
       parity_bit : std_logic;
@@ -116,7 +118,7 @@ architecture arch_axi4_uart of axi4_uart is
         (others => '0'),  -- tx_byte_cnt
         (others => '0'),  -- tx_shift
         0, -- tx_data_cnt
-        0, -- tx_scaler_cnt
+        (others => '0'), -- tx_scaler_cnt
         '0', -- tx_level
         (others => '0'), -- tx_irq_thresh
         (others => '0'), -- tx_more_thresh
@@ -125,12 +127,12 @@ architecture arch_axi4_uart of axi4_uart is
         (others => '0'), -- rx_byte_cnt
         (others => '0'), -- rx_shift
         0, -- rx_data_cnt
-        0, -- rx_scaler_cnt
+        (others => '0'), -- rx_scaler_cnt
         '1', -- rx_level
         (others => '0'), -- rx_irq_thresh
         (others => '0'), -- rx_more_thresh
         (others => '0'), -- rdata
-        0, -- scaler
+        (others => '0'), -- scaler
         '0', -- err_parity
         '0', -- err_stopbit
         '0', -- parity_bit
@@ -221,9 +223,9 @@ begin
     -- system bus clock scaler to baudrate:
     posedge_flag := '0';
     negedge_flag := '0';
-    if r.scaler /= 0 then
+    if r.scaler /= zero32 then
         if r.tx_scaler_cnt = (r.scaler-1) then
-            v.tx_scaler_cnt := 0;
+            v.tx_scaler_cnt := zero32;
             v.tx_level := not r.tx_level;
             posedge_flag := not r.tx_level;
         else
@@ -231,10 +233,10 @@ begin
         end if;
 
         if r.rx_state = idle and i_uart.rd = '1' then
-            v.rx_scaler_cnt := 0;
+            v.rx_scaler_cnt := zero32;
             v.rx_level := '1';
         elsif r.rx_scaler_cnt = (r.scaler-1) then
-            v.rx_scaler_cnt := 0;
+            v.rx_scaler_cnt := zero32;
             v.rx_level := not r.rx_level;
             negedge_flag := r.rx_level;
         else
@@ -374,7 +376,7 @@ begin
                 tmp(14) := r.tx_irq_ena;
                 tmp(15) := r.parity_bit;
           when 1 => 
-                tmp := conv_std_logic_vector(r.scaler,32);
+                tmp := r.scaler;
           when 2 => 
                 tmp := r.fwcpuid;
           when 4 => 
@@ -399,9 +401,9 @@ begin
                     v.tx_irq_ena := tmp(14);
                     v.rx_irq_ena := tmp(13);
              when 1 => 
-                    v.scaler     := conv_integer(tmp);
-                    v.rx_scaler_cnt := 0;
-                    v.tx_scaler_cnt := 0;
+                    v.scaler     := tmp;
+                    v.rx_scaler_cnt := zero32;
+                    v.tx_scaler_cnt := zero32;
              when 2 => 
                     if r.fwcpuid = X"00000000" or tmp = X"00000000" then
                         v.fwcpuid := tmp;

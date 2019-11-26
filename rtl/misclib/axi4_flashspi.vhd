@@ -54,12 +54,14 @@ architecture arch_axi4_flashspi of axi4_flashspi is
      did => GNSSSENSOR_SPI_FLASH
   );
 
+  constant zero32 : std_logic_vector(31 downto 0) := (others => '0');
+
   type state_type is (idle, wsetup, rsetup, txcmd, rbyte, wbyte, rd_complete, wr_complete, wr_accept);
   type page_buf_type is array (0 to 31) of std_logic_vector(31 downto 0); --128 bytes
 
   type registers is record
-     scaler : integer;
-     scaler_cnt : integer;
+     scaler : std_logic_vector(31 downto 0);
+     scaler_cnt : std_logic_vector(31 downto 0);
      state : state_type;
      rready : std_logic;
      wready : std_logic;
@@ -84,7 +86,7 @@ architecture arch_axi4_flashspi of axi4_flashspi is
   end record;
 
   constant R_RESET : registers := (
-    0, 0, idle,                        -- scaler, scaler_cnt, state
+    (others => '0'), (others => '0'), idle, -- scaler, scaler_cnt, state
     '0', '0',                          -- rready, wready
     (others => '0'), (others => '0'),  -- raddr, rdata
     (others => '0'), (others => '0'),  -- waddr, wdata
@@ -171,12 +173,12 @@ begin
     -- system bus clock scaler to baudrate:
     posedge_flag := '0';
     negedge_flag := '0';
-    if r.scaler /= 0 then
+    if r.scaler /= zero32 then
         if r.csn = '1' then
-            v.scaler_cnt := 0;
+            v.scaler_cnt := zero32;
             v.sck := '0';
         elsif r.scaler_cnt = (r.scaler-1) then
-            v.scaler_cnt := 0;
+            v.scaler_cnt := zero32;
             v.sck := not r.sck;
             posedge_flag := not r.sck;
             negedge_flag := r.sck;
@@ -198,7 +200,7 @@ begin
           case conv_integer(r.raddr(16 downto 2)) is
               when 0 =>
                   v.state := rd_complete;
-                  v.si_shifter(31 downto 0) := conv_std_logic_vector(r.scaler, 32);
+                  v.si_shifter(31 downto 0) := r.scaler;
                   v.si_shifter(63 downto 32) := (others => '0');
                   v.bytes_received := 1;   -- to avoid bytes swapping
               when 4 => -- Read Flash STATUS
@@ -244,7 +246,7 @@ begin
         case conv_integer(r.waddr) is
         when 0 =>
             v.state := wr_complete;
-            v.scaler := conv_integer(r.wdata);
+            v.scaler := r.wdata;
         when 4 => -- Write Flash STATUS
             v.state := txcmd;
             v.csn := '0';

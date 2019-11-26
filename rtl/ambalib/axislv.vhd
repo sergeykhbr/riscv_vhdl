@@ -46,7 +46,7 @@ end;
 architecture arch_axi4_slave of axi4_slave is
 
   --! Slave device states during reading value operation.
-  type axi_slave_rstatetype is (rwait, rtrans);
+  type axi_slave_rstatetype is (rwait, rhold, rtrans);
   --! Slave device states during writting data operation.
   type axi_slave_wstatetype is (wwait, wtrans);
 
@@ -91,12 +91,17 @@ begin
     variable v : axi_slave_bank_type;
     variable traddr : std_logic_vector(CFG_SYSBUS_ADDR_BITS-1 downto 0);
     variable twaddr : std_logic_vector(CFG_SYSBUS_ADDR_BITS-1 downto 0);
-    variable v_radr_inc : global_addr_array_type;
-    variable v_wadr_inc : global_addr_array_type;
+    variable v_raddr_bus : global_addr_array_type;
+    variable v_raddr_bus_swp : global_addr_array_type;
+    variable v_raddr_bus_nxt : global_addr_array_type;
+    variable v_raddr_bus_nxt_swp : global_addr_array_type;
+    variable v_raddr_burst_nxt_swp : global_addr_array_type;
+    variable v_wadr_bus : global_addr_array_type;
+    variable v_wadr_bus_swp : global_addr_array_type;
+    variable v_waddr_burst_nxt_swp : global_addr_array_type;
     variable v_re : std_logic;
     variable v_r32 : std_logic;
     variable v_radr : global_addr_array_type;
-    variable v_wadr : global_addr_array_type;
     variable v_we : std_logic_vector(CFG_SYSBUS_DATA_BYTES-1 downto 0);
     variable v_wstrb : std_logic_vector(CFG_SYSBUS_DATA_BYTES-1 downto 0);
     variable v_wdata : std_logic_vector(CFG_SYSBUS_DATA_BITS-1 downto 0);
@@ -118,8 +123,10 @@ begin
              & i_xslvi.aw_bits.addr(11 downto 0);
 
     for n in 0 to CFG_WORDS_ON_BUS-1 loop
-        v_radr_inc(n) := traddr + n*CFG_ALIGN_BYTES;
-        v_wadr_inc(n) := twaddr + n*CFG_ALIGN_BYTES;
+        v_raddr_bus(n) := traddr + n*CFG_ALIGN_BYTES;
+        v_raddr_bus_nxt(n) := v_raddr_bus(n) + XSizeToBytes(conv_integer(i_xslvi.ar_bits.size));
+
+        v_wadr_bus(n) := twaddr + n*CFG_ALIGN_BYTES;
     end loop;
 
     v_re := '0';
@@ -127,12 +134,87 @@ begin
     v_radr(0) := (others => '0');
     v_radr(1) := (others => '0');
 
-    if r.waddr(0)(2) = '0' then
-       v_wadr := r.waddr;
+    -- Next hold read address while write transaction not finished
+    if i_xslvi.ar_bits.addr(2) = '0' then
+        v_raddr_bus_swp := v_raddr_bus;
     else
-       v_wadr(0) := r.waddr(1);
-       v_wadr(1) := r.waddr(0);
+        v_raddr_bus_swp(0) := v_raddr_bus(1);
+        v_raddr_bus_swp(1) := v_raddr_bus(0);
     end if;
+
+    -- Next read accepted address if no write request
+    if (i_xslvi.ar_bits.addr(2) = '0' and i_xslvi.ar_bits.size = "011") or
+       (i_xslvi.ar_bits.addr(2) = '1' and i_xslvi.ar_bits.size = "010") then
+        v_raddr_bus_nxt_swp := v_raddr_bus_nxt;
+        if i_xslvi.ar_bits.burst = AXI_BURST_WRAP then
+            v_raddr_bus_nxt_swp(0)(CFG_SYSBUS_ADDR_BITS-1 downto 5) 
+                 := v_raddr_bus_nxt(0)(CFG_SYSBUS_ADDR_BITS-1 downto 5);
+            v_raddr_bus_nxt_swp(1)(CFG_SYSBUS_ADDR_BITS-1 downto 5) 
+                 := v_raddr_bus_nxt(1)(CFG_SYSBUS_ADDR_BITS-1 downto 5);
+        end if;
+    else
+        v_raddr_bus_nxt_swp(0) := v_raddr_bus_nxt(1);
+        v_raddr_bus_nxt_swp(1) := v_raddr_bus_nxt(0);
+        if i_xslvi.ar_bits.burst = AXI_BURST_WRAP then
+            v_raddr_bus_nxt_swp(0)(CFG_SYSBUS_ADDR_BITS-1 downto 5) 
+                 := v_raddr_bus_nxt(1)(CFG_SYSBUS_ADDR_BITS-1 downto 5);
+            v_raddr_bus_nxt_swp(1)(CFG_SYSBUS_ADDR_BITS-1 downto 5) 
+                 := v_raddr_bus_nxt(0)(CFG_SYSBUS_ADDR_BITS-1 downto 5);
+        end if;
+    end if;
+
+    -- Next burst read address
+    if r.rsize = 4 then
+        v_raddr_burst_nxt_swp(0) := r.raddr(1) + r.rsize;
+        v_raddr_burst_nxt_swp(1) := r.raddr(0) + r.rsize;
+        if r.rburst = AXI_BURST_WRAP then
+            v_raddr_burst_nxt_swp(0)(CFG_SYSBUS_ADDR_BITS-1 downto 5) 
+                 := r.raddr(1)(CFG_SYSBUS_ADDR_BITS-1 downto 5);
+            v_raddr_burst_nxt_swp(1)(CFG_SYSBUS_ADDR_BITS-1 downto 5) 
+                 := r.raddr(0)(CFG_SYSBUS_ADDR_BITS-1 downto 5);
+        end if;
+    else
+        v_raddr_burst_nxt_swp(0) := r.raddr(0) + r.rsize;
+        v_raddr_burst_nxt_swp(1) := r.raddr(1) + r.rsize;
+        if r.rburst = AXI_BURST_WRAP then
+            v_raddr_burst_nxt_swp(0)(CFG_SYSBUS_ADDR_BITS-1 downto 5) 
+                 := r.raddr(0)(CFG_SYSBUS_ADDR_BITS-1 downto 5);
+            v_raddr_burst_nxt_swp(1)(CFG_SYSBUS_ADDR_BITS-1 downto 5) 
+                 := r.raddr(1)(CFG_SYSBUS_ADDR_BITS-1 downto 5);
+        end if;
+    end if;
+
+
+    -- Write swapped address
+    if i_xslvi.aw_bits.addr(2) = '0' then
+        v_wadr_bus_swp := v_wadr_bus;
+    else
+        v_wadr_bus_swp(0) := v_wadr_bus(1);
+        v_wadr_bus_swp(1) := v_wadr_bus(0);
+    end if;
+
+    -- Next burst write address
+    if r.wsize = 4 then
+        v_waddr_burst_nxt_swp(0) := r.waddr(1) + r.wsize;
+        v_waddr_burst_nxt_swp(1) := r.waddr(0) + r.wsize;
+        if r.wburst = AXI_BURST_WRAP then
+            v_waddr_burst_nxt_swp(0)(CFG_SYSBUS_ADDR_BITS-1 downto 5) 
+                 := r.waddr(1)(CFG_SYSBUS_ADDR_BITS-1 downto 5);
+            v_waddr_burst_nxt_swp(1)(CFG_SYSBUS_ADDR_BITS-1 downto 5) 
+                 := r.waddr(0)(CFG_SYSBUS_ADDR_BITS-1 downto 5);
+        end if;
+    else
+        v_waddr_burst_nxt_swp(0) := r.waddr(0) + r.wsize;
+        v_waddr_burst_nxt_swp(1) := r.waddr(1) + r.wsize;
+        if r.wburst = AXI_BURST_WRAP then
+            v_waddr_burst_nxt_swp(0)(CFG_SYSBUS_ADDR_BITS-1 downto 5) 
+                 := r.waddr(0)(CFG_SYSBUS_ADDR_BITS-1 downto 5);
+            v_waddr_burst_nxt_swp(1)(CFG_SYSBUS_ADDR_BITS-1 downto 5) 
+                 := r.waddr(1)(CFG_SYSBUS_ADDR_BITS-1 downto 5);
+        end if;
+    end if;
+
+
     v_we := (others => '0');
 
     v_ar_ready := '0';
@@ -144,29 +226,19 @@ begin
     -- Reading state machine:
     case r.rstate is
     when rwait =>
-        if i_xslvi.aw_valid = '0' and r.wstate = wwait then
-            v_ar_ready := '1';
-        end if;
+        v_ar_ready := '1';
+        v_radr := v_raddr_bus_swp;
 
         if i_xslvi.ar_valid = '1' and v_ar_ready = '1' then
-            v.rstate := rtrans;
-            v_re := '1';
-
-            if i_xslvi.ar_bits.addr(2) = '0' then
-                v_radr := v_radr_inc;
+            if i_xslvi.aw_valid = '0' then
+                v_re := '1';
+                v.rstate := rtrans;
+                v.raddr := v_raddr_bus_nxt_swp;
             else
-                v_radr(0) := v_radr_inc(1);
-                v_radr(1) := v_radr_inc(0);
+                v.rstate := rhold;
+                v.raddr := v_raddr_bus_swp;
             end if;
-            for n in 0 to CFG_WORDS_ON_BUS-1 loop
-                v.raddr(n) := v_radr(n) + XSizeToBytes(conv_integer(i_xslvi.ar_bits.size));
-                if i_xslvi.ar_bits.burst = AXI_BURST_WRAP then
-                    -- i_bank.rsize = 8 and i_bank.rlen = 3
-                    -- 8 x 4 = 32 bytes 
-                    v.raddr(n)(CFG_SYSBUS_ADDR_BITS-1 downto 5) 
-                         := v_radr(n)(CFG_SYSBUS_ADDR_BITS-1 downto 5);
-                end if;
-            end loop;
+
             if i_xslvi.ar_bits.size = "010" then
                 v_r32 := '1';
             end if;
@@ -178,58 +250,49 @@ begin
             v.rresp := AXI_RESP_OKAY;
             v.ruser := i_xslvi.ar_user;
         end if;
+    when rhold =>
+        v_radr := r.raddr;
+        if r.rsize = 4 then
+            v_r32 := '1';
+        end if;
+        if i_xslvi.aw_valid = '0' and r.wstate = wwait then
+            v_re := '1';
+            v.rstate := rtrans;
+            v.raddr := v_raddr_burst_nxt_swp;
+        end if;
     when rtrans =>
         v_r_valid := i_ready;
+        v_radr := r.raddr;
         if r.rlen /= 0 then
             v_re := '1';   -- request next burst read address even if no ready data
         end if;
-        if v.rsize = 4 then
+        if r.rsize = 4 then
             v_r32 := '1';
-        end if;
-        if r.raddr(0)(2) = '0' then
-            v_radr := r.raddr;
-        else
-            v_radr(0) := r.raddr(1);
-            v_radr(1) := r.raddr(0);
         end if;
         if i_xslvi.r_ready = '1' and i_ready = '1' then
             if r.rsize = 4 then
                 v.rswap := not r.rswap;
             end if;
-            for n in 0 to CFG_WORDS_ON_BUS-1 loop
-                v.raddr(n) := r.raddr(n) + r.rsize;
-            end loop;
-            if r.rburst = AXI_BURST_WRAP then
-                for n in 0 to CFG_WORDS_ON_BUS-1 loop
-                    -- i_bank.rsize = 8 and i_bank.rlen = 3
-                    -- 8 x 4 = 32 bytes 
-                    v.raddr(n)(CFG_SYSBUS_ADDR_BITS-1 downto 5) 
-                         := r.raddr(n)(CFG_SYSBUS_ADDR_BITS-1 downto 5);
-                end loop;
-            end if;
+            v.raddr := v_raddr_burst_nxt_swp;
             -- End of transaction (or process another one):
             if r.rlen = 0 then
                 v_r_last := '1';
-                v_ar_ready := not i_xslvi.aw_valid;
-                if i_xslvi.ar_valid = '1' and i_xslvi.aw_valid = '0' then
-                    v.rswap := i_xslvi.ar_bits.addr(2);
-                    v_re := '1';
+                v_ar_ready := '1';
+                v_radr := v_raddr_bus_swp;
+                if i_xslvi.ar_valid = '1' then
+                    if i_xslvi.aw_valid = '0' then
+                        v_re := '1';
+                        v.rstate := rtrans;
+                        v.raddr := v_raddr_bus_nxt_swp;
+                    else
+                        v.rstate := rhold;
+                        v.raddr := v_raddr_bus_swp;
+                    end if;
+
                     if i_xslvi.ar_bits.size = "010" then
                         v_r32 := '1';
                     end if;
-                    if i_xslvi.ar_bits.addr(2) = '0' then
-                        v_radr := v_radr_inc;
-                    else
-                        v_radr(0) := v_radr_inc(1);
-                        v_radr(1) := v_radr_inc(0);
-                    end if;
-                    for n in 0 to CFG_WORDS_ON_BUS-1 loop
-                        v.raddr(n) := v_radr(n) + XSizeToBytes(conv_integer(i_xslvi.ar_bits.size));
-                        if i_xslvi.ar_bits.burst = AXI_BURST_WRAP then
-                            v.raddr(n)(CFG_SYSBUS_ADDR_BITS-1 downto 5) 
-                                := v_radr(n)(CFG_SYSBUS_ADDR_BITS-1 downto 5);
-                        end if;
-                    end loop;
+                    v.rswap := i_xslvi.ar_bits.addr(2);
                     v.rsize := XSizeToBytes(conv_integer(i_xslvi.ar_bits.size));
                     v.rburst := i_xslvi.ar_bits.burst;
                     v.rlen := conv_integer(i_xslvi.ar_bits.len);
@@ -253,24 +316,8 @@ begin
             v_aw_ready := '1';
         end if;
         if i_xslvi.aw_valid = '1' and r.rlen = 0 then
-            if i_xslvi.w_valid = '0' then
-                -- Full AXI bus protocol
-                v.wstate := wtrans;
-            elsif i_ready = '1' then
-                -- AXI lite (no burst support)
-                v_we := (others => '1');
-                v_w_ready := '1';
-                if i_xslvi.aw_bits.addr(2) = '0' then
-                    v_wadr := v_wadr_inc;
-                else
-                    v_wadr(0) := v_wadr_inc(1);
-                    v_wadr(1) := v_wadr_inc(0);
-                end if;
-            end if;
-
-            for n in 0 to CFG_WORDS_ON_BUS-1 loop
-               v.waddr(n) := v_wadr_inc(n);
-            end loop;
+            v.wstate := wtrans;
+            v.waddr := v_wadr_bus_swp;
             v.wswap := i_xslvi.aw_bits.addr(2);
             v.wsize := XSizeToBytes(conv_integer(i_xslvi.aw_bits.size));
             v.wburst := i_xslvi.aw_bits.burst;
@@ -286,11 +333,7 @@ begin
             if r.wsize = 4 then
                 v.wswap := not r.wswap;
             end if;
-            if r.wburst = AXI_BURST_INCR then
-              for n in 0 to CFG_WORDS_ON_BUS-1 loop
-                v.waddr(n) := r.waddr(n) + r.wsize;
-              end loop;
-            end if;
+            v.waddr := v_waddr_burst_nxt_swp;
             -- End of transaction:
             if r.wlen = 0 then
                 v.b_valid := '1';
@@ -298,10 +341,7 @@ begin
                 if i_xslvi.aw_valid = '0' then
                     v.wstate := wwait;
                 else
-                    -- Only Full AXI Bus protocol support here
-                    for n in 0 to CFG_WORDS_ON_BUS-1 loop
-                        v.waddr(n) := v_wadr_inc(n);
-                    end loop;
+                    v.waddr := v_wadr_bus_swp;
                     v.wswap := i_xslvi.aw_bits.addr(2);
                     v.wsize := XSizeToBytes(conv_integer(i_xslvi.aw_bits.size));
                     v.wburst := i_xslvi.aw_bits.burst;
@@ -338,7 +378,7 @@ begin
     o_re <= v_re;
     o_radr <= v_radr;
     o_r32 <= v_r32;
-    o_wadr <= v_wadr;
+    o_wadr <= r.waddr;
     o_we <= v_we(0);
     o_wdata <= v_wdata;
     o_wstrb <= v_wstrb;
