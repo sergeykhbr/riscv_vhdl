@@ -19,8 +19,8 @@
 
 namespace debugger {
 
-Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset)
-    : sc_module(name_),
+Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
+    bool tracer_ena) : sc_module(name_),
     i_clk("i_clk"),
     i_nrst("i_nrst"),
     i_req_ctrl_ready("i_req_ctrl_ready"),
@@ -363,6 +363,25 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset)
     dbg0->o_flush_address(dbg.flush_address);
     dbg0->o_flush_valid(dbg.flush_valid);
 
+    trace0 = 0;
+    if (tracer_ena) {
+        trace0 = new Tracer("trace0", async_reset, "river_trace.log");
+        trace0->i_clk(i_clk);
+        trace0->i_nrst(i_nrst);
+        trace0->i_dbg_executed_cnt(dbg.executed_cnt);
+        trace0->i_e_valid(w.e.valid);
+        trace0->i_e_pc(w.e.pc);
+        trace0->i_e_instr(w.e.instr);
+        trace0->i_e_memop_store(w.e.memop_store);
+        trace0->i_e_memop_load(w.e.memop_load);
+        trace0->i_e_memop_addr(w.e.memop_addr);
+        trace0->i_e_res_data(w.e.res_data);
+        trace0->i_e_res_addr(w.e.res_addr);
+        trace0->i_m_wena(w.w.wena);
+        trace0->i_m_waddr(w.w.waddr);
+        trace0->i_m_wdata(w.w.wdata);
+    }
+
     reg_dbg = 0;
     mem_dbg = 0;
 };
@@ -376,6 +395,9 @@ Processor::~Processor() {
     delete iregs0;
     if (CFG_HW_FPU_ENABLE) {
         delete fregs0;
+    }
+    if (trace0) {
+        delete trace0;
     }
     delete csr0;
     delete dbg0;

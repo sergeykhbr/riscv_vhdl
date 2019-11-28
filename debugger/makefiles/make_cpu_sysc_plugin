@@ -85,7 +85,8 @@ SOURCES = \
 	fmul_d \
 	fpu_top \
 	stacktrbuf \
-	dbg_port
+	dbg_port \
+	tracer
 
 LIBS = \
 	dbg64g \

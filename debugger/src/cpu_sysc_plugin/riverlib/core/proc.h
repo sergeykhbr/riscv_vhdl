@@ -29,8 +29,8 @@
 #include "br_predic.h"
 #include "dbg_port.h"
 #include "regfbank.h"
+#include "tracer.h"
 #include <fstream>
-
 
 namespace debugger {
 
@@ -87,7 +87,8 @@ SC_MODULE(Processor) {
 
     SC_HAS_PROCESS(Processor);
 
-    Processor(sc_module_name name_, uint32_t hartid, bool async_reset);
+    Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
+             bool tracer_ena);
     virtual ~Processor();
 
 private:
@@ -247,6 +248,7 @@ private:
     RegIntBank *iregs0;
     RegFloatBank *fregs0;
     CsrRegs *csr0;
+    Tracer *trace0;
 
     DbgPort *dbg0;
 
