@@ -222,7 +222,7 @@ void DbgPort::comb() {
     if (r.halt == 0) {
         v.clock_cnt = r.clock_cnt.read() + 1;
     }
-    if (i_m_valid.read()) {
+    if (i_e_valid.read()) {
         v.executed_cnt = r.executed_cnt.read() + 1;
     }
     if (i_ebreak.read()) {

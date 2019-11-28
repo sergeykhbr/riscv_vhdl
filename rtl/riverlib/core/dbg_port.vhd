@@ -211,7 +211,7 @@ begin
     if r.halt = '0' then
         v.clock_cnt := r.clock_cnt + 1;
     end if;
-    if i_m_valid = '1' then
+    if i_e_valid = '1' then
         v.executed_cnt := r.executed_cnt + 1;
     end if;
     if i_ebreak = '1' then

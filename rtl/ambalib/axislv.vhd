@@ -221,7 +221,7 @@ begin
         v_ar_ready := '1';
         v_radr := v_raddr_bus_swp;
 
-        if i_xslvi.ar_valid = '1' and v_ar_ready = '1' then
+        if i_xslvi.ar_valid = '1' then
             if i_xslvi.aw_valid = '0' and r.wstate = wwait then
                 v_re := '1';
                 v.rstate := rtrans;

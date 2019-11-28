@@ -47,6 +47,7 @@ int main() {
     p_irq->isr_table = 0;
     pnp->fwid = 0x20190516;
 
+    gpio->direction = 0xf;
     p_irq->irq_lock = 1;
     fw_malloc_init();
     
