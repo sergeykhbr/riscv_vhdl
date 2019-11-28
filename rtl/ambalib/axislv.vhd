@@ -125,6 +125,10 @@ begin
     for n in 0 to CFG_WORDS_ON_BUS-1 loop
         v_raddr_bus(n) := traddr + n*CFG_ALIGN_BYTES;
         v_raddr_bus_nxt(n) := v_raddr_bus(n) + XSizeToBytes(conv_integer(i_xslvi.ar_bits.size));
+        if i_xslvi.ar_bits.burst = AXI_BURST_WRAP then
+            v_raddr_bus_nxt(n)(CFG_SYSBUS_ADDR_BITS-1 downto 5) 
+                 := v_raddr_bus(n)(CFG_SYSBUS_ADDR_BITS-1 downto 5);
+        end if;
 
         v_wadr_bus(n) := twaddr + n*CFG_ALIGN_BYTES;
     end loop;
@@ -146,21 +150,9 @@ begin
     if (i_xslvi.ar_bits.addr(2) = '0' and i_xslvi.ar_bits.size = "011") or
        (i_xslvi.ar_bits.addr(2) = '1' and i_xslvi.ar_bits.size = "010") then
         v_raddr_bus_nxt_swp := v_raddr_bus_nxt;
-        if i_xslvi.ar_bits.burst = AXI_BURST_WRAP then
-            v_raddr_bus_nxt_swp(0)(CFG_SYSBUS_ADDR_BITS-1 downto 5) 
-                 := v_raddr_bus_nxt(0)(CFG_SYSBUS_ADDR_BITS-1 downto 5);
-            v_raddr_bus_nxt_swp(1)(CFG_SYSBUS_ADDR_BITS-1 downto 5) 
-                 := v_raddr_bus_nxt(1)(CFG_SYSBUS_ADDR_BITS-1 downto 5);
-        end if;
     else
         v_raddr_bus_nxt_swp(0) := v_raddr_bus_nxt(1);
         v_raddr_bus_nxt_swp(1) := v_raddr_bus_nxt(0);
-        if i_xslvi.ar_bits.burst = AXI_BURST_WRAP then
-            v_raddr_bus_nxt_swp(0)(CFG_SYSBUS_ADDR_BITS-1 downto 5) 
-                 := v_raddr_bus_nxt(1)(CFG_SYSBUS_ADDR_BITS-1 downto 5);
-            v_raddr_bus_nxt_swp(1)(CFG_SYSBUS_ADDR_BITS-1 downto 5) 
-                 := v_raddr_bus_nxt(0)(CFG_SYSBUS_ADDR_BITS-1 downto 5);
-        end if;
     end if;
 
     -- Next burst read address
@@ -230,7 +222,7 @@ begin
         v_radr := v_raddr_bus_swp;
 
         if i_xslvi.ar_valid = '1' and v_ar_ready = '1' then
-            if i_xslvi.aw_valid = '0' then
+            if i_xslvi.aw_valid = '0' and r.wstate = wwait then
                 v_re := '1';
                 v.rstate := rtrans;
                 v.raddr := v_raddr_bus_nxt_swp;
@@ -280,7 +272,7 @@ begin
                 v_ar_ready := '1';
                 v_radr := v_raddr_bus_swp;
                 if i_xslvi.ar_valid = '1' then
-                    if i_xslvi.aw_valid = '0' then
+                    if i_xslvi.aw_valid = '0' and r.wstate = wwait then
                         v_re := '1';
                         v.rstate := rtrans;
                         v.raddr := v_raddr_bus_nxt_swp;
@@ -301,7 +293,6 @@ begin
                     v.ruser := i_xslvi.ar_user;
                 else
                     v.rstate := rwait;
-                    v_re := '0';
                 end if;
             else
                 v.rlen := r.rlen - 1;
