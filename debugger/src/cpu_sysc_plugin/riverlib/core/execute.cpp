@@ -535,7 +535,12 @@ void InstrExecute::comb() {
             // 1-cycle wait state
             w_hold = 1;
             w_next_ready = 0;
-            v.state = State_WaitInstr;
+            if (i_wb_ready.read() == 1) {
+                v.state = State_WaitInstr;
+            } else {
+                // Queue in memaccess module allows to accept 2 LOAD instructions
+                v.state = State_Hazard;
+            }
         } else if (i_pipeline_hold.read() == 1) {
             v.state = State_Hold;
             v.hold_valid = w_next_ready;

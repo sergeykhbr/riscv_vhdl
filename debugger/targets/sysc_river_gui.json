@@ -190,6 +190,7 @@
                 ['CmdExecutor','cmdexec0'],
                 ['BaseAddress',0x80001000],
                 ['Length',4096],
+                ['Clock','core0'],
                 ['IrqControl',['irqctrl0','irq1']],
                 ['MapList',[['uart0','status'],
                             ['uart0','scaler'],

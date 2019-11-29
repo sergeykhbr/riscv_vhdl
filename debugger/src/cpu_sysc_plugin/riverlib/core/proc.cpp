@@ -377,6 +377,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
         trace0->i_e_memop_addr(w.e.memop_addr);
         trace0->i_e_res_data(w.e.res_data);
         trace0->i_e_res_addr(w.e.res_addr);
+        trace0->i_m_valid(w.m.valid);
         trace0->i_m_wena(w.w.wena);
         trace0->i_m_waddr(w.w.waddr);
         trace0->i_m_wdata(w.w.wdata);

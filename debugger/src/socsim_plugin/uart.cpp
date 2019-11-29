@@ -25,8 +25,10 @@ UART::UART(const char *name) : RegMemBankGeneric(name),
     fwcpuid_(static_cast<IService *>(this), "fwcpuid", 0x08),
     data_(static_cast<IService *>(this), "data", 0x10) {
     registerInterface(static_cast<ISerial *>(this));
+    registerInterface(static_cast<IClockListener *>(this));
     registerAttribute("FifoSize", &fifoSize_);
     registerAttribute("IrqControl", &irqctrl_);
+    registerAttribute("Clock", &clock_);
     registerAttribute("CmdExecutor", &cmdexec_);
 
     listeners_.make_list(0);
@@ -35,6 +37,10 @@ UART::UART(const char *name) : RegMemBankGeneric(name),
     rxfifo_ = 0;
     rx_total_ = 0;
     pcmd_ = 0;
+
+    tx_total_ = 0;
+    tx_wcnt_ = 0;
+    tx_rcnt_ = 0;
 }
 
 UART::~UART() {
@@ -67,6 +73,14 @@ void UART::postinitService() {
         RISCV_error("Can't find IWire interface %s", irqctrl_[0u].to_string());
     }
 
+    iclk_ = static_cast<IClock *>(
+            RISCV_get_service_iface(clock_.to_string(), 
+                                    IFACE_CLOCK));
+    if (!iclk_) {
+        RISCV_error("Can't get IClock interface %s",
+                    clock_.to_string());
+    }
+
     icmdexec_ = static_cast<ICmdExecutor *>(
             RISCV_get_service_iface(cmdexec_.to_string(), 
                                     IFACE_CMD_EXECUTOR));
@@ -83,6 +97,30 @@ void UART::predeleteService() {
     if (icmdexec_) {
         icmdexec_->unregisterCommand(pcmd_);
     }
+}
+
+void UART::stepCallback(uint64_t t) {
+    if (tx_total_) {
+        tx_rcnt_ = (tx_rcnt_ + 1) % FIFOSZ;
+        tx_total_--;
+
+        if (tx_total_ == 0 && status_.getTyped().b.tx_irq_ena) {
+            iwire_->raiseLine();
+        }
+    }
+
+    iclk_->registerStepCallback(static_cast<IClockListener *>(this),
+                                t + 2 * 10 * scaler_.getValue().val);
+}
+
+void UART::setScaler(uint32_t scaler) {
+    if (!iclk_) {
+        return;
+    }
+    uint64_t t = iclk_->getStepCounter();
+    uint64_t rtl_offset = 17;
+    iclk_->moveStepCallback(static_cast<IClockListener *>(this),
+                            t + 10 * scaler + rtl_offset);
 }
 
 int UART::writeData(const char *buf, int sz) {
@@ -148,8 +186,10 @@ void UART::putByte(char v) {
         lstn->updateData(&v, 1);
     }
     RISCV_mutex_unlock(&mutexListeners_);
-    if (status_.getTyped().b.tx_irq_ena) {
-        iwire_->raiseLine();
+    if (tx_total_ < FIFOSZ) {
+        tx_fifo_[tx_wcnt_] = v;
+        tx_wcnt_ = (tx_wcnt_ + 1) % FIFOSZ;
+        tx_total_++;
     }
 }
 
@@ -183,9 +223,22 @@ uint64_t UART::STATUS_TYPE::aboutToRead(uint64_t cur_val) {
         t.b.rx_fifo_full = 0;
     }
 
-    t.b.tx_fifo_empty = 1;
-    t.b.tx_fifo_full = 0;
+    if (p->getTxTotal() == 0) {
+        t.b.tx_fifo_empty = 1;
+        t.b.tx_fifo_full = 0;
+    } else if (p->getTxTotal() == FIFOSZ) {
+        t.b.tx_fifo_empty = 0;
+        t.b.tx_fifo_full = 1;
+    } else {
+        t.b.tx_fifo_empty = 0;
+        t.b.tx_fifo_full = 0;
+    }
     return t.v;
+}
+uint64_t UART::SCALER_TYPE::aboutToWrite(uint64_t new_val) {
+    UART *p = static_cast<UART *>(parent_);
+    p->setScaler(static_cast<uint32_t>(new_val));
+    return new_val;    
 }
 
 uint64_t UART::DATA_TYPE::aboutToRead(uint64_t cur_val) {

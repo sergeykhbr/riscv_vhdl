@@ -37,6 +37,7 @@ SC_MODULE(Tracer) {
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_e_memop_addr;
     sc_in<sc_uint<RISCV_ARCH>> i_e_res_data;
     sc_in<sc_uint<6>> i_e_res_addr;
+    sc_in<bool> i_m_valid;
     sc_in<bool> i_m_wena;
     sc_in<sc_uint<6>> i_m_waddr;
     sc_in<sc_uint<RISCV_ARCH>> i_m_wdata;

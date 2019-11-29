@@ -44,6 +44,7 @@ Tracer::Tracer(sc_module_name name_, bool async_reset, const char *trace_file)
     i_e_memop_addr("i_e_memop_addr"),
     i_e_res_data("i_e_res_data"),
     i_e_res_addr("i_e_res_addr"),
+    i_m_valid("i_m_valid"),
     i_m_wena("i_m_wena"),
     i_m_waddr("i_m_waddr"),
     i_m_wdata("i_m_wdata") {
@@ -218,8 +219,8 @@ void Tracer::registers() {
                 rname[i_m_waddr.read().to_uint()],
                 i_m_wdata.read().to_uint64());
         fwrite(msg, 1, tsz, fl_);
+        r_load_reg = 0;
     }
-    r_load_reg = 0;
 
     if (i_e_valid.read() == 1) {
         task_disassembler(i_e_instr.read().to_uint());

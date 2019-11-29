@@ -570,7 +570,12 @@ begin
             -- 1-cycle wait state
             w_hold := '1';
             w_next_ready := '0';
-            v.state := State_WaitInstr;
+            if i_wb_ready = '1' then
+                v.state := State_WaitInstr;
+            else
+                -- Queue in memaccess module allows to accept 2 LOAD instructions
+                v.state := State_Hazard;
+            end if;
         elsif i_pipeline_hold = '1' then
             v.state := State_Hold;
             v.hold_valid := w_next_ready;

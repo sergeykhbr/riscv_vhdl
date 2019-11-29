@@ -69,7 +69,8 @@ class UartCmdType : public ICommand {
 };
 
 class UART : public RegMemBankGeneric,
-             public ISerial {
+             public ISerial,
+             public IClockListener {
  public:
     explicit UART(const char *name);
     virtual ~UART();
@@ -86,10 +87,14 @@ class UART : public RegMemBankGeneric,
     virtual int openPort(const char *port, AttributeType settings);
     virtual void closePort();
 
+    /** IClockListener */
+    virtual void stepCallback(uint64_t t);
+
     /** Common methods */
+    void setScaler(uint32_t scaler);
     int getFifoSize() { return fifoSize_.to_int(); }
     int getRxTotal() { return rx_total_; }
-    int getTxTotal() { return 0; }
+    int getTxTotal() { return tx_total_; }
     void putByte(char v);
     char getByte();
 
@@ -97,7 +102,13 @@ class UART : public RegMemBankGeneric,
     class STATUS_TYPE : public MappedReg64Type {
      public:
         STATUS_TYPE(IService *parent, const char *name, uint64_t addr) :
-                    MappedReg64Type(parent, name, addr, 4) {}
+                    MappedReg64Type(parent, name, addr, 4) {
+            value_type t;
+            t.v = 0;
+            t.b.rx_irq_ena = 1;
+            t.b.tx_irq_ena = 1;
+            value_.val = t.v;
+        }
 
         union value_type {
             uint64_t v;
@@ -126,6 +137,15 @@ class UART : public RegMemBankGeneric,
         virtual uint64_t aboutToRead(uint64_t cur_val) override;
     };
 
+    class SCALER_TYPE : public MappedReg64Type {
+     public:
+        SCALER_TYPE(IService *parent, const char *name, uint64_t addr) :
+                    MappedReg64Type(parent, name, addr, 4) {}
+
+     protected:
+        virtual uint64_t aboutToWrite(uint64_t new_val) override;
+    };
+
     class DWORD_TYPE : public MappedReg64Type {
      public:
         DWORD_TYPE(IService *parent, const char *name, uint64_t addr) :
@@ -144,20 +164,30 @@ class UART : public RegMemBankGeneric,
  private:
     AttributeType fifoSize_;
     AttributeType irqctrl_;
+    AttributeType clock_;
     AttributeType cmdexec_;
     AttributeType listeners_;  // non-registering attribute
+
     IWire *iwire_;
     ICmdExecutor *icmdexec_;
+    IClock *iclk_;
 
     char *rxfifo_;
     char *p_rx_wr_;
     char *p_rx_rd_;
     int rx_total_;
+
+    static const int FIFOSZ = 15;
+    char tx_fifo_[FIFOSZ];
+    int tx_wcnt_;
+    int tx_rcnt_;
+    int tx_total_;
+
     mutex_def mutexListeners_;
     UartCmdType *pcmd_;
 
     STATUS_TYPE status_;
-    DWORD_TYPE scaler_;
+    SCALER_TYPE scaler_;
     DWORD_TYPE fwcpuid_;
     DATA_TYPE data_;
 };
