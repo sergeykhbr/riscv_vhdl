@@ -292,7 +292,7 @@ begin
         v.instr := wb_e_instr;
         v.res_addr := wb_res_addr;
         v.res_data := wb_mem_data;
-        if i_res_addr = "000000" then
+        if wb_res_addr = "000000" then
             v.wena := '0';
         else
             v.wena := '1';

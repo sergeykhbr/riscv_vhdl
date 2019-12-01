@@ -37,14 +37,14 @@ package config_target is
   --! @brief   HEX-image for the initialization of the Boot ROM.
   --! @details This file is used by \e inferred ROM implementation.
   constant CFG_SIM_BOOTROM_HEX : string := 
---              CFG_TOPDIR & "examples/boot/linuxbuild/bin/bootimage.hex";
-              CFG_TOPDIR & "examples/bootrom_tests/linuxbuild/bin/bootrom_tests.hex";
+              CFG_TOPDIR & "examples/boot/linuxbuild/bin/bootimage.hex";
+--              CFG_TOPDIR & "examples/bootrom_tests/linuxbuild/bin/bootrom_tests.hex";
 
   --! @brief   HEX-image for the initialization of the FwImage ROM.
   --! @details This file is used by \e inferred ROM implementation.
   constant CFG_SIM_FWIMAGE_HEX : string := 
-                CFG_TOPDIR & "examples/zephyr/gcc711/zephyr.hex";
---                CFG_TOPDIR & "examples/dhrystone21/makefiles/bin/dhrystone21.hex";
+--                CFG_TOPDIR & "examples/zephyr/gcc711/zephyr.hex";
+                CFG_TOPDIR & "examples/dhrystone21/makefiles/bin/dhrystone21.hex";
                 
 
   --! @brief Hardware SoC Identificator.

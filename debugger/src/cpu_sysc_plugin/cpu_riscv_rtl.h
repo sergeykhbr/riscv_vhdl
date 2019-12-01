@@ -63,6 +63,11 @@ class CpuRiscV_RTL : public IService,
         return wb_time.read() + 2;
     }
 
+    virtual uint64_t getExecCounter() override {
+        return wb_exec_cnt.read();
+    };
+
+
     virtual void registerStepCallback(IClockListener *cb, uint64_t t) {
         wrapper_->registerStepCallback(cb, t);
     }
@@ -111,6 +116,7 @@ class CpuRiscV_RTL : public IService,
     sc_signal<bool> w_nrst;
     // Timer:
     sc_signal<sc_uint<64>> wb_time;
+    sc_signal<sc_uint<64>> wb_exec_cnt;
     // Memory interface:
     sc_signal<bool> w_req_mem_ready;
     sc_signal<bool> w_req_mem_valid;

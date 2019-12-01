@@ -97,6 +97,7 @@ class UART : public RegMemBankGeneric,
     int getTxTotal() { return tx_total_; }
     void putByte(char v);
     char getByte();
+    uint64_t getExecCounter() { return iclk_->getExecCounter(); }
 
  protected:
     class STATUS_TYPE : public MappedReg64Type {
@@ -190,6 +191,7 @@ class UART : public RegMemBankGeneric,
     SCALER_TYPE scaler_;
     DWORD_TYPE fwcpuid_;
     DATA_TYPE data_;
+    int t_cb_cnt_;
 };
 
 DECLARE_CLASS(UART)

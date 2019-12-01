@@ -63,6 +63,7 @@ SC_MODULE(Processor) {
     // External interrupt pin
     sc_in<bool> i_ext_irq;                              // PLIC interrupt accordingly with spec
     sc_out<sc_uint<64>> o_time;                         // Clock/Step counter depending attribute "GenerateRef"
+    sc_out<sc_uint<64>> o_exec_cnt;
     // Debug interface
     sc_in<bool> i_dport_valid;                          // Debug access from DSU is valid
     sc_in<bool> i_dport_write;                          // Write command flag

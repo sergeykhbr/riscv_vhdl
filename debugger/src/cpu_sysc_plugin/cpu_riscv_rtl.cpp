@@ -185,6 +185,7 @@ void CpuRiscV_RTL::createSystemC() {
     top_->i_resp_mem_store_fault_addr(wb_resp_mem_store_fault_addr);
     top_->i_ext_irq(w_interrupt);
     top_->o_time(wb_time);
+    top_->o_exec_cnt(wb_exec_cnt);
     top_->i_dport_valid(w_dport_valid);
     top_->i_dport_write(w_dport_write);
     top_->i_dport_region(wb_dport_region);

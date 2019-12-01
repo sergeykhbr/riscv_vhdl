@@ -135,7 +135,7 @@
                 ['HartID',0],
                 ['AsyncReset',false],
                 ['FpuEnable',true, 'Enable Hardware FPU module'],
-                ['TracerEnable',true, 'Enable Verification Trace collector module'],
+                ['TracerEnable',false, 'Enable Verification Trace collector module'],
                 ['Bus','axi0'],
                 ['CmdExecutor','cmdexec0']
                 ['Tap','edcltap']
@@ -147,7 +147,7 @@
     {'Class':'MemorySimClass','Instances':[
           {'Name':'bootrom0','Attr':[
                 ['LogLevel',1],
-                ['InitFile','../../../examples/bootrom_tests/linuxbuild/bin/bootrom_tests.hex'],
+                ['InitFile','../../../examples/boot/linuxbuild/bin/bootimage.hex'],
                 ['ReadOnly',true],
                 ['BaseAddress',0x0],
                 ['Length',32768]
@@ -257,7 +257,7 @@
                 ['BaseAddress',0xfffff000],
                 ['Length',4096],
                 ['Tech',0],
-                ['AdcDetector',0xff]
+                ['AdcDetector',0x00]
                 ]}]},
     {'Class':'BusGenericClass','Instances':[
           {'Name':'axi0','Attr':[

@@ -45,6 +45,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     i_resp_data_store_fault_addr("i_resp_data_store_fault_addr"),
     o_resp_data_ready("o_resp_data_ready"),
     i_ext_irq("i_ext_irq"),
+    o_exec_cnt("o_exec_cnt"),
     o_time("o_time"),
     i_dport_valid("i_dport_valid"),
     i_dport_write("i_dport_write"),
@@ -443,6 +444,7 @@ void Processor::comb() {
     } else {
         o_time = dbg.clock_cnt;
     }
+    o_exec_cnt = dbg.executed_cnt;
 
     o_flush_valid = dbg.flush_valid.read() || csr.break_event.read();
     if (csr.break_event.read()) {
