@@ -303,10 +303,10 @@ begin
     -- Writing state machine:
     case r.wstate is
     when wwait =>
-        if r.rlen = 0 then
+        if r.rlen = 0 or r.rstate = rhold then
             v_aw_ready := '1';
         end if;
-        if i_xslvi.aw_valid = '1' and r.rlen = 0 then
+        if i_xslvi.aw_valid = '1' and (r.rlen = 0 or r.rstate = rhold) then
             v.wstate := wtrans;
             v.waddr := v_wadr_bus_swp;
             v.wswap := i_xslvi.aw_bits.addr(2);

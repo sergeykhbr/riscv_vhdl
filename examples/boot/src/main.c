@@ -128,7 +128,13 @@ void _init() {
   
     if (fw_get_cpuid() != 0) {
         // TODO: waiting event or something
-        while(1) {}
+        while(1) {
+            // Just do something
+            uint64_t *sram = (uint64_t *)ADDR_BUS0_XSLV_SRAM;
+            uint64_t tdata = sram[16*1024];
+            sram[16*1024] = tdata;
+            tech = pnp->tech;
+        }
     }
 
     // mask all interrupts in interrupt controller to avoid

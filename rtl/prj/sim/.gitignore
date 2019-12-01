@@ -11,5 +11,5 @@ ncsim.key
 *.log
 *.shm
 *.diag
-
+*.tcl*
 
