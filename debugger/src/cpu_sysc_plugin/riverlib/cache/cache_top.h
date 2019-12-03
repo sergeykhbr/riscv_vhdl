@@ -22,6 +22,7 @@
 #include "icache_stub.h"
 #include "icache_lru.h"
 #include "dcache.h"
+#include "mpu.h"
 
 namespace debugger {
 
@@ -65,7 +66,12 @@ SC_MODULE(CacheTop) {
     sc_in<bool> i_resp_mem_load_fault;                  // Bus response with SLVERR or DECERR on read
     sc_in<bool> i_resp_mem_store_fault;                 // Bus response with SLVERR or DECERR on write
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_resp_mem_store_fault_addr;
-
+    // MPU interface
+    sc_in<bool> i_mpu_region_we;
+    sc_in<sc_uint<CFG_MPU_TBL_WIDTH>> i_mpu_region_idx;
+    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_mpu_region_addr;
+    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_mpu_region_mask;
+    sc_in<sc_uint<CFG_MPU_FL_TOTAL>> i_mpu_region_flags;   // {ena, cachable, r, w, x}
     // Debug signals:
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_flush_address;     // clear ICache address from debug interface
     sc_in<bool> i_flush_valid;                          // address to clear icache is valid
@@ -97,6 +103,7 @@ private:
         sc_signal<sc_uint<8>> req_mem_len;
         sc_signal<sc_uint<2>> req_mem_burst;
         sc_signal<bool> req_mem_last;
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> mpu_addr;
     };
 
     struct RegistersType {
@@ -115,9 +122,16 @@ private:
     sc_signal<sc_uint<BUS_DATA_WIDTH>> wb_data_resp_mem_data;
     sc_signal<bool> w_data_resp_mem_load_fault;
     sc_signal<bool> w_data_req_ready;
+    sc_signal<bool> w_mpu_icachable;
+    sc_signal<bool> w_mpu_executable;
+    sc_signal<bool> w_mpu_dcachable;
+    sc_signal<bool> w_mpu_readable;
+    sc_signal<bool> w_mpu_writable;
+
 
     ICacheLru *i1;
     DCache *d0;
+    MPU *mpu0;
 #ifdef DBG_ICACHE_TB
     ICache_tb *i0_tb;
 #endif

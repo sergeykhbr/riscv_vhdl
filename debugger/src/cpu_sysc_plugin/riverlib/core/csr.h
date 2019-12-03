@@ -59,6 +59,12 @@ SC_MODULE(CsrRegs) {
     sc_in<bool> i_break_mode;               // Behaviour on EBREAK instruction: 0 = halt; 1 = generate trap
     sc_out<bool> o_break_event;             // Breakpoint event to raise status flag in dport interfae
 
+    sc_out<bool> o_mpu_region_we;
+    sc_out<sc_uint<CFG_MPU_TBL_WIDTH>> o_mpu_region_idx;
+    sc_out<sc_uint<BUS_ADDR_WIDTH>> o_mpu_region_addr;
+    sc_out<sc_uint<BUS_ADDR_WIDTH>> o_mpu_region_mask;
+    sc_out<sc_uint<CFG_MPU_FL_TOTAL>> o_mpu_region_flags;  // {ena, cachable, r, w, x}
+
     sc_in<bool> i_dport_ena;                  // Debug port request is enabled
     sc_in<bool> i_dport_write;                // Debug port Write enable
     sc_in<sc_uint<12>> i_dport_addr;          // Debug port CSR address

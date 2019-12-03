@@ -64,6 +64,12 @@ SC_MODULE(Processor) {
     sc_in<bool> i_ext_irq;                              // PLIC interrupt accordingly with spec
     sc_out<sc_uint<64>> o_time;                         // Clock/Step counter depending attribute "GenerateRef"
     sc_out<sc_uint<64>> o_exec_cnt;
+    // MPU interface
+    sc_out<bool> o_mpu_region_we;
+    sc_out<sc_uint<CFG_MPU_TBL_WIDTH>> o_mpu_region_idx;
+    sc_out<sc_uint<BUS_ADDR_WIDTH>> o_mpu_region_addr;
+    sc_out<sc_uint<BUS_ADDR_WIDTH>> o_mpu_region_mask;
+    sc_out<sc_uint<CFG_MPU_FL_TOTAL>> o_mpu_region_flags;  // {ena, cachable, r, w, x}
     // Debug interface
     sc_in<bool> i_dport_valid;                          // Debug access from DSU is valid
     sc_in<bool> i_dport_write;                          // Write command flag

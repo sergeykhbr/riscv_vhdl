@@ -47,6 +47,11 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     i_ext_irq("i_ext_irq"),
     o_exec_cnt("o_exec_cnt"),
     o_time("o_time"),
+    o_mpu_region_we("o_mpu_region_we"),
+    o_mpu_region_idx("o_mpu_region_idx"),
+    o_mpu_region_addr("o_mpu_region_addr"),
+    o_mpu_region_mask("o_mpu_region_mask"),
+    o_mpu_region_flags("o_mpu_region_flags"),
     i_dport_valid("i_dport_valid"),
     i_dport_write("i_dport_write"),
     i_dport_region("i_dport_region"),
@@ -316,6 +321,11 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     csr0->o_trap_pc(csr.trap_pc);
     csr0->i_break_mode(dbg.break_mode);
     csr0->o_break_event(csr.break_event);
+    csr0->o_mpu_region_we(o_mpu_region_we);
+    csr0->o_mpu_region_idx(o_mpu_region_idx);
+    csr0->o_mpu_region_addr(o_mpu_region_addr);
+    csr0->o_mpu_region_mask(o_mpu_region_mask);
+    csr0->o_mpu_region_flags(o_mpu_region_flags);
     csr0->i_dport_ena(dbg.csr_ena);
     csr0->i_dport_write(dbg.csr_write);
     csr0->i_dport_addr(dbg.core_addr);

@@ -54,6 +54,17 @@ static const int CFG_ICACHE_WAYS        = 4;  // 4 odds, 4 even
  */
 static const int CFG_ITAG_WIDTH_TOTAL = CFG_ITAG_WIDTH + 5;
 
+/** MPU config */
+static const int CFG_MPU_TBL_WIDTH   = 2;    // [1:0]  log2(MPU_TBL_SIZE)
+static const int CFG_MPU_TBL_SIZE    = 1 << CFG_MPU_TBL_WIDTH;
+static const int CFG_MPU_FL_WR       = 0;
+static const int CFG_MPU_FL_RD       = 1;
+static const int CFG_MPU_FL_EXEC     = 2;
+static const int CFG_MPU_FL_CACHABLE = 3;
+static const int CFG_MPU_FL_ENA      = 4;
+static const int CFG_MPU_FL_TOTAL    = 5;
+
+
 static const uint8_t MEMOP_8B = 3;
 static const uint8_t MEMOP_4B = 2;
 static const uint8_t MEMOP_2B = 1;

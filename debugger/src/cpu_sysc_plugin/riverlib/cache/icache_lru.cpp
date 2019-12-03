@@ -42,6 +42,8 @@ ICacheLru::ICacheLru(sc_module_name name_, bool async_reset,
     i_resp_mem_data_valid("i_resp_mem_data_valid"),
     i_resp_mem_data("i_resp_mem_data"),
     i_resp_mem_load_fault("i_resp_mem_load_fault"),
+    o_mpu_addr("o_mpu_addr"),
+    i_mpu_executable("i_mpu_executable"),
     i_flush_address("i_flush_address"),
     i_flush_valid("i_flush_valid"),
     o_istate("o_istate") {
@@ -113,6 +115,7 @@ ICacheLru::ICacheLru(sc_module_name name_, bool async_reset,
     sensitive << i_flush_address;
     sensitive << i_flush_valid;
     sensitive << i_req_mem_ready;
+    sensitive << i_mpu_executable;
     for (int i = 0; i < CFG_ICACHE_WAYS; i++) {
         sensitive << memeven[i].rtag;
         sensitive << memeven[i].rdata;
@@ -245,6 +248,7 @@ void ICacheLru::comb() {
     bool w_hit0_valid;
     bool w_hit1_valid;
     sc_uint<BUS_ADDR_WIDTH> wb_mem_addr;
+    sc_uint<BUS_ADDR_WIDTH> wb_mpu_addr;
     sc_uint<32> wb_o_resp_data;
     bool v_init;
     bool w_ena;
@@ -259,6 +263,8 @@ void ICacheLru::comb() {
     TagMemInTypeVariable v_swapin[WAY_SubNum];
    
     v = r;
+
+    wb_mpu_addr = r.req_addr;
 
     if (i_req_ctrl_valid.read() == 1) {
         wb_req_adr = i_req_ctrl_addr.read();
@@ -468,13 +474,14 @@ void ICacheLru::comb() {
 
         } else {
             // Miss
-            v.req_mem_valid = 1;
+            v.req_mem_valid = 0;
             if (!w_hit0_valid || wb_hit0 == MISS) {
-                wb_mem_addr = r.req_addr;
+                wb_mpu_addr = r.req_addr;
             } else {
-                wb_mem_addr = r.req_addr_overlay.read();
+                wb_mpu_addr = r.req_addr_overlay.read();
             }
-            if (i_req_mem_ready.read() == 1) {
+            v.state = State_CheckMPU;
+            /*if (i_req_mem_ready.read() == 1) {
                 v.state = State_WaitResp;
             } else {
                 v.state = State_WaitGrant;
@@ -495,11 +502,38 @@ void ICacheLru::comb() {
             case 3:
                 wb_wstrb_next = 0x8;
                 break;
-            }
+            }*/
+            v.mpu_addr = wb_mpu_addr;
             v.burst_wstrb = wb_wstrb_next;
             v.burst_valid = wb_wstrb_next;
             v.lru_even_wr = wb_lru_even;
             v.lru_odd_wr = wb_lru_odd;
+        }
+        break;
+    case State_CheckMPU:
+        v.req_mem_valid = 1;
+        wb_mem_addr = r.mpu_addr;
+        if (i_req_mem_ready.read() == 1) {
+            v.state = State_WaitResp;
+        } else {
+            v.state = State_WaitGrant;
+        }
+
+        v.mem_addr = wb_mem_addr(BUS_ADDR_WIDTH-1, 3) << 3;
+        v.burst_cnt = 3;
+        switch (wb_mem_addr(CFG_IOFFSET_WIDTH-1, 3)) {
+        case 0:
+            wb_wstrb_next = 0x1;
+            break;
+        case 1:
+            wb_wstrb_next = 0x2;
+            break;
+        case 2:
+            wb_wstrb_next = 0x4;
+            break;
+        case 3:
+            wb_wstrb_next = 0x8;
+            break;
         }
         break;
     case State_WaitGrant:
@@ -657,6 +691,7 @@ void ICacheLru::comb() {
     o_resp_ctrl_data = wb_o_resp_data;
     o_resp_ctrl_addr = r.req_addr.read();
     o_resp_ctrl_load_fault = w_o_resp_load_fault;
+    o_mpu_addr = r.mpu_addr.read();
     o_istate = r.state.read()(1, 0);
 }
 

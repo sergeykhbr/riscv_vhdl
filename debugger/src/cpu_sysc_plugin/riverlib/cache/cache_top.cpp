@@ -56,6 +56,11 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset) :
     i_resp_mem_load_fault("i_resp_mem_load_fault"),
     i_resp_mem_store_fault("i_resp_mem_store_fault"),
     i_resp_mem_store_fault_addr("i_resp_mem_store_fault_addr"),
+    i_mpu_region_we("i_mpu_region_we"),
+    i_mpu_region_idx("i_mpu_region_idx"),
+    i_mpu_region_addr("i_mpu_region_addr"),
+    i_mpu_region_mask("i_mpu_region_mask"),
+    i_mpu_region_flags("i_mpu_region_flags"),
     i_flush_address("i_flush_address"),
     i_flush_valid("i_flush_valid"),
     o_istate("o_istate"),
@@ -114,6 +119,8 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset) :
     i1->i_resp_mem_data_valid(w_ctrl_resp_mem_data_valid);
     i1->i_resp_mem_data(wb_ctrl_resp_mem_data);
     i1->i_resp_mem_load_fault(w_ctrl_resp_mem_load_fault);
+    i1->o_mpu_addr(i.mpu_addr);
+    i1->i_mpu_executable(w_mpu_executable);
     i1->i_flush_address(i_flush_address);
     i1->i_flush_valid(i_flush_valid);
     i1->o_istate(o_istate);
@@ -148,7 +155,28 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset) :
     d0->i_resp_mem_load_fault(w_data_resp_mem_load_fault);
     d0->i_resp_mem_store_fault(i_resp_mem_store_fault);
     d0->i_resp_mem_store_fault_addr(i_resp_mem_store_fault_addr);
+    d0->o_mpu_addr(d.mpu_addr);
+    d0->i_mpu_cachable(w_mpu_dcachable);
+    d0->i_mpu_readable(w_mpu_readable);
+    d0->i_mpu_writable(w_mpu_writable);
     d0->o_dstate(o_dstate);
+
+    mpu0 = new MPU("mpu0", async_reset);
+
+    mpu0->i_clk(i_clk);
+    mpu0->i_nrst(i_nrst);
+    mpu0->i_iaddr(i.mpu_addr);
+    mpu0->i_daddr(d.mpu_addr);
+    mpu0->i_region_we(i_mpu_region_we);
+    mpu0->i_region_idx(i_mpu_region_idx);
+    mpu0->i_region_addr(i_mpu_region_addr);
+    mpu0->i_region_mask(i_mpu_region_mask);
+    mpu0->i_region_flags(i_mpu_region_flags);
+    mpu0->o_icachable(w_mpu_icachable);
+    mpu0->o_iexecutable(w_mpu_executable);
+    mpu0->o_dcachable(w_mpu_dcachable);
+    mpu0->o_dreadable(w_mpu_readable);
+    mpu0->o_dwritable(w_mpu_writable);
 
 #ifdef DBG_ICACHE_TB
     i0_tb = new ICache_tb("ictb0");
@@ -191,6 +219,7 @@ void CacheTop::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 CacheTop::~CacheTop() {
     delete i1;
     delete d0;
+    delete mpu0;
 }
 
 

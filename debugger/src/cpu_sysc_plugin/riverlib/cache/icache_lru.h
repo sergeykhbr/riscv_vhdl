@@ -51,6 +51,9 @@ SC_MODULE(ICacheLru) {
     sc_in<bool> i_resp_mem_data_valid;
     sc_in<sc_uint<BUS_DATA_WIDTH>> i_resp_mem_data;
     sc_in<bool> i_resp_mem_load_fault;
+    // Mpu interface
+    sc_out<sc_uint<BUS_ADDR_WIDTH>> o_mpu_addr;
+    sc_in<bool> i_mpu_executable;
     // Debug interface
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_flush_address;
     sc_in<bool> i_flush_valid;
@@ -80,6 +83,7 @@ SC_MODULE(ICacheLru) {
     enum EState {
         State_Idle,
         State_CheckHit,
+        State_CheckMPU,
         State_WaitGrant,
         State_WaitResp,
         State_CheckResp,
@@ -141,6 +145,7 @@ SC_MODULE(ICacheLru) {
         sc_signal<bool> requested;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_addr;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_addr_overlay;
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> mpu_addr;
         sc_signal<bool> use_overlay;
         sc_signal<sc_uint<3>> state;
         sc_signal<bool> req_mem_valid;
@@ -160,6 +165,7 @@ SC_MODULE(ICacheLru) {
         iv.requested = 0;
         iv.req_addr = 0;
         iv.req_addr_overlay = 0;
+        iv.mpu_addr = 0;
         iv.use_overlay = 0;
         iv.state = State_Idle;
         iv.req_mem_valid = 0;

@@ -48,6 +48,10 @@ DCache::DCache(sc_module_name name_, bool async_reset) : sc_module(name_),
     i_resp_mem_load_fault("i_resp_mem_load_fault"),
     i_resp_mem_store_fault("i_resp_mem_store_fault"),
     i_resp_mem_store_fault_addr("i_resp_mem_store_fault_addr"),
+    o_mpu_addr("o_mpu_addr"),
+    i_mpu_cachable("i_mpu_cachable"),
+    i_mpu_readable("i_mpu_readable"),
+    i_mpu_writable("i_mpu_writable"),
     o_dstate("o_dstate") {
     async_reset_ = async_reset;
 
@@ -64,6 +68,9 @@ DCache::DCache(sc_module_name name_, bool async_reset) : sc_module(name_),
     sensitive << i_resp_mem_store_fault;
     sensitive << i_resp_mem_store_fault_addr;
     sensitive << i_req_mem_ready;
+    sensitive << i_mpu_cachable;
+    sensitive << i_mpu_readable;
+    sensitive << i_mpu_writable;
     sensitive << i_resp_data_ready;
     sensitive << r.req_strob;
     sensitive << r.req_wdata;
@@ -321,6 +328,7 @@ void DCache::comb() {
     // AXI B-channel
     o_resp_data_store_fault = i_resp_mem_store_fault;
     o_resp_data_store_fault_addr = i_resp_mem_store_fault_addr;
+    o_mpu_addr = 0;
     o_dstate = r.state;
 }
 

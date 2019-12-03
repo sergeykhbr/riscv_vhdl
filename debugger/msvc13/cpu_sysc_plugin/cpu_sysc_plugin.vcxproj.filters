@@ -165,6 +165,9 @@
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\tracer.cpp">
       <Filter>riverlib\core</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mpu.cpp">
+      <Filter>riverlib\cache</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\api_types.h">
@@ -330,6 +333,9 @@
     </ClInclude>
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\tracer.h">
       <Filter>riverlib\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mpu.h">
+      <Filter>riverlib\cache</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

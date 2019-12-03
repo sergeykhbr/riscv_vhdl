@@ -53,6 +53,11 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset)
     o_trap_pc("o_trap_pc"),
     i_break_mode("i_break_mode"),
     o_break_event("o_break_event"),
+    o_mpu_region_we("o_mpu_region_we"),
+    o_mpu_region_idx("o_mpu_region_idx"),
+    o_mpu_region_addr("o_mpu_region_addr"),
+    o_mpu_region_mask("o_mpu_region_mask"),
+    o_mpu_region_flags("o_mpu_region_flags"),
     i_dport_ena("i_dport_ena"),
     i_dport_write("i_dport_write"),
     i_dport_addr("i_dport_addr"),
@@ -548,6 +553,11 @@ void CsrRegs::comb() {
     o_rdata = wb_rdata;
     o_dport_rdata = wb_dport_rdata;
     o_break_event = r.break_event;
+    o_mpu_region_we = 0;
+    o_mpu_region_idx = 0;
+    o_mpu_region_addr = 0;
+    o_mpu_region_mask = 0;
+    o_mpu_region_flags = 0;
 }
 
 void CsrRegs::registers() {
