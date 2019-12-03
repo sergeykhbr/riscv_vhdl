@@ -53,6 +53,7 @@ SC_MODULE(ICacheLru) {
     sc_in<bool> i_resp_mem_load_fault;
     // Mpu interface
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_mpu_addr;
+    sc_in<bool> i_mpu_cachable;
     sc_in<bool> i_mpu_executable;
     // Debug interface
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_flush_address;

@@ -120,6 +120,7 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset) :
     i1->i_resp_mem_data(wb_ctrl_resp_mem_data);
     i1->i_resp_mem_load_fault(w_ctrl_resp_mem_load_fault);
     i1->o_mpu_addr(i.mpu_addr);
+    i1->i_mpu_cachable(w_mpu_icachable);
     i1->i_mpu_executable(w_mpu_executable);
     i1->i_flush_address(i_flush_address);
     i1->i_flush_valid(i_flush_valid);

@@ -43,6 +43,7 @@ ICacheLru::ICacheLru(sc_module_name name_, bool async_reset,
     i_resp_mem_data("i_resp_mem_data"),
     i_resp_mem_load_fault("i_resp_mem_load_fault"),
     o_mpu_addr("o_mpu_addr"),
+    i_mpu_cachable("i_mpu_cachable"),
     i_mpu_executable("i_mpu_executable"),
     i_flush_address("i_flush_address"),
     i_flush_valid("i_flush_valid"),
@@ -115,6 +116,7 @@ ICacheLru::ICacheLru(sc_module_name name_, bool async_reset,
     sensitive << i_flush_address;
     sensitive << i_flush_valid;
     sensitive << i_req_mem_ready;
+    sensitive << i_mpu_cachable;
     sensitive << i_mpu_executable;
     for (int i = 0; i < CFG_ICACHE_WAYS; i++) {
         sensitive << memeven[i].rtag;
@@ -247,7 +249,6 @@ void ICacheLru::comb() {
     sc_uint<3> wb_hit1;
     bool w_hit0_valid;
     bool w_hit1_valid;
-    sc_uint<BUS_ADDR_WIDTH> wb_mem_addr;
     sc_uint<BUS_ADDR_WIDTH> wb_mpu_addr;
     sc_uint<32> wb_o_resp_data;
     bool v_init;
@@ -392,9 +393,9 @@ void ICacheLru::comb() {
         v_lrui[WAY_EVEN].wadr = r.mem_addr.read()(IINDEX_END, IINDEX_START);
         v_lrui[WAY_ODD].init = r.mem_addr.read()[CFG_IOFFSET_WIDTH];
         v_lrui[WAY_ODD].wadr = r.mem_addr.read()(IINDEX_END, IINDEX_START);
-    } else if (CFG_SINGLEPORT_CACHE && (r.state.read() == State_WaitGrant
+    } else if (r.state.read() == State_WaitGrant
             || r.state.read() == State_WaitResp || r.state.read() == State_CheckResp
-            || r.state.read() == State_SetupReadAdr)) {
+            || r.state.read() == State_SetupReadAdr) {
             // Do nothing while memory writing
     } else if (w_hit0_valid && w_hit1_valid
         && wb_hit0 != MISS && wb_hit1 != MISS && r.requested.read() == 1) {
@@ -474,67 +475,31 @@ void ICacheLru::comb() {
 
         } else {
             // Miss
-            v.req_mem_valid = 0;
             if (!w_hit0_valid || wb_hit0 == MISS) {
                 wb_mpu_addr = r.req_addr;
             } else {
                 wb_mpu_addr = r.req_addr_overlay.read();
             }
             v.state = State_CheckMPU;
-            /*if (i_req_mem_ready.read() == 1) {
-                v.state = State_WaitResp;
-            } else {
-                v.state = State_WaitGrant;
-            }
-
-            v.mem_addr = wb_mem_addr(BUS_ADDR_WIDTH-1, 3) << 3;
-            v.burst_cnt = 3;
-            switch (wb_mem_addr(CFG_IOFFSET_WIDTH-1, 3)) {
-            case 0:
-                wb_wstrb_next = 0x1;
-                break;
-            case 1:
-                wb_wstrb_next = 0x2;
-                break;
-            case 2:
-                wb_wstrb_next = 0x4;
-                break;
-            case 3:
-                wb_wstrb_next = 0x8;
-                break;
-            }*/
             v.mpu_addr = wb_mpu_addr;
-            v.burst_wstrb = wb_wstrb_next;
-            v.burst_valid = wb_wstrb_next;
             v.lru_even_wr = wb_lru_even;
             v.lru_odd_wr = wb_lru_odd;
         }
         break;
     case State_CheckMPU:
         v.req_mem_valid = 1;
-        wb_mem_addr = r.mpu_addr;
         if (i_req_mem_ready.read() == 1) {
             v.state = State_WaitResp;
         } else {
             v.state = State_WaitGrant;
         }
 
-        v.mem_addr = wb_mem_addr(BUS_ADDR_WIDTH-1, 3) << 3;
+        v.mem_addr = r.mpu_addr.read()(BUS_ADDR_WIDTH-1, CFG_IOFFSET_WIDTH)
+                    << CFG_IOFFSET_WIDTH;
         v.burst_cnt = 3;
-        switch (wb_mem_addr(CFG_IOFFSET_WIDTH-1, 3)) {
-        case 0:
-            wb_wstrb_next = 0x1;
-            break;
-        case 1:
-            wb_wstrb_next = 0x2;
-            break;
-        case 2:
-            wb_wstrb_next = 0x4;
-            break;
-        case 3:
-            wb_wstrb_next = 0x8;
-            break;
-        }
+        wb_wstrb_next = 0x1;
+        v.burst_wstrb = wb_wstrb_next;
+        v.burst_valid = wb_wstrb_next;
         break;
     case State_WaitGrant:
         if (i_req_mem_ready.read()) {
@@ -559,14 +524,7 @@ void ICacheLru::comb() {
         }
         break;
     case State_CheckResp:
-        if (CFG_SINGLEPORT_CACHE) {
-            v.state = State_SetupReadAdr;
-        } else if ((w_o_req_ctrl_ready == 1 && i_req_ctrl_valid.read() == 1)
-                || (r.requested.read() == 1 && w_o_resp_valid == 0)) {
-            v.state = State_CheckHit;
-        } else {
-            v.state = State_Idle;
-        }
+        v.state = State_SetupReadAdr;
         break;
     case State_SetupReadAdr:
         v.state = State_CheckHit;
@@ -616,9 +574,9 @@ void ICacheLru::comb() {
     v_swapin[WAY_ODD].wdata = i_resp_mem_data.read();
     v_swapin[WAY_ODD].load_fault = i_resp_mem_load_fault.read();
 
-    if (CFG_SINGLEPORT_CACHE && (r.state.read() == State_WaitResp
+    if (r.state.read() == State_WaitResp
         || r.state.read() == State_CheckResp
-        || r.state.read() == State_Flush)) {
+        || r.state.read() == State_Flush) {
         v_swapin[WAY_EVEN].radr = r.mem_addr.read();
         v_swapin[WAY_ODD].radr = r.mem_addr.read();
     } else if (r.state.read() == State_Idle || w_o_resp_valid == 1) {

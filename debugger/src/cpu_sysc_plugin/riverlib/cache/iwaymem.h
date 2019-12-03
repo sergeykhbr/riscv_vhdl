@@ -20,8 +20,6 @@
 #include <systemc.h>
 #include "riscv-isa.h"
 #include "../river_cfg.h"
-#include "mem/dpram64i.h"
-#include "mem/dpramtagi.h"
 #include "mem/ram64i.h"
 #include "mem/ramtagi.h"
 
@@ -70,9 +68,6 @@ SC_MODULE(IWayMem) {
     void R_RESET(RegistersType &iv) {
         iv.roffset = 0;
     }
-
-    DpRamTagi *tag0;
-    DpRam64i *datan[RAM64_BLOCK_TOTAL];
 
     RamTagi *tag1;
     Ram64i *datas[RAM64_BLOCK_TOTAL];

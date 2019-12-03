@@ -31,7 +31,6 @@ static const int BUS_ADDR_WIDTH = 64;
 static const int BUS_DATA_WIDTH = 64;
 static const int BUS_DATA_BYTES = BUS_DATA_WIDTH / 8;
 
-static const bool CFG_SINGLEPORT_CACHE = true;
 /** ICacheLru config */
 static const int CFG_IOFFSET_WIDTH   = 5;    // [4:0]  log2(ICACHE_LINE_BYTES)
 static const int CFG_IODDEVEN_WIDTH  = 1;    // [5]    0=even; 1=odd

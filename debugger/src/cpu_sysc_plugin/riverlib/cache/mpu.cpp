@@ -60,8 +60,6 @@ void MPU::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void MPU::comb() {
-    MpuTableItemType vb_tbl_idata;
-    MpuTableItemType vb_tbl_ddata;
     bool v_iena;
     bool v_dena;
     bool v_icachable;
@@ -77,10 +75,6 @@ void MPU::comb() {
     v_executable = true;
     v_readable = true;
     v_writable = true;
-
-    vb_tbl_idata = tbl[i_iaddr.read().to_int()];
-    vb_tbl_ddata = tbl[i_daddr.read().to_int()];
-
 
     v_iena = 0;
     v_dena = 0;
