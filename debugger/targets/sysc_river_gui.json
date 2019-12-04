@@ -139,9 +139,9 @@
                 ['Bus','axi0'],
                 ['CmdExecutor','cmdexec0']
                 ['Tap','edcltap']
-                ['GenerateRef',false,'Generate Registers/Memory access trace file to compare it with functional model'],
+                ['GenerateRef',true,'Generate Registers/Memory access trace file to compare it with functional model'],
                 ['InVcdFile','','None empty string enables generation of stimulus VCD file'],
-                ['OutVcdFile','e:/Projects/o_river','None empty string enables VCD file with reference signals'],
+                ['OutVcdFile','c:/Projects/o_river','None empty string enables VCD file with reference signals'],
                 ['FreqHz',1000000]
                 ]}]},
     {'Class':'MemorySimClass','Instances':[

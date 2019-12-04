@@ -46,12 +46,21 @@ static const int CFG_ITAG_WIDTH      = BUS_ADDR_WIDTH
     - (CFG_IOFFSET_WIDTH + CFG_IODDEVEN_WIDTH + CFG_IINDEX_WIDTH);
 
 static const int CFG_ICACHE_WAYS        = 4;  // 4 odds, 4 even
-/** Store tag data as:
-       [3:0]            qword is valid flag
-       [4]              load_fault
-       [ITAG_WIDTH+5:5] tag value
+
+static const int IINDEX_START = CFG_IOFFSET_WIDTH + CFG_IODDEVEN_WIDTH;
+static const int IINDEX_END = IINDEX_START + CFG_IINDEX_WIDTH - 1;
+
+static const int ITAG_START = IINDEX_START + CFG_IINDEX_WIDTH;
+static const int ITAG_SIZE  = BUS_ADDR_WIDTH - ITAG_START;
+static const int ITAG_END   = BUS_ADDR_WIDTH - 1;
+/**
+    [0] = valid
+    [1] = executable
+    [2] = readable
+    [3] = writable
+    [4] = load_fault
  */
-static const int CFG_ITAG_WIDTH_TOTAL = CFG_ITAG_WIDTH + 5;
+static const int LINE_MEM_WIDTH = 4*BUS_DATA_WIDTH + ITAG_SIZE + 5;
 
 /** MPU config */
 static const int CFG_MPU_TBL_WIDTH   = 2;    // [1:0]  log2(MPU_TBL_SIZE)
