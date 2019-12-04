@@ -180,6 +180,13 @@ void UART::putByte(char v) {
         lstn->updateData(&v, 1);
     }
     RISCV_mutex_unlock(&mutexListeners_);
+
+#if!defined(GENERATE_PRECISE_DHRYSTONE_RTL_TRACE)
+    if (status_.getTyped().b.tx_irq_ena) {
+        iwire_->raiseLine();
+    }
+#endif
+
     //if (tx_total_ < FIFOSZ) {
     //    tx_fifo_[tx_wcnt_] = v;
     //    tx_wcnt_ = (tx_wcnt_ + 1) % FIFOSZ;
