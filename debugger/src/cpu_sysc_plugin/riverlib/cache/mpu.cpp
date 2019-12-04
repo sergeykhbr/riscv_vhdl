@@ -97,7 +97,18 @@ void MPU::comb() {
     if (!async_reset_ && i_nrst.read() == 0) {
         for (int i = 0; i < CFG_MPU_TBL_SIZE; i++) {
             tbl[i].ena = 0;
+            tbl[i].addr = ~0ull;
+            tbl[i].mask = ~0ull;
         }
+
+        // Make first 128 Byte uncachable to test MPU
+        tbl[0].ena = 1;
+        tbl[0].addr = 0 >> CFG_IOFFSET_WIDTH;
+        tbl[0].mask = 0xFFFFFFFFFFFFFF80ull >> CFG_IOFFSET_WIDTH;
+        tbl[0].cache = 0;
+        tbl[0].exec = 1;
+        tbl[0].rd = 1;
+        tbl[0].wr = 1;
     }
 
     o_icachable = v_icachable;
@@ -111,13 +122,21 @@ void MPU::registers() {
     if (async_reset_ && i_nrst.read() == 0) {
         for (int i = 0; i < CFG_MPU_TBL_SIZE; i++) {
             tbl[i].ena = 0;
+            tbl[i].addr = ~0ull;
+            tbl[i].mask = ~0ull;
         }
     } else {
         if (i_region_we.read() == 1) {
             unsigned tidx = i_region_idx.read();
-            tbl[tidx].addr = i_region_addr.read();
-            tbl[tidx].mask = i_region_mask.read();
-            tbl[tidx].ena = i_region_flags.read()[CFG_MPU_FL_ENA];
+            if (i_region_flags.read()[CFG_MPU_FL_ENA] == 1) {
+                tbl[tidx].addr = i_region_addr.read() >> CFG_IOFFSET_WIDTH;
+                tbl[tidx].mask = i_region_mask.read() >> CFG_IOFFSET_WIDTH;
+                tbl[tidx].ena = 1;
+            } else {
+                tbl[tidx].addr = ~0ull;
+                tbl[tidx].mask = ~0ull;
+                tbl[tidx].ena = 0;
+            }
             tbl[tidx].cache = i_region_flags.read()[CFG_MPU_FL_CACHABLE];
             tbl[tidx].exec = i_region_flags.read()[CFG_MPU_FL_EXEC];
             tbl[tidx].rd = i_region_flags.read()[CFG_MPU_FL_RD];
