@@ -37,6 +37,9 @@ SC_MODULE(ICacheLru) {
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_resp_ctrl_addr;
     sc_out<sc_uint<32>> o_resp_ctrl_data;
     sc_out<bool> o_resp_ctrl_load_fault;
+    sc_out<bool> o_resp_ctrl_executable;
+    sc_out<bool> o_resp_ctrl_writable;
+    sc_out<bool> o_resp_ctrl_readable;
     sc_in<bool> i_resp_ctrl_ready;
     // Memory interface:
     sc_in<bool> i_req_mem_ready;
@@ -55,6 +58,8 @@ SC_MODULE(ICacheLru) {
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_mpu_addr;
     sc_in<bool> i_mpu_cachable;
     sc_in<bool> i_mpu_executable;
+    sc_in<bool> i_mpu_writable;
+    sc_in<bool> i_mpu_readable;
     // Debug interface
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_flush_address;
     sc_in<bool> i_flush_valid;
@@ -133,6 +138,9 @@ SC_MODULE(ICacheLru) {
         sc_uint<32> rdata;
         bool valid;
         bool load_fault;
+        bool executable;
+        bool readable;
+        bool writable;
     };
 
     struct LruInType {
@@ -166,6 +174,9 @@ SC_MODULE(ICacheLru) {
         sc_signal<sc_uint<2>> lru_even_wr;
         sc_signal<sc_uint<2>> lru_odd_wr;
         sc_signal<bool> cached;
+        sc_signal<bool> executable;
+        sc_signal<bool> writable;
+        sc_signal<bool> readable;
         sc_signal<bool> load_fault;
         sc_signal<bool> req_flush;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_flush_addr;
@@ -188,6 +199,9 @@ SC_MODULE(ICacheLru) {
         iv.lru_even_wr = 0;
         iv.lru_odd_wr = 0;
         iv.cached = 0;
+        iv.executable = 0;
+        iv.writable = 0;
+        iv.readable = 0;
         iv.load_fault = 0;
         iv.req_flush = 1;           // init flush request
         iv.req_flush_addr = ~0ul;   // [0]=1 flush all
@@ -203,8 +217,8 @@ SC_MODULE(ICacheLru) {
     ILru *lruodd;
 
     TagMemInType swapin[WAY_SubNum];
-    TagMemOutType memeven[CFG_ICACHE_WAYS];
-    TagMemOutType memodd[CFG_ICACHE_WAYS];
+    TagMemOutType wayeven_o[CFG_ICACHE_WAYS];
+    TagMemOutType wayodd_o[CFG_ICACHE_WAYS];
     WayMuxType waysel[WAY_SubNum];
     sc_signal<bool> wb_ena_even[CFG_ICACHE_WAYS];
     sc_signal<bool> wb_ena_odd[CFG_ICACHE_WAYS];

@@ -37,6 +37,7 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset)
     i_ex_data_store_fault("i_ex_data_store_fault"),
     i_ex_data_store_fault_addr("i_ex_data_store_fault_addr"),
     i_ex_instr_load_fault("i_ex_instr_load_fault"),
+    i_ex_instr_not_executable("i_ex_instr_not_executable"),
     i_ex_illegal_instr("i_ex_illegal_instr"),
     i_ex_unalign_store("i_ex_unalign_store"),
     i_ex_unalign_load("i_ex_unalign_load"),
@@ -82,6 +83,7 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset)
     sensitive << i_ex_data_store_fault;
     sensitive << i_ex_data_store_fault_addr;
     sensitive << i_ex_instr_load_fault;
+    sensitive << i_ex_instr_not_executable;
     sensitive << i_ex_illegal_instr;
     sensitive << i_ex_unalign_store;
     sensitive << i_ex_unalign_load;
@@ -148,6 +150,7 @@ void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_ex_data_store_fault, i_ex_data_store_fault.name());
         sc_trace(o_vcd, i_ex_data_store_fault_addr, i_ex_data_store_fault_addr.name());
         sc_trace(o_vcd, i_ex_instr_load_fault, i_ex_instr_load_fault.name());
+        sc_trace(o_vcd, i_ex_instr_not_executable, i_ex_instr_not_executable.name());
         sc_trace(o_vcd, i_ex_illegal_instr, i_ex_illegal_instr.name());
         sc_trace(o_vcd, i_ex_unalign_store, i_ex_unalign_store.name());
         sc_trace(o_vcd, i_ex_unalign_load, i_ex_unalign_load.name());
@@ -348,6 +351,23 @@ void CsrRegs::procedure_RegAccess(uint64_t iaddr, bool iwena,
             ov->mstackund_ena = iwdata(BUS_ADDR_WIDTH-1, 0).or_reduce();
         }
         break;
+    case CSR_mpu_addr:  // [WO] MPU address
+        if (iwena) {
+            ov->mpu_addr = 0;
+        }
+        break;
+    case CSR_mpu_mask:  // [WO] MPU mask
+        if (iwena) {
+            ov->mpu_mask = 0;
+        }
+        break;
+    case CSR_mpu_ctrl:  // [WO] MPU flags and write ena
+        if (iwena) {
+            ov->mpu_idx = iwdata(8+CFG_MPU_TBL_WIDTH-1, 8);
+            ov->mpu_flags = iwdata(CFG_MPU_FL_TOTAL-1, 0);
+            ov->mpu_we = 1;
+        }
+        break;
     default:;
     }
 
@@ -371,6 +391,7 @@ void CsrRegs::comb() {
     v = r;
 
     w_dport_wena = i_dport_ena & i_dport_write;
+    v.mpu_we = 0;
 
     procedure_RegAccess(i_addr.read(), i_wena.read(), i_wdata.read(),
                         r, &v, &wb_rdata);
@@ -488,6 +509,10 @@ void CsrRegs::comb() {
             wb_trap_pc = CFG_NMI_CALL_FROM_UMODE_ADDR;
             wb_trap_code = EXCEPTION_CallFromUmode;
         }
+    } else if (i_ex_instr_not_executable.read() == 1) {
+        w_trap_valid = 1;
+        wb_trap_pc = CFG_NMI_INSTR_PAGE_FAULT_ADDR;
+        wb_trap_code = EXCEPTION_InstrPageFault;
     } else if (r.mstackovr_ena.read() == 1 && w_mstackovr == 1) {
         w_trap_valid = 1;
         wb_trap_pc = CFG_NMI_STACK_OVERFLOW_ADDR;
@@ -553,11 +578,11 @@ void CsrRegs::comb() {
     o_rdata = wb_rdata;
     o_dport_rdata = wb_dport_rdata;
     o_break_event = r.break_event;
-    o_mpu_region_we = 0;
-    o_mpu_region_idx = 0;
-    o_mpu_region_addr = 0;
-    o_mpu_region_mask = 0;
-    o_mpu_region_flags = 0;
+    o_mpu_region_we = r.mpu_we;
+    o_mpu_region_idx = r.mpu_idx;
+    o_mpu_region_addr = r.mpu_addr;
+    o_mpu_region_mask = r.mpu_mask;
+    o_mpu_region_flags = r.mpu_flags;
 }
 
 void CsrRegs::registers() {

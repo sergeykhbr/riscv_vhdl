@@ -57,6 +57,7 @@ RiverTop::RiverTop(sc_module_name name_, uint32_t hartid, bool async_reset,
     proc0->i_resp_ctrl_addr(wb_resp_ctrl_addr);
     proc0->i_resp_ctrl_data(wb_resp_ctrl_data);
     proc0->i_resp_ctrl_load_fault(w_resp_ctrl_load_fault);
+    proc0->i_resp_ctrl_executable(w_resp_ctrl_executable);
     proc0->o_resp_ctrl_ready(w_resp_ctrl_ready);
     proc0->i_req_data_ready(w_req_data_ready);
     proc0->o_req_data_valid(w_req_data_valid);
@@ -103,6 +104,7 @@ RiverTop::RiverTop(sc_module_name name_, uint32_t hartid, bool async_reset,
     cache0->o_resp_ctrl_addr(wb_resp_ctrl_addr);
     cache0->o_resp_ctrl_data(wb_resp_ctrl_data);
     cache0->o_resp_ctrl_load_fault(w_resp_ctrl_load_fault);
+    cache0->o_resp_ctrl_executable(w_resp_ctrl_executable);
     cache0->i_resp_ctrl_ready(w_resp_ctrl_ready);
     cache0->i_req_data_valid(w_req_data_valid);
     cache0->i_req_data_write(w_req_data_write);

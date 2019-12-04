@@ -41,6 +41,7 @@ SC_MODULE(CsrRegs) {
     sc_in<bool> i_ex_data_store_fault;      // Data path: Bus response with SLVERR or DECERR on write
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_ex_data_store_fault_addr;  // Write data miss access
     sc_in<bool> i_ex_instr_load_fault;
+    sc_in<bool> i_ex_instr_not_executable;
     sc_in<bool> i_ex_illegal_instr;
     sc_in<bool> i_ex_unalign_store;
     sc_in<bool> i_ex_unalign_load;
@@ -97,6 +98,12 @@ private:
         sc_signal<sc_uint<RISCV_ARCH>> mepc;
         sc_signal<bool> ext_irq;
 
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> mpu_addr;
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> mpu_mask;
+        sc_signal<sc_uint<CFG_MPU_TBL_WIDTH>> mpu_idx;
+        sc_signal<sc_uint<CFG_MPU_FL_TOTAL>> mpu_flags;
+        sc_signal<bool> mpu_we;
+
         sc_signal<bool> ex_fpu_invalidop;         // FPU Exception: invalid operation
         sc_signal<bool> ex_fpu_divbyzero;         // FPU Exception: divide by zero
         sc_signal<bool> ex_fpu_overflow;          // FPU Exception: overflow
@@ -126,6 +133,11 @@ private:
         iv.mpp = 0;
         iv.mepc = 0;
         iv.ext_irq = 0;
+        iv.mpu_addr = 0;
+        iv.mpu_mask = 0;
+        iv.mpu_idx = 0;
+        iv.mpu_flags = 0;
+        iv.mpu_we = 0;
         iv.ex_fpu_invalidop = 0;
         iv.ex_fpu_divbyzero = 0;
         iv.ex_fpu_overflow = 0;

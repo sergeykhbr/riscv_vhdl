@@ -30,10 +30,12 @@ InstrFetch::InstrFetch(sc_module_name name_, bool async_reset) :
     i_mem_data_addr("i_mem_data_addr"),
     i_mem_data("i_mem_data"),
     i_mem_load_fault("i_mem_load_fault"),
+    i_mem_executable("i_mem_executable"),
     o_mem_resp_ready("o_mem_resp_ready"),
     i_predict_npc("i_predict_npc"),
     o_mem_req_fire("o_mem_req_fire"),
     o_instr_load_fault("o_instr_load_fault"),
+    o_instr_executable("o_instr_executable"),
     o_valid("o_valid"),
     o_pc("o_pc"),
     o_instr("o_instr"),
@@ -51,6 +53,7 @@ InstrFetch::InstrFetch(sc_module_name name_, bool async_reset) :
     sensitive << i_mem_data_valid;
     sensitive << i_mem_data;
     sensitive << i_mem_load_fault;
+    sensitive << i_mem_executable;
     sensitive << i_predict_npc;
     sensitive << i_br_fetch_valid;
     sensitive << i_br_address_fetch;
@@ -63,6 +66,7 @@ InstrFetch::InstrFetch(sc_module_name name_, bool async_reset) :
     sensitive << r.resp_data;
     sensitive << r.resp_valid;
     sensitive << r.instr_load_fault;
+    sensitive << r.instr_executable;
 
     SC_METHOD(registers);
     sensitive << i_nrst;
@@ -75,6 +79,7 @@ void InstrFetch::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_mem_data_addr, i_mem_data_addr.name());
         sc_trace(o_vcd, i_mem_data, i_mem_data.name());
         sc_trace(o_vcd, i_mem_load_fault, i_mem_load_fault.name());
+        sc_trace(o_vcd, i_mem_executable, i_mem_executable.name());
         sc_trace(o_vcd, o_mem_resp_ready, o_mem_resp_ready.name());
         sc_trace(o_vcd, i_predict_npc, i_predict_npc.name());
         sc_trace(o_vcd, i_pipeline_hold, i_pipeline_hold.name());
@@ -86,6 +91,7 @@ void InstrFetch::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_pc, o_pc.name());
         sc_trace(o_vcd, o_instr, o_instr.name());
         sc_trace(o_vcd, o_instr_load_fault, o_instr_load_fault.name());
+        sc_trace(o_vcd, o_instr_executable, o_instr_executable.name());
 
         std::string pn(name());
         sc_trace(o_vcd, r.wait_resp, pn + ".r_wait_resp");
@@ -125,6 +131,7 @@ void InstrFetch::comb() {
         v.resp_address = i_mem_data_addr.read();
         v.resp_data = i_mem_data.read();
         v.instr_load_fault = i_mem_load_fault.read();
+        v.instr_executable = i_mem_executable.read();
     }
 
     wb_o_pc = r.resp_address.read();
@@ -154,6 +161,7 @@ void InstrFetch::comb() {
     o_mem_addr = i_predict_npc.read();
     o_mem_req_fire = w_o_req_fire;
     o_instr_load_fault = r.instr_load_fault;
+    o_instr_executable = r.instr_executable;
     o_valid = r.resp_valid.read() && !(i_pipeline_hold.read() || w_o_hold);
     o_pc = wb_o_pc;
     o_instr = wb_o_instr;

@@ -37,6 +37,7 @@ SC_MODULE(CacheTop) {
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_resp_ctrl_addr;   // ICache response address
     sc_out<sc_uint<32>> o_resp_ctrl_data;               // ICache read data
     sc_out<bool> o_resp_ctrl_load_fault;                // Bus response ERRSLV or ERRDEC on read
+    sc_out<bool> o_resp_ctrl_executable;                // MPU flag: executable
     sc_in<bool> i_resp_ctrl_ready;                      // CPU Core is ready to accept ICache response
     // Data path:
     sc_in<bool> i_req_data_valid;                       // Data path request from CPU Core is valid
@@ -116,6 +117,8 @@ private:
     sc_signal<bool> w_ctrl_resp_mem_data_valid;
     sc_signal<sc_uint<BUS_DATA_WIDTH>> wb_ctrl_resp_mem_data;
     sc_signal<bool> w_ctrl_resp_mem_load_fault;
+    sc_signal<bool> w_resp_ctrl_writable_unused;
+    sc_signal<bool> w_resp_ctrl_readable_unused;
     sc_signal<bool> w_ctrl_req_ready;
     // Memory Data interface:
     sc_signal<bool> w_data_resp_mem_data_valid;
@@ -123,10 +126,13 @@ private:
     sc_signal<bool> w_data_resp_mem_load_fault;
     sc_signal<bool> w_data_req_ready;
     sc_signal<bool> w_mpu_icachable;
-    sc_signal<bool> w_mpu_executable;
+    sc_signal<bool> w_mpu_iexecutable;
+    sc_signal<bool> w_mpu_ireadable_unsued;
+    sc_signal<bool> w_mpu_iwritable_unused;
     sc_signal<bool> w_mpu_dcachable;
-    sc_signal<bool> w_mpu_readable;
-    sc_signal<bool> w_mpu_writable;
+    sc_signal<bool> w_mpu_dexecutable_unused;
+    sc_signal<bool> w_mpu_dreadable;
+    sc_signal<bool> w_mpu_dwritable;
 
 
     ICacheLru *i1;

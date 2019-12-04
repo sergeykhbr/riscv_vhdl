@@ -91,6 +91,7 @@ private:
     sc_signal<bool> w_resp_data_store_fault;
     sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_resp_data_store_fault_addr;
     sc_signal<bool> w_resp_ctrl_load_fault;
+    sc_signal<bool> w_resp_ctrl_executable;
     sc_signal<bool> w_resp_data_ready;
     sc_signal<bool> w_mpu_region_we;
     sc_signal<sc_uint<CFG_MPU_TBL_WIDTH>> wb_mpu_region_idx;

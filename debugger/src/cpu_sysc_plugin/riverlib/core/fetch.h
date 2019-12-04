@@ -33,12 +33,14 @@ SC_MODULE(InstrFetch) {
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_mem_data_addr;
     sc_in<sc_uint<32>> i_mem_data;
     sc_in<bool> i_mem_load_fault;
+    sc_in<bool> i_mem_executable;
     sc_out<bool> o_mem_resp_ready;
 
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_predict_npc;
 
     sc_out<bool> o_mem_req_fire;                    // used by branch predictor to form new npc value
     sc_out<bool> o_instr_load_fault;
+    sc_out<bool> o_instr_executable;
     sc_out<bool> o_valid;
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_pc;
     sc_out<sc_uint<32>> o_instr;
@@ -67,6 +69,7 @@ SC_MODULE(InstrFetch) {
         sc_signal<sc_uint<32>> resp_data;
         sc_signal<bool> resp_valid;
         sc_signal<bool> instr_load_fault;
+        sc_signal<bool> instr_executable;
     } v, r;
 
     void R_RESET(RegistersType &iv) {
@@ -78,6 +81,7 @@ SC_MODULE(InstrFetch) {
         iv.resp_data = 0;
         iv.resp_valid = 0;
         iv.instr_load_fault = 0;
+        iv.instr_executable = 0;
     }
 
     bool async_reset_;

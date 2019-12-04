@@ -94,8 +94,11 @@ static const uint64_t CFG_NMI_CALL_FROM_UMODE_ADDR  = 0x0048;
 static const uint64_t CFG_NMI_CALL_FROM_SMODE_ADDR  = 0x0050;
 static const uint64_t CFG_NMI_CALL_FROM_HMODE_ADDR  = 0x0058;
 static const uint64_t CFG_NMI_CALL_FROM_MMODE_ADDR  = 0x0060;
-static const uint64_t CFG_NMI_STACK_OVERFLOW_ADDR   = 0x0068;
-static const uint64_t CFG_NMI_STACK_UNDERFLOW_ADDR  = 0x0070;
+static const uint64_t CFG_NMI_INSTR_PAGE_FAULT_ADDR = 0x0068;
+static const uint64_t CFG_NMI_LOAD_PAGE_FAULT_ADDR  = 0x0070;
+static const uint64_t CFG_NMI_STORE_PAGE_FAULT_ADDR = 0x0078;
+static const uint64_t CFG_NMI_STACK_OVERFLOW_ADDR   = 0x0080;
+static const uint64_t CFG_NMI_STACK_UNDERFLOW_ADDR  = 0x0088;
 
 /** Number of elements each 2*CFG_ADDR_WIDTH in stack trace buffer: */
 static const int CFG_STACK_TRACE_BUF_SIZE = 32;

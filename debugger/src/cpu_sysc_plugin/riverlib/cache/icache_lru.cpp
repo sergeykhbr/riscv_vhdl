@@ -29,6 +29,9 @@ ICacheLru::ICacheLru(sc_module_name name_, bool async_reset,
     o_resp_ctrl_addr("o_resp_ctrl_addr"),
     o_resp_ctrl_data("o_resp_ctrl_data"),
     o_resp_ctrl_load_fault("o_resp_ctrl_load_fault"),
+    o_resp_ctrl_executable("o_resp_ctrl_executable"),
+    o_resp_ctrl_writable("o_resp_ctrl_writable"),
+    o_resp_ctrl_readable("o_resp_ctrl_readable"),
     i_resp_ctrl_ready("i_resp_ctrl_ready"),
     i_req_mem_ready("i_req_mem_ready"),
     o_req_mem_valid("o_req_mem_valid"),
@@ -45,6 +48,8 @@ ICacheLru::ICacheLru(sc_module_name name_, bool async_reset,
     o_mpu_addr("o_mpu_addr"),
     i_mpu_cachable("i_mpu_cachable"),
     i_mpu_executable("i_mpu_executable"),
+    i_mpu_writable("i_mpu_writable"),
+    i_mpu_readable("i_mpu_readable"),
     i_flush_address("i_flush_address"),
     i_flush_valid("i_flush_valid"),
     o_istate("o_istate") {
@@ -68,13 +73,13 @@ ICacheLru::ICacheLru(sc_module_name name_, bool async_reset,
         wayevenx[i]->i_executable(swapin[WAY_EVEN].executable);
         wayevenx[i]->i_readable(swapin[WAY_EVEN].readable);
         wayevenx[i]->i_writable(swapin[WAY_EVEN].writable);
-        wayevenx[i]->o_rtag(memeven[i].rtag);
-        wayevenx[i]->o_rdata(memeven[i].rdata);
-        wayevenx[i]->o_valid(memeven[i].valid);
-        wayevenx[i]->o_load_fault(memeven[i].load_fault);
-        wayevenx[i]->o_executable(memeven[i].executable);
-        wayevenx[i]->o_readable(memeven[i].readable);
-        wayevenx[i]->o_writable(memeven[i].writable);
+        wayevenx[i]->o_rtag(wayeven_o[i].rtag);
+        wayevenx[i]->o_rdata(wayeven_o[i].rdata);
+        wayevenx[i]->o_valid(wayeven_o[i].valid);
+        wayevenx[i]->o_load_fault(wayeven_o[i].load_fault);
+        wayevenx[i]->o_executable(wayeven_o[i].executable);
+        wayevenx[i]->o_readable(wayeven_o[i].readable);
+        wayevenx[i]->o_writable(wayeven_o[i].writable);
 
         tstr2[6] = '0' + static_cast<char>(i);
         wayoddx[i] = new IWayMem(tstr2, async_reset, 2*i + 1);
@@ -90,13 +95,13 @@ ICacheLru::ICacheLru(sc_module_name name_, bool async_reset,
         wayoddx[i]->i_executable(swapin[WAY_ODD].executable);
         wayoddx[i]->i_readable(swapin[WAY_ODD].readable);
         wayoddx[i]->i_writable(swapin[WAY_ODD].writable);
-        wayoddx[i]->o_rtag(memodd[i].rtag);
-        wayoddx[i]->o_rdata(memodd[i].rdata);
-        wayoddx[i]->o_valid(memodd[i].valid);
-        wayoddx[i]->o_load_fault(memodd[i].load_fault);
-        wayoddx[i]->o_executable(memodd[i].executable);
-        wayoddx[i]->o_readable(memodd[i].readable);
-        wayoddx[i]->o_writable(memodd[i].writable);
+        wayoddx[i]->o_rtag(wayodd_o[i].rtag);
+        wayoddx[i]->o_rdata(wayodd_o[i].rdata);
+        wayoddx[i]->o_valid(wayodd_o[i].valid);
+        wayoddx[i]->o_load_fault(wayodd_o[i].load_fault);
+        wayoddx[i]->o_executable(wayodd_o[i].executable);
+        wayoddx[i]->o_readable(wayodd_o[i].readable);
+        wayoddx[i]->o_writable(wayodd_o[i].writable);
     }
 
     lrueven = new ILru("lrueven0");
@@ -131,14 +136,20 @@ ICacheLru::ICacheLru(sc_module_name name_, bool async_reset,
     sensitive << i_mpu_cachable;
     sensitive << i_mpu_executable;
     for (int i = 0; i < CFG_ICACHE_WAYS; i++) {
-        sensitive << memeven[i].rtag;
-        sensitive << memeven[i].rdata;
-        sensitive << memeven[i].valid;
-        sensitive << memeven[i].load_fault;
-        sensitive << memodd[i].rtag;
-        sensitive << memodd[i].rdata;
-        sensitive << memodd[i].valid;
-        sensitive << memodd[i].load_fault;
+        sensitive << wayeven_o[i].rtag;
+        sensitive << wayeven_o[i].rdata;
+        sensitive << wayeven_o[i].valid;
+        sensitive << wayeven_o[i].load_fault;
+        sensitive << wayeven_o[i].executable;
+        sensitive << wayeven_o[i].readable;
+        sensitive << wayeven_o[i].writable;
+        sensitive << wayodd_o[i].rtag;
+        sensitive << wayodd_o[i].rdata;
+        sensitive << wayodd_o[i].valid;
+        sensitive << wayodd_o[i].load_fault;
+        sensitive << wayodd_o[i].executable;
+        sensitive << wayodd_o[i].readable;
+        sensitive << wayodd_o[i].writable;
     }
     sensitive << wb_lru_even;
     sensitive << wb_lru_odd;
@@ -185,6 +196,7 @@ void ICacheLru::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_resp_ctrl_data, o_resp_ctrl_data.name());
         sc_trace(o_vcd, o_resp_ctrl_load_fault, o_resp_ctrl_load_fault.name());
         sc_trace(o_vcd, i_resp_ctrl_ready, i_resp_ctrl_ready.name());
+        sc_trace(o_vcd, o_resp_ctrl_executable, o_resp_ctrl_executable.name());
 
         sc_trace(o_vcd, i_req_mem_ready, i_req_mem_ready.name());
         sc_trace(o_vcd, o_req_mem_valid, o_req_mem_valid.name());
@@ -234,6 +246,7 @@ void ICacheLru::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, waysel[0].rdata, pn + ".waysel(0).rdata");
         sc_trace(o_vcd, waysel[0].valid, pn + ".waysel(0).valid");
         sc_trace(o_vcd, waysel[0].load_fault, pn + ".waysel(0).load_fault");
+        sc_trace(o_vcd, waysel[0].executable, pn + ".waysel(0).executable");
         sc_trace(o_vcd, waysel[1].hit, pn + ".waysel(1).hit");
         sc_trace(o_vcd, waysel[1].rdata, pn + ".waysel(1).rdata");
         sc_trace(o_vcd, waysel[1].valid, pn + ".waysel(1).valid");
@@ -241,6 +254,7 @@ void ICacheLru::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.use_overlay, pn + ".r_use_overlay");
         sc_trace(o_vcd, r.cached, pn + ".r_cached");
         sc_trace(o_vcd, r.cache_line_i, pn + ".r_cache_line_i");
+        sc_trace(o_vcd, r.executable, pn + ".r_executable");
     }
     for (int i = 0; i < CFG_ICACHE_WAYS; i++) {
         wayevenx[i]->generateVCD(i_vcd, o_vcd);
@@ -268,6 +282,13 @@ void ICacheLru::comb() {
     bool v_line_valid;
     bool w_last;
     bool w_o_resp_load_fault;
+    bool w_o_resp_executable;
+    bool w_o_resp_writable;
+    bool w_o_resp_readable;
+    bool v_cached_load_fault;
+    bool v_cached_executable;
+    bool v_cached_readable;
+    bool v_cached_writable;
     bool w_o_req_ctrl_ready;
     sc_uint<4> wb_wstrb_next;
     bool vb_ena_even[CFG_ICACHE_WAYS];
@@ -327,10 +348,16 @@ void ICacheLru::comb() {
     waysel[WAY_EVEN].rdata = 0;
     waysel[WAY_EVEN].valid = 0;
     waysel[WAY_EVEN].load_fault = 0;
+    waysel[WAY_EVEN].executable = 0;
+    waysel[WAY_EVEN].readable = 0;
+    waysel[WAY_EVEN].writable = 0;
     waysel[WAY_ODD].hit = MISS;
     waysel[WAY_ODD].rdata = 0;
     waysel[WAY_ODD].valid = 0;
     waysel[WAY_ODD].load_fault = 0;
+    waysel[WAY_ODD].executable = 0;
+    waysel[WAY_ODD].readable = 0;
+    waysel[WAY_ODD].writable = 0;
     if (r.use_overlay.read() == 0) {
         wb_rtag_even = wb_rtag;
         wb_rtag_odd = wb_rtag;
@@ -342,23 +369,29 @@ void ICacheLru::comb() {
         wb_rtag_odd = wb_rtag;
     }
     for (uint8_t n = 0; n < static_cast<uint8_t>(CFG_ICACHE_WAYS); n++) {
-        if (waysel[WAY_EVEN].hit == MISS && memeven[n].rtag == wb_rtag_even) {
+        if (waysel[WAY_EVEN].hit == MISS && wayeven_o[n].rtag == wb_rtag_even) {
             waysel[WAY_EVEN].hit = n;
-            waysel[WAY_EVEN].rdata = memeven[n].rdata;
-            waysel[WAY_EVEN].valid = memeven[n].valid;
-            waysel[WAY_EVEN].load_fault = memeven[n].load_fault;
+            waysel[WAY_EVEN].rdata = wayeven_o[n].rdata;
+            waysel[WAY_EVEN].valid = wayeven_o[n].valid;
+            waysel[WAY_EVEN].load_fault = wayeven_o[n].load_fault;
+            waysel[WAY_EVEN].executable = wayeven_o[n].executable;
+            waysel[WAY_EVEN].readable = wayeven_o[n].readable;
+            waysel[WAY_EVEN].writable = wayeven_o[n].writable;
         }
 
-        if (waysel[WAY_ODD].hit == MISS && memodd[n].rtag == wb_rtag_odd) {
+        if (waysel[WAY_ODD].hit == MISS && wayodd_o[n].rtag == wb_rtag_odd) {
             waysel[WAY_ODD].hit = n;
-            waysel[WAY_ODD].rdata = memodd[n].rdata;
-            waysel[WAY_ODD].valid = memodd[n].valid;
-            waysel[WAY_ODD].load_fault = memodd[n].load_fault;
+            waysel[WAY_ODD].rdata = wayodd_o[n].rdata;
+            waysel[WAY_ODD].valid = wayodd_o[n].valid;
+            waysel[WAY_ODD].load_fault = wayodd_o[n].load_fault;
+            waysel[WAY_ODD].executable = wayodd_o[n].executable;
+            waysel[WAY_ODD].writable = wayodd_o[n].writable;
+            waysel[WAY_ODD].readable= wayodd_o[n].readable;
         }
     }
 
     // swap back rdata
-    w_o_resp_load_fault = 0;
+    v_cached_load_fault = 0;
     if (w_raddr5_r == 0) {
         if (r.use_overlay.read() == 0) {
             wb_hit0 = waysel[WAY_EVEN].hit;
@@ -366,7 +399,10 @@ void ICacheLru::comb() {
             w_hit0_valid = waysel[WAY_EVEN].valid;
             w_hit1_valid = waysel[WAY_EVEN].valid;
             vb_cached_data = waysel[WAY_EVEN].rdata;
-            w_o_resp_load_fault = waysel[WAY_EVEN].load_fault;
+            v_cached_load_fault = waysel[WAY_EVEN].load_fault;
+            v_cached_executable = waysel[WAY_EVEN].executable;
+            v_cached_writable = waysel[WAY_EVEN].writable;
+            v_cached_readable = waysel[WAY_EVEN].readable;
         } else {
             wb_hit0 = waysel[WAY_EVEN].hit;
             wb_hit1 = waysel[WAY_ODD].hit;
@@ -374,8 +410,14 @@ void ICacheLru::comb() {
             w_hit1_valid = waysel[WAY_ODD].valid;
             vb_cached_data(15, 0) = waysel[WAY_EVEN].rdata(15, 0);
             vb_cached_data(31, 16) = waysel[WAY_ODD].rdata(15, 0);
-            w_o_resp_load_fault =
+            v_cached_load_fault =
                 waysel[WAY_EVEN].load_fault | waysel[WAY_ODD].load_fault;
+            v_cached_executable =
+                waysel[WAY_EVEN].executable & waysel[WAY_ODD].executable;
+            v_cached_writable =
+                waysel[WAY_EVEN].writable & waysel[WAY_ODD].writable;
+            v_cached_readable =
+                waysel[WAY_EVEN].readable & waysel[WAY_ODD].readable;
         }
     } else {
         if (r.use_overlay.read() == 0) {
@@ -384,7 +426,10 @@ void ICacheLru::comb() {
             w_hit0_valid = waysel[WAY_ODD].valid;
             w_hit1_valid = waysel[WAY_ODD].valid;
             vb_cached_data = waysel[WAY_ODD].rdata;
-            w_o_resp_load_fault = waysel[WAY_ODD].load_fault;
+            v_cached_load_fault = waysel[WAY_ODD].load_fault;
+            v_cached_executable = waysel[WAY_ODD].executable;
+            v_cached_writable = waysel[WAY_ODD].writable;
+            v_cached_readable = waysel[WAY_ODD].readable;
         } else {
             wb_hit0 = waysel[WAY_ODD].hit;
             wb_hit1 = waysel[WAY_EVEN].hit;
@@ -392,8 +437,14 @@ void ICacheLru::comb() {
             w_hit1_valid = waysel[WAY_EVEN].valid;
             vb_cached_data(15, 0) = waysel[WAY_ODD].rdata(15, 0);
             vb_cached_data(31, 16) = waysel[WAY_EVEN].rdata(15, 0);
-            w_o_resp_load_fault =
+            v_cached_load_fault =
                 waysel[WAY_ODD].load_fault | waysel[WAY_EVEN].load_fault;
+            v_cached_executable =
+                waysel[WAY_ODD].executable & waysel[WAY_EVEN].executable;
+            v_cached_writable =
+                waysel[WAY_ODD].writable & waysel[WAY_EVEN].writable;
+            v_cached_readable =
+                waysel[WAY_ODD].readable & waysel[WAY_EVEN].readable;
         }
     }
 
@@ -538,6 +589,9 @@ void ICacheLru::comb() {
         v.burst_wstrb = wb_wstrb_next;
         v.cache_line_i = 0;
         v.load_fault = 0;
+        v.executable = i_mpu_executable.read();
+        v.writable = i_mpu_writable.read();
+        v.readable = i_mpu_readable.read();
         break;
     case State_WaitGrant:
         if (i_req_mem_ready.read()) {
@@ -621,17 +675,17 @@ void ICacheLru::comb() {
     v_swapin[WAY_EVEN].wvalid = v_line_valid;
     v_swapin[WAY_EVEN].wdata = r.cache_line_i.read();
     v_swapin[WAY_EVEN].load_fault = r.load_fault.read();
-    v_swapin[WAY_EVEN].executable = 1;
-    v_swapin[WAY_EVEN].writable = 1;
-    v_swapin[WAY_EVEN].readable = 1;
+    v_swapin[WAY_EVEN].executable = r.executable.read();
+    v_swapin[WAY_EVEN].writable = r.writable.read();
+    v_swapin[WAY_EVEN].readable = r.readable.read();
     v_swapin[WAY_ODD].wadr = r.mem_addr.read();
     v_swapin[WAY_ODD].wstrb = ~0u;
     v_swapin[WAY_ODD].wvalid = v_line_valid;
     v_swapin[WAY_ODD].wdata = r.cache_line_i.read();
     v_swapin[WAY_ODD].load_fault = r.load_fault.read();
-    v_swapin[WAY_ODD].executable = 1;
-    v_swapin[WAY_ODD].writable = 1;
-    v_swapin[WAY_ODD].readable = 1;
+    v_swapin[WAY_ODD].executable = r.executable.read();
+    v_swapin[WAY_ODD].writable = r.writable.read();
+    v_swapin[WAY_ODD].readable = r.readable.read();
 
     if (r.state.read() == State_WaitResp
         || r.state.read() == State_CheckResp
@@ -686,6 +740,9 @@ void ICacheLru::comb() {
         swapin[i].wvalid = v_swapin[i].wvalid;
         swapin[i].wdata = v_swapin[i].wdata;
         swapin[i].load_fault = v_swapin[i].load_fault;
+        swapin[i].executable = v_swapin[i].executable;
+        swapin[i].writable = v_swapin[i].writable;
+        swapin[i].readable = v_swapin[i].readable;
     }
 
     for (int i = 0; i < CFG_ICACHE_WAYS; i++) {
@@ -707,14 +764,25 @@ void ICacheLru::comb() {
     w_o_resp_valid = v_cached_valid || v_uncached_valid;
     if (v_uncached_valid == 1) {
         wb_o_resp_data = vb_uncached_data;
+        w_o_resp_load_fault = r.load_fault;
+        w_o_resp_executable = r.executable;
+        w_o_resp_writable = r.writable;
+        w_o_resp_readable = r.readable;
     } else {
         wb_o_resp_data = vb_cached_data;
+        w_o_resp_load_fault = v_cached_load_fault;
+        w_o_resp_executable = v_cached_executable;
+        w_o_resp_writable = v_cached_writable;
+        w_o_resp_readable = v_cached_readable;
     }
 
     o_resp_ctrl_valid = w_o_resp_valid;
     o_resp_ctrl_data = wb_o_resp_data;
     o_resp_ctrl_addr = r.req_addr.read();
     o_resp_ctrl_load_fault = w_o_resp_load_fault;
+    o_resp_ctrl_executable = w_o_resp_executable;
+    o_resp_ctrl_writable = w_o_resp_writable;
+    o_resp_ctrl_readable = w_o_resp_readable;
     o_mpu_addr = r.mpu_addr.read();
     o_istate = r.state.read()(1, 0);
 }

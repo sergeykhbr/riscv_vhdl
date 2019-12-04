@@ -141,13 +141,13 @@
                 ['Tap','edcltap']
                 ['GenerateRef',true,'Generate Registers/Memory access trace file to compare it with functional model'],
                 ['InVcdFile','','None empty string enables generation of stimulus VCD file'],
-                ['OutVcdFile','c:/Projects/o_river','None empty string enables VCD file with reference signals'],
+                ['OutVcdFile','','None empty string enables VCD file with reference signals'],
                 ['FreqHz',1000000]
                 ]}]},
     {'Class':'MemorySimClass','Instances':[
           {'Name':'bootrom0','Attr':[
                 ['LogLevel',1],
-                ['InitFile','../../../examples/boot/linuxbuild/bin/bootimage.hex'],
+                ['InitFile','../../../examples/bootrom_tests/linuxbuild/bin/bootrom_tests.hex'],
                 ['ReadOnly',true],
                 ['BaseAddress',0x0],
                 ['Length',32768]
