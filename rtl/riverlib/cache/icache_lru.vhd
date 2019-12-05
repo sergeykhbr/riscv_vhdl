@@ -142,12 +142,12 @@ architecture arch_ICacheLru of ICacheLru is
 
   constant R_RESET : RegistersType := (
     '0', (others => '0'), (others => '0'),  -- requested, req_addr, req_addr_overlay
-    '0', State_Idle,                        -- use_overlay, state
-    '0', (others => '0'),                   -- req_mem_valid, mem_addr,
-    0, "0000", "0000",                      -- burst_cnt, burst_wstrb, burst_valid
-    "00", "00", '1',                        -- lru_even_wr, lru_odd_wr, req_flush
-    (others => '1'), (others => '0'),       -- req_flush_addr, req_flush_cnt
-    (others => '0')                         -- flush_cnt
+    '0', State_Flush,                       -- use_overlay, state
+    '0', FLUSH_ALL_ADDR,                    -- req_mem_valid, mem_addr,
+    0, "1111", "0000",                      -- burst_cnt, burst_wstrb, burst_valid
+    "00", "00", '0',                        -- lru_even_wr, lru_odd_wr, req_flush
+    (others => '0'), (others => '0'),       -- req_flush_addr, req_flush_cnt
+    (others => '1')                         -- flush_cnt
   );
 
   signal r, rin : RegistersType;
@@ -260,6 +260,8 @@ begin
   begin
 
     v := r;
+
+    wb_mem_addr := (others => '0');
 
     if i_req_ctrl_valid = '1' then
         wb_req_adr := i_req_ctrl_addr;

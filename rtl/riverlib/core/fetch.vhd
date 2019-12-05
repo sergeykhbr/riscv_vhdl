@@ -93,7 +93,7 @@ begin
 
     v := r;
 
-    w_o_req_valid := i_nrst and not i_pipeline_hold
+    w_o_req_valid := not i_pipeline_hold
         and not (r.wait_resp and not i_mem_data_valid);
     w_o_req_fire := i_mem_req_ready and w_o_req_valid;
 

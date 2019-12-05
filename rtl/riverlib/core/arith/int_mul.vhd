@@ -85,6 +85,14 @@ begin
     v := r;
     v_lvl1 := r_lvl1;
     v_lvl3 := r_lvl3;
+    for i in 0 to 7 loop
+        wb_lvl2(i) := (others => '0');
+    end loop;
+    for i in 0 to 1 loop
+        wb_lvl4(i) := (others => '0');
+    end loop;
+    wb_lvl5 := (others => '0');
+    wb_res32 := (others => '0');
 
     v.ena := r.ena(2 downto 0) & (i_ena and not r.busy);
 

@@ -43,15 +43,15 @@ package config_target is
   --! @brief   HEX-image for the initialization of the FwImage ROM.
   --! @details This file is used by \e inferred ROM implementation.
   constant CFG_SIM_FWIMAGE_HEX : string := 
---                CFG_TOPDIR & "examples/zephyr/gcc711/zephyr.hex";
-                CFG_TOPDIR & "examples/dhrystone21/makefiles/bin/dhrystone21.hex";
+                CFG_TOPDIR & "examples/zephyr/gcc711/zephyr.hex";
+--                CFG_TOPDIR & "examples/dhrystone21/makefiles/bin/dhrystone21.hex";
                 
 
   --! @brief Hardware SoC Identificator.
   --!
   --! @details Read Only unique platform identificator that could be
   --!          read by firmware from the Plug'n'Play support module.
-  constant CFG_HW_ID : std_logic_vector(31 downto 0) := X"20191126";
+  constant CFG_HW_ID : std_logic_vector(31 downto 0) := X"20191206";
 
   --! @brief Enabling Ethernet MAC interface.
   --! @details By default MAC module enables support of the debug feature EDCL.
