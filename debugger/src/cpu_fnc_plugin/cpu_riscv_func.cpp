@@ -60,7 +60,7 @@ void CpuRiver_Functional::postinitService() {
     }
 
     // Power-on
-    reset(false);
+    reset(0);
 
     CpuGeneric::postinitService();
 

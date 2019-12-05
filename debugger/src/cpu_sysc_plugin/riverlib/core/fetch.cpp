@@ -101,7 +101,7 @@ void InstrFetch::comb() {
 
     v = r;
 
-    w_o_req_valid = i_nrst.read() & !i_pipeline_hold.read()
+    w_o_req_valid = !i_pipeline_hold.read()
             & !(r.wait_resp.read() & !i_mem_data_valid.read());
     w_o_req_fire =  i_mem_req_ready.read() && w_o_req_valid;
 

@@ -161,18 +161,18 @@ SC_MODULE(ICacheLru) {
         iv.req_addr = 0;
         iv.req_addr_overlay = 0;
         iv.use_overlay = 0;
-        iv.state = State_Idle;
+        iv.state = State_Flush;
         iv.req_mem_valid = 0;
-        iv.mem_addr = 0;
+        iv.mem_addr = FLUSH_ALL_ADDR;
         iv.burst_cnt = 0;
-        iv.burst_wstrb = 0;
+        iv.burst_wstrb = ~0ul;
         iv.burst_valid = 0;
         iv.lru_even_wr = 0;
         iv.lru_odd_wr = 0;
-        iv.req_flush = 1;           // init flush request
-        iv.req_flush_addr = ~0ul;   // [0]=1 flush all
+        iv.req_flush = 0;
+        iv.req_flush_addr = 0;
         iv.req_flush_cnt = 0;
-        iv.flush_cnt = 0;
+        iv.flush_cnt = ~0ul;
     }
 
     IWayMem *wayevenx[CFG_ICACHE_WAYS];

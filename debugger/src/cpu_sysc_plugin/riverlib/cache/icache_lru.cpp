@@ -260,6 +260,8 @@ void ICacheLru::comb() {
    
     v = r;
 
+    wb_mem_addr = 0;
+
     if (i_req_ctrl_valid.read() == 1) {
         wb_req_adr = i_req_ctrl_addr.read();
     } else {
