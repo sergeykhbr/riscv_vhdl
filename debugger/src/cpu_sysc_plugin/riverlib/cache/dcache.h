@@ -54,6 +54,11 @@ SC_MODULE(DCache) {
     sc_in<bool> i_resp_mem_load_fault;
     sc_in<bool> i_resp_mem_store_fault;
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_resp_mem_store_fault_addr;
+    // MPU interface
+    sc_out<sc_uint<BUS_ADDR_WIDTH>> o_mpu_addr;
+    sc_in<bool> i_mpu_cachable;
+    sc_in<bool> i_mpu_readable;
+    sc_in<bool> i_mpu_writable;
     sc_out<sc_uint<2>> o_dstate;
 
     void comb();

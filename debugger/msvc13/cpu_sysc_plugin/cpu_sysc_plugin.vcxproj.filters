@@ -138,9 +138,6 @@
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\icache_lru.cpp">
       <Filter>riverlib\cache</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mem\dpram64i.cpp">
-      <Filter>riverlib\cache\mem</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\iwaymem.cpp">
       <Filter>riverlib\cache</Filter>
     </ClCompile>
@@ -148,9 +145,6 @@
       <Filter>riverlib\cache</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mem\ramtagi.cpp">
-      <Filter>riverlib\cache\mem</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mem\dpramtagi.cpp">
       <Filter>riverlib\cache\mem</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mem\ram64i.cpp">
@@ -164,6 +158,9 @@
     </ClCompile>
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\tracer.cpp">
       <Filter>riverlib\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mpu.cpp">
+      <Filter>riverlib\cache</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -304,9 +301,6 @@
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\icache_lru.h">
       <Filter>riverlib\cache</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mem\dpram64i.h">
-      <Filter>riverlib\cache\mem</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\iwaymem.h">
       <Filter>riverlib\cache</Filter>
     </ClInclude>
@@ -314,9 +308,6 @@
       <Filter>riverlib\cache</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mem\ramtagi.h">
-      <Filter>riverlib\cache\mem</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mem\dpramtagi.h">
       <Filter>riverlib\cache\mem</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mem\ram64i.h">
@@ -330,6 +321,9 @@
     </ClInclude>
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\tracer.h">
       <Filter>riverlib\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mpu.h">
+      <Filter>riverlib\cache</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -55,13 +55,11 @@ SOURCES = \
 	cpu_riscv_rtl \
 	rtl_wrapper \
 	river_top \
-	icache_stub \
 	ilru \
-	dpramtagi \
-	dpram64i \
 	iwaymem \
 	icache_lru \
 	dcache \
+	mpu \
 	cache_top \
 	int_mul \
 	int_div \

@@ -29,6 +29,7 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset) :
     o_resp_ctrl_addr("o_resp_ctrl_addr"),
     o_resp_ctrl_data("o_resp_ctrl_data"),
     o_resp_ctrl_load_fault("o_resp_ctrl_load_fault"),
+    o_resp_ctrl_executable("o_resp_ctrl_executable"),
     i_resp_ctrl_ready("i_resp_ctrl_ready"),
     i_req_data_valid("i_req_data_valid"),
     i_req_data_write("i_req_data_write"),
@@ -56,6 +57,11 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset) :
     i_resp_mem_load_fault("i_resp_mem_load_fault"),
     i_resp_mem_store_fault("i_resp_mem_store_fault"),
     i_resp_mem_store_fault_addr("i_resp_mem_store_fault_addr"),
+    i_mpu_region_we("i_mpu_region_we"),
+    i_mpu_region_idx("i_mpu_region_idx"),
+    i_mpu_region_addr("i_mpu_region_addr"),
+    i_mpu_region_mask("i_mpu_region_mask"),
+    i_mpu_region_flags("i_mpu_region_flags"),
     i_flush_address("i_flush_address"),
     i_flush_valid("i_flush_valid"),
     o_istate("o_istate"),
@@ -91,6 +97,10 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset) :
     sensitive << i_nrst;
     sensitive << i_clk.pos();
 
+    w_mpu_ireadable_unsued = 0;
+    w_mpu_iwritable_unused = 0;
+    w_mpu_dexecutable_unused = 0;
+
     i1 = new ICacheLru("i1", async_reset, CFG_IINDEX_WIDTH);
     i1->i_clk(i_clk);
     i1->i_nrst(i_nrst);
@@ -101,6 +111,9 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset) :
     i1->o_resp_ctrl_addr(o_resp_ctrl_addr);
     i1->o_resp_ctrl_data(o_resp_ctrl_data);
     i1->o_resp_ctrl_load_fault(o_resp_ctrl_load_fault);
+    i1->o_resp_ctrl_executable(o_resp_ctrl_executable);
+    i1->o_resp_ctrl_writable(w_resp_ctrl_writable_unused);
+    i1->o_resp_ctrl_readable(w_resp_ctrl_readable_unused);
     i1->i_resp_ctrl_ready(i_resp_ctrl_ready);
     i1->i_req_mem_ready(w_ctrl_req_ready);
     i1->o_req_mem_valid(i.req_mem_valid);
@@ -114,6 +127,11 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset) :
     i1->i_resp_mem_data_valid(w_ctrl_resp_mem_data_valid);
     i1->i_resp_mem_data(wb_ctrl_resp_mem_data);
     i1->i_resp_mem_load_fault(w_ctrl_resp_mem_load_fault);
+    i1->o_mpu_addr(i.mpu_addr);
+    i1->i_mpu_cachable(w_mpu_icachable);
+    i1->i_mpu_executable(w_mpu_iexecutable);
+    i1->i_mpu_writable(w_mpu_iwritable_unused);
+    i1->i_mpu_readable(w_mpu_ireadable_unsued);
     i1->i_flush_address(i_flush_address);
     i1->i_flush_valid(i_flush_valid);
     i1->o_istate(o_istate);
@@ -148,7 +166,28 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset) :
     d0->i_resp_mem_load_fault(w_data_resp_mem_load_fault);
     d0->i_resp_mem_store_fault(i_resp_mem_store_fault);
     d0->i_resp_mem_store_fault_addr(i_resp_mem_store_fault_addr);
+    d0->o_mpu_addr(d.mpu_addr);
+    d0->i_mpu_cachable(w_mpu_dcachable);
+    d0->i_mpu_readable(w_mpu_dreadable);
+    d0->i_mpu_writable(w_mpu_dwritable);
     d0->o_dstate(o_dstate);
+
+    mpu0 = new MPU("mpu0", async_reset);
+
+    mpu0->i_clk(i_clk);
+    mpu0->i_nrst(i_nrst);
+    mpu0->i_iaddr(i.mpu_addr);
+    mpu0->i_daddr(d.mpu_addr);
+    mpu0->i_region_we(i_mpu_region_we);
+    mpu0->i_region_idx(i_mpu_region_idx);
+    mpu0->i_region_addr(i_mpu_region_addr);
+    mpu0->i_region_mask(i_mpu_region_mask);
+    mpu0->i_region_flags(i_mpu_region_flags);
+    mpu0->o_icachable(w_mpu_icachable);
+    mpu0->o_iexecutable(w_mpu_iexecutable);
+    mpu0->o_dcachable(w_mpu_dcachable);
+    mpu0->o_dreadable(w_mpu_dreadable);
+    mpu0->o_dwritable(w_mpu_dwritable);
 
 #ifdef DBG_ICACHE_TB
     i0_tb = new ICache_tb("ictb0");
@@ -186,11 +225,13 @@ void CacheTop::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     }
     i1->generateVCD(i_vcd, o_vcd);
     d0->generateVCD(i_vcd, o_vcd);
+    mpu0->generateVCD(i_vcd, o_vcd);
 }
 
 CacheTop::~CacheTop() {
     delete i1;
     delete d0;
+    delete mpu0;
 }
 
 

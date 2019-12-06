@@ -30,6 +30,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     i_resp_ctrl_addr("i_resp_ctrl_addr"),
     i_resp_ctrl_data("i_resp_ctrl_data"),
     i_resp_ctrl_load_fault("i_resp_ctrl_load_fault"),
+    i_resp_ctrl_executable("i_resp_ctrl_executable"),
     o_resp_ctrl_ready("o_resp_ctrl_ready"),
     i_req_data_ready("i_req_data_ready"),
     o_req_data_valid("o_req_data_valid"),
@@ -47,6 +48,11 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     i_ext_irq("i_ext_irq"),
     o_time("o_time"),
     o_exec_cnt("o_exec_cnt"),
+    o_mpu_region_we("o_mpu_region_we"),
+    o_mpu_region_idx("o_mpu_region_idx"),
+    o_mpu_region_addr("o_mpu_region_addr"),
+    o_mpu_region_mask("o_mpu_region_mask"),
+    o_mpu_region_flags("o_mpu_region_flags"),
     i_dport_valid("i_dport_valid"),
     i_dport_write("i_dport_write"),
     i_dport_region("i_dport_region"),
@@ -99,10 +105,12 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     fetch0->i_mem_data_addr(i_resp_ctrl_addr);
     fetch0->i_mem_data(i_resp_ctrl_data);
     fetch0->i_mem_load_fault(i_resp_ctrl_load_fault);
+    fetch0->i_mem_executable(i_resp_ctrl_executable);
     fetch0->o_mem_resp_ready(o_resp_ctrl_ready);
     fetch0->i_predict_npc(bp.npc);
     fetch0->o_mem_req_fire(w.f.req_fire);
     fetch0->o_instr_load_fault(w.f.instr_load_fault);
+    fetch0->o_instr_executable(w.f.instr_executable);
     fetch0->o_valid(w.f.valid);
     fetch0->o_pc(w.f.pc);
     fetch0->o_instr(w.f.instr);
@@ -119,6 +127,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     dec0->i_f_pc(w.f.pc);
     dec0->i_f_instr(w.f.instr);
     dec0->i_instr_load_fault(w.f.instr_load_fault);
+    dec0->i_instr_executable(w.f.instr_executable);
     dec0->o_valid(w.d.instr_valid);
     dec0->o_pc(w.d.pc);
     dec0->o_instr(w.d.instr);
@@ -134,6 +143,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     dec0->o_instr_vec(w.d.instr_vec);
     dec0->o_exception(w.d.exception);
     dec0->o_instr_load_fault(w.d.instr_load_fault);
+    dec0->o_instr_executable(w.d.instr_executable);
 
     exec0 = new InstrExecute("exec0", async_reset);
     exec0->i_clk(i_clk);
@@ -155,6 +165,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     exec0->i_ivec(w.d.instr_vec);
     exec0->i_unsup_exception(w.d.exception);
     exec0->i_instr_load_fault(w.d.instr_load_fault);
+    exec0->i_instr_executable(w.d.instr_executable);
     exec0->i_dport_npc_write(dbg.npc_write);
     exec0->i_dport_npc(wb_exec_dport_npc);
     exec0->o_radr1(w.e.radr1);
@@ -174,6 +185,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     exec0->i_trap_pc(csr.trap_pc);
     exec0->o_ex_npc(w.e.ex_npc);
     exec0->o_ex_instr_load_fault(w.e.ex_instr_load_fault);
+    exec0->o_ex_instr_not_executable(w.e.ex_instr_not_executable);
     exec0->o_ex_illegal_instr(w.e.ex_illegal_instr);
     exec0->o_ex_unalign_store(w.e.ex_unalign_store);
     exec0->o_ex_unalign_load(w.e.ex_unalign_load);
@@ -300,6 +312,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     csr0->i_ex_data_store_fault(i_resp_data_store_fault);
     csr0->i_ex_data_store_fault_addr(i_resp_data_store_fault_addr);
     csr0->i_ex_instr_load_fault(w.e.ex_instr_load_fault);
+    csr0->i_ex_instr_not_executable(w.e.ex_instr_not_executable);
     csr0->i_ex_illegal_instr(w.e.ex_illegal_instr);
     csr0->i_ex_unalign_store(w.e.ex_unalign_store);
     csr0->i_ex_unalign_load(w.e.ex_unalign_load);
@@ -316,6 +329,11 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     csr0->o_trap_pc(csr.trap_pc);
     csr0->i_break_mode(dbg.break_mode);
     csr0->o_break_event(csr.break_event);
+    csr0->o_mpu_region_we(o_mpu_region_we);
+    csr0->o_mpu_region_idx(o_mpu_region_idx);
+    csr0->o_mpu_region_addr(o_mpu_region_addr);
+    csr0->o_mpu_region_mask(o_mpu_region_mask);
+    csr0->o_mpu_region_flags(o_mpu_region_flags);
     csr0->i_dport_ena(dbg.csr_ena);
     csr0->i_dport_write(dbg.csr_write);
     csr0->i_dport_addr(dbg.core_addr);
@@ -474,7 +492,7 @@ void Processor::dbg_print() {
         return;
     }
     int sz;
-    uint64_t exec_cnt = dbg.executed_cnt.read() + 1;
+    uint64_t exec_cnt = dbg.executed_cnt.read();
     if (w.m.valid.read()) {
         sz = RISCV_sprintf(tstr, sizeof(tstr), "%8" RV_PRI64 "d [%08x]: ",
             exec_cnt,

@@ -189,12 +189,12 @@
                                    'CFG_NMI_CALL_FROM_SMODE_ADDR',  0x0050,
                                    'CFG_NMI_CALL_FROM_HMODE_ADDR',  0x0058,
                                    'CFG_NMI_CALL_FROM_MMODE_ADDR',  0x0060,
-                                   'NOT_USED_INSTR_PAGE_FAULT',     0x0000,
-                                   'NOT_USED_LOAD_PAGE_FAULT',      0x0000,
+                                   'NOT_USED_INSTR_PAGE_FAULT',     0x0068,
+                                   'NOT_USED_LOAD_PAGE_FAULT',      0x0070,
                                    'NOT_USED_RSRV14',               0x0000,
-                                   'NOT_USED_STORE_PAGE_FAULT',     0x0000,
-                                   'CFG_NMI_STACK_OVERFLOW_ADDR',   0x0068,
-                                   'CFG_NMI_STACK_UNDERFLOW_ADDR',  0x0070
+                                   'NOT_USED_STORE_PAGE_FAULT',     0x0078,
+                                   'CFG_NMI_STACK_OVERFLOW_ADDR',   0x0080,
+                                   'CFG_NMI_STACK_UNDERFLOW_ADDR',  0x0088
                                   ]],
                 ]}]},
     {'Class':'ICacheFunctionalClass','Instances':[
@@ -208,7 +208,7 @@
     {'Class':'MemorySimClass','Instances':[
           {'Name':'bootrom0','Attr':[
                 ['LogLevel',1],
-                ['InitFile','../../../examples/boot/linuxbuild/bin/bootimage.hex'],
+                ['InitFile','../../../examples/bootrom_tests/linuxbuild/bin/bootrom_tests.hex'],
                 ['ReadOnly',true],
                 ['BaseAddress',0x0],
                 ['Length',32768]
@@ -323,7 +323,7 @@
                 ['BaseAddress',0xfffff000],
                 ['Length',4096],
                 ['Tech',0],
-                ['AdcDetector',0xff]
+                ['AdcDetector',0x00]
                 ]}]},
     {'Class':'FpuFunctionalClass','Instances':[
           {'Name':'fpu0','Attr':[

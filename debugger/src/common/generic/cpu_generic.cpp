@@ -406,7 +406,11 @@ ETransStatus CpuGeneric::dma_memop(Axi4TransactionType *tr) {
     char tstr[512];
     Reg64Type pload = {0};
     if (tr->action == MemAction_Read) {
-        if (tr->xsize == 4) {
+        if (tr->xsize == 1) {
+            pload.buf[0] = tr->rpayload.b8[0];
+        } else if (tr->xsize == 2) {
+            pload.buf16[0] = tr->rpayload.b16[0];
+        } else if (tr->xsize == 4) {
             pload.buf32[0] = tr->rpayload.b32[0];
         } else {
             pload.val = tr->rpayload.b64[0];
@@ -418,7 +422,11 @@ ETransStatus CpuGeneric::dma_memop(Axi4TransactionType *tr) {
                     static_cast<int>(tr->addr),
                     pload.val);
     } else {
-        if (tr->xsize == 4) {
+        if (tr->xsize == 1) {
+            pload.buf[0] = tr->wpayload.b8[0];
+        } else if (tr->xsize == 2) {
+            pload.buf16[0] = tr->wpayload.b16[0];
+        } else if (tr->xsize == 4) {
             pload.buf32[0] = tr->wpayload.b32[0];
         } else {
             pload.val = tr->wpayload.b64[0];

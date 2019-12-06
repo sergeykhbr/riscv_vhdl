@@ -20,21 +20,10 @@
 #include <systemc.h>
 #include "riscv-isa.h"
 #include "../river_cfg.h"
-#include "mem/dpram64i.h"
-#include "mem/dpramtagi.h"
 #include "mem/ram64i.h"
 #include "mem/ramtagi.h"
 
 namespace debugger {
-
-static const int RAM64_BLOCK_TOTAL =
-    (1 << CFG_IOFFSET_WIDTH) / sizeof(uint64_t);
-
-static const int IINDEX_START = CFG_IOFFSET_WIDTH + CFG_IODDEVEN_WIDTH;
-static const int IINDEX_END = IINDEX_START + CFG_IINDEX_WIDTH - 1;
-
-static const int ITAG_START = IINDEX_START + CFG_IINDEX_WIDTH;
-static const int ITAG_END = BUS_ADDR_WIDTH-1;
 
 SC_MODULE(IWayMem) {
     sc_in<bool> i_clk;
@@ -42,14 +31,20 @@ SC_MODULE(IWayMem) {
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_radr;
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_wadr;
     sc_in<bool> i_wena;
-    sc_in<sc_uint<4>> i_wstrb;
-    sc_in<sc_uint<4>> i_wvalid;
-    sc_in<sc_uint<64>> i_wdata;
+    sc_in<sc_uint<4*BUS_DATA_BYTES>> i_wstrb;
+    sc_in<bool> i_wvalid;
+    sc_in<sc_biguint<4*BUS_DATA_WIDTH>> i_wdata;
     sc_in<bool> i_load_fault;
+    sc_in<bool> i_executable;
+    sc_in<bool> i_readable;
+    sc_in<bool> i_writable;
     sc_out<sc_uint<CFG_ITAG_WIDTH>> o_rtag;
     sc_out<sc_uint<32>> o_rdata;
     sc_out<bool> o_valid;
     sc_out<bool> o_load_fault;
+    sc_out<bool> o_executable;
+    sc_out<bool> o_readable;
+    sc_out<bool> o_writable;
 
     void comb();
     void registers();
@@ -71,21 +66,14 @@ SC_MODULE(IWayMem) {
         iv.roffset = 0;
     }
 
-    DpRamTagi *tag0;
-    DpRam64i *datan[RAM64_BLOCK_TOTAL];
-
     RamTagi *tag1;
-    Ram64i *datas[RAM64_BLOCK_TOTAL];
 
     sc_signal<sc_uint<CFG_IINDEX_WIDTH>> wb_radr;
     sc_signal<sc_uint<CFG_IINDEX_WIDTH>> wb_wadr;
 
-    sc_signal<sc_uint<CFG_ITAG_WIDTH_TOTAL>> wb_tag_rdata;
+    sc_signal<sc_biguint<LINE_MEM_WIDTH>> wb_tag_rdata;
     sc_signal<bool> w_tag_wena;
-    sc_signal<sc_uint<CFG_ITAG_WIDTH_TOTAL>> wb_tag_wdata;
-
-    sc_signal<sc_uint<64>> wb_data_rdata[RAM64_BLOCK_TOTAL];
-    sc_signal<bool> w_data_wena[RAM64_BLOCK_TOTAL];
+    sc_signal<sc_biguint<LINE_MEM_WIDTH>> wb_tag_wdata;
 
     bool async_reset_;
     int wayidx_;

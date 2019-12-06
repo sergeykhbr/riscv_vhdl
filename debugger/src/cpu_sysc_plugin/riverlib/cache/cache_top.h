@@ -22,6 +22,7 @@
 #include "icache_stub.h"
 #include "icache_lru.h"
 #include "dcache.h"
+#include "mpu.h"
 
 namespace debugger {
 
@@ -36,6 +37,7 @@ SC_MODULE(CacheTop) {
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_resp_ctrl_addr;   // ICache response address
     sc_out<sc_uint<32>> o_resp_ctrl_data;               // ICache read data
     sc_out<bool> o_resp_ctrl_load_fault;                // Bus response ERRSLV or ERRDEC on read
+    sc_out<bool> o_resp_ctrl_executable;                // MPU flag: executable
     sc_in<bool> i_resp_ctrl_ready;                      // CPU Core is ready to accept ICache response
     // Data path:
     sc_in<bool> i_req_data_valid;                       // Data path request from CPU Core is valid
@@ -65,7 +67,12 @@ SC_MODULE(CacheTop) {
     sc_in<bool> i_resp_mem_load_fault;                  // Bus response with SLVERR or DECERR on read
     sc_in<bool> i_resp_mem_store_fault;                 // Bus response with SLVERR or DECERR on write
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_resp_mem_store_fault_addr;
-
+    // MPU interface
+    sc_in<bool> i_mpu_region_we;
+    sc_in<sc_uint<CFG_MPU_TBL_WIDTH>> i_mpu_region_idx;
+    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_mpu_region_addr;
+    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_mpu_region_mask;
+    sc_in<sc_uint<CFG_MPU_FL_TOTAL>> i_mpu_region_flags;   // {ena, cachable, r, w, x}
     // Debug signals:
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_flush_address;     // clear ICache address from debug interface
     sc_in<bool> i_flush_valid;                          // address to clear icache is valid
@@ -97,6 +104,7 @@ private:
         sc_signal<sc_uint<8>> req_mem_len;
         sc_signal<sc_uint<2>> req_mem_burst;
         sc_signal<bool> req_mem_last;
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> mpu_addr;
     };
 
     struct RegistersType {
@@ -109,15 +117,27 @@ private:
     sc_signal<bool> w_ctrl_resp_mem_data_valid;
     sc_signal<sc_uint<BUS_DATA_WIDTH>> wb_ctrl_resp_mem_data;
     sc_signal<bool> w_ctrl_resp_mem_load_fault;
+    sc_signal<bool> w_resp_ctrl_writable_unused;
+    sc_signal<bool> w_resp_ctrl_readable_unused;
     sc_signal<bool> w_ctrl_req_ready;
     // Memory Data interface:
     sc_signal<bool> w_data_resp_mem_data_valid;
     sc_signal<sc_uint<BUS_DATA_WIDTH>> wb_data_resp_mem_data;
     sc_signal<bool> w_data_resp_mem_load_fault;
     sc_signal<bool> w_data_req_ready;
+    sc_signal<bool> w_mpu_icachable;
+    sc_signal<bool> w_mpu_iexecutable;
+    sc_signal<bool> w_mpu_ireadable_unsued;
+    sc_signal<bool> w_mpu_iwritable_unused;
+    sc_signal<bool> w_mpu_dcachable;
+    sc_signal<bool> w_mpu_dexecutable_unused;
+    sc_signal<bool> w_mpu_dreadable;
+    sc_signal<bool> w_mpu_dwritable;
+
 
     ICacheLru *i1;
     DCache *d0;
+    MPU *mpu0;
 #ifdef DBG_ICACHE_TB
     ICache_tb *i0_tb;
 #endif

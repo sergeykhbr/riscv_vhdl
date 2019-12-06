@@ -40,6 +40,7 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset)
     i_ivec("i_ivec"),
     i_unsup_exception("i_unsup_exception"),
     i_instr_load_fault("i_instr_load_fault"),
+    i_instr_executable("i_instr_executable"),
     i_dport_npc_write("i_dport_npc_write"),
     i_dport_npc("i_dport_npc"),
     o_radr1("o_radr1"),
@@ -59,6 +60,7 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset)
     i_trap_pc("i_trap_pc"),
     o_ex_npc("o_ex_npc"),
     o_ex_instr_load_fault("o_ex_instr_load_fault"),
+    o_ex_instr_not_executable("o_ex_instr_not_executable"),
     o_ex_illegal_instr("o_ex_illegal_instr"),
     o_ex_unalign_store("o_ex_unalign_store"),
     o_ex_unalign_load("o_ex_unalign_load"),
@@ -105,6 +107,7 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset)
     sensitive << i_ivec;
     sensitive << i_unsup_exception;
     sensitive << i_instr_load_fault;
+    sensitive << i_instr_executable;
     sensitive << i_dport_npc_write;
     sensitive << i_dport_npc;
     sensitive << i_rdata1;
@@ -251,6 +254,7 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_f64, i_f64.name());
         sc_trace(o_vcd, i_unsup_exception, i_unsup_exception.name());
         sc_trace(o_vcd, i_instr_load_fault, i_instr_load_fault.name());
+        sc_trace(o_vcd, i_instr_executable, i_instr_executable.name());
         sc_trace(o_vcd, o_radr1, o_radr1.name());
         sc_trace(o_vcd, i_rdata1, i_rdata1.name());
         sc_trace(o_vcd, o_radr2, o_radr2.name());
@@ -280,6 +284,7 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_ret, o_ret.name());
         sc_trace(o_vcd, o_mret, o_mret.name());
         sc_trace(o_vcd, o_uret, o_uret.name());
+        sc_trace(o_vcd, o_ex_instr_not_executable, o_ex_instr_not_executable.name());
 
         std::string pn(name());
         sc_trace(o_vcd, r.hazard_addr0, pn + ".r_hazard_addr0");
@@ -829,6 +834,7 @@ void InstrExecute::comb() {
     o_trap_ready = w_next_ready;
 
     o_ex_instr_load_fault = i_instr_load_fault.read() & w_next_ready;
+    o_ex_instr_not_executable = !i_instr_executable.read() & w_next_ready;
     o_ex_illegal_instr = i_unsup_exception.read() & w_next_ready;
     o_ex_unalign_store = w_exception_store & w_next_ready;
     o_ex_unalign_load = w_exception_load & w_next_ready;

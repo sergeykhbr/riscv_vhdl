@@ -45,6 +45,7 @@ SC_MODULE(Processor) {
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_resp_ctrl_addr;    // Response address must be equal to the latest request address
     sc_in<sc_uint<32>> i_resp_ctrl_data;                // Read value
     sc_in<bool> i_resp_ctrl_load_fault;
+    sc_in<bool> i_resp_ctrl_executable;                 // MPU flag
     sc_out<bool> o_resp_ctrl_ready;                     // Core is ready to accept response from ICache
     // Data path:
     sc_in<bool> i_req_data_ready;                       // DCache is ready to accept request
@@ -64,6 +65,12 @@ SC_MODULE(Processor) {
     sc_in<bool> i_ext_irq;                              // PLIC interrupt accordingly with spec
     sc_out<sc_uint<64>> o_time;                         // Clock/Step counter depending attribute "GenerateRef"
     sc_out<sc_uint<64>> o_exec_cnt;
+    // MPU interface
+    sc_out<bool> o_mpu_region_we;
+    sc_out<sc_uint<CFG_MPU_TBL_WIDTH>> o_mpu_region_idx;
+    sc_out<sc_uint<BUS_ADDR_WIDTH>> o_mpu_region_addr;
+    sc_out<sc_uint<BUS_ADDR_WIDTH>> o_mpu_region_mask;
+    sc_out<sc_uint<CFG_MPU_FL_TOTAL>> o_mpu_region_flags;  // {ena, cachable, r, w, x}
     // Debug interface
     sc_in<bool> i_dport_valid;                          // Debug access from DSU is valid
     sc_in<bool> i_dport_write;                          // Write command flag
@@ -96,6 +103,7 @@ private:
     struct FetchType {
         sc_signal<bool> req_fire;
         sc_signal<bool> instr_load_fault;
+        sc_signal<bool> instr_executable;
         sc_signal<bool> valid;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> pc;
         sc_signal<sc_uint<32>> instr;
@@ -120,6 +128,7 @@ private:
         sc_signal<sc_bv<Instr_Total>> instr_vec;
         sc_signal<bool> exception;
         sc_signal<bool> instr_load_fault;
+        sc_signal<bool> instr_executable;
     };
 
     struct ExecuteType {
@@ -140,6 +149,7 @@ private:
         sc_signal<bool> csr_wena;
         sc_signal<sc_uint<RISCV_ARCH>> csr_wdata;
         sc_signal<bool> ex_instr_load_fault;
+        sc_signal<bool> ex_instr_not_executable;
         sc_signal<bool> ex_illegal_instr;
         sc_signal<bool> ex_unalign_load;
         sc_signal<bool> ex_unalign_store;

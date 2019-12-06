@@ -593,6 +593,12 @@ static const uint16_t CSR_mip           = 0x344;
 static const uint16_t CSR_mstackovr      = 0x350;
 /** Stack underflow (non-standard CSR). */
 static const uint16_t CSR_mstackund      = 0x351;
+/** MPU region address (non-standard CSR). */
+static const uint16_t CSR_mpu_addr       = 0x352;
+/** MPU region mask (non-standard CSR). */
+static const uint16_t CSR_mpu_mask       = 0x353;
+/** MPU region control (non-standard CSR). */
+static const uint16_t CSR_mpu_ctrl       = 0x354;
 /// @}
 
 /** Exceptions */

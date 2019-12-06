@@ -31,7 +31,6 @@ static const int BUS_ADDR_WIDTH = 64;
 static const int BUS_DATA_WIDTH = 64;
 static const int BUS_DATA_BYTES = BUS_DATA_WIDTH / 8;
 
-static const bool CFG_SINGLEPORT_CACHE = true;
 /** ICacheLru config */
 static const int CFG_IOFFSET_WIDTH   = 5;    // [4:0]  log2(ICACHE_LINE_BYTES)
 static const int CFG_IODDEVEN_WIDTH  = 1;    // [5]    0=even; 1=odd
@@ -47,12 +46,32 @@ static const int CFG_ITAG_WIDTH      = BUS_ADDR_WIDTH
     - (CFG_IOFFSET_WIDTH + CFG_IODDEVEN_WIDTH + CFG_IINDEX_WIDTH);
 
 static const int CFG_ICACHE_WAYS        = 4;  // 4 odds, 4 even
-/** Store tag data as:
-       [3:0]            qword is valid flag
-       [4]              load_fault
-       [ITAG_WIDTH+5:5] tag value
+
+static const int IINDEX_START = CFG_IOFFSET_WIDTH + CFG_IODDEVEN_WIDTH;
+static const int IINDEX_END = IINDEX_START + CFG_IINDEX_WIDTH - 1;
+
+static const int ITAG_START = IINDEX_START + CFG_IINDEX_WIDTH;
+static const int ITAG_SIZE  = BUS_ADDR_WIDTH - ITAG_START;
+static const int ITAG_END   = BUS_ADDR_WIDTH - 1;
+/**
+    [0] = valid
+    [1] = executable
+    [2] = readable
+    [3] = writable
+    [4] = load_fault
  */
-static const int CFG_ITAG_WIDTH_TOTAL = CFG_ITAG_WIDTH + 5;
+static const int LINE_MEM_WIDTH = 4*BUS_DATA_WIDTH + ITAG_SIZE + 5;
+
+/** MPU config */
+static const int CFG_MPU_TBL_WIDTH   = 2;    // [1:0]  log2(MPU_TBL_SIZE)
+static const int CFG_MPU_TBL_SIZE    = 1 << CFG_MPU_TBL_WIDTH;
+static const int CFG_MPU_FL_WR       = 0;
+static const int CFG_MPU_FL_RD       = 1;
+static const int CFG_MPU_FL_EXEC     = 2;
+static const int CFG_MPU_FL_CACHABLE = 3;
+static const int CFG_MPU_FL_ENA      = 4;
+static const int CFG_MPU_FL_TOTAL    = 5;
+
 
 static const uint8_t MEMOP_8B = 3;
 static const uint8_t MEMOP_4B = 2;
@@ -75,8 +94,11 @@ static const uint64_t CFG_NMI_CALL_FROM_UMODE_ADDR  = 0x0048;
 static const uint64_t CFG_NMI_CALL_FROM_SMODE_ADDR  = 0x0050;
 static const uint64_t CFG_NMI_CALL_FROM_HMODE_ADDR  = 0x0058;
 static const uint64_t CFG_NMI_CALL_FROM_MMODE_ADDR  = 0x0060;
-static const uint64_t CFG_NMI_STACK_OVERFLOW_ADDR   = 0x0068;
-static const uint64_t CFG_NMI_STACK_UNDERFLOW_ADDR  = 0x0070;
+static const uint64_t CFG_NMI_INSTR_PAGE_FAULT_ADDR = 0x0068;
+static const uint64_t CFG_NMI_LOAD_PAGE_FAULT_ADDR  = 0x0070;
+static const uint64_t CFG_NMI_STORE_PAGE_FAULT_ADDR = 0x0078;
+static const uint64_t CFG_NMI_STACK_OVERFLOW_ADDR   = 0x0080;
+static const uint64_t CFG_NMI_STACK_UNDERFLOW_ADDR  = 0x0088;
 
 /** Number of elements each 2*CFG_ADDR_WIDTH in stack trace buffer: */
 static const int CFG_STACK_TRACE_BUF_SIZE = 32;

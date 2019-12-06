@@ -57,6 +57,7 @@ RiverTop::RiverTop(sc_module_name name_, uint32_t hartid, bool async_reset,
     proc0->i_resp_ctrl_addr(wb_resp_ctrl_addr);
     proc0->i_resp_ctrl_data(wb_resp_ctrl_data);
     proc0->i_resp_ctrl_load_fault(w_resp_ctrl_load_fault);
+    proc0->i_resp_ctrl_executable(w_resp_ctrl_executable);
     proc0->o_resp_ctrl_ready(w_resp_ctrl_ready);
     proc0->i_req_data_ready(w_req_data_ready);
     proc0->o_req_data_valid(w_req_data_valid);
@@ -74,6 +75,11 @@ RiverTop::RiverTop(sc_module_name name_, uint32_t hartid, bool async_reset,
     proc0->i_ext_irq(i_ext_irq);
     proc0->o_time(o_time);
     proc0->o_exec_cnt(o_exec_cnt);
+    proc0->o_mpu_region_we(w_mpu_region_we);
+    proc0->o_mpu_region_idx(wb_mpu_region_idx);
+    proc0->o_mpu_region_addr(wb_mpu_region_addr);
+    proc0->o_mpu_region_mask(wb_mpu_region_mask);
+    proc0->o_mpu_region_flags(wb_mpu_region_flags);
     proc0->i_dport_valid(i_dport_valid);
     proc0->i_dport_write(i_dport_write);
     proc0->i_dport_region(i_dport_region);
@@ -98,6 +104,7 @@ RiverTop::RiverTop(sc_module_name name_, uint32_t hartid, bool async_reset,
     cache0->o_resp_ctrl_addr(wb_resp_ctrl_addr);
     cache0->o_resp_ctrl_data(wb_resp_ctrl_data);
     cache0->o_resp_ctrl_load_fault(w_resp_ctrl_load_fault);
+    cache0->o_resp_ctrl_executable(w_resp_ctrl_executable);
     cache0->i_resp_ctrl_ready(w_resp_ctrl_ready);
     cache0->i_req_data_valid(w_req_data_valid);
     cache0->i_req_data_write(w_req_data_write);
@@ -125,6 +132,11 @@ RiverTop::RiverTop(sc_module_name name_, uint32_t hartid, bool async_reset,
     cache0->i_resp_mem_load_fault(i_resp_mem_load_fault);
     cache0->i_resp_mem_store_fault(i_resp_mem_store_fault);
     cache0->i_resp_mem_store_fault_addr(i_resp_mem_store_fault_addr);
+    cache0->i_mpu_region_we(w_mpu_region_we);
+    cache0->i_mpu_region_idx(wb_mpu_region_idx);
+    cache0->i_mpu_region_addr(wb_mpu_region_addr);
+    cache0->i_mpu_region_mask(wb_mpu_region_mask);
+    cache0->i_mpu_region_flags(wb_mpu_region_flags);
     cache0->i_flush_address(wb_flush_address);
     cache0->i_flush_valid(w_flush_valid);
     cache0->o_istate(wb_istate);

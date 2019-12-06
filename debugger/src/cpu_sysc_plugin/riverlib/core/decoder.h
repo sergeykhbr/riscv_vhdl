@@ -67,6 +67,7 @@ SC_MODULE(InstrDecoder) {
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_f_pc;      // Fetched pc
     sc_in<sc_uint<32>> i_f_instr;               // Fetched instruction value
     sc_in<bool> i_instr_load_fault;             // fault instruction's address
+    sc_in<bool> i_instr_executable;             // MPU flag
 
     sc_out<bool> o_valid;                       // Current output values are valid
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_pc;       // Current instruction pointer value
@@ -83,6 +84,7 @@ SC_MODULE(InstrDecoder) {
     sc_out<sc_bv<Instr_Total>> o_instr_vec;     // One bit per decoded instruction bus
     sc_out<bool> o_exception;
     sc_out<bool> o_instr_load_fault;            // fault instruction's address
+    sc_out<bool> o_instr_executable;            // MPU flag
 
     void comb();
     void registers();
@@ -109,6 +111,7 @@ private:
         sc_signal<bool> f64;
         sc_signal<bool> compressed;
         sc_signal<bool> instr_load_fault;
+        sc_signal<bool> instr_executable;
 
         sc_signal<bool> instr_unimplemented;
     } v, r;
@@ -128,6 +131,7 @@ private:
         iv.f64 = 0;
         iv.compressed = 0;
         iv.instr_load_fault = 0;
+        iv.instr_executable = 0;
         iv.instr_unimplemented = 0;
     }
 

@@ -54,6 +54,12 @@ trap_table:
   nop
   j exception_entry   # Call from M-mode
   nop
+  j exception_entry   # Instruction Page Fault
+  nop
+  j exception_entry   # Load Page Fault
+  nop
+  j exception_entry   # Store Page Fault
+  nop
   j exception_entry   # Stack Overflow
   nop
   j exception_entry   # Stack Underflow
