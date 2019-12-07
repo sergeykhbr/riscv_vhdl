@@ -76,8 +76,11 @@ package river_cfg is
   constant CFG_NMI_CALL_FROM_SMODE_ADDR : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00000050";
   constant CFG_NMI_CALL_FROM_HMODE_ADDR : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00000058";
   constant CFG_NMI_CALL_FROM_MMODE_ADDR : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00000060";
-  constant CFG_NMI_STACK_OVERFLOW_ADDR  : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00000068";
-  constant CFG_NMI_STACK_UNDERFLOW_ADDR : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00000070";
+  constant CFG_NMI_INSTR_PAGE_FAULT_ADDR: std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00000068";
+  constant CFG_NMI_LOAD_PAGE_FAULT_ADDR : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00000070";
+  constant CFG_NMI_STORE_PAGE_FAULT_ADDR: std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00000078";
+  constant CFG_NMI_STACK_OVERFLOW_ADDR  : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00000080";
+  constant CFG_NMI_STACK_UNDERFLOW_ADDR : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00000088";
 
   --! Number of elements each 2*CFG_ADDR_WIDTH in stack trace buffer, 0 = disabled
   constant CFG_STACK_TRACE_BUF_SIZE : integer := 32;
