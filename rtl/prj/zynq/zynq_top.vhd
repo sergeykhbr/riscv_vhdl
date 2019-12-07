@@ -85,6 +85,14 @@ architecture arch_zynq_top of zynq_top is
     i_uart2_rd   : in std_logic;
     o_uart2_td   : out std_logic;
     o_uart2_rtsn : out std_logic;
+    --! SPI Flash
+    i_flash_si : in std_logic;
+    o_flash_so : out std_logic;
+    o_flash_sck : out std_logic;
+    o_flash_csn : out std_logic;
+    o_flash_wpn : out std_logic;
+    o_flash_holdn : out std_logic;
+    o_flash_reset : out std_logic;
     --! OTP Memory
     i_otp_d : in std_logic_vector(15 downto 0);
     o_otp_d : out std_logic_vector(15 downto 0);

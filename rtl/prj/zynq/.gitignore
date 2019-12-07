@@ -1,0 +1,7 @@
+zynq_top.cache
+zynq_top.hw
+zynq_top.ip_user_files
+zynq_top.runs
+zynq_top.sim
+zynq_top.srcs/sources_1/ip/processing_system7_0/*
+!zynq_top.srcs/sources_1/ip/processing_system7_0/processing_system7_0.xci
