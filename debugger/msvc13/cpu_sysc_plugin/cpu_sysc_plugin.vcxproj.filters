@@ -132,9 +132,6 @@
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\fpu_d\l2d_d.cpp">
       <Filter>riverlib\core\fpu_d</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\icache_stub.cpp">
-      <Filter>riverlib\cache</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\icache_lru.cpp">
       <Filter>riverlib\cache</Filter>
     </ClCompile>
@@ -145,9 +142,6 @@
       <Filter>riverlib\cache</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mem\ramtagi.cpp">
-      <Filter>riverlib\cache\mem</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mem\ram64i.cpp">
       <Filter>riverlib\cache\mem</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\fpu_d\divstage53.cpp">
@@ -295,9 +289,6 @@
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\fpu_d\l2d_d.h">
       <Filter>riverlib\core\fpu_d</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\icache_stub.h">
-      <Filter>riverlib\cache</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\icache_lru.h">
       <Filter>riverlib\cache</Filter>
     </ClInclude>
@@ -308,9 +299,6 @@
       <Filter>riverlib\cache</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mem\ramtagi.h">
-      <Filter>riverlib\cache\mem</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mem\ram64i.h">
       <Filter>riverlib\cache\mem</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\fpu_d\divstage53.h">
