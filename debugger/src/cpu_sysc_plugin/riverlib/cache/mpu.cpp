@@ -57,8 +57,6 @@ void MPU::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void MPU::comb() {
-    bool v_iena;
-    bool v_dena;
     bool v_icachable;
     bool v_dcachable;
     bool v_executable;
@@ -73,8 +71,6 @@ void MPU::comb() {
     v_readable = true;
     v_writable = true;
 
-    v_iena = 0;
-    v_dena = 0;
     for (int i = 0; i < CFG_MPU_TBL_SIZE; i++) {
         t_iaddr = i_iaddr.read()(BUS_ADDR_WIDTH-1, CFG_IOFFSET_WIDTH);
         if (tbl[i].addr == (t_iaddr & tbl[i].mask)) {

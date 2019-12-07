@@ -56,11 +56,13 @@ SOURCES = \
 	rtl_wrapper \
 	river_top \
 	ilru \
+	ramtagi \
 	iwaymem \
 	icache_lru \
 	dcache \
 	mpu \
 	cache_top \
+	divstage64 \
 	int_mul \
 	int_div \
 	shift \
