@@ -132,7 +132,7 @@ set_property IOSTANDARD LVCMOS25 [get_ports i_gps_ld]
 set_property PACKAGE_PIN AF30 [get_ports i_glo_ld]
 set_property IOSTANDARD LVCMOS25 [get_ports i_glo_ld]
 
-set_property PACKAGE_PIN Y15 [get_ports o_pps]
+set_property PACKAGE_PIN H30 [get_ports o_pps]
 set_property IOSTANDARD LVCMOS25 [get_ports o_pps]
 
 # RF control:

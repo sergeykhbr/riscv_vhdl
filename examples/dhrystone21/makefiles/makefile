@@ -1,8 +1,8 @@
 include makeutil.mak
 
 TOP_DIR=../../
-OBJ_DIR = $(TOP_DIR)dhrystone21/makefiles/obj
-ELF_DIR = $(TOP_DIR)dhrystone21/makefiles/bin
+OBJ_DIR = $(TOP_DIR)makefiles/obj
+ELF_DIR = $(TOP_DIR)makefiles/bin
 
 
 #-----------------------------------------------------------------------------
