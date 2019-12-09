@@ -86,7 +86,7 @@ SC_MODULE(DCacheLru) {
         State_CheckMPU,
         State_WaitGrant,
         State_WaitResp,
-        State_WriteLineReq,
+        State_WriteLine,
         State_CheckResp,
         State_SetupReadAdr,
         State_Flush
@@ -137,6 +137,17 @@ SC_MODULE(DCacheLru) {
         bool writable;
     };
 
+    struct DisplaceLineType {
+        sc_uint<CFG_DTAG_WIDTH> rtag;
+        sc_biguint<4*BUS_DATA_WIDTH> rdata;
+        bool valid;
+        bool load_fault;
+        bool executable;
+        bool readable;
+        bool writable;
+        bool durty;
+    };
+
     struct LruInType {
         sc_signal<bool> init;
         sc_signal<sc_uint<CFG_DINDEX_WIDTH>> radr;
@@ -169,7 +180,7 @@ SC_MODULE(DCacheLru) {
         sc_signal<bool> writable;
         sc_signal<bool> readable;
         sc_signal<bool> load_fault;
-        sc_signal<bool> write;
+        sc_signal<bool> write_first;
         sc_signal<bool> req_flush;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_flush_addr;
         sc_signal<sc_uint<CFG_IINDEX_WIDTH+1>> req_flush_cnt;
@@ -193,7 +204,7 @@ SC_MODULE(DCacheLru) {
         iv.writable = 0;
         iv.readable = 0;
         iv.load_fault = 0;
-        iv.write = 0;
+        iv.write_first = 0;
         iv.req_flush = 0;           // init flush request
         iv.req_flush_addr = 0;   // [0]=1 flush all
         iv.req_flush_cnt = 0;
@@ -209,6 +220,7 @@ SC_MODULE(DCacheLru) {
     TagMemInType way_i;
     TagMemOutType way_o[CFG_DCACHE_WAYS];
     WayMuxType waysel;
+    DisplaceLineType waydisplace;
     sc_signal<bool> wb_ena[CFG_DCACHE_WAYS];
 
     LruInType lrui;
