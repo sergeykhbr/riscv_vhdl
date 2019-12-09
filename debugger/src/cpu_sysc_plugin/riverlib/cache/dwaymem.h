@@ -38,8 +38,8 @@ SC_MODULE(DWayMem) {
     sc_in<bool> i_executable;
     sc_in<bool> i_readable;
     sc_in<bool> i_writable;
-    sc_out<sc_uint<CFG_ITAG_WIDTH>> o_rtag;
-    sc_out<sc_uint<32>> o_rdata;
+    sc_out<sc_uint<CFG_DTAG_WIDTH>> o_rtag;
+    sc_out<sc_biguint<4*BUS_DATA_WIDTH>> o_rdata;
     sc_out<bool> o_valid;
     sc_out<bool> o_load_fault;
     sc_out<bool> o_executable;
@@ -59,7 +59,7 @@ SC_MODULE(DWayMem) {
  private:
 
     struct RegistersType {
-        sc_signal<sc_uint<CFG_IOFFSET_WIDTH-1>> roffset;   // 2-bytes alignment
+        sc_signal<sc_uint<CFG_DOFFSET_WIDTH-1>> roffset;   // 2-bytes alignment
     } v, r;
 
     void R_RESET(RegistersType &iv) {
@@ -68,12 +68,12 @@ SC_MODULE(DWayMem) {
 
     RamTagi *tag1;
 
-    sc_signal<sc_uint<CFG_IINDEX_WIDTH>> wb_radr;
-    sc_signal<sc_uint<CFG_IINDEX_WIDTH>> wb_wadr;
+    sc_signal<sc_uint<CFG_DINDEX_WIDTH>> wb_radr;
+    sc_signal<sc_uint<CFG_DINDEX_WIDTH>> wb_wadr;
 
-    sc_signal<sc_biguint<LINE_MEM_WIDTH>> wb_tag_rdata;
+    sc_signal<sc_biguint<DLINE_MEM_WIDTH>> wb_tag_rdata;
     sc_signal<bool> w_tag_wena;
-    sc_signal<sc_biguint<LINE_MEM_WIDTH>> wb_tag_wdata;
+    sc_signal<sc_biguint<DLINE_MEM_WIDTH>> wb_tag_wdata;
 
     bool async_reset_;
     int wayidx_;

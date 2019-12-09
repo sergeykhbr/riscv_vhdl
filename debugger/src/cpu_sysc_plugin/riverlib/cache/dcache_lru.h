@@ -35,7 +35,7 @@ SC_MODULE(DCacheLru) {
     sc_out<bool> o_req_ctrl_ready;
     sc_out<bool> o_resp_ctrl_valid;
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_resp_ctrl_addr;
-    sc_out<sc_uint<32>> o_resp_ctrl_data;
+    sc_out<sc_uint<RISCV_ARCH>> o_resp_ctrl_data;
     sc_out<bool> o_resp_ctrl_load_fault;
     sc_out<bool> o_resp_ctrl_executable;
     sc_out<bool> o_resp_ctrl_writable;
@@ -80,19 +80,13 @@ SC_MODULE(DCacheLru) {
 
     static const uint8_t MISS = static_cast<uint8_t>(CFG_ICACHE_WAYS);
 
-    enum EWays {
-        WAY_EVEN,
-        WAY_ODD,
-        WAY_SubNum
-    };
-
     enum EState {
         State_Idle,
         State_CheckHit,
         State_CheckMPU,
         State_WaitGrant,
         State_WaitResp,
-        State_WriteLine,
+        State_WriteLineReq,
         State_CheckResp,
         State_SetupReadAdr,
         State_Flush
@@ -124,8 +118,8 @@ SC_MODULE(DCacheLru) {
     };
 
     struct TagMemOutType {
-        sc_signal<sc_uint<CFG_ITAG_WIDTH>> rtag;
-        sc_signal<sc_uint<32>> rdata;
+        sc_signal<sc_uint<CFG_DTAG_WIDTH>> rtag;
+        sc_signal<sc_biguint<4*BUS_DATA_WIDTH>> rdata;
         sc_signal<bool> valid;
         sc_signal<bool> load_fault;
         sc_signal<bool> executable;
@@ -135,7 +129,7 @@ SC_MODULE(DCacheLru) {
 
     struct WayMuxType {
         sc_uint<3> hit;
-        sc_uint<32> rdata;
+        sc_biguint<4*BUS_DATA_WIDTH> rdata;
         bool valid;
         bool load_fault;
         bool executable;
@@ -145,8 +139,8 @@ SC_MODULE(DCacheLru) {
 
     struct LruInType {
         sc_signal<bool> init;
-        sc_signal<sc_uint<CFG_IINDEX_WIDTH>> radr;
-        sc_signal<sc_uint<CFG_IINDEX_WIDTH>> wadr;
+        sc_signal<sc_uint<CFG_DINDEX_WIDTH>> radr;
+        sc_signal<sc_uint<CFG_DINDEX_WIDTH>> wadr;
         sc_signal<bool> we;
         sc_signal<sc_uint<2>> lru;
     };
@@ -154,8 +148,8 @@ SC_MODULE(DCacheLru) {
     // to comply with vhdl (signals cannot be ceated in process)
     struct LruInTypeVariable {
         bool init;
-        sc_uint<CFG_IINDEX_WIDTH> radr;
-        sc_uint<CFG_IINDEX_WIDTH> wadr;
+        sc_uint<CFG_DINDEX_WIDTH> radr;
+        sc_uint<CFG_DINDEX_WIDTH> wadr;
         bool we;
         sc_uint<2> lru;
     };
@@ -163,69 +157,62 @@ SC_MODULE(DCacheLru) {
     struct RegistersType {
         sc_signal<bool> requested;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_addr;
-        sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_addr_overlay;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> mpu_addr;
-        sc_signal<bool> use_overlay;
         sc_signal<sc_uint<4>> state;
         sc_signal<bool> req_mem_valid;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> mem_addr;
         sc_signal<sc_uint<2>> burst_cnt;
-        sc_signal<sc_uint<4>> burst_wstrb;
-        sc_signal<sc_uint<2>> lru_even_wr;
-        sc_signal<sc_uint<2>> lru_odd_wr;
+        sc_signal<sc_uint<4>> burst_rstrb;
+        sc_signal<sc_uint<2>> lru_wr;
         sc_signal<bool> cached;
         sc_signal<bool> executable;
         sc_signal<bool> writable;
         sc_signal<bool> readable;
         sc_signal<bool> load_fault;
+        sc_signal<bool> write;
         sc_signal<bool> req_flush;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_flush_addr;
         sc_signal<sc_uint<CFG_IINDEX_WIDTH+1>> req_flush_cnt;
         sc_signal<sc_uint<CFG_IINDEX_WIDTH+1>> flush_cnt;
         sc_signal<sc_biguint<4*BUS_DATA_WIDTH>> cache_line_i;
+        sc_signal<sc_biguint<4*BUS_DATA_WIDTH>> cache_line_o;
     } v, r;
 
     void R_RESET(RegistersType &iv) {
         iv.requested = 0;
         iv.req_addr = 0;
-        iv.req_addr_overlay = 0;
         iv.mpu_addr = 0;
-        iv.use_overlay = 0;
         iv.state = State_Flush;
         iv.req_mem_valid = 0;
         iv.mem_addr = FLUSH_ALL_ADDR;
         iv.burst_cnt = 0;
-        iv.burst_wstrb = ~0ul;
-        iv.lru_even_wr = 0;
-        iv.lru_odd_wr = 0;
+        iv.burst_rstrb = ~0ul;
+        iv.lru_wr = 0;
         iv.cached = 0;
         iv.executable = 0;
         iv.writable = 0;
         iv.readable = 0;
         iv.load_fault = 0;
+        iv.write = 0;
         iv.req_flush = 0;           // init flush request
         iv.req_flush_addr = 0;   // [0]=1 flush all
         iv.req_flush_cnt = 0;
         iv.flush_cnt = ~0ul;
         iv.cache_line_i = 0;
+        iv.cache_line_o = 0;
     }
 
-    DWayMem *wayevenx[CFG_ICACHE_WAYS];
-    DWayMem *wayoddx[CFG_ICACHE_WAYS];
+    DWayMem *wayx[CFG_DCACHE_WAYS];
 
-    ILru *lrueven;
-    ILru *lruodd;
+    ILru *lru;
 
-    TagMemInType swapin[WAY_SubNum];
-    TagMemOutType wayeven_o[CFG_ICACHE_WAYS];
-    TagMemOutType wayodd_o[CFG_ICACHE_WAYS];
-    WayMuxType waysel[WAY_SubNum];
-    sc_signal<bool> wb_ena_even[CFG_ICACHE_WAYS];
-    sc_signal<bool> wb_ena_odd[CFG_ICACHE_WAYS];
+    TagMemInType way_i;
+    TagMemOutType way_o[CFG_DCACHE_WAYS];
+    WayMuxType waysel;
+    sc_signal<bool> wb_ena[CFG_DCACHE_WAYS];
 
-    LruInType lrui[WAY_SubNum];
-    sc_signal<sc_uint<2>> wb_lru_even;
-    sc_signal<sc_uint<2>> wb_lru_odd;
+    LruInType lrui;
+    sc_signal<sc_uint<2>> wb_lru;
 
     bool async_reset_;
     int index_width_;
@@ -257,7 +244,7 @@ private:
     sc_signal<bool> w_req_ctrl_ready;
     sc_signal<bool> w_resp_ctrl_valid;
     sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_resp_ctrl_addr;
-    sc_signal<sc_uint<32>> wb_resp_ctrl_data;
+    sc_signal<sc_uint<RISCV_ARCH>> wb_resp_ctrl_data;
     sc_signal<bool> w_resp_ctrl_load_fault;
     sc_signal<bool> w_resp_ctrl_executable;
     sc_signal<bool> w_resp_ctrl_writable;
@@ -298,7 +285,7 @@ private:
     struct BusRegistersType {
         sc_signal<sc_uint<2>> state;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> burst_addr;
-        sc_signal<sc_uint<2>> burst_cnt;
+        sc_signal<sc_uint<8>> burst_cnt;
     } vbus, rbus;
 
     sc_trace_file *tb_vcd;

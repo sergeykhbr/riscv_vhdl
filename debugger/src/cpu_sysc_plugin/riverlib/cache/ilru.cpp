@@ -48,6 +48,9 @@ void ILru::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_we, i_we.name());
         sc_trace(o_vcd, i_lru, i_lru.name());
         sc_trace(o_vcd, o_lru, o_lru.name());
+
+        std::string pn(name());
+        sc_trace(o_vcd, wb_tbl_wdata, pn + ".wb_tbl_wdata");
     }
 }
 

@@ -71,9 +71,9 @@ SC_MODULE(IWayMem) {
     sc_signal<sc_uint<CFG_IINDEX_WIDTH>> wb_radr;
     sc_signal<sc_uint<CFG_IINDEX_WIDTH>> wb_wadr;
 
-    sc_signal<sc_biguint<LINE_MEM_WIDTH>> wb_tag_rdata;
+    sc_signal<sc_biguint<ILINE_MEM_WIDTH>> wb_tag_rdata;
     sc_signal<bool> w_tag_wena;
-    sc_signal<sc_biguint<LINE_MEM_WIDTH>> wb_tag_wdata;
+    sc_signal<sc_biguint<ILINE_MEM_WIDTH>> wb_tag_wdata;
 
     bool async_reset_;
     int wayidx_;

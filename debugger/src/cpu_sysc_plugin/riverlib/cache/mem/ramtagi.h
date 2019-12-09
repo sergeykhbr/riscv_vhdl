@@ -26,9 +26,9 @@ namespace debugger {
 SC_MODULE(RamTagi) {
     sc_in<bool> i_clk;
     sc_in<sc_uint<CFG_IINDEX_WIDTH>> i_adr;
-    sc_out<sc_biguint<LINE_MEM_WIDTH>> o_rdata;
+    sc_out<sc_biguint<ILINE_MEM_WIDTH>> o_rdata;
     sc_in<bool> i_wena;
-    sc_in<sc_biguint<LINE_MEM_WIDTH>> i_wdata;
+    sc_in<sc_biguint<ILINE_MEM_WIDTH>> i_wdata;
 
     void comb();
     void registers();
@@ -41,7 +41,7 @@ SC_MODULE(RamTagi) {
     struct RegistersType {
         sc_signal<bool> update;  // To generate SystemC delta event only.
         sc_signal<sc_uint<CFG_IINDEX_WIDTH>> adr;
-        sc_biguint<LINE_MEM_WIDTH> mem[1 << CFG_IINDEX_WIDTH];
+        sc_biguint<ILINE_MEM_WIDTH> mem[1 << CFG_IINDEX_WIDTH];
     } v, r;
 };
 

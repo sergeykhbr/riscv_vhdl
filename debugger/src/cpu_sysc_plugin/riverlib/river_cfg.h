@@ -60,7 +60,31 @@ static const int ITAG_END   = BUS_ADDR_WIDTH - 1;
     [3] = writable
     [4] = load_fault
  */
-static const int LINE_MEM_WIDTH = 4*BUS_DATA_WIDTH + ITAG_SIZE + 5;
+static const int ILINE_MEM_WIDTH = 4*BUS_DATA_WIDTH + ITAG_SIZE + 5;
+
+/** DCacheLru config */
+static const int CFG_DOFFSET_WIDTH   = 6;    // [5:0]  log2(DCACHE_LINE_BYTES)
+// [13:6]  8: index: 8 KB per odd/even ways (64 KB icache) 75565 drhy
+// [12:6]  7: index: 4 KB per odd/even ways (32 KB icache) 75565
+// [11:6]  6: index: 2 KB per odd/even ways (16 KB icache) 75565,87462
+static const int CFG_DINDEX_WIDTH    = CFG_DOFFSET_WIDTH;    // log2(LINES_PER_WAY) odd or even
+static const int CFG_DLINES_PER_WAY  = 1 << CFG_DINDEX_WIDTH;
+// [31:14] tag when 64 KB
+// [31:13] tag when 32 KB
+// [31:12] tag when 16 KB
+static const int CFG_DTAG_WIDTH      = BUS_ADDR_WIDTH
+    - (CFG_DOFFSET_WIDTH + CFG_DINDEX_WIDTH);
+
+static const int CFG_DCACHE_WAYS        = 4;  // 4 odds, 4 even
+
+static const int DINDEX_START = CFG_DOFFSET_WIDTH;
+static const int DINDEX_END = DINDEX_START + CFG_DINDEX_WIDTH - 1;
+
+static const int DTAG_START = DINDEX_START + CFG_DINDEX_WIDTH;
+static const int DTAG_SIZE  = BUS_ADDR_WIDTH - DTAG_START;
+static const int DTAG_END   = BUS_ADDR_WIDTH - 1;
+static const int DLINE_MEM_WIDTH = 4*BUS_DATA_WIDTH + DTAG_SIZE + 5;
+
 
 /** MPU config */
 static const int CFG_MPU_TBL_WIDTH   = 2;    // [1:0]  log2(MPU_TBL_SIZE)

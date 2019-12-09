@@ -56,71 +56,39 @@ DCacheLru::DCacheLru(sc_module_name name_, bool async_reset,
     async_reset_ = async_reset;
     index_width_ = index_width;
 
-    char tstr1[32] = "wayeven0";
-    char tstr2[32] = "wayodd0";
-    for (int i = 0; i < CFG_ICACHE_WAYS; i++) {
-        tstr1[7] = '0' + static_cast<char>(i);
-        wayevenx[i] = new DWayMem(tstr1, async_reset, 2*i);
-        wayevenx[i]->i_clk(i_clk);
-        wayevenx[i]->i_nrst(i_nrst);
-        wayevenx[i]->i_radr(swapin[WAY_EVEN].radr);
-        wayevenx[i]->i_wadr(swapin[WAY_EVEN].wadr);
-        wayevenx[i]->i_wena(wb_ena_even[i]);
-        wayevenx[i]->i_wstrb(swapin[WAY_EVEN].wstrb);
-        wayevenx[i]->i_wvalid(swapin[WAY_EVEN].wvalid);
-        wayevenx[i]->i_wdata(swapin[WAY_EVEN].wdata);
-        wayevenx[i]->i_load_fault(swapin[WAY_EVEN].load_fault);
-        wayevenx[i]->i_executable(swapin[WAY_EVEN].executable);
-        wayevenx[i]->i_readable(swapin[WAY_EVEN].readable);
-        wayevenx[i]->i_writable(swapin[WAY_EVEN].writable);
-        wayevenx[i]->o_rtag(wayeven_o[i].rtag);
-        wayevenx[i]->o_rdata(wayeven_o[i].rdata);
-        wayevenx[i]->o_valid(wayeven_o[i].valid);
-        wayevenx[i]->o_load_fault(wayeven_o[i].load_fault);
-        wayevenx[i]->o_executable(wayeven_o[i].executable);
-        wayevenx[i]->o_readable(wayeven_o[i].readable);
-        wayevenx[i]->o_writable(wayeven_o[i].writable);
-
-        tstr2[6] = '0' + static_cast<char>(i);
-        wayoddx[i] = new DWayMem(tstr2, async_reset, 2*i + 1);
-        wayoddx[i]->i_clk(i_clk);
-        wayoddx[i]->i_nrst(i_nrst);
-        wayoddx[i]->i_radr(swapin[WAY_ODD].radr);
-        wayoddx[i]->i_wadr(swapin[WAY_ODD].wadr);
-        wayoddx[i]->i_wena(wb_ena_odd[i]);
-        wayoddx[i]->i_wstrb(swapin[WAY_ODD].wstrb);
-        wayoddx[i]->i_wvalid(swapin[WAY_ODD].wvalid);
-        wayoddx[i]->i_wdata(swapin[WAY_ODD].wdata);
-        wayoddx[i]->i_load_fault(swapin[WAY_ODD].load_fault);
-        wayoddx[i]->i_executable(swapin[WAY_ODD].executable);
-        wayoddx[i]->i_readable(swapin[WAY_ODD].readable);
-        wayoddx[i]->i_writable(swapin[WAY_ODD].writable);
-        wayoddx[i]->o_rtag(wayodd_o[i].rtag);
-        wayoddx[i]->o_rdata(wayodd_o[i].rdata);
-        wayoddx[i]->o_valid(wayodd_o[i].valid);
-        wayoddx[i]->o_load_fault(wayodd_o[i].load_fault);
-        wayoddx[i]->o_executable(wayodd_o[i].executable);
-        wayoddx[i]->o_readable(wayodd_o[i].readable);
-        wayoddx[i]->o_writable(wayodd_o[i].writable);
+    char tstr1[32] = "way0";
+    for (int i = 0; i < CFG_DCACHE_WAYS; i++) {
+        tstr1[3] = '0' + static_cast<char>(i);
+        wayx[i] = new DWayMem(tstr1, async_reset, i);
+        wayx[i]->i_clk(i_clk);
+        wayx[i]->i_nrst(i_nrst);
+        wayx[i]->i_radr(way_i.radr);
+        wayx[i]->i_wadr(way_i.wadr);
+        wayx[i]->i_wena(wb_ena[i]);
+        wayx[i]->i_wstrb(way_i.wstrb);
+        wayx[i]->i_wvalid(way_i.wvalid);
+        wayx[i]->i_wdata(way_i.wdata);
+        wayx[i]->i_load_fault(way_i.load_fault);
+        wayx[i]->i_executable(way_i.executable);
+        wayx[i]->i_readable(way_i.readable);
+        wayx[i]->i_writable(way_i.writable);
+        wayx[i]->o_rtag(way_o[i].rtag);
+        wayx[i]->o_rdata(way_o[i].rdata);
+        wayx[i]->o_valid(way_o[i].valid);
+        wayx[i]->o_load_fault(way_o[i].load_fault);
+        wayx[i]->o_executable(way_o[i].executable);
+        wayx[i]->o_readable(way_o[i].readable);
+        wayx[i]->o_writable(way_o[i].writable);
     }
 
-    lrueven = new ILru("lrueven0");
-    lrueven->i_clk(i_clk);
-    lrueven->i_init(lrui[WAY_EVEN].init);
-    lrueven->i_radr(lrui[WAY_EVEN].radr);
-    lrueven->i_wadr(lrui[WAY_EVEN].wadr);
-    lrueven->i_we(lrui[WAY_EVEN].we);
-    lrueven->i_lru(lrui[WAY_EVEN].lru);
-    lrueven->o_lru(wb_lru_even);
-
-    lruodd = new ILru("lruodd0");
-    lruodd->i_clk(i_clk);
-    lruodd->i_init(lrui[WAY_ODD].init);
-    lruodd->i_radr(lrui[WAY_ODD].radr);
-    lruodd->i_wadr(lrui[WAY_ODD].wadr);
-    lruodd->i_we(lrui[WAY_ODD].we);
-    lruodd->i_lru(lrui[WAY_ODD].lru);
-    lruodd->o_lru(wb_lru_odd);
+    lru = new ILru("lru0");
+    lru->i_clk(i_clk);
+    lru->i_init(lrui.init);
+    lru->i_radr(lrui.radr);
+    lru->i_wadr(lrui.wadr);
+    lru->i_we(lrui.we);
+    lru->i_lru(lrui.lru);
+    lru->o_lru(wb_lru);
 
     SC_METHOD(comb);
     sensitive << i_nrst;
@@ -135,41 +103,33 @@ DCacheLru::DCacheLru(sc_module_name name_, bool async_reset,
     sensitive << i_req_mem_ready;
     sensitive << i_mpu_cachable;
     sensitive << i_mpu_executable;
-    for (int i = 0; i < CFG_ICACHE_WAYS; i++) {
-        sensitive << wayeven_o[i].rtag;
-        sensitive << wayeven_o[i].rdata;
-        sensitive << wayeven_o[i].valid;
-        sensitive << wayeven_o[i].load_fault;
-        sensitive << wayeven_o[i].executable;
-        sensitive << wayeven_o[i].readable;
-        sensitive << wayeven_o[i].writable;
-        sensitive << wayodd_o[i].rtag;
-        sensitive << wayodd_o[i].rdata;
-        sensitive << wayodd_o[i].valid;
-        sensitive << wayodd_o[i].load_fault;
-        sensitive << wayodd_o[i].executable;
-        sensitive << wayodd_o[i].readable;
-        sensitive << wayodd_o[i].writable;
+    for (int i = 0; i < CFG_DCACHE_WAYS; i++) {
+        sensitive << way_o[i].rtag;
+        sensitive << way_o[i].rdata;
+        sensitive << way_o[i].valid;
+        sensitive << way_o[i].load_fault;
+        sensitive << way_o[i].executable;
+        sensitive << way_o[i].readable;
+        sensitive << way_o[i].writable;
     }
-    sensitive << wb_lru_even;
-    sensitive << wb_lru_odd;
+    sensitive << wb_lru;
     sensitive << r.requested;
     sensitive << r.req_addr;
-    sensitive << r.req_addr_overlay;
-    sensitive << r.use_overlay;
     sensitive << r.state;
     sensitive << r.req_mem_valid;
     sensitive << r.mem_addr;
     sensitive << r.burst_cnt;
-    sensitive << r.burst_wstrb;
-    sensitive << r.lru_even_wr;
-    sensitive << r.lru_odd_wr;
+    sensitive << r.burst_rstrb;
+    sensitive << r.lru_wr;
     sensitive << r.cached;
     sensitive << r.load_fault;
+    sensitive << r.write;
     sensitive << r.req_flush;
     sensitive << r.req_flush_addr;
     sensitive << r.req_flush_cnt;
     sensitive << r.flush_cnt;
+    sensitive << r.cache_line_i;
+    sensitive << r.cache_line_o;
 
     SC_METHOD(registers);
     sensitive << i_nrst;
@@ -177,12 +137,10 @@ DCacheLru::DCacheLru(sc_module_name name_, bool async_reset,
 };
 
 DCacheLru::~DCacheLru() {
-    for (int i = 0; i < CFG_ICACHE_WAYS; i++) {
-        delete wayevenx[i];
-        delete wayoddx[i];
+    for (int i = 0; i < CFG_DCACHE_WAYS; i++) {
+        delete wayx[i];
     }
-    delete lrueven;
-    delete lruodd;
+    delete lru;
 }
 
 void DCacheLru::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
@@ -218,66 +176,41 @@ void DCacheLru::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         std::string pn(name());
         sc_trace(o_vcd, r.requested, pn + ".r_requested");
         sc_trace(o_vcd, r.state, pn + ".r_state");
-        sc_trace(o_vcd, r.lru_even_wr, pn + ".r_lru_even_wr");
-        sc_trace(o_vcd, r.lru_odd_wr, pn + ".r_lru_odd_wr");
+        sc_trace(o_vcd, r.lru_wr, pn + ".r_lru_wr");
         sc_trace(o_vcd, r.req_addr, pn + ".r_req_addr");
-        sc_trace(o_vcd, r.req_addr_overlay, pn + ".r_req_addr_overlay");
-        sc_trace(o_vcd, wb_ena_even[0], pn + ".wb_ena_even0");
-        sc_trace(o_vcd, wb_ena_even[1], pn + ".wb_ena_even1");
-        sc_trace(o_vcd, wb_ena_even[2], pn + ".wb_ena_even2");
-        sc_trace(o_vcd, wb_ena_even[3], pn + ".wb_ena_even3");
-        sc_trace(o_vcd, wb_ena_odd[0], pn + ".wb_ena_odd0");
-        sc_trace(o_vcd, wb_ena_odd[1], pn + ".wb_ena_odd1");
-        sc_trace(o_vcd, wb_ena_odd[2], pn + ".wb_ena_odd2");
-        sc_trace(o_vcd, wb_ena_odd[3], pn + ".wb_ena_odd3");
-        sc_trace(o_vcd, swapin[0].radr, pn + ".swapin(0).radr");
-        sc_trace(o_vcd, swapin[0].wadr, pn + ".swapin(0).wadr");
-        sc_trace(o_vcd, swapin[0].wstrb, pn + ".swapin(0).wstrb");
-        sc_trace(o_vcd, swapin[0].wvalid, pn + ".swapin(0).wvalid");
-        sc_trace(o_vcd, swapin[0].wdata, pn + ".swapin(0).wdata");
-        sc_trace(o_vcd, swapin[0].load_fault, pn + ".swapin(0).load_fault");
-        sc_trace(o_vcd, swapin[1].radr, pn + ".swapin(1).radr");
-        sc_trace(o_vcd, swapin[1].wadr, pn + ".swapin(1).wadr");
-        sc_trace(o_vcd, swapin[1].wstrb, pn + ".swapin(1).wstrb");
-        sc_trace(o_vcd, swapin[1].wvalid, pn + ".swapin(1).wvalid");
-        sc_trace(o_vcd, swapin[1].wdata, pn + ".swapin(1).wdata");
-        sc_trace(o_vcd, swapin[1].load_fault, pn + ".swapin(1).load_fault");
-        sc_trace(o_vcd, waysel[0].hit, pn + ".waysel(0).hit");
-        sc_trace(o_vcd, waysel[0].rdata, pn + ".waysel(0).rdata");
-        sc_trace(o_vcd, waysel[0].valid, pn + ".waysel(0).valid");
-        sc_trace(o_vcd, waysel[0].load_fault, pn + ".waysel(0).load_fault");
-        sc_trace(o_vcd, waysel[0].executable, pn + ".waysel(0).executable");
-        sc_trace(o_vcd, waysel[1].hit, pn + ".waysel(1).hit");
-        sc_trace(o_vcd, waysel[1].rdata, pn + ".waysel(1).rdata");
-        sc_trace(o_vcd, waysel[1].valid, pn + ".waysel(1).valid");
-        sc_trace(o_vcd, waysel[1].load_fault, pn + ".waysel(1).load_fault");
-        sc_trace(o_vcd, r.use_overlay, pn + ".r_use_overlay");
+        sc_trace(o_vcd, wb_ena[0], pn + ".wb_ena0");
+        sc_trace(o_vcd, wb_ena[1], pn + ".wb_ena1");
+        sc_trace(o_vcd, wb_ena[2], pn + ".wb_ena2");
+        sc_trace(o_vcd, wb_ena[3], pn + ".wb_ena3");
+        sc_trace(o_vcd, way_i.radr, pn + ".way_i.radr");
+        sc_trace(o_vcd, way_i.wadr, pn + ".way_i.wadr");
+        sc_trace(o_vcd, way_i.wstrb, pn + ".way_i.wstrb");
+        sc_trace(o_vcd, way_i.wvalid, pn + ".way_i.wvalid");
+        sc_trace(o_vcd, way_i.wdata, pn + ".way_i.wdata");
+        sc_trace(o_vcd, way_i.load_fault, pn + ".way_i.load_fault");
+        sc_trace(o_vcd, waysel.hit, pn + ".waysel.hit");
+        sc_trace(o_vcd, waysel.rdata, pn + ".waysel.rdata");
+        sc_trace(o_vcd, waysel.valid, pn + ".waysel.valid");
+        sc_trace(o_vcd, waysel.load_fault, pn + ".waysel.load_fault");
+        sc_trace(o_vcd, waysel.executable, pn + ".waysel.executable");
         sc_trace(o_vcd, r.cached, pn + ".r_cached");
         sc_trace(o_vcd, r.cache_line_i, pn + ".r_cache_line_i");
+        sc_trace(o_vcd, r.cache_line_o, pn + ".r_cache_line_o");
         sc_trace(o_vcd, r.executable, pn + ".r_executable");
+        sc_trace(o_vcd, r.write, pn + ".r_write");
     }
     for (int i = 0; i < CFG_ICACHE_WAYS; i++) {
-        wayevenx[i]->generateVCD(i_vcd, o_vcd);
-        wayoddx[i]->generateVCD(i_vcd, o_vcd);
+        wayx[i]->generateVCD(i_vcd, o_vcd);
     }
-    lrueven->generateVCD(i_vcd, o_vcd);
-    lruodd->generateVCD(i_vcd, o_vcd);
+    lru->generateVCD(i_vcd, o_vcd);
 }
 
 void DCacheLru::comb() {
-    bool w_raddr5;
-    bool w_raddr5_r;
-    bool w_use_overlay;
     sc_uint<BUS_ADDR_WIDTH> wb_req_adr;
-    sc_uint<BUS_ADDR_WIDTH> wb_radr_overlay;
-    sc_uint<CFG_ITAG_WIDTH> wb_rtag;
-    sc_uint<CFG_ITAG_WIDTH> wb_rtag_overlay;
-    sc_uint<CFG_ITAG_WIDTH> wb_rtag_even;
-    sc_uint<CFG_ITAG_WIDTH> wb_rtag_odd;
+    sc_uint<CFG_DTAG_WIDTH> wb_rtag;
+    
     sc_uint<3> wb_hit0;
-    sc_uint<3> wb_hit1;
     bool w_hit0_valid;
-    bool w_hit1_valid;
     sc_uint<BUS_ADDR_WIDTH> wb_mpu_addr;
     bool v_line_valid;
     bool w_last;
@@ -290,18 +223,17 @@ void DCacheLru::comb() {
     bool v_cached_readable;
     bool v_cached_writable;
     bool w_o_req_ctrl_ready;
-    sc_uint<4> wb_wstrb_next;
-    bool vb_ena_even[CFG_ICACHE_WAYS];
-    bool vb_ena_odd[CFG_ICACHE_WAYS];
-    LruInTypeVariable v_lrui[WAY_SubNum];
-    TagMemInTypeVariable v_swapin[WAY_SubNum];
+    sc_uint<4> wb_rstrb_next;
+    bool vb_ena[CFG_DCACHE_WAYS];
+    LruInTypeVariable v_lrui;
+    TagMemInTypeVariable v_way_i;
     sc_biguint<4*BUS_DATA_WIDTH> t_cache_line_i;
-    sc_uint<32> vb_cached_data;
+    sc_uint<RISCV_ARCH> vb_cached_data;
     bool v_cached_valid;
     bool v_uncached_valid;
-    sc_uint<32> vb_uncached_data;
+    sc_uint<RISCV_ARCH> vb_uncached_data;
     bool w_o_resp_valid;
-    sc_uint<32> wb_o_resp_data;
+    sc_uint<RISCV_ARCH> wb_o_resp_data;
     sc_uint<8> v_req_mem_len;
    
     v = r;
@@ -311,18 +243,6 @@ void DCacheLru::comb() {
     } else {
         wb_req_adr = r.req_addr.read();
     }
-
-    w_raddr5 = wb_req_adr[CFG_IOFFSET_WIDTH];
-    w_raddr5_r = r.req_addr.read()[CFG_IOFFSET_WIDTH];
-
-    w_use_overlay = 0;
-    if (wb_req_adr(CFG_IOFFSET_WIDTH-1, 1) == 0xF) {
-        w_use_overlay = 1;
-    }
-
-    wb_radr_overlay = wb_req_adr + (1 << CFG_IOFFSET_WIDTH);
-    wb_radr_overlay >>= CFG_IOFFSET_WIDTH;
-    wb_radr_overlay <<= CFG_IOFFSET_WIDTH;
 
     // flush request via debug interface
     if (i_flush_valid.read() == 1) {
@@ -340,169 +260,67 @@ void DCacheLru::comb() {
     }
 
     // Check read tag and select hit way
-    wb_rtag = r.req_addr.read()(ITAG_END, ITAG_START);
-    wb_rtag_overlay = r.req_addr_overlay.read()(ITAG_END, ITAG_START);
-    waysel[WAY_EVEN].hit = MISS;
-    waysel[WAY_EVEN].rdata = 0;
-    waysel[WAY_EVEN].valid = 0;
-    waysel[WAY_EVEN].load_fault = 0;
-    waysel[WAY_EVEN].executable = 0;
-    waysel[WAY_EVEN].readable = 0;
-    waysel[WAY_EVEN].writable = 0;
-    waysel[WAY_ODD].hit = MISS;
-    waysel[WAY_ODD].rdata = 0;
-    waysel[WAY_ODD].valid = 0;
-    waysel[WAY_ODD].load_fault = 0;
-    waysel[WAY_ODD].executable = 0;
-    waysel[WAY_ODD].readable = 0;
-    waysel[WAY_ODD].writable = 0;
-    if (r.use_overlay.read() == 0) {
-        wb_rtag_even = wb_rtag;
-        wb_rtag_odd = wb_rtag;
-    } else if (w_raddr5_r == 0) {
-        wb_rtag_even = wb_rtag;
-        wb_rtag_odd = wb_rtag_overlay;
-    } else {
-        wb_rtag_even = wb_rtag_overlay;
-        wb_rtag_odd = wb_rtag;
-    }
-    for (uint8_t n = 0; n < static_cast<uint8_t>(CFG_ICACHE_WAYS); n++) {
-        if (waysel[WAY_EVEN].hit == MISS && wayeven_o[n].rtag == wb_rtag_even) {
-            waysel[WAY_EVEN].hit = n;
-            waysel[WAY_EVEN].rdata = wayeven_o[n].rdata;
-            waysel[WAY_EVEN].valid = wayeven_o[n].valid;
-            waysel[WAY_EVEN].load_fault = wayeven_o[n].load_fault;
-            waysel[WAY_EVEN].executable = wayeven_o[n].executable;
-            waysel[WAY_EVEN].readable = wayeven_o[n].readable;
-            waysel[WAY_EVEN].writable = wayeven_o[n].writable;
-        }
-
-        if (waysel[WAY_ODD].hit == MISS && wayodd_o[n].rtag == wb_rtag_odd) {
-            waysel[WAY_ODD].hit = n;
-            waysel[WAY_ODD].rdata = wayodd_o[n].rdata;
-            waysel[WAY_ODD].valid = wayodd_o[n].valid;
-            waysel[WAY_ODD].load_fault = wayodd_o[n].load_fault;
-            waysel[WAY_ODD].executable = wayodd_o[n].executable;
-            waysel[WAY_ODD].writable = wayodd_o[n].writable;
-            waysel[WAY_ODD].readable= wayodd_o[n].readable;
+    wb_rtag = r.req_addr.read()(DTAG_END, DTAG_START);
+    waysel.hit = MISS;
+    waysel.rdata = 0;
+    waysel.valid = 0;
+    waysel.load_fault = 0;
+    waysel.executable = 0;
+    waysel.readable = 0;
+    waysel.writable = 0;
+    for (uint8_t n = 0; n < static_cast<uint8_t>(CFG_DCACHE_WAYS); n++) {
+        if (waysel.hit == MISS && way_o[n].rtag == wb_rtag) {
+            waysel.hit = n;
+            waysel.rdata = way_o[n].rdata;
+            waysel.valid = way_o[n].valid;
+            waysel.load_fault = way_o[n].load_fault;
+            waysel.executable = way_o[n].executable;
+            waysel.readable = way_o[n].readable;
+            waysel.writable = way_o[n].writable;
         }
     }
 
     // swap back rdata
     v_cached_load_fault = 0;
-    if (w_raddr5_r == 0) {
-        if (r.use_overlay.read() == 0) {
-            wb_hit0 = waysel[WAY_EVEN].hit;
-            wb_hit1 = waysel[WAY_EVEN].hit;
-            w_hit0_valid = waysel[WAY_EVEN].valid;
-            w_hit1_valid = waysel[WAY_EVEN].valid;
-            vb_cached_data = waysel[WAY_EVEN].rdata;
-            v_cached_load_fault = waysel[WAY_EVEN].load_fault;
-            v_cached_executable = waysel[WAY_EVEN].executable;
-            v_cached_writable = waysel[WAY_EVEN].writable;
-            v_cached_readable = waysel[WAY_EVEN].readable;
-        } else {
-            wb_hit0 = waysel[WAY_EVEN].hit;
-            wb_hit1 = waysel[WAY_ODD].hit;
-            w_hit0_valid = waysel[WAY_EVEN].valid;
-            w_hit1_valid = waysel[WAY_ODD].valid;
-            vb_cached_data(15, 0) = waysel[WAY_EVEN].rdata(15, 0);
-            vb_cached_data(31, 16) = waysel[WAY_ODD].rdata(15, 0);
-            v_cached_load_fault =
-                waysel[WAY_EVEN].load_fault | waysel[WAY_ODD].load_fault;
-            v_cached_executable =
-                waysel[WAY_EVEN].executable & waysel[WAY_ODD].executable;
-            v_cached_writable =
-                waysel[WAY_EVEN].writable & waysel[WAY_ODD].writable;
-            v_cached_readable =
-                waysel[WAY_EVEN].readable & waysel[WAY_ODD].readable;
-        }
-    } else {
-        if (r.use_overlay.read() == 0) {
-            wb_hit0 = waysel[WAY_ODD].hit;
-            wb_hit1 = waysel[WAY_ODD].hit;
-            w_hit0_valid = waysel[WAY_ODD].valid;
-            w_hit1_valid = waysel[WAY_ODD].valid;
-            vb_cached_data = waysel[WAY_ODD].rdata;
-            v_cached_load_fault = waysel[WAY_ODD].load_fault;
-            v_cached_executable = waysel[WAY_ODD].executable;
-            v_cached_writable = waysel[WAY_ODD].writable;
-            v_cached_readable = waysel[WAY_ODD].readable;
-        } else {
-            wb_hit0 = waysel[WAY_ODD].hit;
-            wb_hit1 = waysel[WAY_EVEN].hit;
-            w_hit0_valid = waysel[WAY_ODD].valid;
-            w_hit1_valid = waysel[WAY_EVEN].valid;
-            vb_cached_data(15, 0) = waysel[WAY_ODD].rdata(15, 0);
-            vb_cached_data(31, 16) = waysel[WAY_EVEN].rdata(15, 0);
-            v_cached_load_fault =
-                waysel[WAY_ODD].load_fault | waysel[WAY_EVEN].load_fault;
-            v_cached_executable =
-                waysel[WAY_ODD].executable & waysel[WAY_EVEN].executable;
-            v_cached_writable =
-                waysel[WAY_ODD].writable & waysel[WAY_EVEN].writable;
-            v_cached_readable =
-                waysel[WAY_ODD].readable & waysel[WAY_EVEN].readable;
+    wb_hit0 = waysel.hit;
+    w_hit0_valid = waysel.valid;
+    vb_cached_data = waysel.rdata(RISCV_ARCH-1, 0);
+    for (unsigned i = 1; i < 4; i++) {
+        if (r.req_addr.read()(4, 3).to_uint() == i) {
+            vb_cached_data = waysel.rdata((i+1)*RISCV_ARCH-1, i*RISCV_ARCH);
         }
     }
+    v_cached_load_fault = waysel.load_fault;
+    v_cached_executable = waysel.executable;
+    v_cached_writable = waysel.writable;
+    v_cached_readable = waysel.readable;
 
-    v_lrui[WAY_EVEN].init = 0;
-    v_lrui[WAY_EVEN].radr = 0;
-    v_lrui[WAY_EVEN].wadr = 0;
-    v_lrui[WAY_EVEN].we = 0;
-    v_lrui[WAY_EVEN].lru = 0;
-    v_lrui[WAY_ODD].init = 0;
-    v_lrui[WAY_ODD].radr = 0;
-    v_lrui[WAY_ODD].wadr = 0;
-    v_lrui[WAY_ODD].we = 0;
-    v_lrui[WAY_ODD].lru = 0;
+    v_lrui.init = 0;
+    v_lrui.wadr = 0;
+    v_lrui.we = 0;
+    v_lrui.lru = 0;
     v_cached_valid = 0;
     if (r.state.read() == State_Flush) {
-        v_lrui[WAY_EVEN].init = !r.mem_addr.read()[CFG_IOFFSET_WIDTH];
-        v_lrui[WAY_EVEN].wadr = r.mem_addr.read()(IINDEX_END, IINDEX_START);
-        v_lrui[WAY_ODD].init = r.mem_addr.read()[CFG_IOFFSET_WIDTH];
-        v_lrui[WAY_ODD].wadr = r.mem_addr.read()(IINDEX_END, IINDEX_START);
+        v_lrui.init = 1;
+        v_lrui.wadr = r.req_addr.read()(DINDEX_END, DINDEX_START);
     } else if (r.state.read() == State_WaitGrant
             || r.state.read() == State_WaitResp || r.state.read() == State_CheckResp
-            || r.state.read() == State_WriteLine
+            || r.state.read() == State_WriteLineReq
             || r.state.read() == State_SetupReadAdr) {
             // Do nothing while memory writing
-    } else if (w_hit0_valid && w_hit1_valid
-        && wb_hit0 != MISS && wb_hit1 != MISS && r.requested.read() == 1) {
+    } else if (w_hit0_valid && wb_hit0 != MISS && r.requested.read() == 1) {
         v_cached_valid = 1;
 
         // Update LRU table
-        if (w_raddr5_r == 0) {
-            v_lrui[WAY_EVEN].we = 1;
-            v_lrui[WAY_EVEN].lru = wb_hit0(1, 0);
-            v_lrui[WAY_EVEN].wadr =
-                r.req_addr.read()(IINDEX_END, IINDEX_START);
-            if (r.use_overlay.read() == 1) {
-                v_lrui[WAY_ODD].we = 1;
-                v_lrui[WAY_ODD].lru = wb_hit1(1, 0);
-                v_lrui[WAY_ODD].wadr =
-                    r.req_addr_overlay.read()(IINDEX_END, IINDEX_START);
-            }
-        } else {
-            v_lrui[WAY_ODD].we = 1;
-            v_lrui[WAY_ODD].lru = wb_hit0(1, 0);
-            v_lrui[WAY_ODD].wadr =
-                r.req_addr.read()(IINDEX_END, IINDEX_START);
-            if (r.use_overlay.read() == 1) {
-                v_lrui[WAY_EVEN].we = 1;
-                v_lrui[WAY_EVEN].lru = wb_hit1(1, 0);
-                v_lrui[WAY_EVEN].wadr =
-                    r.req_addr_overlay.read()(IINDEX_END, IINDEX_START);
-            }
-        }
+        v_lrui.we = 1;
+        v_lrui.lru = wb_hit0(1, 0);
+        v_lrui.wadr = r.req_addr.read()(DINDEX_END, DINDEX_START);
     }
 
     w_o_req_ctrl_ready = !r.req_flush.read()
                        && (!r.requested.read() || v_cached_valid);
     if (i_req_ctrl_valid.read() && w_o_req_ctrl_ready) {
         v.req_addr = i_req_ctrl_addr.read();
-        v.req_addr_overlay = wb_radr_overlay;
-        v.use_overlay = w_use_overlay;
         v.requested = 1;
     } else if (v_cached_valid && i_resp_ctrl_ready.read()) {
         v.requested = 0;
@@ -511,16 +329,15 @@ void DCacheLru::comb() {
     // System Bus access state machine
     w_last = 0;
     v_line_valid = 0;
-    for (int i = 0; i < CFG_ICACHE_WAYS; i++) {
-        vb_ena_even[i] = 0;
-        vb_ena_odd[i] = 0;
+    for (int i = 0; i < CFG_DCACHE_WAYS; i++) {
+        vb_ena[i] = 0;
     }
     t_cache_line_i = r.cache_line_i.read();
     v_uncached_valid = 0;
     vb_uncached_data = 0;
     v_req_mem_len = 3;
 
-    wb_wstrb_next = r.burst_wstrb.read() << 1;
+    wb_rstrb_next = r.burst_rstrb.read() << 1;
     switch (r.state.read()) {
     case State_Idle:
         if (r.req_flush.read() == 1) {
@@ -528,10 +345,10 @@ void DCacheLru::comb() {
             t_cache_line_i = 0;
             v.cache_line_i = ~t_cache_line_i;
             if (r.req_flush_addr.read()[0] == 1) {
-                v.mem_addr = FLUSH_ALL_ADDR;
+                v.req_addr = FLUSH_ALL_ADDR;
                 v.flush_cnt = ~0u;
             } else {
-                v.mem_addr = r.req_flush_addr.read();
+                v.req_addr = r.req_flush_addr.read();
                 v.flush_cnt = r.req_flush_cnt.read();
             }
         } else if ((i_req_ctrl_valid.read() == 1 && w_o_req_ctrl_ready == 1)
@@ -553,38 +370,31 @@ void DCacheLru::comb() {
 
         } else {
             // Miss
-            if (!w_hit0_valid || wb_hit0 == MISS) {
-                wb_mpu_addr = r.req_addr.read();
-            } else {
-                wb_mpu_addr = r.req_addr_overlay.read();
-            }
-            v.state = State_CheckMPU;
+            wb_mpu_addr = r.req_addr.read();
             v.mpu_addr = wb_mpu_addr;
-            v.lru_even_wr = wb_lru_even;
-            v.lru_odd_wr = wb_lru_odd;
+            v.lru_wr = wb_lru;
+            v.cache_line_o = waysel.rdata;
+            v.write = waysel.valid;  // TODO: durty
+            v.state = State_CheckMPU;
         }
         break;
     case State_CheckMPU:
         v.req_mem_valid = 1;
-        if (i_req_mem_ready.read() == 1) {
-            v.state = State_WaitResp;
-        } else {
-            v.state = State_WaitGrant;
-        }
+        v.state = State_WaitGrant;
 
         if (i_mpu_cachable.read() == 1) {
-            v.mem_addr = r.mpu_addr.read()(BUS_ADDR_WIDTH-1, CFG_IOFFSET_WIDTH)
-                        << CFG_IOFFSET_WIDTH;
+            v.mem_addr = r.mpu_addr.read()(BUS_ADDR_WIDTH-1, CFG_DOFFSET_WIDTH)
+                        << CFG_DOFFSET_WIDTH;
             v.burst_cnt = 3;
             v.cached = 1;
         } else {
             v.mem_addr = r.mpu_addr.read()(BUS_ADDR_WIDTH-1, 3) << 3;
-            v.burst_cnt = 1;
+            v.burst_cnt = 0;
             v.cached = 0;
-            v_req_mem_len = 1;  // default cached = 3
+            v_req_mem_len = 0;  // default cached = 3
         }
-        wb_wstrb_next = 0x1;
-        v.burst_wstrb = wb_wstrb_next;
+        wb_rstrb_next = 0x1;
+        v.burst_rstrb = wb_rstrb_next;
         v.cache_line_i = 0;
         v.load_fault = 0;
         v.executable = i_mpu_executable.read();
@@ -597,7 +407,7 @@ void DCacheLru::comb() {
             v.req_mem_valid = 0;
         }
         if (r.cached.read() == 0) {
-            v_req_mem_len = 1;
+            v_req_mem_len = 0;
         }
         break;
     case State_WaitResp:
@@ -606,7 +416,7 @@ void DCacheLru::comb() {
         }
         if (i_resp_mem_data_valid.read()) {
             for (int k = 0; k < 4; k++) {
-                if (r.burst_wstrb.read()[k] == 1) {
+                if (r.burst_rstrb.read()[k] == 1) {
                     t_cache_line_i((k+1)*BUS_DATA_WIDTH-1,
                                     k*BUS_DATA_WIDTH) = i_resp_mem_data.read();
                 }
@@ -617,7 +427,7 @@ void DCacheLru::comb() {
             } else {
                 v.burst_cnt = r.burst_cnt.read() - 1;
             }
-            v.burst_wstrb = wb_wstrb_next;
+            v.burst_rstrb = wb_rstrb_next;
             if (i_resp_mem_load_fault.read() == 1) {
                 v.load_fault = 1;
             }
@@ -627,26 +437,18 @@ void DCacheLru::comb() {
         if (r.cached.read() == 1) {
             v.state = State_SetupReadAdr;
             v_line_valid = 1;
-            if (r.mem_addr.read()[CFG_IOFFSET_WIDTH] == 0) {
-                vb_ena_even[r.lru_even_wr.read().to_int()] = 1;
-            } else {
-                vb_ena_odd[r.lru_odd_wr.read().to_int()] = 1;
-            }
+            vb_ena[r.lru_wr.read().to_int()] = 1;
         } else {
             v_uncached_valid = 1;
-            for (unsigned i = 0; i < 4; i++) {
-                if (r.mpu_addr.read()(2, 1) == i) {
-                    vb_uncached_data = r.cache_line_i.read()(16*i+31, 16*i);
-                }
-            }
+            vb_uncached_data = r.cache_line_i.read()(RISCV_ARCH-1, 0);
             if (i_resp_ctrl_ready.read() == 1) {
                 v.state = State_Idle;
                 v.requested = 0;
             }
         }
         break;
-    case State_WriteLine:
-        v.state = State_SetupReadAdr;
+    case State_WriteLineReq:
+        v.state = State_CheckMPU;
         break;
     case State_SetupReadAdr:
         v.state = State_CheckHit;
@@ -657,67 +459,31 @@ void DCacheLru::comb() {
             v.state = State_Idle;
         } else {
             v.flush_cnt = r.flush_cnt.read() - 1;
-            v.mem_addr = r.mem_addr.read() + (1 << CFG_IOFFSET_WIDTH);
+            v.req_addr = r.req_addr.read() + (1 << CFG_DOFFSET_WIDTH);
         }
-        for (int i = 0; i < CFG_ICACHE_WAYS; i++) {
-            vb_ena_even[i] = 1;
-            vb_ena_odd[i] = 1;
+        for (int i = 0; i < CFG_DCACHE_WAYS; i++) {
+            vb_ena[i] = 1;
         }
         break;
     default:;
     }
 
     // Write signals:
-    v_swapin[WAY_EVEN].wadr = r.mem_addr.read();
-    v_swapin[WAY_EVEN].wstrb = ~0u;
-    v_swapin[WAY_EVEN].wvalid = v_line_valid;
-    v_swapin[WAY_EVEN].wdata = r.cache_line_i.read();
-    v_swapin[WAY_EVEN].load_fault = r.load_fault.read();
-    v_swapin[WAY_EVEN].executable = r.executable.read();
-    v_swapin[WAY_EVEN].writable = r.writable.read();
-    v_swapin[WAY_EVEN].readable = r.readable.read();
-    v_swapin[WAY_ODD].wadr = r.mem_addr.read();
-    v_swapin[WAY_ODD].wstrb = ~0u;
-    v_swapin[WAY_ODD].wvalid = v_line_valid;
-    v_swapin[WAY_ODD].wdata = r.cache_line_i.read();
-    v_swapin[WAY_ODD].load_fault = r.load_fault.read();
-    v_swapin[WAY_ODD].executable = r.executable.read();
-    v_swapin[WAY_ODD].writable = r.writable.read();
-    v_swapin[WAY_ODD].readable = r.readable.read();
+    v_way_i.wadr = r.mem_addr.read();
+    v_way_i.wstrb = ~0u;
+    v_way_i.wvalid = v_line_valid;
+    v_way_i.wdata = r.cache_line_i.read();
+    v_way_i.load_fault = r.load_fault.read();
+    v_way_i.executable = r.executable.read();
+    v_way_i.writable = r.writable.read();
+    v_way_i.readable = r.readable.read();
 
-    if (r.state.read() == State_WaitResp
-        || r.state.read() == State_CheckResp
-        || r.state.read() == State_Flush) {
-        v_swapin[WAY_EVEN].radr = r.mem_addr.read();
-        v_swapin[WAY_ODD].radr = r.mem_addr.read();
-    } else if (r.state.read() == State_Idle || v_cached_valid == 1) {
-        if (w_raddr5 == 0) {
-            v_swapin[WAY_EVEN].radr = wb_req_adr;
-            v_swapin[WAY_ODD].radr = wb_radr_overlay;
-            v_lrui[WAY_EVEN].radr = wb_req_adr(IINDEX_END, IINDEX_START);
-            v_lrui[WAY_ODD].radr = wb_radr_overlay(IINDEX_END, IINDEX_START);
-        } else {
-            v_swapin[WAY_EVEN].radr = wb_radr_overlay;
-            v_swapin[WAY_ODD].radr = wb_req_adr;
-            v_lrui[WAY_EVEN].radr = wb_radr_overlay(IINDEX_END, IINDEX_START);
-            v_lrui[WAY_ODD].radr = wb_req_adr(IINDEX_END, IINDEX_START);
-        }
+    if (r.state.read() == State_Idle || v_cached_valid == 1) {
+        v_way_i.radr = wb_req_adr;
+        v_lrui.radr = wb_req_adr(DINDEX_END, DINDEX_START);
     } else {
-        if (w_raddr5_r == 0) {
-            v_swapin[WAY_EVEN].radr = r.req_addr.read();
-            v_swapin[WAY_ODD].radr = r.req_addr_overlay.read();
-            v_lrui[WAY_EVEN].radr =
-                r.req_addr.read()(IINDEX_END, IINDEX_START);
-            v_lrui[WAY_ODD].radr =
-                r.req_addr_overlay.read()(IINDEX_END, IINDEX_START);
-        } else {
-            v_swapin[WAY_EVEN].radr = r.req_addr_overlay.read();
-            v_swapin[WAY_ODD].radr = r.req_addr.read();
-            v_lrui[WAY_EVEN].radr =
-                r.req_addr_overlay.read()(IINDEX_END, IINDEX_START);
-            v_lrui[WAY_ODD].radr =
-                r.req_addr.read()(IINDEX_END, IINDEX_START);
-        }
+        v_way_i.radr = r.req_addr.read();
+        v_lrui.radr = r.req_addr.read()(DINDEX_END, DINDEX_START);
     }
 
 
@@ -725,27 +491,24 @@ void DCacheLru::comb() {
         R_RESET(v);
     }
 
-    for (int i = 0; i < WAY_SubNum; i++) {
-        lrui[i].init = v_lrui[i].init;
-        lrui[i].radr = v_lrui[i].radr;
-        lrui[i].wadr = v_lrui[i].wadr;
-        lrui[i].we = v_lrui[i].we;
-        lrui[i].lru = v_lrui[i].lru;
+    lrui.init = v_lrui.init;
+    lrui.radr = v_lrui.radr;
+    lrui.wadr = v_lrui.wadr;
+    lrui.we = v_lrui.we;
+    lrui.lru = v_lrui.lru;
 
-        swapin[i].radr = v_swapin[i].radr;
-        swapin[i].wadr = v_swapin[i].wadr;
-        swapin[i].wstrb = v_swapin[i].wstrb;
-        swapin[i].wvalid = v_swapin[i].wvalid;
-        swapin[i].wdata = v_swapin[i].wdata;
-        swapin[i].load_fault = v_swapin[i].load_fault;
-        swapin[i].executable = v_swapin[i].executable;
-        swapin[i].writable = v_swapin[i].writable;
-        swapin[i].readable = v_swapin[i].readable;
-    }
+    way_i.radr = v_way_i.radr;
+    way_i.wadr = v_way_i.wadr;
+    way_i.wstrb = v_way_i.wstrb;
+    way_i.wvalid = v_way_i.wvalid;
+    way_i.wdata = v_way_i.wdata;
+    way_i.load_fault = v_way_i.load_fault;
+    way_i.executable = v_way_i.executable;
+    way_i.writable = v_way_i.writable;
+    way_i.readable = v_way_i.readable;
 
-    for (int i = 0; i < CFG_ICACHE_WAYS; i++) {
-        wb_ena_even[i] = vb_ena_even[i];
-        wb_ena_odd[i] = vb_ena_odd[i];
+    for (int i = 0; i < CFG_DCACHE_WAYS; i++) {
+        wb_ena[i] = vb_ena[i];
     }
 
     o_req_ctrl_ready = w_o_req_ctrl_ready;
@@ -861,7 +624,7 @@ DCacheLru_tb::DCacheLru_tb(sc_module_name name_) : sc_module(name_),
     tt->i_flush_valid(w_flush_valid);
     tt->o_istate(wb_istate);
 
-    tb_vcd = sc_create_vcd_trace_file("ICacheLru_tb");
+    tb_vcd = sc_create_vcd_trace_file("DCacheLru_tb");
     tb_vcd->set_time_unit(1, SC_PS);
     sc_trace(tb_vcd, w_nrst, "w_nrst");
     sc_trace(tb_vcd, w_clk, "w_clk");
@@ -904,9 +667,12 @@ void DCacheLru_tb::comb0() {
 
 }
 
+const unsigned START_POINT = 10 + 1 + (1 << (CFG_IINDEX_WIDTH+1));
+
 void DCacheLru_tb::comb_fetch() {
     w_req_ctrl_valid = 0;
     wb_req_ctrl_addr = 0;
+    w_resp_ctrl_ready = 1;
 
     w_mpu_cachable = 1;
     w_mpu_executable = 1;
@@ -914,41 +680,59 @@ void DCacheLru_tb::comb_fetch() {
     w_mpu_readable = 1;
 
     switch (r.clk_cnt.read()) {
-    case 10 + 1 + (1 << (2*(CFG_IINDEX_WIDTH+1))):
+    case START_POINT:
         w_req_ctrl_valid = 1;
-        wb_req_ctrl_addr = 0x00000000;
+        wb_req_ctrl_addr = 0x00000008;
+        break;
+
+    case START_POINT + 10:
+        w_req_ctrl_valid = 1;
+        wb_req_ctrl_addr = 0x00010008;
+        break;
+
+    case START_POINT + 25:
+        w_req_ctrl_valid = 1;
+        wb_req_ctrl_addr = 0x00011008;
+        break;
+
+    case START_POINT + 40:
+        w_req_ctrl_valid = 1;
+        wb_req_ctrl_addr = 0x00012008;
+        break;
+
+    case START_POINT + 55:
+        w_req_ctrl_valid = 1;
+        wb_req_ctrl_addr = 0x00010010;
         break;
     default:;
     }
 }
 
 void DCacheLru_tb::comb_bus() {
-    sc_uint<CFG_IOFFSET_WIDTH> wrap_offset;
-    sc_uint<32> wb_addr4;
     vbus = rbus;
 
     w_req_mem_ready = 0;
     w_resp_mem_data_valid = 0;
     wb_resp_mem_data = 0;
-    wb_addr4 = rbus.burst_addr.read() + 4;
 
     switch (rbus.state.read()) {
     case BUS_Idle:
         w_req_mem_ready = 1;
         if (w_req_mem_valid.read() == 1) {
-            vbus.state = BUS_Read;
+            if (wb_req_mem_len.read() == 0) {
+                vbus.state = BUS_ReadLast;
+            } else {
+                vbus.state = BUS_Read;
+            }
             vbus.burst_addr = wb_req_mem_addr.read();
-            vbus.burst_cnt = 3;
+            vbus.burst_cnt = wb_req_mem_len;
         }
         break;
     case BUS_Read:
         w_resp_mem_data_valid = 1;
-        wb_resp_mem_data = (wb_addr4, rbus.burst_addr.read());
+        wb_resp_mem_data = 0x2000000010000000ull + rbus.burst_addr.read();
         vbus.burst_cnt = rbus.burst_cnt.read() - 1;
-        wrap_offset = rbus.burst_addr.read()(CFG_IOFFSET_WIDTH-1, 0) + 8;
-        // WRAP burst transaction type
-        vbus.burst_addr =
-            (rbus.burst_addr.read()(31, CFG_IOFFSET_WIDTH), wrap_offset);
+        vbus.burst_addr = rbus.burst_addr.read() + 8;
         if (rbus.burst_cnt.read() == 1) {
             vbus.state = BUS_ReadLast;
         }
@@ -956,11 +740,15 @@ void DCacheLru_tb::comb_bus() {
     case BUS_ReadLast:
         w_req_mem_ready = 1;
         w_resp_mem_data_valid = 1;
-        wb_resp_mem_data = (wb_addr4, rbus.burst_addr.read());
+        wb_resp_mem_data = 0x2000000010000000ull + rbus.burst_addr.read();
         if (w_req_mem_valid.read() == 1) {
-            vbus.state = BUS_Read;
+            if (wb_req_mem_len.read() == 0) {
+                vbus.state = BUS_ReadLast;
+            } else {
+                vbus.state = BUS_Read;
+            }
             vbus.burst_addr = wb_req_mem_addr.read();
-            vbus.burst_cnt = 3;
+            vbus.burst_cnt = wb_req_mem_len;
         } else {
             vbus.state = BUS_Idle;
             vbus.burst_cnt = 0;

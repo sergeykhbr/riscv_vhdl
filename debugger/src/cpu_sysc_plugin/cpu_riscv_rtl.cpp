@@ -198,6 +198,9 @@ void CpuRiscV_RTL::createSystemC() {
 #ifdef DBG_ICACHE_LRU_TB
     ICacheLru_tb *tb = new ICacheLru_tb("tb");
 #endif
+#ifdef DBG_DCACHE_LRU_TB
+    DCacheLru_tb *tb = new DCacheLru_tb("tb");
+#endif
 #ifdef DBG_IDIV_TB
     IntDiv_tb *tb = new IntDiv_tb("tb");
 #endif

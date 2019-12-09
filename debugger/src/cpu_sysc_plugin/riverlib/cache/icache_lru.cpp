@@ -566,11 +566,7 @@ void ICacheLru::comb() {
         break;
     case State_CheckMPU:
         v.req_mem_valid = 1;
-        if (i_req_mem_ready.read() == 1) {
-            v.state = State_WaitResp;
-        } else {
-            v.state = State_WaitGrant;
-        }
+        v.state = State_WaitGrant;
 
         if (i_mpu_cachable.read() == 1) {
             v.mem_addr = r.mpu_addr.read()(BUS_ADDR_WIDTH-1, CFG_IOFFSET_WIDTH)

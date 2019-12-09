@@ -90,16 +90,16 @@ void DWayMem::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void DWayMem::comb() {
-    sc_biguint<LINE_MEM_WIDTH> vb_wline;
-    sc_biguint<LINE_MEM_WIDTH> vb_rline;
-    sc_uint<32> vb_rdata;
+    sc_biguint<DLINE_MEM_WIDTH> vb_wline;
+    sc_biguint<DLINE_MEM_WIDTH> vb_rline;
+    sc_biguint<4*BUS_DATA_WIDTH> vb_rdata;
 
     v = r;
 
-    wb_radr = i_radr.read()(IINDEX_END, IINDEX_START);
-    wb_wadr = i_wadr.read()(IINDEX_END, IINDEX_START);
+    wb_radr = i_radr.read()(DINDEX_END, DINDEX_START);
+    wb_wadr = i_wadr.read()(DINDEX_END, DINDEX_START);
 
-    static const int LINE_VALID_BIT = 4*BUS_DATA_WIDTH + ITAG_SIZE;
+    static const int LINE_VALID_BIT = 4*BUS_DATA_WIDTH + DTAG_SIZE;
     static const int LINE_LOAD_FAULT_BIT = LINE_VALID_BIT + 1;
     static const int LINE_EXEC_BIT = LINE_VALID_BIT + 2;
     static const int LINE_RD_BIT = LINE_VALID_BIT + 3;
@@ -117,12 +117,7 @@ void DWayMem::comb() {
 
     v.roffset = i_radr.read()(CFG_IOFFSET_WIDTH-1, 1);
     vb_rline = wb_tag_rdata.read();
-    vb_rdata = (0, vb_rline(255, 240)); // r.offset == 15
-    for (unsigned i = 0; i < 15; i++) {
-        if (i == r.roffset.read()) {
-            vb_rdata = vb_rline(16*i+31, 16*i);
-        }
-    }
+    vb_rdata = vb_rline(4*BUS_DATA_WIDTH-1, 0);
 
     if (!async_reset_ && !i_nrst.read()) {
         R_RESET(v);

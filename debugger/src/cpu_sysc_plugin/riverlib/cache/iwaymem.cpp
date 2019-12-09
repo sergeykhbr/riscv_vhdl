@@ -90,8 +90,8 @@ void IWayMem::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void IWayMem::comb() {
-    sc_biguint<LINE_MEM_WIDTH> vb_wline;
-    sc_biguint<LINE_MEM_WIDTH> vb_rline;
+    sc_biguint<ILINE_MEM_WIDTH> vb_wline;
+    sc_biguint<ILINE_MEM_WIDTH> vb_rline;
     sc_uint<32> vb_rdata;
 
     v = r;
