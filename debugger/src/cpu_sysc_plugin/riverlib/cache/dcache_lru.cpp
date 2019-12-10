@@ -92,6 +92,30 @@ DCacheLru::DCacheLru(sc_module_name name_, bool async_reset,
     lru->i_lru(lrui.lru);
     lru->o_lru(wb_lru);
 
+    mem = new DLineMem("mem0", async_reset);
+    mem->i_clk(i_clk);
+    mem->i_nrst(i_nrst);
+    mem->i_flush(lrui.init);
+    mem->i_addr(way_i.addr);
+    mem->i_wdata(way_i.wdata);
+    mem->i_wstrb(linei_wstrb);
+    mem->i_wvalid(way_i.wvalid);
+    mem->i_wdirty(way_i.wdirty);
+    mem->i_wload_fault(way_i.load_fault);
+    mem->i_wexecutable(way_i.executable);
+    mem->i_wreadable(way_i.readable);
+    mem->i_wwritable(way_i.writable);
+    mem->o_raddr(lineo_raddr);
+    mem->o_rdata(lineo_rdata);
+    mem->o_rvalid(lineo_rvalid);
+    mem->o_rdirty(lineo_rdirty);
+    mem->o_rload_fault(lineo_rload_fault);
+    mem->o_rexecutable(lineo_rexecutable);
+    mem->o_rreadable(lineo_rreadable);
+    mem->o_rwritable(lineo_rwritable);
+    mem->o_hit(lineo_hit);
+
+
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_req_valid;
@@ -146,6 +170,7 @@ DCacheLru::~DCacheLru() {
         delete wayx[i];
     }
     delete lru;
+    delete mem;
 }
 
 void DCacheLru::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
@@ -214,6 +239,7 @@ void DCacheLru::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         wayx[i]->generateVCD(i_vcd, o_vcd);
     }
     lru->generateVCD(i_vcd, o_vcd);
+    mem->generateVCD(i_vcd, o_vcd);
 }
 
 void DCacheLru::comb() {
@@ -270,6 +296,7 @@ void DCacheLru::comb() {
     vb_req_wdata_line(BUS_DATA_WIDTH*(tdx+1)-1, BUS_DATA_WIDTH*tdx) = r.req_wdata.read();
     vb_req_wstrb_line = 0;
     vb_req_wstrb_line(BUS_DATA_BYTES*(tdx+1)-1, BUS_DATA_BYTES*tdx) = r.req_wstrb.read();
+    linei_wstrb = vb_req_wstrb_line;
 
 
     // flush request via debug interface

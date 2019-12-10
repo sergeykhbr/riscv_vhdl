@@ -19,6 +19,7 @@
 
 #include <systemc.h>
 #include "../river_cfg.h"
+#include "dlinemem.h"
 #include "dwaymem.h"
 #include "ilru.h"
 
@@ -98,8 +99,9 @@ SC_MODULE(DCacheLru) {
     struct TagMemInType {
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> addr;
         sc_signal<sc_uint<4*BUS_DATA_BYTES>> wstrb[CFG_DCACHE_WAYS];
-        sc_signal<bool> wvalid;
         sc_signal<sc_biguint<4*BUS_DATA_WIDTH>> wdata;
+        sc_signal<bool> wvalid;
+        sc_signal<bool> wdirty;
         sc_signal<bool> load_fault;
         sc_signal<bool> executable;
         sc_signal<bool> readable;
@@ -110,8 +112,9 @@ SC_MODULE(DCacheLru) {
     struct TagMemInTypeVariable {
         sc_uint<BUS_ADDR_WIDTH> addr;
         sc_uint<4*BUS_DATA_BYTES> wstrb[CFG_DCACHE_WAYS];
-        bool wvalid;
         sc_biguint<4*BUS_DATA_WIDTH> wdata;
+        bool wvalid;
+        bool wdirty;
         bool load_fault;
         bool executable;
         bool readable;
@@ -165,6 +168,18 @@ SC_MODULE(DCacheLru) {
         bool we;
         sc_uint<2> lru;
     };
+
+    sc_signal<sc_uint<4*BUS_DATA_BYTES>> linei_wstrb;
+    sc_signal<sc_uint<BUS_ADDR_WIDTH>> lineo_raddr;
+    sc_signal<sc_biguint<4*BUS_DATA_WIDTH>> lineo_rdata;
+    sc_signal<bool> lineo_rvalid;
+    sc_signal<bool> lineo_rdirty;
+    sc_signal<bool> lineo_rload_fault;
+    sc_signal<bool> lineo_rexecutable;
+    sc_signal<bool> lineo_rreadable;
+    sc_signal<bool> lineo_rwritable;
+    sc_signal<bool> lineo_hit;
+
 
     struct RegistersType {
         sc_signal<bool> requested;
@@ -223,6 +238,7 @@ SC_MODULE(DCacheLru) {
     DWayMem *wayx[CFG_DCACHE_WAYS];
 
     ILru *lru;
+    DLineMem *mem;
 
     TagMemInType way_i;
     TagMemOutType way_o[CFG_DCACHE_WAYS];

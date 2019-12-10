@@ -22,6 +22,7 @@ DLineMem::DLineMem(sc_module_name name_, bool async_reset)
     : sc_module(name_),
     i_clk("i_clk"),
     i_nrst("i_nrst"),
+    i_flush("i_flush"),
     i_addr("i_addr"),
     i_wdata("i_wdata"),
     i_wstrb("i_wstrb"),
@@ -31,6 +32,7 @@ DLineMem::DLineMem(sc_module_name name_, bool async_reset)
     i_wexecutable("i_wexecutable"),
     i_wreadable("i_wreadable"),
     i_wwritable("i_wwritable"),
+    o_raddr("o_raddr"),
     o_rdata("o_rdata"),
     o_rvalid("o_rvalid"),
     o_rdirty("o_rdirty"),
@@ -38,13 +40,7 @@ DLineMem::DLineMem(sc_module_name name_, bool async_reset)
     o_rexecutable("o_rexecutable"),
     o_rreadable("o_rreadable"),
     o_rwritable("o_rwritable"),
-    o_old_data("o_old_data"),
-    o_old_valid("o_old_valid"),
-    o_old_dirty("o_old_dirty"),
-    o_old_load_fault("o_old_load_fault"),
-    o_old_executable("o_old_executable"),
-    o_old_readable("o_old_readable"),
-    o_old_writable("o_old_writable") {
+    o_hit("o_hit") {
     async_reset_ = async_reset;
 
     char tstr1[32] = "way0";
@@ -80,6 +76,7 @@ DLineMem::DLineMem(sc_module_name name_, bool async_reset)
     lru->o_lru(lruo_lru);
 
     SC_METHOD(comb);
+    sensitive << i_flush;
     sensitive << i_addr;
     sensitive << i_wdata;
     sensitive << i_wstrb;
@@ -89,7 +86,21 @@ DLineMem::DLineMem(sc_module_name name_, bool async_reset)
     sensitive << i_wexecutable;
     sensitive << i_wreadable;
     sensitive << i_wwritable;
+    for (int i = 0; i < CFG_DCACHE_WAYS; i++) {
+        sensitive << way_o[i].rtag;
+        sensitive << way_o[i].rdata;
+        sensitive << way_o[i].valid;
+        sensitive << way_o[i].load_fault;
+        sensitive << way_o[i].executable;
+        sensitive << way_o[i].readable;
+        sensitive << way_o[i].writable;
+    }
+    sensitive << lruo_lru;
+    sensitive << r.req_addr;
 
+    SC_METHOD(registers);
+    sensitive << i_nrst;
+    sensitive << i_clk.pos();
 };
 
 DLineMem::~DLineMem() {
@@ -107,7 +118,7 @@ void DLineMem::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_wdata, i_wdata.name());
         sc_trace(o_vcd, o_rvalid, o_rvalid.name());
         sc_trace(o_vcd, o_rdata, o_rdata.name());
-        sc_trace(o_vcd, o_old_data, o_old_data.name());
+        sc_trace(o_vcd, o_hit, o_hit.name());
 
         //std::string pn(name());
         //sc_trace(o_vcd, wb_tag_rdata, pn + ".wb_tag_rdata");
@@ -117,18 +128,70 @@ void DLineMem::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void DLineMem::comb() {
-    sc_biguint<4*BUS_DATA_WIDTH> vb_rdata;
+    sc_uint<2> vb_wayidx;
+    sc_uint<CFG_DINDEX_WIDTH> vb_lineadr;
+    sc_uint<DTAG_SIZE> vb_tag_addr;
+    bool v_lrui_we;
+    bool v_hit;
 
-    wb_addr = i_addr.read()(DINDEX_END, DINDEX_START);
-    for (int i = 0; i < BUS_DATA_BYTES; i++) {
-        w_wena[i] = i_wstrb.read()[i];
-        wb_wdata[i] = i_wdata.read()(8*i+7, 8*i).to_uint();
+    v_hit = 0;
+    v_lrui_we = 0;
+    if (i_wstrb.read() != 0) {
+        v_lrui_we = 1;
+    }
+    vb_lineadr = i_addr.read()(DINDEX_END, DINDEX_START);
+    vb_tag_addr = i_addr.read()(DTAG_END, DTAG_START);
+    v.req_addr = i_addr.read();
 
-        vb_rdata(8*i+7, 8*i) = wb_rdata[i].read();
+    vb_wayidx = lruo_lru.read();
+    for (int i = 0; i < CFG_DCACHE_WAYS; i++) {
+        if (way_o[i].rtag.read() == vb_tag_addr) {
+            vb_wayidx = i;
+            v_lrui_we = 1;  // Read hit update lru anyway
+            v_hit = 1;
+        }
     }
 
-    o_rdata = vb_rdata;
+    for (int i = 0; i < CFG_DCACHE_WAYS; i++) {
+        way_i[i].addr = i_addr.read();
+        way_i[i].wdata = i_wdata.read();
+        if (vb_wayidx == i) {
+            way_i[i].wstrb = i_wstrb.read();
+        } else {
+            way_i[i].wstrb = 0;
+        }
+        way_i[i].wvalid = i_wvalid.read();
+        way_i[i].load_fault = i_wload_fault.read();
+        way_i[i].executable = i_wexecutable.read();
+        way_i[i].readable = i_wreadable.read();
+        way_i[i].writable = i_wwritable.read();
+    }
+
+    lrui_init = i_flush.read();
+    lrui_radr = vb_lineadr;
+    lrui_wadr = vb_lineadr;
+    lrui_we = v_lrui_we;
+    lrui_lru = vb_wayidx;
+
+    o_raddr = r.req_addr.read();
+    o_rdata = way_o[vb_wayidx.to_int()].rdata;
+    o_rvalid = way_o[vb_wayidx.to_int()].valid;
+    o_rdirty = 0;
+    o_rload_fault = way_o[vb_wayidx.to_int()].load_fault;
+    o_rexecutable = way_o[vb_wayidx.to_int()].executable;
+    o_rreadable = way_o[vb_wayidx.to_int()].readable;
+    o_rwritable = way_o[vb_wayidx.to_int()].writable;
+    o_hit = v_hit;
 }
+
+void DLineMem::registers() {
+    if (async_reset_ && i_nrst.read() == 0) {
+        R_RESET(r);
+    } else {
+        r = v;
+    }
+}
+
 
 }  // namespace debugger
 
