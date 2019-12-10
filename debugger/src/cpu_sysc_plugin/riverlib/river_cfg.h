@@ -83,7 +83,6 @@ static const int DINDEX_END = DINDEX_START + CFG_DINDEX_WIDTH - 1;
 static const int DTAG_START = DINDEX_START + CFG_DINDEX_WIDTH;
 static const int DTAG_SIZE  = BUS_ADDR_WIDTH - DTAG_START;
 static const int DTAG_END   = BUS_ADDR_WIDTH - 1;
-static const int DLINE_MEM_WIDTH = 4*BUS_DATA_WIDTH + DTAG_SIZE + 5;
 
 
 /** MPU config */

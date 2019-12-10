@@ -30,8 +30,11 @@ SC_MODULE(DCacheLru) {
     sc_in<bool> i_clk;
     sc_in<bool> i_nrst;
     // Control path:
-    sc_in<bool> i_req_ctrl_valid;
-    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_req_ctrl_addr;
+    sc_in<bool> i_req_valid;
+    sc_in<bool> i_req_write;
+    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_req_addr;
+    sc_in<sc_uint<BUS_DATA_WIDTH>> i_req_wdata;
+    sc_in<sc_uint<BUS_DATA_BYTES>> i_req_wstrb;
     sc_out<bool> o_req_ctrl_ready;
     sc_out<bool> o_resp_ctrl_valid;
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_resp_ctrl_addr;
@@ -93,9 +96,8 @@ SC_MODULE(DCacheLru) {
     };
 
     struct TagMemInType {
-        sc_signal<sc_uint<BUS_ADDR_WIDTH>> radr;
-        sc_signal<sc_uint<BUS_ADDR_WIDTH>> wadr;
-        sc_signal<sc_uint<4*BUS_DATA_BYTES>> wstrb;
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> addr;
+        sc_signal<sc_uint<4*BUS_DATA_BYTES>> wstrb[CFG_DCACHE_WAYS];
         sc_signal<bool> wvalid;
         sc_signal<sc_biguint<4*BUS_DATA_WIDTH>> wdata;
         sc_signal<bool> load_fault;
@@ -106,9 +108,8 @@ SC_MODULE(DCacheLru) {
 
     // to comply with vhdl (signals cannot be ceated in process)
     struct TagMemInTypeVariable {
-        sc_uint<BUS_ADDR_WIDTH> radr;
-        sc_uint<BUS_ADDR_WIDTH> wadr;
-        sc_uint<4*BUS_DATA_BYTES> wstrb;
+        sc_uint<BUS_ADDR_WIDTH> addr;
+        sc_uint<4*BUS_DATA_BYTES> wstrb[CFG_DCACHE_WAYS];
         bool wvalid;
         sc_biguint<4*BUS_DATA_WIDTH> wdata;
         bool load_fault;
@@ -167,7 +168,10 @@ SC_MODULE(DCacheLru) {
 
     struct RegistersType {
         sc_signal<bool> requested;
+        sc_signal<bool> req_write;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_addr;
+        sc_signal<sc_uint<BUS_DATA_WIDTH>> req_wdata;
+        sc_signal<sc_uint<BUS_DATA_BYTES>> req_wstrb;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> mpu_addr;
         sc_signal<sc_uint<4>> state;
         sc_signal<bool> req_mem_valid;
@@ -191,7 +195,10 @@ SC_MODULE(DCacheLru) {
 
     void R_RESET(RegistersType &iv) {
         iv.requested = 0;
+        iv.req_write = 0;
         iv.req_addr = 0;
+        iv.req_wdata = 0;
+        iv.req_wstrb = 0;
         iv.mpu_addr = 0;
         iv.state = State_Flush;
         iv.req_mem_valid = 0;
@@ -221,7 +228,7 @@ SC_MODULE(DCacheLru) {
     TagMemOutType way_o[CFG_DCACHE_WAYS];
     WayMuxType waysel;
     DisplaceLineType waydisplace;
-    sc_signal<bool> wb_ena[CFG_DCACHE_WAYS];
+    //sc_signal<bool> wb_ena[CFG_DCACHE_WAYS];
 
     LruInType lrui;
     sc_signal<sc_uint<2>> wb_lru;
@@ -251,8 +258,11 @@ private:
     sc_clock w_clk;
     sc_signal<bool> w_nrst;
     // Control path:
-    sc_signal<bool> w_req_ctrl_valid;
-    sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_req_ctrl_addr;
+    sc_signal<bool> w_req_valid;
+    sc_signal<bool> w_req_write;
+    sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_req_addr;
+    sc_signal<sc_uint<BUS_DATA_WIDTH>> wb_req_wdata;
+    sc_signal<sc_uint<BUS_DATA_BYTES>> wb_req_wstrb;
     sc_signal<bool> w_req_ctrl_ready;
     sc_signal<bool> w_resp_ctrl_valid;
     sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_resp_ctrl_addr;

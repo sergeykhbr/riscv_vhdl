@@ -20,17 +20,14 @@
 #include <systemc.h>
 #include "riscv-isa.h"
 #include "../river_cfg.h"
-#include "mem/ram64i.h"
-#include "mem/ramtagi.h"
+#include "mem/ram.h"
 
 namespace debugger {
 
 SC_MODULE(DWayMem) {
     sc_in<bool> i_clk;
     sc_in<bool> i_nrst;
-    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_radr;
-    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_wadr;
-    sc_in<bool> i_wena;
+    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_addr;
     sc_in<sc_uint<4*BUS_DATA_BYTES>> i_wstrb;
     sc_in<bool> i_wvalid;
     sc_in<sc_biguint<4*BUS_DATA_WIDTH>> i_wdata;
@@ -66,14 +63,19 @@ SC_MODULE(DWayMem) {
         iv.roffset = 0;
     }
 
-    RamTagi *tag1;
+    static const int TAG_BITS = DTAG_SIZE + 6;
 
-    sc_signal<sc_uint<CFG_DINDEX_WIDTH>> wb_radr;
-    sc_signal<sc_uint<CFG_DINDEX_WIDTH>> wb_wadr;
+    ram<CFG_DINDEX_WIDTH, 8> *datax[4*BUS_DATA_BYTES];
+    ram<CFG_DINDEX_WIDTH, TAG_BITS> *tag0;
+    
+    sc_signal<sc_uint<CFG_DINDEX_WIDTH>> wb_addr;
+    sc_signal<sc_uint<8>> wb_rdata[4*BUS_DATA_BYTES];
+    sc_signal<sc_uint<8>> wb_wdata[4*BUS_DATA_BYTES];
+    sc_signal<bool> w_wdata_we[4*BUS_DATA_BYTES];
 
-    sc_signal<sc_biguint<DLINE_MEM_WIDTH>> wb_tag_rdata;
-    sc_signal<bool> w_tag_wena;
-    sc_signal<sc_biguint<DLINE_MEM_WIDTH>> wb_tag_wdata;
+    sc_signal<sc_uint<TAG_BITS>> wb_rtag;
+    sc_signal<sc_uint<TAG_BITS>> wb_wtag;
+    sc_signal<bool> w_wtag_we;
 
     bool async_reset_;
     int wayidx_;
