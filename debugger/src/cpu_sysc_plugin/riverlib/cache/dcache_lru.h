@@ -19,7 +19,7 @@
 
 #include <systemc.h>
 #include "../river_cfg.h"
-#include "dlinemem.h"
+#include "tagmemnway.h"
 
 namespace debugger {
 
@@ -155,7 +155,7 @@ SC_MODULE(DCacheLru) {
         iv.cache_line_o = 0;
     }
 
-    DLineMem *mem;
+    TagMemNWay *mem;
 
     bool async_reset_;
     int index_width_;

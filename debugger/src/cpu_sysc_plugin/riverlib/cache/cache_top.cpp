@@ -280,7 +280,14 @@ void CacheTop::comb() {
         break;
 
     case State_DMem:
-        w_req_mem_valid = d.req_mem_last & (i.req_mem_valid | d.req_mem_valid);
+        if (d.req_mem_last.read() == 1) {
+            w_req_mem_valid = 1;
+            if (d.req_mem_valid.read() == 1) {
+                wb_mem_addr = d.req_mem_addr;
+            } else if (i.req_mem_valid.read() == 1) {
+                wb_mem_addr = i.req_mem_addr;
+            }
+        }
         if (i_resp_mem_data_valid.read() && d.req_mem_last.read()) {
             if (d.req_mem_valid.read()) {
                 v_data_req_ready = i_req_mem_ready.read();
@@ -308,7 +315,14 @@ void CacheTop::comb() {
         break;
 
     case State_IMem:
-        w_req_mem_valid = i.req_mem_last & (i.req_mem_valid | d.req_mem_valid);
+        if (i.req_mem_last.read() == 1) {
+            w_req_mem_valid = 1;
+            if (d.req_mem_valid.read() == 1) {
+                wb_mem_addr = d.req_mem_addr;
+            } else if (i.req_mem_valid.read() == 1) {
+                wb_mem_addr = i.req_mem_addr;
+            }
+        }
         if (i_resp_mem_data_valid.read() && i.req_mem_last.read()) {
             if (d.req_mem_valid.read()) {
                 v_data_req_ready = i_req_mem_ready.read();

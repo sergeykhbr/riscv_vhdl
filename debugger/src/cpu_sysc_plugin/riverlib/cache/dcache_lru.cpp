@@ -59,7 +59,7 @@ DCacheLru::DCacheLru(sc_module_name name_, bool async_reset,
     async_reset_ = async_reset;
     index_width_ = index_width;
 
-    mem = new DLineMem("mem0", async_reset);
+    mem = new TagMemNWay("mem0", async_reset);
     mem->i_clk(i_clk);
     mem->i_nrst(i_nrst);
     mem->i_cs(line_cs_i);

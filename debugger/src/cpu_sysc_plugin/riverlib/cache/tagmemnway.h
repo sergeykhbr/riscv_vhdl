@@ -14,8 +14,8 @@
  *  limitations under the License.
  */
 
-#ifndef __DEBUGGER_RIVERLIB_CACHE_DLINEMEM_H__
-#define __DEBUGGER_RIVERLIB_CACHE_DLINEMEM_H__
+#ifndef __DEBUGGER_RIVERLIB_CACHE_TAGMEMNWAY_H__
+#define __DEBUGGER_RIVERLIB_CACHE_TAGMEMNWAY_H__
 
 #include <systemc.h>
 #include "riscv-isa.h"
@@ -25,7 +25,7 @@
 
 namespace debugger {
 
-SC_MODULE(DLineMem) {
+SC_MODULE(TagMemNWay) {
     sc_in<bool> i_clk;
     sc_in<bool> i_nrst;
     sc_in<bool> i_cs;
@@ -50,10 +50,10 @@ SC_MODULE(DLineMem) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(DLineMem);
+    SC_HAS_PROCESS(TagMemNWay);
 
-    DLineMem(sc_module_name name_, bool async_reset);
-    virtual ~DLineMem();
+    TagMemNWay(sc_module_name name_, bool async_reset);
+    virtual ~TagMemNWay();
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
@@ -63,14 +63,16 @@ SC_MODULE(DLineMem) {
         sc_signal<sc_uint<4*BUS_DATA_BYTES>> wstrb;
         sc_signal<sc_biguint<4*BUS_DATA_WIDTH>> wdata;
         sc_signal<sc_uint<DTAG_FL_TOTAL>> wflags;
+        sc_signal<bool> valid;
     };
    struct WayOutType {
-        sc_signal<sc_uint<CFG_DTAG_WIDTH>> rtag;
         sc_signal<sc_biguint<4*BUS_DATA_WIDTH>> rdata;
         sc_signal<sc_uint<DTAG_FL_TOTAL>> rflags;
+        sc_signal<bool> valid;
     };
 
-    TagWayMem<DTAG_SIZE, 4*BUS_DATA_WIDTH, DTAG_FL_TOTAL> *wayx[CFG_DCACHE_WAYS];
+    TagWayMem<CFG_DINDEX_WIDTH, 4*BUS_DATA_BYTES,
+              DTAG_SIZE, DTAG_FL_TOTAL> *wayx[CFG_DCACHE_WAYS];
     lru4way<CFG_DINDEX_WIDTH> *lru;
 
     WayInType way_i[CFG_DCACHE_WAYS];
@@ -82,12 +84,8 @@ SC_MODULE(DLineMem) {
     sc_signal<sc_uint<2>> lrui_lru;
     sc_signal<sc_uint<2>> lruo_lru;
 
-    sc_uint<CFG_DTAG_WIDTH> mux_rtag;
     sc_biguint<4*BUS_DATA_WIDTH> mux_rdata;
     sc_uint<DTAG_FL_TOTAL> mux_rflags;
-
-    sc_uint<DTAG_SIZE> vb_tag_addr;
-
 
     struct RegistersType {
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_addr;
@@ -104,4 +102,4 @@ SC_MODULE(DLineMem) {
 
 }  // namespace debugger
 
-#endif  // __DEBUGGER_RIVERLIB_CACHE_DLINEMEM_H__
+#endif  // __DEBUGGER_RIVERLIB_CACHE_TAGMEMNWAY_H__

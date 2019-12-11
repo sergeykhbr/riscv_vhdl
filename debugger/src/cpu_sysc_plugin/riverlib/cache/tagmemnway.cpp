@@ -14,11 +14,11 @@
  *  limitations under the License.
  */
 
-#include "dlinemem.h"
+#include "tagmemnway.h"
 
 namespace debugger {
 
-DLineMem::DLineMem(sc_module_name name_, bool async_reset)
+TagMemNWay::TagMemNWay(sc_module_name name_, bool async_reset)
     : sc_module(name_),
     i_clk("i_clk"),
     i_nrst("i_nrst"),
@@ -45,18 +45,20 @@ DLineMem::DLineMem(sc_module_name name_, bool async_reset)
     char tstr1[32] = "way0";
     for (int i = 0; i < CFG_DCACHE_WAYS; i++) {
         tstr1[3] = '0' + static_cast<char>(i);
-        wayx[i] = new TagWayMem<DTAG_SIZE, 
-                             4*BUS_DATA_WIDTH,
-                             DTAG_FL_TOTAL>(tstr1, async_reset, i);
+        wayx[i] = new TagWayMem<CFG_DINDEX_WIDTH, 
+                                4*BUS_DATA_BYTES,
+                                DTAG_SIZE,
+                                DTAG_FL_TOTAL>(tstr1, async_reset, i);
         wayx[i]->i_clk(i_clk);
         wayx[i]->i_nrst(i_nrst);
         wayx[i]->i_addr(way_i[i].addr);
         wayx[i]->i_wstrb(way_i[i].wstrb);
         wayx[i]->i_wdata(way_i[i].wdata);
         wayx[i]->i_wflags(way_i[i].wflags);
-        wayx[i]->o_rtag(way_o[i].rtag);
+        wayx[i]->i_valid(way_i[i].valid);
         wayx[i]->o_rdata(way_o[i].rdata);
         wayx[i]->o_rflags(way_o[i].rflags);
+        wayx[i]->o_valid(way_o[i].valid);
     }
 
     lru = new lru4way<CFG_DINDEX_WIDTH>("lru0");
@@ -78,9 +80,9 @@ DLineMem::DLineMem(sc_module_name name_, bool async_reset)
     sensitive << i_wreadable;
     sensitive << i_wwritable;
     for (int i = 0; i < CFG_DCACHE_WAYS; i++) {
-        sensitive << way_o[i].rtag;
         sensitive << way_o[i].rdata;
         sensitive << way_o[i].rflags;
+        sensitive << way_o[i].valid;
     }
     sensitive << lruo_lru;
     sensitive << r.req_addr;
@@ -91,14 +93,14 @@ DLineMem::DLineMem(sc_module_name name_, bool async_reset)
     sensitive << i_clk.pos();
 };
 
-DLineMem::~DLineMem() {
+TagMemNWay::~TagMemNWay() {
     for (int i = 0; i < CFG_DCACHE_WAYS; i++) {
         delete wayx[i];
     }
     delete lru;
 }
 
-void DLineMem::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
+void TagMemNWay::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
         sc_trace(o_vcd, i_cs, i_cs.name());
         sc_trace(o_vcd, i_flush, i_flush.name());
@@ -110,12 +112,11 @@ void DLineMem::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_rdata, o_rdata.name());
 
         std::string pn(name());
-        sc_trace(o_vcd, way_o[0].rtag, pn + ".way_o0_rtag");
-        sc_trace(o_vcd, way_o[1].rtag, pn + ".way_o1_rtag");
-        sc_trace(o_vcd, way_o[2].rtag, pn + ".way_o2_rtag");
-        sc_trace(o_vcd, way_o[3].rtag, pn + ".way_o3_rtag");
+        sc_trace(o_vcd, way_o[0].valid, pn + ".valid0");
+        sc_trace(o_vcd, way_o[1].valid, pn + ".valid1");
+        sc_trace(o_vcd, way_o[2].valid, pn + ".valid2");
+        sc_trace(o_vcd, way_o[3].valid, pn + ".valid3");
         sc_trace(o_vcd, r.req_addr, pn + ".r_req_addr");
-        sc_trace(o_vcd, vb_tag_addr, pn + ".vb_tag_addr");
     }
     lru->generateVCD(i_vcd, o_vcd);
     for (int i = 0; i < CFG_DCACHE_WAYS; i++) {
@@ -123,7 +124,7 @@ void DLineMem::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     }
 }
 
-void DLineMem::comb() {
+void TagMemNWay::comb() {
     sc_uint<2> vb_wayidx;
     sc_uint<CFG_DINDEX_WIDTH> vb_lineadr;
     sc_uint<DTAG_FL_TOTAL> vb_wflags;
@@ -136,7 +137,6 @@ void DLineMem::comb() {
     v.re = i_cs.read();
 
     vb_lineadr = i_addr.read()(DINDEX_END, DINDEX_START);
-    vb_tag_addr = r.req_addr.read()(DTAG_END, DTAG_START);
 
     if (i_cs.read() == 1) {
         if (i_wstrb.read() != 0) {
@@ -146,8 +146,7 @@ void DLineMem::comb() {
 
     vb_wayidx = lruo_lru.read();
     for (int i = 0; i < CFG_DCACHE_WAYS; i++) {
-        if (way_o[i].rtag.read() == vb_tag_addr
-            && way_o[i].rflags.read()[DTAG_FL_VALID] == 1) {
+        if (way_o[i].valid.read() == 1) {
             vb_wayidx = i;
             v_lrui_we = r.re.read();
             hit = 1;
@@ -155,13 +154,12 @@ void DLineMem::comb() {
     }
 
     mux_rdata = way_o[vb_wayidx.to_int()].rdata;
-    mux_rtag = way_o[vb_wayidx.to_int()].rtag;
     mux_rflags = way_o[vb_wayidx.to_int()].rflags;
 
-    vb_wflags[DTAG_FL_VALID] = !i_flush.read();
     vb_wflags[DTAG_FL_DIRTY] = i_wdirty.read();
     vb_wflags[DTAG_FL_LOAD_FAULT] = i_wload_fault.read();
     for (int i = 0; i < CFG_DCACHE_WAYS; i++) {
+        way_i[i].valid = !i_flush.read();
         way_i[i].addr = i_addr.read();
         way_i[i].wdata = i_wdata.read();
         if (i_cs.read() == 1 && vb_wayidx == i) {
@@ -177,6 +175,10 @@ void DLineMem::comb() {
     lrui_we = v_lrui_we;
     lrui_lru = vb_wayidx;
 
+    if (!async_reset_ && i_nrst.read() == 0) {
+        R_RESET(v);
+    }
+
     o_raddr = r.req_addr.read();
     o_rdata = mux_rdata;
     o_rvalid = hit;
@@ -187,7 +189,7 @@ void DLineMem::comb() {
     o_rwritable = 0;
 }
 
-void DLineMem::registers() {
+void TagMemNWay::registers() {
     if (async_reset_ && i_nrst.read() == 0) {
         R_RESET(r);
     } else {
