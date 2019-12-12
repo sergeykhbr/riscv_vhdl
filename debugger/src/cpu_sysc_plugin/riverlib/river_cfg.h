@@ -63,24 +63,27 @@ static const int ITAG_END   = BUS_ADDR_WIDTH - 1;
 static const int ILINE_MEM_WIDTH = 4*BUS_DATA_WIDTH + ITAG_SIZE + 5;
 
 /** DCacheLru config */
-static const int CFG_DOFFSET_WIDTH   = 6;    // [5:0]  log2(DCACHE_LINE_BYTES)
-// [13:6]  8: index: 8 KB per odd/even ways (64 KB icache) 75565 drhy
-// [12:6]  7: index: 4 KB per odd/even ways (32 KB icache) 75565
-// [11:6]  6: index: 2 KB per odd/even ways (16 KB icache) 75565,87462
-static const int CFG_DINDEX_WIDTH    = CFG_DOFFSET_WIDTH;    // log2(LINES_PER_WAY) odd or even
-static const int CFG_DLINES_PER_WAY  = 1 << CFG_DINDEX_WIDTH;
-// [31:14] tag when 64 KB
-// [31:13] tag when 32 KB
-// [31:12] tag when 16 KB
+static const int CFG_DLOG2_BYTES_PER_LINE = 6;    // [5:0] 64 Bytes = 4x8 B log2(Bytes per line)
+// [13:6]  8: index: 16 KB per way (64 KB 4-ways dcache) 75565 drhy
+// [12:6]  7: index: 8 KB per way (32 KB 4-ways dcache) 75565
+// [11:6]  6: index: 4 KB per way (16 KB 4-ways dcache) 75565,87462
+static const int CFG_DLOG2_LINES_PER_WAY  = 6;    // log2(LINES_PER_WAY)
+static const int DCACHE_LINES_PER_WAY     = 1 << CFG_DLOG2_LINES_PER_WAY;
+// Number of ways:
+static const int CFG_DLOG2_NWAYS     = 2;
+static const int DCACHE_WAYS         = 1 << CFG_DLOG2_NWAYS;
+
+// Information: To define the CACHE SIZE in Bytes use the following:
+static const int DCACHE_SIZE_BYTES =
+    DCACHE_WAYS * DCACHE_LINES_PER_WAY * (1 << CFG_DLOG2_BYTES_PER_LINE);
+
 static const int CFG_DTAG_WIDTH      = BUS_ADDR_WIDTH
-    - (CFG_DOFFSET_WIDTH + CFG_DINDEX_WIDTH);
+    - (CFG_DLOG2_BYTES_PER_LINE + CFG_DLOG2_LINES_PER_WAY);
 
-static const int CFG_DCACHE_WAYS        = 4;  // 4 odds, 4 even
+static const int DINDEX_START = CFG_DLOG2_BYTES_PER_LINE;
+static const int DINDEX_END = DINDEX_START + CFG_DLOG2_LINES_PER_WAY - 1;
 
-static const int DINDEX_START = CFG_DOFFSET_WIDTH;
-static const int DINDEX_END = DINDEX_START + CFG_DINDEX_WIDTH - 1;
-
-static const int DTAG_START = DINDEX_START + CFG_DINDEX_WIDTH;
+static const int DTAG_START = DINDEX_START + CFG_DLOG2_LINES_PER_WAY;
 static const int DTAG_SIZE  = BUS_ADDR_WIDTH - DTAG_START;
 static const int DTAG_END   = BUS_ADDR_WIDTH - 1;
 

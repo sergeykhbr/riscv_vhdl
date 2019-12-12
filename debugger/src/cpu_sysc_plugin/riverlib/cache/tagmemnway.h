@@ -21,7 +21,7 @@
 #include "riscv-isa.h"
 #include "../river_cfg.h"
 #include "tagwaymem.h"
-#include "lru4way.h"
+#include "lrunway.h"
 
 namespace debugger {
 
@@ -41,6 +41,7 @@ SC_MODULE(TagMemNWay) {
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_raddr;
     sc_out<sc_biguint<4*BUS_DATA_WIDTH>> o_rdata;
     sc_out<bool> o_rvalid;
+    sc_out<bool> o_hit;
     sc_out<bool> o_rdirty;
     sc_out<bool> o_rload_fault;
     sc_out<bool> o_rexecutable;
@@ -66,26 +67,30 @@ SC_MODULE(TagMemNWay) {
         sc_signal<bool> valid;
     };
    struct WayOutType {
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> raddr;
         sc_signal<sc_biguint<4*BUS_DATA_WIDTH>> rdata;
         sc_signal<sc_uint<DTAG_FL_TOTAL>> rflags;
         sc_signal<bool> valid;
+        sc_signal<bool> hit;
     };
 
-    TagWayMem<CFG_DINDEX_WIDTH, 4*BUS_DATA_BYTES,
-              DTAG_SIZE, DTAG_FL_TOTAL> *wayx[CFG_DCACHE_WAYS];
-    lru4way<CFG_DINDEX_WIDTH> *lru;
+    TagWayMem<BUS_ADDR_WIDTH, CFG_DLOG2_LINES_PER_WAY, 4*BUS_DATA_BYTES,
+              DTAG_SIZE, DTAG_FL_TOTAL> *wayx[DCACHE_WAYS];
+    lrunway<CFG_DLOG2_LINES_PER_WAY, CFG_DLOG2_NWAYS> *lru;
 
-    WayInType way_i[CFG_DCACHE_WAYS];
-    WayOutType way_o[CFG_DCACHE_WAYS];
+    WayInType way_i[DCACHE_WAYS];
+    WayOutType way_o[DCACHE_WAYS];
 
     sc_signal<bool> lrui_flush;
-    sc_signal<sc_uint<CFG_DINDEX_WIDTH>> lrui_addr;
+    sc_signal<sc_uint<CFG_DLOG2_LINES_PER_WAY>> lrui_addr;
     sc_signal<bool> lrui_we;
     sc_signal<sc_uint<2>> lrui_lru;
     sc_signal<sc_uint<2>> lruo_lru;
 
+    sc_uint<BUS_ADDR_WIDTH> mux_raddr;
     sc_biguint<4*BUS_DATA_WIDTH> mux_rdata;
     sc_uint<DTAG_FL_TOTAL> mux_rflags;
+    bool mux_valid;
 
     struct RegistersType {
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_addr;

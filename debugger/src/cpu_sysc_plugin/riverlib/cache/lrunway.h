@@ -14,30 +14,33 @@
  *  limitations under the License.
  */
 
-#ifndef __DEBUGGER_RIVERLIB_CACHE_MEM_LRU4WAY_H__
-#define __DEBUGGER_RIVERLIB_CACHE_MEM_LRU4WAY_H__
+#ifndef __DEBUGGER_RIVERLIB_CACHE_MEM_LRUNWAY_H__
+#define __DEBUGGER_RIVERLIB_CACHE_MEM_LRUNWAY_H__
 
 #include <systemc.h>
 #include "riscv-isa.h"
 #include "../river_cfg.h"
 
 namespace debugger {
-
-template <int abits>
-SC_MODULE(lru4way) {
+/**
+    abits = Cache lines adress bus (usually 6..8)
+    log2nway = Number of way bitwidth (=2 for 4 ways cache)
+*/
+template <int abits, int log2nway>
+SC_MODULE(lrunway) {
     sc_in<bool> i_clk;
     sc_in<bool> i_flush;
     sc_in<sc_uint<abits>> i_addr;
     sc_in<bool> i_we;
-    sc_in<sc_uint<2>> i_lru;
-    sc_out<sc_uint<2>> o_lru;
+    sc_in<sc_uint<log2nway>> i_lru;
+    sc_out<sc_uint<log2nway>> o_lru;
 
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(lru4way);
+    SC_HAS_PROCESS(lrunway);
 
-    lru4way(sc_module_name name_) : sc_module(name_),
+    lrunway(sc_module_name name_) : sc_module(name_),
         i_clk("i_clk"),
         i_flush("i_flush"),
         i_addr("i_addr"),
@@ -61,18 +64,20 @@ SC_MODULE(lru4way) {
 
  private:
     static const int LINES_TOTAL = 1 << abits;
+    static const int WAYS_TOTAL = (1 << log2nway);
+    static const int LINE_WIDTH = WAYS_TOTAL * log2nway;
 
-    sc_signal<sc_uint<CFG_IINDEX_WIDTH>> radr;
-    sc_uint<8> tbl[LINES_TOTAL];
+    sc_signal<sc_uint<abits>> radr;
+    sc_uint<LINE_WIDTH> tbl[LINES_TOTAL];
 
-    sc_signal<sc_uint<8>> wb_tbl_rdata;
-    sc_signal<sc_uint<8>> wb_tbl_wdata;
+    sc_signal<sc_uint<LINE_WIDTH>> wb_tbl_rdata;
+    sc_signal<sc_uint<LINE_WIDTH>> wb_tbl_wdata;
     sc_signal<bool> w_we;
 };
 
 
-template <int abits>
-void lru4way<abits>::generateVCD(sc_trace_file *i_vcd,
+template <int abits, int log2nway>
+void lrunway<abits, log2nway>::generateVCD(sc_trace_file *i_vcd,
                                      sc_trace_file *o_vcd) {
     if (o_vcd) {
         sc_trace(o_vcd, i_flush, i_flush.name());
@@ -86,10 +91,11 @@ void lru4way<abits>::generateVCD(sc_trace_file *i_vcd,
     }
 }
 
-template <int abits>
-void lru4way<abits>::comb() {
-    sc_uint<8> vb_tbl_wdata;
-    sc_uint<8> vb_tbl_rdata;
+template <int abits, int log2nway>
+void lrunway<abits, log2nway>::comb() {
+    sc_uint<LINE_WIDTH - log2nway> vb_shift;
+    sc_uint<LINE_WIDTH> vb_tbl_wdata;
+    sc_uint<LINE_WIDTH> vb_tbl_rdata;
     bool v_we;
 
     vb_tbl_rdata = tbl[radr.read().to_int()];
@@ -97,8 +103,29 @@ void lru4way<abits>::comb() {
     v_we = i_we.read();
     if (i_flush.read() == 1) {
         v_we = 1;
-        vb_tbl_wdata = 0xe4;        // 0x3, 0x2, 0x1, 0x0
+        for (int i = 0; i < WAYS_TOTAL; i++) {
+            vb_tbl_wdata((i+1)*log2nway-1, i*log2nway) = i;
+        }
+        //vb_tbl_wdata = 0xe4;        // 0x3, 0x2, 0x1, 0x0
     } else if (i_we.read()) {
+#if 1
+        vb_shift = vb_tbl_rdata(LINE_WIDTH-log2nway-1, 0);  // default
+        if (vb_tbl_rdata(log2nway-1, 0) == i_lru.read()) {
+            vb_shift = vb_tbl_rdata(LINE_WIDTH-1, log2nway);
+        } else {
+            // All except first and last elements:
+            for (int i = 1; i < WAYS_TOTAL-1; i++) {
+                if (vb_tbl_rdata((i+1)*log2nway-1, i*log2nway) == i_lru.read()) {
+                    vb_shift = (vb_tbl_rdata(LINE_WIDTH-1, (i+1)*log2nway),
+                                vb_tbl_rdata(i*log2nway-1, 0));
+                }
+            }
+        }
+        vb_tbl_wdata = (i_lru.read(), vb_shift);
+
+#else
+        sc_assert(log2nway != 2); // TODO: NWAY selector
+
         if (vb_tbl_rdata(7, 6) == i_lru.read()) {
             vb_tbl_wdata = vb_tbl_rdata;
         } else if (vb_tbl_rdata(5, 4) == i_lru.read()) {
@@ -113,15 +140,16 @@ void lru4way<abits>::comb() {
             vb_tbl_wdata = (i_lru.read(),
                             vb_tbl_rdata(7, 2));
         }
+#endif
     }
 
     w_we = v_we;
     wb_tbl_wdata = vb_tbl_wdata;
-    o_lru = vb_tbl_rdata(1, 0);
+    o_lru = vb_tbl_rdata(log2nway-1, 0);
 }
 
-template <int abits>
-void lru4way<abits>::registers() {
+template <int abits, int log2nway>
+void lrunway<abits, log2nway>::registers() {
     radr = i_addr.read();
     wb_tbl_rdata = tbl[i_addr.read().to_int()];
     if (w_we.read() == 1) {
@@ -131,4 +159,4 @@ void lru4way<abits>::registers() {
 
 }  // namespace debugger
 
-#endif  // __DEBUGGER_RIVERLIB_CACHE_MEM_LRU4WAY_H__
+#endif  // __DEBUGGER_RIVERLIB_CACHE_MEM_LRUNWAY_H__

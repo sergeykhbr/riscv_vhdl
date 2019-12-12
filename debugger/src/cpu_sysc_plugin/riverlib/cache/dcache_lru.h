@@ -99,6 +99,7 @@ SC_MODULE(DCacheLru) {
     sc_signal<sc_uint<BUS_ADDR_WIDTH>> line_raddr_o;
     sc_signal<sc_biguint<4*BUS_DATA_WIDTH>> line_rdata_o;
     sc_signal<bool> line_rvalid_o;
+    sc_signal<bool> line_hit_o;
     sc_signal<bool> line_rdirty_o;
     sc_signal<bool> line_rload_fault_o;
     sc_signal<bool> line_rexecutable_o;
@@ -113,6 +114,7 @@ SC_MODULE(DCacheLru) {
         sc_signal<sc_uint<BUS_DATA_BYTES>> req_wstrb;
         sc_signal<sc_uint<4>> state;
         sc_signal<bool> req_mem_valid;
+        sc_signal<bool> mem_write;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> mem_addr;
         sc_signal<sc_uint<2>> burst_cnt;
         sc_signal<sc_uint<4>> burst_rstrb;
@@ -122,10 +124,11 @@ SC_MODULE(DCacheLru) {
         sc_signal<bool> readable;
         sc_signal<bool> load_fault;
         sc_signal<bool> write_first;
+        sc_signal<sc_uint<BUS_DATA_BYTES>> mem_wstrb;
         sc_signal<bool> req_flush;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_flush_addr;
-        sc_signal<sc_uint<CFG_IINDEX_WIDTH+1>> req_flush_cnt;
-        sc_signal<sc_uint<CFG_IINDEX_WIDTH+1>> flush_cnt;
+        sc_signal<sc_uint<CFG_IINDEX_WIDTH>> req_flush_cnt;
+        sc_signal<sc_uint<CFG_IINDEX_WIDTH>> flush_cnt;
         sc_signal<sc_biguint<4*BUS_DATA_WIDTH>> cache_line_i;
         sc_signal<sc_biguint<4*BUS_DATA_WIDTH>> cache_line_o;
     } v, r;
@@ -138,6 +141,7 @@ SC_MODULE(DCacheLru) {
         iv.req_wstrb = 0;
         iv.state = State_Flush;
         iv.req_mem_valid = 0;
+        iv.mem_write = 0;
         iv.mem_addr = 0;
         iv.burst_cnt = 0;
         iv.burst_rstrb = ~0ul;
@@ -147,6 +151,7 @@ SC_MODULE(DCacheLru) {
         iv.readable = 0;
         iv.load_fault = 0;
         iv.write_first = 0;
+        iv.mem_wstrb = 0;
         iv.req_flush = 0;           // init flush request
         iv.req_flush_addr = 0;   // [0]=1 flush all
         iv.req_flush_cnt = 0;
@@ -230,6 +235,7 @@ private:
 
     struct BusRegistersType {
         sc_signal<sc_uint<2>> state;
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> mpu_addr;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> burst_addr;
         sc_signal<sc_uint<8>> burst_cnt;
     } vbus, rbus;
