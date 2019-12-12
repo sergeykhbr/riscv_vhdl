@@ -34,15 +34,16 @@ SC_MODULE(DCacheLru) {
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_req_addr;
     sc_in<sc_uint<BUS_DATA_WIDTH>> i_req_wdata;
     sc_in<sc_uint<BUS_DATA_BYTES>> i_req_wstrb;
-    sc_out<bool> o_req_ctrl_ready;
-    sc_out<bool> o_resp_ctrl_valid;
-    sc_out<sc_uint<BUS_ADDR_WIDTH>> o_resp_ctrl_addr;
-    sc_out<sc_uint<RISCV_ARCH>> o_resp_ctrl_data;
-    sc_out<bool> o_resp_ctrl_load_fault;
-    sc_out<bool> o_resp_ctrl_executable;
-    sc_out<bool> o_resp_ctrl_writable;
-    sc_out<bool> o_resp_ctrl_readable;
-    sc_in<bool> i_resp_ctrl_ready;
+    sc_out<bool> o_req_ready;
+    sc_out<bool> o_resp_valid;
+    sc_out<sc_uint<BUS_ADDR_WIDTH>> o_resp_addr;
+    sc_out<sc_uint<RISCV_ARCH>> o_resp_data;
+    sc_out<sc_uint<BUS_ADDR_WIDTH>> o_resp_er_addr;
+    sc_out<bool> o_resp_er_load_fault;
+    sc_out<bool> o_resp_er_store_fault;
+    sc_out<bool> o_resp_er_mpu_load;        // No access rights to read/execute
+    sc_out<bool> o_resp_er_mpu_store;       // No access rights to write
+    sc_in<bool> i_resp_ready;
     // Memory interface:
     sc_in<bool> i_req_mem_ready;
     sc_out<bool> o_req_mem_valid;
@@ -53,19 +54,19 @@ SC_MODULE(DCacheLru) {
     sc_out<sc_uint<8>> o_req_mem_len;       // burst transactions num
     sc_out<sc_uint<2>> o_req_mem_burst;     // "01" INCR; "10" burst WRAP
     sc_out<bool> o_req_mem_last;            // last in sequence flag
-    sc_in<bool> i_resp_mem_data_valid;
-    sc_in<sc_uint<BUS_DATA_WIDTH>> i_resp_mem_data;
-    sc_in<bool> i_resp_mem_load_fault;
+    sc_in<bool> i_mem_data_valid;
+    sc_in<sc_uint<BUS_DATA_WIDTH>> i_mem_data;
+    sc_in<bool> i_mem_load_fault;
+    sc_in<bool> i_mem_store_fault;
     // Mpu interface
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_mpu_addr;
     sc_in<bool> i_mpu_cachable;
-    sc_in<bool> i_mpu_executable;
-    sc_in<bool> i_mpu_writable;
-    sc_in<bool> i_mpu_readable;
+    sc_in<bool> i_mpu_writable;             // Writable region
+    sc_in<bool> i_mpu_readable;             // Readable/Executable region
     // Debug interface
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_flush_address;
     sc_in<bool> i_flush_valid;
-    sc_out<sc_uint<2>> o_istate;
+    sc_out<sc_uint<4>> o_state;
 
     void comb();
     void registers();
@@ -92,24 +93,21 @@ SC_MODULE(DCacheLru) {
 
     sc_signal<bool> line_cs_i;
     sc_signal<sc_uint<BUS_ADDR_WIDTH>> line_addr_i;
-    sc_signal<bool> line_wdirty_i;
     sc_signal<sc_biguint<4*BUS_DATA_WIDTH>> line_wdata_i;
     sc_signal<sc_uint<4*BUS_DATA_BYTES>> line_wstrb_i;
+    sc_signal<sc_uint<DTAG_FL_TOTAL>> line_wflags_i;
     sc_signal<bool> line_flush_i;
     sc_signal<sc_uint<BUS_ADDR_WIDTH>> line_raddr_o;
     sc_signal<sc_biguint<4*BUS_DATA_WIDTH>> line_rdata_o;
+    sc_signal<sc_uint<DTAG_FL_TOTAL>> line_rflags_o;
     sc_signal<bool> line_rvalid_o;
     sc_signal<bool> line_hit_o;
-    sc_signal<bool> line_rdirty_o;
-    sc_signal<bool> line_rload_fault_o;
-    sc_signal<bool> line_rexecutable_o;
-    sc_signal<bool> line_rreadable_o;
-    sc_signal<bool> line_rwritable_o;
 
     struct RegistersType {
         sc_signal<bool> requested;
         sc_signal<bool> req_write;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_addr;
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_addr_z;  // to support delayed store error response
         sc_signal<sc_uint<BUS_DATA_WIDTH>> req_wdata;
         sc_signal<sc_uint<BUS_DATA_BYTES>> req_wstrb;
         sc_signal<sc_uint<4>> state;
@@ -119,7 +117,6 @@ SC_MODULE(DCacheLru) {
         sc_signal<sc_uint<2>> burst_cnt;
         sc_signal<sc_uint<4>> burst_rstrb;
         sc_signal<bool> cached;
-        sc_signal<bool> executable;
         sc_signal<bool> writable;
         sc_signal<bool> readable;
         sc_signal<bool> load_fault;
@@ -137,6 +134,7 @@ SC_MODULE(DCacheLru) {
         iv.requested = 0;
         iv.req_write = 0;
         iv.req_addr = 0;
+        iv.req_addr_z = 0;
         iv.req_wdata = 0;
         iv.req_wstrb = 0;
         iv.state = State_Flush;
@@ -146,7 +144,6 @@ SC_MODULE(DCacheLru) {
         iv.burst_cnt = 0;
         iv.burst_rstrb = ~0ul;
         iv.cached = 0;
-        iv.executable = 0;
         iv.writable = 0;
         iv.readable = 0;
         iv.load_fault = 0;
@@ -192,15 +189,16 @@ private:
     sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_req_addr;
     sc_signal<sc_uint<BUS_DATA_WIDTH>> wb_req_wdata;
     sc_signal<sc_uint<BUS_DATA_BYTES>> wb_req_wstrb;
-    sc_signal<bool> w_req_ctrl_ready;
-    sc_signal<bool> w_resp_ctrl_valid;
-    sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_resp_ctrl_addr;
-    sc_signal<sc_uint<RISCV_ARCH>> wb_resp_ctrl_data;
-    sc_signal<bool> w_resp_ctrl_load_fault;
-    sc_signal<bool> w_resp_ctrl_executable;
-    sc_signal<bool> w_resp_ctrl_writable;
-    sc_signal<bool> w_resp_ctrl_readable;
-    sc_signal<bool> w_resp_ctrl_ready;
+    sc_signal<bool> w_req_ready;
+    sc_signal<bool> w_resp_valid;
+    sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_resp_addr;
+    sc_signal<sc_uint<RISCV_ARCH>> wb_resp_data;
+    sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_resp_er_addr;
+    sc_signal<bool> w_resp_er_load_fault;
+    sc_signal<bool> w_resp_er_store_fault;
+    sc_signal<bool> w_resp_er_mpu_load;
+    sc_signal<bool> w_resp_er_mpu_store;
+    sc_signal<bool> w_resp_ready;
     // Memory interface:
     sc_signal<bool> w_req_mem_ready;
     sc_signal<bool> w_req_mem_valid;
@@ -211,17 +209,17 @@ private:
     sc_signal<sc_uint<8>> wb_req_mem_len;       // burst transactions num
     sc_signal<sc_uint<2>> wb_req_mem_burst;     // "01" INCR; "10" burst WRAP
     sc_signal<bool> w_req_mem_last;            // last in sequence flag
-    sc_signal<bool> w_resp_mem_data_valid;
-    sc_signal<sc_uint<BUS_DATA_WIDTH>> wb_resp_mem_data;
-    sc_signal<bool> w_resp_mem_load_fault;
+    sc_signal<bool> w_mem_data_valid;
+    sc_signal<sc_uint<BUS_DATA_WIDTH>> wb_mem_data;
+    sc_signal<bool> w_mem_load_fault;
+    sc_signal<bool> w_mem_store_fault;
     sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_mpu_addr;
     sc_signal<bool> w_mpu_cachable;
-    sc_signal<bool> w_mpu_executable;
     sc_signal<bool> w_mpu_writable;
     sc_signal<bool> w_mpu_readable;
     sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_flush_address;
     sc_signal<bool> w_flush_valid;
-    sc_signal<sc_uint<2>> wb_istate;
+    sc_signal<sc_uint<4>> wb_state;
 
     struct RegistersType {
         sc_signal<sc_uint<32>> clk_cnt;

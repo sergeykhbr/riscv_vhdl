@@ -27,20 +27,12 @@ TagMemNWay::TagMemNWay(sc_module_name name_, bool async_reset)
     i_addr("i_addr"),
     i_wdata("i_wdata"),
     i_wstrb("i_wstrb"),
-    i_wdirty("i_wdirty"),
-    i_wload_fault("i_wload_fault"),
-    i_wexecutable("i_wexecutable"),
-    i_wreadable("i_wreadable"),
-    i_wwritable("i_wwritable"),
+    i_wflags("i_wflags"),
     o_raddr("o_raddr"),
     o_rdata("o_rdata"),
+    o_rflags("o_rflags"),
     o_rvalid("o_rvalid"),
-    o_hit("o_hit"),
-    o_rdirty("o_rdirty"),
-    o_rload_fault("o_rload_fault"),
-    o_rexecutable("o_rexecutable"),
-    o_rreadable("o_rreadable"),
-    o_rwritable("o_rwritable") {
+    o_hit("o_hit") {
     async_reset_ = async_reset;
 
     char tstr1[32] = "way0";
@@ -78,11 +70,7 @@ TagMemNWay::TagMemNWay(sc_module_name name_, bool async_reset)
     sensitive << i_addr;
     sensitive << i_wdata;
     sensitive << i_wstrb;
-    sensitive << i_wdirty;
-    sensitive << i_wload_fault;
-    sensitive << i_wexecutable;
-    sensitive << i_wreadable;
-    sensitive << i_wwritable;
+    sensitive << i_wflags;
     for (int i = 0; i < DCACHE_WAYS; i++) {
         sensitive << way_o[i].raddr;
         sensitive << way_o[i].rdata;
@@ -111,7 +99,7 @@ void TagMemNWay::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_cs, i_cs.name());
         sc_trace(o_vcd, i_flush, i_flush.name());
         sc_trace(o_vcd, i_addr, i_addr.name());
-        sc_trace(o_vcd, i_wdirty, i_wdirty.name());
+        sc_trace(o_vcd, i_wflags, i_wflags.name());
         sc_trace(o_vcd, i_wdata, i_wdata.name());
         sc_trace(o_vcd, i_wstrb, i_wstrb.name());
         sc_trace(o_vcd, o_rvalid, o_rvalid.name());
@@ -138,7 +126,6 @@ void TagMemNWay::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 void TagMemNWay::comb() {
     sc_uint<2> vb_wayidx;
     sc_uint<CFG_DLOG2_LINES_PER_WAY> vb_lineadr;
-    sc_uint<DTAG_FL_TOTAL> vb_wflags;
     bool v_lrui_we;
     bool hit;
 
@@ -169,8 +156,6 @@ void TagMemNWay::comb() {
     mux_rflags = way_o[vb_wayidx.to_int()].rflags;
     mux_valid = way_o[vb_wayidx.to_int()].valid;
 
-    vb_wflags[DTAG_FL_DIRTY] = i_wdirty.read();
-    vb_wflags[DTAG_FL_LOAD_FAULT] = i_wload_fault.read();
     for (int i = 0; i < DCACHE_WAYS; i++) {
         way_i[i].valid = !i_flush.read();
         way_i[i].addr = i_addr.read();
@@ -182,7 +167,7 @@ void TagMemNWay::comb() {
         } else {
             way_i[i].wstrb = 0;
         }
-        way_i[i].wflags = vb_wflags;
+        way_i[i].wflags = i_wflags.read();
     }
 
     lrui_flush = i_flush.read();
@@ -196,13 +181,9 @@ void TagMemNWay::comb() {
 
     o_raddr = mux_raddr;
     o_rdata = mux_rdata;
+    o_rflags = mux_rflags;
     o_rvalid = mux_valid;
     o_hit = hit;
-    o_rdirty = mux_rflags[DTAG_FL_DIRTY];
-    o_rload_fault = mux_rflags[DTAG_FL_LOAD_FAULT];
-    o_rexecutable = 0;
-    o_rreadable = 0;
-    o_rwritable = 0;
 }
 
 void TagMemNWay::registers() {

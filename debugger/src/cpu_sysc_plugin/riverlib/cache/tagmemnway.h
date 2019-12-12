@@ -33,20 +33,12 @@ SC_MODULE(TagMemNWay) {
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_addr;
     sc_in<sc_biguint<4*BUS_DATA_WIDTH>> i_wdata;
     sc_in<sc_uint<4*BUS_DATA_BYTES>> i_wstrb;
-    sc_in<bool> i_wdirty;
-    sc_in<bool> i_wload_fault;
-    sc_in<bool> i_wexecutable;
-    sc_in<bool> i_wreadable;
-    sc_in<bool> i_wwritable;
+    sc_in<sc_uint<DTAG_FL_TOTAL>> i_wflags;
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_raddr;
     sc_out<sc_biguint<4*BUS_DATA_WIDTH>> o_rdata;
+    sc_out<sc_uint<DTAG_FL_TOTAL>> o_rflags;
     sc_out<bool> o_rvalid;
     sc_out<bool> o_hit;
-    sc_out<bool> o_rdirty;
-    sc_out<bool> o_rload_fault;
-    sc_out<bool> o_rexecutable;
-    sc_out<bool> o_rreadable;
-    sc_out<bool> o_rwritable;
 
     void comb();
     void registers();
