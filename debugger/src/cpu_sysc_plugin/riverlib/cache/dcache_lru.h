@@ -88,7 +88,8 @@ SC_MODULE(DCacheLru) {
         State_CheckResp,
         State_SetupReadAdr,
         State_WriteLine,
-        State_Flush
+        State_FlushAddr,
+        State_FlushCheck
     };
 
     sc_signal<bool> line_cs_i;
@@ -100,7 +101,6 @@ SC_MODULE(DCacheLru) {
     sc_signal<sc_uint<BUS_ADDR_WIDTH>> line_raddr_o;
     sc_signal<sc_biguint<4*BUS_DATA_WIDTH>> line_rdata_o;
     sc_signal<sc_uint<DTAG_FL_TOTAL>> line_rflags_o;
-    sc_signal<bool> line_rvalid_o;
     sc_signal<bool> line_hit_o;
 
     struct RegistersType {
@@ -121,13 +121,15 @@ SC_MODULE(DCacheLru) {
         sc_signal<bool> readable;
         sc_signal<bool> load_fault;
         sc_signal<bool> write_first;
+        sc_signal<bool> write_flush;
         sc_signal<sc_uint<BUS_DATA_BYTES>> mem_wstrb;
         sc_signal<bool> req_flush;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_flush_addr;
-        sc_signal<sc_uint<CFG_IINDEX_WIDTH>> req_flush_cnt;
-        sc_signal<sc_uint<CFG_IINDEX_WIDTH>> flush_cnt;
+        sc_signal<sc_uint<CFG_IINDEX_WIDTH + CFG_DLOG2_NWAYS>> req_flush_cnt;
+        sc_signal<sc_uint<CFG_IINDEX_WIDTH + CFG_DLOG2_NWAYS>> flush_cnt;
         sc_signal<sc_biguint<4*BUS_DATA_WIDTH>> cache_line_i;
         sc_signal<sc_biguint<4*BUS_DATA_WIDTH>> cache_line_o;
+        sc_signal<bool> init;   // remove xxx from memory simulation
     } v, r;
 
     void R_RESET(RegistersType &iv) {
@@ -137,7 +139,7 @@ SC_MODULE(DCacheLru) {
         iv.req_addr_z = 0;
         iv.req_wdata = 0;
         iv.req_wstrb = 0;
-        iv.state = State_Flush;
+        iv.state = State_FlushAddr;
         iv.req_mem_valid = 0;
         iv.mem_write = 0;
         iv.mem_addr = 0;
@@ -148,6 +150,7 @@ SC_MODULE(DCacheLru) {
         iv.readable = 0;
         iv.load_fault = 0;
         iv.write_first = 0;
+        iv.write_flush = 0;
         iv.mem_wstrb = 0;
         iv.req_flush = 0;           // init flush request
         iv.req_flush_addr = 0;   // [0]=1 flush all
@@ -155,6 +158,7 @@ SC_MODULE(DCacheLru) {
         iv.flush_cnt = ~0ul;
         iv.cache_line_i = 0;
         iv.cache_line_o = 0;
+        iv.init = 1;
     }
 
     TagMemNWay *mem;

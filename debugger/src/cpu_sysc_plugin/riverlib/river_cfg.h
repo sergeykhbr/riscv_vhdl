@@ -87,9 +87,10 @@ static const int DTAG_START = DINDEX_START + CFG_DLOG2_LINES_PER_WAY;
 static const int DTAG_SIZE  = BUS_ADDR_WIDTH - DTAG_START;
 static const int DTAG_END   = BUS_ADDR_WIDTH - 1;
 
-static const int DTAG_FL_DIRTY      = 0;
-static const int DTAG_FL_LOAD_FAULT = 1;
-static const int DTAG_FL_TOTAL      = 2;
+static const int TAG_FL_VALID       = 0;    // always 0
+static const int DTAG_FL_DIRTY      = 1;
+static const int DTAG_FL_LOAD_FAULT = 2;
+static const int DTAG_FL_TOTAL      = 3;
 
 /** MPU config */
 static const int CFG_MPU_TBL_WIDTH   = 2;    // [1:0]  log2(MPU_TBL_SIZE)

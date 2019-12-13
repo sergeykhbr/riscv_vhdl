@@ -37,7 +37,6 @@ SC_MODULE(TagMemNWay) {
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_raddr;
     sc_out<sc_biguint<4*BUS_DATA_WIDTH>> o_rdata;
     sc_out<sc_uint<DTAG_FL_TOTAL>> o_rflags;
-    sc_out<bool> o_rvalid;
     sc_out<bool> o_hit;
 
     void comb();
@@ -56,13 +55,11 @@ SC_MODULE(TagMemNWay) {
         sc_signal<sc_uint<4*BUS_DATA_BYTES>> wstrb;
         sc_signal<sc_biguint<4*BUS_DATA_WIDTH>> wdata;
         sc_signal<sc_uint<DTAG_FL_TOTAL>> wflags;
-        sc_signal<bool> valid;
     };
    struct WayOutType {
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> raddr;
         sc_signal<sc_biguint<4*BUS_DATA_WIDTH>> rdata;
         sc_signal<sc_uint<DTAG_FL_TOTAL>> rflags;
-        sc_signal<bool> valid;
         sc_signal<bool> hit;
     };
 
@@ -82,7 +79,6 @@ SC_MODULE(TagMemNWay) {
     sc_uint<BUS_ADDR_WIDTH> mux_raddr;
     sc_biguint<4*BUS_DATA_WIDTH> mux_rdata;
     sc_uint<DTAG_FL_TOTAL> mux_rflags;
-    bool mux_valid;
 
     struct RegistersType {
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_addr;

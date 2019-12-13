@@ -38,11 +38,9 @@ SC_MODULE(TagWayMem) {
     sc_in<sc_uint<dbytes>> i_wstrb;
     sc_in<sc_biguint<8*dbytes>> i_wdata;
     sc_in<sc_uint<flbits>> i_wflags;
-    sc_in<bool> i_valid;
     sc_out<sc_uint<abus>> o_raddr;
     sc_out<sc_biguint<8*dbytes>> o_rdata;
     sc_out<sc_uint<flbits>> o_rflags;
-    sc_out<bool> o_valid;
     sc_out<bool> o_hit;
 
     void comb();
@@ -58,11 +56,9 @@ SC_MODULE(TagWayMem) {
         i_wstrb("i_wstrb"),
         i_wdata("i_wdata"),
         i_wflags("i_wflags"),
-        i_valid("i_valid"),
         o_raddr("o_raddr"),
         o_rdata("o_rdata"),
         o_rflags("o_rflags"),
-        o_valid("o_valid"),
         o_hit("o_hit") {
         async_reset_ = async_reset;
         wayidx_ = wayidx;
@@ -91,7 +87,6 @@ SC_MODULE(TagWayMem) {
         sensitive << i_wstrb;
         sensitive << i_wdata;
         sensitive << i_wflags;
-        sensitive << i_valid;
         sensitive << tago_rdata;
         for (int i = 0; i < dbytes; i++) {
             sensitive << datao_rdata[i];
@@ -114,7 +109,7 @@ SC_MODULE(TagWayMem) {
 
  private:
 
-    static const int TAG_WITH_FLAGS = tagbits + flbits + 1;
+    static const int TAG_WITH_FLAGS = tagbits + flbits;
 
     ram<ibits, 8> *datax[dbytes];
     ram<ibits, TAG_WITH_FLAGS> *tag0;
@@ -144,7 +139,6 @@ void TagWayMem<abus, ibits, dbytes, tagbits, flbits>::generateVCD(
         sc_trace(o_vcd, i_wstrb, i_wstrb.name());
         sc_trace(o_vcd, i_wdata, i_wdata.name());
         sc_trace(o_vcd, i_wflags, i_wflags.name());
-        sc_trace(o_vcd, i_valid, i_valid.name());
         sc_trace(o_vcd, o_rdata, o_rdata.name());
         sc_trace(o_vcd, o_rflags, o_rflags.name());
 
@@ -174,8 +168,7 @@ void TagWayMem<abus, ibits, dbytes, tagbits, flbits>::comb() {
     }
 
     t_tago_tag = tago_rdata.read()(tagbits-1, 0);
-    if (rb_tagi.read() == t_tago_tag
-        && tago_rdata.read()[TAG_WITH_FLAGS-1] == 1) {
+    if (rb_tagi.read() == t_tago_tag) {
         v_hit = 1;
     }
 
@@ -187,8 +180,7 @@ void TagWayMem<abus, ibits, dbytes, tagbits, flbits>::comb() {
     vb_index = i_addr.read()(abus - tagbits - 1, abus - tagbits - ibits);
     tagi_we = i_wstrb.read().or_reduce();
     vb_tagi_wdata(tagbits-1, 0) = i_addr.read()(abus - 1, abus - tagbits);
-    vb_tagi_wdata(TAG_WITH_FLAGS-2, tagbits) = i_wflags.read();
-    vb_tagi_wdata[TAG_WITH_FLAGS-1] = i_valid.read();
+    vb_tagi_wdata(TAG_WITH_FLAGS-1, tagbits) = i_wflags.read();
 
     if (!async_reset_ && i_nrst.read() == 0) {
         vb_tagi_wdata = 0;
@@ -200,8 +192,7 @@ void TagWayMem<abus, ibits, dbytes, tagbits, flbits>::comb() {
 
     o_raddr = vb_raddr;
     o_rdata = vb_rdata;
-    o_rflags = tago_rdata.read()(TAG_WITH_FLAGS-2, tagbits);
-    o_valid = tago_rdata.read()[TAG_WITH_FLAGS-1];
+    o_rflags = tago_rdata.read()(TAG_WITH_FLAGS-1, tagbits);
     o_hit = v_hit;
 }
 

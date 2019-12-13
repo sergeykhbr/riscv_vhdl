@@ -31,7 +31,6 @@ TagMemNWay::TagMemNWay(sc_module_name name_, bool async_reset)
     o_raddr("o_raddr"),
     o_rdata("o_rdata"),
     o_rflags("o_rflags"),
-    o_rvalid("o_rvalid"),
     o_hit("o_hit") {
     async_reset_ = async_reset;
 
@@ -49,11 +48,9 @@ TagMemNWay::TagMemNWay(sc_module_name name_, bool async_reset)
         wayx[i]->i_wstrb(way_i[i].wstrb);
         wayx[i]->i_wdata(way_i[i].wdata);
         wayx[i]->i_wflags(way_i[i].wflags);
-        wayx[i]->i_valid(way_i[i].valid);
         wayx[i]->o_raddr(way_o[i].raddr);
         wayx[i]->o_rdata(way_o[i].rdata);
         wayx[i]->o_rflags(way_o[i].rflags);
-        wayx[i]->o_valid(way_o[i].valid);
         wayx[i]->o_hit(way_o[i].hit);
     }
 
@@ -75,7 +72,6 @@ TagMemNWay::TagMemNWay(sc_module_name name_, bool async_reset)
         sensitive << way_o[i].raddr;
         sensitive << way_o[i].rdata;
         sensitive << way_o[i].rflags;
-        sensitive << way_o[i].valid;
         sensitive << way_o[i].hit;
     }
     sensitive << lruo_lru;
@@ -102,15 +98,14 @@ void TagMemNWay::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_wflags, i_wflags.name());
         sc_trace(o_vcd, i_wdata, i_wdata.name());
         sc_trace(o_vcd, i_wstrb, i_wstrb.name());
-        sc_trace(o_vcd, o_rvalid, o_rvalid.name());
         sc_trace(o_vcd, o_hit, o_hit.name());
         sc_trace(o_vcd, o_rdata, o_rdata.name());
 
         std::string pn(name());
-        sc_trace(o_vcd, way_o[0].valid, pn + ".valid0");
-        sc_trace(o_vcd, way_o[1].valid, pn + ".valid1");
-        sc_trace(o_vcd, way_o[2].valid, pn + ".valid2");
-        sc_trace(o_vcd, way_o[3].valid, pn + ".valid3");
+        sc_trace(o_vcd, way_o[0].rflags, pn + ".rflags0");
+        sc_trace(o_vcd, way_o[1].rflags, pn + ".rflags1");
+        sc_trace(o_vcd, way_o[2].rflags, pn + ".rflags2");
+        sc_trace(o_vcd, way_o[3].rflags, pn + ".rflags3");
         sc_trace(o_vcd, way_o[0].hit, pn + ".hit0");
         sc_trace(o_vcd, way_o[1].hit, pn + ".hit1");
         sc_trace(o_vcd, way_o[2].hit, pn + ".hit2");
@@ -124,7 +119,7 @@ void TagMemNWay::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void TagMemNWay::comb() {
-    sc_uint<2> vb_wayidx;
+    sc_uint<2> vb_wayidx_o;
     sc_uint<CFG_DLOG2_LINES_PER_WAY> vb_lineadr;
     bool v_lrui_we;
     bool hit;
@@ -142,27 +137,32 @@ void TagMemNWay::comb() {
         }
     }
 
-    vb_wayidx = lruo_lru.read();
+    vb_wayidx_o = lruo_lru.read();
     for (int i = 0; i < DCACHE_WAYS; i++) {
-        if (way_o[i].hit.read() == 1) {
-            vb_wayidx = i;
-            v_lrui_we = r.re.read();
+        if (i_flush.read() == 1) {
+            // Use lsb address part for the way selection
+            vb_wayidx_o = i_addr.read()(CFG_DLOG2_NWAYS-1, 0);
+        } else if (way_o[i].hit.read() == 1 &&
+                   way_o[i].rflags.read()[TAG_FL_VALID] == 1) {
             hit = 1;
+            vb_wayidx_o = i;
+            v_lrui_we = r.re.read();
         }
     }
 
-    mux_raddr = way_o[vb_wayidx.to_int()].raddr;
-    mux_rdata = way_o[vb_wayidx.to_int()].rdata;
-    mux_rflags = way_o[vb_wayidx.to_int()].rflags;
-    mux_valid = way_o[vb_wayidx.to_int()].valid;
+    mux_raddr = way_o[vb_wayidx_o.to_int()].raddr;
+    mux_rdata = way_o[vb_wayidx_o.to_int()].rdata;
+    mux_rflags = way_o[vb_wayidx_o.to_int()].rflags;
 
+    /**
+        Warning: we can write only into previously read line,
+                 if the previuosly read line is hit and contains valid flags
+                 HIGH we modify it. Otherwise, we write into displacing line.
+    */
     for (int i = 0; i < DCACHE_WAYS; i++) {
-        way_i[i].valid = !i_flush.read();
         way_i[i].addr = i_addr.read();
         way_i[i].wdata = i_wdata.read();
-        if (i_flush.read() == 1) {
-            way_i[i].wstrb = ~0ul;
-        } else if (i_cs.read() == 1 && vb_wayidx == i) {
+        if ((i_flush.read() == 1 || i_cs.read() == 1) && vb_wayidx_o == i) {
             way_i[i].wstrb = i_wstrb.read();
         } else {
             way_i[i].wstrb = 0;
@@ -173,7 +173,7 @@ void TagMemNWay::comb() {
     lrui_flush = i_flush.read();
     lrui_addr = vb_lineadr;
     lrui_we = v_lrui_we;
-    lrui_lru = vb_wayidx;
+    lrui_lru = vb_wayidx_o;
 
     if (!async_reset_ && i_nrst.read() == 0) {
         R_RESET(v);
@@ -182,7 +182,6 @@ void TagMemNWay::comb() {
     o_raddr = mux_raddr;
     o_rdata = mux_rdata;
     o_rflags = mux_rflags;
-    o_rvalid = mux_valid;
     o_hit = hit;
 }
 
