@@ -79,6 +79,7 @@ SC_MODULE(DCacheLru) {
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
  private:
+
     enum EState {
         State_Idle,
         State_CheckHit,
@@ -87,19 +88,19 @@ SC_MODULE(DCacheLru) {
         State_WaitResp,
         State_CheckResp,
         State_SetupReadAdr,
-        State_WriteLine,
+        State_WriteBus,
         State_FlushAddr,
         State_FlushCheck
     };
 
     sc_signal<bool> line_cs_i;
     sc_signal<sc_uint<BUS_ADDR_WIDTH>> line_addr_i;
-    sc_signal<sc_biguint<4*BUS_DATA_WIDTH>> line_wdata_i;
-    sc_signal<sc_uint<4*BUS_DATA_BYTES>> line_wstrb_i;
+    sc_signal<sc_biguint<DCACHE_LINE_BITS>> line_wdata_i;
+    sc_signal<sc_uint<(1<<CFG_DLOG2_BYTES_PER_LINE)>> line_wstrb_i;
     sc_signal<sc_uint<DTAG_FL_TOTAL>> line_wflags_i;
     sc_signal<bool> line_flush_i;
     sc_signal<sc_uint<BUS_ADDR_WIDTH>> line_raddr_o;
-    sc_signal<sc_biguint<4*BUS_DATA_WIDTH>> line_rdata_o;
+    sc_signal<sc_biguint<DCACHE_LINE_BITS>> line_rdata_o;
     sc_signal<sc_uint<DTAG_FL_TOTAL>> line_rflags_o;
     sc_signal<bool> line_hit_o;
 
@@ -114,8 +115,8 @@ SC_MODULE(DCacheLru) {
         sc_signal<bool> req_mem_valid;
         sc_signal<bool> mem_write;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> mem_addr;
-        sc_signal<sc_uint<2>> burst_cnt;
-        sc_signal<sc_uint<4>> burst_rstrb;
+        sc_signal<sc_uint<DCACHE_LOG2_BURST_LEN>> burst_cnt;
+        sc_signal<sc_uint<DCACHE_BURST_LEN>> burst_rstrb;
         sc_signal<bool> cached;
         sc_signal<bool> writable;
         sc_signal<bool> readable;
@@ -125,10 +126,10 @@ SC_MODULE(DCacheLru) {
         sc_signal<sc_uint<BUS_DATA_BYTES>> mem_wstrb;
         sc_signal<bool> req_flush;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_flush_addr;
-        sc_signal<sc_uint<CFG_IINDEX_WIDTH + CFG_DLOG2_NWAYS>> req_flush_cnt;
-        sc_signal<sc_uint<CFG_IINDEX_WIDTH + CFG_DLOG2_NWAYS>> flush_cnt;
-        sc_signal<sc_biguint<4*BUS_DATA_WIDTH>> cache_line_i;
-        sc_signal<sc_biguint<4*BUS_DATA_WIDTH>> cache_line_o;
+        sc_signal<sc_uint<CFG_DLOG2_LINES_PER_WAY + CFG_DLOG2_NWAYS>> req_flush_cnt;
+        sc_signal<sc_uint<CFG_DLOG2_LINES_PER_WAY + CFG_DLOG2_NWAYS>> flush_cnt;
+        sc_signal<sc_biguint<DCACHE_LINE_BITS>> cache_line_i;
+        sc_signal<sc_biguint<DCACHE_LINE_BITS>> cache_line_o;
         sc_signal<bool> init;   // remove xxx from memory simulation
     } v, r;
 
@@ -161,7 +162,11 @@ SC_MODULE(DCacheLru) {
         iv.init = 1;
     }
 
-    TagMemNWay *mem;
+    TagMemNWay<BUS_ADDR_WIDTH,
+               CFG_DLOG2_NWAYS,
+               CFG_DLOG2_LINES_PER_WAY,
+               CFG_DLOG2_BYTES_PER_LINE,
+               DTAG_FL_TOTAL> *mem;
 
     bool async_reset_;
     int index_width_;

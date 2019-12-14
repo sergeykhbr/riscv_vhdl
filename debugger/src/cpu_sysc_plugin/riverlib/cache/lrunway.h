@@ -18,22 +18,20 @@
 #define __DEBUGGER_RIVERLIB_CACHE_MEM_LRUNWAY_H__
 
 #include <systemc.h>
-#include "riscv-isa.h"
-#include "../river_cfg.h"
 
 namespace debugger {
 /**
     abits = Cache lines adress bus (usually 6..8)
-    log2nway = Number of way bitwidth (=2 for 4 ways cache)
+    waybits = Number of way bitwidth (=2 for 4 ways cache)
 */
-template <int abits, int log2nway>
+template <int abits, int waybits>
 SC_MODULE(lrunway) {
     sc_in<bool> i_clk;
     sc_in<bool> i_flush;
     sc_in<sc_uint<abits>> i_addr;
     sc_in<bool> i_we;
-    sc_in<sc_uint<log2nway>> i_lru;
-    sc_out<sc_uint<log2nway>> o_lru;
+    sc_in<sc_uint<waybits>> i_lru;
+    sc_out<sc_uint<waybits>> o_lru;
 
     void comb();
     void registers();
@@ -64,8 +62,8 @@ SC_MODULE(lrunway) {
 
  private:
     static const int LINES_TOTAL = 1 << abits;
-    static const int WAYS_TOTAL = (1 << log2nway);
-    static const int LINE_WIDTH = WAYS_TOTAL * log2nway;
+    static const int WAYS_TOTAL = (1 << waybits);
+    static const int LINE_WIDTH = WAYS_TOTAL * waybits;
 
     sc_signal<sc_uint<abits>> radr;
     sc_uint<LINE_WIDTH> tbl[LINES_TOTAL];
@@ -76,8 +74,8 @@ SC_MODULE(lrunway) {
 };
 
 
-template <int abits, int log2nway>
-void lrunway<abits, log2nway>::generateVCD(sc_trace_file *i_vcd,
+template <int abits, int waybits>
+void lrunway<abits, waybits>::generateVCD(sc_trace_file *i_vcd,
                                      sc_trace_file *o_vcd) {
     if (o_vcd) {
         sc_trace(o_vcd, i_flush, i_flush.name());
@@ -91,40 +89,62 @@ void lrunway<abits, log2nway>::generateVCD(sc_trace_file *i_vcd,
     }
 }
 
-template <int abits, int log2nway>
-void lrunway<abits, log2nway>::comb() {
-    sc_uint<LINE_WIDTH - log2nway> vb_shift;
+template <int abits, int waybits>
+void lrunway<abits, waybits>::comb() {
+    //sc_uint<LINE_WIDTH - waybits> vb_shift;
     sc_uint<LINE_WIDTH> vb_tbl_wdata;
     sc_uint<LINE_WIDTH> vb_tbl_rdata;
     bool v_we;
+    bool shift_ena;
 
     vb_tbl_rdata = tbl[radr.read().to_int()];
 
+    shift_ena = 0;
     v_we = i_we.read();
+    vb_tbl_wdata = vb_tbl_rdata;
     if (i_flush.read() == 1) {
         v_we = 1;
         for (int i = 0; i < WAYS_TOTAL; i++) {
-            vb_tbl_wdata((i+1)*log2nway-1, i*log2nway) = i;
+            vb_tbl_wdata((i+1)*waybits-1, i*waybits) = i;
         }
         //vb_tbl_wdata = 0xe4;        // 0x3, 0x2, 0x1, 0x0
     } else if (i_we.read()) {
 #if 1
-        vb_shift = vb_tbl_rdata(LINE_WIDTH-log2nway-1, 0);  // default
-        if (vb_tbl_rdata(log2nway-1, 0) == i_lru.read()) {
-            vb_shift = vb_tbl_rdata(LINE_WIDTH-1, log2nway);
+        if (vb_tbl_rdata(LINE_WIDTH-1, LINE_WIDTH-waybits) != i_lru.read()) {
+           vb_tbl_wdata(LINE_WIDTH-1, LINE_WIDTH-waybits) = i_lru.read();
+           shift_ena = 1;
+
+           for (int i = WAYS_TOTAL-2; i >= 0; i--) {
+                if (shift_ena == 1) {
+                    vb_tbl_wdata((i+1)*waybits-1, i*waybits) =
+                            vb_tbl_rdata((i+2)*waybits-1, (i+1)*waybits);
+                    if (vb_tbl_rdata((i+1)*waybits-1, i*waybits) == i_lru.read()) {
+                        shift_ena = 0;
+                    }
+                } else {
+                    vb_tbl_wdata((i+1)*waybits-1, i*waybits) =
+                            vb_tbl_rdata((i+1)*waybits-1, i*waybits);
+                }
+            }
+        }
+
+#elif 1
+        vb_shift = vb_tbl_rdata(LINE_WIDTH-waybits-1, 0);  // default
+        if (vb_tbl_rdata(waybits-1, 0) == i_lru.read()) {
+            vb_shift = vb_tbl_rdata(LINE_WIDTH-1, waybits);
         } else {
             // All except first and last elements:
             for (int i = 1; i < WAYS_TOTAL-1; i++) {
-                if (vb_tbl_rdata((i+1)*log2nway-1, i*log2nway) == i_lru.read()) {
-                    vb_shift = (vb_tbl_rdata(LINE_WIDTH-1, (i+1)*log2nway),
-                                vb_tbl_rdata(i*log2nway-1, 0));
+                if (vb_tbl_rdata((i+1)*waybits-1, i*waybits) == i_lru.read()) {
+                    vb_shift = (vb_tbl_rdata(LINE_WIDTH-1, (i+1)*waybits),
+                                vb_tbl_rdata(i*waybits-1, 0));
                 }
             }
         }
         vb_tbl_wdata = (i_lru.read(), vb_shift);
 
 #else
-        sc_assert(log2nway != 2); // TODO: NWAY selector
+        sc_assert(waybits != 2); // TODO: NWAY selector
 
         if (vb_tbl_rdata(7, 6) == i_lru.read()) {
             vb_tbl_wdata = vb_tbl_rdata;
@@ -145,11 +165,11 @@ void lrunway<abits, log2nway>::comb() {
 
     w_we = v_we;
     wb_tbl_wdata = vb_tbl_wdata;
-    o_lru = vb_tbl_rdata(log2nway-1, 0);
+    o_lru = vb_tbl_rdata(waybits-1, 0);
 }
 
-template <int abits, int log2nway>
-void lrunway<abits, log2nway>::registers() {
+template <int abits, int waybits>
+void lrunway<abits, waybits>::registers() {
     radr = i_addr.read();
     wb_tbl_rdata = tbl[i_addr.read().to_int()];
     if (w_we.read() == 1) {
