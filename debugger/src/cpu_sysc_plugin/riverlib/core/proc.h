@@ -57,9 +57,11 @@ SC_MODULE(Processor) {
     sc_in<bool> i_resp_data_valid;                      // DCache response is valid
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_resp_data_addr;    // DCache response address must be equal to the latest request address
     sc_in<sc_uint<BUS_DATA_WIDTH>> i_resp_data_data;    // Read value
+    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_resp_data_store_fault_addr;  // write-error address (B-channel)
     sc_in<bool> i_resp_data_load_fault;                 // Bus response with SLVERR or DECERR on read
     sc_in<bool> i_resp_data_store_fault;                // Bus response with SLVERR or DECERR on write
-    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_resp_data_store_fault_addr;  // write-error address (B-channel)
+    sc_in<bool> i_resp_data_er_mpu_load;
+    sc_in<bool> i_resp_data_er_mpu_store;
     sc_out<bool> o_resp_data_ready;                     // Core is ready to accept response from DCache
     // External interrupt pin
     sc_in<bool> i_ext_irq;                              // PLIC interrupt accordingly with spec
@@ -83,8 +85,10 @@ SC_MODULE(Processor) {
     // Cache debug signals:
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_flush_address;    // Address of instruction to remove from ICache
     sc_out<bool> o_flush_valid;                         // Remove address from ICache is valid
-    sc_in<sc_uint<2>> i_istate;                         // ICache transaction state
-    sc_in<sc_uint<2>> i_dstate;                         // DCache transaction state
+    sc_out<sc_uint<BUS_ADDR_WIDTH>> o_data_flush_address;    // Address of instruction to remove from D$
+    sc_out<bool> o_data_flush_valid;                         // Remove address from D$ is valid
+    sc_in<sc_uint<4>> i_istate;                         // ICache transaction state
+    sc_in<sc_uint<4>> i_dstate;                         // DCache transaction state
     sc_in<sc_uint<2>> i_cstate;                         // CacheTop state machine value
 
     void comb();

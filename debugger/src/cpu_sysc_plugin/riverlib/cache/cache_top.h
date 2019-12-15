@@ -50,9 +50,11 @@ SC_MODULE(CacheTop) {
     sc_out<bool> o_resp_data_valid;                     // DCache response is ready
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_resp_data_addr;   // DCache response address
     sc_out<sc_uint<BUS_DATA_WIDTH>> o_resp_data_data;   // DCache response read data
+    sc_out<sc_uint<BUS_ADDR_WIDTH>> o_resp_data_store_fault_addr;   // AXI B-channel error
     sc_out<bool> o_resp_data_load_fault;                // Bus response ERRSLV or ERRDEC on read
     sc_out<bool> o_resp_data_store_fault;               // Bus response ERRSLV or ERRDEC on write
-    sc_out<sc_uint<BUS_ADDR_WIDTH>> o_resp_data_store_fault_addr;   // AXI B-channel error
+    sc_out<bool> o_resp_data_er_mpu_load;
+    sc_out<bool> o_resp_data_er_mpu_store;
     sc_in<bool> i_resp_data_ready;                      // CPU Core is ready to accept DCache repsonse
     // Memory interface:
     sc_in<bool> i_req_mem_ready;                        // System Bus (AXI) is available
@@ -67,7 +69,7 @@ SC_MODULE(CacheTop) {
     sc_in<sc_uint<BUS_DATA_WIDTH>> i_resp_mem_data;     // Read value
     sc_in<bool> i_resp_mem_load_fault;                  // Bus response with SLVERR or DECERR on read
     sc_in<bool> i_resp_mem_store_fault;                 // Bus response with SLVERR or DECERR on write
-    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_resp_mem_store_fault_addr;
+    //sc_in<sc_uint<BUS_ADDR_WIDTH>> i_resp_mem_store_fault_addr;
     // MPU interface
     sc_in<bool> i_mpu_region_we;
     sc_in<sc_uint<CFG_MPU_TBL_WIDTH>> i_mpu_region_idx;
@@ -77,8 +79,10 @@ SC_MODULE(CacheTop) {
     // Debug signals:
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_flush_address;     // clear ICache address from debug interface
     sc_in<bool> i_flush_valid;                          // address to clear icache is valid
-    sc_out<sc_uint<2>> o_istate;                        // ICache state machine value
-    sc_out<sc_uint<2>> o_dstate;                        // DCache state machine value
+    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_data_flush_address;
+    sc_in<bool> i_data_flush_valid;
+    sc_out<sc_uint<4>> o_istate;                        // ICache state machine value
+    sc_out<sc_uint<4>> o_dstate;                        // DCache state machine value
     sc_out<sc_uint<2>> o_cstate;                        // cachetop state machine value
 
     void comb();
@@ -137,7 +141,7 @@ private:
 
 
     ICacheLru *i1;
-    DCache *d0;
+    DCacheLru *d0;
     MPU *mpu0;
 #ifdef DBG_ICACHE_TB
     ICache_tb *i0_tb;

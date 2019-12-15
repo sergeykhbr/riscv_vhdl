@@ -253,16 +253,16 @@ void MemAccess::comb() {
     bool w_mem_sign_ext;
     sc_uint<2> wb_mem_sz;
     sc_uint<BUS_ADDR_WIDTH> wb_mem_addr;
-    sc_uint<RISCV_ARCH> vb_wdata;
+    sc_uint<BUS_DATA_WIDTH> vb_wdata;
     bool w_hold;
     bool w_valid;
     bool w_queue_re;
     //sc_uint<RISCV_ARCH> wb_mem_data_signext;
     sc_uint<BUS_DATA_WIDTH> vb_mem_wdata;
     sc_uint<BUS_DATA_BYTES> vb_mem_wstrb;
-    sc_uint<RISCV_ARCH> vb_mem_resp_shifted;
-    sc_uint<RISCV_ARCH> vb_mem_data_unsigned;
-    sc_uint<RISCV_ARCH> vb_mem_data_signed;
+    sc_uint<BUS_DATA_WIDTH> vb_mem_resp_shifted;
+    sc_uint<BUS_DATA_WIDTH> vb_mem_data_unsigned;
+    sc_uint<BUS_DATA_WIDTH> vb_mem_data_signed;
     sc_uint<RISCV_ARCH> vb_res_data;
     sc_uint<6> wb_res_addr;
     sc_uint<BUS_ADDR_WIDTH> wb_e_pc;
@@ -414,21 +414,21 @@ void MemAccess::comb() {
     } 
 
     switch (r.memop_size.read()) {
-    case 0:
+    case MEMOP_1B:
         vb_mem_data_unsigned = vb_mem_resp_shifted(7, 0);
         vb_mem_data_signed = vb_mem_resp_shifted(7, 0);
         if (vb_mem_resp_shifted[7]) {
             vb_mem_data_signed(63, 8) = ~0;
         }
         break;
-    case 1:
+    case MEMOP_2B:
         vb_mem_data_unsigned = vb_mem_resp_shifted(15, 0);
         vb_mem_data_signed = vb_mem_resp_shifted(15, 0);
         if (vb_mem_resp_shifted[15]) {
             vb_mem_data_signed(63, 16) = ~0;
         }
         break;
-    case 2:
+    case MEMOP_4B:
         vb_mem_data_unsigned = vb_mem_resp_shifted(31, 0);
         vb_mem_data_signed = vb_mem_resp_shifted(31, 0);
         if (i_mem_data.read()[31]) {
@@ -440,36 +440,10 @@ void MemAccess::comb() {
         vb_mem_data_signed = vb_mem_resp_shifted;
     }
 
-
-    /*switch (r.memop_size.read()) {
-    case MEMOP_1B:
-        wb_mem_data_signext = i_mem_data;
-        if (i_mem_data.read()[7]) {
-            wb_mem_data_signext(63, 8) = ~0;
-        }
-        break;
-    case MEMOP_2B:
-        wb_mem_data_signext = i_mem_data;
-        if (i_mem_data.read()[15]) {
-            wb_mem_data_signext(63, 16) = ~0;
-        }
-        break;
-    case MEMOP_4B:
-        wb_mem_data_signext = i_mem_data;
-        if (i_mem_data.read()[31]) {
-            wb_mem_data_signext(63, 32) = ~0;
-        }
-        break;
-    default:
-        wb_mem_data_signext = i_mem_data;
-    }*/
-
     if (r.memop_r.read() == 1) {
         if (r.memop_sign_ext.read() == 1) {
-            //wb_res_data = wb_mem_data_signext;
             vb_wdata = vb_mem_data_signed;
         } else {
-            //wb_res_data = i_mem_data;
             vb_wdata = vb_mem_data_unsigned;
         }
     } else {

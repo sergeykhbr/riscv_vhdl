@@ -41,9 +41,11 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     i_resp_data_valid("i_resp_data_valid"),
     i_resp_data_addr("i_resp_data_addr"),
     i_resp_data_data("i_resp_data_data"),
+    i_resp_data_store_fault_addr("i_resp_data_store_fault_addr"),
     i_resp_data_load_fault("i_resp_data_load_fault"),
     i_resp_data_store_fault("i_resp_data_store_fault"),
-    i_resp_data_store_fault_addr("i_resp_data_store_fault_addr"),
+    i_resp_data_er_mpu_load("i_resp_data_er_mpu_load"),
+    i_resp_data_er_mpu_store("i_resp_data_er_mpu_store"),
     o_resp_data_ready("o_resp_data_ready"),
     i_ext_irq("i_ext_irq"),
     o_time("o_time"),
@@ -63,6 +65,8 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     o_halted("o_halted"),
     o_flush_address("o_flush_address"),
     o_flush_valid("o_flush_valid"),
+    o_data_flush_address("o_data_flush_address"),
+    o_data_flush_valid("o_data_flush_valid"),
     i_istate("i_istate"),
     i_dstate("i_dstate"),
     i_cstate("i_cstate") {
@@ -470,6 +474,8 @@ void Processor::comb() {
     } else {
         o_flush_address = dbg.flush_address;
     }
+    o_data_flush_address = 0;
+    o_data_flush_valid = 0;
 
     o_halted = dbg.halt;
 }

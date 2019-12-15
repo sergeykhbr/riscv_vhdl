@@ -40,7 +40,7 @@ SC_MODULE(RiverTop) {
     sc_in<sc_uint<BUS_DATA_WIDTH>> i_resp_mem_data;     // Read data
     sc_in<bool> i_resp_mem_load_fault;
     sc_in<bool> i_resp_mem_store_fault;
-    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_resp_mem_store_fault_addr;
+    //sc_in<sc_uint<BUS_ADDR_WIDTH>> i_resp_mem_store_fault_addr;
     /** Interrupt line from external interrupts controller (PLIC). */
     sc_in<bool> i_ext_irq;
     sc_out<sc_uint<64>> o_time;                         // Clock/Step counter depending attribute "GenerateRef"
@@ -89,6 +89,8 @@ private:
     sc_signal<sc_uint<BUS_DATA_WIDTH>> wb_resp_data_data;
     sc_signal<bool> w_resp_data_load_fault;
     sc_signal<bool> w_resp_data_store_fault;
+    sc_signal<bool> w_resp_data_er_mpu_load;
+    sc_signal<bool> w_resp_data_er_mpu_store;
     sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_resp_data_store_fault_addr;
     sc_signal<bool> w_resp_ctrl_load_fault;
     sc_signal<bool> w_resp_ctrl_executable;
@@ -100,8 +102,10 @@ private:
     sc_signal<sc_uint<CFG_MPU_FL_TOTAL>> wb_mpu_region_flags;
     sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_flush_address;
     sc_signal<bool> w_flush_valid;
-    sc_signal<sc_uint<2>> wb_istate;
-    sc_signal<sc_uint<2>> wb_dstate;
+    sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_data_flush_address;
+    sc_signal<bool> w_data_flush_valid;
+    sc_signal<sc_uint<4>> wb_istate;
+    sc_signal<sc_uint<4>> wb_dstate;
     sc_signal<sc_uint<2>> wb_cstate;
 };
 

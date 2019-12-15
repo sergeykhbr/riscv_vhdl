@@ -105,6 +105,15 @@ void MPU::comb() {
         tbl[0].exec = 1;
         tbl[0].rd = 1;
         tbl[0].wr = 1;
+
+        // All address above 0x80000000 are uncached (IO devices)
+        tbl[0].ena = 1;
+        tbl[0].addr = 0x0000000080000000ull >> CFG_IOFFSET_WIDTH;
+        tbl[0].mask = 0xFFFFFFFF80000000ull >> CFG_IOFFSET_WIDTH;
+        tbl[0].cache = 0;
+        tbl[0].exec = 1;
+        tbl[0].rd = 1;
+        tbl[0].wr = 1;
     }
 
     o_icachable = v_icachable;

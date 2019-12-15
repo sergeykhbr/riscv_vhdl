@@ -18,8 +18,8 @@
 
 namespace debugger {
 
-DCacheLru::DCacheLru(sc_module_name name_, bool async_reset,
-    int index_width) : sc_module(name_),
+DCacheLru::DCacheLru(sc_module_name name_, bool async_reset)
+    : sc_module(name_),
     i_clk("i_clk"),
     i_nrst("i_nrst"),
     i_req_valid("i_req_valid"),
@@ -58,7 +58,6 @@ DCacheLru::DCacheLru(sc_module_name name_, bool async_reset,
     i_flush_valid("i_flush_valid"),
     o_state("o_state") {
     async_reset_ = async_reset;
-    index_width_ = index_width;
 
     mem = new TagMemNWay<BUS_ADDR_WIDTH,
                          CFG_DLOG2_NWAYS,
@@ -480,6 +479,7 @@ void DCacheLru::comb() {
                     v.state = State_WaitGrant;
                 } else {
                     // Non-cached write
+                    v_resp_valid = 1;
                     v.state = State_Idle;
                 }
             } else {

@@ -64,8 +64,8 @@ SC_MODULE(DbgPort) {
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_flush_address;    // Address of instruction to remove from ICache
     sc_out<bool> o_flush_valid;                         // Remove address from ICache is valid
     // Cache debug signals:
-    sc_in<sc_uint<2>> i_istate;                         // ICache transaction state
-    sc_in<sc_uint<2>> i_dstate;                         // DCache transaction state
+    sc_in<sc_uint<4>> i_istate;                         // ICache transaction state
+    sc_in<sc_uint<4>> i_dstate;                         // DCache transaction state
     sc_in<sc_uint<2>> i_cstate;                         // CacheTop state machine value
 
     void comb();

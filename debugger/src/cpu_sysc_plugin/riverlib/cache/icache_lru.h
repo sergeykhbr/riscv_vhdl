@@ -63,7 +63,7 @@ SC_MODULE(ICacheLru) {
     // Debug interface
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_flush_address;
     sc_in<bool> i_flush_valid;
-    sc_out<sc_uint<2>> o_istate;
+    sc_out<sc_uint<4>> o_istate;
 
     void comb();
     void registers();

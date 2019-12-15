@@ -40,9 +40,11 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset) :
     o_resp_data_valid("o_resp_data_valid"),
     o_resp_data_addr("o_resp_data_addr"),
     o_resp_data_data("o_resp_data_data"),
+    o_resp_data_store_fault_addr("o_resp_data_store_fault_addr"),
     o_resp_data_load_fault("o_resp_data_load_fault"),
     o_resp_data_store_fault("o_resp_data_store_fault"),
-    o_resp_data_store_fault_addr("o_resp_data_store_fault_addr"),
+    o_resp_data_er_mpu_load("o_resp_data_er_mpu_load"),
+    o_resp_data_er_mpu_store("o_resp_data_er_mpu_store"),
     i_resp_data_ready("i_resp_data_ready"),
     i_req_mem_ready("i_req_mem_ready"),
     o_req_mem_valid("o_req_mem_valid"),
@@ -56,7 +58,7 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset) :
     i_resp_mem_data("i_resp_mem_data"),
     i_resp_mem_load_fault("i_resp_mem_load_fault"),
     i_resp_mem_store_fault("i_resp_mem_store_fault"),
-    i_resp_mem_store_fault_addr("i_resp_mem_store_fault_addr"),
+    //i_resp_mem_store_fault_addr("i_resp_mem_store_fault_addr"),
     i_mpu_region_we("i_mpu_region_we"),
     i_mpu_region_idx("i_mpu_region_idx"),
     i_mpu_region_addr("i_mpu_region_addr"),
@@ -64,6 +66,8 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset) :
     i_mpu_region_flags("i_mpu_region_flags"),
     i_flush_address("i_flush_address"),
     i_flush_valid("i_flush_valid"),
+    i_data_flush_address("i_data_flush_address"),
+    i_data_flush_valid("i_data_flush_valid"),
     o_istate("o_istate"),
     o_dstate("o_dstate"),
     o_cstate("o_cstate") {
@@ -136,22 +140,24 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset) :
     i1->i_flush_valid(i_flush_valid);
     i1->o_istate(o_istate);
 
-    d0 = new DCache("d0", async_reset);
+    d0 = new DCacheLru("d0", async_reset);
     d0->i_clk(i_clk);
     d0->i_nrst(i_nrst);
-    d0->i_req_data_valid(i_req_data_valid);
-    d0->i_req_data_write(i_req_data_write);
-    d0->i_req_data_addr(i_req_data_addr);
-    d0->i_req_data_wdata(i_req_data_wdata);
-    d0->i_req_data_wstrb(i_req_data_wstrb);
-    d0->o_req_data_ready(o_req_data_ready);
-    d0->o_resp_data_valid(o_resp_data_valid);
-    d0->o_resp_data_addr(o_resp_data_addr);
-    d0->o_resp_data_data(o_resp_data_data);
-    d0->o_resp_data_load_fault(o_resp_data_load_fault);
-    d0->o_resp_data_store_fault(o_resp_data_store_fault);
-    d0->o_resp_data_store_fault_addr(o_resp_data_store_fault_addr);
-    d0->i_resp_data_ready(i_resp_data_ready);
+    d0->i_req_valid(i_req_data_valid);
+    d0->i_req_write(i_req_data_write);
+    d0->i_req_addr(i_req_data_addr);
+    d0->i_req_wdata(i_req_data_wdata);
+    d0->i_req_wstrb(i_req_data_wstrb);
+    d0->o_req_ready(o_req_data_ready);
+    d0->o_resp_valid(o_resp_data_valid);
+    d0->o_resp_addr(o_resp_data_addr);
+    d0->o_resp_data(o_resp_data_data);
+    d0->o_resp_er_addr(o_resp_data_store_fault_addr);
+    d0->o_resp_er_load_fault(o_resp_data_load_fault);
+    d0->o_resp_er_store_fault(o_resp_data_store_fault);
+    d0->o_resp_er_mpu_load(o_resp_data_er_mpu_load);
+    d0->o_resp_er_mpu_store(o_resp_data_er_mpu_store);
+    d0->i_resp_ready(i_resp_data_ready);
     d0->i_req_mem_ready(w_data_req_ready);
     d0->o_req_mem_valid(d.req_mem_valid);
     d0->o_req_mem_write(d.req_mem_write);
@@ -161,16 +167,18 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset) :
     d0->o_req_mem_len(d.req_mem_len);
     d0->o_req_mem_burst(d.req_mem_burst);
     d0->o_req_mem_last(d.req_mem_last);
-    d0->i_resp_mem_data_valid(w_data_resp_mem_data_valid);
-    d0->i_resp_mem_data(wb_data_resp_mem_data);
-    d0->i_resp_mem_load_fault(w_data_resp_mem_load_fault);
-    d0->i_resp_mem_store_fault(i_resp_mem_store_fault);
-    d0->i_resp_mem_store_fault_addr(i_resp_mem_store_fault_addr);
+    d0->i_mem_data_valid(w_data_resp_mem_data_valid);
+    d0->i_mem_data(wb_data_resp_mem_data);
+    d0->i_mem_load_fault(w_data_resp_mem_load_fault);
+    d0->i_mem_store_fault(i_resp_mem_store_fault);
+    //d0->i_resp_mem_store_fault_addr(i_resp_mem_store_fault_addr);
     d0->o_mpu_addr(d.mpu_addr);
     d0->i_mpu_cachable(w_mpu_dcachable);
     d0->i_mpu_readable(w_mpu_dreadable);
     d0->i_mpu_writable(w_mpu_dwritable);
-    d0->o_dstate(o_dstate);
+    d0->i_flush_address(i_data_flush_address);
+    d0->i_flush_valid(i_data_flush_valid);
+    d0->o_state(o_dstate);
 
     mpu0 = new MPU("mpu0", async_reset);
 

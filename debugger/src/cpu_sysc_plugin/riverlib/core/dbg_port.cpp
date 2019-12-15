@@ -298,8 +298,8 @@ void DbgPort::comb() {
             case 0:
                 wb_rdata[0] = r.halt;
                 wb_rdata[2] = r.breakpoint;
-                wb_rdata(33, 32) = i_istate.read();
-                wb_rdata(37, 36) = i_dstate.read();
+                wb_rdata(35, 32) = i_istate.read();
+                wb_rdata(39, 36) = i_dstate.read();
                 wb_rdata(41, 40) = i_cstate.read();
                 if (i_dport_write.read()) {
                     v.halt = i_dport_wdata.read()[0];

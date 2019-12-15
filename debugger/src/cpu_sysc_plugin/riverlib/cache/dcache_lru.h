@@ -73,7 +73,7 @@ SC_MODULE(DCacheLru) {
 
     SC_HAS_PROCESS(DCacheLru);
 
-    DCacheLru(sc_module_name name_, bool async_reset, int index_width);
+    DCacheLru(sc_module_name name_, bool async_reset);
     virtual ~DCacheLru();
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
@@ -169,7 +169,6 @@ SC_MODULE(DCacheLru) {
                DTAG_FL_TOTAL> *mem;
 
     bool async_reset_;
-    int index_width_;
 };
 
 

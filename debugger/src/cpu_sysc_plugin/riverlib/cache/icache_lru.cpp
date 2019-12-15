@@ -778,7 +778,7 @@ void ICacheLru::comb() {
     o_resp_ctrl_writable = w_o_resp_writable;
     o_resp_ctrl_readable = w_o_resp_readable;
     o_mpu_addr = r.mpu_addr.read();
-    o_istate = r.state.read()(1, 0);
+    o_istate = r.state.read();
 }
 
 void ICacheLru::registers() {
