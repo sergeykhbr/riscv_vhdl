@@ -44,9 +44,9 @@ SC_MODULE(MemAccess) {
     sc_in<bool> i_mem_req_ready;                    // Data cache is ready to accept read/write request
     sc_out<bool> o_mem_valid;                       // Memory request is valid
     sc_out<bool> o_mem_write;                       // Memory write request
-    sc_out<sc_uint<2>> o_mem_sz;                    // Encoded data size in bytes: 0=1B; 1=2B; 2=4B; 3=8B
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_mem_addr;     // Data path requested address
-    sc_out<sc_uint<BUS_DATA_WIDTH>> o_mem_data;     // Data path requested data (write transaction)
+    sc_out<sc_uint<BUS_DATA_WIDTH>> o_mem_wdata;    // Data path requested data (write transaction)
+    sc_out<sc_uint<BUS_DATA_BYTES>> o_mem_wstrb;    // 8-bytes aligned strobs
     sc_in<bool> i_mem_data_valid;                   // Data path memory response is valid
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_mem_data_addr; // Data path memory response address
     sc_in<sc_uint<BUS_DATA_WIDTH>> i_mem_data;      // Data path memory response value
@@ -82,6 +82,8 @@ private:
         sc_signal<sc_uint<32>> instr;
         sc_signal<sc_uint<6>> res_addr;
         sc_signal<sc_uint<RISCV_ARCH>> res_data;
+        sc_signal<sc_uint<BUS_DATA_WIDTH>> mem_wdata;
+        sc_signal<sc_uint<BUS_DATA_BYTES>> mem_wstrb;
         sc_signal<bool> memop_sign_ext;
         sc_signal<sc_uint<2>> memop_size;
         sc_signal<bool> wena;
@@ -95,13 +97,16 @@ private:
         iv.instr = 0;
         iv.res_addr = 0;
         iv.res_data = 0;
+        iv.mem_wdata = 0;
+        iv.mem_wstrb = 0;
         iv.memop_sign_ext = 0;
         iv.memop_size = 0;
         iv.wena = 0;
     }
 
     static const int QUEUE_WIDTH = RISCV_ARCH + 6 + 32 + BUS_ADDR_WIDTH
-                                 + 2 + 1 + 1 + 1 + BUS_DATA_WIDTH;
+                                 + 2 + 1 + 1 + 1 + BUS_DATA_WIDTH
+                                 + BUS_DATA_WIDTH + BUS_DATA_BYTES;
     static const int QUEUE_DEPTH = 1;
 
     struct QueueRegisterType {

@@ -33,9 +33,9 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset) :
     i_resp_ctrl_ready("i_resp_ctrl_ready"),
     i_req_data_valid("i_req_data_valid"),
     i_req_data_write("i_req_data_write"),
-    i_req_data_size("i_req_data_size"),
     i_req_data_addr("i_req_data_addr"),
-    i_req_data_data("i_req_data_data"),
+    i_req_data_wdata("i_req_data_wdata"),
+    i_req_data_wstrb("i_req_data_wstrb"),
     o_req_data_ready("o_req_data_ready"),
     o_resp_data_valid("o_resp_data_valid"),
     o_resp_data_addr("o_resp_data_addr"),
@@ -141,9 +141,9 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset) :
     d0->i_nrst(i_nrst);
     d0->i_req_data_valid(i_req_data_valid);
     d0->i_req_data_write(i_req_data_write);
-    d0->i_req_data_sz(i_req_data_size);
     d0->i_req_data_addr(i_req_data_addr);
-    d0->i_req_data_data(i_req_data_data);
+    d0->i_req_data_wdata(i_req_data_wdata);
+    d0->i_req_data_wstrb(i_req_data_wstrb);
     d0->o_req_data_ready(o_req_data_ready);
     d0->o_resp_data_valid(o_resp_data_valid);
     d0->o_resp_data_addr(o_resp_data_addr);
@@ -199,7 +199,8 @@ void CacheTop::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_req_data_valid, i_req_data_valid.name());
         sc_trace(o_vcd, i_req_data_write, i_req_data_write.name());
         sc_trace(o_vcd, i_req_data_addr, i_req_data_addr.name());
-        sc_trace(o_vcd, i_req_data_data, i_req_data_data.name());
+        sc_trace(o_vcd, i_req_data_wdata, i_req_data_wdata.name());
+        sc_trace(o_vcd, i_req_data_wstrb, i_req_data_wstrb.name());
         sc_trace(o_vcd, i_req_mem_ready, i_req_mem_ready.name());
         sc_trace(o_vcd, o_req_mem_valid, o_req_mem_valid.name());
         sc_trace(o_vcd, o_req_mem_write, o_req_mem_write.name());

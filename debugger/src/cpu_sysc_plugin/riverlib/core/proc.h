@@ -51,12 +51,12 @@ SC_MODULE(Processor) {
     sc_in<bool> i_req_data_ready;                       // DCache is ready to accept request
     sc_out<bool> o_req_data_valid;                      // Request to DCache is valid
     sc_out<bool> o_req_data_write;                      // Read/Write transaction
-    sc_out<sc_uint<2>> o_req_data_size;                 // Size [Bytes]: 0=1B; 1=2B; 2=4B; 3=8B
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_req_data_addr;    // Requesting address to DCache
-    sc_out<sc_uint<RISCV_ARCH>> o_req_data_data;        // Writing value
+    sc_out<sc_uint<BUS_DATA_WIDTH>> o_req_data_wdata;   // Writing value
+    sc_out<sc_uint<BUS_DATA_BYTES>> o_req_data_wstrb;   // 8-bytes aligned strobs
     sc_in<bool> i_resp_data_valid;                      // DCache response is valid
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_resp_data_addr;    // DCache response address must be equal to the latest request address
-    sc_in<sc_uint<RISCV_ARCH>> i_resp_data_data;        // Read value
+    sc_in<sc_uint<BUS_DATA_WIDTH>> i_resp_data_data;    // Read value
     sc_in<bool> i_resp_data_load_fault;                 // Bus response with SLVERR or DECERR on read
     sc_in<bool> i_resp_data_store_fault;                // Bus response with SLVERR or DECERR on write
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_resp_data_store_fault_addr;  // write-error address (B-channel)

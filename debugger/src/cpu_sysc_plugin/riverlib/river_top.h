@@ -82,11 +82,11 @@ private:
     sc_signal<bool> w_req_data_valid;
     sc_signal<bool> w_req_data_write;
     sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_req_data_addr;
-    sc_signal<sc_uint<2>> wb_req_data_size; // 0=1bytes; 1=2bytes; 2=4bytes; 3=8bytes
-    sc_signal<sc_uint<RISCV_ARCH>> wb_req_data_data;
+    sc_signal<sc_uint<BUS_DATA_WIDTH>> wb_req_data_wdata;
+    sc_signal<sc_uint<BUS_DATA_BYTES>> wb_req_data_wstrb;
     sc_signal<bool> w_resp_data_valid;
     sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_resp_data_addr;
-    sc_signal<sc_uint<RISCV_ARCH>> wb_resp_data_data;
+    sc_signal<sc_uint<BUS_DATA_WIDTH>> wb_resp_data_data;
     sc_signal<bool> w_resp_data_load_fault;
     sc_signal<bool> w_resp_data_store_fault;
     sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_resp_data_store_fault_addr;

@@ -23,7 +23,7 @@
 
 namespace debugger {
 
-#define DBG_DCACHE_LRU_TB
+//#define DBG_DCACHE_LRU_TB
 
 SC_MODULE(DCacheLru) {
     sc_in<bool> i_clk;
@@ -37,7 +37,7 @@ SC_MODULE(DCacheLru) {
     sc_out<bool> o_req_ready;
     sc_out<bool> o_resp_valid;
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_resp_addr;
-    sc_out<sc_uint<RISCV_ARCH>> o_resp_data;
+    sc_out<sc_uint<BUS_DATA_WIDTH>> o_resp_data;
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_resp_er_addr;
     sc_out<bool> o_resp_er_load_fault;
     sc_out<bool> o_resp_er_store_fault;
@@ -108,7 +108,7 @@ SC_MODULE(DCacheLru) {
         sc_signal<bool> requested;
         sc_signal<bool> req_write;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_addr;
-        sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_addr_z;  // to support delayed store error response
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_addr_b_resp;  // to support delayed store error response
         sc_signal<sc_uint<BUS_DATA_WIDTH>> req_wdata;
         sc_signal<sc_uint<BUS_DATA_BYTES>> req_wstrb;
         sc_signal<sc_uint<4>> state;
@@ -137,7 +137,7 @@ SC_MODULE(DCacheLru) {
         iv.requested = 0;
         iv.req_write = 0;
         iv.req_addr = 0;
-        iv.req_addr_z = 0;
+        iv.req_addr_b_resp = 0;
         iv.req_wdata = 0;
         iv.req_wstrb = 0;
         iv.state = State_FlushAddr;
@@ -201,7 +201,7 @@ private:
     sc_signal<bool> w_req_ready;
     sc_signal<bool> w_resp_valid;
     sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_resp_addr;
-    sc_signal<sc_uint<RISCV_ARCH>> wb_resp_data;
+    sc_signal<sc_uint<BUS_DATA_WIDTH>> wb_resp_data;
     sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_resp_er_addr;
     sc_signal<bool> w_resp_er_load_fault;
     sc_signal<bool> w_resp_er_store_fault;

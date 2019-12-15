@@ -38,9 +38,9 @@ MemAccess::MemAccess(sc_module_name name_, bool async_reset)
     i_mem_req_ready("i_mem_req_ready"),
     o_mem_valid("o_mem_valid"),
     o_mem_write("o_mem_write"),
-    o_mem_sz("o_mem_sz"),
     o_mem_addr("o_mem_addr"),
-    o_mem_data("o_mem_data"),
+    o_mem_wdata("o_mem_wdata"),
+    o_mem_wstrb("o_mem_wstrb"),
     i_mem_data_valid("i_mem_data_valid"),
     i_mem_data_addr("i_mem_data_addr"),
     i_mem_data("i_mem_data"),
@@ -102,14 +102,16 @@ void MemAccess::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_e_valid, i_e_valid.name());
         sc_trace(o_vcd, i_e_pc, i_e_pc.name());
         sc_trace(o_vcd, i_e_instr, i_e_instr.name());
+        sc_trace(o_vcd, i_memop_addr, i_memop_addr.name());
         sc_trace(o_vcd, i_memop_store, i_memop_store.name());
         sc_trace(o_vcd, i_memop_load, i_memop_load.name());
+        sc_trace(o_vcd, i_memop_size, i_memop_size.name());
         sc_trace(o_vcd, o_mem_valid, o_mem_valid.name());
         sc_trace(o_vcd, o_mem_write, o_mem_write.name());
         sc_trace(o_vcd, i_mem_req_ready, i_mem_req_ready.name());
-        sc_trace(o_vcd, o_mem_sz, o_mem_sz.name());
         sc_trace(o_vcd, o_mem_addr, o_mem_addr.name());
-        sc_trace(o_vcd, o_mem_data, o_mem_data.name());
+        sc_trace(o_vcd, o_mem_wdata, o_mem_wdata.name());
+        sc_trace(o_vcd, o_mem_wstrb, o_mem_wstrb.name());
         sc_trace(o_vcd, i_mem_data_valid, i_mem_data_valid.name());
         sc_trace(o_vcd, i_mem_data_addr, i_mem_data_addr.name());
         sc_trace(o_vcd, i_mem_data, i_mem_data.name());
@@ -132,7 +134,67 @@ void MemAccess::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void MemAccess::main() {
-    queue_data_i = (i_res_data, i_res_addr, i_e_instr, i_e_pc,
+    sc_uint<BUS_DATA_WIDTH> vb_memop_wdata;
+    sc_uint<BUS_DATA_BYTES> vb_memop_wstrb;
+
+    switch (i_memop_size.read()) {
+    case 0:
+        vb_memop_wdata = (i_res_data.read()(7, 0),
+            i_res_data.read()(7, 0), i_res_data.read()(7, 0),
+            i_res_data.read()(7, 0), i_res_data.read()(7, 0),
+            i_res_data.read()(7, 0), i_res_data.read()(7, 0),
+            i_res_data.read()(7, 0));
+        if (i_memop_addr.read()(2, 0) == 0x0) {
+            vb_memop_wstrb = 0x01;
+        } else if (i_memop_addr.read()(2, 0) == 0x1) {
+            vb_memop_wstrb = 0x02;
+        } else if (i_memop_addr.read()(2, 0) == 0x2) {
+            vb_memop_wstrb = 0x04;
+        } else if (i_memop_addr.read()(2, 0) == 0x3) {
+            vb_memop_wstrb = 0x08;
+        } else if (i_memop_addr.read()(2, 0) == 0x4) {
+            vb_memop_wstrb = 0x10;
+        } else if (i_memop_addr.read()(2, 0) == 0x5) {
+            vb_memop_wstrb = 0x20;
+        } else if (i_memop_addr.read()(2, 0) == 0x6) {
+            vb_memop_wstrb = 0x40;
+        } else if (i_memop_addr.read()(2, 0) == 0x7) {
+            vb_memop_wstrb = 0x80;
+        }
+        break;
+    case 1:
+        vb_memop_wdata = (i_res_data.read()(15, 0),
+            i_res_data.read()(15, 0), i_res_data.read()(15, 0),
+            i_res_data.read()(15, 0));
+        if (i_memop_addr.read()(2, 1) == 0) {
+            vb_memop_wstrb = 0x03;
+        } else if (i_memop_addr.read()(2, 1) == 1) {
+            vb_memop_wstrb = 0x0C;
+        } else if (i_memop_addr.read()(2, 1) == 2) {
+            vb_memop_wstrb = 0x30;
+        } else {
+            vb_memop_wstrb = 0xC0;
+        }
+        break;
+    case 2:
+        vb_memop_wdata = (i_res_data.read()(31, 0),
+                    i_res_data.read()(31, 0));
+        if (i_memop_addr.read()[2]) {
+            vb_memop_wstrb = 0xF0;
+        } else {
+            vb_memop_wstrb = 0x0F;
+        }
+        break;
+    case 3:
+        vb_memop_wdata = i_res_data;
+        vb_memop_wstrb = 0xFF;
+        break;
+    default:;
+    }
+
+
+    queue_data_i = (vb_memop_wdata, vb_memop_wstrb,
+                    i_res_data, i_res_addr, i_e_instr, i_e_pc,
                     i_memop_size, i_memop_sign_ext, i_memop_store,
                     (i_memop_load | i_memop_store), i_memop_addr);
     queue_we = i_e_valid;
@@ -191,12 +253,17 @@ void MemAccess::comb() {
     bool w_mem_sign_ext;
     sc_uint<2> wb_mem_sz;
     sc_uint<BUS_ADDR_WIDTH> wb_mem_addr;
-    sc_uint<RISCV_ARCH> wb_mem_data;
+    sc_uint<RISCV_ARCH> vb_wdata;
     bool w_hold;
     bool w_valid;
     bool w_queue_re;
-    sc_uint<RISCV_ARCH> wb_mem_data_signext;
-    sc_uint<RISCV_ARCH> wb_res_data;
+    //sc_uint<RISCV_ARCH> wb_mem_data_signext;
+    sc_uint<BUS_DATA_WIDTH> vb_mem_wdata;
+    sc_uint<BUS_DATA_BYTES> vb_mem_wstrb;
+    sc_uint<RISCV_ARCH> vb_mem_resp_shifted;
+    sc_uint<RISCV_ARCH> vb_mem_data_unsigned;
+    sc_uint<RISCV_ARCH> vb_mem_data_signed;
+    sc_uint<RISCV_ARCH> vb_res_data;
     sc_uint<6> wb_res_addr;
     sc_uint<BUS_ADDR_WIDTH> wb_e_pc;
     sc_uint<32> wb_e_instr;
@@ -208,7 +275,11 @@ void MemAccess::comb() {
     w_valid = 0;
     w_queue_re = 0;
 
-    wb_mem_data = queue_data_o.read()(2*BUS_ADDR_WIDTH+RISCV_ARCH+43-1,
+    vb_mem_wdata = queue_data_o.read()(2*BUS_ADDR_WIDTH+RISCV_ARCH+BUS_DATA_BYTES+BUS_DATA_WIDTH+43-1,
+                                      2*BUS_ADDR_WIDTH+RISCV_ARCH+BUS_DATA_BYTES+43);
+    vb_mem_wstrb = queue_data_o.read()(2*BUS_ADDR_WIDTH+RISCV_ARCH+BUS_DATA_BYTES+43-1,
+                                      2*BUS_ADDR_WIDTH+RISCV_ARCH+43);
+    vb_res_data = queue_data_o.read()(2*BUS_ADDR_WIDTH+RISCV_ARCH+43-1,
                                       2*BUS_ADDR_WIDTH+43);
     wb_res_addr = queue_data_o.read()(2*BUS_ADDR_WIDTH+43-1,
                                       2*BUS_ADDR_WIDTH+37);
@@ -243,7 +314,7 @@ void MemAccess::comb() {
         w_mem_write = !r.memop_r.read();
         wb_mem_sz = r.memop_size.read();
         wb_mem_addr = r.memop_addr.read();
-        wb_mem_data = r.res_data.read();
+        vb_res_data = r.res_data.read();
         w_hold = 1;
         if (i_mem_req_ready.read() == 1) {
             v.state = State_WaitResponse;
@@ -298,7 +369,9 @@ void MemAccess::comb() {
         v.pc = wb_e_pc;
         v.instr = wb_e_instr;
         v.res_addr = wb_res_addr;
-        v.res_data = wb_mem_data;
+        v.res_data = vb_res_data;
+        v.mem_wdata = vb_mem_wdata;
+        v.mem_wstrb = vb_mem_wstrb;
         if (i_res_addr.read() == 0) {
             v.wena = 0;
         } else {
@@ -310,7 +383,65 @@ void MemAccess::comb() {
         v.memop_size = wb_mem_sz;
     }
 
+
+    vb_mem_resp_shifted = 0;
+    vb_mem_data_unsigned = 0;
+    vb_mem_data_signed = 0;
+    switch (r.memop_addr.read()(2, 0)) {
+    case 1:
+        vb_mem_resp_shifted = i_mem_data.read()(63, 8);
+        break;
+    case 2:
+        vb_mem_resp_shifted = i_mem_data.read()(63, 16);
+        break;
+    case 3:
+        vb_mem_resp_shifted = i_mem_data.read()(63, 24);
+        break;
+    case 4:
+        vb_mem_resp_shifted = i_mem_data.read()(63, 32);
+        break;
+    case 5:
+        vb_mem_resp_shifted = i_mem_data.read()(63, 40);
+        break;
+    case 6:
+        vb_mem_resp_shifted = i_mem_data.read()(63, 48);
+        break;
+    case 7:
+        vb_mem_resp_shifted = i_mem_data.read()(63, 56);
+        break;
+    default:
+        vb_mem_resp_shifted = i_mem_data.read();
+    } 
+
     switch (r.memop_size.read()) {
+    case 0:
+        vb_mem_data_unsigned = vb_mem_resp_shifted(7, 0);
+        vb_mem_data_signed = vb_mem_resp_shifted(7, 0);
+        if (vb_mem_resp_shifted[7]) {
+            vb_mem_data_signed(63, 8) = ~0;
+        }
+        break;
+    case 1:
+        vb_mem_data_unsigned = vb_mem_resp_shifted(15, 0);
+        vb_mem_data_signed = vb_mem_resp_shifted(15, 0);
+        if (vb_mem_resp_shifted[15]) {
+            vb_mem_data_signed(63, 16) = ~0;
+        }
+        break;
+    case 2:
+        vb_mem_data_unsigned = vb_mem_resp_shifted(31, 0);
+        vb_mem_data_signed = vb_mem_resp_shifted(31, 0);
+        if (i_mem_data.read()[31]) {
+            vb_mem_data_signed(63, 32) = ~0;
+        }
+        break;
+    default:
+        vb_mem_data_unsigned = vb_mem_resp_shifted;
+        vb_mem_data_signed = vb_mem_resp_shifted;
+    }
+
+
+    /*switch (r.memop_size.read()) {
     case MEMOP_1B:
         wb_mem_data_signext = i_mem_data;
         if (i_mem_data.read()[7]) {
@@ -331,16 +462,18 @@ void MemAccess::comb() {
         break;
     default:
         wb_mem_data_signext = i_mem_data;
-    }
+    }*/
 
     if (r.memop_r.read() == 1) {
         if (r.memop_sign_ext.read() == 1) {
-            wb_res_data = wb_mem_data_signext;
+            //wb_res_data = wb_mem_data_signext;
+            vb_wdata = vb_mem_data_signed;
         } else {
-            wb_res_data = i_mem_data;
+            //wb_res_data = i_mem_data;
+            vb_wdata = vb_mem_data_unsigned;
         }
     } else {
-        wb_res_data = r.res_data;
+        vb_wdata = r.res_data;
     }
 
 
@@ -354,13 +487,13 @@ void MemAccess::comb() {
 
     o_mem_valid = w_mem_valid;
     o_mem_write = w_mem_write;
-    o_mem_sz = wb_mem_sz;
-    o_mem_addr = wb_mem_addr;
-    o_mem_data = wb_mem_data;
+    o_mem_addr = wb_mem_addr & ~LOG2_DATA_BYTES_MASK;
+    o_mem_wdata = vb_mem_wdata;
+    o_mem_wstrb = vb_mem_wstrb;
 
     o_wena = r.wena.read() && w_valid;
     o_waddr = r.res_addr;
-    o_wdata = wb_res_data;
+    o_wdata = vb_wdata;
     o_hold = w_hold;
     /** the following signal used to executation instruction count and debug */
     o_valid = w_valid;
