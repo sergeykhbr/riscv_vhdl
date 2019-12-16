@@ -225,92 +225,92 @@ struct dbg_state_type {
 };
 
 dbg_state_type dbg_steps[] = {
-    {180, TxFifo_NotEmpty},
+    {159, TxFifo_NotEmpty},
     {630, TxFifo_Full},
-    {1582, TxFifo_NotEmpty},
-    {1582+21, TxFifo_Full},
-    {2921, TxFifo_NotEmpty},
-    {2921+21, TxFifo_Full},
-    {4260, TxFifo_NotEmpty},
-    {4260+21, TxFifo_Full},
-    {5599, TxFifo_NotEmpty},
-    {5599+21, TxFifo_Full},
-    {6931, TxFifo_NotEmpty},
-    {6931+21, TxFifo_Full},
-    {8270, TxFifo_NotEmpty},
-    {8270+21, TxFifo_Full},
-    {9609, TxFifo_NotEmpty},    // 'k'
-    {9609+21, TxFifo_Full},
-    {10948, TxFifo_NotEmpty},   // ' '
-    {10948+21, TxFifo_Full},
-    {12280, TxFifo_NotEmpty},   // 'n'
-    {12280+21, TxFifo_Full},
-    {13619, TxFifo_NotEmpty},   // 'o'
-    {13619+21, TxFifo_Full},
-    {14958, TxFifo_NotEmpty},   // 't'
-    {14958+21, TxFifo_Full},
-    {16297, TxFifo_NotEmpty},   // ' '
-    {16297+21, TxFifo_Full},
-    {17629, TxFifo_NotEmpty},   // 'f'
-    {17629+21, TxFifo_Full},
-    {18967, TxFifo_NotEmpty},   // 'o'
-    {18967+21, TxFifo_Full},
-    {20307, TxFifo_NotEmpty},   // 'u'
-    {20307+21, TxFifo_Full},
-    {21646, TxFifo_NotEmpty},   // 'n'
-    {21646+21, TxFifo_Full},
-    {22978, TxFifo_NotEmpty},   // 'd'
-    {22978+21, TxFifo_Full},
-    {24317, TxFifo_NotEmpty},   // '.'
-    {24317+21, TxFifo_Full},
-    {25656, TxFifo_NotEmpty},   // ' '
-    {25656+21, TxFifo_Full},
-    {26995, TxFifo_NotEmpty},   // 'E'
-    {26995+21, TxFifo_Full},
-    {28327, TxFifo_NotEmpty},   // 'n'
-    {28327+21, TxFifo_Full},
-    {29666, TxFifo_NotEmpty},   // 'a'
-    {29666+21, TxFifo_Full},
-    {31005, TxFifo_NotEmpty},   // 'b'
-    {31005+21, TxFifo_Full},
-    {32344, TxFifo_NotEmpty},   // 'l'
-    {32344+21, TxFifo_Full},
-    {33676, TxFifo_NotEmpty},   // 'e'
-    {33676+21, TxFifo_Full},
-    {35015, TxFifo_NotEmpty},   // ' '
-    {35015+21, TxFifo_Full},
-    {36354, TxFifo_NotEmpty},   // 'D'
-    {36354+21, TxFifo_Full},
-    {37693, TxFifo_NotEmpty},   // 'I'
-    {37693+21, TxFifo_Full},
-    {39025, TxFifo_NotEmpty},   // 'P'
-    {39025+21, TxFifo_Full},
-    {40364, TxFifo_NotEmpty},   // ' '
-    {40364+21, TxFifo_Full},
-    {41703, TxFifo_NotEmpty},   // 'i'
-    {41703+21, TxFifo_Full},
-    {43042, TxFifo_NotEmpty},   // 'n'
-    {43042+21, TxFifo_Full},
-    {44373, TxFifo_NotEmpty},   // 't'
-    {44373+21, TxFifo_Full},
-    {45713, TxFifo_NotEmpty},   // '_'
-    {45713+21, TxFifo_Full},
-    {47052, TxFifo_NotEmpty},   // 'r'
-    {47052+21, TxFifo_Full},
-    {48391, TxFifo_NotEmpty},   // 'f'
-    {48391+21, TxFifo_Full},
-    {49723, TxFifo_NotEmpty},   // '.'
-    {49723+21, TxFifo_Full},
-    {51062, TxFifo_NotEmpty},   // ' '
-    {51062+21, TxFifo_Full},
-    {52401, TxFifo_NotEmpty},   // '\r'
-    {52401+21, TxFifo_Full},
-    {53983, TxFifo_NotEmpty},   // '\n'
-    {53983+21, TxFifo_Full},
-    {55617, TxFifo_NotEmpty},
-    {55617+11, TxFifo_Full},    // 'D'
-    {57139, TxFifo_NotEmpty},
-    {57139+11, TxFifo_Full},    // 'h'
+    {1700, TxFifo_NotEmpty},
+    {1700+21, TxFifo_Full},
+    {3039, TxFifo_NotEmpty},
+    {3039+21, TxFifo_Full},
+    {4371, TxFifo_NotEmpty},
+    {4371+21, TxFifo_Full},
+    {5709, TxFifo_NotEmpty},
+    {5709+21, TxFifo_Full},
+    {7049, TxFifo_NotEmpty},
+    {7049+21, TxFifo_Full},
+    {8388, TxFifo_NotEmpty},
+    {8388+21, TxFifo_Full},
+    {9719, TxFifo_NotEmpty},    // 'k'
+    {9719+21, TxFifo_Full},
+    {11059, TxFifo_NotEmpty},   // ' '
+    {11059+21, TxFifo_Full},
+    {12398, TxFifo_NotEmpty},   // 'n'
+    {12398+21, TxFifo_Full},
+    {13737, TxFifo_NotEmpty},   // 'o'
+    {13737+21, TxFifo_Full},
+    {15068, TxFifo_NotEmpty},   // 't'
+    {15068+21, TxFifo_Full},
+    {16408, TxFifo_NotEmpty},   // ' '
+    {16408+21, TxFifo_Full},
+    {17747, TxFifo_NotEmpty},   // 'f'
+    {17747+21, TxFifo_Full},
+    {19084, TxFifo_NotEmpty},   // 'o'
+    {19084+21, TxFifo_Full},
+    {20417, TxFifo_NotEmpty},   // 'u'
+    {20417+21, TxFifo_Full},
+    {21756, TxFifo_NotEmpty},   // 'n'
+    {21756+21, TxFifo_Full},
+    {23096, TxFifo_NotEmpty},   // 'd'
+    {23096+21, TxFifo_Full},
+    {24435, TxFifo_NotEmpty},   // '.'
+    {24435+21, TxFifo_Full},
+    {25767, TxFifo_NotEmpty},   // ' '
+    {25767+21, TxFifo_Full},
+    {27106, TxFifo_NotEmpty},   // 'E'
+    {27106+21, TxFifo_Full},
+    {28445, TxFifo_NotEmpty},   // 'n'
+    {28445+21, TxFifo_Full},
+    {29784, TxFifo_NotEmpty},   // 'a'
+    {29784+21, TxFifo_Full},
+    {31115, TxFifo_NotEmpty},   // 'b'
+    {31115+21, TxFifo_Full},
+    {32454, TxFifo_NotEmpty},   // 'l'
+    {32454+21, TxFifo_Full},
+    {33794, TxFifo_NotEmpty},   // 'e'
+    {33794+21, TxFifo_Full},
+    {35133, TxFifo_NotEmpty},   // ' '
+    {35133+21, TxFifo_Full},
+    {36464, TxFifo_NotEmpty},   // 'D'
+    {36464+21, TxFifo_Full},
+    {37803, TxFifo_NotEmpty},   // 'I'
+    {37803+21, TxFifo_Full},
+    {39143, TxFifo_NotEmpty},   // 'P'
+    {39143+21, TxFifo_Full},
+    {40482, TxFifo_NotEmpty},   // ' '
+    {40482+21, TxFifo_Full},
+    {41813, TxFifo_NotEmpty},   // 'i'
+    {41813+21, TxFifo_Full},
+    {43152, TxFifo_NotEmpty},   // 'n'
+    {43152+21, TxFifo_Full},
+    {44492, TxFifo_NotEmpty},   // 't'
+    {44492+21, TxFifo_Full},
+    {45831, TxFifo_NotEmpty},   // '_'
+    {45831+21, TxFifo_Full},
+    {47162, TxFifo_NotEmpty},   // 'r'
+    {47162+21, TxFifo_Full},
+    {48501, TxFifo_NotEmpty},   // 'f'
+    {48501+21, TxFifo_Full},
+    {49841, TxFifo_NotEmpty},   // '.'
+    {49841+21, TxFifo_Full},
+    {51180, TxFifo_NotEmpty},   // ' '
+    {51180+21, TxFifo_Full},
+    {52511, TxFifo_NotEmpty},   // '\r'
+    {52511+21, TxFifo_Full},
+    {54093, TxFifo_NotEmpty},   // '\n'
+    {54093+21, TxFifo_Full},
+    {55727, TxFifo_NotEmpty},
+    {55727+11, TxFifo_Full},    // 'D'
+    {57249, TxFifo_NotEmpty},
+    {57249+11, TxFifo_Full},    // 'h'
     {58669, TxFifo_NotEmpty},
     {58669+11, TxFifo_Full},    // 'r'
     {60191, TxFifo_NotEmpty},

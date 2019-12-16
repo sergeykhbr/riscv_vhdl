@@ -80,6 +80,8 @@ MemAccess::MemAccess(sc_module_name name_, bool async_reset)
     sensitive << r.res_data;
     sensitive << r.memop_sign_ext;
     sensitive << r.memop_size;
+    sensitive << r.memop_wdata;
+    sensitive << r.memop_wstrb;
     sensitive << r.wena;
 
     SC_METHOD(qproc);
@@ -314,6 +316,8 @@ void MemAccess::comb() {
         w_mem_write = !r.memop_r.read();
         wb_mem_sz = r.memop_size.read();
         wb_mem_addr = r.memop_addr.read();
+        vb_mem_wdata = r.memop_wdata.read();
+        vb_mem_wstrb = r.memop_wstrb.read();
         vb_res_data = r.res_data.read();
         w_hold = 1;
         if (i_mem_req_ready.read() == 1) {
@@ -370,9 +374,9 @@ void MemAccess::comb() {
         v.instr = wb_e_instr;
         v.res_addr = wb_res_addr;
         v.res_data = vb_res_data;
-        v.mem_wdata = vb_mem_wdata;
-        v.mem_wstrb = vb_mem_wstrb;
-        if (i_res_addr.read() == 0) {
+        v.memop_wdata = vb_mem_wdata;
+        v.memop_wstrb = vb_mem_wstrb;
+        if (wb_res_addr == 0) {
             v.wena = 0;
         } else {
             v.wena = 1;

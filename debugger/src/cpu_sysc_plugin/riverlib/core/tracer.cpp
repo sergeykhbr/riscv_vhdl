@@ -97,7 +97,7 @@ void Tracer::task_disassembler(uint32_t instr) {
             default: RISCV_sprintf(disasm, sizeof(disasm), "%10s", "error");
             }
             break;
-        case 4:
+        case 0x04:
             switch (op2) {
             case 0: RISCV_sprintf(disasm, sizeof(disasm), "%10s", "addi"); break;
             case 1: RISCV_sprintf(disasm, sizeof(disasm), "%10s", "slli"); break;
@@ -118,6 +118,23 @@ void Tracer::task_disassembler(uint32_t instr) {
             default: RISCV_sprintf(disasm, sizeof(disasm), "%10s", "error");
             }
         break;
+        case 0x05:
+            RISCV_sprintf(disasm, sizeof(disasm), "%10s", "auipc");
+            break;
+        case 0x06:
+            switch (op2) {
+            case 0: RISCV_sprintf(disasm, sizeof(disasm), "%10s", "addiw"); break;
+            case 1: RISCV_sprintf(disasm, sizeof(disasm), "%10s", "slliw"); break;
+            case 5:
+                if (((instr >> 25) & 0x7f) == 0x00) {
+                    RISCV_sprintf(disasm, sizeof(disasm), "%10s", "srliw");
+                } else if (((instr >> 25) & 0x7f) == 0x20) {
+                    RISCV_sprintf(disasm, sizeof(disasm), "%10s", "sraiw");
+                }
+                break;
+            default: RISCV_sprintf(disasm, sizeof(disasm), "%10s", "error");
+            }
+            break;
         case 0x08:
             switch (op2) {
             case 0: RISCV_sprintf(disasm, sizeof(disasm), "%10s", "sb"); break;
@@ -191,11 +208,66 @@ void Tracer::task_disassembler(uint32_t instr) {
                 RISCV_sprintf(disasm, sizeof(disasm), "%10s", "unknown");
             }
             break;
-        case 0x1B :
-            RISCV_sprintf(disasm, sizeof(disasm), "%10s", "jal");
+        case 0x0D:
+            RISCV_sprintf(disasm, sizeof(disasm), "%10s", "lui");
+            break;
+        case 0x18:
+            switch (op2) {
+            case 0: RISCV_sprintf(disasm, sizeof(disasm), "%10s", "beq"); break;
+            case 1: RISCV_sprintf(disasm, sizeof(disasm), "%10s", "bne"); break;
+            case 4: RISCV_sprintf(disasm, sizeof(disasm), "%10s", "blt"); break;
+            case 5: RISCV_sprintf(disasm, sizeof(disasm), "%10s", "bge"); break;
+            case 6: RISCV_sprintf(disasm, sizeof(disasm), "%10s", "bltu"); break;
+            case 7: RISCV_sprintf(disasm, sizeof(disasm), "%10s", "bgeu"); break;
+            default: RISCV_sprintf(disasm, sizeof(disasm), "%10s", "error");
+            }
             break;
         case 0x19:
             RISCV_sprintf(disasm, sizeof(disasm), "%10s", "jalr");
+            break;
+        case 0x1B :
+            RISCV_sprintf(disasm, sizeof(disasm), "%10s", "jal");
+            break;
+        case 0x1C:
+            switch (op2) {
+            case 0:
+                if (instr == 0x00000073) {
+                    RISCV_sprintf(disasm, sizeof(disasm), "%10s", "ecall");
+                } else if (instr == 0x00100073) {
+                    RISCV_sprintf(disasm, sizeof(disasm), "%10s", "ebreak");
+                } else if (instr == 0x00200073) {
+                    RISCV_sprintf(disasm, sizeof(disasm), "%10s", "uret");
+                } else if (instr == 0x10200073) {
+                    RISCV_sprintf(disasm, sizeof(disasm), "%10s", "sret");
+                } else if (instr == 0x20200073) {
+                    RISCV_sprintf(disasm, sizeof(disasm), "%10s", "hret");
+                } else if (instr == 0x30200073) {
+                    RISCV_sprintf(disasm, sizeof(disasm), "%10s", "mret");
+                } else {
+                    RISCV_sprintf(disasm, sizeof(disasm), "%10s", "error");
+                }
+                break;
+            case 1:
+                RISCV_sprintf(disasm, sizeof(disasm), "%10s", "csrrw");
+                break;
+            case 2:
+                RISCV_sprintf(disasm, sizeof(disasm), "%10s", "csrrs");
+                break;
+            case 3:
+                RISCV_sprintf(disasm, sizeof(disasm), "%10s", "csrrc");
+                break;
+            case 5:
+                RISCV_sprintf(disasm, sizeof(disasm), "%10s", "csrrwi");
+                break;
+            case 6:
+                RISCV_sprintf(disasm, sizeof(disasm), "%10s", "csrrsi");
+                break;
+            case 7:
+                RISCV_sprintf(disasm, sizeof(disasm), "%10s", "csrrci");
+                break;
+            default:
+                RISCV_sprintf(disasm, sizeof(disasm), "%10s", "error");
+            }
             break;
         default:
             RISCV_sprintf(disasm, sizeof(disasm), "%10s", "unknown");

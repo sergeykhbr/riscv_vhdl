@@ -82,8 +82,8 @@ private:
         sc_signal<sc_uint<32>> instr;
         sc_signal<sc_uint<6>> res_addr;
         sc_signal<sc_uint<RISCV_ARCH>> res_data;
-        sc_signal<sc_uint<BUS_DATA_WIDTH>> mem_wdata;
-        sc_signal<sc_uint<BUS_DATA_BYTES>> mem_wstrb;
+        sc_signal<sc_uint<BUS_DATA_WIDTH>> memop_wdata;
+        sc_signal<sc_uint<BUS_DATA_BYTES>> memop_wstrb;
         sc_signal<bool> memop_sign_ext;
         sc_signal<sc_uint<2>> memop_size;
         sc_signal<bool> wena;
@@ -97,8 +97,8 @@ private:
         iv.instr = 0;
         iv.res_addr = 0;
         iv.res_data = 0;
-        iv.mem_wdata = 0;
-        iv.mem_wstrb = 0;
+        iv.memop_wdata = 0;
+        iv.memop_wstrb = 0;
         iv.memop_sign_ext = 0;
         iv.memop_size = 0;
         iv.wena = 0;
