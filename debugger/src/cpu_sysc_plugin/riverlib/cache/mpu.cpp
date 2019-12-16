@@ -62,8 +62,6 @@ void MPU::comb() {
     bool v_executable;
     bool v_readable;
     bool v_writable;
-    uint64_t t_iaddr;
-    uint64_t t_daddr;
 
     v_icachable = true;
     v_dcachable = true;
@@ -72,16 +70,14 @@ void MPU::comb() {
     v_writable = true;
 
     for (int i = 0; i < CFG_MPU_TBL_SIZE; i++) {
-        t_iaddr = i_iaddr.read()(BUS_ADDR_WIDTH-1, CFG_IOFFSET_WIDTH);
-        if (tbl[i].addr == (t_iaddr & tbl[i].mask)) {
+        if (tbl[i].addr == (i_iaddr.read() & tbl[i].mask)) {
             if (tbl[i].ena == 1)  {
                 v_icachable = tbl[i].cache;
                 v_executable = tbl[i].exec;
             }
         }
 
-        t_daddr = i_daddr.read()(BUS_ADDR_WIDTH-1, CFG_IOFFSET_WIDTH);
-        if (tbl[i].addr == (t_daddr & tbl[i].mask)) {
+        if (tbl[i].addr == (i_daddr.read() & tbl[i].mask)) {
             if (tbl[i].ena == 1)  {
                 v_dcachable = tbl[i].cache;
                 v_writable = tbl[i].wr;
@@ -97,23 +93,23 @@ void MPU::comb() {
             tbl[i].mask = ~0ull;
         }
 
-        // Make first 128 Byte uncachable to test MPU
+        // All address above 0x80000000 are uncached (IO devices)
         tbl[0].ena = 1;
-        tbl[0].addr = 0 >> CFG_IOFFSET_WIDTH;
-        tbl[0].mask = 0xFFFFFFFFFFFFFF80ull >> CFG_IOFFSET_WIDTH;
+        tbl[0].addr = 0x0000000080000000ull;
+        tbl[0].mask = 0xFFFFFFFF80000000ull;
         tbl[0].cache = 0;
         tbl[0].exec = 1;
         tbl[0].rd = 1;
         tbl[0].wr = 1;
 
-        // All address above 0x80000000 are uncached (IO devices)
-        tbl[0].ena = 1;
-        tbl[0].addr = 0x0000000080000000ull >> CFG_IOFFSET_WIDTH;
-        tbl[0].mask = 0xFFFFFFFF80000000ull >> CFG_IOFFSET_WIDTH;
-        tbl[0].cache = 0;
-        tbl[0].exec = 1;
-        tbl[0].rd = 1;
-        tbl[0].wr = 1;
+        // Make first 128 Byte uncachable to test MPU
+        tbl[1].ena = 1;
+        tbl[1].addr = 0x0;
+        tbl[1].mask = 0xFFFFFFFFFFFFFF80ull;
+        tbl[1].cache = 0;
+        tbl[1].exec = 1;
+        tbl[1].rd = 1;
+        tbl[1].wr = 1;
     }
 
     o_icachable = v_icachable;
@@ -125,7 +121,16 @@ void MPU::comb() {
 
 void MPU::registers() {
     if (async_reset_ && i_nrst.read() == 0) {
-        for (int i = 0; i < CFG_MPU_TBL_SIZE; i++) {
+        // All address above 0x80000000 are uncached (IO devices)
+        tbl[0].ena = 1;
+        tbl[0].addr = 0x0000000080000000ull;
+        tbl[0].mask = 0xFFFFFFFF80000000ull;
+        tbl[0].cache = 0;
+        tbl[0].exec = 1;
+        tbl[0].rd = 1;
+        tbl[0].wr = 1;
+
+        for (int i = 1; i < CFG_MPU_TBL_SIZE; i++) {
             tbl[i].ena = 0;
             tbl[i].addr = ~0ull;
             tbl[i].mask = ~0ull;
@@ -134,8 +139,8 @@ void MPU::registers() {
         if (i_region_we.read() == 1) {
             unsigned tidx = i_region_idx.read();
             if (i_region_flags.read()[CFG_MPU_FL_ENA] == 1) {
-                tbl[tidx].addr = i_region_addr.read() >> CFG_IOFFSET_WIDTH;
-                tbl[tidx].mask = i_region_mask.read() >> CFG_IOFFSET_WIDTH;
+                tbl[tidx].addr = i_region_addr.read();
+                tbl[tidx].mask = i_region_mask.read();
                 tbl[tidx].ena = 1;
             } else {
                 tbl[tidx].addr = ~0ull;

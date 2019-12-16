@@ -50,8 +50,8 @@ SC_MODULE(MPU) {
 
  private:
     struct MpuTableItemType {
-        sc_uint<BUS_ADDR_WIDTH - CFG_IOFFSET_WIDTH> addr;
-        sc_uint<BUS_ADDR_WIDTH - CFG_IOFFSET_WIDTH> mask;
+        sc_uint<BUS_ADDR_WIDTH> addr;
+        sc_uint<BUS_ADDR_WIDTH> mask;
         bool ena;
         bool cache;
         bool exec;

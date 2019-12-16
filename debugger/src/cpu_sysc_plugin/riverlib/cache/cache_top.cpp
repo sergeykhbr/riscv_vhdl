@@ -290,7 +290,7 @@ void CacheTop::comb() {
 
     case State_DMem:
         if (d.req_mem_last.read() == 1) {
-            w_req_mem_valid = 1;
+            w_req_mem_valid = i.req_mem_valid | d.req_mem_valid;
             if (d.req_mem_valid.read() == 1) {
                 wb_mem_addr = d.req_mem_addr;
             } else if (i.req_mem_valid.read() == 1) {
@@ -325,7 +325,7 @@ void CacheTop::comb() {
 
     case State_IMem:
         if (i.req_mem_last.read() == 1) {
-            w_req_mem_valid = 1;
+            w_req_mem_valid = i.req_mem_valid | d.req_mem_valid;
             if (d.req_mem_valid.read() == 1) {
                 wb_mem_addr = d.req_mem_addr;
             } else if (i.req_mem_valid.read() == 1) {
