@@ -177,6 +177,7 @@ private:
     };
 
     struct MemoryType {
+        sc_signal<bool> memop_ready;;
         sc_signal<bool> valid;
         sc_signal<sc_uint<32>> instr;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> pc;

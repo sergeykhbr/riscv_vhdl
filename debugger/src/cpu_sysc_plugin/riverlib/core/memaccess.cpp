@@ -33,6 +33,7 @@ MemAccess::MemAccess(sc_module_name name_, bool async_reset)
     i_memop_size("i_memop_size"),
     i_memop_addr("i_memop_addr"),
     o_wena("o_wena"),
+    o_memop_ready("o_memop_ready"),
     o_waddr("o_waddr"),
     o_wdata("o_wdata"),
     i_mem_req_ready("i_mem_req_ready"),
@@ -71,6 +72,7 @@ MemAccess::MemAccess(sc_module_name name_, bool async_reset)
     sensitive << i_mem_data;
     sensitive << queue_data_o;
     sensitive << queue_nempty;
+    sensitive << queue_full;
     sensitive << r.state;
     sensitive << r.memop_r;
     sensitive << r.memop_addr;
@@ -124,6 +126,7 @@ void MemAccess::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_pc, o_pc.name());
         sc_trace(o_vcd, o_instr, o_instr.name());
         sc_trace(o_vcd, o_wena, o_wena.name());
+        sc_trace(o_vcd, o_memop_ready, o_memop_ready.name());
         sc_trace(o_vcd, o_waddr, o_waddr.name());
         sc_trace(o_vcd, o_wdata, o_wdata.name());
 
@@ -132,6 +135,7 @@ void MemAccess::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, queue_data_i, pn + ".queue_data_i");
         sc_trace(o_vcd, queue_data_o, pn + ".queue_data_o");
         sc_trace(o_vcd, queue_nempty, pn + ".queue_nempty");
+        sc_trace(o_vcd, queue_full, pn + ".queue_full");
     }
 }
 
@@ -245,6 +249,7 @@ void MemAccess::qproc() {
     }
 
     queue_nempty = nempty;
+    queue_full = full;
     queue_data_o = vb_data_o;
 }
 
@@ -469,6 +474,7 @@ void MemAccess::comb() {
     o_mem_wdata = vb_mem_wdata;
     o_mem_wstrb = vb_mem_wstrb;
 
+    o_memop_ready = !queue_full.read();
     o_wena = r.wena.read() && w_valid;
     o_waddr = r.res_addr;
     o_wdata = vb_wdata;

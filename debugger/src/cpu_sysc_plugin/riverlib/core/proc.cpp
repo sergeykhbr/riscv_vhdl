@@ -156,7 +156,8 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     exec0->i_d_valid(w.d.instr_valid);
     exec0->i_d_pc(w.d.pc);
     exec0->i_d_instr(w.d.instr);
-    exec0->i_wb_ready(w.m.valid);
+    exec0->i_wb_valid(w.m.valid);
+    exec0->i_wb_waddr(w.w.waddr);
     exec0->i_memop_store(w.d.memop_store);
     exec0->i_memop_load(w.d.memop_load);
     exec0->i_memop_sign_ext(w.d.memop_sign_ext);
@@ -206,6 +207,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     exec0->o_memop_store(w.e.memop_store);
     exec0->o_memop_size(w.e.memop_size);
     exec0->o_memop_addr(w.e.memop_addr);
+    exec0->i_memop_ready(w.m.memop_ready);
     exec0->o_trap_ready(w.e.trap_ready);
     exec0->o_valid(w.e.valid);
     exec0->o_pc(w.e.pc);
@@ -229,6 +231,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     mem0->i_memop_store(w.e.memop_store);
     mem0->i_memop_size(w.e.memop_size);
     mem0->i_memop_addr(w.e.memop_addr);
+    mem0->o_memop_ready(w.m.memop_ready);
     mem0->o_waddr(w.w.waddr);
     mem0->o_wena(w.w.wena);
     mem0->o_wdata(w.w.wdata);

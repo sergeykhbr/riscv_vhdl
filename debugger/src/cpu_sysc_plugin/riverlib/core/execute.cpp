@@ -27,7 +27,8 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset)
     i_d_valid("i_d_valid"),
     i_d_pc("i_d_pc"),
     i_d_instr("i_d_instr"),
-    i_wb_ready("i_wb_ready"),
+    i_wb_valid("i_wb_valid"),
+    i_wb_waddr("i_wb_waddr"),
     i_memop_store("i_memop_store"),
     i_memop_load("i_memop_load"),
     i_memop_sign_ext("i_memop_sign_ext"),
@@ -77,6 +78,7 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset)
     o_memop_store("o_memop_store"),
     o_memop_size("o_memop_size"),
     o_memop_addr("o_memop_addr"),
+    i_memop_ready("i_memop_ready"),
     o_trap_ready("o_trap_ready"),
     o_valid("o_valid"),
     o_pc("o_pc"),
@@ -94,7 +96,8 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset)
     sensitive << i_d_valid;
     sensitive << i_d_pc;
     sensitive << i_d_instr;
-    sensitive << i_wb_ready;
+    sensitive << i_wb_valid;
+    sensitive << i_wb_waddr;
     sensitive << i_memop_store;
     sensitive << i_memop_load;
     sensitive << i_memop_sign_ext;
@@ -142,8 +145,6 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset)
     sensitive << r.multi_a1;
     sensitive << r.multi_a2;
     sensitive << r.state;
-    sensitive << r.hazard_addr0;
-    sensitive << r.hazard_depth;
     sensitive << r.hold_valid;
     sensitive << r.hold_multi_ena;
     sensitive << r.call;
@@ -165,6 +166,10 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset)
     sensitive << wb_srlw;
     sensitive << wb_sra;
     sensitive << wb_sraw;
+    for (int i = 0; i < SCOREBOARD_SIZE; i++) {
+        sensitive << r_scoreboard[i].status;
+        sensitive << r_scoreboard[i].forward;
+    }
 
     SC_METHOD(registers);
     sensitive << i_nrst;
@@ -250,7 +255,8 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_d_valid, i_d_valid.name());
         sc_trace(o_vcd, i_d_pc, i_d_pc.name());
         sc_trace(o_vcd, i_d_instr, i_d_instr.name());
-        sc_trace(o_vcd, i_wb_ready, i_wb_ready.name());
+        sc_trace(o_vcd, i_wb_valid, i_wb_valid.name());
+        sc_trace(o_vcd, i_wb_waddr, i_wb_waddr.name());
         sc_trace(o_vcd, i_f64, i_f64.name());
         sc_trace(o_vcd, i_unsup_exception, i_unsup_exception.name());
         sc_trace(o_vcd, i_instr_load_fault, i_instr_load_fault.name());
@@ -275,6 +281,7 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_memop_store, o_memop_store.name());
         sc_trace(o_vcd, o_memop_size, o_memop_size.name());
         sc_trace(o_vcd, o_memop_addr, o_memop_addr.name());
+        sc_trace(o_vcd, i_memop_ready, i_memop_ready.name());
         sc_trace(o_vcd, o_trap_ready, o_trap_ready.name());
         sc_trace(o_vcd, o_valid, o_valid.name());
         sc_trace(o_vcd, o_pc, o_pc.name());
@@ -287,8 +294,6 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_ex_instr_not_executable, o_ex_instr_not_executable.name());
 
         std::string pn(name());
-        sc_trace(o_vcd, r.hazard_addr0, pn + ".r_hazard_addr0");
-        sc_trace(o_vcd, r.hazard_depth, pn + ".hazard_depth");
         sc_trace(o_vcd, r.multiclock_ena, pn + ".r_multiclock_ena");
         sc_trace(o_vcd, r.multi_ena[Multi_MUL], pn + ".r_multi_ena(0)");
         sc_trace(o_vcd, wb_arith_res.arr[Multi_MUL], pn + ".wb_arith_res(0)");
@@ -303,11 +308,44 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, wb_res_addr, pn + ".wb_res_addr");
         sc_trace(o_vcd, r.res_addr, pn + ".r_res_addr");
         sc_trace(o_vcd, r.state, pn + ".state");
-        sc_trace(o_vcd, w_hazard_lvl1, pn + ".w_hazard_lvl1");
-        sc_trace(o_vcd, w_hazard_lvl2, pn + ".w_hazard_lvl2");
         sc_trace(o_vcd, w_next_ready, pn + ".w_next_ready");
         sc_trace(o_vcd, w_multi_ena, pn + ".w_multi_ena");
         sc_trace(o_vcd, w_multi_valid, pn + ".w_multi_valid");
+        
+        sc_trace(o_vcd, r_scoreboard[1].status, pn + ".scoreboard1_status");
+        sc_trace(o_vcd, r_scoreboard[2].status, pn + ".scoreboard2_status");
+        sc_trace(o_vcd, r_scoreboard[3].status, pn + ".scoreboard3_status");
+        sc_trace(o_vcd, r_scoreboard[4].status, pn + ".scoreboard4_status");
+        sc_trace(o_vcd, r_scoreboard[5].status, pn + ".scoreboard5_status");
+        sc_trace(o_vcd, r_scoreboard[6].status, pn + ".scoreboard6_status");
+        sc_trace(o_vcd, r_scoreboard[7].status, pn + ".scoreboard7_status");
+        sc_trace(o_vcd, r_scoreboard[8].status, pn + ".scoreboard8_status");
+        sc_trace(o_vcd, r_scoreboard[9].status, pn + ".scoreboard9_status");
+        sc_trace(o_vcd, r_scoreboard[10].status, pn + ".scoreboard10_status");
+        sc_trace(o_vcd, r_scoreboard[11].status, pn + ".scoreboard11_status");
+        sc_trace(o_vcd, r_scoreboard[12].status, pn + ".scoreboard12_status");
+        sc_trace(o_vcd, r_scoreboard[13].status, pn + ".scoreboard13_status");
+        sc_trace(o_vcd, r_scoreboard[14].status, pn + ".scoreboard14_status");
+        sc_trace(o_vcd, r_scoreboard[15].status, pn + ".scoreboard15_status");
+        sc_trace(o_vcd, r_scoreboard[16].status, pn + ".scoreboard16_status");
+        sc_trace(o_vcd, r_scoreboard[17].status, pn + ".scoreboard17_status");
+        sc_trace(o_vcd, r_scoreboard[18].status, pn + ".scoreboard18_status");
+        sc_trace(o_vcd, r_scoreboard[19].status, pn + ".scoreboard19_status");
+        sc_trace(o_vcd, r_scoreboard[20].status, pn + ".scoreboard20_status");
+        sc_trace(o_vcd, r_scoreboard[21].status, pn + ".scoreboard21_status");
+        sc_trace(o_vcd, r_scoreboard[22].status, pn + ".scoreboard22_status");
+        sc_trace(o_vcd, r_scoreboard[23].status, pn + ".scoreboard23_status");
+        sc_trace(o_vcd, r_scoreboard[24].status, pn + ".scoreboard24_status");
+        sc_trace(o_vcd, r_scoreboard[25].status, pn + ".scoreboard25_status");
+        sc_trace(o_vcd, r_scoreboard[26].status, pn + ".scoreboard26_status");
+        sc_trace(o_vcd, r_scoreboard[27].status, pn + ".scoreboard27_status");
+        sc_trace(o_vcd, r_scoreboard[28].status, pn + ".scoreboard28_status");
+        sc_trace(o_vcd, r_scoreboard[29].status, pn + ".scoreboard29_status");
+        sc_trace(o_vcd, r_scoreboard[30].status, pn + ".scoreboard30_status");
+        sc_trace(o_vcd, r_scoreboard[31].status, pn + ".scoreboard31_status");
+        sc_trace(o_vcd, w_hold_memop, pn + ".w_hold_memop");
+        sc_trace(o_vcd, w_hold_multi, pn + ".w_hold_multi");
+        sc_trace(o_vcd, w_hold_hazard, pn + ".w_hold_hazard");
     }
     mul0->generateVCD(i_vcd, o_vcd);
     div0->generateVCD(i_vcd, o_vcd);
@@ -353,6 +391,10 @@ void InstrExecute::comb() {
     bool w_pc_branch;
     bool w_less;
     bool w_gr_equal;
+    sc_uint<RISCV_ARCH> vb_rdata1;
+    sc_uint<RISCV_ARCH> vb_rdata2;
+    sc_uint<RISCV_ARCH> vb_rfdata1;
+    sc_uint<RISCV_ARCH> vb_rfdata2;
 
     wb_radr1 = 0;
     wb_radr2 = 0;
@@ -374,6 +416,10 @@ void InstrExecute::comb() {
     wv = i_ivec.read();
 
     v = r;
+    for (int i = 0; i < SCOREBOARD_SIZE; i++) {
+        v_scoreboard[i].forward = r_scoreboard[i].forward;
+        v_scoreboard[i].status = r_scoreboard[i].status;
+    }
 
     wb_mask_i31 = 0;
     if (i_d_instr.read()[31]) {
@@ -385,33 +431,38 @@ void InstrExecute::comb() {
         w_pc_valid = 1;
     }
 
+    vb_rdata1 = i_rdata1.read();
+    vb_rdata2 = i_rdata2.read();
+    vb_rfdata1 = i_rfdata1.read();
+    vb_rfdata2 = i_rfdata2.read();
+
     if (i_isa_type.read()[ISA_R_type]) {
         wb_radr1 = (0, i_d_instr.read().range(19, 15));
-        wb_rdata1 = i_rdata1;
+        wb_rdata1 = vb_rdata1;
         wb_radr2 = (0, i_d_instr.read().range(24, 20));
-        wb_rdata2 = i_rdata2;
+        wb_rdata2 = vb_rdata2;
         if (CFG_HW_FPU_ENABLE && i_f64.read() == 1) {
             if ((wv[Instr_FMOV_D_X] |
                 wv[Instr_FCVT_D_L] | wv[Instr_FCVT_D_LU] |
                 wv[Instr_FCVT_D_W] | wv[Instr_FCVT_D_WU]).to_bool() == 0) {
                 wb_radr1 = (1, i_d_instr.read().range(19, 15));
-                wb_rdata1 = i_rfdata1;
+                wb_rdata1 = vb_rfdata1;
             }
             if (wv[Instr_FMOV_X_D].to_bool() == 0) {
                 wb_radr2 = (1, i_d_instr.read().range(24, 20));
-                wb_rdata2 = i_rfdata2;
+                wb_rdata2 = vb_rfdata2;
             }
         }
     } else if (i_isa_type.read()[ISA_I_type]) {
         wb_radr1 = (0, i_d_instr.read().range(19, 15));
-        wb_rdata1 = i_rdata1;
+        wb_rdata1 = vb_rdata1;
         wb_radr2 = 0;
         wb_rdata2 = (wb_mask_i31(63, 12), i_d_instr.read().range(31, 20));
     } else if (i_isa_type.read()[ISA_SB_type]) {
         wb_radr1 = (0, i_d_instr.read().range(19, 15));
-        wb_rdata1 = i_rdata1;
+        wb_rdata1 = vb_rdata1;
         wb_radr2 = (0, i_d_instr.read().range(24, 20));
-        wb_rdata2 = i_rdata2;
+        wb_rdata2 = vb_rdata2;
         wb_off(RISCV_ARCH-1, 12) = wb_mask_i31(RISCV_ARCH-1, 12);
         wb_off[12] = i_d_instr.read()[31];
         wb_off[11] = i_d_instr.read()[7];
@@ -435,15 +486,15 @@ void InstrExecute::comb() {
         wb_rdata2(RISCV_ARCH-1, 32) = wb_mask_i31(RISCV_ARCH-1, 32);
     } else if (i_isa_type.read()[ISA_S_type]) {
         wb_radr1 = (0, i_d_instr.read().range(19, 15));
-        wb_rdata1 = i_rdata1;
+        wb_rdata1 = vb_rdata1;
         wb_radr2 = (0, i_d_instr.read().range(24, 20));
-        wb_rdata2 = i_rdata2;
+        wb_rdata2 = vb_rdata2;
         wb_off(RISCV_ARCH-1, 12) = wb_mask_i31(RISCV_ARCH-1, 12);
         wb_off(11, 5) = i_d_instr.read()(31, 25);
         wb_off(4, 0) = i_d_instr.read()(11, 7);
         if (CFG_HW_FPU_ENABLE && wv[Instr_FSD].to_bool()) {
             wb_radr2 = (1, i_d_instr.read().range(24, 20));
-            wb_rdata2 = i_rfdata2;
+            wb_rdata2 = vb_rfdata2;
         }
     }
 
@@ -488,41 +539,42 @@ void InstrExecute::comb() {
     }
 
     w_next_ready = 0;
-    w_hold = 0;
 
     if (i_d_valid.read() == 1 && w_pc_valid == 1) {
         w_next_ready = 1;
     }
 
-    /** Valid values on the inputs radr1,radr2 will be 2 cycles after
-        signal o_valid = 1
+
+    /** Hold signals:
+            1. hazard
+            2. memaccess not ready to accept next memop operation
+            3. multi instruction
      */
-    w_hazard_lvl1 = 0;
-    if (r.res_addr.read() != 0 &&
-        (wb_radr1 == r.res_addr || wb_radr2 == r.res_addr)) {
-        w_hazard_lvl1 = 1;
+    w_hold_hazard = 0;
+    if ((wb_radr1 != 0 &&
+        r_scoreboard[wb_radr1.to_int()].status.read() == RegHazard) ||
+        (wb_radr2 != 0 &&
+        r_scoreboard[wb_radr2.to_int()].status.read() == RegHazard)) {
+        w_hold_hazard = 1;
     }
 
-    w_hazard_lvl2 = 0;
-    if (r.hazard_addr0.read() != 0 &&
-        (wb_radr1 == r.hazard_addr0 || wb_radr2 == r.hazard_addr0)) {
-        w_hazard_lvl2 = 1;
-    }
+    w_hold_memop = (i_memop_load.read() || i_memop_store.read())
+                && !i_memop_ready.read();
+
+    w_hold_multi = w_multi_ena || (r.state.read() == State_MultiCycle);
+
+    bool v_hold_any = i_pipeline_hold.read() || w_hold_hazard ||
+                      w_hold_memop || w_hold_multi;
+
+    w_next_ready = w_next_ready && !v_hold_any;
 
     w_valid = 0;
     switch (r.state.read()) {
     case State_WaitInstr:
-        if (r.hazard_depth.read() != 0 && w_hazard_lvl2) {
-            // Hazard after missed predicted instruction 1 cycle
-            w_hold = 1;
-            w_next_ready = 0;
-        } else if (i_pipeline_hold.read() == 1) {
-            v.state = State_Hold;
-            v.hold_valid = w_next_ready;
-            v.hold_multi_ena = w_multi_ena;
+        if (v_hold_any == 1) {
+            // do nothing
         } else if (w_next_ready == 1) {
             if (w_multi_ena == 1) {
-                w_hold = 1;
                 v.state = State_MultiCycle;
             } else {
                 v.state = State_SingleCycle;
@@ -531,28 +583,10 @@ void InstrExecute::comb() {
         break;
     case State_SingleCycle:
         w_valid = 1;
-        if (w_hazard_lvl1 == 1) {
-            // 2-cycles wait state
-            w_hold = 1;
-            w_next_ready = 0;
-            v.state = State_Hazard;
-        } else if (w_hazard_lvl2 == 1) {
-            // 1-cycle wait state
-            w_hold = 1;
-            w_next_ready = 0;
-            if (i_wb_ready.read() == 1) {
-                v.state = State_WaitInstr;
-            } else {
-                // Queue in memaccess module allows to accept 2 LOAD instructions
-                v.state = State_Hazard;
-            }
-        } else if (i_pipeline_hold.read() == 1) {
-            v.state = State_Hold;
-            v.hold_valid = w_next_ready;
-            v.hold_multi_ena = w_multi_ena;
+        if (v_hold_any == 1) {
+            // do nothing
         } else if (w_next_ready == 1) {
             if (w_multi_ena == 1) {
-                w_hold = 1;
                 v.state = State_MultiCycle;
             } else {
                 v.state = State_SingleCycle;
@@ -562,53 +596,13 @@ void InstrExecute::comb() {
         }
         break;
     case State_MultiCycle:
-        w_hold = 1;
-        w_next_ready = 0;
         if (w_multi_valid == 1) {
             v.state = State_SingleCycle;
-        }
-        break;
-    case State_Hold:
-        /** No need to raise w_hold because it is already hold, but we have
-        to use previously latched values of instruction type because outputs
-        pc and npc switched for next instruction */
-        w_next_ready = 0;
-        if (i_pipeline_hold.read() == 0) {
-            if (r.hold_valid.read() == 1) {
-                if (r.hold_multi_ena.read() == 1 && w_multi_valid == 0) {
-                    v.state = State_MultiCycle;
-                } else {
-                    v.state = State_SingleCycle;
-                }
-            } else {
-                v.state = State_WaitInstr;
-            }
-        } else if (r.hold_multi_ena.read() == 1) {
-            /** Track the end of multi-instruction while in Hold state */
-            if (w_multi_valid == 1) {
-                v.hold_multi_ena = 0;
-            }
-        }
-        break;
-    case State_Hazard:
-        w_next_ready = 0;
-        w_hold = 1;
-        if (i_wb_ready.read() == 1) {
-            v.state = State_WaitInstr;
         }
         break;
     default:;
     }
 
-    if (w_valid == 1) {
-        v.hazard_addr0 = r.res_addr;
-    }
-
-    if (w_valid && !i_wb_ready.read()) {
-        v.hazard_depth = r.hazard_depth.read() + 1;
-    } else if (!w_valid && i_wb_ready.read()) {
-        v.hazard_depth = r.hazard_depth.read() - 1;
-    }
 
 
     // parallel ALU:
@@ -713,8 +707,8 @@ void InstrExecute::comb() {
         v.multi_a1 = wb_rdata1;
         v.multi_a2 = wb_rdata2;
     } else {
-        v.multi_a1 = i_rdata1;
-        v.multi_a2 = i_rdata2;
+        v.multi_a1 = vb_rdata1;
+        v.multi_a2 = vb_rdata2;
     }
 
     if (w_multi_ena & w_next_ready) {
@@ -800,7 +794,7 @@ void InstrExecute::comb() {
         wb_res = i_csr_rdata;
         w_csr_wena = 1;
         wb_csr_addr = wb_rdata2.range(11, 0);
-        wb_csr_wdata = i_csr_rdata.read() & ~i_rdata1.read();
+        wb_csr_wdata = i_csr_rdata.read() & ~vb_rdata1;
     } else if (wv[Instr_CSRRCI]) {
         wb_res = i_csr_rdata;
         w_csr_wena = 1;
@@ -811,7 +805,7 @@ void InstrExecute::comb() {
         wb_res = i_csr_rdata;
         w_csr_wena = 1;
         wb_csr_addr = wb_rdata2.range(11, 0);
-        wb_csr_wdata = i_csr_rdata.read() | i_rdata1.read();
+        wb_csr_wdata = i_csr_rdata.read() | vb_rdata1;
     } else if (wv[Instr_CSRRSI]) {
         wb_res = i_csr_rdata;
         w_csr_wena = 1;
@@ -822,7 +816,7 @@ void InstrExecute::comb() {
         wb_res = i_csr_rdata;
         w_csr_wena = 1;
         wb_csr_addr = wb_rdata2.range(11, 0);
-        wb_csr_wdata = i_rdata1;
+        wb_csr_wdata = vb_rdata1;
     } else if (wv[Instr_CSRRWI]) {
         wb_res = i_csr_rdata;
         w_csr_wena = 1;
@@ -844,6 +838,8 @@ void InstrExecute::comb() {
     v.call = 0;
     v.ret = 0;
     wb_ex_npc = 0;
+    bool score_we1 = 0;
+
     if (i_dport_npc_write.read()) {
         v.npc = i_dport_npc.read();
     } else if (w_multi_valid) {
@@ -860,6 +856,7 @@ void InstrExecute::comb() {
 
         v.res_addr = wb_res_addr;
         v.res_val = wb_res;
+        score_we1 = 1;
     } else if (w_next_ready) {
         v.pc = i_d_pc;
         v.instr = i_d_instr;
@@ -877,6 +874,7 @@ void InstrExecute::comb() {
 
         v.res_addr = wb_res_addr;
         v.res_val = wb_res;
+        score_we1 = 1;
 
         if (wv[Instr_JAL] && wb_res_addr == Reg_ra) {
             v.call = 1;
@@ -890,15 +888,32 @@ void InstrExecute::comb() {
         }
     }
 
+    if (i_wb_valid.read() == 1) {
+        v_scoreboard[i_wb_waddr.read().to_int()].status = RegValid;
+    }
+    if (score_we1 == 1 && wb_res_addr != 0) {
+        if (w_memop_load == 1) {
+            v_scoreboard[wb_res_addr.to_int()].status = RegHazard;
+        } else {
+            v_scoreboard[wb_res_addr.to_int()].status = RegHazard;
+            v_scoreboard[wb_res_addr.to_int()].forward = wb_res;
+        }
+    }
+
+
     if (!async_reset_ && !i_nrst.read()) {
         R_RESET(v);
+        for (int i = 0; i < SCOREBOARD_SIZE; i++) {
+            v_scoreboard[i].status = RegValid;
+            v_scoreboard[i].forward = 0;
+        }
     }
 
     o_radr1 = wb_radr1;
     o_radr2 = wb_radr2;
     o_res_addr = r.res_addr;
     o_res_data = r.res_val;
-    o_pipeline_hold = w_hold;
+    o_pipeline_hold = w_hold_memop | w_hold_hazard | w_hold_hazard;
 
     o_csr_wena = w_csr_wena && w_next_ready;
     o_csr_addr = wb_csr_addr;
@@ -927,6 +942,10 @@ void InstrExecute::registers() {
         R_RESET(r);
     } else {
         r = v;
+        for (int i = 0; i < SCOREBOARD_SIZE; i++) {
+            r_scoreboard[i].forward = v_scoreboard[i].forward;
+            r_scoreboard[i].status = v_scoreboard[i].status;
+        }
     }
 }
 

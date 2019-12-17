@@ -33,7 +33,8 @@ SC_MODULE(InstrExecute) {
     sc_in<bool> i_d_valid;                      // Decoded instruction is valid
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_d_pc;      // Instruction pointer on decoded instruction
     sc_in<sc_uint<32>> i_d_instr;               // Decoded instruction value
-    sc_in<bool> i_wb_ready;                     // end of write back operation
+    sc_in<bool> i_wb_valid;                     // write back operation valid
+    sc_in<sc_uint<6>> i_wb_waddr;               // write back address
     sc_in<bool> i_memop_store;                  // Store to memory operation
     sc_in<bool> i_memop_load;                   // Load from memoru operation
     sc_in<bool> i_memop_sign_ext;               // Load memory value with sign extending
@@ -87,6 +88,7 @@ SC_MODULE(InstrExecute) {
     sc_out<bool> o_memop_store;                 // Store data instruction
     sc_out<sc_uint<2>> o_memop_size;            // 0=1bytes; 1=2bytes; 2=4bytes; 3=8bytes
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_memop_addr;// Memory access address
+    sc_in<bool> i_memop_ready;
 
     sc_out<bool> o_trap_ready;                  // trap branch request accepted
     sc_out<bool> o_valid;                       // Output is valid
@@ -123,9 +125,26 @@ private:
     static const unsigned State_WaitInstr = 0;
     static const unsigned State_SingleCycle = 1;
     static const unsigned State_MultiCycle = 2;
-    static const unsigned State_Hold = 3;
-    static const unsigned State_Hazard = 4;
 
+    enum ScoreType {
+        RegValid,
+        RegHazard,
+        RegForward
+    };
+
+    struct score_item_type {
+        sc_uint<2> status;
+        sc_uint<RISCV_ARCH> forward;
+    };
+    struct score_item_type_r {
+        sc_signal<sc_uint<2>> status;
+        sc_signal<sc_uint<RISCV_ARCH>> forward;
+    };
+
+    static const int SCOREBOARD_SIZE = 64;
+    score_item_type v_scoreboard[SCOREBOARD_SIZE];
+    score_item_type_r r_scoreboard[SCOREBOARD_SIZE];
+    
     struct RegistersType {
         sc_signal<sc_uint<3>> state;
         sc_signal<bool> d_valid;                        // Valid decoded instruction latch
@@ -155,8 +174,6 @@ private:
         sc_signal<sc_uint<RISCV_ARCH>> multi_a1;        // Multi-cycle operand 1
         sc_signal<sc_uint<RISCV_ARCH>> multi_a2;        // Multi-cycle operand 2
 
-        sc_signal<sc_uint<6>> hazard_addr0;             // Updated register address on previous step
-        sc_signal<sc_uint<2>> hazard_depth;             // Number of modificated registers that wasn't done yet
         sc_signal<bool> hold_valid;
         sc_signal<bool> hold_multi_ena;
 
@@ -193,8 +210,6 @@ private:
         iv.multi_ivec_fpu = 0;
         iv.multi_a1 = 0;
         iv.multi_a2 = 0;
-        iv.hazard_addr0 = 0;
-        iv.hazard_depth = 0;
         iv.hold_valid = 0;
         iv.hold_multi_ena = 0;
         iv.call = 0;
@@ -207,12 +222,12 @@ private:
     sc_signal<bool> w_arith_busy[Multi_Total];
     bool w_exception_store;
     bool w_exception_load;
-    bool w_hazard_lvl1;
-    bool w_hazard_lvl2;
     bool w_next_ready;
-    bool w_hold;
     bool w_multi_valid;
     bool w_multi_ena;
+    bool w_hold_multi;
+    bool w_hold_hazard;
+    bool w_hold_memop;
 
     sc_signal<sc_uint<RISCV_ARCH>> wb_shifter_a1;      // Shifters operand 1
     sc_signal<sc_uint<6>> wb_shifter_a2;               // Shifters operand 2
