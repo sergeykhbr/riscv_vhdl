@@ -182,6 +182,25 @@ architecture arch_CacheTop of CacheTop is
   );
   end component; 
 
+  component mpu  is generic (
+    async_reset : boolean
+  );
+  port (
+    i_clk : in std_logic;
+    i_nrst : in std_logic;
+    i_iaddr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_daddr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_region_we : in std_logic;
+    i_region_idx : in std_logic_vector(CFG_MPU_TBL_WIDTH-1 downto 0);
+    i_region_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_region_mask : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_region_flags : in std_logic_vector(CFG_MPU_FL_TOTAL-1 downto 0);  -- {ena, cachable, r, w, x}
+    o_iflags : out std_logic_vector(CFG_MPU_FL_TOTAL-1 downto 0);
+    o_dflags : out std_logic_vector(CFG_MPU_FL_TOTAL-1 downto 0)
+  );
+  end component;
+
+
 begin
 
     i0 : ICacheLru generic map (

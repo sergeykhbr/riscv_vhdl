@@ -51,6 +51,18 @@ package river_cfg is
   constant BUS_DATA_BYTES : integer := BUS_DATA_WIDTH / 8;
   --! @}
 
+  -- MPU config:
+  constant CFG_MPU_TBL_WIDTH   : integer := 2;    -- [1:0]  log2(MPU_TBL_SIZE)
+  constant CFG_MPU_TBL_SIZE    : integer := 2**CFG_MPU_TBL_WIDTH;
+
+  constant CFG_MPU_FL_WR       : integer := 0;
+  constant CFG_MPU_FL_RD       : integer := 1;
+  constant CFG_MPU_FL_EXEC     : integer := 2;
+  constant CFG_MPU_FL_CACHABLE : integer := 3;
+  constant CFG_MPU_FL_ENA      : integer := 4;
+  constant CFG_MPU_FL_TOTAL    : integer := 5;
+
+
   --! @name   Encoded Memory operation size values
   --! @{
 
