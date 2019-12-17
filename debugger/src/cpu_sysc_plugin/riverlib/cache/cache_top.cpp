@@ -58,7 +58,7 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset) :
     i_resp_mem_data("i_resp_mem_data"),
     i_resp_mem_load_fault("i_resp_mem_load_fault"),
     i_resp_mem_store_fault("i_resp_mem_store_fault"),
-    //i_resp_mem_store_fault_addr("i_resp_mem_store_fault_addr"),
+    i_resp_mem_store_fault_addr("i_resp_mem_store_fault_addr"),
     i_mpu_region_we("i_mpu_region_we"),
     i_mpu_region_idx("i_mpu_region_idx"),
     i_mpu_region_addr("i_mpu_region_addr"),
@@ -101,10 +101,6 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset) :
     sensitive << i_nrst;
     sensitive << i_clk.pos();
 
-    w_mpu_ireadable_unsued = 0;
-    w_mpu_iwritable_unused = 0;
-    w_mpu_dexecutable_unused = 0;
-
     i1 = new ICacheLru("i1", async_reset, CFG_IINDEX_WIDTH);
     i1->i_clk(i_clk);
     i1->i_nrst(i_nrst);
@@ -132,10 +128,7 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset) :
     i1->i_resp_mem_data(wb_ctrl_resp_mem_data);
     i1->i_resp_mem_load_fault(w_ctrl_resp_mem_load_fault);
     i1->o_mpu_addr(i.mpu_addr);
-    i1->i_mpu_cachable(w_mpu_icachable);
-    i1->i_mpu_executable(w_mpu_iexecutable);
-    i1->i_mpu_writable(w_mpu_iwritable_unused);
-    i1->i_mpu_readable(w_mpu_ireadable_unsued);
+    i1->i_mpu_flags(wb_mpu_iflags);
     i1->i_flush_address(i_flush_address);
     i1->i_flush_valid(i_flush_valid);
     i1->o_istate(o_istate);
@@ -173,9 +166,7 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset) :
     d0->i_mem_store_fault(i_resp_mem_store_fault);
     //d0->i_resp_mem_store_fault_addr(i_resp_mem_store_fault_addr);
     d0->o_mpu_addr(d.mpu_addr);
-    d0->i_mpu_cachable(w_mpu_dcachable);
-    d0->i_mpu_readable(w_mpu_dreadable);
-    d0->i_mpu_writable(w_mpu_dwritable);
+    d0->i_mpu_flags(wb_mpu_dflags);
     d0->i_flush_address(i_data_flush_address);
     d0->i_flush_valid(i_data_flush_valid);
     d0->o_state(o_dstate);
@@ -191,11 +182,8 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset) :
     mpu0->i_region_addr(i_mpu_region_addr);
     mpu0->i_region_mask(i_mpu_region_mask);
     mpu0->i_region_flags(i_mpu_region_flags);
-    mpu0->o_icachable(w_mpu_icachable);
-    mpu0->o_iexecutable(w_mpu_iexecutable);
-    mpu0->o_dcachable(w_mpu_dcachable);
-    mpu0->o_dreadable(w_mpu_dreadable);
-    mpu0->o_dwritable(w_mpu_dwritable);
+    mpu0->o_iflags(wb_mpu_iflags);
+    mpu0->o_dflags(wb_mpu_dflags);
 
 #ifdef DBG_ICACHE_TB
     i0_tb = new ICache_tb("ictb0");

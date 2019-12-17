@@ -182,7 +182,7 @@ void CpuRiscV_RTL::createSystemC() {
     top_->i_resp_mem_data(wb_resp_mem_data);
     top_->i_resp_mem_load_fault(w_resp_mem_load_fault);
     top_->i_resp_mem_store_fault(w_resp_mem_store_fault);
-    //top_->i_resp_mem_store_fault_addr(wb_resp_mem_store_fault_addr);
+    top_->i_resp_mem_store_fault_addr(wb_resp_mem_store_fault_addr);
     top_->i_ext_irq(w_interrupt);
     top_->o_time(wb_time);
     top_->o_exec_cnt(wb_exec_cnt);

@@ -69,7 +69,7 @@ SC_MODULE(CacheTop) {
     sc_in<sc_uint<BUS_DATA_WIDTH>> i_resp_mem_data;     // Read value
     sc_in<bool> i_resp_mem_load_fault;                  // Bus response with SLVERR or DECERR on read
     sc_in<bool> i_resp_mem_store_fault;                 // Bus response with SLVERR or DECERR on write
-    //sc_in<sc_uint<BUS_ADDR_WIDTH>> i_resp_mem_store_fault_addr;
+    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_resp_mem_store_fault_addr;
     // MPU interface
     sc_in<bool> i_mpu_region_we;
     sc_in<sc_uint<CFG_MPU_TBL_WIDTH>> i_mpu_region_idx;
@@ -130,14 +130,8 @@ private:
     sc_signal<sc_uint<BUS_DATA_WIDTH>> wb_data_resp_mem_data;
     sc_signal<bool> w_data_resp_mem_load_fault;
     sc_signal<bool> w_data_req_ready;
-    sc_signal<bool> w_mpu_icachable;
-    sc_signal<bool> w_mpu_iexecutable;
-    sc_signal<bool> w_mpu_ireadable_unsued;
-    sc_signal<bool> w_mpu_iwritable_unused;
-    sc_signal<bool> w_mpu_dcachable;
-    sc_signal<bool> w_mpu_dexecutable_unused;
-    sc_signal<bool> w_mpu_dreadable;
-    sc_signal<bool> w_mpu_dwritable;
+    sc_signal<sc_uint<CFG_MPU_FL_TOTAL>> wb_mpu_iflags;
+    sc_signal<sc_uint<CFG_MPU_FL_TOTAL>> wb_mpu_dflags;
 
 
     ICacheLru *i1;

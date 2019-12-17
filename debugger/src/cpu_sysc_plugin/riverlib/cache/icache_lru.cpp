@@ -46,10 +46,7 @@ ICacheLru::ICacheLru(sc_module_name name_, bool async_reset,
     i_resp_mem_data("i_resp_mem_data"),
     i_resp_mem_load_fault("i_resp_mem_load_fault"),
     o_mpu_addr("o_mpu_addr"),
-    i_mpu_cachable("i_mpu_cachable"),
-    i_mpu_executable("i_mpu_executable"),
-    i_mpu_writable("i_mpu_writable"),
-    i_mpu_readable("i_mpu_readable"),
+    i_mpu_flags("i_mpu_flags"),
     i_flush_address("i_flush_address"),
     i_flush_valid("i_flush_valid"),
     o_istate("o_istate") {
@@ -133,8 +130,7 @@ ICacheLru::ICacheLru(sc_module_name name_, bool async_reset,
     sensitive << i_flush_address;
     sensitive << i_flush_valid;
     sensitive << i_req_mem_ready;
-    sensitive << i_mpu_cachable;
-    sensitive << i_mpu_executable;
+    sensitive << i_mpu_flags;
     for (int i = 0; i < CFG_ICACHE_WAYS; i++) {
         sensitive << wayeven_o[i].rtag;
         sensitive << wayeven_o[i].rdata;
@@ -568,7 +564,7 @@ void ICacheLru::comb() {
         v.req_mem_valid = 1;
         v.state = State_WaitGrant;
 
-        if (i_mpu_cachable.read() == 1) {
+        if (i_mpu_flags.read()[CFG_MPU_FL_CACHABLE] == 1) {
             v.mem_addr = r.mpu_addr.read()(BUS_ADDR_WIDTH-1, CFG_IOFFSET_WIDTH)
                         << CFG_IOFFSET_WIDTH;
             v.burst_cnt = 3;
@@ -583,9 +579,9 @@ void ICacheLru::comb() {
         v.burst_wstrb = wb_wstrb_next;
         v.cache_line_i = 0;
         v.load_fault = 0;
-        v.executable = i_mpu_executable.read();
-        v.writable = i_mpu_writable.read();
-        v.readable = i_mpu_readable.read();
+        v.executable = i_mpu_flags.read()[CFG_MPU_FL_EXEC];
+        v.writable = i_mpu_flags.read()[CFG_MPU_FL_WR];
+        v.readable = i_mpu_flags.read()[CFG_MPU_FL_RD];
         break;
     case State_WaitGrant:
         if (i_req_mem_ready.read()) {

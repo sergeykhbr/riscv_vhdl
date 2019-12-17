@@ -51,9 +51,7 @@ DCacheLru::DCacheLru(sc_module_name name_, bool async_reset)
     i_mem_load_fault("i_mem_load_fault"),
     i_mem_store_fault("i_mem_store_fault"),
     o_mpu_addr("o_mpu_addr"),
-    i_mpu_cachable("i_mpu_cachable"),
-    i_mpu_writable("i_mpu_writable"),
-    i_mpu_readable("i_mpu_readable"),
+    i_mpu_flags("i_mpu_flags"),
     i_flush_address("i_flush_address"),
     i_flush_valid("i_flush_valid"),
     o_state("o_state") {
@@ -93,9 +91,7 @@ DCacheLru::DCacheLru(sc_module_name name_, bool async_reset)
     sensitive << i_flush_address;
     sensitive << i_flush_valid;
     sensitive << i_req_mem_ready;
-    sensitive << i_mpu_cachable;
-    sensitive << i_mpu_writable;
-    sensitive << i_mpu_readable;
+    sensitive << i_mpu_flags;
     sensitive << line_raddr_o;
     sensitive << line_rdata_o;
     sensitive << line_hit_o;
@@ -163,7 +159,7 @@ void DCacheLru::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_mem_load_fault, i_mem_load_fault.name());
         sc_trace(o_vcd, i_mem_store_fault, i_mem_store_fault.name());
 
-        sc_trace(o_vcd, i_mpu_cachable, i_mpu_cachable.name());
+        sc_trace(o_vcd, i_mpu_flags, i_mpu_flags.name());
         sc_trace(o_vcd, i_flush_address, i_flush_address.name());
         sc_trace(o_vcd, i_flush_valid, i_flush_valid.name());
         sc_trace(o_vcd, o_state, o_state.name());
@@ -214,6 +210,7 @@ void DCacheLru::comb() {
     sc_uint<DTAG_FL_TOTAL> v_line_wflags;
     sc_uint<BUS_ADDR_WIDTH> vb_err_addr;
     sc_uint<DCACHE_LOG2_BURST_LEN> ridx;
+    bool v_req_same_line;
    
     v = r;
 
@@ -235,6 +232,12 @@ void DCacheLru::comb() {
         vb_err_addr = r.req_addr_b_resp.read();
     } else {
         vb_err_addr = r.req_addr.read();
+    }
+
+    v_req_same_line = 0;
+    if (r.req_addr.read()(BUS_ADDR_WIDTH-1, CFG_DLOG2_BYTES_PER_LINE)
+        == i_req_addr.read()(BUS_ADDR_WIDTH-1, CFG_DLOG2_BYTES_PER_LINE)) {
+        v_req_same_line = 1;
     }
 
 
@@ -328,6 +331,16 @@ void DCacheLru::comb() {
                 vb_line_wdata = vb_line_rdata_o_modified;
                 if (i_resp_ready.read() == 0) {
                     // Do nothing: wait accept
+                } else if (v_req_same_line == 1 && i_req_valid.read() == 1) {
+                    // 1 clock write cycle using previously set read address
+                    v_req_ready = 1;
+                    v.state = State_CheckHit;
+                    v_line_cs = i_req_valid.read();
+                    v.req_addr = i_req_addr.read();
+                    v.req_wstrb = i_req_wstrb.read();
+                    v.req_wdata = i_req_wdata.read();
+                    v.req_write = i_req_write.read();
+                    vb_line_addr = i_req_addr.read();
                 } else {
                     v.state = State_Idle;
                     v.requested = 0;
@@ -359,7 +372,7 @@ void DCacheLru::comb() {
         v.mem_write = 0;
         v.state = State_WaitGrant;
 
-        if (i_mpu_cachable.read() == 1) {
+        if (i_mpu_flags.read()[CFG_MPU_FL_CACHABLE] == 1) {
             if (line_rflags_o.read()[TAG_FL_VALID] == 1 &&
                 line_rflags_o.read()[DTAG_FL_DIRTY] == 1) {
                 v.write_first = 1;
@@ -389,8 +402,8 @@ void DCacheLru::comb() {
         v.burst_rstrb = 0x1;
         v.cache_line_i = 0;
         v.load_fault = 0;
-        v.writable = i_mpu_writable.read();
-        v.readable = i_mpu_readable.read();
+        v.writable = i_mpu_flags.read()[CFG_MPU_FL_WR];
+        v.readable = i_mpu_flags.read()[CFG_MPU_FL_RD];
         break;
     case State_WaitGrant:
         if (i_req_mem_ready.read()) {
@@ -619,7 +632,7 @@ DCacheLru_tb::DCacheLru_tb(sc_module_name name_) : sc_module(name_),
     SC_METHOD(registers);
     sensitive << w_clk.posedge_event();
 
-    tt = new DCacheLru("tt", 0, CFG_IINDEX_WIDTH);
+    tt = new DCacheLru("tt", 0);
     tt->i_clk(w_clk);
     tt->i_nrst(w_nrst);
     tt->i_req_valid(w_req_valid);
@@ -653,9 +666,7 @@ DCacheLru_tb::DCacheLru_tb(sc_module_name name_) : sc_module(name_),
     tt->i_mem_store_fault(w_mem_store_fault);
     // MPU interface
     tt->o_mpu_addr(wb_mpu_addr);
-    tt->i_mpu_cachable(w_mpu_cachable);
-    tt->i_mpu_writable(w_mpu_writable);
-    tt->i_mpu_readable(w_mpu_readable);
+    tt->i_mpu_flags(w_mpu_flags);
     // Debug interface
     tt->i_flush_address(wb_flush_address);
     tt->i_flush_valid(w_flush_valid);
@@ -706,6 +717,7 @@ void DCacheLru_tb::comb0() {
 
 
 void DCacheLru_tb::comb_fetch() {
+    sc_uint<CFG_MPU_FL_TOTAL> v_mpu_flags;
     w_req_valid = 0;
     w_req_write = 0;
     wb_req_addr = 0;
@@ -713,19 +725,21 @@ void DCacheLru_tb::comb_fetch() {
     wb_req_wstrb = 0;
     w_resp_ready = 1;
 
-    w_mpu_cachable = 1;
-    w_mpu_writable = 1;
-    w_mpu_readable = 1;
+    v_mpu_flags = ~0u;
 
     w_flush_valid = 0;
     wb_flush_address = 0;
 
 
     if (rbus.mpu_addr.read()[31] == 1) {
-        w_mpu_cachable = 0;
+        v_mpu_flags[CFG_MPU_FL_CACHABLE] = 0;
     }
+    w_mpu_flags = v_mpu_flags;
 
-    const unsigned START_POINT = 10 + 1 + (1 << (CFG_IINDEX_WIDTH+4));
+    // flush duration in clocks
+    // 1 clock to setup adr + 1 clock to write line for each line
+    // Total number of lines = ways + line_per_way
+    const unsigned START_POINT = 10 + 1 + (1 << (1+CFG_DLOG2_NWAYS+CFG_DLOG2_LINES_PER_WAY));
     const unsigned START_POINT2 = START_POINT + 500;
 
     switch (r.clk_cnt.read()) {
@@ -793,6 +807,36 @@ void DCacheLru_tb::comb_fetch() {
         wb_req_wstrb = 0x0C;
         break;
 
+    case START_POINT2 + 50:
+        w_req_valid = 1;
+        w_req_write = 0;
+        wb_req_addr = 0x00000020;
+        break;
+    case START_POINT2 + 51:
+        w_req_valid = 1;
+        w_req_write = 1;
+        wb_req_addr = 0x00000028;
+        wb_req_wdata = 0x0000DDCC00000000ull;
+        wb_req_wstrb = 0x30;
+        break;
+    case START_POINT2 + 52:
+        w_req_valid = 1;
+        w_req_write = 1;
+        wb_req_addr = 0x00000028;
+        wb_req_wdata = 0xFF00DDCC00000000ull;
+        wb_req_wstrb = 0x80;
+        break;
+    case START_POINT2 + 53:
+        w_req_valid = 1;
+        w_req_write = 0;
+        wb_req_addr = 0x00000028;
+        break;
+    case START_POINT2 + 54:
+        w_req_valid = 1;
+        w_req_write = 0;
+        wb_req_addr = 0x00000020;
+        break;
+
 #if 0
     case START_POINT2 + 50:
         /** Cached Write to notloaded cache line with displacement:
@@ -808,7 +852,7 @@ void DCacheLru_tb::comb_fetch() {
         wb_req_wstrb = 0xF0;
         break;
 #endif
-    case START_POINT2 + 150:
+    case START_POINT2 + 500:
         /** Flush cache (must dirty bits to offload)
          */
         w_flush_valid = 1;

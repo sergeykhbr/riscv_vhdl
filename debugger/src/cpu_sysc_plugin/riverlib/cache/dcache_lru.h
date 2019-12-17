@@ -23,7 +23,7 @@
 
 namespace debugger {
 
-//#define DBG_DCACHE_LRU_TB
+#define DBG_DCACHE_LRU_TB
 
 SC_MODULE(DCacheLru) {
     sc_in<bool> i_clk;
@@ -60,9 +60,7 @@ SC_MODULE(DCacheLru) {
     sc_in<bool> i_mem_store_fault;
     // Mpu interface
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_mpu_addr;
-    sc_in<bool> i_mpu_cachable;
-    sc_in<bool> i_mpu_writable;             // Writable region
-    sc_in<bool> i_mpu_readable;             // Readable/Executable region
+    sc_in<sc_uint<CFG_MPU_FL_TOTAL>> i_mpu_flags;
     // Debug interface
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_flush_address;
     sc_in<bool> i_flush_valid;
@@ -222,9 +220,7 @@ private:
     sc_signal<bool> w_mem_load_fault;
     sc_signal<bool> w_mem_store_fault;
     sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_mpu_addr;
-    sc_signal<bool> w_mpu_cachable;
-    sc_signal<bool> w_mpu_writable;
-    sc_signal<bool> w_mpu_readable;
+    sc_signal<sc_uint<CFG_MPU_FL_TOTAL>> w_mpu_flags;
     sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_flush_address;
     sc_signal<bool> w_flush_valid;
     sc_signal<sc_uint<4>> wb_state;

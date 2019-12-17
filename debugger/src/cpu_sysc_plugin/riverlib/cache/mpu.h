@@ -33,11 +33,8 @@ SC_MODULE(MPU) {
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_region_addr;
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_region_mask;
     sc_in<sc_uint<CFG_MPU_FL_TOTAL>> i_region_flags;  // {ena, cachable, r, w, x}
-    sc_out<bool> o_icachable;
-    sc_out<bool> o_iexecutable;
-    sc_out<bool> o_dcachable;
-    sc_out<bool> o_dreadable;
-    sc_out<bool> o_dwritable;
+    sc_out<sc_uint<CFG_MPU_FL_TOTAL>> o_iflags;
+    sc_out<sc_uint<CFG_MPU_FL_TOTAL>> o_dflags;
 
     void comb();
     void registers();
@@ -52,14 +49,11 @@ SC_MODULE(MPU) {
     struct MpuTableItemType {
         sc_uint<BUS_ADDR_WIDTH> addr;
         sc_uint<BUS_ADDR_WIDTH> mask;
-        bool ena;
-        bool cache;
-        bool exec;
-        bool rd;
-        bool wr;
+        sc_uint<CFG_MPU_FL_TOTAL> flags;
     };
 
     MpuTableItemType tbl[CFG_MPU_TBL_SIZE];
+    MpuTableItemType v_tbl[CFG_MPU_TBL_SIZE];
 
     bool async_reset_;
 };
