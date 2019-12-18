@@ -1,4 +1,5 @@
 ${RTL_HOME}/riverlib/cache/types_cache.vhd
+${RTL_HOME}/riverlib/cache/lrunway.vhd
 ${RTL_HOME}/riverlib/cache/iwaymem.vhd
 ${RTL_HOME}/riverlib/cache/ilru.vhd
 ${RTL_HOME}/riverlib/cache/icache_lru.vhd

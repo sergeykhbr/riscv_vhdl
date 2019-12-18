@@ -365,6 +365,9 @@ void DCacheLru::comb() {
         } else {
             // Miss
             v.state = State_CheckMPU;
+            if (r.req_write.read() == 1) {
+                v_resp_valid = 1;
+            }
         }
         break;
     case State_CheckMPU:
@@ -457,7 +460,9 @@ void DCacheLru::comb() {
                 vb_line_wdata = vb_cache_line_i_modified;
             }
         } else {
-            v_resp_valid = 1;
+            if (r.req_write.read() == 0) {
+                v_resp_valid = 1;
+            }
             vb_resp_data = vb_uncached_data;
             v_resp_er_load_fault = r.load_fault;
             if (i_resp_ready.read() == 1) {
@@ -492,7 +497,7 @@ void DCacheLru::comb() {
                     v.state = State_WaitGrant;
                 } else {
                     // Non-cached write
-                    v_resp_valid = 1;
+                    //v_resp_valid = 1;
                     v.state = State_Idle;
                 }
             } else {
