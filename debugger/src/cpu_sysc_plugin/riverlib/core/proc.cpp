@@ -78,7 +78,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     sensitive << w.f.pipeline_hold;
     sensitive << w.e.npc;
     sensitive << w.e.valid;
-    sensitive << w.e.pipeline_hold;
+    sensitive << w.e.d_ready;
     sensitive << w.m.pipeline_hold;
     sensitive << w.f.imem_req_valid;
     sensitive << w.f.imem_req_addr;
@@ -132,6 +132,11 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     dec0->i_f_instr(w.f.instr);
     dec0->i_instr_load_fault(w.f.instr_load_fault);
     dec0->i_instr_executable(w.f.instr_executable);
+    dec0->o_radr1(w.d.radr1);
+    dec0->o_radr2(w.d.radr2);
+    dec0->o_waddr(w.d.waddr);
+    dec0->o_imm(w.d.imm);
+    dec0->i_e_ready(w.e.d_ready);
     dec0->o_valid(w.d.instr_valid);
     dec0->o_pc(w.d.pc);
     dec0->o_instr(w.d.instr);
@@ -152,10 +157,13 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     exec0 = new InstrExecute("exec0", async_reset);
     exec0->i_clk(i_clk);
     exec0->i_nrst(i_nrst);
-    exec0->i_pipeline_hold(w_exec_pipeline_hold);
     exec0->i_d_valid(w.d.instr_valid);
     exec0->i_d_pc(w.d.pc);
     exec0->i_d_instr(w.d.instr);
+    exec0->i_d_radr1(w.d.radr1);
+    exec0->i_d_radr2(w.d.radr2);
+    exec0->i_d_waddr(w.d.waddr);
+    exec0->i_d_imm(w.d.imm);
     exec0->i_wb_valid(w.m.valid);
     exec0->i_wb_waddr(w.w.waddr);
     exec0->i_memop_store(w.d.memop_store);
@@ -173,15 +181,13 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     exec0->i_instr_executable(w.d.instr_executable);
     exec0->i_dport_npc_write(dbg.npc_write);
     exec0->i_dport_npc(wb_exec_dport_npc);
-    exec0->o_radr1(w.e.radr1);
     exec0->i_rdata1(ireg.rdata1);
-    exec0->o_radr2(w.e.radr2);
     exec0->i_rdata2(ireg.rdata2);
     exec0->i_rfdata1(freg.rdata1);
     exec0->i_rfdata2(freg.rdata2);
     exec0->o_res_addr(w.e.res_addr);
     exec0->o_res_data(w.e.res_data);
-    exec0->o_pipeline_hold(w.e.pipeline_hold);
+    exec0->o_d_ready(w.e.d_ready);
     exec0->o_csr_addr(w.e.csr_addr);
     exec0->o_csr_wena(w.e.csr_wena);
     exec0->i_csr_rdata(csr.rdata);
@@ -264,9 +270,9 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     iregs0 = new RegIntBank("iregs0", async_reset);
     iregs0->i_clk(i_clk);
     iregs0->i_nrst(i_nrst);
-    iregs0->i_radr1(w.e.radr1);
+    iregs0->i_radr1(w.d.radr1);
     iregs0->o_rdata1(ireg.rdata1);
-    iregs0->i_radr2(w.e.radr2);
+    iregs0->i_radr2(w.d.radr2);
     iregs0->o_rdata2(ireg.rdata2);
     iregs0->i_waddr(w.w.waddr);
     iregs0->i_wena(w.w.wena);
@@ -283,9 +289,9 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
         fregs0 = new RegFloatBank("fregs0", async_reset);
         fregs0->i_clk(i_clk);
         fregs0->i_nrst(i_nrst);
-        fregs0->i_radr1(w.e.radr1);
+        fregs0->i_radr1(w.d.radr1);
         fregs0->o_rdata1(freg.rdata1);
-        fregs0->i_radr2(w.e.radr2);
+        fregs0->i_radr2(w.d.radr2);
         fregs0->o_rdata2(freg.rdata2);
         fregs0->i_waddr(w.w.waddr);
         fregs0->i_wena(w.w.wena);
@@ -453,8 +459,8 @@ void Processor::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void Processor::comb() {
-    w_fetch_pipeline_hold = w.e.pipeline_hold | w.m.pipeline_hold | dbg.halt;
-    w_any_pipeline_hold = w.f.pipeline_hold | w.e.pipeline_hold
+    w_fetch_pipeline_hold = !w.e.d_ready | w.m.pipeline_hold | dbg.halt;
+    w_any_pipeline_hold = w.f.pipeline_hold | !w.e.d_ready
         | w.m.pipeline_hold | dbg.halt;
     w_exec_pipeline_hold = w.f.pipeline_hold | w.m.pipeline_hold | dbg.halt;
 

@@ -133,6 +133,10 @@ private:
         sc_signal<bool> exception;
         sc_signal<bool> instr_load_fault;
         sc_signal<bool> instr_executable;
+        sc_signal<sc_uint<6>> radr1;
+        sc_signal<sc_uint<6>> radr2;
+        sc_signal<sc_uint<6>> waddr;
+        sc_signal<sc_uint<RISCV_ARCH>> imm;
     };
 
     struct ExecuteType {
@@ -143,8 +147,6 @@ private:
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> npc;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> ex_npc;
 
-        sc_signal<sc_uint<6>> radr1;
-        sc_signal<sc_uint<6>> radr2;
         sc_signal<sc_uint<6>> res_addr;
         sc_signal<sc_uint<RISCV_ARCH>> res_data;
         sc_signal<bool> mret;
@@ -171,7 +173,7 @@ private:
         sc_signal<bool> memop_store;
         sc_signal<sc_uint<2>> memop_size;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> memop_addr;
-        sc_signal<bool> pipeline_hold;           // Hold pipeline from Execution stage
+        sc_signal<bool> d_ready;           // Hold pipeline from Execution stage
         sc_signal<bool> call;                       // pseudo-instruction CALL
         sc_signal<bool> ret;                        // pseudo-instruction RET
     };

@@ -29,8 +29,11 @@ namespace debugger {
 SC_MODULE(InstrExecute) {
     sc_in<bool> i_clk;
     sc_in<bool> i_nrst;                         // Reset active LOW
-    sc_in<bool> i_pipeline_hold;                // Hold execution by any reason
     sc_in<bool> i_d_valid;                      // Decoded instruction is valid
+    sc_in<sc_uint<6>> i_d_radr1;
+    sc_in<sc_uint<6>> i_d_radr2;
+    sc_in<sc_uint<6>> i_d_waddr;
+    sc_in<sc_uint<RISCV_ARCH>> i_d_imm;
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_d_pc;      // Instruction pointer on decoded instruction
     sc_in<sc_uint<32>> i_d_instr;               // Decoded instruction value
     sc_in<bool> i_wb_valid;                     // write back operation valid
@@ -48,18 +51,17 @@ SC_MODULE(InstrExecute) {
     sc_in<bool> i_unsup_exception;              // Unsupported instruction exception
     sc_in<bool> i_instr_load_fault;             // fault instruction's address
     sc_in<bool> i_instr_executable;             // MPU flag
+
     sc_in<bool> i_dport_npc_write;              // Write npc value from debug port
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_dport_npc; // Debug port npc value to write
 
-    sc_out<sc_uint<6>> o_radr1;                 // Integer/float register index 1
     sc_in<sc_uint<RISCV_ARCH>> i_rdata1;        // Integer register value 1
-    sc_out<sc_uint<6>> o_radr2;                 // Integer/float register index 2
     sc_in<sc_uint<RISCV_ARCH>> i_rdata2;        // Integer register value 2
     sc_in<sc_uint<RISCV_ARCH>> i_rfdata1;       // Float register value 1
     sc_in<sc_uint<RISCV_ARCH>> i_rfdata2;       // Float register value 2
     sc_out<sc_uint<6>> o_res_addr;              // Address to store result of the instruction (0=do not store)
     sc_out<sc_uint<RISCV_ARCH>> o_res_data;     // Value to store
-    sc_out<bool> o_pipeline_hold;               // Hold pipeline while 'writeback' not done or multi-clock instruction.
+    sc_out<bool> o_d_ready;                     // Hold pipeline while 'writeback' not done or multi-clock instruction.
     sc_out<sc_uint<12>> o_csr_addr;             // CSR address. 0 if not a CSR instruction with xret signals mode switching
     sc_out<bool> o_csr_wena;                    // Write new CSR value
     sc_in<sc_uint<RISCV_ARCH>> i_csr_rdata;     // CSR current value
@@ -125,6 +127,7 @@ private:
     static const unsigned State_WaitInstr = 0;
     static const unsigned State_SingleCycle = 1;
     static const unsigned State_MultiCycle = 2;
+    static const unsigned State_Hold = 3;
 
     enum ScoreType {
         RegValid,
@@ -146,13 +149,11 @@ private:
     score_item_type_r r_scoreboard[SCOREBOARD_SIZE];
     
     struct RegistersType {
-        sc_signal<sc_uint<3>> state;
-        sc_signal<bool> d_valid;                        // Valid decoded instruction latch
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> pc;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> npc;
         sc_signal<sc_uint<32>> instr;
-        sc_signal<sc_uint<6>> res_addr;
-        sc_signal<sc_uint<RISCV_ARCH>> res_val;
+        sc_signal<sc_uint<6>> waddr;
+        sc_signal<sc_uint<RISCV_ARCH>> wval;
         sc_signal<bool> memop_load;
         sc_signal<bool> memop_store;
         bool memop_sign_ext;
@@ -174,7 +175,7 @@ private:
         sc_signal<sc_uint<RISCV_ARCH>> multi_a1;        // Multi-cycle operand 1
         sc_signal<sc_uint<RISCV_ARCH>> multi_a2;        // Multi-cycle operand 2
 
-        sc_signal<bool> hold_valid;
+        sc_signal<bool> valid;
         sc_signal<bool> hold_multi_ena;
 
         sc_signal<bool> call;
@@ -182,13 +183,11 @@ private:
     } v, r;
 
     void R_RESET(RegistersType &iv) {
-        iv.state = State_WaitInstr;
-        iv.d_valid = 0;
         iv.pc = 0;
         iv.npc = CFG_NMI_RESET_VECTOR;
         iv.instr = 0;
-        iv.res_addr = 0;
-        iv.res_val = 0;
+        iv.waddr = 0;
+        iv.wval = 0;
         iv.memop_load = 0;
         iv.memop_store = 0;
         iv.memop_sign_ext = 0;
@@ -210,13 +209,12 @@ private:
         iv.multi_ivec_fpu = 0;
         iv.multi_a1 = 0;
         iv.multi_a2 = 0;
-        iv.hold_valid = 0;
+        iv.valid = 0;
         iv.hold_multi_ena = 0;
         iv.call = 0;
         iv.ret = 0;
     }
 
-    sc_uint<6> wb_res_addr;
     multi_arith_type wb_arith_res;
     sc_signal<bool> w_arith_valid[Multi_Total];
     sc_signal<bool> w_arith_busy[Multi_Total];

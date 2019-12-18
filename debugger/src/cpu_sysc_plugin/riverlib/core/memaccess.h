@@ -73,40 +73,53 @@ private:
     static const unsigned State_Idle = 0;
     static const unsigned State_WaitReqAccept = 1;
     static const unsigned State_WaitResponse = 2;
-    static const unsigned State_RegForward = 3;
 
     struct RegistersType {
         sc_signal<sc_uint<2>> state;
         sc_signal<bool> memop_r;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> memop_addr;
-        sc_signal<sc_uint<BUS_ADDR_WIDTH>> pc;
-        sc_signal<sc_uint<32>> instr;
-        sc_signal<sc_uint<6>> res_addr;
-        sc_signal<sc_uint<RISCV_ARCH>> res_data;
         sc_signal<sc_uint<BUS_DATA_WIDTH>> memop_wdata;
         sc_signal<sc_uint<BUS_DATA_BYTES>> memop_wstrb;
         sc_signal<bool> memop_sign_ext;
         sc_signal<sc_uint<2>> memop_size;
-        sc_signal<bool> wena;
+
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> memop_res_pc;
+        sc_signal<sc_uint<32>> memop_res_instr;
+        sc_signal<sc_uint<6>> memop_res_addr;
+        sc_signal<sc_uint<RISCV_ARCH>> memop_res_data;
+        sc_signal<bool> memop_res_wena;
+
+        sc_signal<bool> reg_wb_valid;
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> reg_res_pc;
+        sc_signal<sc_uint<32>> reg_res_instr;
+        sc_signal<sc_uint<6>> reg_res_addr;
+        sc_signal<sc_uint<RISCV_ARCH>> reg_res_data;
+        sc_signal<bool> reg_res_wena;
     } v, r;
 
     void R_RESET(RegistersType &iv) {
         iv.state = State_Idle;
         iv.memop_r = 0;
         iv.memop_addr = 0;
-        iv.pc = 0;
-        iv.instr = 0;
-        iv.res_addr = 0;
-        iv.res_data = 0;
         iv.memop_wdata = 0;
         iv.memop_wstrb = 0;
         iv.memop_sign_ext = 0;
         iv.memop_size = 0;
-        iv.wena = 0;
+        iv.memop_res_pc = 0;
+        iv.memop_res_instr = 0;
+        iv.memop_res_addr = 0;
+        iv.memop_res_data = 0;
+        iv.memop_res_wena = 0;
+        iv.reg_wb_valid = 0;
+        iv.reg_res_pc = 0;
+        iv.reg_res_instr = 0;
+        iv.reg_res_addr = 0;
+        iv.reg_res_data = 0;
+        iv.reg_res_wena = 0;
     }
 
     static const int QUEUE_WIDTH = RISCV_ARCH + 6 + 32 + BUS_ADDR_WIDTH
-                                 + 2 + 1 + 1 + 1 + BUS_DATA_WIDTH
+                                 + 2 + 1 + 1 + BUS_DATA_WIDTH
                                  + BUS_DATA_WIDTH + BUS_DATA_BYTES;
     static const int QUEUE_DEPTH = 1;
 
