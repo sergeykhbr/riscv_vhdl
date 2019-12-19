@@ -29,11 +29,15 @@ namespace debugger {
 SC_MODULE(InstrExecute) {
     sc_in<bool> i_clk;
     sc_in<bool> i_nrst;                         // Reset active LOW
-    sc_in<bool> i_pipeline_hold;                // Hold execution by any reason
     sc_in<bool> i_d_valid;                      // Decoded instruction is valid
+    sc_in<sc_uint<6>> i_d_radr1;
+    sc_in<sc_uint<6>> i_d_radr2;
+    sc_in<sc_uint<6>> i_d_waddr;
+    sc_in<sc_uint<RISCV_ARCH>> i_d_imm;
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_d_pc;      // Instruction pointer on decoded instruction
     sc_in<sc_uint<32>> i_d_instr;               // Decoded instruction value
-    sc_in<bool> i_wb_ready;                     // end of write back operation
+    sc_in<bool> i_wb_valid;                     // write back operation valid
+    sc_in<sc_uint<6>> i_wb_waddr;               // write back address
     sc_in<bool> i_memop_store;                  // Store to memory operation
     sc_in<bool> i_memop_load;                   // Load from memoru operation
     sc_in<bool> i_memop_sign_ext;               // Load memory value with sign extending
@@ -47,18 +51,17 @@ SC_MODULE(InstrExecute) {
     sc_in<bool> i_unsup_exception;              // Unsupported instruction exception
     sc_in<bool> i_instr_load_fault;             // fault instruction's address
     sc_in<bool> i_instr_executable;             // MPU flag
+
     sc_in<bool> i_dport_npc_write;              // Write npc value from debug port
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_dport_npc; // Debug port npc value to write
 
-    sc_out<sc_uint<6>> o_radr1;                 // Integer/float register index 1
     sc_in<sc_uint<RISCV_ARCH>> i_rdata1;        // Integer register value 1
-    sc_out<sc_uint<6>> o_radr2;                 // Integer/float register index 2
     sc_in<sc_uint<RISCV_ARCH>> i_rdata2;        // Integer register value 2
     sc_in<sc_uint<RISCV_ARCH>> i_rfdata1;       // Float register value 1
     sc_in<sc_uint<RISCV_ARCH>> i_rfdata2;       // Float register value 2
     sc_out<sc_uint<6>> o_res_addr;              // Address to store result of the instruction (0=do not store)
     sc_out<sc_uint<RISCV_ARCH>> o_res_data;     // Value to store
-    sc_out<bool> o_pipeline_hold;               // Hold pipeline while 'writeback' not done or multi-clock instruction.
+    sc_out<bool> o_d_ready;                     // Hold pipeline while 'writeback' not done or multi-clock instruction.
     sc_out<sc_uint<12>> o_csr_addr;             // CSR address. 0 if not a CSR instruction with xret signals mode switching
     sc_out<bool> o_csr_wena;                    // Write new CSR value
     sc_in<sc_uint<RISCV_ARCH>> i_csr_rdata;     // CSR current value
@@ -87,6 +90,7 @@ SC_MODULE(InstrExecute) {
     sc_out<bool> o_memop_store;                 // Store data instruction
     sc_out<sc_uint<2>> o_memop_size;            // 0=1bytes; 1=2bytes; 2=4bytes; 3=8bytes
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_memop_addr;// Memory access address
+    sc_in<bool> i_memop_ready;
 
     sc_out<bool> o_trap_ready;                  // trap branch request accepted
     sc_out<bool> o_valid;                       // Output is valid
@@ -124,95 +128,78 @@ private:
     static const unsigned State_SingleCycle = 1;
     static const unsigned State_MultiCycle = 2;
     static const unsigned State_Hold = 3;
-    static const unsigned State_Hazard = 4;
 
+    enum ScoreType {
+        RegValid,
+        RegHazard,
+        RegForward
+    };
+
+    struct score_item_type {
+        sc_uint<2> status;
+        sc_uint<RISCV_ARCH> forward;
+    };
+    struct score_item_type_r {
+        sc_signal<sc_uint<2>> status;
+        sc_signal<sc_uint<RISCV_ARCH>> forward;
+    };
+
+    static const int SCOREBOARD_SIZE = 64;
+    score_item_type v_scoreboard[SCOREBOARD_SIZE];
+    score_item_type_r r_scoreboard[SCOREBOARD_SIZE];
+    
     struct RegistersType {
-        sc_signal<sc_uint<3>> state;
-        sc_signal<bool> d_valid;                        // Valid decoded instruction latch
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> pc;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> npc;
         sc_signal<sc_uint<32>> instr;
-        sc_signal<sc_uint<6>> res_addr;
-        sc_signal<sc_uint<RISCV_ARCH>> res_val;
+        sc_signal<sc_uint<6>> waddr;
+        sc_signal<sc_uint<RISCV_ARCH>> wval;
         sc_signal<bool> memop_load;
         sc_signal<bool> memop_store;
         bool memop_sign_ext;
         sc_uint<2> memop_size;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> memop_addr;
 
-        sc_signal<sc_uint<6>> multi_res_addr;           // latched output reg. address while multi-cycle instruction
-        sc_signal<sc_uint<BUS_ADDR_WIDTH>> multi_pc;    // latched pc-value while multi-cycle instruction
-        sc_signal<sc_uint<BUS_ADDR_WIDTH>> multi_npc;   // latched npc-value while multi-cycle instruction
-        sc_signal<sc_uint<32>> multi_instr;             // Multi-cycle instruction is under processing
-        sc_signal<bool> multi_ena[Multi_Total];         // Enable pulse for Operation that takes more than 1 clock
-        sc_signal<bool> multi_rv32;                     // Long operation with 32-bits operands
-        sc_signal<bool> multi_f64;                      // Long double operation
-        sc_signal<bool> multi_unsigned;                 // Long operation with unsiged operands
-        sc_signal<bool> multi_residual_high;            // Flag for Divider module: 0=divsion output; 1=residual output
-                                                        // Flag for multiplier: 0=usual; 1=get high bits
-        sc_signal<bool> multiclock_ena;
-        sc_signal<sc_bv<Instr_FPU_Total>> multi_ivec_fpu;
-        sc_signal<sc_uint<RISCV_ARCH>> multi_a1;        // Multi-cycle operand 1
-        sc_signal<sc_uint<RISCV_ARCH>> multi_a2;        // Multi-cycle operand 2
-
-        sc_signal<sc_uint<6>> hazard_addr0;             // Updated register address on previous step
-        sc_signal<sc_uint<2>> hazard_depth;             // Number of modificated registers that wasn't done yet
-        sc_signal<bool> hold_valid;
-        sc_signal<bool> hold_multi_ena;
-
+        sc_signal<bool> valid;
         sc_signal<bool> call;
         sc_signal<bool> ret;
     } v, r;
 
     void R_RESET(RegistersType &iv) {
-        iv.state = State_WaitInstr;
-        iv.d_valid = 0;
         iv.pc = 0;
         iv.npc = CFG_NMI_RESET_VECTOR;
         iv.instr = 0;
-        iv.res_addr = 0;
-        iv.res_val = 0;
+        iv.waddr = 0;
+        iv.wval = 0;
         iv.memop_load = 0;
         iv.memop_store = 0;
         iv.memop_sign_ext = 0;
         iv.memop_size = 0;
         iv.memop_addr = 0;
 
-        iv.multi_res_addr = 0;
-        iv.multi_pc = 0;
-        iv.multi_npc = 0;
-        iv.multi_instr = 0;
-        iv.multi_ena[Multi_MUL] = 0;
-        iv.multi_ena[Multi_DIV] = 0;
-        iv.multi_ena[Multi_FPU] = 0;
-        iv.multi_rv32 = 0;
-        iv.multi_f64 = 0;
-        iv.multi_unsigned = 0;
-        iv.multi_residual_high = 0;
-        iv.multiclock_ena = 0;
-        iv.multi_ivec_fpu = 0;
-        iv.multi_a1 = 0;
-        iv.multi_a2 = 0;
-        iv.hazard_addr0 = 0;
-        iv.hazard_depth = 0;
-        iv.hold_valid = 0;
-        iv.hold_multi_ena = 0;
+        iv.valid = 0;
         iv.call = 0;
         iv.ret = 0;
     }
 
-    sc_uint<6> wb_res_addr;
     multi_arith_type wb_arith_res;
+    sc_signal<bool> w_arith_ena[Multi_Total];
     sc_signal<bool> w_arith_valid[Multi_Total];
     sc_signal<bool> w_arith_busy[Multi_Total];
+    sc_signal<bool> w_arith_residual_high;
+    sc_signal<sc_bv<Instr_FPU_Total>> wb_fpu_vec;
     bool w_exception_store;
     bool w_exception_load;
-    bool w_hazard_lvl1;
-    bool w_hazard_lvl2;
     bool w_next_ready;
-    bool w_hold;
-    bool w_multi_valid;
     bool w_multi_ena;
+    bool w_multi_ready;
+    bool w_multi_busy;
+    bool w_hold_multi;
+    bool w_hold_hazard;
+    bool w_hold_memop;
+
+    sc_signal<sc_uint<RISCV_ARCH>> wb_rdata1;
+    sc_signal<sc_uint<RISCV_ARCH>> wb_rdata2;
 
     sc_signal<sc_uint<RISCV_ARCH>> wb_shifter_a1;      // Shifters operand 1
     sc_signal<sc_uint<6>> wb_shifter_a2;               // Shifters operand 2

@@ -69,6 +69,12 @@ SC_MODULE(InstrDecoder) {
     sc_in<bool> i_instr_load_fault;             // fault instruction's address
     sc_in<bool> i_instr_executable;             // MPU flag
 
+    sc_out<sc_uint<6>> o_radr1;
+    sc_out<sc_uint<6>> o_radr2;
+    sc_out<sc_uint<6>> o_waddr;
+    sc_out<sc_uint<RISCV_ARCH>> o_imm;
+
+    sc_in<bool> i_e_ready;
     sc_out<bool> o_valid;                       // Current output values are valid
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_pc;       // Current instruction pointer value
     sc_out<sc_uint<32>> o_instr;                // Current instruction value
@@ -114,12 +120,17 @@ private:
         sc_signal<bool> instr_executable;
 
         sc_signal<bool> instr_unimplemented;
+        sc_signal<sc_uint<6>> radr1;
+        sc_signal<sc_uint<6>> radr2;
+        sc_signal<sc_uint<6>> waddr;
+        sc_signal<sc_uint<RISCV_ARCH>> imm;
+
     } v, r;
 
     void R_RESET(RegistersType &iv) {
         iv.valid = false;
-        iv.pc = 0;
-        iv.instr = 0;
+        iv.pc = ~0ull;
+        iv.instr = ~0ull;
         iv.isa_type = 0;
         iv.instr_vec = 0;
         iv.memop_store = 0;
@@ -133,6 +144,10 @@ private:
         iv.instr_load_fault = 0;
         iv.instr_executable = 0;
         iv.instr_unimplemented = 0;
+        iv.radr1 = 0;
+        iv.radr2 = 0;
+        iv.waddr = 0;
+        iv.imm = 0;
     }
 
     bool async_reset_;

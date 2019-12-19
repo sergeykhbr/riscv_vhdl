@@ -37,6 +37,7 @@ SC_MODULE(Tracer) {
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_e_memop_addr;
     sc_in<sc_uint<RISCV_ARCH>> i_e_res_data;
     sc_in<sc_uint<6>> i_e_res_addr;
+    sc_in<bool> i_m_wb_memop;
     sc_in<bool> i_m_valid;
     sc_in<bool> i_m_wena;
     sc_in<sc_uint<6>> i_m_waddr;
@@ -49,11 +50,28 @@ SC_MODULE(Tracer) {
 
     Tracer(sc_module_name name_, bool async_reset, const char *trace_file);
 
+    void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
+
  private:
     void task_disassembler(uint32_t instr);
 
-    sc_signal<bool> r_load_reg;
-    sc_signal<sc_uint<BUS_ADDR_WIDTH>> r_load_addr;
+    struct TraceStepType {
+        bool entry_valid;
+        uint64_t exec_cnt;
+        uint64_t pc;
+        uint32_t instr;
+        uint32_t waddr;
+        uint64_t wres;
+        bool memop_load;
+        bool memop_store;
+        uint64_t memop_addr;
+    };
+
+    static const int TRACE_TBL_SZ = 64;
+    TraceStepType trace_tbl_[TRACE_TBL_SZ];
+    int tr_wcnt_;
+    int tr_rcnt_;
+    int tr_total_;
 
     FILE *fl_;
     char disasm[1024];

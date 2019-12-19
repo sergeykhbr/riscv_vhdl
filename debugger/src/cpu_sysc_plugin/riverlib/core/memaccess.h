@@ -19,6 +19,7 @@
 
 #include <systemc.h>
 #include "../river_cfg.h"
+#include "queue.h"
 
 namespace debugger {
 
@@ -36,6 +37,7 @@ SC_MODULE(MemAccess) {
     sc_in<bool> i_memop_store;                      // Store i_res_data value into memory
     sc_in<sc_uint<2>> i_memop_size;                 // Encoded memory transaction size in bytes: 0=1B; 1=2B; 2=4B; 3=8B
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_memop_addr;    // Memory access address
+    sc_out<bool> o_memop_ready;                     // Ready toa ccept memop request
     sc_out<bool> o_wena;                            // Write enable signal
     sc_out<sc_uint<6>> o_waddr;                     // Output register address (0 = x0 = no write)
     sc_out<sc_uint<RISCV_ARCH>> o_wdata;            // Register value
@@ -56,15 +58,16 @@ SC_MODULE(MemAccess) {
     sc_out<bool> o_valid;                           // Output is valid
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_pc;           // Valid instruction pointer
     sc_out<sc_uint<32>> o_instr;                    // Valid instruction value
+    sc_out<bool> o_wb_memop;                        // memory operation write back (for tracer only)
 
     void main();
     void comb();
-    void qproc();
     void registers();
 
     SC_HAS_PROCESS(MemAccess);
 
     MemAccess(sc_module_name name_, bool async_reset);
+    virtual ~MemAccess();
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
@@ -72,53 +75,75 @@ private:
     static const unsigned State_Idle = 0;
     static const unsigned State_WaitReqAccept = 1;
     static const unsigned State_WaitResponse = 2;
-    static const unsigned State_RegForward = 3;
+    static const unsigned State_Hold = 3;
 
     struct RegistersType {
         sc_signal<sc_uint<2>> state;
         sc_signal<bool> memop_r;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> memop_addr;
-        sc_signal<sc_uint<BUS_ADDR_WIDTH>> pc;
-        sc_signal<sc_uint<32>> instr;
-        sc_signal<sc_uint<6>> res_addr;
-        sc_signal<sc_uint<RISCV_ARCH>> res_data;
         sc_signal<sc_uint<BUS_DATA_WIDTH>> memop_wdata;
         sc_signal<sc_uint<BUS_DATA_BYTES>> memop_wstrb;
         sc_signal<bool> memop_sign_ext;
         sc_signal<sc_uint<2>> memop_size;
-        sc_signal<bool> wena;
+
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> memop_res_pc;
+        sc_signal<sc_uint<32>> memop_res_instr;
+        sc_signal<sc_uint<6>> memop_res_addr;
+        sc_signal<sc_uint<RISCV_ARCH>> memop_res_data;
+        sc_signal<bool> memop_res_wena;
+
+        sc_signal<bool> reg_wb_valid;
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> reg_res_pc;
+        sc_signal<sc_uint<32>> reg_res_instr;
+        sc_signal<sc_uint<6>> reg_res_addr;
+        sc_signal<sc_uint<RISCV_ARCH>> reg_res_data;
+        sc_signal<bool> reg_res_wena;
+
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> hold_res_pc;
+        sc_signal<sc_uint<32>> hold_res_instr;
+        sc_signal<sc_uint<6>> hold_res_waddr;
+        sc_signal<sc_uint<RISCV_ARCH>> hold_res_wdata;
+        sc_signal<bool> hold_res_wena;
     } v, r;
 
     void R_RESET(RegistersType &iv) {
         iv.state = State_Idle;
         iv.memop_r = 0;
         iv.memop_addr = 0;
-        iv.pc = 0;
-        iv.instr = 0;
-        iv.res_addr = 0;
-        iv.res_data = 0;
         iv.memop_wdata = 0;
         iv.memop_wstrb = 0;
         iv.memop_sign_ext = 0;
         iv.memop_size = 0;
-        iv.wena = 0;
+        iv.memop_res_pc = 0;
+        iv.memop_res_instr = 0;
+        iv.memop_res_addr = 0;
+        iv.memop_res_data = 0;
+        iv.memop_res_wena = 0;
+        iv.reg_wb_valid = 0;
+        iv.reg_res_pc = 0;
+        iv.reg_res_instr = 0;
+        iv.reg_res_addr = 0;
+        iv.reg_res_data = 0;
+        iv.reg_res_wena = 0;
+        iv.hold_res_pc = 0;
+        iv.hold_res_instr = 0;
+        iv.hold_res_waddr = 0;
+        iv.hold_res_wdata = 0;
+        iv.hold_res_wena = 0;
     }
 
     static const int QUEUE_WIDTH = RISCV_ARCH + 6 + 32 + BUS_ADDR_WIDTH
-                                 + 2 + 1 + 1 + 1 + BUS_DATA_WIDTH
+                                 + 2 + 1 + 1 + BUS_DATA_WIDTH
                                  + BUS_DATA_WIDTH + BUS_DATA_BYTES;
-    static const int QUEUE_DEPTH = 1;
 
-    struct QueueRegisterType {
-        sc_signal<sc_uint<2>> wcnt;
-        sc_signal<sc_biguint<QUEUE_WIDTH>> mem[QUEUE_DEPTH];
-    } qv, qr;
+    Queue<2, QUEUE_WIDTH> *queue0;
 
     sc_signal<bool> queue_we;
     sc_signal<bool> queue_re;
     sc_signal<sc_biguint<QUEUE_WIDTH>> queue_data_i;
     sc_signal<sc_biguint<QUEUE_WIDTH>> queue_data_o;
     sc_signal<bool> queue_nempty;
+    sc_signal<bool> queue_full;
 
     bool async_reset_;
 };

@@ -28,6 +28,11 @@ InstrDecoder::InstrDecoder(sc_module_name name_, bool async_reset)
     i_f_instr("i_f_instr"),
     i_instr_load_fault("i_instr_load_fault"),
     i_instr_executable("i_instr_executable"),
+    o_radr1("o_radr1"),
+    o_radr2("o_radr2"),
+    o_waddr("o_waddr"),
+    o_imm("o_imm"),
+    i_e_ready("i_e_ready"),
     o_valid("o_valid"),
     o_pc("o_pc"),
     o_instr("o_instr"),
@@ -54,6 +59,7 @@ InstrDecoder::InstrDecoder(sc_module_name name_, bool async_reset)
     sensitive << i_f_instr;
     sensitive << i_instr_load_fault;
     sensitive << i_instr_executable;
+    sensitive << i_e_ready;
     sensitive << r.valid;
     sensitive << r.pc;
     sensitive << r.instr;
@@ -68,6 +74,10 @@ InstrDecoder::InstrDecoder(sc_module_name name_, bool async_reset)
     sensitive << r.instr_load_fault;
     sensitive << r.instr_executable;
     sensitive << r.instr_unimplemented;
+    sensitive << r.radr1;
+    sensitive << r.radr2;
+    sensitive << r.waddr;
+    sensitive << r.imm;
 
     SC_METHOD(registers);
     sensitive << i_nrst;
@@ -77,6 +87,9 @@ InstrDecoder::InstrDecoder(sc_module_name name_, bool async_reset)
 void InstrDecoder::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
         sc_trace(o_vcd, i_any_hold, i_any_hold.name());
+        sc_trace(o_vcd, i_f_valid, i_f_valid.name());
+        sc_trace(o_vcd, i_f_pc, i_f_pc.name());
+        sc_trace(o_vcd, i_f_instr, i_f_instr.name());
         sc_trace(o_vcd, o_valid, o_valid.name());
         sc_trace(o_vcd, o_pc, o_pc.name());
         sc_trace(o_vcd, o_instr, o_instr.name());
@@ -85,6 +98,10 @@ void InstrDecoder::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_exception, o_exception.name());
         sc_trace(o_vcd, o_compressed, o_compressed.name());
         sc_trace(o_vcd, o_instr_load_fault, o_instr_load_fault.name());
+        sc_trace(o_vcd, o_radr1, o_radr1.name());
+        sc_trace(o_vcd, o_radr2, o_radr2.name());
+        sc_trace(o_vcd, o_waddr, o_waddr.name());
+        sc_trace(o_vcd, o_imm, o_imm.name());
     }
 }
 
@@ -100,6 +117,15 @@ void InstrDecoder::comb() {
     sc_uint<3> wb_opcode2;
     sc_bv<Instr_Total> wb_dec = 0;
     sc_bv<ISA_Total> wb_isa_type = 0;
+    sc_uint<6> vb_radr1;
+    sc_uint<6> vb_radr2;
+    sc_uint<6> vb_waddr;
+    sc_uint<RISCV_ARCH> vb_imm;
+
+    vb_radr1 = 0;
+    vb_radr2 = 0;
+    vb_waddr = 0;
+    vb_imm = 0;
 
     if (wb_instr(1, 0) != 0x3) {
         w_compressed = 1;
@@ -113,6 +139,9 @@ void InstrDecoder::comb() {
             wb_instr_out(19, 15) = 0x2;                     // rs1 = sp
             wb_instr_out(29, 22) =
                 (wb_instr(10, 7), wb_instr(12, 11), wb_instr[5], wb_instr[6]);
+            vb_radr1 = 0x2;//(0, wb_instr.range(19, 15));
+            vb_waddr = 0x8 | wb_instr(4, 2);     // rd
+            vb_imm = (wb_instr(10, 7), wb_instr(12, 11), wb_instr[5], wb_instr[6]) << 2;
             break;
         case OPCODE_C_NOP_ADDI:
             wb_isa_type[ISA_I_type] = 1;
@@ -123,6 +152,12 @@ void InstrDecoder::comb() {
             if (wb_instr[12]) {
                 wb_instr_out(31, 25) = ~0;
             }
+            vb_radr1 = wb_instr(11, 7);//(0, wb_instr.range(19, 15));
+            vb_waddr = wb_instr(11, 7);      // rd
+            vb_imm(4, 0) = wb_instr(6, 2);
+            if (wb_instr[12]) {
+                vb_imm(63, 5) = ~0ull;
+            }
             break;
         case OPCODE_C_SLLI:
             wb_isa_type[ISA_I_type] = 1;
@@ -130,6 +165,9 @@ void InstrDecoder::comb() {
             wb_instr_out(11, 7) = wb_instr(11, 7);      // rd
             wb_instr_out(19, 15) = wb_instr(11, 7);     // rs1
             wb_instr_out(25, 20) = (wb_instr[12], wb_instr(6, 2));  // shamt
+            vb_radr1 = wb_instr(11, 7);//(0, wb_instr.range(19, 15));
+            vb_waddr = wb_instr(11, 7);      // rd
+            vb_imm = (wb_instr[12], wb_instr(6, 2));
             break;
         case OPCODE_C_JAL_ADDIW:
             // JAL is the RV32C only instruction
@@ -141,6 +179,12 @@ void InstrDecoder::comb() {
             if (wb_instr[12]) {
                 wb_instr_out(31, 25) = ~0;
             }
+            vb_radr1 = wb_instr(11, 7);//(0, wb_instr.range(19, 15));
+            vb_waddr = wb_instr(11, 7);      // rd
+            vb_imm(4, 0) = wb_instr(6, 2);
+            if (wb_instr[12]) {
+                vb_imm(63, 5) = ~0ull;
+            }
             break;
         case OPCODE_C_LW:
             wb_isa_type[ISA_I_type] = 1;
@@ -149,6 +193,9 @@ void InstrDecoder::comb() {
             wb_instr_out(19, 15) = 0x8 | wb_instr(9, 7);    // rs1
             wb_instr_out(26, 22) =
                 (wb_instr[5], wb_instr(12, 10), wb_instr[6]);
+            vb_radr1 = 0x8 | wb_instr(9, 7);//(0, wb_instr.range(19, 15));
+            vb_waddr = 0x8 | wb_instr(4, 2);     // rd
+            vb_imm = (wb_instr[5], wb_instr(12, 10), wb_instr[6]) << 2;
             break;
         case OPCODE_C_LI:  // ADDI rd = r0 + imm
             wb_isa_type[ISA_I_type] = 1;
@@ -158,6 +205,11 @@ void InstrDecoder::comb() {
             if (wb_instr[12]) {
                 wb_instr_out(31, 25) = ~0;
             }
+            vb_waddr = wb_instr(11, 7);      // rd
+            vb_imm(4, 0) = wb_instr(6, 2);
+            if (wb_instr[12]) {
+                vb_imm(63, 5) = ~0ull;
+            }
             break;
         case OPCODE_C_LWSP:
             wb_isa_type[ISA_I_type] = 1;
@@ -166,6 +218,9 @@ void InstrDecoder::comb() {
             wb_instr_out(19, 15) = 0x2;                 // rs1 = sp
             wb_instr_out(27, 22) =
                 (wb_instr(3, 2), wb_instr[12], wb_instr(6, 4));
+            vb_radr1 = 0x2;//(0, wb_instr.range(19, 15));
+            vb_waddr = wb_instr(11, 7);      // rd
+            vb_imm = (wb_instr(3, 2), wb_instr[12], wb_instr(6, 4)) << 2;
             break;
         case OPCODE_C_LD:
             wb_isa_type[ISA_I_type] = 1;
@@ -174,6 +229,9 @@ void InstrDecoder::comb() {
             wb_instr_out(19, 15) = 0x8 | wb_instr(9, 7);    // rs1
             wb_instr_out(27, 23) =
                 (wb_instr[6], wb_instr[5], wb_instr(12, 10));
+            vb_radr1 = 0x8 | wb_instr(9, 7);//(0, wb_instr.range(19, 15));
+            vb_waddr = 0x8 | wb_instr(4, 2);     // rd
+            vb_imm = (wb_instr[6], wb_instr[5], wb_instr(12, 10)) << 3;
             break;
         case OPCODE_C_ADDI16SP_LUI:
             if (wb_instr(11, 7) == 0x2) {
@@ -186,6 +244,12 @@ void InstrDecoder::comb() {
                 if (wb_instr[12]) {
                     wb_instr_out(31, 29) = ~0;
                 }
+                vb_radr1 = 0x2;//(0, wb_instr.range(19, 15));
+                vb_waddr = 0x2;     // rd = sp
+                vb_imm = (wb_instr(4, 3), wb_instr[5], wb_instr[2], wb_instr[6]) << 4;
+                if (wb_instr[12]) {
+                    vb_imm(63, 9) = ~0ull;
+                }
             } else {
                 wb_isa_type[ISA_U_type] = 1;
                 wb_dec[Instr_LUI] = 1;
@@ -193,6 +257,11 @@ void InstrDecoder::comb() {
                 wb_instr_out(16, 12) = wb_instr(6, 2);
                 if (wb_instr[12]) {
                     wb_instr_out(31, 17) = ~0;
+                }
+                vb_waddr = wb_instr(11, 7);  // rd
+                vb_imm(16, 12) = wb_instr(6, 2);
+                if (wb_instr[12]) {
+                    vb_imm(RISCV_ARCH-1, 17) = ~0ull;
                 }
             }
             break;
@@ -203,6 +272,9 @@ void InstrDecoder::comb() {
             wb_instr_out(19, 15) = 0x2;             // rs1 = sp
             wb_instr_out(28, 23) =
                 (wb_instr(4, 2), wb_instr[12], wb_instr(6, 5));
+            vb_radr1 = 0x2;//(0, wb_instr.range(19, 15));
+            vb_waddr = wb_instr(11, 7);  // rd
+            vb_imm = (wb_instr(4, 2), wb_instr[12], wb_instr(6, 5)) << 3;
             break;
         case OPCODE_C_MATH:
             if (wb_instr(11, 10) == 0) {
@@ -211,12 +283,18 @@ void InstrDecoder::comb() {
                 wb_instr_out(11, 7) = 0x8 | wb_instr(9, 7);   // rd
                 wb_instr_out(19, 15) = 0x8 | wb_instr(9, 7);  // rs1
                 wb_instr_out(25, 20) = (wb_instr[12], wb_instr(6, 2));  // shamt
+                vb_radr1 = 0x8 | wb_instr(9, 7);//(0, wb_instr.range(19, 15));
+                vb_waddr = 0x8 | wb_instr(9, 7);   // rd
+                vb_imm = (wb_instr[12], wb_instr(6, 2));
             } else if (wb_instr(11, 10) == 1) {
                 wb_isa_type[ISA_I_type] = 1;
                 wb_dec[Instr_SRAI] = 1;
                 wb_instr_out(11, 7) = 0x8 | wb_instr(9, 7);   // rd
                 wb_instr_out(19, 15) = 0x8 | wb_instr(9, 7);  // rs1
                 wb_instr_out(25, 20) = (wb_instr[12], wb_instr(6, 2));  // shamt
+                vb_radr1 = 0x8 | wb_instr(9, 7);//(0, wb_instr.range(19, 15));
+                vb_waddr = 0x8 | wb_instr(9, 7);   // rd
+                vb_imm = (wb_instr[12], wb_instr(6, 2));
             } else if (wb_instr(11, 10) == 2) {
                 wb_isa_type[ISA_I_type] = 1;
                 wb_dec[Instr_ANDI] = 1;
@@ -226,11 +304,20 @@ void InstrDecoder::comb() {
                 if (wb_instr[12]) {
                     wb_instr_out(31, 25) = ~0;
                 }
+                vb_radr1 = 0x8 | wb_instr(9, 7);//(0, wb_instr.range(19, 15));
+                vb_waddr = 0x8 | wb_instr(9, 7);   // rd
+                vb_imm(4, 0) = wb_instr(6, 2);
+                if (wb_instr[12]) {
+                    vb_imm(63, 5) = ~0ull;
+                }
             } else if (wb_instr[12] == 0) {
                 wb_isa_type[ISA_R_type] = 1;
                 wb_instr_out(11, 7) = 0x8 | wb_instr(9, 7);   // rd
                 wb_instr_out(19, 15) = 0x8 | wb_instr(9, 7);  // rs1
                 wb_instr_out(24, 20) = 0x8 | wb_instr(4, 2);  // rs2
+                vb_radr1 = 0x8 | wb_instr(9, 7);//(0, wb_instr.range(19, 15));
+                vb_radr2 = 0x8 | wb_instr(4, 2);//(0, wb_instr.range(24, 20));
+                vb_waddr = 0x8 | wb_instr(9, 7);   // rd
                 switch (wb_instr(6, 5)) {
                 case 0:
                     wb_dec[Instr_SUB] = 1;
@@ -249,6 +336,9 @@ void InstrDecoder::comb() {
                 wb_instr_out(11, 7) = 0x8 | wb_instr(9, 7);   // rd
                 wb_instr_out(19, 15) = 0x8 | wb_instr(9, 7);  // rs1
                 wb_instr_out(24, 20) = 0x8 | wb_instr(4, 2);  // rs2
+                vb_radr1 = 0x8 | wb_instr(9, 7);//(0, wb_instr.range(19, 15));
+                vb_radr2 = 0x8 | wb_instr(4, 2);//(0, wb_instr.range(24, 20));
+                vb_waddr = 0x8 | wb_instr(9, 7);   // rd
                 switch (wb_instr(6, 5)) {
                 case 0:
                     wb_dec[Instr_SUBW] = 1;
@@ -267,10 +357,13 @@ void InstrDecoder::comb() {
                 if (wb_instr(6, 2) == 0) {
                     wb_dec[Instr_JALR] = 1;
                     wb_instr_out(19, 15) = wb_instr(11, 7);  // rs1
+                    vb_radr1 = wb_instr(11, 7);//(0, wb_instr.range(19, 15));
                 } else {
                     wb_dec[Instr_ADDI] = 1;
                     wb_instr_out(11, 7) = wb_instr(11, 7);   // rd
                     wb_instr_out(19, 15) = wb_instr(6, 2);   // rs1
+                    vb_radr1 = wb_instr(6, 2);//(0, wb_instr.range(19, 15));
+                    vb_waddr = wb_instr(11, 7);   // rd
                 }
             } else {
                 if (wb_instr(11, 7) == 0 && wb_instr(6, 2) == 0) {
@@ -279,12 +372,17 @@ void InstrDecoder::comb() {
                     wb_dec[Instr_JALR] = 1;
                     wb_instr_out(11, 7) = 0x1;               // rd = ra
                     wb_instr_out(19, 15) = wb_instr(11, 7);  // rs1
+                    vb_radr1 = 0x1;//(0, wb_instr.range(19, 15));
+                    vb_waddr = 0x1;
                 } else {
                     wb_dec[Instr_ADD] = 1;
                     wb_isa_type[ISA_R_type] = 1;
                     wb_instr_out(11, 7) = wb_instr(11, 7);   // rd
                     wb_instr_out(19, 15) = wb_instr(11, 7);  // rs1
                     wb_instr_out(24, 20) = wb_instr(6, 2);   // rs2
+                    vb_radr1 = wb_instr(11, 7);//(0, wb_instr.range(19, 15));
+                    vb_radr2 = wb_instr(6, 2);//(0, wb_instr.range(24, 20));
+                    vb_waddr = wb_instr(11, 7);   // rd
                 }
             }
             break;
@@ -303,6 +401,11 @@ void InstrDecoder::comb() {
                 wb_instr_out(19, 12) = ~0;              // imm19_12
                 wb_instr_out[31] = 1;                   // imm20
             }
+            vb_imm(10, 1) = (wb_instr[8], wb_instr(10, 9), wb_instr[6], wb_instr[7],
+                            wb_instr[2], wb_instr[11], wb_instr(5, 3));
+            if (wb_instr[12]) {
+                vb_imm(RISCV_ARCH-1, 11) = ~0ull;
+            }
             break;
         case OPCODE_C_SW:
             wb_isa_type[ISA_S_type] = 1;
@@ -311,6 +414,9 @@ void InstrDecoder::comb() {
             wb_instr_out(19, 15) = 0x8 | wb_instr(9, 7);    // rs1
             wb_instr_out(11, 9) = (wb_instr(11, 10), wb_instr[6]);
             wb_instr_out(26, 25) = (wb_instr[5] , wb_instr[12]);
+            vb_radr1 = 0x8 | wb_instr(9, 7);    // rs1
+            vb_radr2 = 0x8 | wb_instr(4, 2);    // rs2
+            vb_imm(6, 2) = (wb_instr[5] , wb_instr[12], wb_instr(11, 10), wb_instr[6]);
             break;
         case OPCODE_C_BEQZ:
             wb_isa_type[ISA_SB_type] = 1;
@@ -323,6 +429,11 @@ void InstrDecoder::comb() {
                 wb_instr_out[7] = 1;
                 wb_instr_out[31] = 1;
             }
+            vb_radr1 = 0x8 | wb_instr(9, 7);    // rs1
+            vb_imm(7, 1) = (wb_instr(6, 5), wb_instr[2], wb_instr(11, 10), wb_instr(4, 3));
+            if (wb_instr[12]) {
+                vb_imm(RISCV_ARCH-1, 8) = ~0ull;
+            }
             break;
         case OPCODE_C_SWSP:
             wb_isa_type[ISA_S_type] = 1;
@@ -331,6 +442,9 @@ void InstrDecoder::comb() {
             wb_instr_out(19, 15) = 0x2;             // rs1 = sp
             wb_instr_out(11, 9) = wb_instr(11, 9);
             wb_instr_out(27, 25) = (wb_instr(8, 7), wb_instr[12]);
+            vb_radr1 = 0x2;             // rs1 = sp
+            vb_radr2 = wb_instr(6, 2);   // rs2
+            vb_imm(7, 2) = (wb_instr(8, 7), wb_instr[12], wb_instr(11, 9));
             break;
         case OPCODE_C_SD:
             wb_isa_type[ISA_S_type] = 1;
@@ -339,6 +453,9 @@ void InstrDecoder::comb() {
             wb_instr_out(19, 15) = 0x8 | wb_instr(9, 7);    // rs1
             wb_instr_out(11, 10) = wb_instr(11, 10);
             wb_instr_out(27, 25) = (wb_instr(6, 5), wb_instr[12]);
+            vb_radr1 = 0x8 | wb_instr(9, 7);    // rs1
+            vb_radr2 = 0x8 | wb_instr(4, 2);    // rs2
+            vb_imm(7, 3) = (wb_instr(6, 5), wb_instr[12], wb_instr(11, 10));
             break;
         case OPCODE_C_BNEZ:
             wb_isa_type[ISA_SB_type] = 1;
@@ -351,6 +468,11 @@ void InstrDecoder::comb() {
                 wb_instr_out[7] = 1;
                 wb_instr_out[31] = 1;
             }
+            vb_radr1 = 0x8 | wb_instr(9, 7);    // rs1
+            vb_imm(7, 1) = (wb_instr(6, 5), wb_instr[2], wb_instr(11, 10), wb_instr(4, 3));
+            if (wb_instr[12]) {
+                vb_imm(RISCV_ARCH-1, 8) = ~0ull;
+            }
             break;
         case OPCODE_C_SDSP:
             wb_isa_type[ISA_S_type] = 1;
@@ -359,6 +481,9 @@ void InstrDecoder::comb() {
             wb_instr_out(19, 15) = 0x2;             // rs1 = sp
             wb_instr_out(11, 10) = wb_instr(11, 10);
             wb_instr_out(28, 25) = (wb_instr(9, 7), wb_instr[12]);
+            vb_radr1 = 0x2;             // rs1 = sp
+            vb_radr2 = wb_instr(6, 2);  // rs2
+            vb_imm(8, 3) = (wb_instr(9, 7), wb_instr[12], wb_instr(11, 10));
             break;
         default:
             w_error = true;
@@ -369,6 +494,9 @@ void InstrDecoder::comb() {
         switch (wb_opcode1) {
         case OPCODE_ADD:
             wb_isa_type[ISA_R_type] = 1;
+            vb_radr1 = (0, wb_instr.range(19, 15));
+            vb_radr2 = (0, wb_instr.range(24, 20));
+            vb_waddr = wb_instr(11, 7);             // rdc
             switch (wb_opcode2) {
             case 0:
                 if (wb_instr(31, 25) == 0x00) {
@@ -434,6 +562,12 @@ void InstrDecoder::comb() {
             break;
         case OPCODE_ADDI:
             wb_isa_type[ISA_I_type] = 1;
+            vb_radr1 = (0, wb_instr.range(19, 15));
+            vb_waddr = wb_instr(11, 7);             // rd
+            vb_imm = wb_instr.range(31, 20);
+            if (wb_instr[31] == 1) {
+                vb_imm(63, 12) = ~0ull;
+            }
             switch (wb_opcode2) {
             case 0:
                 wb_dec[Instr_ADDI] = 1;
@@ -471,6 +605,12 @@ void InstrDecoder::comb() {
             break;
         case OPCODE_ADDIW:
             wb_isa_type[ISA_I_type] = 1;
+            vb_radr1 = (0, wb_instr.range(19, 15));
+            vb_waddr = wb_instr(11, 7);             // rd
+            vb_imm = wb_instr.range(31, 20);
+            if (wb_instr[31] == 1) {
+                vb_imm(63, 12) = ~0ull;
+            }
             switch (wb_opcode2) {
             case 0:
                 wb_dec[Instr_ADDIW] = 1;
@@ -493,6 +633,9 @@ void InstrDecoder::comb() {
             break;
         case OPCODE_ADDW:
             wb_isa_type[ISA_R_type] = 1;
+            vb_radr1 = (0, wb_instr.range(19, 15));
+            vb_radr2 = (0, wb_instr.range(24, 20));
+            vb_waddr = wb_instr(11, 7);             // rd
             switch (wb_opcode2) {
             case 0:
                 if (wb_instr(31, 25) == 0x00) {
@@ -547,9 +690,20 @@ void InstrDecoder::comb() {
         case OPCODE_AUIPC:
             wb_isa_type[ISA_U_type] = 1;
             wb_dec[Instr_AUIPC] = 1;
+            vb_waddr = wb_instr(11, 7);             // rd
+            vb_imm(31, 12) = wb_instr(31, 12);
+            if (wb_instr[31] == 1) {
+                vb_imm(RISCV_ARCH-1, 32) = ~0ull;
+            }
             break;
         case OPCODE_BEQ:
             wb_isa_type[ISA_SB_type] = 1;
+            vb_radr1 = wb_instr(19, 15);
+            vb_radr2 = wb_instr(24, 20);
+            vb_imm(11, 1) = (wb_instr[7], wb_instr(30, 25), wb_instr(11, 8));
+            if (wb_instr[31] == 1) {
+                vb_imm(RISCV_ARCH-1, 12) = ~0ull;
+            }
             switch (wb_opcode2) {
             case 0:
                 wb_dec[Instr_BEQ] = 1;
@@ -576,9 +730,20 @@ void InstrDecoder::comb() {
         case OPCODE_JAL:
             wb_isa_type[ISA_UJ_type] = 1;
             wb_dec[Instr_JAL] = 1;
+            vb_waddr = wb_instr(11, 7);             // rd
+            vb_imm(19, 1) = (wb_instr(19, 12), wb_instr[20], wb_instr(30, 21));
+            if (wb_instr[31] == 1) {
+                vb_imm(RISCV_ARCH-1, 20) = ~0ull;
+            }
             break;
         case OPCODE_JALR:
             wb_isa_type[ISA_I_type] = 1;
+            vb_radr1 = (0, wb_instr.range(19, 15));
+            vb_waddr = wb_instr(11, 7);             // rd
+            vb_imm = wb_instr.range(31, 20);
+            if (wb_instr[31] == 1) {
+                vb_imm(63, 12) = ~0ull;
+            }
             switch (wb_opcode2) {
             case 0:
                 wb_dec[Instr_JALR] = 1;
@@ -589,6 +754,12 @@ void InstrDecoder::comb() {
             break;
         case OPCODE_LB:
             wb_isa_type[ISA_I_type] = 1;
+            vb_radr1 = (0, wb_instr.range(19, 15));
+            vb_waddr = wb_instr(11, 7);             // rd
+            vb_imm = wb_instr.range(31, 20);
+            if (wb_instr[31] == 1) {
+                vb_imm(63, 12) = ~0ull;
+            }
             switch (wb_opcode2) {
             case 0:
                 wb_dec[Instr_LB] = 1;
@@ -618,9 +789,20 @@ void InstrDecoder::comb() {
         case OPCODE_LUI:
             wb_isa_type[ISA_U_type] = 1;
             wb_dec[Instr_LUI] = 1;
+            vb_waddr = wb_instr(11, 7);             // rd
+            vb_imm(31, 12) = wb_instr(31, 12);
+            if (wb_instr[31] == 1) {
+                vb_imm(RISCV_ARCH-1, 32) = ~0ull;
+            }
             break;
         case OPCODE_SB:
             wb_isa_type[ISA_S_type] = 1;
+            vb_radr1 = wb_instr(19, 15);
+            vb_radr2 = wb_instr(24, 20);
+            vb_imm(11, 0) = (wb_instr(31, 25), wb_instr(11, 7));
+            if (wb_instr[31] == 1) {
+                vb_imm(RISCV_ARCH-1, 12) = ~0ull;
+            }
             switch (wb_opcode2) {
             case 0:
                 wb_dec[Instr_SB] = 1;
@@ -640,6 +822,12 @@ void InstrDecoder::comb() {
             break;
         case OPCODE_CSRR:
             wb_isa_type[ISA_I_type] = 1;
+            vb_radr1 = (0, wb_instr.range(19, 15));
+            vb_waddr = wb_instr(11, 7);             // rd
+            vb_imm = wb_instr.range(31, 20);
+            if (wb_instr[31] == 1) {
+                vb_imm(63, 12) = ~0ull;
+            }
             switch (wb_opcode2) {
             case 0:
                 if (wb_instr == 0x00000073) {
@@ -697,6 +885,12 @@ void InstrDecoder::comb() {
                 switch (wb_opcode1) {
                 case OPCODE_FPU_LD:
                     wb_isa_type[ISA_I_type] = 1;
+                    vb_radr1 = (0, wb_instr.range(19, 15));
+                    vb_waddr = (1, wb_instr(11, 7));             // rd
+                    vb_imm = wb_instr.range(31, 20);
+                    if (wb_instr[31] == 1) {
+                        vb_imm(63, 12) = ~0ull;
+                    }
                     if (wb_opcode2 == 3) {
                         wb_dec[Instr_FLD] = 1;
                     } else {
@@ -705,6 +899,12 @@ void InstrDecoder::comb() {
                     break;
                 case OPCODE_FPU_SD:
                     wb_isa_type[ISA_S_type] = 1;
+                    vb_radr1 = (0, wb_instr(19, 15));
+                    vb_radr2 = (1, wb_instr(24, 20));
+                    vb_imm(11, 0) = (wb_instr(31, 25), wb_instr(11, 7));
+                    if (wb_instr[31] == 1) {
+                        vb_imm(RISCV_ARCH-1, 12) = ~0ull;
+                    }
                     if (wb_opcode2 == 3) {
                         wb_dec[Instr_FSD] = 1;
                     } else {
@@ -713,6 +913,9 @@ void InstrDecoder::comb() {
                     break;
                 case OPCODE_FPU_OP:
                     wb_isa_type[ISA_R_type] = 1;
+                    vb_radr1 = (0, wb_instr.range(19, 15));
+                    vb_radr2 = (0, wb_instr.range(24, 20));
+                    vb_waddr = (1, wb_instr(11, 7));             // rd
                     switch (wb_instr(31, 25)) {
                     case 0x1:
                         wb_dec[Instr_FADD_D] = 1;
@@ -760,6 +963,8 @@ void InstrDecoder::comb() {
                         }
                         break;
                     case 0x69:
+                        vb_radr1 = (1, wb_instr.range(19, 15));
+                        vb_waddr = (0, wb_instr(11, 7));             // rd
                         if (wb_instr(24, 20) == 0) {
                             wb_dec[Instr_FCVT_D_W] = 1;
                         } else if (wb_instr(24, 20) == 1) {
@@ -773,6 +978,7 @@ void InstrDecoder::comb() {
                         }
                         break;
                     case 0x71:
+                        vb_radr2 = (1, wb_instr.range(19, 15));
                         if (wb_instr(24, 20) == 0 && wb_opcode2 == 0) {
                             wb_dec[Instr_FMOV_X_D] = 1;
                         } else {
@@ -780,6 +986,8 @@ void InstrDecoder::comb() {
                         }
                         break;
                     case 0x79:
+                        vb_radr1 = (1, wb_instr.range(19, 15));
+                        vb_waddr = (0, wb_instr(11, 7));             // rd
                         if (wb_instr(24, 20) == 0 && wb_opcode2 == 0) {
                             wb_dec[Instr_FMOV_D_X] = 1;
                         } else {
@@ -800,7 +1008,7 @@ void InstrDecoder::comb() {
         wb_instr_out = wb_instr;
     }  // compressed/!compressed
 
-    if (i_f_valid.read()) {
+    if (i_e_ready.read() == 1 && i_f_valid.read() == 1) {
         v.valid = 1;
         v.pc = i_f_pc;
         v.instr = wb_instr_out;
@@ -855,6 +1063,11 @@ void InstrDecoder::comb() {
             | wb_dec[Instr_FSD]).to_bool();
         
         v.instr_unimplemented = w_error;
+
+        v.radr1 = vb_radr1;
+        v.radr2 = vb_radr2;
+        v.waddr = vb_waddr;
+        v.imm = vb_imm;
     } else if (!i_any_hold.read()) {
         v.valid = 0;
     }
@@ -880,6 +1093,11 @@ void InstrDecoder::comb() {
     o_exception = r.instr_unimplemented;
     o_instr_load_fault = r.instr_load_fault;
     o_instr_executable = r.instr_executable;
+
+    o_radr1 = r.radr1;
+    o_radr2 = r.radr2;
+    o_waddr = r.waddr;
+    o_imm = r.imm;
 }
 
 void InstrDecoder::registers() {
