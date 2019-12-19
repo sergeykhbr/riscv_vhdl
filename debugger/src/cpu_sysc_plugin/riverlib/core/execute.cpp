@@ -102,6 +102,7 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset)
     sensitive << i_d_instr;
     sensitive << i_wb_valid;
     sensitive << i_wb_waddr;
+    sensitive << i_memop_ready;
     sensitive << i_memop_store;
     sensitive << i_memop_load;
     sensitive << i_memop_sign_ext;

@@ -255,6 +255,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     mem0->o_valid(w.m.valid);
     mem0->o_pc(w.m.pc);
     mem0->o_instr(w.m.instr);
+    mem0->o_wb_memop(w.m.wb_memop);
 
     predic0 = new BranchPredictor("predic0", async_reset);
     predic0->i_clk(i_clk);
@@ -409,6 +410,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
         trace0->i_e_memop_addr(w.e.memop_addr);
         trace0->i_e_res_data(w.e.res_data);
         trace0->i_e_res_addr(w.e.res_addr);
+        trace0->i_m_wb_memop(w.m.wb_memop);
         trace0->i_m_valid(w.m.valid);
         trace0->i_m_wena(w.w.wena);
         trace0->i_m_waddr(w.w.waddr);
@@ -455,6 +457,9 @@ void Processor::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     iregs0->generateVCD(i_vcd, o_vcd);
     if (CFG_HW_FPU_ENABLE) {
         fregs0->generateVCD(i_vcd, o_vcd);
+    }
+    if (trace0) {
+        trace0->generateVCD(i_vcd, o_vcd);
     }
 }
 

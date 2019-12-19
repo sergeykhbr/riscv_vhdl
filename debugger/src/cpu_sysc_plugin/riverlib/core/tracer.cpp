@@ -44,6 +44,7 @@ Tracer::Tracer(sc_module_name name_, bool async_reset, const char *trace_file)
     i_e_memop_addr("i_e_memop_addr"),
     i_e_res_data("i_e_res_data"),
     i_e_res_addr("i_e_res_addr"),
+    i_m_wb_memop("i_m_wb_memop"),
     i_m_valid("i_m_valid"),
     i_m_wena("i_m_wena"),
     i_m_waddr("i_m_waddr"),
@@ -71,7 +72,10 @@ Tracer::Tracer(sc_module_name name_, bool async_reset, const char *trace_file)
     SC_METHOD(registers);
     sensitive << i_clk.pos();
 
-    r_load_reg = 0;
+    tr_total_ = 0;
+    tr_wcnt_ = 0;
+    tr_rcnt_ = 0;
+    memset(&trace_tbl_, 0, sizeof(trace_tbl_));
 };
 
 void Tracer::comb() {
@@ -275,56 +279,100 @@ void Tracer::task_disassembler(uint32_t instr) {
     }
 }
 
+void Tracer::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
+    if (o_vcd) {
+        sc_trace(o_vcd, i_e_valid, i_e_valid.name());
+        sc_trace(o_vcd, i_m_wb_memop, i_m_wb_memop.name());
+
+        std::string pn(name());
+        sc_trace(o_vcd, tr_wcnt_, pn + ".tr_wcnt_");
+        sc_trace(o_vcd, tr_rcnt_, pn + ".tr_rcnt_");
+        sc_trace(o_vcd, tr_total_, pn + ".tr_total_");
+    }
+}
+
 void Tracer::registers() {
     char msg[256];
     int tsz;
-    if (r_load_reg.read() == 1 && i_m_wena.read() == 1) {
-        tsz = RISCV_sprintf(msg, sizeof(msg),
-            "%20s [%08" RV_PRI64 "x] => %016" RV_PRI64 "x\n",
-                "",
-                r_load_addr.read().to_uint64(),
-                i_m_wdata.read().to_uint64());
-        fwrite(msg, 1, tsz, fl_);
-        tsz = RISCV_sprintf(msg, sizeof(msg),
-            "%20s %10s <= %016" RV_PRI64 "x\n",
-                "",
-                rname[i_m_waddr.read().to_uint()],
-                i_m_wdata.read().to_uint64());
-        fwrite(msg, 1, tsz, fl_);
-        r_load_reg = 0;
-    }
 
     if (i_e_valid.read() == 1) {
-        task_disassembler(i_e_instr.read().to_uint());
+        TraceStepType *p = &trace_tbl_[tr_wcnt_];
+        tr_total_++;
+        if (++tr_wcnt_ >=  TRACE_TBL_SZ) {
+            tr_wcnt_ = 0;
+        }
+
+        p->exec_cnt = i_dbg_executed_cnt.read();
+        p->pc = i_e_pc.read();
+        p->instr = i_e_instr.read().to_uint();
+        p->waddr = i_e_res_addr.read().to_uint();
+        p->wres = i_e_res_data.read();
+        p->memop_addr = i_e_memop_addr.read();
+        p->memop_load = i_e_memop_load.read();
+        p->memop_store = i_e_memop_store.read();
+        if (p->memop_load || p->memop_store) {
+            p->entry_valid = 0;
+        } else {
+            p->entry_valid = 1;
+        }
+    }
+
+    if (i_m_wb_memop.read()) {
+        TraceStepType *p = &trace_tbl_[tr_rcnt_];
+        p->entry_valid = 1;
+        p->waddr = i_m_waddr.read().to_uint();
+        p->wres = i_m_wdata.read();
+    }
+
+    while (trace_tbl_[tr_rcnt_].entry_valid) {
+        TraceStepType *p = &trace_tbl_[tr_rcnt_];
+        p->entry_valid = 0;
+        tr_total_--;
+        if (++tr_rcnt_ >=  TRACE_TBL_SZ) {
+            tr_rcnt_ = 0;
+        }
+
+        task_disassembler(p->instr);
         tsz = RISCV_sprintf(msg, sizeof(msg),
             "%9" RV_PRI64 "d: %08" RV_PRI64 "x: %s \n",
-                i_dbg_executed_cnt.read().to_uint64(),
-                i_e_pc.read().to_uint64(),
+                p->exec_cnt,
+                p->pc,
                 disasm);
         fwrite(msg, 1, tsz, fl_);
 
-        if (i_e_memop_load.read() == 0) {
-            if (i_e_res_addr.read() != 0) {
+        if (p->memop_load) {
+            tsz = RISCV_sprintf(msg, sizeof(msg),
+                "%20s [%08" RV_PRI64 "x] => %016" RV_PRI64 "x\n",
+                    "",
+                    p->memop_addr,
+                    p->wres);
+            fwrite(msg, 1, tsz, fl_);
+            tsz = RISCV_sprintf(msg, sizeof(msg),
+                "%20s %10s <= %016" RV_PRI64 "x\n",
+                    "",
+                    rname[p->waddr],
+                    p->wres);
+            fwrite(msg, 1, tsz, fl_);
+        } else {
+            if (p->waddr != 0) {
                 tsz = RISCV_sprintf(msg, sizeof(msg),
                     "%20s %10s <= %016" RV_PRI64 "x\n",
                         "",
-                        rname[i_e_res_addr.read().to_uint()],
-                        i_e_res_data.read().to_uint64());
+                        rname[p->waddr],
+                        p->wres);
                 fwrite(msg, 1, tsz, fl_);
             }
 
-            if (i_e_memop_store.read() == 1) {
+            if (p->memop_store) {
                 tsz = RISCV_sprintf(msg, sizeof(msg),
                     "%20s [%08" RV_PRI64 "x] <= %016" RV_PRI64 "x\n",
                         "",
-                        i_e_memop_addr.read().to_uint64(),
-                        i_e_res_data.read().to_uint64());
+                        p->memop_addr,
+                        p->wres);
                 fwrite(msg, 1, tsz, fl_);
             }
-        } else {
-            r_load_reg = 1;
-            r_load_addr = i_e_memop_addr.read();
         }
+
     }
 }
 

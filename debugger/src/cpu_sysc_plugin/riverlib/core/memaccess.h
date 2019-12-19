@@ -19,6 +19,7 @@
 
 #include <systemc.h>
 #include "../river_cfg.h"
+#include "queue.h"
 
 namespace debugger {
 
@@ -57,15 +58,16 @@ SC_MODULE(MemAccess) {
     sc_out<bool> o_valid;                           // Output is valid
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_pc;           // Valid instruction pointer
     sc_out<sc_uint<32>> o_instr;                    // Valid instruction value
+    sc_out<bool> o_wb_memop;                        // memory operation write back (for tracer only)
 
     void main();
     void comb();
-    void qproc();
     void registers();
 
     SC_HAS_PROCESS(MemAccess);
 
     MemAccess(sc_module_name name_, bool async_reset);
+    virtual ~MemAccess();
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
@@ -121,12 +123,8 @@ private:
     static const int QUEUE_WIDTH = RISCV_ARCH + 6 + 32 + BUS_ADDR_WIDTH
                                  + 2 + 1 + 1 + BUS_DATA_WIDTH
                                  + BUS_DATA_WIDTH + BUS_DATA_BYTES;
-    static const int QUEUE_DEPTH = 1;
 
-    struct QueueRegisterType {
-        sc_signal<sc_uint<2>> wcnt;
-        sc_signal<sc_biguint<QUEUE_WIDTH>> mem[QUEUE_DEPTH];
-    } qv, qr;
+    Queue<2, QUEUE_WIDTH> *queue0;
 
     sc_signal<bool> queue_we;
     sc_signal<bool> queue_re;

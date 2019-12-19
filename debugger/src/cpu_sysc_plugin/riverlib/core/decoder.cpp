@@ -154,9 +154,9 @@ void InstrDecoder::comb() {
             }
             vb_radr1 = wb_instr(11, 7);//(0, wb_instr.range(19, 15));
             vb_waddr = wb_instr(11, 7);      // rd
-            vb_imm = wb_instr(6, 2);
+            vb_imm(4, 0) = wb_instr(6, 2);
             if (wb_instr[12]) {
-                vb_imm(63, 4) = ~0ull;
+                vb_imm(63, 5) = ~0ull;
             }
             break;
         case OPCODE_C_SLLI:
@@ -181,9 +181,9 @@ void InstrDecoder::comb() {
             }
             vb_radr1 = wb_instr(11, 7);//(0, wb_instr.range(19, 15));
             vb_waddr = wb_instr(11, 7);      // rd
-            vb_imm = wb_instr(6, 2);
+            vb_imm(4, 0) = wb_instr(6, 2);
             if (wb_instr[12]) {
-                vb_imm(63, 4) = ~0ull;
+                vb_imm(63, 5) = ~0ull;
             }
             break;
         case OPCODE_C_LW:
@@ -206,9 +206,9 @@ void InstrDecoder::comb() {
                 wb_instr_out(31, 25) = ~0;
             }
             vb_waddr = wb_instr(11, 7);      // rd
-            vb_imm = wb_instr(6, 2);
+            vb_imm(4, 0) = wb_instr(6, 2);
             if (wb_instr[12]) {
-                vb_imm(63, 4) = ~0ull;
+                vb_imm(63, 5) = ~0ull;
             }
             break;
         case OPCODE_C_LWSP:
@@ -306,9 +306,9 @@ void InstrDecoder::comb() {
                 }
                 vb_radr1 = 0x8 | wb_instr(9, 7);//(0, wb_instr.range(19, 15));
                 vb_waddr = 0x8 | wb_instr(9, 7);   // rd
-                vb_imm = wb_instr(6, 2);
+                vb_imm(4, 0) = wb_instr(6, 2);
                 if (wb_instr[12]) {
-                    vb_imm(63, 4) = ~0ull;
+                    vb_imm(63, 5) = ~0ull;
                 }
             } else if (wb_instr[12] == 0) {
                 wb_isa_type[ISA_R_type] = 1;
@@ -430,8 +430,10 @@ void InstrDecoder::comb() {
                 wb_instr_out[31] = 1;
             }
             vb_radr1 = 0x8 | wb_instr(9, 7);    // rs1
-            vb_imm(RISCV_ARCH-1, 8) = ~0ull;
             vb_imm(7, 1) = (wb_instr(6, 5), wb_instr[2], wb_instr(11, 10), wb_instr(4, 3));
+            if (wb_instr[12]) {
+                vb_imm(RISCV_ARCH-1, 8) = ~0ull;
+            }
             break;
         case OPCODE_C_SWSP:
             wb_isa_type[ISA_S_type] = 1;
