@@ -362,6 +362,8 @@ void InstrExecute::comb() {
     bool w_pc_branch;
     bool w_less;
     bool w_gr_equal;
+    sc_uint<RISCV_ARCH> vb_i_rdata1;
+    sc_uint<RISCV_ARCH> vb_i_rdata2;
     sc_uint<RISCV_ARCH> vb_rdata1;
     sc_uint<RISCV_ARCH> vb_rdata2;
     sc_uint<RISCV_ARCH> vb_rfdata1;
@@ -401,16 +403,29 @@ void InstrExecute::comb() {
     //vb_rdata2 = i_rdata2.read();
     //vb_rfdata1 = i_rfdata1.read();
     //vb_rfdata2 = i_rfdata2.read();
+    if (i_d_radr1.read() != 0 &&
+        r_scoreboard[i_d_radr1.read().to_int()].status.read() == RegForward) {
+        vb_i_rdata1 = r_scoreboard[i_d_radr1.read().to_int()].forward;
+    } else {
+        vb_i_rdata1 = i_rdata1;
+    }
+
+    if (i_d_radr2.read() != 0 &&
+        r_scoreboard[i_d_radr2.read().to_int()].status.read() == RegForward) {
+        vb_i_rdata2 = r_scoreboard[i_d_radr2.read().to_int()].forward;
+    } else {
+        vb_i_rdata2 = i_rdata2;
+    }
 
     if (i_isa_type.read()[ISA_R_type]) {
-        vb_rdata1 = i_rdata1;
-        vb_rdata2 = i_rdata2;
+        vb_rdata1 = vb_i_rdata1;
+        vb_rdata2 = vb_i_rdata2;
     } else if (i_isa_type.read()[ISA_I_type]) {
-        vb_rdata1 = i_rdata1;
+        vb_rdata1 = vb_i_rdata1;
         vb_rdata2 = i_d_imm;
     } else if (i_isa_type.read()[ISA_SB_type]) {
-        vb_rdata1 = i_rdata1;
-        vb_rdata2 = i_rdata2;
+        vb_rdata1 = vb_i_rdata1;
+        vb_rdata2 = vb_i_rdata2;
         wb_off = i_d_imm;
     } else if (i_isa_type.read()[ISA_UJ_type]) {
         vb_rdata1 = i_d_pc;
@@ -419,8 +434,8 @@ void InstrExecute::comb() {
         vb_rdata1 = i_d_pc;
         vb_rdata2 = i_d_imm;
     } else if (i_isa_type.read()[ISA_S_type]) {
-        vb_rdata1 = i_rdata1;
-        vb_rdata2 = i_rdata2;
+        vb_rdata1 = vb_i_rdata1;
+        vb_rdata2 = vb_i_rdata2;
         wb_off = i_d_imm;
     }
 
@@ -719,11 +734,11 @@ void InstrExecute::comb() {
 
         if (i_d_waddr.read() != 0) {
             int tdx = i_d_waddr.read().to_int();
-            if (w_memop_load == 1) {
+            v_scoreboard[tdx].forward = wb_res;
+            if (w_memop_load == 1 || r_scoreboard[tdx].status.read() == RegHazard) {
                 v_scoreboard[tdx].status = RegHazard;
             } else {
                 v_scoreboard[tdx].status = RegHazard;
-                v_scoreboard[tdx].forward = wb_res;
             }
         }
     }
@@ -731,6 +746,7 @@ void InstrExecute::comb() {
     if (w_multi_ready == 1) {
         v_o_valid = 1;
         vb_o_wdata = wb_res;
+        v_scoreboard[r.waddr.read().to_int()].forward = wb_res;
     } else if (w_multi_busy == 1) {
         v_o_valid = 0;
     } else {
