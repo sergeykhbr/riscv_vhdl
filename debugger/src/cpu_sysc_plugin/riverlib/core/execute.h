@@ -160,24 +160,7 @@ private:
         sc_uint<2> memop_size;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> memop_addr;
 
-        sc_signal<sc_uint<6>> multi_res_addr;           // latched output reg. address while multi-cycle instruction
-        sc_signal<sc_uint<BUS_ADDR_WIDTH>> multi_pc;    // latched pc-value while multi-cycle instruction
-        sc_signal<sc_uint<BUS_ADDR_WIDTH>> multi_npc;   // latched npc-value while multi-cycle instruction
-        sc_signal<sc_uint<32>> multi_instr;             // Multi-cycle instruction is under processing
-        sc_signal<bool> multi_ena[Multi_Total];         // Enable pulse for Operation that takes more than 1 clock
-        sc_signal<bool> multi_rv32;                     // Long operation with 32-bits operands
-        sc_signal<bool> multi_f64;                      // Long double operation
-        sc_signal<bool> multi_unsigned;                 // Long operation with unsiged operands
-        sc_signal<bool> multi_residual_high;            // Flag for Divider module: 0=divsion output; 1=residual output
-                                                        // Flag for multiplier: 0=usual; 1=get high bits
-        sc_signal<bool> multiclock_ena;
-        sc_signal<sc_bv<Instr_FPU_Total>> multi_ivec_fpu;
-        sc_signal<sc_uint<RISCV_ARCH>> multi_a1;        // Multi-cycle operand 1
-        sc_signal<sc_uint<RISCV_ARCH>> multi_a2;        // Multi-cycle operand 2
-
         sc_signal<bool> valid;
-        sc_signal<bool> hold_multi_ena;
-
         sc_signal<bool> call;
         sc_signal<bool> ret;
     } v, r;
@@ -194,38 +177,29 @@ private:
         iv.memop_size = 0;
         iv.memop_addr = 0;
 
-        iv.multi_res_addr = 0;
-        iv.multi_pc = 0;
-        iv.multi_npc = 0;
-        iv.multi_instr = 0;
-        iv.multi_ena[Multi_MUL] = 0;
-        iv.multi_ena[Multi_DIV] = 0;
-        iv.multi_ena[Multi_FPU] = 0;
-        iv.multi_rv32 = 0;
-        iv.multi_f64 = 0;
-        iv.multi_unsigned = 0;
-        iv.multi_residual_high = 0;
-        iv.multiclock_ena = 0;
-        iv.multi_ivec_fpu = 0;
-        iv.multi_a1 = 0;
-        iv.multi_a2 = 0;
         iv.valid = 0;
-        iv.hold_multi_ena = 0;
         iv.call = 0;
         iv.ret = 0;
     }
 
     multi_arith_type wb_arith_res;
+    sc_signal<bool> w_arith_ena[Multi_Total];
     sc_signal<bool> w_arith_valid[Multi_Total];
     sc_signal<bool> w_arith_busy[Multi_Total];
+    sc_signal<bool> w_arith_residual_high;
+    sc_signal<sc_bv<Instr_FPU_Total>> wb_fpu_vec;
     bool w_exception_store;
     bool w_exception_load;
     bool w_next_ready;
-    bool w_multi_valid;
     bool w_multi_ena;
+    bool w_multi_ready;
+    bool w_multi_busy;
     bool w_hold_multi;
     bool w_hold_hazard;
     bool w_hold_memop;
+
+    sc_signal<sc_uint<RISCV_ARCH>> wb_rdata1;
+    sc_signal<sc_uint<RISCV_ARCH>> wb_rdata2;
 
     sc_signal<sc_uint<RISCV_ARCH>> wb_shifter_a1;      // Shifters operand 1
     sc_signal<sc_uint<6>> wb_shifter_a2;               // Shifters operand 2

@@ -321,7 +321,9 @@ void Tracer::registers() {
         TraceStepType *p = &trace_tbl_[tr_rcnt_];
         p->entry_valid = 1;
         p->waddr = i_m_waddr.read().to_uint();
-        p->wres = i_m_wdata.read();
+        if (p->memop_load) {
+            p->wres = i_m_wdata.read();
+        }
     }
 
     while (trace_tbl_[tr_rcnt_].entry_valid) {

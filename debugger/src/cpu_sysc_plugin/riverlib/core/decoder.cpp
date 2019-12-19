@@ -469,8 +469,10 @@ void InstrDecoder::comb() {
                 wb_instr_out[31] = 1;
             }
             vb_radr1 = 0x8 | wb_instr(9, 7);    // rs1
-            vb_imm(RISCV_ARCH-1, 8) = ~0ull;
             vb_imm(7, 1) = (wb_instr(6, 5), wb_instr[2], wb_instr(11, 10), wb_instr(4, 3));
+            if (wb_instr[12]) {
+                vb_imm(RISCV_ARCH-1, 8) = ~0ull;
+            }
             break;
         case OPCODE_C_SDSP:
             wb_isa_type[ISA_S_type] = 1;
