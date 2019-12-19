@@ -75,6 +75,7 @@ private:
     static const unsigned State_Idle = 0;
     static const unsigned State_WaitReqAccept = 1;
     static const unsigned State_WaitResponse = 2;
+    static const unsigned State_Hold = 3;
 
     struct RegistersType {
         sc_signal<sc_uint<2>> state;
@@ -97,6 +98,12 @@ private:
         sc_signal<sc_uint<6>> reg_res_addr;
         sc_signal<sc_uint<RISCV_ARCH>> reg_res_data;
         sc_signal<bool> reg_res_wena;
+
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> hold_res_pc;
+        sc_signal<sc_uint<32>> hold_res_instr;
+        sc_signal<sc_uint<6>> hold_res_waddr;
+        sc_signal<sc_uint<RISCV_ARCH>> hold_res_wdata;
+        sc_signal<bool> hold_res_wena;
     } v, r;
 
     void R_RESET(RegistersType &iv) {
@@ -118,6 +125,11 @@ private:
         iv.reg_res_addr = 0;
         iv.reg_res_data = 0;
         iv.reg_res_wena = 0;
+        iv.hold_res_pc = 0;
+        iv.hold_res_instr = 0;
+        iv.hold_res_waddr = 0;
+        iv.hold_res_wdata = 0;
+        iv.hold_res_wena = 0;
     }
 
     static const int QUEUE_WIDTH = RISCV_ARCH + 6 + 32 + BUS_ADDR_WIDTH

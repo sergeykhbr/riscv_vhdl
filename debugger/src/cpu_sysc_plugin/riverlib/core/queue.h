@@ -70,7 +70,7 @@ SC_MODULE(Queue) {
     static const int QUEUE_DEPTH = 1 << szbits;
 
     struct QueueRegisterType {
-        sc_signal<sc_uint<szbits>> wcnt;
+        sc_signal<sc_uint<szbits+1>> wcnt;
         sc_signal<sc_biguint<dbits>> mem[QUEUE_DEPTH];
     } v, r;
 
@@ -91,7 +91,7 @@ void Queue<szbits, dbits>::qproc() {
     if (r.wcnt.read() == QUEUE_DEPTH) {
         full = 1;
     }
-    if (r.wcnt.read() == (QUEUE_DEPTH - 1)) {
+    if (r.wcnt.read() >= (QUEUE_DEPTH - 1)) {
         show_full = 1;
     }
 

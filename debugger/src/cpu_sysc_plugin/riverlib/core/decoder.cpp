@@ -401,11 +401,11 @@ void InstrDecoder::comb() {
                 wb_instr_out(19, 12) = ~0;              // imm19_12
                 wb_instr_out[31] = 1;                   // imm20
             }
-            vb_imm(RISCV_ARCH-1, 12) = ~0ull;
-            vb_imm[11] = wb_instr[12];
-            vb_imm[10] = wb_instr[8];
-            vb_imm(9, 1) = (wb_instr(10, 9), wb_instr[6], wb_instr[7],
+            vb_imm(10, 1) = (wb_instr[8], wb_instr(10, 9), wb_instr[6], wb_instr[7],
                             wb_instr[2], wb_instr[11], wb_instr(5, 3));
+            if (wb_instr[12]) {
+                vb_imm(RISCV_ARCH-1, 11) = ~0ull;
+            }
             break;
         case OPCODE_C_SW:
             wb_isa_type[ISA_S_type] = 1;
