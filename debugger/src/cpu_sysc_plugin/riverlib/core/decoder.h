@@ -75,6 +75,7 @@ SC_MODULE(InstrDecoder) {
     sc_out<sc_uint<RISCV_ARCH>> o_imm;
 
     sc_in<bool> i_e_ready;
+    sc_in<bool> i_e_fencei;
     sc_out<bool> o_valid;                       // Current output values are valid
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_pc;       // Current instruction pointer value
     sc_out<sc_uint<32>> o_instr;                // Current instruction value

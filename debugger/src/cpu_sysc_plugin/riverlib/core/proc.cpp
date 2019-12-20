@@ -111,6 +111,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     fetch0->i_mem_load_fault(i_resp_ctrl_load_fault);
     fetch0->i_mem_executable(i_resp_ctrl_executable);
     fetch0->o_mem_resp_ready(o_resp_ctrl_ready);
+    fetch0->i_e_fencei(w.e.fencei);
     fetch0->i_predict_npc(bp.npc);
     fetch0->o_mem_req_fire(w.f.req_fire);
     fetch0->o_instr_load_fault(w.f.instr_load_fault);
@@ -137,6 +138,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     dec0->o_waddr(w.d.waddr);
     dec0->o_imm(w.d.imm);
     dec0->i_e_ready(w.e.d_ready);
+    dec0->i_e_fencei(w.e.fencei);
     dec0->o_valid(w.d.instr_valid);
     dec0->o_pc(w.d.pc);
     dec0->o_instr(w.d.instr);
@@ -219,6 +221,8 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     exec0->o_pc(w.e.pc);
     exec0->o_npc(w.e.npc);
     exec0->o_instr(w.e.instr);
+    exec0->o_fence(w.e.fence);
+    exec0->o_fencei(w.e.fencei);
     exec0->o_call(w.e.call);
     exec0->o_ret(w.e.ret);
     exec0->o_mret(w.e.mret);
@@ -482,8 +486,11 @@ void Processor::comb() {
     }
     o_exec_cnt = dbg.executed_cnt;
 
-    o_flush_valid = dbg.flush_valid.read() || csr.break_event.read();
-    if (csr.break_event.read()) {
+    o_flush_valid = w.e.fencei.read() || dbg.flush_valid.read()
+                || csr.break_event.read();
+    if (w.e.fencei.read() == 1) {
+        o_flush_address = ~0ull;
+    } else if (csr.break_event.read()) {
         o_flush_address = w.e.npc;
     } else {
         o_flush_address = dbg.flush_address;

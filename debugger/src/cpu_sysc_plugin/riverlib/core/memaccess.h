@@ -60,7 +60,6 @@ SC_MODULE(MemAccess) {
     sc_out<sc_uint<32>> o_instr;                    // Valid instruction value
     sc_out<bool> o_wb_memop;                        // memory operation write back (for tracer only)
 
-    void main();
     void comb();
     void registers();
 
@@ -79,7 +78,7 @@ private:
 
     struct RegistersType {
         sc_signal<sc_uint<2>> state;
-        sc_signal<bool> memop_r;
+        sc_signal<bool> memop_w;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> memop_addr;
         sc_signal<sc_uint<BUS_DATA_WIDTH>> memop_wdata;
         sc_signal<sc_uint<BUS_DATA_BYTES>> memop_wstrb;
@@ -108,7 +107,7 @@ private:
 
     void R_RESET(RegistersType &iv) {
         iv.state = State_Idle;
-        iv.memop_r = 0;
+        iv.memop_w = 0;
         iv.memop_addr = 0;
         iv.memop_wdata = 0;
         iv.memop_wstrb = 0;

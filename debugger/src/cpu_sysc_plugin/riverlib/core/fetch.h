@@ -36,6 +36,7 @@ SC_MODULE(InstrFetch) {
     sc_in<bool> i_mem_executable;
     sc_out<bool> o_mem_resp_ready;
 
+    sc_in<bool> i_e_fencei;
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_predict_npc;
 
     sc_out<bool> o_mem_req_fire;                    // used by branch predictor to form new npc value

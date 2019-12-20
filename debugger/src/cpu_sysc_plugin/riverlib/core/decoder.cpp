@@ -33,6 +33,7 @@ InstrDecoder::InstrDecoder(sc_module_name name_, bool async_reset)
     o_waddr("o_waddr"),
     o_imm("o_imm"),
     i_e_ready("i_e_ready"),
+    i_e_fencei("i_e_fencei"),
     o_valid("o_valid"),
     o_pc("o_pc"),
     o_instr("o_instr"),
@@ -60,6 +61,7 @@ InstrDecoder::InstrDecoder(sc_module_name name_, bool async_reset)
     sensitive << i_instr_load_fault;
     sensitive << i_instr_executable;
     sensitive << i_e_ready;
+    sensitive << i_e_fencei;
     sensitive << r.valid;
     sensitive << r.pc;
     sensitive << r.instr;
@@ -1010,7 +1012,11 @@ void InstrDecoder::comb() {
 
     if (i_e_ready.read() == 1 && i_f_valid.read() == 1) {
         v.valid = 1;
-        v.pc = i_f_pc;
+        if (i_e_fencei.read() == 1) {
+            v.pc = ~0ull;
+        } else {
+            v.pc = i_f_pc;
+        }
         v.instr = wb_instr_out;
         v.compressed = w_compressed;
         v.instr_load_fault = i_instr_load_fault.read();

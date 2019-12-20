@@ -174,6 +174,8 @@ private:
         sc_signal<sc_uint<2>> memop_size;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> memop_addr;
         sc_signal<bool> d_ready;           // Hold pipeline from Execution stage
+        sc_signal<bool> fence;                      // instruction FENCE
+        sc_signal<bool> fencei;                     // instruction FENCE.I
         sc_signal<bool> call;                       // pseudo-instruction CALL
         sc_signal<bool> ret;                        // pseudo-instruction RET
     };

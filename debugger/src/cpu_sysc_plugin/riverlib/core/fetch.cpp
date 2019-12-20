@@ -32,6 +32,7 @@ InstrFetch::InstrFetch(sc_module_name name_, bool async_reset) :
     i_mem_load_fault("i_mem_load_fault"),
     i_mem_executable("i_mem_executable"),
     o_mem_resp_ready("o_mem_resp_ready"),
+    i_e_fencei("i_e_fencei"),
     i_predict_npc("i_predict_npc"),
     o_mem_req_fire("o_mem_req_fire"),
     o_instr_load_fault("o_instr_load_fault"),
@@ -54,6 +55,7 @@ InstrFetch::InstrFetch(sc_module_name name_, bool async_reset) :
     sensitive << i_mem_data;
     sensitive << i_mem_load_fault;
     sensitive << i_mem_executable;
+    sensitive << i_e_fencei;
     sensitive << i_predict_npc;
     sensitive << i_br_fetch_valid;
     sensitive << i_br_address_fetch;
@@ -132,6 +134,10 @@ void InstrFetch::comb() {
         v.resp_data = i_mem_data.read();
         v.instr_load_fault = i_mem_load_fault.read();
         v.instr_executable = i_mem_executable.read();
+    }
+    if (i_e_fencei.read() == 1) {
+        // Clear pipeline stage
+        v.resp_address = ~0ull;
     }
 
     wb_o_pc = r.resp_address.read();
