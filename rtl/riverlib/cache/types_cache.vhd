@@ -82,4 +82,41 @@ package types_cache is
   );
   end component;
 
+  component lrunway is generic (
+    abits : integer;        -- cache bus address bus (usually 6..8)
+    waybits : integer       -- Number of ways bitwidth (=2 for 4-ways cache)
+  );
+  port (
+    i_clk : in std_logic;
+    i_flush : in std_logic;
+    i_addr : in std_logic_vector(abits-1 downto 0);
+    i_we : in std_logic;
+    i_lru : in std_logic_vector(waybits-1 downto 0);
+    o_lru : out std_logic_vector(waybits-1 downto 0)
+  );
+  end component; 
+
+  component tagmem is generic (
+    memtech : integer := 0;
+    async_reset : boolean := false;
+    wayidx : integer := 0;
+    abus : integer := 64;          -- system bus address bus (32 or 64 bits)
+    ibits : integer := 7;          -- lines memory addres width (usually 6..8)
+    lnbits : integer := 5;         -- One line bits: log2(bytes_per_line)
+    flbits : integer := 1          -- Total flags number saved with address tag
+  );
+  port (
+    i_clk : in std_logic;
+    i_nrst : in std_logic;
+    i_addr : in std_logic_vector(abus-1 downto 0);
+    i_wstrb : in std_logic_vector(2**lnbits-1 downto 0);
+    i_wdata : in std_logic_vector(8*(2**lnbits)-1 downto 0);
+    i_wflags : in std_logic_vector(flbits-1 downto 0);
+    o_raddr : out std_logic_vector(abus-1 downto 0);
+    o_rdata : out std_logic_vector(8*(2**lnbits)-1 downto 0);
+    o_rflags : out std_logic_vector(flbits-1 downto 0);
+    o_hit : out std_logic
+  );
+  end component;
+
 end;

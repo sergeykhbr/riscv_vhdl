@@ -2,6 +2,7 @@ ${RTL_HOME}/riverlib/cache/types_cache.vhd
 ${RTL_HOME}/riverlib/cache/lrunway.vhd
 ${RTL_HOME}/riverlib/cache/iwaymem.vhd
 ${RTL_HOME}/riverlib/cache/tagmem.vhd
+${RTL_HOME}/riverlib/cache/tagmemnway.vhd
 ${RTL_HOME}/riverlib/cache/ilru.vhd
 ${RTL_HOME}/riverlib/cache/icache_lru.vhd
 ${RTL_HOME}/riverlib/cache/dcache.vhd
@@ -26,6 +27,7 @@ ${RTL_HOME}/riverlib/core/dbg_port.vhd
 ${RTL_HOME}/riverlib/core/decoder.vhd
 ${RTL_HOME}/riverlib/core/execute.vhd
 ${RTL_HOME}/riverlib/core/fetch.vhd
+${RTL_HOME}/riverlib/core/queue.vhd
 ${RTL_HOME}/riverlib/core/memaccess.vhd
 ${RTL_HOME}/riverlib/core/proc.vhd
 ${RTL_HOME}/riverlib/core/regfbank.vhd

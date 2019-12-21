@@ -46,9 +46,10 @@ package river_cfg is
   --! @brief   Address bus bit-size.
   constant BUS_ADDR_WIDTH : integer := 32;
   --! @brief   Data bus bit-size.
-  constant BUS_DATA_WIDTH : integer := 64;
-  --! @brief   Num of data bytes per transaction.
-  constant BUS_DATA_BYTES : integer := BUS_DATA_WIDTH / 8;
+  constant CFG_LOG2_DATA_BYTES : integer := 3;
+  constant BUS_DATA_BYTES : integer := (2**CFG_LOG2_DATA_BYTES);
+  constant BUS_DATA_WIDTH : integer := 8 * BUS_DATA_BYTES;
+  constant LOG2_DATA_BYTES_MASK : integer := (2**CFG_LOG2_DATA_BYTES) - 1;
   --! @}
 
   -- MPU config:
@@ -1193,5 +1194,23 @@ package river_cfg is
     o_halted : out std_logic
   );
   end component; 
+
+  component queue is generic (
+    async_reset : boolean := false;
+    szbits : integer := 2;
+    dbits : integer := 32
+  );
+  port (
+    i_clk : in std_logic;
+    i_nrst : in std_logic;
+    i_re : in std_logic;
+    i_we : in std_logic;
+    i_wdata : in std_logic_vector(dbits-1 downto 0);
+    o_rdata : out std_logic_vector(dbits-1 downto 0);
+    o_full : out std_logic;
+    o_nempty : out std_logic
+  );
+  end component;
+
 
 end; -- package body
