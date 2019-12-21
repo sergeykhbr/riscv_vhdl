@@ -1017,7 +1017,7 @@ void InstrDecoder::comb() {
         } else {
             v.pc = i_f_pc;
         }
-        v.instr = wb_instr_out;
+        v.instr = i_f_instr.read();
         v.compressed = w_compressed;
         v.instr_load_fault = i_instr_load_fault.read();
         v.instr_executable = i_instr_executable.read();

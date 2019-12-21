@@ -156,6 +156,7 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset)
     sensitive << wb_sra;
     sensitive << wb_sraw;
     for (int i = 0; i < SCOREBOARD_SIZE; i++) {
+        sensitive << r_scoreboard[i].cnt;
         sensitive << r_scoreboard[i].status;
         sensitive << r_scoreboard[i].forward;
     }
@@ -378,6 +379,7 @@ void InstrExecute::comb() {
 
     v = r;
     for (int i = 0; i < SCOREBOARD_SIZE; i++) {
+        v_scoreboard[i].cnt = r_scoreboard[i].cnt;
         v_scoreboard[i].forward = r_scoreboard[i].forward;
         v_scoreboard[i].status = r_scoreboard[i].status;
     }
@@ -691,33 +693,14 @@ void InstrExecute::comb() {
     }
 
 
-/*    if (w_multi_ena & w_next_ready) {
-        v.multiclock_ena = 1;
-        v.multi_res_addr = wb_res_addr;
-        if (CFG_HW_FPU_ENABLE) {
-            v.multi_ivec_fpu = wv.range(Instr_FSUB_D, Instr_FADD_D);
-            if (w_fpu_ena == 1 && (wv[Instr_FMOV_X_D] | wv[Instr_FEQ_D]
-                | wv[Instr_FLT_D] | wv[Instr_FLE_D]
-                | wv[Instr_FCVT_LU_D] | wv[Instr_FCVT_L_D]
-                | wv[Instr_FCVT_WU_D] | wv[Instr_FCVT_W_D]).to_bool() == 0) {
-                v.multi_res_addr = 0x20 | wb_res_addr;
-            }
-        }
-        v.multi_pc = i_d_pc;
-        v.multi_instr = i_d_instr;
-        if (i_trap_valid.read() == 1) {
-            v.multi_npc = i_trap_pc.read();
-        } else {
-            v.multi_npc = vb_npc;
-        }
-    }
-    */
-
-    // ALU block selector:
-
-
     if (i_wb_valid.read() == 1) {
-        v_scoreboard[i_wb_waddr.read().to_int()].status = RegValid;
+        int wb_idx = i_wb_waddr.read().to_int();
+        if (r_scoreboard[wb_idx].cnt.read() == 1) {
+            v_scoreboard[wb_idx].status = RegValid;
+        }
+        if (i_d_waddr.read() != i_wb_waddr.read() || w_next_ready == 0) {
+            v_scoreboard[wb_idx].cnt = r_scoreboard[wb_idx].cnt.read() - 1;
+        }
     }
 
 
@@ -742,10 +725,15 @@ void InstrExecute::comb() {
         if (i_d_waddr.read() != 0) {
             int tdx = i_d_waddr.read().to_int();
             v_scoreboard[tdx].forward = vb_res;
-            if (v_memop_load == 1 || r_scoreboard[tdx].status.read() == RegHazard) {
+            if (v_memop_load == 1 || r_scoreboard[tdx].status.read() == RegHazard
+                || r_scoreboard[tdx].cnt.read() == 2) {
                 v_scoreboard[tdx].status = RegHazard;
             } else {
-                v_scoreboard[tdx].status = RegHazard;
+                v_scoreboard[tdx].status = RegForward;
+            }
+            if (i_d_waddr.read() != i_wb_waddr.read() ||
+                i_wb_valid.read() == 0) {
+                v_scoreboard[tdx].cnt = r_scoreboard[tdx].cnt.read() + 1;
             }
         }
     }
@@ -823,6 +811,7 @@ void InstrExecute::registers() {
         for (int i = 0; i < SCOREBOARD_SIZE; i++) {
             r_scoreboard[i].forward = v_scoreboard[i].forward;
             r_scoreboard[i].status = v_scoreboard[i].status;
+            r_scoreboard[i].cnt = v_scoreboard[i].cnt;
         }
     }
 }

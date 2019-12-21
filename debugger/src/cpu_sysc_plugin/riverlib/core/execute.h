@@ -139,9 +139,11 @@ private:
 
     struct score_item_type {
         sc_uint<2> status;
+        sc_uint<2> cnt;
         sc_uint<RISCV_ARCH> forward;
     };
     struct score_item_type_r {
+        sc_signal<sc_uint<2>> cnt;
         sc_signal<sc_uint<2>> status;
         sc_signal<sc_uint<RISCV_ARCH>> forward;
     };
