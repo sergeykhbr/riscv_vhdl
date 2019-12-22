@@ -40,7 +40,7 @@ SC_MODULE(TagMemCoupled) {
     sc_in<sc_uint<(1<<lnbits)>> i_wstrb;
     sc_in<sc_uint<flbits>> i_wflags;
     sc_out<sc_uint<abus>> o_raddr;
-    sc_out<sc_biguint<8*(1<<lnbits)>> o_rdata;
+    sc_out<sc_biguint<8*(1<<lnbits)+16>> o_rdata;
     sc_out<sc_uint<flbits>> o_rflags;
     sc_out<bool> o_hit;
     sc_out<bool> o_miss_next;
@@ -227,6 +227,42 @@ void TagMemCoupled<abus, waybits, ibits, lnbits, flbits>::comb() {
 
     linei[WAY_EVEN].wflags = i_wflags.read();
     linei[WAY_ODD].wflags = i_wflags.read();
+
+    // Form output:
+    sc_biguint<8*(1<<lnbits)+16> vb_o_rdata;
+    bool v_o_hit;
+    bool v_o_miss_next;
+    sc_uint<flbits> vb_o_rflags;
+    if (v_addr_sel_r == 0) {
+        vb_o_rdata(8*(1<<lnbits)+15, 8*(1<<lnbits)) = lineo[WAY_ODD].rdata.read()(15, 0);
+        vb_o_rdata(8*(1<<lnbits)-1, 0) = lineo[WAY_EVEN].rdata;
+        vb_o_rflags = lineo[WAY_EVEN].rflags;
+
+        if (v_use_overlay_r == 0) {
+            v_o_hit = lineo[WAY_EVEN].hit;
+            v_o_miss_next = 0;
+        } else {
+            v_o_hit = lineo[WAY_EVEN].hit && lineo[WAY_ODD].hit;
+            v_o_miss_next = lineo[WAY_EVEN].hit;
+        }
+    } else {
+        vb_o_rdata(8*(1<<lnbits)+15, 8*(1<<lnbits)) = lineo[WAY_EVEN].rdata.read()(15, 0);
+        vb_o_rdata(8*(1<<lnbits)-1, 0) = lineo[WAY_ODD].rdata;
+        vb_o_rflags = lineo[WAY_ODD].rflags;
+
+        if (v_use_overlay_r == 0) {
+            v_o_hit = lineo[WAY_ODD].hit;
+            v_o_miss_next = 0;
+        } else {
+            v_o_hit = lineo[WAY_EVEN].hit && lineo[WAY_ODD].hit;
+            v_o_miss_next = lineo[WAY_ODD].hit;
+        }
+    }
+
+    o_rdata = vb_o_rdata;
+    o_rflags = vb_o_rflags;
+    o_hit = v_o_hit;
+    o_miss_next = v_o_miss_next;
 }
 
 template <int abus, int waybits, int ibits, int lnbits, int flbits>

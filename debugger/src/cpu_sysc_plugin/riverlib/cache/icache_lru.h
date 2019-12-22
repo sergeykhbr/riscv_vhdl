@@ -90,7 +90,6 @@ SC_MODULE(ICacheLru) {
         State_CheckMPU,
         State_WaitGrant,
         State_WaitResp,
-        State_WriteLine,
         State_CheckResp,
         State_SetupReadAdr,
         State_Flush
@@ -161,14 +160,11 @@ SC_MODULE(ICacheLru) {
     struct RegistersType {
         sc_signal<bool> requested;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_addr;
-        sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_addr_overlay;
-        sc_signal<sc_uint<BUS_ADDR_WIDTH>> mpu_addr;
-        sc_signal<bool> use_overlay;
         sc_signal<sc_uint<4>> state;
         sc_signal<bool> req_mem_valid;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> mem_addr;
         sc_signal<sc_uint<2>> burst_cnt;
-        sc_signal<sc_uint<4>> burst_wstrb;
+        sc_signal<sc_uint<ICACHE_BURST_LEN>> burst_rstrb;
         sc_signal<sc_uint<2>> lru_even_wr;
         sc_signal<sc_uint<2>> lru_odd_wr;
         sc_signal<bool> cached;
@@ -186,14 +182,11 @@ SC_MODULE(ICacheLru) {
     void R_RESET(RegistersType &iv) {
         iv.requested = 0;
         iv.req_addr = 0;
-        iv.req_addr_overlay = 0;
-        iv.mpu_addr = 0;
-        iv.use_overlay = 0;
         iv.state = State_Flush;
         iv.req_mem_valid = 0;
         iv.mem_addr = FLUSH_ALL_ADDR;
         iv.burst_cnt = 0;
-        iv.burst_wstrb = ~0ul;
+        iv.burst_rstrb = 0;
         iv.lru_even_wr = 0;
         iv.lru_odd_wr = 0;
         iv.cached = 0;
@@ -215,7 +208,7 @@ SC_MODULE(ICacheLru) {
     sc_signal<sc_uint<ITAG_FL_TOTAL>> line_wflags_i;
     sc_signal<bool> line_flush_i;
     sc_signal<sc_uint<BUS_ADDR_WIDTH>> line_raddr_o;
-    sc_signal<sc_biguint<ICACHE_LINE_BITS>> line_rdata_o;
+    sc_signal<sc_biguint<ICACHE_LINE_BITS+16>> line_rdata_o;
     sc_signal<sc_uint<ITAG_FL_TOTAL>> line_rflags_o;
     sc_signal<bool> line_hit_o;
     sc_signal<bool> line_miss_next_o;
@@ -225,24 +218,6 @@ SC_MODULE(ICacheLru) {
             CFG_ILOG2_LINES_PER_WAY,
             CFG_ILOG2_BYTES_PER_LINE,
             ITAG_FL_TOTAL> *memcouple;
-
-
-    IWayMem *wayevenx[CFG_ICACHE_WAYS];
-    IWayMem *wayoddx[CFG_ICACHE_WAYS];
-
-    ILru *lrueven;
-    ILru *lruodd;
-
-    TagMemInType swapin[WAY_SubNum];
-    TagMemOutType wayeven_o[CFG_ICACHE_WAYS];
-    TagMemOutType wayodd_o[CFG_ICACHE_WAYS];
-    WayMuxType waysel[WAY_SubNum];
-    sc_signal<bool> wb_ena_even[CFG_ICACHE_WAYS];
-    sc_signal<bool> wb_ena_odd[CFG_ICACHE_WAYS];
-
-    LruInType lrui[WAY_SubNum];
-    sc_signal<sc_uint<2>> wb_lru_even;
-    sc_signal<sc_uint<2>> wb_lru_odd;
 
     bool async_reset_;
     int index_width_;

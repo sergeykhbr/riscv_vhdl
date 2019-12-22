@@ -548,7 +548,7 @@ void DCacheLru::comb() {
             v.flush_cnt = r.flush_cnt.read() - 1;
             /** Use lsb address bits to manually select memory WAY bank: */
             if (r.req_addr.read()(CFG_DLOG2_NWAYS-1, 0) == DCACHE_WAYS-1) {
-                v.req_addr = (r.req_addr.read() + (1 << CFG_DLOG2_BYTES_PER_LINE)) 
+                v.req_addr = (r.req_addr.read() + DCACHE_BYTES_PER_LINE) 
                             & ~LOG2_DATA_BYTES_MASK;
             } else {
                 v.req_addr = r.req_addr.read() + 1;
