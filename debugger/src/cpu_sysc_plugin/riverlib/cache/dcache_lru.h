@@ -23,7 +23,7 @@
 
 namespace debugger {
 
-#define DBG_DCACHE_LRU_TB
+//#define DBG_DCACHE_LRU_TB
 
 SC_MODULE(DCacheLru) {
     sc_in<bool> i_clk;
@@ -94,7 +94,7 @@ SC_MODULE(DCacheLru) {
     sc_signal<bool> line_cs_i;
     sc_signal<sc_uint<BUS_ADDR_WIDTH>> line_addr_i;
     sc_signal<sc_biguint<DCACHE_LINE_BITS>> line_wdata_i;
-    sc_signal<sc_uint<(1<<CFG_DLOG2_BYTES_PER_LINE)>> line_wstrb_i;
+    sc_signal<sc_uint<DCACHE_BYTES_PER_LINE>> line_wstrb_i;
     sc_signal<sc_uint<DTAG_FL_TOTAL>> line_wflags_i;
     sc_signal<bool> line_flush_i;
     sc_signal<sc_uint<BUS_ADDR_WIDTH>> line_raddr_o;

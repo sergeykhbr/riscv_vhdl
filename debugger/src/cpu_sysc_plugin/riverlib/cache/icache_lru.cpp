@@ -119,6 +119,27 @@ ICacheLru::ICacheLru(sc_module_name name_, bool async_reset,
     lruodd->i_lru(lrui[WAY_ODD].lru);
     lruodd->o_lru(wb_lru_odd);
 
+    memcouple = new TagMemCoupled<BUS_ADDR_WIDTH,
+                            CFG_ILOG2_NWAYS,
+                            CFG_ILOG2_LINES_PER_WAY,
+                            CFG_ILOG2_BYTES_PER_LINE,
+                            ITAG_FL_TOTAL>("memcouple0", async_reset);
+
+    memcouple->i_clk(i_clk);
+    memcouple->i_nrst(i_nrst);
+    memcouple->i_cs(line_cs_i);
+    memcouple->i_flush(line_flush_i);
+    memcouple->i_addr(line_addr_i);
+    memcouple->i_wdata(line_wdata_i);
+    memcouple->i_wstrb(line_wstrb_i);
+    memcouple->i_wflags(line_wflags_i);
+    memcouple->o_raddr(line_raddr_o);
+    memcouple->o_rdata(line_rdata_o);
+    memcouple->o_rflags(line_rflags_o);
+    memcouple->o_hit(line_hit_o);
+    memcouple->o_miss_next(line_miss_next_o);
+
+
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_req_ctrl_valid;
@@ -147,6 +168,11 @@ ICacheLru::ICacheLru(sc_module_name name_, bool async_reset,
         sensitive << wayodd_o[i].readable;
         sensitive << wayodd_o[i].writable;
     }
+    sensitive << line_raddr_o;
+    sensitive << line_rdata_o;
+    sensitive << line_rflags_o;
+    sensitive << line_hit_o;
+    sensitive << line_miss_next_o;
     sensitive << wb_lru_even;
     sensitive << wb_lru_odd;
     sensitive << r.requested;
@@ -179,6 +205,7 @@ ICacheLru::~ICacheLru() {
     }
     delete lrueven;
     delete lruodd;
+    delete memcouple;
 }
 
 void ICacheLru::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
@@ -258,6 +285,7 @@ void ICacheLru::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     }
     lrueven->generateVCD(i_vcd, o_vcd);
     lruodd->generateVCD(i_vcd, o_vcd);
+    memcouple->generateVCD(i_vcd, o_vcd);
 }
 
 void ICacheLru::comb() {
@@ -299,7 +327,14 @@ void ICacheLru::comb() {
     bool w_o_resp_valid;
     sc_uint<32> wb_o_resp_data;
     sc_uint<8> v_req_mem_len;
-   
+
+    bool v_flush;
+    bool v_line_cs;
+    sc_uint<BUS_ADDR_WIDTH> vb_line_addr;
+    sc_biguint<DCACHE_LINE_BITS> vb_line_wdata;
+    sc_uint<DCACHE_BYTES_PER_LINE> vb_line_wstrb;
+    sc_uint<DTAG_FL_TOTAL> v_line_wflags;
+
     v = r;
 
     if (i_req_ctrl_valid.read() == 1) {
@@ -517,6 +552,14 @@ void ICacheLru::comb() {
     v_req_mem_len = 3;
 
     wb_wstrb_next = r.burst_wstrb.read() << 1;
+
+    v_flush = 0;
+    v_line_cs = 0;
+    vb_line_addr = r.req_addr.read();
+    vb_line_wdata = r.cache_line_i.read();
+    vb_line_wstrb = 0;
+    v_line_wflags = 0;
+
     switch (r.state.read()) {
     case State_Idle:
         if (r.req_flush.read() == 1) {
@@ -532,6 +575,9 @@ void ICacheLru::comb() {
             }
         } else if ((i_req_ctrl_valid.read() == 1 && w_o_req_ctrl_ready == 1)
                  || r.requested.read() == 1) {
+            v_line_cs = i_req_ctrl_valid.read();
+            vb_line_addr = i_req_ctrl_addr.read();
+
             /** Check hit even there's no new request only the previous one.
                 This must be done in a case of CPU is halted and cache was flushed
             */
@@ -540,6 +586,8 @@ void ICacheLru::comb() {
         break;
     case State_CheckHit:
         if (v_cached_valid == 1) {
+            v_line_cs = i_req_ctrl_valid.read();
+            vb_line_addr = i_req_ctrl_addr.read();
             // Hit
             if (i_req_ctrl_valid.read() == 1 && w_o_req_ctrl_ready == 1) {
                 v.state = State_CheckHit;
@@ -619,6 +667,9 @@ void ICacheLru::comb() {
         if (r.cached.read() == 1) {
             v.state = State_SetupReadAdr;
             v_line_valid = 1;
+            v_line_cs = 1;
+            v_line_wflags[TAG_FL_VALID] = 1;
+            vb_line_wstrb = ~0ul;  // write full line
             if (r.mem_addr.read()[CFG_IOFFSET_WIDTH] == 0) {
                 vb_ena_even[r.lru_even_wr.read().to_int()] = 1;
             } else {
@@ -644,6 +695,11 @@ void ICacheLru::comb() {
         v.state = State_CheckHit;
         break;
     case State_Flush:
+        v_line_wflags = 0;      // flag valid = 0
+        vb_line_wstrb = ~0ul;   // write full line
+        v_line_cs = 1;
+        v_flush = 1;
+        vb_line_addr = r.mem_addr.read();
         if (r.flush_cnt.read() == 0) {
             v.req_flush = 0;
             v.state = State_Idle;
@@ -716,6 +772,13 @@ void ICacheLru::comb() {
     if (!async_reset_ && !i_nrst.read()) {
         R_RESET(v);
     }
+
+    line_cs_i = v_line_cs;
+    line_addr_i = vb_line_addr;
+    line_wdata_i = vb_line_wdata;
+    line_wstrb_i = vb_line_wstrb;
+    line_wflags_i = v_line_wflags;
+    line_flush_i = v_flush;
 
     for (int i = 0; i < WAY_SubNum; i++) {
         lrui[i].init = v_lrui[i].init;

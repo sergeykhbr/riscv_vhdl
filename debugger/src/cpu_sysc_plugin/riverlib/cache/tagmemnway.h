@@ -171,7 +171,7 @@ SC_MODULE(TagMemNWay) {
 template <int abus, int waybits, int ibits, int lnbits, int flbits>
 void TagMemNWay<abus, waybits, ibits, lnbits, flbits>::comb() {
     sc_uint<waybits> vb_wayidx_o;
-    sc_uint<lnbits> vb_lineadr;
+    sc_uint<ibits> vb_lineadr;
     bool v_lrui_we;
     bool hit;
 

@@ -21,6 +21,7 @@
 #include "../river_cfg.h"
 #include "iwaymem.h"
 #include "ilru.h"
+#include "tagmemcoupled.h"
 
 namespace debugger {
 
@@ -206,6 +207,25 @@ SC_MODULE(ICacheLru) {
         iv.flush_cnt = ~0ul;
         iv.cache_line_i = 0;
     }
+
+    sc_signal<bool> line_cs_i;
+    sc_signal<sc_uint<BUS_ADDR_WIDTH>> line_addr_i;
+    sc_signal<sc_biguint<ICACHE_LINE_BITS>> line_wdata_i;
+    sc_signal<sc_uint<(1<<CFG_ILOG2_BYTES_PER_LINE)>> line_wstrb_i;
+    sc_signal<sc_uint<ITAG_FL_TOTAL>> line_wflags_i;
+    sc_signal<bool> line_flush_i;
+    sc_signal<sc_uint<BUS_ADDR_WIDTH>> line_raddr_o;
+    sc_signal<sc_biguint<ICACHE_LINE_BITS>> line_rdata_o;
+    sc_signal<sc_uint<ITAG_FL_TOTAL>> line_rflags_o;
+    sc_signal<bool> line_hit_o;
+    sc_signal<bool> line_miss_next_o;
+
+    TagMemCoupled<BUS_ADDR_WIDTH,
+            CFG_ILOG2_NWAYS,
+            CFG_ILOG2_LINES_PER_WAY,
+            CFG_ILOG2_BYTES_PER_LINE,
+            ITAG_FL_TOTAL> *memcouple;
+
 
     IWayMem *wayevenx[CFG_ICACHE_WAYS];
     IWayMem *wayoddx[CFG_ICACHE_WAYS];

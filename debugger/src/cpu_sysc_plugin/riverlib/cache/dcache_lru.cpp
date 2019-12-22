@@ -186,14 +186,14 @@ void DCacheLru::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void DCacheLru::comb() {
-    sc_biguint<8*(1<<CFG_DLOG2_BYTES_PER_LINE)> vb_cache_line_i_modified;
-    sc_biguint<8*(1<<CFG_DLOG2_BYTES_PER_LINE)> vb_line_rdata_o_modified;
-    sc_uint<(1<<CFG_DLOG2_BYTES_PER_LINE)> vb_line_rdata_o_wstrb;
+    sc_biguint<DCACHE_LINE_BITS> vb_cache_line_i_modified;
+    sc_biguint<DCACHE_LINE_BITS> vb_line_rdata_o_modified;
+    sc_uint<DCACHE_BYTES_PER_LINE> vb_line_rdata_o_wstrb;
     
     bool v_last;
     bool v_req_ready;
     sc_uint<8> v_req_mem_len;
-    sc_biguint<8*(1<<CFG_DLOG2_BYTES_PER_LINE)> t_cache_line_i;
+    sc_biguint<DCACHE_LINE_BITS> t_cache_line_i;
     sc_uint<BUS_DATA_WIDTH> vb_cached_data;
     sc_uint<BUS_DATA_WIDTH> vb_uncached_data;
     bool v_resp_valid;
@@ -204,8 +204,8 @@ void DCacheLru::comb() {
     bool v_flush;
     bool v_line_cs;
     sc_uint<BUS_ADDR_WIDTH> vb_line_addr;
-    sc_biguint<8*(1<<CFG_DLOG2_BYTES_PER_LINE)> vb_line_wdata;
-    sc_uint<(1<<CFG_DLOG2_BYTES_PER_LINE)> vb_line_wstrb;
+    sc_biguint<DCACHE_LINE_BITS> vb_line_wdata;
+    sc_uint<DCACHE_BYTES_PER_LINE> vb_line_wstrb;
     sc_biguint<BUS_DATA_WIDTH> vb_req_mask;
     sc_uint<DTAG_FL_TOTAL> v_line_wflags;
     sc_uint<BUS_ADDR_WIDTH> vb_err_addr;
@@ -497,7 +497,6 @@ void DCacheLru::comb() {
                     v.state = State_WaitGrant;
                 } else {
                     // Non-cached write
-                    //v_resp_valid = 1;
                     v.state = State_Idle;
                 }
             } else {
@@ -527,8 +526,8 @@ void DCacheLru::comb() {
         v_flush = 1;
 
         if (r.init.read() == 0 &&
-            line_rflags_o.read()[TAG_FL_VALID] == 1) {// &&
-//            line_rflags_o.read()[DTAG_FL_DIRTY] == 1) {
+            line_rflags_o.read()[TAG_FL_VALID] == 1 &&
+            line_rflags_o.read()[DTAG_FL_DIRTY] == 1) {
             /** Off-load valid line */
             v.write_flush = 1;
             v.mem_addr = line_raddr_o.read();

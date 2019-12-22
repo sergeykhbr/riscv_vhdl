@@ -33,7 +33,26 @@ static const int BUS_DATA_BYTES      = (1 << CFG_LOG2_DATA_BYTES);
 static const int BUS_DATA_WIDTH      = 8 * BUS_DATA_BYTES;
 static const int LOG2_DATA_BYTES_MASK = (1 << CFG_LOG2_DATA_BYTES) - 1;
 
-/** ICacheLru config */
+/** 
+ * DCacheLru config (16 KB by default)
+ */
+static const int CFG_ILOG2_BYTES_PER_LINE = 5;    // [4:0] 32 Bytes = 4x8 B log2(Bytes per line)
+static const int CFG_ILOG2_LINES_PER_WAY  = 7;    // Odd/Even halfs
+static const int CFG_ILOG2_NWAYS          = 2;
+
+// Derivatives D$ constants:
+static const int ICACHE_BYTES_PER_LINE    = 1 << CFG_ILOG2_BYTES_PER_LINE;
+static const int ICACHE_LINES_PER_WAY     = 1 << CFG_ILOG2_LINES_PER_WAY;
+static const int ICACHE_WAYS              = 1 << CFG_ILOG2_NWAYS;
+
+static const int ICACHE_LOG2_BURST_LEN    =
+                CFG_ILOG2_BYTES_PER_LINE - CFG_LOG2_DATA_BYTES;
+static const int ICACHE_BURST_LEN         = 1 << ICACHE_LOG2_BURST_LEN;
+static const int ICACHE_LINE_BITS         = 8*ICACHE_BYTES_PER_LINE;
+
+static const int ITAG_FL_TOTAL      = 1;
+
+
 static const int CFG_IOFFSET_WIDTH   = 5;    // [4:0]  log2(ICACHE_LINE_BYTES)
 static const int CFG_IODDEVEN_WIDTH  = 1;    // [5]    0=even; 1=odd
 // [13:6]  8: index: 8 KB per odd/even ways (64 KB icache) 75565 drhy
