@@ -129,7 +129,7 @@ begin
                  way_o, lruo_lru, r)
     variable v : RegistersType;
     variable vb_wayidx_o : std_logic_vector(waybits-1 downto 0);
-    variable vb_lineadr : std_logic_vector(lnbits-1 downto 0);
+    variable vb_lineadr : std_logic_vector(ibits-1 downto 0);
     variable v_lrui_we : std_logic;
     variable hit : std_logic;
     variable mux_raddr : std_logic_vector(abus-1 downto 0);

@@ -5,6 +5,7 @@ ${RTL_HOME}/riverlib/cache/tagmem.vhd
 ${RTL_HOME}/riverlib/cache/tagmemnway.vhd
 ${RTL_HOME}/riverlib/cache/ilru.vhd
 ${RTL_HOME}/riverlib/cache/icache_lru.vhd
+${RTL_HOME}/riverlib/cache/dcache_lru.vhd
 ${RTL_HOME}/riverlib/cache/dcache.vhd
 ${RTL_HOME}/riverlib/cache/mpu.vhd
 ${RTL_HOME}/riverlib/cache/cache_top.vhd

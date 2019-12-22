@@ -52,6 +52,33 @@ package river_cfg is
   constant LOG2_DATA_BYTES_MASK : integer := (2**CFG_LOG2_DATA_BYTES) - 1;
   --! @}
 
+
+  -- 
+  -- DCacheLru config (16 KB by default)
+  --
+  constant CFG_DLOG2_BYTES_PER_LINE : integer := 5;    -- [4:0] 32 Bytes = 4x8 B log2(Bytes per line)
+  constant CFG_DLOG2_LINES_PER_WAY  : integer := 7;
+  constant CFG_DLOG2_NWAYS          : integer := 2;
+
+  -- Derivatives D$ constants:
+  constant DCACHE_BYTES_PER_LINE    : integer := 2**CFG_DLOG2_BYTES_PER_LINE;
+  constant DCACHE_LINES_PER_WAY     : integer := 2**CFG_DLOG2_LINES_PER_WAY;
+  constant DCACHE_WAYS              : integer := 2**CFG_DLOG2_NWAYS;
+
+  constant DCACHE_LOG2_BURST_LEN    : integer :=
+                CFG_DLOG2_BYTES_PER_LINE - CFG_LOG2_DATA_BYTES;
+  constant DCACHE_BURST_LEN         : integer := 2**DCACHE_LOG2_BURST_LEN;
+  constant DCACHE_LINE_BITS         : integer := 8*DCACHE_BYTES_PER_LINE;
+
+  -- Information: To define the CACHE SIZE in Bytes use the following:
+  constant DCACHE_SIZE_BYTES : integer :=
+      DCACHE_WAYS * DCACHE_LINES_PER_WAY * DCACHE_BYTES_PER_LINE;
+
+  constant TAG_FL_VALID       : integer := 0;    -- always 0
+  constant DTAG_FL_DIRTY      : integer := 1;
+  constant DTAG_FL_LOAD_FAULT : integer := 2;
+  constant DTAG_FL_TOTAL      : integer := 3;
+
   -- MPU config:
   constant CFG_MPU_TBL_WIDTH   : integer := 2;    -- [1:0]  log2(MPU_TBL_SIZE)
   constant CFG_MPU_TBL_SIZE    : integer := 2**CFG_MPU_TBL_WIDTH;

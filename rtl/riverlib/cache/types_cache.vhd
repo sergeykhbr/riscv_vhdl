@@ -119,4 +119,76 @@ package types_cache is
   );
   end component;
 
+  component tagmemnway is generic (
+    memtech : integer := 0;
+    async_reset : boolean := false;
+    abus : integer := 64;          -- system bus address bus (32 or 64 bits)
+    waybits : integer := 2;        -- log2 of number of ways bits (=2 for 4 ways)
+    ibits : integer := 7;          -- lines memory addres width (usually 6..8)
+    lnbits : integer := 5;         -- One line bits: log2(bytes_per_line)
+    flbits : integer := 1          -- Total flags number saved with address tag
+  );
+  port (
+    i_clk : in std_logic;
+    i_nrst : in std_logic;
+    i_cs : in std_logic;
+    i_flush : in std_logic;
+    i_addr : in std_logic_vector(abus-1 downto 0);
+    i_wdata : in std_logic_vector(8*(2**lnbits)-1 downto 0);
+    i_wstrb : in std_logic_vector(2**lnbits-1 downto 0);
+    i_wflags : in std_logic_vector(flbits-1 downto 0);
+    o_raddr : out std_logic_vector(abus-1 downto 0);
+    o_rdata : out std_logic_vector(8*(2**lnbits)-1 downto 0);
+    o_rflags : out std_logic_vector(flbits-1 downto 0);
+    o_hit : out std_logic
+  );
+  end component;
+
+  component dcache_lru is generic (
+    memtech : integer;
+    async_reset : boolean
+  );
+  port (
+    i_clk : in std_logic;
+    i_nrst : in std_logic;
+    -- Control path:
+    i_req_valid : in std_logic;
+    i_req_write : in std_logic;
+    i_req_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_req_wdata : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+    i_req_wstrb : in std_logic_vector(BUS_DATA_BYTES-1 downto 0);
+    o_req_ready : out std_logic;
+    o_resp_valid : out std_logic;
+    o_resp_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_resp_data : out std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+    o_resp_er_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_resp_er_load_fault : out std_logic;
+    o_resp_er_store_fault : out std_logic;
+    o_resp_er_mpu_load : out std_logic;
+    o_resp_er_mpu_store : out std_logic;
+    i_resp_ready : in std_logic;
+    -- Memory interface:
+    i_req_mem_ready : in std_logic;
+    o_req_mem_valid : out std_logic;
+    o_req_mem_write : out std_logic;
+    o_req_mem_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_req_mem_strob : out std_logic_vector(BUS_DATA_BYTES-1 downto 0);
+    o_req_mem_data : out std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+    o_req_mem_len : out std_logic_vector(7 downto 0);
+    o_req_mem_burst : out std_logic_vector(1 downto 0);
+    o_req_mem_last : out std_logic;
+    i_mem_data_valid : in std_logic;
+    i_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+    i_mem_load_fault : in std_logic;
+    i_mem_store_fault : in std_logic;
+    -- MPU interface
+    o_mpu_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_mpu_flags : in std_logic_vector(CFG_MPU_FL_TOTAL-1 downto 0);
+    -- Debug Signals:
+    i_flush_address : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_flush_valid : in std_logic;
+    o_state : out std_logic_vector(3 downto 0)
+  );
+  end component; 
+
 end;
