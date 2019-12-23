@@ -97,6 +97,12 @@ SC_MODULE(TagMemCoupled) {
         sensitive << i_wdata;
         sensitive << i_wstrb;
         sensitive << i_wflags;
+        for (int i = 0; i < WAY_SubNum; i++) {
+            sensitive << lineo[i].raddr;
+            sensitive << lineo[i].rdata;
+            sensitive << lineo[i].rflags;
+            sensitive << lineo[i].hit;
+        }
         sensitive << r.req_addr;
         sensitive << r.re;
 
@@ -167,15 +173,21 @@ void TagMemCoupled<abus, waybits, ibits, lnbits, flbits>::comb() {
     bool v_addr_sel_r;
     bool v_use_overlay;
     bool v_use_overlay_r;
-    sc_uint<abus> vb_addr_overlay;
+    sc_uint<ibits> vb_index;
+    sc_uint<ibits> vb_index_next;
+    sc_uint<abus> vb_addr_next;
     sc_uint<abus> vb_addr_tag_direct;
-    sc_uint<abus> vb_addr_tag_overlay;
+    sc_uint<abus> vb_addr_tag_next;
     const int ones = (1 << (lnbits-1)) - 1;
 
     v.req_addr = i_addr.read();
-
     v_addr_sel = i_addr.read()[lnbits];
     v_addr_sel_r = r.req_addr.read()[lnbits];
+
+    vb_addr_next = i_addr.read() + (1 << lnbits);
+
+    vb_index = i_addr.read()(ibits+lnbits-1, lnbits);
+    vb_index_next = vb_addr_next(ibits+lnbits-1, lnbits);
 
     v_use_overlay = 0;
     if (i_addr.read()(lnbits-1, 1) == ones) {
@@ -186,31 +198,27 @@ void TagMemCoupled<abus, waybits, ibits, lnbits, flbits>::comb() {
         v_use_overlay_r = 1;
     }
 
-    vb_addr_overlay = i_addr.read() + (1 << lnbits);
 
     // Change the bit order in the requested address:
     //    [tag][line_idx][odd/evenbit][line_bytes] on
-    //    [tag][odd/evenbit][line_idx][line_bytes]
-    vb_addr_tag_direct(abus - 1, TAG_START) = i_addr.read()(abus - 1, TAG_START);
-    vb_addr_tag_direct[ibits + lnbits - 1] = i_addr.read()[lnbits];
-    vb_addr_tag_direct(ibits + lnbits - 2, lnbits) =
-         i_addr.read()(ibits + lnbits - 1, lnbits + 1);
-    vb_addr_tag_direct(lnbits - 1, 0) = i_addr.read()(lnbits - 1, 0);
+    //    [tag][1'b0]    [line_idx]   [line_bytes]
+    //
+    // Example (abus=32; ibits=7; lnbits=5;):
+    //   [4:0]   byte in line           [4:0]
+    //   [11:5]  line index             {[1'b0],[11:6]}
+    //   [31:12] tag                    [31:12]
+    vb_addr_tag_direct = i_addr.read();
+    vb_addr_tag_direct(ibits + lnbits - 1, lnbits) = vb_index >> 1;
 
-    vb_addr_tag_overlay(abus - 1, TAG_START) = vb_addr_overlay(abus - 1, TAG_START);
-    vb_addr_tag_overlay[ibits + lnbits - 1] = vb_addr_overlay[lnbits];
-    vb_addr_tag_overlay(ibits + lnbits - 2, lnbits) =
-         vb_addr_overlay(ibits + lnbits - 1, lnbits + 1);
-    vb_addr_tag_overlay(lnbits - 1, 0) = vb_addr_overlay(lnbits - 1, 0);
+    vb_addr_tag_next = vb_addr_next;
+    vb_addr_tag_next(ibits + lnbits - 1, lnbits) = vb_index_next >> 1;
 
-    linei[WAY_EVEN].addr = vb_addr_tag_direct;
-    if (v_use_overlay == 1 && v_addr_sel == 1) {
-        linei[WAY_EVEN].addr = vb_addr_tag_overlay;
-    }
-
-    linei[WAY_ODD].addr = vb_addr_tag_direct;
-    if (v_use_overlay == 1 && v_addr_sel == 0) {
-        linei[WAY_ODD].addr = vb_addr_tag_overlay;
+    if (v_addr_sel == 0) {
+        linei[WAY_EVEN].addr = vb_addr_tag_direct;
+        linei[WAY_ODD].addr = vb_addr_tag_next;
+    } else {
+        linei[WAY_EVEN].addr =vb_addr_tag_next;
+        linei[WAY_ODD].addr =  vb_addr_tag_direct;
     }
 
     linei[WAY_EVEN].flush = i_flush.read() && !v_addr_sel;
@@ -229,13 +237,15 @@ void TagMemCoupled<abus, waybits, ibits, lnbits, flbits>::comb() {
     linei[WAY_ODD].wflags = i_wflags.read();
 
     // Form output:
+    sc_uint<abus> vb_raddr_tag;
+    sc_uint<abus> vb_o_raddr;
     sc_biguint<8*(1<<lnbits)+16> vb_o_rdata;
     bool v_o_hit;
     bool v_o_miss_next;
     sc_uint<flbits> vb_o_rflags;
     if (v_addr_sel_r == 0) {
-        vb_o_rdata(8*(1<<lnbits)+15, 8*(1<<lnbits)) = lineo[WAY_ODD].rdata.read()(15, 0);
-        vb_o_rdata(8*(1<<lnbits)-1, 0) = lineo[WAY_EVEN].rdata;
+        vb_o_rdata = (lineo[WAY_ODD].rdata.read()(15, 0), lineo[WAY_EVEN].rdata);
+        vb_raddr_tag = lineo[WAY_EVEN].raddr;
         vb_o_rflags = lineo[WAY_EVEN].rflags;
 
         if (v_use_overlay_r == 0) {
@@ -243,22 +253,28 @@ void TagMemCoupled<abus, waybits, ibits, lnbits, flbits>::comb() {
             v_o_miss_next = 0;
         } else {
             v_o_hit = lineo[WAY_EVEN].hit && lineo[WAY_ODD].hit;
-            v_o_miss_next = lineo[WAY_EVEN].hit;
+            v_o_miss_next = lineo[WAY_EVEN].hit && !lineo[WAY_ODD].hit;
         }
     } else {
-        vb_o_rdata(8*(1<<lnbits)+15, 8*(1<<lnbits)) = lineo[WAY_EVEN].rdata.read()(15, 0);
-        vb_o_rdata(8*(1<<lnbits)-1, 0) = lineo[WAY_ODD].rdata;
+        vb_o_rdata = (lineo[WAY_EVEN].rdata.read()(15, 0), lineo[WAY_ODD].rdata);
+        vb_raddr_tag = lineo[WAY_ODD].raddr;
         vb_o_rflags = lineo[WAY_ODD].rflags;
 
         if (v_use_overlay_r == 0) {
             v_o_hit = lineo[WAY_ODD].hit;
             v_o_miss_next = 0;
         } else {
-            v_o_hit = lineo[WAY_EVEN].hit && lineo[WAY_ODD].hit;
-            v_o_miss_next = lineo[WAY_ODD].hit;
+            v_o_hit = lineo[WAY_ODD].hit && lineo[WAY_EVEN].hit;
+            v_o_miss_next = lineo[WAY_ODD].hit && !lineo[WAY_EVEN].hit;
         }
     }
 
+    vb_o_raddr = vb_raddr_tag;
+    vb_o_raddr[lnbits] = v_addr_sel_r;
+    vb_o_raddr(ibits + lnbits - 1, lnbits + 1) =
+                    vb_raddr_tag(ibits + lnbits - 2, lnbits);
+
+    o_raddr = vb_o_raddr;
     o_rdata = vb_o_rdata;
     o_rflags = vb_o_rflags;
     o_hit = v_o_hit;
@@ -284,6 +300,7 @@ generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd)  {
         sc_trace(o_vcd, i_wflags, i_wflags.name());
         sc_trace(o_vcd, i_wdata, i_wdata.name());
         sc_trace(o_vcd, i_wstrb, i_wstrb.name());
+        sc_trace(o_vcd, o_raddr, o_raddr.name());
         sc_trace(o_vcd, o_rdata, o_rdata.name());
         sc_trace(o_vcd, o_hit, o_hit.name());
         sc_trace(o_vcd, o_miss_next, o_miss_next.name());

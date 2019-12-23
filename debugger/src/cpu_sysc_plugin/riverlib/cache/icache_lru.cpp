@@ -177,7 +177,8 @@ void ICacheLru::comb() {
     sc_biguint<ICACHE_LINE_BITS> vb_line_wdata;
     sc_uint<ICACHE_BYTES_PER_LINE> vb_line_wstrb;
     sc_uint<ITAG_FL_TOTAL> v_line_wflags;
-    int sel16;//sc_uint<CFG_ILOG2_BYTES_PER_LINE - 1> sel16;
+    int sel_cached;//sc_uint<CFG_ILOG2_BYTES_PER_LINE - 1> sel16;
+    int sel_uncached;
 
     v = r;
 
@@ -189,10 +190,11 @@ void ICacheLru::comb() {
     v_flush = 0;
     v_last = 0;
     v_req_mem_len = DCACHE_BURST_LEN-1;
-    sel16 = r.req_addr.read()(CFG_DLOG2_BYTES_PER_LINE-1, 1).to_int();
+    sel_cached = r.req_addr.read()(CFG_DLOG2_BYTES_PER_LINE-1, 1).to_int();
+    sel_uncached = r.req_addr.read()(2, 1).to_int();
 
-    vb_cached_data = line_rdata_o.read()(16*sel16 + 31, 16*sel16);
-    vb_uncached_data = r.cache_line_i.read()(31, 0);
+    vb_cached_data = line_rdata_o.read()(16*sel_cached + 31, 16*sel_cached);
+    vb_uncached_data = r.cache_line_i.read()(16*sel_uncached + 31, 16*sel_uncached);
 
 
     // flush request via debug interface
@@ -237,6 +239,7 @@ void ICacheLru::comb() {
             if (i_req_ctrl_valid.read() == 1) {
                 v.requested = 1;
                 v.req_addr = i_req_ctrl_addr.read();
+                v.req_addr_next = i_req_ctrl_addr.read() + ICACHE_BYTES_PER_LINE;
                 v.state = State_CheckHit;
             } else {
                 v.requested = 0;
@@ -255,6 +258,7 @@ void ICacheLru::comb() {
                 v.state = State_CheckHit;
                 v_line_cs = i_req_ctrl_valid.read();
                 v.req_addr = i_req_ctrl_addr.read();
+                v.req_addr_next = i_req_ctrl_addr.read() + ICACHE_BYTES_PER_LINE;
                 vb_line_addr = i_req_ctrl_addr.read();
             } else {
                 v.state = State_Idle;
@@ -262,9 +266,6 @@ void ICacheLru::comb() {
             }
         } else {
             // Miss
-            if (line_miss_next_o.read() == 1) {
-                v.req_addr = r.req_addr.read() + ICACHE_BYTES_PER_LINE;
-            }
             v.state = State_CheckMPU;
         }
         break;
@@ -273,16 +274,21 @@ void ICacheLru::comb() {
         v.state = State_WaitGrant;
 
         if (i_mpu_flags.read()[CFG_MPU_FL_CACHABLE] == 1) {
-            v.mem_addr = r.req_addr.read()(BUS_ADDR_WIDTH-1,
+            if (line_miss_next_o.read() == 0) {
+                v.mem_addr = r.req_addr.read()(BUS_ADDR_WIDTH-1,
                         CFG_ILOG2_BYTES_PER_LINE) << CFG_ILOG2_BYTES_PER_LINE;
+            } else {
+                v.mem_addr = r.req_addr_next.read()(BUS_ADDR_WIDTH-1,
+                        CFG_ILOG2_BYTES_PER_LINE) << CFG_ILOG2_BYTES_PER_LINE;
+            }
             v.burst_cnt = DCACHE_BURST_LEN-1;
             v.cached = 1;
         } else {
             v.mem_addr = r.req_addr.read()(BUS_ADDR_WIDTH-1, CFG_LOG2_DATA_BYTES)
                          << CFG_LOG2_DATA_BYTES;
-            v.burst_cnt = 0;
             v.cached = 0;
-            v_req_mem_len = 0;
+            v_req_mem_len = 1;  // burst = 2
+            v.burst_cnt = 1;
         }
         v.burst_rstrb = 0x1;
         v.load_fault = 0;
@@ -295,9 +301,7 @@ void ICacheLru::comb() {
             v.state = State_WaitResp;
             v.req_mem_valid = 0;
         }
-        if (r.cached.read() == 0) {
-            v_req_mem_len = 0;
-        }
+        v_req_mem_len = r.burst_cnt;
         break;
     case State_WaitResp:
         if (r.burst_cnt.read() == 0) {
@@ -329,6 +333,9 @@ void ICacheLru::comb() {
             v_line_cs = 1;
             v_line_wflags[TAG_FL_VALID] = 1;
             vb_line_wstrb = ~0ul;  // write full line
+            if (line_miss_next_o.read() == 1) {
+                vb_line_addr = r.req_addr_next;
+            }
         } else {
             v_resp_valid = 1;
             vb_resp_data = vb_uncached_data;
@@ -384,7 +391,7 @@ void ICacheLru::comb() {
     o_resp_ctrl_data = vb_resp_data;
     o_resp_ctrl_addr = r.req_addr.read();
     o_resp_ctrl_load_fault = v_resp_er_load_fault;
-    o_resp_ctrl_executable = v_resp_er_mpu_load;
+    o_resp_ctrl_executable = r.executable;
     o_resp_ctrl_writable = 0;
     o_resp_ctrl_readable = 0;
     o_mpu_addr = r.req_addr.read();

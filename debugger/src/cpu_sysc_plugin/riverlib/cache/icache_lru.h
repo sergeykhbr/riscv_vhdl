@@ -160,6 +160,7 @@ SC_MODULE(ICacheLru) {
     struct RegistersType {
         sc_signal<bool> requested;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_addr;
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_addr_next;
         sc_signal<sc_uint<4>> state;
         sc_signal<bool> req_mem_valid;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> mem_addr;
@@ -182,6 +183,7 @@ SC_MODULE(ICacheLru) {
     void R_RESET(RegistersType &iv) {
         iv.requested = 0;
         iv.req_addr = 0;
+        iv.req_addr_next = 0;
         iv.state = State_Flush;
         iv.req_mem_valid = 0;
         iv.mem_addr = FLUSH_ALL_ADDR;
