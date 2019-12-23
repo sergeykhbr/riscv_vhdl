@@ -22,7 +22,7 @@
 namespace debugger {
 
 static const uint64_t CFG_VENDOR_ID         = 0x000000F1;
-static const uint64_t CFG_IMPLEMENTATION_ID = 0x20190521;
+static const uint64_t CFG_IMPLEMENTATION_ID = 0x20191123;
 static const bool CFG_HW_FPU_ENABLE         = true;
 
 static const int RISCV_ARCH     = 64;
@@ -34,13 +34,13 @@ static const int BUS_DATA_WIDTH      = 8 * BUS_DATA_BYTES;
 static const int LOG2_DATA_BYTES_MASK = (1 << CFG_LOG2_DATA_BYTES) - 1;
 
 /** 
- * DCacheLru config (16 KB by default)
+ * ICacheLru config (16 KB by default)
  */
 static const int CFG_ILOG2_BYTES_PER_LINE = 5;    // [4:0] 32 Bytes = 4x8 B log2(Bytes per line)
-static const int CFG_ILOG2_LINES_PER_WAY  = 7;    // Odd/Even halfs
+static const int CFG_ILOG2_LINES_PER_WAY  = 7;
 static const int CFG_ILOG2_NWAYS          = 2;
 
-// Derivatives D$ constants:
+// Derivatives I$ constants:
 static const int ICACHE_BYTES_PER_LINE    = 1 << CFG_ILOG2_BYTES_PER_LINE;
 static const int ICACHE_LINES_PER_WAY     = 1 << CFG_ILOG2_LINES_PER_WAY;
 static const int ICACHE_WAYS              = 1 << CFG_ILOG2_NWAYS;
@@ -50,38 +50,12 @@ static const int ICACHE_LOG2_BURST_LEN    =
 static const int ICACHE_BURST_LEN         = 1 << ICACHE_LOG2_BURST_LEN;
 static const int ICACHE_LINE_BITS         = 8*ICACHE_BYTES_PER_LINE;
 
+// Information: To define the CACHE SIZE in Bytes use the following:
+static const int ICACHE_SIZE_BYTES =
+    ICACHE_WAYS * ICACHE_LINES_PER_WAY * ICACHE_BYTES_PER_LINE;
+
 static const int ITAG_FL_TOTAL      = 1;
 
-
-static const int CFG_IOFFSET_WIDTH   = 5;    // [4:0]  log2(ICACHE_LINE_BYTES)
-static const int CFG_IODDEVEN_WIDTH  = 1;    // [5]    0=even; 1=odd
-// [13:6]  8: index: 8 KB per odd/even ways (64 KB icache) 75565 drhy
-// [12:6]  7: index: 4 KB per odd/even ways (32 KB icache) 75565
-// [11:6]  6: index: 2 KB per odd/even ways (16 KB icache) 75565,87462
-static const int CFG_IINDEX_WIDTH    = 6;    // log2(LINES_PER_WAY) odd or even
-static const int CFG_ILINES_PER_WAY  = 1 << CFG_IINDEX_WIDTH;
-// [31:14] tag when 64 KB
-// [31:13] tag when 32 KB
-// [31:12] tag when 16 KB
-static const int CFG_ITAG_WIDTH      = BUS_ADDR_WIDTH
-    - (CFG_IOFFSET_WIDTH + CFG_IODDEVEN_WIDTH + CFG_IINDEX_WIDTH);
-
-static const int CFG_ICACHE_WAYS        = 4;  // 4 odds, 4 even
-
-static const int IINDEX_START = CFG_IOFFSET_WIDTH + CFG_IODDEVEN_WIDTH;
-static const int IINDEX_END = IINDEX_START + CFG_IINDEX_WIDTH - 1;
-
-static const int ITAG_START = IINDEX_START + CFG_IINDEX_WIDTH;
-static const int ITAG_SIZE  = BUS_ADDR_WIDTH - ITAG_START;
-static const int ITAG_END   = BUS_ADDR_WIDTH - 1;
-/**
-    [0] = valid
-    [1] = executable
-    [2] = readable
-    [3] = writable
-    [4] = load_fault
- */
-static const int ILINE_MEM_WIDTH = 4*BUS_DATA_WIDTH + ITAG_SIZE + 5;
 
 /** 
  * DCacheLru config (16 KB by default)
@@ -108,6 +82,7 @@ static const int TAG_FL_VALID       = 0;    // always 0
 static const int DTAG_FL_DIRTY      = 1;
 static const int DTAG_FL_LOAD_FAULT = 2;
 static const int DTAG_FL_TOTAL      = 3;
+
 
 /** MPU config */
 static const int CFG_MPU_TBL_WIDTH   = 2;    // [1:0]  log2(MPU_TBL_SIZE)

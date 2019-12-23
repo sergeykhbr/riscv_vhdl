@@ -69,9 +69,6 @@
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\br_predic.cpp">
       <Filter>riverlib\core</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\dcache.cpp">
-      <Filter>riverlib\cache</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\csr.cpp">
       <Filter>riverlib\core</Filter>
     </ClCompile>
@@ -134,15 +131,6 @@
     </ClCompile>
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\icache_lru.cpp">
       <Filter>riverlib\cache</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\iwaymem.cpp">
-      <Filter>riverlib\cache</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\ilru.cpp">
-      <Filter>riverlib\cache</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mem\ramtagi.cpp">
-      <Filter>riverlib\cache\mem</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\fpu_d\divstage53.cpp">
       <Filter>riverlib\core\fpu_d</Filter>
@@ -216,9 +204,6 @@
     </ClInclude>
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\br_predic.h">
       <Filter>riverlib\core</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\dcache.h">
-      <Filter>riverlib\cache</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\csr.h">
       <Filter>riverlib\core</Filter>
@@ -294,15 +279,6 @@
     </ClInclude>
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\icache_lru.h">
       <Filter>riverlib\cache</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\iwaymem.h">
-      <Filter>riverlib\cache</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\ilru.h">
-      <Filter>riverlib\cache</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mem\ramtagi.h">
-      <Filter>riverlib\cache\mem</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\fpu_d\divstage53.h">
       <Filter>riverlib\core\fpu_d</Filter>

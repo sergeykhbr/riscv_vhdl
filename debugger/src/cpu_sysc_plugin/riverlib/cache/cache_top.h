@@ -19,10 +19,8 @@
 
 #include <systemc.h>
 #include "../river_cfg.h"
-#include "icache_stub.h"
 #include "icache_lru.h"
 #include "dcache_lru.h"
-#include "dcache.h"
 #include "mpu.h"
 
 namespace debugger {
