@@ -29,6 +29,7 @@ SC_MODULE(RiverTop) {
     sc_in<bool> i_nrst;                                 // Reset: active LOW
     // Memory interface:
     sc_in<bool> i_req_mem_ready;                        // System Bus is ready to accept memory operation request
+    sc_out<bool> o_req_mem_path;                        // 0=ctrl; 1=data path
     sc_out<bool> o_req_mem_valid;                       // AXI memory request is valid
     sc_out<bool> o_req_mem_write;                       // AXI memory request is write type
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_req_mem_addr;     // AXI memory request address
@@ -36,7 +37,8 @@ SC_MODULE(RiverTop) {
     sc_out<sc_uint<BUS_DATA_WIDTH>> o_req_mem_data;     // Writing data
     sc_out<sc_uint<8>> o_req_mem_len;                   // burst transaction length
     sc_out<sc_uint<2>> o_req_mem_burst;                 // burst type: "00" FIX; "01" INCR; "10" WRAP
-    sc_in<bool> i_resp_mem_data_valid;                  // AXI response is valid
+    sc_in<bool> i_resp_mem_valid;                       // AXI response is valid
+    sc_in<bool> i_resp_mem_path;                        // 0=ctrl; 1=data path
     sc_in<sc_uint<BUS_DATA_WIDTH>> i_resp_mem_data;     // Read data
     sc_in<bool> i_resp_mem_load_fault;
     sc_in<bool> i_resp_mem_store_fault;

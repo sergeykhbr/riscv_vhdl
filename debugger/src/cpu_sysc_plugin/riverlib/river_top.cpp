@@ -23,6 +23,7 @@ RiverTop::RiverTop(sc_module_name name_, uint32_t hartid, bool async_reset,
     i_clk("i_clk"),
     i_nrst("i_nrst"),
     i_req_mem_ready("i_req_mem_ready"),
+    o_req_mem_path("o_req_mem_path"),
     o_req_mem_valid("o_req_mem_valid"),
     o_req_mem_write("o_req_mem_write"),
     o_req_mem_addr("o_req_mem_addr"),
@@ -30,7 +31,7 @@ RiverTop::RiverTop(sc_module_name name_, uint32_t hartid, bool async_reset,
     o_req_mem_data("o_req_mem_data"),
     o_req_mem_len("o_req_mem_len"),
     o_req_mem_burst("o_req_mem_burst"),
-    i_resp_mem_data_valid("i_resp_mem_data_valid"),
+    i_resp_mem_valid("i_resp_mem_valid"),
     i_resp_mem_data("i_resp_mem_data"),
     i_resp_mem_load_fault("i_resp_mem_load_fault"),
     i_resp_mem_store_fault("i_resp_mem_store_fault"),
@@ -126,6 +127,7 @@ RiverTop::RiverTop(sc_module_name name_, uint32_t hartid, bool async_reset,
     cache0->o_resp_data_er_mpu_store(w_resp_data_er_mpu_store);
     cache0->i_resp_data_ready(w_resp_data_ready);
     cache0->i_req_mem_ready(i_req_mem_ready);
+    cache0->o_req_mem_path(o_req_mem_path);
     cache0->o_req_mem_valid(o_req_mem_valid);
     cache0->o_req_mem_write(o_req_mem_write);
     cache0->o_req_mem_addr(o_req_mem_addr);
@@ -133,7 +135,8 @@ RiverTop::RiverTop(sc_module_name name_, uint32_t hartid, bool async_reset,
     cache0->o_req_mem_data(o_req_mem_data);
     cache0->o_req_mem_len(o_req_mem_len);
     cache0->o_req_mem_burst(o_req_mem_burst);
-    cache0->i_resp_mem_data_valid(i_resp_mem_data_valid);
+    cache0->i_resp_mem_valid(i_resp_mem_valid);
+    cache0->i_resp_mem_path(i_resp_mem_path);
     cache0->i_resp_mem_data(i_resp_mem_data);
     cache0->i_resp_mem_load_fault(i_resp_mem_load_fault);
     cache0->i_resp_mem_store_fault(i_resp_mem_store_fault);
@@ -191,7 +194,7 @@ void RiverTop::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(i_vcd, i_clk, "i_clk");
         sc_trace(i_vcd, i_nrst, "i_nrst");
         sc_trace(i_vcd, i_req_mem_ready, "i_req_mem_ready");
-        sc_trace(i_vcd, i_resp_mem_data_valid, "i_resp_mem_data_valid");
+        sc_trace(i_vcd, i_resp_mem_valid, "i_resp_mem_valid");
         sc_trace(i_vcd, i_resp_mem_data, "i_resp_mem_data");
         sc_trace(i_vcd, i_resp_mem_load_fault, "i_resp_mem_load_fault");
         sc_trace(i_vcd, i_resp_mem_store_fault, "i_resp_mem_store_fault");

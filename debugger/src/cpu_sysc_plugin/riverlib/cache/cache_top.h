@@ -22,6 +22,7 @@
 #include "icache_lru.h"
 #include "dcache_lru.h"
 #include "mpu.h"
+#include "../core/queue.h"
 
 namespace debugger {
 
@@ -56,6 +57,7 @@ SC_MODULE(CacheTop) {
     sc_in<bool> i_resp_data_ready;                      // CPU Core is ready to accept DCache repsonse
     // Memory interface:
     sc_in<bool> i_req_mem_ready;                        // System Bus (AXI) is available
+    sc_out<bool> o_req_mem_path;                        // 0=ctrl; 1=data path
     sc_out<bool> o_req_mem_valid;                       // Memory operation to system bus is valid
     sc_out<bool> o_req_mem_write;                       // Memory operation write flag
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_req_mem_addr;     // Requesting address
@@ -63,7 +65,9 @@ SC_MODULE(CacheTop) {
     sc_out<sc_uint<BUS_DATA_WIDTH>> o_req_mem_data;     // Writing value
     sc_out<sc_uint<8>> o_req_mem_len;                   // burst transaction length
     sc_out<sc_uint<2>> o_req_mem_burst;                 // burst type: "00" FIX; "01" INCR; "10" WRAP
-    sc_in<bool> i_resp_mem_data_valid;                  // Memory operation from system bus is completed
+    sc_out<bool> o_req_mem_last;
+    sc_in<bool> i_resp_mem_valid;                       // Memory operation from system bus is completed
+    sc_in<bool> i_resp_mem_path;                        // 0=ctrl; 1=data path
     sc_in<sc_uint<BUS_DATA_WIDTH>> i_resp_mem_data;     // Read value
     sc_in<bool> i_resp_mem_load_fault;                  // Bus response with SLVERR or DECERR on read
     sc_in<bool> i_resp_mem_store_fault;                 // Bus response with SLVERR or DECERR on write
@@ -84,7 +88,6 @@ SC_MODULE(CacheTop) {
     sc_out<sc_uint<2>> o_cstate;                        // cachetop state machine value
 
     void comb();
-    void registers();
 
     SC_HAS_PROCESS(CacheTop);
 
@@ -93,10 +96,17 @@ SC_MODULE(CacheTop) {
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
-private:
-    static const uint8_t State_Idle = 0;
-    static const uint8_t State_IMem = 1;
-    static const uint8_t State_DMem = 2;
+ private:
+    static const int DATA_PATH = 0;
+    static const int CTRL_PATH = 1;
+
+    static const int QUEUE_WIDTH =
+        BUS_ADDR_WIDTH      // addr
+        + 8                 // len
+        + 2                 // burst type
+        + 1                 // 0=read/1=write
+        + 1                 // 0=instruction; 1=data
+        ;
 
     struct CacheOutputType {
         sc_signal<bool> req_mem_valid;
@@ -109,10 +119,6 @@ private:
         sc_signal<bool> req_mem_last;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> mpu_addr;
     };
-
-    struct RegistersType {
-        sc_signal<sc_uint<2>> state;
-    } v, r;
 
     CacheOutputType i, d;
 
@@ -131,16 +137,22 @@ private:
     sc_signal<sc_uint<CFG_MPU_FL_TOTAL>> wb_mpu_iflags;
     sc_signal<sc_uint<CFG_MPU_FL_TOTAL>> wb_mpu_dflags;
 
+    sc_signal<bool> queue_re_i;
+    sc_signal<bool> queue_we_i;
+    sc_signal<sc_biguint<QUEUE_WIDTH>> queue_wdata_i;
+    sc_signal<sc_biguint<QUEUE_WIDTH>> queue_rdata_o;
+    sc_signal<bool> queue_full_o;
+    sc_signal<bool> queue_nempty_o;
 
     ICacheLru *i1;
     DCacheLru *d0;
     MPU *mpu0;
+    Queue<2, QUEUE_WIDTH> *queue0;
 #ifdef DBG_ICACHE_TB
     ICache_tb *i0_tb;
 #endif
     bool async_reset_;
 };
-
 
 }  // namespace debugger
 

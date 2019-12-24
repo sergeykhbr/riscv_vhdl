@@ -156,6 +156,8 @@ void Queue<szbits, dbits>::registers() {
 template<int szbits, int dbits>
 void Queue<szbits, dbits>::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
+        sc_trace(o_vcd, i_we, i_we.name());
+        sc_trace(o_vcd, i_wdata, i_wdata.name());
         std::string pn(name());
         sc_trace(o_vcd, r.wcnt, pn + ".r_wcnt");
         //sc_trace(o_vcd, r.mem[0], pn + ".r_mem0");

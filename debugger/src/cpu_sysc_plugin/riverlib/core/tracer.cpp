@@ -215,6 +215,57 @@ void Tracer::task_disassembler(uint32_t instr) {
         case 0x0D:
             RISCV_sprintf(disasm, sizeof(disasm), "%10s", "lui");
             break;
+        case 0x0E:
+            switch (op2) {
+            case 0:
+                if (((instr >> 25) & 0x7f) == 0x00) {
+                    RISCV_sprintf(disasm, sizeof(disasm), "%10s", "addw");
+                } else if (((instr >> 25) & 0x7f) == 0x01) {
+                    RISCV_sprintf(disasm, sizeof(disasm), "%10s", "mulw");
+                } else if (((instr >> 25) & 0x7f) == 0x20) {
+                    RISCV_sprintf(disasm, sizeof(disasm), "%10s", "subw");
+                } else {
+                    RISCV_sprintf(disasm, sizeof(disasm), "%10s", "error");
+                }
+                break;
+            case 1:
+                RISCV_sprintf(disasm, sizeof(disasm), "%10s", "sllw");
+                break;
+            case 4:
+                if (((instr >> 25) & 0x7f) == 0x01) {
+                    RISCV_sprintf(disasm, sizeof(disasm), "%10s", "divw");
+                } else {
+                    RISCV_sprintf(disasm, sizeof(disasm), "%10s", "error");
+                }
+                break;
+            case 5:
+                if (((instr >> 25) & 0x7f) == 0x00) {
+                    RISCV_sprintf(disasm, sizeof(disasm), "%10s", "srlw");
+                } else if (((instr >> 25) & 0x7f) == 0x01) {
+                    RISCV_sprintf(disasm, sizeof(disasm), "%10s", "divuw");
+                } else if (((instr >> 25) & 0x7f) == 0x20) {
+                    RISCV_sprintf(disasm, sizeof(disasm), "%10s", "sraw");
+                } else {
+                    RISCV_sprintf(disasm, sizeof(disasm), "%10s", "error");
+                }
+                break;
+            case 6:
+                if (((instr >> 25) & 0x7f) == 0x01) {
+                    RISCV_sprintf(disasm, sizeof(disasm), "%10s", "remw");
+                } else {
+                    RISCV_sprintf(disasm, sizeof(disasm), "%10s", "error");
+                }
+                break;
+            case 7:
+                if (((instr >> 25) & 0x7f) == 0x01) {
+                    RISCV_sprintf(disasm, sizeof(disasm), "%10s", "remuw");
+                } else {
+                    RISCV_sprintf(disasm, sizeof(disasm), "%10s", "error");
+                }
+                break;
+            default: RISCV_sprintf(disasm, sizeof(disasm), "%10s", "error");
+            }
+            break;
         case 0x18:
             switch (op2) {
             case 0: RISCV_sprintf(disasm, sizeof(disasm), "%10s", "beq"); break;

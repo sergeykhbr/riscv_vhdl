@@ -41,13 +41,15 @@ class RtlWrapper : public sc_module,
     // Memory interface:
     sc_out<bool> o_req_mem_ready;
     sc_in<bool> i_req_mem_valid;
+    sc_in<bool> i_req_mem_path;
     sc_in<bool> i_req_mem_write;
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_req_mem_addr;
     sc_in<sc_uint<BUS_DATA_BYTES>> i_req_mem_strob;
     sc_in<sc_uint<BUS_DATA_WIDTH>> i_req_mem_data;
     sc_in<sc_uint<8>> i_req_mem_len;
     sc_in<sc_uint<2>> i_req_mem_burst;
-    sc_out<bool> o_resp_mem_data_valid;
+    sc_out<bool> o_resp_mem_valid;
+    sc_out<bool> o_resp_mem_path;
     sc_out<sc_uint<BUS_DATA_WIDTH>> o_resp_mem_data;
     sc_out<bool> o_resp_mem_load_fault;
     sc_out<bool> o_resp_mem_store_fault;
@@ -72,6 +74,7 @@ class RtlWrapper : public sc_module,
 
     struct RegistersType {
         // AXI4 Request 
+        sc_signal<bool> req_path;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_addr;
         sc_signal<sc_uint<8>> req_len;
         sc_signal<sc_uint<2>> req_burst;

@@ -47,6 +47,7 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset) :
     o_resp_data_er_mpu_store("o_resp_data_er_mpu_store"),
     i_resp_data_ready("i_resp_data_ready"),
     i_req_mem_ready("i_req_mem_ready"),
+    o_req_mem_path("o_req_mem_path"),
     o_req_mem_valid("o_req_mem_valid"),
     o_req_mem_write("o_req_mem_write"),
     o_req_mem_addr("o_req_mem_addr"),
@@ -54,7 +55,9 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset) :
     o_req_mem_data("o_req_mem_data"),
     o_req_mem_len("o_req_mem_len"),
     o_req_mem_burst("o_req_mem_burst"),
-    i_resp_mem_data_valid("i_resp_mem_data_valid"),
+    o_req_mem_last("o_req_mem_last"),
+    i_resp_mem_valid("i_resp_mem_valid"),
+    i_resp_mem_path("i_resp_mem_path"),
     i_resp_mem_data("i_resp_mem_data"),
     i_resp_mem_load_fault("i_resp_mem_load_fault"),
     i_resp_mem_store_fault("i_resp_mem_store_fault"),
@@ -92,14 +95,13 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset) :
     sensitive << d.req_mem_len;
     sensitive << d.req_mem_burst;
     sensitive << d.req_mem_last;
-    sensitive << i_resp_mem_data_valid;
+    sensitive << i_resp_mem_valid;
+    sensitive << i_resp_mem_path;
     sensitive << i_resp_mem_data;
     sensitive << i_resp_mem_load_fault;
-    sensitive << r.state;
-
-    SC_METHOD(registers);
-    sensitive << i_nrst;
-    sensitive << i_clk.pos();
+    sensitive << queue_rdata_o;
+    sensitive << queue_full_o;
+    sensitive << queue_nempty_o;
 
     i1 = new ICacheLru("i1", async_reset);
     i1->i_clk(i_clk);
@@ -131,7 +133,7 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset) :
     i1->i_mpu_flags(wb_mpu_iflags);
     i1->i_flush_address(i_flush_address);
     i1->i_flush_valid(i_flush_valid);
-    i1->o_istate(o_istate);
+    i1->o_state(o_istate);
 
     d0 = new DCacheLru("d0", async_reset);
     d0->i_clk(i_clk);
@@ -185,6 +187,18 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset) :
     mpu0->o_iflags(wb_mpu_iflags);
     mpu0->o_dflags(wb_mpu_dflags);
 
+    queue0 = new Queue<2, QUEUE_WIDTH>("queue0", async_reset);
+
+    queue0->i_clk(i_clk);
+    queue0->i_nrst(i_nrst);
+    queue0->i_re(queue_re_i);
+    queue0->i_we(queue_we_i);
+    queue0->i_wdata(queue_wdata_i);
+    queue0->o_rdata(queue_rdata_o);
+    queue0->o_full(queue_full_o);
+    queue0->o_nempty(queue_nempty_o);
+
+
 #ifdef DBG_ICACHE_TB
     i0_tb = new ICache_tb("ictb0");
 #endif
@@ -199,11 +213,13 @@ void CacheTop::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_req_data_wstrb, i_req_data_wstrb.name());
         sc_trace(o_vcd, i_req_mem_ready, i_req_mem_ready.name());
         sc_trace(o_vcd, o_req_mem_valid, o_req_mem_valid.name());
+        sc_trace(o_vcd, o_req_mem_path, o_req_mem_path.name());
         sc_trace(o_vcd, o_req_mem_write, o_req_mem_write.name());
         sc_trace(o_vcd, o_req_mem_addr, o_req_mem_addr.name());
         sc_trace(o_vcd, o_req_mem_strob, o_req_mem_strob.name());
         sc_trace(o_vcd, o_req_mem_data, o_req_mem_data.name());
-        sc_trace(o_vcd, i_resp_mem_data_valid, i_resp_mem_data_valid.name());
+        sc_trace(o_vcd, i_resp_mem_valid, i_resp_mem_valid.name());
+        sc_trace(o_vcd, i_resp_mem_path, i_resp_mem_path.name());
         sc_trace(o_vcd, i_resp_mem_data, i_resp_mem_data.name());
         sc_trace(o_vcd, o_istate, o_istate.name());
         sc_trace(o_vcd, o_dstate, o_dstate.name());
@@ -218,166 +234,90 @@ void CacheTop::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
                         pn + ".w_ctrl_resp_mem_data_valid");
         sc_trace(o_vcd, wb_ctrl_resp_mem_data, pn + ".wb_ctrl_resp_mem_data");
         sc_trace(o_vcd, w_ctrl_req_ready, pn + ".w_ctrl_req_ready");
-        sc_trace(o_vcd, r.state, pn + ".r_state");
     }
     i1->generateVCD(i_vcd, o_vcd);
     d0->generateVCD(i_vcd, o_vcd);
     mpu0->generateVCD(i_vcd, o_vcd);
+    queue0->generateVCD(i_vcd, o_vcd);
 }
 
 CacheTop::~CacheTop() {
     delete i1;
     delete d0;
     delete mpu0;
+    delete queue0;
 }
 
 
 void CacheTop::comb() {
-    bool w_req_mem_valid;
-    sc_uint<BUS_ADDR_WIDTH> wb_mem_addr;
-    sc_uint<8> wb_mem_len;
-    sc_uint<2> wb_mem_burst;
-    bool w_mem_write;
-    bool v_data_req_ready;
-    bool v_data_resp_mem_data_valid;
-    bool v_ctrl_req_ready;
-    bool v_ctrl_resp_mem_data_valid;
+    sc_biguint<QUEUE_WIDTH> vb_ctrl_bus;
+    sc_biguint<QUEUE_WIDTH> vb_data_bus;
+    sc_biguint<QUEUE_WIDTH> vb_queue_bus;
+    sc_biguint<QUEUE_WIDTH> to;
+    sc_uint<1> ctrl_path_id;
+    sc_uint<1> data_path_id;
+    bool v_queue_we;
+    bool v_queue_re;
+    bool v_req_mem_last;
 
-    v = r;
+    v_queue_re = i_req_mem_ready;
+    v_queue_we = i.req_mem_valid || d.req_mem_valid;
 
-    // default is data path
-    w_req_mem_valid = 0;
-    wb_mem_addr = d.req_mem_addr;
-    w_mem_write = d.req_mem_write;
-    wb_mem_len = d.req_mem_len;
-    wb_mem_burst = d.req_mem_burst;
-    v_data_req_ready = 0;
-    v_data_resp_mem_data_valid = 0;
-    v_ctrl_req_ready = 0;
-    v_ctrl_resp_mem_data_valid = 0;
+    ctrl_path_id = CTRL_PATH;
+    vb_ctrl_bus = (ctrl_path_id,
+                i.req_mem_write,
+                i.req_mem_burst,
+                i.req_mem_len,
+                i.req_mem_addr);
 
-    switch (r.state.read()) {
-    case State_Idle:
-        w_req_mem_valid = i.req_mem_valid | d.req_mem_valid;
-        if (d.req_mem_valid.read()) {
-            v_data_req_ready = i_req_mem_ready.read();
-            if (i_req_mem_ready.read() == 1) {
-                v.state = State_DMem;
-            }
-        } else if (i.req_mem_valid.read()) {
-            v_ctrl_req_ready = i_req_mem_ready.read();
-            wb_mem_addr = i.req_mem_addr;
-            wb_mem_len = i.req_mem_len;
-            wb_mem_burst = i.req_mem_burst;
-            w_mem_write = i.req_mem_write;
-            if (i_req_mem_ready.read() == 1) {
-                v.state = State_IMem;
-            }
-        }
-        break;
+    data_path_id = DATA_PATH;
+    vb_data_bus = (data_path_id,
+                d.req_mem_write,
+                d.req_mem_burst,
+                d.req_mem_len,
+                d.req_mem_addr);
 
-    case State_DMem:
-        if (d.req_mem_last.read() == 1) {
-            w_req_mem_valid = i.req_mem_valid | d.req_mem_valid;
-            if (d.req_mem_valid.read() == 1) {
-                wb_mem_addr = d.req_mem_addr;
-            } else if (i.req_mem_valid.read() == 1) {
-                wb_mem_addr = i.req_mem_addr;
-            }
-        }
-        if (i_resp_mem_data_valid.read() && d.req_mem_last.read()) {
-            if (d.req_mem_valid.read()) {
-                v_data_req_ready = i_req_mem_ready.read();
-                if (i_req_mem_ready.read() == 1) {
-                    v.state = State_DMem;
-                } else {
-                    v.state = State_Idle;
-                }
-            } else if (i.req_mem_valid.read() == 1) {
-                v_ctrl_req_ready = i_req_mem_ready.read();
-                wb_mem_addr = i.req_mem_addr;
-                wb_mem_len = i.req_mem_len;
-                wb_mem_burst = i.req_mem_burst;
-                w_mem_write = i.req_mem_write;
-                if (i_req_mem_ready.read() == 1) {
-                    v.state = State_IMem;
-                } else {
-                    v.state = State_Idle;
-                }
-            } else {
-                v.state = State_Idle;
-            }
-        }
-        v_data_resp_mem_data_valid = i_resp_mem_data_valid;
-        break;
-
-    case State_IMem:
-        if (i.req_mem_last.read() == 1) {
-            w_req_mem_valid = i.req_mem_valid | d.req_mem_valid;
-            if (d.req_mem_valid.read() == 1) {
-                wb_mem_addr = d.req_mem_addr;
-            } else if (i.req_mem_valid.read() == 1) {
-                wb_mem_addr = i.req_mem_addr;
-            }
-        }
-        if (i_resp_mem_data_valid.read() && i.req_mem_last.read()) {
-            if (d.req_mem_valid.read()) {
-                v_data_req_ready = i_req_mem_ready.read();
-                if (i_req_mem_ready.read() == 1) {
-                    v.state = State_DMem;
-                } else {
-                    v.state = State_Idle;
-                }
-            } else if (i.req_mem_valid.read() == 1) {
-                v_ctrl_req_ready = i_req_mem_ready.read();
-                wb_mem_addr = i.req_mem_addr;
-                wb_mem_len = i.req_mem_len;
-                wb_mem_burst = i.req_mem_burst;
-                w_mem_write = i.req_mem_write;
-                if (i_req_mem_ready.read() == 1) {
-                    v.state = State_IMem;
-                } else {
-                    v.state = State_Idle;
-                }
-            } else {
-                v.state = State_Idle;
-            }
-        }
-        v_ctrl_resp_mem_data_valid = i_resp_mem_data_valid;
-        break;
-    default:;
+    if (d.req_mem_valid.read() == 1) {
+        vb_queue_bus = vb_data_bus;
+    } else {
+        vb_queue_bus = vb_ctrl_bus;
     }
 
-    if (!async_reset_ && !i_nrst.read()) {
-        v.state = State_Idle;
+    queue_wdata_i = vb_queue_bus;
+    queue_we_i = v_queue_we;
+    queue_re_i = v_queue_re;
+
+    w_data_req_ready = 1;
+    w_ctrl_req_ready = !d.req_mem_valid;
+    if (i_resp_mem_path.read() == CTRL_PATH) {
+        v_req_mem_last = i.req_mem_last;
+        w_ctrl_resp_mem_data_valid = i_resp_mem_valid.read();
+        w_ctrl_resp_mem_load_fault = i_resp_mem_load_fault.read();
+        w_data_resp_mem_data_valid = 0;
+        w_data_resp_mem_load_fault = 0;
+    } else {
+        v_req_mem_last = d.req_mem_last;
+        w_ctrl_resp_mem_data_valid = 0;
+        w_ctrl_resp_mem_load_fault = 0;
+        w_data_resp_mem_data_valid = i_resp_mem_valid.read();
+        w_data_resp_mem_load_fault = i_resp_mem_load_fault.read();
     }
 
-    w_data_req_ready = v_data_req_ready;
-    w_data_resp_mem_data_valid = v_data_resp_mem_data_valid;
-    wb_data_resp_mem_data = i_resp_mem_data.read();
-    w_data_resp_mem_load_fault = i_resp_mem_load_fault.read();
-
-    w_ctrl_req_ready = v_ctrl_req_ready;
-    w_ctrl_resp_mem_data_valid = v_ctrl_resp_mem_data_valid;
     wb_ctrl_resp_mem_data = i_resp_mem_data.read();
-    w_ctrl_resp_mem_load_fault = i_resp_mem_load_fault.read();
+    wb_data_resp_mem_data = i_resp_mem_data.read();
 
-    o_req_mem_valid = w_req_mem_valid;
-    o_req_mem_addr = wb_mem_addr;
-    o_req_mem_len = wb_mem_len;
-    o_req_mem_burst = wb_mem_burst;
-    o_req_mem_write = w_mem_write;
+
+    to = queue_rdata_o.read();
+    o_req_mem_valid = queue_nempty_o;
+    o_req_mem_path = to[BUS_ADDR_WIDTH + 11];
+    o_req_mem_write = to[BUS_ADDR_WIDTH + 10];
+    o_req_mem_burst = to(BUS_ADDR_WIDTH + 9, BUS_ADDR_WIDTH + 8).to_uint64();
+    o_req_mem_len = to(BUS_ADDR_WIDTH + 7, BUS_ADDR_WIDTH).to_uint64();
+    o_req_mem_addr = to(BUS_ADDR_WIDTH-1, 0).to_uint64();
     o_req_mem_strob = d.req_mem_strob;
     o_req_mem_data = d.req_mem_wdata;
-    o_cstate = r.state;
-}
-
-void CacheTop::registers() {
-    if (async_reset_ && i_nrst.read() == 0) {
-        r.state = State_Idle;
-    } else {
-        r = v;
-    }
+    o_req_mem_last = v_req_mem_last;
+    o_cstate = 0;
 }
 
 }  // namespace debugger

@@ -29,13 +29,15 @@ RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
     i_time("i_time"),
     o_req_mem_ready("o_req_mem_ready"),
     i_req_mem_valid("i_req_mem_valid"),
+    i_req_mem_path("i_req_mem_path"),
     i_req_mem_write("i_req_mem_write"),
     i_req_mem_addr("i_req_mem_addr"),
     i_req_mem_strob("i_req_mem_strob"),
     i_req_mem_data("i_req_mem_data"),
     i_req_mem_len("i_req_mem_len"),
     i_req_mem_burst("i_req_mem_burst"),
-    o_resp_mem_data_valid("o_resp_mem_data_valid"),
+    o_resp_mem_valid("o_resp_mem_valid"),
+    o_resp_mem_path("o_resp_mem_path"),
     o_resp_mem_data("o_resp_mem_data"),
     o_resp_mem_load_fault("o_resp_mem_load_fault"),
     o_resp_mem_store_fault("o_resp_mem_store_fault"),
@@ -76,6 +78,7 @@ RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
     sensitive << w_interrupt;
     sensitive << i_halted;
     sensitive << i_req_mem_valid;
+    sensitive << i_req_mem_path;
     sensitive << i_req_mem_write;
     sensitive << i_req_mem_addr;
     sensitive << i_req_mem_strob;
@@ -83,6 +86,7 @@ RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
     sensitive << i_req_mem_len;
     sensitive << i_req_mem_burst;
     sensitive << i_halted;
+    sensitive << r.req_path;
     sensitive << r.req_addr;
     sensitive << r.req_len;
     sensitive << r.req_burst;
@@ -118,9 +122,12 @@ void RtlWrapper::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (i_vcd) {
     }
     if (o_vcd) {
+        sc_trace(o_vcd, i_req_mem_valid, i_req_mem_valid.name());
+        sc_trace(o_vcd, i_req_mem_path, i_req_mem_path.name());
         sc_trace(o_vcd, i_req_mem_strob, i_req_mem_strob.name());
         sc_trace(o_vcd, i_req_mem_data, i_req_mem_data.name());
-        sc_trace(o_vcd, o_resp_mem_data_valid, o_resp_mem_data_valid.name());
+        sc_trace(o_vcd, o_resp_mem_valid, o_resp_mem_valid.name());
+        sc_trace(o_vcd, o_resp_mem_path, o_resp_mem_path.name());
         sc_trace(o_vcd, o_resp_mem_data, o_resp_mem_data.name());
 
         std::string pn(name());
@@ -130,6 +137,7 @@ void RtlWrapper::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.req_write, pn + ".r_req_write");
         sc_trace(o_vcd, r.req_len, pn + ".r_req_len");
         sc_trace(o_vcd, r.req_burst, pn + ".r_req_burst");
+        sc_trace(o_vcd, r.req_path, pn + ".r_req_path");
     }
 }
 
@@ -156,6 +164,7 @@ void RtlWrapper::comb() {
         } else {
             w_req_mem_ready = 1;
             if (i_req_mem_valid.read()) {
+                v.req_path = i_req_mem_path.read();
                 v.req_addr = i_req_mem_addr.read();
                 v.req_write = i_req_mem_write.read();
                 v.req_burst = i_req_mem_burst.read();
@@ -168,6 +177,7 @@ void RtlWrapper::comb() {
         if (r.req_len.read() == 0) {
             w_req_mem_ready = 1;
             if (i_req_mem_valid.read()) {
+                v.req_path = i_req_mem_path.read();
                 v.req_addr = i_req_mem_addr.read();
                 v.req_write = i_req_mem_write.read();
                 v.req_burst = i_req_mem_burst.read();
@@ -201,7 +211,8 @@ void RtlWrapper::comb() {
 
     w_req_mem_ready = w_req_mem_ready;
     o_req_mem_ready = w_req_mem_ready;
-    o_resp_mem_data_valid = w_resp_valid;
+    o_resp_mem_valid = w_resp_valid;
+    o_resp_mem_path = r.req_path.read();
     o_resp_mem_data = wb_resp_data;
     o_resp_mem_load_fault = w_resp_load_fault;
     o_resp_mem_store_fault = r.store_fault.read();

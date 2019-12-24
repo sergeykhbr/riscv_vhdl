@@ -119,6 +119,7 @@ class CpuRiscV_RTL : public IService,
     sc_signal<sc_uint<64>> wb_exec_cnt;
     // Memory interface:
     sc_signal<bool> w_req_mem_ready;
+    sc_signal<bool> w_req_mem_path;
     sc_signal<bool> w_req_mem_valid;
     sc_signal<bool> w_req_mem_write;
     sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_req_mem_addr;
@@ -126,7 +127,8 @@ class CpuRiscV_RTL : public IService,
     sc_signal<sc_uint<BUS_DATA_WIDTH>> wb_req_mem_data;
     sc_signal<sc_uint<8>> wb_req_mem_len;
     sc_signal<sc_uint<2>> wb_req_mem_burst;
-    sc_signal<bool> w_resp_mem_data_valid;
+    sc_signal<bool> w_resp_mem_valid;
+    sc_signal<bool> w_resp_mem_path;
     sc_signal<sc_uint<BUS_DATA_WIDTH>> wb_resp_mem_data;
     sc_signal<bool> w_resp_mem_load_fault;
     sc_signal<bool> w_resp_mem_store_fault;
