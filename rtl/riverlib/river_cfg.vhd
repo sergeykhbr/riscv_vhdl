@@ -827,33 +827,39 @@ package river_cfg is
   port (
     i_clk  : in std_logic;
     i_nrst : in std_logic;
-    i_e_valid : in std_logic;
-    i_e_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    i_e_instr : in std_logic_vector(31 downto 0);
-    i_res_addr : in std_logic_vector(5 downto 0);
-    i_res_data : in std_logic_vector(RISCV_ARCH-1 downto 0);
-    i_memop_sign_ext : in std_logic;
-    i_memop_load : in std_logic;
-    i_memop_store : in std_logic;
-    i_memop_size : in std_logic_vector(1 downto 0);
-    i_memop_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    o_wena : out std_logic;
-    o_waddr : out std_logic_vector(5 downto 0);
-    o_wdata : out std_logic_vector(RISCV_ARCH-1 downto 0);
+    i_e_valid : in std_logic;                                         -- Execution stage outputs are valid
+    i_e_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);          -- Execution stage instruction pointer
+    i_e_instr : in std_logic_vector(31 downto 0);                     -- Execution stage instruction value
+
+    i_res_addr : in std_logic_vector(5 downto 0);                     -- Register address to be written (0=no writing)
+    i_res_data : in std_logic_vector(RISCV_ARCH-1 downto 0);          -- Register value to be written
+    i_memop_sign_ext : in std_logic;                                  -- Load data with sign extending (if less than 8 Bytes)
+    i_memop_load : in std_logic;                                      -- Load data from memory and write to i_res_addr
+    i_memop_store : in std_logic;                                     -- Store i_res_data value into memory
+    i_memop_size : in std_logic_vector(1 downto 0);                   -- Encoded memory transaction size in bytes: 0=1B; 1=2B; 2=4B; 3=8B
+    i_memop_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);    -- Memory access address
+    o_memop_ready : out std_logic;                                    -- Ready to accept memop request
+    o_wena : out std_logic;                                           -- Write enable signal
+    o_waddr : out std_logic_vector(5 downto 0);                       -- Output register address (0 = x0 = no write)
+    o_wdata : out std_logic_vector(RISCV_ARCH-1 downto 0);            -- Register value
+
+    -- Memory interface:
     i_mem_req_ready : in std_logic;
-    o_mem_valid : out std_logic;
-    o_mem_write : out std_logic;
-    o_mem_sz : out std_logic_vector(1 downto 0);
-    o_mem_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    o_mem_data : out std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
-    i_mem_data_valid : in std_logic;
-    i_mem_data_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    i_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+    o_mem_valid : out std_logic;                                      -- Memory request is valid
+    o_mem_write : out std_logic;                                      -- Memory write request
+    o_mem_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);     -- Data path requested address
+    o_mem_wdata : out std_logic_vector(BUS_DATA_WIDTH-1 downto 0);     -- Data path requested data (write transaction)
+    o_mem_wstrb : out std_logic_vector(BUS_DATA_BYTES-1 downto 0);    -- 8-bytes aligned strobs
+    i_mem_data_valid : in std_logic;                                  -- Data path memory response is valid
+    i_mem_data_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0); -- Data path memory response address
+    i_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);      -- Data path memory response value
     o_mem_resp_ready : out std_logic;
-    o_hold : out std_logic;
-    o_valid : out std_logic;
-    o_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    o_instr : out std_logic_vector(31 downto 0)
+
+    o_hold : out std_logic;                                           -- Memory operation is more than 1 clock
+    o_valid : out std_logic;                                          -- Output is valid
+    o_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);           -- Valid instruction pointer
+    o_instr : out std_logic_vector(31 downto 0);                      -- Valid instruction value
+    o_wb_memop : out std_logic                                        -- memory operation write-back (for tracer only)
   );
   end component; 
 

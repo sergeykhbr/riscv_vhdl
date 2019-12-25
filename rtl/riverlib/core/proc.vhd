@@ -162,10 +162,12 @@ architecture arch_Processor of Processor is
     end record;
 
     type MemoryType is record
+        memop_ready : std_logic;
         valid : std_logic;
         instr : std_logic_vector(31 downto 0);
         pc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
         pipeline_hold : std_logic;
+        wb_memop : std_logic;
     end record;
 
     type WriteBackType is record
@@ -390,15 +392,16 @@ begin
         i_memop_store => w.e.memop_store,
         i_memop_size => w.e.memop_size,
         i_memop_addr => w.e.memop_addr,
+        o_memop_ready => w.m.memop_ready,
         o_waddr => w.w.waddr,
         o_wena => w.w.wena,
         o_wdata => w.w.wdata,
         i_mem_req_ready => i_req_data_ready,
         o_mem_valid => o_req_data_valid,
         o_mem_write => o_req_data_write,
-        o_mem_sz => o_req_data_size,
         o_mem_addr => o_req_data_addr,
-        o_mem_data => o_req_data_data,
+        o_mem_wdata => o_req_data_wdata,
+        o_mem_wstrb => o_req_data_wstrb,
         i_mem_data_valid => i_resp_data_valid,
         i_mem_data_addr => i_resp_data_addr,
         i_mem_data => i_resp_data_data,
@@ -406,7 +409,8 @@ begin
         o_hold => w.m.pipeline_hold,
         o_valid => w.m.valid,
         o_pc => w.m.pc,
-        o_instr => w.m.instr);
+        o_instr => w.m.instr,
+        o_wb_memop => w.m.wb_memop);
 
     predic0 : BranchPredictor generic map (
         async_reset => async_reset
