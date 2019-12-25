@@ -205,7 +205,9 @@ begin
   cpu0 : river_amba generic map (
     memtech  => CFG_MEMTECH,
     hartid => 0,
-    async_reset => CFG_ASYNC_RESET
+    async_reset => CFG_ASYNC_RESET,
+    fpu_ena => true,
+    tracer_ena => false
   ) port map ( 
     i_nrst   => w_bus_nrst,
     i_clk    => i_clk,
@@ -221,7 +223,9 @@ begin
       cpu1 : river_amba generic map (
         memtech  => CFG_MEMTECH,
         hartid => 1,
-        async_reset => CFG_ASYNC_RESET
+        async_reset => CFG_ASYNC_RESET,
+        fpu_ena => true,
+        tracer_ena => false
       ) port map ( 
         i_nrst   => w_bus_nrst,
         i_clk    => i_clk,

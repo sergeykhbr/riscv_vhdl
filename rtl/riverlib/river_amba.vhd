@@ -1,5 +1,5 @@
 --!
---! Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+--! Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
 --!
 --! Licensed under the Apache License, Version 2.0 (the "License");
 --! you may not use this file except in compliance with the License.
@@ -35,7 +35,9 @@ entity river_amba is
   generic (
     memtech : integer;
     hartid : integer;
-    async_reset : boolean
+    async_reset : boolean;
+    fpu_ena : boolean;
+    tracer_ena : boolean
   );
   port ( 
     i_nrst   : in std_logic;
@@ -58,64 +60,67 @@ architecture arch_river_amba of river_amba is
      did => RISCV_RIVER_CPU
   );
 
+  type state_type is (idle, reading, writing);
+
   type RegistersType is record
-      reading : std_logic;
+      state : state_type;
+      resp_path : std_logic;
       w_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-      w_valid : std_logic;
-      w_last : std_logic;
       b_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-      b_ready : std_logic;
   end record;
 
   constant R_RESET : RegistersType := (
-      '0', (others => '0'), '0', '0', (others => '0'), '0'
+      idle, '0', (others => '0'), (others => '0')
   );
 
   signal r, rin : RegistersType;
 
-  signal w_req_mem_ready : std_logic;
-  signal w_req_mem_valid : std_logic;
-  signal w_req_mem_write : std_logic;
-  signal wb_req_mem_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-  signal wb_req_mem_strob : std_logic_vector(BUS_DATA_BYTES-1 downto 0);
-  signal wb_req_mem_data : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
-  signal wb_req_mem_len : std_logic_vector(7 downto 0);
-  signal wb_req_mem_burst : std_logic_vector(1 downto 0);
-  signal w_resp_mem_data_valid : std_logic;
-  signal w_resp_mem_load_fault : std_logic;
-  signal w_resp_mem_store_fault : std_logic;
+  signal req_mem_ready_i : std_logic;
+  signal req_mem_path_o : std_logic;
+  signal req_mem_valid_o : std_logic;
+  signal req_mem_write_o : std_logic;
+  signal req_mem_addr_o : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+  signal req_mem_strob_o : std_logic_vector(BUS_DATA_BYTES-1 downto 0);
+  signal req_mem_data_o : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+  signal req_mem_len_o : std_logic_vector(7 downto 0);
+  signal req_mem_burst_o : std_logic_vector(1 downto 0);
+  signal req_mem_last_o : std_logic;
+  signal resp_mem_valid_i : std_logic;
+  signal resp_mem_load_fault_i : std_logic;
+  signal resp_mem_store_fault_i : std_logic;
 
 begin
 
   o_mstcfg <= xconfig;
-  w_resp_mem_data_valid <= i_msti.r_valid or (r.w_valid and i_msti.w_ready);
-  -- Slave response resp = SLVERR (2'b10)
-  -- Interconnect response resp = DECERR (2'b11):
-  w_resp_mem_load_fault <= r.reading and i_msti.r_valid and i_msti.r_resp(1);
-  w_resp_mem_store_fault <= r.b_ready and i_msti.b_valid and i_msti.b_resp(1);
   
   river0 : RiverTop  generic map (
       memtech => memtech,
       hartid => hartid,
-      async_reset => async_reset
+      async_reset => async_reset,
+      fpu_ena => fpu_ena,
+      tracer_ena => tracer_ena
     ) port map (
       i_clk => i_clk,
       i_nrst => i_nrst,
-      i_req_mem_ready => w_req_mem_ready,
-      o_req_mem_valid => w_req_mem_valid,
-      o_req_mem_write => w_req_mem_write,
-      o_req_mem_addr => wb_req_mem_addr,
-      o_req_mem_strob => wb_req_mem_strob,
-      o_req_mem_data => wb_req_mem_data,
-      o_req_mem_len => wb_req_mem_len,
-      o_req_mem_burst => wb_req_mem_burst,
-      i_resp_mem_data_valid => w_resp_mem_data_valid,
+      i_req_mem_ready => req_mem_ready_i,
+      o_req_mem_path => req_mem_path_o,
+      o_req_mem_valid => req_mem_valid_o,
+      o_req_mem_write => req_mem_write_o,
+      o_req_mem_addr => req_mem_addr_o,
+      o_req_mem_strob => req_mem_strob_o,
+      o_req_mem_data => req_mem_data_o,
+      o_req_mem_len => req_mem_len_o,
+      o_req_mem_burst => req_mem_burst_o,
+      o_req_mem_last => req_mem_last_o,
+      i_resp_mem_valid => resp_mem_valid_i,
+      i_resp_mem_path => r.resp_path,
       i_resp_mem_data => i_msti.r_data,
-      i_resp_mem_load_fault => w_resp_mem_load_fault,
-      i_resp_mem_store_fault => w_resp_mem_store_fault,
+      i_resp_mem_load_fault => resp_mem_load_fault_i,
+      i_resp_mem_store_fault => resp_mem_store_fault_i,
       i_resp_mem_store_fault_addr => r.b_addr,
       i_ext_irq => i_ext_irq,
       o_time => open,
+      o_exec_cnt => open,
       i_dport_valid => i_dport.valid,
       i_dport_write => i_dport.write,
       i_dport_region => i_dport.region,
@@ -126,70 +131,106 @@ begin
       o_halted => o_dport.halted
 );
 
-  comb : process(i_nrst, w_req_mem_valid, w_req_mem_write, wb_req_mem_addr,
-                 wb_req_mem_strob, wb_req_mem_data, wb_req_mem_len,
-                 wb_req_mem_burst, i_msti, r)
+  comb : process(i_nrst, req_mem_path_o, req_mem_valid_o, req_mem_write_o,
+                 req_mem_addr_o, req_mem_strob_o, req_mem_data_o, req_mem_len_o,
+                 req_mem_burst_o, req_mem_last_o, i_msti, r)
     variable v : RegistersType;
     variable vmsto : axi4_master_out_type;
+    variable v_req_mem_ready : std_logic;
+    variable v_resp_mem_valid : std_logic;
+    variable v_mem_er_load_fault : std_logic;
+    variable v_mem_er_store_fault : std_logic;
+    variable v_next_ready : std_logic;
   begin
 
     v := r;
 
+    v_req_mem_ready := '0';
+    v_resp_mem_valid := '0';
+    v_mem_er_load_fault := '0';
+    v_mem_er_store_fault := i_msti.b_valid and i_msti.b_resp(1);
+    v_next_ready := '0';
+
     vmsto := axi4_master_out_none;
-    vmsto.ar_valid      := w_req_mem_valid and not w_req_mem_write;
-    vmsto.ar_bits.addr  := wb_req_mem_addr;
-    vmsto.ar_bits.len   := wb_req_mem_len;
+
+    vmsto.ar_bits.addr  := req_mem_addr_o;
+    vmsto.ar_bits.len   := req_mem_len_o;
     vmsto.ar_user       := '0';
-    vmsto.ar_id         := conv_std_logic_vector(0, CFG_ROCKET_ID_BITS);
+    vmsto.ar_id         := (others => '0');
     vmsto.ar_bits.size  := "011"; -- 8 bytes
-    vmsto.ar_bits.burst := wb_req_mem_burst;
+    vmsto.ar_bits.burst := req_mem_burst_o;
 
-    vmsto.aw_valid      := w_req_mem_valid and w_req_mem_write;
-    vmsto.aw_bits.addr  := wb_req_mem_addr;
-    vmsto.aw_bits.len   := wb_req_mem_len;
+    vmsto.aw_bits.addr  := req_mem_addr_o;
+    vmsto.aw_bits.len   := req_mem_len_o;
     vmsto.aw_user       := '0';
-    vmsto.aw_id         := conv_std_logic_vector(0, CFG_ROCKET_ID_BITS);
+    vmsto.aw_id         := (others => '0');
     vmsto.aw_bits.size  := "011"; -- 8 bytes
-    vmsto.aw_bits.burst := wb_req_mem_burst;
+    vmsto.aw_bits.burst := req_mem_burst_o;
 
-    vmsto.w_valid := r.w_valid;
-    vmsto.w_last := r.w_last;
-    vmsto.w_strb := wb_req_mem_strob;
-    vmsto.w_data := wb_req_mem_data;
+    vmsto.w_strb := req_mem_strob_o;
+    vmsto.w_data := req_mem_data_o;
 
-    vmsto.b_ready := r.b_ready;
+    vmsto.b_ready := '1';
     vmsto.r_ready := '1';
 
-    if (w_req_mem_valid and not w_req_mem_write and i_msti.ar_ready) = '1' then
-        v.reading := '1';
-    elsif i_msti.r_valid = '1' and i_msti.r_last = '1' then
-        v.reading := '0';
+    case r.state is
+    when idle =>
+        v_next_ready := '1';
+
+    when reading =>
+        vmsto.r_ready := '1';
+        v_mem_er_load_fault := i_msti.r_valid and i_msti.r_resp(1);
+        v_resp_mem_valid := i_msti.r_valid;
+        if i_msti.r_valid = '1' and i_msti.r_last = '1' then
+            v_next_ready := '1';
+            v.state := idle;
+        end if;
+
+    when writing =>
+        vmsto.w_valid := '1';
+        vmsto.w_last := req_mem_last_o;
+        v_resp_mem_valid := i_msti.w_ready;
+        if i_msti.w_ready = '1' and req_mem_last_o = '1' then
+            v_next_ready := '1';
+            v.state := idle;
+            v.b_addr := r.w_addr;
+        end if;
+
+    when others =>  
+    end case;
+
+    if v_next_ready = '1' then
+        if req_mem_valid_o = '1' then
+            v.resp_path := req_mem_path_o;
+            if req_mem_write_o = '0' then
+                vmsto.ar_valid := '1';
+                if i_msti.ar_ready = '1' then
+                    v_req_mem_ready := '1';
+                    v.state := reading;
+                end if;
+            else
+                vmsto.aw_valid := '1';
+                if i_msti.aw_ready = '1' then
+                    v_req_mem_ready := '1';
+                    v.state := writing;
+                    v.w_addr := req_mem_addr_o;
+                end if;
+            end if;
+        end if;
     end if;
 
-    if (w_req_mem_valid and w_req_mem_write and i_msti.aw_ready) = '1' then
-        v.w_addr := wb_req_mem_addr;
-        v.w_valid := '1';
-        v.w_last := '1';
-    elsif i_msti.w_ready = '1' then
-        v.w_valid := '0';
-        v.w_last := '0';
-    end if;
-    
-    if (r.w_valid and i_msti.w_ready) = '1' then
-        v.b_addr := r.w_addr;
-        v.b_ready := '1';
-    elsif i_msti.b_valid = '1' then
-        v.b_ready := '0';
-    end if;
 
     if not async_reset and i_nrst = '0' then
         v := R_RESET;
     end if;
 
-    rin <= v;
     o_msto <= vmsto;
-    w_req_mem_ready <= (w_req_mem_write and i_msti.aw_ready)
-                    or (not w_req_mem_write and i_msti.ar_ready);
+    req_mem_ready_i <= v_req_mem_ready;  
+    resp_mem_valid_i <= v_resp_mem_valid;
+    resp_mem_load_fault_i <= v_mem_er_load_fault;
+    resp_mem_store_fault_i <= v_mem_er_store_fault;
+
+    rin <= v;
   end process;
 
   -- registers:
