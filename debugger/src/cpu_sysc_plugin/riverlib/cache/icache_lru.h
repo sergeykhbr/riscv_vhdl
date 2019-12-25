@@ -72,12 +72,6 @@ SC_MODULE(ICacheLru) {
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
  private:
-    enum EWays {
-        WAY_EVEN,
-        WAY_ODD,
-        WAY_SubNum
-    };
-
     enum EState {
         State_Idle,
         State_CheckHit,
@@ -90,7 +84,6 @@ SC_MODULE(ICacheLru) {
     };
 
     struct RegistersType {
-        sc_signal<bool> requested;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_addr;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_addr_next;
         sc_signal<sc_uint<4>> state;
@@ -111,7 +104,6 @@ SC_MODULE(ICacheLru) {
     } v, r;
 
     void R_RESET(RegistersType &iv) {
-        iv.requested = 0;
         iv.req_addr = 0;
         iv.req_addr_next = 0;
         iv.state = State_Flush;

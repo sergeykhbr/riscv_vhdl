@@ -37,6 +37,7 @@ SC_MODULE(RiverTop) {
     sc_out<sc_uint<BUS_DATA_WIDTH>> o_req_mem_data;     // Writing data
     sc_out<sc_uint<8>> o_req_mem_len;                   // burst transaction length
     sc_out<sc_uint<2>> o_req_mem_burst;                 // burst type: "00" FIX; "01" INCR; "10" WRAP
+    sc_out<bool> o_req_mem_last;                        // last in write sequence
     sc_in<bool> i_resp_mem_valid;                       // AXI response is valid
     sc_in<bool> i_resp_mem_path;                        // 0=ctrl; 1=data path
     sc_in<sc_uint<BUS_DATA_WIDTH>> i_resp_mem_data;     // Read data
@@ -78,6 +79,8 @@ private:
     sc_signal<bool> w_resp_ctrl_valid;
     sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_resp_ctrl_addr;
     sc_signal<sc_uint<32>> wb_resp_ctrl_data;
+    sc_signal<bool> w_resp_ctrl_load_fault;
+    sc_signal<bool> w_resp_ctrl_executable;
     sc_signal<bool> w_resp_ctrl_ready;
     // Data path:
     sc_signal<bool> w_req_data_ready;
@@ -94,8 +97,6 @@ private:
     sc_signal<bool> w_resp_data_er_mpu_load;
     sc_signal<bool> w_resp_data_er_mpu_store;
     sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_resp_data_store_fault_addr;
-    sc_signal<bool> w_resp_ctrl_load_fault;
-    sc_signal<bool> w_resp_ctrl_executable;
     sc_signal<bool> w_resp_data_ready;
     sc_signal<bool> w_mpu_region_we;
     sc_signal<sc_uint<CFG_MPU_TBL_WIDTH>> wb_mpu_region_idx;

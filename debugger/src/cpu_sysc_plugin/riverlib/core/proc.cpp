@@ -20,7 +20,7 @@
 namespace debugger {
 
 Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
-    bool tracer_ena) : sc_module(name_),
+    bool fpu_ena, bool tracer_ena) : sc_module(name_),
     i_clk("i_clk"),
     i_nrst("i_nrst"),
     i_req_ctrl_ready("i_req_ctrl_ready"),
@@ -70,6 +70,8 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     i_istate("i_istate"),
     i_dstate("i_dstate"),
     i_cstate("i_cstate") {
+    fpu_ena_ = fpu_ena;
+    tracer_ena_ = tracer_ena;
     generate_ref_ = 0;
 
     SC_METHOD(comb);
@@ -290,7 +292,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     iregs0->o_ra(ireg.ra);
     iregs0->o_sp(ireg.sp);
 
-    if (CFG_HW_FPU_ENABLE) {
+    if (fpu_ena_) {
         fregs0 = new RegFloatBank("fregs0", async_reset);
         fregs0->i_clk(i_clk);
         fregs0->i_nrst(i_nrst);
@@ -432,7 +434,7 @@ Processor::~Processor() {
     delete mem0;
     delete predic0;
     delete iregs0;
-    if (CFG_HW_FPU_ENABLE) {
+    if (fregs0) {
         delete fregs0;
     }
     if (trace0) {
@@ -459,7 +461,7 @@ void Processor::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     fetch0->generateVCD(i_vcd, o_vcd);
     mem0->generateVCD(i_vcd, o_vcd);
     iregs0->generateVCD(i_vcd, o_vcd);
-    if (CFG_HW_FPU_ENABLE) {
+    if (fregs0) {
         fregs0->generateVCD(i_vcd, o_vcd);
     }
     if (trace0) {

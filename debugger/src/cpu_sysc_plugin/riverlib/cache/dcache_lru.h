@@ -103,7 +103,6 @@ SC_MODULE(DCacheLru) {
     sc_signal<bool> line_hit_o;
 
     struct RegistersType {
-        sc_signal<bool> requested;
         sc_signal<bool> req_write;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_addr;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_addr_b_resp;  // to support delayed store error response
@@ -132,7 +131,6 @@ SC_MODULE(DCacheLru) {
     } v, r;
 
     void R_RESET(RegistersType &iv) {
-        iv.requested = 0;
         iv.req_write = 0;
         iv.req_addr = 0;
         iv.req_addr_b_resp = 0;

@@ -37,7 +37,7 @@ SC_MODULE(MemAccess) {
     sc_in<bool> i_memop_store;                      // Store i_res_data value into memory
     sc_in<sc_uint<2>> i_memop_size;                 // Encoded memory transaction size in bytes: 0=1B; 1=2B; 2=4B; 3=8B
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_memop_addr;    // Memory access address
-    sc_out<bool> o_memop_ready;                     // Ready toa ccept memop request
+    sc_out<bool> o_memop_ready;                     // Ready to accept memop request
     sc_out<bool> o_wena;                            // Write enable signal
     sc_out<sc_uint<6>> o_waddr;                     // Output register address (0 = x0 = no write)
     sc_out<sc_uint<RISCV_ARCH>> o_wdata;            // Register value
@@ -131,9 +131,16 @@ private:
         iv.hold_res_wena = 0;
     }
 
-    static const int QUEUE_WIDTH = RISCV_ARCH + 6 + 32 + BUS_ADDR_WIDTH
-                                 + 2 + 1 + 1 + BUS_DATA_WIDTH
-                                 + BUS_DATA_WIDTH + BUS_DATA_BYTES;
+    static const int QUEUE_WIDTH = BUS_DATA_WIDTH
+                                 + BUS_DATA_BYTES 
+                                 + RISCV_ARCH
+                                 + 6
+                                 + 32
+                                 + BUS_ADDR_WIDTH
+                                 + 2
+                                 + 1
+                                 + 1
+                                 + BUS_ADDR_WIDTH;
 
     Queue<2, QUEUE_WIDTH> *queue0;
 

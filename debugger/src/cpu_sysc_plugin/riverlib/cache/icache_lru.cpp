@@ -90,7 +90,6 @@ ICacheLru::ICacheLru(sc_module_name name_, bool async_reset)
     sensitive << line_rflags_o;
     sensitive << line_hit_o;
     sensitive << line_miss_next_o;
-    sensitive << r.requested;
     sensitive << r.req_addr;
     sensitive << r.state;
     sensitive << r.req_mem_valid;
@@ -144,7 +143,6 @@ void ICacheLru::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_state, o_state.name());
 
         std::string pn(name());
-        sc_trace(o_vcd, r.requested, pn + ".r_requested");
         sc_trace(o_vcd, r.state, pn + ".r_state");
         sc_trace(o_vcd, r.req_addr, pn + ".r_req_addr");
         sc_trace(o_vcd, r.cached, pn + ".r_cached");
@@ -184,8 +182,8 @@ void ICacheLru::comb() {
     v_resp_er_mpu_store = 0;
     v_flush = 0;
     v_last = 0;
-    v_req_mem_len = DCACHE_BURST_LEN-1;
-    sel_cached = r.req_addr.read()(CFG_DLOG2_BYTES_PER_LINE-1, 1).to_int();
+    v_req_mem_len = ICACHE_BURST_LEN-1;
+    sel_cached = r.req_addr.read()(CFG_ILOG2_BYTES_PER_LINE-1, 1).to_int();
     sel_uncached = r.req_addr.read()(2, 1).to_int();
 
     vb_cached_data = line_rdata_o.read()(16*sel_cached + 31, 16*sel_cached);
@@ -232,12 +230,9 @@ void ICacheLru::comb() {
             v_line_cs = i_req_valid.read();
             vb_line_addr = i_req_addr.read();
             if (i_req_valid.read() == 1) {
-                v.requested = 1;
                 v.req_addr = i_req_addr.read();
                 v.req_addr_next = i_req_addr.read() + ICACHE_BYTES_PER_LINE;
                 v.state = State_CheckHit;
-            } else {
-                v.requested = 0;
             }
         }
         break;
@@ -257,7 +252,6 @@ void ICacheLru::comb() {
                 vb_line_addr = i_req_addr.read();
             } else {
                 v.state = State_Idle;
-                v.requested = 0;
             }
         } else {
             // Miss
@@ -276,7 +270,7 @@ void ICacheLru::comb() {
                 v.mem_addr = r.req_addr_next.read()(BUS_ADDR_WIDTH-1,
                         CFG_ILOG2_BYTES_PER_LINE) << CFG_ILOG2_BYTES_PER_LINE;
             }
-            v.burst_cnt = DCACHE_BURST_LEN-1;
+            v.burst_cnt = ICACHE_BURST_LEN-1;
             v.cached = 1;
         } else {
             v.mem_addr = r.req_addr.read()(BUS_ADDR_WIDTH-1, CFG_LOG2_DATA_BYTES)
@@ -304,7 +298,7 @@ void ICacheLru::comb() {
         }
         if (i_mem_data_valid.read()) {
             t_cache_line_i = r.cache_line_i.read();
-            for (int k = 0; k < DCACHE_BURST_LEN; k++) {
+            for (int k = 0; k < ICACHE_BURST_LEN; k++) {
                 if (r.burst_rstrb.read()[k] == 1) {
                     t_cache_line_i((k+1)*BUS_DATA_WIDTH-1,
                                     k*BUS_DATA_WIDTH) = i_mem_data.read();
@@ -337,7 +331,6 @@ void ICacheLru::comb() {
             v_resp_er_load_fault = r.load_fault;
             if (i_resp_ready.read() == 1) {
                 v.state = State_Idle;
-                v.requested = 0;
             }
         }
         break;

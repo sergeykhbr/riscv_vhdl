@@ -100,7 +100,7 @@ SC_MODULE(Processor) {
     SC_HAS_PROCESS(Processor);
 
     Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
-             bool tracer_ena);
+             bool fpu_ena, bool tracer_ena);
     virtual ~Processor();
 
 private:
@@ -283,6 +283,9 @@ private:
     bool mem_dbg_write_flag;
     uint64_t dbg_mem_value_mask;
     uint64_t dbg_mem_write_value;
+
+    bool fpu_ena_;
+    bool tracer_ena_;
 };
 
 

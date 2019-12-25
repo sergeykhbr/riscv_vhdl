@@ -31,6 +31,7 @@ RiverTop::RiverTop(sc_module_name name_, uint32_t hartid, bool async_reset,
     o_req_mem_data("o_req_mem_data"),
     o_req_mem_len("o_req_mem_len"),
     o_req_mem_burst("o_req_mem_burst"),
+    o_req_mem_last("o_req_mem_last"),
     i_resp_mem_valid("i_resp_mem_valid"),
     i_resp_mem_data("i_resp_mem_data"),
     i_resp_mem_load_fault("i_resp_mem_load_fault"),
@@ -48,7 +49,7 @@ RiverTop::RiverTop(sc_module_name name_, uint32_t hartid, bool async_reset,
     o_dport_rdata("o_dport_rdata"),
     o_halted("o_halted") {
 
-    proc0 = new Processor("proc0", hartid, async_reset, tracer_ena);
+    proc0 = new Processor("proc0", hartid, async_reset, fpu_ena, tracer_ena);
     proc0->i_clk(i_clk);
     proc0->i_nrst(i_nrst);
     proc0->i_req_ctrl_ready(w_req_ctrl_ready);
@@ -135,6 +136,7 @@ RiverTop::RiverTop(sc_module_name name_, uint32_t hartid, bool async_reset,
     cache0->o_req_mem_data(o_req_mem_data);
     cache0->o_req_mem_len(o_req_mem_len);
     cache0->o_req_mem_burst(o_req_mem_burst);
+    cache0->o_req_mem_last(o_req_mem_last);
     cache0->i_resp_mem_valid(i_resp_mem_valid);
     cache0->i_resp_mem_path(i_resp_mem_path);
     cache0->i_resp_mem_data(i_resp_mem_data);

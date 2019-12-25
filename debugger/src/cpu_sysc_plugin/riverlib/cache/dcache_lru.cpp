@@ -96,7 +96,6 @@ DCacheLru::DCacheLru(sc_module_name name_, bool async_reset)
     sensitive << line_rdata_o;
     sensitive << line_hit_o;
     sensitive << line_rflags_o;
-    sensitive << r.requested;
     sensitive << r.req_addr;
     sensitive << r.req_addr_b_resp;
     sensitive << r.state;
@@ -165,7 +164,6 @@ void DCacheLru::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_state, o_state.name());
 
         std::string pn(name());
-        sc_trace(o_vcd, r.requested, pn + ".r_requested");
         sc_trace(o_vcd, r.state, pn + ".r_state");
         sc_trace(o_vcd, r.req_addr, pn + ".r_req_addr");
         sc_trace(o_vcd, r.req_wstrb, pn + ".r_req_wstrb");
@@ -305,14 +303,11 @@ void DCacheLru::comb() {
             v_req_ready = 1;
             vb_line_addr = i_req_addr.read();
             if (i_req_valid.read() == 1) {
-                v.requested = 1;
                 v.req_addr = i_req_addr.read();
                 v.req_wstrb = i_req_wstrb.read();
                 v.req_wdata = i_req_wdata.read();
                 v.req_write = i_req_write.read();
                 v.state = State_CheckHit;
-            } else {
-                v.requested = 0;
             }
         }
         break;
@@ -343,7 +338,6 @@ void DCacheLru::comb() {
                     vb_line_addr = i_req_addr.read();
                 } else {
                     v.state = State_Idle;
-                    v.requested = 0;
                 }
             } else {
                 v_req_ready = 1;
@@ -359,7 +353,6 @@ void DCacheLru::comb() {
                     vb_line_addr = i_req_addr.read();
                 } else {
                     v.state = State_Idle;
-                    v.requested = 0;
                 }
             }
         } else {
@@ -467,7 +460,6 @@ void DCacheLru::comb() {
             v_resp_er_load_fault = r.load_fault;
             if (i_resp_ready.read() == 1) {
                 v.state = State_Idle;
-                v.requested = 0;
             }
         }
         break;
