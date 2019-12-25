@@ -27,7 +27,9 @@ use riverlib.river_cfg.all;
 entity Processor is
   generic (
     hartid : integer;
-    async_reset : boolean
+    async_reset : boolean;
+    fpu_ena : boolean;
+    tracer_ena : boolean
   );
   port (
     i_clk : in std_logic;                                             -- CPU clock
@@ -40,24 +42,34 @@ entity Processor is
     i_resp_ctrl_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- Response address must be equal to the latest request address
     i_resp_ctrl_data : in std_logic_vector(31 downto 0);              -- Read value
     i_resp_ctrl_load_fault : in std_logic;                            -- bus response with error
+    i_resp_ctrl_executable : in std_logic;
     o_resp_ctrl_ready : out std_logic;
     -- Data path:
     i_req_data_ready : in std_logic;                                  -- DCache is ready to accept request
     o_req_data_valid : out std_logic;                                 -- Request to DCache is valid
     o_req_data_write : out std_logic;                                 -- Read/Write transaction
-    o_req_data_size : out std_logic_vector(1 downto 0);               -- Size [Bytes]: 0=1B; 1=2B; 2=4B; 3=8B
     o_req_data_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- Requesting address to DCache
-    o_req_data_data : out std_logic_vector(RISCV_ARCH-1 downto 0);    -- Writing value
+    o_req_data_wdata : out std_logic_vector(BUS_DATA_WIDTH-1 downto 0); -- Writing value
+    o_req_data_wstrb : out std_logic_vector(BUS_DATA_BYTES-1 downto 0); -- 8-bytes aligned strobs
     i_resp_data_valid : in std_logic;                                 -- DCache response is valid
     i_resp_data_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- DCache response address must be equal to the latest request address
-    i_resp_data_data : in std_logic_vector(RISCV_ARCH-1 downto 0);    -- Read value
+    i_resp_data_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);    -- Read value
+    i_resp_data_store_fault_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_resp_data_load_fault : in std_logic;                            -- Bus response with SLVERR or DECERR on read
     i_resp_data_store_fault : in std_logic;                           -- Bus response with SLVERR or DECERR on write
-    i_resp_data_store_fault_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_resp_data_er_mpu_load : in std_logic;
+    i_resp_data_er_mpu_store : in std_logic;
     o_resp_data_ready : out std_logic;
     -- External interrupt pin
     i_ext_irq : in std_logic;                                         -- PLIC interrupt accordingly with spec
     o_time : out std_logic_vector(63 downto 0);                       -- Timer in clock except halt state
+    o_exec_cnt : out std_logic_vector(63 downto 0);
+    -- MPU interface
+    o_mpu_region_we : out std_logic;
+    o_mpu_region_idx : out std_logic_vector(CFG_MPU_TBL_WIDTH-1 downto 0);
+    o_mpu_region_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_mpu_region_mask : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_mpu_region_flags : out std_logic_vector(CFG_MPU_FL_TOTAL-1 downto 0);  -- {ena, cachable, r, w, x}
     -- Debug interface:
     i_dport_valid : in std_logic;                                     -- Debug access from DSU is valid
     i_dport_write : in std_logic;                                     -- Write command flag
@@ -70,8 +82,10 @@ entity Processor is
     -- Debug signals:
     o_flush_address : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- Address of instruction to remove from ICache
     o_flush_valid : out std_logic;                                    -- Remove address from ICache is valid
-    i_istate : in std_logic_vector(1 downto 0);                       -- ICache state machine value
-    i_dstate : in std_logic_vector(1 downto 0);                       -- DCache state machine value
+    o_data_flush_address : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);    -- Address of instruction to remove from D$
+    o_data_flush_valid : out std_logic;                               -- Remove address from D$ is valid
+    i_istate : in std_logic_vector(3 downto 0);                       -- ICache state machine value
+    i_dstate : in std_logic_vector(3 downto 0);                       -- DCache state machine value
     i_cstate : in std_logic_vector(1 downto 0)                        -- CacheTop state machine value
   );
 end; 

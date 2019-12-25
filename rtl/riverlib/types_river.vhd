@@ -109,7 +109,9 @@ component river_amba is
   generic (
     memtech : integer;
     hartid : integer;
-    async_reset : boolean
+    async_reset : boolean;
+    fpu_ena : boolean;
+    tracer_ena : boolean
   );
   port ( 
     i_nrst   : in std_logic;
