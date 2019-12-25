@@ -98,25 +98,25 @@ void MPU::comb() {
 
 
     if (!async_reset_ && i_nrst.read() == 0) {
+        for (int i = 0; i < CFG_MPU_TBL_SIZE; i++) {
+            v_tbl[i].flags = 0;
+            v_tbl[i].addr = 0;
+            v_tbl[i].mask = ~0ull;
+        }
+
         // All address above 0x80000000 are uncached (IO devices)
-        v_tbl[0].addr = 0x0000000080000000ull;
-        v_tbl[0].mask = 0xFFFFFFFF80000000ull;
+        v_tbl[0].addr(31, 0) = 0x80000000ull;
+        v_tbl[0].mask(31, 0) = 0x80000000ull;
         v_tbl[0].flags[CFG_MPU_FL_ENA] = 1;
         v_tbl[0].flags[CFG_MPU_FL_CACHABLE] = 0;
         v_tbl[0].flags[CFG_MPU_FL_EXEC] = 1;
         v_tbl[0].flags[CFG_MPU_FL_RD] = 1;
         v_tbl[0].flags[CFG_MPU_FL_WR] = 1;
 
-        for (int i = 1; i < CFG_MPU_TBL_SIZE; i++) {
-            v_tbl[i].flags = 0;
-            v_tbl[i].addr = ~0ull;
-            v_tbl[i].mask = ~0ull;
-        }
-
 #if 1
         // Debug: Make first 128 Byte uncachable to test MPU
-        v_tbl[1].addr = 0x0;
-        v_tbl[1].mask = 0xFFFFFFFFFFFFFF80ull;
+        v_tbl[1].addr(31, 0) = 0x00000000ull;
+        v_tbl[1].mask(31, 0) = 0xFFFFFF80ull;
         v_tbl[1].flags[CFG_MPU_FL_ENA] = 1;
         v_tbl[1].flags[CFG_MPU_FL_CACHABLE] = 0;
         v_tbl[1].flags[CFG_MPU_FL_EXEC] = 1;
@@ -131,20 +131,20 @@ void MPU::comb() {
 
 void MPU::registers() {
     if (async_reset_ && i_nrst.read() == 0) {
+        for (int i = 1; i < CFG_MPU_TBL_SIZE; i++) {
+            tbl[i].flags = 0;
+            tbl[i].addr = 0;
+            tbl[i].mask = ~0ull;
+        }
+
         // All address above 0x80000000 are uncached (IO devices)
-        tbl[0].addr = 0x0000000080000000ull;
-        tbl[0].mask = 0xFFFFFFFF80000000ull;
+        tbl[0].addr(31, 0) = 0x80000000ull;
+        tbl[0].mask(31, 0) = 0x80000000ull;
         tbl[0].flags[CFG_MPU_FL_ENA] = 1;
         tbl[0].flags[CFG_MPU_FL_CACHABLE] = 0;
         tbl[0].flags[CFG_MPU_FL_EXEC] = 1;
         tbl[0].flags[CFG_MPU_FL_RD] = 1;
         tbl[0].flags[CFG_MPU_FL_WR] = 1;
-
-        for (int i = 1; i < CFG_MPU_TBL_SIZE; i++) {
-            tbl[i].flags = 0;
-            tbl[i].addr = ~0ull;
-            tbl[i].mask = ~0ull;
-        }
     } else {
         for (int i = 0; i < CFG_MPU_TBL_SIZE; i++) {
             tbl[i] = v_tbl[i];

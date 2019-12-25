@@ -101,13 +101,13 @@ begin
     if not async_reset and i_nrst = '0' then
         for i in 0 to CFG_MPU_TBL_SIZE-1 loop
             v_tbl(i).flags := (others => '0');
-            v_tbl(i).addr := (others => '1');
+            v_tbl(i).addr := (others => '0');
             v_tbl(i).mask := (others => '1');
         end loop;
 
         -- All address above 0x80000000 are uncached (IO devices)
-        v_tbl(0).addr := X"80000000";
-        v_tbl(0).mask := X"80000000";
+        v_tbl(0).addr(31 downto 0) := X"80000000";
+        v_tbl(0).mask(31 downto 0) := X"80000000";
         v_tbl(0).flags(CFG_MPU_FL_ENA) := '1';
         v_tbl(0).flags(CFG_MPU_FL_CACHABLE) := '0';
         v_tbl(0).flags(CFG_MPU_FL_EXEC) := '1';
@@ -116,8 +116,8 @@ begin
 
 
         -- (debug) Make first 128 Byte uncachable to test MPU
-        v_tbl(1).addr := X"00000000";
-        v_tbl(1).mask := X"FFFFFF80";
+        v_tbl(1).addr(31 downto 0) := X"00000000";
+        v_tbl(1).mask(31 downto 0) := X"FFFFFF80";
         v_tbl(1).flags(CFG_MPU_FL_ENA) := '1';
         v_tbl(1).flags(CFG_MPU_FL_CACHABLE) := '0';
         v_tbl(1).flags(CFG_MPU_FL_EXEC) := '1';
@@ -137,13 +137,13 @@ begin
      if async_reset and i_nrst = '0' then
         for i in 0 to CFG_MPU_TBL_SIZE-1 loop
             tbl(i).flags <= (others => '0');
-            tbl(i).addr <= (others => '1');
+            tbl(i).addr <= (others => '0');
             tbl(i).mask <= (others => '1');
         end loop;
 
         -- All address above 0x80000000 are uncached (IO devices)
-        tbl(0).addr <= conv_std_logic_vector(16#80000000#, BUS_ADDR_WIDTH);
-        tbl(0).mask <= conv_std_logic_vector(16#80000000#, BUS_ADDR_WIDTH);
+        tbl(0).addr(31 downto 0) <= X"80000000";
+        tbl(0).mask(31 downto 0) <= X"80000000";
         tbl(0).flags(CFG_MPU_FL_ENA) <= '1';
         tbl(0).flags(CFG_MPU_FL_CACHABLE) <= '0';
         tbl(0).flags(CFG_MPU_FL_EXEC) <= '1';

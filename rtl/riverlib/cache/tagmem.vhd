@@ -120,6 +120,7 @@ begin
     rin_index <= v_index;
 
     tagi_we <= or_reduce(i_wstrb);
+	 wb_index <= v_index;
     tagi_wdata <= i_wflags & i_addr(abus - 1 downto ibits + lnbits);
 
     o_raddr <= vb_raddr;

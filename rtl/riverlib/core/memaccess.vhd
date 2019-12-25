@@ -163,7 +163,7 @@ begin
 
  
   comb : process(i_nrst, i_e_valid, i_e_pc, i_e_instr, i_res_addr, i_res_data,
-                 i_memop_sign_ext, i_memop_load, i_memop_store, i_memop_size,
+                 i_memop_sign_ext, i_memop_load, i_memop_store, i_memop_size, i_memop_addr,
                  i_mem_data_addr, i_mem_req_ready, i_mem_data_valid,
                  i_mem_data_addr, i_mem_data,
                  queue_data_o, queue_nempty, queue_full, r)
