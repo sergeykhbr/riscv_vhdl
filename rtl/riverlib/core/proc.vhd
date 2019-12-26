@@ -135,8 +135,6 @@ architecture arch_Processor of Processor is
         npc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
         ex_npc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
 
-        radr1 : std_logic_vector(5 downto 0);
-        radr2 : std_logic_vector(5 downto 0);
         res_addr : std_logic_vector(5 downto 0);
         res_data : std_logic_vector(RISCV_ARCH-1 downto 0);
         mret : std_logic;
@@ -145,6 +143,7 @@ architecture arch_Processor of Processor is
         csr_wena : std_logic;
         csr_wdata : std_logic_vector(RISCV_ARCH-1 downto 0);
         ex_instr_load_fault : std_logic;
+        ex_instr_not_executable : std_logic;
         ex_illegal_instr : std_logic;
         ex_unalign_load : std_logic;
         ex_unalign_store : std_logic;
@@ -165,7 +164,6 @@ architecture arch_Processor of Processor is
         d_ready : std_logic;                     -- Hold pipeline from Execution stage
         fence : std_logic;                       -- instruction FENCE
         fencei : std_logic;                      -- instruction FENCE.I
-        pipeline_hold : std_logic;               -- Hold pipeline from Execution stage
         call : std_logic;
         ret : std_logic;
     end record;
@@ -255,14 +253,12 @@ architecture arch_Processor of Processor is
     
     signal w_fetch_pipeline_hold : std_logic;
     signal w_any_pipeline_hold : std_logic;
-    signal w_exec_pipeline_hold : std_logic;
 
 begin
 
-    w_fetch_pipeline_hold <= w.e.pipeline_hold or w.m.pipeline_hold or dbg.halt;
-    w_any_pipeline_hold <= w.f.pipeline_hold or w.e.pipeline_hold 
+    w_fetch_pipeline_hold <= not w.e.d_ready or w.m.pipeline_hold or dbg.halt;
+    w_any_pipeline_hold <= w.f.pipeline_hold or not w.e.d_ready
                           or w.m.pipeline_hold  or dbg.halt;
-    w_exec_pipeline_hold <= w.f.pipeline_hold or w.m.pipeline_hold or dbg.halt;
 
     wb_ireg_dport_addr <= dbg.core_addr(4 downto 0);
     wb_freg_dport_addr <= dbg.core_addr(4 downto 0);
@@ -329,15 +325,20 @@ begin
         o_instr_executable => w.d.instr_executable);
 
     exec0 : InstrExecute generic map (
-        async_reset => async_reset
+        async_reset => async_reset,
+        fpu_ena => fpu_ena
       ) port map (
         i_clk => i_clk,
         i_nrst => i_nrst,
-        i_pipeline_hold => w_exec_pipeline_hold,
         i_d_valid => w.d.instr_valid,
         i_d_pc => w.d.pc,
         i_d_instr => w.d.instr,
-        i_wb_ready => w.m.valid,
+        i_d_radr1 => w.d.radr1,
+        i_d_radr2 => w.d.radr2,
+        i_d_waddr => w.d.waddr,
+        i_d_imm => w.d.imm,
+        i_wb_valid => w.m.valid,
+        i_wb_waddr => w.w.waddr,
         i_memop_store => w.d.memop_store,
         i_memop_load => w.d.memop_load,
         i_memop_sign_ext => w.d.memop_sign_ext,
@@ -350,17 +351,16 @@ begin
         i_ivec => w.d.instr_vec,
         i_unsup_exception => w.d.exception,
         i_instr_load_fault => w.d.instr_load_fault,
+        i_instr_executable => w.d.instr_executable,
         i_dport_npc_write => dbg.npc_write,
         i_dport_npc => wb_exec_dport_npc,
-        o_radr1 => w.e.radr1,
         i_rdata1 => ireg.rdata1,
-        o_radr2 => w.e.radr2,
         i_rdata2 => ireg.rdata2,
         i_rfdata1 => freg.rdata1,
         i_rfdata2 => freg.rdata2,
         o_res_addr => w.e.res_addr,
         o_res_data => w.e.res_data,
-        o_pipeline_hold => w.e.pipeline_hold,
+        o_d_ready => w.e.d_ready,
         o_csr_addr => w.e.csr_addr,
         o_csr_wena => w.e.csr_wena,
         i_csr_rdata => csr.rdata,
@@ -369,6 +369,7 @@ begin
         i_trap_pc => csr.trap_pc,
         o_ex_npc => w.e.ex_npc,
         o_ex_instr_load_fault => w.e.ex_instr_load_fault,
+        o_ex_instr_not_executable => w.e.ex_instr_not_executable,
         o_ex_illegal_instr => w.e.ex_illegal_instr,
         o_ex_unalign_store => w.e.ex_unalign_store,
         o_ex_unalign_load => w.e.ex_unalign_load,
@@ -385,11 +386,14 @@ begin
         o_memop_store => w.e.memop_store,
         o_memop_size => w.e.memop_size,
         o_memop_addr => w.e.memop_addr,
+        i_memop_ready => w.m.memop_ready,
         o_trap_ready => w.e.trap_ready,
         o_valid => w.e.valid,
         o_pc => w.e.pc,
         o_npc => w.e.npc,
         o_instr => w.e.instr,
+        o_fence => w.e.fence,
+        o_fencei => w.e.fencei,
         o_call => w.e.call,
         o_ret => w.e.ret,
         o_mret => w.e.mret,
@@ -449,9 +453,9 @@ begin
       ) port map ( 
         i_clk => i_clk,
         i_nrst => i_nrst,
-        i_radr1 => w.e.radr1,
+        i_radr1 => w.d.radr1,
         o_rdata1 => ireg.rdata1,
-        i_radr2 => w.e.radr2,
+        i_radr2 => w.d.radr2,
         o_rdata2 => ireg.rdata2,
         i_waddr => w.w.waddr,
         i_wena => w.w.wena,
@@ -470,9 +474,9 @@ begin
       ) port map (
         i_clk => i_clk,
         i_nrst => i_nrst,
-        i_radr1 => w.e.radr1,
+        i_radr1 => w.d.radr1,
         o_rdata1 => freg.rdata1,
-        i_radr2 => w.e.radr2,
+        i_radr2 => w.d.radr2,
         o_rdata2 => freg.rdata2,
         i_waddr => w.w.waddr,
         i_wena => w.w.wena,

@@ -17,6 +17,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use IEEE.std_logic_arith.all;  -- UNSIGNED function
+use ieee.std_logic_misc.all;  -- or_reduce()
 library commonlib;
 use commonlib.types_common.all;
 --! RIVER CPU specific library.
@@ -26,16 +27,21 @@ use riverlib.river_cfg.all;
 
 
 entity InstrExecute is generic (
-    async_reset : boolean
+    async_reset : boolean;
+    fpu_ena : boolean
   );
   port (
     i_clk  : in std_logic;
     i_nrst : in std_logic;                                      -- Reset active LOW
-    i_pipeline_hold : in std_logic;                             -- Hold execution by any reason
     i_d_valid : in std_logic;                                   -- Decoded instruction is valid
+    i_d_radr1 : in std_logic_vector(5 downto 0);
+    i_d_radr2 : in std_logic_vector(5 downto 0);
+    i_d_waddr : in std_logic_vector(5 downto 0);
+    i_d_imm : in std_logic_vector(RISCV_ARCH-1 downto 0);
     i_d_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);    -- Instruction pointer on decoded instruction
     i_d_instr : in std_logic_vector(31 downto 0);               -- Decoded instruction value
-    i_wb_ready : in std_logic;                                  -- End of write back operation
+    i_wb_valid : in std_logic;                                  -- End of write back operation
+    i_wb_waddr : in std_logic_vector(5 downto 0);               -- Write back address
     i_memop_store : in std_logic;                               -- Store to memory operation
     i_memop_load : in std_logic;                                -- Load from memoru operation
     i_memop_sign_ext : in std_logic;                            -- Load memory value with sign extending
@@ -48,18 +54,17 @@ entity InstrExecute is generic (
     i_ivec : in std_logic_vector(Instr_Total-1 downto 0);       -- One pulse per supported instruction.
     i_unsup_exception : in std_logic;                           -- Unsupported instruction exception
     i_instr_load_fault : in std_logic;                          -- Instruction fetched from fault address
+    i_instr_executable : in std_logic;                          -- MPU flag
     i_dport_npc_write : in std_logic;                           -- Write npc value from debug port
     i_dport_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- Debug port npc value to write
 
-    o_radr1 : out std_logic_vector(5 downto 0);                 -- Integer/float register index 1
     i_rdata1 : in std_logic_vector(RISCV_ARCH-1 downto 0);      -- Integer register value 1
-    o_radr2 : out std_logic_vector(5 downto 0);                 -- Integer/float register index 2
     i_rdata2 : in std_logic_vector(RISCV_ARCH-1 downto 0);      -- Integer register value 2
     i_rfdata1 : in std_logic_vector(RISCV_ARCH-1 downto 0);     -- Float register value 1
     i_rfdata2 : in std_logic_vector(RISCV_ARCH-1 downto 0);     -- Float register value 2
     o_res_addr : out std_logic_vector(5 downto 0);              -- Address to store result of the instruction (0=do not store)
     o_res_data : out std_logic_vector(RISCV_ARCH-1 downto 0);   -- Value to store
-    o_pipeline_hold : out std_logic;                            -- Hold pipeline while 'writeback' not done or multi-clock instruction.
+    o_d_ready : out std_logic;                                  -- Hold pipeline while 'writeback' not done or multi-clock instruction.
     o_csr_addr : out std_logic_vector(11 downto 0);             -- CSR address. 0 if not a CSR instruction with xret signals mode switching
     o_csr_wena : out std_logic;                                 -- Write new CSR value
     i_csr_rdata : in std_logic_vector(RISCV_ARCH-1 downto 0);   -- CSR current value
@@ -69,6 +74,7 @@ entity InstrExecute is generic (
     -- exceptions:
     o_ex_npc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     o_ex_instr_load_fault : out std_logic;                      -- Instruction fetched from fault address
+    o_ex_instr_not_executable : out std_logic;                  -- MPU prohibit this instruction
     o_ex_illegal_instr : out std_logic;
     o_ex_unalign_store : out std_logic;
     o_ex_unalign_load : out std_logic;
@@ -86,12 +92,15 @@ entity InstrExecute is generic (
     o_memop_store : out std_logic;                              -- Store data instruction
     o_memop_size : out std_logic_vector(1 downto 0);            -- 0=1bytes; 1=2bytes; 2=4bytes; 3=8bytes
     o_memop_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- Memory access address
+    i_memop_ready : in std_logic;
 
     o_trap_ready : out std_logic;                               -- Trap branch request was accepted
     o_valid : out std_logic;                                    -- Output is valid
     o_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);     -- Valid instruction pointer
     o_npc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);    -- Next instruction pointer. Next decoded pc must match to this value or will be ignored.
     o_instr : out std_logic_vector(31 downto 0);                -- Valid instruction value
+    o_fence : out std_logic;
+    o_fencei : out std_logic;
     o_call : out std_logic;                                     -- CALL pseudo instruction detected
     o_ret : out std_logic;                                      -- RET pseudoinstruction detected
     o_mret : out std_logic;                                     -- MRET instruction
@@ -106,75 +115,64 @@ architecture arch_InstrExecute of InstrExecute is
   constant Multi_FPU : integer := 2;
   constant Multi_Total : integer := 3;
 
-  constant State_WaitInstr : std_logic_vector(2 downto 0) := "000";
-  constant State_SingleCycle : std_logic_vector(2 downto 0) := "001";
-  constant State_MultiCycle : std_logic_vector(2 downto 0) := "010";
-  constant State_Hold : std_logic_vector(2 downto 0) := "011";
-  constant State_Hazard : std_logic_vector(2 downto 0) := "100";
+  constant RegValid : std_logic_vector(1 downto 0) := "00";
+  constant RegHazard : std_logic_vector(1 downto 0) := "01";
+  constant RegForward : std_logic_vector(1 downto 0) := "10";
+
+  constant SCOREBOARD_SIZE : integer := 64;
 
   constant zero64 : std_logic_vector(63 downto 0) := (others => '0');
 
   type multi_arith_type is array (0 to Multi_Total-1) 
       of std_logic_vector(RISCV_ARCH-1 downto 0);
 
+  type score_item_type is record
+      status : std_logic_vector(1 downto 0);
+      cnt : std_logic_vector(1 downto 0);
+      forward : std_logic_vector(RISCV_ARCH-1 downto 0);
+  end record;
+
+  type score_table_type is array (0 to SCOREBOARD_SIZE-1) of score_item_type;
+
+  signal r_scoreboard : score_table_type;
+  signal rin_scoreboard : score_table_type;
+
   type RegistersType is record
-        state : std_logic_vector(2 downto 0);
-        d_valid : std_logic;                                   -- Valid decoded instruction latch
         pc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
         npc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
         instr : std_logic_vector(31 downto 0);
-        res_addr : std_logic_vector(5 downto 0);
-        res_val : std_logic_vector(RISCV_ARCH-1 downto 0);
+        waddr : std_logic_vector(5 downto 0);
+        wval : std_logic_vector(RISCV_ARCH-1 downto 0);
         memop_load : std_logic;
         memop_store : std_logic;
         memop_sign_ext : std_logic;
         memop_size : std_logic_vector(1 downto 0);
         memop_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
 
-        multi_res_addr : std_logic_vector(5 downto 0);         -- latched output reg. address while multi-cycle instruction
-        multi_pc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- latched pc-value while multi-cycle instruction
-        multi_npc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- latched npc-value while multi-cycle instruction
-        multi_instr : std_logic_vector(31 downto 0);           -- Multi-cycle instruction is under processing
-        multi_ena : std_logic_vector(Multi_Total-1 downto 0);  -- Enable pulse for Operation that takes more than 1 clock
-        multi_rv32 : std_logic;                                -- Long operation with 32-bits operands
-        multi_f64 : std_logic;                                 -- Long float operation
-        multi_unsigned : std_logic;                            -- Long operation with unsiged operands
-        multi_residual_high : std_logic;                       -- Flag for Divider module: 0=divsion output; 1=residual output
-                                                               -- Flag for multiplier: 0=usual; 1=get high bits
-        multiclock_ena : std_logic;
-        multi_ivec_fpu : std_logic_vector(Instr_FPU_Total-1 downto 0);
-        multi_a1 : std_logic_vector(RISCV_ARCH-1 downto 0);    -- Multi-cycle operand 1
-        multi_a2 : std_logic_vector(RISCV_ARCH-1 downto 0);    -- Multi-cycle operand 2
-
-        hazard_addr0 : std_logic_vector(5 downto 0);           -- Updated register address on previous step
-        hazard_depth : std_logic_vector(1 downto 0);           -- Number of modificated registers that wasn't done yet
-        hold_valid : std_logic;
-        hold_multi_ena : std_logic;
-
+        valid : std_logic;
         call : std_logic;
         ret : std_logic;
   end record;
 
   constant R_RESET : RegistersType := (
-    State_WaitInstr,                                   -- state
-    '0', (others => '0'), CFG_NMI_RESET_VECTOR,        -- d_valid, pc, npc
-    (others => '0'), (others => '0'), (others => '0'), -- instr, res_addr, res_val
+    (others => '0'), CFG_NMI_RESET_VECTOR,             -- pc, npc
+    (others => '0'), (others => '0'), (others => '0'), -- instr, waddr, wval
     '0', '0', '0', "00", (others => '0'),              -- memop_load, memop_store, memop_sign_ext, memop_size, memop_addr
-    (others => '0'), (others => '0'), (others => '0'), -- multi_res_addr, multi_pc, multi_npc
-    (others => '0'), (others => '0'), '0',             -- multi_instr, multi_ena, multi_rv32
-    '0', '0',  '0',                                    -- multi_f64, multi_unsigned, multi_residual_high
-    '0', (others => '0'),                              -- multiclock_ena, multi_ivec_fpu
-    (others => '0'), (others => '0'),                  -- multi_a1, multi_a2
-    (others => '0'), (others => '0'),                  -- hazard_add0, hazard_depth
-    '0', '0',                                          -- hold_valid, hold_multi_ena
+    '0',                                               -- valid
     '0', '0'                                           -- call, ret
   );
 
   signal r, rin : RegistersType;
 
   signal wb_arith_res : multi_arith_type;
+  signal w_arith_ena : std_logic_vector(Multi_Total-1 downto 0);
   signal w_arith_valid : std_logic_vector(Multi_Total-1 downto 0);
   signal w_arith_busy : std_logic_vector(Multi_Total-1 downto 0);
+  signal w_arith_residual_high: std_logic;
+  signal w_multi_ena : std_logic;
+
+  signal wb_rdata1 : std_logic_vector(RISCV_ARCH-1 downto 0);
+  signal wb_rdata2 : std_logic_vector(RISCV_ARCH-1 downto 0);
 
   signal wb_shifter_a1 : std_logic_vector(RISCV_ARCH-1 downto 0);  -- Shifters operand 1
   signal wb_shifter_a2 : std_logic_vector(5 downto 0);             -- Shifters operand 2
@@ -262,12 +260,12 @@ begin
    ) port map (
       i_clk  => i_clk,
       i_nrst => i_nrst,
-      i_ena => r.multi_ena(Multi_MUL),
-      i_unsigned => r.multi_unsigned,
-      i_high => r.multi_residual_high,
-      i_rv32 => r.multi_rv32,
-      i_a1 => r.multi_a1,
-      i_a2 => r.multi_a2,
+      i_ena => w_arith_ena(Multi_MUL),
+      i_unsigned => i_unsigned_op,
+      i_high => w_arith_residual_high,
+      i_rv32 => i_rv32,
+      i_a1 => wb_rdata1,
+      i_a2 => wb_rdata2,
       o_res => wb_arith_res(Multi_MUL),
       o_valid => w_arith_valid(Multi_MUL),
       o_busy => w_arith_busy(Multi_MUL));
@@ -277,12 +275,12 @@ begin
    ) port map (
       i_clk  => i_clk,
       i_nrst => i_nrst,
-      i_ena => r.multi_ena(Multi_DIV),
-      i_unsigned => r.multi_unsigned,
-      i_residual => r.multi_residual_high,
-      i_rv32 => r.multi_rv32,
-      i_a1 => r.multi_a1,
-      i_a2 => r.multi_a2,
+      i_ena => w_arith_ena(Multi_DIV),
+      i_unsigned => i_unsigned_op,
+      i_residual => w_arith_residual_high,
+      i_rv32 => i_rv32,
+      i_a1 => wb_rdata1,
+      i_a2 => wb_rdata2,
       o_res => wb_arith_res(Multi_DIV),
       o_valid => w_arith_valid(Multi_DIV),
       o_busy => w_arith_busy(Multi_DIV));
@@ -297,16 +295,16 @@ begin
       o_srlw => wb_srlw,
       o_sraw => wb_sraw);
 
-  fpuena : if CFG_HW_FPU_ENABLE generate
+  fpuena : if fpu_ena generate
      fpu0 : FpuTop generic map (
         async_reset => async_reset
      ) port map (
         i_clk => i_clk,
         i_nrst => i_nrst,
-        i_ena => r.multi_ena(Multi_FPU),
-        i_ivec => r.multi_ivec_fpu,
-        i_a => r.multi_a1,
-        i_b => r.multi_a2,
+        i_ena => w_arith_ena(Multi_FPU),
+        i_ivec => i_ivec(Instr_FSUB_D downto Instr_FADD_D),
+        i_a => wb_rdata1,
+        i_b => wb_rdata2,
         o_res => wb_arith_res(Multi_FPU),
         o_ex_invalidop => o_ex_fpu_invalidop,
         o_ex_divbyzero => o_ex_fpu_divbyzero,
@@ -318,7 +316,7 @@ begin
      );
   end generate;
 
-  fpudis : if not CFG_HW_FPU_ENABLE generate
+  fpudis : if not fpu_ena generate
         wb_arith_res(Multi_FPU) <= (others => '0');
         w_arith_valid(Multi_FPU) <= '0';
         w_arith_busy(Multi_FPU) <= '0';
@@ -330,607 +328,460 @@ begin
         o_ex_fpu_inexact <= '0';
   end generate;
 
-  comb : process(i_nrst, i_pipeline_hold, i_d_valid, i_d_pc, i_d_instr,
-                 i_wb_ready, i_memop_load, i_memop_store, i_memop_sign_ext,
+  comb : process(i_nrst, i_d_valid, i_d_radr1, i_d_radr2, i_d_waddr, i_d_imm,
+                 i_d_pc, i_d_instr, i_wb_valid, i_wb_waddr,
+                 i_memop_load, i_memop_store, i_memop_sign_ext,
                  i_memop_size, i_unsigned_op, i_rv32, i_compressed, i_f64, i_isa_type, i_ivec,
+                 i_unsup_exception, i_instr_load_fault, i_instr_executable,
+                 i_dport_npc_write, i_dport_npc, 
                  i_rdata1, i_rdata2, i_rfdata1, i_rfdata2, i_csr_rdata, 
-                 i_trap_valid, i_trap_pc, i_dport_npc_write,
-                 i_dport_npc, i_unsup_exception, i_instr_load_fault,
+                 i_trap_valid, i_trap_pc, i_memop_ready,
                  wb_arith_res, w_arith_valid, w_arith_busy,
-                 wb_sll, wb_sllw, wb_srl, wb_srlw, wb_sra, wb_sraw, r)
+                 wb_sll, wb_sllw, wb_srl, wb_srlw, wb_sra, wb_sraw, r, r_scoreboard)
     variable v : RegistersType;
+    variable v_scoreboard : score_table_type;
+
     variable w_exception_store : std_logic;
     variable w_exception_load : std_logic;
-    variable wb_radr1 : std_logic_vector(5 downto 0);      -- [5] 0=Integer bank; 1=FPU bank
-    variable wb_rdata1 : std_logic_vector(RISCV_ARCH-1 downto 0);
-    variable wb_radr2 : std_logic_vector(5 downto 0);
-    variable wb_rdata2 : std_logic_vector(RISCV_ARCH-1 downto 0);
-    variable w_mret : std_logic;
-    variable w_uret : std_logic;
-    variable w_csr_wena : std_logic;
-    variable wb_res_addr : std_logic_vector(5 downto 0);
-    variable wb_csr_addr  : std_logic_vector(11 downto 0);
-    variable wb_csr_wdata : std_logic_vector(RISCV_ARCH-1 downto 0);
-    variable wb_res : std_logic_vector(RISCV_ARCH-1 downto 0);
-    variable wb_npc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    variable wb_ex_npc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    variable wb_off : std_logic_vector(RISCV_ARCH-1 downto 0);
-    variable wb_mask_i31 : std_logic_vector(RISCV_ARCH-1 downto 0);    -- Bits depending instr[31] bits
-    variable wb_sum64 : std_logic_vector(RISCV_ARCH-1 downto 0);
-    variable wb_sum32 : std_logic_vector(RISCV_ARCH-1 downto 0);
-    variable wb_sub64 : std_logic_vector(RISCV_ARCH-1 downto 0);
-    variable wb_sub32 : std_logic_vector(RISCV_ARCH-1 downto 0);
-    variable wb_and64 : std_logic_vector(RISCV_ARCH-1 downto 0);
-    variable wb_or64 : std_logic_vector(RISCV_ARCH-1 downto 0);
-    variable wb_xor64 : std_logic_vector(RISCV_ARCH-1 downto 0);
-    variable w_memop_load : std_logic;
-    variable w_memop_store : std_logic;
-    variable w_memop_sign_ext : std_logic;
-    variable wb_memop_size : std_logic_vector(1 downto 0);
-    variable wb_memop_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-
-    variable w_valid : std_logic;
-    variable w_pc_valid : std_logic;
+    variable w_multi_ready : std_logic;
+    variable w_multi_busy : std_logic;
     variable w_next_ready : std_logic;
-    variable w_hold : std_logic;
-    variable w_multi_valid : std_logic;
-    variable w_multi_ena : std_logic;
-    variable w_fpu_ena : std_logic;
-    variable w_res_wena : std_logic;
-    variable w_pc_branch : std_logic;
-    variable w_hazard_lvl1 : std_logic;
-    variable w_hazard_lvl2 : std_logic;
-    variable w_less : std_logic;
-    variable w_gr_equal : std_logic;
+    variable w_hold_multi : std_logic;
+    variable w_hold_hazard : std_logic;
+    variable w_hold_memop : std_logic;
+    variable v_fence : std_logic;
+    variable v_fencei : std_logic;
+    variable v_mret : std_logic;
+    variable v_uret : std_logic;
+    variable v_csr_wena : std_logic;
+    variable vb_csr_addr : std_logic_vector(11 downto 0);
+    variable vb_csr_wdata : std_logic_vector(RISCV_ARCH-1 downto 0);
+    variable vb_res : std_logic_vector(RISCV_ARCH-1 downto 0);
+    variable vb_npc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    variable vb_ex_npc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    variable vb_npc_incr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    variable vb_off : std_logic_vector(RISCV_ARCH-1 downto 0);
+    variable vb_sum64 : std_logic_vector(RISCV_ARCH-1 downto 0);
+    variable vb_sum32 : std_logic_vector(RISCV_ARCH-1 downto 0);
+    variable vb_sub64 : std_logic_vector(RISCV_ARCH-1 downto 0);
+    variable vb_sub32 : std_logic_vector(RISCV_ARCH-1 downto 0);
+    variable vb_and64 : std_logic_vector(RISCV_ARCH-1 downto 0);
+    variable vb_or64 : std_logic_vector(RISCV_ARCH-1 downto 0);
+    variable vb_xor64 : std_logic_vector(RISCV_ARCH-1 downto 0);
+    variable v_memop_load : std_logic;
+    variable v_memop_store : std_logic;
+    variable v_memop_sign_ext : std_logic;
+    variable vb_memop_size : std_logic_vector(1 downto 0);
+    variable vb_memop_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     variable wv : std_logic_vector(Instr_Total-1 downto 0);
     variable opcode_len : integer;
+    variable v_call : std_logic;
+    variable v_ret : std_logic;
+    variable v_pc_branch : std_logic;
+    variable v_less : std_logic;
+    variable v_gr_equal : std_logic;
+    variable vb_i_rdata1 : std_logic_vector(RISCV_ARCH-1 downto 0);
+    variable vb_i_rdata2 : std_logic_vector(RISCV_ARCH-1 downto 0);
+    variable vb_rdata1 : std_logic_vector(RISCV_ARCH-1 downto 0);
+    variable vb_rdata2 : std_logic_vector(RISCV_ARCH-1 downto 0);
+    variable vb_rfdata1 : std_logic_vector(RISCV_ARCH-1 downto 0);
+    variable vb_rfdata2 : std_logic_vector(RISCV_ARCH-1 downto 0);
+    variable v_o_valid : std_logic;
+    variable vb_o_wdata : std_logic_vector(RISCV_ARCH-1 downto 0);
+    variable v_hold_exec : std_logic;
+    variable int_radr1 : integer;
+    variable int_radr2 : integer;
+    variable int_waddr : integer;
 
   begin
 
-    wb_radr1 := (others => '0');
-    wb_radr2 := (others => '0');
-    w_mret := '0';
-    w_uret := '0';
-    w_csr_wena := '0';
-    wb_res_addr := (others => '0');
-    wb_csr_addr := (others => '0');
-    wb_csr_wdata := (others => '0');
-    wb_res := (others => '0');
-    wb_off := (others => '0');
-    wb_rdata1 := (others => '0');
-    wb_rdata2 := (others => '0');
-    w_memop_load := '0';
-    w_memop_store := '0';
-    w_memop_sign_ext := '0';
-    wb_memop_size := (others => '0');
-    wb_memop_addr := (others => '0');
-    wv := i_ivec;
-
     v := r;
+    for i in 0 to SCOREBOARD_SIZE-1 loop
+        v_scoreboard(i).cnt := r_scoreboard(i).cnt;
+        v_scoreboard(i).forward := r_scoreboard(i).forward;
+        v_scoreboard(i).status := r_scoreboard(i).status;
+    end loop;
 
-    wb_mask_i31 := (others => i_d_instr(31));
 
-    w_pc_valid := '0';
-    if i_d_pc = r.npc then
-        w_pc_valid := '1';
+    v_csr_wena := '0';
+    vb_csr_addr := (others => '0');
+    vb_csr_wdata := (others => '0');
+    vb_res := (others => '0');
+    vb_off := (others => '0');
+    v_memop_load := '0';
+    v_memop_store := '0';
+    v_memop_sign_ext := '0';
+    vb_memop_size := (others => '0');
+    vb_memop_addr := (others => '0');
+    wv := i_ivec;
+    v_call := '0';
+    v_ret := '0';
+    vb_ex_npc := (others => '0');
+    v.valid := '0';
+    v.call := '0';
+    v.ret := '0';
+    vb_rdata1 := (others => '0');
+    vb_rdata2 := (others => '0');
+    int_radr1 := conv_integer(i_d_radr1);
+    int_radr2 := conv_integer(i_d_radr2);
+    int_waddr := conv_integer(i_d_waddr);
+
+    if or_reduce(i_d_radr1) = '1' and
+        r_scoreboard(int_radr1).status = RegForward then
+        vb_i_rdata1 := r_scoreboard(int_radr1).forward;
+    else
+        vb_i_rdata1 := i_rdata1;
+    end if;
+
+    if or_reduce(i_d_radr2) = '1' and
+        r_scoreboard(int_radr2).status = RegForward then
+        vb_i_rdata2 := r_scoreboard(int_radr2).forward;
+    else
+        vb_i_rdata2 := i_rdata2;
     end if;
 
     if i_isa_type(ISA_R_type) = '1' then
-        wb_radr1 := ('0' & i_d_instr(19 downto 15));
-        wb_rdata1 := i_rdata1;
-        wb_radr2 := ('0' & i_d_instr(24 downto 20));
-        wb_rdata2 := i_rdata2;
-        if CFG_HW_FPU_ENABLE and i_f64 = '1' then
-            if (wv(Instr_FMOV_D_X) or
-                wv(Instr_FCVT_D_L) or wv(Instr_FCVT_D_LU) or
-                wv(Instr_FCVT_D_W) or wv(Instr_FCVT_D_WU)) = '0' then
-                wb_radr1 := ('1' & i_d_instr(19 downto 15));
-                wb_rdata1 := i_rfdata1;
-            end if;
-            if wv(Instr_FMOV_X_D) = '0' then
-                wb_radr2 := ('1' & i_d_instr(24 downto 20));
-                wb_rdata2 := i_rfdata2;
-            end if;
-        end if;
+        vb_rdata1 := vb_i_rdata1;
+        vb_rdata2 := vb_i_rdata2;
     elsif i_isa_type(ISA_I_type) = '1' then
-        wb_radr1 := ('0' & i_d_instr(19 downto 15));
-        wb_rdata1 := i_rdata1;
-        wb_radr2 := (others => '0');
-        wb_rdata2 := wb_mask_i31(63 downto 12) & i_d_instr(31 downto 20);
+        vb_rdata1 := vb_i_rdata1;
+        vb_rdata2 := i_d_imm;
     elsif i_isa_type(ISA_SB_type) = '1' then
-        wb_radr1 := ('0' & i_d_instr(19 downto 15));
-        wb_rdata1 := i_rdata1;
-        wb_radr2 := ('0' & i_d_instr(24 downto 20));
-        wb_rdata2 := i_rdata2;
-        wb_off(RISCV_ARCH-1 downto 12) := wb_mask_i31(RISCV_ARCH-1 downto 12);
-        wb_off(12) := i_d_instr(31);
-        wb_off(11) := i_d_instr(7);
-        wb_off(10 downto 5) := i_d_instr(30 downto 25);
-        wb_off(4 downto 1) := i_d_instr(11 downto 8);
-        wb_off(0) := '0';
+        vb_rdata1 := vb_i_rdata1;
+        vb_rdata2 := vb_i_rdata2;
+        vb_off := i_d_imm;
     elsif i_isa_type(ISA_UJ_type) = '1' then
-        wb_radr1 := (others => '0');
-        wb_rdata1 := X"00000000" & i_d_pc;
-        wb_radr2 := (others => '0');
-        wb_off(RISCV_ARCH-1 downto 20) := wb_mask_i31(RISCV_ARCH-1 downto 20);
-        wb_off(19 downto 12) := i_d_instr(19 downto 12);
-        wb_off(11) := i_d_instr(20);
-        wb_off(10 downto 1) := i_d_instr(30 downto 21);
-        wb_off(0) := '0';
-    elsif i_isa_type(ISA_U_type) = '1'then
-        wb_radr1 := (others => '0');
-        wb_rdata1 := X"00000000" & i_d_pc;
-        wb_radr2 := (others => '0');
-        wb_rdata2(31 downto 0) := i_d_instr(31 downto 12) & X"000";
-        wb_rdata2(RISCV_ARCH-1 downto 32) := wb_mask_i31(RISCV_ARCH-1 downto 32);
+        vb_rdata1(BUS_ADDR_WIDTH-1 downto 0) := i_d_pc;
+        vb_off := i_d_imm;
+    elsif i_isa_type(ISA_U_type) = '1' then
+        vb_rdata1(BUS_ADDR_WIDTH-1 downto 0) := i_d_pc;
+        vb_rdata2 := i_d_imm;
     elsif i_isa_type(ISA_S_type) = '1' then
-        wb_radr1 := ('0' & i_d_instr(19 downto 15));
-        wb_rdata1 := i_rdata1;
-        wb_radr2 := ('0' & i_d_instr(24 downto 20));
-        wb_rdata2 := i_rdata2;
-        wb_off(RISCV_ARCH-1 downto 12) := wb_mask_i31(RISCV_ARCH-1 downto 12);
-        wb_off(11 downto 5) := i_d_instr(31 downto 25);
-        wb_off(4 downto 0) := i_d_instr(11 downto 7);
-        if CFG_HW_FPU_ENABLE and wv(Instr_FSD) = '1' then
-            wb_radr2 := ('1' & i_d_instr(24 downto 20));
-            wb_rdata2 := i_rfdata2;
-        end if;
+        vb_rdata1 := vb_i_rdata1;
+        vb_rdata2 := vb_i_rdata2;
+        vb_off := i_d_imm;
     end if;
 
-    --! Default number of cycles per instruction = 0 (1 clock per instr)
-    --! If instruction is multicycle then modify this value.
-    --!
-    w_fpu_ena := '0';
-    if CFG_HW_FPU_ENABLE then
+    -- Default number of cycles per instruction = 0 (1 clock per instr)
+    -- If instruction is multicycle then modify this value.
+    --
+    w_arith_ena(Multi_FPU) <= '0';
+    if fpu_ena then
         if i_f64 = '1' and (wv(Instr_FSD) or wv(Instr_FLD)) = '0' then
-            w_fpu_ena := '1';
+            w_arith_ena(Multi_FPU) <= '1';
         end if;
     end if;
 
-    w_multi_ena := wv(Instr_MUL) or wv(Instr_MULW) or wv(Instr_DIV)
-                    or wv(Instr_DIVU) or wv(Instr_DIVW) or wv(Instr_DIVUW)
-                    or wv(Instr_REM) or wv(Instr_REMU) or wv(Instr_REMW)
-                    or wv(Instr_REMUW) or w_fpu_ena;
+    w_multi_busy := w_arith_busy(Multi_MUL) or w_arith_busy(Multi_DIV)
+                  or w_arith_busy(Multi_FPU);
 
-    w_multi_valid := w_arith_valid(Multi_MUL) or w_arith_valid(Multi_DIV)
-                   or w_arith_valid(Multi_FPU);
+    w_multi_ready := w_arith_valid(Multi_MUL) or w_arith_valid(Multi_DIV)
+                  or w_arith_valid(Multi_FPU);
 
-    -- Don't modify registers on conditional jumps:
-    w_res_wena := not (wv(Instr_BEQ) or wv(Instr_BGE) or wv(Instr_BGEU)
-               or wv(Instr_BLT) or wv(Instr_BLTU) or wv(Instr_BNE)
-               or wv(Instr_SD) or wv(Instr_SW) or wv(Instr_SH) or wv(Instr_SB)
-               or wv(Instr_FSD)
-               or wv(Instr_MRET) or wv(Instr_URET)
-               or wv(Instr_ECALL) or wv(Instr_EBREAK));
 
-    if w_multi_valid = '1' then
-        wb_res_addr := r.multi_res_addr;
-        v.multiclock_ena := '0';
-    elsif w_res_wena = '1' then
-        wb_res_addr := ('0' & i_d_instr(11 downto 7));
-        if CFG_HW_FPU_ENABLE then
-            if i_f64 = '1' and wv(Instr_FLD) = '1' then
-                wb_res_addr(5) := '1';
-            end if;
-        end if;
-    else
-        wb_res_addr := (others => '0');
+    -- Hold signals:
+    --      1. hazard
+    --      2. memaccess not ready to accept next memop operation
+    --      3. multi instruction
+    --
+    w_hold_hazard := '0';
+    if (or_reduce(i_d_radr1) = '1' and
+        r_scoreboard(conv_integer(i_d_radr1)).status = RegHazard) or
+        (or_reduce(i_d_radr2) = '1' and
+        r_scoreboard(conv_integer(i_d_radr2)).status = RegHazard) then
+        w_hold_hazard := '1';
     end if;
 
+    w_hold_memop := (i_memop_load or i_memop_store)
+                and not i_memop_ready;
+
+    w_hold_multi := w_multi_busy or w_multi_ready;
+
+    v_hold_exec := w_hold_hazard or w_hold_memop or w_hold_multi;
 
     w_next_ready := '0';
-    w_hold := '0';
-
-    if i_d_valid = '1' and w_pc_valid = '1' then
+    if i_d_valid = '1' and i_d_pc = r.npc and v_hold_exec = '0' then
         w_next_ready := '1';
     end if;
 
-    --! Valid values on the inputs radr1,radr2 will be 2 cycles after
-    --! signal o_valid = 1
-    --!
-    w_hazard_lvl1 := '0';
-    if r.res_addr /= "000000" and
-        (wb_radr1 = r.res_addr or wb_radr2 = r.res_addr) then
-        w_hazard_lvl1 := '1';
+    v_fence := wv(Instr_FENCE) and w_next_ready;
+    v_fencei := wv(Instr_FENCE_I) and w_next_ready;
+    v_mret := wv(Instr_MRET) and w_next_ready;
+    v_uret := wv(Instr_URET) and w_next_ready;
+
+    w_arith_ena(Multi_MUL) <= (wv(Instr_MUL) or wv(Instr_MULW)) and w_next_ready;
+    w_arith_ena(Multi_DIV) <= (wv(Instr_DIV) or wv(Instr_DIVU)
+                            or wv(Instr_DIVW) or wv(Instr_DIVUW)
+                            or wv(Instr_REM) or wv(Instr_REMU)
+                            or wv(Instr_REMW) or wv(Instr_REMUW)) and w_next_ready;
+    w_arith_residual_high <= (wv(Instr_REM) or wv(Instr_REMU)
+                          or wv(Instr_REMW) or wv(Instr_REMUW));
+
+
+    w_multi_ena <= w_arith_ena(Multi_MUL) or w_arith_ena(Multi_DIV)
+                or w_arith_ena(Multi_FPU);
+
+
+    if i_memop_load = '1' then
+        vb_memop_addr :=
+            vb_rdata1(BUS_ADDR_WIDTH-1 downto 0) + vb_rdata2(BUS_ADDR_WIDTH-1 downto 0);
+    elsif i_memop_store = '1' then
+        vb_memop_addr := 
+            vb_rdata1(BUS_ADDR_WIDTH-1 downto 0) + vb_off(BUS_ADDR_WIDTH-1 downto 0);
     end if;
 
-    w_hazard_lvl2 := '0';
-    if r.hazard_addr0 /= "000000" and
-        (wb_radr1 = r.hazard_addr0 or wb_radr2 = r.hazard_addr0) then
-        w_hazard_lvl2 := '1';
+    w_exception_store := '0';
+    w_exception_load := '0';
+
+    if (wv(Instr_LD) = '1' and vb_memop_addr(2 downto 0) /= "000")
+        or ((wv(Instr_LW) or wv(Instr_LWU)) = '1' and vb_memop_addr(1 downto 0) /= "00")
+        or ((wv(Instr_LH) or wv(Instr_LHU)) = '1' and vb_memop_addr(0) = '1') then
+        w_exception_load := '1';
     end if;
-
-    w_valid := '0';
-    case r.state is
-    when State_WaitInstr =>
-        if r.hazard_depth /= "00" and w_hazard_lvl2 = '1' then
-            -- Hazard after missed predicted instruction 1 cycle
-            w_hold := '1';
-            w_next_ready := '0';
-        elsif i_pipeline_hold = '1' then
-            v.state := State_Hold;
-            v.hold_valid := w_next_ready;
-            v.hold_multi_ena := w_multi_ena;
-        elsif w_next_ready = '1' then
-            if w_multi_ena = '1' then
-                w_hold := '1';
-                v.state := State_MultiCycle;
-            else
-                v.state := State_SingleCycle;
-            end if;
-        end if;
-    when State_SingleCycle =>
-        w_valid := '1';
-        if w_hazard_lvl1 = '1' then
-            -- 2-cycles wait state
-            w_hold := '1';
-            w_next_ready := '0';
-            v.state := State_Hazard;
-        elsif w_hazard_lvl2 = '1' then
-            -- 1-cycle wait state
-            w_hold := '1';
-            w_next_ready := '0';
-            if i_wb_ready = '1' then
-                v.state := State_WaitInstr;
-            else
-                -- Queue in memaccess module allows to accept 2 LOAD instructions
-                v.state := State_Hazard;
-            end if;
-        elsif i_pipeline_hold = '1' then
-            v.state := State_Hold;
-            v.hold_valid := w_next_ready;
-            v.hold_multi_ena := w_multi_ena;
-        elsif w_next_ready = '1' then
-            if w_multi_ena = '1' then
-                w_hold := '1';
-                v.state := State_MultiCycle;
-            else
-                v.state := State_SingleCycle;
-            end if;
-        else
-            v.state := State_WaitInstr;
-        end if;
-    when State_MultiCycle =>
-        w_hold := '1';
-        w_next_ready := '0';
-        if w_multi_valid = '1' then
-            v.state := State_SingleCycle;
-        end if;
-    when State_Hold =>
-        --! No need to raise w_hold because it is already hold, but we have
-        --! to use previously latched values of instruction type because outputs
-        --! pc and npc switched for next instruction
-        w_next_ready := '0';
-        if i_pipeline_hold = '0' then
-            if r.hold_valid = '1' then
-                if r.hold_multi_ena = '1' and w_multi_valid = '0' then
-                    v.state := State_MultiCycle;
-                else
-                    v.state := State_SingleCycle;
-                end if;
-            else
-                v.state := State_WaitInstr;
-            end if;
-        elsif r.hold_multi_ena = '1' then
-            --! Track the end of multi-instruction while in Hold state
-            if w_multi_valid = '1' then
-                v.hold_multi_ena := '0';
-            end if;
-        end if;
-    when State_Hazard =>
-        w_next_ready := '0';
-        w_hold := '1';
-        if i_wb_ready = '1' then
-            v.state := State_WaitInstr;
-        end if;
-    when others =>
-    end case;
-
-    if w_valid = '1' then
-        v.hazard_addr0 := r.res_addr;
-    end if;
-
-    if w_valid = '1' and i_wb_ready = '0' then
-        v.hazard_depth := r.hazard_depth + 1;
-    elsif w_valid = '0' and i_wb_ready = '1' then
-        v.hazard_depth := r.hazard_depth - 1;
+    if (wv(Instr_SD) = '1' and vb_memop_addr(2 downto 0) /= "000")
+        or (wv(Instr_SW) = '1' and vb_memop_addr(1 downto 0) /= "00")
+        or (wv(Instr_SH) = '1' and vb_memop_addr(0) = '1') then
+        w_exception_store := '1';
     end if;
 
 
     -- parallel ALU:
-    wb_sum64 := wb_rdata1 + wb_rdata2;
-    wb_sum32(31 downto 0) := wb_rdata1(31 downto 0) + wb_rdata2(31 downto 0);
-    wb_sum32(63 downto 32) := (others => wb_sum32(31));
-    wb_sub64 := wb_rdata1 - wb_rdata2;
-    wb_sub32(31 downto 0) := wb_rdata1(31 downto 0) - wb_rdata2(31 downto 0);
-    wb_sub32(63 downto 32) := (others => wb_sub32(31));
-    wb_and64 := wb_rdata1 and wb_rdata2;
-    wb_or64 := wb_rdata1 or wb_rdata2;
-    wb_xor64 := wb_rdata1 xor wb_rdata2;
+    vb_sum64 := vb_rdata1 + vb_rdata2;
+    vb_sum32(31 downto 0) := vb_rdata1(31 downto 0) + vb_rdata2(31 downto 0);
+    vb_sum32(63 downto 32) := (others => vb_sum32(31));
+    vb_sub64 := vb_rdata1 - vb_rdata2;
+    vb_sub32(31 downto 0) := vb_rdata1(31 downto 0) - vb_rdata2(31 downto 0);
+    vb_sub32(63 downto 32) := (others => vb_sub32(31));
+    vb_and64 := vb_rdata1 and vb_rdata2;
+    vb_or64 := vb_rdata1 or vb_rdata2;
+    vb_xor64 := vb_rdata1 xor vb_rdata2;
     
-    wb_shifter_a1 <= wb_rdata1;
-    wb_shifter_a2 <= wb_rdata2(5 downto 0);
+    wb_shifter_a1 <= vb_rdata1;
+    wb_shifter_a2 <= vb_rdata2(5 downto 0);
 
-    w_less := '0';
-    w_gr_equal := '0';
-    if UNSIGNED(wb_rdata1) < UNSIGNED(wb_rdata2) then
-        w_less := '1';
+    v_less := '0';
+    v_gr_equal := '0';
+    if UNSIGNED(vb_rdata1) < UNSIGNED(vb_rdata2) then
+        v_less := '1';
     end if;
-    if UNSIGNED(wb_rdata1) >= UNSIGNED(wb_rdata2) then
-        w_gr_equal := '1';
+    if UNSIGNED(vb_rdata1) >= UNSIGNED(vb_rdata2) then
+        v_gr_equal := '1';
     end if;
 
     -- Relative Branch on some condition:
-    w_pc_branch := '0';
-    if ((wv(Instr_BEQ) = '1' and (wb_sub64 = zero64))
-        or (wv(Instr_BGE) = '1' and (wb_sub64(63) = '0'))
-        or (wv(Instr_BGEU) = '1' and (w_gr_equal = '1'))
-        or (wv(Instr_BLT) = '1' and (wb_sub64(63) = '1'))
-        or (wv(Instr_BLTU) = '1' and (w_less = '1'))
-        or (wv(Instr_BNE) = '1' and (wb_sub64 /= zero64))) then
-        w_pc_branch := '1';
+    v_pc_branch := '0';
+    if ((wv(Instr_BEQ) = '1' and (vb_sub64 = zero64))
+        or (wv(Instr_BGE) = '1' and (vb_sub64(63) = '0'))
+        or (wv(Instr_BGEU) = '1' and (v_gr_equal = '1'))
+        or (wv(Instr_BLT) = '1' and (vb_sub64(63) = '1'))
+        or (wv(Instr_BLTU) = '1' and (v_less = '1'))
+        or (wv(Instr_BNE) = '1' and (vb_sub64 /= zero64))) then
+        v_pc_branch := '1';
     end if;
 
     opcode_len := 4;
     if i_compressed = '1' then
         opcode_len := 2;
     end if;
+    vb_npc_incr := i_d_pc + opcode_len;
 
-    if w_pc_branch = '1' then
-        wb_npc := i_d_pc + wb_off(BUS_ADDR_WIDTH-1 downto 0);
+
+    if i_trap_valid = '1' then
+        vb_npc := i_trap_pc;
+        vb_ex_npc := vb_npc_incr;
+    elsif v_pc_branch = '1' then
+        vb_npc := i_d_pc + vb_off(BUS_ADDR_WIDTH-1 downto 0);
     elsif wv(Instr_JAL) = '1' then
-        wb_res(63 downto 32) := (others => '0');
-        wb_res(31 downto 0) := i_d_pc + opcode_len;
-        wb_npc := wb_rdata1(BUS_ADDR_WIDTH-1 downto 0) + wb_off(BUS_ADDR_WIDTH-1 downto 0);
+        vb_npc := vb_rdata1(BUS_ADDR_WIDTH-1 downto 0) + vb_off(BUS_ADDR_WIDTH-1 downto 0);
     elsif wv(Instr_JALR) = '1' then
-        wb_res(63 downto 32) := (others => '0');
-        wb_res(31 downto 0) := i_d_pc + opcode_len;
-        wb_npc := wb_rdata1(BUS_ADDR_WIDTH-1 downto 0) + wb_rdata2(BUS_ADDR_WIDTH-1 downto 0);
-        wb_npc(0) := '0';
+        vb_npc := vb_rdata1(BUS_ADDR_WIDTH-1 downto 0) + vb_rdata2(BUS_ADDR_WIDTH-1 downto 0);
+        vb_npc(0) := '0';
     elsif wv(Instr_MRET) = '1' then
-        wb_res(63 downto 32) := (others => '0');
-        wb_res(31 downto 0) := i_d_pc + opcode_len;
-        w_mret := '1';
-        w_csr_wena := '0';
-        wb_csr_addr := CSR_mepc;
-        wb_npc := i_csr_rdata(BUS_ADDR_WIDTH-1 downto 0);
+        vb_npc := i_csr_rdata(BUS_ADDR_WIDTH-1 downto 0);
     elsif wv(Instr_URET) = '1' then
-        wb_res(63 downto 32) := (others => '0');
-        wb_res(31 downto 0) := i_d_pc + opcode_len;
-        w_uret := '1';
-        w_csr_wena := '0';
-        wb_csr_addr := CSR_uepc;
-        wb_npc := i_csr_rdata(BUS_ADDR_WIDTH-1 downto 0);
+        vb_npc := i_csr_rdata(BUS_ADDR_WIDTH-1 downto 0);
     else
-        -- Instr_HRET, Instr_SRET, Instr_FENCE, Instr_FENCE_I:
-        wb_npc := i_d_pc + opcode_len;
+        vb_npc := vb_npc_incr;
     end if;
-
-    if i_memop_load = '1' then
-        wb_memop_addr := wb_rdata1(BUS_ADDR_WIDTH-1 downto 0)
-                      + wb_rdata2(BUS_ADDR_WIDTH-1 downto 0);
-    elsif i_memop_store = '1' then
-        wb_memop_addr := wb_rdata1(BUS_ADDR_WIDTH-1 downto 0)
-                       + wb_off(BUS_ADDR_WIDTH-1 downto 0);
-    end if;
-
-    w_exception_store := '0';
-    w_exception_load := '0';
-
-    if ((wv(Instr_LD) = '1' and wb_memop_addr(2 downto 0) /= "000")
-        or ((wv(Instr_LW) or wv(Instr_LWU)) = '1' and wb_memop_addr(1 downto 0) /= "00")
-        or ((wv(Instr_LH) or wv(Instr_LHU)) = '1' and wb_memop_addr(0) /= '0'))  then
-        w_exception_load := '1';
-    end if;
-    if ((wv(Instr_SD) = '1' and wb_memop_addr(2 downto 0) /= "000")
-        or (wv(Instr_SW) = '1' and wb_memop_addr(1 downto 0) /= "00")
-        or (wv(Instr_SH) = '1' and wb_memop_addr(0) /= '0')) then
-        w_exception_store := '1';
-    end if;
-
-    v.multi_ena := (others => '0');
-    v.multi_rv32 := i_rv32;
-    v.multi_f64 := i_f64;
-    v.multi_unsigned := i_unsigned_op;
-    v.multi_residual_high := '0';
-    if w_fpu_ena = '1' then
-        v.multi_a1 := wb_rdata1;
-        v.multi_a2 := wb_rdata2;
-    else
-        v.multi_a1 := i_rdata1;
-        v.multi_a2 := i_rdata2;
-    end if;
-
-    if (w_multi_ena and w_next_ready) = '1' then
-        v.multiclock_ena := '1';
-        v.multi_res_addr := wb_res_addr;
-        if CFG_HW_FPU_ENABLE then
-            v.multi_ivec_fpu := wv(Instr_FSUB_D downto Instr_FADD_D);
-            if w_fpu_ena = '1' and (wv(Instr_FMOV_X_D) or wv(Instr_FEQ_D)
-                or wv(Instr_FLT_D) or wv(Instr_FLE_D)
-                or wv(Instr_FCVT_LU_D) or wv(Instr_FCVT_L_D)
-                or wv(Instr_FCVT_WU_D) or wv(Instr_FCVT_W_D)) = '0' then
-                v.multi_res_addr := '1' & wb_res_addr(4 downto 0);
-            end if;
-        end if;
-        v.multi_pc := i_d_pc;
-        v.multi_instr := i_d_instr;
-        if i_trap_valid = '1' then
-            v.multi_npc := i_trap_pc;
-        else
-            v.multi_npc := wb_npc;
-        end if;
-    end if;
-
 
     -- ALU block selector:
     if w_arith_valid(Multi_MUL) = '1' then
-        wb_res := wb_arith_res(Multi_MUL);
+        vb_res := wb_arith_res(Multi_MUL);
     elsif w_arith_valid(Multi_DIV) = '1' then
-        wb_res := wb_arith_res(Multi_DIV);
+        vb_res := wb_arith_res(Multi_DIV);
     elsif w_arith_valid(Multi_FPU) = '1' then
-        wb_res := wb_arith_res(Multi_FPU);
+        vb_res := wb_arith_res(Multi_FPU);
     elsif i_memop_load = '1' then
-        w_memop_load := '1';
-        w_memop_sign_ext := i_memop_sign_ext;
-        wb_memop_size := i_memop_size;
+        v_memop_load := '1';
+        v_memop_sign_ext := i_memop_sign_ext;
+        vb_memop_size := i_memop_size;
     elsif i_memop_store = '1' then
-        w_memop_store := '1';
-        wb_memop_size := i_memop_size;
-        wb_res := wb_rdata2;
+        v_memop_store := '1';
+        vb_memop_size := i_memop_size;
+        vb_res := vb_rdata2;
+    elsif wv(Instr_JAL) = '1' then
+        vb_res(BUS_ADDR_WIDTH-1 downto 0) := vb_npc_incr;
+        if int_waddr = Reg_ra then
+            v_call := '1';
+        end if;
+    elsif wv(Instr_JALR) = '1' then
+        vb_res(BUS_ADDR_WIDTH-1 downto 0) := vb_npc_incr;
+        if int_waddr = Reg_ra then
+            v_call := '1';
+        elsif or_reduce(vb_rdata2) = '0' and int_radr1 = Reg_ra then
+            v_ret := '1';
+        end if;
     elsif (wv(Instr_ADD) or wv(Instr_ADDI) or wv(Instr_AUIPC)) = '1' then
-        wb_res := wb_sum64;
+        vb_res := vb_sum64;
     elsif (wv(Instr_ADDW) or wv(Instr_ADDIW)) = '1' then
-        wb_res := wb_sum32;
+        vb_res := vb_sum32;
     elsif wv(Instr_SUB) = '1' then
-        wb_res := wb_sub64;
+        vb_res := vb_sub64;
     elsif wv(Instr_SUBW) = '1' then
-        wb_res := wb_sub32;
+        vb_res := vb_sub32;
     elsif (wv(Instr_SLL) or wv(Instr_SLLI)) = '1' then
-        wb_res := wb_sll;
+        vb_res := wb_sll;
     elsif (wv(Instr_SLLW) or wv(Instr_SLLIW)) = '1' then
-        wb_res := wb_sllw;
+        vb_res := wb_sllw;
     elsif (wv(Instr_SRL) or wv(Instr_SRLI)) = '1' then
-        wb_res := wb_srl;
+        vb_res := wb_srl;
     elsif (wv(Instr_SRLW) or wv(Instr_SRLIW)) = '1' then
-        wb_res := wb_srlw;
+        vb_res := wb_srlw;
     elsif (wv(Instr_SRA) or wv(Instr_SRAI)) = '1' then
-        wb_res := wb_sra;
+        vb_res := wb_sra;
     elsif (wv(Instr_SRAW) or wv(Instr_SRAW) or wv(Instr_SRAIW)) = '1' then
-        wb_res := wb_sraw;
+        vb_res := wb_sraw;
     elsif (wv(Instr_AND) or wv(Instr_ANDI)) = '1' then
-        wb_res := wb_and64;
+        vb_res := vb_and64;
     elsif (wv(Instr_OR) or wv(Instr_ORI)) = '1' then
-        wb_res := wb_or64;
+        vb_res := vb_or64;
     elsif (wv(Instr_XOR) or wv(Instr_XORI)) = '1' then
-        wb_res := wb_xor64;
+        vb_res := vb_xor64;
     elsif (wv(Instr_SLT) or wv(Instr_SLTI)) = '1' then
-        wb_res(RISCV_ARCH-1 downto 1) := (others => '0');
-        wb_res(0) := wb_sub64(63);
+        vb_res(RISCV_ARCH-1 downto 1) := (others => '0');
+        vb_res(0) := vb_sub64(63);
     elsif (wv(Instr_SLTU) or wv(Instr_SLTIU)) = '1' then
-        wb_res(63 downto 1) := (others => '0');
-        wb_res(0) := w_less;
+        vb_res(63 downto 1) := (others => '0');
+        vb_res(0) := v_less;
     elsif wv(Instr_LUI) = '1' then
-        wb_res := wb_rdata2;
-    elsif (wv(Instr_MUL) or wv(Instr_MULW)) = '1' then
-        v.multi_ena(Multi_MUL) := w_next_ready;
-    elsif (wv(Instr_DIV) or wv(Instr_DIVU)
-            or wv(Instr_DIVW) or wv(Instr_DIVUW)) = '1' then
-        v.multi_ena(Multi_DIV) := w_next_ready;
-    elsif (wv(Instr_REM) or wv(Instr_REMU)
-            or wv(Instr_REMW) or wv(Instr_REMUW)) = '1' then
-        v.multi_ena(Multi_DIV) := w_next_ready;
-        v.multi_residual_high := '1';
-    elsif w_fpu_ena = '1' then
-        v.multi_ena(Multi_FPU) := w_next_ready;
+        vb_res := vb_rdata2;
     elsif wv(Instr_CSRRC) = '1' then
-        wb_res := i_csr_rdata;
-        w_csr_wena := '1';
-        wb_csr_addr := wb_rdata2(11 downto 0);
-        wb_csr_wdata := i_csr_rdata and (not i_rdata1);
+        vb_res := i_csr_rdata;
+        v_csr_wena := '1';
+        vb_csr_addr := vb_rdata2(11 downto 0);
+        vb_csr_wdata := i_csr_rdata and (not vb_rdata1);
     elsif wv(Instr_CSRRCI) = '1' then
-        wb_res := i_csr_rdata;
-        w_csr_wena := '1';
-        wb_csr_addr := wb_rdata2(11 downto 0);
-        wb_csr_wdata(RISCV_ARCH-1 downto 5) := i_csr_rdata(RISCV_ARCH-1 downto 5);
-        wb_csr_wdata(4 downto 0) := i_csr_rdata(4 downto 0) and not wb_radr1(4 downto 0);  -- zero-extending 5 to 64-bits
+        vb_res := i_csr_rdata;
+        v_csr_wena := '1';
+        vb_csr_addr := vb_rdata2(11 downto 0);
+        vb_csr_wdata(RISCV_ARCH-1 downto 5) := i_csr_rdata(RISCV_ARCH-1 downto 5);
+        vb_csr_wdata(4 downto 0) := i_csr_rdata(4 downto 0) and not i_d_radr1(4 downto 0);  -- zero-extending 5 to 64-bits
     elsif wv(Instr_CSRRS) = '1' then
-        wb_res := i_csr_rdata;
-        w_csr_wena := '1';
-        wb_csr_addr := wb_rdata2(11 downto 0);
-        wb_csr_wdata := i_csr_rdata or i_rdata1;
+        vb_res := i_csr_rdata;
+        v_csr_wena := '1';
+        vb_csr_addr := vb_rdata2(11 downto 0);
+        vb_csr_wdata := i_csr_rdata or vb_rdata1;
     elsif wv(Instr_CSRRSI) = '1' then
-        wb_res := i_csr_rdata;
-        w_csr_wena := '1';
-        wb_csr_addr := wb_rdata2(11 downto 0);
-        wb_csr_wdata(RISCV_ARCH-1 downto 5) := i_csr_rdata(RISCV_ARCH-1 downto 5);
-        wb_csr_wdata(4 downto 0) := i_csr_rdata(4 downto 0) or wb_radr1(4 downto 0);  -- zero-extending 5 to 64-bits
+        vb_res := i_csr_rdata;
+        v_csr_wena := '1';
+        vb_csr_addr := vb_rdata2(11 downto 0);
+        vb_csr_wdata(RISCV_ARCH-1 downto 5) := i_csr_rdata(RISCV_ARCH-1 downto 5);
+        vb_csr_wdata(4 downto 0) := i_csr_rdata(4 downto 0) or i_d_radr1(4 downto 0);  -- zero-extending 5 to 64-bits
     elsif wv(Instr_CSRRW) = '1' then
-        wb_res := i_csr_rdata;
-        w_csr_wena := '1';
-        wb_csr_addr := wb_rdata2(11 downto 0);
-        wb_csr_wdata := i_rdata1;
+        vb_res := i_csr_rdata;
+        v_csr_wena := '1';
+        vb_csr_addr := vb_rdata2(11 downto 0);
+        vb_csr_wdata := vb_rdata1;
     elsif wv(Instr_CSRRWI) = '1' then
-        wb_res := i_csr_rdata;
-        w_csr_wena := '1';
-        wb_csr_addr := wb_rdata2(11 downto 0);
-        wb_csr_wdata(RISCV_ARCH-1 downto 5) := (others => '0');
-        wb_csr_wdata(4 downto 0) := wb_radr1(4 downto 0);  -- zero-extending 5 to 64-bits
+        vb_res := i_csr_rdata;
+        v_csr_wena := '1';
+        vb_csr_addr := vb_rdata2(11 downto 0);
+        vb_csr_wdata(RISCV_ARCH-1 downto 5) := (others => '0');
+        vb_csr_wdata(4 downto 0) := i_d_radr1(4 downto 0);  -- zero-extending 5 to 64-bits
+    elsif wv(Instr_MRET) = '1' then
+        vb_res(BUS_ADDR_WIDTH-1 downto 0) := vb_npc_incr;
+        v_csr_wena := '0';
+        vb_csr_addr := CSR_mepc;
+    elsif wv(Instr_URET) = '1' then
+        vb_res(BUS_ADDR_WIDTH-1 downto 0) := vb_npc_incr;
+        v_csr_wena := '0';
+        vb_csr_addr := CSR_uepc;
     end if;
 
+
+    if i_wb_valid = '1' then
+        if r_scoreboard(conv_integer(i_wb_waddr)).cnt = "01" then
+            v_scoreboard(conv_integer(i_wb_waddr)).status := RegValid;
+        end if;
+        if i_d_waddr /= i_wb_waddr or w_next_ready = '0' then
+            v_scoreboard(conv_integer(i_wb_waddr)).cnt := 
+                         r_scoreboard(conv_integer(i_wb_waddr)).cnt - 1;
+        end if;
+    end if;
+
+    -- Latch ready result
+    if w_next_ready = '1' then
+        v.valid := '1';
+
+        v.pc := i_d_pc;
+        v.instr := i_d_instr;
+        v.npc := vb_npc;
+        v.memop_load := i_memop_load;
+        v.memop_sign_ext := i_memop_sign_ext;
+        v.memop_store := i_memop_store;
+        v.memop_size := i_memop_size;
+        v.memop_addr := vb_memop_addr;
+
+        v.waddr := i_d_waddr;
+        v.wval := vb_res;
+        v.call := v_call;
+        v.ret := v_ret;
+
+        if or_reduce(i_d_waddr) = '1' then
+            v_scoreboard(int_waddr).forward := vb_res;
+            if v_memop_load = '1' or r_scoreboard(int_waddr).status = RegHazard
+                or r_scoreboard(int_waddr).cnt = "10" then
+                v_scoreboard(int_waddr).status := RegHazard;
+            else
+                v_scoreboard(int_waddr).status := RegForward;
+            end if;
+            if i_d_waddr /= i_wb_waddr or i_wb_valid = '0' then
+                v_scoreboard(int_waddr).cnt := r_scoreboard(int_waddr).cnt + 1;
+            end if;
+        end if;
+    end if;
+
+
+    if not async_reset and i_nrst = '0' then
+        v := R_RESET;
+        for i in 0 to SCOREBOARD_SIZE-1 loop
+            v_scoreboard(i).status := RegValid;
+            v_scoreboard(i).cnt := (others => '0');
+            v_scoreboard(i).forward := (others => '0');
+        end loop;
+    end if;
+
+    wb_rdata1 <= vb_rdata1;
+    wb_rdata2 <= vb_rdata2;
 
     o_trap_ready <= w_next_ready;
 
     o_ex_instr_load_fault <= i_instr_load_fault and w_next_ready;
+    o_ex_instr_not_executable <= not i_instr_executable and w_next_ready;
     o_ex_illegal_instr <= i_unsup_exception and w_next_ready;
     o_ex_unalign_store <= w_exception_store and w_next_ready;
     o_ex_unalign_load <= w_exception_load and w_next_ready;
     o_ex_breakpoint <= wv(Instr_EBREAK) and w_next_ready;
     o_ex_ecall <= wv(Instr_ECALL) and w_next_ready;
 
-    v.call := '0';
-    v.ret := '0';
-    wb_ex_npc := (others => '0');
-    if i_dport_npc_write = '1' then
-        v.npc := i_dport_npc;
-    elsif w_multi_valid = '1' then
-        -- multi-cycle instruction ending by single-cycle state
-        -- so no need to check jump opcodes
-        v.pc := r.multi_pc;
-        v.instr := r.multi_instr;
-        v.npc := r.multi_npc;
-        v.memop_load := '0';
-        v.memop_sign_ext := '0';
-        v.memop_store := '0';
-        v.memop_size := (others => '0');
-        v.memop_addr := (others => '0');
+    o_res_addr <= r.waddr;
+    o_res_data <= vb_o_wdata;
+    o_d_ready <= not v_hold_exec;
 
-        v.res_addr := wb_res_addr;
-        v.res_val := wb_res;
-    elsif w_next_ready = '1' then
-        v.pc := i_d_pc;
-        v.instr := i_d_instr;
-        if i_trap_valid = '1' then
-            v.npc := i_trap_pc;
-            wb_ex_npc := wb_npc;
-        else
-            v.npc := wb_npc;
-        end if;
-        v.memop_load := w_memop_load;
-        v.memop_sign_ext := w_memop_sign_ext;
-        v.memop_store := w_memop_store;
-        v.memop_size := wb_memop_size;
-        v.memop_addr := wb_memop_addr;
-
-        v.res_addr := wb_res_addr;
-        v.res_val := wb_res;
-
-        if wv(Instr_JAL) = '1' and conv_integer(wb_res_addr) = Reg_ra then
-            v.call := '1';
-        end if;
-        if wv(Instr_JALR) = '1' then
-            if conv_integer(wb_res_addr) = Reg_ra then
-                v.call := '1';
-            elsif wb_rdata2 = zero64 and conv_integer(wb_radr1) = Reg_ra then
-                v.ret := '1';
-            end if;
-        end if;
-    end if;
-
-    if not async_reset and i_nrst = '0' then
-        v := R_RESET;
-    end if;
-
-    o_radr1 <= wb_radr1;
-    o_radr2 <= wb_radr2;
-    o_res_addr <= r.res_addr;
-    o_res_data <= r.res_val;
-    o_pipeline_hold <= w_hold;
-
-    o_csr_wena <= w_csr_wena and w_next_ready;
-    o_csr_addr <= wb_csr_addr;
-    o_csr_wdata <= wb_csr_wdata;
-    o_ex_npc <= wb_ex_npc;
+    o_csr_wena <= v_csr_wena and w_next_ready;
+    o_csr_addr <= vb_csr_addr;
+    o_csr_wdata <= vb_csr_wdata;
+    o_ex_npc <= vb_ex_npc;
 
     o_memop_sign_ext <= r.memop_sign_ext;
     o_memop_load <= r.memop_load;
@@ -938,17 +789,20 @@ begin
     o_memop_size <= r.memop_size;
     o_memop_addr <= r.memop_addr;
 
-    o_valid <= w_valid;
+    o_valid <= v_o_valid;
     o_pc <= r.pc;
     o_npc <= r.npc;
     o_instr <= r.instr;
+    o_fence <= v_fence;
+    o_fencei <= v_fencei;
     o_call <= r.call;
     o_ret <= r.ret;
-    o_mret <= w_mret;
-    o_uret <= w_uret;
+    o_mret <= v_mret;
+    o_uret <= v_uret;
     o_fpu_valid <= w_arith_valid(Multi_FPU);
     
     rin <= v;
+    rin_scoreboard <= v_scoreboard;
   end process;
 
   -- registers:
@@ -956,8 +810,18 @@ begin
   begin 
      if async_reset and i_nrst = '0' then
         r <= R_RESET;
+        for i in 0 to SCOREBOARD_SIZE-1 loop
+            r_scoreboard(i).forward <= (others => '0');
+            r_scoreboard(i).status <= RegValid;
+            r_scoreboard(i).cnt <= (others => '0');
+        end loop;
      elsif rising_edge(i_clk) then 
         r <= rin;
+        for i in 0 to SCOREBOARD_SIZE-1 loop
+            r_scoreboard(i).forward <= rin_scoreboard(i).forward;
+            r_scoreboard(i).status <= rin_scoreboard(i).status;
+            r_scoreboard(i).cnt <= rin_scoreboard(i).cnt;
+        end loop;
      end if; 
   end process;
 

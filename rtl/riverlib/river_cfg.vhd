@@ -685,72 +685,84 @@ package river_cfg is
   --! @param[out] o_mret        MRET detected
   --! @param[out] o_uret        URET detected
   component InstrExecute is generic (
-    async_reset : boolean
+    async_reset : boolean;
+    fpu_ena : boolean
   );
   port (
     i_clk  : in std_logic;
-    i_nrst : in std_logic;
-    i_pipeline_hold : in std_logic;
-    i_d_valid : in std_logic;
-    i_d_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    i_d_instr : in std_logic_vector(31 downto 0);
-    i_wb_ready : in std_logic;
-    i_memop_store : in std_logic;
-    i_memop_load : in std_logic;
-    i_memop_sign_ext : in std_logic;
-    i_memop_size : in std_logic_vector(1 downto 0);
-    i_unsigned_op : in std_logic;
-    i_rv32 : in std_logic;
-    i_compressed : in std_logic;
-    i_f64 : in std_logic;
-    i_isa_type : in std_logic_vector(ISA_Total-1 downto 0);
-    i_ivec : in std_logic_vector(Instr_Total-1 downto 0);
-    i_unsup_exception : in std_logic;
-    i_instr_load_fault : in std_logic;
-    i_dport_npc_write : in std_logic;
-    i_dport_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    o_radr1 : out std_logic_vector(5 downto 0);
-    i_rdata1 : in std_logic_vector(RISCV_ARCH-1 downto 0);
-    o_radr2 : out std_logic_vector(5 downto 0);
-    i_rdata2 : in std_logic_vector(RISCV_ARCH-1 downto 0);
-    i_rfdata1 : in std_logic_vector(RISCV_ARCH-1 downto 0);
-    i_rfdata2 : in std_logic_vector(RISCV_ARCH-1 downto 0);
-    o_res_addr : out std_logic_vector(5 downto 0);
-    o_res_data : out std_logic_vector(RISCV_ARCH-1 downto 0);
-    o_pipeline_hold : out std_logic;
-    o_csr_addr : out std_logic_vector(11 downto 0);
-    o_csr_wena : out std_logic;
-    i_csr_rdata : in std_logic_vector(RISCV_ARCH-1 downto 0);
-    o_csr_wdata : out std_logic_vector(RISCV_ARCH-1 downto 0);
+    i_nrst : in std_logic;                                      -- Reset active LOW
+    i_d_valid : in std_logic;                                   -- Decoded instruction is valid
+    i_d_radr1 : in std_logic_vector(5 downto 0);
+    i_d_radr2 : in std_logic_vector(5 downto 0);
+    i_d_waddr : in std_logic_vector(5 downto 0);
+    i_d_imm : in std_logic_vector(RISCV_ARCH-1 downto 0);
+    i_d_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);    -- Instruction pointer on decoded instruction
+    i_d_instr : in std_logic_vector(31 downto 0);               -- Decoded instruction value
+    i_wb_valid : in std_logic;                                  -- End of write back operation
+    i_wb_waddr : in std_logic_vector(5 downto 0);               -- Write back address
+    i_memop_store : in std_logic;                               -- Store to memory operation
+    i_memop_load : in std_logic;                                -- Load from memoru operation
+    i_memop_sign_ext : in std_logic;                            -- Load memory value with sign extending
+    i_memop_size : in std_logic_vector(1 downto 0);             -- Memory transaction size
+    i_unsigned_op : in std_logic;                               -- Unsigned operands
+    i_rv32 : in std_logic;                                      -- 32-bits instruction
+    i_compressed : in std_logic;                                -- C-extension (2-bytes length)
+    i_f64 : in std_logic;                                       -- D-extension (FPU)
+    i_isa_type : in std_logic_vector(ISA_Total-1 downto 0);     -- Type of the instruction's structure (ISA spec.)
+    i_ivec : in std_logic_vector(Instr_Total-1 downto 0);       -- One pulse per supported instruction.
+    i_unsup_exception : in std_logic;                           -- Unsupported instruction exception
+    i_instr_load_fault : in std_logic;                          -- Instruction fetched from fault address
+    i_instr_executable : in std_logic;                          -- MPU flag
+    i_dport_npc_write : in std_logic;                           -- Write npc value from debug port
+    i_dport_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- Debug port npc value to write
+
+    i_rdata1 : in std_logic_vector(RISCV_ARCH-1 downto 0);      -- Integer register value 1
+    i_rdata2 : in std_logic_vector(RISCV_ARCH-1 downto 0);      -- Integer register value 2
+    i_rfdata1 : in std_logic_vector(RISCV_ARCH-1 downto 0);     -- Float register value 1
+    i_rfdata2 : in std_logic_vector(RISCV_ARCH-1 downto 0);     -- Float register value 2
+    o_res_addr : out std_logic_vector(5 downto 0);              -- Address to store result of the instruction (0=do not store)
+    o_res_data : out std_logic_vector(RISCV_ARCH-1 downto 0);   -- Value to store
+    o_d_ready : out std_logic;                                  -- Hold pipeline while 'writeback' not done or multi-clock instruction.
+    o_csr_addr : out std_logic_vector(11 downto 0);             -- CSR address. 0 if not a CSR instruction with xret signals mode switching
+    o_csr_wena : out std_logic;                                 -- Write new CSR value
+    i_csr_rdata : in std_logic_vector(RISCV_ARCH-1 downto 0);   -- CSR current value
+    o_csr_wdata : out std_logic_vector(RISCV_ARCH-1 downto 0);  -- CSR new value
     i_trap_valid : in std_logic;
     i_trap_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    -- exceptions:
     o_ex_npc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    o_ex_instr_load_fault : out std_logic;
+    o_ex_instr_load_fault : out std_logic;                      -- Instruction fetched from fault address
+    o_ex_instr_not_executable : out std_logic;                  -- MPU prohibit this instruction
     o_ex_illegal_instr : out std_logic;
     o_ex_unalign_store : out std_logic;
     o_ex_unalign_load : out std_logic;
     o_ex_breakpoint : out std_logic;
     o_ex_ecall : out std_logic;
-    o_ex_fpu_invalidop : out std_logic;
-    o_ex_fpu_divbyzero : out std_logic;
-    o_ex_fpu_overflow : out std_logic;
-    o_ex_fpu_underflow : out std_logic;
-    o_ex_fpu_inexact : out std_logic;
-    o_fpu_valid : out std_logic;
-    o_memop_sign_ext : out std_logic;
-    o_memop_load : out std_logic;
-    o_memop_store : out std_logic;
-    o_memop_size : out std_logic_vector(1 downto 0);
-    o_memop_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    o_trap_ready : out std_logic;
-    o_valid : out std_logic;
-    o_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    o_npc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    o_instr : out std_logic_vector(31 downto 0);
-    o_call : out std_logic;
-    o_ret : out std_logic;
-    o_mret : out std_logic;
-    o_uret : out std_logic
+    o_ex_fpu_invalidop : out std_logic;            -- FPU Exception: invalid operation
+    o_ex_fpu_divbyzero : out std_logic;            -- FPU Exception: divide by zero
+    o_ex_fpu_overflow : out std_logic;             -- FPU Exception: overflow
+    o_ex_fpu_underflow : out std_logic;            -- FPU Exception: underflow
+    o_ex_fpu_inexact : out std_logic;              -- FPU Exception: inexact
+    o_fpu_valid : out std_logic;                   -- FPU output is valid
+
+    o_memop_sign_ext : out std_logic;                           -- Load data with sign extending
+    o_memop_load : out std_logic;                               -- Load data instruction
+    o_memop_store : out std_logic;                              -- Store data instruction
+    o_memop_size : out std_logic_vector(1 downto 0);            -- 0=1bytes; 1=2bytes; 2=4bytes; 3=8bytes
+    o_memop_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- Memory access address
+    i_memop_ready : in std_logic;
+
+    o_trap_ready : out std_logic;                               -- Trap branch request was accepted
+    o_valid : out std_logic;                                    -- Output is valid
+    o_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);     -- Valid instruction pointer
+    o_npc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);    -- Next instruction pointer. Next decoded pc must match to this value or will be ignored.
+    o_instr : out std_logic_vector(31 downto 0);                -- Valid instruction value
+    o_fence : out std_logic;
+    o_fencei : out std_logic;
+    o_call : out std_logic;                                     -- CALL pseudo instruction detected
+    o_ret : out std_logic;                                      -- RET pseudoinstruction detected
+    o_mret : out std_logic;                                     -- MRET instruction
+    o_uret : out std_logic                                      -- URET instruction
   );
   end component; 
 
