@@ -109,7 +109,7 @@ SC_MODULE(InstrExecute) {
 
     SC_HAS_PROCESS(InstrExecute);
 
-    InstrExecute(sc_module_name name_, bool async_reset);
+    InstrExecute(sc_module_name name_, bool async_reset, bool fpu_ena);
     virtual ~InstrExecute();
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
@@ -126,11 +126,6 @@ private:
         sc_signal<sc_uint<RISCV_ARCH>> arr[Multi_Total];
     };
 
-    static const unsigned State_WaitInstr = 0;
-    static const unsigned State_SingleCycle = 1;
-    static const unsigned State_MultiCycle = 2;
-    static const unsigned State_Hold = 3;
-
     enum ScoreType {
         RegValid,
         RegHazard,
@@ -142,6 +137,7 @@ private:
         sc_uint<2> cnt;
         sc_uint<RISCV_ARCH> forward;
     };
+
     struct score_item_type_r {
         sc_signal<sc_uint<2>> cnt;
         sc_signal<sc_uint<2>> status;
@@ -220,6 +216,7 @@ private:
     FpuTop *fpu0;
 
     bool async_reset_;
+    bool fpu_ena_;
 };
 
 

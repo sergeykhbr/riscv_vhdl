@@ -245,7 +245,7 @@ void DCacheLru::comb() {
             v.req_flush_cnt = ~0u;
             v.req_flush_addr = 0;
         } else {
-            v.req_flush_cnt = 0;
+            v.req_flush_cnt = DCACHE_WAYS-1;
             v.req_flush_addr = i_flush_address.read();
         }
     }
@@ -295,7 +295,7 @@ void DCacheLru::comb() {
                 v.req_addr = 0;
                 v.flush_cnt = ~0u;
             } else {
-                v.req_addr = r.req_flush_addr.read() & ~LOG2_DATA_BYTES_MASK;
+                v.req_addr = r.req_flush_addr.read() & ~LOG2_DLINE_BYTES_MASK;
                 v.flush_cnt = r.req_flush_cnt.read();
             }
         } else {
@@ -541,7 +541,7 @@ void DCacheLru::comb() {
             /** Use lsb address bits to manually select memory WAY bank: */
             if (r.req_addr.read()(CFG_DLOG2_NWAYS-1, 0) == DCACHE_WAYS-1) {
                 v.req_addr = (r.req_addr.read() + DCACHE_BYTES_PER_LINE) 
-                            & ~LOG2_DATA_BYTES_MASK;
+                            & ~LOG2_DLINE_BYTES_MASK;
             } else {
                 v.req_addr = r.req_addr.read() + 1;
             }

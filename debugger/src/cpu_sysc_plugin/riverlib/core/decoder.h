@@ -98,7 +98,7 @@ SC_MODULE(InstrDecoder) {
 
     SC_HAS_PROCESS(InstrDecoder);
 
-    InstrDecoder(sc_module_name name_, bool async_reset);
+    InstrDecoder(sc_module_name name_, bool async_reset, bool fpu_ena);
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
@@ -152,6 +152,7 @@ private:
     }
 
     bool async_reset_;
+    bool fpu_ena_;
 };
 
 }  // namespace debugger

@@ -189,15 +189,17 @@ void TagMemNWay<abus, waybits, ibits, lnbits, flbits>::comb() {
     }
 
     vb_wayidx_o = lruo_lru.read();
-    for (int i = 0; i < NWAYS; i++) {
-        if (i_flush.read() == 1) {
-            // Use lsb address part for the way selection
-            vb_wayidx_o = i_addr.read()(waybits-1, 0);
-        } else if (way_o[i].hit.read() == 1 &&
-                    way_o[i].rflags.read()[FL_VALID] == 1) {
-            hit = 1;
-            vb_wayidx_o = i;
-            v_lrui_we = r.re.read();
+    if (i_flush.read() == 1) {
+        // Use lsb address part for the way selection
+        vb_wayidx_o = i_addr.read()(waybits-1, 0);
+    } else {
+        for (int i = 0; i < NWAYS; i++) {
+            if (way_o[i].hit.read() == 1 &&
+                way_o[i].rflags.read()[FL_VALID] == 1) {
+                hit = 1;
+                vb_wayidx_o = i;
+                v_lrui_we = r.re.read();
+            }
         }
     }
 

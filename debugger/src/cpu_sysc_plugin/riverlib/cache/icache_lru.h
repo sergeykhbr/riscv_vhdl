@@ -86,6 +86,7 @@ SC_MODULE(ICacheLru) {
     struct RegistersType {
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_addr;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_addr_next;
+        sc_signal<sc_uint<BUS_ADDR_WIDTH>> write_addr;
         sc_signal<sc_uint<4>> state;
         sc_signal<bool> req_mem_valid;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> mem_addr;
@@ -98,14 +99,15 @@ SC_MODULE(ICacheLru) {
         sc_signal<bool> load_fault;
         sc_signal<bool> req_flush;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_flush_addr;
-        sc_signal<sc_uint<CFG_ILOG2_LINES_PER_WAY>> req_flush_cnt;
-        sc_signal<sc_uint<CFG_ILOG2_LINES_PER_WAY>> flush_cnt;
+        sc_signal<sc_uint<CFG_ILOG2_LINES_PER_WAY+CFG_ILOG2_NWAYS>> req_flush_cnt;
+        sc_signal<sc_uint<CFG_ILOG2_LINES_PER_WAY+CFG_ILOG2_NWAYS>> flush_cnt;
         sc_signal<sc_biguint<ICACHE_LINE_BITS>> cache_line_i;
     } v, r;
 
     void R_RESET(RegistersType &iv) {
         iv.req_addr = 0;
         iv.req_addr_next = 0;
+        iv.write_addr = 0;
         iv.state = State_Flush;
         iv.req_mem_valid = 0;
         iv.mem_addr = 0;
@@ -133,7 +135,7 @@ SC_MODULE(ICacheLru) {
     sc_signal<sc_biguint<ICACHE_LINE_BITS+16>> line_rdata_o;
     sc_signal<sc_uint<ITAG_FL_TOTAL>> line_rflags_o;
     sc_signal<bool> line_hit_o;
-    sc_signal<bool> line_miss_next_o;
+    sc_signal<bool> line_hit_next_o;
 
     TagMemCoupled<BUS_ADDR_WIDTH,
             CFG_ILOG2_NWAYS,

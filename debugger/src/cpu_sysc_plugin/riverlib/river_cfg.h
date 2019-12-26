@@ -31,7 +31,7 @@ static const int BUS_ADDR_WIDTH      = 64;
 static const int CFG_LOG2_DATA_BYTES = 3;
 static const int BUS_DATA_BYTES      = (1 << CFG_LOG2_DATA_BYTES);
 static const int BUS_DATA_WIDTH      = 8 * BUS_DATA_BYTES;
-static const int LOG2_DATA_BYTES_MASK = (1 << CFG_LOG2_DATA_BYTES) - 1;
+static const int LOG2_DATA_BYTES_MASK = BUS_DATA_BYTES - 1;
 
 /** 
  * ICacheLru config (16 KB by default)
@@ -44,6 +44,7 @@ static const int CFG_ILOG2_NWAYS          = 2;
 static const int ICACHE_BYTES_PER_LINE    = 1 << CFG_ILOG2_BYTES_PER_LINE;
 static const int ICACHE_LINES_PER_WAY     = 1 << CFG_ILOG2_LINES_PER_WAY;
 static const int ICACHE_WAYS              = 1 << CFG_ILOG2_NWAYS;
+static const int LOG2_ILINE_BYTES_MASK    = ICACHE_BYTES_PER_LINE - 1;
 
 static const int ICACHE_LOG2_BURST_LEN    =
                 CFG_ILOG2_BYTES_PER_LINE - CFG_LOG2_DATA_BYTES;
@@ -68,6 +69,7 @@ static const int CFG_DLOG2_NWAYS          = 2;
 static const int DCACHE_BYTES_PER_LINE    = 1 << CFG_DLOG2_BYTES_PER_LINE;
 static const int DCACHE_LINES_PER_WAY     = 1 << CFG_DLOG2_LINES_PER_WAY;
 static const int DCACHE_WAYS              = 1 << CFG_DLOG2_NWAYS;
+static const int LOG2_DLINE_BYTES_MASK    = DCACHE_BYTES_PER_LINE - 1;
 
 static const int DCACHE_LOG2_BURST_LEN    =
                 CFG_DLOG2_BYTES_PER_LINE - CFG_LOG2_DATA_BYTES;

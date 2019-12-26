@@ -126,7 +126,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     fetch0->i_br_address_fetch(dbg.br_address_fetch);
     fetch0->i_br_instr_fetch(dbg.br_instr_fetch);
 
-    dec0 = new InstrDecoder("dec0", async_reset);
+    dec0 = new InstrDecoder("dec0", async_reset, fpu_ena);
     dec0->i_clk(i_clk);
     dec0->i_nrst(i_nrst);
     dec0->i_any_hold(w_any_pipeline_hold);
@@ -158,7 +158,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     dec0->o_instr_load_fault(w.d.instr_load_fault);
     dec0->o_instr_executable(w.d.instr_executable);
 
-    exec0 = new InstrExecute("exec0", async_reset);
+    exec0 = new InstrExecute("exec0", async_reset, fpu_ena);
     exec0->i_clk(i_clk);
     exec0->i_nrst(i_nrst);
     exec0->i_d_valid(w.d.instr_valid);
@@ -473,7 +473,6 @@ void Processor::comb() {
     w_fetch_pipeline_hold = !w.e.d_ready | w.m.pipeline_hold | dbg.halt;
     w_any_pipeline_hold = w.f.pipeline_hold | !w.e.d_ready
         | w.m.pipeline_hold | dbg.halt;
-    w_exec_pipeline_hold = w.f.pipeline_hold | w.m.pipeline_hold | dbg.halt;
 
     wb_ireg_dport_addr = dbg.core_addr.read()(4, 0);
     wb_freg_dport_addr = dbg.core_addr.read()(4, 0);

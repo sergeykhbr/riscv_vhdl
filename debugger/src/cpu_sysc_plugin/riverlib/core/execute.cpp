@@ -19,8 +19,8 @@
 
 namespace debugger {
 
-InstrExecute::InstrExecute(sc_module_name name_, bool async_reset)
-    : sc_module(name_),
+InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
+    bool fpu_ena) : sc_module(name_),
     i_clk("i_clk"),
     i_nrst("i_nrst"),
     i_d_valid("i_d_valid"),
@@ -92,6 +92,7 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset)
     o_mret("o_mret"),
     o_uret("o_uret") {
     async_reset_ = async_reset;
+    fpu_ena_ = fpu_ena;
 
     SC_METHOD(comb);
     sensitive << i_nrst;
@@ -201,7 +202,7 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset)
     sh0->o_srlw(wb_srlw);
     sh0->o_sraw(wb_sraw);
 
-    if (CFG_HW_FPU_ENABLE) {
+    if (fpu_ena_) {
         fpu0 = new FpuTop("fpu0", async_reset);
         fpu0->i_clk(i_clk);
         fpu0->i_nrst(i_nrst);
@@ -234,7 +235,7 @@ InstrExecute::~InstrExecute() {
     delete mul0;
     delete div0;
     delete sh0;
-    if (CFG_HW_FPU_ENABLE) {
+    if (fpu_ena_) {
         delete fpu0;
     }
 }
@@ -330,7 +331,7 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     }
     mul0->generateVCD(i_vcd, o_vcd);
     div0->generateVCD(i_vcd, o_vcd);
-    if (CFG_HW_FPU_ENABLE) {
+    if (fpu_ena_) {
         fpu0->generateVCD(i_vcd, o_vcd);
     }
 }
@@ -376,6 +377,7 @@ void InstrExecute::comb() {
     bool v_o_valid;
     sc_uint<RISCV_ARCH> vb_o_wdata;
     bool v_hold_exec;
+    int int_waddr;
 
     v = r;
     for (int i = 0; i < SCOREBOARD_SIZE; i++) {
@@ -402,6 +404,9 @@ void InstrExecute::comb() {
     v.valid = 0;
     v.call = 0;
     v.ret = 0;
+    vb_rdata1 = 0;
+    vb_rdata2 = 0;
+    int_waddr = i_d_waddr.read().to_int();
 
 
     //vb_rdata1 = i_rdata1.read();
@@ -448,7 +453,7 @@ void InstrExecute::comb() {
      *  If instruction is multicycle then modify this value.
      */
     w_arith_ena[Multi_FPU] = 0;
-    if (CFG_HW_FPU_ENABLE) {
+    if (fpu_ena_) {
         if (i_f64.read() && !(wv[Instr_FSD] | wv[Instr_FLD]).to_bool()) {
             w_arith_ena[Multi_FPU] = 1;
         }
@@ -723,17 +728,16 @@ void InstrExecute::comb() {
         v.ret = v_ret;
 
         if (i_d_waddr.read() != 0) {
-            int tdx = i_d_waddr.read().to_int();
-            v_scoreboard[tdx].forward = vb_res;
-            if (v_memop_load == 1 || r_scoreboard[tdx].status.read() == RegHazard
-                || r_scoreboard[tdx].cnt.read() == 2) {
-                v_scoreboard[tdx].status = RegHazard;
+            v_scoreboard[int_waddr].forward = vb_res;
+            if (v_memop_load == 1 || r_scoreboard[int_waddr].status.read() == RegHazard
+                || r_scoreboard[int_waddr].cnt.read() == 2) {
+                v_scoreboard[int_waddr].status = RegHazard;
             } else {
-                v_scoreboard[tdx].status = RegForward;
+                v_scoreboard[int_waddr].status = RegForward;
             }
             if (i_d_waddr.read() != i_wb_waddr.read() ||
                 i_wb_valid.read() == 0) {
-                v_scoreboard[tdx].cnt = r_scoreboard[tdx].cnt.read() + 1;
+                v_scoreboard[int_waddr].cnt = r_scoreboard[int_waddr].cnt.read() + 1;
             }
         }
     }
@@ -758,6 +762,7 @@ void InstrExecute::comb() {
         R_RESET(v);
         for (int i = 0; i < SCOREBOARD_SIZE; i++) {
             v_scoreboard[i].status = RegValid;
+            v_scoreboard[i].cnt = 0;
             v_scoreboard[i].forward = 0;
         }
     }
@@ -806,6 +811,11 @@ void InstrExecute::comb() {
 void InstrExecute::registers() {
     if (async_reset_ && i_nrst.read() == 0) {
         R_RESET(r);
+        for (int i = 0; i < SCOREBOARD_SIZE; i++) {
+            r_scoreboard[i].forward = RegValid;
+            r_scoreboard[i].status = 0;
+            r_scoreboard[i].cnt = 0;
+        }
     } else {
         r = v;
         for (int i = 0; i < SCOREBOARD_SIZE; i++) {

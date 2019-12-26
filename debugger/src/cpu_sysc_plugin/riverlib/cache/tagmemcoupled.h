@@ -43,7 +43,7 @@ SC_MODULE(TagMemCoupled) {
     sc_out<sc_biguint<8*(1<<lnbits)+16>> o_rdata;
     sc_out<sc_uint<flbits>> o_rflags;
     sc_out<bool> o_hit;
-    sc_out<bool> o_miss_next;
+    sc_out<bool> o_hit_next;
 
     void comb();
     void registers();
@@ -64,7 +64,7 @@ SC_MODULE(TagMemCoupled) {
         o_rdata("o_rdata"),
         o_rflags("o_rflags"),
         o_hit("o_hit"),
-        o_miss_next("o_miss_next") {
+        o_hit_next("o_hit_next") {
         async_reset_ = async_reset;
 
         char tagname[32] = "mem0";
@@ -173,7 +173,7 @@ void TagMemCoupled<abus, waybits, ibits, lnbits, flbits>::comb() {
     sc_uint<abus> vb_o_raddr;
     sc_biguint<8*(1<<lnbits)+16> vb_o_rdata;
     bool v_o_hit;
-    bool v_o_miss_next;
+    bool v_o_hit_next;
     sc_uint<flbits> vb_o_rflags;
 
     v_addr_sel = i_addr.read()[lnbits];
@@ -238,24 +238,22 @@ void TagMemCoupled<abus, waybits, ibits, lnbits, flbits>::comb() {
         vb_raddr_tag = lineo[EVEN].raddr;
         vb_o_rflags = lineo[EVEN].rflags;
 
+        v_o_hit = lineo[EVEN].hit;
         if (v_use_overlay_r == 0) {
-            v_o_hit = lineo[EVEN].hit;
-            v_o_miss_next = 0;
+            v_o_hit_next = lineo[EVEN].hit;
         } else {
-            v_o_hit = lineo[EVEN].hit && lineo[ODD].hit;
-            v_o_miss_next = lineo[EVEN].hit && !lineo[ODD].hit;
+            v_o_hit_next = lineo[ODD].hit;
         }
     } else {
         vb_o_rdata = (lineo[EVEN].rdata.read()(15, 0), lineo[ODD].rdata);
         vb_raddr_tag = lineo[ODD].raddr;
         vb_o_rflags = lineo[ODD].rflags;
 
+        v_o_hit = lineo[ODD].hit;
         if (v_use_overlay_r == 0) {
-            v_o_hit = lineo[ODD].hit;
-            v_o_miss_next = 0;
+            v_o_hit_next = lineo[ODD].hit;
         } else {
-            v_o_hit = lineo[ODD].hit && lineo[EVEN].hit;
-            v_o_miss_next = lineo[ODD].hit && !lineo[EVEN].hit;
+            v_o_hit_next = lineo[EVEN].hit;
         }
     }
 
@@ -268,7 +266,7 @@ void TagMemCoupled<abus, waybits, ibits, lnbits, flbits>::comb() {
     o_rdata = vb_o_rdata;
     o_rflags = vb_o_rflags;
     o_hit = v_o_hit;
-    o_miss_next = v_o_miss_next;
+    o_hit_next = v_o_hit_next;
 }
 
 template <int abus, int waybits, int ibits, int lnbits, int flbits>
@@ -293,7 +291,7 @@ generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd)  {
         sc_trace(o_vcd, o_raddr, o_raddr.name());
         sc_trace(o_vcd, o_rdata, o_rdata.name());
         sc_trace(o_vcd, o_hit, o_hit.name());
-        sc_trace(o_vcd, o_miss_next, o_miss_next.name());
+        sc_trace(o_vcd, o_hit_next, o_hit_next.name());
 
         std::string pn(name());
         sc_trace(o_vcd, r_req_addr, pn + ".r_req_addr");

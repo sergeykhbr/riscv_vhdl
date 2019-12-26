@@ -70,7 +70,7 @@ ICacheLru::ICacheLru(sc_module_name name_, bool async_reset)
     memcouple->o_rdata(line_rdata_o);
     memcouple->o_rflags(line_rflags_o);
     memcouple->o_hit(line_hit_o);
-    memcouple->o_miss_next(line_miss_next_o);
+    memcouple->o_hit_next(line_hit_next_o);
 
 
     SC_METHOD(comb);
@@ -89,7 +89,7 @@ ICacheLru::ICacheLru(sc_module_name name_, bool async_reset)
     sensitive << line_rdata_o;
     sensitive << line_rflags_o;
     sensitive << line_hit_o;
-    sensitive << line_miss_next_o;
+    sensitive << line_hit_next_o;
     sensitive << r.req_addr;
     sensitive << r.state;
     sensitive << r.req_mem_valid;
@@ -197,10 +197,10 @@ void ICacheLru::comb() {
             v.req_flush_cnt = ~0u;
             v.req_flush_addr = 0;
         } else if (i_flush_address.read()(CFG_ILOG2_BYTES_PER_LINE-1, 1).and_reduce() == 1) {
-            v.req_flush_cnt = 1;
+            v.req_flush_cnt = 2*ICACHE_WAYS - 1;
             v.req_flush_addr = i_flush_address.read();
         } else {
-            v.req_flush_cnt = 0;
+            v.req_flush_cnt = ICACHE_WAYS - 1;
             v.req_flush_addr = i_flush_address.read();
         }
     }
@@ -222,7 +222,7 @@ void ICacheLru::comb() {
                 v.req_addr = 0;
                 v.flush_cnt = ~0u;
             } else {
-                v.req_addr = r.req_flush_addr.read() & ~LOG2_DATA_BYTES_MASK;
+                v.req_addr = r.req_flush_addr.read() & ~LOG2_ILINE_BYTES_MASK;
                 v.flush_cnt = r.req_flush_cnt.read();
             }
         } else {
@@ -238,7 +238,7 @@ void ICacheLru::comb() {
         break;
     case State_CheckHit:
         vb_resp_data = vb_cached_data;
-        if (line_hit_o.read() == 1) {
+        if (line_hit_o.read() == 1 && line_hit_next_o.read() == 1) {
             // Hit
             v_req_ready = 1;
             v_resp_valid = 1;
@@ -261,12 +261,14 @@ void ICacheLru::comb() {
     case State_CheckMPU:
         v.req_mem_valid = 1;
         v.state = State_WaitGrant;
+        v.write_addr = r.req_addr;
 
         if (i_mpu_flags.read()[CFG_MPU_FL_CACHABLE] == 1) {
-            if (line_miss_next_o.read() == 0) {
+            if (line_hit_o.read() == 0) {
                 v.mem_addr = r.req_addr.read()(BUS_ADDR_WIDTH-1,
                         CFG_ILOG2_BYTES_PER_LINE) << CFG_ILOG2_BYTES_PER_LINE;
             } else {
+                v.write_addr = r.req_addr_next;
                 v.mem_addr = r.req_addr_next.read()(BUS_ADDR_WIDTH-1,
                         CFG_ILOG2_BYTES_PER_LINE) << CFG_ILOG2_BYTES_PER_LINE;
             }
@@ -307,6 +309,8 @@ void ICacheLru::comb() {
             v.cache_line_i = t_cache_line_i;
             if (r.burst_cnt.read() == 0) {
                 v.state = State_CheckResp;
+                v.write_addr = r.req_addr;      // Swap addres for 1 clock to write line
+                v.req_addr = r.write_addr;
             } else {
                 v.burst_cnt = r.burst_cnt.read() - 1;
             }
@@ -317,14 +321,12 @@ void ICacheLru::comb() {
         }
         break;
     case State_CheckResp:
+        v.req_addr = r.write_addr;              // Restore req_addr after line write
         if (r.cached.read() == 1) {
             v.state = State_SetupReadAdr;
             v_line_cs = 1;
             v_line_wflags[TAG_FL_VALID] = 1;
             vb_line_wstrb = ~0ul;  // write full line
-            if (line_miss_next_o.read() == 1) {
-                vb_line_addr = r.req_addr_next;
-            }
         } else {
             v_resp_valid = 1;
             vb_resp_data = vb_uncached_data;
@@ -346,7 +348,13 @@ void ICacheLru::comb() {
             v.state = State_Idle;
         } else {
             v.flush_cnt = r.flush_cnt.read() - 1;
-            v.req_addr = r.req_addr.read() + ICACHE_BYTES_PER_LINE;
+            /// Use lsb address bits to manually select memory WAY bank:
+            if (r.req_addr.read()(CFG_ILOG2_NWAYS-1, 0) == ICACHE_WAYS-1) {
+                v.req_addr = (r.req_addr.read() + ICACHE_BYTES_PER_LINE)
+                            & ~LOG2_ILINE_BYTES_MASK;
+            } else {
+                v.req_addr = r.req_addr.read() + 1;
+            }
         }
         break;
     default:;
