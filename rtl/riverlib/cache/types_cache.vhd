@@ -108,7 +108,7 @@ package types_cache is
     o_rdata : out std_logic_vector(8*(2**lnbits)+15 downto 0);
     o_rflags : out std_logic_vector(flbits-1 downto 0);
     o_hit : out std_logic;
-    o_miss_next : out std_logic
+    o_hit_next : out std_logic
   );
   end component;
 

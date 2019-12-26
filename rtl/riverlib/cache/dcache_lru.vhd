@@ -16,6 +16,7 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.std_logic_misc.all;  -- or_reduce()
 library commonlib;
 use commonlib.types_common.all;
 library riverlib;
@@ -245,7 +246,8 @@ begin
             v.req_flush_cnt := (others => '1');
             v.req_flush_addr := (others => '0');
         else
-            v.req_flush_cnt := (others => '0');
+            v.req_flush_cnt := conv_std_logic_vector(DCACHE_WAYS-1,
+                               CFG_DLOG2_LINES_PER_WAY+CFG_DLOG2_NWAYS);
             v.req_flush_addr := i_flush_address;
         end if;
     end if;
@@ -291,7 +293,8 @@ begin
                 v.flush_cnt := (others => '1');
             else
                 v.req_addr := r.req_flush_addr;
-                v.req_addr(LOG2_DATA_BYTES_MASK-1 downto 0) := (others => '0');
+                v.req_addr := r.req_flush_addr(BUS_ADDR_WIDTH-1 downto CFG_DLOG2_BYTES_PER_LINE)
+                              & zero64(CFG_DLOG2_BYTES_PER_LINE-1 downto 0);
                 v.flush_cnt := r.req_flush_cnt;
             end if;
         else
@@ -501,7 +504,7 @@ begin
         v.state := State_FlushCheck;
         v.write_flush := '0';
         v.cache_line_i := (others => '0');
-        if r.flush_cnt = zero64(CFG_DLOG2_LINES_PER_WAY+CFG_DLOG2_NWAYS-1 downto 0) then
+        if or_reduce(r.flush_cnt) = '0' then
             v.state := State_Idle;
             v.init := '0';
         end if;
@@ -525,20 +528,20 @@ begin
         else
             -- Write clean line
             v.state := State_FlushAddr;
-            if r.flush_cnt = zero64(CFG_DLOG2_LINES_PER_WAY+CFG_DLOG2_NWAYS-1 downto 0) then
+            if or_reduce(r.flush_cnt) = '0' then
                 v.state := State_Idle;
                 v.init := '0';
             end if;
         end if;
 
-        if r.flush_cnt /= zero64(CFG_DLOG2_LINES_PER_WAY+CFG_DLOG2_NWAYS-1 downto 0) then
+        if or_reduce(r.flush_cnt) = '1' then
             v.flush_cnt := r.flush_cnt - 1;
             -- Use lsb address bits to manually select memory WAY bank:
             if r.req_addr(CFG_DLOG2_NWAYS-1 downto 0) =
                conv_std_logic_vector(DCACHE_WAYS-1, CFG_DLOG2_NWAYS) then
                 v.req_addr(BUS_ADDR_WIDTH-1 downto CFG_DLOG2_BYTES_PER_LINE) := 
                     r.req_addr(BUS_ADDR_WIDTH-1 downto CFG_DLOG2_BYTES_PER_LINE) + 1;
-               v.req_addr(LOG2_DATA_BYTES_MASK-1 downto 0) := (others => '0');
+                v.req_addr(CFG_DLOG2_BYTES_PER_LINE-1 downto 0) := (others => '0');
             else
                 v.req_addr := r.req_addr + 1;
             end if;

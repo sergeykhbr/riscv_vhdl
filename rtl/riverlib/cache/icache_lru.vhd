@@ -81,6 +81,7 @@ architecture arch_icache_lru of icache_lru is
   type RegistersType is record
       req_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
       req_addr_next : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+      write_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
       state : std_logic_vector(3 downto 0);
       req_mem_valid : std_logic;
       mem_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
@@ -93,13 +94,14 @@ architecture arch_icache_lru of icache_lru is
       load_fault : std_logic;
       req_flush : std_logic;
       req_flush_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-      req_flush_cnt : std_logic_vector(CFG_ILOG2_LINES_PER_WAY-1 downto 0);
-      flush_cnt : std_logic_vector(CFG_ILOG2_LINES_PER_WAY-1 downto 0);
+      req_flush_cnt : std_logic_vector(CFG_ILOG2_LINES_PER_WAY+CFG_ILOG2_NWAYS-1 downto 0);
+      flush_cnt : std_logic_vector(CFG_ILOG2_LINES_PER_WAY+CFG_ILOG2_NWAYS-1 downto 0);
       cache_line_i : std_logic_vector(ICACHE_LINE_BITS-1 downto 0);
   end record;
 
   constant R_RESET : RegistersType := (
     (others => '0'), (others => '0'),       -- req_addr, req_addr_next
+    (others => '0'),                        -- write_addr
     State_Flush,                            -- state
     '0', (others => '0'),                   -- req_mem_valid, mem_addr,
     (others => '0'),                        -- burst_cnt
@@ -126,7 +128,7 @@ architecture arch_icache_lru of icache_lru is
   signal line_rdata_o : std_logic_vector(ICACHE_LINE_BITS+15 downto 0);
   signal line_rflags_o : std_logic_vector(ITAG_FL_TOTAL-1 downto 0);
   signal line_hit_o : std_logic;
-  signal line_miss_next_o : std_logic;
+  signal line_hit_next_o : std_logic;
 
 begin
 
@@ -151,7 +153,7 @@ begin
       o_rdata => line_rdata_o,
       o_rflags => line_rflags_o,
       o_hit => line_hit_o,
-      o_miss_next => line_miss_next_o
+      o_hit_next => line_hit_next_o
   );
 
 
@@ -159,7 +161,7 @@ begin
                 i_resp_ready, i_req_mem_ready, 
                 i_mem_data_valid, i_mem_data, i_mem_load_fault, 
                 i_mpu_flags, i_flush_address, i_flush_valid,
-                line_raddr_o, line_rdata_o, line_rflags_o, line_hit_o, line_miss_next_o, r)
+                line_raddr_o, line_rdata_o, line_rflags_o, line_hit_o, line_hit_next_o, r)
     variable v : RegistersType;
     variable v_last : std_logic;
     variable v_req_ready : std_logic;
@@ -204,10 +206,12 @@ begin
             v.req_flush_cnt := (others => '1');
             v.req_flush_addr := (others => '0');
         elsif and_reduce(i_flush_address(CFG_ILOG2_BYTES_PER_LINE-1 downto 1)) = '1' then
-            v.req_flush_cnt := conv_std_logic_vector(1, CFG_ILOG2_LINES_PER_WAY);
+            v.req_flush_cnt := conv_std_logic_vector(2*ICACHE_WAYS-1,
+                               CFG_ILOG2_LINES_PER_WAY+CFG_ILOG2_NWAYS);
             v.req_flush_addr := i_flush_address;
         else
-            v.req_flush_cnt := (others => '0');
+            v.req_flush_cnt := conv_std_logic_vector(ICACHE_WAYS-1,
+                               CFG_ILOG2_LINES_PER_WAY+CFG_ILOG2_NWAYS);
             v.req_flush_addr := i_flush_address;
         end if;
     end if;
@@ -228,8 +232,8 @@ begin
                 v.req_addr := (others => '0');
                 v.flush_cnt := (others => '1');
             else
-                v.req_addr := r.req_flush_addr(BUS_ADDR_WIDTH-1 downto LOG2_DATA_BYTES_MASK)
-                              & zero64(LOG2_DATA_BYTES_MASK-1 downto 0);
+                v.req_addr := r.req_flush_addr(BUS_ADDR_WIDTH-1 downto CFG_ILOG2_BYTES_PER_LINE)
+                              & zero64(CFG_ILOG2_BYTES_PER_LINE-1 downto 0);
                 v.flush_cnt := r.req_flush_cnt;
             end if;
         else
@@ -244,7 +248,7 @@ begin
         end if;
     when State_CheckHit =>
         vb_resp_data := vb_cached_data;
-        if line_hit_o = '1' then
+        if line_hit_o = '1' and line_hit_next_o = '1' then
             -- Hit
             v_req_ready := '1';
             v_resp_valid := '1';
@@ -266,12 +270,14 @@ begin
     when State_CheckMPU =>
         v.req_mem_valid := '1';
         v.state := State_WaitGrant;
+        v.write_addr := r.req_addr;
 
         if i_mpu_flags(CFG_MPU_FL_CACHABLE) = '1' then
-            if line_miss_next_o = '0' then
+            if line_hit_o = '0' then
                 v.mem_addr := r.req_addr(BUS_ADDR_WIDTH-1 downto CFG_ILOG2_BYTES_PER_LINE)
                             & zero64(CFG_ILOG2_BYTES_PER_LINE-1 downto 0);
             else
+                v.write_addr := r.req_addr_next;
                 v.mem_addr := r.req_addr_next(BUS_ADDR_WIDTH-1 downto CFG_ILOG2_BYTES_PER_LINE)
                             & zero64(CFG_ILOG2_BYTES_PER_LINE-1 downto 0);
             end if;
@@ -308,6 +314,8 @@ begin
             end loop;
             if or_reduce(r.burst_cnt) = '0' then
                 v.state := State_CheckResp;
+                v.write_addr := r.req_addr;      -- Swap addres for 1 clock to write line
+                v.req_addr := r.write_addr;
             else
                 v.burst_cnt := r.burst_cnt - 1;
             end if;
@@ -317,14 +325,12 @@ begin
             end if;
         end if;
     when State_CheckResp =>
+        v.req_addr := r.write_addr;              -- Restore req_addr after line write
         if r.cached = '1' then
             v.state := State_SetupReadAdr;
             v_line_cs := '1';
             v_line_wflags(TAG_FL_VALID) := '1';
             vb_line_wstrb := (others => '1');  -- write full line
-            if line_miss_next_o = '1' then
-                vb_line_addr := r.req_addr_next;
-            end if;
         else
             v_resp_valid := '1';
             vb_resp_data := vb_uncached_data;
@@ -344,7 +350,14 @@ begin
             v.state := State_Idle;
         else 
             v.flush_cnt := r.flush_cnt - 1;
-            v.req_addr := r.req_addr + ICACHE_BYTES_PER_LINE;
+            if r.req_addr(CFG_ILOG2_NWAYS-1 downto 0) =
+               conv_std_logic_vector(ICACHE_WAYS-1, CFG_ILOG2_NWAYS) then
+                v.req_addr(BUS_ADDR_WIDTH-1 downto CFG_ILOG2_BYTES_PER_LINE) := 
+                    r.req_addr(BUS_ADDR_WIDTH-1 downto CFG_ILOG2_BYTES_PER_LINE) + 1;
+                v.req_addr(CFG_ILOG2_BYTES_PER_LINE-1 downto 0) := (others => '0');
+            else
+                v.req_addr := r.req_addr + 1;
+            end if;
         end if;
     when others =>
     end case;

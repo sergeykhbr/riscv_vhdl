@@ -582,31 +582,42 @@ package river_cfg is
   --! @param[out] o_exception Unimplemented instruction
   --! @param[out] o_instr_load_fault Instruction fetched from fault address
   component InstrDecoder is generic (
-    async_reset : boolean
+    async_reset : boolean;
+    fpu_ena : boolean
   );
   port (
     i_clk  : in std_logic;
     i_nrst : in std_logic;
-    i_any_hold : in std_logic;
-    i_f_valid : in std_logic;
-    i_f_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    i_f_instr : in std_logic_vector(31 downto 0);
-    i_instr_load_fault : in std_logic;
-    o_valid : out std_logic;
-    o_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    o_instr : out std_logic_vector(31 downto 0);
-    o_memop_store : out std_logic;
-    o_memop_load : out std_logic;
-    o_memop_sign_ext : out std_logic;
-    o_memop_size : out std_logic_vector(1 downto 0);
-    o_rv32 : out std_logic;
-    o_f64 : out std_logic;
-    o_compressed : out std_logic;
-    o_unsigned_op : out std_logic;
-    o_isa_type : out std_logic_vector(ISA_Total-1 downto 0);
-    o_instr_vec : out std_logic_vector(Instr_Total-1 downto 0);
-    o_exception : out std_logic;
-    o_instr_load_fault : out std_logic
+    i_any_hold : in std_logic;                               -- Hold pipeline by any reason
+    i_f_valid : in std_logic;                                -- Fetch input valid
+    i_f_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0); -- Fetched pc
+    i_f_instr : in std_logic_vector(31 downto 0);            -- Fetched instruction value
+    i_instr_load_fault : in std_logic;                       -- Instruction fetched from fault address
+    i_instr_executable : in std_logic;                       -- MPU flag
+
+    o_radr1 : out std_logic_vector(5 downto 0);
+    o_radr2 : out std_logic_vector(5 downto 0);
+    o_waddr : out std_logic_vector(5 downto 0);
+    o_imm : out std_logic_vector(RISCV_ARCH-1 downto 0);
+
+    i_e_ready : in std_logic;
+    i_e_fencei : in std_logic;
+    o_valid : out std_logic;                                 -- Current output values are valid
+    o_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);  -- Current instruction pointer value
+    o_instr : out std_logic_vector(31 downto 0);             -- Current instruction value
+    o_memop_store : out std_logic;                           -- Store to memory operation
+    o_memop_load : out std_logic;                            -- Load from memoru operation
+    o_memop_sign_ext : out std_logic;                        -- Load memory value with sign extending
+    o_memop_size : out std_logic_vector(1 downto 0);         -- Memory transaction size
+    o_rv32 : out std_logic;                                  -- 32-bits instruction
+    o_compressed : out std_logic;                            -- 16-bits opcode (C-extension)
+    o_f64 : out std_logic;                                   -- 64-bits FPU (D-extension)
+    o_unsigned_op : out std_logic;                           -- Unsigned operands
+    o_isa_type : out std_logic_vector(ISA_Total-1 downto 0); -- Instruction format accordingly with ISA
+    o_instr_vec : out std_logic_vector(Instr_Total-1 downto 0); -- One bit per decoded instruction bus
+    o_exception : out std_logic;                             -- Unimplemented instruction
+    o_instr_load_fault : out std_logic;                      -- Instruction fetched from fault address
+    o_instr_executable : out std_logic                       -- MPU flag
   );
   end component; 
 

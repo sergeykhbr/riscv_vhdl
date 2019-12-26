@@ -95,6 +95,7 @@ architecture arch_Processor of Processor is
     type FetchType is record
         req_fire : std_logic;
         instr_load_fault : std_logic;
+        instr_executable : std_logic;
         valid : std_logic;
         pc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
         instr : std_logic_vector(31 downto 0);
@@ -119,6 +120,11 @@ architecture arch_Processor of Processor is
         instr_vec : std_logic_vector(Instr_Total-1 downto 0);
         exception : std_logic;
         instr_load_fault : std_logic;
+        instr_executable : std_logic;
+        radr1 : std_logic_vector(5 downto 0);
+        radr2 : std_logic_vector(5 downto 0);
+        waddr : std_logic_vector(5 downto 0);
+        imm : std_logic_vector(RISCV_ARCH-1 downto 0);
     end record;
 
     type ExecuteType is record
@@ -156,7 +162,10 @@ architecture arch_Processor of Processor is
         memop_store : std_logic;
         memop_size : std_logic_vector(1 downto 0);
         memop_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-        pipeline_hold : std_logic;                            -- Hold pipeline from Execution stage
+        d_ready : std_logic;                     -- Hold pipeline from Execution stage
+        fence : std_logic;                       -- instruction FENCE
+        fencei : std_logic;                      -- instruction FENCE.I
+        pipeline_hold : std_logic;               -- Hold pipeline from Execution stage
         call : std_logic;
         ret : std_logic;
     end record;
@@ -285,7 +294,8 @@ begin
         i_br_instr_fetch => dbg.br_instr_fetch);
         
     dec0 : InstrDecoder generic map (
-        async_reset => async_reset
+        async_reset => async_reset,
+        fpu_ena => fpu_ena
       ) port map (
         i_clk => i_clk,
         i_nrst => i_nrst,
@@ -294,6 +304,13 @@ begin
         i_f_pc => w.f.pc,
         i_f_instr => w.f.instr,
         i_instr_load_fault => w.f.instr_load_fault,
+        i_instr_executable => w.f.instr_executable,
+        o_radr1 => w.d.radr1,
+        o_radr2 => w.d.radr2,
+        o_waddr => w.d.waddr,
+        o_imm => w.d.imm,
+        i_e_ready => w.e.d_ready,
+        i_e_fencei => w.e.fencei,
         o_valid => w.d.instr_valid,
         o_pc => w.d.pc,
         o_instr => w.d.instr,
@@ -308,7 +325,8 @@ begin
         o_isa_type => w.d.isa_type,
         o_instr_vec => w.d.instr_vec,
         o_exception => w.d.exception,
-        o_instr_load_fault => w.d.instr_load_fault);
+        o_instr_load_fault => w.d.instr_load_fault,
+        o_instr_executable => w.d.instr_executable);
 
     exec0 : InstrExecute generic map (
         async_reset => async_reset

@@ -25,7 +25,8 @@ use riverlib.river_cfg.all;
 
 
 entity InstrDecoder is generic (
-    async_reset : boolean
+    async_reset : boolean;
+    fpu_ena : boolean
   );
   port (
     i_clk  : in std_logic;
@@ -35,7 +36,15 @@ entity InstrDecoder is generic (
     i_f_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0); -- Fetched pc
     i_f_instr : in std_logic_vector(31 downto 0);            -- Fetched instruction value
     i_instr_load_fault : in std_logic;                       -- Instruction fetched from fault address
+    i_instr_executable : in std_logic;                       -- MPU flag
 
+    o_radr1 : out std_logic_vector(5 downto 0);
+    o_radr2 : out std_logic_vector(5 downto 0);
+    o_waddr : out std_logic_vector(5 downto 0);
+    o_imm : out std_logic_vector(RISCV_ARCH-1 downto 0);
+
+    i_e_ready : in std_logic;
+    i_e_fencei : in std_logic;
     o_valid : out std_logic;                                 -- Current output values are valid
     o_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);  -- Current instruction pointer value
     o_instr : out std_logic_vector(31 downto 0);             -- Current instruction value
@@ -50,7 +59,8 @@ entity InstrDecoder is generic (
     o_isa_type : out std_logic_vector(ISA_Total-1 downto 0); -- Instruction format accordingly with ISA
     o_instr_vec : out std_logic_vector(Instr_Total-1 downto 0); -- One bit per decoded instruction bus
     o_exception : out std_logic;                             -- Unimplemented instruction
-    o_instr_load_fault : out std_logic                       -- Instruction fetched from fault address
+    o_instr_load_fault : out std_logic;                      -- Instruction fetched from fault address
+    o_instr_executable : out std_logic                       -- MPU flag
   );
 end; 
  
@@ -127,7 +137,13 @@ architecture arch_InstrDecoder of InstrDecoder is
       f64 : std_logic;
       compressed : std_logic;
       instr_load_fault : std_logic;
+      instr_executable : std_logic;
+
       instr_unimplemented : std_logic;
+      radr1 : std_logic_vector(5 downto 0);
+      radr2 : std_logic_vector(5 downto 0);
+      waddr : std_logic_vector(5 downto 0);
+      imm : std_logic_vector(RISCV_ARCH-1 downto 0);
   end record;
 
   constant R_RESET : RegistersType := (
@@ -135,7 +151,12 @@ architecture arch_InstrDecoder of InstrDecoder is
     (others => '0'), (others => '0'), '0',   -- instr_vec, instr, memop_store
     '0', '0', "00",                          -- memop_load, memop_sign_ext, memop_size
     '0', '0', '0',                           -- unsigned_op, rv32, f64
-    '0', '0', '0'                            -- compressed, instr_load_fault, instr_unimpl
+    '0', '0', '0',                           -- compressed, instr_load_fault, instr_executable
+    '0',                                     -- instr_unimpl
+     (others => '0'),                        -- radr1
+     (others => '0'),                        -- radr2
+     (others => '0'),                        -- waddr
+     (others => '0')                         -- imm
   );
 
   signal r, rin : RegistersType;
@@ -143,7 +164,8 @@ architecture arch_InstrDecoder of InstrDecoder is
 begin
 
 
-  comb : process(i_nrst, i_any_hold, i_f_valid, i_f_pc, i_f_instr, i_instr_load_fault, r)
+  comb : process(i_nrst, i_any_hold, i_f_valid, i_f_pc, i_f_instr, i_instr_load_fault,
+                i_instr_executable, i_e_ready, i_e_fencei, r)
     variable v : RegistersType;
     variable w_o_valid : std_logic;
     variable w_error : std_logic;
@@ -154,6 +176,10 @@ begin
     variable wb_opcode2 : std_logic_vector(2 downto 0);
     variable wb_dec : std_logic_vector(Instr_Total-1 downto 0);
     variable wb_isa_type : std_logic_vector(ISA_Total-1 downto 0);
+    variable vb_radr1 : std_logic_vector(5 downto 0);
+    variable vb_radr2 : std_logic_vector(5 downto 0);
+    variable vb_waddr : std_logic_vector(5 downto 0);
+    variable vb_imm : std_logic_vector(RISCV_ARCH-1 downto 0);
   begin
 
     v := r;
@@ -164,6 +190,10 @@ begin
     wb_opcode2 := wb_instr(14 downto 12);
     wb_dec := (others => '0');
     wb_isa_type := (others => '0');
+    vb_radr1 := (others => '0');
+    vb_radr2 := (others => '0');
+    vb_waddr := (others => '0');
+    vb_imm := (others => '0');
 
     if wb_instr(1 downto 0) /= "11" then
         w_compressed := '1';
@@ -177,6 +207,10 @@ begin
             wb_instr_out(19 downto 15) := "00010";                     -- rs1 = sp
             wb_instr_out(29 downto 22) :=
                 wb_instr(10 downto 7) & wb_instr(12 downto 11) & wb_instr(5) & wb_instr(6);
+            vb_radr1 := "000010";                       -- rs1 = sp
+            vb_waddr := "001" & wb_instr(4 downto 2);   -- rd
+            vb_imm(9 downto 2) := wb_instr(10 downto 7) & wb_instr(12 downto 11)
+                                & wb_instr(5) & wb_instr(6);
         when OPCODE_C_NOP_ADDI =>
             wb_isa_type(ISA_I_type) := '1';
             wb_dec(Instr_ADDI) := '1';
@@ -186,12 +220,19 @@ begin
             if wb_instr(12) = '1' then
                 wb_instr_out(31 downto 25) := (others => '1');
             end if;
+            vb_radr1 := '0' & wb_instr(11 downto 7);      -- rs1
+            vb_waddr := '0' & wb_instr(11 downto 7);      -- rd
+            vb_imm(4 downto 0) := wb_instr(6 downto 2);
+            vb_imm(RISCV_ARCH-1 downto 5) := (others => wb_instr(12));
         when OPCODE_C_SLLI =>
             wb_isa_type(ISA_I_type) := '1';
             wb_dec(Instr_SLLI) := '1';
             wb_instr_out(11 downto 7) := wb_instr(11 downto 7);      -- rd
             wb_instr_out(19 downto 15) := wb_instr(11 downto 7);     -- rs1
             wb_instr_out(25 downto 20) := wb_instr(12) & wb_instr(6 downto 2);  -- shamt
+            vb_radr1 := '0' & wb_instr(11 downto 7);                 -- rs1
+            vb_waddr := '0' & wb_instr(11 downto 7);                 -- rd
+            vb_imm(5 downto 0) := wb_instr(12) & wb_instr(6 downto 2);
         when OPCODE_C_JAL_ADDIW =>
             -- JAL is the RV32C only instruction
             wb_isa_type(ISA_I_type) := '1';
@@ -202,6 +243,10 @@ begin
             if wb_instr(12) = '1' then
                 wb_instr_out(31 downto 25) := (others => '1');
             end if;
+            vb_radr1 := '0' & wb_instr(11 downto 7);                 -- rs1
+            vb_waddr := '0' & wb_instr(11 downto 7);                 -- rd
+            vb_imm(4 downto 0) := wb_instr(6 downto 2);
+            vb_imm(RISCV_ARCH-1 downto 5) := (others => wb_instr(12));
         when OPCODE_C_LW =>
             wb_isa_type(ISA_I_type) := '1';
             wb_dec(Instr_LW) := '1';
@@ -209,6 +254,9 @@ begin
             wb_instr_out(19 downto 15) := "01" & wb_instr(9 downto 7);  -- rs1
             wb_instr_out(26 downto 22) :=
                 wb_instr(5) & wb_instr(12 downto 10) & wb_instr(6);
+            vb_radr1 := "001" & wb_instr(9 downto 7);   -- rs1
+            vb_waddr := "001" & wb_instr(4 downto 2);   -- rd
+            vb_imm(6 downto 2) := wb_instr(5) & wb_instr(12 downto 10) & wb_instr(6);
         when OPCODE_C_LI =>  -- ADDI rd = r0 + imm
             wb_isa_type(ISA_I_type) := '1';
             wb_dec(Instr_ADDI) := '1';
@@ -217,6 +265,9 @@ begin
             if wb_instr(12) = '1' then
                 wb_instr_out(31 downto 25) := (others => '1');
             end if;
+            vb_waddr := '0' & wb_instr(11 downto 7);      -- rd
+            vb_imm(4 downto 0) := wb_instr(6 downto 2);
+            vb_imm(RISCV_ARCH-1 downto 5) := (others => wb_instr(12));
         when OPCODE_C_LWSP =>
             wb_isa_type(ISA_I_type) := '1';
             wb_dec(Instr_LW) := '1';
@@ -224,6 +275,9 @@ begin
             wb_instr_out(19 downto 15) := "00010";                 -- rs1 = sp
             wb_instr_out(27 downto 22) :=
                 wb_instr(3 downto 2) & wb_instr(12) & wb_instr(6 downto 4);
+            vb_radr1 := "000010";                        -- rs1 = sp
+            vb_waddr := '0' & wb_instr(11 downto 7);     -- rd
+            vb_imm(7 downto 2) := wb_instr(3 downto 2) & wb_instr(12) & wb_instr(6 downto 4);
         when OPCODE_C_LD =>
             wb_isa_type(ISA_I_type) := '1';
             wb_dec(Instr_LD) := '1';
@@ -231,6 +285,9 @@ begin
             wb_instr_out(19 downto 15) := "01" & wb_instr(9 downto 7);  -- rs1
             wb_instr_out(27 downto 23) :=
                 wb_instr(6) & wb_instr(5) & wb_instr(12 downto 10);
+            vb_radr1 := "001" & wb_instr(9 downto 7);   -- rs1
+            vb_waddr := "001" & wb_instr(4 downto 2);   -- rd
+            vb_imm(7 downto 3) := wb_instr(6) & wb_instr(5) & wb_instr(12 downto 10);
         when OPCODE_C_ADDI16SP_LUI =>
             if wb_instr(11 downto 7) = "00010" then
                 wb_isa_type(ISA_I_type) := '1';
@@ -242,6 +299,10 @@ begin
                 if wb_instr(12) = '1' then
                     wb_instr_out(31 downto 29) := (others => '1');
                 end if;
+                vb_radr1 := "000010";    -- rs1 = sp
+                vb_waddr := "000010";    -- rd = sp
+                vb_imm(8 downto 4) := wb_instr(4 downto 3) & wb_instr(5) & wb_instr(2) & wb_instr(6);
+                vb_imm(RISCV_ARCH-1 downto 9) := (others => wb_instr(12));
             else
                 wb_isa_type(ISA_U_type) := '1';
                 wb_dec(Instr_LUI) := '1';
@@ -250,6 +311,9 @@ begin
                 if wb_instr(12) = '1' then
                     wb_instr_out(31 downto 17) := (others => '1');
                 end if;
+                vb_waddr := '0' & wb_instr(11 downto 7);             -- rd
+                vb_imm(16 downto 12) := wb_instr(6 downto 2);
+                vb_imm(RISCV_ARCH-1 downto 17) := (others => wb_instr(12));
             end if;
         when OPCODE_C_LDSP =>
             wb_isa_type(ISA_I_type) := '1';
@@ -258,6 +322,9 @@ begin
             wb_instr_out(19 downto 15) := "00010";               -- rs1 = sp
             wb_instr_out(28 downto 23) :=
                 wb_instr(4 downto 2) & wb_instr(12) & wb_instr(6 downto 5);
+            vb_radr1 := "000010";                                -- rs1 = sp
+            vb_waddr := '0' & wb_instr(11 downto 7);             -- rd
+            vb_imm(8 downto 3) := wb_instr(4 downto 2) & wb_instr(12) & wb_instr(6 downto 5);
         when OPCODE_C_MATH =>
             if wb_instr(11 downto 10) = "00" then
                 wb_isa_type(ISA_I_type) := '1';
@@ -265,12 +332,18 @@ begin
                 wb_instr_out(11 downto 7) := "01" & wb_instr(9 downto 7);   -- rd
                 wb_instr_out(19 downto 15) := "01" & wb_instr(9 downto 7);  -- rs1
                 wb_instr_out(25 downto 20) := wb_instr(12) & wb_instr(6 downto 2);  -- shamt
+                vb_radr1 := "001" & wb_instr(9 downto 7);            -- rs1
+                vb_waddr := "001" & wb_instr(9 downto 7);            -- rd
+                vb_imm(5 downto 0) := wb_instr(12) & wb_instr(6 downto 2);  -- shamt
             elsif wb_instr(11 downto 10) = "01" then
                 wb_isa_type(ISA_I_type) := '1';
                 wb_dec(Instr_SRAI) := '1';
                 wb_instr_out(11 downto 7) := "01" & wb_instr(9 downto 7);   -- rd
                 wb_instr_out(19 downto 15) := "01" & wb_instr(9 downto 7);  -- rs1
                 wb_instr_out(25 downto 20) := wb_instr(12) & wb_instr(6 downto 2);  -- shamt
+                vb_radr1 := "001" & wb_instr(9 downto 7);            -- rs1
+                vb_waddr := "001" & wb_instr(9 downto 7);            -- rd
+                vb_imm(5 downto 0) := wb_instr(12) & wb_instr(6 downto 2);  -- shamt
             elsif wb_instr(11 downto 10) = "10" then
                 wb_isa_type(ISA_I_type) := '1';
                 wb_dec(Instr_ANDI) := '1';
@@ -280,11 +353,18 @@ begin
                 if wb_instr(12) = '1' then
                     wb_instr_out(31 downto 25) := (others => '1');
                 end if;
+                vb_radr1 := "001" & wb_instr(9 downto 7);            -- rs1
+                vb_waddr := "001" & wb_instr(9 downto 7);            -- rd
+                vb_imm(4 downto 0) :=  wb_instr(6 downto 2);
+                vb_imm(RISCV_ARCH-1 downto 5) := (others => wb_instr(12));
             elsif wb_instr(12) = '0' then
                 wb_isa_type(ISA_R_type) := '1';
                 wb_instr_out(11 downto 7) := "01" & wb_instr(9 downto 7);   -- rd
                 wb_instr_out(19 downto 15) := "01" & wb_instr(9 downto 7);  -- rs1
                 wb_instr_out(24 downto 20) := "01" & wb_instr(4 downto 2);  -- rs2
+                vb_radr1 := "001" & wb_instr(9 downto 7);            -- rs1
+                vb_radr2 := "001" & wb_instr(4 downto 2);            -- rs2
+                vb_waddr := "001" & wb_instr(9 downto 7);            -- rd
                 case wb_instr(6 downto 5) is
                 when "00" =>
                     wb_dec(Instr_SUB) := '1';
@@ -300,6 +380,9 @@ begin
                 wb_instr_out(11 downto 7) := "01" & wb_instr(9 downto 7);   -- rd
                 wb_instr_out(19 downto 15) := "01" & wb_instr(9 downto 7);  -- rs1
                 wb_instr_out(24 downto 20) := "01" & wb_instr(4 downto 2);  -- rs2
+                vb_radr1 := "001" & wb_instr(9 downto 7);            -- rs1
+                vb_radr2 := "001" & wb_instr(4 downto 2);            -- rs2
+                vb_waddr := "001" & wb_instr(9 downto 7);            -- rd
                 case wb_instr(6 downto 5) is
                 when "00" =>
                     wb_dec(Instr_SUBW) := '1';
@@ -315,10 +398,13 @@ begin
                 if wb_instr(6 downto 2) = "00000" then
                     wb_dec(Instr_JALR) := '1';
                     wb_instr_out(19 downto 15) := wb_instr(11 downto 7);  -- rs1
+                    vb_radr1 := '0' & wb_instr(11 downto 7);            -- rs1
                 else
                     wb_dec(Instr_ADDI) := '1';
                     wb_instr_out(11 downto 7) := wb_instr(11 downto 7);   -- rd
                     wb_instr_out(19 downto 15) := wb_instr(6 downto 2);   -- rs1
+                    vb_radr1 := '0' & wb_instr(6 downto 2);               -- rs1
+                    vb_waddr := '0' & wb_instr(11 downto 7);              -- rd
                 end if;
             else
                 if wb_instr(11 downto 7) = "00000" and wb_instr(6 downto 2) = "00000" then
@@ -327,12 +413,17 @@ begin
                     wb_dec(Instr_JALR) := '1';
                     wb_instr_out(11 downto 7) := "00001";                 -- rd = ra
                     wb_instr_out(19 downto 15) := wb_instr(11 downto 7);  -- rs1
+                    vb_radr1 := "000001";
+                    vb_waddr := "000001";
                 else
                     wb_dec(Instr_ADD) := '1';
                     wb_isa_type(ISA_R_type) := '1';
                     wb_instr_out(11 downto 7) := wb_instr(11 downto 7);   -- rd
                     wb_instr_out(19 downto 15) := wb_instr(11 downto 7);  -- rs1
                     wb_instr_out(24 downto 20) := wb_instr(6 downto 2);   -- rs2
+                    vb_radr1 := '0' & wb_instr(11 downto 7);              -- rs1
+                    vb_radr2 := '0' & wb_instr(6 downto 2);               -- rs2
+                    vb_waddr := '0' & wb_instr(11 downto 7);              -- rd
                 end if;
             end if;
         when OPCODE_C_J =>   -- JAL with rd = 0
@@ -350,6 +441,9 @@ begin
                 wb_instr_out(19 downto 12) := (others => '1'); -- imm19_12
                 wb_instr_out(31) := '1';                 -- imm20
             end if;
+            vb_imm(10 downto 1) := wb_instr(8) & wb_instr(10 downto 9) & wb_instr(6) & wb_instr(7)
+                                 & wb_instr(2) & wb_instr(11) & wb_instr(5 downto 3);
+            vb_imm(RISCV_ARCH-1 downto 11) := (others => wb_instr(12));
         when OPCODE_C_SW =>
             wb_isa_type(ISA_S_type) := '1';
             wb_dec(Instr_SW) := '1';
@@ -357,6 +451,9 @@ begin
             wb_instr_out(19 downto 15) := "01" & wb_instr(9 downto 7);    -- rs1
             wb_instr_out(11 downto 9) := wb_instr(11 downto 10) & wb_instr(6);
             wb_instr_out(26 downto 25) := wb_instr(5) & wb_instr(12);
+            vb_radr1 := "001" & wb_instr(9 downto 7);    -- rs1
+            vb_radr2 := "001" & wb_instr(4 downto 2);    -- rs2
+            vb_imm(6 downto 2) := wb_instr(5) & wb_instr(12) & wb_instr(11 downto 10) & wb_instr(6);
         when OPCODE_C_BEQZ =>
             wb_isa_type(ISA_SB_type) := '1';
             wb_dec(Instr_BEQ) := '1';
@@ -368,6 +465,10 @@ begin
                 wb_instr_out(7) := '1';
                 wb_instr_out(31) := '1';
             end if;
+            vb_radr1 := "001" & wb_instr(9 downto 7);    -- rs1
+            vb_imm(7 downto 1) := wb_instr(6 downto 5) & wb_instr(2)
+                                & wb_instr(11 downto 10) & wb_instr(4 downto 3);
+            vb_imm(RISCV_ARCH-1 downto 8) := (others => wb_instr(12));
         when OPCODE_C_SWSP =>
             wb_isa_type(ISA_S_type) := '1';
             wb_dec(Instr_SW) := '1';
@@ -375,6 +476,9 @@ begin
             wb_instr_out(19 downto 15) := "00010";             -- rs1 = sp
             wb_instr_out(11 downto 9) := wb_instr(11 downto 9);
             wb_instr_out(27 downto 25) := wb_instr(8 downto 7) & wb_instr(12);
+            vb_radr1 := "000010";                    -- rs1 = sp
+            vb_radr2 := '0' & wb_instr(6 downto 2);  -- rs2
+            vb_imm(7 downto 2) := wb_instr(8 downto 7) & wb_instr(12) & wb_instr(11 downto 9);
         when OPCODE_C_SD =>
             wb_isa_type(ISA_S_type) := '1';
             wb_dec(Instr_SD) := '1';
@@ -382,6 +486,9 @@ begin
             wb_instr_out(19 downto 15) := "01" & wb_instr(9 downto 7);  -- rs1
             wb_instr_out(11 downto 10) := wb_instr(11 downto 10);
             wb_instr_out(27 downto 25) := wb_instr(6 downto 5) & wb_instr(12);
+            vb_radr1 := "001" & wb_instr(9 downto 7);  -- rs1
+            vb_radr2 := "001" & wb_instr(4 downto 2);  -- rs2
+            vb_imm(7 downto 3) := wb_instr(6 downto 5) & wb_instr(12) & wb_instr(11 downto 10);
         when OPCODE_C_BNEZ =>
             wb_isa_type(ISA_SB_type) := '1';
             wb_dec(Instr_BNE) := '1';
@@ -393,6 +500,10 @@ begin
                 wb_instr_out(7) := '1';
                 wb_instr_out(31) := '1';
             end if;
+            vb_radr1 := "001" & wb_instr(9 downto 7);    -- rs1
+            vb_imm(7 downto 1) := wb_instr(6 downto 5) & wb_instr(2)
+                               & wb_instr(11 downto 10) & wb_instr(4 downto 3);
+            vb_imm(RISCV_ARCH-1 downto 8) := (others => wb_instr(12));
         when OPCODE_C_SDSP =>
             wb_isa_type(ISA_S_type) := '1';
             wb_dec(Instr_SD) := '1';
@@ -400,6 +511,9 @@ begin
             wb_instr_out(19 downto 15) := "00010";               -- rs1 = sp
             wb_instr_out(11 downto 10) := wb_instr(11 downto 10);
             wb_instr_out(28 downto 25) := wb_instr(9 downto 7) & wb_instr(12);
+            vb_radr1 := "000010";                          -- rs1 = sp
+            vb_radr2 := '0' & wb_instr(6 downto 2);        -- rs2
+            vb_imm(8 downto 3) := wb_instr(9 downto 7) & wb_instr(12) & wb_instr(11 downto 10);
         when others =>
             w_error := '1';
         end case;
@@ -407,6 +521,9 @@ begin
         case wb_opcode1 is
         when OPCODE_ADD =>
             wb_isa_type(ISA_R_type) := '1';
+            vb_radr1 := '0' & wb_instr(19 downto 15);
+            vb_radr2 := '0' & wb_instr(24 downto 20);
+            vb_waddr := '0' & wb_instr(11 downto 7);             -- rd
             case wb_opcode2 is
             when "000" =>
                 if wb_instr(31 downto 25) = "0000000" then
@@ -463,6 +580,10 @@ begin
             end case;
         when OPCODE_ADDI =>
             wb_isa_type(ISA_I_type) := '1';
+            vb_radr1 := '0' & wb_instr(19 downto 15);
+            vb_waddr := '0' & wb_instr(11 downto 7);             -- rd
+            vb_imm(11 downto 0) := wb_instr(31 downto 20);
+            vb_imm(RISCV_ARCH-1 downto 12) := (others => wb_instr(31));
             case wb_opcode2 is
             when "000" =>
                 wb_dec(Instr_ADDI) := '1';
@@ -491,6 +612,10 @@ begin
             end case;
         when OPCODE_ADDIW =>
             wb_isa_type(ISA_I_type) := '1';
+            vb_radr1 := '0' & wb_instr(19 downto 15);
+            vb_waddr := '0' & wb_instr(11 downto 7);             -- rd
+            vb_imm(11 downto 0) := wb_instr(31 downto 20);
+            vb_imm(RISCV_ARCH-1 downto 12) := (others => wb_instr(31));
             case wb_opcode2 is
             when "000" =>
                 wb_dec(Instr_ADDIW) := '1';
@@ -509,6 +634,9 @@ begin
             end case;
         when OPCODE_ADDW =>
             wb_isa_type(ISA_R_type) := '1';
+            vb_radr1 := '0' & wb_instr(19 downto 15);
+            vb_radr2 := '0' & wb_instr(24 downto 20);
+            vb_waddr := '0' & wb_instr(11 downto 7);             -- rd
             case wb_opcode2 is
             when "000" =>
                 if wb_instr(31 downto 25) = "0000000" then
@@ -556,8 +684,15 @@ begin
         when OPCODE_AUIPC =>
             wb_isa_type(ISA_U_type) := '1';
             wb_dec(Instr_AUIPC) := '1';
+            vb_waddr := '0' & wb_instr(11 downto 7);             -- rd
+            vb_imm(31 downto 12) := wb_instr(31 downto 12);
+            vb_imm(RISCV_ARCH-1 downto 32) := (others => wb_instr(31));
         when OPCODE_BEQ =>
             wb_isa_type(ISA_SB_type) := '1';
+            vb_radr1 := '0' & wb_instr(19 downto 15);
+            vb_radr2 := '0' & wb_instr(24 downto 20);
+            vb_imm(11 downto 1) := wb_instr(7) & wb_instr(30 downto 25) & wb_instr(11 downto 8);
+            vb_imm(RISCV_ARCH-1 downto 12) := (others => wb_instr(31));
             case wb_opcode2 is
             when "000" =>
                 wb_dec(Instr_BEQ) := '1';
@@ -577,8 +712,15 @@ begin
         when OPCODE_JAL =>
             wb_isa_type(ISA_UJ_type) := '1';
             wb_dec(Instr_JAL) := '1';
+            vb_waddr := '0' & wb_instr(11 downto 7);             -- rd
+            vb_imm(19 downto 1) := wb_instr(19 downto 12) & wb_instr(20) & wb_instr(30 downto 21);
+            vb_imm(RISCV_ARCH-1 downto 20) := (others => wb_instr(31));
         when OPCODE_JALR =>
             wb_isa_type(ISA_I_type) := '1';
+            vb_radr1 := '0' & wb_instr(19 downto 15);
+            vb_waddr := '0' & wb_instr(11 downto 7);             -- rd
+            vb_imm(11 downto 0) := wb_instr(31 downto 20);
+            vb_imm(RISCV_ARCH-1 downto 12) := (others => wb_instr(31));
             case wb_opcode2 is
             when "000" =>
                 wb_dec(Instr_JALR) := '1';
@@ -587,6 +729,10 @@ begin
             end case;
         when OPCODE_LB =>
             wb_isa_type(ISA_I_type) := '1';
+            vb_radr1 := '0' & wb_instr(19 downto 15);
+            vb_waddr := '0' & wb_instr(11 downto 7);             -- rd
+            vb_imm(11 downto 0) := wb_instr(31 downto 20);
+            vb_imm(RISCV_ARCH-1 downto 12) := (others => wb_instr(31));
             case wb_opcode2 is
             when "000" =>
                 wb_dec(Instr_LB) := '1';
@@ -608,8 +754,15 @@ begin
         when OPCODE_LUI =>
             wb_isa_type(ISA_U_type) := '1';
             wb_dec(Instr_LUI) := '1';
+            vb_waddr := '0' & wb_instr(11 downto 7);             -- rd
+            vb_imm(31 downto 12) := wb_instr(31 downto 12);
+            vb_imm(RISCV_ARCH-1 downto 32) := (others => wb_instr(31));
         when OPCODE_SB =>
             wb_isa_type(ISA_S_type) := '1';
+            vb_radr1 := '0' & wb_instr(19 downto 15);
+            vb_radr2 := '0' & wb_instr(24 downto 20);
+            vb_imm(11 downto 0) := wb_instr(31 downto 25) & wb_instr(11 downto 7);
+            vb_imm(RISCV_ARCH-1 downto 12) := (others => wb_instr(31));
             case wb_opcode2 is
             when "000" =>
                 wb_dec(Instr_SB) := '1';
@@ -624,6 +777,10 @@ begin
             end case;
         when OPCODE_CSRR =>
             wb_isa_type(ISA_I_type) := '1';
+            vb_radr1 := '0' & wb_instr(19 downto 15);
+            vb_waddr := '0' & wb_instr(11 downto 7);
+            vb_imm(11 downto 0) := wb_instr(31 downto 20);
+            vb_imm(RISCV_ARCH-1 downto 12) := (others => wb_instr(31));
             case wb_opcode2 is
             when "000" =>
                 if wb_instr = X"00000073" then
@@ -667,10 +824,14 @@ begin
             end case;
 
         when others =>
-            if CFG_HW_FPU_ENABLE then
+            if fpu_ena then
                 case wb_opcode1 is
                 when OPCODE_FPU_LD =>
                     wb_isa_type(ISA_I_type) := '1';
+                    vb_radr1 := '0' & wb_instr(19 downto 15);
+                    vb_waddr := '1' & wb_instr(11 downto 7);
+                    vb_imm(11 downto 0) := wb_instr(31 downto 20);
+                    vb_imm(RISCV_ARCH-1 downto 12) := (others => wb_instr(31));
                     if wb_opcode2 = "011" then
                         wb_dec(Instr_FLD) := '1';
                     else
@@ -678,6 +839,10 @@ begin
                     end if;
                 when OPCODE_FPU_SD =>
                     wb_isa_type(ISA_S_type) := '1';
+                    vb_radr1 := '0' & wb_instr(19 downto 15);
+                    vb_radr2 := '1' & wb_instr(24 downto 20);
+                    vb_imm(11 downto 0) := wb_instr(31 downto 25) & wb_instr(11 downto 7);
+                    vb_imm(RISCV_ARCH-1 downto 12) := (others => wb_instr(31));
                     if wb_opcode2 = "011" then
                         wb_dec(Instr_FSD) := '1';
                     else
@@ -685,6 +850,9 @@ begin
                     end if;
                 when OPCODE_FPU_OP =>
                     wb_isa_type(ISA_R_type) := '1';
+                    vb_radr1 := '0' & wb_instr(19 downto 15);
+                    vb_radr2 := '0' & wb_instr(24 downto 20);
+                    vb_waddr := '1' & wb_instr(11 downto 7);
                     case wb_instr(31 downto 25) is
                     when "0000001" =>
                         wb_dec(Instr_FADD_D) := '1';
@@ -725,6 +893,8 @@ begin
                             w_error := '1';
                         end if;
                     when "1101001" =>
+                        vb_radr1 := '1' & wb_instr(19 downto 15);
+                        vb_waddr := '0' & wb_instr(11 downto 7);             -- rd
                         if wb_instr(24 downto 20) = "00000" then
                             wb_dec(Instr_FCVT_D_W) := '1';
                         elsif wb_instr(24 downto 20) = "00001" then
@@ -737,12 +907,15 @@ begin
                             w_error := '1';
                         end if;
                     when "1110001" =>
+                        vb_radr2 := '1' & wb_instr(19 downto 15);
                         if wb_instr(24 downto 20) = "00000" and wb_opcode2 = "000" then
                             wb_dec(Instr_FMOV_X_D) := '1';
                         else
                             w_error := '1';
                         end if;
                     when "1111001" =>
+                        vb_radr1 := '1' & wb_instr(19 downto 15);
+                        vb_waddr := '0' & wb_instr(11 downto 7);             -- rd
                         if wb_instr(24 downto 20) = "00000" and wb_opcode2 = "000" then
                             wb_dec(Instr_FMOV_D_X) := '1';
                         else
@@ -762,12 +935,17 @@ begin
     end if;
 
 
-    if i_f_valid = '1' then
+    if i_e_ready = '1' and i_f_valid = '1' then
         v.valid := '1';
-        v.pc := i_f_pc;
+        if i_e_fencei = '1' then
+            v.pc := (others => '1');
+        else
+            v.pc := i_f_pc;
+        end if;
         v.instr := wb_instr_out;
         v.compressed := w_compressed;
         v.instr_load_fault := i_instr_load_fault;
+        v.instr_executable := i_instr_executable;
 
         v.isa_type := wb_isa_type;
         v.instr_vec := wb_dec;
@@ -815,6 +993,10 @@ begin
             or wb_dec(Instr_FSD);
         
         v.instr_unimplemented := w_error;
+        v.radr1 := vb_radr1;
+        v.radr2 := vb_radr2;
+        v.waddr := vb_waddr;
+        v.imm := vb_imm;
     elsif i_any_hold = '0' then
         v.valid := '0';
     end if;
@@ -839,6 +1021,12 @@ begin
     o_instr_vec <= r.instr_vec;
     o_exception <= r.instr_unimplemented;
     o_instr_load_fault <= r.instr_load_fault;
+    o_instr_executable <= r.instr_executable;
+
+    o_radr1 <= r.radr1;
+    o_radr2 <= r.radr2;
+    o_waddr <= r.waddr;
+    o_imm <= r.imm;
     
     rin <= v;
   end process;

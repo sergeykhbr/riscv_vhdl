@@ -46,7 +46,7 @@ entity tagmemcoupled is generic (
     o_rdata : out std_logic_vector(8*(2**lnbits)+15 downto 0);
     o_rflags : out std_logic_vector(flbits-1 downto 0);
     o_hit : out std_logic;
-    o_miss_next : out std_logic
+    o_hit_next : out std_logic
   );
 end; 
  
@@ -124,7 +124,7 @@ begin
     variable vb_o_raddr : std_logic_vector(abus-1 downto 0);
     variable vb_o_rdata : std_logic_vector(8*(2**lnbits)+15 downto 0);
     variable v_o_hit : std_logic;
-    variable v_o_miss_next : std_logic;
+    variable v_o_hit_next : std_logic;
     variable vb_o_rflags : std_logic_vector(flbits-1 downto 0);
   begin
 
@@ -184,24 +184,22 @@ begin
         vb_raddr_tag := lineo(EVEN).raddr;
         vb_o_rflags := lineo(EVEN).rflags;
 
+        v_o_hit := lineo(EVEN).hit;
         if v_use_overlay_r = '0' then
-            v_o_hit := lineo(EVEN).hit;
-            v_o_miss_next := '0';
+            v_o_hit_next := lineo(EVEN).hit;
         else
-            v_o_hit := lineo(EVEN).hit and lineo(ODD).hit;
-            v_o_miss_next := lineo(EVEN).hit and not lineo(ODD).hit;
+            v_o_hit_next := lineo(ODD).hit;
         end if;
     else
         vb_o_rdata := lineo(EVEN).rdata(15 downto 0) & lineo(ODD).rdata;
         vb_raddr_tag := lineo(ODD).raddr;
         vb_o_rflags := lineo(ODD).rflags;
 
+        v_o_hit := lineo(ODD).hit;
         if v_use_overlay_r = '0' then
-            v_o_hit := lineo(ODD).hit;
-            v_o_miss_next := '0';
+            v_o_hit_next := lineo(ODD).hit;
         else
-            v_o_hit := lineo(ODD).hit and lineo(EVEN).hit;
-            v_o_miss_next := lineo(ODD).hit and not lineo(EVEN).hit;
+            v_o_hit_next := lineo(EVEN).hit;
         end if;
     end if;
 
@@ -214,7 +212,7 @@ begin
     o_rdata <= vb_o_rdata;
     o_rflags <= vb_o_rflags;
     o_hit <= v_o_hit;
-    o_miss_next <= v_o_miss_next;
+    o_hit_next <= v_o_hit_next;
   end process;
 
   -- registers:
