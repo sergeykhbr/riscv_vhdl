@@ -742,15 +742,14 @@ void InstrExecute::comb() {
         }
     }
 
+    v_o_valid = r.valid;
+    vb_o_wdata = r.wval;
     if (w_multi_ready == 1) {
         v_o_valid = 1;
         vb_o_wdata = vb_res;
         v_scoreboard[r.waddr.read().to_int()].forward = vb_res;
     } else if (w_multi_busy == 1) {
         v_o_valid = 0;
-    } else {
-        v_o_valid = r.valid;
-        vb_o_wdata = r.wval;
     }
 
     if (i_dport_npc_write.read()) {

@@ -61,7 +61,6 @@ InstrFetch::InstrFetch(sc_module_name name_, bool async_reset) :
     sensitive << i_br_address_fetch;
     sensitive << i_br_instr_fetch;
     sensitive << r.wait_resp;
-    sensitive << r.pipeline_init;
     sensitive << r.br_address;
     sensitive << r.br_instr;
     sensitive << r.resp_address;

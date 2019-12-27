@@ -358,9 +358,6 @@ void DCacheLru::comb() {
         } else {
             // Miss
             v.state = State_CheckMPU;
-            if (r.req_write.read() == 1) {
-                v_resp_valid = 1;
-            }
         }
         break;
     case State_CheckMPU:
@@ -408,6 +405,8 @@ void DCacheLru::comb() {
                 (r.req_write.read() == 1 && r.cached.read() == 0)) {
                 v.state = State_WriteBus;
             } else {
+                // 1. uncached read
+                // 2. cached read or write
                 v.state = State_WaitResp;
             }
             v.req_mem_valid = 0;
@@ -451,11 +450,12 @@ void DCacheLru::comb() {
                 v.req_write = 0;
                 v_line_wflags[DTAG_FL_DIRTY] = 1;
                 vb_line_wdata = vb_cache_line_i_modified;
+                v_resp_valid = 1;
+                v.state = State_Idle;
             }
         } else {
-            if (r.req_write.read() == 0) {
-                v_resp_valid = 1;
-            }
+            // uncached read only (write goes to WriteBus)
+            v_resp_valid = 1;
             vb_resp_data = vb_uncached_data;
             v_resp_er_load_fault = r.load_fault;
             if (i_resp_ready.read() == 1) {
@@ -490,6 +490,7 @@ void DCacheLru::comb() {
                 } else {
                     // Non-cached write
                     v.state = State_Idle;
+                    v_resp_valid = 1;
                 }
             } else {
                 v.burst_cnt = r.burst_cnt.read() - 1;

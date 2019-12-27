@@ -258,7 +258,6 @@ private:
 
     sc_signal<bool> w_fetch_pipeline_hold;
     sc_signal<bool> w_any_pipeline_hold;
-    sc_signal<bool> w_exec_pipeline_hold;
 
     InstrFetch *fetch0;
     InstrDecoder *dec0;

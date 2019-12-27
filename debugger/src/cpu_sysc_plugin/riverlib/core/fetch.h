@@ -62,7 +62,6 @@ SC_MODULE(InstrFetch) {
  private:
     struct RegistersType {
         sc_signal<bool> wait_resp;
-        sc_signal<sc_uint<5>> pipeline_init;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> br_address;
         sc_signal<sc_uint<32>> br_instr;
 
@@ -75,7 +74,6 @@ SC_MODULE(InstrFetch) {
 
     void R_RESET(RegistersType &iv) {
         iv.wait_resp = 0;
-        iv.pipeline_init = 0;
         iv.br_address = ~0ul;
         iv.br_instr = 0;
         iv.resp_address = 0;
