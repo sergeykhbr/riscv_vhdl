@@ -751,6 +751,20 @@ begin
         end if;
     end if;
 
+    v_o_valid := r.valid;
+    vb_o_wdata := r.wval;
+    if w_multi_ready = '1' then
+        v_o_valid := '1';
+        vb_o_wdata := vb_res;
+        v_scoreboard(conv_integer(r.waddr)).forward := vb_res;
+    elsif w_multi_busy = '1' then
+        v_o_valid := '0';
+    end if;
+
+    if i_dport_npc_write = '1' then
+        v.npc := i_dport_npc;
+    end if;
+
 
     if not async_reset and i_nrst = '0' then
         v := R_RESET;

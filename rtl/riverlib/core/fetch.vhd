@@ -38,12 +38,15 @@ entity InstrFetch is generic (
     i_mem_data_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_mem_data : in std_logic_vector(31 downto 0);
     i_mem_load_fault : in std_logic;
+    i_mem_executable : in std_logic;
     o_mem_resp_ready : out std_logic;
+    i_e_fencei : in std_logic;
 
     i_predict_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
 
     o_mem_req_fire : out std_logic;                    -- used by branch predictor to form new npc value
     o_instr_load_fault : out std_logic;                -- fault instruction's address
+    o_instr_executable : out std_logic;
     o_valid : out std_logic;
     o_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     o_instr : out std_logic_vector(31 downto 0);
@@ -58,7 +61,6 @@ architecture arch_InstrFetch of InstrFetch is
 
   type RegistersType is record
       wait_resp : std_logic;
-      pipeline_init : std_logic_vector(4 downto 0);
       br_address : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
       br_instr : std_logic_vector(31 downto 0);
 
@@ -66,14 +68,16 @@ architecture arch_InstrFetch of InstrFetch is
       resp_data : std_logic_vector(31 downto 0);
       resp_valid : std_logic;
       instr_load_fault : std_logic;
+      instr_executable : std_logic;
   end record;
 
   constant R_RESET : RegistersType := (
-    '0', (others => '0'),
+    '0',
     (others => '1'),  -- br_address
     (others =>'0'),   -- br_instr
     (others =>'0'), (others =>'0'), '0',
-    '0'               -- instr_load_fault
+    '0',              -- instr_load_fault
+    '0'               -- instr_executable
   );
 
   signal r, rin : RegistersType;
@@ -81,7 +85,8 @@ architecture arch_InstrFetch of InstrFetch is
 begin
 
   comb : process(i_nrst, i_pipeline_hold, i_mem_req_ready, i_mem_data_valid,
-                i_mem_data_addr, i_mem_data, i_mem_load_fault, i_predict_npc, 
+                i_mem_data_addr, i_mem_data, i_mem_load_fault, i_mem_executable,
+                i_e_fencei, i_predict_npc, 
                 i_br_fetch_valid, i_br_address_fetch, i_br_instr_fetch, r)
     variable v : RegistersType;
     variable w_o_req_valid : std_logic;
@@ -105,21 +110,26 @@ begin
         v.wait_resp := '0';
     end if;
 
+    if i_br_fetch_valid = '1' then
+        v.br_address := i_br_address_fetch;
+        v.br_instr := i_br_instr_fetch;
+    end if;
+
     if i_mem_data_valid = '1' and r.wait_resp = '1' and i_pipeline_hold = '0' then
         v.resp_valid := '1';
         v.resp_address := i_mem_data_addr;
         v.resp_data := i_mem_data;
         v.instr_load_fault := i_mem_load_fault;
+        v.instr_executable := i_mem_executable;
+    end if;
+    if i_e_fencei = '1' then
+        -- Clear pipeline stage
+        v.resp_address := (others => '1');
     end if;
 
     wb_o_pc := r.resp_address;
     wb_o_instr := r.resp_data;
 
-
-    if i_br_fetch_valid = '1' then
-        v.br_address := i_br_address_fetch;
-        v.br_instr := i_br_instr_fetch;
-    end if;
 
     -- Breakpoint skip logic that allows to continue execution
     -- without actual breakpoint remove only once 
@@ -139,6 +149,7 @@ begin
     o_mem_addr <= i_predict_npc;
     o_mem_req_fire <= w_o_req_fire;
     o_instr_load_fault <= r.instr_load_fault;
+    o_instr_executable <= r.instr_executable;
     o_valid <= r.resp_valid and not (i_pipeline_hold or w_o_hold);
     o_pc <= wb_o_pc;
     o_instr <= wb_o_instr;

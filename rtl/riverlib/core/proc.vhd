@@ -258,11 +258,27 @@ begin
 
     w_fetch_pipeline_hold <= not w.e.d_ready or w.m.pipeline_hold or dbg.halt;
     w_any_pipeline_hold <= w.f.pipeline_hold or not w.e.d_ready
-                          or w.m.pipeline_hold  or dbg.halt;
+                          or w.m.pipeline_hold or dbg.halt;
 
     wb_ireg_dport_addr <= dbg.core_addr(4 downto 0);
     wb_freg_dport_addr <= dbg.core_addr(4 downto 0);
     wb_exec_dport_npc <= dbg.core_wdata(BUS_ADDR_WIDTH-1 downto 0);
+
+    o_req_ctrl_valid <= w.f.imem_req_valid;
+    o_req_ctrl_addr <= w.f.imem_req_addr;
+    o_time <= dbg.clock_cnt;
+    o_exec_cnt <= dbg.executed_cnt;
+
+    o_flush_valid <= w.e.fencei or dbg.flush_valid or csr.break_event;
+    o_flush_address <= (others => '1') when w.e.fencei = '1'
+                                       else w.e.npc when csr.break_event = '1'
+                                       else dbg.flush_address;
+
+    o_data_flush_address <= (others => '0');
+    o_data_flush_valid <= '0';
+
+    o_halted <= dbg.halt;
+
     
     fetch0 : InstrFetch generic map (
         async_reset => async_reset
@@ -277,10 +293,13 @@ begin
         i_mem_data_addr => i_resp_ctrl_addr,
         i_mem_data => i_resp_ctrl_data,
         i_mem_load_fault => i_resp_ctrl_load_fault,
+        i_mem_executable => i_resp_ctrl_executable,
         o_mem_resp_ready => o_resp_ctrl_ready,
+        i_e_fencei => w.e.fencei,
         i_predict_npc => bp.npc,
         o_mem_req_fire => w.f.req_fire,
         o_instr_load_fault => w.f.instr_load_fault,
+        o_instr_executable => w.f.instr_executable,
         o_valid => w.f.valid,
         o_pc => w.f.pc,
         o_instr => w.f.instr,
@@ -582,10 +601,4 @@ begin
         i_dstate => i_dstate,
         i_cstate => i_cstate);
 
-    o_flush_valid <= dbg.flush_valid or csr.break_event;
-    o_flush_address <= w.e.npc when csr.break_event = '1' else dbg.flush_address;
-    o_req_ctrl_valid <= w.f.imem_req_valid;
-    o_req_ctrl_addr <= w.f.imem_req_addr;
-    o_time <= dbg.clock_cnt;
-    o_halted <= dbg.halt;
 end;

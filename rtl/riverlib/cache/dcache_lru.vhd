@@ -361,9 +361,6 @@ begin
         else
             -- Miss
             v.state := State_CheckMPU;
-            if r.req_write = '1' then
-                v_resp_valid := '1';
-            end if;
         end if;
     when State_CheckMPU =>
         v.req_mem_valid := '1';
@@ -413,6 +410,8 @@ begin
                 (r.req_write = '1' and r.cached = '0') then
                 v.state := State_WriteBus;
             else
+                -- 1. uncached read
+                -- 2. cached read or write
                 v.state := State_WaitResp;
             end if;
             v.req_mem_valid := '0';
@@ -452,11 +451,12 @@ begin
                 v.req_write := '0';
                 v_line_wflags(DTAG_FL_DIRTY) := '1';
                 vb_line_wdata := vb_cache_line_i_modified;
+                v_resp_valid := '1';
+                v.state := State_Idle;
             end if;
         else
-            if r.req_write = '0' then
-                v_resp_valid := '1';
-            end if;
+            -- uncached read only (write goes to WriteBus)
+            v_resp_valid := '1';
             vb_resp_data := vb_uncached_data;
             v_resp_er_load_fault := r.load_fault;
             if i_resp_ready = '1' then
@@ -490,6 +490,7 @@ begin
                 else
                     -- Non-cached write
                     v.state := State_Idle;
+                    v_resp_valid := '1';
                 end if;
             else
                 v.burst_cnt := r.burst_cnt - 1;

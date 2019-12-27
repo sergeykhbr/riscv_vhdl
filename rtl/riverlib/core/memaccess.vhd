@@ -434,7 +434,7 @@ begin
     when others =>
     end case;
 
-    if (i_e_valid and (i_memop_load or i_memop_store)) = '0' then
+    if i_e_valid = '1' and (i_memop_load or i_memop_store) = '0' then
         v.reg_wb_valid := '1';
         v.reg_res_pc := i_e_pc;
         v.reg_res_instr := i_e_instr;
@@ -495,8 +495,8 @@ begin
 
     o_mem_valid <= v_mem_valid;
     o_mem_write <= v_mem_write;
-    o_mem_addr <= vb_mem_addr(BUS_ADDR_WIDTH-1 downto LOG2_DATA_BYTES_MASK)
-                & zero64(LOG2_DATA_BYTES_MASK-1 downto 0);
+    o_mem_addr <= vb_mem_addr(BUS_ADDR_WIDTH-1 downto CFG_LOG2_DATA_BYTES)
+                & zero64(CFG_LOG2_DATA_BYTES-1 downto 0);
     o_mem_wdata <= vb_mem_wdata;
     o_mem_wstrb <= vb_mem_wstrb;
 

@@ -799,18 +799,22 @@ package river_cfg is
     i_mem_data_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_mem_data : in std_logic_vector(31 downto 0);
     i_mem_load_fault : in std_logic;
+    i_mem_executable : in std_logic;
     o_mem_resp_ready : out std_logic;
+    i_e_fencei : in std_logic;
+
     i_predict_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
 
-    o_mem_req_fire : out std_logic;
-    o_instr_load_fault : out std_logic;
+    o_mem_req_fire : out std_logic;                    -- used by branch predictor to form new npc value
+    o_instr_load_fault : out std_logic;                -- fault instruction's address
+    o_instr_executable : out std_logic;
     o_valid : out std_logic;
     o_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     o_instr : out std_logic_vector(31 downto 0);
-    o_hold : out std_logic;
-    i_br_fetch_valid : in std_logic;
-    i_br_address_fetch : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    i_br_instr_fetch : in std_logic_vector(31 downto 0)
+    o_hold : out std_logic;                                -- Hold due no response from icache yet
+    i_br_fetch_valid : in std_logic;                       -- Fetch injection address/instr are valid
+    i_br_address_fetch : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0); -- Fetch injection address to skip ebreak instruciton only once
+    i_br_instr_fetch : in std_logic_vector(31 downto 0)   -- Real instruction value that was replaced by ebreak
   );
   end component; 
 

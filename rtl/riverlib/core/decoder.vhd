@@ -942,7 +942,7 @@ begin
         else
             v.pc := i_f_pc;
         end if;
-        v.instr := wb_instr_out;
+        v.instr := i_f_instr;
         v.compressed := w_compressed;
         v.instr_load_fault := i_instr_load_fault;
         v.instr_executable := i_instr_executable;
