@@ -148,10 +148,7 @@ begin
 
     vb_wayidx_o := lruo_lru;
     for i in 0 to NWAYS-1 loop
-        if i_flush = '1' then
-            -- Use lsb address part for the way selection
-            vb_wayidx_o := i_addr(waybits-1 downto 0);
-        elsif way_o(i).hit = '1' and
+        if way_o(i).hit = '1' and
                     way_o(i).rflags(FL_VALID) = '1' then
             hit := '1';
             vb_wayidx_o := conv_std_logic_vector(i, waybits);
@@ -170,8 +167,8 @@ begin
     for i in 0 to NWAYS-1 loop
         way_i(i).addr <= i_addr;
         way_i(i).wdata <= i_wdata;
-        if (i_flush = '1' or i_cs = '1')
-           and vb_wayidx_o = conv_std_logic_vector(i, waybits) then
+        if (i_flush = '1' and i_addr(waybits-1 downto 0) = conv_std_logic_vector(i, waybits))
+            or (i_cs = '1' and vb_wayidx_o = conv_std_logic_vector(i, waybits)) then
             way_i(i).wstrb <= i_wstrb;
         else
             way_i(i).wstrb <= (others => '0');

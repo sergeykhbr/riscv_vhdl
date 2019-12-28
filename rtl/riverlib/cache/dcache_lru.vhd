@@ -500,8 +500,6 @@ begin
             --end if;
         end if;
     when State_FlushAddr =>
-        v_line_cs := '1';
-        v_flush := '1';
         v.state := State_FlushCheck;
         v.write_flush := '0';
         v.cache_line_i := (others => '0');
@@ -513,7 +511,6 @@ begin
         v.cache_line_o := line_rdata_o;
         v_line_wflags := (others => '0');      -- flag valid = 0
         vb_line_wstrb := (others => '1');      -- write full line
-        v_line_cs := '1';
         v_flush := '1';
 
         if r.init = '0' and

@@ -344,7 +344,6 @@ begin
     when State_Flush =>
         v_line_wflags := (others => '0');      -- flag valid = 0
         vb_line_wstrb := (others => '1');   -- write full line
-        v_line_cs := '1';
         v_flush := '1';
         if or_reduce(r.flush_cnt) = '0' then
             v.state := State_Idle;

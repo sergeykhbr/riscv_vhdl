@@ -179,6 +179,7 @@ void DCacheLru::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.write_flush, pn + ".r_write_flush");
         sc_trace(o_vcd, r.burst_cnt, pn + ".r_burst_cnt");
         sc_trace(o_vcd, r.mem_wstrb, pn + ".r_mem_wstrb");
+        sc_trace(o_vcd, r.flush_cnt, pn + ".r_flush_cnt");
     }
     mem->generateVCD(i_vcd, o_vcd);
 }
@@ -501,8 +502,6 @@ void DCacheLru::comb() {
         }
         break;
     case State_FlushAddr:
-        v_line_cs = 1;
-        v_flush = 1;
         v.state = State_FlushCheck;
         v.write_flush = 0;
         v.cache_line_i = 0;
@@ -515,7 +514,6 @@ void DCacheLru::comb() {
         v.cache_line_o = line_rdata_o.read();
         v_line_wflags = 0;      // flag valid = 0
         vb_line_wstrb = ~0ul;   // write full line
-        v_line_cs = 1;
         v_flush = 1;
 
         if (r.init.read() == 0 &&

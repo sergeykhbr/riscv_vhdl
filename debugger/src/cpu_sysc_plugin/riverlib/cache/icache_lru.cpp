@@ -148,6 +148,7 @@ void ICacheLru::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.cached, pn + ".r_cached");
         sc_trace(o_vcd, r.cache_line_i, pn + ".r_cache_line_i");
         sc_trace(o_vcd, r.executable, pn + ".r_executable");
+        sc_trace(o_vcd, r.flush_cnt, pn + ".r_flush_cnt");
     }
     memcouple->generateVCD(i_vcd, o_vcd);
 }
@@ -342,7 +343,6 @@ void ICacheLru::comb() {
     case State_Flush:
         v_line_wflags = 0;      // flag valid = 0
         vb_line_wstrb = ~0ul;   // write full line
-        v_line_cs = 1;
         v_flush = 1;
         if (r.flush_cnt.read() == 0) {
             v.state = State_Idle;
