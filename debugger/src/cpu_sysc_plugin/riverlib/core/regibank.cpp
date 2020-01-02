@@ -81,7 +81,7 @@ void RegIntBank::comb() {
         }
     } else if (i_wena.read()) {
         if (i_waddr.read() != 0) {
-            v.mem[i_waddr.read().to_int()] = i_wdata;
+            v.mem[i_waddr.read()(REG_MSB(), 0).to_int()] = i_wdata;
         }
     }
     v.update = !r.update.read();
@@ -94,8 +94,8 @@ void RegIntBank::comb() {
         v.update = 0;
     }
 
-    o_rdata1 = r.mem[i_radr1.read().to_int()];
-    o_rdata2 = r.mem[i_radr2.read().to_int()];
+    o_rdata1 = r.mem[i_radr1.read()(REG_MSB(), 0).to_int()];
+    o_rdata2 = r.mem[i_radr2.read()(REG_MSB(), 0).to_int()];
     o_dport_rdata = r.mem[i_dport_addr.read().to_int()];
     o_ra = r.mem[Reg_ra];
     o_sp = r.mem[Reg_sp];

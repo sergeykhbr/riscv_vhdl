@@ -40,6 +40,7 @@ void Shifter::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 
 void Shifter::comb() {
     sc_uint<64> wb_sll;
+    sc_uint<64> wb_sllw;
     sc_uint<64> wb_srl;
     sc_uint<64> wb_sra;
     sc_uint<32> wb_srlw;
@@ -520,10 +521,12 @@ void Shifter::comb() {
     }
 
     o_sll = wb_sll;
+    wb_sllw = 0;
+    wb_sllw(31, 0) = wb_sll(31, 0);
     if (wb_sll[31]) {
-        wb_sll(63, 32) = ~0;
+        wb_sllw(63, 32) = ~0;
     }
-    o_sllw = wb_sll;
+    o_sllw = wb_sllw;
     o_srl = wb_srl;
     o_sra = wb_sra;
     o_srlw = wb_srlw.to_uint64();

@@ -57,7 +57,8 @@ end;
  
 architecture arch_RegBank of RegBank is
 
-  constant REGS_TOTAL : integer := Reg_Total + conv_integer(fpu_ena)*RegFpu_Total;
+  constant REG_MSB : integer := 4 + conv_integer(fpu_ena);
+  constant REGS_TOTAL : integer := 2**(REG_MSB + 1);
 
   type MemoryType is array (0 to REGS_TOTAL-1) 
          of std_logic_vector(RISCV_ARCH-1 downto 0);
@@ -82,8 +83,8 @@ begin
             v.mem(conv_integer(i_dport_addr)) := i_dport_wdata;
         end if;
     elsif i_wena = '1'  then
-        if or_reduce(i_waddr) = '1' then
-            v.mem(conv_integer(i_waddr)) := i_wdata;
+        if or_reduce(i_waddr(REG_MSB downto 0)) = '1' then
+            v.mem(conv_integer(i_waddr(REG_MSB downto 0))) := i_wdata;
         end if;
     end if;
 
@@ -97,8 +98,8 @@ begin
     rin <= v;
   end process;
 
-  o_rdata1 <= r.mem(conv_integer(i_radr1));
-  o_rdata2 <= r.mem(conv_integer(i_radr2));
+  o_rdata1 <= r.mem(conv_integer(i_radr1(REG_MSB downto 0)));
+  o_rdata2 <= r.mem(conv_integer(i_radr2(REG_MSB downto 0)));
   o_dport_rdata <= r.mem(conv_integer(i_dport_addr));
   o_ra <= r.mem(Reg_ra);
   o_sp <= r.mem(Reg_sp);
