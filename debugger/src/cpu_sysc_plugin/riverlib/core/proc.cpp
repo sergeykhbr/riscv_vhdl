@@ -187,8 +187,6 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     exec0->i_dport_npc(wb_exec_dport_npc);
     exec0->i_rdata1(ireg.rdata1);
     exec0->i_rdata2(ireg.rdata2);
-    exec0->i_rfdata1(freg.rdata1);
-    exec0->i_rfdata2(freg.rdata2);
     exec0->o_res_addr(w.e.res_addr);
     exec0->o_res_data(w.e.res_data);
     exec0->o_d_ready(w.e.d_ready);
@@ -274,7 +272,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     predic0->i_ra(ireg.ra);
     predic0->o_npc_predict(bp.npc);
 
-    iregs0 = new RegIntBank("iregs0", async_reset);
+    iregs0 = new RegIntBank("iregs0", async_reset, fpu_ena);
     iregs0->i_clk(i_clk);
     iregs0->i_nrst(i_nrst);
     iregs0->i_radr1(w.d.radr1);
@@ -292,7 +290,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     iregs0->o_ra(ireg.ra);
     iregs0->o_sp(ireg.sp);
 
-    if (fpu_ena_) {
+/*    if (fpu_ena_) {
         fregs0 = new RegFloatBank("fregs0", async_reset);
         fregs0->i_clk(i_clk);
         fregs0->i_nrst(i_nrst);
@@ -312,7 +310,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
         freg.rdata1 = 0;
         freg.rdata2 = 0;
         freg.dport_rdata = 0;
-    }
+    }*/
 
     csr0 = new CsrRegs("csr0", hartid, async_reset);
     csr0->i_clk(i_clk);

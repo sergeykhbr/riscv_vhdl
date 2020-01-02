@@ -18,7 +18,7 @@
 
 namespace debugger {
 
-RegIntBank::RegIntBank(sc_module_name name_, bool async_reset) :
+RegIntBank::RegIntBank(sc_module_name name_, bool async_reset, bool fpu_ena) :
     sc_module(name_),
     i_clk("i_clk"),
     i_nrst("i_nrst"),
@@ -37,6 +37,7 @@ RegIntBank::RegIntBank(sc_module_name name_, bool async_reset) :
     o_ra("o_ra"),
     o_sp("o_sp") {
     async_reset_ = async_reset;
+    fpu_ena_ = fpu_ena;
 
     SC_METHOD(comb);
     sensitive << i_nrst;
@@ -78,23 +79,23 @@ void RegIntBank::comb() {
         if (i_dport_addr.read() != 0) {
             v.mem[i_dport_addr.read().to_int()] = i_dport_wdata;
         }
-    } else if (i_waddr.read()[5] == 0 && i_wena.read()) {
+    } else if (i_wena.read()) {
         if (i_waddr.read() != 0) {
-            v.mem[i_waddr.read()(4, 0).to_int()] = i_wdata;
+            v.mem[i_waddr.read().to_int()] = i_wdata;
         }
     }
     v.update = !r.update.read();
 
     if (!async_reset_ && !i_nrst.read()) {   
         v.mem[0] = 0;
-        for (int i = 1; i < Reg_Total; i++) {
+        for (int i = 1; i < REGS_TOTAL; i++) {
             v.mem[i] = 0xfeedface;
         }
         v.update = 0;
     }
 
-    o_rdata1 = r.mem[i_radr1.read()(4, 0).to_int()];
-    o_rdata2 = r.mem[i_radr2.read()(4, 0).to_int()];
+    o_rdata1 = r.mem[i_radr1.read().to_int()];
+    o_rdata2 = r.mem[i_radr2.read().to_int()];
     o_dport_rdata = r.mem[i_dport_addr.read().to_int()];
     o_ra = r.mem[Reg_ra];
     o_sp = r.mem[Reg_sp];
@@ -103,7 +104,7 @@ void RegIntBank::comb() {
 void RegIntBank::registers() {
     if (async_reset_ && i_nrst.read() == 0) {
         r.mem[0] = 0;
-        for (int i = 1; i < Reg_Total; i++) {
+        for (int i = 1; i < REGS_TOTAL; i++) {
             r.mem[i] = 0xfeedface;
         }
         r.update = 0;

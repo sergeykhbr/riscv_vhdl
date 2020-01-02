@@ -55,10 +55,8 @@ SC_MODULE(InstrExecute) {
     sc_in<bool> i_dport_npc_write;              // Write npc value from debug port
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_dport_npc; // Debug port npc value to write
 
-    sc_in<sc_uint<RISCV_ARCH>> i_rdata1;        // Integer register value 1
-    sc_in<sc_uint<RISCV_ARCH>> i_rdata2;        // Integer register value 2
-    sc_in<sc_uint<RISCV_ARCH>> i_rfdata1;       // Float register value 1
-    sc_in<sc_uint<RISCV_ARCH>> i_rfdata2;       // Float register value 2
+    sc_in<sc_uint<RISCV_ARCH>> i_rdata1;        // Integer/Float register value 1
+    sc_in<sc_uint<RISCV_ARCH>> i_rdata2;        // Integer/Float register value 2
     sc_out<sc_uint<6>> o_res_addr;              // Address to store result of the instruction (0=do not store)
     sc_out<sc_uint<RISCV_ARCH>> o_res_data;     // Value to store
     sc_out<bool> o_d_ready;                     // Hold pipeline while 'writeback' not done or multi-clock instruction.

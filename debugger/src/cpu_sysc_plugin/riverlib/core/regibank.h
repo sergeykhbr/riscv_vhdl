@@ -50,19 +50,22 @@ SC_MODULE(RegIntBank) {
 
     SC_HAS_PROCESS(RegIntBank);
 
-    RegIntBank(sc_module_name name_, bool async_reset);
+    RegIntBank(sc_module_name name_, bool async_reset, bool fpu_ena);
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
 private:
     friend struct Processor; // for debug purposes(remove it)s
 
+    static const int REGS_TOTAL = Reg_Total + RegFpu_Total;
+
     struct RegistersType {
         sc_signal<bool> update;             // To generate SystemC delta event only.
-        sc_uint<RISCV_ARCH> mem[Reg_Total]; // Multi-ports memory
+        sc_uint<RISCV_ARCH> mem[REGS_TOTAL]; // Multi-ports memory
     } v, r;
 
     bool async_reset_;
+    bool fpu_ena_;
 };
 
 }  // namespace debugger

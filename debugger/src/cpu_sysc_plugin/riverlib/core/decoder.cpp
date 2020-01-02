@@ -916,8 +916,8 @@ void InstrDecoder::comb() {
                     break;
                 case OPCODE_FPU_OP:
                     wb_isa_type[ISA_R_type] = 1;
-                    vb_radr1 = (0, wb_instr.range(19, 15));
-                    vb_radr2 = (0, wb_instr.range(24, 20));
+                    vb_radr1 = (1, wb_instr.range(19, 15));
+                    vb_radr2 = (1, wb_instr.range(24, 20));
                     vb_waddr = (1, wb_instr(11, 7));             // rd
                     switch (wb_instr(31, 25)) {
                     case 0x1:
@@ -942,6 +942,7 @@ void InstrDecoder::comb() {
                         }
                         break;
                     case 0x51:
+                        vb_waddr[5] = 0;
                         if (wb_opcode2 == 0) {
                             wb_dec[Instr_FLE_D] = 1;
                         } else if (wb_opcode2 == 1) {
@@ -953,6 +954,7 @@ void InstrDecoder::comb() {
                         }
                         break;
                     case 0x61:
+                        vb_waddr[5] = 0;
                         if (wb_instr(24, 20) == 0) {
                             wb_dec[Instr_FCVT_W_D] = 1;
                         } else if (wb_instr(24, 20) == 1) {
@@ -966,8 +968,7 @@ void InstrDecoder::comb() {
                         }
                         break;
                     case 0x69:
-                        vb_radr1 = (1, wb_instr.range(19, 15));
-                        vb_waddr = (0, wb_instr(11, 7));             // rd
+                        vb_radr1[5] = 0;
                         if (wb_instr(24, 20) == 0) {
                             wb_dec[Instr_FCVT_D_W] = 1;
                         } else if (wb_instr(24, 20) == 1) {
@@ -981,7 +982,7 @@ void InstrDecoder::comb() {
                         }
                         break;
                     case 0x71:
-                        vb_radr2 = (1, wb_instr.range(19, 15));
+                        vb_waddr[5] = 0;
                         if (wb_instr(24, 20) == 0 && wb_opcode2 == 0) {
                             wb_dec[Instr_FMOV_X_D] = 1;
                         } else {
@@ -989,8 +990,7 @@ void InstrDecoder::comb() {
                         }
                         break;
                     case 0x79:
-                        vb_radr1 = (1, wb_instr.range(19, 15));
-                        vb_waddr = (0, wb_instr(11, 7));             // rd
+                        vb_radr1[5] = 0;
                         if (wb_instr(24, 20) == 0 && wb_opcode2 == 0) {
                             wb_dec[Instr_FMOV_D_X] = 1;
                         } else {

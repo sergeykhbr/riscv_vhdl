@@ -659,8 +659,6 @@ package river_cfg is
   --! @param[in] i_rdata1 Integer register value 1
   --! @param[out] o_radr2 Integer/float register index 2
   --! @param[in] i_rdata2 Integer register value 2
-  --! @param[in] i_rfdata1   Float register value 1
-  --! @param[in] i_rfdata2   Float register value 2
   --! @param[out] o_res_addr Address to store result of the instruction (0=do not store)
   --! @param[out] o_res_data Value to store
   --! @param[out] o_pipeline_hold Hold pipeline while 'writeback' not done or multi-clock instruction.
@@ -729,8 +727,6 @@ package river_cfg is
 
     i_rdata1 : in std_logic_vector(RISCV_ARCH-1 downto 0);      -- Integer register value 1
     i_rdata2 : in std_logic_vector(RISCV_ARCH-1 downto 0);      -- Integer register value 2
-    i_rfdata1 : in std_logic_vector(RISCV_ARCH-1 downto 0);     -- Float register value 1
-    i_rfdata2 : in std_logic_vector(RISCV_ARCH-1 downto 0);     -- Float register value 2
     o_res_addr : out std_logic_vector(5 downto 0);              -- Address to store result of the instruction (0=do not store)
     o_res_data : out std_logic_vector(RISCV_ARCH-1 downto 0);   -- Value to store
     o_d_ready : out std_logic;                                  -- Hold pipeline while 'writeback' not done or multi-clock instruction.
@@ -917,8 +913,9 @@ package river_cfg is
   --! @param[out] o_dport_rdata  Debug port read value
   --! @param[out] o_ra           Return address for branch predictor
   --! @param[out] o_sp           Stack Pointer for the borders control
-  component RegIntBank is generic (
-    async_reset : boolean
+  component RegBank is generic (
+    async_reset : boolean;
+    fpu_ena : boolean
   );
   port (
     i_clk : in std_logic;

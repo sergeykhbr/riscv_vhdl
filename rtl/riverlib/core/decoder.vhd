@@ -850,8 +850,8 @@ begin
                     end if;
                 when OPCODE_FPU_OP =>
                     wb_isa_type(ISA_R_type) := '1';
-                    vb_radr1 := '0' & wb_instr(19 downto 15);
-                    vb_radr2 := '0' & wb_instr(24 downto 20);
+                    vb_radr1 := '1' & wb_instr(19 downto 15);
+                    vb_radr2 := '1' & wb_instr(24 downto 20);
                     vb_waddr := '1' & wb_instr(11 downto 7);
                     case wb_instr(31 downto 25) is
                     when "0000001" =>
@@ -871,6 +871,7 @@ begin
                             w_error := '1';
                         end if;
                     when "1010001" =>
+                        vb_waddr(5) := '0';
                         if wb_opcode2 = "000" then
                             wb_dec(Instr_FLE_D) := '1';
                         elsif wb_opcode2 = "001" then
@@ -881,6 +882,7 @@ begin
                             w_error := '1';
                         end if;
                     when "1100001" =>
+                        vb_waddr(5) := '0';
                         if wb_instr(24 downto 20) = "00000" then
                             wb_dec(Instr_FCVT_W_D) := '1';
                         elsif wb_instr(24 downto 20) = "00001" then
@@ -893,8 +895,7 @@ begin
                             w_error := '1';
                         end if;
                     when "1101001" =>
-                        vb_radr1 := '1' & wb_instr(19 downto 15);
-                        vb_waddr := '0' & wb_instr(11 downto 7);             -- rd
+                        vb_radr1(5) := '0';
                         if wb_instr(24 downto 20) = "00000" then
                             wb_dec(Instr_FCVT_D_W) := '1';
                         elsif wb_instr(24 downto 20) = "00001" then
@@ -907,15 +908,14 @@ begin
                             w_error := '1';
                         end if;
                     when "1110001" =>
-                        vb_radr2 := '1' & wb_instr(19 downto 15);
+                        vb_waddr(5) := '0';
                         if wb_instr(24 downto 20) = "00000" and wb_opcode2 = "000" then
                             wb_dec(Instr_FMOV_X_D) := '1';
                         else
                             w_error := '1';
                         end if;
                     when "1111001" =>
-                        vb_radr1 := '1' & wb_instr(19 downto 15);
-                        vb_waddr := '0' & wb_instr(11 downto 7);             -- rd
+                        vb_radr1(5) := '0';
                         if wb_instr(24 downto 20) = "00000" and wb_opcode2 = "000" then
                             wb_dec(Instr_FMOV_D_X) := '1';
                         else

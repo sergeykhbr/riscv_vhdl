@@ -58,10 +58,8 @@ entity InstrExecute is generic (
     i_dport_npc_write : in std_logic;                           -- Write npc value from debug port
     i_dport_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- Debug port npc value to write
 
-    i_rdata1 : in std_logic_vector(RISCV_ARCH-1 downto 0);      -- Integer register value 1
-    i_rdata2 : in std_logic_vector(RISCV_ARCH-1 downto 0);      -- Integer register value 2
-    i_rfdata1 : in std_logic_vector(RISCV_ARCH-1 downto 0);     -- Float register value 1
-    i_rfdata2 : in std_logic_vector(RISCV_ARCH-1 downto 0);     -- Float register value 2
+    i_rdata1 : in std_logic_vector(RISCV_ARCH-1 downto 0);      -- Integer/FPU registers value 1
+    i_rdata2 : in std_logic_vector(RISCV_ARCH-1 downto 0);      -- Integer/FPU registers value 2
     o_res_addr : out std_logic_vector(5 downto 0);              -- Address to store result of the instruction (0=do not store)
     o_res_data : out std_logic_vector(RISCV_ARCH-1 downto 0);   -- Value to store
     o_d_ready : out std_logic;                                  -- Hold pipeline while 'writeback' not done or multi-clock instruction.

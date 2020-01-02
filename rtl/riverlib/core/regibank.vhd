@@ -16,6 +16,7 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.std_logic_misc.all;  -- or_reduce()
 library commonlib;
 use commonlib.types_common.all;
 --! RIVER CPU specific library.
@@ -24,8 +25,9 @@ library riverlib;
 use riverlib.river_cfg.all;
 
 
-entity RegIntBank is generic (
-    async_reset : boolean
+entity RegBank is generic (
+    async_reset : boolean;
+    fpu_ena : boolean
   );
   port (
     i_clk : in std_logic;                                   -- CPU clock
@@ -52,9 +54,11 @@ entity RegIntBank is generic (
   );
 end; 
  
-architecture arch_RegIntBank of RegIntBank is
+architecture arch_RegBank of RegBank is
 
-  type MemoryType is array (0 to Reg_Total-1) 
+  constant REGS_TOTAL : integer := Reg_Total + fpu_ena*RegFpu_Total;
+
+  type MemoryType is array (0 to REGS_TOTAL-1) 
          of std_logic_vector(RISCV_ARCH-1 downto 0);
 
   type RegistersType is record
@@ -73,18 +77,18 @@ begin
     v := r;
     --! Debug port has higher priority. Collision must be controlled by SW
     if (i_dport_ena and i_dport_write) = '1' then
-        if i_dport_addr /= "00000" then
+        if or_reduce(i_dport_addr) = '1' then
             v.mem(conv_integer(i_dport_addr)) := i_dport_wdata;
         end if;
-    elsif i_waddr(5) = '0' and i_wena = '1'  then
-        if i_waddr(4 downto 0) /= "00000" then
-            v.mem(conv_integer(i_waddr(4 downto 0))) := i_wdata;
+    elsif i_wena = '1'  then
+        if or_reduce(i_waddr) = '1' then
+            v.mem(conv_integer(i_waddr)) := i_wdata;
         end if;
     end if;
 
     if not async_reset and i_nrst = '0' then
         v.mem(Reg_Zero) := (others => '0');
-        for i in 1 to Reg_Total-1 loop
+        for i in 1 to REGS_TOTAL-1 loop
             v.mem(i) := X"00000000FEEDFACE";
         end loop;
     end if;
@@ -92,8 +96,8 @@ begin
     rin <= v;
   end process;
 
-  o_rdata1 <= r.mem(conv_integer(i_radr1(4 downto 0)));
-  o_rdata2 <= r.mem(conv_integer(i_radr2(4 downto 0)));
+  o_rdata1 <= r.mem(conv_integer(i_radr1));
+  o_rdata2 <= r.mem(conv_integer(i_radr2));
   o_dport_rdata <= r.mem(conv_integer(i_dport_addr));
   o_ra <= r.mem(Reg_ra);
   o_sp <= r.mem(Reg_sp);
@@ -103,7 +107,7 @@ begin
   begin 
      if async_reset and i_nrst = '0' then
         r.mem(Reg_Zero) <= (others => '0');
-        for i in 1 to Reg_Total-1 loop
+        for i in 1 to REGS_TOTAL-1 loop
             r.mem(i) <= X"00000000FEEDFACE";
         end loop;
      elsif rising_edge(i_clk) then 

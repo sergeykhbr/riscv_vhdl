@@ -375,8 +375,6 @@ begin
         i_dport_npc => wb_exec_dport_npc,
         i_rdata1 => ireg.rdata1,
         i_rdata2 => ireg.rdata2,
-        i_rfdata1 => freg.rdata1,
-        i_rfdata2 => freg.rdata2,
         o_res_addr => w.e.res_addr,
         o_res_data => w.e.res_data,
         o_d_ready => w.e.d_ready,
@@ -467,8 +465,9 @@ begin
         o_npc_predict => bp.npc);
 
 
-    iregs0 : RegIntBank generic map (
-        async_reset => async_reset
+    iregs0 : RegBank generic map (
+        async_reset => async_reset,
+        fpu_ena => fpu_ena
       ) port map ( 
         i_clk => i_clk,
         i_nrst => i_nrst,
@@ -487,25 +486,6 @@ begin
         o_ra => ireg.ra,   -- Return address
         o_sp => ireg.sp);
 
-    fpuena : if CFG_HW_FPU_ENABLE generate
-      fregs0 : RegFloatBank generic map (
-        async_reset => async_reset
-      ) port map (
-        i_clk => i_clk,
-        i_nrst => i_nrst,
-        i_radr1 => w.d.radr1,
-        o_rdata1 => freg.rdata1,
-        i_radr2 => w.d.radr2,
-        o_rdata2 => freg.rdata2,
-        i_waddr => w.w.waddr,
-        i_wena => w.w.wena,
-        i_wdata => w.w.wdata,
-        i_dport_addr => wb_freg_dport_addr,
-        i_dport_ena => dbg.freg_ena,
-        i_dport_write => dbg.freg_write,
-        i_dport_wdata => dbg.core_wdata,
-        o_dport_rdata => freg.dport_rdata);
-    end generate;
 
     fpudis : if not CFG_HW_FPU_ENABLE generate
         freg.rdata1 <= (others => '0');

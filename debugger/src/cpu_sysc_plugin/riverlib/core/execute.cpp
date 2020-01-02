@@ -49,8 +49,6 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     i_dport_npc("i_dport_npc"),
     i_rdata1("i_rdata1"),
     i_rdata2("i_rdata2"),
-    i_rfdata1("i_rfdata1"),
-    i_rfdata2("i_rfdata2"),
     o_res_addr("o_res_addr"),
     o_res_data("o_res_data"),
     o_d_ready("o_d_ready"),
@@ -123,8 +121,6 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     sensitive << i_dport_npc;
     sensitive << i_rdata1;
     sensitive << i_rdata2;
-    sensitive << i_rfdata1;
-    sensitive << i_rfdata2;
     sensitive << i_csr_rdata;
     sensitive << i_trap_valid;
     sensitive << i_trap_pc;
@@ -245,6 +241,7 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_d_valid, i_d_valid.name());
         sc_trace(o_vcd, i_d_pc, i_d_pc.name());
         sc_trace(o_vcd, i_d_instr, i_d_instr.name());
+        sc_trace(o_vcd, i_d_waddr, i_d_waddr.name());
         sc_trace(o_vcd, i_wb_valid, i_wb_valid.name());
         sc_trace(o_vcd, i_wb_waddr, i_wb_waddr.name());
         sc_trace(o_vcd, i_f64, i_f64.name());
@@ -253,8 +250,6 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_instr_executable, i_instr_executable.name());
         sc_trace(o_vcd, i_rdata1, i_rdata1.name());
         sc_trace(o_vcd, i_rdata2, i_rdata2.name());
-        sc_trace(o_vcd, i_rfdata1, i_rfdata1.name());
-        sc_trace(o_vcd, i_rfdata2, i_rfdata2.name());
         sc_trace(o_vcd, o_res_addr, o_res_addr.name());
         sc_trace(o_vcd, o_res_data, o_res_data.name());
         sc_trace(o_vcd, o_d_ready, o_d_ready.name());
@@ -412,10 +407,6 @@ void InstrExecute::comb() {
     int_waddr = i_d_waddr.read().to_int();
 
 
-    //vb_rdata1 = i_rdata1.read();
-    //vb_rdata2 = i_rdata2.read();
-    //vb_rfdata1 = i_rfdata1.read();
-    //vb_rfdata2 = i_rfdata2.read();
     if (i_d_radr1.read() != 0 &&
         r_scoreboard[i_d_radr1.read().to_int()].status.read() == RegForward) {
         vb_i_rdata1 = r_scoreboard[i_d_radr1.read().to_int()].forward;
