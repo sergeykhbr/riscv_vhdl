@@ -462,16 +462,6 @@ begin
         vb_off := i_d_imm;
     end if;
 
-    -- Default number of cycles per instruction = 0 (1 clock per instr)
-    -- If instruction is multicycle then modify this value.
-    --
-    w_arith_ena(Multi_FPU) <= '0';
-    if fpu_ena then
-        if i_f64 = '1' and (wv(Instr_FSD) or wv(Instr_FLD)) = '0' then
-            w_arith_ena(Multi_FPU) <= '1';
-        end if;
-    end if;
-
     w_multi_busy := w_arith_busy(Multi_MUL) or w_arith_busy(Multi_DIV)
                   or w_arith_busy(Multi_FPU);
 
@@ -509,18 +499,27 @@ begin
     v_mret := wv(Instr_MRET) and w_next_ready;
     v_uret := wv(Instr_URET) and w_next_ready;
 
-    w_arith_ena(Multi_MUL) <= (wv(Instr_MUL) or wv(Instr_MULW)) and w_next_ready;
-    w_arith_ena(Multi_DIV) <= (wv(Instr_DIV) or wv(Instr_DIVU)
+    v_next_mul_ready := (wv(Instr_MUL) or wv(Instr_MULW)) and w_next_ready;
+    v_next_div_ready := (wv(Instr_DIV) or wv(Instr_DIVU)
                             or wv(Instr_DIVW) or wv(Instr_DIVUW)
                             or wv(Instr_REM) or wv(Instr_REMU)
                             or wv(Instr_REMW) or wv(Instr_REMUW)) and w_next_ready;
+    v_next_fpu_ready := '0';
+    if fpu_ena then
+        if i_f64 = '1' and (wv(Instr_FSD) or wv(Instr_FLD)) = '0' then
+            v_next_fpu_ready := w_next_ready;
+        end if;
+    end if;
+
     w_arith_residual_high <= (wv(Instr_REM) or wv(Instr_REMU)
                           or wv(Instr_REMW) or wv(Instr_REMUW));
 
 
-    w_multi_ena <= w_arith_ena(Multi_MUL) or w_arith_ena(Multi_DIV)
-                or w_arith_ena(Multi_FPU);
+    w_multi_ena <= v_next_mul_ready or v_next_div_ready or v_next_fpu_ready;
 
+    w_arith_ena(Multi_MUL) <= v_next_mul_ready;
+    w_arith_ena(Multi_DIV) <= v_next_div_ready;
+    w_arith_ena(Multi_FPU) <= v_next_fpu_ready;
 
     if i_memop_load = '1' then
         vb_memop_addr :=

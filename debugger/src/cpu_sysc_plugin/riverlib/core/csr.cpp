@@ -353,12 +353,12 @@ void CsrRegs::procedure_RegAccess(uint64_t iaddr, bool iwena,
         break;
     case CSR_mpu_addr:  // [WO] MPU address
         if (iwena) {
-            ov->mpu_addr = 0;
+            ov->mpu_addr = iwdata(BUS_ADDR_WIDTH-1, 0);
         }
         break;
     case CSR_mpu_mask:  // [WO] MPU mask
         if (iwena) {
-            ov->mpu_mask = 0;
+            ov->mpu_mask = iwdata(BUS_ADDR_WIDTH-1, 0);
         }
         break;
     case CSR_mpu_ctrl:  // [WO] MPU flags and write ena

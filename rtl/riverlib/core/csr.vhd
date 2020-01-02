@@ -65,6 +65,12 @@ entity CsrRegs is
     i_break_mode : in std_logic;                            -- Behaviour on EBREAK instruction: 0 = halt; 1 = generate trap
     o_break_event : out std_logic;                          -- 1 clock EBREAK detected
 
+    o_mpu_region_we : out std_logic;
+    o_mpu_region_idx : out std_logic_vector(CFG_MPU_TBL_WIDTH-1 downto 0);
+    o_mpu_region_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_mpu_region_mask : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_mpu_region_flags : out std_logic_vector(CFG_MPU_FL_TOTAL-1 downto 0);  -- {ena, cachable, r, w, x}
+
     i_dport_ena : in std_logic;                              -- Debug port request is enabled
     i_dport_write : in std_logic;                            -- Debug port Write enable
     i_dport_addr : in std_logic_vector(11 downto 0);         -- Debug port CSR address
@@ -91,6 +97,12 @@ architecture arch_CsrRegs of CsrRegs is
       mepc : std_logic_vector(RISCV_ARCH-1 downto 0);
       ext_irq : std_logic;
 
+      mpu_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+      mpu_mask : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+      mpu_idx : std_logic_vector(CFG_MPU_TBL_WIDTH-1 downto 0);
+      mpu_flags : std_logic_vector(CFG_MPU_FL_TOTAL-1 downto 0);
+      mpu_we : std_logic;
+
       ex_fpu_invalidop : std_logic;          -- FPU Exception: invalid operation
       ex_fpu_divbyzero : std_logic;          -- FPU Exception: divide by zero
       ex_fpu_overflow : std_logic;           -- FPU Exception: overflow
@@ -115,7 +127,12 @@ architecture arch_CsrRegs of CsrRegs is
         '0', '0', '0',
         '0',             -- mstackovr_ena
         '0',             -- mstackund_ena
-        (others => '0'), (others => '0'), '0',
+        (others => '0'), (others => '0'), '0', --mpp, mepc, ext_irq
+        (others => '0'), -- mpu_addr
+        (others => '0'), -- mpu_mask
+        (others => '0'), -- mpu_idx
+        (others => '0'), -- mpu_flags
+        '0',             -- mpu_we
         '0', '0', '0', '0', '0', 
         '0', (others => '0'), (others => '0'), '0',
         '0', '0', (others => '0'));
@@ -270,6 +287,20 @@ architecture arch_CsrRegs of CsrRegs is
             ov.mstackund := iwdata(BUS_ADDR_WIDTH-1 downto 0);
             ov.mstackund_ena := or_reduce(iwdata(BUS_ADDR_WIDTH-1 downto 0));
         end if;
+    when CSR_mpu_addr =>
+        if iwena = '1' then
+            ov.mpu_addr := iwdata(BUS_ADDR_WIDTH-1 downto 0);
+        end if;
+    when CSR_mpu_mask =>
+        if iwena = '1' then
+            ov.mpu_mask := iwdata(BUS_ADDR_WIDTH-1 downto 0);
+        end if;
+    when CSR_mpu_ctrl =>
+        if iwena = '1' then
+            ov.mpu_idx := iwdata(8+CFG_MPU_TBL_WIDTH-1 downto 8);
+            ov.mpu_flags := iwdata(CFG_MPU_FL_TOTAL-1 downto 0);
+            ov.mpu_we := '1';
+        end if;
     when others =>
     end case;
   end;
@@ -304,6 +335,7 @@ begin
     tv1 := r;
 
     w_dport_wena := i_dport_ena and i_dport_write;
+    v.mpu_we := '0';
 
     procedure_RegAccess(i_addr, i_wena, i_wdata,
                         tv1, tv2, wb_rdata);
@@ -481,6 +513,11 @@ begin
     o_rdata <= wb_rdata;
     o_dport_rdata <= wb_dport_rdata;
     o_break_event <= r.break_event;
+    o_mpu_region_we <= r.mpu_we;
+    o_mpu_region_idx <= r.mpu_idx;
+    o_mpu_region_addr <= r.mpu_addr;
+    o_mpu_region_mask <= r.mpu_mask;
+    o_mpu_region_flags <= r.mpu_flags;
     
     rin <= v;
   end process;

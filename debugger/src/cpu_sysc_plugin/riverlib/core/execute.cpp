@@ -378,6 +378,9 @@ void InstrExecute::comb() {
     sc_uint<RISCV_ARCH> vb_o_wdata;
     bool v_hold_exec;
     int int_waddr;
+    bool v_next_mul_ready;
+    bool v_next_div_ready;
+    bool v_next_fpu_ready;
 
     v = r;
     for (int i = 0; i < SCOREBOARD_SIZE; i++) {
@@ -449,16 +452,6 @@ void InstrExecute::comb() {
         vb_off = i_d_imm;
     }
 
-    /** Default number of cycles per instruction = 0 (1 clock per instr)
-     *  If instruction is multicycle then modify this value.
-     */
-    w_arith_ena[Multi_FPU] = 0;
-    if (fpu_ena_) {
-        if (i_f64.read() && !(wv[Instr_FSD] | wv[Instr_FLD]).to_bool()) {
-            w_arith_ena[Multi_FPU] = 1;
-        }
-    }
-
     wb_fpu_vec = wv.range(Instr_FSUB_D, Instr_FADD_D);  // directly connected i_ivec
     w_multi_busy = w_arith_busy[Multi_MUL] | w_arith_busy[Multi_DIV]
                   | w_arith_busy[Multi_FPU];
@@ -498,18 +491,27 @@ void InstrExecute::comb() {
     v_mret = wv[Instr_MRET].to_bool() & w_next_ready;
     v_uret = wv[Instr_URET].to_bool() & w_next_ready;
 
-    w_arith_ena[Multi_MUL] = (wv[Instr_MUL] || wv[Instr_MULW]) && w_next_ready;
-    w_arith_ena[Multi_DIV] = (wv[Instr_DIV] || wv[Instr_DIVU]
+    v_next_mul_ready = (wv[Instr_MUL] || wv[Instr_MULW]) && w_next_ready;
+    v_next_div_ready = (wv[Instr_DIV] || wv[Instr_DIVU]
                             || wv[Instr_DIVW] || wv[Instr_DIVUW]
                             || wv[Instr_REM] || wv[Instr_REMU]
                             || wv[Instr_REMW] || wv[Instr_REMUW]) && w_next_ready;
+    v_next_fpu_ready = 0;
+    if (fpu_ena_) {
+        if (i_f64.read() && !(wv[Instr_FSD] | wv[Instr_FLD]).to_bool()) {
+            v_next_fpu_ready = w_next_ready;
+        }
+    }
+
     w_arith_residual_high = (wv[Instr_REM] || wv[Instr_REMU]
                           || wv[Instr_REMW] || wv[Instr_REMUW]);
 
 
-    w_multi_ena = w_arith_ena[Multi_MUL] | w_arith_ena[Multi_DIV]
-                | w_arith_ena[Multi_FPU];
+    w_multi_ena = v_next_mul_ready || v_next_div_ready || v_next_fpu_ready;
 
+    w_arith_ena[Multi_MUL] = v_next_mul_ready;
+    w_arith_ena[Multi_DIV] = v_next_div_ready;
+    w_arith_ena[Multi_FPU] = v_next_fpu_ready;
 
     if (i_memop_load) {
         vb_memop_addr =

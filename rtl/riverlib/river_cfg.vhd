@@ -397,6 +397,12 @@ package river_cfg is
   constant CSR_mstackovr     : std_logic_vector(11 downto 0) := X"350";
   -- Machine stack underflow
   constant CSR_mstackund     : std_logic_vector(11 downto 0) := X"351";
+  -- MPU region address (non-standard CSR).
+  constant CSR_mpu_addr      : std_logic_vector(11 downto 0) := X"352";
+  -- MPU region mask (non-standard CSR).
+  constant CSR_mpu_mask      : std_logic_vector(11 downto 0) := X"353";
+  -- MPU region control (non-standard CSR).
+  constant CSR_mpu_ctrl      : std_logic_vector(11 downto 0) := X"354";
   --! @}
 
   --! @name   Exceptions
@@ -551,6 +557,11 @@ package river_cfg is
     o_trap_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_break_mode : in std_logic;
     o_break_event : out std_logic;
+    o_mpu_region_we : out std_logic;
+    o_mpu_region_idx : out std_logic_vector(CFG_MPU_TBL_WIDTH-1 downto 0);
+    o_mpu_region_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_mpu_region_mask : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_mpu_region_flags : out std_logic_vector(CFG_MPU_FL_TOTAL-1 downto 0);
     i_dport_ena : in std_logic;
     i_dport_write : in std_logic;
     i_dport_addr : in std_logic_vector(11 downto 0);
