@@ -332,7 +332,7 @@ begin
                  i_memop_size, i_unsigned_op, i_rv32, i_compressed, i_f64, i_isa_type, i_ivec,
                  i_unsup_exception, i_instr_load_fault, i_instr_executable,
                  i_dport_npc_write, i_dport_npc, 
-                 i_rdata1, i_rdata2, i_rfdata1, i_rfdata2, i_csr_rdata, 
+                 i_rdata1, i_rdata2, i_csr_rdata, 
                  i_trap_valid, i_trap_pc, i_memop_ready,
                  wb_arith_res, w_arith_valid, w_arith_busy,
                  wb_sll, wb_sllw, wb_srl, wb_srlw, wb_sra, wb_sraw, r, r_scoreboard)

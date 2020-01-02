@@ -70,6 +70,7 @@ function "*" (a, b : std_logic_vector) return std_logic_vector;
 
 function conv_integer(v : std_logic_vector) return integer;
 function conv_integer(v : std_logic) return integer;
+function conv_integer(v : boolean) return integer;
 function conv_std_logic_vector(i : integer; w : integer) return std_logic_vector;
 function conv_std_logic_vector_signed(i : integer; w : integer) return std_logic_vector;
 function conv_std_logic(b : boolean) return std_ulogic;
@@ -92,6 +93,12 @@ begin
     if v = '1' then return(1);
     else return(0); end if;
   else return(0); end if;
+end;
+
+function conv_integer(v : boolean) return integer is
+begin
+    if v then return(1);
+    else return(0); end if;
 end;
 
 function conv_std_logic_vector(i : integer; w : integer) return std_logic_vector is

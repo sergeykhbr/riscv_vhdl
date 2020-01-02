@@ -16,6 +16,7 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
+use IEEE.std_logic_arith.all;  -- UNSIGNED function
 use ieee.std_logic_misc.all;  -- or_reduce()
 library commonlib;
 use commonlib.types_common.all;
@@ -56,7 +57,7 @@ end;
  
 architecture arch_RegBank of RegBank is
 
-  constant REGS_TOTAL : integer := Reg_Total + fpu_ena*RegFpu_Total;
+  constant REGS_TOTAL : integer := Reg_Total + conv_integer(fpu_ena)*RegFpu_Total;
 
   type MemoryType is array (0 to REGS_TOTAL-1) 
          of std_logic_vector(RISCV_ARCH-1 downto 0);
