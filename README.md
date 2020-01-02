@@ -66,18 +66,16 @@ with enabled (-O0) and disabled (-O2) optimization to define HW and GCC-compiler
 All sources are available and could be run on the simulator or on the 
 different FPGA targets.
 
-Target             | Git tag | Dhrystone<br> per sec,<br> -O0 | Dhrystone<br> per sec,<br> -O2 | Information.
+Target             | Git tag | Dhrystone<br> per sec,<br> -O0, 60 MHz | Dhrystone<br> per sec,<br> -O2, 60 MHz | Information.
 -------------------|:-------:|:------------------------------:|:------------------------------:|:------------
-RISC-V simulator   | v6.0    | **65652.0** | **76719.0**   | Ubuntu GNU GCC 6.1.0 toolchain RV64IMA custom build
-"Rocket" CPU       | v6.0    | -           | **23999.0**   | GCC 6.1.0
-"River" CPU        | v6.0    | -           | **35121.0**   | GCC 6.1.0
-RISC-V simulator   | latest  | **76824.0** | **176469.0**  | *GCC 7.1.1* with the compressed instructions set
-"River" CPU        | latest  | **29440.0** | **89420.0**   | *GCC 7.1.1* with the compressed instructions set
-ARM simulator      | latest  | **78451.0** | **162600.0**  | *arm-none-eabi-gcc 7.2.0*, ARM ISA only
-Cortex-R5 ARM      | No      | **20561.0** | **42401.0**   | *arm-none-eabi-gcc 7.2.0*, custom FPGA system:<br> Single-Core, MPU enabled, **Caches disabled**
-Cortex-R5 ARM      | No      | **54052.0** | **132446.0**  | *arm-none-eabi-gcc 7.2.0*, custom FPGA system:<br> Single-Core, MPU enabled, **Caches enabled**
+RISC-V simulator   | latest  | **76824.0** | **176469.0**  | *GCC 7.1.1* with the compressed instructions set.
+RISC-V simulator   | latest  | **-**       | **184074.0**  | *GCC 8.3.1* with the compressed instructions set.
+"River" CPU        | latest  | **-**       | **135432.0**  | *GCC 8.3.1* with the compressed instructions set.
+ARM simulator      | latest  | **78451.0** | **162600.0**  | *arm-none-eabi-gcc 7.2.0*, ARM ISA only.
+Cortex-R5 ARM      | No      | **20561.0** | **42401.0**   | *arm-none-eabi-gcc 7.2.0*, custom FPGA system:<br> Single-Core, MPU enabled, **Caches disabled**.
+Cortex-R5 ARM      | No      | **54052.0** | **132446.0**  | *arm-none-eabi-gcc 7.2.0*, custom FPGA system:<br> Single-Core, MPU enabled, **Caches enabled**.
 Cortex-M3 Thumb2   | [arm_vhdl](https://github.com/sergeykhbr/arm_vhdl) | soon       | soon          | *arm-none-eabi-gcc 7.2.0*, custom FPGA system
-"LEON3" SPARC V8   | No      | **48229.0** | **119515.0**  | *sparc-elf-gcc 4.4.2*, custom FPGA system
+"LEON3" SPARC V8   | No      | **48229.0** | **119515.0**  | *sparc-elf-gcc 4.4.2*, custom FPGA system.
 
 Access to all memory banks and peripheries for all targets (including ARM and Leon3) is made 
 in the same clock domain and always is
@@ -89,7 +87,7 @@ CPU         | Clocks-Per-Instruction,<br> CPI | Description.
 ------------|:-------:|:------------------------------
 Cortext-R5  | 1.22    | This is **dual-issue** processor capable to execute a pair of instructions per<br> one clock. It's a very good but quite expensive CPU.
 LEON3       | 1.5     | CPI information from [here](https://www.gaisler.com/index.php/products/simulators/tsim).
-River       | 1.9     | Free-to-use and highly customizable CPU. This result achieved with enabled 16 KB I-cache.
+River       | 1.35    | Free-to-use and highly customizable CPU. I/D caches are enabled: 4-ways, 16 KB each.
 Cortex-M3   | soon    | RTL is under development.
 
    **Since the tag 'v7.0' RIVER CPU is the main processor in the system and all issues
