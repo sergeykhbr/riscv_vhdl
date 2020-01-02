@@ -392,6 +392,9 @@ begin
     variable int_radr1 : integer;
     variable int_radr2 : integer;
     variable int_waddr : integer;
+    variable v_next_mul_ready : std_logic;
+    variable v_next_div_ready : std_logic;
+    variable v_next_fpu_ready : std_logic;
 
   begin
 
