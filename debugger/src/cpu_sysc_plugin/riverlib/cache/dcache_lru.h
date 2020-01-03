@@ -115,8 +115,8 @@ SC_MODULE(DCacheLru) {
         sc_signal<sc_uint<DCACHE_LOG2_BURST_LEN>> burst_cnt;
         sc_signal<sc_uint<DCACHE_BURST_LEN>> burst_rstrb;
         sc_signal<bool> cached;
-        sc_signal<bool> writable;
-        sc_signal<bool> readable;
+        sc_signal<bool> mpu_er_store;
+        sc_signal<bool> mpu_er_load;
         sc_signal<bool> load_fault;
         sc_signal<bool> write_first;
         sc_signal<bool> write_flush;
@@ -143,8 +143,8 @@ SC_MODULE(DCacheLru) {
         iv.burst_cnt = 0;
         iv.burst_rstrb = ~0ul;
         iv.cached = 0;
-        iv.writable = 0;
-        iv.readable = 0;
+        iv.mpu_er_store = 0;
+        iv.mpu_er_load = 0;
         iv.load_fault = 0;
         iv.write_first = 0;
         iv.write_flush = 0;

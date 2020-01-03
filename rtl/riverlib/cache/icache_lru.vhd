@@ -89,8 +89,6 @@ architecture arch_icache_lru of icache_lru is
       burst_rstrb : std_logic_vector(ICACHE_BURST_LEN-1 downto 0);
       cached : std_logic;
       executable : std_logic;
-      writable : std_logic;
-      readable : std_logic;
       load_fault : std_logic;
       req_flush : std_logic;
       req_flush_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
@@ -108,8 +106,6 @@ architecture arch_icache_lru of icache_lru is
     (others => '0'),                        -- burst_rstrb
     '0',                                    -- cached
     '0',                                    -- executable
-    '0',                                    -- writable
-    '0',                                    -- readable
     '0',                                    -- load_fault
     '0',                                    -- req_flush
     (others => '0'), (others => '0'),       -- req_flush_addr, req_flush_cnt
@@ -224,6 +220,7 @@ begin
 
     case r.state is
     when State_Idle =>
+        v.executable := '1';
         if r.req_flush = '1' then
             v.state := State_Flush;
             v.req_flush := '0';
@@ -268,33 +265,38 @@ begin
             v.state := State_CheckMPU;
         end if;
     when State_CheckMPU =>
-        v.req_mem_valid := '1';
-        v.state := State_WaitGrant;
-        v.write_addr := r.req_addr;
-
-        if i_mpu_flags(CFG_MPU_FL_CACHABLE) = '1' then
-            if line_hit_o = '0' then
-                v.mem_addr := r.req_addr(BUS_ADDR_WIDTH-1 downto CFG_ILOG2_BYTES_PER_LINE)
-                            & zero64(CFG_ILOG2_BYTES_PER_LINE-1 downto 0);
-            else
-                v.write_addr := r.req_addr_next;
-                v.mem_addr := r.req_addr_next(BUS_ADDR_WIDTH-1 downto CFG_ILOG2_BYTES_PER_LINE)
-                            & zero64(CFG_ILOG2_BYTES_PER_LINE-1 downto 0);
-            end if;
-            v.burst_cnt := conv_std_logic_vector(ICACHE_BURST_LEN-1, 8);
-            v.cached := '1';
-        else
-            v.mem_addr := r.req_addr(BUS_ADDR_WIDTH-1 downto CFG_LOG2_DATA_BYTES)
-                         & zero64(CFG_LOG2_DATA_BYTES-1 downto 0);
+        if i_mpu_flags(CFG_MPU_FL_EXEC) = '0' then
+            v.cache_line_i := (others => '1');
+            v.state := State_CheckResp;
             v.cached := '0';
-            v_req_mem_len := X"01";  -- burst = 2
-            v.burst_cnt := X"01";
+        else
+            v.req_mem_valid := '1';
+            v.state := State_WaitGrant;
+            v.write_addr := r.req_addr;
+
+            if i_mpu_flags(CFG_MPU_FL_CACHABLE) = '1' then
+                if line_hit_o = '0' then
+                    v.mem_addr := r.req_addr(BUS_ADDR_WIDTH-1 downto CFG_ILOG2_BYTES_PER_LINE)
+                                & zero64(CFG_ILOG2_BYTES_PER_LINE-1 downto 0);
+                else
+                    v.write_addr := r.req_addr_next;
+                    v.mem_addr := r.req_addr_next(BUS_ADDR_WIDTH-1 downto CFG_ILOG2_BYTES_PER_LINE)
+                                & zero64(CFG_ILOG2_BYTES_PER_LINE-1 downto 0);
+                end if;
+                v.burst_cnt := conv_std_logic_vector(ICACHE_BURST_LEN-1, 8);
+                v.cached := '1';
+            else
+                v.mem_addr := r.req_addr(BUS_ADDR_WIDTH-1 downto CFG_LOG2_DATA_BYTES)
+                             & zero64(CFG_LOG2_DATA_BYTES-1 downto 0);
+                v.cached := '0';
+                v_req_mem_len := X"01";  -- burst = 2
+                v.burst_cnt := X"01";
+            end if;
         end if;
+
         v.burst_rstrb := conv_std_logic_vector(1, ICACHE_BURST_LEN);
         v.load_fault := '0';
         v.executable := i_mpu_flags(CFG_MPU_FL_EXEC);
-        v.writable := i_mpu_flags(CFG_MPU_FL_WR);
-        v.readable := i_mpu_flags(CFG_MPU_FL_RD);
     when State_WaitGrant =>
         if i_req_mem_ready = '1' then
             v.state := State_WaitResp;
@@ -326,18 +328,18 @@ begin
         end if;
     when State_CheckResp =>
         v.req_addr := r.write_addr;              -- Restore req_addr after line write
-        if r.cached = '1' then
-            v.state := State_SetupReadAdr;
-            v_line_cs := '1';
-            v_line_wflags(TAG_FL_VALID) := '1';
-            vb_line_wstrb := (others => '1');  -- write full line
-        else
+        if r.cached = '0' or r.load_fault = '1' then
             v_resp_valid := '1';
             vb_resp_data := vb_uncached_data;
             v_resp_er_load_fault := r.load_fault;
             if i_resp_ready = '1' then
                 v.state := State_Idle;
             end if;
+        else
+            v.state := State_SetupReadAdr;
+            v_line_cs := '1';
+            v_line_wflags(TAG_FL_VALID) := '1';
+            vb_line_wstrb := (others => '1');  -- write full line
         end if;
     when State_SetupReadAdr =>
         v.state := State_CheckHit;

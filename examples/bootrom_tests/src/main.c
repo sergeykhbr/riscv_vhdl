@@ -70,8 +70,9 @@ int main() {
 
     led_set(0x03);
     test_timer();      // Enabling timer[0] with 1 sec interrupts
-#else
+#elif 0
     test_timer_multicycle_instructions();
+#else
 #endif
 
     led_set(0x04);

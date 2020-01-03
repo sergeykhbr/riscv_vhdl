@@ -214,11 +214,11 @@ void ICacheLru::comb() {
 
     switch (r.state.read()) {
     case State_Idle:
+        v.executable = 1;
         if (r.req_flush.read() == 1) {
             v.state = State_Flush;
             v.req_flush = 0;
-            t_cache_line_i = 0;
-            v.cache_line_i = ~t_cache_line_i;
+            v.cache_line_i = 0;
             if (r.req_flush_addr.read()[0] == 1) {
                 v.req_addr = 0;
                 v.flush_cnt = ~0u;
@@ -260,33 +260,39 @@ void ICacheLru::comb() {
         }
         break;
     case State_CheckMPU:
-        v.req_mem_valid = 1;
-        v.state = State_WaitGrant;
-        v.write_addr = r.req_addr;
-
-        if (i_mpu_flags.read()[CFG_MPU_FL_CACHABLE] == 1) {
-            if (line_hit_o.read() == 0) {
-                v.mem_addr = r.req_addr.read()(BUS_ADDR_WIDTH-1,
-                        CFG_ILOG2_BYTES_PER_LINE) << CFG_ILOG2_BYTES_PER_LINE;
-            } else {
-                v.write_addr = r.req_addr_next;
-                v.mem_addr = r.req_addr_next.read()(BUS_ADDR_WIDTH-1,
-                        CFG_ILOG2_BYTES_PER_LINE) << CFG_ILOG2_BYTES_PER_LINE;
-            }
-            v.burst_cnt = ICACHE_BURST_LEN-1;
-            v.cached = 1;
-        } else {
-            v.mem_addr = r.req_addr.read()(BUS_ADDR_WIDTH-1, CFG_LOG2_DATA_BYTES)
-                         << CFG_LOG2_DATA_BYTES;
+        if (i_mpu_flags.read()[CFG_MPU_FL_EXEC] == 0) {
+            t_cache_line_i = 0;
+            v.cache_line_i = ~t_cache_line_i;
+            v.state = State_CheckResp;
             v.cached = 0;
-            v_req_mem_len = 1;  // burst = 2
-            v.burst_cnt = 1;
+        } else {
+            v.req_mem_valid = 1;
+            v.state = State_WaitGrant;
+            v.write_addr = r.req_addr;
+
+            if (i_mpu_flags.read()[CFG_MPU_FL_CACHABLE] == 1) {
+                if (line_hit_o.read() == 0) {
+                    v.mem_addr = r.req_addr.read()(BUS_ADDR_WIDTH-1,
+                            CFG_ILOG2_BYTES_PER_LINE) << CFG_ILOG2_BYTES_PER_LINE;
+                } else {
+                    v.write_addr = r.req_addr_next;
+                    v.mem_addr = r.req_addr_next.read()(BUS_ADDR_WIDTH-1,
+                            CFG_ILOG2_BYTES_PER_LINE) << CFG_ILOG2_BYTES_PER_LINE;
+                }
+                v.burst_cnt = ICACHE_BURST_LEN-1;
+                v.cached = 1;
+            } else {
+                v.mem_addr = r.req_addr.read()(BUS_ADDR_WIDTH-1, CFG_LOG2_DATA_BYTES)
+                             << CFG_LOG2_DATA_BYTES;
+                v.cached = 0;
+                v_req_mem_len = 1;  // burst = 2
+                v.burst_cnt = 1;
+            }
         }
+
         v.burst_rstrb = 0x1;
         v.load_fault = 0;
         v.executable = i_mpu_flags.read()[CFG_MPU_FL_EXEC];
-        v.writable = i_mpu_flags.read()[CFG_MPU_FL_WR];
-        v.readable = i_mpu_flags.read()[CFG_MPU_FL_RD];
         break;
     case State_WaitGrant:
         if (i_req_mem_ready.read()) {
@@ -323,18 +329,18 @@ void ICacheLru::comb() {
         break;
     case State_CheckResp:
         v.req_addr = r.write_addr;              // Restore req_addr after line write
-        if (r.cached.read() == 1) {
-            v.state = State_SetupReadAdr;
-            v_line_cs = 1;
-            v_line_wflags[TAG_FL_VALID] = 1;
-            vb_line_wstrb = ~0ul;  // write full line
-        } else {
+        if (r.cached.read() == 0 || r.load_fault.read() == 1) {
             v_resp_valid = 1;
             vb_resp_data = vb_uncached_data;
             v_resp_er_load_fault = r.load_fault;
             if (i_resp_ready.read() == 1) {
                 v.state = State_Idle;
             }
+        } else {
+            v.state = State_SetupReadAdr;
+            v_line_cs = 1;
+            v_line_wflags[TAG_FL_VALID] = 1;
+            vb_line_wstrb = ~0ul;  // write full line
         }
         break;
     case State_SetupReadAdr:

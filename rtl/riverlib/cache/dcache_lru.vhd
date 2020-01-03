@@ -110,8 +110,8 @@ architecture arch_dcache_lru of dcache_lru is
       burst_cnt : integer range 0 to DCACHE_BURST_LEN-1;
       burst_rstrb : std_logic_vector(DCACHE_BURST_LEN-1 downto 0);
       cached : std_logic;
-      writable : std_logic;
-      readable : std_logic;
+      mpu_er_store : std_logic;
+      mpu_er_load : std_logic;
       load_fault : std_logic;
       write_first : std_logic;
       write_flush : std_logic;
@@ -136,8 +136,8 @@ architecture arch_dcache_lru of dcache_lru is
     0,                                      -- burst_cnt
     (others => '1'),                        -- burst_rstrb
     '0',                                    -- cached
-    '0',                                    -- writable
-    '0',                                    -- readable
+    '0',                                    -- mpu_er_store
+    '0',                                    -- mpu_er_load
     '0',                                    -- load_fault
     '0',                                    -- write_first
     '0',                                    -- write_flush
@@ -197,8 +197,7 @@ begin
     variable v_resp_valid : std_logic;
     variable vb_resp_data : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
     variable v_resp_er_load_fault : std_logic;
-    variable v_resp_er_mpu_load : std_logic;
-    variable v_resp_er_mpu_store : std_logic;
+    variable v_resp_er_store_fault : std_logic;
     variable v_flush : std_logic;
     variable v_line_cs : std_logic;
     variable vb_line_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
@@ -216,8 +215,7 @@ begin
     v_req_ready := '0';
     v_resp_valid := '0';
     v_resp_er_load_fault := '0';
-    v_resp_er_mpu_load := '0';
-    v_resp_er_mpu_store := '0';
+    v_resp_er_store_fault := '0';
     v_flush := '0';
     v_last := '0';
     v_req_mem_len := conv_std_logic_vector(DCACHE_BURST_LEN-1, 8);
@@ -284,6 +282,8 @@ begin
     -- System Bus access state machine
     case r.state is
     when State_Idle =>
+        v.mpu_er_store := '0';
+        v.mpu_er_load := '0';
         if r.req_flush = '1' then
             v.state := State_FlushAddr;
             v.req_flush := '0';
@@ -363,46 +363,56 @@ begin
             v.state := State_CheckMPU;
         end if;
     when State_CheckMPU =>
-        v.req_mem_valid := '1';
-        v.mem_write := '0';
-        v.state := State_WaitGrant;
-
-        if i_mpu_flags(CFG_MPU_FL_CACHABLE) = '1' then
-            if line_rflags_o(TAG_FL_VALID) = '1' and
-                line_rflags_o(DTAG_FL_DIRTY) = '1' then
-                v.write_first := '1';
-                v.mem_write := '1';
-                v.mem_addr(BUS_ADDR_WIDTH-1 downto CFG_DLOG2_BYTES_PER_LINE) := 
-                    line_raddr_o(BUS_ADDR_WIDTH-1 downto CFG_DLOG2_BYTES_PER_LINE);
-                v.mem_addr(CFG_DLOG2_BYTES_PER_LINE-1 downto 0) := (others => '0');
-            else
-                v.mem_addr(BUS_ADDR_WIDTH-1 downto CFG_DLOG2_BYTES_PER_LINE) :=
-                    r.req_addr(BUS_ADDR_WIDTH-1 downto CFG_DLOG2_BYTES_PER_LINE);
-                v.mem_addr(CFG_DLOG2_BYTES_PER_LINE-1 downto 0) := (others => '0');
-            end if;
-            v.mem_wstrb := (others => '1');
-            v.burst_cnt := DCACHE_BURST_LEN-1;
-            v.cached := '1';
-            v.cache_line_o := line_rdata_o;
-        else
-            v.mem_addr(BUS_ADDR_WIDTH-1 downto CFG_LOG2_DATA_BYTES) :=
-                r.req_addr(BUS_ADDR_WIDTH-1 downto CFG_LOG2_DATA_BYTES);
-            v.mem_addr(CFG_LOG2_DATA_BYTES-1 downto 0) := (others => '0');
-            v.mem_wstrb := r.req_wstrb;
-            v.mem_write := r.req_write;
-            v.burst_cnt := 0;
+        if r.req_write = '1' and i_mpu_flags(CFG_MPU_FL_WR) = '0' then
+            v.mpu_er_store := '1';
+            v.cache_line_i := (others => '1');
+            v.state := State_CheckResp;
             v.cached := '0';
-            v_req_mem_len := (others => '0');
+        elsif r.req_write = '0' and i_mpu_flags(CFG_MPU_FL_RD) = '0' then
+            v.mpu_er_load := '1';
+            v.cache_line_i := (others => '1');
+            v.state := State_CheckResp;
+            v.cached := '0';
+        else
+            v.req_mem_valid := '1';
+            v.mem_write := '0';
+            v.state := State_WaitGrant;
 
-            v.cache_line_o := (others => '0');
-            v.cache_line_o(BUS_DATA_WIDTH-1 downto 0) := r.req_wdata;
+            if i_mpu_flags(CFG_MPU_FL_CACHABLE) = '1' then
+                if line_rflags_o(TAG_FL_VALID) = '1' and
+                    line_rflags_o(DTAG_FL_DIRTY) = '1' then
+                    v.write_first := '1';
+                    v.mem_write := '1';
+                    v.mem_addr(BUS_ADDR_WIDTH-1 downto CFG_DLOG2_BYTES_PER_LINE) := 
+                        line_raddr_o(BUS_ADDR_WIDTH-1 downto CFG_DLOG2_BYTES_PER_LINE);
+                    v.mem_addr(CFG_DLOG2_BYTES_PER_LINE-1 downto 0) := (others => '0');
+                else
+                    v.mem_addr(BUS_ADDR_WIDTH-1 downto CFG_DLOG2_BYTES_PER_LINE) :=
+                        r.req_addr(BUS_ADDR_WIDTH-1 downto CFG_DLOG2_BYTES_PER_LINE);
+                    v.mem_addr(CFG_DLOG2_BYTES_PER_LINE-1 downto 0) := (others => '0');
+                end if;
+                v.mem_wstrb := (others => '1');
+                v.burst_cnt := DCACHE_BURST_LEN-1;
+                v.cached := '1';
+                v.cache_line_o := line_rdata_o;
+            else
+                v.mem_addr(BUS_ADDR_WIDTH-1 downto CFG_LOG2_DATA_BYTES) :=
+                    r.req_addr(BUS_ADDR_WIDTH-1 downto CFG_LOG2_DATA_BYTES);
+                v.mem_addr(CFG_LOG2_DATA_BYTES-1 downto 0) := (others => '0');
+                v.mem_wstrb := r.req_wstrb;
+                v.mem_write := r.req_write;
+                v.burst_cnt := 0;
+                v.cached := '0';
+                v_req_mem_len := (others => '0');
+
+                v.cache_line_o := (others => '0');
+                v.cache_line_o(BUS_DATA_WIDTH-1 downto 0) := r.req_wdata;
+            end if;
         end if;
         v.burst_rstrb := (others => '0');
         v.burst_rstrb(0) := '1';
         v.cache_line_i := (others => '0');
         v.load_fault := '0';
-        v.writable := i_mpu_flags(CFG_MPU_FL_WR);
-        v.readable := i_mpu_flags(CFG_MPU_FL_RD);
     when State_WaitGrant =>
         if i_req_mem_ready = '1' then
             if r.write_flush = '1' or
@@ -441,7 +451,17 @@ begin
             end if;
         end if;
     when State_CheckResp =>
-        if r.cached = '1' then
+        if r.cached = '0' or r.load_fault = '1' then
+            -- uncached read only (write goes to WriteBus) or cached load-modify fault
+            v_resp_valid := '1';
+            vb_resp_data := vb_uncached_data;
+            v_resp_er_load_fault := r.load_fault and (not r.req_write);
+            v_resp_er_store_fault := r.load_fault and r.req_write;
+            if i_resp_ready = '1' then
+                v.state := State_Idle;
+                v.requested := '0';
+            end if;
+        else
             v.state := State_SetupReadAdr;
             v_line_cs := '1';
             v_line_wflags(TAG_FL_VALID) := '1';
@@ -453,15 +473,6 @@ begin
                 vb_line_wdata := vb_cache_line_i_modified;
                 v_resp_valid := '1';
                 v.state := State_Idle;
-            end if;
-        else
-            -- uncached read only (write goes to WriteBus)
-            v_resp_valid := '1';
-            vb_resp_data := vb_uncached_data;
-            v_resp_er_load_fault := r.load_fault;
-            if i_resp_ready = '1' then
-                v.state := State_Idle;
-                v.requested := '0';
             end if;
         end if;
     when State_SetupReadAdr =>
@@ -575,9 +586,9 @@ begin
     o_resp_addr <= r.req_addr;
     o_resp_er_addr <= vb_err_addr;
     o_resp_er_load_fault <= v_resp_er_load_fault;
-    o_resp_er_store_fault <= i_mem_store_fault;
-    o_resp_er_mpu_load <= v_resp_er_mpu_load;
-    o_resp_er_mpu_store <= v_resp_er_mpu_store;
+    o_resp_er_store_fault <= v_resp_er_store_fault;
+    o_resp_er_mpu_load <= r.mpu_er_load;
+    o_resp_er_mpu_store <= r.mpu_er_store;
     o_mpu_addr <= r.req_addr;
     o_state <= r.state;
     

@@ -149,6 +149,7 @@ void MemAccess::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 
         std::string pn(name());
         sc_trace(o_vcd, r.state, pn + ".state");
+        sc_trace(o_vcd, r.memop_addr, pn + ".r_memop_addr");
         sc_trace(o_vcd, r.memop_res_pc, pn + ".r_memop_res_pc");
         sc_trace(o_vcd, r.reg_wb_valid, pn + ".r_reg_wb_valid");
         sc_trace(o_vcd, r.reg_res_pc, pn + ".r_reg_res_pc");
@@ -331,7 +332,7 @@ void MemAccess::comb() {
     case MEMOP_4B:
         vb_mem_data_unsigned(31, 0) = vb_mem_resp_shifted(31, 0);
         vb_mem_data_signed(31, 0) = vb_mem_resp_shifted(31, 0);
-        if (i_mem_data.read()[31]) {
+        if (vb_mem_resp_shifted[31]) {
             vb_mem_data_signed(63, 32) = ~0;
         }
         break;

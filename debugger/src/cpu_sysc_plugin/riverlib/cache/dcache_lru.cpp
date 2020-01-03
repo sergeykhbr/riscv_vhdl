@@ -198,8 +198,7 @@ void DCacheLru::comb() {
     bool v_resp_valid;
     sc_uint<BUS_DATA_WIDTH> vb_resp_data;
     bool v_resp_er_load_fault;
-    bool v_resp_er_mpu_load;
-    bool v_resp_er_mpu_store;
+    bool v_resp_er_store_fault;
     bool v_flush;
     bool v_line_cs;
     sc_uint<BUS_ADDR_WIDTH> vb_line_addr;
@@ -216,8 +215,7 @@ void DCacheLru::comb() {
     v_req_ready = 0;
     v_resp_valid = 0;
     v_resp_er_load_fault = 0;
-    v_resp_er_mpu_load = 0;
-    v_resp_er_mpu_store = 0;
+    v_resp_er_store_fault = 0;
     v_flush = 0;
     v_last = 0;
     v_req_mem_len = DCACHE_BURST_LEN-1;
@@ -287,6 +285,8 @@ void DCacheLru::comb() {
     // System Bus access state machine
     switch (r.state.read()) {
     case State_Idle:
+        v.mpu_er_store = 0;
+        v.mpu_er_load = 0;
         if (r.req_flush.read() == 1) {
             v.state = State_FlushAddr;
             v.req_flush = 0;
@@ -366,38 +366,53 @@ void DCacheLru::comb() {
         v.mem_write = 0;
         v.state = State_WaitGrant;
 
-        if (i_mpu_flags.read()[CFG_MPU_FL_CACHABLE] == 1) {
-            if (line_rflags_o.read()[TAG_FL_VALID] == 1 &&
-                line_rflags_o.read()[DTAG_FL_DIRTY] == 1) {
-                v.write_first = 1;
-                v.mem_write = 1;
-                v.mem_addr = line_raddr_o.read()(BUS_ADDR_WIDTH-1,
-                            CFG_DLOG2_BYTES_PER_LINE) << CFG_DLOG2_BYTES_PER_LINE;
-            } else {
-                v.mem_addr = r.req_addr.read()(BUS_ADDR_WIDTH-1,
-                            CFG_DLOG2_BYTES_PER_LINE) << CFG_DLOG2_BYTES_PER_LINE;
-            }
-            v.mem_wstrb = ~0ul;
-            v.burst_cnt = DCACHE_BURST_LEN-1;
-            v.cached = 1;
-            v.cache_line_o = line_rdata_o;
-        } else {
-            v.mem_addr = r.req_addr.read()(BUS_ADDR_WIDTH-1, CFG_LOG2_DATA_BYTES)
-                         << CFG_LOG2_DATA_BYTES;
-            v.mem_wstrb = r.req_wstrb.read();
-            v.mem_write = r.req_write.read();
-            v.burst_cnt = 0;
-            v.cached = 0;
-            v_req_mem_len = 0;
+        if (r.req_write.read() == 1
+            && i_mpu_flags.read()[CFG_MPU_FL_WR] == 0) {
+            v.mpu_er_store = 1;
             t_cache_line_i = 0;
-            t_cache_line_i(BUS_DATA_WIDTH-1, 0) = r.req_wdata.read();
-            v.cache_line_o = t_cache_line_i;
+            v.cache_line_i = ~t_cache_line_i;
+            v.state = State_CheckResp;
+            v.cached = 0;
+        } else if (r.req_write.read() == 0
+                    && i_mpu_flags.read()[CFG_MPU_FL_RD] == 0) {
+            v.mpu_er_load = 1;
+            t_cache_line_i = 0;
+            v.cache_line_i = ~t_cache_line_i;
+            v.state = State_CheckResp;
+            v.cached = 0;
+        } else {
+            if (i_mpu_flags.read()[CFG_MPU_FL_CACHABLE] == 1) {
+                if (line_rflags_o.read()[TAG_FL_VALID] == 1 &&
+                    line_rflags_o.read()[DTAG_FL_DIRTY] == 1) {
+                    v.write_first = 1;
+                    v.mem_write = 1;
+                    v.mem_addr = line_raddr_o.read()(BUS_ADDR_WIDTH-1,
+                                CFG_DLOG2_BYTES_PER_LINE) << CFG_DLOG2_BYTES_PER_LINE;
+                } else {
+                    v.mem_addr = r.req_addr.read()(BUS_ADDR_WIDTH-1,
+                                CFG_DLOG2_BYTES_PER_LINE) << CFG_DLOG2_BYTES_PER_LINE;
+                }
+                v.mem_wstrb = ~0ul;
+                v.burst_cnt = DCACHE_BURST_LEN-1;
+                v.cached = 1;
+                v.cache_line_o = line_rdata_o;
+            } else {
+                v.mem_addr = r.req_addr.read()(BUS_ADDR_WIDTH-1, CFG_LOG2_DATA_BYTES)
+                             << CFG_LOG2_DATA_BYTES;
+                v.mem_wstrb = r.req_wstrb.read();
+                v.mem_write = r.req_write.read();
+                v.burst_cnt = 0;
+                v.cached = 0;
+                v_req_mem_len = 0;
+                t_cache_line_i = 0;
+                t_cache_line_i(BUS_DATA_WIDTH-1, 0) = r.req_wdata.read();
+                v.cache_line_o = t_cache_line_i;
+            }
         }
+
         v.burst_rstrb = 0x1;
         v.cache_line_i = 0;
         v.load_fault = 0;
-        v.writable = i_mpu_flags.read()[CFG_MPU_FL_WR];
-        v.readable = i_mpu_flags.read()[CFG_MPU_FL_RD];
         break;
     case State_WaitGrant:
         if (i_req_mem_ready.read()) {
@@ -441,7 +456,16 @@ void DCacheLru::comb() {
         }
         break;
     case State_CheckResp:
-        if (r.cached.read() == 1) {
+        if (r.cached.read() == 0 || r.load_fault.read() == 1) {
+            // uncached read only (write goes to WriteBus) or cached load-modify fault
+            v_resp_valid = 1;
+            vb_resp_data = vb_uncached_data;
+            v_resp_er_store_fault = r.load_fault && r.req_write;
+            v_resp_er_load_fault = r.load_fault && !r.req_write;
+            if (i_resp_ready.read() == 1) {
+                v.state = State_Idle;
+            }
+        } else {
             v.state = State_SetupReadAdr;
             v_line_cs = 1;
             v_line_wflags[TAG_FL_VALID] = 1;
@@ -452,14 +476,6 @@ void DCacheLru::comb() {
                 v_line_wflags[DTAG_FL_DIRTY] = 1;
                 vb_line_wdata = vb_cache_line_i_modified;
                 v_resp_valid = 1;
-                v.state = State_Idle;
-            }
-        } else {
-            // uncached read only (write goes to WriteBus)
-            v_resp_valid = 1;
-            vb_resp_data = vb_uncached_data;
-            v_resp_er_load_fault = r.load_fault;
-            if (i_resp_ready.read() == 1) {
                 v.state = State_Idle;
             }
         }
@@ -577,9 +593,9 @@ void DCacheLru::comb() {
     o_resp_addr = r.req_addr.read();
     o_resp_er_addr = vb_err_addr;
     o_resp_er_load_fault = v_resp_er_load_fault;
-    o_resp_er_store_fault = i_mem_store_fault.read();
-    o_resp_er_mpu_load = v_resp_er_mpu_load;
-    o_resp_er_mpu_store = v_resp_er_mpu_store;
+    o_resp_er_store_fault = v_resp_er_store_fault;
+    o_resp_er_mpu_load = r.mpu_er_load;
+    o_resp_er_mpu_store = r.mpu_er_store;
     o_mpu_addr = r.req_addr.read();
     o_state = r.state;
 }

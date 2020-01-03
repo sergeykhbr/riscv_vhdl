@@ -94,8 +94,6 @@ SC_MODULE(ICacheLru) {
         sc_signal<sc_uint<ICACHE_BURST_LEN>> burst_rstrb;
         sc_signal<bool> cached;
         sc_signal<bool> executable;
-        sc_signal<bool> writable;
-        sc_signal<bool> readable;
         sc_signal<bool> load_fault;
         sc_signal<bool> req_flush;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_flush_addr;
@@ -115,8 +113,6 @@ SC_MODULE(ICacheLru) {
         iv.burst_rstrb = 0;
         iv.cached = 0;
         iv.executable = 0;
-        iv.writable = 0;
-        iv.readable = 0;
         iv.load_fault = 0;
         iv.req_flush = 0;           // init flush request
         iv.req_flush_addr = 0;   // [0]=1 flush all
