@@ -157,11 +157,13 @@ SC_MODULE(TagMemNWay) {
     struct RegistersType {
         sc_signal<sc_uint<abus>> req_addr;
         sc_signal<bool> re;
+        sc_signal<bool> flush;
     } v, r;
 
     void R_RESET(RegistersType &iv) {
         iv.req_addr = 0;
         iv.re = 0;
+        iv.flush = 0;
     }
 
     bool async_reset_;
@@ -179,6 +181,7 @@ void TagMemNWay<abus, waybits, ibits, lnbits, flbits>::comb() {
     v_lrui_we = 0;
     v.req_addr = i_addr.read();
     v.re = i_cs.read();
+    v.flush = i_flush.read();
 
     vb_lineadr = i_addr.read()(ibits+lnbits-1, lnbits);
 
@@ -190,7 +193,7 @@ void TagMemNWay<abus, waybits, ibits, lnbits, flbits>::comb() {
 
     vb_wayidx_o = lruo_lru.read();
     for (int i = 0; i < NWAYS; i++) {
-        if (i_flush.read() == 1 && i_addr.read()(waybits-1, 0) == i) {
+        if (r.flush.read() == 1 && r.req_addr.read()(waybits-1, 0) == i) {
             vb_wayidx_o = i;
         } else if (way_o[i].hit.read() == 1 &&
             way_o[i].rflags.read()[FL_VALID] == 1) {

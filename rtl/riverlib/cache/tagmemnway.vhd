@@ -74,9 +74,10 @@ architecture arch_tagmemnway of tagmemnway is
   type RegistersType is record
       req_addr : std_logic_vector(abus-1 downto 0);
       re : std_logic;
+      flush : std_logic;
   end record;
 
-  constant R_RESET : RegistersType := ((others => '0'), '0');
+  constant R_RESET : RegistersType := ((others => '0'), '0', '0');
 
   signal way_i : way_in_vector;
   signal way_o : way_out_vector;
@@ -141,6 +142,7 @@ begin
     v_lrui_we := '0';
     v.req_addr := i_addr;
     v.re := i_cs;
+    v.flush := i_flush;
 
     vb_lineadr := i_addr(ibits+lnbits-1 downto lnbits);
 
@@ -148,7 +150,7 @@ begin
 
     vb_wayidx_o := lruo_lru;
     for i in 0 to NWAYS-1 loop
-        if i_flush = '1' and i_addr(waybits-1 downto 0) = conv_std_logic_vector(i, waybits) then
+        if r.flush = '1' and r.req_addr(waybits-1 downto 0) = conv_std_logic_vector(i, waybits) then
             vb_wayidx_o := conv_std_logic_vector(i, waybits);
         elsif way_o(i).hit = '1' and way_o(i).rflags(FL_VALID) = '1' then
             hit := '1';
