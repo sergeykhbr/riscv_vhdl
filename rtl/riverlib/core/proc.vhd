@@ -274,8 +274,8 @@ begin
                                        else w.e.npc when csr.break_event = '1'
                                        else dbg.flush_address;
 
-    o_data_flush_address <= (others => '0');
-    o_data_flush_valid <= '0';
+    o_data_flush_address <= (others => '1');
+    o_data_flush_valid <= w.e.fence;
 
     o_halted <= dbg.halt;
 

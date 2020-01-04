@@ -494,8 +494,8 @@ void Processor::comb() {
     } else {
         o_flush_address = dbg.flush_address;
     }
-    o_data_flush_address = 0;
-    o_data_flush_valid = 0;
+    o_data_flush_address = ~0ull;
+    o_data_flush_valid = w.e.fence;
 
     o_halted = dbg.halt;
 }

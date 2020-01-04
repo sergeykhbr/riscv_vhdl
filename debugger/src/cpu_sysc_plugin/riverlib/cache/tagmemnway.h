@@ -190,7 +190,9 @@ void TagMemNWay<abus, waybits, ibits, lnbits, flbits>::comb() {
 
     vb_wayidx_o = lruo_lru.read();
     for (int i = 0; i < NWAYS; i++) {
-        if (way_o[i].hit.read() == 1 &&
+        if (i_flush.read() == 1 && i_addr.read()(waybits-1, 0) == i) {
+            vb_wayidx_o = i;
+        } else if (way_o[i].hit.read() == 1 &&
             way_o[i].rflags.read()[FL_VALID] == 1) {
             hit = 1;
             vb_wayidx_o = i;

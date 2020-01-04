@@ -180,6 +180,9 @@ void DCacheLru::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.burst_cnt, pn + ".r_burst_cnt");
         sc_trace(o_vcd, r.mem_wstrb, pn + ".r_mem_wstrb");
         sc_trace(o_vcd, r.flush_cnt, pn + ".r_flush_cnt");
+        sc_trace(o_vcd, r.req_flush, pn + ".r_req_flush");
+        sc_trace(o_vcd, r.req_flush_addr, pn + ".r_req_flush_addr");
+        sc_trace(o_vcd, r.req_flush_cnt, pn + ".r_req_flush_cnt");
     }
     mem->generateVCD(i_vcd, o_vcd);
 }
@@ -290,8 +293,7 @@ void DCacheLru::comb() {
         if (r.req_flush.read() == 1) {
             v.state = State_FlushAddr;
             v.req_flush = 0;
-            t_cache_line_i = 0;
-            v.cache_line_i = ~t_cache_line_i;
+            v.cache_line_i = 0;
             if (r.req_flush_addr.read()[0] == 1) {
                 v.req_addr = 0;
                 v.flush_cnt = ~0u;
@@ -341,10 +343,12 @@ void DCacheLru::comb() {
                     v.state = State_Idle;
                 }
             } else {
-                v_req_ready = 1;
+                v_req_ready = !r.req_flush.read();
                 if (i_resp_ready.read() == 0) {
                     // Do nothing: wait accept
-                } else if (i_req_valid.read() == 1) {
+                } else if (i_req_valid.read() == 0 || r.req_flush.read() == 1) {
+                    v.state = State_Idle;
+                } else {
                     v.state = State_CheckHit;
                     v_line_cs = i_req_valid.read();
                     v.req_addr = i_req_addr.read();
@@ -352,8 +356,6 @@ void DCacheLru::comb() {
                     v.req_wdata = i_req_wdata.read();
                     v.req_write = i_req_write.read();
                     vb_line_addr = i_req_addr.read();
-                } else {
-                    v.state = State_Idle;
                 }
             }
         } else {
@@ -519,12 +521,9 @@ void DCacheLru::comb() {
         break;
     case State_FlushAddr:
         v.state = State_FlushCheck;
+        v_flush = 1;
         v.write_flush = 0;
         v.cache_line_i = 0;
-        if (r.flush_cnt.read() == 0) {
-            v.state = State_Idle;
-            v.init = 0;
-        }
         break;
     case State_FlushCheck:
         v.cache_line_o = line_rdata_o.read();
@@ -541,17 +540,18 @@ void DCacheLru::comb() {
             v.req_mem_valid = 1;
             v.burst_cnt = DCACHE_BURST_LEN-1;
             v.mem_write = 1;
+            v.cached = 1;
             v.state = State_WaitGrant;
         } else {
             /** Write clean line */
             v.state = State_FlushAddr;
-            if (r.flush_cnt.read() == 0) {
+            if (r.flush_cnt.read().or_reduce() == 0) {
                 v.state = State_Idle;
                 v.init = 0;
             }
         }
 
-        if (r.flush_cnt.read() != 0) {
+        if (r.flush_cnt.read().or_reduce() == 1) {
             v.flush_cnt = r.flush_cnt.read() - 1;
             /** Use lsb address bits to manually select memory WAY bank: */
             if (r.req_addr.read()(CFG_DLOG2_NWAYS-1, 0) == DCACHE_WAYS-1) {

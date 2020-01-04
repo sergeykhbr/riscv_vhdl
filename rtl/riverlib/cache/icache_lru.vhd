@@ -247,18 +247,18 @@ begin
         vb_resp_data := vb_cached_data;
         if line_hit_o = '1' and line_hit_next_o = '1' then
             -- Hit
-            v_req_ready := '1';
+            v_req_ready := not r.req_flush;
             v_resp_valid := '1';
             if i_resp_ready = '0' then
                 -- Do nothing: wait accept
-            elsif i_req_valid = '1' then
+            elsif i_req_valid = '0' or r.req_flush = '1' then
+                v.state := State_Idle;
+            else
                 v.state := State_CheckHit;
                 v_line_cs := i_req_valid;
                 v.req_addr := i_req_addr;
                 v.req_addr_next := i_req_addr + ICACHE_BYTES_PER_LINE;
                 vb_line_addr := i_req_addr;
-            else
-                v.state := State_Idle;
             end if;
         else
             -- Miss

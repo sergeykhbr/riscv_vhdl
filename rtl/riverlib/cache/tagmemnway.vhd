@@ -148,8 +148,9 @@ begin
 
     vb_wayidx_o := lruo_lru;
     for i in 0 to NWAYS-1 loop
-        if way_o(i).hit = '1' and
-                    way_o(i).rflags(FL_VALID) = '1' then
+        if i_flush = '1' and i_addr(waybits-1 downto 0) = conv_std_logic_vector(i, waybits) then
+            vb_wayidx_o := conv_std_logic_vector(i, waybits);
+        elsif way_o(i).hit = '1' and way_o(i).rflags(FL_VALID) = '1' then
             hit := '1';
             vb_wayidx_o := conv_std_logic_vector(i, waybits);
             v_lrui_we := r.re;

@@ -149,6 +149,9 @@ void ICacheLru::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.cache_line_i, pn + ".r_cache_line_i");
         sc_trace(o_vcd, r.executable, pn + ".r_executable");
         sc_trace(o_vcd, r.flush_cnt, pn + ".r_flush_cnt");
+        sc_trace(o_vcd, r.req_flush, pn + ".r_req_flush");
+        sc_trace(o_vcd, r.req_flush_addr, pn + ".r_req_flush_addr");
+        sc_trace(o_vcd, r.req_flush_cnt, pn + ".r_req_flush_cnt");
     }
     memcouple->generateVCD(i_vcd, o_vcd);
 }
@@ -241,18 +244,18 @@ void ICacheLru::comb() {
         vb_resp_data = vb_cached_data;
         if (line_hit_o.read() == 1 && line_hit_next_o.read() == 1) {
             // Hit
-            v_req_ready = 1;
+            v_req_ready = !r.req_flush.read();
             v_resp_valid = 1;
             if (i_resp_ready.read() == 0) {
                 // Do nothing: wait accept
-            } else if (i_req_valid.read() == 1) {
+            } else if (i_req_valid.read() == 0 || r.req_flush.read() == 1) {
+                v.state = State_Idle;
+            } else {
                 v.state = State_CheckHit;
                 v_line_cs = i_req_valid.read();
                 v.req_addr = i_req_addr.read();
                 v.req_addr_next = i_req_addr.read() + ICACHE_BYTES_PER_LINE;
                 vb_line_addr = i_req_addr.read();
-            } else {
-                v.state = State_Idle;
             }
         } else {
             // Miss
@@ -350,7 +353,7 @@ void ICacheLru::comb() {
         v_line_wflags = 0;      // flag valid = 0
         vb_line_wstrb = ~0ul;   // write full line
         v_flush = 1;
-        if (r.flush_cnt.read() == 0) {
+        if (r.flush_cnt.read().or_reduce() == 0) {
             v.state = State_Idle;
         } else {
             v.flush_cnt = r.flush_cnt.read() - 1;

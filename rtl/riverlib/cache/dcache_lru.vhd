@@ -97,7 +97,6 @@ architecture arch_dcache_lru of dcache_lru is
   signal line_hit_o : std_logic;
 
   type RegistersType is record
-      requested : std_logic;
       req_write : std_logic;
       req_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
       req_addr_b_resp : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
@@ -126,7 +125,7 @@ architecture arch_dcache_lru of dcache_lru is
   end record;
 
   constant R_RESET : RegistersType := (
-    '0', '0',                               -- requested, req_write
+    '0',                                    -- req_write
     (others => '0'), (others => '0'),       -- req_addr, req_addr_b_resp
     (others => '0'), (others => '0'),       -- req_wdata, req_wstrb
     State_FlushAddr,                        -- state
@@ -287,7 +286,7 @@ begin
         if r.req_flush = '1' then
             v.state := State_FlushAddr;
             v.req_flush := '0';
-            v.cache_line_i := (others => '1');
+            v.cache_line_i := (others => '0');
             if r.req_flush_addr(0) = '1' then
                 v.req_addr := (others => '0');
                 v.flush_cnt := (others => '1');
@@ -302,14 +301,11 @@ begin
             v_req_ready := '1';
             vb_line_addr := i_req_addr;
             if i_req_valid = '1' then
-                v.requested := '1';
                 v.req_addr := i_req_addr;
                 v.req_wstrb := i_req_wstrb;
                 v.req_wdata := i_req_wdata;
                 v.req_write := i_req_write;
                 v.state := State_CheckHit;
-            else
-                v.requested := '0';
             end if;
         end if;
     when State_CheckHit =>
@@ -339,13 +335,14 @@ begin
                     vb_line_addr := i_req_addr;
                 else
                     v.state := State_Idle;
-                    v.requested := '0';
                 end if;
             else
-                v_req_ready := '1';
+                v_req_ready := not r.req_flush;
                 if i_resp_ready = '0' then
                     -- Do nothing: wait accept
-                elsif i_req_valid = '1' then
+                elsif i_req_valid = '0' or r.req_flush = '1' then
+                    v.state := State_Idle;
+                else
                     v.state := State_CheckHit;
                     v_line_cs := i_req_valid;
                     v.req_addr := i_req_addr;
@@ -353,9 +350,6 @@ begin
                     v.req_wdata := i_req_wdata;
                     v.req_write := i_req_write;
                     vb_line_addr := i_req_addr;
-                else
-                    v.state := State_Idle;
-                    v.requested := '0';
                 end if;
             end if;
         else
@@ -459,7 +453,6 @@ begin
             v_resp_er_store_fault := r.load_fault and r.req_write;
             if i_resp_ready = '1' then
                 v.state := State_Idle;
-                v.requested := '0';
             end if;
         else
             v.state := State_SetupReadAdr;
@@ -512,12 +505,9 @@ begin
         end if;
     when State_FlushAddr =>
         v.state := State_FlushCheck;
+        v_flush := '1';
         v.write_flush := '0';
         v.cache_line_i := (others => '0');
-        if or_reduce(r.flush_cnt) = '0' then
-            v.state := State_Idle;
-            v.init := '0';
-        end if;
     when State_FlushCheck =>
         v.cache_line_o := line_rdata_o;
         v_line_wflags := (others => '0');      -- flag valid = 0
@@ -533,6 +523,7 @@ begin
             v.req_mem_valid := '1';
             v.burst_cnt := DCACHE_BURST_LEN-1;
             v.mem_write := '1';
+            v.cached := '1';
             v.state := State_WaitGrant;
         else
             -- Write clean line
