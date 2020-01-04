@@ -340,9 +340,9 @@ void InstrExecute::comb() {
     sc_uint<12> vb_csr_addr;
     sc_uint<RISCV_ARCH> vb_csr_wdata;
     sc_uint<RISCV_ARCH> vb_res;
-    sc_uint<BUS_ADDR_WIDTH> vb_npc;
-    sc_uint<BUS_ADDR_WIDTH> vb_ex_npc;
+    sc_uint<BUS_ADDR_WIDTH> vb_prog_npc;
     sc_uint<BUS_ADDR_WIDTH> vb_npc_incr;
+    sc_uint<BUS_ADDR_WIDTH> vb_npc;
     sc_uint<RISCV_ARCH> vb_off;
     sc_uint<RISCV_ARCH> vb_sum64;
     sc_uint<RISCV_ARCH> vb_sum32;
@@ -398,7 +398,6 @@ void InstrExecute::comb() {
     wv = i_ivec.read();
     v_call = 0;
     v_ret = 0;
-    vb_ex_npc = 0;
     v.valid = 0;
     v.call = 0;
     v.ret = 0;
@@ -571,22 +570,25 @@ void InstrExecute::comb() {
     }
     vb_npc_incr = i_d_pc.read() + opcode_len;
 
+    if (v_pc_branch) {
+        vb_prog_npc = i_d_pc.read() + vb_off(BUS_ADDR_WIDTH-1, 0);
+    } else if (wv[Instr_JAL].to_bool()) {
+        vb_prog_npc = vb_rdata1(BUS_ADDR_WIDTH-1, 0) + vb_off(BUS_ADDR_WIDTH-1, 0);
+    } else if (wv[Instr_JALR].to_bool()) {
+        vb_prog_npc = vb_rdata1(BUS_ADDR_WIDTH-1, 0) + vb_rdata2(BUS_ADDR_WIDTH-1, 0);
+        vb_prog_npc[0] = 0;
+    } else if (wv[Instr_MRET].to_bool()) {
+        vb_prog_npc = i_csr_rdata;
+    } else if (wv[Instr_URET].to_bool()) {
+        vb_prog_npc = i_csr_rdata;
+    } else {
+        vb_prog_npc = vb_npc_incr;
+    }
+
     if (i_trap_valid.read()) {
         vb_npc = i_trap_pc.read();
-        vb_ex_npc = vb_npc_incr;
-    } else if (v_pc_branch) {
-        vb_npc = i_d_pc.read() + vb_off(BUS_ADDR_WIDTH-1, 0);
-    } else if (wv[Instr_JAL].to_bool()) {
-        vb_npc = vb_rdata1(BUS_ADDR_WIDTH-1, 0) + vb_off(BUS_ADDR_WIDTH-1, 0);
-    } else if (wv[Instr_JALR].to_bool()) {
-        vb_npc = vb_rdata1(BUS_ADDR_WIDTH-1, 0) + vb_rdata2(BUS_ADDR_WIDTH-1, 0);
-        vb_npc[0] = 0;
-    } else if (wv[Instr_MRET].to_bool()) {
-        vb_npc = i_csr_rdata;
-    } else if (wv[Instr_URET].to_bool()) {
-        vb_npc = i_csr_rdata;
     } else {
-        vb_npc = vb_npc_incr;
+        vb_npc = vb_prog_npc;
     }
 
     // ALU block selector:
@@ -779,7 +781,7 @@ void InstrExecute::comb() {
     o_csr_wena = v_csr_wena && w_next_ready;
     o_csr_addr = vb_csr_addr;
     o_csr_wdata = vb_csr_wdata;
-    o_ex_npc = vb_ex_npc;
+    o_ex_npc = vb_prog_npc;
 
     o_memop_sign_ext = r.memop_sign_ext;
     o_memop_load = r.memop_load;

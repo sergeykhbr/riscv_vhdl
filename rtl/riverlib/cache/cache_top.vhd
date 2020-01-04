@@ -167,7 +167,7 @@ begin
     w_data_resp_mem_data_valid <= '0' when i_resp_mem_path = CTRL_PATH else i_resp_mem_valid;
 
     w_ctrl_resp_mem_load_fault <= i_resp_mem_load_fault when i_resp_mem_path = CTRL_PATH else '0';
-    w_data_resp_mem_load_fault <= '0' when i_resp_mem_path = CTRL_PATH else w_data_resp_mem_load_fault;
+    w_data_resp_mem_load_fault <= '0' when i_resp_mem_path = CTRL_PATH else i_resp_mem_load_fault;
 
     o_req_mem_last <= i.req_mem_last when i_resp_mem_path = CTRL_PATH else d.req_mem_last;
 

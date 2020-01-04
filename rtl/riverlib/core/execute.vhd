@@ -355,9 +355,9 @@ begin
     variable vb_csr_addr : std_logic_vector(11 downto 0);
     variable vb_csr_wdata : std_logic_vector(RISCV_ARCH-1 downto 0);
     variable vb_res : std_logic_vector(RISCV_ARCH-1 downto 0);
-    variable vb_npc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    variable vb_ex_npc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    variable vb_prog_npc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     variable vb_npc_incr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    variable vb_npc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     variable vb_off : std_logic_vector(RISCV_ARCH-1 downto 0);
     variable vb_sum64 : std_logic_vector(RISCV_ARCH-1 downto 0);
     variable vb_sum32 : std_logic_vector(RISCV_ARCH-1 downto 0);
@@ -417,7 +417,6 @@ begin
     wv := i_ivec;
     v_call := '0';
     v_ret := '0';
-    vb_ex_npc := (others => '0');
     v.valid := '0';
     v.call := '0';
     v.ret := '0';
@@ -586,22 +585,25 @@ begin
     vb_npc_incr := i_d_pc + opcode_len;
 
 
+    if v_pc_branch = '1' then
+        vb_prog_npc := i_d_pc + vb_off(BUS_ADDR_WIDTH-1 downto 0);
+    elsif wv(Instr_JAL) = '1' then
+        vb_prog_npc := vb_rdata1(BUS_ADDR_WIDTH-1 downto 0) + vb_off(BUS_ADDR_WIDTH-1 downto 0);
+    elsif wv(Instr_JALR) = '1' then
+        vb_prog_npc := vb_rdata1(BUS_ADDR_WIDTH-1 downto 0) + vb_rdata2(BUS_ADDR_WIDTH-1 downto 0);
+        vb_prog_npc(0) := '0';
+    elsif wv(Instr_MRET) = '1' then
+        vb_prog_npc := i_csr_rdata(BUS_ADDR_WIDTH-1 downto 0);
+    elsif wv(Instr_URET) = '1' then
+        vb_prog_npc := i_csr_rdata(BUS_ADDR_WIDTH-1 downto 0);
+    else
+        vb_prog_npc := vb_npc_incr;
+    end if;
+
     if i_trap_valid = '1' then
         vb_npc := i_trap_pc;
-        vb_ex_npc := vb_npc_incr;
-    elsif v_pc_branch = '1' then
-        vb_npc := i_d_pc + vb_off(BUS_ADDR_WIDTH-1 downto 0);
-    elsif wv(Instr_JAL) = '1' then
-        vb_npc := vb_rdata1(BUS_ADDR_WIDTH-1 downto 0) + vb_off(BUS_ADDR_WIDTH-1 downto 0);
-    elsif wv(Instr_JALR) = '1' then
-        vb_npc := vb_rdata1(BUS_ADDR_WIDTH-1 downto 0) + vb_rdata2(BUS_ADDR_WIDTH-1 downto 0);
-        vb_npc(0) := '0';
-    elsif wv(Instr_MRET) = '1' then
-        vb_npc := i_csr_rdata(BUS_ADDR_WIDTH-1 downto 0);
-    elsif wv(Instr_URET) = '1' then
-        vb_npc := i_csr_rdata(BUS_ADDR_WIDTH-1 downto 0);
     else
-        vb_npc := vb_npc_incr;
+        vb_npc := vb_prog_npc;
     end if;
 
     -- ALU block selector:
@@ -795,7 +797,7 @@ begin
     o_csr_wena <= v_csr_wena and w_next_ready;
     o_csr_addr <= vb_csr_addr;
     o_csr_wdata <= vb_csr_wdata;
-    o_ex_npc <= vb_ex_npc;
+    o_ex_npc <= vb_prog_npc;
 
     o_memop_sign_ext <= r.memop_sign_ext;
     o_memop_load <= r.memop_load;
