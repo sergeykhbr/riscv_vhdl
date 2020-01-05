@@ -30,8 +30,9 @@ SC_MODULE(MemAccess) {
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_e_pc;          // Execution stage instruction pointer
     sc_in<sc_uint<32>> i_e_instr;                   // Execution stage instruction value
 
-    sc_in<sc_uint<6>> i_res_addr;                   // Register address to be written (0=no writing)
-    sc_in<sc_uint<RISCV_ARCH>> i_res_data;          // Register value to be written
+    sc_in<sc_uint<6>> i_memop_waddr;                // Register address to be written (0=no writing)
+    sc_in<sc_uint<4>> i_memop_wtag;                
+    sc_in<sc_uint<RISCV_ARCH>> i_memop_wdata;       // Register value to be written
     sc_in<bool> i_memop_sign_ext;                   // Load data with sign extending (if less than 8 Bytes)
     sc_in<bool> i_memop_load;                       // Load data from memory and write to i_res_addr
     sc_in<bool> i_memop_store;                      // Store i_res_data value into memory
@@ -131,7 +132,8 @@ private:
         iv.hold_res_wena = 0;
     }
 
-    static const int QUEUE_WIDTH = BUS_DATA_WIDTH
+    static const int QUEUE_WIDTH = 4
+                                 + BUS_DATA_WIDTH
                                  + BUS_DATA_BYTES 
                                  + RISCV_ARCH
                                  + 6

@@ -25,8 +25,9 @@ MemAccess::MemAccess(sc_module_name name_, bool async_reset)
     i_e_valid("i_e_valid"),
     i_e_pc("i_e_pc"),
     i_e_instr("i_e_instr"),
-    i_res_addr("i_res_addr"),
-    i_res_data("i_res_data"),
+    i_memop_waddr("i_memop_waddr"),
+    i_memop_wtag("i_memop_wtag"),
+    i_memop_wdata("i_memop_wdata"),
     i_memop_sign_ext("i_memop_sign_ext"),
     i_memop_load("i_memop_load"),
     i_memop_store("i_memop_store"),
@@ -63,8 +64,9 @@ MemAccess::MemAccess(sc_module_name name_, bool async_reset)
     sensitive << i_memop_store;
     sensitive << i_memop_size;
     sensitive << i_memop_addr;
-    sensitive << i_res_addr;
-    sensitive << i_res_data;
+    sensitive << i_memop_waddr;
+    sensitive << i_memop_wtag;
+    sensitive << i_memop_wdata;
     sensitive << i_mem_req_ready;
     sensitive << i_mem_data_valid;
     sensitive << i_mem_data_addr;
@@ -120,8 +122,9 @@ void MemAccess::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_e_valid, i_e_valid.name());
         sc_trace(o_vcd, i_e_pc, i_e_pc.name());
         sc_trace(o_vcd, i_e_instr, i_e_instr.name());
-        sc_trace(o_vcd, i_res_addr, i_res_addr.name());
-        sc_trace(o_vcd, i_res_data, i_res_data.name());
+        sc_trace(o_vcd, i_memop_waddr, i_memop_waddr.name());
+        sc_trace(o_vcd, i_memop_wtag, i_memop_wtag.name());
+        sc_trace(o_vcd, i_memop_wdata, i_memop_wdata.name());
         sc_trace(o_vcd, i_memop_addr, i_memop_addr.name());
         sc_trace(o_vcd, i_memop_store, i_memop_store.name());
         sc_trace(o_vcd, i_memop_load, i_memop_load.name());
@@ -177,6 +180,7 @@ void MemAccess::comb() {
     bool v_hold_output;
     bool v_wb_memop;
     bool v_queue_re;
+    sc_uint<4> vb_mem_wtag;
     sc_uint<BUS_DATA_WIDTH> vb_mem_wdata;
     sc_uint<BUS_DATA_BYTES> vb_mem_wstrb;
     sc_uint<BUS_DATA_WIDTH> vb_mem_resp_shifted;
@@ -211,11 +215,11 @@ void MemAccess::comb() {
 
     switch (i_memop_size.read()) {
     case 0:
-        vb_memop_wdata = (i_res_data.read()(7, 0),
-            i_res_data.read()(7, 0), i_res_data.read()(7, 0),
-            i_res_data.read()(7, 0), i_res_data.read()(7, 0),
-            i_res_data.read()(7, 0), i_res_data.read()(7, 0),
-            i_res_data.read()(7, 0));
+        vb_memop_wdata = (i_memop_wdata.read()(7, 0),
+            i_memop_wdata.read()(7, 0), i_memop_wdata.read()(7, 0),
+            i_memop_wdata.read()(7, 0), i_memop_wdata.read()(7, 0),
+            i_memop_wdata.read()(7, 0), i_memop_wdata.read()(7, 0),
+            i_memop_wdata.read()(7, 0));
         if (i_memop_addr.read()(2, 0) == 0x0) {
             vb_memop_wstrb = 0x01;
         } else if (i_memop_addr.read()(2, 0) == 0x1) {
@@ -235,9 +239,9 @@ void MemAccess::comb() {
         }
         break;
     case 1:
-        vb_memop_wdata = (i_res_data.read()(15, 0),
-            i_res_data.read()(15, 0), i_res_data.read()(15, 0),
-            i_res_data.read()(15, 0));
+        vb_memop_wdata = (i_memop_wdata.read()(15, 0),
+            i_memop_wdata.read()(15, 0), i_memop_wdata.read()(15, 0),
+            i_memop_wdata.read()(15, 0));
         if (i_memop_addr.read()(2, 1) == 0) {
             vb_memop_wstrb = 0x03;
         } else if (i_memop_addr.read()(2, 1) == 1) {
@@ -249,8 +253,8 @@ void MemAccess::comb() {
         }
         break;
     case 2:
-        vb_memop_wdata = (i_res_data.read()(31, 0),
-                    i_res_data.read()(31, 0));
+        vb_memop_wdata = (i_memop_wdata.read()(31, 0),
+                    i_memop_wdata.read()(31, 0));
         if (i_memop_addr.read()[2]) {
             vb_memop_wstrb = 0xF0;
         } else {
@@ -258,20 +262,22 @@ void MemAccess::comb() {
         }
         break;
     case 3:
-        vb_memop_wdata = i_res_data;
+        vb_memop_wdata = i_memop_wdata;
         vb_memop_wstrb = 0xFF;
         break;
     default:;
     }
 
     // Form Queue inputs:
-    queue_data_i = (vb_memop_wdata, vb_memop_wstrb,
-                    i_res_data, i_res_addr, i_e_instr, i_e_pc,
+    queue_data_i = (i_memop_wtag, vb_memop_wdata, vb_memop_wstrb,
+                    i_memop_wdata, i_memop_waddr, i_e_instr, i_e_pc,
                     i_memop_size, i_memop_sign_ext, i_memop_store,
                     i_memop_addr);
     queue_we = i_e_valid & (i_memop_load | i_memop_store);
 
     // Split Queue outputs:
+    vb_mem_wtag = queue_data_o.read()(2*BUS_ADDR_WIDTH+RISCV_ARCH+BUS_DATA_BYTES+BUS_DATA_WIDTH+45,
+                                      2*BUS_ADDR_WIDTH+RISCV_ARCH+BUS_DATA_BYTES+BUS_DATA_WIDTH+42);
     vb_mem_wdata = queue_data_o.read()(2*BUS_ADDR_WIDTH+RISCV_ARCH+BUS_DATA_BYTES+BUS_DATA_WIDTH+42-1,
                                       2*BUS_ADDR_WIDTH+RISCV_ARCH+BUS_DATA_BYTES+42);
     vb_mem_wstrb = queue_data_o.read()(2*BUS_ADDR_WIDTH+RISCV_ARCH+BUS_DATA_BYTES+42-1,
@@ -469,9 +475,9 @@ void MemAccess::comb() {
         v.reg_wb_valid = 1;
         v.reg_res_pc = i_e_pc;
         v.reg_res_instr = i_e_instr;
-        v.reg_res_addr = i_res_addr;
-        v.reg_res_data = i_res_data;
-        v.reg_res_wena = i_res_addr.read().or_reduce();
+        v.reg_res_addr = i_memop_waddr;
+        v.reg_res_data = i_memop_wdata;
+        v.reg_res_wena = i_memop_waddr.read().or_reduce();
     } else {
         v.reg_wb_valid = 0;
         v.reg_res_pc = 0;

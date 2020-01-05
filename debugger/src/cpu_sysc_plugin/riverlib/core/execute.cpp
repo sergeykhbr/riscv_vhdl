@@ -48,9 +48,15 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     i_dport_npc_write("i_dport_npc_write"),
     i_dport_npc("i_dport_npc"),
     i_rdata1("i_rdata1"),
+    i_rhazard1("i_rhazard1"),
     i_rdata2("i_rdata2"),
-    o_res_addr("o_res_addr"),
-    o_res_data("o_res_data"),
+    i_rhazard2("i_rhazard2"),
+    i_wtag("i_wtag"),
+    o_wena("o_wena"),
+    o_waddr("o_waddr"),
+    o_whazard("o_whazard"),
+    o_wdata("o_wdata"),
+    o_wtag("o_wtag"),
     o_d_ready("o_d_ready"),
     o_csr_addr("o_csr_addr"),
     o_csr_wena("o_csr_wena"),
@@ -77,6 +83,9 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     o_memop_store("o_memop_store"),
     o_memop_size("o_memop_size"),
     o_memop_addr("o_memop_addr"),
+    o_memop_wdata("o_memop_wdata"),
+    o_memop_waddr("o_memop_waddr"),
+    o_memop_wtag("o_memop_wtag"),
     i_memop_ready("i_memop_ready"),
     o_trap_ready("o_trap_ready"),
     o_valid("o_valid"),
@@ -120,14 +129,18 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     sensitive << i_dport_npc_write;
     sensitive << i_dport_npc;
     sensitive << i_rdata1;
+    sensitive << i_rhazard1;
     sensitive << i_rdata2;
+    sensitive << i_rhazard2;
+    sensitive << i_wtag;
     sensitive << i_csr_rdata;
     sensitive << i_trap_valid;
     sensitive << i_trap_pc;
     sensitive << r.pc;
     sensitive << r.npc;
     sensitive << r.instr;
-    sensitive << r.waddr;
+    sensitive << r.memop_waddr;
+    sensitive << r.memop_wtag;
     sensitive << r.wval;
     sensitive << r.memop_load;
     sensitive << r.memop_store;
@@ -249,9 +262,13 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_instr_load_fault, i_instr_load_fault.name());
         sc_trace(o_vcd, i_instr_executable, i_instr_executable.name());
         sc_trace(o_vcd, i_rdata1, i_rdata1.name());
+        sc_trace(o_vcd, i_rhazard1, i_rhazard1.name());
         sc_trace(o_vcd, i_rdata2, i_rdata2.name());
-        sc_trace(o_vcd, o_res_addr, o_res_addr.name());
-        sc_trace(o_vcd, o_res_data, o_res_data.name());
+        sc_trace(o_vcd, i_rhazard2, i_rhazard2.name());
+        sc_trace(o_vcd, o_wena, o_wena.name());
+        sc_trace(o_vcd, o_whazard, o_whazard.name());
+        sc_trace(o_vcd, o_waddr, o_waddr.name());
+        sc_trace(o_vcd, o_wdata, o_wdata.name());
         sc_trace(o_vcd, o_d_ready, o_d_ready.name());
         sc_trace(o_vcd, o_csr_addr, o_csr_addr.name());
         sc_trace(o_vcd, o_csr_wena, o_csr_wena.name());
@@ -264,6 +281,10 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_memop_store, o_memop_store.name());
         sc_trace(o_vcd, o_memop_size, o_memop_size.name());
         sc_trace(o_vcd, o_memop_addr, o_memop_addr.name());
+        sc_trace(o_vcd, o_memop_wdata, o_memop_wdata.name());
+        sc_trace(o_vcd, o_memop_waddr, o_memop_waddr.name());
+        sc_trace(o_vcd, o_memop_wtag, o_memop_wtag.name());
+
         sc_trace(o_vcd, i_memop_ready, i_memop_ready.name());
         sc_trace(o_vcd, o_trap_ready, o_trap_ready.name());
         sc_trace(o_vcd, o_valid, o_valid.name());
@@ -283,7 +304,8 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, wb_arith_res.arr[Multi_DIV], pn + ".wb_arith_res(1)");
         sc_trace(o_vcd, w_arith_ena[Multi_FPU], pn + ".w_arith_ena(2)");
         sc_trace(o_vcd, wb_arith_res.arr[Multi_FPU], pn + ".wb_arith_res(2)");
-        sc_trace(o_vcd, r.waddr, pn + ".r_waddr");
+        sc_trace(o_vcd, r.memop_waddr, pn + ".r_memop_waddr");
+        sc_trace(o_vcd, r.memop_wtag, pn + ".r_memop_wtag");
         sc_trace(o_vcd, w_next_ready, pn + ".w_next_ready");
         sc_trace(o_vcd, w_multi_ena, pn + ".w_multi_ena");
         sc_trace(o_vcd, w_multi_busy, pn + ".w_multi_busy");
@@ -408,7 +430,7 @@ void InstrExecute::comb() {
     int_waddr = i_d_waddr.read().to_int();
 
 
-    if (i_d_radr1.read() != 0 &&
+    /*if (i_d_radr1.read() != 0 &&
         r_scoreboard[i_d_radr1.read().to_int()].status.read() == RegForward) {
         vb_i_rdata1 = r_scoreboard[i_d_radr1.read().to_int()].forward;
     } else {
@@ -420,7 +442,9 @@ void InstrExecute::comb() {
         vb_i_rdata2 = r_scoreboard[i_d_radr2.read().to_int()].forward;
     } else {
         vb_i_rdata2 = i_rdata2;
-    }
+    }*/
+    vb_i_rdata1 = i_rdata1;
+    vb_i_rdata2 = i_rdata2;
 
     if (i_isa_type.read()[ISA_R_type]) {
         vb_rdata1 = vb_i_rdata1;
@@ -457,14 +481,15 @@ void InstrExecute::comb() {
             2. memaccess not ready to accept next memop operation
             3. multi instruction
      */
-    w_hold_hazard = 0;
+    /*w_hold_hazard = 0;
     if ((i_d_radr1.read() != 0 &&
         r_scoreboard[i_d_radr1.read().to_int()].status.read() == RegHazard) ||
         (i_d_radr2.read() != 0 &&
         r_scoreboard[i_d_radr2.read().to_int()].status.read() == RegHazard) ||
         (int_waddr != 0 && r_scoreboard[int_waddr].cnt.read() != 0)) {
         w_hold_hazard = 1;
-    }
+    }*/
+    w_hold_hazard = i_rhazard1.read() || i_rhazard2.read();
 
     w_hold_memop = (i_memop_load.read() || i_memop_store.read())
                 && !i_memop_ready.read();
@@ -696,7 +721,7 @@ void InstrExecute::comb() {
     }
 
 
-    if (i_wb_valid.read() == 1) {
+    /*if (i_wb_valid.read() == 1) {
         int wb_idx = i_wb_waddr.read().to_int();
         if (r_scoreboard[wb_idx].cnt.read() == 1) {
             v_scoreboard[wb_idx].status = RegValid;
@@ -704,10 +729,14 @@ void InstrExecute::comb() {
         if (i_d_waddr.read() != i_wb_waddr.read() || w_next_ready == 0) {
             v_scoreboard[wb_idx].cnt = r_scoreboard[wb_idx].cnt.read() - 1;
         }
-    }
+    }*/
 
 
     // Latch ready result
+    bool v_wena = 0;
+    bool v_whazard = 0;
+    sc_uint<4> vb_wtag = i_wtag.read();
+    sc_uint<6> vb_waddr = i_d_waddr.read();
     if (w_next_ready == 1) {
         v.valid = 1;
 
@@ -719,13 +748,18 @@ void InstrExecute::comb() {
         v.memop_store = i_memop_store;
         v.memop_size = i_memop_size;
         v.memop_addr = vb_memop_addr;
+        v.memop_wdata = vb_res;
 
-        v.waddr = i_d_waddr.read();
+        v.memop_waddr = i_d_waddr.read();
+        v.memop_wtag = i_wtag.read();
+        v_whazard = v_memop_load;
+        v_wena = i_d_waddr.read().or_reduce();
+
         v.wval = vb_res;
         v.call = v_call;
         v.ret = v_ret;
 
-        if (i_d_waddr.read() != 0) {
+        /*if (i_d_waddr.read() != 0) {
             v_scoreboard[int_waddr].forward = vb_res;
             if (v_memop_load == 1 || r_scoreboard[int_waddr].status.read() == RegHazard
                 || r_scoreboard[int_waddr].cnt.read() == 2) {
@@ -737,7 +771,7 @@ void InstrExecute::comb() {
                 i_wb_valid.read() == 0) {
                 v_scoreboard[int_waddr].cnt = r_scoreboard[int_waddr].cnt.read() + 1;
             }
-        }
+        }*/
     }
 
     v_o_valid = r.valid;
@@ -745,7 +779,7 @@ void InstrExecute::comb() {
     if (w_multi_ready == 1) {
         v_o_valid = 1;
         vb_o_wdata = vb_res;
-        v_scoreboard[r.waddr.read().to_int()].forward = vb_res;
+        //v_scoreboard[r.waddr.read().to_int()].forward = vb_res;
     } else if (w_multi_busy == 1) {
         v_o_valid = 0;
     }
@@ -777,8 +811,9 @@ void InstrExecute::comb() {
     o_ex_breakpoint = wv[Instr_EBREAK].to_bool() & w_next_ready;
     o_ex_ecall = wv[Instr_ECALL].to_bool() & w_next_ready;
 
-    o_res_addr = r.waddr;
-    o_res_data = vb_o_wdata;
+    o_wena = v_wena;
+    o_waddr = vb_waddr;
+    o_wdata = vb_o_wdata;
     o_d_ready = !v_hold_exec;
 
     o_csr_wena = v_csr_wena && w_next_ready;
@@ -791,7 +826,10 @@ void InstrExecute::comb() {
     o_memop_store = r.memop_store;
     o_memop_size = r.memop_size;
     o_memop_addr = r.memop_addr;
-
+    o_memop_wdata = r.memop_wdata;
+    o_memop_waddr = r.memop_waddr;
+    o_memop_wtag = r.memop_wtag;
+    
     o_valid = v_o_valid;
     o_pc = r.pc;
     o_npc = r.npc;

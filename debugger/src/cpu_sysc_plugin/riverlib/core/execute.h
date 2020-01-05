@@ -56,9 +56,15 @@ SC_MODULE(InstrExecute) {
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_dport_npc; // Debug port npc value to write
 
     sc_in<sc_uint<RISCV_ARCH>> i_rdata1;        // Integer/Float register value 1
+    sc_in<bool> i_rhazard1;
     sc_in<sc_uint<RISCV_ARCH>> i_rdata2;        // Integer/Float register value 2
-    sc_out<sc_uint<6>> o_res_addr;              // Address to store result of the instruction (0=do not store)
-    sc_out<sc_uint<RISCV_ARCH>> o_res_data;     // Value to store
+    sc_in<bool> i_rhazard2;
+    sc_in<sc_uint<4>> i_wtag;
+    sc_out<bool> o_wena;
+    sc_out<sc_uint<6>> o_waddr;                 // Address to store result of the instruction (0=do not store)
+    sc_out<bool> o_whazard;
+    sc_out<sc_uint<RISCV_ARCH>> o_wdata;        // Value to store
+    sc_out<sc_uint<4>> o_wtag;
     sc_out<bool> o_d_ready;                     // Hold pipeline while 'writeback' not done or multi-clock instruction.
     sc_out<sc_uint<12>> o_csr_addr;             // CSR address. 0 if not a CSR instruction with xret signals mode switching
     sc_out<bool> o_csr_wena;                    // Write new CSR value
@@ -88,6 +94,9 @@ SC_MODULE(InstrExecute) {
     sc_out<bool> o_memop_store;                 // Store data instruction
     sc_out<sc_uint<2>> o_memop_size;            // 0=1bytes; 1=2bytes; 2=4bytes; 3=8bytes
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_memop_addr;// Memory access address
+    sc_out<sc_uint<RISCV_ARCH>> o_memop_wdata;
+    sc_out<sc_uint<6>> o_memop_waddr;
+    sc_out<sc_uint<4>> o_memop_wtag;
     sc_in<bool> i_memop_ready;
 
     sc_out<bool> o_trap_ready;                  // trap branch request accepted
@@ -150,13 +159,15 @@ private:
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> pc;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> npc;
         sc_signal<sc_uint<32>> instr;
-        sc_signal<sc_uint<6>> waddr;
+        sc_signal<sc_uint<6>> memop_waddr;
+        sc_signal<sc_uint<4>> memop_wtag;
         sc_signal<sc_uint<RISCV_ARCH>> wval;
         sc_signal<bool> memop_load;
         sc_signal<bool> memop_store;
         bool memop_sign_ext;
         sc_uint<2> memop_size;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> memop_addr;
+        sc_signal<sc_uint<RISCV_ARCH>> memop_wdata;
 
         sc_signal<bool> valid;
         sc_signal<bool> call;
@@ -167,13 +178,15 @@ private:
         iv.pc = 0;
         iv.npc = CFG_NMI_RESET_VECTOR;
         iv.instr = 0;
-        iv.waddr = 0;
+        iv.memop_waddr = 0;
+        iv.memop_wtag = 0;
         iv.wval = 0;
         iv.memop_load = 0;
         iv.memop_store = 0;
         iv.memop_sign_ext = 0;
         iv.memop_size = 0;
         iv.memop_addr = 0;
+        iv.memop_wdata = 0;
 
         iv.valid = 0;
         iv.call = 0;

@@ -28,13 +28,18 @@ SC_MODULE(RegIntBank) {
     sc_in<bool> i_nrst;                     // Reset. Active LOW
     sc_in<sc_uint<6>> i_radr1;              // Port 1 read address
     sc_out<sc_uint<RISCV_ARCH>> o_rdata1;   // Port 1 read value
+    sc_out<bool> o_rhazard1;
 
     sc_in<sc_uint<6>> i_radr2;              // Port 2 read address
     sc_out<sc_uint<RISCV_ARCH>> o_rdata2;   // Port 2 read value
+    sc_out<bool> o_rhazard2;
 
     sc_in<sc_uint<6>> i_waddr;              // Writing value
     sc_in<bool> i_wena;                     // Writing is enabled
+    sc_in<bool> i_whazard;                  // memop_load hazard
+    sc_in<sc_uint<4>> i_wtag;               // tag
     sc_in<sc_uint<RISCV_ARCH>> i_wdata;     // Writing value
+    sc_out<sc_uint<4>> o_wtag;              // Writing tag
 
     sc_in<sc_uint<5>> i_dport_addr;             // Debug port address
     sc_in<bool> i_dport_ena;                    // Debug port is enabled
@@ -60,9 +65,15 @@ private:
     int REG_MSB() { return 4 + fpu_ena_; }
     static const int REGS_TOTAL = Reg_Total + RegFpu_Total;
 
+    struct reg_score_type {
+        sc_uint<RISCV_ARCH> val;
+        sc_uint<4> tag;
+        bool hazard;
+    };
+
     struct RegistersType {
         sc_signal<bool> update;             // To generate SystemC delta event only.
-        sc_uint<RISCV_ARCH> mem[REGS_TOTAL]; // Multi-ports memory
+        reg_score_type reg[REGS_TOTAL]; // Multi-ports memory
     } v, r;
 
     bool async_reset_;

@@ -134,7 +134,6 @@
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\fpu_d\l2d_d.cpp" />
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\memaccess.cpp" />
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\proc.cpp" />
-    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\regfbank.cpp" />
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\regibank.cpp" />
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\stacktrbuf.cpp" />
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\tracer.cpp" />
@@ -191,7 +190,6 @@
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\memaccess.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\proc.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\queue.h" />
-    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\regfbank.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\regibank.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\stacktrbuf.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\tracer.h" />

@@ -146,8 +146,11 @@ private:
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> npc;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> ex_npc;
 
-        sc_signal<sc_uint<6>> res_addr;
-        sc_signal<sc_uint<RISCV_ARCH>> res_data;
+        sc_signal<bool> wena;
+        sc_signal<sc_uint<6>> waddr;
+        sc_signal<sc_uint<RISCV_ARCH>> wdata;
+        sc_signal<sc_uint<4>> wtag;
+        sc_signal<bool> whazard;
         sc_signal<bool> mret;
         sc_signal<bool> uret;
         sc_signal<sc_uint<12>> csr_addr;
@@ -172,6 +175,9 @@ private:
         sc_signal<bool> memop_store;
         sc_signal<sc_uint<2>> memop_size;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> memop_addr;
+        sc_signal<sc_uint<RISCV_ARCH>> memop_wdata;
+        sc_signal<sc_uint<6>> memop_waddr;
+        sc_signal<sc_uint<4>> memop_wtag;
         sc_signal<bool> d_ready;           // Hold pipeline from Execution stage
         sc_signal<bool> fence;                      // instruction FENCE
         sc_signal<bool> fencei;                     // instruction FENCE.I
@@ -197,7 +203,10 @@ private:
 
     struct IntRegsType {
         sc_signal<sc_uint<RISCV_ARCH>> rdata1;
+        sc_signal<bool> rhazard1;
         sc_signal<sc_uint<RISCV_ARCH>> rdata2;
+        sc_signal<bool> rhazard2;
+        sc_signal<sc_uint<4>> wtag;
         sc_signal<sc_uint<RISCV_ARCH>> dport_rdata;
         sc_signal<sc_uint<RISCV_ARCH>> ra;      // Return address
         sc_signal<sc_uint<RISCV_ARCH>> sp;      // Stack pointer

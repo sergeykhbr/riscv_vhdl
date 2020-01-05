@@ -186,9 +186,15 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     exec0->i_dport_npc_write(dbg.npc_write);
     exec0->i_dport_npc(wb_exec_dport_npc);
     exec0->i_rdata1(ireg.rdata1);
+    exec0->i_rhazard1(ireg.rhazard1);
     exec0->i_rdata2(ireg.rdata2);
-    exec0->o_res_addr(w.e.res_addr);
-    exec0->o_res_data(w.e.res_data);
+    exec0->i_rhazard2(ireg.rhazard2);
+    exec0->i_wtag(ireg.wtag);
+    exec0->o_wena(w.e.wena);
+    exec0->o_waddr(w.e.waddr);
+    exec0->o_whazard(w.e.whazard);
+    exec0->o_wdata(w.e.wdata);
+    exec0->o_wtag(w.e.wtag);
     exec0->o_d_ready(w.e.d_ready);
     exec0->o_csr_addr(w.e.csr_addr);
     exec0->o_csr_wena(w.e.csr_wena);
@@ -215,6 +221,9 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     exec0->o_memop_store(w.e.memop_store);
     exec0->o_memop_size(w.e.memop_size);
     exec0->o_memop_addr(w.e.memop_addr);
+    exec0->o_memop_wdata(w.e.memop_wdata);
+    exec0->o_memop_waddr(w.e.memop_waddr);
+    exec0->o_memop_wtag(w.e.memop_wtag);
     exec0->i_memop_ready(w.m.memop_ready);
     exec0->o_trap_ready(w.e.trap_ready);
     exec0->o_valid(w.e.valid);
@@ -234,8 +243,9 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     mem0->i_e_valid(w.e.valid);
     mem0->i_e_pc(w.e.pc);
     mem0->i_e_instr(w.e.instr);
-    mem0->i_res_addr(w.e.res_addr);
-    mem0->i_res_data(w.e.res_data);
+    mem0->i_memop_waddr(w.e.memop_waddr);
+    mem0->i_memop_wtag(w.e.memop_wtag);
+    mem0->i_memop_wdata(w.e.memop_wdata);
     mem0->i_memop_sign_ext(w.e.memop_sign_ext);
     mem0->i_memop_load(w.e.memop_load);
     mem0->i_memop_store(w.e.memop_store);
@@ -277,11 +287,16 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     iregs0->i_nrst(i_nrst);
     iregs0->i_radr1(w.d.radr1);
     iregs0->o_rdata1(ireg.rdata1);
+    iregs0->o_rhazard1(ireg.rhazard1);
     iregs0->i_radr2(w.d.radr2);
     iregs0->o_rdata2(ireg.rdata2);
-    iregs0->i_waddr(w.w.waddr);
-    iregs0->i_wena(w.w.wena);
-    iregs0->i_wdata(w.w.wdata);
+    iregs0->o_rhazard2(ireg.rhazard2);
+    iregs0->i_waddr(w.e.waddr);
+    iregs0->i_wena(w.e.wena);
+    iregs0->i_whazard(w.e.whazard);
+    iregs0->i_wtag(w.e.wtag);
+    iregs0->i_wdata(w.e.wdata);
+    iregs0->o_wtag(ireg.wtag);
     iregs0->i_dport_addr(wb_ireg_dport_addr);
     iregs0->i_dport_ena(dbg.ireg_ena);
     iregs0->i_dport_write(dbg.ireg_write);
@@ -412,8 +427,8 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
         trace0->i_e_memop_store(w.e.memop_store);
         trace0->i_e_memop_load(w.e.memop_load);
         trace0->i_e_memop_addr(w.e.memop_addr);
-        trace0->i_e_res_data(w.e.res_data);
-        trace0->i_e_res_addr(w.e.res_addr);
+        trace0->i_e_res_data(w.e.wdata);
+        trace0->i_e_res_addr(w.e.waddr);
         trace0->i_m_wb_memop(w.m.wb_memop);
         trace0->i_m_valid(w.m.valid);
         trace0->i_m_wena(w.w.wena);
@@ -517,7 +532,7 @@ void Processor::dbg_print() {
         sz = RISCV_sprintf(tstr, sizeof(tstr), "%8" RV_PRI64 "d [%08x]: ",
             exec_cnt,
             w.m.pc.read().to_int());
-        uint64_t prev_val = iregs0->r.mem[w.w.waddr.read().to_int()].to_int64();
+        uint64_t prev_val = iregs0->r.reg[w.w.waddr.read().to_int()].val.to_int64();
         uint64_t cur_val = w.w.wdata.read().to_int64();
         if (w.w.waddr.read() == 0 || prev_val == cur_val) {
             // not writing
@@ -559,7 +574,7 @@ void Processor::dbg_print() {
     if (w.e.memop_store.read() || w.e.memop_load.read()) {
         mem_dbg_write_flag = w.e.memop_store;
         if (mem_dbg_write_flag) {
-            dbg_mem_write_value = w.e.res_data.read();
+            dbg_mem_write_value = w.e.wdata.read();
         }
         switch (w.e.memop_size.read()) {
         case 0: dbg_mem_value_mask = 0xFFull; break;

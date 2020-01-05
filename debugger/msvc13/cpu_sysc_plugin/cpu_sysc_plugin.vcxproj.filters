@@ -105,9 +105,6 @@
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\fpu_d\idiv53.cpp">
       <Filter>riverlib\core\fpu_d</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\regfbank.cpp">
-      <Filter>riverlib\core</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\fpu_d\fadd_d.cpp">
       <Filter>riverlib\core\fpu_d</Filter>
     </ClCompile>
@@ -252,9 +249,6 @@
     </ClInclude>
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\fpu_d\idiv53.h">
       <Filter>riverlib\core\fpu_d</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\regfbank.h">
-      <Filter>riverlib\core</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\fpu_d\fadd_d.h">
       <Filter>riverlib\core\fpu_d</Filter>
