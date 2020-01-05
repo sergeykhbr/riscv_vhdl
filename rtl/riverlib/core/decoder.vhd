@@ -413,7 +413,7 @@ begin
                     wb_dec(Instr_JALR) := '1';
                     wb_instr_out(11 downto 7) := "00001";                 -- rd = ra
                     wb_instr_out(19 downto 15) := wb_instr(11 downto 7);  -- rs1
-                    vb_radr1 := "000001";
+                    vb_radr1 := '0' & wb_instr(11 downto 7);  -- rs1;
                     vb_waddr := "000001";
                 else
                     wb_dec(Instr_ADD) := '1';

@@ -540,6 +540,7 @@ void DCacheLru::comb() {
             v.req_mem_valid = 1;
             v.burst_cnt = DCACHE_BURST_LEN-1;
             v.mem_write = 1;
+            v.mem_wstrb = ~0ul;
             v.cached = 1;
             v.state = State_WaitGrant;
         } else {

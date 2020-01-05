@@ -375,7 +375,7 @@ void InstrDecoder::comb() {
                     wb_dec[Instr_JALR] = 1;
                     wb_instr_out(11, 7) = 0x1;               // rd = ra
                     wb_instr_out(19, 15) = wb_instr(11, 7);  // rs1
-                    vb_radr1 = 0x1;                 // rs1
+                    vb_radr1 = wb_instr(11, 7);              // rs1
                     vb_waddr = 0x1;
                 } else {
                     wb_dec[Instr_ADD] = 1;

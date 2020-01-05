@@ -28,7 +28,6 @@
 #include "csr.h"
 #include "br_predic.h"
 #include "dbg_port.h"
-#include "regfbank.h"
 #include "tracer.h"
 #include <fstream>
 
@@ -266,7 +265,6 @@ private:
 
     BranchPredictor *predic0;
     RegIntBank *iregs0;
-    RegFloatBank *fregs0;
     CsrRegs *csr0;
     Tracer *trace0;
 

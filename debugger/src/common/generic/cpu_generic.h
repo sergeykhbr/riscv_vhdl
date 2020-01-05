@@ -265,6 +265,16 @@ class CpuGeneric : public IService,
 
     std::ofstream *reg_trace_file;
     std::ofstream *mem_trace_file;
+
+    struct trace_type {
+        uint64_t pc;
+        uint32_t instr;
+        bool memop_ena;
+        uint64_t memop_addr;
+        int write;
+        Reg64Type data;
+        char disasm[256];
+    } trace_data_;
 };
 
 }  // namespace debugger

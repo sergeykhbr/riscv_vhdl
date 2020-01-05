@@ -298,6 +298,8 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r_scoreboard[7].status, pn + ".scoreboard7_status");
         sc_trace(o_vcd, r_scoreboard[8].status, pn + ".scoreboard8_status");
         sc_trace(o_vcd, r_scoreboard[9].status, pn + ".scoreboard9_status");
+        sc_trace(o_vcd, r_scoreboard[9].cnt, pn + ".scoreboard9_cnt");
+        sc_trace(o_vcd, r_scoreboard[9].forward, pn + ".scoreboard9_forward");
         sc_trace(o_vcd, r_scoreboard[10].status, pn + ".scoreboard10_status");
         sc_trace(o_vcd, r_scoreboard[11].status, pn + ".scoreboard11_status");
         sc_trace(o_vcd, r_scoreboard[12].status, pn + ".scoreboard12_status");
@@ -459,7 +461,8 @@ void InstrExecute::comb() {
     if ((i_d_radr1.read() != 0 &&
         r_scoreboard[i_d_radr1.read().to_int()].status.read() == RegHazard) ||
         (i_d_radr2.read() != 0 &&
-        r_scoreboard[i_d_radr2.read().to_int()].status.read() == RegHazard)) {
+        r_scoreboard[i_d_radr2.read().to_int()].status.read() == RegHazard) ||
+        (int_waddr != 0 && r_scoreboard[int_waddr].cnt.read() != 0)) {
         w_hold_hazard = 1;
     }
 

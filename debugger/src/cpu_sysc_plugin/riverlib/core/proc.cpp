@@ -432,9 +432,6 @@ Processor::~Processor() {
     delete mem0;
     delete predic0;
     delete iregs0;
-    if (fregs0) {
-        delete fregs0;
-    }
     if (trace0) {
         delete trace0;
     }
@@ -459,9 +456,6 @@ void Processor::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     fetch0->generateVCD(i_vcd, o_vcd);
     mem0->generateVCD(i_vcd, o_vcd);
     iregs0->generateVCD(i_vcd, o_vcd);
-    if (fregs0) {
-        fregs0->generateVCD(i_vcd, o_vcd);
-    }
     if (trace0) {
         trace0->generateVCD(i_vcd, o_vcd);
     }

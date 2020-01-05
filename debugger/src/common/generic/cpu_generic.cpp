@@ -80,6 +80,7 @@ CpuGeneric::CpuGeneric(const char *name)
     do_not_cache_ = false;
 
     dport_.valid = 0;
+    memset(&trace_data_, 0, sizeof(trace_data_));
     reg_trace_file = 0;
     mem_trace_file = 0;
     memcache_ = 0;
@@ -398,6 +399,17 @@ ETransStatus CpuGeneric::dma_memop(Axi4TransactionType *tr) {
             }
         }
     }
+
+    trace_data_.memop_ena = true;
+    trace_data_.memop_addr = tr->addr;
+    trace_data_.write = tr->action == MemAction_Write ? 1 : 0;
+    trace_data_.data.val = 0;
+    if (tr->action == MemAction_Read) {
+        memcpy(trace_data_.data.buf, tr->rpayload.b8, tr->xsize);
+    } else {
+        memcpy(trace_data_.data.buf, tr->wpayload.b8, tr->xsize);
+    }
+
     if (!mem_trace_file) {
     //if (!reg_trace_file) {
         return ret;

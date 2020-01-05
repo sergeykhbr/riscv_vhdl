@@ -475,10 +475,9 @@ begin
     --      3. multi instruction
     --
     w_hold_hazard := '0';
-    if (or_reduce(i_d_radr1) = '1' and
-        r_scoreboard(conv_integer(i_d_radr1)).status = RegHazard) or
-        (or_reduce(i_d_radr2) = '1' and
-        r_scoreboard(conv_integer(i_d_radr2)).status = RegHazard) then
+    if (or_reduce(i_d_radr1) = '1' and r_scoreboard(int_radr1).status = RegHazard) or
+        (or_reduce(i_d_radr2) = '1' and r_scoreboard(int_radr2).status = RegHazard) or
+        (or_reduce(i_d_waddr) = '1' and or_reduce(r_scoreboard(int_waddr).cnt) = '1') then
         w_hold_hazard := '1';
     end if;
 
