@@ -725,10 +725,16 @@ package river_cfg is
     i_dport_npc_write : in std_logic;                           -- Write npc value from debug port
     i_dport_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- Debug port npc value to write
 
-    i_rdata1 : in std_logic_vector(RISCV_ARCH-1 downto 0);      -- Integer register value 1
-    i_rdata2 : in std_logic_vector(RISCV_ARCH-1 downto 0);      -- Integer register value 2
-    o_res_addr : out std_logic_vector(5 downto 0);              -- Address to store result of the instruction (0=do not store)
-    o_res_data : out std_logic_vector(RISCV_ARCH-1 downto 0);   -- Value to store
+    i_rdata1 : in std_logic_vector(RISCV_ARCH-1 downto 0);      -- Integer/FPU registers value 1
+    i_rhazard1 : in std_logic;
+    i_rdata2 : in std_logic_vector(RISCV_ARCH-1 downto 0);      -- Integer/FPU registers value 2
+    i_rhazard2 : in std_logic;
+    i_wtag : in std_logic_vector(3 downto 0);
+    o_wena : out std_logic;
+    o_waddr : out std_logic_vector(5 downto 0);                 -- Address to store result of the instruction (0=do not store)
+    o_whazard : out std_logic;
+    o_wdata : out std_logic_vector(RISCV_ARCH-1 downto 0);      -- Value to store
+    o_wtag : out std_logic_vector(3 downto 0);
     o_d_ready : out std_logic;                                  -- Hold pipeline while 'writeback' not done or multi-clock instruction.
     o_csr_addr : out std_logic_vector(11 downto 0);             -- CSR address. 0 if not a CSR instruction with xret signals mode switching
     o_csr_wena : out std_logic;                                 -- Write new CSR value
@@ -757,6 +763,9 @@ package river_cfg is
     o_memop_store : out std_logic;                              -- Store data instruction
     o_memop_size : out std_logic_vector(1 downto 0);            -- 0=1bytes; 1=2bytes; 2=4bytes; 3=8bytes
     o_memop_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- Memory access address
+    o_memop_wdata : out std_logic_vector(RISCV_ARCH-1 downto 0);
+    o_memop_waddr : out std_logic_vector(5 downto 0);
+    o_memop_wtag : out std_logic_vector(3 downto 0);
     i_memop_ready : in std_logic;
 
     o_trap_ready : out std_logic;                               -- Trap branch request was accepted
@@ -769,7 +778,8 @@ package river_cfg is
     o_call : out std_logic;                                     -- CALL pseudo instruction detected
     o_ret : out std_logic;                                      -- RET pseudoinstruction detected
     o_mret : out std_logic;                                     -- MRET instruction
-    o_uret : out std_logic                                      -- URET instruction
+    o_uret : out std_logic;                                     -- URET instruction
+    o_multi_ready : out std_logic
   );
   end component; 
 
@@ -865,17 +875,20 @@ package river_cfg is
     i_e_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);          -- Execution stage instruction pointer
     i_e_instr : in std_logic_vector(31 downto 0);                     -- Execution stage instruction value
 
-    i_res_addr : in std_logic_vector(5 downto 0);                     -- Register address to be written (0=no writing)
-    i_res_data : in std_logic_vector(RISCV_ARCH-1 downto 0);          -- Register value to be written
+    i_memop_waddr : in std_logic_vector(5 downto 0);                  -- Register address to be written (0=no writing)
+    i_memop_wtag : in std_logic_vector(3 downto 0);
+    i_memop_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0);       -- Register value to be written
     i_memop_sign_ext : in std_logic;                                  -- Load data with sign extending (if less than 8 Bytes)
     i_memop_load : in std_logic;                                      -- Load data from memory and write to i_res_addr
     i_memop_store : in std_logic;                                     -- Store i_res_data value into memory
     i_memop_size : in std_logic_vector(1 downto 0);                   -- Encoded memory transaction size in bytes: 0=1B; 1=2B; 2=4B; 3=8B
     i_memop_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);    -- Memory access address
     o_memop_ready : out std_logic;                                    -- Ready to accept memop request
-    o_wena : out std_logic;                                           -- Write enable signal
-    o_waddr : out std_logic_vector(5 downto 0);                       -- Output register address (0 = x0 = no write)
-    o_wdata : out std_logic_vector(RISCV_ARCH-1 downto 0);            -- Register value
+    o_wb_wena : out std_logic;                                        -- Write enable signal
+    o_wb_waddr : out std_logic_vector(5 downto 0);                    -- Output register address (0 = x0 = no write)
+    o_wb_wdata : out std_logic_vector(RISCV_ARCH-1 downto 0);         -- Register value
+    o_wb_wtag : out std_logic_vector(3 downto 0);
+    i_wb_ready : in std_logic;
 
     -- Memory interface:
     i_mem_req_ready : in std_logic;
@@ -887,13 +900,7 @@ package river_cfg is
     i_mem_data_valid : in std_logic;                                  -- Data path memory response is valid
     i_mem_data_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0); -- Data path memory response address
     i_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);      -- Data path memory response value
-    o_mem_resp_ready : out std_logic;
-
-    o_hold : out std_logic;                                           -- Memory operation is more than 1 clock
-    o_valid : out std_logic;                                          -- Output is valid
-    o_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);           -- Valid instruction pointer
-    o_instr : out std_logic_vector(31 downto 0);                      -- Valid instruction value
-    o_wb_memop : out std_logic                                        -- memory operation write-back (for tracer only)
+    o_mem_resp_ready : out std_logic
   );
   end component; 
 
@@ -918,22 +925,27 @@ package river_cfg is
     fpu_ena : boolean
   );
   port (
-    i_clk : in std_logic;
-    i_nrst : in std_logic;
-    i_radr1 : in std_logic_vector(5 downto 0);
-    o_rdata1 : out std_logic_vector(RISCV_ARCH-1 downto 0);
-    i_radr2 : in std_logic_vector(5 downto 0);
-    o_rdata2 : out std_logic_vector(RISCV_ARCH-1 downto 0);
-    i_waddr : in std_logic_vector(5 downto 0);
-    i_wena : in std_logic;
-    i_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0);
-    i_dport_addr : in std_logic_vector(4 downto 0);
-    i_dport_ena : in std_logic;
-    i_dport_write : in std_logic;
-    i_dport_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0);
-    o_dport_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0);
-    o_ra : out std_logic_vector(RISCV_ARCH-1 downto 0);
-    o_sp : out std_logic_vector(RISCV_ARCH-1 downto 0)
+    i_clk : in std_logic;                                   -- CPU clock
+    i_nrst : in std_logic;                                  -- Reset. Active LOW.
+    i_radr1 : in std_logic_vector(5 downto 0);              -- Port 1 read address
+    o_rdata1 : out std_logic_vector(RISCV_ARCH-1 downto 0); -- Port 1 read value
+    o_rhazard1 : out std_logic;
+    i_radr2 : in std_logic_vector(5 downto 0);              -- Port 2 read address
+    o_rdata2 : out std_logic_vector(RISCV_ARCH-1 downto 0); -- Port 2 read value
+    o_rhazard2 : out std_logic;
+    i_waddr : in std_logic_vector(5 downto 0);              -- Writing value
+    i_wena : in std_logic;                                  -- Writing is enabled
+    i_whazard : in std_logic;
+    i_wtag : in std_logic_vector(3 downto 0);
+    i_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0);   -- Writing value
+    o_wtag : out std_logic_vector(3 downto 0);
+    i_dport_addr : in std_logic_vector(4 downto 0);         -- Debug port address
+    i_dport_ena : in std_logic;                             -- Debug port is enabled
+    i_dport_write : in std_logic;                           -- Debug port write is enabled
+    i_dport_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0); -- Debug port write value
+    o_dport_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0);-- Debug port read value
+    o_ra : out std_logic_vector(RISCV_ARCH-1 downto 0);     -- Return address for branch predictor
+    o_sp : out std_logic_vector(RISCV_ARCH-1 downto 0)      -- Stack Pointer for the borders control
   );
   end component; 
 

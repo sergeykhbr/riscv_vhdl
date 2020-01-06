@@ -135,8 +135,11 @@ architecture arch_Processor of Processor is
         npc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
         ex_npc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
 
-        res_addr : std_logic_vector(5 downto 0);
-        res_data : std_logic_vector(RISCV_ARCH-1 downto 0);
+        wena : std_logic;
+        waddr : std_logic_vector(5 downto 0);
+        wdata : std_logic_vector(RISCV_ARCH-1 downto 0);
+        wtag : std_logic_vector(3 downto 0);
+        whazard : std_logic;
         mret : std_logic;
         uret : std_logic;
         csr_addr : std_logic_vector(11 downto 0);
@@ -161,11 +164,15 @@ architecture arch_Processor of Processor is
         memop_store : std_logic;
         memop_size : std_logic_vector(1 downto 0);
         memop_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+        memop_wdata : std_logic_vector(RISCV_ARCH-1 downto 0);
+        memop_waddr : std_logic_vector(5 downto 0);
+        memop_wtag : std_logic_vector(3 downto 0);
         d_ready : std_logic;                     -- Hold pipeline from Execution stage
         fence : std_logic;                       -- instruction FENCE
         fencei : std_logic;                      -- instruction FENCE.I
         call : std_logic;
         ret : std_logic;
+        multi_ready : std_logic;
     end record;
 
     type MemoryType is record
@@ -178,15 +185,18 @@ architecture arch_Processor of Processor is
     end record;
 
     type WriteBackType is record
-        pc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
         wena : std_logic;
         waddr : std_logic_vector(5 downto 0);
         wdata : std_logic_vector(RISCV_ARCH-1 downto 0);
+        wtag : std_logic_vector(3 downto 0);
     end record;
 
     type IntRegsType is record
         rdata1 : std_logic_vector(RISCV_ARCH-1 downto 0);
+        rhazard1 : std_logic;
         rdata2 : std_logic_vector(RISCV_ARCH-1 downto 0);
+        rhazard2 : std_logic;
+        wtag : std_logic_vector(3 downto 0);
         dport_rdata : std_logic_vector(RISCV_ARCH-1 downto 0);
         ra : std_logic_vector(RISCV_ARCH-1 downto 0);       -- Return address
         sp : std_logic_vector(RISCV_ARCH-1 downto 0);       -- Stack pointer
@@ -254,15 +264,28 @@ architecture arch_Processor of Processor is
     signal w_fetch_pipeline_hold : std_logic;
     signal w_any_pipeline_hold : std_logic;
 
+    signal w_writeback_ready : std_logic;
+    signal w_reg_wena : std_logic;
+    signal w_reg_whazard : std_logic;
+    signal wb_reg_waddr : std_logic_vector(5 downto 0);
+    signal wb_reg_wdata : std_logic_vector(RISCV_ARCH-1 downto 0);
+    signal wb_reg_wtag : std_logic_vector(3 downto 0);
+
 begin
 
-    w_fetch_pipeline_hold <= not w.e.d_ready or w.m.pipeline_hold or dbg.halt;
-    w_any_pipeline_hold <= w.f.pipeline_hold or not w.e.d_ready
-                          or w.m.pipeline_hold or dbg.halt;
+    w_fetch_pipeline_hold <= not w.e.d_ready or dbg.halt;
+    w_any_pipeline_hold <= w.f.pipeline_hold or not w.e.d_ready or dbg.halt;
 
     wb_ireg_dport_addr <= dbg.core_addr(4 downto 0);
     wb_freg_dport_addr <= dbg.core_addr(4 downto 0);
     wb_exec_dport_npc <= dbg.core_wdata(BUS_ADDR_WIDTH-1 downto 0);
+
+    w_writeback_ready <= not w.e.wena;
+    w_reg_wena <= w.e.wena when w.e.wena = '1' else w.w.wena;
+    w_reg_whazard <= w.e.whazard when w.e.wena = '1' else '0';
+    wb_reg_waddr <= w.e.waddr when w.e.wena = '1' else w.w.waddr;
+    wb_reg_wdata <= w.e.wdata when w.e.wena = '1' else w.w.wdata;
+    wb_reg_wtag <= w.e.wtag when w.e.wena = '1' else w.w.wtag;
 
     o_req_ctrl_valid <= w.f.imem_req_valid;
     o_req_ctrl_addr <= w.f.imem_req_addr;
@@ -374,9 +397,15 @@ begin
         i_dport_npc_write => dbg.npc_write,
         i_dport_npc => wb_exec_dport_npc,
         i_rdata1 => ireg.rdata1,
+        i_rhazard1 => ireg.rhazard1,
         i_rdata2 => ireg.rdata2,
-        o_res_addr => w.e.res_addr,
-        o_res_data => w.e.res_data,
+        i_rhazard2 => ireg.rhazard2,
+        i_wtag => ireg.wtag,
+        o_wena => w.e.wena,
+        o_waddr => w.e.waddr,
+        o_whazard => w.e.whazard,
+        o_wdata => w.e.wdata,
+        o_wtag => w.e.wtag,
         o_d_ready => w.e.d_ready,
         o_csr_addr => w.e.csr_addr,
         o_csr_wena => w.e.csr_wena,
@@ -403,6 +432,9 @@ begin
         o_memop_store => w.e.memop_store,
         o_memop_size => w.e.memop_size,
         o_memop_addr => w.e.memop_addr,
+        o_memop_wdata => w.e.memop_wdata,
+        o_memop_waddr => w.e.memop_waddr,
+        o_memop_wtag => w.e.memop_wtag,
         i_memop_ready => w.m.memop_ready,
         o_trap_ready => w.e.trap_ready,
         o_valid => w.e.valid,
@@ -414,7 +446,8 @@ begin
         o_call => w.e.call,
         o_ret => w.e.ret,
         o_mret => w.e.mret,
-        o_uret => w.e.uret);
+        o_uret => w.e.uret,
+        o_multi_ready => w.e.multi_ready);
 
     mem0 : MemAccess generic map (
         async_reset => async_reset
@@ -424,17 +457,20 @@ begin
         i_e_valid => w.e.valid,
         i_e_pc => w.e.pc,
         i_e_instr => w.e.instr,
-        i_res_addr => w.e.res_addr,
-        i_res_data => w.e.res_data,
+        i_memop_waddr => w.e.memop_waddr,
+        i_memop_wtag => w.e.memop_wtag,
+        i_memop_wdata => w.e.memop_wdata,
         i_memop_sign_ext => w.e.memop_sign_ext,
         i_memop_load => w.e.memop_load,
         i_memop_store => w.e.memop_store,
         i_memop_size => w.e.memop_size,
         i_memop_addr => w.e.memop_addr,
         o_memop_ready => w.m.memop_ready,
-        o_waddr => w.w.waddr,
-        o_wena => w.w.wena,
-        o_wdata => w.w.wdata,
+        o_wb_wena => w.w.wena,
+        o_wb_waddr => w.w.waddr,
+        o_wb_wdata => w.w.wdata,
+        o_wb_wtag => w.w.wtag,
+        i_wb_ready => w_writeback_ready,
         i_mem_req_ready => i_req_data_ready,
         o_mem_valid => o_req_data_valid,
         o_mem_write => o_req_data_write,
@@ -444,12 +480,7 @@ begin
         i_mem_data_valid => i_resp_data_valid,
         i_mem_data_addr => i_resp_data_addr,
         i_mem_data => i_resp_data_data,
-        o_mem_resp_ready => o_resp_data_ready,
-        o_hold => w.m.pipeline_hold,
-        o_valid => w.m.valid,
-        o_pc => w.m.pc,
-        o_instr => w.m.instr,
-        o_wb_memop => w.m.wb_memop);
+        o_mem_resp_ready => o_resp_data_ready);
 
     predic0 : BranchPredictor generic map (
         async_reset => async_reset
@@ -473,11 +504,16 @@ begin
         i_nrst => i_nrst,
         i_radr1 => w.d.radr1,
         o_rdata1 => ireg.rdata1,
+        o_rhazard1 => ireg.rhazard1,
         i_radr2 => w.d.radr2,
         o_rdata2 => ireg.rdata2,
-        i_waddr => w.w.waddr,
-        i_wena => w.w.wena,
-        i_wdata => w.w.wdata,
+        o_rhazard2 => ireg.rhazard2,
+        i_waddr => wb_reg_waddr,
+        i_wena => w_reg_wena,
+        i_whazard => w_reg_whazard,
+        i_wtag => wb_reg_wtag,
+        i_wdata => wb_reg_wdata,
+        o_wtag => ireg.wtag,
         i_dport_addr => wb_ireg_dport_addr,
         i_dport_ena => dbg.ireg_ena,
         i_dport_write => dbg.ireg_write,

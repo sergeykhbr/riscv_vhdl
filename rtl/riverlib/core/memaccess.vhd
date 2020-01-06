@@ -34,17 +34,20 @@ entity MemAccess is generic (
     i_e_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);          -- Execution stage instruction pointer
     i_e_instr : in std_logic_vector(31 downto 0);                     -- Execution stage instruction value
 
-    i_res_addr : in std_logic_vector(5 downto 0);                     -- Register address to be written (0=no writing)
-    i_res_data : in std_logic_vector(RISCV_ARCH-1 downto 0);          -- Register value to be written
+    i_memop_waddr : in std_logic_vector(5 downto 0);                  -- Register address to be written (0=no writing)
+    i_memop_wtag : in std_logic_vector(3 downto 0);
+    i_memop_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0);       -- Register value to be written
     i_memop_sign_ext : in std_logic;                                  -- Load data with sign extending (if less than 8 Bytes)
     i_memop_load : in std_logic;                                      -- Load data from memory and write to i_res_addr
     i_memop_store : in std_logic;                                     -- Store i_res_data value into memory
     i_memop_size : in std_logic_vector(1 downto 0);                   -- Encoded memory transaction size in bytes: 0=1B; 1=2B; 2=4B; 3=8B
     i_memop_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);    -- Memory access address
     o_memop_ready : out std_logic;                                    -- Ready to accept memop request
-    o_wena : out std_logic;                                           -- Write enable signal
-    o_waddr : out std_logic_vector(5 downto 0);                       -- Output register address (0 = x0 = no write)
-    o_wdata : out std_logic_vector(RISCV_ARCH-1 downto 0);            -- Register value
+    o_wb_wena : out std_logic;                                        -- Write enable signal
+    o_wb_waddr : out std_logic_vector(5 downto 0);                    -- Output register address (0 = x0 = no write)
+    o_wb_wdata : out std_logic_vector(RISCV_ARCH-1 downto 0);         -- Register value
+    o_wb_wtag : out std_logic_vector(3 downto 0);
+    i_wb_ready : in std_logic;
 
     -- Memory interface:
     i_mem_req_ready : in std_logic;
@@ -56,13 +59,7 @@ entity MemAccess is generic (
     i_mem_data_valid : in std_logic;                                  -- Data path memory response is valid
     i_mem_data_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0); -- Data path memory response address
     i_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);      -- Data path memory response value
-    o_mem_resp_ready : out std_logic;
-
-    o_hold : out std_logic;                                           -- Memory operation is more than 1 clock
-    o_valid : out std_logic;                                          -- Output is valid
-    o_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);           -- Valid instruction pointer
-    o_instr : out std_logic_vector(31 downto 0);                      -- Valid instruction value
-    o_wb_memop : out std_logic                                        -- memory operation write-back (for tracer only)
+    o_mem_resp_ready : out std_logic
   );
 end; 
  
@@ -89,19 +86,9 @@ architecture arch_MemAccess of MemAccess is
       memop_res_addr : std_logic_vector(5 downto 0);
       memop_res_data : std_logic_vector(RISCV_ARCH-1 downto 0);
       memop_res_wena : std_logic;
+      memop_wtag : std_logic_vector(3 downto 0);
 
-      reg_wb_valid : std_logic;
-      reg_res_pc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-      reg_res_instr : std_logic_vector(31 downto 0);
-      reg_res_addr : std_logic_vector(5 downto 0);
-      reg_res_data : std_logic_vector(RISCV_ARCH-1 downto 0);
-      reg_res_wena : std_logic;
-
-      hold_res_pc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-      hold_res_instr : std_logic_vector(31 downto 0);
-      hold_res_waddr : std_logic_vector(5 downto 0);
-      hold_res_wdata : std_logic_vector(RISCV_ARCH-1 downto 0);
-      hold_res_wena : std_logic;
+      hold_rdata : std_logic_vector(RISCV_ARCH-1 downto 0);
   end record;
  
   constant R_RESET : RegistersType := (
@@ -111,21 +98,17 @@ architecture arch_MemAccess of MemAccess is
     '0', (others => '0'),                    -- memop_sign_ext, memop_size
     (others => '0'), (others => '0'),        -- memop_res_pc, memop_res_instr
     (others => '0'),                         -- memop_res_addr
-    (others => '0'), '0',                    -- memop_res_data, memop_wena
-    '0',                                     -- reg_wb_valid
-    (others => '0'), (others => '0'),        -- reg_res_pc, reg_res_instr
-    (others => '0'),                         -- reg_res_addr
-    (others => '0'), '0',                    -- reg_res_data, reg_wena
-    (others => '0'), (others => '0'),        -- hold_res_pc, hold_res_instr
-    (others => '0'),                         -- hold_res_addr
-    (others => '0'), '0'                     -- hold_res_data, hold_wena
+    (others => '0'), '0',                    -- memop_res_data, memop_res_wena
+    (others => '0'),                         -- memop_wtag
+    (others => '0')                          -- hold_rdata
   );
 
   signal r, rin : RegistersType;
 
   -- TODO: move into separate module
   -- queue signals before move into separate module
-  constant QUEUE_WIDTH : integer := BUS_DATA_WIDTH
+  constant QUEUE_WIDTH : integer := 4
+                                  + BUS_DATA_WIDTH
                                   + BUS_DATA_BYTES
                                   + RISCV_ARCH 
                                   + 6
@@ -162,9 +145,9 @@ begin
   );
 
  
-  comb : process(i_nrst, i_e_valid, i_e_pc, i_e_instr, i_res_addr, i_res_data,
+  comb : process(i_nrst, i_e_valid, i_e_pc, i_e_instr, i_memop_waddr, i_memop_wtag, i_memop_wdata,
                  i_memop_sign_ext, i_memop_load, i_memop_store, i_memop_size, i_memop_addr,
-                 i_mem_data_addr, i_mem_req_ready, i_mem_data_valid,
+                 i_wb_ready, i_mem_data_addr, i_mem_req_ready, i_mem_data_valid,
                  i_mem_data_addr, i_mem_data,
                  queue_data_o, queue_nempty, queue_full, r)
     variable v : RegistersType;
@@ -176,10 +159,8 @@ begin
     variable vb_mem_sz : std_logic_vector(1 downto 0);
     variable vb_mem_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     variable vb_mem_rdata : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
-    variable v_hold : std_logic;
-    variable v_hold_output : std_logic;
-    variable v_wb_memop : std_logic;
     variable v_queue_re : std_logic;
+    variable vb_mem_wtag : std_logic_vector(3 downto 0);
     variable vb_mem_wdata : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
     variable vb_mem_wstrb : std_logic_vector(BUS_DATA_BYTES-1 downto 0);
     variable vb_mem_resp_shifted : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
@@ -191,19 +172,14 @@ begin
     variable vb_e_instr : std_logic_vector(31 downto 0);
     variable v_memop_ready : std_logic;
     variable v_o_wena : std_logic;
-    variable v_o_valid : std_logic;
     variable vb_o_waddr : std_logic_vector(5 downto 0);
     variable vb_o_wdata : std_logic_vector(RISCV_ARCH-1 downto 0);
-    variable vb_o_pc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    variable vb_o_instr : std_logic_vector(31 downto 0);
+    variable vb_o_wtag : std_logic_vector(3 downto 0);
   begin
 
     v := r;
 
     v_mem_valid := '0';
-    v_hold := '0';
-    v_hold_output := '0';
-    v_wb_memop := '0';
     v_queue_re := '0';
 
     vb_mem_resp_shifted := (others => '0');
@@ -213,12 +189,18 @@ begin
     vb_memop_wdata := (others => '0');
     vb_memop_wstrb := (others => '0');
 
+    v_o_wena := '0';
+    vb_o_waddr := (others => '0');
+    vb_o_wdata := (others => '0');
+    vb_o_wtag := (others => '0');
+
+
     case i_memop_size is
     when "00" =>
-        vb_memop_wdata := i_res_data(7 downto 0) & i_res_data(7 downto 0)
-                        & i_res_data(7 downto 0) & i_res_data(7 downto 0)
-                        & i_res_data(7 downto 0) & i_res_data(7 downto 0)
-                        & i_res_data(7 downto 0) & i_res_data(7 downto 0);
+        vb_memop_wdata := i_memop_wdata(7 downto 0) & i_memop_wdata(7 downto 0)
+                        & i_memop_wdata(7 downto 0) & i_memop_wdata(7 downto 0)
+                        & i_memop_wdata(7 downto 0) & i_memop_wdata(7 downto 0)
+                        & i_memop_wdata(7 downto 0) & i_memop_wdata(7 downto 0);
         if i_memop_addr(2 downto 0) = "000" then
             vb_memop_wstrb := X"01";
         elsif i_memop_addr(2 downto 0) = "001" then
@@ -237,8 +219,8 @@ begin
             vb_memop_wstrb := X"80";
         end if;
     when "01" =>
-        vb_memop_wdata := i_res_data(15 downto 0) & i_res_data(15 downto 0)
-                        & i_res_data(15 downto 0) & i_res_data(15 downto 0);
+        vb_memop_wdata := i_memop_wdata(15 downto 0) & i_memop_wdata(15 downto 0)
+                        & i_memop_wdata(15 downto 0) & i_memop_wdata(15 downto 0);
         if i_memop_addr(2 downto 1) = "00" then
             vb_memop_wstrb := X"03";
         elsif i_memop_addr(2 downto 1) = "01" then
@@ -249,26 +231,28 @@ begin
             vb_memop_wstrb := X"C0";
         end if;
     when "10" =>
-        vb_memop_wdata := i_res_data(31 downto 0) & i_res_data(31 downto 0);
+        vb_memop_wdata := i_memop_wdata(31 downto 0) & i_memop_wdata(31 downto 0);
         if i_memop_addr(2) = '1' then
             vb_memop_wstrb := X"F0";
         else
             vb_memop_wstrb := X"0F";
         end if;
     when "11" =>
-        vb_memop_wdata := i_res_data;
+        vb_memop_wdata := i_memop_wdata;
         vb_memop_wstrb := X"FF";
     when others =>
     end case;
 
     -- Form Queue inputs:
-    queue_data_i <= vb_memop_wdata & vb_memop_wstrb &
-                    i_res_data & i_res_addr & i_e_instr & i_e_pc &
+    queue_data_i <= i_memop_wtag & vb_memop_wdata & vb_memop_wstrb &
+                    i_memop_wdata & i_memop_waddr & i_e_instr & i_e_pc &
                     i_memop_size & i_memop_sign_ext & i_memop_store &
                     i_memop_addr;
     queue_we <= i_e_valid and (i_memop_load or i_memop_store);
 
     -- Split Queue outputs:
+    vb_mem_wtag := queue_data_o(2*BUS_ADDR_WIDTH+RISCV_ARCH+BUS_DATA_BYTES+BUS_DATA_WIDTH+45 downto
+                                2*BUS_ADDR_WIDTH+RISCV_ARCH+BUS_DATA_BYTES+BUS_DATA_WIDTH+42);
     vb_mem_wdata := queue_data_o(2*BUS_ADDR_WIDTH+RISCV_ARCH+BUS_DATA_BYTES+BUS_DATA_WIDTH+42-1 downto
                                  2*BUS_ADDR_WIDTH+RISCV_ARCH+BUS_DATA_BYTES+42);
     vb_mem_wstrb := queue_data_o(2*BUS_ADDR_WIDTH+RISCV_ARCH+BUS_DATA_BYTES+42-1 downto
@@ -337,6 +321,7 @@ begin
             v.memop_res_wena := or_reduce(vb_res_addr);
             v.memop_addr := vb_mem_addr;
             v.memop_wdata := vb_mem_wdata;
+            v.memop_wtag := vb_mem_wtag;
             v.memop_wstrb := vb_mem_wstrb;
             v.memop_w := v_mem_write;
             v.memop_sign_ext := v_mem_sign_ext;
@@ -363,23 +348,17 @@ begin
         if i_mem_data_valid = '0' then
             -- Do nothing
         else
-            v_wb_memop := '1';
+            v_o_wena := r.memop_res_wena;
+            vb_o_waddr := r.memop_res_addr;
+            vb_o_wdata := vb_mem_rdata;
+            vb_o_wtag := r.memop_wtag;
+
             v_queue_re := '1';
-            if r.reg_wb_valid = '1' then
+            if r.memop_res_wena = '1' and i_wb_ready = '0' then
                 -- Inject only one clock hold-on and wait a couple of clocks
-                v_hold := '1';
                 v_queue_re := '0';
-                v_wb_memop := '0';
                 v.state := State_Hold;
-                v.hold_res_wena := r.memop_res_wena;
-                v.hold_res_waddr := r.memop_res_addr;
-                if r.memop_w = '0' then
-                    v.hold_res_wdata := vb_mem_rdata;
-                else
-                    v.hold_res_wdata := r.memop_res_data;
-                end if;
-                v.hold_res_pc := r.memop_res_pc;
-                v.hold_res_instr := r.memop_res_instr;
+                v.hold_rdata := vb_mem_rdata;
             elsif queue_nempty = '1' then
                 v_mem_valid := '1';
                 v.memop_res_pc := vb_e_pc;
@@ -389,6 +368,7 @@ begin
                 v.memop_res_wena := or_reduce(vb_res_addr);
                 v.memop_addr := vb_mem_addr;
                 v.memop_wdata := vb_mem_wdata;
+                v.memop_wtag := vb_mem_wtag;
                 v.memop_wstrb := vb_mem_wstrb;
                 v.memop_w := v_mem_write;
                 v.memop_sign_ext := v_mem_sign_ext;
@@ -404,9 +384,11 @@ begin
             end if;
         end if;
     when State_Hold =>
-        if r.reg_wb_valid = '0' then
-            v_hold_output := '1';
-            v_wb_memop := '1';
+        v_o_wena := r.memop_res_wena;
+        vb_o_waddr := r.memop_res_addr;
+        vb_o_wdata := r.hold_rdata;
+        vb_o_wtag := r.memop_wtag;
+        if i_wb_ready = '1' then
             v_queue_re := '1';
             if queue_nempty = '1' then
                 v_mem_valid := '1';
@@ -417,6 +399,7 @@ begin
                 v.memop_res_wena := or_reduce(vb_res_addr);
                 v.memop_addr := vb_mem_addr;
                 v.memop_wdata := vb_mem_wdata;
+                v.memop_wtag := vb_mem_wtag;
                 v.memop_wstrb := vb_mem_wstrb;
                 v.memop_w := v_mem_write;
                 v.memop_sign_ext := v_mem_sign_ext;
@@ -434,55 +417,9 @@ begin
     when others =>
     end case;
 
-    if i_e_valid = '1' and (i_memop_load or i_memop_store) = '0' then
-        v.reg_wb_valid := '1';
-        v.reg_res_pc := i_e_pc;
-        v.reg_res_instr := i_e_instr;
-        v.reg_res_addr := i_res_addr;
-        v.reg_res_data := i_res_data;
-        v.reg_res_wena := or_reduce(i_res_addr);
-    else
-        v.reg_wb_valid := '0';
-        v.reg_res_pc := (others => '0');
-        v.reg_res_instr := (others => '0');
-        v.reg_res_addr := (others => '0');
-        v.reg_res_data := (others => '0');
-        v.reg_res_wena := '0';
-    end if;
-
     v_memop_ready := '1';
     if queue_full = '1' then
         v_memop_ready := '0';
-    end if;
-
-    v_o_valid := '0';
-    if r.reg_wb_valid = '1' then
-        v_o_valid := '1';
-        v_o_wena := r.reg_res_wena;
-        vb_o_waddr := r.reg_res_addr;
-        vb_o_wdata := r.reg_res_data;
-        vb_o_pc := r.reg_res_pc;
-        vb_o_instr := r.reg_res_instr;
-    elsif v_hold_output = '1' then
-        v_o_valid := '1';
-        v_o_wena := r.hold_res_wena;
-        vb_o_waddr := r.hold_res_waddr;
-        vb_o_wdata := r.hold_res_wdata;
-        vb_o_pc := r.hold_res_pc;
-        vb_o_instr := r.hold_res_instr;
-    elsif v_wb_memop = '1' then
-        v_o_valid := '1';
-        v_o_wena := r.memop_res_wena;
-        vb_o_waddr := r.memop_res_addr;
-        vb_o_wdata := vb_mem_rdata;
-        vb_o_pc := r.memop_res_pc;
-        vb_o_instr := r.memop_res_instr;
-    else
-        v_o_wena := '0';
-        vb_o_waddr := (others => '0');
-        vb_o_wdata := (others => '0');
-        vb_o_pc := (others => '0');
-        vb_o_instr := (others => '0');
     end if;
 
     if not async_reset and i_nrst = '0' then
@@ -500,16 +437,11 @@ begin
     o_mem_wdata <= vb_mem_wdata;
     o_mem_wstrb <= vb_mem_wstrb;
 
-    o_hold <= v_hold;
     o_memop_ready <= v_memop_ready;
-    o_wena <= v_o_wena;
-    o_waddr <= vb_o_waddr;
-    o_wdata <= vb_o_wdata;
-    -- the following signal used to executation instruction count and debug
-    o_valid <= v_o_valid;
-    o_pc <= vb_o_pc;
-    o_instr <= vb_o_instr;
-    o_wb_memop <= v_wb_memop;
+    o_wb_wena <= v_o_wena;
+    o_wb_waddr <= vb_o_waddr;
+    o_wb_wdata <= vb_o_wdata;
+    o_wb_wtag <= vb_o_wtag;
     
     rin <= v;
   end process;

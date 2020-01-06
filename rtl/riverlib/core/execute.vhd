@@ -59,9 +59,15 @@ entity InstrExecute is generic (
     i_dport_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- Debug port npc value to write
 
     i_rdata1 : in std_logic_vector(RISCV_ARCH-1 downto 0);      -- Integer/FPU registers value 1
+    i_rhazard1 : in std_logic;
     i_rdata2 : in std_logic_vector(RISCV_ARCH-1 downto 0);      -- Integer/FPU registers value 2
-    o_res_addr : out std_logic_vector(5 downto 0);              -- Address to store result of the instruction (0=do not store)
-    o_res_data : out std_logic_vector(RISCV_ARCH-1 downto 0);   -- Value to store
+    i_rhazard2 : in std_logic;
+    i_wtag : in std_logic_vector(3 downto 0);
+    o_wena : out std_logic;
+    o_waddr : out std_logic_vector(5 downto 0);                 -- Address to store result of the instruction (0=do not store)
+    o_whazard : out std_logic;
+    o_wdata : out std_logic_vector(RISCV_ARCH-1 downto 0);      -- Value to store
+    o_wtag : out std_logic_vector(3 downto 0);
     o_d_ready : out std_logic;                                  -- Hold pipeline while 'writeback' not done or multi-clock instruction.
     o_csr_addr : out std_logic_vector(11 downto 0);             -- CSR address. 0 if not a CSR instruction with xret signals mode switching
     o_csr_wena : out std_logic;                                 -- Write new CSR value
@@ -90,6 +96,9 @@ entity InstrExecute is generic (
     o_memop_store : out std_logic;                              -- Store data instruction
     o_memop_size : out std_logic_vector(1 downto 0);            -- 0=1bytes; 1=2bytes; 2=4bytes; 3=8bytes
     o_memop_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- Memory access address
+    o_memop_wdata : out std_logic_vector(RISCV_ARCH-1 downto 0);
+    o_memop_waddr : out std_logic_vector(5 downto 0);
+    o_memop_wtag : out std_logic_vector(3 downto 0);
     i_memop_ready : in std_logic;
 
     o_trap_ready : out std_logic;                               -- Trap branch request was accepted
@@ -102,7 +111,8 @@ entity InstrExecute is generic (
     o_call : out std_logic;                                     -- CALL pseudo instruction detected
     o_ret : out std_logic;                                      -- RET pseudoinstruction detected
     o_mret : out std_logic;                                     -- MRET instruction
-    o_uret : out std_logic                                      -- URET instruction
+    o_uret : out std_logic;                                     -- URET instruction
+    o_multi_ready : out std_logic
   );
 end; 
  
@@ -113,39 +123,24 @@ architecture arch_InstrExecute of InstrExecute is
   constant Multi_FPU : integer := 2;
   constant Multi_Total : integer := 3;
 
-  constant RegValid : std_logic_vector(1 downto 0) := "00";
-  constant RegHazard : std_logic_vector(1 downto 0) := "01";
-  constant RegForward : std_logic_vector(1 downto 0) := "10";
-
-  constant SCOREBOARD_SIZE : integer := 64;
-
   constant zero64 : std_logic_vector(63 downto 0) := (others => '0');
 
   type multi_arith_type is array (0 to Multi_Total-1) 
       of std_logic_vector(RISCV_ARCH-1 downto 0);
 
-  type score_item_type is record
-      status : std_logic_vector(1 downto 0);
-      cnt : std_logic_vector(1 downto 0);
-      forward : std_logic_vector(RISCV_ARCH-1 downto 0);
-  end record;
-
-  type score_table_type is array (0 to SCOREBOARD_SIZE-1) of score_item_type;
-
-  signal r_scoreboard : score_table_type;
-  signal rin_scoreboard : score_table_type;
-
   type RegistersType is record
         pc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
         npc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
         instr : std_logic_vector(31 downto 0);
-        waddr : std_logic_vector(5 downto 0);
+        memop_waddr : std_logic_vector(5 downto 0);
+        memop_wtag : std_logic_vector(3 downto 0);
         wval : std_logic_vector(RISCV_ARCH-1 downto 0);
         memop_load : std_logic;
         memop_store : std_logic;
         memop_sign_ext : std_logic;
         memop_size : std_logic_vector(1 downto 0);
         memop_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+        memop_wdata : std_logic_vector(RISCV_ARCH-1 downto 0);
 
         valid : std_logic;
         call : std_logic;
@@ -154,8 +149,10 @@ architecture arch_InstrExecute of InstrExecute is
 
   constant R_RESET : RegistersType := (
     (others => '0'), CFG_NMI_RESET_VECTOR,             -- pc, npc
-    (others => '0'), (others => '0'), (others => '0'), -- instr, waddr, wval
+    (others => '0'), (others => '0'),                  -- instr, memop_waddr
+    (others => '0'), (others => '0'),                  -- memop_wtag, wval
     '0', '0', '0', "00", (others => '0'),              -- memop_load, memop_store, memop_sign_ext, memop_size, memop_addr
+    (others => '0'),                                   -- memop_wdata
     '0',                                               -- valid
     '0', '0'                                           -- call, ret
   );
@@ -332,12 +329,11 @@ begin
                  i_memop_size, i_unsigned_op, i_rv32, i_compressed, i_f64, i_isa_type, i_ivec,
                  i_unsup_exception, i_instr_load_fault, i_instr_executable,
                  i_dport_npc_write, i_dport_npc, 
-                 i_rdata1, i_rdata2, i_csr_rdata, 
+                 i_rdata1, i_rhazard1, i_rdata2, i_rhazard2, i_wtag, i_csr_rdata, 
                  i_trap_valid, i_trap_pc, i_memop_ready,
                  wb_arith_res, w_arith_valid, w_arith_busy,
-                 wb_sll, wb_sllw, wb_srl, wb_srlw, wb_sra, wb_sraw, r, r_scoreboard)
+                 wb_sll, wb_sllw, wb_srl, wb_srlw, wb_sra, wb_sraw, r)
     variable v : RegistersType;
-    variable v_scoreboard : score_table_type;
 
     variable w_exception_store : std_logic;
     variable w_exception_load : std_logic;
@@ -393,16 +389,13 @@ begin
     variable v_next_mul_ready : std_logic;
     variable v_next_div_ready : std_logic;
     variable v_next_fpu_ready : std_logic;
+    variable v_wena : std_logic;
+    variable v_whazard : std_logic;
+    variable vb_waddr : std_logic_vector(5 downto 0);
 
   begin
 
     v := r;
-    for i in 0 to SCOREBOARD_SIZE-1 loop
-        v_scoreboard(i).cnt := r_scoreboard(i).cnt;
-        v_scoreboard(i).forward := r_scoreboard(i).forward;
-        v_scoreboard(i).status := r_scoreboard(i).status;
-    end loop;
-
 
     v_csr_wena := '0';
     vb_csr_addr := (others => '0');
@@ -426,19 +419,8 @@ begin
     int_radr2 := conv_integer(i_d_radr2);
     int_waddr := conv_integer(i_d_waddr);
 
-    if or_reduce(i_d_radr1) = '1' and
-        r_scoreboard(int_radr1).status = RegForward then
-        vb_i_rdata1 := r_scoreboard(int_radr1).forward;
-    else
-        vb_i_rdata1 := i_rdata1;
-    end if;
-
-    if or_reduce(i_d_radr2) = '1' and
-        r_scoreboard(int_radr2).status = RegForward then
-        vb_i_rdata2 := r_scoreboard(int_radr2).forward;
-    else
-        vb_i_rdata2 := i_rdata2;
-    end if;
+    vb_i_rdata1 := i_rdata1;
+    vb_i_rdata2 := i_rdata2;
 
     if i_isa_type(ISA_R_type) = '1' then
         vb_rdata1 := vb_i_rdata1;
@@ -474,12 +456,7 @@ begin
     --      2. memaccess not ready to accept next memop operation
     --      3. multi instruction
     --
-    w_hold_hazard := '0';
-    if (or_reduce(i_d_radr1) = '1' and r_scoreboard(int_radr1).status = RegHazard) or
-        (or_reduce(i_d_radr2) = '1' and r_scoreboard(int_radr2).status = RegHazard) or
-        (or_reduce(i_d_waddr) = '1' and or_reduce(r_scoreboard(int_waddr).cnt) = '1') then
-        w_hold_hazard := '1';
-    end if;
+    w_hold_hazard := i_rhazard1 or i_rhazard2;
 
     w_hold_memop := (i_memop_load or i_memop_store)
                 and not i_memop_ready;
@@ -710,17 +687,11 @@ begin
     end if;
 
 
-    if i_wb_valid = '1' then
-        if r_scoreboard(conv_integer(i_wb_waddr)).cnt = "01" then
-            v_scoreboard(conv_integer(i_wb_waddr)).status := RegValid;
-        end if;
-        if i_d_waddr /= i_wb_waddr or w_next_ready = '0' then
-            v_scoreboard(conv_integer(i_wb_waddr)).cnt := 
-                         r_scoreboard(conv_integer(i_wb_waddr)).cnt - 1;
-        end if;
-    end if;
-
     -- Latch ready result
+    v_wena := '0';
+    v_whazard := '0';
+    vb_waddr := i_d_waddr;
+    vb_o_wdata := vb_res;
     if w_next_ready = '1' then
         v.valid := '1';
 
@@ -732,35 +703,24 @@ begin
         v.memop_store := i_memop_store;
         v.memop_size := i_memop_size;
         v.memop_addr := vb_memop_addr;
+        v.memop_wdata := vb_res;
 
-        v.waddr := i_d_waddr;
+        v.memop_waddr := i_d_waddr;
+        v.memop_wtag := i_wtag + 1;
+        v_whazard := v_memop_load;
+        v_wena := or_reduce(i_d_waddr) and not w_multi_ena;
+
         v.wval := vb_res;
         v.call := v_call;
         v.ret := v_ret;
-
-        if or_reduce(i_d_waddr) = '1' then
-            v_scoreboard(int_waddr).forward := vb_res;
-            if v_memop_load = '1' or r_scoreboard(int_waddr).status = RegHazard
-                or r_scoreboard(int_waddr).cnt = "10" then
-                v_scoreboard(int_waddr).status := RegHazard;
-            else
-                v_scoreboard(int_waddr).status := RegForward;
-            end if;
-            if i_d_waddr /= i_wb_waddr or i_wb_valid = '0' then
-                v_scoreboard(int_waddr).cnt := r_scoreboard(int_waddr).cnt + 1;
-            end if;
-        end if;
     end if;
 
-    v_o_valid := r.valid;
-    vb_o_wdata := r.wval;
     if w_multi_ready = '1' then
-        v_o_valid := '1';
-        vb_o_wdata := vb_res;
-        v_scoreboard(conv_integer(r.waddr)).forward := vb_res;
-    elsif w_multi_busy = '1' then
-        v_o_valid := '0';
+        v_wena := or_reduce(r.memop_waddr);
+        vb_waddr := r.memop_waddr;
     end if;
+
+    v_o_valid := (r.valid and not w_multi_busy) or w_multi_ready;
 
     if i_dport_npc_write = '1' then
         v.npc := i_dport_npc;
@@ -769,11 +729,6 @@ begin
 
     if not async_reset and i_nrst = '0' then
         v := R_RESET;
-        for i in 0 to SCOREBOARD_SIZE-1 loop
-            v_scoreboard(i).status := RegValid;
-            v_scoreboard(i).cnt := (others => '0');
-            v_scoreboard(i).forward := (others => '0');
-        end loop;
     end if;
 
     wb_rdata1 <= vb_rdata1;
@@ -789,8 +744,11 @@ begin
     o_ex_breakpoint <= wv(Instr_EBREAK) and w_next_ready;
     o_ex_ecall <= wv(Instr_ECALL) and w_next_ready;
 
-    o_res_addr <= r.waddr;
-    o_res_data <= vb_o_wdata;
+    o_wena <= v_wena;
+    o_whazard <= v_whazard;
+    o_waddr <= vb_waddr;
+    o_wdata <= vb_o_wdata;
+    o_wtag <= i_wtag;
     o_d_ready <= not v_hold_exec;
 
     o_csr_wena <= v_csr_wena and w_next_ready;
@@ -803,6 +761,9 @@ begin
     o_memop_store <= r.memop_store;
     o_memop_size <= r.memop_size;
     o_memop_addr <= r.memop_addr;
+    o_memop_wdata <= r.memop_wdata;
+    o_memop_waddr <= r.memop_waddr;
+    o_memop_wtag <= r.memop_wtag;
 
     o_valid <= v_o_valid;
     o_pc <= r.pc;
@@ -815,9 +776,10 @@ begin
     o_mret <= v_mret;
     o_uret <= v_uret;
     o_fpu_valid <= w_arith_valid(Multi_FPU);
+    -- Tracer only:
+    o_multi_ready <= w_multi_ready;
     
     rin <= v;
-    rin_scoreboard <= v_scoreboard;
   end process;
 
   -- registers:
@@ -825,18 +787,8 @@ begin
   begin 
      if async_reset and i_nrst = '0' then
         r <= R_RESET;
-        for i in 0 to SCOREBOARD_SIZE-1 loop
-            r_scoreboard(i).forward <= (others => '0');
-            r_scoreboard(i).status <= RegValid;
-            r_scoreboard(i).cnt <= (others => '0');
-        end loop;
      elsif rising_edge(i_clk) then 
         r <= rin;
-        for i in 0 to SCOREBOARD_SIZE-1 loop
-            r_scoreboard(i).forward <= rin_scoreboard(i).forward;
-            r_scoreboard(i).status <= rin_scoreboard(i).status;
-            r_scoreboard(i).cnt <= rin_scoreboard(i).cnt;
-        end loop;
      end if; 
   end process;
 
