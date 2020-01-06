@@ -135,13 +135,13 @@
                 ['HartID',0],
                 ['AsyncReset',false],
                 ['FpuEnable',true, 'Enable Hardware FPU module'],
-                ['TracerEnable',true, 'Enable Verification Trace collector module'],
+                ['TracerEnable',false, 'Enable Verification Trace collector module'],
                 ['Bus','axi0'],
                 ['CmdExecutor','cmdexec0']
                 ['Tap','edcltap']
-                ['GenerateRef',true,'Generate Registers/Memory access trace file to compare it with functional model'],
+                ['GenerateRef',false,'Generate Registers/Memory access trace file to compare it with functional model'],
                 ['InVcdFile','','None empty string enables generation of stimulus VCD file'],
-                ['OutVcdFile','e:/Projects/o_river','None empty string enables VCD file with reference signals'],
+                ['OutVcdFile','','None empty string enables VCD file with reference signals'],
                 ['FreqHz',1000000]
                 ]}]},
     {'Class':'MemorySimClass','Instances':[

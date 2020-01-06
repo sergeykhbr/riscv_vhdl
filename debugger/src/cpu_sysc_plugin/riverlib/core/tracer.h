@@ -32,13 +32,15 @@ SC_MODULE(Tracer) {
     sc_in<bool> i_e_valid;
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_e_pc;
     sc_in<sc_uint<32>> i_e_instr;
+    sc_in<bool> i_e_multi_ready;
+    sc_in<bool> i_e_wena;
+    sc_in<bool> i_e_whazard;
+    sc_in<sc_uint<6>> i_e_waddr;
+    sc_in<sc_uint<RISCV_ARCH>> i_e_wdata;
     sc_in<bool> i_e_memop_store;
     sc_in<bool> i_e_memop_load;
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_e_memop_addr;
-    sc_in<sc_uint<RISCV_ARCH>> i_e_res_data;
-    sc_in<sc_uint<6>> i_e_res_addr;
-    sc_in<bool> i_m_wb_memop;
-    sc_in<bool> i_m_valid;
+    sc_in<sc_uint<RISCV_ARCH>> i_e_memop_wdata;
     sc_in<bool> i_m_wena;
     sc_in<sc_uint<6>> i_m_waddr;
     sc_in<sc_uint<RISCV_ARCH>> i_m_wdata;
@@ -57,6 +59,7 @@ SC_MODULE(Tracer) {
 
     struct TraceStepType {
         bool entry_valid;
+        bool whazard;
         uint64_t exec_cnt;
         uint64_t pc;
         uint32_t instr;

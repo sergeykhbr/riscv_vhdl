@@ -39,9 +39,11 @@ SC_MODULE(MemAccess) {
     sc_in<sc_uint<2>> i_memop_size;                 // Encoded memory transaction size in bytes: 0=1B; 1=2B; 2=4B; 3=8B
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_memop_addr;    // Memory access address
     sc_out<bool> o_memop_ready;                     // Ready to accept memop request
-    sc_out<bool> o_wena;                            // Write enable signal
-    sc_out<sc_uint<6>> o_waddr;                     // Output register address (0 = x0 = no write)
-    sc_out<sc_uint<RISCV_ARCH>> o_wdata;            // Register value
+    sc_out<bool> o_wb_wena;                         // Write enable signal
+    sc_out<sc_uint<6>> o_wb_waddr;                  // Output register address (0 = x0 = no write)
+    sc_out<sc_uint<RISCV_ARCH>> o_wb_wdata;         // Register value
+    sc_out<sc_uint<4>> o_wb_wtag;
+    sc_in<bool> i_wb_ready;
 
     // Memory interface:
     sc_in<bool> i_mem_req_ready;                    // Data cache is ready to accept read/write request
@@ -54,12 +56,6 @@ SC_MODULE(MemAccess) {
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_mem_data_addr; // Data path memory response address
     sc_in<sc_uint<BUS_DATA_WIDTH>> i_mem_data;      // Data path memory response value
     sc_out<bool> o_mem_resp_ready;                  // Pipeline is ready to accept memory operation response
-
-    sc_out<bool> o_hold;                            // memory access hold-on
-    sc_out<bool> o_valid;                           // Output is valid
-    sc_out<sc_uint<BUS_ADDR_WIDTH>> o_pc;           // Valid instruction pointer
-    sc_out<sc_uint<32>> o_instr;                    // Valid instruction value
-    sc_out<bool> o_wb_memop;                        // memory operation write back (for tracer only)
 
     void comb();
     void registers();
@@ -91,19 +87,9 @@ private:
         sc_signal<sc_uint<6>> memop_res_addr;
         sc_signal<sc_uint<RISCV_ARCH>> memop_res_data;
         sc_signal<bool> memop_res_wena;
+        sc_signal<sc_uint<4>> memop_wtag;
 
-        sc_signal<bool> reg_wb_valid;
-        sc_signal<sc_uint<BUS_ADDR_WIDTH>> reg_res_pc;
-        sc_signal<sc_uint<32>> reg_res_instr;
-        sc_signal<sc_uint<6>> reg_res_addr;
-        sc_signal<sc_uint<RISCV_ARCH>> reg_res_data;
-        sc_signal<bool> reg_res_wena;
-
-        sc_signal<sc_uint<BUS_ADDR_WIDTH>> hold_res_pc;
-        sc_signal<sc_uint<32>> hold_res_instr;
-        sc_signal<sc_uint<6>> hold_res_waddr;
-        sc_signal<sc_uint<RISCV_ARCH>> hold_res_wdata;
-        sc_signal<bool> hold_res_wena;
+        sc_signal<sc_uint<RISCV_ARCH>> hold_rdata;
     } v, r;
 
     void R_RESET(RegistersType &iv) {
@@ -119,17 +105,8 @@ private:
         iv.memop_res_addr = 0;
         iv.memop_res_data = 0;
         iv.memop_res_wena = 0;
-        iv.reg_wb_valid = 0;
-        iv.reg_res_pc = 0;
-        iv.reg_res_instr = 0;
-        iv.reg_res_addr = 0;
-        iv.reg_res_data = 0;
-        iv.reg_res_wena = 0;
-        iv.hold_res_pc = 0;
-        iv.hold_res_instr = 0;
-        iv.hold_res_waddr = 0;
-        iv.hold_res_wdata = 0;
-        iv.hold_res_wena = 0;
+        iv.memop_wtag = 0;
+        iv.hold_rdata = 0;
     }
 
     static const int QUEUE_WIDTH = 4

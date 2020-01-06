@@ -19,7 +19,7 @@
 
 namespace debugger {
 
-#define GENERATE_REF_ZEPHYR
+//#define GENERATE_REF_ZEPHYR
 
 UART::UART(const char *name) : RegMemBankGeneric(name),
     status_(static_cast<IService *>(this), "status", 0x00),

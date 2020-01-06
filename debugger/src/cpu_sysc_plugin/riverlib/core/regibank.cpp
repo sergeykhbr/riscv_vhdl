@@ -69,13 +69,15 @@ void RegIntBank::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_wena, i_wena.name());
         sc_trace(o_vcd, i_waddr, i_waddr.name());
         sc_trace(o_vcd, i_wdata, i_wdata.name());
+        sc_trace(o_vcd, i_wtag, i_wtag.name());
         sc_trace(o_vcd, o_rdata1, o_rdata1.name());
         sc_trace(o_vcd, o_rdata2, o_rdata2.name());
         sc_trace(o_vcd, o_wtag, o_wtag.name());
         sc_trace(o_vcd, o_dport_rdata, o_dport_rdata.name());
 
         std::string pn(name());
-        sc_trace(o_vcd, r.reg[5].val, pn + ".r4");
+        sc_trace(o_vcd, r.reg[8].val, pn + ".r4");
+        sc_trace(o_vcd, r.reg[8].tag, pn + ".r4_tag");
     }
 }
 
@@ -96,9 +98,7 @@ void RegIntBank::comb() {
         if (i_wtag.read() == r.reg[int_waddr].tag) {
             v.reg[int_waddr].hazard = i_whazard;
             v.reg[int_waddr].val = i_wdata;
-            if (i_whazard.read() == 0) {
-                v.reg[int_waddr].tag = r.reg[int_waddr].tag + 1;
-            }
+            v.reg[int_waddr].tag = r.reg[int_waddr].tag + 1;
         }
     }
     v.update = !r.update.read();

@@ -39,13 +39,16 @@ Tracer::Tracer(sc_module_name name_, bool async_reset, const char *trace_file)
     i_dbg_executed_cnt("i_dbg_executed_cnt"),
     i_e_valid("i_e_valid"),
     i_e_pc("i_e_pc"),
+    i_e_instr("i_e_instr"),
+    i_e_multi_ready("i_e_multi_ready"),
+    i_e_wena("i_e_wena"),
+    i_e_whazard("i_e_whazard"),
+    i_e_waddr("i_e_waddr"),
+    i_e_wdata("i_e_wdata"),
     i_e_memop_store("i_e_memop_store"),
     i_e_memop_load("i_e_memop_load"),
     i_e_memop_addr("i_e_memop_addr"),
-    i_e_res_data("i_e_res_data"),
-    i_e_res_addr("i_e_res_addr"),
-    i_m_wb_memop("i_m_wb_memop"),
-    i_m_valid("i_m_valid"),
+    i_e_memop_wdata("i_e_memop_wdata"),
     i_m_wena("i_m_wena"),
     i_m_waddr("i_m_waddr"),
     i_m_wdata("i_m_wdata") {
@@ -60,11 +63,16 @@ Tracer::Tracer(sc_module_name name_, bool async_reset, const char *trace_file)
     sensitive << i_dbg_executed_cnt;
     sensitive << i_e_valid;
     sensitive << i_e_pc;
+    sensitive << i_e_instr;
+    sensitive << i_e_multi_ready;
+    sensitive << i_e_wena;
+    sensitive << i_e_whazard;
+    sensitive << i_e_waddr;
+    sensitive << i_e_wdata;
     sensitive << i_e_memop_store;
     sensitive << i_e_memop_load;
     sensitive << i_e_memop_addr;
-    sensitive << i_e_res_data;
-    sensitive << i_e_res_addr;
+    sensitive << i_e_memop_wdata;
     sensitive << i_m_wena;
     sensitive << i_m_waddr;
     sensitive << i_m_wdata;
@@ -333,7 +341,7 @@ void Tracer::task_disassembler(uint32_t instr) {
 void Tracer::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
         sc_trace(o_vcd, i_e_valid, i_e_valid.name());
-        sc_trace(o_vcd, i_m_wb_memop, i_m_wb_memop.name());
+        sc_trace(o_vcd, i_m_wena, i_m_wena.name());
 
         std::string pn(name());
         sc_trace(o_vcd, tr_wcnt_, pn + ".tr_wcnt_");
@@ -346,35 +354,41 @@ void Tracer::registers() {
     char msg[256];
     int tsz;
 
+
     if (i_e_valid.read() == 1) {
         TraceStepType *p = &trace_tbl_[tr_wcnt_];
-        tr_total_++;
-        if (++tr_wcnt_ >=  TRACE_TBL_SZ) {
-            tr_wcnt_ = 0;
+        if (i_e_multi_ready.read() == 0) {
+            tr_total_++;
+            if (++tr_wcnt_ >=  TRACE_TBL_SZ) {
+                tr_wcnt_ = 0;
+            }
         }
 
         p->exec_cnt = i_dbg_executed_cnt.read();
         p->pc = i_e_pc.read();
         p->instr = i_e_instr.read().to_uint();
-        p->waddr = i_e_res_addr.read().to_uint();
-        p->wres = i_e_res_data.read();
         p->memop_addr = i_e_memop_addr.read();
         p->memop_load = i_e_memop_load.read();
         p->memop_store = i_e_memop_store.read();
-        if (p->memop_load || p->memop_store) {
-            p->entry_valid = 0;
-        } else {
-            p->entry_valid = 1;
+        p->entry_valid = !p->whazard;
+    }
+
+    // 1 clock delay
+    trace_tbl_[tr_wcnt_].waddr = i_e_waddr.read().to_uint();
+    trace_tbl_[tr_wcnt_].wres = i_e_wdata.read();
+    trace_tbl_[tr_wcnt_].whazard = i_e_whazard.read();
+    if (i_e_multi_ready.read() == 1) {
+        tr_total_++;
+        if (++tr_wcnt_ >=  TRACE_TBL_SZ) {
+            tr_wcnt_ = 0;
         }
     }
 
-    if (i_m_wb_memop.read()) {
+    if (!i_e_wena.read() && i_m_wena.read() && trace_tbl_[tr_rcnt_].whazard) {
         TraceStepType *p = &trace_tbl_[tr_rcnt_];
         p->entry_valid = 1;
-        p->waddr = i_m_waddr.read().to_uint();
-        if (p->memop_load) {
-            p->wres = i_m_wdata.read();
-        }
+        p->whazard = 0;
+        p->wres = i_m_wdata.read();
     }
 
     while (trace_tbl_[tr_rcnt_].entry_valid) {

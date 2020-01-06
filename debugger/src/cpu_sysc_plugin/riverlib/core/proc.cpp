@@ -81,6 +81,15 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     sensitive << w.e.npc;
     sensitive << w.e.valid;
     sensitive << w.e.d_ready;
+    sensitive << w.e.wena;
+    sensitive << w.e.whazard;
+    sensitive << w.e.waddr;
+    sensitive << w.e.wdata;
+    sensitive << w.e.wtag;
+    sensitive << w.w.wena;
+    sensitive << w.w.waddr;
+    sensitive << w.w.wdata;
+    sensitive << w.w.wtag;
     sensitive << w.m.pipeline_hold;
     sensitive << w.f.imem_req_valid;
     sensitive << w.f.imem_req_addr;
@@ -236,6 +245,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     exec0->o_ret(w.e.ret);
     exec0->o_mret(w.e.mret);
     exec0->o_uret(w.e.uret);
+    exec0->o_multi_ready(w.e.multi_ready);
 
     mem0 = new MemAccess("mem0", async_reset);
     mem0->i_clk(i_clk);
@@ -252,9 +262,11 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     mem0->i_memop_size(w.e.memop_size);
     mem0->i_memop_addr(w.e.memop_addr);
     mem0->o_memop_ready(w.m.memop_ready);
-    mem0->o_waddr(w.w.waddr);
-    mem0->o_wena(w.w.wena);
-    mem0->o_wdata(w.w.wdata);
+    mem0->o_wb_wena(w.w.wena);
+    mem0->o_wb_waddr(w.w.waddr);
+    mem0->o_wb_wdata(w.w.wdata);
+    mem0->o_wb_wtag(w.w.wtag);
+    mem0->i_wb_ready(w_writeback_ready);
     mem0->i_mem_req_ready(i_req_data_ready);
     mem0->o_mem_valid(o_req_data_valid);
     mem0->o_mem_write(o_req_data_write);
@@ -265,11 +277,6 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     mem0->i_mem_data_addr(i_resp_data_addr);
     mem0->i_mem_data(i_resp_data_data);
     mem0->o_mem_resp_ready(o_resp_data_ready);
-    mem0->o_hold(w.m.pipeline_hold);
-    mem0->o_valid(w.m.valid);
-    mem0->o_pc(w.m.pc);
-    mem0->o_instr(w.m.instr);
-    mem0->o_wb_memop(w.m.wb_memop);
 
     predic0 = new BranchPredictor("predic0", async_reset);
     predic0->i_clk(i_clk);
@@ -291,11 +298,11 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     iregs0->i_radr2(w.d.radr2);
     iregs0->o_rdata2(ireg.rdata2);
     iregs0->o_rhazard2(ireg.rhazard2);
-    iregs0->i_waddr(w.e.waddr);
-    iregs0->i_wena(w.e.wena);
-    iregs0->i_whazard(w.e.whazard);
-    iregs0->i_wtag(w.e.wtag);
-    iregs0->i_wdata(w.e.wdata);
+    iregs0->i_waddr(wb_reg_waddr);
+    iregs0->i_wena(w_reg_wena);
+    iregs0->i_whazard(w_reg_whazard);
+    iregs0->i_wtag(wb_reg_wtag);
+    iregs0->i_wdata(wb_reg_wdata);
     iregs0->o_wtag(ireg.wtag);
     iregs0->i_dport_addr(wb_ireg_dport_addr);
     iregs0->i_dport_ena(dbg.ireg_ena);
@@ -424,13 +431,15 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
         trace0->i_e_valid(w.e.valid);
         trace0->i_e_pc(w.e.pc);
         trace0->i_e_instr(w.e.instr);
+        trace0->i_e_multi_ready(w.e.multi_ready);
+        trace0->i_e_wena(w.e.wena);
+        trace0->i_e_whazard(w.e.whazard);
+        trace0->i_e_waddr(w.e.waddr);
+        trace0->i_e_wdata(w.e.wdata);
         trace0->i_e_memop_store(w.e.memop_store);
         trace0->i_e_memop_load(w.e.memop_load);
         trace0->i_e_memop_addr(w.e.memop_addr);
-        trace0->i_e_res_data(w.e.wdata);
-        trace0->i_e_res_addr(w.e.waddr);
-        trace0->i_m_wb_memop(w.m.wb_memop);
-        trace0->i_m_valid(w.m.valid);
+        trace0->i_e_memop_wdata(w.e.memop_wdata);
         trace0->i_m_wena(w.w.wena);
         trace0->i_m_waddr(w.w.waddr);
         trace0->i_m_wdata(w.w.wdata);
@@ -484,6 +493,21 @@ void Processor::comb() {
     wb_ireg_dport_addr = dbg.core_addr.read()(4, 0);
     wb_freg_dport_addr = dbg.core_addr.read()(4, 0);
     wb_exec_dport_npc = dbg.core_wdata.read()(BUS_ADDR_WIDTH-1, 0);
+
+    w_writeback_ready = !w.e.wena.read();
+    if (w.e.wena.read() == 1) {
+        w_reg_wena = w.e.wena;
+        w_reg_whazard = w.e.whazard;
+        wb_reg_waddr = w.e.waddr;
+        wb_reg_wdata = w.e.wdata;
+        wb_reg_wtag = w.e.wtag;
+    } else {
+        w_reg_wena = w.w.wena;
+        w_reg_whazard = 0;
+        wb_reg_waddr = w.w.waddr;
+        wb_reg_wdata = w.w.wdata;
+        wb_reg_wtag = w.w.wtag;
+    }
 
     o_req_ctrl_valid = w.f.imem_req_valid;
     o_req_ctrl_addr = w.f.imem_req_addr;

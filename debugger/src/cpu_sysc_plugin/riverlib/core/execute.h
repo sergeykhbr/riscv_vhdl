@@ -110,6 +110,7 @@ SC_MODULE(InstrExecute) {
     sc_out<bool> o_ret;                         // RET pseudoinstruction detected
     sc_out<bool> o_mret;                        // MRET.
     sc_out<bool> o_uret;                        // MRET.
+    sc_out<bool> o_multi_ready;
 
     void comb();
     void registers();
@@ -133,28 +134,6 @@ private:
         sc_signal<sc_uint<RISCV_ARCH>> arr[Multi_Total];
     };
 
-    enum ScoreType {
-        RegValid,
-        RegHazard,
-        RegForward
-    };
-
-    struct score_item_type {
-        sc_uint<2> status;
-        sc_uint<2> cnt;
-        sc_uint<RISCV_ARCH> forward;
-    };
-
-    struct score_item_type_r {
-        sc_signal<sc_uint<2>> cnt;
-        sc_signal<sc_uint<2>> status;
-        sc_signal<sc_uint<RISCV_ARCH>> forward;
-    };
-
-    static const int SCOREBOARD_SIZE = 64;
-    score_item_type v_scoreboard[SCOREBOARD_SIZE];
-    score_item_type_r r_scoreboard[SCOREBOARD_SIZE];
-    
     struct RegistersType {
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> pc;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> npc;

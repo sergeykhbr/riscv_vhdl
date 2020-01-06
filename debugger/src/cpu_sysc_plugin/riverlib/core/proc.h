@@ -183,6 +183,7 @@ private:
         sc_signal<bool> fencei;                     // instruction FENCE.I
         sc_signal<bool> call;                       // pseudo-instruction CALL
         sc_signal<bool> ret;                        // pseudo-instruction RET
+        sc_signal<bool> multi_ready;
     };
 
     struct MemoryType {
@@ -195,10 +196,10 @@ private:
     };
 
     struct WriteBackType {
-        sc_signal<sc_uint<BUS_ADDR_WIDTH>> pc;
         sc_signal<bool> wena;
         sc_signal<sc_uint<6>> waddr;
         sc_signal<sc_uint<RISCV_ARCH>> wdata;
+        sc_signal<sc_uint<4>> wtag;
     };
 
     struct IntRegsType {
@@ -289,6 +290,13 @@ private:
     bool mem_dbg_write_flag;
     uint64_t dbg_mem_value_mask;
     uint64_t dbg_mem_write_value;
+
+    sc_signal<bool> w_writeback_ready;
+    sc_signal<bool> w_reg_wena;
+    sc_signal<bool> w_reg_whazard;
+    sc_signal<sc_uint<6>> wb_reg_waddr;
+    sc_signal<sc_uint<RISCV_ARCH>> wb_reg_wdata;
+    sc_signal<sc_uint<4>> wb_reg_wtag;
 
     bool fpu_ena_;
     bool tracer_ena_;

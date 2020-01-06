@@ -97,7 +97,8 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     o_call("o_call"),
     o_ret("o_ret"),
     o_mret("o_mret"),
-    o_uret("o_uret") {
+    o_uret("o_uret"),
+    o_multi_ready("o_multi_ready") {
     async_reset_ = async_reset;
     fpu_ena_ = fpu_ena;
 
@@ -165,11 +166,6 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     sensitive << wb_srlw;
     sensitive << wb_sra;
     sensitive << wb_sraw;
-    for (int i = 0; i < SCOREBOARD_SIZE; i++) {
-        sensitive << r_scoreboard[i].cnt;
-        sensitive << r_scoreboard[i].status;
-        sensitive << r_scoreboard[i].forward;
-    }
 
     SC_METHOD(registers);
     sensitive << i_nrst;
@@ -310,40 +306,6 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, w_multi_ena, pn + ".w_multi_ena");
         sc_trace(o_vcd, w_multi_busy, pn + ".w_multi_busy");
         sc_trace(o_vcd, w_multi_ready, pn + ".w_multi_ready");
-        
-        sc_trace(o_vcd, r_scoreboard[1].status, pn + ".scoreboard1_status");
-        sc_trace(o_vcd, r_scoreboard[2].status, pn + ".scoreboard2_status");
-        sc_trace(o_vcd, r_scoreboard[3].status, pn + ".scoreboard3_status");
-        sc_trace(o_vcd, r_scoreboard[4].status, pn + ".scoreboard4_status");
-        sc_trace(o_vcd, r_scoreboard[5].status, pn + ".scoreboard5_status");
-        sc_trace(o_vcd, r_scoreboard[6].status, pn + ".scoreboard6_status");
-        sc_trace(o_vcd, r_scoreboard[7].status, pn + ".scoreboard7_status");
-        sc_trace(o_vcd, r_scoreboard[8].status, pn + ".scoreboard8_status");
-        sc_trace(o_vcd, r_scoreboard[9].status, pn + ".scoreboard9_status");
-        sc_trace(o_vcd, r_scoreboard[9].cnt, pn + ".scoreboard9_cnt");
-        sc_trace(o_vcd, r_scoreboard[9].forward, pn + ".scoreboard9_forward");
-        sc_trace(o_vcd, r_scoreboard[10].status, pn + ".scoreboard10_status");
-        sc_trace(o_vcd, r_scoreboard[11].status, pn + ".scoreboard11_status");
-        sc_trace(o_vcd, r_scoreboard[12].status, pn + ".scoreboard12_status");
-        sc_trace(o_vcd, r_scoreboard[13].status, pn + ".scoreboard13_status");
-        sc_trace(o_vcd, r_scoreboard[14].status, pn + ".scoreboard14_status");
-        sc_trace(o_vcd, r_scoreboard[15].status, pn + ".scoreboard15_status");
-        sc_trace(o_vcd, r_scoreboard[16].status, pn + ".scoreboard16_status");
-        sc_trace(o_vcd, r_scoreboard[17].status, pn + ".scoreboard17_status");
-        sc_trace(o_vcd, r_scoreboard[18].status, pn + ".scoreboard18_status");
-        sc_trace(o_vcd, r_scoreboard[19].status, pn + ".scoreboard19_status");
-        sc_trace(o_vcd, r_scoreboard[20].status, pn + ".scoreboard20_status");
-        sc_trace(o_vcd, r_scoreboard[21].status, pn + ".scoreboard21_status");
-        sc_trace(o_vcd, r_scoreboard[22].status, pn + ".scoreboard22_status");
-        sc_trace(o_vcd, r_scoreboard[23].status, pn + ".scoreboard23_status");
-        sc_trace(o_vcd, r_scoreboard[24].status, pn + ".scoreboard24_status");
-        sc_trace(o_vcd, r_scoreboard[25].status, pn + ".scoreboard25_status");
-        sc_trace(o_vcd, r_scoreboard[26].status, pn + ".scoreboard26_status");
-        sc_trace(o_vcd, r_scoreboard[27].status, pn + ".scoreboard27_status");
-        sc_trace(o_vcd, r_scoreboard[28].status, pn + ".scoreboard28_status");
-        sc_trace(o_vcd, r_scoreboard[29].status, pn + ".scoreboard29_status");
-        sc_trace(o_vcd, r_scoreboard[30].status, pn + ".scoreboard30_status");
-        sc_trace(o_vcd, r_scoreboard[31].status, pn + ".scoreboard31_status");
         sc_trace(o_vcd, w_hold_memop, pn + ".w_hold_memop");
         sc_trace(o_vcd, w_hold_multi, pn + ".w_hold_multi");
         sc_trace(o_vcd, w_hold_hazard, pn + ".w_hold_hazard");
@@ -400,14 +362,12 @@ void InstrExecute::comb() {
     bool v_next_mul_ready;
     bool v_next_div_ready;
     bool v_next_fpu_ready;
+    bool v_wena;
+    bool v_whazard;
+    sc_uint<4> vb_wtag;
+    sc_uint<6> vb_waddr;
 
     v = r;
-    for (int i = 0; i < SCOREBOARD_SIZE; i++) {
-        v_scoreboard[i].cnt = r_scoreboard[i].cnt;
-        v_scoreboard[i].forward = r_scoreboard[i].forward;
-        v_scoreboard[i].status = r_scoreboard[i].status;
-    }
-
 
     v_csr_wena = 0;
     vb_csr_addr = 0;
@@ -430,19 +390,6 @@ void InstrExecute::comb() {
     int_waddr = i_d_waddr.read().to_int();
 
 
-    /*if (i_d_radr1.read() != 0 &&
-        r_scoreboard[i_d_radr1.read().to_int()].status.read() == RegForward) {
-        vb_i_rdata1 = r_scoreboard[i_d_radr1.read().to_int()].forward;
-    } else {
-        vb_i_rdata1 = i_rdata1;
-    }
-
-    if (i_d_radr2.read() != 0 &&
-        r_scoreboard[i_d_radr2.read().to_int()].status.read() == RegForward) {
-        vb_i_rdata2 = r_scoreboard[i_d_radr2.read().to_int()].forward;
-    } else {
-        vb_i_rdata2 = i_rdata2;
-    }*/
     vb_i_rdata1 = i_rdata1;
     vb_i_rdata2 = i_rdata2;
 
@@ -481,14 +428,6 @@ void InstrExecute::comb() {
             2. memaccess not ready to accept next memop operation
             3. multi instruction
      */
-    /*w_hold_hazard = 0;
-    if ((i_d_radr1.read() != 0 &&
-        r_scoreboard[i_d_radr1.read().to_int()].status.read() == RegHazard) ||
-        (i_d_radr2.read() != 0 &&
-        r_scoreboard[i_d_radr2.read().to_int()].status.read() == RegHazard) ||
-        (int_waddr != 0 && r_scoreboard[int_waddr].cnt.read() != 0)) {
-        w_hold_hazard = 1;
-    }*/
     w_hold_hazard = i_rhazard1.read() || i_rhazard2.read();
 
     w_hold_memop = (i_memop_load.read() || i_memop_store.read())
@@ -721,22 +660,12 @@ void InstrExecute::comb() {
     }
 
 
-    /*if (i_wb_valid.read() == 1) {
-        int wb_idx = i_wb_waddr.read().to_int();
-        if (r_scoreboard[wb_idx].cnt.read() == 1) {
-            v_scoreboard[wb_idx].status = RegValid;
-        }
-        if (i_d_waddr.read() != i_wb_waddr.read() || w_next_ready == 0) {
-            v_scoreboard[wb_idx].cnt = r_scoreboard[wb_idx].cnt.read() - 1;
-        }
-    }*/
-
-
     // Latch ready result
-    bool v_wena = 0;
-    bool v_whazard = 0;
-    sc_uint<4> vb_wtag = i_wtag.read();
-    sc_uint<6> vb_waddr = i_d_waddr.read();
+    v_wena = 0;
+    v_whazard = 0;
+    vb_wtag = i_wtag.read();
+    vb_waddr = i_d_waddr.read();
+    vb_o_wdata = vb_res;
     if (w_next_ready == 1) {
         v.valid = 1;
 
@@ -751,38 +680,21 @@ void InstrExecute::comb() {
         v.memop_wdata = vb_res;
 
         v.memop_waddr = i_d_waddr.read();
-        v.memop_wtag = i_wtag.read();
+        v.memop_wtag = i_wtag.read() + 1;
         v_whazard = v_memop_load;
-        v_wena = i_d_waddr.read().or_reduce();
+        v_wena = i_d_waddr.read().or_reduce() && !w_multi_ena;
 
         v.wval = vb_res;
         v.call = v_call;
         v.ret = v_ret;
-
-        /*if (i_d_waddr.read() != 0) {
-            v_scoreboard[int_waddr].forward = vb_res;
-            if (v_memop_load == 1 || r_scoreboard[int_waddr].status.read() == RegHazard
-                || r_scoreboard[int_waddr].cnt.read() == 2) {
-                v_scoreboard[int_waddr].status = RegHazard;
-            } else {
-                v_scoreboard[int_waddr].status = RegForward;
-            }
-            if (i_d_waddr.read() != i_wb_waddr.read() ||
-                i_wb_valid.read() == 0) {
-                v_scoreboard[int_waddr].cnt = r_scoreboard[int_waddr].cnt.read() + 1;
-            }
-        }*/
-    }
-
-    v_o_valid = r.valid;
-    vb_o_wdata = r.wval;
+    } 
+    
     if (w_multi_ready == 1) {
-        v_o_valid = 1;
-        vb_o_wdata = vb_res;
-        //v_scoreboard[r.waddr.read().to_int()].forward = vb_res;
-    } else if (w_multi_busy == 1) {
-        v_o_valid = 0;
+        v_wena = r.memop_waddr.read().or_reduce();
+        vb_waddr = r.memop_waddr;
     }
+
+    v_o_valid = (r.valid && !w_multi_busy) || w_multi_ready;
 
     if (i_dport_npc_write.read()) {
         v.npc = i_dport_npc.read();
@@ -791,11 +703,6 @@ void InstrExecute::comb() {
 
     if (!async_reset_ && !i_nrst.read()) {
         R_RESET(v);
-        for (int i = 0; i < SCOREBOARD_SIZE; i++) {
-            v_scoreboard[i].status = RegValid;
-            v_scoreboard[i].cnt = 0;
-            v_scoreboard[i].forward = 0;
-        }
     }
 
     wb_rdata1 = vb_rdata1;
@@ -812,8 +719,10 @@ void InstrExecute::comb() {
     o_ex_ecall = wv[Instr_ECALL].to_bool() & w_next_ready;
 
     o_wena = v_wena;
+    o_whazard = v_whazard;
     o_waddr = vb_waddr;
     o_wdata = vb_o_wdata;
+    o_wtag = i_wtag;
     o_d_ready = !v_hold_exec;
 
     o_csr_wena = v_csr_wena && w_next_ready;
@@ -841,23 +750,15 @@ void InstrExecute::comb() {
     o_mret = v_mret;
     o_uret = v_uret;
     o_fpu_valid = w_arith_valid[Multi_FPU];
+    // Tracer only:
+    o_multi_ready = w_multi_ready;
 }
 
 void InstrExecute::registers() {
     if (async_reset_ && i_nrst.read() == 0) {
         R_RESET(r);
-        for (int i = 0; i < SCOREBOARD_SIZE; i++) {
-            r_scoreboard[i].forward = RegValid;
-            r_scoreboard[i].status = 0;
-            r_scoreboard[i].cnt = 0;
-        }
     } else {
         r = v;
-        for (int i = 0; i < SCOREBOARD_SIZE; i++) {
-            r_scoreboard[i].forward = v_scoreboard[i].forward;
-            r_scoreboard[i].status = v_scoreboard[i].status;
-            r_scoreboard[i].cnt = v_scoreboard[i].cnt;
-        }
     }
 }
 
