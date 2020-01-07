@@ -223,14 +223,13 @@ void CpuRiver_Functional::trackContextEnd() {
     if (reg_trace_file == 0) {
         return;
     }
-    int sz;
     char tstr[1024];
 
     riscv_disassembler(trace_data_.instr,
                        trace_data_.disasm,
                        sizeof(trace_data_.disasm));
 
-    sz = RISCV_sprintf(tstr, sizeof(tstr),
+    RISCV_sprintf(tstr, sizeof(tstr),
         "%9" RV_PRI64 "d: %08" RV_PRI64 "x: %s \n",
             step_cnt_ - 1,
             trace_data_.pc,
@@ -239,7 +238,7 @@ void CpuRiver_Functional::trackContextEnd() {
 
 
     if (trace_data_.memop_ena && !trace_data_.write) {
-        sz = RISCV_sprintf(tstr, sizeof(tstr),
+        RISCV_sprintf(tstr, sizeof(tstr),
             "%20s [%08" RV_PRI64 "x] => %016" RV_PRI64 "x\n",
                 "",
                 trace_data_.memop_addr,
@@ -248,13 +247,11 @@ void CpuRiver_Functional::trackContextEnd() {
     }
 
 
-    bool reg_changed = false;
     uint64_t *prev = portSavedRegs_.getpR64();
     uint64_t *cur = portRegs_.getpR64();
     for (int i = 0; i < Reg_Total; i++) {
         if (prev[i] != cur[i]) {
-            reg_changed = true;
-            sz = RISCV_sprintf(tstr, sizeof(tstr),
+            RISCV_sprintf(tstr, sizeof(tstr),
                 "%20s %10s <= %016" RV_PRI64 "x\n",
                     "",
                     IREGS_NAMES[i],
@@ -264,7 +261,7 @@ void CpuRiver_Functional::trackContextEnd() {
     }
 
     if (trace_data_.memop_ena && trace_data_.write) {
-        sz = RISCV_sprintf(tstr, sizeof(tstr),
+        RISCV_sprintf(tstr, sizeof(tstr),
             "%20s [%08" RV_PRI64 "x] <= %016" RV_PRI64 "x\n",
                 "",
                 trace_data_.memop_addr,

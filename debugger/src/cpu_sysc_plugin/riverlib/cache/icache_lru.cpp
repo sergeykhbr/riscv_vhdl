@@ -166,8 +166,6 @@ void ICacheLru::comb() {
     sc_uint<32> vb_uncached_data;
     sc_uint<32> vb_resp_data;
     bool v_resp_er_load_fault;
-    bool v_resp_er_mpu_load;
-    bool v_resp_er_mpu_store;
     bool v_flush;
     bool v_line_cs;
     sc_uint<BUS_ADDR_WIDTH> vb_line_addr;
@@ -182,8 +180,6 @@ void ICacheLru::comb() {
     v_req_ready = 0;
     v_resp_valid = 0;
     v_resp_er_load_fault = 0;
-    v_resp_er_mpu_load = 0;
-    v_resp_er_mpu_store = 0;
     v_flush = 0;
     v_last = 0;
     v_req_mem_len = ICACHE_BURST_LEN-1;

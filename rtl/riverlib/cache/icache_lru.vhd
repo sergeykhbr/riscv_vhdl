@@ -167,8 +167,6 @@ begin
     variable vb_uncached_data : std_logic_vector(31 downto 0);
     variable vb_resp_data : std_logic_vector(31 downto 0);
     variable v_resp_er_load_fault : std_logic;
-    variable v_resp_er_mpu_load : std_logic;
-    variable v_resp_er_mpu_store : std_logic;
     variable v_flush : std_logic;
     variable v_line_cs : std_logic;
     variable vb_line_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
@@ -184,8 +182,6 @@ begin
     v_req_ready := '0';
     v_resp_valid := '0';
     v_resp_er_load_fault := '0';
-    v_resp_er_mpu_load := '0';
-    v_resp_er_mpu_store := '0';
     v_flush := '0';
     v_last := '0';
     v_req_mem_len := conv_std_logic_vector(ICACHE_BURST_LEN-1, 8);

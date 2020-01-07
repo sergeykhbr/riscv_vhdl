@@ -69,8 +69,8 @@ different FPGA targets.
 Target             | Git tag | Dhrystone<br> per sec,<br> -O0, 60 MHz | Dhrystone<br> per sec,<br> -O2, 60 MHz | Information.
 -------------------|:-------:|:------------------------------:|:------------------------------:|:------------
 RISC-V simulator   | latest  | **76824.0** | **176469.0**  | *GCC 7.1.1* with the compressed instructions set.
-RISC-V simulator   | latest  | **-**       | **184074.0**  | *GCC 8.3.1* with the compressed instructions set.
-"River" CPU        | latest  | **-**       | **135432.0**  | *GCC 8.3.1* with the compressed instructions set.
+RISC-V simulator   | latest  | **77719.0** | **184074.0**  | *GCC 8.3.1* with the compressed instructions set.
+"River" CPU        | latest  | **48581**   | **135432.0**  | *GCC 8.3.1* with the compressed instructions set.
 ARM simulator      | latest  | **78451.0** | **162600.0**  | *arm-none-eabi-gcc 7.2.0*, ARM ISA only.
 Cortex-R5 ARM      | No      | **20561.0** | **42401.0**   | *arm-none-eabi-gcc 7.2.0*, custom FPGA system:<br> Single-Core, MPU enabled, **Caches disabled**.
 Cortex-R5 ARM      | No      | **54052.0** | **132446.0**  | *arm-none-eabi-gcc 7.2.0*, custom FPGA system:<br> Single-Core, MPU enabled, **Caches enabled**.
@@ -78,10 +78,10 @@ Cortex-M3 Thumb2   | [arm_vhdl](https://github.com/sergeykhbr/arm_vhdl) | soon  
 "LEON3" SPARC V8   | No      | **48229.0** | **119515.0**  | *sparc-elf-gcc 4.4.2*, custom FPGA system.
 
 Access to all memory banks and peripheries for all targets (including ARM and Leon3) is made 
-in the same clock domain and always is
-one clock (without wait-states). So, this benchmark 
-result (**Dhrystone per seconds**) shows performance of the CPU with integer 
-instructions and degradation of the CPI relative ideal (simulation) case.
+in the same clock domain and always is one clock (without wait-states).
+So, this benchmark  result (**Dhrystone per seconds**) shows performance of 
+the CPU with integer instructions and degradation of the CPI relative ideal 
+(simulation) case.
 
 CPU         | Clocks-Per-Instruction,<br> CPI | Description.
 ------------|:-------:|:------------------------------

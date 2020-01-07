@@ -902,13 +902,6 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../riverlib/core/regfbank.vhd">
-        <FileInfo>
-          <Attr Name="Library" Val="riverlib"/>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
       <File Path="$PPRDIR/../../riverlib/core/regibank.vhd">
         <FileInfo>
           <Attr Name="Library" Val="riverlib"/>

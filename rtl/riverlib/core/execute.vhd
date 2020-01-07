@@ -361,10 +361,6 @@ begin
     variable vb_and64 : std_logic_vector(RISCV_ARCH-1 downto 0);
     variable vb_or64 : std_logic_vector(RISCV_ARCH-1 downto 0);
     variable vb_xor64 : std_logic_vector(RISCV_ARCH-1 downto 0);
-    variable v_memop_load : std_logic;
-    variable v_memop_store : std_logic;
-    variable v_memop_sign_ext : std_logic;
-    variable vb_memop_size : std_logic_vector(1 downto 0);
     variable vb_memop_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     variable wv : std_logic_vector(Instr_Total-1 downto 0);
     variable opcode_len : integer;
@@ -401,10 +397,6 @@ begin
     vb_csr_wdata := (others => '0');
     vb_res := (others => '0');
     vb_off := (others => '0');
-    v_memop_load := '0';
-    v_memop_store := '0';
-    v_memop_sign_ext := '0';
-    vb_memop_size := (others => '0');
     vb_memop_addr := (others => '0');
     wv := i_ivec;
     v_call := '0';
@@ -589,12 +581,8 @@ begin
     elsif w_arith_valid(Multi_FPU) = '1' then
         vb_res := wb_arith_res(Multi_FPU);
     elsif i_memop_load = '1' then
-        v_memop_load := '1';
-        v_memop_sign_ext := i_memop_sign_ext;
-        vb_memop_size := i_memop_size;
+        vb_res := (others => '0');
     elsif i_memop_store = '1' then
-        v_memop_store := '1';
-        vb_memop_size := i_memop_size;
         vb_res := vb_rdata2;
     elsif wv(Instr_JAL) = '1' then
         vb_res(BUS_ADDR_WIDTH-1 downto 0) := vb_npc_incr;
@@ -706,7 +694,7 @@ begin
 
         v.memop_waddr := i_d_waddr;
         v.memop_wtag := i_wtag + 1;
-        v_whazard := v_memop_load;
+        v_whazard := i_memop_load;
         v_wena := or_reduce(i_d_waddr) and not w_multi_ena;
 
         v.wval := vb_res;
