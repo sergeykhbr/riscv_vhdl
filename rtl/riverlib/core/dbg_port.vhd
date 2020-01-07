@@ -150,7 +150,7 @@ begin
   end generate;
 
   comb : process(i_nrst, i_dport_valid, i_dport_write, i_dport_region, 
-                 i_dport_addr, i_dport_wdata, i_ireg_rdata, i_freg_rdata,
+                 i_dport_addr, i_dport_wdata, i_ireg_rdata,
                  i_csr_rdata, i_pc, i_npc, i_e_next_ready, i_e_valid, i_ebreak, r,
                  wb_stack_rdata, i_e_call, i_e_ret, i_istate, i_dstate,
                  i_cstate)
@@ -361,8 +361,6 @@ begin
     o_csr_write <= w_o_csr_write;
     o_ireg_ena <= w_o_ireg_ena;
     o_ireg_write <= w_o_ireg_write;
-    o_freg_ena <= w_o_freg_ena;
-    o_freg_write <= w_o_freg_write;
     o_npc_write <= w_o_npc_write;
     o_clock_cnt <= r.clock_cnt;
     o_executed_cnt <= r.executed_cnt;

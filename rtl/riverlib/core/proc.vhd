@@ -197,12 +197,6 @@ architecture arch_Processor of Processor is
         sp : std_logic_vector(RISCV_ARCH-1 downto 0);       -- Stack pointer
     end record;
 
-    type FloatRegsType is record
-        rdata1 : std_logic_vector(RISCV_ARCH-1 downto 0);
-        rdata2 : std_logic_vector(RISCV_ARCH-1 downto 0);
-        dport_rdata : std_logic_vector(RISCV_ARCH-1 downto 0);
-    end record;
-
     type CsrType is record
         rdata : std_logic_vector(RISCV_ARCH-1 downto 0);
         dport_rdata : std_logic_vector(RISCV_ARCH-1 downto 0);
@@ -245,7 +239,6 @@ architecture arch_Processor of Processor is
     end record;
 
     signal ireg : IntRegsType;
-    signal freg : FloatRegsType;
     signal csr : CsrType;
     signal w : PipelineType;
     signal dbg : DebugType;
@@ -511,12 +504,6 @@ begin
         o_ra => ireg.ra,   -- Return address
         o_sp => ireg.sp);
 
-
-    fpudis : if not CFG_HW_FPU_ENABLE generate
-        freg.rdata1 <= (others => '0');
-        freg.rdata2 <= (others => '0');
-        freg.dport_rdata <= (others => '0');
-    end generate;
 
     csr0 : CsrRegs generic map (
         hartid => hartid,

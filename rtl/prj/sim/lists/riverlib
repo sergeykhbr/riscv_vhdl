@@ -29,7 +29,6 @@ ${RTL_HOME}/riverlib/core/fetch.vhd
 ${RTL_HOME}/riverlib/core/queue.vhd
 ${RTL_HOME}/riverlib/core/memaccess.vhd
 ${RTL_HOME}/riverlib/core/proc.vhd
-${RTL_HOME}/riverlib/core/regfbank.vhd
 ${RTL_HOME}/riverlib/core/regibank.vhd
 ${RTL_HOME}/riverlib/core/stacktrbuf.vhd
 ${RTL_HOME}/riverlib/dsu/axi_dsu.vhd
