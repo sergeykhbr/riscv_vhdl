@@ -177,11 +177,6 @@ architecture arch_Processor of Processor is
 
     type MemoryType is record
         memop_ready : std_logic;
-        valid : std_logic;
-        instr : std_logic_vector(31 downto 0);
-        pc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-        pipeline_hold : std_logic;
-        wb_memop : std_logic;
     end record;
 
     type WriteBackType is record
@@ -226,14 +221,13 @@ architecture arch_Processor of Processor is
     end record;
 
     type DebugType is record
-        core_addr : std_logic_vector(11 downto 0);           -- Address of the sub-region register
+        csr_addr : std_logic_vector(11 downto 0);           -- Address of the sub-region register
+        reg_addr : std_logic_vector(5 downto 0);
         core_wdata : std_logic_vector(RISCV_ARCH-1 downto 0);-- Write data
         csr_ena : std_logic;                                 -- Region 0: Access to CSR bank is enabled.
         csr_write : std_logic;                               -- Region 0: CSR write enable
         ireg_ena : std_logic;                                -- Region 1: Access to integer register bank is enabled
         ireg_write : std_logic;                              -- Region 1: Integer registers bank write pulse
-        freg_ena : std_logic;                                -- Region 1: Access to float register bank is enabled
-        freg_write : std_logic;                              -- Region 1: Float registers bank write pulse
         npc_write : std_logic;                               -- Region 1: npc write enable
         halt : std_logic;                                    -- Halt signal is equal to hold pipeline
         clock_cnt : std_logic_vector(63 downto 0);           -- Number of clocks excluding halt state
@@ -257,8 +251,6 @@ architecture arch_Processor of Processor is
     signal dbg : DebugType;
     signal bp : BranchPredictorType;
 
-    signal wb_ireg_dport_addr : std_logic_vector(4 downto 0);
-    signal wb_freg_dport_addr : std_logic_vector(4 downto 0);
     signal wb_exec_dport_npc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     
     signal w_fetch_pipeline_hold : std_logic;
@@ -276,8 +268,6 @@ begin
     w_fetch_pipeline_hold <= not w.e.d_ready or dbg.halt;
     w_any_pipeline_hold <= w.f.pipeline_hold or not w.e.d_ready or dbg.halt;
 
-    wb_ireg_dport_addr <= dbg.core_addr(4 downto 0);
-    wb_freg_dport_addr <= dbg.core_addr(4 downto 0);
     wb_exec_dport_npc <= dbg.core_wdata(BUS_ADDR_WIDTH-1 downto 0);
 
     w_writeback_ready <= not w.e.wena;
@@ -379,7 +369,6 @@ begin
         i_d_radr2 => w.d.radr2,
         i_d_waddr => w.d.waddr,
         i_d_imm => w.d.imm,
-        i_wb_valid => w.m.valid,
         i_wb_waddr => w.w.waddr,
         i_memop_store => w.d.memop_store,
         i_memop_load => w.d.memop_load,
@@ -514,7 +503,7 @@ begin
         i_wtag => wb_reg_wtag,
         i_wdata => wb_reg_wdata,
         o_wtag => ireg.wtag,
-        i_dport_addr => wb_ireg_dport_addr,
+        i_dport_addr => dbg.reg_addr,
         i_dport_ena => dbg.ireg_ena,
         i_dport_write => dbg.ireg_write,
         i_dport_wdata => dbg.core_wdata,
@@ -573,7 +562,7 @@ begin
         o_mpu_region_flags => o_mpu_region_flags,
         i_dport_ena => dbg.csr_ena,
         i_dport_write => dbg.csr_write,
-        i_dport_addr => dbg.core_addr,
+        i_dport_addr => dbg.csr_addr,
         i_dport_wdata => dbg.core_wdata,
         o_dport_rdata => csr.dport_rdata);
 
@@ -590,24 +579,22 @@ begin
         i_dport_wdata => i_dport_wdata,
         o_dport_ready => o_dport_ready,
         o_dport_rdata => o_dport_rdata,
-        o_core_addr => dbg.core_addr,
+        o_csr_addr => dbg.csr_addr,
+        o_reg_addr => dbg.reg_addr,
         o_core_wdata => dbg.core_wdata,
         o_csr_ena => dbg.csr_ena,
         o_csr_write => dbg.csr_write,
         i_csr_rdata => csr.dport_rdata,
         o_ireg_ena => dbg.ireg_ena,
         o_ireg_write => dbg.ireg_write,
-        o_freg_ena => dbg.freg_ena,
-        o_freg_write => dbg.freg_write,
         o_npc_write => dbg.npc_write,
         i_ireg_rdata => ireg.dport_rdata,
-        i_freg_rdata => freg.dport_rdata,
         i_pc => w.e.pc,
         i_npc => w.e.npc,
+        i_e_next_ready => w.e.trap_ready,
         i_e_valid => w.e.valid,
         i_e_call => w.e.call,
         i_e_ret => w.e.ret,
-        i_m_valid => w.m.valid,
         o_clock_cnt => dbg.clock_cnt,
         o_executed_cnt => dbg.executed_cnt,
         o_halt => dbg.halt,

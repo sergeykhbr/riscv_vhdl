@@ -29,24 +29,22 @@ DbgPort::DbgPort(sc_module_name name_, bool async_reset) :
     i_dport_wdata("i_dport_wdata"),
     o_dport_ready("o_dport_ready"),
     o_dport_rdata("o_dport_rdata"),
-    o_core_addr("o_core_addr"),
+    o_csr_addr("o_csr_addr"),
+    o_reg_addr("o_reg_addr"),
     o_core_wdata("o_core_wdata"),
     o_csr_ena("o_csr_ena"),
     o_csr_write("o_csr_write"),
     i_csr_rdata("i_csr_rdata"),
     o_ireg_ena("o_ireg_ena"),
     o_ireg_write("o_ireg_write"),
-    o_freg_ena("o_freg_ena"),
-    o_freg_write("o_freg_write"),
     o_npc_write("o_npc_write"),
     i_ireg_rdata("i_ireg_rdata"),
-    i_freg_rdata("i_freg_rdata"),
     i_pc("i_pc"),
     i_npc("i_npc"),
+    i_e_next_ready("i_e_next_ready"),
     i_e_valid("i_e_valid"),
     i_e_call("i_e_call"),
     i_e_ret("i_e_ret"),
-    i_m_valid("i_m_valid"),
     o_clock_cnt("o_clock_cnt"),
     o_executed_cnt("o_executed_cnt"),
     o_halt("o_halt"),
@@ -70,14 +68,13 @@ DbgPort::DbgPort(sc_module_name name_, bool async_reset) :
     sensitive << i_dport_addr;
     sensitive << i_dport_wdata;
     sensitive << i_ireg_rdata;
-    sensitive << i_freg_rdata;
     sensitive << i_csr_rdata;
     sensitive << i_pc;
     sensitive << i_npc;
     sensitive << i_e_call;
     sensitive << i_e_ret;
+    sensitive << i_e_next_ready;
     sensitive << i_e_valid;
-    sensitive << i_m_valid;
     sensitive << i_ebreak;
     sensitive << i_istate;
     sensitive << i_dstate;
@@ -125,24 +122,22 @@ void DbgPort::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_dport_wdata, i_dport_wdata.name());
         sc_trace(o_vcd, o_dport_ready, o_dport_ready.name());
         sc_trace(o_vcd, o_dport_rdata, o_dport_rdata.name());
-        sc_trace(o_vcd, o_core_addr, o_core_addr.name());
+        sc_trace(o_vcd, o_csr_addr, o_csr_addr.name());
+        sc_trace(o_vcd, o_reg_addr, o_reg_addr.name());
         sc_trace(o_vcd, o_core_wdata, o_core_wdata.name());
         sc_trace(o_vcd, o_csr_ena, o_csr_ena.name());
         sc_trace(o_vcd, o_csr_write, o_csr_write.name());
         sc_trace(o_vcd, i_csr_rdata, i_csr_rdata.name());
         sc_trace(o_vcd, o_ireg_ena, o_ireg_ena.name());
         sc_trace(o_vcd, o_ireg_write, o_ireg_write.name());
-        sc_trace(o_vcd, o_freg_ena, o_freg_ena.name());
-        sc_trace(o_vcd, o_freg_write, o_freg_write.name());
         sc_trace(o_vcd, o_npc_write, o_npc_write.name());
         sc_trace(o_vcd, i_ireg_rdata, i_ireg_rdata.name());
-        sc_trace(o_vcd, i_freg_rdata, i_freg_rdata.name());
         sc_trace(o_vcd, i_pc, i_pc.name());
         sc_trace(o_vcd, i_npc, i_npc.name());
+        sc_trace(o_vcd, i_e_next_ready, i_e_next_ready.name());
         sc_trace(o_vcd, i_e_valid, i_e_valid.name());
         sc_trace(o_vcd, i_e_call, i_e_call.name());
         sc_trace(o_vcd, i_e_ret, i_e_ret.name());
-        sc_trace(o_vcd, i_m_valid, i_m_valid.name());
         sc_trace(o_vcd, o_clock_cnt, o_clock_cnt.name());
         sc_trace(o_vcd, o_executed_cnt, o_executed_cnt.name());
         sc_trace(o_vcd, o_halt, o_halt.name());
@@ -169,7 +164,8 @@ void DbgPort::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void DbgPort::comb() {
-    sc_uint<12> wb_o_core_addr;
+    sc_uint<6> wb_o_reg_addr;
+    sc_uint<12> wb_o_csr_addr;
     sc_uint<RISCV_ARCH> wb_o_core_wdata;
     sc_uint<64> wb_rdata;
     sc_uint<12> wb_idx;
@@ -178,14 +174,13 @@ void DbgPort::comb() {
     bool w_o_csr_write;
     bool w_o_ireg_ena;
     bool w_o_ireg_write;
-    bool w_o_freg_ena;
-    bool w_o_freg_write;
     bool w_o_npc_write;
     bool w_cur_halt;
 
     v = r;
 
-    wb_o_core_addr = 0;
+    wb_o_reg_addr = 0;
+    wb_o_csr_addr = 0;
     wb_o_core_wdata = 0;
     wb_rdata = 0;
     wb_o_rdata = 0;
@@ -194,8 +189,6 @@ void DbgPort::comb() {
     w_o_csr_write = 0;
     w_o_ireg_ena = 0;
     w_o_ireg_write = 0;
-    w_o_freg_ena = 0;
-    w_o_freg_write = 0;
     w_o_npc_write = 0;
     v.br_fetch_valid = 0;
     v.flush_valid = 0;
@@ -208,7 +201,7 @@ void DbgPort::comb() {
     v.ready = i_dport_valid.read();
 
     w_cur_halt = 0;
-    if (i_e_valid.read()) {
+    if (i_e_next_ready.read()) {
         if (r.stepping_mode_cnt.read() != 0) {
             v.stepping_mode_cnt = r.stepping_mode_cnt.read() - 1;
             if (r.stepping_mode_cnt.read() == 1) {
@@ -248,7 +241,7 @@ void DbgPort::comb() {
         switch (i_dport_region.read()) {
         case 0:
             w_o_csr_ena = 1;
-            wb_o_core_addr = i_dport_addr;
+            wb_o_csr_addr = i_dport_addr;
             wb_rdata = i_csr_rdata;
             if (i_dport_write.read()) {
                 w_o_csr_write = 1;
@@ -258,7 +251,7 @@ void DbgPort::comb() {
         case 1:
             if (wb_idx < 32) {
                 w_o_ireg_ena = 1;
-                wb_o_core_addr = i_dport_addr;
+                wb_o_reg_addr = (0, i_dport_addr.read()(4, 0));
                 wb_rdata = i_ireg_rdata;
                 if (i_dport_write.read()) {
                     w_o_ireg_write = 1;
@@ -279,11 +272,11 @@ void DbgPort::comb() {
                     v.stack_trace_cnt = i_dport_wdata.read()(4, 0);
                 }
             } else if (wb_idx >= 64 && wb_idx < 96) {
-                w_o_freg_ena = 1;
-                wb_o_core_addr = i_dport_addr;
-                wb_rdata = i_freg_rdata;
+                w_o_ireg_ena = 1;
+                wb_o_reg_addr = (1, i_dport_addr.read()(4, 0));
+                wb_rdata = i_ireg_rdata;
                 if (i_dport_write.read()) {
-                    w_o_freg_write = 1;
+                    w_o_ireg_write = 1;
                     wb_o_core_wdata = i_dport_wdata;
                 }
             } else if (wb_idx >= 128 
@@ -381,14 +374,13 @@ void DbgPort::comb() {
         R_RESET(v);
     }
 
-    o_core_addr = wb_o_core_addr;
+    o_csr_addr = wb_o_csr_addr;
+    o_reg_addr = wb_o_reg_addr;
     o_core_wdata = wb_o_core_wdata;
     o_csr_ena = w_o_csr_ena;
     o_csr_write = w_o_csr_write;
     o_ireg_ena = w_o_ireg_ena;
     o_ireg_write = w_o_ireg_write;
-    o_freg_ena = w_o_freg_ena;
-    o_freg_write = w_o_freg_write;
     o_npc_write = w_o_npc_write;
     o_clock_cnt = r.clock_cnt;
     o_executed_cnt = r.executed_cnt;

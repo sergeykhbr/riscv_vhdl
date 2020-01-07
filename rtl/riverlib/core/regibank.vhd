@@ -49,7 +49,7 @@ entity RegBank is generic (
     i_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0);   -- Writing value
     o_wtag : out std_logic_vector(3 downto 0);
 
-    i_dport_addr : in std_logic_vector(4 downto 0);         -- Debug port address
+    i_dport_addr : in std_logic_vector(5 downto 0);         -- Debug port address
     i_dport_ena : in std_logic;                             -- Debug port is enabled
     i_dport_write : in std_logic;                           -- Debug port write is enabled
     i_dport_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0); -- Debug port write value
@@ -85,6 +85,7 @@ begin
                  i_dport_ena, i_dport_write, i_dport_addr, i_dport_wdata, r)
     variable v : RegistersType;
     variable int_waddr : integer;
+    variable int_daddr : integer;
   begin
 
     for i in 0 to REGS_TOTAL-1 loop
@@ -94,12 +95,13 @@ begin
     end loop;
 
     int_waddr := conv_integer(i_waddr(REG_MSB downto 0));
+    int_daddr := conv_integer(i_dport_addr(REG_MSB downto 0));
 
     --! Debug port has higher priority. Collision must be controlled by SW
     if (i_dport_ena and i_dport_write) = '1' then
         if or_reduce(i_dport_addr) = '1' then
-            v.mem(conv_integer(i_dport_addr)).val := i_dport_wdata;
-            v.mem(conv_integer(i_dport_addr)).hazard := '0';
+            v.mem(int_daddr).val := i_dport_wdata;
+            v.mem(int_daddr).hazard := '0';
         end if;
     elsif i_wena = '1' and or_reduce(i_waddr(REG_MSB downto 0)) = '1' then
         if i_wtag = r.mem(int_waddr).tag then
@@ -128,7 +130,7 @@ begin
   o_rdata2 <= r.mem(conv_integer(i_radr2(REG_MSB downto 0))).val;
   o_rhazard2 <= r.mem(conv_integer(i_radr2(REG_MSB downto 0))).hazard;
   o_wtag <= r.mem(conv_integer(i_waddr(REG_MSB downto 0))).tag;
-  o_dport_rdata <= r.mem(conv_integer(i_dport_addr)).val;
+  o_dport_rdata <= r.mem(conv_integer(i_dport_addr(REG_MSB downto 0))).val;
   o_ra <= r.mem(Reg_ra).val;
   o_sp <= r.mem(Reg_sp).val;
 

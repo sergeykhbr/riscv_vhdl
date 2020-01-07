@@ -36,7 +36,6 @@ SC_MODULE(InstrExecute) {
     sc_in<sc_uint<RISCV_ARCH>> i_d_imm;
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_d_pc;      // Instruction pointer on decoded instruction
     sc_in<sc_uint<32>> i_d_instr;               // Decoded instruction value
-    sc_in<bool> i_wb_valid;                     // write back operation valid
     sc_in<sc_uint<6>> i_wb_waddr;               // write back address
     sc_in<bool> i_memop_store;                  // Store to memory operation
     sc_in<bool> i_memop_load;                   // Load from memoru operation

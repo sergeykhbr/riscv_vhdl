@@ -39,6 +39,7 @@ SOURCES = \
 	cmd_regs_generic \
 	cmd_csr \
 	mapreg \
+	riscv_disasm \
 	plugin_init \
 	cpu_riscv_func \
 	icache_func \

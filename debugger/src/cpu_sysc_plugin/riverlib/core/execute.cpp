@@ -30,7 +30,6 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     i_d_imm("i_d_imm"),
     i_d_pc("i_d_pc"),
     i_d_instr("i_d_instr"),
-    i_wb_valid("i_wb_valid"),
     i_wb_waddr("i_wb_waddr"),
     i_memop_store("i_memop_store"),
     i_memop_load("i_memop_load"),
@@ -111,7 +110,6 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     sensitive << i_d_imm;
     sensitive << i_d_pc;
     sensitive << i_d_instr;
-    sensitive << i_wb_valid;
     sensitive << i_wb_waddr;
     sensitive << i_memop_ready;
     sensitive << i_memop_store;
@@ -251,7 +249,6 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_d_pc, i_d_pc.name());
         sc_trace(o_vcd, i_d_instr, i_d_instr.name());
         sc_trace(o_vcd, i_d_waddr, i_d_waddr.name());
-        sc_trace(o_vcd, i_wb_valid, i_wb_valid.name());
         sc_trace(o_vcd, i_wb_waddr, i_wb_waddr.name());
         sc_trace(o_vcd, i_f64, i_f64.name());
         sc_trace(o_vcd, i_unsup_exception, i_unsup_exception.name());

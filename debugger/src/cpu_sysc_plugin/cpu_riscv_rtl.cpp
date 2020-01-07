@@ -34,14 +34,12 @@ CpuRiscV_RTL::CpuRiscV_RTL(const char *name)
     registerAttribute("FreqHz", &freqHz_);
     registerAttribute("InVcdFile", &InVcdFile_);
     registerAttribute("OutVcdFile", &OutVcdFile_);
-    registerAttribute("GenerateRef", &GenerateRef_);
 
     bus_.make_string("");
     freqHz_.make_uint64(1);
     fpuEnable_.make_boolean(true);
     InVcdFile_.make_string("");
     OutVcdFile_.make_string("");
-    GenerateRef_.make_boolean(false);
     RISCV_event_create(&config_done_, "riscv_sysc_config_done");
     RISCV_register_hap(static_cast<IHap *>(this));
 
@@ -96,9 +94,7 @@ void CpuRiscV_RTL::postinitService() {
 
     wrapper_->setBus(ibus_);
     wrapper_->setClockHz(freqHz_.to_int());
-    wrapper_->generateRef(GenerateRef_.to_bool());
     wrapper_->generateVCD(i_vcd_, o_vcd_);
-    top_->generateRef(GenerateRef_.to_bool());
     top_->generateVCD(i_vcd_, o_vcd_);
 
     pcmd_br_ = new CmdBrRiscv(itap_);

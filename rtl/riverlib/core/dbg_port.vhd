@@ -39,24 +39,22 @@ entity DbgPort is generic (
     o_dport_ready : out std_logic;                            -- Response is ready
     o_dport_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0);-- Response value
     -- CPU debugging signals:
-    o_core_addr : out std_logic_vector(11 downto 0);          -- Address of the sub-region register
+    o_csr_addr : out std_logic_vector(11 downto 0);            -- Address of the sub-region register
+    o_reg_addr : out std_logic_vector(5 downto 0);
     o_core_wdata : out std_logic_vector(RISCV_ARCH-1 downto 0);-- Write data
     o_csr_ena : out std_logic;                                -- Region 0: Access to CSR bank is enabled.
     o_csr_write : out std_logic;                              -- Region 0: CSR write enable
     i_csr_rdata : in std_logic_vector(RISCV_ARCH-1 downto 0); -- Region 0: CSR read value
     o_ireg_ena : out std_logic;                               -- Region 1: Access to integer register bank is enabled
     o_ireg_write : out std_logic;                             -- Region 1: Integer registers bank write pulse
-    o_freg_ena : out std_logic;                               -- Region 1: Access to float register bank is enabled
-    o_freg_write : out std_logic;                             -- Region 1: Float registers bank write pulse
     o_npc_write : out std_logic;                              -- Region 1: npc write enable
     i_ireg_rdata : in std_logic_vector(RISCV_ARCH-1 downto 0);-- Region 1: Integer register read value
-    i_freg_rdata : in std_logic_vector(RISCV_ARCH-1 downto 0);-- Region 1: Float register read value
     i_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);    -- Region 1: Instruction pointer
     i_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);   -- Region 1: Next Instruction pointer
+    i_e_next_ready : in std_logic;
     i_e_valid : in std_logic;                                 -- Stepping control signal
     i_e_call : in std_logic;                                  -- pseudo-instruction CALL
     i_e_ret : in std_logic;                                   -- pseudo-instruction RET
-    i_m_valid : in std_logic;                                 -- To compute number of valid executed instruction
     o_clock_cnt : out std_logic_vector(63 downto 0);          -- Number of clocks excluding halt state
     o_executed_cnt : out std_logic_vector(63 downto 0);       -- Number of executed instructions
     o_halt : out std_logic;                                   -- Halt signal is equal to hold pipeline
@@ -153,11 +151,12 @@ begin
 
   comb : process(i_nrst, i_dport_valid, i_dport_write, i_dport_region, 
                  i_dport_addr, i_dport_wdata, i_ireg_rdata, i_freg_rdata,
-                 i_csr_rdata, i_pc, i_npc, i_e_valid, i_m_valid, i_ebreak, r,
+                 i_csr_rdata, i_pc, i_npc, i_e_next_ready, i_e_valid, i_ebreak, r,
                  wb_stack_rdata, i_e_call, i_e_ret, i_istate, i_dstate,
                  i_cstate)
     variable v : RegistersType;
-    variable wb_o_core_addr : std_logic_vector(11 downto 0);
+    variable wb_o_csr_addr : std_logic_vector(11 downto 0);
+    variable wb_o_reg_addr : std_logic_vector(5 downto 0);
     variable wb_o_core_wdata : std_logic_vector(RISCV_ARCH-1 downto 0);
     variable wb_rdata : std_logic_vector(63 downto 0);
     variable wb_o_rdata : std_logic_vector(63 downto 0);
@@ -166,15 +165,14 @@ begin
     variable w_o_csr_write : std_logic;
     variable w_o_ireg_ena : std_logic;
     variable w_o_ireg_write : std_logic;
-    variable w_o_freg_ena : std_logic;
-    variable w_o_freg_write : std_logic;
     variable w_o_npc_write : std_logic;
     variable w_cur_halt : std_logic;
   begin
 
     v := r;
 
-    wb_o_core_addr := (others => '0');
+    wb_o_csr_addr := (others => '0');
+    wb_o_reg_addr := (others => '0');
     wb_o_core_wdata := (others => '0');
     wb_rdata := (others => '0');
     wb_o_rdata := (others => '0');
@@ -183,8 +181,6 @@ begin
     w_o_csr_write := '0';
     w_o_ireg_ena := '0';
     w_o_ireg_write := '0';
-    w_o_freg_ena := '0';
-    w_o_freg_write := '0';
     w_o_npc_write := '0';
     v.br_fetch_valid := '0';
     v.flush_valid := '0';
@@ -197,7 +193,7 @@ begin
     v.ready := i_dport_valid;
 
     w_cur_halt := '0';
-    if i_e_valid = '1' then
+    if i_e_next_ready = '1' then
         if r.stepping_mode_cnt /= zero64(RISCV_ARCH-1 downto 0) then
             v.stepping_mode_cnt := r.stepping_mode_cnt - 1;
             if r.stepping_mode_cnt = one64 then
@@ -236,7 +232,7 @@ begin
         case i_dport_region is
         when "00" =>
             w_o_csr_ena := '1';
-            wb_o_core_addr := i_dport_addr;
+            wb_o_csr_addr := i_dport_addr;
             wb_rdata := i_csr_rdata;
             if i_dport_write = '1' then
                 w_o_csr_write := '1';
@@ -245,7 +241,7 @@ begin
         when "01" =>
             if wb_idx < 32 then
                 w_o_ireg_ena := '1';
-                wb_o_core_addr := i_dport_addr;
+                wb_o_reg_addr := '0' & i_dport_addr(4 downto 0);
                 wb_rdata := i_ireg_rdata;
                 if i_dport_write = '1' then
                     w_o_ireg_write := '1';
@@ -267,11 +263,11 @@ begin
                     v.stack_trace_cnt := conv_integer(i_dport_wdata);
                 end if;
             elsif (wb_idx >= 64) and (wb_idx < 96) then
-                w_o_freg_ena := '1';
-                wb_o_core_addr := i_dport_addr;
-                wb_rdata := i_freg_rdata;
+                w_o_ireg_ena := '1';
+                wb_o_reg_addr := '1' & i_dport_addr(4 downto 0);
+                wb_rdata := i_ireg_rdata;
                 if i_dport_write = '1' then
-                    w_o_freg_write := '1';
+                    w_o_ireg_write := '1';
                     wb_o_core_wdata := i_dport_wdata;
                 end if;
             elsif (wb_idx >= 128) and (wb_idx < (128 + 2 * CFG_STACK_TRACE_BUF_SIZE)) then
@@ -358,7 +354,8 @@ begin
 
     rin <= v;
 
-    o_core_addr <= wb_o_core_addr;
+    o_csr_addr <= wb_o_csr_addr;
+    o_reg_addr <= wb_o_reg_addr;
     o_core_wdata <= wb_o_core_wdata;
     o_csr_ena <= w_o_csr_ena;
     o_csr_write <= w_o_csr_write;

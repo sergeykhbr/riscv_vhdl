@@ -66,8 +66,7 @@ SC_MODULE(RiverTop) {
     virtual ~RiverTop();
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
-    void generateRef(bool v) { proc0->generateRef(v); }
-private:
+ private:
 
     Processor *proc0;
     CacheTop *cache0;

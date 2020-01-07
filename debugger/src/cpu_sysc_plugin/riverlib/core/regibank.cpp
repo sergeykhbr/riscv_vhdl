@@ -82,6 +82,7 @@ void RegIntBank::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void RegIntBank::comb() {
+    int int_daddr = i_dport_addr.read()(REG_MSB(), 0).to_int();
     int int_waddr = i_waddr.read()(REG_MSB(), 0).to_int();
     int int_radr1 = i_radr1.read()(REG_MSB(), 0).to_int();
     int int_radr2 = i_radr2.read()(REG_MSB(), 0).to_int();
@@ -90,8 +91,8 @@ void RegIntBank::comb() {
 
     /** Debug port has higher priority. Collision must be controlled by SW */
     if (i_dport_ena.read() && i_dport_write.read()) {
-        if (i_dport_addr.read() != 0) {
-            v.reg[i_dport_addr.read().to_int()].val = i_dport_wdata;
+        if (i_dport_addr.read().or_reduce() == 1) {
+            v.reg[int_daddr].val = i_dport_wdata;
             v.reg[int_waddr].hazard = 0;
         }
     } else if (i_wena.read() == 1 && i_waddr.read().or_reduce() == 1) {
@@ -120,7 +121,7 @@ void RegIntBank::comb() {
     o_rdata2 = r.reg[int_radr2].val;
     o_rhazard2 = r.reg[int_radr2].hazard;
     o_wtag = r.reg[int_waddr].tag;
-    o_dport_rdata = r.reg[i_dport_addr.read().to_int()].val;
+    o_dport_rdata = r.reg[int_daddr].val;
     o_ra = r.reg[Reg_ra].val;
     o_sp = r.reg[Reg_sp].val;
 }

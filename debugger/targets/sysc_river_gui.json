@@ -139,7 +139,6 @@
                 ['Bus','axi0'],
                 ['CmdExecutor','cmdexec0']
                 ['Tap','edcltap']
-                ['GenerateRef',false,'Generate Registers/Memory access trace file to compare it with functional model'],
                 ['InVcdFile','','None empty string enables generation of stimulus VCD file'],
                 ['OutVcdFile','','None empty string enables VCD file with reference signals'],
                 ['FreqHz',1000000]

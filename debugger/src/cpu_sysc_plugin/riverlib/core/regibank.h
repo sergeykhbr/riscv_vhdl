@@ -41,7 +41,7 @@ SC_MODULE(RegIntBank) {
     sc_in<sc_uint<RISCV_ARCH>> i_wdata;     // Writing value
     sc_out<sc_uint<4>> o_wtag;              // Writing tag
 
-    sc_in<sc_uint<5>> i_dport_addr;             // Debug port address
+    sc_in<sc_uint<6>> i_dport_addr;             // Debug port address
     sc_in<bool> i_dport_ena;                    // Debug port is enabled
     sc_in<bool> i_dport_write;                  // Debug port write is enabled
     sc_in<sc_uint<RISCV_ARCH>> i_dport_wdata;   // Debug port write value

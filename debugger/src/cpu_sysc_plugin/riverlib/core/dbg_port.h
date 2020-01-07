@@ -35,24 +35,22 @@ SC_MODULE(DbgPort) {
     sc_out<bool> o_dport_ready;                         // Response is ready
     sc_out<sc_uint<RISCV_ARCH>> o_dport_rdata;          // Response value
     // CPU debugging signals:
-    sc_out<sc_uint<12>> o_core_addr;                    // Address of the sub-region register
+    sc_out<sc_uint<12>> o_csr_addr;                     // Address of the sub-region register
+    sc_out<sc_uint<6>> o_reg_addr;
     sc_out<sc_uint<RISCV_ARCH>> o_core_wdata;           // Write data
     sc_out<bool> o_csr_ena;                             // Region 0: Access to CSR bank is enabled.
     sc_out<bool> o_csr_write;                           // Region 0: CSR write enable
     sc_in<sc_uint<RISCV_ARCH>> i_csr_rdata;             // Region 0: CSR read value
     sc_out<bool> o_ireg_ena;                            // Region 1: Access to integer register bank is enabled
     sc_out<bool> o_ireg_write;                          // Region 1: Integer registers bank write pulse
-    sc_out<bool> o_freg_ena;                            // Region 1: Access to float register bank is enabled
-    sc_out<bool> o_freg_write;                          // Region 1: Float registers bank write pulse
     sc_out<bool> o_npc_write;                           // Region 1: npc write enable
     sc_in<sc_uint<RISCV_ARCH>> i_ireg_rdata;            // Region 1: Integer register read value
-    sc_in<sc_uint<RISCV_ARCH>> i_freg_rdata;            // Region 1: Float register read value
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_pc;                // Region 1: Instruction pointer
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_npc;               // Region 1: Next Instruction pointer
+    sc_in<bool> i_e_next_ready;
     sc_in<bool> i_e_valid;                              // Stepping control signal
     sc_in<bool> i_e_call;                               // pseudo-instruction CALL
     sc_in<bool> i_e_ret;                                // pseudo-instruction RET
-    sc_in<bool> i_m_valid;                              // To compute number of valid executed instruction
     sc_out<sc_uint<64>> o_clock_cnt;                    // Number of clocks excluding halt state
     sc_out<sc_uint<64>> o_executed_cnt;                 // Number of executed instructions
     sc_out<bool> o_halt;                                // Halt signal is equal to hold pipeline

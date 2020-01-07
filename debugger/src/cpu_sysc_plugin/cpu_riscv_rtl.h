@@ -105,7 +105,6 @@ class CpuRiscV_RTL : public IService,
     AttributeType freqHz_;
     AttributeType InVcdFile_;
     AttributeType OutVcdFile_;
-    AttributeType GenerateRef_;
     event_def config_done_;
 
     ICmdExecutor *icmdexec_;

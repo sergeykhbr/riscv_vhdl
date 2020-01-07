@@ -122,7 +122,6 @@ class RtlWrapper : public sc_module,
     virtual ~RtlWrapper();
 
  public:
-    void generateRef(bool v) { generate_ref_ = v; }
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
     void setBus(IMemoryOperation *v) { ibus_ = v; }
     /** Default time resolution 1 picosecond. */
@@ -153,7 +152,6 @@ class RtlWrapper : public sc_module,
     IFace *iparent_;    // pointer on parent module object (used for logging)
     int clockCycles_;   // default in [ps]
     ClockAsyncTQueueType step_queue_;
-    bool generate_ref_;
 
     sc_uint<32> t_trans_idx_up;
     sc_uint<32> t_trans_idx_down;

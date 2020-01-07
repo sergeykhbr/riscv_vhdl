@@ -52,7 +52,6 @@ RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
     i_dport_rdata("i_dport_rdata"),
     i_halted("i_halted") {
     iparent_ = parent;
-    generate_ref_ = false;
     clockCycles_ = 1000000; // 1 MHz when default resolution = 1 ps
 
     v.nrst = 1;//0;

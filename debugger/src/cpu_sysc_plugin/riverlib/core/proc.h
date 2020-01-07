@@ -91,9 +91,6 @@ SC_MODULE(Processor) {
     sc_in<sc_uint<2>> i_cstate;                         // CacheTop state machine value
 
     void comb();
-    void negedge_proc();
-    void dbg_print();
-    void generateRef(bool v);
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
     SC_HAS_PROCESS(Processor);
@@ -187,12 +184,7 @@ private:
     };
 
     struct MemoryType {
-        sc_signal<bool> memop_ready;;
-        sc_signal<bool> valid;
-        sc_signal<sc_uint<32>> instr;
-        sc_signal<sc_uint<BUS_ADDR_WIDTH>> pc;
-        sc_signal<bool> pipeline_hold;
-        sc_signal<bool> wb_memop;
+        sc_signal<bool> memop_ready;
     };
 
     struct WriteBackType {
@@ -228,14 +220,13 @@ private:
     } csr;
 
     struct DebugType {
-        sc_signal<sc_uint<12>> core_addr;           // Address of the sub-region register
+        sc_signal<sc_uint<12>> csr_addr;           // Address of the sub-region register
+        sc_signal<sc_uint<6>> reg_addr;
         sc_signal<sc_uint<RISCV_ARCH>> core_wdata;  // Write data
         sc_signal<bool> csr_ena;                    // Region 0: Access to CSR bank is enabled.
         sc_signal<bool> csr_write;                  // Region 0: CSR write enable
         sc_signal<bool> ireg_ena;                   // Region 1: Access to integer register bank is enabled
         sc_signal<bool> ireg_write;                 // Region 1: Integer registers bank write pulse
-        sc_signal<bool> freg_ena;                   // Region 1: Access to float register bank is enabled
-        sc_signal<bool> freg_write;                 // Region 1: Float registers bank write pulse
         sc_signal<bool> npc_write;                  // Region 1: npc write enable
         sc_signal<bool> halt;                       // Halt signal is equal to hold pipeline
         sc_signal<sc_uint<64>> clock_cnt;           // Number of clocks excluding halt state
@@ -261,8 +252,6 @@ private:
         WriteBackType w;                        // Write back registers value
     } w;
 
-    sc_signal<sc_uint<5>> wb_ireg_dport_addr;
-    sc_signal<sc_uint<5>> wb_freg_dport_addr;
     sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_exec_dport_npc;
 
     sc_signal<bool> w_fetch_pipeline_hold;
@@ -279,17 +268,6 @@ private:
     Tracer *trace0;
 
     DbgPort *dbg0;
-
-    /** Used only for reference trace generation to compare with
-        functional model */
-    bool generate_ref_;
-    sc_event print_event_;
-    char tstr[1024];
-    ofstream *reg_dbg;
-    ofstream *mem_dbg;
-    bool mem_dbg_write_flag;
-    uint64_t dbg_mem_value_mask;
-    uint64_t dbg_mem_write_value;
 
     sc_signal<bool> w_writeback_ready;
     sc_signal<bool> w_reg_wena;

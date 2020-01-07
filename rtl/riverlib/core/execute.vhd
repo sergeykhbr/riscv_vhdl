@@ -40,7 +40,6 @@ entity InstrExecute is generic (
     i_d_imm : in std_logic_vector(RISCV_ARCH-1 downto 0);
     i_d_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);    -- Instruction pointer on decoded instruction
     i_d_instr : in std_logic_vector(31 downto 0);               -- Decoded instruction value
-    i_wb_valid : in std_logic;                                  -- End of write back operation
     i_wb_waddr : in std_logic_vector(5 downto 0);               -- Write back address
     i_memop_store : in std_logic;                               -- Store to memory operation
     i_memop_load : in std_logic;                                -- Load from memoru operation
@@ -324,7 +323,7 @@ begin
   end generate;
 
   comb : process(i_nrst, i_d_valid, i_d_radr1, i_d_radr2, i_d_waddr, i_d_imm,
-                 i_d_pc, i_d_instr, i_wb_valid, i_wb_waddr,
+                 i_d_pc, i_d_instr, i_wb_waddr,
                  i_memop_load, i_memop_store, i_memop_sign_ext,
                  i_memop_size, i_unsigned_op, i_rv32, i_compressed, i_f64, i_isa_type, i_ivec,
                  i_unsup_exception, i_instr_load_fault, i_instr_executable,

@@ -50,7 +50,7 @@ IrqController::IrqController(const char *name)  : IService(name) {
     irqTotal_.make_uint64(4);
 
     memset(&regs_, 0, sizeof(regs_));
-    regs_.irq_mask = ~0;
+    regs_.irq_mask = 0x1e;
     regs_.irq_lock = 1;
 }
 
@@ -88,11 +88,11 @@ ETransStatus IrqController::b_transport(Axi4TransactionType *trans) {
 
             switch (off + i) {
             case 0:
-                regs_.irq_mask = trans->wpayload.b32[i];
+                regs_.irq_mask = trans->wpayload.b32[i] & 0x1e;
                 RISCV_info("Set irq_mask = %08x", trans->wpayload.b32[i]);
                 break;
             case 1:
-                regs_.irq_pending = trans->wpayload.b32[i];
+                regs_.irq_pending = trans->wpayload.b32[i] & 0x1e;
                 RISCV_info("Set irq_pending = %08x", trans->wpayload.b32[i]);
                 break;
             case 2:

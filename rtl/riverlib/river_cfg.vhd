@@ -707,7 +707,6 @@ package river_cfg is
     i_d_imm : in std_logic_vector(RISCV_ARCH-1 downto 0);
     i_d_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);    -- Instruction pointer on decoded instruction
     i_d_instr : in std_logic_vector(31 downto 0);               -- Decoded instruction value
-    i_wb_valid : in std_logic;                                  -- End of write back operation
     i_wb_waddr : in std_logic_vector(5 downto 0);               -- Write back address
     i_memop_store : in std_logic;                               -- Store to memory operation
     i_memop_load : in std_logic;                                -- Load from memoru operation
@@ -939,38 +938,13 @@ package river_cfg is
     i_wtag : in std_logic_vector(3 downto 0);
     i_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0);   -- Writing value
     o_wtag : out std_logic_vector(3 downto 0);
-    i_dport_addr : in std_logic_vector(4 downto 0);         -- Debug port address
+    i_dport_addr : in std_logic_vector(5 downto 0);         -- Debug port address
     i_dport_ena : in std_logic;                             -- Debug port is enabled
     i_dport_write : in std_logic;                           -- Debug port write is enabled
     i_dport_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0); -- Debug port write value
     o_dport_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0);-- Debug port read value
     o_ra : out std_logic_vector(RISCV_ARCH-1 downto 0);     -- Return address for branch predictor
     o_sp : out std_logic_vector(RISCV_ARCH-1 downto 0)      -- Stack Pointer for the borders control
-  );
-  end component; 
-
-  component RegFloatBank is generic (
-    async_reset : boolean
-  );
-  port (
-    i_clk : in std_logic;                                   -- CPU clock
-    i_nrst : in std_logic;                                  -- Reset. Active LOW.
-
-    i_radr1 : in std_logic_vector(5 downto 0);              -- Port 1 read address
-    o_rdata1 : out std_logic_vector(RISCV_ARCH-1 downto 0); -- Port 1 read value
-
-    i_radr2 : in std_logic_vector(5 downto 0);              -- Port 2 read address
-    o_rdata2 : out std_logic_vector(RISCV_ARCH-1 downto 0); -- Port 2 read value
-
-    i_waddr : in std_logic_vector(5 downto 0);              -- Writing value
-    i_wena : in std_logic;                                  -- Writing is enabled
-    i_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0);   -- Writing value
-
-    i_dport_addr : in std_logic_vector(4 downto 0);         -- Debug port address
-    i_dport_ena : in std_logic;                             -- Debug port is enabled
-    i_dport_write : in std_logic;                           -- Debug port write is enabled
-    i_dport_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0); -- Debug port write value
-    o_dport_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0)-- Debug port read value
   );
   end component; 
 
@@ -1017,46 +991,44 @@ package river_cfg is
     async_reset : boolean
   );
   port (
-    i_clk : in std_logic;
-    i_nrst : in std_logic;
-    i_dport_valid : in std_logic;
-    i_dport_write : in std_logic;
-    i_dport_region : in std_logic_vector(1 downto 0);
-    i_dport_addr : in std_logic_vector(11 downto 0);
-    i_dport_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0);
-    o_dport_ready : out std_logic;
-    o_dport_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0);
-    o_core_addr : out std_logic_vector(11 downto 0);
-    o_core_wdata : out std_logic_vector(RISCV_ARCH-1 downto 0);
-    o_csr_ena : out std_logic;
-    o_csr_write : out std_logic;
-    i_csr_rdata : in std_logic_vector(RISCV_ARCH-1 downto 0);
-    o_ireg_ena : out std_logic;
-    o_ireg_write : out std_logic;
-    o_freg_ena : out std_logic;
-    o_freg_write : out std_logic;
-    o_npc_write : out std_logic;
-    i_ireg_rdata : in std_logic_vector(RISCV_ARCH-1 downto 0);
-    i_freg_rdata : in std_logic_vector(RISCV_ARCH-1 downto 0);
-    i_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    i_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    i_e_valid : in std_logic;
-    i_e_call : in std_logic;
-    i_e_ret : in std_logic;
-    i_m_valid : in std_logic;
-    o_clock_cnt : out std_logic_vector(63 downto 0);
-    o_executed_cnt : out std_logic_vector(63 downto 0);
-    o_halt : out std_logic;
-    i_ebreak : in std_logic;
-    o_break_mode : out std_logic;
-    o_br_fetch_valid : out std_logic;
-    o_br_address_fetch : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    o_br_instr_fetch : out std_logic_vector(31 downto 0);
-    o_flush_address : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    o_flush_valid : out std_logic;
-    i_istate : in std_logic_vector(3 downto 0);
-    i_dstate : in std_logic_vector(3 downto 0);
-    i_cstate : in std_logic_vector(1 downto 0)
+    i_clk : in std_logic;                                     -- CPU clock
+    i_nrst : in std_logic;                                    -- Reset. Active LOW.
+    i_dport_valid : in std_logic;                             -- Debug access from DSU is valid
+    i_dport_write : in std_logic;                             -- Write command flag
+    i_dport_region : in std_logic_vector(1 downto 0);         -- Registers region ID: 0=CSR; 1=IREGS; 2=Control
+    i_dport_addr : in std_logic_vector(11 downto 0);          -- Register idx
+    i_dport_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0);-- Write value
+    o_dport_ready : out std_logic;                            -- Response is ready
+    o_dport_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0);-- Response value
+    o_csr_addr : out std_logic_vector(11 downto 0);            -- Address of the sub-region register
+    o_reg_addr : out std_logic_vector(5 downto 0);
+    o_core_wdata : out std_logic_vector(RISCV_ARCH-1 downto 0);-- Write data
+    o_csr_ena : out std_logic;                                -- Region 0: Access to CSR bank is enabled.
+    o_csr_write : out std_logic;                              -- Region 0: CSR write enable
+    i_csr_rdata : in std_logic_vector(RISCV_ARCH-1 downto 0); -- Region 0: CSR read value
+    o_ireg_ena : out std_logic;                               -- Region 1: Access to integer register bank is enabled
+    o_ireg_write : out std_logic;                             -- Region 1: Integer registers bank write pulse
+    o_npc_write : out std_logic;                              -- Region 1: npc write enable
+    i_ireg_rdata : in std_logic_vector(RISCV_ARCH-1 downto 0);-- Region 1: Integer register read value
+    i_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);    -- Region 1: Instruction pointer
+    i_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);   -- Region 1: Next Instruction pointer
+    i_e_next_ready : in std_logic;
+    i_e_valid : in std_logic;                                 -- Stepping control signal
+    i_e_call : in std_logic;                                  -- pseudo-instruction CALL
+    i_e_ret : in std_logic;                                   -- pseudo-instruction RET
+    o_clock_cnt : out std_logic_vector(63 downto 0);          -- Number of clocks excluding halt state
+    o_executed_cnt : out std_logic_vector(63 downto 0);       -- Number of executed instructions
+    o_halt : out std_logic;                                   -- Halt signal is equal to hold pipeline
+    i_ebreak : in std_logic;                                  -- ebreak instruction decoded
+    o_break_mode : out std_logic;                             -- Behaviour on EBREAK instruction: 0 = halt; 1 = generate trap
+    o_br_fetch_valid : out std_logic;                         -- Fetch injection address/instr are valid
+    o_br_address_fetch : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0); -- Fetch injection address to skip ebreak instruciton only once
+    o_br_instr_fetch : out std_logic_vector(31 downto 0);     -- Real instruction value that was replaced by ebreak
+    o_flush_address : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);  -- Address of instruction to remove from ICache
+    o_flush_valid : out std_logic;                            -- Remove address from ICache is valid
+    i_istate : in std_logic_vector(3 downto 0);               -- ICache state machine value
+    i_dstate : in std_logic_vector(3 downto 0);               -- DCache state machine value
+    i_cstate : in std_logic_vector(1 downto 0)                -- CacheTop state machine value
   );
   end component;
 
