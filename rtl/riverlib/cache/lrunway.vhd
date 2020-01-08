@@ -45,11 +45,12 @@ architecture arch_lrunway of lrunway is
   signal tbl : array_type;
   signal wb_tbl_rdata : std_logic_vector(LINE_WIDTH-1 downto 0);
   signal wb_tbl_wdata : std_logic_vector(LINE_WIDTH-1 downto 0);
+  signal wb_tbl_waddr :std_logic_vector(abits-1 downto 0);
   signal w_we : std_logic;
 
 begin
 
-  comb : process(i_flush, i_addr, i_we, i_lru, wb_tbl_rdata)
+  comb : process(i_flush, i_addr, i_we, i_lru, wb_tbl_rdata, radr)
     variable vb_tbl_wdata : std_logic_vector(7 downto 0);
     variable v_we : std_logic;
     variable shift_ena : std_logic;
@@ -58,9 +59,11 @@ begin
     shift_ena := '0';
     v_we := i_we;
     vb_tbl_wdata := wb_tbl_rdata;
+    wb_tbl_waddr := radr;
 
     if i_flush = '1' then
         v_we := '1';
+        wb_tbl_waddr := i_addr;
         for i in 0 to WAYS_TOTAL-1 loop
             vb_tbl_wdata((i+1)*waybits-1 downto i*waybits) := conv_std_logic_vector(i, waybits);
         end loop;
@@ -95,7 +98,7 @@ begin
     if rising_edge(i_clk) then 
       radr <= i_addr;
       if w_we = '1' then
-        tbl(conv_integer(i_addr)) <= wb_tbl_wdata;
+        tbl(conv_integer(wb_tbl_waddr)) <= wb_tbl_wdata;
       end if;
     end if;
   end process;

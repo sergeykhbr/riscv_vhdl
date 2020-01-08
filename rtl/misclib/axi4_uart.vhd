@@ -136,8 +136,8 @@ architecture arch_axi4_uart of axi4_uart is
         '0', -- err_parity
         '0', -- err_stopbit
         '0', -- parity_bit
-        '1', -- tx_irq_ena
-        '1', -- rx_irq_ena
+        '0', -- tx_irq_ena
+        '0', -- rx_irq_ena
         (others => '0')); -- fwcpuid
 
 signal r, rin : registers;

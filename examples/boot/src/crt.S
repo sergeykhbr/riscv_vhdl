@@ -106,10 +106,9 @@ _start:
   ##! csrc (pseudo asm instruction) - clear bit 
   ##! csrrc - atomic read and clear bit
 
-  li t0, 0x00001800   # MPP[12:11] = 0x3 (Previous to machine mode)
+  # Clear Previous mode (set U-mode), disable interrupt in U-mode
+  li t0, 0x00001880   # MPP[12:11] = 0x0 MPIE[7]=0 (Previous to machine mode)
   csrc mstatus, t0    # run tests in user mode = 0, by clearing bits
-  li t0, 0x00000008   # Enable irq in machine and user modes after execution of xRET
-  csrs mstatus, t0    # enable interrupts in user mode
   #li t0, MSTATUS_FS;
   #csrs mstatus, t0    # enable FPU
   #li t0, MSTATUS_XS;   

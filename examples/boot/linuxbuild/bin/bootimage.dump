@@ -7,39 +7,39 @@ Disassembly of section .text:
 0000000000000000 <trap_table>:
    0:	0940006f          	j	94 <_start>
    4:	00000013          	nop
-   8:	1780006f          	j	180 <exception_entry>
+   8:	1700006f          	j	178 <exception_entry>
    c:	00000013          	nop
-  10:	1700006f          	j	180 <exception_entry>
+  10:	1680006f          	j	178 <exception_entry>
   14:	00000013          	nop
-  18:	1680006f          	j	180 <exception_entry>
+  18:	1600006f          	j	178 <exception_entry>
   1c:	00000013          	nop
-  20:	1600006f          	j	180 <exception_entry>
+  20:	1580006f          	j	178 <exception_entry>
   24:	00000013          	nop
-  28:	1580006f          	j	180 <exception_entry>
+  28:	1500006f          	j	178 <exception_entry>
   2c:	00000013          	nop
-  30:	1500006f          	j	180 <exception_entry>
+  30:	1480006f          	j	178 <exception_entry>
   34:	00000013          	nop
-  38:	1480006f          	j	180 <exception_entry>
+  38:	1400006f          	j	178 <exception_entry>
   3c:	00000013          	nop
-  40:	1400006f          	j	180 <exception_entry>
+  40:	1380006f          	j	178 <exception_entry>
   44:	00000013          	nop
-  48:	1380006f          	j	180 <exception_entry>
+  48:	1300006f          	j	178 <exception_entry>
   4c:	00000013          	nop
-  50:	1300006f          	j	180 <exception_entry>
+  50:	1280006f          	j	178 <exception_entry>
   54:	00000013          	nop
-  58:	1280006f          	j	180 <exception_entry>
+  58:	1200006f          	j	178 <exception_entry>
   5c:	00000013          	nop
-  60:	1200006f          	j	180 <exception_entry>
+  60:	1180006f          	j	178 <exception_entry>
   64:	00000013          	nop
-  68:	1180006f          	j	180 <exception_entry>
+  68:	1100006f          	j	178 <exception_entry>
   6c:	00000013          	nop
-  70:	1100006f          	j	180 <exception_entry>
+  70:	1080006f          	j	178 <exception_entry>
   74:	00000013          	nop
-  78:	1080006f          	j	180 <exception_entry>
+  78:	1000006f          	j	178 <exception_entry>
   7c:	00000013          	nop
-  80:	1000006f          	j	180 <exception_entry>
+  80:	0f80006f          	j	178 <exception_entry>
   84:	00000013          	nop
-  88:	0f80006f          	j	180 <exception_entry>
+  88:	0f00006f          	j	178 <exception_entry>
   8c:	00000013          	nop
 
 0000000000000090 <bad_trap>:
@@ -78,179 +78,181 @@ Disassembly of section .text:
  108:	00000f13          	li	t5,0
  10c:	00000f93          	li	t6,0
  110:	000022b7          	lui	t0,0x2
- 114:	8002829b          	addiw	t0,t0,-2048
+ 114:	8802829b          	addiw	t0,t0,-1920
  118:	3002b073          	csrc	mstatus,t0
- 11c:	00800293          	li	t0,8
- 120:	3002a073          	csrs	mstatus,t0
- 124:	00000297          	auipc	t0,0x0
- 128:	15828293          	addi	t0,t0,344 # 27c <interrupt_entry>
- 12c:	30529073          	csrw	mtvec,t0
- 130:	000012b7          	lui	t0,0x1
- 134:	8002829b          	addiw	t0,t0,-2048
- 138:	3042a073          	csrs	mie,t0
- 13c:	100001b7          	lui	gp,0x10000
- 140:	f1402573          	csrr	a0,mhartid
- 144:	10080137          	lui	sp,0x10080
- 148:	00100593          	li	a1,1
- 14c:	00b50663          	beq	a0,a1,158 <sp_init_core1>
- 150:	00000593          	li	a1,0
- 154:	00b50463          	beq	a0,a1,15c <sp_init_core0>
+ 11c:	00000297          	auipc	t0,0x0
+ 120:	15828293          	addi	t0,t0,344 # 274 <interrupt_entry>
+ 124:	30529073          	csrw	mtvec,t0
+ 128:	000012b7          	lui	t0,0x1
+ 12c:	8002829b          	addiw	t0,t0,-2048
+ 130:	3042a073          	csrs	mie,t0
+ 134:	100001b7          	lui	gp,0x10000
+ 138:	f1402573          	csrr	a0,mhartid
+ 13c:	10080137          	lui	sp,0x10080
+ 140:	00100593          	li	a1,1
+ 144:	00b50663          	beq	a0,a1,150 <sp_init_core1>
+ 148:	00000593          	li	a1,0
+ 14c:	00b50463          	beq	a0,a1,154 <sp_init_core0>
 
-0000000000000158 <sp_init_core1>:
- 158:	00c0006f          	j	164 <sp_init_coreall>
+0000000000000150 <sp_init_core1>:
+ 150:	00c0006f          	j	15c <sp_init_coreall>
 
-000000000000015c <sp_init_core0>:
- 15c:	fffff2b7          	lui	t0,0xfffff
- 160:	00510133          	add	sp,sp,t0
+0000000000000154 <sp_init_core0>:
+ 154:	fffff2b7          	lui	t0,0xfffff
+ 158:	00510133          	add	sp,sp,t0
 
-0000000000000164 <sp_init_coreall>:
- 164:	00200233          	add	tp,zero,sp
- 168:	f0020213          	addi	tp,tp,-256 # ffffffffffffff00 <_end+0xfffffffffffff418>
- 16c:	ef810113          	addi	sp,sp,-264 # 1007fef8 <_end+0x1007f410>
- 170:	4ec000ef          	jal	ra,65c <_init>
- 174:	100002b7          	lui	t0,0x10000
- 178:	34129073          	csrw	mepc,t0
- 17c:	30200073          	mret
+000000000000015c <sp_init_coreall>:
+ 15c:	00200233          	add	tp,zero,sp
+ 160:	f0020213          	addi	tp,tp,-256 # ffffffffffffff00 <_end+0xfffffffffffff418>
+ 164:	ef810113          	addi	sp,sp,-264 # 1007fef8 <_end+0x1007f410>
+ 168:	4f4000ef          	jal	ra,65c <_init>
+ 16c:	100002b7          	lui	t0,0x10000
+ 170:	34129073          	csrw	mepc,t0
+ 174:	30200073          	mret
 
-0000000000000180 <exception_entry>:
- 180:	0ff0000f          	fence
- 184:	00123023          	sd	ra,0(tp) # 0 <trap_table>
- 188:	00823423          	sd	s0,8(tp) # 8 <trap_table+0x8>
- 18c:	00923823          	sd	s1,16(tp) # 10 <trap_table+0x10>
- 190:	01223c23          	sd	s2,24(tp) # 18 <trap_table+0x18>
- 194:	03323023          	sd	s3,32(tp) # 20 <trap_table+0x20>
- 198:	03423423          	sd	s4,40(tp) # 28 <trap_table+0x28>
- 19c:	03523823          	sd	s5,48(tp) # 30 <trap_table+0x30>
- 1a0:	03623c23          	sd	s6,56(tp) # 38 <trap_table+0x38>
- 1a4:	05723023          	sd	s7,64(tp) # 40 <trap_table+0x40>
- 1a8:	05823423          	sd	s8,72(tp) # 48 <trap_table+0x48>
- 1ac:	05923823          	sd	s9,80(tp) # 50 <trap_table+0x50>
- 1b0:	05a23c23          	sd	s10,88(tp) # 58 <trap_table+0x58>
- 1b4:	07b23023          	sd	s11,96(tp) # 60 <trap_table+0x60>
- 1b8:	06223423          	sd	sp,104(tp) # 68 <trap_table+0x68>
- 1bc:	07023c23          	sd	a6,120(tp) # 78 <trap_table+0x78>
- 1c0:	09123023          	sd	a7,128(tp) # 80 <trap_table+0x80>
- 1c4:	08a23423          	sd	a0,136(tp) # 88 <trap_table+0x88>
- 1c8:	08b23823          	sd	a1,144(tp) # 90 <bad_trap>
- 1cc:	08c23c23          	sd	a2,152(tp) # 98 <_start+0x4>
- 1d0:	0ad23023          	sd	a3,160(tp) # a0 <_start+0xc>
- 1d4:	0ae23423          	sd	a4,168(tp) # a8 <_start+0x14>
- 1d8:	0af23823          	sd	a5,176(tp) # b0 <_start+0x1c>
- 1dc:	0b023c23          	sd	a6,184(tp) # b8 <_start+0x24>
- 1e0:	0d123023          	sd	a7,192(tp) # c0 <_start+0x2c>
- 1e4:	0c523423          	sd	t0,200(tp) # c8 <_start+0x34>
- 1e8:	0c623823          	sd	t1,208(tp) # d0 <_start+0x3c>
- 1ec:	0c723c23          	sd	t2,216(tp) # d8 <_start+0x44>
- 1f0:	0fc23023          	sd	t3,224(tp) # e0 <_start+0x4c>
- 1f4:	0fd23423          	sd	t4,232(tp) # e8 <_start+0x54>
- 1f8:	0e323823          	sd	gp,240(tp) # f0 <_start+0x5c>
- 1fc:	5a8000ef          	jal	ra,7a4 <exception_handler_c>
- 200:	00023083          	ld	ra,0(tp) # 0 <trap_table>
- 204:	00823403          	ld	s0,8(tp) # 8 <trap_table+0x8>
- 208:	01023483          	ld	s1,16(tp) # 10 <trap_table+0x10>
- 20c:	01823903          	ld	s2,24(tp) # 18 <trap_table+0x18>
- 210:	02023983          	ld	s3,32(tp) # 20 <trap_table+0x20>
- 214:	02823a03          	ld	s4,40(tp) # 28 <trap_table+0x28>
- 218:	03023a83          	ld	s5,48(tp) # 30 <trap_table+0x30>
- 21c:	03823b03          	ld	s6,56(tp) # 38 <trap_table+0x38>
- 220:	04023b83          	ld	s7,64(tp) # 40 <trap_table+0x40>
- 224:	04823c03          	ld	s8,72(tp) # 48 <trap_table+0x48>
- 228:	05023c83          	ld	s9,80(tp) # 50 <trap_table+0x50>
- 22c:	05823d03          	ld	s10,88(tp) # 58 <trap_table+0x58>
- 230:	06023d83          	ld	s11,96(tp) # 60 <trap_table+0x60>
- 234:	06823103          	ld	sp,104(tp) # 68 <trap_table+0x68>
- 238:	07823803          	ld	a6,120(tp) # 78 <trap_table+0x78>
- 23c:	08023883          	ld	a7,128(tp) # 80 <trap_table+0x80>
- 240:	08823503          	ld	a0,136(tp) # 88 <trap_table+0x88>
- 244:	09023583          	ld	a1,144(tp) # 90 <bad_trap>
- 248:	09823603          	ld	a2,152(tp) # 98 <_start+0x4>
- 24c:	0a023683          	ld	a3,160(tp) # a0 <_start+0xc>
- 250:	0a823703          	ld	a4,168(tp) # a8 <_start+0x14>
- 254:	0b023783          	ld	a5,176(tp) # b0 <_start+0x1c>
- 258:	0b823803          	ld	a6,184(tp) # b8 <_start+0x24>
- 25c:	0c023883          	ld	a7,192(tp) # c0 <_start+0x2c>
- 260:	0c823283          	ld	t0,200(tp) # c8 <_start+0x34>
- 264:	0d023303          	ld	t1,208(tp) # d0 <_start+0x3c>
- 268:	0d823383          	ld	t2,216(tp) # d8 <_start+0x44>
- 26c:	0e023e03          	ld	t3,224(tp) # e0 <_start+0x4c>
- 270:	0e823e83          	ld	t4,232(tp) # e8 <_start+0x54>
- 274:	0f023183          	ld	gp,240(tp) # f0 <_start+0x5c>
- 278:	30200073          	mret
+0000000000000178 <exception_entry>:
+ 178:	0ff0000f          	fence
+ 17c:	00123023          	sd	ra,0(tp) # 0 <trap_table>
+ 180:	00823423          	sd	s0,8(tp) # 8 <trap_table+0x8>
+ 184:	00923823          	sd	s1,16(tp) # 10 <trap_table+0x10>
+ 188:	01223c23          	sd	s2,24(tp) # 18 <trap_table+0x18>
+ 18c:	03323023          	sd	s3,32(tp) # 20 <trap_table+0x20>
+ 190:	03423423          	sd	s4,40(tp) # 28 <trap_table+0x28>
+ 194:	03523823          	sd	s5,48(tp) # 30 <trap_table+0x30>
+ 198:	03623c23          	sd	s6,56(tp) # 38 <trap_table+0x38>
+ 19c:	05723023          	sd	s7,64(tp) # 40 <trap_table+0x40>
+ 1a0:	05823423          	sd	s8,72(tp) # 48 <trap_table+0x48>
+ 1a4:	05923823          	sd	s9,80(tp) # 50 <trap_table+0x50>
+ 1a8:	05a23c23          	sd	s10,88(tp) # 58 <trap_table+0x58>
+ 1ac:	07b23023          	sd	s11,96(tp) # 60 <trap_table+0x60>
+ 1b0:	06223423          	sd	sp,104(tp) # 68 <trap_table+0x68>
+ 1b4:	07023c23          	sd	a6,120(tp) # 78 <trap_table+0x78>
+ 1b8:	09123023          	sd	a7,128(tp) # 80 <trap_table+0x80>
+ 1bc:	08a23423          	sd	a0,136(tp) # 88 <trap_table+0x88>
+ 1c0:	08b23823          	sd	a1,144(tp) # 90 <bad_trap>
+ 1c4:	08c23c23          	sd	a2,152(tp) # 98 <_start+0x4>
+ 1c8:	0ad23023          	sd	a3,160(tp) # a0 <_start+0xc>
+ 1cc:	0ae23423          	sd	a4,168(tp) # a8 <_start+0x14>
+ 1d0:	0af23823          	sd	a5,176(tp) # b0 <_start+0x1c>
+ 1d4:	0b023c23          	sd	a6,184(tp) # b8 <_start+0x24>
+ 1d8:	0d123023          	sd	a7,192(tp) # c0 <_start+0x2c>
+ 1dc:	0c523423          	sd	t0,200(tp) # c8 <_start+0x34>
+ 1e0:	0c623823          	sd	t1,208(tp) # d0 <_start+0x3c>
+ 1e4:	0c723c23          	sd	t2,216(tp) # d8 <_start+0x44>
+ 1e8:	0fc23023          	sd	t3,224(tp) # e0 <_start+0x4c>
+ 1ec:	0fd23423          	sd	t4,232(tp) # e8 <_start+0x54>
+ 1f0:	0e323823          	sd	gp,240(tp) # f0 <_start+0x5c>
+ 1f4:	5b0000ef          	jal	ra,7a4 <exception_handler_c>
+ 1f8:	00023083          	ld	ra,0(tp) # 0 <trap_table>
+ 1fc:	00823403          	ld	s0,8(tp) # 8 <trap_table+0x8>
+ 200:	01023483          	ld	s1,16(tp) # 10 <trap_table+0x10>
+ 204:	01823903          	ld	s2,24(tp) # 18 <trap_table+0x18>
+ 208:	02023983          	ld	s3,32(tp) # 20 <trap_table+0x20>
+ 20c:	02823a03          	ld	s4,40(tp) # 28 <trap_table+0x28>
+ 210:	03023a83          	ld	s5,48(tp) # 30 <trap_table+0x30>
+ 214:	03823b03          	ld	s6,56(tp) # 38 <trap_table+0x38>
+ 218:	04023b83          	ld	s7,64(tp) # 40 <trap_table+0x40>
+ 21c:	04823c03          	ld	s8,72(tp) # 48 <trap_table+0x48>
+ 220:	05023c83          	ld	s9,80(tp) # 50 <trap_table+0x50>
+ 224:	05823d03          	ld	s10,88(tp) # 58 <trap_table+0x58>
+ 228:	06023d83          	ld	s11,96(tp) # 60 <trap_table+0x60>
+ 22c:	06823103          	ld	sp,104(tp) # 68 <trap_table+0x68>
+ 230:	07823803          	ld	a6,120(tp) # 78 <trap_table+0x78>
+ 234:	08023883          	ld	a7,128(tp) # 80 <trap_table+0x80>
+ 238:	08823503          	ld	a0,136(tp) # 88 <trap_table+0x88>
+ 23c:	09023583          	ld	a1,144(tp) # 90 <bad_trap>
+ 240:	09823603          	ld	a2,152(tp) # 98 <_start+0x4>
+ 244:	0a023683          	ld	a3,160(tp) # a0 <_start+0xc>
+ 248:	0a823703          	ld	a4,168(tp) # a8 <_start+0x14>
+ 24c:	0b023783          	ld	a5,176(tp) # b0 <_start+0x1c>
+ 250:	0b823803          	ld	a6,184(tp) # b8 <_start+0x24>
+ 254:	0c023883          	ld	a7,192(tp) # c0 <_start+0x2c>
+ 258:	0c823283          	ld	t0,200(tp) # c8 <_start+0x34>
+ 25c:	0d023303          	ld	t1,208(tp) # d0 <_start+0x3c>
+ 260:	0d823383          	ld	t2,216(tp) # d8 <_start+0x44>
+ 264:	0e023e03          	ld	t3,224(tp) # e0 <_start+0x4c>
+ 268:	0e823e83          	ld	t4,232(tp) # e8 <_start+0x54>
+ 26c:	0f023183          	ld	gp,240(tp) # f0 <_start+0x5c>
+ 270:	30200073          	mret
 
-000000000000027c <interrupt_entry>:
- 27c:	0ff0000f          	fence
- 280:	34051073          	csrw	mscratch,a0
- 284:	00123023          	sd	ra,0(tp) # 0 <trap_table>
- 288:	00823423          	sd	s0,8(tp) # 8 <trap_table+0x8>
- 28c:	00923823          	sd	s1,16(tp) # 10 <trap_table+0x10>
- 290:	01223c23          	sd	s2,24(tp) # 18 <trap_table+0x18>
- 294:	03323023          	sd	s3,32(tp) # 20 <trap_table+0x20>
- 298:	03423423          	sd	s4,40(tp) # 28 <trap_table+0x28>
- 29c:	03523823          	sd	s5,48(tp) # 30 <trap_table+0x30>
- 2a0:	03623c23          	sd	s6,56(tp) # 38 <trap_table+0x38>
- 2a4:	05723023          	sd	s7,64(tp) # 40 <trap_table+0x40>
- 2a8:	05823423          	sd	s8,72(tp) # 48 <trap_table+0x48>
- 2ac:	05923823          	sd	s9,80(tp) # 50 <trap_table+0x50>
- 2b0:	05a23c23          	sd	s10,88(tp) # 58 <trap_table+0x58>
- 2b4:	07b23023          	sd	s11,96(tp) # 60 <trap_table+0x60>
- 2b8:	06223423          	sd	sp,104(tp) # 68 <trap_table+0x68>
- 2bc:	07023c23          	sd	a6,120(tp) # 78 <trap_table+0x78>
- 2c0:	09123023          	sd	a7,128(tp) # 80 <trap_table+0x80>
- 2c4:	08a23423          	sd	a0,136(tp) # 88 <trap_table+0x88>
- 2c8:	08b23823          	sd	a1,144(tp) # 90 <bad_trap>
- 2cc:	08c23c23          	sd	a2,152(tp) # 98 <_start+0x4>
- 2d0:	0ad23023          	sd	a3,160(tp) # a0 <_start+0xc>
- 2d4:	0ae23423          	sd	a4,168(tp) # a8 <_start+0x14>
- 2d8:	0af23823          	sd	a5,176(tp) # b0 <_start+0x1c>
- 2dc:	0b023c23          	sd	a6,184(tp) # b8 <_start+0x24>
- 2e0:	0d123023          	sd	a7,192(tp) # c0 <_start+0x2c>
- 2e4:	0c523423          	sd	t0,200(tp) # c8 <_start+0x34>
- 2e8:	0c623823          	sd	t1,208(tp) # d0 <_start+0x3c>
- 2ec:	0c723c23          	sd	t2,216(tp) # d8 <_start+0x44>
- 2f0:	0fc23023          	sd	t3,224(tp) # e0 <_start+0x4c>
- 2f4:	0fd23423          	sd	t4,232(tp) # e8 <_start+0x54>
- 2f8:	0e323823          	sd	gp,240(tp) # f0 <_start+0x5c>
- 2fc:	34202573          	csrr	a0,mcause
- 300:	341025f3          	csrr	a1,mepc
- 304:	06b23823          	sd	a1,112(tp) # 70 <trap_table+0x70>
- 308:	00010613          	mv	a2,sp
- 30c:	000012b7          	lui	t0,0x1
- 310:	8002829b          	addiw	t0,t0,-2048
- 314:	3442b073          	csrc	mip,t0
- 318:	4da000ef          	jal	ra,7f2 <interrupt_handler_c>
- 31c:	07023583          	ld	a1,112(tp) # 70 <trap_table+0x70>
- 320:	34159073          	csrw	mepc,a1
- 324:	00023083          	ld	ra,0(tp) # 0 <trap_table>
- 328:	00823403          	ld	s0,8(tp) # 8 <trap_table+0x8>
- 32c:	01023483          	ld	s1,16(tp) # 10 <trap_table+0x10>
- 330:	01823903          	ld	s2,24(tp) # 18 <trap_table+0x18>
- 334:	02023983          	ld	s3,32(tp) # 20 <trap_table+0x20>
- 338:	02823a03          	ld	s4,40(tp) # 28 <trap_table+0x28>
- 33c:	03023a83          	ld	s5,48(tp) # 30 <trap_table+0x30>
- 340:	03823b03          	ld	s6,56(tp) # 38 <trap_table+0x38>
- 344:	04023b83          	ld	s7,64(tp) # 40 <trap_table+0x40>
- 348:	04823c03          	ld	s8,72(tp) # 48 <trap_table+0x48>
- 34c:	05023c83          	ld	s9,80(tp) # 50 <trap_table+0x50>
- 350:	05823d03          	ld	s10,88(tp) # 58 <trap_table+0x58>
- 354:	06023d83          	ld	s11,96(tp) # 60 <trap_table+0x60>
- 358:	06823103          	ld	sp,104(tp) # 68 <trap_table+0x68>
- 35c:	07823803          	ld	a6,120(tp) # 78 <trap_table+0x78>
- 360:	08023883          	ld	a7,128(tp) # 80 <trap_table+0x80>
- 364:	08823503          	ld	a0,136(tp) # 88 <trap_table+0x88>
- 368:	09023583          	ld	a1,144(tp) # 90 <bad_trap>
- 36c:	09823603          	ld	a2,152(tp) # 98 <_start+0x4>
- 370:	0a023683          	ld	a3,160(tp) # a0 <_start+0xc>
- 374:	0a823703          	ld	a4,168(tp) # a8 <_start+0x14>
- 378:	0b023783          	ld	a5,176(tp) # b0 <_start+0x1c>
- 37c:	0b823803          	ld	a6,184(tp) # b8 <_start+0x24>
- 380:	0c023883          	ld	a7,192(tp) # c0 <_start+0x2c>
- 384:	0c823283          	ld	t0,200(tp) # c8 <_start+0x34>
- 388:	0d023303          	ld	t1,208(tp) # d0 <_start+0x3c>
- 38c:	0d823383          	ld	t2,216(tp) # d8 <_start+0x44>
- 390:	0e023e03          	ld	t3,224(tp) # e0 <_start+0x4c>
- 394:	0e823e83          	ld	t4,232(tp) # e8 <_start+0x54>
- 398:	0f023183          	ld	gp,240(tp) # f0 <_start+0x5c>
- 39c:	30200073          	mret
+0000000000000274 <interrupt_entry>:
+ 274:	0ff0000f          	fence
+ 278:	34051073          	csrw	mscratch,a0
+ 27c:	00123023          	sd	ra,0(tp) # 0 <trap_table>
+ 280:	00823423          	sd	s0,8(tp) # 8 <trap_table+0x8>
+ 284:	00923823          	sd	s1,16(tp) # 10 <trap_table+0x10>
+ 288:	01223c23          	sd	s2,24(tp) # 18 <trap_table+0x18>
+ 28c:	03323023          	sd	s3,32(tp) # 20 <trap_table+0x20>
+ 290:	03423423          	sd	s4,40(tp) # 28 <trap_table+0x28>
+ 294:	03523823          	sd	s5,48(tp) # 30 <trap_table+0x30>
+ 298:	03623c23          	sd	s6,56(tp) # 38 <trap_table+0x38>
+ 29c:	05723023          	sd	s7,64(tp) # 40 <trap_table+0x40>
+ 2a0:	05823423          	sd	s8,72(tp) # 48 <trap_table+0x48>
+ 2a4:	05923823          	sd	s9,80(tp) # 50 <trap_table+0x50>
+ 2a8:	05a23c23          	sd	s10,88(tp) # 58 <trap_table+0x58>
+ 2ac:	07b23023          	sd	s11,96(tp) # 60 <trap_table+0x60>
+ 2b0:	06223423          	sd	sp,104(tp) # 68 <trap_table+0x68>
+ 2b4:	07023c23          	sd	a6,120(tp) # 78 <trap_table+0x78>
+ 2b8:	09123023          	sd	a7,128(tp) # 80 <trap_table+0x80>
+ 2bc:	08a23423          	sd	a0,136(tp) # 88 <trap_table+0x88>
+ 2c0:	08b23823          	sd	a1,144(tp) # 90 <bad_trap>
+ 2c4:	08c23c23          	sd	a2,152(tp) # 98 <_start+0x4>
+ 2c8:	0ad23023          	sd	a3,160(tp) # a0 <_start+0xc>
+ 2cc:	0ae23423          	sd	a4,168(tp) # a8 <_start+0x14>
+ 2d0:	0af23823          	sd	a5,176(tp) # b0 <_start+0x1c>
+ 2d4:	0b023c23          	sd	a6,184(tp) # b8 <_start+0x24>
+ 2d8:	0d123023          	sd	a7,192(tp) # c0 <_start+0x2c>
+ 2dc:	0c523423          	sd	t0,200(tp) # c8 <_start+0x34>
+ 2e0:	0c623823          	sd	t1,208(tp) # d0 <_start+0x3c>
+ 2e4:	0c723c23          	sd	t2,216(tp) # d8 <_start+0x44>
+ 2e8:	0fc23023          	sd	t3,224(tp) # e0 <_start+0x4c>
+ 2ec:	0fd23423          	sd	t4,232(tp) # e8 <_start+0x54>
+ 2f0:	0e323823          	sd	gp,240(tp) # f0 <_start+0x5c>
+ 2f4:	34202573          	csrr	a0,mcause
+ 2f8:	341025f3          	csrr	a1,mepc
+ 2fc:	06b23823          	sd	a1,112(tp) # 70 <trap_table+0x70>
+ 300:	00010613          	mv	a2,sp
+ 304:	000012b7          	lui	t0,0x1
+ 308:	8002829b          	addiw	t0,t0,-2048
+ 30c:	3442b073          	csrc	mip,t0
+ 310:	4e2000ef          	jal	ra,7f2 <interrupt_handler_c>
+ 314:	07023583          	ld	a1,112(tp) # 70 <trap_table+0x70>
+ 318:	34159073          	csrw	mepc,a1
+ 31c:	00023083          	ld	ra,0(tp) # 0 <trap_table>
+ 320:	00823403          	ld	s0,8(tp) # 8 <trap_table+0x8>
+ 324:	01023483          	ld	s1,16(tp) # 10 <trap_table+0x10>
+ 328:	01823903          	ld	s2,24(tp) # 18 <trap_table+0x18>
+ 32c:	02023983          	ld	s3,32(tp) # 20 <trap_table+0x20>
+ 330:	02823a03          	ld	s4,40(tp) # 28 <trap_table+0x28>
+ 334:	03023a83          	ld	s5,48(tp) # 30 <trap_table+0x30>
+ 338:	03823b03          	ld	s6,56(tp) # 38 <trap_table+0x38>
+ 33c:	04023b83          	ld	s7,64(tp) # 40 <trap_table+0x40>
+ 340:	04823c03          	ld	s8,72(tp) # 48 <trap_table+0x48>
+ 344:	05023c83          	ld	s9,80(tp) # 50 <trap_table+0x50>
+ 348:	05823d03          	ld	s10,88(tp) # 58 <trap_table+0x58>
+ 34c:	06023d83          	ld	s11,96(tp) # 60 <trap_table+0x60>
+ 350:	06823103          	ld	sp,104(tp) # 68 <trap_table+0x68>
+ 354:	07823803          	ld	a6,120(tp) # 78 <trap_table+0x78>
+ 358:	08023883          	ld	a7,128(tp) # 80 <trap_table+0x80>
+ 35c:	08823503          	ld	a0,136(tp) # 88 <trap_table+0x88>
+ 360:	09023583          	ld	a1,144(tp) # 90 <bad_trap>
+ 364:	09823603          	ld	a2,152(tp) # 98 <_start+0x4>
+ 368:	0a023683          	ld	a3,160(tp) # a0 <_start+0xc>
+ 36c:	0a823703          	ld	a4,168(tp) # a8 <_start+0x14>
+ 370:	0b023783          	ld	a5,176(tp) # b0 <_start+0x1c>
+ 374:	0b823803          	ld	a6,184(tp) # b8 <_start+0x24>
+ 378:	0c023883          	ld	a7,192(tp) # c0 <_start+0x2c>
+ 37c:	0c823283          	ld	t0,200(tp) # c8 <_start+0x34>
+ 380:	0d023303          	ld	t1,208(tp) # d0 <_start+0x3c>
+ 384:	0d823383          	ld	t2,216(tp) # d8 <_start+0x44>
+ 388:	0e023e03          	ld	t3,224(tp) # e0 <_start+0x4c>
+ 38c:	0e823e83          	ld	t4,232(tp) # e8 <_start+0x54>
+ 390:	0f023183          	ld	gp,240(tp) # f0 <_start+0x5c>
+ 394:	30200073          	mret
+ 398:	0000                	unimp
+ 39a:	0000                	unimp
+ 39c:	0000                	unimp
+ 39e:	0000                	unimp
  3a0:	0000                	unimp
 
 00000000000003a2 <fw_get_cpuid>:

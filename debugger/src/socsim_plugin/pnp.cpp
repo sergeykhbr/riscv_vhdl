@@ -22,7 +22,7 @@ PNP::PNP(const char *name)  : IService(name) {
     memset(&regs_, 0, sizeof(regs_));
     iter_.buf = regs_.cfg_table;
     regs_.hwid = 0x20170313;
-    regs_.fwid = 0xdeadcafe;
+    regs_.fwid = 0;
     regs_.tech.bits.tech = TECH_INFERRED;
     regs_.tech.bits.mst_total = 0;
     regs_.tech.bits.slv_total = 0;

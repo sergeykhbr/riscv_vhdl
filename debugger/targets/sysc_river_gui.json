@@ -140,7 +140,7 @@
                 ['CmdExecutor','cmdexec0']
                 ['Tap','edcltap']
                 ['InVcdFile','','None empty string enables generation of stimulus VCD file'],
-                ['OutVcdFile','','None empty string enables VCD file with reference signals'],
+                ['OutVcdFile','c:/Projects/o_river','None empty string enables VCD file with reference signals'],
                 ['FreqHz',1000000]
                 ]}]},
     {'Class':'MemorySimClass','Instances':[
@@ -180,7 +180,7 @@
                 ['LogLevel',3],
                 ['BaseAddress',0x80000000],
                 ['Length',4096],
-                ['DIP',0x1]
+                ['DIP',0x0]
                 ]}]},
     {'Class':'UARTClass','Instances':[
           {'Name':'uart0','Attr':[
@@ -255,7 +255,7 @@
                 ['LogLevel',4],
                 ['BaseAddress',0xfffff000],
                 ['Length',4096],
-                ['Tech',0],
+                ['Tech',49],
                 ['AdcDetector',0x00]
                 ]}]},
     {'Class':'BusGenericClass','Instances':[

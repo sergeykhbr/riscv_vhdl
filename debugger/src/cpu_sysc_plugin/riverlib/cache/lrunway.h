@@ -66,6 +66,7 @@ SC_MODULE(lrunway) {
     static const int LINE_WIDTH = WAYS_TOTAL * waybits;
 
     sc_signal<sc_uint<abits>> radr;
+    sc_signal<sc_uint<abits>> wb_tbl_wadr;
     sc_uint<LINE_WIDTH> tbl[LINES_TOTAL];
 
     sc_signal<sc_uint<LINE_WIDTH>> wb_tbl_rdata;
@@ -85,7 +86,10 @@ void lrunway<abits, waybits>::generateVCD(sc_trace_file *i_vcd,
         sc_trace(o_vcd, o_lru, o_lru.name());
 
         std::string pn(name());
+        sc_trace(o_vcd, wb_tbl_rdata, pn + ".wb_tbl_rdata");
         sc_trace(o_vcd, wb_tbl_wdata, pn + ".wb_tbl_wdata");
+        sc_trace(o_vcd, wb_tbl_wadr, pn + ".wb_tbl_wadr");
+        sc_trace(o_vcd, tbl[0], pn + ".tbl0");
     }
 }
 
@@ -97,13 +101,15 @@ void lrunway<abits, waybits>::comb() {
     bool v_we;
     bool shift_ena;
 
-    vb_tbl_rdata = tbl[radr.read().to_int()];
+    vb_tbl_rdata = wb_tbl_rdata;
+    wb_tbl_wadr = radr.read();
 
     shift_ena = 0;
     v_we = i_we.read();
     vb_tbl_wdata = vb_tbl_rdata;
     if (i_flush.read() == 1) {
         v_we = 1;
+        wb_tbl_wadr = i_addr.read();
         for (int i = 0; i < WAYS_TOTAL; i++) {
             vb_tbl_wdata((i+1)*waybits-1, i*waybits) = i;
         }
@@ -173,7 +179,7 @@ void lrunway<abits, waybits>::registers() {
     radr = i_addr.read();
     wb_tbl_rdata = tbl[i_addr.read().to_int()];
     if (w_we.read() == 1) {
-        tbl[i_addr.read().to_int()] = wb_tbl_wdata;
+        tbl[wb_tbl_wadr.read().to_int()] = wb_tbl_wdata;
     }
 }
 
