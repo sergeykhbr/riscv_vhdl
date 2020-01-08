@@ -1,0 +1,3 @@
+linuxbuild/obj
+*.elf
+*.dump

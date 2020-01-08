@@ -135,7 +135,7 @@
                 ['HartID',0],
                 ['AsyncReset',false],
                 ['FpuEnable',true, 'Enable Hardware FPU module'],
-                ['TracerEnable',false, 'Enable Verification Trace collector module'],
+                ['TracerEnable',true, 'Enable Verification Trace collector module'],
                 ['Bus','axi0'],
                 ['CmdExecutor','cmdexec0']
                 ['Tap','edcltap']
@@ -170,7 +170,7 @@
     {'Class':'MemorySimClass','Instances':[
           {'Name':'sram0','Attr':[
                 ['LogLevel',1],
-                ['InitFile','../../../examples/zephyr/gcc711/zephyr.hex'],
+                ['InitFile','../../../examples/riscv-tests/makefiles/bin/riscv-tests.hex'],
                 ['ReadOnly',false],
                 ['BaseAddress',0x10000000],
                 ['Length',0x80000]
@@ -255,7 +255,7 @@
                 ['LogLevel',4],
                 ['BaseAddress',0xfffff000],
                 ['Length',4096],
-                ['Tech',49],
+                ['Tech',0],
                 ['AdcDetector',0x00]
                 ]}]},
     {'Class':'BusGenericClass','Instances':[

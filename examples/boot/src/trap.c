@@ -89,3 +89,15 @@ long interrupt_handler_c(long cause, long epc, long long regs[32]) {
 
     return epc;
 }
+
+void env_ucall_c(long long test_id) {
+    if (test_id != 0) {
+        print_uart("TEST_FAILED\r\n", 13);
+        print_uart("a0=", 3);
+        print_uart_hex(test_id);
+        print_uart("\r\n", 2);
+    } else {
+        print_uart("TEST_PASSED\r\n", 13);
+    }
+    while (1) {}
+}

@@ -24,6 +24,7 @@
   .globl _start
   .globl exception_handler_c
   .globl interrupt_handler_c
+  .globl env_ucall_c
 
 trap_table:
 # 8-bytes per exception entry
@@ -46,7 +47,7 @@ trap_table:
   nop
   j exception_entry   # Store Fault
   nop
-  j exception_entry   # Call from U-mode
+  j env_ucall         # Call from U-mode
   nop
   j exception_entry   # Call from S-mode
   nop
@@ -209,6 +210,12 @@ sp_init_coreall:
   ##! sets the pc to the value stored in the Xepc register, where X is the privilege mode (S, H, or M) in
   ##! which the ERET instruction was executed.
   mret
+
+env_ucall:
+  li  sp, SRAM_BASE_ADDR+SRAM_SIZE_BYTES
+  addi sp, sp,-264
+  jal env_ucall_c
+  ## never reach here
 
 exception_entry:
   fence
