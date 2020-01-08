@@ -334,10 +334,6 @@ void InstrExecute::comb() {
     sc_uint<RISCV_ARCH> vb_and64;
     sc_uint<RISCV_ARCH> vb_or64;
     sc_uint<RISCV_ARCH> vb_xor64;
-    bool v_memop_load;
-    bool v_memop_store;
-    bool v_memop_sign_ext;
-    sc_uint<2> vb_memop_size;
     sc_uint<BUS_ADDR_WIDTH> vb_memop_addr;
     sc_bv<Instr_Total> wv;
     int opcode_len;
@@ -355,13 +351,11 @@ void InstrExecute::comb() {
     bool v_o_valid;
     sc_uint<RISCV_ARCH> vb_o_wdata;
     bool v_hold_exec;
-    int int_waddr;
     bool v_next_mul_ready;
     bool v_next_div_ready;
     bool v_next_fpu_ready;
     bool v_wena;
     bool v_whazard;
-    sc_uint<4> vb_wtag;
     sc_uint<6> vb_waddr;
 
     v = r;
@@ -371,10 +365,6 @@ void InstrExecute::comb() {
     vb_csr_wdata = 0;
     vb_res = 0;
     vb_off = 0;
-    v_memop_load = 0;
-    v_memop_store = 0;
-    v_memop_sign_ext = 0;
-    vb_memop_size = 0;
     vb_memop_addr = 0;
     wv = i_ivec.read();
     v_call = 0;
@@ -384,8 +374,6 @@ void InstrExecute::comb() {
     v.ret = 0;
     vb_rdata1 = 0;
     vb_rdata2 = 0;
-    int_waddr = i_d_waddr.read().to_int();
-
 
     vb_i_rdata1 = i_rdata1;
     vb_i_rdata2 = i_rdata2;
@@ -563,12 +551,8 @@ void InstrExecute::comb() {
     } else if (w_arith_valid[Multi_FPU]) {
         vb_res = wb_arith_res.arr[Multi_FPU];
     } else if (i_memop_load) {
-        v_memop_load = 1;
-        v_memop_sign_ext = i_memop_sign_ext;
-        vb_memop_size = i_memop_size;
+        vb_res = 0;
     } else if (i_memop_store) {
-        v_memop_store = 1;
-        vb_memop_size = i_memop_size;
         vb_res = vb_rdata2;
     } else if (wv[Instr_JAL].to_bool()) {
         vb_res = vb_npc_incr;
@@ -660,7 +644,6 @@ void InstrExecute::comb() {
     // Latch ready result
     v_wena = 0;
     v_whazard = 0;
-    vb_wtag = i_wtag.read();
     vb_waddr = i_d_waddr.read();
     vb_o_wdata = vb_res;
     if (w_next_ready == 1) {
@@ -678,7 +661,7 @@ void InstrExecute::comb() {
 
         v.memop_waddr = i_d_waddr.read();
         v.memop_wtag = i_wtag.read() + 1;
-        v_whazard = v_memop_load;
+        v_whazard = i_memop_load;
         v_wena = i_d_waddr.read().or_reduce() && !w_multi_ena;
 
         v.wval = vb_res;

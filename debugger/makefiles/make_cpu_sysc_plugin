@@ -55,11 +55,8 @@ SOURCES = \
 	cpu_riscv_rtl \
 	rtl_wrapper \
 	river_top \
-	ilru \
-	ramtagi \
-	iwaymem \
 	icache_lru \
-	dcache \
+	dcache_lru \
 	mpu \
 	cache_top \
 	divstage64 \
@@ -74,7 +71,6 @@ SOURCES = \
 	memaccess \
 	proc \
 	regibank \
-	regfbank \
 	d2l_d \
 	l2d_d \
 	fadd_d \
