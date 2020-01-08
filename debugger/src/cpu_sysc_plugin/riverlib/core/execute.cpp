@@ -351,6 +351,7 @@ void InstrExecute::comb() {
     bool v_o_valid;
     sc_uint<RISCV_ARCH> vb_o_wdata;
     bool v_hold_exec;
+    bool v_multi_ena;
     bool v_next_mul_ready;
     bool v_next_div_ready;
     bool v_next_fpu_ready;
@@ -449,7 +450,7 @@ void InstrExecute::comb() {
                           || wv[Instr_REMW] || wv[Instr_REMUW]);
 
 
-    w_multi_ena = v_next_mul_ready || v_next_div_ready || v_next_fpu_ready;
+    v_multi_ena = v_next_mul_ready || v_next_div_ready || v_next_fpu_ready;
 
     w_arith_ena[Multi_MUL] = v_next_mul_ready;
     w_arith_ena[Multi_DIV] = v_next_div_ready;
@@ -662,7 +663,7 @@ void InstrExecute::comb() {
         v.memop_waddr = i_d_waddr.read();
         v.memop_wtag = i_wtag.read() + 1;
         v_whazard = i_memop_load;
-        v_wena = i_d_waddr.read().or_reduce() && !w_multi_ena;
+        v_wena = i_d_waddr.read().or_reduce() && !v_multi_ena;
 
         v.wval = vb_res;
         v.call = v_call;
@@ -687,6 +688,8 @@ void InstrExecute::comb() {
 
     wb_rdata1 = vb_rdata1;
     wb_rdata2 = vb_rdata2;
+
+    w_multi_ena = v_multi_ena;
 
     o_trap_ready = w_next_ready;
 

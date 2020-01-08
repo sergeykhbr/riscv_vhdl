@@ -336,6 +336,7 @@ begin
 
     variable w_exception_store : std_logic;
     variable w_exception_load : std_logic;
+    variable v_multi_ena : std_logic;
     variable w_multi_ready : std_logic;
     variable w_multi_busy : std_logic;
     variable w_next_ready : std_logic;
@@ -482,7 +483,7 @@ begin
                           or wv(Instr_REMW) or wv(Instr_REMUW));
 
 
-    w_multi_ena <= v_next_mul_ready or v_next_div_ready or v_next_fpu_ready;
+    v_multi_ena := v_next_mul_ready or v_next_div_ready or v_next_fpu_ready;
 
     w_arith_ena(Multi_MUL) <= v_next_mul_ready;
     w_arith_ena(Multi_DIV) <= v_next_div_ready;
@@ -695,7 +696,7 @@ begin
         v.memop_waddr := i_d_waddr;
         v.memop_wtag := i_wtag + 1;
         v_whazard := i_memop_load;
-        v_wena := or_reduce(i_d_waddr) and not w_multi_ena;
+        v_wena := or_reduce(i_d_waddr) and not v_multi_ena;
 
         v.wval := vb_res;
         v.call := v_call;
@@ -720,6 +721,8 @@ begin
 
     wb_rdata1 <= vb_rdata1;
     wb_rdata2 <= vb_rdata2;
+
+    w_multi_ena <= v_multi_ena;
 
     o_trap_ready <= w_next_ready;
 

@@ -213,6 +213,7 @@ begin
 
     v_req_ready := '0';
     v_resp_valid := '0';
+    vb_resp_data := (others => '0');
     v_resp_er_load_fault := '0';
     v_resp_er_store_fault := '0';
     v_flush := '0';
