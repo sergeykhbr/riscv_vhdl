@@ -52,6 +52,7 @@ begin
 
   comb : process(i_flush, i_addr, i_we, i_lru, wb_tbl_rdata, radr)
     variable vb_tbl_wdata : std_logic_vector(7 downto 0);
+    variable vb_tbl_waddr :std_logic_vector(abits-1 downto 0);
     variable v_we : std_logic;
     variable shift_ena : std_logic;
   begin
@@ -59,11 +60,11 @@ begin
     shift_ena := '0';
     v_we := i_we;
     vb_tbl_wdata := wb_tbl_rdata;
-    wb_tbl_waddr := radr;
+    vb_tbl_waddr := radr;
 
     if i_flush = '1' then
         v_we := '1';
-        wb_tbl_waddr := i_addr;
+        vb_tbl_waddr := i_addr;
         for i in 0 to WAYS_TOTAL-1 loop
             vb_tbl_wdata((i+1)*waybits-1 downto i*waybits) := conv_std_logic_vector(i, waybits);
         end loop;
@@ -89,6 +90,7 @@ begin
 
     w_we <= v_we;
     wb_tbl_wdata <= vb_tbl_wdata;
+    wb_tbl_waddr <= vb_tbl_waddr;
   end process;
 
   wb_tbl_rdata <= tbl(conv_integer(radr));
