@@ -91,8 +91,9 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     o_pc("o_pc"),
     o_npc("o_npc"),
     o_instr("o_instr"),
-    o_fence("o_fence"),
-    o_fencei("o_fencei"),
+    i_flushd_end("i_flushd_end"),
+    o_flushd("o_flushd"),
+    o_flushi("o_flushi"),
     o_call("o_call"),
     o_ret("o_ret"),
     o_mret("o_mret"),
@@ -135,6 +136,7 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     sensitive << i_csr_rdata;
     sensitive << i_trap_valid;
     sensitive << i_trap_pc;
+    sensitive << i_flushd_end;
     sensitive << r.pc;
     sensitive << r.npc;
     sensitive << r.instr;
@@ -147,6 +149,7 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     sensitive << r.valid;
     sensitive << r.call;
     sensitive << r.ret;
+    sensitive << r.hold_fencei;
     sensitive << wb_arith_res.arr[Multi_MUL];
     sensitive << wb_arith_res.arr[Multi_DIV];
     sensitive << wb_arith_res.arr[Multi_FPU];
@@ -297,6 +300,7 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, wb_arith_res.arr[Multi_DIV], pn + ".wb_arith_res(1)");
         sc_trace(o_vcd, w_arith_ena[Multi_FPU], pn + ".w_arith_ena(2)");
         sc_trace(o_vcd, wb_arith_res.arr[Multi_FPU], pn + ".wb_arith_res(2)");
+        sc_trace(o_vcd, r.hold_fencei, pn + ".r_hold_fencei");
         sc_trace(o_vcd, r.memop_waddr, pn + ".r_memop_waddr");
         sc_trace(o_vcd, r.memop_wtag, pn + ".r_memop_wtag");
         sc_trace(o_vcd, w_next_ready, pn + ".w_next_ready");
@@ -411,17 +415,20 @@ void InstrExecute::comb() {
 
     /** Hold signals:
             1. hazard
-            2. memaccess not ready to accept next memop operation
+            2. memaccess not ready to accept next memop operation (or flush request)
             3. multi instruction
+            4. Flushing $D on flush.i instruction
      */
     w_hold_hazard = i_rhazard1.read() || i_rhazard2.read();
 
-    w_hold_memop = (i_memop_load.read() || i_memop_store.read())
+    w_hold_memop = (i_memop_load.read() || i_memop_store.read()
+                    || wv[Instr_FENCE] || wv[Instr_FENCE_I])
                 && !i_memop_ready.read();
 
     w_hold_multi = w_multi_busy | w_multi_ready;
 
-    v_hold_exec = w_hold_hazard || w_hold_memop || w_hold_multi;
+    v_hold_exec = w_hold_hazard || w_hold_memop || w_hold_multi
+                || r.hold_fencei.read();
 
     w_next_ready = 0;
     if (i_d_valid.read() == 1 && i_d_pc.read() == r.npc.read()
@@ -668,7 +675,13 @@ void InstrExecute::comb() {
         v.wval = vb_res;
         v.call = v_call;
         v.ret = v_ret;
-    } 
+        v.flushd = v_fencei || v_fence;
+        v.hold_fencei = v_fencei;
+    }
+
+    if (i_flushd_end.read() == 1) {
+        v.hold_fencei = 0;
+    }
     
     if (w_multi_ready == 1) {
         v_wena = r.memop_waddr.read().or_reduce();
@@ -726,8 +739,8 @@ void InstrExecute::comb() {
     o_pc = r.pc;
     o_npc = r.npc;
     o_instr = r.instr;
-    o_fence = v_fence;
-    o_fencei = v_fencei;
+    o_flushd = r.flushd;    // must be post in a memory queue to avoid to early flushing
+    o_flushi = v_fencei || v_fence;
     o_call = r.call;
     o_ret = r.ret;
     o_mret = v_mret;

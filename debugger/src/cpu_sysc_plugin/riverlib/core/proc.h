@@ -86,6 +86,7 @@ SC_MODULE(Processor) {
     sc_out<bool> o_flush_valid;                         // Remove address from ICache is valid
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_data_flush_address;    // Address of instruction to remove from D$
     sc_out<bool> o_data_flush_valid;                         // Remove address from D$ is valid
+    sc_in<bool> i_data_flush_end;
     sc_in<sc_uint<4>> i_istate;                         // ICache transaction state
     sc_in<sc_uint<4>> i_dstate;                         // DCache transaction state
     sc_in<sc_uint<2>> i_cstate;                         // CacheTop state machine value
@@ -176,8 +177,8 @@ private:
         sc_signal<sc_uint<6>> memop_waddr;
         sc_signal<sc_uint<4>> memop_wtag;
         sc_signal<bool> d_ready;           // Hold pipeline from Execution stage
-        sc_signal<bool> fence;                      // instruction FENCE
-        sc_signal<bool> fencei;                     // instruction FENCE.I
+        sc_signal<bool> flushd;
+        sc_signal<bool> flushi;
         sc_signal<bool> call;                       // pseudo-instruction CALL
         sc_signal<bool> ret;                        // pseudo-instruction RET
         sc_signal<bool> multi_ready;
@@ -185,6 +186,7 @@ private:
 
     struct MemoryType {
         sc_signal<bool> memop_ready;
+        sc_signal<bool> flushd;
     };
 
     struct WriteBackType {

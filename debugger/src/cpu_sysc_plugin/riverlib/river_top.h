@@ -106,6 +106,7 @@ SC_MODULE(RiverTop) {
     sc_signal<bool> w_flush_valid;
     sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_data_flush_address;
     sc_signal<bool> w_data_flush_valid;
+    sc_signal<bool> w_data_flush_end;
     sc_signal<sc_uint<4>> wb_istate;
     sc_signal<sc_uint<4>> wb_dstate;
     sc_signal<sc_uint<2>> wb_cstate;

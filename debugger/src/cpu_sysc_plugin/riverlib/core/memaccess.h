@@ -29,6 +29,8 @@ SC_MODULE(MemAccess) {
     sc_in<bool> i_e_valid;                          // Execution stage outputs are valid
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_e_pc;          // Execution stage instruction pointer
     sc_in<sc_uint<32>> i_e_instr;                   // Execution stage instruction value
+    sc_in<bool> i_e_flushd;
+    sc_out<bool> o_flushd;
 
     sc_in<sc_uint<6>> i_memop_waddr;                // Register address to be written (0=no writing)
     sc_in<sc_uint<4>> i_memop_wtag;                
@@ -109,7 +111,8 @@ private:
         iv.hold_rdata = 0;
     }
 
-    static const int QUEUE_WIDTH = 4
+    static const int QUEUE_WIDTH = 1   // i_e_flushd
+                                 + 4   // wtag
                                  + BUS_DATA_WIDTH
                                  + BUS_DATA_BYTES 
                                  + RISCV_ARCH

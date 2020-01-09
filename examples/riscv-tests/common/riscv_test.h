@@ -227,7 +227,7 @@ reset_vector:                                                           \
 
 #define EXTRA_DATA
 
-#define RVTEST_DATA_BEGIN
+#define RVTEST_DATA_BEGIN .align 4;
 #define RVTEST_DATA_BEGIN__                                               \
         EXTRA_DATA                                                      \
         .pushsection .tohost,"aw",@progbits;                            \
@@ -236,7 +236,7 @@ reset_vector:                                                           \
         .popsection;                                                    \
         .align 4; .global begin_signature; begin_signature:
 
-#define RVTEST_DATA_END
+#define RVTEST_DATA_END   .align 4;
 #define RVTEST_DATA_END__ .align 4; .global end_signature; end_signature:
 
 #endif

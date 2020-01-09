@@ -67,6 +67,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     o_flush_valid("o_flush_valid"),
     o_data_flush_address("o_data_flush_address"),
     o_data_flush_valid("o_data_flush_valid"),
+    i_data_flush_end("i_data_flush_end"),
     i_istate("i_istate"),
     i_dstate("i_dstate"),
     i_cstate("i_cstate") {
@@ -115,7 +116,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     fetch0->i_mem_load_fault(i_resp_ctrl_load_fault);
     fetch0->i_mem_executable(i_resp_ctrl_executable);
     fetch0->o_mem_resp_ready(o_resp_ctrl_ready);
-    fetch0->i_e_fencei(w.e.fencei);
+    fetch0->i_e_fencei(w.e.flushi);
     fetch0->i_predict_npc(bp.npc);
     fetch0->o_mem_req_fire(w.f.req_fire);
     fetch0->o_instr_load_fault(w.f.instr_load_fault);
@@ -142,7 +143,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     dec0->o_waddr(w.d.waddr);
     dec0->o_imm(w.d.imm);
     dec0->i_e_ready(w.e.d_ready);
-    dec0->i_e_fencei(w.e.fencei);
+    dec0->i_e_fencei(w.e.flushi);
     dec0->o_valid(w.d.instr_valid);
     dec0->o_pc(w.d.pc);
     dec0->o_instr(w.d.instr);
@@ -231,8 +232,9 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     exec0->o_pc(w.e.pc);
     exec0->o_npc(w.e.npc);
     exec0->o_instr(w.e.instr);
-    exec0->o_fence(w.e.fence);
-    exec0->o_fencei(w.e.fencei);
+    exec0->i_flushd_end(i_data_flush_end);
+    exec0->o_flushd(w.e.flushd);
+    exec0->o_flushi(w.e.flushi);
     exec0->o_call(w.e.call);
     exec0->o_ret(w.e.ret);
     exec0->o_mret(w.e.mret);
@@ -245,6 +247,8 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     mem0->i_e_valid(w.e.valid);
     mem0->i_e_pc(w.e.pc);
     mem0->i_e_instr(w.e.instr);
+    mem0->i_e_flushd(w.e.flushd);
+    mem0->o_flushd(w.m.flushd);
     mem0->i_memop_waddr(w.e.memop_waddr);
     mem0->i_memop_wtag(w.e.memop_wtag);
     mem0->i_memop_wdata(w.e.memop_wdata);
@@ -490,9 +494,9 @@ void Processor::comb() {
     o_time = dbg.clock_cnt;
     o_exec_cnt = dbg.executed_cnt;
 
-    o_flush_valid = w.e.fencei.read() || dbg.flush_valid.read()
+    o_flush_valid = w.e.flushi.read() || dbg.flush_valid.read()
                 || csr.break_event.read();
-    if (w.e.fencei.read() == 1) {
+    if (w.e.flushi.read() == 1) {
         o_flush_address = ~0ull;
     } else if (csr.break_event.read()) {
         o_flush_address = w.e.npc;
@@ -500,7 +504,7 @@ void Processor::comb() {
         o_flush_address = dbg.flush_address;
     }
     o_data_flush_address = ~0ull;
-    o_data_flush_valid = w.e.fence;
+    o_data_flush_valid = w.m.flushd;
 
     o_halted = dbg.halt;
 }

@@ -71,6 +71,7 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset) :
     i_flush_valid("i_flush_valid"),
     i_data_flush_address("i_data_flush_address"),
     i_data_flush_valid("i_data_flush_valid"),
+    o_data_flush_end("o_data_flush_end"),
     o_istate("o_istate"),
     o_dstate("o_dstate"),
     o_cstate("o_cstate") {
@@ -171,6 +172,7 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset) :
     d0->i_mpu_flags(wb_mpu_dflags);
     d0->i_flush_address(i_data_flush_address);
     d0->i_flush_valid(i_data_flush_valid);
+    d0->o_flush_end(o_data_flush_end);
     d0->o_state(o_dstate);
 
     mpu0 = new MPU("mpu0", async_reset);

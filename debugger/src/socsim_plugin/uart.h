@@ -106,8 +106,8 @@ class UART : public RegMemBankGeneric,
                     MappedReg64Type(parent, name, addr, 4) {
             value_type t;
             t.v = 0;
-            t.b.rx_irq_ena = 1;
-            t.b.tx_irq_ena = 1;
+            t.b.rx_irq_ena = 0;
+            t.b.tx_irq_ena = 0;
             value_.val = t.v;
         }
 

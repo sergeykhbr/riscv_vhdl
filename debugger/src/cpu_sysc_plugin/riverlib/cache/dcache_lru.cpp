@@ -54,6 +54,7 @@ DCacheLru::DCacheLru(sc_module_name name_, bool async_reset)
     i_mpu_flags("i_mpu_flags"),
     i_flush_address("i_flush_address"),
     i_flush_valid("i_flush_valid"),
+    o_flush_end("o_flush_end"),
     o_state("o_state") {
     async_reset_ = async_reset;
 
@@ -203,6 +204,7 @@ void DCacheLru::comb() {
     bool v_resp_er_load_fault;
     bool v_resp_er_store_fault;
     bool v_flush;
+    bool v_flush_end;
     bool v_line_cs;
     sc_uint<BUS_ADDR_WIDTH> vb_line_addr;
     sc_biguint<DCACHE_LINE_BITS> vb_line_wdata;
@@ -221,6 +223,7 @@ void DCacheLru::comb() {
     v_resp_er_load_fault = 0;
     v_resp_er_store_fault = 0;
     v_flush = 0;
+    v_flush_end = 0;
     v_last = 0;
     v_req_mem_len = DCACHE_BURST_LEN-1;
     ridx = r.req_addr.read()(CFG_DLOG2_BYTES_PER_LINE-1, CFG_LOG2_DATA_BYTES);
@@ -550,6 +553,7 @@ void DCacheLru::comb() {
             if (r.flush_cnt.read().or_reduce() == 0) {
                 v.state = State_Idle;
                 v.init = 0;
+                v_flush_end = 1;
             }
         }
 
@@ -599,6 +603,7 @@ void DCacheLru::comb() {
     o_resp_er_mpu_load = r.mpu_er_load;
     o_resp_er_mpu_store = r.mpu_er_store;
     o_mpu_addr = r.req_addr.read();
+    o_flush_end = v_flush_end;
     o_state = r.state;
 }
 

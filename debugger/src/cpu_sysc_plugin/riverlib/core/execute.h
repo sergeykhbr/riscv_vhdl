@@ -103,8 +103,9 @@ SC_MODULE(InstrExecute) {
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_pc;       // Valid instruction pointer
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_npc;      // Next instruction pointer. Next decoded pc must match to this value or will be ignored.
     sc_out<sc_uint<32>> o_instr;                // Valid instruction value
-    sc_out<bool> o_fence;                                                // 
-    sc_out<bool> o_fencei;                                               // 
+    sc_in<bool> i_flushd_end;
+    sc_out<bool> o_flushd;
+    sc_out<bool> o_flushi;
     sc_out<bool> o_call;                        // CALL pseudo instruction detected
     sc_out<bool> o_ret;                         // RET pseudoinstruction detected
     sc_out<bool> o_mret;                        // MRET.
@@ -150,6 +151,8 @@ private:
         sc_signal<bool> valid;
         sc_signal<bool> call;
         sc_signal<bool> ret;
+        sc_signal<bool> flushd;
+        sc_signal<bool> hold_fencei;
     } v, r;
 
     void R_RESET(RegistersType &iv) {
@@ -169,6 +172,8 @@ private:
         iv.valid = 0;
         iv.call = 0;
         iv.ret = 0;
+        iv.flushd = 0;
+        iv.hold_fencei = 0;
     }
 
     multi_arith_type wb_arith_res;

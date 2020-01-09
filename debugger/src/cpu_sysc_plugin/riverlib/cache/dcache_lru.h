@@ -64,6 +64,7 @@ SC_MODULE(DCacheLru) {
     // Debug interface
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_flush_address;
     sc_in<bool> i_flush_valid;
+    sc_out<bool> o_flush_end;
     sc_out<sc_uint<4>> o_state;
 
     void comb();
