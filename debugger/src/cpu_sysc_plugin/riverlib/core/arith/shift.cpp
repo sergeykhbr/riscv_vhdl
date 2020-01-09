@@ -43,7 +43,7 @@ void Shifter::comb() {
     sc_uint<64> wb_sllw;
     sc_uint<64> wb_srl;
     sc_uint<64> wb_sra;
-    sc_uint<32> wb_srlw;
+    sc_uint<64> wb_srlw;
     sc_uint<64> wb_sraw;
     sc_uint<64> v64;
     sc_uint<32> v32;
@@ -390,130 +390,162 @@ void Shifter::comb() {
 
     switch (i_a2.read()(4, 0)) {
     case 0:
+        wb_sllw = v32;
         wb_srlw = v32;
         wb_sraw = (msk32(63, 32), v32);
         break;
     case 1:
+        wb_sllw = v32 << 1;
         wb_srlw = v32(31, 1);
         wb_sraw = (msk32(63, 31), v32(31, 1));
         break;
     case 2:
+        wb_sllw = v32 << 2;
         wb_srlw = v32(31, 2);
         wb_sraw = (msk32(63, 30), v32(31, 2));
         break;
     case 3:
+        wb_sllw = v32 << 3;
         wb_srlw = v32(31, 3);
         wb_sraw = (msk32(63, 29), v32(31, 3));
         break;
     case 4:
+        wb_sllw = v32 << 4;
         wb_srlw = v32(31, 4);
         wb_sraw = (msk32(63, 28), v32(31, 4));
         break;
     case 5:
+        wb_sllw = v32 << 5;
         wb_srlw = v32(31, 5);
         wb_sraw = (msk32(63, 27), v32(31, 5));
         break;
     case 6:
+        wb_sllw = v32 << 6;
         wb_srlw = v32(31, 6);
         wb_sraw = (msk32(63, 26), v32(31, 6));
         break;
     case 7:
+        wb_sllw = v32 << 7;
         wb_srlw = v32(31, 7);
         wb_sraw = (msk32(63, 25), v32(31, 7));
         break;
     case 8:
+        wb_sllw = v32 << 8;
         wb_srlw = v32(31, 8);
         wb_sraw = (msk32(63, 24), v32(31, 8));
         break;
     case 9:
+        wb_sllw = v32 << 9;
         wb_srlw = v32(31, 9);
         wb_sraw = (msk32(63, 23), v32(31, 9));
         break;
     case 10:
+        wb_sllw = v32 << 10;
         wb_srlw = v32(31, 10);
         wb_sraw = (msk32(63, 22), v32(31, 10));
         break;
     case 11:
+        wb_sllw = v32 << 11;
         wb_srlw = v32(31, 11);
         wb_sraw = (msk32(63, 21), v32(31, 11));
         break;
     case 12:
+        wb_sllw = v32 << 12;
         wb_srlw = v32(31, 12);
         wb_sraw = (msk32(63, 20), v32(31, 12));
         break;
     case 13:
+        wb_sllw = v32 << 13;
         wb_srlw = v32(31, 13);
         wb_sraw = (msk32(63, 19), v32(31, 13));
         break;
     case 14:
+        wb_sllw = v32 << 14;
         wb_srlw = v32(31, 14);
         wb_sraw = (msk32(63, 18), v32(31, 14));
         break;
     case 15:
+        wb_sllw = v32 << 15;
         wb_srlw = v32(31, 15);
         wb_sraw = (msk32(63, 17), v32(31, 15));
         break;
     case 16:
+        wb_sllw = v32 << 16;
         wb_srlw = v32(31, 16);
         wb_sraw = (msk32(63, 16), v32(31, 16));
         break;
     case 17:
+        wb_sllw = v32 << 17;
         wb_srlw = v32(31, 17);
         wb_sraw = (msk32(63, 15), v32(31, 17));
         break;
     case 18:
+        wb_sllw = v32 << 18;
         wb_srlw = v32(31, 18);
         wb_sraw = (msk32(63, 14), v32(31, 18));
         break;
     case 19:
+        wb_sllw = v32 << 19;
         wb_srlw = v32(31, 19);
         wb_sraw = (msk32(63, 13), v32(31, 19));
         break;
     case 20:
+        wb_sllw = v32 << 20;
         wb_srlw = v32(31, 20);
         wb_sraw = (msk32(63, 12), v32(31, 20));
         break;
     case 21:
+        wb_sllw = v32 << 21;
         wb_srlw = v32(31, 21);
         wb_sraw = (msk32(63, 11), v32(31, 21));
         break;
     case 22:
+        wb_sllw = v32 << 22;
         wb_srlw = v32(31, 22);
         wb_sraw = (msk32(63, 10), v32(31, 22));
         break;
     case 23:
+        wb_sllw = v32 << 23;
         wb_srlw = v32(31, 23);
         wb_sraw = (msk32(63, 9), v32(31, 23));
         break;
     case 24:
+        wb_sllw = v32 << 24;
         wb_srlw = v32(31, 24);
         wb_sraw = (msk32(63, 8), v32(31, 24));
         break;
     case 25:
+        wb_sllw = v32 << 25;
         wb_srlw = v32(31, 25);
         wb_sraw = (msk32(63, 7), v32(31, 25));
         break;
     case 26:
+        wb_sllw = v32 << 26;
         wb_srlw = v32(31, 26);
         wb_sraw = (msk32(63, 6), v32(31, 26));
         break;
     case 27:
+        wb_sllw = v32 << 27;
         wb_srlw = v32(31, 27);
         wb_sraw = (msk32(63, 5), v32(31, 27));
         break;
     case 28:
+        wb_sllw = v32 << 28;
         wb_srlw = v32(31, 28);
         wb_sraw = (msk32(63, 4), v32(31, 28));
         break;
     case 29:
+        wb_sllw = v32 << 29;
         wb_srlw = v32(31, 29);
         wb_sraw = (msk32(63, 3), v32(31, 29));
         break;
     case 30:
+        wb_sllw = v32 << 30;
         wb_srlw = v32(31, 30);
         wb_sraw = (msk32(63, 2), v32(31, 30));
         break;
     case 31:
+        wb_sllw = v32 << 31;
         wb_srlw = v32(31, 31);
         wb_sraw = (msk32(63, 1), v32(31, 31));
         break;
@@ -521,15 +553,20 @@ void Shifter::comb() {
     }
 
     o_sll = wb_sll;
-    wb_sllw = 0;
-    wb_sllw(31, 0) = wb_sll(31, 0);
-    if (wb_sll[31]) {
+    if (wb_sllw[31]) {
         wb_sllw(63, 32) = ~0;
+    } else {
+        wb_sllw(63, 32) = 0;
     }
     o_sllw = wb_sllw;
     o_srl = wb_srl;
     o_sra = wb_sra;
-    o_srlw = wb_srlw.to_uint64();
+
+    if (wb_srlw[31]) {
+        // when shift right == 0 and a1[31] = 1
+        wb_srlw(63, 32) = ~0;
+    }
+    o_srlw = wb_srlw;
     o_sraw = wb_sraw;
 }
 

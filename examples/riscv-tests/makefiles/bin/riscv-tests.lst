@@ -509,7 +509,7 @@ Disassembly of section .text:
 0000000010000430 <test_3>:
   TEST_IMM_OP( 3,  addi, 0x00000002, 0x00000001, 0x001 );
     10000430:	4085                	li	ra,1
-    10000432:	00108713          	addi	a4,ra,1 # ffffffff80000001 <_end+0xffffffff6fff5f0f>
+    10000432:	00108713          	addi	a4,ra,1 # ffffffff80000001 <_end+0xffffffff6fff5ec1>
     10000436:	4e89                	li	t4,2
     10000438:	418d                	li	gp,3
     1000043a:	01d70463          	beq	a4,t4,10000442 <test_4>
@@ -546,10 +546,10 @@ Disassembly of section .text:
 000000001000047e <test_7>:
   TEST_IMM_OP( 7,  addi, 0xffffffff7ffff800, 0xffffffff80000000, 0x800 );
     1000047e:	800000b7          	lui	ra,0x80000
-    10000482:	80008713          	addi	a4,ra,-2048 # ffffffff7ffff800 <_end+0xffffffff6fff570e>
+    10000482:	80008713          	addi	a4,ra,-2048 # ffffffff7ffff800 <_end+0xffffffff6fff56c0>
     10000486:	fff00e9b          	addiw	t4,zero,-1
     1000048a:	01fe9e93          	slli	t4,t4,0x1f
-    1000048e:	800e8e93          	addi	t4,t4,-2048 # ffffffff7ffff800 <_end+0xffffffff6fff570e>
+    1000048e:	800e8e93          	addi	t4,t4,-2048 # ffffffff7ffff800 <_end+0xffffffff6fff56c0>
     10000492:	419d                	li	gp,7
     10000494:	01d70463          	beq	a4,t4,1000049c <test_8>
     10000498:	2930906f          	j	10009f2a <fail>
@@ -579,10 +579,10 @@ Disassembly of section .text:
   TEST_IMM_OP( 10, addi, 0x00000000800007fe, 0x7fffffff, 0x7ff );
     100004ce:	800000b7          	lui	ra,0x80000
     100004d2:	fff0809b          	addiw	ra,ra,-1
-    100004d6:	7ff08713          	addi	a4,ra,2047 # ffffffff800007ff <_end+0xffffffff6fff670d>
+    100004d6:	7ff08713          	addi	a4,ra,2047 # ffffffff800007ff <_end+0xffffffff6fff66bf>
     100004da:	00100e9b          	addiw	t4,zero,1
     100004de:	01fe9e93          	slli	t4,t4,0x1f
-    100004e2:	7fee8e93          	addi	t4,t4,2046 # ffffffff800007fe <_end+0xffffffff6fff670c>
+    100004e2:	7fee8e93          	addi	t4,t4,2046 # ffffffff800007fe <_end+0xffffffff6fff66be>
     100004e6:	41a9                	li	gp,10
     100004e8:	01d70463          	beq	a4,t4,100004f0 <test_11>
     100004ec:	23f0906f          	j	10009f2a <fail>
@@ -591,7 +591,7 @@ Disassembly of section .text:
 
   TEST_IMM_OP( 11, addi, 0xffffffff800007ff, 0xffffffff80000000, 0x7ff );
     100004f0:	800000b7          	lui	ra,0x80000
-    100004f4:	7ff08713          	addi	a4,ra,2047 # ffffffff800007ff <_end+0xffffffff6fff670d>
+    100004f4:	7ff08713          	addi	a4,ra,2047 # ffffffff800007ff <_end+0xffffffff6fff66bf>
     100004f8:	80000eb7          	lui	t4,0x80000
     100004fc:	7ffe8e9b          	addiw	t4,t4,2047
     10000500:	41ad                	li	gp,11
@@ -602,7 +602,7 @@ Disassembly of section .text:
   TEST_IMM_OP( 12, addi, 0x000000007ffff7ff, 0x000000007fffffff, 0x800 );
     1000050a:	800000b7          	lui	ra,0x80000
     1000050e:	fff0809b          	addiw	ra,ra,-1
-    10000512:	80008713          	addi	a4,ra,-2048 # ffffffff7ffff800 <_end+0xffffffff6fff570e>
+    10000512:	80008713          	addi	a4,ra,-2048 # ffffffff7ffff800 <_end+0xffffffff6fff56c0>
     10000516:	7ffffeb7          	lui	t4,0x7ffff
     1000051a:	7ffe8e9b          	addiw	t4,t4,2047
     1000051e:	41b1                	li	gp,12
@@ -642,7 +642,7 @@ Disassembly of section .text:
   TEST_IMM_OP( 16, addi, 0x0000000080000000, 0x7fffffff, 0x001 );
     1000055e:	800000b7          	lui	ra,0x80000
     10000562:	fff0809b          	addiw	ra,ra,-1
-    10000566:	00108713          	addi	a4,ra,1 # ffffffff80000001 <_end+0xffffffff6fff5f0f>
+    10000566:	00108713          	addi	a4,ra,1 # ffffffff80000001 <_end+0xffffffff6fff5ec1>
     1000056a:	00100e9b          	addiw	t4,zero,1
     1000056e:	01fe9e93          	slli	t4,t4,0x1f
     10000572:	41c1                	li	gp,16
@@ -2868,7 +2868,7 @@ RVTEST_CODE_BEGIN
     100018fa:	fff08093          	addi	ra,ra,-1 # feffff <test_2-0xf010001>
     100018fe:	0010011b          	addiw	sp,zero,1
     10001902:	02011113          	slli	sp,sp,0x20
-    10001906:	fff10113          	addi	sp,sp,-1 # 22221fff <_end+0x12217f0d>
+    10001906:	fff10113          	addi	sp,sp,-1 # 22221fff <_end+0x12217ebf>
     1000190a:	0020f863          	bleu	sp,ra,1000191a <test_4+0x2a>
     1000190e:	00300463          	beq	zero,gp,10001916 <test_4+0x26>
     10001912:	6180806f          	j	10009f2a <fail>
@@ -2986,7 +2986,7 @@ RVTEST_CODE_BEGIN
     10001a3e:	4201                	li	tp,0
     10001a40:	00f0009b          	addiw	ra,zero,15
     10001a44:	01c09093          	slli	ra,ra,0x1c
-    10001a48:	fff08093          	addi	ra,ra,-1 # ffffffff7fffffff <_end+0xffffffff6fff5f0d>
+    10001a48:	fff08093          	addi	ra,ra,-1 # ffffffff7fffffff <_end+0xffffffff6fff5ebf>
     10001a4c:	00f0011b          	addiw	sp,zero,15
     10001a50:	01c11113          	slli	sp,sp,0x1c
     10001a54:	0020e463          	bltu	ra,sp,10001a5c <test_12+0x20>
@@ -3590,7 +3590,7 @@ RVTEST_CODE_BEGIN
     10001fa8:	01c09093          	slli	ra,ra,0x1c
     10001fac:	00f0011b          	addiw	sp,zero,15
     10001fb0:	01c11113          	slli	sp,sp,0x1c
-    10001fb4:	fff10113          	addi	sp,sp,-1 # ffffffff7fffffff <_end+0xffffffff6fff5f0d>
+    10001fb4:	fff10113          	addi	sp,sp,-1 # ffffffff7fffffff <_end+0xffffffff6fff5ebf>
     10001fb8:	0020f463          	bleu	sp,ra,10001fc0 <test_9+0x20>
     10001fbc:	76f0706f          	j	10009f2a <fail>
     10001fc0:	0205                	addi	tp,tp,1
@@ -4349,7 +4349,7 @@ RVTEST_CODE_END
 
   TEST_LD_OP( 2, lb, 0xffffffffffffffff, 0,  tdat );
     100025f4:	00008097          	auipc	ra,0x8
-    100025f8:	a1008093          	addi	ra,ra,-1520 # 1000a004 <tdat>
+    100025f8:	a1c08093          	addi	ra,ra,-1508 # 1000a010 <tdat>
     100025fc:	00008703          	lb	a4,0(ra)
     10002600:	5efd                	li	t4,-1
     10002602:	4189                	li	gp,2
@@ -4359,7 +4359,7 @@ RVTEST_CODE_END
 000000001000260c <test_3>:
   TEST_LD_OP( 3, lb, 0x0000000000000000, 1,  tdat );
     1000260c:	00008097          	auipc	ra,0x8
-    10002610:	9f808093          	addi	ra,ra,-1544 # 1000a004 <tdat>
+    10002610:	a0408093          	addi	ra,ra,-1532 # 1000a010 <tdat>
     10002614:	00108703          	lb	a4,1(ra)
     10002618:	4e81                	li	t4,0
     1000261a:	418d                	li	gp,3
@@ -4369,7 +4369,7 @@ RVTEST_CODE_END
 0000000010002624 <test_4>:
   TEST_LD_OP( 4, lb, 0xfffffffffffffff0, 2,  tdat );
     10002624:	00008097          	auipc	ra,0x8
-    10002628:	9e008093          	addi	ra,ra,-1568 # 1000a004 <tdat>
+    10002628:	9ec08093          	addi	ra,ra,-1556 # 1000a010 <tdat>
     1000262c:	00208703          	lb	a4,2(ra)
     10002630:	5ec1                	li	t4,-16
     10002632:	4191                	li	gp,4
@@ -4379,7 +4379,7 @@ RVTEST_CODE_END
 000000001000263c <test_5>:
   TEST_LD_OP( 5, lb, 0x000000000000000f, 3, tdat );
     1000263c:	00008097          	auipc	ra,0x8
-    10002640:	9c808093          	addi	ra,ra,-1592 # 1000a004 <tdat>
+    10002640:	9d408093          	addi	ra,ra,-1580 # 1000a010 <tdat>
     10002644:	00308703          	lb	a4,3(ra)
     10002648:	4ebd                	li	t4,15
     1000264a:	4195                	li	gp,5
@@ -4392,7 +4392,7 @@ RVTEST_CODE_END
 
   TEST_LD_OP( 6, lb, 0xffffffffffffffff, -3, tdat4 );
     10002654:	00008097          	auipc	ra,0x8
-    10002658:	9b308093          	addi	ra,ra,-1613 # 1000a007 <tdat4>
+    10002658:	9bf08093          	addi	ra,ra,-1601 # 1000a013 <tdat4>
     1000265c:	ffd08703          	lb	a4,-3(ra)
     10002660:	5efd                	li	t4,-1
     10002662:	4199                	li	gp,6
@@ -4402,7 +4402,7 @@ RVTEST_CODE_END
 000000001000266c <test_7>:
   TEST_LD_OP( 7, lb, 0x0000000000000000, -2,  tdat4 );
     1000266c:	00008097          	auipc	ra,0x8
-    10002670:	99b08093          	addi	ra,ra,-1637 # 1000a007 <tdat4>
+    10002670:	9a708093          	addi	ra,ra,-1625 # 1000a013 <tdat4>
     10002674:	ffe08703          	lb	a4,-2(ra)
     10002678:	4e81                	li	t4,0
     1000267a:	419d                	li	gp,7
@@ -4412,7 +4412,7 @@ RVTEST_CODE_END
 0000000010002684 <test_8>:
   TEST_LD_OP( 8, lb, 0xfffffffffffffff0, -1,  tdat4 );
     10002684:	00008097          	auipc	ra,0x8
-    10002688:	98308093          	addi	ra,ra,-1661 # 1000a007 <tdat4>
+    10002688:	98f08093          	addi	ra,ra,-1649 # 1000a013 <tdat4>
     1000268c:	fff08703          	lb	a4,-1(ra)
     10002690:	5ec1                	li	t4,-16
     10002692:	41a1                	li	gp,8
@@ -4422,7 +4422,7 @@ RVTEST_CODE_END
 000000001000269c <test_9>:
   TEST_LD_OP( 9, lb, 0x000000000000000f, 0,   tdat4 );
     1000269c:	00008097          	auipc	ra,0x8
-    100026a0:	96b08093          	addi	ra,ra,-1685 # 1000a007 <tdat4>
+    100026a0:	97708093          	addi	ra,ra,-1673 # 1000a013 <tdat4>
     100026a4:	00008703          	lb	a4,0(ra)
     100026a8:	4ebd                	li	t4,15
     100026aa:	41a5                	li	gp,9
@@ -4435,7 +4435,7 @@ RVTEST_CODE_END
 
   TEST_CASE( 10, x5, 0xffffffffffffffff, \
     100026b4:	00008097          	auipc	ra,0x8
-    100026b8:	95008093          	addi	ra,ra,-1712 # 1000a004 <tdat>
+    100026b8:	95c08093          	addi	ra,ra,-1700 # 1000a010 <tdat>
     100026bc:	1081                	addi	ra,ra,-32
     100026be:	02008283          	lb	t0,32(ra)
     100026c2:	5efd                	li	t4,-1
@@ -4451,7 +4451,7 @@ RVTEST_CODE_END
 
   TEST_CASE( 11, x5, 0x0000000000000000, \
     100026ce:	00008097          	auipc	ra,0x8
-    100026d2:	93608093          	addi	ra,ra,-1738 # 1000a004 <tdat>
+    100026d2:	94208093          	addi	ra,ra,-1726 # 1000a010 <tdat>
     100026d6:	10e9                	addi	ra,ra,-6
     100026d8:	00708283          	lb	t0,7(ra)
     100026dc:	4e81                	li	t4,0
@@ -4469,7 +4469,7 @@ RVTEST_CODE_END
     100026e8:	41b1                	li	gp,12
     100026ea:	4201                	li	tp,0
     100026ec:	00008097          	auipc	ra,0x8
-    100026f0:	91908093          	addi	ra,ra,-1767 # 1000a005 <tdat2>
+    100026f0:	92508093          	addi	ra,ra,-1755 # 1000a011 <tdat2>
     100026f4:	00108703          	lb	a4,1(ra)
     100026f8:	00070313          	mv	t1,a4
     100026fc:	5ec1                	li	t4,-16
@@ -4484,7 +4484,7 @@ RVTEST_CODE_END
     1000270e:	41b5                	li	gp,13
     10002710:	4201                	li	tp,0
     10002712:	00008097          	auipc	ra,0x8
-    10002716:	8f408093          	addi	ra,ra,-1804 # 1000a006 <tdat3>
+    10002716:	90008093          	addi	ra,ra,-1792 # 1000a012 <tdat3>
     1000271a:	00108703          	lb	a4,1(ra)
     1000271e:	0001                	nop
     10002720:	00070313          	mv	t1,a4
@@ -4500,7 +4500,7 @@ RVTEST_CODE_END
     10002736:	41b9                	li	gp,14
     10002738:	4201                	li	tp,0
     1000273a:	00008097          	auipc	ra,0x8
-    1000273e:	8ca08093          	addi	ra,ra,-1846 # 1000a004 <tdat>
+    1000273e:	8d608093          	addi	ra,ra,-1834 # 1000a010 <tdat>
     10002742:	00108703          	lb	a4,1(ra)
     10002746:	0001                	nop
     10002748:	0001                	nop
@@ -4518,7 +4518,7 @@ RVTEST_CODE_END
     10002760:	41bd                	li	gp,15
     10002762:	4201                	li	tp,0
     10002764:	00008097          	auipc	ra,0x8
-    10002768:	8a108093          	addi	ra,ra,-1887 # 1000a005 <tdat2>
+    10002768:	8ad08093          	addi	ra,ra,-1875 # 1000a011 <tdat2>
     1000276c:	00108703          	lb	a4,1(ra)
     10002770:	5ec1                	li	t4,-16
     10002772:	01d70463          	beq	a4,t4,1000277a <test_15+0x1a>
@@ -4532,7 +4532,7 @@ RVTEST_CODE_END
     10002782:	41c1                	li	gp,16
     10002784:	4201                	li	tp,0
     10002786:	00008097          	auipc	ra,0x8
-    1000278a:	88008093          	addi	ra,ra,-1920 # 1000a006 <tdat3>
+    1000278a:	88c08093          	addi	ra,ra,-1908 # 1000a012 <tdat3>
     1000278e:	0001                	nop
     10002790:	00108703          	lb	a4,1(ra)
     10002794:	4ebd                	li	t4,15
@@ -4547,7 +4547,7 @@ RVTEST_CODE_END
     100027a6:	41c5                	li	gp,17
     100027a8:	4201                	li	tp,0
     100027aa:	00008097          	auipc	ra,0x8
-    100027ae:	85a08093          	addi	ra,ra,-1958 # 1000a004 <tdat>
+    100027ae:	86608093          	addi	ra,ra,-1946 # 1000a010 <tdat>
     100027b2:	0001                	nop
     100027b4:	0001                	nop
     100027b6:	00108703          	lb	a4,1(ra)
@@ -4566,7 +4566,7 @@ RVTEST_CODE_END
 
   TEST_CASE( 18, x2, 2, \
     100027cc:	00008297          	auipc	t0,0x8
-    100027d0:	83828293          	addi	t0,t0,-1992 # 1000a004 <tdat>
+    100027d0:	84428293          	addi	t0,t0,-1980 # 1000a010 <tdat>
     100027d4:	00028103          	lb	sp,0(t0)
     100027d8:	4109                	li	sp,2
     100027da:	4e89                	li	t4,2
@@ -4582,7 +4582,7 @@ RVTEST_CODE_END
 
   TEST_CASE( 19, x2, 2, \
     100027e6:	00008297          	auipc	t0,0x8
-    100027ea:	81e28293          	addi	t0,t0,-2018 # 1000a004 <tdat>
+    100027ea:	82a28293          	addi	t0,t0,-2006 # 1000a010 <tdat>
     100027ee:	00028103          	lb	sp,0(t0)
     100027f2:	0001                	nop
     100027f4:	4109                	li	sp,2
@@ -4600,7 +4600,7 @@ RVTEST_CODE_END
 
   TEST_LD_OP( 2, lbu, 0x00000000000000ff, 0,  tdat );
     10002804:	00008097          	auipc	ra,0x8
-    10002808:	80408093          	addi	ra,ra,-2044 # 1000a008 <tdat>
+    10002808:	81c08093          	addi	ra,ra,-2020 # 1000a020 <tdat>
     1000280c:	0000c703          	lbu	a4,0(ra)
     10002810:	0ff00e93          	li	t4,255
     10002814:	4189                	li	gp,2
@@ -4609,8 +4609,8 @@ RVTEST_CODE_END
 
 000000001000281e <test_3>:
   TEST_LD_OP( 3, lbu, 0x0000000000000000, 1,  tdat );
-    1000281e:	00007097          	auipc	ra,0x7
-    10002822:	7ea08093          	addi	ra,ra,2026 # 1000a008 <tdat>
+    1000281e:	00008097          	auipc	ra,0x8
+    10002822:	80208093          	addi	ra,ra,-2046 # 1000a020 <tdat>
     10002826:	0010c703          	lbu	a4,1(ra)
     1000282a:	4e81                	li	t4,0
     1000282c:	418d                	li	gp,3
@@ -4620,7 +4620,7 @@ RVTEST_CODE_END
 0000000010002836 <test_4>:
   TEST_LD_OP( 4, lbu, 0x00000000000000f0, 2,  tdat );
     10002836:	00007097          	auipc	ra,0x7
-    1000283a:	7d208093          	addi	ra,ra,2002 # 1000a008 <tdat>
+    1000283a:	7ea08093          	addi	ra,ra,2026 # 1000a020 <tdat>
     1000283e:	0020c703          	lbu	a4,2(ra)
     10002842:	0f000e93          	li	t4,240
     10002846:	4191                	li	gp,4
@@ -4630,7 +4630,7 @@ RVTEST_CODE_END
 0000000010002850 <test_5>:
   TEST_LD_OP( 5, lbu, 0x000000000000000f, 3, tdat );
     10002850:	00007097          	auipc	ra,0x7
-    10002854:	7b808093          	addi	ra,ra,1976 # 1000a008 <tdat>
+    10002854:	7d008093          	addi	ra,ra,2000 # 1000a020 <tdat>
     10002858:	0030c703          	lbu	a4,3(ra)
     1000285c:	4ebd                	li	t4,15
     1000285e:	4195                	li	gp,5
@@ -4643,7 +4643,7 @@ RVTEST_CODE_END
 
   TEST_LD_OP( 6, lbu, 0x00000000000000ff, -3, tdat4 );
     10002868:	00007097          	auipc	ra,0x7
-    1000286c:	7a308093          	addi	ra,ra,1955 # 1000a00b <tdat4>
+    1000286c:	7bb08093          	addi	ra,ra,1979 # 1000a023 <tdat4>
     10002870:	ffd0c703          	lbu	a4,-3(ra)
     10002874:	0ff00e93          	li	t4,255
     10002878:	4199                	li	gp,6
@@ -4653,7 +4653,7 @@ RVTEST_CODE_END
 0000000010002882 <test_7>:
   TEST_LD_OP( 7, lbu, 0x0000000000000000, -2,  tdat4 );
     10002882:	00007097          	auipc	ra,0x7
-    10002886:	78908093          	addi	ra,ra,1929 # 1000a00b <tdat4>
+    10002886:	7a108093          	addi	ra,ra,1953 # 1000a023 <tdat4>
     1000288a:	ffe0c703          	lbu	a4,-2(ra)
     1000288e:	4e81                	li	t4,0
     10002890:	419d                	li	gp,7
@@ -4663,7 +4663,7 @@ RVTEST_CODE_END
 000000001000289a <test_8>:
   TEST_LD_OP( 8, lbu, 0x00000000000000f0, -1,  tdat4 );
     1000289a:	00007097          	auipc	ra,0x7
-    1000289e:	77108093          	addi	ra,ra,1905 # 1000a00b <tdat4>
+    1000289e:	78908093          	addi	ra,ra,1929 # 1000a023 <tdat4>
     100028a2:	fff0c703          	lbu	a4,-1(ra)
     100028a6:	0f000e93          	li	t4,240
     100028aa:	41a1                	li	gp,8
@@ -4673,7 +4673,7 @@ RVTEST_CODE_END
 00000000100028b4 <test_9>:
   TEST_LD_OP( 9, lbu, 0x000000000000000f, 0,   tdat4 );
     100028b4:	00007097          	auipc	ra,0x7
-    100028b8:	75708093          	addi	ra,ra,1879 # 1000a00b <tdat4>
+    100028b8:	76f08093          	addi	ra,ra,1903 # 1000a023 <tdat4>
     100028bc:	0000c703          	lbu	a4,0(ra)
     100028c0:	4ebd                	li	t4,15
     100028c2:	41a5                	li	gp,9
@@ -4686,7 +4686,7 @@ RVTEST_CODE_END
 
   TEST_CASE( 10, x5, 0x00000000000000ff, \
     100028cc:	00007097          	auipc	ra,0x7
-    100028d0:	73c08093          	addi	ra,ra,1852 # 1000a008 <tdat>
+    100028d0:	75408093          	addi	ra,ra,1876 # 1000a020 <tdat>
     100028d4:	1081                	addi	ra,ra,-32
     100028d6:	0200c283          	lbu	t0,32(ra)
     100028da:	0ff00e93          	li	t4,255
@@ -4702,7 +4702,7 @@ RVTEST_CODE_END
 
   TEST_CASE( 11, x5, 0x0000000000000000, \
     100028e8:	00007097          	auipc	ra,0x7
-    100028ec:	72008093          	addi	ra,ra,1824 # 1000a008 <tdat>
+    100028ec:	73808093          	addi	ra,ra,1848 # 1000a020 <tdat>
     100028f0:	10e9                	addi	ra,ra,-6
     100028f2:	0070c283          	lbu	t0,7(ra)
     100028f6:	4e81                	li	t4,0
@@ -4720,7 +4720,7 @@ RVTEST_CODE_END
     10002902:	41b1                	li	gp,12
     10002904:	4201                	li	tp,0
     10002906:	00007097          	auipc	ra,0x7
-    1000290a:	70308093          	addi	ra,ra,1795 # 1000a009 <tdat2>
+    1000290a:	71b08093          	addi	ra,ra,1819 # 1000a021 <tdat2>
     1000290e:	0010c703          	lbu	a4,1(ra)
     10002912:	00070313          	mv	t1,a4
     10002916:	0f000e93          	li	t4,240
@@ -4735,7 +4735,7 @@ RVTEST_CODE_END
     1000292a:	41b5                	li	gp,13
     1000292c:	4201                	li	tp,0
     1000292e:	00007097          	auipc	ra,0x7
-    10002932:	6dc08093          	addi	ra,ra,1756 # 1000a00a <tdat3>
+    10002932:	6f408093          	addi	ra,ra,1780 # 1000a022 <tdat3>
     10002936:	0010c703          	lbu	a4,1(ra)
     1000293a:	0001                	nop
     1000293c:	00070313          	mv	t1,a4
@@ -4751,7 +4751,7 @@ RVTEST_CODE_END
     10002952:	41b9                	li	gp,14
     10002954:	4201                	li	tp,0
     10002956:	00007097          	auipc	ra,0x7
-    1000295a:	6b208093          	addi	ra,ra,1714 # 1000a008 <tdat>
+    1000295a:	6ca08093          	addi	ra,ra,1738 # 1000a020 <tdat>
     1000295e:	0010c703          	lbu	a4,1(ra)
     10002962:	0001                	nop
     10002964:	0001                	nop
@@ -4769,7 +4769,7 @@ RVTEST_CODE_END
     1000297c:	41bd                	li	gp,15
     1000297e:	4201                	li	tp,0
     10002980:	00007097          	auipc	ra,0x7
-    10002984:	68908093          	addi	ra,ra,1673 # 1000a009 <tdat2>
+    10002984:	6a108093          	addi	ra,ra,1697 # 1000a021 <tdat2>
     10002988:	0010c703          	lbu	a4,1(ra)
     1000298c:	0f000e93          	li	t4,240
     10002990:	01d70463          	beq	a4,t4,10002998 <test_15+0x1c>
@@ -4783,7 +4783,7 @@ RVTEST_CODE_END
     100029a0:	41c1                	li	gp,16
     100029a2:	4201                	li	tp,0
     100029a4:	00007097          	auipc	ra,0x7
-    100029a8:	66608093          	addi	ra,ra,1638 # 1000a00a <tdat3>
+    100029a8:	67e08093          	addi	ra,ra,1662 # 1000a022 <tdat3>
     100029ac:	0001                	nop
     100029ae:	0010c703          	lbu	a4,1(ra)
     100029b2:	4ebd                	li	t4,15
@@ -4798,7 +4798,7 @@ RVTEST_CODE_END
     100029c4:	41c5                	li	gp,17
     100029c6:	4201                	li	tp,0
     100029c8:	00007097          	auipc	ra,0x7
-    100029cc:	64008093          	addi	ra,ra,1600 # 1000a008 <tdat>
+    100029cc:	65808093          	addi	ra,ra,1624 # 1000a020 <tdat>
     100029d0:	0001                	nop
     100029d2:	0001                	nop
     100029d4:	0010c703          	lbu	a4,1(ra)
@@ -4817,7 +4817,7 @@ RVTEST_CODE_END
 
   TEST_CASE( 18, x2, 2, \
     100029ea:	00007297          	auipc	t0,0x7
-    100029ee:	61e28293          	addi	t0,t0,1566 # 1000a008 <tdat>
+    100029ee:	63628293          	addi	t0,t0,1590 # 1000a020 <tdat>
     100029f2:	0002c103          	lbu	sp,0(t0)
     100029f6:	4109                	li	sp,2
     100029f8:	4e89                	li	t4,2
@@ -4833,7 +4833,7 @@ RVTEST_CODE_END
 
   TEST_CASE( 19, x2, 2, \
     10002a04:	00007297          	auipc	t0,0x7
-    10002a08:	60428293          	addi	t0,t0,1540 # 1000a008 <tdat>
+    10002a08:	61c28293          	addi	t0,t0,1564 # 1000a020 <tdat>
     10002a0c:	0002c103          	lbu	sp,0(t0)
     10002a10:	0001                	nop
     10002a12:	4109                	li	sp,2
@@ -4851,7 +4851,7 @@ RVTEST_CODE_END
 
   TEST_LD_OP( 2, lh, 0x00000000000000ff, 0,  tdat );
     10002a22:	00007097          	auipc	ra,0x7
-    10002a26:	5ea08093          	addi	ra,ra,1514 # 1000a00c <tdat>
+    10002a26:	60e08093          	addi	ra,ra,1550 # 1000a030 <tdat>
     10002a2a:	00009703          	lh	a4,0(ra)
     10002a2e:	0ff00e93          	li	t4,255
     10002a32:	4189                	li	gp,2
@@ -4861,7 +4861,7 @@ RVTEST_CODE_END
 0000000010002a3c <test_3>:
   TEST_LD_OP( 3, lh, 0xffffffffffffff00, 2,  tdat );
     10002a3c:	00007097          	auipc	ra,0x7
-    10002a40:	5d008093          	addi	ra,ra,1488 # 1000a00c <tdat>
+    10002a40:	5f408093          	addi	ra,ra,1524 # 1000a030 <tdat>
     10002a44:	00209703          	lh	a4,2(ra)
     10002a48:	f0000e93          	li	t4,-256
     10002a4c:	418d                	li	gp,3
@@ -4871,7 +4871,7 @@ RVTEST_CODE_END
 0000000010002a56 <test_4>:
   TEST_LD_OP( 4, lh, 0x0000000000000ff0, 4,  tdat );
     10002a56:	00007097          	auipc	ra,0x7
-    10002a5a:	5b608093          	addi	ra,ra,1462 # 1000a00c <tdat>
+    10002a5a:	5da08093          	addi	ra,ra,1498 # 1000a030 <tdat>
     10002a5e:	00409703          	lh	a4,4(ra)
     10002a62:	00001eb7          	lui	t4,0x1
     10002a66:	ff0e8e9b          	addiw	t4,t4,-16
@@ -4882,7 +4882,7 @@ RVTEST_CODE_END
 0000000010002a74 <test_5>:
   TEST_LD_OP( 5, lh, 0xfffffffffffff00f, 6, tdat );
     10002a74:	00007097          	auipc	ra,0x7
-    10002a78:	59808093          	addi	ra,ra,1432 # 1000a00c <tdat>
+    10002a78:	5bc08093          	addi	ra,ra,1468 # 1000a030 <tdat>
     10002a7c:	00609703          	lh	a4,6(ra)
     10002a80:	fffffeb7          	lui	t4,0xfffff
     10002a84:	00fe8e9b          	addiw	t4,t4,15
@@ -4896,7 +4896,7 @@ RVTEST_CODE_END
 
   TEST_LD_OP( 6, lh, 0x00000000000000ff, -6,  tdat4 );
     10002a92:	00007097          	auipc	ra,0x7
-    10002a96:	58008093          	addi	ra,ra,1408 # 1000a012 <tdat4>
+    10002a96:	5a408093          	addi	ra,ra,1444 # 1000a036 <tdat4>
     10002a9a:	ffa09703          	lh	a4,-6(ra)
     10002a9e:	0ff00e93          	li	t4,255
     10002aa2:	4199                	li	gp,6
@@ -4906,7 +4906,7 @@ RVTEST_CODE_END
 0000000010002aac <test_7>:
   TEST_LD_OP( 7, lh, 0xffffffffffffff00, -4,  tdat4 );
     10002aac:	00007097          	auipc	ra,0x7
-    10002ab0:	56608093          	addi	ra,ra,1382 # 1000a012 <tdat4>
+    10002ab0:	58a08093          	addi	ra,ra,1418 # 1000a036 <tdat4>
     10002ab4:	ffc09703          	lh	a4,-4(ra)
     10002ab8:	f0000e93          	li	t4,-256
     10002abc:	419d                	li	gp,7
@@ -4916,7 +4916,7 @@ RVTEST_CODE_END
 0000000010002ac6 <test_8>:
   TEST_LD_OP( 8, lh, 0x0000000000000ff0, -2,  tdat4 );
     10002ac6:	00007097          	auipc	ra,0x7
-    10002aca:	54c08093          	addi	ra,ra,1356 # 1000a012 <tdat4>
+    10002aca:	57008093          	addi	ra,ra,1392 # 1000a036 <tdat4>
     10002ace:	ffe09703          	lh	a4,-2(ra)
     10002ad2:	00001eb7          	lui	t4,0x1
     10002ad6:	ff0e8e9b          	addiw	t4,t4,-16
@@ -4927,7 +4927,7 @@ RVTEST_CODE_END
 0000000010002ae4 <test_9>:
   TEST_LD_OP( 9, lh, 0xfffffffffffff00f,  0, tdat4 );
     10002ae4:	00007097          	auipc	ra,0x7
-    10002ae8:	52e08093          	addi	ra,ra,1326 # 1000a012 <tdat4>
+    10002ae8:	55208093          	addi	ra,ra,1362 # 1000a036 <tdat4>
     10002aec:	00009703          	lh	a4,0(ra)
     10002af0:	fffffeb7          	lui	t4,0xfffff
     10002af4:	00fe8e9b          	addiw	t4,t4,15
@@ -4941,7 +4941,7 @@ RVTEST_CODE_END
 
   TEST_CASE( 10, x5, 0x00000000000000ff, \
     10002b02:	00007097          	auipc	ra,0x7
-    10002b06:	50a08093          	addi	ra,ra,1290 # 1000a00c <tdat>
+    10002b06:	52e08093          	addi	ra,ra,1326 # 1000a030 <tdat>
     10002b0a:	1081                	addi	ra,ra,-32
     10002b0c:	02009283          	lh	t0,32(ra)
     10002b10:	0ff00e93          	li	t4,255
@@ -4957,7 +4957,7 @@ RVTEST_CODE_END
 
   TEST_CASE( 11, x5, 0xffffffffffffff00, \
     10002b1e:	00007097          	auipc	ra,0x7
-    10002b22:	4ee08093          	addi	ra,ra,1262 # 1000a00c <tdat>
+    10002b22:	51208093          	addi	ra,ra,1298 # 1000a030 <tdat>
     10002b26:	10ed                	addi	ra,ra,-5
     10002b28:	00709283          	lh	t0,7(ra)
     10002b2c:	f0000e93          	li	t4,-256
@@ -4975,7 +4975,7 @@ RVTEST_CODE_END
     10002b3a:	41b1                	li	gp,12
     10002b3c:	4201                	li	tp,0
     10002b3e:	00007097          	auipc	ra,0x7
-    10002b42:	4d008093          	addi	ra,ra,1232 # 1000a00e <tdat2>
+    10002b42:	4f408093          	addi	ra,ra,1268 # 1000a032 <tdat2>
     10002b46:	00209703          	lh	a4,2(ra)
     10002b4a:	00070313          	mv	t1,a4
     10002b4e:	00001eb7          	lui	t4,0x1
@@ -4991,7 +4991,7 @@ RVTEST_CODE_END
     10002b66:	41b5                	li	gp,13
     10002b68:	4201                	li	tp,0
     10002b6a:	00007097          	auipc	ra,0x7
-    10002b6e:	4a608093          	addi	ra,ra,1190 # 1000a010 <tdat3>
+    10002b6e:	4ca08093          	addi	ra,ra,1226 # 1000a034 <tdat3>
     10002b72:	00209703          	lh	a4,2(ra)
     10002b76:	0001                	nop
     10002b78:	00070313          	mv	t1,a4
@@ -5008,7 +5008,7 @@ RVTEST_CODE_END
     10002b94:	41b9                	li	gp,14
     10002b96:	4201                	li	tp,0
     10002b98:	00007097          	auipc	ra,0x7
-    10002b9c:	47408093          	addi	ra,ra,1140 # 1000a00c <tdat>
+    10002b9c:	49808093          	addi	ra,ra,1176 # 1000a030 <tdat>
     10002ba0:	00209703          	lh	a4,2(ra)
     10002ba4:	0001                	nop
     10002ba6:	0001                	nop
@@ -5026,7 +5026,7 @@ RVTEST_CODE_END
     10002bc0:	41bd                	li	gp,15
     10002bc2:	4201                	li	tp,0
     10002bc4:	00007097          	auipc	ra,0x7
-    10002bc8:	44a08093          	addi	ra,ra,1098 # 1000a00e <tdat2>
+    10002bc8:	46e08093          	addi	ra,ra,1134 # 1000a032 <tdat2>
     10002bcc:	00209703          	lh	a4,2(ra)
     10002bd0:	00001eb7          	lui	t4,0x1
     10002bd4:	ff0e8e9b          	addiw	t4,t4,-16
@@ -5041,7 +5041,7 @@ RVTEST_CODE_END
     10002be8:	41c1                	li	gp,16
     10002bea:	4201                	li	tp,0
     10002bec:	00007097          	auipc	ra,0x7
-    10002bf0:	42408093          	addi	ra,ra,1060 # 1000a010 <tdat3>
+    10002bf0:	44808093          	addi	ra,ra,1096 # 1000a034 <tdat3>
     10002bf4:	0001                	nop
     10002bf6:	00209703          	lh	a4,2(ra)
     10002bfa:	fffffeb7          	lui	t4,0xfffff
@@ -5057,7 +5057,7 @@ RVTEST_CODE_END
     10002c12:	41c5                	li	gp,17
     10002c14:	4201                	li	tp,0
     10002c16:	00007097          	auipc	ra,0x7
-    10002c1a:	3f608093          	addi	ra,ra,1014 # 1000a00c <tdat>
+    10002c1a:	41a08093          	addi	ra,ra,1050 # 1000a030 <tdat>
     10002c1e:	0001                	nop
     10002c20:	0001                	nop
     10002c22:	00209703          	lh	a4,2(ra)
@@ -5076,7 +5076,7 @@ RVTEST_CODE_END
 
   TEST_CASE( 18, x2, 2, \
     10002c3a:	00007297          	auipc	t0,0x7
-    10002c3e:	3d228293          	addi	t0,t0,978 # 1000a00c <tdat>
+    10002c3e:	3f628293          	addi	t0,t0,1014 # 1000a030 <tdat>
     10002c42:	00029103          	lh	sp,0(t0)
     10002c46:	4109                	li	sp,2
     10002c48:	4e89                	li	t4,2
@@ -5092,7 +5092,7 @@ RVTEST_CODE_END
 
   TEST_CASE( 19, x2, 2, \
     10002c54:	00007297          	auipc	t0,0x7
-    10002c58:	3b828293          	addi	t0,t0,952 # 1000a00c <tdat>
+    10002c58:	3dc28293          	addi	t0,t0,988 # 1000a030 <tdat>
     10002c5c:	00029103          	lh	sp,0(t0)
     10002c60:	0001                	nop
     10002c62:	4109                	li	sp,2
@@ -5110,7 +5110,7 @@ RVTEST_CODE_END
 
   TEST_LD_OP( 2, lhu, 0x00000000000000ff, 0,  tdat );
     10002c72:	00007097          	auipc	ra,0x7
-    10002c76:	3a208093          	addi	ra,ra,930 # 1000a014 <tdat>
+    10002c76:	3ce08093          	addi	ra,ra,974 # 1000a040 <tdat>
     10002c7a:	0000d703          	lhu	a4,0(ra)
     10002c7e:	0ff00e93          	li	t4,255
     10002c82:	4189                	li	gp,2
@@ -5120,7 +5120,7 @@ RVTEST_CODE_END
 0000000010002c8c <test_3>:
   TEST_LD_OP( 3, lhu, 0x000000000000ff00, 2,  tdat );
     10002c8c:	00007097          	auipc	ra,0x7
-    10002c90:	38808093          	addi	ra,ra,904 # 1000a014 <tdat>
+    10002c90:	3b408093          	addi	ra,ra,948 # 1000a040 <tdat>
     10002c94:	0020d703          	lhu	a4,2(ra)
     10002c98:	00010eb7          	lui	t4,0x10
     10002c9c:	f00e8e9b          	addiw	t4,t4,-256
@@ -5131,7 +5131,7 @@ RVTEST_CODE_END
 0000000010002caa <test_4>:
   TEST_LD_OP( 4, lhu, 0x0000000000000ff0, 4,  tdat );
     10002caa:	00007097          	auipc	ra,0x7
-    10002cae:	36a08093          	addi	ra,ra,874 # 1000a014 <tdat>
+    10002cae:	39608093          	addi	ra,ra,918 # 1000a040 <tdat>
     10002cb2:	0040d703          	lhu	a4,4(ra)
     10002cb6:	00001eb7          	lui	t4,0x1
     10002cba:	ff0e8e9b          	addiw	t4,t4,-16
@@ -5142,7 +5142,7 @@ RVTEST_CODE_END
 0000000010002cc8 <test_5>:
   TEST_LD_OP( 5, lhu, 0x000000000000f00f, 6, tdat );
     10002cc8:	00007097          	auipc	ra,0x7
-    10002ccc:	34c08093          	addi	ra,ra,844 # 1000a014 <tdat>
+    10002ccc:	37808093          	addi	ra,ra,888 # 1000a040 <tdat>
     10002cd0:	0060d703          	lhu	a4,6(ra)
     10002cd4:	0000feb7          	lui	t4,0xf
     10002cd8:	00fe8e9b          	addiw	t4,t4,15
@@ -5156,7 +5156,7 @@ RVTEST_CODE_END
 
   TEST_LD_OP( 6, lhu, 0x00000000000000ff, -6,  tdat4 );
     10002ce6:	00007097          	auipc	ra,0x7
-    10002cea:	33408093          	addi	ra,ra,820 # 1000a01a <tdat4>
+    10002cea:	36008093          	addi	ra,ra,864 # 1000a046 <tdat4>
     10002cee:	ffa0d703          	lhu	a4,-6(ra)
     10002cf2:	0ff00e93          	li	t4,255
     10002cf6:	4199                	li	gp,6
@@ -5166,7 +5166,7 @@ RVTEST_CODE_END
 0000000010002d00 <test_7>:
   TEST_LD_OP( 7, lhu, 0x000000000000ff00, -4,  tdat4 );
     10002d00:	00007097          	auipc	ra,0x7
-    10002d04:	31a08093          	addi	ra,ra,794 # 1000a01a <tdat4>
+    10002d04:	34608093          	addi	ra,ra,838 # 1000a046 <tdat4>
     10002d08:	ffc0d703          	lhu	a4,-4(ra)
     10002d0c:	00010eb7          	lui	t4,0x10
     10002d10:	f00e8e9b          	addiw	t4,t4,-256
@@ -5177,7 +5177,7 @@ RVTEST_CODE_END
 0000000010002d1e <test_8>:
   TEST_LD_OP( 8, lhu, 0x0000000000000ff0, -2,  tdat4 );
     10002d1e:	00007097          	auipc	ra,0x7
-    10002d22:	2fc08093          	addi	ra,ra,764 # 1000a01a <tdat4>
+    10002d22:	32808093          	addi	ra,ra,808 # 1000a046 <tdat4>
     10002d26:	ffe0d703          	lhu	a4,-2(ra)
     10002d2a:	00001eb7          	lui	t4,0x1
     10002d2e:	ff0e8e9b          	addiw	t4,t4,-16
@@ -5188,7 +5188,7 @@ RVTEST_CODE_END
 0000000010002d3c <test_9>:
   TEST_LD_OP( 9, lhu, 0x000000000000f00f,  0, tdat4 );
     10002d3c:	00007097          	auipc	ra,0x7
-    10002d40:	2de08093          	addi	ra,ra,734 # 1000a01a <tdat4>
+    10002d40:	30a08093          	addi	ra,ra,778 # 1000a046 <tdat4>
     10002d44:	0000d703          	lhu	a4,0(ra)
     10002d48:	0000feb7          	lui	t4,0xf
     10002d4c:	00fe8e9b          	addiw	t4,t4,15
@@ -5202,7 +5202,7 @@ RVTEST_CODE_END
 
   TEST_CASE( 10, x5, 0x00000000000000ff, \
     10002d5a:	00007097          	auipc	ra,0x7
-    10002d5e:	2ba08093          	addi	ra,ra,698 # 1000a014 <tdat>
+    10002d5e:	2e608093          	addi	ra,ra,742 # 1000a040 <tdat>
     10002d62:	1081                	addi	ra,ra,-32
     10002d64:	0200d283          	lhu	t0,32(ra)
     10002d68:	0ff00e93          	li	t4,255
@@ -5218,7 +5218,7 @@ RVTEST_CODE_END
 
   TEST_CASE( 11, x5, 0x000000000000ff00, \
     10002d76:	00007097          	auipc	ra,0x7
-    10002d7a:	29e08093          	addi	ra,ra,670 # 1000a014 <tdat>
+    10002d7a:	2ca08093          	addi	ra,ra,714 # 1000a040 <tdat>
     10002d7e:	10ed                	addi	ra,ra,-5
     10002d80:	0070d283          	lhu	t0,7(ra)
     10002d84:	00010eb7          	lui	t4,0x10
@@ -5237,7 +5237,7 @@ RVTEST_CODE_END
     10002d96:	41b1                	li	gp,12
     10002d98:	4201                	li	tp,0
     10002d9a:	00007097          	auipc	ra,0x7
-    10002d9e:	27c08093          	addi	ra,ra,636 # 1000a016 <tdat2>
+    10002d9e:	2a808093          	addi	ra,ra,680 # 1000a042 <tdat2>
     10002da2:	0020d703          	lhu	a4,2(ra)
     10002da6:	00070313          	mv	t1,a4
     10002daa:	00001eb7          	lui	t4,0x1
@@ -5253,7 +5253,7 @@ RVTEST_CODE_END
     10002dc2:	41b5                	li	gp,13
     10002dc4:	4201                	li	tp,0
     10002dc6:	00007097          	auipc	ra,0x7
-    10002dca:	25208093          	addi	ra,ra,594 # 1000a018 <tdat3>
+    10002dca:	27e08093          	addi	ra,ra,638 # 1000a044 <tdat3>
     10002dce:	0020d703          	lhu	a4,2(ra)
     10002dd2:	0001                	nop
     10002dd4:	00070313          	mv	t1,a4
@@ -5270,7 +5270,7 @@ RVTEST_CODE_END
     10002df0:	41b9                	li	gp,14
     10002df2:	4201                	li	tp,0
     10002df4:	00007097          	auipc	ra,0x7
-    10002df8:	22008093          	addi	ra,ra,544 # 1000a014 <tdat>
+    10002df8:	24c08093          	addi	ra,ra,588 # 1000a040 <tdat>
     10002dfc:	0020d703          	lhu	a4,2(ra)
     10002e00:	0001                	nop
     10002e02:	0001                	nop
@@ -5289,7 +5289,7 @@ RVTEST_CODE_END
     10002e20:	41bd                	li	gp,15
     10002e22:	4201                	li	tp,0
     10002e24:	00007097          	auipc	ra,0x7
-    10002e28:	1f208093          	addi	ra,ra,498 # 1000a016 <tdat2>
+    10002e28:	21e08093          	addi	ra,ra,542 # 1000a042 <tdat2>
     10002e2c:	0020d703          	lhu	a4,2(ra)
     10002e30:	00001eb7          	lui	t4,0x1
     10002e34:	ff0e8e9b          	addiw	t4,t4,-16
@@ -5304,7 +5304,7 @@ RVTEST_CODE_END
     10002e48:	41c1                	li	gp,16
     10002e4a:	4201                	li	tp,0
     10002e4c:	00007097          	auipc	ra,0x7
-    10002e50:	1cc08093          	addi	ra,ra,460 # 1000a018 <tdat3>
+    10002e50:	1f808093          	addi	ra,ra,504 # 1000a044 <tdat3>
     10002e54:	0001                	nop
     10002e56:	0020d703          	lhu	a4,2(ra)
     10002e5a:	0000feb7          	lui	t4,0xf
@@ -5320,7 +5320,7 @@ RVTEST_CODE_END
     10002e72:	41c5                	li	gp,17
     10002e74:	4201                	li	tp,0
     10002e76:	00007097          	auipc	ra,0x7
-    10002e7a:	19e08093          	addi	ra,ra,414 # 1000a014 <tdat>
+    10002e7a:	1ca08093          	addi	ra,ra,458 # 1000a040 <tdat>
     10002e7e:	0001                	nop
     10002e80:	0001                	nop
     10002e82:	0020d703          	lhu	a4,2(ra)
@@ -5340,7 +5340,7 @@ RVTEST_CODE_END
 
   TEST_CASE( 18, x2, 2, \
     10002e9e:	00007297          	auipc	t0,0x7
-    10002ea2:	17628293          	addi	t0,t0,374 # 1000a014 <tdat>
+    10002ea2:	1a228293          	addi	t0,t0,418 # 1000a040 <tdat>
     10002ea6:	0002d103          	lhu	sp,0(t0)
     10002eaa:	4109                	li	sp,2
     10002eac:	4e89                	li	t4,2
@@ -5356,7 +5356,7 @@ RVTEST_CODE_END
 
   TEST_CASE( 19, x2, 2, \
     10002eb8:	00007297          	auipc	t0,0x7
-    10002ebc:	15c28293          	addi	t0,t0,348 # 1000a014 <tdat>
+    10002ebc:	18828293          	addi	t0,t0,392 # 1000a040 <tdat>
     10002ec0:	0002d103          	lhu	sp,0(t0)
     10002ec4:	0001                	nop
     10002ec6:	4109                	li	sp,2
@@ -5374,7 +5374,7 @@ RVTEST_CODE_END
 
   TEST_LD_OP( 2, lw, 0x0000000000ff00ff, 0,  tdat );
     10002ed6:	00007097          	auipc	ra,0x7
-    10002eda:	14608093          	addi	ra,ra,326 # 1000a01c <tdat>
+    10002eda:	17a08093          	addi	ra,ra,378 # 1000a050 <tdat>
     10002ede:	0000a703          	lw	a4,0(ra)
     10002ee2:	00ff0eb7          	lui	t4,0xff0
     10002ee6:	0ffe8e9b          	addiw	t4,t4,255
@@ -5385,7 +5385,7 @@ RVTEST_CODE_END
 0000000010002ef4 <test_3>:
   TEST_LD_OP( 3, lw, 0xffffffffff00ff00, 4,  tdat );
     10002ef4:	00007097          	auipc	ra,0x7
-    10002ef8:	12808093          	addi	ra,ra,296 # 1000a01c <tdat>
+    10002ef8:	15c08093          	addi	ra,ra,348 # 1000a050 <tdat>
     10002efc:	0040a703          	lw	a4,4(ra)
     10002f00:	ff010eb7          	lui	t4,0xff010
     10002f04:	f00e8e9b          	addiw	t4,t4,-256
@@ -5396,7 +5396,7 @@ RVTEST_CODE_END
 0000000010002f12 <test_4>:
   TEST_LD_OP( 4, lw, 0x000000000ff00ff0, 8,  tdat );
     10002f12:	00007097          	auipc	ra,0x7
-    10002f16:	10a08093          	addi	ra,ra,266 # 1000a01c <tdat>
+    10002f16:	13e08093          	addi	ra,ra,318 # 1000a050 <tdat>
     10002f1a:	0080a703          	lw	a4,8(ra)
     10002f1e:	0ff01eb7          	lui	t4,0xff01
     10002f22:	ff0e8e9b          	addiw	t4,t4,-16
@@ -5407,7 +5407,7 @@ RVTEST_CODE_END
 0000000010002f30 <test_5>:
   TEST_LD_OP( 5, lw, 0xfffffffff00ff00f, 12, tdat );
     10002f30:	00007097          	auipc	ra,0x7
-    10002f34:	0ec08093          	addi	ra,ra,236 # 1000a01c <tdat>
+    10002f34:	12008093          	addi	ra,ra,288 # 1000a050 <tdat>
     10002f38:	00c0a703          	lw	a4,12(ra)
     10002f3c:	f00ffeb7          	lui	t4,0xf00ff
     10002f40:	00fe8e9b          	addiw	t4,t4,15
@@ -5421,7 +5421,7 @@ RVTEST_CODE_END
 
   TEST_LD_OP( 6, lw, 0x0000000000ff00ff, -12, tdat4 );
     10002f4e:	00007097          	auipc	ra,0x7
-    10002f52:	0da08093          	addi	ra,ra,218 # 1000a028 <tdat4>
+    10002f52:	10e08093          	addi	ra,ra,270 # 1000a05c <tdat4>
     10002f56:	ff40a703          	lw	a4,-12(ra)
     10002f5a:	00ff0eb7          	lui	t4,0xff0
     10002f5e:	0ffe8e9b          	addiw	t4,t4,255
@@ -5432,7 +5432,7 @@ RVTEST_CODE_END
 0000000010002f6c <test_7>:
   TEST_LD_OP( 7, lw, 0xffffffffff00ff00, -8,  tdat4 );
     10002f6c:	00007097          	auipc	ra,0x7
-    10002f70:	0bc08093          	addi	ra,ra,188 # 1000a028 <tdat4>
+    10002f70:	0f008093          	addi	ra,ra,240 # 1000a05c <tdat4>
     10002f74:	ff80a703          	lw	a4,-8(ra)
     10002f78:	ff010eb7          	lui	t4,0xff010
     10002f7c:	f00e8e9b          	addiw	t4,t4,-256
@@ -5443,7 +5443,7 @@ RVTEST_CODE_END
 0000000010002f8a <test_8>:
   TEST_LD_OP( 8, lw, 0x000000000ff00ff0, -4,  tdat4 );
     10002f8a:	00007097          	auipc	ra,0x7
-    10002f8e:	09e08093          	addi	ra,ra,158 # 1000a028 <tdat4>
+    10002f8e:	0d208093          	addi	ra,ra,210 # 1000a05c <tdat4>
     10002f92:	ffc0a703          	lw	a4,-4(ra)
     10002f96:	0ff01eb7          	lui	t4,0xff01
     10002f9a:	ff0e8e9b          	addiw	t4,t4,-16
@@ -5454,7 +5454,7 @@ RVTEST_CODE_END
 0000000010002fa8 <test_9>:
   TEST_LD_OP( 9, lw, 0xfffffffff00ff00f, 0,   tdat4 );
     10002fa8:	00007097          	auipc	ra,0x7
-    10002fac:	08008093          	addi	ra,ra,128 # 1000a028 <tdat4>
+    10002fac:	0b408093          	addi	ra,ra,180 # 1000a05c <tdat4>
     10002fb0:	0000a703          	lw	a4,0(ra)
     10002fb4:	f00ffeb7          	lui	t4,0xf00ff
     10002fb8:	00fe8e9b          	addiw	t4,t4,15
@@ -5468,7 +5468,7 @@ RVTEST_CODE_END
 
   TEST_CASE( 10, x5, 0x0000000000ff00ff, \
     10002fc6:	00007097          	auipc	ra,0x7
-    10002fca:	05608093          	addi	ra,ra,86 # 1000a01c <tdat>
+    10002fca:	08a08093          	addi	ra,ra,138 # 1000a050 <tdat>
     10002fce:	1081                	addi	ra,ra,-32
     10002fd0:	0200a283          	lw	t0,32(ra)
     10002fd4:	00ff0eb7          	lui	t4,0xff0
@@ -5485,7 +5485,7 @@ RVTEST_CODE_END
 
   TEST_CASE( 11, x5, 0xffffffffff00ff00, \
     10002fe6:	00007097          	auipc	ra,0x7
-    10002fea:	03608093          	addi	ra,ra,54 # 1000a01c <tdat>
+    10002fea:	06a08093          	addi	ra,ra,106 # 1000a050 <tdat>
     10002fee:	10f5                	addi	ra,ra,-3
     10002ff0:	0070a283          	lw	t0,7(ra)
     10002ff4:	ff010eb7          	lui	t4,0xff010
@@ -5504,7 +5504,7 @@ RVTEST_CODE_END
     10003006:	41b1                	li	gp,12
     10003008:	4201                	li	tp,0
     1000300a:	00007097          	auipc	ra,0x7
-    1000300e:	01608093          	addi	ra,ra,22 # 1000a020 <tdat2>
+    1000300e:	04a08093          	addi	ra,ra,74 # 1000a054 <tdat2>
     10003012:	0040a703          	lw	a4,4(ra)
     10003016:	00070313          	mv	t1,a4
     1000301a:	0ff01eb7          	lui	t4,0xff01
@@ -5520,7 +5520,7 @@ RVTEST_CODE_END
     10003032:	41b5                	li	gp,13
     10003034:	4201                	li	tp,0
     10003036:	00007097          	auipc	ra,0x7
-    1000303a:	fee08093          	addi	ra,ra,-18 # 1000a024 <tdat3>
+    1000303a:	02208093          	addi	ra,ra,34 # 1000a058 <tdat3>
     1000303e:	0040a703          	lw	a4,4(ra)
     10003042:	0001                	nop
     10003044:	00070313          	mv	t1,a4
@@ -5537,7 +5537,7 @@ RVTEST_CODE_END
     10003060:	41b9                	li	gp,14
     10003062:	4201                	li	tp,0
     10003064:	00007097          	auipc	ra,0x7
-    10003068:	fb808093          	addi	ra,ra,-72 # 1000a01c <tdat>
+    10003068:	fec08093          	addi	ra,ra,-20 # 1000a050 <tdat>
     1000306c:	0040a703          	lw	a4,4(ra)
     10003070:	0001                	nop
     10003072:	0001                	nop
@@ -5556,7 +5556,7 @@ RVTEST_CODE_END
     10003090:	41bd                	li	gp,15
     10003092:	4201                	li	tp,0
     10003094:	00007097          	auipc	ra,0x7
-    10003098:	f8c08093          	addi	ra,ra,-116 # 1000a020 <tdat2>
+    10003098:	fc008093          	addi	ra,ra,-64 # 1000a054 <tdat2>
     1000309c:	0040a703          	lw	a4,4(ra)
     100030a0:	0ff01eb7          	lui	t4,0xff01
     100030a4:	ff0e8e9b          	addiw	t4,t4,-16
@@ -5571,7 +5571,7 @@ RVTEST_CODE_END
     100030b8:	41c1                	li	gp,16
     100030ba:	4201                	li	tp,0
     100030bc:	00007097          	auipc	ra,0x7
-    100030c0:	f6808093          	addi	ra,ra,-152 # 1000a024 <tdat3>
+    100030c0:	f9c08093          	addi	ra,ra,-100 # 1000a058 <tdat3>
     100030c4:	0001                	nop
     100030c6:	0040a703          	lw	a4,4(ra)
     100030ca:	f00ffeb7          	lui	t4,0xf00ff
@@ -5587,7 +5587,7 @@ RVTEST_CODE_END
     100030e2:	41c5                	li	gp,17
     100030e4:	4201                	li	tp,0
     100030e6:	00007097          	auipc	ra,0x7
-    100030ea:	f3608093          	addi	ra,ra,-202 # 1000a01c <tdat>
+    100030ea:	f6a08093          	addi	ra,ra,-150 # 1000a050 <tdat>
     100030ee:	0001                	nop
     100030f0:	0001                	nop
     100030f2:	0040a703          	lw	a4,4(ra)
@@ -5607,7 +5607,7 @@ RVTEST_CODE_END
 
   TEST_CASE( 18, x2, 2, \
     1000310e:	00007297          	auipc	t0,0x7
-    10003112:	f0e28293          	addi	t0,t0,-242 # 1000a01c <tdat>
+    10003112:	f4228293          	addi	t0,t0,-190 # 1000a050 <tdat>
     10003116:	0002a103          	lw	sp,0(t0)
     1000311a:	4109                	li	sp,2
     1000311c:	4e89                	li	t4,2
@@ -5623,7 +5623,7 @@ RVTEST_CODE_END
 
   TEST_CASE( 19, x2, 2, \
     10003128:	00007297          	auipc	t0,0x7
-    1000312c:	ef428293          	addi	t0,t0,-268 # 1000a01c <tdat>
+    1000312c:	f2828293          	addi	t0,t0,-216 # 1000a050 <tdat>
     10003130:	0002a103          	lw	sp,0(t0)
     10003134:	0001                	nop
     10003136:	4109                	li	sp,2
@@ -5641,7 +5641,7 @@ RVTEST_CODE_END
 
   TEST_LD_OP( 2, lwu, 0x0000000000ff00ff, 0,  tdat );
     10003146:	00007097          	auipc	ra,0x7
-    1000314a:	ee608093          	addi	ra,ra,-282 # 1000a02c <tdat>
+    1000314a:	f1a08093          	addi	ra,ra,-230 # 1000a060 <tdat>
     1000314e:	0000e703          	lwu	a4,0(ra)
     10003152:	00ff0eb7          	lui	t4,0xff0
     10003156:	0ffe8e9b          	addiw	t4,t4,255
@@ -5652,7 +5652,7 @@ RVTEST_CODE_END
 0000000010003164 <test_3>:
   TEST_LD_OP( 3, lwu, 0x00000000ff00ff00, 4,  tdat );
     10003164:	00007097          	auipc	ra,0x7
-    10003168:	ec808093          	addi	ra,ra,-312 # 1000a02c <tdat>
+    10003168:	efc08093          	addi	ra,ra,-260 # 1000a060 <tdat>
     1000316c:	0040e703          	lwu	a4,4(ra)
     10003170:	00010eb7          	lui	t4,0x10
     10003174:	f01e8e9b          	addiw	t4,t4,-255
@@ -5665,7 +5665,7 @@ RVTEST_CODE_END
 000000001000318a <test_4>:
   TEST_LD_OP( 4, lwu, 0x000000000ff00ff0, 8,  tdat );
     1000318a:	00007097          	auipc	ra,0x7
-    1000318e:	ea208093          	addi	ra,ra,-350 # 1000a02c <tdat>
+    1000318e:	ed608093          	addi	ra,ra,-298 # 1000a060 <tdat>
     10003192:	0080e703          	lwu	a4,8(ra)
     10003196:	0ff01eb7          	lui	t4,0xff01
     1000319a:	ff0e8e9b          	addiw	t4,t4,-16
@@ -5676,7 +5676,7 @@ RVTEST_CODE_END
 00000000100031a8 <test_5>:
   TEST_LD_OP( 5, lwu, 0x00000000f00ff00f, 12, tdat );
     100031a8:	00007097          	auipc	ra,0x7
-    100031ac:	e8408093          	addi	ra,ra,-380 # 1000a02c <tdat>
+    100031ac:	eb808093          	addi	ra,ra,-328 # 1000a060 <tdat>
     100031b0:	00c0e703          	lwu	a4,12(ra)
     100031b4:	000f0eb7          	lui	t4,0xf0
     100031b8:	0ffe8e9b          	addiw	t4,t4,255
@@ -5692,7 +5692,7 @@ RVTEST_CODE_END
 
   TEST_LD_OP( 6, lwu, 0x0000000000ff00ff, -12, tdat4 );
     100031ce:	00007097          	auipc	ra,0x7
-    100031d2:	e6a08093          	addi	ra,ra,-406 # 1000a038 <tdat4>
+    100031d2:	e9e08093          	addi	ra,ra,-354 # 1000a06c <tdat4>
     100031d6:	ff40e703          	lwu	a4,-12(ra)
     100031da:	00ff0eb7          	lui	t4,0xff0
     100031de:	0ffe8e9b          	addiw	t4,t4,255
@@ -5703,7 +5703,7 @@ RVTEST_CODE_END
 00000000100031ec <test_7>:
   TEST_LD_OP( 7, lwu, 0x00000000ff00ff00, -8,  tdat4 );
     100031ec:	00007097          	auipc	ra,0x7
-    100031f0:	e4c08093          	addi	ra,ra,-436 # 1000a038 <tdat4>
+    100031f0:	e8008093          	addi	ra,ra,-384 # 1000a06c <tdat4>
     100031f4:	ff80e703          	lwu	a4,-8(ra)
     100031f8:	00010eb7          	lui	t4,0x10
     100031fc:	f01e8e9b          	addiw	t4,t4,-255
@@ -5716,7 +5716,7 @@ RVTEST_CODE_END
 0000000010003212 <test_8>:
   TEST_LD_OP( 8, lwu, 0x000000000ff00ff0, -4,  tdat4 );
     10003212:	00007097          	auipc	ra,0x7
-    10003216:	e2608093          	addi	ra,ra,-474 # 1000a038 <tdat4>
+    10003216:	e5a08093          	addi	ra,ra,-422 # 1000a06c <tdat4>
     1000321a:	ffc0e703          	lwu	a4,-4(ra)
     1000321e:	0ff01eb7          	lui	t4,0xff01
     10003222:	ff0e8e9b          	addiw	t4,t4,-16
@@ -5727,7 +5727,7 @@ RVTEST_CODE_END
 0000000010003230 <test_9>:
   TEST_LD_OP( 9, lwu, 0x00000000f00ff00f, 0,   tdat4 );
     10003230:	00007097          	auipc	ra,0x7
-    10003234:	e0808093          	addi	ra,ra,-504 # 1000a038 <tdat4>
+    10003234:	e3c08093          	addi	ra,ra,-452 # 1000a06c <tdat4>
     10003238:	0000e703          	lwu	a4,0(ra)
     1000323c:	000f0eb7          	lui	t4,0xf0
     10003240:	0ffe8e9b          	addiw	t4,t4,255
@@ -5743,7 +5743,7 @@ RVTEST_CODE_END
 
   TEST_CASE( 10, x5, 0x0000000000ff00ff, \
     10003256:	00007097          	auipc	ra,0x7
-    1000325a:	dd608093          	addi	ra,ra,-554 # 1000a02c <tdat>
+    1000325a:	e0a08093          	addi	ra,ra,-502 # 1000a060 <tdat>
     1000325e:	1081                	addi	ra,ra,-32
     10003260:	0200e283          	lwu	t0,32(ra)
     10003264:	00ff0eb7          	lui	t4,0xff0
@@ -5760,7 +5760,7 @@ RVTEST_CODE_END
 
   TEST_CASE( 11, x5, 0x00000000ff00ff00, \
     10003276:	00007097          	auipc	ra,0x7
-    1000327a:	db608093          	addi	ra,ra,-586 # 1000a02c <tdat>
+    1000327a:	dea08093          	addi	ra,ra,-534 # 1000a060 <tdat>
     1000327e:	10f5                	addi	ra,ra,-3
     10003280:	0070e283          	lwu	t0,7(ra)
     10003284:	00010eb7          	lui	t4,0x10
@@ -5781,7 +5781,7 @@ RVTEST_CODE_END
     1000329e:	41b1                	li	gp,12
     100032a0:	4201                	li	tp,0
     100032a2:	00007097          	auipc	ra,0x7
-    100032a6:	d8e08093          	addi	ra,ra,-626 # 1000a030 <tdat2>
+    100032a6:	dc208093          	addi	ra,ra,-574 # 1000a064 <tdat2>
     100032aa:	0040e703          	lwu	a4,4(ra)
     100032ae:	00070313          	mv	t1,a4
     100032b2:	0ff01eb7          	lui	t4,0xff01
@@ -5797,7 +5797,7 @@ RVTEST_CODE_END
     100032ca:	41b5                	li	gp,13
     100032cc:	4201                	li	tp,0
     100032ce:	00007097          	auipc	ra,0x7
-    100032d2:	d6608093          	addi	ra,ra,-666 # 1000a034 <tdat3>
+    100032d2:	d9a08093          	addi	ra,ra,-614 # 1000a068 <tdat3>
     100032d6:	0040e703          	lwu	a4,4(ra)
     100032da:	0001                	nop
     100032dc:	00070313          	mv	t1,a4
@@ -5816,7 +5816,7 @@ RVTEST_CODE_END
     10003300:	41b9                	li	gp,14
     10003302:	4201                	li	tp,0
     10003304:	00007097          	auipc	ra,0x7
-    10003308:	d2808093          	addi	ra,ra,-728 # 1000a02c <tdat>
+    10003308:	d5c08093          	addi	ra,ra,-676 # 1000a060 <tdat>
     1000330c:	0040e703          	lwu	a4,4(ra)
     10003310:	0001                	nop
     10003312:	0001                	nop
@@ -5837,7 +5837,7 @@ RVTEST_CODE_END
     10003338:	41bd                	li	gp,15
     1000333a:	4201                	li	tp,0
     1000333c:	00007097          	auipc	ra,0x7
-    10003340:	cf408093          	addi	ra,ra,-780 # 1000a030 <tdat2>
+    10003340:	d2808093          	addi	ra,ra,-728 # 1000a064 <tdat2>
     10003344:	0040e703          	lwu	a4,4(ra)
     10003348:	0ff01eb7          	lui	t4,0xff01
     1000334c:	ff0e8e9b          	addiw	t4,t4,-16
@@ -5852,7 +5852,7 @@ RVTEST_CODE_END
     10003360:	41c1                	li	gp,16
     10003362:	4201                	li	tp,0
     10003364:	00007097          	auipc	ra,0x7
-    10003368:	cd008093          	addi	ra,ra,-816 # 1000a034 <tdat3>
+    10003368:	d0408093          	addi	ra,ra,-764 # 1000a068 <tdat3>
     1000336c:	0001                	nop
     1000336e:	0040e703          	lwu	a4,4(ra)
     10003372:	000f0eb7          	lui	t4,0xf0
@@ -5870,7 +5870,7 @@ RVTEST_CODE_END
     10003392:	41c5                	li	gp,17
     10003394:	4201                	li	tp,0
     10003396:	00007097          	auipc	ra,0x7
-    1000339a:	c9608093          	addi	ra,ra,-874 # 1000a02c <tdat>
+    1000339a:	cca08093          	addi	ra,ra,-822 # 1000a060 <tdat>
     1000339e:	0001                	nop
     100033a0:	0001                	nop
     100033a2:	0040e703          	lwu	a4,4(ra)
@@ -5892,7 +5892,7 @@ RVTEST_CODE_END
 
   TEST_CASE( 18, x2, 2, \
     100033c6:	00007297          	auipc	t0,0x7
-    100033ca:	c6628293          	addi	t0,t0,-922 # 1000a02c <tdat>
+    100033ca:	c9a28293          	addi	t0,t0,-870 # 1000a060 <tdat>
     100033ce:	0002e103          	lwu	sp,0(t0)
     100033d2:	4109                	li	sp,2
     100033d4:	4e89                	li	t4,2
@@ -5908,7 +5908,7 @@ RVTEST_CODE_END
 
   TEST_CASE( 19, x2, 2, \
     100033e0:	00007297          	auipc	t0,0x7
-    100033e4:	c4c28293          	addi	t0,t0,-948 # 1000a02c <tdat>
+    100033e4:	c8028293          	addi	t0,t0,-896 # 1000a060 <tdat>
     100033e8:	0002e103          	lwu	sp,0(t0)
     100033ec:	0001                	nop
     100033ee:	4109                	li	sp,2
@@ -5926,7 +5926,7 @@ RVTEST_CODE_END
 
   TEST_LD_OP( 2, ld, 0x00ff00ff00ff00ff, 0,  tdat );
     100033fe:	00007097          	auipc	ra,0x7
-    10003402:	c3e08093          	addi	ra,ra,-962 # 1000a03c <tdat>
+    10003402:	c7208093          	addi	ra,ra,-910 # 1000a070 <tdat>
     10003406:	0000b703          	ld	a4,0(ra)
     1000340a:	00ff0eb7          	lui	t4,0xff0
     1000340e:	0ffe8e9b          	addiw	t4,t4,255
@@ -5941,12 +5941,12 @@ RVTEST_CODE_END
 000000001000342c <test_3>:
   TEST_LD_OP( 3, ld, 0xff00ff00ff00ff00, 8,  tdat );
     1000342c:	00007097          	auipc	ra,0x7
-    10003430:	c1008093          	addi	ra,ra,-1008 # 1000a03c <tdat>
+    10003430:	c4408093          	addi	ra,ra,-956 # 1000a070 <tdat>
     10003434:	0080b703          	ld	a4,8(ra)
     10003438:	ff010eb7          	lui	t4,0xff010
     1000343c:	f01e8e9b          	addiw	t4,t4,-255
     10003440:	010e9e93          	slli	t4,t4,0x10
-    10003444:	f01e8e93          	addi	t4,t4,-255 # ffffffffff00ff01 <_end+0xffffffffef005e0f>
+    10003444:	f01e8e93          	addi	t4,t4,-255 # ffffffffff00ff01 <_end+0xffffffffef005dc1>
     10003448:	010e9e93          	slli	t4,t4,0x10
     1000344c:	f00e8e93          	addi	t4,t4,-256
     10003450:	418d                	li	gp,3
@@ -5956,7 +5956,7 @@ RVTEST_CODE_END
 000000001000345a <test_4>:
   TEST_LD_OP( 4, ld, 0x0ff00ff00ff00ff0, 16, tdat );
     1000345a:	00007097          	auipc	ra,0x7
-    1000345e:	be208093          	addi	ra,ra,-1054 # 1000a03c <tdat>
+    1000345e:	c1608093          	addi	ra,ra,-1002 # 1000a070 <tdat>
     10003462:	0100b703          	ld	a4,16(ra)
     10003466:	00010eb7          	lui	t4,0x10
     1000346a:	f01e8e9b          	addiw	t4,t4,-255
@@ -5973,12 +5973,12 @@ RVTEST_CODE_END
 0000000010003490 <test_5>:
   TEST_LD_OP( 5, ld, 0xf00ff00ff00ff00f, 24, tdat );
     10003490:	00007097          	auipc	ra,0x7
-    10003494:	bac08093          	addi	ra,ra,-1108 # 1000a03c <tdat>
+    10003494:	be008093          	addi	ra,ra,-1056 # 1000a070 <tdat>
     10003498:	0180b703          	ld	a4,24(ra)
     1000349c:	ffff0eb7          	lui	t4,0xffff0
     100034a0:	0ffe8e9b          	addiw	t4,t4,255
     100034a4:	010e9e93          	slli	t4,t4,0x10
-    100034a8:	0ffe8e93          	addi	t4,t4,255 # ffffffffffff00ff <_end+0xffffffffeffe600d>
+    100034a8:	0ffe8e93          	addi	t4,t4,255 # ffffffffffff00ff <_end+0xffffffffeffe5fbf>
     100034ac:	010e9e93          	slli	t4,t4,0x10
     100034b0:	0ffe8e93          	addi	t4,t4,255
     100034b4:	00ce9e93          	slli	t4,t4,0xc
@@ -5993,7 +5993,7 @@ RVTEST_CODE_END
 
   TEST_LD_OP( 6, ld, 0x00ff00ff00ff00ff, -24, tdat4 );
     100034c6:	00007097          	auipc	ra,0x7
-    100034ca:	b8e08093          	addi	ra,ra,-1138 # 1000a054 <tdat4>
+    100034ca:	bc208093          	addi	ra,ra,-1086 # 1000a088 <tdat4>
     100034ce:	fe80b703          	ld	a4,-24(ra)
     100034d2:	00ff0eb7          	lui	t4,0xff0
     100034d6:	0ffe8e9b          	addiw	t4,t4,255
@@ -6008,12 +6008,12 @@ RVTEST_CODE_END
 00000000100034f4 <test_7>:
   TEST_LD_OP( 7, ld, 0xff00ff00ff00ff00, -16, tdat4 );
     100034f4:	00007097          	auipc	ra,0x7
-    100034f8:	b6008093          	addi	ra,ra,-1184 # 1000a054 <tdat4>
+    100034f8:	b9408093          	addi	ra,ra,-1132 # 1000a088 <tdat4>
     100034fc:	ff00b703          	ld	a4,-16(ra)
     10003500:	ff010eb7          	lui	t4,0xff010
     10003504:	f01e8e9b          	addiw	t4,t4,-255
     10003508:	010e9e93          	slli	t4,t4,0x10
-    1000350c:	f01e8e93          	addi	t4,t4,-255 # ffffffffff00ff01 <_end+0xffffffffef005e0f>
+    1000350c:	f01e8e93          	addi	t4,t4,-255 # ffffffffff00ff01 <_end+0xffffffffef005dc1>
     10003510:	010e9e93          	slli	t4,t4,0x10
     10003514:	f00e8e93          	addi	t4,t4,-256
     10003518:	419d                	li	gp,7
@@ -6023,7 +6023,7 @@ RVTEST_CODE_END
 0000000010003522 <test_8>:
   TEST_LD_OP( 8, ld, 0x0ff00ff00ff00ff0, -8,  tdat4 );
     10003522:	00007097          	auipc	ra,0x7
-    10003526:	b3208093          	addi	ra,ra,-1230 # 1000a054 <tdat4>
+    10003526:	b6608093          	addi	ra,ra,-1178 # 1000a088 <tdat4>
     1000352a:	ff80b703          	ld	a4,-8(ra)
     1000352e:	00010eb7          	lui	t4,0x10
     10003532:	f01e8e9b          	addiw	t4,t4,-255
@@ -6040,12 +6040,12 @@ RVTEST_CODE_END
 0000000010003558 <test_9>:
   TEST_LD_OP( 9, ld, 0xf00ff00ff00ff00f, 0,   tdat4 );
     10003558:	00007097          	auipc	ra,0x7
-    1000355c:	afc08093          	addi	ra,ra,-1284 # 1000a054 <tdat4>
+    1000355c:	b3008093          	addi	ra,ra,-1232 # 1000a088 <tdat4>
     10003560:	0000b703          	ld	a4,0(ra)
     10003564:	ffff0eb7          	lui	t4,0xffff0
     10003568:	0ffe8e9b          	addiw	t4,t4,255
     1000356c:	010e9e93          	slli	t4,t4,0x10
-    10003570:	0ffe8e93          	addi	t4,t4,255 # ffffffffffff00ff <_end+0xffffffffeffe600d>
+    10003570:	0ffe8e93          	addi	t4,t4,255 # ffffffffffff00ff <_end+0xffffffffeffe5fbf>
     10003574:	010e9e93          	slli	t4,t4,0x10
     10003578:	0ffe8e93          	addi	t4,t4,255
     1000357c:	00ce9e93          	slli	t4,t4,0xc
@@ -6060,7 +6060,7 @@ RVTEST_CODE_END
 
   TEST_CASE( 10, x5, 0x00ff00ff00ff00ff, \
     1000358e:	00007097          	auipc	ra,0x7
-    10003592:	aae08093          	addi	ra,ra,-1362 # 1000a03c <tdat>
+    10003592:	ae208093          	addi	ra,ra,-1310 # 1000a070 <tdat>
     10003596:	1081                	addi	ra,ra,-32
     10003598:	0200b283          	ld	t0,32(ra)
     1000359c:	00ff0eb7          	lui	t4,0xff0
@@ -6081,13 +6081,13 @@ RVTEST_CODE_END
 
   TEST_CASE( 11, x5, 0xff00ff00ff00ff00, \
     100035be:	00007097          	auipc	ra,0x7
-    100035c2:	a7e08093          	addi	ra,ra,-1410 # 1000a03c <tdat>
+    100035c2:	ab208093          	addi	ra,ra,-1358 # 1000a070 <tdat>
     100035c6:	10f5                	addi	ra,ra,-3
     100035c8:	00b0b283          	ld	t0,11(ra)
     100035cc:	ff010eb7          	lui	t4,0xff010
     100035d0:	f01e8e9b          	addiw	t4,t4,-255
     100035d4:	010e9e93          	slli	t4,t4,0x10
-    100035d8:	f01e8e93          	addi	t4,t4,-255 # ffffffffff00ff01 <_end+0xffffffffef005e0f>
+    100035d8:	f01e8e93          	addi	t4,t4,-255 # ffffffffff00ff01 <_end+0xffffffffef005dc1>
     100035dc:	010e9e93          	slli	t4,t4,0x10
     100035e0:	f00e8e93          	addi	t4,t4,-256
     100035e4:	41ad                	li	gp,11
@@ -6104,7 +6104,7 @@ RVTEST_CODE_END
     100035ee:	41b1                	li	gp,12
     100035f0:	4201                	li	tp,0
     100035f2:	00007097          	auipc	ra,0x7
-    100035f6:	a5208093          	addi	ra,ra,-1454 # 1000a044 <tdat2>
+    100035f6:	a8608093          	addi	ra,ra,-1402 # 1000a078 <tdat2>
     100035fa:	0080b703          	ld	a4,8(ra)
     100035fe:	00070313          	mv	t1,a4
     10003602:	00010eb7          	lui	t4,0x10
@@ -6126,14 +6126,14 @@ RVTEST_CODE_END
     10003632:	41b5                	li	gp,13
     10003634:	4201                	li	tp,0
     10003636:	00007097          	auipc	ra,0x7
-    1000363a:	a1608093          	addi	ra,ra,-1514 # 1000a04c <tdat3>
+    1000363a:	a4a08093          	addi	ra,ra,-1462 # 1000a080 <tdat3>
     1000363e:	0080b703          	ld	a4,8(ra)
     10003642:	0001                	nop
     10003644:	00070313          	mv	t1,a4
     10003648:	ffff0eb7          	lui	t4,0xffff0
     1000364c:	0ffe8e9b          	addiw	t4,t4,255
     10003650:	010e9e93          	slli	t4,t4,0x10
-    10003654:	0ffe8e93          	addi	t4,t4,255 # ffffffffffff00ff <_end+0xffffffffeffe600d>
+    10003654:	0ffe8e93          	addi	t4,t4,255 # ffffffffffff00ff <_end+0xffffffffeffe5fbf>
     10003658:	010e9e93          	slli	t4,t4,0x10
     1000365c:	0ffe8e93          	addi	t4,t4,255
     10003660:	00ce9e93          	slli	t4,t4,0xc
@@ -6149,7 +6149,7 @@ RVTEST_CODE_END
     10003678:	41b9                	li	gp,14
     1000367a:	4201                	li	tp,0
     1000367c:	00007097          	auipc	ra,0x7
-    10003680:	9c008093          	addi	ra,ra,-1600 # 1000a03c <tdat>
+    10003680:	9f408093          	addi	ra,ra,-1548 # 1000a070 <tdat>
     10003684:	0080b703          	ld	a4,8(ra)
     10003688:	0001                	nop
     1000368a:	0001                	nop
@@ -6157,7 +6157,7 @@ RVTEST_CODE_END
     10003690:	ff010eb7          	lui	t4,0xff010
     10003694:	f01e8e9b          	addiw	t4,t4,-255
     10003698:	010e9e93          	slli	t4,t4,0x10
-    1000369c:	f01e8e93          	addi	t4,t4,-255 # ffffffffff00ff01 <_end+0xffffffffef005e0f>
+    1000369c:	f01e8e93          	addi	t4,t4,-255 # ffffffffff00ff01 <_end+0xffffffffef005dc1>
     100036a0:	010e9e93          	slli	t4,t4,0x10
     100036a4:	f00e8e93          	addi	t4,t4,-256
     100036a8:	01d30463          	beq	t1,t4,100036b0 <test_14+0x38>
@@ -6172,7 +6172,7 @@ RVTEST_CODE_END
     100036b8:	41bd                	li	gp,15
     100036ba:	4201                	li	tp,0
     100036bc:	00007097          	auipc	ra,0x7
-    100036c0:	98808093          	addi	ra,ra,-1656 # 1000a044 <tdat2>
+    100036c0:	9bc08093          	addi	ra,ra,-1604 # 1000a078 <tdat2>
     100036c4:	0080b703          	ld	a4,8(ra)
     100036c8:	00010eb7          	lui	t4,0x10
     100036cc:	f01e8e9b          	addiw	t4,t4,-255
@@ -6193,13 +6193,13 @@ RVTEST_CODE_END
     100036f8:	41c1                	li	gp,16
     100036fa:	4201                	li	tp,0
     100036fc:	00007097          	auipc	ra,0x7
-    10003700:	95008093          	addi	ra,ra,-1712 # 1000a04c <tdat3>
+    10003700:	98408093          	addi	ra,ra,-1660 # 1000a080 <tdat3>
     10003704:	0001                	nop
     10003706:	0080b703          	ld	a4,8(ra)
     1000370a:	ffff0eb7          	lui	t4,0xffff0
     1000370e:	0ffe8e9b          	addiw	t4,t4,255
     10003712:	010e9e93          	slli	t4,t4,0x10
-    10003716:	0ffe8e93          	addi	t4,t4,255 # ffffffffffff00ff <_end+0xffffffffeffe600d>
+    10003716:	0ffe8e93          	addi	t4,t4,255 # ffffffffffff00ff <_end+0xffffffffeffe5fbf>
     1000371a:	010e9e93          	slli	t4,t4,0x10
     1000371e:	0ffe8e93          	addi	t4,t4,255
     10003722:	00ce9e93          	slli	t4,t4,0xc
@@ -6215,14 +6215,14 @@ RVTEST_CODE_END
     1000373a:	41c5                	li	gp,17
     1000373c:	4201                	li	tp,0
     1000373e:	00007097          	auipc	ra,0x7
-    10003742:	8fe08093          	addi	ra,ra,-1794 # 1000a03c <tdat>
+    10003742:	93208093          	addi	ra,ra,-1742 # 1000a070 <tdat>
     10003746:	0001                	nop
     10003748:	0001                	nop
     1000374a:	0080b703          	ld	a4,8(ra)
     1000374e:	ff010eb7          	lui	t4,0xff010
     10003752:	f01e8e9b          	addiw	t4,t4,-255
     10003756:	010e9e93          	slli	t4,t4,0x10
-    1000375a:	f01e8e93          	addi	t4,t4,-255 # ffffffffff00ff01 <_end+0xffffffffef005e0f>
+    1000375a:	f01e8e93          	addi	t4,t4,-255 # ffffffffff00ff01 <_end+0xffffffffef005dc1>
     1000375e:	010e9e93          	slli	t4,t4,0x10
     10003762:	f00e8e93          	addi	t4,t4,-256
     10003766:	01d70463          	beq	a4,t4,1000376e <test_17+0x34>
@@ -6239,7 +6239,7 @@ RVTEST_CODE_END
 
   TEST_CASE( 18, x2, 2, \
     10003776:	00007297          	auipc	t0,0x7
-    1000377a:	8c628293          	addi	t0,t0,-1850 # 1000a03c <tdat>
+    1000377a:	8fa28293          	addi	t0,t0,-1798 # 1000a070 <tdat>
     1000377e:	0002b103          	ld	sp,0(t0)
     10003782:	4109                	li	sp,2
     10003784:	4e89                	li	t4,2
@@ -6255,7 +6255,7 @@ RVTEST_CODE_END
 
   TEST_CASE( 19, x2, 2, \
     10003790:	00007297          	auipc	t0,0x7
-    10003794:	8ac28293          	addi	t0,t0,-1876 # 1000a03c <tdat>
+    10003794:	8e028293          	addi	t0,t0,-1824 # 1000a070 <tdat>
     10003798:	0002b103          	ld	sp,0(t0)
     1000379c:	0001                	nop
     1000379e:	4109                	li	sp,2
@@ -7012,7 +7012,7 @@ RVTEST_CODE_END
 
   TEST_ST_OP( 2, lb, sb, 0xffffffffffffffaa, 0, tdat );
     10003f6a:	00006097          	auipc	ra,0x6
-    10003f6e:	0f208093          	addi	ra,ra,242 # 1000a05c <tdat>
+    10003f6e:	12608093          	addi	ra,ra,294 # 1000a090 <tdat>
     10003f72:	faa00113          	li	sp,-86
     10003f76:	00208023          	sb	sp,0(ra)
     10003f7a:	00008703          	lb	a4,0(ra)
@@ -7024,7 +7024,7 @@ RVTEST_CODE_END
 0000000010003f8c <test_3>:
   TEST_ST_OP( 3, lb, sb, 0x0000000000000000, 1, tdat );
     10003f8c:	00006097          	auipc	ra,0x6
-    10003f90:	0d008093          	addi	ra,ra,208 # 1000a05c <tdat>
+    10003f90:	10408093          	addi	ra,ra,260 # 1000a090 <tdat>
     10003f94:	4101                	li	sp,0
     10003f96:	002080a3          	sb	sp,1(ra)
     10003f9a:	00108703          	lb	a4,1(ra)
@@ -7036,7 +7036,7 @@ RVTEST_CODE_END
 0000000010003faa <test_4>:
   TEST_ST_OP( 4, lh, sb, 0xffffffffffffefa0, 2, tdat );
     10003faa:	00006097          	auipc	ra,0x6
-    10003fae:	0b208093          	addi	ra,ra,178 # 1000a05c <tdat>
+    10003fae:	0e608093          	addi	ra,ra,230 # 1000a090 <tdat>
     10003fb2:	fffff137          	lui	sp,0xfffff
     10003fb6:	fa01011b          	addiw	sp,sp,-96
     10003fba:	00208123          	sb	sp,2(ra)
@@ -7050,7 +7050,7 @@ RVTEST_CODE_END
 0000000010003fd4 <test_5>:
   TEST_ST_OP( 5, lb, sb, 0x000000000000000a, 3, tdat );
     10003fd4:	00006097          	auipc	ra,0x6
-    10003fd8:	08808093          	addi	ra,ra,136 # 1000a05c <tdat>
+    10003fd8:	0bc08093          	addi	ra,ra,188 # 1000a090 <tdat>
     10003fdc:	4129                	li	sp,10
     10003fde:	002081a3          	sb	sp,3(ra)
     10003fe2:	00308703          	lb	a4,3(ra)
@@ -7065,7 +7065,7 @@ RVTEST_CODE_END
 
   TEST_ST_OP( 6, lb, sb, 0xffffffffffffffaa, -3, tdat8 );
     10003ff2:	00006097          	auipc	ra,0x6
-    10003ff6:	07108093          	addi	ra,ra,113 # 1000a063 <tdat8>
+    10003ff6:	0a508093          	addi	ra,ra,165 # 1000a097 <tdat8>
     10003ffa:	faa00113          	li	sp,-86
     10003ffe:	fe208ea3          	sb	sp,-3(ra)
     10004002:	ffd08703          	lb	a4,-3(ra)
@@ -7077,7 +7077,7 @@ RVTEST_CODE_END
 0000000010004014 <test_7>:
   TEST_ST_OP( 7, lb, sb, 0x0000000000000000, -2, tdat8 );
     10004014:	00006097          	auipc	ra,0x6
-    10004018:	04f08093          	addi	ra,ra,79 # 1000a063 <tdat8>
+    10004018:	08308093          	addi	ra,ra,131 # 1000a097 <tdat8>
     1000401c:	4101                	li	sp,0
     1000401e:	fe208f23          	sb	sp,-2(ra)
     10004022:	ffe08703          	lb	a4,-2(ra)
@@ -7089,7 +7089,7 @@ RVTEST_CODE_END
 0000000010004032 <test_8>:
   TEST_ST_OP( 8, lb, sb, 0xffffffffffffffa0, -1, tdat8 );
     10004032:	00006097          	auipc	ra,0x6
-    10004036:	03108093          	addi	ra,ra,49 # 1000a063 <tdat8>
+    10004036:	06508093          	addi	ra,ra,101 # 1000a097 <tdat8>
     1000403a:	fa000113          	li	sp,-96
     1000403e:	fe208fa3          	sb	sp,-1(ra)
     10004042:	fff08703          	lb	a4,-1(ra)
@@ -7101,7 +7101,7 @@ RVTEST_CODE_END
 0000000010004054 <test_9>:
   TEST_ST_OP( 9, lb, sb, 0x000000000000000a, 0,  tdat8 );
     10004054:	00006097          	auipc	ra,0x6
-    10004058:	00f08093          	addi	ra,ra,15 # 1000a063 <tdat8>
+    10004058:	04308093          	addi	ra,ra,67 # 1000a097 <tdat8>
     1000405c:	4129                	li	sp,10
     1000405e:	00208023          	sb	sp,0(ra)
     10004062:	00008703          	lb	a4,0(ra)
@@ -7116,7 +7116,7 @@ RVTEST_CODE_END
 
   TEST_CASE( 10, x5, 0x78, \
     10004072:	00006097          	auipc	ra,0x6
-    10004076:	ff208093          	addi	ra,ra,-14 # 1000a064 <tdat9>
+    10004076:	02608093          	addi	ra,ra,38 # 1000a098 <tdat9>
     1000407a:	12345137          	lui	sp,0x12345
     1000407e:	6781011b          	addiw	sp,sp,1656
     10004082:	fe008213          	addi	tp,ra,-32
@@ -7135,13 +7135,13 @@ RVTEST_CODE_END
 
   TEST_CASE( 11, x5, 0xffffffffffffff98, \
     1000409c:	00006097          	auipc	ra,0x6
-    100040a0:	fc808093          	addi	ra,ra,-56 # 1000a064 <tdat9>
+    100040a0:	ffc08093          	addi	ra,ra,-4 # 1000a098 <tdat9>
     100040a4:	00003137          	lui	sp,0x3
     100040a8:	0981011b          	addiw	sp,sp,152
     100040ac:	10e9                	addi	ra,ra,-6
     100040ae:	002083a3          	sb	sp,7(ra)
     100040b2:	00006217          	auipc	tp,0x6
-    100040b6:	fb320213          	addi	tp,tp,-77 # 1000a065 <tdat10>
+    100040b6:	fe720213          	addi	tp,tp,-25 # 1000a099 <tdat10>
     100040ba:	00020283          	lb	t0,0(tp) # 0 <test_2-0x10000000>
     100040be:	f9800e93          	li	t4,-104
     100040c2:	41ad                	li	gp,11
@@ -7159,7 +7159,7 @@ RVTEST_CODE_END
     100040ce:	4201                	li	tp,0
     100040d0:	fdd00093          	li	ra,-35
     100040d4:	00006117          	auipc	sp,0x6
-    100040d8:	f8810113          	addi	sp,sp,-120 # 1000a05c <tdat>
+    100040d8:	fbc10113          	addi	sp,sp,-68 # 1000a090 <tdat>
     100040dc:	00110023          	sb	ra,0(sp)
     100040e0:	00010703          	lb	a4,0(sp)
     100040e4:	fdd00e93          	li	t4,-35
@@ -7175,7 +7175,7 @@ RVTEST_CODE_END
     100040fa:	4201                	li	tp,0
     100040fc:	fcd00093          	li	ra,-51
     10004100:	00006117          	auipc	sp,0x6
-    10004104:	f5c10113          	addi	sp,sp,-164 # 1000a05c <tdat>
+    10004104:	f9010113          	addi	sp,sp,-112 # 1000a090 <tdat>
     10004108:	0001                	nop
     1000410a:	001100a3          	sb	ra,1(sp)
     1000410e:	00110703          	lb	a4,1(sp)
@@ -7192,7 +7192,7 @@ RVTEST_CODE_END
     10004128:	4201                	li	tp,0
     1000412a:	fcc00093          	li	ra,-52
     1000412e:	00006117          	auipc	sp,0x6
-    10004132:	f2e10113          	addi	sp,sp,-210 # 1000a05c <tdat>
+    10004132:	f6210113          	addi	sp,sp,-158 # 1000a090 <tdat>
     10004136:	0001                	nop
     10004138:	0001                	nop
     1000413a:	00110123          	sb	ra,2(sp)
@@ -7211,7 +7211,7 @@ RVTEST_CODE_END
     1000415a:	fbc00093          	li	ra,-68
     1000415e:	0001                	nop
     10004160:	00006117          	auipc	sp,0x6
-    10004164:	efc10113          	addi	sp,sp,-260 # 1000a05c <tdat>
+    10004164:	f3010113          	addi	sp,sp,-208 # 1000a090 <tdat>
     10004168:	001101a3          	sb	ra,3(sp)
     1000416c:	00310703          	lb	a4,3(sp)
     10004170:	fbc00e93          	li	t4,-68
@@ -7228,7 +7228,7 @@ RVTEST_CODE_END
     10004188:	fbb00093          	li	ra,-69
     1000418c:	0001                	nop
     1000418e:	00006117          	auipc	sp,0x6
-    10004192:	ece10113          	addi	sp,sp,-306 # 1000a05c <tdat>
+    10004192:	f0210113          	addi	sp,sp,-254 # 1000a090 <tdat>
     10004196:	0001                	nop
     10004198:	00110223          	sb	ra,4(sp)
     1000419c:	00410703          	lb	a4,4(sp)
@@ -7247,7 +7247,7 @@ RVTEST_CODE_END
     100041bc:	0001                	nop
     100041be:	0001                	nop
     100041c0:	00006117          	auipc	sp,0x6
-    100041c4:	e9c10113          	addi	sp,sp,-356 # 1000a05c <tdat>
+    100041c4:	ed010113          	addi	sp,sp,-304 # 1000a090 <tdat>
     100041c8:	001102a3          	sb	ra,5(sp)
     100041cc:	00510703          	lb	a4,5(sp)
     100041d0:	fab00e93          	li	t4,-85
@@ -7263,7 +7263,7 @@ RVTEST_CODE_END
     100041e4:	41c9                	li	gp,18
     100041e6:	4201                	li	tp,0
     100041e8:	00006117          	auipc	sp,0x6
-    100041ec:	e7410113          	addi	sp,sp,-396 # 1000a05c <tdat>
+    100041ec:	ea810113          	addi	sp,sp,-344 # 1000a090 <tdat>
     100041f0:	03300093          	li	ra,51
     100041f4:	00110023          	sb	ra,0(sp)
     100041f8:	00010703          	lb	a4,0(sp)
@@ -7279,7 +7279,7 @@ RVTEST_CODE_END
     10004210:	41cd                	li	gp,19
     10004212:	4201                	li	tp,0
     10004214:	00006117          	auipc	sp,0x6
-    10004218:	e4810113          	addi	sp,sp,-440 # 1000a05c <tdat>
+    10004218:	e7c10113          	addi	sp,sp,-388 # 1000a090 <tdat>
     1000421c:	02300093          	li	ra,35
     10004220:	0001                	nop
     10004222:	001100a3          	sb	ra,1(sp)
@@ -7296,7 +7296,7 @@ RVTEST_CODE_END
     1000423e:	41d1                	li	gp,20
     10004240:	4201                	li	tp,0
     10004242:	00006117          	auipc	sp,0x6
-    10004246:	e1a10113          	addi	sp,sp,-486 # 1000a05c <tdat>
+    10004246:	e4e10113          	addi	sp,sp,-434 # 1000a090 <tdat>
     1000424a:	02200093          	li	ra,34
     1000424e:	0001                	nop
     10004250:	0001                	nop
@@ -7314,7 +7314,7 @@ RVTEST_CODE_END
     1000426e:	41d5                	li	gp,21
     10004270:	4201                	li	tp,0
     10004272:	00006117          	auipc	sp,0x6
-    10004276:	dea10113          	addi	sp,sp,-534 # 1000a05c <tdat>
+    10004276:	e1e10113          	addi	sp,sp,-482 # 1000a090 <tdat>
     1000427a:	0001                	nop
     1000427c:	40c9                	li	ra,18
     1000427e:	001101a3          	sb	ra,3(sp)
@@ -7331,7 +7331,7 @@ RVTEST_CODE_END
     10004298:	41d9                	li	gp,22
     1000429a:	4201                	li	tp,0
     1000429c:	00006117          	auipc	sp,0x6
-    100042a0:	dc010113          	addi	sp,sp,-576 # 1000a05c <tdat>
+    100042a0:	df410113          	addi	sp,sp,-524 # 1000a090 <tdat>
     100042a4:	0001                	nop
     100042a6:	40c5                	li	ra,17
     100042a8:	0001                	nop
@@ -7349,7 +7349,7 @@ RVTEST_CODE_END
     100042c4:	41dd                	li	gp,23
     100042c6:	4201                	li	tp,0
     100042c8:	00006117          	auipc	sp,0x6
-    100042cc:	d9410113          	addi	sp,sp,-620 # 1000a05c <tdat>
+    100042cc:	dc810113          	addi	sp,sp,-568 # 1000a090 <tdat>
     100042d0:	0001                	nop
     100042d2:	0001                	nop
     100042d4:	4085                	li	ra,1
@@ -7366,7 +7366,7 @@ RVTEST_CODE_END
     100042f0:	0ef00513          	li	a0,239
   la a1, tdat
     100042f4:	00006597          	auipc	a1,0x6
-    100042f8:	d6858593          	addi	a1,a1,-664 # 1000a05c <tdat>
+    100042f8:	d9c58593          	addi	a1,a1,-612 # 1000a090 <tdat>
   sb a0, 3(a1)
     100042fc:	00a581a3          	sb	a0,3(a1)
 	...
@@ -7379,7 +7379,7 @@ RVTEST_CODE_END
 
   TEST_ST_OP( 2, lh, sh, 0x00000000000000aa, 0, tdat );
     10004302:	00006097          	auipc	ra,0x6
-    10004306:	d6408093          	addi	ra,ra,-668 # 1000a066 <tdat>
+    10004306:	d9e08093          	addi	ra,ra,-610 # 1000a0a0 <tdat>
     1000430a:	0aa00113          	li	sp,170
     1000430e:	00209023          	sh	sp,0(ra)
     10004312:	00009703          	lh	a4,0(ra)
@@ -7391,7 +7391,7 @@ RVTEST_CODE_END
 0000000010004324 <test_3>:
   TEST_ST_OP( 3, lh, sh, 0xffffffffffffaa00, 2, tdat );
     10004324:	00006097          	auipc	ra,0x6
-    10004328:	d4208093          	addi	ra,ra,-702 # 1000a066 <tdat>
+    10004328:	d7c08093          	addi	ra,ra,-644 # 1000a0a0 <tdat>
     1000432c:	ffffb137          	lui	sp,0xffffb
     10004330:	a001011b          	addiw	sp,sp,-1536
     10004334:	00209123          	sh	sp,2(ra)
@@ -7405,7 +7405,7 @@ RVTEST_CODE_END
 000000001000434e <test_4>:
   TEST_ST_OP( 4, lw, sh, 0xffffffffbeef0aa0, 4, tdat );
     1000434e:	00006097          	auipc	ra,0x6
-    10004352:	d1808093          	addi	ra,ra,-744 # 1000a066 <tdat>
+    10004352:	d5208093          	addi	ra,ra,-686 # 1000a0a0 <tdat>
     10004356:	beef1137          	lui	sp,0xbeef1
     1000435a:	aa01011b          	addiw	sp,sp,-1376
     1000435e:	00209223          	sh	sp,4(ra)
@@ -7419,7 +7419,7 @@ RVTEST_CODE_END
 0000000010004378 <test_5>:
   TEST_ST_OP( 5, lh, sh, 0xffffffffffffa00a, 6, tdat );
     10004378:	00006097          	auipc	ra,0x6
-    1000437c:	cee08093          	addi	ra,ra,-786 # 1000a066 <tdat>
+    1000437c:	d2808093          	addi	ra,ra,-728 # 1000a0a0 <tdat>
     10004380:	ffffa137          	lui	sp,0xffffa
     10004384:	00a1011b          	addiw	sp,sp,10
     10004388:	00209323          	sh	sp,6(ra)
@@ -7436,7 +7436,7 @@ RVTEST_CODE_END
 
   TEST_ST_OP( 6, lh, sh, 0x00000000000000aa, -6, tdat8 );
     100043a2:	00006097          	auipc	ra,0x6
-    100043a6:	cd208093          	addi	ra,ra,-814 # 1000a074 <tdat8>
+    100043a6:	d0c08093          	addi	ra,ra,-756 # 1000a0ae <tdat8>
     100043aa:	0aa00113          	li	sp,170
     100043ae:	fe209d23          	sh	sp,-6(ra)
     100043b2:	ffa09703          	lh	a4,-6(ra)
@@ -7448,7 +7448,7 @@ RVTEST_CODE_END
 00000000100043c4 <test_7>:
   TEST_ST_OP( 7, lh, sh, 0xffffffffffffaa00, -4, tdat8 );
     100043c4:	00006097          	auipc	ra,0x6
-    100043c8:	cb008093          	addi	ra,ra,-848 # 1000a074 <tdat8>
+    100043c8:	cea08093          	addi	ra,ra,-790 # 1000a0ae <tdat8>
     100043cc:	ffffb137          	lui	sp,0xffffb
     100043d0:	a001011b          	addiw	sp,sp,-1536
     100043d4:	fe209e23          	sh	sp,-4(ra)
@@ -7462,7 +7462,7 @@ RVTEST_CODE_END
 00000000100043ee <test_8>:
   TEST_ST_OP( 8, lh, sh, 0x0000000000000aa0, -2, tdat8 );
     100043ee:	00006097          	auipc	ra,0x6
-    100043f2:	c8608093          	addi	ra,ra,-890 # 1000a074 <tdat8>
+    100043f2:	cc008093          	addi	ra,ra,-832 # 1000a0ae <tdat8>
     100043f6:	00001137          	lui	sp,0x1
     100043fa:	aa01011b          	addiw	sp,sp,-1376
     100043fe:	fe209f23          	sh	sp,-2(ra)
@@ -7476,7 +7476,7 @@ RVTEST_CODE_END
 0000000010004418 <test_9>:
   TEST_ST_OP( 9, lh, sh, 0xffffffffffffa00a, 0,  tdat8 );
     10004418:	00006097          	auipc	ra,0x6
-    1000441c:	c5c08093          	addi	ra,ra,-932 # 1000a074 <tdat8>
+    1000441c:	c9608093          	addi	ra,ra,-874 # 1000a0ae <tdat8>
     10004420:	ffffa137          	lui	sp,0xffffa
     10004424:	00a1011b          	addiw	sp,sp,10
     10004428:	00209023          	sh	sp,0(ra)
@@ -7493,7 +7493,7 @@ RVTEST_CODE_END
 
   TEST_CASE( 10, x5, 0x5678, \
     10004442:	00006097          	auipc	ra,0x6
-    10004446:	c3408093          	addi	ra,ra,-972 # 1000a076 <tdat9>
+    10004446:	c6e08093          	addi	ra,ra,-914 # 1000a0b0 <tdat9>
     1000444a:	12345137          	lui	sp,0x12345
     1000444e:	6781011b          	addiw	sp,sp,1656
     10004452:	fe008213          	addi	tp,ra,-32
@@ -7513,13 +7513,13 @@ RVTEST_CODE_END
 
   TEST_CASE( 11, x5, 0x3098, \
     10004470:	00006097          	auipc	ra,0x6
-    10004474:	c0608093          	addi	ra,ra,-1018 # 1000a076 <tdat9>
+    10004474:	c4008093          	addi	ra,ra,-960 # 1000a0b0 <tdat9>
     10004478:	00003137          	lui	sp,0x3
     1000447c:	0981011b          	addiw	sp,sp,152
     10004480:	10ed                	addi	ra,ra,-5
     10004482:	002093a3          	sh	sp,7(ra)
     10004486:	00006217          	auipc	tp,0x6
-    1000448a:	bf220213          	addi	tp,tp,-1038 # 1000a078 <tdat10>
+    1000448a:	c2c20213          	addi	tp,tp,-980 # 1000a0b2 <tdat10>
     1000448e:	00021283          	lh	t0,0(tp) # 0 <test_2-0x10000000>
     10004492:	00003eb7          	lui	t4,0x3
     10004496:	098e8e9b          	addiw	t4,t4,152
@@ -7539,7 +7539,7 @@ RVTEST_CODE_END
     100044a8:	ffffd0b7          	lui	ra,0xffffd
     100044ac:	cdd0809b          	addiw	ra,ra,-803
     100044b0:	00006117          	auipc	sp,0x6
-    100044b4:	bb610113          	addi	sp,sp,-1098 # 1000a066 <tdat>
+    100044b4:	bf010113          	addi	sp,sp,-1040 # 1000a0a0 <tdat>
     100044b8:	00111023          	sh	ra,0(sp)
     100044bc:	00011703          	lh	a4,0(sp)
     100044c0:	ffffdeb7          	lui	t4,0xffffd
@@ -7557,7 +7557,7 @@ RVTEST_CODE_END
     100044dc:	ffffc0b7          	lui	ra,0xffffc
     100044e0:	ccd0809b          	addiw	ra,ra,-819
     100044e4:	00006117          	auipc	sp,0x6
-    100044e8:	b8210113          	addi	sp,sp,-1150 # 1000a066 <tdat>
+    100044e8:	bbc10113          	addi	sp,sp,-1092 # 1000a0a0 <tdat>
     100044ec:	0001                	nop
     100044ee:	00111123          	sh	ra,2(sp)
     100044f2:	00211703          	lh	a4,2(sp)
@@ -7576,7 +7576,7 @@ RVTEST_CODE_END
     10004512:	ffffc0b7          	lui	ra,0xffffc
     10004516:	bcc0809b          	addiw	ra,ra,-1076
     1000451a:	00006117          	auipc	sp,0x6
-    1000451e:	b4c10113          	addi	sp,sp,-1204 # 1000a066 <tdat>
+    1000451e:	b8610113          	addi	sp,sp,-1146 # 1000a0a0 <tdat>
     10004522:	0001                	nop
     10004524:	0001                	nop
     10004526:	00111223          	sh	ra,4(sp)
@@ -7597,7 +7597,7 @@ RVTEST_CODE_END
     1000454e:	bbc0809b          	addiw	ra,ra,-1092
     10004552:	0001                	nop
     10004554:	00006117          	auipc	sp,0x6
-    10004558:	b1210113          	addi	sp,sp,-1262 # 1000a066 <tdat>
+    10004558:	b4c10113          	addi	sp,sp,-1204 # 1000a0a0 <tdat>
     1000455c:	00111323          	sh	ra,6(sp)
     10004560:	00611703          	lh	a4,6(sp)
     10004564:	ffffbeb7          	lui	t4,0xffffb
@@ -7616,7 +7616,7 @@ RVTEST_CODE_END
     10004584:	abb0809b          	addiw	ra,ra,-1349
     10004588:	0001                	nop
     1000458a:	00006117          	auipc	sp,0x6
-    1000458e:	adc10113          	addi	sp,sp,-1316 # 1000a066 <tdat>
+    1000458e:	b1610113          	addi	sp,sp,-1258 # 1000a0a0 <tdat>
     10004592:	0001                	nop
     10004594:	00111423          	sh	ra,8(sp)
     10004598:	00811703          	lh	a4,8(sp)
@@ -7637,7 +7637,7 @@ RVTEST_CODE_END
     100045c0:	0001                	nop
     100045c2:	0001                	nop
     100045c4:	00006117          	auipc	sp,0x6
-    100045c8:	aa210113          	addi	sp,sp,-1374 # 1000a066 <tdat>
+    100045c8:	adc10113          	addi	sp,sp,-1316 # 1000a0a0 <tdat>
     100045cc:	00111523          	sh	ra,10(sp)
     100045d0:	00a11703          	lh	a4,10(sp)
     100045d4:	ffffeeb7          	lui	t4,0xffffe
@@ -7654,7 +7654,7 @@ RVTEST_CODE_END
     100045ec:	41c9                	li	gp,18
     100045ee:	4201                	li	tp,0
     100045f0:	00006117          	auipc	sp,0x6
-    100045f4:	a7610113          	addi	sp,sp,-1418 # 1000a066 <tdat>
+    100045f4:	ab010113          	addi	sp,sp,-1360 # 1000a0a0 <tdat>
     100045f8:	000020b7          	lui	ra,0x2
     100045fc:	2330809b          	addiw	ra,ra,563
     10004600:	00111023          	sh	ra,0(sp)
@@ -7672,7 +7672,7 @@ RVTEST_CODE_END
     10004620:	41cd                	li	gp,19
     10004622:	4201                	li	tp,0
     10004624:	00006117          	auipc	sp,0x6
-    10004628:	a4210113          	addi	sp,sp,-1470 # 1000a066 <tdat>
+    10004628:	a7c10113          	addi	sp,sp,-1412 # 1000a0a0 <tdat>
     1000462c:	000010b7          	lui	ra,0x1
     10004630:	2230809b          	addiw	ra,ra,547
     10004634:	0001                	nop
@@ -7691,7 +7691,7 @@ RVTEST_CODE_END
     10004656:	41d1                	li	gp,20
     10004658:	4201                	li	tp,0
     1000465a:	00006117          	auipc	sp,0x6
-    1000465e:	a0c10113          	addi	sp,sp,-1524 # 1000a066 <tdat>
+    1000465e:	a4610113          	addi	sp,sp,-1466 # 1000a0a0 <tdat>
     10004662:	000010b7          	lui	ra,0x1
     10004666:	1220809b          	addiw	ra,ra,290
     1000466a:	0001                	nop
@@ -7711,7 +7711,7 @@ RVTEST_CODE_END
     1000468e:	41d5                	li	gp,21
     10004690:	4201                	li	tp,0
     10004692:	00006117          	auipc	sp,0x6
-    10004696:	9d410113          	addi	sp,sp,-1580 # 1000a066 <tdat>
+    10004696:	a0e10113          	addi	sp,sp,-1522 # 1000a0a0 <tdat>
     1000469a:	0001                	nop
     1000469c:	11200093          	li	ra,274
     100046a0:	00111323          	sh	ra,6(sp)
@@ -7728,7 +7728,7 @@ RVTEST_CODE_END
     100046bc:	41d9                	li	gp,22
     100046be:	4201                	li	tp,0
     100046c0:	00006117          	auipc	sp,0x6
-    100046c4:	9a610113          	addi	sp,sp,-1626 # 1000a066 <tdat>
+    100046c4:	9e010113          	addi	sp,sp,-1568 # 1000a0a0 <tdat>
     100046c8:	0001                	nop
     100046ca:	40c5                	li	ra,17
     100046cc:	0001                	nop
@@ -7746,7 +7746,7 @@ RVTEST_CODE_END
     100046e8:	41dd                	li	gp,23
     100046ea:	4201                	li	tp,0
     100046ec:	00006117          	auipc	sp,0x6
-    100046f0:	97a10113          	addi	sp,sp,-1670 # 1000a066 <tdat>
+    100046f0:	9b410113          	addi	sp,sp,-1612 # 1000a0a0 <tdat>
     100046f4:	0001                	nop
     100046f6:	0001                	nop
     100046f8:	000030b7          	lui	ra,0x3
@@ -7766,7 +7766,7 @@ RVTEST_CODE_END
     10004724:	eef5051b          	addiw	a0,a0,-273
   la a1, tdat
     10004728:	00006597          	auipc	a1,0x6
-    1000472c:	93e58593          	addi	a1,a1,-1730 # 1000a066 <tdat>
+    1000472c:	97858593          	addi	a1,a1,-1672 # 1000a0a0 <tdat>
   sh a0, 6(a1)
     10004730:	00a59323          	sh	a0,6(a1)
 	...
@@ -7779,7 +7779,7 @@ RVTEST_CODE_END
 
   TEST_ST_OP( 2, lw, sw, 0x0000000000aa00aa, 0,  tdat );
     10004736:	00006097          	auipc	ra,0x6
-    1000473a:	94408093          	addi	ra,ra,-1724 # 1000a07a <tdat>
+    1000473a:	98a08093          	addi	ra,ra,-1654 # 1000a0c0 <tdat>
     1000473e:	00aa0137          	lui	sp,0xaa0
     10004742:	0aa1011b          	addiw	sp,sp,170
     10004746:	0020a023          	sw	sp,0(ra)
@@ -7793,7 +7793,7 @@ RVTEST_CODE_END
 0000000010004760 <test_3>:
   TEST_ST_OP( 3, lw, sw, 0xffffffffaa00aa00, 4,  tdat );
     10004760:	00006097          	auipc	ra,0x6
-    10004764:	91a08093          	addi	ra,ra,-1766 # 1000a07a <tdat>
+    10004764:	96008093          	addi	ra,ra,-1696 # 1000a0c0 <tdat>
     10004768:	aa00b137          	lui	sp,0xaa00b
     1000476c:	a001011b          	addiw	sp,sp,-1536
     10004770:	0020a223          	sw	sp,4(ra)
@@ -7807,7 +7807,7 @@ RVTEST_CODE_END
 000000001000478a <test_4>:
   TEST_ST_OP( 4, lw, sw, 0x000000000aa00aa0, 8,  tdat );
     1000478a:	00006097          	auipc	ra,0x6
-    1000478e:	8f008093          	addi	ra,ra,-1808 # 1000a07a <tdat>
+    1000478e:	93608093          	addi	ra,ra,-1738 # 1000a0c0 <tdat>
     10004792:	0aa01137          	lui	sp,0xaa01
     10004796:	aa01011b          	addiw	sp,sp,-1376
     1000479a:	0020a423          	sw	sp,8(ra)
@@ -7821,7 +7821,7 @@ RVTEST_CODE_END
 00000000100047b4 <test_5>:
   TEST_ST_OP( 5, lw, sw, 0xffffffffa00aa00a, 12, tdat );
     100047b4:	00006097          	auipc	ra,0x6
-    100047b8:	8c608093          	addi	ra,ra,-1850 # 1000a07a <tdat>
+    100047b8:	90c08093          	addi	ra,ra,-1780 # 1000a0c0 <tdat>
     100047bc:	a00aa137          	lui	sp,0xa00aa
     100047c0:	00a1011b          	addiw	sp,sp,10
     100047c4:	0020a623          	sw	sp,12(ra)
@@ -7838,7 +7838,7 @@ RVTEST_CODE_END
 
   TEST_ST_OP( 6, lw, sw, 0x0000000000aa00aa, -12, tdat8 );
     100047de:	00006097          	auipc	ra,0x6
-    100047e2:	8b808093          	addi	ra,ra,-1864 # 1000a096 <tdat8>
+    100047e2:	8fe08093          	addi	ra,ra,-1794 # 1000a0dc <tdat8>
     100047e6:	00aa0137          	lui	sp,0xaa0
     100047ea:	0aa1011b          	addiw	sp,sp,170
     100047ee:	fe20aa23          	sw	sp,-12(ra)
@@ -7852,7 +7852,7 @@ RVTEST_CODE_END
 0000000010004808 <test_7>:
   TEST_ST_OP( 7, lw, sw, 0xffffffffaa00aa00, -8,  tdat8 );
     10004808:	00006097          	auipc	ra,0x6
-    1000480c:	88e08093          	addi	ra,ra,-1906 # 1000a096 <tdat8>
+    1000480c:	8d408093          	addi	ra,ra,-1836 # 1000a0dc <tdat8>
     10004810:	aa00b137          	lui	sp,0xaa00b
     10004814:	a001011b          	addiw	sp,sp,-1536
     10004818:	fe20ac23          	sw	sp,-8(ra)
@@ -7866,7 +7866,7 @@ RVTEST_CODE_END
 0000000010004832 <test_8>:
   TEST_ST_OP( 8, lw, sw, 0x000000000aa00aa0, -4,  tdat8 );
     10004832:	00006097          	auipc	ra,0x6
-    10004836:	86408093          	addi	ra,ra,-1948 # 1000a096 <tdat8>
+    10004836:	8aa08093          	addi	ra,ra,-1878 # 1000a0dc <tdat8>
     1000483a:	0aa01137          	lui	sp,0xaa01
     1000483e:	aa01011b          	addiw	sp,sp,-1376
     10004842:	fe20ae23          	sw	sp,-4(ra)
@@ -7880,7 +7880,7 @@ RVTEST_CODE_END
 000000001000485c <test_9>:
   TEST_ST_OP( 9, lw, sw, 0xffffffffa00aa00a, 0,   tdat8 );
     1000485c:	00006097          	auipc	ra,0x6
-    10004860:	83a08093          	addi	ra,ra,-1990 # 1000a096 <tdat8>
+    10004860:	88008093          	addi	ra,ra,-1920 # 1000a0dc <tdat8>
     10004864:	a00aa137          	lui	sp,0xa00aa
     10004868:	00a1011b          	addiw	sp,sp,10
     1000486c:	0020a023          	sw	sp,0(ra)
@@ -7897,7 +7897,7 @@ RVTEST_CODE_END
 
   TEST_CASE( 10, x5, 0x12345678, \
     10004886:	00006097          	auipc	ra,0x6
-    1000488a:	81408093          	addi	ra,ra,-2028 # 1000a09a <tdat9>
+    1000488a:	85a08093          	addi	ra,ra,-1958 # 1000a0e0 <tdat9>
     1000488e:	12345137          	lui	sp,0x12345
     10004892:	6781011b          	addiw	sp,sp,1656
     10004896:	fe008213          	addi	tp,ra,-32
@@ -7916,14 +7916,14 @@ RVTEST_CODE_END
   # Test with unaligned base
 
   TEST_CASE( 11, x5, 0x58213098, \
-    100048b4:	00005097          	auipc	ra,0x5
-    100048b8:	7e608093          	addi	ra,ra,2022 # 1000a09a <tdat9>
+    100048b4:	00006097          	auipc	ra,0x6
+    100048b8:	82c08093          	addi	ra,ra,-2004 # 1000a0e0 <tdat9>
     100048bc:	58213137          	lui	sp,0x58213
     100048c0:	0981011b          	addiw	sp,sp,152
     100048c4:	10f5                	addi	ra,ra,-3
     100048c6:	0020a3a3          	sw	sp,7(ra)
-    100048ca:	00005217          	auipc	tp,0x5
-    100048ce:	7d420213          	addi	tp,tp,2004 # 1000a09e <tdat10>
+    100048ca:	00006217          	auipc	tp,0x6
+    100048ce:	81a20213          	addi	tp,tp,-2022 # 1000a0e4 <tdat10>
     100048d2:	00022283          	lw	t0,0(tp) # 0 <test_2-0x10000000>
     100048d6:	58213eb7          	lui	t4,0x58213
     100048da:	098e8e9b          	addiw	t4,t4,152
@@ -7943,7 +7943,7 @@ RVTEST_CODE_END
     100048ec:	aabbd0b7          	lui	ra,0xaabbd
     100048f0:	cdd0809b          	addiw	ra,ra,-803
     100048f4:	00005117          	auipc	sp,0x5
-    100048f8:	78610113          	addi	sp,sp,1926 # 1000a07a <tdat>
+    100048f8:	7cc10113          	addi	sp,sp,1996 # 1000a0c0 <tdat>
     100048fc:	c006                	sw	ra,0(sp)
     100048fe:	4702                	lw	a4,0(sp)
     10004900:	aabbdeb7          	lui	t4,0xaabbd
@@ -7961,7 +7961,7 @@ RVTEST_CODE_END
     1000491c:	daabc0b7          	lui	ra,0xdaabc
     10004920:	ccd0809b          	addiw	ra,ra,-819
     10004924:	00005117          	auipc	sp,0x5
-    10004928:	75610113          	addi	sp,sp,1878 # 1000a07a <tdat>
+    10004928:	79c10113          	addi	sp,sp,1948 # 1000a0c0 <tdat>
     1000492c:	0001                	nop
     1000492e:	c206                	sw	ra,4(sp)
     10004930:	4712                	lw	a4,4(sp)
@@ -7980,7 +7980,7 @@ RVTEST_CODE_END
     1000494e:	ddaac0b7          	lui	ra,0xddaac
     10004952:	bcc0809b          	addiw	ra,ra,-1076
     10004956:	00005117          	auipc	sp,0x5
-    1000495a:	72410113          	addi	sp,sp,1828 # 1000a07a <tdat>
+    1000495a:	76a10113          	addi	sp,sp,1898 # 1000a0c0 <tdat>
     1000495e:	0001                	nop
     10004960:	0001                	nop
     10004962:	c406                	sw	ra,8(sp)
@@ -8001,7 +8001,7 @@ RVTEST_CODE_END
     10004986:	bbc0809b          	addiw	ra,ra,-1092
     1000498a:	0001                	nop
     1000498c:	00005117          	auipc	sp,0x5
-    10004990:	6ee10113          	addi	sp,sp,1774 # 1000a07a <tdat>
+    10004990:	73410113          	addi	sp,sp,1844 # 1000a0c0 <tdat>
     10004994:	c606                	sw	ra,12(sp)
     10004996:	4732                	lw	a4,12(sp)
     10004998:	cddabeb7          	lui	t4,0xcddab
@@ -8020,7 +8020,7 @@ RVTEST_CODE_END
     100049b8:	abb0809b          	addiw	ra,ra,-1349
     100049bc:	0001                	nop
     100049be:	00005117          	auipc	sp,0x5
-    100049c2:	6bc10113          	addi	sp,sp,1724 # 1000a07a <tdat>
+    100049c2:	70210113          	addi	sp,sp,1794 # 1000a0c0 <tdat>
     100049c6:	0001                	nop
     100049c8:	c806                	sw	ra,16(sp)
     100049ca:	4742                	lw	a4,16(sp)
@@ -8041,7 +8041,7 @@ RVTEST_CODE_END
     100049f0:	0001                	nop
     100049f2:	0001                	nop
     100049f4:	00005117          	auipc	sp,0x5
-    100049f8:	68610113          	addi	sp,sp,1670 # 1000a07a <tdat>
+    100049f8:	6cc10113          	addi	sp,sp,1740 # 1000a0c0 <tdat>
     100049fc:	ca06                	sw	ra,20(sp)
     100049fe:	4752                	lw	a4,20(sp)
     10004a00:	bccdeeb7          	lui	t4,0xbccde
@@ -8058,7 +8058,7 @@ RVTEST_CODE_END
     10004a18:	41c9                	li	gp,18
     10004a1a:	4201                	li	tp,0
     10004a1c:	00005117          	auipc	sp,0x5
-    10004a20:	65e10113          	addi	sp,sp,1630 # 1000a07a <tdat>
+    10004a20:	6a410113          	addi	sp,sp,1700 # 1000a0c0 <tdat>
     10004a24:	001120b7          	lui	ra,0x112
     10004a28:	2330809b          	addiw	ra,ra,563
     10004a2c:	c006                	sw	ra,0(sp)
@@ -8076,7 +8076,7 @@ RVTEST_CODE_END
     10004a48:	41cd                	li	gp,19
     10004a4a:	4201                	li	tp,0
     10004a4c:	00005117          	auipc	sp,0x5
-    10004a50:	62e10113          	addi	sp,sp,1582 # 1000a07a <tdat>
+    10004a50:	67410113          	addi	sp,sp,1652 # 1000a0c0 <tdat>
     10004a54:	300110b7          	lui	ra,0x30011
     10004a58:	2230809b          	addiw	ra,ra,547
     10004a5c:	0001                	nop
@@ -8095,7 +8095,7 @@ RVTEST_CODE_END
     10004a7a:	41d1                	li	gp,20
     10004a7c:	4201                	li	tp,0
     10004a7e:	00005117          	auipc	sp,0x5
-    10004a82:	5fc10113          	addi	sp,sp,1532 # 1000a07a <tdat>
+    10004a82:	64210113          	addi	sp,sp,1602 # 1000a0c0 <tdat>
     10004a86:	330010b7          	lui	ra,0x33001
     10004a8a:	1220809b          	addiw	ra,ra,290
     10004a8e:	0001                	nop
@@ -8115,7 +8115,7 @@ RVTEST_CODE_END
     10004aae:	41d5                	li	gp,21
     10004ab0:	4201                	li	tp,0
     10004ab2:	00005117          	auipc	sp,0x5
-    10004ab6:	5c810113          	addi	sp,sp,1480 # 1000a07a <tdat>
+    10004ab6:	60e10113          	addi	sp,sp,1550 # 1000a0c0 <tdat>
     10004aba:	0001                	nop
     10004abc:	233000b7          	lui	ra,0x23300
     10004ac0:	1120809b          	addiw	ra,ra,274
@@ -8134,7 +8134,7 @@ RVTEST_CODE_END
     10004ae0:	41d9                	li	gp,22
     10004ae2:	4201                	li	tp,0
     10004ae4:	00005117          	auipc	sp,0x5
-    10004ae8:	59610113          	addi	sp,sp,1430 # 1000a07a <tdat>
+    10004ae8:	5dc10113          	addi	sp,sp,1500 # 1000a0c0 <tdat>
     10004aec:	0001                	nop
     10004aee:	223300b7          	lui	ra,0x22330
     10004af2:	0110809b          	addiw	ra,ra,17
@@ -8154,7 +8154,7 @@ RVTEST_CODE_END
     10004b14:	41dd                	li	gp,23
     10004b16:	4201                	li	tp,0
     10004b18:	00005117          	auipc	sp,0x5
-    10004b1c:	56210113          	addi	sp,sp,1378 # 1000a07a <tdat>
+    10004b1c:	5a810113          	addi	sp,sp,1448 # 1000a0c0 <tdat>
     10004b20:	0001                	nop
     10004b22:	0001                	nop
     10004b24:	122330b7          	lui	ra,0x12233
@@ -8178,7 +8178,7 @@ RVTEST_CODE_END
 
   TEST_ST_OP( 2, ld, sd, 0x00aa00aa00aa00aa, 0,  tdat );
     10004b4a:	00005097          	auipc	ra,0x5
-    10004b4e:	55808093          	addi	ra,ra,1368 # 1000a0a2 <tdat>
+    10004b4e:	5a608093          	addi	ra,ra,1446 # 1000a0f0 <tdat>
     10004b52:	00550137          	lui	sp,0x550
     10004b56:	0551011b          	addiw	sp,sp,85
     10004b5a:	01011113          	slli	sp,sp,0x10
@@ -8200,11 +8200,11 @@ RVTEST_CODE_END
 0000000010004b94 <test_3>:
   TEST_ST_OP( 3, ld, sd, 0xaa00aa00aa00aa00, 8,  tdat );
     10004b94:	00005097          	auipc	ra,0x5
-    10004b98:	50e08093          	addi	ra,ra,1294 # 1000a0a2 <tdat>
+    10004b98:	55c08093          	addi	ra,ra,1372 # 1000a0f0 <tdat>
     10004b9c:	ffd50137          	lui	sp,0xffd50
     10004ba0:	0551011b          	addiw	sp,sp,85
     10004ba4:	01011113          	slli	sp,sp,0x10
-    10004ba8:	05510113          	addi	sp,sp,85 # ffffffffffd50055 <_end+0xffffffffefd45f63>
+    10004ba8:	05510113          	addi	sp,sp,85 # ffffffffffd50055 <_end+0xffffffffefd45f15>
     10004bac:	00d11113          	slli	sp,sp,0xd
     10004bb0:	00b10113          	addi	sp,sp,11
     10004bb4:	00c11113          	slli	sp,sp,0xc
@@ -8214,7 +8214,7 @@ RVTEST_CODE_END
     10004bc4:	ffd50eb7          	lui	t4,0xffd50
     10004bc8:	055e8e9b          	addiw	t4,t4,85
     10004bcc:	010e9e93          	slli	t4,t4,0x10
-    10004bd0:	055e8e93          	addi	t4,t4,85 # ffffffffffd50055 <_end+0xffffffffefd45f63>
+    10004bd0:	055e8e93          	addi	t4,t4,85 # ffffffffffd50055 <_end+0xffffffffefd45f15>
     10004bd4:	00de9e93          	slli	t4,t4,0xd
     10004bd8:	00be8e93          	addi	t4,t4,11
     10004bdc:	00ce9e93          	slli	t4,t4,0xc
@@ -8226,7 +8226,7 @@ RVTEST_CODE_END
 0000000010004bee <test_4>:
   TEST_ST_OP( 4, ld, sd, 0x0aa00aa00aa00aa0, 16,  tdat );
     10004bee:	00005097          	auipc	ra,0x5
-    10004bf2:	4b408093          	addi	ra,ra,1204 # 1000a0a2 <tdat>
+    10004bf2:	50208093          	addi	ra,ra,1282 # 1000a0f0 <tdat>
     10004bf6:	00550137          	lui	sp,0x550
     10004bfa:	0551011b          	addiw	sp,sp,85
     10004bfe:	00d11113          	slli	sp,sp,0xd
@@ -8252,11 +8252,11 @@ RVTEST_CODE_END
 0000000010004c48 <test_5>:
   TEST_ST_OP( 5, ld, sd, 0xa00aa00aa00aa00a, 24, tdat );
     10004c48:	00005097          	auipc	ra,0x5
-    10004c4c:	45a08093          	addi	ra,ra,1114 # 1000a0a2 <tdat>
+    10004c4c:	4a808093          	addi	ra,ra,1192 # 1000a0f0 <tdat>
     10004c50:	fffd0137          	lui	sp,0xfffd0
     10004c54:	0551011b          	addiw	sp,sp,85
     10004c58:	01011113          	slli	sp,sp,0x10
-    10004c5c:	05510113          	addi	sp,sp,85 # fffffffffffd0055 <_end+0xffffffffeffc5f63>
+    10004c5c:	05510113          	addi	sp,sp,85 # fffffffffffd0055 <_end+0xffffffffeffc5f15>
     10004c60:	01011113          	slli	sp,sp,0x10
     10004c64:	05510113          	addi	sp,sp,85
     10004c68:	00d11113          	slli	sp,sp,0xd
@@ -8266,7 +8266,7 @@ RVTEST_CODE_END
     10004c78:	fffd0eb7          	lui	t4,0xfffd0
     10004c7c:	055e8e9b          	addiw	t4,t4,85
     10004c80:	010e9e93          	slli	t4,t4,0x10
-    10004c84:	055e8e93          	addi	t4,t4,85 # fffffffffffd0055 <_end+0xffffffffeffc5f63>
+    10004c84:	055e8e93          	addi	t4,t4,85 # fffffffffffd0055 <_end+0xffffffffeffc5f15>
     10004c88:	010e9e93          	slli	t4,t4,0x10
     10004c8c:	055e8e93          	addi	t4,t4,85
     10004c90:	00de9e93          	slli	t4,t4,0xd
@@ -8281,7 +8281,7 @@ RVTEST_CODE_END
 
   TEST_ST_OP( 6, ld, sd, 0x00aa00aa00aa00aa, -24, tdat8 );
     10004ca2:	00005097          	auipc	ra,0x5
-    10004ca6:	43808093          	addi	ra,ra,1080 # 1000a0da <tdat8>
+    10004ca6:	48608093          	addi	ra,ra,1158 # 1000a128 <tdat8>
     10004caa:	00550137          	lui	sp,0x550
     10004cae:	0551011b          	addiw	sp,sp,85
     10004cb2:	01011113          	slli	sp,sp,0x10
@@ -8303,11 +8303,11 @@ RVTEST_CODE_END
 0000000010004cec <test_7>:
   TEST_ST_OP( 7, ld, sd, 0xaa00aa00aa00aa00, -16, tdat8 );
     10004cec:	00005097          	auipc	ra,0x5
-    10004cf0:	3ee08093          	addi	ra,ra,1006 # 1000a0da <tdat8>
+    10004cf0:	43c08093          	addi	ra,ra,1084 # 1000a128 <tdat8>
     10004cf4:	ffd50137          	lui	sp,0xffd50
     10004cf8:	0551011b          	addiw	sp,sp,85
     10004cfc:	01011113          	slli	sp,sp,0x10
-    10004d00:	05510113          	addi	sp,sp,85 # ffffffffffd50055 <_end+0xffffffffefd45f63>
+    10004d00:	05510113          	addi	sp,sp,85 # ffffffffffd50055 <_end+0xffffffffefd45f15>
     10004d04:	00d11113          	slli	sp,sp,0xd
     10004d08:	00b10113          	addi	sp,sp,11
     10004d0c:	00c11113          	slli	sp,sp,0xc
@@ -8317,7 +8317,7 @@ RVTEST_CODE_END
     10004d1c:	ffd50eb7          	lui	t4,0xffd50
     10004d20:	055e8e9b          	addiw	t4,t4,85
     10004d24:	010e9e93          	slli	t4,t4,0x10
-    10004d28:	055e8e93          	addi	t4,t4,85 # ffffffffffd50055 <_end+0xffffffffefd45f63>
+    10004d28:	055e8e93          	addi	t4,t4,85 # ffffffffffd50055 <_end+0xffffffffefd45f15>
     10004d2c:	00de9e93          	slli	t4,t4,0xd
     10004d30:	00be8e93          	addi	t4,t4,11
     10004d34:	00ce9e93          	slli	t4,t4,0xc
@@ -8329,7 +8329,7 @@ RVTEST_CODE_END
 0000000010004d46 <test_8>:
   TEST_ST_OP( 8, ld, sd, 0x0aa00aa00aa00aa0, -8,  tdat8 );
     10004d46:	00005097          	auipc	ra,0x5
-    10004d4a:	39408093          	addi	ra,ra,916 # 1000a0da <tdat8>
+    10004d4a:	3e208093          	addi	ra,ra,994 # 1000a128 <tdat8>
     10004d4e:	00550137          	lui	sp,0x550
     10004d52:	0551011b          	addiw	sp,sp,85
     10004d56:	00d11113          	slli	sp,sp,0xd
@@ -8355,11 +8355,11 @@ RVTEST_CODE_END
 0000000010004da0 <test_9>:
   TEST_ST_OP( 9, ld, sd, 0xa00aa00aa00aa00a, 0,   tdat8 );
     10004da0:	00005097          	auipc	ra,0x5
-    10004da4:	33a08093          	addi	ra,ra,826 # 1000a0da <tdat8>
+    10004da4:	38808093          	addi	ra,ra,904 # 1000a128 <tdat8>
     10004da8:	fffd0137          	lui	sp,0xfffd0
     10004dac:	0551011b          	addiw	sp,sp,85
     10004db0:	01011113          	slli	sp,sp,0x10
-    10004db4:	05510113          	addi	sp,sp,85 # fffffffffffd0055 <_end+0xffffffffeffc5f63>
+    10004db4:	05510113          	addi	sp,sp,85 # fffffffffffd0055 <_end+0xffffffffeffc5f15>
     10004db8:	01011113          	slli	sp,sp,0x10
     10004dbc:	05510113          	addi	sp,sp,85
     10004dc0:	00d11113          	slli	sp,sp,0xd
@@ -8369,7 +8369,7 @@ RVTEST_CODE_END
     10004dd0:	fffd0eb7          	lui	t4,0xfffd0
     10004dd4:	055e8e9b          	addiw	t4,t4,85
     10004dd8:	010e9e93          	slli	t4,t4,0x10
-    10004ddc:	055e8e93          	addi	t4,t4,85 # fffffffffffd0055 <_end+0xffffffffeffc5f63>
+    10004ddc:	055e8e93          	addi	t4,t4,85 # fffffffffffd0055 <_end+0xffffffffeffc5f15>
     10004de0:	010e9e93          	slli	t4,t4,0x10
     10004de4:	055e8e93          	addi	t4,t4,85
     10004de8:	00de9e93          	slli	t4,t4,0xd
@@ -8384,7 +8384,7 @@ RVTEST_CODE_END
 
   TEST_CASE( 10, x5, 0x1234567812345678, \
     10004dfa:	00005097          	auipc	ra,0x5
-    10004dfe:	2e808093          	addi	ra,ra,744 # 1000a0e2 <tdat9>
+    10004dfe:	33608093          	addi	ra,ra,822 # 1000a130 <tdat9>
     10004e02:	00247137          	lui	sp,0x247
     10004e06:	8ad1011b          	addiw	sp,sp,-1875
     10004e0a:	00e11113          	slli	sp,sp,0xe
@@ -8416,7 +8416,7 @@ RVTEST_CODE_END
 
   TEST_CASE( 11, x5, 0x5821309858213098, \
     10004e58:	00005097          	auipc	ra,0x5
-    10004e5c:	28a08093          	addi	ra,ra,650 # 1000a0e2 <tdat9>
+    10004e5c:	2d808093          	addi	ra,ra,728 # 1000a130 <tdat9>
     10004e60:	00b04137          	lui	sp,0xb04
     10004e64:	2611011b          	addiw	sp,sp,609
     10004e68:	00c11113          	slli	sp,sp,0xc
@@ -8428,7 +8428,7 @@ RVTEST_CODE_END
     10004e80:	10f5                	addi	ra,ra,-3
     10004e82:	0020b5a3          	sd	sp,11(ra)
     10004e86:	00005217          	auipc	tp,0x5
-    10004e8a:	26420213          	addi	tp,tp,612 # 1000a0ea <tdat10>
+    10004e8a:	2b220213          	addi	tp,tp,690 # 1000a138 <tdat10>
     10004e8e:	00023283          	ld	t0,0(tp) # 0 <test_2-0x10000000>
     10004e92:	00b04eb7          	lui	t4,0xb04
     10004e96:	261e8e9b          	addiw	t4,t4,609
@@ -8454,7 +8454,7 @@ RVTEST_CODE_END
     10004ec0:	0abbd0b7          	lui	ra,0xabbd
     10004ec4:	cdd0809b          	addiw	ra,ra,-803
     10004ec8:	00005117          	auipc	sp,0x5
-    10004ecc:	1da10113          	addi	sp,sp,474 # 1000a0a2 <tdat>
+    10004ecc:	22810113          	addi	sp,sp,552 # 1000a0f0 <tdat>
     10004ed0:	e006                	sd	ra,0(sp)
     10004ed2:	6702                	ld	a4,0(sp)
     10004ed4:	0abbdeb7          	lui	t4,0xabbd
@@ -8472,7 +8472,7 @@ RVTEST_CODE_END
     10004ef0:	0aabc0b7          	lui	ra,0xaabc
     10004ef4:	ccd0809b          	addiw	ra,ra,-819
     10004ef8:	00005117          	auipc	sp,0x5
-    10004efc:	1aa10113          	addi	sp,sp,426 # 1000a0a2 <tdat>
+    10004efc:	1f810113          	addi	sp,sp,504 # 1000a0f0 <tdat>
     10004f00:	0001                	nop
     10004f02:	e406                	sd	ra,8(sp)
     10004f04:	6722                	ld	a4,8(sp)
@@ -8491,7 +8491,7 @@ RVTEST_CODE_END
     10004f22:	0daac0b7          	lui	ra,0xdaac
     10004f26:	bcc0809b          	addiw	ra,ra,-1076
     10004f2a:	00005117          	auipc	sp,0x5
-    10004f2e:	17810113          	addi	sp,sp,376 # 1000a0a2 <tdat>
+    10004f2e:	1c610113          	addi	sp,sp,454 # 1000a0f0 <tdat>
     10004f32:	0001                	nop
     10004f34:	0001                	nop
     10004f36:	e806                	sd	ra,16(sp)
@@ -8512,7 +8512,7 @@ RVTEST_CODE_END
     10004f5a:	bbc0809b          	addiw	ra,ra,-1092
     10004f5e:	0001                	nop
     10004f60:	00005117          	auipc	sp,0x5
-    10004f64:	14210113          	addi	sp,sp,322 # 1000a0a2 <tdat>
+    10004f64:	19010113          	addi	sp,sp,400 # 1000a0f0 <tdat>
     10004f68:	ec06                	sd	ra,24(sp)
     10004f6a:	6762                	ld	a4,24(sp)
     10004f6c:	0ddabeb7          	lui	t4,0xddab
@@ -8531,7 +8531,7 @@ RVTEST_CODE_END
     10004f8c:	abb0809b          	addiw	ra,ra,-1349
     10004f90:	0001                	nop
     10004f92:	00005117          	auipc	sp,0x5
-    10004f96:	11010113          	addi	sp,sp,272 # 1000a0a2 <tdat>
+    10004f96:	15e10113          	addi	sp,sp,350 # 1000a0f0 <tdat>
     10004f9a:	0001                	nop
     10004f9c:	f006                	sd	ra,32(sp)
     10004f9e:	7702                	ld	a4,32(sp)
@@ -8552,7 +8552,7 @@ RVTEST_CODE_END
     10004fc4:	0001                	nop
     10004fc6:	0001                	nop
     10004fc8:	00005117          	auipc	sp,0x5
-    10004fcc:	0da10113          	addi	sp,sp,218 # 1000a0a2 <tdat>
+    10004fcc:	12810113          	addi	sp,sp,296 # 1000a0f0 <tdat>
     10004fd0:	f406                	sd	ra,40(sp)
     10004fd2:	7722                	ld	a4,40(sp)
     10004fd4:	0ccdeeb7          	lui	t4,0xccde
@@ -8569,7 +8569,7 @@ RVTEST_CODE_END
     10004fec:	41c9                	li	gp,18
     10004fee:	4201                	li	tp,0
     10004ff0:	00005117          	auipc	sp,0x5
-    10004ff4:	0b210113          	addi	sp,sp,178 # 1000a0a2 <tdat>
+    10004ff4:	10010113          	addi	sp,sp,256 # 1000a0f0 <tdat>
     10004ff8:	001120b7          	lui	ra,0x112
     10004ffc:	2330809b          	addiw	ra,ra,563
     10005000:	e006                	sd	ra,0(sp)
@@ -8587,7 +8587,7 @@ RVTEST_CODE_END
     1000501c:	41cd                	li	gp,19
     1000501e:	4201                	li	tp,0
     10005020:	00005117          	auipc	sp,0x5
-    10005024:	08210113          	addi	sp,sp,130 # 1000a0a2 <tdat>
+    10005024:	0d010113          	addi	sp,sp,208 # 1000a0f0 <tdat>
     10005028:	300110b7          	lui	ra,0x30011
     1000502c:	2230809b          	addiw	ra,ra,547
     10005030:	0001                	nop
@@ -8606,7 +8606,7 @@ RVTEST_CODE_END
     1000504e:	41d1                	li	gp,20
     10005050:	4201                	li	tp,0
     10005052:	00005117          	auipc	sp,0x5
-    10005056:	05010113          	addi	sp,sp,80 # 1000a0a2 <tdat>
+    10005056:	09e10113          	addi	sp,sp,158 # 1000a0f0 <tdat>
     1000505a:	330010b7          	lui	ra,0x33001
     1000505e:	1220809b          	addiw	ra,ra,290
     10005062:	0001                	nop
@@ -8626,7 +8626,7 @@ RVTEST_CODE_END
     10005082:	41d5                	li	gp,21
     10005084:	4201                	li	tp,0
     10005086:	00005117          	auipc	sp,0x5
-    1000508a:	01c10113          	addi	sp,sp,28 # 1000a0a2 <tdat>
+    1000508a:	06a10113          	addi	sp,sp,106 # 1000a0f0 <tdat>
     1000508e:	0001                	nop
     10005090:	233000b7          	lui	ra,0x23300
     10005094:	1120809b          	addiw	ra,ra,274
@@ -8645,7 +8645,7 @@ RVTEST_CODE_END
     100050b4:	41d9                	li	gp,22
     100050b6:	4201                	li	tp,0
     100050b8:	00005117          	auipc	sp,0x5
-    100050bc:	fea10113          	addi	sp,sp,-22 # 1000a0a2 <tdat>
+    100050bc:	03810113          	addi	sp,sp,56 # 1000a0f0 <tdat>
     100050c0:	0001                	nop
     100050c2:	223300b7          	lui	ra,0x22330
     100050c6:	0110809b          	addiw	ra,ra,17
@@ -8665,7 +8665,7 @@ RVTEST_CODE_END
     100050e8:	41dd                	li	gp,23
     100050ea:	4201                	li	tp,0
     100050ec:	00005117          	auipc	sp,0x5
-    100050f0:	fb610113          	addi	sp,sp,-74 # 1000a0a2 <tdat>
+    100050f0:	00410113          	addi	sp,sp,4 # 1000a0f0 <tdat>
     100050f4:	0001                	nop
     100050f6:	0001                	nop
     100050f8:	122330b7          	lui	ra,0x12233
@@ -9750,7 +9750,7 @@ RVTEST_CODE_END
     10005a90:	fff120b7          	lui	ra,0xfff12
     10005a94:	3450809b          	addiw	ra,ra,837
     10005a98:	00c09093          	slli	ra,ra,0xc
-    10005a9c:	67808093          	addi	ra,ra,1656 # fffffffffff12678 <_end+0xffffffffeff08586>
+    10005a9c:	67808093          	addi	ra,ra,1656 # fffffffffff12678 <_end+0xffffffffeff08538>
     10005aa0:	0000971b          	slliw	a4,ra,0x0
     10005aa4:	12345eb7          	lui	t4,0x12345
     10005aa8:	678e8e9b          	addiw	t4,t4,1656
@@ -9763,7 +9763,7 @@ RVTEST_CODE_END
     10005ab8:	fff120b7          	lui	ra,0xfff12
     10005abc:	3450809b          	addiw	ra,ra,837
     10005ac0:	00c09093          	slli	ra,ra,0xc
-    10005ac4:	67808093          	addi	ra,ra,1656 # fffffffffff12678 <_end+0xffffffffeff08586>
+    10005ac4:	67808093          	addi	ra,ra,1656 # fffffffffff12678 <_end+0xffffffffeff08538>
     10005ac8:	0040971b          	slliw	a4,ra,0x4
     10005acc:	23456eb7          	lui	t4,0x23456
     10005ad0:	780e8e9b          	addiw	t4,t4,1920
@@ -10157,7 +10157,7 @@ RVTEST_CODE_END
     10005e30:	fff120b7          	lui	ra,0xfff12
     10005e34:	3450809b          	addiw	ra,ra,837
     10005e38:	00c09093          	slli	ra,ra,0xc
-    10005e3c:	67808093          	addi	ra,ra,1656 # fffffffffff12678 <_end+0xffffffffeff08586>
+    10005e3c:	67808093          	addi	ra,ra,1656 # fffffffffff12678 <_end+0xffffffffeff08538>
     10005e40:	4101                	li	sp,0
     10005e42:	0020973b          	sllw	a4,ra,sp
     10005e46:	12345eb7          	lui	t4,0x12345
@@ -10171,7 +10171,7 @@ RVTEST_CODE_END
     10005e5a:	fff120b7          	lui	ra,0xfff12
     10005e5e:	3450809b          	addiw	ra,ra,837
     10005e62:	00c09093          	slli	ra,ra,0xc
-    10005e66:	67808093          	addi	ra,ra,1656 # fffffffffff12678 <_end+0xffffffffeff08586>
+    10005e66:	67808093          	addi	ra,ra,1656 # fffffffffff12678 <_end+0xffffffffeff08538>
     10005e6a:	4111                	li	sp,4
     10005e6c:	0020973b          	sllw	a4,ra,sp
     10005e70:	23456eb7          	lui	t4,0x23456
@@ -11704,7 +11704,7 @@ RVTEST_CODE_END
   TEST_RR_OP( 15, sltu, 0, 0xffffffff, 0x00000001 );
     10006b12:	0010009b          	addiw	ra,zero,1
     10006b16:	02009093          	slli	ra,ra,0x20
-    10006b1a:	fff08093          	addi	ra,ra,-1 # ffffffff7fffffff <_end+0xffffffff6fff5f0d>
+    10006b1a:	fff08093          	addi	ra,ra,-1 # ffffffff7fffffff <_end+0xffffffff6fff5ebf>
     10006b1e:	4105                	li	sp,1
     10006b20:	0020b733          	sltu	a4,ra,sp
     10006b24:	4e81                	li	t4,0
@@ -13047,7 +13047,7 @@ RVTEST_CODE_END
     1000772e:	fff120b7          	lui	ra,0xfff12
     10007732:	3450809b          	addiw	ra,ra,837
     10007736:	00c09093          	slli	ra,ra,0xc
-    1000773a:	67808093          	addi	ra,ra,1656 # fffffffffff12678 <_end+0xffffffffeff08586>
+    1000773a:	67808093          	addi	ra,ra,1656 # fffffffffff12678 <_end+0xffffffffeff08538>
     1000773e:	4000d71b          	sraiw	a4,ra,0x0
     10007742:	12345eb7          	lui	t4,0x12345
     10007746:	678e8e9b          	addiw	t4,t4,1656
@@ -13060,7 +13060,7 @@ RVTEST_CODE_END
     10007756:	fff120b7          	lui	ra,0xfff12
     1000775a:	3450809b          	addiw	ra,ra,837
     1000775e:	00c09093          	slli	ra,ra,0xc
-    10007762:	67808093          	addi	ra,ra,1656 # fffffffffff12678 <_end+0xffffffffeff08586>
+    10007762:	67808093          	addi	ra,ra,1656 # fffffffffff12678 <_end+0xffffffffeff08538>
     10007766:	4040d71b          	sraiw	a4,ra,0x4
     1000776a:	01234eb7          	lui	t4,0x1234
     1000776e:	567e8e9b          	addiw	t4,t4,1383
@@ -13489,7 +13489,7 @@ RVTEST_CODE_END
     10007b58:	fff120b7          	lui	ra,0xfff12
     10007b5c:	3450809b          	addiw	ra,ra,837
     10007b60:	00c09093          	slli	ra,ra,0xc
-    10007b64:	67808093          	addi	ra,ra,1656 # fffffffffff12678 <_end+0xffffffffeff08586>
+    10007b64:	67808093          	addi	ra,ra,1656 # fffffffffff12678 <_end+0xffffffffeff08538>
     10007b68:	4101                	li	sp,0
     10007b6a:	4020d73b          	sraw	a4,ra,sp
     10007b6e:	12345eb7          	lui	t4,0x12345
@@ -13503,7 +13503,7 @@ RVTEST_CODE_END
     10007b82:	fff120b7          	lui	ra,0xfff12
     10007b86:	3450809b          	addiw	ra,ra,837
     10007b8a:	00c09093          	slli	ra,ra,0xc
-    10007b8e:	67808093          	addi	ra,ra,1656 # fffffffffff12678 <_end+0xffffffffeff08586>
+    10007b8e:	67808093          	addi	ra,ra,1656 # fffffffffff12678 <_end+0xffffffffeff08538>
     10007b92:	4111                	li	sp,4
     10007b94:	4020d73b          	sraw	a4,ra,sp
     10007b98:	01234eb7          	lui	t4,0x1234
@@ -13874,7 +13874,7 @@ RVTEST_CODE_END
     10007ee8:	0020d733          	srl	a4,ra,sp
     10007eec:	00100e9b          	addiw	t4,zero,1
     10007ef0:	021e9e93          	slli	t4,t4,0x21
-    10007ef4:	fffe8e93          	addi	t4,t4,-1 # ffffffff7fffffff <_end+0xffffffff6fff5f0d>
+    10007ef4:	fffe8e93          	addi	t4,t4,-1 # ffffffff7fffffff <_end+0xffffffff6fff5ebf>
     10007ef8:	01ee9e93          	slli	t4,t4,0x1e
     10007efc:	418d                	li	gp,3
     10007efe:	01d70463          	beq	a4,t4,10007f06 <test_4>
@@ -14449,7 +14449,7 @@ RVTEST_CODE_END
     1000846e:	0010d713          	srli	a4,ra,0x1
     10008472:	00100e9b          	addiw	t4,zero,1
     10008476:	021e9e93          	slli	t4,t4,0x21
-    1000847a:	fffe8e93          	addi	t4,t4,-1 # ffffffff7fffffff <_end+0xffffffff6fff5f0d>
+    1000847a:	fffe8e93          	addi	t4,t4,-1 # ffffffff7fffffff <_end+0xffffffff6fff5ebf>
     1000847e:	01ee9e93          	slli	t4,t4,0x1e
     10008482:	418d                	li	gp,3
     10008484:	01d70463          	beq	a4,t4,1000848c <test_4>
@@ -14656,7 +14656,7 @@ RVTEST_CODE_END
     10008670:	4201                	li	tp,0
     10008672:	0010009b          	addiw	ra,zero,1
     10008676:	01f09093          	slli	ra,ra,0x1f
-    1000867a:	00108093          	addi	ra,ra,1 # 21212001 <_end+0x11207f0f>
+    1000867a:	00108093          	addi	ra,ra,1 # 21212001 <_end+0x11207ec1>
     1000867e:	01f0d713          	srli	a4,ra,0x1f
     10008682:	0001                	nop
     10008684:	0001                	nop
@@ -14898,7 +14898,7 @@ RVTEST_CODE_END
     100088a4:	fff120b7          	lui	ra,0xfff12
     100088a8:	3450809b          	addiw	ra,ra,837
     100088ac:	00c09093          	slli	ra,ra,0xc
-    100088b0:	67808093          	addi	ra,ra,1656 # fffffffffff12678 <_end+0xffffffffeff08586>
+    100088b0:	67808093          	addi	ra,ra,1656 # fffffffffff12678 <_end+0xffffffffeff08538>
     100088b4:	0000d71b          	srliw	a4,ra,0x0
     100088b8:	12345eb7          	lui	t4,0x12345
     100088bc:	678e8e9b          	addiw	t4,t4,1656
@@ -14911,7 +14911,7 @@ RVTEST_CODE_END
     100088cc:	fff120b7          	lui	ra,0xfff12
     100088d0:	3450809b          	addiw	ra,ra,837
     100088d4:	00c09093          	slli	ra,ra,0xc
-    100088d8:	67808093          	addi	ra,ra,1656 # fffffffffff12678 <_end+0xffffffffeff08586>
+    100088d8:	67808093          	addi	ra,ra,1656 # fffffffffff12678 <_end+0xffffffffeff08538>
     100088dc:	0040d71b          	srliw	a4,ra,0x4
     100088e0:	01234eb7          	lui	t4,0x1234
     100088e4:	567e8e9b          	addiw	t4,t4,1383
@@ -15313,7 +15313,7 @@ RVTEST_CODE_END
     10008c7e:	fff120b7          	lui	ra,0xfff12
     10008c82:	3450809b          	addiw	ra,ra,837
     10008c86:	00c09093          	slli	ra,ra,0xc
-    10008c8a:	67808093          	addi	ra,ra,1656 # fffffffffff12678 <_end+0xffffffffeff08586>
+    10008c8a:	67808093          	addi	ra,ra,1656 # fffffffffff12678 <_end+0xffffffffeff08538>
     10008c8e:	4101                	li	sp,0
     10008c90:	0020d73b          	srlw	a4,ra,sp
     10008c94:	12345eb7          	lui	t4,0x12345
@@ -15327,7 +15327,7 @@ RVTEST_CODE_END
     10008ca8:	fff120b7          	lui	ra,0xfff12
     10008cac:	3450809b          	addiw	ra,ra,837
     10008cb0:	00c09093          	slli	ra,ra,0xc
-    10008cb4:	67808093          	addi	ra,ra,1656 # fffffffffff12678 <_end+0xffffffffeff08586>
+    10008cb4:	67808093          	addi	ra,ra,1656 # fffffffffff12678 <_end+0xffffffffeff08538>
     10008cb8:	4111                	li	sp,4
     10008cba:	0020d73b          	srlw	a4,ra,sp
     10008cbe:	01234eb7          	lui	t4,0x1234
@@ -15789,7 +15789,7 @@ RVTEST_CODE_END
     100090f2:	ffff0eb7          	lui	t4,0xffff0
     100090f6:	fffe8e9b          	addiw	t4,t4,-1
     100090fa:	00fe9e93          	slli	t4,t4,0xf
-    100090fe:	001e8e93          	addi	t4,t4,1 # ffffffffffff0001 <_end+0xffffffffeffe5f0f>
+    100090fe:	001e8e93          	addi	t4,t4,1 # ffffffffffff0001 <_end+0xffffffffeffe5ec1>
     10009102:	41ad                	li	gp,11
     10009104:	01d70463          	beq	a4,t4,1000910c <test_12>
     10009108:	6230006f          	j	10009f2a <fail>
