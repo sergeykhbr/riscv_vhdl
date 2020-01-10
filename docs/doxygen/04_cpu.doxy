@@ -62,16 +62,17 @@ about already implemented features and features that are now in the development.
         DSP algoritms. Full support will be added later or by request.</td>
   </tr>
   <tr>
-    <td>A-extension</td>  <td>Planned</td>   <td>Atomic instructions
-        set support. Planned in release v.11.0</td>
-  </tr>
-  <tr>
     <td>Instruction Cache</td>  <td>Yes</td>   <td>Configurable
-       IP. Default configurations: 4-ways, 16 KB</td>
+       IP. Default configurations: 4-ways, 16 KB, LRU</td>
   </tr>
   <tr>
-    <td>Data Cache</td>  <td>Developing</td>   <td>Configurable
-       IP. Default configurations: 4-ways, 16 KB. Planned in v10.0</td>
+    <td>Data Cache</td>  <td>Yes</td>   <td>Configurable
+       IP. Default configurations: 4-ways, 16 KB, LRU.</td>
+  </tr>
+  <tr>
+    <td>Memory Protection Unit</td>  <td>Yes</td>   <td>Configurable
+       number of MPU entries. Programmable: region size, caching enable/disable,
+       read-write-execute access rights.</td>
   </tr>
   <tr>
     <td>Brach Predictor</td>  <td>Yes</td>   <td>Improve CPI
@@ -83,8 +84,12 @@ about already implemented features and features that are now in the development.
        custom Control and Status Registers (CSR) in CPU.</td>
   </tr>
   <tr>
+    <td>A-extension</td>  <td>Planned</td>   <td>Atomic instructions
+        set support.</td>
+  </tr>
+  <tr>
     <td>Watchdog</td>  <td>Planned</td>   <td>Generate reset signal if there's
-       no CPU activity specified number of clock cycles. Planned in v10.0</td>
+       no CPU activity specified number of clock cycles.</td>
   </tr>
 </table>
 <b>Table 4-1. RIVER CPU features list.</b>
@@ -133,41 +138,6 @@ main generic parameters are avaiable for the user configuration.
        </ul></td>
   </tr>
   <tr>
-    <td>CFG_SINGLEPORT_CACHE</td>
-    <td>true</td>
-    <td><b>Singleport Memory in Caches</b>. Specify memory blocks type
-       used in caches implementation. Dual-Port memory can improve performance
-       but requires bigger ASIC silicon usage.
-       <ul>
-         <li>FALSE: Use Dual-Port memory blocks for caches</li>
-         <li>TRUE: Use Single-Port memory blocks for caches</li>
-       </ul></td>
-  </tr>
-  <tr>
-    <td>CFG_IINDEX_WIDTH</td>
-    <td>6</td>
-    <td><b>Lines Per Way</b>. This value defines number of lines
-       instantiated in each way for Instruction Cache:
-       <ul>
-         <li>1: Analog of Cache disabled</li>
-         <li>6: 4 KB per Way. Total cache size 16 KB</li>
-         <li>7: 8 KB per Way. Total cache size 32 KB</li>
-         <li>8: 16 KB per Way. Total cache size 64 KB</li>
-       </ul></td>
-  </tr>
-  <tr>
-    <td>CFG_DINDEX_WIDTH</td>
-    <td>6</td>
-    <td><b>Lines Per Way</b>. This value defines number of lines
-       instantiated in each way for Data Cache:
-       <ul>
-         <li>1: Analog of Cache disabled</li>
-         <li>6: 4 KB per Way. Total cache size 16 KB</li>
-         <li>7: 8 KB per Way. Total cache size 32 KB</li>
-         <li>8: 16 KB per Way. Total cache size 64 KB</li>
-       </ul></td>
-  </tr>
-  <tr>
     <td>RISCV_ARCH</td>
     <td>64</td>
     <td><b>Architecture Size</b>. General CPU registers bit width:
@@ -177,9 +147,271 @@ main generic parameters are avaiable for the user configuration.
          <li>128: RISC-V 128-bit not supported</li>
        </ul></td>
   </tr>
+  <tr>
+    <td>BUS_ADDR_WIDTH</td>
+    <td>32</td>
+    <td><b>System Bus Width</b>. Typicall value (other values acceptable but not tested):
+       <ul>
+         <li>32: Use 32-bits address bus (default)</li>
+         <li>64: Use 64-bits address bus</li>
+       </ul></td>
+  </tr>
+  <tr>
+    <td>CFG_LOG2_DATA_BYTES</td>
+    <td>3</td>
+    <td><b>Data Bus Bytes</b> parameter. Logarithmic value of System Data Bus in Bytes.
+       <ul>
+         <li>3: Number of bytes 2**3 = 8 (64 bits)</li>
+       </ul></td>
+  </tr>
+  <tr>
+    <td>CFG_ILOG2_BYTES_PER_LINE</td>
+    <td>5</td>
+    <td><b>Bytes per Lane</b>. Logarithmic value of Bytes per one I-cache line.
+       This value and Data Bus width define length of one burst transaction
+       when cached memory access is used.
+       <ul>
+         <li>4: 32 Bytes per I-cache line. Burst length 4 with 64-bits data bus</li>
+         <li>5: 64 Bytes per I-Cache line. Burst length 8 with 64-bits data bus</li>
+       </ul></td>
+  </tr>
+  <tr>
+    <td>CFG_ILOG2_LINES_PER_WAY</td>
+    <td>7</td>
+    <td><b>Lines Per Way</b>. Logarithmic value defines I-cache size or
+       number of lines instantiated for the each way:
+       <ul>
+         <li>1: Analog of Cache disabled</li>
+         <li>7: 128 lines per Way. (16 KB in default configuration)</li>
+         <li>8: 256 lines Way.</li>
+         <li>9: 512 lines Way.</li>
+       </ul></td>
+  </tr>
+  <tr>
+    <td>CFG_ILOG2_NWAYS</td>
+    <td>2</td>
+    <td><b>Number of Way</b>. Logarithmic value defines I-cache associativity:
+       <ul>
+         <li>2: 4 Ways. (default)</li>
+         <li>3: 8 Ways.</li>
+       </ul></td>
+  </tr>
+  <tr>
+    <td>CFG_DLOG2_BYTES_PER_LINE</td>
+    <td>5</td>
+    <td><b>Bytes per Lane</b>. Logarithmic value of Bytes per one D-cache line.
+       This value and Data Bus width define length of one burst transaction
+       when cached memory access is used.
+       <ul>
+         <li>4: 32 Bytes per D-cache line. Burst length 4 with 64-bits data bus</li>
+         <li>5: 64 Bytes per D-Cache line. Burst length 8 with 64-bits data bus</li>
+       </ul></td>
+  </tr>
+  <tr>
+    <td>CFG_DLOG2_LINES_PER_WAY</td>
+    <td>7</td>
+    <td><b>Lines Per Way</b>. Logarithmic value defines D-cache size or
+       number of lines instantiated for the each way:
+       <ul>
+         <li>1: Analog of Cache disabled</li>
+         <li>7: 128 lines per Way. (16 KB in default configuration)</li>
+         <li>8: 256 lines Way.</li>
+         <li>9: 512 lines Way.</li>
+       </ul></td>
+  </tr>
+  <tr>
+    <td>CFG_DLOG2_NWAYS</td>
+    <td>2</td>
+    <td><b>Number of Way</b>. Logarithmic value defines D-cache associativity:
+       <ul>
+         <li>2: 4 Ways. (default)</li>
+         <li>3: 8 Ways.</li>
+       </ul></td>
+  </tr>
+  <tr>
+    <td>CFG_MPU_TBL_WIDTH</td>
+    <td>2</td>
+    <td><b>MPU table length</b>. Logarithmic value defines number of entries
+       (memory regions) supported by Memory Protection Unit:
+       <ul>
+         <li>2: 4 regions (default)</li>
+         <li>3: 8 regions.</li>
+         <li>4: 16 regions.</li>
+       </ul></td>
+  </tr>
 </table>
 <b>Table 4-2. RIVER generic parameters.</b>
 </center>
+
+ @section cpu_mpu_section Memory Protection Unit
+
+  The MPU based <i>Protected Memory System Architecture</i> provides a 
+considerably simpler memory protection scheme than the MMU based model
+providing the <i>Virtual Memory System Architecture</i>. The simplification
+applies to both the hardware and the software.
+
+  Main simplification is that the MPU does not use translation tables.
+Instead, Control and Status Registers (CSRs) are used to fully define
+<i>protection regions</i>, eliminating the need for hardware to do translation
+table walks, and for software to set up and maintain the translation tables.
+This has the benefit of making memory checking fully determenistic.
+However, the level of control is now region based rater than page based, that is,
+the control is considerably less fine-grained.
+
+  A second simplification is that virtual-to-physical address translation
+is not supported. Processor works only with the physical addresses.
+The following feature are common to all MPU based designs:
+
+\li The memory is divided into regions. Dedicated Control registers are
+    used to to define the region size, base address, and memory attributes,
+    for example, cachability and access permissions of a region.
+
+\li Memory region control (read and write access) is permitted only
+    from priviledged modes.
+
+\li If an address is defined in multiple regions, a fixed priority scheme
+    (highest region number) is used to define the properties of the address
+    being accessed.
+
+\li All addresses are physical addresses, address translation is not supported.
+
+ @subsection mpu_memaccess_sequence Memory access sequence
+
+  When River CPU generated a memory access, the I/D cache systems check
+availability of data inside of it. If the <i>miss</i> signal generated
+MPU compares the memory address with the programmed memory regions:
+
+\li If the memory region marked as uncached cache subsystem generates
+    memory request directly into system bus interface without storing
+    response into cache memory.
+
+\li If the memory region marked as cachable the cache subsystem generates
+    memory burst request to read full cache line (on read operation) or
+    read-modify-write to cache memory on write operation.
+
+\li If the memory region is enabled and access rights do not allow to 
+    complete operation then cache subsystem returns error response without
+    access to system bus.
+
+\li Current implementation of MPU allows to read, write and execute data
+    for all disabled regions.
+
+ @subsection mpu_overlapping_subsection Overlapping regions
+
+  The Protection Unit can be programmed with two or more overlapping regions.
+When overlapping regions are programmed, a fixed priority scheme is applied to
+determine the region whose attributes are applied to memory access.
+
+  For example, if the \c CFG_MPU_TBL_WIDTH = 3 enabling 8 programmable regions
+then region 7 take the highest priority and region 0 takes lowest priority.
+Lets suppose:
+
+\li Data region 1 is programmed to be 16 KB in size, starting from address 0x0
+    with the caching flag = 1.
+
+\li Data region 2 is programmed 64 Bytes in size, starting from address 0x3000
+    with the caching flag = 0.
+
+  Then this 64 B of memory can be used for the inter-processor communication
+without performance penalty on cache flushing operations because read and write
+access will be re-directed on system bus without L1 caching.
+
+<center>
+<table>
+  <tr>
+    <th>Address</th>  <th>Cachable</th> <th>Read</th> <th>Write</th> <th>Execute</th>
+  </tr>
+  <tr>
+    <td>0x00000000-0x7FFFFFFF</td>
+    <td>TRUE</td>
+    <td>TRUE</td>
+    <td>TRUE</td>
+    <td>TRUE</td>
+  </tr>
+  <tr>
+    <td>0x80000000-0xFFFFFFFF</td>
+    <td>FALSE</td>
+    <td>TRUE</td>
+    <td>TRUE</td>
+    <td>FALSE</td>
+  </tr>
+</table>
+<b>Table 4-3. Default memory map.</b>
+</center>
+
+ @subsection mpu_csr_subsection Memory access control
+
+  Access to a memory region is controlled by River CPU specific Control and Status
+Registers (CSRs).
+
+<b>CSR_MPU_ADDR Register (0x352)</b>
+
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>ADDR</td>   <td>[BUS_ADDR_WIDTH-1:0]</td>   <td>WO</td>   <td><b>MPU Address</b>.
+     Base address of programming region. This value applied to the MPU region on write
+     access into the register \c CSR_MPU_CTRL</td>
+  </tr>
+</table>
+
+<b>CSR_MPU_MASK Register (0x353)</b>
+
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>MASK</td>   <td>[BUS_ADDR_WIDTH-1:0]</td>   <td>WO</td>   <td><b>MPU Address Mask</b>.
+     Address mask defining region size. This value applied to the MPU region on write
+     access into the register \c CSR_MPU_CTRL.</td>
+  </tr>
+</table>
+
+<b>CSR_MPU_CTRL Register (0x354)</b>
+
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>IDX</td>   <td>[8+CFG_MPU_TBL_WIDTH-1:8]</td>   <td>WO</td>   <td><b>Region Index</b>.
+     This field specify region index that will be modified on write access to this
+     register</td>
+  </tr>
+  <tr>
+    <td>ENA</td>   <td>[4]</td>   <td>WO</td>   <td><b>Region Enable</b>.
+     Enable region:
+       \li 0 = region disabled (not used)
+       \li 1 = region enabled</td>
+  </tr>
+  <tr>
+    <td>CACHABLE</td>   <td>[3]</td>   <td>WO</td>   <td><b>Caching Enable</b>.
+     Enable region for caching:
+       \li 0 = caching disabled
+       \li 1 = caching enabled</td>
+  </tr>
+  <tr>
+    <td>EXEC</td>   <td>[2]</td>   <td>WO</td>   <td><b>Execute Enable</b>.
+     Enable region for the instruction execution:
+       \li 0 = execution disabled
+       \li 1 = execution enabled</td>
+  </tr>
+  <tr>
+    <td>RD</td>   <td>[1]</td>   <td>WO</td>   <td><b>Read Enable</b>.
+     Enable region for reading:
+       \li 0 = read disabled
+       \li 1 = read enabled</td>
+  </tr>
+  <tr>
+    <td>WR</td>   <td>[0]</td>   <td>WO</td>   <td><b>Write Enable</b>.
+     Enable region for writing:
+       \li 0 = write disabled
+       \li 1 = write enabled</td>
+  </tr>
+</table>
 
 
  @section cpu_prefetch_section Program Flow Control
@@ -191,8 +423,7 @@ instruction words (1-standard or 2-compressed instructions) on each clock cycle.
   If Instruction Cache module cannot return data on the next clock
 cycle Fetch module generates <c>hold pipeline</c> signal.
 <c>Hold pipeline</c> signal released when \c ICache module returns valid data.
-In a case of enabled \c CFG_SINGLEPORT_CACHE parameter it will take 6 clock
-cycles to request and save 4-clock burst transaction.
+Typically it will take 6 clock cycles to request and save 4-clock burst transaction.
 
   Preprocessing of branch instructions enables the instruction flow to be predicted.
 While the CPU is in the process of decoding and executing an instruction the fetcher
