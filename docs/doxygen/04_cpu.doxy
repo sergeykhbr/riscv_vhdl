@@ -351,6 +351,9 @@ Registers (CSRs).
     <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
   </tr>
   <tr>
+    <td>reserved</td>   <td>[63:BUS_ADDR_WIDTH]</td>   <td>WO</td>   <td><b></b>.</td>
+  </tr>
+  <tr>
     <td>ADDR</td>   <td>[BUS_ADDR_WIDTH-1:0]</td>   <td>WO</td>   <td><b>MPU Address</b>.
      Base address of programming region. This value applied to the MPU region on write
      access into the register \c CSR_MPU_CTRL</td>
@@ -362,6 +365,9 @@ Registers (CSRs).
 <table>
   <tr>
     <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>reserved</td>   <td>[63:BUS_ADDR_WIDTH]</td>   <td>WO</td>   <td><b></b>.</td>
   </tr>
   <tr>
     <td>MASK</td>   <td>[BUS_ADDR_WIDTH-1:0]</td>   <td>WO</td>   <td><b>MPU Address Mask</b>.
@@ -627,6 +633,9 @@ the possibility to run multitasks environment.
 | 0x344 | MIP               | 0x0                | Machine Interrupt pending
 | 0x350 | MSTACKOVR<sup>1</sup> | 0x0            | Machine Stack Overflow limit
 | 0x351 | MSTACKUND<sup>1</sup> | 0x0            | Machine Stack Underflow limit
+| 0x352 | MPU_ADDR<sup>1</sup>  | 0x0            | MPU region Base address
+| 0x353 | MPU_MASK<sup>1</sup>  | 0x0            | MPU region size
+| 0x354 | MPU_CTRL<sup>1</sup>  | 0x0            | MPU Control Register
 <b>Table 4-5. List of implemented CSR registers.</b>
 </center>
 <sup>1</sup> - Non-standard CSR register (River CPU only).
@@ -1308,6 +1317,81 @@ at which the exception event is generated if the 'sp' comes out of these limits.
          \li zero - Stack Overflow exception disabled
          \li non-zero - Raise Stack Underflow exception if register value \c sp
                         is greater than this value.</td>
+  </tr>
+</table>
+
+<b>MPU_ADDR Register (0x352)</b>
+
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>reserved</td>   <td>[63:BUS_ADDR_WIDTH]</td>   <td>WO</td>   <td><b></b>.</td>
+  </tr>
+  <tr>
+    <td>ADDR</td>   <td>[BUS_ADDR_WIDTH-1:0]</td>   <td>WO</td>   <td><b>MPU Address</b>.
+     Base address of programming region. This value applied to the MPU region on write
+     access into the register \c MPU_CTRL</td>
+  </tr>
+</table>
+
+<b>MPU_MASK Register (0x353)</b>
+
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>reserved</td>   <td>[63:BUS_ADDR_WIDTH]</td>   <td>WO</td>   <td><b></b>.</td>
+  </tr>
+  <tr>
+    <td>MASK</td>   <td>[BUS_ADDR_WIDTH-1:0]</td>   <td>WO</td>   <td><b>MPU Address Mask</b>.
+     Address mask defining region size. This value applied to the MPU region on write
+     access into the register \c MPU_CTRL.</td>
+  </tr>
+</table>
+
+<b>MPU_CTRL Register (0x354)</b>
+
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>IDX</td>   <td>[8+CFG_MPU_TBL_WIDTH-1:8]</td>   <td>WO</td>   <td><b>Region Index</b>.
+     This field specify region index that will be modified on write access to this
+     register</td>
+  </tr>
+  <tr>
+    <td>ENA</td>   <td>[4]</td>   <td>WO</td>   <td><b>Region Enable</b>.
+     Enable region:
+       \li 0 = region disabled (not used)
+       \li 1 = region enabled</td>
+  </tr>
+  <tr>
+    <td>CACHABLE</td>   <td>[3]</td>   <td>WO</td>   <td><b>Caching Enable</b>.
+     Enable region for caching:
+       \li 0 = caching disabled
+       \li 1 = caching enabled</td>
+  </tr>
+  <tr>
+    <td>EXEC</td>   <td>[2]</td>   <td>WO</td>   <td><b>Execute Enable</b>.
+     Enable region for the instruction execution:
+       \li 0 = execution disabled
+       \li 1 = execution enabled</td>
+  </tr>
+  <tr>
+    <td>RD</td>   <td>[1]</td>   <td>WO</td>   <td><b>Read Enable</b>.
+     Enable region for reading:
+       \li 0 = read disabled
+       \li 1 = read enabled</td>
+  </tr>
+  <tr>
+    <td>WR</td>   <td>[0]</td>   <td>WO</td>   <td><b>Write Enable</b>.
+     Enable region for writing:
+       \li 0 = write disabled
+       \li 1 = write enabled</td>
   </tr>
 </table>
 

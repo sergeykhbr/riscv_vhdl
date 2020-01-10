@@ -32,7 +32,9 @@ INCL_PATH=\
 # source files directories list:
 SRC_PATH =\
 	$(TOP_DIR)isa \
-	$(TOP_DIR)isa/rv64ui
+	$(TOP_DIR)isa/rv64ui \
+	$(TOP_DIR)isa/rv64um \
+	$(TOP_DIR)isa/rv64uc
 
 LIB_NAMES =\
 	gcc \
@@ -41,7 +43,7 @@ LIB_NAMES =\
 
 VPATH = $(SRC_PATH)
 
-SOURCES = \
+SOURCE_64UI = \
 	add addi addiw addw \
 	and andi \
 	auipc \
@@ -57,8 +59,21 @@ SOURCES = \
 	sra srai sraiw sraw \
 	srl srli srliw srlw \
 	sub subw \
-	xor xori \
+	xor xori
+
+# do not test: mulh mulhsu mulhu
+SOURCE_64UM = \
+	div divu divuw divw \
+	mul mulw \
+	rem remu remuw remw
+
+SOURCE_64UC = \
+	rvc
+
+SOURCES = $(SOURCE_64UI) \
+	$(SOURCE_64UC) \
 	passfail
+
 
 OBJ_FILES = $(addsuffix .o,$(SOURCES))
 OUTNAME = riscv-tests

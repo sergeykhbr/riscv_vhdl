@@ -135,7 +135,7 @@
                 ['HartID',0],
                 ['AsyncReset',false],
                 ['FpuEnable',true, 'Enable Hardware FPU module'],
-                ['TracerEnable',false, 'Enable Verification Trace collector module'],
+                ['TracerEnable',true, 'Enable Verification Trace collector module'],
                 ['Bus','axi0'],
                 ['CmdExecutor','cmdexec0']
                 ['Tap','edcltap']

@@ -62,7 +62,7 @@ package config_target is
   constant CFG_DSU_ENABLE : boolean := true;
 
   --! External Flash IC connected via SPI
-  constant CFG_EXT_FLASH_ENA : boolean := false;
+  constant CFG_EXT_FLASH_ENA : boolean := true;
 
   --! GNSS sub-system
   constant CFG_GNSS_SS_ENA : boolean := false;

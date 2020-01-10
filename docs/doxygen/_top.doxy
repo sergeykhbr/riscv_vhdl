@@ -243,12 +243,14 @@ is available at:
 
 Examples folder includes:
 
+  \li RISC-V compatibility tests modified to run on current SoC.
+      Original sources are available at: https://github.com/riscv/riscv-tests
   \li Interrupts initialization and usage
   \li Interaction with the peripheries (UART, Timer etc)
   \li Benchmark for the integer performance evaluation Dhrystone 2.1.
 
  This repository is organized around VHDL libraries, where each major IP 
-is assigned a unique library name. Using separate libraries avoids name 
+is assigned to a unique library name. Using separate libraries avoids name 
 clashes between IP cores and hides unnecessary implementation details 
 from the end user. 
 

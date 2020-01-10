@@ -27,7 +27,12 @@ void flash_wait_ready(spiflash_map *spi) {
 
 void test_spiflash(uint64_t bar) {
     spiflash_map *spi = (spiflash_map *)bar;
+
+    // Scaler register is in the cached region. So we have to use MPU to disable caching
+    // or use FENCE instruction. Otherwise SPI controller will hang-on system
+    mpu_enable_region(3, bar, 4, 0, "rw");
     spi->scaler.b32[0] = 4;  // 10 MHz spi interface
+
     printf_uart("FlashID. . . . .%02x\r\n", spi->flash_id.b32[0]);
 
     if (is_simulation() == 0) {

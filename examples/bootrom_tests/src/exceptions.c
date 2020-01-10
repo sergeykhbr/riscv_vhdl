@@ -75,7 +75,6 @@ void exception_stack_underflow_c() {
 }
 
 void exception_handler_c() {
-    asm("fence");
     asm("fence.i");
     IRQ_HANDLER *tbl = fw_get_ram_data(EXCEPTION_TABLE_NAME);
     int idx = get_mcause();

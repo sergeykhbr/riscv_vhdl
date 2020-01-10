@@ -81,10 +81,16 @@ may be freely changed during tuning and customization process.
 @note These peripheries parameters represents default system configuration and
 may be freely changed during tuning and customization process.
 
-<b>High Performance 64-bit CPU with Five-Stage Pipeline</b>
+<b>High Performance 64-bit CPU with Out-of-Order Memory access</b>
 
 <ul>
   <li>Single clock cycle instruction execution for most instructions</li>
+  <li>Configurable Instruction and Data Caches</li>
+  <li>Memory Protection Unit</li>
+  <li>Queued Memory access with depth 4 requests in Data path.</li>
+  <li>Registers Forwarding with Tagging that allows to continue instruction execution
+     while LOAD instructions are in progress without risk to overwrite new data
+     by loaded from memory.</li>
   <li>4 clock cycles integer multiplication (64-bit x 64-bit)</li>
   <li>34 clock cycles integer division (64-bit / 64-bit)</li>
   <li>Floating Point Unit (FPU):</li>
