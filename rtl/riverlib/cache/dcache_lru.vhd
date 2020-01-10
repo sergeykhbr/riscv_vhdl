@@ -66,6 +66,7 @@ entity dcache_lru is generic (
     -- Debug Signals:
     i_flush_address : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_flush_valid : in std_logic;
+    o_flush_end : out std_logic;
     o_state : out std_logic_vector(3 downto 0)
   );
 end; 
@@ -198,6 +199,7 @@ begin
     variable v_resp_er_load_fault : std_logic;
     variable v_resp_er_store_fault : std_logic;
     variable v_flush : std_logic;
+    variable v_flush_end : std_logic;
     variable v_line_cs : std_logic;
     variable vb_line_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     variable vb_line_wdata : std_logic_vector(DCACHE_LINE_BITS-1 downto 0);
@@ -217,6 +219,7 @@ begin
     v_resp_er_load_fault := '0';
     v_resp_er_store_fault := '0';
     v_flush := '0';
+    v_flush_end := '0';
     v_last := '0';
     v_req_mem_len := conv_std_logic_vector(DCACHE_BURST_LEN-1, 8);
     ridx := conv_integer(r.req_addr(CFG_DLOG2_BYTES_PER_LINE-1 downto CFG_LOG2_DATA_BYTES));
@@ -533,6 +536,7 @@ begin
             if or_reduce(r.flush_cnt) = '0' then
                 v.state := State_Idle;
                 v.init := '0';
+                v_flush_end := '1';
             end if;
         end if;
 
@@ -583,6 +587,7 @@ begin
     o_resp_er_mpu_load <= r.mpu_er_load;
     o_resp_er_mpu_store <= r.mpu_er_store;
     o_mpu_addr <= r.req_addr;
+    o_flush_end <= v_flush_end;
     o_state <= r.state;
     
     rin <= v;

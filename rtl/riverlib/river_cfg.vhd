@@ -772,8 +772,9 @@ package river_cfg is
     o_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);     -- Valid instruction pointer
     o_npc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);    -- Next instruction pointer. Next decoded pc must match to this value or will be ignored.
     o_instr : out std_logic_vector(31 downto 0);                -- Valid instruction value
-    o_fence : out std_logic;
-    o_fencei : out std_logic;
+    i_flushd_end : in std_logic;
+    o_flushd : out std_logic;
+    o_flushi : out std_logic;
     o_call : out std_logic;                                     -- CALL pseudo instruction detected
     o_ret : out std_logic;                                      -- RET pseudoinstruction detected
     o_mret : out std_logic;                                     -- MRET instruction
@@ -873,6 +874,8 @@ package river_cfg is
     i_e_valid : in std_logic;                                         -- Execution stage outputs are valid
     i_e_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);          -- Execution stage instruction pointer
     i_e_instr : in std_logic_vector(31 downto 0);                     -- Execution stage instruction value
+    i_e_flushd : in std_logic;
+    o_flushd : out std_logic;
 
     i_memop_waddr : in std_logic_vector(5 downto 0);                  -- Register address to be written (0=no writing)
     i_memop_wtag : in std_logic_vector(3 downto 0);
@@ -1129,6 +1132,7 @@ package river_cfg is
     o_flush_valid : out std_logic;                                    -- Remove address from ICache is valid
     o_data_flush_address : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);    -- Address of instruction to remove from D$
     o_data_flush_valid : out std_logic;                               -- Remove address from D$ is valid
+    i_data_flush_end : in std_logic;
     i_istate : in std_logic_vector(3 downto 0);                       -- ICache state machine value
     i_dstate : in std_logic_vector(3 downto 0);                       -- DCache state machine value
     i_cstate : in std_logic_vector(1 downto 0)                        -- CacheTop state machine value
@@ -1235,6 +1239,7 @@ package river_cfg is
     i_flush_valid : in std_logic;                                      -- address to clear icache is valid
     i_data_flush_address : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);  -- clear D$ address
     i_data_flush_valid : in std_logic;                                      -- address to clear D$ is valid
+    o_data_flush_end : out std_logic;
     o_istate : out std_logic_vector(3 downto 0);                      -- ICache state machine value
     o_dstate : out std_logic_vector(3 downto 0);                      -- DCache state machine value
     o_cstate : out std_logic_vector(1 downto 0)                       -- cachetop state machine value

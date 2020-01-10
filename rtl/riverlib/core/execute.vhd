@@ -105,8 +105,9 @@ entity InstrExecute is generic (
     o_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);     -- Valid instruction pointer
     o_npc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);    -- Next instruction pointer. Next decoded pc must match to this value or will be ignored.
     o_instr : out std_logic_vector(31 downto 0);                -- Valid instruction value
-    o_fence : out std_logic;
-    o_fencei : out std_logic;
+    i_flushd_end : in std_logic;
+    o_flushd : out std_logic;
+    o_flushi : out std_logic;
     o_call : out std_logic;                                     -- CALL pseudo instruction detected
     o_ret : out std_logic;                                      -- RET pseudoinstruction detected
     o_mret : out std_logic;                                     -- MRET instruction
@@ -144,6 +145,8 @@ architecture arch_InstrExecute of InstrExecute is
         valid : std_logic;
         call : std_logic;
         ret : std_logic;
+        flushd : std_logic;
+        hold_fencei : std_logic;
   end record;
 
   constant R_RESET : RegistersType := (
@@ -153,7 +156,8 @@ architecture arch_InstrExecute of InstrExecute is
     '0', '0', '0', "00", (others => '0'),              -- memop_load, memop_store, memop_sign_ext, memop_size, memop_addr
     (others => '0'),                                   -- memop_wdata
     '0',                                               -- valid
-    '0', '0'                                           -- call, ret
+    '0', '0',                                          -- call, ret
+    '0', '0'                                           -- flushd, hold_fencei
   );
 
   signal r, rin : RegistersType;
@@ -329,7 +333,7 @@ begin
                  i_unsup_exception, i_instr_load_fault, i_instr_executable,
                  i_dport_npc_write, i_dport_npc, 
                  i_rdata1, i_rhazard1, i_rdata2, i_rhazard2, i_wtag, i_csr_rdata, 
-                 i_trap_valid, i_trap_pc, i_memop_ready,
+                 i_trap_valid, i_trap_pc, i_memop_ready, i_flushd_end,
                  wb_arith_res, w_arith_valid, w_arith_busy,
                  wb_sll, wb_sllw, wb_srl, wb_srlw, wb_sra, wb_sraw, r)
     variable v : RegistersType;
@@ -445,17 +449,20 @@ begin
 
     -- Hold signals:
     --      1. hazard
-    --      2. memaccess not ready to accept next memop operation
+    --      2. memaccess not ready to accept next memop operation (or flush request)
     --      3. multi instruction
+    --      4. Flushing $D on fence.i instruction
     --
     w_hold_hazard := i_rhazard1 or i_rhazard2;
 
-    w_hold_memop := (i_memop_load or i_memop_store)
-                and not i_memop_ready;
+    w_hold_memop := (i_memop_load or i_memop_store or
+                    wv(Instr_FENCE) or wv(Instr_FENCE_I))
+                    and not i_memop_ready;
 
     w_hold_multi := w_multi_busy or w_multi_ready;
 
-    v_hold_exec := w_hold_hazard or w_hold_memop or w_hold_multi;
+    v_hold_exec := w_hold_hazard or w_hold_memop or w_hold_multi
+                   or r.hold_fencei;
 
     w_next_ready := '0';
     if i_d_valid = '1' and i_d_pc = r.npc and v_hold_exec = '0' then
@@ -701,6 +708,12 @@ begin
         v.wval := vb_res;
         v.call := v_call;
         v.ret := v_ret;
+        v.flushd := v_fencei or v_fence;
+        v.hold_fencei := v_fencei;
+    end if;
+
+    if i_flushd_end = '1' then
+        v.hold_fencei := '0';
     end if;
 
     if w_multi_ready = '1' then
@@ -759,8 +772,8 @@ begin
     o_pc <= r.pc;
     o_npc <= r.npc;
     o_instr <= r.instr;
-    o_fence <= v_fence;
-    o_fencei <= v_fencei;
+    o_flushd <= r.flushd;   -- must be post in memory queue to avoid too early flushing
+    o_flushi <= v_fencei or v_fence;
     o_call <= r.call;
     o_ret <= r.ret;
     o_mret <= v_mret;

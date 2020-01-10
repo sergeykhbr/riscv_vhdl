@@ -45,6 +45,7 @@ package config_target is
   constant CFG_SIM_FWIMAGE_HEX : string := 
 --                CFG_TOPDIR & "examples/zephyr/gcc711/zephyr.hex";
                 CFG_TOPDIR & "examples/dhrystone21/makefiles/bin/dhrystone21.hex";
+--                CFG_TOPDIR & "examples/riscv-tests/makefiles/bin/riscv-tests.hex";
                 
 
   --! @brief Hardware SoC Identificator.

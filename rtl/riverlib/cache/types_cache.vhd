@@ -198,6 +198,7 @@ package types_cache is
     -- Debug Signals:
     i_flush_address : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_flush_valid : in std_logic;
+    o_flush_end : out std_logic;
     o_state : out std_logic_vector(3 downto 0)
   );
   end component; 

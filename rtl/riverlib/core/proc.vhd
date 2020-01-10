@@ -84,6 +84,7 @@ entity Processor is
     o_flush_valid : out std_logic;                                    -- Remove address from ICache is valid
     o_data_flush_address : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);    -- Address of instruction to remove from D$
     o_data_flush_valid : out std_logic;                               -- Remove address from D$ is valid
+    i_data_flush_end : in std_logic;
     i_istate : in std_logic_vector(3 downto 0);                       -- ICache state machine value
     i_dstate : in std_logic_vector(3 downto 0);                       -- DCache state machine value
     i_cstate : in std_logic_vector(1 downto 0)                        -- CacheTop state machine value
@@ -168,8 +169,8 @@ architecture arch_Processor of Processor is
         memop_waddr : std_logic_vector(5 downto 0);
         memop_wtag : std_logic_vector(3 downto 0);
         d_ready : std_logic;                     -- Hold pipeline from Execution stage
-        fence : std_logic;                       -- instruction FENCE
-        fencei : std_logic;                      -- instruction FENCE.I
+        flushd : std_logic;
+        flushi : std_logic;
         call : std_logic;
         ret : std_logic;
         multi_ready : std_logic;
@@ -177,6 +178,7 @@ architecture arch_Processor of Processor is
 
     type MemoryType is record
         memop_ready : std_logic;
+        flushd : std_logic;
     end record;
 
     type WriteBackType is record
@@ -275,13 +277,13 @@ begin
     o_time <= dbg.clock_cnt;
     o_exec_cnt <= dbg.executed_cnt;
 
-    o_flush_valid <= w.e.fencei or dbg.flush_valid or csr.break_event;
-    o_flush_address <= (others => '1') when w.e.fencei = '1'
+    o_flush_valid <= w.e.flushi or dbg.flush_valid or csr.break_event;
+    o_flush_address <= (others => '1') when w.e.flushi = '1'
                                        else w.e.npc when csr.break_event = '1'
                                        else dbg.flush_address;
 
     o_data_flush_address <= (others => '1');
-    o_data_flush_valid <= w.e.fence;
+    o_data_flush_valid <= w.m.flushd;
 
     o_halted <= dbg.halt;
 
@@ -301,7 +303,7 @@ begin
         i_mem_load_fault => i_resp_ctrl_load_fault,
         i_mem_executable => i_resp_ctrl_executable,
         o_mem_resp_ready => o_resp_ctrl_ready,
-        i_e_fencei => w.e.fencei,
+        i_e_fencei => w.e.flushi,
         i_predict_npc => bp.npc,
         o_mem_req_fire => w.f.req_fire,
         o_instr_load_fault => w.f.instr_load_fault,
@@ -331,7 +333,7 @@ begin
         o_waddr => w.d.waddr,
         o_imm => w.d.imm,
         i_e_ready => w.e.d_ready,
-        i_e_fencei => w.e.fencei,
+        i_e_fencei => w.e.flushi,
         o_valid => w.d.instr_valid,
         o_pc => w.d.pc,
         o_instr => w.d.instr,
@@ -423,8 +425,9 @@ begin
         o_pc => w.e.pc,
         o_npc => w.e.npc,
         o_instr => w.e.instr,
-        o_fence => w.e.fence,
-        o_fencei => w.e.fencei,
+        i_flushd_end => i_data_flush_end,
+        o_flushd => w.e.flushd,
+        o_flushi => w.e.flushi,
         o_call => w.e.call,
         o_ret => w.e.ret,
         o_mret => w.e.mret,
@@ -439,6 +442,8 @@ begin
         i_e_valid => w.e.valid,
         i_e_pc => w.e.pc,
         i_e_instr => w.e.instr,
+        i_e_flushd => w.e.flushd,
+        o_flushd => w.m.flushd,
         i_memop_waddr => w.e.memop_waddr,
         i_memop_wtag => w.e.memop_wtag,
         i_memop_wdata => w.e.memop_wdata,

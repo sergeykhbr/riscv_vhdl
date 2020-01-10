@@ -33,6 +33,8 @@ entity MemAccess is generic (
     i_e_valid : in std_logic;                                         -- Execution stage outputs are valid
     i_e_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);          -- Execution stage instruction pointer
     i_e_instr : in std_logic_vector(31 downto 0);                     -- Execution stage instruction value
+    i_e_flushd : in std_logic;
+    o_flushd : out std_logic;
 
     i_memop_waddr : in std_logic_vector(5 downto 0);                  -- Register address to be written (0=no writing)
     i_memop_wtag : in std_logic_vector(3 downto 0);
@@ -107,7 +109,8 @@ architecture arch_MemAccess of MemAccess is
 
   -- TODO: move into separate module
   -- queue signals before move into separate module
-  constant QUEUE_WIDTH : integer := 4
+  constant QUEUE_WIDTH : integer := 1   -- i_e_flushd
+                                  + 4   -- wtag
                                   + BUS_DATA_WIDTH
                                   + BUS_DATA_BYTES
                                   + RISCV_ARCH 
@@ -148,7 +151,7 @@ begin
   comb : process(i_nrst, i_e_valid, i_e_pc, i_e_instr, i_memop_waddr, i_memop_wtag, i_memop_wdata,
                  i_memop_sign_ext, i_memop_load, i_memop_store, i_memop_size, i_memop_addr,
                  i_wb_ready, i_mem_data_addr, i_mem_req_ready, i_mem_data_valid,
-                 i_mem_data_addr, i_mem_data,
+                 i_mem_data_addr, i_mem_data, i_e_flushd,
                  queue_data_o, queue_nempty, queue_full, r)
     variable v : RegistersType;
     variable vb_memop_wdata : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
@@ -160,6 +163,7 @@ begin
     variable vb_mem_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     variable vb_mem_rdata : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
     variable v_queue_re : std_logic;
+    variable v_flushd : std_logic;
     variable vb_mem_wtag : std_logic_vector(3 downto 0);
     variable vb_mem_wdata : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
     variable vb_mem_wstrb : std_logic_vector(BUS_DATA_BYTES-1 downto 0);
@@ -244,13 +248,14 @@ begin
     end case;
 
     -- Form Queue inputs:
-    queue_data_i <= i_memop_wtag & vb_memop_wdata & vb_memop_wstrb &
+    queue_data_i <= i_e_flushd & i_memop_wtag & vb_memop_wdata & vb_memop_wstrb &
                     i_memop_wdata & i_memop_waddr & i_e_instr & i_e_pc &
                     i_memop_size & i_memop_sign_ext & i_memop_store &
                     i_memop_addr;
-    queue_we <= i_e_valid and (i_memop_load or i_memop_store);
+    queue_we <= i_e_valid and (i_memop_load or i_memop_store or i_e_flushd);
 
     -- Split Queue outputs:
+    v_flushd := queue_data_o(2*BUS_ADDR_WIDTH+RISCV_ARCH+BUS_DATA_BYTES+BUS_DATA_WIDTH+46);
     vb_mem_wtag := queue_data_o(2*BUS_ADDR_WIDTH+RISCV_ARCH+BUS_DATA_BYTES+BUS_DATA_WIDTH+45 downto
                                 2*BUS_ADDR_WIDTH+RISCV_ARCH+BUS_DATA_BYTES+BUS_DATA_WIDTH+42);
     vb_mem_wdata := queue_data_o(2*BUS_ADDR_WIDTH+RISCV_ARCH+BUS_DATA_BYTES+BUS_DATA_WIDTH+42-1 downto
@@ -313,7 +318,7 @@ begin
     when State_Idle =>
         v_queue_re := '1';
         if queue_nempty = '1' then
-            v_mem_valid := '1';
+            v_mem_valid := not v_flushd;
             v.memop_res_pc := vb_e_pc;
             v.memop_res_instr := vb_e_instr;
             v.memop_res_addr := vb_res_addr;
@@ -327,7 +332,9 @@ begin
             v.memop_sign_ext := v_mem_sign_ext;
             v.memop_size := vb_mem_sz;
 
-            if i_mem_req_ready = '1' then
+            if v_flushd = '1' then
+                -- do nothing
+            elsif i_mem_req_ready = '1' then
                 v.state := State_WaitResponse;
             else
                 v.state := State_WaitReqAccept;
@@ -360,7 +367,7 @@ begin
                 v.state := State_Hold;
                 v.hold_rdata := vb_mem_rdata;
             elsif queue_nempty = '1' then
-                v_mem_valid := '1';
+                v_mem_valid := not v_flushd;
                 v.memop_res_pc := vb_e_pc;
                 v.memop_res_instr := vb_e_instr;
                 v.memop_res_addr := vb_res_addr;
@@ -374,7 +381,9 @@ begin
                 v.memop_sign_ext := v_mem_sign_ext;
                 v.memop_size := vb_mem_sz;
 
-                if i_mem_req_ready = '1' then
+                if v_flushd = '1' then
+                    v.state := State_Idle;
+                elsif i_mem_req_ready = '1' then
                     v.state := State_WaitResponse;
                 else
                     v.state := State_WaitReqAccept;
@@ -391,7 +400,7 @@ begin
         if i_wb_ready = '1' then
             v_queue_re := '1';
             if queue_nempty = '1' then
-                v_mem_valid := '1';
+                v_mem_valid := not v_flushd;
                 v.memop_res_pc := vb_e_pc;
                 v.memop_res_instr := vb_e_instr;
                 v.memop_res_addr := vb_res_addr;
@@ -405,7 +414,9 @@ begin
                 v.memop_sign_ext := v_mem_sign_ext;
                 v.memop_size := vb_mem_sz;
 
-                if i_mem_req_ready = '1' then
+                if v_flushd = '1' then
+                    v.state := State_Idle;
+                elsif i_mem_req_ready = '1' then
                     v.state := State_WaitResponse;
                 else
                     v.state := State_WaitReqAccept;
@@ -428,6 +439,7 @@ begin
 
     queue_re <= v_queue_re;
 
+    o_flushd <= queue_nempty and v_flushd and v_queue_re;
     o_mem_resp_ready <= '1';
 
     o_mem_valid <= v_mem_valid;

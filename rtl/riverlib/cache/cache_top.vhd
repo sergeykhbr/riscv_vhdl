@@ -85,6 +85,7 @@ entity CacheTop is generic (
     i_flush_valid : in std_logic;                                      -- address to clear icache is valid
     i_data_flush_address : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);  -- clear D$ address
     i_data_flush_valid : in std_logic;                                      -- address to clear D$ is valid
+    o_data_flush_end : out std_logic;
     o_istate : out std_logic_vector(3 downto 0);                      -- ICache state machine value
     o_dstate : out std_logic_vector(3 downto 0);                      -- DCache state machine value
     o_cstate : out std_logic_vector(1 downto 0)                       -- cachetop state machine value
@@ -274,6 +275,7 @@ begin
         i_mpu_flags => wb_mpu_dflags,
         i_flush_address => i_data_flush_address,
         i_flush_valid => i_data_flush_valid,
+        o_flush_end => o_data_flush_end,
         o_state => o_dstate
     );
 
