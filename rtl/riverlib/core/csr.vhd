@@ -335,13 +335,16 @@ begin
     tv1 := r;
 
     w_dport_wena := i_dport_ena and i_dport_write;
-    v.mpu_we := '0';
 
     procedure_RegAccess(i_addr, i_wena, i_wdata,
                         tv1, tv2, wb_rdata);
 
     procedure_RegAccess(i_dport_addr, w_dport_wena,
                         i_dport_wdata, tv2, v, wb_dport_rdata);
+
+    if r.mpu_we = '1' then
+        v.mpu_we := '0';
+    end if;
 
     w_ie := '0';
     if (r.mode /= PRV_M) or r.mie = '1' then

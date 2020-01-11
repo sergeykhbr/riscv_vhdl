@@ -391,13 +391,16 @@ void CsrRegs::comb() {
     v = r;
 
     w_dport_wena = i_dport_ena & i_dport_write;
-    v.mpu_we = 0;
 
     procedure_RegAccess(i_addr.read(), i_wena.read(), i_wdata.read(),
                         r, &v, &wb_rdata);
 
     procedure_RegAccess(i_dport_addr.read(), w_dport_wena,
                         i_dport_wdata.read(), r, &v, &wb_dport_rdata);
+
+    if (r.mpu_we.read() == 1) {
+        v.mpu_we = 0;
+    }
 
     w_ie = 0;
     if ((r.mode.read() != PRV_M) || r.mie.read()) {

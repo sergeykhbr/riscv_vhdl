@@ -37,9 +37,18 @@ void mpu_enable_region(int idx,
                        uint64_t KB,
                        int cached,
                        const char *rwx) {
-    uint64_t mask = (1ull << (KB * 10)) - 1;
+    uint64_t mask = (~0ull) << 10;
     const char *p = rwx;
     mpu_ctrl_type ctrl;
+
+    asm("csrw 0x352, %0" : :"r"(bar));
+
+    KB >>= 1;
+    while (KB) {
+        mask <<= 1;
+        KB >>= 1;
+    }
+    asm("csrw 0x353, %0" : :"r"(mask));
 
     ctrl.value = 0;
     ctrl.bits.IDX = idx;
@@ -57,8 +66,5 @@ void mpu_enable_region(int idx,
         }
         p++;
     }
-
-    asm("csrw 0x352, %0" : :"r"(bar));
-    asm("csrw 0x353, %0" : :"r"(mask));
     asm("csrw 0x354, %0" : :"r"(ctrl.value));
 }
