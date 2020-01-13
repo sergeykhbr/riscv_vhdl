@@ -100,6 +100,9 @@ accordingly with its index:
 | 0x01A20 | CPU_CSR_MIP       | 00000000:00000000h | 0x344: Machine Interrupt pending
 | 0x01A80 | CPU_CSR_MSTACKOVR | 00000000:00000000h | 0x350: Machine Stack Overflow limit
 | 0x01A88 | CPU_CSR_MSTACKUND | 00000000:00000000h | 0x351: Machine Stack Underflow limit
+| 0x01A90 | CPU_CSR_MPU_ADDR  | 00000000:00000000h | 0x352: MPU Region Base Address
+| 0x01A98 | CPU_CSR_MPU_MASK  | 00000000:00000000h | 0x353: MPU Region Base Size
+| 0x01AA0 | CPU_CSR_MPU_CTRL  | 00000000:00000000h | 0x354: MPU Region Control register
 <b>Table 5-1. List of mapped CPU CSR registers.</b>
 </center>
    
@@ -181,14 +184,6 @@ exact CPU target in a multi-processor configuration.
 | 0x082F0 | CPU_FT10  | 64h'0 | FPU register 30
 | 0x082F8 | CPU_FT11  | 64h'0 | FPU register 31
 | 0x08400 | CPU_STACKTRACE_BUF  | 64h'0 | Hardware Stack Trace Buffer
-| 0x08800 | CPU_INSTR_BUF0  | 64h'0 | Address/Instruction buffer
-| 0x08808 | CPU_INSTR_BUF1  | 64h'0 | Address/Instruction buffer
-| 0x08810 | CPU_INSTR_BUF2  | 64h'0 | Address/Instruction buffer
-| 0x08818 | CPU_INSTR_BUF3  | 64h'0 | Address/Instruction buffer
-| 0x08820 | CPU_DBG1_0      | 64h'0 | RTL Debug support register
-| 0x08828 | CPU_DBG1_1      | 64h'0 | RTL Debug support register
-| 0x08830 | CPU_DBG1_2      | 64h'0 | RTL Debug support register
-| 0x08838 | CPU_DBG1_3      | 64h'0 | RTL Debug support register
 <b>Table 5-2. List of mapped CPU General Purpose Registers.</b>
 </center>
 

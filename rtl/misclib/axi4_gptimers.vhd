@@ -39,6 +39,7 @@ entity axi4_gptimers is
     cfg    : out axi4_slave_config_type;
     i_axi  : in  axi4_slave_in_type;
     o_axi  : out axi4_slave_out_type;
+    o_pwm : out std_logic_vector(tmr_total-1 downto 0);
     o_irq  : out std_logic
   );
 end; 
@@ -60,12 +61,19 @@ architecture arch_axi4_gptimers of axi4_gptimers is
   type timer_type is record
       count_ena : std_logic;
       irq_ena   : std_logic;
+      pwm_ena   : std_logic;
+      pwm_polarity : std_logic;
       value : std_logic_vector(63 downto 0);
       init_value : std_logic_vector(63 downto 0);
+      pwm_threshold : std_logic_vector(63 downto 0);
   end record;
   
   constant timer_type_reset : timer_type := 
-     ('0', '0', (others => '0'), (others => '0'));
+     ('0', '0', 
+      '0', '0',
+      (others => '0'),
+      (others => '0'),
+      (others => '0'));
 
   type vector_timer_type is array (0 to tmr_total-1) of timer_type;
 
@@ -73,12 +81,13 @@ architecture arch_axi4_gptimers of axi4_gptimers is
     tmr  : vector_timer_type;
     highcnt : std_logic_vector(63 downto 0);
     pending : std_logic_vector(tmr_total-1 downto 0);
+    pwm : std_logic_vector(tmr_total-1 downto 0);
     raddr : global_addr_array_type;
   end record;
 
   constant R_RESET : registers := (
       (others => timer_type_reset), (others => '0'), (others => '0'),
-      ((others => '0'), (others => '0'))
+      ((others => '0'), (others => '0'), (others => '0'))
   );
 
   signal r, rin : registers;
@@ -131,15 +140,21 @@ begin
     irq_ena := '0';
     for n in 0 to tmr_total-1 loop
         if r.tmr(n).count_ena = '1' then 
+           if r.tmr(n).pwm_ena = '1' and r.tmr(n).value = r.tmr(n).pwm_threshold then
+               v.pwm(n) := not r.pwm(n);
+           end if;
+
            if r.tmr(n).value = zero64 then
                irq_ena := irq_ena or r.tmr(n).irq_ena;
                v.pending(n) := r.tmr(n).irq_ena;
+               v.pwm(n) := r.tmr(n).pwm_polarity;
                v.tmr(n).value := r.tmr(n).init_value;
            else
                v.tmr(n).value := r.tmr(n).value - 1;
            end if;
         else
            v.tmr(n).value := r.tmr(n).init_value;
+           v.pwm(n) := r.tmr(n).pwm_polarity;
         end if;
     end loop;
 
@@ -154,11 +169,15 @@ begin
                 tmp := r.highcnt(63 downto 32);
           when 2 => 
                 tmp(tmr_total-1 downto 0) := r.pending;
+          when 3 => 
+                tmp(tmr_total-1 downto 0) := r.pwm;
           when others => 
                 for k in 0 to tmr_total-1 loop
                    if raddr = (16 + 8*k) then
                       tmp(0) := r.tmr(k).count_ena;
                       tmp(1) := r.tmr(k).irq_ena;
+                      tmp(4) := r.tmr(k).pwm_ena;
+                      tmp(5) := r.tmr(k).pwm_polarity;
                    elsif raddr = (16 + 8*k + 2) then
                       tmp := r.tmr(k).value(31 downto 0);
                    elsif raddr = (16 + 8*k + 3) then
@@ -167,6 +186,10 @@ begin
                       tmp := r.tmr(k).init_value(31 downto 0);
                    elsif raddr = (16 + 8*k + 5) then
                       tmp := r.tmr(k).init_value(63 downto 32);
+                   elsif raddr = (16 + 8*k + 6) then
+                      tmp := r.tmr(k).pwm_threshold(31 downto 0);
+                   elsif raddr = (16 + 8*k + 7) then
+                      tmp := r.tmr(k).pwm_threshold(63 downto 32);
                    end if;
                 end loop;
        end case;
@@ -188,6 +211,8 @@ begin
                    if waddr = (16 + 8*k) then
                       v.tmr(k).count_ena := tmp(0);
                       v.tmr(k).irq_ena := tmp(1);
+                      v.tmr(k).pwm_ena := tmp(4);
+                      v.tmr(k).pwm_polarity := tmp(5);
                    elsif waddr = (16 + 8*k + 2) then
                       v.tmr(k).value(31 downto 0) := tmp;
                    elsif waddr = (16 + 8*k + 3) then
@@ -196,6 +221,10 @@ begin
                       v.tmr(k).init_value(31 downto 0) := tmp;
                    elsif waddr = (16 + 8*k + 5) then
                       v.tmr(k).init_value(63 downto 32) := tmp;
+                   elsif waddr = (16 + 8*k + 6) then
+                      v.tmr(k).pwm_threshold(31 downto 0) := tmp;
+                   elsif waddr = (16 + 8*k + 7) then
+                      v.tmr(k).pwm_threshold(63 downto 32) := tmp;
                    end if;
                 end loop;
            end case;
@@ -209,6 +238,7 @@ begin
     rin <= v;
 
     o_irq <= irq_ena;
+    o_pwm <= r.pwm;
     wb_dev_rdata <= vrdata;
   end process;
 

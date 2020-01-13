@@ -2,77 +2,257 @@
  
  @section gptimers_overview GPTimers overview
 
- This GPTimers implementation can be additionally configured using the following
- generic parameters.
+  This section describes General Purpose Timer interface module (GPTs). The
+GPTs is a N-channel timer that provides a timing reference with the interrupt
+generation and pulse-width-modulation functions. The following figure is a block
+diagram of the GPTs:
 
- | Name | Default   | Description
- |:-----|:---------:|:------------
- |irqx  | 0         | <b>Interrupt pin index</b> This value is used only as argument in output Plug'n'Play configuration.
- |tmr_total| 2      | <b>Total Number of Timers.</b> Each timer is the 64-bits counter that can be used for interrupt generation or without.
 
- @section gptimers_regs GPTimers registers mapping
- GPTimers device acts like a slave AMBA AXI4 device that is directly mapped
- into physical memory. Default address location for our implementation 
- is defined by 0x80005000. Memory size is 4 KB.
+ @section gpt_registers_section GPTs Registers
 
- @par High Precision Timer register (Least Word) (0x000).
+  GPTs module is connected as a slave device to the AXI4 Bus Controller
+and available for reading and writing as a single port memory for any
+master device in the system.
 
- | Bits |Type| Reset |Field Name| Bits  | Description 
- |:----:|:--:|:-----:|:---------|:-----:|:------------------------------------------------------------|
- | 64   | RO | 64h'0 | highcnt  | 63:0  | <b>High precision counter</b>. This counter isn't used as a source of interrupt and cannot be stopped from SW.
+AXI4 GPTs configured with the following generic parameters by default:
 
- @par High Precision Timer register (Most Word) (0x004).
+<center>
+<table>
+  <tr>
+    <th>Name</th>    <th>Value</th>   <th>Description</th>
+  </tr>
+  <tr>
+    <td>async_reset</td>
+    <td>FALSE</td>
+    <td><b>Reset Type</b>. Internal registers reset type:
+       <ul>
+         <li>FALSE syncrhonous reset (FPGA)</li>
+         <li>TRUE asynchronous reset (ASIC)</li>
+       </ul></td>
+  </tr>
+  <tr>
+    <td>xaddr</td>
+    <td>16#80005#</td>
+    <td><b>Base address</b>. Base Address value defines bits [31:12] of the
+        allocated memory space</td>
+  </tr>
+  <tr>
+    <td>xmask</td>
+    <td>16#FFFFF#</td>
+    <td><b>Address Mask</b>. Address Mask is used by system controller to defines
+        allocated memory size</td>
+  </tr>
+  <tr>
+    <td>irqx</td>
+    <td>3</td>
+    <td><b>IRQ Index</b>. This value is used only as the information data in the
+         Plug'n'Play structure and doesn't actualy define line index.</td>
+  </tr>
+  <tr>
+    <td>tmr_total</td>
+    <td>2</td>
+    <td><b>Total Number of Timers</b>. Total number of timers instantiated in the module.
+          This value also defines total number of PWM outputs (one PWM signal per
+          one timer). High precision counter is always present in GPTs. </td>
+  </tr>
+</table>
+<b>Table 9-1. GPTs generic parameters.</b>
+</center>
 
- | Bits |Type| Reset |Field Name| Bits  | Description 
- |:----:|:--:|:-----:|:---------|:-----:|:------------------------------------------------------------|
- | 64   | RO | 64h'0 | highcnt  | 63:0  | <b>High precision counter</b>. This counter isn't used as a source of interrupt and cannot be stopped from SW.
+  These generic parameters directly define the GPTs device memory location
+in the system memory map. Base Address is 0x80005000. Allocated memory size
+is 4 KB.
 
- @par Pending Timer IRQ register (0x008).
+  The full list of Registers relative Device Base Address offset is shown in the
+following table.
 
- | Bits |Type| Reset |Field Name| Bits  | Description 
- |:----:|:--:|:-----:|:---------|:-----:|:------------------------------------------------------------|
- | 32-tmr_total | RW | 0 | reserved  | 31:tmr_total  | Reserved.
- | tmr_total  | RW | 0 | pending  | tmr_total-1:0  | <b>Pending Bit</b>. Each timer can be configured to generate interrupt. Simaltenously with interrupt is rising pending bit that has to be lowed by Software.
+  <b>Default Device Registers list (tmr_total = 2)</b>
 
- @par Timer[0] Control register (0x040).
+<center>
+| Offset   | Name                | Reset Val.         | Description
+|:--------:|:--------------------|:------------------:|----------------------------
+| 0x000    | GPT_HIGH_CNT        | 00000000:00000000h | High-precision 64-bit counter
+| 0x008    | GPT_IRQ_PENDING     | 0000:0000h         | Interrupt Pending bits (1 bit per channel)
+| 0x00C    | GPT_PWM             | 0000:0000h         | PWM output bits (1 bit per channel)
+| 0x040    | GPT_CONTROL_0       | 0000:0000h         | Timer 0: Control Register
+| 0x044    | reserved            | 0000:0000h         | Reserved
+| 0x048    | GPT_CNT_VALUE_0     | 00000000:00000000h | Timer 0: Current value of the channel's counter
+| 0x050    | GPT_INIT_VALUE_0    | 00000000:00000000h | Timer 0: Channel's counter init value when zero reached
+| 0x058    | GPT_PWM_THRESHOLD_0 | 00000000:00000000h | Timer 0: Channel's threshold to invert pwm output
+| 0x060    | GPT_CONTROL_1       | 0000:0000h         | Timer 1: Control Register
+| 0x064    | reserved            | 0000:0000h         | Reserved
+| 0x068    | GPT_CNT_VALUE_1     | 00000000:00000000h | Timer 1: Current value of the channel's counter
+| 0x070    | GPT_INIT_VALUE_1    | 00000000:00000000h | Timer 1: Channel's counter init value when zero reached
+| 0x078    | GPT_PWM_THRESHOLD_1 | 00000000:00000000h | Timer 1: Channel's threshold to invert pwm output
+<b>Table 9-2. AXI4 GPTs Registers.</b>
+</center>
 
- | Bits |Type| Reset |Field Name| Bits  | Description 
- |:----:|:--:|:-----:|:---------|:-----:|:------------------------------------------------------------|
- | 30 | RW | 30h'0 | reserved  | 31:2  | Reserved.
- | 1  | RW | 1b'0 | irq_ena    | 1  | <b>Interrupt Enable</b>. Enable the interrupt generation when the timer reaches zero value.
- | 0  | RW | 1b'0 | count_ena  | 0  | <b>Count Enable</b>. Enable/Disable counter.
+<b> GPT_HIGH_CNT Register (0x000)</b>
 
- @par Timer[0] Current Value register (0x048).
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>highcnt</td>   <td>[63:0]</td>   <td>RW</td>   <td><b>High precision counter</b>.
+        This counter isn't used as a source of interrupt and cannot be stopped from SW.</td>
+  </tr>
+</table>
 
- | Bits |Type| Reset |Field Name| Bits  | Description 
- |:----:|:--:|:-----:|:---------|:-----:|:------------------------------------------------------------|
- | 64 | RW | 64h'0 | value  | 63:0  | <b>Timer Value</b>. Read/Write register with counter's value. When it equals to 0 the 'init_value' will be used to re-initialize counter.
 
- @par Timer[0] Init Value register (0x050).
+<b> GPT_IRQ_PENDING Register (0x008)</b>
 
- | Bits |Type| Reset |Field Name| Bits  | Description 
- |:----:|:--:|:-----:|:---------|:-----:|:------------------------------------------------------------|
- | 64 | RW | 64h'0 | init_value  | 63:0  | <b>Timer Init Value</b>. Read/Write register is used for cycle timer re-initializtion. If init_value = 0 and value != 0 then the timer is used as a 'single shot' timer.
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>pending</td>   <td>[tmr_total-1:0]</td>   <td>RW</td>   <td><b>Interrupts Pending</b>.
+        Each timer can be configured to generate interrupt. Simultaneously with interrupt is
+        raising pending bit that has to be lowered by Software
+          \li 0 - no interrupt
+          \li 1 - pending interrupt</td>
+  </tr>
+</table>
 
- @par Timer[1] Control register (0x060 = 0x040 + Idx * 32).
 
- | Bits |Type| Reset |Field Name| Bits  | Description 
- |:----:|:--:|:-----:|:---------|:-----:|:------------------------------------------------------------|
- | 30 | RW | 30h'0 | reserved  | 31:2  | Reserved.
- | 1  | RW | 1b'0 | irq_ena    | 1  | <b>Interrupt Enable</b>. Enable the interrupt generation when the timer reaches zero value.
- | 0  | RW | 1b'0 | count_ena  | 0  | <b>Count Enable</b>. Enable/Disable counter.
+<b> GPT_IRQ_PWM Register (0x00C)</b>
 
- @par Timer[1] Current Value register (0x068 = 0x48 + Idx * 32).
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>pwm</td>   <td>[tmr_total-1:0]</td>   <td>RO</td>   <td><b>PWM outputs</b>.
+        Each timer can be configured to generate pwm pulses. This registers represents state
+        of the output pin (one bit per channel).</td>
+  </tr>
+</table>
 
- | Bits |Type| Reset |Field Name| Bits  | Description 
- |:----:|:--:|:-----:|:---------|:-----:|:------------------------------------------------------------|
- | 64 | RW | 64h'0 | value  | 63:0  | <b>Timer Value</b>. Read/Write register with counter's value. When it equals to 0 the 'init_value' will be used to re-initialize counter.
 
- @par Timer[1] Init Value register (0x070 = 0x050 + Idx * 32).
+ <b>GPT_CONTROL_n Register (0x040 + 0x20*n)</b>
 
- | Bits |Type| Reset |Field Name| Bits  | Description 
- |:----:|:--:|:-----:|:---------|:-----:|:------------------------------------------------------------|
- | 64 | RW | 64h'0 | init_value  | 63:0  | <b>Timer Init Value</b>. Read/Write register is used for cycle timer re-initializtion. If init_value = 0 and value != 0 then the timer is used as a 'single shot' timer.
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>rsrv</td>  <td>[31:6]</td>   <td>RZ</td>   <td>reserved.</td>
+  </tr>
+  <tr>
+    <td>pwm_polarity</td>  <td>[5]</td>   <td>RW</td>   <td><b>PWM polarity</b>.
+        This bit is controlled by Software and allows to change PWM polarity:
+        \li 0 - Set pwm to \c LOW when counter equals 0x0 and \c HIGH when
+                counter value equals to \c GPT_PWM_THRESHOLD_n
+        \li 1 - Set pwm to \c HIGH when counter equals 0x0 and \c LOW when
+                counter value equals to \c GPT_PWM_THRESHOLD_n</td>
+  </tr>
+  <tr>
+    <td>pwm_ena</td>  <td>[4]</td>   <td>RW</td>   <td><b>PWM enable</b>.
+        This bit enables inversion of the pwm output when counter value reaches
+        value writen in \c GPT_PWM_THRESHOLD_n regsiter.
+        \li 0 - Disable PWM
+        \li 1 - Enable PWM</td>
+  </tr>
+  <tr>
+    <td>rsrv</td>  <td>[3:2]</td>   <td>RZ</td>   <td>reserved</td>
+  </tr>
+  <tr>
+    <td>irq_ena</td>  <td>[1]</td>   <td>RW</td>   <td><b>Interrupt Enable</b>.
+        Enable IRQ pulse generation when counter reaches zero value
+        \li 0 - IRQ disabled
+        \li 1 - IRQ enabled</td>
+  </tr>
+  <tr>
+    <td>count_ena</td>  <td>[4]</td>   <td>RW</td>   <td><b>Count Enabled</b>.
+        \li 0 - Timer disabled
+        \li 1 - Timer enabled</td>
+  </tr>
+</table>
+
+
+<b> GPT_CNT_VALUE_n Register (0x050 + 0x20*n)</b>
+
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>value</td>   <td>[63:0]</td>   <td>RW</td>   <td><b>Timer Value</b>.
+        Countdown counter value available for reading and writing. When this
+        value reaches zero it will be re-initialized by value writen in regsiter
+        \c GPT_INIT_VALUE_n </td>
+  </tr>
+</table>
+
+
+<b> GPT_INIT_VALUE_n Register (0x058 + 0x20*n)</b>
+
+<table>
+  <tr>
+    <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>init_value</td>   <td>[63:0]</td>   <td>RW</td>   <td><b>Timer Init Value</b>.
+        Read/Write register is used for cycle timer re-initializtion.
+        If init_value = 0 and value != 0 then the timer is used as a 'single shot' timer.</td>
+  </tr>
+</table>
+
+
+@section gpt_example_section C-code example
+
+  The following C-example demonstrates procedure of the interaction
+with the High Precision counter to implement delay function:
+
+
+@code
+    // System clock in Hz (60 MHz)
+    #define SYS_HZ 60000000
+
+    // Memory Base address of the device
+    #define ADDR_BUS0_XSLV_GPTIMERS   0x80005000
+    #define GPT_TIMERS_TOTAL          2
+
+    // Channel's timer Control Registers bits    
+    #define TIMER_CONTROL_ENA           (1 << 0)
+    #define TIMER_CONTROL_IRQ_ENA       (1 << 1)
+    #define TIMER_CONTROL_PWM_ENA       (1 << 4)
+    #define TIMER_CONTROL_PWM_POLARITY  (1 << 5)
+
+    // Channel timer register mapping
+    typedef struct gptimer_type {
+        volatile uint32_t control;
+        volatile uint32_t rsv1;
+        volatile uint64_t cur_value;
+        volatile uint64_t init_value;
+        volatile uint64_t pwm_threshold;
+    } gptimer_type;
+
+    // Device registers mapping
+    typedef struct gptimers_map {
+        volatile uint64_t highcnt;
+        volatile uint32_t pending;
+        volatile uint32_t pwm;
+        uint32_t rsvr[12];
+        gptimer_type timer[GPT_TIMERS_TOTAL];
+    } gptimers_map;
+    
+    // Delay function in microseconds:
+    void delay(uint64_t usec) {
+        gptimers_map *ptmr = (gptimers_map *)ADDR_BUS0_XSLV_GPTIMERS;
+        uint64_t dlt_clk = usec * (SYS_HZ / 1000000ull);
+        uint64_t starttime = ptmr->highcnt;
+        uint64_t endtime = starttime + dlt_clk;
+    
+        // Check overlapping:
+        if (endtime < starttime) {
+            while (starttime < ptmr->highcnt) {}
+        }
+
+        while (ptmr->highcnt < endtime) {}
+    }
+@endcode
 
 
 */

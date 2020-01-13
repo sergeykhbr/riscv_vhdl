@@ -258,6 +258,7 @@ component axi4_irqctrl is
     cfg    : out axi4_slave_config_type;
     i_axi  : in  axi4_slave_in_type;
     o_axi  : out axi4_slave_out_type;
+    o_pwm : out std_logic_vector(tmr_total-1 downto 0);
     o_irq  : out std_logic
   );
   end component; 

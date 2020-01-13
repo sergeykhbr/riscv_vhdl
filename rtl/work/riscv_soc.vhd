@@ -521,6 +521,7 @@ end generate;
     cfg    => slv_cfg(CFG_BUS0_XSLV_GPTIMERS),
     i_axi  => axisi(CFG_BUS0_XSLV_GPTIMERS),
     o_axi  => axiso(CFG_BUS0_XSLV_GPTIMERS),
+    o_pwm  => open,
     o_irq  => irq_pins(CFG_IRQ_GPTIMERS)
   );
 
