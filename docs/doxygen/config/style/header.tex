@@ -57,9 +57,9 @@
   left=2.5cm,%
   right=2.5cm%
 }
-\tolerance=750
+\tolerance=650
 \hfuzz=15pt
-\hbadness=750
+\hbadness=650
 \textheight=650pt% default 674 see https://www.sharelatex.com/learn/Page_size_and_margins
 \setlength{\emergencystretch}{15pt}
 \setlength{\parindent}{0cm}
@@ -146,6 +146,10 @@
 \newcounter{tblid}[chapter]
 \newenvironment{tblid}[1][]{\refstepcounter{tblid}\par\medskip
    \textbf{Table~\thechapter#1-\thetblid#1. \medskip}}{\medskip}
+
+\newcounter{figid}[chapter]
+\newenvironment{figid}[1][]{\refstepcounter{figid}\par\medskip
+   \textbf{Figure~\thechapter#1-\thefigid#1. \medskip}}{\medskip}
 
 \begin{document}
 

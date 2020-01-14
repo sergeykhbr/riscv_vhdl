@@ -7,6 +7,31 @@ GPTs is a N-channel timer that provides a timing reference with the interrupt
 generation and pulse-width-modulation functions. The following figure is a block
 diagram of the GPTs:
 
+<center>
+ <img src="../doxygen/pics/gptimer_top.png" alt="GPTimer Top"> 
+ @latexonly {\includegraphics{../doxygen/pics/gptimer_top.png}} @endlatexonly
+
+@latexonly \begin{figid} @endlatexonly
+GPT connection to the System Bus.
+@latexonly \end{figid} @endlatexonly
+</center>
+
+  All instantiated timers implement own registers set that includes pair of
+registers \c GPT_INIT_VALUE_n and GPT_PWM_THRESHOLD_n. These registers allow
+to form modulated signal as shown on the following diagrams:
+
+<center>
+ <img src="../doxygen/pics/gptimer_pwm.png" alt="GPTimer PWM"> 
+ @latexonly {\includegraphics{../doxygen/pics/gptimer_pwm.png}} @endlatexonly
+
+@latexonly \begin{figid} @endlatexonly
+PWM signal formed by single timer channel.
+@latexonly \end{figid} @endlatexonly
+</center>
+
+  Disabling channel timer or PWM modulation via control bits will set output pin
+into value writen in bit <i>pwm_polarity</i> of register \c GPT_CONTROL_n.
+
 
  @section gpt_registers_section GPTs Registers
 
@@ -56,7 +81,10 @@ AXI4 GPTs configured with the following generic parameters by default:
           one timer). High precision counter is always present in GPTs. </td>
   </tr>
 </table>
-<b>Table 9-1. GPTs generic parameters.</b>
+
+@latexonly \begin{tblid} @endlatexonly
+GPTs generic parameters.
+@latexonly \end{tblid} @endlatexonly
 </center>
 
   These generic parameters directly define the GPTs device memory location
@@ -84,7 +112,10 @@ following table.
 | 0x068    | GPT_CNT_VALUE_1     | 00000000:00000000h | Timer 1: Current value of the channel's counter
 | 0x070    | GPT_INIT_VALUE_1    | 00000000:00000000h | Timer 1: Channel's counter init value when zero reached
 | 0x078    | GPT_PWM_THRESHOLD_1 | 00000000:00000000h | Timer 1: Channel's threshold to invert pwm output
-<b>Table 9-2. AXI4 GPTs Registers.</b>
+
+@latexonly \begin{tblid} @endlatexonly
+AXI4 GPTs Registers.
+@latexonly \end{tblid} @endlatexonly
 </center>
 
 <b> GPT_HIGH_CNT Register (0x000)</b>
@@ -254,5 +285,18 @@ with the High Precision counter to implement delay function:
     }
 @endcode
 
+  The following example shows how to enable PWM generation in timer
+channel 1 with the following parameters:
+\li Period PWM: 1 kHz
+\li Duty Cycle: 0.25
+
+@code
+    void enable_pwm() {
+        gptimers_map *ptmr = (gptimers_map *)ADDR_BUS0_XSLV_GPTIMERS;
+        ptmr->timer[1].init_value = SYS_HZ / 1000;
+        ptmr->timer[1].pwm_treshold = SYS_HZ / 1000 / 4;
+        ptmr->timer[1].icontrol = TIMER_CONTROL_ENA | TIMER_CONTROL_PWM_ENA;
+    }
+@endcode
 
 */

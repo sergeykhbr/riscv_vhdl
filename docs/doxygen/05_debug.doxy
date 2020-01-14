@@ -103,7 +103,9 @@ accordingly with its index:
 | 0x01A90 | CPU_CSR_MPU_ADDR  | 00000000:00000000h | 0x352: MPU Region Base Address
 | 0x01A98 | CPU_CSR_MPU_MASK  | 00000000:00000000h | 0x353: MPU Region Base Size
 | 0x01AA0 | CPU_CSR_MPU_CTRL  | 00000000:00000000h | 0x354: MPU Region Control register
-<b>Table 5-1. List of mapped CPU CSR registers.</b>
+@latexonly \begin{tblid} @endlatexonly
+List of mapped CPU CSR registers.
+@latexonly \end{tblid} @endlatexonly
 </center>
    
 
@@ -184,7 +186,9 @@ exact CPU target in a multi-processor configuration.
 | 0x082F0 | CPU_FT10  | 64h'0 | FPU register 30
 | 0x082F8 | CPU_FT11  | 64h'0 | FPU register 31
 | 0x08400 | CPU_STACKTRACE_BUF  | 64h'0 | Hardware Stack Trace Buffer
-<b>Table 5-2. List of mapped CPU General Purpose Registers.</b>
+@latexonly \begin{tblid} @endlatexonly
+List of mapped CPU General Purpose Registers.
+@latexonly \end{tblid} @endlatexonly
 </center>
 
 
@@ -207,7 +211,9 @@ exact CPU target in a multi-processor configuration.
 | 0x10038 | CPU_BR_ADDR_FETCH  | 00000000:00000000h | Redefine instruction from this address
 | 0x10040 | CPU_BR_INSTR_FETCH | 00000000:00000000h | Redefined instruction value for the fecthed address
 | 0x10048 | CPU_IFLUSH       | 00000000:00000000h | Flush Instruction Cache
-<b>Table 5-3. Run Control registers list.</b>
+@latexonly \begin{tblid} @endlatexonly
+Run Control registers list.
+@latexonly \end{tblid} @endlatexonly
 </center>
 
 
@@ -410,7 +416,9 @@ generate transactions on the debug interface connected to CPUs debug port.
 | 0x18068 | DSU_MST2_R_CNT   | 00000000:00000000h | Bus read statistic for Master[2]
 | 0x18070 | DSU_MST3_W_CNT   | 00000000:00000000h | Bus write statistic for Master[3]
 | 0x18078 | DSU_MST3_R_CNT   | 00000000:00000000h | Bus read statistic for Master[3]
-<b>Table 5-4. DSU Local registers list.</b>
+@latexonly \begin{tblid} @endlatexonly
+DSU Local registers list.
+@latexonly \end{tblid} @endlatexonly
 </center>
 
 <b> DSU_SOFT_RESET Register (0x18000)</b>

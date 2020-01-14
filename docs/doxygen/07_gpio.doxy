@@ -78,7 +78,9 @@ AXI4 GPIO Controller configured with the following generic parameters by default
     <td><b>GPIO Width</b>. Total number of bi-directional pins.</td>
   </tr>
 </table>
-<b>Table 7-1. GPIO generic parameters.</b>
+@latexonly \begin{tblid} @endlatexonly
+GPIO generic parameters.
+@latexonly \end{tblid} @endlatexonly
 </center>
 
   These generic parameters directly define the GPIO Controller device memory location
@@ -97,7 +99,9 @@ following table.
 | 0x004    | GPIO_IUSER     | 0000:0000h | Input IOs values
 | 0x008    | GPIO_OUSER     | 0000:0000h | Output IOs values
 | 0x00C    | GPIO_REG32     | 0000:0000h | Debug register
-<b>Table 7-2. AXI4 GPIO Controller Registers.</b>
+@latexonly \begin{tblid} @endlatexonly
+AXI4 GPIO Controller Registers.
+@latexonly \end{tblid} @endlatexonly
 </center>
 
 

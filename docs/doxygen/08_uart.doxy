@@ -10,7 +10,9 @@ on the top level of the default SoC implementation (see <c>asic_top.vhd</c>)
  <img src="../doxygen/pics/uart_top.png" alt="UART top"> 
  @latexonly {\includegraphics{../doxygen/pics/uart_top.png}} @endlatexonly
 
-<b>Figure 8-1. Bi-directional serial connection.</b>
+@latexonly \begin{figid} @endlatexonly
+Bi-directional serial connection.
+@latexonly \end{figid} @endlatexonly
 </center>
 
 
@@ -31,7 +33,9 @@ parts:
  <img src="../doxygen/pics/uart_frame.png" alt="UART frame"> 
  @latexonly {\includegraphics{../doxygen/pics/uart_frame.png}} @endlatexonly
 
-<b>Figure 8-2. Standard UART frame.</b>
+@latexonly \begin{figid} @endlatexonly
+Standard UART frame.
+@latexonly \end{figid} @endlatexonly
 </center>
 
   Special protocol bits (SOF, P, STOP) automatically formed and handled
@@ -100,7 +104,9 @@ AXI4 UART configured with the following generic parameters by default:
     <td><b>FIFO Size</b>. Size of the Tx and Rx FIFOs in bytes.</td>
   </tr>
 </table>
-<b>Table 8-1. UART generic parameters.</b>
+@latexonly \begin{tblid} @endlatexonly
+UART generic parameters.
+@latexonly \end{tblid} @endlatexonly
 </center>
 
   These generic parameters directly define the UART device memory location
@@ -119,7 +125,9 @@ following table.
 | 0x004    | UART_SCALER        | 0000:0000h | Baudrate Control Register
 | 0x008    | UART_FWCPUID       | 0000:0000h | Multiprocessor Marker Register
 | 0x010    | UART_DATA          | 0000:0000h | Data Buffer Register
-<b>Table 8-2. AXI4 UART Registers.</b>
+@latexonly \begin{tblid} @endlatexonly
+AXI4 UART Registers.
+@latexonly \end{tblid} @endlatexonly
 </center>
  
 

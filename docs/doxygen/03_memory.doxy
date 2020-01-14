@@ -11,7 +11,9 @@ and external memory are mapped into one common address space.
  <img src="../doxygen/pics/addr_space_overview.png" alt="Address Space"> 
  @latexonly {\includegraphics{../doxygen/pics/addr_space_overview.png}} @endlatexonly
 
-<b>Figure 3-1. Address Space Overview.</b>
+@latexonly \begin{figid} @endlatexonly
+Address Space Overview.
+@latexonly \end{figid} @endlatexonly
 </center>
 
   The following VHDL configuration parameters defines address and
@@ -23,7 +25,7 @@ data space sizes.
 | CFG_SYSBUS_ADDR_BITS | 32       | Address Bus bit width |
 | CFG_SYSBUS_DATA_BITS | 64       | Data Bus bit width    |
 @latexonly \begin{tblid} @endlatexonly
-<b>General System Bus parameters.</b>
+General System Bus parameters.
 @latexonly \end{tblid} @endlatexonly
 </center>
 
@@ -34,7 +36,9 @@ data space sizes.
  <img src="../doxygen/pics/mem_byte_order.png" alt="Byte Order"> 
  @latexonly {\includegraphics{../doxygen/pics/mem_byte_order.png}} @endlatexonly
 
-<b>Figure 3-2. Storage of Words, Bytes and Bits in a Byte Organized Memory.</b>
+@latexonly \begin{figid} @endlatexonly
+Storage of Words, Bytes and Bits in a Byte Organized Memory.
+@latexonly \end{figid} @endlatexonly
 </center>
 
   RISC-V architecture supposes memory is addressed as 8-bit bytes, with words
@@ -97,18 +101,18 @@ enhanced in an upward-compatible fashion.
 | I/D Caches         | 800A0000h | 800BFFFFh | 128 Kbytes  | Reserved                                            
 | PNP                | FFFFF000h | FFFFFFFFh | 4 Kbytes    | System status and configuration registers           
 @latexonly \begin{tblid} @endlatexonly
-<b>Default SoC Memory Map.</b>
+Default SoC Memory Map.
 @latexonly \end{tblid} @endlatexonly
 </center>
 
 @section bootrom_memory_section Boot ROM
 
-  Generic internal ROM module initilized with the default boot loader image (HEX-file)
-available in folder <i>examples/boot/</i>.
+  Generic internal ROM module initialized with the default boot loader image (HEX-file)
+available in the folder <i>examples/boot/</i>.
 
   Default bootrom image allows to implement the following functionality:
 
-\li Default exception handlers printing exception code into UART port;.
+\li Default exception handlers printing exception code into UART port.
 \li Implement initial system initialization, like: registers reset, stack initialization.
 \li Implement GPIO input reading to select boot options.
 \li Copy User image into SRAM as is and jump into SRAM entry point in User Mode.
@@ -156,13 +160,13 @@ available in folder <i>examples/boot/</i>.
   </tr>
 </table>
 @latexonly \begin{tblid} @endlatexonly
-<b>Boot ROM generic parameters.</b>
+Boot ROM generic parameters.
 @latexonly \end{tblid} @endlatexonly
 </center>
 
   These generic parameters directly define the Boot ROM location
 in the system memory map 0x00000000. <i>xmask</i> value used to compute allocated
-memory size is 32 KB.
+memory size (in this default case 32 KB).
 
 
 @section userrom_memory_section User ROM
@@ -171,7 +175,7 @@ memory size is 32 KB.
 image <i>fwimage.hex</i>. This image is coping as is into internal SRAM by Boot Loader
 and the Base Address of internal SRAM (0x10000000) used as entry point of the program.
 
-  This ROM allows to write simple user application without needs to implement
+  This ROM allows to write simple user application without need to implement
 processor initialization code that executed in privileged Machine Mode 
 (see <i>examples/helloworld/</i> or <i>examples/riscv-tests/</i>).
 
@@ -222,13 +226,13 @@ this ROM may be removed from the system using only external Flash Memory storage
   </tr>
 </table>
 @latexonly \begin{tblid} @endlatexonly
-<b>User's ROM generic parameters.</b>
+User's ROM generic parameters.
 @latexonly \end{tblid} @endlatexonly
 </center>
 
   These generic parameters directly define the User's ROM location
 in the system memory map 0x00100000. <i>xmask</i> value used to compute allocated
-memory size is 256 KB.
+memory size (in this default case 256 KB).
 
 
 @section external_flash_section External Flash Memory
@@ -246,7 +250,9 @@ SPI clock frequency).
  <img src="../doxygen/pics/flash_to_axi.png" alt="Flash to AXI"> 
  @latexonly {\includegraphics{../doxygen/pics/flash_to_axi.png}} @endlatexonly
 
-<b>Figure 3-3. SPI Flash and SoC connection.</b>
+@latexonly \begin{figid} @endlatexonly
+SPI Flash and SoC connection.
+@latexonly \end{figid} @endlatexonly
 </center>
 
   External Flash memory is fully accessible for reading as a simple memory
@@ -280,7 +286,7 @@ flash IC is shown below.
 | RDID  | 1010 1011          | Release from Deep Power-down mode and Read Electronic Signature
 | DPD   | 1011 1001          | Deep Power-Down mode
 @latexonly \begin{tblid} @endlatexonly
-<b>External Flash IC Instruction Set.</b>
+External Flash IC Instruction Set.
 @latexonly \end{tblid} @endlatexonly
 </center>
 
@@ -330,7 +336,7 @@ contains the managing registers of the AXI4 bridge
   </tr>
 </table>
 @latexonly \begin{tblid} @endlatexonly
-<b>SPI Bridge generic parameters.</b>
+SPI Bridge generic parameters.
 @latexonly \end{tblid} @endlatexonly
 </center>
 
@@ -357,7 +363,7 @@ following table.
 | 0x20048  | FLASH_ERASE_CHIP   | 0000:0000h | Clear all memory sectors
 | 0x20050  | FLASH_POWER_DOWN   | 0000:0000h | Enable Deep Power-down mode
 @latexonly \begin{tblid} @endlatexonly
-<b>AXI4 SPI Bridge Registers.</b>
+AXI4 SPI Bridge Registers.
 @latexonly \end{tblid} @endlatexonly
 </center>
 
@@ -372,7 +378,9 @@ of the following format:
  <img src="../doxygen/pics/spi_rd_data.png" alt="SPI read data"> 
  @latexonly {\includegraphics{../doxygen/pics/spi_rd_data.png}} @endlatexonly
 
- <b>Figure 3-4. READ sequence format.</b>
+@latexonly \begin{figid} @endlatexonly
+READ sequence format.
+@latexonly \end{figid} @endlatexonly
 </center>
 
   The bridge supports 4 and 8-bytes read operations.
@@ -440,7 +448,9 @@ cycle.
  <img src="../doxygen/pics/spi_rd_status.png" alt="SPI read status"> 
  @latexonly {\includegraphics{../doxygen/pics/spi_rd_status.png}} @endlatexonly
 
-<b>Figure 3-5. Read STATUS register SPI sequence.</b>
+@latexonly \begin{figid} @endlatexonly
+Read STATUS register SPI sequence.
+@latexonly \end{figid} @endlatexonly
 </center>
 
   Write request into this register forms the following signals sequence on SPI Bus:
@@ -449,7 +459,9 @@ cycle.
  <img src="../doxygen/pics/spi_wr_status.png" alt="SPI write status"> 
  @latexonly {\includegraphics{../doxygen/pics/spi_wr_status.png}} @endlatexonly
 
-<b>Figure 3-6. Write STATUS register SPI sequence.</b>
+@latexonly \begin{figid} @endlatexonly
+Write STATUS register SPI sequence.
+@latexonly \end{figid} @endlatexonly
 </center>
 
 
@@ -475,7 +487,9 @@ cycle.
  <img src="../doxygen/pics/spi_rd_id.png" alt="SPI read ID"> 
  @latexonly {\includegraphics{../doxygen/pics/spi_rd_id.png}} @endlatexonly
 
-<b>Figure 3-7. Read ID register SPI sequence.</b>
+@latexonly \begin{figid} @endlatexonly
+Read ID register SPI sequence.
+@latexonly \end{figid} @endlatexonly
 </center>
 
   Read request from this register will release the external flash device from
@@ -502,7 +516,9 @@ the device to Standby mode.
  <img src="../doxygen/pics/spi_wr_enable.png" alt="SPI Write Enable"> 
  @latexonly {\includegraphics{../doxygen/pics/spi_wr_enable.png}} @endlatexonly
 
-<b>Figure 3-8. Write Enable SPI sequence.</b>
+@latexonly \begin{figid} @endlatexonly
+Write Enable SPI sequence.
+@latexonly \end{figid} @endlatexonly
 </center>
 
 
@@ -531,7 +547,9 @@ the device to Standby mode.
  <img src="../doxygen/pics/spi_wr_page.png" alt="SPI Write Page"> 
  @latexonly {\includegraphics{../doxygen/pics/spi_wr_page.png}} @endlatexonly
 
-<b>Figure 3-9. PAGE write sequence.</b>
+@latexonly \begin{figid} @endlatexonly
+PAGE write sequence.
+@latexonly \end{figid} @endlatexonly
 </center>
 
   It is necessary polling bit WIP in the STATUS register and wait
@@ -558,7 +576,9 @@ while write process isn't finished otherwise data corruption may happen.
  <img src="../doxygen/pics/spi_wr_disable.png" alt="SPI Write Disable"> 
  @latexonly {\includegraphics{../doxygen/pics/spi_wr_disable.png}} @endlatexonly
 
-<b>Figure 3-10. Write Disable sequence.</b>
+@latexonly \begin{figid} @endlatexonly
+Write Disable sequence.
+@latexonly \end{figid} @endlatexonly
 </center>
 
 
@@ -584,7 +604,9 @@ while write process isn't finished otherwise data corruption may happen.
  <img src="../doxygen/pics/spi_erase_page.png" alt="SPI Erase Page"> 
  @latexonly {\includegraphics{../doxygen/pics/spi_erase_page.png}} @endlatexonly
 
-<b>Figure 3-11. Page Erase sequence.</b>
+@latexonly \begin{figid} @endlatexonly
+Page Erase sequence.
+@latexonly \end{figid} @endlatexonly
 </center>
 
 
@@ -610,7 +632,9 @@ while write process isn't finished otherwise data corruption may happen.
  <img src="../doxygen/pics/spi_erase_sector.png" alt="SPI Erase Sector"> 
  @latexonly {\includegraphics{../doxygen/pics/spi_erase_sector.png}} @endlatexonly
 
-<b>Figure 3-12. Sector Erase sequence.</b>
+@latexonly \begin{figid} @endlatexonly
+Sector Erase sequence.
+@latexonly \end{figid} @endlatexonly
 </center>
 
 
@@ -632,7 +656,9 @@ while write process isn't finished otherwise data corruption may happen.
  <img src="../doxygen/pics/spi_erase_chip.png" alt="SPI Erase Chip"> 
  @latexonly {\includegraphics{../doxygen/pics/spi_erase_chip.png}} @endlatexonly
 
-<b>Figure 3-13. Chip Erase sequence.</b>
+@latexonly \begin{figid} @endlatexonly
+Chip Erase sequence.
+@latexonly \end{figid} @endlatexonly
 </center>
 
 
@@ -654,7 +680,9 @@ while write process isn't finished otherwise data corruption may happen.
  <img src="../doxygen/pics/spi_pwrdwn_enable.png" alt="SPI PowerDown ena"> 
  @latexonly {\includegraphics{../doxygen/pics/spi_pwrdwn_enable.png}} @endlatexonly
 
-<b>Figure 3-14. Enable Deep Power-down mode sequence.</b>
+@latexonly \begin{figid} @endlatexonly
+Enable Deep Power-down mode sequence.
+@latexonly \end{figid} @endlatexonly
 </center>
 
 

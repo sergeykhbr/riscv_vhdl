@@ -7,7 +7,9 @@ interrupt controller \c irqctrl, available on AXI4 bus as the slave device.
  <img src="../doxygen/pics/irq_to_cpu.png" alt="irqctrl connection"> 
  @latexonly {\includegraphics{../doxygen/pics/irq_to_cpu.png}} @endlatexonly
 
-<b>Figure 6-1. Connection of the Interrupt Controller to the System Bus</b>
+@latexonly \begin{figid} @endlatexonly
+Connection of the Interrupt Controller to the System Bus.
+@latexonly \end{figid} @endlatexonly
 </center>
 
   Any interrupt request from any device is directly latching into the pending register
@@ -83,7 +85,9 @@ AXI4 IRQ Controller configured with the following generic parameters by default:
         allocated memory size</td>
   </tr>
 </table>
-<b>Table 6-1. IRQCTRL generic parameters.</b>
+@latexonly \begin{tblid} @endlatexonly
+IRQCTRL generic parameters.
+@latexonly \end{tblid} @endlatexonly
 </center>
 
   These generic parameters directly define the IRQ Controller device memory location
@@ -110,7 +114,10 @@ following table.
 | 0x024    | DBG_EPC_HIGH   | 0000:0000h | Debug register to save instruction pointer (upper dword)
 | 0x028    | IRQ_LOCK       | 0000:0000h | Software interrupts lock
 | 0x02C    | IRQ_CAUSE_IDX  | 0000:0000h | Debug register with the IRQ index
-<b>Table 6-2. AXI4 Interrupt Controller Registers.</b>
+
+@latexonly \begin{tblid} @endlatexonly
+AXI4 Interrupt Controller Registers.
+@latexonly \end{tblid} @endlatexonly
 </center>
 
 <b>IRQS_MASK Register (0x000)</b>

@@ -20,7 +20,9 @@ to read/modify processors registers without halting the pipeline.
  <img src="../doxygen/pics/river_top.png" alt="Top Level"> 
  @latexonly {\includegraphics{../doxygen/pics/river_top.png}} @endlatexonly
 
-<b>Figure 4-1. Functional diagram of the River CPU.</b>
+@latexonly \begin{figid} @endlatexonly
+Functional diagram of the River CPU.
+@latexonly \end{figid} @endlatexonly
 </center>
 
   RISC-V Core \c River continues developing to support new instructions sets
@@ -92,7 +94,10 @@ about already implemented features and features that are now in the development.
        no CPU activity specified number of clock cycles.</td>
   </tr>
 </table>
-<b>Table 4-1. RIVER CPU features list.</b>
+
+@latexonly \begin{tblid} @endlatexonly
+RIVER CPU features list.
+@latexonly \end{tblid} @endlatexonly
 </center>
 
 
@@ -240,7 +245,10 @@ main generic parameters are avaiable for the user configuration.
        </ul></td>
   </tr>
 </table>
-<b>Table 4-2. RIVER generic parameters.</b>
+
+@latexonly \begin{tblid} @endlatexonly
+RIVER generic parameters.
+@latexonly \end{tblid} @endlatexonly
 </center>
 
  @section cpu_mpu_section Memory Protection Unit
@@ -338,7 +346,10 @@ access will be re-directed on system bus without L1 caching.
     <td>FALSE</td>
   </tr>
 </table>
-<b>Table 4-3. Default memory map.</b>
+
+@latexonly \begin{tblid} @endlatexonly
+Default memory map.
+@latexonly \end{tblid} @endlatexonly
 </center>
 
  @subsection mpu_csr_subsection Memory access control
@@ -603,7 +614,10 @@ using the following rules:
     <td>Compressed 2-bytes instruction</td>  <td>*</td>   <td>npc = pc + 2</td>
   </tr>
 </table>
-<b>Table 4-3. Branch Classes and Prediction Rules.</b>
+
+@latexonly \begin{tblid} @endlatexonly
+Branch Classes and Prediction Rules.
+@latexonly \end{tblid} @endlatexonly
 </center>
 
  @section general_register_section General Purpose Registers
@@ -655,7 +669,10 @@ Debug Port provides debuging registers access via \c DSU.
 | x29      | t4         | Temporary register 4
 | x30      | t5         | Temporary register 5
 | x31      | t6         | Temporary register 6
-<b>Table 4-4. Integer Registers bank.</b>
+
+@latexonly \begin{tblid} @endlatexonly
+Integer Registers bank.
+@latexonly \end{tblid} @endlatexonly
 </center>
 
   Register \c x0 (zero), \c x1  (return address) usage cannot be changed
@@ -707,7 +724,10 @@ of the bank if the FPU was disabled.
 | f29      | ft4        | FP temporary register 4
 | f30      | ft5        | FP temporary register 5
 | f31      | ft6        | FP temporary register 6
-<b>Table 4-5. Floating-Point Unit Registers bank.</b>
+
+@latexonly \begin{tblid} @endlatexonly
+Floating-Point Unit Registers bank.
+@latexonly \end{tblid} @endlatexonly
 </center>
 
 @note The future version of River is planned with the additional \c generic
@@ -763,7 +783,10 @@ the possibility to run multitasks environment.
 | 0x352 | MPU_ADDR<sup>1</sup>  | 0x0            | MPU region Base address
 | 0x353 | MPU_MASK<sup>1</sup>  | 0x0            | MPU region size
 | 0x354 | MPU_CTRL<sup>1</sup>  | 0x0            | MPU Control Register
-<b>Table 4-5. List of implemented CSR registers.</b>
+
+@latexonly \begin{tblid} @endlatexonly
+List of implemented CSR registers.
+@latexonly \end{tblid} @endlatexonly
 </center>
 <sup>1</sup> - Non-standard CSR register (River CPU only).
 
@@ -1316,7 +1339,10 @@ core. River CPU doesn't have a registered JEDEC identification.
 | 15 | StorePageFault | Not used
 | 16 | StackOverflow  | Stack pointer (sp) is below than overflow limit
 | 17 | StackUnderflow | Stack pointer (sp) is higher than underflow limit
-<b>Table 4-6. CODE value in a case of exception.</b>
+
+@latexonly \begin{tblid} @endlatexonly
+CODE value in a case of exception.
+@latexonly \end{tblid} @endlatexonly
 </center>
 
 <b>Interrupt Codes</b>
@@ -1336,7 +1362,10 @@ core. River CPU doesn't have a registered JEDEC identification.
 | 9  | SExternal     | Not used
 | 10 | HExternal     | Not used
 | 11 | MExternal     | Interrupt request from an external IRQ controller
-<b>Table 4-7. CODE value in a case of interrupt.</b>
+
+@latexonly \begin{tblid} @endlatexonly
+CODE value in a case of interrupt.
+@latexonly \end{tblid} @endlatexonly
 </center>
 
 
@@ -1565,7 +1594,10 @@ at which the exception event is generated if the 'sp' comes out of these limits.
 | CFG_NMI_STORE_PAGE_FAULT_ADDR| 0x00000078 | MPU prohibits data storing
 | CFG_NMI_STACK_OVERFLOW_ADDR  | 0x00000080 | Stack Overflow handler
 | CFG_NMI_STACK_UNDERFLOW_ADDR | 0x00000088 | Stack Underflow handler
-<b>Table 4-6. CPU River Exceptions Table RTL configuration.</b>
+
+@latexonly \begin{tblid} @endlatexonly
+CPU River Exceptions Table RTL configuration.
+@latexonly \end{tblid} @endlatexonly
 </center>
 
 @note To reduce memory usage by Exception Table it is possible to assign all

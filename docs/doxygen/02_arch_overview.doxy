@@ -19,7 +19,9 @@ with enabled commercial IP blocks are provided in the following subchapters.
  <img src="../doxygen/pics/soc_top.png" alt="Top Level"> 
  @latexonly {\includegraphics{../doxygen/pics/soc_top.png}} @endlatexonly
 
-<b>Figure 2-1. SoC Functional Block Diagram</b>
+@latexonly \begin{figid} @endlatexonly
+SoC Functional Block Diagram.
+@latexonly \end{figid} @endlatexonly
 </center>
 
 @section summary_of_features Summary of Features

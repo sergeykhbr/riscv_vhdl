@@ -51,8 +51,7 @@ framework.
 
 ## System-on-Chip structure
 
-SoC documentation in [.pdf](docs/riscv_vhdl_trm.pdf) and 
-[.html](http://sergeykhbr.github.io/riscv_vhdl/) formats.
+SoC documentation in [.pdf](docs/riscv_vhdl_trm.pdf) formats.
 
 ![SOC top](docs/doxygen/pics/soc_top_v5.png)
 
@@ -87,7 +86,7 @@ CPU         | Clocks-Per-Instruction,<br> CPI | Description.
 ------------|:-------:|:------------------------------
 Cortext-R5  | 1.22    | This is **dual-issue** processor capable to execute a pair of instructions per<br> one clock. It's a very good but quite expensive CPU.
 LEON3       | 1.5     | CPI information from [here](https://www.gaisler.com/index.php/products/simulators/tsim).
-River       | 1.35    | Free-to-use and highly customizable CPU. I/D caches are enabled: 4-ways, 16 KB each.
+River       | 1.35    | Free-to-use and highly customizable CPU. I/D caches are enabled: 4-ways, 16 KB each. [Reference Manual](docs/riscv_vhdl_trm.pdf).
 Cortex-M3   | soon    | RTL is under development.
 
    **Since the tag 'v7.0' RIVER CPU is the main processor in the system and all issues
