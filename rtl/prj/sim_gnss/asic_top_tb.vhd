@@ -30,6 +30,7 @@ architecture behavior of asic_top_tb is
   signal i_sclk_p : std_logic := '1';
   signal i_sclk_n : std_logic;
   signal io_gpio : std_logic_vector(11 downto 0);
+  signal o_pwm : std_logic_vector(1 downto 0);
   signal i_uart1_rd : std_logic := '1';
   signal o_uart1_td : std_logic;
   signal i_uart2_rd : std_logic := '1';
@@ -82,6 +83,7 @@ architecture behavior of asic_top_tb is
     i_sclk_p  : in std_logic;
     i_sclk_n  : in std_logic;
     io_gpio   : inout std_logic_vector(11 downto 0);
+    o_pwm : out std_logic_vector(1 downto 0);
     i_jtag_tck : in std_logic;
     i_jtag_ntrst : in std_logic;
     i_jtag_tms : in std_logic;
@@ -322,6 +324,7 @@ begin
     i_sclk_p  => i_sclk_p,
     i_sclk_n  => i_sclk_n,
     io_gpio   => io_gpio,
+    o_pwm => o_pwm,
     i_jtag_tck => jtag_tck,
     i_jtag_ntrst => jtag_ntrst,
     i_jtag_tms => jtag_tms,

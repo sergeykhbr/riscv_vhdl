@@ -107,6 +107,8 @@ component riscv_soc is port
   i_gpio     : in std_logic_vector(11 downto 0);
   o_gpio     : out std_logic_vector(11 downto 0);
   o_gpio_dir : out std_logic_vector(11 downto 0);
+  --! GPTimers
+  o_pwm : out std_logic_vector(1 downto 0);
   --! JTAG signals:
   i_jtag_tck : in std_logic;
   i_jtag_ntrst : in std_logic;
@@ -315,6 +317,8 @@ begin
     i_gpio     => ib_gpio_ipins,
     o_gpio     => ob_gpio_opins,
     o_gpio_dir => ob_gpio_direction,
+    --! GPTimers
+    o_pwm => open,
     --! JTAG signals:
     i_jtag_tck => ib_jtag_tck,
     i_jtag_ntrst => ib_jtag_ntrst,

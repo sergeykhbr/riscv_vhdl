@@ -63,6 +63,8 @@ entity riscv_soc is port
   i_gpio     : in std_logic_vector(11 downto 0);
   o_gpio     : out std_logic_vector(11 downto 0);
   o_gpio_dir : out std_logic_vector(11 downto 0);
+  --! GPTimers
+  o_pwm : out std_logic_vector(1 downto 0);
   --! JTAG signals:
   i_jtag_tck : in std_logic;
   i_jtag_ntrst : in std_logic;
@@ -521,7 +523,7 @@ end generate;
     cfg    => slv_cfg(CFG_BUS0_XSLV_GPTIMERS),
     i_axi  => axisi(CFG_BUS0_XSLV_GPTIMERS),
     o_axi  => axiso(CFG_BUS0_XSLV_GPTIMERS),
-    o_pwm  => open,
+    o_pwm  => o_pwm,
     o_irq  => irq_pins(CFG_IRQ_GPTIMERS)
   );
 

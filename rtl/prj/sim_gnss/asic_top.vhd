@@ -47,6 +47,8 @@ entity asic_top is port
   i_sclk_n  : in std_logic;
   --! GPIO: [11:4] LEDs; [3:0] DIP switch
   io_gpio     : inout std_logic_vector(11 downto 0);
+  --! GPTimers
+  o_pwm : out std_logic_vector(1 downto 0);
   --! JTAG signals:
   i_jtag_tck : in std_logic;
   i_jtag_ntrst : in std_logic;
@@ -117,6 +119,8 @@ component riscv_soc is port
   i_gpio     : in std_logic_vector(11 downto 0);
   o_gpio     : out std_logic_vector(11 downto 0);
   o_gpio_dir : out std_logic_vector(11 downto 0);
+  --! GPTimers
+  o_pwm : out std_logic_vector(1 downto 0);
   --! JTAG signals:
   i_jtag_tck : in std_logic;
   i_jtag_ntrst : in std_logic;
@@ -193,6 +197,7 @@ end component;
   signal ob_gpio_direction : std_logic_vector(11 downto 0);
   signal ob_gpio_opins    : std_logic_vector(11 downto 0);
   signal ib_gpio_ipins     : std_logic_vector(11 downto 0);
+  signal ob_pwm    : std_logic_vector(1 downto 0);
   signal ib_uart1_rd    : std_logic;
   signal ob_uart1_td    : std_logic;
   signal ib_uart2_rd    : std_logic;
@@ -268,6 +273,10 @@ begin
   gpiox : for i in 0 to 11 generate
     iob0  : iobuf_tech generic map(CFG_PADTECH) 
             port map (ib_gpio_ipins(i), io_gpio(i), ob_gpio_opins(i), ob_gpio_direction(i));
+  end generate;
+
+  pwmx : for i in 0 to 1 generate
+    opwm0  : obuf_tech generic map(CFG_PADTECH) port map (o_pwm(i), ob_pwm(i));
   end generate;
 
   --! JTAG signals:
@@ -356,6 +365,8 @@ begin
     i_gpio     => ib_gpio_ipins,
     o_gpio     => ob_gpio_opins,
     o_gpio_dir => ob_gpio_direction,
+    --! GPTimers
+    o_pwm => ob_pwm,
     --! JTAG signals:
     i_jtag_tck => ib_jtag_tck,
     i_jtag_ntrst => ib_jtag_ntrst,

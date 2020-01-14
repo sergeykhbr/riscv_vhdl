@@ -87,7 +87,7 @@ architecture arch_axi4_gptimers of axi4_gptimers is
 
   constant R_RESET : registers := (
       (others => timer_type_reset), (others => '0'), (others => '0'),
-      ((others => '0'), (others => '0'), (others => '0'))
+      (others => '0'), ((others => '0'), (others => '0'))
   );
 
   signal r, rin : registers;
