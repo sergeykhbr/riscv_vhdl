@@ -22,7 +22,9 @@ data space sizes.
 |:--------------------:|:--------:|:----------------------|
 | CFG_SYSBUS_ADDR_BITS | 32       | Address Bus bit width |
 | CFG_SYSBUS_DATA_BITS | 64       | Data Bus bit width    |
-<b>Table 3-1. General System Bus parameters.</b>
+@latexonly \begin{tblid} @endlatexonly
+<b>General System Bus parameters.</b>
+@latexonly \end{tblid} @endlatexonly
 </center>
 
 
@@ -88,16 +90,146 @@ enhanced in an upward-compatible fashion.
 | GPIO Controller    | 80000000h | 80000FFFh | 4 Kbytes    | User specific IOs                                   
 | UART1              | 80001000h | 80001FFFh | 4 Kbytes    | Default serial port                                 
 | IRQ Controller     | 80002000h | 80002FFFh | 4 Kbytes    | Interrupt Controller                                
-| GNSS Engine        | 80003000h | 80003FFFh | 4 Kbytes    | Satellite Navigation engine                         
-| RF Controller      | 80004000h | 80004FFFh | 4 Kbytes    | RF front-end controller                             
 | GP Timers          | 80005000h | 80005FFFh | 4 Kbytes    | Two general purpose timers with RTC                 
-| FSE GPS-L1         | 8000A000h | 8000AFFFh | 4 Kbytes    | Fast Search Engine for GPS-CA signals               
+| GNSS Sub-System    | 80008000h | 8000FFFFh | 32 Kbytes   | Customizable Satellite Navigation Sub-System (GPS/Glonass/Galileo)
 | Ethernet MAC       | 80040000h | 8007FFFFh | 256 Kbytes  | 100 Mb Ethernet MAC with the Debug support          
 | DSU                | 80080000h | 8009FFFFh | 128 Kbytes  | Debug Support Unit with the multiprocessors support 
 | I/D Caches         | 800A0000h | 800BFFFFh | 128 Kbytes  | Reserved                                            
 | PNP                | FFFFF000h | FFFFFFFFh | 4 Kbytes    | System status and configuration registers           
-<b>Table 3-2. River Memory Map.</b>
+@latexonly \begin{tblid} @endlatexonly
+<b>Default SoC Memory Map.</b>
+@latexonly \end{tblid} @endlatexonly
 </center>
+
+@section bootrom_memory_section Boot ROM
+
+  Generic internal ROM module initilized with the default boot loader image (HEX-file)
+available in folder <i>examples/boot/</i>.
+
+  Default bootrom image allows to implement the following functionality:
+
+\li Default exception handlers printing exception code into UART port;.
+\li Implement initial system initialization, like: registers reset, stack initialization.
+\li Implement GPIO input reading to select boot options.
+\li Copy User image into SRAM as is and jump into SRAM entry point in User Mode.
+
+  <b>VHDL IP generic parameters</b>
+
+<center>
+<table>
+  <tr>
+    <th>Name</th>    <th>Value</th>   <th>Description</th>
+  </tr>
+  <tr>
+    <td>memtech</td>
+    <td>CFG_MEMTECH</td>
+    <td><b>Memory technology</b>. This integer parameter defines memory
+       banks instantiated in system:
+       <ul>
+         <li>0 (inferred) = generic memory blocks (RTL Simulation)</li>
+         <li>not 0 = FPGA or ASIC technology specific memory banks</li>
+       </ul></td>
+  </tr>
+  <tr>
+    <td>async_reset</td>
+    <td>FALSE</td>
+    <td><b>Reset Type</b>. Internal registers reset type:
+       <ul>
+         <li>FALSE syncrhonous reset (FPGA)</li>
+         <li>TRUE asynchronous reset (ASIC)</li>
+       </ul></td>
+  </tr>
+  <tr>
+    <td>xaddr</td>
+    <td>16#00000#</td>
+    <td><b>Base address</b>. Base Address value defines bits [31:12] of the allocated memory space</td>
+  </tr>
+  <tr>
+    <td>xmask</td>
+    <td>16#FFFF8#</td>
+    <td><b>Address Mask</b>. Address Mask is used by system controller to defines allocated memory size</td>
+  </tr>
+  <tr>
+    <td>sim_hexfile</td>
+    <td>CFG_SIM_BOOTROM_HEX</td>
+    <td><b>Image file</b>. HEX-file used for ROM initialization</td>
+  </tr>
+</table>
+@latexonly \begin{tblid} @endlatexonly
+<b>Boot ROM generic parameters.</b>
+@latexonly \end{tblid} @endlatexonly
+</center>
+
+  These generic parameters directly define the Boot ROM location
+in the system memory map 0x00000000. <i>xmask</i> value used to compute allocated
+memory size is 32 KB.
+
+
+@section userrom_memory_section User ROM
+
+  Additional internal ROM memory bank initialized with the custom user's program
+image <i>fwimage.hex</i>. This image is coping as is into internal SRAM by Boot Loader
+and the Base Address of internal SRAM (0x10000000) used as entry point of the program.
+
+  This ROM allows to write simple user application without needs to implement
+processor initialization code that executed in privileged Machine Mode 
+(see <i>examples/helloworld/</i> or <i>examples/riscv-tests/</i>).
+
+  Additionally, no needs to program external flash IC or other external memory
+storage. That's significantly simplify system debugging on FPGA. But in common case 
+this ROM may be removed from the system using only external Flash Memory storage.
+
+  <b>VHDL IP generic parameters</b>
+
+<center>
+<table>
+  <tr>
+    <th>Name</th>    <th>Value</th>   <th>Description</th>
+  </tr>
+  <tr>
+    <td>memtech</td>
+    <td>CFG_MEMTECH</td>
+    <td><b>Memory technology</b>. This integer parameter defines memory
+       banks instantiated in system:
+       <ul>
+         <li>0 (inferred) = generic memory blocks (RTL Simulation)</li>
+         <li>not 0 = FPGA or ASIC technology specific memory banks</li>
+       </ul></td>
+  </tr>
+  <tr>
+    <td>async_reset</td>
+    <td>FALSE</td>
+    <td><b>Reset Type</b>. Internal registers reset type:
+       <ul>
+         <li>FALSE syncrhonous reset (FPGA)</li>
+         <li>TRUE asynchronous reset (ASIC)</li>
+       </ul></td>
+  </tr>
+  <tr>
+    <td>xaddr</td>
+    <td>16#00100#</td>
+    <td><b>Base address</b>. Base Address value defines bits [31:12] of the allocated memory space</td>
+  </tr>
+  <tr>
+    <td>xmask</td>
+    <td>16#FFFC0#</td>
+    <td><b>Address Mask</b>. Address Mask is used by system controller to defines allocated memory size</td>
+  </tr>
+  <tr>
+    <td>sim_hexfile</td>
+    <td>CFG_SIM_FWIMAGE_HEX</td>
+    <td><b>Image file</b>. HEX-file used for ROM initialization</td>
+  </tr>
+</table>
+@latexonly \begin{tblid} @endlatexonly
+<b>User's ROM generic parameters.</b>
+@latexonly \end{tblid} @endlatexonly
+</center>
+
+  These generic parameters directly define the User's ROM location
+in the system memory map 0x00100000. <i>xmask</i> value used to compute allocated
+memory size is 256 KB.
+
 
 @section external_flash_section External Flash Memory
 
@@ -147,7 +279,9 @@ flash IC is shown below.
 | CE    | 1100 0111          | Chip Erase - erase all sectors in memory array
 | RDID  | 1010 1011          | Release from Deep Power-down mode and Read Electronic Signature
 | DPD   | 1011 1001          | Deep Power-Down mode
-<b>Table 3-3. Instruction Set.</b>
+@latexonly \begin{tblid} @endlatexonly
+<b>External Flash IC Instruction Set.</b>
+@latexonly \end{tblid} @endlatexonly
 </center>
 
   AXI4 read request into SPI controller address space automatically generates the
@@ -195,7 +329,9 @@ contains the managing registers of the AXI4 bridge
     <td><b>Address Mask</b>. Address Mask is used by system controller to defines allocated memory size</td>
   </tr>
 </table>
-<b>Table 3-4. SPI Bridge generic parameters.</b>
+@latexonly \begin{tblid} @endlatexonly
+<b>SPI Bridge generic parameters.</b>
+@latexonly \end{tblid} @endlatexonly
 </center>
 
   These generic parameters directly define the UART device memory location
@@ -220,7 +356,9 @@ following table.
 | 0x20040  | FLASH_ERASE_SECTOR | 0000:0000h | Clear memory sector
 | 0x20048  | FLASH_ERASE_CHIP   | 0000:0000h | Clear all memory sectors
 | 0x20050  | FLASH_POWER_DOWN   | 0000:0000h | Enable Deep Power-down mode
-<b>Table 3-5. AXI4 SPI Bridge Registers.</b>
+@latexonly \begin{tblid} @endlatexonly
+<b>AXI4 SPI Bridge Registers.</b>
+@latexonly \end{tblid} @endlatexonly
 </center>
 
 

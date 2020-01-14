@@ -362,6 +362,7 @@ void CsrRegs::procedure_RegAccess(uint64_t iaddr, bool iwena,
         }
         break;
     case CSR_mpu_ctrl:  // [WO] MPU flags and write ena
+        (*ordata) = CFG_MPU_TBL_SIZE << 8;
         if (iwena) {
             ov->mpu_idx = iwdata(8+CFG_MPU_TBL_WIDTH-1, 8);
             ov->mpu_flags = iwdata(CFG_MPU_FL_TOTAL-1, 0);

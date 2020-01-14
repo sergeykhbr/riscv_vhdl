@@ -296,6 +296,7 @@ architecture arch_CsrRegs of CsrRegs is
             ov.mpu_mask := iwdata(BUS_ADDR_WIDTH-1 downto 0);
         end if;
     when CSR_mpu_ctrl =>
+        ordata(15 downto 8) := conv_std_logic_vector(CFG_MPU_TBL_SIZE, 8);
         if iwena = '1' then
             ov.mpu_idx := iwdata(8+CFG_MPU_TBL_WIDTH-1 downto 8);
             ov.mpu_flags := iwdata(CFG_MPU_FL_TOTAL-1 downto 0);

@@ -319,7 +319,7 @@ access will be re-directed on system bus without L1 caching.
 <center>
 <table>
   <tr>
-    <th>Address</th>  <th>Cachable</th> <th>Read</th> <th>Write</th> <th>Execute</th>
+    <th>Address</th>  <th>Enabled</th> <th>Cachable</th> <th>Read</th> <th>Write</th> <th>Execute</th>
   </tr>
   <tr>
     <td>0x00000000-0x7FFFFFFF</td>
@@ -327,9 +327,11 @@ access will be re-directed on system bus without L1 caching.
     <td>TRUE</td>
     <td>TRUE</td>
     <td>TRUE</td>
+    <td>TRUE</td>
   </tr>
   <tr>
     <td>0x80000000-0xFFFFFFFF</td>
+    <td>TRUE</td>
     <td>FALSE</td>
     <td>TRUE</td>
     <td>TRUE</td>
@@ -340,6 +342,28 @@ access will be re-directed on system bus without L1 caching.
 </center>
 
  @subsection mpu_csr_subsection Memory access control
+
+  The following RTL /i River Configuration parameter specify the addresses of
+exceptions handlers for MPU:
+
+<table>
+  <tr>
+    <th>Parameter</th> <th>Value</th> <th>Description</th>
+  </tr>
+  <tr>
+    <td>CFG_NMI_INSTR_PAGE_FAULT_ADDR</td>   <td>00000068h</td>   <td>Execute 
+       instruction from the enabled region with the attribute \i executable = FALSE</td>
+  </tr>
+  <tr>
+    <td>CFG_NMI_LOAD_PAGE_FAULT_ADDR</td>   <td>00000070h</td>   <td>Load 
+       data from the enabled region with the attribute \i readable = FALSE</td>
+  </tr>
+  <tr>
+    <td>CFG_NMI_STORE_PAGE_FAULT_ADDR</td>   <td>00000078h</td>   <td>Store
+       data into the enabled region with the attribute \i writable = FALSE</td>
+  </tr>
+</table>
+
 
   Access to a memory region is controlled by River CPU specific Control and Status
 Registers (CSRs).
@@ -383,9 +407,11 @@ Registers (CSRs).
     <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
   </tr>
   <tr>
-    <td>IDX</td>   <td>[8+CFG_MPU_TBL_WIDTH-1:8]</td>   <td>WO</td>   <td><b>Region Index</b>.
+    <td>IDX</td>   <td>[15:8]</td>   <td>RW</td>   <td><b>Region Index</b>.
      This field specify region index that will be modified on write access to this
-     register</td>
+     register on write access.
+     This value contains total number of available regions \c CFG_MPU_TBL_SIZE
+     on read access</td>
   </tr>
   <tr>
     <td>ENA</td>   <td>[4]</td>   <td>WO</td>   <td><b>Region Enable</b>.
@@ -418,6 +444,107 @@ Registers (CSRs).
        \li 1 = write enabled</td>
   </tr>
 </table>
+
+ @subsection mpu_example_section C-code example
+
+  The following C-example shows how to read total available memory regions
+provided by MPU:
+
+@code
+    // 0x354 = CSR_MPU_CTRL:
+    int get_region_total() {
+        int ret;
+        asm("csrr %0, 0x354" : "=r" (ret));
+        return (ret >> 8) 0xFF;
+    }
+@endcode
+
+  Example of methods that controlling specific memory region via CSRs registers:
+
+@code
+    // CSR register CSR_MPU_CTRL
+    typedef union mpu_ctrl_type {
+        struct bits_type {
+            uint64_t WR    : 1;     // [0]
+            uint64_t RD    : 1;     // [1]
+            uint64_t EXEC  : 1;     // [2]
+            uint64_t CACHABLE : 1;  // [3]
+            uint64_t ENA    : 1;    // [4]
+            uint64_t rsrv1  : 3;    // [7:5]
+            uint64_t IDX    : 8;    // [15:8]
+            uint64_t rsrv2  : 48;   // 
+        } bits;
+        uint64_t value;
+    } mpu_ctrl_type;
+
+
+    // Enable MPU region with the specifc rights:
+    void mpu_enable_region(int idx,            // MPU entry index
+                           uint64_t bar,       // Memory region base address
+                           uint64_t KB,        // Memory region size in KB
+                           int cached,         // 1=cached; 0=uncached
+                           const char *rwx) {  // Region access rights string
+        uint64_t mask = (~0ull) << 10;
+        const char *p = rwx;
+        mpu_ctrl_type ctrl;
+
+        // Write base address
+        asm("csrw 0x352, %0" : :"r"(bar));
+
+        // Computes region mask using KB value
+        KB >>= 1;
+        while (KB) {
+            mask <<= 1;
+            KB >>= 1;
+        }
+        asm("csrw 0x353, %0" : :"r"(mask));
+
+        // Write Control word
+        ctrl.value = 0;
+        ctrl.bits.IDX = idx;
+        ctrl.bits.ENA = 1;
+        ctrl.bits.CACHABLE = cached;
+        while (*p) {
+            if (*p == 'r') {
+                ctrl.bits.RD = 1;
+            }
+            if (*p == 'w') {
+                ctrl.bits.WR = 1;
+            }
+            if (*p == 'x') {
+                ctrl.bits.EXEC = 1;
+            }
+            p++;
+        }
+        asm("csrw 0x354, %0" : :"r"(ctrl.value));
+    }
+
+    // Disable MPU region
+    void mpu_disable_region(int idx) {
+        mpu_ctrl_type ctrl;
+        ctrl.value = 0;
+        ctrl.bits.IDX = idx;
+        asm("csrw 0x354, %0" : :"r"(ctrl.value));
+    }
+@endcode
+
+  The following C-example demonstrates procedures of interaction
+with the MPU module that allows to configure, enable and disable certain
+memory regions access rights using previously defined methods.
+
+@code
+    // Test function
+    void test_mpu() {
+        int reg_total = get_region_total();
+
+        // Make 0x20000..0x20FFF region:
+        //       uncached
+        //       read, write, not executable
+        mpu_enable_region(reg_total-1, 0x20000, 4, 0, "rw")
+        ..
+        mpu_disable_region(reg_total-1);
+    }
+@endcode
 
 
  @section cpu_prefetch_section Program Flow Control
@@ -1359,9 +1486,11 @@ at which the exception event is generated if the 'sp' comes out of these limits.
     <th>Field</th> <th>Bits</th> <th>Type</th> <th>Description</th>
   </tr>
   <tr>
-    <td>IDX</td>   <td>[8+CFG_MPU_TBL_WIDTH-1:8]</td>   <td>WO</td>   <td><b>Region Index</b>.
+    <td>IDX</td>   <td>[15:8]</td>   <td>RW</td>   <td><b>Region Index</b>.
      This field specify region index that will be modified on write access to this
-     register</td>
+     register on write access.
+     This value contains total number of available regions \c CFG_MPU_TBL_SIZE
+     on read access</td>
   </tr>
   <tr>
     <td>ENA</td>   <td>[4]</td>   <td>WO</td>   <td><b>Region Enable</b>.
@@ -1431,8 +1560,11 @@ at which the exception event is generated if the 'sp' comes out of these limits.
 | CFG_NMI_CALL_FROM_SMODE_ADDR | 0x00000050 | Environment call from S-mode handler
 | CFG_NMI_CALL_FROM_HMODE_ADDR | 0x00000058 | Environment call from H-mode handler
 | CFG_NMI_CALL_FROM_MMODE_ADDR | 0x00000060 | Environment call from M-mode handler
-| CFG_NMI_STACK_OVERFLOW_ADDR  | 0x00000068 | Stack Overflow handler
-| CFG_NMI_STACK_UNDERFLOW_ADDR | 0x00000070 | Stack Underflow handler
+| CFG_NMI_INSTR_PAGE_FAULT_ADDR| 0x00000068 | MPU prohibits instruction execution
+| CFG_NMI_LOAD_PAGE_FAULT_ADDR | 0x00000070 | MPU prohibits data loading
+| CFG_NMI_STORE_PAGE_FAULT_ADDR| 0x00000078 | MPU prohibits data storing
+| CFG_NMI_STACK_OVERFLOW_ADDR  | 0x00000080 | Stack Overflow handler
+| CFG_NMI_STACK_UNDERFLOW_ADDR | 0x00000088 | Stack Underflow handler
 <b>Table 4-6. CPU River Exceptions Table RTL configuration.</b>
 </center>
 

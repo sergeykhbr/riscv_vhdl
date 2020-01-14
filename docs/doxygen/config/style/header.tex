@@ -143,6 +143,10 @@
 \renewcommand{\numberline}[1]{#1~}
 %===== C O N T E N T S =====
 
+\newcounter{tblid}[chapter]
+\newenvironment{tblid}[1][]{\refstepcounter{tblid}\par\medskip
+   \textbf{Table~\thechapter#1-\thetblid#1. \medskip}}{\medskip}
+
 \begin{document}
 
 % Titlepage & ToC
