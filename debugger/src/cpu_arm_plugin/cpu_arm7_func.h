@@ -70,6 +70,8 @@ class CpuCortex_Functional : public CpuGeneric,
     virtual uint32_t getV() { return p_psr_->u.V; }
     virtual void setV(uint32_t v) { p_psr_->u.V = v; }
 
+    virtual bool InITBlock() { return ITBlock_; }
+
     // Common River methods shared with instructions:
     uint64_t *getpRegs() { return portRegs_.getpR64(); }
 
@@ -107,6 +109,8 @@ class CpuCortex_Functional : public CpuGeneric,
     CmdBrArm *pcmd_br_;
     CmdRegArm *pcmd_reg_;
     CmdRegsArm *pcmd_regs_;
+
+    bool ITBlock_;
 };
 
 DECLARE_CLASS(CpuCortex_Functional)

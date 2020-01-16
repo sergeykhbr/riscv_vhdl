@@ -20,6 +20,7 @@
 #include <iclass.h>
 #include <iservice.h>
 #include "coreservices/isrccode.h"
+#include "coreservices/icpuarm.h"
 
 namespace debugger {
 
@@ -106,10 +107,13 @@ class ArmSourceService : public IService,
         AttributeType *comment);
 
  private:
+    AttributeType cpu_;
     AttributeType endianess_;
     AttributeType brList_;
     AttributeType symbolListSortByName_;
     AttributeType symbolListSortByAddr_;
+
+    ICpuArm *iarm_;
 };
 
 DECLARE_CLASS(ArmSourceService)

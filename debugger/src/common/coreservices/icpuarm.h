@@ -46,6 +46,15 @@ enum ECoreModes {
     CoreModes_Total = 32
 };
 
+enum SRType {
+    SRType_None,
+    SRType_LSL,
+    SRType_LSR,
+    SRType_ASR,
+    SRType_ROR,
+    SRType_RRX
+};
+
 class ICpuArm : public IFace {
  public:
     ICpuArm() : IFace(IFACE_CPU_ARM) {}
@@ -70,6 +79,11 @@ class ICpuArm : public IFace {
     /** Overflow flag */
     virtual uint32_t getV() = 0;
     virtual void setV(uint32_t v) = 0;
+
+    /** This function returns TRUE if execution is currently in an IT block 
+        and FALSE otherwise. IT allows one of four following Thumb instructions
+        (the IT block) to be conditional */
+    virtual bool InITBlock() = 0;
 };
 
 }  // namespace debugger

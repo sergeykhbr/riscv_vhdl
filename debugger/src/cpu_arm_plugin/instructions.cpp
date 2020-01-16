@@ -89,6 +89,126 @@ T1Instruction::T1Instruction(CpuCortex_Functional *icpu,
     mask_ ^= ~0;
 }
 
+uint32_t T1Instruction::AddWithCarry(uint32_t x, uint32_t y, uint32_t carry_in,
+                                    uint32_t *overflow, uint32_t *carry_out) {
+    uint64_t unsigned_sum = static_cast<uint64_t>(x) +
+                            static_cast<uint64_t>(y) + carry_in;
+    int64_t signed_sum = static_cast<int64_t>(static_cast<int>(x)) +
+                         static_cast<int64_t>(static_cast<int>(y)) + carry_in;
+    uint32_t result = static_cast<uint32_t>(unsigned_sum);
+
+    *carry_out = 0;
+    if (static_cast<uint64_t>(result) != unsigned_sum) {
+        *carry_out = 1;
+    }
+    *overflow = 0;
+    if (static_cast<int64_t>(static_cast<int32_t>(result)) != signed_sum) {
+        *overflow = 1;
+    }
+    return result;
+}
+
+uint32_t T1Instruction::Shift(uint32_t value, SRType type, int amount, uint32_t carry_in) {
+    uint32_t carry_out;
+    return Shift_C(value, type, amount, carry_in, &carry_out);
+}
+
+uint32_t T1Instruction::Shift_C(uint32_t value, SRType type, int amount,
+                                uint32_t carry_in, uint32_t *carry_out) {
+    uint32_t result = 0;
+    switch (type) {
+    case SRType_None:   // Identical to SRType_LSL with amount == 0
+        result = value;
+        *carry_out = carry_in;
+        break;
+    case SRType_LSL:
+        if (amount == 0) {
+            result = value;
+            *carry_out = carry_in;
+        } else {
+            result = LSL_C(value, amount, carry_out);
+        }
+        break;
+    case SRType_LSR:
+        result = LSR_C(value, amount, carry_out);
+        break;
+    case SRType_ASR:
+        result = ASR_C(value, amount, carry_out);
+        break;
+    case SRType_ROR:
+        result = ROR_C(value, amount, carry_out);
+        break;
+    case SRType_RRX:
+        result = RRX_C(value, carry_in, carry_out);
+        break;
+    }
+    return result;
+}
+
+uint32_t T1Instruction::LSL_C(uint32_t x, int n, uint32_t *carry_out) {
+    if (n > 31) {
+        return 0;
+    }
+    uint64_t extended_x = static_cast<uint64_t>(x) << n;
+    *carry_out = static_cast<uint32_t>((extended_x >> 32) & 1);
+    return static_cast<uint32_t>(extended_x);
+}
+
+uint32_t T1Instruction::LSR_C(uint32_t x, int n, uint32_t *carry_out) {
+    if (n > 31) {
+        return 0;
+    }
+    uint64_t extended_x = static_cast<uint64_t>(x);
+    *carry_out = static_cast<uint32_t>((extended_x >> (n-1)) & 1);
+    return static_cast<uint32_t>(extended_x >> n);
+}
+
+uint32_t T1Instruction::ASR_C(uint32_t x, int n, uint32_t *carry_out) {
+    if (n > 31) {
+        if (x & 0x80000000) {
+            return ~0ul;
+        } else {
+            return 0;
+        }
+    }
+    int64_t extended_x = static_cast<int64_t>(static_cast<int32_t>(x));
+    *carry_out = static_cast<uint32_t>((extended_x >> (n-1)) & 1);
+    return static_cast<uint32_t>(extended_x >> n);
+}
+
+uint32_t T1Instruction::ROR_C(uint32_t x, int n, uint32_t *carry_out) {
+    int m = n % 32;
+    uint32_t result;
+    uint32_t c_out;
+    if (m == 0) {
+        result = x;
+    } else {
+        result = LSR_C(x, m, &c_out) | LSL_C(x, 32-m, &c_out);
+    }
+    *carry_out = (result >> 31) & 1;
+    return result;
+}
+
+uint32_t T1Instruction::ROL_C(uint32_t x, int n, uint32_t *carry_out) {
+    int m = n % 32;
+    uint32_t result;
+    uint32_t c_out;
+    if (m == 0) {
+        result = x;
+    } else {
+        result = LSL_C(x, m, &c_out) | LSR_C(x, 32-m, &c_out);
+    }
+    *carry_out = result & 1;
+    return result;
+}
+
+uint32_t T1Instruction::RRX_C(uint32_t x, uint32_t carry_in,
+                              uint32_t *carry_out) {
+    uint32_t result = (carry_in << 31) | (x >> 1);
+    *carry_out = x & 1;
+    return result;
+}
+
 IFace *ArmInstruction::getInterface(const char *name) {
     return icpu_->getInterface(name);
 }

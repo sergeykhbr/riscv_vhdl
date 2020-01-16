@@ -121,6 +121,7 @@ void CpuCortex_Functional::reset(IFace *isource) {
     Axi4TransactionType tr;
     CpuGeneric::reset(isource);
     portRegs_.reset();
+    ITBlock_ = false;
 
     tr.action = MemAction_Read;
     tr.addr = resetVector_.to_uint64();

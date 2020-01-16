@@ -18,6 +18,7 @@
 #define __DEBUGGER_SRC_CPU_ARM_PLUGIN_INSTRUCTIONS_H__
 
 #include <inttypes.h>
+#include "coreservices/icpuarm.h"
 #include "generic/cpu_generic.h"
 
 namespace debugger {
@@ -70,6 +71,21 @@ class T1Instruction : public GenericInstruction {
     // IInstruction interface:
     virtual const char *name() { return name_.to_string(); }
     virtual int exec(Reg64Type *payload) = 0;
+
+    uint32_t AddWithCarry(uint32_t x, uint32_t y, uint32_t carry_in,
+                          uint32_t *overflow, uint32_t *carry_out);
+
+    uint32_t Shift(uint32_t value, SRType type, int amount, uint32_t carry_in);
+    uint32_t Shift_C(uint32_t value, SRType type, int amount, uint32_t carry_in,
+                    uint32_t *carry_out);
+
+    uint32_t LSL_C(uint32_t x, int n, uint32_t *carry_out);
+    uint32_t LSR_C(uint32_t x, int n, uint32_t *carry_out);
+    uint32_t ASR_C(uint32_t x, int n, uint32_t *carry_out);
+    uint32_t ROR_C(uint32_t x, int n, uint32_t *carry_out);
+    uint32_t ROL_C(uint32_t x, int n, uint32_t *carry_out);
+    uint32_t RRX_C(uint32_t x, uint32_t carry_in, uint32_t *carry_out);
+    uint32_t Align(uint32_t x, uint32_t y) { return y * (x / y); }
 
  protected:
     virtual IFace *getInterface(const char *name);

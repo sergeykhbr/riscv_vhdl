@@ -501,7 +501,13 @@ enum EIsaArmV7 {
     ARMV7_BFC,
     ARMV7_BFI,
     T1_BL,
+    T1_LDR_I,
+    T1_LDR_L,   // literal
+    T1_LDR_R,
     T1_PUSH,
+    T1_SUB_I,
+    T1_SUB_R,
+    T1_SUB_SP,
     ARMV7_Total
 };
 

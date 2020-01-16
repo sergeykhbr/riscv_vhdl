@@ -3,7 +3,7 @@
     'SimEnable':true,
     'GUI':true,
     'InitCommands':[
-                    'loadh86 C:/Projects/boardTest/makefiles/bin/test2.hex',
+                    'loadh86 E:/Projects/boardTest/makefiles/bin/test2.hex',
                     'reset'
                    ],
     'Description':'This configuration instantiates functional RISC-V model'
@@ -114,6 +114,7 @@
     {'Class':'ArmSourceServiceClass','Instances':[
           {'Name':'src0','Attr':[
                 ['LogLevel',4],
+                ['CPU','core0'],
                 ['Endianess',0, '0=LSB (x86); 1=MSB(ARM)'],
                 ]}]},
     {'Class':'GrethClass','Instances':[

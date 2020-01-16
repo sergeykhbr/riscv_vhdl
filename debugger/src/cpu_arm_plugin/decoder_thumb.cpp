@@ -23,8 +23,18 @@ namespace debugger {
 EIsaArmV7 decoder_thumb(uint32_t ti, uint32_t *tio,
                          char *errmsg, size_t errsz) {
     EIsaArmV7 ret = ARMV7_Total;
-    if ((ti & 0xFE00) == 0xB400) {
+    if ((ti & 0xFF80) == 0xB080) {
+        ret = T1_SUB_SP;
+    } else if ((ti & 0xFE00) == 0x1E00) {
+        ret = T1_SUB_I;
+    } else if ((ti & 0xFE00) == 0x1A00) {
+        ret = T1_SUB_R;
+    } else if ((ti & 0xFE00) == 0xB400) {
         ret = T1_PUSH;
+    } else if ((ti & 0xF800) == 0x6800) {
+        ret = T1_LDR_I;
+    } else if ((ti & 0xF800) == 0x4800) {
+        ret = T1_LDR_L;
     } else if ((ti & 0xF800) == 0xF000) {
         uint32_t ti2 = ti >> 16;
         if ((ti2 & 0xD000) == 0xD000) {
