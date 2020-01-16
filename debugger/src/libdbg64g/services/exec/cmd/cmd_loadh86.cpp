@@ -111,7 +111,7 @@ void CmdLoadH86::exec(AttributeType *args, AttributeType *res) {
             code = -1;
             break;
         case 4:
-            addr_msb_ = static_cast<int>(sec_data[0]) | sec_data[1];
+            addr_msb_ = (static_cast<int>(sec_data[0]) << 8) | sec_data[1];
             if (addr_msb_ > maxadr) {
                 maxadr = addr_msb_;
             }

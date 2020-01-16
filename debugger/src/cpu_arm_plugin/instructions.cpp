@@ -79,26 +79,13 @@ ArmInstruction::ArmInstruction(CpuCortex_Functional *icpu, const char *name,
     mask_ ^= ~0;
 }
 
-ThumbInstruction::ThumbInstruction(CpuCortex_Functional *icpu,
-                                   const char *name, const char *bits) {
+T1Instruction::T1Instruction(CpuCortex_Functional *icpu,
+                                   const char *name) {
     icpu_ = icpu;
     R = icpu->getpRegs();
     name_.make_string(name);
     mask_ = 0;
     opcode_ = 0;
-    for (int i = 0; i < 16; i++) {
-        switch (bits[i]) {
-        case '0':
-            break;
-        case '1':
-            opcode_ |= (1 << (15 - i));
-            break;
-        case '?':
-            mask_ |= (1 << (15 - i));
-            break;
-        default:;
-        }
-    }
     mask_ ^= ~0;
 }
 
@@ -106,7 +93,7 @@ IFace *ArmInstruction::getInterface(const char *name) {
     return icpu_->getInterface(name);
 }
 
-IFace *ThumbInstruction::getInterface(const char *name) {
+IFace *T1Instruction::getInterface(const char *name) {
     return icpu_->getInterface(name);
 }
 

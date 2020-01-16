@@ -107,9 +107,27 @@ void CpuCortex_Functional::handleTrap() {
     interrupt_pending_[0] = 0;
 }
 
+uint64_t CpuCortex_Functional::getResetAddress() {
+    Axi4TransactionType tr;
+    tr.action = MemAction_Read;
+    tr.addr = resetVector_.to_uint64() + 4;
+    tr.source_idx = sysBusMasterID_.to_int();
+    tr.xsize = 4; 
+    dma_memop(&tr);
+    return tr.rpayload.b32[0] - 1;
+}
+
 void CpuCortex_Functional::reset(IFace *isource) {
+    Axi4TransactionType tr;
     CpuGeneric::reset(isource);
     portRegs_.reset();
+
+    tr.action = MemAction_Read;
+    tr.addr = resetVector_.to_uint64();
+    tr.source_idx = sysBusMasterID_.to_int();
+    tr.xsize = 4; 
+    dma_memop(&tr);
+    setReg(Reg_sp, tr.rpayload.b32[0]);
     if (defaultMode_.is_equal("Thumb")) {
         setInstrMode(THUMB_mode);
     }
@@ -117,14 +135,14 @@ void CpuCortex_Functional::reset(IFace *isource) {
 }
 
 GenericInstruction *CpuCortex_Functional::decodeInstruction(Reg64Type *cache) {
-    ArmInstruction *instr = NULL;
+    GenericInstruction *instr = NULL;
     uint32_t ti = cacheline_[0].buf32[0];
 
     EIsaArmV7 etype;
     if (getInstrMode() == THUMB_mode) {
         uint32_t tio;
         etype = decoder_thumb(ti, &tio, errmsg_, sizeof(errmsg_));
-        cacheline_[0].buf32[0] = tio;
+        //cacheline_[0].buf32[0] = tio;
     } else {
         etype = decoder_arm(ti, errmsg_, sizeof(errmsg_));
     }

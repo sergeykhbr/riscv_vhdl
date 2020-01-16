@@ -23,6 +23,26 @@ namespace debugger {
 EIsaArmV7 decoder_thumb(uint32_t ti, uint32_t *tio,
                          char *errmsg, size_t errsz) {
     EIsaArmV7 ret = ARMV7_Total;
+    if ((ti & 0xFE00) == 0xB400) {
+        ret = T1_PUSH;
+    } else if ((ti & 0xF800) == 0xF000) {
+        uint32_t ti2 = ti >> 16;
+        if ((ti2 & 0xD000) == 0xD000) {
+            ret = T1_BL;
+        } else if ((ti2 & 0xD000) == 0xC000) {
+            // BLX call ARM routine
+            RISCV_sprintf(errmsg, errsz,
+                "ARMV5T BLX(1) unsupported: %04x", ti2 & 0xFFFF);
+        } else {
+            RISCV_sprintf(errmsg, errsz,
+                "Wrong BL/BLX suffix %04x", ti2 & 0xFFFF);
+        }
+    } else {
+        RISCV_sprintf(errmsg, errsz,
+            "undefined instruction %04x", ti & 0xFFFF);
+    }
+    return ret;
+
     switch ((ti >> 13) & 0x7) {
     case 0:  // [15:13] == 3b'000
         /** 
@@ -544,6 +564,8 @@ EIsaArmV7 decoder_thumb(uint32_t ti, uint32_t *tio,
                     ret = ARMV7_UXTB;
                     break;
                 }
+            } else if ((ti & 0xFE00) == 0xB400) {
+                ret = T1_PUSH;
             } else {
                 RISCV_sprintf(errmsg, errsz,
                     "undefined instruction %04x", ti & 0xFFFF);
@@ -622,24 +644,11 @@ EIsaArmV7 decoder_thumb(uint32_t ti, uint32_t *tio,
             RISCV_sprintf(errmsg, errsz,
                 "undefined instruction %04x", ti & 0xFFFF);
         } else if ((ti & 0xF800) == 0xF000) {
-            BranchType op;
-            op.value = 0;
-            op.bits.offset = ti & 0x7FF;
-            if (ti & 0x4) {
-                op.bits.offset |= 0xfff800;
-            }
-            op.bits.offset <<= 12;  // prefix
-            op.bits.opcode = 0x5;
-
             // The next Thumb instruction MUST BE suffix
             uint32_t ti2 = ti >> 16;
-            if ((ti2 & 0xF800) == 0xF800) {
-                // BL call Thumb routine
-                op.bits.offset |= ((ti & 0x7FF) << 1);
-                op.bits.L = 1;
-                op.bits.cond = 0xE;
-                ret = ARMV7_BL;
-            } else if ((ti2 & 0xF800) == 0xE800) {
+            if ((ti2 & 0xD000) == 0xD000) {
+                ret = T1_BL;
+            } else if ((ti2 & 0xD000) == 0xC000) {
                 // BLX call ARM routine
                 RISCV_sprintf(errmsg, errsz,
                     "ARMV5T BLX(1) unsupported: %04x", ti2 & 0xFFFF);
@@ -647,7 +656,6 @@ EIsaArmV7 decoder_thumb(uint32_t ti, uint32_t *tio,
                 RISCV_sprintf(errmsg, errsz,
                     "Wrong BL/BLX suffix %04x", ti2 & 0xFFFF);
             }
-            *tio = op.value;
         } else {
             RISCV_sprintf(errmsg, errsz,
                 "undefined instruction %04x", ti & 0xFFFF);

@@ -58,6 +58,9 @@ class CpuCortex_Functional : public CpuGeneric,
         const EInstructionModes MODE[2] = {ARM_mode, THUMB_mode};
         return MODE[p_psr_->u.T];
     }
+    virtual void setReg(int idx, uint64_t val) {
+        portRegs_.getpR64()[idx] = val;
+    }
     virtual uint32_t getZ() { return p_psr_->u.Z; }
     virtual void setZ(uint32_t z) { p_psr_->u.Z = z; }
     virtual uint32_t getC() { return p_psr_->u.C; }
@@ -72,6 +75,7 @@ class CpuCortex_Functional : public CpuGeneric,
 
  protected:
     /** CpuGeneric common methods */
+    virtual uint64_t getResetAddress();
     virtual EEndianessType endianess() { return LittleEndian; }
     virtual GenericInstruction *decodeInstruction(Reg64Type *cache);
     virtual void generateIllegalOpcode();
@@ -92,7 +96,7 @@ class CpuCortex_Functional : public CpuGeneric,
 
     static const int INSTR_HASH_TABLE_SIZE = 1 << 4;
     AttributeType listInstr_[INSTR_HASH_TABLE_SIZE];
-    ArmInstruction *isaTableArmV7_[ARMV7_Total];
+    GenericInstruction *isaTableArmV7_[ARMV7_Total];
 
     GenericReg64Bank portRegs_;
     GenericReg64Bank portSavedRegs_;

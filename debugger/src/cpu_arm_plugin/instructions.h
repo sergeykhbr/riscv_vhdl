@@ -63,10 +63,9 @@ class ArmInstruction : public GenericInstruction {
     uint64_t *R;
 };
 
-class ThumbInstruction : public GenericInstruction {
+class T1Instruction : public GenericInstruction {
  public:
-    ThumbInstruction(CpuCortex_Functional *icpu, const char *name,
-                    const char *bits);
+    T1Instruction(CpuCortex_Functional *icpu, const char *name);
 
     // IInstruction interface:
     virtual const char *name() { return name_.to_string(); }

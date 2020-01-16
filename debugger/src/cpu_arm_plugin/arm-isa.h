@@ -500,6 +500,8 @@ enum EIsaArmV7 {
     ARMV7_SDIV,
     ARMV7_BFC,
     ARMV7_BFI,
+    T1_BL,
+    T1_PUSH,
     ARMV7_Total
 };
 

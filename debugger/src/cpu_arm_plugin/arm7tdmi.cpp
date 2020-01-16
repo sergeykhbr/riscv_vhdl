@@ -1348,6 +1348,64 @@ class BFI : public BitsFieldInstruction {
         BitsFieldInstruction(icpu, "BFI", "????0111110??????????????001????") {}
 };
 
+class BL_T1 : public T1Instruction {
+ public:
+    BL_T1(CpuCortex_Functional *icpu) : T1Instruction(icpu, "BL_T1") {}
+
+    virtual int exec(Reg64Type *payload) {
+        uint32_t instr0 = payload->buf16[0];
+        uint32_t instr1 = payload->buf16[1];
+        uint32_t S = (instr0 >> 10) & 1;
+        uint32_t I1 = (((instr1 >> 13) & 0x1) ^ S) ^ 1;
+        uint32_t I2 = (((instr1 >> 11) & 0x1) ^ S) ^ 1;
+        uint32_t imm11 = instr1 & 0x7FF;
+        uint32_t imm10 = instr0 & 0x3FF;
+        uint64_t imm64 = 
+        imm64 = (I1 << 23) | (I2 << 22) | (imm10 << 12) | (imm11 << 1);
+        if (S) {
+            imm64 |= (~0ull) << 24;
+        }
+
+        uint64_t pc = icpu_->getPC();
+        uint64_t npc = pc + imm64 + 4;
+        icpu_->setReg(Reg_lr, npc | 0x1);
+        icpu_->setReg(Reg_pc, npc);
+        icpu_->setBranch(npc);
+        return 4;
+    }
+};
+
+class PUSH_T1 : public T1Instruction {
+ public:
+    PUSH_T1(CpuCortex_Functional *icpu) : T1Instruction(icpu, "PUSH_T1") {}
+
+    virtual int exec(Reg64Type *payload) {
+        uint32_t instr = payload->buf16[0];
+        uint64_t address = R[Reg_sp];
+
+        trans_.action = MemAction_Write;
+        trans_.xsize = 4;
+        trans_.wstrb = 0xF;
+        if (instr & 0x100) {
+            address -= 4;
+            trans_.addr = address;
+            trans_.wpayload.b64[0] = R[Reg_lr];
+            icpu_->dma_memop(&trans_);
+        }
+
+        for (int i = 7; i >= 0; i--) {
+            if (instr & (1ul << i)) {
+                address -= 4;
+                trans_.addr = address;
+                trans_.wpayload.b64[0] = R[i];
+                icpu_->dma_memop(&trans_);
+            }
+        }
+
+        icpu_->setReg(Reg_sp, address);
+        return 2;
+    }
+};
 
 void CpuCortex_Functional::addArm7tmdiIsa() {
     isaTableArmV7_[ARMV7_BX] = new BX(this);
@@ -1407,6 +1465,8 @@ void CpuCortex_Functional::addArm7tmdiIsa() {
     isaTableArmV7_[ARMV7_SDIV] = new SDIV(this);
     isaTableArmV7_[ARMV7_BFC] = new BFC(this);
     isaTableArmV7_[ARMV7_BFI] = new BFI(this);
+    isaTableArmV7_[T1_BL] = new BL_T1(this);
+    isaTableArmV7_[T1_PUSH] = new PUSH_T1(this);
 }
 
 }  // namespace debugger
