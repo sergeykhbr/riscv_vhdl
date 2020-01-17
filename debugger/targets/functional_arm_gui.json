@@ -146,8 +146,7 @@
                 ['FreqHz',1000000],
                 ['SysBusMasterID',0],
                 ['SourceCode','src0'],
-                ['GenerateRegTraceFile',false,'Generate Registers modification file to compare with SystemC'],
-                ['GenerateMemTraceFile',false,'Generate Memory access file to compare with SystemC'],
+                ['GenerateTraceFile','arm_r5_trace.log', 'Empty field disabling tracer'],
                 ['DefaultMode','Arm'],
                 ]}]},
     {'Class':'MemorySimClass','Instances':[

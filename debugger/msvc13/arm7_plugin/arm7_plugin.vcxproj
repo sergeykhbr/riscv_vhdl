@@ -107,6 +107,7 @@
     <ClCompile Include="..\..\src\cpu_arm_plugin\instructions.cpp" />
     <ClCompile Include="..\..\src\cpu_arm_plugin\plugin_init.cpp" />
     <ClCompile Include="..\..\src\cpu_arm_plugin\srcproc\srcproc.cpp" />
+    <ClCompile Include="..\..\src\cpu_arm_plugin\srcproc\thumb_disasm.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\api_core.h" />
@@ -133,6 +134,7 @@
     <ClInclude Include="..\..\src\cpu_arm_plugin\cpu_arm7_func.h" />
     <ClInclude Include="..\..\src\cpu_arm_plugin\instructions.h" />
     <ClInclude Include="..\..\src\cpu_arm_plugin\srcproc\srcproc.h" />
+    <ClInclude Include="..\..\src\cpu_arm_plugin\srcproc\thumb_disasm.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

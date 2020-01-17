@@ -49,6 +49,7 @@ SOURCES = \
 	cmd_regs_generic \
 	iotypes \
 	mapreg \
+	thumb_disasm \
 	srcproc \
 	decoder_arm \
 	decoder_thumb \

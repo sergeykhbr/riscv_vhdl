@@ -68,7 +68,7 @@ class CpuRiver_Functional : public CpuGeneric,
     /** Tack Registers changes during execution */
     virtual void trackContextStart();
     /** // Stop tracking and write trace file */
-    virtual void trackContextEnd() override;
+    virtual void traceOutput() override;
 
     void addIsaUserRV64I();
     void addIsaPrivilegedRV64I();

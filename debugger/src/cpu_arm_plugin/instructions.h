@@ -86,6 +86,9 @@ class T1Instruction : public GenericInstruction {
     uint32_t ROL_C(uint32_t x, int n, uint32_t *carry_out);
     uint32_t RRX_C(uint32_t x, uint32_t carry_in, uint32_t *carry_out);
     uint32_t Align(uint32_t x, uint32_t y) { return y * (x / y); }
+    uint32_t ThumbExpandImmWithC(uint32_t imm12, uint32_t *carry_out);
+
+    bool BadReg(uint32_t n) { return n == Reg_sp || n == Reg_pc; }
 
  protected:
     virtual IFace *getInterface(const char *name);

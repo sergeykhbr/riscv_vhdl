@@ -72,6 +72,9 @@
     <ClCompile Include="..\..\src\cpu_arm_plugin\decoder_thumb.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\cpu_arm_plugin\srcproc\thumb_disasm.cpp">
+      <Filter>src\srcproc</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\api_types.h">
@@ -145,6 +148,9 @@
     </ClInclude>
     <ClInclude Include="..\..\src\common\api_core.h">
       <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_arm_plugin\srcproc\thumb_disasm.h">
+      <Filter>src\srcproc</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

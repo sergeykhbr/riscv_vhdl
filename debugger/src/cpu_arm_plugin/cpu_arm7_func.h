@@ -60,6 +60,9 @@ class CpuCortex_Functional : public CpuGeneric,
     }
     virtual void setReg(int idx, uint64_t val) {
         portRegs_.getpR64()[idx] = val;
+        if (trace_file_) {
+            traceRegister(idx, val);
+        }
     }
     virtual uint32_t getZ() { return p_psr_->u.Z; }
     virtual void setZ(uint32_t z) { p_psr_->u.Z = z; }
@@ -71,6 +74,7 @@ class CpuCortex_Functional : public CpuGeneric,
     virtual void setV(uint32_t v) { p_psr_->u.V = v; }
 
     virtual bool InITBlock() { return ITBlock_; }
+    virtual bool LastInITBlock() { return ITBlockCnt_ == 0; }
 
     // Common River methods shared with instructions:
     uint64_t *getpRegs() { return portRegs_.getpR64(); }
@@ -82,10 +86,8 @@ class CpuCortex_Functional : public CpuGeneric,
     virtual GenericInstruction *decodeInstruction(Reg64Type *cache);
     virtual void generateIllegalOpcode();
     virtual void handleTrap();
-    /** Tack Registers changes during execution */
-    virtual void trackContextStart();
     /** // Stop tracking and write trace file */
-    virtual void trackContextEnd() override;
+    virtual void traceOutput() override;
 
     void addArm7tmdiIsa();
     unsigned addSupportedInstruction(ArmInstruction *instr);
@@ -101,7 +103,6 @@ class CpuCortex_Functional : public CpuGeneric,
     GenericInstruction *isaTableArmV7_[ARMV7_Total];
 
     GenericReg64Bank portRegs_;
-    GenericReg64Bank portSavedRegs_;
     ProgramStatusRegsiterType *p_psr_;
 
     char errmsg_[256];
@@ -111,6 +112,7 @@ class CpuCortex_Functional : public CpuGeneric,
     CmdRegsArm *pcmd_regs_;
 
     bool ITBlock_;
+    int ITBlockCnt_;
 };
 
 DECLARE_CLASS(CpuCortex_Functional)

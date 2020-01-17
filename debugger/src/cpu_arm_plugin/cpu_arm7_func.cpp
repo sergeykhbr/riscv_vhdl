@@ -16,13 +16,13 @@
 
 #include <api_core.h>
 #include "cpu_arm7_func.h"
+#include "srcproc/thumb_disasm.h"
 
 namespace debugger {
 
 CpuCortex_Functional::CpuCortex_Functional(const char *name) :
     CpuGeneric(name),
-    portRegs_(this, "regs", 0x8000, Reg_Total),
-    portSavedRegs_(this, "savedregs", 0, Reg_Total) {
+    portRegs_(this, "regs", 0x8000, Reg_Total) {
     registerInterface(static_cast<ICpuArm *>(this));
     registerAttribute("VectorTable", &vectorTable_);
     registerAttribute("DefaultMode", &defaultMode_);
@@ -122,6 +122,7 @@ void CpuCortex_Functional::reset(IFace *isource) {
     CpuGeneric::reset(isource);
     portRegs_.reset();
     ITBlock_ = false;
+    ITBlockCnt_ = 0;
 
     tr.action = MemAction_Read;
     tr.addr = resetVector_.to_uint64();
@@ -163,48 +164,47 @@ void CpuCortex_Functional::generateIllegalOpcode() {
     RISCV_error("Illegal instruction at 0x%08" RV_PRI64 "x", getPC());
 }
 
-void CpuCortex_Functional::trackContextStart() {
-    if (reg_trace_file == 0) {
-        return;
-    }
-    /** Save previous reg values to find modification after exec() */
-    uint64_t *dst = portSavedRegs_.getpR64();
-    uint64_t *src = portRegs_.getpR64();
-    memcpy(dst, src, Reg_Total*sizeof(uint64_t));
-}
-
-void CpuCortex_Functional::trackContextEnd() {
-    CpuGeneric::trackContextEnd();
-
-    if (reg_trace_file == 0) {
-        return;
-    }
-    int sz;
+void CpuCortex_Functional::traceOutput() {
     char tstr[1024];
-    const char *pinstrname = "unknown";
-    if (instr_) {
-        pinstrname = instr_->name();
-    }
-    sz = RISCV_sprintf(tstr, sizeof(tstr),"%8I64d [%08x]: %8s ",
-        step_cnt_, pc_.getValue().buf32[0],
-        pinstrname);
+    trace_action_type *pa;
 
-    bool reg_changed = false;
-    uint64_t *prev = portSavedRegs_.getpR64();
-    uint64_t *cur = portRegs_.getpR64();
-    for (int i = 0; i < Reg_Total; i++) {
-        if (prev[i] != cur[i]) {
-            reg_changed = true;
-            sz += RISCV_sprintf(&tstr[sz], sizeof(tstr) - sz,
-                    "%3s <= %016I64x ",
-                    IREGS_NAMES[i], cur[i]);
+    disasm_thumb(trace_data_.pc,
+                 trace_data_.instr,
+                 trace_data_.disasm,
+                 sizeof(trace_data_.disasm));
+
+    RISCV_sprintf(tstr, sizeof(tstr),
+        "%9" RV_PRI64 "d: %08" RV_PRI64 "x: %s \n",
+            trace_data_.step_cnt - 1,
+            trace_data_.pc,
+            trace_data_.disasm);
+    (*trace_file_) << tstr;
+
+    for (int i = 0; i < trace_data_.action_cnt; i++) {
+        pa = &trace_data_.action[i];
+        if (!pa->memop) {
+            RISCV_sprintf(tstr, sizeof(tstr),
+                "%21s %10s <= %08x\n",
+                    "",
+                    IREGS_NAMES[pa->waddr],
+                    static_cast<uint32_t>(pa->wdata));
+        } else if (pa->memop_write) {
+            RISCV_sprintf(tstr, sizeof(tstr),
+                "%21s [%08" RV_PRI64 "x] <= %08x\n",
+                    "",
+                    pa->memop_addr,
+                    pa->memop_data.buf32[0]);
+        } else {
+            RISCV_sprintf(tstr, sizeof(tstr),
+                "%21s [%08" RV_PRI64 "x] => %08x\n",
+                    "",
+                    pa->memop_addr,
+                    pa->memop_data.buf32[0]);
         }
+        (*trace_file_) << tstr;
     }
-    if (instr_ && !reg_changed) {
-        sz += RISCV_sprintf(&tstr[sz], sizeof(tstr) - sz, "-", NULL);
-    }
-    (*reg_trace_file) << tstr << "\n";
-    reg_trace_file->flush();
+
+    trace_file_->flush();
 }
 
 void CpuCortex_Functional::raiseSignal(int idx) {

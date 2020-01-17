@@ -52,8 +52,7 @@ CpuGeneric::CpuGeneric(const char *name)
     registerAttribute("Tap", &tap_);
     registerAttribute("StackTraceSize", &stackTraceSize_);
     registerAttribute("FreqHz", &freqHz_);
-    registerAttribute("GenerateRegTraceFile", &generateRegTraceFile_);
-    registerAttribute("GenerateMemTraceFile", &generateMemTraceFile_);
+    registerAttribute("GenerateTraceFile", &generateTraceFile_);
     registerAttribute("ResetVector", &resetVector_);
     registerAttribute("SysBusMasterID", &sysBusMasterID_);
     registerAttribute("CacheBaseAddress", &cacheBaseAddr_);
@@ -80,9 +79,8 @@ CpuGeneric::CpuGeneric(const char *name)
     do_not_cache_ = false;
 
     dport_.valid = 0;
+    trace_file_ = 0;
     memset(&trace_data_, 0, sizeof(trace_data_));
-    reg_trace_file = 0;
-    mem_trace_file = 0;
     memcache_ = 0;
     memcache_flag_ = 0;
     memcache_sz_ = 0;
@@ -104,13 +102,9 @@ CpuGeneric::~CpuGeneric() {
     if (memcache_flag_) {
         delete [] memcache_flag_;
     }
-    if (reg_trace_file) {
-        reg_trace_file->close();
-        delete reg_trace_file;
-    }
-    if (mem_trace_file) {
-        mem_trace_file->close();
-        delete mem_trace_file;
+    if (trace_file_) {
+        trace_file_->close();
+        delete trace_file_;
     }
 }
 
@@ -189,11 +183,8 @@ void CpuGeneric::postinitService() {
             RISCV_error("Can't create thread.", NULL);
             return;
         }
-        if (generateRegTraceFile_.to_bool()) {
-            reg_trace_file = new std::ofstream("river_func_regs.log");
-        }
-        if (generateMemTraceFile_.to_bool()) {
-            mem_trace_file = new std::ofstream("river_func_mem.log");
+        if (generateTraceFile_.is_string() && generateTraceFile_.size()) {
+            trace_file_ = new std::ofstream(generateTraceFile_.to_string());
         }
     }
 }
@@ -247,6 +238,10 @@ void CpuGeneric::updatePipeline() {
     updateQueue();
 
     handleTrap();
+
+    if (trace_file_) {
+        traceOutput();
+    }
 }
 
 bool CpuGeneric::updateState() {
@@ -319,6 +314,16 @@ void CpuGeneric::flush(uint64_t addr) {
     }
 }
 
+void CpuGeneric::trackContextStart() {
+    if (!trace_file_) {
+        return;
+    }
+    trace_data_.action_cnt = 0;
+    trace_data_.step_cnt = step_cnt_;
+    trace_data_.pc = pc_.getValue().val;
+    trace_data_.instr = cacheline_[0].buf32[0];
+}
+
 void CpuGeneric::trackContextEnd() {
     if (do_not_cache_) {
         if (cachable_pc_) {
@@ -336,6 +341,28 @@ void CpuGeneric::trackContextEnd() {
         }
     }
     do_not_cache_ = false;
+}
+
+void CpuGeneric::traceRegister(int idx, uint64_t v) {
+    if (trace_data_.action_cnt >= 64) {
+        return;
+    }
+    trace_action_type *p = &trace_data_.action[trace_data_.action_cnt++];
+    p->memop = false;
+    p->waddr = idx;
+    p->wdata = v;
+}
+
+void CpuGeneric::traceMemop(uint64_t addr, int we, uint64_t v, uint32_t sz) {
+    if (trace_data_.action_cnt >= 64) {
+        return;
+    }
+    trace_action_type *p = &trace_data_.action[trace_data_.action_cnt++];
+    p->memop = true;
+    p->memop_addr = addr;
+    p->memop_write = we;
+    p->memop_data.val = v;
+    p->memop_size = sz;
 }
 
 void CpuGeneric::registerStepCallback(IClockListener *cb,
@@ -400,58 +427,17 @@ ETransStatus CpuGeneric::dma_memop(Axi4TransactionType *tr) {
         }
     }
 
-    trace_data_.memop_ena = true;
-    trace_data_.memop_addr = tr->addr;
-    trace_data_.write = tr->action == MemAction_Write ? 1 : 0;
-    trace_data_.data.val = 0;
-    if (tr->action == MemAction_Read) {
-        memcpy(trace_data_.data.buf, tr->rpayload.b8, tr->xsize);
-    } else {
-        memcpy(trace_data_.data.buf, tr->wpayload.b8, tr->xsize);
-    }
-
-    if (!mem_trace_file) {
-    //if (!reg_trace_file) {
-        return ret;
-    }
-
-    char tstr[512];
-    Reg64Type pload = {0};
-    if (tr->action == MemAction_Read) {
-        if (tr->xsize == 1) {
-            pload.buf[0] = tr->rpayload.b8[0];
-        } else if (tr->xsize == 2) {
-            pload.buf16[0] = tr->rpayload.b16[0];
-        } else if (tr->xsize == 4) {
-            pload.buf32[0] = tr->rpayload.b32[0];
+    if (trace_file_) {
+        int we = tr->action == MemAction_Write ? 1 : 0;
+        Reg64Type memop_data;
+        memop_data.val = 0;
+        if (tr->action == MemAction_Read) {
+            memcpy(memop_data.buf, tr->rpayload.b8, tr->xsize);
         } else {
-            pload.val = tr->rpayload.b64[0];
+            memcpy(memop_data.buf, tr->wpayload.b8, tr->xsize);
         }
-        RISCV_sprintf(tstr, sizeof(tstr),
-                    "%8" RV_PRI64 "d %08x: [%08x] => %016" RV_PRI64 "x\n",
-                    step_cnt_,
-                    pc_.getValue().buf32[0],
-                    static_cast<int>(tr->addr),
-                    pload.val);
-    } else {
-        if (tr->xsize == 1) {
-            pload.buf[0] = tr->wpayload.b8[0];
-        } else if (tr->xsize == 2) {
-            pload.buf16[0] = tr->wpayload.b16[0];
-        } else if (tr->xsize == 4) {
-            pload.buf32[0] = tr->wpayload.b32[0];
-        } else {
-            pload.val = tr->wpayload.b64[0];
-        }
-        RISCV_sprintf(tstr, sizeof(tstr),
-                    "%8" RV_PRI64 "d %08x: [%08x] <= %016" RV_PRI64 "x\n",
-                    step_cnt_,
-                    pc_.getValue().buf32[0],
-                    static_cast<int>(tr->addr),
-                    pload.val);
+        traceMemop(tr->addr, we,  memop_data.val, tr->xsize);
     }
-    (*mem_trace_file) << tstr;
-    mem_trace_file->flush();
     return ret;
 }
 

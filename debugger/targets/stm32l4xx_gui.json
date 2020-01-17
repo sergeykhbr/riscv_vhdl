@@ -3,7 +3,7 @@
     'SimEnable':true,
     'GUI':true,
     'InitCommands':[
-                    'loadh86 E:/Projects/boardTest/makefiles/bin/test2.hex',
+                    'loadh86 ./../../../examples/stm32l476xx_demo/makefiles/bin/stm32l476xx_demo.hex',
                     'reset'
                    ],
     'Description':'This configuration instantiates functional RISC-V model'
@@ -143,8 +143,7 @@
                 ['FreqHz',1000000],
                 ['SysBusMasterID',0],
                 ['SourceCode','src0'],
-                ['GenerateRegTraceFile',false,'Generate Registers modification file to compare with SystemC'],
-                ['GenerateMemTraceFile',false,'Generate Memory access file to compare with SystemC'],
+                ['GenerateTraceFile','stm32l4xx_tracer.log','Specify file name to enable tracer'],
                 ['DefaultMode','Thumb'],
                 ]}]},
     {'Class':'MemoryLUTClass','Instances':[

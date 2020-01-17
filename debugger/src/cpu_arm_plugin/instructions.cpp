@@ -209,6 +209,43 @@ uint32_t T1Instruction::RRX_C(uint32_t x, uint32_t carry_in,
     return result;
 }
 
+uint32_t T1Instruction::ThumbExpandImmWithC(uint32_t imm12,
+                                            uint32_t *carry_out) {
+    uint32_t imm32;
+    uint32_t t8 = imm12 & 0xFF;
+    if ((imm12 & 0xC00) == 0) {
+        switch ((imm12 >> 8) & 0x3) {
+        case 0:
+            imm32 = t8;
+            break;
+        case 1:
+            if ((imm12 & 0xFF) == 0) {
+                RISCV_error("%s", "UNPREDICTABLE");
+            }
+            imm32 = (t8 << 16) | t8;
+            break;
+        case 2:
+            if ((imm12 & 0xFF) == 0) {
+                RISCV_error("%s", "UNPREDICTABLE");
+            }
+            imm32 = (t8 << 24) | (t8 << 8);
+            break;
+        case 3:
+            if ((imm12 & 0xFF) == 0) {
+                RISCV_error("%s", "UNPREDICTABLE");
+            }
+            imm32 = (t8 << 24) | (t8 << 16) | (t8 << 8) | t8;
+            break;
+        default:;
+        }
+        *carry_out = icpu_->getC();
+    } else {
+        uint32_t unrotated_value = (1 << 7) | (imm12 & 0x7F);
+        imm32 = ROR_C(unrotated_value, (imm12 >> 7), carry_out);
+    }
+    return imm32;
+}
+
 IFace *ArmInstruction::getInterface(const char *name) {
     return icpu_->getInterface(name);
 }

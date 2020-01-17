@@ -500,11 +500,20 @@ enum EIsaArmV7 {
     ARMV7_SDIV,
     ARMV7_BFC,
     ARMV7_BFI,
-    T1_BL,
+    T1_B,       // 4.6.12
+    T1_BIC_I,   // 4.6.15
+    T1_BL,      // 4.6.18
+    T1_BX,      // 4.6.20
+    T1_CMP_R,   // 4.6.30
     T1_LDR_I,
-    T1_LDR_L,   // literal
+    T1_LDR_L,   // 
     T1_LDR_R,
-    T1_PUSH,
+    T1_MOV_I,   // 4.6.76
+    T2_MOV_I,   // 4.6.76
+    T1_ORR_I,   // 4.6.91
+    T1_POP,     // 4.6.98
+    T1_PUSH,    // 4.6.99
+    T1_STR_I,
     T1_SUB_I,
     T1_SUB_R,
     T1_SUB_SP,

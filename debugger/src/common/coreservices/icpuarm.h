@@ -84,6 +84,7 @@ class ICpuArm : public IFace {
         and FALSE otherwise. IT allows one of four following Thumb instructions
         (the IT block) to be conditional */
     virtual bool InITBlock() = 0;
+    virtual bool LastInITBlock() = 0;
 };
 
 }  // namespace debugger

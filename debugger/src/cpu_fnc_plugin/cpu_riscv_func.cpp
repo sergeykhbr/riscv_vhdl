@@ -204,11 +204,8 @@ void CpuRiver_Functional::generateIllegalOpcode() {
 }
 
 void CpuRiver_Functional::trackContextStart() {
-    trace_data_.pc = pc_.getValue().val;
-    trace_data_.instr = cacheline_[0].buf32[0];
-    trace_data_.memop_ena = false;
-
-    if (reg_trace_file == 0) {
+    CpuGeneric::trackContextStart();
+    if (trace_file_ == 0) {
         return;
     }
     /** Save previous reg values to find modification after exec() */
@@ -217,13 +214,9 @@ void CpuRiver_Functional::trackContextStart() {
     memcpy(dst, src, Reg_Total*sizeof(uint64_t));
 }
 
-void CpuRiver_Functional::trackContextEnd() {
-    CpuGeneric::trackContextEnd();
-
-    if (reg_trace_file == 0) {
-        return;
-    }
+void CpuRiver_Functional::traceOutput() {
     char tstr[1024];
+    trace_action_type *pa = &trace_data_.action[0];
 
     riscv_disassembler(trace_data_.instr,
                        trace_data_.disasm,
@@ -231,19 +224,19 @@ void CpuRiver_Functional::trackContextEnd() {
 
     RISCV_sprintf(tstr, sizeof(tstr),
         "%9" RV_PRI64 "d: %08" RV_PRI64 "x: %s \n",
-            step_cnt_ - 1,
+            trace_data_.step_cnt - 1,
             trace_data_.pc,
             trace_data_.disasm);
-    (*reg_trace_file) << tstr;
+    (*trace_file_) << tstr;
 
 
-    if (trace_data_.memop_ena && !trace_data_.write) {
+    if (pa->memop && !pa->memop_write) {
         RISCV_sprintf(tstr, sizeof(tstr),
             "%20s [%08" RV_PRI64 "x] => %016" RV_PRI64 "x\n",
                 "",
-                trace_data_.memop_addr,
-                trace_data_.data.val);
-        (*reg_trace_file) << tstr;
+                pa->memop_addr,
+                pa->memop_data.val);
+        (*trace_file_) << tstr;
     }
 
 
@@ -256,20 +249,20 @@ void CpuRiver_Functional::trackContextEnd() {
                     "",
                     IREGS_NAMES[i],
                     cur[i]);
-            (*reg_trace_file) << tstr;
+            (*trace_file_) << tstr;
         }
     }
 
-    if (trace_data_.memop_ena && trace_data_.write) {
+    if (pa->memop && pa->memop_write) {
         RISCV_sprintf(tstr, sizeof(tstr),
             "%20s [%08" RV_PRI64 "x] <= %016" RV_PRI64 "x\n",
                 "",
-                trace_data_.memop_addr,
-                trace_data_.data.val);
-        (*reg_trace_file) << tstr;
+                pa->memop_addr,
+                pa->memop_data.val);
+        (*trace_file_) << tstr;
     }
 
-    reg_trace_file->flush();
+    trace_file_->flush();
 }
 
 void CpuRiver_Functional::raiseSignal(int idx) {

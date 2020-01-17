@@ -141,8 +141,11 @@ class CpuGeneric : public IService,
     virtual GenericInstruction *decodeInstruction(Reg64Type *cache) = 0;
     virtual void generateIllegalOpcode() = 0;
     virtual void handleTrap() = 0;
-    virtual void trackContextStart() {}
+    virtual void trackContextStart();
     virtual void trackContextEnd();
+    virtual void traceRegister(int idx, uint64_t v);
+    virtual void traceMemop(uint64_t addr, int we, uint64_t v, uint32_t sz);
+    virtual void traceOutput() {}
 
  public:
     /** IClock */
@@ -188,8 +191,7 @@ class CpuGeneric : public IService,
     AttributeType sysBusWidthBytes_;
     AttributeType sourceCode_;
     AttributeType stackTraceSize_;
-    AttributeType generateRegTraceFile_;
-    AttributeType generateMemTraceFile_;
+    AttributeType generateTraceFile_;
     AttributeType resetVector_;
     AttributeType sysBusMasterID_;
     AttributeType hwBreakpoints_;
@@ -263,18 +265,26 @@ class CpuGeneric : public IService,
 
     uint64_t cur_prv_level;
 
-    std::ofstream *reg_trace_file;
-    std::ofstream *mem_trace_file;
+    struct trace_action_type {
+        bool memop;             // 0=register; 1=memop
+        int waddr;              // register addr
+        uint64_t wdata;         // register data
+        int memop_write;        // 0=read
+        uint64_t memop_addr;
+        Reg64Type memop_data;
+        int memop_size;
+    };
 
     struct trace_type {
+        uint64_t step_cnt;
         uint64_t pc;
         uint32_t instr;
-        bool memop_ena;
-        uint64_t memop_addr;
-        int write;
-        Reg64Type data;
         char disasm[256];
+        // 1 instruction several actions
+        trace_action_type action[64];
+        int action_cnt;
     } trace_data_;
+    std::ofstream *trace_file_;
 };
 
 }  // namespace debugger

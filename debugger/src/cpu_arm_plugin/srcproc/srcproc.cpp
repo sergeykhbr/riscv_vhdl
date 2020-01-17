@@ -16,6 +16,7 @@
 
 #include "../arm-isa.h"
 #include "srcproc.h"
+#include "thumb_disasm.h"
 #include <iostream>
 
 namespace debugger {
@@ -228,122 +229,6 @@ bool ArmSourceService::isBreakpoint(uint64_t addr, AttributeType *outbr) {
     return false;
 }
 
-int disasm_thumb(uint64_t pc,
-                 uint32_t ti,
-                 AttributeType *mnemonic,
-                 AttributeType *comment) {
-    char tstr[128];
-    int tsz;
-    int len = 2;
-    mnemonic->make_string("unknown");
-    comment->make_string("");
-    if ((ti & 0xFF80) == 0xB080) {
-        uint32_t imm = (ti & 0x7F) << 2;
-        tsz = RISCV_sprintf(tstr, sizeof(tstr), "sub      sp, #%d",
-                static_cast<int32_t>(imm));
-        mnemonic->make_string(tstr);
-    } else if ((ti & 0xFE00) == 0x1E00) {
-        uint32_t d = ti  & 0x7;
-        uint32_t n = (ti >> 3) & 0x7;
-        uint32_t imm = (ti >> 6) & 0x7;
-        if (d == n) {
-            tsz = RISCV_sprintf(tstr, sizeof(tstr), "sub      %s, #%d",
-                    IREGS_NAMES[n], static_cast<int32_t>(imm));
-        } else {
-            tsz = RISCV_sprintf(tstr, sizeof(tstr), "sub      %s, %s, #%d",
-                    IREGS_NAMES[d],
-                    IREGS_NAMES[n],
-                    static_cast<int32_t>(imm));
-        }
-        mnemonic->make_string(tstr);
-    } else if ((ti & 0xFE00) == 0x1A00) {
-        //ret = T1_SUB_R;
-        uint32_t d = ti  & 0x7;
-        uint32_t n = (ti >> 3) & 0x7;
-        uint32_t m = (ti >> 6) & 0x7;
-        if (d == n) {
-            tsz = RISCV_sprintf(tstr, sizeof(tstr), "sub      %s, %s",
-                    IREGS_NAMES[n], IREGS_NAMES[m]);
-        } else {
-            tsz = RISCV_sprintf(tstr, sizeof(tstr), "sub      %s, %s, %s",
-                    IREGS_NAMES[d],
-                    IREGS_NAMES[n],
-                    IREGS_NAMES[m]);
-        }
-        mnemonic->make_string(tstr);
-    } else if ((ti & 0xFE00) == 0xB400) {
-        int itotal = 0;
-        tsz = RISCV_sprintf(tstr, sizeof(tstr), "push     %s", "{");
-        for (int i = 0; i < 8; i++) {
-            if (ti & (1 << i)) {
-                if (itotal) {
-                    tsz += RISCV_sprintf(&tstr[tsz], sizeof(tstr) - tsz,
-                            ", %s", IREGS_NAMES[i]);
-                } else {
-                    tsz += RISCV_sprintf(&tstr[tsz], sizeof(tstr) - tsz,
-                            "%s", IREGS_NAMES[i]);
-                }
-                itotal++;
-            }
-        }
-        if (ti & 0x100) {
-            if (itotal) {
-                tsz += RISCV_sprintf(&tstr[tsz], sizeof(tstr) - tsz,
-                        ", %s}", IREGS_NAMES[Reg_lr]);
-            } else {
-                tsz += RISCV_sprintf(&tstr[tsz], sizeof(tstr) - tsz,
-                        "%s}", IREGS_NAMES[Reg_lr]);
-            }
-        } else {
-            tsz += RISCV_sprintf(&tstr[tsz], sizeof(tstr) - tsz,
-                    "%s", "}");
-        }
-        mnemonic->make_string(tstr);
-    } else if ((ti & 0xF800) == 0x6800) {
-        uint32_t t = ti  & 0x7;
-        uint32_t n = (ti >> 3) & 0x7;
-        uint32_t imm = ((ti >> 6) & 0x1F) << 2;
-        RISCV_sprintf(tstr, sizeof(tstr), "ldr      %s, [%s, #%d]",
-            IREGS_NAMES[t],
-            IREGS_NAMES[n],
-            static_cast<int32_t>(imm)
-            );
-        mnemonic->make_string(tstr);
-    } else if ((ti & 0xF800) == 0x4800) {
-        uint32_t imm = (ti & 0xFF) << 2;
-        RISCV_sprintf(tstr, sizeof(tstr), "ldr      %s, [pc, #%d]",
-            IREGS_NAMES[(ti >> 8) & 0x7],
-            static_cast<int32_t>(imm)
-            );
-        mnemonic->make_string(tstr);
-    } else if ((ti & 0xF800) == 0xF000) {
-        uint32_t ti2 = ti >> 16;
-        if ((ti2 & 0xD000) == 0xD000) {
-            uint32_t instr0 = ti & 0xFFFF;
-            uint32_t instr1 = ti >> 16;
-            uint32_t S = (instr0 >> 10) & 1;
-            uint32_t I1 = (((instr1 >> 13) & 0x1) ^ S) ^ 1;
-            uint32_t I2 = (((instr1 >> 11) & 0x1) ^ S) ^ 1;
-            uint32_t imm11 = instr1 & 0x7FF;
-            uint32_t imm10 = instr0 & 0x3FF;
-            uint32_t imm = 
-            imm = (I1 << 23) | (I2 << 22) | (imm10 << 12) | (imm11 << 1);
-            if (S) {
-                imm |= (~0ul) << 24;
-            }
-            RISCV_sprintf(tstr, sizeof(tstr), "bl       %08x",
-                static_cast<uint32_t>(pc) + 4 + imm
-                );
-            mnemonic->make_string(tstr);
-            len = 4;
-        } else if ((ti2 & 0xD000) == 0xC000) {
-            // BLX call ARM routine
-            len = 4;
-        }
-    }
-    return len;
-}
-
 int ArmSourceService::disasm(uint64_t pc,
                        uint8_t *data,
                        int offset,
@@ -352,7 +237,11 @@ int ArmSourceService::disasm(uint64_t pc,
     uint32_t instr;
     memcpy(&instr, &data[offset], 4);
     if (iarm_->getInstrMode() == THUMB_mode) {
-        return disasm_thumb(pc, instr, mnemonic, comment);
+        char tstr[1024];
+        int ret = disasm_thumb(pc, instr, tstr, sizeof(tstr));
+        mnemonic->make_string(tstr);
+        comment->make_string("");
+        return ret;
     }
 
 

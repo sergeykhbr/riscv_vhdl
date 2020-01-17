@@ -1348,6 +1348,71 @@ class BFI : public BitsFieldInstruction {
         BitsFieldInstruction(icpu, "BFI", "????0111110??????????????001????") {}
 };
 
+/** 4.6.12 B */
+class B_T1 : public T1Instruction {
+ public:
+    B_T1(CpuCortex_Functional *icpu) : T1Instruction(icpu, "B") {}
+
+    virtual int exec(Reg64Type *payload) {
+        uint32_t ti = payload->buf16[0];
+        uint32_t cond = (ti >> 8) & 0xF;
+        uint32_t imm8 = ti & 0xFF;
+        uint64_t imm32 = imm8 << 1;
+        if (ti & 0x80) {
+            imm32 |= (~0ull) << 9;
+        }
+
+        if (icpu_->InITBlock()) {
+            RISCV_error("%s", "UNPREDICTABLE");
+        }
+
+        if (check_cond(icpu_, cond)) {
+            uint64_t npc = icpu_->getPC() + 4 + imm32;
+            icpu_->setReg(Reg_pc, npc);
+            icpu_->setBranch(npc);
+        }
+        return 2;
+    }
+};
+
+
+/** 4.6.15 BIC (immediate) */
+class BIC_I_T1 : public T1Instruction {
+ public:
+    BIC_I_T1(CpuCortex_Functional *icpu) : T1Instruction(icpu, "BIC.W") {}
+
+    virtual int exec(Reg64Type *payload) {
+        uint32_t ti0 = payload->buf16[0];
+        uint32_t ti1 = payload->buf16[1];
+        uint32_t carry;
+        uint32_t result;
+        uint32_t d = (ti1 >> 8) & 0xF;
+        uint32_t n = ti0  & 0xF;
+        bool setflags = (ti0 >> 4) & 1;
+        uint32_t i = (ti0 >> 10) & 1;
+        uint32_t imm3 = (ti1 >> 12) & 0x7;
+        uint32_t imm8 = ti1 & 0xFF;
+        uint32_t imm12 = (i << 11) | (imm3 << 8) | imm8;
+        uint32_t Rn = static_cast<uint32_t>(R[n]);
+        uint32_t imm32 = ThumbExpandImmWithC(imm12, &carry);
+
+        if (BadReg(d) || BadReg(n)) {
+            RISCV_error("%s", "UNPREDICTABLE");
+        }
+        result = Rn & ~imm32;
+        icpu_->setReg(d, result);
+
+        if (setflags) {
+            icpu_->setN((result >> 31) & 1);
+            icpu_->setZ(result == 0 ? 1: 0);
+            icpu_->setC(carry);
+            // V unchanged
+        }
+        return 4;
+    }
+};
+
+/** 4.6.18 BL, BLX (immediate) */
 class BL_T1 : public T1Instruction {
  public:
     BL_T1(CpuCortex_Functional *icpu) : T1Instruction(icpu, "BL_T1") {}
@@ -1366,15 +1431,72 @@ class BL_T1 : public T1Instruction {
             imm64 |= (~0ull) << 24;
         }
 
-        uint64_t pc = icpu_->getPC();
-        uint64_t npc = pc + imm64 + 4;
-        icpu_->setReg(Reg_lr, npc | 0x1);
+        if (icpu_->InITBlock() && !icpu_->LastInITBlock()) {
+            RISCV_error("%s", "UNPREDICTABLE");
+        }
+
+        uint64_t pc = icpu_->getPC() + 4;
+        uint64_t npc = pc + imm64;
+        icpu_->setInstrMode(THUMB_mode);
+        icpu_->setReg(Reg_lr, pc | 0x1);
         icpu_->setReg(Reg_pc, npc);
         icpu_->setBranch(npc);
         return 4;
     }
 };
 
+/** 4.6.20 BX */
+class BX_T1 : public T1Instruction {
+ public:
+    BX_T1(CpuCortex_Functional *icpu) : T1Instruction(icpu, "BX") {}
+
+    virtual int exec(Reg64Type *payload) {
+        uint32_t instr0 = payload->buf16[0];
+        uint32_t m = (instr0 >> 3) & 0xF;
+
+        if (icpu_->InITBlock() && !icpu_->LastInITBlock()) {
+            RISCV_error("%s", "UNPREDICTABLE");
+        }
+
+        uint32_t Rm = static_cast<uint32_t>(R[m]);
+        if (Rm & 0x1) {
+            icpu_->setInstrMode(THUMB_mode);
+        } else {
+            icpu_->setInstrMode(ARM_mode);
+        }
+        Rm &= ~0x1ul;
+        icpu_->setReg(Reg_pc, Rm);
+        icpu_->setBranch(Rm);
+        return 2;
+    }
+};
+
+/** 4.6.30 CMP (register) */
+class CMP_R_T1 : public T1Instruction {
+ public:
+    CMP_R_T1(CpuCortex_Functional *icpu) : T1Instruction(icpu, "CMP") {}
+
+    virtual int exec(Reg64Type *payload) {
+        uint32_t ti = payload->buf16[0];
+        uint32_t carry;
+        uint32_t overflow;
+        uint32_t result;
+        uint32_t n = ti  & 0x7;
+        uint32_t m = (ti >> 3) & 0x7;
+
+        uint32_t shifted = static_cast<uint32_t>(R[m]); // no shifting
+        uint32_t Rn = static_cast<uint32_t>(R[n]);
+        result = AddWithCarry(Rn, ~shifted, 1, &overflow, &carry);
+
+        icpu_->setN((result >> 31) & 1);
+        icpu_->setZ(result == 0 ? 1: 0);
+        icpu_->setC(carry);
+        icpu_->setV(overflow);
+        return 2;
+    }
+};
+
+/** 4.6.43 LDR (immediate) */
 class LDR_I_T1 : public T1Instruction {
  public:
     LDR_I_T1(CpuCortex_Functional *icpu) : T1Instruction(icpu, "LDRI") {}
@@ -1406,6 +1528,7 @@ class LDR_I_T1 : public T1Instruction {
     }
 };
 
+/** 4.6.44 LDR (literal) */
 class LDR_L_T1 : public T1Instruction {
  public:
     LDR_L_T1(CpuCortex_Functional *icpu) : T1Instruction(icpu, "LDR") {}
@@ -1439,6 +1562,183 @@ class LDR_L_T1 : public T1Instruction {
     }
 };
 
+/** 4.6.45 LDR (register) */
+class LDR_R_T1 : public T1Instruction {
+ public:
+    LDR_R_T1(CpuCortex_Functional *icpu) : T1Instruction(icpu, "LDR") {}
+
+    virtual int exec(Reg64Type *payload) {
+        uint32_t instr = payload->buf16[0];
+        uint32_t t = instr & 0x7;
+        uint32_t n = (instr >> 3) & 0x7;
+        uint32_t m = (instr >> 6) & 0x7;
+        SRType shift_t = SRType_None;
+        int shift_n = 0;
+        uint32_t c_out;
+
+        uint32_t address = static_cast<uint32_t>(R[n])
+                         + LSL_C(static_cast<uint32_t>(R[m]), shift_n, &c_out);
+
+        trans_.addr = address;
+        trans_.action = MemAction_Read;
+        trans_.xsize = 4;
+        trans_.wstrb = 0;
+        icpu_->dma_memop(&trans_);
+
+        if (t == Reg_pc) {
+            if (address & 0x3) {
+                RISCV_error("%04x: unpredictable", instr);
+            } else {
+                icpu_->setReg(Reg_pc, trans_.rpayload.b32[0]);
+                icpu_->setBranch(trans_.rpayload.b32[0]);
+            }
+        } else {
+            icpu_->setReg(t, trans_.rpayload.b32[0]);
+        }
+
+        return 2;
+    }
+};
+
+/** 4.6.76 MOV (immediate) */
+class MOV_I_T1 : public T1Instruction {
+ public:
+    MOV_I_T1(CpuCortex_Functional *icpu) : T1Instruction(icpu, "MOVS") {}
+
+    virtual int exec(Reg64Type *payload) {
+        uint32_t instr = payload->buf16[0];
+        uint32_t d = (instr >> 8) & 0x7;
+        bool setflags = !icpu_->InITBlock();
+        uint32_t imm32 = instr  & 0xFF;
+        uint32_t carry = icpu_->getC();
+
+        icpu_->setReg(d, imm32);
+
+        if (setflags) {
+            icpu_->setN((imm32 >> 31) & 1);
+            icpu_->setZ(imm32 == 0 ? 1: 0);
+            icpu_->setC(carry);
+            // V unchanged
+        }
+        return 2;
+    }
+};
+
+class MOV_I_T2 : public T1Instruction {
+ public:
+    MOV_I_T2(CpuCortex_Functional *icpu) : T1Instruction(icpu, "MOV.W") {}
+
+    virtual int exec(Reg64Type *payload) {
+        uint32_t ti0 = payload->buf16[0];
+        uint32_t ti1 = payload->buf16[1];
+        uint32_t carry;
+        uint32_t result;
+        uint32_t d = (ti1 >> 8) & 0xF;
+        bool setflags = (ti0 >> 4) & 1;
+        uint32_t i = (ti0 >> 10) & 1;
+        uint32_t imm3 = (ti1 >> 12) & 0x7;
+        uint32_t imm8 = ti1 & 0xFF;
+        uint32_t imm12 = (i << 11) | (imm3 << 8) | imm8;
+        uint32_t imm32 = ThumbExpandImmWithC(imm12, &carry);
+
+        if (BadReg(d)) {
+            RISCV_error("%s", "UNPREDICTABLE");
+        }
+        result = imm32;
+        icpu_->setReg(d, result);
+
+        if (setflags) {
+            icpu_->setN((result >> 31) & 1);
+            icpu_->setZ(result == 0 ? 1: 0);
+            icpu_->setC(carry);
+            // V unchanged
+        }
+        return 4;
+    }
+};
+
+/** 4.6.91 ORR (immediate) */
+class ORR_I_T1 : public T1Instruction {
+ public:
+    ORR_I_T1(CpuCortex_Functional *icpu) : T1Instruction(icpu, "ORR.W") {}
+
+    virtual int exec(Reg64Type *payload) {
+        uint32_t ti0 = payload->buf16[0];
+        uint32_t ti1 = payload->buf16[1];
+        uint32_t carry;
+        uint32_t result;
+        uint32_t d = (ti1 >> 8) & 0xF;
+        uint32_t n = ti0  & 0xF;
+        bool setflags = (ti0 >> 4) & 1;
+        uint32_t i = (ti0 >> 10) & 1;
+        uint32_t imm3 = (ti1 >> 12) & 0x7;
+        uint32_t imm8 = ti1 & 0xFF;
+        uint32_t imm12 = (i << 11) | (imm3 << 8) | imm8;
+        uint32_t Rn = static_cast<uint32_t>(R[n]);
+        uint32_t imm32 = ThumbExpandImmWithC(imm12, &carry);
+
+        if (n == Reg_pc) {
+            Rn += 4;
+            RISCV_error("%s", "?????? see MOV (immediate)");
+        } else if (BadReg(d) || n == Reg_sp) {
+            RISCV_error("%s", "UNPREDICTABLE");
+        }
+        result = Rn | imm32;
+        icpu_->setReg(d, result);
+
+        if (setflags) {
+            icpu_->setN((result >> 31) & 1);
+            icpu_->setZ(result == 0 ? 1: 0);
+            icpu_->setC(carry);
+            // V unchanged
+        }
+        return 4;
+    }
+};
+
+/** 4.6.98 POP */
+class POP_T1 : public T1Instruction {
+ public:
+    POP_T1(CpuCortex_Functional *icpu) : T1Instruction(icpu, "POP") {}
+
+    virtual int exec(Reg64Type *payload) {
+        uint32_t instr = payload->buf16[0];
+        uint32_t address = static_cast<uint32_t>(R[Reg_sp]);
+
+        trans_.action = MemAction_Read;
+        trans_.xsize = 4;
+        trans_.wstrb = 0;
+
+        for (int i = 0; i < 8; i++) {
+            if (instr & (1ul << i)) {
+                trans_.addr = address;
+                icpu_->dma_memop(&trans_);
+                icpu_->setReg(i, trans_.rpayload.b32[0]);
+                address += 4;
+            }
+        }
+        if (instr & 0x100) {
+            trans_.addr = address;
+            icpu_->dma_memop(&trans_);
+
+            uint32_t npc = trans_.rpayload.b32[0];
+            if (npc & 0x1) {
+                icpu_->setInstrMode(THUMB_mode);
+            } else {
+                icpu_->setInstrMode(ARM_mode);
+            }
+            npc &= ~0x1ul;
+            icpu_->setReg(Reg_pc, npc);
+            icpu_->setBranch(npc);
+            address += 4;
+        }
+
+        icpu_->setReg(Reg_sp, address);
+        return 2;
+    }
+};
+
+/** 4.6.99 PUSH */
 class PUSH_T1 : public T1Instruction {
  public:
     PUSH_T1(CpuCortex_Functional *icpu) : T1Instruction(icpu, "PUSH_T1") {}
@@ -1471,6 +1771,28 @@ class PUSH_T1 : public T1Instruction {
     }
 };
 
+/** 4.6.162 STR (immediate) */
+class STR_I_T1 : public T1Instruction {
+ public:
+    STR_I_T1(CpuCortex_Functional *icpu) : T1Instruction(icpu, "STRI") {}
+
+    virtual int exec(Reg64Type *payload) {
+        uint32_t instr = payload->buf16[0];
+        uint32_t t = instr & 0x7;
+        uint32_t n = (instr >> 3) & 0x7;
+        uint64_t imm32 = ((instr >> 6) & 0x1F) << 2;
+
+        trans_.addr = R[n] + imm32;
+        trans_.action = MemAction_Write;
+        trans_.xsize = 4;
+        trans_.wstrb = 0xF;
+        trans_.wpayload.b32[0] = static_cast<uint32_t>(R[t]);
+        icpu_->dma_memop(&trans_);
+        return 2;
+    }
+};
+
+/** 4.6.176 SUB (immediate) */
 class SUB_I_T1 : public T1Instruction {
  public:
     SUB_I_T1(CpuCortex_Functional *icpu) : T1Instruction(icpu, "SUBI") {}
@@ -1498,7 +1820,7 @@ class SUB_I_T1 : public T1Instruction {
     }
 };
 
-
+/** 4.6.177 SUB (register) */
 class SUB_R_T1 : public T1Instruction {
  public:
     SUB_R_T1(CpuCortex_Functional *icpu) : T1Instruction(icpu, "SUBR") {}
@@ -1531,7 +1853,7 @@ class SUB_R_T1 : public T1Instruction {
     }
 };
 
-
+/** 4.6.178 SUB (SP minus immediate) */
 class SUB_SP_T1 : public T1Instruction {
  public:
     SUB_SP_T1(CpuCortex_Functional *icpu) : T1Instruction(icpu, "SUBSP") {}
@@ -1609,10 +1931,20 @@ void CpuCortex_Functional::addArm7tmdiIsa() {
     isaTableArmV7_[ARMV7_SDIV] = new SDIV(this);
     isaTableArmV7_[ARMV7_BFC] = new BFC(this);
     isaTableArmV7_[ARMV7_BFI] = new BFI(this);
+    isaTableArmV7_[T1_B] = new B_T1(this);
+    isaTableArmV7_[T1_BIC_I] = new BIC_I_T1(this);
     isaTableArmV7_[T1_BL] = new BL_T1(this);
+    isaTableArmV7_[T1_BX] = new BX_T1(this);
+    isaTableArmV7_[T1_CMP_R] = new CMP_R_T1(this);
     isaTableArmV7_[T1_LDR_I] = new LDR_I_T1(this);
     isaTableArmV7_[T1_LDR_L] = new LDR_L_T1(this);
+    isaTableArmV7_[T1_LDR_R] = new LDR_R_T1(this);
+    isaTableArmV7_[T1_MOV_I] = new MOV_I_T1(this);
+    isaTableArmV7_[T2_MOV_I] = new MOV_I_T2(this);
+    isaTableArmV7_[T1_POP] = new POP_T1(this);
     isaTableArmV7_[T1_PUSH] = new PUSH_T1(this);
+    isaTableArmV7_[T1_ORR_I] = new ORR_I_T1(this);
+    isaTableArmV7_[T1_STR_I] = new STR_I_T1(this);
     isaTableArmV7_[T1_SUB_I] = new SUB_I_T1(this);
     isaTableArmV7_[T1_SUB_R] = new SUB_R_T1(this);
     isaTableArmV7_[T1_SUB_SP] = new SUB_SP_T1(this);
