@@ -75,6 +75,8 @@ class T1Instruction : public GenericInstruction {
     uint32_t AddWithCarry(uint32_t x, uint32_t y, uint32_t carry_in,
                           uint32_t *overflow, uint32_t *carry_out);
 
+    SRType DecodeImmShift(uint32_t type, uint32_t imm5, uint32_t *shift_n);
+    SRType DecodeRegShift(uint32_t type);
     uint32_t Shift(uint32_t value, SRType type, int amount, uint32_t carry_in);
     uint32_t Shift_C(uint32_t value, SRType type, int amount, uint32_t carry_in,
                     uint32_t *carry_out);

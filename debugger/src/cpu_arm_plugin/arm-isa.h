@@ -500,23 +500,63 @@ enum EIsaArmV7 {
     ARMV7_SDIV,
     ARMV7_BFC,
     ARMV7_BFI,
+    T2_ADD_I,   // 4.6.3
+    T3_ADD_I,   // 4.6.3
+    T1_ADD_R,   // 4.6.4
+    T3_ADD_R,   // 4.6.4
+    T1_ADDSP_I, // 4.6.5
+    T1_AND_I,   // 4.6.8
+    T1_ASR_I,   // 4.6.10
     T1_B,       // 4.6.12
+    T2_B,       // 4.6.12
     T1_BIC_I,   // 4.6.15
-    T1_BL,      // 4.6.18
+    T1_BL_I,    // 4.6.18
+    T1_BLX_R,   // 4.6.19
     T1_BX,      // 4.6.20
+    T1_CBNZ,    // 4.6.22
+    T1_CBZ,     // 4.6.23
+    T1_CMP_I,   // 4.6.29
+    T2_CMP_I,   // 4.6.29
     T1_CMP_R,   // 4.6.30
-    T1_LDR_I,
-    T1_LDR_L,   // 
-    T1_LDR_R,
+    T1_CPS,     // 4.6.31
+    T1_LDR_I,   // 4.6.43
+    T2_LDR_I,   // 4.6.43
+    T4_LDR_I,   // 4.6.43
+    T1_LDR_L,   // 4.6.44
+    T1_LDR_R,   // 4.6.45
+    T2_LDR_R,   // 4.6.45
+    T1_LDRB_I,  // 4.6.46
+    T1_LDRB_R,  // 4.6.48
+    T2_LDRB_R,  // 4.6.48
+    T1_LSL_I,   // 4.6.68
+    T1_LSR_I,   // 4.6.70
+    T1_LSR_R,   // 4.6.71
     T1_MOV_I,   // 4.6.76
     T2_MOV_I,   // 4.6.76
+    T3_MOV_I,   // 4.6.76
+    T1_MOV_R,   // 4.6.77
+    T2_MOV_R,   // 4.6.77
+                // 4.6.78 MOV (shifted register) is a synonym for ASR, LSL, LSR, ROR, RRX
+    T1_MUL,     // 4.6.84
+    T2_MUL,     // 4.6.84
     T1_ORR_I,   // 4.6.91
     T1_POP,     // 4.6.98
     T1_PUSH,    // 4.6.99
-    T1_STR_I,
-    T1_SUB_I,
-    T1_SUB_R,
-    T1_SUB_SP,
+    T1_SDIV,    // 4.6.126
+    T1_STR_I,   // 4.6.162
+    T1_STRB_I,  // 4.6.164
+    T2_STRB_I,  // 4.6.164
+    T1_STRH_I,  // 4.6.172
+    T1_SUB_I,   // 4.6.176
+    T2_SUB_I,   // 4.6.176
+    T3_SUB_I,   // 4.6.176
+    T1_SUB_R,   // 4.6.177
+    T1_SUB_SP,  // 4.6.178
+    T1_TBB,     // 4.6.188
+    T1_TST_I,   // 4.6.192
+    T1_UBFX,    // 4.6.197
+    T1_UDIV,    // 4.6.198
+    T1_UMULL,   // 4.6.207
     ARMV7_Total
 };
 

@@ -108,6 +108,51 @@ uint32_t T1Instruction::AddWithCarry(uint32_t x, uint32_t y, uint32_t carry_in,
     return result;
 }
 
+SRType T1Instruction::DecodeImmShift(uint32_t type, uint32_t imm5, uint32_t *shift_n) {
+    SRType ret = SRType_None;
+    switch (type) {
+    case 0:
+        ret = SRType_LSL;
+        *shift_n = imm5;
+        break;
+    case 1:
+        ret = SRType_LSR;
+        *shift_n = imm5;
+        if (imm5 == 0) {
+            *shift_n = 32;
+        }
+        break;
+    case 2:
+        ret = SRType_ASR;
+        *shift_n = imm5;
+        if (imm5 == 0) {
+            *shift_n = 32;
+        }
+        break;
+    case 3:
+        if (imm5 == 0) {
+            ret = SRType_RRX;
+            *shift_n = 1;
+        } else {
+            ret = SRType_ROR;
+            *shift_n = imm5;
+        }
+        break;
+    default:;
+    }
+    return ret;
+}
+
+SRType T1Instruction::DecodeRegShift(uint32_t type) {
+    static const SRType shift_select[4] = {
+        SRType_LSL,
+        SRType_LSR,
+        SRType_ASR,
+        SRType_ROR
+    };
+    return shift_select[type & 0x3];
+}
+
 uint32_t T1Instruction::Shift(uint32_t value, SRType type, int amount, uint32_t carry_in) {
     uint32_t carry_out;
     return Shift_C(value, type, amount, carry_in, &carry_out);

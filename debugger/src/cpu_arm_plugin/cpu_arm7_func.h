@@ -72,6 +72,15 @@ class CpuCortex_Functional : public CpuGeneric,
     virtual void setN(uint32_t n) { p_psr_->u.N = n; }
     virtual uint32_t getV() { return p_psr_->u.V; }
     virtual void setV(uint32_t v) { p_psr_->u.V = v; }
+    virtual uint32_t getA() { return p_psr_->u.A; }
+    virtual void setA(uint32_t v) { p_psr_->u.A = v; }
+    virtual uint32_t getI() { return p_psr_->u.I; }
+    virtual void setI(uint32_t v) { p_psr_->u.I = v; }
+    virtual uint32_t getF() { return p_psr_->u.F; }
+    virtual void setF(uint32_t v) { p_psr_->u.F = v; }
+
+    // DZ = CP15[19] Divide-by-zero (generate fault exception)
+    virtual uint32_t getDZ() { return 0; }
 
     virtual bool InITBlock() { return ITBlock_; }
     virtual bool LastInITBlock() { return ITBlockCnt_ == 0; }

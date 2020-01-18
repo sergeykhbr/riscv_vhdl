@@ -25,7 +25,7 @@
                                      ['r2', 'r8',  'sp'],
                                      ['r3', 'r9',  'lr'],
                                      ['r4', 'r10', 'pc'],
-                                     ['r7', 'r11', 'npc']],
+                                     ['r5', 'r11', 'npc']],
                            'RegWidthBytes':4}],
                      'CpuContext':[
                          {'CpuIndex':0,
@@ -142,6 +142,7 @@
                 ['ResetVector',0x0000],
                 ['FreqHz',1000000],
                 ['SysBusMasterID',0],
+                ['ResetState','Halted'],
                 ['SourceCode','src0'],
                 ['GenerateTraceFile','stm32l4xx_tracer.log','Specify file name to enable tracer'],
                 ['DefaultMode','Thumb'],

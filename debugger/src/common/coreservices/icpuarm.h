@@ -80,6 +80,21 @@ class ICpuArm : public IFace {
     virtual uint32_t getV() = 0;
     virtual void setV(uint32_t v) = 0;
 
+    /** Impersize Data abort */
+    virtual uint32_t getA() = 0;
+    virtual void setA(uint32_t v) = 0;
+
+    /** IRQ interrupt */
+    virtual uint32_t getI() = 0;
+    virtual void setI(uint32_t v) = 0;
+
+    /** FIQ interrupt */
+    virtual uint32_t getF() = 0;
+    virtual void setF(uint32_t v) = 0;
+
+    // DZ = CP15[19] Divide-by-zero (generate fault exception)
+    virtual uint32_t getDZ() { return 0; }
+
     /** This function returns TRUE if execution is currently in an IT block 
         and FALSE otherwise. IT allows one of four following Thumb instructions
         (the IT block) to be conditional */
