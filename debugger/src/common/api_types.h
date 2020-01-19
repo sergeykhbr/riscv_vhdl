@@ -127,6 +127,55 @@ union Reg16Type {
     } bits;
 };
 
+union Reg32Type {
+    uint8_t buf[4];
+    uint16_t buf16[2];
+    uint32_t val;
+    int32_t  ival;
+    float    f32;
+    Reg8Type r8[4];
+    Reg16Type r16[2];
+    struct f32_bits_type {
+        uint32_t mant : 23;
+        uint32_t exp : 8;
+        uint32_t sign : 1;
+    } f32bits;
+    struct bits_type {
+        uint32_t b0 : 1;
+        uint32_t b1 : 1;
+        uint32_t b2 : 1;
+        uint32_t b3 : 1;
+        uint32_t b4 : 1;
+        uint32_t b5 : 1;
+        uint32_t b6 : 1;
+        uint32_t b7 : 1;
+        uint32_t b8 : 1;
+        uint32_t b9 : 1;
+        uint32_t b10 : 1;
+        uint32_t b11 : 1;
+        uint32_t b12 : 1;
+        uint32_t b13 : 1;
+        uint32_t b14 : 1;
+        uint32_t b15 : 1;
+        uint32_t b16 : 1;
+        uint32_t b17 : 1;
+        uint32_t b18 : 1;
+        uint32_t b19 : 1;
+        uint32_t b20 : 1;
+        uint32_t b21 : 1;
+        uint32_t b22 : 1;
+        uint32_t b23 : 1;
+        uint32_t b24 : 1;
+        uint32_t b25 : 1;
+        uint32_t b26 : 1;
+        uint32_t b27 : 1;
+        uint32_t b28 : 1;
+        uint32_t b29 : 1;
+        uint32_t b30 : 1;
+        uint32_t b31 : 1;
+    } bits;
+};
+
 union Reg64Type {
     uint8_t buf[8];
     uint16_t buf16[4];
@@ -137,6 +186,7 @@ union Reg64Type {
     double   f64;
     Reg8Type r8[8];
     Reg16Type r16[4];
+    Reg32Type r32[2];
     struct f64_bits_type {
         uint64_t mant : 52;
         uint64_t exp : 11;

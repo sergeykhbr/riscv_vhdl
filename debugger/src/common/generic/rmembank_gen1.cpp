@@ -98,7 +98,7 @@ ETransStatus RegMemBankGeneric::b_transport(Axi4TransactionType *trans) {
                     trans->addr, trans->rpayload.b64[0]);
     } else {
         memcpy(&stubmem[off], trans->wpayload.b8, trans->xsize);
-        uint64_t msk = (0x1ull << trans->xsize) - 1;
+        uint64_t msk = (0x1ull << 8*trans->xsize) - 1;
         RISCV_info("Write stub [%08" RV_PRI64 "x] <= 0x%" RV_PRI64 "x",
                     trans->addr, trans->wpayload.b64[0] & msk);
     }

@@ -172,6 +172,76 @@
                 ['BaseAddress',0x20000000],
                 ['Length',0x20000]
                 ]}]},
+    {'Class':'BusGenericClass','Instances':[
+          {'Name':'ahb1','Attr':[
+                ['LogLevel',1],
+                ['UseHash',false],
+                ['BaseAddress',0x40021000],
+                ['Length',0x4400],
+                ['MapList',['rcc0'
+                           ]]
+                ]}]},
+    {'Class':'BusGenericClass','Instances':[
+          {'Name':'ahb2','Attr':[
+                ['LogLevel',1],
+                ['UseHash',false],
+                ['BaseAddress',0x48000000],
+                ['Length',0x18000000],
+                ['MapList',['gpioa',
+                            'gpiod'
+                           ]]
+                ]}]},
+    {'Class':'STM32L4_RCCClass','Instances':[
+          {'Name':'rcc0','Attr':[
+                ['ObjDescription','Reset and Clock Control module mapped into AHB1'],
+                ['LogLevel',4],
+                ['BaseAddress',0x40021000],
+                ['Length',0x400],
+                ['MapList',[['rcc0','CR'],
+                            ['rcc0','ICSCR'],
+                            ['rcc0','CFGR'],
+                            ['rcc0','PLLCFGR'],
+                            ['rcc0','CIER'],
+                           ]]
+                ]}]},
+    {'Class':'STM32L4_GPIOClass','Instances':[
+          {'Name':'gpioa','Attr':[
+                ['ObjDescription','GPIO port connected to AHB2'],
+                ['LogLevel',4],
+                ['BaseAddress',0x48000000],
+                ['Length',0x400],
+                ['MapList',[['gpioa','MODER'],
+                            ['gpioa','OTYPER'],
+                            ['gpioa','OSPEEDR'],
+                            ['gpioa','PUPDR'],
+                            ['gpioa','IDR'],
+                            ['gpioa','ODR'],
+                            ['gpioa','BSRR'],
+                            ['gpioa','LCKR'],
+                            ['gpioa','AFRL'],
+                            ['gpioa','AFRH'],
+                            ['gpioa','BRR'],
+                           ]]
+                ]}]},
+    {'Class':'STM32L4_GPIOClass','Instances':[
+          {'Name':'gpiod','Attr':[
+                ['ObjDescription','GPIO port connected to AHB2'],
+                ['LogLevel',4],
+                ['BaseAddress',0x48000C00],
+                ['Length',0x400],
+                ['MapList',[['gpioa','MODER'],
+                            ['gpioa','OTYPER'],
+                            ['gpioa','OSPEEDR'],
+                            ['gpioa','PUPDR'],
+                            ['gpioa','IDR'],
+                            ['gpioa','ODR'],
+                            ['gpioa','BSRR'],
+                            ['gpioa','LCKR'],
+                            ['gpioa','AFRL'],
+                            ['gpioa','AFRH'],
+                            ['gpioa','BRR'],
+                           ]]
+                ]}]},
     {'Class':'DSUClass','Instances':[
           {'Name':'dsu0','Attr':[
                 ['LogLevel',1],
@@ -190,11 +260,11 @@
           {'Name':'axi0','Attr':[
                 ['LogLevel',3],
                 ['UseHash',false],
-                ['MapList',['alias0','flash0','sram1','dsu0','greth0']]
+                ['MapList',['alias0','sram1','flash0','ahb1','ahb2','dsu0','greth0']]
                 ]}]},
     {'Class':'BusGenericClass','Instances':[
           {'Name':'dbgbus0','Attr':[
-                ['LogLevel',3],
+                ['LogLevel',1],
                 ['UseHash',false],
                 ['MapList',[['core0','pc'],
                             ['core0','npc'],

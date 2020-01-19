@@ -64,6 +64,58 @@ ETransStatus MappedReg64Type::b_transport(Axi4TransactionType *trans) {
     return TRANS_OK;
 }
 
+/** 32-bits register */
+MappedReg32Type::MappedReg32Type(IService *parent, const char *name,
+                  uint64_t addr, int priority) {
+    if (parent == NULL) {
+    } else {
+        parent->registerPortInterface(name,
+                static_cast<IMemoryOperation *>(this));
+        parent->registerPortInterface(name,
+                static_cast<IResetListener *>(this));
+    }
+    parent_ = parent;
+    portListeners_.make_list(0);
+    regname_.make_string(name);
+    baseAddress_.make_uint64(addr);
+    length_.make_uint64(4);
+    priority_.make_int64(priority);
+    value_.val = 0;
+    hard_reset_value_ = 0;
+}
+
+IFace *MappedReg32Type::getInterface(const char *name) {
+    if (strcmp(name, IFACE_MEMORY_OPERATION) == 0) {
+        return static_cast<IMemoryOperation *>(this);
+    }
+    return parent_->getInterface(name);
+}
+
+ETransStatus MappedReg32Type::b_transport(Axi4TransactionType *trans) {
+    // ARM supports word, half-word and byte access to registers
+    uint64_t off = trans->addr - getBaseAddress();
+    int xsz = trans->xsize >= 4 ? 4 : static_cast<int>(trans->xsize);
+    int roff = static_cast<int>(off & 0x3);
+    int rsz = xsz - roff;
+    Reg32Type cur;
+    if (trans->action == MemAction_Read) {
+        cur.val = aboutToRead(value_.val);
+        trans->rpayload.b32[0] = 0;
+        memcpy(trans->rpayload.b8, &cur.buf[roff], rsz);
+        RISCV_debug("Read %s [%02" RV_PRI64 "x] => %08x",
+                    regName(), trans->addr, trans->rpayload.b32[0]);
+    } else {
+        cur.val = value_.val;
+        memcpy(&cur.buf[roff], trans->wpayload.b8, rsz);
+        value_.val = aboutToWrite(cur.val);
+        RISCV_debug("Write %s [%02" RV_PRI64 "x] <= %08x",
+                    regName(), trans->addr, trans->wpayload.b32[0]);
+    }
+    return TRANS_OK;
+}
+
+
+/** 16-bits register */
 MappedReg16Type::MappedReg16Type(IService *parent, const char *name,
                   uint64_t addr, int len, int priority) {
     if (parent == NULL) {
@@ -119,6 +171,7 @@ ETransStatus MappedReg16Type::b_transport(Axi4TransactionType *trans) {
     return TRANS_OK;
 }
 
+/** 8-bits register */
 MappedReg8Type::MappedReg8Type(IService *parent, const char *name,
                   uint64_t addr, int len, int priority) {
     if (parent == NULL) {

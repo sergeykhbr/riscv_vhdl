@@ -354,7 +354,7 @@ static const char *const IREGS_NAMES[] = {
     "r7",       // [7] 
     "r8",       // [8] 
     "r9",       // [9] 
-    "r10",      // [10]
+    "sl",       // [10]
     "r11",      // [11]
     "fp",       // [12] frame pointer
     "sp",       // [13] stack pointer
@@ -503,6 +503,7 @@ enum EIsaArmV7 {
     T2_ADD_I,   // 4.6.3
     T3_ADD_I,   // 4.6.3
     T1_ADD_R,   // 4.6.4
+    T2_ADD_R,   // 4.6.4
     T3_ADD_R,   // 4.6.4
     T1_ADDSP_I, // 4.6.5
     T1_AND_I,   // 4.6.8
@@ -521,6 +522,7 @@ enum EIsaArmV7 {
     T1_CPS,     // 4.6.31
     T1_LDR_I,   // 4.6.43
     T2_LDR_I,   // 4.6.43
+    T3_LDR_I,   // 4.6.43
     T4_LDR_I,   // 4.6.43
     T1_LDR_L,   // 4.6.44
     T1_LDR_R,   // 4.6.45
@@ -541,9 +543,11 @@ enum EIsaArmV7 {
     T2_MUL,     // 4.6.84
     T1_ORR_I,   // 4.6.91
     T1_POP,     // 4.6.98
-    T1_PUSH,    // 4.6.99
+    T1_PUSH,    // 4.6.99, T2_PUSH equivalen STMDB SP!,<register>
     T1_SDIV,    // 4.6.126
+    T1_STMDB,   // 4.6.160
     T1_STR_I,   // 4.6.162
+    T1_STR_R,   // 4.6.163
     T1_STRB_I,  // 4.6.164
     T2_STRB_I,  // 4.6.164
     T1_STRH_I,  // 4.6.172

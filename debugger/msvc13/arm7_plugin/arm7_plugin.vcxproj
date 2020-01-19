@@ -99,6 +99,7 @@
     <ClCompile Include="..\..\src\common\generic\cpu_generic.cpp" />
     <ClCompile Include="..\..\src\common\generic\iotypes.cpp" />
     <ClCompile Include="..\..\src\common\generic\mapreg.cpp" />
+    <ClCompile Include="..\..\src\common\generic\rmembank_gen1.cpp" />
     <ClCompile Include="..\..\src\cpu_arm_plugin\arm7tdmi.cpp" />
     <ClCompile Include="..\..\src\cpu_arm_plugin\cmds\cmd_br_arm7.cpp" />
     <ClCompile Include="..\..\src\cpu_arm_plugin\cpu_arm7_func.cpp" />
@@ -108,6 +109,8 @@
     <ClCompile Include="..\..\src\cpu_arm_plugin\plugin_init.cpp" />
     <ClCompile Include="..\..\src\cpu_arm_plugin\srcproc\srcproc.cpp" />
     <ClCompile Include="..\..\src\cpu_arm_plugin\srcproc\thumb_disasm.cpp" />
+    <ClCompile Include="..\..\src\cpu_arm_plugin\stm32l4\stm32l4_gpio.cpp" />
+    <ClCompile Include="..\..\src\cpu_arm_plugin\stm32l4\stm32l4_rcc.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\api_core.h" />
@@ -123,6 +126,7 @@
     <ClInclude Include="..\..\src\common\generic\cpu_generic.h" />
     <ClInclude Include="..\..\src\common\generic\iotypes.h" />
     <ClInclude Include="..\..\src\common\generic\mapreg.h" />
+    <ClInclude Include="..\..\src\common\generic\rmembank_gen1.h" />
     <ClInclude Include="..\..\src\common\iattr.h" />
     <ClInclude Include="..\..\src\common\iclass.h" />
     <ClInclude Include="..\..\src\common\iface.h" />
@@ -135,6 +139,8 @@
     <ClInclude Include="..\..\src\cpu_arm_plugin\instructions.h" />
     <ClInclude Include="..\..\src\cpu_arm_plugin\srcproc\srcproc.h" />
     <ClInclude Include="..\..\src\cpu_arm_plugin\srcproc\thumb_disasm.h" />
+    <ClInclude Include="..\..\src\cpu_arm_plugin\stm32l4\stm32l4_gpio.h" />
+    <ClInclude Include="..\..\src\cpu_arm_plugin\stm32l4\stm32l4_rcc.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

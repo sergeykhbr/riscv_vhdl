@@ -66,6 +66,48 @@ class MappedReg64Type : public IMemoryOperation,
     uint64_t hard_reset_value_;
 };
 
+class MappedReg32Type : public IMemoryOperation,
+                        public IResetListener {
+ public:
+    MappedReg32Type(IService *parent, const char *name,
+                    uint64_t addr, int priority = 1);
+
+    /** IMemoryOperation methods */
+    virtual ETransStatus b_transport(Axi4TransactionType *trans);
+
+    /** IResetListener interface */
+    virtual void reset(IFace *isource) { value_.val = hard_reset_value_; }
+
+    /** General access methods: */
+    const char *regName() { return regname_.to_string(); }
+    Reg32Type getValue() { return value_; }
+    void setValue(Reg32Type v) { value_ = v; }
+    void setValue(uint32_t v) { value_.val = v; }
+    void setHardResetValue(uint32_t v) {
+        hard_reset_value_ = v;
+        reset(0);
+    } 
+
+ protected:
+    /** Possible side effects handlers:  */
+    virtual uint32_t aboutToRead(uint32_t cur_val) {
+        return cur_val;
+    }
+    virtual uint32_t aboutToWrite(uint32_t new_val) {
+        return new_val;
+    }
+ protected:
+    // Debug output compatibility
+    IFace *getInterface(const char *name);
+
+ protected:
+    IService *parent_;
+    AttributeType regname_;
+    AttributeType portListeners_;
+    Reg32Type value_;
+    uint32_t hard_reset_value_;
+};
+
 class MappedReg16Type : public IMemoryOperation,
                         public IResetListener {
  public:
