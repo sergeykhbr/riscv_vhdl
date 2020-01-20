@@ -72,6 +72,9 @@ class T1Instruction : public GenericInstruction {
     virtual const char *name() { return name_.to_string(); }
     virtual int exec(Reg64Type *payload) = 0;
 
+    // Instructions length can be different so need to use ConditionPassed
+    // in each function:
+    bool ConditionPassed();
     uint32_t AddWithCarry(uint32_t x, uint32_t y, uint32_t carry_in,
                           uint32_t *overflow, uint32_t *carry_out);
 
@@ -90,6 +93,10 @@ class T1Instruction : public GenericInstruction {
     uint32_t Align(uint32_t x, uint32_t y) { return y * (x / y); }
     uint32_t ThumbExpandImmWithC(uint32_t imm12, uint32_t *carry_out);
 
+    void BranchWritePC(uint32_t npc);
+    void BXWritePC(uint32_t npc);
+    void ALUWritePC(uint32_t npc);
+    void LoadWritePC();
     bool BadReg(uint32_t n) { return n == Reg_sp || n == Reg_pc; }
 
  protected:

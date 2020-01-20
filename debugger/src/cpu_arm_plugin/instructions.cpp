@@ -89,6 +89,12 @@ T1Instruction::T1Instruction(CpuCortex_Functional *icpu,
     mask_ ^= ~0;
 }
 
+bool T1Instruction::ConditionPassed() {
+    if (icpu_->InITBlock()) {
+    }
+    return true;
+}
+
 uint32_t T1Instruction::AddWithCarry(uint32_t x, uint32_t y, uint32_t carry_in,
                                     uint32_t *overflow, uint32_t *carry_out) {
     uint64_t unsigned_sum = static_cast<uint64_t>(x) +
@@ -289,6 +295,46 @@ uint32_t T1Instruction::ThumbExpandImmWithC(uint32_t imm12,
         imm32 = ROR_C(unrotated_value, (imm12 >> 7), carry_out);
     }
     return imm32;
+}
+
+void T1Instruction::BranchWritePC(uint32_t npc) {
+    icpu_->setReg(Reg_pc, npc);
+    icpu_->setBranch(npc);
+}
+
+void T1Instruction::BXWritePC(uint32_t npc) {
+    if (npc & 0x1) {
+        icpu_->setInstrMode(THUMB_mode);
+        npc &= ~0x1ul;
+    } else {
+        icpu_->setInstrMode(ARM_mode);
+    }
+
+    icpu_->setReg(Reg_pc, npc);
+    icpu_->setBranch(npc);
+}
+
+void T1Instruction::ALUWritePC(uint32_t npc) {
+    if (npc & 0x1) {
+        icpu_->setInstrMode(THUMB_mode);
+        npc &= ~0x1ul;
+    } else {
+        icpu_->setInstrMode(ARM_mode);
+    }
+    icpu_->setReg(Reg_pc, npc);
+    icpu_->setBranch(npc);
+}
+
+void T1Instruction::LoadWritePC() {
+    uint32_t npc = trans_.rpayload.b32[0];
+    if (npc & 0x1) {
+        icpu_->setInstrMode(THUMB_mode);
+        npc &= ~0x1ul;
+    } else {
+        icpu_->setInstrMode(ARM_mode);
+    }
+    icpu_->setReg(Reg_pc, npc);
+    icpu_->setBranch(npc);
 }
 
 IFace *ArmInstruction::getInterface(const char *name) {

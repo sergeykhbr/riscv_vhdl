@@ -82,8 +82,9 @@ class CpuCortex_Functional : public CpuGeneric,
     // DZ = CP15[19] Divide-by-zero (generate fault exception)
     virtual uint32_t getDZ() { return 0; }
 
-    virtual bool InITBlock() { return ITBlock_; }
-    virtual bool LastInITBlock() { return ITBlockCnt_ == 0; }
+    virtual void StartITBlock(uint32_t firstcond, uint32_t mask);
+    virtual bool InITBlock() { return ITBlockMask_ != 0; }
+    virtual bool LastInITBlock() { return ITBlockMask_ == 0x8; }
 
     // Common River methods shared with instructions:
     uint64_t *getpRegs() { return portRegs_.getpR64(); }
@@ -120,8 +121,12 @@ class CpuCortex_Functional : public CpuGeneric,
     CmdRegArm *pcmd_reg_;
     CmdRegsArm *pcmd_regs_;
 
-    bool ITBlock_;
+    // CPSR contains fields IT[7:0]
+    //     IT[7:5] = cond_base, when IT Block enabled, 4'b0000 otherwise
+    //     IT[4:0]
     int ITBlockCnt_;
+    bool ITBlockCond_[4];
+    uint32_t ITBlockMask_;
 };
 
 DECLARE_CLASS(CpuCortex_Functional)

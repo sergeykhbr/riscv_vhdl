@@ -121,7 +121,7 @@ void CpuCortex_Functional::reset(IFace *isource) {
     Axi4TransactionType tr;
     CpuGeneric::reset(isource);
     portRegs_.reset();
-    ITBlock_ = false;
+    ITBlockMask_ = 0;
     ITBlockCnt_ = 0;
 
     tr.action = MemAction_Read;
@@ -134,6 +134,11 @@ void CpuCortex_Functional::reset(IFace *isource) {
         setInstrMode(THUMB_mode);
     }
     estate_ = CORE_Halted;
+}
+
+void CpuCortex_Functional::StartITBlock(uint32_t firstcond, uint32_t mask) {
+    ITBlockMask_ = mask;
+    ITBlockCond_[0] = firstcond;
 }
 
 GenericInstruction *CpuCortex_Functional::decodeInstruction(Reg64Type *cache) {

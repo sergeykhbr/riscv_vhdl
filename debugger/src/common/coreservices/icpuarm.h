@@ -98,6 +98,7 @@ class ICpuArm : public IFace {
     /** This function returns TRUE if execution is currently in an IT block 
         and FALSE otherwise. IT allows one of four following Thumb instructions
         (the IT block) to be conditional */
+    virtual void StartITBlock(uint32_t firstcond, uint32_t mask) = 0;
     virtual bool InITBlock() = 0;
     virtual bool LastInITBlock() = 0;
 };
