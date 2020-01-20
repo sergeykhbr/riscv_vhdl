@@ -441,7 +441,9 @@ void InstrExecute::comb() {
     v_mret = wv[Instr_MRET].to_bool() & w_next_ready;
     v_uret = wv[Instr_URET].to_bool() & w_next_ready;
 
-    v_next_mul_ready = (wv[Instr_MUL] || wv[Instr_MULW]) && w_next_ready;
+    v_next_mul_ready = (wv[Instr_MUL] || wv[Instr_MULW]
+                     || wv[Instr_MULH]|| wv[Instr_MULHSU]
+                     || wv[Instr_MULHU]) && w_next_ready;
     v_next_div_ready = (wv[Instr_DIV] || wv[Instr_DIVU]
                             || wv[Instr_DIVW] || wv[Instr_DIVUW]
                             || wv[Instr_REM] || wv[Instr_REMU]
@@ -454,7 +456,8 @@ void InstrExecute::comb() {
     }
 
     w_arith_residual_high = (wv[Instr_REM] || wv[Instr_REMU]
-                          || wv[Instr_REMW] || wv[Instr_REMUW]);
+                          || wv[Instr_REMW] || wv[Instr_REMUW]
+                          || wv[Instr_MULH] || wv[Instr_MULHSU] || wv[Instr_MULHU]);
 
 
     v_multi_ena = v_next_mul_ready || v_next_div_ready || v_next_fpu_ready;
