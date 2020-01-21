@@ -43,7 +43,7 @@ public:
         uint64_t clr_mask = ~R[u.bits.rs1];
         uint64_t csr = icpu_->readCSR(u.bits.imm);
         if (u.bits.rd) {
-            R[u.bits.rd] = csr;
+            icpu_->setReg(u.bits.rd, csr);
         }
         icpu_->writeCSR(u.bits.imm, (csr & clr_mask));
         return 4;
@@ -69,7 +69,7 @@ public:
         uint64_t clr_mask = ~static_cast<uint64_t>((u.bits.rs1));
         uint64_t csr = icpu_->readCSR(u.bits.imm);
         if (u.bits.rd) {
-            R[u.bits.rd] = csr;
+            icpu_->setReg(u.bits.rd, csr);
         }
         icpu_->writeCSR(u.bits.imm, (csr & clr_mask));
         return 4;
@@ -99,7 +99,7 @@ public:
         uint64_t set_mask = R[u.bits.rs1];
         uint64_t csr = icpu_->readCSR(u.bits.imm);
         if (u.bits.rd) {
-            R[u.bits.rd] = csr;
+            icpu_->setReg(u.bits.rd, csr);
         }
         icpu_->writeCSR(u.bits.imm, (csr | set_mask));
         return 4;
@@ -125,7 +125,7 @@ public:
         uint64_t set_mask = u.bits.rs1;
         uint64_t csr = icpu_->readCSR(u.bits.imm);
         if (u.bits.rd) {
-            R[u.bits.rd] = csr;
+            icpu_->setReg(u.bits.rd, csr);
         }
         icpu_->writeCSR(u.bits.imm, (csr | set_mask));
         return 4;
@@ -152,7 +152,7 @@ public:
 
         uint64_t wr_value = R[u.bits.rs1];
         if (u.bits.rd) {
-            R[u.bits.rd] = icpu_->readCSR(u.bits.imm);
+            icpu_->setReg(u.bits.rd, icpu_->readCSR(u.bits.imm));
         }
         icpu_->writeCSR(u.bits.imm, wr_value);
         return 4;
@@ -177,7 +177,7 @@ public:
 
         uint64_t wr_value = u.bits.rs1;
         if (u.bits.rd) {
-            R[u.bits.rd] = icpu_->readCSR(u.bits.imm);
+            icpu_->setReg(u.bits.rd, icpu_->readCSR(u.bits.imm));
         }
         icpu_->writeCSR(u.bits.imm, wr_value);
         return 4;

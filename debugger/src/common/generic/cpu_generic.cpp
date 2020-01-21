@@ -109,6 +109,7 @@ CpuGeneric::~CpuGeneric() {
 }
 
 void CpuGeneric::postinitService() {
+    R = getpRegs();
     if (resetState_.is_equal("Halted")) {
         estate_ = CORE_Halted;
     } else {
@@ -380,6 +381,13 @@ bool CpuGeneric::moveStepCallback(IClockListener *cb, uint64_t t) {
     }
     registerStepCallback(cb, t);
     return false;
+}
+
+void CpuGeneric::setReg(int idx, uint64_t val) {
+    R[idx] = val;
+    if (trace_file_) {
+        traceRegister(idx, val);
+    }
 }
 
 void CpuGeneric::setBranch(uint64_t npc) {

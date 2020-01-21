@@ -113,7 +113,9 @@ class CpuGeneric : public IService,
                                          IDbgNbResponse *cb);
 
     /** ICpuFunctional */
+    virtual uint64_t *getpRegs() = 0;   // main register bank
     virtual uint64_t getPC() { return pc_.getValue().val; }
+    virtual void setReg(int idx, uint64_t val);
     virtual void setBranch(uint64_t npc);
     virtual void pushStackTrace();
     virtual void popStackTrace();
@@ -214,6 +216,7 @@ class CpuGeneric : public IService,
     unsigned oplen_;
     MappedReg64Type pc_;
     MappedReg64Type npc_;
+    uint64_t *R;                            // Pointer to register bank
     GenericStatusType status_;
     MappedReg64Type stepping_cnt_;
     StepCounterType clock_cnt_;

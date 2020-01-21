@@ -216,7 +216,6 @@ void CpuRiver_Functional::trackContextStart() {
 
 void CpuRiver_Functional::traceOutput() {
     char tstr[1024];
-    trace_action_type *pa = &trace_data_.action[0];
 
     riscv_disassembler(trace_data_.instr,
                        trace_data_.disasm,
@@ -230,35 +229,27 @@ void CpuRiver_Functional::traceOutput() {
     (*trace_file_) << tstr;
 
 
-    if (pa->memop && !pa->memop_write) {
-        RISCV_sprintf(tstr, sizeof(tstr),
-            "%20s [%08" RV_PRI64 "x] => %016" RV_PRI64 "x\n",
-                "",
-                pa->memop_addr,
-                pa->memop_data.val);
-        (*trace_file_) << tstr;
-    }
-
-
-    uint64_t *prev = portSavedRegs_.getpR64();
-    uint64_t *cur = portRegs_.getpR64();
-    for (int i = 0; i < Reg_Total; i++) {
-        if (prev[i] != cur[i]) {
+    for (int i = 0; i < trace_data_.action_cnt; i++) {
+        trace_action_type *pa = &trace_data_.action[i];
+        if (!pa->memop) {
             RISCV_sprintf(tstr, sizeof(tstr),
                 "%20s %10s <= %016" RV_PRI64 "x\n",
                     "",
-                    IREGS_NAMES[i],
-                    cur[i]);
-            (*trace_file_) << tstr;
+                    IREGS_NAMES[pa->waddr],
+                    pa->wdata);
+        } else if (pa->memop_write) {
+            RISCV_sprintf(tstr, sizeof(tstr),
+                "%20s [%08" RV_PRI64 "x] <= %016" RV_PRI64 "x\n",
+                    "",
+                    pa->memop_addr,
+                    pa->memop_data.val);
+        } else {
+            RISCV_sprintf(tstr, sizeof(tstr),
+                "%20s [%08" RV_PRI64 "x] => %016" RV_PRI64 "x\n",
+                    "",
+                    pa->memop_addr,
+                    pa->memop_data.val);
         }
-    }
-
-    if (pa->memop && pa->memop_write) {
-        RISCV_sprintf(tstr, sizeof(tstr),
-            "%20s [%08" RV_PRI64 "x] <= %016" RV_PRI64 "x\n",
-                "",
-                pa->memop_addr,
-                pa->memop_data.val);
         (*trace_file_) << tstr;
     }
 

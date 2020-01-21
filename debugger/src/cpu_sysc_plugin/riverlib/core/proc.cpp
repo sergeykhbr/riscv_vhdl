@@ -418,7 +418,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
 
     trace0 = 0;
     if (tracer_ena) {
-        trace0 = new Tracer("trace0", async_reset, "river_trace.log");
+        trace0 = new Tracer("trace0", async_reset, "trace_river_sysc.log");
         trace0->i_clk(i_clk);
         trace0->i_nrst(i_nrst);
         trace0->i_dbg_executed_cnt(dbg.executed_cnt);

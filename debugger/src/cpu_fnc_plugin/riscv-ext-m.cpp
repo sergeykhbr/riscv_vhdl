@@ -32,13 +32,15 @@ class DIV : public RiscvInstruction {
 
     virtual int exec(Reg64Type *payload) {
         ISA_R_type u;
+        int64_t res;
         u.value = payload->buf32[0];
         if (R[u.bits.rs2]) {
-            R[u.bits.rd] = static_cast<int64_t>(R[u.bits.rs1])
+            res = static_cast<int64_t>(R[u.bits.rs1])
                  / static_cast<int64_t>(R[u.bits.rs2]);
         } else {
-            R[u.bits.rd] = ~0ull;
+            res = -1;
         }
+        icpu_->setReg(u.bits.rd, static_cast<uint64_t>(res));
         return 4;
     }
 };
@@ -53,13 +55,15 @@ class DIVU : public RiscvInstruction {
 
     virtual int exec(Reg64Type *payload) {
         ISA_R_type u;
+        uint64_t res;
         u.value = payload->buf32[0];
         if (R[u.bits.rs2]) {
-            R[u.bits.rd] = R[u.bits.rs1] / R[u.bits.rs2];
+            res = R[u.bits.rs1] / R[u.bits.rs2];
         } else {
             // Difference relative x86
-            R[u.bits.rd] = ~0ull;
+            res = ~0ull;
         }
+        icpu_->setReg(u.bits.rd, res);
         return 4;
     }
 };
@@ -77,13 +81,14 @@ class DIVUW : public RiscvInstruction {
         u.value = payload->buf32[0];
         uint32_t a1 = static_cast<uint32_t>(R[u.bits.rs1]);
         uint32_t a2 = static_cast<uint32_t>(R[u.bits.rs2]);
+        int32_t res;
         if (a2) {
             // DIVUW also sign-extended
-            int32_t res = static_cast<int32_t>(a1 / a2);
-            R[u.bits.rd] = static_cast<int64_t>(res);
+            res = static_cast<int32_t>(a1 / a2);
         } else {
-            R[u.bits.rd] = ~0ull;
+            res = -1;
         }
+        icpu_->setReg(u.bits.rd, static_cast<int64_t>(res));
         return 4;
     }
 };
@@ -101,11 +106,17 @@ class DIVW : public RiscvInstruction {
         u.value = payload->buf32[0];
         int32_t divident = static_cast<int32_t>(R[u.bits.rs1]);
         int32_t divisor = static_cast<int32_t>(R[u.bits.rs2]);
+        int64_t res;
         if (divisor) {
-            R[u.bits.rd] = static_cast<int64_t>(divident / divisor);
+            // ! Integer overflow on x86
+            res = static_cast<int64_t>(divident) /
+                  static_cast<int64_t>(divisor);
         } else {
-            R[u.bits.rd] = ~0ull;
+            res = -1;
         }
+        res <<= 32;
+        res >>= 32;
+        icpu_->setReg(u.bits.rd, static_cast<uint64_t>(res));
         return 4;
     }
 };
@@ -123,9 +134,11 @@ class MUL : public RiscvInstruction {
 
     virtual int exec(Reg64Type *payload) {
         ISA_R_type u;
+        int64_t res;
         u.value = payload->buf32[0];
-        R[u.bits.rd] = static_cast<int64_t>(R[u.bits.rs1])
+        res = static_cast<int64_t>(R[u.bits.rs1])
                 * static_cast<int64_t>(R[u.bits.rs2]);
+        icpu_->setReg(u.bits.rd, static_cast<uint64_t>(res));
         return 4;
     }
 };
@@ -149,11 +162,12 @@ class MULW : public RiscvInstruction {
         u.value = payload->buf32[0];
         int32_t m1 = static_cast<int32_t>(R[u.bits.rs1]);
         int32_t m2 = static_cast<int32_t>(R[u.bits.rs2]);
+        int32_t resw;
+        int64_t res;
 
-        R[u.bits.rd] = static_cast<int64_t>(m1 * m2);
-        if (R[u.bits.rd] & (1LL << 31)) {
-            R[u.bits.rd] |= EXT_SIGN_32;
-        }
+        resw = m1 * m2;
+        res = static_cast<int64_t>(resw);
+        icpu_->setReg(u.bits.rd, static_cast<uint64_t>(res));
         return 4;
     }
 };
@@ -168,9 +182,15 @@ public:
 
     virtual int exec(Reg64Type *payload) {
         ISA_R_type u;
+        int64_t res;
         u.value = payload->buf32[0];
-        R[u.bits.rd] = static_cast<int64_t>(R[u.bits.rs1])
-             % static_cast<int64_t>(R[u.bits.rs2]);
+        if (R[u.bits.rs2]) {
+            res = static_cast<int64_t>(R[u.bits.rs1])
+                 % static_cast<int64_t>(R[u.bits.rs2]);
+        } else {
+            res = static_cast<int64_t>(R[u.bits.rs1]);
+        }
+        icpu_->setReg(u.bits.rd, static_cast<uint64_t>(res));
         return 4;
     }
 };
@@ -185,8 +205,14 @@ public:
 
     virtual int exec(Reg64Type *payload) {
         ISA_R_type u;
+        uint64_t res;
         u.value = payload->buf32[0];
-        R[u.bits.rd] = R[u.bits.rs1] % R[u.bits.rs2];
+        if (R[u.bits.rs2]) {
+            res = R[u.bits.rs1] % R[u.bits.rs2];
+        } else {
+            res = R[u.bits.rs1];
+        }
+        icpu_->setReg(u.bits.rd, res);
         return 4;
     }
 };
@@ -206,11 +232,17 @@ public:
 
     virtual int exec(Reg64Type *payload) {
         ISA_R_type u;
-        int32_t tmp;
+        int64_t res;
         u.value = payload->buf32[0];
-        tmp = static_cast<int32_t>(R[u.bits.rs1])
-            % static_cast<int32_t>(R[u.bits.rs2]);
-        R[u.bits.rd] = static_cast<uint64_t>(static_cast<int64_t>(tmp));
+        int32_t a1 = static_cast<int32_t>(R[u.bits.rs1]);
+        int32_t a2 = static_cast<int32_t>(R[u.bits.rs2]);
+        if (a2) {
+            // To avoid integer overflow exception on x86 use int64_t
+            res = static_cast<int64_t>(a1) % static_cast<int64_t>(a2);
+        } else {
+            res = a1;
+        }
+        icpu_->setReg(u.bits.rd, static_cast<uint64_t>(res));
         return 4;
     }
 };
@@ -222,13 +254,19 @@ public:
 
     virtual int exec(Reg64Type *payload) {
         ISA_R_type u;
-        uint32_t tmp;
-        int32_t itmp;
         u.value = payload->buf32[0];
-        tmp = static_cast<uint32_t>(R[u.bits.rs1])
-            % static_cast<uint32_t>(R[u.bits.rs2]);
-        itmp = static_cast<int32_t>(tmp);
-        R[u.bits.rd] = static_cast<uint64_t>(static_cast<int64_t>(itmp));
+        uint32_t a1 = static_cast<uint32_t>(R[u.bits.rs1]);
+        uint32_t a2 = static_cast<uint32_t>(R[u.bits.rs2]);
+        int32_t resw;
+        int64_t res;
+        u.value = payload->buf32[0];
+        if (a2) {
+            resw = static_cast<int32_t>(a1 % a2);
+        } else {
+            resw = a1;
+        }
+        res = static_cast<int64_t>(resw);
+        icpu_->setReg(u.bits.rd, static_cast<uint64_t>(res));
         return 4;
     }
 };

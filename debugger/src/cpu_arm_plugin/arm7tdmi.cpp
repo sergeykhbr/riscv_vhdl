@@ -3221,7 +3221,7 @@ class STRB_I_T3 : public T1Instruction {
         uint32_t ti1 = payload->buf16[1];
         uint32_t t = (ti1 >> 12) & 0xF;
         uint32_t n = ti & 0xF;
-        uint64_t imm32 = ti1 & 0xFF;
+        uint32_t imm32 = ti1 & 0xFF;
         uint32_t index = (ti1 >> 10) & 1;
         uint32_t add = (ti1 >> 9) & 1;
         uint32_t wback = (ti1 >> 8) & 1;

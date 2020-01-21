@@ -133,6 +133,10 @@ class RtlWrapper : public sc_module,
     virtual void nb_transport_debug_port(DebugPortTransactionType *trans,
                                         IDbgNbResponse *cb);
 
+    /** ICpuRiscV interface */
+    virtual uint64_t readCSR(int idx) { return 0;}
+    void virtual writeCSR(int idx, uint64_t val) {}
+
     /** IClock */
     virtual void registerStepCallback(IClockListener *cb, uint64_t t);
 

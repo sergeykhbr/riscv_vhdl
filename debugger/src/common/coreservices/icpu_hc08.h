@@ -91,9 +91,6 @@ class ICpuHC08 : public IFace {
  public:
     ICpuHC08() : IFace(IFACE_CPU_HC08) {}
 
-    /** Fast access to memory mapped registers */
-    virtual Reg64Type *getpRegs() = 0;
-
     /** External IRQ line status (need for BIH, BIL instructions) */
     virtual bool getIRQ() = 0;
 

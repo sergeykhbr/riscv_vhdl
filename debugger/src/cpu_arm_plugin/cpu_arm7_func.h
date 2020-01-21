@@ -58,12 +58,6 @@ class CpuCortex_Functional : public CpuGeneric,
         const EInstructionModes MODE[2] = {ARM_mode, THUMB_mode};
         return MODE[p_psr_->u.T];
     }
-    virtual void setReg(int idx, uint64_t val) {
-        portRegs_.getpR64()[idx] = val;
-        if (trace_file_) {
-            traceRegister(idx, val);
-        }
-    }
     virtual uint32_t getZ() { return p_psr_->u.Z; }
     virtual void setZ(uint32_t z) { p_psr_->u.Z = z; }
     virtual uint32_t getC() { return p_psr_->u.C; }
@@ -86,8 +80,8 @@ class CpuCortex_Functional : public CpuGeneric,
     virtual bool InITBlock() { return ITBlockMask_ != 0; }
     virtual bool LastInITBlock() { return ITBlockMask_ == 0x8; }
 
-    // Common River methods shared with instructions:
-    uint64_t *getpRegs() { return portRegs_.getpR64(); }
+    // CpuGeneric virtual methods:
+    virtual uint64_t *getpRegs() { return portRegs_.getpR64(); }
 
  protected:
     /** CpuGeneric common methods */

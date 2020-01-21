@@ -48,16 +48,25 @@ class CpuRiver_Functional : public CpuGeneric,
 
     /** ICpuFunctional interface */
     virtual void raiseSoftwareIrq() {}
+    virtual void setReg(int idx, uint64_t val) override {
+        if (idx) {
+            CpuGeneric:: setReg(idx, val);
+        }
+    }
     virtual uint64_t getIrqAddress(int idx) { return readCSR(CSR_mtvec); }
     virtual void exceptionLoadInstruction(Axi4TransactionType *tr);
     virtual void exceptionLoadData(Axi4TransactionType *tr);
     virtual void exceptionStoreData(Axi4TransactionType *tr);
 
+    /** ICpuRiscV interface */
+    virtual uint64_t readCSR(int idx) override;
+    virtual void writeCSR(int idx, uint64_t val) override;
+
+    // CpuGeneric virtual methods:
+    virtual uint64_t *getpRegs() { return portRegs_.getpR64(); }
+
     // Common River methods shared with instructions:
-    uint64_t *getpRegs() { return portRegs_.getpR64(); }
     uint64_t *getpFpuRegs() { return portRegsFpu_.getpR64(); }
-    uint64_t readCSR(int idx);
-    void writeCSR(int idx, uint64_t val);
 
  protected:
     /** CpuGeneric common methods */

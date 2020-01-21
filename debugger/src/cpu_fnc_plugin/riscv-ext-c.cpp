@@ -42,9 +42,11 @@ public:
 
     virtual int exec(Reg64Type *payload) {
         ISA_CR_type u;
+        uint64_t res;
         u.value = payload->buf16[0];
         if (u.bits.rdrs1) {
-            R[u.bits.rdrs1] += R[u.bits.rs2];
+            res = R[u.bits.rdrs1] + R[u.bits.rs2]; 
+            icpu_->setReg(u.bits.rdrs1, res);
         }
         return 2;
     }
@@ -76,7 +78,7 @@ public:
         if (u.bits.imm6) {
             imm |= EXT_SIGN_6;
         }
-        R[u.bits.rdrs] = R[u.bits.rdrs] + imm;
+        icpu_->setReg(u.bits.rdrs, R[u.bits.rdrs] + imm);
         return 2;
     }
 };
@@ -106,7 +108,7 @@ public:
             imm |= EXT_SIGN_6;
         }
         imm <<= 4;
-        R[Reg_sp] = R[Reg_sp] + imm;
+        icpu_->setReg(Reg_sp, R[Reg_sp] + imm);
         return 2;
     }
 };
@@ -132,7 +134,7 @@ public:
         uint64_t imm = (u.bits.imm9_6 << 4) | (u.bits.imm5_4 << 2)
                     | (u.bits.imm3 << 1) | u.bits.imm2;
         imm <<= 2;
-        R[8 + u.bits.rd] = R[Reg_sp] + imm;
+        icpu_->setReg(8 + u.bits.rd, R[Reg_sp] + imm);
         return 2;
     }
 };
@@ -158,16 +160,18 @@ public:
 
     virtual int exec(Reg64Type *payload) {
         ISA_CI_type u;
+        uint64_t res;
         u.value = payload->buf16[0];
     
         uint64_t imm = u.bits.imm;
         if (u.bits.imm6) {
             imm |= EXT_SIGN_6;
         }
-        R[u.bits.rdrs] = (R[u.bits.rdrs] + imm) & 0xFFFFFFFFLL;
-        if (R[u.bits.rdrs] & (1LL << 31)) {
-            R[u.bits.rdrs] |= EXT_SIGN_32;
+        res = (R[u.bits.rdrs] + imm) & 0xFFFFFFFFLL;
+        if (res & (1LL << 31)) {
+            res |= EXT_SIGN_32;
         }
+        icpu_->setReg(u.bits.rdrs, res);
         return 2;
     }
 };
@@ -186,13 +190,15 @@ public:
 
     virtual int exec(Reg64Type *payload) {
         ISA_CS_type u;
+        uint64_t res;
         u.value = payload->buf16[0];
-        R[8 + u.bits.rs1] += R[8 + u.bits.rs2];
-        R[8 + u.bits.rs1] &= 0xFFFFFFFFLL;
+        res = R[8 + u.bits.rs1] + R[8 + u.bits.rs2];
+        res &= 0xFFFFFFFFLL;
         
-        if (R[8 + u.bits.rs1] & (1LL << 31)) {
-            R[8 + u.bits.rs1] |= EXT_SIGN_32;
+        if (res & (1LL << 31)) {
+            res |= EXT_SIGN_32;
         }
+        icpu_->setReg(8 + u.bits.rs1, res);
         return 2;
     }
 };
@@ -211,8 +217,10 @@ public:
 
     virtual int exec(Reg64Type *payload) {
         ISA_CS_type u;
+        uint64_t res;
         u.value = payload->buf16[0];
-        R[8 + u.bits.rs1] &= R[8 + u.bits.rs2];
+        res = R[8 + u.bits.rs1] & R[8 + u.bits.rs2];
+        icpu_->setReg(8 + u.bits.rs1, res);
         return 2;
     }
 };
@@ -231,13 +239,15 @@ public:
 
     virtual int exec(Reg64Type *payload) {
         ISA_CB_type u;
+        uint64_t res;
         u.value = payload->buf16[0];
     
-        uint64_t imm = (u.bits.off7_6 << 3) | (u.bits.off2_1 << 1)  | u.bits.off5;
-        if (u.bits.off8) {
-            imm |= EXT_SIGN_5;
+        uint64_t imm = u.shbits.shamt;
+        if (u.shbits.shamt5) {
+            imm |= EXT_SIGN_6;
         }
-        R[8 + u.bits.rs1] &= imm;
+        res = R[8 + u.bits.rs1] & imm;
+        icpu_->setReg(8 + u.bits.rs1, res);
         return 2;
     }
 };
@@ -401,7 +411,7 @@ public:
     virtual int exec(Reg64Type *payload) {
         ISA_CR_type u;
         u.value = payload->buf16[0];
-        R[Reg_ra] = icpu_->getPC() + 2;
+        icpu_->setReg(Reg_ra, icpu_->getPC() + 2);
         icpu_->setBranch(R[u.bits.rdrs1]);
         icpu_->pushStackTrace();
         return 2;
@@ -467,7 +477,7 @@ public:
                 icpu_->exceptionLoadData(&trans);
             }
         }
-        R[8 + u.bits.rd] = trans.rpayload.b64[0];
+        icpu_->setReg(8 + u.bits.rd, trans.rpayload.b64[0]);
         return 2;
     }
 };
@@ -509,7 +519,7 @@ public:
                 icpu_->exceptionLoadData(&trans);
             }
         }
-        R[u.ldspbits.rd] = trans.rpayload.b64[0];
+        icpu_->setReg(u.ldspbits.rd, trans.rpayload.b64[0]);
         return 2;
     }
 };
@@ -539,7 +549,7 @@ public:
         if (u.bits.imm6) {
             imm |= EXT_SIGN_6;
         }
-        R[u.bits.rdrs] = imm;
+        icpu_->setReg(u.bits.rdrs, imm);
         return 2;
     }
 };
@@ -559,6 +569,7 @@ public:
     virtual int exec(Reg64Type *payload) {
         Axi4TransactionType trans;
         ISA_CL_type u;
+        uint64_t res;
         u.value = payload->buf16[0];
         uint64_t off = (u.bits.imm6 << 4) | (u.bits.imm5_3 << 1) | u.bits.imm27;
         off <<= 2;
@@ -574,10 +585,11 @@ public:
                 icpu_->exceptionLoadData(&trans);
             }
         }
-        R[8 + u.bits.rd] = trans.rpayload.b32[0];
-        if (R[8 + u.bits.rd] & (1LL << 31)) {
-            R[8 + u.bits.rd] |= EXT_SIGN_32;
+        res = trans.rpayload.b32[0];
+        if (res & (1LL << 31)) {
+            res |= EXT_SIGN_32;
         }
+        icpu_->setReg(8 + u.bits.rd, res);
         return 2;
     }
 };
@@ -603,6 +615,7 @@ public:
     virtual int exec(Reg64Type *payload) {
         Axi4TransactionType trans;
         ISA_CI_type u;
+        uint64_t res;
         u.value = payload->buf16[0];
         uint64_t off = (u.lwspbits.off7_6 << 4) | (u.lwspbits.off5 << 3)
                      | u.lwspbits.off4_2;
@@ -618,10 +631,11 @@ public:
                 icpu_->exceptionLoadData(&trans);
             }
         }
-        R[u.lwspbits.rd] = trans.rpayload.b32[0];
-        if (R[u.lwspbits.rd] & (1LL << 31)) {
-            R[u.lwspbits.rd] |= EXT_SIGN_32;
+        res = trans.rpayload.b32[0];
+        if (res & (1LL << 31)) {
+            res |= EXT_SIGN_32;
         }
+        icpu_->setReg(u.lwspbits.rd, res);
         return 2;
     }
 };
@@ -656,7 +670,7 @@ public:
             imm |= EXT_SIGN_6;
         }
         imm <<= 12;
-        R[u.bits.rdrs] = imm;
+        icpu_->setReg(u.bits.rdrs, imm);
         return 2;
     }
 };
@@ -682,7 +696,7 @@ public:
     virtual int exec(Reg64Type *payload) {
         ISA_CR_type u;
         u.value = payload->buf16[0];
-        R[u.bits.rdrs1] = R[u.bits.rs2];
+        icpu_->setReg(u.bits.rdrs1, R[u.bits.rs2]);
         return 2;
     }
 };
@@ -718,8 +732,10 @@ public:
 
     virtual int exec(Reg64Type *payload) {
         ISA_CS_type u;
+        uint64_t res;
         u.value = payload->buf16[0];
-        R[8 + u.bits.rs1] |= R[8 + u.bits.rs2];
+        res = R[8 + u.bits.rs1] | R[8 + u.bits.rs2];
+        icpu_->setReg(8 + u.bits.rs1, res);
         return 2;
     }
 };
@@ -821,7 +837,7 @@ public:
         u.value = payload->buf16[0];
         uint32_t shamt = (u.shbits.shamt5 << 5) | u.shbits.shamt;
         uint32_t idx = (u.shbits.funct2 << 3) | u.shbits.rd;
-        R[idx] = R[idx] << shamt;
+        icpu_->setReg(idx, R[idx] << shamt);
         return 2;
     }
 };
@@ -839,9 +855,11 @@ public:
 
     virtual int exec(Reg64Type *payload) {
         ISA_CB_type u;
+        uint64_t res;
         u.value = payload->buf16[0];
         uint32_t shamt = (u.shbits.shamt5 << 5) | u.shbits.shamt;
-        R[8 + u.shbits.rd] = static_cast<int64_t>(R[8 + u.shbits.rd]) >> shamt;
+        res = static_cast<int64_t>(R[8 + u.shbits.rd]) >> shamt;
+        icpu_->setReg(8 + u.shbits.rd, res);
         return 2;
     }
 };
@@ -867,7 +885,7 @@ public:
         ISA_CB_type u;
         u.value = payload->buf16[0];
         uint32_t shamt = (u.shbits.shamt5 << 5) | u.shbits.shamt;
-        R[8 + u.shbits.rd] = R[8 + u.shbits.rd] >> shamt;
+        icpu_->setReg(8 + u.shbits.rd, R[8 + u.shbits.rd] >> shamt);
         return 2;
     }
 };
@@ -887,7 +905,7 @@ public:
     virtual int exec(Reg64Type *payload) {
         ISA_CS_type u;
         u.value = payload->buf16[0];
-        R[8 + u.bits.rs1] -= R[8 + u.bits.rs2];
+        icpu_->setReg(8 + u.bits.rs1, R[8 + u.bits.rs1] - R[8 + u.bits.rs2]);
         return 2;
     }
 };
@@ -907,13 +925,15 @@ public:
 
     virtual int exec(Reg64Type *payload) {
         ISA_CS_type u;
+        uint64_t res;
         u.value = payload->buf16[0];
-        R[8 + u.bits.rs1] -= R[8 + u.bits.rs2];
-        R[8 + u.bits.rs1] &= 0xFFFFFFFFLL;
+        res = R[8 + u.bits.rs1] - R[8 + u.bits.rs2];
+        res &= 0xFFFFFFFFLL;
         
-        if (R[8 + u.bits.rs1] & (1LL << 31)) {
-            R[8 + u.bits.rs1] |= EXT_SIGN_32;
+        if (res & (1LL << 31)) {
+            res |= EXT_SIGN_32;
         }
+        icpu_->setReg(8 + u.bits.rs1, res);
         return 2;
     }
 };
@@ -1000,7 +1020,7 @@ public:
     virtual int exec(Reg64Type *payload) {
         ISA_CS_type u;
         u.value = payload->buf16[0];
-        R[8 + u.bits.rs1] ^= R[8 + u.bits.rs2];
+        icpu_->setReg(8 + u.bits.rs1, R[8 + u.bits.rs1] ^ R[8 + u.bits.rs2]);
         return 2;
     }
 };

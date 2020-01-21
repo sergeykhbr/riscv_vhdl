@@ -62,8 +62,6 @@ class ICpuArm : public IFace {
     virtual void setInstrMode(EInstructionModes mode) = 0;
     virtual EInstructionModes getInstrMode() = 0;
 
-    virtual void setReg(int idx, uint64_t val) = 0;
-
     /** Zero flag */
     virtual uint32_t getZ() = 0;
     virtual void setZ(uint32_t z) = 0;

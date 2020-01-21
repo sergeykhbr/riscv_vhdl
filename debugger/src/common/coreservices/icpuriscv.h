@@ -31,6 +31,9 @@ static const char *const IFACE_CPU_RISCV = "ICpuRiscV";
 class ICpuRiscV : public IFace {
 public:
     ICpuRiscV() : IFace(IFACE_CPU_RISCV) {}
+
+    virtual uint64_t readCSR(int idx) = 0;
+    void virtual writeCSR(int idx, uint64_t val) = 0;
 };
 
 }  // namespace debugger
