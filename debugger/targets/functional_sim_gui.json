@@ -172,7 +172,7 @@
                 ['FreqHz',12000000],
                 ['VectorTable',0x100,'Hardcoded in CSR mtvec value: interrupts vector table address'],
                 ['ResetVector',0x0000,'Initial intruction pointer value (config parameter)'],
-                ['GenerateTraceFile','','Specify file name to enable tracer'],
+                ['GenerateTraceFile','tracer_river_funct.log','Specify file name to enable tracer'],
                 ['CacheBaseAddress',0x10000000],
                 ['CacheAddressMask',0x7ffff],
                 ['ResetState','Halted', 'CPU state after reset signal is raised: Halted or OFF'],
@@ -231,7 +231,7 @@
     {'Class':'MemorySimClass','Instances':[
           {'Name':'sram0','Attr':[
                 ['LogLevel',1],
-                ['InitFile','../../../examples/zephyr/gcc711/zephyr.hex'],
+                ['InitFile','../../../examples/riscv-tests/makefiles/bin/riscv-tests.hex'],
                 ['ReadOnly',false],
                 ['BaseAddress',0x10000000],
                 ['Length',0x80000]

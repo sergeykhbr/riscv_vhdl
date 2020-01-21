@@ -100,13 +100,31 @@ int riscv_disassembler(uint32_t instr, char *disasm, size_t strsz) {
                 }
                 break;
             case 1:
-                RISCV_sprintf(disasm, strsz, "%10s", "sll");
+                if (((instr >> 25) & 0x7f) == 0x00) {
+                    RISCV_sprintf(disasm, strsz, "%10s", "sll");
+                } else if (((instr >> 25) & 0x7f) == 0x01) {
+                    RISCV_sprintf(disasm, strsz, "%10s", "mulh");
+                } else {
+                    RISCV_sprintf(disasm, strsz, "%10s", "error");
+                }
                 break;
             case 2:
-                RISCV_sprintf(disasm, strsz, "%10s", "slt");
+                if (((instr >> 25) & 0x7f) == 0x00) {
+                    RISCV_sprintf(disasm, strsz, "%10s", "slt");
+                } else if (((instr >> 25) & 0x7f) == 0x01) {
+                    RISCV_sprintf(disasm, strsz, "%10s", "mulhsu");
+                } else {
+                    RISCV_sprintf(disasm, strsz, "%10s", "error");
+                }
                 break;
             case 3:
-                RISCV_sprintf(disasm, strsz, "%10s", "sltu");
+                if (((instr >> 25) & 0x7f) == 0x00) {
+                    RISCV_sprintf(disasm, strsz, "%10s", "sltu");
+                } else if (((instr >> 25) & 0x7f) == 0x01) {
+                    RISCV_sprintf(disasm, strsz, "%10s", "mulhu");
+                } else {
+                    RISCV_sprintf(disasm, strsz, "%10s", "error");
+                }
                 break;
             case 4:
                 if (((instr >> 25) & 0x7f) == 0x00) {

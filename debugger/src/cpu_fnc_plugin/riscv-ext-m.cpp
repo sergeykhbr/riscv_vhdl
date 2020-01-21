@@ -144,6 +144,179 @@ class MUL : public RiscvInstruction {
 };
 
 /**
+ * @brief The MULH signed multiplication
+ *
+ * MULH, MULHU, and MULHSU perform the same multiplication but return
+ * the upper XLEN bits of the full 2*XLEN-bit product, for signed*signed,
+ * unsigned*unsigned, and signed*unsigned multiplication respectively
+ */
+class MULH : public RiscvInstruction {
+ public:
+    MULH(CpuRiver_Functional *icpu)
+        : RiscvInstruction(icpu, "MULH", "0000001??????????001?????0110011") {}
+
+    virtual int exec(Reg64Type *payload) {
+        ISA_R_type u;
+        int64_t res;
+        u.value = payload->buf32[0];
+        uint64_t a1 = R[u.bits.rs1];
+        uint64_t a2 = R[u.bits.rs2];
+
+        uint64_t lvl1[2];
+        uint64_t lvl2[2];
+        uint64_t L = (a1 & 0xFFFFFFFFull) * (a2 & 0xFFFFFFFFull);
+        uint64_t M = (a1 >> 32) * (a2 & 0xFFFFFFFFull);
+
+        lvl1[0] = L & 0xFFFFFFFFul;
+        lvl1[0] |= (((M & 0xFFFFFFFFul) + (L >> 32)) << 32);
+        lvl1[1] = (((M & 0xFFFFFFFFul) + (L >> 32)) >> 32);   // carry bits
+
+        L = (a1 & 0xFFFFFFFFull) * (a2 >> 32);
+        M = (a1 >> 32) * (a2 >> 32);
+        lvl2[0] = L & 0xFFFFFFFFul;
+        lvl2[0] |= (((M & 0xFFFFFFFFul) + (L >> 32)) << 32);
+        lvl2[1] = (((M & 0xFFFFFFFFul) + (L >> 32)) >> 32);   // carry bits
+
+        uint64_t tsum;
+        uint64_t lsb = lvl1[0] & 0xFFFFFFFFul;
+        tsum = (lvl1[0] >> 32) + (lvl2[0] & 0xFFFFFFFFul);
+        lsb |= tsum << 32;
+        uint64_t msb = tsum >> 32;
+        msb += lvl1[1] + (lvl2[0] >> 32);
+        msb += lvl2[1] << 32;
+
+        res = msb;
+        icpu_->setReg(u.bits.rd, static_cast<uint64_t>(res));
+        return 4;
+    }
+};
+
+class MULHSU : public RiscvInstruction {
+ public:
+    MULHSU(CpuRiver_Functional *icpu)
+        : RiscvInstruction(icpu, "MULHSU", "0000001??????????010?????0110011") {}
+
+    virtual int exec(Reg64Type *payload) {
+        ISA_R_type u;
+        int64_t res;
+        u.value = payload->buf32[0];
+        uint64_t a1 = R[u.bits.rs1];
+        uint64_t a2 = R[u.bits.rs2];
+
+        struct LevelType {
+            uint64_t val[2];
+        };
+        LevelType lvl0[32];
+        LevelType lvl1[16];
+        LevelType lvl2[8];
+        LevelType lvl3[4];
+        LevelType lvl4[2];
+        LevelType lvl5;
+        uint64_t carry;
+        for (int i = 0; i < 32; i++) {
+            switch ((a2 >> 2*i) & 0x3) {
+            case 0:
+                lvl0[i].val[0] = 0;
+                lvl0[i].val[1] = 0;
+                break;
+            case 1:
+                lvl0[i].val[0] = a1;
+                lvl0[i].val[1] = 0;
+                break;
+            case 2:
+                lvl0[i].val[0] = a1 << 1;
+                lvl0[i].val[1] = a1 >> 63;
+                break;
+            case 3:
+                lvl0[i].val[0] = (a1 << 1) + a1;
+                carry = ((a1 >> 62) & 1) & !(lvl0[i].val[0] >> 63);
+                lvl0[i].val[1] = (a1 >> 63) + carry;
+                break;
+            default:;
+            }
+        }
+
+        for (int i = 0; i < 16; i++) {
+            lvl1[i].val[0] = (lvl0[2*i+1].val[0] << 2) + lvl0[2*i].val[0];
+            carry = ((lvl0[2*i+1].val[0] >> 61) & 1) & !(lvl1[i].val[0] >> 63);
+            lvl1[i].val[1] = (lvl0[2*i+1].val[1] << 2) | (lvl0[2*i+1].val[0] >> 62);
+            lvl1[i].val[1] += lvl1[2*i].val[1] + carry;
+        }
+
+        for (int i = 0; i < 8; i++) {
+            lvl2[i].val[0] = (lvl1[2*i+1].val[0] << 4) + lvl1[2*i].val[0];
+            carry = ((lvl1[2*i+1].val[0] >> 59) & 1) & !(lvl2[i].val[0] >> 63);
+            lvl2[i].val[1] = (lvl1[2*i+1].val[1] << 4) | (lvl1[2*i+1].val[0] >> 60);
+            lvl2[i].val[1] += lvl1[2*i].val[1] + carry;
+        }
+
+        for (int i = 0; i < 4; i++) {
+            lvl3[i].val[0] = (lvl2[2*i+1].val[0] << 8) + lvl2[2*i].val[0];
+            carry = ((lvl2[2*i+1].val[0] >> 55) & 1) & !(lvl3[i].val[0] >> 63);
+            lvl3[i].val[1] = (lvl2[2*i+1].val[1] << 8) | (lvl2[2*i+1].val[0] >> 56);
+            lvl3[i].val[1] += lvl2[2*i].val[1] + carry;
+        }
+
+        for (int i = 0; i < 2; i++) {
+            lvl4[i].val[0] = (lvl3[2*i+1].val[0] << 16) + lvl3[2*i].val[0];
+            carry = ((lvl3[2*i+1].val[0] >> 47) & 1) & !(lvl4[i].val[0] >> 63);
+            lvl4[i].val[1] = (lvl3[2*i+1].val[1] << 16) | (lvl3[2*i+1].val[0] >> 48);
+            lvl4[i].val[1] += lvl3[2*i].val[1] + carry;
+        }
+
+        lvl5.val[0] = (lvl4[1].val[0] << 32) + lvl4[0].val[0];
+        carry = ((lvl4[1].val[0] >> 31) & 1) & !(lvl5.val[0] >> 63);
+        lvl5.val[1] = (lvl4[1].val[1] << 32) | (lvl4[1].val[0] >> 32);
+        lvl5.val[1] += lvl4[0].val[1] + carry;
+
+        res = lvl5.val[1];
+        icpu_->setReg(u.bits.rd, static_cast<uint64_t>(res));
+        return 4;
+    }
+};
+
+class MULHU : public RiscvInstruction {
+ public:
+    MULHU(CpuRiver_Functional *icpu)
+        : RiscvInstruction(icpu, "MULHU", "0000001??????????011?????0110011") {}
+
+    virtual int exec(Reg64Type *payload) {
+        ISA_R_type u;
+        int64_t res;
+        u.value = payload->buf32[0];
+        uint64_t a1 = R[u.bits.rs1];
+        uint64_t a2 = R[u.bits.rs2];
+
+        uint64_t lvl1[2];
+        uint64_t lvl2[2];
+        uint64_t L = (a1 & 0xFFFFFFFFull) * (a2 & 0xFFFFFFFFull);
+        uint64_t M = (a1 >> 32) * (a2 & 0xFFFFFFFFull);
+
+        lvl1[0] = L & 0xFFFFFFFFul;
+        lvl1[0] |= (((M & 0xFFFFFFFFul) + (L >> 32)) << 32);
+        lvl1[1] = (((M & 0xFFFFFFFFul) + (L >> 32)) >> 32);   // carry bits
+
+        L = (a1 & 0xFFFFFFFFull) * (a2 >> 32);
+        M = (a1 >> 32) * (a2 >> 32);
+        lvl2[0] = L & 0xFFFFFFFFul;
+        lvl2[0] |= (((M & 0xFFFFFFFFul) + (L >> 32)) << 32);
+        lvl2[1] = (((M & 0xFFFFFFFFul) + (L >> 32)) >> 32);   // carry bits
+
+        uint64_t tsum;
+        uint64_t lsb = lvl1[0] & 0xFFFFFFFFul;
+        tsum = (lvl1[0] >> 32) + (lvl2[0] & 0xFFFFFFFFul);
+        lsb |= tsum << 32;
+        uint64_t msb = tsum >> 32;
+        msb += lvl1[1] + (lvl2[0] >> 32);
+        msb += lvl2[1] << 32;
+
+        res = msb;
+        icpu_->setReg(u.bits.rd, static_cast<uint64_t>(res));
+        return 4;
+    }
+};
+
+/**
  * @brief The MULW 32-bits signed multiplication (RV64I)
  *
  * MULW is only valid for RV64, and multiplies the lower 32 bits of the source
@@ -277,18 +450,14 @@ void CpuRiver_Functional::addIsaExtensionM() {
     addSupportedInstruction(new DIVUW(this));
     addSupportedInstruction(new DIVW(this));
     addSupportedInstruction(new MUL(this));
+    addSupportedInstruction(new MULH(this));
+    addSupportedInstruction(new MULHSU(this));
+    addSupportedInstruction(new MULHU(this));
     addSupportedInstruction(new MULW(this));
     addSupportedInstruction(new REM(this));
     addSupportedInstruction(new REMU(this));
     addSupportedInstruction(new REMW(this));
     addSupportedInstruction(new REMUW(this));
-
-    // TODO
-    /*
-    addInstr("MULH", "0000001??????????001?????0110011", NULL, out);
-    addInstr("MULHSU", "0000001??????????010?????0110011", NULL, out);
-    addInstr("MULHU", "0000001??????????011?????0110011", NULL, out);
-    */
 
     uint64_t isa = portCSR_.read(CSR_misa).val;
     portCSR_.write(CSR_misa, isa | (1LL << ('M' - 'A')));
