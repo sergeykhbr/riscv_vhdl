@@ -37,7 +37,7 @@ class DIV : public RiscvInstruction {
             R[u.bits.rd] = static_cast<int64_t>(R[u.bits.rs1])
                  / static_cast<int64_t>(R[u.bits.rs2]);
         } else {
-            R[u.bits.rd] = 0;
+            R[u.bits.rd] = ~0ull;
         }
         return 4;
     }
@@ -57,7 +57,8 @@ class DIVU : public RiscvInstruction {
         if (R[u.bits.rs2]) {
             R[u.bits.rd] = R[u.bits.rs1] / R[u.bits.rs2];
         } else {
-            R[u.bits.rd] = 0;
+            // Difference relative x86
+            R[u.bits.rd] = ~0ull;
         }
         return 4;
     }
@@ -74,12 +75,14 @@ class DIVUW : public RiscvInstruction {
     virtual int exec(Reg64Type *payload) {
         ISA_R_type u;
         u.value = payload->buf32[0];
-        if (static_cast<uint32_t>(R[u.bits.rs2])) {
-            R[u.bits.rd] = 
-                static_cast<uint32_t>(R[u.bits.rs1]) / 
-                static_cast<uint32_t>(R[u.bits.rs2]);
+        uint32_t a1 = static_cast<uint32_t>(R[u.bits.rs1]);
+        uint32_t a2 = static_cast<uint32_t>(R[u.bits.rs2]);
+        if (a2) {
+            // DIVUW also sign-extended
+            int32_t res = static_cast<int32_t>(a1 / a2);
+            R[u.bits.rd] = static_cast<int64_t>(res);
         } else {
-            R[u.bits.rd] = 0;
+            R[u.bits.rd] = ~0ull;
         }
         return 4;
     }
@@ -101,7 +104,7 @@ class DIVW : public RiscvInstruction {
         if (divisor) {
             R[u.bits.rd] = static_cast<int64_t>(divident / divisor);
         } else {
-            R[u.bits.rd] = 0;
+            R[u.bits.rd] = ~0ull;
         }
         return 4;
     }
@@ -220,10 +223,12 @@ public:
     virtual int exec(Reg64Type *payload) {
         ISA_R_type u;
         uint32_t tmp;
+        int32_t itmp;
         u.value = payload->buf32[0];
         tmp = static_cast<uint32_t>(R[u.bits.rs1])
             % static_cast<uint32_t>(R[u.bits.rs2]);
-        R[u.bits.rd] = static_cast<uint64_t>(static_cast<int64_t>(tmp));
+        itmp = static_cast<int32_t>(tmp);
+        R[u.bits.rd] = static_cast<uint64_t>(static_cast<int64_t>(itmp));
         return 4;
     }
 };

@@ -76,6 +76,8 @@ void IntMul::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 
         std::string pn(name());
         sc_trace(o_vcd, r.ena, pn + ".r_ena");
+        sc_trace(o_vcd, r.result, pn + ".r_result");
+        sc_trace(o_vcd, r.high, pn + ".r_high");
     }
 }
 

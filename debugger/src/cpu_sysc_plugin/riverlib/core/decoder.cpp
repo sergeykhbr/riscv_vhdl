@@ -513,13 +513,31 @@ void InstrDecoder::comb() {
                 }
                 break;
             case 0x1:
-                wb_dec[Instr_SLL] = 1;
+                if (wb_instr(31, 25) == 0x00) {
+                    wb_dec[Instr_SLL] = 1;
+                } else if (wb_instr(31, 25) == 0x01) {
+                    wb_dec[Instr_MULH] = 1;
+                } else {
+                    w_error = true;
+                }
                 break;
             case 0x2:
-                wb_dec[Instr_SLT] = 1;
+                if (wb_instr(31, 25) == 0x00) {
+                    wb_dec[Instr_SLT] = 1;
+                } else if (wb_instr(31, 25) == 0x01) {
+                    wb_dec[Instr_MULHSU] = 1;
+                } else {
+                    w_error = true;
+                }
                 break;
             case 0x3:
-                wb_dec[Instr_SLTU] = 1;
+                if (wb_instr(31, 25) == 0x00) {
+                    wb_dec[Instr_SLTU] = 1;
+                } else if (wb_instr(31, 25) == 0x01) {
+                    wb_dec[Instr_MULHU] = 1;
+                } else {
+                    w_error = true;
+                }
                 break;
             case 0x4:
                 if (wb_instr(31, 25) == 0x00) {

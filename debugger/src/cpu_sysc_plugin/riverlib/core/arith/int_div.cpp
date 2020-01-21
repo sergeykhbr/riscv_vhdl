@@ -64,6 +64,7 @@ IntDiv::IntDiv(sc_module_name name_, bool async_reset)
     sensitive << r.divisor_i;
     sensitive << r.divident_i;
     sensitive << r.bits_i;
+    sensitive << r.div_on_zero;
 
     SC_METHOD(registers);
     sensitive << i_nrst;
@@ -73,6 +74,7 @@ IntDiv::IntDiv(sc_module_name name_, bool async_reset)
 void IntDiv::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
         sc_trace(o_vcd, i_ena, i_ena.name());
+        sc_trace(o_vcd, i_unsigned, i_unsigned.name());
         sc_trace(o_vcd, o_res, o_res.name());
         sc_trace(o_vcd, o_valid, o_valid.name());
 
@@ -86,6 +88,7 @@ void IntDiv::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.divident_i, pn + ".r_divident_i");
         sc_trace(o_vcd, r.divisor_i, pn + ".r_divisor_i");
         sc_trace(o_vcd, r.bits_i, pn + ".r_bits_i");
+        sc_trace(o_vcd, r.div_on_zero, pn + ".r_div_on_zero");
     }
     stage0.generateVCD(i_vcd, o_vcd);
     stage1.generateVCD(i_vcd, o_vcd);
@@ -96,6 +99,8 @@ void IntDiv::comb() {
     bool w_invert32;
     sc_uint<64> wb_a1;
     sc_uint<64> wb_a2;
+    sc_uint<64> vb_rem;
+    sc_uint<64> vb_div;
 
     v = r;
 
@@ -130,6 +135,32 @@ void IntDiv::comb() {
 
     v.ena = (r.ena.read() << 1) | (i_ena & !r.busy);
 
+    if (r.invert.read()) {
+        vb_rem = ~r.divident_i.read().to_uint64() + 1;
+    } else {
+        vb_rem = r.divident_i.read();
+    }
+
+    if (r.invert.read()) {
+        vb_div = ~r.bits_i.read().to_uint64() + 1;
+    } else {
+        vb_div = r.bits_i.read();
+    }
+
+    // DIVW, DIVUW, REMW and REMUW sign-extended accordingly with 
+    // User Level ISA v2.2
+    if (r.rv32.read() == 1) {
+        vb_div(63, 32) = 0;
+        vb_rem(63, 32) = 0;
+        if (vb_div[31]) {
+            vb_div(63, 32) = ~0ull;
+        }
+        if (vb_rem[31]) {
+            vb_rem(63, 32) = ~0ull;
+        }
+    }
+
+
     if (i_ena.read() == 1) {
         v.busy = 1;
         v.rv32 = i_rv32;
@@ -148,25 +179,33 @@ void IntDiv::comb() {
         v.invert = (!i_rv32.read() && w_invert64) 
                 || (i_rv32.read() && w_invert32);
 
+        if (i_rv32.read() == 1) {
+            if (i_unsigned.read() == 1) {
+                v.div_on_zero = !i_a2.read()(31, 0).or_reduce();
+            } else {
+                v.div_on_zero = !i_a2.read()(30, 0).or_reduce();
+            }
+        } else {
+            if (i_unsigned.read() == 1) {
+                v.div_on_zero = !i_a2.read()(63, 0).or_reduce();
+            } else {
+                v.div_on_zero = !i_a2.read()(62, 0).or_reduce();
+            }
+        }
+
         v.a1_dbg = i_a1;
         v.a2_dbg = i_a2;
-        v.reference_div = compute_reference(i_unsigned.read(), i_rv32.read(),
-                                     i_residual.read(),
-                                     i_a1.read(), i_a2.read());
+        //v.reference_div = compute_reference(i_unsigned.read(), i_rv32.read(),
+        //                             i_residual.read(),
+        //                             i_a1.read(), i_a2.read());
     } else if (r.ena.read()[8]) {
         v.busy = 0;
         if (r.resid.read()) {
-            if (r.invert.read()) {
-                v.result = ~r.divident_i.read().to_uint64() + 1;
-            } else {
-                v.result = r.divident_i.read();
-            }
+            v.result = vb_rem;
+        } else if (r.div_on_zero.read() == 1) {
+            v.result = ~0ull;
         } else {
-            if (r.invert.read()) {
-                v.result = ~r.bits_i.read().to_uint64() + 1;
-            } else {
-                v.result = r.bits_i.read();
-            }
+            v.result = vb_div;
         }
     } else if (r.busy.read() == 1) {
         v.divident_i = wb_resid1_o;
@@ -186,7 +225,7 @@ void IntDiv::comb() {
 
 void IntDiv::registers() {
     // Debug purpose only"
-    if (v.ena.read()[9]) {
+    /*if (v.ena.read()[9]) {
         uint64_t t1 = v.result.read()(63,0).to_uint64();
         uint64_t t2 = r.reference_div.to_uint64();
         if (t1 != t2) {
@@ -200,7 +239,7 @@ void IntDiv::registers() {
             cout << tstr;
             cout.flush();
         }
-    }
+    }*/
 
     if (async_reset_ && i_nrst.read() == 0) {
         R_RESET(r);

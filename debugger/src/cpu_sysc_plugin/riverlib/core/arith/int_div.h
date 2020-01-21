@@ -58,6 +58,7 @@ private:
         sc_signal<bool> rv32;
         sc_signal<bool> resid;
         sc_signal<bool> invert;
+        sc_signal<bool> div_on_zero;
         sc_signal<bool> busy;
         sc_signal<sc_uint<10>> ena;
         sc_signal<sc_uint<64>> divident_i;
@@ -74,6 +75,7 @@ private:
         iv.rv32 = 0;
         iv.resid = 0;
         iv.invert = 0;
+        iv.div_on_zero = 0;
         iv.busy = 0;
         iv.ena = 0;
         iv.divident_i = 0;
