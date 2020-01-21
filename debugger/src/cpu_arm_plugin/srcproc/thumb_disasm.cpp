@@ -279,7 +279,12 @@ int disasm_thumb(uint64_t pc,
         }
         len = 4;
     } else if ((ti & 0x0000FF7F) == 0x0000F85F) {
-        // ret = T2_LDR_L
+        uint32_t t = (ti1 >> 12) & 0xF;
+        int32_t imm32 = static_cast<int32_t>(ti1 & 0xFFF);
+        bool add = (ti >> 7) & 1;
+        RISCV_sprintf(disasm, sz, "ldr.w    %s, [pc, #%d]",
+                IREGS_NAMES[t], 
+                add ? imm32: -imm32);
         len = 4;
     } else if ((ti & 0x0000FFF0) == 0x0000F8D0) {
         uint32_t t = (ti1 >> 12) & 0xf;
@@ -555,11 +560,23 @@ int disasm_thumb(uint64_t pc,
         RISCV_sprintf(disasm, sz, "ands     %s, %s",
                 IREGS_NAMES[dn],
                 IREGS_NAMES[m]);
+    } else if ((ti & 0xFFC0) == 0x4080) {
+        uint32_t dn = ti & 0x7;
+        uint32_t m = (ti >> 3) & 0x7;
+        RISCV_sprintf(disasm, sz, "lsls     %s, %s",
+                IREGS_NAMES[dn],
+                IREGS_NAMES[m]);
     } else if ((ti & 0xFFC0) == 0x40C0) {
         uint32_t dn = ti & 0x7;
         uint32_t m = (ti >> 3) & 0x7;
         RISCV_sprintf(disasm, sz, "lsrs     %s, %s",
                 IREGS_NAMES[dn],
+                IREGS_NAMES[m]);
+    } else if ((ti & 0xFFC0) == 0x4200) {
+        uint32_t n = ti  & 0x7;
+        uint32_t m = (ti >> 3)  & 0x7;
+        RISCV_sprintf(disasm, sz, "tsts     %s, %s",
+                IREGS_NAMES[n],
                 IREGS_NAMES[m]);
     } else if ((ti & 0xFFC0) == 0x4280) {
         uint32_t n = ti  & 0x7;
@@ -590,6 +607,13 @@ int disasm_thumb(uint64_t pc,
         uint32_t dn = (DN << 3) | (ti & 0x7);
         RISCV_sprintf(disasm, sz, "add      %s, %s",
                 IREGS_NAMES[dn],
+                IREGS_NAMES[m]);
+    } else if ((ti & 0xFF00) == 0x4500) {
+        uint32_t N = (ti >> 7) & 0x1;
+        uint32_t n = (N << 3) | (ti  & 0x7);
+        uint32_t m = (ti >> 3) & 0xF;
+        RISCV_sprintf(disasm, sz, "cmp      %s, %s",
+                IREGS_NAMES[n],
                 IREGS_NAMES[m]);
     } else if ((ti & 0xFF00) == 0x4600) {
         uint32_t D = (ti >> 7) & 1;

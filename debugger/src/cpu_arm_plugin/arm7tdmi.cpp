@@ -2056,6 +2056,41 @@ class CMP_R_T1 : public T1Instruction {
     }
 };
 
+class CMP_R_T2 : public T1Instruction {
+ public:
+    CMP_R_T2(CpuCortex_Functional *icpu) : T1Instruction(icpu, "CMP") {}
+
+    virtual int exec(Reg64Type *payload) {
+        if (!ConditionPassed()) {
+            return 2;
+        }
+        uint32_t ti = payload->buf16[0];
+        uint32_t carry;
+        uint32_t overflow;
+        uint32_t result;
+        uint32_t N = (ti >> 7) & 0x1;
+        uint32_t n = (N << 3) | (ti  & 0x7);
+        uint32_t m = (ti >> 3) & 0xF;
+
+        if (n < 8 && m < 8) {
+            RISCV_error("%s", "UNPREDICTABLE");
+        }
+        if (n == Reg_pc) {
+            RISCV_error("%s", "UNPREDICTABLE");
+        }
+
+        uint32_t shifted = static_cast<uint32_t>(R[m]); // no shifting
+        uint32_t Rn = static_cast<uint32_t>(R[n]);
+        result = AddWithCarry(Rn, ~shifted, 1, &overflow, &carry);
+
+        icpu_->setN((result >> 31) & 1);
+        icpu_->setZ(result == 0 ? 1: 0);
+        icpu_->setC(carry);
+        icpu_->setV(overflow);
+        return 2;
+    }
+};
+
 /** 4.6.31 CPS (Change Processor State) */
 class CPS_T1 : public T1Instruction {
  public:
@@ -2311,6 +2346,48 @@ class LDR_L_T1 : public T1Instruction {
     }
 };
 
+class LDR_L_T2 : public T1Instruction {
+ public:
+    LDR_L_T2(CpuCortex_Functional *icpu) : T1Instruction(icpu, "LDR.W") {}
+
+    virtual int exec(Reg64Type *payload) {
+        if (!ConditionPassed()) {
+            return 4;
+        }
+        uint32_t ti = payload->buf16[0];
+        uint32_t ti1 = payload->buf16[1];
+        uint32_t t = (ti1 >> 12) & 0xF;
+        uint32_t imm32 = ti1 & 0xFFF;
+        uint32_t base = static_cast<uint32_t>(icpu_->getPC()) + 4;
+        base &= ~0x3;  // Align(base, 4)
+        bool add = (ti >> 7) & 1;
+        uint64_t address;
+
+        if (t == Reg_pc && icpu_->InITBlock() && !icpu_->LastInITBlock()) {
+            RISCV_error("%s", "UNPREDICTABLE");
+        }
+        address = add ? base + imm32 : base - imm32;
+
+        trans_.addr = address;
+        trans_.action = MemAction_Read;
+        trans_.xsize = 4;
+        trans_.wstrb = 0;
+        icpu_->dma_memop(&trans_);
+
+        if (t == Reg_pc) {
+            if (address & 0x3) {
+                RISCV_error("%s", "UNPREDICTABLE");
+            } else {
+                LoadWritePC();
+            }
+        } else {
+            icpu_->setReg(t, trans_.rpayload.b32[0]);
+        }
+
+        return 4;
+    }
+};
+
 /** 4.6.45 LDR (register) */
 class LDR_R_T1 : public T1Instruction {
  public:
@@ -2534,6 +2611,36 @@ class LSL_I_T1 : public T1Instruction {
 };
 
 /** LSL (register) */
+class LSL_R_T1 : public T1Instruction {
+ public:
+    LSL_R_T1(CpuCortex_Functional *icpu) : T1Instruction(icpu, "LSLS") {}
+
+    virtual int exec(Reg64Type *payload) {
+        if (!ConditionPassed()) {
+            return 2;
+        }
+        uint32_t ti = payload->buf16[0];
+        uint32_t dn = ti & 0x7;
+        uint32_t m = (ti >> 3) & 0x7;
+        bool setflags = !icpu_->InITBlock();
+        uint32_t shift_n = static_cast<uint32_t>(R[m] & 0xFF);
+        uint32_t Rn = static_cast<uint32_t>(R[dn]);
+        uint32_t carry;
+        uint32_t result;
+
+        result = Shift_C(Rn, SRType_LSL, shift_n, icpu_->getC(), &carry);
+        icpu_->setReg(dn, result);
+
+        if (setflags) {
+            icpu_->setN((result >> 31) & 1);
+            icpu_->setZ(result == 0 ? 1: 0);
+            icpu_->setC(carry);
+            // V unchanged
+        }
+        return 2;
+    }
+};
+
 class LSL_R_T2 : public T1Instruction {
  public:
     LSL_R_T2(CpuCortex_Functional *icpu) : T1Instruction(icpu, "LSL.W") {}
@@ -3550,6 +3657,30 @@ class TST_I_T1 : public T1Instruction {
     }
 };
 
+/** 4.6.193 TST (register) */
+class TST_R_T1 : public T1Instruction {
+ public:
+    TST_R_T1(CpuCortex_Functional *icpu) : T1Instruction(icpu, "TSTS") {}
+
+    virtual int exec(Reg64Type *payload) {
+        if (!ConditionPassed()) {
+            return 2;
+        }
+        uint32_t ti = payload->buf16[0];
+        uint32_t n = ti  & 0x7;
+        uint32_t m = (ti >> 3)  & 0x7;
+        uint32_t Rn = static_cast<uint32_t>(R[n]);
+        uint32_t shifted = static_cast<uint32_t>(R[m]);
+        uint32_t result = Rn & shifted;
+
+        icpu_->setN((result >> 31) & 1);
+        icpu_->setZ(result == 0 ? 1: 0);
+        // C no shift, no change
+        // V unchanged
+        return 2;
+    }
+};
+
 /** 4.6.197 UBFX */
 class UBFX_T1 : public T1Instruction {
  public:
@@ -3748,6 +3879,7 @@ void CpuCortex_Functional::addArm7tmdiIsa() {
     isaTableArmV7_[T1_CMP_I] = new CMP_I_T1(this);
     isaTableArmV7_[T2_CMP_I] = new CMP_I_T2(this);
     isaTableArmV7_[T1_CMP_R] = new CMP_R_T1(this);
+    isaTableArmV7_[T2_CMP_R] = new CMP_R_T2(this);
     isaTableArmV7_[T1_CPS] = new CPS_T1(this);
     isaTableArmV7_[T1_IT] = new IT_T1(this);
     isaTableArmV7_[T1_LDR_I] = new LDR_I_T1(this);
@@ -3755,6 +3887,7 @@ void CpuCortex_Functional::addArm7tmdiIsa() {
     isaTableArmV7_[T3_LDR_I] = new LDR_I_T3(this);
     isaTableArmV7_[T4_LDR_I] = new LDR_I_T4(this);
     isaTableArmV7_[T1_LDR_L] = new LDR_L_T1(this);
+    isaTableArmV7_[T2_LDR_L] = new LDR_L_T2(this);
     isaTableArmV7_[T1_LDR_R] = new LDR_R_T1(this);
     isaTableArmV7_[T2_LDR_R] = new LDR_R_T2(this);
     isaTableArmV7_[T1_LDRB_I] = new LDRB_I_T1(this);
@@ -3762,6 +3895,7 @@ void CpuCortex_Functional::addArm7tmdiIsa() {
     isaTableArmV7_[T2_LDRB_R] = new LDRB_R_T2(this);
     isaTableArmV7_[T1_LDRSB_I] = new LDRSB_I_T1(this);
     isaTableArmV7_[T1_LSL_I] = new LSL_I_T1(this);
+    isaTableArmV7_[T1_LSL_R] = new LSL_R_T1(this);
     isaTableArmV7_[T2_LSL_R] = new LSL_R_T2(this);
     isaTableArmV7_[T1_LSR_I] = new LSR_I_T1(this);
     isaTableArmV7_[T1_LSR_R] = new LSR_R_T1(this);
@@ -3794,6 +3928,7 @@ void CpuCortex_Functional::addArm7tmdiIsa() {
     isaTableArmV7_[T1_SUB_SP] = new SUB_SP_T1(this);
     isaTableArmV7_[T1_TBB] = new TBB_T1(this);
     isaTableArmV7_[T1_TST_I] = new TST_I_T1(this);
+    isaTableArmV7_[T1_TST_R] = new TST_R_T1(this);
     isaTableArmV7_[T1_UBFX] = new UBFX_T1(this);
     isaTableArmV7_[T1_UDIV] = new UDIV_T1(this);
     isaTableArmV7_[T1_UMULL] = new UMULL_T1(this);

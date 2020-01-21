@@ -48,7 +48,7 @@ EIsaArmV7 decoder_thumb(uint32_t ti, uint32_t *tio,
     } else if ((ti & 0x8000FBEF) == 0x0000F1AD) {
         // T2_SUBSP_I
     } else if ((ti & 0x0000FF7F) == 0x0000F85F) {
-        // T2_LDR_L
+        ret = T2_LDR_L;
     } else if ((ti & 0x0F00FFF0) == 0x0E00F850) {
         // T1_LDRT
     } else if ((ti & 0x0D00FFF0) == 0x0800F850) {
@@ -131,8 +131,12 @@ EIsaArmV7 decoder_thumb(uint32_t ti, uint32_t *tio,
         ret = T2_MOV_R;
     } else if ((ti & 0xFFC0) == 0x4000) {
         ret = T1_AND_R;
+    } else if ((ti & 0xFFC0) == 0x4080) {
+        ret = T1_LSL_R;
     } else if ((ti & 0xFFC0) == 0x40C0) {
         ret = T1_LSR_R;
+    } else if ((ti & 0xFFC0) == 0x4200) {
+        ret = T1_TST_R;
     } else if ((ti & 0xFFC0) == 0x4280) {
         ret = T1_CMP_R;
     } else if ((ti & 0xFFC0) == 0x4340) {
@@ -143,6 +147,8 @@ EIsaArmV7 decoder_thumb(uint32_t ti, uint32_t *tio,
         ret = T1_SUB_SP;
     } else if ((ti & 0xFF00) == 0x4400) {
         ret = T2_ADD_R;
+    } else if ((ti & 0xFF00) == 0x4500) {
+        ret = T2_CMP_R;
     } else if ((ti & 0xFF00) == 0x4600) {
         ret = T1_MOV_R;
     } else if ((ti & 0xFF00) == 0xBF00) {

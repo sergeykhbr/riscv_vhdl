@@ -91,6 +91,7 @@ T1Instruction::T1Instruction(CpuCortex_Functional *icpu,
 
 bool T1Instruction::ConditionPassed() {
     if (icpu_->InITBlock()) {
+        return check_cond(icpu_, icpu_->ITBlockCondition());
     }
     return true;
 }

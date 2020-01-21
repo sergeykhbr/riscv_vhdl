@@ -121,8 +121,10 @@ void CpuCortex_Functional::reset(IFace *isource) {
     Axi4TransactionType tr;
     CpuGeneric::reset(isource);
     portRegs_.reset();
+    ITBlockEnabled = false;
+    ITBlockBaseCond_ = 0;
     ITBlockMask_ = 0;
-    ITBlockCnt_ = 0;
+    ITBlockCondition_ = Cond_AL;
 
     tr.action = MemAction_Read;
     tr.addr = resetVector_.to_uint64();
@@ -137,8 +139,49 @@ void CpuCortex_Functional::reset(IFace *isource) {
 }
 
 void CpuCortex_Functional::StartITBlock(uint32_t firstcond, uint32_t mask) {
-    ITBlockMask_ = mask;
-    ITBlockCond_[0] = firstcond;
+    // bf0c  : ite eq => eq ne
+    // bf14  : ite ne => ne eq
+    // bf16  : itet ne => ne eq ne
+
+    ITBlockBaseCond_ = firstcond;
+
+    uint32_t base0 = firstcond & 0x1;
+    uint32_t m3 = (mask >> 3) & 0x1;
+    uint32_t m2 = (mask >> 2) & 0x1;
+    uint32_t m1 = (mask >> 1) & 0x1;
+    
+    if ((mask & 0x7) == 0) {
+        // One instruction condition
+        ITBlockMask_ = (base0 << 4) | 0x8;
+    } else if ((mask & 0x3) == 0) {
+        // Two instructions condition
+        ITBlockMask_ = (base0 << 4) | (m3 << 3) | 0x4;
+    } else if ((mask & 0x1) == 0) {
+        // Three instructions condition
+        ITBlockMask_ = (base0 << 4) | (m3 << 3) | (m2 << 2) | 0x2;
+    } else {
+        // Four instructions condition
+        ITBlockMask_ = (base0 << 4) | (m3 << 3) | (m2 << 2) | (m1 << 2) | 0x1;
+    }
+    ITBlockCondition_ = firstcond;
+    ITBlockEnabled = true;
+}
+
+void CpuCortex_Functional::trackContextEnd() {
+    CpuGeneric::trackContextEnd();
+
+    if (ITBlockMask_ && !ITBlockEnabled) {
+        if (LastInITBlock()) {
+            // See table 2-1 shifting of IT execution stage
+            ITBlockMask_ = 0;
+            ITBlockCondition_ = Cond_AL;
+        } else {
+            ITBlockMask_ = ITBlockMask_ << 1;  // 5 bits field
+            ITBlockCondition_ =
+                (ITBlockBaseCond_ & ~0x1) | ((ITBlockMask_ >> 4) & 1);
+        }
+    }
+    ITBlockEnabled = false;     // Just to skip IT instruction
 }
 
 GenericInstruction *CpuCortex_Functional::decodeInstruction(Reg64Type *cache) {

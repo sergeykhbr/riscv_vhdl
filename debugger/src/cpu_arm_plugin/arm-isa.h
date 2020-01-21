@@ -523,6 +523,7 @@ enum EIsaArmV7 {
     T1_CMP_I,   // 4.6.29
     T2_CMP_I,   // 4.6.29
     T1_CMP_R,   // 4.6.30
+    T2_CMP_R,   // 4.6.30
     T1_CPS,     // 4.6.31
     T1_IT,      // 4.6.39
     T1_LDR_I,   // 4.6.43
@@ -530,6 +531,7 @@ enum EIsaArmV7 {
     T3_LDR_I,   // 4.6.43
     T4_LDR_I,   // 4.6.43
     T1_LDR_L,   // 4.6.44
+    T2_LDR_L,   // 4.6.44
     T1_LDR_R,   // 4.6.45
     T2_LDR_R,   // 4.6.45
     T1_LDRB_I,  // 4.6.46
@@ -537,6 +539,7 @@ enum EIsaArmV7 {
     T2_LDRB_R,  // 4.6.48
     T1_LDRSB_I, // 4.6.59
     T1_LSL_I,   // 4.6.68
+    T1_LSL_R,   // 4.6.69
     T2_LSL_R,   // 4.6.69
     T1_LSR_I,   // 4.6.70
     T1_LSR_R,   // 4.6.71
@@ -570,6 +573,7 @@ enum EIsaArmV7 {
     T1_SUB_SP,  // 4.6.178
     T1_TBB,     // 4.6.188
     T1_TST_I,   // 4.6.192
+    T1_TST_R,   // 4.6.193
     T1_UBFX,    // 4.6.197
     T1_UDIV,    // 4.6.198
     T1_UMULL,   // 4.6.207

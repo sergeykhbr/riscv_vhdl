@@ -78,7 +78,8 @@ class CpuCortex_Functional : public CpuGeneric,
 
     virtual void StartITBlock(uint32_t firstcond, uint32_t mask);
     virtual bool InITBlock() { return ITBlockMask_ != 0; }
-    virtual bool LastInITBlock() { return ITBlockMask_ == 0x8; }
+    virtual bool LastInITBlock() { return (ITBlockMask_ & 0xF) == 0x8; }
+    virtual uint32_t ITBlockCondition() { return ITBlockCondition_; }
 
     // CpuGeneric virtual methods:
     virtual uint64_t *getpRegs() { return portRegs_.getpR64(); }
@@ -90,7 +91,7 @@ class CpuCortex_Functional : public CpuGeneric,
     virtual GenericInstruction *decodeInstruction(Reg64Type *cache);
     virtual void generateIllegalOpcode();
     virtual void handleTrap();
-    /** // Stop tracking and write trace file */
+    virtual void trackContextEnd() override;
     virtual void traceOutput() override;
 
     void addArm7tmdiIsa();
@@ -117,10 +118,11 @@ class CpuCortex_Functional : public CpuGeneric,
 
     // CPSR contains fields IT[7:0]
     //     IT[7:5] = cond_base, when IT Block enabled, 4'b0000 otherwise
-    //     IT[4:0]
-    int ITBlockCnt_;
-    bool ITBlockCond_[4];
-    uint32_t ITBlockMask_;
+    //     IT[4:0] = ITBlockMask_
+    bool ITBlockEnabled;
+    uint32_t ITBlockCondition_ : 4;
+    uint32_t ITBlockBaseCond_ : 4;
+    uint32_t ITBlockMask_ : 5;
 };
 
 DECLARE_CLASS(CpuCortex_Functional)
