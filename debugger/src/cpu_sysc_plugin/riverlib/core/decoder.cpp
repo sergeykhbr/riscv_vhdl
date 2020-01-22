@@ -1064,7 +1064,8 @@ void InstrDecoder::comb() {
             v.memop_size = MEMOP_1B;
         }
         v.unsigned_op = (wb_dec[Instr_DIVU] | wb_dec[Instr_REMU] |
-                wb_dec[Instr_DIVUW] | wb_dec[Instr_REMUW]).to_bool() |
+                wb_dec[Instr_DIVUW] | wb_dec[Instr_REMUW] |
+                wb_dec[Instr_MULHU]).to_bool() |
                 wb_dec[Instr_FCVT_WU_D].to_bool() |
                 wb_dec[Instr_FCVT_LU_D].to_bool();
 

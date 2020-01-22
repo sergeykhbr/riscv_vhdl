@@ -181,6 +181,7 @@ private:
     sc_signal<bool> w_arith_valid[Multi_Total];
     sc_signal<bool> w_arith_busy[Multi_Total];
     sc_signal<bool> w_arith_residual_high;
+    sc_signal<bool> w_mul_hsu;
     sc_signal<sc_bv<Instr_FPU_Total>> wb_fpu_vec;
     bool w_exception_store;
     bool w_exception_load;

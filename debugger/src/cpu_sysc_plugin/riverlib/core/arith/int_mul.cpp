@@ -26,6 +26,7 @@ IntMul::IntMul(sc_module_name name_, bool async_reset) : sc_module(name_),
     i_nrst("i_nrst"),
     i_ena("i_ena"),
     i_unsigned("i_unsigned"),
+    i_hsu("i_hsu"),
     i_high("i_high"),
     i_rv32("i_rv32"),
     i_a1("i_a1"),
@@ -41,6 +42,7 @@ IntMul::IntMul(sc_module_name name_, bool async_reset) : sc_module(name_),
     sensitive << i_unsigned;
     sensitive << i_rv32;
     sensitive << i_high;
+    sensitive << i_hsu;
     sensitive << i_a1;
     sensitive << i_a2;
     sensitive << r.result;
@@ -70,6 +72,9 @@ void IntMul::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_a1, i_a1.name());
         sc_trace(o_vcd, i_a2, i_a2.name());
         sc_trace(o_vcd, i_ena, i_ena.name());
+        sc_trace(o_vcd, i_unsigned, i_unsigned.name());
+        sc_trace(o_vcd, i_high, i_high.name());
+        sc_trace(o_vcd, i_hsu, i_hsu.name());
         sc_trace(o_vcd, o_res, o_res.name());
         sc_trace(o_vcd, o_valid, o_valid.name());
         sc_trace(o_vcd, o_busy, o_busy.name());
@@ -78,6 +83,10 @@ void IntMul::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.ena, pn + ".r_ena");
         sc_trace(o_vcd, r.result, pn + ".r_result");
         sc_trace(o_vcd, r.high, pn + ".r_high");
+        sc_trace(o_vcd, r.zero, pn + ".r_zero");
+        sc_trace(o_vcd, r.inv, pn + ".r_inv");
+        sc_trace(o_vcd, r.a1, pn + ".r_a1");
+        sc_trace(o_vcd, r.a2, pn + ".r_a2");
     }
 }
 
@@ -89,13 +98,33 @@ void IntMul::comb() {
     sc_biguint<128> wb_lvl5;
     sc_biguint<128> wb_res32;
     sc_uint<64> wb_res;
+    sc_uint<64> vb_a1s;
+    sc_uint<64> vb_a2s;
+    bool v_a1s_nzero;
+    bool v_a2s_nzero;
 
     v = r;
+
+    v_a1s_nzero = i_a1.read()(62, 0).or_reduce();
+    if (v_a1s_nzero && i_a1.read()[63]) {
+        vb_a1s = ~i_a1.read() + 1;
+    } else {
+        vb_a1s = i_a1;
+    }
+
+    v_a2s_nzero = i_a2.read()(62, 0).or_reduce();
+    if (v_a2s_nzero && i_a2.read()[63]) {
+        vb_a2s = ~i_a2.read() + 1;
+    } else {
+        vb_a2s = i_a2;
+    }
 
     v.ena = (r.ena.read() << 1) | (i_ena & !r.busy);
 
     if (i_ena.read()) {
         v.busy = 1;
+        v.inv = 0;
+        v.zero = 0;
         if (i_rv32.read()) {
             v.a1 = i_a1.read()(31, 0);
             if (!i_unsigned.read() && i_a1.read()[31]) {
@@ -104,6 +133,21 @@ void IntMul::comb() {
             v.a2 = i_a2.read()(31, 0);
             if (!i_unsigned.read() && i_a2.read()[31]) {
                 v.a2(63, 32) = ~0;
+            }
+        } else if (i_high.read() == 1) {
+            if (i_hsu.read() == 1) {
+                v.zero = !v_a1s_nzero || !i_a2.read().or_reduce();
+                v.inv = i_a1.read()[63];
+                v.a1 = vb_a1s;
+                v.a2 = i_a2;
+            } else if (i_unsigned.read() == 1) {
+                v.a1 = i_a1;
+                v.a2 = i_a2;
+            } else {
+                v.zero = !v_a1s_nzero || !v_a2s_nzero;
+                v.inv = i_a1.read()[63] ^ i_a2.read()[63];
+                v.a1 = vb_a1s;
+                v.a2 = vb_a2s;
             }
         } else {
             v.a1 = i_a1;
@@ -172,6 +216,14 @@ void IntMul::comb() {
                 wb_res32(127, 32) = ~0;
             }
             v.result = wb_res32;
+        } else if (r.high.read() == 1) {
+            if (r.zero.read() == 1) {
+                v.result = 0;
+            } else if (r.inv.read() == 1) {
+                v.result = ~wb_lvl5;
+            } else {
+                v.result = wb_lvl5;
+            }
         } else {
             v.result = wb_lvl5;
         }
@@ -179,7 +231,7 @@ void IntMul::comb() {
 
     wb_res = r.result.read()(63, 0);
     if (r.high.read()) {
-        wb_res = r.result.read()(127, 64);  // not tested yet
+        wb_res = r.result.read()(127, 64);
     }
 
     if (!async_reset_ && i_nrst.read() == 0) {

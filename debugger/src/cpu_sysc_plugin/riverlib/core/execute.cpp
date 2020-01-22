@@ -177,8 +177,9 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     mul0->i_nrst(i_nrst);
     mul0->i_ena(w_arith_ena[Multi_MUL]);
     mul0->i_unsigned(i_unsigned_op);
-    mul0->i_rv32(i_rv32);
+    mul0->i_hsu(w_mul_hsu);
     mul0->i_high(w_arith_residual_high);
+    mul0->i_rv32(i_rv32);
     mul0->i_a1(wb_rdata1);
     mul0->i_a2(wb_rdata2);
     mul0->o_res(wb_arith_res.arr[Multi_MUL]);
@@ -459,6 +460,7 @@ void InstrExecute::comb() {
                           || wv[Instr_REMW] || wv[Instr_REMUW]
                           || wv[Instr_MULH] || wv[Instr_MULHSU] || wv[Instr_MULHU]);
 
+    w_mul_hsu = wv[Instr_MULHSU].to_bool();
 
     v_multi_ena = v_next_mul_ready || v_next_div_ready || v_next_fpu_ready;
 

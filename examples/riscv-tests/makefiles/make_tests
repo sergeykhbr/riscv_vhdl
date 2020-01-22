@@ -61,16 +61,15 @@ SOURCE_64UI = \
 	sub subw \
 	xor xori
 
-# do not test: mulh mulhsu mulhu
 SOURCE_64UM = \
 	div divu divuw divw \
-	mul mulw \
+	mul mulw mulhsu mulhu mulh \
 	rem remu remuw remw
 
 SOURCE_64UC = \
 	rvc
 
-SOURCES = mulhu $(SOURCE_64UI) $(SOURCE_64UC) $(SOURCE_64UM) \
+SOURCES = $(SOURCE_64UI) $(SOURCE_64UC) $(SOURCE_64UM) \
 	passfail
 
 

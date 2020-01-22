@@ -161,31 +161,116 @@ class MULH : public RiscvInstruction {
         u.value = payload->buf32[0];
         uint64_t a1 = R[u.bits.rs1];
         uint64_t a2 = R[u.bits.rs2];
+        uint64_t a1s = a1;
+        uint64_t a2s = a2;
+        bool inva1 = 0;
+        bool inva2 = 0;
+        bool zero;
+        bool inv;
+        if ((a1 >> 63) && (a1 << 1)) {  // not -0
+            a1s = ~a1 + 1;
+            inva1 = true;
+        }
+        if ((a2 >> 63) && (a2 << 1)) {  // not -0
+            a2s = ~a2 + 1;
+            inva2 = true;
+        }
+        zero = a1s == 0 || a2s == 0;
+        inv = inva1 ^ inva2;
 
-        uint64_t lvl1[2];
-        uint64_t lvl2[2];
-        uint64_t L = (a1 & 0xFFFFFFFFull) * (a2 & 0xFFFFFFFFull);
-        uint64_t M = (a1 >> 32) * (a2 & 0xFFFFFFFFull);
+        struct LevelType {
+            uint64_t val[2];
+        };
+        LevelType lvl0[32];
+        LevelType lvl1[16];
+        LevelType lvl2[8];
+        LevelType lvl3[4];
+        LevelType lvl4[2];
+        LevelType lvl5;
+        uint64_t carry;
+        uint64_t msb1, msb2, msbres;
+        for (int i = 0; i < 32; i++) {
+            switch ((a2s >> 2*i) & 0x3) {
+            case 0:
+                lvl0[i].val[0] = 0;
+                lvl0[i].val[1] = 0;
+                break;
+            case 1:
+                lvl0[i].val[0] = a1s;
+                lvl0[i].val[1] = 0;
+                break;
+            case 2:
+                lvl0[i].val[0] = a1s << 1;
+                lvl0[i].val[1] = a1s >> 63;
+                break;
+            case 3:
+                lvl0[i].val[0] = (a1s << 1) + a1s;
+                // (a1[63] & a2[63]) | (a1[63] & !res[63])
+                msb1 = (a1s >> 62) & 1;
+                msb2 = (a1s >> 63) & 1;
+                msbres = lvl0[i].val[0] >> 63;
+                carry = (msb1 & msb2) | ((msb1 | msb2) & !msbres);
+                lvl0[i].val[1] = (a1s >> 63) + carry;
+                break;
+            default:;
+            }
+        }
 
-        lvl1[0] = L & 0xFFFFFFFFul;
-        lvl1[0] |= (((M & 0xFFFFFFFFul) + (L >> 32)) << 32);
-        lvl1[1] = (((M & 0xFFFFFFFFul) + (L >> 32)) >> 32);   // carry bits
+        for (int i = 0; i < 16; i++) {
+            lvl1[i].val[0] = (lvl0[2*i+1].val[0] << 2) + lvl0[2*i].val[0];
+            msb1 = (lvl0[2*i+1].val[0] >> 61) & 1;
+            msb2 = (lvl0[2*i].val[0] >> 63) & 1;
+            msbres = lvl1[i].val[0] >> 63;
+            carry = (msb1 & msb2) | ((msb1 | msb2) & !msbres);
+            lvl1[i].val[1] = (lvl0[2*i+1].val[1] << 2) | (lvl0[2*i+1].val[0] >> 62);
+            lvl1[i].val[1] += lvl0[2*i].val[1] + carry;
+        }
 
-        L = (a1 & 0xFFFFFFFFull) * (a2 >> 32);
-        M = (a1 >> 32) * (a2 >> 32);
-        lvl2[0] = L & 0xFFFFFFFFul;
-        lvl2[0] |= (((M & 0xFFFFFFFFul) + (L >> 32)) << 32);
-        lvl2[1] = (((M & 0xFFFFFFFFul) + (L >> 32)) >> 32);   // carry bits
+        for (int i = 0; i < 8; i++) {
+            lvl2[i].val[0] = (lvl1[2*i+1].val[0] << 4) + lvl1[2*i].val[0];
+            msb1 = (lvl1[2*i+1].val[0] >> 59) & 1;
+            msb2 = (lvl1[2*i].val[0] >> 63) & 1;
+            msbres = lvl2[i].val[0] >> 63;
+            carry = (msb1 & msb2) | ((msb1 | msb2) & !msbres);
+            lvl2[i].val[1] = (lvl1[2*i+1].val[1] << 4) | (lvl1[2*i+1].val[0] >> 60);
+            lvl2[i].val[1] += lvl1[2*i].val[1] + carry;
+        }
 
-        uint64_t tsum;
-        uint64_t lsb = lvl1[0] & 0xFFFFFFFFul;
-        tsum = (lvl1[0] >> 32) + (lvl2[0] & 0xFFFFFFFFul);
-        lsb |= tsum << 32;
-        uint64_t msb = tsum >> 32;
-        msb += lvl1[1] + (lvl2[0] >> 32);
-        msb += lvl2[1] << 32;
+        for (int i = 0; i < 4; i++) {
+            lvl3[i].val[0] = (lvl2[2*i+1].val[0] << 8) + lvl2[2*i].val[0];
+            msb1 = (lvl2[2*i+1].val[0] >> 55) & 1;
+            msb2 = (lvl2[2*i].val[0] >> 63) & 1;
+            msbres = lvl3[i].val[0] >> 63;
+            carry = (msb1 & msb2) | ((msb1 | msb2) & !msbres);
+            lvl3[i].val[1] = (lvl2[2*i+1].val[1] << 8) | (lvl2[2*i+1].val[0] >> 56);
+            lvl3[i].val[1] += lvl2[2*i].val[1] + carry;
+        }
 
-        res = msb;
+        for (int i = 0; i < 2; i++) {
+            lvl4[i].val[0] = (lvl3[2*i+1].val[0] << 16) + lvl3[2*i].val[0];
+            msb1 = (lvl3[2*i+1].val[0] >> 47) & 1;
+            msb2 = (lvl3[2*i].val[0] >> 63) & 1;
+            msbres = lvl4[i].val[0] >> 63;
+            carry = (msb1 & msb2) | ((msb1 | msb2) & !msbres);
+            lvl4[i].val[1] = (lvl3[2*i+1].val[1] << 16) | (lvl3[2*i+1].val[0] >> 48);
+            lvl4[i].val[1] += lvl3[2*i].val[1] + carry;
+        }
+
+        lvl5.val[0] = (lvl4[1].val[0] << 32) + lvl4[0].val[0];
+        msb1 = (lvl4[1].val[0] >> 31) & 1;
+        msb2 = (lvl4[0].val[0] >> 63) & 1;
+        msbres = lvl5.val[0] >> 63;
+        carry = (msb1 & msb2) | ((msb1 | msb2) & !msbres);
+        lvl5.val[1] = (lvl4[1].val[1] << 32) | (lvl4[1].val[0] >> 32);
+        lvl5.val[1] += lvl4[0].val[1] + carry;
+
+        if (zero) {
+            res = 0;
+        } else if (inv) {
+            res = ~lvl5.val[1];
+        } else {
+            res = lvl5.val[1];
+        }
         icpu_->setReg(u.bits.rd, static_cast<uint64_t>(res));
         return 4;
     }
@@ -202,6 +287,14 @@ class MULHSU : public RiscvInstruction {
         u.value = payload->buf32[0];
         uint64_t a1 = R[u.bits.rs1];
         uint64_t a2 = R[u.bits.rs2];
+        uint64_t a1s = a1;
+        bool inv = 0;
+        bool zero;
+        if ((a1 >> 63) && (a1 << 1)) {  // not -0
+            a1s = ~a1 + 1;
+            inv = true;
+        }
+        zero = a1s == 0 || a2 == 0;
 
         struct LevelType {
             uint64_t val[2];
@@ -213,6 +306,7 @@ class MULHSU : public RiscvInstruction {
         LevelType lvl4[2];
         LevelType lvl5;
         uint64_t carry;
+        uint64_t msb1, msb2, msbres;
         for (int i = 0; i < 32; i++) {
             switch ((a2 >> 2*i) & 0x3) {
             case 0:
@@ -220,17 +314,21 @@ class MULHSU : public RiscvInstruction {
                 lvl0[i].val[1] = 0;
                 break;
             case 1:
-                lvl0[i].val[0] = a1;
+                lvl0[i].val[0] = a1s;
                 lvl0[i].val[1] = 0;
                 break;
             case 2:
-                lvl0[i].val[0] = a1 << 1;
-                lvl0[i].val[1] = a1 >> 63;
+                lvl0[i].val[0] = a1s << 1;
+                lvl0[i].val[1] = a1s >> 63;
                 break;
             case 3:
-                lvl0[i].val[0] = (a1 << 1) + a1;
-                carry = ((a1 >> 62) & 1) & !(lvl0[i].val[0] >> 63);
-                lvl0[i].val[1] = (a1 >> 63) + carry;
+                lvl0[i].val[0] = (a1s << 1) + a1s;
+                // (a1[63] & a2[63]) | (a1[63] & !res[63])
+                msb1 = (a1s >> 62) & 1;
+                msb2 = (a1s >> 63) & 1;
+                msbres = lvl0[i].val[0] >> 63;
+                carry = (msb1 & msb2) | ((msb1 | msb2) & !msbres);
+                lvl0[i].val[1] = (a1s >> 63) + carry;
                 break;
             default:;
             }
@@ -238,38 +336,59 @@ class MULHSU : public RiscvInstruction {
 
         for (int i = 0; i < 16; i++) {
             lvl1[i].val[0] = (lvl0[2*i+1].val[0] << 2) + lvl0[2*i].val[0];
-            carry = ((lvl0[2*i+1].val[0] >> 61) & 1) & !(lvl1[i].val[0] >> 63);
+            msb1 = (lvl0[2*i+1].val[0] >> 61) & 1;
+            msb2 = (lvl0[2*i].val[0] >> 63) & 1;
+            msbres = lvl1[i].val[0] >> 63;
+            carry = (msb1 & msb2) | ((msb1 | msb2) & !msbres);
             lvl1[i].val[1] = (lvl0[2*i+1].val[1] << 2) | (lvl0[2*i+1].val[0] >> 62);
-            lvl1[i].val[1] += lvl1[2*i].val[1] + carry;
+            lvl1[i].val[1] += lvl0[2*i].val[1] + carry;
         }
 
         for (int i = 0; i < 8; i++) {
             lvl2[i].val[0] = (lvl1[2*i+1].val[0] << 4) + lvl1[2*i].val[0];
-            carry = ((lvl1[2*i+1].val[0] >> 59) & 1) & !(lvl2[i].val[0] >> 63);
+            msb1 = (lvl1[2*i+1].val[0] >> 59) & 1;
+            msb2 = (lvl1[2*i].val[0] >> 63) & 1;
+            msbres = lvl2[i].val[0] >> 63;
+            carry = (msb1 & msb2) | ((msb1 | msb2) & !msbres);
             lvl2[i].val[1] = (lvl1[2*i+1].val[1] << 4) | (lvl1[2*i+1].val[0] >> 60);
             lvl2[i].val[1] += lvl1[2*i].val[1] + carry;
         }
 
         for (int i = 0; i < 4; i++) {
             lvl3[i].val[0] = (lvl2[2*i+1].val[0] << 8) + lvl2[2*i].val[0];
-            carry = ((lvl2[2*i+1].val[0] >> 55) & 1) & !(lvl3[i].val[0] >> 63);
+            msb1 = (lvl2[2*i+1].val[0] >> 55) & 1;
+            msb2 = (lvl2[2*i].val[0] >> 63) & 1;
+            msbres = lvl3[i].val[0] >> 63;
+            carry = (msb1 & msb2) | ((msb1 | msb2) & !msbres);
             lvl3[i].val[1] = (lvl2[2*i+1].val[1] << 8) | (lvl2[2*i+1].val[0] >> 56);
             lvl3[i].val[1] += lvl2[2*i].val[1] + carry;
         }
 
         for (int i = 0; i < 2; i++) {
             lvl4[i].val[0] = (lvl3[2*i+1].val[0] << 16) + lvl3[2*i].val[0];
-            carry = ((lvl3[2*i+1].val[0] >> 47) & 1) & !(lvl4[i].val[0] >> 63);
+            msb1 = (lvl3[2*i+1].val[0] >> 47) & 1;
+            msb2 = (lvl3[2*i].val[0] >> 63) & 1;
+            msbres = lvl4[i].val[0] >> 63;
+            carry = (msb1 & msb2) | ((msb1 | msb2) & !msbres);
             lvl4[i].val[1] = (lvl3[2*i+1].val[1] << 16) | (lvl3[2*i+1].val[0] >> 48);
             lvl4[i].val[1] += lvl3[2*i].val[1] + carry;
         }
 
         lvl5.val[0] = (lvl4[1].val[0] << 32) + lvl4[0].val[0];
-        carry = ((lvl4[1].val[0] >> 31) & 1) & !(lvl5.val[0] >> 63);
+        msb1 = (lvl4[1].val[0] >> 31) & 1;
+        msb2 = (lvl4[0].val[0] >> 63) & 1;
+        msbres = lvl5.val[0] >> 63;
+        carry = (msb1 & msb2) | ((msb1 | msb2) & !msbres);
         lvl5.val[1] = (lvl4[1].val[1] << 32) | (lvl4[1].val[0] >> 32);
         lvl5.val[1] += lvl4[0].val[1] + carry;
 
-        res = lvl5.val[1];
+        if (zero) {
+            res = 0;
+        } else if (inv) {
+            res = ~lvl5.val[1];
+        } else {
+            res = lvl5.val[1];
+        }
         icpu_->setReg(u.bits.rd, static_cast<uint64_t>(res));
         return 4;
     }

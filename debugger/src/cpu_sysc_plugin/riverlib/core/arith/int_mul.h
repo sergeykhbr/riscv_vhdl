@@ -29,6 +29,7 @@ SC_MODULE(IntMul) {
     sc_in<bool> i_nrst;
     sc_in<bool> i_ena;                      // Enable bit
     sc_in<bool> i_unsigned;                 // Unsigned operands
+    sc_in<bool> i_hsu;                      // MULHSU instruction: signed * unsigned
     sc_in<bool> i_high;                     // High multiplied bits [127:64]
     sc_in<bool> i_rv32;                     // 32-bits operands enabled
     sc_in<sc_uint<RISCV_ARCH>> i_a1;        // Operand 1
@@ -77,6 +78,8 @@ private:
         sc_signal<bool> unsign;
         sc_signal<bool> high;
         sc_signal<bool> rv32;
+        sc_signal<bool> zero;
+        sc_signal<bool> inv;
         sc_signal<sc_biguint<128>> result;
 
         sc_uint<RISCV_ARCH> a1_dbg;
@@ -97,6 +100,8 @@ private:
         iv.high = 0;
         iv.rv32 = 0;
         iv.result = 0;
+        iv.zero = 0;
+        iv.inv = 0;
         iv.reference_mul = 0;
     }
 
