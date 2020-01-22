@@ -2165,6 +2165,61 @@ class IT_T1 : public T1Instruction {
     }
 };
 
+/** 4.6.42 LDMIA Load Multiple Increment After Load */
+class LDMIA_T2 : public T1Instruction {
+ public:
+    LDMIA_T2(CpuCortex_Functional *icpu) : T1Instruction(icpu, "LDMIA.W") {}
+
+    virtual int exec(Reg64Type *payload) {
+        if (!ConditionPassed()) {
+            return 4;
+        }
+        uint32_t ti = payload->buf16[0];
+        uint32_t ti1 = payload->buf16[1];
+        uint32_t n = ti & 0xF;
+        uint32_t P = (ti1 >> 15) & 1;
+        uint32_t M = (ti1 >> 14) & 1;
+        uint32_t register_list = ti1 & 0xDFFF;
+        uint32_t address = static_cast<uint32_t>(R[n]);
+        uint32_t BitCnt = 0;
+        uint32_t wback = (ti >> 5) & 1;
+
+        if (n == Reg_pc) {
+            RISCV_error("%s", "UNPREDICTABLE");
+        }
+        if (P == 1 && M == 1) {
+            RISCV_error("%s", "UNPREDICTABLE");
+        }
+        if (P == 1 && icpu_->InITBlock() && !icpu_->LastInITBlock()) {
+            RISCV_error("%s", "UNPREDICTABLE");
+        }
+        trans_.action = MemAction_Read;
+        trans_.xsize = 4;
+        trans_.wstrb = 0;
+
+        for (int i = 0; i < Reg_pc; i++) {
+            if (register_list & (1ul << i)) {
+                trans_.addr = address;
+                icpu_->dma_memop(&trans_);
+                if (!(i == n && wback)) {
+                    icpu_->setReg(i, trans_.rpayload.b32[0]);
+                } else {
+                    // R[i] set earlier to be bits[32] UNKNOWN
+                }
+                address += 4;
+            }
+        }
+        if (ti & (1ul << Reg_pc)) {
+            LoadWritePC(address);
+            address += 4;
+        }
+        if (wback) {
+            icpu_->setReg(n, address);
+        }
+        return 4;
+    }
+};
+
 /** 4.6.43 LDR (immediate) */
 class LDR_I_T1 : public T1Instruction {
  public:
@@ -2177,21 +2232,21 @@ class LDR_I_T1 : public T1Instruction {
         uint32_t instr = payload->buf16[0];
         uint32_t t = instr & 0x7;
         uint32_t n = (instr >> 3) & 0x7;
-        uint64_t imm32 = ((instr >> 6) & 0x1F) << 2;
-
-        trans_.addr = R[n] + imm32;
-        trans_.action = MemAction_Read;
-        trans_.xsize = 4;
-        trans_.wstrb = 0;
-        icpu_->dma_memop(&trans_);
+        uint32_t imm32 = ((instr >> 6) & 0x1F) << 2;
+        uint32_t address = static_cast<uint32_t>(R[n]) + imm32;
 
         if (t == Reg_pc) {
             if (trans_.addr & 0x3) {
                 RISCV_error("%s", "UNPREDICTABLE");
             } else {
-                LoadWritePC();
+                LoadWritePC(address);
             }
         } else {
+            trans_.addr = address;
+            trans_.action = MemAction_Read;
+            trans_.xsize = 4;
+            trans_.wstrb = 0;
+            icpu_->dma_memop(&trans_);
             icpu_->setReg(t, trans_.rpayload.b32[0]);
         }
 
@@ -2236,25 +2291,24 @@ class LDR_I_T3 : public T1Instruction {
         uint32_t t = (ti1 >> 12) & 0xf;
         uint32_t n = ti & 0xF;
         uint32_t imm32 = ti1 & 0xFFF;
-        uint32_t Rn = static_cast<uint32_t>(R[n]);
+        uint32_t address = static_cast<uint32_t>(R[n]) + imm32;
 
         if (t == Reg_pc && icpu_->InITBlock() && !icpu_->LastInITBlock()) {
             RISCV_error("%s", "UNPREDICTABLE");
         }
 
-        trans_.addr = Rn + imm32;
-        trans_.action = MemAction_Read;
-        trans_.xsize = 4;
-        trans_.wstrb = 0;
-        icpu_->dma_memop(&trans_);
-
         if (t == Reg_pc) {
             if (trans_.addr & 0x3) {
                 RISCV_error("%s", "UNPREDICTABLE");
             } else {
-                LoadWritePC();
+                LoadWritePC(address);
             }
         } else {
+            trans_.addr = address;
+            trans_.action = MemAction_Read;
+            trans_.xsize = 4;
+            trans_.wstrb = 0;
+            icpu_->dma_memop(&trans_);
             icpu_->setReg(t, trans_.rpayload.b32[0]);
         }
         return 4;
@@ -2287,23 +2341,23 @@ class LDR_I_T4 : public T1Instruction {
         }
 
         uint32_t offset_addr = add ? Rn + imm32 : Rn - imm32;
-        trans_.addr = index ? offset_addr : Rn;
+        uint32_t address = index ? offset_addr : Rn;
         if (wback) {
             icpu_->setReg(n, offset_addr);
         }
-
-        trans_.action = MemAction_Read;
-        trans_.xsize = 4;
-        trans_.wstrb = 0;
-        icpu_->dma_memop(&trans_);
 
         if (t == Reg_pc) {
             if (trans_.addr & 0x3) {
                 RISCV_error("%s", "UNPREDICTABLE");
             } else {
-                LoadWritePC();
+                LoadWritePC(address);
             }
         } else {
+            trans_.action = MemAction_Read;
+            trans_.addr = address;
+            trans_.xsize = 4;
+            trans_.wstrb = 0;
+            icpu_->dma_memop(&trans_);
             icpu_->setReg(t, trans_.rpayload.b32[0]);
         }
         return 4;
@@ -2321,24 +2375,23 @@ class LDR_L_T1 : public T1Instruction {
         }
         uint32_t ti = payload->buf16[0];
         uint32_t t = (ti >> 8) & 0x7;
-        uint64_t imm8 = (ti & 0xFF) << 2;
-        uint64_t base = icpu_->getPC() + 4;
+        uint32_t imm8 = (ti & 0xFF) << 2;
+        uint32_t base = static_cast<uint32_t>(icpu_->getPC()) + 4;
         base &= ~0x3;  // Align(base, 4)
-        uint64_t address = base + imm8;
-
-        trans_.addr = address;
-        trans_.action = MemAction_Read;
-        trans_.xsize = 4;
-        trans_.wstrb = 0;
-        icpu_->dma_memop(&trans_);
+        uint32_t address = base + imm8;
 
         if (t == Reg_pc) {
             if (address & 0x3) {
                 RISCV_error("%s", "UNPREDICTABLE");
             } else {
-                LoadWritePC();
+                LoadWritePC(address);
             }
         } else {
+            trans_.addr = address;
+            trans_.action = MemAction_Read;
+            trans_.xsize = 4;
+            trans_.wstrb = 0;
+            icpu_->dma_memop(&trans_);
             icpu_->setReg(t, trans_.rpayload.b32[0]);
         }
 
@@ -2361,26 +2414,25 @@ class LDR_L_T2 : public T1Instruction {
         uint32_t base = static_cast<uint32_t>(icpu_->getPC()) + 4;
         base &= ~0x3;  // Align(base, 4)
         bool add = (ti >> 7) & 1;
-        uint64_t address;
+        uint32_t address;
 
         if (t == Reg_pc && icpu_->InITBlock() && !icpu_->LastInITBlock()) {
             RISCV_error("%s", "UNPREDICTABLE");
         }
         address = add ? base + imm32 : base - imm32;
 
-        trans_.addr = address;
-        trans_.action = MemAction_Read;
-        trans_.xsize = 4;
-        trans_.wstrb = 0;
-        icpu_->dma_memop(&trans_);
-
         if (t == Reg_pc) {
             if (address & 0x3) {
                 RISCV_error("%s", "UNPREDICTABLE");
             } else {
-                LoadWritePC();
+                LoadWritePC(address);
             }
         } else {
+            trans_.addr = address;
+            trans_.action = MemAction_Read;
+            trans_.xsize = 4;
+            trans_.wstrb = 0;
+            icpu_->dma_memop(&trans_);
             icpu_->setReg(t, trans_.rpayload.b32[0]);
         }
 
@@ -2440,19 +2492,18 @@ class LDR_R_T2 : public T1Instruction {
         uint32_t address = static_cast<uint32_t>(R[n])
                          + LSL_C(static_cast<uint32_t>(R[m]), shift_n, &c_out);
 
-        trans_.addr = address;
-        trans_.action = MemAction_Read;
-        trans_.xsize = 4;
-        trans_.wstrb = 0;
-        icpu_->dma_memop(&trans_);
-
         if (t == Reg_pc) {
             if (address & 0x3) {
                 RISCV_error("%s", "UNPREDICTABLE");
             } else {
-                LoadWritePC();
+                LoadWritePC(address);
             }
         } else {
+            trans_.addr = address;
+            trans_.action = MemAction_Read;
+            trans_.xsize = 4;
+            trans_.wstrb = 0;
+            icpu_->dma_memop(&trans_);
             icpu_->setReg(t, trans_.rpayload.b32[0]);
         }
         return 4;
@@ -3045,15 +3096,52 @@ class POP_T1 : public T1Instruction {
             }
         }
         if (instr & 0x100) {
-            trans_.addr = address;
-            icpu_->dma_memop(&trans_);
-
-            LoadWritePC();
+            LoadWritePC(address);
             address += 4;
         }
 
         icpu_->setReg(Reg_sp, address);
         return 2;
+    }
+};
+
+class POP_T2 : public T1Instruction {
+ public:
+    POP_T2(CpuCortex_Functional *icpu) : T1Instruction(icpu, "POP.W") {}
+
+    virtual int exec(Reg64Type *payload) {
+        if (!ConditionPassed()) {
+            return 4;
+        }
+        uint32_t ti = payload->buf16[0];
+        uint32_t ti1 = payload->buf16[1];
+        uint32_t P = (ti1 >> 15) & 1;
+        uint32_t M = (ti1 >> 14) & 1;
+        uint32_t register_list = ti1 & 0xDFFF;
+        uint32_t address = static_cast<uint32_t>(R[Reg_sp]);
+        uint32_t BitCnt = 0;
+
+        if (P == 1 && M == 1) {
+            RISCV_error("%s", "UNPREDICTABLE");
+        }
+        trans_.action = MemAction_Read;
+        trans_.xsize = 4;
+        trans_.wstrb = 0;
+
+        for (int i = 0; i < Reg_pc; i++) {
+            if (register_list & (1ul << i)) {
+                trans_.addr = address;
+                icpu_->dma_memop(&trans_);
+                icpu_->setReg(i, trans_.rpayload.b32[0]);
+                address += 4;
+            }
+        }
+        if (ti & (1ul << Reg_pc)) {
+            LoadWritePC(address);
+            address += 4;
+        }
+        icpu_->setReg(Reg_sp, address);
+        return 4;
     }
 };
 
@@ -3882,6 +3970,7 @@ void CpuCortex_Functional::addArm7tmdiIsa() {
     isaTableArmV7_[T2_CMP_R] = new CMP_R_T2(this);
     isaTableArmV7_[T1_CPS] = new CPS_T1(this);
     isaTableArmV7_[T1_IT] = new IT_T1(this);
+    isaTableArmV7_[T2_LDMIA] = new LDMIA_T2(this);
     isaTableArmV7_[T1_LDR_I] = new LDR_I_T1(this);
     isaTableArmV7_[T2_LDR_I] = new LDR_I_T2(this);
     isaTableArmV7_[T3_LDR_I] = new LDR_I_T3(this);
@@ -3909,6 +3998,7 @@ void CpuCortex_Functional::addArm7tmdiIsa() {
     isaTableArmV7_[T2_MUL] = new MUL_T2(this);
     isaTableArmV7_[T1_NOP] = new NOP_T1(this);
     isaTableArmV7_[T1_POP] = new POP_T1(this);
+    isaTableArmV7_[T2_POP] = new POP_T2(this);
     isaTableArmV7_[T1_PUSH] = new PUSH_T1(this);
     isaTableArmV7_[T1_ORR_I] = new ORR_I_T1(this);
     isaTableArmV7_[T1_SDIV] = new SDIV_T1(this);

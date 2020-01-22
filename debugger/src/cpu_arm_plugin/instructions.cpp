@@ -326,8 +326,15 @@ void T1Instruction::ALUWritePC(uint32_t npc) {
     icpu_->setBranch(npc);
 }
 
-void T1Instruction::LoadWritePC() {
-    uint32_t npc = trans_.rpayload.b32[0];
+void T1Instruction::LoadWritePC(uint32_t address) {
+    uint32_t npc;
+    trans_.action = MemAction_Read;
+    trans_.addr = address;
+    trans_.xsize = 4;
+    trans_.wstrb = 0;
+    icpu_->dma_memop(&trans_);
+
+    npc = trans_.rpayload.b32[0];
     if (npc & 0x1) {
         icpu_->setInstrMode(THUMB_mode);
         npc &= ~0x1ul;

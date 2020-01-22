@@ -526,6 +526,7 @@ enum EIsaArmV7 {
     T2_CMP_R,   // 4.6.30
     T1_CPS,     // 4.6.31
     T1_IT,      // 4.6.39
+    T2_LDMIA,
     T1_LDR_I,   // 4.6.43
     T2_LDR_I,   // 4.6.43
     T3_LDR_I,   // 4.6.43
@@ -555,6 +556,7 @@ enum EIsaArmV7 {
     T1_NOP,     // 4.6.88
     T1_ORR_I,   // 4.6.91
     T1_POP,     // 4.6.98
+    T2_POP,     // 4.6.98
     T1_PUSH,    // 4.6.99, T2_PUSH equivalen STMDB SP!,<register>
     T1_SDIV,    // 4.6.126
     T1_STMDB,   // 4.6.160

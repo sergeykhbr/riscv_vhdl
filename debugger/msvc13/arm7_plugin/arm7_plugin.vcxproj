@@ -110,7 +110,9 @@
     <ClCompile Include="..\..\src\cpu_arm_plugin\srcproc\srcproc.cpp" />
     <ClCompile Include="..\..\src\cpu_arm_plugin\srcproc\thumb_disasm.cpp" />
     <ClCompile Include="..\..\src\cpu_arm_plugin\stm32l4\stm32l4_gpio.cpp" />
+    <ClCompile Include="..\..\src\cpu_arm_plugin\stm32l4\stm32l4_nvic.cpp" />
     <ClCompile Include="..\..\src\cpu_arm_plugin\stm32l4\stm32l4_rcc.cpp" />
+    <ClCompile Include="..\..\src\cpu_arm_plugin\stm32l4\stm32l4_systick.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\api_core.h" />
@@ -140,7 +142,9 @@
     <ClInclude Include="..\..\src\cpu_arm_plugin\srcproc\srcproc.h" />
     <ClInclude Include="..\..\src\cpu_arm_plugin\srcproc\thumb_disasm.h" />
     <ClInclude Include="..\..\src\cpu_arm_plugin\stm32l4\stm32l4_gpio.h" />
+    <ClInclude Include="..\..\src\cpu_arm_plugin\stm32l4\stm32l4_nvic.h" />
     <ClInclude Include="..\..\src\cpu_arm_plugin\stm32l4\stm32l4_rcc.h" />
+    <ClInclude Include="..\..\src\cpu_arm_plugin\stm32l4\stm32l4_systick.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -96,7 +96,7 @@ class T1Instruction : public GenericInstruction {
     void BranchWritePC(uint32_t npc);
     void BXWritePC(uint32_t npc);
     void ALUWritePC(uint32_t npc);
-    void LoadWritePC();
+    void LoadWritePC(uint32_t address);
     bool BadReg(uint32_t n) { return n == Reg_sp || n == Reg_pc; }
 
  protected:

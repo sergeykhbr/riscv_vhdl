@@ -201,6 +201,26 @@ int disasm_thumb(uint64_t pc,
     } else if ((ti & 0x0FC0FF7F) == 0x0000F81F) {
         // T1_LDRB_L
         len = 4;
+    } else if ((ti & 0x2000FFFF) == 0x0000E8BD) {
+        // ldmia sp! equivalent
+        uint32_t register_list = ti1 & 0xDFFF;
+        int itotal = 0;
+        tsz = RISCV_sprintf(disasm, sz, "pop.w    sp!, %s", "{");
+        for (int i = 0; i < 16; i++) {
+            if (ti1 & (1 << i)) {
+                if (itotal) {
+                    tsz += RISCV_sprintf(&disasm[tsz], sz - tsz,
+                            ", %s", IREGS_NAMES[i]);
+                } else {
+                    tsz += RISCV_sprintf(&disasm[tsz], sz - tsz,
+                            "%s", IREGS_NAMES[i]);
+                }
+                itotal++;
+            }
+        }
+        tsz += RISCV_sprintf(&disasm[tsz], sz - tsz,
+                "%s", "}");
+        len = 4;
     } else if ((ti & 0xF000FF7F) == 0xF000F91F) {
         // T3_PLI_I
         len = 4;
@@ -356,6 +376,29 @@ int disasm_thumb(uint64_t pc,
         RISCV_sprintf(disasm, sz, "cmp.w    %s, #%xh",
                 IREGS_NAMES[n],
                 imm32);
+        len = 4;
+    } else if ((ti & 0x2000FFD0) == 0x0000E890) {
+        uint32_t n = ti & 0xF;
+        uint32_t register_list = ti1 & 0xDFFF;
+        uint32_t wback = (ti >> 5) & 1;
+        int itotal = 0;
+        tsz = RISCV_sprintf(disasm, sz, "ldmia.w  %s%s {",
+            IREGS_NAMES[n],
+            WBACK_SYMB[wback]);
+        for (int i = 0; i < 16; i++) {
+            if (ti1 & (1 << i)) {
+                if (itotal) {
+                    tsz += RISCV_sprintf(&disasm[tsz], sz - tsz,
+                            ", %s", IREGS_NAMES[i]);
+                } else {
+                    tsz += RISCV_sprintf(&disasm[tsz], sz - tsz,
+                            "%s", IREGS_NAMES[i]);
+                }
+                itotal++;
+            }
+        }
+        tsz += RISCV_sprintf(&disasm[tsz], sz - tsz,
+                "%s", "}");
         len = 4;
     } else if ((ti & 0xA000FFD0) == 0x0000E900) {
         uint32_t n = ti & 0xF;
