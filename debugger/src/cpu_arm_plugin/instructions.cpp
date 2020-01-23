@@ -304,6 +304,10 @@ void T1Instruction::BranchWritePC(uint32_t npc) {
 }
 
 void T1Instruction::BXWritePC(uint32_t npc) {
+    if ((npc & 0xFFFFFF80) == 0xFFFFFF80) {
+        icpu_->exitException(npc);
+        return;
+    }
     if (npc & 0x1) {
         icpu_->setInstrMode(THUMB_mode);
         npc &= ~0x1ul;
@@ -335,6 +339,10 @@ void T1Instruction::LoadWritePC(uint32_t address) {
     icpu_->dma_memop(&trans_);
 
     npc = trans_.rpayload.b32[0];
+    if ((npc & 0xFFFFFF80) == 0xFFFFFF80) {
+        icpu_->exitException(npc);
+        return;
+    }
     if (npc & 0x1) {
         icpu_->setInstrMode(THUMB_mode);
         npc &= ~0x1ul;

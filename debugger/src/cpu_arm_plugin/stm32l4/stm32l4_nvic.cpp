@@ -20,26 +20,118 @@
 namespace debugger {
 
 STM32L4_NVIC::STM32L4_NVIC(const char *name) : IService(name),
-    NVIC_ISER0(this, "NVIC_ISER0", 0x100),
-    NVIC_ISER1(this, "NVIC_ISER1", 0x104),
-    NVIC_ISER2(this, "NVIC_ISER2", 0x108),
-    NVIC_ISER3(this, "NVIC_ISER3", 0x10C),
-    NVIC_ISER4(this, "NVIC_ISER4", 0x110),
-    NVIC_ISER5(this, "NVIC_ISER5", 0x114),
-    NVIC_ISER6(this, "NVIC_ISER6", 0x118),
-    NVIC_ISER7(this, "NVIC_ISER7", 0x11C) {
+    NVIC_STIR(this, "NVIC_STIR", 0xF00) {
+    char tstr[64];
+    for (int i = 0; i < 8; i++) {
+        RISCV_sprintf(tstr, sizeof(tstr), "NVIC_ISER%d", i);
+        NVIC_ISERx[i] = new ISER_TYPE(this, tstr, 0x100 + 4*i, 32*i);
+
+        RISCV_sprintf(tstr, sizeof(tstr), "NVIC_ICER%d", i);
+        NVIC_ICERx[i] = new ICER_TYPE(this, tstr, 0x180 + 4*i, 32*i);
+
+        RISCV_sprintf(tstr, sizeof(tstr), "NVIC_ISPR%d", i);
+        NVIC_ISPRx[i] = new ISPR_TYPE(this, tstr, 0x200 + 4*i, 32*i);
+
+        RISCV_sprintf(tstr, sizeof(tstr), "NVIC_ICPR%d", i);
+        NVIC_ICPRx[i] = new ICPR_TYPE(this, tstr, 0x280 + 4*i, 32*i);
+
+        RISCV_sprintf(tstr, sizeof(tstr), "NVIC_IABR%d", i);
+        NVIC_IABRx[i] = new IABR_TYPE(this, tstr, 0x300 + 4*i, 32*i);
+    }
+    for (int i = 0; i < 61; i++) {
+        RISCV_sprintf(tstr, sizeof(tstr), "NVIC_IPR%d", i);
+        NVIC_IPRx[i] = new IPR_TYPE(this, tstr, 0x400 + 4*i, 4*i);
+    }
+}
+
+STM32L4_NVIC::~STM32L4_NVIC() {
+    for (int i = 0; i < 8; i++) {
+        delete NVIC_ISERx[i];
+        delete NVIC_ICERx[i];
+        delete NVIC_ISPRx[i];
+        delete NVIC_ICPRx[i];
+        delete NVIC_IABRx[i];
+    }
+    for (int i = 0; i < 61; i++) {
+        delete NVIC_IPRx[i];
+    }
 }
 
 void STM32L4_NVIC::postinitService() {
     uint64_t baseaddr = 0xe000e000;
-    NVIC_ISER0.setBaseAddress(baseaddr + 0x100);
-    NVIC_ISER1.setBaseAddress(baseaddr + 0x104);
-    NVIC_ISER2.setBaseAddress(baseaddr + 0x108);
-    NVIC_ISER3.setBaseAddress(baseaddr + 0x10C);
-    NVIC_ISER4.setBaseAddress(baseaddr + 0x110);
-    NVIC_ISER5.setBaseAddress(baseaddr + 0x114);
-    NVIC_ISER6.setBaseAddress(baseaddr + 0x118);
-    NVIC_ISER7.setBaseAddress(baseaddr + 0x11C);
+    for (int i = 0; i < 8; i++) {
+        NVIC_ISERx[i]->setBaseAddress(baseaddr + 0x100 + 4*i);
+        NVIC_ICERx[i]->setBaseAddress(baseaddr + 0x180 + 4*i);
+        NVIC_ISPRx[i]->setBaseAddress(baseaddr + 0x200 + 4*i);
+        NVIC_ICPRx[i]->setBaseAddress(baseaddr + 0x280 + 4*i);
+        NVIC_IABRx[i]->setBaseAddress(baseaddr + 0x300 + 4*i);
+    }
+    for (int i = 0; i < 61; i++) {
+        NVIC_IPRx[i]->setBaseAddress(baseaddr + 0x400 + 4*i);
+    }
+}
+
+void STM32L4_NVIC::enableInterrupt(int idx) {
+    int regidx = idx >> 5;
+    int regoff = idx & 0x1F;
+    uint32_t t = NVIC_IABRx[regidx]->getValue().val;
+
+    // 29  TIM3_IRQn
+    // 54  TIM6_DAC_IRQn
+    RISCV_info("Enabling Interrupt %d", idx);
+    t |= (1ul << regoff);
+    NVIC_IABRx[regidx]->setValue(t);
+}
+
+void STM32L4_NVIC::disableInterrupt(int idx) {
+    int regidx = idx >> 5;
+    int regoff = idx & 0x1F;
+    uint32_t t = NVIC_IABRx[regidx]->getValue().val;
+
+    RISCV_info("Disabling Interrupt %d", idx);
+    t &= ~(1ul << regoff);
+    NVIC_IABRx[regidx]->setValue(t);
+}
+
+
+uint32_t STM32L4_NVIC::ISER_TYPE::aboutToWrite(uint32_t cur_val) {
+    STM32L4_NVIC *p = static_cast<STM32L4_NVIC *>(parent_);
+    for (int i = 0; i < 32; i++) {
+        if (cur_val & (1 << i)) {
+            p->enableInterrupt(startidx_ + i);
+        }
+    }
+    return cur_val;
+}
+
+uint32_t STM32L4_NVIC::ICER_TYPE::aboutToWrite(uint32_t cur_val) {
+    STM32L4_NVIC *p = static_cast<STM32L4_NVIC *>(parent_);
+    for (int i = 0; i < 32; i++) {
+        if (cur_val & (1 << i)) {
+            p->disableInterrupt(startidx_ + i);
+        }
+    }
+    return cur_val;
+}
+
+uint32_t STM32L4_NVIC::ISPR_TYPE::aboutToWrite(uint32_t cur_val) {
+    return cur_val;
+}
+
+uint32_t STM32L4_NVIC::ICPR_TYPE::aboutToWrite(uint32_t cur_val) {
+    return cur_val;
+}
+
+uint32_t STM32L4_NVIC::IABR_TYPE::aboutToWrite(uint32_t cur_val) {
+    return cur_val;
+}
+
+uint32_t STM32L4_NVIC::IPR_TYPE::aboutToWrite(uint32_t cur_val) {
+    return cur_val;
+}
+
+uint32_t STM32L4_NVIC::STIR_TYPE::aboutToWrite(uint32_t cur_val) {
+    return cur_val;
 }
 
 }  // namespace debugger

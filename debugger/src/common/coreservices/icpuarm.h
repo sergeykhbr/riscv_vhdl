@@ -46,6 +46,12 @@ enum ECoreModes {
     CoreModes_Total = 32
 };
 
+enum EM4Modes {
+    M4_MainMode,
+    M4_HandlerMode,
+    M4_ThreadMode,
+};
+
 enum SRType {
     SRType_None,
     SRType_LSL,
@@ -53,6 +59,19 @@ enum SRType {
     SRType_ASR,
     SRType_ROR,
     SRType_RRX
+};
+
+/**
+    0xFFFFFFF1 Return to Handler mode. Use MSP and return to MSP
+    0xFFFFFFF9 Return to Thread mode. Use MSP and return to MSP
+    0xFFFFFFFD Return to Thread mode. Use PSP and return to PSP
+ */
+union EXC_RETURN {
+    uint32_t v;
+    struct bits_type {
+        uint32_t code : 5;      // [4:0]
+        uint32_t ones : 27;     // [31:5] = `1
+    } b;
 };
 
 class ICpuArm : public IFace {
@@ -99,6 +118,9 @@ class ICpuArm : public IFace {
     virtual void StartITBlock(uint32_t firstcond, uint32_t mask) = 0;
     virtual bool InITBlock() = 0;
     virtual bool LastInITBlock() = 0;
+
+    virtual void enterException(int idx) = 0;
+    virtual void exitException(uint32_t npc) = 0;
 };
 
 }  // namespace debugger

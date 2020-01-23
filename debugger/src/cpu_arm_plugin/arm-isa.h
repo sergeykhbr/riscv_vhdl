@@ -525,6 +525,7 @@ enum EIsaArmV7 {
     T1_CMP_R,   // 4.6.30
     T2_CMP_R,   // 4.6.30
     T1_CPS,     // 4.6.31
+    T1_EOR_R,   // 4.6.37
     T1_IT,      // 4.6.39
     T2_LDMIA,
     T1_LDR_I,   // 4.6.43
@@ -553,8 +554,10 @@ enum EIsaArmV7 {
                 // 4.6.78 MOV (shifted register) is a synonym for ASR, LSL, LSR, ROR, RRX
     T1_MUL,     // 4.6.84
     T2_MUL,     // 4.6.84
+    T1_MVN_R,   // 4.6.86
     T1_NOP,     // 4.6.88
     T1_ORR_I,   // 4.6.91
+    T1_ORR_R,   // 4.6.92
     T1_POP,     // 4.6.98
     T2_POP,     // 4.6.98
     T1_PUSH,    // 4.6.99, T2_PUSH equivalen STMDB SP!,<register>

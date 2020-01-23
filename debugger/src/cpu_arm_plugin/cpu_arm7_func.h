@@ -81,6 +81,9 @@ class CpuCortex_Functional : public CpuGeneric,
     virtual bool LastInITBlock() { return (ITBlockMask_ & 0xF) == 0x8; }
     virtual uint32_t ITBlockCondition() { return ITBlockCondition_; }
 
+    virtual void enterException(int idx);
+    virtual void exitException(uint32_t npc);
+
     // CpuGeneric virtual methods:
     virtual uint64_t *getpRegs() { return portRegs_.getpR64(); }
 
@@ -93,7 +96,7 @@ class CpuCortex_Functional : public CpuGeneric,
     virtual void handleTrap();
     virtual void trackContextEnd() override;
     virtual void traceOutput() override;
-
+    
     void addArm7tmdiIsa();
     unsigned addSupportedInstruction(ArmInstruction *instr);
     uint32_t hash32(uint32_t val) { return (val >> 24) & 0xf; }

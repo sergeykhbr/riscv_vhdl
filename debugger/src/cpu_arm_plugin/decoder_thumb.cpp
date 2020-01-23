@@ -135,6 +135,8 @@ EIsaArmV7 decoder_thumb(uint32_t ti, uint32_t *tio,
         ret = T2_MOV_R;
     } else if ((ti & 0xFFC0) == 0x4000) {
         ret = T1_AND_R;
+    } else if ((ti & 0xFFC0) == 0x4040) {
+        ret = T1_EOR_R;
     } else if ((ti & 0xFFC0) == 0x4080) {
         ret = T1_LSL_R;
     } else if ((ti & 0xFFC0) == 0x40C0) {
@@ -143,8 +145,12 @@ EIsaArmV7 decoder_thumb(uint32_t ti, uint32_t *tio,
         ret = T1_TST_R;
     } else if ((ti & 0xFFC0) == 0x4280) {
         ret = T1_CMP_R;
+    } else if ((ti & 0xFFC0) == 0x4300) {
+        ret = T1_ORR_R;
     } else if ((ti & 0xFFC0) == 0x4340) {
         ret = T1_MUL;
+    } else if ((ti & 0xFFC0) == 0x43C0) {
+        ret = T1_MVN_R;
     } else if ((ti & 0xFFC0) == 0xB2C0) {
         ret = T1_UXTB;
     } else if ((ti & 0xFF80) == 0xB080) {

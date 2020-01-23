@@ -2135,6 +2135,35 @@ class CPS_T1 : public T1Instruction {
     }
 };
 
+/** 4.6.37 EOR (register) */
+class EOR_R_T1 : public T1Instruction {
+ public:
+    EOR_R_T1(CpuCortex_Functional *icpu) : T1Instruction(icpu, "EORS") {}
+
+    virtual int exec(Reg64Type *payload) {
+        if (!ConditionPassed()) {
+            return 2;
+        }
+        uint32_t ti = payload->buf16[0];
+        uint32_t dn = ti & 0x7;
+        uint32_t m = (ti >> 3) & 0x7;
+        bool setflags = !icpu_->InITBlock();
+        uint32_t Rm = static_cast<uint32_t>(R[m]);
+        uint32_t Rn = static_cast<uint32_t>(R[dn]);
+        uint32_t result = Rn ^ Rm;
+
+        icpu_->setReg(dn, result);
+        if (setflags) {
+            // Mask 0x7 no need to check on SP or PC
+            icpu_->setN((result >> 31) & 1);
+            icpu_->setZ(result == 0 ? 1: 0);
+            // C the same because no shoft
+            // V unchanged
+        }
+        return 2;
+    }
+};
+
 /** 4.6.39 IT (IT Block) */
 class IT_T1 : public T1Instruction {
  public:
@@ -2210,11 +2239,16 @@ class LDMIA_T2 : public T1Instruction {
             }
         }
         if (ti & (1ul << Reg_pc)) {
+            if (wback) {
+                icpu_->setReg(n, address + 4);  // to support Exception Exit
+            }
+
             LoadWritePC(address);
             address += 4;
-        }
-        if (wback) {
-            icpu_->setReg(n, address);
+        } else {
+            if (wback) {
+                icpu_->setReg(n, address);
+            }
         }
         return 4;
     }
@@ -3022,6 +3056,32 @@ class MUL_T2 : public T1Instruction {
     }
 };
 
+/** 4.6.86 MVN (register) */
+class MVN_R_T1 : public T1Instruction {
+ public:
+    MVN_R_T1(CpuCortex_Functional *icpu) : T1Instruction(icpu, "MVNS") {}
+
+    virtual int exec(Reg64Type *payload) {
+        if (!ConditionPassed()) {
+            return 2;
+        }
+        uint32_t ti = payload->buf16[0];
+        uint32_t d = ti & 0x7;
+        uint32_t m = (ti >> 3) & 0x7;
+        bool setflags = !icpu_->InITBlock();
+        uint32_t result = ~static_cast<uint32_t>(R[m]);
+
+        icpu_->setReg(d, result);
+        if (setflags) {
+            icpu_->setN((result >> 31) & 1);
+            icpu_->setZ(result == 0 ? 1: 0);
+            // No shift no C
+            // V unchanged
+        }
+        return 2;
+    }
+};
+
 /** 4.6.88 NOP */
 class NOP_T1 : public T1Instruction {
  public:
@@ -3071,6 +3131,35 @@ class ORR_I_T1 : public T1Instruction {
     }
 };
 
+/** 4.6.92 ORR (register) */
+class ORR_R_T1 : public T1Instruction {
+ public:
+    ORR_R_T1(CpuCortex_Functional *icpu) : T1Instruction(icpu, "ORRS") {}
+
+    virtual int exec(Reg64Type *payload) {
+        if (!ConditionPassed()) {
+            return 2;
+        }
+        uint32_t ti = payload->buf16[0];
+        uint32_t dn = ti & 0x7;
+        uint32_t m = (ti >> 3) & 0x7;
+        bool setflags = !icpu_->InITBlock();
+        uint32_t Rm = static_cast<uint32_t>(R[m]);
+        uint32_t Rn = static_cast<uint32_t>(R[dn]);
+        uint32_t result = Rn | Rm;
+
+        icpu_->setReg(dn, result);
+        if (setflags) {
+            // Mask 0x7 no need to check on SP or PC
+            icpu_->setN((result >> 31) & 1);
+            icpu_->setZ(result == 0 ? 1: 0);
+            // C the same because no shoft
+            // V unchanged
+        }
+        return 2;
+    }
+};
+
 /** 4.6.98 POP */
 class POP_T1 : public T1Instruction {
  public:
@@ -3096,11 +3185,13 @@ class POP_T1 : public T1Instruction {
             }
         }
         if (instr & 0x100) {
+            icpu_->setReg(Reg_sp, address + 4); // To support Exception Exit
+
             LoadWritePC(address);
             address += 4;
+        } else {
+            icpu_->setReg(Reg_sp, address);
         }
-
-        icpu_->setReg(Reg_sp, address);
         return 2;
     }
 };
@@ -3137,10 +3228,13 @@ class POP_T2 : public T1Instruction {
             }
         }
         if (ti & (1ul << Reg_pc)) {
+            icpu_->setReg(Reg_sp, address);
+
             LoadWritePC(address);
             address += 4;
+        } else {
+            icpu_->setReg(Reg_sp, address);
         }
-        icpu_->setReg(Reg_sp, address);
         return 4;
     }
 };
@@ -3969,6 +4063,7 @@ void CpuCortex_Functional::addArm7tmdiIsa() {
     isaTableArmV7_[T1_CMP_R] = new CMP_R_T1(this);
     isaTableArmV7_[T2_CMP_R] = new CMP_R_T2(this);
     isaTableArmV7_[T1_CPS] = new CPS_T1(this);
+    isaTableArmV7_[T1_EOR_R] = new EOR_R_T1(this);
     isaTableArmV7_[T1_IT] = new IT_T1(this);
     isaTableArmV7_[T2_LDMIA] = new LDMIA_T2(this);
     isaTableArmV7_[T1_LDR_I] = new LDR_I_T1(this);
@@ -3996,11 +4091,13 @@ void CpuCortex_Functional::addArm7tmdiIsa() {
     isaTableArmV7_[T2_MOV_R] = new MOV_R_T2(this);
     isaTableArmV7_[T1_MUL] = new MUL_T1(this);
     isaTableArmV7_[T2_MUL] = new MUL_T2(this);
+    isaTableArmV7_[T1_MVN_R] = new MVN_R_T1(this);
     isaTableArmV7_[T1_NOP] = new NOP_T1(this);
     isaTableArmV7_[T1_POP] = new POP_T1(this);
     isaTableArmV7_[T2_POP] = new POP_T2(this);
     isaTableArmV7_[T1_PUSH] = new PUSH_T1(this);
     isaTableArmV7_[T1_ORR_I] = new ORR_I_T1(this);
+    isaTableArmV7_[T1_ORR_R] = new ORR_R_T1(this);
     isaTableArmV7_[T1_SDIV] = new SDIV_T1(this);
     isaTableArmV7_[T1_STMDB] = new STMDB_T1(this);
     isaTableArmV7_[T1_STR_I] = new STR_I_T1(this);

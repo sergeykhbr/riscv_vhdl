@@ -89,9 +89,33 @@ unsigned CpuCortex_Functional::addSupportedInstruction(
 }
 
 void CpuCortex_Functional::handleTrap() {
+    if (getI() == 1) {
+        return;
+    }
     if ((interrupt_pending_[0] | interrupt_pending_[1]) == 0) {
         return;
     }
+#if 1
+    int irq_idx;
+    for (int i = 0; i < 2; i++) {
+        if (interrupt_pending_[i] == 0) {
+            continue;
+        }
+
+        for (int n = 0; n < 64; n++) {
+            if ((interrupt_pending_[i] & (1ull << n)) == 0) {
+                continue;
+            }
+            irq_idx = 64*i + n;
+            if (irq_idx < 16) {
+                enterException(irq_idx);
+            } else {
+                RISCV_error("Interrupts from NVIC not supported %d", irq_idx);
+            }
+        }
+        interrupt_pending_[i] = 0;
+    }
+#else
     if (interrupt_pending_[0] & (1ull << Interrupt_SoftwareIdx)) {
         DsuMapType::udbg_type::debug_region_type::breakpoint_control_reg t1;
         t1.val = br_control_.getValue().val;
@@ -104,7 +128,109 @@ void CpuCortex_Functional::handleTrap() {
         }
     }
     npc_.setValue(0 + 4*0);
+#endif
     interrupt_pending_[0] = 0;
+}
+
+void CpuCortex_Functional::enterException(int idx) {
+    // Save register into stack
+    trans_.addr = static_cast<uint32_t>(R[Reg_sp]);
+    trans_.action = MemAction_Write;
+    trans_.wstrb = 0xF;
+    trans_.xsize = 4; 
+
+    trans_.addr -= 4;
+    trans_.wpayload.b32[0] = static_cast<uint32_t>(R[Reg_r0]);
+    dma_memop(&trans_);
+
+    trans_.addr -= 4;
+    trans_.wpayload.b32[0] = static_cast<uint32_t>(R[Reg_r1]);
+    dma_memop(&trans_);
+
+    trans_.addr -= 4;
+    trans_.wpayload.b32[0] = static_cast<uint32_t>(R[Reg_r2]);
+    dma_memop(&trans_);
+
+    trans_.addr -= 4;
+    trans_.wpayload.b32[0] = static_cast<uint32_t>(R[Reg_r3]);
+    dma_memop(&trans_);
+
+    trans_.addr -= 4;
+    trans_.wpayload.b32[0] = static_cast<uint32_t>(R[Reg_fe]);
+    dma_memop(&trans_);
+
+    trans_.addr -= 4;
+    trans_.wpayload.b32[0] = static_cast<uint32_t>(R[Reg_lr]);
+    dma_memop(&trans_);
+
+    trans_.addr -= 4;
+    trans_.wpayload.b32[0] =
+            static_cast<uint32_t>(npc_.getValue().buf32[0] | 0x1);
+    dma_memop(&trans_);
+
+    trans_.addr -= 4;
+    trans_.wpayload.b32[0] = static_cast<uint32_t>(R[Reg_cpsr]);
+    dma_memop(&trans_);
+
+    setReg(Reg_sp, static_cast<uint32_t>(trans_.addr));
+    setReg(Reg_lr, 0xFFFFFFF9);     // EXC_RETURN
+
+    // Load vector address:
+    trans_.action = MemAction_Read;
+    trans_.addr = 4*idx;
+    trans_.xsize = 4; 
+    trans_.wstrb = 0;
+    dma_memop(&trans_);
+                
+    uint32_t npc = trans_.rpayload.b32[0];
+    if (npc & 0x1) {
+        setInstrMode(THUMB_mode);
+        npc &= ~0x1ul;
+    } else {
+        setInstrMode(ARM_mode);
+    }
+    npc_.setValue(npc);
+}
+
+void CpuCortex_Functional::exitException(uint32_t npc) {
+    trans_.action = MemAction_Read;
+    trans_.addr = R[Reg_sp];
+    trans_.xsize = 4; 
+    trans_.wstrb = 0;
+
+    dma_memop(&trans_);
+    R[Reg_cpsr] = trans_.rpayload.b32[0];
+    trans_.addr += 4;
+
+    dma_memop(&trans_);
+    npc_.setValue(trans_.rpayload.b32[0] & ~0x1);
+    trans_.addr += 4;
+
+    dma_memop(&trans_);
+    setReg(Reg_lr, trans_.rpayload.b32[0]);
+    trans_.addr += 4;
+
+    dma_memop(&trans_);
+    setReg(Reg_fe, trans_.rpayload.b32[0]);
+    trans_.addr += 4;
+
+    dma_memop(&trans_);
+    setReg(Reg_r3, trans_.rpayload.b32[0]);
+    trans_.addr += 4;
+
+    dma_memop(&trans_);
+    setReg(Reg_r2, trans_.rpayload.b32[0]);
+    trans_.addr += 4;
+
+    dma_memop(&trans_);
+    setReg(Reg_r1, trans_.rpayload.b32[0]);
+    trans_.addr += 4;
+
+    dma_memop(&trans_);
+    setReg(Reg_r0, trans_.rpayload.b32[0]);
+    trans_.addr += 4;
+
+    setReg(Reg_sp, static_cast<uint32_t>(trans_.addr));
 }
 
 uint64_t CpuCortex_Functional::getResetAddress() {
@@ -256,7 +382,11 @@ void CpuCortex_Functional::traceOutput() {
 }
 
 void CpuCortex_Functional::raiseSignal(int idx) {
-    RISCV_error("Raise unsupported signal %d", idx);
+    if (idx >= 128) {
+        RISCV_error("Raise unsupported signal %d", idx);
+    }
+    RISCV_debug("Request Interrupt %d", idx);
+    interrupt_pending_[idx >> 6] |= (1ull << (idx & 0x3F));
 }
 
 void CpuCortex_Functional::lowerSignal(int idx) {
