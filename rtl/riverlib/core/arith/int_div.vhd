@@ -16,6 +16,7 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.std_logic_misc.all;  -- or_reduce()
 library commonlib;
 use commonlib.types_common.all;
 --! RIVER CPU specific library.
@@ -58,6 +59,7 @@ architecture arch_IntDiv of IntDiv is
       resid : std_logic;                           -- Compute residual flag
       invert : std_logic;                          -- invert result value before output
       busy : std_logic;
+      div_on_zero : std_logic;
       ena : std_logic_vector(9 downto 0);
       divident_i : std_logic_vector(63 downto 0);
       divisor_i : std_logic_vector(119 downto 0);
@@ -67,6 +69,7 @@ architecture arch_IntDiv of IntDiv is
 
   constant R_RESET : RegistersType := (
       '0', '0', '0', '0',                -- rv32, resid, invert, busy
+      '0',                               -- div_on_zero
       (others => '0'), (others => '0'),  -- ena, divident_i
       (others => '0'), (others => '0'),  -- divisor_i, bits_i
       (others => '0')                    -- result
@@ -106,6 +109,8 @@ begin
     variable wb_divider : std_logic_vector(64 downto 0);
     variable w_invert64 : std_logic;
     variable w_invert32 : std_logic;
+    variable vb_rem : std_logic_vector(63 downto 0);
+    variable vb_div : std_logic_vector(63 downto 0);
   begin
 
     v := r;
@@ -144,6 +149,26 @@ begin
     v.ena := r.ena(8 downto 0) & (i_ena and not r.busy);
 
 
+    if r.invert = '1' then
+        vb_rem := (not r.divident_i) + 1;
+    else
+        vb_rem := r.divident_i;
+    end if;
+
+    if r.invert = '1' then
+        vb_div := (not r.bits_i) + 1;
+    else
+        vb_div := r.bits_i;
+    end if;
+
+    -- DIVW, DIVUW, REMW and REMUW sign-extended accordingly with 
+    -- User Level ISA v2.2
+    if r.rv32 = '1' then
+        vb_div(63 downto 32) := (others => vb_div(31));
+        vb_rem(63 downto 32) := (others => vb_rem(31));
+    end if;
+ 
+
     if i_ena = '1' then
         v.busy := '1';
         v.rv32 := i_rv32;
@@ -160,20 +185,29 @@ begin
                 or (i_residual and i_a1(63)));
         v.invert := (not i_rv32 and w_invert64) 
                 or (i_rv32 and w_invert32);
+
+        -- Compatibility with riscv-tests but loose compatibility with x86
+        if i_rv32 = '1' then
+            if i_unsigned = '1' then
+               v.div_on_zero := not or_reduce(i_a2(31 downto 0));
+            else
+               v.div_on_zero := not or_reduce(i_a2(30 downto 0));
+            end if;
+        else
+            if i_unsigned = '1' then
+               v.div_on_zero := not or_reduce(i_a2(63 downto 0));
+            else
+               v.div_on_zero := not or_reduce(i_a2(62 downto 0));
+            end if;
+        end if;
     elsif r.ena(8) = '1' then
         v.busy := '0';
         if r.resid = '1' then
-            if r.invert = '1' then
-                v.result := (not r.divident_i) + 1;
-            else
-                v.result := r.divident_i;
-            end if;
+            v.result := vb_rem;
+        elsif r.div_on_zero = '1' then
+            v.result := (others => '1');
         else
-            if r.invert = '1' then
-                v.result := (not r.bits_i) + 1;
-            else
-                v.result := r.bits_i;
-            end if;
+            v.result := vb_div;
         end if;
     elsif r.busy = '1' then
         v.divident_i := wb_resid1_o;

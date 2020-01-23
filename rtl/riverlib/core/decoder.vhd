@@ -536,11 +536,29 @@ begin
                     w_error := '1';
                 end if;
             when "001" =>
-                wb_dec(Instr_SLL) := '1';
+                if wb_instr(31 downto 25) = "0000000" then
+                    wb_dec(Instr_SLL) := '1';
+                elsif wb_instr(31 downto 25) = "0000001" then
+                    wb_dec(Instr_MULH) := '1';
+                else 
+                    w_error := '1';
+                end if;
             when "010" =>
-                wb_dec(Instr_SLT) := '1';
-            when "011" =>
-                wb_dec(Instr_SLTU) := '1';
+                if wb_instr(31 downto 25) = "0000000" then
+                    wb_dec(Instr_SLT) := '1';
+                elsif wb_instr(31 downto 25) = "0000001" then
+                    wb_dec(Instr_MULHSU) := '1';
+                else 
+                    w_error := '1';
+                end if;
+        when "011" =>
+                if wb_instr(31 downto 25) = "0000000" then
+                    wb_dec(Instr_SLTU) := '1';
+                elsif wb_instr(31 downto 25) = "0000001" then
+                    wb_dec(Instr_MULHU) := '1';
+                else 
+                    w_error := '1';
+                end if;
             when "100" =>
                 if wb_instr(31 downto 25) = "0000000" then
                     wb_dec(Instr_XOR) := '1';
@@ -970,6 +988,7 @@ begin
         end if;
         v.unsigned_op := wb_dec(Instr_DIVU) or wb_dec(Instr_REMU) or
                          wb_dec(Instr_DIVUW) or wb_dec(Instr_REMUW) or
+                         wb_dec(Instr_MULHU) or
                          wb_dec(Instr_FCVT_WU_D) or
                          wb_dec(Instr_FCVT_LU_D);
 

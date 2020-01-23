@@ -167,6 +167,7 @@ architecture arch_InstrExecute of InstrExecute is
   signal w_arith_valid : std_logic_vector(Multi_Total-1 downto 0);
   signal w_arith_busy : std_logic_vector(Multi_Total-1 downto 0);
   signal w_arith_residual_high: std_logic;
+  signal w_mul_hsu: std_logic;
   signal w_multi_ena : std_logic;
 
   signal wb_rdata1 : std_logic_vector(RISCV_ARCH-1 downto 0);
@@ -189,6 +190,7 @@ architecture arch_InstrExecute of InstrExecute is
     i_nrst : in std_logic;
     i_ena : in std_logic;
     i_unsigned : in std_logic;
+    i_hsu : in std_logic;
     i_high : in std_logic;
     i_rv32 : in std_logic;
     i_a1 : in std_logic_vector(RISCV_ARCH-1 downto 0);
@@ -260,6 +262,7 @@ begin
       i_nrst => i_nrst,
       i_ena => w_arith_ena(Multi_MUL),
       i_unsigned => i_unsigned_op,
+      i_hsu => w_mul_hsu,
       i_high => w_arith_residual_high,
       i_rv32 => i_rv32,
       i_a1 => wb_rdata1,
@@ -474,7 +477,9 @@ begin
     v_mret := wv(Instr_MRET) and w_next_ready;
     v_uret := wv(Instr_URET) and w_next_ready;
 
-    v_next_mul_ready := (wv(Instr_MUL) or wv(Instr_MULW)) and w_next_ready;
+    v_next_mul_ready := (wv(Instr_MUL) or wv(Instr_MULW)
+                            or wv(Instr_MULH) or wv(Instr_MULHSU)
+                            or wv(Instr_MULHU)) and w_next_ready;
     v_next_div_ready := (wv(Instr_DIV) or wv(Instr_DIVU)
                             or wv(Instr_DIVW) or wv(Instr_DIVUW)
                             or wv(Instr_REM) or wv(Instr_REMU)
@@ -487,8 +492,10 @@ begin
     end if;
 
     w_arith_residual_high <= (wv(Instr_REM) or wv(Instr_REMU)
-                          or wv(Instr_REMW) or wv(Instr_REMUW));
+                          or wv(Instr_REMW) or wv(Instr_REMUW)
+                          or wv(Instr_MULH) or wv(Instr_MULHSU) or wv(Instr_MULHU));
 
+    w_mul_hsu <= wv(Instr_MULHSU);
 
     v_multi_ena := v_next_mul_ready or v_next_div_ready or v_next_fpu_ready;
 
