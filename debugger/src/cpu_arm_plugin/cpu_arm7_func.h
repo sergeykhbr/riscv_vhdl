@@ -82,7 +82,7 @@ class CpuCortex_Functional : public CpuGeneric,
     virtual uint32_t ITBlockCondition() { return ITBlockCondition_; }
 
     virtual void enterException(int idx);
-    virtual void exitException(uint32_t npc);
+    virtual void exitException(uint32_t exc_return);
 
     // CpuGeneric virtual methods:
     virtual uint64_t *getpRegs() { return portRegs_.getpR64(); }

@@ -2630,6 +2630,30 @@ class LDRB_R_T2 : public T1Instruction {
     }
 };
 
+/** 4.6.55 LDRH (immediate) */
+class LDRH_I_T1 : public T1Instruction {
+ public:
+    LDRH_I_T1(CpuCortex_Functional *icpu) : T1Instruction(icpu, "LDRH") {}
+
+    virtual int exec(Reg64Type *payload) {
+        if (!ConditionPassed()) {
+            return 2;
+        }
+        uint32_t ti = payload->buf16[0];
+        uint32_t t = ti & 0x7;
+        uint32_t n = (ti >> 3) & 0x7;
+        uint32_t imm32 = ((ti >> 6) & 0x1F) << 1;
+
+        trans_.addr = static_cast<uint32_t>(R[n]) + imm32;
+        trans_.action = MemAction_Read;
+        trans_.xsize = 2;
+        trans_.wstrb = 0;
+        icpu_->dma_memop(&trans_);
+        icpu_->setReg(t, trans_.rpayload.b16[0]);
+        return 2;
+    }
+};
+
 /** 4.6.59 LDRSB (immediate) */
 class LDRSB_I_T1 : public T1Instruction {
  public:
@@ -3272,6 +3296,119 @@ class PUSH_T1 : public T1Instruction {
 
         icpu_->setReg(Reg_sp, address);
         return 2;
+    }
+};
+
+/** 4.6.118 RSB (immediate) Reverse Subtract */
+class RSB_I_T1 : public T1Instruction {
+ public:
+    RSB_I_T1(CpuCortex_Functional *icpu) : T1Instruction(icpu, "NEG") {}
+
+    virtual int exec(Reg64Type *payload) {
+        if (!ConditionPassed()) {
+            return 2;
+        }
+        uint32_t ti = payload->buf16[0];
+        uint32_t d = ti & 0x7;
+        uint32_t n = (ti >> 3) & 0x7;
+        bool setflags = !icpu_->InITBlock();
+        uint32_t Rn = static_cast<uint32_t>(R[n]);
+        uint32_t imm32 = 0;     // Implicit zero immediate
+        uint32_t overflow;
+        uint32_t carry;
+        uint32_t result;
+
+        result = AddWithCarry(~Rn, imm32, 1, &overflow, &carry);
+        icpu_->setReg(d, result);
+        if (setflags) {
+            icpu_->setN((result >> 31) & 1);
+            icpu_->setZ(result == 0 ? 1: 0);
+            icpu_->setC(carry);
+            icpu_->setV(overflow);
+        }
+        return 2;
+    }
+};
+
+class RSB_I_T2 : public T1Instruction {
+ public:
+    RSB_I_T2(CpuCortex_Functional *icpu) : T1Instruction(icpu, "RSB.W") {}
+
+    virtual int exec(Reg64Type *payload) {
+        if (!ConditionPassed()) {
+            return 4;
+        }
+        uint32_t ti = payload->buf16[0];
+        uint32_t ti1 = payload->buf16[1];
+        uint32_t d = (ti1 >> 8) & 0xF;
+        uint32_t n = ti & 0xF;
+        bool setflags = (ti >> 4) & 1;
+        uint32_t imm8 = ti1 & 0xFF;
+        uint32_t imm3 = (ti1 >> 12) & 0x7;
+        uint32_t i = (ti >> 10) & 1;
+        uint32_t imm12 = (i << 11) | (imm3 << 8) | imm8;
+        uint32_t overflow;
+        uint32_t carry;
+        uint32_t result;
+        uint32_t Rn = static_cast<uint32_t>(R[n]);
+        uint32_t imm32 = ThumbExpandImmWithC(imm12, &carry);
+
+        if (BadReg(d) || BadReg(n)) {
+            RISCV_error("%s", "UNPREDICTABLE");
+        }
+
+        result = AddWithCarry(~Rn, imm32, 1, &overflow, &carry);
+        icpu_->setReg(d, result);
+        if (setflags) {
+            icpu_->setN((result >> 31) & 1);
+            icpu_->setZ(result == 0 ? 1: 0);
+            icpu_->setC(carry);
+            icpu_->setV(overflow);
+        }
+        return 4;
+    }
+};
+
+/** 4.6.119 RSB (register) Reverse Subtruct */
+class RSB_R_T1 : public T1Instruction {
+ public:
+    RSB_R_T1(CpuCortex_Functional *icpu) : T1Instruction(icpu, "RSB") {}
+
+    virtual int exec(Reg64Type *payload) {
+        if (!ConditionPassed()) {
+            return 4;
+        }
+        uint32_t ti = payload->buf16[0];
+        uint32_t ti1 = payload->buf16[1];
+        uint32_t d = (ti1 >> 8) & 0xF;
+        uint32_t n = ti & 0xF;
+        uint32_t m = ti1 & 0xF;
+        bool setflags = (ti >> 4) & 1;
+        uint32_t imm3 = (ti1 >> 12) & 0x7;
+        uint32_t imm2 = (ti1 >> 6) & 0x3;
+        uint32_t type = (ti1 >> 4) & 0x3;
+        uint32_t shift_n;
+        uint32_t overflow;
+        uint32_t carry;
+        uint32_t result;
+        SRType shift_t = DecodeImmShift(type, (imm3 << 2) | imm2, &shift_n);
+        uint32_t Rm = static_cast<uint32_t>(R[m]);
+        uint32_t Rn = static_cast<uint32_t>(R[n]);
+        uint32_t shifted = Shift(Rm, shift_t, shift_n, icpu_->getC());
+
+        if (BadReg(d) || BadReg(n) || BadReg(m)) {
+            RISCV_error("%s", "UNPREDICTABLE");
+        }
+
+        result = AddWithCarry(~Rn, shifted, 1, &overflow, &carry);
+        icpu_->setReg(d, result);
+        if (setflags) {
+            icpu_->setN((result >> 31) & 1);
+            icpu_->setZ(result == 0 ? 1: 0);
+            icpu_->setC(carry);
+            icpu_->setV(overflow);
+        }
+        return 4;
     }
 };
 
@@ -3980,6 +4117,26 @@ class UXTB_T1 : public T1Instruction {
     }
 };
 
+/** 4.6.226 UXTH */
+class UXTH_T1 : public T1Instruction {
+ public:
+    UXTH_T1(CpuCortex_Functional *icpu) : T1Instruction(icpu, "UXTH") {}
+
+    virtual int exec(Reg64Type *payload) {
+        if (!ConditionPassed()) {
+            return 2;
+        }
+        uint32_t ti = payload->buf16[0];
+        uint32_t d = ti & 0x7;
+        uint32_t m = (ti >> 3) & 0x7;
+        uint32_t Rm = static_cast<uint32_t>(R[m]);
+
+        // rotation = 0 no need to call ROR_C
+        icpu_->setReg(d, Rm & 0xFFFF);
+        return 2;
+    }
+};
+
 void CpuCortex_Functional::addArm7tmdiIsa() {
     isaTableArmV7_[ARMV7_BX] = new BX(this);
     isaTableArmV7_[ARMV7_B] = new B(this);
@@ -4077,6 +4234,7 @@ void CpuCortex_Functional::addArm7tmdiIsa() {
     isaTableArmV7_[T1_LDRB_I] = new LDRB_I_T1(this);
     isaTableArmV7_[T1_LDRB_R] = new LDRB_R_T1(this);
     isaTableArmV7_[T2_LDRB_R] = new LDRB_R_T2(this);
+    isaTableArmV7_[T1_LDRH_I] = new LDRH_I_T1(this);
     isaTableArmV7_[T1_LDRSB_I] = new LDRSB_I_T1(this);
     isaTableArmV7_[T1_LSL_I] = new LSL_I_T1(this);
     isaTableArmV7_[T1_LSL_R] = new LSL_R_T1(this);
@@ -4098,6 +4256,9 @@ void CpuCortex_Functional::addArm7tmdiIsa() {
     isaTableArmV7_[T1_PUSH] = new PUSH_T1(this);
     isaTableArmV7_[T1_ORR_I] = new ORR_I_T1(this);
     isaTableArmV7_[T1_ORR_R] = new ORR_R_T1(this);
+    isaTableArmV7_[T1_RSB_I] = new RSB_I_T1(this);
+    isaTableArmV7_[T2_RSB_I] = new RSB_I_T2(this);
+    isaTableArmV7_[T1_RSB_R] = new RSB_R_T1(this);
     isaTableArmV7_[T1_SDIV] = new SDIV_T1(this);
     isaTableArmV7_[T1_STMDB] = new STMDB_T1(this);
     isaTableArmV7_[T1_STR_I] = new STR_I_T1(this);
@@ -4120,6 +4281,7 @@ void CpuCortex_Functional::addArm7tmdiIsa() {
     isaTableArmV7_[T1_UDIV] = new UDIV_T1(this);
     isaTableArmV7_[T1_UMULL] = new UMULL_T1(this);
     isaTableArmV7_[T1_UXTB] = new UXTB_T1(this);
+    isaTableArmV7_[T1_UXTH] = new UXTH_T1(this);
 }
 
 }  // namespace debugger

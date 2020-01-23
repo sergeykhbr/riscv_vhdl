@@ -277,7 +277,7 @@
     {'Class':'STM32L4_GPIOClass','Instances':[
           {'Name':'gpiod','Attr':[
                 ['ObjDescription','GPIO port connected to AHB2'],
-                ['LogLevel',4],
+                ['LogLevel',2],
                 ['BaseAddress',0x48000C00],
                 ['Length',0x400],
                 ['MapList',[['gpiod','MODER'],

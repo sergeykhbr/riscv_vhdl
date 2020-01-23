@@ -539,6 +539,7 @@ enum EIsaArmV7 {
     T1_LDRB_I,  // 4.6.46
     T1_LDRB_R,  // 4.6.48
     T2_LDRB_R,  // 4.6.48
+    T1_LDRH_I,  // 4.6.55
     T1_LDRSB_I, // 4.6.59
     T1_LSL_I,   // 4.6.68
     T1_LSL_R,   // 4.6.69
@@ -556,11 +557,15 @@ enum EIsaArmV7 {
     T2_MUL,     // 4.6.84
     T1_MVN_R,   // 4.6.86
     T1_NOP,     // 4.6.88
+                // 4.6.87 NEG is a pre-UAL synonym for RSB (immediate) with imm=0
     T1_ORR_I,   // 4.6.91
     T1_ORR_R,   // 4.6.92
     T1_POP,     // 4.6.98
     T2_POP,     // 4.6.98
     T1_PUSH,    // 4.6.99, T2_PUSH equivalen STMDB SP!,<register>
+    T1_RSB_I,   // 4.6.119
+    T2_RSB_I,   // 4.6.119
+    T1_RSB_R,   // 4.6.119
     T1_SDIV,    // 4.6.126
     T1_STMDB,   // 4.6.160
     T1_STR_I,   // 4.6.162
@@ -583,6 +588,7 @@ enum EIsaArmV7 {
     T1_UDIV,    // 4.6.198
     T1_UMULL,   // 4.6.207
     T1_UXTB,    // 4.6.224
+    T1_UXTH,    // 4.6.226
     ARMV7_Total
 };
 

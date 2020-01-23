@@ -95,6 +95,10 @@ void CpuCortex_Functional::handleTrap() {
     if ((interrupt_pending_[0] | interrupt_pending_[1]) == 0) {
         return;
     }
+    if (InITBlock()) {
+        // To simplify psr control suppose interrupts outside of blocks
+        return;
+    }
 #if 1
     int irq_idx;
     for (int i = 0; i < 2; i++) {
@@ -192,7 +196,7 @@ void CpuCortex_Functional::enterException(int idx) {
     npc_.setValue(npc);
 }
 
-void CpuCortex_Functional::exitException(uint32_t npc) {
+void CpuCortex_Functional::exitException(uint32_t exc_return) {
     trans_.action = MemAction_Read;
     trans_.addr = R[Reg_sp];
     trans_.xsize = 4; 
@@ -203,7 +207,9 @@ void CpuCortex_Functional::exitException(uint32_t npc) {
     trans_.addr += 4;
 
     dma_memop(&trans_);
-    npc_.setValue(trans_.rpayload.b32[0] & ~0x1);
+    uint32_t npc = trans_.rpayload.b32[0] & ~0x1ul;
+    setReg(Reg_pc, npc);
+    setBranch(npc);
     trans_.addr += 4;
 
     dma_memop(&trans_);
