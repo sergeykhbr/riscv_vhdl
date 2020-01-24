@@ -67,6 +67,7 @@ class DbgMainWindow : public QMainWindow,
     void slotActionTriggerGnssMap(bool val);
     void slotActionTriggerGnssPlot(bool val);
     void slotActionTriggerSymbolBrowser();
+    void slotActionTriggerDemoM4(bool val);
     void slotOpenDisasm(uint64_t addr, uint64_t sz);
     void slotOpenMemory(uint64_t addr, uint64_t sz);
     void slotBreakpointsChanged();
@@ -104,6 +105,8 @@ class DbgMainWindow : public QMainWindow,
     QMdiSubWindow *viewGnssMap_;
     QAction *actionGnssPlot_;
     QMdiSubWindow *viewGnssPlot_;
+    QAction *actionDemoM4_;
+    QMdiSubWindow *viewDemoM4_;
     QTimer *tmrGlobal_;
     MdiAreaWidget *mdiArea_;
     

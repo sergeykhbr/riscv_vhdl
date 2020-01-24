@@ -31,12 +31,17 @@ STM32L4_GPIO::STM32L4_GPIO(const char *name) : RegMemBankGeneric(name),
     AFRL(this, "AFRL", 0x20),
     AFRH(this, "AFRH", 0x24),
     BRR(this, "BRR", 0x28) {
+    registerPortInterface("ODR", static_cast<IIOPort *>(&ODR));
+    registerAttribute("HardResetMode", &hardResetMode_);
+    direction_ = 0;
 }
 
 void STM32L4_GPIO::postinitService() {
     RegMemBankGeneric::postinitService();
-
+    
     MODER.setBaseAddress(baseAddress_.to_uint64() + 0x00);
+    MODER.setHardResetValue(hardResetMode_.to_uint32());
+
     OTYPER.setBaseAddress(baseAddress_.to_uint64() + 0x04);
     OSPEEDR.setBaseAddress(baseAddress_.to_uint64() + 0x08);
     PUPDR.setBaseAddress(baseAddress_.to_uint64() + 0x0c);
@@ -47,6 +52,65 @@ void STM32L4_GPIO::postinitService() {
     AFRL.setBaseAddress(baseAddress_.to_uint64() + 0x20);
     AFRH.setBaseAddress(baseAddress_.to_uint64() + 0x24);
     BRR.setBaseAddress(baseAddress_.to_uint64() + 0x28);
+}
+
+void STM32L4_GPIO::setMode(uint32_t v) {
+    for (int i = 0; i < 16; i++) {
+        switch ((v >> 2*i) & 0x3) {
+        case 0: // Input Mode
+            direction_ &= ~(1 << i);
+            break;
+        case 1: // General purpose Output Mode
+            direction_ |= 1 << i;
+            break;
+        case 2: // Alternate function mode
+            direction_ &= ~(1 << i);
+            break;
+        case 3: // Analog mode (reset state)
+            direction_ &= ~(1 << i);
+            break;
+        default:;
+        }
+    }
+}
+
+void STM32L4_GPIO::setOpenDrain(uint32_t v) {
+    openDrain_ = v & 0xFFFF;
+}
+
+uint32_t STM32L4_GPIO::preOutput(uint32_t v) {
+    // TODO: open-drain, pull-up, pull-down config
+    return v & 0xFFFF;
+}
+
+uint32_t STM32L4_GPIO::getDirection() {
+    return direction_;
+}
+
+uint32_t STM32L4_GPIO::MODER_TYPE::aboutToWrite(uint32_t nxt_val) {
+    STM32L4_GPIO *p = static_cast<STM32L4_GPIO *>(parent_);
+    p->setMode(nxt_val);
+    return nxt_val;
+}
+
+uint32_t STM32L4_GPIO::OTYPER_TYPE::aboutToWrite(uint32_t nxt_val) {
+    STM32L4_GPIO *p = static_cast<STM32L4_GPIO *>(parent_);
+    p->setOpenDrain(nxt_val);
+    return nxt_val;
+}
+
+uint32_t STM32L4_GPIO::ODR_TYPE::aboutToWrite(uint32_t nxt_val) {
+    STM32L4_GPIO *p = static_cast<STM32L4_GPIO *>(parent_);
+    IIOPortListener16 *lstn;
+    for (unsigned i = 0; i < portListeners_.size(); i++) {
+        lstn = static_cast<IIOPortListener16 *>(portListeners_[i].to_iface());
+        lstn->writeData(nxt_val, p->getDirection());
+    }
+    for (unsigned i = 0; i < portListeners_.size(); i++) {
+        lstn = static_cast<IIOPortListener16 *>(portListeners_[i].to_iface());
+        lstn->latch();
+    }
+    return nxt_val;
 }
 
 }  // namespace debugger

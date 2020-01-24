@@ -81,9 +81,9 @@ class MappedReg32Type : public IMemoryOperation,
     /** General access methods: */
     const char *regName() { return regname_.to_string(); }
     Reg32Type getValue() { return value_; }
-    void setValue(Reg32Type v) { value_ = v; }
-    void setValue(uint32_t v) { value_.val = v; }
-    void setHardResetValue(uint32_t v) {
+    virtual void setValue(Reg32Type v) { value_ = v; }
+    virtual void setValue(uint32_t v) { value_.val = v; }
+    virtual void setHardResetValue(uint32_t v) {
         hard_reset_value_ = v;
         reset(0);
     } 

@@ -109,6 +109,7 @@
     <ClCompile Include="..\..\src\cpu_arm_plugin\plugin_init.cpp" />
     <ClCompile Include="..\..\src\cpu_arm_plugin\srcproc\srcproc.cpp" />
     <ClCompile Include="..\..\src\cpu_arm_plugin\srcproc\thumb_disasm.cpp" />
+    <ClCompile Include="..\..\src\cpu_arm_plugin\stm32l4\st7789v.cpp" />
     <ClCompile Include="..\..\src\cpu_arm_plugin\stm32l4\stm32l4_gpio.cpp" />
     <ClCompile Include="..\..\src\cpu_arm_plugin\stm32l4\stm32l4_nvic.cpp" />
     <ClCompile Include="..\..\src\cpu_arm_plugin\stm32l4\stm32l4_rcc.cpp" />
@@ -141,6 +142,7 @@
     <ClInclude Include="..\..\src\cpu_arm_plugin\instructions.h" />
     <ClInclude Include="..\..\src\cpu_arm_plugin\srcproc\srcproc.h" />
     <ClInclude Include="..\..\src\cpu_arm_plugin\srcproc\thumb_disasm.h" />
+    <ClInclude Include="..\..\src\cpu_arm_plugin\stm32l4\st7789v.h" />
     <ClInclude Include="..\..\src\cpu_arm_plugin\stm32l4\stm32l4_gpio.h" />
     <ClInclude Include="..\..\src\cpu_arm_plugin\stm32l4\stm32l4_nvic.h" />
     <ClInclude Include="..\..\src\cpu_arm_plugin\stm32l4\stm32l4_rcc.h" />

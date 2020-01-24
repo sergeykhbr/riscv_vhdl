@@ -13,6 +13,7 @@
                 {'Name':'gui0','Attr':[
                 ['LogLevel',4],
                 ['WidgetsConfig',{
+                  'OpenViews':['DemoM4Window'],
                   'Serial':'port1',
                   'AutoComplete':'autocmd0',
                   'StepToSecHz':30000000.0,
@@ -31,6 +32,15 @@
                          {'CpuIndex':0,
                           'RegisterSetIndex':0,
                           'Description':'ARM v7 32-bits integer bank'}]
+                  },
+                  'DemoM4Widgets':{
+                     'Display':{
+                         'Width':320,
+                         'Height':240,
+                         'Scale':1,
+                         'ScreenShotScale':1,
+                         'SaveFolder':'../../'
+                     }
                   }
                 }],
                 ['CmdExecutor','cmdexec0']
@@ -144,7 +154,7 @@
                 ['SysBusMasterID',0],
                 ['ResetState','Halted'],
                 ['SourceCode','src0'],
-                ['GenerateTraceFile','stm32l4xx_tracer.log','Specify file name to enable tracer'],
+                ['GenerateTraceFile','','Specify file name to enable tracer'],
                 ['DefaultMode','Thumb'],
                 ]}]},
     {'Class':'MemoryLUTClass','Instances':[
@@ -261,6 +271,7 @@
                 ['LogLevel',2],
                 ['BaseAddress',0x48000000],
                 ['Length',0x400],
+                ['HardResetMode',0xABFFFFFF],
                 ['MapList',[['gpioa','MODER'],
                             ['gpioa','OTYPER'],
                             ['gpioa','OSPEEDR'],
@@ -280,6 +291,7 @@
                 ['LogLevel',2],
                 ['BaseAddress',0x48000C00],
                 ['Length',0x400],
+                ['HardResetMode',0xFFFFFFFF],
                 ['MapList',[['gpiod','MODER'],
                             ['gpiod','OTYPER'],
                             ['gpiod','OSPEEDR'],
@@ -292,6 +304,18 @@
                             ['gpiod','AFRH'],
                             ['gpiod','BRR'],
                            ]]
+                ]}]},
+    {'Class':'ST7789VClass','Instances':[
+          {'Name':'display0','Attr':[
+                ['ObjDescription','Display Controller 240x320 256K-colors'],
+                ['LogLevel',2],
+                ['CmdExecutor','cmdexec0'],
+                ['IOData',['gpiod','ODR']],
+                ['IOWR',[['gpioa','ODR'], 8], '[IIOPort instance, pinindex]'],
+                ['IORD',[['gpioa','ODR'], 9], '[IIOPort instance, pinindex]'],
+                ['IODC',[['gpioa','ODR'], 10], '[IIOPort instance, pinindex]'],
+                ['IOCS',[['gpioa','ODR'], 11], '[IIOPort instance, pinindex]'],
+                ['IOReset',[['gpioa','ODR'], 12], '[IIOPort instance, pinindex]'],
                 ]}]},
     {'Class':'DSUClass','Instances':[
           {'Name':'dsu0','Attr':[

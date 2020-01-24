@@ -525,6 +525,7 @@ enum EIsaArmV7 {
     T1_CMP_R,   // 4.6.30
     T2_CMP_R,   // 4.6.30
     T1_CPS,     // 4.6.31
+    T1_EOR_I,   // 4.6.36
     T1_EOR_R,   // 4.6.37
     T1_IT,      // 4.6.39
     T2_LDMIA,

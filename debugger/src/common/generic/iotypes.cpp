@@ -150,7 +150,7 @@ void IOReg16Type::write(uint16_t data) {
 IOReg32Type::IOReg32Type(IService *parent, const char *name,
     uint32_t addr, uint32_t len, int priority) :
     IORegType(parent, name, addr, len, priority) {
-    value.buf32[0] = 0;
+    value.val = 0;
     hard_reset_value_ = 0;
 }
 
@@ -170,7 +170,7 @@ ETransStatus IOReg32Type::b_transport(Axi4TransactionType *trans) {
 
 uint32_t IOReg32Type::read() {
     IIOPortListener32 *lstn;
-    uint32_t odata = value.buf32[0];
+    uint32_t odata = value.val;
     for (unsigned i = 0; i < portListeners_.size(); i++) {
         lstn = static_cast<IIOPortListener32 *>(portListeners_[i].to_iface());
         lstn->readData(&odata, get_direction());
@@ -180,7 +180,7 @@ uint32_t IOReg32Type::read() {
 
 void IOReg32Type::write(uint32_t data) {
     IIOPortListener32 *lstn;
-    value.buf32[0] = data;
+    value.val = data;
     for (unsigned i = 0; i < portListeners_.size(); i++) {
         lstn = static_cast<IIOPortListener32 *>(portListeners_[i].to_iface());
         lstn->writeData(data, get_direction());

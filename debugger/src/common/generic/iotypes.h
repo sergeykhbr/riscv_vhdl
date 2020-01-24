@@ -111,8 +111,8 @@ public:
     virtual void reset(IFace *isource) { write(hard_reset_value_); }
 
     /** General access methods: */
-    uint32_t getValue() { return value.buf32[0]; }
-    void setValue(uint32_t v) { value.buf32[0] = v; }
+    uint32_t getValue() { return value.val; }
+    void setValue(uint32_t v) { value.val = v; }
 
 protected:
     virtual uint32_t get_direction() { return 0u; }
@@ -120,7 +120,7 @@ protected:
     virtual void write(uint32_t val);
 
 protected:
-    Reg64Type value;
+    Reg32Type value;
     uint32_t hard_reset_value_;
 };
 
@@ -183,12 +183,6 @@ class IOPinType8 : public IOPinType,
     }
 
     virtual void latch() { value_ = prelatch_; }
-};
-
-class IOPinType8Debug : public IOPinType8 {
- public:
-    IOPinType8Debug(IService *parent, const char *name) :
-        IOPinType8(parent, name) {}
 
  protected:
     // Debug output compatibility
@@ -224,6 +218,50 @@ class IOPinType16 : public IOPinType,
     virtual void latch() {
         value_ = prelatch_;
     }
+};
+
+/** TODO: remove IOPinType from classes like in the following */
+class IOPinType32 : public IIOPortListener32 {
+ public:
+    IOPinType32(IService *parent, const char *name) : parent_(parent) {
+        parent->registerPortInterface(name,
+                static_cast<IIOPortListener32 *>(this));
+        pinidx_ = 0;
+        bitLatched_ = false;
+        bitPreLatched_ = false;
+    }
+
+    /** IIOPortListener32 */
+    virtual void readData(uint32_t *val, uint32_t mask) {
+        *val |= bitLatched_ << pinidx_;
+    }
+    virtual void writeData(uint32_t val, uint32_t mask) {
+        //if (mask & (1ul << pinidx_)) {
+            bitPreLatched_ = (val >> pinidx_) & 1;
+        //}
+    }
+    virtual void latch() override {
+        if (!bitLatched_ && bitPreLatched_) {
+            posedge();
+        } else if (bitLatched_ && !bitPreLatched_) {
+            negedge();
+        }
+        bitLatched_ = bitPreLatched_;
+    }
+
+    /** Common methods: */
+    void setPinIdx(int pinidx) { pinidx_ = pinidx; }
+    uint32_t getLevel() { return bitLatched_; }
+
+ protected:
+    virtual void posedge() {}
+    virtual void negedge() {}
+
+ protected:
+    IService *parent_;
+    int pinidx_;
+    uint32_t bitLatched_;
+    uint32_t bitPreLatched_;
 };
 
 }  // namespace debugger

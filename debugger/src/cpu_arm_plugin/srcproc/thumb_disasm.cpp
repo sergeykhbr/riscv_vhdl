@@ -495,7 +495,24 @@ int disasm_thumb(uint64_t pc,
         uint32_t imm8 = ti1 & 0xFF;
         uint32_t imm12 = (i << 11) | (imm3 << 8) | imm8;
         uint32_t imm32 = ThumbExpandImmWith(imm12);
-        RISCV_sprintf(disasm, sz, "and.w    %s, #%xh",
+        RISCV_sprintf(disasm, sz, "and.w    %s, %s, #%xh",
+                IREGS_NAMES[d],
+                IREGS_NAMES[n],
+                imm32);
+        len = 4;
+    } else if ((ti & 0x8F00FBE0) == 0x0F00F080) {
+        // T1_TEQ_I;
+        len = 4;
+    } else if ((ti & 0x8000FBE0) == 0x0000F080) {
+        uint32_t d = (ti1 >> 8) & 0xF;
+        uint32_t n = ti  & 0xF;
+        uint32_t i = (ti >> 10) & 1;
+        uint32_t imm3 = (ti1 >> 12) & 0x7;
+        uint32_t imm8 = ti1 & 0xFF;
+        uint32_t imm12 = (i << 11) | (imm3 << 8) | imm8;
+        uint32_t imm32 = ThumbExpandImmWith(imm12);
+        RISCV_sprintf(disasm, sz, "eor.w    %s, %s, #%xh",
+                IREGS_NAMES[d],
                 IREGS_NAMES[n],
                 imm32);
         len = 4;

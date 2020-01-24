@@ -2135,6 +2135,45 @@ class CPS_T1 : public T1Instruction {
     }
 };
 
+/** 4.6.36 EOR (immediate) */
+class EOR_I_T1 : public T1Instruction {
+ public:
+    EOR_I_T1(CpuCortex_Functional *icpu) : T1Instruction(icpu, "EOR.W") {}
+
+    virtual int exec(Reg64Type *payload) {
+        if (!ConditionPassed()) {
+            return 4;
+        }
+        uint32_t ti = payload->buf16[0];
+        uint32_t ti1 = payload->buf16[1];
+        uint32_t carry;
+        uint32_t result;
+        uint32_t d = (ti1 >> 8) & 0xF;
+        uint32_t n = ti  & 0xF;
+        bool setflags = (ti >> 4) & 1;
+        uint32_t i = (ti >> 10) & 1;
+        uint32_t imm3 = (ti1 >> 12) & 0x7;
+        uint32_t imm8 = ti1 & 0xFF;
+        uint32_t imm12 = (i << 11) | (imm3 << 8) | imm8;
+        uint32_t Rn = static_cast<uint32_t>(R[n]);
+        uint32_t imm32 = ThumbExpandImmWithC(imm12, &carry);
+
+        if (BadReg(d) || BadReg(n)) {
+            RISCV_error("%s", "UNPREDICTABLE");
+        }
+        result = Rn ^ imm32;
+        icpu_->setReg(d, result);
+
+        if (setflags) {
+            icpu_->setN((result >> 31) & 1);
+            icpu_->setZ(result == 0 ? 1: 0);
+            icpu_->setC(carry);
+            // V unchanged
+        }
+        return 4;
+    }
+};
+
 /** 4.6.37 EOR (register) */
 class EOR_R_T1 : public T1Instruction {
  public:
@@ -4220,6 +4259,7 @@ void CpuCortex_Functional::addArm7tmdiIsa() {
     isaTableArmV7_[T1_CMP_R] = new CMP_R_T1(this);
     isaTableArmV7_[T2_CMP_R] = new CMP_R_T2(this);
     isaTableArmV7_[T1_CPS] = new CPS_T1(this);
+    isaTableArmV7_[T1_EOR_I] = new EOR_I_T1(this);
     isaTableArmV7_[T1_EOR_R] = new EOR_R_T1(this);
     isaTableArmV7_[T1_IT] = new IT_T1(this);
     isaTableArmV7_[T2_LDMIA] = new LDMIA_T2(this);

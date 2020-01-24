@@ -26,6 +26,7 @@
 #include "ControlWidget/ConsoleWidget.h"
 #include "PeriphWidgets/UartWidget.h"
 #include "PeriphWidgets/GpioWidget.h"
+#include "PeriphWidgets/DemoM4Widget.h"
 #include "GnssWidgets/MapWidget.h"
 #include "GnssWidgets/PlotWidget.h"
 #include <QtWidgets/QtWidgets>
@@ -210,6 +211,14 @@ void DbgMainWindow::createActions() {
     connect(actionSerial_, SIGNAL(triggered(bool)),
             this, SLOT(slotActionTriggerUart0(bool)));
 
+    actionDemoM4_ = new QAction(QIcon(tr(":/images/serial_96x96.png")),
+                              tr("&ARM M4 display"), this);
+    actionDemoM4_->setToolTip(tr("STM32L4xx ARM Demo"));
+    actionDemoM4_->setCheckable(true);
+    actionDemoM4_->setChecked(false);
+    connect(actionDemoM4_, SIGNAL(triggered(bool)),
+            this, SLOT(slotActionTriggerDemoM4(bool)));
+
     actionGnssMap_ = new QAction(QIcon(tr(":/images/opmap_96x96.png")),
                               tr("&OpenStreetMap"), this);
     actionGnssMap_->setToolTip(tr("Open Street map with GNSS tracks view"));
@@ -342,9 +351,16 @@ void DbgMainWindow::createMdiWindow() {
 }
 
 void DbgMainWindow::addWidgets() {
+    const AttributeType &openList = (*igui_->getpConfig())["OpenViews"];
     slotActionTriggerUart0(true);
     slotActionTriggerCpuAsmView(true);
 
+    for (unsigned i = 0; i < openList.size(); i++) {
+        AttributeType &viewName = const_cast<AttributeType &>(openList[i]);
+        if (viewName.is_equal("DemoM4Window")) {
+            slotActionTriggerDemoM4(true);
+        }
+    }
     //slotActionTriggerGnssMap(true);
 }
 
@@ -431,6 +447,15 @@ void DbgMainWindow::slotActionTriggerGnssPlot(bool val) {
 
 void DbgMainWindow::slotActionTriggerSymbolBrowser() {
     new SymbolBrowserQMdiSubWindow(igui_, mdiArea_, this);
+}
+
+void DbgMainWindow::slotActionTriggerDemoM4(bool val) {
+    if (val) {
+        viewDemoM4_ = 
+            new DemoM4QMdiSubWindow(igui_, mdiArea_, this, actionDemoM4_);
+    } else {
+        viewDemoM4_->close();
+    }
 }
 
 void DbgMainWindow::slotOpenDisasm(uint64_t addr, uint64_t sz) {

@@ -93,6 +93,9 @@
     <ClCompile Include="..\..\src\cpu_arm_plugin\stm32l4\stm32l4_systick.cpp">
       <Filter>src\stm32l4</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\cpu_arm_plugin\stm32l4\st7789v.cpp">
+      <Filter>src\stm32l4</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\api_types.h">
@@ -183,6 +186,9 @@
       <Filter>src\stm32l4</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\cpu_arm_plugin\stm32l4\stm32l4_systick.h">
+      <Filter>src\stm32l4</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_arm_plugin\stm32l4\st7789v.h">
       <Filter>src\stm32l4</Filter>
     </ClInclude>
   </ItemGroup>

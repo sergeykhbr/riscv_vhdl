@@ -20,6 +20,7 @@
 #include "iclass.h"
 #include "iservice.h"
 #include "coreservices/imemop.h"
+#include "coreservices/iioport.h"
 #include "generic/mapreg.h"
 #include "generic/rmembank_gen1.h"
 
@@ -32,13 +33,89 @@ class STM32L4_GPIO : public RegMemBankGeneric {
     /** IService interface */
     virtual void postinitService() override;
 
+    /** Common methods for registers: */
+    void setMode(uint32_t v);
+    void setOpenDrain(uint32_t v);
+    uint32_t preOutput(uint32_t v);
+    uint32_t getDirection();
+
  protected:
+    AttributeType hardResetMode_;
+
+    uint32_t direction_;        // 0=input; 1=output
+    uint32_t openDrain_;        // 0=pull up/down; 1=open-drain
+
+    // Direction config
+    class MODER_TYPE : public MappedReg32Type {
+     public:
+        MODER_TYPE(IService *parent, const char *name, uint64_t addr) :
+                    MappedReg32Type(parent, name, addr) {
+            hard_reset_value_ = 0x00000000;
+            value_.val = hard_reset_value_;
+        }
+
+        virtual void setHardResetValue(uint32_t v) override {
+            MappedReg32Type::setHardResetValue(v);
+            STM32L4_GPIO *p = static_cast<STM32L4_GPIO *>(parent_);
+            p->setMode(v);
+        } 
+
+     protected:
+        virtual uint32_t aboutToWrite(uint32_t nxt_val) override;
+    };
+
+    // Open-drain, pull-up/down config
+    class OTYPER_TYPE : public MappedReg32Type {
+     public:
+        OTYPER_TYPE(IService *parent, const char *name, uint64_t addr) :
+                    MappedReg32Type(parent, name, addr) {
+            hard_reset_value_ = 0x00000000;
+            value_.val = hard_reset_value_;
+        }
+     protected:
+        virtual uint32_t aboutToWrite(uint32_t nxt_val) override;
+    };
+
+    // Output Data Register
+    class ODR_TYPE : public MappedReg32Type,
+                         public IIOPort {
+     public:
+        ODR_TYPE(IService *parent, const char *name, uint64_t addr) :
+                    MappedReg32Type(parent, name, addr) {
+            hard_reset_value_ = 0x00000000;
+            value_.val = hard_reset_value_;
+            portListeners_.make_list(0);
+        }
+
+        /** IIOPort interface */
+        virtual void registerPortListener(IFace *listener) {
+            AttributeType item;
+            item.make_iface(listener);
+            portListeners_.add_to_list(&item);
+        }
+
+        virtual void unregisterPortListener(IFace *listener) {
+            for (unsigned i = 0; i < portListeners_.size(); i++) {
+                if (listener == portListeners_[i].to_iface()) {
+                    portListeners_.remove_from_list(i);
+                    break;
+                }
+            }
+        }
+
+     protected:
+        virtual uint32_t aboutToWrite(uint32_t nxt_val) override;
+     protected:
+        AttributeType portListeners_;
+    };
+
+
     MappedReg32Type MODER;          // 0x00
-    MappedReg32Type OTYPER;         // 0x04
+    OTYPER_TYPE OTYPER;             // 0x04
     MappedReg32Type OSPEEDR;        // 0x08
     MappedReg32Type PUPDR;          // 0x0c
     MappedReg32Type IDR;            // 0x10
-    MappedReg32Type ODR;            // 0x14
+    ODR_TYPE ODR;                   // 0x14
     MappedReg32Type BSRR;           // 0x18
     MappedReg32Type LCKR;           // 0x1c
     MappedReg32Type AFRL;           // 0x20

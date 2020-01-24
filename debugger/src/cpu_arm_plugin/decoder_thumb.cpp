@@ -113,6 +113,10 @@ EIsaArmV7 decoder_thumb(uint32_t ti, uint32_t *tio,
         ret = T3_MOV_I;
     } else if ((ti & 0x8000FBE0) == 0x0000F000) {
         ret = T1_AND_I;
+    } else if ((ti & 0x8F00FBE0) == 0x0F00F080) {
+        // T1_TEQ_I;
+    } else if ((ti & 0x8000FBE0) == 0x0000F080) {
+        ret = T1_EOR_I;
     } else if ((ti & 0x8000FBE0) == 0x0000F100) {
         ret = T3_ADD_I;
     } else if ((ti & 0x8000FBE0) == 0x0000F1A0) {
