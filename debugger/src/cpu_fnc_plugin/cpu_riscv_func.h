@@ -62,12 +62,6 @@ class CpuRiver_Functional : public CpuGeneric,
     virtual uint64_t readCSR(int idx) override;
     virtual void writeCSR(int idx, uint64_t val) override;
 
-    // CpuGeneric virtual methods:
-    virtual uint64_t *getpRegs() { return portRegs_.getpR64(); }
-
-    // Common River methods shared with instructions:
-    uint64_t *getpFpuRegs() { return portRegsFpu_.getpR64(); }
-
  protected:
     /** CpuGeneric common methods */
     virtual EEndianessType endianess() { return LittleEndian; }
@@ -105,9 +99,6 @@ class CpuRiver_Functional : public CpuGeneric,
     static const int INSTR_HASH_TABLE_SIZE = 1 << 6;
     AttributeType listInstr_[INSTR_HASH_TABLE_SIZE];
 
-    GenericReg64Bank portRegs_;
-    GenericReg64Bank portSavedRegs_;
-    GenericReg64Bank portRegsFpu_;
     GenericReg64Bank portCSR_;
 
     CmdBrRiscv *pcmd_br_;

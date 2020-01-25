@@ -84,9 +84,6 @@ class CpuCortex_Functional : public CpuGeneric,
     virtual void enterException(int idx);
     virtual void exitException(uint32_t exc_return);
 
-    // CpuGeneric virtual methods:
-    virtual uint64_t *getpRegs() { return portRegs_.getpR64(); }
-
  protected:
     /** CpuGeneric common methods */
     virtual uint64_t getResetAddress();
@@ -98,6 +95,7 @@ class CpuCortex_Functional : public CpuGeneric,
     virtual void traceOutput() override;
     
     void addArm7tmdiIsa();
+    void addThumb2Isa();
     unsigned addSupportedInstruction(ArmInstruction *instr);
     uint32_t hash32(uint32_t val) { return (val >> 24) & 0xf; }
 
@@ -110,7 +108,6 @@ class CpuCortex_Functional : public CpuGeneric,
     AttributeType listInstr_[INSTR_HASH_TABLE_SIZE];
     GenericInstruction *isaTableArmV7_[ARMV7_Total];
 
-    GenericReg64Bank portRegs_;
     ProgramStatusRegsiterType *p_psr_;
 
     char errmsg_[256];

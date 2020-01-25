@@ -54,6 +54,10 @@ class ICpuFunctional : public IFace {
     virtual void raiseSoftwareIrq() = 0;
     virtual uint64_t *getpRegs() = 0;
     virtual uint64_t getPC() = 0;
+    virtual void setPC(uint64_t v) = 0;
+    virtual uint64_t getNPC() = 0;
+    virtual void setNPC(uint64_t v) = 0;
+
     virtual void setBranch(uint64_t npc) = 0;
     virtual void pushStackTrace() = 0;
     virtual void popStackTrace() = 0;

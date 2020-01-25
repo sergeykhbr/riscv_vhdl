@@ -36,10 +36,30 @@
 
 namespace debugger {
 
+class GenericPCType : public MappedReg64Type {
+ public:
+    GenericPCType(IService *parent, const char *name, uint64_t addr) :
+        MappedReg64Type(parent, name, addr, 10) {
+    }
+ protected:
+    virtual uint64_t aboutToRead(uint64_t cur_val) override;
+    virtual uint64_t aboutToWrite(uint64_t new_val) override;
+};
+
+class GenericNPCType : public MappedReg64Type {
+ public:
+    GenericNPCType(IService *parent, const char *name, uint64_t addr) :
+        MappedReg64Type(parent, name, addr, 10) {
+    }
+ protected:
+    virtual uint64_t aboutToRead(uint64_t cur_val) override;
+    virtual uint64_t aboutToWrite(uint64_t new_val) override;
+};
+
 class GenericStatusType : public MappedReg64Type {
  public:
     GenericStatusType(IService *parent, const char *name, uint64_t addr) :
-        MappedReg64Type(parent, name, addr) {
+        MappedReg64Type(parent, name, addr, 10) {
     }
  protected:
     virtual uint64_t aboutToRead(uint64_t cur_val) override;
@@ -49,7 +69,7 @@ class GenericStatusType : public MappedReg64Type {
 class FetchedBreakpointType : public MappedReg64Type {
  public:
     FetchedBreakpointType(IService *parent, const char *name, uint64_t addr)
-        : MappedReg64Type(parent, name, addr) {
+        : MappedReg64Type(parent, name, addr, 10) {
     }
  protected:
     virtual uint64_t aboutToWrite(uint64_t new_val) override;
@@ -58,7 +78,7 @@ class FetchedBreakpointType : public MappedReg64Type {
 class AddBreakpointType : public MappedReg64Type {
  public:
     AddBreakpointType(IService *parent, const char *name, uint64_t addr)
-        : MappedReg64Type(parent, name, addr) {
+        : MappedReg64Type(parent, name, addr, 10) {
     }
  protected:
     virtual uint64_t aboutToWrite(uint64_t new_val) override;
@@ -67,7 +87,7 @@ class AddBreakpointType : public MappedReg64Type {
 class RemoveBreakpointType : public MappedReg64Type {
  public:
     RemoveBreakpointType(IService *parent, const char *name, uint64_t addr)
-        : MappedReg64Type(parent, name, addr) {
+        : MappedReg64Type(parent, name, addr, 10) {
     }
  protected:
     virtual uint64_t aboutToWrite(uint64_t new_val) override;
@@ -76,7 +96,7 @@ class RemoveBreakpointType : public MappedReg64Type {
 class StepCounterType : public MappedReg64Type {
  public:
     StepCounterType(IService *parent, const char *name, uint64_t addr)
-        : MappedReg64Type(parent, name, addr) {
+        : MappedReg64Type(parent, name, addr, 10) {
     }
  protected:
     virtual uint64_t aboutToRead(uint64_t cur_val) override;
@@ -85,7 +105,7 @@ class StepCounterType : public MappedReg64Type {
 class FlushAddressType : public MappedReg64Type {
  public:
     FlushAddressType(IService *parent, const char *name, uint64_t addr)
-        : MappedReg64Type(parent, name, addr) {
+        : MappedReg64Type(parent, name, addr, 10) {
     }
  protected:
     virtual uint64_t aboutToWrite(uint64_t new_val) override;
@@ -113,8 +133,11 @@ class CpuGeneric : public IService,
                                          IDbgNbResponse *cb);
 
     /** ICpuFunctional */
-    virtual uint64_t *getpRegs() = 0;   // main register bank
-    virtual uint64_t getPC() { return pc_.getValue().val; }
+    virtual uint64_t *getpRegs() { return R; }
+    virtual uint64_t getPC() { return *PC_; }
+    virtual void setPC(uint64_t v) { *PC_ = v; }
+    virtual uint64_t getNPC() { return *NPC_; }
+    virtual void setNPC(uint64_t v) { *NPC_ = v; }
     virtual void setReg(int idx, uint64_t val);
     virtual void setBranch(uint64_t npc);
     virtual void pushStackTrace();
@@ -177,7 +200,7 @@ class CpuGeneric : public IService,
 
     virtual void updatePipeline();
     virtual bool updateState();
-    virtual uint64_t fetchingAddress() { return pc_.getValue().val; }
+    virtual uint64_t fetchingAddress() { return getPC(); }
     virtual void fetchILine();
     virtual void updateDebugPort();
     virtual void updateQueue();
@@ -214,9 +237,13 @@ class CpuGeneric : public IService,
     uint64_t hw_stepping_break_;
     bool branch_;
     unsigned oplen_;
-    MappedReg64Type pc_;
-    MappedReg64Type npc_;
     uint64_t *R;                            // Pointer to register bank
+    uint64_t *PC_;
+    uint64_t *NPC_;
+
+    GenericReg64Bank portRegs_;
+    GenericPCType dbgpc_;
+    GenericNPCType dbgnpc_;
     GenericStatusType status_;
     MappedReg64Type stepping_cnt_;
     StepCounterType clock_cnt_;
@@ -230,7 +257,8 @@ class CpuGeneric : public IService,
     AddBreakpointType br_hw_add_;
     RemoveBreakpointType br_hw_remove_;
 
-    Reg64Type pc_z_;
+    //Reg64Type pc_z_;
+    uint64_t pc_z_;
     uint64_t interrupt_pending_[2];
     bool sw_breakpoint_;
     bool skip_sw_breakpoint_;
@@ -250,9 +278,12 @@ class CpuGeneric : public IService,
 
     Axi4TransactionType trans_;
     Reg64Type cacheline_[512/4];
+    
     // Simple memory cache to avoid access to sysbus and speed-up simulation
-    uint8_t *memcache_;             // unparsed instructions storage
-    uint8_t *memcache_flag_;        // cached instruction length in bytes
+    struct ICacheType {
+        GenericInstruction *instr;
+        uint32_t buf;
+    } *icache_;            // parsed instructions storage
     int memcache_sz_;               // allocated size
     uint64_t CACHE_BASE_ADDR_;
     uint64_t CACHE_MASK_;

@@ -28,7 +28,7 @@ class MappedReg64Type : public IMemoryOperation,
                         public IResetListener {
  public:
     MappedReg64Type(IService *parent, const char *name,
-                    uint64_t addr, int len = 8, int priority = 1);
+                    uint64_t addr, int priority = 1);
 
     /** IMemoryOperation methods */
     virtual ETransStatus b_transport(Axi4TransactionType *trans);

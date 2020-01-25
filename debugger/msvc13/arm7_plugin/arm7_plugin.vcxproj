@@ -114,6 +114,7 @@
     <ClCompile Include="..\..\src\cpu_arm_plugin\stm32l4\stm32l4_nvic.cpp" />
     <ClCompile Include="..\..\src\cpu_arm_plugin\stm32l4\stm32l4_rcc.cpp" />
     <ClCompile Include="..\..\src\cpu_arm_plugin\stm32l4\stm32l4_systick.cpp" />
+    <ClCompile Include="..\..\src\cpu_arm_plugin\thumb.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\api_core.h" />

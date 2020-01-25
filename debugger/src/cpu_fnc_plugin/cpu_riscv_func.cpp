@@ -23,9 +23,6 @@ namespace debugger {
 
 CpuRiver_Functional::CpuRiver_Functional(const char *name) :
     CpuGeneric(name),
-    portRegs_(this, "regs", DSUREG(ureg.v.iregs), Reg_Total),
-    portSavedRegs_(this, "savedregs", 0, Reg_Total),  // not mapped !!!
-    portRegsFpu_(this, "fregs", DSUREG(ureg.v.fregs), RegFpu_Total),
     portCSR_(this, "csr", DSUREG(csr), 1<<12) {
     registerInterface(static_cast<ICpuRiscV *>(this));
     registerAttribute("VendorID", &vendorid_);
@@ -131,7 +128,7 @@ void CpuRiver_Functional::handleTrap() {
         if (t1.bits.trap_on_break == 0) {
             sw_breakpoint_ = true;
             interrupt_pending_[0] &= ~(1ull << EXCEPTION_Breakpoint);
-            npc_.setValue(pc_.getValue());
+            setNPC(getPC());
             halt("EBREAK Breakpoint");
             return;
         }
@@ -147,15 +144,15 @@ void CpuRiver_Functional::handleTrap() {
     portCSR_.write(CSR_mstatus, mstatus.value);
 
     int xepc = static_cast<int>((cur_prv_level << 8) + 0x41);
-    portCSR_.write(xepc, npc_.getValue().val);
+    portCSR_.write(xepc, getNPC());
     if (interrupt_pending_[0] & exception_mask) {
         // Exception: ['cfg_nmi_name', address, ....]
         int entry_idx = 2*static_cast<int>(mcause.value) + 1;
         uint64_t trap = exceptionTable_[entry_idx].to_uint64();
-        npc_.setValue(trap);
+        setNPC(trap);
     } else {
         // Software interrupt handled after instruction was executed
-        npc_.setValue(portCSR_.read(CSR_mtvec));
+        setNPC(portCSR_.read(CSR_mtvec).val);
     }
     interrupt_pending_[0] = 0;
 }
@@ -208,10 +205,6 @@ void CpuRiver_Functional::trackContextStart() {
     if (trace_file_ == 0) {
         return;
     }
-    /** Save previous reg values to find modification after exec() */
-    uint64_t *dst = portSavedRegs_.getpR64();
-    uint64_t *src = portRegs_.getpR64();
-    memcpy(dst, src, Reg_Total*sizeof(uint64_t));
 }
 
 void CpuRiver_Functional::traceOutput() {

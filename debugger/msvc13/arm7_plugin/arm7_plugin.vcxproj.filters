@@ -96,6 +96,9 @@
     <ClCompile Include="..\..\src\cpu_arm_plugin\stm32l4\st7789v.cpp">
       <Filter>src\stm32l4</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\cpu_arm_plugin\thumb.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\api_types.h">

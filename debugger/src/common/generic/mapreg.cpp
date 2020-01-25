@@ -20,7 +20,7 @@
 namespace debugger {
 
 MappedReg64Type::MappedReg64Type(IService *parent, const char *name,
-                  uint64_t addr, int len, int priority) {
+                  uint64_t addr, int priority) {
     if (parent == NULL) {
     } else {
         parent->registerPortInterface(name,
@@ -32,7 +32,7 @@ MappedReg64Type::MappedReg64Type(IService *parent, const char *name,
     portListeners_.make_list(0);
     regname_.make_string(name);
     baseAddress_.make_uint64(addr);
-    length_.make_uint64(len);
+    length_.make_uint64(8);
     priority_.make_int64(priority);
     value_.val = 0;
     hard_reset_value_ = 0;

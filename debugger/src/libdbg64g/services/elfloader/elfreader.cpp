@@ -240,7 +240,7 @@ void ElfReaderService::processDebugSymbol(SectionHeaderType *sh) {
         if ((st_type == STT_OBJECT || st_type == STT_FUNC) && st->get_value()) {
             tsymb.make_list(Symbol_Total);
             tsymb[Symbol_Name].make_string(symb_name);
-            tsymb[Symbol_Addr].make_uint64(st->get_value());
+            tsymb[Symbol_Addr].make_uint64(st->get_value() & ~1ull);
             tsymb[Symbol_Size].make_uint64(st->get_size());
             if (st_type == STT_FUNC) {
                 tsymb[Symbol_Type].make_uint64(SYMBOL_TYPE_FUNCTION);

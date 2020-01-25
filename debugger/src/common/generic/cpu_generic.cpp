@@ -22,8 +22,9 @@ namespace debugger {
 
 CpuGeneric::CpuGeneric(const char *name)  
     : IService(name), IHap(HAP_ConfigDone),
-    pc_(this, "pc", DSUREG(ureg.v.pc)),
-    npc_(this, "npc", DSUREG(ureg.v.npc)),
+    portRegs_(this, "regs", DSUREG(ureg.v.iregs[0]), 0x1000),    // 4096 bytes region of DSU
+    dbgpc_(this, "pc", DSUREG(ureg.v.pc)),
+    dbgnpc_(this, "npc", DSUREG(ureg.v.npc)),
     status_(this, "status", DSUREG(udbg.v.control)),
     stepping_cnt_(this, "stepping_cnt", DSUREG(udbg.v.stepping_mode_steps)),
     clock_cnt_(this, "clock_cnt", DSUREG(udbg.v.clock_cnt)),
@@ -68,7 +69,7 @@ CpuGeneric::CpuGeneric(const char *name)
     isysbus_ = 0;
     estate_ = CORE_OFF;
     step_cnt_ = 0;
-    pc_z_.val = 0;
+    pc_z_ = 0;
     hw_stepping_break_ = 0;
     interrupt_pending_[0] = 0;
     interrupt_pending_[1] = 0;
@@ -81,8 +82,7 @@ CpuGeneric::CpuGeneric(const char *name)
     dport_.valid = 0;
     trace_file_ = 0;
     memset(&trace_data_, 0, sizeof(trace_data_));
-    memcache_ = 0;
-    memcache_flag_ = 0;
+    icache_ = 0;
     memcache_sz_ = 0;
     fetch_addr_ = 0;
     cache_offset_ = 0;
@@ -91,16 +91,17 @@ CpuGeneric::CpuGeneric(const char *name)
     CACHE_MASK_ = 0;
     oplen_ = 0;
     RISCV_set_default_clock(static_cast<IClock *>(this));
+
+    R = portRegs_.getpR64();
+    PC_ = &R[33];       // as mapped in dsu by default
+    NPC_ = &R[34];       // as mapped in dsu by default
 }
 
 CpuGeneric::~CpuGeneric() {
     RISCV_set_default_clock(0);
     RISCV_event_close(&eventConfigDone_);
-    if (memcache_) {
-        delete [] memcache_;
-    }
-    if (memcache_flag_) {
-        delete [] memcache_flag_;
+    if (icache_) {
+        delete [] icache_;
     }
     if (trace_file_) {
         trace_file_->close();
@@ -109,7 +110,6 @@ CpuGeneric::~CpuGeneric() {
 }
 
 void CpuGeneric::postinitService() {
-    R = getpRegs();
     if (resetState_.is_equal("Halted")) {
         estate_ = CORE_Halted;
     } else {
@@ -172,9 +172,8 @@ void CpuGeneric::postinitService() {
     CACHE_MASK_ = ~cacheAddrMask_.to_uint64();
     if (cacheAddrMask_.to_uint64()) {
         memcache_sz_ = cacheAddrMask_.to_int() + 1;
-        memcache_ = new uint8_t[memcache_sz_];
-        memcache_flag_ = new uint8_t[memcache_sz_];
-        memset(memcache_flag_, 0, memcache_sz_);
+        icache_ = new ICacheType[memcache_sz_];
+        memset(icache_, 0, memcache_sz_*sizeof(ICacheType));
     }
 
     // Get global settings:
@@ -213,13 +212,16 @@ void CpuGeneric::updatePipeline() {
         return;
     }
 
-    pc_.setValue(npc_.getValue());
+    setPC(getNPC());
     branch_ = false;
     oplen_ = 0;
 
     if (!checkHwBreakpoint()) {
         fetchILine();
-        instr_ = decodeInstruction(cacheline_);
+        // Checked that it was cached
+        if (!instr_) {
+            instr_ = decodeInstruction(cacheline_);
+        }
 
         trackContextStart();
         if (instr_) {
@@ -229,11 +231,11 @@ void CpuGeneric::updatePipeline() {
         }
         trackContextEnd();
 
-        pc_z_ = pc_.getValue();
+        pc_z_ = getPC();
     }
 
     if (!branch_) {
-        npc_.setValue(pc_.getValue().val + oplen_);
+        setNPC(getPC() + oplen_);
     }
 
     updateQueue();
@@ -279,16 +281,19 @@ void CpuGeneric::updateQueue() {
 
 void CpuGeneric::fetchILine() {
     fetch_addr_ = fetchingAddress();
-    cachable_pc_ = memcache_flag_
-                && (fetch_addr_ & CACHE_MASK_) == CACHE_BASE_ADDR_;
-    cache_offset_ = fetch_addr_ - CACHE_BASE_ADDR_;
+    cachable_pc_ = false;
+    instr_ = 0;
+    if ((fetch_addr_ & CACHE_MASK_) == CACHE_BASE_ADDR_) {
+        cachable_pc_ = true;
+        cache_offset_ = fetch_addr_ - CACHE_BASE_ADDR_;
+        instr_ = icache_[cache_offset_].instr;
+        cacheline_[0].buf32[0] = icache_[cache_offset_].buf;  // for tracer
+    }
+    
 
-    if (cachable_pc_ && memcache_flag_[cache_offset_]) {
-        cacheline_[0].buf32[0] = *reinterpret_cast<uint32_t *>(
-                            &memcache_[cache_offset_]);
-    } else {
+    if (!instr_) {
         trans_.action = MemAction_Read;
-        trans_.addr = pc_.getValue().val;
+        trans_.addr = getPC();
         trans_.xsize = 4;
         trans_.wstrb = 0;
         if (dma_memop(&trans_) == TRANS_ERROR) {
@@ -304,14 +309,16 @@ void CpuGeneric::fetchILine() {
 }
 
 void CpuGeneric::flush(uint64_t addr) {
-    if (memcache_flag_ == 0) {
+    if (icache_ == 0) {
         return;
     }
     if (addr == ~0ull) {
-        memset(memcache_flag_, 0, memcache_sz_);
+        memset(icache_, 0, memcache_sz_*sizeof(ICacheType));
     } else if ((addr & CACHE_MASK_) == CACHE_BASE_ADDR_) {
         /** SW breakpoint manager must call this flush operation */
-        memcache_flag_[addr - CACHE_BASE_ADDR_] = 0;
+        if ((addr & CACHE_MASK_) == CACHE_BASE_ADDR_) {
+            icache_[addr - CACHE_BASE_ADDR_].instr = 0;
+        }
     }
 }
 
@@ -321,14 +328,14 @@ void CpuGeneric::trackContextStart() {
     }
     trace_data_.action_cnt = 0;
     trace_data_.step_cnt = step_cnt_;
-    trace_data_.pc = pc_.getValue().val;
+    trace_data_.pc = getPC();
     trace_data_.instr = cacheline_[0].buf32[0];
 }
 
 void CpuGeneric::trackContextEnd() {
     if (do_not_cache_) {
         if (cachable_pc_) {
-            memcache_flag_[cache_offset_] = 0;
+            icache_[cache_offset_].instr = 0;
         }
     } else {
         if (icovtracker_) {
@@ -336,9 +343,8 @@ void CpuGeneric::trackContextEnd() {
                                       static_cast<uint8_t>(oplen_));
         }
         if (cachable_pc_) {
-            memcache_flag_[cache_offset_] = oplen_;
-            *reinterpret_cast<uint32_t *>(&memcache_[cache_offset_]) =
-                cacheline_[0].buf32[0];
+            icache_[cache_offset_].instr = instr_;
+            icache_[cache_offset_].buf = cacheline_[0].buf32[0];
         }
     }
     do_not_cache_ = false;
@@ -392,7 +398,7 @@ void CpuGeneric::setReg(int idx, uint64_t val) {
 
 void CpuGeneric::setBranch(uint64_t npc) {
     branch_ = true;
-    npc_.setValue(npc);
+    setNPC(npc);
 }
 
 void CpuGeneric::pushStackTrace() {
@@ -400,8 +406,8 @@ void CpuGeneric::pushStackTrace() {
     if (cnt >= stackTraceSize_.to_int()) {
         return;
     }
-    stackTraceBuf_.write(2*cnt, pc_.getValue().val);
-    stackTraceBuf_.write(2*cnt + 1,  npc_.getValue().val);
+    stackTraceBuf_.write(2*cnt, getPC());
+    stackTraceBuf_.write(2*cnt + 1, getNPC());
     stackTraceCnt_.setValue(cnt + 1);
 }
 
@@ -488,10 +494,10 @@ void CpuGeneric::halt(const char *descr) {
     
     if (descr == NULL) {
         RISCV_info("pc:%04" RV_PRI64 "x: %s \t CPU halted",
-                       pc_.getValue().val, strop);
+                       getPC(), strop);
     } else {
         RISCV_info("pc:%04" RV_PRI64 "x: %s\t %s",
-                       pc_.getValue().val, strop, descr);
+                       getPC(), strop, descr);
     }
     estate_ = CORE_Halted;
     RISCV_trigger_hap(getInterface(IFACE_SERVICE), HAP_Halt, "Descr");
@@ -518,12 +524,11 @@ void CpuGeneric::power(EPowerAction onoff) {
 void CpuGeneric::reset(IFace *isource) {
     flush(~0ull);
     /** Reset address can be changed in runtime */
-    pc_.setHardResetValue(getResetAddress());
-    npc_.setHardResetValue(getResetAddress());
+    portRegs_.reset();
+    setPC(getResetAddress());
+    setNPC(getResetAddress());
     status_.reset(isource);
     stackTraceCnt_.reset(isource);
-    pc_.reset(isource);
-    npc_.reset(isource);
     interrupt_pending_[0] = 0;
     interrupt_pending_[1] = 0;
     hw_breakpoint_ = false;
@@ -582,7 +587,7 @@ void CpuGeneric::removeHwBreakpoint(uint64_t addr) {
 }
 
 bool CpuGeneric::checkHwBreakpoint() {
-    uint64_t pc = pc_.getValue().val;
+    uint64_t pc = getPC();
     if (hw_breakpoint_ && pc == hw_break_addr_) {
         hw_breakpoint_ = false;
         return false;
@@ -610,6 +615,27 @@ void CpuGeneric::skipBreakpoint() {
     sw_breakpoint_ = false;
 }
 
+uint64_t GenericPCType::aboutToRead(uint64_t cur_val) {
+    CpuGeneric *pcpu = static_cast<CpuGeneric *>(parent_);
+    return pcpu->getPC();
+}
+
+uint64_t GenericPCType::aboutToWrite(uint64_t new_val) {
+    CpuGeneric *pcpu = static_cast<CpuGeneric *>(parent_);
+    pcpu->setPC(new_val);
+    return new_val;
+}
+
+uint64_t GenericNPCType::aboutToRead(uint64_t cur_val) {
+    CpuGeneric *pcpu = static_cast<CpuGeneric *>(parent_);
+    return pcpu->getNPC();
+}
+
+uint64_t GenericNPCType::aboutToWrite(uint64_t new_val) {
+    CpuGeneric *pcpu = static_cast<CpuGeneric *>(parent_);
+    pcpu->setNPC(new_val);
+    return new_val;
+}
 
 uint64_t GenericStatusType::aboutToRead(uint64_t cur_val) {
     GenericCpuControlType ctrl;

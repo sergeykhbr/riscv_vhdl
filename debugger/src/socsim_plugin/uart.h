@@ -103,7 +103,7 @@ class UART : public RegMemBankGeneric,
     class STATUS_TYPE : public MappedReg64Type {
      public:
         STATUS_TYPE(IService *parent, const char *name, uint64_t addr) :
-                    MappedReg64Type(parent, name, addr, 4) {
+                    MappedReg64Type(parent, name, addr) {
             value_type t;
             t.v = 0;
             t.b.rx_irq_ena = 0;
@@ -141,7 +141,7 @@ class UART : public RegMemBankGeneric,
     class SCALER_TYPE : public MappedReg64Type {
      public:
         SCALER_TYPE(IService *parent, const char *name, uint64_t addr) :
-                    MappedReg64Type(parent, name, addr, 4) {}
+                    MappedReg64Type(parent, name, addr) {}
 
      protected:
         virtual uint64_t aboutToWrite(uint64_t new_val) override;
@@ -150,13 +150,13 @@ class UART : public RegMemBankGeneric,
     class DWORD_TYPE : public MappedReg64Type {
      public:
         DWORD_TYPE(IService *parent, const char *name, uint64_t addr) :
-                    MappedReg64Type(parent, name, addr, 4) {}
+                    MappedReg64Type(parent, name, addr) {}
     };
 
     class DATA_TYPE : public MappedReg64Type {
      public:
         DATA_TYPE(IService *parent, const char *name, uint64_t addr) :
-                    MappedReg64Type(parent, name, addr, 4) {}
+                    MappedReg64Type(parent, name, addr) {}
      protected:
         virtual uint64_t aboutToRead(uint64_t cur_val) override;
         virtual uint64_t aboutToWrite(uint64_t new_val) override;

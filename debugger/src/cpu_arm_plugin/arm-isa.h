@@ -507,14 +507,17 @@ enum EIsaArmV7 {
     T2_ADD_R,   // 4.6.4
     T3_ADD_R,   // 4.6.4
     T1_ADDSP_I, // 4.6.5
+    T2_ADDSP_I, // 4.6.5
     T1_ADR,     // 4.6.7
     T1_AND_I,   // 4.6.8
     T1_AND_R,   // 4.6.9
+    T2_AND_R,   // 4.6.9
     T1_ASR_I,   // 4.6.10
     T1_B,       // 4.6.12
     T2_B,       // 4.6.12
     T3_B,       // 4.6.12
     T1_BIC_I,   // 4.6.15
+    T1_BKPT,    // 4.6.17
     T1_BL_I,    // 4.6.18
     T1_BLX_R,   // 4.6.19
     T1_BX,      // 4.6.20
@@ -528,7 +531,7 @@ enum EIsaArmV7 {
     T1_EOR_I,   // 4.6.36
     T1_EOR_R,   // 4.6.37
     T1_IT,      // 4.6.39
-    T2_LDMIA,
+    T2_LDMIA,   // 4.6.42
     T1_LDR_I,   // 4.6.43
     T2_LDR_I,   // 4.6.43
     T3_LDR_I,   // 4.6.43
@@ -538,9 +541,11 @@ enum EIsaArmV7 {
     T1_LDR_R,   // 4.6.45
     T2_LDR_R,   // 4.6.45
     T1_LDRB_I,  // 4.6.46
+    T2_LDRB_I,  // 4.6.46
     T1_LDRB_R,  // 4.6.48
     T2_LDRB_R,  // 4.6.48
     T1_LDRH_I,  // 4.6.55
+    T2_LDRH_R,  // 4.6.57
     T1_LDRSB_I, // 4.6.59
     T1_LSL_I,   // 4.6.68
     T1_LSL_R,   // 4.6.69
@@ -548,6 +553,7 @@ enum EIsaArmV7 {
     T1_LSR_I,   // 4.6.70
     T1_LSR_R,   // 4.6.71
     T2_LSR_R,   // 4.6.71
+    T1_MLS,     // 4.6.75
     T1_MOV_I,   // 4.6.76
     T2_MOV_I,   // 4.6.76
     T3_MOV_I,   // 4.6.76
@@ -561,6 +567,7 @@ enum EIsaArmV7 {
                 // 4.6.87 NEG is a pre-UAL synonym for RSB (immediate) with imm=0
     T1_ORR_I,   // 4.6.91
     T1_ORR_R,   // 4.6.92
+    T2_ORR_R,   // 4.6.92
     T1_POP,     // 4.6.98
     T2_POP,     // 4.6.98
     T1_PUSH,    // 4.6.99, T2_PUSH equivalen STMDB SP!,<register>
@@ -570,24 +577,28 @@ enum EIsaArmV7 {
     T1_SDIV,    // 4.6.126
     T1_STMDB,   // 4.6.160
     T1_STR_I,   // 4.6.162
+    T2_STR_I,   // 4.6.162
     T1_STR_R,   // 4.6.163
     T2_STR_R,   // 4.6.163
     T1_STRB_I,  // 4.6.164
     T2_STRB_I,  // 4.6.164
     T3_STRB_I,  // 4.6.164
+    T1_STRB_R,  // 4.6.165
     T2_STRB_R,  // 4.6.165
     T1_STRH_I,  // 4.6.172
     T1_SUB_I,   // 4.6.176
     T2_SUB_I,   // 4.6.176
     T3_SUB_I,   // 4.6.176
     T1_SUB_R,   // 4.6.177
-    T1_SUB_SP,  // 4.6.178
+    T2_SUB_R,   // 4.6.177
+    T1_SUBSP_I, // 4.6.178
     T1_TBB,     // 4.6.188
     T1_TST_I,   // 4.6.192
     T1_TST_R,   // 4.6.193
     T1_UBFX,    // 4.6.197
     T1_UDIV,    // 4.6.198
     T1_UMULL,   // 4.6.207
+    T1_UXTAH,   // 4.6.223
     T1_UXTB,    // 4.6.224
     T1_UXTH,    // 4.6.226
     ARMV7_Total

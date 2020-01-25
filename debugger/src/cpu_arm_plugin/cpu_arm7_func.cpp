@@ -21,13 +21,13 @@
 namespace debugger {
 
 CpuCortex_Functional::CpuCortex_Functional(const char *name) :
-    CpuGeneric(name),
-    portRegs_(this, "regs", 0x8000, Reg_Total) {
+    CpuGeneric(name) {
     registerInterface(static_cast<ICpuArm *>(this));
     registerAttribute("VectorTable", &vectorTable_);
     registerAttribute("DefaultMode", &defaultMode_);
     p_psr_ = reinterpret_cast<ProgramStatusRegsiterType *>(
-            &portRegs_.getp()[Reg_cpsr]);
+            &R[Reg_cpsr]);
+    PC_ = &R[Reg_pc];   // redefine location of PC register in bank
 }
 
 CpuCortex_Functional::~CpuCortex_Functional() {
@@ -39,6 +39,7 @@ void CpuCortex_Functional::postinitService() {
         listInstr_[i].make_list(0);
     }
     addArm7tmdiIsa();
+    addThumb2Isa();
 
     CpuGeneric::postinitService();
 
@@ -89,6 +90,19 @@ unsigned CpuCortex_Functional::addSupportedInstruction(
 }
 
 void CpuCortex_Functional::handleTrap() {
+    // Check software before checking I-bit
+    if (interrupt_pending_[0] & (1ull << Interrupt_SoftwareIdx)) {
+        DsuMapType::udbg_type::debug_region_type::breakpoint_control_reg t1;
+        t1.val = br_control_.getValue().val;
+        if (t1.bits.trap_on_break == 0) {
+            sw_breakpoint_ = true;
+            interrupt_pending_[0] &= ~(1ull << Interrupt_SoftwareIdx);
+            setNPC(getPC());
+            halt("SWI Breakpoint");
+            return;
+        }
+    }
+
     if (getI() == 1) {
         return;
     }
@@ -99,7 +113,7 @@ void CpuCortex_Functional::handleTrap() {
         // To simplify psr control suppose interrupts outside of blocks
         return;
     }
-#if 1
+
     int irq_idx;
     for (int i = 0; i < 2; i++) {
         if (interrupt_pending_[i] == 0) {
@@ -119,20 +133,6 @@ void CpuCortex_Functional::handleTrap() {
         }
         interrupt_pending_[i] = 0;
     }
-#else
-    if (interrupt_pending_[0] & (1ull << Interrupt_SoftwareIdx)) {
-        DsuMapType::udbg_type::debug_region_type::breakpoint_control_reg t1;
-        t1.val = br_control_.getValue().val;
-        if (t1.bits.trap_on_break == 0) {
-            sw_breakpoint_ = true;
-            interrupt_pending_[0] &= ~(1ull << Interrupt_SoftwareIdx);
-            npc_.setValue(pc_.getValue());
-            halt("SWI Breakpoint");
-            return;
-        }
-    }
-    npc_.setValue(0 + 4*0);
-#endif
     interrupt_pending_[0] = 0;
 }
 
@@ -169,7 +169,7 @@ void CpuCortex_Functional::enterException(int idx) {
 
     trans_.addr -= 4;
     trans_.wpayload.b32[0] =
-            static_cast<uint32_t>(npc_.getValue().buf32[0] | 0x1);
+            static_cast<uint32_t>(getNPC() | 0x1);
     dma_memop(&trans_);
 
     trans_.addr -= 4;
@@ -193,7 +193,7 @@ void CpuCortex_Functional::enterException(int idx) {
     } else {
         setInstrMode(ARM_mode);
     }
-    npc_.setValue(npc);
+    setNPC(npc);
 }
 
 void CpuCortex_Functional::exitException(uint32_t exc_return) {
@@ -252,7 +252,6 @@ uint64_t CpuCortex_Functional::getResetAddress() {
 void CpuCortex_Functional::reset(IFace *isource) {
     Axi4TransactionType tr;
     CpuGeneric::reset(isource);
-    portRegs_.reset();
     ITBlockEnabled = false;
     ITBlockBaseCond_ = 0;
     ITBlockMask_ = 0;

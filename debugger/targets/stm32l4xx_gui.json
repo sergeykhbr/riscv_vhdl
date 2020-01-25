@@ -4,6 +4,7 @@
     'GUI':true,
     'InitCommands':[
                     'loadh86 ./../../../examples/stm32l476xx_demo/makefiles/bin/stm32l476xx_demo.hex',
+                    'loadelf ./../../../examples/stm32l476xx_demo/makefiles/bin/stm32l476xx_demo.elf nocode',
                     'reset'
                    ],
     'Description':'This configuration instantiates functional RISC-V model'
@@ -155,6 +156,8 @@
                 ['ResetState','Halted'],
                 ['SourceCode','src0'],
                 ['GenerateTraceFile','','Specify file name to enable tracer'],
+                ['CacheBaseAddress',0x08000000],
+                ['CacheAddressMask',0x7ffff],
                 ['DefaultMode','Thumb'],
                 ]}]},
     {'Class':'MemoryLUTClass','Instances':[
@@ -198,7 +201,10 @@
                 ['BaseAddress',0x48000000],
                 ['Length',0x18000000],
                 ['MapList',['gpioa',
-                            'gpiod'
+                            'gpiob',
+                            'gpioc',
+                            'gpiod',
+                            'gpioe',
                            ]]
                 ]}]},
     {'Class':'BusGenericClass','Instances':[
@@ -286,6 +292,46 @@
                            ]]
                 ]}]},
     {'Class':'STM32L4_GPIOClass','Instances':[
+          {'Name':'gpiob','Attr':[
+                ['ObjDescription','GPIO port connected to AHB2'],
+                ['LogLevel',2],
+                ['BaseAddress',0x48000400],
+                ['Length',0x400],
+                ['HardResetMode',0xABFFFFFF],
+                ['MapList',[['gpiob','MODER'],
+                            ['gpiob','OTYPER'],
+                            ['gpiob','OSPEEDR'],
+                            ['gpiob','PUPDR'],
+                            ['gpiob','IDR'],
+                            ['gpiob','ODR'],
+                            ['gpiob','BSRR'],
+                            ['gpiob','LCKR'],
+                            ['gpiob','AFRL'],
+                            ['gpiob','AFRH'],
+                            ['gpiob','BRR'],
+                           ]]
+                ]}]},
+    {'Class':'STM32L4_GPIOClass','Instances':[
+          {'Name':'gpioc','Attr':[
+                ['ObjDescription','GPIO port connected to AHB2'],
+                ['LogLevel',2],
+                ['BaseAddress',0x48000800],
+                ['Length',0x400],
+                ['HardResetMode',0xABFFFFFF],
+                ['MapList',[['gpioc','MODER'],
+                            ['gpioc','OTYPER'],
+                            ['gpioc','OSPEEDR'],
+                            ['gpioc','PUPDR'],
+                            ['gpioc','IDR'],
+                            ['gpioc','ODR'],
+                            ['gpioc','BSRR'],
+                            ['gpioc','LCKR'],
+                            ['gpioc','AFRL'],
+                            ['gpioc','AFRH'],
+                            ['gpioc','BRR'],
+                           ]]
+                ]}]},
+    {'Class':'STM32L4_GPIOClass','Instances':[
           {'Name':'gpiod','Attr':[
                 ['ObjDescription','GPIO port connected to AHB2'],
                 ['LogLevel',2],
@@ -303,6 +349,26 @@
                             ['gpiod','AFRL'],
                             ['gpiod','AFRH'],
                             ['gpiod','BRR'],
+                           ]]
+                ]}]},
+    {'Class':'STM32L4_GPIOClass','Instances':[
+          {'Name':'gpioe','Attr':[
+                ['ObjDescription','GPIO port connected to AHB2'],
+                ['LogLevel',2],
+                ['BaseAddress',0x48001000],
+                ['Length',0x400],
+                ['HardResetMode',0xFFFFFFFF],
+                ['MapList',[['gpioe','MODER'],
+                            ['gpioe','OTYPER'],
+                            ['gpioe','OSPEEDR'],
+                            ['gpioe','PUPDR'],
+                            ['gpioe','IDR'],
+                            ['gpioe','ODR'],
+                            ['gpioe','BSRR'],
+                            ['gpioe','LCKR'],
+                            ['gpioe','AFRL'],
+                            ['gpioe','AFRH'],
+                            ['gpioe','BRR'],
                            ]]
                 ]}]},
     {'Class':'ST7789VClass','Instances':[
@@ -354,6 +420,7 @@
                             ['core0','br_fetch_instr'],
                             ['core0','br_hw_add'],
                             ['core0','br_hw_remove'],
+                            ['core0','br_flush_addr'],
                            ]]
                 ]}]},
     {'Class':'HardResetClass','Instances':[
