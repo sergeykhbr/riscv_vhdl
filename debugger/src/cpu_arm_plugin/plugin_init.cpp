@@ -21,6 +21,7 @@
 #include "stm32l4/stm32l4_systick.h"
 #include "stm32l4/stm32l4_nvic.h"
 #include "stm32l4/st7789v.h"
+#include "stm32l4/demo_keypad.h"
 
 namespace debugger {
 
@@ -34,6 +35,7 @@ extern "C" void plugin_init(void) {
     REGISTER_CLASS_IDX(STM32L4_SysTick, 5);
     REGISTER_CLASS_IDX(STM32L4_NVIC, 6);
     REGISTER_CLASS_IDX(ST7789V, 7);
+    REGISTER_CLASS_IDX(DemoKeypad, 8);
 }
 
 }  // namespace debugger

@@ -99,6 +99,12 @@
     <ClCompile Include="..\..\src\cpu_arm_plugin\thumb.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\cpu_arm_plugin\stm32l4\demo_keypad.cpp">
+      <Filter>src\stm32l4</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\common\generic\key_gen1.cpp">
+      <Filter>common\generic</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\api_types.h">
@@ -193,6 +199,12 @@
     </ClInclude>
     <ClInclude Include="..\..\src\cpu_arm_plugin\stm32l4\st7789v.h">
       <Filter>src\stm32l4</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_arm_plugin\stm32l4\demo_keypad.h">
+      <Filter>src\stm32l4</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\generic\key_gen1.h">
+      <Filter>common\generic</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -19,6 +19,8 @@ set GUI_PLUGIN_SRC=..\..\src\gui_plugin\
 %QT_PATH%\bin\moc.exe -i %GUI_PLUGIN_SRC%\PeriphWidgets\GpioWidget.h -o %GUI_PLUGIN_SRC%\PeriphWidgets\moc_GpioWidget.h
 %QT_PATH%\bin\moc.exe -i %GUI_PLUGIN_SRC%\PeriphWidgets\LedDisplay.h -o %GUI_PLUGIN_SRC%\PeriphWidgets\moc_LedDisplay.h
 %QT_PATH%\bin\moc.exe -i %GUI_PLUGIN_SRC%\PeriphWidgets\DemoM4Widget.h -o %GUI_PLUGIN_SRC%\PeriphWidgets\moc_DemoM4Widget.h
+%QT_PATH%\bin\moc.exe -i %GUI_PLUGIN_SRC%\PeriphWidgets\ButtonGenWidget.h -o %GUI_PLUGIN_SRC%\PeriphWidgets\moc_ButtonGenWidget.h
+%QT_PATH%\bin\moc.exe -i %GUI_PLUGIN_SRC%\PeriphWidgets\DemoSTM32Keypad.h -o %GUI_PLUGIN_SRC%\PeriphWidgets\moc_DemoSTM32Keypad.h
 %QT_PATH%\bin\moc.exe -i %GUI_PLUGIN_SRC%\CpuWidgets\RegWidget.h -o %GUI_PLUGIN_SRC%\CpuWidgets\moc_RegWidget.h
 %QT_PATH%\bin\moc.exe -i %GUI_PLUGIN_SRC%\CpuWidgets\RegSetView.h -o %GUI_PLUGIN_SRC%\CpuWidgets\moc_RegSetView.h
 %QT_PATH%\bin\moc.exe -i %GUI_PLUGIN_SRC%\CpuWidgets\RegsControl.h -o %GUI_PLUGIN_SRC%\CpuWidgets\moc_RegsControl.h

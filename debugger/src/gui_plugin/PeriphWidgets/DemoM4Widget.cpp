@@ -1,5 +1,5 @@
 /*
- *  Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
+ *  Copyright 2020 Sergey Khabarov, sergeykhbr@gmail.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 
 #include "LedDisplay.h"
+#include "DemoSTM32Keypad.h"
 #include "DemoM4Widget.h"
 #include "moc_DemoM4Widget.h"
 
@@ -35,9 +36,14 @@ DemoM4Widget::DemoM4Widget(IGui *igui, QWidget *parent) : QWidget(parent) {
     connect(this, SIGNAL(signalUpdateByTimer()),
             parea, SLOT(slotUpdateByTimer()));
 
-    gridLayout->addWidget(parea, 0, 0, Qt::AlignCenter);
+    DemoSTM32Keypad *pkpad = new DemoSTM32Keypad(this, igui);
+    connect(this, SIGNAL(signalUpdateByTimer()),
+            pkpad, SLOT(slotUpdateByTimer()));
 
-    gridLayout->setRowStretch(1, 10);
+    gridLayout->addWidget(parea, 0, 0, Qt::AlignCenter);
+    gridLayout->addWidget(pkpad, 1, 0, Qt::AlignCenter);
+
+    gridLayout->setRowStretch(2, 10);
     gridLayout->setColumnStretch(1, 10);
     setLayout(gridLayout);
 

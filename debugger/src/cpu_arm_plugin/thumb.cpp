@@ -20,6 +20,45 @@
 
 namespace debugger {
 
+/** 4.6.1 ADC (immediate) */
+class ADC_I_T1 : public T1Instruction {
+ public:
+    ADC_I_T1(CpuCortex_Functional *icpu) : T1Instruction(icpu, "ADC_I_T1") {}
+
+    virtual int exec(Reg64Type *payload) {
+        if (!ConditionPassed()) {
+            return 4;
+        }
+        uint32_t ti = payload->buf16[0];
+        uint32_t ti1 = payload->buf16[1];
+        uint32_t i = (ti >> 10) & 1;
+        uint32_t setflags = (ti >> 4) & 1;
+        uint32_t n = ti & 0xF;
+        uint32_t imm3 = (ti1 >> 12) & 0x7;
+        uint32_t d = (ti1 >> 8) & 0xF;
+        uint32_t imm8 = ti1 & 0xFF;
+        uint32_t overflow;
+        uint32_t carry;
+        uint32_t result;
+        uint32_t Rn = static_cast<uint32_t>(R[n]);
+        uint32_t imm32 = ThumbExpandImmWithC((i << 11) | (imm3 << 8) | imm8, &carry);
+
+        if (BadReg(d) || BadReg(n)) {
+            RISCV_error("%s", "UNPREDICTABLE");
+        }
+
+        result = AddWithCarry(Rn, imm32, icpu_->getC(), &overflow, &carry);
+        icpu_->setReg(d, result);
+        if (setflags) {
+            icpu_->setN((result >> 31) & 1);
+            icpu_->setZ(result == 0 ? 1: 0);
+            icpu_->setC(carry);
+            icpu_->setV(overflow);
+        }
+        return 4;
+    }
+};
+
 /** 4.6.3 ADD (immediate) */
 class ADD_I_T1 : public T1Instruction {
  public:
@@ -521,6 +560,38 @@ class B_T3 : public T1Instruction {
             uint32_t npc = static_cast<uint32_t>(icpu_->getPC()) + 4 + imm32;
             BranchWritePC(npc);
         }
+        return 4;
+    }
+};
+
+class B_T4 : public T1Instruction {
+ public:
+    B_T4(CpuCortex_Functional *icpu) : T1Instruction(icpu, "B.W") {}
+
+    virtual int exec(Reg64Type *payload) {
+        if (!ConditionPassed()) {
+            return 4;
+        }
+        uint32_t ti = payload->buf16[0];
+        uint32_t ti1 = payload->buf16[1];
+        uint32_t S = (ti >> 10) & 1;
+        uint32_t imm10 = ti & 0x3FF;
+        uint32_t J1 = (ti1 >> 13) & 1;
+        uint32_t J2 = (ti1 >> 11) & 1;
+        uint32_t imm11 = ti1 & 0x7FF;
+        uint32_t I1 = (!(J1 ^ S)) & 1;
+        uint32_t I2 = (!(J2 ^ S)) & 1;
+        uint32_t imm32 = (I1 << 23) | (I2 << 22) | (imm10 << 12) | (imm11 << 1);
+        if (S) {
+            imm32 |= (~0ul) << 24;
+        }
+
+        if (icpu_->InITBlock() && !icpu_->LastInITBlock()) {
+            RISCV_error("%s", "UNPREDICTABLE");
+        }
+
+        uint32_t npc = static_cast<uint32_t>(icpu_->getPC()) + 4 + imm32;
+        BranchWritePC(npc);
         return 4;
     }
 };
@@ -1384,6 +1455,45 @@ class LDRB_I_T2 : public T1Instruction {
     }
 };
 
+class LDRB_I_T3 : public T1Instruction {
+ public:
+    LDRB_I_T3(CpuCortex_Functional *icpu) : T1Instruction(icpu, "LDRB.W") {}
+
+    virtual int exec(Reg64Type *payload) {
+        if (!ConditionPassed()) {
+            return 4;
+        }
+        uint32_t ti = payload->buf16[0];
+        uint32_t ti1 = payload->buf16[1];
+        uint32_t n = ti & 0xF;
+        uint32_t t = (ti1 >> 12) & 0xF;
+        uint32_t index = (ti1 >> 10) & 1;
+        uint32_t add = (ti1 >> 9) & 1;
+        uint32_t wback = (ti1 >> 8) & 1;
+        uint32_t imm32 = ti1 & 0xFF;
+        uint32_t Rn = static_cast<uint32_t>(R[n]);
+        uint32_t offset_addr = add != 0 ? (Rn + imm32) : (Rn - imm32);
+        uint32_t address = index != 0 ? offset_addr : Rn;
+
+        if (!index && !wback) {
+            RISCV_error("%s", "UNDEFINED");
+        }
+        if (BadReg(t) || (wback && n == t)) {
+            RISCV_error("%s", "UNPREDICTABLE");
+        }
+        if (wback) {
+            icpu_->setReg(n, offset_addr);
+        }
+        trans_.addr = address;
+        trans_.action = MemAction_Read;
+        trans_.xsize = 1;
+        trans_.wstrb = 0;
+        icpu_->dma_memop(&trans_);
+        icpu_->setReg(t, trans_.rpayload.b8[0]);
+        return 4;
+    }
+};
+
 /** 4.6.48 LDRB (register) */
 class LDRB_R_T1 : public T1Instruction {
  public:
@@ -1527,6 +1637,69 @@ class LDRSB_I_T1 : public T1Instruction {
         }
 
         uint32_t address = static_cast<uint32_t>(R[n]) + imm32;
+
+        trans_.addr = address;
+        trans_.action = MemAction_Read;
+        trans_.xsize = 1;
+        trans_.wstrb = 0;
+        icpu_->dma_memop(&trans_);
+        int32_t result = static_cast<int8_t>(trans_.rpayload.b8[0]);
+        icpu_->setReg(t, static_cast<uint32_t>(result));
+        return 4;
+    }
+};
+
+/** 4.6.61 LDRSB (register) */
+class LDRSB_R_T1 : public T1Instruction {
+ public:
+    LDRSB_R_T1(CpuCortex_Functional *icpu) : T1Instruction(icpu, "LDRSB_R_T1") {}
+
+    virtual int exec(Reg64Type *payload) {
+        if (!ConditionPassed()) {
+            return 2;
+        }
+        uint32_t ti = payload->buf16[0];
+        uint32_t m = (ti >> 6) & 0x7;
+        uint32_t n = (ti >> 3) & 0x7;
+        uint32_t t = ti & 0x7;
+        uint32_t Rn = static_cast<uint32_t>(R[n]);
+        uint32_t shifted = static_cast<uint32_t>(R[m]);  // no shift
+        uint32_t address = Rn + shifted;
+
+        trans_.addr = address;
+        trans_.action = MemAction_Read;
+        trans_.xsize = 1;
+        trans_.wstrb = 0;
+        icpu_->dma_memop(&trans_);
+        int32_t result = static_cast<int8_t>(trans_.rpayload.b8[0]);
+        icpu_->setReg(t, static_cast<uint32_t>(result));
+        return 2;
+    }
+};
+
+class LDRSB_R_T2 : public T1Instruction {
+ public:
+    LDRSB_R_T2(CpuCortex_Functional *icpu) : T1Instruction(icpu, "LDRSB_R_T2") {}
+
+    virtual int exec(Reg64Type *payload) {
+        if (!ConditionPassed()) {
+            return 4;
+        }
+        uint32_t ti = payload->buf16[0];
+        uint32_t ti1 = payload->buf16[1];
+        uint32_t n = ti & 0xF;
+        uint32_t t = (ti1 >> 12) & 0xF;
+        uint32_t shift_n = (ti1 >> 4) & 0x3;
+        uint32_t m = ti1 & 0xF;
+        uint32_t Rm = static_cast<uint32_t>(R[m]);
+        uint32_t carry;
+
+        if (t == Reg_sp || BadReg(m)) {
+            RISCV_error("%s", "UNPREDICTABLE");
+        }
+
+        uint32_t offset = LSL_C(Rm, shift_n, &carry);
+        uint32_t address = static_cast<uint32_t>(R[n]) + offset;
 
         trans_.addr = address;
         trans_.action = MemAction_Read;
@@ -1735,6 +1908,34 @@ class LSR_R_T2 : public T1Instruction {
             icpu_->setC(carry);
             // V unchanged
         }
+        return 4;
+    }
+};
+
+/** 4.6.74 MLA Multiply and Accumulate*/
+class MLA_T1 : public T1Instruction {
+ public:
+    MLA_T1(CpuCortex_Functional *icpu) : T1Instruction(icpu, "MLA_T1") {}
+
+    virtual int exec(Reg64Type *payload) {
+        if (!ConditionPassed()) {
+            return 4;
+        }
+        uint32_t ti = payload->buf16[0];
+        uint32_t ti1 = payload->buf16[1];
+        uint32_t n = ti & 0xF;
+        uint32_t a = (ti1 >> 12) & 0xF;
+        uint32_t d = (ti1 >> 8) & 0xF;
+        uint32_t m = ti1 & 0xF;
+        uint32_t result;
+
+        if (BadReg(d) || BadReg(n) || BadReg(m) || a == Reg_sp) {
+            RISCV_error("%s", "UNPREDICTABLE");
+        }
+
+        // signed or unsigned independent only if calculation in 64-bits
+        result = static_cast<uint32_t>(R[a] + R[n]*R[m]);
+        icpu_->setReg(d, result);
         return 4;
     }
 };
@@ -2336,6 +2537,40 @@ class RSB_R_T1 : public T1Instruction {
     }
 };
 
+/** 4.6.125 SBFX */
+class SBFX_T1 : public T1Instruction {
+ public:
+    SBFX_T1(CpuCortex_Functional *icpu) : T1Instruction(icpu, "SBFX_T1") {}
+
+    virtual int exec(Reg64Type *payload) {
+        if (!ConditionPassed()) {
+            return 4;
+        }
+        uint32_t ti = payload->buf16[0];
+        uint32_t ti1 = payload->buf16[1];
+        uint32_t result;
+        uint32_t n = ti & 0xF;
+        uint32_t imm3 = (ti1 >> 12) & 0x7;
+        uint32_t d = (ti1 >> 8) & 0xF;
+        uint32_t imm2 = (ti1 >> 6) & 0x3;
+        uint32_t widthm1 = ti1 & 0x1F;
+        uint32_t lsbit = (imm3 << 2) | imm2;
+        uint32_t Rn = static_cast<uint32_t>(R[n]);
+        uint32_t msbit = lsbit + widthm1;
+        uint64_t mask = (1ull << (widthm1 + 1)) - 1;
+
+        if (BadReg(d) || BadReg(n) || msbit > 31) {
+            RISCV_error("%s", "UNPREDICTABLE");
+        }
+        result = (Rn >> lsbit) & static_cast<uint32_t>(mask);
+        if (result & (1ul << widthm1)) {
+            result |= static_cast<uint32_t>(~mask);
+        }
+        icpu_->setReg(d, result);
+        return 4;
+    }
+};
+
 /** 4.6.126 SDIV */
 class SDIV_T1 : public T1Instruction {
  public:
@@ -2366,6 +2601,38 @@ class SDIV_T1 : public T1Instruction {
             result = Rn / Rm;
         }
         icpu_->setReg(d, static_cast<uint32_t>(result));
+        return 4;
+    }
+};
+
+/** 4.6.150 SMULL */
+class SMULL_T1 : public T1Instruction {
+ public:
+    SMULL_T1(CpuCortex_Functional *icpu) : T1Instruction(icpu, "SMULL_T1") {}
+
+    virtual int exec(Reg64Type *payload) {
+        if (!ConditionPassed()) {
+            return 4;
+        }
+        uint32_t ti = payload->buf16[0];
+        uint32_t ti1 = payload->buf16[1];
+        uint32_t n = ti & 0xF;
+        uint32_t dLo = (ti1 >> 12) & 0xF;
+        uint32_t dHi = (ti1 >> 8) & 0xF;
+        uint32_t m = ti1 & 0xF;
+        int32_t Rn = static_cast<int32_t>(R[n]);
+        int32_t Rm = static_cast<int32_t>(R[m]);
+        int64_t result;
+
+        if (BadReg(dLo) || BadReg(dHi) || BadReg(n) || BadReg(m)) {
+            RISCV_error("%s", "UNPREDICTABLE");
+        }
+        if (dLo == dHi) {
+            RISCV_error("%s", "UNPREDICTABLE");
+        }
+        result = static_cast<int64_t>(Rn) * static_cast<int64_t>(Rm);
+        icpu_->setReg(dHi, static_cast<uint32_t>(result >> 32));
+        icpu_->setReg(dLo, static_cast<uint32_t>(result));
         return 4;
     }
 };
@@ -2415,6 +2682,53 @@ class STMDB_T1 : public T1Instruction {
             }
         }
         return 4;
+    }
+};
+
+/** 4.6.161 STMIA Store Multiple Increment After */
+class STMIA_T1 : public T1Instruction {
+ public:
+    STMIA_T1(CpuCortex_Functional *icpu) : T1Instruction(icpu, "STMIA_T1") {}
+
+    virtual int exec(Reg64Type *payload) {
+        if (!ConditionPassed()) {
+            return 2;
+        }
+        uint32_t ti = payload->buf16[0];
+        uint32_t n = (ti >> 8) & 0x7;
+        uint32_t register_list = ti & 0xFF;
+        uint64_t address = static_cast<uint32_t>(R[n]);
+        uint32_t BitCount = 0;
+
+        trans_.action = MemAction_Write;
+        trans_.xsize = 4;
+        trans_.wstrb = 0xF;
+        for (int i = 0; i < 8; i++) {
+            if (((register_list >> i) & 1) == 0) {
+                continue;
+            }
+            if (i == n) {                   // wback always TRUE
+                if (BitCount == 0) {        // LowestSetBit
+                    trans_.addr = address;
+                    trans_.wpayload.b64[0] = R[i];
+                    icpu_->dma_memop(&trans_);
+                } else {
+                    RISCV_error("%s", "UNKNOWN");
+                }
+            } else {
+                trans_.addr = address;
+                trans_.wpayload.b64[0] = R[i];
+                icpu_->dma_memop(&trans_);
+            }
+            address += 4;
+            BitCount++;
+        }
+        if (BitCount < 1) {
+            RISCV_error("%s", "UNPREDICTABLE");
+        }
+
+        icpu_->setReg(n, static_cast<uint32_t>(R[n] + 4*BitCount));
+        return 2;
     }
 };
 
@@ -2695,6 +3009,52 @@ class STRB_R_T2 : public T1Instruction {
     }
 };
 
+/** 4.6.167 STRD (immediate) */
+class STRD_I_T1 : public T1Instruction {
+ public:
+    STRD_I_T1(CpuCortex_Functional *icpu) : T1Instruction(icpu, "STRD_I_T1") {}
+
+    virtual int exec(Reg64Type *payload) {
+        if (!ConditionPassed()) {
+            return 4;
+        }
+        uint32_t ti = payload->buf16[0];
+        uint32_t ti1 = payload->buf16[1];
+        uint32_t index = (ti >> 8) & 1;
+        uint32_t add = (ti >> 7) & 1;
+        uint32_t wback = (ti >> 5) & 1;
+        uint32_t n = ti & 0xF;
+        uint32_t t = (ti1 >> 12) & 0xF;
+        uint32_t t2 = (ti1 >> 8) & 0xF;
+        uint32_t imm32 = (ti1 & 0xFF) << 2;
+        uint32_t Rn = static_cast<uint32_t>(R[n]);
+        uint32_t offset_addr = add != 0 ? Rn + imm32 : Rn - imm32;
+        uint32_t address = index != 0 ? offset_addr : Rn;
+
+        if (wback && (t == n || t2 == n)) {
+            RISCV_error("%s", "UNPREDICTABLE");
+        }
+        if (n == Reg_pc || BadReg(t) || BadReg(t2)) {
+            RISCV_error("%s", "UNPREDICTABLE");
+        }
+
+        if (wback) {
+            icpu_->setReg(n, offset_addr);
+        }
+        trans_.addr = address;
+        trans_.action = MemAction_Write;
+        trans_.xsize = 4;
+        trans_.wstrb = 0xF;
+        trans_.wpayload.b32[0] = static_cast<uint8_t>(R[t]);
+        icpu_->dma_memop(&trans_);
+
+        trans_.addr = address + 4;
+        trans_.wpayload.b32[0] = static_cast<uint8_t>(R[t2]);
+        icpu_->dma_memop(&trans_);
+        return 4;
+    }
+};
+
 /** 4.6.172 STRH (immediate) */
 class STRH_I_T1 : public T1Instruction {
  public:
@@ -2716,6 +3076,78 @@ class STRH_I_T1 : public T1Instruction {
         trans_.wpayload.b32[0] = static_cast<uint16_t>(R[t]);
         icpu_->dma_memop(&trans_);
         return 2;
+    }
+};
+
+class STRH_I_T2 : public T1Instruction {
+ public:
+    STRH_I_T2(CpuCortex_Functional *icpu) : T1Instruction(icpu, "STRH_I_T2") {}
+
+    virtual int exec(Reg64Type *payload) {
+        if (!ConditionPassed()) {
+            return 4;
+        }
+        uint32_t ti = payload->buf16[0];
+        uint32_t ti1 = payload->buf16[1];
+        uint32_t t = (ti1 >> 12) & 0xF;
+        uint32_t n = ti & 0xF;
+        uint32_t imm32 = ti1 & 0xFFF;
+        uint32_t address = static_cast<uint32_t>(R[n]) + imm32;
+
+        if (n == Reg_pc) {
+            RISCV_error("%s", "UNDEFINED");
+        }
+        if (BadReg(t)) {
+            RISCV_error("%s", "UNPREDICTABLE");
+        }
+
+        trans_.addr = address;
+        trans_.action = MemAction_Write;
+        trans_.xsize = 2;
+        trans_.wstrb = 0x3;
+        trans_.wpayload.b32[0] = static_cast<uint16_t>(R[t]);
+        icpu_->dma_memop(&trans_);
+        return 4;
+    }
+};
+
+class STRH_I_T3 : public T1Instruction {
+ public:
+    STRH_I_T3(CpuCortex_Functional *icpu) : T1Instruction(icpu, "STRH_I_T3") {}
+
+    virtual int exec(Reg64Type *payload) {
+        if (!ConditionPassed()) {
+            return 4;
+        }
+        uint32_t ti = payload->buf16[0];
+        uint32_t ti1 = payload->buf16[1];
+        uint32_t n = ti & 0xF;
+        uint32_t t = (ti1 >> 12) & 0xF;
+        uint32_t index = (ti1 >> 10) & 1;
+        uint32_t add = (ti1 >> 9) & 1;
+        uint32_t wback = (ti1 >> 8) & 1;
+        uint32_t imm32 = ti1 & 0xFF;
+        uint32_t Rn = static_cast<uint32_t>(R[n]);
+        uint32_t offset_addr = add != 0 ? Rn + imm32 : Rn - imm32;
+        uint32_t address = index != 0 ? offset_addr : Rn;
+
+        if (n == Reg_pc || (!index && !wback)) {
+            RISCV_error("%s", "UNDEFINED");
+        }
+        if (BadReg(t) || (wback && n == t)) {
+            RISCV_error("%s", "UNPREDICTABLE");
+        }
+        if (wback) {
+            icpu_->setReg(n, offset_addr);
+        }
+
+        trans_.addr = address;
+        trans_.action = MemAction_Write;
+        trans_.xsize = 2;
+        trans_.wstrb = 0x3;
+        trans_.wpayload.b32[0] = static_cast<uint16_t>(R[t]);
+        icpu_->dma_memop(&trans_);
+        return 4;
     }
 };
 
@@ -2922,6 +3354,55 @@ class SUBSP_I_T1 : public T1Instruction {
     }
 };
 
+/** 4.6.182 SXTAB Signed Extend and Add Byte extracts */
+class SXTAB_T1 : public T1Instruction {
+ public:
+    SXTAB_T1(CpuCortex_Functional *icpu) : T1Instruction(icpu, "SXTAB_T1") {}
+
+    virtual int exec(Reg64Type *payload) {
+        if (!ConditionPassed()) {
+            return 4;
+        }
+        uint32_t ti = payload->buf16[0];
+        uint32_t ti1 = payload->buf16[1];
+        uint32_t n = ti & 0xF;
+        uint32_t d = (ti1 >> 8) & 0xF;
+        uint32_t rotation = ((ti1 >> 4) & 0x3) << 3;
+        uint32_t m = ti1 & 0xF;
+        uint32_t Rm = static_cast<uint32_t>(R[m]);
+        uint32_t Rn = static_cast<uint32_t>(R[n]);
+        uint32_t carry;
+
+        if (BadReg(d) || n == Reg_sp || BadReg(m)) {
+            RISCV_error("%s", "UNPREDICTABLE");
+        }
+        int8_t rotated = static_cast<int8_t>(ROR_C(Rm, rotation, &carry));
+        uint32_t result = Rn
+                + static_cast<uint32_t>(static_cast<int32_t>(rotated));
+        icpu_->setReg(d, result);
+        return 4;
+    }
+};
+
+/** 4.6.185 SXTB Signed Extend Byte extract */
+class SXTB_T1 : public T1Instruction {
+ public:
+    SXTB_T1(CpuCortex_Functional *icpu) : T1Instruction(icpu, "SXTB_T1") {}
+
+    virtual int exec(Reg64Type *payload) {
+        if (!ConditionPassed()) {
+            return 2;
+        }
+        uint32_t ti = payload->buf16[0];
+        uint32_t d = ti & 0x7;
+        uint32_t m = (ti >> 3) & 0x7;
+        int8_t rotated = static_cast<int8_t>(R[m]);  // no rotation
+        uint32_t result = static_cast<uint32_t>(static_cast<int32_t>(rotated));
+        icpu_->setReg(d, result);
+        return 2;
+    }
+};
+
 /** 4.6.188 TBB: Table Branch Cycle */
 class TBB_T1 : public T1Instruction {
  public:
@@ -3116,6 +3597,38 @@ class UMULL_T1 : public T1Instruction {
     }
 };
 
+/** 4.6.221 UXTAB */
+class UXTAB_T1 : public T1Instruction {
+ public:
+    UXTAB_T1(CpuCortex_Functional *icpu) : T1Instruction(icpu, "UXTAB_T1") {}
+
+    virtual int exec(Reg64Type *payload) {
+        if (!ConditionPassed()) {
+            return 4;
+        }
+        uint32_t ti = payload->buf16[0];
+        uint32_t ti1 = payload->buf16[1];
+        uint32_t n = ti & 0xF;
+        uint32_t d = (ti1 >> 8) & 0xF;
+        uint32_t rotation = ((ti1 >> 4) & 0x3) << 3;
+        uint32_t m = ti1 & 0xF;
+        uint32_t Rm = static_cast<uint32_t>(R[m]);
+        uint32_t Rn = static_cast<uint32_t>(R[n]);
+        uint32_t rotated;
+        uint32_t carry;
+        uint32_t result;
+
+        if (BadReg(d) || n == Reg_sp || BadReg(m)) {
+            RISCV_error("%s", "UNPREDICTABLE");
+        }
+
+        rotated = ROR_C(Rm, rotation, &carry);
+        result = Rn + (rotated & 0xFF);
+        icpu_->setReg(d, result);
+        return 4;
+    }
+};
+
 /** 4.6.223 UXTAH */
 class UXTAH_T1 : public T1Instruction {
  public:
@@ -3189,6 +3702,7 @@ class UXTH_T1 : public T1Instruction {
 };
 
 void CpuCortex_Functional::addThumb2Isa() {
+    isaTableArmV7_[T1_ADC_I] = new ADC_I_T1(this);
     isaTableArmV7_[T1_ADD_I] = new ADD_I_T1(this);
     isaTableArmV7_[T2_ADD_I] = new ADD_I_T2(this);
     isaTableArmV7_[T3_ADD_I] = new ADD_I_T3(this);
@@ -3205,6 +3719,7 @@ void CpuCortex_Functional::addThumb2Isa() {
     isaTableArmV7_[T1_B] = new B_T1(this);
     isaTableArmV7_[T2_B] = new B_T2(this);
     isaTableArmV7_[T3_B] = new B_T3(this);
+    isaTableArmV7_[T4_B] = new B_T4(this);
     isaTableArmV7_[T1_BIC_I] = new BIC_I_T1(this);
     isaTableArmV7_[T1_BKPT] = new BKPT_T1(this);
     isaTableArmV7_[T1_BL_I] = new BL_I_T1(this);
@@ -3231,17 +3746,21 @@ void CpuCortex_Functional::addThumb2Isa() {
     isaTableArmV7_[T2_LDR_R] = new LDR_R_T2(this);
     isaTableArmV7_[T1_LDRB_I] = new LDRB_I_T1(this);
     isaTableArmV7_[T2_LDRB_I] = new LDRB_I_T2(this);
+    isaTableArmV7_[T3_LDRB_I] = new LDRB_I_T3(this);
     isaTableArmV7_[T1_LDRB_R] = new LDRB_R_T1(this);
     isaTableArmV7_[T2_LDRB_R] = new LDRB_R_T2(this);
     isaTableArmV7_[T1_LDRH_I] = new LDRH_I_T1(this);
     isaTableArmV7_[T2_LDRH_R] = new LDRH_R_T2(this);
     isaTableArmV7_[T1_LDRSB_I] = new LDRSB_I_T1(this);
+    isaTableArmV7_[T1_LDRSB_R] = new LDRSB_R_T1(this);
+    isaTableArmV7_[T2_LDRSB_R] = new LDRSB_R_T2(this);
     isaTableArmV7_[T1_LSL_I] = new LSL_I_T1(this);
     isaTableArmV7_[T1_LSL_R] = new LSL_R_T1(this);
     isaTableArmV7_[T2_LSL_R] = new LSL_R_T2(this);
     isaTableArmV7_[T1_LSR_I] = new LSR_I_T1(this);
     isaTableArmV7_[T1_LSR_R] = new LSR_R_T1(this);
     isaTableArmV7_[T2_LSR_R] = new LSR_R_T2(this);
+    isaTableArmV7_[T1_MLA] = new MLA_T1(this);
     isaTableArmV7_[T1_MLS] = new MLS_T1(this);
     isaTableArmV7_[T1_MOV_I] = new MOV_I_T1(this);
     isaTableArmV7_[T2_MOV_I] = new MOV_I_T2(this);
@@ -3261,8 +3780,11 @@ void CpuCortex_Functional::addThumb2Isa() {
     isaTableArmV7_[T1_RSB_I] = new RSB_I_T1(this);
     isaTableArmV7_[T2_RSB_I] = new RSB_I_T2(this);
     isaTableArmV7_[T1_RSB_R] = new RSB_R_T1(this);
+    isaTableArmV7_[T1_SBFX] = new SBFX_T1(this);
     isaTableArmV7_[T1_SDIV] = new SDIV_T1(this);
+    isaTableArmV7_[T1_SMULL] = new SMULL_T1(this);
     isaTableArmV7_[T1_STMDB] = new STMDB_T1(this);
+    isaTableArmV7_[T1_STMIA] = new STMIA_T1(this);
     isaTableArmV7_[T1_STR_I] = new STR_I_T1(this);
     isaTableArmV7_[T2_STR_I] = new STR_I_T2(this);
     isaTableArmV7_[T1_STR_R] = new STR_R_T1(this);
@@ -3272,19 +3794,25 @@ void CpuCortex_Functional::addThumb2Isa() {
     isaTableArmV7_[T3_STRB_I] = new STRB_I_T3(this);
     isaTableArmV7_[T1_STRB_R] = new STRB_R_T1(this);
     isaTableArmV7_[T2_STRB_R] = new STRB_R_T2(this);
+    isaTableArmV7_[T1_STRD_I] = new STRD_I_T1(this);
     isaTableArmV7_[T1_STRH_I] = new STRH_I_T1(this);
+    isaTableArmV7_[T2_STRH_I] = new STRH_I_T2(this);
+    isaTableArmV7_[T3_STRH_I] = new STRH_I_T3(this);
     isaTableArmV7_[T1_SUB_I] = new SUB_I_T1(this);
     isaTableArmV7_[T2_SUB_I] = new SUB_I_T2(this);
     isaTableArmV7_[T3_SUB_I] = new SUB_I_T3(this);
     isaTableArmV7_[T1_SUB_R] = new SUB_R_T1(this);
     isaTableArmV7_[T2_SUB_R] = new SUB_R_T2(this);
     isaTableArmV7_[T1_SUBSP_I] = new SUBSP_I_T1(this);
+    isaTableArmV7_[T1_SXTAB] = new SXTAB_T1(this);
+    isaTableArmV7_[T1_SXTB] = new SXTB_T1(this);
     isaTableArmV7_[T1_TBB] = new TBB_T1(this);
     isaTableArmV7_[T1_TST_I] = new TST_I_T1(this);
     isaTableArmV7_[T1_TST_R] = new TST_R_T1(this);
     isaTableArmV7_[T1_UBFX] = new UBFX_T1(this);
     isaTableArmV7_[T1_UDIV] = new UDIV_T1(this);
     isaTableArmV7_[T1_UMULL] = new UMULL_T1(this);
+    isaTableArmV7_[T1_UXTAB] = new UXTAB_T1(this);
     isaTableArmV7_[T1_UXTAH] = new UXTAH_T1(this);
     isaTableArmV7_[T1_UXTB] = new UXTB_T1(this);
     isaTableArmV7_[T1_UXTH] = new UXTH_T1(this);

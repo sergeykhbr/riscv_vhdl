@@ -134,7 +134,9 @@
     <ClCompile Include="..\..\src\gui_plugin\MainWindow\DbgMainWindow.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\MainWindow\ebreakhandler.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\MainWindow\MdiAreaWidget.cpp" />
+    <ClCompile Include="..\..\src\gui_plugin\PeriphWidgets\ButtonGenWidget.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\PeriphWidgets\DemoM4Widget.cpp" />
+    <ClCompile Include="..\..\src\gui_plugin\PeriphWidgets\DemoSTM32Keypad.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\PeriphWidgets\DipArea.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\PeriphWidgets\GpioWidget.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\PeriphWidgets\LedArea.cpp" />
@@ -179,7 +181,9 @@
     <ClInclude Include="..\..\src\gui_plugin\MainWindow\DbgMainWindow.h" />
     <ClInclude Include="..\..\src\gui_plugin\MainWindow\ebreakhandler.h" />
     <ClInclude Include="..\..\src\gui_plugin\MainWindow\MdiAreaWidget.h" />
+    <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\ButtonGenWidget.h" />
     <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\DemoM4Widget.h" />
+    <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\DemoSTM32Keypad.h" />
     <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\DipArea.h" />
     <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\GpioWidget.h" />
     <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\LedArea.h" />

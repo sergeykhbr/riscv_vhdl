@@ -125,6 +125,12 @@
     <ClCompile Include="..\..\src\gui_plugin\PeriphWidgets\LedDisplay.cpp">
       <Filter>PeriphWidgets</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\PeriphWidgets\ButtonGenWidget.cpp">
+      <Filter>PeriphWidgets</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\PeriphWidgets\DemoSTM32Keypad.cpp">
+      <Filter>PeriphWidgets</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\api_types.h">
@@ -248,6 +254,12 @@
       <Filter>PeriphWidgets</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\LedDisplay.h">
+      <Filter>PeriphWidgets</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\ButtonGenWidget.h">
+      <Filter>PeriphWidgets</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\DemoSTM32Keypad.h">
       <Filter>PeriphWidgets</Filter>
     </ClInclude>
   </ItemGroup>

@@ -500,6 +500,7 @@ enum EIsaArmV7 {
     ARMV7_SDIV,
     ARMV7_BFC,
     ARMV7_BFI,
+    T1_ADC_I,   // 4.6.1
     T1_ADD_I,   // 4.6.3
     T2_ADD_I,   // 4.6.3
     T3_ADD_I,   // 4.6.3
@@ -516,6 +517,7 @@ enum EIsaArmV7 {
     T1_B,       // 4.6.12
     T2_B,       // 4.6.12
     T3_B,       // 4.6.12
+    T4_B,       // 4.6.12
     T1_BIC_I,   // 4.6.15
     T1_BKPT,    // 4.6.17
     T1_BL_I,    // 4.6.18
@@ -542,17 +544,21 @@ enum EIsaArmV7 {
     T2_LDR_R,   // 4.6.45
     T1_LDRB_I,  // 4.6.46
     T2_LDRB_I,  // 4.6.46
+    T3_LDRB_I,  // 4.6.46
     T1_LDRB_R,  // 4.6.48
     T2_LDRB_R,  // 4.6.48
     T1_LDRH_I,  // 4.6.55
     T2_LDRH_R,  // 4.6.57
     T1_LDRSB_I, // 4.6.59
+    T1_LDRSB_R, // 4.6.61
+    T2_LDRSB_R, // 4.6.61
     T1_LSL_I,   // 4.6.68
     T1_LSL_R,   // 4.6.69
     T2_LSL_R,   // 4.6.69
     T1_LSR_I,   // 4.6.70
     T1_LSR_R,   // 4.6.71
     T2_LSR_R,   // 4.6.71
+    T1_MLA,     // 4.6.74
     T1_MLS,     // 4.6.75
     T1_MOV_I,   // 4.6.76
     T2_MOV_I,   // 4.6.76
@@ -574,8 +580,11 @@ enum EIsaArmV7 {
     T1_RSB_I,   // 4.6.119
     T2_RSB_I,   // 4.6.119
     T1_RSB_R,   // 4.6.119
+    T1_SBFX,    // 4.6.125
     T1_SDIV,    // 4.6.126
+    T1_SMULL,   // 4.6.150
     T1_STMDB,   // 4.6.160
+    T1_STMIA,   // 4.6.161
     T1_STR_I,   // 4.6.162
     T2_STR_I,   // 4.6.162
     T1_STR_R,   // 4.6.163
@@ -585,19 +594,25 @@ enum EIsaArmV7 {
     T3_STRB_I,  // 4.6.164
     T1_STRB_R,  // 4.6.165
     T2_STRB_R,  // 4.6.165
+    T1_STRD_I,  // 4.6.167
     T1_STRH_I,  // 4.6.172
+    T2_STRH_I,  // 4.6.172
+    T3_STRH_I,  // 4.6.172
     T1_SUB_I,   // 4.6.176
     T2_SUB_I,   // 4.6.176
     T3_SUB_I,   // 4.6.176
     T1_SUB_R,   // 4.6.177
     T2_SUB_R,   // 4.6.177
     T1_SUBSP_I, // 4.6.178
+    T1_SXTAB,   // 4.6.182
+    T1_SXTB,    // 4.6.185
     T1_TBB,     // 4.6.188
     T1_TST_I,   // 4.6.192
     T1_TST_R,   // 4.6.193
     T1_UBFX,    // 4.6.197
     T1_UDIV,    // 4.6.198
     T1_UMULL,   // 4.6.207
+    T1_UXTAB,   // 4.6.221
     T1_UXTAH,   // 4.6.223
     T1_UXTB,    // 4.6.224
     T1_UXTH,    // 4.6.226

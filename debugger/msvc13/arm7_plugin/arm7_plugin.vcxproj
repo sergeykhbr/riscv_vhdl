@@ -98,6 +98,7 @@
     <ClCompile Include="..\..\src\common\generic\cmd_reg_generic.cpp" />
     <ClCompile Include="..\..\src\common\generic\cpu_generic.cpp" />
     <ClCompile Include="..\..\src\common\generic\iotypes.cpp" />
+    <ClCompile Include="..\..\src\common\generic\key_gen1.cpp" />
     <ClCompile Include="..\..\src\common\generic\mapreg.cpp" />
     <ClCompile Include="..\..\src\common\generic\rmembank_gen1.cpp" />
     <ClCompile Include="..\..\src\cpu_arm_plugin\arm7tdmi.cpp" />
@@ -109,6 +110,7 @@
     <ClCompile Include="..\..\src\cpu_arm_plugin\plugin_init.cpp" />
     <ClCompile Include="..\..\src\cpu_arm_plugin\srcproc\srcproc.cpp" />
     <ClCompile Include="..\..\src\cpu_arm_plugin\srcproc\thumb_disasm.cpp" />
+    <ClCompile Include="..\..\src\cpu_arm_plugin\stm32l4\demo_keypad.cpp" />
     <ClCompile Include="..\..\src\cpu_arm_plugin\stm32l4\st7789v.cpp" />
     <ClCompile Include="..\..\src\cpu_arm_plugin\stm32l4\stm32l4_gpio.cpp" />
     <ClCompile Include="..\..\src\cpu_arm_plugin\stm32l4\stm32l4_nvic.cpp" />
@@ -129,6 +131,7 @@
     <ClInclude Include="..\..\src\common\generic\cmd_reg_generic.h" />
     <ClInclude Include="..\..\src\common\generic\cpu_generic.h" />
     <ClInclude Include="..\..\src\common\generic\iotypes.h" />
+    <ClInclude Include="..\..\src\common\generic\key_gen1.h" />
     <ClInclude Include="..\..\src\common\generic\mapreg.h" />
     <ClInclude Include="..\..\src\common\generic\rmembank_gen1.h" />
     <ClInclude Include="..\..\src\common\iattr.h" />
@@ -143,6 +146,7 @@
     <ClInclude Include="..\..\src\cpu_arm_plugin\instructions.h" />
     <ClInclude Include="..\..\src\cpu_arm_plugin\srcproc\srcproc.h" />
     <ClInclude Include="..\..\src\cpu_arm_plugin\srcproc\thumb_disasm.h" />
+    <ClInclude Include="..\..\src\cpu_arm_plugin\stm32l4\demo_keypad.h" />
     <ClInclude Include="..\..\src\cpu_arm_plugin\stm32l4\st7789v.h" />
     <ClInclude Include="..\..\src\cpu_arm_plugin\stm32l4\stm32l4_gpio.h" />
     <ClInclude Include="..\..\src\cpu_arm_plugin\stm32l4\stm32l4_nvic.h" />

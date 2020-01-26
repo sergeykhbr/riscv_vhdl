@@ -35,6 +35,10 @@ const char *WBACK_SYMB[2] = {
     "", "!"
 };
 
+const char *ADD_SYMB[2] = {
+    "-", ""
+};
+
 const char *SETFLAGS_SYMB[2] = {
     " ", "S"
 };
@@ -116,7 +120,14 @@ static int disasm_w(uint64_t pc,
     int len = 0;
     uint32_t ti1 = ti >> 16;
     int tsz;
-    if ((ti & 0xF0F0FFF0) == 0xF0F0FB90) {
+    if ((ti & 0xFFF0FFF0) == 0xF000E8D0) {
+        uint32_t n = ti & 0xF;
+        uint32_t m = (ti >> 16) & 0xF;
+        RISCV_sprintf(disasm, sz, "tbb      %s, %s",
+                IREGS_NAMES[n],
+                IREGS_NAMES[m]);
+        len = 4;
+    } else if ((ti & 0xF0F0FFF0) == 0xF0F0FB90) {
         uint32_t d = (ti1 >> 8) & 0xF;
         uint32_t n = ti & 0xF;
         uint32_t m = ti1 & 0xF;
@@ -143,12 +154,17 @@ static int disasm_w(uint64_t pc,
                 IREGS_NAMES[n],
                 IREGS_NAMES[m]);
         len = 4;
-    } else if ((ti & 0xFFF0FFF0) == 0xF000E8D0) {
+    } else if ((ti & 0x8020FFF0) == 0x0000F340) {
         uint32_t n = ti & 0xF;
-        uint32_t m = (ti >> 16) & 0xF;
-        RISCV_sprintf(disasm, sz, "tbb      %s, %s",
+        uint32_t imm3 = (ti1 >> 12) & 0x7;
+        uint32_t d = (ti1 >> 8) & 0xF;
+        uint32_t imm2 = (ti1 >> 6) & 0x3;
+        uint32_t widthm1 = ti1 & 0x1F;
+        uint32_t lsbit = (imm3 << 2) | imm2;
+        RISCV_sprintf(disasm, sz, "sbfx     %s, %s, #%d, #%d",
+                IREGS_NAMES[d],
                 IREGS_NAMES[n],
-                IREGS_NAMES[m]);
+                lsbit, widthm1 + 1);
         len = 4;
     } else if ((ti & 0x8020FFF0) == 0x0000F3C0) {
         uint32_t d = (ti1 >> 8) & 0xF;
@@ -180,11 +196,16 @@ static int disasm_w(uint64_t pc,
     } else if ((ti & 0x8000FBEF) == 0x0000F1AD) {
         // T2_SUBSP_I
         len = 4;
-    } else if ((ti & 0x0800FFFF) == 0x0800F85F) {
-        // T4_LDR_I: see LDR
+    } else if ((ti & 0x0000FF7F) == 0x0000F85F) {
+        uint32_t t = (ti1 >> 12) & 0xF;
+        int32_t imm32 = static_cast<int32_t>(ti1 & 0xFFF);
+        bool add = (ti >> 7) & 1;
+        RISCV_sprintf(disasm, sz, "ldr.w    %s, [pc, #%d]",
+                IREGS_NAMES[t], 
+                add ? imm32: -imm32);
         len = 4;
     } else if ((ti & 0x0F00FFF0) == 0x0E00F850) {
-        // T4_LDR_I: see LDRT
+        // T1_LDRT
         len = 4;
     } else if ((ti & 0x0D00FFF0) == 0x0800F850) {
         // T4_LDR_I: undefined
@@ -201,8 +222,23 @@ static int disasm_w(uint64_t pc,
     } else if ((ti & 0xFFC0FFF0) == 0xF000F810) {
         // T1_PLD_R
         len = 4;
+    } else if ((ti & 0xF000FF7F) == 0xF000F91F) {
+        // T3_PLI_I
+        len = 4;
+    } else if ((ti & 0xFF00FFF0) == 0xFC00F910) {
+        // T2_PLI_I
+        len = 4;
+    } else if ((ti & 0xF000FFF0) == 0xF000F990) {
+        // T1_PLI_I
+        len = 4;
+    } else if ((ti & 0xFFC0FFF0) == 0xF000F910) {
+        // T1_PLI_R
+        len = 4;
     } else if ((ti & 0x0FC0FF7F) == 0x0000F81F) {
         // T1_LDRB_L
+        len = 4;
+    } else if ((ti & 0x0000FF7F) == 0x0000F91F) {
+        // T1_LDRSB_L
         len = 4;
     } else if ((ti & 0x2000FFFF) == 0x0000E8BD) {
         // ldmia sp! equivalent
@@ -223,15 +259,6 @@ static int disasm_w(uint64_t pc,
         }
         tsz += RISCV_sprintf(&disasm[tsz], sz - tsz,
                 "%s", "}");
-        len = 4;
-    } else if ((ti & 0xF000FF7F) == 0xF000F91F) {
-        // T3_PLI_I
-        len = 4;
-    } else if ((ti & 0xFF00FFF0) == 0xFC00F910) {
-        // T2_PLI_I
-        len = 4;
-    } else if ((ti & 0xF000FFF0) == 0xF000F990) {
-        // T1_PLI_I
         len = 4;
     } else if ((ti & 0x0FC0FFF0) == 0x0000F800) {
         uint32_t t = (ti1 >> 12) & 0xF;
@@ -280,11 +307,28 @@ static int disasm_w(uint64_t pc,
                 IREGS_NAMES[m],
                 shift_n);
         len = 4;
+    } else if ((ti & 0x0FC0FFF0) == 0x0000F910) {
+        uint32_t n = ti & 0xF;
+        uint32_t t = (ti1 >> 12) & 0xF;
+        uint32_t shift_n = (ti1 >> 4) & 0x3;
+        uint32_t m = ti1 & 0xF;
+        RISCV_sprintf(disasm, sz, "ldrsb.w  %s, [%s, %s, lsl #%d]",
+                IREGS_NAMES[t],
+                IREGS_NAMES[n],
+                IREGS_NAMES[m],
+                shift_n);
+        len = 4;
     } else if ((ti & 0x0F00FFF0) == 0x0E00F800) {
         // T1_STRBT
         len = 4;
     } else if ((ti & 0xF0C0FFFF) == 0xF080FA1F) {
         // T2_UXTH;
+        len = 4;
+    } else if ((ti & 0xF0C0FFFF) == 0xF080FA4F) {
+        // T2_SXTB;
+        len = 4;
+    } else if ((ti & 0xF0C0FFFF) == 0xF080FA5F) {
+        // T2_UXTB;
         len = 4;
     } else if ((ti & 0x8F00FFF0) == 0x0F00EA10) {
         // T2_TST_R
@@ -303,6 +347,28 @@ static int disasm_w(uint64_t pc,
                 IREGS_NAMES[m],
                 rotation);
         len = 4;
+    } else if ((ti & 0xF0C0FFF0) == 0xF080FA40) {
+        uint32_t n = ti & 0xF;
+        uint32_t d = (ti1 >> 8) & 0xF;
+        uint32_t rotation = ((ti1 >> 4) & 0x3) << 3;
+        uint32_t m = ti1 & 0xF;
+        RISCV_sprintf(disasm, sz, "sxtab    %s, %s, %s, ror #%d",
+                IREGS_NAMES[d],
+                IREGS_NAMES[n],
+                IREGS_NAMES[m],
+                rotation);
+        len = 4;
+    } else if ((ti & 0xF0C0FFF0) == 0xF080FA50) {
+        uint32_t n = ti & 0xF;
+        uint32_t d = (ti1 >> 8) & 0xF;
+        uint32_t rotation = ((ti1 >> 4) & 0x3) << 3;
+        uint32_t m = ti1 & 0xF;
+        RISCV_sprintf(disasm, sz, "uxtab    %s, %s, %s, ror #%d",
+                IREGS_NAMES[d],
+                IREGS_NAMES[n],
+                IREGS_NAMES[m],
+                rotation);
+        len = 4;
     } else if ((ti & 0x00F0FFF0) == 0x0010FB00) {
         uint32_t n = ti & 0xF;
         uint32_t a = (ti1 >> 12) & 0xF;
@@ -314,15 +380,51 @@ static int disasm_w(uint64_t pc,
                 IREGS_NAMES[m],
                 IREGS_NAMES[a]);
         len = 4;
+    } else if ((ti & 0x0F00FFF0) == 0x0E00F810) {
+        // T1_LDRBT
+        len = 4;
+    } else if ((ti & 0x0F00FFF0) == 0x0E00F820) {
+        // T1_STRHT;
+        len = 4;
     } else if ((ti & 0x0800FFF0) == 0x0800F800) {
         uint32_t t = (ti1 >> 12) & 0xF;
         uint32_t n = ti & 0xF;
         uint64_t imm32 = ti1 & 0xFF;
         uint32_t index = (ti1 >> 10) & 1;
+        uint32_t add = (ti1 >> 9) & 1;
         uint32_t wback = (ti1 >> 8) & 1;
-        RISCV_sprintf(disasm, sz, "strb.w   %s, [%s, #%d]%s",
+        RISCV_sprintf(disasm, sz, "strb.w   %s, [%s, #%s%d]%s",
                 IREGS_NAMES[t],
                 IREGS_NAMES[n],
+                ADD_SYMB[add],
+                imm32,
+                WBACK_SYMB[index & wback]);
+        len = 4;
+    } else if ((ti & 0x0800FFF0) == 0x0800F810) {
+        uint32_t n = ti & 0xF;
+        uint32_t t = (ti1 >> 12) & 0xF;
+        uint32_t index = (ti1 >> 10) & 1;
+        uint32_t add = (ti1 >> 9) & 1;
+        uint32_t wback = (ti1 >> 8) & 1;
+        uint32_t imm32 = ti1 & 0xFF;
+        RISCV_sprintf(disasm, sz, "ldrb.w   %s, [%s, #%s%d]%s",
+                IREGS_NAMES[t],
+                IREGS_NAMES[n],
+                ADD_SYMB[add],
+                imm32,
+                WBACK_SYMB[index & wback]);
+        len = 4;
+    } else if ((ti & 0x0800FFF0) == 0x0800F820) {
+        uint32_t n = ti & 0xF;
+        uint32_t t = (ti1 >> 12) & 0xF;
+        uint32_t index = (ti1 >> 10) & 1;
+        uint32_t add = (ti1 >> 9) & 1;
+        uint32_t wback = (ti1 >> 8) & 1;
+        uint32_t imm32 = ti1 & 0xFF;
+        RISCV_sprintf(disasm, sz, "strh.w   %s, [%s, #%s%d]%s",
+                IREGS_NAMES[t],
+                IREGS_NAMES[n],
+                ADD_SYMB[add],
                 imm32,
                 WBACK_SYMB[index & wback]);
         len = 4;
@@ -346,31 +448,6 @@ static int disasm_w(uint64_t pc,
                     IREGS_NAMES[t], IREGS_NAMES[n], imm32);
         }
         len = 4;
-    } else if ((ti & 0x0000FF7F) == 0x0000F85F) {
-        uint32_t t = (ti1 >> 12) & 0xF;
-        int32_t imm32 = static_cast<int32_t>(ti1 & 0xFFF);
-        bool add = (ti >> 7) & 1;
-        RISCV_sprintf(disasm, sz, "ldr.w    %s, [pc, #%d]",
-                IREGS_NAMES[t], 
-                add ? imm32: -imm32);
-        len = 4;
-    } else if ((ti & 0x0000FFF0) == 0x0000F890) {
-        uint32_t t = (ti1 >> 12) & 0xF;
-        uint32_t n = ti & 0xF;
-        uint32_t imm32 = ti1 & 0xFFF;
-        RISCV_sprintf(disasm, sz, "ldrb.w   %s, [%s, #%d]",
-                IREGS_NAMES[t],
-                IREGS_NAMES[n],
-                imm32);
-        len = 4;
-    } else if ((ti & 0x0000FFF0) == 0x0000F8D0) {
-        uint32_t t = (ti1 >> 12) & 0xf;
-        uint32_t n = ti & 0xF;
-        uint32_t imm32 = ti1 & 0xFFF;
-        RISCV_sprintf(disasm, sz, "ldr.w    %s, [%s, #%d]",
-                IREGS_NAMES[t],
-                IREGS_NAMES[n],
-                imm32);
     } else if ((ti & 0x0FC0FFF0) == 0x0000F850) {
         uint32_t t = (ti1 >> 12) & 0xF;
         uint32_t n = ti & 0xF;
@@ -381,6 +458,28 @@ static int disasm_w(uint64_t pc,
                 IREGS_NAMES[n],
                 IREGS_NAMES[m],
                 shift_n);
+        len = 4;
+    } else if ((ti & 0x00F0FFF0) == 0x0000FB00) {
+        uint32_t n = ti & 0xF;
+        uint32_t a = (ti1 >> 12) & 0xF;
+        uint32_t d = (ti1 >> 8) & 0xF;
+        uint32_t m = ti1 & 0xF;
+        RISCV_sprintf(disasm, sz, "mla      %s, %s, %s, %s",
+                IREGS_NAMES[d],
+                IREGS_NAMES[n],
+                IREGS_NAMES[m],
+                IREGS_NAMES[a]);
+        len = 4;
+    } else if ((ti & 0x00F0FFF0) == 0x0000FB80) {
+        uint32_t n = ti & 0xF;
+        uint32_t dLo = (ti1 >> 12) & 0xF;
+        uint32_t dHi = (ti1 >> 8) & 0xF;
+        uint32_t m = ti1 & 0xF;
+        RISCV_sprintf(disasm, sz, "smull    %s, %s, %s, %s",
+                IREGS_NAMES[dLo],
+                IREGS_NAMES[dHi],
+                IREGS_NAMES[n],
+                IREGS_NAMES[m]);
         len = 4;
     } else if ((ti & 0x00F0FFF0) == 0x0000FBA0) {
         uint32_t dLo = (ti1 >> 12) & 0xF;
@@ -483,15 +582,38 @@ static int disasm_w(uint64_t pc,
     } else if ((ti & 0x0000FFF0) == 0x0000F880) {
         uint32_t t = (ti1 >> 12) & 0xF;
         uint32_t n = ti & 0xF;
-        uint64_t imm32 = ti1 & 0xFFF;
+        uint32_t imm32 = ti1 & 0xFFF;
         RISCV_sprintf(disasm, sz, "strb.w   %s, [%s, #%d]",
                 IREGS_NAMES[t],
                 IREGS_NAMES[n],
                 imm32);
         len = 4;
-    } else if ((ti & 0x0000FF7F) == 0x0000F91F) {
-        // T1_LDRSB_L
+    } else if ((ti & 0x0000FFF0) == 0x0000F890) {
+        uint32_t t = (ti1 >> 12) & 0xF;
+        uint32_t n = ti & 0xF;
+        uint32_t imm32 = ti1 & 0xFFF;
+        RISCV_sprintf(disasm, sz, "ldrb.w   %s, [%s, #%d]",
+                IREGS_NAMES[t],
+                IREGS_NAMES[n],
+                imm32);
         len = 4;
+    } else if ((ti & 0x0000FFF0) == 0x0000F8A0) {
+        uint32_t t = (ti1 >> 12) & 0xF;
+        uint32_t n = ti & 0xF;
+        uint32_t imm32 = ti1 & 0xFFF;
+        RISCV_sprintf(disasm, sz, "strh.w   %s, [%s, #%d]",
+                IREGS_NAMES[t],
+                IREGS_NAMES[n],
+                imm32);
+        len = 4;
+    } else if ((ti & 0x0000FFF0) == 0x0000F8D0) {
+        uint32_t t = (ti1 >> 12) & 0xf;
+        uint32_t n = ti & 0xF;
+        uint32_t imm32 = ti1 & 0xFFF;
+        RISCV_sprintf(disasm, sz, "ldr.w    %s, [%s, #%d]",
+                IREGS_NAMES[t],
+                IREGS_NAMES[n],
+                imm32);
     } else if ((ti & 0x0000FFF0) == 0x0000F990) {
         uint32_t t = (ti1 >> 12) & 0xF;
         uint32_t n = ti & 0xF;
@@ -627,6 +749,19 @@ static int disasm_w(uint64_t pc,
                 IREGS_NAMES[n],
                 imm32);
         len = 4;
+    } else if ((ti & 0x8000FBE0) == 0x0000F140) {
+        uint32_t i = (ti >> 10) & 1;
+        uint32_t setflags = (ti >> 4) & 1;
+        uint32_t n = ti & 0xF;
+        uint32_t imm3 = (ti1 >> 12) & 0x7;
+        uint32_t d = (ti1 >> 8) & 0xF;
+        uint32_t imm8 = ti1 & 0xFF;
+        uint32_t imm32 = ThumbExpandImmWith((i << 11) | (imm3 << 8) | imm8);
+        RISCV_sprintf(disasm, sz, "adc.w    %s, %s, #%d",
+                IREGS_NAMES[d],
+                IREGS_NAMES[n],
+                imm32);
+        len = 4;
     } else if ((ti & 0x8000FBE0) == 0x0000F1A0) {
         uint32_t d = (ti1 >> 8) & 0xF;
         uint32_t n = ti & 0xF;
@@ -680,6 +815,25 @@ static int disasm_w(uint64_t pc,
                 IREGS_NAMES[n],
                 imm32);
         len = 4;
+    } else if ((ti & 0x0000FF70) == 0x0000E840) {
+        // see Load/Store double and exclusive, and table branch on page 3-28
+        len = 4;
+    } else if ((ti & 0x0000FE50) == 0x0000E840) {
+        uint32_t index = (ti >> 8) & 1;
+        uint32_t add = (ti >> 7) & 1;
+        uint32_t wback = (ti >> 5) & 1;
+        uint32_t n = ti & 0xF;
+        uint32_t t = (ti1 >> 12) & 0xF;
+        uint32_t t2 = (ti1 >> 8) & 0xF;
+        uint32_t imm32 = (ti1 & 0xFF) << 2;
+        RISCV_sprintf(disasm, sz, "strd     %s, %s, [%s, #%s%d]%s",
+                IREGS_NAMES[t],
+                IREGS_NAMES[t2],
+                IREGS_NAMES[n],
+                ADD_SYMB[add],
+                imm32,
+                WBACK_SYMB[index & wback]);
+        len = 4;
     } else if ((ti & 0x8000FBE0) == 0x0000F020) {
         uint32_t d = (ti1 >> 8) & 0xF;
         uint32_t n = ti  & 0xF;
@@ -707,6 +861,22 @@ static int disasm_w(uint64_t pc,
         }
         RISCV_sprintf(disasm, sz, "b%s.n    %08x",
             CONDITION[cond],
+            static_cast<uint32_t>(pc) + 4 + imm32
+            );
+        len = 4;
+    } else if ((ti & 0xD000F800) == 0x9000F000) {
+        uint32_t S = (ti >> 10) & 1;
+        uint32_t imm10 = ti & 0x3FF;
+        uint32_t J1 = (ti1 >> 13) & 1;
+        uint32_t J2 = (ti1 >> 11) & 1;
+        uint32_t imm11 = ti1 & 0x7FF;
+        uint32_t I1 = (!(J1 ^ S)) & 1;
+        uint32_t I2 = (!(J2 ^ S)) & 1;
+        uint32_t imm32 = (I1 << 23) | (I2 << 22) | (imm10 << 12) | (imm11 << 1);
+        if (S) {
+            imm32 |= (~0ul) << 24;
+        }
+        RISCV_sprintf(disasm, sz, "b.w     %08x",
             static_cast<uint32_t>(pc) + 4 + imm32
             );
         len = 4;
@@ -829,6 +999,12 @@ int disasm_thumb(uint64_t pc,
         RISCV_sprintf(disasm, sz, "mvns     %s, %s",
                 IREGS_NAMES[d],
                 IREGS_NAMES[m]);
+    } else if ((ti & 0xFFC0) == 0xB240) {
+        uint32_t d = ti & 0x7;
+        uint32_t m = (ti >> 3) & 0x7;
+        RISCV_sprintf(disasm, sz, "sxtb     %s, %s",
+                IREGS_NAMES[d],
+                IREGS_NAMES[m]);
     } else if ((ti & 0xFFC0) == 0xB280) {
         uint32_t d = ti & 0x7;
         uint32_t m = (ti >> 3) & 0x7;
@@ -929,10 +1105,19 @@ int disasm_thumb(uint64_t pc,
             IREGS_NAMES[n],
             IREGS_NAMES[m]
             );
+    } else if ((ti & 0xFE00) == 0x5600) {
+        uint32_t m = (ti >> 6) & 0x7;
+        uint32_t n = (ti >> 3) & 0x7;
+        uint32_t t = ti & 0x7;
+        RISCV_sprintf(disasm, sz, "ldrsb    %s, [%s, %s]",
+            IREGS_NAMES[t],
+            IREGS_NAMES[n],
+            IREGS_NAMES[m]
+            );
     } else if ((ti & 0xFE00) == 0x5800) {
         uint32_t t = ti & 0x7;
         uint32_t n = (ti >> 3) & 0x7;
-        uint64_t m = (ti >> 6) & 0x7;
+        uint32_t m = (ti >> 6) & 0x7;
         RISCV_sprintf(disasm, sz, "ldr      %s, [%s, %s]",
             IREGS_NAMES[t],
             IREGS_NAMES[n],
@@ -1006,7 +1191,7 @@ int disasm_thumb(uint64_t pc,
         uint32_t n = ti & 0x7;
         uint32_t imm5 = (ti >> 3) & 0x1F;
         uint32_t i = (ti >> 9) & 0x1;
-        uint64_t imm32 = (i << 6) | (imm5 << 1);
+        uint32_t imm32 = (i << 6) | (imm5 << 1);
         RISCV_sprintf(disasm, sz, "cbnz     %s, %08x",
             IREGS_NAMES[n],
             static_cast<uint32_t>(pc) + 4 + imm32
@@ -1016,7 +1201,7 @@ int disasm_thumb(uint64_t pc,
         uint32_t n = ti & 0x7;
         uint32_t imm5 = (ti >> 3) & 0x1F;
         uint32_t i = (ti >> 9) & 0x1;
-        uint64_t imm32 = (i << 6) | (imm5 << 1);
+        uint32_t imm32 = (i << 6) | (imm5 << 1);
         RISCV_sprintf(disasm, sz, "cbz      %s, %08x",
             IREGS_NAMES[n],
             static_cast<uint32_t>(pc) + 4 + imm32
@@ -1103,7 +1288,7 @@ int disasm_thumb(uint64_t pc,
     } else if ((ti & 0xF800) == 0x7000) {
         uint32_t t = ti & 0x7;
         uint32_t n = (ti >> 3) & 0x7;
-        uint64_t imm32 = (ti >> 6) & 0x1F;
+        uint32_t imm32 = (ti >> 6) & 0x1F;
         RISCV_sprintf(disasm, sz, "strb     %s, [%s, #%d]",
             IREGS_NAMES[t],
             IREGS_NAMES[n],
@@ -1121,7 +1306,7 @@ int disasm_thumb(uint64_t pc,
     } else if ((ti & 0xF800) == 0x8000) {
         uint32_t t = ti & 0x7;
         uint32_t n = (ti >> 3) & 0x7;
-        uint64_t imm32 = ((ti >> 6) & 0x1F) << 1;
+        uint32_t imm32 = ((ti >> 6) & 0x1F) << 1;
         RISCV_sprintf(disasm, sz, "strh     %s, [%s, #%d]",
             IREGS_NAMES[t],
             IREGS_NAMES[n],
@@ -1138,14 +1323,14 @@ int disasm_thumb(uint64_t pc,
             );
     } else if ((ti & 0xF800) == 0x9000) {
         uint32_t t = (ti >> 8) & 0x7;
-        uint64_t imm32 = (ti & 0xFF) << 2;
+        uint32_t imm32 = (ti & 0xFF) << 2;
         RISCV_sprintf(disasm, sz, "str      %s, [sp, #%d]",
             IREGS_NAMES[t],
             imm32
             );
     } else if ((ti & 0xF800) == 0x9800) {
         uint32_t t = (t >> 8) & 0x7;
-        uint64_t imm32 = (ti & 0xFF) << 2;
+        uint32_t imm32 = (ti & 0xFF) << 2;
         RISCV_sprintf(disasm, sz, "ldr      %s, [sp, #%d]",
             IREGS_NAMES[t],
             imm32
@@ -1164,9 +1349,29 @@ int disasm_thumb(uint64_t pc,
             IREGS_NAMES[d],
             imm32
             );
+    } else if ((ti & 0xF800) == 0xC000) {
+        uint32_t n = (ti >> 8) & 0x7;
+        uint32_t register_list = ti & 0xFF;
+        int itotal = 0;
+        tsz = RISCV_sprintf(disasm, sz, "stmia    %s!, {", 
+            IREGS_NAMES[n]);
+        for (int i = 0; i < 8; i++) {
+            if (ti & (1 << i)) {
+                if (itotal) {
+                    tsz += RISCV_sprintf(&disasm[tsz], sz - tsz,
+                            ", %s", IREGS_NAMES[i]);
+                } else {
+                    tsz += RISCV_sprintf(&disasm[tsz], sz - tsz,
+                            "%s", IREGS_NAMES[i]);
+                }
+                itotal++;
+            }
+        }
+        tsz += RISCV_sprintf(&disasm[tsz], sz - tsz,
+                "%s", "}");
     } else if ((ti & 0xF800) == 0xE000) {
         uint32_t imm11 = ti & 0x7FF;
-        uint64_t imm32 = imm11 << 1;
+        uint32_t imm32 = imm11 << 1;
         if (ti & 0x400) {
             imm32 |= (~0ull) << 12;
         }
@@ -1198,7 +1403,7 @@ int disasm_thumb(uint64_t pc,
     } else if ((ti & 0xF000) == 0xD000) {
         uint32_t cond = (ti >> 8) & 0xF;
         uint32_t imm8 = ti & 0xFF;
-        uint64_t imm32 = imm8 << 1;
+        uint32_t imm32 = imm8 << 1;
         if (ti & 0x80) {
             imm32 |= (~0ull) << 9;
         }

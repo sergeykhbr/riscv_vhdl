@@ -14,7 +14,7 @@
                 {'Name':'gui0','Attr':[
                 ['LogLevel',4],
                 ['WidgetsConfig',{
-                  'OpenViews':['DemoM4Window'],
+                  'OpenViews':['DemoM4Window','AsmQMdiSubWindow'],
                   'Serial':'port1',
                   'AutoComplete':'autocmd0',
                   'StepToSecHz':30000000.0,
@@ -275,6 +275,7 @@
           {'Name':'gpioa','Attr':[
                 ['ObjDescription','GPIO port connected to AHB2'],
                 ['LogLevel',2],
+                ['CmdExecutor','cmdexec0'],
                 ['BaseAddress',0x48000000],
                 ['Length',0x400],
                 ['HardResetMode',0xABFFFFFF],
@@ -295,6 +296,7 @@
           {'Name':'gpiob','Attr':[
                 ['ObjDescription','GPIO port connected to AHB2'],
                 ['LogLevel',2],
+                ['CmdExecutor','cmdexec0'],
                 ['BaseAddress',0x48000400],
                 ['Length',0x400],
                 ['HardResetMode',0xABFFFFFF],
@@ -315,6 +317,7 @@
           {'Name':'gpioc','Attr':[
                 ['ObjDescription','GPIO port connected to AHB2'],
                 ['LogLevel',2],
+                ['CmdExecutor','cmdexec0'],
                 ['BaseAddress',0x48000800],
                 ['Length',0x400],
                 ['HardResetMode',0xABFFFFFF],
@@ -335,6 +338,7 @@
           {'Name':'gpiod','Attr':[
                 ['ObjDescription','GPIO port connected to AHB2'],
                 ['LogLevel',2],
+                ['CmdExecutor','cmdexec0'],
                 ['BaseAddress',0x48000C00],
                 ['Length',0x400],
                 ['HardResetMode',0xFFFFFFFF],
@@ -355,6 +359,7 @@
           {'Name':'gpioe','Attr':[
                 ['ObjDescription','GPIO port connected to AHB2'],
                 ['LogLevel',2],
+                ['CmdExecutor','cmdexec0'],
                 ['BaseAddress',0x48001000],
                 ['Length',0x400],
                 ['HardResetMode',0xFFFFFFFF],
@@ -383,6 +388,30 @@
                 ['IOCS',[['gpioa','ODR'], 11], '[IIOPort instance, pinindex]'],
                 ['IOReset',[['gpioa','ODR'], 12], '[IIOPort instance, pinindex]'],
                 ]}]},
+    {'Class':'DemoKeypadClass','Instances':[
+          {'Name':'keyboard0','Attr':[
+                ['LogLevel',2],
+                ['CmdExecutor','cmdexec0'],
+                ['Port',['gpiob','ODR']],
+                ['Keys',[['BTN_1',    1,[['gpioe','IDR'],0],0,0],
+                         ['BTN_2',    1,[['gpioe','IDR'],1],0,0],
+                         ['BTN_3',    1,[['gpioe','IDR'],2],0,0],
+                         ['BTN_4',    1,[['gpioe','IDR'],3],0,0],
+                         ['BTN_5',    1,[['gpioe','IDR'],4],0,0],
+                         ['BTN_P1',   1,[['gpioe','IDR'],5],0,0],
+                         ['BTN_P2',   1,[['gpioe','IDR'],6],0,0],
+                         ['BTN_P5',   1,[['gpioe','IDR'],7],0,0],
+                         ['BTN_6',    1,[['gpioe','IDR'],0],1,0],
+                         ['BTN_7',    1,[['gpioe','IDR'],1],1,0],
+                         ['BTN_8',    1,[['gpioe','IDR'],2],1,0],
+                         ['BTN_9',    1,[['gpioe','IDR'],3],1,0],
+                         ['BTN_0',    1,[['gpioe','IDR'],4],1,0],
+                         ['BTN_P4',   1,[['gpioe','IDR'],5],1,0],
+                         ['BTN_P6',   1,[['gpioe','IDR'],6],1,0],
+                         ['BTN_P3',   1,[['gpioe','IDR'],7],1,0]
+                         ['BTN_P7',   1,[['gpiob','IDR'],5],-1,0]
+                         ],'[ButtonName,Active Value (not-inversed), read_port_bit, col_index, pwr_on]'],
+                ]}]},                
     {'Class':'DSUClass','Instances':[
           {'Name':'dsu0','Attr':[
                 ['LogLevel',1],

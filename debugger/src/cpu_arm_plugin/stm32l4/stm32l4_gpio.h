@@ -21,26 +21,42 @@
 #include "iservice.h"
 #include "coreservices/imemop.h"
 #include "coreservices/iioport.h"
+#include "coreservices/icmdexec.h"
 #include "generic/mapreg.h"
 #include "generic/rmembank_gen1.h"
 
 namespace debugger {
 
-class STM32L4_GPIO : public RegMemBankGeneric {
+class STM32L4_GPIO : public RegMemBankGeneric,
+                     public ICommand {
  public:
     explicit STM32L4_GPIO(const char *name);
 
     /** IService interface */
     virtual void postinitService() override;
+    virtual void predeleteService() override;
+
+    /** ICommand */
+    virtual int isValid(AttributeType *args);
+    virtual void exec(AttributeType *args, AttributeType *res);
 
     /** Common methods for registers: */
     void setMode(uint32_t v);
     void setOpenDrain(uint32_t v);
     uint32_t preOutput(uint32_t v);
     uint32_t getDirection();
+    uint32_t getOutput();
+    void modifyOutput(uint32_t v);
 
  protected:
+    int getLogLevel() { return logLevel_.to_int(); }
+    void setLogLevel(int level) { return logLevel_.make_int64(level); }
+
+ protected:
+    AttributeType cmdexec_;
     AttributeType hardResetMode_;
+
+    ICmdExecutor *iexec_;
 
     uint32_t direction_;        // 0=input; 1=output
     uint32_t openDrain_;        // 0=pull up/down; 1=open-drain
@@ -102,11 +118,53 @@ class STM32L4_GPIO : public RegMemBankGeneric {
                 }
             }
         }
-
-     protected:
         virtual uint32_t aboutToWrite(uint32_t nxt_val) override;
      protected:
         AttributeType portListeners_;
+    };
+
+    // Input Data Register
+    class IDR_TYPE : public MappedReg32Type,
+                     public IIOPort {
+     public:
+        IDR_TYPE(IService *parent, const char *name, uint64_t addr) :
+                    MappedReg32Type(parent, name, addr) {
+            hard_reset_value_ = 0x00000000;
+            value_.val = hard_reset_value_;
+            portListeners_.make_list(0);
+        }
+
+        /** IIOPort interface */
+        virtual void registerPortListener(IFace *listener) {
+            AttributeType item;
+            item.make_iface(listener);
+            portListeners_.add_to_list(&item);
+        }
+
+        virtual void unregisterPortListener(IFace *listener) {
+            for (unsigned i = 0; i < portListeners_.size(); i++) {
+                if (listener == portListeners_[i].to_iface()) {
+                    portListeners_.remove_from_list(i);
+                    break;
+                }
+            }
+        }
+     protected:
+        virtual uint32_t aboutToRead(uint32_t val) override;
+     protected:
+        AttributeType portListeners_;
+    };
+
+    // Clear/Set bit atomically
+    class BSRR_TYPE : public MappedReg32Type {
+     public:
+        BSRR_TYPE(IService *parent, const char *name, uint64_t addr) :
+                    MappedReg32Type(parent, name, addr) {
+            hard_reset_value_ = 0x00000000;
+            value_.val = hard_reset_value_;
+        }
+     protected:
+        virtual uint32_t aboutToWrite(uint32_t newval) override;
     };
 
 
@@ -114,9 +172,9 @@ class STM32L4_GPIO : public RegMemBankGeneric {
     OTYPER_TYPE OTYPER;             // 0x04
     MappedReg32Type OSPEEDR;        // 0x08
     MappedReg32Type PUPDR;          // 0x0c
-    MappedReg32Type IDR;            // 0x10
+    IDR_TYPE IDR;                   // 0x10
     ODR_TYPE ODR;                   // 0x14
-    MappedReg32Type BSRR;           // 0x18
+    BSRR_TYPE BSRR;           // 0x18
     MappedReg32Type LCKR;           // 0x1c
     MappedReg32Type AFRL;           // 0x20
     MappedReg32Type AFRH;           // 0x24

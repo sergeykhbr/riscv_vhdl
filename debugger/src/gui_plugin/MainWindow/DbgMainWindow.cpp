@@ -352,16 +352,21 @@ void DbgMainWindow::createMdiWindow() {
 
 void DbgMainWindow::addWidgets() {
     const AttributeType &openList = (*igui_->getpConfig())["OpenViews"];
-    slotActionTriggerUart0(true);
-    slotActionTriggerCpuAsmView(true);
 
     for (unsigned i = 0; i < openList.size(); i++) {
         AttributeType &viewName = const_cast<AttributeType &>(openList[i]);
-        if (viewName.is_equal("DemoM4Window")) {
+        if (viewName.is_equal("UartQMdiSubWindow")) {
+            slotActionTriggerUart0(true);
+        } else if (viewName.is_equal("AsmQMdiSubWindow")) {
+            slotActionTriggerCpuAsmView(true);
+        } else if (viewName.is_equal("RegsQMdiSubWindow")) {
+            slotActionTriggerRegs(true);
+        } else if (viewName.is_equal("MapQMdiSubWindow")) {
+            slotActionTriggerGnssMap(true);
+        } else if (viewName.is_equal("DemoM4Window")) {
             slotActionTriggerDemoM4(true);
         }
     }
-    //slotActionTriggerGnssMap(true);
 }
 
 void DbgMainWindow::slotActionTriggerUart0(bool val) {
