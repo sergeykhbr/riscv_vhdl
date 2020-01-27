@@ -6,7 +6,7 @@
     <LocalDebuggerEnvironment>PATH=%PATH%;$(QT_PATH)/bin</LocalDebuggerEnvironment>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <LocalDebuggerCommandArguments>-c ../../targets/stm32l4xx_gui.json </LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-c ../../targets/functional_sim_gui.json </LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerEnvironment>PATH=%PATH%;$(QT_PATH)/bin</LocalDebuggerEnvironment>
   </PropertyGroup>
