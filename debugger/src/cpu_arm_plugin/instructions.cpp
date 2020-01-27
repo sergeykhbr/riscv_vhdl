@@ -218,7 +218,7 @@ uint32_t T1Instruction::LSR_C(uint32_t x, int n, uint32_t *carry_out) {
 uint32_t T1Instruction::ASR_C(uint32_t x, int n, uint32_t *carry_out) {
     if (n > 31) {
         if (x & 0x80000000) {
-            return ~0ul;
+            return ~0;
         } else {
             return 0;
         }

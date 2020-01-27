@@ -242,7 +242,6 @@ static int disasm_w(uint64_t pc,
         len = 4;
     } else if ((ti & 0x2000FFFF) == 0x0000E8BD) {
         // ldmia sp! equivalent
-        uint32_t register_list = ti1 & 0xDFFF;
         int itotal = 0;
         tsz = RISCV_sprintf(disasm, sz, "pop.w    sp!, %s", "{");
         for (int i = 0; i < 16; i++) {
@@ -535,7 +534,6 @@ static int disasm_w(uint64_t pc,
         len = 4;
     } else if ((ti & 0x2000FFD0) == 0x0000E890) {
         uint32_t n = ti & 0xF;
-        uint32_t register_list = ti1 & 0xDFFF;
         uint32_t wback = (ti >> 5) & 1;
         int itotal = 0;
         tsz = RISCV_sprintf(disasm, sz, "ldmia.w  %s%s {",
@@ -751,7 +749,6 @@ static int disasm_w(uint64_t pc,
         len = 4;
     } else if ((ti & 0x8000FBE0) == 0x0000F140) {
         uint32_t i = (ti >> 10) & 1;
-        uint32_t setflags = (ti >> 4) & 1;
         uint32_t n = ti & 0xF;
         uint32_t imm3 = (ti1 >> 12) & 0x7;
         uint32_t d = (ti1 >> 8) & 0xF;
@@ -792,7 +789,6 @@ static int disasm_w(uint64_t pc,
         len = 4;
     } else if ((ti & 0x8000FBEF) == 0x0000F04F) {
         uint32_t d = (ti1 >> 8) & 0xF;
-        uint32_t n = ti  & 0xF;
         uint32_t i = (ti >> 10) & 1;
         uint32_t imm3 = (ti1 >> 12) & 0x7;
         uint32_t imm8 = ti1 & 0xFF;
@@ -890,7 +886,6 @@ int disasm_thumb(uint64_t pc,
                  size_t sz) {
     int retlen;
     int len = 2;
-    uint32_t ti1 = ti >> 16;
     int tsz;
     RISCV_sprintf(disasm, sz, "%s", "unknown");
 
@@ -900,7 +895,7 @@ int disasm_thumb(uint64_t pc,
         uint32_t m = (ti >> 3) & 0xF;
         RISCV_sprintf(disasm, sz, "bx       %s",
                 IREGS_NAMES[m]);
-    } else if (retlen = disasm_w(pc, ti, disasm, sz)) {
+    } else if ((retlen = disasm_w(pc, ti, disasm, sz)) != 0) {
         len = retlen;
     } else if ((ti & 0xFFE8) == 0xB660) {
         uint32_t disable = (ti >> 4) & 1;
@@ -908,7 +903,7 @@ int disasm_thumb(uint64_t pc,
         uint32_t I = (ti >> 1) & 1;
         uint32_t F = (ti >> 0) & 1;
         char iflags[4] = {0};
-        char *effect[2] = {"e", "d"};
+        const char *effect[2] = {"e", "d"};
         int tcnt = 0;
         if (A) {
             iflags[tcnt++] = 'a';
@@ -1329,7 +1324,7 @@ int disasm_thumb(uint64_t pc,
             imm32
             );
     } else if ((ti & 0xF800) == 0x9800) {
-        uint32_t t = (t >> 8) & 0x7;
+        uint32_t t = (ti >> 8) & 0x7;
         uint32_t imm32 = (ti & 0xFF) << 2;
         RISCV_sprintf(disasm, sz, "ldr      %s, [sp, #%d]",
             IREGS_NAMES[t],
@@ -1351,7 +1346,6 @@ int disasm_thumb(uint64_t pc,
             );
     } else if ((ti & 0xF800) == 0xC000) {
         uint32_t n = (ti >> 8) & 0x7;
-        uint32_t register_list = ti & 0xFF;
         int itotal = 0;
         tsz = RISCV_sprintf(disasm, sz, "stmia    %s!, {", 
             IREGS_NAMES[n]);
@@ -1387,7 +1381,7 @@ int disasm_thumb(uint64_t pc,
         uint32_t I2 = (((instr1 >> 11) & 0x1) ^ S) ^ 1;
         uint32_t imm11 = instr1 & 0x7FF;
         uint32_t imm10 = instr0 & 0x3FF;
-        uint32_t imm = 
+        uint32_t imm;
         imm = (I1 << 23) | (I2 << 22) | (imm10 << 12) | (imm11 << 1);
         if (S) {
             imm |= (~0ul) << 24;

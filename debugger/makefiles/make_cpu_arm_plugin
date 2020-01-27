@@ -33,6 +33,7 @@ SRC_PATH =\
 	$(TOP_DIR)src/common \
 	$(TOP_DIR)src/common/generic \
 	$(TOP_DIR)src/cpu_arm_plugin \
+	$(TOP_DIR)src/cpu_arm_plugin/stm32l4 \
 	$(TOP_DIR)src/cpu_arm_plugin/srcproc \
 	$(TOP_DIR)src/cpu_arm_plugin/cmds
 
@@ -48,14 +49,23 @@ SOURCES = \
 	cmd_reg_generic \
 	cmd_regs_generic \
 	iotypes \
+	key_gen1 \
 	mapreg \
+	rmembank_gen1 \
 	thumb_disasm \
 	srcproc \
 	decoder_arm \
 	decoder_thumb \
 	arm7tdmi \
+	thumb \
 	cpu_arm7_func \
 	instructions \
+	demo_keypad \
+	st7789v \
+	stm32l4_gpio \
+	stm32l4_nvic \
+	stm32l4_rcc \
+	stm32l4_systick \
 	plugin_init
 
 LIBS = \

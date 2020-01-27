@@ -33,10 +33,11 @@ class DIV : public RiscvInstruction {
     virtual int exec(Reg64Type *payload) {
         ISA_R_type u;
         int64_t res;
+        int64_t rs1 = static_cast<int64_t>(R[u.bits.rs1]);
+        int64_t rs2 = static_cast<int64_t>(R[u.bits.rs2]);
         u.value = payload->buf32[0];
-        if (R[u.bits.rs2]) {
-            res = static_cast<int64_t>(R[u.bits.rs1])
-                 / static_cast<int64_t>(R[u.bits.rs2]);
+        if (rs2) {
+            res = rs1 / rs2;
         } else {
             res = -1;
         }

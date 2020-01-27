@@ -54,9 +54,13 @@ SOURCES = \
 	ebreakhandler \
 	DbgMainWindow \
 	MdiAreaWidget \
+	ButtonGenWidget \
+	DemoM4Widget \
+	DemoSTM32Keypad \
+	DipArea \
 	GpioWidget \
 	LedArea \
-	DipArea \
+	LedDisplay \
 	UartEditor \
 	UartWidget \
 	RegsViewWidget \
@@ -135,6 +139,10 @@ prebuild:
 	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/PeriphWidgets/GpioWidget.h -o $(GUI_PLUGIN_SRC)/PeriphWidgets/moc_GpioWidget.h
 	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/PeriphWidgets/LedArea.h -o $(GUI_PLUGIN_SRC)/PeriphWidgets/moc_LedArea.h
 	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/PeriphWidgets/DipArea.h -o $(GUI_PLUGIN_SRC)/PeriphWidgets/moc_DipArea.h
+	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/PeriphWidgets/LedDisplay.h -o $(GUI_PLUGIN_SRC)/PeriphWidgets/moc_LedDisplay.h
+	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/PeriphWidgets/DemoM4Widget.h -o $(GUI_PLUGIN_SRC)/PeriphWidgets/moc_DemoM4Widget.h
+	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/PeriphWidgets/ButtonGenWidget.h -o $(GUI_PLUGIN_SRC)/PeriphWidgets/moc_ButtonGenWidget.h
+	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/PeriphWidgets/DemoSTM32Keypad.h -o $(GUI_PLUGIN_SRC)/PeriphWidgets/moc_DemoSTM32Keypad.h
 	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/CpuWidgets/AsmViewWidget.h -o $(GUI_PLUGIN_SRC)/CpuWidgets/moc_AsmViewWidget.h
 	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/CpuWidgets/AsmArea.h -o $(GUI_PLUGIN_SRC)/CpuWidgets/moc_AsmArea.h
 	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/CpuWidgets/AsmControl.h -o $(GUI_PLUGIN_SRC)/CpuWidgets/moc_AsmControl.h
@@ -153,3 +161,4 @@ prebuild:
 	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/GnssWidgets/StreetMapObject.h -o $(GUI_PLUGIN_SRC)/GnssWidgets/moc_StreetMapObject.h
 	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/GnssWidgets/MapWidget.h -o $(GUI_PLUGIN_SRC)/GnssWidgets/moc_MapWidget.h
 	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/GnssWidgets/PlotWidget.h -o $(GUI_PLUGIN_SRC)/GnssWidgets/moc_PlotWidget.h
+

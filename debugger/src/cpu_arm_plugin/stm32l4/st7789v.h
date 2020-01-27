@@ -76,10 +76,9 @@ class CS_PinType : public IOPinType32 {
 
 class DataBusType : public IIOPortListener32 {
  public:
-    DataBusType(IService *parent) : parent_(parent) {
+    DataBusType(IService *parent) : parent_(parent), data_(0) {
         parent->registerPortInterface("L_D",
                 static_cast<IIOPortListener32 *>(this));
-        data_ = 0;
     }
 
     uint16_t getData()             { return data_; }

@@ -663,7 +663,7 @@ class BL_I_T1 : public T1Instruction {
         uint32_t I2 = (((instr1 >> 11) & 0x1) ^ S) ^ 1;
         uint32_t imm11 = instr1 & 0x7FF;
         uint32_t imm10 = instr0 & 0x3FF;
-        uint32_t imm32 = 
+        uint32_t imm32;
         imm32 = (I1 << 23) | (I2 << 22) | (imm10 << 12) | (imm11 << 1);
         if (S) {
             imm32 |= (~0ul) << 24;
@@ -1068,7 +1068,6 @@ class LDMIA_T2 : public T1Instruction {
         uint32_t M = (ti1 >> 14) & 1;
         uint32_t register_list = ti1 & 0xDFFF;
         uint32_t address = static_cast<uint32_t>(R[n]);
-        uint32_t BitCnt = 0;
         uint32_t wback = (ti >> 5) & 1;
 
         if (n == Reg_pc) {
@@ -1088,7 +1087,7 @@ class LDMIA_T2 : public T1Instruction {
             if (register_list & (1ul << i)) {
                 trans_.addr = address;
                 icpu_->dma_memop(&trans_);
-                if (!(i == n && wback)) {
+                if (!(static_cast<unsigned>(i) == n && wback)) {
                     icpu_->setReg(i, trans_.rpayload.b32[0]);
                 } else {
                     // R[i] set earlier to be bits[32] UNKNOWN
@@ -2359,7 +2358,6 @@ class POP_T2 : public T1Instruction {
         uint32_t M = (ti1 >> 14) & 1;
         uint32_t register_list = ti1 & 0xDFFF;
         uint32_t address = static_cast<uint32_t>(R[Reg_sp]);
-        uint32_t BitCnt = 0;
 
         if (P == 1 && M == 1) {
             RISCV_error("%s", "UNPREDICTABLE");
@@ -2707,8 +2705,8 @@ class STMIA_T1 : public T1Instruction {
             if (((register_list >> i) & 1) == 0) {
                 continue;
             }
-            if (i == n) {                   // wback always TRUE
-                if (BitCount == 0) {        // LowestSetBit
+            if (static_cast<unsigned>(i) == n) {  // wback always TRUE
+                if (BitCount == 0) {              // LowestSetBit
                     trans_.addr = address;
                     trans_.wpayload.b64[0] = R[i];
                     icpu_->dma_memop(&trans_);

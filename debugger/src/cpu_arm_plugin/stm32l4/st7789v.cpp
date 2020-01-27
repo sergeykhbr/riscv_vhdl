@@ -39,11 +39,11 @@ void ST7789VCmdType::getFrame(AttributeType *res, bool diff) {
 
 ST7789V::ST7789V(const char *name) :
     IService(name),
-    busData_(this),
     pinRD_(this),
     pinWR_(this),
     pinDC_(this),
-    pinCS_(this) {
+    pinCS_(this),
+    busData_(this) {
     registerInterface(static_cast<IIOPortListener32 *>(&busData_));
     registerInterface(static_cast<IResetListener *>(this));
 
