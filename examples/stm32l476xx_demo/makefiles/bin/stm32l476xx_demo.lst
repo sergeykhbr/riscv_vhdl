@@ -4781,21 +4781,21 @@ void display01() {
  8001bf4:	f7ff fdb8 	bl	8001768 <fillhx>
     //grafchar(0x5B); // 5b
     //grafchar(0x7E);
-    putstr("   Auriga");
+    putstr("Sergey Khabarov");
  8001bf8:	4845      	ldr	r0, [pc, #276]	; (8001d10 <display01+0x13c>)
  8001bfa:	f7ff ffc1 	bl	8001b80 <putstr>
     grafchar(' ');
  8001bfe:	2020      	movs	r0, #32
  8001c00:	f7ff fe62 	bl	80018c8 <grafchar>
     column1 = currentColumn;
-    putstr("SimTech");
+    putstr("Sim");
  8001c04:	4843      	ldr	r0, [pc, #268]	; (8001d14 <display01+0x140>)
  8001c06:	f7ff ffbb 	bl	8001b80 <putstr>
     column2 = currentColumn;
     setFontSize(8);
  8001c0a:	2008      	movs	r0, #8
  8001c0c:	f000 fbcc 	bl	80023a8 <setFontSize>
-    putstr("TM");
+    putstr("R");
  8001c10:	4841      	ldr	r0, [pc, #260]	; (8001d18 <display01+0x144>)
  8001c12:	f7ff ffb5 	bl	8001b80 <putstr>
     setFontSize(32);
@@ -4923,7 +4923,7 @@ void display01() {
  8001d0c:	bd08      	pop	{r3, pc}
  8001d0e:	bf00      	nop
  8001d10:	08004568 	.word	0x08004568
- 8001d14:	08004574 	.word	0x08004574
+ 8001d14:	08004578 	.word	0x08004578
  8001d18:	0800457c 	.word	0x0800457c
  8001d1c:	08004580 	.word	0x08004580
  8001d20:	08004598 	.word	0x08004598
@@ -10212,9 +10212,9 @@ void buttonInterruptHandler(uint8_t buttonId){
  800452c:	2101 2f01 1101 e100 d001 0201 0901 0d01     .!./............
  800453c:	0d01 2701 2b01 3301 4201 1701 1201 1101     ...'.+.3.B......
  800454c:	2f01 3101 2100 2a00 0001 0001 0001 ef01     ./.1.!.*........
- 800455c:	2b00 0001 0001 0101 3f01 2900 2020 4120     .+.......?.)   A
- 800456c:	7275 6769 0061 0000 6953 546d 6365 0068     uriga...SimTech.
- 800457c:	4d54 0000 4120 4d52 4320 726f 6574 2d78     TM.. ARM Cortex-
+ 800455c:	2b00 0001 0001 0101 3f01 2900 6553 6772     .+.......?.)Serg
+ 800456c:	7965 4b20 6168 6162 6f72 0076 6953 006d     ey Khabarov.Sim.
+ 800457c:	0052 0000 4120 4d52 4320 726f 6574 2d78     R... ARM Cortex-
  800458c:	344d 6920 736e 6469 0065 0000 6f53 7466     M4 inside...Soft
  800459c:	6177 6572 5620 7265 6973 6e6f 203a 0000     ware Version: ..
  80045ac:	5453 334d 4c32 7834 2078 6544 6f6d 6620     STM32L4xx Demo f
