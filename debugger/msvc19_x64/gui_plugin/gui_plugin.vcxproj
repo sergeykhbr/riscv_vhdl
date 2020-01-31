@@ -21,14 +21,14 @@
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
-    <CharacterSet>MultiByte</CharacterSet>
+    <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>MultiByte</CharacterSet>
+    <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -133,9 +133,13 @@
     <ClCompile Include="..\..\src\gui_plugin\MainWindow\DbgMainWindow.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\MainWindow\ebreakhandler.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\MainWindow\MdiAreaWidget.cpp" />
+    <ClCompile Include="..\..\src\gui_plugin\PeriphWidgets\ButtonGenWidget.cpp" />
+    <ClCompile Include="..\..\src\gui_plugin\PeriphWidgets\DemoM4Widget.cpp" />
+    <ClCompile Include="..\..\src\gui_plugin\PeriphWidgets\DemoSTM32Keypad.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\PeriphWidgets\DipArea.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\PeriphWidgets\GpioWidget.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\PeriphWidgets\LedArea.cpp" />
+    <ClCompile Include="..\..\src\gui_plugin\PeriphWidgets\LedDisplay.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\PeriphWidgets\UartEditor.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\PeriphWidgets\UartWidget.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\qt_wrapper.cpp" />
@@ -176,9 +180,13 @@
     <ClInclude Include="..\..\src\gui_plugin\MainWindow\DbgMainWindow.h" />
     <ClInclude Include="..\..\src\gui_plugin\MainWindow\ebreakhandler.h" />
     <ClInclude Include="..\..\src\gui_plugin\MainWindow\MdiAreaWidget.h" />
+    <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\ButtonGenWidget.h" />
+    <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\DemoM4Widget.h" />
+    <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\DemoSTM32Keypad.h" />
     <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\DipArea.h" />
     <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\GpioWidget.h" />
     <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\LedArea.h" />
+    <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\LedDisplay.h" />
     <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\UartEditor.h" />
     <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\UartWidget.h" />
     <ClInclude Include="..\..\src\gui_plugin\qt_wrapper.h" />

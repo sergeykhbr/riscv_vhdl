@@ -52,7 +52,7 @@ void ComPortService::getListOfPorts(AttributeType *list) {
 
     //Forming List Of Ports...
     DWORD dw;
-    char temp[4] = {0};
+    wchar_t temp[4] = {0};
     int port = -1;
     PORT_INFO_1 *pPortInfo;
     pPortInfo = (PORT_INFO_1 *)lpPorts;
@@ -60,10 +60,12 @@ void ComPortService::getListOfPorts(AttributeType *list) {
  
     char comName[16];
     char chCom[20];
+    wchar_t wchCom[20];
+    size_t bytes_converted;
     size_t szComLen;
     for (dw = 0; dw < Ports_Count; dw++) {
     
-        if (strstr(pPortInfo->pName, "com") == 0) {
+        if (wcsstr(pPortInfo->pName, L"com") == 0) {
             continue;
         }
         temp[0] = pPortInfo->pName[3];
@@ -74,12 +76,13 @@ void ComPortService::getListOfPorts(AttributeType *list) {
 		    temp[2] = pPortInfo->pName[5];
         }
 
-		port = strtoul(temp, NULL, 0);;
+		port = wcstoul(temp, NULL, 0);;
         szComLen = RISCV_sprintf(chCom, sizeof(chCom),
                                  "\\\\.\\COM%d", port) + 1;
+        mbstowcs_s(&bytes_converted, wchCom, chCom, 20);
 
 
-		HANDLE h = CreateFile(chCom, GENERIC_READ | GENERIC_WRITE, 
+		HANDLE h = CreateFileW(wchCom, GENERIC_READ | GENERIC_WRITE, 
                               0, NULL, OPEN_EXISTING, 
                               FILE_ATTRIBUTE_NORMAL,NULL);
 
@@ -102,7 +105,9 @@ void ComPortService::getListOfPorts(AttributeType *list) {
 
 int ComPortService::openPort(const char *port, AttributeType settings) {
     char chCom[20];
+    wchar_t wchCom[20];
     char chConfig[64];
+    wchar_t wchConfig[64];
     HANDLE hFile;
     COMMPROP CommProp;
     DCB dcb;
@@ -110,12 +115,16 @@ int ComPortService::openPort(const char *port, AttributeType settings) {
     DWORD dwStoredFlags;
     DWORD  Errors;
     COMSTAT  Stat;
+    size_t bytes_converted;
   
     RISCV_sprintf(chCom, sizeof(chCom), "\\\\.\\%s", port);
+    mbstowcs_s(&bytes_converted, wchCom, chCom, 20);
+
     RISCV_sprintf(chConfig, sizeof(chConfig),
                   "baud=%d parity=N data=8 stop=1", settings[0u].to_int());
+    mbstowcs_s(&bytes_converted, wchConfig, chConfig, 640);
  
-    hFile = CreateFile(chCom,
+    hFile = CreateFileW(wchCom,
                         GENERIC_READ|GENERIC_WRITE,
                         0,//FILE_SHARE_READ|FILE_SHARE_WRITE,
                         NULL,						
@@ -139,7 +148,7 @@ int ComPortService::openPort(const char *port, AttributeType settings) {
     FillMemory(&dcb, sizeof(dcb), 0);
 
     dcb.DCBlength = sizeof(dcb);
-    if (!BuildCommDCB(chConfig, &dcb)) {   
+    if (!BuildCommDCBW(wchConfig, &dcb)) {   
         RISCV_error("Can't BuildCommDCB(%s,)", chConfig);
         CloseHandle(hFile);
         return -1;

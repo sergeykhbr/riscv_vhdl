@@ -19,6 +19,9 @@
     <Filter Include="src\cmds">
       <UniqueIdentifier>{6d608113-0c84-4026-be02-44d352c9fe54}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\stm32l4">
+      <UniqueIdentifier>{8c294943-84e1-4533-a339-ade1f0d0609d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\common\attribute.cpp">
@@ -71,6 +74,36 @@
     </ClCompile>
     <ClCompile Include="..\..\src\cpu_arm_plugin\decoder_thumb.cpp">
       <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cpu_arm_plugin\stm32l4\demo_keypad.cpp">
+      <Filter>src\stm32l4</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cpu_arm_plugin\stm32l4\st7789v.cpp">
+      <Filter>src\stm32l4</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cpu_arm_plugin\stm32l4\stm32l4_gpio.cpp">
+      <Filter>src\stm32l4</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cpu_arm_plugin\stm32l4\stm32l4_nvic.cpp">
+      <Filter>src\stm32l4</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cpu_arm_plugin\stm32l4\stm32l4_rcc.cpp">
+      <Filter>src\stm32l4</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cpu_arm_plugin\stm32l4\stm32l4_systick.cpp">
+      <Filter>src\stm32l4</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\common\generic\key_gen1.cpp">
+      <Filter>common\generic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\common\generic\rmembank_gen1.cpp">
+      <Filter>common\generic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cpu_arm_plugin\thumb.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cpu_arm_plugin\srcproc\thumb_disasm.cpp">
+      <Filter>src\srcproc</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -145,6 +178,33 @@
     </ClInclude>
     <ClInclude Include="..\..\src\common\api_core.h">
       <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_arm_plugin\stm32l4\demo_keypad.h">
+      <Filter>src\stm32l4</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_arm_plugin\stm32l4\st7789v.h">
+      <Filter>src\stm32l4</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_arm_plugin\stm32l4\stm32l4_gpio.h">
+      <Filter>src\stm32l4</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_arm_plugin\stm32l4\stm32l4_nvic.h">
+      <Filter>src\stm32l4</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_arm_plugin\stm32l4\stm32l4_rcc.h">
+      <Filter>src\stm32l4</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_arm_plugin\stm32l4\stm32l4_systick.h">
+      <Filter>src\stm32l4</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\generic\key_gen1.h">
+      <Filter>common\generic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\generic\rmembank_gen1.h">
+      <Filter>common\generic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_arm_plugin\srcproc\thumb_disasm.h">
+      <Filter>src\srcproc</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

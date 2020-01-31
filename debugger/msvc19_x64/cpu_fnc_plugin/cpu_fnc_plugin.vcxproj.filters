@@ -62,6 +62,9 @@
     </ClCompile>
     <ClCompile Include="..\..\src\cpu_fnc_plugin\cpu_stub_fpga.cpp" />
     <ClCompile Include="..\..\src\cpu_fnc_plugin\icache_func.cpp" />
+    <ClCompile Include="..\..\src\common\generic\riscv_disasm.cpp">
+      <Filter>common\generic</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\api_types.h">
@@ -131,5 +134,8 @@
       <Filter>common</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\cpu_fnc_plugin\icache_func.h" />
+    <ClInclude Include="..\..\src\common\generic\riscv_disasm.h">
+      <Filter>common\generic</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

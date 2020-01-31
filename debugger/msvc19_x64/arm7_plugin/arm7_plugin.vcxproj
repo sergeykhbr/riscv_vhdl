@@ -21,14 +21,14 @@
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
-    <CharacterSet>MultiByte</CharacterSet>
+    <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>MultiByte</CharacterSet>
+    <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -97,7 +97,9 @@
     <ClCompile Include="..\..\src\common\generic\cmd_reg_generic.cpp" />
     <ClCompile Include="..\..\src\common\generic\cpu_generic.cpp" />
     <ClCompile Include="..\..\src\common\generic\iotypes.cpp" />
+    <ClCompile Include="..\..\src\common\generic\key_gen1.cpp" />
     <ClCompile Include="..\..\src\common\generic\mapreg.cpp" />
+    <ClCompile Include="..\..\src\common\generic\rmembank_gen1.cpp" />
     <ClCompile Include="..\..\src\cpu_arm_plugin\arm7tdmi.cpp" />
     <ClCompile Include="..\..\src\cpu_arm_plugin\cmds\cmd_br_arm7.cpp" />
     <ClCompile Include="..\..\src\cpu_arm_plugin\cpu_arm7_func.cpp" />
@@ -106,6 +108,14 @@
     <ClCompile Include="..\..\src\cpu_arm_plugin\instructions.cpp" />
     <ClCompile Include="..\..\src\cpu_arm_plugin\plugin_init.cpp" />
     <ClCompile Include="..\..\src\cpu_arm_plugin\srcproc\srcproc.cpp" />
+    <ClCompile Include="..\..\src\cpu_arm_plugin\srcproc\thumb_disasm.cpp" />
+    <ClCompile Include="..\..\src\cpu_arm_plugin\stm32l4\demo_keypad.cpp" />
+    <ClCompile Include="..\..\src\cpu_arm_plugin\stm32l4\st7789v.cpp" />
+    <ClCompile Include="..\..\src\cpu_arm_plugin\stm32l4\stm32l4_gpio.cpp" />
+    <ClCompile Include="..\..\src\cpu_arm_plugin\stm32l4\stm32l4_nvic.cpp" />
+    <ClCompile Include="..\..\src\cpu_arm_plugin\stm32l4\stm32l4_rcc.cpp" />
+    <ClCompile Include="..\..\src\cpu_arm_plugin\stm32l4\stm32l4_systick.cpp" />
+    <ClCompile Include="..\..\src\cpu_arm_plugin\thumb.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\api_core.h" />
@@ -120,7 +130,9 @@
     <ClInclude Include="..\..\src\common\generic\cmd_reg_generic.h" />
     <ClInclude Include="..\..\src\common\generic\cpu_generic.h" />
     <ClInclude Include="..\..\src\common\generic\iotypes.h" />
+    <ClInclude Include="..\..\src\common\generic\key_gen1.h" />
     <ClInclude Include="..\..\src\common\generic\mapreg.h" />
+    <ClInclude Include="..\..\src\common\generic\rmembank_gen1.h" />
     <ClInclude Include="..\..\src\common\iattr.h" />
     <ClInclude Include="..\..\src\common\iclass.h" />
     <ClInclude Include="..\..\src\common\iface.h" />
@@ -132,6 +144,13 @@
     <ClInclude Include="..\..\src\cpu_arm_plugin\cpu_arm7_func.h" />
     <ClInclude Include="..\..\src\cpu_arm_plugin\instructions.h" />
     <ClInclude Include="..\..\src\cpu_arm_plugin\srcproc\srcproc.h" />
+    <ClInclude Include="..\..\src\cpu_arm_plugin\srcproc\thumb_disasm.h" />
+    <ClInclude Include="..\..\src\cpu_arm_plugin\stm32l4\demo_keypad.h" />
+    <ClInclude Include="..\..\src\cpu_arm_plugin\stm32l4\st7789v.h" />
+    <ClInclude Include="..\..\src\cpu_arm_plugin\stm32l4\stm32l4_gpio.h" />
+    <ClInclude Include="..\..\src\cpu_arm_plugin\stm32l4\stm32l4_nvic.h" />
+    <ClInclude Include="..\..\src\cpu_arm_plugin\stm32l4\stm32l4_rcc.h" />
+    <ClInclude Include="..\..\src\cpu_arm_plugin\stm32l4\stm32l4_systick.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

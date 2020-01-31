@@ -69,9 +69,6 @@
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\br_predic.cpp">
       <Filter>riverlib\core</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\dcache.cpp">
-      <Filter>riverlib\cache</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\csr.cpp">
       <Filter>riverlib\core</Filter>
     </ClCompile>
@@ -138,29 +135,20 @@
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\icache_lru.cpp">
       <Filter>riverlib\cache</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\icache_stub.cpp">
-      <Filter>riverlib\cache</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mem\dpram64i.cpp">
-      <Filter>riverlib\cache\mem</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mem\dpramtagi.cpp">
-      <Filter>riverlib\cache\mem</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\ilru.cpp">
-      <Filter>riverlib\cache</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\iwaymem.cpp">
-      <Filter>riverlib\cache</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mem\ram64i.cpp">
-      <Filter>riverlib\cache\mem</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mem\ramtagi.cpp">
-      <Filter>riverlib\cache\mem</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\arith\divstage64.cpp">
       <Filter>riverlib\core\arith</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\dcache_lru.cpp">
+      <Filter>riverlib\cache</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mpu.cpp">
+      <Filter>riverlib\cache</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\common\generic\riscv_disasm.cpp">
+      <Filter>common\generic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\tracer.cpp">
+      <Filter>riverlib\core</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -219,9 +207,6 @@
     </ClInclude>
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\br_predic.h">
       <Filter>riverlib\core</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\dcache.h">
-      <Filter>riverlib\cache</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\csr.h">
       <Filter>riverlib\core</Filter>
@@ -301,29 +286,35 @@
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\icache_lru.h">
       <Filter>riverlib\cache</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\icache_stub.h">
-      <Filter>riverlib\cache</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mem\dpram64i.h">
-      <Filter>riverlib\cache\mem</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mem\dpramtagi.h">
-      <Filter>riverlib\cache\mem</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\ilru.h">
-      <Filter>riverlib\cache</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\iwaymem.h">
-      <Filter>riverlib\cache</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mem\ram64i.h">
-      <Filter>riverlib\cache\mem</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mem\ramtagi.h">
-      <Filter>riverlib\cache\mem</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\arith\divstage64.h">
       <Filter>riverlib\core\arith</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mem\ram.h">
+      <Filter>riverlib\cache\mem</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\dcache_lru.h">
+      <Filter>riverlib\cache</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\lrunway.h">
+      <Filter>riverlib\cache</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mpu.h">
+      <Filter>riverlib\cache</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\tagmem.h">
+      <Filter>riverlib\cache</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\tagmemcoupled.h">
+      <Filter>riverlib\cache</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\tagmemnway.h">
+      <Filter>riverlib\cache</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\generic\riscv_disasm.h">
+      <Filter>common\generic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\tracer.h">
+      <Filter>riverlib\core</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

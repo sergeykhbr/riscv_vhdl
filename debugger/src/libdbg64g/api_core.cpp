@@ -462,13 +462,17 @@ extern "C" void RISCV_thread_join(thread_def th, int ms) {
 extern "C" void RISCV_event_create(event_def *ev, const char *name) {
 #if defined(_WIN32) || defined(__CYGWIN__)
     char event_name[256];
+    wchar_t w_event_name[256];
+    size_t bytes_converted;
     pcore_->generateUniqueName("", event_name, sizeof(event_name));
+    mbstowcs_s(&bytes_converted, w_event_name, event_name, 256);
+
     ev->state = false;
-    ev->cond = CreateEvent(
+    ev->cond = CreateEventW(
         NULL,               // default security attributes
         TRUE,               // manual-reset event
         FALSE,              // initial state is nonsignaled
-        TEXT(event_name)    // object name
+        w_event_name    // object name
         );
 #else
     pthread_mutex_init(&ev->mut, NULL);
@@ -560,13 +564,17 @@ extern "C" int RISCV_event_wait_ms(event_def *ev, int ms) {
 extern "C" sharemem_def RISCV_memshare_create(const char *name, int sz) {
     sharemem_def ret = 0;
 #if defined(_WIN32) || defined(__CYGWIN__)
-    ret = CreateFileMapping(
+    wchar_t w_name[1024];
+    size_t bytes_converted;
+    mbstowcs_s(&bytes_converted, w_name, name, 256);
+
+    ret = CreateFileMappingW(
                  INVALID_HANDLE_VALUE,  // use paging file
                  NULL,                  // default security
                  PAGE_READWRITE,      // read/write access
                  0,                   // maximum object size (high-order DWORD)
                  sz,                  // maximum object size (low-order DWORD)
-                 name);               // name of mapping object
+                 w_name);               // name of mapping object
 #else
     ret = shm_open(name, O_CREAT | O_RDWR, 0777);
     if (ret > 0) {

@@ -120,6 +120,9 @@ void CmdLoadH86::exec(AttributeType *args, AttributeType *res) {
                 //bool st = true;
             //}
             break;
+        case 5:
+            //generateError(res, "EIP not supported");
+            break;
         default:
             generateError(res, "Wrong file format");
             code = -1;

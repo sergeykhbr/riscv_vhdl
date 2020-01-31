@@ -21,14 +21,14 @@
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
-    <CharacterSet>MultiByte</CharacterSet>
+    <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>MultiByte</CharacterSet>
+    <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -58,6 +58,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(SolutionDir)../src/common;$(SYSTEMC_PATH)/src;</AdditionalIncludeDirectories>
+      <DisableSpecificWarnings>4407</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -81,6 +82,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(SolutionDir)../src/common;$(SYSTEMC_PATH)/src;</AdditionalIncludeDirectories>
+      <DisableSpecificWarnings>4407</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -99,20 +101,15 @@
     <ClCompile Include="..\..\src\common\generic\cmd_br_generic.cpp" />
     <ClCompile Include="..\..\src\common\generic\cmd_regs_generic.cpp" />
     <ClCompile Include="..\..\src\common\generic\cmd_reg_generic.cpp" />
+    <ClCompile Include="..\..\src\common\generic\riscv_disasm.cpp" />
     <ClCompile Include="..\..\src\cpu_sysc_plugin\cmds\cmd_br_riscv.cpp" />
     <ClCompile Include="..\..\src\cpu_sysc_plugin\cmds\cmd_csr.cpp" />
     <ClCompile Include="..\..\src\cpu_sysc_plugin\cpu_riscv_rtl.cpp" />
     <ClCompile Include="..\..\src\cpu_sysc_plugin\plugin_init.cpp" />
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\cache_top.cpp" />
-    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\dcache.cpp" />
+    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\dcache_lru.cpp" />
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\icache_lru.cpp" />
-    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\icache_stub.cpp" />
-    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\ilru.cpp" />
-    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\iwaymem.cpp" />
-    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mem\dpram64i.cpp" />
-    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mem\dpramtagi.cpp" />
-    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mem\ram64i.cpp" />
-    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mem\ramtagi.cpp" />
+    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mpu.cpp" />
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\arith\divstage64.cpp" />
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\arith\int_div.cpp" />
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\arith\int_mul.cpp" />
@@ -137,6 +134,7 @@
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\regfbank.cpp" />
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\regibank.cpp" />
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\stacktrbuf.cpp" />
+    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\tracer.cpp" />
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\river_top.cpp" />
     <ClCompile Include="..\..\src\cpu_sysc_plugin\rtl_wrapper.cpp" />
   </ItemGroup>
@@ -149,6 +147,7 @@
     <ClInclude Include="..\..\src\common\generic\cmd_br_generic.h" />
     <ClInclude Include="..\..\src\common\generic\cmd_regs_generic.h" />
     <ClInclude Include="..\..\src\common\generic\cmd_reg_generic.h" />
+    <ClInclude Include="..\..\src\common\generic\riscv_disasm.h" />
     <ClInclude Include="..\..\src\common\iattr.h" />
     <ClInclude Include="..\..\src\common\iclass.h" />
     <ClInclude Include="..\..\src\common\iface.h" />
@@ -160,15 +159,14 @@
     <ClInclude Include="..\..\src\cpu_sysc_plugin\cmds\cmd_reg_riscv.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\cpu_riscv_rtl.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\cache_top.h" />
-    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\dcache.h" />
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\dcache_lru.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\icache_lru.h" />
-    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\icache_stub.h" />
-    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\ilru.h" />
-    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\iwaymem.h" />
-    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mem\dpram64i.h" />
-    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mem\dpramtagi.h" />
-    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mem\ram64i.h" />
-    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mem\ramtagi.h" />
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\lrunway.h" />
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mem\ram.h" />
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\mpu.h" />
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\tagmem.h" />
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\tagmemcoupled.h" />
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\cache\tagmemnway.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\arith\divstage64.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\arith\int_div.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\arith\int_mul.h" />
@@ -193,6 +191,7 @@
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\regfbank.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\regibank.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\stacktrbuf.h" />
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\tracer.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\river_cfg.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\river_top.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\rtl_wrapper.h" />
