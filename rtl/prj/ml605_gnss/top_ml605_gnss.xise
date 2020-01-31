@@ -654,11 +654,6 @@
       <association xil_pn:name="Implementation" xil_pn:seqID="18"/>
       <library xil_pn:name="riverlib"/>
     </file>
-    <file xil_pn:name="../../riverlib/core/regfbank.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="198"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="55"/>
-      <library xil_pn:name="riverlib"/>
-    </file>
     <file xil_pn:name="../../ambalib/axislv.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="198"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="82"/>

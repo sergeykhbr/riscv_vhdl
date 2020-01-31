@@ -23,6 +23,9 @@ use commonlib.types_common.all;
 use commonlib.types_util.all;
 
 entity ethphy_sim is 
+  generic (
+    OUTPUT_ENA : std_logic := '1'
+  );
   port (
     rst : in std_logic;
     clk : in std_logic;
@@ -218,31 +221,31 @@ begin
      if r.clk_cnt >= EDCL_MSG1_START and r.clk_cnt < (EDCL_MSG1_START + EDCL_MSG1_LEN) then
          ibit := r.clk_cnt - EDCL_MSG1_START;
          rxd := EDCL_MSG1(4*(EDCL_MSG1_LEN - ibit)-1 downto 4*(EDCL_MSG1_LEN - ibit)-4);
-         rxdv := '1';
+         rxdv := OUTPUT_ENA;
      elsif r.clk_cnt >= EDCL_MSG2_START and r.clk_cnt < (EDCL_MSG2_START + EDCL_MSG2_LEN) then
          ibit := r.clk_cnt - EDCL_MSG2_START;
          rxd := EDCL_MSG2(4*(EDCL_MSG2_LEN - ibit)-1 downto 4*(EDCL_MSG2_LEN - ibit)-4);
-         rxdv := '1';
+         rxdv := OUTPUT_ENA;
      elsif r.clk_cnt >= EDCL_MSG3_START and r.clk_cnt < (EDCL_MSG3_START + EDCL_MSG3_LEN) then
          ibit := r.clk_cnt - EDCL_MSG3_START;
          rxd := EDCL_MSG3(4*(EDCL_MSG3_LEN - ibit)-1 downto 4*(EDCL_MSG3_LEN - ibit)-4);
-         rxdv := '1';
+         rxdv := OUTPUT_ENA;
      elsif r.clk_cnt >= EDCL_MSG4_START and r.clk_cnt < (EDCL_MSG4_START + EDCL_MSG4_LEN) then
          ibit := r.clk_cnt - EDCL_MSG4_START;
          rxd := EDCL_MSG4(4*(EDCL_MSG4_LEN - ibit)-1 downto 4*(EDCL_MSG4_LEN - ibit)-4);
-         rxdv := '1';
+         rxdv := OUTPUT_ENA;
      elsif r.clk_cnt >= EDCL_MSG5_START and r.clk_cnt < (EDCL_MSG5_START + EDCL_MSG5_LEN) then
          ibit := r.clk_cnt - EDCL_MSG5_START;
          rxd := EDCL_MSG5(4*(EDCL_MSG5_LEN - ibit)-1 downto 4*(EDCL_MSG5_LEN - ibit)-4);
-         rxdv := '1';
+         rxdv := OUTPUT_ENA;
      elsif r.clk_cnt >= EDCL_MSG6_START and r.clk_cnt < (EDCL_MSG6_START + EDCL_MSG6_LEN) then
          ibit := r.clk_cnt - EDCL_MSG6_START;
          rxd := EDCL_MSG6(4*(EDCL_MSG6_LEN - ibit)-1 downto 4*(EDCL_MSG6_LEN - ibit)-4);
-         rxdv := '1';
+         rxdv := OUTPUT_ENA;
      elsif r.msg_cnt /= r.msg_len then
          v.msg_cnt := r.msg_cnt + 1;
          rxd := r.msg(4*(r.msg_len - r.msg_cnt)-1 downto 4*(r.msg_len - r.msg_cnt)-4);
-         rxdv := '1';
+         rxdv := OUTPUT_ENA;
      end if;
 
      -- Reset

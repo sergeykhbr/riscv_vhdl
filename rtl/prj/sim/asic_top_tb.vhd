@@ -66,6 +66,10 @@ architecture behavior of asic_top_tb is
 
   signal iClkCnt : integer := 0;
   signal iEdclCnt : integer := 0;
+
+  constant UART_WR_ENA : std_logic := '0';
+  constant JTAG_WR_ENA : std_logic := '0';
+  constant ETH_WR_ENA : std_logic := '0';
   
   component asic_top is port ( 
     i_rst     : in std_logic;
@@ -132,7 +136,10 @@ architecture behavior of asic_top_tb is
   );
   end component;
 
-  component ethphy_sim is 
+  component ethphy_sim is
+  generic (
+    OUTPUT_ENA : std_logic := '1'
+  );
   port (
     rst : in std_logic;
     clk : in std_logic;
@@ -197,12 +204,12 @@ begin
     if rising_edge(i_sclk_n) then
         uart_wr_str <= '0';
         if iClkCnt = 82000 then
-           uart_wr_str <= '1';
+           uart_wr_str <= UART_WR_ENA;
            uart_instr(1 to 4) <= "ping";
            uart_instr(5) <= cr;
            uart_instr(6) <= lf;
         elsif iClkCnt = 108000 then
-           uart_wr_str <= '1';
+           uart_wr_str <= UART_WR_ENA;
            uart_instr(1 to 3) <= "pnp";
            uart_instr(4) <= cr;
            uart_instr(5) <= lf;
@@ -210,25 +217,25 @@ begin
 
         jtag_test_ena <= '0';
         if iClkCnt = 3000 then
-           jtag_test_ena <= '1';
+           jtag_test_ena <= JTAG_WR_ENA;
            jtag_test_burst <= (others => '0');
            jtag_test_addr <= X"10000000";
            jtag_test_we <= '0';
            jtag_test_wdata <= (others => '0');
         elsif iClkCnt = 5000 then
-           jtag_test_ena <= '1';
+           jtag_test_ena <= JTAG_WR_ENA;
            jtag_test_burst <= (others => '0');
            jtag_test_addr <= X"fffff004";
            jtag_test_we <= '1';
            jtag_test_wdata <= X"12345678";
         elsif iClkCnt = 7000 then
-           jtag_test_ena <= '1';
+           jtag_test_ena <= JTAG_WR_ENA;
            jtag_test_burst <= X"01";
            jtag_test_addr <= X"10000004";
            jtag_test_we <= '0';
            jtag_test_wdata <= (others => '0');
         elsif iClkCnt = 10000 then
-           jtag_test_ena <= '1';
+           jtag_test_ena <= JTAG_WR_ENA;
            jtag_test_burst <= X"02";
            jtag_test_addr <= X"FFFFF004";
            jtag_test_we <= '1';
@@ -254,7 +261,9 @@ begin
     busy => uart_busy
   );
 
-  phy0 : ethphy_sim port map (
+  phy0 : ethphy_sim generic map (
+    OUTPUT_ENA => ETH_WR_ENA
+  ) port map (
     rst => i_rst,
     clk  => i_sclk_p,
     o_rxd  => i_rxd,
