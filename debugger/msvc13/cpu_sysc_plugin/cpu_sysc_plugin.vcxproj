@@ -139,6 +139,7 @@
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\regibank.cpp" />
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\stacktrbuf.cpp" />
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\tracer.cpp" />
+    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\river_amba.cpp" />
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\river_top.cpp" />
     <ClCompile Include="..\..\src\cpu_sysc_plugin\rtl_wrapper.cpp" />
   </ItemGroup>
@@ -195,6 +196,7 @@
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\regibank.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\stacktrbuf.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\tracer.h" />
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\river_amba.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\river_cfg.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\river_top.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\rtl_wrapper.h" />

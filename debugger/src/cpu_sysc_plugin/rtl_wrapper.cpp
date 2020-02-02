@@ -27,21 +27,50 @@ RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
     o_clk("clk", 10, SC_NS),
     o_nrst("o_nrst"),
     i_time("i_time"),
-    o_req_mem_ready("o_req_mem_ready"),
-    i_req_mem_valid("i_req_mem_valid"),
-    i_req_mem_path("i_req_mem_path"),
-    i_req_mem_write("i_req_mem_write"),
-    i_req_mem_addr("i_req_mem_addr"),
-    i_req_mem_strob("i_req_mem_strob"),
-    i_req_mem_data("i_req_mem_data"),
-    i_req_mem_len("i_req_mem_len"),
-    i_req_mem_burst("i_req_mem_burst"),
-    o_resp_mem_valid("o_resp_mem_valid"),
-    o_resp_mem_path("o_resp_mem_path"),
-    o_resp_mem_data("o_resp_mem_data"),
-    o_resp_mem_load_fault("o_resp_mem_load_fault"),
-    o_resp_mem_store_fault("o_resp_mem_store_fault"),
-    o_resp_mem_store_fault_addr("o_resp_mem_store_fault_addr"),
+    o_msti_aw_ready("o_msti_aw_ready"),
+    o_msti_w_ready("o_msti_w_ready"),
+    o_msti_b_valid("o_msti_b_valid"),
+    o_msti_b_resp("o_msti_b_resp"),
+    o_msti_b_id("o_msti_b_id"),
+    o_msti_b_user("o_msti_b_user"),
+    o_msti_ar_ready("o_msti_ar_ready"),
+    o_msti_r_valid("o_msti_r_valid"),
+    o_msti_r_resp("o_msti_r_resp"),
+    o_msti_r_data("o_msti_r_data"),
+    o_msti_r_last("o_msti_r_last"),
+    o_msti_r_id("o_msti_r_id"),
+    o_msti_r_user("o_msti_r_user"),
+    i_msto_aw_valid("i_msto_aw_valid"),
+    i_msto_aw_bits_addr("i_msto_aw_bits_addr"),
+    i_msto_aw_bits_len("i_msto_aw_bits_len"),
+    i_msto_aw_bits_size("i_msto_aw_bits_size"),
+    i_msto_aw_bits_burst("i_msto_aw_bits_burst"),
+    i_msto_aw_bits_lock("i_msto_aw_bits_lock"),
+    i_msto_aw_bits_cache("i_msto_aw_bits_cache"),
+    i_msto_aw_bits_prot("i_msto_aw_bits_prot"),
+    i_msto_aw_bits_qos("i_msto_aw_bits_qos"),
+    i_msto_aw_bits_region("i_msto_aw_bits_region"),
+    i_msto_aw_id("i_msto_aw_id"),
+    i_msto_aw_user("i_msto_aw_user"),
+    i_msto_w_valid("i_msto_w_valid"),
+    i_msto_w_data("i_msto_w_data"),
+    i_msto_w_last("i_msto_w_last"),
+    i_msto_w_strb("i_msto_w_strb"),
+    i_msto_w_user("i_msto_w_user"),
+    i_msto_b_ready("i_msto_b_ready"),
+    i_msto_ar_valid("i_msto_ar_valid"),
+    i_msto_ar_bits_addr("i_msto_ar_bits_addr"),
+    i_msto_ar_bits_len("i_msto_ar_bits_len"),
+    i_msto_ar_bits_size("i_msto_ar_bits_size"),
+    i_msto_ar_bits_burst("i_msto_ar_bits_burst"),
+    i_msto_ar_bits_lock("i_msto_ar_bits_lock"),
+    i_msto_ar_bits_cache("i_msto_ar_bits_cache"),
+    i_msto_ar_bits_prot("i_msto_ar_bits_prot"),
+    i_msto_ar_bits_qos("i_msto_ar_bits_qos"),
+    i_msto_ar_bits_region("i_msto_ar_bits_region"),
+    i_msto_ar_id("i_msto_ar_id"),
+    i_msto_ar_user("i_msto_ar_user"),
+    i_msto_r_ready("i_msto_r_ready"),
     o_interrupt("o_interrupt"),
     o_dport_valid("o_dport_valid"),
     o_dport_write("o_dport_write"),
@@ -59,8 +88,8 @@ RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
     v.req_len = 0;
     v.req_burst = 0;
     v.req_write = 0;
-    v.store_fault = 0;
-    v.store_addr = 0;
+    v.b_valid = 0;
+    v.b_resp = 0;
     v.interrupt = false;
     async_interrupt = 0;
     request_reset = false;
@@ -76,30 +105,52 @@ RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
     SC_METHOD(comb);
     sensitive << w_interrupt;
     sensitive << i_halted;
-    sensitive << i_req_mem_valid;
-    sensitive << i_req_mem_path;
-    sensitive << i_req_mem_write;
-    sensitive << i_req_mem_addr;
-    sensitive << i_req_mem_strob;
-    sensitive << i_req_mem_data;
-    sensitive << i_req_mem_len;
-    sensitive << i_req_mem_burst;
+    sensitive << i_msto_aw_valid;
+    sensitive << i_msto_aw_bits_addr;
+    sensitive << i_msto_aw_bits_len;
+    sensitive << i_msto_aw_bits_size;
+    sensitive << i_msto_aw_bits_burst;
+    sensitive << i_msto_aw_bits_lock;
+    sensitive << i_msto_aw_bits_cache;
+    sensitive << i_msto_aw_bits_prot;
+    sensitive << i_msto_aw_bits_qos;
+    sensitive << i_msto_aw_bits_region;
+    sensitive << i_msto_aw_id;
+    sensitive << i_msto_aw_user;
+    sensitive << i_msto_w_valid;
+    sensitive << i_msto_w_data;
+    sensitive << i_msto_w_last;
+    sensitive << i_msto_w_strb;
+    sensitive << i_msto_w_user;
+    sensitive << i_msto_b_ready;
+    sensitive << i_msto_ar_valid;
+    sensitive << i_msto_ar_bits_addr;
+    sensitive << i_msto_ar_bits_len;
+    sensitive << i_msto_ar_bits_size;
+    sensitive << i_msto_ar_bits_burst;
+    sensitive << i_msto_ar_bits_lock;
+    sensitive << i_msto_ar_bits_cache;
+    sensitive << i_msto_ar_bits_prot;
+    sensitive << i_msto_ar_bits_qos;
+    sensitive << i_msto_ar_bits_region;
+    sensitive << i_msto_ar_id;
+    sensitive << i_msto_ar_user;
+    sensitive << i_msto_r_ready;
     sensitive << i_halted;
-    sensitive << r.req_path;
     sensitive << r.req_addr;
     sensitive << r.req_len;
     sensitive << r.req_burst;
     sensitive << r.req_write;
-    sensitive << r.store_fault;
-    sensitive << r.store_addr;
+    sensitive << r.b_valid;
+    sensitive << r.b_resp;
     sensitive << r.nrst;
     sensitive << r.interrupt;
     sensitive << r.state;
     sensitive << r.halted;
     sensitive << w_resp_valid;
     sensitive << wb_resp_data;
-    sensitive << w_resp_store_fault;
-    sensitive << w_resp_load_fault;
+    sensitive << w_r_error;
+    sensitive << w_w_error;
     sensitive << w_dport_valid;
     sensitive << w_dport_write;
     sensitive << wb_dport_region;
@@ -121,13 +172,50 @@ void RtlWrapper::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (i_vcd) {
     }
     if (o_vcd) {
-        sc_trace(o_vcd, i_req_mem_valid, i_req_mem_valid.name());
-        sc_trace(o_vcd, i_req_mem_path, i_req_mem_path.name());
-        sc_trace(o_vcd, i_req_mem_strob, i_req_mem_strob.name());
-        sc_trace(o_vcd, i_req_mem_data, i_req_mem_data.name());
-        sc_trace(o_vcd, o_resp_mem_valid, o_resp_mem_valid.name());
-        sc_trace(o_vcd, o_resp_mem_path, o_resp_mem_path.name());
-        sc_trace(o_vcd, o_resp_mem_data, o_resp_mem_data.name());
+        sc_trace(o_vcd, i_msto_aw_valid, i_msto_aw_valid.name());
+        sc_trace(o_vcd, i_msto_aw_bits_addr, i_msto_aw_bits_addr.name());
+        sc_trace(o_vcd, i_msto_aw_bits_len, i_msto_aw_bits_len.name());
+        sc_trace(o_vcd, i_msto_aw_bits_size, i_msto_aw_bits_size.name());
+        sc_trace(o_vcd, i_msto_aw_bits_burst, i_msto_aw_bits_burst.name());
+        sc_trace(o_vcd, i_msto_aw_bits_lock, i_msto_aw_bits_lock.name());
+        sc_trace(o_vcd, i_msto_aw_bits_cache, i_msto_aw_bits_cache.name());
+        sc_trace(o_vcd, i_msto_aw_bits_prot, i_msto_aw_bits_prot.name());
+        sc_trace(o_vcd, i_msto_aw_bits_qos, i_msto_aw_bits_qos.name());
+        sc_trace(o_vcd, i_msto_aw_bits_region, i_msto_aw_bits_region.name());
+        sc_trace(o_vcd, i_msto_aw_id, i_msto_aw_id.name());
+        sc_trace(o_vcd, i_msto_aw_user, i_msto_aw_user.name());
+        sc_trace(o_vcd, i_msto_w_valid, i_msto_w_valid.name());
+        sc_trace(o_vcd, i_msto_w_data, i_msto_w_data.name());
+        sc_trace(o_vcd, i_msto_w_last, i_msto_w_last.name());
+        sc_trace(o_vcd, i_msto_w_strb, i_msto_w_strb.name());
+        sc_trace(o_vcd, i_msto_w_user, i_msto_w_user.name());
+        sc_trace(o_vcd, i_msto_b_ready, i_msto_b_ready.name());
+        sc_trace(o_vcd, i_msto_ar_valid, i_msto_ar_valid.name());
+        sc_trace(o_vcd, i_msto_ar_bits_addr, i_msto_ar_bits_addr.name());
+        sc_trace(o_vcd, i_msto_ar_bits_len, i_msto_ar_bits_len.name());
+        sc_trace(o_vcd, i_msto_ar_bits_size, i_msto_ar_bits_size.name());
+        sc_trace(o_vcd, i_msto_ar_bits_burst, i_msto_ar_bits_burst.name());
+        sc_trace(o_vcd, i_msto_ar_bits_lock, i_msto_ar_bits_lock.name());
+        sc_trace(o_vcd, i_msto_ar_bits_cache, i_msto_ar_bits_cache.name());
+        sc_trace(o_vcd, i_msto_ar_bits_prot, i_msto_ar_bits_prot.name());
+        sc_trace(o_vcd, i_msto_ar_bits_qos, i_msto_ar_bits_qos.name());
+        sc_trace(o_vcd, i_msto_ar_bits_region, i_msto_ar_bits_region.name());
+        sc_trace(o_vcd, i_msto_ar_id, i_msto_ar_id.name());
+        sc_trace(o_vcd, i_msto_ar_user, i_msto_ar_user.name());
+        sc_trace(o_vcd, i_msto_r_ready, i_msto_r_ready.name());
+        sc_trace(o_vcd, o_msti_aw_ready, o_msti_aw_ready.name());
+        sc_trace(o_vcd, o_msti_w_ready, o_msti_w_ready.name());
+        sc_trace(o_vcd, o_msti_b_valid, o_msti_b_valid.name());
+        sc_trace(o_vcd, o_msti_b_resp, o_msti_b_resp.name());
+        sc_trace(o_vcd, o_msti_b_id, o_msti_b_id.name());
+        sc_trace(o_vcd, o_msti_b_user, o_msti_b_user.name());
+        sc_trace(o_vcd, o_msti_ar_ready, o_msti_ar_ready.name());
+        sc_trace(o_vcd, o_msti_r_valid, o_msti_r_valid.name());
+        sc_trace(o_vcd, o_msti_r_resp, o_msti_r_resp.name());
+        sc_trace(o_vcd, o_msti_r_data, o_msti_r_data.name());
+        sc_trace(o_vcd, o_msti_r_last, o_msti_r_last.name());
+        sc_trace(o_vcd, o_msti_r_id, o_msti_r_id.name());
+        sc_trace(o_vcd, o_msti_r_user, o_msti_r_user.name());
 
         std::string pn(name());
         sc_trace(o_vcd, r.nrst, pn + ".r_nrst");
@@ -136,7 +224,8 @@ void RtlWrapper::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.req_write, pn + ".r_req_write");
         sc_trace(o_vcd, r.req_len, pn + ".r_req_len");
         sc_trace(o_vcd, r.req_burst, pn + ".r_req_burst");
-        sc_trace(o_vcd, r.req_path, pn + ".r_req_path");
+        sc_trace(o_vcd, r.b_resp, pn + ".r_b_resp");
+        sc_trace(o_vcd, r.b_valid, pn + ".r_b_valid");
     }
 }
 
@@ -147,27 +236,34 @@ void RtlWrapper::clk_gen() {
 void RtlWrapper::comb() {
     bool w_req_mem_ready;
     sc_uint<BUS_ADDR_WIDTH> vb_req_addr;
+    sc_uint<2> vb_r_resp;
 
     w_req_mem_ready = 0;
+    vb_r_resp = 0; // OKAY
+    v.b_valid = 0;
+    v.b_resp = 0;
 
     v.interrupt = w_interrupt;
     v.halted = i_halted.read();
-    v.store_fault = w_resp_store_fault;
-    v.store_addr = wb_resp_store_fault_addr;
 
     v.nrst = (r.nrst.read() << 1) | 1;
     switch (r.state.read()) {
     case State_Idle:
+        v.r_error = 0;
+        v.w_error = 0;
         if (request_reset) {
             v.state = State_Reset;
         } else {
             w_req_mem_ready = 1;
-            if (i_req_mem_valid.read()) {
-                v.req_path = i_req_mem_path.read();
-                v.req_addr = i_req_mem_addr.read();
-                v.req_write = i_req_mem_write.read();
-                v.req_burst = i_req_mem_burst.read();
-                v.req_len = i_req_mem_len.read();
+            if (i_msto_ar_valid.read()) {
+                v.req_write = 0;
+                v.req_burst = i_msto_ar_bits_burst.read();
+                v.req_len = i_msto_ar_bits_len.read();
+                v.state = State_Busy;
+            } else if (i_msto_aw_valid.read()) {
+                v.req_write = 1;
+                v.req_burst = i_msto_aw_bits_burst.read();
+                v.req_len = i_msto_aw_bits_len.read();
                 v.state = State_Busy;
             }
         }
@@ -175,17 +271,32 @@ void RtlWrapper::comb() {
     case State_Busy:
         if (r.req_len.read() == 0) {
             w_req_mem_ready = 1;
-            if (i_req_mem_valid.read()) {
-                v.req_path = i_req_mem_path.read();
-                v.req_addr = i_req_mem_addr.read();
-                v.req_write = i_req_mem_write.read();
-                v.req_burst = i_req_mem_burst.read();
-                v.req_len = i_req_mem_len.read();
+            v.r_error = 0;
+            v.w_error = 0;
+            if (i_msto_ar_valid.read()) {
+                v.req_write = 0;
+                v.req_burst = i_msto_ar_bits_burst.read();
+                v.req_len = i_msto_ar_bits_len.read();
+                v.state = State_Busy;
+            } else if (i_msto_aw_valid.read()) {
+                v.req_write = 1;
+                v.req_burst = i_msto_aw_bits_burst.read();
+                v.req_len = i_msto_aw_bits_len.read();
                 v.state = State_Busy;
             } else {
                 v.state = State_Idle;
             }
+            if (r.req_write.read()) {
+                v.b_valid = 1;
+                v.b_resp = r.w_error.read() || w_w_error ? 0x2 : 0x0;
+            }
         } else {
+            if (r.req_write.read()) {
+                v.w_error = r.w_error.read() || w_w_error;
+            } else {
+                v.r_error = r.r_error.read() || w_r_error;
+            }
+
             v.req_len = r.req_len.read() - 1;
             if (r.req_burst.read() == 0) {
                 vb_req_addr = r.req_addr.read();
@@ -206,16 +317,27 @@ void RtlWrapper::comb() {
     default:;
     }
 
+    if (r.r_error.read() || w_r_error.read()) {
+        vb_r_resp = 0x2;    // SLVERR
+    }
+
     o_nrst = r.nrst.read()[1].to_bool();
 
-    w_req_mem_ready = w_req_mem_ready;
-    o_req_mem_ready = w_req_mem_ready;
-    o_resp_mem_valid = w_resp_valid;
-    o_resp_mem_path = r.req_path.read();
-    o_resp_mem_data = wb_resp_data;
-    o_resp_mem_load_fault = w_resp_load_fault;
-    o_resp_mem_store_fault = r.store_fault.read();
-    o_resp_mem_store_fault_addr = r.store_addr.read();
+    o_msti_aw_ready = w_req_mem_ready;
+    o_msti_w_ready = w_resp_valid && r.req_write.read();
+    o_msti_b_valid = r.b_valid;
+    o_msti_b_resp = r.b_resp;
+    o_msti_b_id = 0;
+    o_msti_b_user = 0;
+
+    o_msti_ar_ready = w_req_mem_ready;
+    o_msti_r_valid = w_resp_valid && !r.req_write.read();
+    o_msti_r_resp = vb_r_resp;                    // 0=OKAY;1=EXOKAY;2=SLVERR;3=DECER
+    o_msti_r_data = wb_resp_data;
+    o_msti_r_last = w_resp_valid && !r.req_write.read() && r.req_len.read() == 0;
+    o_msti_r_id = 0;
+    o_msti_r_user = 0;
+
     o_interrupt = r.interrupt;
 
     o_dport_valid = w_dport_valid;
@@ -253,18 +375,18 @@ void RtlWrapper::sys_bus_proc() {
 
     w_resp_valid = 0;
     wb_resp_data = 0;
-    w_resp_store_fault = 0;
-    w_resp_load_fault = 0;
+    w_r_error = 0;
+    w_w_error = 0;
     if (r.state.read() == State_Busy) {
         trans.addr = r.req_addr.read();
         if (r.req_write.read() == 1) {
             trans.action = MemAction_Write;
-            uint8_t strob = i_req_mem_strob.read();
+            uint8_t strob = i_msto_w_strb.read();
             uint64_t offset = mask2offset(strob);
             trans.addr += offset;
             trans.xsize = mask2size(strob >> offset);
             trans.wstrb = (1 << trans.xsize) - 1;
-            trans.wpayload.b64[0] = i_req_mem_data.read();
+            trans.wpayload.b64[0] = i_msto_w_data.read();
             trans.rpayload.b64[0] = 0;
         } else {
             trans.action = MemAction_Read;
@@ -279,11 +401,9 @@ void RtlWrapper::sys_bus_proc() {
         wb_resp_data = trans.rpayload.b64[0];
         if (resp == TRANS_ERROR) {
             if (r.req_write.read() == 1) {
-                w_resp_store_fault = 1;
-                wb_resp_store_fault_addr =
-                    static_cast<uint32_t>(trans.addr);
+                w_w_error = 1;
             } else {
-                w_resp_load_fault = 1;
+                w_r_error = 1;
             }
         }
     }

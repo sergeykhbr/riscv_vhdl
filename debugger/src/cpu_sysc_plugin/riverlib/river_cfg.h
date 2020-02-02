@@ -32,6 +32,7 @@ static const int CFG_LOG2_DATA_BYTES = 3;
 static const int BUS_DATA_BYTES      = (1 << CFG_LOG2_DATA_BYTES);
 static const int BUS_DATA_WIDTH      = 8 * BUS_DATA_BYTES;
 static const int LOG2_DATA_BYTES_MASK = BUS_DATA_BYTES - 1;
+static const int CFG_ID_BITS         = 5;
 
 /** 
  * ICacheLru config (16 KB by default)

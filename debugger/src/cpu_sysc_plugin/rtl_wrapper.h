@@ -39,21 +39,52 @@ class RtlWrapper : public sc_module,
     // Timer:
     sc_in<sc_uint<RISCV_ARCH>> i_time;
     // Memory interface:
-    sc_out<bool> o_req_mem_ready;
-    sc_in<bool> i_req_mem_valid;
-    sc_in<bool> i_req_mem_path;
-    sc_in<bool> i_req_mem_write;
-    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_req_mem_addr;
-    sc_in<sc_uint<BUS_DATA_BYTES>> i_req_mem_strob;
-    sc_in<sc_uint<BUS_DATA_WIDTH>> i_req_mem_data;
-    sc_in<sc_uint<8>> i_req_mem_len;
-    sc_in<sc_uint<2>> i_req_mem_burst;
-    sc_out<bool> o_resp_mem_valid;
-    sc_out<bool> o_resp_mem_path;
-    sc_out<sc_uint<BUS_DATA_WIDTH>> o_resp_mem_data;
-    sc_out<bool> o_resp_mem_load_fault;
-    sc_out<bool> o_resp_mem_store_fault;
-    sc_out<sc_uint<BUS_ADDR_WIDTH>> o_resp_mem_store_fault_addr;
+    // AXI4 input structure:
+    sc_out<bool> o_msti_aw_ready;
+    sc_out<bool> o_msti_w_ready;
+    sc_out<bool> o_msti_b_valid;
+    sc_out<sc_uint<2>> o_msti_b_resp;
+    sc_out<sc_uint<CFG_ID_BITS>> o_msti_b_id;
+    sc_out<bool> o_msti_b_user;
+    sc_out<bool> o_msti_ar_ready;
+    sc_out<bool> o_msti_r_valid;
+    sc_out<sc_uint<2>> o_msti_r_resp;                    // 0=OKAY;1=EXOKAY;2=SLVERR;3=DECER
+    sc_out<sc_uint<BUS_DATA_WIDTH>> o_msti_r_data;
+    sc_out<bool> o_msti_r_last;
+    sc_out<sc_uint<CFG_ID_BITS>> o_msti_r_id;
+    sc_out<bool> o_msti_r_user;
+    // AXI4 output structure:
+    sc_in<bool> i_msto_aw_valid;
+    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_msto_aw_bits_addr;
+    sc_in<sc_uint<8>> i_msto_aw_bits_len;              // burst len = len[7:0] + 1
+    sc_in<sc_uint<3>> i_msto_aw_bits_size;             // 0=1B; 1=2B; 2=4B; 3=8B; ...
+    sc_in<sc_uint<2>> i_msto_aw_bits_burst;            // 00=FIXED; 01=INCR; 10=WRAP; 11=reserved
+    sc_in<bool> i_msto_aw_bits_lock;
+    sc_in<sc_uint<4>> i_msto_aw_bits_cache;
+    sc_in<sc_uint<3>> i_msto_aw_bits_prot;
+    sc_in<sc_uint<4>> i_msto_aw_bits_qos;
+    sc_in<sc_uint<4>> i_msto_aw_bits_region;
+    sc_in<sc_uint<CFG_ID_BITS>> i_msto_aw_id;
+    sc_in<bool> i_msto_aw_user;
+    sc_in<bool> i_msto_w_valid;
+    sc_in<sc_uint<BUS_DATA_WIDTH>> i_msto_w_data;
+    sc_in<bool> i_msto_w_last;
+    sc_in<sc_uint<BUS_DATA_BYTES>> i_msto_w_strb;
+    sc_in<bool> i_msto_w_user;
+    sc_in<bool> i_msto_b_ready;
+    sc_in<bool> i_msto_ar_valid;
+    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_msto_ar_bits_addr;
+    sc_in<sc_uint<8>> i_msto_ar_bits_len;              // burst len = len[7:0] + 1
+    sc_in<sc_uint<3>> i_msto_ar_bits_size;             // 0=1B; 1=2B; 2=4B; 3=8B; ...
+    sc_in<sc_uint<2>> i_msto_ar_bits_burst;            // 00=FIXED; 01=INCR; 10=WRAP; 11=reserved
+    sc_in<bool> i_msto_ar_bits_lock;
+    sc_in<sc_uint<4>> i_msto_ar_bits_cache;
+    sc_in<sc_uint<3>> i_msto_ar_bits_prot;
+    sc_in<sc_uint<4>> i_msto_ar_bits_qos;
+    sc_in<sc_uint<4>> i_msto_ar_bits_region;
+    sc_in<sc_uint<CFG_ID_BITS>> i_msto_ar_id;
+    sc_in<bool> i_msto_ar_user;
+    sc_in<bool> i_msto_r_ready;
     /** Interrupt line from external interrupts controller. */
     sc_out<bool> o_interrupt;
     // Debug interface
@@ -74,27 +105,29 @@ class RtlWrapper : public sc_module,
 
     struct RegistersType {
         // AXI4 Request 
-        sc_signal<bool> req_path;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_addr;
         sc_signal<sc_uint<8>> req_len;
         sc_signal<sc_uint<2>> req_burst;
         sc_signal<bool> req_write;
         // AXI4 B-Channel
-        sc_signal<bool> store_fault;
-        sc_signal<sc_uint<BUS_ADDR_WIDTH>> store_addr;
+        sc_signal<bool> b_valid;
+        sc_signal<sc_uint<2>> b_resp;
         //
         sc_signal<sc_bv<5>> nrst;
         sc_signal<bool> interrupt;
         sc_signal<sc_uint<2>> state;
         sc_signal<bool> halted;
+        sc_signal<bool> r_error;
+        sc_signal<bool> w_error;
     } r, v;
 
     sc_event bus_event_;
     sc_signal<bool> w_resp_valid;
     sc_signal<sc_uint<RISCV_ARCH>> wb_resp_data;
-    sc_signal<bool> w_resp_store_fault;
-    sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_resp_store_fault_addr;
-    sc_signal<bool> w_resp_load_fault;
+    //sc_signal<bool> w_resp_store_fault;
+    //sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_resp_store_fault_addr;
+    sc_signal<bool> w_r_error;
+    sc_signal<bool> w_w_error;
 
     sc_signal<bool> w_dport_valid;
     sc_signal<bool> w_dport_write;
