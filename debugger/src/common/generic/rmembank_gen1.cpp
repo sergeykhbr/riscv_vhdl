@@ -85,33 +85,47 @@ void RegMemBankGeneric::hapTriggered(IFace *isrc,
 
 ETransStatus RegMemBankGeneric::b_transport(Axi4TransactionType *trans) {
     IMemoryOperation *imem;
-    if ((imem = getRegFace(trans->addr)) != 0) {
-        return imem->b_transport(trans);
+    uint64_t t_addr = trans->addr;      // orignal address
+
+    trans->addr -= getBaseAddress();    // offset relative registers bank
+    imem = imaphash_[trans->addr];
+    if (imem != 0) {
+        ETransStatus ret = imem->b_transport(trans);
+        trans->addr = t_addr;           // restore address;
+        return ret;
     }
     
     // Stubs:
-    uint16_t off = static_cast<uint16_t>(trans->addr - getBaseAddress());
+    uint64_t off = trans->addr;
     if (trans->action == MemAction_Read) {
         trans->rpayload.b64[0] = 0;
         memcpy(trans->rpayload.b8, &stubmem[off], trans->xsize);
         RISCV_info("Read stub  [%08" RV_PRI64 "x] => 0x%" RV_PRI64 "x",
-                    trans->addr, trans->rpayload.b64[0]);
+                    t_addr, trans->rpayload.b64[0]);
     } else {
         memcpy(&stubmem[off], trans->wpayload.b8, trans->xsize);
         uint64_t msk = (0x1ull << 8*trans->xsize) - 1;
         RISCV_info("Write stub [%08" RV_PRI64 "x] <= 0x%" RV_PRI64 "x",
-                    trans->addr, trans->wpayload.b64[0] & msk);
+                    t_addr, trans->wpayload.b64[0] & msk);
     }
+    trans->addr = t_addr;           // restore address;
     return TRANS_OK;
 }
 
 ETransStatus RegMemBankGeneric::nb_transport(Axi4TransactionType *trans,
                                              IAxi4NbResponse *cb) {
     IMemoryOperation *imem;
-    if ((imem = getRegFace(trans->addr)) != 0) {
-        return imem->nb_transport(trans, cb);
+    uint64_t t_addr = trans->addr;      // orignal address
+    
+    trans->addr -= getBaseAddress();    // offset relative registers bank
+    imem = imaphash_[trans->addr];
+    if (imem != 0) {
+        ETransStatus ret = imem->nb_transport(trans, cb);
+        trans->addr = t_addr;           // restore address;
+        return ret;
     }
     
+    trans->addr = t_addr;               // restore address;
     ETransStatus ret = b_transport(trans);
     cb->nb_response(trans);
     return ret;
@@ -119,7 +133,8 @@ ETransStatus RegMemBankGeneric::nb_transport(Axi4TransactionType *trans,
 
 
 void RegMemBankGeneric::maphash(IMemoryOperation *imemop) {
-    uint64_t off = imemop->getBaseAddress() - baseAddress_.to_uint64();
+    // All Registers inside bank mapped relative register bank baseAddress
+    uint64_t off = imemop->getBaseAddress();
     if (!imaphash_) {
         return;
     }
@@ -127,7 +142,7 @@ void RegMemBankGeneric::maphash(IMemoryOperation *imemop) {
         RISCV_printf(0, 0,
                 "Map out-of-range %08" RV_PRI64 "x => %08" RV_PRI64 "x",
                 imemop->getBaseAddress(),
-                baseAddress_.to_uint64());
+                length_.to_uint64());
         return;
     }
     for (unsigned i = 0; i < imemop->getLength(); i++) {

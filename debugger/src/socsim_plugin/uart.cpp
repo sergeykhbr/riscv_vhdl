@@ -58,11 +58,6 @@ UART::~UART() {
 
 void UART::postinitService() {
     RegMemBankGeneric::postinitService();
-    uint64_t baseoff = baseAddress_.to_uint64();
-    status_.setBaseAddress(baseoff + status_.getBaseAddress());
-    scaler_.setBaseAddress(baseoff + scaler_.getBaseAddress());
-    fwcpuid_.setBaseAddress(baseoff + fwcpuid_.getBaseAddress());
-    data_.setBaseAddress(baseoff + data_.getBaseAddress());
 
     rxfifo_ = new char[fifoSize_.to_int()];
     p_rx_wr_ = rxfifo_;
@@ -227,7 +222,7 @@ char UART::getByte() {
     return ret;
 }
 
-uint64_t UART::STATUS_TYPE::aboutToRead(uint64_t cur_val) {
+uint32_t UART::STATUS_TYPE::aboutToRead(uint32_t cur_val) {
     UART *p = static_cast<UART *>(parent_);
     value_type t;
     t.v = cur_val;
@@ -254,18 +249,18 @@ uint64_t UART::STATUS_TYPE::aboutToRead(uint64_t cur_val) {
     }
     return t.v;
 }
-uint64_t UART::SCALER_TYPE::aboutToWrite(uint64_t new_val) {
+uint32_t UART::SCALER_TYPE::aboutToWrite(uint32_t new_val) {
     UART *p = static_cast<UART *>(parent_);
     p->setScaler(static_cast<uint32_t>(new_val));
     return new_val;    
 }
 
-uint64_t UART::DATA_TYPE::aboutToRead(uint64_t cur_val) {
+uint32_t UART::DATA_TYPE::aboutToRead(uint32_t cur_val) {
     UART *p = static_cast<UART *>(parent_);
     return static_cast<uint8_t>(p->getByte());
 }
 
-uint64_t UART::DATA_TYPE::aboutToWrite(uint64_t new_val) {
+uint32_t UART::DATA_TYPE::aboutToWrite(uint32_t new_val) {
     UART *p = static_cast<UART *>(parent_);
     p->putByte(static_cast<char>(new_val));
     return new_val;    

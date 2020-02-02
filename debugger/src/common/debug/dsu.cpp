@@ -34,7 +34,6 @@ DSU::~DSU() {
 
 void DSU::postinitService() {
     RegMemBankGeneric::postinitService();
-    remap(baseAddress_.to_uint64());
 
     ICpuGeneric *icpu;
     for (unsigned i = 0; i < cpu_.size(); i++) {

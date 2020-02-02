@@ -29,12 +29,6 @@ STM32L4_RCC::STM32L4_RCC(const char *name) : RegMemBankGeneric(name),
 
 void STM32L4_RCC::postinitService() {
     RegMemBankGeneric::postinitService();
-
-    CR.setBaseAddress(baseAddress_.to_uint64() + 0x00);
-    ICSCR.setBaseAddress(baseAddress_.to_uint64() + 0x04);
-    CFGR.setBaseAddress(baseAddress_.to_uint64() + 0x08);
-    PLLCFGR.setBaseAddress(baseAddress_.to_uint64() + 0x0C);
-    CIER.setBaseAddress(baseAddress_.to_uint64() + 0x18);
 }
 
 uint32_t STM32L4_RCC::RCC_CR_TYPE::aboutToRead(uint32_t cur_val) {

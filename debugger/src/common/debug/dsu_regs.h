@@ -29,9 +29,6 @@ class DsuRegisters {
     explicit DsuRegisters(IService *parent);
 
  protected:
-    void remap(uint64_t baseoff);
-
- protected:
     class SOFT_RESET_TYPE : public MappedReg64Type {
      public:
         SOFT_RESET_TYPE(IService *parent, const char *name, uint64_t addr) :

@@ -29,15 +29,6 @@ DsuRegisters::DsuRegisters(IService *parent) :
     bus_util_(parent, "bus_util", 0x18040, 2*64) {
 }
 
-void DsuRegisters::remap(uint64_t baseoff) {
-    csr_region_.setBaseAddress(baseoff + csr_region_.getBaseAddress());
-    reg_region_.setBaseAddress(baseoff + reg_region_.getBaseAddress());
-    dbg_region_.setBaseAddress(baseoff + dbg_region_.getBaseAddress());
-    soft_reset_.setBaseAddress(baseoff + soft_reset_.getBaseAddress());
-    cpu_context_.setBaseAddress(baseoff + cpu_context_.getBaseAddress());
-    bus_util_.setBaseAddress(baseoff + bus_util_.getBaseAddress());
-}
-
 uint64_t DsuRegisters::SOFT_RESET_TYPE::aboutToWrite(uint64_t new_val) {
     new_val &= 0x1;
     DSU *p = static_cast<DSU *>(parent_);

@@ -100,10 +100,10 @@ class UART : public RegMemBankGeneric,
     uint64_t getExecCounter() { return iclk_->getExecCounter(); }
 
  protected:
-    class STATUS_TYPE : public MappedReg64Type {
+    class STATUS_TYPE : public MappedReg32Type {
      public:
         STATUS_TYPE(IService *parent, const char *name, uint64_t addr) :
-                    MappedReg64Type(parent, name, addr) {
+                    MappedReg32Type(parent, name, addr) {
             value_type t;
             t.v = 0;
             t.b.rx_irq_ena = 0;
@@ -112,20 +112,20 @@ class UART : public RegMemBankGeneric,
         }
 
         union value_type {
-            uint64_t v;
+            uint32_t v;
             struct bits_type {
-                uint64_t tx_fifo_full : 1;      // [0]
-                uint64_t tx_fifo_empty : 1;     // [1]
-                uint64_t rsrv1 : 2;             // [3:2]
-                uint64_t rx_fifo_full : 1;      // [4]
-                uint64_t rx_fifo_empty : 1;     // [5]
-                uint64_t rsrv2 : 2;             // [7:6]
-                uint64_t err_parity : 1;        // [8]
-                uint64_t err_stopbit : 1;       // [9]
-                uint64_t rsrv3 : 3;             // [12:10]
-                uint64_t rx_irq_ena : 1;        // [13]
-                uint64_t tx_irq_ena : 1;        // [14]
-                uint64_t parity_bit : 1;        // [15]
+                uint32_t tx_fifo_full : 1;      // [0]
+                uint32_t tx_fifo_empty : 1;     // [1]
+                uint32_t rsrv1 : 2;             // [3:2]
+                uint32_t rx_fifo_full : 1;      // [4]
+                uint32_t rx_fifo_empty : 1;     // [5]
+                uint32_t rsrv2 : 2;             // [7:6]
+                uint32_t err_parity : 1;        // [8]
+                uint32_t err_stopbit : 1;       // [9]
+                uint32_t rsrv3 : 3;             // [12:10]
+                uint32_t rx_irq_ena : 1;        // [13]
+                uint32_t tx_irq_ena : 1;        // [14]
+                uint32_t parity_bit : 1;        // [15]
             } b;
         };
 
@@ -135,31 +135,31 @@ class UART : public RegMemBankGeneric,
             return ret;
         }
      protected:
-        virtual uint64_t aboutToRead(uint64_t cur_val) override;
+        virtual uint32_t aboutToRead(uint32_t cur_val) override;
     };
 
-    class SCALER_TYPE : public MappedReg64Type {
+    class SCALER_TYPE : public MappedReg32Type {
      public:
         SCALER_TYPE(IService *parent, const char *name, uint64_t addr) :
-                    MappedReg64Type(parent, name, addr) {}
+                    MappedReg32Type(parent, name, addr) {}
 
      protected:
-        virtual uint64_t aboutToWrite(uint64_t new_val) override;
+        virtual uint32_t aboutToWrite(uint32_t new_val) override;
     };
 
-    class DWORD_TYPE : public MappedReg64Type {
+    class DWORD_TYPE : public MappedReg32Type {
      public:
         DWORD_TYPE(IService *parent, const char *name, uint64_t addr) :
-                    MappedReg64Type(parent, name, addr) {}
+                    MappedReg32Type(parent, name, addr) {}
     };
 
-    class DATA_TYPE : public MappedReg64Type {
+    class DATA_TYPE : public MappedReg32Type {
      public:
         DATA_TYPE(IService *parent, const char *name, uint64_t addr) :
-                    MappedReg64Type(parent, name, addr) {}
+                    MappedReg32Type(parent, name, addr) {}
      protected:
-        virtual uint64_t aboutToRead(uint64_t cur_val) override;
-        virtual uint64_t aboutToWrite(uint64_t new_val) override;
+        virtual uint32_t aboutToRead(uint32_t cur_val) override;
+        virtual uint32_t aboutToWrite(uint32_t new_val) override;
     };
 
  private:

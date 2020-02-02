@@ -53,19 +53,7 @@ STM32L4_GPIO::STM32L4_GPIO(const char *name) : RegMemBankGeneric(name),
 void STM32L4_GPIO::postinitService() {
     RegMemBankGeneric::postinitService();
     
-    MODER.setBaseAddress(baseAddress_.to_uint64() + 0x00);
     MODER.setHardResetValue(hardResetMode_.to_uint32());
-
-    OTYPER.setBaseAddress(baseAddress_.to_uint64() + 0x04);
-    OSPEEDR.setBaseAddress(baseAddress_.to_uint64() + 0x08);
-    PUPDR.setBaseAddress(baseAddress_.to_uint64() + 0x0c);
-    IDR.setBaseAddress(baseAddress_.to_uint64() + 0x10);
-    ODR.setBaseAddress(baseAddress_.to_uint64() + 0x14);
-    BSRR.setBaseAddress(baseAddress_.to_uint64() + 0x18);
-    LCKR.setBaseAddress(baseAddress_.to_uint64() + 0x1c);
-    AFRL.setBaseAddress(baseAddress_.to_uint64() + 0x20);
-    AFRH.setBaseAddress(baseAddress_.to_uint64() + 0x24);
-    BRR.setBaseAddress(baseAddress_.to_uint64() + 0x28);
 
     iexec_ = static_cast<ICmdExecutor *>
         (RISCV_get_service_iface(cmdexec_.to_string(), IFACE_CMD_EXECUTOR));
