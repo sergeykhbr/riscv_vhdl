@@ -86,11 +86,11 @@ SC_MODULE(RiverTop) {
     sc_signal<bool> w_req_data_valid;
     sc_signal<bool> w_req_data_write;
     sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_req_data_addr;
-    sc_signal<sc_uint<BUS_DATA_WIDTH>> wb_req_data_wdata;
-    sc_signal<sc_uint<BUS_DATA_BYTES>> wb_req_data_wstrb;
+    sc_signal<sc_uint<64>> wb_req_data_wdata;
+    sc_signal<sc_uint<8>> wb_req_data_wstrb;
     sc_signal<bool> w_resp_data_valid;
     sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_resp_data_addr;
-    sc_signal<sc_uint<BUS_DATA_WIDTH>> wb_resp_data_data;
+    sc_signal<sc_uint<64>> wb_resp_data_data;
     sc_signal<bool> w_resp_data_load_fault;
     sc_signal<bool> w_resp_data_store_fault;
     sc_signal<bool> w_resp_data_er_mpu_load;

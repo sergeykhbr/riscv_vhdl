@@ -157,7 +157,7 @@ void ICacheLru::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void ICacheLru::comb() {
-    sc_biguint<4*BUS_DATA_WIDTH> t_cache_line_i;
+    sc_biguint<ICACHE_LINE_BITS> t_cache_line_i;
     bool v_last;
     bool v_req_ready;
     bool v_resp_valid;

@@ -123,9 +123,7 @@ class RtlWrapper : public sc_module,
 
     sc_event bus_event_;
     sc_signal<bool> w_resp_valid;
-    sc_signal<sc_uint<RISCV_ARCH>> wb_resp_data;
-    //sc_signal<bool> w_resp_store_fault;
-    //sc_signal<sc_uint<BUS_ADDR_WIDTH>> wb_resp_store_fault_addr;
+    sc_signal<sc_uint<BUS_DATA_WIDTH>> wb_resp_data;
     sc_signal<bool> w_r_error;
     sc_signal<bool> w_w_error;
 

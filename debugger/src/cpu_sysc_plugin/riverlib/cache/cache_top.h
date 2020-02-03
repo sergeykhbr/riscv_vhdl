@@ -43,12 +43,12 @@ SC_MODULE(CacheTop) {
     sc_in<bool> i_req_data_valid;                       // Data path request from CPU Core is valid
     sc_in<bool> i_req_data_write;                       // Data write memopy operation flag
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_req_data_addr;     // Memory operation address
-    sc_in<sc_uint<BUS_DATA_WIDTH>> i_req_data_wdata;    // Memory operation write value
-    sc_in<sc_uint<BUS_DATA_BYTES>> i_req_data_wstrb;    // 8-bytes aligned strob
+    sc_in<sc_uint<64>> i_req_data_wdata;                // Memory operation write value
+    sc_in<sc_uint<8>> i_req_data_wstrb;                 // 8-bytes aligned strob
     sc_out<bool> o_req_data_ready;                      // Memory operation request accepted by DCache
     sc_out<bool> o_resp_data_valid;                     // DCache response is ready
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_resp_data_addr;   // DCache response address
-    sc_out<sc_uint<BUS_DATA_WIDTH>> o_resp_data_data;   // DCache response read data
+    sc_out<sc_uint<64>> o_resp_data_data;               // DCache response read data
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_resp_data_store_fault_addr;   // AXI B-channel error
     sc_out<bool> o_resp_data_load_fault;                // Bus response ERRSLV or ERRDEC on read
     sc_out<bool> o_resp_data_store_fault;               // Bus response ERRSLV or ERRDEC on write

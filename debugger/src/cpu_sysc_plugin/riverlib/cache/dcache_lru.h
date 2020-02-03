@@ -32,12 +32,12 @@ SC_MODULE(DCacheLru) {
     sc_in<bool> i_req_valid;
     sc_in<bool> i_req_write;
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_req_addr;
-    sc_in<sc_uint<BUS_DATA_WIDTH>> i_req_wdata;
-    sc_in<sc_uint<BUS_DATA_BYTES>> i_req_wstrb;
+    sc_in<sc_uint<64>> i_req_wdata;
+    sc_in<sc_uint<8>> i_req_wstrb;
     sc_out<bool> o_req_ready;
     sc_out<bool> o_resp_valid;
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_resp_addr;
-    sc_out<sc_uint<BUS_DATA_WIDTH>> o_resp_data;
+    sc_out<sc_uint<64>> o_resp_data;
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_resp_er_addr;
     sc_out<bool> o_resp_er_load_fault;
     sc_out<bool> o_resp_er_store_fault;

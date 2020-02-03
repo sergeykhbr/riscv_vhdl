@@ -154,22 +154,22 @@ void MemAccess::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void MemAccess::comb() {
-    sc_uint<BUS_DATA_WIDTH> vb_memop_wdata;
-    sc_uint<BUS_DATA_BYTES> vb_memop_wstrb;
+    sc_uint<64> vb_memop_wdata;
+    sc_uint<8> vb_memop_wstrb;
     bool v_mem_valid;
     bool v_mem_write;
     bool v_mem_sign_ext;
     sc_uint<2> vb_mem_sz;
     sc_uint<BUS_ADDR_WIDTH> vb_mem_addr;
-    sc_uint<BUS_DATA_WIDTH> vb_mem_rdata;
+    sc_uint<64> vb_mem_rdata;
     bool v_queue_re;
     bool v_flushd;
     sc_uint<4> vb_mem_wtag;
-    sc_uint<BUS_DATA_WIDTH> vb_mem_wdata;
-    sc_uint<BUS_DATA_BYTES> vb_mem_wstrb;
-    sc_uint<BUS_DATA_WIDTH> vb_mem_resp_shifted;
-    sc_uint<BUS_DATA_WIDTH> vb_mem_data_unsigned;
-    sc_uint<BUS_DATA_WIDTH> vb_mem_data_signed;
+    sc_uint<64> vb_mem_wdata;
+    sc_uint<8> vb_mem_wstrb;
+    sc_uint<64> vb_mem_resp_shifted;
+    sc_uint<64> vb_mem_data_unsigned;
+    sc_uint<64> vb_mem_data_signed;
     sc_uint<RISCV_ARCH> vb_res_data;
     sc_uint<6> vb_res_addr;
     sc_uint<BUS_ADDR_WIDTH> vb_e_pc;
@@ -260,12 +260,12 @@ void MemAccess::comb() {
     queue_we = i_e_valid & (i_memop_load | i_memop_store | i_e_flushd);
 
     // Split Queue outputs:
-    v_flushd = queue_data_o.read()[2*BUS_ADDR_WIDTH+RISCV_ARCH+BUS_DATA_BYTES+BUS_DATA_WIDTH+46];
-    vb_mem_wtag = queue_data_o.read()(2*BUS_ADDR_WIDTH+RISCV_ARCH+BUS_DATA_BYTES+BUS_DATA_WIDTH+45,
-                                      2*BUS_ADDR_WIDTH+RISCV_ARCH+BUS_DATA_BYTES+BUS_DATA_WIDTH+42);
-    vb_mem_wdata = queue_data_o.read()(2*BUS_ADDR_WIDTH+RISCV_ARCH+BUS_DATA_BYTES+BUS_DATA_WIDTH+42-1,
-                                      2*BUS_ADDR_WIDTH+RISCV_ARCH+BUS_DATA_BYTES+42);
-    vb_mem_wstrb = queue_data_o.read()(2*BUS_ADDR_WIDTH+RISCV_ARCH+BUS_DATA_BYTES+42-1,
+    v_flushd = queue_data_o.read()[2*BUS_ADDR_WIDTH+RISCV_ARCH+8+64+46];
+    vb_mem_wtag = queue_data_o.read()(2*BUS_ADDR_WIDTH+RISCV_ARCH+8+64+45,
+                                      2*BUS_ADDR_WIDTH+RISCV_ARCH+8+64+42);
+    vb_mem_wdata = queue_data_o.read()(2*BUS_ADDR_WIDTH+RISCV_ARCH+8+64+42-1,
+                                      2*BUS_ADDR_WIDTH+RISCV_ARCH+8+42);
+    vb_mem_wstrb = queue_data_o.read()(2*BUS_ADDR_WIDTH+RISCV_ARCH+8+42-1,
                                       2*BUS_ADDR_WIDTH+RISCV_ARCH+42);
     vb_res_data = queue_data_o.read()(2*BUS_ADDR_WIDTH+RISCV_ARCH+42-1,
                                       2*BUS_ADDR_WIDTH+42);

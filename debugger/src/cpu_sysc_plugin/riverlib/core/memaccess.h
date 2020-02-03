@@ -52,11 +52,11 @@ SC_MODULE(MemAccess) {
     sc_out<bool> o_mem_valid;                       // Memory request is valid
     sc_out<bool> o_mem_write;                       // Memory write request
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_mem_addr;     // Data path requested address
-    sc_out<sc_uint<BUS_DATA_WIDTH>> o_mem_wdata;    // Data path requested data (write transaction)
-    sc_out<sc_uint<BUS_DATA_BYTES>> o_mem_wstrb;    // 8-bytes aligned strobs
+    sc_out<sc_uint<64>> o_mem_wdata;                // Data path requested data (write transaction)
+    sc_out<sc_uint<8>> o_mem_wstrb;                 // 8-bytes aligned strobs
     sc_in<bool> i_mem_data_valid;                   // Data path memory response is valid
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_mem_data_addr; // Data path memory response address
-    sc_in<sc_uint<BUS_DATA_WIDTH>> i_mem_data;      // Data path memory response value
+    sc_in<sc_uint<64>> i_mem_data;                  // Data path memory response value
     sc_out<bool> o_mem_resp_ready;                  // Pipeline is ready to accept memory operation response
 
     void comb();
@@ -79,8 +79,8 @@ private:
         sc_signal<sc_uint<2>> state;
         sc_signal<bool> memop_w;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> memop_addr;
-        sc_signal<sc_uint<BUS_DATA_WIDTH>> memop_wdata;
-        sc_signal<sc_uint<BUS_DATA_BYTES>> memop_wstrb;
+        sc_signal<sc_uint<64>> memop_wdata;
+        sc_signal<sc_uint<8>> memop_wstrb;
         sc_signal<bool> memop_sign_ext;
         sc_signal<sc_uint<2>> memop_size;
 
@@ -113,8 +113,8 @@ private:
 
     static const int QUEUE_WIDTH = 1   // i_e_flushd
                                  + 4   // wtag
-                                 + BUS_DATA_WIDTH
-                                 + BUS_DATA_BYTES 
+                                 + 64  // wdata width
+                                 + 8   // wstrb 
                                  + RISCV_ARCH
                                  + 6
                                  + 32
