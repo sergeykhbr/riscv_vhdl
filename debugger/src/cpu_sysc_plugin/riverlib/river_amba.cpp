@@ -149,10 +149,54 @@ RiverAmba::~RiverAmba() {
 
 void RiverAmba::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
-        sc_trace(o_vcd, o_time, "o_time");
-        sc_trace(o_vcd, o_halted, "o_halted");
-        sc_trace(o_vcd, o_dport_ready, "o_dport_ready");
-        sc_trace(o_vcd, o_dport_rdata, "o_dport_rdata");
+        sc_trace(o_vcd, o_time, o_time.name());
+        sc_trace(o_vcd, o_halted, o_halted.name());
+        sc_trace(o_vcd, o_dport_ready, o_dport_ready.name());
+        sc_trace(o_vcd, o_dport_rdata, o_dport_rdata.name());
+
+        sc_trace(o_vcd, i_msti_aw_ready, i_msti_aw_ready.name());
+        sc_trace(o_vcd, i_msti_w_ready, i_msti_w_ready.name());
+        sc_trace(o_vcd, i_msti_b_valid, i_msti_b_valid.name());
+        sc_trace(o_vcd, i_msti_b_resp, i_msti_b_resp.name());
+        sc_trace(o_vcd, i_msti_ar_ready, i_msti_ar_ready.name());
+        sc_trace(o_vcd, i_msti_r_valid, i_msti_r_valid.name());
+        sc_trace(o_vcd, i_msti_r_resp, i_msti_r_resp.name());
+        sc_trace(o_vcd, i_msti_r_data, i_msti_r_data.name());
+        sc_trace(o_vcd, i_msti_r_last, i_msti_r_last.name());
+
+        sc_trace(o_vcd, o_msto_aw_valid, o_msto_aw_valid.name());
+        sc_trace(o_vcd, o_msto_aw_bits_addr, o_msto_aw_bits_addr.name());
+        sc_trace(o_vcd, o_msto_aw_bits_len, o_msto_aw_bits_len.name());
+        sc_trace(o_vcd, o_msto_aw_bits_size, o_msto_aw_bits_size.name());
+        sc_trace(o_vcd, o_msto_aw_bits_burst, o_msto_aw_bits_burst.name());
+        sc_trace(o_vcd, o_msto_aw_bits_lock, o_msto_aw_bits_lock.name());
+        sc_trace(o_vcd, o_msto_aw_bits_cache, o_msto_aw_bits_cache.name());
+        sc_trace(o_vcd, o_msto_w_valid, o_msto_w_valid.name());
+        sc_trace(o_vcd, o_msto_w_data, o_msto_w_data.name());
+        sc_trace(o_vcd, o_msto_w_last, o_msto_w_last.name());
+        sc_trace(o_vcd, o_msto_w_strb, o_msto_w_strb.name());
+        sc_trace(o_vcd, o_msto_b_ready, o_msto_b_ready.name());
+        sc_trace(o_vcd, o_msto_ar_valid, o_msto_ar_valid.name());
+        sc_trace(o_vcd, o_msto_ar_bits_addr, o_msto_ar_bits_addr.name());
+        sc_trace(o_vcd, o_msto_ar_bits_len, o_msto_ar_bits_len.name());
+        sc_trace(o_vcd, o_msto_ar_bits_size, o_msto_ar_bits_size.name());
+        sc_trace(o_vcd, o_msto_ar_bits_burst, o_msto_ar_bits_burst.name());
+        sc_trace(o_vcd, o_msto_ar_bits_lock, o_msto_ar_bits_lock.name());
+        sc_trace(o_vcd, o_msto_ar_bits_cache, o_msto_ar_bits_cache.name());
+        sc_trace(o_vcd, o_msto_r_ready, o_msto_r_ready.name());
+
+        std::string pn(name());
+        sc_trace(o_vcd, req_mem_path_o, pn + ".req_mem_path_o");
+        sc_trace(o_vcd, req_mem_valid_o, pn + ".req_mem_valid_o");
+        sc_trace(o_vcd, req_mem_write_o, pn + ".req_mem_write_o");
+        sc_trace(o_vcd, req_mem_addr_o, pn + ".req_mem_addr_o");
+        sc_trace(o_vcd, req_mem_strob_o, pn + ".req_mem_strob_o");
+        sc_trace(o_vcd, req_mem_data_o, pn + ".req_mem_data_o");
+        sc_trace(o_vcd, req_mem_len_o, pn + ".req_mem_len_o");
+        sc_trace(o_vcd, req_mem_burst_o, pn + ".req_mem_burst_o");
+        sc_trace(o_vcd, req_mem_last_o, pn + ".req_mem_last_o");
+        sc_trace(o_vcd, r.state, pn + ".r_state");
+        
     }
 
     river0->generateVCD(i_vcd, o_vcd);

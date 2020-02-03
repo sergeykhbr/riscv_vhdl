@@ -257,11 +257,13 @@ void RtlWrapper::comb() {
             w_req_mem_ready = 1;
             if (i_msto_ar_valid.read()) {
                 v.req_write = 0;
+                v.req_addr = i_msto_ar_bits_addr.read();
                 v.req_burst = i_msto_ar_bits_burst.read();
                 v.req_len = i_msto_ar_bits_len.read();
                 v.state = State_Busy;
             } else if (i_msto_aw_valid.read()) {
                 v.req_write = 1;
+                v.req_addr = i_msto_aw_bits_addr.read();
                 v.req_burst = i_msto_aw_bits_burst.read();
                 v.req_len = i_msto_aw_bits_len.read();
                 v.state = State_Busy;
@@ -275,11 +277,13 @@ void RtlWrapper::comb() {
             v.w_error = 0;
             if (i_msto_ar_valid.read()) {
                 v.req_write = 0;
+                v.req_addr = i_msto_ar_bits_addr.read();
                 v.req_burst = i_msto_ar_bits_burst.read();
                 v.req_len = i_msto_ar_bits_len.read();
                 v.state = State_Busy;
             } else if (i_msto_aw_valid.read()) {
                 v.req_write = 1;
+                v.req_addr = i_msto_aw_bits_addr.read();
                 v.req_burst = i_msto_aw_bits_burst.read();
                 v.req_len = i_msto_aw_bits_len.read();
                 v.state = State_Busy;

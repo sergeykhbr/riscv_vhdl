@@ -55,6 +55,7 @@ SOURCES = \
 	cpu_riscv_rtl \
 	rtl_wrapper \
 	river_top \
+	river_amba \
 	icache_lru \
 	dcache_lru \
 	mpu \

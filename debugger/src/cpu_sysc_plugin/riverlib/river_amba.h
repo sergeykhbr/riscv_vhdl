@@ -89,7 +89,7 @@ SC_MODULE(RiverAmba) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(InstrFetch);
+    SC_HAS_PROCESS(RiverAmba);
 
     RiverAmba(sc_module_name name_,
              uint32_t hartid,
