@@ -84,11 +84,11 @@ architecture arch_RiverTop of RiverTop is
   signal w_req_data_valid : std_logic;
   signal w_req_data_write : std_logic;
   signal wb_req_data_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-  signal wb_req_data_wdata : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
-  signal wb_req_data_wstrb : std_logic_vector(BUS_DATA_BYTES-1 downto 0);
+  signal wb_req_data_wdata : std_logic_vector(63 downto 0);
+  signal wb_req_data_wstrb : std_logic_vector(7 downto 0);
   signal w_resp_data_valid : std_logic;
   signal wb_resp_data_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-  signal wb_resp_data_data : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+  signal wb_resp_data_data : std_logic_vector(63 downto 0);
   signal w_resp_data_load_fault : std_logic;
   signal w_resp_data_store_fault : std_logic;
   signal w_resp_data_er_mpu_load : std_logic;

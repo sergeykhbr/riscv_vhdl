@@ -49,11 +49,11 @@ entity Processor is
     o_req_data_valid : out std_logic;                                 -- Request to DCache is valid
     o_req_data_write : out std_logic;                                 -- Read/Write transaction
     o_req_data_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- Requesting address to DCache
-    o_req_data_wdata : out std_logic_vector(BUS_DATA_WIDTH-1 downto 0); -- Writing value
-    o_req_data_wstrb : out std_logic_vector(BUS_DATA_BYTES-1 downto 0); -- 8-bytes aligned strobs
+    o_req_data_wdata : out std_logic_vector(63 downto 0);             -- Writing value
+    o_req_data_wstrb : out std_logic_vector(7 downto 0);              -- 8-bytes aligned strobs
     i_resp_data_valid : in std_logic;                                 -- DCache response is valid
     i_resp_data_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- DCache response address must be equal to the latest request address
-    i_resp_data_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);    -- Read value
+    i_resp_data_data : in std_logic_vector(63 downto 0);              -- Read value
     i_resp_data_store_fault_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     i_resp_data_load_fault : in std_logic;                            -- Bus response with SLVERR or DECERR on read
     i_resp_data_store_fault : in std_logic;                           -- Bus response with SLVERR or DECERR on write

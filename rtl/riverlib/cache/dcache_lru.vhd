@@ -34,12 +34,12 @@ entity dcache_lru is generic (
     i_req_valid : in std_logic;
     i_req_write : in std_logic;
     i_req_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    i_req_wdata : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
-    i_req_wstrb : in std_logic_vector(BUS_DATA_BYTES-1 downto 0);
+    i_req_wdata : in std_logic_vector(63 downto 0);
+    i_req_wstrb : in std_logic_vector(7 downto 0);
     o_req_ready : out std_logic;
     o_resp_valid : out std_logic;
     o_resp_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    o_resp_data : out std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+    o_resp_data : out std_logic_vector(63 downto 0);
     o_resp_er_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     o_resp_er_load_fault : out std_logic;
     o_resp_er_store_fault : out std_logic;

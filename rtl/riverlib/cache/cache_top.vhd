@@ -45,12 +45,12 @@ entity CacheTop is generic (
     i_req_data_valid : in std_logic;
     i_req_data_write : in std_logic;
     i_req_data_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    i_req_data_wdata : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
-    i_req_data_wstrb : in std_logic_vector(BUS_DATA_BYTES-1 downto 0);
+    i_req_data_wdata : in std_logic_vector(63 downto 0);
+    i_req_data_wstrb : in std_logic_vector(7 downto 0);
     o_req_data_ready : out std_logic;
     o_resp_data_valid : out std_logic;
     o_resp_data_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    o_resp_data_data : out std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+    o_resp_data_data : out std_logic_vector(63 downto 0);
     o_resp_data_store_fault_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
     o_resp_data_load_fault : out std_logic;
     o_resp_data_store_fault : out std_logic;

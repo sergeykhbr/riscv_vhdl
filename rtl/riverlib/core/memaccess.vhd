@@ -56,11 +56,11 @@ entity MemAccess is generic (
     o_mem_valid : out std_logic;                                      -- Memory request is valid
     o_mem_write : out std_logic;                                      -- Memory write request
     o_mem_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);     -- Data path requested address
-    o_mem_wdata : out std_logic_vector(BUS_DATA_WIDTH-1 downto 0);     -- Data path requested data (write transaction)
-    o_mem_wstrb : out std_logic_vector(BUS_DATA_BYTES-1 downto 0);    -- 8-bytes aligned strobs
+    o_mem_wdata : out std_logic_vector(63 downto 0);                  -- Data path requested data (write transaction)
+    o_mem_wstrb : out std_logic_vector(7 downto 0);                   -- 8-bytes aligned strobs
     i_mem_data_valid : in std_logic;                                  -- Data path memory response is valid
     i_mem_data_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0); -- Data path memory response address
-    i_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);      -- Data path memory response value
+    i_mem_data : in std_logic_vector(63 downto 0);                    -- Data path memory response value
     o_mem_resp_ready : out std_logic
   );
 end; 
@@ -78,8 +78,8 @@ architecture arch_MemAccess of MemAccess is
       state : std_logic_vector(1 downto 0);
       memop_w : std_logic;
       memop_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-      memop_wdata : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
-      memop_wstrb : std_logic_vector(BUS_DATA_BYTES-1 downto 0);
+      memop_wdata : std_logic_vector(63 downto 0);
+      memop_wstrb : std_logic_vector(7 downto 0);
       memop_sign_ext : std_logic;
       memop_size : std_logic_vector(1 downto 0);
       
@@ -111,8 +111,8 @@ architecture arch_MemAccess of MemAccess is
   -- queue signals before move into separate module
   constant QUEUE_WIDTH : integer := 1   -- i_e_flushd
                                   + 4   -- wtag
-                                  + BUS_DATA_WIDTH
-                                  + BUS_DATA_BYTES
+                                  + 64  -- wdata width
+                                  + 8   -- wdata btyes
                                   + RISCV_ARCH 
                                   + 6
                                   + 32
@@ -154,22 +154,22 @@ begin
                  i_mem_data_addr, i_mem_data, i_e_flushd,
                  queue_data_o, queue_nempty, queue_full, r)
     variable v : RegistersType;
-    variable vb_memop_wdata : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
-    variable vb_memop_wstrb : std_logic_vector(BUS_DATA_BYTES-1 downto 0);
+    variable vb_memop_wdata : std_logic_vector(63 downto 0);
+    variable vb_memop_wstrb : std_logic_vector(7 downto 0);
     variable v_mem_valid : std_logic;
     variable v_mem_write : std_logic;
     variable v_mem_sign_ext : std_logic;
     variable vb_mem_sz : std_logic_vector(1 downto 0);
     variable vb_mem_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    variable vb_mem_rdata : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+    variable vb_mem_rdata : std_logic_vector(63 downto 0);
     variable v_queue_re : std_logic;
     variable v_flushd : std_logic;
     variable vb_mem_wtag : std_logic_vector(3 downto 0);
-    variable vb_mem_wdata : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
-    variable vb_mem_wstrb : std_logic_vector(BUS_DATA_BYTES-1 downto 0);
-    variable vb_mem_resp_shifted : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
-    variable vb_mem_data_unsigned : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
-    variable vb_mem_data_signed : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+    variable vb_mem_wdata : std_logic_vector(63 downto 0);
+    variable vb_mem_wstrb : std_logic_vector(7 downto 0);
+    variable vb_mem_resp_shifted : std_logic_vector(63 downto 0);
+    variable vb_mem_data_unsigned : std_logic_vector(63 downto 0);
+    variable vb_mem_data_signed : std_logic_vector(63 downto 0);
     variable vb_res_data : std_logic_vector(RISCV_ARCH-1 downto 0);
     variable vb_res_addr : std_logic_vector(5 downto 0);
     variable vb_e_pc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
@@ -255,12 +255,12 @@ begin
     queue_we <= i_e_valid and (i_memop_load or i_memop_store or i_e_flushd);
 
     -- Split Queue outputs:
-    v_flushd := queue_data_o(2*BUS_ADDR_WIDTH+RISCV_ARCH+BUS_DATA_BYTES+BUS_DATA_WIDTH+46);
-    vb_mem_wtag := queue_data_o(2*BUS_ADDR_WIDTH+RISCV_ARCH+BUS_DATA_BYTES+BUS_DATA_WIDTH+45 downto
-                                2*BUS_ADDR_WIDTH+RISCV_ARCH+BUS_DATA_BYTES+BUS_DATA_WIDTH+42);
-    vb_mem_wdata := queue_data_o(2*BUS_ADDR_WIDTH+RISCV_ARCH+BUS_DATA_BYTES+BUS_DATA_WIDTH+42-1 downto
-                                 2*BUS_ADDR_WIDTH+RISCV_ARCH+BUS_DATA_BYTES+42);
-    vb_mem_wstrb := queue_data_o(2*BUS_ADDR_WIDTH+RISCV_ARCH+BUS_DATA_BYTES+42-1 downto
+    v_flushd := queue_data_o(2*BUS_ADDR_WIDTH+RISCV_ARCH+8+64+46);
+    vb_mem_wtag := queue_data_o(2*BUS_ADDR_WIDTH+RISCV_ARCH+8+64+45 downto
+                                2*BUS_ADDR_WIDTH+RISCV_ARCH+8+64+42);
+    vb_mem_wdata := queue_data_o(2*BUS_ADDR_WIDTH+RISCV_ARCH+8+64+42-1 downto
+                                 2*BUS_ADDR_WIDTH+RISCV_ARCH+8+42);
+    vb_mem_wstrb := queue_data_o(2*BUS_ADDR_WIDTH+RISCV_ARCH+8+42-1 downto
                                       2*BUS_ADDR_WIDTH+RISCV_ARCH+42);
     vb_res_data := queue_data_o(2*BUS_ADDR_WIDTH+RISCV_ARCH+42-1 downto
                                       2*BUS_ADDR_WIDTH+42);
