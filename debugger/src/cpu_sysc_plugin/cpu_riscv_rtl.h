@@ -126,8 +126,8 @@ class CpuRiscV_RTL : public IService,
     sc_signal<bool> msti_b_user_i;
     sc_signal<bool> msti_ar_ready_i;
     sc_signal<bool> msti_r_valid_i;
-    sc_signal<sc_uint<2>> msti_r_resp_i;
-    sc_signal<sc_uint<BUS_DATA_WIDTH>> msti_r_data_i;
+    sc_signal<sc_uint<4>> msti_r_resp_i;
+    sc_signal<sc_biguint<DCACHE_LINE_BITS>> msti_r_data_i;
     sc_signal<bool> msti_r_last_i;
     sc_signal<sc_uint<CFG_ID_BITS>> msti_r_id_i;
     sc_signal<bool> msti_r_user_i;
@@ -145,7 +145,7 @@ class CpuRiscV_RTL : public IService,
     sc_signal<sc_uint<CFG_ID_BITS>> msto_aw_id_o;
     sc_signal<bool> msto_aw_user_o;
     sc_signal<bool> msto_w_valid_o;
-    sc_signal<sc_uint<BUS_DATA_WIDTH>> msto_w_data_o;
+    sc_signal<sc_biguint<DCACHE_LINE_BITS>> msto_w_data_o;
     sc_signal<bool> msto_w_last_o;
     sc_signal<sc_uint<BUS_DATA_BYTES>> msto_w_strb_o;
     sc_signal<bool> msto_w_user_o;
@@ -163,7 +163,27 @@ class CpuRiscV_RTL : public IService,
     sc_signal<sc_uint<CFG_ID_BITS>> msto_ar_id_o;
     sc_signal<bool> msto_ar_user_o;
     sc_signal<bool> msto_r_ready_o;
-
+    // ACE signals
+    sc_signal<bool> msti_ac_valid_i;
+    sc_signal<sc_uint<BUS_ADDR_WIDTH>> msti_ac_addr_i;
+    sc_signal<sc_uint<4>> msti_ac_snoop_i;
+    sc_signal<sc_uint<3>> msti_ac_prot_i;
+    sc_signal<bool> msti_cr_ready_i;
+    sc_signal<bool> msti_cd_ready_i;
+    sc_signal<sc_uint<2>> msto_ar_domain_o;
+    sc_signal<sc_uint<4>> msto_ar_snoop_o;
+    sc_signal<sc_uint<2>> msto_ar_bar_o;
+    sc_signal<sc_uint<2>> msto_aw_domain_o;
+    sc_signal<sc_uint<4>> msto_aw_snoop_o;
+    sc_signal<sc_uint<2>> msto_aw_bar_o;
+    sc_signal<bool> msto_ac_ready_o;
+    sc_signal<bool> msto_cr_valid_o;
+    sc_signal<sc_uint<5>> msto_cr_resp_o;
+    sc_signal<bool> msto_cd_valid_o;
+    sc_signal<sc_uint<BUS_DATA_WIDTH>> msto_cd_data_o;
+    sc_signal<bool> msto_cd_last_o;
+    sc_signal<bool> msto_rack_o;
+    sc_signal<bool> msto_wack_o;
     /** Interrupt line from external interrupts controller. */
     sc_signal<bool> w_interrupt;
     // Debug interface

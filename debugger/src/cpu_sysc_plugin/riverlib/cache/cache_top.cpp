@@ -50,12 +50,13 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset) :
     o_req_mem_path("o_req_mem_path"),
     o_req_mem_valid("o_req_mem_valid"),
     o_req_mem_write("o_req_mem_write"),
+    o_req_mem_cached("o_req_mem_cached"),
     o_req_mem_addr("o_req_mem_addr"),
     o_req_mem_strob("o_req_mem_strob"),
     o_req_mem_data("o_req_mem_data"),
-    o_req_mem_len("o_req_mem_len"),
-    o_req_mem_burst("o_req_mem_burst"),
-    o_req_mem_last("o_req_mem_last"),
+    //o_req_mem_len("o_req_mem_len"),
+    //o_req_mem_burst("o_req_mem_burst"),
+    //o_req_mem_last("o_req_mem_last"),
     i_resp_mem_valid("i_resp_mem_valid"),
     i_resp_mem_path("i_resp_mem_path"),
     i_resp_mem_data("i_resp_mem_data"),
@@ -82,20 +83,22 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset) :
     sensitive << i_req_mem_ready;
     sensitive << i.req_mem_valid;
     sensitive << i.req_mem_write;
+    sensitive << i.req_mem_cached;
     sensitive << i.req_mem_addr;
     sensitive << i.req_mem_strob;
     sensitive << i.req_mem_wdata;
-    sensitive << i.req_mem_len;
-    sensitive << i.req_mem_burst;
-    sensitive << i.req_mem_last;
+    //sensitive << i.req_mem_len;
+    //sensitive << i.req_mem_burst;
+    //sensitive << i.req_mem_last;
     sensitive << d.req_mem_valid;
     sensitive << d.req_mem_write;
+    sensitive << d.req_mem_cached;
     sensitive << d.req_mem_addr;
     sensitive << d.req_mem_strob;
     sensitive << d.req_mem_wdata;
-    sensitive << d.req_mem_len;
-    sensitive << d.req_mem_burst;
-    sensitive << d.req_mem_last;
+    //sensitive << d.req_mem_len;
+    //sensitive << d.req_mem_burst;
+    //sensitive << d.req_mem_last;
     sensitive << i_resp_mem_valid;
     sensitive << i_resp_mem_path;
     sensitive << i_resp_mem_data;
@@ -121,12 +124,13 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset) :
     i1->i_req_mem_ready(w_ctrl_req_ready);
     i1->o_req_mem_valid(i.req_mem_valid);
     i1->o_req_mem_write(i.req_mem_write);
+    i1->o_req_mem_cached(i.req_mem_cached);
     i1->o_req_mem_addr(i.req_mem_addr);
     i1->o_req_mem_strob(i.req_mem_strob);
     i1->o_req_mem_data(i.req_mem_wdata);
-    i1->o_req_mem_len(i.req_mem_len);
-    i1->o_req_mem_burst(i.req_mem_burst);
-    i1->o_req_mem_last(i.req_mem_last);
+    //i1->o_req_mem_len(i.req_mem_len);
+    //i1->o_req_mem_burst(i.req_mem_burst);
+    //i1->o_req_mem_last(i.req_mem_last);
     i1->i_mem_data_valid(w_ctrl_resp_mem_data_valid);
     i1->i_mem_data(wb_ctrl_resp_mem_data);
     i1->i_mem_load_fault(w_ctrl_resp_mem_load_fault);
@@ -157,12 +161,13 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset) :
     d0->i_req_mem_ready(w_data_req_ready);
     d0->o_req_mem_valid(d.req_mem_valid);
     d0->o_req_mem_write(d.req_mem_write);
+    d0->o_req_mem_cached(d.req_mem_cached);
     d0->o_req_mem_addr(d.req_mem_addr);
     d0->o_req_mem_strob(d.req_mem_strob);
     d0->o_req_mem_data(d.req_mem_wdata);
-    d0->o_req_mem_len(d.req_mem_len);
-    d0->o_req_mem_burst(d.req_mem_burst);
-    d0->o_req_mem_last(d.req_mem_last);
+    //d0->o_req_mem_len(d.req_mem_len);
+    //d0->o_req_mem_burst(d.req_mem_burst);
+    //d0->o_req_mem_last(d.req_mem_last);
     d0->i_mem_data_valid(w_data_resp_mem_data_valid);
     d0->i_mem_data(wb_data_resp_mem_data);
     d0->i_mem_load_fault(w_data_resp_mem_load_fault);
@@ -260,7 +265,7 @@ void CacheTop::comb() {
     sc_uint<1> data_path_id;
     bool v_queue_we;
     bool v_queue_re;
-    bool v_req_mem_last;
+    //bool v_req_mem_last;
 
     v_queue_re = i_req_mem_ready;
     v_queue_we = i.req_mem_valid || d.req_mem_valid;
@@ -268,15 +273,17 @@ void CacheTop::comb() {
     ctrl_path_id = CTRL_PATH;
     vb_ctrl_bus = (ctrl_path_id,
                 i.req_mem_write,
-                i.req_mem_burst,
-                i.req_mem_len,
+                i.req_mem_cached,
+                //i.req_mem_burst,
+                //i.req_mem_len,
                 i.req_mem_addr);
 
     data_path_id = DATA_PATH;
     vb_data_bus = (data_path_id,
                 d.req_mem_write,
-                d.req_mem_burst,
-                d.req_mem_len,
+                d.req_mem_cached,
+                //d.req_mem_burst,
+                //d.req_mem_len,
                 d.req_mem_addr);
 
     if (d.req_mem_valid.read() == 1) {
@@ -292,13 +299,13 @@ void CacheTop::comb() {
     w_data_req_ready = 1;
     w_ctrl_req_ready = !d.req_mem_valid;
     if (i_resp_mem_path.read() == CTRL_PATH) {
-        v_req_mem_last = i.req_mem_last;
+        //v_req_mem_last = i.req_mem_last;
         w_ctrl_resp_mem_data_valid = i_resp_mem_valid.read();
         w_ctrl_resp_mem_load_fault = i_resp_mem_load_fault.read();
         w_data_resp_mem_data_valid = 0;
         w_data_resp_mem_load_fault = 0;
     } else {
-        v_req_mem_last = d.req_mem_last;
+        //v_req_mem_last = d.req_mem_last;
         w_ctrl_resp_mem_data_valid = 0;
         w_ctrl_resp_mem_load_fault = 0;
         w_data_resp_mem_data_valid = i_resp_mem_valid.read();
@@ -311,14 +318,15 @@ void CacheTop::comb() {
 
     to = queue_rdata_o.read();
     o_req_mem_valid = queue_nempty_o;
-    o_req_mem_path = to[BUS_ADDR_WIDTH + 11];
-    o_req_mem_write = to[BUS_ADDR_WIDTH + 10];
-    o_req_mem_burst = to(BUS_ADDR_WIDTH + 9, BUS_ADDR_WIDTH + 8).to_uint64();
-    o_req_mem_len = to(BUS_ADDR_WIDTH + 7, BUS_ADDR_WIDTH).to_uint64();
+    o_req_mem_path = to[BUS_ADDR_WIDTH + 2];
+    o_req_mem_write = to[BUS_ADDR_WIDTH + 1];
+    o_req_mem_cached = to[BUS_ADDR_WIDTH];
     o_req_mem_addr = to(BUS_ADDR_WIDTH-1, 0).to_uint64();
+    //o_req_mem_burst = to(BUS_ADDR_WIDTH + 9, BUS_ADDR_WIDTH + 8).to_uint64();
+    //o_req_mem_len = to(BUS_ADDR_WIDTH + 7, BUS_ADDR_WIDTH).to_uint64();
+    //o_req_mem_last = v_req_mem_last;
     o_req_mem_strob = d.req_mem_strob;
     o_req_mem_data = d.req_mem_wdata;
-    o_req_mem_last = v_req_mem_last;
     o_cstate = 0;
 }
 

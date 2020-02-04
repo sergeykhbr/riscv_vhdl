@@ -71,6 +71,26 @@ RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
     i_msto_ar_id("i_msto_ar_id"),
     i_msto_ar_user("i_msto_ar_user"),
     i_msto_r_ready("i_msto_r_ready"),
+    o_msti_ac_valid("o_msti_ac_valid"),
+    o_msti_ac_addr("o_msti_ac_addr"),
+    o_msti_ac_snoop("o_msti_ac_snoop"),
+    o_msti_ac_prot("o_msti_ac_prot"),
+    o_msti_cr_ready("o_msti_cr_ready"),
+    o_msti_cd_ready("o_msti_cd_ready"),
+    i_msto_ar_domain("i_msto_ar_domain"),
+    i_msto_ar_snoop("i_msto_ar_snoop"),
+    i_msto_ar_bar("i_msto_ar_bar"),
+    i_msto_aw_domain("i_msto_aw_domain"),
+    i_msto_aw_snoop("i_msto_aw_snoop"),
+    i_msto_aw_bar("i_msto_aw_bar"),
+    i_msto_ac_ready("i_msto_ac_ready"),
+    i_msto_cr_valid("i_msto_cr_valid"),
+    i_msto_cr_resp("i_msto_cr_resp"),
+    i_msto_cd_valid("i_msto_cd_valid"),
+    i_msto_cd_data("i_msto_cd_data"),
+    i_msto_cd_last("i_msto_cd_last"),
+    i_msto_rack("i_msto_rack"),
+    i_msto_wack("i_msto_wack"),
     o_interrupt("o_interrupt"),
     o_dport_valid("o_dport_valid"),
     o_dport_write("o_dport_write"),
@@ -236,7 +256,7 @@ void RtlWrapper::clk_gen() {
 void RtlWrapper::comb() {
     bool w_req_mem_ready;
     sc_uint<BUS_ADDR_WIDTH> vb_req_addr;
-    sc_uint<2> vb_r_resp;
+    sc_uint<4> vb_r_resp;
 
     w_req_mem_ready = 0;
     vb_r_resp = 0; // OKAY
@@ -385,7 +405,7 @@ void RtlWrapper::sys_bus_proc() {
         trans.addr = r.req_addr.read();
         if (r.req_write.read() == 1) {
             trans.action = MemAction_Write;
-            uint8_t strob = i_msto_w_strb.read();
+            uint8_t strob = static_cast<uint8_t>(i_msto_w_strb.read());
             uint64_t offset = mask2offset(strob);
             trans.addr += offset;
             trans.xsize = mask2size(strob >> offset);

@@ -40,12 +40,13 @@ DCacheLru::DCacheLru(sc_module_name name_, bool async_reset)
     i_req_mem_ready("i_req_mem_ready"),
     o_req_mem_valid("o_req_mem_valid"),
     o_req_mem_write("o_req_mem_write"),
+    o_req_mem_cached("o_req_mem_cached"),
     o_req_mem_addr("o_req_mem_addr"),
     o_req_mem_strob("o_req_mem_strob"),
     o_req_mem_data("o_req_mem_data"),
-    o_req_mem_len("o_req_mem_len"),
-    o_req_mem_burst("o_req_mem_burst"),
-    o_req_mem_last("o_req_mem_last"),
+    //o_req_mem_len("o_req_mem_len"),
+    //o_req_mem_burst("o_req_mem_burst"),
+    //o_req_mem_last("o_req_mem_last"),
     i_mem_data_valid("i_mem_data_valid"),
     i_mem_data("i_mem_data"),
     i_mem_load_fault("i_mem_load_fault"),
@@ -148,12 +149,10 @@ void DCacheLru::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_req_mem_ready, i_req_mem_ready.name());
         sc_trace(o_vcd, o_req_mem_valid, o_req_mem_valid.name());
         sc_trace(o_vcd, o_req_mem_write, o_req_mem_write.name());
+        sc_trace(o_vcd, o_req_mem_cached, o_req_mem_cached.name());
         sc_trace(o_vcd, o_req_mem_addr, o_req_mem_addr.name());
         sc_trace(o_vcd, o_req_mem_strob, o_req_mem_strob.name());
         sc_trace(o_vcd, o_req_mem_data, o_req_mem_data.name());
-        sc_trace(o_vcd, o_req_mem_len, o_req_mem_len.name());
-        sc_trace(o_vcd, o_req_mem_burst, o_req_mem_burst.name());
-        sc_trace(o_vcd, o_req_mem_last, o_req_mem_last.name());
         sc_trace(o_vcd, i_mem_data_valid, i_mem_data_valid.name());
         sc_trace(o_vcd, i_mem_data, i_mem_data.name());
         sc_trace(o_vcd, i_mem_load_fault, i_mem_load_fault.name());
@@ -438,6 +437,15 @@ void DCacheLru::comb() {
         }
         break;
     case State_WaitResp:
+#if 1
+        if (i_mem_data_valid.read()) {
+            v.cache_line_i = i_mem_data.read();
+            v.state = State_CheckResp;
+            if (i_mem_load_fault.read() == 1) {
+                v.load_fault = 1;
+            }
+        }
+#else
         if (r.burst_cnt.read() == 0) {
             v_last = 1;
         }
@@ -460,6 +468,7 @@ void DCacheLru::comb() {
                 v.load_fault = 1;
             }
         }
+#endif
         break;
     case State_CheckResp:
         if (r.cached.read() == 0 || r.load_fault.read() == 1) {
@@ -490,6 +499,27 @@ void DCacheLru::comb() {
         v.state = State_CheckHit;
         break;
     case State_WriteBus:
+#if 1
+        if (i_mem_data_valid.read()) {
+            v.req_addr_b_resp = r.req_addr;
+            if (r.write_flush.read() == 1) {
+                // Offloading Cache line on flush request
+                v.state = State_FlushAddr;
+            } else if (r.write_first.read() == 1) {
+                v.mem_addr = r.req_addr.read()(BUS_ADDR_WIDTH-1, CFG_DLOG2_BYTES_PER_LINE)
+                            << CFG_DLOG2_BYTES_PER_LINE;
+                v.req_mem_valid = 1;
+                v.burst_cnt = DCACHE_BURST_LEN-1;
+                v.write_first = 0;
+                v.mem_write = 0;
+                v.state = State_WaitGrant;
+            } else {
+                // Non-cached write
+                v.state = State_Idle;
+                v_resp_valid = 1;
+            }
+        }
+#else
         if (r.burst_cnt.read() == 0) {
             v_last = 1;
         }
@@ -522,6 +552,7 @@ void DCacheLru::comb() {
             //    v.store_fault = 1;
             //}
         }
+#endif
         break;
     case State_FlushAddr:
         v.state = State_FlushCheck;
@@ -588,11 +619,12 @@ void DCacheLru::comb() {
     o_req_mem_valid = r.req_mem_valid.read();
     o_req_mem_addr = r.mem_addr.read();
     o_req_mem_write = r.mem_write.read();
-    o_req_mem_strob = r.mem_wstrb.read();
-    o_req_mem_data = r.cache_line_o.read()(BUS_DATA_WIDTH-1, 0).to_uint64();
-    o_req_mem_len = v_req_mem_len;
-    o_req_mem_burst = 1;    // 00=FIX; 01=INCR; 10=WRAP
-    o_req_mem_last = v_last;
+    o_req_mem_cached = r.cached.read();
+    o_req_mem_strob = r.mem_wstrb.read();   // used only for uncached write
+    o_req_mem_data = r.cache_line_o.read();
+    //o_req_mem_len = v_req_mem_len;
+    //o_req_mem_burst = 1;    // 00=FIX; 01=INCR; 10=WRAP
+    //o_req_mem_last = v_last;
 
     o_resp_valid = v_resp_valid;
     o_resp_data = vb_resp_data;

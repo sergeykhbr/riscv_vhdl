@@ -36,12 +36,10 @@ ICacheLru::ICacheLru(sc_module_name name_, bool async_reset)
     i_req_mem_ready("i_req_mem_ready"),
     o_req_mem_valid("o_req_mem_valid"),
     o_req_mem_write("o_req_mem_write"),
+    o_req_mem_cached("o_req_mem_cached"),
     o_req_mem_addr("o_req_mem_addr"),
     o_req_mem_strob("o_req_mem_strob"),
     o_req_mem_data("o_req_mem_data"),
-    o_req_mem_len("o_req_mem_len"),
-    o_req_mem_burst("o_req_mem_burst"),
-    o_req_mem_last("o_req_mem_last"),
     i_mem_data_valid("i_mem_data_valid"),
     i_mem_data("i_mem_data"),
     i_mem_load_fault("i_mem_load_fault"),
@@ -128,12 +126,10 @@ void ICacheLru::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_req_mem_ready, i_req_mem_ready.name());
         sc_trace(o_vcd, o_req_mem_valid, o_req_mem_valid.name());
         sc_trace(o_vcd, o_req_mem_write, o_req_mem_write.name());
+        sc_trace(o_vcd, o_req_mem_cached, o_req_mem_cached.name());
         sc_trace(o_vcd, o_req_mem_addr, o_req_mem_addr.name());
         sc_trace(o_vcd, o_req_mem_strob, o_req_mem_strob.name());
         sc_trace(o_vcd, o_req_mem_data, o_req_mem_data.name());
-        sc_trace(o_vcd, o_req_mem_len, o_req_mem_len.name());
-        sc_trace(o_vcd, o_req_mem_burst, o_req_mem_burst.name());
-        sc_trace(o_vcd, o_req_mem_last, o_req_mem_last.name());
         sc_trace(o_vcd, i_mem_data_valid, i_mem_data_valid.name());
         sc_trace(o_vcd, i_mem_data, i_mem_data.name());
         sc_trace(o_vcd, i_mem_load_fault, i_mem_load_fault.name());
@@ -302,6 +298,17 @@ void ICacheLru::comb() {
         v_req_mem_len = r.burst_cnt;
         break;
     case State_WaitResp:
+#if 1
+        if (i_mem_data_valid.read()) {
+            v.cache_line_i = i_mem_data.read();
+            v.state = State_CheckResp;
+            v.write_addr = r.req_addr;      // Swap addres for 1 clock to write line
+            v.req_addr = r.write_addr;
+            if (i_mem_load_fault.read() == 1) {
+                v.load_fault = 1;
+            }
+        }
+#else
         if (r.burst_cnt.read() == 0) {
             v_last = 1;
         }
@@ -326,6 +333,7 @@ void ICacheLru::comb() {
                 v.load_fault = 1;
             }
         }
+#endif
         break;
     case State_CheckResp:
         v.req_addr = r.write_addr;              // Restore req_addr after line write
@@ -383,11 +391,12 @@ void ICacheLru::comb() {
     o_req_mem_valid = r.req_mem_valid.read();
     o_req_mem_addr = r.mem_addr.read();
     o_req_mem_write = false;
+    o_req_mem_cached = r.cached.read();
     o_req_mem_strob = 0;
     o_req_mem_data = 0;
-    o_req_mem_len = v_req_mem_len;
-    o_req_mem_burst = 1;    // 00=FIX; 01=INCR; 10=WRAP
-    o_req_mem_last = v_last;
+    //o_req_mem_len = v_req_mem_len;
+    //o_req_mem_burst = 1;    // 00=FIX; 01=INCR; 10=WRAP
+    //o_req_mem_last = v_last;
 
     o_resp_valid = v_resp_valid;
     o_resp_data = vb_resp_data;
