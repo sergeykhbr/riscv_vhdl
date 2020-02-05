@@ -69,7 +69,7 @@ class RtlWrapper : public sc_module,
     sc_in<bool> i_msto_w_valid;
     sc_in<sc_biguint<DCACHE_LINE_BITS>> i_msto_w_data;
     sc_in<bool> i_msto_w_last;
-    sc_in<sc_uint<BUS_DATA_BYTES>> i_msto_w_strb;
+    sc_in<sc_uint<DCACHE_BYTES_PER_LINE>> i_msto_w_strb;
     sc_in<bool> i_msto_w_user;
     sc_in<bool> i_msto_b_ready;
     sc_in<bool> i_msto_ar_valid;
@@ -120,7 +120,10 @@ class RtlWrapper : public sc_module,
 
     enum EState {
         State_Idle,
-        State_Busy,
+        State_ReadUncached,
+        State_ReadCached,
+        State_WriteUncached,
+        State_WriteCached,
         State_Reset,
     };
 
@@ -129,22 +132,24 @@ class RtlWrapper : public sc_module,
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_addr;
         sc_signal<sc_uint<8>> req_len;
         sc_signal<sc_uint<2>> req_burst;
-        sc_signal<bool> req_write;
         // AXI4 B-Channel
         sc_signal<bool> b_valid;
         sc_signal<sc_uint<2>> b_resp;
         //
         sc_signal<sc_bv<5>> nrst;
         sc_signal<bool> interrupt;
-        sc_signal<sc_uint<2>> state;
+        sc_signal<sc_uint<3>> state;
         sc_signal<bool> halted;
+        sc_signal<sc_biguint<DCACHE_LINE_BITS>> line;
         sc_signal<bool> r_error;
         sc_signal<bool> w_error;
     } r, v;
 
     sc_event bus_event_;
     sc_signal<bool> w_resp_valid;
-    sc_signal<sc_biguint<DCACHE_LINE_BITS>> wb_resp_data;
+    sc_signal<sc_uint<BUS_DATA_WIDTH>> wb_wdata;
+    sc_signal<sc_uint<BUS_DATA_BYTES>> wb_wstrb;
+    sc_signal<sc_uint<BUS_DATA_WIDTH>> wb_resp_data;
     sc_signal<bool> w_r_error;
     sc_signal<bool> w_w_error;
 

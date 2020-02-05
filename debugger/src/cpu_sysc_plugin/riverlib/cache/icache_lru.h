@@ -46,11 +46,8 @@ SC_MODULE(ICacheLru) {
     sc_out<bool> o_req_mem_write;
     sc_out<bool> o_req_mem_cached;
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_req_mem_addr;
-    sc_out<sc_uint<BUS_DATA_BYTES>> o_req_mem_strob;    // used only for uncached access
+    sc_out<sc_uint<ICACHE_BYTES_PER_LINE>> o_req_mem_strob;    // unused
     sc_out<sc_biguint<ICACHE_LINE_BITS>> o_req_mem_data;
-    //sc_out<sc_uint<8>> o_req_mem_len;       // burst transactions num
-    //sc_out<sc_uint<2>> o_req_mem_burst;     // "01" INCR; "10" burst WRAP
-    //sc_out<bool> o_req_mem_last;            // last in sequence flag
     sc_in<bool> i_mem_data_valid;
     sc_in<sc_biguint<ICACHE_LINE_BITS>> i_mem_data;
     sc_in<bool> i_mem_load_fault;
@@ -91,8 +88,6 @@ SC_MODULE(ICacheLru) {
         sc_signal<sc_uint<4>> state;
         sc_signal<bool> req_mem_valid;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> mem_addr;
-        sc_signal<sc_uint<8>> burst_cnt;
-        sc_signal<sc_uint<ICACHE_BURST_LEN>> burst_rstrb;
         sc_signal<bool> cached;
         sc_signal<bool> executable;
         sc_signal<bool> load_fault;
@@ -110,8 +105,6 @@ SC_MODULE(ICacheLru) {
         iv.state = State_Flush;
         iv.req_mem_valid = 0;
         iv.mem_addr = 0;
-        iv.burst_cnt = 0;
-        iv.burst_rstrb = 0;
         iv.cached = 0;
         iv.executable = 0;
         iv.load_fault = 0;

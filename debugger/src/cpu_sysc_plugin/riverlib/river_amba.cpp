@@ -229,13 +229,15 @@ void RiverAmba::comb() {
     bool vmsto_aw_valid;
     sc_uint<3> vmsto_size;
     sc_uint<8> vmsto_len;
+    sc_uint<3> vmsto_prot;
 
     v = r;
 
     v_req_mem_ready = 0;
     v_resp_mem_valid = 0;
     v_mem_er_load_fault = 0;
-    v_mem_er_store_fault = i_msti_b_valid.read() && i_msti_b_resp.read()[1];
+    v_mem_er_store_fault = i_msti_b_valid.read() && i_msti_b_resp.read()[1]
+                           && r.b_wait.read();
     v_next_ready = 0;
 
     vmsto_r_ready = 1;
@@ -243,6 +245,10 @@ void RiverAmba::comb() {
     vmsto_w_last = 0;
     vmsto_ar_valid = 0;
     vmsto_aw_valid = 0;
+
+    if (i_msti_b_valid.read() == 1) {
+        v.b_wait = 0;
+    }
 
     switch (r.state.read()) {
     case idle:
@@ -253,6 +259,7 @@ void RiverAmba::comb() {
         vmsto_r_ready = 1;
         v_mem_er_load_fault = i_msti_r_valid.read() && i_msti_r_resp.read()[1];
         v_resp_mem_valid = i_msti_r_valid.read();
+        // r_valid and r_last always should be in the same time
         if (i_msti_r_valid.read() == 1 && i_msti_r_last.read() == 1) {
             v_next_ready = 1;
             v.state = idle;
@@ -263,10 +270,12 @@ void RiverAmba::comb() {
         vmsto_w_valid = 1;
         vmsto_w_last = 1;
         v_resp_mem_valid = i_msti_w_ready.read();
+        // Write full line without burst transactions:
         if (i_msti_w_ready.read() == 1) {
             v_next_ready = 1;
             v.state = idle;
             v.b_addr = r.w_addr;
+            v.b_wait = 1;
         }
         break;
 
@@ -308,6 +317,10 @@ void RiverAmba::comb() {
         }
     }
 
+    vmsto_prot[0] = 0;                      // 0=Unpriviledge; 1=Priviledge access
+    vmsto_prot[1] = 0;                      // 0=Secure access; 1=Non-secure access
+    vmsto_prot[2] = req_mem_path_o.read();  // 0=Data; 1=Instruction
+
     o_msto_aw_valid = vmsto_aw_valid;
     o_msto_aw_bits_addr = req_mem_addr_o;
     o_msto_aw_bits_len = vmsto_len;
@@ -315,7 +328,7 @@ void RiverAmba::comb() {
     o_msto_aw_bits_burst = 0x1;                 // 00=FIX; 01=INCR; 10=WRAP
     o_msto_aw_bits_lock = 0;
     o_msto_aw_bits_cache = req_mem_cached_o.read();
-    o_msto_aw_bits_prot = 0;
+    o_msto_aw_bits_prot = vmsto_prot;
     o_msto_aw_bits_qos = 0;
     o_msto_aw_bits_region = 0;
     o_msto_aw_id = 0;
@@ -333,8 +346,8 @@ void RiverAmba::comb() {
     o_msto_ar_bits_size = vmsto_size;           // 0=1B; 1=2B; 2=4B; 3=8B; ...
     o_msto_ar_bits_burst = 0x1;                 // INCR
     o_msto_ar_bits_lock = 0;
-    o_msto_ar_bits_cache = 0;
-    o_msto_ar_bits_prot = 0;
+    o_msto_ar_bits_cache = req_mem_cached_o.read();
+    o_msto_ar_bits_prot = vmsto_prot;
     o_msto_ar_bits_qos = 0;
     o_msto_ar_bits_region = 0;
     o_msto_ar_id = 0;

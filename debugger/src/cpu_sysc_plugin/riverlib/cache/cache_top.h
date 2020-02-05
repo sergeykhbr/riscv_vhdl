@@ -62,11 +62,8 @@ SC_MODULE(CacheTop) {
     sc_out<bool> o_req_mem_write;                       // Memory operation write flag
     sc_out<bool> o_req_mem_cached;
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_req_mem_addr;     // Requesting address
-    sc_out<sc_uint<BUS_DATA_BYTES>> o_req_mem_strob;    // Writing strob 1 bit per 1 byte (AXI compliance)
+    sc_out<sc_uint<DCACHE_BYTES_PER_LINE>> o_req_mem_strob;  // Writing strob 1 bit per 1 byte (AXI compliance)
     sc_out<sc_biguint<DCACHE_LINE_BITS>> o_req_mem_data;     // Writing value
-    //sc_out<sc_uint<8>> o_req_mem_len;                   // burst transaction length
-    //sc_out<sc_uint<2>> o_req_mem_burst;                 // burst type: "00" FIX; "01" INCR; "10" WRAP
-    //sc_out<bool> o_req_mem_last;
     sc_in<bool> i_resp_mem_valid;                       // Memory operation from system bus is completed
     sc_in<bool> i_resp_mem_path;                        // 0=ctrl; 1=data path
     sc_in<sc_biguint<DCACHE_LINE_BITS>> i_resp_mem_data;   // Read value
@@ -104,8 +101,6 @@ SC_MODULE(CacheTop) {
 
     static const int QUEUE_WIDTH =
         BUS_ADDR_WIDTH      // addr
-        //+ 8                 // len
-        //+ 2                 // burst type
         + 1                 // 0=uncached; 1=cached
         + 1                 // 0=read; 1=write
         + 1                 // 0=instruction; 1=data
@@ -116,11 +111,8 @@ SC_MODULE(CacheTop) {
         sc_signal<bool> req_mem_write;
         sc_signal<bool> req_mem_cached;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_mem_addr;
-        sc_signal<sc_uint<BUS_DATA_BYTES>> req_mem_strob;
+        sc_signal<sc_uint<DCACHE_BYTES_PER_LINE>> req_mem_strob;
         sc_signal<sc_biguint<ICACHE_LINE_BITS>> req_mem_wdata;
-        //sc_signal<sc_uint<8>> req_mem_len;
-        //sc_signal<sc_uint<2>> req_mem_burst;
-        //sc_signal<bool> req_mem_last;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> mpu_addr;
     };
 

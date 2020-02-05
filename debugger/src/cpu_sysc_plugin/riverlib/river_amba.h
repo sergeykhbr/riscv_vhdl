@@ -57,7 +57,7 @@ SC_MODULE(RiverAmba) {
     sc_out<bool> o_msto_w_valid;
     sc_out<sc_biguint<DCACHE_LINE_BITS>> o_msto_w_data;
     sc_out<bool> o_msto_w_last;
-    sc_out<sc_uint<BUS_DATA_BYTES>> o_msto_w_strb;
+    sc_out<sc_uint<DCACHE_BYTES_PER_LINE>> o_msto_w_strb;
     sc_out<bool> o_msto_w_user;
     sc_out<bool> o_msto_b_ready;
     sc_out<bool> o_msto_ar_valid;
@@ -131,11 +131,8 @@ SC_MODULE(RiverAmba) {
     sc_signal<bool> req_mem_write_o;
     sc_signal<bool> req_mem_cached_o;
     sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_mem_addr_o;
-    sc_signal<sc_uint<BUS_DATA_BYTES>> req_mem_strob_o;
+    sc_signal<sc_uint<DCACHE_BYTES_PER_LINE>> req_mem_strob_o;
     sc_signal<sc_biguint<DCACHE_LINE_BITS>> req_mem_data_o;
-    //sc_signal<sc_uint<8>> req_mem_len_o;
-    //sc_signal<sc_uint<2>> req_mem_burst_o;
-    //sc_signal<bool> req_mem_last_o;
     sc_signal<bool> resp_mem_valid_i;
     sc_signal<bool> resp_mem_load_fault_i;
     sc_signal<bool> resp_mem_store_fault_i;
@@ -151,6 +148,7 @@ SC_MODULE(RiverAmba) {
         sc_signal<bool> resp_path;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> w_addr;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> b_addr;
+        sc_signal<bool> b_wait;
     } v, r;
 
     void R_RESET(RegistersType &iv) {
@@ -158,6 +156,7 @@ SC_MODULE(RiverAmba) {
         iv.resp_path = 0;
         iv.w_addr = 0;
         iv.b_addr = 0;
+        iv.b_wait = 0;
     }
 
     bool async_reset_;

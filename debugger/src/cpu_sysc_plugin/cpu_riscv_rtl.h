@@ -147,7 +147,7 @@ class CpuRiscV_RTL : public IService,
     sc_signal<bool> msto_w_valid_o;
     sc_signal<sc_biguint<DCACHE_LINE_BITS>> msto_w_data_o;
     sc_signal<bool> msto_w_last_o;
-    sc_signal<sc_uint<BUS_DATA_BYTES>> msto_w_strb_o;
+    sc_signal<sc_uint<DCACHE_BYTES_PER_LINE>> msto_w_strb_o;
     sc_signal<bool> msto_w_user_o;
     sc_signal<bool> msto_b_ready_o;
     sc_signal<bool> msto_ar_valid_o;
