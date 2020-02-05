@@ -37,7 +37,7 @@ SC_MODULE(RiverAmba) {
     sc_in<bool> i_msti_r_valid;
     sc_in<sc_uint<4>> i_msti_r_resp;                    // 0000=OKAY;0001=EXOKAY;0010=SLVERR;0011=DECER
                                                         // resp[2] PassDirty; rresp[3] IsShared
-    sc_in<sc_biguint<DCACHE_LINE_BITS>> i_msti_r_data;
+    sc_in<sc_biguint<L1CACHE_LINE_BITS>> i_msti_r_data;
     sc_in<bool> i_msti_r_last;
     sc_in<sc_uint<CFG_ID_BITS>> i_msti_r_id;
     sc_in<bool> i_msti_r_user;
@@ -55,7 +55,7 @@ SC_MODULE(RiverAmba) {
     sc_out<sc_uint<CFG_ID_BITS>> o_msto_aw_id;
     sc_out<bool> o_msto_aw_user;
     sc_out<bool> o_msto_w_valid;
-    sc_out<sc_biguint<DCACHE_LINE_BITS>> o_msto_w_data;
+    sc_out<sc_biguint<L1CACHE_LINE_BITS>> o_msto_w_data;
     sc_out<bool> o_msto_w_last;
     sc_out<sc_uint<DCACHE_BYTES_PER_LINE>> o_msto_w_strb;
     sc_out<bool> o_msto_w_user;
@@ -90,7 +90,7 @@ SC_MODULE(RiverAmba) {
     sc_out<bool> o_msto_cr_valid;
     sc_out<sc_uint<5>> o_msto_cr_resp;
     sc_out<bool> o_msto_cd_valid;
-    sc_out<sc_uint<BUS_DATA_WIDTH>> o_msto_cd_data;
+    sc_out<sc_biguint<L1CACHE_LINE_BITS>> o_msto_cd_data;
     sc_out<bool> o_msto_cd_last;
     sc_out<bool> o_msto_rack;
     sc_out<bool> o_msto_wack;
@@ -131,8 +131,8 @@ SC_MODULE(RiverAmba) {
     sc_signal<bool> req_mem_write_o;
     sc_signal<bool> req_mem_cached_o;
     sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_mem_addr_o;
-    sc_signal<sc_uint<DCACHE_BYTES_PER_LINE>> req_mem_strob_o;
-    sc_signal<sc_biguint<DCACHE_LINE_BITS>> req_mem_data_o;
+    sc_signal<sc_uint<L1CACHE_BYTES_PER_LINE>> req_mem_strob_o;
+    sc_signal<sc_biguint<L1CACHE_LINE_BITS>> req_mem_data_o;
     sc_signal<bool> resp_mem_valid_i;
     sc_signal<bool> resp_mem_load_fault_i;
     sc_signal<bool> resp_mem_store_fault_i;

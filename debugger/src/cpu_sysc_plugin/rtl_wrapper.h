@@ -48,8 +48,8 @@ class RtlWrapper : public sc_module,
     sc_out<bool> o_msti_b_user;
     sc_out<bool> o_msti_ar_ready;
     sc_out<bool> o_msti_r_valid;
-    sc_out<sc_uint<4>> o_msti_r_resp;                    // 0=OKAY;1=EXOKAY;2=SLVERR;3=DECER _ ACE
-    sc_out<sc_biguint<DCACHE_LINE_BITS>> o_msti_r_data;
+    sc_out<sc_uint<2>> o_msti_r_resp;                    // 0=OKAY;1=EXOKAY;2=SLVERR;3=DECER
+    sc_out<sc_uint<BUS_DATA_WIDTH>> o_msti_r_data;
     sc_out<bool> o_msti_r_last;
     sc_out<sc_uint<CFG_ID_BITS>> o_msti_r_id;
     sc_out<bool> o_msti_r_user;
@@ -67,9 +67,9 @@ class RtlWrapper : public sc_module,
     sc_in<sc_uint<CFG_ID_BITS>> i_msto_aw_id;
     sc_in<bool> i_msto_aw_user;
     sc_in<bool> i_msto_w_valid;
-    sc_in<sc_biguint<DCACHE_LINE_BITS>> i_msto_w_data;
+    sc_in<sc_uint<BUS_DATA_WIDTH>> i_msto_w_data;
     sc_in<bool> i_msto_w_last;
-    sc_in<sc_uint<DCACHE_BYTES_PER_LINE>> i_msto_w_strb;
+    sc_in<sc_uint<BUS_DATA_BYTES>> i_msto_w_strb;
     sc_in<bool> i_msto_w_user;
     sc_in<bool> i_msto_b_ready;
     sc_in<bool> i_msto_ar_valid;
@@ -85,27 +85,6 @@ class RtlWrapper : public sc_module,
     sc_in<sc_uint<CFG_ID_BITS>> i_msto_ar_id;
     sc_in<bool> i_msto_ar_user;
     sc_in<bool> i_msto_r_ready;
-     // ACE signals:
-    sc_out<bool> o_msti_ac_valid;
-    sc_out<sc_uint<BUS_ADDR_WIDTH>> o_msti_ac_addr;
-    sc_out<sc_uint<4>> o_msti_ac_snoop;                 // Table C3-19
-    sc_out<sc_uint<3>> o_msti_ac_prot;
-    sc_out<bool> o_msti_cr_ready;
-    sc_out<bool> o_msti_cd_ready;
-    sc_in<sc_uint<2>> i_msto_ar_domain;                 // 00=Non-shareable (single master in domain)
-    sc_in<sc_uint<4>> i_msto_ar_snoop;                  // Table C3-7:
-    sc_in<sc_uint<2>> i_msto_ar_bar;                    // read barrier transaction
-    sc_in<sc_uint<2>> i_msto_aw_domain;
-    sc_in<sc_uint<4>> i_msto_aw_snoop;                  // Table C3-8
-    sc_in<sc_uint<2>> i_msto_aw_bar;                    // write barrier transaction
-    sc_in<bool> i_msto_ac_ready;
-    sc_in<bool> i_msto_cr_valid;
-    sc_in<sc_uint<5>> i_msto_cr_resp;
-    sc_in<bool> i_msto_cd_valid;
-    sc_in<sc_uint<BUS_DATA_WIDTH>> i_msto_cd_data;
-    sc_in<bool> i_msto_cd_last;
-    sc_in<bool> i_msto_rack;
-    sc_in<bool> i_msto_wack;
     /** Interrupt line from external interrupts controller. */
     sc_out<bool> o_interrupt;
     // Debug interface
@@ -140,7 +119,7 @@ class RtlWrapper : public sc_module,
         sc_signal<bool> interrupt;
         sc_signal<sc_uint<3>> state;
         sc_signal<bool> halted;
-        sc_signal<sc_biguint<DCACHE_LINE_BITS>> line;
+        sc_signal<sc_biguint<L1CACHE_LINE_BITS>> line;
         sc_signal<bool> r_error;
         sc_signal<bool> w_error;
     } r, v;

@@ -71,26 +71,6 @@ RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
     i_msto_ar_id("i_msto_ar_id"),
     i_msto_ar_user("i_msto_ar_user"),
     i_msto_r_ready("i_msto_r_ready"),
-    o_msti_ac_valid("o_msti_ac_valid"),
-    o_msti_ac_addr("o_msti_ac_addr"),
-    o_msti_ac_snoop("o_msti_ac_snoop"),
-    o_msti_ac_prot("o_msti_ac_prot"),
-    o_msti_cr_ready("o_msti_cr_ready"),
-    o_msti_cd_ready("o_msti_cd_ready"),
-    i_msto_ar_domain("i_msto_ar_domain"),
-    i_msto_ar_snoop("i_msto_ar_snoop"),
-    i_msto_ar_bar("i_msto_ar_bar"),
-    i_msto_aw_domain("i_msto_aw_domain"),
-    i_msto_aw_snoop("i_msto_aw_snoop"),
-    i_msto_aw_bar("i_msto_aw_bar"),
-    i_msto_ac_ready("i_msto_ac_ready"),
-    i_msto_cr_valid("i_msto_cr_valid"),
-    i_msto_cr_resp("i_msto_cr_resp"),
-    i_msto_cd_valid("i_msto_cd_valid"),
-    i_msto_cd_data("i_msto_cd_data"),
-    i_msto_cd_last("i_msto_cd_last"),
-    i_msto_rack("i_msto_rack"),
-    i_msto_wack("i_msto_wack"),
     o_interrupt("o_interrupt"),
     o_dport_valid("o_dport_valid"),
     o_dport_write("o_dport_write"),
@@ -258,15 +238,15 @@ void RtlWrapper::clk_gen() {
 void RtlWrapper::comb() {
     bool w_req_mem_ready;
     sc_uint<BUS_ADDR_WIDTH> vb_req_addr;
-    sc_biguint<DCACHE_LINE_BITS> vb_line_cached_o;
-    sc_biguint<DCACHE_LINE_BITS> vb_line_uncached_o;
-    sc_biguint<DCACHE_LINE_BITS> vb_line_o;
+    sc_biguint<L1CACHE_LINE_BITS> vb_line_cached_o;
+    sc_biguint<L1CACHE_LINE_BITS> vb_line_uncached_o;
+    sc_biguint<L1CACHE_LINE_BITS> vb_line_o;
     sc_uint<4> vb_r_resp;
     bool v_r_valid;
     bool v_w_ready;
     sc_uint<BUS_DATA_WIDTH> vb_wdata;
     sc_uint<BUS_DATA_BYTES> vb_wstrb;
-    int tmux = (DCACHE_BURST_LEN - 1) - r.req_len.read().to_int();
+    int tmux = (L1CACHE_BURST_LEN - 1) - r.req_len.read().to_int();
 
     w_req_mem_ready = 0;
     vb_r_resp = 0; // OKAY
@@ -275,7 +255,7 @@ void RtlWrapper::comb() {
     v.b_valid = 0;
     v.b_resp = 0;
 
-    vb_line_cached_o = (wb_resp_data, r.line.read()(DCACHE_LINE_BITS-1, BUS_DATA_WIDTH));
+    vb_line_cached_o = (wb_resp_data, r.line.read()(L1CACHE_LINE_BITS-1, BUS_DATA_WIDTH));
     vb_line_uncached_o = (0, wb_resp_data);
     vb_line_o = 0;
     vb_wdata = 0;
@@ -367,11 +347,7 @@ void RtlWrapper::comb() {
             v.req_burst = 0x1;                                  // INCR
             if (i_msto_ar_bits_cache.read()[0] == 1) {          // cached:
                 v.state = State_ReadCached;
-                if (i_msto_ar_bits_prot.read()[2] == 1) {       // instruction
-                    v.req_len = ICACHE_BURST_LEN - 1;
-                } else {                                        // data
-                    v.req_len = DCACHE_BURST_LEN - 1;
-                }
+                v.req_len = L1CACHE_BURST_LEN - 1;
             } else {                                            // uncached:
                 v.state = State_ReadUncached;
                 if (i_msto_ar_bits_prot.read()[2] == 1) {       // instruction
@@ -385,7 +361,7 @@ void RtlWrapper::comb() {
             v.req_burst = 0x1;                                  // INCR
             if (i_msto_aw_bits_cache.read()[0] == 1) {          // cached (data only):
                 v.state = State_WriteCached;
-                v.req_len = DCACHE_BURST_LEN - 1;
+                v.req_len = L1CACHE_BURST_LEN - 1;
             } else {                                            // uncached (data only):
                 v.state = State_WriteUncached;
                 v.req_len = 0;

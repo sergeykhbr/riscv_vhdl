@@ -101,7 +101,7 @@ SC_MODULE(AxiSerDes) {
     sc_in<bool> i_msti_ar_ready;
     sc_in<bool> i_msti_r_valid;
     sc_in<sc_uint<2>> i_msti_r_resp;                    // 00=OKAY;01=EXOKAY;10=SLVERR;11=DECER
-    sc_in<sc_biguint<BUS_DATA_WIDTH>> i_msti_r_data;
+    sc_in<sc_uint<BUS_DATA_WIDTH>> i_msti_r_data;
     sc_in<bool> i_msti_r_last;
     sc_in<sc_uint<CFG_ID_BITS>> i_msti_r_id;
     sc_in<bool> i_msti_r_user;
@@ -118,7 +118,7 @@ SC_MODULE(AxiSerDes) {
     sc_out<sc_uint<CFG_ID_BITS>> o_msto_aw_id;
     sc_out<bool> o_msto_aw_user;
     sc_out<bool> o_msto_w_valid;
-    sc_out<sc_biguint<BUS_DATA_WIDTH>> o_msto_w_data;
+    sc_out<sc_uint<BUS_DATA_WIDTH>> o_msto_w_data;
     sc_out<bool> o_msto_w_last;
     sc_out<sc_uint<BUS_DATA_BYTES>> o_msto_w_strb;
     sc_out<bool> o_msto_w_user;
