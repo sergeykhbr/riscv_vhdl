@@ -193,7 +193,6 @@ AxiSerDes::AxiSerDes(sc_module_name name, bool async_reset) : sc_module(name),
     sensitive << i_msti_r_last;
     sensitive << i_msti_r_id;
     sensitive << i_msti_r_user;
-    sensitive << r.req_addr;
     sensitive << r.req_len;
     sensitive << r.b_wait;
     sensitive << r.state;
@@ -201,7 +200,7 @@ AxiSerDes::AxiSerDes(sc_module_name name, bool async_reset) : sc_module(name),
     sensitive << r.wstrb;
 
     SC_METHOD(registers);
-    sensitive << i_clk.posedge_event();
+    sensitive << i_clk.pos();
 }
 
 AxiSerDes::~AxiSerDes() {
@@ -256,7 +255,6 @@ void AxiSerDes::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 
         std::string pn(name());
         sc_trace(o_vcd, r.state, pn + ".r_state");
-        sc_trace(o_vcd, r.req_addr, pn + ".r_req_addr");
         sc_trace(o_vcd, r.req_len, pn + ".r_req_len");
         sc_trace(o_vcd, r.b_wait, pn + ".r_b_wait");
     }
@@ -264,27 +262,29 @@ void AxiSerDes::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 
 void AxiSerDes::comb() {
     bool v_req_mem_ready;
-    sc_uint<BUS_ADDR_WIDTH> vb_req_addr;
     sc_uint<BUS_DATA_WIDTH> vb_r_data;
-    sc_biguint<DCACHE_LINE_BITS> vb_line_cached_o;
-    sc_biguint<DCACHE_LINE_BITS> vb_line_uncached_o;
     sc_biguint<DCACHE_LINE_BITS> vb_line_o;
     sc_uint<4> vb_r_resp;
     bool v_r_valid;
     bool v_w_valid;
+    bool v_w_last;
     bool v_w_ready;
     sc_uint<8> vb_len;
 
     v_req_mem_ready = 0;
     v_r_valid = 0;
     v_w_valid = 0;
+    v_w_last = 0;
     v_w_ready = 0;
     vb_len = 0;
 
     vb_r_data = i_msti_r_data.read();
-    vb_line_cached_o = (vb_r_data, r.line.read()(DCACHE_LINE_BITS-1, BUS_DATA_WIDTH));
-    vb_line_uncached_o = (0, vb_r_data);
-    vb_line_o = 0;
+    vb_line_o = r.line.read();
+    for (int i = 0; i < L1CACHE_BURST_LEN; i++) {
+        if (r.rmux.read()[i] == 1) {
+            vb_line_o((i+1)*BUS_DATA_WIDTH-1, i*BUS_DATA_WIDTH) = vb_r_data;
+        }
+    }
 
     if (i_slvo_b_ready.read() == 1) {
         v.b_wait = 0;
@@ -294,48 +294,32 @@ void AxiSerDes::comb() {
     case State_Idle:
         v_req_mem_ready = 1;
         break;
-    case State_ReadUncached:
+    case State_Read:
         if (i_msti_r_valid.read() == 1) {
-            v_r_valid = 1;
-            vb_line_o = vb_line_uncached_o;
-            v_req_mem_ready = 1;
-        }
-        break;
-    case State_ReadCached:
-        if (i_msti_r_valid.read() == 1) {
-            vb_line_o = vb_line_cached_o;
-            v.line = vb_line_cached_o;
+            v.line = vb_line_o;
+            v.rmux = r.rmux.read() << 1;
             if (r.req_len.read() == 0) {
                 v_r_valid = 1;
                 v_req_mem_ready = 1;
             } else {
                 v.req_len = r.req_len.read() - 1;
-                vb_req_addr = r.req_addr.read() + 8;
-                v.req_addr = vb_req_addr;
             }
         }
         break;
-    case State_WriteUncached:
+    case State_Write:
         v_w_valid = 1;
-        if (i_msti_w_ready.read()) {
-            v_w_ready = 1;
-            v.b_wait = 1;
-            v_req_mem_ready = 1;
+        if (r.req_len.read() == 0) {
+            v_w_last = 1;
         }
-        break;
-    case State_WriteCached:
-        v_w_valid = 1;
         if (i_msti_w_ready.read()) {
-            v.line = (0, r.line.read()(L1CACHE_LINE_BITS, BUS_DATA_WIDTH));
-            v.wstrb = (0, r.wstrb.read()(L1CACHE_BYTES_PER_LINE, BUS_DATA_BYTES));
+            v.line = (0, r.line.read()(L1CACHE_LINE_BITS-1, BUS_DATA_WIDTH));
+            v.wstrb = (0, r.wstrb.read()(L1CACHE_BYTES_PER_LINE-1, BUS_DATA_BYTES));
             if (r.req_len.read() == 0) {
                 v_w_ready = 1;
                 v.b_wait = 1;
                 v_req_mem_ready = 1;
             } else {
                 v.req_len = r.req_len.read() - 1;
-                vb_req_addr = r.req_addr.read() + 8;
-                v.req_addr = vb_req_addr;
             }
         }
         break;
@@ -344,29 +328,42 @@ void AxiSerDes::comb() {
 
     if (v_req_mem_ready == 1) {
         if (i_slvo_ar_valid.read() && i_msti_ar_ready.read()) {
-            v.req_addr = i_slvo_ar_bits_addr.read();
-            if (i_slvo_ar_bits_cache.read()[0] == 1) {         // cached:
-                v.state = State_ReadCached;
-                vb_len = L1CACHE_BURST_LEN - 1;
-            } else {                                            // uncached:
-                v.state = State_ReadUncached;
-                if (i_slvo_ar_bits_prot.read()[2] == 1) {      // instruction
-                    vb_len = 1;
-                } else {                                        // data
-                    vb_len = 0;
-                }
-
+            v.state = State_Read;
+            v.rmux = 1;
+            switch (i_slvo_ar_bits_size.read()) {
+            case 4: // 16 Bytes
+                vb_len = 1;
+                break;
+            case 5: // 32 Bytes
+                vb_len = 3;
+                break;
+            case 6: // 64 Bytes
+                vb_len = 7;
+                break;
+            case 7: // 128 Bytes
+                vb_len = 15;
+                break;
+            default:
+                vb_len = 0;
             }
         } else if (i_slvo_aw_valid.read() && i_msti_aw_ready.read()) {
-            v.req_addr = i_slvo_aw_bits_addr.read();
-            v.line = i_slvo_w_data.read();                     // Undocumented feature of RIVER
-            if (i_slvo_aw_bits_cache.read()[0] == 1) {         // cached (data only):
-                v.state = State_WriteCached;
-                v.wstrb = ~0ul;
-                vb_len = L1CACHE_BURST_LEN - 1;
-            } else {                                            // uncached (data only):
-                v.state = State_WriteUncached;
-                v.wstrb = i_slvo_w_strb.read();
+            v.line = i_slvo_w_data.read();                     // Undocumented RIVER (Axi-lite feature)
+            v.wstrb = i_slvo_w_strb.read();
+            v.state = State_Write;
+            switch (i_slvo_aw_bits_size.read()) {
+            case 4: // 16 Bytes
+                vb_len = 1;
+                break;
+            case 5: // 32 Bytes
+                vb_len = 3;
+                break;
+            case 6: // 64 Bytes
+                vb_len = 7;
+                break;
+            case 7: // 128 Bytes
+                vb_len = 15;
+                break;
+            default:
                 vb_len = 0;
             }
         } else {
@@ -395,7 +392,7 @@ void AxiSerDes::comb() {
     o_msto_aw_id = i_slvo_aw_id;
     o_msto_aw_user = i_slvo_aw_user;
     o_msto_w_valid = v_w_valid;
-    o_msto_w_last = v_w_valid;
+    o_msto_w_last = v_w_last;
     o_msto_w_data = r.line.read()(BUS_DATA_WIDTH-1, 0).to_uint64();
     o_msto_w_strb = r.wstrb.read()(BUS_DATA_BYTES-1, 0);
     o_msto_w_user = i_slvo_w_user;

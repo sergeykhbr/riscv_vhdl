@@ -150,28 +150,26 @@ SC_MODULE(AxiSerDes) {
  private:
     enum EState {
         State_Idle,
-        State_ReadUncached,
-        State_ReadCached,
-        State_WriteUncached,
-        State_WriteCached,
+        State_Read,
+        State_Write,
     };
 
     struct RegistersType {
         sc_signal<sc_uint<3>> state;
-        sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_addr;
         sc_signal<sc_uint<8>> req_len;
         sc_signal<bool> b_wait;
         sc_signal<sc_biguint<L1CACHE_LINE_BITS>> line;
         sc_signal<sc_uint<L1CACHE_BYTES_PER_LINE>> wstrb;
+        sc_signal<sc_uint<L1CACHE_BURST_LEN>> rmux;
     } r, v;
 
     void R_RESET(RegistersType &iv) {
         iv.state = State_Idle;
-        iv.req_addr = 0;
         iv.req_len = 0;
         iv.b_wait = 0;
         iv.line = 0;
         iv.wstrb = 0;
+        iv.rmux = 0;
     }
 
     bool async_reset_;

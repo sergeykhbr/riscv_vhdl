@@ -228,7 +228,6 @@ void RiverAmba::comb() {
     bool vmsto_ar_valid;
     bool vmsto_aw_valid;
     sc_uint<3> vmsto_size;
-    sc_uint<8> vmsto_len;
     sc_uint<3> vmsto_prot;
 
     v = r;
@@ -307,14 +306,12 @@ void RiverAmba::comb() {
         R_RESET(v);
     }
 
-    vmsto_len = 0;
     if (req_mem_cached_o.read() == 1) {
         vmsto_size = 0x5;   // 32 Bytes
+    } else if (req_mem_path_o.read() == 1) {
+        vmsto_size = 0x4;   // 16 Bytes: Uncached Instruction
     } else {
-        vmsto_size = 0x3;   // 8 Bytes
-        if (req_mem_path_o.read() == 0) {   // CTRL path
-            vmsto_len = 1;
-        }
+        vmsto_size = 0x3;   // 8 Bytes: Uncached Data
     }
 
     vmsto_prot[0] = 0;                      // 0=Unpriviledge; 1=Priviledge access
@@ -323,7 +320,7 @@ void RiverAmba::comb() {
 
     o_msto_aw_valid = vmsto_aw_valid;
     o_msto_aw_bits_addr = req_mem_addr_o;
-    o_msto_aw_bits_len = vmsto_len;
+    o_msto_aw_bits_len = 0;
     o_msto_aw_bits_size = vmsto_size;           // 0=1B; 1=2B; 2=4B; 3=8B; 4=16B; 5=32B; 6=64B; 7=128B
     o_msto_aw_bits_burst = 0x1;                 // 00=FIX; 01=INCR; 10=WRAP
     o_msto_aw_bits_lock = 0;
@@ -342,7 +339,7 @@ void RiverAmba::comb() {
 
     o_msto_ar_valid = vmsto_ar_valid;
     o_msto_ar_bits_addr = req_mem_addr_o;
-    o_msto_ar_bits_len = vmsto_len;
+    o_msto_ar_bits_len = 0;
     o_msto_ar_bits_size = vmsto_size;           // 0=1B; 1=2B; 2=4B; 3=8B; ...
     o_msto_ar_bits_burst = 0x1;                 // INCR
     o_msto_ar_bits_lock = 0;

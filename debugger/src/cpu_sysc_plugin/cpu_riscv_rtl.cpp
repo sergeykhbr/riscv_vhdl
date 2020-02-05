@@ -95,6 +95,9 @@ void CpuRiscV_RTL::postinitService() {
     wrapper_->setBus(ibus_);
     wrapper_->setClockHz(freqHz_.to_int());
     wrapper_->generateVCD(i_vcd_, o_vcd_);
+    if (serdes_) {
+        serdes_->generateVCD(i_vcd_, o_vcd_);
+    }
     core_->generateVCD(i_vcd_, o_vcd_);
 
     pcmd_br_ = new CmdBrRiscv(itap_);

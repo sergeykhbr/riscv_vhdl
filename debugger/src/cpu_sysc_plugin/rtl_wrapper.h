@@ -99,10 +99,8 @@ class RtlWrapper : public sc_module,
 
     enum EState {
         State_Idle,
-        State_ReadUncached,
-        State_ReadCached,
-        State_WriteUncached,
-        State_WriteCached,
+        State_Read,
+        State_Write,
         State_Reset,
     };
 
@@ -119,7 +117,6 @@ class RtlWrapper : public sc_module,
         sc_signal<bool> interrupt;
         sc_signal<sc_uint<3>> state;
         sc_signal<bool> halted;
-        sc_signal<sc_biguint<L1CACHE_LINE_BITS>> line;
         sc_signal<bool> r_error;
         sc_signal<bool> w_error;
     } r, v;
