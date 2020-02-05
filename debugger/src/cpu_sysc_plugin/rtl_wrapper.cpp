@@ -246,6 +246,8 @@ void RtlWrapper::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.req_burst, pn + ".r_req_burst");
         sc_trace(o_vcd, r.b_resp, pn + ".r_b_resp");
         sc_trace(o_vcd, r.b_valid, pn + ".r_b_valid");
+        sc_trace(o_vcd, wb_wdata, pn + ".wb_wdata");
+        sc_trace(o_vcd, wb_wstrb, pn + ".wb_wstrb");
     }
 }
 
@@ -262,7 +264,9 @@ void RtlWrapper::comb() {
     sc_uint<4> vb_r_resp;
     bool v_r_valid;
     bool v_w_ready;
-    int tmux = (DCACHE_BURST_LEN - 1) - r.req_len.read();
+    sc_uint<BUS_DATA_WIDTH> vb_wdata;
+    sc_uint<BUS_DATA_BYTES> vb_wstrb;
+    int tmux = (DCACHE_BURST_LEN - 1) - r.req_len.read().to_int();
 
     w_req_mem_ready = 0;
     vb_r_resp = 0; // OKAY
@@ -274,6 +278,8 @@ void RtlWrapper::comb() {
     vb_line_cached_o = (wb_resp_data, r.line.read()(DCACHE_LINE_BITS-1, BUS_DATA_WIDTH));
     vb_line_uncached_o = (0, wb_resp_data);
     vb_line_o = 0;
+    vb_wdata = 0;
+    vb_wstrb = 0;
 
     v.interrupt = w_interrupt;
     v.halted = i_halted.read();
@@ -316,16 +322,16 @@ void RtlWrapper::comb() {
         break;
     case State_WriteUncached:
         v_w_ready = 1;
-        wb_wdata = i_msto_w_data.read()(BUS_DATA_WIDTH-1, 0).to_uint64();
-        wb_wstrb = i_msto_w_strb.read()(BUS_DATA_BYTES-1, 0);
+        vb_wdata = i_msto_w_data.read()(BUS_DATA_WIDTH-1, 0).to_uint64();
+        vb_wstrb = i_msto_w_strb.read()(BUS_DATA_BYTES-1, 0);
         v.b_valid = 1;
         v.b_resp = w_w_error ? 0x2 : 0x0;
         w_req_mem_ready = 1;
         break;
     case State_WriteCached:
-        wb_wdata = i_msto_w_data.read()((tmux+1)*BUS_DATA_WIDTH-1,
+        vb_wdata = i_msto_w_data.read()((tmux+1)*BUS_DATA_WIDTH-1,
                                         tmux*BUS_DATA_WIDTH).to_uint64();
-        wb_wstrb = (1u << BUS_DATA_BYTES) - 1;
+        vb_wstrb = (1u << BUS_DATA_BYTES) - 1;
         if (r.req_len.read() == 0) {
             v_w_ready = 1;
             v.b_valid = 1;
@@ -377,7 +383,7 @@ void RtlWrapper::comb() {
         } else if (i_msto_aw_valid.read()) {
             v.req_addr = i_msto_aw_bits_addr.read();
             v.req_burst = 0x1;                                  // INCR
-            if (i_msto_ar_bits_cache.read()[0] == 1) {          // cached (data only):
+            if (i_msto_aw_bits_cache.read()[0] == 1) {          // cached (data only):
                 v.state = State_WriteCached;
                 v.req_len = DCACHE_BURST_LEN - 1;
             } else {                                            // uncached (data only):
@@ -392,6 +398,9 @@ void RtlWrapper::comb() {
     if (r.r_error.read() || w_r_error.read()) {
         vb_r_resp = 0x2;    // SLVERR
     }
+
+    wb_wdata = vb_wdata;
+    wb_wstrb = vb_wstrb;
 
     o_nrst = r.nrst.read()[1].to_bool();
 
@@ -472,6 +481,7 @@ void RtlWrapper::sys_bus_proc() {
         trans.action = MemAction_Write;
         strob = static_cast<uint8_t>(wb_wstrb.read());
         offset = mask2offset(strob);
+        trans.addr = r.req_addr.read();
         trans.addr += offset;
         trans.xsize = mask2size(strob >> offset);
         trans.wstrb = (1 << trans.xsize) - 1;
@@ -487,7 +497,7 @@ void RtlWrapper::sys_bus_proc() {
         trans.action = MemAction_Write;
         trans.addr = r.req_addr.read();
         trans.xsize = BUS_DATA_BYTES;
-        trans.wstrb = wb_wstrb.read();
+        trans.wstrb = wb_wstrb.read().to_uint();
         trans.wpayload.b64[0] = wb_wdata.read();
         resp = ibus_->b_transport(&trans);
 

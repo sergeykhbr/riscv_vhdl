@@ -87,6 +87,13 @@ static const int DTAG_FL_LOAD_FAULT = 2;
 static const int DTAG_FL_TOTAL      = 3;
 
 
+/**
+ * L1 cache common parameters (suppose I$ and D$ have the same size)
+ */
+static const int L1CACHE_BYTES_PER_LINE   = DCACHE_BYTES_PER_LINE;
+static const int L1CACHE_LINE_BITS        = 8*DCACHE_BYTES_PER_LINE;
+static const int L1CACHE_BURST_LEN        = DCACHE_BURST_LEN;
+
 /** MPU config */
 static const int CFG_MPU_TBL_WIDTH   = 2;    // [1:0]  log2(MPU_TBL_SIZE)
 static const int CFG_MPU_TBL_SIZE    = 1 << CFG_MPU_TBL_WIDTH;

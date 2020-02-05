@@ -34,6 +34,7 @@ SRC_PATH =\
 	$(TOP_DIR)src/cpu_sysc_plugin \
 	$(TOP_DIR)src/cpu_sysc_plugin/cmds \
 	$(TOP_DIR)src/cpu_sysc_plugin/riverlib \
+	$(TOP_DIR)src/cpu_sysc_plugin/riverlib/l2 \
 	$(TOP_DIR)src/cpu_sysc_plugin/riverlib/core \
 	$(TOP_DIR)src/cpu_sysc_plugin/riverlib/core/arith \
 	$(TOP_DIR)src/cpu_sysc_plugin/riverlib/core/fpu_d \
@@ -56,6 +57,7 @@ SOURCES = \
 	rtl_wrapper \
 	river_top \
 	river_amba \
+	axiserdes \
 	icache_lru \
 	dcache_lru \
 	mpu \
@@ -83,7 +85,8 @@ SOURCES = \
 	fpu_top \
 	stacktrbuf \
 	dbg_port \
-	tracer
+	tracer \
+	l2_top
 
 LIBS = \
 	dbg64g \
