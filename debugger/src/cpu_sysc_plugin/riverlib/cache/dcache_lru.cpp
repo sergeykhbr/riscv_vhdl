@@ -420,7 +420,6 @@ void DCacheLru::comb() {
         }
         break;
     case State_WaitResp:
-#if 1
         if (i_mem_data_valid.read()) {
             v.cache_line_i = i_mem_data.read();
             v.state = State_CheckResp;
@@ -428,30 +427,6 @@ void DCacheLru::comb() {
                 v.load_fault = 1;
             }
         }
-#else
-        if (r.burst_cnt.read() == 0) {
-            v_last = 1;
-        }
-        if (i_mem_data_valid.read()) {
-            t_cache_line_i = r.cache_line_i.read();
-            for (int k = 0; k < DCACHE_BURST_LEN; k++) {
-                if (r.burst_rstrb.read()[k] == 1) {
-                    t_cache_line_i((k+1)*BUS_DATA_WIDTH-1,
-                                    k*BUS_DATA_WIDTH) = i_mem_data.read();
-                }
-            }
-            v.cache_line_i = t_cache_line_i;
-            if (r.burst_cnt.read() == 0) {
-                v.state = State_CheckResp;
-            } else {
-                v.burst_cnt = r.burst_cnt.read() - 1;
-            }
-            v.burst_rstrb = r.burst_rstrb.read() << 1;
-            if (i_mem_load_fault.read() == 1) {
-                v.load_fault = 1;
-            }
-        }
-#endif
         break;
     case State_CheckResp:
         if (r.cached.read() == 0 || r.load_fault.read() == 1) {
@@ -482,7 +457,6 @@ void DCacheLru::comb() {
         v.state = State_CheckHit;
         break;
     case State_WriteBus:
-#if 1
         if (i_mem_data_valid.read()) {
             v.req_addr_b_resp = r.req_addr;
             if (r.write_flush.read() == 1) {
@@ -500,41 +474,10 @@ void DCacheLru::comb() {
                 v.state = State_Idle;
                 v_resp_valid = 1;
             }
-        }
-#else
-        if (r.burst_cnt.read() == 0) {
-            v_last = 1;
-        }
-        if (i_mem_data_valid.read()) {
-            // Shift right to send lower part on AXI
-            v.cache_line_o =
-                (0, r.cache_line_o.read()(DCACHE_LINE_BITS-1, BUS_DATA_WIDTH));
-            if (r.burst_cnt.read() == 0) {
-                v.req_addr_b_resp = r.req_addr;
-                if (r.write_flush.read() == 1) {
-                    // Offloading Cache line on flush request
-                    v.state = State_FlushAddr;
-                } else if (r.write_first.read() == 1) {
-                    v.mem_addr = r.req_addr.read()(BUS_ADDR_WIDTH-1, CFG_DLOG2_BYTES_PER_LINE)
-                                << CFG_DLOG2_BYTES_PER_LINE;
-                    v.req_mem_valid = 1;
-                    v.burst_cnt = DCACHE_BURST_LEN-1;
-                    v.write_first = 0;
-                    v.mem_write = 0;
-                    v.state = State_WaitGrant;
-                } else {
-                    // Non-cached write
-                    v.state = State_Idle;
-                    v_resp_valid = 1;
-                }
-            } else {
-                v.burst_cnt = r.burst_cnt.read() - 1;
-            }
             //if (i_resp_mem_store_fault.read() == 1) {
             //    v.store_fault = 1;
             //}
         }
-#endif
         break;
     case State_FlushAddr:
         v.state = State_FlushCheck;

@@ -34,11 +34,11 @@ SC_MODULE(RiverTop) {
     sc_out<bool> o_req_mem_write;                       // AXI memory request is write type
     sc_out<bool> o_req_mem_cached;
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_req_mem_addr;     // AXI memory request address
-    sc_out<sc_uint<DCACHE_BYTES_PER_LINE>> o_req_mem_strob;  // Writing strob. 1 bit per Byte (uncached only)
-    sc_out<sc_biguint<DCACHE_LINE_BITS>> o_req_mem_data;     // Writing data
+    sc_out<sc_uint<L1CACHE_BYTES_PER_LINE>> o_req_mem_strob;  // Writing strob. 1 bit per Byte (uncached only)
+    sc_out<sc_biguint<L1CACHE_LINE_BITS>> o_req_mem_data;     // Writing data
     sc_in<bool> i_resp_mem_valid;                       // AXI response is valid
     sc_in<bool> i_resp_mem_path;                        // 0=ctrl; 1=data path
-    sc_in<sc_biguint<DCACHE_LINE_BITS>> i_resp_mem_data;     // Read data
+    sc_in<sc_biguint<L1CACHE_LINE_BITS>> i_resp_mem_data;     // Read data
     sc_in<bool> i_resp_mem_load_fault;
     sc_in<bool> i_resp_mem_store_fault;
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_resp_mem_store_fault_addr;

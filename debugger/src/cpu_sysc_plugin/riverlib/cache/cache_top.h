@@ -62,11 +62,11 @@ SC_MODULE(CacheTop) {
     sc_out<bool> o_req_mem_write;                       // Memory operation write flag
     sc_out<bool> o_req_mem_cached;
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_req_mem_addr;     // Requesting address
-    sc_out<sc_uint<DCACHE_BYTES_PER_LINE>> o_req_mem_strob;  // Writing strob 1 bit per 1 byte (AXI compliance)
-    sc_out<sc_biguint<DCACHE_LINE_BITS>> o_req_mem_data;     // Writing value
+    sc_out<sc_uint<L1CACHE_BYTES_PER_LINE>> o_req_mem_strob;  // Writing strob 1 bit per 1 byte (AXI compliance)
+    sc_out<sc_biguint<L1CACHE_LINE_BITS>> o_req_mem_data;     // Writing value
     sc_in<bool> i_resp_mem_valid;                       // Memory operation from system bus is completed
     sc_in<bool> i_resp_mem_path;                        // 0=ctrl; 1=data path
-    sc_in<sc_biguint<DCACHE_LINE_BITS>> i_resp_mem_data;   // Read value
+    sc_in<sc_biguint<L1CACHE_LINE_BITS>> i_resp_mem_data;   // Read value
     sc_in<bool> i_resp_mem_load_fault;                  // Bus response with SLVERR or DECERR on read
     sc_in<bool> i_resp_mem_store_fault;                 // Bus response with SLVERR or DECERR on write
     sc_in<sc_uint<BUS_ADDR_WIDTH>> i_resp_mem_store_fault_addr;
@@ -112,7 +112,7 @@ SC_MODULE(CacheTop) {
         sc_signal<bool> req_mem_cached;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_mem_addr;
         sc_signal<sc_uint<DCACHE_BYTES_PER_LINE>> req_mem_strob;
-        sc_signal<sc_biguint<ICACHE_LINE_BITS>> req_mem_wdata;
+        sc_signal<sc_biguint<DCACHE_LINE_BITS>> req_mem_wdata;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> mpu_addr;
     };
 

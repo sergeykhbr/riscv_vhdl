@@ -57,7 +57,7 @@ SC_MODULE(RiverAmba) {
     sc_out<bool> o_msto_w_valid;
     sc_out<sc_biguint<L1CACHE_LINE_BITS>> o_msto_w_data;
     sc_out<bool> o_msto_w_last;
-    sc_out<sc_uint<DCACHE_BYTES_PER_LINE>> o_msto_w_strb;
+    sc_out<sc_uint<L1CACHE_BYTES_PER_LINE>> o_msto_w_strb;
     sc_out<bool> o_msto_w_user;
     sc_out<bool> o_msto_b_ready;
     sc_out<bool> o_msto_ar_valid;
