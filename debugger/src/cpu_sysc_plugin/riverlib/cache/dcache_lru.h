@@ -48,14 +48,12 @@ SC_MODULE(DCacheLru) {
     sc_in<bool> i_req_mem_ready;
     sc_out<bool> o_req_mem_valid;
     sc_out<bool> o_req_mem_write;
+    sc_out<bool> o_req_mem_cached;
     sc_out<sc_uint<BUS_ADDR_WIDTH>> o_req_mem_addr;
-    sc_out<sc_uint<BUS_DATA_BYTES>> o_req_mem_strob;
-    sc_out<sc_uint<BUS_DATA_WIDTH>> o_req_mem_data;
-    sc_out<sc_uint<8>> o_req_mem_len;       // burst transactions num
-    sc_out<sc_uint<2>> o_req_mem_burst;     // "01" INCR; "10" burst WRAP
-    sc_out<bool> o_req_mem_last;            // last in sequence flag
+    sc_out<sc_uint<DCACHE_BYTES_PER_LINE>> o_req_mem_strob;
+    sc_out<sc_biguint<DCACHE_LINE_BITS>> o_req_mem_data;
     sc_in<bool> i_mem_data_valid;
-    sc_in<sc_uint<BUS_DATA_WIDTH>> i_mem_data;
+    sc_in<sc_biguint<DCACHE_LINE_BITS>> i_mem_data;
     sc_in<bool> i_mem_load_fault;
     sc_in<bool> i_mem_store_fault;
     // Mpu interface
@@ -113,15 +111,13 @@ SC_MODULE(DCacheLru) {
         sc_signal<bool> req_mem_valid;
         sc_signal<bool> mem_write;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> mem_addr;
-        sc_signal<sc_uint<DCACHE_LOG2_BURST_LEN>> burst_cnt;
-        sc_signal<sc_uint<DCACHE_BURST_LEN>> burst_rstrb;
         sc_signal<bool> cached;
         sc_signal<bool> mpu_er_store;
         sc_signal<bool> mpu_er_load;
         sc_signal<bool> load_fault;
         sc_signal<bool> write_first;
         sc_signal<bool> write_flush;
-        sc_signal<sc_uint<BUS_DATA_BYTES>> mem_wstrb;
+        sc_signal<sc_uint<DCACHE_BYTES_PER_LINE>> mem_wstrb;
         sc_signal<bool> req_flush;
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_flush_addr;
         sc_signal<sc_uint<CFG_DLOG2_LINES_PER_WAY + CFG_DLOG2_NWAYS>> req_flush_cnt;
@@ -141,8 +137,6 @@ SC_MODULE(DCacheLru) {
         iv.req_mem_valid = 0;
         iv.mem_write = 0;
         iv.mem_addr = 0;
-        iv.burst_cnt = 0;
-        iv.burst_rstrb = ~0ul;
         iv.cached = 0;
         iv.mpu_er_store = 0;
         iv.mpu_er_load = 0;

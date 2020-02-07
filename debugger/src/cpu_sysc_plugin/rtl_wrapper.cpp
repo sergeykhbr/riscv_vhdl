@@ -87,7 +87,6 @@ RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
     v.req_addr = 0;
     v.req_len = 0;
     v.req_burst = 0;
-    v.req_write = 0;
     v.b_valid = 0;
     v.b_resp = 0;
     v.interrupt = false;
@@ -140,13 +139,14 @@ RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
     sensitive << r.req_addr;
     sensitive << r.req_len;
     sensitive << r.req_burst;
-    sensitive << r.req_write;
     sensitive << r.b_valid;
     sensitive << r.b_resp;
     sensitive << r.nrst;
     sensitive << r.interrupt;
     sensitive << r.state;
     sensitive << r.halted;
+    sensitive << r.r_error;
+    sensitive << r.w_error;
     sensitive << w_resp_valid;
     sensitive << wb_resp_data;
     sensitive << w_r_error;
@@ -221,11 +221,12 @@ void RtlWrapper::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.nrst, pn + ".r_nrst");
         sc_trace(o_vcd, r.state, pn + ".r_state");
         sc_trace(o_vcd, r.req_addr, pn + ".r_req_addr");
-        sc_trace(o_vcd, r.req_write, pn + ".r_req_write");
         sc_trace(o_vcd, r.req_len, pn + ".r_req_len");
         sc_trace(o_vcd, r.req_burst, pn + ".r_req_burst");
         sc_trace(o_vcd, r.b_resp, pn + ".r_b_resp");
         sc_trace(o_vcd, r.b_valid, pn + ".r_b_valid");
+        sc_trace(o_vcd, wb_wdata, pn + ".wb_wdata");
+        sc_trace(o_vcd, wb_wstrb, pn + ".wb_wstrb");
     }
 }
 
@@ -236,12 +237,24 @@ void RtlWrapper::clk_gen() {
 void RtlWrapper::comb() {
     bool w_req_mem_ready;
     sc_uint<BUS_ADDR_WIDTH> vb_req_addr;
-    sc_uint<2> vb_r_resp;
+    sc_uint<4> vb_r_resp;
+    bool v_r_valid;
+    bool v_r_last;
+    bool v_w_ready;
+    sc_uint<BUS_DATA_WIDTH> vb_wdata;
+    sc_uint<BUS_DATA_BYTES> vb_wstrb;
+    int tmux = (L1CACHE_BURST_LEN - 1) - r.req_len.read().to_int();
 
     w_req_mem_ready = 0;
     vb_r_resp = 0; // OKAY
+    v_r_valid = 0;
+    v_r_last = 0;
+    v_w_ready = 0;
     v.b_valid = 0;
     v.b_resp = 0;
+
+    vb_wdata = 0;
+    vb_wstrb = 0;
 
     v.interrupt = w_interrupt;
     v.halted = i_halted.read();
@@ -255,60 +268,35 @@ void RtlWrapper::comb() {
             v.state = State_Reset;
         } else {
             w_req_mem_ready = 1;
-            if (i_msto_ar_valid.read()) {
-                v.req_write = 0;
-                v.req_addr = i_msto_ar_bits_addr.read();
-                v.req_burst = i_msto_ar_bits_burst.read();
-                v.req_len = i_msto_ar_bits_len.read();
-                v.state = State_Busy;
-            } else if (i_msto_aw_valid.read()) {
-                v.req_write = 1;
-                v.req_addr = i_msto_aw_bits_addr.read();
-                v.req_burst = i_msto_aw_bits_burst.read();
-                v.req_len = i_msto_aw_bits_len.read();
-                v.state = State_Busy;
-            }
         }
         break;
-    case State_Busy:
+    case State_Read:
+        v_r_valid = 1;
         if (r.req_len.read() == 0) {
             w_req_mem_ready = 1;
-            v.r_error = 0;
-            v.w_error = 0;
-            if (i_msto_ar_valid.read()) {
-                v.req_write = 0;
-                v.req_addr = i_msto_ar_bits_addr.read();
-                v.req_burst = i_msto_ar_bits_burst.read();
-                v.req_len = i_msto_ar_bits_len.read();
-                v.state = State_Busy;
-            } else if (i_msto_aw_valid.read()) {
-                v.req_write = 1;
-                v.req_addr = i_msto_aw_bits_addr.read();
-                v.req_burst = i_msto_aw_bits_burst.read();
-                v.req_len = i_msto_aw_bits_len.read();
-                v.state = State_Busy;
-            } else {
-                v.state = State_Idle;
-            }
-            if (r.req_write.read()) {
-                v.b_valid = 1;
-                v.b_resp = r.w_error.read() || w_w_error ? 0x2 : 0x0;
-            }
+            v_r_last = 1;
         } else {
-            if (r.req_write.read()) {
-                v.w_error = r.w_error.read() || w_w_error;
-            } else {
-                v.r_error = r.r_error.read() || w_r_error;
-            }
-
+            v.r_error = r.r_error.read() || w_r_error;
             v.req_len = r.req_len.read() - 1;
-            if (r.req_burst.read() == 0) {
-                vb_req_addr = r.req_addr.read();
-            } else if (r.req_burst.read() == 1) {
+            if (r.req_burst.read() == 1) {
                 vb_req_addr = r.req_addr.read() + 8;
-            } else if (r.req_burst.read() == 2) {
-                vb_req_addr(4, 0) = r.req_addr.read()(4, 0) + 8;
-                vb_req_addr(31, 5) = r.req_addr.read()(31, 5);
+            }
+            v.req_addr = vb_req_addr;
+        }
+        break;
+    case State_Write:
+        vb_wdata = i_msto_w_data.read();
+        vb_wstrb = i_msto_w_strb.read();
+        v_w_ready = 1;
+        if (r.req_len.read() == 0) {
+            v.b_valid = 1;
+            v.b_resp = r.w_error.read() || w_w_error ? 0x2 : 0x0;
+            w_req_mem_ready = 1;
+        } else {
+            v.w_error = r.w_error.read() || w_w_error;
+            v.req_len = r.req_len.read() - 1;
+            if (r.req_burst.read() == 1) {
+                vb_req_addr = r.req_addr.read() + 8;
             }
             v.req_addr = vb_req_addr;
         }
@@ -321,24 +309,45 @@ void RtlWrapper::comb() {
     default:;
     }
 
+    if (w_req_mem_ready == 1) {
+        v.r_error = 0;
+        v.w_error = 0;
+        if (i_msto_ar_valid.read()) {
+            v.state = State_Read;
+            v.req_addr = i_msto_ar_bits_addr.read();
+            v.req_burst = i_msto_ar_bits_burst.read();
+            v.req_len = i_msto_ar_bits_len.read();
+        } else if (i_msto_aw_valid.read()) {
+            v.state = State_Write;
+            v.req_addr = i_msto_aw_bits_addr.read();
+            v.req_burst = i_msto_aw_bits_burst.read();
+            v.req_len = i_msto_aw_bits_len.read();
+        } else {
+            v.state = State_Idle;
+        }
+    }
+
     if (r.r_error.read() || w_r_error.read()) {
         vb_r_resp = 0x2;    // SLVERR
     }
 
+    wb_wdata = vb_wdata;
+    wb_wstrb = vb_wstrb;
+
     o_nrst = r.nrst.read()[1].to_bool();
 
     o_msti_aw_ready = w_req_mem_ready;
-    o_msti_w_ready = w_resp_valid && r.req_write.read();
+    o_msti_w_ready = v_w_ready;
     o_msti_b_valid = r.b_valid;
     o_msti_b_resp = r.b_resp;
     o_msti_b_id = 0;
     o_msti_b_user = 0;
 
     o_msti_ar_ready = w_req_mem_ready;
-    o_msti_r_valid = w_resp_valid && !r.req_write.read();
+    o_msti_r_valid = v_r_valid;
     o_msti_r_resp = vb_r_resp;                    // 0=OKAY;1=EXOKAY;2=SLVERR;3=DECER
     o_msti_r_data = wb_resp_data;
-    o_msti_r_last = w_resp_valid && !r.req_write.read() && r.req_len.read() == 0;
+    o_msti_r_last = v_r_last;
     o_msti_r_id = 0;
     o_msti_r_user = 0;
 
@@ -362,6 +371,8 @@ void RtlWrapper::registers() {
 void RtlWrapper::sys_bus_proc() {
     /** Simulation events queue */
     IFace *cb;
+    uint8_t strob;
+    uint64_t offset;
 
     step_queue_.initProc();
     step_queue_.pushPreQueued();
@@ -381,35 +392,39 @@ void RtlWrapper::sys_bus_proc() {
     wb_resp_data = 0;
     w_r_error = 0;
     w_w_error = 0;
-    if (r.state.read() == State_Busy) {
+
+    switch (r.state.read()) {
+    case State_Read:
+        trans.action = MemAction_Read;
         trans.addr = r.req_addr.read();
-        if (r.req_write.read() == 1) {
-            trans.action = MemAction_Write;
-            uint8_t strob = i_msto_w_strb.read();
-            uint64_t offset = mask2offset(strob);
-            trans.addr += offset;
-            trans.xsize = mask2size(strob >> offset);
-            trans.wstrb = (1 << trans.xsize) - 1;
-            trans.wpayload.b64[0] = i_msto_w_data.read();
-            trans.rpayload.b64[0] = 0;
-        } else {
-            trans.action = MemAction_Read;
-            trans.xsize = 8;
-            trans.wstrb = 0;
-            trans.wpayload.b64[0] = 0;
-            trans.rpayload.b64[0] = 0;
-        }
+        trans.xsize = 8;
+        trans.wstrb = 0;
+        trans.wpayload.b64[0] = 0;
         resp = ibus_->b_transport(&trans);
 
         w_resp_valid = 1;
         wb_resp_data = trans.rpayload.b64[0];
         if (resp == TRANS_ERROR) {
-            if (r.req_write.read() == 1) {
-                w_w_error = 1;
-            } else {
-                w_r_error = 1;
-            }
+            w_r_error = 1;
         }
+        break;
+    case State_Write:
+        trans.action = MemAction_Write;
+        strob = static_cast<uint8_t>(wb_wstrb.read());
+        offset = mask2offset(strob);
+        trans.addr = r.req_addr.read();
+        trans.addr += offset;
+        trans.xsize = mask2size(strob >> offset);
+        trans.wstrb = (1 << trans.xsize) - 1;
+        trans.wpayload.b64[0] = wb_wdata.read();
+        resp = ibus_->b_transport(&trans);
+
+        w_resp_valid = 1;
+        if (resp == TRANS_ERROR) {
+            w_w_error = 1;
+        }
+        break;
+    default:;
     }
 
     // Debug port handling:

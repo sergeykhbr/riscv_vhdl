@@ -66,6 +66,26 @@ RiverAmba::RiverAmba(sc_module_name name_, uint32_t hartid, bool async_reset,
     o_msto_ar_id("o_msto_ar_id"),
     o_msto_ar_user("o_msto_ar_user"),
     o_msto_r_ready("o_msto_r_ready"),
+    i_msti_ac_valid("i_msti_ac_valid"),
+    i_msti_ac_addr("i_msti_ac_addr"),
+    i_msti_ac_snoop("i_msti_ac_snoop"),
+    i_msti_ac_prot("i_msti_ac_prot"),
+    i_msti_cr_ready("i_msti_cr_ready"),
+    i_msti_cd_ready("i_msti_cd_ready"),
+    o_msto_ar_domain("o_msto_ar_domain"),
+    o_msto_ar_snoop("o_msto_ar_snoop"),
+    o_msto_ar_bar("o_msto_ar_bar"),
+    o_msto_aw_domain("o_msto_aw_domain"),
+    o_msto_aw_snoop("o_msto_aw_snoop"),
+    o_msto_aw_bar("o_msto_aw_bar"),
+    o_msto_ac_ready("o_msto_ac_ready"),
+    o_msto_cr_valid("o_msto_cr_valid"),
+    o_msto_cr_resp("o_msto_cr_resp"),
+    o_msto_cd_valid("o_msto_cd_valid"),
+    o_msto_cd_data("o_msto_cd_data"),
+    o_msto_cd_last("o_msto_cd_last"),
+    o_msto_rack("o_msto_rack"),
+    o_msto_wack("o_msto_wack"),
     i_ext_irq("i_ext_irq"),
     o_time("o_time"),
     o_exec_cnt("o_exec_cnt"),
@@ -85,12 +105,10 @@ RiverAmba::RiverAmba(sc_module_name name_, uint32_t hartid, bool async_reset,
     river0->o_req_mem_path(req_mem_path_o);
     river0->o_req_mem_valid(req_mem_valid_o);
     river0->o_req_mem_write(req_mem_write_o);
+    river0->o_req_mem_cached(req_mem_cached_o);
     river0->o_req_mem_addr(req_mem_addr_o);
     river0->o_req_mem_strob(req_mem_strob_o);
     river0->o_req_mem_data(req_mem_data_o);
-    river0->o_req_mem_len(req_mem_len_o);
-    river0->o_req_mem_burst(req_mem_burst_o);
-    river0->o_req_mem_last(req_mem_last_o);
     river0->i_resp_mem_valid(resp_mem_valid_i);
     river0->i_resp_mem_path(r.resp_path);
     river0->i_resp_mem_data(i_msti_r_data);
@@ -127,12 +145,10 @@ RiverAmba::RiverAmba(sc_module_name name_, uint32_t hartid, bool async_reset,
     sensitive << req_mem_path_o;
     sensitive << req_mem_valid_o;
     sensitive << req_mem_write_o;
+    sensitive << req_mem_cached_o;
     sensitive << req_mem_addr_o;
     sensitive << req_mem_strob_o;
     sensitive << req_mem_data_o;
-    sensitive << req_mem_len_o;
-    sensitive << req_mem_burst_o;
-    sensitive << req_mem_last_o;
     sensitive << r.state;
     sensitive << r.resp_path;
     sensitive << r.w_addr;
@@ -189,12 +205,10 @@ void RiverAmba::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, req_mem_path_o, pn + ".req_mem_path_o");
         sc_trace(o_vcd, req_mem_valid_o, pn + ".req_mem_valid_o");
         sc_trace(o_vcd, req_mem_write_o, pn + ".req_mem_write_o");
+        sc_trace(o_vcd, req_mem_cached_o, pn + ".req_mem_cached_o");
         sc_trace(o_vcd, req_mem_addr_o, pn + ".req_mem_addr_o");
         sc_trace(o_vcd, req_mem_strob_o, pn + ".req_mem_strob_o");
         sc_trace(o_vcd, req_mem_data_o, pn + ".req_mem_data_o");
-        sc_trace(o_vcd, req_mem_len_o, pn + ".req_mem_len_o");
-        sc_trace(o_vcd, req_mem_burst_o, pn + ".req_mem_burst_o");
-        sc_trace(o_vcd, req_mem_last_o, pn + ".req_mem_last_o");
         sc_trace(o_vcd, r.state, pn + ".r_state");
         
     }
@@ -213,13 +227,16 @@ void RiverAmba::comb() {
     bool vmsto_w_last;
     bool vmsto_ar_valid;
     bool vmsto_aw_valid;
+    sc_uint<3> vmsto_size;
+    sc_uint<3> vmsto_prot;
 
     v = r;
 
     v_req_mem_ready = 0;
     v_resp_mem_valid = 0;
     v_mem_er_load_fault = 0;
-    v_mem_er_store_fault = i_msti_b_valid.read() && i_msti_b_resp.read()[1];
+    v_mem_er_store_fault = i_msti_b_valid.read() && i_msti_b_resp.read()[1]
+                           && r.b_wait.read();
     v_next_ready = 0;
 
     vmsto_r_ready = 1;
@@ -227,6 +244,10 @@ void RiverAmba::comb() {
     vmsto_w_last = 0;
     vmsto_ar_valid = 0;
     vmsto_aw_valid = 0;
+
+    if (i_msti_b_valid.read() == 1) {
+        v.b_wait = 0;
+    }
 
     switch (r.state.read()) {
     case idle:
@@ -237,6 +258,7 @@ void RiverAmba::comb() {
         vmsto_r_ready = 1;
         v_mem_er_load_fault = i_msti_r_valid.read() && i_msti_r_resp.read()[1];
         v_resp_mem_valid = i_msti_r_valid.read();
+        // r_valid and r_last always should be in the same time
         if (i_msti_r_valid.read() == 1 && i_msti_r_last.read() == 1) {
             v_next_ready = 1;
             v.state = idle;
@@ -245,12 +267,14 @@ void RiverAmba::comb() {
 
     case writing:
         vmsto_w_valid = 1;
-        vmsto_w_last = req_mem_last_o;
+        vmsto_w_last = 1;
         v_resp_mem_valid = i_msti_w_ready.read();
-        if (i_msti_w_ready.read() == 1 && req_mem_last_o.read() == 1) {
+        // Write full line without burst transactions:
+        if (i_msti_w_ready.read() == 1) {
             v_next_ready = 1;
             v.state = idle;
             v.b_addr = r.w_addr;
+            v.b_wait = 1;
         }
         break;
 
@@ -282,15 +306,26 @@ void RiverAmba::comb() {
         R_RESET(v);
     }
 
+    if (req_mem_cached_o.read() == 1) {
+        vmsto_size = 0x5;   // 32 Bytes
+    } else if (req_mem_path_o.read() == 1) {
+        vmsto_size = 0x4;   // 16 Bytes: Uncached Instruction
+    } else {
+        vmsto_size = 0x3;   // 8 Bytes: Uncached Data
+    }
+
+    vmsto_prot[0] = 0;                      // 0=Unpriviledge; 1=Priviledge access
+    vmsto_prot[1] = 0;                      // 0=Secure access; 1=Non-secure access
+    vmsto_prot[2] = req_mem_path_o.read();  // 0=Data; 1=Instruction
 
     o_msto_aw_valid = vmsto_aw_valid;
     o_msto_aw_bits_addr = req_mem_addr_o;
-    o_msto_aw_bits_len = req_mem_len_o;
-    o_msto_aw_bits_size = 0x3;                  // 0=1B; 1=2B; 2=4B; 3=8B; ...
-    o_msto_aw_bits_burst = req_mem_burst_o;
+    o_msto_aw_bits_len = 0;
+    o_msto_aw_bits_size = vmsto_size;           // 0=1B; 1=2B; 2=4B; 3=8B; 4=16B; 5=32B; 6=64B; 7=128B
+    o_msto_aw_bits_burst = 0x1;                 // 00=FIX; 01=INCR; 10=WRAP
     o_msto_aw_bits_lock = 0;
-    o_msto_aw_bits_cache = 0;
-    o_msto_aw_bits_prot = 0;
+    o_msto_aw_bits_cache = req_mem_cached_o.read();
+    o_msto_aw_bits_prot = vmsto_prot;
     o_msto_aw_bits_qos = 0;
     o_msto_aw_bits_region = 0;
     o_msto_aw_id = 0;
@@ -304,12 +339,12 @@ void RiverAmba::comb() {
 
     o_msto_ar_valid = vmsto_ar_valid;
     o_msto_ar_bits_addr = req_mem_addr_o;
-    o_msto_ar_bits_len = req_mem_len_o;
-    o_msto_ar_bits_size = 0x3;                  // 0=1B; 1=2B; 2=4B; 3=8B; ...
-    o_msto_ar_bits_burst = req_mem_burst_o;
+    o_msto_ar_bits_len = 0;
+    o_msto_ar_bits_size = vmsto_size;           // 0=1B; 1=2B; 2=4B; 3=8B; ...
+    o_msto_ar_bits_burst = 0x1;                 // INCR
     o_msto_ar_bits_lock = 0;
-    o_msto_ar_bits_cache = 0;
-    o_msto_ar_bits_prot = 0;
+    o_msto_ar_bits_cache = req_mem_cached_o.read();
+    o_msto_ar_bits_prot = vmsto_prot;
     o_msto_ar_bits_qos = 0;
     o_msto_ar_bits_region = 0;
     o_msto_ar_id = 0;

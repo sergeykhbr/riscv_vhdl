@@ -99,7 +99,8 @@ class RtlWrapper : public sc_module,
 
     enum EState {
         State_Idle,
-        State_Busy,
+        State_Read,
+        State_Write,
         State_Reset,
     };
 
@@ -108,14 +109,13 @@ class RtlWrapper : public sc_module,
         sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_addr;
         sc_signal<sc_uint<8>> req_len;
         sc_signal<sc_uint<2>> req_burst;
-        sc_signal<bool> req_write;
         // AXI4 B-Channel
         sc_signal<bool> b_valid;
         sc_signal<sc_uint<2>> b_resp;
         //
         sc_signal<sc_bv<5>> nrst;
         sc_signal<bool> interrupt;
-        sc_signal<sc_uint<2>> state;
+        sc_signal<sc_uint<3>> state;
         sc_signal<bool> halted;
         sc_signal<bool> r_error;
         sc_signal<bool> w_error;
@@ -123,6 +123,8 @@ class RtlWrapper : public sc_module,
 
     sc_event bus_event_;
     sc_signal<bool> w_resp_valid;
+    sc_signal<sc_uint<BUS_DATA_WIDTH>> wb_wdata;
+    sc_signal<sc_uint<BUS_DATA_BYTES>> wb_wstrb;
     sc_signal<sc_uint<BUS_DATA_WIDTH>> wb_resp_data;
     sc_signal<bool> w_r_error;
     sc_signal<bool> w_w_error;
