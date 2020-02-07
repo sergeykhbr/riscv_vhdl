@@ -50,14 +50,12 @@ entity dcache_lru is generic (
     i_req_mem_ready : in std_logic;
     o_req_mem_valid : out std_logic;
     o_req_mem_write : out std_logic;
+    o_req_mem_cached : out std_logic;
     o_req_mem_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    o_req_mem_strob : out std_logic_vector(BUS_DATA_BYTES-1 downto 0);
-    o_req_mem_data : out std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
-    o_req_mem_len : out std_logic_vector(7 downto 0);
-    o_req_mem_burst : out std_logic_vector(1 downto 0);
-    o_req_mem_last : out std_logic;
+    o_req_mem_strob : out std_logic_vector(DCACHE_BYTES_PER_LINE-1 downto 0);
+    o_req_mem_data : out std_logic_vector(DCACHE_LINE_BITS-1 downto 0);
     i_mem_data_valid : in std_logic;
-    i_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+    i_mem_data : in std_logic_vector(DCACHE_LINE_BITS-1 downto 0);
     i_mem_load_fault : in std_logic;
     i_mem_store_fault : in std_logic;
     -- MPU interface
@@ -107,15 +105,13 @@ architecture arch_dcache_lru of dcache_lru is
       req_mem_valid : std_logic;
       mem_write : std_logic;
       mem_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-      burst_cnt : integer range 0 to DCACHE_BURST_LEN-1;
-      burst_rstrb : std_logic_vector(DCACHE_BURST_LEN-1 downto 0);
       cached : std_logic;
       mpu_er_store : std_logic;
       mpu_er_load : std_logic;
       load_fault : std_logic;
       write_first : std_logic;
       write_flush : std_logic;
-      mem_wstrb : std_logic_vector(BUS_DATA_BYTES-1 downto 0);
+      mem_wstrb : std_logic_vector(DCACHE_BYTES_PER_LINE-1 downto 0);
       req_flush : std_logic;
       req_flush_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
       req_flush_cnt : std_logic_vector(CFG_DLOG2_LINES_PER_WAY + CFG_DLOG2_NWAYS-1 downto 0);
@@ -133,8 +129,6 @@ architecture arch_dcache_lru of dcache_lru is
     '0',                                    -- req_mem_valid
     '0',                                    -- mem_write
     (others => '0'),                        -- mem_addr,
-    0,                                      -- burst_cnt
-    (others => '1'),                        -- burst_rstrb
     '0',                                    -- cached
     '0',                                    -- mpu_er_store
     '0',                                    -- mpu_er_load
@@ -189,9 +183,7 @@ begin
     variable vb_line_rdata_o_modified : std_logic_vector(DCACHE_LINE_BITS-1 downto 0);
     variable vb_line_rdata_o_wstrb : std_logic_vector(DCACHE_BYTES_PER_LINE-1 downto 0);
     
-    variable v_last : std_logic;
     variable v_req_ready : std_logic;
-    variable v_req_mem_len : std_logic_vector(7 downto 0);
     variable vb_cached_data : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
     variable vb_uncached_data : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
     variable v_resp_valid : std_logic;
@@ -220,8 +212,6 @@ begin
     v_resp_er_store_fault := '0';
     v_flush := '0';
     v_flush_end := '0';
-    v_last := '0';
-    v_req_mem_len := conv_std_logic_vector(DCACHE_BURST_LEN-1, 8);
     ridx := conv_integer(r.req_addr(CFG_DLOG2_BYTES_PER_LINE-1 downto CFG_LOG2_DATA_BYTES));
 
     vb_cached_data := line_rdata_o((ridx+1)*BUS_DATA_WIDTH - 1 downto
@@ -390,25 +380,21 @@ begin
                     v.mem_addr(CFG_DLOG2_BYTES_PER_LINE-1 downto 0) := (others => '0');
                 end if;
                 v.mem_wstrb := (others => '1');
-                v.burst_cnt := DCACHE_BURST_LEN-1;
                 v.cached := '1';
                 v.cache_line_o := line_rdata_o;
             else
                 v.mem_addr(BUS_ADDR_WIDTH-1 downto CFG_LOG2_DATA_BYTES) :=
                     r.req_addr(BUS_ADDR_WIDTH-1 downto CFG_LOG2_DATA_BYTES);
                 v.mem_addr(CFG_LOG2_DATA_BYTES-1 downto 0) := (others => '0');
-                v.mem_wstrb := r.req_wstrb;
+                v.mem_wstrb := (others => '0');
+                v.mem_wstrb(7 downto 0) := r.req_wstrb;
                 v.mem_write := r.req_write;
-                v.burst_cnt := 0;
                 v.cached := '0';
-                v_req_mem_len := (others => '0');
 
                 v.cache_line_o := (others => '0');
                 v.cache_line_o(BUS_DATA_WIDTH-1 downto 0) := r.req_wdata;
             end if;
         end if;
-        v.burst_rstrb := (others => '0');
-        v.burst_rstrb(0) := '1';
         v.cache_line_i := (others => '0');
         v.load_fault := '0';
     when State_WaitGrant =>
@@ -424,26 +410,10 @@ begin
             end if;
             v.req_mem_valid := '0';
         end if;
-        if r.cached = '0' then
-            v_req_mem_len := (others => '0');
-        end if;
     when State_WaitResp =>
-        if r.burst_cnt = 0 then
-            v_last := '1';
-        end if;
         if i_mem_data_valid = '1' then
-            for k in 0 to DCACHE_BURST_LEN-1 loop
-                if r.burst_rstrb(k) = '1' then
-                    v.cache_line_i((k+1)*BUS_DATA_WIDTH-1 downto
-                                    k*BUS_DATA_WIDTH) := i_mem_data;
-                end if;
-            end loop;
-            if r.burst_cnt = 0 then
-                v.state := State_CheckResp;
-            else
-                v.burst_cnt := r.burst_cnt - 1;
-            end if;
-            v.burst_rstrb := r.burst_rstrb(DCACHE_BURST_LEN-2 downto 0) & '0';
+            v.cache_line_i := i_mem_data;
+            v.state := State_CheckResp;
             if i_mem_load_fault = '1' then
                 v.load_fault := '1';
             end if;
@@ -475,33 +445,22 @@ begin
     when State_SetupReadAdr =>
         v.state := State_CheckHit;
     when State_WriteBus =>
-        if r.burst_cnt = 0 then
-            v_last := '1';
-        end if;
         if i_mem_data_valid = '1' then
-            -- Shift right to send lower part on AXI
-            v.cache_line_o := zero64(BUS_DATA_WIDTH-1 downto 0)
-                            & r.cache_line_o(DCACHE_LINE_BITS-1 downto BUS_DATA_WIDTH);
-            if r.burst_cnt = 0 then
-                v.req_addr_b_resp := r.req_addr;
-                if r.write_flush = '1' then
-                    -- Offloading Cache line on flush request
-                    v.state := State_FlushAddr;
-                elsif r.write_first = '1' then
-                    v.mem_addr := r.req_addr(BUS_ADDR_WIDTH-1 downto CFG_DLOG2_BYTES_PER_LINE)
-                                & zero64(CFG_DLOG2_BYTES_PER_LINE-1 downto 0);
-                    v.req_mem_valid := '1';
-                    v.burst_cnt := DCACHE_BURST_LEN-1;
-                    v.write_first := '0';
-                    v.mem_write := '0';
-                    v.state := State_WaitGrant;
-                else
-                    -- Non-cached write
-                    v.state := State_Idle;
-                    v_resp_valid := '1';
-                end if;
+            v.req_addr_b_resp := r.req_addr;
+            if r.write_flush = '1' then
+                -- Offloading Cache line on flush request
+                v.state := State_FlushAddr;
+            elsif r.write_first = '1' then
+                v.mem_addr := r.req_addr(BUS_ADDR_WIDTH-1 downto CFG_DLOG2_BYTES_PER_LINE)
+                            & zero64(CFG_DLOG2_BYTES_PER_LINE-1 downto 0);
+                v.req_mem_valid := '1';
+                v.write_first := '0';
+                v.mem_write := '0';
+                v.state := State_WaitGrant;
             else
-                v.burst_cnt := r.burst_cnt - 1;
+                -- Non-cached write
+                v.state := State_Idle;
+                v_resp_valid := '1';
             end if;
             --if i_resp_mem_store_fault = '1' then
             --    v.store_fault := '1';
@@ -525,7 +484,6 @@ begin
             v.write_flush := '1';
             v.mem_addr := line_raddr_o;
             v.req_mem_valid := '1';
-            v.burst_cnt := DCACHE_BURST_LEN-1;
             v.mem_write := '1';
             v.mem_wstrb := (others => '1');
             v.cached := '1';
@@ -572,11 +530,9 @@ begin
     o_req_mem_valid <= r.req_mem_valid;
     o_req_mem_addr <= r.mem_addr;
     o_req_mem_write <= r.mem_write;
+    o_req_mem_cached <= r.cached;
     o_req_mem_strob <= r.mem_wstrb;
-    o_req_mem_data <= r.cache_line_o(BUS_DATA_WIDTH-1 downto 0);
-    o_req_mem_len <= v_req_mem_len;
-    o_req_mem_burst <= "01";    -- 00=FIX; 01=INCR; 10=WRAP
-    o_req_mem_last <= v_last;
+    o_req_mem_data <= r.cache_line_o;
 
     o_resp_valid <= v_resp_valid;
     o_resp_data <= vb_resp_data;

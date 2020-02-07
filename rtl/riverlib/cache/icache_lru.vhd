@@ -46,14 +46,12 @@ entity icache_lru is generic (
     i_req_mem_ready : in std_logic;
     o_req_mem_valid : out std_logic;
     o_req_mem_write : out std_logic;
+    o_req_mem_cached : out std_logic;
     o_req_mem_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    o_req_mem_strob : out std_logic_vector(BUS_DATA_BYTES-1 downto 0);
-    o_req_mem_data : out std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
-    o_req_mem_len : out std_logic_vector(7 downto 0);
-    o_req_mem_burst : out std_logic_vector(1 downto 0);
-    o_req_mem_last : out std_logic;
+    o_req_mem_strob : out std_logic_vector(ICACHE_BYTES_PER_LINE-1 downto 0);
+    o_req_mem_data : out std_logic_vector(ICACHE_LINE_BITS-1 downto 0);
     i_mem_data_valid : in std_logic;
-    i_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+    i_mem_data : in std_logic_vector(ICACHE_LINE_BITS-1 downto 0);
     i_mem_load_fault : in std_logic;
     -- MPU interface:
     o_mpu_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
@@ -85,8 +83,6 @@ architecture arch_icache_lru of icache_lru is
       state : std_logic_vector(3 downto 0);
       req_mem_valid : std_logic;
       mem_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-      burst_cnt : std_logic_vector(7 downto 0);
-      burst_rstrb : std_logic_vector(ICACHE_BURST_LEN-1 downto 0);
       cached : std_logic;
       executable : std_logic;
       load_fault : std_logic;
@@ -102,8 +98,6 @@ architecture arch_icache_lru of icache_lru is
     (others => '0'),                        -- write_addr
     State_Flush,                            -- state
     '0', (others => '0'),                   -- req_mem_valid, mem_addr,
-    (others => '0'),                        -- burst_cnt
-    (others => '0'),                        -- burst_rstrb
     '0',                                    -- cached
     '0',                                    -- executable
     '0',                                    -- load_fault
@@ -159,10 +153,8 @@ begin
                 i_mpu_flags, i_flush_address, i_flush_valid,
                 line_raddr_o, line_rdata_o, line_rflags_o, line_hit_o, line_hit_next_o, r)
     variable v : RegistersType;
-    variable v_last : std_logic;
     variable v_req_ready : std_logic;
     variable v_resp_valid : std_logic;
-    variable v_req_mem_len : std_logic_vector(7 downto 0);
     variable vb_cached_data : std_logic_vector(31 downto 0);
     variable vb_uncached_data : std_logic_vector(31 downto 0);
     variable vb_resp_data : std_logic_vector(31 downto 0);
@@ -184,8 +176,6 @@ begin
     vb_resp_data := (others => '0');
     v_resp_er_load_fault := '0';
     v_flush := '0';
-    v_last := '0';
-    v_req_mem_len := conv_std_logic_vector(ICACHE_BURST_LEN-1, 8);
     sel_cached := conv_integer(r.req_addr(CFG_ILOG2_BYTES_PER_LINE-1 downto 1));
     sel_uncached := conv_integer(r.req_addr(2 downto 1));
 
@@ -280,18 +270,14 @@ begin
                     v.mem_addr := r.req_addr_next(BUS_ADDR_WIDTH-1 downto CFG_ILOG2_BYTES_PER_LINE)
                                 & zero64(CFG_ILOG2_BYTES_PER_LINE-1 downto 0);
                 end if;
-                v.burst_cnt := conv_std_logic_vector(ICACHE_BURST_LEN-1, 8);
                 v.cached := '1';
             else
                 v.mem_addr := r.req_addr(BUS_ADDR_WIDTH-1 downto CFG_LOG2_DATA_BYTES)
                              & zero64(CFG_LOG2_DATA_BYTES-1 downto 0);
                 v.cached := '0';
-                v_req_mem_len := X"01";  -- burst = 2
-                v.burst_cnt := X"01";
             end if;
         end if;
 
-        v.burst_rstrb := conv_std_logic_vector(1, ICACHE_BURST_LEN);
         v.load_fault := '0';
         v.executable := i_mpu_flags(CFG_MPU_FL_EXEC);
     when State_WaitGrant =>
@@ -299,26 +285,12 @@ begin
             v.state := State_WaitResp;
             v.req_mem_valid := '0';
         end if;
-        v_req_mem_len := r.burst_cnt;
     when State_WaitResp =>
-        if or_reduce(r.burst_cnt) = '0' then
-            v_last := '1';
-        end if;
         if i_mem_data_valid = '1' then
-            for k in 0 to ICACHE_BURST_LEN-1 loop
-                if r.burst_rstrb(k) = '1'then
-                    v.cache_line_i((k+1)*BUS_DATA_WIDTH-1 downto
-                                    k*BUS_DATA_WIDTH) := i_mem_data;
-                end if;
-            end loop;
-            if or_reduce(r.burst_cnt) = '0' then
-                v.state := State_CheckResp;
-                v.write_addr := r.req_addr;      -- Swap addres for 1 clock to write line
-                v.req_addr := r.write_addr;
-            else
-                v.burst_cnt := r.burst_cnt - 1;
-            end if;
-            v.burst_rstrb := r.burst_rstrb(ICACHE_BURST_LEN-2 downto 0) & '0';
+            v.cache_line_i := i_mem_data;
+            v.state := State_CheckResp;
+            v.write_addr := r.req_addr;      -- Swap addres for 1 clock to write line
+            v.req_addr := r.write_addr;
             if i_mem_load_fault = '1' then
                 v.load_fault := '1';
             end if;
@@ -377,11 +349,9 @@ begin
     o_req_mem_valid <= r.req_mem_valid;
     o_req_mem_addr <= r.mem_addr;
     o_req_mem_write <= '0';
+    o_req_mem_cached <= r.cached;
     o_req_mem_strob <= (others => '0');
     o_req_mem_data <= (others => '0');
-    o_req_mem_len <= v_req_mem_len;
-    o_req_mem_burst <= "01";  -- 00=FIX; 01=INCR; 10=WRAP
-    o_req_mem_last <= v_last;
 
     o_resp_valid <= v_resp_valid;
     o_resp_data <= vb_resp_data;

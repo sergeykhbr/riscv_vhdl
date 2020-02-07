@@ -50,14 +50,12 @@ architecture behavior of dcache_lru_tb is
   signal i_req_mem_ready : std_logic;
   signal o_req_mem_valid : std_logic;
   signal o_req_mem_write : std_logic;
+  signal o_req_mem_cached : std_logic;
   signal o_req_mem_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-  signal o_req_mem_strob : std_logic_vector(BUS_DATA_BYTES-1 downto 0);
-  signal o_req_mem_data : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
-  signal o_req_mem_len : std_logic_vector(7 downto 0);
-  signal o_req_mem_burst : std_logic_vector(1 downto 0);
-  signal o_req_mem_last : std_logic;
+  signal o_req_mem_strob : std_logic_vector(L1CACHE_BYTES_PER_LINE-1 downto 0);
+  signal o_req_mem_data : std_logic_vector(L1CACHE_LINE_BITS-1 downto 0);
   signal i_mem_data_valid : std_logic;
-  signal i_mem_data : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+  signal i_mem_data : std_logic_vector(L1CACHE_LINE_BITS-1 downto 0);
   signal i_mem_load_fault : std_logic;
   signal i_mem_store_fault : std_logic;
   signal o_mpu_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
@@ -72,7 +70,6 @@ architecture behavior of dcache_lru_tb is
       state : bus_state_type;
       mpu_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
       burst_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-      burst_cnt : integer;
   end record;
 
   signal r, rin : BusRegisterType;
@@ -183,8 +180,8 @@ begin
 
 
   comb_bus : process (i_nrst, r,
-                      o_req_mem_valid, o_req_mem_write, o_req_mem_addr, o_req_mem_strob,
-                      o_req_mem_data, o_req_mem_len, o_req_mem_burst, o_req_mem_last,
+                      o_req_mem_valid, o_req_mem_write, o_req_mem_cached,
+                      o_req_mem_addr, o_req_mem_strob, o_req_mem_data, 
                       o_mpu_addr)
     variable v : BusRegisterType;
   begin
@@ -201,37 +198,23 @@ begin
     when Idle =>
         i_req_mem_ready <= '1';
         if o_req_mem_valid = '1' then
-            if o_req_mem_len = zero64(7 downto 0) then
-                v.state := ReadLast;
-            else
-                v.state := Read;
-            end if;
+            v.state := ReadLast;
             v.burst_addr := o_req_mem_addr;
-            v.burst_cnt := conv_integer(o_req_mem_len);
         end if;
     when Read =>
         i_mem_data_valid <= '1';
         i_mem_data <= X"2000000010000000" + r.burst_addr;
-        v.burst_cnt := r.burst_cnt - 1;
         v.burst_addr := r.burst_addr + 8;
-        if r.burst_cnt = 1 then
-            v.state := ReadLast;
-        end if;
+        v.state := ReadLast;
     when ReadLast =>
         i_req_mem_ready <= '1';
         i_mem_data_valid <= '1';
         i_mem_data <= X"2000000010000000" + r.burst_addr;
         if o_req_mem_valid = '1' then
-            if o_req_mem_len = X"00" then
-                v.state := ReadLast;
-            else
-                v.state := Read;
-            end if;
+            v.state := ReadLast;
             v.burst_addr := o_req_mem_addr;
-            v.burst_cnt := conv_integer(o_req_mem_len);
         else
             v.state := Idle;
-            v.burst_cnt := 0;
         end if;
     when others =>
     end case;
@@ -242,7 +225,6 @@ begin
         v.state := Idle;
         v.mpu_addr := (others => '0');
         v.burst_addr := (others => '0');
-        v.burst_cnt := 0;
     end if;
 
 
@@ -282,12 +264,10 @@ begin
     i_req_mem_ready => i_req_mem_ready,
     o_req_mem_valid => o_req_mem_valid,
     o_req_mem_write => o_req_mem_write,
+    o_req_mem_cached => o_req_mem_cached,
     o_req_mem_addr => o_req_mem_addr,
     o_req_mem_strob => o_req_mem_strob,
     o_req_mem_data => o_req_mem_data,
-    o_req_mem_len => o_req_mem_len,
-    o_req_mem_burst => o_req_mem_burst,
-    o_req_mem_last => o_req_mem_last,
     i_mem_data_valid => i_mem_data_valid,
     i_mem_data => i_mem_data,
     i_mem_load_fault => i_mem_load_fault,

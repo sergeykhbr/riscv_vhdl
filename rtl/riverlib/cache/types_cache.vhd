@@ -135,14 +135,12 @@ package types_cache is
     i_req_mem_ready : in std_logic;
     o_req_mem_valid : out std_logic;
     o_req_mem_write : out std_logic;
+    o_req_mem_cached : out std_logic;
     o_req_mem_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    o_req_mem_strob : out std_logic_vector(BUS_DATA_BYTES-1 downto 0);
-    o_req_mem_data : out std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
-    o_req_mem_len : out std_logic_vector(7 downto 0);
-    o_req_mem_burst : out std_logic_vector(1 downto 0);
-    o_req_mem_last : out std_logic;
+    o_req_mem_strob : out std_logic_vector(ICACHE_BYTES_PER_LINE-1 downto 0);
+    o_req_mem_data : out std_logic_vector(ICACHE_LINE_BITS-1 downto 0);
     i_mem_data_valid : in std_logic;
-    i_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+    i_mem_data : in std_logic_vector(ICACHE_LINE_BITS-1 downto 0);
     i_mem_load_fault : in std_logic;
     -- MPU interface:
     o_mpu_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
@@ -182,14 +180,12 @@ package types_cache is
     i_req_mem_ready : in std_logic;
     o_req_mem_valid : out std_logic;
     o_req_mem_write : out std_logic;
+    o_req_mem_cached : out std_logic;
     o_req_mem_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    o_req_mem_strob : out std_logic_vector(BUS_DATA_BYTES-1 downto 0);
-    o_req_mem_data : out std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
-    o_req_mem_len : out std_logic_vector(7 downto 0);
-    o_req_mem_burst : out std_logic_vector(1 downto 0);
-    o_req_mem_last : out std_logic;
+    o_req_mem_strob : out std_logic_vector(DCACHE_BYTES_PER_LINE-1 downto 0);
+    o_req_mem_data : out std_logic_vector(DCACHE_LINE_BITS-1 downto 0);
     i_mem_data_valid : in std_logic;
-    i_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+    i_mem_data : in std_logic_vector(DCACHE_LINE_BITS-1 downto 0);
     i_mem_load_fault : in std_logic;
     i_mem_store_fault : in std_logic;
     -- MPU interface

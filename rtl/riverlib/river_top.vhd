@@ -39,15 +39,13 @@ entity RiverTop is
     o_req_mem_path : out std_logic;                                   -- 0=ctrl; 1=data path
     o_req_mem_valid : out std_logic;                                  -- AXI memory request is valid
     o_req_mem_write : out std_logic;                                  -- AXI memory request is write type
+    o_req_mem_cached : out std_logic;
     o_req_mem_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0); -- AXI memory request address
-    o_req_mem_strob : out std_logic_vector(BUS_DATA_BYTES-1 downto 0);-- Writing strob. 1 bit per Byte
-    o_req_mem_data : out std_logic_vector(BUS_DATA_WIDTH-1 downto 0); -- Writing data
-    o_req_mem_len : out std_logic_vector(7 downto 0);                 -- burst length
-    o_req_mem_burst : out std_logic_vector(1 downto 0);               -- burst type: "00" FIX; "01" INCR; "10" WRAP
-    o_req_mem_last : out std_logic;
+    o_req_mem_strob : out std_logic_vector(L1CACHE_BYTES_PER_LINE-1 downto 0);-- Writing strob. 1 bit per Byte
+    o_req_mem_data : out std_logic_vector(L1CACHE_LINE_BITS-1 downto 0); -- Writing data
     i_resp_mem_valid : in std_logic;                                  -- AXI response is valid
     i_resp_mem_path : in std_logic;                                   -- 0=ctrl; 1=data path
-    i_resp_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0); -- Read data
+    i_resp_mem_data : in std_logic_vector(L1CACHE_LINE_BITS-1 downto 0); -- Read data
     i_resp_mem_load_fault : in std_logic;                             -- Bus response with SLVERR or DECERR on read
     i_resp_mem_store_fault : in std_logic;                            -- Bus response with SLVERR or DECERR on write
     i_resp_mem_store_fault_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
@@ -202,12 +200,10 @@ begin
         o_req_mem_path => o_req_mem_path,
         o_req_mem_valid => o_req_mem_valid,
         o_req_mem_write => o_req_mem_write,
+        o_req_mem_cached => o_req_mem_cached,
         o_req_mem_addr => o_req_mem_addr,
         o_req_mem_strob => o_req_mem_strob,
         o_req_mem_data => o_req_mem_data,
-        o_req_mem_len => o_req_mem_len,
-        o_req_mem_burst => o_req_mem_burst,
-        o_req_mem_last => o_req_mem_last,
         i_resp_mem_valid => i_resp_mem_valid,
         i_resp_mem_path => i_resp_mem_path,
         i_resp_mem_data => i_resp_mem_data,

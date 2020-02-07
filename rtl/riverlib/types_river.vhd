@@ -189,13 +189,27 @@ component river_amba is
   port ( 
     i_nrst   : in std_logic;
     i_clk    : in std_logic;
-    i_msti   : in axi4_master_in_type;
-    o_msto   : out axi4_master_out_type;
+    i_msti   : in axi4_river_in_type;
+    o_msto   : out axi4_river_out_type;
     o_mstcfg : out axi4_master_config_type;
     i_dport  : in dport_in_type;
     o_dport  : out dport_out_type;
     i_ext_irq : in std_logic
   );
+end component;
+
+component river_serdes is 
+  generic (
+    async_reset : boolean
+  );
+  port ( 
+    i_nrst  : in std_logic;
+    i_clk   : in std_logic;
+    i_coreo : in axi4_river_out_type;
+    o_corei : out axi4_river_in_type;
+    i_msti  : in axi4_master_in_type;
+    o_msto  : out axi4_master_out_type
+);
 end component;
 
 end; -- package body

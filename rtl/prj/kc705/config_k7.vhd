@@ -30,9 +30,9 @@ package config_target is
 
   constant CFG_TOPDIR : string := "../../../";
 
-  --! @brief   Dual-core configuration enabling
-  --! @details This config parameter used only with CPU River
-  constant CFG_COMMON_DUAL_CORE_ENABLE : boolean := false;
+  --! @brief   Number of processors in a system
+  --! @details This value may be in a range 1 to CFG_TOTAL_CPU_MAX-1
+  constant CFG_CPU_NUM : integer := 1;
 
   --! @brief   HEX-image for the initialization of the Boot ROM.
   --! @details This file is used by \e inferred ROM implementation.
@@ -68,5 +68,8 @@ package config_target is
 
   --! OTP 8 KB memory bank
   constant CFG_OTP8KB_ENA : boolean := false;
+
+  --! Coherent bridge with L2-cache
+  constant CFG_L2CACHE_ENA : boolean := false;
 
 end;

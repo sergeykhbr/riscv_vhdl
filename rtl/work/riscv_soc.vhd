@@ -151,6 +151,9 @@ architecture arch_riscv_soc of riscv_soc is
   signal spiflashi : spi_in_type;
   signal spiflasho : spi_out_type;
 
+  signal corei   : axi4_river_in_vector;
+  signal coreo   : axi4_river_out_vector;
+
   --! Arbiter is switching only slaves output signal, data from noc
   --! is connected to all slaves and to the arbiter itself.
   signal aximi   : bus0_xmst_in_vector;
@@ -159,6 +162,7 @@ architecture arch_riscv_soc of riscv_soc is
   signal axiso   : bus0_xslv_out_vector;
   signal slv_cfg : bus0_xslv_cfg_vector;
   signal mst_cfg : bus0_xmst_cfg_vector;
+  signal wb_core_irq : std_logic_vector(CFG_TOTAL_CPU_MAX-1 downto 0);
   signal w_ext_irq : std_logic;
   signal dport_i : dport_in_vector;
   signal dport_o : dport_out_vector;
@@ -203,47 +207,56 @@ begin
     o_bus_util_r => wb_bus_util_r  -- Bus read access utilization per master statistic
   );
 
-  --! @brief RISC-V Processor core (River or Rocket).
-  cpu0 : river_amba generic map (
-    memtech  => CFG_MEMTECH,
-    hartid => 0,
-    async_reset => CFG_ASYNC_RESET,
-    fpu_ena => true,
-    tracer_ena => false
-  ) port map ( 
-    i_nrst   => w_bus_nrst,
-    i_clk    => i_clk,
-    i_msti   => aximi(CFG_BUS0_XMST_CPU0),
-    o_msto   => aximo(CFG_BUS0_XMST_CPU0),
-    o_mstcfg => mst_cfg(CFG_BUS0_XMST_CPU0),
-    i_dport => dport_i(0),
-    o_dport => dport_o(0),
-    i_ext_irq => w_ext_irq
-  );
+  wb_core_irq <= "0" & w_ext_irq;  -- TODO: other CPU interrupts
 
-  dualcore_ena : if CFG_COMMON_DUAL_CORE_ENABLE generate
-      cpu1 : river_amba generic map (
-        memtech  => CFG_MEMTECH,
-        hartid => 1,
-        async_reset => CFG_ASYNC_RESET,
-        fpu_ena => true,
-        tracer_ena => false
-      ) port map ( 
-        i_nrst   => w_bus_nrst,
-        i_clk    => i_clk,
-        i_msti   => aximi(CFG_BUS0_XMST_CPU1),
-        o_msto   => aximo(CFG_BUS0_XMST_CPU1),
-        o_mstcfg => mst_cfg(CFG_BUS0_XMST_CPU1),
-        i_dport => dport_i(1),
-        o_dport => dport_o(1),
-        i_ext_irq => '0'  -- todo: 
-      );
+  --! @brief RISC-V Processor core River.
+  cpuslotx : for n in 0 to CFG_TOTAL_CPU_MAX-1 generate
+      cpux : if n < CFG_CPU_NUM generate
+          river0 : river_amba generic map (
+            memtech  => CFG_MEMTECH,
+            hartid => n,
+            async_reset => CFG_ASYNC_RESET,
+            fpu_ena => true,
+            tracer_ena => false
+          ) port map ( 
+            i_nrst   => w_bus_nrst,
+            i_clk    => i_clk,
+            i_msti   => corei(CFG_BUS0_XMST_CPU0+n),
+            o_msto   => coreo(CFG_BUS0_XMST_CPU0+n),
+            o_mstcfg => mst_cfg(CFG_BUS0_XMST_CPU0+n),
+            i_dport => dport_i(n),
+            o_dport => dport_o(n),
+            i_ext_irq => wb_core_irq(n)
+          );
+      end generate;
+      emptyx : if n >= CFG_CPU_NUM generate
+          coreo(CFG_BUS0_XMST_CPU0+n) <= axi4_river_out_none;
+          mst_cfg(CFG_BUS0_XMST_CPU0+n) <= axi4_master_config_none;
+          dport_o(n) <= dport_out_none;
+      end generate;
   end generate;
 
-  dualcore_dis : if not CFG_COMMON_DUAL_CORE_ENABLE generate
-      aximo(CFG_BUS0_XMST_CPU1) <= axi4_master_out_none;
-      mst_cfg(CFG_BUS0_XMST_CPU1) <= axi4_master_config_none;
-		dport_o(1) <= dport_out_none;
+  l2_ena : if CFG_L2CACHE_ENA generate
+      -- TODO:
+  end generate;
+  l2_dis : if not CFG_L2CACHE_ENA generate
+      serdesslotx : for n in 0 to CFG_TOTAL_CPU_MAX-1 generate
+          serdesx : if n < CFG_CPU_NUM generate
+              serdes0 : river_serdes generic map (
+                async_reset => CFG_ASYNC_RESET
+              ) port map ( 
+                i_nrst  => w_bus_nrst,
+                i_clk   => i_clk,
+                i_coreo => coreo(CFG_BUS0_XMST_CPU0+n),
+                o_corei => corei(CFG_BUS0_XMST_CPU0+n),
+                i_msti => aximi(CFG_BUS0_XMST_CPU0+n),
+                o_msto => aximo(CFG_BUS0_XMST_CPU0+n)
+              );
+          end generate;
+          serdesemptyx : if n >= CFG_CPU_NUM generate
+              aximo(CFG_BUS0_XMST_CPU0+n) <= axi4_master_out_none;
+          end generate;
+      end generate;
   end generate;
 
 

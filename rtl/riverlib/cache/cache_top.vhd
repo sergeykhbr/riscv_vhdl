@@ -62,15 +62,13 @@ entity CacheTop is generic (
     o_req_mem_path : out std_logic;
     o_req_mem_valid : out std_logic;
     o_req_mem_write : out std_logic;
+    o_req_mem_cached : out std_logic;
     o_req_mem_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    o_req_mem_strob : out std_logic_vector(BUS_DATA_BYTES-1 downto 0);
-    o_req_mem_data : out std_logic_vector(BUS_DATA_WIDTH-1 downto 0);  -- burst transaction length
-    o_req_mem_len : out std_logic_vector(7 downto 0);                  -- burst length
-    o_req_mem_burst : out std_logic_vector(1 downto 0);                -- burst type: "00" FIX; "01" INCR; "10" WRAP
-    o_req_mem_last : out std_logic;
+    o_req_mem_strob : out std_logic_vector(L1CACHE_BYTES_PER_LINE-1 downto 0);
+    o_req_mem_data : out std_logic_vector(L1CACHE_LINE_BITS-1 downto 0);  -- burst transaction length
     i_resp_mem_valid : in std_logic;
     i_resp_mem_path : in std_logic;
-    i_resp_mem_data : in std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+    i_resp_mem_data : in std_logic_vector(L1CACHE_LINE_BITS-1 downto 0);
     i_resp_mem_load_fault : in std_logic;                             -- Bus response with SLVERR or DECERR on read
     i_resp_mem_store_fault : in std_logic;                            -- Bus response with SLVERR or DECERR on write
     i_resp_mem_store_fault_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
@@ -97,22 +95,19 @@ architecture arch_CacheTop of CacheTop is
   constant CTRL_PATH : std_logic := '1';
   constant CACHE_QUEUE_WIDTH : integer :=
         BUS_ADDR_WIDTH      -- addr
-        + 8                 -- len
-        + 2                 -- burst type
+        + 1                 -- 0=uncached/1=cached
         + 1                 -- 0=read/1=write
-        + 1                 -- 0=instruction; 1=data
+        + 1                 -- 1=instruction; 0=data
         ;
 
 
   type CacheOutputType is record
       req_mem_valid : std_logic;
       req_mem_write : std_logic;
+      req_mem_cached : std_logic;
       req_mem_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-      req_mem_strob : std_logic_vector(BUS_DATA_BYTES-1 downto 0);
-      req_mem_wdata : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
-      req_mem_len : std_logic_vector(7 downto 0);
-      req_mem_burst : std_logic_vector(1 downto 0);
-      req_mem_last : std_logic;
+      req_mem_strob : std_logic_vector(DCACHE_BYTES_PER_LINE-1 downto 0);
+      req_mem_wdata : std_logic_vector(DCACHE_LINE_BITS-1 downto 0);
       mpu_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
   end record;
 
@@ -148,14 +143,12 @@ begin
 
     wb_ctrl_bus <= CTRL_PATH &
                    i.req_mem_write &
-                   i.req_mem_burst &
-                   i.req_mem_len &
+                   i.req_mem_cached &
                    i.req_mem_addr;
 
     wb_data_bus <= DATA_PATH &
                    d.req_mem_write &
-                   d.req_mem_burst &
-                   d.req_mem_len &
+                   d.req_mem_cached &
                    d.req_mem_addr;
 
     queue_wdata_i <= wb_data_bus when d.req_mem_valid = '1' else wb_ctrl_bus;
@@ -170,14 +163,11 @@ begin
     w_ctrl_resp_mem_load_fault <= i_resp_mem_load_fault when i_resp_mem_path = CTRL_PATH else '0';
     w_data_resp_mem_load_fault <= '0' when i_resp_mem_path = CTRL_PATH else i_resp_mem_load_fault;
 
-    o_req_mem_last <= i.req_mem_last when i_resp_mem_path = CTRL_PATH else d.req_mem_last;
-
     o_req_mem_valid <= queue_nempty_o;
 
-    o_req_mem_path <= queue_rdata_o(BUS_ADDR_WIDTH+11);
-    o_req_mem_write <= queue_rdata_o(BUS_ADDR_WIDTH+10);
-    o_req_mem_burst <= queue_rdata_o(BUS_ADDR_WIDTH+9 downto BUS_ADDR_WIDTH+8);
-    o_req_mem_len <= queue_rdata_o(BUS_ADDR_WIDTH+7 downto BUS_ADDR_WIDTH);
+    o_req_mem_path <= queue_rdata_o(BUS_ADDR_WIDTH+2);
+    o_req_mem_write <= queue_rdata_o(BUS_ADDR_WIDTH+1);
+    o_req_mem_cached <= queue_rdata_o(BUS_ADDR_WIDTH);
     o_req_mem_addr <= queue_rdata_o(BUS_ADDR_WIDTH-1 downto 0);
 
     o_req_mem_strob <= d.req_mem_strob;
@@ -220,12 +210,10 @@ begin
         i_req_mem_ready => w_ctrl_req_ready,
         o_req_mem_valid => i.req_mem_valid,
         o_req_mem_write => i.req_mem_write,
+        o_req_mem_cached => i.req_mem_cached,
         o_req_mem_addr => i.req_mem_addr,
         o_req_mem_strob => i.req_mem_strob,
         o_req_mem_data => i.req_mem_wdata,
-        o_req_mem_len => i.req_mem_len,
-        o_req_mem_burst => i.req_mem_burst,
-        o_req_mem_last => i.req_mem_last,
         i_mem_data_valid => w_ctrl_resp_mem_data_valid,
         i_mem_data => i_resp_mem_data,
         i_mem_load_fault => w_ctrl_resp_mem_load_fault,
@@ -260,12 +248,10 @@ begin
         i_req_mem_ready => w_data_req_ready,
         o_req_mem_valid => d.req_mem_valid,
         o_req_mem_write => d.req_mem_write,
+        o_req_mem_cached => d.req_mem_cached,
         o_req_mem_addr => d.req_mem_addr,
         o_req_mem_strob => d.req_mem_strob,
         o_req_mem_data => d.req_mem_wdata,
-        o_req_mem_len => d.req_mem_len,
-        o_req_mem_burst => d.req_mem_burst,
-        o_req_mem_last => d.req_mem_last,
         i_mem_data_valid => w_data_resp_mem_data_valid,
         i_mem_data => i_resp_mem_data,
         i_mem_load_fault => w_data_resp_mem_load_fault,
