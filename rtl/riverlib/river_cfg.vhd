@@ -43,6 +43,7 @@ package river_cfg is
   constant BUS_DATA_BYTES : integer := (2**CFG_LOG2_DATA_BYTES);
   constant BUS_DATA_WIDTH : integer := 8 * BUS_DATA_BYTES;
   constant LOG2_DATA_BYTES_MASK : integer := (2**CFG_LOG2_DATA_BYTES) - 1;
+  constant CFG_RIVER_ID_BITS : integer := 1;
   --! @}
 
 
@@ -95,6 +96,11 @@ package river_cfg is
   constant DTAG_FL_DIRTY      : integer := 1;
   constant DTAG_FL_LOAD_FAULT : integer := 2;
   constant DTAG_FL_TOTAL      : integer := 3;
+
+  -- L1 cache common parameters (suppose I$ and D$ have the same size)
+  constant L1CACHE_BYTES_PER_LINE : integer := DCACHE_BYTES_PER_LINE;
+  constant L1CACHE_LINE_BITS      : integer := 8*DCACHE_BYTES_PER_LINE;
+  constant L1CACHE_BURST_LEN      : integer := DCACHE_BURST_LEN;
 
   -- MPU config:
   constant CFG_MPU_TBL_WIDTH   : integer := 2;    -- [1:0]  log2(MPU_TBL_SIZE)

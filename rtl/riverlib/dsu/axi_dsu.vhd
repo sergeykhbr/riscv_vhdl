@@ -99,7 +99,7 @@ architecture arch_axi_dsu of axi_dsu is
     dev_ready : std_logic;
     -- Platform statistic:
     clk_cnt : std_logic_vector(63 downto 0);
-    cpu_context : std_logic_vector(log2x(CFG_CORES_PER_DSU_MAX)-1 downto 0);
+    cpu_context : std_logic_vector(log2x(CFG_TOTAL_CPU_MAX)-1 downto 0);
     util_w_cnt : mst_utilization_type;
     util_r_cnt : mst_utilization_type;
   end record;
@@ -182,7 +182,7 @@ begin
     when 0 =>
         vrdata_internal(0) := r.soft_rst;
     when 1 =>
-        vrdata_internal(log2x(CFG_CORES_PER_DSU_MAX)-1 downto 0) := r.cpu_context;
+        vrdata_internal(log2x(CFG_TOTAL_CPU_MAX)-1 downto 0) := r.cpu_context;
     when others =>
         if (iraddr >= 8) and (iraddr < (8 + 2*CFG_BUS0_XMST_TOTAL)) then
              vrdata_internal := wb_bus_util_map(iraddr - 8);
@@ -197,7 +197,7 @@ begin
             when 0 =>
                 v.soft_rst := r.wdata(0);
             when 1 =>
-                v.cpu_context := r.wdata(log2x(CFG_CORES_PER_DSU_MAX)-1 downto 0);
+                v.cpu_context := r.wdata(log2x(CFG_TOTAL_CPU_MAX)-1 downto 0);
             when others =>
             end case;
         else

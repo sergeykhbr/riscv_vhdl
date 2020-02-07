@@ -35,4 +35,5 @@ ${RTL_HOME}/riverlib/dsu/axi_dsu.vhd
 ${RTL_HOME}/riverlib/river_amba.vhd
 ${RTL_HOME}/riverlib/river_cfg.vhd
 ${RTL_HOME}/riverlib/river_top.vhd
+${RTL_HOME}/riverlib/river_serdes.vhd
 ${RTL_HOME}/riverlib/types_river.vhd

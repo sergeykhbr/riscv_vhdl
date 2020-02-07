@@ -34,7 +34,80 @@ use riverlib.river_cfg.all;
 --! @brief   Declaration of components visible on SoC top level.
 package types_river is
 
-constant CFG_CORES_PER_DSU_MAX : integer := 2;
+constant CFG_TOTAL_CPU_MAX : integer := 2;
+
+-- AXI4 with ACE channels
+type axi4_river_out_type is record
+  aw_valid : std_logic;
+  aw_bits : axi4_metadata_type;
+  aw_id   : std_logic_vector(CFG_RIVER_ID_BITS-1 downto 0);
+  aw_user : std_logic;
+  w_valid : std_logic;
+  w_data : std_logic_vector(L1CACHE_LINE_BITS-1 downto 0);
+  w_last : std_logic;
+  w_strb : std_logic_vector(L1CACHE_BYTES_PER_LINE-1 downto 0);
+  w_user : std_logic;
+  b_ready : std_logic;
+  ar_valid : std_logic;
+  ar_bits : axi4_metadata_type;
+  ar_id   : std_logic_vector(CFG_RIVER_ID_BITS-1 downto 0);
+  ar_user : std_logic;
+  r_ready : std_logic;
+  -- ACE signals
+  ar_domain : std_logic_vector(1 downto 0);                -- 00=Non-shareable (single master in domain)
+  ar_snoop : std_logic_vector(3 downto 0);                 -- Table C3-7:
+  ar_bar : std_logic_vector(1 downto 0);                   -- read barrier transaction
+  aw_domain : std_logic_vector(1 downto 0);
+  aw_snoop : std_logic_vector(3 downto 0);                 -- Table C3-8
+  aw_bar : std_logic_vector(1 downto 0);                   -- write barrier transaction
+  ac_ready : std_logic;
+  cr_valid : std_logic;
+  cr_resp : std_logic_vector(4 downto 0);
+  cd_valid : std_logic;
+  cd_data : std_logic_vector(L1CACHE_LINE_BITS-1 downto 0);
+  cd_last : std_logic;
+  rack : std_logic;
+  wack : std_logic;
+end record;
+
+constant axi4_river_out_none : axi4_river_out_type := (
+      '0', META_NONE, (others=>'0'), '0',
+      '0', (others=>'0'), '0', (others=>'0'), '0', 
+      '0', '0', META_NONE, (others=>'0'), '0', '0',
+       "00", X"0", "00", "00", X"0", "00", '0', '0',
+       "00000", '0', (others => '0'), '0', '0', '0');
+
+type axi4_river_in_type is record
+  aw_ready : std_logic;
+  w_ready : std_logic;
+  b_valid : std_logic;
+  b_resp : std_logic_vector(1 downto 0);
+  b_id   : std_logic_vector(CFG_RIVER_ID_BITS-1 downto 0);
+  b_user : std_logic;
+  ar_ready : std_logic;
+  r_valid : std_logic;
+  r_resp : std_logic_vector(3 downto 0);
+  r_data : std_logic_vector(L1CACHE_LINE_BITS-1 downto 0);
+  r_last : std_logic;
+  r_id   : std_logic_vector(CFG_RIVER_ID_BITS-1 downto 0);
+  r_user : std_logic;
+  -- ACE signals
+  ac_valid : std_logic;
+  ac_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+  ac_snoop : std_logic_vector(3 downto 0);                  -- Table C3-19
+  ac_prot : std_logic_vector(2 downto 0);
+  cr_ready : std_logic;
+  cd_ready : std_logic;
+end record;
+
+constant axi4_river_in_none : axi4_river_in_type := (
+      '0', '0', '0', AXI_RESP_OKAY, (others=>'0'), '0',
+      '0', '0', (others => '0'), (others=>'0'), '0', (others=>'0'), '0',
+      '0', (others => '0'), X"0", "000", '0', '0');
+
+type axi4_river_in_vector is array (0 to CFG_TOTAL_CPU_MAX-1) of axi4_river_in_type;
+type axi4_river_out_vector is array (0 to CFG_TOTAL_CPU_MAX-1) of axi4_river_out_type;
+
 
 type dport_in_type is record
     valid : std_logic;
@@ -47,7 +120,7 @@ end record;
 constant dport_in_none : dport_in_type := (
   '0', '0', (others => '0'), (others => '0'), (others => '0'));
 
-type dport_in_vector is array (0 to CFG_CORES_PER_DSU_MAX-1) 
+type dport_in_vector is array (0 to CFG_TOTAL_CPU_MAX-1) 
        of dport_in_type;
 
 
@@ -60,7 +133,7 @@ end record;
 constant dport_out_none : dport_out_type := (
     '0', '1', (others => '0'));
 
-type dport_out_vector is array (0 to CFG_CORES_PER_DSU_MAX-1) 
+type dport_out_vector is array (0 to CFG_TOTAL_CPU_MAX-1) 
      of dport_out_type;
 
   --! @brief   Declaration of the Debug Support Unit with the AXI interface.
