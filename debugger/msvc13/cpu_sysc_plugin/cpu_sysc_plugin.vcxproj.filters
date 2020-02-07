@@ -328,5 +328,8 @@
     <ClInclude Include="..\..\src\cpu_sysc_plugin\axiserdes.h">
       <Filter>riverlib</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\types_river.h">
+      <Filter>riverlib</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

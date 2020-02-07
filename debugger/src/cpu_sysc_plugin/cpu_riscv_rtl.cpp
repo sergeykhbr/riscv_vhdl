@@ -198,6 +198,7 @@ void CpuRiscV_RTL::createSystemC() {
     serdes_ = new AxiSerDes("serdes0", asyncReset_.to_bool());
     serdes_->i_clk(wrapper_->o_clk);
     serdes_->i_nrst(w_nrst);
+    serdes_->o_corei(corei_i);
     serdes_->o_corei_aw_ready(corei_aw_ready_i);
     serdes_->o_corei_w_ready(corei_w_ready_i);
     serdes_->o_corei_b_valid(corei_b_valid_i);

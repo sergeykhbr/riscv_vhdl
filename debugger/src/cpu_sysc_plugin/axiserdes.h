@@ -18,7 +18,7 @@
 #define __DEBUGGER_SRC_CPU_SYSC_PLUGIN_AXISERDES_H__
 
 #include "api_core.h"
-#include "riverlib/river_cfg.h"
+#include "riverlib/types_river.h"
 #include <systemc.h>
 
 namespace debugger {
@@ -27,6 +27,7 @@ SC_MODULE(AxiSerDes) {
     sc_in<bool> i_clk;                                  // CPU clock
     sc_in<bool> i_nrst;
     // CPU AXI + ACE
+    sc_out<axi4_river_in_type> o_corei;
     sc_out<bool> o_corei_aw_ready;
     sc_out<bool> o_corei_w_ready;
     sc_out<bool> o_corei_b_valid;

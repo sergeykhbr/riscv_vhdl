@@ -18,6 +18,7 @@
 #define __DEBUGGER_RIVER_AMBA_H__
 
 #include "river_cfg.h"
+#include "types_river.h"
 #include "river_top.h"
 #include <systemc.h>
 

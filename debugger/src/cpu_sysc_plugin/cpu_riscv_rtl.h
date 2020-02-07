@@ -119,6 +119,7 @@ class CpuRiscV_RTL : public IService,
     sc_signal<sc_uint<64>> wb_exec_cnt;
 
     // AXI4 input structure:
+    sc_signal<axi4_river_in_type> corei_i;
     sc_signal<bool> corei_aw_ready_i;
     sc_signal<bool> corei_w_ready_i;
     sc_signal<bool> corei_b_valid_i;

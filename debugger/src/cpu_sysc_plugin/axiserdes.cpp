@@ -22,6 +22,7 @@ AxiSerDes::AxiSerDes(sc_module_name name, bool async_reset) : sc_module(name),
     i_clk("i_clk"),
     i_nrst("o_nrst"),
     // CPU[0] AXI4 + ACE:
+    o_corei("o_corei"),
     o_corei_aw_ready("o_corei_aw_ready"),
     o_corei_w_ready("o_corei_w_ready"),
     o_corei_b_valid("o_corei_b_valid"),
@@ -252,6 +253,8 @@ void AxiSerDes::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_msti_r_last, i_msti_r_last.name());
         sc_trace(o_vcd, i_msti_r_id, i_msti_r_id.name());
         sc_trace(o_vcd, i_msti_r_user, i_msti_r_user.name());
+
+        sc_trace(o_vcd, o_corei, o_corei.name());
 
         std::string pn(name());
         sc_trace(o_vcd, r.state, pn + ".r_state");
